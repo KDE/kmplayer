@@ -23,7 +23,7 @@
     <Action name="view_arts_control"/>
   </Menu>
   <Menu name="settings"><text>&amp;Settings</text>
-    <Action name="fullscreen"/ append="show_merge">
+    <Action name="fullscreen" append="show_merge"/>
     <Action name="configure"/>
   </Menu>
 </MenuBar>
