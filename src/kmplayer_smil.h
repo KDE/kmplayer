@@ -139,8 +139,20 @@ public:
     virtual void end ();
     void paint (QPainter & p);
     virtual QString setParam (const QString & name, const QString & value);
+    /**
+     * calls reset() and pulls in the attached_element's attributes
+     */
+    void init ();
     unsigned int background_color;
+    QString left;
+    QString top;
+    QString width;
+    QString height;
+    QString right;
+    QString bottom;
     bool have_bg_color;
+private:
+    void reset ();
 };
 
 /**
@@ -344,6 +356,10 @@ public:
     KDE_NO_CDTOR_EXPORT Region (ElementPtr & d) : RegionBase (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "region"; }
     ElementPtr childFromTag (const QString & tag);
+    /**
+     * calculates dimensions of this regions with w and h as width and height
+     */
+    void calculateBounds (int w, int h);
 };
 
 /**
@@ -353,6 +369,10 @@ class RootLayout : public RegionBase {
 public:
     KDE_NO_CDTOR_EXPORT RootLayout (ElementPtr & d) : RegionBase (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
+    /**
+     * recursively calculates dimensions of this and child regions
+     */
+    void updateLayout ();
 };
 
 /**

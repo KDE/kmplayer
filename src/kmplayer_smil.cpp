@@ -69,7 +69,9 @@ ElementRuntimePtr Element::getRuntime () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (ElementPtr e)
- : has_mouse (false), x (0), y (0), w (0), h (0), z_order (1), regionElement (e) {
+ : has_mouse (false), x (0), y (0), w (0), h (0),
+   xscale (0.0), yscale (0.0),
+   z_order (1), regionElement (e) {
     self = RegionNodePtrW (this);
     ElementRuntimePtr rt = e->getRuntime ();
     if (rt)
@@ -122,6 +124,17 @@ KDE_NO_EXPORT void RegionNode::repaint () {
     }
 };
 
+KDE_NO_EXPORT void RegionNode::calculateChildBounds () {
+    SMIL::Region * r = convertNode <SMIL::Region> (regionElement);
+    for (RegionNodePtr rn = firstChild; rn; rn = rn->nextSibling) {
+        SMIL::Region * cr = convertNode <SMIL::Region> (rn->regionElement);
+        cr->calculateBounds (r->w, r->h);
+        rn->calculateChildBounds ();
+        if (xscale > 0.001)
+            scaleRegion (xscale, yscale, x, y);
+    }
+}
+
 KDE_NO_EXPORT bool RegionNode::pointerClicked (int _x, int _y) {
     bool inside = _x > x && _x < x + w && _y > y && _y < y + h;
     if (!inside)
@@ -169,8 +182,8 @@ KDE_NO_EXPORT bool RegionNode::pointerMoved (int _x, int _y) {
 KDE_NO_EXPORT void RegionNode::setSize (int _x, int _y, int _w, int _h, bool keepaspect) {
     RegionBase * region = convertNode <RegionBase> (regionElement);
     if (region && region->w > 0 && region->h > 0) {
-        float xscale = 1.0 + 1.0 * (_w - region->w) / region->w;
-        float yscale = 1.0 + 1.0 * (_h - region->h) / region->h;
+        xscale = 1.0 + 1.0 * (_w - region->w) / region->w;
+        yscale = 1.0 + 1.0 * (_h - region->h) / region->h;
         if (keepaspect)
             if (xscale > yscale) {
                 xscale = yscale;
@@ -480,7 +493,27 @@ KDE_NO_EXPORT void TimedRuntime::stopped () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT RegionRuntime::RegionRuntime (ElementPtr e)
- : ElementRuntime (e), background_color (0), have_bg_color (false) {}
+ : ElementRuntime (e) {
+    init ();
+}
+
+KDE_NO_EXPORT void RegionRuntime::init () {
+    reset ();
+    if (element) {
+        for (ElementPtr a= element->attributes().item(0); a; a=a->nextSibling())
+            setParam (QString (a->nodeName ()), a->nodeValue ());
+    }
+}
+
+KDE_NO_EXPORT void RegionRuntime::reset () {
+    have_bg_color = false;
+    left.truncate (0);
+    top.truncate (0);
+    width.truncate (0);
+    height.truncate (0);
+    right.truncate (0);
+    bottom.truncate (0);
+}
 
 KDE_NO_EXPORT void RegionRuntime::paint (QPainter & p) {
     if (have_bg_color && region_node) {
@@ -493,6 +526,7 @@ KDE_NO_EXPORT
 QString RegionRuntime::setParam (const QString & name, const QString & val) {
     kdDebug () << "RegionRuntime::setParam " << name << "=" << val << endl;
     QString old_val;
+    bool needs_bounds_calc = false;
     if (name == QString::fromLatin1 ("background-color") ||
             name == QString::fromLatin1 ("background-color")) {
         if (have_bg_color)
@@ -504,22 +538,48 @@ QString RegionRuntime::setParam (const QString & name, const QString & val) {
             old_val = QString::number (region_node->z_order);
             region_node->z_order = val.toInt ();
         }
+    } else if (name == QString::fromLatin1 ("left")) {
+        old_val = left;
+        left = val;
+        needs_bounds_calc = true;
+    } else if (name == QString::fromLatin1 ("top")) {
+        old_val = top;
+        top = val;
+        needs_bounds_calc = true;
+    } else if (name == QString::fromLatin1 ("width")) {
+        old_val = width;
+        width = val;
+        needs_bounds_calc = true;
+    } else if (name == QString::fromLatin1 ("height")) {
+        old_val = height;
+        height = val;
+        needs_bounds_calc = true;
+    } else if (name == QString::fromLatin1 ("right")) {
+        old_val = right;
+        right = val;
+        needs_bounds_calc = true;
+    } else if (name == QString::fromLatin1 ("bottom")) {
+        old_val = bottom;
+        bottom = val;
+        needs_bounds_calc = true;
     } else
         return ElementRuntime::setParam (name, val);
+    if (needs_bounds_calc && element) {
+        RegionNodePtr rn = element->document ()->rootLayout;
+        if (rn && rn->regionElement) {
+            convertNode <SMIL::RootLayout> (rn->regionElement)->updateLayout ();
+            rn->repaint ();
+        }
+    }
     return old_val;
 }
 
 KDE_NO_EXPORT void RegionRuntime::begin () {
-    if (element)
-        for (ElementPtr a=element->attributes().item(0); a;a=a->nextSibling()) {
-            Attribute * att = convertNode <Attribute> (a);
-            setParam (QString (att->nodeName ()), att->nodeValue ());
-        }
     ElementRuntime::begin ();
 }
 
 KDE_NO_EXPORT void RegionRuntime::end () {
-    have_bg_color = false;
+    reset ();
     ElementRuntime::end ();
 }
 
@@ -548,8 +608,6 @@ QString AnimateGroupData::setParam (const QString & name, const QString & val) {
 
 KDE_NO_EXPORT void SetData::started () {
     kdDebug () << "SetData::started " << durations [duration_time].durval << endl;
-    if (durations [duration_time].durval == duration_media)
-        durations [duration_time].durval = 0; // intrinsic duration of 0
     if (element) {
         if (target_element) {
             ElementRuntimePtr rt = target_element->getRuntime ();
@@ -572,7 +630,8 @@ KDE_NO_EXPORT void SetData::stopped () {
     if (target_element) {
         ElementRuntimePtr rt = target_element->getRuntime ();
         if (rt) {
-            old_value = rt->setParam (changed_attribute, old_value);
+            QString ov = rt->setParam (changed_attribute, old_value);
+            kdDebug () << "SetData::stopped " << target_element->nodeName () << "." << changed_attribute << " " << ov << "->" << change_to << endl;
             if (target_region)
                 target_region->repaint ();
         }
@@ -816,8 +875,10 @@ KDE_NO_EXPORT void Smil::start () {
     kdDebug () << "Smil::start" << endl;
     current_av_media_type = ElementPtr ();
     setState (state_started);
-    if (document ()->rootLayout) {
-        beginOrEndRegions (document ()->rootLayout, true);
+    RegionNodePtr rn = document ()->rootLayout;
+    if (rn && rn->regionElement) {
+        beginOrEndRegions (rn, true);
+        convertNode <SMIL::RootLayout> (rn->regionElement)->updateLayout ();
         document ()->rootLayout->repaint ();
     }
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
@@ -895,24 +956,6 @@ static void buildRegionNodes (ElementPtr p, RegionNodePtr r) {
         }
 }
 
-static void sizeRegionNodes (RegionNodePtr p) {
-    RegionBase * rb = convertNode <RegionBase> (p->regionElement);
-    for (RegionNodePtr rg = p->firstChild; rg; rg = rg->nextSibling) {
-        SMIL::Region *smilregion = convertNode<SMIL::Region>(rg->regionElement);
-        int l = calcLength (smilregion->getAttribute("left"), rb->w);
-        int t = calcLength (smilregion->getAttribute ("top"), rb->h);
-        int w = calcLength (smilregion->getAttribute ("width"), rb->w);
-        int h = calcLength (smilregion->getAttribute ("height"), rb->h);
-        int r = calcLength (smilregion->getAttribute ("right"), rb->w);
-        int b = calcLength (smilregion->getAttribute ("bottom"), rb->h);
-        smilregion->x = l;
-        smilregion->y = t;
-        smilregion->w = w > 0 ? w : rb->w - l - (r > 0 ? r : 0);
-        smilregion->h = h > 0 ? h : rb->h - t - (b > 0 ? b : 0);
-        sizeRegionNodes (rg);
-    }
-}
-
 KDE_NO_EXPORT void SMIL::Layout::closed () {
     RegionNodePtr root;
     SMIL::RootLayout * smilroot = 0L;
@@ -941,14 +984,11 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
         kdError () << "Layout w/o a root-layout w/ regions" << endl;
         return;
     }
-    smilroot->x = smilroot->y = 0;
-    smilroot->w = smilroot->getAttribute ("width").toInt ();
-    smilroot->h = smilroot->getAttribute ("height").toInt ();
+    smilroot->updateLayout ();
     if (smilroot->w <= 0 || smilroot->h <= 0) {
         kdError () << "Root layout not having valid dimensions" << endl;
         return;
     }
-    sizeRegionNodes (root);
     rootLayout = root;
     document ()->rootLayout = root;
 }
@@ -962,11 +1002,41 @@ KDE_NO_EXPORT ElementRuntimePtr RegionBase::getRuntime () {
 }
 
 //-----------------------------------------------------------------------------
+KDE_NO_EXPORT void SMIL::RootLayout::updateLayout () {
+    x = y = 0;
+    ElementRuntimePtr rt = getRuntime ();
+    if (rt) {
+        RegionRuntime * rr = static_cast <RegionRuntime *> (rt.ptr ());
+        w = rr->width.toInt ();
+        h = rr->height.toInt ();
+        kdDebug () << "RootLayout::updateLayout " << w << "," << h << endl;
+        if (rr->region_node)
+            rr->region_node->calculateChildBounds ();
+    }
+}
+
+//-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementPtr SMIL::Region::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "region"))
         return (new SMIL::Region (m_doc))->self ();
     return ElementPtr ();
+}
+
+KDE_NO_EXPORT void SMIL::Region::calculateBounds (int _w, int _h) {
+    ElementRuntimePtr rt = getRuntime ();
+    if (rt) {
+        RegionRuntime * rr = static_cast <RegionRuntime *> (rt.ptr ());
+        x = calcLength (rr->left, _w);
+        y = calcLength (rr->top, _h);
+        int w1 = calcLength (rr->width, _w);
+        int h1 = calcLength (rr->height, _h);
+        int r = calcLength (rr->right, _w);
+        int b = calcLength (rr->bottom, _h);
+        w = w1 > 0 ? w1 : _w - x - (r > 0 ? r : 0);
+        h = h1 > 0 ? h1 : _h - y - (b > 0 ? b : 0);
+        kdDebug () << "Region::updateLayout " << x << "," << y << " " << w << "x" << h << endl;
+    }
 }
 
 //-----------------------------------------------------------------------------

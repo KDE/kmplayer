@@ -203,13 +203,20 @@ public:
      */
     void repaint ();
     /**
-     * calculate bounds given the outer coordinates
+     * calculate bounds given the outer coordinates (absolute)
      */
     void setSize (int x, int y, int w, int h, bool keep_aspect);
     /**
-     * calculate bounds given scale factors and offset
+     * calculate bounds given scale factors and offset (absolute) and
+     * x,y,w,h element's values
      */
     void scaleRegion (float sx, float sy, int xoff, int yoff);
+    /**
+     * calculate the relative x,y,w,h on the child region elements
+     * given this element's w and h value
+     * and child's left/top/right/width/height/bottom attributes
+     */
+    void calculateChildBounds ();
     /**
      * user clicked w/ the mouse on this region, returns true if handled
      */
@@ -223,9 +230,13 @@ public:
      */
     bool has_mouse;
     /**
-     * (Scaled) Dimensions set by viewer
+     * (Scaled) Dimensions set by setSize
      */
     int x, y, w, h;
+    /**
+     * Scale factors
+     */
+    float xscale, yscale;
     /**
      * z-order of this region
      */
