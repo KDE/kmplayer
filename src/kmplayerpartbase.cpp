@@ -669,6 +669,7 @@ void KMPlayerSource::setURL (const KURL & url) {
 }
 
 QString KMPlayerSource::first () {
+    if (!m_document) return QString ();  // non-url based sources
     kdDebug() << "KMPlayerSource::first" << endl;
     m_current = m_document;
     if (!m_document->isMrl ())
@@ -697,6 +698,7 @@ static ElementPtr findDepthFirst (ElementPtr elm) {
 }
 
 QString KMPlayerSource::next () {
+    if (!m_document) return QString ();  // non-url based sources
     kdDebug() << "KMPlayerSource::next" << endl;
     if (m_back_request && m_back_request->isMrl ()) {
         m_current = m_back_request;
