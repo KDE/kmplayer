@@ -49,3 +49,50 @@ fi
 AM_CONDITIONAL(include_kxineplayer, test "$have_xine" = "yes")
 
 KDE_CHECK_BINUTILS
+
+AC_MSG_CHECKING([for KDE version])
+
+AC_LANG_SAVE
+AC_LANG_CPLUSPLUS
+kdeversion_save_CXXFLAGS="$CXXFLAGS"
+kdeversion_safe_LIBS="$LIBS"
+LIBS="$LIBS $X_EXTRA_LIBS"
+CXXFLAGS="$CXXFLAGS $all_includes"
+
+AC_COMPILE_IFELSE([
+#include <kdeversion.h>
+#if ! ( KDE_IS_VERSION( 3, 2, 90 ) )
+#error KDE 3.2
+#endif
+],
+    need_kde32_compat="no"
+,
+    need_kde32_compat="yes"
+)
+
+AC_COMPILE_IFELSE([
+#include <kdeversion.h>
+#if ! ( KDE_IS_VERSION( 3, 1, 90 ) )
+#error KDE 3.1
+#endif
+],
+    need_kde31_compat="no"
+,
+    need_kde31_compat="yes"
+)
+
+CXXFLAGS="$kdeversion_save_CXXFLAGS"
+LIBS="$kdeversion_safe_LIBS"
+AC_LANG_RESTORE
+
+if test "$need_kde32_compat" = "yes"; then
+    AC_MSG_RESULT([KDE 3.2.x])
+fi
+
+if test "$need_kde31_compat" = "yes"; then
+    AC_MSG_RESULT([KDE 3.1.x])
+fi
+
+AM_CONDITIONAL(need_kde32_compatibility, test "$need_kde32_compat" = "yes")
+AM_CONDITIONAL(need_kde31_compatibility, test "$need_kde31_compat" = "yes")
+
