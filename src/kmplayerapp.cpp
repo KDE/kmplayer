@@ -50,6 +50,7 @@
 #include <kprocess.h>
 #include <kprocctrl.h>
 #include <dcopclient.h>
+#include <kpopupmenu.h>
 
 // application specific includes
 #include "kmplayer.h"
@@ -177,7 +178,7 @@ void KMPlayerApp::initView ()
 {
     m_view = static_cast <KMPlayerView*> (m_player->view());
     setCentralWidget (m_view);
-    QPopupMenu * bookmarkmenu = (QPopupMenu *) m_view->bookmarkMenu ();
+    QPopupMenu * bookmarkmenu = m_view->bookmarkMenu ();
     m_view->popupMenu ()->removeItem (KMPlayerView::menu_bookmark);
     menuBar ()->insertItem (i18n ("&Bookmarks"), bookmarkmenu, -1, 2);
     m_sourcemenu = menuBar ()->findItem (menuBar ()->idAt (0));
