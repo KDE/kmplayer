@@ -134,6 +134,7 @@ public:
     void setMovieLength (int len);
     void setSource (KMPlayerSource * source);
     KMPlayerSource * source () const { return m_source; }
+    bool autoPlay () const { return m_autoplay; }
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool closeURL ();
@@ -196,6 +197,7 @@ private:
     int movie_height;
     int m_movie_position;
     bool m_started_emited : 1;
+    bool m_autoplay : 1;
     bool m_ispart : 1;
     bool m_use_slave : 1;
     bool m_recording : 1;

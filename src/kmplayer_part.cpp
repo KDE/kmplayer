@@ -148,6 +148,7 @@ KMPlayer::KMPlayer (QWidget * parent, KConfig * config)
    m_liveconnectextension (0L),
    movie_width (0),
    movie_height (0),
+   m_autoplay (true),
    m_ispart (false) {
     m_view->init ();
     init();
@@ -163,6 +164,7 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
    movie_width (0),
    movie_height (0),
+   m_autoplay (true),
    m_ispart (true) {
     printf("MPlayer::KMPlayer ()\n");
     setInstance (KMPlayerFactory::instance ());
@@ -186,6 +188,9 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
                 movie_width = value.toInt();
             else if (name.lower()==QString::fromLatin1("height"))
                 movie_height = value.toInt();
+            else if (name.lower()==QString::fromLatin1("autostart"))
+                m_autoplay = !(value.lower() == QString::fromLatin1("false") ||
+                               value.lower() == QString::fromLatin1("0"));
         }
     }
     m_view->init ();
@@ -1151,7 +1156,8 @@ void KMPlayerURLSource::finished () {
     m_urlother = KURL ();
     m_identified = true;
     kdDebug () << "KMPlayerURLSource::finished()" << endl;
-    QTimer::singleShot (0, this, SLOT (play ()));
+    if (m_player->autoPlay())
+        QTimer::singleShot (0, this, SLOT (play ()));
 }
 
 void KMPlayerURLSource::deactivate () {
