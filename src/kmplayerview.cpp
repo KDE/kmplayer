@@ -807,7 +807,7 @@ KDE_NO_EXPORT void KMPlayerView::init () {
     connect (m_buttonbar->colorMenu(), SIGNAL (mouseLeft ()), this, SLOT (popupMenuMouseLeft ()));
     setAcceptDrops (true);
     m_holder->resizeEvent (0L);
-    kdDebug() << "KMPlayerView " << (unsigned long) (m_viewer->winId()) << endl;
+    kdDebug() << "KMPlayerView " << (unsigned long) (m_viewer->embeddedWinId()) << endl;
 
     XSelectInput (qt_xdisplay (), m_viewer->embeddedWinId (), 
                //KeyPressMask | KeyReleaseMask |

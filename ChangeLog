@@ -1,3 +1,10 @@
+Changes since version 0.8.4-rc3
+- Begin of GStreamer backend support
+- Actively determine mime-type for playlist detection (was guess on extension
+  or use the one the plugin got from konqueror)
+- VCD tracks are, for MPlayer only, displayed in playlist and not in menu
+- Added custom command for VDR, output to console view
+- Made command interaction with VDR much more relyable
 Changes since version 0.8.4-rc2
 - Added a XVideo player (kxvplayer) process. Used now for viewing VDR
 - Fixed various crash cases with the playlist
