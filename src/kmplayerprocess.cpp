@@ -155,6 +155,8 @@ bool MPlayerBase::sendCommand (const QString & cmd) {
 
 bool MPlayerBase::stop () {
     if (!source () || !m_process || !m_process->isRunning ()) return true;
+    disconnect (m_process, SIGNAL (processExited (KProcess *)),
+                this, SLOT (processStopped (KProcess *)));
     if (!m_use_slave) {
         void (*oldhandler)(int) = signal(SIGTERM, SIG_IGN);
         ::kill (-1 * ::getpid (), SIGTERM);
@@ -165,8 +167,9 @@ bool MPlayerBase::stop () {
     do {
         KProcessController::theKProcessController->waitForProcessExit (2);
     } while (t.elapsed () < 2000 && m_process->isRunning ());
-    if (m_process->isRunning () && !KMPlayerProcess::stop ())
-        processStopped (0L); // give up
+    if (m_process->isRunning ())
+        return KMPlayerProcess::stop ();
+    processStopped (0L);
     return true;
 }
 
@@ -371,7 +374,7 @@ bool MPlayer::run (const char * args, const char * pipe) {
 
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
 
-    if (m_process->isRunning ()) {
+    if (m_process->isRunning () && source ()->identified ()) {
         QTimer::singleShot (0, this, SLOT (emitStarted ()));
         return true;
     }
@@ -453,10 +456,10 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
 }
 
 void MPlayer::processStopped (KProcess * p) {
-    if (!m_grabfile.isEmpty ()) {
+    if (p && !m_grabfile.isEmpty ()) {
         emit grabReady (m_grabfile);
         m_grabfile.truncate (0);
-    } else if (!source ()->identified ()) {
+    } else if (p && !source ()->identified ()) {
         source ()->setIdentified ();
         QTimer::singleShot (0, this, SLOT (play ()));
     } else
@@ -606,7 +609,6 @@ void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
     m_source->setHeight (h);
     m_source->setAspect (a);
     m_source->setLength (len);
-    m_player->setMovieLength (len);
     if (m_player->settings ()->sizeratio) {
         KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
         if (!v) return;

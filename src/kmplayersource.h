@@ -56,7 +56,7 @@ public:
     void setHeight (int h) { m_height = h; }
     void setAspect (float a) { m_aspect = a; }
     /* setLength (len) set length in deci-seconds */
-    void setLength (int len) { m_length = len; }
+    void setLength (int len);
     /* setPosition (pos) set position in deci-seconds */
     void setPosition (int pos) { m_position = pos; }
     virtual void setIdentified (bool b = true);

@@ -714,7 +714,6 @@ void KMPlayerAppURLSource::activate () {
         init ();
         KMPlayerSettings * conf = m_player->settings ();
         FFServerSetting & ffs = conf->ffserversettings[conf->ffserversetting];
-        m_player->setMovieLength (0);
         if (!ffs.width.isEmpty () && !ffs.height.isEmpty ()) {
             setWidth (ffs.width.toInt ());
             setHeight (ffs.height.toInt ());

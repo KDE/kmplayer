@@ -83,7 +83,6 @@ public:
     KURL url () const { return m_urlsource->url (); }
     void setURL (const KURL & url) { m_urlsource->setURL (url); }
     void sizes (int & w, int & h) const;
-    void setMovieLength (int len);
     void setProcess (KMPlayerProcess *);
     void setSource (KMPlayerSource * source);
     KMPlayerProcess * process () const { return m_process; }
@@ -108,7 +107,7 @@ public slots:
     void setMPlayer (int id);
 public:
     virtual bool isSeekable (void) const;
-    virtual unsigned long position (void) const { return m_movie_position; }
+    virtual unsigned long position (void) const;
     virtual bool hasLength (void) const;
     virtual unsigned long length (void) const;
 signals:
@@ -142,7 +141,6 @@ protected:
     MEncoder * m_mencoder;
     Xine * m_xine;
     KMPlayerURLSource * m_urlsource;
-    int m_movie_position;
     bool m_autoplay : 1;
     bool m_ispart : 1;
     bool m_noresize : 1;

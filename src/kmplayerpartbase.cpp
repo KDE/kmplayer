@@ -65,7 +65,6 @@ void KMPlayer::init () {
     m_view->init ();
     m_settings->readConfig ();
     setProcess (m_mplayer);
-    m_movie_position = 0;
     m_bPosSliderPressed = false;
     m_view->contrastSlider ()->setValue (m_settings->contrast);
     m_view->brightnessSlider ()->setValue (m_settings->brightness);
@@ -88,7 +87,6 @@ void KMPlayer::init () {
     m_view->popupMenu ()->connectItem (KMPlayerView::menu_config,
                                        m_settings, SLOT (show ()));
     connect (m_mencoder, SIGNAL (finished()), this, SLOT (recordingFinished()));
-    setMovieLength (0);
     //connect (m_view->configButton (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
 }
 
@@ -185,8 +183,6 @@ void KMPlayer::setSource (KMPlayerSource * source) {
         closeURL ();
     }
     m_process->setSource (source);
-    if (!oldsource)
-        setMovieLength (0);
     if (source->hasLength () && m_settings->showposslider)
         m_view->positionSlider()->show ();
     else
@@ -224,7 +220,6 @@ bool KMPlayer::openURL (const KURL & url) {
 bool KMPlayer::closeURL () {
     stop ();
     if (!m_view) return false;
-    setMovieLength (0);
     m_view->viewer ()->setAspect (0.0);
     m_view->reset ();
     return true;
@@ -250,9 +245,9 @@ void KMPlayer::recordingFinished () {
 
 void KMPlayer::processFinished () {
     kdDebug () << "process finished" << endl;
-    if (m_movie_position > m_process->source ()->length ())
-        setMovieLength (m_movie_position);
-    m_movie_position = 0;
+    if (m_process->source ()->position () > m_process->source ()->length ())
+        m_process->source ()->setLength (m_process->source ()->position ());
+    m_process->source ()->setPosition (0);
     if (m_view && m_view->playButton ()->isOn ()) {
         m_view->playButton ()->toggle ();
         m_view->positionSlider()->setEnabled (false);
@@ -276,7 +271,6 @@ void KMPlayer::processStarted () {
 
 void KMPlayer::processPosition (int pos) {
     if (!m_view) return;
-    m_movie_position = pos;
     QSlider *slider = m_view->positionSlider ();
     if (m_process->source ()->length () <= 0 && pos > 7 * slider->maxValue ()/8)
         slider->setMaxValue (slider->maxValue() * 2);
@@ -302,12 +296,8 @@ void KMPlayer::processOutput (const QString & msg) {
         m_view->addText (msg + QString ("\n"));
 }
 
-void KMPlayer::setMovieLength (int len) {
-    if (!m_process->source ())
-        return;
-    m_process->source ()->setLength (len);
-    if (m_view)
-        m_view->positionSlider()->setMaxValue (len > 0 ? m_process->source ()->length () + 9 : 300);
+unsigned long KMPlayer::position () const {
+    return 100 * m_process->source ()->position ();
 }
 
 void KMPlayer::pause () {
@@ -432,9 +422,17 @@ void KMPlayerSource::init () {
     m_width = 0;
     m_height = 0;
     m_aspect = 0.0;
-    m_length = 0;
+    setLength (0);
+    m_position = 0;
     m_identified = false;
     m_recordcmd.truncate (0);
+}
+
+void KMPlayerSource::setLength (int len) {
+    m_length = len;
+    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
+    if (view)
+        view->positionSlider()->setMaxValue (len > 0 ? len + 9 : 300);
 }
 
 bool KMPlayerSource::processOutput (const QString & str) {
@@ -562,9 +560,8 @@ bool KMPlayerSource::isSeekable () {
 }
 
 void KMPlayerSource::setIdentified (bool b) {
+    kdDebug () << "KMPlayerSource::setIdentified " << m_identified << b <<endl;
     m_identified = b;
-    if (b)
-        m_player->setMovieLength (length ());
 }
 //-----------------------------------------------------------------------------
 
