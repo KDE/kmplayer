@@ -650,17 +650,14 @@ bool KXinePlayer::event (QEvent * e) {
             xine_event_dispose_queue (event_queue);
             xine_dispose (stream);
             stream = 0L;
+            xine_close_video_driver (xine, vo_port);  
             mutex.unlock ();
             XLockDisplay (display);
-            fprintf (stderr, "painting\n");
-            unsigned int u, w, h;
-            int x, y;
-            Window root;
-            XGetGeometry (display, wid, &root, &x, &y, &w, &h, &u, &u);
-            XSetForeground (display, DefaultGC (display, screen),
-                    BlackPixel (display, screen));
-            XFillRectangle (display, wid, DefaultGC (display, screen), x, y, w, h);
+            XClearWindow (display, wid);
             XUnlockDisplay (display);
+            mutex.lock ();
+            vo_port = xine_open_video_driver(xine, d->vo_driver, XINE_VISUAL_TYPE_X11, (void *) &vis);
+            mutex.unlock ();
             if (callback)
                 callback->finished ();
             else
