@@ -369,10 +369,6 @@ class RootLayout : public RegionBase {
 public:
     KDE_NO_CDTOR_EXPORT RootLayout (ElementPtr & d) : RegionBase (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
-    /**
-     * recursively calculates dimensions of this and child regions
-     */
-    void updateLayout ();
 };
 
 /**
@@ -508,6 +504,7 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "set"; }
     virtual ElementRuntimePtr getNewRuntime ();
     virtual void start ();
+    bool expose () { return false; }
 };
 
 class Animate : public TimedElement {
@@ -515,6 +512,7 @@ public:
     KDE_NO_CDTOR_EXPORT Animate (ElementPtr & d) : TimedElement (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
     virtual ElementRuntimePtr getNewRuntime ();
+    bool expose () { return false; }
 };
 
 class Param : public Element {
@@ -522,6 +520,7 @@ public:
     KDE_NO_CDTOR_EXPORT Param (ElementPtr & d) : Element (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "param"; }
     void start ();
+    bool expose () { return false; }
 };
 
 } // SMIL namespace

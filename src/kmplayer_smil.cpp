@@ -43,16 +43,17 @@ static const unsigned int duration_element_activated = (unsigned int) -3;
 static const unsigned int duration_element_inbounds = (unsigned int) -4;
 static const unsigned int duration_element_outbounds = (unsigned int) -5;
 static const unsigned int duration_element_stopped = (unsigned int) -6;
-static const unsigned int duration_last_option = (unsigned int) -7;
+static const unsigned int duration_data_download = (unsigned int) -7;
+static const unsigned int duration_last_option = (unsigned int) -8;
 
 //-----------------------------------------------------------------------------
 
 static RegionNodePtr findRegion (RegionNodePtr p, const QString & id) {
+    if (p->regionElement->getAttribute ("id") == id) {
+        kdDebug () << "MediaType region found " << id << endl;
+        return p;
+    }
     for (RegionNodePtr r = p->firstChild; r; r = r->nextSibling) {
-        if (r->regionElement->getAttribute ("id") == id) {
-            kdDebug () << "MediaType region found " << id << endl;
-            return r;
-        }
         RegionNodePtr r1 = findRegion (r, id);
         if (r1)
             return r1;
@@ -466,8 +467,10 @@ KDE_NO_EXPORT void TimedRuntime::propagateStop () {
 KDE_NO_EXPORT void TimedRuntime::started () {
     kdDebug () << "TimedRuntime::started " << (element ? element->nodeName() : "-") << endl; 
     if (durations [duration_time].durval > 0) {
-        if (durations [duration_time].durval < duration_last_option)
+        if (durations [duration_time].durval < duration_last_option) {
             dur_timer = startTimer (1000 * durations [duration_time].durval);
+            kdDebug () << "TimedRuntime::started set dur timer " << durations [duration_time].durval << endl;
+        }
     } else if (!element || durations [end_time].durval < duration_last_option)
         // no duration set and no special end, so mark us finished
         propagateStop ();
@@ -567,7 +570,7 @@ QString RegionRuntime::setParam (const QString & name, const QString & val) {
     if (needs_bounds_calc && element) {
         RegionNodePtr rn = element->document ()->rootLayout;
         if (rn && rn->regionElement) {
-            convertNode <SMIL::RootLayout> (rn->regionElement)->updateLayout ();
+            convertNode <RegionBase> (rn->regionElement)->updateLayout ();
             rn->repaint ();
         }
     }
@@ -861,9 +864,10 @@ static void beginOrEndRegions (RegionNodePtr rn, bool b) {
     if (rn->regionElement) {
         ElementRuntimePtr rt = rn->regionElement->getRuntime ();
         if (rt) {
-            if (b)
+            if (b) {
+                static_cast <RegionRuntime *> (rt.ptr ())->init ();
                 rt->begin ();
-            else
+            } else
                 rt->end ();
         }
     }
@@ -878,7 +882,7 @@ KDE_NO_EXPORT void Smil::start () {
     RegionNodePtr rn = document ()->rootLayout;
     if (rn && rn->regionElement) {
         beginOrEndRegions (rn, true);
-        convertNode <SMIL::RootLayout> (rn->regionElement)->updateLayout ();
+        convertNode <RegionBase> (rn->regionElement)->updateLayout ();
         document ()->rootLayout->repaint ();
     }
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
@@ -958,7 +962,7 @@ static void buildRegionNodes (ElementPtr p, RegionNodePtr r) {
 
 KDE_NO_EXPORT void SMIL::Layout::closed () {
     RegionNodePtr root;
-    SMIL::RootLayout * smilroot = 0L;
+    RegionBase * smilroot = 0L;
     RegionNodePtr region;
     RegionNodePtr last_region;
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
@@ -967,7 +971,7 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
             root = (new RegionNode (e))->self;
             if (region)
                 root->firstChild = region;
-            smilroot = convertNode <SMIL::RootLayout> (e);
+            smilroot = convertNode <RegionBase> (e);
         } else if (!strcmp (name, "region")) {
             if (region) {
                 last_region->nextSibling = (new RegionNode (e))->self;
@@ -979,6 +983,10 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
             }
             buildRegionNodes (e, last_region);
         }
+    }
+    if (!root && region && region->regionElement) {
+        smilroot = convertNode <RegionBase> (region->regionElement);
+        root = region;
     }
     if (!root || !region) {
         kdError () << "Layout w/o a root-layout w/ regions" << endl;
@@ -1001,15 +1009,14 @@ KDE_NO_EXPORT ElementRuntimePtr RegionBase::getRuntime () {
     return runtime;
 }
 
-//-----------------------------------------------------------------------------
-KDE_NO_EXPORT void SMIL::RootLayout::updateLayout () {
+KDE_NO_EXPORT void RegionBase::updateLayout () {
     x = y = 0;
     ElementRuntimePtr rt = getRuntime ();
     if (rt) {
         RegionRuntime * rr = static_cast <RegionRuntime *> (rt.ptr ());
         w = rr->width.toInt ();
         h = rr->height.toInt ();
-        kdDebug () << "RootLayout::updateLayout " << w << "," << h << endl;
+        kdDebug () << "RegionBase::updateLayout " << w << "," << h << endl;
         if (rr->region_node)
             rr->region_node->calculateChildBounds ();
     }
@@ -1368,6 +1375,7 @@ namespace KMPlayer {
                 delete image;
             }
             QPixmap * image;
+            int olddur;
     };
 }
 
@@ -1413,12 +1421,18 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
 }
 
 KDE_NO_EXPORT void ImageData::started () {
+    if (mt_d->job) {
+        d->olddur = durations [duration_time].durval;
+        durations [duration_time].durval = duration_data_download;
+        return;
+    }
     if (durations [duration_time].durval == duration_media)
         durations [duration_time].durval = 0; // intrinsic duration of 0
     MediaTypeRuntime::started ();
 }
 
 KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
+    kdDebug () << "ImageData::slotResult" << endl;
     MediaTypeRuntime::slotResult (job);
     if (mt_d->data.size () && element) {
         QPixmap *pix = new QPixmap (mt_d->data);
@@ -1431,6 +1445,11 @@ KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
                 region_node->repaint ();
         } else
             delete pix;
+    }
+    if (timingstate == timings_started &&
+            durations [duration_time].durval == duration_data_download) {
+        durations [duration_time].durval = d->olddur;
+        QTimer::singleShot (0, this, SLOT (started ()));
     }
 }
 
@@ -1452,6 +1471,7 @@ namespace KMPlayer {
         QByteArray data;
         unsigned int background_color;
         unsigned int foreground_color;
+        int olddur;
         QTextCodec * codec;
         QFont font;
         bool transparent;
@@ -1540,6 +1560,11 @@ KDE_NO_EXPORT void TextData::paint (QPainter & p) {
 }
 
 KDE_NO_EXPORT void TextData::started () {
+    if (mt_d->job) {
+        d->olddur = durations [duration_time].durval;
+        durations [duration_time].durval = duration_data_download;
+        return;
+    }
     if (durations [duration_time].durval == duration_media)
         durations [duration_time].durval = 0; // intrinsic duration of 0
     MediaTypeRuntime::started ();
@@ -1556,6 +1581,11 @@ KDE_NO_EXPORT void TextData::slotResult (KIO::Job * job) {
                  (timingstate == timings_stopped &&
                   mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)))
             region_node->repaint ();
+    }
+    if (timingstate == timings_started &&
+            durations [duration_time].durval == duration_data_download) {
+        durations [duration_time].durval = d->olddur;
+        QTimer::singleShot (0, this, SLOT (started ()));
     }
 }
 

@@ -296,6 +296,10 @@ protected:
     ElementRuntimePtr runtime;
 public:
     virtual ElementRuntimePtr getRuntime ();
+    /**
+     * recursively calculates dimensions of this and child regions
+     */
+    void updateLayout ();
     int x, y, w, h;
 };
 
