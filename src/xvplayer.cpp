@@ -57,6 +57,7 @@ static bool                 have_freq;
 static bool                 xv_success;
 static int                  xvport;
 static int                  xv_encoding = -1;
+static QString              xv_norm;
 static int                  xv_frequency;
 static int                  screen;
 static int                  movie_width;
@@ -208,7 +209,7 @@ void KXVideoPlayer::init () {
         QDomElement elm = doc.createElement (elmentry);
         elm.setAttribute (attname, QString ("XVideo"));
         elm.setAttribute (atttype, valtree);
-        for (int i = 0; i < adaptors; i++) {
+        for (unsigned i = 0; i < adaptors; i++) {
             if ((ai[i].type & XvInputMask) &&
                     (ai[i].type & XvVideoMask) &&
                     ai[i].base_id > 0) {
@@ -239,8 +240,10 @@ void KXVideoPlayer::init () {
                     port_item.setAttribute (attvalue, QString::number (port));
                     if (freq_found)
                         port_item.setAttribute (QString("FREQ"), QString("1"));
-                    for (int i = 0; i < nr_encode; i++) {
+                    for (unsigned i = 0; i < nr_encode; i++) {
                         if (strcmp (encodings[i].name, "XV_IMAGE")) {
+                            if (xvport == port && xv_encoding < 0 && !xv_norm.isEmpty () && QString (encodings[i].name).lower ().startsWith(xv_norm.lower ()))
+                                xv_encoding = encodings[i].encoding_id;
                             if (port == xvport && encodings[i].encoding_id == xv_encoding) {
                                 movie_width = encodings[i].width;
                                 movie_height = encodings[i].height;
@@ -304,7 +307,7 @@ void getConfigEntries (QByteArray & buf) {
 }
 
 void KXVideoPlayer::play () {
-    fprintf (stderr, "play\n");
+    fprintf (stderr, "play xv://%d:%d/%d\n", xvport, xv_encoding, xv_frequency);
     if (!xv_success)
         return;
     if (callback && movie_width > 0 && movie_height > 0)
@@ -493,6 +496,8 @@ int main(int argc, char **argv) {
             }
         } else if (!strcmp (argv [i], "-enc")) {
             xv_encoding = strtol (argv [++i], 0L, 10);
+        } else if (!strcmp (argv [i], "-norm")) {
+            xv_norm = argv [++i];
         } else if (!strcmp (argv [i], "-freq")) {
             xv_frequency = strtol (argv [++i], 0L, 10);
         } else  {

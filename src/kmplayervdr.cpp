@@ -604,7 +604,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
             for (elm = elm->firstChild (); elm; elm = elm->nextSibling ()) {
                 if (convertNode <TypeNode> (elm)->type != QString ("tree"))
                     continue;
-                for (ElementPtr e = e->firstChild (); e; e=e->nextSibling ()) {
+                for (ElementPtr e=elm->firstChild (); e; e=e->nextSibling ()) {
                     if (strcmp (e->nodeName (), "Port"))
                         continue;
                     QString portatt;
@@ -704,7 +704,7 @@ KDE_NO_EXPORT bool XVideo::play () {
     int xv_port = m_source->xvPort ();
     int xv_encoding = m_source->xvEncoding ();
     int freq = m_source->frequency ();
-    QString cmd  = QString ("kxvplayer -port %1 -enc %2 -wid %3 -cb %4 ").arg (xv_port).arg (xv_encoding).arg (view()->viewer()->embeddedWinId ()).arg (dcopName ());
+    QString cmd  = QString ("kxvplayer -port %1 -enc %2 -norm \"%3\" -wid %4 -cb %5 ").arg (xv_port).arg (xv_encoding).arg (m_source->videoNorm ()).arg (view()->viewer()->embeddedWinId ()).arg (dcopName ());
     if (freq > 0)
         cmd += QString ("-freq %1 ").arg (freq);
     printf ("%s\n", cmd.latin1 ());

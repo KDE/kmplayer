@@ -1097,23 +1097,29 @@ void CallbackProcess::runForConfig() {}
 KDE_NO_CDTOR_EXPORT ConfigDocument::ConfigDocument ()
     : Document (QString::null) {}
 
-struct ChoiceNode : public ConfigNode {
-    KDE_NO_CDTOR_EXPORT ChoiceNode (ElementPtr d, QComboBox * c)
-        : ConfigNode (d), combo (c) {}
-    KDE_NO_CDTOR_EXPORT ~ChoiceNode () {}
-    void closed () { combo->insertItem (value); }
-    const char * nodeName () const { return "choicenode"; }
-    QComboBox * combo;
-};
+KDE_NO_CDTOR_EXPORT ConfigDocument::~ConfigDocument () {
+    kdDebug () << "~ConfigDocument" << endl;
+}
 
-struct SomeNode : public Element {
-    KDE_NO_CDTOR_EXPORT SomeNode (ElementPtr d, const QString t)
-        : Element (d), tag (t) {}
-    KDE_NO_CDTOR_EXPORT ~SomeNode () {}
-    ElementPtr childFromTag (const QString & t);
-    const char * nodeName () const { return tag.ascii (); }
-    QString tag;
-};
+namespace KMPlayer {
+    struct ChoiceNode : public ConfigNode {
+        KDE_NO_CDTOR_EXPORT ChoiceNode (ElementPtr d, QComboBox * c)
+            : ConfigNode (d), combo (c) {}
+        KDE_NO_CDTOR_EXPORT ~ChoiceNode () {}
+        void closed () { combo->insertItem (value); }
+        const char * nodeName () const { return "choicenode"; }
+        QComboBox * combo;
+    };
+
+    struct SomeNode : public Element {
+        KDE_NO_CDTOR_EXPORT SomeNode (ElementPtr d, const QString t)
+            : Element (d), tag (t) {}
+        KDE_NO_CDTOR_EXPORT ~SomeNode () {}
+        ElementPtr childFromTag (const QString & t);
+        const char * nodeName () const { return tag.ascii (); }
+        QString tag;
+    };
+} // namespace
 
 KDE_NO_CDTOR_EXPORT ConfigNode::ConfigNode (ElementPtr d)
     : Element (d), w (0L) {}
@@ -1527,7 +1533,7 @@ KDE_NO_EXPORT void Xine::processStopped (KProcess *) {
     QTimer::singleShot (0, this, SLOT (emitFinished ()));
     if (m_send_config == send_try) {
         m_send_config = send_new; // we failed, retry ..
-        play ();
+        runForConfig ();
     }
 }
 

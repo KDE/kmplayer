@@ -60,6 +60,31 @@ static Element * fromContentControlGroup (ElementPtr d, const QString & tag) {
 
 //-----------------------------------------------------------------------------
 
+namespace KMPlayer {
+    struct XMLStringlet {
+        const QString str;
+        XMLStringlet (const QString & s) : str (s) {}
+    };
+} // namespace
+
+QTextStream & operator << (QTextStream & out, const XMLStringlet & txt) {
+    int len = int (txt.str.length ());
+    for (int i = 0; i < len; ++i) {
+        if (txt.str [i] == QChar ('<')) {
+            out <<  "&lt;";
+        } else if (txt.str [i] == QChar ('>')) {
+            out <<  "&gt;";
+        } else if (txt.str [i] == QChar ('"')) {
+            out <<  "&quot;";
+        } else if (txt.str [i] == QChar ('&')) {
+            out <<  "&amp;";
+        } else
+            out << txt.str [i];
+    }
+    return out;
+}
+//-----------------------------------------------------------------------------
+
 Element::~Element () {
     clear ();
 }
@@ -206,10 +231,19 @@ QString Element::innerText () const {
 static void getInnerXML (const ElementPtr p, QTextOStream & out) {
     for (ElementPtr e = p->firstChild (); e; e = e->nextSibling ()) {
         if (!strcmp (e->nodeName (), "#text"))
-            out << (convertNode <TextNode> (e))->text;
+            out << XMLStringlet (convertNode <TextNode> (e)->text);
         else {
-            out << QChar ('<') << e->nodeName () << QChar ('>'); //TODO attr.
-            getInnerXML (e, out);
+            out << QChar ('<') << XMLStringlet (e->nodeName ());
+            for (ElementPtr a = e->attributes (); a; a = a->nextSibling ()) {
+                Attribute * attribute = convertNode <Attribute> (a);
+                out << " " << XMLStringlet (attribute->name) << "=\"" << XMLStringlet (attribute->value) << "\"";
+            }
+            if (e->hasChildNodes ()) {
+                out << QChar ('>');
+                getInnerXML (e, out);
+                out << QString("</")<<XMLStringlet (e->nodeName())<< QChar('>');
+            } else
+                out << QString ("/>");
         }
     }
 }

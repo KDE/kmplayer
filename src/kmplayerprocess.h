@@ -256,7 +256,7 @@ protected:
 
 struct KMPLAYER_EXPORT ConfigDocument : public Document {
     ConfigDocument ();
-    KDE_NO_CDTOR_EXPORT ~ConfigDocument () {}
+    ~ConfigDocument ();
     ElementPtr childFromTag (const QString & tag);
 };
 

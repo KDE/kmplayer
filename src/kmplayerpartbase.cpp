@@ -629,7 +629,7 @@ KAboutData* PartBase::createAboutData () {
 Source::Source (const QString & name, PartBase * player, const char * n)
  : QObject (player, n),
    m_name (name), m_player (player), m_auto_play (true),
-   m_frequency (0), m_xvport (0), m_xvencoding (0) {
+   m_frequency (0), m_xvport (0), m_xvencoding (-1) {
     init ();
 }
 
