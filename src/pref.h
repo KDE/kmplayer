@@ -295,8 +295,11 @@ public:
     QLineEdit * arguments;
 private slots:
     void slotRecord ();
+    void recordingStarted ();
+    void recordingFinished ();
 private:
     KMPlayer * m_player;
+    QPushButton * recordButton;
 };
 
 class KMPlayerPrefBroadcastPage : public QFrame

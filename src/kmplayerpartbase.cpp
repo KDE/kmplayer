@@ -319,6 +319,8 @@ void KMPlayer::record () {
         m_process->stop ();
         m_mencoder->setSource (m_process->source ());
         m_settings->show (KMPlayerPreferences::PageRecording);
+        if (m_view->recordButton ()->isOn ()) 
+            m_view->recordButton ()->toggle ();
     }
     if (m_view) m_view->setCursor (QCursor (Qt::ArrowCursor));
 }

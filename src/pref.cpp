@@ -483,11 +483,11 @@ KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * play
     url->setShowLocalProtocol (true);
     urllayout->addWidget (urlLabel);
     urllayout->addWidget (url);
-    QPushButton * record = new QPushButton (i18n ("Start Recording"), this);
-    connect (record, SIGNAL (clicked ()), this, SLOT (slotRecord ()));
+    recordButton = new QPushButton (i18n ("Start Recording"), this);
+    connect (recordButton, SIGNAL (clicked ()), this, SLOT (slotRecord ()));
     QHBoxLayout *buttonlayout = new QHBoxLayout ();
     buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
-    buttonlayout->addWidget (record);
+    buttonlayout->addWidget (recordButton);
     QGroupBox *mencoderBox = new QGroupBox (i18n ("Mencoder Settings"), this);
     mencoderBox->setFlat( false );
     mencoderBox->setInsideMargin( 7 );
@@ -501,11 +501,26 @@ KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * play
     layout->addLayout (buttonlayout);
     layout->addWidget (mencoderBox);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    connect (m_player->mencoder(), SIGNAL (started()), this, SLOT (recordingStarted()));
+    connect (m_player->mencoder(), SIGNAL (finished()), this, SLOT (recordingFinished()));
 }
 
 void KMPlayerPrefRecordPage::slotRecord () {
-    m_player->mencoder ()->setURL (KURL (url->lineEdit ()->text ()));
-    m_player->mencoder ()->play ();
+    if (!m_player->mencoder()->playing()) {
+        if (!url->lineEdit()->text().isEmpty()) {
+            m_player->mencoder ()->setURL (KURL (url->lineEdit ()->text ()));
+            m_player->mencoder ()->play ();
+        }
+    } else
+        m_player->mencoder ()->stop ();
+}
+
+void KMPlayerPrefRecordPage::recordingStarted () {
+    recordButton->setText (i18n ("Stop Recording"));
+}
+
+void KMPlayerPrefRecordPage::recordingFinished () {
+    recordButton->setText (i18n ("Start Recording"));
 }
 
 KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerSetting * _ffs) : QFrame (parent), ffs (_ffs) {
