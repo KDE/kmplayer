@@ -55,7 +55,7 @@
 #include "kmplayerprocess.h"
 
 
-K_EXPORT_COMPONENT_FACTORY (kparts_kmplayer, KMPlayerFactory);
+K_EXPORT_COMPONENT_FACTORY (libkmplayer_part, KMPlayerFactory);
 
 KInstance *KMPlayerFactory::s_instance = 0;
 

@@ -1,22 +1,16 @@
-INCLUDES = -I$(kde_includes)/kio $(all_includes)
+INCLUDES= -I$(kde_includes)/kio $(all_includes)
 
 KDE_ICON=AUTO
 
-METASOURCES = AUTO
+METASOURCES= AUTO
 
-lib_LTLIBRARIES=kdeinit_kmplayer.la
+lib_LTLIBRARIES= kmplayer.la
 
-kde_module_LTLIBRARIES = kparts_kmplayer.la
+kde_module_LTLIBRARIES= libkmplayer_part.la
 
-kparts_kmplayer_la_SOURCES = kmplayer_part.cpp kmplayer_koffice_part.cpp kmplayerview.cpp kmplayerconfig.cpp pref.cpp kmplayerprocess.cpp kmplayer_callback.skel kmplayer_backend.stub
-
-kparts_kmplayer_la_LDFLAGS= $(all_libraries) -module $(KDE_PLUGIN) $(LIB_ARTS) -lm
-kparts_kmplayer_la_LIBADD= $(LIB_KFILE) $(LIB_KPARTS) $(LIB_KIO) $(LIB_KOFFICE) -lkmediaplayer
-
-kdeinit_kmplayer_la_SOURCES= main.cpp kmplayerapp.cpp
-
-kdeinit_kmplayer_la_LIBADD= kparts_kmplayer.la
-kdeinit_kmplayer_la_LDFLAGS= $(all_libraries) $(KDE_RPATH) -module -avoid-version
+libkmplayer_part_la_SOURCES= kmplayer_part.cpp kmplayer_koffice_part.cpp kmplayerview.cpp kmplayerconfig.cpp pref.cpp kmplayerprocess.cpp kmplayer_callback.skel kmplayer_backend.stub
+libkmplayer_part_la_LDFLAGS= -module
+libkmplayer_part_la_LIBADD= $(LIB_KFILE) $(LIB_KPARTS) $(LIB_KIO) $(LIB_KOFFICE) -lkmediaplayer $(all_libraries) $(KDE_PLUGIN) $(LIB_ARTS) -lm
 
 EXTRA_PROGRAMS = kxineplayer
 if include_kxineplayer
@@ -25,9 +19,13 @@ endif
 
 bin_PROGRAMS= kmplayer $(kxineplayer_app)
 
-kmplayer_LDADD= kdeinit_kmplayer.la
-kmplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH)
+kmplayer_la_SOURCES= main.cpp kmplayerapp.cpp
+kmplayer_la_LIBADD= libkmplayer_part.la
+kmplayer_la_LDFLAGS= -module -avoid-version
+
 kmplayer_SOURCES= dummy.cpp
+kmplayer_LDADD= kmplayer.la
+kmplayer_LDFLAGS= 
 
 kxineplayer_LDADD= $(LIB_XINE)
 kxineplayer_CFLAGS= $(CFLAGS_XINE)
