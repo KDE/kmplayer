@@ -102,15 +102,10 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
     QString bmfile = locate ("data", "kmplayer/bookmarks.xml");
     QString localbmfile = locateLocal ("data", "kmplayer/bookmarks.xml");
     if (localbmfile != bmfile) {
-        int dummy;
-        kdDebug () << "cp " << bmfile.local8Bit () << " " << localbmfile.local8Bit () << endl;
-        QApplication::flushX ();
-        if (!fork ()) {
-            execlp ("cp", "cp", (const char *) bmfile.local8Bit (), (const char *) localbmfile.local8Bit (), 0L);
-            exit (1);
-        } else {
-            wait(&dummy);
-        }
+        kdDebug () << "cp " << bmfile << " " << localbmfile << endl;
+        KProcess p;
+        p << "/bin/cp" << bmfile.local8Bit () << localbmfile.local8Bit ();
+        p.start (KProcess::Block);
     }
     m_bookmark_manager = new KMPlayerBookmarkManager (localbmfile);
     m_bookmark_owner = new KMPlayerBookmarkOwner (this);
