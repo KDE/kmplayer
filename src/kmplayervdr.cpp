@@ -68,15 +68,18 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::KMPlayerPrefSourcePageVDR (QWidge
     QLabel * label = new QLabel (i18n ("XVideo port:"), this);
     gridlayout->addWidget (label, 0, 0);
     xv_port = new QLineEdit ("", this);
+    QWhatsThis::add (xv_port, i18n ("Port base of the X Video extension.\nIf left to default (0), the first available port will be used. However if you have multible XVideo usages, you might have to provide the port to use here.\nSee the output from 'xvinfo' for more information"));
     gridlayout->addWidget (xv_port, 0, 1);
     label = new QLabel (i18n ("Communication port:"), this);
     gridlayout->addWidget (label, 1, 0);
     tcp_port = new QLineEdit ("", this);
+    QWhatsThis::add (tcp_port, i18n ("Communation port with VDR. Default is port 2001.\nIf you use another port, with the '-p' option of 'vdr', you must set it here too."));
     gridlayout->addWidget (tcp_port, 1, 1);
     layout->addLayout (gridlayout);
     scale = new QButtonGroup (2, Qt::Vertical, i18n ("Scale"), this);
     new QRadioButton (i18n ("4:3"), scale);
     new QRadioButton (i18n ("16:9"), scale);
+    QWhatsThis::add (scale, i18n ("Aspects to use when viewing VDR"));
     scale->setButton (0);
     layout->addWidget (scale);
     layout->addItem (new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
@@ -192,7 +195,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     channel_timer = startTimer (30000);
     m_document = (new Document (QString ("VDR")))->self ();
     sendCommand (cmd_list_channels, true);
-    setAspect (scale ? 16.0/9 : 1.25);
+    setAspect (scale ? 16.0/9 : 1.33);
     if (m_player->settings ()->sizeratio)
         view->viewer ()->setAspect (aspect ());
 }
