@@ -128,6 +128,12 @@ void KMPlayer::addControlPanel (KMPlayerControlPanel * panel) {
     connect (panel->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
     connect (panel->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
     connect (panel, SIGNAL (destroyed(QObject *)), this, SLOT (controlPanelDestroyed(QObject *)));
+    panel->popupMenu()->connectItem (KMPlayerControlPanel::menu_fullscreen, m_view, SLOT (fullScreen ()));
+#ifdef HAVE_XINE
+    QPopupMenu *menu = panel->playerMenu ();
+    menu->connectItem (menu->idAt(0), this, SLOT (setMPlayer (int)));
+    menu->connectItem (menu->idAt(1), this, SLOT (setXine (int)));
+#endif
     if ((playing () && !panel->playButton ()->isOn ()) ||
             (!playing () && panel->playButton ()->isOn ()))
         panel->playButton ()->toggle ();
@@ -149,6 +155,12 @@ void KMPlayer::removeControlPanel (KMPlayerControlPanel * panel) {
     disconnect (panel->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
     disconnect (panel->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
     disconnect (panel, SIGNAL (destroyed(QObject *)), this, SLOT (controlPanelDestroyed(QObject *)));
+    panel->popupMenu()->disconnectItem (KMPlayerControlPanel::menu_fullscreen, m_view, SLOT (fullScreen ()));
+#ifdef HAVE_XINE
+    QPopupMenu *menu = panel->playerMenu ();
+    menu->disconnectItem (menu->idAt(0), this, SLOT (setMPlayer (int)));
+    menu->disconnectItem (menu->idAt(1), this, SLOT (setXine (int)));
+#endif
     m_panels.remove (panel);
 }
 
@@ -160,20 +172,20 @@ void KMPlayer::init (KActionCollection * action_collection) {
     m_view->init ();
     m_settings->readConfig ();
     m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner,
-                        m_view->bookmarkMenu (), action_collection, true, true);
+                        m_view->buttonBar ()->bookmarkMenu (), action_collection, true, true);
     setProcess (m_mplayer);
     addControlPanel (m_view->buttonBar ());
     m_bPosSliderPressed = false;
-    m_view->contrastSlider ()->setValue (m_settings->contrast);
-    m_view->brightnessSlider ()->setValue (m_settings->brightness);
-    m_view->hueSlider ()->setValue (m_settings->hue);
-    m_view->saturationSlider ()->setValue (m_settings->saturation);
-    connect (m_view->contrastSlider (), SIGNAL (valueChanged(int)), this, SLOT (contrastValueChanged(int)));
-    connect (m_view->brightnessSlider (), SIGNAL (valueChanged(int)), this, SLOT (brightnessValueChanged(int)));
-    connect (m_view->hueSlider (), SIGNAL (valueChanged(int)), this, SLOT (hueValueChanged(int)));
-    connect (m_view->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));
+    m_view->buttonBar ()->contrastSlider ()->setValue (m_settings->contrast);
+    m_view->buttonBar ()->brightnessSlider ()->setValue (m_settings->brightness);
+    m_view->buttonBar ()->hueSlider ()->setValue (m_settings->hue);
+    m_view->buttonBar ()->saturationSlider ()->setValue (m_settings->saturation);
+    connect (m_view->buttonBar ()->contrastSlider (), SIGNAL (valueChanged(int)), this, SLOT (contrastValueChanged(int)));
+    connect (m_view->buttonBar ()->brightnessSlider (), SIGNAL (valueChanged(int)), this, SLOT (brightnessValueChanged(int)));
+    connect (m_view->buttonBar ()->hueSlider (), SIGNAL (valueChanged(int)), this, SLOT (hueValueChanged(int)));
+    connect (m_view->buttonBar ()->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));
     connect (m_view, SIGNAL (urlDropped (const KURL &)), this, SLOT (openURL (const KURL &)));
-    m_view->popupMenu ()->connectItem (KMPlayerView::menu_config,
+    m_view->buttonBar ()->popupMenu ()->connectItem (KMPlayerControlPanel::menu_config,
                                        this, SLOT (showConfigDialog ()));
     setRecorder (m_mencoder);
     //connect (m_view->configButton (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
@@ -251,7 +263,7 @@ void KMPlayer::setXine (int id) {
     m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
     m_config->sync ();
     setProcess (m_xine);
-    QPopupMenu * menu = m_view->playerMenu ();
+    QPopupMenu * menu = m_view->buttonBar ()->playerMenu ();
     for (unsigned i = 0; i < menu->count(); i++) {
         int menuid = menu->idAt (i);
         menu->setItemChecked (menuid, menuid == id);
@@ -267,7 +279,7 @@ void KMPlayer::setMPlayer (int id) {
     m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
     m_config->sync ();
     setProcess (m_mplayer);
-    QPopupMenu * menu = m_view->playerMenu ();
+    QPopupMenu * menu = m_view->buttonBar ()->playerMenu ();
     for (unsigned i = 0; i < menu->count(); i++) {
         int menuid = menu->idAt (i);
         menu->setItemChecked (menuid, menuid == id);
@@ -278,25 +290,27 @@ void KMPlayer::setMPlayer (int id) {
 
 void KMPlayer::enablePlayerMenu (bool enable) {
 #ifdef HAVE_XINE
-    if (enable) {
-        if (!m_view || !m_view->playerMenu ())
-            return;
-        QPopupMenu * menu = m_view->playerMenu ();
-        menu->clear ();
-        menu->insertItem (i18n ("&MPlayer"), this, SLOT (setMPlayer (int)));
-        menu->insertItem (i18n ("&Xine"), this, SLOT (setXine (int)));
-        menu->setEnabled (true);
-        if (m_settings->urlbackend == QString ("Xine")) {
-            menu->setItemChecked (menu->idAt (1), true);
-            setProcess (m_xine);
+    if (!m_view)
+        return;
+    ControlPanelList::iterator e = m_panels.end();
+    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
+        if (enable) {
+            QPopupMenu * menu = (*i)->playerMenu ();
+            menu->clear ();
+            menu->insertItem (i18n ("&MPlayer"), this, SLOT (setMPlayer (int)));
+            menu->insertItem (i18n ("&Xine"), this, SLOT (setXine (int)));
+            menu->setEnabled (true);
+            if (m_settings->urlbackend == QString ("Xine")) {
+                menu->setItemChecked (menu->idAt (1), true);
+                setProcess (m_xine);
+            } else {
+                setProcess (m_mplayer);
+                menu->setItemChecked (menu->idAt (0), true);
+            }
+            (*i)->popupMenu ()->setItemVisible (KMPlayerControlPanel::menu_player, true);
         } else {
-            setProcess (m_mplayer);
-            menu->setItemChecked (menu->idAt (0), true);
+            (*i)->popupMenu ()->setItemVisible (KMPlayerControlPanel::menu_player, false);
         }
-        m_view->popupMenu ()->setItemVisible (KMPlayerView::menu_player, true);
-    } else {
-        if (m_view)
-            m_view->popupMenu ()->setItemVisible (KMPlayerView::menu_player, false);
     }
 #endif
 }

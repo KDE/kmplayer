@@ -154,8 +154,8 @@ void KMPlayerApp::initView ()
 {
     m_view = static_cast <KMPlayerView*> (m_player->view());
     setCentralWidget (m_view);
-    QPopupMenu * bookmarkmenu = m_view->bookmarkMenu ();
-    m_view->popupMenu ()->removeItem (KMPlayerView::menu_bookmark);
+    QPopupMenu * bookmarkmenu = m_view->buttonBar()->bookmarkMenu ();
+    m_view->buttonBar()->popupMenu ()->removeItem (KMPlayerControlPanel::menu_bookmark);
     menuBar ()->insertItem (i18n ("&Bookmarks"), bookmarkmenu, -1, 2);
     m_sourcemenu = menuBar ()->findItem (menuBar ()->idAt (0));
     m_sourcemenu->setText (i18n ("S&ource"));
@@ -179,13 +179,13 @@ void KMPlayerApp::initView ()
              this, SLOT (loadingProgress (int)));
     connect (m_player, SIGNAL (sourceChanged (KMPlayerSource *)), this,
              SLOT (slotSourceChanged (KMPlayerSource *)));
-    m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom50,
+    m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayerControlPanel::menu_zoom50,
             this, SLOT (zoom50 ()));
-    m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom100,
+    m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayerControlPanel::menu_zoom100,
             this, SLOT (zoom100 ()));
-    m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom150,
+    m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayerControlPanel::menu_zoom150,
             this, SLOT (zoom150 ()));
-    m_view->popupMenu ()->connectItem (KMPlayerView::menu_fullscreen,
+    m_view->buttonBar ()->popupMenu ()->connectItem (KMPlayerControlPanel::menu_fullscreen,
             this, SLOT (fullScreen ()));
     connect (m_view->buttonBar()->broadcastButton (), SIGNAL (clicked ()),
             this, SLOT (broadcastClicked ()));

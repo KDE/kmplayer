@@ -68,10 +68,6 @@ class KMPlayerView : public KMediaPlayer::View {
     friend class KMPlayerViewerHolder;
     friend class KMPlayerViewer;
 public:
-    enum MenuID {
-        menu_config = 0, menu_player, menu_fullscreen, menu_volume, 
-        menu_bookmark, menu_zoom, menu_zoom50, menu_zoom100, menu_zoom150
-    };
     KMPlayerView(QWidget *parent, const char *name = (char*) 0);
     ~KMPlayerView();
 
@@ -83,14 +79,6 @@ public:
     QMultiLineEdit * consoleOutput () const { return m_multiedit; }
     KMPlayerViewer * viewer () const { return m_viewer; }
     KMPlayerControlPanel * buttonBar () const { return m_buttonbar; }
-    QSlider * contrastSlider () const { return m_contrastSlider; }
-    QSlider * brightnessSlider () const { return m_brightnessSlider; }
-    QSlider * hueSlider () const { return m_hueSlider; }
-    QSlider * saturationSlider () const { return m_saturationSlider; }
-    QPopupMenu * playerMenu () const { return m_playerMenu; }
-    QPopupMenu * popupMenu () const { return m_popupMenu; }
-    KPopupMenu * bookmarkMenu () const { return m_bookmarkMenu; }
-    QPopupMenu * zoomMenu () const { return m_zoomMenu; }
     bool keepSizeRatio () const { return m_keepsizeratio; }
     void setKeepSizeRatio (bool b) { m_keepsizeratio = b; }
     bool useArts () const { return m_use_arts; }
@@ -132,16 +120,8 @@ private:
     QString tmplog;
     QPixmap * m_image;
     KMPlayerControlPanel * m_buttonbar;
-    QPopupMenu * m_popupMenu;
-    QPopupMenu * m_playerMenu;
-    KPopupMenu * m_bookmarkMenu;
-    QPopupMenu * m_zoomMenu;
     QLabel * m_arts_label;
     QSlider * m_slider;
-    QSlider * m_contrastSlider;
-    QSlider * m_brightnessSlider;
-    QSlider * m_hueSlider;
-    QSlider * m_saturationSlider;
     Arts::SoundServerV2 * m_artsserver;
     Arts::StereoVolumeControl * m_svc;
     KArtsFloatWatch * m_watch;
@@ -157,8 +137,16 @@ private:
 
 class KMPlayerControlPanel : public QWidget {
 public:
+    enum MenuID {
+        menu_config = 0, menu_player, menu_fullscreen, menu_volume, 
+        menu_bookmark, menu_zoom, menu_zoom50, menu_zoom100, menu_zoom150
+    };
     KMPlayerControlPanel (QWidget * parent);
     QSlider * positionSlider () const { return m_posSlider; }
+    QSlider * contrastSlider () const { return m_contrastSlider; }
+    QSlider * brightnessSlider () const { return m_brightnessSlider; }
+    QSlider * hueSlider () const { return m_hueSlider; }
+    QSlider * saturationSlider () const { return m_saturationSlider; }
     QPushButton * backButton () const { return m_backButton; }
     QPushButton * playButton () const { return m_playButton; }
     QPushButton * forwardButton () const { return m_forwardButton; }
@@ -167,8 +155,16 @@ public:
     QPushButton * configButton () const { return m_configButton; }
     QPushButton * recordButton () const { return m_recordButton; }
     QPushButton * broadcastButton () const { return m_broadcastButton; }
+    QPopupMenu * popupMenu () const { return m_popupMenu; }
+    KPopupMenu * bookmarkMenu () const { return m_bookmarkMenu; }
+    QPopupMenu * zoomMenu () const { return m_zoomMenu; }
+    QPopupMenu * playerMenu () const { return m_playerMenu; }
 private:
     QSlider * m_posSlider;
+    QSlider * m_contrastSlider;
+    QSlider * m_brightnessSlider;
+    QSlider * m_hueSlider;
+    QSlider * m_saturationSlider;
     QPushButton * m_backButton;
     QPushButton * m_playButton;
     QPushButton * m_forwardButton;
@@ -177,6 +173,10 @@ private:
     QPushButton * m_configButton;
     QPushButton * m_recordButton;
     QPushButton * m_broadcastButton;
+    QPopupMenu * m_popupMenu;
+    KPopupMenu * m_bookmarkMenu;
+    QPopupMenu * m_zoomMenu;
+    QPopupMenu * m_playerMenu;
 };
 
 class KMPlayerViewer : public QWidget {

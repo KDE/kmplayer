@@ -158,11 +158,11 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
         }
     }
     init ();
-    m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom50,
+    m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayerControlPanel::menu_zoom50,
                                       this, SLOT (setMenuZoom (int)));
-    m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom100,
+    m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayerControlPanel::menu_zoom100,
                                       this, SLOT (setMenuZoom (int)));
-    m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom150,
+    m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayerControlPanel::menu_zoom150,
                                       this, SLOT (setMenuZoom (int)));
     KParts::Part::setWidget (m_view);
     setXMLFile("kmplayerpartui.rc");
@@ -200,6 +200,7 @@ bool KMPlayerPart::openURL (const KURL & url) {
         }
     }
     KMPlayerControlPanel * panel = m_view->buttonBar ();
+    enablePlayerMenu (true);
     if (m_features & Feat_Controls) {
         panel->show ();
         m_view->setAutoHideButtons (false);
@@ -286,12 +287,12 @@ void KMPlayerPart::processPlaying () {
 void KMPlayerPart::setMenuZoom (int id) {
     int w, h;
     sizes (w, h);
-    if (id == KMPlayerView::menu_zoom100) {
+    if (id == KMPlayerControlPanel::menu_zoom100) {
         m_liveconnectextension->setSize (w, h);
         return;
     }
     float scale = 1.5;
-    if (id == KMPlayerView::menu_zoom50)
+    if (id == KMPlayerControlPanel::menu_zoom50)
         scale = 0.5;
     if (m_view->viewer ())
         m_liveconnectextension->setSize (int (scale * m_view->viewer ()->width ()),
@@ -706,6 +707,7 @@ void KMPlayerHRefSource::grabReady (const QString & path) {
 void KMPlayerHRefSource::finished () {
     kdDebug () << "KMPlayerHRefSource::finished()" << endl;
     KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
+    if (!view) return;
     if (!view->setPicture (m_grabfile)) {
         clear ();
         QTimer::singleShot (0, this, SLOT (play ()));
@@ -718,6 +720,7 @@ void KMPlayerHRefSource::finished () {
 void KMPlayerHRefSource::deactivate () {
     kdDebug () << "KMPlayerHRefSource::deactivate()" << endl;
     KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
+    if (!view) return;
     view->setPicture (QString::null);
     if (view->viewer ())
         disconnect (view->viewer (), SIGNAL (clicked ()), this, SLOT (play ()));

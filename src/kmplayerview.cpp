@@ -281,12 +281,11 @@ void KMPlayerViewLayer::fullScreen () {
         m_accel->connectItem (id, this, SLOT (accelActivated ()));
     }
     m_fullscreen = !m_fullscreen;
-    m_view->popupMenu ()->setItemChecked (KMPlayerView::menu_fullscreen, 
-                                          m_fullscreen);
+    m_view->buttonBar()->popupMenu ()->setItemChecked (KMPlayerControlPanel::menu_fullscreen, m_fullscreen);
 }
 
 void KMPlayerViewLayer::accelActivated () {
-    m_view->popupMenu ()->activateItemAt (m_view->popupMenu ()->indexOf (KMPlayerView::menu_fullscreen)); 
+    m_view->buttonBar()->popupMenu ()->activateItemAt (m_view->buttonBar()->popupMenu ()->indexOf (KMPlayerControlPanel::menu_fullscreen)); 
 }
 //-----------------------------------------------------------------------------
 
@@ -375,6 +374,41 @@ KMPlayerControlPanel::KMPlayerControlPanel (QWidget * parent) : QWidget (parent)
     m_posSlider = new QSlider (Qt::Horizontal, this);
     m_posSlider->setEnabled (false);
     buttonbox->addWidget (m_posSlider);
+    m_popupMenu = new QPopupMenu (this);
+    m_playerMenu = new QPopupMenu (this);
+    m_playerMenu->setEnabled (false);
+    m_popupMenu->insertItem (i18n ("&Play with"), m_playerMenu, menu_player);
+    m_popupMenu->setItemVisible (menu_player, false);
+    m_bookmarkMenu = new KPopupMenu (this);
+    m_popupMenu->insertItem (i18n("&Bookmarks"), m_bookmarkMenu, menu_bookmark);
+    m_zoomMenu = new QPopupMenu (this);
+    m_zoomMenu->insertItem (i18n ("50%"), menu_zoom50);
+    m_zoomMenu->insertItem (i18n ("100%"), menu_zoom100);
+    m_zoomMenu->insertItem (i18n ("150%"), menu_zoom150);
+    m_popupMenu->insertItem (i18n ("&Zoom"), m_zoomMenu, menu_zoom);
+    m_popupMenu->insertItem (i18n ("&Full Screen"), menu_fullscreen);
+    m_popupMenu->setAccel (QKeySequence (Qt::Key_F), menu_fullscreen);
+    m_popupMenu->insertSeparator ();
+    QPopupMenu * colorMenu = new QPopupMenu (this);
+    QLabel * label = new QLabel (i18n ("Contrast:"), colorMenu);
+    colorMenu->insertItem (label);
+    m_contrastSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
+    colorMenu->insertItem (m_contrastSlider);
+    label = new QLabel (i18n ("Brightness:"), colorMenu);
+    colorMenu->insertItem (label);
+    m_brightnessSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
+    colorMenu->insertItem (m_brightnessSlider);
+    label = new QLabel (i18n ("Hue:"), colorMenu);
+    colorMenu->insertItem (label);
+    m_hueSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
+    colorMenu->insertItem (m_hueSlider);
+    label = new QLabel (i18n ("Saturation:"), colorMenu);
+    colorMenu->insertItem (label);
+    m_saturationSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
+    colorMenu->insertItem (m_saturationSlider);
+    m_popupMenu->insertItem (i18n ("Co&lors"), colorMenu);
+    m_popupMenu->insertSeparator ();
+    m_popupMenu->insertItem (i18n ("&Configure KMPlayer..."), menu_config);
 }
 
 //-----------------------------------------------------------------------------
@@ -383,7 +417,6 @@ KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
   : KMediaPlayer::View (parent, name),
     m_image (0L),
     m_buttonbar (0L),
-    m_playerMenu (0L),
     m_artsserver (0L),
     m_svc (0L),
     m_watch (0L),
@@ -443,41 +476,6 @@ void KMPlayerView::init () {
 #if KDE_IS_VERSION(3,1,90)
     setVideoWidget (m_layer);
 #endif
-    m_popupMenu = new QPopupMenu (m_layer);
-    m_playerMenu = new QPopupMenu (m_layer);
-    m_playerMenu->setEnabled (false);
-    m_popupMenu->insertItem (i18n ("&Play with"), m_playerMenu, menu_player);
-    m_popupMenu->setItemVisible (menu_player, false);
-    m_bookmarkMenu = new KPopupMenu (m_layer);
-    m_popupMenu->insertItem (i18n("&Bookmarks"), m_bookmarkMenu, menu_bookmark);
-    m_zoomMenu = new QPopupMenu (m_layer);
-    m_zoomMenu->insertItem (i18n ("50%"), menu_zoom50);
-    m_zoomMenu->insertItem (i18n ("100%"), menu_zoom100);
-    m_zoomMenu->insertItem (i18n ("150%"), menu_zoom150);
-    m_popupMenu->insertItem (i18n ("&Zoom"), m_zoomMenu, menu_zoom);
-    m_popupMenu->insertItem (i18n ("&Full Screen"),
-          this, SLOT (fullScreen()), QKeySequence (Qt::Key_F), menu_fullscreen);
-    m_popupMenu->insertSeparator ();
-    QPopupMenu * colorMenu = new QPopupMenu (m_layer);
-    QLabel * label = new QLabel (i18n ("Contrast:"), colorMenu);
-    colorMenu->insertItem (label);
-    m_contrastSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
-    colorMenu->insertItem (m_contrastSlider);
-    label = new QLabel (i18n ("Brightness:"), colorMenu);
-    colorMenu->insertItem (label);
-    m_brightnessSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
-    colorMenu->insertItem (m_brightnessSlider);
-    label = new QLabel (i18n ("Hue:"), colorMenu);
-    colorMenu->insertItem (label);
-    m_hueSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
-    colorMenu->insertItem (m_hueSlider);
-    label = new QLabel (i18n ("Saturation:"), colorMenu);
-    colorMenu->insertItem (label);
-    m_saturationSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
-    colorMenu->insertItem (m_saturationSlider);
-    m_popupMenu->insertItem (i18n ("Co&lors"), colorMenu);
-    m_popupMenu->insertSeparator ();
-    m_popupMenu->insertItem (i18n ("&Configure KMPlayer..."), menu_config);
 
     QVBoxLayout * viewerbox = new QVBoxLayout (m_viewer, 0, 0);
     m_multiedit = new QMultiLineEdit (m_viewer, "ConsoleOutput");
@@ -495,7 +493,8 @@ void KMPlayerView::init () {
 
     connect (m_viewer, SIGNAL (aboutToPlay ()), this, SLOT (startsToPlay ()));
     connect (m_buttonbar->configButton(), SIGNAL (clicked ()), this, SLOT (showPopupMenu()));
-
+    m_buttonbar->popupMenu()->connectItem (KMPlayerControlPanel::menu_config,
+                                           this, SLOT (fullScreen ()));
     setAcceptDrops (true);
     m_holder->resizeEvent (0L);
     kdDebug() << "KMPlayerView " << (unsigned long) (m_viewer->winId()) << endl;
@@ -535,16 +534,16 @@ void KMPlayerView::updateUseArts () {
         *m_artsserver = KArtsServer().server();
         m_svc = new Arts::StereoVolumeControl;
         if (m_artsserver && !m_artsserver->isNull()) {
-            m_arts_label = new QLabel (i18n ("Volume:"), m_popupMenu);
-            m_popupMenu->insertItem (m_arts_label, -1, 4);
-            m_slider = new QSlider (0, 100, 10, 40, Qt::Horizontal, m_popupMenu);
+            m_arts_label = new QLabel (i18n ("Volume:"), m_buttonbar->popupMenu ());
+            m_buttonbar->popupMenu ()->insertItem (m_arts_label, -1, 4);
+            m_slider = new QSlider (0, 100, 10, 40, Qt::Horizontal, m_buttonbar->popupMenu ());
             connect(m_slider, SIGNAL(valueChanged(int)), this,SLOT(setVolume(int)));
             *m_svc = m_artsserver->outVolume();
             m_watch = new KArtsFloatWatch(*m_svc, "scaleFactor_changed", this);
             connect (m_watch, SIGNAL (valueChanged (float)), 
                     this, SLOT (updateVolume (float)));
-            m_popupMenu->insertItem (m_slider, menu_volume, 5);
-            m_popupMenu->insertSeparator (6);
+            m_buttonbar->popupMenu ()->insertItem (m_slider, menu_volume, 5);
+            m_buttonbar->popupMenu ()->insertSeparator (6);
         }
     }
 #endif
@@ -553,9 +552,9 @@ void KMPlayerView::updateUseArts () {
 void KMPlayerView::setUseArts (bool b) {
 #ifdef USE_ARTS
     if (m_use_arts && !b && m_artsserver) {
-        m_popupMenu->removeItemAt (6);
-        m_popupMenu->removeItemAt (5);
-        m_popupMenu->removeItemAt (4);
+        m_buttonbar->popupMenu ()->removeItemAt (6);
+        m_buttonbar->popupMenu ()->removeItemAt (5);
+        m_buttonbar->popupMenu ()->removeItemAt (4);
         delete m_watch;
         delete m_artsserver;
         delete m_svc;
@@ -666,7 +665,7 @@ void KMPlayerView::showPopupMenu () {
         updateVolume(m_svc->scaleFactor());
     }
 #endif
-    m_popupMenu->exec (m_buttonbar->configButton()->mapToGlobal (QPoint (0, button_height)));
+    m_buttonbar->popupMenu ()->exec (m_buttonbar->configButton()->mapToGlobal (QPoint (0, button_height)));
 }
 
 void KMPlayerView::leaveEvent (QEvent *) {
@@ -682,7 +681,7 @@ void KMPlayerView::reset () {
         m_viewer->parentWidget ()->setMouseTracking (false);
     }
     if (m_layer->isFullScreen())
-        popupMenu ()->activateItemAt (popupMenu ()->indexOf (KMPlayerView::menu_fullscreen)); 
+        m_buttonbar->popupMenu ()->activateItemAt (m_buttonbar->popupMenu ()->indexOf (KMPlayerControlPanel::menu_fullscreen)); 
         //m_layer->fullScreen ();
     m_multiedit->hide ();
     if (m_show_console_output) {
@@ -709,13 +708,13 @@ void KMPlayerView::fullScreen () {
         //if (m_keepsizeratio && m_viewer->aspect () < 0.01)
         //    m_viewer->setAspect (1.0 * m_viewer->width() / m_viewer->height());
         m_layer->fullScreen();
-        m_popupMenu->setItemVisible (menu_zoom, false);
+        m_buttonbar->popupMenu ()->setItemVisible (KMPlayerControlPanel::menu_zoom, false);
     } else {
         if (m_sreensaver_disabled)
             m_sreensaver_disabled = !kapp->dcopClient()->send
                 ("kdesktop", "KScreensaverIface", "enable(bool)", "true");
         m_layer->fullScreen();
-        m_popupMenu->setItemVisible (menu_zoom, true);
+        m_buttonbar->popupMenu ()->setItemVisible (KMPlayerControlPanel::menu_zoom, true);
     }
 }
 
@@ -777,6 +776,7 @@ void KMPlayerViewer::resizeEvent (QResizeEvent *) {
     };
     XSendEvent(qt_xdisplay(), c.event, TRUE, StructureNotifyMask, (XEvent*) &c);
     XFlush (qt_xdisplay ());
+    update ();
 }
 
 void KMPlayerViewer::hideEvent (QHideEvent *) {
