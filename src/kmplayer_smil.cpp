@@ -83,7 +83,7 @@ KDE_NO_CDTOR_EXPORT void RegionNode::clearAll () {
 KDE_NO_CDTOR_EXPORT
 ElementRuntime::ElementRuntime (ElementPtr e)
  : element (e), start_timer (0), dur_timer (0),
-   repeat_count (0), isstarted (false) {}
+   repeat_count (0), isstarted (false), isstopped (false) {}
 
 KDE_NO_CDTOR_EXPORT ElementRuntime::~ElementRuntime () {}
 
@@ -193,7 +193,7 @@ KDE_NO_EXPORT void ElementRuntime::end () {
     killTimers ();
     start_timer = 0;
     dur_timer = 0;
-    isstarted = false;
+    isstopped = isstarted = false;
     if (region_node) {
         region_node->clearAll ();
         region_node = RegionNodePtr ();
@@ -254,6 +254,7 @@ KDE_NO_EXPORT void ElementRuntime::propagateStop () {
         isstarted = false;
         QTimer::singleShot (0, this, SLOT (stopped ()));
     }
+    isstopped = true;
 }
 
 KDE_NO_EXPORT void ElementRuntime::started () {
@@ -326,12 +327,14 @@ KDE_NO_EXPORT void SetData::stopped () {
 namespace KMPlayer {
     class MediaTypeRuntimePrivate {
     public:
-        KDE_NO_CDTOR_EXPORT MediaTypeRuntimePrivate () : job (0L) {}
+        KDE_NO_CDTOR_EXPORT MediaTypeRuntimePrivate ()
+            : job (0L), fill (fill_unknown) {}
         KDE_NO_CDTOR_EXPORT ~MediaTypeRuntimePrivate () {
             delete job;
         }
         KIO::Job * job;
         QByteArray data;
+        enum { fill_unknown, fill_freeze } fill;
     };
 }
 
@@ -379,6 +382,12 @@ KDE_NO_EXPORT void MediaTypeRuntime::begin () {
                 } else
                     kdWarning() << "region " << region << " not found" << endl;
             }
+        }
+        QString fill = element->getAttribute ("fill");
+        if (!fill.isEmpty ()) {
+            if (fill == "freeze")
+                mt_d->fill = MediaTypeRuntimePrivate::fill_freeze;
+            // else all other fill options ..
         }
     }
     ElementRuntime::begin ();
@@ -933,7 +942,9 @@ KDE_NO_CDTOR_EXPORT ImageData::~ImageData () {
 }
 
 KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
-    if (isstarted && d->image && region_node) {
+    if ((isstarted ||
+         (mt_d->fill == MediaTypeRuntimePrivate::fill_freeze && isstopped)) &&
+            d->image && region_node) {
         RegionNode * r = region_node.ptr ();
         p.drawPixmap (QRect (r->x, r->y, r->w, r->h), *d->image);
     }
@@ -952,7 +963,8 @@ KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
         if (!pix->isNull ()) {
             d->image = pix;
             PlayListNotify * n = element->document ()->notify_listener;
-            if (isstarted && n && region_node)
+            if (n && region_node && (isstarted || (isstopped &&
+                          mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)))
                 n->repaintRegion (region_node);
         } else
             delete pix;
@@ -1015,7 +1027,9 @@ KDE_NO_CDTOR_EXPORT TextData::~TextData () {
 }
 
 KDE_NO_EXPORT void TextData::paint (QPainter & p) {
-    if (isstarted && region_node) {
+    if ((isstarted ||
+         (mt_d->fill == MediaTypeRuntimePrivate::fill_freeze && isstopped)) &&
+            region_node) {
         int x = region_node->x;
         int y = region_node->y;
         if (!d->transparent)
@@ -1052,7 +1066,8 @@ KDE_NO_EXPORT void TextData::slotResult (KIO::Job * job) {
     if (mt_d->data.size () && element) {
         d->data = mt_d->data;
         PlayListNotify * n = element->document ()->notify_listener;
-        if (isstarted && n && region_node)
+        if (n && region_node && (isstarted ||
+            (mt_d->fill == MediaTypeRuntimePrivate::fill_freeze && isstopped)))
             n->repaintRegion (region_node);
     }
 }

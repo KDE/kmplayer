@@ -123,6 +123,7 @@ protected:
     int dur_timer;
     int repeat_count;
     bool isstarted;
+    bool isstopped;
 };
 
 /**
