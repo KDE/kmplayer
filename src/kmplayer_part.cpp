@@ -296,7 +296,16 @@ void KMPlayer::processOutput (KProcess *, char * str, int len) {
 
     if (m_posRegExp.search (out) > -1) {
         // during playing, this regexp will match often
-        setPosSlider (int (m_posRegExp.cap (1).toFloat ()));
+        m_movie_position = int (10.0 * m_posRegExp.cap (1).toFloat ());
+        if (m_view) {
+            QSlider *slider = m_view->positionSlider ();
+            if (m_movie_length <= 0 && m_movie_position >3*slider->maxValue()/4)
+                slider->setMaxValue (slider->maxValue() * 2);
+            else if (slider->maxValue() < m_movie_position)
+                slider->setMaxValue (int (1.4 * slider->maxValue()));
+            if (!m_bPosSliderPressed)
+                slider->setValue (m_movie_position);
+        }
     } else {
         m_view->addText (out);
         QRegExp sizeRegExp (m_configdialog->sizepattern);
@@ -360,7 +369,7 @@ void KMPlayer::processStopped (KProcess *) {
 
     killTimers ();
     if (m_movie_position > m_movie_length)
-        setMovieLength (m_movie_position);
+        setMovieLength (m_movie_position/10);
     m_movie_position = 0;
     if (m_started_emited) {
         m_started_emited = false;
@@ -387,7 +396,7 @@ void KMPlayer::processStopped (KProcess *) {
 void KMPlayer::setMovieLength (int len) {
     m_movie_length = len;
     if (m_view)
-        m_view->positionSlider()->setMaxValue (len > 0 ? len : 10);
+        m_view->positionSlider()->setMaxValue (len > 0 ? len * 10 : 100);
 }
 
 void KMPlayer::pause () {
@@ -651,20 +660,6 @@ void KMPlayer::setMenuZoom (int id) {
                                      int (scale * m_view->viewer ()->height()));
 }
 
-void KMPlayer::setPosSlider (int pos) {
-    m_movie_position = pos;
-    if (!m_view) return;
-    QSlider *slider = m_view->positionSlider ();
-
-    if (m_movie_length <= 0 && pos > 3 * slider->maxValue() / 4)
-        slider->setMaxValue (slider->maxValue() * 2);
-    else if (slider->maxValue() < pos)
-        slider->setMaxValue (int (1.4 * slider->maxValue()));
-
-    if (!m_bPosSliderPressed)
-        slider->setValue (pos);
-}
-
 void KMPlayer::posSliderPressed () {
     m_bPosSliderPressed=true;
 }
@@ -773,6 +768,11 @@ void KMPlayerLiveConnectExtension::unregister (const unsigned long) {
 }
 
 void KMPlayerLiveConnectExtension::setSize (int w, int h) {
+    KMPlayerView * view = static_cast <KMPlayerView*> (player->view ());
+    if (view->buttonBar()->isVisible())
+        h += view->buttonBar()->height();
+    if (view->positionSlider()->isVisible())
+        h += view->positionSlider()->height();
     QCString jscode;
     //jscode.sprintf("this.width=%d;this.height=%d;kmplayer", w, h);
     KParts::LiveConnectExtension::ArgList args;

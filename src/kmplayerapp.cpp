@@ -249,7 +249,7 @@ void KMPlayerApp::playPipe () {
     doc->setAspect (-1.0);
     m_player->stop ();
     m_player->setURL (KURL ());
-    QString args ("-quiet -");
+    QString args ("-");
     m_player->run (args.ascii(), m_pipe.ascii());
     setCaption (i18n ("Pipe - %1").arg(m_pipe), false);
     m_openpipe = true;
@@ -483,7 +483,7 @@ void KMPlayerApp::playDVD () {
         return;
     QString args;
     unsigned i;
-    args.sprintf ("-quiet -slave");
+    args.sprintf ("-slave");
     for (i = 0; i < m_dvdsubtitlemenu->count(); i++)
         if (m_dvdsubtitlemenu->isItemChecked (m_dvdsubtitlemenu->idAt (i)))
             args += " -sid " + QString::number (m_dvdsubtitlemenu->idAt (i));
@@ -510,7 +510,7 @@ void KMPlayerApp::playVCD () {
         return;
     QString args;
     unsigned i;
-    args.sprintf ("-quiet -slave");
+    args.sprintf ("-slave");
     for (i = 0; i < m_vcdtrackmenu->count(); i++)
         if (m_vcdtrackmenu->isItemChecked (i)) {
             args += " -vcd " + m_vcdtrackmenu->findItem (i)->text ();

@@ -233,12 +233,11 @@ KMPlayerViewerHolder::KMPlayerViewerHolder (QWidget * pa, KMPlayerView * view)
 }
 
 void KMPlayerViewerHolder::mouseMoveEvent (QMouseEvent * e) {
-    int vert_buttons_pos = height ();
-    if (m_view->positionSlider ()->isVisible ())
-        vert_buttons_pos -= m_view->positionSlider ()->height ();
-    if (e->state () == Qt::NoButton)
+    if (e->state () == Qt::NoButton) {
+        int vert_buttons_pos = height ();
         m_view->delayedShowButtons (e->y() > vert_buttons_pos - button_height &&
                                     e->y() < vert_buttons_pos);
+    }
 }
 
 void KMPlayerViewerHolder::resizeEvent (QResizeEvent *) {

@@ -117,13 +117,12 @@ public slots:
     bool playing () const;
     void showConfigDialog ();
     void setMenuZoom (int id);
-    void setPosSlider (int pos);
     void posSliderChanged (int pos);
 public:
     virtual bool isSeekable (void) const { return m_movie_length > 0; }
-    virtual unsigned long position () const { return m_movie_position; }
-    virtual bool hasLength () const { return m_movie_length > 0; }
-    virtual unsigned long length () const { return m_movie_length; }
+    virtual unsigned long position (void) const { return m_movie_position; }
+    virtual bool hasLength (void) const { return m_movie_length > 0; }
+    virtual unsigned long length (void) const { return m_movie_length; }
 signals:
     void running ();
     void finished ();
