@@ -62,7 +62,7 @@ KDE_NO_CDTOR_EXPORT Element::~Element () {
     clear ();
 }
 
-KDE_NO_EXPORT Document * Element::document () {
+Document * Element::document () {
     return static_cast<Document*>(static_cast<Element *>(m_doc));
 }
 
@@ -90,7 +90,7 @@ KDE_NO_EXPORT void Element::clear () {
     m_first_child = m_last_child = 0L;
 }
 
-KDE_NO_EXPORT void Element::appendChild (ElementPtr c) {
+void Element::appendChild (ElementPtr c) {
     if (!m_first_child) {
         m_first_child = m_last_child = c;
     } else {
@@ -184,7 +184,7 @@ static bool hasMrlChildren (ElementPtr e) {
 }
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT Document::Document (const QString & s) {
+Document::Document (const QString & s) {
     m_doc = this;
     m_self = m_doc;
     src = s;
@@ -201,7 +201,7 @@ KDE_NO_EXPORT ElementPtr Document::childFromTag (ElementPtr d, const QString & t
     return 0L;
 }
 
-KDE_NO_EXPORT void Document::dispose () {
+void Document::dispose () {
     clear ();
     m_doc = 0L;
 }
@@ -345,7 +345,7 @@ KDE_NO_EXPORT void EntryRef::setAttributes (const QXmlAttributes & atts) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT GenericURL::GenericURL (ElementPtr d, const QString & s)
+GenericURL::GenericURL (ElementPtr d, const QString & s)
  : Mrl (d) {
     src = s;
 }

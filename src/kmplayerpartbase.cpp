@@ -351,7 +351,7 @@ KDE_NO_EXPORT void KMPlayer::changeURL (const QString & url) {
     emit urlChanged (url);
 }
 
-KDE_NO_EXPORT void KMPlayer::changeTitle (const QString & title) {
+void KMPlayer::changeTitle (const QString & title) {
     emit titleChanged (title);
 }
 

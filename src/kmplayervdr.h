@@ -42,6 +42,7 @@ class QCheckBox;
 class QLineEdit;
 class KAction;
 class QSocket;
+class QTimerEvent;
 
 class KMPlayerPrefSourcePageVDR : public QFrame {
     Q_OBJECT
@@ -70,6 +71,9 @@ public:
 public slots:
     void activate ();
     void deactivate ();
+    void jump (ElementPtr e);
+    void forward ();
+    void backward ();
     void keyUp ();
     void keyDown ();
     void keyBack ();
@@ -95,8 +99,10 @@ public slots:
     void dataWritten (int);
     void readyRead ();
     void socketError (int);
+protected:
+    void timerEvent (QTimerEvent *);
 private:
-    void sendCommand (const char * cmd);
+    void sendCommand (const char * cmd, bool b=false);
     KMPlayerPrefSourcePageVDR * m_configpage;
     KAction * act_up;
     KAction * act_down;
@@ -111,6 +117,7 @@ private:
     KAction * act_blue;
     QSocket * m_socket;
     VDRCommand * commands;
+    int channel_timer;
     int tcp_port;
     int xv_port;
 };

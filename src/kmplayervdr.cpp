@@ -75,12 +75,17 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::~KMPlayerPrefSourcePageVDR () {}
 
 //-----------------------------------------------------------------------------
 
+static const char * cmd_chan_query = "CHAN\n";
+static const char * cmd_list_channels = "LSTC\n";
+
 class VDRCommand {
 public:
-    KDE_NO_CDTOR_EXPORT VDRCommand (const char * c) : command (c), next (0L) {}
+    KDE_NO_CDTOR_EXPORT VDRCommand (const char * c, bool b=false)
+        : command (c), next (0L), waitForResponse (b) {}
     KDE_NO_CDTOR_EXPORT ~VDRCommand () {}
     const char * command;
     VDRCommand * next;
+    bool waitForResponse;
 };
 
 //-----------------------------------------------------------------------------
@@ -90,6 +95,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerVDRSource::KMPlayerVDRSource (KMPlayerApp * app, QPo
    m_configpage (0),
    m_socket (new QSocket (this)), 
    commands (0L),
+   channel_timer (0),
    tcp_port (0),
    xv_port (0) {
     m_player->settings ()->addPage (this);
@@ -114,7 +120,7 @@ KDE_NO_EXPORT bool KMPlayerVDRSource::hasLength () {
 }
 
 KDE_NO_EXPORT bool KMPlayerVDRSource::isSeekable () {
-    return false;
+    return true;
 }
 
 KDE_NO_EXPORT QString KMPlayerVDRSource::prettyName () {
@@ -162,6 +168,8 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     connect (m_socket, SIGNAL (readyRead ()), this, SLOT (readyRead ()));
     connect (m_socket, SIGNAL (bytesWritten (int)), this, SLOT (dataWritten (int)));
     connect (m_socket, SIGNAL (error (int)), this, SLOT (socketError (int)));
+    channel_timer = startTimer (30000);
+    m_document = (new Document (QString ("VDR")))->self ();
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
@@ -182,12 +190,18 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
     m_menu->removeItemAt (3);
     m_menu->removeItemAt (2);
     m_menu->removeItemAt (1);
+    killTimer (channel_timer);
+    channel_timer = 0;
+    if (m_document)
+        m_document->document ()->dispose ();
+    m_document = 0L;
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::connected () {
-    if (!m_player->players () ["xvideo"]->playing ())
+    if (!m_player->players () ["xvideo"]->playing ()) {
         QTimer::singleShot (0, m_player, SLOT (play ()));
-    else if (commands) {
+        //sendCommand (cmd_list_channels, true);
+    } else if (commands) {
         m_socket->writeBlock (commands->command, strlen (commands->command));
         m_socket->flush ();
     }
@@ -195,6 +209,8 @@ KDE_NO_EXPORT void KMPlayerVDRSource::connected () {
 
 KDE_NO_EXPORT void KMPlayerVDRSource::dataWritten (int) {
     if (commands) {
+        if (commands->waitForResponse)
+            return;
         VDRCommand * c = commands->next;
         delete commands;
         commands = c;
@@ -210,9 +226,34 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
     char * data = new char [nr + 1];
     m_socket->readBlock (data, nr);
     data [nr] = 0;
-    KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
-    if (v)
-        v->addText (QString::fromLocal8Bit (data, nr));
+    kdDebug () << "readyRead " << nr << endl;
+    if (commands && commands->waitForResponse) {
+        if (!strcmp (commands->command, cmd_chan_query)) {
+            data [strcspn (data, "\r\n")] = 0;
+            m_player->changeTitle (QString (data));
+        } /*else if (!strcmp (commands->command, cmd_list_channels)&&m_document) {
+            char * d = data;
+            int count = 0;
+            do {
+                int p = strcspn (d, "\r\n");
+                d[p] = 0;
+                if (p != 0)
+                    m_document->appendChild ((new GenericURL (m_document, d))->self ());
+                kdDebug () << d << endl;
+                nr -= (p + 2);
+                d += (p + 2);
+                count++;
+            } while (nr > 0 && count < 1000);
+            m_player->updateTree (m_document, m_current);
+        }*/
+        VDRCommand * c = commands->next;
+        delete commands;
+        commands = c;
+    } else {
+        KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
+        if (v)
+            v->addText (QString::fromLocal8Bit (data, nr));
+    }
     delete [] data;
 }
 
@@ -224,11 +265,11 @@ KDE_NO_EXPORT void KMPlayerVDRSource::socketError (int code) {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::sendCommand (const char * cmd) {
+KDE_NO_EXPORT void KMPlayerVDRSource::sendCommand (const char * cmd, bool b) {
     if (m_player->process ()->source () != this)
         return;
     if (!commands) {
-        commands = new VDRCommand (cmd);
+        commands = new VDRCommand (cmd, b);
         if (m_socket->state () == QSocket::Connected) {
             m_socket->writeBlock (commands->command, strlen(commands->command));
             m_socket->flush ();
@@ -238,14 +279,32 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sendCommand (const char * cmd) {
         VDRCommand * c = commands;
         for (int i = 0; i < 10; ++i)
             if (!c->next) {
-                c->next = new VDRCommand (cmd);
+                c->next = new VDRCommand (cmd, b);
                 break;
             }
     }
 }
-    
+
+KDE_NO_EXPORT void KMPlayerVDRSource::timerEvent (QTimerEvent *) {
+    sendCommand (cmd_chan_query, true);
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::jump (ElementPtr e) {
+}
+KDE_NO_EXPORT void KMPlayerVDRSource::forward () {
+    sendCommand ("CHAN +\n");
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::backward () {
+    sendCommand ("CHAN -\n");
+}
+
 KDE_NO_EXPORT void KMPlayerVDRSource::keyUp () {
-    sendCommand ("HITK UP\n");
+    //sendCommand ("HITK UP\n");
+    KAction * action = ::qt_cast <KAction *> (sender ());
+    kdDebug () << action << " " << action->name () << !strncmp ("vdr_key_", action->name (), 8) << endl;
+    if (action && !strncmp ("vdr_key_", action->name (), 8))
+        sendCommand (QString ("HITK %1\n").arg (action->name () + 8).ascii ());
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::keyDown () {
