@@ -169,12 +169,11 @@ void KMPlayerPreferences::removePrefPage (KMPlayerPreferencesPage * page) {
             break;
         }
     if (!tab->count ()) {
-        QWidget * w = en_it.data ()->parentWidget ();
+        QWidget * w = tab->parentWidget ();
         while (w && !w->inherits ("QFrame"))
             w = w->parentWidget ();
         delete w;
         entries.erase (en_it);
-        delete tab;
     }
 }
 

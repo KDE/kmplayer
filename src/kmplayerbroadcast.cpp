@@ -16,6 +16,7 @@
    the free software foundation, inc., 59 temple place - suite 330,
    boston, ma 02111-1307, usa.
 */
+#include <algorithm>
 
 #include <qlayout.h>
 #include <qlabel.h>
@@ -424,6 +425,8 @@ void KMPlayerBroadcastConfig::write (KConfig * config) {
 }
 
 void KMPlayerBroadcastConfig::read (KConfig * config) {
+    std::for_each (ffserversettingprofiles.begin (), ffserversettingprofiles.end (), Deleter<FFServerSetting>);
+    ffserversettingprofiles.clear ();
     config->setGroup (strBroadcast);
     ffserversettings = config->readListEntry (strFFServerCustomSetting, ';');
     QStringList profiles = config->readListEntry (strFFServerProfiles, ';');
