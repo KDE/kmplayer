@@ -47,6 +47,10 @@
 #include <kconfig.h>
 #include <kaction.h>
 #include <kiconloader.h>
+#include <kdeversion.h>
+#if KDE_IS_VERSION(3, 1, 90)
+#include <kinputdialog.h>
+#endif
 
 #include "kmplayer_backend_stub.h"
 #include "kmplayer_callback.h"
@@ -124,6 +128,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerVDRSource::KMPlayerVDRSource (KMPlayerApp * app, QPo
     act_green = new KAction (i18n ("VDR Key Green"), 0, 0, this, SLOT (keyGreen ()), m_app->actionCollection (),"vdr_key_green");
     act_yellow = new KAction (i18n ("VDR Key Yellow"), 0, 0, this, SLOT (keyYellow ()), m_app->actionCollection (),"vdr_key_yellow");
     act_blue = new KAction (i18n ("VDR Key Blue"), 0, 0, this, SLOT (keyBlue ()), m_app->actionCollection (),"vdr_key_blue");
+#if KDE_IS_VERSION(3, 1, 90)
+    /*KAction  * act_cmd =*/ new KAction (i18n ("VDR Custom Command"), 0, 0, this, SLOT (customCmd ()), m_app->actionCollection (),"vdr_key_custom");
+#endif
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerVDRSource::~KMPlayerVDRSource () {
@@ -176,6 +183,9 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("green"), KIcon::Small, 0, true), i18n ("Green"), this, SLOT (keyGreen ()), 0, -1, 9);
     m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("yellow"), KIcon::Small, 0, true), i18n ("Yellow"), this, SLOT (keyYellow ()), 0, -1, 10);
     m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("blue"), KIcon::Small, 0, true), i18n ("Blue"), this, SLOT (keyBlue ()), 0, -1, 11);
+#if KDE_IS_VERSION(3, 1, 90)
+    m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("exec"), KIcon::Small, 0, true), i18n ("Custom ..."), this, SLOT (customCmd ()), 0, -1, 12);
+#endif
     connect (m_socket, SIGNAL (connected ()), this, SLOT (connected ()));
     connect (m_socket, SIGNAL (readyRead ()), this, SLOT (readyRead ()));
     connect (m_socket, SIGNAL (connectionClosed ()), this, SLOT (disconnected ()));
@@ -213,17 +223,8 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
         disconnect (panel->button (KMPlayerControlPanel::button_yellow), SIGNAL (clicked ()), this, SLOT (keyYellow ()));
         disconnect (panel->button (KMPlayerControlPanel::button_blue), SIGNAL (clicked ()), this, SLOT (keyBlue ()));
     }
-    m_menu->removeItemAt (11);
-    m_menu->removeItemAt (10);
-    m_menu->removeItemAt (9);
-    m_menu->removeItemAt (8);
-    m_menu->removeItemAt (7);
-    m_menu->removeItemAt (6);
-    m_menu->removeItemAt (5);
-    m_menu->removeItemAt (4);
-    m_menu->removeItemAt (3);
-    m_menu->removeItemAt (2);
-    m_menu->removeItemAt (1);
+    for (int i = 12; i > 0; --i)
+        m_menu->removeItemAt (i);
     processStopped ();
 }
 
@@ -318,6 +319,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
     if (commands) {
         bool cmd_done = false;
         while (!line.isEmpty ()) {
+            v->addText (QString (line) + QChar ('\n'));
             cmd_done = (line.length () > 3 && line[3] == ' '); // from svdrpsend.pl
             // kdDebug () << "readyRead " << cmd_done << " " << commands->command << endl;
             if (!strcmp (commands->command, cmd_list_channels) && m_document) {
@@ -395,6 +397,14 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sendCommand () {
     m_socket->flush ();
     killTimer (timeout_timer);
     timeout_timer = startTimer (30000);
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::customCmd () {
+#if KDE_IS_VERSION(3, 1, 90)
+    QString cmd = KInputDialog::getText (i18n ("Custom VDR command"), i18n ("You can pass commands to VDR.\nEnter 'HELP' to see a list of available commands.\nYou can see VDR response in the console window.\n\nVDR Command:"), QString::null, 0, m_player->view ());
+    if (!cmd.isEmpty ())
+        queueCommand (QString (cmd + QChar ('\n')).local8Bit ());
+#endif
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::timerEvent (QTimerEvent * e) {

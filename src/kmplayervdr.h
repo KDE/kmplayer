@@ -98,6 +98,7 @@ private slots:
     void keyGreen ();
     void keyYellow ();
     void keyBlue ();
+    void customCmd ();
     void connected ();
     void disconnected ();
     void readyRead ();
