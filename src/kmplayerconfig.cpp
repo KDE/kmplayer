@@ -25,6 +25,8 @@
 #include <qtabwidget.h>
 #include <qslider.h>
 #include <qtable.h>
+#include <kurlrequester.h>
+#include <klineedit.h>
 
 #include <kconfig.h>
 #include <kapplication.h>
@@ -38,7 +40,7 @@
 //#include "configdialog.h"
 #include "pref.h"
 
-FFServerSetting::FFServerSetting (int i, const QString & n, const QString & f, const QString & ac, int abr, int asr, const QString & vc, int vbr, int q, int fr, int gs, int w, int h) 
+FFServerSetting::FFServerSetting (int i, const QString & n, const QString & f, const QString & ac, int abr, int asr, const QString & vc, int vbr, int q, int fr, int gs, int w, int h)
  : index (i), name (n), format (f), audiocodec (ac),
    audiobitrate (abr > 0 ? QString::number (abr) : QString ()),
    audiosamplerate (asr > 0 ? QString::number (asr) : QString ()),
@@ -139,7 +141,7 @@ TVInput::TVInput (const QString & n, int _id) : name (n), id (_id) {
     channels.setAutoDelete (true);
 }
 
-TVDevice::TVDevice (const QString & d, const QSize & s) 
+TVDevice::TVDevice (const QString & d, const QSize & s)
     : device (d), size (s), noplayback (false) {
     inputs.setAutoDelete (true);
 }
@@ -183,7 +185,7 @@ static const char * strAddRecordButton = "Add Record Button";
 static const char * strAddBroadcastButton = "Add Broadcast Button";
 static const char * strAutoHideButtons = "Auto Hide Control Buttons";
 static const char * strAutoPlayAfterRecording = "Auto Play After Recording";
-//static const char * strAutoHideSlider = "Auto Hide Slider"; 
+//static const char * strAutoHideSlider = "Auto Hide Slider";
 static const char * strSeekTime = "Forward/Backward Seek Time";
 static const char * strCacheSize = "Cache Size for Streaming";
 static const char * strPlayDVD = "Immediately Play DVD";
@@ -320,12 +322,12 @@ void KMPlayerConfig::readConfig () {
     chapterspattern = m_config->readEntry (strChapterPattern, "There are ([0-9]+) chapters");
     trackspattern = m_config->readEntry (strTrackPattern, "track ([0-9]+):");
 
-    
+
     // postproc
     m_config->setGroup (strPPGroup);
     postprocessing = m_config->readBoolEntry (strPostProcessing, false);
     disableppauto = m_config->readBoolEntry (strDisablePPauto, true);
-    
+
     pp_default = m_config->readBoolEntry (strPP_Default, true);
     pp_fast = m_config->readBoolEntry (strPP_Fast, false);
     pp_custom = m_config->readBoolEntry (strPP_Custom, false);
@@ -362,7 +364,7 @@ void KMPlayerConfig::readConfig () {
     int deviceentries = m_config->readListEntry (strTVDevices, devlist, ';');
     for (int i = 0; i < deviceentries; i++) {
         m_config->setGroup (devlist.at (i));
-        TVDevice * device = new TVDevice (devlist.at (i), 
+        TVDevice * device = new TVDevice (devlist.at (i),
                                           m_config->readSizeEntry (strTVSize));
         device->name = m_config->readEntry (strTVDeviceName, "/dev/video");
         device->audiodevice = m_config->readEntry (strTVAudioDevice, "");
@@ -425,9 +427,9 @@ void KMPlayerConfig::show () {
     if (!configdialog) {
         configdialog = new KMPlayerPreferences (m_player->view (), _ffs);
         configdialog->m_SourcePageTV->scanner = new TVDeviceScannerSource (m_player);
-        connect (configdialog, SIGNAL (okClicked ()), 
+        connect (configdialog, SIGNAL (okClicked ()),
                 this, SLOT (okPressed ()));
-        connect (configdialog, SIGNAL (applyClicked ()), 
+        connect (configdialog, SIGNAL (applyClicked ()),
                 this, SLOT (okPressed ()));
         if (KApplication::kApplication())
             connect (configdialog, SIGNAL (helpClicked ()),
@@ -448,16 +450,16 @@ void KMPlayerConfig::show () {
     configdialog->m_GeneralPageGeneral->seekTime->setValue(seektime);
     configdialog->m_SourcePageURL->url->setText (m_player->url ().url ());
     configdialog->m_GeneralPageDVD->autoPlayDVD->setChecked (playdvd); //works if autoplay?
-    configdialog->m_GeneralPageDVD->dvdDevicePath->setText (dvddevice);
+    configdialog->m_GeneralPageDVD->dvdDevicePath->lineEdit()->setText (dvddevice);
     configdialog->m_GeneralPageVCD->autoPlayVCD->setChecked (playvcd);
-    configdialog->m_GeneralPageVCD->vcdDevicePath->setText (vcddevice);
+    configdialog->m_GeneralPageVCD->vcdDevicePath->lineEdit()->setText (vcddevice);
     configdialog->m_SourcePageTV->driver->setText (tvdriver);
     configdialog->m_SourcePageTV->setTVDevices (&tvdevices);
-    
+
     configdialog->m_GeneralPageOutput->videoDriver->setCurrentItem (videodriver);
     configdialog->m_GeneralPageOutput->audioDriver->setCurrentItem (audiodriver);
-    
-    
+
+
     if (cachesize > 0)
         configdialog->m_GeneralPageAdvanced->cacheSize->setValue(cachesize);
     configdialog->m_GeneralPageAdvanced->additionalArguments->setText (additionalarguments);
@@ -470,12 +472,12 @@ void KMPlayerConfig::show () {
     configdialog->m_GeneralPageAdvanced->dvdTitlePattern->setText (titlespattern);
     configdialog->m_GeneralPageAdvanced->dvdChapPattern->setText (chapterspattern);
     configdialog->m_GeneralPageAdvanced->vcdTrackPattern->setText (trackspattern);
-    
+
     // postproc
     configdialog->m_OPPagePostproc->postProcessing->setChecked (postprocessing);
     configdialog->m_OPPagePostproc->postProcessing->setChecked (disableppauto);
     configdialog->m_OPPagePostproc->PostprocessingOptions->setEnabled (postprocessing);
-    
+
     configdialog->m_OPPagePostproc->defaultPreset->setChecked (pp_default);
     configdialog->m_OPPagePostproc->fastPreset->setChecked (pp_fast);
     configdialog->m_OPPagePostproc->customPreset->setChecked (pp_custom);
@@ -525,7 +527,7 @@ void KMPlayerConfig::show () {
 
 void KMPlayerConfig::writeConfig () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
-    
+
     m_config->setGroup (strGeneralGroup);
     m_config->writeEntry (strContrast, contrast);
     m_config->writeEntry (strBrightness, brightness);
@@ -549,10 +551,10 @@ void KMPlayerConfig::writeConfig () {
     m_config->writeEntry (strAddBroadcastButton, showbroadcastbutton);
     m_config->writeEntry (strAutoHideButtons, autohidebuttons);
     m_config->writeEntry (strPlayDVD, playdvd);
-    
+
     m_config->writeEntry (strDVDDevice, dvddevice);
     m_config->writeEntry (strPlayVCD, playvcd);
-    
+
     m_config->writeEntry (strVCDDevice, vcddevice);
     m_config->setGroup (strMPlayerPatternGroup);
     m_config->writeEntry (strSize, sizepattern);
@@ -622,7 +624,7 @@ void KMPlayerConfig::writeConfig () {
             inputlist.append (QString::number (input->id) + sep + input->name);
             if (input->hastuner) {
                 TVChannel * channel;
-                QStringList channellist; 
+                QStringList channellist;
                 for (input->channels.first (); (channel = input->channels.current()); input->channels.next ()) {
                     channellist.append (channel->name + sep + QString::number (channel->frequency));
                 }
@@ -662,7 +664,7 @@ void KMPlayerConfig::okPressed () {
 
     if (urlchanged)
         m_player->setURL (configdialog->m_SourcePageURL->url->text ());
-    
+
     sizeratio = configdialog->m_GeneralPageGeneral->keepSizeRatio->isChecked ();
     m_player->keepMovieAspect (sizeratio);
     showconsole = configdialog->m_GeneralPageGeneral->showConsoleOutput->isChecked ();
@@ -699,14 +701,14 @@ void KMPlayerConfig::okPressed () {
     if (!showbroadcastbutton)
         view->broadcastButton ()->hide ();
     playdvd = configdialog->m_GeneralPageDVD->autoPlayDVD->isChecked ();
-    dvddevice = configdialog->m_GeneralPageDVD->dvdDevicePath->text ();
+    dvddevice = configdialog->m_GeneralPageDVD->dvdDevicePath->lineEdit()->text ();
     playvcd = configdialog->m_GeneralPageVCD->autoPlayVCD->isChecked ();
-    vcddevice = configdialog->m_GeneralPageVCD->vcdDevicePath->text ();
+    vcddevice = configdialog->m_GeneralPageVCD->vcdDevicePath->lineEdit()->text ();
     seektime = configdialog->m_GeneralPageGeneral->seekTime->value();
-    m_player->setSeekTime (seektime); 
-    
+    m_player->setSeekTime (seektime);
+
     additionalarguments = configdialog->m_GeneralPageAdvanced->additionalArguments->text();
-    cachesize = configdialog->m_GeneralPageAdvanced->cacheSize->value(); 
+    cachesize = configdialog->m_GeneralPageAdvanced->cacheSize->value();
     sizepattern = configdialog->m_GeneralPageAdvanced->sizePattern->text ();
     cachepattern = configdialog->m_GeneralPageAdvanced->cachePattern->text ();
     startpattern = configdialog->m_GeneralPageAdvanced->startPattern->text ();
@@ -716,7 +718,7 @@ void KMPlayerConfig::okPressed () {
     subtitlespattern = configdialog->m_GeneralPageAdvanced->dvdSubPattern->text ();
     chapterspattern = configdialog->m_GeneralPageAdvanced->dvdChapPattern->text ();
     trackspattern = configdialog->m_GeneralPageAdvanced->vcdTrackPattern->text ();
-    
+
     videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentItem();
     audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentItem();
     if (audiodriver == ADRIVER_ARTS_INDEX)

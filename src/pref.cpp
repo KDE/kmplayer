@@ -41,6 +41,7 @@
 #include <kdebug.h>
 #include <kfiledialog.h>
 #include <kmessagebox.h>
+#include <klineedit.h>
 
 #include "pref.h"
 
@@ -51,12 +52,12 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent, FFServerSetting * ffs)
 	QFrame *frame;
 	QStringList hierarchy; // typo? :)
 	QVBoxLayout *vlay;
-	
+
 
 	hierarchy << i18n("General") << i18n("General");
 	frame = addPage(hierarchy, i18n("General Options"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
-	
+
 	m_GeneralPageGeneral = new KMPlayerPrefGeneralPageGeneral(frame);
 	vlay->addWidget(m_GeneralPageGeneral);
 
@@ -66,7 +67,7 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent, FFServerSetting * ffs)
 	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
 	m_SourcePageURL = new KMPlayerPrefSourcePageURL (frame);
 	vlay->addWidget (m_SourcePageURL);
-	
+
 	hierarchy.clear();
 	hierarchy << i18n("Source") << i18n("DVD");
 	frame = addPage(hierarchy, i18n("DVD Playing Options"));
@@ -110,7 +111,7 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent, FFServerSetting * ffs)
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	m_GeneralPageOutput = new KMPlayerPrefGeneralPageOutput(frame);
 	vlay->addWidget(m_GeneralPageOutput);
-	
+
 	hierarchy.clear();
 	hierarchy << i18n("General") << i18n("Advanced");
 	frame = addPage(hierarchy, i18n("Advanced Options"));
@@ -222,7 +223,7 @@ KMPlayerPrefGeneralPageDVD::KMPlayerPrefGeneralPageDVD(QWidget *parent) : QFrame
     autoPlayDVD = new QCheckBox (i18n ("Auto play after opening DVD"), this, 0);
     QToolTip::add(autoPlayDVD, i18n ("Start playing DVD right after opening DVD"));
     QLabel *dvdDevicePathLabel = new QLabel (i18n("DVD device:"), this, 0);
-    dvdDevicePath = new QLineEdit ("/dev/dvd", this, 0);
+    dvdDevicePath = new KURLRequester ("/dev/dvd", this, 0);
     QToolTip::add(dvdDevicePath, i18n ("Path to your DVD device, you must have read rights to this device"));
     layout->addWidget (autoPlayDVD);
     layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
@@ -338,7 +339,7 @@ KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerPre
     QGridLayout *gridlayout = new QGridLayout (layout, 2, 2);
     QLabel *driverLabel = new QLabel (i18n ("Driver:"), this, 0);
     driver = new QLineEdit ("", this, 0);
-    QToolTip::add (driver, i18n ("dummy, v4l or bsdbt848")); 
+    QToolTip::add (driver, i18n ("dummy, v4l or bsdbt848"));
     QLabel *deviceLabel = new QLabel (i18n ("Device:"), this, 0);
     device = new QLineEdit ("", this, 0);
     QToolTip::add (device, i18n("Path to your video device, eg. /dev/video0"));
@@ -393,7 +394,7 @@ void KMPlayerPrefSourcePageTV::slotDeviceDeleted (QFrame * frame) {
         kdError() << "Deleted page has no KMPlayerPrefSourcePageTVDevice" << endl;
     m_devicepages.remove (frame);
 }
-    
+
 void KMPlayerPrefSourcePageTV::slotScan () {
     TVDevice *dev = findDevice (*m_devices, device->text ());
     if (dev && !findDevice (deleteddevices, device->text ())) {
@@ -401,12 +402,12 @@ void KMPlayerPrefSourcePageTV::slotScan () {
         return;
     }
     scanner->scan (device->text (), driver->text());
-    connect (scanner, SIGNAL (scanFinished (TVDevice *)), 
+    connect (scanner, SIGNAL (scanFinished (TVDevice *)),
              this, SLOT (slotScanFinished (TVDevice *)));
 }
 
 void KMPlayerPrefSourcePageTV::slotScanFinished (TVDevice * _device) {
-    disconnect (scanner, SIGNAL (scanFinished (TVDevice *)), 
+    disconnect (scanner, SIGNAL (scanFinished (TVDevice *)),
                 this, SLOT (slotScanFinished (TVDevice *)));
     if (!_device) {
         KMessageBox::error (this, i18n ("No device found."), i18n ("Error"));
@@ -577,7 +578,7 @@ KMPlayerPrefGeneralPageVCD::KMPlayerPrefGeneralPageVCD(QWidget *parent) : QFrame
 	QToolTip::add(autoPlayVCD, i18n ("Start playing VCD right after opening VCD")); // i don't know about this
 
 	QLabel *vcdDevicePathLabel = new QLabel (i18n ("VCD (CDROM) device:"), this, 0);
-	vcdDevicePath = new QLineEdit ("/dev/cdrom", this, 0);
+	vcdDevicePath = new KURLRequester ("/dev/cdrom", this, 0);
 	QToolTip::add(vcdDevicePath, i18n ("Path to your CDROM/DVD device, you must have read rights to this device"));
 
 	layout->addWidget (autoPlayVCD);
@@ -591,7 +592,7 @@ KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidget *parent) : 
 {
 	QVBoxLayout *layout = new QVBoxLayout (this);
 	QHBoxLayout *childLayout1 = new QHBoxLayout (layout);
-	
+
 	videoDriver = new QComboBox(this);
 	videoDriver->insertItem(VDRIVER_XV, VDRIVER_XV_INDEX);
 	videoDriver->insertItem(VDRIVER_X11, VDRIVER_X11_INDEX);
@@ -601,7 +602,7 @@ KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidget *parent) : 
 	QToolTip::add(videoDriver, i18n("Sets video driver. Recommended is XVideo, or, if it is not supported, X11, which is slower."));
 	childLayout1->addWidget(new QLabel(i18n("Video driver:"),this));
 	childLayout1->addWidget(videoDriver);
-	
+
 	QHBoxLayout *childLayout2 = new QHBoxLayout (layout);
 	audioDriver = new QComboBox(this);
 	audioDriver->insertItem(ADRIVER_DEFAULT, ADRIVER_DEFAULT_INDEX);
@@ -611,7 +612,7 @@ KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidget *parent) : 
 	audioDriver->insertItem(ADRIVER_ARTS, ADRIVER_ARTS_INDEX);
 	childLayout2->addWidget(new QLabel(i18n("Audio driver:"),this));
 	childLayout2->addWidget(audioDriver);
-	
+
 }
 
 KMPlayerPrefOPPageGeneral::KMPlayerPrefOPPageGeneral(QWidget *parent)
@@ -623,16 +624,16 @@ KMPlayerPrefOPPageGeneral::KMPlayerPrefOPPageGeneral(QWidget *parent)
 
 KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame(parent)
 {
-	
+
 	QVBoxLayout *tabLayout = new QVBoxLayout (this);
 	postProcessing = new QCheckBox( i18n("postProcessing"), this, 0 );
 	postProcessing->setEnabled( TRUE );
 	disablePPauto = new QCheckBox (i18n("disablePostProcessingAutomatically"), this, 0);
-	
+
 	tabLayout->addWidget( postProcessing );
 	tabLayout->addWidget( disablePPauto );
 	tabLayout->addItem ( new QSpacerItem( 5, 5, QSizePolicy::Minimum, QSizePolicy::Minimum ) );
-	
+
 	PostprocessingOptions = new QTabWidget( this, "PostprocessingOptions" );
 	PostprocessingOptions->setEnabled( TRUE );
 	PostprocessingOptions->setAutoMask( FALSE );
@@ -664,7 +665,7 @@ KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame
 	//
 	/* I JUST WASN'T ABLE TO GET THIS WORKING WITH QGridLayouts */
 
-	QWidget *customFiltersWidget = new QWidget( PostprocessingOptions, "customFiltersWidget" ); 
+	QWidget *customFiltersWidget = new QWidget( PostprocessingOptions, "customFiltersWidget" );
 	QVBoxLayout *customFiltersWidgetLayout = new QVBoxLayout( customFiltersWidget );
 
 	QGroupBox *customFilters = new QGroupBox(0, Qt::Vertical, customFiltersWidget, "customFilters" );
@@ -672,7 +673,7 @@ KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame
 	customFilters->setFlat(false);
 	customFilters->setEnabled( FALSE );
 	customFilters->setInsideSpacing(7);
-	
+
 	QLayout *customFiltersLayout = customFilters->layout();
 	QHBoxLayout *customFiltersLayout1 = new QHBoxLayout ( customFilters->layout() );
 
@@ -769,7 +770,7 @@ KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame
 	//THIRD!!!
 	//
 	QWidget *deintSelectionWidget = new QWidget( PostprocessingOptions, "deintSelectionWidget" );
-	QVBoxLayout *deintSelectionWidgetLayout = new QVBoxLayout( deintSelectionWidget); 
+	QVBoxLayout *deintSelectionWidgetLayout = new QVBoxLayout( deintSelectionWidget);
 	QButtonGroup *deinterlacingGroup = new QButtonGroup(5, Qt::Vertical, deintSelectionWidget, "deinterlacingGroup" );
 
 	LinBlendDeinterlacer = new QCheckBox( deinterlacingGroup, "LinBlendDeinterlacer" );
@@ -787,8 +788,8 @@ KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame
 	deinterlacingGroup->insert( MedianDeinterlacer );
 
 	deinterlacingGroup->insert( FfmpegDeinterlacer );
-	
-	
+
+
 	deintSelectionWidgetLayout->addWidget( deinterlacingGroup, 0, 0 );
 
 	PostprocessingOptions->insertTab( deintSelectionWidget, "" );
@@ -805,7 +806,7 @@ KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame
 	connect( DeringFilter, SIGNAL( toggled(bool) ), DeringAQuality, SLOT( setEnabled(bool) ) );
 	connect( DeringFilter, SIGNAL( toggled(bool) ), DeringCFiltering, SLOT( setEnabled(bool) ) );
 	//connect( TmpNoiseFilter, SIGNAL( toggled(bool) ), TmpNoiseSlider, SLOT( setEnabled(bool) ) );
-	
+
 	connect( AutolevelsFilter, SIGNAL( toggled(bool) ), AutolevelsFullrange, SLOT( setEnabled(bool) ) );
 
 	postProcessing->setText( i18n( "Enable use of postprocessing filters" ) );
@@ -856,7 +857,7 @@ KMPlayerPrefGeneralPageAdvanced::KMPlayerPrefGeneralPageAdvanced(QWidget *parent
 	QVBoxLayout *realGroupBoxLayout = new QVBoxLayout (realGroupBox->layout());
 
 	QGridLayout *groupBoxLayout = new QGridLayout (realGroupBoxLayout,1,1);
-	
+
 	QLabel *langPattLabel = new QLabel (i18n("DVD language pattern:"), realGroupBox, 0);
 	dvdLangPattern = new QLineEdit (realGroupBox);
 	groupBoxLayout->addWidget(langPattLabel,0,0);
@@ -881,12 +882,12 @@ KMPlayerPrefGeneralPageAdvanced::KMPlayerPrefGeneralPageAdvanced(QWidget *parent
 	vcdTrackPattern = new QLineEdit (realGroupBox);
 	groupBoxLayout->addWidget(trackPattLabel,4,0);
 	groupBoxLayout->addWidget(vcdTrackPattern,4,2);
-	
+
 	QLabel *sizePattLabel = new QLabel (i18n("Size pattern:"), realGroupBox, 0);
 	sizePattern = new QLineEdit (realGroupBox);
 	groupBoxLayout->addWidget(sizePattLabel,5,0);
 	groupBoxLayout->addWidget(sizePattern,5,2);
-	
+
 	QLabel *cachePattLabel = new QLabel (i18n("Cache pattern:"), realGroupBox, 0);
 	cachePattern = new QLineEdit (realGroupBox);
 	groupBoxLayout->addWidget(cachePattLabel,6,0);
@@ -896,7 +897,7 @@ KMPlayerPrefGeneralPageAdvanced::KMPlayerPrefGeneralPageAdvanced(QWidget *parent
 	indexPattern = new QLineEdit (realGroupBox);
 	groupBoxLayout->addWidget(indexPattLabel,7,0);
 	groupBoxLayout->addWidget(indexPattern,7,2);
-	
+
 	QLabel *startPattLabel = new QLabel (i18n("Start pattern:"), realGroupBox, 0);
 	startPattern = new QLineEdit (realGroupBox);
 	groupBoxLayout->addWidget(startPattLabel,8,0);
@@ -904,19 +905,19 @@ KMPlayerPrefGeneralPageAdvanced::KMPlayerPrefGeneralPageAdvanced(QWidget *parent
 
 	groupBoxLayout->addColSpacing(1, 10);
 	layout->addWidget(realGroupBox);
-	
+
 
 	layout->addWidget(new QLabel (i18n("Additional command line arguments:"),this));
 	additionalArguments = new QLineEdit(this);
 	layout->addWidget(additionalArguments);
-	
-	
+
+
 	QHBoxLayout *addLayout2 = new QHBoxLayout (layout);
 	addLayout2->addWidget(new QLabel (i18n("Cache size:"),this));
 	cacheSize = new QSpinBox (0, 32767, 32, this);
 	addLayout2->addWidget(cacheSize);
 	addLayout2->addWidget(new QLabel (i18n("kB"),this));
-	
+
 	layout->addItem(new QSpacerItem(1,1, QSizePolicy::Minimum, QSizePolicy::Minimum));
 }
 
@@ -927,8 +928,8 @@ void KMPlayerPreferences::confirmDefaults() {
     		case 0:	KMPlayerPreferences::setDefaults();
         		break;
     		case 1:	break;
-	}	
-	
+	}
+
 }
 
 void KMPlayerPreferences::setDefaults() {
@@ -939,16 +940,16 @@ void KMPlayerPreferences::setDefaults() {
 	m_GeneralPageGeneral->autoHideControlButtons->setChecked(false);
 	m_GeneralPageGeneral->showPositionSlider->setChecked(true);
 	m_GeneralPageGeneral->seekTime->setValue(10);
-	
+
 	m_GeneralPageDVD->autoPlayDVD->setChecked(true);
-	m_GeneralPageDVD->dvdDevicePath->setText("/dev/dvd");
-	
+	m_GeneralPageDVD->dvdDevicePath->lineEdit()->setText("/dev/dvd");
+
 	m_GeneralPageVCD->autoPlayVCD->setChecked(true);
-	m_GeneralPageVCD->vcdDevicePath->setText("/dev/cdrom");
-	
+	m_GeneralPageVCD->vcdDevicePath->lineEdit()->setText("/dev/cdrom");
+
 	m_GeneralPageOutput->videoDriver->setCurrentItem(VDRIVER_XV_INDEX);
 	m_GeneralPageOutput->audioDriver->setCurrentItem(ADRIVER_DEFAULT_INDEX);
-	
+
 	m_GeneralPageAdvanced->dvdLangPattern->setText("\\[open].*audio.*language: ([A-Za-z]+).*aid.*[^0-9]([0-9]+)");
 	m_GeneralPageAdvanced->dvdTitlePattern->setText("There are ([0-9]+) titles");
 	m_GeneralPageAdvanced->dvdSubPattern->setText("\\[open].*subtitle.*[^0-9]([0-9]+).*language: ([A-Za-z]+)");
@@ -959,17 +960,17 @@ void KMPlayerPreferences::setDefaults() {
 	m_GeneralPageAdvanced->startPattern->setText("Start[^ ]* play");
 	m_GeneralPageAdvanced->additionalArguments->setText("");
 	m_GeneralPageAdvanced->cacheSize->setValue(256);
-	
+
 	m_OPPagePostproc->postProcessing->setChecked(false);
 	m_OPPagePostproc->disablePPauto->setChecked(true);
-	
+
 	m_OPPagePostproc->defaultPreset->setChecked(true);
-	
+
 	m_OPPagePostproc->LinBlendDeinterlacer->setChecked(false);
 	m_OPPagePostproc->LinIntDeinterlacer->setChecked(false);
 	m_OPPagePostproc->CubicIntDeinterlacer->setChecked(false);
 	m_OPPagePostproc->MedianDeinterlacer->setChecked(false);
 	m_OPPagePostproc->FfmpegDeinterlacer->setChecked(false);
-	
+
 }
 #include "pref.moc"

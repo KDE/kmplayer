@@ -51,6 +51,7 @@
 #include <qslider.h>
 #include <qspinbox.h>
 #include <qstringlist.h>
+#include <kurlrequester.h>
 
 #include "kmplayersource.h"
 
@@ -156,7 +157,7 @@ class KMPlayerPreferences : public KDialogBase
 public:
     KMPlayerPreferences(QWidget *parent, FFServerSetting * ffs);
     ~KMPlayerPreferences();
-    
+
     KMPlayerPrefGeneralPageGeneral 	*m_GeneralPageGeneral;
     KMPlayerPrefSourcePageURL 		*m_SourcePageURL;
     KMPlayerPrefGeneralPageDVD 		*m_GeneralPageDVD;
@@ -191,9 +192,9 @@ public:
     QCheckBox *autoHideSlider;
     QCheckBox *alwaysBuildIndex;
     QCheckBox *framedrop;
-    
+
     QSpinBox *seekTime;
-        
+
 };
 
 class KMPlayerPrefSourcePageURL : public QFrame
@@ -214,10 +215,10 @@ class KMPlayerPrefGeneralPageDVD : public QFrame
 public:
     KMPlayerPrefGeneralPageDVD(QWidget *parent = 0);
     ~KMPlayerPrefGeneralPageDVD() {}
-    
+
     QCheckBox *autoPlayDVD;
-    QLineEdit *dvdDevicePath;
-          
+    KURLRequester *dvdDevicePath;
+
 };
 
 class KMPlayerPrefGeneralPageVCD : public QFrame
@@ -226,9 +227,9 @@ class KMPlayerPrefGeneralPageVCD : public QFrame
 public:
     KMPlayerPrefGeneralPageVCD(QWidget *parent = 0);
     ~KMPlayerPrefGeneralPageVCD() {}
-    QLineEdit *vcdDevicePath;
+    KURLRequester *vcdDevicePath;
     QCheckBox *autoPlayVCD;
-    
+
 };
 
 class KMPlayerPrefSourcePageTVDevice : public QFrame
@@ -327,7 +328,7 @@ class KMPlayerPrefGeneralPageOutput : public QFrame
 public:
     KMPlayerPrefGeneralPageOutput(QWidget *parent = 0);
     ~KMPlayerPrefGeneralPageOutput() {}
-    
+
     QComboBox *videoDriver;
     QComboBox *audioDriver;
 };
@@ -350,18 +351,18 @@ public:
     QCheckBox* postProcessing;
     QCheckBox* disablePPauto;
     QTabWidget* PostprocessingOptions;
-    
+
     QRadioButton* defaultPreset;
     QRadioButton* customPreset;
     QRadioButton* fastPreset;
-    
+
     QCheckBox* HzDeblockFilter;
     QCheckBox* VtDeblockFilter;
     QCheckBox* DeringFilter;
     QCheckBox* HzDeblockAQuality;
     QCheckBox* VtDeblockAQuality;
     QCheckBox* DeringAQuality;
-        
+
     QCheckBox* AutolevelsFilter;
     QCheckBox* AutolevelsFullrange;
     QCheckBox* HzDeblockCFiltering;
@@ -369,7 +370,7 @@ public:
     QCheckBox* DeringCFiltering;
     QCheckBox* TmpNoiseFilter;
     QSlider* TmpNoiseSlider;
-    
+
     QCheckBox* LinBlendDeinterlacer;
     QCheckBox* CubicIntDeinterlacer;
     QCheckBox* LinIntDeinterlacer;
