@@ -77,19 +77,29 @@ KDE_CHECK_HEADER(xine.h,
 AC_MSG_CHECKING([if kxineplayer can be compiled])
 AC_MSG_RESULT($have_xine)
 
-if test "$have_xine" = "yes"; then
-  vers=`xine-config --version 2>/dev/null | awk 'BEGIN { FS = "."; } { printf "%d", ($1 * 1000 + $2) * 1000 + $3;}'`
-  if test -n "$vers" && test "$vers" -ge 1000000
-  then
-        AC_DEFINE(HAVE_XINE, 1, [If we have libxine installed])
-        LIB_XINE="`xine-config --libs`"
-        AC_SUBST(LIB_XINE)
-        CFLAGS_XINE="`xine-config --cflags`"
-        AC_SUBST(CFLAGS_XINE)
-  else
-       have_xine="no"
-       AC_MSG_WARN([Your xine installation is too old (1.0.0 or later required)])
-  fi
+AC_ARG_WITH(xine,
+    AC_HELP_STRING([--without-xine],[build KMPlayer without Xine [default=with]]),
+    [build_xine=$withval],
+    [build_xine=yes]
+)
+
+if test "$build_xine" != "no"; then
+    if test "$have_xine" = "yes"; then
+      vers=`xine-config --version 2>/dev/null | awk 'BEGIN { FS = "."; } { printf "%d", ($1 * 1000 + $2) * 1000 + $3;}'`
+      if test -n "$vers" && test "$vers" -ge 1000000
+      then
+            AC_DEFINE(HAVE_XINE, 1, [If we have libxine installed])
+            LIB_XINE="`xine-config --libs`"
+            AC_SUBST(LIB_XINE)
+            CFLAGS_XINE="`xine-config --cflags`"
+            AC_SUBST(CFLAGS_XINE)
+      else
+           have_xine="no"
+           AC_MSG_WARN([Your xine installation is too old (1.0.0 or later required)])
+      fi
+    fi
+else
+    have_xine="no"
 fi
 
 AM_CONDITIONAL(include_kxineplayer, test "$have_xine" = "yes")
