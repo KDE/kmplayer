@@ -44,60 +44,60 @@
 
 KMPlayerPreferences::KMPlayerPreferences(QWidget *parent)
 : KDialogBase(TreeList, i18n("KMPlayer Preferences"),
-		Help|Default|Ok|Apply|Cancel, Ok, parent, 0, true)
+		Help|Default|Ok|Apply|Cancel, Ok, parent, 0, false)
 {
 	QFrame *frame;
-	QStringList hierarcy; // typo? :)
+	QStringList hierarchy; // typo? :)
 	QVBoxLayout *vlay;
 	
 
-	hierarcy << i18n("General") << i18n("General");
-	frame = addPage(hierarcy, i18n("General Options"));
+	hierarchy << i18n("General") << i18n("General");
+	frame = addPage(hierarchy, i18n("General Options"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	
 	m_GeneralPageGeneral = new KMPlayerPrefGeneralPageGeneral(frame);
 	vlay->addWidget(m_GeneralPageGeneral);
 
-	hierarcy.clear();
-	hierarcy << i18n ("Source") << i18n ("URL");
-	frame = addPage (hierarcy, i18n ("URL"));
+	hierarchy.clear();
+	hierarchy << i18n ("Source") << i18n ("URL");
+	frame = addPage (hierarchy, i18n ("URL"));
 	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
 	m_SourcePageURL = new KMPlayerPrefSourcePageURL (frame);
 	vlay->addWidget (m_SourcePageURL);
 	
-	hierarcy.clear();
-	hierarcy << i18n("Source") << i18n("DVD");
-	frame = addPage(hierarcy, i18n("DVD playing options"));
+	hierarchy.clear();
+	hierarchy << i18n("Source") << i18n("DVD");
+	frame = addPage(hierarchy, i18n("DVD playing options"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	m_GeneralPageDVD = new KMPlayerPrefGeneralPageDVD(frame);
 	vlay->addWidget(m_GeneralPageDVD);
 
 
-	hierarcy.clear();
-	hierarcy << i18n("Source") << i18n("VCD");
-	frame = addPage(hierarcy, i18n("VCD playing options"));
+	hierarchy.clear();
+	hierarchy << i18n("Source") << i18n("VCD");
+	frame = addPage(hierarchy, i18n("VCD playing options"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	m_GeneralPageVCD = new KMPlayerPrefGeneralPageVCD(frame);
 	vlay->addWidget(m_GeneralPageVCD);
 
-	hierarcy.clear();
-	hierarcy << i18n ("Source") << i18n ("TV");
-	frame = addPage (hierarcy, i18n ("TV options"));
+	hierarchy.clear();
+	hierarchy << i18n ("Source") << i18n ("TV");
+	frame = addPage (hierarchy, i18n ("TV options"));
 	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
 	m_SourcePageTV = new KMPlayerPrefSourcePageTV (frame, this);
 	vlay->addWidget (m_SourcePageTV);
 
 
-	hierarcy.clear();
-	hierarcy << i18n("General") << i18n("Output");
-	frame = addPage(hierarcy, i18n("Video and audio output options || NOT YET USED == FIXME!"));
+	hierarchy.clear();
+	hierarchy << i18n("General") << i18n("Output");
+	frame = addPage(hierarchy, i18n("Video and audio output options"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	m_GeneralPageOutput = new KMPlayerPrefGeneralPageOutput(frame);
 	vlay->addWidget(m_GeneralPageOutput);
 	
-	hierarcy.clear();
-	hierarcy << i18n("General") << i18n("Advanced");
-	frame = addPage(hierarcy, i18n("Advanced options"));
+	hierarchy.clear();
+	hierarchy << i18n("General") << i18n("Advanced");
+	frame = addPage(hierarchy, i18n("Advanced options"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	m_GeneralPageAdvanced = new KMPlayerPrefGeneralPageAdvanced(frame);
 	vlay->addWidget(m_GeneralPageAdvanced);
@@ -106,17 +106,17 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent)
 * not yet needed...
  */
  
-	/*hierarcy.clear();
-	hierarcy << i18n("Output plugins") << i18n("General");
-	frame = addPage(hierarcy, i18n("Output plugin Options || NOT YET USED == FIXME!"));
+	/*hierarchy.clear();
+	hierarchy << i18n("Output plugins") << i18n("General");
+	frame = addPage(hierarchy, i18n("Output plugin Options || NOT YET USED == FIXME!"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	m_OPPageGeneral = new KMPlayerPrefOPPageGeneral(frame);
 	vlay->addWidget(m_OPPageGeneral);*/
 	
 	
-	hierarcy.clear();
-	hierarcy << i18n("Output plugins") << i18n("Postprocessing");
-	frame = addPage(hierarcy, i18n("Postprocessing options"));
+	hierarchy.clear();
+	hierarchy << i18n("Output plugins") << i18n("Postprocessing");
+	frame = addPage(hierarchy, i18n("Postprocessing options"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	m_OPPagePostproc = new KMPlayerPrefOPPagePostProc(frame);
 	vlay->addWidget(m_OPPagePostproc);
@@ -193,7 +193,7 @@ KMPlayerPrefGeneralPageDVD::KMPlayerPrefGeneralPageDVD(QWidget *parent) : QFrame
 
 
 	autoPlayDVD 		= new QCheckBox (i18n("Auto play after opening DVD"), this, 0);
-	QToolTip::add(autoPlayDVD, i18n("FIXME! Start playing DVD right after opening DVD")); // i don't know about this
+	QToolTip::add(autoPlayDVD, i18n("Start playing DVD right after opening DVD")); // i don't know about this
 
 	QLabel *dvdDevicePathLabel = new QLabel (i18n("DVD device:"), this, 0);
 	dvdDevicePath 		= new QLineEdit ("/dev/dvd", this, 0);
@@ -300,9 +300,9 @@ KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerPre
 }
 
 void KMPlayerPrefSourcePageTV::addPage (TVDevice * device, bool show) {
-    QStringList hierarcy; // typo? :)
-    hierarcy << i18n("Source") << i18n("TV") << device->name;
-    QFrame * frame = m_preference->addPage (hierarcy, device->name);
+    QStringList hierarchy; // typo? :)
+    hierarchy << i18n("Source") << i18n("TV") << device->name;
+    QFrame * frame = m_preference->addPage (hierarchy, device->name);
     QVBoxLayout *vlay = new QVBoxLayout (frame, m_preference->marginHint(), m_preference->spacingHint());
     KMPlayerPrefSourcePageTVDevice * devpage = new KMPlayerPrefSourcePageTVDevice (frame, device);
     devpage->name->setText (device->name);
@@ -323,7 +323,6 @@ void KMPlayerPrefSourcePageTV::setTVDevices (QPtrList <TVDevice> * devs) {
     addeddevices.setAutoDelete (false);
     deleteddevices.clear ();
     m_devicepages.clear ();
-    TVDevice * device;
     for (m_devices->first(); m_devices->current (); m_devices->next())
         addPage (m_devices->current ());
 }
@@ -393,7 +392,7 @@ KMPlayerPrefGeneralPageVCD::KMPlayerPrefGeneralPageVCD(QWidget *parent) : QFrame
 
 
 	autoPlayVCD = new QCheckBox (i18n("Auto play after opening a VCD"), this, 0);
-	QToolTip::add(autoPlayVCD, i18n("FIXME! Start playing VCD right after opening VCD")); // i don't know about this
+	QToolTip::add(autoPlayVCD, i18n("Start playing VCD right after opening VCD")); // i don't know about this
 
 	QLabel *vcdDevicePathLabel = new QLabel (i18n("VCD (CDROM) device:"), this, 0);
 	vcdDevicePath = new QLineEdit ("/dev/cdrom", this, 0);

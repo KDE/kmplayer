@@ -576,8 +576,11 @@ void KMPlayer::play () {
     if (m_process->isRunning ()) {
         sendCommand (QString ("gui_play"));
         if (!m_view->playButton ()->isOn ()) m_view->playButton ()->toggle ();
-    } else if (m_source)
+    } else if (m_source) {
         m_source->play ();
+        if (m_view->playButton ()->isOn () && !playing ())
+            m_view->playButton ()->toggle ();
+    }
 }
 
 bool KMPlayer::playing () const {

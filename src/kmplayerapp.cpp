@@ -248,6 +248,8 @@ void KMPlayerApp::saveOptions()
     }
     //config->writeEntry ("ToolBarPos", (int) toolBar("mainToolBar")->barPos());
     fileOpenRecent->saveEntries (config,"Recent Files");
+    disconnect (m_player->configDialog (), SIGNAL (configChanged ()),
+                this, SLOT (configChanged ()));
     m_player->configDialog ()->writeConfig ();
 }
 
@@ -835,6 +837,9 @@ void KMPlayerTVSource::deactivate () {
 
 void KMPlayerTVSource::buildMenu () {
     KMPlayerConfig * config = m_player->configDialog ();
+    QString currentcommand;
+    if (m_tvsource)
+        currentcommand = m_tvsource->command;
     CommandMap::iterator it = commands.begin ();
     for ( ; it != commands.end (); ++it)
         delete it.data ();
@@ -852,6 +857,8 @@ void KMPlayerTVSource::buildMenu () {
                 TVSource * source = new TVSource;
                 devmenu->insertItem (input->name, this, SLOT (menuClicked (int)), 0, counter);
                 source->command.sprintf ("device=%s:input=%d", device->device.ascii (), input->id);
+                if (currentcommand == source->command)
+                    m_tvsource = source;
                 source->size = device->size;
                 commands.insert (counter++, source);
             } else {
@@ -863,6 +870,8 @@ void KMPlayerTVSource::buildMenu () {
                     source->size = device->size;
                     inputmenu->insertItem (channel->name, this, SLOT(menuClicked (int)), 0, counter);
                     source->command.sprintf ("device=%s:input=%d:freq=%d", device->device.ascii (), input->id, channel->frequency);
+                    if (currentcommand == source->command)
+                        m_tvsource = source;
                     commands.insert (counter++, source);
                 }
                 devmenu->insertItem (input->name, inputmenu, 0, input->id);
@@ -878,7 +887,6 @@ void KMPlayerTVSource::menuClicked (int id) {
         if (m_player->source () != this)
             m_player->setSource (this);
         m_tvsource = it.data ();
-        kdDebug() << "KMPlayerTVSource::menuClickedt " << m_tvsource->command << endl;
         play ();
     }
 }

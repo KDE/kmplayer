@@ -381,7 +381,6 @@ void KMPlayerConfig::show () {
     configdialog->m_OPPagePostproc->MedianDeinterlacer->setChecked (pp_med_int);
     configdialog->m_OPPagePostproc->FfmpegDeinterlacer->setChecked (pp_ffmpeg_int);
 
-  
     configdialog->show ();
 }
 
@@ -454,6 +453,7 @@ void KMPlayerConfig::writeConfig () {
     m_config->writeEntry (strPP_FFmpeg_Int, pp_ffmpeg_int);
 
     //TV stuff
+    m_config->setGroup (strTV);
     QStringList devicelist = m_config->readListEntry (strTVDevices, ';');
     for (unsigned i = 0; i < devicelist.size (); i++)
         m_config->deleteGroup (*devicelist.at (i));
@@ -526,9 +526,9 @@ void KMPlayerConfig::okPressed () {
     view->setAutoHideButtons (autohidebuttons);
     showposslider = configdialog->m_GeneralPageGeneral->showPositionSlider->isChecked ();
     if (showposslider && m_player->source ()->hasLength ())
-        view->positionSlider ()->hide ();
-    else
         view->positionSlider ()->show ();
+    else
+        view->positionSlider ()->hide ();
     //autohideslider = configdialog->m_GeneralPageGeneral->autoHideSlider->isChecked();
     //view->setAutoHideSlider(autohideslider);
     //showcnfbutton = configdialog->m_GeneralPageGeneral->addConfigButton->isChecked ();
