@@ -84,6 +84,7 @@ static Display             *display;
 static Window               wid;
 static bool                 window_created;
 static bool                 xine_verbose;
+static bool                 wants_config;
 static int                  screen;
 static int                  completion_event;
 static int                  xpos, ypos, width, height;
@@ -280,6 +281,8 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
             sub_mrl = QString (argv ()[++i]);
         } else if (!strcmp (argv ()[i], "-v")) {
             xine_verbose = true;
+        } else if (!strcmp (argv ()[i], "-c")) {
+            wants_config = true;
         } else if (!strcmp (argv ()[i], "-cb")) {
             QString str = argv ()[++i];
             int pos = str.find ('/');
@@ -359,9 +362,11 @@ KXinePlayer::~KXinePlayer () {
     xineapp = 0L;
 }
 
-void getConfigEntries (QByteArray & buf, int size) {
+void getConfigEntries (QByteArray & buf) {
     xine_cfg_entry_t entry;
     int pos = 0;
+    int size = 1024;
+    buf.resize (size);
     pos += snprintf (buf.data () + pos, size - pos, "<document>\n");
     for (int i = xine_config_get_first_entry (xine, &entry); i; i = xine_config_get_next_entry (xine, &entry)) {
         pos += snprintf (buf.data () + pos, size - pos, "<entry NAME=\"%s\" TYPE=", entry.key);
@@ -371,7 +376,7 @@ void getConfigEntries (QByteArray & buf, int size) {
                 pos += snprintf (buf.data () + pos, size - pos, "\"string\" VALUE=\"%s\"/>", entry.str_value);
                 break;
             case XINE_CONFIG_TYPE_RANGE:
-                pos += snprintf (buf.data () + pos, size - pos, "\"range\" START=\"%d\" END=\"%d\"/>", entry.range_min, entry.range_max);
+                pos += snprintf (buf.data () + pos, size - pos, "\"range\" START=\"%d\" END=\"%d\" VALUE=\"%d\"/>", entry.range_min, entry.range_max, entry.num_value);
                 break;
             case XINE_CONFIG_TYPE_ENUM:
                 pos += snprintf (buf.data () + pos, size - pos, "\"enum\" VALUE=\"%d\" DEFAULT=\"%d\">", entry.num_value, entry.num_default);
@@ -790,7 +795,7 @@ int main(int argc, char **argv) {
     xineapp = new KXinePlayer (argc, argv);
 
     if (!callback && mrl.isEmpty ()) {
-        fprintf (stderr, "usage: %s [-vo (xv|xshm)] [-ao (arts|esd|..)] [-dvd-device <device>] [-vcd-device <device>] [-wid <X11 Window>] [-sub <subtitle url>] [-v] [-cb <DCOP callback name>] [<url>]\n", argv[0]);
+        fprintf (stderr, "usage: %s [-vo (xv|xshm)] [-ao (arts|esd|..)] [-dvd-device <device>] [-vcd-device <device>] [-wid <X11 Window>] [-sub <subtitle url>] [-v] [-cb <DCOP callback name> [-c]] [<url>]\n", argv[0]);
         delete xineapp;
         return 1;
     }
@@ -823,9 +828,9 @@ int main(int argc, char **argv) {
     }
 
     if (callback) {
-        int size = 512;
-        QByteArray buf (size);
-        getConfigEntries (buf, size);
+        QByteArray buf;
+        if (wants_config)
+            getConfigEntries (buf);
         callback->started (buf);
     }
     xineapp->exec ();

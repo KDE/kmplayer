@@ -58,7 +58,7 @@ void KMPlayerProcess::initProcess () {
     delete m_process;
     m_process = new KProcess;
     m_process->setUseShell (true);
-    m_source->setPosition (0);
+    if (m_source) m_source->setPosition (0);
     m_url.truncate (0);
 }
 
@@ -610,8 +610,11 @@ void KMPlayerCallback::loadingProgress (int percentage) {
 KMPlayerCallbackProcess::KMPlayerCallbackProcess (KMPlayer * player)
  : KMPlayerProcess (player),
    m_callback (new KMPlayerCallback (this)),
-   m_configpage (new KMPlayerXMLPreferencesPage (this)) {
+   m_configpage (new KMPlayerXMLPreferencesPage (this)),
+   m_have_config (unknown) {
+#ifdef HAVE_XINE
     m_player->settings ()->pagelist.push_back (m_configpage);
+#endif
 }
 
 KMPlayerCallbackProcess::~KMPlayerCallbackProcess () {
@@ -667,12 +670,26 @@ void KMPlayerCallbackProcess::setMoviePosition (int position) {
 void KMPlayerCallbackProcess::setLoadingProgress (int percentage) {
     emit loading (percentage);
 }
+
+bool KMPlayerCallbackProcess::getConfigData (QByteArray & data) {
+    if (m_have_config == unknown) {
+        if (playing ())
+            return false; // it will come ..
+        m_have_config = probe;
+        play ();
+    } else if (m_have_config == yes) {
+        data = m_configdata;
+        return true;
+    }
+    return false;
+}
 //-----------------------------------------------------------------------------
 #include <qlayout.h>
 #include <qtable.h>
 #include <qlineedit.h>
 #include <qslider.h>
 #include <qcombobox.h>
+#include <qcheckbox.h>
 #include <qdom.h>
 
 class KMPlayerXMLPreferencesFrame : public QFrame {
@@ -702,7 +719,9 @@ void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
     if (fromUI) {
         ; // TODO: send changes to Xine
     } else {
-        QByteArray data = m_process->getConfigData ();
+        QByteArray data;
+        if (!m_process->getConfigData (data))
+            return;
         // if not have data, get it from Xine
         if (!data.size ())
             return;
@@ -711,33 +730,52 @@ void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
             QString err;
             int line, column;
             if (!dom.setContent (data, false, &err, &line, &column)) {
-                fprintf (stderr, "%s %d %d\n", err.ascii(), line, column);
+                kdDebug () << "Config data error " << err << " l:" << line << " c:" << column << endl;
                 return;
             }
             if (dom.childNodes().length() != 1 || dom.firstChild().childNodes().length() < 1) {
-                fprintf (stderr, "No valid data\n");
+                kdDebug () << "No valid data" << endl;
                 return;
             }
-            m_configframe->table->setNumCols (2);
-            m_configframe->table->setNumRows (dom.firstChild().childNodes().length());
-            m_configframe->table->verticalHeader ()->hide ();
-            m_configframe->table->setLeftMargin (0);
-            m_configframe->table->horizontalHeader ()->hide ();
-            m_configframe->table->setTopMargin (0);
-            m_configframe->table->setColumnReadOnly (0, true);
-            m_configframe->table->setColumnWidth (0, 250);
+            QTable * table = m_configframe->table;
+            table->setNumCols (2);
+            table->setNumRows (dom.firstChild().childNodes().length());
+            table->verticalHeader ()->hide ();
+            table->setLeftMargin (0);
+            table->horizontalHeader ()->hide ();
+            table->setTopMargin (0);
+            table->setColumnReadOnly (0, true);
+            table->setColumnWidth (0, 250);
+            table->setColumnWidth (1, 250);
             // set up the table fields
             int row = 0;
             for (QDomNode node = dom.firstChild().firstChild(); !node.isNull (); node = node.nextSibling (), row++) {
                 QDomNamedNodeMap attr = node.attributes ();
                 QDomNode n = attr.namedItem (QString ("NAME"));
                 QDomNode t = attr.namedItem (QString ("TYPE"));
-                kdDebug() << node.nodeName () << " " << node.attributes ().length () << " " << n.isNull() << endl;
                 if (!n.isNull () && !t.isNull ()) {
                     m_configframe->table->setText (row, 0, n.nodeValue ());
                     if (t.nodeValue () == QString ("num") || t.nodeValue () == QString ("string")) {
-                        QDomNode v = attr.namedItem (QString ("VALUE"));
-                        m_configframe->table->setText (row, 1, v.nodeValue ());
+                        QString v = attr.namedItem (QString ("VALUE")).nodeValue ();
+                        table->setText (row, 1, v);
+                    } else if (t.nodeValue () == QString ("range")) {
+                        QString v = attr.namedItem (QString ("VALUE")).nodeValue ();
+                        QString s = attr.namedItem (QString ("START")).nodeValue ();
+                        QString e = attr.namedItem (QString ("END")).nodeValue ();
+                        QSlider * slider = new QSlider (s.toInt (), e.toInt (), 1, v.toInt (), Qt::Horizontal, table);
+                        table->setCellWidget (row, 1, slider);
+                    } else if (t.nodeValue () == QString ("bool")) {
+                        QString v = attr.namedItem (QString ("VALUE")).nodeValue ();
+                        QCheckBox * checkbox = new QCheckBox (table);
+                        checkbox->setChecked (v.toInt ());
+                        table->setCellWidget (row, 1, checkbox);
+                    } else if (t.nodeValue () == QString ("enum")) {
+                        QString v = attr.namedItem (QString ("VALUE")).nodeValue ();
+                        QComboBox * combobox = new QComboBox (table);
+                        for (QDomNode d = node.firstChild(); !d.isNull (); d = d.nextSibling ())
+                            combobox->insertItem (d.attributes ().namedItem (QString ("VALUE")).nodeValue ());
+                        combobox->setCurrentItem (v.toInt ());
+                        table->setCellWidget (row, 1, combobox);
                     }
                 }
             }
@@ -784,6 +822,18 @@ bool Xine::play () {
             m_backend->play ();
         return true;
     }
+    QString cbname;
+    cbname.sprintf ("%s/%s", QString (kapp->dcopClient ()->appId ()).ascii (),
+                             QString (m_callback->objId ()).ascii ());
+    if (m_have_config == probe) {
+        initProcess ();
+        printf ("kxineplayer -wid %lu", (unsigned long) widget ()->winId ());
+        *m_process << "kxineplayer -wid " << QString::number (widget ()->winId ());
+        printf (" -cb %s -c nomovie\n", cbname.ascii());
+        *m_process << " -cb " << cbname << " -c nomovie";
+        m_process->start (KProcess::NotifyOnExit, KProcess::All);
+        return m_process->isRunning ();
+    }
     KURL url = m_source->url ();
     if (m_urls.count () > 0) {
         url = KURL (m_urls.front ());
@@ -810,11 +860,12 @@ bool Xine::play () {
         printf (" -ao %s", strAudioDriver.lower().ascii());
         *m_process << " -ao " << strAudioDriver.lower();
     }
-    QString cbname;
-    cbname.sprintf ("%s/%s", QString (kapp->dcopClient ()->appId ()).ascii (),
-                             QString (m_callback->objId ()).ascii ());
     printf (" -cb %s", cbname.ascii());
     *m_process << " -cb " << cbname;
+    if (m_have_config == unknown) {
+        printf (" -c");
+        *m_process << " -c";
+    }
     if (url.url ().startsWith (QString::fromLatin1 ("dvd://")) &&
             !settings->dvddevice.isEmpty ()) {
         printf (" -dvd-device %s", settings->dvddevice.ascii ());
@@ -852,7 +903,8 @@ bool Xine::play () {
 
 bool Xine::stop () {
     kdDebug () << "Xine::stop ()" << endl;
-    if (!source ()) return false;
+    if (m_have_config == probe)
+        m_have_config = unknown; // hmm
     if (!m_process || !m_process->isRunning ()) return true;
     if (m_backend) {
         m_backend->quit ();
@@ -905,11 +957,20 @@ void Xine::processStopped (KProcess *) {
 }
 
 void Xine::setStarted (QByteArray & data) {
-    m_configdata = data;
     QString dcopname;
     dcopname.sprintf ("kxineplayer-%u", m_process->pid ());
     kdDebug () << "up and running " << dcopname << endl;
     m_backend = new KMPlayerBackend_stub (dcopname.ascii (), "KMPlayerBackend");
+    if (m_have_config == probe || m_have_config == unknown) {
+        m_configdata = data;
+        if (m_have_config == probe) {
+            m_have_config = data.size () ? yes : no;
+            stop ();
+            m_configpage->sync (false);
+            return;
+        }
+        m_have_config = data.size () ? yes : no;
+    }
     KMPlayerSettings * settings = m_player->settings ();
     saturation (settings->saturation, true);
     hue (settings->hue, true);

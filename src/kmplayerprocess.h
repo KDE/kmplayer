@@ -174,11 +174,12 @@ public:
     virtual void setMovieParams (int length, int width, int height, float aspect);
     virtual void setMoviePosition (int position);
     virtual void setLoadingProgress (int percentage);
-    QByteArray & getConfigData () { return m_configdata; }
+    bool getConfigData (QByteArray &);
 protected:
     KMPlayerCallback * m_callback;
     QByteArray m_configdata;
     KMPlayerXMLPreferencesPage * m_configpage;
+    enum { unknown, probe, yes, no } m_have_config;
 };
 
 class KMPlayerXMLPreferencesPage : public KMPlayerPreferencesPage {

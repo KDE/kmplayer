@@ -78,7 +78,7 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, KMPlayerSettings * s
         (tab, settings->audiodrivers, settings->videodrivers);
     tab->insertTab (m_GeneralPageOutput, i18n("Output"));
     m_GeneralPageAdvanced = new KMPlayerPrefGeneralPageAdvanced (tab);
-    tab->insertTab (m_GeneralPageAdvanced, i18n("Advanced"));
+    tab->insertTab (m_GeneralPageAdvanced, i18n("Advanced (MPlayer)"));
     entries.insert (i18n("General Options"), tab);
 
     frame = addPage (i18n ("Source"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("source"), KIcon::NoGroup, 32));
