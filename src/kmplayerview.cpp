@@ -503,7 +503,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerView::~KMPlayerView () {
         delete m_layer;
 }
 
-KDE_NO_EXPORT bool KMPlayerView::setPicture (const QString & path) {
+bool KMPlayerView::setPicture (const QString & path) {
     delete m_image;
     if (path.isEmpty ())
         m_image = 0L;
