@@ -874,7 +874,7 @@ void KMPlayerDVDSource::buildArguments () {
         if (m_player->settings ()->dvddevice.length () > 0)
             m_options += QString(" -dvd-device ") + m_player->settings()->dvddevice;
     }
-    m_recordCommand = m_options + QString (" -vop scale -zoom");
+    m_recordcmd = m_options + QString (" -vop scale -zoom");
 }
 
 QString KMPlayerDVDSource::filterOptions () {
@@ -1047,7 +1047,7 @@ void KMPlayerVCDSource::buildArguments () {
     m_options.truncate (0);
     if (m_player->settings ()->vcddevice.length () > 0)
         m_options+=QString(" -cdrom-device ") + m_player->settings()->vcddevice;
-    m_recordCommand = m_options;
+    m_recordcmd = m_options;
 }
 
 void KMPlayerVCDSource::trackMenuClicked (int id) {
@@ -1083,20 +1083,13 @@ bool KMPlayerPipeSource::isSeekable () {
 void KMPlayerPipeSource::activate () {
     m_player->setProcess (m_player->mplayer ());
     init ();
-    m_options = QString ("-");
+    m_recordcmd = m_options = QString ("-"); // or m_url?
     m_identified = true;
     QTimer::singleShot (0, m_player, SLOT (play ()));
     m_app->slotStatusMsg (i18n ("Ready."));
 }
 
 void KMPlayerPipeSource::deactivate () {
-}
-
-QString KMPlayerPipeSource::recordCommand () {
-    if (m_pipecmd.isEmpty ())
-        return QString::null;
-    return m_pipecmd + QString ("|") + QString ("mencoder - ") + 
-           m_player->settings ()->mencoderarguments;
 }
 
 //-----------------------------------------------------------------------------
@@ -1145,7 +1138,10 @@ void KMPlayerTVSource::buildArguments () {
     setWidth (m_tvsource->size.width ());
     setHeight (m_tvsource->size.height ());
     m_options.sprintf ("-tv noaudio:driver=%s:%s:width=%d:height=%d -slave -nocache -quiet", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
-    m_recordCommand.sprintf ("-tv on:%s:driver=%s:%s:width=%d:height=%d", m_tvsource->audiodevice.isEmpty () ? "noaudio" : (QString ("forceaudio:adevice=") + m_tvsource->audiodevice).ascii(), config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
+    if (config->mplayerpost090)
+        m_recordcmd.sprintf ("-tv %s:driver=%s:%s:width=%d:height=%d", m_tvsource->audiodevice.isEmpty () ? "noaudio" : (QString ("forceaudio:adevice=") + m_tvsource->audiodevice).ascii(), config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
+    else
+        m_recordcmd.sprintf ("-tv on:%s:driver=%s:%s:width=%d:height=%d", m_tvsource->audiodevice.isEmpty () ? "noaudio" : (QString ("forceaudio:adevice=") + m_tvsource->audiodevice).ascii(), config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
     if (!m_app->broadcasting ())
         m_app->resizePlayer (100);
     m_ffmpegCommand = QString (" -vd ") + m_tvsource->videodevice;

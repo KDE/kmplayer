@@ -48,16 +48,16 @@ public:
     const KURL & url () const { return m_url; }
     const QString & options () const { return m_options; }
     const QString & pipeCmd () const { return m_pipecmd; }
+    const QString & recordCmd () const { return m_recordcmd; }
     bool identified () const { return m_identified; }
     virtual void setIdentified (bool b = true);
-    virtual QString recordCommand ();
     virtual QString ffmpegCommand ();
 public slots:
     virtual void activate () = 0;
     virtual void deactivate () = 0;
 protected:
     KMPlayer * m_player;
-    QString m_recordCommand;
+    QString m_recordcmd;
     QString m_ffmpegCommand;
     bool m_identified;
     KURL m_url;

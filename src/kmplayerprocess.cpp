@@ -148,6 +148,20 @@ bool MPlayerBase::sendCommand (const QString & cmd) {
     return false;
 }
 
+bool MPlayerBase::stop () {
+    kdDebug () << "MPlayerBase::stop ()" << endl;
+    if (!source () || !m_process || !m_process->isRunning ()) return true;
+    if (!m_use_slave) {
+        void (*oldhandler)(int) = signal(SIGTERM, SIG_IGN);
+        ::kill (-1 * ::getpid (), SIGTERM);
+        signal(SIGTERM, oldhandler);
+    }
+    KProcessController::theKProcessController->waitForProcessExit (1);
+    if (m_process->isRunning () && !KMPlayerProcess::stop ())
+        processStopped (0L); // give up
+    return true;
+}
+
 void MPlayerBase::dataWritten (KProcess *) {
     if (!commands.size ()) return;
     kdDebug() << "eval done " << commands.last () << endl;
@@ -201,19 +215,10 @@ bool MPlayer::play () {
 
 bool MPlayer::stop () {
     kdDebug () << "MPlayer::stop ()" << endl;
-    if (!source ()) return false;
-    if (!m_process || !m_process->isRunning ()) return true;
-    if (m_use_slave) {
+    if (!source () || !m_process || !m_process->isRunning ()) return true;
+    if (m_use_slave)
         sendCommand (QString ("quit"));
-    } else {
-        void (*oldhandler)(int) = signal(SIGTERM, SIG_IGN);
-        ::kill (-1 * ::getpid (), SIGTERM);
-        signal(SIGTERM, oldhandler);
-    }
-    KProcessController::theKProcessController->waitForProcessExit (1);
-    if (m_process->isRunning () && !MPlayerBase::stop ())
-        processStopped (0L); // give up
-    return true;
+    return MPlayerBase::stop ();
 }
 
 bool MPlayer::pause () {
@@ -442,32 +447,40 @@ void MEncoder::init () {
 }
 
 bool MEncoder::play () {
-    if (!m_source || m_source->recordCommand ().isEmpty ())
+    if (!m_source || m_source->recordCmd ().isNull ())
         return false;
     bool success = false;
     KFileDialog *dlg = new KFileDialog (QString::null, QString::null, m_player->view (), "", true);
     if (dlg->exec ()) {
         stop ();
         initProcess ();
+        QString args;
+        m_use_slave = m_source->pipeCmd ().isEmpty ();
+        if (!m_use_slave)
+            args = m_source->pipeCmd () + QString (" | ");
+        args += QString ("mencoder ") + m_player->settings()->mencoderarguments + QString (" ") + m_source->recordCmd ();
+        const KURL & url (source ()->url ());
+        QString myurl = url.isLocalFile () ? url.path () : url.url ();
+        bool post090 = m_player->settings ()->mplayerpost090;
+        if (!myurl.isEmpty ()) {
+            if (!post090 && myurl.startsWith (QString ("tv://")))
+                ; // skip it
+            else if (!post090 && myurl.startsWith (QString ("vcd://")))
+                args += myurl.replace (0, 6, QString (" -vcd "));
+            else if (!post090 && myurl.startsWith (QString ("dvd://")))
+                args += myurl.replace (0, 6, QString (" -dvd "));
+            else
+                args += QString (" ") + KProcess::quote (url.isLocalFile () ? url.path () : url.url ());
+        }
         m_recordurl = dlg->selectedURL().url ();
-        QString myurl = KProcess::quote (m_recordurl.isLocalFile () ? m_recordurl.path () : m_recordurl.url ());
-        kdDebug () << m_source->recordCommand () << " -o " << myurl << endl;
-        *m_process << m_source->recordCommand () << " -o " << myurl;
+        QString outurl = KProcess::quote (m_recordurl.isLocalFile () ? m_recordurl.path () : m_recordurl.url ());
+        kdDebug () << args << " -o " << outurl << endl;
+        *m_process << args << " -o " << outurl;
         m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
         success = m_process->isRunning ();
     }
     delete dlg;
     return success;
-}
-
-bool MEncoder::stop () {
-    if (!m_process || !m_process->isRunning ())
-        return true;
-    m_process->kill (SIGINT);
-    KProcessController::theKProcessController->waitForProcessExit (3);
-    if (m_process->isRunning ())
-        return MPlayerBase::stop ();
-    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -526,10 +539,10 @@ void KMPlayerCallbackProcess::setURL (const QString & url) {
     m_urls.push_back (url);
 }
 
-void KMPlayerCallbackProcess::setStatusMessage (const QString & msg) {
+void KMPlayerCallbackProcess::setStatusMessage (const QString & /*msg*/) {
 }
 
-void KMPlayerCallbackProcess::setErrorMessage (int code, const QString & msg) {
+void KMPlayerCallbackProcess::setErrorMessage (int /*code*/, const QString & /*msg*/) {
 }
 
 void KMPlayerCallbackProcess::setFinished () {

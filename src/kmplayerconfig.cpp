@@ -200,6 +200,7 @@ static const char * strAddRecordButton = "Add Record Button";
 static const char * strAddBroadcastButton = "Add Broadcast Button";
 static const char * strAutoHideButtons = "Auto Hide Control Buttons";
 static const char * strAutoPlayAfterRecording = "Auto Play After Recording";
+static const char * strPostMPlayer090 = "Post MPlayer 0.90";
 //static const char * strAutoHideSlider = "Auto Hide Slider";
 static const char * strSeekTime = "Forward/Backward Seek Time";
 static const char * strCacheSize = "Cache Size for Streaming";
@@ -290,6 +291,7 @@ void KMPlayerSettings::readConfig () {
     showbuttons = m_config->readBoolEntry (strShowControlButtons, true);
     autohidebuttons = m_config->readBoolEntry (strAutoHideButtons, false);
     autoplayafterrecording = m_config->readBoolEntry (strAutoPlayAfterRecording, true);
+    mplayerpost090 = m_config->readBoolEntry (strPostMPlayer090, false);
     view->setAutoHideButtons (showbuttons && autohidebuttons);
     if (!showbuttons) {
         view->buttonBar ()->hide ();

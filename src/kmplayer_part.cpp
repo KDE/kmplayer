@@ -914,7 +914,7 @@ void KMPlayerSource::init () {
     m_aspect = 0.0;
     m_length = 0;
     m_identified = false;
-    m_recordCommand.truncate (0);
+    m_recordcmd.truncate (0);
 }
 
 bool KMPlayerSource::processOutput (const QString & str) {
@@ -1027,13 +1027,6 @@ QString KMPlayerSource::filterOptions () {
     return PPargs;
 }
 
-QString KMPlayerSource::recordCommand () {
-    if (m_recordCommand.isEmpty ())
-        return QString::null;
-    return QString ("mencoder ") + m_player->settings()->mencoderarguments +
-           QString (" ") + m_recordCommand;
-}
-
 QString KMPlayerSource::ffmpegCommand () {
     if (m_ffmpegCommand.isEmpty ())
         return QString::null;
@@ -1128,13 +1121,13 @@ bool KMPlayerURLSource::processOutput (const QString & str) {
     return KMPlayerSource::processOutput (str);
 }
 
-const QString KMPlayerURLSource::buildArguments () {
-    m_ffmpegCommand.truncate (0);
-    QString myurl (KProcess::quote (m_url.isLocalFile () ? m_url.path () : m_url.url ()));
-    m_recordCommand = myurl;
-    if (m_url.isLocalFile ())
+void KMPlayerURLSource::buildArguments () {
+    m_recordcmd = QString ("");
+    if (m_url.isLocalFile ()) {
+        QString myurl (KProcess::quote (m_url.isLocalFile () ? m_url.path () : m_url.url ()));
         m_ffmpegCommand = QString ("-i ") + myurl;
-    return myurl;
+    } else
+        m_ffmpegCommand.truncate (0);
 }
 
 void KMPlayerURLSource::activate () {
@@ -1164,7 +1157,7 @@ void KMPlayerURLSource::setIdentified (bool b) {
         if (m_url.path ().lower ().endsWith (".avi") ||
                 m_url.path ().lower ().endsWith (".divx")) {
             m_options += QString (" -idx ");
-            m_recordCommand = QString (" -idx ");
+            m_recordcmd = QString (" -idx ");
         }
     }
 }

@@ -136,7 +136,6 @@ public:
     virtual ~KMPlayerPipeSource ();
     virtual bool hasLength ();
     virtual bool isSeekable ();
-    virtual QString recordCommand ();
     void setCommand (const QString & cmd) { m_pipecmd = cmd; }
 public slots:
     virtual void activate ();

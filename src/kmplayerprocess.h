@@ -77,6 +77,8 @@ public:
     MPlayerBase (KMPlayer * player);
     ~MPlayerBase ();
     void initProcess ();
+public slots:
+    virtual bool stop ();
 protected:
     bool sendCommand (const QString &);
     QStringList commands;
@@ -126,7 +128,6 @@ public:
     const KURL & recordURL () const { return m_recordurl; }
 public slots:
     virtual bool play ();
-    virtual bool stop ();
 private:
     KURL m_recordurl;
 };

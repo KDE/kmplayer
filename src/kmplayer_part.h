@@ -107,7 +107,7 @@ public slots:
     virtual void activate ();
     virtual void deactivate ();
 private:
-    const QString buildArguments ();
+    void buildArguments ();
     QValueList <KURL> m_urls;
     KURL m_urlother;
     bool isreference;
