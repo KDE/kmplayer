@@ -149,6 +149,7 @@ void KMPlayerPart::processLoading (int percentage) {
 }
 
 void KMPlayerPart::processStarted () {
+    KMPlayer::processStarted ();
     emit started (0L);
     m_started_emited = true;
 }

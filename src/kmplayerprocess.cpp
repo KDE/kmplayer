@@ -609,6 +609,10 @@ void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
         v->viewer ()->setAspect (a);
         v->updateLayout ();
     }
+    if (!m_started_emited) {
+        m_started_emited = true;
+        QTimer::singleShot (0, this, SLOT (emitStarted ()));
+    }
 }
 
 void KMPlayerCallbackProcess::setMoviePosition (int position) {
@@ -680,6 +684,7 @@ bool Xine::play () {
     printf (" %s\n", myurl.ascii ());
     *m_process << myurl;
     fflush (stdout);
+    m_started_emited = false;
     m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
     return m_process->isRunning ();
 }
@@ -738,7 +743,6 @@ void Xine::processRunning () {
     brightness (settings->brightness, true);
     contrast (settings->contrast, true);
     m_backend->play ();
-    QTimer::singleShot (0, this, SLOT (emitStarted ()));
 }
 
 bool Xine::saturation (int val, bool) {

@@ -266,7 +266,6 @@ void KMPlayer::processFinished () {
 
 void KMPlayer::processStarted () {
     if (!m_view) return;
-    kdDebug () << "process started" << endl;
     if (m_settings->showposslider && m_process->source ()->hasLength ())
         m_view->positionSlider()->show();
     else

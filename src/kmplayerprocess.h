@@ -67,6 +67,7 @@ protected:
     KMPlayer * m_player;
     KMPlayerSource * m_source;
     KProcess * m_process;
+    bool m_started_emited;
 protected slots:
     // QTimer::singleShot slots for the signals
     void emitStarted () { emit started (); }
