@@ -311,9 +311,10 @@ void KMPlayerApp::zoom150 () {
 void KMPlayerApp::broadcastClicked () {
     if (m_broadcastconfig->broadcasting ())
         m_broadcastconfig->stopServer ();
-    else
-        m_player->settings ()->show  ("BroadcastPage");
-    m_view->broadcastButton ()->toggle ();
+    else {
+        m_player->settings ()->show ("BroadcastPage");
+        m_view->broadcastButton ()->toggle ();
+    }
 }
 
 void KMPlayerApp::broadcastStarted () {

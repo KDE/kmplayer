@@ -489,7 +489,8 @@ void KMPlayerBroadcastConfig::startServer () {
              this, SLOT (processStopped (KProcess *)));
     QString conffile = locateLocal ("data", "kmplayer/ffserver.conf");
     const char * noaudio = m_player->process ()->source ()->audioDevice ().isEmpty () ? "NoAudio" : "";
-    FFServerSetting & ffs = ffserversettings;
+    FFServerSetting ffs;
+    m_configpage->getSettings (ffs);
     QString acl;
     QStringList::iterator it = ffs.acl.begin ();
     for (; it != ffs.acl.end (); ++it)
@@ -532,7 +533,8 @@ void KMPlayerBroadcastConfig::processOutput (KProcess * p, char * s, int) {
 }
 
 void KMPlayerBroadcastConfig::startFeed () {
-    FFServerSetting & ffs = ffserversettings;
+    FFServerSetting ffs;
+    m_configpage->getSettings (ffs);
     QString ffurl;
     if (!m_ffserver_process || !m_ffserver_process->isRunning ()) {
         KMessageBox::error (m_configpage, i18n ("Failed to start ffserver.\n") + m_ffserver_out, i18n ("Error"));
