@@ -491,7 +491,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerListViewItem::KMPlayerListViewItem (QListView *v, co
 }
 
 KDE_NO_EXPORT void KMPlayerListViewItem::init () {
-    setText (0, m_elm->isMrl () ? m_elm->mrl()->src : QString (m_elm->tagName ()));
     setPixmap (0, m_elm->isMrl () ? *video_pix : *folder_pix);
 }
 
@@ -511,6 +510,7 @@ static void populateTree (ElementPtr e, ElementPtr focus, QListView * tree, QLis
     }
     for (ElementPtr c = e->firstChild (); c; c = c->nextSibling ()) {
         QListViewItem * i = new KMPlayerListViewItem (item, c);
+        i->setText (0, c->isMrl () ? c->mrl ()->src : QString (c->tagName ()));
         item->insertItem (i);
         populateTree (c, focus, tree, i);
     }
@@ -520,6 +520,7 @@ void KMPlayerPlayListView::updateTree (ElementPtr root, ElementPtr active) {
     clear ();
     if (!root) return;
     QListViewItem * item = new KMPlayerListViewItem (this, root);
+    item->setText (0, KURL (root->mrl()->src).prettyURL ());
     insertItem (item);
     populateTree (root, active, this, item);
     //if (root->hasChildNodes ())
