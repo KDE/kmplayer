@@ -51,7 +51,7 @@ static MPlayerAudioDriver _ads[] = {
     { 0, QString::null }
 };
 
-static const int ADRIVER_ARTS_INDEX = 2;
+static const int ADRIVER_ARTS_INDEX = 4;
 
 FFServerSetting::FFServerSetting (int i, const QString & n, const QString & f, const QString & ac, int abr, int asr, const QString & vc, int vbr, int q, int fr, int gs, int w, int h)
  : index (i), name (n), format (f), audiocodec (ac),
@@ -735,8 +735,7 @@ void KMPlayerSettings::okPressed () {
 
     videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentItem();
     audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentItem();
-    if (audiodriver == ADRIVER_ARTS_INDEX)
-    	    view->setUseArts(true);
+    view->setUseArts(audiodriver == ADRIVER_ARTS_INDEX);
     //postproc
     postprocessing = configdialog->m_OPPagePostproc->postProcessing->isChecked();
     disableppauto = configdialog->m_OPPagePostproc->disablePPauto->isChecked();
