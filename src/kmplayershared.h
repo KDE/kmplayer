@@ -117,9 +117,10 @@ struct SharedPtr {
 template <class T>
 inline SharedPtr<T> & SharedPtr<T>::operator = (const SharedPtr<T> & s) {
     if (data != s.data) {
-        if (data) data->release ();
+        SharedData<T> * tmp = data;
         data = s.data;
         if (data) data->addRef ();
+        if (tmp) tmp->release ();
     }
     return *this;
 }
@@ -160,9 +161,10 @@ struct WeakPtr {
 template <class T>
 inline WeakPtr<T> & WeakPtr<T>::operator = (const WeakPtr<T> & w) {
     if (data != w.data) {
-        if (data) data->releaseWeak ();
+        SharedData<T> * tmp = data;
         data = w.data;
         if (data) data->addWeakRef ();
+        if (tmp) data->releaseWeak ();
     }
     return *this;
 }
@@ -170,9 +172,10 @@ inline WeakPtr<T> & WeakPtr<T>::operator = (const WeakPtr<T> & w) {
 template <class T>
 inline WeakPtr<T> & WeakPtr<T>::operator = (const SharedPtr<T> & s) {
     if (data != s.data) {
-        if (data) data->releaseWeak ();
+        SharedData<T> * tmp = data;
         data = s.data;
         if (data) data->addWeakRef ();
+        if (tmp) data->releaseWeak ();
     }
     return *this;
 }
@@ -191,9 +194,10 @@ template <class T> inline SharedPtr<T>::SharedPtr (const WeakPtr <T> & w) : data
 template <class T>
 inline SharedPtr<T> & SharedPtr<T>::operator = (const WeakPtr<T> & s) {
     if (data != s.data) {
-        if (data) data->release ();
+        SharedData<T> * tmp = data;
         data = s.data;
         if (data) data->addRef ();
+        if (tmp) data->release ();
     }
     return *this;
 }
