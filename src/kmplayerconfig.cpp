@@ -26,7 +26,6 @@
 #include <qtabwidget.h>
 #include <qslider.h>
 #include <qlabel.h>
-#include <qtable.h>
 #include <qbuttongroup.h>
 #include <kurlrequester.h>
 #include <klineedit.h>
@@ -85,7 +84,7 @@ FFServerSetting & FFServerSetting::operator = (const FFServerSetting & fs) {
 }
 
 FFServerSetting & FFServerSetting::operator = (const QStringList & sl) {
-    if (sl.count () != 11) {
+    if (sl.count () < 11) {
         return *this;
     }
     QStringList::const_iterator it = sl.begin ();
@@ -100,6 +99,9 @@ FFServerSetting & FFServerSetting::operator = (const QStringList & sl) {
     gopsize = *it++;
     width = *it++;
     height = *it++;
+    acl.clear ();
+    for (; it != sl.end (); ++it)
+        acl.push_back (*it);
     return *this;
 }
 
@@ -140,17 +142,11 @@ const QStringList FFServerSetting::list () {
     sl.push_back (gopsize);
     sl.push_back (width);
     sl.push_back (height);
+    QStringList::const_iterator it = acl.begin ();
+    for (; it != acl.end (); ++it)
+        sl.push_back (*it);
     return sl;
 }
-
-static FFServerSetting _ffs[] = {
-    FFServerSetting (0, i18n ("Modem (32k)"), QString ("avi"), QString ("mp3"), 8, 11025, QString ("mpeg4"), 50, 19, 3, 3, 160, 128 ),
-    FFServerSetting (1, i18n ("ISDN (64k)"), QString ("avi"), QString ("mp3"), 8, 11025, QString ("mpeg4"), 50, 16, 3, 3, 320, 240 ),
-    FFServerSetting (2, i18n ("ISDN2 (128k)"), QString ("avi"), QString ("mp3"), 32, 22050, QString ("mpeg4"), 80, 10, 10, 12, 320, 240 ),
-    FFServerSetting (3, i18n ("LAN (1024k)"), QString ("mpeg"), QString::null, 64, 44100, QString::null, 512, 5, 25, 12, 320, 240 ),
-    FFServerSetting (4, i18n ("Custom"), QString::null, QString::null, 0, 0, QString::null, 0, 0, 0, 0, 0, 0 ),
-    FFServerSetting (-1, QString::null, QString::null, QString::null, 0, 0, QString::null, 0, 0, 0, 0, 0, 0 )
-};
 
 TVChannel::TVChannel (const QString & n, int f) : name (n), frequency (f) {}
 
@@ -173,7 +169,6 @@ void TVDevice::clear () {
 KMPlayerSettings::KMPlayerSettings (KMPlayer * player, KConfig * config)
   : configdialog (0L), m_config (config), m_player (player) {
     audiodrivers = _ads;
-    ffserversettings = _ffs;
 }
 
 KMPlayerSettings::~KMPlayerSettings () {
@@ -290,9 +285,9 @@ static const char * strMaxClients = "Maximum Connections";
 static const char * strMaxBandwidth = "Maximum Bandwidth";
 static const char * strFeedFile = "Feed File";
 static const char * strFeedFileSize = "Feed File Size";
-static const char * strFFServerSetting = "FFServer Setting";
+//static const char * strFFServerSetting = "FFServer Setting";
 static const char * strFFServerCustomSetting = "Custom Setting";
-static const char * strFFServerACL = "FFServer ACL";
+static const char * strFFServerProfiles = "Profiles";
 
 void KMPlayerSettings::readConfig () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
@@ -463,20 +458,23 @@ void KMPlayerSettings::readConfig () {
     maxbandwidth = m_config->readNumEntry (strMaxBandwidth, 1000);
     feedfile = m_config->readPathEntry (strFeedFile, "/tmp/kmplayer.ffm");
     feedfilesize = m_config->readNumEntry (strFeedFileSize, 512);
-    ffserversetting = m_config->readNumEntry (strFFServerSetting, 0);
-    if (ffserversetting == 4)
-        ffserversettings[4] = m_config->readListEntry (strFFServerCustomSetting, ';');
-    ffserveracl = m_config->readListEntry (strFFServerACL, ';');
-    if (!ffserveracl.count ()) {
-        ffserveracl.push_back (QString ("127.0.0.1"));
-        ffserveracl.push_back (QString ("10.0.0.0 10.255.255.255"));
-        ffserveracl.push_back (QString ("192.168.0.0 192.168.255.255"));
+    ffserversettings = m_config->readListEntry (strFFServerCustomSetting, ';');
+    QStringList profiles = m_config->readListEntry (strFFServerProfiles, ';');
+    QStringList::iterator pr_it = profiles.begin ();
+    for (; pr_it != profiles.end (); ++pr_it) {
+        QStringList sl = m_config->readListEntry (QString ("Profile_") + *pr_it, ';');
+        if (sl.size () > 10) {
+            FFServerSetting * ffs = new FFServerSetting (sl);
+            ffs->name = *pr_it;
+            ffserversettingprofiles.push_back (ffs);
+        }
+        
     }
 }
 
 void KMPlayerSettings::show () {
     if (!configdialog) {
-        configdialog = new KMPlayerPreferences (m_player, _ads, _ffs);
+        configdialog = new KMPlayerPreferences (m_player, _ads, ffserversettingprofiles);
         configdialog->m_SourcePageTV->scanner = new TVDeviceScannerSource (m_player);
         connect (configdialog, SIGNAL (okClicked ()),
                 this, SLOT (okPressed ()));
@@ -581,17 +579,7 @@ void KMPlayerSettings::show () {
     configdialog->m_BroadcastPage->maxbandwidth->setText (QString::number (maxbandwidth));
     configdialog->m_BroadcastPage->feedfile->setText (feedfile);
     configdialog->m_BroadcastPage->feedfilesize->setText (QString::number (feedfilesize));
-    configdialog->m_BroadcastFormatPage->optimize->setCurrentItem (ffserversetting);
-    configdialog->m_BroadcastFormatPage->custom = ffserversettings[4];
-    configdialog->m_BroadcastFormatPage->format->insertItem (QString (""));
-    configdialog->m_BroadcastFormatPage->format->setCurrentText (QString (""));
-    configdialog->m_BroadcastFormatPage->slotIndexChanged (ffserversetting);
-    QTable *accesslist = configdialog->m_BroadcastACLPage->accesslist;
-    accesslist->setNumRows (0);
-    accesslist->setNumRows (50);
-    QStringList::iterator it = ffserveracl.begin ();
-    for (int i = 0; it != ffserveracl.end (); ++i, ++it)
-        accesslist->setItem (i, 0, new QTableItem (accesslist, QTableItem::Always, *it));
+    configdialog->m_BroadcastFormatPage->setSettings (ffserversettings);
 
     configdialog->show ();
 }
@@ -737,10 +725,13 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strMaxBandwidth, maxbandwidth);
     m_config->writePathEntry (strFeedFile, feedfile);
     m_config->writeEntry (strFeedFileSize, feedfilesize);
-    m_config->writeEntry (strFFServerSetting, ffserversetting);
-    if (ffserversetting == 4)
-        m_config->writeEntry (strFFServerCustomSetting, ffserversettings[4].list (), ';');
-    m_config->writeEntry (strFFServerACL, ffserveracl, ';');
+    m_config->writeEntry (strFFServerCustomSetting, ffserversettings.list (), ';');
+    QStringList sl;
+    for (int i = 0; i < (int) ffserversettingprofiles.size (); i++) {
+        sl.push_back (ffserversettingprofiles[i]->name);
+        m_config->writeEntry (QString ("Profile_") + ffserversettingprofiles[i]->name, ffserversettingprofiles[i]->list(), ';');
+    }
+    m_config->writeEntry (strFFServerProfiles, sl, ';');
     m_config->sync ();
 }
 
@@ -889,16 +880,7 @@ void KMPlayerSettings::okPressed () {
     maxbandwidth = configdialog->m_BroadcastPage->maxbandwidth->text ().toInt();
     feedfile = configdialog->m_BroadcastPage->feedfile->text ();
     feedfilesize = configdialog->m_BroadcastPage->feedfilesize->text ().toInt();
-    ffserversetting = configdialog->m_BroadcastFormatPage->optimize->currentItem ();
-    configdialog->m_BroadcastFormatPage->slotIndexChanged (ffserversetting);
-    if (ffserversetting == 4)
-        ffserversettings[4] = configdialog->m_BroadcastFormatPage->custom;
-    ffserveracl.clear ();
-    QTable *accesslist = configdialog->m_BroadcastACLPage->accesslist;
-    for (int i = 0; i < accesslist->numRows (); ++i) {
-        if (accesslist->item (i, 0) && !accesslist->item (i, 0)->text ().isEmpty ())
-            ffserveracl.push_back (accesslist->item (i, 0)->text ());
-    }
+    configdialog->m_BroadcastFormatPage->getSettings(ffserversettings);
     writeConfig ();
 
     emit configChanged ();

@@ -274,7 +274,7 @@ void KMPlayerApp::openDocumentFile (const KURL& url)
     if (broadcasting () && url.url() == m_ffserver_url) {
         // speed up replay
         KMPlayerSettings * conf = m_player->settings ();
-        FFServerSetting & ffs = conf->ffserversettings[conf->ffserversetting];
+        FFServerSetting & ffs = conf->ffserversettings;
         KMPlayerSource * source = m_player->process ()->source ();
         if (!ffs.width.isEmpty () && !ffs.height.isEmpty ()) {
             source->setWidth (ffs.width.toInt ());
@@ -367,12 +367,12 @@ void KMPlayerApp::broadcastClicked () {
         source = m_tvsource->tvsource ();
     const char * noaudio = source && source->audiodevice.isEmpty () ? "NoAudio" : "";
     KMPlayerSettings * conf = m_player->settings ();
+    FFServerSetting & ffs = conf->ffserversettings;
     QString acl;
-    QStringList::iterator it = conf->ffserveracl.begin ();
-    for (; it != conf->ffserveracl.end (); ++it)
+    QStringList::iterator it = ffs.acl.begin ();
+    for (; it != ffs.acl.end (); ++it)
         acl += QString ("ACL allow ") + *it + QString ("\n");
     unlink (conf->feedfile.ascii ());
-    FFServerSetting & ffs = conf->ffserversettings[conf->ffserversetting];
     QFile qfile (conffile);
     qfile.open (IO_WriteOnly);
     QString configdata;
@@ -398,7 +398,7 @@ void KMPlayerApp::processOutput (KProcess * p, char * s, int) {
 
 void KMPlayerApp::startFeed () {
     KMPlayerSettings * conf = m_player->settings ();
-    FFServerSetting & ffs = conf->ffserversettings[conf->ffserversetting];
+    FFServerSetting & ffs = conf->ffserversettings;
     do {
         if (!m_ffserver_process || !m_ffserver_process->isRunning ()) {
             KMessageBox::error (this, i18n ("Failed to start ffserver.\n") + m_ffserver_out, i18n ("Error"));

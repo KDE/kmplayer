@@ -113,9 +113,8 @@ public:
     int maxbandwidth;
     QString feedfile;
     int feedfilesize;
-    FFServerSetting * ffserversettings;
-    int ffserversetting;
-    QStringList ffserveracl;
+    FFServerSetting ffserversettings;
+    FFServerSettingList ffserversettingprofiles;
     int seektime;
     int cachesize;
     int videodriver;

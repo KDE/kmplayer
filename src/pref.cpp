@@ -54,7 +54,7 @@
 #include "kmplayerprocess.h"
 #include "kmplayerconfig.h"
 
-KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver * ad, FFServerSetting * ffs)
+KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver * ad, FFServerSettingList & ffs)
 : KDialogBase (IconList, i18n ("KMPlayer Preferences"),
 		Help|Default|Ok|Apply|Cancel, Ok, player->view (), 0, false)
 {
@@ -105,12 +105,10 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
     vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
-    m_BroadcastPage = new KMPlayerPrefBroadcastPage (tab);
-    tab->insertTab (m_BroadcastPage, i18n ("Broadcasting (ffserver)"));
     m_BroadcastFormatPage = new KMPlayerPrefBroadcastFormatPage (tab, ffs);
-    tab->insertTab (m_BroadcastFormatPage, i18n ("Format"));
-    m_BroadcastACLPage = new KMPlayerPrefBroadcastACLPage (tab);
-    tab->insertTab (m_BroadcastACLPage, i18n ("ACL"));
+    tab->insertTab (m_BroadcastFormatPage, i18n ("Profiles"));
+    m_BroadcastPage = new KMPlayerPrefBroadcastPage (tab);
+    tab->insertTab (m_BroadcastPage, i18n ("FFServer"));
 
     /*
      * not yet needed...
@@ -685,21 +683,21 @@ KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent) : QFrame 
     gridlayout->addWidget (feedfilesize, 5, 1);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
+#undef ADDPROPERTY
+#define ADDPROPERTY(label,qedit,gridlayout,row,parent)                  \
+    qedit = new QLineEdit ("", parent);                                 \
+    gridlayout->addWidget (new QLabel (qedit, label, parent), row, 0);  \
+    gridlayout->addWidget (qedit, row, 1);
 
-KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *parent, FFServerSetting * _ffs) : QFrame (parent), ffs (_ffs) 
+KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *parent, FFServerSettingList & ffs) : QFrame (parent), profiles (ffs) 
 {
-    QVBoxLayout *layout = new QVBoxLayout (this, 5);
-    QGridLayout *gridlayout = new QGridLayout (layout, 2, 2, 2);
-    QLabel * label = new QLabel (i18n ("Optimize for:"), this);
-    optimize = new QComboBox(this);
-    for (FFServerSetting * s = ffs; s->index >=0; s++)
-        optimize->insertItem (s->name, s->index);
-    connect (optimize, SIGNAL (activated (int)),
-             this, SLOT (slotIndexChanged (int)));
-    gridlayout->addWidget (label, 0, 0);
-    gridlayout->addWidget (optimize, 0, 1);
-    label = new QLabel (i18n ("Format:"), this);
+    QHBoxLayout *layout = new QHBoxLayout (this, 5);
+    QGridLayout *formatlayout = new QGridLayout (11, 2, 2);
+    formatlayout->setAlignment (Qt::AlignTop);
+    QVBoxLayout *rightlayout = new QVBoxLayout (5);
     format = new QComboBox (this);
+    QLabel * label = new QLabel (format, i18n ("Format:"), this);
+    format->clear ();
     format->insertItem (QString ("asf"));
     format->insertItem (QString ("avi"));
     format->insertItem (QString ("mpjpeg"));
@@ -707,60 +705,70 @@ KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *paren
     format->insertItem (QString ("rm"));
     format->insertItem (QString ("swf"));
     QToolTip::add (format, i18n ("Only avi, mpeg and rm work for mplayer playback"));
-    gridlayout->addWidget (label, 1, 0);
-    gridlayout->addWidget (format, 1, 1);
-    movieparams = new QGroupBox (10, Qt::Horizontal, i18n("Optional Settings"), this);
-    movieparams->setColumns (2);
-    QToolTip::add (movieparams, i18n ("Leave field empty for default with this format"));
-    label = new QLabel (i18n ("Audio codec:"), movieparams);
-    audiocodec = new QLineEdit ("", movieparams);
-    label = new QLabel (i18n ("Audio bit rate (kbit):"), movieparams);
-    audiobitrate = new QLineEdit ("", movieparams);
-    label = new QLabel (i18n ("Audio sample rate (Hz):"), movieparams);
-    audiosamplerate = new QLineEdit ("", movieparams);
-    label = new QLabel (i18n ("Video codec:"), movieparams);
-    videocodec = new QLineEdit ("", movieparams);
-    label = new QLabel (i18n ("Video bit rate (kbit):"), movieparams);
-    videobitrate = new QLineEdit ("", movieparams);
-    label = new QLabel (i18n ("Quality (1-31):"), movieparams);
-    quality = new QLineEdit ("", movieparams);
-    label = new QLabel (i18n ("Frame rate (Hz):"), movieparams);
-    framerate = new QLineEdit ("", movieparams);
-    label = new QLabel (i18n ("Gop size:"), movieparams);
-    gopsize = new QLineEdit ("", movieparams);
-    label = new QLabel (i18n ("Width (pixels):"), movieparams);
-    moviewidth = new QLineEdit ("", movieparams);
-    label = new QLabel (i18n ("Height (pixels):"), movieparams);
-    movieheight = new QLineEdit ("", movieparams);
-    layout->addWidget (movieparams);
-    movieparams->setEnabled (false);
+    formatlayout->addWidget (label, 0, 0);
+    formatlayout->addWidget (format, 0, 1);
+    ADDPROPERTY (i18n ("Audio codec:"), audiocodec, formatlayout, 1, this);
+    ADDPROPERTY (i18n ("Audio bit rate (kbit):"), audiobitrate, formatlayout, 2, this);
+    ADDPROPERTY (i18n ("Audio sample rate (Hz):"), audiosamplerate, formatlayout, 3, this);
+    ADDPROPERTY (i18n ("Video codec:"), videocodec, formatlayout, 4, this);
+    ADDPROPERTY (i18n ("Video bit rate (kbit):"), videobitrate, formatlayout, 5, this);
+    ADDPROPERTY (i18n ("Quality (1-31):"), quality, formatlayout, 6, this);
+    ADDPROPERTY (i18n ("Frame rate (Hz):"), framerate, formatlayout, 7, this);
+    ADDPROPERTY (i18n ("Gop size:"), gopsize, formatlayout, 8, this);
+    ADDPROPERTY (i18n ("Width (pixels):"), moviewidth, formatlayout, 9, this);
+    ADDPROPERTY (i18n ("Height (pixels):"), movieheight, formatlayout, 10, this);
+    label = new QLabel (i18n ("Allow Access from:"), this);
+    accesslist = new QTable (40, 1, this);
+    accesslist->setColumnWidth (0, 250);
+    QToolTip::add (accesslist, i18n ("'Single IP' or 'start-IP end-IP' for IP ranges"));
+    QHeader *header = accesslist->horizontalHeader ();
+    header->setLabel (0, i18n ("Host/IP or IP range"));
+    QFrame *profileframe = new QFrame (this);
+    QGridLayout *profileslayout = new QGridLayout (profileframe, 4, 2, 2);
+    profile = new QLineEdit ("", profileframe);
+    connect (profile, SIGNAL(textChanged (const QString &)),
+             this, SLOT (slotTextChanged (const QString &)));
+    profilelist = new QListBox (profileframe);
+    for (int i = 0; i < (int) profiles.size (); i++)
+        profilelist->insertItem (profiles[i]->name, i);
+    connect (profilelist, SIGNAL (selected (int)),
+             this, SLOT (slotIndexChanged (int)));
+    connect (profilelist, SIGNAL (highlighted (int)),
+             this, SLOT (slotItemHighlighted (int)));
+    load = new QPushButton (i18n ("Load"), profileframe);
+    save = new QPushButton (i18n ("Save"), profileframe);
+    del = new QPushButton (i18n ("Delete"), profileframe);
+    load->setEnabled (false);
+    save->setEnabled (false);
+    del->setEnabled (false);
+    connect (load, SIGNAL (clicked ()), this, SLOT (slotLoad ()));
+    connect (save, SIGNAL (clicked ()), this, SLOT (slotSave ()));
+    connect (del, SIGNAL (clicked ()), this, SLOT (slotDelete ()));
+    profileslayout->addWidget (profile, 0, 0);
+    profileslayout->addMultiCellWidget (profilelist, 1, 3, 0, 0);
+    profileslayout->addWidget (load, 1, 1);
+    profileslayout->addWidget (save, 2, 1);
+    profileslayout->addWidget (del, 3, 1);
+    rightlayout->addWidget (profileframe);
+    QFrame * line = new QFrame (this);
+    line->setFrameShape (QFrame::HLine);
+    rightlayout->addWidget (line);
+    rightlayout->addWidget (label);
+    rightlayout->addWidget (accesslist);
+    rightlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    layout->addLayout (rightlayout);
+    line = new QFrame (this);
+    line->setFrameShape (QFrame::VLine);
+    layout->addWidget (line);
+    layout->addLayout (formatlayout);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    //QHBoxLayout *buttonlayout = new QHBoxLayout ();
-    //buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
-    //QPushButton * addformat = new QPushButton (i18n ("Add Movie Format..."), this);
-    //buttonlayout->addWidget (addformat);
-    //layout->addLayout (buttonlayout);
 }
 
-void KMPlayerPrefBroadcastFormatPage::slotIndexChanged (int index) {
-    bool iscustom = ffs[index].name == i18n ("Custom");
-    FFServerSetting & fs = iscustom ? custom : ffs[index];
-    if (iscustom && !format->currentText ().isEmpty ()) {
-        fs.format = format->currentText ();
-        fs.audiocodec = audiocodec->text ();
-        fs.audiobitrate = audiobitrate->text ();
-        fs.audiosamplerate = audiosamplerate->text ();
-        fs.videocodec = videocodec->text ();
-        fs.videobitrate = videobitrate->text ();
-        fs.quality = quality->text ();
-        fs.framerate = framerate->text ();
-        fs.gopsize = gopsize->text ();
-        fs.width = moviewidth->text ();
-        fs.height = movieheight->text ();
-    }
-    if (format->currentText ().isEmpty ())
-        format->removeItem (format->currentItem ());
-    format->setCurrentText (fs.format);
+#undef ADDPROPERTY
+
+void KMPlayerPrefBroadcastFormatPage::setSettings (const FFServerSetting & fs) {
+    if (!fs.format.isEmpty ())
+        format->setCurrentText (fs.format);
     audiocodec->setText (fs.audiocodec);
     audiobitrate->setText (fs.audiobitrate);
     audiosamplerate->setText (fs.audiosamplerate);
@@ -771,21 +779,80 @@ void KMPlayerPrefBroadcastFormatPage::slotIndexChanged (int index) {
     gopsize->setText (fs.gopsize);
     moviewidth->setText (fs.width);
     movieheight->setText (fs.height);
-    format->setEnabled (iscustom);
-    movieparams->setEnabled (iscustom);
+    accesslist->setNumRows (0);
+    accesslist->setNumRows (50);
+    QStringList::const_iterator it = fs.acl.begin ();
+    for (int i = 0; it != fs.acl.end (); ++i, ++it)
+        accesslist->setItem (i, 0, new QTableItem (accesslist, QTableItem::Always, *it));
 }
 
-KMPlayerPrefBroadcastACLPage::KMPlayerPrefBroadcastACLPage (QWidget *parent)
-: QFrame (parent) {
-    QVBoxLayout *layout = new QVBoxLayout (this, 5);
-    QLabel * label = new QLabel (i18n ("Allow access from:"), this);
-    layout->addWidget (label);
-    accesslist = new QTable (40, 1, this);
-    accesslist->setColumnWidth (0, 300);
-    QToolTip::add (accesslist, i18n ("'Single IP' or 'start-IP end-IP' for IP ranges"));
-    QHeader *header = accesslist->horizontalHeader ();
-    header->setLabel (0, i18n ("Host/IP or IP range"));
-    layout->addWidget (accesslist);
+void KMPlayerPrefBroadcastFormatPage::getSettings (FFServerSetting & fs) {
+    fs.format = format->currentText ();
+    fs.audiocodec = audiocodec->text ();
+    fs.audiobitrate = audiobitrate->text ();
+    fs.audiosamplerate = audiosamplerate->text ();
+    fs.videocodec = videocodec->text ();
+    fs.videobitrate = videobitrate->text ();
+    fs.quality = quality->text ();
+    fs.framerate = framerate->text ();
+    fs.gopsize = gopsize->text ();
+    fs.width = moviewidth->text ();
+    fs.height = movieheight->text ();
+    fs.acl.clear ();
+    for (int i = 0; i < accesslist->numRows (); ++i) {
+        if (accesslist->item (i, 0) && !accesslist->item (i, 0)->text ().isEmpty ())
+            fs.acl.push_back (accesslist->item (i, 0)->text ());
+    }
+}
+
+void KMPlayerPrefBroadcastFormatPage::slotIndexChanged (int index) {
+    slotItemHighlighted (index);
+    if (index > 0 && index < (int) profiles.size ())
+        setSettings (*profiles[index]);
+}
+
+void KMPlayerPrefBroadcastFormatPage::slotTextChanged (const QString & txt) {
+    save->setEnabled (txt.length ());
+}
+
+void KMPlayerPrefBroadcastFormatPage::slotItemHighlighted (int index) {
+    if (index < 0 || index >= (int) profiles.size ()) {
+        load->setEnabled (false);
+        del->setEnabled (false);
+    } else {
+        profile->setText (profiles[profilelist->currentItem ()]->name);
+        load->setEnabled (true);
+        del->setEnabled (true);
+        slotTextChanged (profilelist->currentText ());
+    }
+}
+
+void KMPlayerPrefBroadcastFormatPage::slotSave () {
+    for (int i = 0; i < (int) profiles.size (); ++i)
+        if (profiles[i]->name == profile->text ()) {
+            getSettings (*profiles[i]);
+            return;
+        }
+    FFServerSetting * fs = new FFServerSetting;
+    fs->name = profile->text ();
+    getSettings (*fs);
+    profiles.push_back (fs);
+    profilelist->insertItem (fs->name);
+}
+
+void KMPlayerPrefBroadcastFormatPage::slotLoad () {
+    setSettings (*profiles[profilelist->currentItem ()]);
+}
+
+void KMPlayerPrefBroadcastFormatPage::slotDelete () {
+    FFServerSettingList::iterator it = profiles.begin();
+    for (int i = 0; i < profilelist->currentItem (); i++)
+        ++it;
+    delete *it;
+    profiles.erase (it);
+    profilelist->removeItem (profilelist->currentItem ());
+    load->setEnabled (false);
+    del->setEnabled (false);
 }
 
 KMPlayerPrefGeneralPageVCD::KMPlayerPrefGeneralPageVCD(QWidget *parent) : QFrame(parent)

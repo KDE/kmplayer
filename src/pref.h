@@ -28,6 +28,7 @@
 #define _KMPlayerPREF_H_
 
 #include <list>
+#include <vector>
 
 #include <kdialogbase.h>
 #include <qframe.h>
@@ -56,7 +57,6 @@ class KMPlayerPrefMEncoderPage;         // mencoder
 class KMPlayerPrefFFMpegPage;           // ffmpeg
 class KMPlayerPrefBroadcastPage;        // broadcast
 class KMPlayerPrefBroadcastFormatPage;  // broadcast format
-class KMPlayerPrefBroadcastACLPage;     // broadcast ACL
 class KMPlayerPrefGeneralPageOutput;	// general, output
 class KMPlayerPrefGeneralPageAdvanced;	// general, advanced, pattern matches etc.
 class KMPlayerPrefOPPageGeneral;	// OP = outputplugins, general
@@ -141,6 +141,7 @@ class FFServerSetting {
 public:
     FFServerSetting () {}
     FFServerSetting (int i, const QString & n, const QString & f, const QString & ac, int abr, int asr, const QString & vc, int vbr, int q, int fr, int gs, int w, int h);
+    FFServerSetting (const QStringList & sl) { *this = sl; }
     int index;
     QString name;
     QString format;
@@ -154,11 +155,14 @@ public:
     QString gopsize;
     QString width;
     QString height;
+    QStringList acl;
     FFServerSetting & operator = (const QStringList &);
     FFServerSetting & operator = (const FFServerSetting & fs);
     const QStringList list ();
     QString & ffconfig (QString & buf);
 };
+
+typedef std::vector <FFServerSetting *> FFServerSettingList;
 
 class TVDeviceScannerSource : public KMPlayerSource {
     Q_OBJECT
@@ -192,7 +196,7 @@ class KMPlayerPreferences : public KDialogBase
     Q_OBJECT
 public:
 
-    KMPlayerPreferences(KMPlayer *, MPlayerAudioDriver * ad, FFServerSetting *ffs);
+    KMPlayerPreferences(KMPlayer *, MPlayerAudioDriver * ad, FFServerSettingList &);
     ~KMPlayerPreferences();
 
     KMPlayerPrefGeneralPageGeneral 	*m_GeneralPageGeneral;
@@ -205,7 +209,6 @@ public:
     KMPlayerPrefFFMpegPage              *m_FFMpegPage;
     KMPlayerPrefBroadcastPage 		*m_BroadcastPage;
     KMPlayerPrefBroadcastFormatPage 	*m_BroadcastFormatPage;
-    KMPlayerPrefBroadcastACLPage 	*m_BroadcastACLPage;
     KMPlayerPrefGeneralPageOutput 	*m_GeneralPageOutput;
     KMPlayerPrefGeneralPageAdvanced	*m_GeneralPageAdvanced;
     KMPlayerPrefOPPageGeneral 		*m_OPPageGeneral;
@@ -422,11 +425,10 @@ class KMPlayerPrefBroadcastFormatPage : public QFrame
 {
     Q_OBJECT
 public:
-    KMPlayerPrefBroadcastFormatPage (QWidget *parent, FFServerSetting * _ffs);
+    KMPlayerPrefBroadcastFormatPage (QWidget *parent, FFServerSettingList &);
     ~KMPlayerPrefBroadcastFormatPage () {}
 
-    QComboBox * optimize;
-    QGroupBox * movieparams;
+    QListBox * profilelist;
     QComboBox * format;
     QLineEdit * audiocodec;
     QLineEdit * audiobitrate;
@@ -438,20 +440,22 @@ public:
     QLineEdit * gopsize;
     QLineEdit * moviewidth;
     QLineEdit * movieheight;
-    FFServerSetting custom;
-public slots:
+    QLineEdit * profile;
+    void setSettings (const FFServerSetting &);
+    void getSettings (FFServerSetting &);
+private slots:
     void slotIndexChanged (int index);
+    void slotItemHighlighted (int index);
+    void slotTextChanged (const QString &);
+    void slotLoad ();
+    void slotSave ();
+    void slotDelete ();
 private:
-    FFServerSetting * ffs;
-};
-
-class KMPlayerPrefBroadcastACLPage : public QFrame
-{
-    Q_OBJECT
-public:
-    KMPlayerPrefBroadcastACLPage (QWidget *parent);
-    ~KMPlayerPrefBroadcastACLPage () {}
     QTable * accesslist;
+    QPushButton * load;
+    QPushButton * save;
+    QPushButton * del;
+    FFServerSettingList & profiles;
 };
 
 class KMPlayerPrefGeneralPageOutput : public QFrame
