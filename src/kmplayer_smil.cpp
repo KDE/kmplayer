@@ -322,10 +322,10 @@ void TimedRuntime::setDurationItem (DurationTime item, const QString & val) {
             kdDebug() << "reg.cap (1) " << t << (ok && t > 0.000) << endl;
             QString u = reg.cap (2);
             if (u.startsWith ("m"))
-                dur = (unsigned int) (t * 60);
+                dur = (unsigned int) (10 * t * 60);
             else if (u.startsWith ("h"))
-                dur = (unsigned int) (t * 60 * 60);
-            dur = (unsigned int) t;
+                dur = (unsigned int) (10 * t * 60 * 60);
+            dur = (unsigned int) (10 * t);
         }
     } else if (vl.find ("indefinite") > -1)
         dur = duration_infinite;
@@ -380,7 +380,7 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
 
     if (durations [begin_time].durval > 0) {
         if (durations [begin_time].durval < duration_last_option) {
-            start_timer = startTimer (1000 * durations [begin_time].durval);
+            start_timer = startTimer (100 * durations [begin_time].durval);
         }
     } else {
         timingstate = timings_started;
@@ -446,7 +446,7 @@ QString TimedRuntime::setParam (const QString & name, const QString & val) {
                 timingstate == timings_stopped) {
             if (durations [begin_time].durval > 0) { // create a timer for start
                 if (durations [begin_time].durval < duration_last_option)
-                    start_timer = startTimer(1000*durations[begin_time].durval);
+                    start_timer = startTimer(100*durations[begin_time].durval);
             } else {                                // start now
                 timingstate = timings_started;
                 QTimer::singleShot (0, this, SLOT (started ()));
@@ -555,7 +555,7 @@ KDE_NO_EXPORT void TimedRuntime::started () {
     kdDebug () << "TimedRuntime::started " << (element ? element->nodeName() : "-") << endl; 
     if (durations [duration_time].durval > 0) {
         if (durations [duration_time].durval < duration_last_option) {
-            dur_timer = startTimer (1000 * durations [duration_time].durval);
+            dur_timer = startTimer (100 * durations [duration_time].durval);
             kdDebug () << "TimedRuntime::started set dur timer " << durations [duration_time].durval << endl;
         }
     } else if (!element ||
@@ -574,7 +574,7 @@ KDE_NO_EXPORT void TimedRuntime::stopped () {
     else if (0 < repeat_count--) {
         if (durations [begin_time].durval > 0 &&
                 durations [begin_time].durval < duration_last_option) {
-            start_timer = startTimer (1000 * durations [begin_time].durval);
+            start_timer = startTimer (100 * durations [begin_time].durval);
         } else {
             timingstate = timings_started;
             QTimer::singleShot (0, this, SLOT (started ()));
@@ -783,7 +783,7 @@ KDE_NO_EXPORT void AnimateData::started () {
                     kdDebug () << "AnimateData::started no to found" << endl;
                     return;
                 }
-                steps = durations [duration_time].durval * 1000 / 100;
+                steps = durations [duration_time].durval; // 10 per sec
                 if (steps > 0) {
                     anim_timer = startTimer (100); // 100 ms for now FIXME
                     change_delta = (change_to_val - change_from_val) / steps;
