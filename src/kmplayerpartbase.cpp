@@ -493,6 +493,7 @@ KAboutData* KMPlayer::createAboutData () {
 KMPlayerSource::KMPlayerSource (KMPlayer * player)
     : QObject (player), m_player (player) {
     kdDebug () << "KMPlayerSource::KMPlayerSource" << endl;
+    init ();
 }
 
 KMPlayerSource::~KMPlayerSource () {
@@ -512,7 +513,7 @@ void KMPlayerSource::init () {
 void KMPlayerSource::setLength (int len) {
     m_length = len;
     KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
-    if (view)
+    if (view && view->positionSlider ())
         view->positionSlider()->setMaxValue (len > 0 ? len + 9 : 300);
 }
 

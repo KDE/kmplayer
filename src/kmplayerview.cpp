@@ -377,8 +377,10 @@ static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char * const
 KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
   : KMediaPlayer::View (parent, name),
     m_image (0L),
+    m_posSlider (0L),
     m_artsserver (0L),
     m_svc (0L),
+    m_watch (0L),
     delayed_timer (0),
     m_keepsizeratio (false),
     m_show_console_output (false),
