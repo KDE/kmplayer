@@ -54,6 +54,7 @@
 #include <kstandarddirs.h>
 
 #include "kmplayer_part.h"
+#include "kmplayer_koffice_part.h"
 #include "kmplayerview.h"
 #include "kmplayerconfig.h"
 #include <qfile.h>
