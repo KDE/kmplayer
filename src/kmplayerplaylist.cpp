@@ -446,6 +446,20 @@ KDE_NO_CDTOR_EXPORT Document::~Document () {
     kdDebug () << "~Document\n";
 }
 
+static ElementPtr getElementByIdImpl (ElementPtr e, const QString & id) {
+    if (e->getAttribute ("id") == id)
+        return e;
+    ElementPtr elm;
+    for (ElementPtr c = e->firstChild (); c; c = c->nextSibling ())
+        if ((elm = getElementByIdImpl (c, id)))
+            break;
+    return elm;
+}
+
+ElementPtr Document::getElementById (const QString & id) {
+    return getElementByIdImpl (m_self, id);
+}
+
 KDE_NO_EXPORT ElementPtr Document::childFromTag (const QString & tag) {
     Element * elm = fromXMLDocumentGroup (m_doc, tag);
     if (elm)

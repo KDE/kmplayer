@@ -71,11 +71,34 @@ typedef WeakPtr<RegionNode> RegionNodePtrW;
 typedef SharedPtr<ElementRuntime> ElementRuntimePtr;
 
 
+/**
+ * Node for layout hierarchy as found in SMIL document
+ */
 class RegionNode {
 public:
     RegionNode (ElementPtr e);
     KDE_NO_CDTOR_EXPORT ~RegionNode () {}
+    /**
+     * paints background if background-color set and afterwards passes
+     * the painter of attached_element's runtime
+     */
     void paint (QPainter & p);
+    /**
+     * user clicked w/ the mouse on this region
+     */
+    void pointerClicked ();
+    /**
+     * user entered w/ the mouse this region
+     */
+    void pointerEntered ();
+    /**
+     * user left w/ the mouse this region
+     */
+    void pointerLeft ();
+    /**
+     * boolean for check if pointerEntered/pointerLeft should be called by View
+     */
+    bool has_mouse;
     /**
      * (Scaled) Dimensions set by viewer
      */
@@ -282,6 +305,7 @@ class KMPLAYER_EXPORT Document : public Mrl {
 public:
     Document (const QString &, PlayListNotify * notify = 0L);
     ~Document ();
+    ElementPtr getElementById (const QString & id);
     /** All nodes have shared pointers to Document,
      * so explicitly dispose it (calls clean and set m_doc to 0L)
      * */

@@ -263,6 +263,7 @@ KDE_NO_CDTOR_EXPORT ViewLayer::ViewLayer (QWidget * parent, View * view)
     setAcceptDrops (true);
     new KAction (i18n ("Escape"), KShortcut (Qt::Key_Escape), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_escape");
     new KAction (i18n ("Fullscreen"), KShortcut (Qt::Key_F), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_toggle");
+    setMouseTracking (true);
 }
 
 KDE_NO_EXPORT void ViewLayer::fullScreen () {
@@ -287,6 +288,33 @@ KDE_NO_EXPORT void ViewLayer::accelActivated () {
     m_view->controlPanel()->popupMenu ()->activateItemAt (m_view->controlPanel()->popupMenu ()->indexOf (ControlPanel::menu_fullscreen)); 
 }
 
+static bool mousePressForRegions (RegionNodePtr & rn, int x, int y) {
+    bool inside = x > rn->x && x < rn->x+rn->w && y > rn->y && y < rn->y+rn->h;
+    bool handled = false;
+    for (RegionNodePtr r = rn->firstChild; r; r = r->nextSibling)
+        handled |= mousePressForRegions (r, x, y);
+    if (!handled && inside)
+        rn->pointerClicked ();
+    return inside;
+}
+
+KDE_NO_EXPORT void ViewLayer::mousePressEvent (QMouseEvent * e) {
+    if (rootLayout)
+        mousePressForRegions (rootLayout, e->x (), e->y ());
+}
+
+static bool mouseMoveForRegions (RegionNodePtr & rn, int x, int y) {
+    bool inside = x > rn->x && x < rn->x+rn->w && y > rn->y && y < rn->y+rn->h;
+    bool handled = false;
+    for (RegionNodePtr r = rn->firstChild; r; r = r->nextSibling)
+        handled |= mouseMoveForRegions (r, x, y);
+    if (rn->has_mouse && (!inside || handled))
+        rn->pointerLeft ();
+    else if (inside && !handled && !rn->has_mouse)
+        rn->pointerEntered ();
+    return inside;
+}
+
 KDE_NO_EXPORT void ViewLayer::mouseMoveEvent (QMouseEvent * e) {
     if (e->state () == Qt::NoButton) {
         int vert_buttons_pos = height ();
@@ -294,6 +322,8 @@ KDE_NO_EXPORT void ViewLayer::mouseMoveEvent (QMouseEvent * e) {
         m_view->delayedShowButtons (e->y() > vert_buttons_pos-cp_height &&
                                     e->y() < vert_buttons_pos);
     }
+    if (rootLayout)
+        mouseMoveForRegions (rootLayout, e->x (), e->y ());
 }
 
 static void paintRegions (QPainter & p, RegionNodePtr & rn) {
@@ -1120,7 +1150,7 @@ void View::setControlPanelMode (ControlPanelMode m) {
                 m_control_panel->show ();
         } else
             m_control_panel->hide ();
-    m_layer->setMouseTracking (m_controlpanel_mode == CP_AutoHide && m_playing);
+    //m_layer->setMouseTracking (m_controlpanel_mode == CP_AutoHide && m_playing);
     m_layer->resizeEvent (0L);
 }
 
@@ -1228,7 +1258,7 @@ KDE_NO_EXPORT void View::videoStart () {
 KDE_NO_EXPORT void View::videoStop () {
     if (m_control_panel && m_controlpanel_mode == CP_AutoHide) {
         m_control_panel->show ();
-        m_layer->setMouseTracking (false);
+        //m_layer->setMouseTracking (false);
     }
     m_playing = false;
     XClearWindow (qt_xdisplay(), m_viewer->embeddedWinId ());

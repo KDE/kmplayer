@@ -59,8 +59,17 @@ public:
      * If this element is attached to a region, region_node points to it
      */
     RegionNodePtrW region_node;
+signals:
+    void activateEvent ();
+    void outOfBoundsEvent ();
+    void inBoundsEvent ();
+public slots:
+    void emitActivateEvent () { emit activateEvent (); }
+    void emitOutOfBoundsEvent () { emit outOfBoundsEvent (); }
+    void emitInBoundsEvent () { emit inBoundsEvent (); }
 protected slots:
     void timerEvent (QTimerEvent *);
+    void elementActivateEvent ();
     /**
      * start_timer timer expired
      */

@@ -37,7 +37,10 @@ using namespace KMPlayer;
 
 static const unsigned int duration_infinite = (unsigned int) -1;
 static const unsigned int duration_media = (unsigned int) -2;
-static const unsigned int duration_last_option = (unsigned int) -3;
+static const unsigned int duration_element_activated = (unsigned int) -3;
+static const unsigned int duration_element_inbounds = (unsigned int) -4;
+static const unsigned int duration_element_outbounds = (unsigned int) -5;
+static const unsigned int duration_last_option = (unsigned int) -6;
 
 //-----------------------------------------------------------------------------
 
@@ -73,9 +76,10 @@ KDE_NO_EXPORT void ElementRuntime::begin () {
     if (start_timer || dur_timer)
         end ();
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (media_element);
-    if (mt->begin_time > 0)
-        start_timer = startTimer (1000 * mt->begin_time);
-    else {
+    if (mt->begin_time > 0) {
+        if (mt->begin_time < duration_last_option)
+            start_timer = startTimer (1000 * mt->begin_time);
+    } else {
         isstarted = true;
         QTimer::singleShot (0, this, SLOT (started ()));
     }
@@ -100,6 +104,20 @@ KDE_NO_EXPORT void ElementRuntime::timerEvent (QTimerEvent * e) {
         isstarted = true;
         QTimer::singleShot (0, this, SLOT (started ()));
     } else if (e->timerId () == dur_timer) {
+        end ();
+        mt->timed_end ();
+    }
+}
+
+KDE_NO_EXPORT void ElementRuntime::elementActivateEvent () {
+    kdDebug () << "ElementRuntime::elementActivateEvent" << endl;
+    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (media_element);
+    if (!mt)
+        end ();
+    else if (!isstarted && mt->begin_time == duration_element_activated) {
+        isstarted = true;
+        QTimer::singleShot (0, this, SLOT (started ()));
+    } else if (isstarted && mt->end_time == duration_element_activated) {
         end ();
         mt->timed_end ();
     }
@@ -442,8 +460,8 @@ static unsigned int getSeconds (const QString & v) {
     if (reg.search (v) > -1) {
         bool ok;
         double t = reg.cap (1).toDouble (&ok);
-        kdDebug() << "reg.cap (1) " << t << (ok && t > 0.000) << endl;
         if (ok && t > 0.000) {
+            kdDebug() << "reg.cap (1) " << t << (ok && t > 0.000) << endl;
             QString u = reg.cap (2);
             if (u.startsWith ("m"))
                 return (unsigned int) (t * 60);
@@ -453,6 +471,12 @@ static unsigned int getSeconds (const QString & v) {
         }
     } else if (vl.find ("indefinite") > -1)
         return duration_infinite;
+    if (vl.find ("activateevent") > -1)
+        return duration_element_activated;
+    else if (vl.find ("inboundsevent") > -1)
+        return duration_element_inbounds;
+    else if (vl.find ("outofboundsevent") > -1)
+        return duration_element_outbounds;
     return 0; // also 0 for 'media' duration, so it will not update then
 }
 
@@ -496,6 +520,21 @@ KDE_NO_EXPORT void SMIL::MediaType::start () {
         region->attached_element = m_self;
         ElementRuntimePtr rt = getRuntime ();
         if (rt) {
+            if (begin_time == duration_element_activated) {
+                QString b = getAttribute ("begin");
+                int pos = b.find (QChar ('.'));
+                if (pos > 0) {
+                    ElementPtr e = document ()->getElementById (b.left (pos));
+                    if (e) {
+                        kdDebug () << "getElementById " << b.left (pos) << " " << e->nodeName () << endl;
+                        ElementRuntimePtr rt2 = e->getRuntime ();
+                        if (rt2) {
+                            rt->connect (rt2.ptr (), SIGNAL (activateEvent ()),
+                                    rt.ptr (), SLOT (elementActivateEvent ()));
+                        }
+                    }
+                }
+            }
             rt->region_node = region;
             rt->begin ();
         }
@@ -590,6 +629,35 @@ void RegionNode::paint (QPainter & p) {
         if (rt)
             rt->paint (p);
     }
+}
+
+void RegionNode::pointerClicked () {
+    if (attached_element) {
+        kdDebug () << "pointerClicked " << attached_element->nodeName () << endl;
+        ElementRuntimePtr rt = attached_element->getRuntime ();
+        if (rt)
+            rt->emitActivateEvent ();
+    }
+}
+
+void RegionNode::pointerEntered () {
+    has_mouse = true;
+    if (attached_element) {
+        kdDebug () << "pointerEntered " << attached_element->nodeName () << endl;
+        ElementRuntimePtr rt = attached_element->getRuntime ();
+        if (rt)
+            rt->emitInBoundsEvent ();
+    }
+}
+
+void RegionNode::pointerLeft () {
+    if (attached_element) {
+        kdDebug () << "pointerLeft " << attached_element->nodeName () << endl;
+        ElementRuntimePtr rt = attached_element->getRuntime ();
+        if (rt)
+            rt->emitOutOfBoundsEvent ();
+    }
+    has_mouse = false;
 }
 
 namespace KMPlayer {
