@@ -634,7 +634,8 @@ static void printTree (ElementPtr root, QString off=QString()) {
 void KMPlayerSource::setURL (const KURL & url) {
     m_url = url;
     m_back_request = 0L;
-    if (m_document && !m_document->hasChildNodes () && m_document->mrl()->src.isEmpty ())
+    if (m_document && !m_document->hasChildNodes () &&
+                (m_document->mrl()->src.isEmpty () || m_document->mrl()->src == url.url ()))
         // special case, mime is set first by plugin FIXME v
         m_document->mrl()->src = url.url ();
     else {
@@ -751,7 +752,7 @@ void KMPlayerSource::forward () {
 }
 
 QString KMPlayerSource::mime () const {
-    return m_current ? m_current->mrl ()->mimetype : QString ();
+    return m_current ? m_current->mrl ()->mimetype : (m_document ? m_document->mrl ()->mimetype : QString ());
 }
 
 void KMPlayerSource::setMime (const QString & m) {
@@ -892,7 +893,8 @@ void KMPlayerSource::requestElement (QListViewItem * item) {
     if (vi && vi->m_elm && vi->m_elm->isMrl ()) {
         m_back_request = vi->m_elm;
         m_player->process ()->stop ();
-    }
+    } else
+        m_player->process ()->view ()->playList ()->updateTree (m_document, m_current);
 }
 //-----------------------------------------------------------------------------
 
@@ -1064,8 +1066,11 @@ KDE_NO_EXPORT void KMPlayerURLSource::read (QTextStream & textstream) {
             QString mrl = line.stripWhiteSpace ();
             if (mrl.lower ().startsWith (QString ("asf ")))
                 mrl = mrl.mid (4).stripWhiteSpace ();
-            if (!mrl.isEmpty () && !mrl.startsWith (QChar ('#')))
-                insertURL (mrl);
+            if (!mrl.isEmpty () && !mrl.startsWith (QChar ('#'))) {
+                KURL url (mrl);
+                if (url.isValid ())
+                    insertURL (url.url ());
+            }
             line = textstream.readLine ();
         } while (!line.isNull ()); /* TODO && m_document.size () < 1024 / * support 1k entries * /);*/
     }
@@ -1105,12 +1110,22 @@ KDE_NO_EXPORT void KMPlayerURLSource::play () {
     if (url.isEmpty ())
         return;
     QString mimestr = mime ();
+    int plugin_pos = mimestr.find ("-plugin");
+    if (plugin_pos > 0)
+        mimestr.truncate (plugin_pos);
+    if (mimestr == QString ("audio/vnd.rn-realaudio") ||
+            (url.isLocalFile () &&
+             url.url ().lower ().endsWith (QString ("ram"))))
+        setMime (QString ("audio/x-pn-realaudio"));
     bool maybe_playlist = (url.url ().lower ().endsWith (QString ("m3u")) ||
             url.url ().lower ().endsWith (QString ("asx")) ||
             mimestr == QString ("audio/mpegurl") ||
             mimestr == QString ("audio/x-mpegurl") ||
             mimestr == QString ("video/x-ms-wmp") ||
             mimestr == QString ("video/x-ms-asf") ||
+            (mimestr == QString ("audio/x-pn-realaudio") &&
+             (url.protocol ().compare (QString ("rtsp")) ||
+              url.protocol ().compare (QString ("rtp")))) ||
             mimestr == QString ("application/smil") ||
             mimestr == QString ("application/x-mplayer2"));
     if (!m_current->mrl ()->parsed && url.isLocalFile ()) {
