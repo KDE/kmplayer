@@ -32,7 +32,6 @@
 #include <klocale.h>
 
 #include "kmplayer_part.h"
-#include "kmplayer_koffice_part.h"
 #include "kmplayerview.h"
 #include "kmplayerconfig.h"
 #include "kmplayerprocess.h"
@@ -55,12 +54,7 @@ KParts::Part *KMPlayerFactory::createPartObject
    QObject *parent, const char * name,
    const char * cls, const QStringList & args) {
       kdDebug() << "KMPlayerFactory::createPartObject " << cls << endl;
-#ifdef HAVE_KOFFICE
-    if (strstr (cls, "KoDocument"))
-        return new KOfficeMPlayer (wparent, wname, parent, name);
-    else
-#endif //HAVE_KOFFICE
-        return new KMPlayerPart (wparent, wname, parent, name, args);
+      return new KMPlayerPart (wparent, wname, parent, name, args);
 }
 
 //-----------------------------------------------------------------------------
