@@ -73,6 +73,12 @@ Atom xv_freq_atom;
 Atom xv_volume_atom;
 Atom xv_mute_atom;
 Atom xv_autopaint_colorkey_atom;
+enum {
+    limit_volume = 0,
+    limit_hue, limit_contrast, limit_brightness, limit_saturation,
+    limit_last
+};
+struct Limit { int min; int max; } xv_limits [limit_last];
 static QString elmentry ("entry");
 static QString elmitem ("item");
 static QString attname ("NAME");
@@ -128,23 +134,28 @@ void Backend::seek (int, bool /*absolute*/) {
 }
 
 void Backend::hue (int h, bool) {
-    xvapp->hue (10 * h);
+    if (xv_limits[limit_hue].max > xv_limits[limit_hue].min)
+        xvapp->hue ((h + 100) * (xv_limits[limit_hue].max - xv_limits[limit_hue].min)/200 + xv_limits[limit_hue].min);
 }
 
 void Backend::saturation (int s, bool) {
-    xvapp->saturation (10 * s);
+    if (xv_limits[limit_saturation].max > xv_limits[limit_saturation].min)
+        xvapp->saturation ((s + 100) * (xv_limits[limit_saturation].max - xv_limits[limit_saturation].min)/200 + xv_limits[limit_saturation].min);
 }
 
 void Backend::contrast (int c, bool) {
-    xvapp->contrast (10 * c);
+    if (xv_limits[limit_contrast].max > xv_limits[limit_contrast].min)
+        xvapp->contrast ((c + 100)*(xv_limits[limit_contrast].max - xv_limits[limit_contrast].min)/200 + xv_limits[limit_contrast].min);
 }
 
 void Backend::brightness (int b, bool) {
-    xvapp->brightness (10 * b);
+    if (xv_limits[limit_brightness].max > xv_limits[limit_brightness].min)
+        xvapp->brightness ((b + 100)*(xv_limits[limit_brightness].max - xv_limits[limit_brightness].min)/200 + xv_limits[limit_brightness].min);
 }
 
 void Backend::volume (int v, bool) {
-    xvapp->volume (v);
+    if (xv_limits[limit_volume].max > xv_limits[limit_volume].min)
+        xvapp->volume (v*(xv_limits[limit_volume].max - xv_limits[limit_volume].min)/100 + xv_limits[limit_volume].min);
 }
 
 void Backend::frequency (int f) {
@@ -326,7 +337,7 @@ void KXVideoPlayer::play () {
         gc = XCreateGC (display, wid, 0, NULL);
         XvSelectPortNotify (display, xvport, 1);
         XvSelectVideoNotify (display, wid, 1);
-        int cur_val;
+        int nr, cur_val;
         if (XvGetPortAttribute (display, xvport, xv_autopaint_colorkey_atom, &cur_val) == Success && cur_val == 0) {
             fprintf (stderr, "XV_AUTOPAINT_COLORKEY is 0\n");
             XvSetPortAttribute (display, xvport, xv_autopaint_colorkey_atom, 1);
@@ -337,6 +348,26 @@ void KXVideoPlayer::play () {
             XvSetPortAttribute (display, xvport, xv_mute_atom, 0);
             reset_xv_mute = true;
         }
+        XvAttribute *attributes = XvQueryPortAttributes (display, xvport, &nr);
+        if (attributes)
+            for (int i = 0; i < nr; i++) {
+                Limit * limit = 0;
+                Atom atom = XInternAtom (display, attributes[i].name, false);
+                if (atom == xv_volume_atom) {
+                    limit = xv_limits + limit_volume;
+                } else if (atom == xv_hue_atom) {
+                    limit = xv_limits + limit_hue;
+                } else if (atom == xv_saturation_atom) {
+                    limit = xv_limits + limit_saturation;
+                } else if (atom == xv_brightness_atom) {
+                    limit = xv_limits + limit_brightness;
+                } else if (atom == xv_contrast_atom) {
+                    limit = xv_limits + limit_contrast;
+                } else
+                    continue;
+                limit->min = attributes[i].min_value;
+                limit->max = attributes[i].max_value;
+            }
         if (xv_frequency > 0)
             XvSetPortAttribute (display, xvport, xv_freq_atom, int (1.0*xv_frequency/6.25));
         if (xv_encoding >= 0)

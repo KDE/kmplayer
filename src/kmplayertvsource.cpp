@@ -249,8 +249,11 @@ KDE_NO_EXPORT void KMPlayerTVSource::activate () {
         }
     } else
         KMPlayer::Source::first ();
-    if (m_current)
+    if (m_current) {
+        if (!strcmp (m_current->nodeName (), "tvchannel"))
+            m_frequency =KMPlayer::convertNode<TVChannel>(m_current)->frequency;
         jump (m_current);
+    }
 }
 /* TODO: playback by
  * ffmpeg -vd /dev/video0 -r 25 -s 768x576 -f rawvideo - |mplayer -nocache -ao arts -rawvideo on:w=768:h=576:fps=25 -quiet -
