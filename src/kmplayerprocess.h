@@ -82,7 +82,7 @@ protected:
     QStringList commands;
     bool m_use_slave : 1;
 protected slots:
-    void processStopped (KProcess *);
+    virtual void processStopped (KProcess *);
 private slots:
     void dataWritten (KProcess *);
 };
@@ -105,6 +105,8 @@ public slots:
     virtual bool hue (int pos, bool absolute);
     virtual bool contrast (int pos, bool absolute);
     virtual bool brightness (int pos, bool absolute);
+protected slots:
+    void processStopped (KProcess *);
 private slots:
     void processOutput (KProcess *, char *, int);
 private:

@@ -99,14 +99,13 @@ public:
 
     virtual bool processOutput (const QString & line);
     virtual bool hasLength ();
+    virtual void setIdentified (bool b = true);
 
     void setURL (const KURL & url);
 public slots:
     virtual void init ();
     virtual void activate ();
     virtual void deactivate ();
-    virtual void play ();
-    virtual void finished ();
 private:
     const QString buildArguments ();
     QValueList <KURL> m_urls;

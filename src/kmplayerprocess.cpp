@@ -163,7 +163,6 @@ void MPlayerBase::processStopped (KProcess *) {
     QTimer::singleShot (0, this, SLOT (emitFinished ()));
 }
 
-
 //-----------------------------------------------------------------------------
 
 MPlayer::MPlayer (KMPlayer * player)
@@ -186,8 +185,18 @@ bool MPlayer::play () {
     if (!source ()) return false;
     if (playing ())
         return sendCommand (QString ("gui_play"));
-    m_source->play ();
-    return m_process->isRunning ();
+    QString args = source ()->options () + QString (" ");
+    const KURL & url (source ()->url ());
+    if (!url.isEmpty ()) {
+        QString myurl (url.isLocalFile () ? url.path () : url.url ());
+        args += KProcess::quote (myurl);
+    }
+    if (!source ()->identified ())
+        args += QString (" -quiet -nocache -identify -frames 0 ");
+    else if (m_player->settings ()->loop)
+        args += QString (" -loop 0");
+
+    return run (args.ascii (), source ()->pipeCmd ().ascii ());
 }
 
 bool MPlayer::stop () {
@@ -277,8 +286,13 @@ bool MPlayer::run (const char * args, const char * pipe) {
         printf ("%s | ", pipe);
         *m_process << pipe << " | ";
     }
-    printf ("mplayer -wid %lu", (unsigned long) widget ()->winId ());
+    printf ("mplayer -wid %lu ", (unsigned long) widget ()->winId ());
     *m_process << "mplayer -wid " << QString::number (widget ()->winId ());
+
+    if (m_use_slave) {
+        printf ("-slave ");
+        *m_process << "-slave ";
+    }
 
     QString strVideoDriver;
 
@@ -304,10 +318,6 @@ bool MPlayer::run (const char * args, const char * pipe) {
     if (strAudioDriver != "") {
         printf (" -ao %s", strAudioDriver.lower().ascii());
         *m_process << " -ao " << strAudioDriver.lower().ascii();
-    }
-    if (settings->loop) {
-        printf (" -loop 0");
-        *m_process << " -loop 0";
     }
     if (settings->framedrop) {
         printf (" -framedrop");
@@ -409,6 +419,14 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
             }
         }
     } while (slen > 0);
+}
+
+void MPlayer::processStopped (KProcess *) {
+    if (!source ()->identified ()) {
+        source ()->setIdentified ();
+        QTimer::singleShot (0, this, SLOT (play ()));
+    } else
+        MPlayerBase::processStopped (0L);
 }
 
 //-----------------------------------------------------------------------------

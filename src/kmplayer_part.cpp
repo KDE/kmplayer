@@ -1048,6 +1048,11 @@ bool KMPlayerSource::isSeekable () {
     return true;
 }
 
+void KMPlayerSource::setIdentified (bool b) {
+    m_identified = b;
+    if (b)
+        m_player->setMovieLength (10 * length ());
+}
 //-----------------------------------------------------------------------------
 
 KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, const KURL & url)
@@ -1124,91 +1129,47 @@ bool KMPlayerURLSource::processOutput (const QString & str) {
 }
 
 const QString KMPlayerURLSource::buildArguments () {
-    m_recordCommand.truncate (0);
     m_ffmpegCommand.truncate (0);
     QString myurl (KProcess::quote (m_url.isLocalFile () ? m_url.path () : m_url.url ()));
-    m_recordCommand += myurl;
+    m_recordCommand = myurl;
     if (m_url.isLocalFile ())
         m_ffmpegCommand = QString ("-i ") + myurl;
     return myurl;
 }
 
-void KMPlayerURLSource::play () {
-    kdDebug () << "KMPlayerURLSource::play() " << m_url.url() << endl;
-    KURL url = m_url;
-    if (m_urls.count () > 0)
-        url = *m_urls.begin ();
-    if (!url.isValid () || url.isEmpty ())
+void KMPlayerURLSource::activate () {
+    init ();
+    buildArguments ();
+    if (url ().isEmpty ())
         return;
+    QTimer::singleShot (0, m_player, SLOT (play ()));
     if (m_player->liveconnectextension ())
         m_player->liveconnectextension ()->enableFinishEvent ();
-    QString args;
-    if (m_player->settings ()->urlbackend == QString ("Xine")) {
-        buildArguments ();
-        QTimer::singleShot (0, m_player, SLOT (play ()));
-        return;
-    }
-    int cache = m_player->settings ()->cachesize;
-    if (url.isLocalFile () || cache <= 0)
-        args.sprintf ("-slave ");
-    else
-        args.sprintf ("-slave -cache %d ", cache);
+}
 
-    if (m_player->settings ()->alwaysbuildindex && url.isLocalFile ()) {
-        if (url.path ().lower ().endsWith (".avi") ||
-            url.path ().lower ().endsWith (".divx")) {
-            args += QString (" -idx ");
+
+void KMPlayerURLSource::setIdentified (bool b) {
+    KMPlayerSource::setIdentified (b);
+    if (!isreference && !m_urlother.isEmpty ())
+        m_urls.push_back (m_urlother);
+    if (m_urls.count () > 0)
+        m_url = *m_urls.begin ();
+    m_urlother = KURL ();
+    buildArguments ();
+    int cache = m_player->settings ()->cachesize;
+    if (!m_url.isLocalFile () && cache > 0)
+        m_options.sprintf ("-cache %d ", cache);
+
+    if (m_player->settings ()->alwaysbuildindex && m_url.isLocalFile ()) {
+        if (m_url.path ().lower ().endsWith (".avi") ||
+                m_url.path ().lower ().endsWith (".divx")) {
+            m_options += QString (" -idx ");
             m_recordCommand = QString (" -idx ");
         }
     }
-    args += buildArguments ();
-    m_player->mplayer ()->run (args.latin1 ());
-}
-
-void KMPlayerURLSource::activate () {
-    init ();
-    if (m_player->settings ()->urlbackend == QString ("Xine")) {
-        buildArguments ();
-        if (!url ().isEmpty ()) {
-            QTimer::singleShot (0, m_player, SLOT (play ()));
-            if (m_player->liveconnectextension ())
-                m_player->liveconnectextension ()->enableFinishEvent ();
-        }
-        return;
-    }
-    bool loop = m_player->settings ()->loop;
-    m_player->settings ()->loop = false;
-    if (!url ().isEmpty ()) {
-        QString args ("-quiet -nocache -identify -frames 0 ");
-        QString myurl (url ().isLocalFile () ? url ().path () : m_url.url ());
-        args += KProcess::quote (myurl);
-        if (m_player->mplayer ()->run (args.ascii ()))
-            connect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
-    }
-    m_player->settings ()->loop = loop;
-}
-
-void KMPlayerURLSource::finished () {
-    kdDebug () << "KMPlayerURLSource::finished()" << m_identified << " "  <<  m_player->hrefSource ()->url ().url () << " " <<  m_player->hrefSource ()->url ().isValid () << endl;
-    if (m_identified && m_player->hrefSource ()->url ().isValid ()) {
-        disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
-        m_player->setSource (m_player->hrefSource ());
-        return;
-    }
-    if (!m_player->hrefSource ()->url ().isValid ())
-        disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
-    m_player->setMovieLength (10 * length ());
-    if (!isreference && !m_urlother.isEmpty ())
-        m_urls.push_back (m_urlother);
-    m_urlother = KURL ();
-    m_identified = true;
-    kdDebug () << "KMPlayerURLSource::finished()" << m_player->autoPlay() << endl;
-    if (m_player->autoPlay())
-        QTimer::singleShot (0, this, SLOT (play ()));
 }
 
 void KMPlayerURLSource::deactivate () {
-    disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
     KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
     if (view)
         view->playerMenu ()->setEnabled (false);
@@ -1246,15 +1207,16 @@ void KMPlayerHRefSource::setURL (const KURL & url) {
 
 void KMPlayerHRefSource::play () {
     kdDebug () << "KMPlayerHRefSource::play " << m_url.url() << endl;
+    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
     m_player->setSource (m_player->urlSource ());
 }
 
 void KMPlayerHRefSource::activate () {
-    m_player->setProcess (m_player->mplayer ());
     if (m_finished) {
         QTimer::singleShot (0, this, SLOT (finished ()));
         return;
     }
+    m_player->setProcess (m_player->mplayer ());
     KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
     init ();
     m_player->stop ();
@@ -1280,11 +1242,11 @@ void KMPlayerHRefSource::activate () {
 void KMPlayerHRefSource::finished () {
     KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
     m_finished = true;
-    disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
     kdDebug () << "KMPlayerHRefSource::finished()" << endl;
     QString outfile = locateLocal ("data", "kmplayer/00000001.jpg");
     if (!view->setPicture (outfile)) {
         setURL (KURL ());
+        disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
         QTimer::singleShot (0, this, SLOT (play ()));
         return;
     }

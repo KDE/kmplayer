@@ -495,6 +495,7 @@ bool KMPlayerView::setPicture (const QString & path) {
         if (m_image->isNull ()) {
             delete m_image;
             m_image = 0L;
+            kdDebug() << "KMPlayerView::setPicture failed " << path << endl;
         } else
             m_multiedit->hide ();
     }

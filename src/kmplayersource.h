@@ -47,12 +47,14 @@ public:
     void setLength (int len) { m_length = len; }
     const KURL & url () const { return m_url; }
     const QString & options () const { return m_options; }
+    const QString & pipeCmd () const { return m_pipecmd; }
+    bool identified () const { return m_identified; }
+    virtual void setIdentified (bool b = true);
     virtual QString recordCommand ();
     virtual QString ffmpegCommand ();
 public slots:
     virtual void activate () = 0;
     virtual void deactivate () = 0;
-    virtual void play () = 0;
 protected:
     KMPlayer * m_player;
     QString m_recordCommand;
@@ -60,6 +62,7 @@ protected:
     bool m_identified;
     KURL m_url;
     QString m_options;
+    QString m_pipecmd;
 private:
     int m_width;
     int m_height;

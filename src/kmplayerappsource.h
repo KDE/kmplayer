@@ -40,9 +40,9 @@ class KMPlayerAppURLSource : public KMPlayerURLSource {
 public:
     KMPlayerAppURLSource (KMPlayerApp * app);
     virtual ~KMPlayerAppURLSource ();
+    virtual void setIdentified (bool b = true);
 public slots:
     virtual void activate ();
-    void finished ();
 private:
     KMPlayerApp * m_app;
 };
@@ -67,20 +67,18 @@ public:
     virtual ~KMPlayerDVDSource ();
     virtual bool processOutput (const QString & line);
     virtual QString filterOptions ();
+    virtual void setIdentified (bool b = true);
 public slots:
     virtual void activate ();
     virtual void deactivate ();
-    virtual void play ();
 
-    void finished ();
     void titleMenuClicked (int id);
     void subtitleMenuClicked (int id);
     void languageMenuClicked (int id);
     void chapterMenuClicked (int id);
-private slots:
-    void identify ();
 private:
-    const QString buildArguments ();
+    void buildArguments ();
+    void play ();
     QRegExp langRegExp;
     QRegExp subtitleRegExp;
     QRegExp titleRegExp;
@@ -115,17 +113,15 @@ public:
     KMPlayerVCDSource (KMPlayerApp * app, QPopupMenu * m);
     virtual ~KMPlayerVCDSource ();
     virtual bool processOutput (const QString & line);
+    virtual void setIdentified (bool b = true);
 public slots:
     virtual void activate ();
     virtual void deactivate ();
-    virtual void play ();
 
-    void finished ();
-    void trackMenuClicked (int id);
 private slots:
-    void identify ();
+    void trackMenuClicked (int id);
 private:
-    const QString buildArguments ();
+    void buildArguments ();
     QRegExp trackRegExp;
     QPopupMenu * m_vcdtrackmenu;
     int m_current_title;
@@ -141,15 +137,12 @@ public:
     virtual bool hasLength ();
     virtual bool isSeekable ();
     virtual QString recordCommand ();
-    void setCommand (const QString & cmd) { m_pipe = cmd; }
-    const QString & command () const { return m_pipe; }
+    void setCommand (const QString & cmd) { m_pipecmd = cmd; }
 public slots:
     virtual void activate ();
     virtual void deactivate ();
-    virtual void play ();
 private:
     KMPlayerApp * m_app;
-    QString m_pipe;
 };
 
 
@@ -168,7 +161,6 @@ public:
     };
     KMPlayerTVSource (KMPlayerApp * app, QPopupMenu * m);
     virtual ~KMPlayerTVSource ();
-    //virtual bool processOutput (const QString & line);
     virtual QString filterOptions ();
     virtual bool hasLength ();
     virtual bool isSeekable ();
@@ -177,12 +169,10 @@ public:
 public slots:
     virtual void activate ();
     virtual void deactivate ();
-    virtual void play ();
 
-    //void finished ();
     void menuClicked (int id);
 private:
-    const QString buildArguments ();
+    void buildArguments ();
     typedef QMap <int, TVSource *> CommandMap;
     TVSource * m_tvsource;
     CommandMap commands;
