@@ -1,4 +1,5 @@
 [Protocol]
+Class=:internet
 exec=kmplayer "%u"
 protocol=mms
 input=none
