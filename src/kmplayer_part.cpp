@@ -110,7 +110,8 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
    m_hrefsource (new KMPlayerHRefSource (this)),
    m_features (Feat_Unknown),
    m_started_emited (false),
-   m_havehref (false) {
+   m_havehref (false),
+   m_request_fileopen (false) {
     bool show_fullscreen = false;
     m_ispart = true;
     kdDebug () << "MPlayer::KMPlayer ()" << endl;
@@ -161,6 +162,9 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
                 m_group = value.isEmpty() ? QString::fromLatin1("_anonymous") : value;
             } else if (name == QString::fromLatin1("__khtml__pluginbaseurl")) {
                 m_docbase = KURL (value);
+            } else if (name == QString::fromLatin1("__khtml__classid")) {
+                if (value.lower ().contains(QString::fromLatin1 ("22d6f312-b0f6-11d0-94ab-0080c74c7e95")))
+                    m_urlsource->setMime (QString ("video/x-ms-wmp"));
             } else if (name == QString::fromLatin1("src")) {
                 m_src_url = value;
             } else if (name == QString::fromLatin1 ("fullscreenmode")) {
@@ -204,8 +208,7 @@ bool KMPlayerPart::allowRedir (const KURL & url) {
 }
 
 bool KMPlayerPart::openFile() {
-    if (m_urlsource->mime () == QString ("audio/mpegurl") ||
-            m_urlsource->mime () == QString ("audio/x-scpls"))
+    if (m_request_fileopen)
         return KMPlayer::openURL (KParts::ReadOnlyPart::m_file);
     return false;
 }
@@ -228,7 +231,9 @@ bool KMPlayerPart::openURL (const KURL & url) {
         }
     }
     enablePlayerMenu (true);
-    if (!m_src_url.isEmpty () && current_player) {
+    if (m_src_url.isEmpty ()) {
+        m_src_url = url.url ();
+    } else if (current_player) {
         if (m_features & Feat_Controls) {
             removeControlPanel (m_view->buttonBar ());
             current_player->addControlPanel (m_view->buttonBar ());
@@ -242,8 +247,12 @@ bool KMPlayerPart::openURL (const KURL & url) {
     }
     if (!m_view || !url.isValid ()) return false;
     if (m_urlsource->mime () == QString ("audio/mpegurl") ||
-            m_urlsource->mime () == QString ("audio/x-scpls"))
+            m_urlsource->mime () == QString ("audio/x-scpls") ||
+            (url.protocol () == QString ("http") &&
+             (m_urlsource->mime () == QString ("video/x-ms-wmp")))) {
+        m_request_fileopen = true;
         return KParts::ReadOnlyPart::openURL (url);
+    }
     if (m_havehref && !kapp->authorizeURLAction ("redirect", url, m_urlsource->url ()))
         m_havehref = false;
     if (m_havehref && m_settings->allowhref) {

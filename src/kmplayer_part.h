@@ -143,6 +143,7 @@ protected:
     bool m_started_emited : 1;
     //bool m_noresize : 1;
     bool m_havehref : 1;
+    bool m_request_fileopen : 1;
 };
 
 
