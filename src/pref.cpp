@@ -589,7 +589,11 @@ void KMPlayerPrefRecordPage::slotRecord () {
     if (!url->lineEdit()->text().isEmpty()) {
         m_player->stop ();
         m_player->settings ()->recordfile = url->lineEdit()->text();
+#if KDE_IS_VERSION(3,1,90)
         int id = recorder->selectedId ();
+#else
+        int id = recorder->id (recorder->selected ());
+#endif
         m_player->settings ()->recorder = KMPlayerSettings::Recorder (id);
         RecorderList::iterator it = m_recorders.begin ();
         for (; id > 0 && it != m_recorders.end (); ++it, --id)
@@ -625,7 +629,11 @@ void KMPlayerPrefMEncoderPage::record () {
     m_player->setRecorder (m_player->mencoder ());
     if (!m_player->mencoder()->playing ()) {
         m_player->settings ()->mencoderarguments = arguments->text ();
+#if KDE_IS_VERSION(3,1,90)
         m_player->settings ()->recordcopy = !format->selectedId ();
+#else
+        m_player->settings ()->recordcopy = !format->id (format->selected ());
+#endif
         m_player->mencoder ()->setURL (KURL (m_player->settings ()->recordfile));
         m_player->mencoder ()->play ();
     } else

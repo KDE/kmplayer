@@ -369,7 +369,6 @@ bool MPlayer::run (const char * args, const char * pipe) {
     for ( it = m_process->args().begin(); it != m_process->args().end(); ++it ){
         sMPArgs += (*it);
     }
-    //m_view->addText( sMPArgs.simplifyWhiteSpace() );
 
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
 

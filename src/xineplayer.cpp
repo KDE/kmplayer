@@ -271,9 +271,7 @@ void KXinePlayer::init () {
     XGetWindowAttributes(display, wid, &attr);
     width = attr.width;
     height = attr.height;
-    printf ("trying lock 1\n");
     mutex.lock ();
-    printf ("lock 1\n");
     if (XShmQueryExtension(display) == True)
         completion_event = XShmGetEventBase(display) + ShmCompletion;
     else
@@ -603,9 +601,7 @@ public:
                 case Expose:
                     if(xevent.xexpose.count != 0 || !stream)
                         break;
-                    printf ("trying lock 3\n");
                     mutex.lock ();
-                    printf ("lock 3\n");
                     if (stream)
                         xine_gui_send_vo_data(stream, XINE_GUI_SEND_EXPOSE_EVENT, &xevent);
                     mutex.unlock ();
@@ -613,13 +609,11 @@ public:
 
                 case ConfigureNotify:
                     {
-                        printf("ConfigureNotify\n");
                         XConfigureEvent *cev = (XConfigureEvent *) &xevent;
                         Window           tmp_win;
 
                         width  = cev->width;
                         height = cev->height;
-                        printf("ConfigureNotify %d,%d\n", width, height);
                         if((cev->x == 0) && (cev->y == 0)) {
                             XLockDisplay(display);
                             XTranslateCoordinates(display, cev->window,

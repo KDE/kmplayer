@@ -132,6 +132,7 @@ private:
     // widget that contains m_holder, m_buttonbar and m_posSlider
     KMPlayerViewLayer * m_layer;
     QMultiLineEdit * m_multiedit;
+    QString tmplog;
     QPixmap * m_image;
     QWidget * m_buttonbar;
     QPushButton * m_backButton;

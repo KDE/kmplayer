@@ -825,13 +825,21 @@ void KMPlayerSettings::okPressed () {
     pp_med_int = configdialog->m_OPPagePostproc->MedianDeinterlacer->isChecked();
     pp_ffmpeg_int = configdialog->m_OPPagePostproc->FfmpegDeinterlacer->isChecked();
     // recording
+#if KDE_IS_VERSION(3,1,90)
     replayoption = ReplayOption (configdialog->m_RecordPage->replay->selectedId ());
+#else
+    replayoption = ReplayOption (configdialog->m_RecordPage->replay->id (configdialog->m_RecordPage->replay->selected ()));
+#endif
     replaytime = configdialog->m_RecordPage->replaytime->text ().toInt ();
     configdialog->m_RecordPage->replaytime->setText (QString::number (replaytime));
     recordfile = configdialog->m_RecordPage->url->lineEdit()->text ();
     mencoderarguments = configdialog->m_MEncoderPage->arguments->text ();
     ffmpegarguments = configdialog->m_FFMpegPage->arguments->text ();
+#if KDE_IS_VERSION(3,1,90)
     recordcopy = !configdialog->m_MEncoderPage->format->selectedId ();
+#else
+    recordcopy = !configdialog->m_MEncoderPage->format->id (configdialog->m_MEncoderPage->format->selected ());
+#endif
     // broadcast
     bindaddress = configdialog->m_BroadcastPage->bindaddress->text ();
     ffserverport = configdialog->m_BroadcastPage->port->text ().toInt ();

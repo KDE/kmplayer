@@ -263,7 +263,7 @@ KMPlayerViewLayer::KMPlayerViewLayer (KMPlayerView * parent, QBoxLayout * b)
    m_box (b),
    m_accel (0L),
    m_fullscreen (false) {
-    setEraseColor (QColor (0, 0, 0));
+    setEraseColor (QColor (255, 0, 0));
 }
 
 void KMPlayerViewLayer::fullScreen () {
@@ -428,7 +428,6 @@ void KMPlayerView::init () {
     m_buttonbar = new QWidget (m_layer);
     m_holder = new KMPlayerViewerHolder (m_layer, this);
     m_viewer = new KMPlayerViewer (m_holder, this);
-    //m_holder->setEraseColor (QColor (0, 0, 0));
     layerbox->addWidget (m_holder);
 #if KDE_IS_VERSION(3,1,90)
     setVideoWidget (m_layer);
@@ -509,6 +508,7 @@ void KMPlayerView::init () {
     connect (m_configButton, SIGNAL (clicked ()), this, SLOT (showPopupMenu()));
 
     setAcceptDrops (true);
+    m_holder->resizeEvent (0L);
     kdDebug() << "KMPlayerView " << (unsigned long) (m_viewer->winId()) << endl;
 
 }
@@ -631,9 +631,14 @@ void KMPlayerView::timerEvent (QTimerEvent * e) {
 }
 
 void KMPlayerView::addText (const QString & str) {
-    m_multiedit->append (str);
-    while (5000 < m_multiedit->numLines ())
-        m_multiedit->removeLine (0);
+    tmplog += str;
+    int pos = tmplog.findRev (QChar ('\n'));
+    if (pos >= 0) {
+        m_multiedit->append (tmplog.left (pos));
+        tmplog = tmplog.mid (pos+1);
+        while (5000 < m_multiedit->numLines ())
+            m_multiedit->removeLine (0);
+    }
 }
 
 /* void KMPlayerView::print (QPrinter *pPrinter)
@@ -703,8 +708,8 @@ void KMPlayerView::fullScreen () {
                 m_sreensaver_disabled = kapp->dcopClient()->send
                     ("kdesktop", "KScreensaverIface", "enable(bool)", "false");
         }
-        if (m_keepsizeratio && m_viewer->aspect () < 0.01)
-            m_viewer->setAspect (1.0 * m_viewer->width() / m_viewer->height());
+        //if (m_keepsizeratio && m_viewer->aspect () < 0.01)
+        //    m_viewer->setAspect (1.0 * m_viewer->width() / m_viewer->height());
         m_layer->fullScreen();
         m_popupMenu->setItemVisible (menu_zoom, false);
     } else {
