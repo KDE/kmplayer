@@ -236,13 +236,8 @@ bool MPlayer::play () {
         args += KProcess::quote (QString (QFile::encodeName (m_url)));
     }
     m_tmpURL.truncate (0);
-    m_sizeRegExp.setPattern (m_player->settings ()->sizepattern);
-    m_startRegExp.setPattern (m_player->settings ()->startpattern);
-    if (!source ()->identified ()) {
-        m_refURLRegExp.setPattern (m_player->settings ()->referenceurlpattern);
-        m_refRegExp.setPattern (m_player->settings ()->referencepattern);
-        if (!m_player->settings ()->mplayerpost090)
-            args += QString (" -quiet -nocache -identify -frames 0 ");
+    if (!source ()->identified () && !m_player->settings ()->mplayerpost090) {
+        args += QString (" -quiet -nocache -identify -frames 0 ");
     } else {
         if (m_player->settings ()->loop)
             args += QString (" -loop 0");
@@ -325,7 +320,12 @@ bool MPlayer::run (const char * args, const char * pipe) {
     m_cacheRegExp.setPattern (settings->cachepattern);
     m_indexRegExp.setPattern (settings->indexpattern);
     m_posRegExp.setPattern (m_player->settings ()->positionpattern);
-
+    m_sizeRegExp.setPattern (m_player->settings ()->sizepattern);
+    m_startRegExp.setPattern (m_player->settings ()->startpattern);
+    if (!source ()->identified ()) {
+        m_refURLRegExp.setPattern (m_player->settings ()->referenceurlpattern);
+        m_refRegExp.setPattern (m_player->settings ()->referencepattern);
+    }
     m_use_slave = !(pipe && pipe[0]);
     if (!m_use_slave) {
         printf ("%s | ", pipe);

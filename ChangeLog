@@ -1,3 +1,16 @@
+Changes since version 0.8.1a
+- MPlayer-1.0-pre is default now ([MPlayer] Post MPlayer 0.90=true in
+  kmplayerrc)
+- Removed the '-frames 0' switch for MPlayer-1.0-pre, now identifying is done
+  in one stroke with playback (faster playing, less sensible to failures)
+- Xine configuration tab for convenient editing of ~/.xine/config2
+- Made config dialog somewhat flexible, and TV/broadcast settings are now
+  not available when launched from the plugin
+- Change dir of mplayer/kxineplayer process if playing a local file. Hopefully
+  fixes relative links in supported playlist files.
+- Profiles for broadcasting
+- Fixed always having a left/right black border with Xine
+- Sub title support (although MPlayer-1.0-pre3 crashes with '-sub' option)
 Changes since version 0.8.1
 - Fix for Web object having HREF attributes and not 'Click to Play' enabled
 - Allow opening 'vcd://' and 'dvd://' URLs (useful for Xine VCD Nav)
