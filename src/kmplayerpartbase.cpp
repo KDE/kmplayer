@@ -334,25 +334,19 @@ void KMPlayer::processFinished () {
     if (m_process->source ()->position () > m_process->source ()->length ())
         m_process->source ()->setLength (m_process->source ()->position ());
     m_process->source ()->setPosition (0);
-    if (m_view && m_view->playButton ()->isOn ()) {
+    if (!m_view) return;
+    if (m_view->playButton ()->isOn ())
         m_view->playButton ()->toggle ();
-        m_view->positionSlider()->setEnabled (false);
-        m_view->positionSlider()->setValue (0);
-    }
-    if (m_view) {
-        m_view->reset ();
-        emit stopPlaying ();
-    }
+    m_view->positionSlider()->setValue (0);
+    m_view->positionSlider()->setEnabled (false);
+    m_view->positionSlider()->hide();
+    m_view->reset ();
+    emit stopPlaying ();
 }
 
 void KMPlayer::processStarted () {
     if (!m_view) return;
-    if (m_settings->showposslider && m_process->source ()->hasLength ())
-        m_view->positionSlider()->show();
-    else
-        m_view->positionSlider()->hide();
     if (!m_view->playButton ()->isOn ()) m_view->playButton ()->toggle ();
-    m_view->positionSlider()->setEnabled (true);
 }
 
 void KMPlayer::processPosition (int pos) {
@@ -375,6 +369,11 @@ void KMPlayer::processPlaying () {
     kdDebug () << "KMPlayer::processPlaying " << endl;
     if (m_settings->sizeratio)
         m_view->viewer ()->setAspect (m_process->source ()->aspect ());
+    m_view->positionSlider()->setEnabled (true);
+    if (m_settings->showposslider && m_process->source ()->hasLength ())
+        m_view->positionSlider()->show();
+    else
+        m_view->positionSlider()->hide();
     emit loading (100);
     emit startPlaying ();
 }

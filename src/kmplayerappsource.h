@@ -41,7 +41,6 @@ class KMPlayerAppURLSource : public KMPlayerURLSource {
 public:
     KMPlayerAppURLSource (KMPlayerApp * app);
     virtual ~KMPlayerAppURLSource ();
-    virtual void setIdentified (bool b = true);
 public slots:
     virtual void activate ();
 private:

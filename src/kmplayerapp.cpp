@@ -228,9 +228,12 @@ void KMPlayerApp::loadingProgress (int percentage) {
 }
 
 void KMPlayerApp::playerStarted () {
-    if (m_player->process ()->source () != m_tvsource && 
-        m_player->settings ()->sizeratio)
+    KMPlayerSource * source = m_player->process ()->source ();
+    if (source != m_tvsource && m_player->settings ()->sizeratio) {
         resizePlayer (100);
+        if (source->inherits ("KMPlayerURLSource"))
+            recentFiles ()->addURL (source->url ());
+    }
 }
 
 void KMPlayerApp::slotSourceChanged (KMPlayerSource * source) {
@@ -698,12 +701,6 @@ void KMPlayerAppURLSource::activate () {
     } else
         KMPlayerURLSource::activate ();
     m_app->slotStatusMsg (i18n ("Ready."));
-}
-
-void KMPlayerAppURLSource::setIdentified (bool b) {
-    KMPlayerURLSource::setIdentified (b);
-    if (b)
-        m_app->recentFiles ()->addURL (url ());
 }
 
 //-----------------------------------------------------------------------------

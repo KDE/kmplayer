@@ -392,6 +392,7 @@ KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
 {
     if (!kmplayerview_static)
         kmplayerview_static = kmplayerViewStatic.setObject (new KMPlayerViewStatic());
+    setEraseColor (QColor (0, 0, 255));
 }
 
 void KMPlayerView::dropEvent (QDropEvent * de) {
