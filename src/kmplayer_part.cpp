@@ -216,9 +216,10 @@ void KMPlayer::init () {
     connect (m_view->forwardButton (), SIGNAL (clicked ()), this, SLOT (forward ()));
     connect (m_view->pauseButton (), SIGNAL (clicked ()), this, SLOT (pause ()));
     connect (m_view->stopButton (), SIGNAL (clicked ()), this, SLOT (stop ()));
-    connect (m_view->positionSlider (), SIGNAL (sliderMoved (int)), SLOT (posSliderChanged (int)));
-    connect (m_view->positionSlider (), SIGNAL (sliderPressed()), SLOT (posSliderPressed()));
-    connect (m_view->positionSlider (), SIGNAL (sliderReleased()), SLOT (posSliderReleased()));
+    connect (m_view->positionSlider (), SIGNAL (sliderMoved (int)), this, SLOT (posSliderChanged (int)));
+    connect (m_view->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
+    connect (m_view->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
+    connect (m_view, SIGNAL (urlDropped (const KURL &)), this, SLOT (openURL (const KURL &)));
     m_view->popupMenu ()->connectItem (KMPlayerView::menu_config,
                                        m_configdialog, SLOT (show ()));
     setSource (m_urlsource);
@@ -277,6 +278,7 @@ void KMPlayer::setSource (KMPlayerSource * source) {
 
 bool KMPlayer::openURL (const KURL & _url) {
     if (!m_view) return false;
+    kdDebug () << "openURL " << _url << endl; 
     KURL url = _url;
     if (!m_href.isEmpty ())
         url = m_href;

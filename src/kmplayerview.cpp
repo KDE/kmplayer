@@ -35,6 +35,7 @@ email                :
 #include <qslider.h>
 #include <qlabel.h>
 #include <qdatastream.h>
+#include <qdragobject.h>
 
 #include <X11/Xlib.h>
 #include <X11/Intrinsic.h>
@@ -244,6 +245,7 @@ void KMPlayerViewLayer::accelActivated () {
 KMPlayerViewerHolder::KMPlayerViewerHolder (QWidget * pa, KMPlayerView * view)
  : QWidget (pa), m_view (view) {
     setEraseColor (QColor (0, 0, 0));
+    setAcceptDrops (true);
 }
 
 void KMPlayerViewerHolder::mouseMoveEvent (QMouseEvent * e) {
@@ -272,6 +274,13 @@ void KMPlayerViewerHolder::resizeEvent (QResizeEvent *) {
     m_view->viewer ()->setGeometry (x, y, w, h);
 }
 
+void KMPlayerViewerHolder::dropEvent (QDropEvent * de) {
+    m_view->dropEvent (de);
+}
+
+void KMPlayerViewerHolder::dragEnterEvent (QDragEnterEvent* dee) {
+    m_view->dragEnterEvent (dee);
+}
 //-----------------------------------------------------------------------------
 
 class KMPlayerSlider : public QSlider {
@@ -316,6 +325,34 @@ KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
 {
     if (!kmplayerview_static)
         kmplayerview_static = kmplayerViewStatic.setObject (new KMPlayerViewStatic());
+}
+
+void KMPlayerView::dropEvent (QDropEvent * de) {
+    KURL url;
+    if (QUriDrag::canDecode (de)) {
+        QStrList sl;
+        QUriDrag::decode (de, sl);
+        if (sl.count () > 0)
+            url = KURL (sl.at (0));
+    } else if (QTextDrag::canDecode (de)) {
+        QString text;
+        QTextDrag::decode (de, text);
+        url = KURL (text);
+    }
+    if (url.isValid ()) {
+        emit urlDropped (url);
+        de->accept ();
+    }
+}
+
+void KMPlayerView::dragEnterEvent (QDragEnterEvent* dee) {
+    if (QUriDrag::canDecode (dee)) {
+        dee->accept ();
+    } else if (QTextDrag::canDecode (dee)) {
+        QString text;
+        if (KURL (QTextDrag::decode (dee, text)).isValid ())
+            dee->accept ();
+    }
 }
 
 void KMPlayerView::init () {
@@ -374,6 +411,7 @@ void KMPlayerView::init () {
     connect (m_viewer, SIGNAL (aboutToPlay ()), this, SLOT (startsToPlay ()));
     connect (m_configButton, SIGNAL (clicked ()), this, SLOT (showPopupMenu()));
 
+    setAcceptDrops (true);
     XSelectInput (qt_xdisplay (), m_viewer->winId (), 
             ExposureMask | StructureNotifyMask | KeyPressMask);
     printf ("KMPlayerView %u %u\n", m_viewer->winId(), kmplayerview_static);
@@ -480,7 +518,7 @@ void KMPlayerView::addText (const QString & str) {
     m_multiedit->append (str);
 }
 
-void KMPlayerView::print (QPrinter *pPrinter)
+/* void KMPlayerView::print (QPrinter *pPrinter)
 {
     QPainter printpainter;
     printpainter.begin (pPrinter);
@@ -488,7 +526,7 @@ void KMPlayerView::print (QPrinter *pPrinter)
     // TODO: add your printing code here
 
     printpainter.end ();
-}
+}*/
 
 void KMPlayerView::startsToPlay () {
     m_multiedit->hide ();
@@ -569,6 +607,7 @@ KMPlayerViewer::KMPlayerViewer (QWidget *parent, KMPlayerView * view)
                            CWBackPixel | CWBorderPixel | CWColormap, &xswa));*/
     setEraseColor (QColor (0, 0, 0));
     setFocusPolicy (QWidget::NoFocus);
+    setAcceptDrops (true);
 }
 
 KMPlayerViewer::~KMPlayerViewer () {
@@ -610,6 +649,14 @@ int KMPlayerViewer::heightForWidth (int w) const {
     if (m_aspect <= 0.01)
         return 0;
     return int (w/m_aspect); 
+}
+
+void KMPlayerViewer::dropEvent (QDropEvent * de) {
+    m_view->dropEvent (de);
+}
+
+void KMPlayerViewer::dragEnterEvent (QDragEnterEvent* dee) {
+    m_view->dragEnterEvent (dee);
 }
 
 bool KMPlayerViewer::x11Event (XEvent * e) {

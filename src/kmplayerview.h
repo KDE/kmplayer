@@ -23,9 +23,9 @@ email                :
 #endif 
 
 #include <qwidget.h>
+#include <kurl.h>
 #include <kmediaplayer/view.h>
 
-class KMPlayerDoc;
 class KMPlayerView;
 class KMPlayerViewer;
 class QMultiLineEdit;
@@ -58,6 +58,8 @@ private:
 
 class KMPlayerView : public KMediaPlayer::View {
     Q_OBJECT
+    friend class KMPlayerViewerHolder;
+    friend class KMPlayerViewer;
 public:
     enum MenuID {
         menu_config = 0, menu_fullscreen, menu_volume, 
@@ -69,7 +71,7 @@ public:
     void addText (const QString &);
     void init ();
     void reset ();
-    void print(QPrinter *pPrinter);
+    //void print(QPrinter *pPrinter);
 
     QMultiLineEdit * consoleOutput () const { return m_multiedit; }
     KMPlayerViewer * viewer () const { return m_viewer; }
@@ -100,9 +102,13 @@ public slots:
     void setVolume (int);
     void updateVolume (float);
     void fullScreen ();
+signals:
+    void urlDropped (const KURL & url);
 protected:
     void leaveEvent (QEvent *);
     void timerEvent (QTimerEvent *);
+    void dragEnterEvent (QDragEnterEvent *);
+    void dropEvent (QDropEvent *);
 private:
     KMPlayerViewer * m_viewer;
     KMPlayerViewLayer * m_layer;
@@ -147,6 +153,8 @@ signals:
 protected:
     void showEvent (QShowEvent *);
     void hideEvent (QHideEvent *);
+    void dragEnterEvent (QDragEnterEvent *);
+    void dropEvent (QDropEvent *);
     bool x11Event (XEvent *);
     void mouseMoveEvent (QMouseEvent * e);
 private:
@@ -161,6 +169,8 @@ public:
 protected:
     void resizeEvent (QResizeEvent *);
     void mouseMoveEvent (QMouseEvent *);
+    void dragEnterEvent (QDragEnterEvent *);
+    void dropEvent (QDropEvent *);
 private:
     KMPlayerView * m_view;
 };

@@ -256,7 +256,8 @@ KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent,
 }
 
 void KMPlayerPrefSourcePageTVDevice::slotDelete () {
-    emit deleted (static_cast <QFrame *> (parent ()));
+    if (KMessageBox::warningYesNo (this, i18n ("You're about to remove this device from the Source menu.\nContinue?"), i18n ("KMPlayer: Confirm")) == KMessageBox::Yes)
+        emit deleted (static_cast <QFrame *> (parent ()));
 }
 
 void KMPlayerPrefSourcePageTVDevice::updateTVDevice () {
