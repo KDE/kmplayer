@@ -808,6 +808,7 @@ void KMPlayerPipeSource::deactivate () {
 
 KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QPopupMenu * m)
     : KMPlayerMenuSource (a, m) {
+    m_tvsource = 0L;
     m_menu->insertTearOffHandle ();
 }
 
