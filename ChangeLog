@@ -1,6 +1,7 @@
 Changes since version 0.8.4-rc2
 - Added a XVideo player (kxvplayer) process. Used now for viewing VDR
 - Fixed various crash cases with the playlist
+- Playlist view is dockable now
 Changes since version 0.8.4-rc1
 - Oops, left an ugly hack in the icon loading for the playlist tree, can crash
   konqueror.

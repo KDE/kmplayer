@@ -1,5 +1,6 @@
 debian/tmp/usr/lib/libkdeinit_kmplayer.so
 debian/tmp/usr/lib/kde3/kmplayer.so
 debian/tmp/usr/bin/kmplayer
+debian/tmp/usr/bin/kxvplayer
 debian/tmp/usr/share/apps/kmplayer/kmplayerui.rc
 debian/tmp/usr/share/applications/kde/kmplayer.desktop
