@@ -236,6 +236,31 @@ void KMPlayer::setMPlayer (int id) {
         setSource (m_process->source ()); // re-activate
 }
 
+void KMPlayer::enablePlayerMenu (bool enable) {
+#ifdef HAVE_XINE
+    if (enable) {
+        if (!m_view || !m_view->playerMenu ())
+            return;
+        QPopupMenu * menu = m_view->playerMenu ();
+        menu->clear ();
+        menu->insertItem (i18n ("&MPlayer"), this, SLOT (setMPlayer (int)));
+        menu->insertItem (i18n ("&Xine"), this, SLOT (setXine (int)));
+        menu->setEnabled (true);
+        if (m_settings->urlbackend == QString ("Xine")) {
+            menu->setItemChecked (menu->idAt (1), true);
+            setProcess (m_xine);
+        } else {
+            setProcess (m_mplayer);
+            menu->setItemChecked (menu->idAt (0), true);
+        }
+        m_view->popupMenu ()->setItemVisible (KMPlayerView::menu_player, true);
+    } else {
+        if (m_view)
+            m_view->popupMenu ()->setItemVisible (KMPlayerView::menu_player, false);
+    }
+#endif
+}
+
 void KMPlayer::setSource (KMPlayerSource * source) {
     KMPlayerSource * oldsource = m_process->source ();
     if (oldsource) {
@@ -659,24 +684,7 @@ KMPlayerURLSource::~KMPlayerURLSource () {
 
 void KMPlayerURLSource::init () {
     KMPlayerSource::init ();
-#ifdef HAVE_XINE
-    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
-    if (!view || !view->playerMenu ())
-        return;
-    QPopupMenu * menu = view->playerMenu ();
-    menu->clear ();
-    menu->insertItem (i18n ("&MPlayer"), m_player, SLOT (setMPlayer (int)));
-    menu->insertItem (i18n ("&Xine"), m_player, SLOT (setXine (int)));
-    menu->setEnabled (true);
-    if (m_player->settings ()->urlbackend == QString ("Xine")) {
-        menu->setItemChecked (menu->idAt (1), true);
-        m_player->setProcess (m_player->xine ());
-    } else {
-        m_player->setProcess (m_player->mplayer ());
-        menu->setItemChecked (menu->idAt (0), true);
-    }
-    view->popupMenu ()->setItemVisible (KMPlayerView::menu_player, true);
-#endif
+    m_player->enablePlayerMenu (true);
 }
 
 bool KMPlayerURLSource::hasLength () {
@@ -715,11 +723,7 @@ void KMPlayerURLSource::setIdentified (bool b) {
 }
 
 void KMPlayerURLSource::deactivate () {
-#ifdef HAVE_XINE
-    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
-    if (view)
-        view->popupMenu ()->setItemVisible (KMPlayerView::menu_player, false);
-#endif
+    m_player->enablePlayerMenu (false);
 }
 
 QString KMPlayerURLSource::prettyName () {

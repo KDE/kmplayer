@@ -47,15 +47,6 @@ void Deleter (T * t) {
     delete t;
 }
 
-inline KURL makeURL (const QString & s) {
-    KURL url;
-    if (KURL (s).isLocalFile ())
-        url.setPath (s);
-    else
-        url = s;
-    return url;
-}
-
 class KMPlayerPreferencesPage {
 public:
     virtual ~KMPlayerPreferencesPage () {}

@@ -405,7 +405,7 @@ KMPlayerPrefFFMpegPage::KMPlayerPrefFFMpegPage (QWidget *parent, KMPlayer * play
 void KMPlayerPrefFFMpegPage::record () {
     kdDebug() << "KMPlayerPrefFFMpegPage::record" << endl;
     m_player->setRecorder (m_player->ffmpeg ());
-    m_player->ffmpeg ()->setURL (KURL (m_player->settings ()->recordfile));
+    m_player->ffmpeg ()->setURL (KURL::fromPathOrURL (m_player->settings ()->recordfile));
     m_player->ffmpeg ()->setArguments (arguments->text ());
     m_player->recorder ()->play ();
 }

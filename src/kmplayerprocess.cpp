@@ -461,7 +461,7 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
             kdDebug () << "Reference mrl " << m_refURLRegExp.cap (1) << endl;
             if (!m_tmpURL.isEmpty ()) {
                 if (!m_source->referenceUrls ().count ())
-                    m_source->setCurrentURL (KURL (m_tmpURL));
+                    m_source->setCurrentURL (KURL::fromPathOrURL (m_tmpURL));
                 m_source->referenceUrls ().push_back (m_tmpURL);
             }
             m_tmpURL = m_refURLRegExp.cap (1);
@@ -1058,7 +1058,7 @@ bool Xine::play () {
     }
     KURL url = m_source->currentUrl ();
     if (m_source->referenceUrls ().count () > 0) {
-        url = KURL (m_source->referenceUrls ().front ());
+        url = KURL::fromPathOrURL (m_source->referenceUrls ().front ());
         m_source->setCurrentURL (url);
         m_source->referenceUrls ().clear ();
     }

@@ -436,31 +436,32 @@ void KMPlayerSettings::okPressed () {
         if (configdialog->m_SourcePageURL->url->url ().isEmpty ())
             urlchanged = false;
         else {
-            if (configdialog->m_SourcePageURL->url->url ().find ("://") == -1) {
+            KURL url = KURL::fromPathOrURL (configdialog->m_SourcePageURL->url->url ());
+            if (url.isLocalFile ()) {
                 QFileInfo fi (configdialog->m_SourcePageURL->url->url ());
                 if (!fi.exists ()) {
                     urlchanged = false;
                     KMessageBox::error (m_player->view (), i18n ("File %1 does not exist.").arg (configdialog->m_SourcePageURL->url->url ()), i18n ("Error"));
-                } else {
+                } else
                     configdialog->m_SourcePageURL->url->setURL (fi.absFilePath ());
-                    if (!configdialog->m_SourcePageURL->sub_url->url ().isEmpty () && configdialog->m_SourcePageURL->sub_url->url ().find ("://") == -1) {
-                        QFileInfo sfi (configdialog->m_SourcePageURL->sub_url->url ());
-                        if (!sfi.exists ()) {
-                            KMessageBox::error (m_player->view (), i18n ("Sub title file %1 does not exist.").arg (configdialog->m_SourcePageURL->sub_url->url ()), i18n ("Error"));
-                            configdialog->m_SourcePageURL->sub_url->setURL (QString::null);
-                        } else
-                            configdialog->m_SourcePageURL->sub_url->setURL (sfi.absFilePath ());
-                    }
-                }
+            }
+            url = KURL::fromPathOrURL (configdialog->m_SourcePageURL->sub_url->url ());
+            if (urlchanged && url.isEmpty () && url.isLocalFile ()) {
+                QFileInfo sfi (configdialog->m_SourcePageURL->sub_url->url ());
+                if (!sfi.exists ()) {
+                    KMessageBox::error (m_player->view (), i18n ("Sub title file %1 does not exist.").arg (configdialog->m_SourcePageURL->sub_url->url ()), i18n ("Error"));
+                    configdialog->m_SourcePageURL->sub_url->setURL (QString::null);
+                } else
+                    configdialog->m_SourcePageURL->sub_url->setURL (sfi.absFilePath ());
             }
         }
     }
     if (urlchanged) {
-        KURL url (configdialog->m_SourcePageURL->url->url ());
+        KURL url = KURL::fromPathOrURL (configdialog->m_SourcePageURL->url->url ());
         m_player->setURL (url);
         if (urllist.find (url.prettyURL ()) == urllist.end ())
             configdialog->m_SourcePageURL->urllist->insertItem (url.prettyURL (), 0);
-        KURL sub_url (configdialog->m_SourcePageURL->sub_url->url ());
+        KURL sub_url = KURL::fromPathOrURL (configdialog->m_SourcePageURL->sub_url->url ());
         if (sub_urllist.find (sub_url.prettyURL ()) == sub_urllist.end ())
             configdialog->m_SourcePageURL->sub_urllist->insertItem (sub_url.prettyURL (), 0);
     }
@@ -576,8 +577,8 @@ void KMPlayerSettings::okPressed () {
     if (urlchanged) {
         m_player->urlSource ()->setSubURL
             (configdialog->m_SourcePageURL->sub_url->url ());
-        m_player->openURL (makeURL (configdialog->m_SourcePageURL->url->url ()));
-        m_player->process ()->source ()->setSubURL (makeURL (configdialog->m_SourcePageURL->sub_url->url ()));
+        m_player->openURL (KURL::fromPathOrURL (configdialog->m_SourcePageURL->url->url ()));
+        m_player->process ()->source ()->setSubURL (KURL::fromPathOrURL (configdialog->m_SourcePageURL->sub_url->url ()));
     }
 }
 

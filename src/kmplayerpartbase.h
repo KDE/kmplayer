@@ -99,6 +99,7 @@ public:
     KMPlayerURLSource * urlSource () const { return m_urlsource; }
     KConfig * config () const { return m_config; }
     bool autoPlay () const { return m_autoplay; }
+    void enablePlayerMenu (bool enable);
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool closeURL ();

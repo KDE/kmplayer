@@ -917,7 +917,7 @@ bool KMPlayerVCDSource::processOutput (const QString & str) {
 void KMPlayerVCDSource::activate () {
     m_player->stop ();
     init ();
-    m_player->setProcess (m_player->mplayer ());
+    m_player->enablePlayerMenu (true);
     m_start_play = playvcd;
     m_current_title = -1;
     buildArguments ();
@@ -927,6 +927,7 @@ void KMPlayerVCDSource::activate () {
 
 void KMPlayerVCDSource::deactivate () {
     m_vcdtrackmenu->clear ();
+    m_player->enablePlayerMenu (false);
 }
 
 void KMPlayerVCDSource::setIdentified (bool b) {
