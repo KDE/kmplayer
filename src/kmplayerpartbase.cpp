@@ -876,6 +876,11 @@ void Source::repaintRegion (RegionNode * r) {
         m_player->process()->view ()->fullScreenWidget ()->update (r->x, r->y, r->w, r->h);
 }
 
+void Source::avWidgetSizes (RegionNode * r, unsigned int * bg) {
+    if (m_player->view ())
+        m_player->process()->view ()->fullScreenWidget ()->setAudioVideoGeometry (r->x, r->y, r->w, r->h, bg);
+}
+
 void Source::insertURL (const QString & mrl) {
     kdDebug() << "Source::insertURL " << (Element*)m_current << mrl << endl;
     KURL url (currentMrl (), mrl);

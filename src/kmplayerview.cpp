@@ -317,25 +317,6 @@ KDE_NO_EXPORT void ViewLayer::paintEvent (QPaintEvent * pe) {
     }
 }
 
-static void scaleRegions (RegionNodePtr & p, float sx, float sy, int xoff, int yoff, RegionNodePtr & av_rgn) {
-    for (RegionNodePtr r = p->firstChild; r; r =r->nextSibling)
-        if (r->regionElement) {  // note WeakPtr can be null
-            RegionBase * smilregion = convertNode<RegionBase>(r->regionElement);
-            r->x = xoff + int (sx * smilregion->x);
-            r->y = yoff + int (sy * smilregion->y);
-            r->w = int (sx * smilregion->w);
-            r->h = int (sy * smilregion->h);
-            if (r->attached_element) {
-                // hack to get the one and only audio/video widget sizes
-                const char * nn = r->attached_element->nodeName ();
-                if (!strcmp (nn, "video") || !strcmp (nn, "audio"))
-                    av_rgn = r;
-            }
-            //kdDebug () << "ViewLayer " << r->x << "," << r->y << " " << r->w << "x" << r->h << endl;
-            scaleRegions (r, sx, sy, r->x, r->y, av_rgn);
-        }
-}
-
 KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
     if (!m_view->controlPanel ()) return;
     int x =0, y = 0;
@@ -345,44 +326,21 @@ KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
     int wws = w;
     // move controlpanel over video when autohiding and playing
     int hws = h - (m_view->controlPanelMode () == View::CP_AutoHide && m_view->widgetStack ()->visibleWidget () == m_view->viewer () ? 0 : hcp);
-    // now scale the regions and find video region
-    if (rootLayout && rootLayout->regionElement && wws > 0 && hws > 0) {
-        RegionBase *region = convertNode<RegionBase>(rootLayout->regionElement);
-        if (region->w > 0 && region->h > 0) {
-            m_view->viewer ()->setAspect (region->w / region->h);
-            float xscale = 1.0 + 1.0 * (wws - region->w) / region->w;
-            float yscale = 1.0 + 1.0 * (hws - region->h) / region->h;
-            if (m_view->keepSizeRatio ())
-                if (xscale > yscale) {
-                    xscale = yscale;
-                    wws = int ((xscale - 1.0) * region->w + region->w);
-                    x = (w - wws) / 2;
-                } else {
-                    yscale = xscale;
-                    int old_hws = hws;
-                    hws = int ((yscale - 1.0) * region->h + region->h);
-                    y = (old_hws - hws) / 2;
-                }
-            rootLayout->x = x;
-            rootLayout->y = y;
-            rootLayout->w = wws;
-            rootLayout->h = hws;
-            wws = hws = 0;
-            RegionNodePtr av_rgn;
-            scaleRegions (rootLayout, xscale, yscale, x, y, av_rgn);
-            if (av_rgn) {
-                x = av_rgn->x;
-                y = av_rgn->y;
-                wws = av_rgn->w;
-                hws = av_rgn->h;
-                if (av_rgn->attached_element) {
-                    QString colstr = av_rgn->attached_element->getAttribute ("background-color");
-                    if (!colstr.isEmpty ())
-                        m_view->viewer ()->setBackgroundColor (QColor (colstr));
-                }
-            }
-        }
-    }
+
+    // now scale the regions and check if video region is already sized
+    bool av_geometry_changed = false;
+    if (rootLayout && wws > 0 && hws > 0) {
+        m_av_geometry = QRect (0, 0, 0, 0);
+        rootLayout->setSize (x, y, wws, hws, m_view->keepSizeRatio ());
+        av_geometry_changed = (m_av_geometry != QRect (0, 0, 0, 0));
+        x = m_av_geometry.x ();
+        y = m_av_geometry.y ();
+        wws = m_av_geometry.width ();
+        hws = m_av_geometry.height ();
+            //m_view->viewer ()->setAspect (region->w / region->h);
+    } else
+        m_av_geometry = QRect (x, y, wws, hws);
+
     // scale video widget inside region
     if (m_view->keepSizeRatio() && m_view->controlPanelMode() != View::CP_Only){
         int hfw = m_view->viewer ()->heightForWidth (wws);
@@ -399,7 +357,16 @@ KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
     // finally resize controlpanel and video widget
     if (m_view->controlPanel ()->isVisible ())
         m_view->controlPanel ()->setGeometry (0, h-hcp, w, hcp);
-    m_view->widgetStack ()->setGeometry (x, y, wws, hws);
+    if (!av_geometry_changed)
+        m_view->widgetStack ()->setGeometry (x, y, wws, hws);
+}
+
+KDE_NO_EXPORT
+void ViewLayer::setAudioVideoGeometry (int x, int y, int w, int h, unsigned int * bg_color) {
+    m_av_geometry = QRect (x, y, w, h);
+    m_view->widgetStack ()->setGeometry (x, y, w, h);
+    if (bg_color)
+        m_view->viewer ()->setBackgroundColor (QColor (QRgb (*bg_color)));
 }
 
 KDE_NO_EXPORT void ViewLayer::setRootLayout (RegionNodePtr rl) {

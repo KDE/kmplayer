@@ -166,6 +166,48 @@ KDE_NO_EXPORT bool RegionNode::pointerMoved (int _x, int _y) {
     return inside;
 }
 
+KDE_NO_EXPORT void RegionNode::setSize (int _x, int _y, int _w, int _h, bool keepaspect) {
+    RegionBase * region = convertNode <RegionBase> (regionElement);
+    if (region && region->w > 0 && region->h > 0) {
+        float xscale = 1.0 + 1.0 * (_w - region->w) / region->w;
+        float yscale = 1.0 + 1.0 * (_h - region->h) / region->h;
+        if (keepaspect)
+            if (xscale > yscale) {
+                xscale = yscale;
+                _x = (_w - int ((xscale - 1.0) * region->w + region->w)) / 2;
+            } else {
+                yscale = xscale;
+                _y = (_h - int ((yscale - 1.0) * region->h + region->h)) / 2;
+            }
+        scaleRegion (xscale, yscale, _x, _y);
+    }
+}
+
+KDE_NO_EXPORT
+void RegionNode::scaleRegion (float sx, float sy, int xoff, int yoff) {
+    RegionBase * smilregion = convertNode <RegionBase> (regionElement);
+    if (smilregion) {  // note WeakPtr can be null
+        x = xoff + int (sx * smilregion->x);
+        y = yoff + int (sy * smilregion->y);
+        w = int (sx * smilregion->w);
+        h = int (sy * smilregion->h);
+        if (attached_element) {
+            // hack to get the one and only audio/video widget sizes
+            const char * nn = attached_element->nodeName ();
+            PlayListNotify * n = attached_element->document ()->notify_listener;
+            if (n && !strcmp (nn, "video") || !strcmp (nn, "audio")) {
+                ElementRuntimePtr rt = smilregion->getRuntime ();
+                RegionRuntime *rr = static_cast <RegionRuntime*> (rt.ptr());
+                if (rr)
+                    n->avWidgetSizes (this, rr->have_bg_color ? &rr->background_color : 0L);
+            }
+        }
+        //kdDebug () << "Region size " << x << "," << y << " " << w << "x" << h << endl;
+    }
+    for (RegionNodePtr r = firstChild; r; r =r->nextSibling)
+        r->scaleRegion (sx, sy, x, y);
+}
+
 //-----------------------------------------------------------------------------
 
 ElementRuntime::ElementRuntime (ElementPtr e)

@@ -203,6 +203,14 @@ public:
      */
     void repaint ();
     /**
+     * calculate bounds given the outer coordinates
+     */
+    void setSize (int x, int y, int w, int h, bool keep_aspect);
+    /**
+     * calculate bounds given scale factors and offset
+     */
+    void scaleRegion (float sx, float sy, int xoff, int yoff);
+    /**
      * user clicked w/ the mouse on this region, returns true if handled
      */
     bool pointerClicked (int x, int y);
@@ -354,6 +362,10 @@ public:
      * Some region needs repainting, eg. a timer expired
      */
     virtual void repaintRegion (RegionNode * region) = 0;
+    /**
+     * Sets the video widget postion and background color if bg not NULL
+     */
+    virtual void avWidgetSizes (RegionNode * region, unsigned int * bg) = 0;
 };
 
 class KMPLAYER_EXPORT Document : public Mrl {

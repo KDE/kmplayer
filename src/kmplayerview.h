@@ -107,6 +107,7 @@ public:
     bool isFullScreen () const { return m_fullscreen; }
     KActionCollection * actionCollection () const { return m_collection; }
     void setRootLayout (RegionNodePtr rl);
+    void setAudioVideoGeometry (int x, int y, int w, int y, unsigned int * bg);
 public slots:
     void fullScreen ();
     void accelActivated ();
@@ -124,6 +125,7 @@ private:
     View * m_view;
     KActionCollection * m_collection;
     RegionNodePtr rootLayout;
+    QRect m_av_geometry;
     bool m_fullscreen : 1;
 };
 
