@@ -1,6 +1,10 @@
 [Protocol]
 Class=:internet
 Description=Microsoft Media Server Protocol
+Description[nl]=Microsoft Media Server-protocol
+Description[pt]=Protocolo Microsoft Media Server
+Description[pt_BR]=Protocolo Microsoft Media Server
+Description[sv]=Microsoft mediaserver-protokoll
 exec=kmplayer "%u"
 protocol=mms
 input=none
