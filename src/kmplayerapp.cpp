@@ -819,7 +819,7 @@ void KMPlayerDVDSource::deactivate () {
 void KMPlayerDVDSource::finished () {
     disconnect (m_player, SIGNAL (finished()), this, SLOT (finished ()));
     m_player->setMovieLength (10 * length ());
-    if (m_current_title < 0 || m_current_title >= m_dvdtitlemenu->count ())
+    if (m_current_title < 0 || m_current_title >= int (m_dvdtitlemenu->count()))
         m_current_title = 0;
     if (m_dvdtitlemenu->count ()) 
         m_dvdtitlemenu->setItemChecked (m_current_title, true);
@@ -931,12 +931,22 @@ bool KMPlayerVCDSource::processOutput (const QString & str) {
 }
 
 void KMPlayerVCDSource::activate () {
+    m_start_play = m_player->configDialog ()->playvcd;
+    trackRegExp.setPattern (m_player->configDialog ()->trackspattern);
+    m_current_title = -1;
+    identify ();
+}
+
+void KMPlayerVCDSource::identify () {
     init ();
     deactivate (); // clearMenus ?
-    QString args ("-v vcd:// -identify -frames 0 -quiet -nocache");
+    QString args ("-v -identify -frames 0 -quiet -nocache");
+    if (m_current_title >= 0)
+        args += QString (" -vcd ") + QString::number (m_current_title + 1);
+    else
+        args += QString (" vcd://");
     if (m_player->configDialog ()->vcddevice.length () > 0)
         args += QString(" -cdrom-device ")+m_player->configDialog ()->vcddevice;
-    trackRegExp.setPattern (m_player->configDialog ()->trackspattern);
     bool loop = m_player->configDialog ()->loop;
     m_player->configDialog ()->loop = false;
     if (m_player->run (args.ascii()))
@@ -953,10 +963,15 @@ void KMPlayerVCDSource::deactivate () {
 void KMPlayerVCDSource::finished () {
     disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
     m_player->setMovieLength (10 * length ());
-    if (m_vcdtrackmenu->count ()) m_vcdtrackmenu->setItemChecked (0, true);
+    if (m_current_title < 0 || m_current_title >= int (m_vcdtrackmenu->count()))
+        m_current_title = 0;
+    if (m_vcdtrackmenu->count ())
+        m_vcdtrackmenu->setItemChecked (m_current_title, true);
+    else
+        m_current_title = -1; // hmmm
     app->resizePlayer (100);
     m_identified = true;
-    if (m_player->configDialog ()->playvcd)
+    if (m_start_play)
         QTimer::singleShot (0, this, SLOT (play ()));
     else
         buildArguments ();
@@ -964,31 +979,28 @@ void KMPlayerVCDSource::finished () {
 }
 
 void KMPlayerVCDSource::play () {
+    m_start_play = true;
     m_player->run ((QString ("-slave ") + buildArguments ()).ascii ());
 }
 
 const QString KMPlayerVCDSource::buildArguments () {
     QString args;
-    unsigned i;
-    for (i = 0; i < m_vcdtrackmenu->count(); i++)
-        if (m_vcdtrackmenu->isItemChecked (i)) {
-            args += " -vcd " + m_vcdtrackmenu->findItem (i)->text ();
-            break;
-        }
-    if (i == m_vcdtrackmenu->count ())
+    if (m_current_title >= 0)
+        args += " -vcd " + m_vcdtrackmenu->findItem (m_current_title)->text ();
+    else
         args += " vcd:// ";
     if (m_player->configDialog ()->vcddevice.length () > 0)
-        args += QString(" -cdrom-device ") + m_player->configDialog()->vcddevice;
+        args +=QString(" -cdrom-device ") + m_player->configDialog()->vcddevice;
     m_recordCommand = args;
     return args;
 }
 
 void KMPlayerVCDSource::trackMenuClicked (int id) {
     menuItemClicked (m_vcdtrackmenu, id);
-    if (m_player->configDialog ()->playvcd)
-        play ();
-    else
-        buildArguments ();
+    if (m_current_title != id) {
+        m_current_title = id;
+        QTimer::singleShot (0, this, SLOT (identify ()));
+    }
 }
 
 //-----------------------------------------------------------------------------

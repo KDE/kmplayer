@@ -107,10 +107,14 @@ public slots:
 
     void finished ();
     void trackMenuClicked (int id);
+private slots:
+    void identify ();
 private:
     const QString buildArguments ();
     QRegExp trackRegExp;
     QPopupMenu * m_vcdtrackmenu;
+    int m_current_title;
+    bool m_start_play;
 };
 
 
