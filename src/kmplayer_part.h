@@ -180,8 +180,8 @@ public slots:
     bool playing () const;
     void showConfigDialog ();
     void setMenuZoom (int id);
-    void setXine ();
-    void setMPlayer ();
+    void setXine (int id);
+    void setMPlayer (int id);
 public:
     virtual bool isSeekable (void) const;
     virtual unsigned long position (void) const { return m_movie_position; }

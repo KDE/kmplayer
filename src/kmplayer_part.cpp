@@ -250,7 +250,7 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
 
 extern const char * strUrlBackend;
 
-void KMPlayer::setXine () {
+void KMPlayer::setXine (int id) {
     bool playing = m_process->playing ();
     if (playing)
         m_process->source ()->deactivate ();
@@ -258,11 +258,16 @@ void KMPlayer::setXine () {
     m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
     m_config->sync ();
     setProcess (m_xine);
+    QPopupMenu * menu = m_view->playerMenu ();
+    for (unsigned i = 0; i < menu->count(); i++) {
+        int menuid = menu->idAt (i);
+        menu->setItemChecked (menuid, menuid == id);
+    }
     if (playing)
         m_process->source ()->activate ();
 }
 
-void KMPlayer::setMPlayer () {
+void KMPlayer::setMPlayer (int id) {
     bool playing = m_process->playing ();
     if (playing)
         m_process->source ()->deactivate ();
@@ -270,6 +275,11 @@ void KMPlayer::setMPlayer () {
     m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
     m_config->sync ();
     setProcess (m_mplayer);
+    QPopupMenu * menu = m_view->playerMenu ();
+    for (unsigned i = 0; i < menu->count(); i++) {
+        int menuid = menu->idAt (i);
+        menu->setItemChecked (menuid, menuid == id);
+    }
     if (playing)
         m_process->source ()->activate ();
 }
@@ -1063,6 +1073,19 @@ void KMPlayerURLSource::init () {
     isreference = false;
     m_urls.clear ();
     m_urlother = KURL ();
+    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
+    QPopupMenu * menu = view->playerMenu ();
+    menu->clear ();
+    menu->insertItem (i18n ("&MPlayer"), m_player, SLOT (setMPlayer (int)));
+    menu->insertItem (i18n ("&Xine"), m_player, SLOT (setXine (int)));
+    menu->setEnabled (true);
+    if (m_player->settings ()->urlbackend == QString ("Xine")) {
+        menu->setItemChecked (menu->idAt (1), true);
+        m_player->setProcess (m_player->xine ());
+    } else {
+        m_player->setProcess (m_player->mplayer ());
+        menu->setItemChecked (menu->idAt (0), true);
+    }
 }
 
 bool KMPlayerURLSource::hasLength () {
@@ -1146,23 +1169,12 @@ void KMPlayerURLSource::play () {
 }
 
 void KMPlayerURLSource::activate () {
-    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
-    QPopupMenu * menu = view->playerMenu ();
-    menu->clear ();
-    menu->insertItem (i18n ("&MPlayer"), m_player, SLOT (setMPlayer ()));
-    menu->insertItem (i18n ("&Xine"), m_player, SLOT (setXine ()));
-    menu->setEnabled (true);
+    init ();
     if (m_player->settings ()->urlbackend == QString ("Xine")) {
-        menu->setItemChecked (menu->idAt (1), true);
-        m_player->setProcess (m_player->xine ());
         if (!url ().isEmpty ())
             QTimer::singleShot (0, m_player, SLOT (play ()));
         return;
-    } else {
-        m_player->setProcess (m_player->mplayer ());
-        menu->setItemChecked (menu->idAt (0), true);
     }
-    init ();
     bool loop = m_player->settings ()->loop;
     m_player->settings ()->loop = false;
     if (!url ().isEmpty ()) {

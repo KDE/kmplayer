@@ -1084,7 +1084,7 @@ const QString KMPlayerTVSource::buildArguments () {
     setWidth (m_tvsource->size.width ());
     setHeight (m_tvsource->size.height ());
     QString args;
-    args.sprintf ("tv:// on:noaudio:driver=%s:%s:width=%d:height=%d", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
+    args.sprintf ("tv://on:noaudio:driver=%s:%s:width=%d:height=%d", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
     if (!app->broadcasting ())
         app->resizePlayer (100);
     m_recordCommand = args;

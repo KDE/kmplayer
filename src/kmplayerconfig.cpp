@@ -851,6 +851,7 @@ bool TVDeviceScannerSource::scan (const QString & dev, const QString & dri) {
 }
 
 void TVDeviceScannerSource::activate () {
+    m_player->setProcess (m_player->mplayer ());
     m_nameRegExp.setPattern ("Selected device:\\s*([^\\s].*)");
     m_sizesRegExp.setPattern ("Supported sizes:\\s*([0-9]+)x([0-9]+) => ([0-9]+)x([0-9]+)");
     m_inputRegExp.setPattern ("\\s*([0-9]+):\\s*([^:]+):[^\\(]*\\(tuner:([01]),\\s*norm:([^\\)]+)\\)");
@@ -869,7 +870,7 @@ void TVDeviceScannerSource::play () {
     if (!m_tvdevice)
         return;
     QString args;
-    args.sprintf ("-tv on:driver=%s:device=%s -identify -frames 0", m_driver.ascii (), m_tvdevice->device.ascii ());
+    args.sprintf ("tv://on:driver=%s:device=%s -identify -frames 0", m_driver.ascii (), m_tvdevice->device.ascii ());
     if (m_player->mplayer ()->run (args.ascii()))
         connect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
     else
