@@ -36,6 +36,10 @@ kxineplayer_SOURCES= xineplayer.cpp kmplayer_backend.skel kmplayer_callback.stub
 applnk_DATA = kmplayer.desktop
 applnkdir = $(kde_appsdir)/Multimedia
 
+if include_koffice_support
+SERVICES_KOFFICE = kmplayer_koffice.desktop
+endif
+
 kde_services_DATA = kmplayer_component.desktop $(SERVICES_KOFFICE)
 
 rc_DATA = kmplayerui.rc kmplayerpartui.rc

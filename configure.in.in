@@ -35,12 +35,11 @@ KDE_CHECK_HEADER(koDocument.h,
 AC_MSG_CHECKING([if kmplayer can be compiled with koffice support])
 AC_MSG_RESULT($have_koffice)
 
+AM_CONDITIONAL(include_koffice_support, test "$want_koffice_plugin" = "yes" -a "$have_koffice" = "yes")
 if test "$want_koffice_plugin" = "yes" -a "$have_koffice" = "yes"; then
         AC_DEFINE(HAVE_KOFFICE, 1, [If we have koffice installed])
         LIB_KOFFICE="-lkofficecore -lkofficeui"
         AC_SUBST(LIB_KOFFICE)
-        SERVICES_KOFFICE="kmplayer_koffice.desktop"
-        AC_SUBST(SERVICES_KOFFICE)
 fi
 
 KDE_CHECK_HEADER(xine.h,
