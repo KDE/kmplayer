@@ -170,6 +170,7 @@ public:
      */ 
     virtual ElementPtr realMrl ();
     QString src;
+    QString bookmark_url;
     QString pretty_name;
     QString mimetype;
     bool parsed;

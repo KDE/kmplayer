@@ -1019,7 +1019,6 @@ KDE_NO_EXPORT QFrame * KMPlayerVCDSource::prefPage (QWidget * parent) {
 
 KDE_NO_CDTOR_EXPORT KMPlayerPipeSource::KMPlayerPipeSource (KMPlayerApp * a)
  : KMPlayer::Source (i18n ("Pipe"), a->player (), "pipesource"), m_app (a) {
-    setURL (KURL ("stdin://"));
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerPipeSource::~KMPlayerPipeSource () {
@@ -1034,6 +1033,12 @@ KDE_NO_EXPORT bool KMPlayerPipeSource::isSeekable () {
 }
 
 KDE_NO_EXPORT void KMPlayerPipeSource::activate () {
+    if (!m_url.protocol ().compare ("kmplayer"))
+        m_pipecmd = KURL::decode_string (m_url.path ()).mid (1);
+    setURL (KURL ("stdin://"));
+    KMPlayer::GenericURL * gen = new KMPlayer::GenericURL (m_document, QString ("stdin://"), m_pipecmd);
+    gen->bookmark_url = QString ("kmplayer://pipesource/%1").arg (m_pipecmd);
+    m_document->appendChild (gen->self ());
     m_recordcmd = m_options = QString ("-"); // or m_url?
     m_identified = true;
     first ();

@@ -650,7 +650,7 @@ void PlayListView::addBookMark () {
     ListViewItem * item = static_cast <ListViewItem *> (currentItem ());
     if (item->m_elm) {
         Mrl * mrl = item->m_elm->mrl ();
-        KURL url (mrl ? mrl->src : QString (item->m_elm->nodeName ()));
+        KURL url (mrl ? (mrl->bookmark_url.isEmpty () ? mrl->src : mrl->bookmark_url) : QString (item->m_elm->nodeName ()));
         emit addBookMark (mrl->pretty_name.isEmpty () ? url.prettyURL () : mrl->pretty_name, url.url ());
     }
 }
