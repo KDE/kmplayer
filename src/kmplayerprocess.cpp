@@ -211,7 +211,7 @@ bool MPlayer::play () {
     const KURL & url (source ()->url ());
     if (!url.isEmpty ()) {
         QString myurl (url.isLocalFile () ? url.path () : url.url ());
-        args += KProcess::quote (myurl);
+        args += KProcess::quote (QString (QFile::encodeName (myurl)));
     }
     if (!source ()->identified ())
         args += QString (" -quiet -nocache -identify -frames 0 ");
@@ -390,7 +390,7 @@ bool MPlayer::grabPicture (const KURL & url, int pos) {
     args += QString (" -frames 1 -nosound -quiet ");
     if (pos > 0)
         args += QString ("-ss %1 ").arg (pos);
-    args += KProcess::quote (myurl).ascii ();
+    args += KProcess::quote (QString (QFile::encodeName (myurl))).ascii ();
     *m_process << args;
     kdDebug () << args << endl;
     m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
@@ -495,11 +495,13 @@ bool MEncoder::play () {
                 args += myurl.replace (0, 6, QString (" -vcd "));
             else if (!post090 && myurl.startsWith (QString ("dvd://")))
                 args += myurl.replace (0, 6, QString (" -dvd "));
-            else
-                args += QString (" ") + KProcess::quote (url.isLocalFile () ? url.path () : url.url ());
+            else {
+                QString myurl = url.isLocalFile () ? url.path () : url.url ();
+                args += QString (" ") + KProcess::quote (QString (QFile::encodeName (myurl)));
+            }
         }
         m_recordurl = dlg->selectedURL().url ();
-        QString outurl = KProcess::quote (m_recordurl.isLocalFile () ? m_recordurl.path () : m_recordurl.url ());
+        QString outurl = KProcess::quote (QString (QFile::encodeName (m_recordurl.isLocalFile () ? m_recordurl.path () : m_recordurl.url ())));
         kdDebug () << args << " -o " << outurl << endl;
         *m_process << args << " -o " << outurl;
         m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
@@ -674,7 +676,7 @@ bool Xine::play () {
                              QString (m_callback->objId ()).ascii ());
     printf (" -cb %s", cbname.ascii());
     *m_process << " -cb " << cbname.ascii();
-    QString myurl = KProcess::quote (url.isLocalFile () ? url.path () : url.url ());
+    QString myurl = KProcess::quote (QString (QFile::encodeName (url.isLocalFile () ? url.path () : url.url ())));
     printf (" %s\n", myurl.ascii ());
     *m_process << myurl.ascii();
     fflush (stdout);
