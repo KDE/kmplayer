@@ -897,6 +897,7 @@ Callback::Callback (CallbackProcess * process)
       m_process (process) {}
 
 void Callback::statusMessage (int code, QString msg) {
+    if (!m_process->m_source) return;
     switch ((StatusCode) code) {
         case stat_newtitle:
             m_process->player ()->changeTitle (msg);
@@ -1016,6 +1017,7 @@ void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
 }
 
 void CallbackProcess::setMovieParams (int len, int w, int h, float a) {
+    if (!m_source) return;
     kdDebug () << "setMovieParams " << len << " " << w << "," << h << " " << a << endl;
     in_gui_update = true;
     m_source->setWidth (w);
@@ -1033,6 +1035,7 @@ void CallbackProcess::setMovieParams (int len, int w, int h, float a) {
 }
 
 void CallbackProcess::setMoviePosition (int position) {
+    if (!m_source) return;
     in_gui_update = true;
     m_source->setPosition (position);
     m_request_seek = -1;
