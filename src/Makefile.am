@@ -38,20 +38,22 @@ endif
 
 bin_PROGRAMS= $(kxineplayer_app) kxvplayer $(kgstplayer_app)
 
-kxineplayer_LDADD= $(LIB_XINE)
+noinst_LTLIBRARIES = libkmplayerbackend.la
+libkmplayerbackend_la_SOURCES = kmplayer_backend.skel kmplayer_callback.stub
+
+kxineplayer_LDADD= libkmplayerbackend.la $(LIB_XINE) -lDCOP
 kxineplayer_CFLAGS= $(CFLAGS_XINE)
-kxineplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH) -lDCOP
-kxineplayer_SOURCES= xineplayer.cpp kmplayer_backend.skel kmplayer_callback.stub
+kxineplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH)
+kxineplayer_SOURCES= xineplayer.cpp
 
-kxvplayer_LDADD=
-kxvplayer_CFLAGS=
-kxvplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH) -lDCOP -lXv
-kxvplayer_SOURCES= xvplayer.cpp kmplayer_backend.skel kmplayer_callback.stub
+kxvplayer_LDADD= libkmplayerbackend.la -lDCOP -lXv
+kxvplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH)
+kxvplayer_SOURCES= xvplayer.cpp
 
-kgstplayer_LDADD= $(LIB_GST)
+kgstplayer_LDADD= libkmplayerbackend.la $(LIB_GST) -lDCOP
 kgstplayer_CPPFLAGS= $(CFLAGS_GST)
-kgstplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH) -lDCOP
-kgstplayer_SOURCES= gstplayer.cpp kmplayer_backend.skel kmplayer_callback.stub
+kgstplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH)
+kgstplayer_SOURCES= gstplayer.cpp
 
 xdg_apps_DATA = kmplayer.desktop
 
