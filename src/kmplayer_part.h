@@ -101,7 +101,8 @@ public:
     KMPlayerBrowserExtension * browserextension() const
         { return m_browserextension; }
     void setHRef (const QString & h) { m_href = h; }
-    void sizes (int & w, int & h) const; 
+    void sizes (int & w, int & h) const;
+    void setMovieLength (int len);
 public slots:
     virtual bool openURL (const KURL & url);
     virtual void pause (void);
@@ -116,17 +117,16 @@ public slots:
     bool playing () const;
     void showConfigDialog ();
     void setMenuZoom (int id);
-    void setPosSlider(int);
-    void posSliderChanged(int);
+    void setPosSlider (int pos);
+    void posSliderChanged (int pos);
 public:
-    virtual bool isSeekable (void) const;
-    virtual unsigned long position (void) const;
-    virtual bool hasLength (void) const;
-    virtual unsigned long length (void) const;
+    virtual bool isSeekable (void) const { return m_movie_length > 0; }
+    virtual unsigned long position () const { return m_movie_position; }
+    virtual bool hasLength () const { return m_movie_length > 0; }
+    virtual unsigned long length () const { return m_movie_length; }
 signals:
     void running ();
     void finished ();
-    void moviePositionChanged (int);
 protected:
     bool openFile();
     void timerEvent (QTimerEvent *);
@@ -157,6 +157,8 @@ private:
     int m_cachesize;
     int movie_width;
     int movie_height;
+    int m_movie_length;
+    int m_movie_position;
     bool m_term_signal_send : 1;
     bool m_kill_signal_send : 1;
     bool m_started_emited : 1;

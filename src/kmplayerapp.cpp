@@ -322,6 +322,7 @@ void KMPlayerApp::finished () {
     disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
     KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
     QMultiLineEdit * txt = kview->consoleOutput ();
+    int movie_length = 0;
     for (int i = 0; i < txt->numLines (); i++) {
         QString str = txt->textLine (i);
         if (str.startsWith ("ID_VIDEO_WIDTH")) {
@@ -339,9 +340,10 @@ void KMPlayerApp::finished () {
         } else if (str.startsWith ("ID_LENGTH")) {
             int pos = str.find ('=');
             if (pos > 0)
-                kview->positionSlider()->setMaxValue (str.mid (pos + 1).toInt());
+                movie_length = str.mid (pos + 1).toInt();
         }
     }
+    m_player->setMovieLength (movie_length);
     resizePlayer (100);
     const KURL & url = doc->URL ();
     if (m_player->openURL (url)) {
@@ -362,6 +364,7 @@ void KMPlayerApp::finishedOpenDVD () {
 
     KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
     QMultiLineEdit * txt = kview->consoleOutput ();
+    int movie_length = 0;
     QRegExp langRegExp (m_player->configDialog ()->langpattern);
     QRegExp subtitleRegExp (m_player->configDialog ()->subtitlespattern);
     QRegExp titleRegExp (m_player->configDialog ()->titlespattern);
@@ -386,7 +389,7 @@ void KMPlayerApp::finishedOpenDVD () {
         } else if (str.startsWith ("ID_LENGTH")) {
             int pos = str.find ('=');
             if (pos > 0)
-                kview->positionSlider()->setMaxValue (str.mid (pos + 1).toInt());
+                movie_length = str.mid (pos + 1).toInt();
         } else if (subtitleRegExp.search (cstr) > -1) {
             m_dvdsubtitlemenu->insertItem (subtitleRegExp.cap (2), this,
                                            SLOT (subtitleMenuClicked (int)), 0,
@@ -415,6 +418,7 @@ void KMPlayerApp::finishedOpenDVD () {
                                           SLOT (chapterMenuClicked(int)), 0, c);
         }
     }
+    m_player->setMovieLength (movie_length);
     //if (m_dvdsubtitlemenu->count()) m_dvdsubtitlemenu->setItemChecked (m_dvdsubtitlemenu->idAt (0), true);
     if (m_dvdtitlemenu->count ()) m_dvdtitlemenu->setItemChecked (0, true);
     if (m_dvdchaptermenu->count ()) m_dvdchaptermenu->setItemChecked (0, true);
@@ -433,6 +437,7 @@ void KMPlayerApp::finishedOpenVCD () {
     m_vcdtrackmenu->clear ();
 
     KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
+    int movie_length = 0;
     QMultiLineEdit * txt = kview->consoleOutput ();
     QRegExp trackRegExp (m_player->configDialog ()->trackspattern);
     //kdDebug () << "finishedOpenDVD " << txt->numLines () << endl;
@@ -455,7 +460,7 @@ void KMPlayerApp::finishedOpenVCD () {
         } else if (str.startsWith ("ID_LENGTH")) {
             int pos = str.find ('=');
             if (pos > 0)
-                kview->positionSlider()->setMaxValue (str.mid (pos + 1).toInt());
+                movie_length = str.mid (pos + 1).toInt();
         } else if (trackRegExp.search (cstr) > -1) {
             m_vcdtrackmenu->insertItem (trackRegExp.cap (1), this,
                                         SLOT (trackMenuClicked(int)), 0,
@@ -463,6 +468,7 @@ void KMPlayerApp::finishedOpenVCD () {
             kdDebug () << "track " << trackRegExp.cap (1) << endl;
         }
     }
+    m_player->setMovieLength (movie_length);
     if (m_vcdtrackmenu->count()) m_vcdtrackmenu->setItemChecked (0, true);
     resizePlayer (100);
     if (m_player->configDialog ()->playvcd)

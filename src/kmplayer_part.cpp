@@ -191,6 +191,8 @@ void KMPlayer::init () {
     m_browserextension = new KMPlayerBrowserExtension (this);
     movie_width = 0;
     movie_height = 0;
+    m_movie_position = 0;
+    m_movie_length = 0;
     m_bPosSliderPressed = false;
     m_posRegExp.setPattern ("V:[^0-9]*([0-9\\.]+)");
     connect (m_view->backButton (), SIGNAL (clicked ()), this, SLOT (back ()));
@@ -198,7 +200,6 @@ void KMPlayer::init () {
     connect (m_view->forwardButton (), SIGNAL (clicked ()), this, SLOT (forward ()));
     connect (m_view->pauseButton (), SIGNAL (clicked ()), this, SLOT (pause ()));
     connect (m_view->stopButton (), SIGNAL (clicked ()), this, SLOT (stop ()));
-    connect (this, SIGNAL (moviePositionChanged (int)), SLOT (setPosSlider (int)));
     connect (m_view->positionSlider (), SIGNAL (sliderMoved (int)), SLOT (posSliderChanged (int)));
     connect (m_view->positionSlider (), SIGNAL (sliderPressed()), SLOT (posSliderPressed()));
     connect (m_view->positionSlider (), SIGNAL (sliderReleased()), SLOT (posSliderReleased()));
@@ -295,7 +296,7 @@ void KMPlayer::processOutput (KProcess *, char * str, int len) {
 
     if (m_posRegExp.search (out) > -1) {
         // during playing, this regexp will match often
-        emit moviePositionChanged (int (m_posRegExp.cap (1).toFloat ()));
+        setPosSlider (int (m_posRegExp.cap (1).toFloat ()));
     } else {
         m_view->addText (out);
         QRegExp sizeRegExp (m_configdialog->sizepattern);
@@ -358,6 +359,9 @@ void KMPlayer::processStopped (KProcess *) {
     printf("process stopped\n");
 
     killTimers ();
+    if (m_movie_position > m_movie_length)
+        setMovieLength (m_movie_position);
+    m_movie_position = 0;
     if (m_started_emited) {
         m_started_emited = false;
         m_browserextension->setLoadingProgress (100);
@@ -367,7 +371,6 @@ void KMPlayer::processStopped (KProcess *) {
         m_view->playButton ()->toggle ();
         m_view->positionSlider()->setEnabled (false);
         m_view->positionSlider()->setValue (0);
-        m_view->positionSlider()->setMaxValue (0);
     }
     if (qApp->eventLoop ()->loopLevel () == m_stoplooplevel) {
         qApp->eventLoop ()->exitLoop ();
@@ -381,20 +384,10 @@ void KMPlayer::processStopped (KProcess *) {
     }
 }
 
-bool KMPlayer::isSeekable () const {
-    return false;
-}
-
-unsigned long KMPlayer::position () const {
-    return 0;
-}
-
-bool KMPlayer::hasLength () const {
-    return false;
-}
-
-unsigned long KMPlayer::length () const {
-    return 0;
+void KMPlayer::setMovieLength (int len) {
+    m_movie_length = len;
+    if (m_view)
+        m_view->positionSlider()->setMaxValue (len > 0 ? len : 10);
 }
 
 void KMPlayer::pause () {
@@ -414,11 +407,12 @@ void KMPlayer::forward () {
 }
 
 bool KMPlayer::run (const char * args, const char * pipe) {
+    m_movie_position = 0;
     m_view->consoleOutput ()->clear ();
     m_started_emited = false;
     initProcess ();
 
-    if ( m_view->positionSlider()->maxValue() == 0 || !m_configdialog->showposslider )
+    if (!m_configdialog->showposslider)
         m_view->positionSlider()->hide();
     else
         m_view->positionSlider()->show();
@@ -576,8 +570,6 @@ void KMPlayer::play () {
         args.sprintf ("-slave");
     else
         args.sprintf ("-slave -cache %d", m_cachesize);
-    if (!m_configdialog->showposslider)
-        args.append (" -quiet");
     run (args);
     emit running ();
 }
@@ -659,32 +651,30 @@ void KMPlayer::setMenuZoom (int id) {
                                      int (scale * m_view->viewer ()->height()));
 }
 
-void KMPlayer::setPosSlider(int iNewPos)
-{
+void KMPlayer::setPosSlider (int pos) {
+    m_movie_position = pos;
+    if (!m_view) return;
     QSlider *slider = m_view->positionSlider ();
 
-    if (slider->isVisible () && slider->isEnabled () && !m_bPosSliderPressed)
-        slider->setValue (iNewPos);
+    if (m_movie_length <= 0 && pos > 3 * slider->maxValue() / 4)
+        slider->setMaxValue (slider->maxValue() * 2);
+    else if (slider->maxValue() < pos)
+        slider->setMaxValue (int (1.4 * slider->maxValue()));
+
+    if (!m_bPosSliderPressed)
+        slider->setValue (pos);
 }
 
-void KMPlayer::posSliderPressed()
-{
+void KMPlayer::posSliderPressed () {
     m_bPosSliderPressed=true;
 }
 
-void KMPlayer::posSliderReleased()
-{
+void KMPlayer::posSliderReleased () {
     m_bPosSliderPressed=false;
 }
 
-void KMPlayer::posSliderChanged(int iNewPos)
-{
-        static int iOldPos=-1;
-
-        if ( iNewPos != iOldPos ) {
-            seekPercent( (float) iNewPos / m_view->positionSlider()->maxValue() * 100 );
-            iOldPos = iNewPos;
-        }
+void KMPlayer::posSliderChanged (int pos) {
+    seekPercent (100.0 * pos / m_view->positionSlider()->maxValue());
 }
 
 KAboutData* KMPlayer::createAboutData () {

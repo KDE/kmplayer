@@ -135,7 +135,6 @@ public:
 
     void setAspect (float a);
     float aspect () { return m_aspect; }
-    void setMouseTrackingPos (int p) { m_mouse_tracking_pos = p; }
 signals:
     void aboutToPlay ();
 protected:
@@ -146,7 +145,6 @@ protected:
 private:
     float m_aspect;
     KMPlayerView * m_view;
-    int m_mouse_tracking_pos;
 };
 
 class KMPlayerViewerHolder : public QWidget {

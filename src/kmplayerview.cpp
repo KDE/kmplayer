@@ -233,8 +233,12 @@ KMPlayerViewerHolder::KMPlayerViewerHolder (QWidget * pa, KMPlayerView * view)
 }
 
 void KMPlayerViewerHolder::mouseMoveEvent (QMouseEvent * e) {
+    int vert_buttons_pos = height ();
+    if (m_view->positionSlider ()->isVisible ())
+        vert_buttons_pos -= m_view->positionSlider ()->height ();
     if (e->state () == Qt::NoButton)
-        m_view->delayedShowButtons (e->y () > height () - button_height);
+        m_view->delayedShowButtons (e->y() > vert_buttons_pos - button_height &&
+                                    e->y() < vert_buttons_pos);
 }
 
 void KMPlayerViewerHolder::resizeEvent (QResizeEvent *) {
@@ -253,7 +257,6 @@ void KMPlayerViewerHolder::resizeEvent (QResizeEvent *) {
         y = (height () - h) / 2;
     }
     m_view->viewer ()->setGeometry (x, y, w, h);
-    m_view->viewer ()->setMouseTrackingPos (height () - button_height);
 }
 
 //-----------------------------------------------------------------------------
@@ -264,14 +267,13 @@ public:
         : QSlider (orient, parent), m_view (view) {
     }
 protected:
-    void mouseMoveEvent (QMouseEvent * e);
+    void enterEvent (QEvent *);
 private:
     KMPlayerView * m_view;
 };
 
-void KMPlayerSlider::mouseMoveEvent (QMouseEvent * e) {
-    if (e->state () == Qt::NoButton)
-        m_view->delayedShowButtons (e->y () > height () - 5);
+void KMPlayerSlider::enterEvent (QEvent *) {
+    m_view->delayedShowButtons (false);
 }
 
 //-----------------------------------------------------------------------------
@@ -313,9 +315,9 @@ void KMPlayerView::init () {
     //w1->setEraseColor (QColor (0, 0, 0));
     layerbox->addWidget (w1);
     
+    layerbox->addWidget (m_buttonbar);
     m_posSlider = new KMPlayerSlider (Qt::Horizontal, m_layer, this);
     layerbox->addWidget (m_posSlider);
-    layerbox->addWidget (m_buttonbar);
 
     QHBoxLayout * buttonbox = new QHBoxLayout (m_buttonbar, 1);
     m_buttonbar->setMaximumSize (2500, button_height);
@@ -436,7 +438,15 @@ void KMPlayerView::updateVolume (float v) {
 void KMPlayerView::timerEvent (QTimerEvent * e) {
     killTimer (e->timerId ());
     delayed_timer = 0;
-    bool mouse_on_buttons = (m_layer->hasMouse () && m_layer->mapFromGlobal (QCursor::pos ()).y () > m_layer->height () - button_height);
+    if (!m_playing)
+        return;
+    int vert_buttons_pos = m_layer->height ();
+    if (m_posSlider->isVisible ())
+        vert_buttons_pos -= m_posSlider->height ();
+    int mouse_pos = m_layer->mapFromGlobal (QCursor::pos ()).y();
+    bool mouse_on_buttons = (m_layer->hasMouse () && 
+                             mouse_pos >= vert_buttons_pos - button_height && 
+                             mouse_pos <= vert_buttons_pos);
     if (mouse_on_buttons && !m_buttonbar->isVisible ())
         m_buttonbar->show ();
     else if (!mouse_on_buttons && m_buttonbar->isVisible ())
@@ -500,8 +510,7 @@ void KMPlayerView::reset () {
 
 KMPlayerViewer::KMPlayerViewer (QWidget *parent, KMPlayerView * view)
   : QWidget (parent), m_aspect (0.0),
-    m_view (view),
-    m_mouse_tracking_pos (0x7fffffff) {
+    m_view (view) {
     /*XWindowAttributes xwa;
     XGetWindowAttributes (qt_xdisplay(), winId (), &xwa);
     XSetWindowAttributes xswa;
@@ -515,7 +524,6 @@ KMPlayerViewer::KMPlayerViewer (QWidget *parent, KMPlayerView * view)
 }
 
 KMPlayerViewer::~KMPlayerViewer () {
-    printf ("KMPlayerViewer::~KMPlayerViewer\n");
 }
     
 void KMPlayerViewer::showEvent (QShowEvent *) {
@@ -540,7 +548,7 @@ void KMPlayerViewer::hideEvent (QHideEvent *) {
 
 void KMPlayerViewer::mouseMoveEvent (QMouseEvent * e) {
     if (e->state () == Qt::NoButton)
-        m_view->delayedShowButtons (e->y () > m_mouse_tracking_pos);
+        m_view->delayedShowButtons (e->y () > height () - button_height);
 }
 
 void KMPlayerViewer::setAspect (float a) {
