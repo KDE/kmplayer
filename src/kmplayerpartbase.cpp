@@ -369,15 +369,15 @@ void PartBase::changeTitle (const QString & title) {
 }
 
 bool PartBase::isSeekable (void) const {
-    return m_source->isSeekable ();
+    return m_source ? m_source->isSeekable () : false;
 }
 
 bool PartBase::hasLength () const {
-    return m_source->hasLength (); 
+    return m_source ? m_source->hasLength () : false; 
 }
 
 unsigned long PartBase::length () const {
-    return m_source->length ();
+    return m_source ? m_source->length () : 0;
 }
 
 bool PartBase::openURL (const KURL & url) {
