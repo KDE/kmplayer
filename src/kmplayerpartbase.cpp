@@ -196,6 +196,8 @@ KMPlayer::~KMPlayer () {
         delete (KMPlayerView*) m_view;
     m_view = (KMPlayerView*) 0;
     stop ();
+    if (m_process && m_process->source ())
+        m_process->source ()->deactivate ();
     delete m_settings;
     delete m_bookmark_menu;
     delete m_bookmark_manager;

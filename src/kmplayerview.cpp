@@ -70,6 +70,8 @@ static const int button_height_only_buttons = 11;
 #include <kdebug.h>
 #include <klocale.h>
 #include <kapplication.h>
+#include <kactioncollection.h>
+#include <kshortcut.h>
 #include <kurldrag.h>
 #include <dcopclient.h>
 
@@ -189,8 +191,10 @@ KDE_NO_CDTOR_EXPORT KMPlayerViewLayer::KMPlayerViewLayer (QWidget * parent, KMPl
  : QWidget (parent),
    m_parent (parent),
    m_view (view),
-   m_accel (0L),
+   m_collection (new KActionCollection (this)),
    m_fullscreen (false) {
+    new KAction (i18n ("Escape"), KShortcut (Qt::Key_Escape), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_escape");
+    new KAction (i18n ("Fullscreen"), KShortcut (Qt::Key_F), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_toggle");
 }
 
 KDE_NO_EXPORT void KMPlayerViewLayer::fullScreen () {
@@ -198,14 +202,17 @@ KDE_NO_EXPORT void KMPlayerViewLayer::fullScreen () {
         showNormal ();
         reparent (m_parent, 0, QPoint (0, 0), true);
         static_cast <KDockWidget *> (m_parent)->setWidget (this);
-        delete m_accel;
-        m_accel = 0L;
+        for (int i = 0; i < m_collection->count (); ++i)
+            m_collection->action (i)->setEnabled (false);
     } else {
         reparent (0L, 0, qApp->desktop()->screenGeometry(this).topLeft(), true);
         showFullScreen ();
-        m_accel = new QAccel (this);
-        int id = m_accel->insertItem (QKeySequence (Qt::Key_Escape));
-        m_accel->connectItem (id, this, SLOT (accelActivated ()));
+        for (int i = 0; i < m_collection->count (); ++i)
+            m_collection->action (i)->setEnabled (true);
+
+        //m_accel = new QAccel (this);
+        //int id = m_accel->insertItem (QKeySequence (Qt::Key_Escape));
+        //m_accel->connectItem (id, this, SLOT (accelActivated ()));
     }
     m_fullscreen = !m_fullscreen;
     m_view->buttonBar()->popupMenu ()->setItemChecked (KMPlayerControlPanel::menu_fullscreen, m_fullscreen);
@@ -889,6 +896,12 @@ void KMPlayerView::addText (const QString & str) {
     }
 }
 
+void KMPlayerView::addFullscreenAction (const QString & title, const KShortcut & c, QObject * o, const char * s, const char * name) {
+    KAction * action = m_layer->m_collection->action (name);
+    if (action)
+        m_layer->m_collection->remove (action);
+    new KAction (title, c, o, s, m_layer->m_collection, name);
+}
 /* void KMPlayerView::print (QPrinter *pPrinter)
 {
     QPainter printpainter;
@@ -986,7 +999,7 @@ KDE_NO_EXPORT bool KMPlayerView::x11Event (XEvent * e) {
                 switch (ksym) {
                     case XK_f:
                     case XK_F:
-                        fullScreen ();
+                        //fullScreen ();
                         break;
                 };
             }

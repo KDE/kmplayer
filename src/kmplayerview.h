@@ -49,6 +49,9 @@ class QSlider;
 class QLabel;
 class QAccel;
 class KPopupMenu;
+class KActionCollection;
+class KAction;
+class KShortcut;
 class KMPlayerPlayListView;
 
 class KMPlayerListViewItem : public QListViewItem {
@@ -85,6 +88,7 @@ private:
 };
 
 class KMPlayerViewLayer : public QWidget {
+    friend class KMPlayerView;
     Q_OBJECT
 public:
     KMPlayerViewLayer (QWidget * parent, KMPlayerView * view);
@@ -95,7 +99,7 @@ public slots:
 private:
     QWidget * m_parent;
     KMPlayerView * m_view;
-    QAccel * m_accel;
+    KActionCollection * m_collection;
     bool m_fullscreen : 1;
 };
 
@@ -145,6 +149,7 @@ public:
     //void setAutoHideSlider (bool b);
     KDE_NO_EXPORT ControlPanelMode controlPanelMode () const { return m_controlpanel_mode; }
     void delayedShowButtons (bool show);
+    void addFullscreenAction (const QString &, const KShortcut &, QObject *, const char *, const char *);
     bool isFullScreen () const;
     bool setPicture (const QString & path);
     QPixmap * image () const { return m_image; }
