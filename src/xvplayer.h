@@ -36,6 +36,7 @@ public:
     void contrast (int val);
     void brightness (int val);
     void volume (int val);
+    void frequency (int val);
     //void seek (int val);
     //bool event (QEvent * e);
 public slots:

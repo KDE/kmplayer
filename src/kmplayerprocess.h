@@ -218,7 +218,7 @@ public:
     virtual void setErrorMessage (int code, const QString & msg);
     virtual void setFinished ();
     virtual void setPlaying ();
-    virtual void setStarted (QByteArray & data);
+    virtual void setStarted (QCString dcopname, QByteArray & data);
     virtual void setMovieParams (int length, int width, int height, float aspect);
     virtual void setMoviePosition (int position);
     virtual void setLoadingProgress (int percentage);
@@ -274,7 +274,6 @@ public slots:
     virtual void urlForPlaying (const QString &);
     bool quit ();
     bool seek (int pos, bool absolute);
-    void setStarted (QByteArray & data);
 private slots:
     void processStopped (KProcess *);
     void processOutput (KProcess *, char *, int);
@@ -294,7 +293,6 @@ public slots:
     virtual void urlForPlaying (const QString &);
     bool quit ();
     bool seek (int pos, bool absolute);
-    void setStarted (QByteArray & data);
 private slots:
     void processStopped (KProcess *);
     void processOutput (KProcess *, char *, int);

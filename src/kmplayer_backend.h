@@ -41,6 +41,7 @@ k_dcop:
     virtual ASYNC contrast (int c, bool absolute);
     virtual ASYNC brightness (int b, bool absolute);
     virtual ASYNC volume (int v, bool absolute);
+    virtual ASYNC frequency (int f);
     virtual ASYNC quit ();
     virtual ASYNC setConfig (QByteArray);
 private:

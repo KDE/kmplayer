@@ -529,10 +529,11 @@ KDE_NO_EXPORT void KMPlayerSettings::okPressed () {
     int backend = configdialog->m_SourcePageURL->backend->currentItem ();
     const KMPlayer::ProcessMap::const_iterator e = m_player->players ().end();
     for (KMPlayer::ProcessMap::const_iterator i = m_player->players ().begin(); backend >=0 && i != e; ++i) {
-        if (backend-- == 0) {
-            backends["urlsource"] = i.data ()->name ();
-            if (i.data () != m_player->process ())
-                m_player->setProcess (i.data ()->name ());
+        KMPlayerProcess * proc = i.data ();
+        if (proc->supports ("urlsource") && backend-- == 0) {
+            backends["urlsource"] = proc->name ();
+            if (proc != m_player->process ())
+                m_player->setProcess (proc->name ());
         }
     }
     allowhref = configdialog->m_SourcePageURL->allowhref->isChecked ();

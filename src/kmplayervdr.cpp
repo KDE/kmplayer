@@ -644,15 +644,6 @@ KDE_NO_EXPORT bool XVideo::quit () {
     return KMPlayerProcess::stop ();
 }
 
-KDE_NO_EXPORT void XVideo::setStarted (QByteArray & data) {
-    QString dcopname;
-    dcopname.sprintf ("kxvideoplayer-%u", m_process->pid ());
-    kdDebug () << "up and running " << dcopname << endl;
-    m_backend = new KMPlayerBackend_stub (dcopname.ascii (), "KMPlayerBackend");
-    KMPlayerCallbackProcess::setStarted (data);
-    m_backend->play ();
-}
-
 KDE_NO_EXPORT void XVideo::processStopped (KProcess *) {
     QTimer::singleShot (0, this, SLOT (emitFinished ()));
 }

@@ -141,7 +141,6 @@ public:
     ~XVideo ();
     QString menuName () const;
     KDE_NO_EXPORT void setPort (int xvport) { xv_port = xvport; }
-    void setStarted (QByteArray & data);
     void initProcess ();
 public slots:
     virtual bool play ();

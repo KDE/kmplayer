@@ -285,6 +285,9 @@ void KMPlayerBackend::volume (int v, bool) {
     xineapp->volume (v);
 }
 
+void KMPlayerBackend::frequency (int) {
+}
+
 void KMPlayerBackend::quit () {
     delete callback;
     callback = 0L;
@@ -1000,7 +1003,7 @@ int main(int argc, char **argv) {
         QByteArray buf;
         if (wants_config)
             getConfigEntries (buf);
-        callback->started (buf);
+        callback->started (dcopclient.appId (), buf);
     }
     xineapp->exec ();
 

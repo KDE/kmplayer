@@ -898,8 +898,8 @@ void KMPlayerCallback::playing () {
     m_process->setPlaying ();
 }
 
-void KMPlayerCallback::started (QByteArray data) {
-    m_process->setStarted (data);
+void KMPlayerCallback::started (QCString dcopname, QByteArray data) {
+    m_process->setStarted (dcopname, data);
 }
 
 void KMPlayerCallback::movieParams (int length, int w, int h, float aspect) {
@@ -954,13 +954,31 @@ void KMPlayerCallbackProcess::setPlaying () {
     emit startedPlaying ();
 }
 
-void KMPlayerCallbackProcess::setStarted (QByteArray &) {
+void KMPlayerCallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
     m_status = status_start;
+    if (data.size ())
+        m_configdata = data;
+    kdDebug () << "up and running " << dcopname << endl;
+    m_backend = new KMPlayerBackend_stub (dcopname, "KMPlayerBackend");
+    if (m_send_config == send_new) {
+        m_backend->setConfig (m_changeddata);
+    }
+    if (m_have_config == config_probe || m_have_config == config_unknown) {
+        bool was_probe = m_have_config == config_probe;
+        m_have_config = data.size () ? config_yes : config_no;
+        if (m_configpage)
+            m_configpage->sync (false);
+        if (was_probe) {
+            quit ();
+            return;
+        }
+    }
     KMPlayerSettings * settings = m_player->settings ();
     saturation (settings->saturation, true);
     hue (settings->hue, true);
     brightness (settings->brightness, true);
     contrast (settings->contrast, true);
+    m_backend->play ();
 }
 
 void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
@@ -1106,6 +1124,7 @@ static QString valenum ("enum");
 static QString valstring ("string");
 
 KDE_NO_EXPORT void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
+    if (!m_configframe) return;
     QTable * table = m_configframe->table;
     QDomDocument & dom = m_configframe->dom;
     int row = 0;
@@ -1390,7 +1409,8 @@ void Xine::urlForPlaying (const QString & urlstr) {
 
 KDE_NO_EXPORT bool Xine::quit () {
     kdDebug () << "Xine::quit ()" << endl;
-    disconnect (m_source, SIGNAL (currentURL (const QString &)), this, SLOT (urlForPlaying (const QString &)));
+    if (m_source)
+        disconnect (m_source, SIGNAL (currentURL (const QString &)), this, SLOT (urlForPlaying (const QString &)));
     if (m_have_config == config_probe)
         m_have_config = config_unknown; // hmm
     if (m_send_config == send_new)
@@ -1450,32 +1470,6 @@ KDE_NO_EXPORT void Xine::processStopped (KProcess *) {
         m_send_config = send_new; // we failed, retry ..
         play ();
     }
-}
-
-KDE_NO_EXPORT void Xine::setStarted (QByteArray & data) {
-    QString dcopname;
-    dcopname.sprintf ("kxineplayer-%u", m_process->pid ());
-    kdDebug () << "up and running " << dcopname << endl;
-    m_backend = new KMPlayerBackend_stub (dcopname.ascii (), "KMPlayerBackend");
-    KMPlayerCallbackProcess::setStarted (data);
-    if (m_have_config == config_probe || m_have_config == config_unknown) {
-        m_configdata = data;
-        if (m_have_config == config_probe) {
-            m_have_config = data.size () ? config_yes : config_no;
-            stop ();
-            m_configpage->sync (false);
-            return;
-        }
-        m_have_config = data.size () ? config_yes : config_no;
-    }
-    if (m_send_config == send_new) {
-        m_backend->setConfig (m_changeddata);
-        return;
-    }
-    //const KURL & url = m_source->subUrl ();
-    //if (!url.isEmpty ())
-    //    m_backend->setSubTitleURL (url.isLocalFile () ? url.path () : url.url ());
-    m_backend->play ();
 }
 
 //-----------------------------------------------------------------------------
@@ -1622,15 +1616,6 @@ KDE_NO_EXPORT void GStreamer::processStopped (KProcess *) {
     delete m_backend;
     m_backend = 0L;
     QTimer::singleShot (0, this, SLOT (emitFinished ()));
-}
-
-KDE_NO_EXPORT void GStreamer::setStarted (QByteArray & data) {
-    QString dcopname;
-    dcopname.sprintf ("kgstreamerplayer-%u", m_process->pid ());
-    kdDebug () << "up and running " << dcopname << endl;
-    m_backend = new KMPlayerBackend_stub (dcopname.ascii (), "KMPlayerBackend");
-    KMPlayerCallbackProcess::setStarted (data);
-    m_backend->play ();
 }
 
 //-----------------------------------------------------------------------------

@@ -52,13 +52,23 @@ static GC                   gc;
 static bool                 window_created = true;
 static bool                 wants_config;
 static bool                 verbose;
-static int                  running;
+static bool                 running;
+static bool                 have_freq;
+static bool                 xv_success;
+static int                  freq;
 static int                  xvport;
+static int                  xv_encoding = -1;
 static int                  screen;
+static int                  movie_width;
+static int                  movie_height;
+Atom xv_enc_atom;
 Atom xv_hue_atom;
 Atom xv_saturation_atom;
 Atom xv_brightness_atom;
 Atom xv_contrast_atom;
+Atom xv_freq_atom;
+Atom xv_volume_atom;
+Atom xv_mute_atom;
 static QString elmentry ("entry");
 static QString elmitem ("item");
 static QString attname ("NAME");
@@ -72,6 +82,7 @@ static QString valnum ("num");
 static QString valbool ("bool");
 static QString valenum ("enum");
 static QString valstring ("string");
+static QByteArray config_buf;
 
 extern "C" {
 
@@ -129,6 +140,10 @@ void KMPlayerBackend::volume (int v, bool) {
     xvapp->volume (v);
 }
 
+void KMPlayerBackend::frequency (int f) {
+    xvapp->frequency (f);
+}
+
 void KMPlayerBackend::quit () {
     delete callback;
     callback = 0L;
@@ -183,35 +198,79 @@ void KXVideoPlayer::init () {
                   (PointerMotionMask | ExposureMask | KeyPressMask | ButtonPressMask | StructureNotifyMask)); // | SubstructureNotifyMask));
     XvAdaptorInfo * ai;
     unsigned int adaptors;
-    if (!xvport && XvQueryAdaptors (display, XDefaultRootWindow (display), &adaptors, &ai) == Success) {
+    xv_success = true;
+    QDomDocument doc;
+    QDomElement root = doc.createElement (QString ("document"));
+    if (XvQueryAdaptors (display, XDefaultRootWindow (display), &adaptors, &ai) == Success) {
+        QDomElement elm = doc.createElement (elmentry);
+        elm.setAttribute (attname, QString ("XVideo"));
+        elm.setAttribute (atttype, valenum);
         for (int i = 0; i < adaptors; i++) {
             if ((ai[i].type & XvInputMask) &&
                     (ai[i].type & XvVideoMask) &&
                     ai[i].base_id > 0) {
-                fprintf (stderr, "using xvport %d\n", ai[i].base_id);
-                xvport = ai[i].base_id;
-                break;
+                int port = ai[i].base_id;
+                if (!xvport) {
+                    fprintf (stderr, "using xvport %d\n", port);
+                    xvport = port;
+                }
+                int dummy;
+                if (XvGetPortAttribute (display, port, xv_freq_atom, &dummy) == Success)
+                    have_freq = true;
+                fprintf (stderr, "freq %d %d\n", have_freq, dummy);
+                XvAttribute *attributes = 0L;
+                int nr_attr;
+                attributes = XvQueryPortAttributes (display, port, &nr_attr);
+                if (attributes) {
+                    for (int i = 0; i < nr_attr; i++)
+                        fprintf (stderr, "%s (%d .. %d)\n", attributes[i].name, attributes[i].min_value, attributes[i].max_value);
+                    XFree(attributes);
+                }
+                XvEncodingInfo * encodings = 0L;
+                unsigned nr_encode;
+                XvQueryEncodings (display, port, &nr_encode, &encodings);
+                if (encodings) {
+                    for (int i = 0; i < nr_encode; i++) {
+                        if (strcmp (encodings[i].name, "XV_IMAGE")) {
+                            if (port == xvport && encodings[i].encoding_id == xv_encoding) {
+                                movie_width = encodings[i].width;
+                                movie_height = encodings[i].height;
+                            }
+                            char buf [256];
+                            snprintf (buf, sizeof (buf), "Port %d: %d - %s", port, encodings[i].encoding_id, encodings[i].name);
+                            QDomElement item = doc.createElement (elmitem);
+                            item.setAttribute (attvalue, QString (buf));
+                            elm.appendChild (item);
+                        }
+                    }
+                    XvFreeEncodingInfo (encodings);
+                }
             }
-            if (adaptors > 0)
-                XvFreeAdaptorInfo(ai);
         }
+        root.appendChild (elm);
+        XvFreeAdaptorInfo(ai);
     }
+    doc.appendChild (root);
+    QCString exp = doc.toCString ();
+    config_buf = exp;
+    fprintf (stderr, "%s\n", (const char *)exp);
+    config_buf.resize (exp.length ()); // strip terminating \0
+
     if (xvport <= 0) {
         fprintf (stderr, "no valid xvport found\n");
+        xv_success = false;
         return;
-    }
-    if (XvGrabPort (display, xvport, CurrentTime) == Success) {
-        gc = XCreateGC (display, wid, 0, NULL);
-        XvSelectPortNotify (display, xvport, 1);
-        XvSelectVideoNotify (display, wid, 1);
-        running = true;
     }
     if (window_created) {
         fprintf (stderr, "map %lu\n", wid);
+        if (movie_width > 0 && movie_height > 0)
+            XResizeWindow (display, wid, movie_width, movie_height);
         XMapRaised(display, wid);
         XSync(display, False);
     }
     XUnlockDisplay(display);
+    if (!xv_success)
+        fprintf (stderr, "Failed to init %d port\n", xvport);
 }
 
 KXVideoPlayer::~KXVideoPlayer () {
@@ -237,11 +296,24 @@ void getConfigEntries (QByteArray & buf) {
 
 void KXVideoPlayer::play () {
     fprintf (stderr, "play\n");
-    if (running) {
-        XLockDisplay (display);
-        putVideo ();
-        XUnlockDisplay (display);
+    if (!xv_success)
+        return;
+    if (callback && movie_width > 0 && movie_height > 0)
+        callback->movieParams (0, movie_width, movie_height, 1.0*movie_width/movie_height);
+    XLockDisplay (display);
+    if (!running && XvGrabPort (display, xvport, CurrentTime) == Success) {
+        gc = XCreateGC (display, wid, 0, NULL);
+        XvSelectPortNotify (display, xvport, 1);
+        XvSelectVideoNotify (display, wid, 1);
+        if (freq)
+            XvSetPortAttribute (display, xvport, xv_freq_atom, int (1.0*freq/6.25));
+        if (xv_encoding >= 0)
+            XvSetPortAttribute (display, xvport, xv_enc_atom, xv_encoding);
+        //XvGetVideo (..
+        running = true;
     }
+    putVideo ();
+    XUnlockDisplay (display);
 }
 
 void KXVideoPlayer::stop () {
@@ -263,28 +335,46 @@ void KXVideoPlayer::finished () {
 void KXVideoPlayer::saturation (int val) {
     XLockDisplay(display);
     XvSetPortAttribute (display, xvport, xv_saturation_atom, val);
+    XFlush (display);
     XUnlockDisplay(display);
 }
 
 void KXVideoPlayer::hue (int val) {
     XLockDisplay(display);
     XvSetPortAttribute (display, xvport, xv_hue_atom, val);
+    XFlush (display);
     XUnlockDisplay(display);
 }
 
 void KXVideoPlayer::contrast (int val) {
     XLockDisplay(display);
     XvSetPortAttribute (display, xvport, xv_contrast_atom, val);
+    XFlush (display);
     XUnlockDisplay(display);
 }
 
 void KXVideoPlayer::brightness (int val) {
     XLockDisplay(display);
     XvSetPortAttribute (display, xvport, xv_brightness_atom, val);
+    XFlush (display);
     XUnlockDisplay(display);
 }
 
-void KXVideoPlayer::volume (int) {
+void KXVideoPlayer::volume (int val) {
+    XLockDisplay(display);
+    XvSetPortAttribute (display, xvport, xv_volume_atom, val);
+    XFlush (display);
+    XUnlockDisplay(display);
+}
+
+void KXVideoPlayer::frequency (int val) {
+    freq = val;
+    if (running) {
+        XLockDisplay(display);
+        XvSetPortAttribute (display, xvport, xv_freq_atom, int (1.0*val/6.25));
+        XFlush (display);
+        XUnlockDisplay(display);
+    }
 }
 
 class XEventThread : public QThread {
@@ -327,7 +417,11 @@ protected:
                     break;
 
                 case ConfigureNotify:
-                    putVideo ();
+                    if (::running)
+                        putVideo ();
+                    break;
+                case XvVideoNotify:
+                    fprintf (stderr, "xvevent %d\n", ((XvEvent*)&xevent)->xvvideo.reason);
                     break;
                 default:
                     if (xevent.type < LASTEvent)
@@ -351,10 +445,14 @@ int main(int argc, char **argv) {
         XCloseDisplay (display);
         return 1;
     }
+    xv_enc_atom = XInternAtom (display, "XV_ENCODING", false);
     xv_hue_atom = XInternAtom (display, "XV_HUE", false);
     xv_saturation_atom = XInternAtom (display, "XV_SATURATION", false);
     xv_brightness_atom = XInternAtom (display, "XV_BRIGHTNESS", false);
     xv_contrast_atom = XInternAtom (display, "XV_CONTRAST", false);
+    xv_freq_atom = XInternAtom (display, "XV_FREQ", false);
+    xv_volume_atom = XInternAtom (display, "XV_VOLUME", false);
+    xv_mute_atom = XInternAtom (display, "XV_MUTE", false);
 
     xvapp = new KXVideoPlayer (argc, argv);
 
@@ -384,8 +482,10 @@ int main(int argc, char **argv) {
                 callback = new KMPlayerCallback_stub 
                     (str.left (pos).ascii (), str.mid (pos + 1).ascii ());
             }
+        } else if (!strcmp (argv [i], "-enc")) {
+            xv_encoding = strtol (argv [++i], 0L, 10);
         } else  {
-            fprintf (stderr, "usage: %s [-port <xv port>] [-f <config file>] [-v] [(-wid|-window-id) <window>] [(-root|-window)] [-cb <DCOP callback name> [-c]]\n", argv[0]);
+            fprintf (stderr, "usage: %s [-port <xv port>] [-enc <encoding>] [-f <config file>] [-v] [(-wid|-window-id) <window>] [(-root|-window)] [-cb <DCOP callback name> [-c]]\n", argv[0]);
             delete xvapp;
             return 1;
         }
@@ -399,13 +499,10 @@ int main(int argc, char **argv) {
     eventThread->start ();
 
     xvapp->init ();
-
     if (callback) {
-        QByteArray buf;
-        if (wants_config)
-            getConfigEntries (buf);
-        callback->started (buf);
+        callback->started (dcopclient.appId (), config_buf);
     }
+
     xvapp->exec ();
 
     XLockDisplay(display);
