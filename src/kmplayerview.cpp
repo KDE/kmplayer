@@ -878,7 +878,7 @@ KDE_NO_EXPORT void KMPlayerView::timerEvent (QTimerEvent * e) {
     killTimer (e->timerId ());
 }
 
-KDE_NO_EXPORT void KMPlayerView::addText (const QString & str) {
+void KMPlayerView::addText (const QString & str) {
     tmplog += str;
     int pos = tmplog.findRev (QChar ('\n'));
     if (pos >= 0) {
@@ -987,6 +987,7 @@ KDE_NO_EXPORT bool KMPlayerView::x11Event (XEvent * e) {
                     case XK_f:
                     case XK_F:
                         fullScreen ();
+                        break;
                 };
             }
             break;
@@ -1082,6 +1083,7 @@ void KMPlayerViewer::sendKeyEvent (int key) {
         0, XKeysymToKeycode (qt_xdisplay (), keysym), true
     };
     XSendEvent (qt_xdisplay(), embeddedWinId (), FALSE, KeyPressMask, (XEvent *) &event);
+    XFlush (qt_xdisplay ());
 }
 
 KDE_NO_EXPORT void KMPlayerViewer::sendConfigureEvent () {

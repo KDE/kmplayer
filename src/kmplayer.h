@@ -121,6 +121,7 @@ private:
     QPopupMenu * m_dvdnavmenu;
     QPopupMenu * m_vcdmenu;
     QPopupMenu * m_tvmenu;
+    QPopupMenu * m_vdrmenu;
     KMPlayerFFServerConfig * m_ffserverconfig;
     KMPlayerBroadcastConfig * m_broadcastconfig;
     QCString m_dcopName;

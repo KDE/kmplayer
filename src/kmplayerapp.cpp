@@ -82,6 +82,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       m_dvdnavmenu (new QPopupMenu (this)),
       m_vcdmenu (new QPopupMenu (this)),
       m_tvmenu (new QPopupMenu (this)),
+      m_vdrmenu (new QPopupMenu (this)),
       m_ffserverconfig (new KMPlayerFFServerConfig),
       m_broadcastconfig (new KMPlayerBroadcastConfig (m_player, m_ffserverconfig))
 {
@@ -97,7 +98,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     m_player->sources () ["vcdsource"] = new KMPlayerVCDSource(this, m_vcdmenu);
     m_player->sources () ["pipesource"] = new KMPlayerPipeSource (this);
     m_player->sources () ["tvsource"] = new KMPlayerTVSource (this, m_tvmenu);
-    m_player->sources () ["vdrsource"] = new KMPlayerVDRSource (this);
+    m_player->sources () ["vdrsource"] = new KMPlayerVDRSource (this, m_vdrmenu);
     initActions();
     initView();
 
@@ -189,7 +190,8 @@ KDE_NO_EXPORT void KMPlayerApp::initView ()
     m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0, true), i18n ("&TV"), m_tvmenu, -1, 6);
     m_vcdmenu->insertItem (i18n ("&Open VCD"), this, SLOT(openVCD ()), 0,-1, 1);
     m_sourcemenu->popup ()->insertItem (i18n ("&Open Pipe..."), this, SLOT(openPipe ()), 0, -1, 5);
-    m_sourcemenu->popup ()->insertItem (i18n ("VD&R"), this, SLOT(openVDR ()), 0, -1, 6);
+    m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0, true), i18n ("VD&R"), m_vdrmenu, -1, 6);
+    m_vdrmenu->insertItem (i18n ("&Connect"), this, SLOT (openVDR ()));
     connect (m_player->settings (), SIGNAL (configChanged ()),
              this, SLOT (configChanged ()));
     connect (m_player, SIGNAL (startPlaying ()),

@@ -28,17 +28,20 @@
 
 #include <kurl.h>
 
-#include "kmplayersource.h"
+#include "kmplayerappsource.h"
 #include "kmplayerconfig.h"
 #include "kmplayerprocess.h"
 
 
 class KMPlayerApp;
+class VDRCommand;
 class KURLRequester;
 class QPopupMenu;
 class QMenuItem;
 class QCheckBox;
 class QLineEdit;
+class KAction;
+class QSocket;
 
 class KMPlayerPrefSourcePageVDR : public QFrame {
     Q_OBJECT
@@ -51,10 +54,10 @@ public:
 };
 
 
-class KMPlayerVDRSource : public KMPlayerSource, public KMPlayerPreferencesPage {
+class KMPlayerVDRSource : public KMPlayerMenuSource, public KMPlayerPreferencesPage {
     Q_OBJECT
 public:
-    KMPlayerVDRSource (KMPlayerApp * app);
+    KMPlayerVDRSource (KMPlayerApp * app, QPopupMenu *);
     virtual ~KMPlayerVDRSource ();
     virtual bool hasLength ();
     virtual bool isSeekable ();
@@ -65,11 +68,28 @@ public:
     virtual void prefLocation (QString & item, QString & icon, QString & tab);
     virtual QFrame * prefPage (QWidget * parent);
 public slots:
-    virtual void activate ();
-    virtual void deactivate ();
+    void activate ();
+    void deactivate ();
+    void keyUp ();
+    void keyDown ();
+    void keyBack ();
+    void keyOk ();
+    void keySetup ();
+    void keyChannels ();
+    void connected ();
+    void dataWritten (int);
+    void socketError (int);
 private:
-    KMPlayerApp * m_app;
+    void sendCommand (const char * cmd);
     KMPlayerPrefSourcePageVDR * m_configpage;
+    KAction * act_up;
+    KAction * act_down;
+    KAction * act_back;
+    KAction * act_ok;
+    KAction * act_setup;
+    KAction * act_channels;
+    QSocket * m_socket;
+    VDRCommand * commands;
     int tcp_port;
     int xv_port;
 };
@@ -85,6 +105,7 @@ public slots:
     virtual bool stop ();
 private slots:
     void processStopped (KProcess *);
+    void processOutput (KProcess *, char *, int);
 private:
     int xv_port;
 };
