@@ -94,6 +94,7 @@ public:
     int feedfilesize;
     FFServerSetting * ffserversettings;
     int ffserversetting;
+    QStringList ffserveracl;
     int seektime;
     int cachesize;
     int videodriver;

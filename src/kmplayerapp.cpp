@@ -284,7 +284,7 @@ static const char * const ffserverconf =
 "Port %d\nBindAddress %s\nMaxClients %d\nMaxBandwidth %d\n"
 "CustomLog -\nNoDaemon\n"
 "<Feed kmplayer.ffm>\nFile %s\nFileMaxSize %dK\nACL allow 127.0.0.1\n</Feed>\n"
-"<Stream video.avi>\nFeed kmplayer.ffm\nFormat avi\nVideoBitRate %d\nVideoFrameRate %d\nVideoSize %dx%d\nVideoGopSize %d\nVideoQMin %d\nAudioBitRate %d\nAudioSampleRate %d\nAudioCodec mp3\nVideoCodec mpeg4\n%s\n</Stream>\n"
+"<Stream video.avi>\nFeed kmplayer.ffm\n%sFormat avi\nVideoBitRate %d\nVideoFrameRate %d\nVideoSize %dx%d\nVideoGopSize %d\nVideoQMin %d\nAudioBitRate %d\nAudioSampleRate %d\nAudioCodec mp3\nVideoCodec mpeg4\n%s\n</Stream>\n"
 "<Stream stat.html>\nFormat status\nACL allow localhost\n</Stream>\n";
 
 void KMPlayerApp::broadcastClicked () {
@@ -325,12 +325,16 @@ void KMPlayerApp::broadcastClicked () {
         source = m_tvsource->tvsource ();
     const char * noaudio = source && source->audiodevice.isEmpty () ? "NoAudio" : "";
     KMPlayerConfig * conf = m_player->configDialog ();
+    QString acl;
+    QStringList::iterator it = conf->ffserveracl.begin ();
+    for (; it != conf->ffserveracl.end (); ++it)
+        acl += QString ("ACL allow ") + *it + QString ("\n");
     unlink (conf->feedfile.ascii ());
     FFServerSetting & ffs = conf->ffserversettings[conf->ffserversetting];
     QFile qfile (conffile);
     qfile.open (IO_WriteOnly);
     QString configdata;
-    configdata.sprintf (ffserverconf, conf->ffserverport, conf->bindaddress.ascii (), conf->maxclients, conf->maxbandwidth, conf->feedfile.ascii (), conf->feedfilesize, ffs.videobitrate, ffs.framerate, ffs.width, ffs.height, ffs.gopsize, ffs.quality, ffs.audiobitrate, ffs.audiosamplerate, noaudio);
+    configdata.sprintf (ffserverconf, conf->ffserverport, conf->bindaddress.ascii (), conf->maxclients, conf->maxbandwidth, conf->feedfile.ascii (), conf->feedfilesize, acl.ascii (), ffs.videobitrate, ffs.framerate, ffs.width, ffs.height, ffs.gopsize, ffs.quality, ffs.audiobitrate, ffs.audiosamplerate, noaudio);
     qfile.writeBlock (configdata.ascii (), configdata.length ());
     qfile.close ();
     kdDebug () << configdata << endl;

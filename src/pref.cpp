@@ -421,6 +421,7 @@ KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerS
     QGridLayout *gridlayout = new QGridLayout (layout, 7, 2);
     QLabel *label = new QLabel (i18n ("Bind address:"), this);
     bindaddress = new QLineEdit ("", this);
+    QToolTip::add (bindaddress, i18n ("If you have multible network devices, you can limit access"));
     gridlayout->addWidget (label, 0, 0);
     gridlayout->addWidget (bindaddress, 0, 1);
     label = new QLabel (i18n ("Listen Port:"), this);
@@ -449,6 +450,14 @@ KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerS
         optimize->insertItem (s->name, s->index);
     gridlayout->addWidget (label, 6, 0);
     gridlayout->addWidget (optimize, 6, 1);
+    label = new QLabel (i18n ("Allow access from:"), this);
+    layout->addWidget (label);
+    accesslist = new QTable (40, 1, this);
+    accesslist->setColumnWidth (0, 300);
+    QToolTip::add (accesslist, i18n ("'Single IP' or 'start-IP end-IP' for IP ranges"));
+    QHeader *header = accesslist->horizontalHeader();
+    header->setLabel (0, i18n ("Host/IP or IP range"));
+    layout->addWidget (accesslist);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     //QHBoxLayout *buttonlayout = new QHBoxLayout ();
     //buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));

@@ -24,6 +24,7 @@
 #include <qmultilineedit.h>
 #include <qtabwidget.h>
 #include <qslider.h>
+#include <qtable.h>
 
 #include <kconfig.h>
 #include <kapplication.h>
@@ -153,6 +154,7 @@ static const char * strMaxBandwidth = "Maximum Bandwidth";
 static const char * strFeedFile = "Feed File";
 static const char * strFeedFileSize = "Feed File Size";
 static const char * strFFServerSetting = "FFServer Setting";
+static const char * strFFServerACL = "FFServer ACL";
 
 void KMPlayerConfig::readConfig () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
@@ -304,6 +306,12 @@ void KMPlayerConfig::readConfig () {
     feedfile = m_config->readEntry (strFeedFile, "/tmp/kmplayer.ffm");
     feedfilesize = m_config->readNumEntry (strFeedFileSize, 512);
     ffserversetting = m_config->readNumEntry (strFFServerSetting, 0);
+    ffserveracl = m_config->readListEntry (strFFServerACL, ';');
+    if (!ffserveracl.count ()) {
+        ffserveracl.push_back (QString ("127.0.0.1"));
+        ffserveracl.push_back (QString ("10.0.0.0 10.255.255.255"));
+        ffserveracl.push_back (QString ("192.168.0.0 192.168.255.255"));
+    }
 }
 
 void KMPlayerConfig::show () {
@@ -392,6 +400,12 @@ void KMPlayerConfig::show () {
     configdialog->m_BroadcastPage->feedfile->setText (feedfile);
     configdialog->m_BroadcastPage->feedfilesize->setText (QString::number (feedfilesize));
     configdialog->m_BroadcastPage->optimize->setCurrentItem (ffserversetting);
+    QTable *accesslist = configdialog->m_BroadcastPage->accesslist;
+    accesslist->setNumRows (0);
+    accesslist->setNumRows (50);
+    QStringList::iterator it = ffserveracl.begin ();
+    for (int i = 0; it != ffserveracl.end (); ++i, ++it)
+        accesslist->setItem (i, 0, new QTableItem (accesslist, QTableItem::Always, *it));
     configdialog->show ();
 }
 
@@ -510,6 +524,7 @@ void KMPlayerConfig::writeConfig () {
     m_config->writeEntry (strFeedFile, feedfile);
     m_config->writeEntry (strFeedFileSize, feedfilesize);
     m_config->writeEntry (strFFServerSetting, ffserversetting);
+    m_config->writeEntry (strFFServerACL, ffserveracl, ';');
     m_config->sync ();
 }
 
@@ -611,6 +626,12 @@ void KMPlayerConfig::okPressed () {
     feedfile = configdialog->m_BroadcastPage->feedfile->text ();
     feedfilesize = configdialog->m_BroadcastPage->feedfilesize->text ().toInt();
     ffserversetting = configdialog->m_BroadcastPage->optimize->currentItem ();
+    ffserveracl.clear ();
+    QTable *accesslist = configdialog->m_BroadcastPage->accesslist;
+    for (int i = 0; i < accesslist->numRows (); ++i) {
+        if (accesslist->item (i, 0) && !accesslist->item (i, 0)->text ().isEmpty ())
+            ffserveracl.push_back (accesslist->item (i, 0)->text ());
+    }
     writeConfig ();
 
     emit configChanged ();

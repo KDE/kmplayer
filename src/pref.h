@@ -64,6 +64,7 @@ class KMPlayerPrefGeneralPageAdvanced;	// general, advanced, pattern matches etc
 class KMPlayerPrefOPPageGeneral;	// OP = outputplugins, general
 class KMPlayerPrefOPPagePostProc;	// outputplugins, postproc
 class QTabWidget;
+class QTable;
 
 
 class TVChannel {
@@ -275,6 +276,7 @@ public:
     QLineEdit * feedfile;
     QLineEdit * feedfilesize;
     QComboBox * optimize;
+    QTable * accesslist;
 };
 
 class KMPlayerPrefGeneralPageOutput : public QFrame

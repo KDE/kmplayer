@@ -70,7 +70,7 @@ int main (int argc, char *argv[])
         }
         args->clear ();
     }
-    app.dcopClient()->attach();
+    app.dcopClient()->registerAs("kmplayer");
     int retvalue = app.exec ();
     
     delete kmplayer;
