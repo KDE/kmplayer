@@ -39,6 +39,7 @@
 
 class QWidgetStack;
 class QPixmap;
+class QPainter;
 class QPopupMenu;
 class QBoxLayout;
 class QSlider;
@@ -104,6 +105,7 @@ class ViewArea : public QWidget {
     Q_OBJECT
 public:
     ViewArea (QWidget * parent, View * view);
+    ~ViewArea ();
     bool isFullScreen () const { return m_fullscreen; }
     KActionCollection * actionCollection () const { return m_collection; }
     void setRootLayout (RegionNodePtr rl);
@@ -123,6 +125,8 @@ protected:
 private:
     QWidget * m_parent;
     View * m_view;
+    QPainter * m_painter;
+    QPixmap * m_paint_buffer;
     KActionCollection * m_collection;
     RegionNodePtr rootLayout;
     QRect m_av_geometry;

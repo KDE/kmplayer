@@ -258,6 +258,8 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
  : QWidget (parent),
    m_parent (parent),
    m_view (view),
+   m_painter (0L),
+   m_paint_buffer (0L),
    m_collection (new KActionCollection (this)),
    m_fullscreen (false) {
     setEraseColor (QColor (0, 0, 0));
@@ -265,7 +267,12 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
     new KAction (i18n ("Escape"), KShortcut (Qt::Key_Escape), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_escape");
     new KAction (i18n ("Fullscreen"), KShortcut (Qt::Key_F), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_toggle");
     setMouseTracking (true);
-    //setWFlags (getWFlags () | WRepaintNoErase);
+    setWFlags (getWFlags () | WRepaintNoErase);
+}
+
+KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {
+    delete m_painter;
+    delete m_paint_buffer;
 }
 
 KDE_NO_EXPORT void ViewArea::fullScreen () {
@@ -309,11 +316,31 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
 }
 
 KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
+#define PAINT_BUFFER_HEIGHT 128
     QWidget::paintEvent (pe);
     if (rootLayout && rootLayout->regionElement) {
+        if (!m_paint_buffer) {
+            m_paint_buffer = new QPixmap (width (), PAINT_BUFFER_HEIGHT);
+            m_painter = new QPainter ();
+        } else if (m_paint_buffer->width () < width ())
+            m_paint_buffer->resize (width (), PAINT_BUFFER_HEIGHT);
+        int py=0;
+        int ex = pe->rect ().x ();
+        int ey = pe->rect ().y ();
+        int ew = pe->rect ().width ();
+        int eh = pe->rect ().height ();
         QPainter p;
         p.begin (this);
-        rootLayout->paint (p);
+        while (py < eh) {
+            int ph = eh-py < PAINT_BUFFER_HEIGHT ? eh-py : PAINT_BUFFER_HEIGHT;
+            m_painter->begin (m_paint_buffer);
+            m_painter->translate(-ex, -ey-py);
+            m_painter->fillRect (ex, ey+py, ew, ph, QBrush (paletteBackgroundColor ()));
+            rootLayout->paint (*m_painter);
+            m_painter->end();
+            p.drawPixmap (ex, ey+py, *m_paint_buffer, 0, 0, ew, ph);
+            py += PAINT_BUFFER_HEIGHT;
+        }
         p.end ();
     }
 }
