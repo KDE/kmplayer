@@ -172,22 +172,35 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
         }
     }
     init ();
-    if (m_features & Feat_Controls)
-        m_view->setControlPanelMode (KMPlayerView::CP_Show);
-    else if (m_features != Feat_Unknown)
-        m_view->setControlPanelMode (KMPlayerView::CP_Hide);
-    else
-        m_view->setControlPanelMode (KMPlayerView::CP_AutoHide);
+    KParts::Part::setWidget (m_view);
+    setXMLFile("kmplayerpartui.rc");
     m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayerControlPanel::menu_zoom50,
                                       this, SLOT (setMenuZoom (int)));
     m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayerControlPanel::menu_zoom100,
                                       this, SLOT (setMenuZoom (int)));
     m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayerControlPanel::menu_zoom150,
                                       this, SLOT (setMenuZoom (int)));
-    KParts::Part::setWidget (m_view);
-    setXMLFile("kmplayerpartui.rc");
-    if (!m_group.isEmpty ())
+
+    if (m_features & Feat_Controls)
+        m_view->setControlPanelMode (KMPlayerView::CP_Show);
+    else if (m_features != Feat_Unknown)
+        m_view->setControlPanelMode (KMPlayerView::CP_Hide);
+    else
+        m_view->setControlPanelMode (KMPlayerView::CP_AutoHide);
+    if (!m_group.isEmpty ()) {
+        KMPlayerPart * master = masterKMPlayerPart ();
+        if (master) {
+            // found a master, exchange controls now
+            if (m_features & Feat_Controls) {
+                removeControlPanel (m_view->buttonBar ());
+                master->addControlPanel (m_view->buttonBar ());
+            }
+            if (m_features & Feat_Viewer) {
+                m_view->setForeignViewer (master->m_view);
+            }
+        }
         kmplayerpart_static->kmplayer_parts.push_back (this);
+    }
     if (m_view->isFullScreen () != show_fullscreen)
         m_view->fullScreen ();
 }
@@ -204,6 +217,21 @@ bool KMPlayerPart::allowRedir (const KURL & url) {
     return kapp->authorizeURLAction ("redirect", url, m_docbase);
 }
 
+KMPlayerPart * KMPlayerPart::masterKMPlayerPart () {
+    KMPlayerPartList::iterator i = kmplayerpart_static->kmplayer_parts.begin ();
+    for (; i != kmplayerpart_static->kmplayer_parts.end (); ++i)
+        if (*i && ((KMPlayerPart*)*i) != this &&
+                allowRedir ((*i)->m_docbase) &&
+                m_group != QString::fromLatin1("_unique") &&
+                (*i)->m_group != QString::fromLatin1("_unique") &&
+                ((*i)->m_group == m_group ||
+                 (*i)->m_group == QString::fromLatin1("_master") ||
+                 m_group == QString::fromLatin1("_master")) &&
+                !(*i)->process()->source ()->url().isEmpty ())
+            return *i;
+    return 0L;
+}
+
 bool KMPlayerPart::openFile() {
     if (m_request_fileopen)
         return KMPlayer::openURL (KParts::ReadOnlyPart::m_file);
@@ -215,36 +243,27 @@ bool KMPlayerPart::openURL (const KURL & url) {
     if (url == m_docbase)
         // if url is the container document, then it's an empty URL
         return true;
-    KMPlayerPart * current_player = 0L;
-    KMPlayerPartList::iterator i = kmplayerpart_static->kmplayer_parts.begin ();
-    for (; i != kmplayerpart_static->kmplayer_parts.end (); ++i) {
-        kdDebug() << "[00;31m" << m_src_url << " other:" << (*i)->m_src_url << "[00m " << (current_player!=(KMPlayerPart*)*i) << " " << (m_group == (*i)->m_group) << ((*i)->m_src_url == m_src_url) <<endl;
-        if (!current_player && *i && (KMPlayerPart*)*i != this &&
-                ((*i)->m_src_url == m_src_url || (*i)->m_src_url.isEmpty ()) &&
-                m_group != QString::fromLatin1("_unique") &&
-                (*i)->m_group != QString::fromLatin1("_unique") &&
-                ((*i)->m_group == m_group ||
-                 (*i)->m_group == QString::fromLatin1("_master") ||
-                 m_group == QString::fromLatin1("_master"))) {
-            current_player = *i;
-            break;
+    if (!m_group.isEmpty ()) {
+        // check for another KPart with the same group name already playing
+        if (masterKMPlayerPart ())
+            // found one, nothing to do ..
+            return true;
+        // ok this is the master, now exchange controls
+        KMPlayerPartList::iterator i = kmplayerpart_static->kmplayer_parts.begin ();
+        for (; i != kmplayerpart_static->kmplayer_parts.end (); ++i) {
+            if (!*i || !(*i)->m_view || ((KMPlayerPart*)*i) == this)
+                continue;
+            if ((*i)->m_features & Feat_Controls) {
+                KMPlayerControlPanel * panel = (*i)->m_view->buttonBar ();
+                (*i)->removeControlPanel (panel);
+                addControlPanel (panel);
+            }
+            if ((*i)->m_features & Feat_Viewer) {
+                (*i)->m_view->setForeignViewer (m_view);
+            }
         }
     }
     enablePlayerMenu (true);
-    if (m_src_url.isEmpty ()) {
-        m_src_url = url.url ();
-    } else if (current_player) {
-        if (m_features & Feat_Controls) {
-            removeControlPanel (m_view->buttonBar ());
-            current_player->addControlPanel (m_view->buttonBar ());
-        }
-        if (m_features & Feat_Viewer) {
-            m_view->setForeignViewer (current_player->m_view);
-        }
-        if (current_player->m_src_url.isEmpty ())
-            return current_player->openURL (url);
-        return true;
-    }
     if (!m_view || !url.isValid ()) return false;
     KParts::URLArgs args = m_browserextension->urlArgs();
     if (!args.serviceType.isEmpty ())

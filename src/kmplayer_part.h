@@ -132,6 +132,12 @@ protected slots:
     virtual void processPlaying ();
 protected:
     virtual bool openFile(); // reimplement for KParts::ReadOnlyPart
+private:
+    /**
+     * Returns another KPart with the same group name on which openURL is
+     * already called.
+     */
+    KMPlayerPart * masterKMPlayerPart ();
     KMPlayerBrowserExtension * m_browserextension;
     KMPlayerLiveConnectExtension * m_liveconnectextension;
     KMPlayerHRefSource * m_hrefsource;
