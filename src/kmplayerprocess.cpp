@@ -53,8 +53,8 @@
 #include "kmplayer_callback.h"
 #include "kmplayer_backend_stub.h"
 
-KMPlayerProcess::KMPlayerProcess (KMPlayer * player)
-    : QObject (player), m_player (player), m_source (0L), m_process (0L) {}
+KMPlayerProcess::KMPlayerProcess (KMPlayer * player, const char * n)
+    : QObject (player, n), m_player (player), m_source (0L), m_process (0L) {}
 
 KMPlayerProcess::~KMPlayerProcess () {
     stop ();
@@ -146,8 +146,8 @@ static bool proxyForURL (const KURL& url, QString& proxy) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT MPlayerBase::MPlayerBase (KMPlayer * player)
-    : KMPlayerProcess (player), m_use_slave (true) {
+KDE_NO_CDTOR_EXPORT MPlayerBase::MPlayerBase (KMPlayer * player, const char * n)
+    : KMPlayerProcess (player, n), m_use_slave (true) {
     m_process = new KProcess;
 }
 
@@ -226,7 +226,7 @@ KDE_NO_EXPORT void MPlayerBase::processStopped (KProcess *) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT MPlayer::MPlayer (KMPlayer * player)
- : MPlayerBase (player),
+ : MPlayerBase (player, "mplayer"),
    m_widget (0L),
    m_configpage (new MPlayerPreferencesPage (this)) {
     m_player->settings ()->pagelist.push_back (m_configpage);
@@ -703,7 +703,7 @@ KDE_NO_EXPORT QFrame * MPlayerPreferencesPage::prefPage (QWidget * parent) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT MEncoder::MEncoder (KMPlayer * player)
-    : MPlayerBase (player) {
+    : MPlayerBase (player, "mencoder") {
     }
 
 KDE_NO_CDTOR_EXPORT MEncoder::~MEncoder () {
@@ -762,8 +762,9 @@ KDE_NO_EXPORT bool MEncoder::stop () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT MPlayerDumpstream::MPlayerDumpstream (KMPlayer * player)
-    : MPlayerBase (player) {
+KDE_NO_CDTOR_EXPORT
+MPlayerDumpstream::MPlayerDumpstream (KMPlayer * player)
+    : MPlayerBase (player, "mplayerdumpstream") {
     }
 
 KDE_NO_CDTOR_EXPORT MPlayerDumpstream::~MPlayerDumpstream () {
@@ -869,8 +870,8 @@ void KMPlayerCallback::loadingProgress (int percentage) {
 
 //-----------------------------------------------------------------------------
 
-KMPlayerCallbackProcess::KMPlayerCallbackProcess (KMPlayer * player)
- : KMPlayerProcess (player),
+KMPlayerCallbackProcess::KMPlayerCallbackProcess (KMPlayer * player, const char * n)
+ : KMPlayerProcess (player, n),
    m_callback (new KMPlayerCallback (this)),
    m_backend (0L),
    m_configpage (new KMPlayerXMLPreferencesPage (this)),
@@ -1165,7 +1166,7 @@ KDE_NO_EXPORT QFrame * KMPlayerXMLPreferencesPage::prefPage (QWidget * parent) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT Xine::Xine (KMPlayer * player)
-    : KMPlayerCallbackProcess (player) {
+    : KMPlayerCallbackProcess (player, "xine") {
 }
 
 KDE_NO_CDTOR_EXPORT Xine::~Xine () {}
@@ -1421,7 +1422,7 @@ KDE_NO_EXPORT bool Xine::contrast (int val, bool) {
 //-----------------------------------------------------------------------------
 
 FFMpeg::FFMpeg (KMPlayer * player)
-    : KMPlayerProcess (player) {
+    : KMPlayerProcess (player, "ffmpeg") {
 }
 
 KDE_NO_CDTOR_EXPORT FFMpeg::~FFMpeg () {

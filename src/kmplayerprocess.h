@@ -42,7 +42,7 @@ class KMPlayerBackend_stub;
 class KMPlayerProcess : public QObject {
     Q_OBJECT
 public:
-    KMPlayerProcess (KMPlayer * player);
+    KMPlayerProcess (KMPlayer * player, const char * n);
     virtual ~KMPlayerProcess ();
     virtual void init ();
     virtual void initProcess ();
@@ -86,7 +86,7 @@ protected slots:
 class MPlayerBase : public KMPlayerProcess {
     Q_OBJECT
 public:
-    MPlayerBase (KMPlayer * player);
+    MPlayerBase (KMPlayer * player, const char * n);
     ~MPlayerBase ();
     void initProcess ();
 public slots:
@@ -199,7 +199,7 @@ class KMPlayerXMLPreferencesFrame;
 class KMPlayerCallbackProcess : public KMPlayerProcess {
     Q_OBJECT
 public:
-    KMPlayerCallbackProcess (KMPlayer * player);
+    KMPlayerCallbackProcess (KMPlayer * player, const char * n);
     ~KMPlayerCallbackProcess ();
     virtual void setStatusMessage (const QString & msg);
     virtual void setErrorMessage (int code, const QString & msg);
