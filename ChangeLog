@@ -1,3 +1,8 @@
+Changes since version 0.8.4
+- Fix keyboard shortcuts for increase/decrease volume for fullscreen
+- Better 100% zoom calculation
+- Prevents ways to crash KMPlayer via DCOP when just started
+- Fix MPlayer's command queue after manually stop a movie
 Changes since version 0.8.4-rc5
 - Debian builds now a kmplayer-i18n package too
 - Controlpanel uses paletteForegroundColor for drawing
