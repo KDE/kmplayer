@@ -835,7 +835,19 @@ KDE_NO_CDTOR_EXPORT KMPlayerView::~KMPlayerView () {
 }
 
 void KMPlayerView::showPlaylist () {
-    m_dock_playlist->manualDock (m_dock_video, KDockWidget::DockLeft, 30);
+    int h = 0;
+    bool horz = true;
+    for (QListViewItem * i = m_playlist->firstChild (); i; i = i->itemBelow()) {
+        h += i->height ();
+        if (h > int (0.5 * height ())) {
+            horz = false;
+            break;
+        }
+    }
+    int perc = 30;
+    if (100 * h / height () < perc)
+        perc = 100 * h / height ();
+    m_dock_playlist->manualDock (m_dock_video, horz ? KDockWidget::DockTop : KDockWidget::DockLeft, perc);
 }
 
 bool KMPlayerView::setPicture (const QString & path) {
