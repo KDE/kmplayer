@@ -64,6 +64,7 @@ static const char * strKeepSizeRatio = "Keep Size Ratio";
 static const char * strVoDriver = "Video Driver";
 static const char * strAoDriver = "Audio Driver";
 static const char * strAddArgs = "Additional Arguments";
+static const char * strMencoderArgs = "Mencoder Arguments";
 static const char * strSize = "Movie Size";
 static const char * strCache = "Cache Fill";
 static const char * strIndexPattern = "Index Pattern";
@@ -73,7 +74,9 @@ static const char * strLoop = "Loop";
 static const char * strShowControlButtons = "Show Control Buttons";
 static const char * strShowPositionSlider = "Show Position Slider";
 static const char * strAddConfigButton = "Add Configure Button";
+static const char * strAddRecordButton = "Add Record Button";
 static const char * strAutoHideButtons = "Auto Hide Control Buttons";
+static const char * strAutoPlayAfterRecording = "Auto Play After Recording";
 //static const char * strAutoHideSlider = "Auto Hide Slider"; 
 static const char * strSeekTime = "Forward/Backward Seek Time";
 static const char * strCacheSize = "Cache Size for Streaming";
@@ -145,6 +148,7 @@ void KMPlayerConfig::readConfig () {
     loop = m_config->readBoolEntry (strLoop, false);
     showbuttons = m_config->readBoolEntry (strShowControlButtons, true);
     autohidebuttons = m_config->readBoolEntry (strAutoHideButtons, false);
+    autoplayafterrecording = m_config->readBoolEntry (strAutoPlayAfterRecording, true);
     view->setAutoHideButtons (showbuttons && autohidebuttons);
     if (!showbuttons) {
         view->buttonBar ()->hide ();
@@ -160,6 +164,11 @@ void KMPlayerConfig::readConfig () {
         view->configButton ()->show ();
     else
         view->configButton ()->hide ();
+    showrecordbutton = m_config->readBoolEntry (strAddRecordButton, true);
+    if (showrecordbutton)
+        view->recordButton ()->show ();
+    else
+        view->recordButton ()->hide ();
     seektime = m_config->readNumEntry (strSeekTime, 10);
     m_player->setSeekTime (seektime);
     alwaysbuildindex = m_config->readBoolEntry (strAlwaysBuildIndex, false);
@@ -176,6 +185,7 @@ void KMPlayerConfig::readConfig () {
     else
     	view->setUseArts (false);
     additionalarguments = m_config->readEntry (strAddArgs, "");
+    mencoderarguments = m_config->readEntry (strMencoderArgs, "-oac copy -ovc copy");
     cachesize = m_config->readNumEntry (strCacheSize, 0);
     m_player->setCacheSize (cachesize);
     m_config->setGroup (strMPlayerPatternGroup);

@@ -104,6 +104,8 @@ public:
     bool loop;
     bool showbuttons;
     bool showcnfbutton;
+    bool showrecordbutton;
+    bool autoplayafterrecording;
     bool showposslider;
     bool autohidebuttons;
     bool autohideslider;
@@ -152,6 +154,7 @@ public:
     QString dvddevice;
     QString vcddevice;
     QString additionalarguments;
+    QString mencoderarguments;
     QString sizepattern;
     QString cachepattern;
     QString indexpattern;

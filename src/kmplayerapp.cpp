@@ -481,28 +481,13 @@ bool KMPlayerAppURLSource::processOutput (const QString & str) {
 }
 
 void KMPlayerAppURLSource::activate () {
-    init ();
-    bool loop = m_player->configDialog ()->loop;
-    m_player->configDialog ()->loop = false;
-    if (!url ().isEmpty ()) {
-        QString args ("-quiet -nocache -identify -frames 0 ");
-        QString myurl (url ().isLocalFile () ? url ().path () : m_url.url ());
-        args += KProcess::quote (myurl);
-        if (m_player->run (args.ascii ()))
-            connect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
-        else
-            app->slotStatusMsg (i18n ("Ready."));
-    }
-    m_player->configDialog ()->loop = loop;
+    KMPlayerURLSource::activate ();
+    app->slotStatusMsg (i18n ("Ready."));
 }
 
 void KMPlayerAppURLSource::finished () {
-    disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
-    m_player->setMovieLength (10 * length ());
     app->resizePlayer (100);
-    play ();
-    app->recentFiles ()->addURL (url ());
-    app->slotStatusMsg (i18n ("Ready."));
+    KMPlayerURLSource::finished ();
 }
 
 void KMPlayerAppURLSource::deactivate () {
@@ -622,14 +607,13 @@ void KMPlayerDVDSource::finished () {
     if (m_dvdlanguagemenu->count()) m_dvdlanguagemenu->setItemChecked (m_dvdlanguagemenu->idAt (0), true);
     app->resizePlayer (100);
     if (m_player->configDialog ()->playdvd)
-        play ();
+        QTimer::singleShot (0, this, SLOT (play ()));
     app->slotStatusMsg (i18n ("Ready."));
 }
 
 void KMPlayerDVDSource::play () {
     QString args;
     unsigned i;
-    args.sprintf ("-slave");
     for (i = 0; i < m_dvdsubtitlemenu->count(); i++)
         if (m_dvdsubtitlemenu->isItemChecked (m_dvdsubtitlemenu->idAt (i)))
             args += " -sid " + QString::number (m_dvdsubtitlemenu->idAt (i));
@@ -648,7 +632,8 @@ void KMPlayerDVDSource::play () {
             args += " -aid " + QString::number (m_dvdlanguagemenu->idAt (i));
     if (m_player->configDialog ()->dvddevice.length () > 0)
         args += QString(" -dvd-device ") + m_player->configDialog ()->dvddevice;
-    m_player->run (args.ascii());
+    m_recordCommand = args + QString (" -vop scale -zoom");
+    m_player->run ((QString ("-slave ") + args).ascii());
 }
 
 QString KMPlayerDVDSource::filterOptions () {
@@ -732,14 +717,13 @@ void KMPlayerVCDSource::finished () {
     if (m_vcdtrackmenu->count()) m_vcdtrackmenu->setItemChecked (0, true);
     app->resizePlayer (100);
     if (m_player->configDialog ()->playdvd)
-        play ();
+        QTimer::singleShot (0, this, SLOT (play ()));
     app->slotStatusMsg (i18n ("Ready."));
 }
 
 void KMPlayerVCDSource::play () {
     QString args;
     unsigned i;
-    args.sprintf ("-slave");
     for (i = 0; i < m_vcdtrackmenu->count(); i++)
         if (m_vcdtrackmenu->isItemChecked (i)) {
             args += " -vcd " + m_vcdtrackmenu->findItem (i)->text ();
@@ -749,7 +733,8 @@ void KMPlayerVCDSource::play () {
         args += " vcd:// ";
     if (m_player->configDialog ()->vcddevice.length () > 0)
         args += QString(" -cdrom-device") + m_player->configDialog()->vcddevice;
-    m_player->run (args.ascii());
+    m_recordCommand = args;
+    m_player->run ((QString ("-slave ") + args).ascii());
 }
 
 void KMPlayerVCDSource::trackMenuClicked (int id) {
@@ -827,9 +812,10 @@ void KMPlayerTVSource::play () {
     setWidth (m_tvsource->size.width ());
     setHeight (m_tvsource->size.height ());
     QString args;
-    args.sprintf ("-tv on:driver=%s:%s:width=%d:height=%d -nocache -quiet", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
+    args.sprintf ("-tv on:driver=%s:%s:width=%d:height=%d", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
     app->resizePlayer (100);
-    m_player->run (args.ascii());
+    m_recordCommand = args;
+    m_player->run ((QString ("-slave -nocache -quiet ") + args).ascii());
 }
 
 void KMPlayerTVSource::deactivate () {

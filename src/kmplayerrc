@@ -8,6 +8,7 @@ Show Statusbar=true
 [MPlayer]
 Add Configure Button=true
 Additional Arguments=
+Mencoder Arguments=-oac mp3lame -ovc lavc
 Cache Size for Streaming=128
 DVD Device=/dev/dvd
 Forward/Backward Seek Time=10
@@ -16,7 +17,9 @@ Keep Size Ratio=true
 Loop=false
 Show Console Output=false
 Show Control Buttons=true
+Add Record Button=true
 Auto Hide Control Buttons=false
+Auto Play After Recording=true
 Show DVD Menu=true
 Video Driver=xv
 

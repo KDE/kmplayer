@@ -23,6 +23,7 @@
 #include <kparts/factory.h>
 #include <kurl.h>
 #include <qobject.h>
+#include <qvaluelist.h>
 #include <qstringlist.h>
 #include <qguardedptr.h>
 #include <qregexp.h>
@@ -89,15 +90,22 @@ public:
     KMPlayerURLSource (KMPlayer * player, const KURL & url = KURL ());
     virtual ~KMPlayerURLSource ();
 
-    void setURL (const KURL & url) { m_url = url; }
+    virtual bool processOutput (const QString & line);
+
+    void setURL (const KURL & url);
     const KURL & url () const { return m_url; }
 public slots:
     virtual void init ();
     virtual void activate ();
     virtual void deactivate ();
     virtual void play ();
+    virtual void finished ();
 private:
+    QValueList <KURL> m_urls;
     KURL m_url;
+    KURL m_urlother;
+    bool isreference;
+    bool foundnonreference;
 };
 
 
@@ -133,6 +141,7 @@ public slots:
     virtual void pause (void);
     virtual void play (void);
     virtual void stop (void);
+    void record ();
     virtual void seek (unsigned long msec);
     virtual void seekPercent (float per);
 
@@ -177,6 +186,7 @@ private:
     QRegExp m_indexRegExp;
     QStringList commands;
     QString m_href;
+    KURL m_recordurl;
     QString m_process_output;
     int m_seektime;
     int m_cachesize;
@@ -186,6 +196,7 @@ private:
     bool m_started_emited : 1;
     bool m_ispart : 1;
     bool m_use_slave : 1;
+    bool m_recording : 1;
     bool m_bPosSliderPressed : 1;
 };
 
