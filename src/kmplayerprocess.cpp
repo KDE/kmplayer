@@ -144,7 +144,7 @@ bool KMPlayerProcess::stop () {
             KMessageBox::error (m_player->view (), i18n ("Failed to end player process."), i18n ("Error"));
         }
     } while (false);
-    return !m_process->isRunning ();
+    return !playing ();
 }
 
 bool KMPlayerProcess::quit () {

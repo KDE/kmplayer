@@ -83,13 +83,16 @@ extern "C" {
 
 
 static void
-cb_error (GstElement * /*play*/,
+cb_error (GstElement * play,
           GstElement * /*src*/,
           GError     *err,
           const char *debug,
           gpointer    /*data*/)
 {
     fprintf (stderr, "cb_error: %s %s\n", err->message, debug);
+    if (GST_STATE (play) == GST_STATE_PLAYING)
+        gst_element_set_state (play, GST_STATE_READY);
+    QApplication::postEvent (gstapp, new QEvent ((QEvent::Type)event_finished));
 }
 
 static void
@@ -324,13 +327,12 @@ void KGStreamerPlayer::play () {
     fprintf (stderr, "play %s\n", mrl.ascii ());
     if (mrl.isEmpty ())
         return;
-    gchar *uri = g_strdup (mrl.ascii ());
-
+    gchar *uri;
     mutex.lock ();
     gst_elm_play = gst_element_factory_make ("playbin", "player");
     if (!gst_elm_play) {
         fprintf (stderr, "couldn't create playbin\n");
-        return;
+        goto fail;
     }
     if (ao_driver && !strcmp (ao_driver, "alsa"))
         audiosink = gst_element_factory_make ("alsasink", "audiosink");
@@ -340,10 +342,14 @@ void KGStreamerPlayer::play () {
         audiosink = gst_element_factory_make ("esdsink", "audiosink");
     else
         audiosink = gst_element_factory_make ("osssink", "audiosink");
+    if (!audiosink)
+        goto fail;
     if (vo_driver && !strcmp (vo_driver, "xv"))
         videosink = gst_element_factory_make ("xvimagesink", "videosink");
     else
         videosink = gst_element_factory_make ("ximagesink", "videosink");
+    if (!videosink)
+        goto fail;
     g_object_set (G_OBJECT (gst_elm_play),
             "video-sink",  videosink,
             "audio-sink",  audiosink,
@@ -358,11 +364,15 @@ void KGStreamerPlayer::play () {
     if (GST_STATE (gst_elm_play) > GST_STATE_READY)
         gst_element_set_state (gst_elm_play, GST_STATE_READY);
 
+    uri = g_strdup (mrl.ascii ());
     g_object_set (gst_elm_play, "uri", uri, NULL);
     gst_element_set_state (gst_elm_play, GST_STATE_PLAYING);
     mutex.unlock ();
 
     g_free (uri);
+    return;
+fail:
+    QApplication::postEvent (gstapp, new QEvent ((QEvent::Type)event_finished));
 }
 
 void KGStreamerPlayer::pause () {
@@ -380,12 +390,9 @@ void KGStreamerPlayer::stop () {
         mutex.lock ();
         gst_element_set_state (gst_elm_play, GST_STATE_NULL);
 
-        if (videosink && GST_IS_X_OVERLAY (videosink)) {
-            gst_x_overlay_set_xwindow_id (GST_X_OVERLAY (videosink), 0);
-        }
         mutex.unlock ();
-    }
-    //QApplication::postEvent (gstapp, new QEvent ((QEvent::Type)event_finished));
+    } else
+        QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_finished));
 }
 
 void KGStreamerPlayer::finished () {
@@ -418,8 +425,13 @@ bool KGStreamerPlayer::event (QEvent * e) {
             if (gst_elm_play) {
                 mutex.lock ();
                 gst_object_unref (GST_OBJECT (gst_elm_play));
-                gst_object_unref (GST_OBJECT (audiosink));
-                gst_object_unref (GST_OBJECT (videosink));
+                if (audiosink)
+                    gst_object_unref (GST_OBJECT (audiosink));
+                if (videosink) {
+                    if (videosink && GST_IS_X_OVERLAY (videosink))
+                        gst_x_overlay_set_xwindow_id (GST_X_OVERLAY (videosink), 0);
+                    gst_object_unref (GST_OBJECT (videosink));
+                }
                 mutex.unlock ();
                 gst_elm_play = 0L;
                 audiosink = 0L;
