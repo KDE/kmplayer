@@ -64,14 +64,15 @@ static Display             *display;
 static Window               wid;
 static int                  screen;
 static int                  completion_event;
-static int                  xpos, ypos, width, height, fullscreen;
+static int                  xpos, ypos, width, height;
 static double               pixel_aspect;
 
 static int                  running = 0;
+static int                  firstframe = 0;
 
 extern "C" {
 
-static void dest_size_cb(void *data, int video_width, int video_height, double video_pixel_aspect,
+static void dest_size_cb(void * /*data*/, int /*video_width*/, int /*video_height*/, double /*video_pixel_aspect*/,
         int *dest_width, int *dest_height, double *dest_pixel_aspect)  {
 
     if(!running)
@@ -82,12 +83,19 @@ static void dest_size_cb(void *data, int video_width, int video_height, double v
     *dest_pixel_aspect = pixel_aspect;
 }
 
-static void frame_output_cb(void *data, int video_width, int video_height,
-        double video_pixel_aspect, int *dest_x, int *dest_y,
+static void frame_output_cb(void * /*data*/, int /*video_width*/, int /*video_height*/,
+        double /*video_pixel_aspect*/, int *dest_x, int *dest_y,
         int *dest_width, int *dest_height, 
         double *dest_pixel_aspect, int *win_x, int *win_y) {
     if(!running)
         return;
+    if (firstframe) {
+        printf("first frame\n");
+        xineapp->lock ();
+        xineapp->updatePosition ();
+        xineapp->unlock ();
+        firstframe = 0;
+    }
 
     *dest_x            = 0;
     *dest_y            = 0;
@@ -98,7 +106,7 @@ static void frame_output_cb(void *data, int video_width, int video_height,
     *dest_pixel_aspect = pixel_aspect;
 }
 
-static void event_listener(void *user_data, const xine_event_t *event) {
+static void event_listener(void * /*user_data*/, const xine_event_t *event) {
     switch(event->type) { 
         case XINE_EVENT_UI_PLAYBACK_FINISHED:
             printf ("XINE_EVENT_UI_PLAYBACK_FINISHED\n");
@@ -125,6 +133,8 @@ static void event_listener(void *user_data, const xine_event_t *event) {
         case XINE_EVENT_FRAME_FORMAT_CHANGE:
             printf ("XINE_EVENT_FRAME_FORMAT_CHANGE\n");
             break;
+        default:
+            printf ("event_listener %d\n", event->type);
 
     }
 }
@@ -150,6 +160,7 @@ void KMPlayerBackend::stop () {
 }
 
 void KMPlayerBackend::pause () {
+    xineapp->pause ();
 }
 
 void KMPlayerBackend::seek (int pos, bool absolute) {
@@ -223,7 +234,14 @@ void KXinePlayer::setURL (const QString & url) {
 }
 
 void KXinePlayer::play () {
-    if (running) return;
+    if (running) {
+        mutex.lock ();
+        if (xine_get_status (stream) == XINE_STATUS_PLAY &&
+            xine_get_param (stream, XINE_PARAM_SPEED) == XINE_SPEED_PAUSE)
+            xine_set_param( stream, XINE_PARAM_SPEED, XINE_SPEED_NORMAL);
+        mutex.unlock ();
+        return;
+    }
     XWindowAttributes attr;
     XGetWindowAttributes(display, wid, &attr);
     width = attr.width;
@@ -274,12 +292,15 @@ void KXinePlayer::play () {
     if (!xine_open (stream, d->mrl.ascii ())) {
         printf("Unable to open mrl '%s'\n", d->mrl.ascii ());
         mutex.unlock ();
+        finished ();
         return;
     }
-    printf("video info %d,%d len %d\n", xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_WIDTH), xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_HEIGHT), xine_get_stream_info(stream, XINE_STREAM_INFO_FRAME_DURATION));
+    if (callback)
+        firstframe = 1;
     if (!xine_play (stream, 0, 0)) {
         printf("Unable to play mrl '%s'\n", d->mrl.ascii ());
         mutex.unlock ();
+        finished ();
         return;
     }
     running = 1;
@@ -321,8 +342,38 @@ void KXinePlayer::stop () {
     if (callback) callback->finished ();
 }
 
+void KXinePlayer::pause () {
+    if (!running) return;
+    mutex.lock ();
+    if (xine_get_status (stream) == XINE_STATUS_PLAY)
+        xine_set_param( stream, XINE_PARAM_SPEED, XINE_SPEED_PAUSE);
+    mutex.unlock ();
+}
+
 void KXinePlayer::finished () {
     QTimer::singleShot (10, this, SLOT (stop ()));
+}
+
+void KXinePlayer::updatePosition () {
+    if (!running) return;
+    int h, w, pos, len;
+    mutex.lock ();
+    xine_get_pos_length (stream, 0, &pos, &len);
+    if (firstframe) {
+        w = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_WIDTH);
+        h = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_HEIGHT);
+
+    }
+    mutex.unlock ();
+    if (firstframe) {
+        printf("movieParams %dx%d %d\n", w, h, len/100);
+        if (h > 0)
+            callback->movieParams (len/100, w, h, 1.0*w/h);
+        callback->playing ();
+    } else {
+        callback->moviePosition (pos/100);
+    }
+    QTimer::singleShot (500, this, SLOT (updatePosition ()));
 }
 
 class XEventThread : public QThread {

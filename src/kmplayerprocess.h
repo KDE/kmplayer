@@ -141,6 +141,7 @@ public:
     virtual void setPlaying ();
     virtual void setStarted ();
     virtual void setMovieParams (int length, int width, int height, float aspect);
+    virtual void setMoviePosition (int position);
 signals:
     void running ();
 protected:
@@ -160,6 +161,7 @@ public slots:
     bool play ();
     bool stop ();
     void setFinished ();
+    bool pause ();
 private slots:
     void running ();
     void processStopped (KProcess *);

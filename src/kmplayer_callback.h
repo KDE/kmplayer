@@ -35,6 +35,7 @@ k_dcop:
     ASYNC playing ();
     ASYNC started ();
     ASYNC movieParams (int length, int width, int height, float aspect);
+    ASYNC moviePosition (int position);
 private:
     KMPlayerCallbackProcess * m_process;
 };

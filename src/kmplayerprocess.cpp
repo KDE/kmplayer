@@ -88,6 +88,7 @@ bool KMPlayerProcess::brightness (int /*pos*/, int /*absolute*/) {
 }
 
 bool KMPlayerProcess::stop () {
+    if (!playing ()) return true;
     do {
         m_process->kill (SIGTERM);
         KProcessController::theKProcessController->waitForProcessExit (1);
@@ -486,6 +487,10 @@ void KMPlayerCallback::movieParams (int length, int w, int h, float aspect) {
     m_process->setMovieParams (length, w, h, aspect);
 }
 
+void KMPlayerCallback::moviePosition (int position) {
+    m_process->setMoviePosition (position);
+}
+
 //-----------------------------------------------------------------------------
 
 KMPlayerCallbackProcess::KMPlayerCallbackProcess (KMPlayer * player)
@@ -512,7 +517,9 @@ void KMPlayerCallbackProcess::setFinished () {
 }
 
 void KMPlayerCallbackProcess::setPlaying () {
+    KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
     QTimer::singleShot (0, this, SLOT (emitStarted ()));
+    QTimer::singleShot (0, v, SLOT (startsToPlay ())); // FIXME
 }
 
 void KMPlayerCallbackProcess::setStarted () {
@@ -524,8 +531,12 @@ void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
     m_source->setHeight (h);
     m_source->setAspect (a);
     m_source->setLength (len);
+    m_player->setMovieLength (len);
 }
 
+void KMPlayerCallbackProcess::setMoviePosition (int position) {
+    emit positionChanged (position);
+}
 //-----------------------------------------------------------------------------
 
 Xine::Xine (KMPlayer * player) : KMPlayerCallbackProcess (player) {
@@ -535,11 +546,14 @@ Xine::Xine (KMPlayer * player) : KMPlayerCallbackProcess (player) {
 Xine::~Xine () {}
 
 QWidget * Xine::widget () {
-    kdDebug () << "player " << m_player << " view: " << m_player->view() <<endl;
     return static_cast <KMPlayerView *> (m_player->view())->viewer();
 }
 
 bool Xine::play () {
+    if (playing ()) {
+        m_backend->play ();
+        return true;
+    }
     KMPlayerSettings *settings = m_player->settings ();
     delete m_process;
     m_process = new KProcess;
@@ -616,6 +630,13 @@ void Xine::setFinished () {
         stop ();
     }
 }
+
+bool Xine::pause () {
+    if (!playing ()) return false;
+    m_backend->pause ();
+    return true;
+}
+   
 void Xine::processStopped (KProcess *) {
     delete m_backend;
     m_backend = 0L;
