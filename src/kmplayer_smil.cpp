@@ -102,8 +102,11 @@ KDE_NO_EXPORT void TimedRegionData::timerEvent (QTimerEvent * e) {
         start_timer = 0;
         isstarted = true;
         QTimer::singleShot (0, this, SLOT (started ()));
-        if (mt->duration_time > 0 && mt->duration_time < duration_last_option)
-            dur_timer = startTimer (1000 * mt->duration_time);
+        if (mt->duration_time > 0) {
+            if (mt->duration_time < duration_last_option)
+                dur_timer = startTimer (1000 * mt->duration_time);
+        } else
+            mt->timed_end ();
     } else if (e->timerId () == dur_timer) {
         killTimer (dur_timer);
         dur_timer = 0;
@@ -432,22 +435,24 @@ static RegionNodePtr findRegion (RegionNodePtr p, const QString & id) {
 }
 
 static unsigned int getSeconds (const QString & v) {
-    QRegExp reg ("\\s*([0-9\\.]+)\\s*([a-zA-Z]*)");
-    kdDebug () << "getSeconds " << v << " " << (reg.search (v) > -1 ? reg.cap (1) : QString ("nomatch")) << endl;
+    QRegExp reg ("\\s*([0-9\\.]+)\\s*([a-z]*)");
+    QString vl = v.lower ();
+    kdDebug () << "getSeconds " << v << endl;
     if (reg.search (v) > -1) {
         bool ok;
         double t = reg.cap (1).toDouble (&ok);
         kdDebug() << "reg.cap (1) " << t << (ok && t > 0.000) << endl;
         if (ok && t > 0.000) {
-            QString u = reg.cap (2).lower ();
+            QString u = reg.cap (2);
             if (u.startsWith ("m"))
                 return (unsigned int) (t * 60);
             else if (u.startsWith ("h"))
                 return (unsigned int) (t * 60 * 60);
             return (unsigned int) t;
         }
-    }
-    return 0;
+    } else if (vl.find ("indefinite") > -1)
+        return duration_infinite;
+    return 0; // also 0 for 'media' duration, so it will not update then
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::opened () {
@@ -475,7 +480,7 @@ KDE_NO_EXPORT void SMIL::MediaType::opened () {
         else
             kdWarning () << "unhandled MediaType attr: " << cname << "=" << a->nodeValue () << endl;
     }
-    if (!dur) // update dur if not set
+    if (!dur && end_time > begin_time) // update dur if not set
         dur = end_time - begin_time;
     if (dur)
         duration_time = dur;
