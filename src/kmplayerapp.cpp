@@ -343,7 +343,7 @@ void KMPlayerApp::finished () {
                 movie_length = str.mid (pos + 1).toInt();
         }
     }
-    m_player->setMovieLength (movie_length);
+    m_player->setMovieLength (10 * movie_length);
     resizePlayer (100);
     const KURL & url = doc->URL ();
     if (m_player->openURL (url)) {
@@ -418,7 +418,7 @@ void KMPlayerApp::finishedOpenDVD () {
                                           SLOT (chapterMenuClicked(int)), 0, c);
         }
     }
-    m_player->setMovieLength (movie_length);
+    m_player->setMovieLength (10 * movie_length);
     //if (m_dvdsubtitlemenu->count()) m_dvdsubtitlemenu->setItemChecked (m_dvdsubtitlemenu->idAt (0), true);
     if (m_dvdtitlemenu->count ()) m_dvdtitlemenu->setItemChecked (0, true);
     if (m_dvdchaptermenu->count ()) m_dvdchaptermenu->setItemChecked (0, true);
@@ -468,7 +468,7 @@ void KMPlayerApp::finishedOpenVCD () {
             kdDebug () << "track " << trackRegExp.cap (1) << endl;
         }
     }
-    m_player->setMovieLength (movie_length);
+    m_player->setMovieLength (10 * movie_length);
     if (m_vcdtrackmenu->count()) m_vcdtrackmenu->setItemChecked (0, true);
     resizePlayer (100);
     if (m_player->configDialog ()->playvcd)

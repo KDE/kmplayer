@@ -194,7 +194,7 @@ void KMPlayer::init () {
     m_movie_position = 0;
     m_movie_length = 0;
     m_bPosSliderPressed = false;
-    m_posRegExp.setPattern ("V:[^0-9]*([0-9\\.]+)");
+    m_posRegExp.setPattern ("V:\\s+([0-9\\.]+)");
     connect (m_view->backButton (), SIGNAL (clicked ()), this, SLOT (back ()));
     connect (m_view->playButton (), SIGNAL (clicked ()), this, SLOT (play ()));
     connect (m_view->forwardButton (), SIGNAL (clicked ()), this, SLOT (forward ()));
@@ -369,7 +369,7 @@ void KMPlayer::processStopped (KProcess *) {
 
     killTimers ();
     if (m_movie_position > m_movie_length)
-        setMovieLength (m_movie_position/10);
+        setMovieLength (m_movie_position);
     m_movie_position = 0;
     if (m_started_emited) {
         m_started_emited = false;
@@ -394,7 +394,7 @@ void KMPlayer::processStopped (KProcess *) {
 }
 
 void KMPlayer::setMovieLength (int len) {
-    m_movie_length = 10 * len;
+    m_movie_length = len;
     if (m_view)
         m_view->positionSlider()->setMaxValue (len > 0 ? m_movie_length : 200);
 }
