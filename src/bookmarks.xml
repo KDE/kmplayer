@@ -1,7 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE xbel>
-<xbel folded="no" >
- <folder folded="no" icon="bookmark_folder" >
+<xbel folded="yes" >
+ <folder folded="yes" icon="bookmark_folder" >
+  <title>South America</title>
+  <folder folded="yes" icon="bookmark_folder" >
+   <title>Brazil</title>
+   <bookmark icon="video" href="http://www.bloomberg.com/streams/video/LiveBR_nb.ram" >
+    <title>Bloomberg TV Brazil</title>
+   </bookmark>
+  </folder>
+ </folder>
+ <folder folded="yes" icon="bookmark_folder" >
+  <title>Asia</title>
+  <folder folded="yes" icon="bookmark_folder" >
+   <title>TV</title>
+   <bookmark icon="video" href="http://www.bloomberg.com/streams/video/LiveAS_nb.ram" >
+    <title>Bloomberg TV Asia-Pacific</title>
+   </bookmark>
+   <bookmark icon="video" href="http://www.bloomberg.com/streams/video/LiveJA_nb.ram" >
+    <title>Bloomberg TV Japan</title>
+   </bookmark>
+  </folder>
+ </folder>
+ <folder folded="yes" icon="bookmark_folder" >
   <title>Europe</title>
   <folder folded="yes" icon="bookmark_folder" >
    <title>czech republic</title>
@@ -155,70 +176,70 @@
   </folder>
   <folder folded="yes" icon="bookmark_folder" >
    <title>denmark</title>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e02ch01m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e02ch01m?wmcontentbitrate=300000/.wma" >
     <title>P1</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e02ch02m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e02ch02m?wmcontentbitrate=300000/.wma" >
     <title>P2</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e02ch03m?wmcontentbitrate=300000" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e02ch03m?wmcontentbitrate=300000" >
     <title>P3</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch04m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e04ch04m?wmcontentbitrate=300000/.wma" >
     <title>Kanal 94</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch06m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e04ch06m?wmcontentbitrate=300000/.wma" >
     <title>Radio Fyn</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch08m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e04ch08m?wmcontentbitrate=300000/.wma" >
     <title>Bornholms Radio</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch07m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e04ch07m?wmcontentbitrate=300000/.wma" >
     <title>Regionalen</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch09m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e04ch09m?wmcontentbitrate=300000/.wma" >
     <title>Københavns Radio</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch05m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e04ch05m?wmcontentbitrate=300000/.wma" >
     <title>Radio Syd</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch03m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e04ch03m?wmcontentbitrate=300000/.wma" >
     <title>Østjyllands Radio</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch02m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e04ch02m?wmcontentbitrate=300000/.wma" >
     <title>Radio Midt &amp; Vest</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e02ch09m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e02ch09m?wmcontentbitrate=300000/.wma" >
     <title>DR Barometer</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e02ch07m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e02ch07m?wmcontentbitrate=300000/.wma" >
     <title>DR Boogieradio</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e06ch02m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e06ch02m?wmcontentbitrate=300000/.wma" >
     <title>DR Erhverv</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e02ch08m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e02ch08m?wmcontentbitrate=300000/.wma" >
     <title>DR Ghetto</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e06ch01m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e06ch01m?wmcontentbitrate=300000/.wma" >
     <title>DR Gyldne Genhør</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e02ch05m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e02ch05m?wmcontentbitrate=300000/.wma" >
     <title>DR Jazz</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e02ch06m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e02ch06m?wmcontentbitrate=300000/.wma" >
     <title>DR Klassisk</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch11m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e04ch11m?wmcontentbitrate=300000/.wma" >
     <title>DR Nyheder</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e02ch04m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e02ch04m?wmcontentbitrate=300000/.wma" >
     <title>DR Rock</title>
    </bookmark>
-   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch10m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wmsc.dr.dk/e04ch10m?wmcontentbitrate=300000/.wma" >
     <title>DR Soft</title>
    </bookmark>
-   <bookmark icon="www" href="http://wms.dr.dk/e02ch12m?wmcontentbitrate=300000/.wma" >
+   <bookmark icon="sound" href="http://wms.dr.dk/e02ch12m?wmcontentbitrate=300000/.wma" >
     <title>DR Sport</title>
    </bookmark>
   </folder>
@@ -227,6 +248,9 @@
     <title>TV</title>
     <bookmark icon="video" href="http://www.itele.fr/smi/direct.smi" >
      <title>I Télévision</title>
+    </bookmark>
+    <bookmark icon="video" href="http://www.bloomberg.com/streams/video/LiveFR_nb.ram" >
+     <title>Bloomberg TV France</title>
     </bookmark>
     <bookmark icon="video" href="http://www.bbc.co.uk/newsa/n5ctrl/tvseq/n24.ram" >
      <title>bbc news</title>
@@ -296,15 +320,15 @@
    <bookmark icon="sound" href="mms://viptvr.yacast.fr/tvr_francemusiques2" >
     <title>france musique</title>
    </bookmark>
-   <bookmark icon="www" href="http://trevize.letsgozik.com:44444/letsgozik_56" >
+   <bookmark icon="sound" href="http://trevize.letsgozik.com:44444/letsgozik_56" >
     <title>Let's Go Zik</title>
    </bookmark>
   </folder>
   <folder folded="yes" >
    <title>germany</title>
-   <folder folded="no" >
+   <folder folded="yes" >
     <title>TV</title>
-    <bookmark icon="www" href="http://www.bloomberg.com/streams/video/LiveDE_nb.asxx" >
+    <bookmark icon="video" href="http://www.bloomberg.com/streams/video/LiveDE_nb.ram" >
      <title>Bloomberg TV Germany</title>
     </bookmark>
    </folder>
@@ -326,30 +350,36 @@
   </folder>
   <folder folded="yes" >
    <title>greece</title>
-   <bookmark icon="www" href="http://64.246.32.39:8906/" >
+   <bookmark icon="sound" href="http://64.246.32.39:8906/" >
     <title>Cosmoradio</title>
    </bookmark>
   </folder>
   <folder folded="yes" >
    <title>hungary</title>
-   <bookmark icon="www" href="http://yp.tilos.hu:9000/tilos_high.ogg" >
+   <bookmark icon="sound" href="http://yp.tilos.hu:9000/tilos_high.ogg" >
     <title>Tilos Radio </title>
    </bookmark>
-   <bookmark icon="www" href="http://195.184.2.4:8000/" >
+   <bookmark icon="sound" href="http://195.184.2.4:8000/" >
     <title>Csaba Radio</title>
    </bookmark>
-   <bookmark icon="www" href="http://broadcast.jazzradio.hu/jazzradio-128" >
+   <bookmark icon="sound" href="http://broadcast.jazzradio.hu/jazzradio-128" >
     <title>Jazz Radio</title>
    </bookmark>
   </folder>
   <folder folded="yes" >
    <title>ireland</title>
-   <bookmark icon="www" href="http://69.57.152.94:8000" >
+   <bookmark icon="sound" href="http://69.57.152.94:8000" >
     <title>Live Ireland</title>
    </bookmark>
   </folder>
   <folder folded="yes" >
    <title>italy</title>
+   <folder folded="yes" icon="bookmark_folder" >
+    <title>TV</title>
+    <bookmark icon="video" href="http://www.bloomberg.com/streams/video/LiveIT_nb.ram" >
+     <title>Bloomberg TV Italy</title>
+    </bookmark>
+   </folder>
    <bookmark icon="sound" href="mms://62.101.104.172/company" >
     <title>Company</title>
    </bookmark>
@@ -371,13 +401,16 @@
   </folder>
   <folder folded="yes" >
    <title>macedonia</title>
-   <bookmark icon="www" href="http://195.26.152.92:8000/" >
+   <bookmark icon="sound" href="http://195.26.152.92:8000/" >
     <title>City Radio</title>
    </bookmark>
   </folder>
   <folder folded="yes" >
    <title>netherlands</title>
-   <bookmark icon="www" href="http://213.10.138.62:8000" >
+   <bookmark icon="video" href="http://cgi.omroep.nl/cgi-bin/streams?/tv/nos/journaal/bb.laatste.rm" >
+    <title>NOS Journaal</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://213.10.138.62:8000" >
     <title>DBS Radio</title>
    </bookmark>
   </folder>
@@ -389,10 +422,10 @@
   </folder>
   <folder folded="yes" >
    <title>russia</title>
-   <bookmark icon="www" href="http://horus.mtu.ru:9000/" >
+   <bookmark icon="sound" href="http://horus.mtu.ru:9000/" >
     <title>Europa Plus</title>
    </bookmark>
-   <bookmark icon="www" href="http://channel1.region72.ru:8000" >
+   <bookmark icon="sound" href="http://channel1.region72.ru:8000" >
     <title>Red Army Radio</title>
    </bookmark>
   </folder>
@@ -406,6 +439,9 @@
    <title>slovakia</title>
    <folder folded="yes" icon="bookmark_folder" >
     <title>TV</title>
+    <bookmark icon="video" href="http://www.joj.sk/tvarchiv/video/playlist/playlist.wvx?video=random" >
+     <title>joj</title>
+    </bookmark>
     <bookmark icon="video" href="mmsh://mslive2.markiza.sk/markiza/" >
      <title>markíza</title>
     </bookmark>
@@ -452,48 +488,90 @@
   </folder>
   <folder folded="yes" >
    <title>slovenia</title>
-   <bookmark icon="www" href="http://193.95.242.36:8000/" >
+   <bookmark icon="sound" href="http://193.95.242.36:8000/" >
     <title>Libra Radio</title>
    </bookmark>
   </folder>
   <folder folded="yes" >
    <title>spain</title>
-   <bookmark icon="www" href="http://www.onamallorca.net:8000/ona.ogg" >
+   <folder folded="yes" icon="bookmark_folder" >
+    <title>TV</title>
+    <bookmark icon="video" href="http://www.bloomberg.com/streams/video/LiveES_nb.ram" >
+     <title>Bloomberg TV Spain</title>
+    </bookmark>
+   </folder>
+   <bookmark icon="sound" href="http://www.onamallorca.net:8000/ona.ogg" >
     <title>Ona Mallorca</title>
    </bookmark>
-   <bookmark icon="www" href="http://217.125.97.68:80/" >
+   <bookmark icon="sound" href="http://217.125.97.68:80/" >
     <title>Alpicat Radio</title>
    </bookmark>
   </folder>
   <folder folded="yes" >
    <title>united kingdom</title>
-   <bookmark icon="www" href="http://live.urn1350.net:8080/urn_high.ogg" >
+   <folder folded="yes" icon="bookmark_folder" >
+    <title>virgin radio</title>
+    <bookmark icon="sound" href="http://ogg.smgradio.com/vr32.ogg" >
+     <title>1215AM</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://ogg.smgradio.com/vr160.ogg" >
+     <title>1215AM (broadband)</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://ogg.smgradio.com/vc32.ogg" >
+     <title>classic rock</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://ogg.smgradio.com/vc160.ogg" >
+     <title>classic rock (broadband)</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://ogg.smgradio.com/gr32.ogg" >
+     <title>groove</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://ogg.smgradio.com/gr160.ogg" >
+     <title>groove (broadband)</title>
+    </bookmark>
+   </folder>
+   <folder folded="yes" icon="bookmark_folder" >
+    <title>TV</title>
+    <bookmark icon="video" href="http://www.bloomberg.com/streams/video/LiveUK_nb.ram" >
+     <title>Bloomberg TV UK</title>
+    </bookmark>
+   </folder>
+   <bookmark icon="sound" href="http://live.urn1350.net:8080/urn_high.ogg" >
     <title>URN</title>
    </bookmark>
   </folder>
  </folder>
  <folder folded="yes" icon="bookmark_folder" >
   <title>North America</title>
-  <folder folded="no" >
+  <folder folded="yes" >
    <title>USA</title>
+   <folder folded="yes" icon="bookmark_folder" >
+    <title>TV</title>
+    <bookmark icon="video" href="http://www.bloomberg.com/streams/video/LiveBTV56.ramx" >
+     <title>Bloomberg TV US</title>
+    </bookmark>
+    <bookmark icon="video" href="http://www.bloomberg.com/streams/video/LiveBTV200.ramx" >
+     <title>Bloomberg TV US (broadband)</title>
+    </bookmark>
+   </folder>
    <folder folded="yes" >
     <title>NH</title>
-    <bookmark icon="www" href="http://www.WNTK.COM/audio/wntk.ram" >
+    <bookmark icon="sound" href="http://www.WNTK.COM/audio/wntk.ram" >
      <title>WNTK</title>
     </bookmark>
-    <bookmark icon="www" href="http://wunh.unh.edu:8000/" >
+    <bookmark icon="sound" href="http://wunh.unh.edu:8000/" >
      <title>WUNH</title>
     </bookmark>
    </folder>
    <folder folded="yes" >
     <title>NY</title>
-    <bookmark icon="www" href="http://205.188.234.68:8002" >
+    <bookmark icon="sound" href="http://205.188.234.68:8002" >
      <title>Digitally Imported - EuroDance</title>
     </bookmark>
-    <bookmark icon="www" href="http://64.236.34.97:80/stream/1019" >
+    <bookmark icon="sound" href="http://64.236.34.97:80/stream/1019" >
      <title>Digitally Imported - Modern Jazz</title>
     </bookmark>
-    <bookmark icon="www" href="http://69.31.76.84:8000" >
+    <bookmark icon="sound" href="http://69.31.76.84:8000" >
      <title>MostlyClassical.com</title>
     </bookmark>
    </folder>
@@ -509,10 +587,10 @@
   </folder>
   <folder folded="yes" >
    <title>Canada</title>
-   <bookmark icon="www" href="http://caracal.rttinc.com:8002/" >
+   <bookmark icon="sound" href="http://caracal.rttinc.com:8002/" >
     <title>CIZZ Zed 99  </title>
    </bookmark>
-   <bookmark icon="www" href="http://caracal.rttinc.com:8004/" >
+   <bookmark icon="sound" href="http://caracal.rttinc.com:8004/" >
     <title>CKGY Country  </title>
    </bookmark>
    <bookmark icon="sound" href="http://oggtrial.nm.cbc.ca:80/cbcr1-toronto.ogg" >
@@ -521,7 +599,7 @@
   </folder>
   <folder folded="yes" >
    <title>Mexico</title>
-   <bookmark icon="www" href="http://66.98.138.13:9520/" >
+   <bookmark icon="sound" href="http://66.98.138.13:9520/" >
     <title>XEMA B15 </title>
    </bookmark>
   </folder>
