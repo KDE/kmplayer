@@ -610,35 +610,6 @@ void PartBase::decreaseVolume () {
         m_view->controlPanel ()->volumeBar ()->setValue (m_view->controlPanel ()->volumeBar ()->value () - 2);
 }
 
-void PartBase::sizes (int & w, int & h) const {
-    ElementPtr doc = m_source->document ();
-    if (doc) {
-        RegionNodePtr rl = doc->document ()->rootLayout;
-        if (rl) {
-            RegionBase * root = convertNode <RegionBase> (rl->regionElement);
-            if (!m_noresize && root) {
-                w = root->w;
-                h = root->h;
-                if (w && h)
-                    return;
-            }
-            w = rl->w;
-            h = rl->h;
-            if (w && h)
-                return;
-        }
-        Mrl * mrl = m_source->current () ? m_source->current ()->mrl () : 0L;
-        if (mrl) {
-            w = mrl->width;
-            h = mrl->height;
-        }
-    }
-    if ((m_noresize || w <= 0 || h <= 0) && m_view->viewer ()) {
-        w = m_view->viewer ()->width ();
-        h = m_view->viewer ()->height ();
-    }
-}
-
 KDE_NO_EXPORT void PartBase::posSliderPressed () {
     m_bPosSliderPressed=true;
 }
@@ -711,43 +682,13 @@ Source::~Source () {
 }
 
 void Source::init () {
+    m_width = 0;
+    m_height = 0;
+    m_aspect = 0.0;
     setLength (0);
     m_position = 0;
     m_identified = false;
     m_recordcmd.truncate (0);
-}
-
-int Source::width () {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    return mrl ? mrl->width : 0;
-}
-
-int Source::height () {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    return mrl ? mrl->height : 0;
-}
-
-float Source::aspect () {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    return mrl ? mrl->aspect : 0.0;
-}
-
-void Source::setWidth (int w) {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    if (mrl)
-        mrl->width = w;
-}
-
-void Source::setHeight (int w) {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    if (mrl)
-        mrl->height = w;
-}
-
-void Source::setAspect (float w) {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    if (mrl)
-        mrl->aspect = w;
 }
 
 void Source::setLength (int len) {
@@ -1115,6 +1056,73 @@ KDE_NO_EXPORT void URLSource::init () {
     Source::init ();
 }
 
+int URLSource::width () {
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    return mrl ? mrl->width : 0;
+}
+
+int URLSource::height () {
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    return mrl ? mrl->height : 0;
+}
+
+float URLSource::aspect () {
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    return mrl ? mrl->aspect : 0.0;
+}
+
+void URLSource::dimensions (int & w, int & h) {
+    if (!m_player->mayResize () && m_player->view ()) {
+        w = m_player->process ()->view ()->viewer ()->width ();
+        h = m_player->process ()->view ()->viewer ()->height ();
+    } else {
+        ElementPtr doc = m_document;
+        if (doc) {
+            RegionNodePtr rl = doc->document ()->rootLayout;
+            if (rl) {
+                RegionBase *root = convertNode <RegionBase> (rl->regionElement);
+                if (root) {
+                    w = root->w;
+                    h = root->h;
+                    if (w && h)
+                        return;
+                }
+                w = rl->w;
+                h = rl->h;
+                if (w && h)
+                    return;
+            }
+            Mrl *mrl = m_current ? m_current->mrl () : 0L;
+            if (mrl) {
+                w = mrl->width;
+                h = mrl->height;
+                if (w && h)
+                    return;
+            }
+        }
+        w = width ();
+        h = height ();
+    }
+}
+
+void URLSource::setWidth (int w) {
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    if (mrl)
+        mrl->width = w;
+}
+
+void URLSource::setHeight (int w) {
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    if (mrl)
+        mrl->height = w;
+}
+
+void URLSource::setAspect (float w) {
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    if (mrl)
+        mrl->aspect = w;
+}
+
 KDE_NO_EXPORT bool URLSource::hasLength () {
     return !!length ();
 }
@@ -1252,6 +1260,8 @@ KDE_NO_EXPORT void URLSource::read (QTextStream & textstream) {
                     setWidth (root->w);
                     setHeight (root->h);
                     setAspect (root->h > 0 ? 1.0 * root->w / root->h : 0.0);
+                    if (m_player->view ())
+                        m_player->process ()->view ()->viewer ()->setAspect (aspect ()); // obviously this sucks
                 }
             }
         } else if (line.lower () != QString ("[reference]")) do {

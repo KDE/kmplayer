@@ -16,6 +16,7 @@
  *  Boston, MA 02111-1307, USA.
  **/
 
+#include <config.h>
 #include <qtextstream.h>
 #include <qcolor.h>
 #include <qpainter.h>
@@ -695,9 +696,18 @@ namespace KMPlayer {
     class MediaTypeRuntimePrivate {
     public:
         KDE_NO_CDTOR_EXPORT MediaTypeRuntimePrivate ()
-            : job (0L), fill (fill_unknown) {}
+         : job (0L) {
+            reset ();
+        }
         KDE_NO_CDTOR_EXPORT ~MediaTypeRuntimePrivate () {
             delete job;
+        }
+        void reset () {
+            if (job) {
+                job->kill (); // quiet, no result signal
+                job = 0L; // KIO::Job::kill deletes itself
+            }
+            fill = fill_freeze;
         }
         KIO::Job * job;
         QByteArray data;
@@ -746,10 +756,7 @@ KDE_NO_EXPORT void MediaTypeRuntime::slotData (KIO::Job*, const QByteArray& qb) 
 }
 
 KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::end () {
-    if (mt_d->job) {
-        mt_d->job->kill (); // quiet, no result signal
-        mt_d->job = 0L; // KIO::Job::kill deletes itself
-    }
+    mt_d->reset ();
     TimedRuntime::end ();
 }
 
@@ -772,7 +779,9 @@ QString MediaTypeRuntime::setParam (const QString & name, const QString & val) {
     } else if (name == QString::fromLatin1 ("fill")) {
         if (val == QString::fromLatin1 ("freeze"))
             mt_d->fill = MediaTypeRuntimePrivate::fill_freeze;
-            // else all other fill options ..
+        else
+            mt_d->fill = MediaTypeRuntimePrivate::fill_unknown;
+        // else all other fill options ..
     } else if (name == QString::fromLatin1 ("src")) {
         old_val = source_url;
         source_url = val;

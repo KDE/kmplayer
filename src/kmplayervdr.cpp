@@ -218,7 +218,6 @@ KDE_NO_EXPORT void KMPlayerVDRSource::processStopped () {
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::processStarted () {
-    //setURL (KURL (QString ("vdr://localhost:%1").arg (tcp_port)));
     m_socket->connectToHost ("127.0.0.1", tcp_port);
     commands = new VDRCommand ("connect", commands);
 }
@@ -500,13 +499,6 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deleteCommands () {
 
 KDE_NO_EXPORT void KMPlayerVDRSource::jump (KMPlayer::ElementPtr e) {
     if (!e->isMrl ()) return;
-    KMPlayer::Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    if (mrl) {
-        KMPlayer::Mrl * newmrl = e->mrl ();
-        newmrl->width = mrl->width;
-        newmrl->height = mrl->height;
-        newmrl->aspect = mrl->aspect;
-    }
     m_current = e;
     jump (e->mrl ()->pretty_name);
 }

@@ -64,6 +64,13 @@ public:
     URLSource (PartBase * player, const KURL & url = KURL ());
     virtual ~URLSource ();
 
+    virtual int width ();
+    virtual int height ();
+    virtual float aspect ();
+    virtual void dimensions (int & w, int & h);
+    virtual void setWidth (int w);
+    virtual void setHeight (int h);
+    virtual void setAspect (float a);
     virtual bool hasLength ();
     virtual QString prettyName ();
 public slots:
@@ -99,7 +106,6 @@ public:
     void keepMovieAspect (bool);
     KDE_NO_EXPORT KURL url () const { return m_sources ["urlsource"]->url (); }
     KDE_NO_EXPORT void setURL (const KURL & url) { m_sources ["urlsource"]->setURL (url); }
-    void sizes (int & w, int & h) const;
 
     /* Changes the process,
      * calls setSource if process was playing
@@ -118,6 +124,7 @@ public:
     QMap <QString, Process *> & recorders () { return m_recorders; }
     QMap <QString, Source *> & sources () { return m_sources; }
     KDE_NO_EXPORT KConfig * config () const { return m_config; }
+    KDE_NO_EXPORT bool mayResize () const { return !m_noresize; }
     void updatePlayerMenu ();
 
     // these are called from Process

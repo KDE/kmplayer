@@ -468,8 +468,9 @@ KDE_NO_EXPORT void KMPlayerPart::processStateChange (KMPlayer::Process::State ol
 }
 
 KDE_NO_EXPORT void KMPlayerPart::setMenuZoom (int id) {
-    int w, h;
-    sizes (w, h);
+    int w = 0, h = 0;
+    if (m_source)
+        m_source->dimensions (w, h);
     if (id == KMPlayer::ControlPanel::menu_zoom100) {
         m_liveconnectextension->setSize (w, h);
         return;
