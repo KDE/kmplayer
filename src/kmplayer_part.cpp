@@ -714,7 +714,7 @@ void KMPlayerHRefSource::finished () {
         return;
     }
     if (view->viewer ())
-        connect (view->viewer (), SIGNAL (clicked ()), this, SLOT (play ()));
+        connect (view, SIGNAL (pictureClicked ()), this, SLOT (play ()));
 }
 
 void KMPlayerHRefSource::deactivate () {
@@ -723,7 +723,7 @@ void KMPlayerHRefSource::deactivate () {
     if (!view) return;
     view->setPicture (QString::null);
     if (view->viewer ())
-        disconnect (view->viewer (), SIGNAL (clicked ()), this, SLOT (play ()));
+        disconnect (view, SIGNAL (pictureClicked ()), this, SLOT (play ()));
 }
 
 QString KMPlayerHRefSource::prettyName () {

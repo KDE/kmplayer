@@ -185,12 +185,12 @@ void KMPlayerApp::initView ()
             this, SLOT (zoom100 ()));
     m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayerControlPanel::menu_zoom150,
             this, SLOT (zoom150 ()));
-    m_view->buttonBar ()->popupMenu ()->connectItem (KMPlayerControlPanel::menu_fullscreen,
-            this, SLOT (fullScreen ()));
     connect (m_view->buttonBar()->broadcastButton (), SIGNAL (clicked ()),
             this, SLOT (broadcastClicked ()));
     connect (m_view->viewer (), SIGNAL (aspectChanged ()),
             this, SLOT (zoom100 ()));
+    connect (m_view, SIGNAL (fullScreenChanged ()),
+            this, SLOT (fullScreen ()));
     /*QPopupMenu * viewmenu = new QPopupMenu;
     viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()),
                           QKeySequence ("CTRL + Key_F"));
@@ -510,7 +510,6 @@ void KMPlayerApp::slotStatusMsg(const QString &text) {
 void KMPlayerApp::fullScreen () {
     if (sender ()->metaObject ()->inherits ("KAction"))
         m_view->fullScreen();
-        
 #if KDE_IS_VERSION(3,1,90)
     KToggleAction *fullScreenAction = static_cast<KToggleAction*>(action("fullscreen"));
     if (fullScreenAction)

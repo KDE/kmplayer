@@ -69,6 +69,7 @@ class KMPlayerView : public KMediaPlayer::View {
     Q_OBJECT
     friend class KMPlayerViewerHolder;
     friend class KMPlayerViewer;
+    friend class KMPlayerPictureWidget;
 public:
     KMPlayerView(QWidget *parent, const char *name = (char*) 0);
     ~KMPlayerView();
@@ -106,13 +107,17 @@ public slots:
     void updateLayout ();
 signals:
     void urlDropped (const KURL & url);
+    void pictureClicked ();
+    void fullScreenChanged ();
 protected:
     void leaveEvent (QEvent *);
     void timerEvent (QTimerEvent *);
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
+    bool x11Event (XEvent *);
 private:
     void updateUseArts ();
+    void emitPictureClicked () { emit pictureClicked (); }
     // widget for player's output
     QGuardedPtr<KMPlayerViewer> m_viewer;
     // console output
@@ -199,15 +204,11 @@ public:
     float aspect () { return m_aspect; }
     void sendKeyEvent (int key);
 signals:
-    void aboutToPlay ();
-    void clicked ();
     void aspectChanged ();
 protected:
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
-    bool x11Event (XEvent *);
     void mouseMoveEvent (QMouseEvent * e);
-    void mousePressEvent (QMouseEvent * e);
 private:
     float m_aspect;
     KMPlayerView * m_view;
