@@ -109,13 +109,14 @@ KDE_NO_EXPORT void KMPlayerPrefSourcePageVDR::showEvent (QShowEvent *) {
 
 static const char * cmd_chan_query = "CHAN\n";
 static const char * cmd_list_channels = "LSTC\n";
+static const char * cmd_volume_query = "VOLU\n";
 
 class VDRCommand {
 public:
     KDE_NO_CDTOR_EXPORT VDRCommand (const char * c, VDRCommand * n=0L)
-        : command (c), next (n) {}
-    KDE_NO_CDTOR_EXPORT ~VDRCommand () {}
-    const char * command;
+        : command (strdup (c)), next (n) {}
+    KDE_NO_CDTOR_EXPORT ~VDRCommand () { free (command); }
+    char * command;
     VDRCommand * next;
 };
 
@@ -128,7 +129,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerVDRSource::KMPlayerVDRSource (KMPlayerApp * app, QPo
    commands (0L),
    channel_timer (0),
    timeout_timer (0),
-   tcp_port (0) {
+   tcp_port (0),
+   m_stored_volume (0) {
     m_player->settings ()->addPage (this);
     act_up = new KAction (i18n ("VDR Key Up"), 0, 0, this, SLOT (keyUp ()), m_app->actionCollection (),"vdr_key_up");
     act_down = new KAction (i18n ("VDR Key Down"), 0, 0, this, SLOT (keyDown ()), m_app->actionCollection (),"vdr_key_down");
@@ -249,9 +251,10 @@ KDE_NO_EXPORT void KMPlayerVDRSource::getCurrent () {
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::processStopped () {
-    if (m_socket->state () == QSocket::Connected)
+    if (m_socket->state () == QSocket::Connected) {
+        queueCommand (QString ("VOLU %1\n").arg (m_stored_volume).ascii ());
         queueCommand ("QUIT\n");
-    deleteCommands ();
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::processStarted () {
@@ -262,6 +265,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::processStarted () {
     
 KDE_NO_EXPORT void KMPlayerVDRSource::connected () {
     queueCommand (cmd_list_channels);
+    queueCommand (cmd_volume_query);
     killTimer (channel_timer);
     channel_timer = startTimer (3000);
     m_menu->changeItem (0, KGlobal::iconLoader ()->loadIconSet (QString ("connect_no"), KIcon::Small, 0, true), i18n ("Dis&connect"));
@@ -363,6 +367,17 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
                 if (line.length () > 4) {
                     m_player->changeTitle (line.mid (4));
                     v->playList ()->selectItem (line.mid (4));
+                }
+            } else if (cmd_done && !strcmp(commands->command,cmd_volume_query)){
+                int pos = line.findRev (QChar (' '));
+                if (pos > 0) {
+                    QString v = line.mid (pos + 1);
+                    if (!v.compare ("mute"))
+                        m_stored_volume = 0;
+                    else
+                        m_stored_volume = v.toInt ();
+                    if (m_stored_volume == 0)
+                        queueCommand (QString ("VOLU %1\n").arg (250).ascii ());
                 }
             }
             line = readbuf.getReadLine ();

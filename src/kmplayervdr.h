@@ -137,6 +137,7 @@ private:
     int channel_timer;
     int timeout_timer;
     int tcp_port;
+    int m_stored_volume;
     int scale;
 };
 
