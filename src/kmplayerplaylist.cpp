@@ -28,20 +28,34 @@ int shared_data_count;
 
 using namespace KMPlayer;
 
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT Region::Region (ElementPtr e)
+    : x (0), y (0), w (0), h (0), m_element (e), isForAudioVideo (false) {}
+
+KDE_NO_CDTOR_EXPORT Region::Region ()
+    : x (0), y (0), w (0), h (0), isForAudioVideo (true) {}
+
+KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (ElementPtr e) : Region (e) {}
+
+KDE_NO_CDTOR_EXPORT RootLayout::RootLayout (ElementPtr e) : Region (e) {}
+
+//-----------------------------------------------------------------------------
+
 static Element * fromXMLDocumentGroup (ElementPtr & d, const QString & tag) {
     const char * const name = tag.latin1 ();
     if (!strcmp (name, "smil"))
-        return new Smil (d);
+        return new SMIL::Smil (d);
     else if (!strcasecmp (name, "asx"))
-        return new Asx (d);
+        return new ASX::Asx (d);
     return 0L;
 }
 
 static Element * fromScheduleGroup (ElementPtr & d, const QString & tag) {
     if (!strcmp (tag.latin1 (), "par"))
-        return new Par (d);
+        return new SMIL::Par (d);
     else if (!strcmp (tag.latin1 (), "seq"))
-        return new Seq (d);
+        return new SMIL::Seq (d);
     // else if (!strcmp (tag.latin1 (), "excl"))
     //    return new Seq (d, p);
     return 0L;
@@ -49,14 +63,14 @@ static Element * fromScheduleGroup (ElementPtr & d, const QString & tag) {
 
 static Element * fromMediaContentGroup (ElementPtr & d, const QString & tag) {
     if (!strcmp (tag.latin1 (), "video") || !strcmp (tag.latin1 (), "audio"))
-        return new MediaType (d, tag);
+        return new SMIL::MediaType (d, tag);
     // text, img, animation, textstream, ref, brush
     return 0L;
 }
 
 static Element * fromContentControlGroup (ElementPtr & d, const QString & tag) {
     if (!strcmp (tag.latin1 (), "switch"))
-        return new Switch (d);
+        return new SMIL::Switch (d);
     return 0L;
 }
 
@@ -292,6 +306,8 @@ bool Element::isMrl () {
 
 void Element::opened () {}
 
+void Element::closed () {}
+
 void Element::setAttribute (const QString & name, const QString & value) {
     ElementPtr last_attribute;
     for (ElementPtr e = m_first_attribute; e; e = e->nextSibling ()) {
@@ -382,7 +398,9 @@ ElementPtr Mrl::realMrl () {
 
 //-----------------------------------------------------------------------------
 
-Document::Document (const QString & s) : m_tree_version (0) {
+Document::Document (const QString & s)
+ : rootLayout (new RootLayout),
+ m_tree_version (0) {
     m_doc = this;
     m_self = m_doc;
     src = s;
@@ -445,16 +463,39 @@ KDE_NO_CDTOR_EXPORT Title::Title (ElementPtr & d)
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT ElementPtr Smil::childFromTag (const QString & tag) {
+KDE_NO_EXPORT ElementPtr SMIL::Smil::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "body"))
-        return (new Body (m_doc))->self ();
-    // else if head
+        return (new SMIL::Body (m_doc))->self ();
+    else if (!strcmp (tag.latin1 (), "head"))
+        return (new SMIL::Head (m_doc))->self ();
     return ElementPtr ();
 }
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT ElementPtr Body::childFromTag (const QString & tag) {
+KDE_NO_EXPORT ElementPtr SMIL::Head::childFromTag (const QString & tag) {
+    if (!strcmp (tag.latin1 (), "layout"))
+        return (new SMIL::Layout (m_doc))->self ();
+    return ElementPtr ();
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_EXPORT ElementPtr SMIL::Layout::childFromTag (const QString & tag) {
+    if (!strcmp (tag.latin1 (), "root-layout"))
+        return (new SMIL::RootLayout (m_doc))->self ();
+    else if (!strcmp (tag.latin1 (), "region"))
+        return (new SMIL::Region (m_doc))->self ();
+    return ElementPtr ();
+}
+
+KDE_NO_EXPORT void SMIL::Layout::closed () {
+    // TODO construct the KMPlayer::RootLayout tree and pass to view
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_EXPORT ElementPtr SMIL::Body::childFromTag (const QString & tag) {
     Element * elm = fromScheduleGroup (m_doc, tag);
     if (!elm) elm = fromMediaContentGroup (m_doc, tag);
     if (!elm) elm = fromContentControlGroup (m_doc, tag);
@@ -465,7 +506,7 @@ KDE_NO_EXPORT ElementPtr Body::childFromTag (const QString & tag) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT ElementPtr Par::childFromTag (const QString & tag) {
+KDE_NO_EXPORT ElementPtr SMIL::Par::childFromTag (const QString & tag) {
     Element * elm = fromScheduleGroup (m_doc, tag);
     if (!elm) elm = fromMediaContentGroup (m_doc, tag);
     if (!elm) elm = fromContentControlGroup (m_doc, tag);
@@ -476,7 +517,7 @@ KDE_NO_EXPORT ElementPtr Par::childFromTag (const QString & tag) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT ElementPtr Seq::childFromTag (const QString & tag) {
+KDE_NO_EXPORT ElementPtr SMIL::Seq::childFromTag (const QString & tag) {
     Element * elm = fromScheduleGroup (m_doc, tag);
     if (!elm) elm = fromMediaContentGroup (m_doc, tag);
     if (!elm) elm = fromContentControlGroup (m_doc, tag);
@@ -487,7 +528,7 @@ KDE_NO_EXPORT ElementPtr Seq::childFromTag (const QString & tag) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT ElementPtr Switch::childFromTag (const QString & tag) {
+KDE_NO_EXPORT ElementPtr SMIL::Switch::childFromTag (const QString & tag) {
     Element * elm = fromContentControlGroup (m_doc, tag);
     if (!elm) elm = fromMediaContentGroup (m_doc, tag);
     if (elm)
@@ -495,23 +536,23 @@ KDE_NO_EXPORT ElementPtr Switch::childFromTag (const QString & tag) {
     return ElementPtr ();
 }
 
-bool Switch::isMrl () {
+bool SMIL::Switch::isMrl () {
     return false; // TODO eval conditions on children and choose one
 }
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT MediaType::MediaType (ElementPtr & d, const QString & t)
+KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (ElementPtr &d, const QString &t)
     : Mrl (d), m_type (t), bitrate (0) {}
 
-KDE_NO_EXPORT ElementPtr MediaType::childFromTag (const QString & tag) {
+KDE_NO_EXPORT ElementPtr SMIL::MediaType::childFromTag (const QString & tag) {
     Element * elm = fromContentControlGroup (m_doc, tag);
     if (elm)
         return elm->self ();
     return ElementPtr ();
 }
 
-KDE_NO_EXPORT void MediaType::opened () {
+KDE_NO_EXPORT void SMIL::MediaType::opened () {
     for (ElementPtr a = m_first_attribute; a; a = a->nextSibling ()) {
         const char * cname = a->nodeName ();
         if (!strcmp (cname, "system-bitrate"))
@@ -528,18 +569,18 @@ KDE_NO_EXPORT void MediaType::opened () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT ElementPtr Asx::childFromTag (const QString & tag) {
+KDE_NO_EXPORT ElementPtr ASX::Asx::childFromTag (const QString & tag) {
     const char * name = tag.latin1 ();
     if (!strcasecmp (name, "entry"))
-        return (new Entry (m_doc))->self ();
+        return (new ASX::Entry (m_doc))->self ();
     else if (!strcasecmp (name, "entryref"))
-        return (new EntryRef (m_doc))->self ();
+        return (new ASX::EntryRef (m_doc))->self ();
     else if (!strcasecmp (name, "title"))
         return (new Title (m_doc))->self ();
     return ElementPtr ();
 }
 
-KDE_NO_EXPORT bool Asx::isMrl () {
+KDE_NO_EXPORT bool ASX::Asx::isMrl () {
     if (cached_ismrl_version != document ()->m_tree_version) {
         for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
             if (!strcmp (e->nodeName (), "title"))
@@ -549,16 +590,16 @@ KDE_NO_EXPORT bool Asx::isMrl () {
 }
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT ElementPtr Entry::childFromTag (const QString & tag) {
+KDE_NO_EXPORT ElementPtr ASX::Entry::childFromTag (const QString & tag) {
     const char * name = tag.latin1 ();
     if (!strcasecmp (name, "ref"))
-        return (new Ref (m_doc))->self ();
+        return (new ASX::Ref (m_doc))->self ();
     else if (!strcasecmp (name, "title"))
         return (new Title (m_doc))->self ();
     return ElementPtr ();
 }
 
-KDE_NO_EXPORT bool Entry::isMrl () {
+KDE_NO_EXPORT bool ASX::Entry::isMrl () {
     if (cached_ismrl_version != document ()->m_tree_version) {
         QString pn;
         src.truncate (0);
@@ -583,7 +624,7 @@ KDE_NO_EXPORT bool Entry::isMrl () {
     return !src.isEmpty ();
 }
 
-KDE_NO_EXPORT ElementPtr Entry::realMrl () {
+KDE_NO_EXPORT ElementPtr ASX::Entry::realMrl () {
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
         if (e->isMrl ())
             return e;
@@ -592,7 +633,7 @@ KDE_NO_EXPORT ElementPtr Entry::realMrl () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT void Ref::opened () {
+KDE_NO_EXPORT void ASX::Ref::opened () {
     for (ElementPtr a = m_first_attribute; a; a = a->nextSibling ()) {
         if (!strcasecmp (a->nodeName (), "href"))
             src = a->nodeValue ();
@@ -605,7 +646,7 @@ KDE_NO_EXPORT void Ref::opened () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT void EntryRef::opened () {
+KDE_NO_EXPORT void ASX::EntryRef::opened () {
     for (ElementPtr a = m_first_attribute; a; a = a->nextSibling ()) {
         if (!strcasecmp (a->nodeName (), "href"))
             src = a->nodeValue ();

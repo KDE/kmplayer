@@ -304,6 +304,33 @@ KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
     int wws = w;
     // move controlpanel over video when autohiding and playing
     int hws = h - (m_view->controlPanelMode () == View::CP_AutoHide && m_view->widgetStack ()->visibleWidget () == m_view->viewer () ? 0 : hcp);
+    // now scale the regions and find video region
+    if (rootLayout && rootLayout->m_element && wws > 0  && hws > 0) {
+        rootLayout->w = rootLayout->m_element->getAttribute ("width").toInt ();
+        rootLayout->h = rootLayout->m_element->getAttribute ("height").toInt ();
+        float xscale = 1.0 + 1.0 * (wws - rootLayout->w) / wws;
+        float yscale = 1.0 + 1.0 * (hws - rootLayout->h) / hws;
+        rootLayout->x = rootLayout->y = 0;
+        rootLayout->w = wws;
+        rootLayout->h = hws;
+        if (rootLayout->firstChild) {
+            wws = hws = 0;
+            for (RegionNodePtr r =rootLayout->firstChild; r; r = r->nextSibling)
+             if (r->m_element) {
+              r->x = int(xscale * r->m_element->getAttribute ("left").toInt());
+              r->y = int(yscale *r->m_element->getAttribute ("top").toInt ());
+              r->w = int(xscale * r->m_element->getAttribute("width").toInt());
+              r->h = int(yscale *r->m_element->getAttribute("height").toInt());
+              if (r->isForAudioVideo) { // ugh
+                  x = r->x;
+                  y = r->y;
+                  wws = r->w;
+                  hws = r->h;
+              }
+             }
+        }
+    }
+    // scale video widget inside region
     if (m_view->keepSizeRatio() && m_view->controlPanelMode() != View::CP_Only){
         int hfw = m_view->viewer ()->heightForWidth (w);
         if (hfw > 0)
@@ -315,9 +342,10 @@ KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
                 hws = hfw;
             }
     }
-    m_view->widgetStack ()->setGeometry (x, y, wws, hws);
+    // finally resize controlpanel and video widget
     if (m_view->controlPanel ()->isVisible ())
         m_view->controlPanel ()->setGeometry (0, h-hcp, w, hcp);
+    m_view->widgetStack ()->setGeometry (x, y, wws, hws);
 }
 
 KDE_NO_EXPORT void ViewLayer::showEvent (QShowEvent *) {

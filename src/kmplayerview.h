@@ -105,6 +105,7 @@ public:
     ViewLayer (QWidget * parent, View * view);
     bool isFullScreen () const { return m_fullscreen; }
     KActionCollection * actionCollection () const { return m_collection; }
+    KDE_NO_EXPORT void setRootLayout (RootLayoutPtr rl) { rootLayout = rl; }
 public slots:
     void fullScreen ();
     void accelActivated ();
@@ -119,6 +120,7 @@ private:
     QWidget * m_parent;
     View * m_view;
     KActionCollection * m_collection;
+    RootLayoutPtr rootLayout;
     bool m_fullscreen : 1;
 };
 

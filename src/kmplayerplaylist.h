@@ -58,9 +58,48 @@ namespace KMPlayer {
 class Document;
 class Element;
 class Mrl;
+class RegionNode;
+class RootLayout;
 
 typedef SharedPtr<Element> ElementPtr;
 typedef WeakPtr<Element> ElementPtrW;
+typedef SharedPtr<RegionNode> RegionNodePtr;
+typedef SharedPtr<RootLayout> RootLayoutPtr;
+
+class Region {
+public:
+    KDE_NO_CDTOR_EXPORT ~Region () {}
+    /**
+     * Dimensions
+     */
+    int x, y, w, h;
+    /**
+     * Corresponding DOM node (SMIL::Region or SMIL::RootLayout)
+     */
+    ElementPtrW m_element;
+    /**
+     * This completely sucks, whether this region shows the video FIXME
+     */
+    bool isForAudioVideo;
+protected:
+    Region ();
+    Region (ElementPtr e);
+};
+
+class RegionNode : public Region {
+public:
+    RegionNode (ElementPtr e);
+    KDE_NO_CDTOR_EXPORT ~RegionNode () {}
+    RegionNodePtr nextSibling;
+};
+
+class RootLayout : public Region {
+public:
+    RootLayout (ElementPtr e);
+    KDE_NO_CDTOR_EXPORT RootLayout () {}
+    KDE_NO_CDTOR_EXPORT ~RootLayout () {}
+    RegionNodePtr firstChild;
+};
 
 class KMPLAYER_EXPORT NodeList {
     ElementPtrW first_element;
@@ -111,6 +150,10 @@ public:
      * Open tag is found by parser, attributes are set
      */
     virtual void opened ();
+    /*
+     * Close tag is found by parser, children are appended
+     */
+    virtual void closed ();
     KDE_NO_EXPORT bool isDocument () const { return m_doc == m_self; }
     KDE_NO_EXPORT bool hasChildNodes () const { return m_first_child != 0L; }
     KDE_NO_EXPORT ElementPtr parentNode () const { return m_parent; }
@@ -192,6 +235,7 @@ public:
      * Will return false if this document has child nodes
      */
     bool isMrl ();
+    RootLayoutPtr rootLayout;
     unsigned int m_tree_version;
 };
 
@@ -226,6 +270,8 @@ public:
 
 //-----------------------------------------------------------------------------
 
+namespace SMIL {
+
 class Smil : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Smil (ElementPtr & d) : Element (d) {}
@@ -233,11 +279,38 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "smil"; }
 };
 
+class Head : public Element {
+public:
+    KDE_NO_CDTOR_EXPORT Head (ElementPtr & d) : Element (d) {}
+    ElementPtr childFromTag (const QString & tag);
+    KDE_NO_EXPORT const char * nodeName () const { return "head"; }
+};
+
 class Body : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Body (ElementPtr & d) : Element (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "body"; }
+};
+
+class Layout : public Element {
+public:
+    KDE_NO_CDTOR_EXPORT Layout (ElementPtr & d) : Element (d) {}
+    ElementPtr childFromTag (const QString & tag);
+    KDE_NO_EXPORT const char * nodeName () const { return "layout"; }
+    void closed ();
+};
+
+class RootLayout : public Element {
+public:
+    KDE_NO_CDTOR_EXPORT RootLayout (ElementPtr & d) : Element (d) {}
+    KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
+};
+
+class Region : public Element {
+public:
+    KDE_NO_CDTOR_EXPORT Region (ElementPtr & d) : Element (d) {}
+    KDE_NO_EXPORT const char * nodeName () const { return "region"; }
 };
 
 class Par : public Element {
@@ -276,7 +349,11 @@ public:
     int bitrate;
 };
 
+} // SMIL namespace
+
 //-----------------------------------------------------------------------------
+
+namespace ASX {
 
 class Asx : public Mrl {
 public:
@@ -320,6 +397,8 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "EntryRef"; }
 };
 
+} // ASX namespace
+
 //-----------------------------------------------------------------------------
 
 class KMPLAYER_EXPORT GenericURL : public Mrl { //just some url, can get a SMIL or ASX childtree
@@ -341,6 +420,6 @@ public:
 
 void readXML (ElementPtr root, QTextStream & in, const QString & firstline);
 
-}  // namespace
+}  // KMPlayer namespace
 
 #endif //_KMPLAYER_PLAYLIST_H_
