@@ -76,6 +76,7 @@ static xine_stream_t       *stream;
 static xine_stream_t       *sub_stream;
 static xine_video_port_t   *vo_port;
 static xine_audio_port_t   *ao_port;
+static xine_post_t         *post_plugin;
 static xine_event_queue_t  *event_queue;
 static x11_visual_t         vis;
 static char                *dvd_device;
@@ -144,6 +145,23 @@ static void frame_output_cb(void * /*data*/, int /*video_width*/, int /*video_he
     *dest_width        = width;
     *dest_height       = height;
     *dest_pixel_aspect = pixel_aspect;
+}
+
+static void xine_config_cb (void * /*user_data*/, xine_cfg_entry_t * entry) {
+    fprintf (stderr, "xine_config_cb %s\n", entry->enum_values[entry->num_value]);
+    if (!stream)
+        return;
+    mutex.lock ();
+    if (post_plugin) {
+        xine_post_wire_audio_port (xine_get_audio_source (stream), ao_port);
+        xine_post_dispose (xine, post_plugin);
+        post_plugin = 0L;
+    }
+    if (strcmp (entry->enum_values[entry->num_value], "none")) {
+        post_plugin = xine_post_init (xine, entry->enum_values[entry->num_value], 0, &ao_port, &vo_port);
+        xine_post_wire (xine_get_audio_source (stream), xine_post_input (post_plugin, (char *) "audio in"));
+    }
+    mutex.unlock ();
 }
 
 static void event_listener(void * /*user_data*/, const xine_event_t *event) {
@@ -393,6 +411,15 @@ void KXinePlayer::init () {
     vo_port = xine_open_video_driver(xine, d->vo_driver, XINE_VISUAL_TYPE_X11, (void *) &vis);
 
     ao_port = xine_open_audio_driver (xine, d->ao_driver, NULL);
+    const char *const * pp = xine_list_post_plugins_typed (xine, XINE_POST_TYPE_AUDIO_VISUALIZATION);
+    int i;
+    for (i = 0; pp[i]; i++);
+    const char ** options = new const char * [i+2];
+    options[0] = "none";
+    for (i = 0; pp[i]; i++)
+        options[i+1] = pp[i];
+    options[i+1] = 0L;
+    xine_config_register_enum (xine, "audio.visualization", 0, (char ** ) options, 0L, 0L, 0, xine_config_cb, 0L);
 }
 
 KXinePlayer::~KXinePlayer () {
@@ -509,7 +536,12 @@ void KXinePlayer::play () {
         finished ();
         return;
     }
+    bool audio_vis = !xine_get_stream_info (stream, XINE_STREAM_INFO_HAS_VIDEO);
+    xine_cfg_entry_t cfg_entry;
+    audio_vis &= xine_config_lookup_entry (xine, "audio.visualization", &cfg_entry);
     mutex.unlock ();
+    if (audio_vis)
+        xine_config_cb (0L, &cfg_entry);
     if (callback)
         firstframe = 1;
 }
