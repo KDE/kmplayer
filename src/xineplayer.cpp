@@ -97,7 +97,7 @@ static bool                 audio_vis;
 static int                  screen;
 static int                  completion_event;
 static int                  xpos, ypos, width, height;
-static int                  movie_width, movie_height, movie_length;
+static int                  movie_width, movie_height, movie_length, movie_pos;
 static double               pixel_aspect;
 
 static int                  running = 0;
@@ -508,6 +508,7 @@ void KXinePlayer::play () {
         mutex.unlock ();
         return;
     }
+    movie_pos = 0;
     movie_width = 0;
     movie_height = 0;
 
@@ -592,7 +593,10 @@ void KXinePlayer::updatePosition () {
     mutex.lock ();
     xine_get_pos_length (stream, 0, &pos, &movie_length);
     mutex.unlock ();
-    callback->moviePosition (pos/100);
+    if (movie_pos != pos) {
+        movie_pos = pos;
+        callback->moviePosition (pos/100);
+    }
     QTimer::singleShot (500, this, SLOT (updatePosition ()));
 }
 
