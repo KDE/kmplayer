@@ -48,6 +48,7 @@ static const int XKeyPress = KeyPress;
 #undef Always
 #undef Never
 #undef Status
+#undef Unsorted
 
 static const int button_height = 11;
 

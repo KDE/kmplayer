@@ -1,3 +1,9 @@
+Changes since version 0.7.96
+- Build changes, kdeinit wasn't used (speeds up loading) and an option for
+  disabling arts volume slider (eg. if you use kmix already)
+  use --disable-arts-volume with configure and it prevents linking agains the 
+  arts libs (speeds up loading of kmplayer too)
+- Moved color sliders to a sub menu, fix it for mplayer
 Changes since version 0.7.95
 - Support for mplayer/mencoder from CVS. Set 'Post MPlayer 0.90=true' in 
   .kde/share/config/kmplayer.rc under group [MPlayer] to use it.

@@ -202,12 +202,14 @@ KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
     url->setShowLocalProtocol (true);
     backend = new QComboBox (this);
     QLabel *backendLabel = new QLabel (i18n ("Use Movie Player:"), this, 0);
-    allowhref = new QCheckBox (i18n ("Enable 'Click to Play' Start images:"), this);
+    allowhref = new QCheckBox (i18n ("Enable 'Click to Play' support"), this);
+    //QToolTip::add (allowhref, i18n ("Explain this in a few lines"));
     backend->insertItem (QString ("MPlayer"), 0);
     backend->insertItem (QString ("Xine"), 1);
     urllayout->addWidget (urlLabel);
     urllayout->addWidget (url);
     layout->addLayout (urllayout);
+    layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
     backendlayout->addWidget (backendLabel);
     backendlayout->addWidget (backend);
     layout->addLayout (backendlayout);
