@@ -20,7 +20,7 @@
 #include <math.h>
 
 // include files for Qt
-#include <qprinter.h>
+#include <qstyle.h>
 #include <qtimer.h>
 #include <qpainter.h>
 #include <qmetaobject.h>
@@ -835,8 +835,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerView::~KMPlayerView () {
 }
 
 void KMPlayerView::showPlaylist () {
-    int h = 0;
     bool horz = true;
+    QStyle & style = m_playlist->style ();
+    int h = style.pixelMetric (QStyle::PM_ScrollBarExtent, m_playlist);
+    h += style.pixelMetric (QStyle::PM_DockWindowFrameWidth, m_playlist);
+    h += style.pixelMetric (QStyle::PM_DockWindowHandleExtent, m_playlist);
     for (QListViewItem * i = m_playlist->firstChild (); i; i = i->itemBelow()) {
         h += i->height ();
         if (h > int (0.5 * height ())) {
@@ -845,7 +848,7 @@ void KMPlayerView::showPlaylist () {
         }
     }
     int perc = 30;
-    if (100 * h / height () < perc)
+    if (horz && 100 * h / height () < perc)
         perc = 100 * h / height ();
     m_dock_playlist->manualDock (m_dock_video, horz ? KDockWidget::DockTop : KDockWidget::DockLeft, perc);
 }
