@@ -41,7 +41,7 @@ class TextDataPrivate;
 typedef WeakPtr<ElementRuntime> ElementRuntimePtrW;
 
 /**
- * Live representation of a SMIL MediaType element
+ * Live representation of a SMIL element
  */
 class ElementRuntime : public QObject {
     Q_OBJECT
@@ -49,12 +49,13 @@ public:
     enum DurationTime {
         begin_time = 0, duration_time, end_time, durtime_last
     };
+    ElementRuntime (ElementPtr e);
     virtual ~ElementRuntime ();
     void setDurationItem (DurationTime item, const QString & val);
     /**
      * start, or restart in case of re-use, the durations
      */
-    void begin ();
+    virtual void begin ();
     /**
      * forced killing of timers
      */
@@ -96,8 +97,7 @@ protected slots:
 private:
     void processEvent (unsigned int event);
 protected:
-    ElementRuntime (ElementPtr & e);
-    ElementPtrW media_element;
+    ElementPtrW element;
     int start_timer;
     int dur_timer;
     bool isstarted;
@@ -112,8 +112,10 @@ protected:
     KDE_NO_CDTOR_EXPORT MediaTypeRuntime (ElementPtr e) : ElementRuntime (e) {}
 public:
     KDE_NO_CDTOR_EXPORT ~MediaTypeRuntime () {}
-protected slots:
-    virtual void stopped ();
+    /**
+     * re-implement for regions
+     */
+    virtual void begin ();
 };
 
 class AudioVideoData : public MediaTypeRuntime {
@@ -228,11 +230,38 @@ public:
 };
 
 /**
- * A Par represends parallel processing of all its children
+ * Abstract base for all SMIL element having begin/dur/end/.. attributes
  */
-class Par : public Element {
+class TimedElement : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Par (ElementPtr & d) : Element (d) {}
+    KDE_NO_CDTOR_EXPORT ~TimedElement () {}
+    ElementRuntimePtr getRuntime ();
+    void start ();
+    void reset ();
+protected:
+    KDE_NO_CDTOR_EXPORT TimedElement (ElementPtr & d) : Mrl (d) {}
+    ElementRuntimePtr runtime;
+    virtual ElementRuntimePtr getNewRuntime () = 0;
+};
+
+/**
+ * Abstract base for the group elements (par/seq/excl/..)
+ */
+class GroupBase : public TimedElement {
+public:
+    KDE_NO_CDTOR_EXPORT ~GroupBase () {}
+    bool isMrl ();
+protected:
+    KDE_NO_CDTOR_EXPORT GroupBase (ElementPtr & d) : TimedElement (d) {}
+    virtual ElementRuntimePtr getNewRuntime ();
+};
+
+/**
+ * A Par represents parallel processing of all its children
+ */
+class Par : public GroupBase {
+public:
+    KDE_NO_CDTOR_EXPORT Par (ElementPtr & d) : GroupBase (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "par"; }
     void start ();
@@ -241,11 +270,12 @@ public:
     void childDone (ElementPtr child);
 };
 
-class Seq : public Element {
+class Seq : public GroupBase {
 public:
-    KDE_NO_CDTOR_EXPORT Seq (ElementPtr & d) : Element (d) {}
+    KDE_NO_CDTOR_EXPORT Seq (ElementPtr & d) : GroupBase (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "seq"; }
+    void start ();
 };
 
 class Body : public Seq {
@@ -270,33 +300,14 @@ public:
 /**
  * Abstract base for the MediaType classes (video/audio/text/img/..)
  */
-class MediaType : public Mrl {
+class MediaType : public TimedElement {
 public:
     MediaType (ElementPtr & d, const QString & t);
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
-    ElementRuntimePtr getRuntime ();
     void opened ();
-    void start ();
-    void reset ();
-    /**
-     * Called from the ElementRuntime when 'start' attribute expires
-     * so audio/video clip should start
-     */
-    void timed_start ();
-    /**
-     * Called from the ElementRuntime when 'dur' (or 'end' - 'start')
-     * attribute expires to mark us finished
-     */
-    void timed_end ();
-    virtual ElementRuntimePtr getNewRuntime () = 0;
-    RegionNodePtrW region;
-    ElementRuntimePtr runtime;
     QString m_type;
     unsigned int bitrate;
-    unsigned int begin_time;
-    unsigned int end_time;
-    unsigned int duration_time;
 };
 
 class AVMediaType : public MediaType {
