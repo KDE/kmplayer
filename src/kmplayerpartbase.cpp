@@ -578,7 +578,11 @@ void KMPlayer::posSliderPressed () {
 
 void KMPlayer::posSliderReleased () {
     m_bPosSliderPressed=false;
-    QSlider * posSlider = ::qt_cast<QSlider *> (sender ());
+#if (QT_VERSION < 0x030200)
+    const QSlider * posSlider = dynamic_cast <const QSlider *> (sender ());
+#else
+    const QSlider * posSlider = ::qt_cast<const QSlider *> (sender ());
+#endif
     if (posSlider)
         m_process->seek (posSlider->value(), true);
 }
