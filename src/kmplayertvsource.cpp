@@ -66,7 +66,7 @@ static const char * strTVDriver = "Driver";
 KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent, TVDevice * dev)
 : QFrame (parent, "PageTVDevice"), device (dev) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
-    QLabel * deviceLabel = new QLabel (QString (i18n ("Video device:")) + device->device, this, 0);
+    QLabel * deviceLabel = new QLabel (i18n ("Video device:") + device->device, this, 0);
     layout->addWidget (deviceLabel);
     QGridLayout *gridlayout = new QGridLayout (layout, 5, 4);
     QLabel * audioLabel = new QLabel (i18n ("Audio device:"), this);

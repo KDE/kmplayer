@@ -86,6 +86,7 @@ private slots:
     void openDVD ();
     void openVCD ();
     void openPipe ();
+    void openVDR ();
     void fullScreen ();
     void configChanged ();
     void keepSizeRatio ();

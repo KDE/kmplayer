@@ -38,6 +38,7 @@ class KURLRequester;
 class QPopupMenu;
 class QMenuItem;
 class QCheckBox;
+class QLineEdit;
 class TVInput;
 class TVChannel;
 
@@ -169,6 +170,5 @@ public slots:
 private:
     KMPlayerApp * m_app;
 };
-
 
 #endif // KMPLAYERAPPSOURCE_H

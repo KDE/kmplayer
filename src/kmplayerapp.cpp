@@ -62,6 +62,7 @@
 #include "kmplayerappsource.h"
 #include "kmplayertvsource.h"
 #include "kmplayerbroadcast.h"
+#include "kmplayervdr.h"
 #include "kmplayerconfig.h"
 
 #define ID_STATUS_MSG 1
@@ -88,6 +89,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     connect (m_broadcastconfig, SIGNAL (broadcastStopped()), this, SLOT (broadcastStopped()));
     initStatusBar();
     m_player->init (actionCollection ());
+    m_player->players () ["xvideo"] = new XVideo (m_player);
     m_player->setProcess ("mplayer");
     m_player->setRecorder ("mencoder");
     m_player->sources () ["dvdsource"] = new KMPlayerDVDSource(this, m_dvdmenu);
@@ -95,6 +97,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     m_player->sources () ["vcdsource"] = new KMPlayerVCDSource(this, m_vcdmenu);
     m_player->sources () ["pipesource"] = new KMPlayerPipeSource (this);
     m_player->sources () ["tvsource"] = new KMPlayerTVSource (this, m_tvmenu);
+    m_player->sources () ["vdrsource"] = new KMPlayerVDRSource (this);
     initActions();
     initView();
 
@@ -186,6 +189,7 @@ KDE_NO_EXPORT void KMPlayerApp::initView ()
     m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0, true), i18n ("&TV"), m_tvmenu, -1, 6);
     m_vcdmenu->insertItem (i18n ("&Open VCD"), this, SLOT(openVCD ()), 0,-1, 1);
     m_sourcemenu->popup ()->insertItem (i18n ("&Open Pipe..."), this, SLOT(openPipe ()), 0, -1, 5);
+    m_sourcemenu->popup ()->insertItem (i18n ("VD&R"), this, SLOT(openVDR ()), 0, -1, 6);
     connect (m_player->settings (), SIGNAL (configChanged ()),
              this, SLOT (configChanged ()));
     connect (m_player, SIGNAL (startPlaying ()),
@@ -260,6 +264,11 @@ KDE_NO_EXPORT void KMPlayerApp::openPipe () {
     }
     static_cast <KMPlayerPipeSource *> (m_player->sources () ["pipesource"])->setCommand (cmd);
     m_player->setSource (m_player->sources () ["pipesource"]);
+}
+
+KDE_NO_EXPORT void KMPlayerApp::openVDR () {
+    slotStatusMsg(i18n("Opening VDR..."));
+    m_player->setSource (m_player->sources () ["vdrsource"]);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
