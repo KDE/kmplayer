@@ -26,7 +26,7 @@
 #include <qmetaobject.h>
 #include <qlayout.h>
 #include <qpixmap.h>
-#include <qmultilineedit.h>
+#include <qtextedit.h>
 #include <qapplication.h>
 #include <qiconset.h>
 #include <qaccel.h>
@@ -660,7 +660,7 @@ KDE_NO_EXPORT void KMPlayerPlayListView::dragEnterEvent (QDragEnterEvent* dee) {
 
 //-----------------------------------------------------------------------------
 
-class KMPlayerConsole : public QMultiLineEdit {
+class KMPlayerConsole : public QTextEdit {
 public:
     KMPlayerConsole (QWidget * parent, KMPlayerView * view);
 protected:
@@ -669,7 +669,9 @@ private:
     KMPlayerView * m_view;
 };
 
-KDE_NO_CDTOR_EXPORT KMPlayerConsole::KMPlayerConsole (QWidget * parent, KMPlayerView * view) : QMultiLineEdit (parent, "kde_kmplayer_console"), m_view (view) {}
+KDE_NO_CDTOR_EXPORT KMPlayerConsole::KMPlayerConsole (QWidget * parent, KMPlayerView * view) : QTextEdit (parent, "kde_kmplayer_console"), m_view (view) {
+    setTextFormat(Qt::PlainText);
+}
 
 KDE_NO_EXPORT void KMPlayerConsole::contextMenuEvent (QContextMenuEvent * e) {
     m_view->buttonBar ()->popupMenu ()->exec (e->globalPos ());
@@ -973,8 +975,8 @@ void KMPlayerView::addText (const QString & str, bool eol) {
             tmplog = tmplog.mid (pos+1);
         }
     }
-    while (5000 < m_multiedit->numLines ())
-        m_multiedit->removeLine (0);
+    while (5000 < m_multiedit->paragraphs ())
+        m_multiedit->removeParagraph (0);
 }
 
 void KMPlayerView::addFullscreenAction (const QString & title, const KShortcut & c, QObject * o, const char * s, const char * name) {

@@ -44,6 +44,7 @@
 #include <kaction.h>
 #include <kprocess.h>
 #include <kstandarddirs.h>
+#include <kmimetype.h>
 #include <kio/job.h>
 #include <kio/jobclasses.h>
 
@@ -56,9 +57,9 @@ class KMPlayerBookmarkOwner : public KBookmarkOwner {
 public:
     KMPlayerBookmarkOwner (KMPlayer *);
     KDE_NO_CDTOR_EXPORT ~KMPlayerBookmarkOwner () {}
-    virtual void openBookmarkURL(const QString& _url);
-    virtual QString currentTitle() const;
-    virtual QString currentURL() const;
+    void openBookmarkURL(const QString& _url);
+    QString currentTitle() const;
+    QString currentURL() const;
 private:
     KMPlayer * m_player;
 };
@@ -1075,13 +1076,55 @@ KDE_NO_EXPORT void FilteredInputSource::fetchData () {
     buffer += textstream.readLine ();
 }
 
+static bool isPlayListMime (const QString & mime) {
+    const char * mimestr = mime.ascii ();
+    return mimestr && (!strcmp (mimestr, "audio/mpegurl") ||
+            !strcmp (mimestr ,"audio/x-mpegurl") ||
+            !strcmp (mimestr ,"video/x-ms-wmp") ||
+            !strcmp (mimestr ,"video/x-ms-asf") ||
+            !strcmp (mimestr ,"audio/x-scpls") ||
+            !strcmp (mimestr ,"audio/x-pn-realaudio") ||
+            !strcmp (mimestr ,"audio/vnd.rn-realaudio") ||
+            !strcmp (mimestr ,"application/smil") ||
+            !strcmp (mimestr ,"text/xml") ||
+            !strcmp (mimestr ,"application/x-mplayer2"));
+}
+
 KDE_NO_EXPORT void KMPlayerURLSource::read (QTextStream & textstream) {
     QString line;
     do {
         line = textstream.readLine ();
     } while (!line.isNull () && line.stripWhiteSpace ().isEmpty ());
     if (!line.isNull ()) {
-        if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
+        if (mime () == QString ("audio/x-scpls")) {
+            bool groupfound = false;
+            int nr = -1;
+            do {
+                line = line.stripWhiteSpace ();
+                if (!line.isEmpty ()) {
+                    if (line.startsWith (QString ("[")) && line.endsWith (QString ("]"))) {
+                        if (!groupfound && line.mid (1, line.length () - 2).stripWhiteSpace () == QString ("playlist"))
+                            groupfound = true;
+                        else
+                            break;
+                        kdDebug () << "Group found: " << line << endl;
+                    } else if (groupfound) {
+                        int eq_pos = line.find (QChar ('='));
+                        if (eq_pos > 0) {
+                            if (line.lower ().startsWith (QString ("numberofentries"))) {
+                                nr = line.mid (eq_pos + 1).stripWhiteSpace ().toInt ();
+                                kdDebug () << "numberofentries : " << nr << endl;
+                            } else if (nr > 0 && line.lower ().startsWith (QString ("file"))) {
+                                QString mrl = line.mid (eq_pos + 1).stripWhiteSpace ();
+                                if (!mrl.isEmpty ())
+                                    insertURL (mrl);
+                            }
+                        }
+                    }
+                }
+                line = textstream.readLine ();
+            } while (!line.isNull ());
+        } else if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
             QXmlSimpleReader reader;
             MMXmlContentHandler content_handler (m_document);
             FilteredInputSource input_source (textstream, line);
@@ -1103,10 +1146,9 @@ KDE_NO_EXPORT void KMPlayerURLSource::read (QTextStream & textstream) {
 KDE_NO_EXPORT void KMPlayerURLSource::kioData (KIO::Job *, const QByteArray & d) {
     int size = m_data.size ();
     int newsize = size + d.size ();
+    kdDebug () << "KMPlayerURLSource::kioData: " << newsize << endl;
     if (newsize > 50000) {
-        kdDebug () << "KMPlayerURLSource::kioData: " << newsize << endl;
-        m_job->kill();
-        m_job = 0L; // KIO::Job::kill deletes itself
+        m_job->kill (false);
     } else  {
         m_data.resize (newsize);
         memcpy (m_data.data () + size, d.data (), newsize - size);
@@ -1116,12 +1158,15 @@ KDE_NO_EXPORT void KMPlayerURLSource::kioData (KIO::Job *, const QByteArray & d)
 KDE_NO_EXPORT void KMPlayerURLSource::kioMimetype (KIO::Job *, const QString & mimestr) {
     kdDebug () << "KMPlayerURLSource::kioMimetype " << mimestr << endl;
     setMime (mimestr);
+    if (!isPlayListMime (mimestr))
+        m_job->kill (false);
 }
 
 KDE_NO_EXPORT void KMPlayerURLSource::kioResult (KIO::Job *) {
     m_job = 0L; // KIO::Job::kill deletes itself
     QTextStream textstream (m_data, IO_ReadOnly);
-    read (textstream);
+    if (isPlayListMime (mime ()))
+        read (textstream);
     if (m_current) {
         m_current->mrl ()->parsed = true;
         if (!m_current->isMrl ())
@@ -1134,60 +1179,50 @@ KDE_NO_EXPORT void KMPlayerURLSource::play () {
     KURL url (current ());
     if (url.isEmpty ())
         return;
-    QString mimestr = mime ();
-    int plugin_pos = mimestr.find ("-plugin");
-    if (plugin_pos > 0)
-        mimestr.truncate (plugin_pos);
-    bool maybe_playlist = (url.url ().lower ().endsWith (QString ("m3u")) ||
-            url.url ().lower ().endsWith (QString ("asx")) ||
-            mimestr == QString ("audio/mpegurl") ||
-            mimestr == QString ("audio/x-mpegurl") ||
-            mimestr == QString ("video/x-ms-wmp") ||
-            mimestr == QString ("video/x-ms-asf") ||
-            ((mimestr == QString ("audio/x-pn-realaudio") ||
-              mimestr == QString ("audio/vnd.rn-realaudio") ||
-              url.url ().lower ().endsWith (QString (".ram")) ||
-              url.url ().lower ().endsWith (QString (".rpm"))) &&
-             url.protocol ().compare (QString ("rtsp")) &&
-             url.protocol ().compare (QString ("rtp"))) ||
-            mimestr == QString ("application/smil") ||
-            mimestr == QString ("application/x-mplayer2"));
-    if (!m_current->mrl ()->parsed && url.isLocalFile ()) {
-        QFile file (url.path ());
-        if (!file.exists ())
-            return;
-        if (url.url ().lower ().endsWith (QString ("pls")) ||
-                mimestr == QString ("audio/x-scpls")) {
-            KSimpleConfig kc (url.path (), true);
-            kc.setGroup ("playlist");
-            int nr = kc.readNumEntry ("numberofentries", 0);
-            if (nr == 0)
-                nr = kc.readNumEntry ("NumberOfEntries", 0);
-            for (int i = 0; i < nr; i++) {
-                QString mrl = kc.readEntry (QString ("File%1").arg(i+1), "");
-                if (!mrl.isEmpty ())
-                    insertURL (mrl);
+    if (!m_current->mrl ()->parsed) {
+        QString mimestr = mime ();
+        int plugin_pos = mimestr.find ("-plugin");
+        if (plugin_pos > 0)
+            mimestr.truncate (plugin_pos);
+        bool maybe_playlist = isPlayListMime (mimestr);
+        if (url.isLocalFile ()) {
+            QFile file (url.path ());
+            if (!file.exists ())
+                return;
+            if (mimestr.isEmpty ()) {
+                KMimeType::Ptr mime = KMimeType::findByURL (url);
+                if (mime) {
+                    mimestr = mime->name ();
+                    setMime (mimestr);
+                    maybe_playlist = isPlayListMime (mimestr);
+                }
             }
-        } else if (maybe_playlist && file.size () < 50000 && file.open (IO_ReadOnly)) {
-            QTextStream textstream (&file);
-            read (textstream);
+            if (maybe_playlist && file.size () < 50000 && file.open (IO_ReadOnly)) {
+                QTextStream textstream (&file);
+                read (textstream);
+            }
+            m_current->mrl ()->parsed = true;
+            if (!m_current->isMrl ())
+                next ();
+        } else if ((maybe_playlist &&
+                    url.protocol ().compare (QString ("mms")) &&
+                    url.protocol ().compare (QString ("rtsp")) &&
+                    url.protocol ().compare (QString ("rtp"))) ||
+                (mimestr.isEmpty () &&
+                 url.protocol ().startsWith (QString ("http")))) {
+            m_data.truncate (0);
+            m_job = KIO::get (url, false, false);
+            m_job->addMetaData ("PropagateHttpHeader", "true");
+            connect (m_job, SIGNAL (data (KIO::Job *, const QByteArray &)),
+                    this, SLOT (kioData (KIO::Job *, const QByteArray &)));
+            //connect( m_job, SIGNAL(connected(KIO::Job*)),
+            //         this, SLOT(slotConnected(KIO::Job*)));
+            connect (m_job, SIGNAL (mimetype (KIO::Job *, const QString &)),
+                    this, SLOT (kioMimetype (KIO::Job *, const QString &)));
+            connect (m_job, SIGNAL (result (KIO::Job *)),
+                    this, SLOT (kioResult (KIO::Job *)));
+            return;
         }
-        m_current->mrl ()->parsed = true;
-        if (!m_current->isMrl ())
-            next ();
-    } else if (!m_current->mrl ()->parsed && maybe_playlist) {
-        m_data.truncate (0);
-        m_job = KIO::get (url, false, false);
-        m_job->addMetaData ("PropagateHttpHeader", "true");
-        connect (m_job, SIGNAL (data (KIO::Job *, const QByteArray &)),
-                 this, SLOT (kioData (KIO::Job *, const QByteArray &)));
-    //connect( m_job, SIGNAL(connected(KIO::Job*)),
-    //         this, SLOT(slotConnected(KIO::Job*)));
-        connect (m_job, SIGNAL (mimetype (KIO::Job *, const QString &)),
-                 this, SLOT (kioMimetype (KIO::Job *, const QString &)));
-        connect (m_job, SIGNAL (result (KIO::Job *)),
-                 this, SLOT (kioResult (KIO::Job *)));
-        return;
     }
     KMPlayerSource::play ();
 }

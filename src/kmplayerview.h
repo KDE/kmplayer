@@ -40,7 +40,7 @@ class KMPlayerView;
 class KMPlayerViewer;
 class KMPlayerViewerHolder;
 class KMPlayerControlPanel;
-class QMultiLineEdit;
+class KMPlayerConsole;
 class QWidgetStack;
 class QPixmap;
 class QPopupMenu;
@@ -137,7 +137,7 @@ public:
     void reset ();
     //void print(QPrinter *pPrinter);
 
-    //QMultiLineEdit * consoleOutput () const { return m_multiedit; }
+    //KMPlayerConsole * consoleOutput () const { return m_multiedit; }
     KDE_NO_EXPORT KMPlayerViewer * viewer () const { return m_viewer; }
     KDE_NO_EXPORT KMPlayerControlPanel * buttonBar () const { return m_buttonbar; }
     KDE_NO_EXPORT KMPlayerPlayListView * playList () const { return m_playlist; }
@@ -185,7 +185,7 @@ private:
     // widget for player's output
     KMPlayerViewer * m_viewer;
     // console output
-    QMultiLineEdit * m_multiedit;
+    KMPlayerConsole * m_multiedit;
     // widget stack contains m_viewer, m_multiedit and m_picturewidget
     QWidgetStack * m_widgetstack;
     // widget that layouts m_widgetstack for ratio setting

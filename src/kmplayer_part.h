@@ -135,8 +135,6 @@ protected slots:
     void viewerPartDestroyed (QObject *);
     void viewerPartProcessChanged (const char *);
     void waitForImageWindowTimeOut ();
-protected:
-    virtual bool openFile(); // reimplement for KParts::ReadOnlyPart
 private:
     KMPlayerBrowserExtension * m_browserextension;
     KMPlayerLiveConnectExtension * m_liveconnectextension;
@@ -149,7 +147,6 @@ private:
     bool m_started_emited : 1;
     //bool m_noresize : 1;
     bool m_havehref : 1;
-    bool m_request_fileopen : 1;
 };
 
 

@@ -130,8 +130,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
    m_features (Feat_Unknown),
    m_started_emited (false),
-   m_havehref (false),
-   m_request_fileopen (false) {
+   m_havehref (false) {
     kdDebug () << "MPlayer(" << this << ")::KMPlayer ()" << endl;
     bool show_fullscreen = false;
     m_ispart = true;
@@ -322,12 +321,6 @@ KDE_NO_EXPORT void KMPlayerPart::viewerPartProcessChanged (const char * pname) {
     setProcess (pname);
 }
 
-KDE_NO_EXPORT bool KMPlayerPart::openFile() {
-    if (m_request_fileopen)
-        return KMPlayer::openURL (KParts::ReadOnlyPart::m_file);
-    return false;
-}
-
 KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
     kdDebug () << "KMPlayerPart::openURL " << _url.url() << endl;
     KMPlayerSource * urlsource = m_sources ["urlsource"];
@@ -375,10 +368,6 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
     KParts::URLArgs args = m_browserextension->urlArgs();
     if (!args.serviceType.isEmpty ())
         urlsource->setMime (args.serviceType);
-    if (!url.isLocalFile() && urlsource->mime() == QString("audio/x-scpls")) {
-        m_request_fileopen = true;
-        return KParts::ReadOnlyPart::openURL (url);
-    }
     if (m_havehref && m_settings->allowhref) {
         hrefsource->setURL (url);
         setSource (hrefsource);

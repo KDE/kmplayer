@@ -1283,10 +1283,11 @@ KDE_NO_EXPORT void Xine::initProcess () {
 // v4l:/Webcam/0   v4l:/Television/21600  v4l:/Radio/96
 KDE_NO_EXPORT bool Xine::play () {
     KURL url (m_source ? m_source->current () : QString ());
+    QString myurl = url.isLocalFile () ? url.path () : url.url ();
     if (playing ()) {
         if (m_backend) {
             if (m_status == status_stop) {
-                m_backend->setURL (url.url ());
+                m_backend->setURL (myurl);
                 m_player->changeURL (url.url ());
             }
             m_backend->play ();
@@ -1310,7 +1311,7 @@ KDE_NO_EXPORT bool Xine::play () {
         return m_process->isRunning ();
     }
     m_request_seek = -1;
-    kdDebug() << "Xine::play (" << url.url() << ")" << endl;
+    kdDebug() << "Xine::play (" << myurl << ")" << endl;
     if (url.isEmpty ())
         return false;
     KMPlayerSettings *settings = m_player->settings ();
@@ -1363,7 +1364,7 @@ KDE_NO_EXPORT bool Xine::play () {
             (QFileInfo (m_source->url ().path ()).dirPath (true));
     }
     m_url = url.url ();
-    QString myurl = KProcess::quote (QString (QFile::encodeName (m_url)));
+    myurl = KProcess::quote (QString (QFile::encodeName (myurl)));
     printf (" %s\n", myurl.ascii ());
     *m_process << " " << myurl;
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
