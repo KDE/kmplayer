@@ -44,7 +44,7 @@ extern "C" {
 
         KAboutData aboutData ("kmplayer", I18N_NOOP ("KMPlayer"),
                 VERSION, description, KAboutData::License_GPL,
-                "(c) 2002, Koos Vriezen", 0, 0, "");
+                "(c) 2002-2005, Koos Vriezen", 0, 0, "");
         aboutData.addAuthor( "Koos Vriezen",0, "");
         KCmdLineArgs::init (argc, argv, &aboutData);
         KCmdLineArgs::addCmdLineOptions (options); // Add our own options.

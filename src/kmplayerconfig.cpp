@@ -457,6 +457,7 @@ KDE_NO_EXPORT void Settings::okPressed () {
     if (!view)
         return;
     bool urlchanged = configdialog->m_SourcePageURL->changed;
+    bool playerchanged = true;
     if (urlchanged) {
         if (configdialog->m_SourcePageURL->url->url ().isEmpty ())
             urlchanged = false;
@@ -537,8 +538,10 @@ KDE_NO_EXPORT void Settings::okPressed () {
         Process * proc = i.data ();
         if (proc->supports ("urlsource") && backend-- == 0) {
             backends["urlsource"] = proc->name ();
-            if (proc != m_player->process ())
+            if (proc != m_player->process ()) {
                 m_player->setProcess (proc->name ());
+                playerchanged = true;
+            }
         }
     }
     allowhref = configdialog->m_SourcePageURL->allowhref->isChecked ();
@@ -598,7 +601,7 @@ KDE_NO_EXPORT void Settings::okPressed () {
     writeConfig ();
     emit configChanged ();
 
-    if (urlchanged) {
+    if (urlchanged || playerchanged) {
         m_player->sources () ["urlsource"]->setSubURL
             (KURL(configdialog->m_SourcePageURL->sub_url->url()));
         m_player->openURL (KURL::fromPathOrURL (configdialog->m_SourcePageURL->url->url ()));
