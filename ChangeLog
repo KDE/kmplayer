@@ -1,3 +1,8 @@
+Changes since version 0.8.2-rc2
+- Add audio/x-pn-realaudio to supported mimetypes
+- Fix for filenames containing a #
+- Build fix for KDE-3.1.x
+- Add audio.visualization property for Xine (very nice for eg. web radio)
 Changes since version 0.8.2-rc1
 - Don't fill X log with ffmpeg output
 - Jump to broadcast config page first when clicking broadcast button

@@ -1,4 +1,4 @@
-#AM_INIT_AUTOMAKE(kmplayer,0.8.2rc2)
+#AM_INIT_AUTOMAKE(kmplayer,0.8.2rc3)
 
 if test "$build_arts" = "no"; then
     not_want_arts_volume="yes"
