@@ -42,6 +42,7 @@ k_dcop:
     virtual ASYNC brightness (int b, bool absolute);
     virtual ASYNC volume (int v, bool absolute);
     virtual ASYNC quit ();
+    virtual ASYNC setConfig (QByteArray);
 private:
     KMPlayerBackendPrivate * d;
 };

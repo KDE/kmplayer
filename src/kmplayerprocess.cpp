@@ -610,8 +610,10 @@ void KMPlayerCallback::loadingProgress (int percentage) {
 KMPlayerCallbackProcess::KMPlayerCallbackProcess (KMPlayer * player)
  : KMPlayerProcess (player),
    m_callback (new KMPlayerCallback (this)),
+   m_backend (0L),
    m_configpage (new KMPlayerXMLPreferencesPage (this)),
-   m_have_config (unknown) {
+   m_have_config (unknown),
+   m_send_config (send_no) {
 #ifdef HAVE_XINE
     m_player->settings ()->pagelist.push_back (m_configpage);
 #endif
@@ -631,7 +633,13 @@ void KMPlayerCallbackProcess::setURL (const QString & url) {
 void KMPlayerCallbackProcess::setStatusMessage (const QString & /*msg*/) {
 }
 
-void KMPlayerCallbackProcess::setErrorMessage (int /*code*/, const QString & /*msg*/) {
+void KMPlayerCallbackProcess::setErrorMessage (int code, const QString & msg) {
+    kdDebug () << "setErrorMessage " << code << " " << msg << endl;
+    if (code == 0 && m_send_config != send_no) {
+        if (m_send_config == send_new)
+            stop ();
+        m_send_config = send_no;
+    }
 }
 
 void KMPlayerCallbackProcess::setFinished () {
@@ -683,6 +691,15 @@ bool KMPlayerCallbackProcess::getConfigData (QByteArray & data) {
     }
     return false;
 }
+
+void KMPlayerCallbackProcess::sendConfigData (const QByteArray & data) {
+    m_changeddata = data;
+    m_send_config = playing () ? send_try : send_new;
+    if (m_send_config == send_try)
+        m_backend->setConfig (data);
+    else
+        play ();
+}
 //-----------------------------------------------------------------------------
 #include <qlayout.h>
 #include <qtable.h>
@@ -696,6 +713,7 @@ class KMPlayerXMLPreferencesFrame : public QFrame {
 public:
     KMPlayerXMLPreferencesFrame (QWidget * parent);
     QTable * table;
+    QDomDocument dom;
 };
 
 KMPlayerXMLPreferencesFrame::KMPlayerXMLPreferencesFrame (QWidget * parent)
@@ -715,9 +733,78 @@ void KMPlayerXMLPreferencesPage::write (KConfig *) {
 void KMPlayerXMLPreferencesPage::read (KConfig *) {
 }
 
+static QString attname ("NAME");
+static QString atttype ("TYPE");
+static QString attvalue ("VALUE");
+static QString attstart ("START");
+static QString attend ("END");
+static QString valrange ("range");
+static QString valnum ("num");
+static QString valbool ("bool");
+static QString valenum ("enum");
+static QString valstring ("string");
+
 void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
+    QTable * table = m_configframe->table;
+    QDomDocument & dom = m_configframe->dom;
+    int row = 0;
     if (fromUI) {
-        ; // TODO: send changes to Xine
+        if (m_configframe->table->numCols () < 1) // not yet created
+            return;
+        if (dom.childNodes().length() != 1 || dom.firstChild().childNodes().length() < 1) {
+            kdDebug () << "No valid data" << endl;
+            return;
+        }
+        QDomDocument changeddom;
+        if (!changeddom.setContent (QCString ("<document></document>")))
+            kdDebug () << "changed doc error" << endl;
+        kdDebug () << changeddom.toCString () << endl;
+        for (QDomNode node = dom.firstChild().firstChild(); !node.isNull (); node = node.nextSibling (), row++) {
+            QDomNamedNodeMap attr = node.attributes ();
+            QDomNode n = attr.namedItem (attname);
+            QDomNode t = attr.namedItem (atttype);
+            if (!n.isNull () && !t.isNull ()) {
+                if (m_configframe->table->text (row, 0) != n.nodeValue ()) {
+                    kdDebug () << "Unexpected table text found at row " << row << endl;
+                    return;
+                }
+                QDomNode v = attr.namedItem (attvalue);
+                bool changed = false;
+                if (t.nodeValue () == valnum || t.nodeValue () == valstring) {
+                    if (table->text (row, 1) != v.nodeValue ()) {
+                        v.setNodeValue (table->text (row, 1));
+                        changed = true;
+                    }
+                } else if (t.nodeValue () == valrange) {
+                    int i = v.nodeValue ().toInt ();
+                    QSlider * slider = static_cast<QSlider *>(table->cellWidget (row, 1));
+                    if (slider->value () != i) {
+                        v.setNodeValue (QString::number (slider->value ()));
+                        changed = true;
+                    }
+                } else if (t.nodeValue () == valbool) {
+                    bool b = attr.namedItem (attvalue).nodeValue ().toInt ();
+                    QCheckBox * checkbox = static_cast<QCheckBox *>(table->cellWidget (row, 1));
+                    if (checkbox->isChecked () != b) {
+                        //node.toElement ().setAttribute (attvalue, QString::number (b ? 1 : 0));
+                        v.setNodeValue (QString::number (b ? 0 : 1));
+                        changed = true;
+                    }
+                } else if (t.nodeValue () == valenum) {
+                    int i = v.nodeValue ().toInt ();
+                    QComboBox * combobox = static_cast<QComboBox *>(table->cellWidget (row, 1));
+                    if (combobox->currentItem () != i) {
+                        v.setNodeValue (QString::number (combobox->currentItem ()));
+                        changed = true;
+                    }
+                }
+                if (changed)
+                    changeddom.firstChild ().appendChild (node.cloneNode ());
+            }
+        }
+        kdDebug () << changeddom.toCString () << endl;
+        if (changeddom.firstChild().childNodes().length() > 0)
+            m_process->sendConfigData (changeddom.toCString ());
     } else {
         QByteArray data;
         if (!m_process->getConfigData (data))
@@ -726,7 +813,6 @@ void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
         if (!data.size ())
             return;
         if (m_configframe->table->numCols () < 1) { // not yet created
-            QDomDocument dom;
             QString err;
             int line, column;
             if (!dom.setContent (data, false, &err, &line, &column)) {
@@ -737,7 +823,6 @@ void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
                 kdDebug () << "No valid data" << endl;
                 return;
             }
-            QTable * table = m_configframe->table;
             table->setNumCols (2);
             table->setNumRows (dom.firstChild().childNodes().length());
             table->verticalHeader ()->hide ();
@@ -748,32 +833,31 @@ void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
             table->setColumnWidth (0, 250);
             table->setColumnWidth (1, 250);
             // set up the table fields
-            int row = 0;
             for (QDomNode node = dom.firstChild().firstChild(); !node.isNull (); node = node.nextSibling (), row++) {
                 QDomNamedNodeMap attr = node.attributes ();
-                QDomNode n = attr.namedItem (QString ("NAME"));
-                QDomNode t = attr.namedItem (QString ("TYPE"));
+                QDomNode n = attr.namedItem (attname);
+                QDomNode t = attr.namedItem (atttype);
                 if (!n.isNull () && !t.isNull ()) {
                     m_configframe->table->setText (row, 0, n.nodeValue ());
-                    if (t.nodeValue () == QString ("num") || t.nodeValue () == QString ("string")) {
-                        QString v = attr.namedItem (QString ("VALUE")).nodeValue ();
+                    if (t.nodeValue () == valnum || t.nodeValue () == valstring) {
+                        QString v = attr.namedItem (attvalue).nodeValue ();
                         table->setText (row, 1, v);
-                    } else if (t.nodeValue () == QString ("range")) {
-                        QString v = attr.namedItem (QString ("VALUE")).nodeValue ();
-                        QString s = attr.namedItem (QString ("START")).nodeValue ();
-                        QString e = attr.namedItem (QString ("END")).nodeValue ();
+                    } else if (t.nodeValue () == valrange) {
+                        QString v = attr.namedItem (attvalue).nodeValue ();
+                        QString s = attr.namedItem (attstart).nodeValue ();
+                        QString e = attr.namedItem (attend).nodeValue ();
                         QSlider * slider = new QSlider (s.toInt (), e.toInt (), 1, v.toInt (), Qt::Horizontal, table);
                         table->setCellWidget (row, 1, slider);
-                    } else if (t.nodeValue () == QString ("bool")) {
-                        QString v = attr.namedItem (QString ("VALUE")).nodeValue ();
+                    } else if (t.nodeValue () == valbool) {
+                        QString v = attr.namedItem (attvalue).nodeValue ();
                         QCheckBox * checkbox = new QCheckBox (table);
                         checkbox->setChecked (v.toInt ());
                         table->setCellWidget (row, 1, checkbox);
-                    } else if (t.nodeValue () == QString ("enum")) {
-                        QString v = attr.namedItem (QString ("VALUE")).nodeValue ();
+                    } else if (t.nodeValue () == valenum) {
+                        QString v = attr.namedItem (attvalue).nodeValue ();
                         QComboBox * combobox = new QComboBox (table);
                         for (QDomNode d = node.firstChild(); !d.isNull (); d = d.nextSibling ())
-                            combobox->insertItem (d.attributes ().namedItem (QString ("VALUE")).nodeValue ());
+                            combobox->insertItem (d.attributes ().namedItem (attvalue).nodeValue ());
                         combobox->setCurrentItem (v.toInt ());
                         table->setCellWidget (row, 1, combobox);
                     }
@@ -797,7 +881,7 @@ QFrame * KMPlayerXMLPreferencesPage::prefPage (QWidget * parent) {
 //-----------------------------------------------------------------------------
 
 Xine::Xine (KMPlayer * player)
-    : KMPlayerCallbackProcess (player), m_backend (0L) {
+    : KMPlayerCallbackProcess (player) {
 }
 
 Xine::~Xine () {}
@@ -825,12 +909,16 @@ bool Xine::play () {
     QString cbname;
     cbname.sprintf ("%s/%s", QString (kapp->dcopClient ()->appId ()).ascii (),
                              QString (m_callback->objId ()).ascii ());
-    if (m_have_config == probe) {
+    if (m_have_config == probe || m_send_config == send_new) {
         initProcess ();
         printf ("kxineplayer -wid %lu", (unsigned long) widget ()->winId ());
         *m_process << "kxineplayer -wid " << QString::number (widget ()->winId ());
-        printf (" -cb %s -c nomovie\n", cbname.ascii());
-        *m_process << " -cb " << cbname << " -c nomovie";
+        if (m_have_config == probe) {
+            printf (" -c");
+            *m_process << " -c ";
+        }
+        printf (" -cb %s nomovie\n", cbname.ascii());
+        *m_process << " -cb " << cbname << " nomovie";
         m_process->start (KProcess::NotifyOnExit, KProcess::All);
         return m_process->isRunning ();
     }
@@ -905,6 +993,8 @@ bool Xine::stop () {
     kdDebug () << "Xine::stop ()" << endl;
     if (m_have_config == probe)
         m_have_config = unknown; // hmm
+    if (m_send_config == send_new)
+        m_send_config = send_no; // oh well
     if (!m_process || !m_process->isRunning ()) return true;
     if (m_backend) {
         m_backend->quit ();
@@ -954,6 +1044,10 @@ void Xine::processStopped (KProcess *) {
     delete m_backend;
     m_backend = 0L;
     QTimer::singleShot (0, this, SLOT (emitFinished ()));
+    if (m_send_config == send_try) {
+        m_send_config = send_new; // we failed, retry ..
+        play ();
+    }
 }
 
 void Xine::setStarted (QByteArray & data) {
@@ -970,6 +1064,10 @@ void Xine::setStarted (QByteArray & data) {
             return;
         }
         m_have_config = data.size () ? yes : no;
+    }
+    if (m_send_config == send_new) {
+        m_backend->setConfig (m_changeddata);
+        return;
     }
     KMPlayerSettings * settings = m_player->settings ();
     saturation (settings->saturation, true);

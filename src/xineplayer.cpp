@@ -79,6 +79,7 @@ static xine_event_queue_t  *event_queue;
 static x11_visual_t         vis;
 static char                *dvd_device;
 static char                *vcd_device;
+static char                 configfile[2048];
 
 static Display             *display;
 static Window               wid;
@@ -261,6 +262,49 @@ void KMPlayerBackend::quit () {
     callback = 0L;
     xineapp->stop ();
     QTimer::singleShot (10, qApp, SLOT (quit ()));
+}
+
+bool updateConfigEntry (const QString & name, const QString & value) {
+    xine_cfg_entry_t cfg_entry;
+    if (!xine_config_lookup_entry (xine, name.ascii (), &cfg_entry))
+        return false;
+    if (cfg_entry.type == XINE_CONFIG_TYPE_STRING ||
+            cfg_entry.type == XINE_CONFIG_TYPE_UNKNOWN)
+        cfg_entry.str_value = (char *) value.ascii ();
+    else
+        cfg_entry.num_value = value.toInt ();
+    xine_config_update_entry (xine,  &cfg_entry);
+    return true;
+}
+
+#include <qdom.h>
+void KMPlayerBackend::setConfig (QByteArray data) {
+    fprintf (stderr, "%s\n", data.data ());
+    QString err;
+    QString attvalue ("VALUE");
+    QString attname ("NAME");
+    int line, column;
+    QDomDocument dom;
+    char * docend = strstr (data.data (), "</document>");
+    if (docend && (docend + strlen ("</document>") - data.data () < data.size ())) {
+        fprintf (stderr, "warning truncating data\n");
+        data.resize (docend + strlen ("</document>") - data.data ());
+    }
+    if (dom.setContent (data, false, &err, &line, &column)) {
+        if (dom.childNodes().length() == 1) {
+            for (QDomNode node = dom.firstChild().firstChild();
+                    !node.isNull ();
+                    node = node.nextSibling ()) {
+                QDomNamedNodeMap attr = node.attributes ();
+                updateConfigEntry (attr.namedItem (attname).nodeValue (),
+                                   attr.namedItem (attvalue).nodeValue ());
+            }
+            xine_config_save (xine, configfile);
+        } else
+            err = QString ("invalid data");
+    }
+    if (callback)
+        callback->errorMessage (0, err);
 }
 
 KXinePlayer::KXinePlayer (int _argc, char ** _argv)
@@ -810,22 +854,16 @@ int main(int argc, char **argv) {
     xine = xine_new();
     if (xine_verbose)
         xine_engine_set_param (xine, XINE_ENGINE_PARAM_VERBOSITY, XINE_VERBOSITY_LOG);
-    char configfile[2048];
     sprintf(configfile, "%s%s", xine_get_homedir(), "/.xine/config2");
     xine_config_load(xine, configfile);
     xine_init(xine);
 
     xineapp->init ();
 
-    xine_cfg_entry_t cfg_entry;
-    if (dvd_device && xine_config_lookup_entry (xine, "input.dvd_device", &cfg_entry)) {
-        cfg_entry.str_value = dvd_device;
-        xine_config_update_entry (xine,  &cfg_entry);
-    }
-    if (vcd_device && xine_config_lookup_entry (xine, "input.vcd_device", &cfg_entry)) {
-        cfg_entry.str_value = vcd_device;
-        xine_config_update_entry (xine,  &cfg_entry);
-    }
+    if (dvd_device)
+        updateConfigEntry (QString ("input.dvd_device"), QString (dvd_device));
+    if (vcd_device)
+        updateConfigEntry (QString ("input.vcd_device"), QString (vcd_device));
 
     if (callback) {
         QByteArray buf;

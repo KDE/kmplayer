@@ -175,11 +175,15 @@ public:
     virtual void setMoviePosition (int position);
     virtual void setLoadingProgress (int percentage);
     bool getConfigData (QByteArray &);
+    void sendConfigData (const QByteArray &);
 protected:
     KMPlayerCallback * m_callback;
+    KMPlayerBackend_stub * m_backend;
     QByteArray m_configdata;
+    QByteArray m_changeddata;
     KMPlayerXMLPreferencesPage * m_configpage;
     enum { unknown, probe, yes, no } m_have_config;
+    enum { send_no, send_try, send_new } m_send_config;
 };
 
 class KMPlayerXMLPreferencesPage : public KMPlayerPreferencesPage {
@@ -217,8 +221,6 @@ public slots:
 private slots:
     void processStopped (KProcess *);
     void processOutput (KProcess *, char *, int);
-private:
-    KMPlayerBackend_stub * m_backend;
 };
 
 class FFMpeg : public KMPlayerProcess, public Recorder {
