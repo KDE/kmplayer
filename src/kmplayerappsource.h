@@ -66,7 +66,7 @@ public:
 };
 
 
-class KMPlayerDVDSource : public KMPlayerMenuSource, public KMPlayer::KMPlayerPreferencesPage {
+class KMPlayerDVDSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
     KMPlayerDVDSource (KMPlayerApp * app, QPopupMenu * m);
@@ -127,7 +127,7 @@ public:
 };
 
 
-class KMPlayerVCDSource : public KMPlayerMenuSource, public KMPlayer::KMPlayerPreferencesPage {
+class KMPlayerVCDSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
     KMPlayerVCDSource (KMPlayerApp * app, QPopupMenu * m);

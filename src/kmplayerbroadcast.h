@@ -125,7 +125,7 @@ private:
 };
 
 
-class KMPlayerFFServerConfig : public KMPlayer::KMPlayerPreferencesPage {
+class KMPlayerFFServerConfig : public KMPlayer::PreferencesPage {
 public:
     KMPlayerFFServerConfig ();
     KDE_NO_CDTOR_EXPORT ~KMPlayerFFServerConfig () {}
@@ -144,7 +144,7 @@ private:
     QGuardedPtr <KMPlayerPrefBroadcastPage> m_configpage;
 };
 
-class KMPlayerBroadcastConfig : public QObject, public KMPlayer::KMPlayerPreferencesPage {
+class KMPlayerBroadcastConfig : public QObject, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
     KMPlayerBroadcastConfig (KMPlayer::PartBase * player, KMPlayerFFServerConfig * fsc);

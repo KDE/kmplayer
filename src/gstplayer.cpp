@@ -45,7 +45,7 @@ static char                 configfile[2048];
 
 static Display             *display;
 static KGStreamerPlayer   *gstapp;
-static KMPlayer::KMPlayerCallback_stub * callback;
+static KMPlayer::Callback_stub * callback;
 static Window               wid;
 static QMutex               mutex (true);
 static bool                 window_created = true;
@@ -188,58 +188,58 @@ GstSizeEvent::GstSizeEvent (int l, int w, int h)
 
 using namespace KMPlayer;
 
-KMPlayerBackend::KMPlayerBackend ()
-    : DCOPObject (QCString ("KMPlayerBackend")) {
+Backend::Backend ()
+    : DCOPObject (QCString ("Backend")) {
 }
 
-KMPlayerBackend::~KMPlayerBackend () {}
+Backend::~Backend () {}
 
-void KMPlayerBackend::setURL (QString url) {
+void Backend::setURL (QString url) {
     mrl = url;
 }
 
-void KMPlayerBackend::setSubTitleURL (QString) {
+void Backend::setSubTitleURL (QString) {
 }
 
-void KMPlayerBackend::play () {
+void Backend::play () {
     gstapp->play ();
 }
 
-void KMPlayerBackend::stop () {
+void Backend::stop () {
     QTimer::singleShot (0, gstapp, SLOT (stop ()));
 }
 
-void KMPlayerBackend::pause () {
+void Backend::pause () {
     gstapp->pause ();
 }
 
-void KMPlayerBackend::seek (int, bool /*absolute*/) {
+void Backend::seek (int, bool /*absolute*/) {
 }
 
-void KMPlayerBackend::hue (int h, bool) {
+void Backend::hue (int h, bool) {
     gstapp->hue (10 * h);
 }
 
-void KMPlayerBackend::saturation (int s, bool) {
+void Backend::saturation (int s, bool) {
     gstapp->saturation (10 * s);
 }
 
-void KMPlayerBackend::contrast (int c, bool) {
+void Backend::contrast (int c, bool) {
     gstapp->contrast (10 * c);
 }
 
-void KMPlayerBackend::brightness (int b, bool) {
+void Backend::brightness (int b, bool) {
     gstapp->brightness (10 * b);
 }
 
-void KMPlayerBackend::volume (int v, bool) {
+void Backend::volume (int v, bool) {
     gstapp->volume (v);
 }
 
-void KMPlayerBackend::frequency (int) {
+void Backend::frequency (int) {
 }
 
-void KMPlayerBackend::quit () {
+void Backend::quit () {
     delete callback;
     callback = 0L;
     if (running)
@@ -253,7 +253,7 @@ bool updateConfigEntry (const QString & name, const QString & value) {
     return true;
 }
 
-void KMPlayerBackend::setConfig (QByteArray data) {
+void Backend::setConfig (QByteArray data) {
     QString err;
     int line, column;
     QDomDocument dom;
@@ -567,7 +567,7 @@ int main(int argc, char **argv) {
             int pos = str.find ('/');
             if (pos > -1) {
                 fprintf (stderr, "callback is %s %s\n", str.left (pos).ascii (), str.mid (pos + 1).ascii ());
-                callback = new KMPlayer::KMPlayerCallback_stub 
+                callback = new KMPlayer::Callback_stub 
                     (str.left (pos).ascii (), str.mid (pos + 1).ascii ());
             }
         } else if (!strncmp (argv [i], "-", 1)) {
@@ -581,7 +581,7 @@ int main(int argc, char **argv) {
 
     DCOPClient dcopclient;
     dcopclient.registerAs ("kgstreamerplayer");
-    KMPlayerBackend player;
+    Backend player;
 
     XEventThread * eventThread = new XEventThread;
     eventThread->start ();

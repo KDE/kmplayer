@@ -235,13 +235,13 @@ KDE_NO_EXPORT void Settings::readConfig () {
     pp_med_int = m_config->readBoolEntry (strPP_Med_Int, false);
     pp_ffmpeg_int = m_config->readBoolEntry (strPP_FFmpeg_Int, false);
 
-    for (KMPlayerPreferencesPage * p = pagelist; p; p = p->next)
+    for (PreferencesPage * p = pagelist; p; p = p->next)
         p->read (m_config);
 }
 
 KDE_NO_EXPORT bool Settings::createDialog () {
     if (configdialog) return false;
-    configdialog = new KMPlayerPreferences (m_player, this);
+    configdialog = new Preferences (m_player, this);
     int id = 0;
     const PartBase::ProcessMap::const_iterator e = m_player->players ().end ();
     for (PartBase::ProcessMap::const_iterator i = m_player->players ().begin(); i != e; ++i) {
@@ -259,8 +259,8 @@ KDE_NO_EXPORT bool Settings::createDialog () {
     return true;
 }
 
-void Settings::addPage (KMPlayerPreferencesPage * page) {
-    for (KMPlayerPreferencesPage * p = pagelist; p; p = p->next)
+void Settings::addPage (PreferencesPage * page) {
+    for (PreferencesPage * p = pagelist; p; p = p->next)
         if (p == page)
             return;
     page->read (m_config);
@@ -272,11 +272,11 @@ void Settings::addPage (KMPlayerPreferencesPage * page) {
     pagelist = page;
 }
 
-void Settings::removePage (KMPlayerPreferencesPage * page) {
+void Settings::removePage (PreferencesPage * page) {
     if (configdialog)
         configdialog->removePrefPage (page);
-    KMPlayerPreferencesPage * prev = 0L;
-    for (KMPlayerPreferencesPage * p = pagelist; p; prev = p, p = p->next)
+    PreferencesPage * prev = 0L;
+    for (PreferencesPage * p = pagelist; p; prev = p, p = p->next)
         if (p == page) {
             if (prev)
                 prev->next = p->next;
@@ -362,7 +362,7 @@ void Settings::show (const char * pagename) {
     configdialog->m_FFMpegPage->arguments->setText (ffmpegarguments);
 
     //dynamic stuff
-    for (KMPlayerPreferencesPage * p = pagelist; p; p = p->next)
+    for (PreferencesPage * p = pagelist; p; p = p->next)
         p->sync (false);
     //\dynamic stuff
     if (pagename)
@@ -443,7 +443,7 @@ void Settings::writeConfig () {
     m_config->writeEntry (strFFMpegArgs, ffmpegarguments);
 
     //dynamic stuff
-    for (KMPlayerPreferencesPage * p = pagelist; p; p = p->next)
+    for (PreferencesPage * p = pagelist; p; p = p->next)
         p->write (m_config);
     //\dynamic stuff
     m_config->sync ();
@@ -588,7 +588,7 @@ KDE_NO_EXPORT void Settings::okPressed () {
 #endif
 
     //dynamic stuff
-    for (KMPlayerPreferencesPage * p = pagelist; p; p = p->next)
+    for (PreferencesPage * p = pagelist; p; p = p->next)
         p->sync (true);
     //\dynamic stuff
 

@@ -71,7 +71,7 @@ public:
 };
 
 static KXinePlayer * xineapp;
-static KMPlayer::KMPlayerCallback_stub * callback;
+static KMPlayer::Callback_stub * callback;
 static QMutex mutex (true);
 
 static xine_t              *xine;
@@ -237,60 +237,60 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
 
 using namespace KMPlayer;
 
-KMPlayerBackend::KMPlayerBackend ()
-    : DCOPObject (QCString ("KMPlayerBackend")) {
+Backend::Backend ()
+    : DCOPObject (QCString ("Backend")) {
 }
 
-KMPlayerBackend::~KMPlayerBackend () {}
+Backend::~Backend () {}
 
-void KMPlayerBackend::setURL (QString url) {
+void Backend::setURL (QString url) {
     mrl = url;
 }
 
-void KMPlayerBackend::setSubTitleURL (QString url) {
+void Backend::setSubTitleURL (QString url) {
     sub_mrl = url;
 }
 
-void KMPlayerBackend::play () {
+void Backend::play () {
     xineapp->play ();
 }
 
-void KMPlayerBackend::stop () {
+void Backend::stop () {
     QTimer::singleShot (0, xineapp, SLOT (stop ()));
 }
 
-void KMPlayerBackend::pause () {
+void Backend::pause () {
     xineapp->pause ();
 }
 
-void KMPlayerBackend::seek (int pos, bool /*absolute*/) {
+void Backend::seek (int pos, bool /*absolute*/) {
     xineapp->seek (pos);
 }
 
-void KMPlayerBackend::hue (int h, bool) {
+void Backend::hue (int h, bool) {
     xineapp->hue (65535 * (h + 100) / 200);
 }
 
-void KMPlayerBackend::saturation (int s, bool) {
+void Backend::saturation (int s, bool) {
     xineapp->saturation (65535 * (s + 100) / 200);
 }
 
-void KMPlayerBackend::contrast (int c, bool) {
+void Backend::contrast (int c, bool) {
     xineapp->contrast (65535 * (c + 100) / 200);
 }
 
-void KMPlayerBackend::brightness (int b, bool) {
+void Backend::brightness (int b, bool) {
     xineapp->brightness (65535 * (b + 100) / 200);
 }
 
-void KMPlayerBackend::volume (int v, bool) {
+void Backend::volume (int v, bool) {
     xineapp->volume (v);
 }
 
-void KMPlayerBackend::frequency (int) {
+void Backend::frequency (int) {
 }
 
-void KMPlayerBackend::quit () {
+void Backend::quit () {
     delete callback;
     callback = 0L;
     if (running)
@@ -317,7 +317,7 @@ bool updateConfigEntry (const QString & name, const QString & value) {
     return changed;
 }
 
-void KMPlayerBackend::setConfig (QByteArray data) {
+void Backend::setConfig (QByteArray data) {
     QString err;
     int line, column;
     QDomDocument dom;
@@ -375,7 +375,7 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
             int pos = str.find ('/');
             if (pos > -1) {
                 fprintf (stderr, "callback is %s %s\n", str.left (pos).ascii (), str.mid (pos + 1).ascii ());
-                callback = new KMPlayer::KMPlayerCallback_stub 
+                callback = new KMPlayer::Callback_stub 
                     (str.left (pos).ascii (), str.mid (pos + 1).ascii ());
             }
         } else 
@@ -716,13 +716,13 @@ bool KXinePlayer::event (QEvent * e) {
         case event_url: {
             XineURLEvent * ue = static_cast <XineURLEvent *> (e);                
             if (callback)
-                callback->statusMessage ((int) KMPlayer::KMPlayerCallback::stat_addurl, ue->url);
+                callback->statusMessage ((int) KMPlayer::Callback::stat_addurl, ue->url);
             break;
         }
         case event_title: {
             XineTitleEvent * ue = static_cast <XineTitleEvent *> (e);                
             if (callback)
-                callback->statusMessage ((int) KMPlayer::KMPlayerCallback::stat_newtitle, ue->title);
+                callback->statusMessage ((int) KMPlayer::Callback::stat_newtitle, ue->title);
             break;
         }
         default:
@@ -980,7 +980,7 @@ int main(int argc, char **argv) {
 
     DCOPClient dcopclient;
     dcopclient.registerAs ("kxineplayer");
-    KMPlayerBackend player;
+    Backend player;
 
     XEventThread * eventThread = new XEventThread;
     eventThread->start ();

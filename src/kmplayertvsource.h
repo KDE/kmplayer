@@ -175,7 +175,7 @@ private:
     QRegExp m_inputRegExp;
 };
 
-class KMPlayerTVSource : public KMPlayerMenuSource, public KMPlayer::KMPlayerPreferencesPage {
+class KMPlayerTVSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
     struct TVSource {

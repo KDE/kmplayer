@@ -874,12 +874,12 @@ KDE_NO_EXPORT bool MPlayerDumpstream::stop () {
 
 static int callback_counter = 0;
 
-KMPlayerCallback::KMPlayerCallback (KMPlayerCallbackProcess * process)
+Callback::Callback (CallbackProcess * process)
     : DCOPObject (QString (QString ("KMPlayerCallback-") +
                            QString::number (callback_counter++)).ascii ()),
       m_process (process) {}
 
-void KMPlayerCallback::statusMessage (int code, QString msg) {
+void Callback::statusMessage (int code, QString msg) {
     switch ((StatusCode) code) {
         case stat_newtitle:
             m_process->player ()->changeTitle (msg);
@@ -892,56 +892,56 @@ void KMPlayerCallback::statusMessage (int code, QString msg) {
     };
 }
 
-void KMPlayerCallback::errorMessage (int code, QString msg) {
+void Callback::errorMessage (int code, QString msg) {
     m_process->setErrorMessage (code, msg);
 }
 
-void KMPlayerCallback::finished () {
+void Callback::finished () {
     m_process->setFinished ();
 }
 
-void KMPlayerCallback::playing () {
+void Callback::playing () {
     m_process->setPlaying ();
 }
 
-void KMPlayerCallback::started (QCString dcopname, QByteArray data) {
+void Callback::started (QCString dcopname, QByteArray data) {
     m_process->setStarted (dcopname, data);
 }
 
-void KMPlayerCallback::movieParams (int length, int w, int h, float aspect) {
+void Callback::movieParams (int length, int w, int h, float aspect) {
     m_process->setMovieParams (length, w, h, aspect);
 }
 
-void KMPlayerCallback::moviePosition (int position) {
+void Callback::moviePosition (int position) {
     m_process->setMoviePosition (position);
 }
 
-void KMPlayerCallback::loadingProgress (int percentage) {
+void Callback::loadingProgress (int percentage) {
     m_process->setLoadingProgress (percentage);
 }
 
 //-----------------------------------------------------------------------------
 
-KMPlayerCallbackProcess::KMPlayerCallbackProcess (PartBase * player, const char * n)
+CallbackProcess::CallbackProcess (PartBase * player, const char * n)
  : Process (player, n),
-   m_callback (new KMPlayerCallback (this)),
+   m_callback (new Callback (this)),
    m_backend (0L),
-   m_configpage (new KMPlayerXMLPreferencesPage (this)),
+   m_configpage (new XMLPreferencesPage (this)),
    in_gui_update (false),
    m_have_config (config_unknown),
    m_send_config (send_no),
    m_status (status_stop) {
 }
 
-KMPlayerCallbackProcess::~KMPlayerCallbackProcess () {
+CallbackProcess::~CallbackProcess () {
     delete m_callback;
     delete m_configpage;
 }
 
-void KMPlayerCallbackProcess::setStatusMessage (const QString & /*msg*/) {
+void CallbackProcess::setStatusMessage (const QString & /*msg*/) {
 }
 
-void KMPlayerCallbackProcess::setErrorMessage (int code, const QString & msg) {
+void CallbackProcess::setErrorMessage (int code, const QString & msg) {
     kdDebug () << "setErrorMessage " << code << " " << msg << endl;
     if (code == 0 && m_send_config != send_no) {
         if (m_send_config == send_new)
@@ -950,22 +950,22 @@ void KMPlayerCallbackProcess::setErrorMessage (int code, const QString & msg) {
     }
 }
 
-void KMPlayerCallbackProcess::setFinished () {
+void CallbackProcess::setFinished () {
     m_status = status_stop;
     //QTimer::singleShot (0, this, SLOT (emitFinished ()));
 }
 
-void KMPlayerCallbackProcess::setPlaying () {
+void CallbackProcess::setPlaying () {
     m_status = status_play;
     emit startedPlaying ();
 }
 
-void KMPlayerCallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
+void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
     m_status = status_start;
     if (data.size ())
         m_configdata = data;
     kdDebug () << "up and running " << dcopname << endl;
-    m_backend = new KMPlayerBackend_stub (dcopname, "KMPlayerBackend");
+    m_backend = new Backend_stub (dcopname, "Backend");
     if (m_send_config == send_new) {
         m_backend->setConfig (m_changeddata);
     }
@@ -988,7 +988,7 @@ void KMPlayerCallbackProcess::setStarted (QCString dcopname, QByteArray & data) 
     m_backend->play ();
 }
 
-void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
+void CallbackProcess::setMovieParams (int len, int w, int h, float a) {
     kdDebug () << "setMovieParams " << len << " " << w << "," << h << " " << a << endl;
     in_gui_update = true;
     m_source->setWidth (w);
@@ -1005,7 +1005,7 @@ void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
     in_gui_update = false;
 }
 
-void KMPlayerCallbackProcess::setMoviePosition (int position) {
+void CallbackProcess::setMoviePosition (int position) {
     in_gui_update = true;
     m_source->setPosition (position);
     m_request_seek = -1;
@@ -1013,13 +1013,13 @@ void KMPlayerCallbackProcess::setMoviePosition (int position) {
     in_gui_update = false;
 }
 
-void KMPlayerCallbackProcess::setLoadingProgress (int percentage) {
+void CallbackProcess::setLoadingProgress (int percentage) {
     in_gui_update = true;
     emit loaded (percentage);
     in_gui_update = false;
 }
 
-bool KMPlayerCallbackProcess::getConfigData () {
+bool CallbackProcess::getConfigData () {
     if (m_have_config == config_no)
         return false;
     if (m_have_config == config_unknown && !playing ()) {
@@ -1029,7 +1029,7 @@ bool KMPlayerCallbackProcess::getConfigData () {
     return true;
 }
 
-void KMPlayerCallbackProcess::setChangedData (const QByteArray & data) {
+void CallbackProcess::setChangedData (const QByteArray & data) {
     m_changeddata = data;
     m_send_config = playing () ? send_try : send_new;
     if (m_send_config == send_try)
@@ -1038,90 +1038,90 @@ void KMPlayerCallbackProcess::setChangedData (const QByteArray & data) {
         play ();
 }
 
-bool KMPlayerCallbackProcess::stop () {
+bool CallbackProcess::stop () {
     if (!m_process || !m_process->isRunning ()) return true;
     if (m_backend)
         m_backend->stop ();
     return true;
 }
 
-bool KMPlayerCallbackProcess::pause () {
+bool CallbackProcess::pause () {
     if (!playing () || !m_backend) return false;
     m_backend->pause ();
     return true;
 }
 
-bool KMPlayerCallbackProcess::saturation (int val, bool b) {
+bool CallbackProcess::saturation (int val, bool b) {
     if (m_backend)
         m_backend->saturation (val, b);
     return !!m_backend;
 }
 
-bool KMPlayerCallbackProcess::hue (int val, bool b) {
+bool CallbackProcess::hue (int val, bool b) {
     if (m_backend)
         m_backend->hue (val, b);
     return !!m_backend;
 }
 
-bool KMPlayerCallbackProcess::brightness (int val, bool b) {
+bool CallbackProcess::brightness (int val, bool b) {
     if (m_backend)
         m_backend->brightness (val, b);
     return !!m_backend;
 }
 
-bool KMPlayerCallbackProcess::contrast (int val, bool b) {
+bool CallbackProcess::contrast (int val, bool b) {
     if (m_backend)
         m_backend->contrast (val, b);
     return !!m_backend;
 }
 
-QString KMPlayerCallbackProcess::dcopName () {
+QString CallbackProcess::dcopName () {
     QString cbname;
     cbname.sprintf ("%s/%s", QString (kapp->dcopClient ()->appId ()).ascii (),
                              QString (m_callback->objId ()).ascii ());
     return cbname;
 }
 
-void KMPlayerCallbackProcess::runForConfig() {}
+void CallbackProcess::runForConfig() {}
 
 //-----------------------------------------------------------------------------
 
 namespace KMPlayer {
 
-class KMPlayerXMLPreferencesFrame : public QFrame {
+class XMLPreferencesFrame : public QFrame {
 public:
-    KMPlayerXMLPreferencesFrame (QWidget * parent, KMPlayerCallbackProcess *);
+    XMLPreferencesFrame (QWidget * parent, CallbackProcess *);
     QTable * table;
     QDomDocument dom;
 protected:
     void showEvent (QShowEvent *);
 private:
-    KMPlayerCallbackProcess * m_process;
+    CallbackProcess * m_process;
 };
 
 } // namespace
 
-KDE_NO_CDTOR_EXPORT KMPlayerXMLPreferencesFrame::KMPlayerXMLPreferencesFrame
-(QWidget * parent, KMPlayerCallbackProcess * p)
+KDE_NO_CDTOR_EXPORT XMLPreferencesFrame::XMLPreferencesFrame
+(QWidget * parent, CallbackProcess * p)
  : QFrame (parent), m_process (p){
     QVBoxLayout * layout = new QVBoxLayout (this);
     table = new QTable (this);
     layout->addWidget (table);
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerXMLPreferencesPage::KMPlayerXMLPreferencesPage (KMPlayerCallbackProcess * p)
+KDE_NO_CDTOR_EXPORT XMLPreferencesPage::XMLPreferencesPage (CallbackProcess * p)
  : m_process (p), m_configframe (0L) {
 }
 
-KDE_NO_EXPORT void KMPlayerXMLPreferencesFrame::showEvent (QShowEvent *) {
+KDE_NO_EXPORT void XMLPreferencesFrame::showEvent (QShowEvent *) {
     if (!m_process->haveConfig ())
         m_process->getConfigData ();
 }
 
-KDE_NO_EXPORT void KMPlayerXMLPreferencesPage::write (KConfig *) {
+KDE_NO_EXPORT void XMLPreferencesPage::write (KConfig *) {
 }
 
-KDE_NO_EXPORT void KMPlayerXMLPreferencesPage::read (KConfig *) {
+KDE_NO_EXPORT void XMLPreferencesPage::read (KConfig *) {
 }
 
 static QString attname ("NAME");
@@ -1136,7 +1136,7 @@ static QString valenum ("enum");
 static QString valstring ("string");
 static QString valtree ("tree");
 
-KDE_NO_EXPORT void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
+KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
     if (!m_configframe) return;
     QTable * table = m_configframe->table;
     QDomDocument & dom = m_configframe->dom;
@@ -1277,14 +1277,14 @@ KDE_NO_EXPORT void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerXMLPreferencesPage::prefLocation (QString & item, QString & icon, QString & tab) {
+KDE_NO_EXPORT void XMLPreferencesPage::prefLocation (QString & item, QString & icon, QString & tab) {
     item = i18n ("General Options");
     icon = QString ("kmplayer");
     tab = m_process->menuName ();
 }
 
-KDE_NO_EXPORT QFrame * KMPlayerXMLPreferencesPage::prefPage (QWidget * parent) {
-    m_configframe = new KMPlayerXMLPreferencesFrame (parent, m_process);
+KDE_NO_EXPORT QFrame * XMLPreferencesPage::prefPage (QWidget * parent) {
+    m_configframe = new XMLPreferencesFrame (parent, m_process);
     return m_configframe;
 }
 
@@ -1295,7 +1295,7 @@ static const char * xine_supported [] = {
 };
 
 KDE_NO_CDTOR_EXPORT Xine::Xine (PartBase * player)
-    : KMPlayerCallbackProcess (player, "xine") {
+    : CallbackProcess (player, "xine") {
 #ifdef HAVE_XINE
     m_supported_sources = xine_supported;
     m_player->settings ()->addPage (m_configpage);
@@ -1451,7 +1451,7 @@ KDE_NO_EXPORT bool Xine::quit () {
 }
 
 KDE_NO_EXPORT void Xine::setFinished () {
-    KMPlayerCallbackProcess::setFinished ();
+    CallbackProcess::setFinished ();
     if (!m_source) return; // initial case?
     kdDebug () << "Xine::finished () " << endl;
     if (m_source->next ().isEmpty ()) {
@@ -1499,7 +1499,7 @@ static const char * gst_supported [] = {
 };
 
 KDE_NO_CDTOR_EXPORT GStreamer::GStreamer (PartBase * player)
-    : KMPlayerCallbackProcess (player, "gst") {
+    : CallbackProcess (player, "gst") {
 #ifdef HAVE_GSTREAMER
     m_supported_sources = gst_supported;
 #endif
@@ -1601,7 +1601,7 @@ KDE_NO_EXPORT bool GStreamer::quit () {
 }
 
 KDE_NO_EXPORT void GStreamer::setFinished () {
-    KMPlayerCallbackProcess::setFinished ();
+    CallbackProcess::setFinished ();
     if (!m_source) return; // initial case?
     kdDebug () << "GStreamer::finished () " << endl;
     if (m_source->next ().isEmpty ()) {

@@ -23,13 +23,13 @@
 
 namespace KMPlayer {
 
-class KMPlayerBackendPrivate;
+class BackendPrivate;
 
-class KMPlayerBackend : public DCOPObject {
+class Backend : public DCOPObject {
     K_DCOP
 public:
-    KMPlayerBackend ();
-    virtual ~KMPlayerBackend ();
+    Backend ();
+    virtual ~Backend ();
 k_dcop:
     virtual ASYNC setURL (QString url);
     virtual ASYNC setSubTitleURL (QString url);
@@ -47,7 +47,7 @@ k_dcop:
     virtual ASYNC quit ();
     virtual ASYNC setConfig (QByteArray);
 private:
-    KMPlayerBackendPrivate * d;
+    BackendPrivate * d;
 };
 
 } // namespace

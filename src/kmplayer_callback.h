@@ -23,13 +23,13 @@
 
 namespace KMPlayer {
 
-class KMPlayerCallbackProcess;
+class CallbackProcess;
 
-class KMPlayerCallback : public DCOPObject {
+class Callback : public DCOPObject {
     K_DCOP
 public:
     enum StatusCode { stat_addurl = 0, stat_newtitle };
-    KMPlayerCallback (KMPlayerCallbackProcess *);
+    Callback (CallbackProcess *);
 k_dcop:
     ASYNC statusMessage (int code, QString msg);
     ASYNC errorMessage (int code, QString msg);
@@ -40,7 +40,7 @@ k_dcop:
     ASYNC moviePosition (int position);
     ASYNC loadingProgress (int percentage);
 private:
-    KMPlayerCallbackProcess * m_process;
+    CallbackProcess * m_process;
 };
 
 } // namespace

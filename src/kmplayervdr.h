@@ -62,7 +62,7 @@ private:
 };
 
 
-class KMPlayerVDRSource : public KMPlayerMenuSource, public KMPlayer::KMPlayerPreferencesPage {
+class KMPlayerVDRSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
     KMPlayerVDRSource (KMPlayerApp * app, QPopupMenu *);
@@ -139,7 +139,7 @@ private:
     int scale;
 };
 
-class XVideo : public KMPlayer::KMPlayerCallbackProcess {
+class XVideo : public KMPlayer::CallbackProcess {
     Q_OBJECT
 public:
     struct Input {

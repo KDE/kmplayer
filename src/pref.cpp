@@ -59,7 +59,7 @@
 
 using namespace KMPlayer;
 
-KDE_NO_CDTOR_EXPORT KMPlayerPreferences::KMPlayerPreferences(PartBase * player, Settings * settings)
+KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * settings)
 : KDialogBase (IconList, i18n ("Preferences"),
 		Help|Default|Ok|Apply|Cancel, Ok, player->view (), 0, false)
 {
@@ -72,9 +72,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerPreferences::KMPlayerPreferences(PartBase * player, 
     vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
-    m_GeneralPageGeneral = new KMPlayerPrefGeneralPageGeneral (tab);
+    m_GeneralPageGeneral = new PrefGeneralPageGeneral (tab);
     tab->insertTab (m_GeneralPageGeneral, i18n("General"));
-    m_GeneralPageOutput = new KMPlayerPrefGeneralPageOutput
+    m_GeneralPageOutput = new PrefGeneralPageOutput
         (tab, settings->audiodrivers, settings->videodrivers);
     tab->insertTab (m_GeneralPageOutput, i18n("Output"));
     entries.insert (i18n("General Options"), tab);
@@ -83,7 +83,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPreferences::KMPlayerPreferences(PartBase * player, 
     vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
-    m_SourcePageURL = new KMPlayerPrefSourcePageURL (tab);
+    m_SourcePageURL = new PrefSourcePageURL (tab);
     tab->insertTab (m_SourcePageURL, i18n ("URL"));
     entries.insert (i18n("Source"), tab);
 
@@ -92,19 +92,19 @@ KDE_NO_CDTOR_EXPORT KMPlayerPreferences::KMPlayerPreferences(PartBase * player, 
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
 
-    m_MEncoderPage = new KMPlayerPrefMEncoderPage (tab, player);
+    m_MEncoderPage = new PrefMEncoderPage (tab, player);
     tab->insertTab (m_MEncoderPage, i18n ("MEncoder"));
     recorders = m_MEncoderPage;
 
-    m_FFMpegPage = new KMPlayerPrefFFMpegPage (tab, player);
+    m_FFMpegPage = new PrefFFMpegPage (tab, player);
     tab->insertTab (m_FFMpegPage, i18n ("FFMpeg"));
     m_MEncoderPage->next = m_FFMpegPage;
 
-    m_MPlayerDumpstreamPage = new KMPlayerPrefMPlayerDumpstreamPage (tab, player);
+    m_MPlayerDumpstreamPage = new PrefMPlayerDumpstreamPage (tab, player);
     // tab->insertTab (m_MPlayerDumpstreamPage, i18n ("MPlayer -dumpstream"));
     m_FFMpegPage->next = m_MPlayerDumpstreamPage;
 
-    m_RecordPage = new KMPlayerPrefRecordPage (tab, player, recorders);
+    m_RecordPage = new PrefRecordPage (tab, player, recorders);
     tab->insertTab (m_RecordPage, i18n ("General"), 0);
     tab->setCurrentPage (0);
     entries.insert (i18n("Recording"), tab);
@@ -113,18 +113,18 @@ KDE_NO_CDTOR_EXPORT KMPlayerPreferences::KMPlayerPreferences(PartBase * player, 
     vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
-    m_OPPagePostproc = new KMPlayerPrefOPPagePostProc (tab);
+    m_OPPagePostproc = new PrefOPPagePostProc (tab);
     tab->insertTab (m_OPPagePostproc, i18n ("Postprocessing"));
     entries.insert (i18n("Postprocessing"), tab);
 
-    for (KMPlayerPreferencesPage * p = settings->pagelist; p; p = p->next)
+    for (PreferencesPage * p = settings->pagelist; p; p = p->next)
         addPrefPage (p);
         
 
     connect (this, SIGNAL (defaultClicked ()), SLOT (confirmDefaults ()));
 }
 
-KDE_NO_EXPORT void KMPlayerPreferences::setPage (const char * name) {
+KDE_NO_EXPORT void Preferences::setPage (const char * name) {
     QObject * o = child (name, "QFrame");
     if (!o) return;
     QFrame * page = static_cast <QFrame *> (o);
@@ -139,7 +139,7 @@ KDE_NO_EXPORT void KMPlayerPreferences::setPage (const char * name) {
     showPage (pageIndex (t->parentWidget ()));
 }
 
-KDE_NO_EXPORT void KMPlayerPreferences::addPrefPage (KMPlayerPreferencesPage * page) {
+KDE_NO_EXPORT void Preferences::addPrefPage (PreferencesPage * page) {
     QString item, subitem, icon;
     QFrame * frame;
     QTabWidget * tab;
@@ -160,7 +160,7 @@ KDE_NO_EXPORT void KMPlayerPreferences::addPrefPage (KMPlayerPreferencesPage * p
     tab->insertTab (frame, subitem);
 }
 
-KDE_NO_EXPORT void KMPlayerPreferences::removePrefPage (KMPlayerPreferencesPage * page) {
+KDE_NO_EXPORT void Preferences::removePrefPage(PreferencesPage * page) {
     QString item, subitem, icon;
     page->prefLocation (item, icon, subitem);
     if (item.isEmpty ())
@@ -185,10 +185,10 @@ KDE_NO_EXPORT void KMPlayerPreferences::removePrefPage (KMPlayerPreferencesPage 
     }
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerPreferences::~KMPlayerPreferences() {
+KDE_NO_CDTOR_EXPORT Preferences::~Preferences() {
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
+KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *parent)
 : QFrame (parent, "GeneralPage")
 {
 	QVBoxLayout *layout = new QVBoxLayout(this, 5, 2);
@@ -223,7 +223,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGener
         layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
+KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
 : QFrame (parent, "URLPage")
 {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
@@ -266,14 +266,14 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidge
              this, SLOT (slotTextChanged (const QString &)));
 }
 
-KDE_NO_EXPORT void KMPlayerPrefSourcePageURL::slotBrowse () {
+KDE_NO_EXPORT void PrefSourcePageURL::slotBrowse () {
 }
 
-KDE_NO_EXPORT void KMPlayerPrefSourcePageURL::slotTextChanged (const QString &) {
+KDE_NO_EXPORT void PrefSourcePageURL::slotTextChanged (const QString &) {
     changed = true;
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, PartBase * player, RecorderPage * rl) : QFrame (parent, "RecordPage"), m_player (player), m_recorders (rl) {
+KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent, PartBase * player, RecorderPage * rl) : QFrame (parent, "RecordPage"), m_player (player), m_recorders (rl) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     QHBoxLayout * urllayout = new QHBoxLayout ();
     QLabel *urlLabel = new QLabel (i18n ("Output file:"), this);
@@ -319,18 +319,18 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *par
     connect (replay, SIGNAL (clicked (int)), this, SLOT (replayClicked (int)));
 }
 
-KDE_NO_EXPORT void KMPlayerPrefRecordPage::recordingStarted () {
+KDE_NO_EXPORT void PrefRecordPage::recordingStarted () {
     recordButton->setText (i18n ("Stop Recording"));
     url->setEnabled (false);
     topLevelWidget ()->hide ();
 }
 
-KDE_NO_EXPORT void KMPlayerPrefRecordPage::recordingFinished () {
+KDE_NO_EXPORT void PrefRecordPage::recordingFinished () {
     recordButton->setText (i18n ("Start Recording"));
     url->setEnabled (true);
 }
 
-KDE_NO_EXPORT void KMPlayerPrefRecordPage::sourceChanged (Source * src) {
+KDE_NO_EXPORT void PrefRecordPage::sourceChanged (Source * src) {
     source->setText (i18n ("Current Source: ") + src->prettyName ());
     int id = 0;
     for (RecorderPage * p = m_recorders; p; p = p->next, ++id) {
@@ -339,11 +339,11 @@ KDE_NO_EXPORT void KMPlayerPrefRecordPage::sourceChanged (Source * src) {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerPrefRecordPage::replayClicked (int id) {
+KDE_NO_EXPORT void PrefRecordPage::replayClicked (int id) {
     replaytime->setEnabled (id == Settings::ReplayAfter);
 }
 
-KDE_NO_EXPORT void KMPlayerPrefRecordPage::slotRecord () {
+KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
     if (!url->lineEdit()->text().isEmpty()) {
         m_player->process ()->stop ();
         m_player->settings ()->recordfile = url->lineEdit()->text();
@@ -366,7 +366,7 @@ KDE_NO_EXPORT void KMPlayerPrefRecordPage::slotRecord () {
 KDE_NO_CDTOR_EXPORT RecorderPage::RecorderPage (QWidget *parent, PartBase * player)
  : QFrame (parent), next (0L), m_player (player) {}
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefMEncoderPage::KMPlayerPrefMEncoderPage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
+KDE_NO_CDTOR_EXPORT PrefMEncoderPage::PrefMEncoderPage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     format = new QButtonGroup (3, Qt::Vertical, i18n ("Format"), this);
     new QRadioButton (i18n ("Same as source"), format);
@@ -382,11 +382,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefMEncoderPage::KMPlayerPrefMEncoderPage (QWidget 
     connect (format, SIGNAL (clicked (int)), this, SLOT (formatClicked (int)));
 }
 
-KDE_NO_EXPORT void KMPlayerPrefMEncoderPage::formatClicked (int id) {
+KDE_NO_EXPORT void PrefMEncoderPage::formatClicked (int id) {
     arguments->setEnabled (!!id);
 }
 
-KDE_NO_EXPORT void KMPlayerPrefMEncoderPage::record () {
+KDE_NO_EXPORT void PrefMEncoderPage::record () {
     MEncoder *rec = static_cast<MEncoder*>(m_player->recorders () ["mencoder"]);
     m_player->setRecorder ("mencoder");
     if (!rec->playing ()) {
@@ -402,19 +402,19 @@ KDE_NO_EXPORT void KMPlayerPrefMEncoderPage::record () {
         rec->stop ();
 }
 
-KDE_NO_EXPORT QString KMPlayerPrefMEncoderPage::name () {
+KDE_NO_EXPORT QString PrefMEncoderPage::name () {
     return i18n ("&MEncoder");
 }
 
-KDE_NO_EXPORT bool KMPlayerPrefMEncoderPage::sourceSupported (Source *) {
+KDE_NO_EXPORT bool PrefMEncoderPage::sourceSupported (Source *) {
     return true;
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefMPlayerDumpstreamPage::KMPlayerPrefMPlayerDumpstreamPage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
+KDE_NO_CDTOR_EXPORT PrefMPlayerDumpstreamPage::PrefMPlayerDumpstreamPage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
     hide();
 }
 
-KDE_NO_EXPORT void KMPlayerPrefMPlayerDumpstreamPage::record () {
+KDE_NO_EXPORT void PrefMPlayerDumpstreamPage::record () {
     MPlayerDumpstream  * rec = static_cast <MPlayerDumpstream *> (m_player->recorders () ["mplayerdumpstream"]);
     m_player->setRecorder ("mplayerdumpstream");
     if (!rec->playing ()) {
@@ -424,15 +424,15 @@ KDE_NO_EXPORT void KMPlayerPrefMPlayerDumpstreamPage::record () {
         rec->stop ();
 }
 
-KDE_NO_EXPORT QString KMPlayerPrefMPlayerDumpstreamPage::name () {
+KDE_NO_EXPORT QString PrefMPlayerDumpstreamPage::name () {
     return i18n ("MPlayer -&dumpstream");
 }
 
-KDE_NO_EXPORT bool KMPlayerPrefMPlayerDumpstreamPage::sourceSupported (Source *) {
+KDE_NO_EXPORT bool PrefMPlayerDumpstreamPage::sourceSupported (Source *) {
     return true;
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefFFMpegPage::KMPlayerPrefFFMpegPage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
+KDE_NO_CDTOR_EXPORT PrefFFMpegPage::PrefFFMpegPage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     QGridLayout *gridlayout = new QGridLayout (1, 2, 2);
     QLabel *argLabel = new QLabel (i18n("FFMpeg arguments:"), this);
@@ -443,7 +443,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefFFMpegPage::KMPlayerPrefFFMpegPage (QWidget *par
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
-KDE_NO_EXPORT void KMPlayerPrefFFMpegPage::record () {
+KDE_NO_EXPORT void PrefFFMpegPage::record () {
     FFMpeg  * rec = static_cast <FFMpeg *> (m_player->recorders () ["ffmpeg"]);
     m_player->setRecorder ("ffmpeg");
     rec->setURL (KURL::fromPathOrURL (m_player->settings ()->recordfile));
@@ -451,11 +451,11 @@ KDE_NO_EXPORT void KMPlayerPrefFFMpegPage::record () {
     rec->play ();
 }
 
-KDE_NO_EXPORT QString KMPlayerPrefFFMpegPage::name () {
+KDE_NO_EXPORT QString PrefFFMpegPage::name () {
     return i18n ("&FFMpeg");
 }
 
-KDE_NO_EXPORT bool KMPlayerPrefFFMpegPage::sourceSupported (Source * source) {
+KDE_NO_EXPORT bool PrefFFMpegPage::sourceSupported (Source * source) {
     QString protocol = source->url ().protocol ();
     return !source->audioDevice ().isEmpty () ||
            !source->videoDevice ().isEmpty () ||
@@ -464,7 +464,7 @@ KDE_NO_EXPORT bool KMPlayerPrefFFMpegPage::sourceSupported (Source * source) {
 }
 
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidget *parent, OutputDriver * ad, OutputDriver * vd)
+KDE_NO_CDTOR_EXPORT PrefGeneralPageOutput::PrefGeneralPageOutput(QWidget *parent, OutputDriver * ad, OutputDriver * vd)
  : QFrame (parent) {
     QGridLayout *layout = new QGridLayout (this, 2, 2, 5);
 
@@ -483,14 +483,14 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefOPPageGeneral::KMPlayerPrefOPPageGeneral(QWidget *parent)
+KDE_NO_CDTOR_EXPORT PrefOPPageGeneral::PrefOPPageGeneral(QWidget *parent)
 : QFrame(parent)
 {
     QVBoxLayout *layout = new QVBoxLayout (this, 5);
     layout->setAutoAdd (true);
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame(parent)
+KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : QFrame(parent)
 {
 
 	QVBoxLayout *tabLayout = new QVBoxLayout (this, 5);
@@ -716,19 +716,19 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidg
 	PostprocessingOptions->adjustSize();
 }
 
-KDE_NO_EXPORT void KMPlayerPreferences::confirmDefaults() {
+KDE_NO_EXPORT void Preferences::confirmDefaults() {
 	// TODO: Switch to KMessageBox
 	switch( QMessageBox::warning( this, i18n("Reset Settings?"),
         i18n("You are about to have all your settings overwritten with defaults.\nPlease confirm.\n"),
         i18n("&OK"), i18n("&Cancel"), QString::null, 0, 1 ) ){
-    		case 0:	KMPlayerPreferences::setDefaults();
+    		case 0:	Preferences::setDefaults();
         		break;
     		case 1:	break;
 	}
 
 }
 
-KDE_NO_EXPORT void KMPlayerPreferences::setDefaults() {
+KDE_NO_EXPORT void Preferences::setDefaults() {
 	m_GeneralPageGeneral->keepSizeRatio->setChecked(true);
 	m_GeneralPageGeneral->loop->setChecked(false);
 	m_GeneralPageGeneral->seekTime->setValue(10);

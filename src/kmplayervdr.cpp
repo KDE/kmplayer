@@ -642,7 +642,7 @@ static const char * xv_supported [] = {
 };
 
 KDE_NO_CDTOR_EXPORT XVideo::XVideo (KMPlayer::PartBase * player)
- : KMPlayer::KMPlayerCallbackProcess (player, "xvideo"),
+ : KMPlayer::CallbackProcess (player, "xvideo"),
    m_ports (0L) {
     m_supported_sources = xv_supported;
     //m_player->settings ()->addPage (m_configpage);
@@ -748,7 +748,7 @@ KDE_NO_EXPORT void XVideo::setStarted (QCString dcopname, QByteArray & data) {
         }
         break;
     }
-    KMPlayerCallbackProcess::setStarted (dcopname, data);
+    CallbackProcess::setStarted (dcopname, data);
 }
 
 #include "kmplayervdr.moc"

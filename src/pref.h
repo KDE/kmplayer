@@ -41,44 +41,44 @@ class KURLRequester;
 
 namespace KMPlayer {
     
-class KMPlayerPrefGeneralPageGeneral; 	// general, general
-class KMPlayerPrefSourcePageURL;        // source, url
-class KMPlayerPrefRecordPage;           // recording
+class PrefGeneralPageGeneral; 	// general, general
+class PrefSourcePageURL;        // source, url
+class PrefRecordPage;           // recording
 class RecorderPage;                     // base recorder
-class KMPlayerPrefMEncoderPage;         // mencoder
-class KMPlayerPrefMPlayerDumpstreamPage; // mplayer -dumpstream
-class KMPlayerPrefFFMpegPage;           // ffmpeg
-class KMPlayerPrefGeneralPageOutput;	// general, output
-class KMPlayerPrefOPPageGeneral;	// OP = outputplugins, general
-class KMPlayerPrefOPPagePostProc;	// outputplugins, postproc
+class PrefMEncoderPage;         // mencoder
+class PrefMPlayerDumpstreamPage; // mplayer -dumpstream
+class PrefFFMpegPage;           // ffmpeg
+class PrefGeneralPageOutput;	// general, output
+class PrefOPPageGeneral;	// OP = outputplugins, general
+class PrefOPPagePostProc;	// outputplugins, postproc
 class PartBase;
 class Source;
 class Settings;
-class KMPlayerPreferencesPage;
+class PreferencesPage;
 class OutputDriver;
 
 
-class KMPlayerPreferences : public KDialogBase
+class Preferences : public KDialogBase
 {
     Q_OBJECT
 public:
 
-    KMPlayerPreferences(PartBase *, Settings *);
-    ~KMPlayerPreferences();
+    Preferences(PartBase *, Settings *);
+    ~Preferences();
 
-    KMPlayerPrefGeneralPageGeneral 	*m_GeneralPageGeneral;
-    KMPlayerPrefSourcePageURL 		*m_SourcePageURL;
-    KMPlayerPrefRecordPage 		*m_RecordPage;
-    KMPlayerPrefMEncoderPage            *m_MEncoderPage;
-    KMPlayerPrefMPlayerDumpstreamPage   *m_MPlayerDumpstreamPage;
-    KMPlayerPrefFFMpegPage              *m_FFMpegPage;
-    KMPlayerPrefGeneralPageOutput 	*m_GeneralPageOutput;
-    KMPlayerPrefOPPageGeneral 		*m_OPPageGeneral;
-    KMPlayerPrefOPPagePostProc		*m_OPPagePostproc;
+    PrefGeneralPageGeneral 	*m_GeneralPageGeneral;
+    PrefSourcePageURL 		*m_SourcePageURL;
+    PrefRecordPage 		*m_RecordPage;
+    PrefMEncoderPage            *m_MEncoderPage;
+    PrefMPlayerDumpstreamPage   *m_MPlayerDumpstreamPage;
+    PrefFFMpegPage              *m_FFMpegPage;
+    PrefGeneralPageOutput 	*m_GeneralPageOutput;
+    PrefOPPageGeneral 		*m_OPPageGeneral;
+    PrefOPPagePostProc		*m_OPPagePostproc;
     void setDefaults();
     void setPage (const char *);
-    void addPrefPage (KMPlayerPreferencesPage *);
-    void removePrefPage (KMPlayerPreferencesPage *);
+    void addPrefPage (PreferencesPage *);
+    void removePrefPage (PreferencesPage *);
 
     RecorderPage * recorders;
     QMap<QString, QTabWidget *> entries;
@@ -86,12 +86,12 @@ public slots:
     void confirmDefaults();
 };
 
-class KMPlayerPrefGeneralPageGeneral : public QFrame
+class PrefGeneralPageGeneral : public QFrame
 {
     Q_OBJECT
 public:
-    KMPlayerPrefGeneralPageGeneral(QWidget *parent = 0);
-    ~KMPlayerPrefGeneralPageGeneral() {}
+    PrefGeneralPageGeneral(QWidget *parent = 0);
+    ~PrefGeneralPageGeneral() {}
 
     QCheckBox *keepSizeRatio;
     QCheckBox *loop;
@@ -103,12 +103,12 @@ public:
 
 };
 
-class KMPlayerPrefSourcePageURL : public QFrame
+class PrefSourcePageURL : public QFrame
 {
     Q_OBJECT
 public:
-    KMPlayerPrefSourcePageURL (QWidget *parent);
-    ~KMPlayerPrefSourcePageURL () {}
+    PrefSourcePageURL (QWidget *parent);
+    ~PrefSourcePageURL () {}
 
     KURLRequester * url;
     //KHistoryCombo * url;
@@ -124,12 +124,12 @@ private slots:
 };
 
 
-class KMPlayerPrefRecordPage : public QFrame
+class PrefRecordPage : public QFrame
 {
     Q_OBJECT
 public:
-    KMPlayerPrefRecordPage (QWidget *parent, PartBase *, RecorderPage *);
-    ~KMPlayerPrefRecordPage () {}
+    PrefRecordPage (QWidget *parent, PartBase *, RecorderPage *);
+    ~PrefRecordPage () {}
 
     KURLRequester * url;
     QButtonGroup * recorder;
@@ -163,12 +163,12 @@ protected:
     PartBase * m_player;
 };
 
-class KMPlayerPrefMEncoderPage : public RecorderPage 
+class PrefMEncoderPage : public RecorderPage 
 {
     Q_OBJECT
 public:
-    KMPlayerPrefMEncoderPage (QWidget *parent, PartBase *);
-    ~KMPlayerPrefMEncoderPage () {}
+    PrefMEncoderPage (QWidget *parent, PartBase *);
+    ~PrefMEncoderPage () {}
 
     void record ();
     QString name ();
@@ -181,12 +181,12 @@ public slots:
 private:
 };
 
-class KMPlayerPrefMPlayerDumpstreamPage : public RecorderPage 
+class PrefMPlayerDumpstreamPage : public RecorderPage 
 {
     Q_OBJECT
 public:
-    KMPlayerPrefMPlayerDumpstreamPage (QWidget *parent, PartBase *);
-    ~KMPlayerPrefMPlayerDumpstreamPage () {}
+    PrefMPlayerDumpstreamPage (QWidget *parent, PartBase *);
+    ~PrefMPlayerDumpstreamPage () {}
 
     void record ();
     QString name ();
@@ -197,12 +197,12 @@ public:
 private:
 };
 
-class KMPlayerPrefFFMpegPage : public RecorderPage
+class PrefFFMpegPage : public RecorderPage
 {
     Q_OBJECT
 public:
-    KMPlayerPrefFFMpegPage (QWidget *parent, PartBase *);
-    ~KMPlayerPrefFFMpegPage () {}
+    PrefFFMpegPage (QWidget *parent, PartBase *);
+    ~PrefFFMpegPage () {}
 
     void record ();
     QString name ();
@@ -214,31 +214,31 @@ private:
 };
 
 
-class KMPlayerPrefGeneralPageOutput : public QFrame
+class PrefGeneralPageOutput : public QFrame
 {
     Q_OBJECT
 public:
-    KMPlayerPrefGeneralPageOutput (QWidget *parent, OutputDriver * ad, OutputDriver * vd);
-    ~KMPlayerPrefGeneralPageOutput() {}
+    PrefGeneralPageOutput (QWidget *parent, OutputDriver * ad, OutputDriver * vd);
+    ~PrefGeneralPageOutput() {}
 
     QListBox *videoDriver;
     QListBox *audioDriver;
 };
 
-class KMPlayerPrefOPPageGeneral : public QFrame
+class PrefOPPageGeneral : public QFrame
 {
     Q_OBJECT
 public:
-    KMPlayerPrefOPPageGeneral(QWidget *parent = 0);
-    ~KMPlayerPrefOPPageGeneral() {}
+    PrefOPPageGeneral(QWidget *parent = 0);
+    ~PrefOPPageGeneral() {}
 };
 
-class KMPlayerPrefOPPagePostProc : public QFrame
+class PrefOPPagePostProc : public QFrame
 {
     Q_OBJECT
 public:
-    KMPlayerPrefOPPagePostProc(QWidget *parent = 0);
-    ~KMPlayerPrefOPPagePostProc() {}
+    PrefOPPagePostProc(QWidget *parent = 0);
+    ~PrefOPPagePostProc() {}
 
     QCheckBox* postProcessing;
     QCheckBox* disablePPauto;

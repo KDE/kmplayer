@@ -40,8 +40,8 @@ namespace KMPlayer {
 class PartBase;
 class View;
 class Source;
-class KMPlayerCallback;
-class KMPlayerBackend_stub;
+class Callback;
+class Backend_stub;
 
 class KMPLAYER_EXPORT Process : public QObject {
     Q_OBJECT
@@ -153,7 +153,7 @@ private:
     QString m_tmpURL;
 };
 
-class MPlayerPreferencesPage : public KMPlayerPreferencesPage {
+class MPlayerPreferencesPage : public PreferencesPage {
 public:
     enum Pattern {
         pat_size = 0, pat_cache, pat_pos, pat_index,
@@ -209,14 +209,14 @@ public slots:
     virtual bool stop ();
 };
 
-class KMPlayerXMLPreferencesPage;
-class KMPlayerXMLPreferencesFrame;
+class XMLPreferencesPage;
+class XMLPreferencesFrame;
 
-class KMPLAYER_EXPORT KMPlayerCallbackProcess : public Process {
+class KMPLAYER_EXPORT CallbackProcess : public Process {
     Q_OBJECT
 public:
-    KMPlayerCallbackProcess (PartBase * player, const char * n);
-    ~KMPlayerCallbackProcess ();
+    CallbackProcess (PartBase * player, const char * n);
+    ~CallbackProcess ();
     virtual void setStatusMessage (const QString & msg);
     virtual void setErrorMessage (int code, const QString & msg);
     virtual void setFinished ();
@@ -241,32 +241,32 @@ signals:
     void configReceived ();
 protected:
     virtual void runForConfig ();
-    KMPlayerCallback * m_callback;
-    KMPlayerBackend_stub * m_backend;
+    Callback * m_callback;
+    Backend_stub * m_backend;
     QByteArray m_configdata;
     QByteArray m_changeddata;
-    KMPlayerXMLPreferencesPage * m_configpage;
+    XMLPreferencesPage * m_configpage;
     bool in_gui_update;
     enum { config_unknown, config_probe, config_yes, config_no } m_have_config;
     enum { send_no, send_try, send_new } m_send_config;
     enum { status_stop, status_play, status_start } m_status;
 };
 
-class KMPlayerXMLPreferencesPage : public KMPlayerPreferencesPage {
+class XMLPreferencesPage : public PreferencesPage {
 public:
-    KMPlayerXMLPreferencesPage (KMPlayerCallbackProcess *);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerXMLPreferencesPage () {}
+    XMLPreferencesPage (CallbackProcess *);
+    KDE_NO_CDTOR_EXPORT ~XMLPreferencesPage () {}
     void write (KConfig *);
     void read (KConfig *);
     void sync (bool fromUI);
     void prefLocation (QString & item, QString & icon, QString & tab);
     QFrame * prefPage (QWidget * parent);
 private:
-    KMPlayerCallbackProcess * m_process;
-    KMPlayerXMLPreferencesFrame * m_configframe;
+    CallbackProcess * m_process;
+    XMLPreferencesFrame * m_configframe;
 };
 
-class Xine : public KMPlayerCallbackProcess {
+class Xine : public CallbackProcess {
     Q_OBJECT
 public:
     Xine (PartBase * player);
@@ -287,7 +287,7 @@ private slots:
     void processOutput (KProcess *, char *, int);
 };
 
-class GStreamer : public KMPlayerCallbackProcess {
+class GStreamer : public CallbackProcess {
     Q_OBJECT
 public:
     GStreamer (PartBase * player);

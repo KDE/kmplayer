@@ -34,7 +34,7 @@ class KConfig;
 namespace KMPlayer {
     
 class PartBase;
-class KMPlayerPreferences;
+class Preferences;
 
 class OutputDriver {
 public:
@@ -47,15 +47,15 @@ void Deleter (T * t) {
     delete t;
 }
 
-class KMPLAYER_EXPORT KMPlayerPreferencesPage {
+class KMPLAYER_EXPORT PreferencesPage {
 public:
-    virtual ~KMPlayerPreferencesPage () {}
+    virtual ~PreferencesPage () {}
     virtual void write (KConfig *) = 0;
     virtual void read (KConfig *) = 0;
     virtual void sync (bool fromUI) = 0;
     virtual void prefLocation (QString & item, QString & icon, QString & tab) = 0;
     virtual QFrame * prefPage (QWidget * parent) = 0;
-    KMPlayerPreferencesPage * next;
+    PreferencesPage * next;
 };
 
 class KMPLAYER_EXPORT Settings : public QObject {
@@ -65,9 +65,9 @@ public:
     ~Settings ();
     bool createDialog ();
     void show (const char * pagename = 0L);
-    void addPage (KMPlayerPreferencesPage *);
-    void removePage (KMPlayerPreferencesPage *);
-    KMPlayerPreferences *configDialog() const { return configdialog; }
+    void addPage (PreferencesPage *);
+    void removePage (PreferencesPage *);
+    Preferences *configDialog() const { return configdialog; }
 
     QStringList urllist;
     QStringList sub_urllist;
@@ -134,7 +134,7 @@ public:
     QString dvddevice;
     QString vcddevice;
     QMap <QString, QString> backends;
-    KMPlayerPreferencesPage * pagelist;
+    PreferencesPage * pagelist;
 signals:
     void configChanged ();
 public slots:
@@ -144,7 +144,7 @@ private slots:
     void okPressed ();
     void getHelp ();
 private:
-    KMPlayerPreferences * configdialog;
+    Preferences * configdialog;
     KConfig * m_config;
     PartBase * m_player;
 };
