@@ -99,6 +99,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerVDRSource::KMPlayerVDRSource (KMPlayerApp * app, QPo
     act_ok = new KAction (i18n ("VDR Key Ok"), 0, 0, this, SLOT (keyOk ()), m_app->actionCollection (),"vdr_key_ok");
     act_setup = new KAction (i18n ("VDR Key Setup"), 0, 0, this, SLOT (keySetup ()), m_app->actionCollection (),"vdr_key_setup");
     act_channels = new KAction (i18n ("VDR Key Channels"), 0, 0, this, SLOT (keyChannels ()), m_app->actionCollection (),"vdr_key_channels");
+    act_menu = new KAction (i18n ("VDR Key Menu"), 0, 0, this, SLOT (keyMenu ()), m_app->actionCollection (),"vdr_key_menu");
+    act_red = new KAction (i18n ("VDR Key Red"), 0, 0, this, SLOT (keyRed ()), m_app->actionCollection (),"vdr_key_red");
+    act_green = new KAction (i18n ("VDR Key Green"), 0, 0, this, SLOT (keyGreen ()), m_app->actionCollection (),"vdr_key_green");
+    act_yellow = new KAction (i18n ("VDR Key Yellow"), 0, 0, this, SLOT (keyYellow ()), m_app->actionCollection (),"vdr_key_yellow");
+    act_blue = new KAction (i18n ("VDR Key Blue"), 0, 0, this, SLOT (keyBlue ()), m_app->actionCollection (),"vdr_key_blue");
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerVDRSource::~KMPlayerVDRSource () {
@@ -124,6 +129,21 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     view->addFullscreenAction (i18n ("VDR Key Back"), act_back->shortcut (), this, SLOT (keyBack ()), "vdr_key_back");
     view->addFullscreenAction (i18n ("VDR Key Setup"), act_setup->shortcut (), this, SLOT (keySetup ()), "vdr_key_setup");
     view->addFullscreenAction (i18n ("VDR Key Channels"), act_channels->shortcut (), this, SLOT (keyChannels ()), "vdr_key_channels");
+    view->addFullscreenAction (i18n ("VDR Key Menu"), act_menu->shortcut (), this, SLOT (keyMenu ()), "vdr_key_menu");
+    view->addFullscreenAction (i18n ("VDR Key 0"), KShortcut (Qt::Key_0), this, SLOT (key0 ()), "vdr_key_0");
+    view->addFullscreenAction (i18n ("VDR Key 1"), KShortcut (Qt::Key_1), this, SLOT (key1 ()), "vdr_key_1");
+    view->addFullscreenAction (i18n ("VDR Key 2"), KShortcut (Qt::Key_2), this, SLOT (key2 ()), "vdr_key_2");
+    view->addFullscreenAction (i18n ("VDR Key 3"), KShortcut (Qt::Key_3), this, SLOT (key3 ()), "vdr_key_3");
+    view->addFullscreenAction (i18n ("VDR Key 4"), KShortcut (Qt::Key_4), this, SLOT (key4 ()), "vdr_key_4");
+    view->addFullscreenAction (i18n ("VDR Key 5"), KShortcut (Qt::Key_5), this, SLOT (key5 ()), "vdr_key_5");
+    view->addFullscreenAction (i18n ("VDR Key 6"), KShortcut (Qt::Key_6), this, SLOT (key6 ()), "vdr_key_6");
+    view->addFullscreenAction (i18n ("VDR Key 7"), KShortcut (Qt::Key_7), this, SLOT (key7 ()), "vdr_key_7");
+    view->addFullscreenAction (i18n ("VDR Key 8"), KShortcut (Qt::Key_8), this, SLOT (key8 ()), "vdr_key_8");
+    view->addFullscreenAction (i18n ("VDR Key 9"), KShortcut (Qt::Key_9), this, SLOT (key9 ()), "vdr_key_9");
+    view->addFullscreenAction (i18n ("VDR Key Red"), act_red->shortcut (), this, SLOT (keyRed ()), "vdr_key_red");
+    view->addFullscreenAction (i18n ("VDR Key Green"), act_green->shortcut (), this, SLOT (keyGreen ()), "vdr_key_green");
+    view->addFullscreenAction (i18n ("VDR Key Yellow"), act_yellow->shortcut (), this, SLOT (keyYellow ()), "vdr_key_yellow");
+    view->addFullscreenAction (i18n ("VDR Key Blue"), act_blue->shortcut (), this, SLOT (keyBlue ()), "vdr_key_blue");
     m_player->setProcess ("xvideo");
     static_cast<XVideo *>(m_player->players () ["xvideo"])->setPort (xv_port);
     m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("up"), KIcon::Small, 0, true), i18n ("Up"), this, SLOT (keyUp ()), 0, -1, 1);
@@ -132,6 +152,11 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("ok"), KIcon::Small, 0, true), i18n ("Ok"), this, SLOT (keyOk ()), 0, -1, 4);
     m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("player_playlist"), KIcon::Small, 0, true), i18n ("Channels"), this, SLOT (keyChannels ()), 0, -1, 5);
     m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("configure"), KIcon::Small, 0, true), i18n ("Setup"), this, SLOT (keySetup ()), 0, -1, 6);
+    m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("showmenu"), KIcon::Small, 0, true), i18n ("Menu"), this, SLOT (keyMenu ()), 0, -1, 7);
+    m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("red"), KIcon::Small, 0, true), i18n ("Red"), this, SLOT (keyRed ()), 0, -1, 8);
+    m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("green"), KIcon::Small, 0, true), i18n ("Green"), this, SLOT (keyGreen ()), 0, -1, 9);
+    m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("yellow"), KIcon::Small, 0, true), i18n ("Yellow"), this, SLOT (keyYellow ()), 0, -1, 10);
+    m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("blue"), KIcon::Small, 0, true), i18n ("Blue"), this, SLOT (keyBlue ()), 0, -1, 11);
     m_socket->connectToHost ("localhost", tcp_port);
     connect (m_socket, SIGNAL (connected ()), this, SLOT (connected ()));
     connect (m_socket, SIGNAL (readyRead ()), this, SLOT (readyRead ()));
@@ -146,6 +171,11 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
     disconnect (m_socket, SIGNAL (error (int)), this, SLOT (socketError (int)));
     if (m_socket->state () == QSocket::Connected)
         sendCommand ("QUIT\n");
+    m_menu->removeItemAt (11);
+    m_menu->removeItemAt (10);
+    m_menu->removeItemAt (9);
+    m_menu->removeItemAt (8);
+    m_menu->removeItemAt (7);
     m_menu->removeItemAt (6);
     m_menu->removeItemAt (5);
     m_menu->removeItemAt (4);
@@ -182,7 +212,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
     data [nr] = 0;
     KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
     if (v)
-        v->addText (QString::fromLocal8Bit (str, nr));
+        v->addText (QString::fromLocal8Bit (data, nr));
     delete [] data;
 }
 
@@ -236,6 +266,66 @@ KDE_NO_EXPORT void KMPlayerVDRSource::keySetup () {
 
 KDE_NO_EXPORT void KMPlayerVDRSource::keyChannels () {
     sendCommand ("HITK CHANNELS\n");
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::keyMenu () {
+    sendCommand ("HITK MENU\n");
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::key0 () {
+    sendCommand ("HITK 0\n");
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::key1 () {
+    sendCommand ("HITK 1\n");
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::key2 () {
+    sendCommand ("HITK 2\n");
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::key3 () {
+    sendCommand ("HITK 3\n");
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::key4 () {
+    sendCommand ("HITK 4\n");
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::key5 () {
+    sendCommand ("HITK 5\n");
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::key6 () {
+    sendCommand ("HITK 6\n");
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::key7 () {
+    sendCommand ("HITK 7\n");
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::key8 () {
+    sendCommand ("HITK 8\n");
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::key9 () {
+    sendCommand ("HITK 9\n");
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::keyRed () {
+    sendCommand ("HITK RED\n");
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::keyGreen () {
+    sendCommand ("HITK GREEN\n");
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::keyYellow () {
+    sendCommand ("HITK YELLOW\n");
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::keyBlue () {
+    sendCommand ("HITK BLUE\n");
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::write (KConfig * m_config) {
