@@ -197,8 +197,9 @@ public:
     KMPlayerPrefSourcePageURL (QWidget *parent);
     ~KMPlayerPrefSourcePageURL () {}
 
-    QLineEdit *url;
+    KURLRequester * url;
     QComboBox * backend;
+    QCheckBox * allowhref;
 private slots:
     void slotBrowse ();
 };

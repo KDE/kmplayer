@@ -194,31 +194,28 @@ KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
 KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
 : QFrame (parent)
 {
-    QVBoxLayout *layout = new QVBoxLayout (this);
-    QHBoxLayout *buttonlayout = new QHBoxLayout ();
+    QVBoxLayout *layout = new QVBoxLayout (this, 0, 2);
+    QHBoxLayout * urllayout = new QHBoxLayout ();
+    QHBoxLayout * backendlayout = new QHBoxLayout ();
     QLabel *urlLabel = new QLabel (i18n ("URL:"), this, 0);
-    url = new QLineEdit ("", this, 0);
+    url = new KURLRequester ("", this, 0);
+    url->setShowLocalProtocol (true);
     backend = new QComboBox (this);
     QLabel *backendLabel = new QLabel (i18n ("Use Movie Player:"), this, 0);
+    allowhref = new QCheckBox (i18n ("Enable 'Click to Play' Start images:"), this);
     backend->insertItem (QString ("MPlayer"), 0);
     backend->insertItem (QString ("Xine"), 1);
-    QPushButton * browse = new QPushButton (i18n ("Browse..."), this);
-    connect (browse, SIGNAL (clicked ()), this, SLOT (slotBrowse ()));
-    layout->addWidget (urlLabel);
-    layout->addWidget (url);
-    layout->addWidget (backendLabel);
-    layout->addWidget (backend);
+    urllayout->addWidget (urlLabel);
+    urllayout->addWidget (url);
+    layout->addLayout (urllayout);
+    backendlayout->addWidget (backendLabel);
+    backendlayout->addWidget (backend);
+    layout->addLayout (backendlayout);
+    layout->addWidget (allowhref);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
-    buttonlayout->addWidget (browse);
-    layout->addLayout (buttonlayout);
 }
 
 void KMPlayerPrefSourcePageURL::slotBrowse () {
-    KFileDialog *dlg = new KFileDialog (QString::null, QString::null, this, "", true);
-    if (dlg->exec ())
-        url->setText (dlg->selectedURL().url ());
-    delete dlg;
 }
 
 KMPlayerPrefGeneralPageDVD::KMPlayerPrefGeneralPageDVD(QWidget *parent) : QFrame(parent)
@@ -235,7 +232,6 @@ KMPlayerPrefGeneralPageDVD::KMPlayerPrefGeneralPageDVD(QWidget *parent) : QFrame
     layout->addWidget (dvdDevicePathLabel);
     layout->addWidget (dvdDevicePath);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-
 }
 
 KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent, TVDevice * dev)

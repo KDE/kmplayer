@@ -38,8 +38,8 @@
 #include "kmplayerconfig.h"
 #include "kmplayer_part.h"
 #include "kmplayerprocess.h"
+#include "kmplayersource.h"
 #include "kmplayerview.h"
-//#include "configdialog.h"
 #include "pref.h"
 
 static MPlayerAudioDriver _ads[] = {
@@ -217,6 +217,7 @@ static const char * strVCDDevice = "VCD Device";
 static const char * strTrackPattern = "VCD Tracks";
 static const char * strAlwaysBuildIndex = "Always build index";
 const char * strUrlBackend = "URL Backend";
+static const char * strAllowHref = "Allow HREF";
 // postproc thingies
 static const char * strPPGroup = "Post processing options";
 static const char * strPostProcessing = "Post processing";
@@ -322,6 +323,8 @@ void KMPlayerSettings::readConfig () {
     videodriver = m_config->readNumEntry (strVoDriver, VDRIVER_XV_INDEX);
     audiodriver = m_config->readNumEntry (strAoDriver, 0);
     urlbackend = m_config->readEntry(strUrlBackend, "mplayer");
+    allowhref = m_config->readBoolEntry(strAllowHref, false);
+
     view->setUseArts (audiodriver == ADRIVER_ARTS_INDEX);
     additionalarguments = m_config->readEntry (strAddArgs, "");
     mencoderarguments = m_config->readEntry (strMencoderArgs, "-oac copy -ovc copy");
@@ -464,7 +467,7 @@ void KMPlayerSettings::show () {
     configdialog->m_GeneralPageGeneral->showBroadcastButton->setChecked (showbroadcastbutton);
     configdialog->m_GeneralPageGeneral->autoHideControlButtons->setChecked (autohidebuttons); //works
     configdialog->m_GeneralPageGeneral->seekTime->setValue(seektime);
-    configdialog->m_SourcePageURL->url->setText (m_player->url ().url ());
+    configdialog->m_SourcePageURL->url->setURL (m_player->process ()->source ()->url ().url ());
     configdialog->m_GeneralPageDVD->autoPlayDVD->setChecked (playdvd); //works if autoplay?
     configdialog->m_GeneralPageDVD->dvdDevicePath->lineEdit()->setText (dvddevice);
     configdialog->m_GeneralPageVCD->autoPlayVCD->setChecked (playvcd);
@@ -475,7 +478,7 @@ void KMPlayerSettings::show () {
     configdialog->m_GeneralPageOutput->videoDriver->setCurrentItem (videodriver);
     configdialog->m_GeneralPageOutput->audioDriver->setCurrentItem (audiodriver);
     configdialog->m_SourcePageURL->backend->setCurrentText (urlbackend);
-
+    configdialog->m_SourcePageURL->allowhref->setChecked (allowhref);
 
     if (cachesize > 0)
         configdialog->m_GeneralPageAdvanced->cacheSize->setValue(cachesize);
@@ -559,6 +562,7 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strVoDriver, videodriver);
     m_config->writeEntry (strAoDriver, audiodriver);
     m_config->writeEntry (strUrlBackend, urlbackend);
+    m_config->writeEntry (strAllowHref, allowhref);
     m_config->writeEntry (strAddArgs, additionalarguments);
     m_config->writeEntry (strCacheSize, cachesize);
     m_config->writeEntry (strShowControlButtons, showbuttons);
@@ -676,12 +680,12 @@ void KMPlayerSettings::okPressed () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
     if (!view)
         return;
-    bool urlchanged = m_player->url () != KURL (configdialog->m_SourcePageURL->url->text ());
-    if (m_player->url ().isEmpty () && configdialog->m_SourcePageURL->url->text ().isEmpty ())
+    bool urlchanged = m_player->process ()->source ()->url () != configdialog->m_SourcePageURL->url->url ();
+    if (m_player->process ()->source ()->url ().isEmpty () && configdialog->m_SourcePageURL->url->url ().isEmpty ())
         urlchanged = false; // hmmm aren't these URLs the same?
 
     if (urlchanged)
-        m_player->setURL (configdialog->m_SourcePageURL->url->text ());
+        m_player->setURL (configdialog->m_SourcePageURL->url->url ());
 
     sizeratio = configdialog->m_GeneralPageGeneral->keepSizeRatio->isChecked ();
     m_player->keepMovieAspect (sizeratio);
@@ -740,6 +744,7 @@ void KMPlayerSettings::okPressed () {
     videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentItem();
     audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentItem();
     urlbackend = configdialog->m_SourcePageURL->backend->currentText ();
+    allowhref = configdialog->m_SourcePageURL->allowhref->isChecked ();
     view->setUseArts(audiodriver == ADRIVER_ARTS_INDEX);
     //postproc
     postprocessing = configdialog->m_OPPagePostproc->postProcessing->isChecked();
@@ -793,7 +798,7 @@ void KMPlayerSettings::okPressed () {
     emit configChanged ();
 
     if (urlchanged)
-        m_player->openURL (KURL (configdialog->m_SourcePageURL->url->text ()));
+        m_player->openURL (configdialog->m_SourcePageURL->url->url ());
 }
 
 void KMPlayerSettings::getHelp () {

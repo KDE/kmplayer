@@ -319,17 +319,18 @@ unsigned long KMPlayer::length () const {
 }
             
 bool KMPlayer::openURL (const KURL & url) {
-    kdDebug () << "KMPlayer::openURL " << url.url() << endl;
+    kdDebug () << "KMPlayer::openURL " << url.url() << url.isValid () << endl;
     if (!m_view || !url.isValid ()) return false;
-    if (m_havehref) {
-        m_havehref = false;
+    if (m_havehref && m_settings->allowhref) {
         m_hrefsource->setURL (url);
         setSource (m_hrefsource);
     } else {
-        m_urlsource->setURL (url);
-        m_hrefsource->setURL (KURL ());
+        if (!m_havehref) m_urlsource->setURL (url);
+        m_hrefsource->clear ();
         setSource (m_urlsource);
+        kdDebug () << "KMPlayer::openURL2 " << m_urlsource << " " << m_urlsource->url().url() << endl;
     }
+    m_havehref = false;
     return true;
 }
 
@@ -347,15 +348,14 @@ bool KMPlayer::openFile () {
 }
 
 void KMPlayer::keepMovieAspect (bool b) {
+    if (!m_view) return;
     m_view->setKeepSizeRatio (b);
-    if (b) {
-        m_view->viewer ()->setAspect (m_process->source ()->aspect ());
-    } else
-        m_view->viewer ()->setAspect (0.0);
+    m_view->viewer ()->setAspect (b ? m_process->source ()->aspect () : 0.0);
 }
 
 void KMPlayer::recordingFinished () {
-    if (m_view && m_view->recordButton ()->isOn ()) 
+    if (!m_view) return;
+    if (m_view->recordButton ()->isOn ()) 
         m_view->recordButton ()->toggle ();
     if (m_settings->autoplayafterrecording)
         openURL (m_mencoder->recordURL ());
@@ -387,6 +387,7 @@ void KMPlayer::processFinished () {
 }
 
 void KMPlayer::processStarted () {
+    if (!m_view) return;
     kdDebug () << "process started" << endl;
     if (m_settings->showposslider && m_process->source ()->hasLength ())
         m_view->positionSlider()->show();
@@ -399,6 +400,7 @@ void KMPlayer::processStarted () {
 }
 
 void KMPlayer::processPosition (int pos) {
+    if (!m_view) return;
     m_movie_position = pos;
     QSlider *slider = m_view->positionSlider ();
     if (m_process->source ()->length () <= 0 && pos > 7 * slider->maxValue ()/8)
@@ -418,6 +420,7 @@ void KMPlayer::processLoading (int percentage) {
 }
 
 void KMPlayer::processPlaying () {
+    if (!m_view) return;
     kdDebug () << "KMPlayer::processPlaying " << endl;
     if (m_settings->sizeratio) {
         m_view->viewer ()->setAspect (m_process->source ()->aspect ());
@@ -1102,7 +1105,7 @@ bool KMPlayerURLSource::processOutput (const QString & str) {
         KURL url (str.mid (pos + 1));
         if (url.isValid ())
             m_urls.push_front (url);
-        kdDebug () << "KMPlayerURLSource::processOutput " << url.url () << endl;
+        kdDebug () << "KMPlayerURLSource::processOutput ID_FILENAME=" << url.url () << endl;
         return true;
     } else if (str.startsWith ("Playing")) {
         KURL url(str.mid (8));
@@ -1146,12 +1149,17 @@ void KMPlayerURLSource::setIdentified (bool b) {
     KMPlayerSource::setIdentified (b);
     if (!isreference && !m_urlother.isEmpty ())
         m_urls.push_back (m_urlother);
-    if (m_urls.count () > 0)
+    if (m_urls.count () > 0) {
         m_url = *m_urls.begin ();
+        kdDebug () << "KMPlayerURLSource::setIdentified new url:" << m_url << endl;
+    }
     m_urlother = KURL ();
     buildArguments ();
     int cache = m_player->settings ()->cachesize;
-    if (!m_url.isLocalFile () && cache > 0)
+    if (!m_url.isLocalFile () && cache > 0 && 
+            m_url.protocol () != QString ("dvd") &&
+            m_url.protocol () != QString ("vcd") &&
+            m_url.protocol () != QString ("tv"))
         m_options.sprintf ("-cache %d ", cache);
 
     if (m_player->settings ()->alwaysbuildindex && m_url.isLocalFile ()) {
@@ -1223,20 +1231,24 @@ void KMPlayerHRefSource::activate () {
     }
 }
 
+void KMPlayerHRefSource::clear () {
+    setURL (KURL ());
+    disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
+}
+
 void KMPlayerHRefSource::grabReady (const QString & path) {
     kdDebug () << "KMPlayerHRefSource::grabReady(" << path << ")" << endl;
     m_finished = true;
     m_grabfile = path;
     connect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
-    QTimer::singleShot (0, this, SLOT (finished ()));
+    finished ();
 }
 
 void KMPlayerHRefSource::finished () {
     kdDebug () << "KMPlayerHRefSource::finished()" << endl;
     KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
     if (!view->setPicture (m_grabfile)) {
-        setURL (KURL ());
-        disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
+        clear ();
         QTimer::singleShot (0, this, SLOT (play ()));
         return;
     }

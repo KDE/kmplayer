@@ -123,8 +123,8 @@ public:
     virtual bool processOutput (const QString & line);
     virtual bool hasLength ();
 
-    //void setURL (const KURL & url) { m_url = url; }
     void setURL (const KURL &);
+    void clear ();
 public slots:
     virtual void init ();
     virtual void activate ();

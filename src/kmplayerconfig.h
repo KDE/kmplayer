@@ -59,6 +59,7 @@ public:
     bool mplayerpost090 : 1;
     bool playdvd : 1;
     bool playvcd : 1;
+    bool allowhref : 1;
 // postproc thingies
     bool postprocessing : 1;
     bool disableppauto : 1;
