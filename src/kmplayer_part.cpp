@@ -29,6 +29,7 @@
 #include <kdebug.h>
 #include <kconfig.h>
 #include <kaction.h>
+#include <kapplication.h>
 #include <klocale.h>
 #include <kinstance.h>
 
@@ -118,6 +119,8 @@ KMPlayerPart::~KMPlayerPart () {
 bool KMPlayerPart::openURL (const KURL & url) {
     kdDebug () << "KMPlayerPart::openURL " << url.url() << endl;
     if (!m_view || !url.isValid ()) return false;
+    if (m_havehref && !kapp->authorizeURLAction ("redirect", url, m_urlsource->url ()))
+        m_havehref = false;
     if (m_havehref && m_settings->allowhref) {
         m_hrefsource->setURL (url);
         setSource (m_hrefsource);
@@ -216,7 +219,7 @@ enum JSCommand {
     notsupported,
     canpause, canplay, canstop, canseek, 
     isfullscreen, isloop, isaspect,
-    length, width, height, playstate, position, source, protocol,
+    length, width, height, playstate, position, source, setsource, protocol,
     gotourl, nextentry, jsc_pause, play, preventry, stop, volume
 };
 
@@ -227,7 +230,7 @@ struct JSCommandEntry {
     const KParts::LiveConnectExtension::Type rettype;
 };
 
-const int jscommandentries = 111;
+const int jscommandentries = 112;
 
 // keep this list in alphabetic order
 // http://service.real.com/help/library/guides/realonescripting/browse/htmfiles/embedmet.htm
@@ -317,6 +320,7 @@ static const JSCommandEntry JSCommandList [jscommandentries] = {
     { "SetConsoleEvents", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetControls", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetCopyright", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetCurrentPosition", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetDoubleSize", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetFullScreen", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetImageStatus", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
@@ -331,7 +335,7 @@ static const JSCommandEntry JSCommandList [jscommandentries] = {
     { "SetShowPreferences", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetShowStatistics", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetShuffle", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
-    { "SetSource" /*Do NOT support this for the part*/, notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetSource", setsource, 0L, KParts::LiveConnectExtension::TypeBool },
     { "SetTitle", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetVolume", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetWantErrors", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
@@ -483,6 +487,15 @@ bool KMPlayerLiveConnectExtension::call
             break;
         case source:
             rval = player->url ().url ();
+            break;
+        case setsource:
+            rval ="false";
+            if (args.size ()) {
+                KURL url (args.first ());
+                if (kapp->authorizeURLAction ("redirect", player->url (), url) &&
+                        player->openURL (url))
+                    rval = "true";
+            }
             break;
         case protocol:
             rval = player->url ().protocol ();
