@@ -293,7 +293,7 @@ bool KMPlayer::openURL (const KURL & _url) {
         m_urlsource->setURL (url);
         setSource (m_urlsource);
         //play ();
-        m_href == QString::null;
+        m_href = QString::null;
     }
     return m_process->isRunning ();
 }
