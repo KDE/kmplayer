@@ -390,6 +390,13 @@ KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
     m_view->widgetStack ()->setGeometry (x, y, wws, hws);
 }
 
+KDE_NO_EXPORT void ViewLayer::setRootLayout (RegionNodePtr rl) {
+    if (rootLayout != rl) {
+        rootLayout = rl;
+        resizeEvent (0L);
+    }
+}
+
 KDE_NO_EXPORT void ViewLayer::showEvent (QShowEvent *) {
     resizeEvent (0L);
 }

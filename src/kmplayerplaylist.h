@@ -282,6 +282,10 @@ public:
      * Element has started or stopped notification
      */
     virtual void stateElementChanged (ElementPtr element) = 0;
+    /**
+     * Some region needs repainting, eg. a timer expired
+     */
+    virtual void repaintRegion (RegionNodePtr region) = 0;
 };
 
 class KMPLAYER_EXPORT Document : public Mrl {

@@ -39,35 +39,73 @@ namespace KMPlayer {
 class ImageDataPrivate;
 class TextDataPrivate;
 
-class AudioVideoData : public RegionData {
+class TimedRegionData : public QObject, public RegionData {
+    Q_OBJECT
+public:
+    ~TimedRegionData ();
+    /**
+     * start, or restart in case of re-use, the durations
+     */
+    void begin ();
+    /**
+     * forced killing of timers
+     */
+    void end ();
+protected slots:
+    void timerEvent (QTimerEvent *);
+    /**
+     * start_timer timer expired
+     */
+    virtual void started ();
+protected:
+    TimedRegionData (RegionNodePtr r, ElementPtr & e);
+    ElementPtrW media_element;
+    int start_timer;
+    int dur_timer;
+    bool isstarted;
+};
+
+class AudioVideoData : public TimedRegionData {
+    Q_OBJECT
 public:
     AudioVideoData (RegionNodePtr r, ElementPtr e);
     virtual bool isAudioVideo ();
-    ElementPtrW av_element;
+protected slots:
+    /**
+     * start_timer timer expired, start the audio/video clip
+     */
+    virtual void started ();
 };
 
-class ImageData : public QObject, public RegionData {
+class ImageData : public TimedRegionData {
     Q_OBJECT
 public:
     ImageData (RegionNodePtr r, ElementPtr e);
     ~ImageData ();
     void paint (QPainter & p);
-    ElementPtrW image_element;
-    QPixmap * image;
     ImageDataPrivate * d;
+protected slots:
+    /**
+     * start_timer timer expired, repaint if we have an image
+     */
+    virtual void started ();
 private slots:
     void slotResult (KIO::Job*);
     void slotData (KIO::Job*, const QByteArray& qb);
 };
 
-class TextData : public QObject, public RegionData {
+class TextData : public TimedRegionData {
     Q_OBJECT
 public:
     TextData (RegionNodePtr r, ElementPtr e);
     ~TextData ();
     void paint (QPainter & p);
-    ElementPtrW text_element;
     TextDataPrivate * d;
+protected slots:
+    /**
+     * start_timer timer expired, repaint if we have text
+     */
+    virtual void started ();
 private slots:
     void slotResult (KIO::Job*);
     void slotData (KIO::Job*, const QByteArray& qb);
@@ -162,9 +200,22 @@ public:
     void opened ();
     void start ();
     void reset ();
+    /**
+     * Called from the TimedRegionData when 'start' attribute expires
+     * so audio/video clip should start
+     */
+    void timed_start ();
+    /**
+     * Called from the TimedRegionData when 'dur' (or 'end' - 'start' 
+     * attribute expires to mark us finished
+     */
+    void timed_end ();
     RegionNodePtrW region;
     QString m_type;
-    int bitrate;
+    unsigned int bitrate;
+    unsigned int begin_time;
+    unsigned int end_time;
+    unsigned int duration_time;
 };
 
 class AVMediaType : public MediaType {
@@ -179,7 +230,6 @@ class ImageMediaType : public MediaType {
 public:
     ImageMediaType (ElementPtr & d);
     RegionDataPtr getNewData (RegionNodePtr r);
-    void start ();
     /**
      * cache the region data, so we load image only once
      */
@@ -190,7 +240,6 @@ class TextMediaType : public MediaType {
 public:
     TextMediaType (ElementPtr & d);
     RegionDataPtr getNewData (RegionNodePtr r);
-    void start ();
     /**
      * cache the region data, so we load image only once
      */

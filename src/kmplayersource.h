@@ -121,6 +121,7 @@ protected:
      */
     bool requestPlayURL (ElementPtr mrl, RegionNodePtr region);
     void stateElementChanged (ElementPtr element);
+    void repaintRegion (RegionNodePtr region);
 
     ElementPtr m_document;
     ElementPtr m_current;

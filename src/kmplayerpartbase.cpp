@@ -805,7 +805,7 @@ void Source::playURLDone () {
     m_player->process()->view ()->fullScreenWidget ()->repaint ();
 }
 
-bool Source::requestPlayURL (ElementPtr mrl, RegionNodePtr region) {
+bool Source::requestPlayURL (ElementPtr mrl, RegionNodePtr /*region*/) {
     kdDebug() << "Source::requestPlayURL " << mrl->mrl ()->src << endl;
     m_current = mrl;
     m_player->updateTree ();
@@ -819,6 +819,11 @@ void Source::stateElementChanged (ElementPtr elm) {
         emit endOfPlayItems (); // played all items
     if (m_player->view ())
         m_player->process()->view ()->fullScreenWidget ()->update ();
+}
+
+void Source::repaintRegion (RegionNodePtr r) {
+    if (m_player->view ())
+        m_player->process()->view ()->fullScreenWidget ()->update (r->x, r->y, r->w, r->h);
 }
 
 void Source::insertURL (const QString & mrl) {
