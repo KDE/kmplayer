@@ -126,7 +126,7 @@ inline SharedPtr<T> & SharedPtr<T>::operator = (const SharedPtr<T> & s) {
 }
 
 template <class T> inline SharedPtr<T> & SharedPtr<T>::operator = (T * t) {
-    if ((!data && t) || data->ptr != t) {
+    if ((!data && t) || (data && data->ptr != t)) {
         if (data) data->release ();
         data = t ? new SharedData<T> (t, false) : 0L;
     }
