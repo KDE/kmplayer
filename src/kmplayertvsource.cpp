@@ -278,7 +278,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::playCurrent () {
     if (m_cur_tvdevice)
         old_dev = KMPlayer::convertNode <TVDevice> (m_cur_tvdevice)->src;
     KMPlayer::ElementPtr elm = m_current;
-    if (!strcmp (elm->nodeName (), "tvchannel")) {
+    if (elm && !strcmp (elm->nodeName (), "tvchannel")) {
         channel = KMPlayer::convertNode <TVChannel> (elm);
         elm = elm->parentNode ();
     }

@@ -61,6 +61,10 @@ public:
      * forced killing of timers
      */
     virtual void end ();
+    /**
+     * change behaviour of this runtime, returns old value
+     */
+    virtual QString setParam (const QString & name, const QString & value);
     bool isStarted () const { return isstarted; }
     virtual void paint (QPainter &) {}
     /**
@@ -137,12 +141,12 @@ protected:
      * Gets contents from url and puts it in mt_d->data
      */
     bool wget (const KURL & url);
+    /**
+     * abort previous wget job
+     */
+    void killWGet ();
 public:
     ~MediaTypeRuntime ();
-    /**
-     * re-implement for regions
-     */
-    virtual void begin ();
     /**
      * re-implement for pending KIO::Job operations
      */
@@ -155,6 +159,10 @@ public:
      * will request a repaint of attached region
      */
     virtual void stopped ();
+    /**
+     * re-implement for regions
+     */
+    virtual QString setParam (const QString & name, const QString & value);
 protected:
     MediaTypeRuntimePrivate * mt_d;
 protected slots:
@@ -170,11 +178,11 @@ class AudioVideoData : public MediaTypeRuntime {
 public:
     AudioVideoData (ElementPtr e);
     virtual bool isAudioVideo ();
-protected slots:
+    virtual QString setParam (const QString & name, const QString & value);
     /**
      * start_timer timer expired, start the audio/video clip
      */
-    virtual void started ();
+    virtual void started () {}
 };
 
 /**
@@ -186,6 +194,7 @@ public:
     ImageData (ElementPtr e);
     ~ImageData ();
     void paint (QPainter & p);
+    virtual QString setParam (const QString & name, const QString & value);
     ImageDataPrivate * d;
 protected slots:
     /**
@@ -205,6 +214,7 @@ public:
     TextData (ElementPtr e);
     ~TextData ();
     void paint (QPainter & p);
+    virtual QString setParam (const QString & name, const QString & value);
     TextDataPrivate * d;
 protected slots:
     /**
@@ -371,8 +381,11 @@ public:
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
     void opened ();
+    void start ();
+    void stop ();
     QString m_type;
     unsigned int bitrate;
+    bool in_start;
 };
 
 class AVMediaType : public MediaType {
@@ -403,6 +416,13 @@ public:
     void start ();
     void reset ();
     ElementRuntimePtr runtime;
+};
+
+class Param : public Element {
+public:
+    KDE_NO_CDTOR_EXPORT Param (ElementPtr & d) : Element (d) {}
+    KDE_NO_EXPORT const char * nodeName () const { return "param"; }
+    void start ();
 };
 
 } // SMIL namespace

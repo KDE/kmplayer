@@ -148,9 +148,9 @@ KDE_NO_EXPORT void ElementRuntime::begin () {
         end ();
 
     // setup timings ..
+    durations [duration_time].durval = duration_media; //intrinsic time duration
     setDurationItem (begin_time, element->getAttribute ("begin"));
     setDurationItem (end_time, element->getAttribute ("end"));
-    durations [duration_time].durval = duration_media; //intrinsic time duration
     QString durvalstr = element->getAttribute ("dur").stripWhiteSpace ();
     if (durvalstr.isEmpty ()) { // update dur if not set
         if (durations [end_time].durval < duration_last_option &&
@@ -205,6 +205,11 @@ KDE_NO_EXPORT void ElementRuntime::end () {
         }
         durations [i].durval = 0;
     }
+}
+
+KDE_NO_EXPORT
+QString ElementRuntime::setParam (const QString & name, const QString & val) {
+    return QString::null;
 }
 
 KDE_NO_EXPORT void ElementRuntime::timerEvent (QTimerEvent * e) {
@@ -268,12 +273,13 @@ KDE_NO_EXPORT void ElementRuntime::started () {
 }
 
 KDE_NO_EXPORT void ElementRuntime::stopped () {
+    kdDebug () << "ElementRuntime::stopped " << !!element << " " << repeat_count << " " << durations [duration_time].durval << endl; 
     if (!element)
         end ();
     else if (0 < repeat_count--) {
-        if (durations [begin_time].durval > 0) {
-            if (durations [begin_time].durval < duration_last_option)
-                start_timer = startTimer (1000 * durations [begin_time].durval);
+        if (durations [begin_time].durval > 0 &&
+                durations [begin_time].durval < duration_last_option) {
+            start_timer = startTimer (1000 * durations [begin_time].durval);
         } else {
             isstarted = true;
             QTimer::singleShot (0, this, SLOT (started ()));
@@ -287,39 +293,44 @@ KDE_NO_EXPORT void ElementRuntime::stopped () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT void SetData::started () {
-    kdDebug () << "SetData::started" << endl;
+    kdDebug () << "SetData::started " << durations [duration_time].durval << endl;
+    if (durations [duration_time].durval == duration_media)
+        durations [duration_time].durval = 0; // intrinsic duration of 0
     if (element) {
         QString elm_id = element->getAttribute ("targetElement");
         target_element = element->document ()->getElementById (elm_id);
         changed_attribute = element->getAttribute ("attributeName");
         QString to = element->getAttribute ("to");
         if (target_element) {
-            old_value = target_element->getAttribute (changed_attribute);
-            target_element->setAttribute (changed_attribute, to);
-            PlayListNotify * n = target_element->document ()->notify_listener;
             ElementRuntimePtr rt = target_element->getRuntime ();
-            if (rt)
+            if (rt) {
                 target_region = rt->region_node;
-            else if (!strcmp (target_element->nodeName (), "region"))
-                target_region = findRegion (target_element->document ()->rootLayout, elm_id);
-    kdDebug () << "SetData::started " << target_element->nodeName () << "." << changed_attribute << " " << old_value << "->" << to << endl;
-            if (n && target_region)
-                n->repaintRegion (target_region);
+                old_value = rt->setParam (changed_attribute, to);
+                kdDebug () << "SetData::started " << target_element->nodeName () << "." << changed_attribute << " " << old_value << "->" << to << endl;
+                PlayListNotify *n = target_element->document()->notify_listener;
+                if (n && target_region)
+                    n->repaintRegion (target_region);
+            }
         } else
             kdWarning () << "target element not found" << endl;
     } else
         kdWarning () << "set element disappeared" << endl;
+    ElementRuntime::started ();
 }
 
 KDE_NO_EXPORT void SetData::stopped () {
+    kdDebug () << "SetData::stopped " << durations [duration_time].durval << endl;
     if (target_element) {
-        target_element->setAttribute (changed_attribute, old_value);
-        PlayListNotify * n = target_element->document ()->notify_listener;
-        if (n && target_region)
-            n->repaintRegion (target_region);
+        ElementRuntimePtr rt = target_element->getRuntime ();
+        if (rt) {
+            old_value = rt->setParam (changed_attribute, old_value);
+            PlayListNotify * n = target_element->document ()->notify_listener;
+            if (n && target_region)
+                n->repaintRegion (target_region);
+        }
     } else
         kdWarning () << "target element not found" << endl;
-    isstarted = false;
+    ElementRuntime::stopped ();
 }
 
 //-----------------------------------------------------------------------------
@@ -342,10 +353,19 @@ KDE_NO_CDTOR_EXPORT MediaTypeRuntime::MediaTypeRuntime (ElementPtr e)
  : ElementRuntime (e), mt_d (new MediaTypeRuntimePrivate) {}
 
 KDE_NO_CDTOR_EXPORT MediaTypeRuntime::~MediaTypeRuntime () {
+    killWGet ();
     delete mt_d;
 }
 
+KDE_NO_EXPORT void MediaTypeRuntime::killWGet () {
+    if (mt_d->job) {
+        mt_d->job->kill (); // quiet, no result signal
+        mt_d->job = 0L;
+    }
+}
+
 KDE_NO_EXPORT bool MediaTypeRuntime::wget (const KURL & url) {
+    killWGet ();
     mt_d->job = KIO::get (url, false, false);
     connect (mt_d->job, SIGNAL (data (KIO::Job *, const QByteArray &)),
              this, SLOT (slotData (KIO::Job *, const QByteArray &)));
@@ -354,8 +374,8 @@ KDE_NO_EXPORT bool MediaTypeRuntime::wget (const KURL & url) {
     return true;
 }
 
-KDE_NO_EXPORT void MediaTypeRuntime::slotResult (KIO::Job *) {
-    if (mt_d->job->error ())
+KDE_NO_EXPORT void MediaTypeRuntime::slotResult (KIO::Job * job) {
+    if (job->error ())
         mt_d->data.resize (0);
     mt_d->job = 0L; // signal KIO::Job::result deletes itself
 }
@@ -368,37 +388,36 @@ KDE_NO_EXPORT void MediaTypeRuntime::slotData (KIO::Job*, const QByteArray& qb) 
     }
 }
 
-KDE_NO_EXPORT void MediaTypeRuntime::begin () {
-    if (element) {
-        // setup region ..
-        QString region = element->getAttribute ("region");
-        if (!region.isEmpty ()) {
-            RegionNodePtr root = element->document ()->rootLayout;
-            if (root) {
-                region_node = findRegion (root, region);
-                if (region_node) {
-                    region_node->clearAll ();
-                    region_node->attached_element = element;
-                } else
-                    kdWarning() << "region " << region << " not found" << endl;
-            }
-        }
-        QString fill = element->getAttribute ("fill");
-        if (!fill.isEmpty ()) {
-            if (fill == "freeze")
-                mt_d->fill = MediaTypeRuntimePrivate::fill_freeze;
-            // else all other fill options ..
-        }
-    }
-    ElementRuntime::begin ();
-}
-
 KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::end () {
     if (mt_d->job) {
         mt_d->job->kill (); // quiet, no result signal
         mt_d->job = 0L; // KIO::Job::kill deletes itself
     }
     ElementRuntime::end ();
+}
+
+KDE_NO_EXPORT
+QString MediaTypeRuntime::setParam (const QString & name, const QString & val) {
+    if (name == QString::fromLatin1 ("region")) {
+        // setup region ..
+        if (element && !val.isEmpty ()) {
+            RegionNodePtr root = element->document ()->rootLayout;
+            if (root) {
+                region_node = findRegion (root, val);
+                if (region_node) {
+                    region_node->clearAll ();
+                    region_node->attached_element = element;
+                } else
+                    kdWarning() << "region " << val << " not found" << endl;
+            }
+        }
+    } else if (name == QString::fromLatin1 ("fill")) {
+        if (val == QString::fromLatin1 ("freeze"))
+            mt_d->fill = MediaTypeRuntimePrivate::fill_freeze;
+            // else all other fill options ..
+    } else
+        return ElementRuntime::setParam (name, val);
+    return QString::null;
 }
 
 KDE_NO_EXPORT void MediaTypeRuntime::started () {
@@ -426,15 +445,18 @@ KDE_NO_EXPORT bool AudioVideoData::isAudioVideo () {
     return isstarted;
 }
 
-KDE_NO_EXPORT void AudioVideoData::started () {
-    kdDebug () << "AudioVideoData::started " << endl; 
-    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
-    if (mt) {
-        PlayListNotify * n = mt->document ()->notify_listener;
-        if (n && !mt->src.isEmpty ())
-            n->requestPlayURL (element, region_node);
-    }
-    ElementRuntime::started (); // no repaint necessary
+KDE_NO_EXPORT
+QString AudioVideoData::setParam (const QString & name, const QString & val) {
+    kdDebug () << "AudioVideoData::setParam " << name << "=" << val << endl;
+    if (name == QString::fromLatin1 ("src")) {
+        if (element) {
+            PlayListNotify * n = element->document ()->notify_listener;
+            if (n && !val.isEmpty ())
+                n->requestPlayURL (element, region_node);
+        }
+    } else
+        return MediaTypeRuntime::setParam (name, val);
+    return QString::null;
 }
 //-----------------------------------------------------------------------------
 
@@ -448,6 +470,18 @@ static Element * fromScheduleGroup (ElementPtr & d, const QString & tag) {
     return 0L;
 }
 
+static Element * fromParamGroup (ElementPtr & d, const QString & tag) {
+    if (!strcmp (tag.latin1 (), "param"))
+        return new SMIL::Param (d);
+    return 0L;
+}
+
+static Element * fromAnimateGroup (ElementPtr & d, const QString & tag) {
+    if (!strcmp (tag.latin1 (), "set"))
+        return new SMIL::Set (d);
+    return 0L;
+}
+
 static Element * fromMediaContentGroup (ElementPtr & d, const QString & tag) {
     const char * taglatin = tag.latin1 ();
     if (!strcmp (taglatin, "video") || !strcmp (taglatin, "audio"))
@@ -456,8 +490,6 @@ static Element * fromMediaContentGroup (ElementPtr & d, const QString & tag) {
         return new SMIL::ImageMediaType (d);
     else if (!strcmp (taglatin, "text"))
         return new SMIL::TextMediaType (d);
-    else if (!strcmp (tag.latin1 (), "set")) // not sure if correct ..
-        return new SMIL::Set (d);
     // animation, textstream, ref, brush
     return 0L;
 }
@@ -465,8 +497,6 @@ static Element * fromMediaContentGroup (ElementPtr & d, const QString & tag) {
 static Element * fromContentControlGroup (ElementPtr & d, const QString & tag) {
     if (!strcmp (tag.latin1 (), "switch"))
         return new SMIL::Switch (d);
-    else if (!strcmp (tag.latin1 (), "set"))
-        return new SMIL::Set (d);
     return 0L;
 }
 
@@ -772,6 +802,8 @@ KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (ElementPtr &d, const QString &t)
 
 KDE_NO_EXPORT ElementPtr SMIL::MediaType::childFromTag (const QString & tag) {
     Element * elm = fromContentControlGroup (m_doc, tag);
+    if (!elm) elm = fromParamGroup (m_doc, tag);
+    if (!elm) elm = fromAnimateGroup (m_doc, tag);
     if (elm)
         return elm->self ();
     return ElementPtr ();
@@ -790,6 +822,33 @@ KDE_NO_EXPORT void SMIL::MediaType::opened () {
     }
 }
 
+KDE_NO_EXPORT void SMIL::MediaType::start () {
+    ElementRuntimePtr rt = getRuntime ();
+    if (rt) {
+        setState (state_started);
+        in_start = false;
+        if (firstChild ()) {
+            in_start = true;
+            firstChild ()->start ();
+        }
+        if (!in_start) { // all children finished
+            for (ElementPtr a = attributes().item (0); a; a= a->nextSibling()) {
+                Attribute * att = convertNode <Attribute> (a);
+                rt->setParam (QString (att->nodeName ()), att->nodeValue ());
+            }
+            rt->setParam (QString ("src"), src);
+            rt->begin ();
+        } // else this points to a playlist
+    } else // should not happen
+        Element::start ();
+}
+
+KDE_NO_EXPORT void SMIL::MediaType::stop () {
+    if (in_start) // all children stopped while still in the start() proc
+        in_start = false;
+    else
+        SMIL::TimedElement::stop ();
+}
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT
@@ -867,6 +926,18 @@ KDE_NO_EXPORT void SMIL::Set::reset () {
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_EXPORT void SMIL::Param::start () {
+    QString name = getAttribute ("name");
+    if (!name.isEmpty () && parentNode ()) {
+        ElementRuntimePtr rt = parentNode ()->getRuntime ();
+        if (rt)
+            rt->setParam (name, getAttribute ("value"));
+    }
+    stop (); // no livetime of itself
+}
+
+//-----------------------------------------------------------------------------
+
 void RegionNode::paint (QPainter & p) {
     if (regionElement) {
         QString colstr = regionElement->getAttribute ("background-color");
@@ -922,23 +993,32 @@ namespace KMPlayer {
 
 KDE_NO_CDTOR_EXPORT ImageData::ImageData (ElementPtr e)
  : MediaTypeRuntime (e), d (new ImageDataPrivate) {
-    Mrl * mrl = element ? element->mrl () : 0L;
-    kdDebug () << "ImageData::ImageData " << (mrl ? mrl->src : QString()) << endl;
-    if (mrl && !mrl->src.isEmpty ()) {
-        KURL url (mrl->src);
-        if (url.isLocalFile ()) {
-            QPixmap *pix = new QPixmap (url.path ());
-            if (pix->isNull ())
-                delete pix;
-            else
-                d->image = pix;
-        } else
-            wget (url);
-    }
 }
 
 KDE_NO_CDTOR_EXPORT ImageData::~ImageData () {
     delete d;
+}
+
+KDE_NO_EXPORT
+QString ImageData::setParam (const QString & name, const QString & val) {
+    kdDebug () << "ImageData::param " << name << "=" << val << endl;
+    if (name == QString::fromLatin1 ("src")) {
+        delete d->image;
+        killWGet ();
+        if (!val.isEmpty ()) {
+            KURL url (val);
+            if (url.isLocalFile ()) {
+                QPixmap *pix = new QPixmap (url.path ());
+                if (pix->isNull ())
+                    delete pix;
+                else
+                    d->image = pix;
+            } else
+                wget (url);
+        }
+    } else
+        return MediaTypeRuntime::setParam (name, val);
+    return QString::null;
 }
 
 KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
@@ -988,42 +1068,49 @@ namespace KMPlayer {
 }
 
 KDE_NO_CDTOR_EXPORT TextData::TextData (ElementPtr e)
- : MediaTypeRuntime (e) {
-    d = new TextDataPrivate;
-    Mrl * mrl = element ? element->mrl () : 0L;
-    kdDebug () << "TextData::TextData " << (mrl ? mrl->src : QString()) << endl;
-    if (mrl && !mrl->src.isEmpty ()) {
-        KURL url (mrl->src);
-        if (url.isLocalFile ()) {
-            QFile file (url.path ());
-            file.open (IO_ReadOnly);
-            d->data = file.readAll ();
-        } else
-            wget (url);
-    }
-    for (ElementPtr p = element->firstChild (); p; p = p->nextSibling())
-        if (!strcmp (p->nodeName (), "param")) {
-            QString name = p->getAttribute ("name");
-            QString value = p->getAttribute ("value");
-            kdDebug () << "TextData param " << name << "=" << value << endl;
-            if (name == QString ("backgroundColor"))
-                d->background_color = QColor (value).rgb ();
-            else if (name == QString ("fontColor"))
-                d->foreground_color = QColor (value).rgb ();
-            else if (name == QString ("charset"))
-                d->codec = QTextCodec::codecForName (value.ascii ());
-            else if (name == QString ("fontFace"))
-                ; //FIXME
-            else if (name == QString ("fontPtSize"))
-                d->font.setPointSize (value.toInt ());
-            else if (name == QString ("fontSize"))
-                d->font.setPointSize (d->font.pointSize () + value.toInt ());
-            // TODO: expandTabs fontBackgroundColor fontSize fontStyle fontWeight hAlig vAlign wordWrap
-        }
+ : MediaTypeRuntime (e), d (new TextDataPrivate) {
 }
 
 KDE_NO_CDTOR_EXPORT TextData::~TextData () {
     delete d;
+}
+
+KDE_NO_EXPORT
+QString TextData::setParam (const QString & name, const QString & val) {
+    kdDebug () << "TextData::setParam " << name << "=" << val << endl;
+    QString old_val;
+    if (name == QString::fromLatin1 ("src")) {
+        d->data.resize (0);
+        killWGet ();
+        if (!val.isEmpty ()) {
+            KURL url (val);
+            if (url.isLocalFile ()) {
+                QFile file (url.path ());
+                file.open (IO_ReadOnly);
+                d->data = file.readAll ();
+            } else
+                wget (url);
+        }
+    } else if (name == QString::fromLatin1 ("backgroundColor")) {
+        old_val = QColor (QRgb (d->background_color)).name ();
+        d->background_color = QColor (val).rgb ();
+    } else if (name == QString ("fontColor")) {
+        old_val = QColor (QRgb (d->foreground_color)).name ();
+        d->foreground_color = QColor (val).rgb ();
+    } else if (name == QString ("charset")) {
+        d->codec = QTextCodec::codecForName (val.ascii ());
+    } else if (name == QString ("fontFace")) {
+        ; //FIXME
+    } else if (name == QString ("fontPtSize")) {
+        old_val = QString::number (d->font.pointSize ());
+        d->font.setPointSize (val.toInt ());
+    } else if (name == QString ("fontSize")) {
+        old_val = QString::number (0); // -1 * val.toInt () ??
+        d->font.setPointSize (d->font.pointSize () + val.toInt ());
+    // TODO: expandTabs fontBackgroundColor fontSize fontStyle fontWeight hAlig vAlign wordWrap
+    } else
+        return MediaTypeRuntime::setParam (name, val);
+    return old_val;
 }
 
 KDE_NO_EXPORT void TextData::paint (QPainter & p) {

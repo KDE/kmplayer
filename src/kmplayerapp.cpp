@@ -298,19 +298,12 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
 
 KDE_NO_EXPORT void KMPlayerApp::resizePlayer (int percentage) {
     KMPlayer::Source * source = m_player->source ();
-    if (!source || (percentage == 100 && source->aspect () < 0.01))
-        return; // 100% of a not set aspect?
+    if (!source)
+        return;
     int w, h;
     m_player->sizes (w, h);
     kdDebug () << "KMPlayerApp::resizePlayer (" << w << "," << h << ")" << endl;
     if (w > 0 && h > 0) {
-        if (source->aspect () > 0.01) {
-            w = int (source->aspect () * h);
-            w += w % 2;
-            source->setWidth (w);
-            source->setHeight (h);
-        } else
-            source->setAspect (1.0 * w/h);
         if (m_view->controlPanel ()->isVisible ())
             h += m_view->controlPanel ()->size ().height ();
         QSize s1 = size ();

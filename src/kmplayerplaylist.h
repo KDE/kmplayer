@@ -293,6 +293,9 @@ public:
     QString src;
     QString pretty_name;
     QString mimetype;
+    int width;
+    int height;
+    float aspect;
     bool parsed;
     bool bookmarkable;
 };

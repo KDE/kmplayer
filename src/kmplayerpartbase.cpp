@@ -412,8 +412,9 @@ bool PartBase::openFile () {
 void PartBase::keepMovieAspect (bool b) {
     if (!m_view) return;
     m_view->setKeepSizeRatio (b);
+    Mrl * mrl = m_source->current () ? m_source->current ()->mrl () : 0L;
     if (m_view->viewer ())
-        m_view->viewer ()->setAspect (b ? m_source->aspect () : 0.0);
+        m_view->viewer ()->setAspect (b && mrl ? mrl->aspect : 0.0);
 }
 
 static const char * statemap [] = {
@@ -460,9 +461,9 @@ void PartBase::processStateChange (KMPlayer::Process::State old, KMPlayer::Proce
     kdDebug () << "processState " << statemap[old] << " -> " << statemap[state] << endl;
     Source * src = m_process->player() == this ? m_source : m_process->source();
     if (state == Process::Playing) {
+        Mrl * mrl = m_source->current () ? m_source->current ()->mrl () : 0L;
         m_process->view ()->videoStart ();
-        if (m_settings->sizeratio && m_view->viewer ())
-            m_view->viewer ()->setAspect (src->aspect ());
+        m_view->viewer ()->setAspect (m_settings->sizeratio && mrl ? mrl->aspect : 0.0);
         m_view->controlPanel ()->showPositionSlider (!!src->length ());
         m_view->controlPanel ()->enableSeekButtons (src->isSeekable ());
         if (m_settings->autoadjustvolume && src == m_source)
@@ -625,9 +626,12 @@ void PartBase::sizes (int & w, int & h) const {
             if (w && h)
                 return;
         }
+        Mrl * mrl = m_source->current () ? m_source->current ()->mrl () : 0L;
+        if (mrl) {
+            w = mrl->width;
+            h = mrl->height;
+        }
     }
-    w = m_source->width ();
-    h = m_source->height ();
     if ((m_noresize || w <= 0 || h <= 0) && m_view->viewer ()) {
         w = m_view->viewer ()->width ();
         h = m_view->viewer ()->height ();
@@ -706,13 +710,43 @@ Source::~Source () {
 }
 
 void Source::init () {
-    m_width = 0;
-    m_height = 0;
-    m_aspect = 0.0;
     setLength (0);
     m_position = 0;
     m_identified = false;
     m_recordcmd.truncate (0);
+}
+
+int Source::width () {
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    return mrl ? mrl->width : 0;
+}
+
+int Source::height () {
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    return mrl ? mrl->height : 0;
+}
+
+float Source::aspect () {
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    return mrl ? mrl->aspect : 0.0;
+}
+
+void Source::setWidth (int w) {
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    if (mrl)
+        mrl->width = w;
+}
+
+void Source::setHeight (int w) {
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    if (mrl)
+        mrl->height = w;
+}
+
+void Source::setAspect (float w) {
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    if (mrl)
+        mrl->aspect = w;
 }
 
 void Source::setLength (int len) {

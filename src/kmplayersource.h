@@ -48,13 +48,13 @@ public:
     virtual bool hasLength ();
     virtual bool isSeekable ();
 
-    KDE_NO_EXPORT int width () const { return m_width; }
-    KDE_NO_EXPORT int height () const { return m_height; }
+    int width ();
+    int height ();
     /* length () returns length in deci-seconds */
     KDE_NO_EXPORT int length () const { return m_length; }
     /* position () returns position in deci-seconds */
     KDE_NO_EXPORT int position () const { return m_position; }
-    KDE_NO_EXPORT float aspect () const { return m_aspect > 0.01 ? m_aspect : (m_height > 0 ? (1.0*m_width)/m_height: 0.0); }
+    float aspect ();
     KDE_NO_EXPORT const KURL & url () const { return m_url; }
     KDE_NO_EXPORT const KURL & subUrl () const { return m_sub_url; }
     void reset ();
@@ -77,9 +77,9 @@ public:
     void insertURL (const QString & url);
     KDE_NO_EXPORT void setSubURL (const KURL & url) { m_sub_url = url; }
     void setMime (const QString & m);
-    KDE_NO_EXPORT void setWidth (int w) { m_width = w; }
-    KDE_NO_EXPORT void setHeight (int h) { m_height = h; }
-    KDE_NO_EXPORT void setAspect (float a) { m_aspect = a; }
+    void setWidth (int w);
+    void setHeight (int h);
+    void setAspect (float a);
     /* setLength (len) set length in deci-seconds */
     void setLength (int len);
     /* setPosition (pos) set position in deci-seconds */
@@ -142,9 +142,6 @@ protected:
     QString m_pipecmd;
     QString m_options;
 private:
-    int m_width;
-    int m_height;
-    float m_aspect;
     int m_length;
     int m_position;
 };
