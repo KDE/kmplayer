@@ -157,10 +157,14 @@ KDE_NO_EXPORT bool RegionNode::pointerClicked (int _x, int _y) {
         handled |= r->pointerClicked (_x, _y);
     if (!handled) { // handle it ..
         if (attached_element) {
-            kdDebug () << "activateEvent " << attached_element->nodeName () << endl;
             ElementRuntimePtr rt = attached_element->getRuntime ();
             if (rt)
                 static_cast <TimedRuntime *> (rt.ptr ())->emitActivateEvent ();
+        }
+        if (regionElement) {
+            ElementRuntimePtr rt = regionElement->getRuntime ();
+            if (rt)
+                static_cast <RegionRuntime *> (rt.ptr ())->emitActivateEvent ();
         }
     }
     return inside;
@@ -175,18 +179,26 @@ KDE_NO_EXPORT bool RegionNode::pointerMoved (int _x, int _y) {
     if (has_mouse && (!inside || handled)) { // OutOfBoundsEvent
         has_mouse = false;
         if (attached_element) {
-            kdDebug () << "pointerLeft " << attached_element->nodeName () << endl;
             ElementRuntimePtr rt = attached_element->getRuntime ();
             if (rt)
-                static_cast <TimedRuntime *> (rt.ptr ())->emitOutOfBoundsEvent ();
+                static_cast <TimedRuntime *> (rt.ptr())->emitOutOfBoundsEvent();
+        }
+        if (regionElement) {
+            ElementRuntimePtr rt = regionElement->getRuntime ();
+            if (rt)
+                static_cast <RegionRuntime *>(rt.ptr())->emitOutOfBoundsEvent();
         }
     } else if (inside && !handled && !has_mouse) { // InBoundsEvent
         has_mouse = true;
         if (attached_element) {
-            kdDebug () << "pointerEntered " << attached_element->nodeName () << endl;
             ElementRuntimePtr rt = attached_element->getRuntime ();
             if (rt)
                 static_cast <TimedRuntime *> (rt.ptr ())->emitInBoundsEvent ();
+        }
+        if (regionElement) {
+            ElementRuntimePtr rt = regionElement->getRuntime ();
+            if (rt)
+                static_cast <RegionRuntime *> (rt.ptr ())->emitInBoundsEvent ();
         }
     }
     return inside;
@@ -274,9 +286,13 @@ KDE_NO_EXPORT void ElementRuntime::reset () {
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_CDTOR_EXPORT RegionSignalerRuntime::RegionSignalerRuntime (ElementPtr e)
+    : QObject (0L), ElementRuntime (e) {}
+
+//-----------------------------------------------------------------------------
+
 KDE_NO_CDTOR_EXPORT
-TimedRuntime::TimedRuntime (ElementPtr e)
- : QObject (0L), ElementRuntime (e) {
+TimedRuntime::TimedRuntime (ElementPtr e) : RegionSignalerRuntime (e) {
     reset ();
 }
 
@@ -322,24 +338,25 @@ void TimedRuntime::setDurationItem (DurationTime item, const QString & val) {
             if (e) {
                 kdDebug () << "getElementById " << vl.left (pos) << " " << e->nodeName () << endl;
                 ElementRuntimePtr rt = e->getRuntime ();
-                if (rt) {
-                    TimedRuntime * tr = static_cast <TimedRuntime*> (rt.ptr ());
+                RegionSignalerRuntime * rs = dynamic_cast <RegionSignalerRuntime*> (rt.ptr ());
+                if (rs) {
                     if (vl.find ("activateevent") > -1) {
                         dur = duration_element_activated;
-                        connect (tr, SIGNAL (activateEvent ()),
+                        connect (rs, SIGNAL (activateEvent ()),
                                  this, SLOT (elementActivateEvent ()));
                     } else if (vl.find ("inboundsevent") > -1) {
                         dur = duration_element_inbounds;
-                        connect (tr, SIGNAL (inBoundsEvent ()),
+                        connect (rs, SIGNAL (inBoundsEvent ()),
                                  this, SLOT (elementInBoundsEvent ()));
                     } else if (vl.find ("outofboundsevent") > -1) {
                         dur = duration_element_outbounds;
-                        connect (tr, SIGNAL (outOfBoundsEvent ()),
+                        connect (rs, SIGNAL (outOfBoundsEvent ()),
                                  this, SLOT (elementOutOfBoundsEvent ()));
                     }
                     breakConnection (item);
                     durations [(int) item].connection = rt;
-                }
+                } else
+                    kdWarning () << "not a RegionSignaler" << endl;
             }
         }
     }
@@ -569,7 +586,7 @@ KDE_NO_EXPORT void TimedRuntime::stopped () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT RegionRuntime::RegionRuntime (ElementPtr e)
- : ElementRuntime (e) {
+ : RegionSignalerRuntime (e) {
     init ();
 }
 
@@ -1079,15 +1096,6 @@ KDE_NO_EXPORT ElementPtr SMIL::Layout::childFromTag (const QString & tag) {
     return ElementPtr ();
 }
 
-static int calcLength (const QString & strval, int full) {
-    if (strval.isEmpty ())
-        return 0;
-    int p = strval.find (QChar ('%'));
-    if (p > -1)
-        return int (strval.left (p).toDouble () * full / 100);
-    return int (strval.toDouble ());
-}
-
 static void buildRegionNodes (ElementPtr p, RegionNodePtr r) {
     RegionNodePtr region;
     RegionNodePtr last_region;
@@ -1215,6 +1223,15 @@ KDE_NO_EXPORT ElementPtr SMIL::Region::childFromTag (const QString & tag) {
     return ElementPtr ();
 }
 
+static int calcLength (const QString & strval, int full) {
+    if (strval.isEmpty ())
+        return 0;
+    int p = strval.find (QChar ('%'));
+    if (p > -1)
+        return int (strval.left (p).toDouble () * full / 100);
+    return int (strval.toDouble ());
+}
+
 /**
  * calculates dimensions of this regions with w and h as width and height
  */
@@ -1230,7 +1247,7 @@ KDE_NO_EXPORT void SMIL::Region::calculateBounds (int _w, int _h) {
         int b = calcLength (rr->bottom, _h);
         w = w1 > 0 ? w1 : _w - x - (r > 0 ? r : 0);
         h = h1 > 0 ? h1 : _h - y - (b > 0 ? b : 0);
-        kdDebug () << "Region::updateLayout " << x << "," << y << " " << w << "x" << h << endl;
+        kdDebug () << "Region::calculateBounds " << x << "," << y << " " << w << "x" << h << endl;
     }
 }
 

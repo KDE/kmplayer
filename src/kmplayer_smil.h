@@ -42,9 +42,38 @@ class TextDataPrivate;
 typedef WeakPtr<ElementRuntime> ElementRuntimePtrW;
 
 /**
+ * Base for RegionRuntime and TimedRuntime, having events from regions
+ */
+class RegionSignalerRuntime : public QObject, public ElementRuntime {
+    Q_OBJECT
+signals:
+    /**
+     * mouse has clicked the region_node
+     */
+    void activateEvent ();
+    /**
+     * mouse has left the region_node
+     */
+    void outOfBoundsEvent ();
+    /**
+     * mouse has entered the region_node
+     */
+    void inBoundsEvent ();
+    /**
+     * element has stopped, usefull for 'endsync="elm_id"
+     */
+public slots:
+    void emitActivateEvent () { emit activateEvent (); }
+    void emitOutOfBoundsEvent () { emit outOfBoundsEvent (); }
+    void emitInBoundsEvent () { emit inBoundsEvent (); }
+protected:
+    RegionSignalerRuntime (ElementPtr e);
+};
+
+/**
  * Live representation of a SMIL element having timings
  */
-class TimedRuntime : public QObject, public ElementRuntime {
+class TimedRuntime : public RegionSignalerRuntime {
     Q_OBJECT
 public:
     enum TimingState {
@@ -71,26 +100,8 @@ public:
         ElementRuntimePtrW connection;
     } durations [(const int) durtime_last];
 signals:
-    /**
-     * mouse has clicked the region_node
-     */
-    void activateEvent ();
-    /**
-     * mouse has left the region_node
-     */
-    void outOfBoundsEvent ();
-    /**
-     * mouse has entered the region_node
-     */
-    void inBoundsEvent ();
-    /**
-     * element has stopped, usefull for 'endsync="elm_id"
-     */
     void elementStopped ();
 public slots:
-    void emitActivateEvent () { emit activateEvent (); }
-    void emitOutOfBoundsEvent () { emit outOfBoundsEvent (); }
-    void emitInBoundsEvent () { emit inBoundsEvent (); }
     void emitElementStopped () { emit elementStopped (); }
 protected slots:
     void timerEvent (QTimerEvent *);
@@ -115,7 +126,7 @@ protected:
 /**
  * Runtime data for a region
  */
-class RegionRuntime : public ElementRuntime {
+class RegionRuntime : public RegionSignalerRuntime {
 public:
     RegionRuntime (ElementPtr e);
     KDE_NO_CDTOR_EXPORT ~RegionRuntime () {}
