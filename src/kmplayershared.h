@@ -164,7 +164,7 @@ inline WeakPtr<T> & WeakPtr<T>::operator = (const WeakPtr<T> & w) {
         SharedData<T> * tmp = data;
         data = w.data;
         if (data) data->addWeakRef ();
-        if (tmp) data->releaseWeak ();
+        if (tmp) tmp->releaseWeak ();
     }
     return *this;
 }
@@ -175,7 +175,7 @@ inline WeakPtr<T> & WeakPtr<T>::operator = (const SharedPtr<T> & s) {
         SharedData<T> * tmp = data;
         data = s.data;
         if (data) data->addWeakRef ();
-        if (tmp) data->releaseWeak ();
+        if (tmp) tmp->releaseWeak ();
     }
     return *this;
 }
@@ -197,7 +197,7 @@ inline SharedPtr<T> & SharedPtr<T>::operator = (const WeakPtr<T> & s) {
         SharedData<T> * tmp = data;
         data = s.data;
         if (data) data->addRef ();
-        if (tmp) data->release ();
+        if (tmp) tmp->release ();
     }
     return *this;
 }
