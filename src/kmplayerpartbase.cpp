@@ -790,6 +790,7 @@ void Source::playURLDone () {
         for (ElementPtr p = m_back_request->parentNode(); p; p =p->parentNode())
             p->setState (Element::state_started);
         m_back_request->start ();
+        m_back_request = ElementPtr ();
     } else {
         Mrl * mrl = m_current ? m_current->mrl () : 0L;
         if (mrl)
