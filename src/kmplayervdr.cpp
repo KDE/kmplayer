@@ -657,16 +657,12 @@ static const char * xv_supported [] = {
 };
 
 KDE_NO_CDTOR_EXPORT XVideo::XVideo (KMPlayer::PartBase * player)
- : KMPlayer::CallbackProcess (player, "xvideo") {
+ : KMPlayer::CallbackProcess (player, "xvideo", i18n ("X&Video")) {
     m_supported_sources = xv_supported;
     //m_player->settings ()->addPage (m_configpage);
 }
 
 KDE_NO_CDTOR_EXPORT XVideo::~XVideo () {}
-
-KDE_NO_EXPORT QString XVideo::menuName () const {
-    return i18n ("X&Video");
-}
 
 KDE_NO_EXPORT bool XVideo::ready () {
     if (playing ()) {

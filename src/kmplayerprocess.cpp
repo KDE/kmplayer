@@ -914,10 +914,11 @@ void Callback::loadingProgress (int percentage) {
 
 //-----------------------------------------------------------------------------
 
-CallbackProcess::CallbackProcess (PartBase * player, const char * n)
+CallbackProcess::CallbackProcess (PartBase * player, const char * n, const QString & menuname)
  : Process (player, n),
    m_callback (new Callback (this)),
    m_backend (0L),
+   m_menuname (menuname),
    m_configpage (new XMLPreferencesPage (this)),
    in_gui_update (false),
    m_have_config (config_unknown),
@@ -933,6 +934,10 @@ CallbackProcess::~CallbackProcess () {
 }
 
 void CallbackProcess::setStatusMessage (const QString & /*msg*/) {
+}
+
+QString CallbackProcess::menuName () const {
+    return m_menuname;
 }
 
 void CallbackProcess::setErrorMessage (int code, const QString & msg) {
@@ -1165,6 +1170,10 @@ KDE_NO_EXPORT void CallbackProcess::processStopped (KProcess *) {
     }
 }
 
+WId CallbackProcess::widget () {
+    return view()->viewer()->embeddedWinId ();
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT ConfigDocument::ConfigDocument ()
@@ -1385,7 +1394,7 @@ static const char * xine_supported [] = {
 };
 
 KDE_NO_CDTOR_EXPORT Xine::Xine (PartBase * player)
-    : CallbackProcess (player, "xine") {
+    : CallbackProcess (player, "xine", i18n ("&Xine")) {
 #ifdef HAVE_XINE
     m_supported_sources = xine_supported;
     m_player->settings ()->addPage (m_configpage);
@@ -1393,14 +1402,6 @@ KDE_NO_CDTOR_EXPORT Xine::Xine (PartBase * player)
 }
 
 KDE_NO_CDTOR_EXPORT Xine::~Xine () {}
-
-KDE_NO_EXPORT QString Xine::menuName () const {
-    return i18n ("&Xine");
-}
-
-KDE_NO_EXPORT WId Xine::widget () {
-    return view()->viewer()->embeddedWinId ();
-}
 
 bool Xine::ready () {
     initProcess ();
@@ -1413,8 +1414,6 @@ bool Xine::ready () {
     *m_process << " -f " << xine_config;
 
     QString strVideoDriver = QString (settings->videodrivers[settings->videodriver].driver);
-    if (strVideoDriver == QString ("x11"))
-        strVideoDriver = QString ("xshm");
     if (!strVideoDriver.isEmpty ()) {
         printf (" -vo %s", strVideoDriver.lower().ascii());
         *m_process << " -vo " << strVideoDriver.lower();
@@ -1447,21 +1446,13 @@ static const char * gst_supported [] = {
 };
 
 KDE_NO_CDTOR_EXPORT GStreamer::GStreamer (PartBase * player)
-    : CallbackProcess (player, "gst") {
+    : CallbackProcess (player, "gst", i18n ("&GStreamer")) {
 #ifdef HAVE_GSTREAMER
     m_supported_sources = gst_supported;
 #endif
 }
 
 KDE_NO_CDTOR_EXPORT GStreamer::~GStreamer () {}
-
-KDE_NO_EXPORT QString GStreamer::menuName () const {
-    return i18n ("&GStreamer");
-}
-
-KDE_NO_EXPORT WId GStreamer::widget () {
-    return view()->viewer()->embeddedWinId ();
-}
 
 KDE_NO_EXPORT bool GStreamer::ready () {
     initProcess ();
@@ -1484,6 +1475,7 @@ KDE_NO_EXPORT bool GStreamer::ready () {
     }
     printf (" -cb %s\n", dcopName ().ascii());
     *m_process << " -cb " << dcopName ();
+    m_process->start (KProcess::NotifyOnExit, KProcess::All);
     return m_process->isRunning ();
 }
 

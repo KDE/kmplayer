@@ -369,6 +369,8 @@ void KGStreamerPlayer::play () {
     if (GST_STATE (gst_elm_play) > GST_STATE_READY)
         gst_element_set_state (gst_elm_play, GST_STATE_READY);
 
+    if (mrl.startsWith (QChar ('/')))
+        mrl = QString ("file://") + mrl;
     uri = g_strdup (mrl.ascii ());
     g_object_set (gst_elm_play, "uri", uri, NULL);
     gst_element_set_state (gst_elm_play, GST_STATE_PLAYING);

@@ -63,7 +63,7 @@ class Mrl;
 typedef SharedPtr<Element> ElementPtr;
 typedef WeakPtr<Element> ElementPtrW;
 
-class NodeList {
+class KMPLAYER_EXPORT NodeList {
     ElementPtrW first_element;
 public:
     NodeList (ElementPtr e) : first_element (e) {}

@@ -345,6 +345,8 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
     for(int i = 1; i < argc (); i++) {
         if (!strcmp (argv ()[i], "-vo")) {
             d->vo_driver = argv ()[++i];
+            if (!strcmp (d->vo_driver, "x11"))
+                d->vo_driver = (char *) "xshm";
         } else if (!strcmp (argv ()[i], "-ao")) {
             d->ao_driver = argv ()[++i];
         } else if (!strcmp (argv ()[i], "-dvd-device")) {

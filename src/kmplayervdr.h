@@ -145,7 +145,6 @@ class XVideo : public KMPlayer::CallbackProcess {
 public:
     XVideo (KMPlayer::PartBase * player);
     ~XVideo ();
-    QString menuName () const;
 public slots:
     virtual bool ready ();
 };

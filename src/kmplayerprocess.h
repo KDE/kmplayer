@@ -217,7 +217,7 @@ class KMPLAYER_EXPORT CallbackProcess : public Process {
     Q_OBJECT
     friend class Callback;
 public:
-    CallbackProcess (PartBase * player, const char * n);
+    CallbackProcess (PartBase * player, const char * n, const QString & menu);
     ~CallbackProcess ();
     virtual void setStatusMessage (const QString & msg);
     virtual void setErrorMessage (int code, const QString & msg);
@@ -227,6 +227,8 @@ public:
     virtual void setMovieParams (int length, int width, int height, float aspect);
     virtual void setMoviePosition (int position);
     virtual void setLoadingProgress (int percentage);
+    virtual QString menuName () const;
+    virtual WId widget ();
     KDE_NO_EXPORT QByteArray & configData () { return m_configdata; }
     KDE_NO_EXPORT bool haveConfig () { return m_have_config == config_yes; }
     bool getConfigData ();
@@ -252,6 +254,7 @@ protected slots:
 protected:
     Callback * m_callback;
     Backend_stub * m_backend;
+    QString m_menuname;
     QByteArray m_configdata;
     QByteArray m_changeddata;
     XMLPreferencesPage * m_configpage;
@@ -304,8 +307,6 @@ class Xine : public CallbackProcess {
 public:
     Xine (PartBase * player);
     ~Xine ();
-    QString menuName () const;
-    WId widget ();
 public slots:
     bool ready ();
 };
@@ -315,8 +316,6 @@ class GStreamer : public CallbackProcess {
 public:
     GStreamer (PartBase * player);
     ~GStreamer ();
-    QString menuName () const;
-    WId widget ();
 public slots:
     virtual bool ready ();
 };

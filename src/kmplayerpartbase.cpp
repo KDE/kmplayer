@@ -446,7 +446,7 @@ static const char * statemap [] = {
 
 void PartBase::processStateChange (Process::State old, Process::State state) {
     if (!m_view) return;
-    m_view->buttonBar ()->setPlaying (state >= Process::Ready);
+    m_view->buttonBar ()->setPlaying (state > Process::Ready);
     kdDebug () << "processState " << statemap[old] << " -> " << statemap[state] << endl;
     Source * src = m_process->player() == this ? m_source : m_process->source();
     if (state == Process::Playing) {
