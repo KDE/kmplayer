@@ -165,7 +165,6 @@ public:
     KMPlayerProcess * process () const { return m_process; }
     MPlayer * mplayer () const { return m_mplayer; }
     MEncoder * mencoder () const { return m_mencoder; }
-    KMPlayerSource * source () const;
     KMPlayerURLSource * urlSource () const { return m_urlsource; }
     KMPlayerHRefSource * hrefSource () const { return m_hrefsource; }
     bool autoPlay () const { return m_autoplay; }

@@ -536,14 +536,6 @@ void KMPlayerView::setAutoHideButtons (bool b) {
     m_posSlider->setMouseTracking (b && m_playing);
 }
 
-/*void KMPlayerView::setAutoHideSlider (bool b) {
-    killTimers ();
-    m_auto_hide_slider = b;
-    if (b && m_playing)
-    	m_slider->hide();
-    else
-    	m_slider->show();
-*/
 void KMPlayerView::delayedShowButtons (bool show) {
     if (!m_auto_hide_buttons || delayed_timer ||
         (show && m_buttonbar->isVisible ()) || 

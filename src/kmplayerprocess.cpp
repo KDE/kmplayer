@@ -35,6 +35,7 @@
 #include "kmplayerprocess.h"
 #include "kmplayersource.h"
 #include "kmplayerconfig.h"
+#include "kmplayer_callback.h"
 
 KMPlayerProcess::KMPlayerProcess (KMPlayer * player)
     : m_player (player), m_source (0L), m_process (0L) {}
@@ -452,6 +453,78 @@ bool MEncoder::stop () {
         }
     } while (false);
     return true;
+}
+
+//-----------------------------------------------------------------------------
+
+static int callback_counter = 0;
+
+KMPlayerCallback::KMPlayerCallback (KMPlayerCallbackProcess * process)
+    : DCOPObject (QString (QString ("KMPlayerCallback-") +
+                           QString::number (callback_counter++)).ascii ()),
+      m_process (process) {}
+
+void KMPlayerCallback::setURL (QString url) {
+    m_process->setURL (url);
+}
+
+void KMPlayerCallback::statusMessage (QString msg) {
+    m_process->setStatusMessage (msg);
+}
+
+void KMPlayerCallback::errorMessage (int code, QString msg) {
+    m_process->setErrorMessage (code, msg);
+}
+
+void KMPlayerCallback::finished () {
+    m_process->setFinished ();
+}
+
+void KMPlayerCallback::playing () {
+    m_process->setPlaying ();
+}
+
+void KMPlayerCallback::started () {
+    m_process->setStarted ();
+}
+
+void KMPlayerCallback::movieParams (int length, int w, int h, float aspect) {
+    m_process->setMovieParams (length, w, h, aspect);
+}
+
+//-----------------------------------------------------------------------------
+
+KMPlayerCallbackProcess::KMPlayerCallbackProcess (KMPlayer * player)
+    : KMPlayerProcess (player), m_callback (new KMPlayerCallback (this)) {
+}
+
+KMPlayerCallbackProcess::~KMPlayerCallbackProcess () {
+    delete m_callback;
+}
+
+void KMPlayerCallbackProcess::setURL (const QString & url) {
+}
+
+void KMPlayerCallbackProcess::setStatusMessage (const QString & msg) {
+}
+
+void KMPlayerCallbackProcess::setErrorMessage (int code, const QString & msg) {
+}
+
+void KMPlayerCallbackProcess::setFinished () {
+}
+
+void KMPlayerCallbackProcess::setPlaying () {
+}
+
+void KMPlayerCallbackProcess::setStarted () {
+}
+
+void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
+    m_source->setWidth (w);
+    m_source->setHeight (h);
+    m_source->setAspect (a);
+    m_source->setLength (len);
 }
 
 //-----------------------------------------------------------------------------

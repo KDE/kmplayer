@@ -272,10 +272,6 @@ void KMPlayer::setSource (KMPlayerSource * source, bool keepsizes) {
     if (source) QTimer::singleShot (0, source, SLOT (activate ()));
 }
 
-KMPlayerSource * KMPlayer::source () const {
-    return m_process->source ();
-}
-
 bool KMPlayer::isSeekable (void) const {
     return m_process->source ()->isSeekable ();
 }

@@ -30,6 +30,7 @@ class QWidget;
 class KProcess;
 class KMPlayer;
 class KMPlayerSource;
+class KMPlayerCallback;
 
 class KMPlayerProcess : public QObject {
     Q_OBJECT
@@ -125,6 +126,22 @@ public slots:
     virtual bool stop ();
 private:
     KURL m_recordurl;
+};
+
+class KMPlayerCallbackProcess : public KMPlayerProcess {
+    Q_OBJECT
+public:
+    KMPlayerCallbackProcess (KMPlayer * player);
+    ~KMPlayerCallbackProcess ();
+    virtual void setURL (const QString & url);
+    virtual void setStatusMessage (const QString & msg);
+    virtual void setErrorMessage (int code, const QString & msg);
+    virtual void setFinished ();
+    virtual void setPlaying ();
+    virtual void setStarted ();
+    virtual void setMovieParams (int length, int width, int height, float aspect);
+protected:
+    KMPlayerCallback * m_callback;
 };
 
 class FFMpeg : public KMPlayerProcess {

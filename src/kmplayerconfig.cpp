@@ -694,7 +694,7 @@ void KMPlayerSettings::okPressed () {
     if (!showbuttons)
         view->buttonBar ()->hide ();
     showposslider = configdialog->m_GeneralPageGeneral->showPositionSlider->isChecked ();
-    if (showposslider && m_player->source ()->hasLength ())
+    if (showposslider && m_player->process ()->source ()->hasLength ())
         view->positionSlider ()->show ();
     else
         view->positionSlider ()->hide ();
@@ -839,7 +839,7 @@ bool TVDeviceScannerSource::scan (const QString & dev, const QString & dri) {
         return false;
     m_tvdevice = new TVDevice (dev, QSize ());
     m_driver = dri;
-    m_source = m_player->source ();
+    m_source = m_player->process ()->source ();
     m_player->setSource (this);
     play ();
     return !!m_tvdevice;

@@ -8,7 +8,7 @@ lib_LTLIBRARIES=kdeinit_kmplayer.la
 
 kde_module_LTLIBRARIES = kparts_kmplayer.la
 
-kparts_kmplayer_la_SOURCES = kmplayer_part.cpp kmplayer_koffice_part.cpp kmplayerview.cpp kmplayerconfig.cpp pref.cpp kmplayerprocess.cpp
+kparts_kmplayer_la_SOURCES = kmplayer_part.cpp kmplayer_koffice_part.cpp kmplayerview.cpp kmplayerconfig.cpp pref.cpp kmplayerprocess.cpp kmplayer_callback.skel kmplayer_backend.stub
 
 kparts_kmplayer_la_LDFLAGS= $(all_libraries) -module $(KDE_PLUGIN) -lartskde -lm
 kparts_kmplayer_la_LIBADD= $(LIB_KFILE) $(LIB_KPARTS) $(LIB_KIO) $(LIB_KOFFICE) -lkmediaplayer
@@ -18,12 +18,16 @@ kdeinit_kmplayer_la_SOURCES= main.cpp kmplayerapp.cpp
 kdeinit_kmplayer_la_LIBADD= kparts_kmplayer.la
 kdeinit_kmplayer_la_LDFLAGS= $(all_libraries) $(KDE_RPATH) -module -avoid-version
 
-bin_PROGRAMS= kmplayer
+bin_PROGRAMS= kmplayer kxineplayer
 
 kmplayer_LDADD= kdeinit_kmplayer.la
 kmplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH)
 kmplayer_SOURCES= dummy.cpp
 
+kxineplayer_LDADD= $(LIB_XINE)
+kxineplayer_CFLAGS= $(CFLAGS_XINE)
+kxineplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH) -lqt-mt -lDCOP
+kxineplayer_SOURCES= xineplayer.cpp kmplayer_backend.skel kmplayer_callback.stub
 
 CLEANFILES = dummy.cpp
 

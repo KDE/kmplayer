@@ -12,3 +12,16 @@ if test "$have_koffice" = "yes"; then
         LIB_KOFFICE="-lkofficecore -lkofficeui"
         AC_SUBST(LIB_KOFFICE)
 fi
+
+have_xine=yes
+if test "$have_xine" = "yes"; then
+        KDE_CHECK_HEADER(xine.h,,have_xine=no)
+fi
+
+if test "$have_xine" = "yes"; then
+        AC_DEFINE(HAVE_XINE, 1, [If we have libxine installed])
+        LIB_XINE="`xine-config --libs`"
+        AC_SUBST(LIB_XINE)
+        CFLAGS_XINE="`xine-config --cflags`"
+        AC_SUBST(CFLAGS_XINE)
+fi

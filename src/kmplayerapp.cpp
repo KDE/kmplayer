@@ -235,7 +235,7 @@ void KMPlayerApp::openDocumentFile (const KURL& url)
 }
 
 void KMPlayerApp::resizePlayer (int percentage) {
-    KMPlayerSource * source = m_player->source ();
+    KMPlayerSource * source = m_player->process ()->source ();
     int w = source->width ();
     int h = source->height ();
     if (w <= 0 || h <= 0) {
@@ -255,7 +255,7 @@ void KMPlayerApp::resizePlayer (int percentage) {
         if (m_player->settings ()->showbuttons &&
             !m_player->settings ()->autohidebuttons)
             h += 2 + view->buttonBar()->frameSize ().height ();
-        if (m_player->source ()->hasLength () && 
+        if (source->hasLength () && 
             m_player->settings ()->showposslider)
             h += 2 + view->positionSlider ()->height ();
         w = int (1.0 * w * percentage/100.0);
@@ -304,7 +304,7 @@ void KMPlayerApp::broadcastClicked () {
         setCursor (QCursor (Qt::ArrowCursor));
         return;
     }
-    if (m_player->source ()->ffmpegCommand ().isEmpty ()) {
+    if (m_player->process ()->source ()->ffmpegCommand ().isEmpty ()) {
         view->broadcastButton ()->toggle ();
         setCursor (QCursor (Qt::ArrowCursor));
         return;
@@ -325,7 +325,7 @@ void KMPlayerApp::broadcastClicked () {
     }
     QString conffile = locateLocal ("data", "kmplayer/ffserver.conf");
     KMPlayerTVSource::TVSource * source = 0L;
-    if (m_player->source () == m_tvsource)
+    if (m_player->process ()->source () == m_tvsource)
         source = m_tvsource->tvsource ();
     const char * noaudio = source && source->audiodevice.isEmpty () ? "NoAudio" : "";
     KMPlayerSettings * conf = m_player->settings ();
@@ -359,7 +359,7 @@ void KMPlayerApp::processOutput (KProcess * p, char * s, int) {
 }
 
 void KMPlayerApp::startFeed () {
-    QString ffmpegcmd = m_player->source ()->ffmpegCommand ();
+    QString ffmpegcmd = m_player->process ()->source ()->ffmpegCommand ();
     KMPlayerSettings * conf = m_player->settings ();
     FFServerSetting & ffs = conf->ffserversettings[conf->ffserversetting];
     do {
@@ -379,7 +379,7 @@ void KMPlayerApp::startFeed () {
             m_endserver = true;
             return;
         }
-        if (m_player->source () == m_tvsource) {
+        if (m_player->process ()->source () == m_tvsource) {
             KMPlayerTVSource::TVSource * tvsource = m_tvsource->tvsource ();
             if (tvsource->frequency >= 0) {
                 KProcess process;
@@ -433,7 +433,7 @@ void KMPlayerApp::processStopped (KProcess * process) {
         if (view && view->broadcastButton ()->isOn ())
             view->broadcastButton ()->toggle ();
     }
-    if (!m_ffserver_process->isRunning () && m_player->source () != m_tvsource)
+    if (!m_ffserver_process->isRunning () && m_player->process ()->source () != m_tvsource)
         view->broadcastButton ()->hide ();
 }
 
@@ -650,8 +650,8 @@ void KMPlayerApp::configChanged () {
 
 void KMPlayerApp::keepSizeRatio () {
     view->setKeepSizeRatio (!view->keepSizeRatio ());
-    if (m_player->source () && view->keepSizeRatio ())
-        view->viewer ()->setAspect (m_player->source ()->aspect ());
+    if (m_player->process ()->source () && view->keepSizeRatio ())
+        view->viewer ()->setAspect (m_player->process ()->source ()->aspect ());
     else
         view->viewer ()->setAspect (0.0);
     viewKeepRatio->setChecked (view->keepSizeRatio ());
@@ -1161,7 +1161,7 @@ void KMPlayerTVSource::buildMenu () {
 void KMPlayerTVSource::menuClicked (int id) {
     CommandMap::iterator it = commands.find (id);
     if (it != commands.end ()) {
-        if (m_player->source () != this)
+        if (m_player->process ()->source () != this)
             m_player->setSource (this);
         m_tvsource = it.data ();
         if (app->broadcasting ()) {
