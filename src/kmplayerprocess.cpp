@@ -1050,6 +1050,8 @@ bool CallbackProcess::play (Source * source) {
     const KURL & sub_url = m_source->subUrl ();
     if (!sub_url.isEmpty ())
         m_backend->setSubTitleURL (QString (QFile::encodeName (sub_url.isLocalFile () ? QFileInfo (getPath (sub_url)).absFilePath () : sub_url.url ())));
+    if (source->frequency () > 0)
+        m_backend->frequency (source->frequency ());
     m_backend->play ();
     setState (Buffering);
     return true;
@@ -1135,18 +1137,9 @@ KDE_NO_CDTOR_EXPORT ConfigDocument::~ConfigDocument () {
 }
 
 namespace KMPlayer {
-    struct ChoiceNode : public ConfigNode {
-        KDE_NO_CDTOR_EXPORT ChoiceNode (ElementPtr d, QComboBox * c)
-            : ConfigNode (d), combo (c) {}
-        KDE_NO_CDTOR_EXPORT ~ChoiceNode () {}
-        void closed () { combo->insertItem (value); }
-        const char * nodeName () const { return "choicenode"; }
-        QComboBox * combo;
-    };
-
-    struct SomeNode : public Element {
+    struct SomeNode : public ConfigNode {
         KDE_NO_CDTOR_EXPORT SomeNode (ElementPtr d, const QString t)
-            : Element (d), tag (t) {}
+            : ConfigNode (d), tag (t) {}
         KDE_NO_CDTOR_EXPORT ~SomeNode () {}
         ElementPtr childFromTag (const QString & t);
         const char * nodeName () const { return tag.ascii (); }
@@ -1168,8 +1161,6 @@ ElementPtr ConfigNode::childFromTag (const QString &) {
 }
 
 ElementPtr TypeNode::childFromTag (const QString & tag) {
-    if (!tag.compare ("item") && ::qt_cast <QComboBox*> (w))
-        return (new ChoiceNode (m_doc, ::qt_cast <QComboBox*> (w)))->self ();
     return (new SomeNode (m_doc, tag))->self ();
 }
 
@@ -1209,7 +1200,12 @@ QWidget * TypeNode::createWidget (QWidget * parent) {
         checkbox->setChecked (value.toInt ());
         w = checkbox;
     } else if (!strcmp (ctype, "enum")) {
-        w = new QComboBox (parent);
+        QComboBox * combo = new QComboBox (parent);
+        for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
+            if (!strcmp (e->nodeName (), "item"))
+                combo->insertItem (convertNode <ConfigNode> (e)->value);
+        combo->setCurrentItem (value.toInt ());
+        w = combo;
     } else if (!strcmp (ctype, "tree")) {
     } else
         kdDebug() << "Unknown type:" << ctype << endl;
@@ -1217,8 +1213,6 @@ QWidget * TypeNode::createWidget (QWidget * parent) {
 }
 
 void TypeNode::closed () {
-    if (w && !type.compare ("enum"))
-        static_cast <QComboBox *> (w)->setCurrentItem (value.toInt ());
 }
 
 void TypeNode::changedXML (QTextStream & out) {

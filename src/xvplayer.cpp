@@ -70,6 +70,7 @@ Atom xv_contrast_atom;
 Atom xv_freq_atom;
 Atom xv_volume_atom;
 Atom xv_mute_atom;
+Atom xv_autopaint_colorkey_atom;
 static QString elmentry ("entry");
 static QString elmitem ("item");
 static QString attname ("NAME");
@@ -216,13 +217,17 @@ void KXVideoPlayer::init () {
                 int port = ai[i].base_id;
                 bool freq_found = false;
                 XvAttribute *attributes = 0L;
-                int nr_attr;
+                int nr_attr, cur_val;
                 attributes = XvQueryPortAttributes (display, port, &nr_attr);
                 if (attributes) {
                     for (int i = 0; i < nr_attr; i++) {
                         if (!strcmp (attributes[i].name, "XV_FREQ"))
                             freq_found = true;
-                        fprintf (stderr, "%s (%d .. %d)\n", attributes[i].name, attributes[i].min_value, attributes[i].max_value);
+                        Atom atom = XInternAtom (display, attributes[i].name, false);
+                        fprintf (stderr, "%s[%d] (%d .. %d)", attributes[i].name, atom, attributes[i].min_value, attributes[i].max_value);
+                        if (attributes[i].flags & XvGettable && XvGetPortAttribute (display, port, atom, &cur_val) == Success)
+                            fprintf (stderr, " current: %d", cur_val);
+                        fprintf (stderr, "\n");
                     }
                     XFree(attributes);
                 }
@@ -339,7 +344,10 @@ void KXVideoPlayer::stop () {
         XClearArea (display, wid, 0, 0, 0, 0, true);
         XUnlockDisplay (display);
     }
-    QTimer::singleShot (0, qApp, SLOT (quit ()));
+    if (callback)
+        callback->finished ();
+    else
+        QTimer::singleShot (0, qApp, SLOT (quit ()));
 }
 
 void KXVideoPlayer::finished () {
@@ -467,6 +475,7 @@ int main(int argc, char **argv) {
     xv_freq_atom = XInternAtom (display, "XV_FREQ", false);
     xv_volume_atom = XInternAtom (display, "XV_VOLUME", false);
     xv_mute_atom = XInternAtom (display, "XV_MUTE", false);
+    xv_autopaint_colorkey_atom = XInternAtom (display, "XV_AUTOPAINT_COLORKEY", false);
 
     xvapp = new KXVideoPlayer (argc, argv);
 

@@ -268,13 +268,13 @@ KDE_NO_EXPORT void KMPlayerTVSource::buildMenu () {
          m_menu->insertItem (KMPlayer::convertNode <TVDevice> (dp)->pretty_name, this, SLOT (menuClicked (int)), 0, counter++);
 }
 
-KDE_NO_EXPORT void KMPlayerTVSource::jump (KMPlayer::ElementPtr e) {
+KDE_NO_EXPORT void KMPlayerTVSource::getCurrent () {
     QString old_dev;
     TVChannel * channel = 0L;
     TVInput * input = 0L;
     if (m_cur_tvdevice)
         old_dev = KMPlayer::convertNode <TVDevice> (m_cur_tvdevice)->src;
-    KMPlayer::ElementPtr elm = e;
+    KMPlayer::ElementPtr elm = m_current;
     if (!strcmp (elm->nodeName (), "tvchannel")) {
         channel = KMPlayer::convertNode <TVChannel> (elm);
         elm = elm->parentNode ();
@@ -283,9 +283,8 @@ KDE_NO_EXPORT void KMPlayerTVSource::jump (KMPlayer::ElementPtr e) {
         input = KMPlayer::convertNode <TVInput> (elm);
     if (!(channel || (input && !input->hastuner)))
         return;
-    m_current = e;
     m_cur_tvdevice = input->parentNode ();
-    TVDevice * tvdevice =KMPlayer::convertNode <TVDevice> (m_cur_tvdevice);
+    TVDevice * tvdevice = KMPlayer::convertNode <TVDevice> (m_cur_tvdevice);
     bool playing = (old_dev == tvdevice->src) && m_player->playing ();
     m_identified = true;
     m_audiodevice = tvdevice->audiodevice;
@@ -306,15 +305,10 @@ KDE_NO_EXPORT void KMPlayerTVSource::jump (KMPlayer::ElementPtr e) {
         m_recordcmd.sprintf ("-tv %s:driver=%s:%s:width=%d:height=%d", m_audiodevice.isEmpty () ? "noaudio" : (QString ("forceaudio:adevice=") + m_audiodevice).ascii(), tvdriver.ascii (), command.ascii (), width (), height ());
     else
         m_recordcmd.sprintf ("-tv on:%s:driver=%s:%s:width=%d:height=%d", m_audiodevice.isEmpty () ? "noaudio" : (QString ("forceaudio:adevice=") + m_audiodevice).ascii(), tvdriver.ascii (), command.ascii (), width (), height ());
-    if (!m_app->broadcasting ())
-        m_app->resizePlayer (100);
-    if (!m_app->broadcasting ()) {
-        m_player->process ()->stop ();
-        if (!KMPlayer::convertNode <TVDevice> (m_cur_tvdevice)->noplayback || playing)
-            QTimer::singleShot (0, m_player, SLOT (play ()));
-    } else
+    if (m_app->broadcasting ())
         QTimer::singleShot (0, m_app->broadcastConfig (), SLOT (startFeed ()));
-    m_player->updateTree (m_document, m_current);
+    else
+        KMPlayer::Source::getCurrent ();
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::menuClicked (int id) {

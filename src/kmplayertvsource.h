@@ -155,10 +155,8 @@ public:
 public slots:
     virtual void activate ();
     virtual void deactivate ();
-
+    virtual void getCurrent ();
     void menuClicked (int id);
-protected:
-    void jump (KMPlayer::ElementPtr e);
 private slots:
     void slotScan ();
     void slotScanFinished (TVDevice * device);
