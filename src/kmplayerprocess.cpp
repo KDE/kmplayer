@@ -143,7 +143,7 @@ void MPlayerBase::initProcess () {
 }
 
 bool MPlayerBase::sendCommand (const QString & cmd) {
-    if (m_process->isRunning () && m_use_slave) {
+    if (playing () && m_use_slave) {
         commands.push_front (cmd + "\n");
         printf ("eval %s", commands.last ().latin1 ());
         m_process->writeStdin (QFile::encodeName(commands.last ()),
@@ -249,7 +249,6 @@ bool MPlayer::volume (int incdec, bool absolute) {
 
 bool MPlayer::saturation (int val, bool absolute) {
     if (!source ()) return false;
-    if (!m_widget) return false;
     QString cmd;
     cmd.sprintf ("saturation %d %d", val, absolute ? 1 : 0);
     return sendCommand (cmd);
@@ -257,7 +256,6 @@ bool MPlayer::saturation (int val, bool absolute) {
 
 bool MPlayer::hue (int val, bool absolute) {
     if (!source ()) return false;
-    if (!m_widget) return false;
     QString cmd;
     cmd.sprintf ("hue %d %d", val, absolute ? 1 : 0);
     return sendCommand (cmd);
@@ -265,7 +263,6 @@ bool MPlayer::hue (int val, bool absolute) {
 
 bool MPlayer::contrast (int val, bool /*absolute*/) {
     if (!source ()) return false;
-    if (!m_widget) return false;
     QString cmd;
     cmd.sprintf ("contrast %d 1", val);
     return sendCommand (cmd);
@@ -273,7 +270,6 @@ bool MPlayer::contrast (int val, bool /*absolute*/) {
 
 bool MPlayer::brightness (int val, bool /*absolute*/) {
     if (!source ()) return false;
-    if (!m_widget) return false;
     QString cmd;
     cmd.sprintf ("brightness %d 1", val);
     return sendCommand (cmd);
