@@ -69,7 +69,7 @@ ElementRuntimePtr Element::getRuntime () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (ElementPtr e)
- : x (0), y (0), w (0), h (0), z_order (1), regionElement (e) {
+ : has_mouse (false), x (0), y (0), w (0), h (0), z_order (1), regionElement (e) {
     self = RegionNodePtrW (this);
     ElementRuntimePtr rt = e->getRuntime ();
     if (rt)
@@ -94,6 +94,24 @@ KDE_NO_EXPORT void RegionNode::paint (QPainter & p) {
         if (rt)
             rt->paint (p);
     }
+    // now paint children, accounting for z-order
+    int done_index = -1;
+    do {
+        int cur_index = 1 << 8 * sizeof (int) - 2;  // should be enough :-)
+        int check_index = cur_index;
+        for (RegionNodePtr r = firstChild; r; r = r->nextSibling) {
+            if (r->z_order > done_index && r->z_order < cur_index)
+                cur_index = r->z_order;
+        }
+        if (check_index == cur_index)
+            break;
+        for (RegionNodePtr r = firstChild; r; r = r->nextSibling)
+            if (r->z_order == cur_index) {
+                kdDebug () << "Painting " << cur_index << endl;
+                r->paint (p);
+            }
+        done_index = cur_index;
+    } while (true);
 }
 
 KDE_NO_EXPORT void RegionNode::repaint () {
@@ -104,33 +122,48 @@ KDE_NO_EXPORT void RegionNode::repaint () {
     }
 };
 
-KDE_NO_EXPORT void RegionNode::pointerClicked () {
-    if (attached_element) {
-        kdDebug () << "pointerClicked " << attached_element->nodeName () << endl;
-        ElementRuntimePtr rt = attached_element->getRuntime ();
-        if (rt)
-            static_cast <TimedRuntime *> (rt.ptr ())->emitActivateEvent ();
+KDE_NO_EXPORT bool RegionNode::pointerClicked (int _x, int _y) {
+    bool inside = _x > x && _x < x + w && _y > y && _y < y + h;
+    if (!inside)
+        return false;
+    bool handled = false;
+    for (RegionNodePtr r = firstChild; r; r = r->nextSibling)
+        handled |= r->pointerClicked (_x, _y);
+    if (!handled) { // handle it ..
+        if (attached_element) {
+            kdDebug () << "activateEvent " << attached_element->nodeName () << endl;
+            ElementRuntimePtr rt = attached_element->getRuntime ();
+            if (rt)
+                static_cast <TimedRuntime *> (rt.ptr ())->emitActivateEvent ();
+        }
     }
+    return inside;
 }
 
-KDE_NO_EXPORT void RegionNode::pointerEntered () {
-    has_mouse = true;
-    if (attached_element) {
-        kdDebug () << "pointerEntered " << attached_element->nodeName () << endl;
-        ElementRuntimePtr rt = attached_element->getRuntime ();
-        if (rt)
-            static_cast <TimedRuntime *> (rt.ptr ())->emitInBoundsEvent ();
+KDE_NO_EXPORT bool RegionNode::pointerMoved (int _x, int _y) {
+    bool inside = _x > x && _x < x + w && _y > y && _y < y + h;
+    bool handled = false;
+    if (inside)
+        for (RegionNodePtr r = firstChild; r; r = r->nextSibling)
+            handled |= r->pointerMoved (_x, _y);
+    if (has_mouse && (!inside || handled)) { // OutOfBoundsEvent
+        has_mouse = false;
+        if (attached_element) {
+            kdDebug () << "pointerLeft " << attached_element->nodeName () << endl;
+            ElementRuntimePtr rt = attached_element->getRuntime ();
+            if (rt)
+                static_cast <TimedRuntime *> (rt.ptr ())->emitOutOfBoundsEvent ();
+        }
+    } else if (inside && !handled && !has_mouse) { // InBoundsEvent
+        has_mouse = true;
+        if (attached_element) {
+            kdDebug () << "pointerEntered " << attached_element->nodeName () << endl;
+            ElementRuntimePtr rt = attached_element->getRuntime ();
+            if (rt)
+                static_cast <TimedRuntime *> (rt.ptr ())->emitInBoundsEvent ();
+        }
     }
-}
-
-KDE_NO_EXPORT void RegionNode::pointerLeft () {
-    if (attached_element) {
-        kdDebug () << "pointerLeft " << attached_element->nodeName () << endl;
-        ElementRuntimePtr rt = attached_element->getRuntime ();
-        if (rt)
-            static_cast <TimedRuntime *> (rt.ptr ())->emitOutOfBoundsEvent ();
-    }
-    has_mouse = false;
+    return inside;
 }
 
 //-----------------------------------------------------------------------------
@@ -645,11 +678,11 @@ KDE_NO_EXPORT void Smil::start () {
 }
 
 KDE_NO_EXPORT void Smil::stop () {
-    Mrl::stop ();
     if (document ()->rootLayout) {
         beginOrEndRegions (document ()->rootLayout, false);
         document ()->rootLayout->repaint ();
     }
+    Mrl::stop ();
 }
 
 KDE_NO_EXPORT ElementPtr Smil::realMrl () {

@@ -203,17 +203,13 @@ public:
      */
     void repaint ();
     /**
-     * user clicked w/ the mouse on this region
+     * user clicked w/ the mouse on this region, returns true if handled
      */
-    void pointerClicked ();
+    bool pointerClicked (int x, int y);
     /**
-     * user entered w/ the mouse this region
+     * user moved the mouse over this region
      */
-    void pointerEntered ();
-    /**
-     * user left w/ the mouse this region
-     */
-    void pointerLeft ();
+    bool pointerMoved (int x, int y);
     /**
      * boolean for check if pointerEntered/pointerLeft should be called by View
      */
