@@ -64,6 +64,8 @@ public:
     void showBroadcastConfig ();
     void hideBroadcastConfig ();
     KDE_NO_EXPORT KMPlayerBroadcastConfig * broadcastConfig () const { return m_broadcastconfig; }
+    /* After createGUI() some menu's have to readded again */
+    void initMenu ();
 protected:
     void saveOptions ();
     void readOptions ();
@@ -125,7 +127,6 @@ private:
     QPopupMenu * m_dvdnavmenu;
     QPopupMenu * m_vcdmenu;
     QPopupMenu * m_tvmenu;
-    QPopupMenu * m_vdrmenu;
     KMPlayerFFServerConfig * m_ffserverconfig;
     KMPlayerBroadcastConfig * m_broadcastconfig;
     QCString m_dcopName;

@@ -1,9 +1,25 @@
 <!DOCTYPE kpartgui>
-<kpartgui name="kmplayer" version="13">
+<kpartgui name="kmplayer" version="14">
 <MenuBar>
   <Menu name="file"><text>&amp;File</text>
     <Action name="new_window"/>
     <Action name="open"/>
+    <Action name="source_pipe"/>
+    <Menu name="vdr"><text>VD&amp;R</text>
+      <Action name="vdr_connect"/>
+      <Action name="vdr_key_up"/>
+      <Action name="vdr_key_down"/>
+      <Action name="vdr_key_back"/>
+      <Action name="vdr_key_ok"/>
+      <Action name="vdr_key_setup"/>
+      <Action name="vdr_key_channels"/>
+      <Action name="vdr_key_menu"/>
+      <Action name="vdr_key_red"/>
+      <Action name="vdr_key_green"/>
+      <Action name="vdr_key_yellow"/>
+      <Action name="vdr_key_blue"/>
+      <Action name="vdr_key_custom"/>
+    </Menu>
   </Menu>
   <Menu name="view"><text>&amp;View</text>
     <Action name="fullscreen"/>
@@ -54,5 +70,11 @@
   <Action name="view_console"/>
   <Separator/>
   <Action name="configure"/>
+  <Separator/>
+  <Action name="vdr_key_up"/>
+  <Action name="vdr_key_down"/>
+  <Action name="vdr_key_back"/>
+  <Action name="vdr_key_ok"/>
+  <Action name="vdr_key_menu"/>
 </Toolbar>
 </kpartgui>

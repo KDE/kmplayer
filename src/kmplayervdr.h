@@ -62,10 +62,10 @@ private:
 };
 
 
-class KMPlayerVDRSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
+class KMPlayerVDRSource : public KMPlayer::Source, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
-    KMPlayerVDRSource (KMPlayerApp * app, QPopupMenu *);
+    KMPlayerVDRSource (KMPlayerApp * app);
     virtual ~KMPlayerVDRSource ();
     virtual bool hasLength ();
     virtual bool isSeekable ();
@@ -82,6 +82,7 @@ public slots:
     void forward ();
     void backward ();
     void getCurrent ();
+    void toggleConnected ();
 private slots:
     void keyUp ();
     void keyDown ();
@@ -111,7 +112,6 @@ private slots:
     void socketError (int);
     void processStopped ();
     void processStarted ();
-    void toggleConnected ();
     void configReceived ();
 protected:
     void timerEvent (QTimerEvent *);
@@ -120,6 +120,7 @@ private:
     void queueCommand (const char * cmd, int repeat_ms);
     void sendCommand ();
     void deleteCommands ();
+    KMPlayerApp * m_app;
     KMPlayerPrefSourcePageVDR * m_configpage;
     KAction * act_up;
     KAction * act_down;
@@ -132,6 +133,7 @@ private:
     KAction * act_green;
     KAction * act_yellow;
     KAction * act_blue;
+    KAction * act_custom;
     QSocket * m_socket;
     VDRCommand * commands;
     int channel_timer;

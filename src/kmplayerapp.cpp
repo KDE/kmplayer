@@ -83,7 +83,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       m_dvdnavmenu (new QPopupMenu (this)),
       m_vcdmenu (new QPopupMenu (this)),
       m_tvmenu (new QPopupMenu (this)),
-      m_vdrmenu (new QPopupMenu (this)),
       m_ffserverconfig (new KMPlayerFFServerConfig),
       m_broadcastconfig (new KMPlayerBroadcastConfig (m_player, m_ffserverconfig))
 {
@@ -99,7 +98,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     m_player->sources () ["vcdsource"] = new KMPlayerVCDSource(this, m_vcdmenu);
     m_player->sources () ["pipesource"] = new KMPlayerPipeSource (this);
     m_player->sources () ["tvsource"] = new KMPlayerTVSource (this, m_tvmenu);
-    m_player->sources () ["vdrsource"] = new KMPlayerVDRSource (this, m_vdrmenu);
+    m_player->sources () ["vdrsource"] = new KMPlayerVDRSource (this);
     initActions();
     initView();
 
@@ -125,6 +124,9 @@ KDE_NO_EXPORT void KMPlayerApp::initActions()
     fileClose = KStdAction::close(this, SLOT(slotFileClose()), actionCollection());
     fileQuit = KStdAction::quit(this, SLOT(slotFileQuit()), actionCollection());
     
+    new KAction (i18n ("&Open Pipe..."), QString ("filesys-pipe"), KShortcut (), this, SLOT(openPipe ()), actionCollection (), "source_pipe");
+    //KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0,true)
+    new KAction (i18n ("&Connect"), QString ("connect_established"), KShortcut (), this, SLOT (openVDR ()), actionCollection (), "vdr_connect");
     new KAction (i18n ("V&ideo"), QString ("video"), KShortcut (), m_player, SLOT (showVideoWindow ()), actionCollection (), "view_video");
     new KAction (i18n ("Pla&y List"), QString ("player_playlist"), KShortcut (), m_player, SLOT (showPlayListWindow ()), actionCollection (), "view_playlist");
     new KAction (i18n ("C&onsole"), QString ("konsole"), KShortcut (), m_player, SLOT (showConsoleWindow ()), actionCollection (), "view_console");
@@ -170,11 +172,7 @@ KDE_NO_EXPORT void KMPlayerApp::initStatusBar()
     statusBar()->insertItem(i18n("Ready."), ID_STATUS_MSG);
 }
 
-KDE_NO_EXPORT void KMPlayerApp::initView ()
-{
-    m_view = static_cast <KMPlayer::View*> (m_player->view());
-    m_view->docArea ()->readDockConfig (config, QString ("Window Layout"));
-    setCentralWidget (m_view);
+KDE_NO_EXPORT void KMPlayerApp::initMenu () {
     QPopupMenu * bookmarkmenu = m_view->buttonBar()->bookmarkMenu ();
     m_view->buttonBar()->popupMenu ()->removeItem (KMPlayer::ControlPanel::menu_bookmark);
     menuBar ()->insertItem (i18n ("&Bookmarks"), bookmarkmenu, -1, 2);
@@ -191,9 +189,13 @@ KDE_NO_EXPORT void KMPlayerApp::initView ()
     m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("cdrom_mount"), KIcon::Small, 0, true), i18n ("V&CD"), m_vcdmenu, -1, 5);
     m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0, true), i18n ("&TV"), m_tvmenu, -1, 6);
     m_vcdmenu->insertItem (i18n ("&Open VCD"), this, SLOT(openVCD ()), 0,-1, 1);
-    m_sourcemenu->popup ()->insertItem (i18n ("&Open Pipe..."), this, SLOT(openPipe ()), 0, -1, 5);
-    m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0, true), i18n ("VD&R"), m_vdrmenu, -1, 6);
-    m_vdrmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("connect_established"), KIcon::Small, 0, true), i18n ("&Connect"), this, SLOT (openVDR ()), 0, 0);
+}
+
+KDE_NO_EXPORT void KMPlayerApp::initView () {
+    m_view = static_cast <KMPlayer::View*> (m_player->view());
+    m_view->docArea ()->readDockConfig (config, QString ("Window Layout"));
+    setCentralWidget (m_view);
+    initMenu ();
     connect (m_player->settings (), SIGNAL (configChanged ()),
              this, SLOT (configChanged ()));
     connect (m_player, SIGNAL (startPlaying ()),
@@ -272,7 +274,10 @@ KDE_NO_EXPORT void KMPlayerApp::openPipe () {
 
 KDE_NO_EXPORT void KMPlayerApp::openVDR () {
     slotStatusMsg(i18n("Opening VDR..."));
-    m_player->setSource (m_player->sources () ["vdrsource"]);
+    if (strcmp (m_player->source ()->name (), "vdrsource"))
+        m_player->setSource (m_player->sources () ["vdrsource"]);
+    else
+        static_cast<KMPlayerVDRSource *>(m_player->source())->toggleConnected();
 }
 
 KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)

@@ -1032,8 +1032,10 @@ void View::addText (const QString & str, bool eol) {
 
 void View::addFullscreenAction (const QString & title, const KShortcut & c, QObject * o, const char * s, const char * name) {
     KAction * action = m_layer->m_collection->action (name);
-    if (action)
-        m_layer->m_collection->remove (action);
+    if (action) {
+        action->unplug (m_layer);
+        delete action;
+    }
     new KAction (title, c, o, s, m_layer->m_collection, name);
 }
 /* void View::print (QPrinter *pPrinter)

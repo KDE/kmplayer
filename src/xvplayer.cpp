@@ -338,7 +338,8 @@ void KXVideoPlayer::play () {
         if (callback)
             callback->playing ();
     }
-    putVideo ();
+    if (running)
+        putVideo ();
     XUnlockDisplay (display);
 }
 
