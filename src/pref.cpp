@@ -359,10 +359,13 @@ KDE_NO_EXPORT void KMPlayerPrefRecordPage::slotRecord () {
         m_player->settings ()->replaytime = replaytime->text ().toInt ();
 #if KDE_IS_VERSION(3,1,90)
         int id = recorder->selectedId ();
+        int replayid = replay->selectedId ();
 #else
         int id = recorder->id (recorder->selected ());
+        int replayid = replay->id (replay->selectedId ());
 #endif
         m_player->settings ()->recorder = KMPlayerSettings::Recorder (id);
+        m_player->settings ()->replayoption = KMPlayerSettings::ReplayOption (replayid);
         RecorderList::iterator it = m_recorders.begin ();
         for (; id > 0 && it != m_recorders.end (); ++it, --id)
             ;

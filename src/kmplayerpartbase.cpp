@@ -329,7 +329,8 @@ void KMPlayer::setSource (KMPlayerSource * source) {
         }
     }
     m_process->setSource (source);
-    m_recorder->setSource (source);
+    if (!m_recorder->playing ())
+        m_recorder->setSource (source);
     source->init ();
     if (source) QTimer::singleShot (0, source, SLOT (activate ()));
     emit sourceChanged (source);

@@ -536,10 +536,8 @@ KDE_NO_EXPORT void KMPlayerSettings::okPressed () {
     pp_ffmpeg_int = configdialog->m_OPPagePostproc->FfmpegDeinterlacer->isChecked();
     // recording
 #if (QT_VERSION < 0x030200)
-    replayoption = ReplayOption (configdialog->m_RecordPage->replay->id (configdialog->m_RecordPage->replay->selected ()));
     recorder = Recorder (configdialog->m_RecordPage->recorder->id (configdialog->m_RecordPage->recorder->selected ()));
 #else
-    replayoption = ReplayOption (configdialog->m_RecordPage->replay->selectedId ());
     recorder = Recorder (configdialog->m_RecordPage->recorder->selectedId ());
 #endif
     replaytime = configdialog->m_RecordPage->replaytime->text ().toInt ();
