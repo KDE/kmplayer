@@ -196,6 +196,8 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
 
 	keepSizeRatio = new QCheckBox (i18n("Keep size ratio"), this, 0);
 	QWhatsThis::add(keepSizeRatio, i18n("When checked, movie will keep its aspect ratio\nwhen window is resized"));
+	dockSysTray = new QCheckBox (i18n("Dock in system tray"), this, 0);
+	QWhatsThis::add (dockSysTray, i18n ("When checked, an icon of KMPlayer will be added to the system tray.\nWhen clicked it will hide KMPlayer's main window and removing KMPlayer's taskbar button."));
 	loop = new QCheckBox (i18n("Loop"), this, 0);
 	QWhatsThis::add(loop, i18n("Makes current movie loop"));
 	showRecordButton = new QCheckBox (i18n ("Show record button"), this);

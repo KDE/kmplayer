@@ -53,6 +53,7 @@
 #include <kurlrequester.h>
 #include <klineedit.h>
 #include <kkeydialog.h>
+#include <ksystemtray.h>
 
 // application specific includes
 #include "kmplayer.h"
@@ -78,6 +79,7 @@ extern const char * strMPlayerGroup;
 KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     : KMainWindow(0, name),
       config (kapp->config ()),
+      m_systray (0L),
       m_player (new KMPlayer::PartBase (this, 0L, 0L, 0L, config)),
       m_dvdmenu (new QPopupMenu (this)),
       m_dvdnavmenu (new QPopupMenu (this)),
@@ -577,6 +579,14 @@ KDE_NO_EXPORT void KMPlayerApp::startArtsControl () {
 
 KDE_NO_EXPORT void KMPlayerApp::configChanged () {
     viewKeepRatio->setChecked (m_player->settings ()->sizeratio);
+    if (m_player->settings ()->docksystray && !m_systray) {
+        m_systray = new KSystemTray (this);
+        m_systray->setPixmap (KGlobal::iconLoader ()->loadIcon (QString ("kmplayer"), KIcon::NoGroup, 22));
+        m_systray->show ();
+    } else {
+        delete m_systray;
+        m_systray = 0L;
+    }
     static_cast <KMPlayerTVSource *> (m_player->sources () ["tvsource"])->buildMenu ();
 }
 

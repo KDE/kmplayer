@@ -105,6 +105,7 @@ KDE_NO_CDTOR_EXPORT Settings::~Settings () {
 KDE_EXPORT const char * strMPlayerGroup = "MPlayer";
 const char * strGeneralGroup = "General Options";
 static const char * strKeepSizeRatio = "Keep Size Ratio";
+static const char * strDockSysTray = "Dock in System Tray";
 static const char * strVolume = "Volume";
 static const char * strContrast = "Contrast";
 static const char * strBrightness = "Brightness";
@@ -222,6 +223,7 @@ KDE_NO_EXPORT void Settings::readConfig () {
     m_config->setGroup (strMPlayerGroup);
     sizeratio = m_config->readBoolEntry (strKeepSizeRatio, true);
     view->setKeepSizeRatio (sizeratio);
+    docksystray = m_config->readBoolEntry (strDockSysTray, true);
     loop = m_config->readBoolEntry (strLoop, false);
     framedrop = m_config->readBoolEntry (strFrameDrop, true);
     autoadjustvolume = m_config->readBoolEntry (strAdjustVolume, true);
@@ -341,6 +343,7 @@ void Settings::removePage (PreferencesPage * page) {
 void Settings::show (const char * pagename) {
     bool created = createDialog ();
     configdialog->m_GeneralPageGeneral->keepSizeRatio->setChecked (sizeratio);
+    configdialog->m_GeneralPageGeneral->dockSysTray->setChecked (docksystray);
     configdialog->m_GeneralPageGeneral->loop->setChecked (loop);
     configdialog->m_GeneralPageGeneral->framedrop->setChecked (framedrop);
     configdialog->m_GeneralPageGeneral->adjustvolume->setChecked (autoadjustvolume);
@@ -445,6 +448,7 @@ void Settings::writeConfig () {
         m_config->writeEntry (colors[i].option, colors[i].color);
     m_config->setGroup (strMPlayerGroup);
     m_config->writeEntry (strKeepSizeRatio, view->keepSizeRatio ());
+    m_config->writeEntry (strDockSysTray, docksystray);
     m_config->writeEntry (strLoop, loop);
     m_config->writeEntry (strFrameDrop, framedrop);
     m_config->writeEntry (strAdjustVolume, autoadjustvolume);
@@ -568,6 +572,7 @@ KDE_NO_EXPORT void Settings::okPressed () {
             sub_urllist.push_back (configdialog->m_SourcePageURL->sub_urllist->text (i));
     sizeratio = configdialog->m_GeneralPageGeneral->keepSizeRatio->isChecked ();
     m_player->keepMovieAspect (sizeratio);
+    docksystray = configdialog->m_GeneralPageGeneral->dockSysTray->isChecked ();
     loop = configdialog->m_GeneralPageGeneral->loop->isChecked ();
     framedrop = configdialog->m_GeneralPageGeneral->framedrop->isChecked ();
     autoadjustvolume = configdialog->m_GeneralPageGeneral->adjustvolume->isChecked ();

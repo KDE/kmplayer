@@ -34,6 +34,7 @@ class QMenuItem;
 class KProcess;
 class KMPlayerBroadcastConfig;
 class KMPlayerFFServerConfig;
+class KSystemTray;
 
 namespace KMPlayer {
     class View;
@@ -110,6 +111,7 @@ private slots:
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
     KConfig * config;
+    KSystemTray * m_systray;
     KMPlayer::View * m_view;
     KMPlayer::PartBase * m_player;
 
