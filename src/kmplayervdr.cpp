@@ -244,6 +244,10 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
     processStopped ();
 }
 
+KDE_NO_EXPORT void KMPlayerVDRSource::getCurrent () {
+    emit currentURL (this); // FIXME HACK
+}
+
 KDE_NO_EXPORT void KMPlayerVDRSource::processStopped () {
     if (m_socket->state () == QSocket::Connected)
         queueCommand ("QUIT\n");
@@ -266,7 +270,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::connected () {
 KDE_NO_EXPORT void KMPlayerVDRSource::disconnected () {
     kdDebug() << "disconnected " << commands << endl;
     setURL (KURL (QString ("vdr://localhost:%1").arg (tcp_port)));
-    if (channel_timer && m_player->process ()->source () == this)
+    if (channel_timer && m_player->source () == this)
         m_player->process ()->stop ();
     deleteCommands ();
     m_menu->changeItem (0, KGlobal::iconLoader ()->loadIconSet (QString ("connect_established"), KIcon::Small, 0, true), i18n ("&Connect"));
@@ -387,7 +391,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::socketError (int code) {
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::queueCommand (const char * cmd) {
-    if (m_player->process ()->source () != this)
+    if (m_player->source () != this)
         return;
     if (!commands) {
         readbuf.clear ();
@@ -696,7 +700,7 @@ KDE_NO_EXPORT void XVideo::runForConfig () {
     }
 }
 
-KDE_NO_EXPORT bool XVideo::play () {
+KDE_NO_EXPORT bool XVideo::ready () {
     if (playing ()) {
         return true;
     }
@@ -710,8 +714,6 @@ KDE_NO_EXPORT bool XVideo::play () {
     printf ("%s\n", cmd.latin1 ());
     *m_process << cmd;
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
-    if (m_process->isRunning ())
-        emit startedPlaying ();
     return m_process->isRunning ();
 }
 
@@ -734,7 +736,7 @@ KDE_NO_EXPORT bool XVideo::quit () {
 }
 
 KDE_NO_EXPORT void XVideo::processStopped (KProcess *) {
-    QTimer::singleShot (0, this, SLOT (emitFinished ()));
+    setState (KMPlayer::Process::NotRunning);
 }
 
 KDE_NO_EXPORT void XVideo::processOutput (KProcess *, char * str, int slen) {

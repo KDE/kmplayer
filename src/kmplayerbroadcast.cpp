@@ -463,7 +463,7 @@ QFrame * KMPlayerBroadcastConfig::prefPage (QWidget * parent) {
         connect (m_player, SIGNAL (sourceChanged (KMPlayer::Source *)),
                  this, SLOT (sourceChanged (KMPlayer::Source *)));
         m_configpage->startbutton->setEnabled
-            (!m_player->process ()->source ()->videoDevice ().isEmpty ());
+            (!m_player->source ()->videoDevice ().isEmpty ());
     }
     return m_configpage;
 }
@@ -492,7 +492,7 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::startServer () {
     connect (m_ffserver_process, SIGNAL (processExited (KProcess *)),
              this, SLOT (processStopped (KProcess *)));
     QString conffile = locateLocal ("data", "kmplayer/ffserver.conf");
-    const char * noaudio = m_player->process ()->source ()->audioDevice ().isEmpty () ? "NoAudio" : "";
+    const char * noaudio = m_player->source ()->audioDevice ().isEmpty () ? "NoAudio" : "";
     FFServerSetting ffs;
     m_configpage->getSettings (ffs);
     QString acl;
@@ -554,12 +554,11 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::startFeed () {
         m_ffmpeg_process->stop ();
     delete m_ffmpeg_process;
     m_ffmpeg_process = new KMPlayer::FFMpeg (m_player);
-    m_ffmpeg_process->setSource (m_player->process ()->source ());
     connect (m_ffmpeg_process, SIGNAL (finished ()),
              this, SLOT (feedFinished ()));
     ffurl.sprintf ("http://localhost:%d/kmplayer.ffm", m_ffserverconfig->ffserverport);
     m_ffmpeg_process->setURL (KURL(ffurl));
-    if (!m_ffmpeg_process->play ()) {
+    if (!m_ffmpeg_process->play (m_player->source ())) {
         KMessageBox::error (m_configpage, i18n ("Failed to start ffmpeg."), i18n ("Error"));
         stopProcess (m_ffserver_process);
         goto bail_out;
@@ -596,7 +595,7 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::processStopped (KProcess *) {
         m_configpage->serverled->setState (KLed::Off);
         m_configpage->startbutton->setText (i18n ("Start"));
         m_configpage->startbutton->setEnabled
-            (!m_player->process ()->source ()->videoDevice ().isEmpty ());
+            (!m_player->source ()->videoDevice ().isEmpty ());
     }
     m_ffserver_process->deleteLater ();
     m_ffserver_process = 0L;

@@ -298,10 +298,10 @@ void Settings::show (const char * pagename) {
     configdialog->m_GeneralPageGeneral->seekTime->setValue(seektime);
     configdialog->m_SourcePageURL->urllist->clear ();
     configdialog->m_SourcePageURL->urllist->insertStringList (urllist);
-    configdialog->m_SourcePageURL->urllist->setCurrentText (m_player->process ()->source ()->url ().prettyURL ());
+    configdialog->m_SourcePageURL->urllist->setCurrentText (m_player->source ()->url ().prettyURL ());
     configdialog->m_SourcePageURL->sub_urllist->clear ();
     configdialog->m_SourcePageURL->sub_urllist->insertStringList (sub_urllist);
-    configdialog->m_SourcePageURL->sub_urllist->setCurrentText (m_player->process ()->source ()->subUrl ().prettyURL ());
+    configdialog->m_SourcePageURL->sub_urllist->setCurrentText (m_player->source ()->subUrl ().prettyURL ());
     configdialog->m_SourcePageURL->changed = false;
 
     configdialog->m_GeneralPageOutput->videoDriver->setCurrentItem (videodriver);
@@ -599,7 +599,7 @@ KDE_NO_EXPORT void Settings::okPressed () {
         m_player->sources () ["urlsource"]->setSubURL
             (KURL(configdialog->m_SourcePageURL->sub_url->url()));
         m_player->openURL (KURL::fromPathOrURL (configdialog->m_SourcePageURL->url->url ()));
-        m_player->process ()->source ()->setSubURL (KURL::fromPathOrURL (configdialog->m_SourcePageURL->sub_url->url ()));
+        m_player->source ()->setSubURL (KURL::fromPathOrURL (configdialog->m_SourcePageURL->sub_url->url ()));
     }
 }
 

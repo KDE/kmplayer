@@ -323,6 +323,8 @@ void KXVideoPlayer::play () {
             XvSetPortAttribute (display, xvport, xv_enc_atom, xv_encoding);
         //XvGetVideo (..
         running = true;
+        if (callback)
+            callback->playing ();
     }
     putVideo ();
     XUnlockDisplay (display);
@@ -330,11 +332,11 @@ void KXVideoPlayer::play () {
 
 void KXVideoPlayer::stop () {
     if (running) {
+        running = false;
         XLockDisplay (display);
         XvStopVideo (display, xvport, wid);
         XvUngrabPort (display, xvport, CurrentTime);
         XClearArea (display, wid, 0, 0, 0, 0, true);
-        running = false;
         XUnlockDisplay (display);
     }
     QTimer::singleShot (0, qApp, SLOT (quit ()));

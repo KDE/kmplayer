@@ -88,15 +88,16 @@ public:
 
     virtual QString prettyName ();
 signals:
-    // in respond to 'first'/'current'/'next'/'previous' call
-    void currentURL (const QString &);
+    // in respond to 'getCurrent()' call
+    void currentURL (Source *);
+    void endOfPlayItems ();
 public slots:
     virtual void activate () = 0;
     virtual void deactivate () = 0;
     virtual void forward ();
     virtual void backward ();
     virtual void play ();
-    virtual void getCurrent (); // will emit currentURL
+    virtual void getCurrent (); // will emit currentURL or endOfPlayItems
     virtual void jump (ElementPtr e);
 protected:
     ElementPtr m_document;

@@ -127,9 +127,7 @@ public slots:
     virtual bool closeURL ();
     void setMenuZoom (int id);
 protected slots:
-    virtual void processStarted ();
-    virtual void processStartedPlaying ();
-    virtual void processFinished ();
+    virtual void processStateChange (KMPlayer::Process::State, KMPlayer::Process::State state);
     virtual void loaded (int percentage);
     void viewerPartDestroyed (QObject *);
     void viewerPartProcessChanged (const char *);

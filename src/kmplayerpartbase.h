@@ -30,6 +30,7 @@
 
 #include "kmplayerview.h"
 #include "kmplayersource.h"
+#include "kmplayerprocess.h"
 
 
 class KAboutData;
@@ -111,6 +112,7 @@ public:
     void setSource (Source * source);
     KDE_NO_EXPORT Process * process () const { return m_process; }
     KDE_NO_EXPORT Process * recorder () const { return m_recorder; }
+    KDE_NO_EXPORT Source * source () const { return m_source; }
     QMap <QString, Process *> & players () { return m_players; }
     QMap <QString, Process *> & recorders () { return m_recorders; }
     QMap <QString, Source *> & sources () { return m_sources; }
@@ -166,11 +168,8 @@ protected slots:
     void brightnessValueChanged (int val);
     void hueValueChanged (int val);
     void saturationValueChanged (int val);
-    void recordingStarted ();
-    void recordingFinished ();
-    virtual void processStarted ();
-    virtual void processStartedPlaying ();
-    virtual void processFinished ();
+    virtual void processStateChange (Process::State, Process::State);
+    void recordingStateChange (Process::State, Process::State);
     void positioned (int pos);
     void lengthFound (int len);
     virtual void loaded (int percentage);
@@ -182,6 +181,7 @@ protected:
     Settings * m_settings;
     Process * m_process;
     Process * m_recorder;
+    Source * m_source;
     ProcessMap m_players;
     ProcessMap m_recorders;
     QMap <QString, Source *> m_sources;

@@ -82,11 +82,11 @@ KDE_NO_EXPORT void BookmarkOwner::openBookmarkURL (const QString & url) {
 }
 
 KDE_NO_EXPORT QString BookmarkOwner::currentTitle () const {
-    return m_player->process ()->source ()->prettyName ();
+    return m_player->source ()->prettyName ();
 }
 
 KDE_NO_EXPORT QString BookmarkOwner::currentURL () const {
-    return m_player->process ()->source ()->url ().url ();
+    return m_player->source ()->url ().url ();
 }
 
 inline BookmarkManager::BookmarkManager(const QString & bmfile)
@@ -103,6 +103,7 @@ PartBase::PartBase (QWidget * wparent, const char *wname,
    m_settings (new Settings (this, config)),
    m_process (0L),
    m_recorder (0L),
+   m_source (0L),
    m_bookmark_menu (0L),
    m_record_timer (0),
    m_ispart (false),
@@ -196,8 +197,8 @@ PartBase::~PartBase () {
         delete (View*) m_view;
     m_view = (View*) 0;
     stop ();
-    if (m_process && m_process->source ())
-        m_process->source ()->deactivate ();
+    if (m_source)
+        m_source->deactivate ();
     delete m_settings;
     delete m_bookmark_menu;
     delete m_bookmark_manager;
@@ -212,41 +213,34 @@ void PartBase::setProcess (const char * name) {
     Process * process = name ? m_players [name] : 0L;
     if (m_process == process)
         return;
-    Source * source = process ? process->source () : 0L;
-    if (!source)
-        source = m_sources ["urlsource"];
+    if (!m_source)
+        m_source = m_sources ["urlsource"];
     if (m_process) {
-        disconnect (m_process, SIGNAL (finished ()),
-                    this, SLOT (processFinished ()));
-        disconnect (m_process, SIGNAL (started ()),
-                    this, SLOT (processStarted ()));
-        disconnect (m_process, SIGNAL (startedPlaying ()),
-                    this, SLOT (processStartedPlaying ()));
+        disconnect(m_process,SIGNAL(stateChange(Process::State,Process::State)),
+                 this, SLOT(processStateChange(Process::State,Process::State)));
         disconnect (m_process, SIGNAL (positioned (int)),
                     this, SLOT (positioned (int)));
         disconnect (m_process, SIGNAL (loaded (int)),
                     this, SLOT (loaded (int)));
         disconnect (m_process, SIGNAL (lengthFound (int)),
                     this, SLOT (lengthFound (int)));
-        disconnect (source, SIGNAL (currentURL (const QString &)),
-                    m_process, SLOT (urlForPlaying (const QString &)));
+        disconnect (m_source, SIGNAL (currentURL (Source *)),
+                    m_process, SLOT (play (Source *)));
         m_process->quit ();
-        source = m_process->source ();
     }
     m_process = process;
     if (!process)
         return;
-    m_process->setSource (source); // will stop the process if new source
-    connect (m_process, SIGNAL (started ()), this, SLOT (processStarted ()));
-    connect (m_process, SIGNAL (startedPlaying ()), this, SLOT (processStartedPlaying ()));
-    connect (m_process, SIGNAL (finished ()), this, SLOT (processFinished ()));
+    connect (m_process, SIGNAL (stateChange (Process::State, Process::State)),
+            this, SLOT (processStateChange (Process::State, Process::State)));
     connect (m_process, SIGNAL (positioned(int)), this, SLOT (positioned(int)));
     connect (m_process, SIGNAL (loaded (int)), this, SLOT (loaded (int)));
     connect (m_process, SIGNAL(lengthFound(int)), this, SLOT(lengthFound(int)));
+    connect(m_source,SIGNAL(currentURL(Source*)),m_process,SLOT(play(Source*)));
     if (m_process->playing ()) {
         m_view->buttonBar ()->setPlaying (true);
-        m_view->buttonBar ()->showPositionSlider (!!m_process->source ()->length());
-        m_view->buttonBar ()->enableSeekButtons (m_process->source()->isSeekable());
+        m_view->buttonBar ()->showPositionSlider (!!m_source->length ());
+        m_view->buttonBar ()->enableSeekButtons (m_source->isSeekable ());
     }
     emit processChanged (name);
 }
@@ -256,25 +250,22 @@ void PartBase::setRecorder (const char * name) {
     if (m_recorder == recorder)
         return;
     if (m_recorder) {
-        disconnect (m_recorder, SIGNAL (finished ()),
-                    this, SLOT (processFinished ()));
-        disconnect (recorder, SIGNAL (started()),
-                    this, SLOT (recordingStarted()));
+        disconnect(recorder, SIGNAL(stateChange(Process::State,Process::State)),
+              this, SLOT (recordingStateChange(Process::State,Process::State)));
         m_recorder->quit ();
     }
     m_recorder = recorder;
     if (!recorder)
         return;
-    connect (m_recorder, SIGNAL (started()), this, SLOT (recordingStarted()));
-    connect (m_recorder, SIGNAL (finished()), this, SLOT (recordingFinished()));
-    m_recorder->setSource (m_process->source ());
+    connect (recorder, SIGNAL (stateChange (Process::State,Process::State)),
+             this, SLOT (recordingStateChange (Process::State,Process::State)));
 }
 
 extern const char * strGeneralGroup;
 
 KDE_NO_EXPORT void PartBase::slotPlayerMenu (int id) {
     bool playing = m_process->playing ();
-    const char * src = m_process->source()->name ();
+    const char * src = m_source->name ();
     QPopupMenu * menu = m_view->buttonBar ()->playerMenu ();
     ProcessMap::const_iterator pi = m_players.begin(), e = m_players.end();
     unsigned i = 0;
@@ -293,18 +284,18 @@ KDE_NO_EXPORT void PartBase::slotPlayerMenu (int id) {
         ++i;
     }
     if (playing)
-        setSource (m_process->source ()); // re-activate
+        setSource (m_source); // re-activate
 }
 
 void PartBase::updatePlayerMenu () {
-    if (!m_view || !m_process || !m_process->source ())
+    if (!m_view || !m_process || !m_source)
         return;
     QPopupMenu * menu = m_view->buttonBar ()->playerMenu ();
     menu->clear ();
     const ProcessMap::const_iterator e = m_players.end();
     for (ProcessMap::const_iterator i = m_players.begin(); i != e; ++i) {
         Process * p = i.data ();
-        if (p->supports (m_process->source ()->name ())) {
+        if (p->supports (m_source->name ())) {
             int id = menu->insertItem (p->menuName (), this, SLOT (slotPlayerMenu (int)));
             if (i.data() == m_process)
                 menu->setItemChecked (id, true);
@@ -312,29 +303,31 @@ void PartBase::updatePlayerMenu () {
     }
 }
 
-void PartBase::setSource (Source * source) {
-    Source * oldsource = m_process->source ();
-    if (oldsource) {
-        oldsource->deactivate ();
+void PartBase::setSource (Source * _source) {
+    if (m_source) {
+        m_source->deactivate ();
         stop ();
         if (m_view) {
             if (m_view->viewer ())
                 m_view->viewer ()->setAspect (0.0);
             m_view->reset ();
         }
+        disconnect (m_source, SIGNAL (currentURL (Source *)),
+                 m_process, SLOT (play (Source *)));
+        disconnect (m_source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
     }
     m_view->buttonBar ()->setAutoControls (true);
-    QString p = m_settings->backends [source->name()];
+    QString p = m_settings->backends [_source->name()];
     if (p.isEmpty ()) {
         m_config->setGroup (strGeneralGroup);
-        p = m_config->readEntry (source->name(), "");
+        p = m_config->readEntry (_source->name (), "");
     }
-    if (p.isEmpty () || !m_players.contains (p) || !m_players [p]->supports (source->name ())) {
+    if (p.isEmpty () || !m_players.contains (p) || !m_players [p]->supports (_source->name ())) {
         p.truncate (0);
-        if (!m_process->supports (source->name ())) {
+        if (!m_process->supports (_source->name ())) {
             ProcessMap::const_iterator i, e = m_players.end();
             for (i = m_players.begin(); i != e; ++i)
-                if (i.data ()->supports (source->name ())) {
+                if (i.data ()->supports (_source->name ())) {
                     p = QString (i.data ()->name ());
                     break;
                 }
@@ -346,17 +339,18 @@ void PartBase::setSource (Source * source) {
             p = QString (m_process->name ());
     }
     if (p != m_process->name ()) {
-        m_players [p]->setSource (source);
         setProcess (p.ascii ());
     }
-    m_settings->backends [source->name()] = m_process->name ();
-    m_process->setSource (source);
-    if (!m_recorder->playing ())
-        m_recorder->setSource (source);
+    m_settings->backends [_source->name()] = m_process->name ();
+    m_source = _source;
+    m_process->setSource (m_source);
+    connect (m_source, SIGNAL (currentURL (Source *)),
+            m_process, SLOT (play (Source *)));
+    connect (m_source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
     updatePlayerMenu ();
-    source->init ();
-    if (source) QTimer::singleShot (0, source, SLOT (activate ()));
-    emit sourceChanged (source);
+    m_source->init ();
+    if (m_source) QTimer::singleShot (0, m_source, SLOT (activate ()));
+    emit sourceChanged (m_source);
 }
 
 KDE_NO_EXPORT void PartBase::changeURL (const QString & url) {
@@ -368,26 +362,26 @@ void PartBase::changeTitle (const QString & title) {
 }
 
 bool PartBase::isSeekable (void) const {
-    return m_process->source ()->isSeekable ();
+    return m_source->isSeekable ();
 }
 
 bool PartBase::hasLength () const {
-    return m_process->source ()->hasLength (); 
+    return m_source->hasLength (); 
 }
 
 unsigned long PartBase::length () const {
-    return m_process->source ()->length ();
+    return m_source->length ();
 }
             
 bool PartBase::openURL (const KURL & url) {
     kdDebug () << "PartBase::openURL " << url.url() << url.isValid () << endl;
     if (!m_view || url.isEmpty ()) return false;
     stop ();
-    Source * source = m_sources ["urlsource"];
-    source->setSubURL (KURL ());
-    source->setURL (url);
-    source->setIdentified (false);
-    setSource (source);
+    Source * src = m_sources ["urlsource"];
+    src->setSubURL (KURL ());
+    src->setURL (url);
+    src->setIdentified (false);
+    setSource (src);
     return true;
 }
 
@@ -408,28 +402,26 @@ void PartBase::keepMovieAspect (bool b) {
     if (!m_view) return;
     m_view->setKeepSizeRatio (b);
     if (m_view->viewer ())
-        m_view->viewer ()->setAspect (b ? m_process->source ()->aspect () : 0.0);
+        m_view->viewer ()->setAspect (b ? m_source->aspect () : 0.0);
 }
 
-KDE_NO_EXPORT void PartBase::recordingStarted () {
+KDE_NO_EXPORT void PartBase::recordingStateChange (Process::State, Process::State state) {
     if (!m_view) return;
-    m_view->buttonBar ()->setRecording (true);
-    if (m_settings->replayoption == Settings::ReplayAfter)
-        m_record_timer = startTimer (1000 * m_settings->replaytime);
-    emit startRecording ();
-}
-
-KDE_NO_EXPORT void PartBase::recordingFinished () {
-    if (!m_view) return;
-    m_view->buttonBar ()->setRecording (false);
-    emit stopRecording ();
-    killTimer (m_record_timer);
-    m_record_timer = 0;
-    if (m_settings->replayoption == Settings::ReplayFinished ||
-        (m_settings->replayoption == Settings::ReplayAfter && !playing ())) {
-        Recorder * rec = dynamic_cast <Recorder*> (m_recorder);
-        if (rec)
-            openURL (rec->recordURL ());
+    m_view->buttonBar ()->setRecording (state >= Process::Ready);
+    if (state >= Process::Ready) {
+        if (m_settings->replayoption == Settings::ReplayAfter)
+            m_record_timer = startTimer (1000 * m_settings->replaytime);
+        emit startRecording ();
+    } else if (state == Process::NotRunning) {
+        emit stopRecording ();
+        killTimer (m_record_timer);
+        m_record_timer = 0;
+        if (m_settings->replayoption == Settings::ReplayFinished ||
+                (m_settings->replayoption == Settings::ReplayAfter && !playing ())) {
+            Recorder * rec = dynamic_cast <Recorder*> (m_recorder);
+            if (rec)
+                openURL (rec->recordURL ());
+        }
     }
 }
 
@@ -444,21 +436,34 @@ void PartBase::timerEvent (QTimerEvent * e) {
     }
 }
 
-void PartBase::processFinished () {
-    kdDebug () << "process finished" << endl;
-    if (m_process->source ()->hasLength () &&
-            m_process->source ()->position () > m_process->source ()->length ())
-        m_process->source ()->setLength (m_process->source ()->position ());
-    m_process->source ()->setPosition (0);
-    if (!m_view) return;
-    m_view->buttonBar ()->setPlaying (false);
-    m_view->reset ();
-    emit stopPlaying ();
-}
+static const char * statemap [] = {
+    "NotRunning", "Ready", "Buffering", "Playing"
+};
 
-void PartBase::processStarted () {
+void PartBase::processStateChange (Process::State old, Process::State state) {
     if (!m_view) return;
-    m_view->buttonBar ()->setPlaying (true);
+    m_view->buttonBar ()->setPlaying (state >= Process::Ready);
+    kdDebug () << "processState " << statemap[old] << " -> " << statemap[state] << endl;
+    if (state == Process::Playing) {
+        m_process->view ()->videoStart ();
+        if (m_settings->sizeratio && m_view->viewer ())
+            m_view->viewer ()->setAspect (m_source->aspect ());
+        m_view->buttonBar ()->showPositionSlider (!!m_source->length ());
+        m_view->buttonBar ()->enableSeekButtons (m_source->isSeekable ());
+        emit loading (100);
+        emit startPlaying ();
+    } else if (state == Process::NotRunning) {
+        if (m_source->hasLength () &&
+                m_source->position() > m_source->length())
+            m_source->setLength (m_source->position ());
+        m_source->setPosition (0);
+        m_view->reset ();
+        emit stopPlaying ();
+    } else if (state == Process::Ready) {
+        if (old == Process::Playing)
+            m_source->next ();
+        m_source->getCurrent ();
+    }
 }
 
 KDE_NO_EXPORT void PartBase::positioned (int pos) {
@@ -477,20 +482,8 @@ void PartBase::lengthFound (int len) {
     m_view->buttonBar ()->setPlayingLength (len);
 }
 
-void PartBase::processStartedPlaying () {
-    if (!m_view) return;
-    m_process->view ()->videoStart ();
-    kdDebug () << "PartBase::processStartedPlaying " << endl;
-    if (m_settings->sizeratio && m_view->viewer ())
-        m_view->viewer ()->setAspect (m_process->source ()->aspect ());
-    m_view->buttonBar ()->showPositionSlider (!!m_process->source ()->length());
-    m_view->buttonBar ()->enableSeekButtons (m_process->source()->isSeekable());
-    emit loading (100);
-    emit startPlaying ();
-}
-
 unsigned long PartBase::position () const {
-    return 100 * m_process->source ()->position ();
+    return 100 * m_source->position ();
 }
 
 void PartBase::pause () {
@@ -498,17 +491,17 @@ void PartBase::pause () {
 }
 
 void PartBase::back () {
-    m_process->source ()->backward ();
+    m_source->backward ();
 }
 
 void PartBase::forward () {
-    m_process->source ()->forward ();
+    m_source->forward ();
 }
 
 void PartBase::playListItemSelected (QListViewItem * item) {
     if (m_in_update_tree) return;
     ListViewItem * vi = static_cast <ListViewItem *> (item);
-    m_process->source ()->jump (vi->m_elm);
+    m_source->jump (vi->m_elm);
 }
 
 void PartBase::updateTree (const ElementPtr & d, const ElementPtr & c) {
@@ -531,8 +524,12 @@ void PartBase::record () {
 }
 
 void PartBase::play () {
-    m_process->play ();
-    m_view->buttonBar ()->setPlaying (m_process->playing ());
+    if (m_process->state () == Process::NotRunning) {
+        m_process->ready ();
+    } else if (m_process->state () == Process::Ready) {
+        m_source->getCurrent ();
+    } else
+        m_process->play (m_source);
 }
 
 bool PartBase::playing () const {
@@ -545,10 +542,10 @@ void PartBase::stop () {
         m_view->buttonBar ()->button (ControlPanel::button_stop)->toggle ();
         m_view->setCursor (QCursor (Qt::WaitCursor));
     }
-    if (m_process) {
-        m_process->source ()->first ();
+    if (m_process)
         m_process->quit ();
-    }
+    if (m_source)
+        m_source->first ();
     if (m_view) {
         m_view->setCursor (QCursor (Qt::ArrowCursor));
         if (m_view->buttonBar ()->button (ControlPanel::button_stop)->isOn ())
@@ -569,8 +566,8 @@ void PartBase::sizes (int & w, int & h) const {
         w = m_view->viewer ()->width ();
         h = m_view->viewer ()->height ();
     } else {
-        w = m_process->source ()->width ();
-        h = m_process->source ()->height ();
+        w = m_source->width ();
+        h = m_source->height ();
     }
 }
 
@@ -674,7 +671,7 @@ void Source::setURL (const KURL & url) {
         if (m_document)
             m_document->document ()->dispose ();
         m_document = (new Document (url.url ()))->self ();
-        if (m_player->process () && m_player->process ()->source () == this)
+        if (m_player->process () && m_player->source () == this)
             m_player->updateTree (m_document, m_current);
     }
     m_current = m_document;
@@ -700,7 +697,10 @@ void Source::getCurrent () {
     m_player->changeURL (url);
     if (m_player->process () && m_player->process ()->view ())
         m_player->process ()->view ()->videoStop (); // show buttonbar
-    emit currentURL (url);
+    if (url.isEmpty ())
+        emit endOfPlayItems ();
+    else
+        emit currentURL (this);
 }
 
 static ElementPtr findDepthFirst (ElementPtr elm) {

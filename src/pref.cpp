@@ -286,11 +286,11 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent, PartBase * 
     QHBoxLayout *buttonlayout = new QHBoxLayout;
     buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
     buttonlayout->addWidget (recordButton);
-    source = new QLabel (i18n ("Current source: ") + m_player->process ()->source ()->prettyName (), this);
+    source = new QLabel (i18n ("Current source: ") + m_player->source ()->prettyName (), this);
     recorder = new QButtonGroup (3 /*m_recorders.size ()*/, Qt::Vertical, i18n ("Recorder"), this);
     for (RecorderPage * p = m_recorders; p; p = p->next) {
         QRadioButton * radio = new QRadioButton (p->name (), recorder);
-        radio->setEnabled (p->sourceSupported (m_player->process()->source ()));
+        radio->setEnabled (p->sourceSupported (m_player->source ()));
     }
     recorder->setButton(0); // for now
     replay = new QButtonGroup (4, Qt::Vertical, i18n ("Auto Playback"), this);
@@ -397,7 +397,7 @@ KDE_NO_EXPORT void PrefMEncoderPage::record () {
         m_player->settings ()->recordcopy = !format->id (format->selected ());
 #endif
         rec->setURL (KURL (m_player->settings ()->recordfile));
-        rec->play ();
+        rec->play (m_player->source ());
     } else
         rec->stop ();
 }
@@ -419,7 +419,7 @@ KDE_NO_EXPORT void PrefMPlayerDumpstreamPage::record () {
     m_player->setRecorder ("mplayerdumpstream");
     if (!rec->playing ()) {
         rec->setURL (KURL (m_player->settings ()->recordfile));
-        rec->play ();
+        rec->play (m_player->source ());
     } else
         rec->stop ();
 }
@@ -448,7 +448,7 @@ KDE_NO_EXPORT void PrefFFMpegPage::record () {
     m_player->setRecorder ("ffmpeg");
     rec->setURL (KURL::fromPathOrURL (m_player->settings ()->recordfile));
     rec->setArguments (arguments->text ());
-    rec->play ();
+    rec->play (m_player->source ());
 }
 
 KDE_NO_EXPORT QString PrefFFMpegPage::name () {

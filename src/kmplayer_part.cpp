@@ -413,19 +413,6 @@ KDE_NO_EXPORT bool KMPlayerPart::closeURL () {
     return PartBase::closeURL ();
 }
 
-KDE_NO_EXPORT void KMPlayerPart::processFinished () {
-    PartBase::processFinished ();
-    if (m_started_emited) {
-        m_started_emited = false;
-        m_browserextension->setLoadingProgress (100);
-        emit completed ();
-    } else {
-        emit canceled (i18n ("Could not start MPlayer"));
-    }
-    if (m_view)
-        m_browserextension->infoMessage (i18n ("KMPlayer: Stop Playing"));
-}
-
 KDE_NO_EXPORT void KMPlayerPart::loaded (int percentage) {
     PartBase::loaded (percentage);
     if (percentage < 100) {
@@ -435,23 +422,32 @@ KDE_NO_EXPORT void KMPlayerPart::loaded (int percentage) {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerPart::processStarted () {
-    PartBase::processStarted ();
-    emit started (0L);
-    m_started_emited = true;
-}
-
-KDE_NO_EXPORT void KMPlayerPart::processStartedPlaying () {
+KDE_NO_EXPORT void KMPlayerPart::processStateChange (KMPlayer::Process::State old, KMPlayer::Process::State state) {
     if (!m_view) return;
-    kdDebug () << "KMPlayerPart::processStartedPlaying " << endl;
-    PartBase::processStartedPlaying ();
-    if (m_settings->sizeratio && !m_noresize)
-        m_liveconnectextension->setSize (m_process->source ()->width (),
-                                         m_process->source ()->height ());
-    m_browserextension->setLoadingProgress (100);
-    emit completed ();
-    m_started_emited = false;
-    m_browserextension->infoMessage (i18n("KMPlayer: Playing"));
+    KMPlayer::PartBase::processStateChange (old, state);
+    if (old == Process::NotRunning && state == Process::Ready) {
+        emit started (0L);
+        m_started_emited = true;
+    } else if (state == Process::Playing) {
+        kdDebug () << "KMPlayerPart::processStartedPlaying " << endl;
+        if (m_settings->sizeratio && !m_noresize)
+            m_liveconnectextension->setSize (m_source->width (),
+                                             m_source->height ());
+        m_browserextension->setLoadingProgress (100);
+        emit completed ();
+        m_started_emited = false;
+        m_browserextension->infoMessage (i18n("KMPlayer: Playing"));
+    } else if (state == Process::NotRunning) {
+        if (m_started_emited) {
+            m_started_emited = false;
+            m_browserextension->setLoadingProgress (100);
+            emit completed ();
+        } else {
+            emit canceled (i18n ("Could not start process ") + QString (process ()->name ()));
+        }
+        m_browserextension->infoMessage (i18n ("KMPlayer: Stop Playing"));
+    }
+
 }
 
 KDE_NO_EXPORT void KMPlayerPart::setMenuZoom (int id) {
@@ -718,7 +714,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
             rval = player->process ()->playing () ? "true" : "false";
             break;
         case canseek:
-            rval = player->process ()->source ()->isSeekable () ? "true" : "false";
+            rval = player->source ()->isSeekable () ? "true" : "false";
             break;
         case play:
             player->play ();
@@ -748,13 +744,13 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
             rval = static_cast <KMPlayer::View*> (player->view ())->isFullScreen () ? "true" : "false";
             break;
         case length:
-            rval.setNum (player->process ()->source ()->length ());
+            rval.setNum (player->source ()->length ());
             break;
         case width:
-            rval.setNum (player->process ()->source ()->width ());
+            rval.setNum (player->source ()->width ());
             break;
         case height:
-            rval.setNum (player->process ()->source ()->height ());
+            rval.setNum (player->source ()->height ());
             break;
         case playstate: // FIXME 0-6
             rval = player->process ()->playing () ? "3" : "0";

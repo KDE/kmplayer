@@ -323,7 +323,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::menuClicked (int id) {
         ;
     m_cur_tvdevice = elm;
     m_current = 0L;
-    if (m_player->process ()->source () == this) {
+    if (m_player->source () == this) {
         m_player->stop ();
         m_current = m_cur_tvdevice;
         KMPlayer::Source::next ();
@@ -588,7 +588,7 @@ KDE_NO_EXPORT bool TVDeviceScannerSource::scan (const QString & dev, const QStri
         return false;
     m_tvdevice = new TVDevice (m_doc, dev, QSize ());
     m_driver = dri;
-    m_source = m_player->process ()->source ();
+    m_source = m_player->source ();
     m_player->setSource (this);
     m_identified = true;
     play ();

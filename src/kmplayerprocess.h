@@ -46,33 +46,33 @@ class Backend_stub;
 class KMPLAYER_EXPORT Process : public QObject {
     Q_OBJECT
 public:
+    enum State {
+        NotRunning = 0, Ready, Buffering, Playing
+    };
     Process (PartBase * player, const char * n);
     virtual ~Process ();
     virtual void init ();
     virtual void initProcess ();
     virtual QString menuName () const;
     bool playing () const;
-    KDE_NO_EXPORT Source * source () const { return m_source; }
     KDE_NO_EXPORT KProcess * process () const { return m_process; }
     KDE_NO_EXPORT PartBase * player () const { return m_player; }
     virtual WId widget ();
     View * view ();
-    void setSource (Source * source);
+    void setSource (Source * src) { m_source = src; }
     virtual bool grabPicture (const KURL & url, int pos);
     bool supports (const char * source) const;
+    State state () const { return m_state; }
 signals:
-    // backend process is running
-    void started ();
-    // backend process is playing
-    void startedPlaying ();
-    // backend process has ended
-    void finished ();
+    // backend process state changed
+    void stateChange (Process::State oldstate, Process::State newstate);
     void grabReady (const QString & path);
     void loaded (int percentage);
     void positioned (int pos);
     void lengthFound (int len);
 public slots:
-    virtual bool play ();
+    virtual bool ready ();
+    virtual bool play (Source *);
     virtual bool stop ();
     virtual bool quit ();
     virtual bool pause ();
@@ -84,17 +84,18 @@ public slots:
     virtual bool contrast (int pos, bool absolute);
     virtual bool brightness (int pos, bool absolute);
 protected:
+    void setState (State newstate);
     PartBase * m_player;
     Source * m_source;
+    State m_state;
+    State m_old_state;
     KProcess * m_process;
     QString m_url;
     int m_request_seek;
     const char ** m_supported_sources;
 protected slots:
-    virtual void urlForPlaying (const QString &);
     // QTimer::singleShot slots for the signals
-    void emitStarted () { emit started (); }
-    void emitFinished () { emit finished (); }
+    void emitStateChange () { emit stateChange (m_old_state, m_state); }
 };
 
 class MPlayerBase : public Process {
@@ -130,7 +131,7 @@ public:
     virtual bool grabPicture (const KURL & url, int pos);
     bool run (const char * args, const char * pipe = 0L);
 public slots:
-    virtual bool play ();
+    virtual bool play (Source *);
     virtual bool stop ();
     virtual bool pause ();
     virtual bool seek (int pos, bool absolute);
@@ -142,7 +143,6 @@ public slots:
     MPlayerPreferencesPage * configPage () const { return m_configpage; }
 protected slots:
     void processStopped (KProcess *);
-    void urlForPlaying (const QString &);
 private slots:
     void processOutput (KProcess *, char *, int);
 private:
@@ -193,7 +193,7 @@ public:
     virtual void init ();
     KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
 public slots:
-    virtual void urlForPlaying (const QString &);
+    virtual bool play (Source *);
     virtual bool stop ();
 };
 
@@ -205,7 +205,7 @@ public:
     virtual void init ();
     KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
 public slots:
-    virtual void urlForPlaying (const QString &);
+    virtual bool play (Source *);
     virtual bool stop ();
 };
 
@@ -214,6 +214,7 @@ class XMLPreferencesFrame;
 
 class KMPLAYER_EXPORT CallbackProcess : public Process {
     Q_OBJECT
+    friend class Callback;
 public:
     CallbackProcess (PartBase * player, const char * n);
     ~CallbackProcess ();
@@ -232,6 +233,7 @@ public:
     QString dcopName ();
     ElementPtr configDocument () { return configdoc; }
 public slots:
+    bool play (Source *);
     bool stop ();
     bool pause ();
     bool saturation (int pos, bool absolute);
@@ -304,11 +306,9 @@ public:
     ~Xine ();
     QString menuName () const;
     WId widget ();
-    void setFinished ();
     void initProcess ();
 public slots:
-    virtual bool play ();
-    virtual void urlForPlaying (const QString &);
+    bool ready ();
     bool quit ();
     bool seek (int pos, bool absolute);
 protected:
@@ -325,11 +325,9 @@ public:
     ~GStreamer ();
     QString menuName () const;
     WId widget ();
-    void setFinished ();
     void initProcess ();
 public slots:
-    virtual bool play ();
-    virtual void urlForPlaying (const QString &);
+    virtual bool ready ();
     bool quit ();
     bool seek (int pos, bool absolute);
 private slots:
@@ -345,7 +343,7 @@ public:
     virtual void init ();
     void setArguments (const QString & args) { arguments = args; }
 public slots:
-    virtual void urlForPlaying (const QString &);
+    virtual bool play (Source *);
     virtual bool stop ();
 private slots:
     void processStopped (KProcess *);

@@ -81,6 +81,7 @@ public slots:
     void jump (KMPlayer::ElementPtr e);
     void forward ();
     void backward ();
+    void getCurrent ();
 private slots:
     void keyUp ();
     void keyDown ();
@@ -147,7 +148,7 @@ public:
     QString menuName () const;
     void initProcess ();
 public slots:
-    virtual bool play ();
+    virtual bool ready ();
     virtual bool quit ();
 protected:
     virtual void runForConfig ();

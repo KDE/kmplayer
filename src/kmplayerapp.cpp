@@ -232,7 +232,7 @@ KDE_NO_EXPORT void KMPlayerApp::loadingProgress (int percentage) {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
-    KMPlayer::Source * source = m_player->process ()->source ();
+    KMPlayer::Source * source = m_player->source ();
     if (source->inherits ("KMPlayer::URLSource"))
         recentFiles ()->addURL (source->url ());
 }
@@ -282,7 +282,7 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
     if (m_broadcastconfig->broadcasting () && url.url() == m_broadcastconfig->serverURL ()) {
         // speed up replay
         FFServerSetting & ffs = m_broadcastconfig->ffserversettings;
-        KMPlayer::Source * source = m_player->process ()->source ();
+        KMPlayer::Source * source = m_player->source ();
         if (!ffs.width.isEmpty () && !ffs.height.isEmpty ()) {
             source->setWidth (ffs.width.toInt ());
             source->setHeight (ffs.height.toInt ());
@@ -293,7 +293,7 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
 }
 
 KDE_NO_EXPORT void KMPlayerApp::resizePlayer (int percentage) {
-    KMPlayer::Source * source = m_player->process ()->source ();
+    KMPlayer::Source * source = m_player->source ();
     int w = source->width ();
     int h = source->height ();
     if (w <= 0 || h <= 0) {
@@ -361,7 +361,7 @@ KDE_NO_EXPORT void KMPlayerApp::broadcastStarted () {
 KDE_NO_EXPORT void KMPlayerApp::broadcastStopped () {
     if (m_view->buttonBar()->broadcastButton ()->isOn ())
         m_view->buttonBar()->broadcastButton ()->toggle ();
-    if (m_player->process ()->source () != m_player->sources () ["tvsource"])
+    if (m_player->source () != m_player->sources () ["tvsource"])
         m_view->buttonBar()->broadcastButton ()->hide ();
     setCursor (QCursor (Qt::ArrowCursor));
 }
@@ -578,8 +578,8 @@ KDE_NO_EXPORT void KMPlayerApp::configChanged () {
 
 KDE_NO_EXPORT void KMPlayerApp::keepSizeRatio () {
     m_view->setKeepSizeRatio (!m_view->keepSizeRatio ());
-    if (m_player->process ()->source () && m_view->keepSizeRatio ())
-        m_view->viewer ()->setAspect (m_player->process ()->source ()->aspect ());
+    if (m_player->source () && m_view->keepSizeRatio ())
+        m_view->viewer ()->setAspect (m_player->source ()->aspect ());
     else
         m_view->viewer ()->setAspect (0.0);
     m_player->settings ()->sizeratio = m_view->keepSizeRatio ();
