@@ -23,7 +23,7 @@
 
 using namespace KMPlayer;
 
-static Element * fromXMLDocumentGroup (ElementPtr d, const QString & tag) {
+static Element * fromXMLDocumentGroup (ElementPtr & d, const QString & tag) {
     const char * const name = tag.latin1 ();
     if (!strcmp (name, "smil"))
         return new Smil (d);
@@ -32,7 +32,7 @@ static Element * fromXMLDocumentGroup (ElementPtr d, const QString & tag) {
     return 0L;
 }
 
-static Element * fromScheduleGroup (ElementPtr d, const QString & tag) {
+static Element * fromScheduleGroup (ElementPtr & d, const QString & tag) {
     if (!strcmp (tag.latin1 (), "par"))
         return new Par (d);
     else if (!strcmp (tag.latin1 (), "seq"))
@@ -42,14 +42,14 @@ static Element * fromScheduleGroup (ElementPtr d, const QString & tag) {
     return 0L;
 }
 
-static Element * fromMediaContentGroup (ElementPtr d, const QString & tag) {
+static Element * fromMediaContentGroup (ElementPtr & d, const QString & tag) {
     if (!strcmp (tag.latin1 (), "video") || !strcmp (tag.latin1 (), "audio"))
         return new MediaType (d, tag);
     // text, img, animation, textstream, ref, brush
     return 0L;
 };
 
-static Element * fromContentControlGroup (ElementPtr d, const QString & tag) {
+static Element * fromContentControlGroup (ElementPtr & d, const QString & tag) {
     if (!strcmp (tag.latin1 (), "switch"))
         return new Switch (d);
     return 0L;
@@ -317,7 +317,7 @@ QString Element::getAttribute (const QString & name) {
     return value;
 }
 
-Attribute::Attribute (ElementPtr d, const QString & n, const QString & v)
+Attribute::Attribute (ElementPtr & d, const QString & n, const QString & v)
   : Element (d), name (n), value (v) {}
 
 static bool hasMrlChildren (const ElementPtr & e) {
@@ -327,7 +327,7 @@ static bool hasMrlChildren (const ElementPtr & e) {
     return false;
 }
 
-Mrl::Mrl (ElementPtr d) : Element (d), cached_ismrl_version (~0), parsed (false) {}
+Mrl::Mrl (ElementPtr & d) : Element (d), cached_ismrl_version (~0), parsed (false) {}
 
 KDE_NO_CDTOR_EXPORT Mrl::Mrl () : cached_ismrl_version (~0), parsed (false) {}
 
@@ -382,7 +382,7 @@ bool Document::isMrl () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT TextNode::TextNode (ElementPtr d, const QString & s)
+KDE_NO_CDTOR_EXPORT TextNode::TextNode (ElementPtr & d, const QString & s)
  : Element (d), text (s) {}
 
 void TextNode::appendText (const QString & s) {
@@ -390,7 +390,7 @@ void TextNode::appendText (const QString & s) {
 }
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT Title::Title (ElementPtr d) : Element (d) {}
+KDE_NO_CDTOR_EXPORT Title::Title (ElementPtr & d) : Element (d) {}
 
 KDE_NO_EXPORT bool Title::expose () {
     return false;
@@ -454,7 +454,7 @@ bool Switch::isMrl () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT MediaType::MediaType (ElementPtr d, const QString & t)
+KDE_NO_CDTOR_EXPORT MediaType::MediaType (ElementPtr & d, const QString & t)
     : Mrl (d), m_type (t), bitrate (0) {}
 
 KDE_NO_EXPORT ElementPtr MediaType::childFromTag (const QString & tag) {
@@ -566,7 +566,7 @@ KDE_NO_EXPORT void EntryRef::opened () {
 
 //-----------------------------------------------------------------------------
 
-GenericURL::GenericURL (ElementPtr d, const QString & s, const QString & name)
+GenericURL::GenericURL (ElementPtr & d, const QString & s, const QString & name)
  : Mrl (d) {
     src = s;
     pretty_name = name;
@@ -931,10 +931,11 @@ bool DocumentBuilder::readCDATA () {
 bool DocumentBuilder::readComment () {
     while (nextToken ()) {
         if (token->token == tok_angle_close && prev_token)
-            if (prev_token->string.endsWith (QString ("--")))
+            if (prev_token->string.endsWith (QString ("--"))) {
+                m_state = m_state->next;
                 return true;
+            }
     }
-    m_state = m_state->next;
     return false;
 }
 

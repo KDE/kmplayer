@@ -271,14 +271,14 @@ struct KMPLAYER_EXPORT ConfigDocument : public Document {
 };
 
 struct KMPLAYER_EXPORT ConfigNode : public Element {
-    ConfigNode (ElementPtr d);
+    ConfigNode (ElementPtr & d);
     KDE_NO_CDTOR_EXPORT ~ConfigNode () {}
     ElementPtr childFromTag (const QString & tag);
     QWidget * w;
 };
 
 struct KMPLAYER_EXPORT TypeNode : public ConfigNode {
-    KDE_NO_CDTOR_EXPORT TypeNode (ElementPtr d) : ConfigNode (d) {}
+    KDE_NO_CDTOR_EXPORT TypeNode (ElementPtr & d) : ConfigNode (d) {}
     KDE_NO_CDTOR_EXPORT ~TypeNode () {}
     void closed ();
     ElementPtr childFromTag (const QString & tag);

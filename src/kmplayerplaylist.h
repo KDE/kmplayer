@@ -130,7 +130,7 @@ public:
      */
     KDE_NO_EXPORT ElementPtr self () const { return m_self; }
 protected:
-    KDE_NO_CDTOR_EXPORT Element (ElementPtr d) : m_doc (d), m_self (this) {}
+    KDE_NO_CDTOR_EXPORT Element (ElementPtr & d) : m_doc (d), m_self (this) {}
     KDE_NO_CDTOR_EXPORT Element () {} // for Document
     ElementPtr m_doc;
     ElementPtrW m_parent;
@@ -149,7 +149,7 @@ KDE_NO_EXPORT inline T * convertNode (ElementPtr e) {
         
 class KMPLAYER_EXPORT Attribute : public Element {
 public:
-    Attribute (ElementPtr d, const QString & n, const QString & v);
+    Attribute (ElementPtr & d, const QString & n, const QString & v);
     KDE_NO_CDTOR_EXPORT ~Attribute () {}
     QString name;
     QString value;
@@ -157,7 +157,7 @@ public:
 
 class KMPLAYER_EXPORT Mrl : public Element {
 protected:
-    Mrl (ElementPtr d);
+    Mrl (ElementPtr & d);
     Mrl (); // for Document
     ElementPtr childFromTag (const QString & tag);
     unsigned int cached_ismrl_version;
@@ -194,7 +194,7 @@ public:
 
 class KMPLAYER_EXPORT TextNode : public Element {
 public:
-    TextNode (ElementPtr d, const QString & s);
+    TextNode (ElementPtr & d, const QString & s);
     KDE_NO_CDTOR_EXPORT ~TextNode () {}
     void appendText (const QString & s);
     KDE_NO_EXPORT const char * nodeName () const { return "#text"; }
@@ -203,7 +203,7 @@ public:
 
 class Title : public Element {
 public:
-    Title (ElementPtr d);
+    Title (ElementPtr & d);
     KDE_NO_CDTOR_EXPORT ~Title () {}
     KDE_NO_EXPORT const char * nodeName () const { return "title"; }
     virtual bool expose ();
@@ -213,35 +213,35 @@ public:
 
 class Smil : public Element {
 public:
-    KDE_NO_CDTOR_EXPORT Smil (ElementPtr d) : Element (d) {}
+    KDE_NO_CDTOR_EXPORT Smil (ElementPtr & d) : Element (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "smil"; }
 };
 
 class Body : public Element {
 public:
-    KDE_NO_CDTOR_EXPORT Body (ElementPtr d) : Element (d) {}
+    KDE_NO_CDTOR_EXPORT Body (ElementPtr & d) : Element (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "body"; }
 };
 
 class Par : public Element {
 public:
-    KDE_NO_CDTOR_EXPORT Par (ElementPtr d) : Element (d) {}
+    KDE_NO_CDTOR_EXPORT Par (ElementPtr & d) : Element (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "par"; }
 };
 
 class Seq : public Element {
 public:
-    KDE_NO_CDTOR_EXPORT Seq (ElementPtr d) : Element (d) {}
+    KDE_NO_CDTOR_EXPORT Seq (ElementPtr & d) : Element (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "seq"; }
 };
 
 class Switch : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Switch (ElementPtr d) : Mrl (d) {}
+    KDE_NO_CDTOR_EXPORT Switch (ElementPtr & d) : Mrl (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "switch"; }
     /**
@@ -253,7 +253,7 @@ public:
 
 class MediaType : public Mrl {
 public:
-    MediaType (ElementPtr d, const QString & t);
+    MediaType (ElementPtr & d, const QString & t);
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
     void opened ();
@@ -265,7 +265,7 @@ public:
 
 class Asx : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Asx (ElementPtr d) : Mrl (d) {}
+    KDE_NO_CDTOR_EXPORT Asx (ElementPtr & d) : Mrl (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "ASX"; }
     /**
@@ -276,7 +276,7 @@ public:
 
 class Entry : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Entry (ElementPtr d) : Mrl (d) {}
+    KDE_NO_CDTOR_EXPORT Entry (ElementPtr & d) : Mrl (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "Entry"; }
     /**
@@ -291,7 +291,7 @@ public:
 
 class Ref : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Ref (ElementPtr d) : Mrl (d) {}
+    KDE_NO_CDTOR_EXPORT Ref (ElementPtr & d) : Mrl (d) {}
     //ElementPtr childFromTag (const QString & tag);
     void opened ();
     KDE_NO_EXPORT const char * nodeName () const { return "Ref"; }
@@ -299,7 +299,7 @@ public:
 
 class EntryRef : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT EntryRef (ElementPtr d) : Mrl (d) {}
+    KDE_NO_CDTOR_EXPORT EntryRef (ElementPtr & d) : Mrl (d) {}
     //ElementPtr childFromTag (const QString & tag);
     void opened ();
     KDE_NO_EXPORT const char * nodeName () const { return "EntryRef"; }
@@ -309,8 +309,8 @@ public:
 
 class KMPLAYER_EXPORT GenericURL : public Mrl { //just some url, can get a SMIL or ASX childtree
 public:
-    KDE_NO_CDTOR_EXPORT GenericURL (ElementPtr d) : Mrl (d) {}
-    GenericURL(ElementPtr d, const QString &s, const QString &n=QString::null);
+    KDE_NO_CDTOR_EXPORT GenericURL (ElementPtr & d) : Mrl (d) {}
+    GenericURL(ElementPtr &d, const QString &s, const QString &n=QString::null);
     KDE_NO_EXPORT const char * nodeName () const { return "GenericURL"; }
     /**
      * Will return false if this document has child nodes

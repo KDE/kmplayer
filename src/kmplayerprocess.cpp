@@ -1187,7 +1187,7 @@ KDE_NO_CDTOR_EXPORT ConfigDocument::~ConfigDocument () {
 
 namespace KMPlayer {
     struct SomeNode : public ConfigNode {
-        KDE_NO_CDTOR_EXPORT SomeNode (ElementPtr d, const QString t)
+        KDE_NO_CDTOR_EXPORT SomeNode (ElementPtr & d, const QString t)
             : ConfigNode (d), tag (t) {}
         KDE_NO_CDTOR_EXPORT ~SomeNode () {}
         ElementPtr childFromTag (const QString & t);
@@ -1196,12 +1196,12 @@ namespace KMPlayer {
     };
 } // namespace
 
-KDE_NO_CDTOR_EXPORT ConfigNode::ConfigNode (ElementPtr d)
+KDE_NO_CDTOR_EXPORT ConfigNode::ConfigNode (ElementPtr & d)
     : Element (d), w (0L) {}
 
 ElementPtr ConfigDocument::childFromTag (const QString & tag) {
     if (tag.lower () == QString ("document"))
-        return (new ConfigNode (self ()))->self ();
+        return (new ConfigNode (m_doc))->self ();
     return 0L;
 }
 

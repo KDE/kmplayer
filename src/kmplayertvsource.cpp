@@ -159,8 +159,10 @@ KDE_NO_EXPORT void KMPlayerPrefSourcePageTVDevice::updateTVDevice () {
             QTable * table = static_cast <QTable *> (widget->child ("PageTVChannels", "QTable"));
             if (table) {
                 input->clear ();
-                for (int j = 0; j < table->numRows() && table->item (j, 1); ++j)
-                    input->appendChild ((new TVChannel (device->document ()->self (), table->item (j, 0)->text (), table->item (j, 1)->text ().toInt ()))->self());
+                for (int j = 0; j<table->numRows() && table->item (j, 1); ++j) {
+                    KMPlayer::ElementPtr doc = device->document ()->self ();
+                    input->appendChild ((new TVChannel (doc, table->item (j, 0)->text (), table->item (j, 1)->text ().toInt ()))->self());
+                }
             }
             QComboBox * norms = static_cast <QComboBox *> (widget->child ("PageTVNorm", "QComboBox"));
             if (norms) {
@@ -202,11 +204,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget 
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT TVChannel::TVChannel (KMPlayer::ElementPtr d, const QString & n, int f) : KMPlayer::GenericURL (d, QString ("tv://"), n), name (n), frequency (f) {}
+KDE_NO_CDTOR_EXPORT TVChannel::TVChannel (KMPlayer::ElementPtr & d, const QString & n, int f) : KMPlayer::GenericURL (d, QString ("tv://"), n), name (n), frequency (f) {}
 
-KDE_NO_CDTOR_EXPORT TVInput::TVInput (KMPlayer::ElementPtr d, const QString & n, int _id) : KMPlayer::GenericURL (d, QString ("tv://"), n), name (n), id (_id) {}
+KDE_NO_CDTOR_EXPORT TVInput::TVInput (KMPlayer::ElementPtr & d, const QString & n, int _id) : KMPlayer::GenericURL (d, QString ("tv://"), n), name (n), id (_id) {}
 
-KDE_NO_CDTOR_EXPORT TVDevice::TVDevice (KMPlayer::ElementPtr doc, const QString & d, const QSize & s)
+KDE_NO_CDTOR_EXPORT TVDevice::TVDevice (KMPlayer::ElementPtr & doc, const QString & d, const QSize & s)
     : KMPlayer::GenericURL (doc, d), size (s), noplayback (false) {
 }
 

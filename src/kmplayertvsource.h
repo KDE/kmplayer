@@ -44,7 +44,7 @@ class KURLRequester;
 
 class TVChannel : public KMPlayer::GenericURL {
 public:
-    TVChannel (KMPlayer::ElementPtr d, const QString & n, int f);
+    TVChannel (KMPlayer::ElementPtr & d, const QString & n, int f);
     KDE_NO_CDTOR_EXPORT ~TVChannel () {}
     KDE_NO_EXPORT const char * nodeName () const { return "tvchannel"; }
     QString name;
@@ -53,7 +53,7 @@ public:
 
 class TVInput : public KMPlayer::GenericURL {
 public:
-    TVInput (KMPlayer::ElementPtr d, const QString & n, int id);
+    TVInput (KMPlayer::ElementPtr & d, const QString & n, int id);
     KDE_NO_CDTOR_EXPORT ~TVInput () {}
     KDE_NO_EXPORT const char * nodeName () const { return "tvinput"; }
     QString name;
@@ -64,7 +64,7 @@ public:
 
 class TVDevice : public KMPlayer::GenericURL {
 public:
-    TVDevice (KMPlayer::ElementPtr d, const QString & d, const QSize & size);
+    TVDevice (KMPlayer::ElementPtr & d, const QString & d, const QSize & size);
     KDE_NO_CDTOR_EXPORT ~TVDevice () {}
     KDE_NO_EXPORT const char * nodeName () const { return "tvdevice"; }
     QString audiodevice;
