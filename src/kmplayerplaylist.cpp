@@ -702,7 +702,7 @@ bool DocumentBuilder::nextToken () {
             next_token->token = tok_white_space;
         } else if (!next_char.isLetterOrNumber ()) {
             if (next_char == QChar ('#')) {
-                if (next_token->token != tok_text) { // check last item on stack &
+                if (next_token->token == tok_empty) { // check last item on stack &
                     push ();
                     next_token->token = tok_hash;
                 }
@@ -737,7 +737,6 @@ bool DocumentBuilder::nextToken () {
                 push ();
                 append_char = false;
                 TokenInfoPtr tmp = token;
-                next_token->token = tok_text;
                 if (nextToken () && token->token == tok_text &&
                         nextToken () && token->token == tok_semi_colon) {
                     if (prev_token->string == QString ("amp"))
@@ -750,15 +749,31 @@ bool DocumentBuilder::nextToken () {
                         token->string = QChar ('"');
                     else if (prev_token->string == QString ("apos"))
                         token->string = QChar ('\'');
+                    else if (prev_token->string == QString ("copy"))
+                        token->string = QChar (169);
                     else
-                        ;  // TODO lookup
-                    if (tmp) {
+                        token->string = QChar ('?');// TODO lookup more ..
+                    if (tmp) { // cut out the & xxx ; tokens
                         tmp->next = token;
                         token = tmp;
                     }
-                    //kdDebug () << "entity found " << prev_token->string.latin1() << endl;
+                    token->token = tok_text;
+                    //kdDebug () << "entity found "<<prev_token->string << endl;
+                } else if (token->token == tok_hash &&
+                        nextToken () && token->token == tok_text && 
+                        nextToken () && token->token == tok_semi_colon) {
+                    //kdDebug () << "char entity found " << prev_token->string << prev_token->string.toInt (0L, 16) << endl;
+                    token->token = tok_text;
+                    if (!prev_token->string.startsWith (QChar ('x')))
+                        token->string = QChar (prev_token->string.toInt ());
+                    else
+                        token->string = QChar (prev_token->string.mid (1).toInt (0L, 16));
+                    if (tmp) { // cut out the '& # xxx ;' tokens
+                        tmp->next = token;
+                        token = tmp;
+                    }
                 } else {
-                    token = tmp;
+                    token = tmp; // restore and insert the lost & token
                     tmp = TokenInfoPtr (new TokenInfo);
                     tmp->token = tok_amp;
                     tmp->string += QChar ('&');
