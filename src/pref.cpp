@@ -124,7 +124,7 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent, FFServerSetting * ffs)
 
 	/*hierarchy.clear();
 	hierarchy << i18n("Output plugins") << i18n("General");
-	frame = addPage(hierarchy, i18n("Output plugin Options || NOT YET USED == FIXME!"));
+	frame = addPage(hierarchy, i18n("Output Plugin Options || NOT YET USED == FIXME!"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	m_OPPageGeneral = new KMPlayerPrefOPPageGeneral(frame);
 	vlay->addWidget(m_OPPageGeneral);*/
