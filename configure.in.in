@@ -118,23 +118,20 @@ if test "$build_gstreamer" != "no"; then
             have_gst_interfaces=yes,have_gst_interfaces=no)
 
         dnl Give error if we don't have gstreamer
-        if test "x$have_gst" = "xno"; then
-            LIB_GST=""
-            CFLAGS_GST=""
-        else
-            LIB_GST=$GST_LIBS
-            CFLAGS_GST=$GST_CFLAGS
-            AC_SUBST(LIB_GST)
-            AC_SUBST(CFLAGS_GST)
+        if test "x$have_gst" = "xyes"; then
             AC_SUBST(GST_MAJORMINOR)
             AC_DEFINE(HAVE_GSTREAMER, 1, [have GStreamer])
         fi
     fi
 fi
 AC_MSG_CHECKING([if kgstplayer can be compiled])
-AC_MSG_RESULT($have_gst)
+if test "x$have_gst" = "xyes" && test "x$have_gst_plugins" = "xyes" && test "x$have_gst_interfaces" = "xyes"; then
+    AC_MSG_RESULT(yes)
+else
+    AC_MSG_RESULT(no)
+fi
 
-AM_CONDITIONAL(include_kgstplayer, [test x$have_gst = xyes])
+AM_CONDITIONAL(include_kgstplayer, [test "x$have_gst" = "xyes" && test "x$have_gst_plugins" = "xyes" && test "x$have_gst_interfaces" = "xyes"])
 
 KDE_CHECK_BINUTILS
 
