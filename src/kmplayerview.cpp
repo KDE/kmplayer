@@ -47,6 +47,7 @@
 
 #include "kmplayerview.h"
 #include "kmplayersource.h"
+#include "kmplayer_smil.h"
 
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
@@ -292,20 +293,6 @@ KDE_NO_EXPORT void ViewLayer::mouseMoveEvent (QMouseEvent * e) {
         int cp_height = m_view->controlPanel ()->maximumSize ().height ();
         m_view->delayedShowButtons (e->y() > vert_buttons_pos-cp_height &&
                                     e->y() < vert_buttons_pos);
-    }
-}
-
-void RegionNode::paint (QPainter & p) {
-    if (have_color)
-        p.fillRect (x, y, w, h, QColor (QRgb (background_color)));
-    if (data)
-        data->paint (p);
-}
-
-KDE_NO_CDTOR_EXPORT void ImageData::paint (QPainter & p) {
-    if (image && region_node) {
-        RegionNode * r = region_node.ptr ();
-        p.drawPixmap (QRect (r->x, r->y, r->w, r->h), *image);
     }
 }
 

@@ -70,12 +70,12 @@ typedef SharedPtr<RegionNode> RegionNodePtr;
 typedef WeakPtr<RegionNode> RegionNodePtrW;
 typedef SharedPtr<RegionData> RegionDataPtr;
 
+
 class RegionData {
 public:
     KDE_NO_CDTOR_EXPORT virtual ~RegionData () {}
     virtual void paint (QPainter &) {}
     virtual bool isAudioVideo ();
-    virtual bool isImage ();
 protected:
     RegionData (RegionNodePtr r);
     RegionNodePtrW region_node;
@@ -113,24 +113,6 @@ public:
 
     RegionNodePtr nextSibling;
     RegionNodePtr firstChild;
-};
-
-class AudioVideoData : public RegionData {
-public:
-    AudioVideoData (RegionNodePtr r, ElementPtr e);
-    virtual bool isAudioVideo ();
-    ElementPtrW av_element;
-};
-
-class ImageData : public RegionData {
-public:
-    ImageData (RegionNodePtr r, ElementPtr e);
-    ~ImageData ();
-    bool isImage () { return true; }
-    void paint (QPainter & p);
-    ElementPtrW image_element;
-    QPixmap * image;
-    ImageDataPrivate * d;
 };
 
 class KMPLAYER_EXPORT NodeList {
@@ -352,8 +334,6 @@ public:
 
 //-----------------------------------------------------------------------------
 
-namespace SMIL {
-
 class Smil : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Smil (ElementPtr & d) : Mrl (d) {}
@@ -369,117 +349,6 @@ public:
     ElementPtr realMrl ();
     ElementPtr current_av_media_type;
 };
-
-class Head : public Element {
-public:
-    KDE_NO_CDTOR_EXPORT Head (ElementPtr & d) : Element (d) {}
-    ElementPtr childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return "head"; }
-    bool expose ();
-};
-
-class Layout : public Element {
-public:
-    KDE_NO_CDTOR_EXPORT Layout (ElementPtr & d) : Element (d) {}
-    ElementPtr childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return "layout"; }
-    void closed ();
-    RegionNodePtr rootLayout;
-};
-
-class RegionBase : public Element {
-protected:
-    KDE_NO_CDTOR_EXPORT RegionBase (ElementPtr & d) : Element (d) {}
-public:
-    int x, y, w, h;
-};
-
-class Region : public RegionBase {
-public:
-    KDE_NO_CDTOR_EXPORT Region (ElementPtr & d) : RegionBase (d) {}
-    KDE_NO_EXPORT const char * nodeName () const { return "region"; }
-    ElementPtr childFromTag (const QString & tag);
-};
-
-class RootLayout : public RegionBase {
-public:
-    KDE_NO_CDTOR_EXPORT RootLayout (ElementPtr & d) : RegionBase (d) {}
-    KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
-};
-
-/**
- * A Par represends parallel processing of all its children
- */
-class Par : public Element {
-public:
-    KDE_NO_CDTOR_EXPORT Par (ElementPtr & d) : Element (d) {}
-    ElementPtr childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return "par"; }
-    void start ();
-    void stop ();
-    void reset ();
-    void childDone (ElementPtr child);
-};
-
-class Seq : public Element {
-public:
-    KDE_NO_CDTOR_EXPORT Seq (ElementPtr & d) : Element (d) {}
-    ElementPtr childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return "seq"; }
-};
-
-class Body : public Seq {
-public:
-    KDE_NO_CDTOR_EXPORT Body (ElementPtr & d) : Seq (d) {}
-    ElementPtr childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return "body"; }
-};
-
-class Switch : public Element {
-public:
-    KDE_NO_CDTOR_EXPORT Switch (ElementPtr & d) : Element (d) {}
-    ElementPtr childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return "switch"; }
-    // Condition
-    void start ();
-    void stop ();
-    void reset ();
-    void childDone (ElementPtr child);
-};
-
-class MediaType : public Mrl {
-public:
-    MediaType (ElementPtr & d, const QString & t);
-    ElementPtr childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
-    void opened ();
-    void start ();
-    void reset ();
-    RegionNodePtrW region;
-    QString m_type;
-    int bitrate;
-};
-
-class AVMediaType : public MediaType {
-public:
-    AVMediaType (ElementPtr & d, const QString & t);
-    RegionDataPtr getNewData (RegionNodePtr r);
-    void start ();
-    void stop ();
-};
-
-class ImageMediaType : public MediaType {
-public:
-    ImageMediaType (ElementPtr & d);
-    RegionDataPtr getNewData (RegionNodePtr r);
-    void start ();
-    /**
-     * cache the region data, so we load image only once
-     */
-    RegionDataPtr region_data;
-};
-
-} // SMIL namespace
 
 //-----------------------------------------------------------------------------
 
