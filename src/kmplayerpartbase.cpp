@@ -67,15 +67,15 @@ private:
 inline KMPlayerBookmarkOwner::KMPlayerBookmarkOwner (KMPlayer * player)
     : m_player (player) {}
 
-inline void KMPlayerBookmarkOwner::openBookmarkURL (const QString & url) {
+KDE_NO_EXPORT void KMPlayerBookmarkOwner::openBookmarkURL (const QString & url) {
     m_player->openURL (KURL (url));
 }
 
-inline QString KMPlayerBookmarkOwner::currentTitle () const {
+KDE_NO_EXPORT QString KMPlayerBookmarkOwner::currentTitle () const {
     return m_player->process ()->source ()->prettyName ();
 }
 
-inline QString KMPlayerBookmarkOwner::currentURL () const {
+KDE_NO_EXPORT QString KMPlayerBookmarkOwner::currentURL () const {
     return m_player->process ()->source ()->url ().url ();
 }
 
@@ -181,7 +181,7 @@ void KMPlayer::removeControlPanel (KMPlayerControlPanel * panel) {
     m_panels.remove (panel);
 }
 
-void KMPlayer::controlPanelDestroyed (QObject * panel) {
+KDE_NO_EXPORT void KMPlayer::controlPanelDestroyed (QObject * panel) {
     m_panels.remove (static_cast <KMPlayerControlPanel *> (panel));
 }
 
@@ -257,7 +257,7 @@ void KMPlayer::setRecorder (KMPlayerProcess * recorder) {
 extern const char * strUrlBackend;
 extern const char * strMPlayerGroup;
 
-void KMPlayer::setXine (int id) {
+KDE_NO_EXPORT void KMPlayer::setXine (int id) {
     bool playing = m_process->playing ();
     m_settings->urlbackend = QString ("Xine");
     m_config->setGroup (strMPlayerGroup);
@@ -273,7 +273,7 @@ void KMPlayer::setXine (int id) {
         setSource (m_process->source ()); // re-activate
 }
 
-void KMPlayer::setMPlayer (int id) {
+KDE_NO_EXPORT void KMPlayer::setMPlayer (int id) {
     bool playing = m_process->playing ();
     m_settings->urlbackend = QString ("MPlayer");
     m_config->setGroup (strMPlayerGroup);
@@ -334,7 +334,7 @@ void KMPlayer::setSource (KMPlayerSource * source) {
     emit sourceChanged (source);
 }
 
-void KMPlayer::addURL (const QString & _url) {
+KDE_NO_EXPORT void KMPlayer::addURL (const QString & _url) {
     QString url = KURL::fromPathOrURL (_url).url ();
     kdDebug () << "mrl added: " << url << endl;
     if (m_process->source ()->url ().url () != url && m_url != url)
@@ -342,11 +342,11 @@ void KMPlayer::addURL (const QString & _url) {
     emit urlAdded (url);
 }
 
-void KMPlayer::changeURL (const QString & url) {
+KDE_NO_EXPORT void KMPlayer::changeURL (const QString & url) {
     emit urlChanged (url);
 }
 
-void KMPlayer::changeTitle (const QString & title) {
+KDE_NO_EXPORT void KMPlayer::changeTitle (const QString & title) {
     emit titleChanged (title);
 }
 
@@ -393,7 +393,7 @@ void KMPlayer::keepMovieAspect (bool b) {
         m_view->viewer ()->setAspect (b ? m_process->source ()->aspect () : 0.0);
 }
 
-void KMPlayer::recordingStarted () {
+KDE_NO_EXPORT void KMPlayer::recordingStarted () {
     if (!m_view) return;
     std::for_each (m_panels.begin (), m_panels.end (),
             std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setRecording), true));
@@ -402,7 +402,7 @@ void KMPlayer::recordingStarted () {
     emit startRecording ();
 }
 
-void KMPlayer::recordingFinished () {
+KDE_NO_EXPORT void KMPlayer::recordingFinished () {
     if (!m_view) return;
     std::for_each (m_panels.begin (), m_panels.end (),
             std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setRecording), false));
@@ -417,7 +417,7 @@ void KMPlayer::recordingFinished () {
     }
 }
 
-void KMPlayer::timerEvent (QTimerEvent * e) {
+KDE_NO_EXPORT void KMPlayer::timerEvent (QTimerEvent * e) {
     kdDebug () << "record timer event" << (m_recorder->playing () && !playing ()) << endl;
     killTimer (e->timerId ());
     m_record_timer = 0;
@@ -428,7 +428,7 @@ void KMPlayer::timerEvent (QTimerEvent * e) {
     }
 }
 
-void KMPlayer::processFinished () {
+KDE_NO_EXPORT void KMPlayer::processFinished () {
     kdDebug () << "process finished" << endl;
     if (m_process->source ()->hasLength () &&
             m_process->source ()->position () > m_process->source ()->length ())
@@ -441,13 +441,13 @@ void KMPlayer::processFinished () {
     emit stopPlaying ();
 }
 
-void KMPlayer::processStarted () {
+KDE_NO_EXPORT void KMPlayer::processStarted () {
     if (!m_view) return;
     std::for_each (m_panels.begin (), m_panels.end (),
             std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setPlaying), true));
 }
 
-void KMPlayer::processPositioned (int pos) {
+KDE_NO_EXPORT void KMPlayer::processPositioned (int pos) {
     if (!m_view) return;
     ControlPanelList::iterator e = m_panels.end();
     for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
@@ -464,7 +464,7 @@ void KMPlayer::processPositioned (int pos) {
     }
 }
 
-void KMPlayer::processLoaded (int percentage) {
+KDE_NO_EXPORT void KMPlayer::processLoaded (int percentage) {
     if (!m_view) return;
     ControlPanelList::iterator e = m_panels.end();
     for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
@@ -478,7 +478,7 @@ void KMPlayer::processLoaded (int percentage) {
     emit loading (percentage);
 }
 
-void KMPlayer::processStartedPlaying () {
+KDE_NO_EXPORT void KMPlayer::processStartedPlaying () {
     if (!m_view) return;
     kdDebug () << "KMPlayer::processStartedPlaying " << endl;
     if (m_settings->sizeratio && m_view->viewer ())
@@ -568,11 +568,11 @@ void KMPlayer::sizes (int & w, int & h) const {
     }
 }
 
-void KMPlayer::posSliderPressed () {
+KDE_NO_EXPORT void KMPlayer::posSliderPressed () {
     m_bPosSliderPressed=true;
 }
 
-void KMPlayer::posSliderReleased () {
+KDE_NO_EXPORT void KMPlayer::posSliderReleased () {
     m_bPosSliderPressed=false;
 #if (QT_VERSION < 0x030200)
     const QSlider * posSlider = dynamic_cast <const QSlider *> (sender ());
@@ -583,27 +583,27 @@ void KMPlayer::posSliderReleased () {
         m_process->seek (posSlider->value(), true);
 }
 
-void KMPlayer::contrastValueChanged (int val) {
+KDE_NO_EXPORT void KMPlayer::contrastValueChanged (int val) {
     m_settings->contrast = val;
     m_process->contrast (val, true);
 }
 
-void KMPlayer::brightnessValueChanged (int val) {
+KDE_NO_EXPORT void KMPlayer::brightnessValueChanged (int val) {
     m_settings->brightness = val;
     m_process->brightness (val, true);
 }
 
-void KMPlayer::hueValueChanged (int val) {
+KDE_NO_EXPORT void KMPlayer::hueValueChanged (int val) {
     m_settings->hue = val;
     m_process->hue (val, true);
 }
 
-void KMPlayer::saturationValueChanged (int val) {
+KDE_NO_EXPORT void KMPlayer::saturationValueChanged (int val) {
     m_settings->saturation = val;
     m_process->saturation (val, true);
 }
 
-void KMPlayer::positionValueChanged (int pos) {
+KDE_NO_EXPORT void KMPlayer::positionValueChanged (int pos) {
     m_process->seek (pos, true);
 }
 
@@ -652,7 +652,7 @@ void KMPlayerSource::setURL (const KURL & url) {
     m_nexturl = m_refurls.end ();
 }
 
-void KMPlayerSource::checkList () {
+KDE_NO_EXPORT void KMPlayerSource::checkList () {
     URLInfoList::iterator tmp = m_currenturl;
     if (tmp != m_refurls.end () && m_nexturl != ++tmp) {
         kdDebug () << "Erasing " << m_currenturl->url << endl;
@@ -858,37 +858,37 @@ QString KMPlayerSource::prettyName () {
 
 //-----------------------------------------------------------------------------
 
-KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, const KURL & url)
+KDE_NO_EXPORT KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, const KURL & url)
     : KMPlayerSource (i18n ("URL"), player), m_job (0L) {
     setURL (url);
     kdDebug () << "KMPlayerURLSource::KMPlayerURLSource" << endl;
 }
 
-KMPlayerURLSource::~KMPlayerURLSource () {
+KDE_NO_EXPORT KMPlayerURLSource::~KMPlayerURLSource () {
     kdDebug () << "KMPlayerURLSource::~KMPlayerURLSource" << endl;
 }
 
-void KMPlayerURLSource::init () {
+KDE_NO_EXPORT void KMPlayerURLSource::init () {
     KMPlayerSource::init ();
     m_player->enablePlayerMenu (true);
 }
 
-bool KMPlayerURLSource::hasLength () {
+KDE_NO_EXPORT bool KMPlayerURLSource::hasLength () {
     return !!length ();
 }
 
-void KMPlayerURLSource::activate () {
+KDE_NO_EXPORT void KMPlayerURLSource::activate () {
     if (url ().isEmpty ())
         return;
     if (m_auto_play)
         play ();
 }
 
-void KMPlayerURLSource::deactivate () {
+KDE_NO_EXPORT void KMPlayerURLSource::deactivate () {
     m_player->enablePlayerMenu (false);
 }
 
-QString KMPlayerURLSource::prettyName () {
+KDE_NO_EXPORT QString KMPlayerURLSource::prettyName () {
     if (m_url.isEmpty ())
         return QString (i18n ("URL"));
     if (m_url.url ().length () > 50) {
@@ -920,7 +920,7 @@ class MMXmlContentHandler : public QXmlDefaultHandler {
     KMPlayerURLSource * m_urlsource;
 public:
     MMXmlContentHandler (KMPlayerURLSource * source) : m_urlsource (source) {}
-    bool startElement (const QString &, const QString &,
+    KDE_NO_EXPORT bool startElement (const QString &, const QString &,
                        const QString & elm, const QXmlAttributes & atts) {
         kdDebug() << "startElement=" << elm << endl;
         if (elm.lower () == QString ("entryref") ||
@@ -942,12 +942,12 @@ class FilteredInputSource : public QXmlInputSource {
     int pos;
 public:
     FilteredInputSource (QTextStream & ts, QString & b) : textstream (ts), buffer (b), pos (0) {}
-    QString data () { return textstream.read (); }
+    KDE_NO_EXPORT QString data () { return textstream.read (); }
     void fetchData ();
     QChar next ();
 };
 
-QChar FilteredInputSource::next () {
+KDE_NO_EXPORT QChar FilteredInputSource::next () {
     if (pos + 8 >= (int) buffer.length ())
         fetchData ();
     if (pos >= (int) buffer.length ())
@@ -963,7 +963,7 @@ QChar FilteredInputSource::next () {
     return ch;
 }
 
-void FilteredInputSource::fetchData () {
+KDE_NO_EXPORT void FilteredInputSource::fetchData () {
     if (pos > 0)
         buffer = buffer.mid (pos);
     pos = 0;
@@ -972,7 +972,7 @@ void FilteredInputSource::fetchData () {
     buffer += textstream.readLine ();
 }
 
-void KMPlayerURLSource::read (QTextStream & textstream) {
+KDE_NO_EXPORT void KMPlayerURLSource::read (QTextStream & textstream) {
     QString line;
     do {
         line = textstream.readLine ();
@@ -997,7 +997,7 @@ void KMPlayerURLSource::read (QTextStream & textstream) {
 ;
 }
 
-void KMPlayerURLSource::kioData (KIO::Job *, const QByteArray & d) {
+KDE_NO_EXPORT void KMPlayerURLSource::kioData (KIO::Job *, const QByteArray & d) {
     int size = m_data.size ();
     int newsize = size + d.size ();
     if (newsize > 50000) {
@@ -1010,12 +1010,12 @@ void KMPlayerURLSource::kioData (KIO::Job *, const QByteArray & d) {
     }
 }
 
-void KMPlayerURLSource::kioMimetype (KIO::Job *, const QString & mimestr) {
+KDE_NO_EXPORT void KMPlayerURLSource::kioMimetype (KIO::Job *, const QString & mimestr) {
     kdDebug () << "KMPlayerURLSource::kioMimetype " << mimestr << endl;
     setMime (mimestr);
 }
 
-void KMPlayerURLSource::kioResult (KIO::Job *) {
+KDE_NO_EXPORT void KMPlayerURLSource::kioResult (KIO::Job *) {
     m_job = 0L; // KIO::Job::kill deletes itself
     QTextStream textstream (m_data, IO_ReadOnly);
     read (textstream);
@@ -1026,7 +1026,7 @@ void KMPlayerURLSource::kioResult (KIO::Job *) {
     }
 }
 
-void KMPlayerURLSource::play () {
+KDE_NO_EXPORT void KMPlayerURLSource::play () {
     KURL url (current ());
     if (url.isEmpty ())
         return;

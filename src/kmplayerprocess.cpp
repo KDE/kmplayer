@@ -146,15 +146,15 @@ static bool proxyForURL (const KURL& url, QString& proxy) {
 
 //-----------------------------------------------------------------------------
 
-MPlayerBase::MPlayerBase (KMPlayer * player)
+KDE_NO_EXPORT MPlayerBase::MPlayerBase (KMPlayer * player)
     : KMPlayerProcess (player), m_use_slave (true) {
     m_process = new KProcess;
 }
 
-MPlayerBase::~MPlayerBase () {
+KDE_NO_EXPORT MPlayerBase::~MPlayerBase () {
 }
 
-void MPlayerBase::initProcess () {
+KDE_NO_EXPORT void MPlayerBase::initProcess () {
     KMPlayerProcess::initProcess ();
     const KURL & url (source ()->url ());
     if (!url.isEmpty ()) {
@@ -168,7 +168,7 @@ void MPlayerBase::initProcess () {
             this, SLOT (processStopped (KProcess *)));
 }
 
-bool MPlayerBase::sendCommand (const QString & cmd) {
+KDE_NO_EXPORT bool MPlayerBase::sendCommand (const QString & cmd) {
     if (playing () && m_use_slave) {
         commands.push_front (cmd + "\n");
         printf ("eval %s", commands.last ().latin1 ());
@@ -180,7 +180,7 @@ bool MPlayerBase::sendCommand (const QString & cmd) {
     return false;
 }
 
-bool MPlayerBase::stop () {
+KDE_NO_EXPORT bool MPlayerBase::stop () {
     if (!source () || !m_process || !m_process->isRunning ()) return true;
     if (!m_use_slave) {
         void (*oldhandler)(int) = signal(SIGTERM, SIG_IGN);
@@ -202,13 +202,13 @@ bool MPlayerBase::stop () {
     return true;
 }
 
-bool MPlayerBase::quit () {
+KDE_NO_EXPORT bool MPlayerBase::quit () {
     disconnect (m_process, SIGNAL (processExited (KProcess *)),
                 this, SLOT (processStopped (KProcess *)));
     return stop ();
 }
 
-void MPlayerBase::dataWritten (KProcess *) {
+KDE_NO_EXPORT void MPlayerBase::dataWritten (KProcess *) {
     if (!commands.size ()) return;
     kdDebug() << "eval done " << commands.last () << endl;
     commands.pop_back ();
@@ -217,7 +217,7 @@ void MPlayerBase::dataWritten (KProcess *) {
                              commands.last ().length ());
 }
 
-void MPlayerBase::processStopped (KProcess *) {
+KDE_NO_EXPORT void MPlayerBase::processStopped (KProcess *) {
     kdDebug() << "process stopped" << endl;
     commands.clear ();
     QTimer::singleShot (0, this, SLOT (emitFinished ()));
@@ -225,27 +225,27 @@ void MPlayerBase::processStopped (KProcess *) {
 
 //-----------------------------------------------------------------------------
 
-MPlayer::MPlayer (KMPlayer * player)
+KDE_NO_EXPORT MPlayer::MPlayer (KMPlayer * player)
  : MPlayerBase (player),
    m_widget (0L),
    m_configpage (new MPlayerPreferencesPage (this)) {
     m_player->settings ()->pagelist.push_back (m_configpage);
 }
 
-MPlayer::~MPlayer () {
+KDE_NO_EXPORT MPlayer::~MPlayer () {
     if (m_widget && !m_widget->parent ())
         delete m_widget;
     delete m_configpage;
 }
 
-void MPlayer::init () {
+KDE_NO_EXPORT void MPlayer::init () {
 }
 
-WId MPlayer::widget () {
+KDE_NO_EXPORT WId MPlayer::widget () {
     return static_cast <KMPlayerView *> (m_player->view())->viewer()->embeddedWinId ();
 }
 
-bool MPlayer::play () {
+KDE_NO_EXPORT bool MPlayer::play () {
     if (!source ()) return false;
     if (playing ())
         return sendCommand (QString ("gui_play"));
@@ -295,7 +295,7 @@ bool MPlayer::play () {
     return run (args.ascii (), source ()->pipeCmd ().ascii ());
 }
 
-bool MPlayer::stop () {
+KDE_NO_EXPORT bool MPlayer::stop () {
     if (!source () || !m_process || !m_process->isRunning ()) return true;
     kdDebug () << "MPlayer::stop ()" << endl;
     if (m_use_slave)
@@ -303,11 +303,11 @@ bool MPlayer::stop () {
     return MPlayerBase::stop ();
 }
 
-bool MPlayer::pause () {
+KDE_NO_EXPORT bool MPlayer::pause () {
     return sendCommand (QString ("pause"));
 }
 
-bool MPlayer::seek (int pos, bool absolute) {
+KDE_NO_EXPORT bool MPlayer::seek (int pos, bool absolute) {
     if (!m_source || !m_source->hasLength () ||
             (absolute && m_source->position () == pos))
         return false;
@@ -333,35 +333,35 @@ bool MPlayer::seek (int pos, bool absolute) {
     return sendCommand (cmd);
 }
 
-bool MPlayer::volume (int incdec, bool absolute) {
+KDE_NO_EXPORT bool MPlayer::volume (int incdec, bool absolute) {
     if (!source ()) return false;
     if (!absolute)
         return sendCommand (QString ("volume ") + QString::number (incdec));
     return false;
 }
 
-bool MPlayer::saturation (int val, bool absolute) {
+KDE_NO_EXPORT bool MPlayer::saturation (int val, bool absolute) {
     if (!source ()) return false;
     QString cmd;
     cmd.sprintf ("saturation %d %d", val, absolute ? 1 : 0);
     return sendCommand (cmd);
 }
 
-bool MPlayer::hue (int val, bool absolute) {
+KDE_NO_EXPORT bool MPlayer::hue (int val, bool absolute) {
     if (!source ()) return false;
     QString cmd;
     cmd.sprintf ("hue %d %d", val, absolute ? 1 : 0);
     return sendCommand (cmd);
 }
 
-bool MPlayer::contrast (int val, bool /*absolute*/) {
+KDE_NO_EXPORT bool MPlayer::contrast (int val, bool /*absolute*/) {
     if (!source ()) return false;
     QString cmd;
     cmd.sprintf ("contrast %d 1", val);
     return sendCommand (cmd);
 }
 
-bool MPlayer::brightness (int val, bool /*absolute*/) {
+KDE_NO_EXPORT bool MPlayer::brightness (int val, bool /*absolute*/) {
     if (!source ()) return false;
     QString cmd;
     cmd.sprintf ("brightness %d 1", val);
@@ -443,7 +443,7 @@ bool MPlayer::run (const char * args, const char * pipe) {
     return false;
 }
 
-bool MPlayer::grabPicture (const KURL & url, int pos) {
+KDE_NO_EXPORT bool MPlayer::grabPicture (const KURL & url, int pos) {
     stop ();
     initProcess ();
     QString outdir = locateLocal ("data", "kmplayer/");
@@ -462,7 +462,7 @@ bool MPlayer::grabPicture (const KURL & url, int pos) {
     return m_process->isRunning ();
 }
 
-void MPlayer::processOutput (KProcess *, char * str, int slen) {
+KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
     KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
     if (!v || slen <= 0) return;
 
@@ -545,7 +545,7 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
     } while (slen > 0);
 }
 
-void MPlayer::processStopped (KProcess * p) {
+KDE_NO_EXPORT void MPlayer::processStopped (KProcess * p) {
     if (p && !m_grabfile.isEmpty ()) {
         emit grabReady (m_grabfile);
         m_grabfile.truncate (0);
@@ -608,7 +608,7 @@ public:
     QTable * table;
 };
 
-MPlayerPreferencesFrame::MPlayerPreferencesFrame (QWidget * parent)
+KDE_NO_EXPORT MPlayerPreferencesFrame::MPlayerPreferencesFrame (QWidget * parent)
  : QFrame (parent) {
     QVBoxLayout * layout = new QVBoxLayout (this);
     table = new QTable (int (MPlayerPreferencesPage::pat_last)+non_patterns, 2, this);
@@ -637,11 +637,11 @@ MPlayerPreferencesFrame::MPlayerPreferencesFrame (QWidget * parent)
     layout->addWidget (table);
 }
 
-MPlayerPreferencesPage::MPlayerPreferencesPage (MPlayer * p)
+KDE_NO_EXPORT MPlayerPreferencesPage::MPlayerPreferencesPage (MPlayer * p)
  : m_process (p), m_configframe (0L) {
 }
 
-void MPlayerPreferencesPage::write (KConfig * config) {
+KDE_NO_EXPORT void MPlayerPreferencesPage::write (KConfig * config) {
     config->setGroup (strMPlayerPatternGroup);
     for (int i = 0; i < int (pat_last); i++)
         config->writeEntry
@@ -652,7 +652,7 @@ void MPlayerPreferencesPage::write (KConfig * config) {
     config->writeEntry (strAlwaysBuildIndex, alwaysbuildindex);
 }
 
-void MPlayerPreferencesPage::read (KConfig * config) {
+KDE_NO_EXPORT void MPlayerPreferencesPage::read (KConfig * config) {
     config->setGroup (strMPlayerPatternGroup);
     for (int i = 0; i < int (pat_last); i++)
         m_patterns[i].setPattern (config->readEntry
@@ -663,7 +663,7 @@ void MPlayerPreferencesPage::read (KConfig * config) {
     alwaysbuildindex = config->readBoolEntry (strAlwaysBuildIndex, false);
 }
 
-void MPlayerPreferencesPage::sync (bool fromUI) {
+KDE_NO_EXPORT void MPlayerPreferencesPage::sync (bool fromUI) {
     QTable * table = m_configframe->table;
     QSpinBox * cacheSize = static_cast<QSpinBox *>(table->cellWidget (1, 1));
     QCheckBox * buildIndex = static_cast<QCheckBox *>(table->cellWidget (2, 1));
@@ -683,30 +683,30 @@ void MPlayerPreferencesPage::sync (bool fromUI) {
     }
 }
 
-void MPlayerPreferencesPage::prefLocation (QString & item, QString & icon, QString & tab) {
+KDE_NO_EXPORT void MPlayerPreferencesPage::prefLocation (QString & item, QString & icon, QString & tab) {
     item = i18n ("General Options");
     icon = QString ("kmplayer");
     tab = i18n ("MPlayer");
 }
 
-QFrame * MPlayerPreferencesPage::prefPage (QWidget * parent) {
+KDE_NO_EXPORT QFrame * MPlayerPreferencesPage::prefPage (QWidget * parent) {
     m_configframe = new MPlayerPreferencesFrame (parent);
     return m_configframe;
 }
 
 //-----------------------------------------------------------------------------
 
-MEncoder::MEncoder (KMPlayer * player)
+KDE_NO_EXPORT MEncoder::MEncoder (KMPlayer * player)
     : MPlayerBase (player) {
     }
 
-MEncoder::~MEncoder () {
+KDE_NO_EXPORT MEncoder::~MEncoder () {
 }
 
-void MEncoder::init () {
+KDE_NO_EXPORT void MEncoder::init () {
 }
 
-bool MEncoder::play () {
+KDE_NO_EXPORT bool MEncoder::play () {
     if (!m_source || m_source->recordCmd ().isNull ())
         return false;
     bool success = false;
@@ -746,7 +746,7 @@ bool MEncoder::play () {
     return success;
 }
 
-bool MEncoder::stop () {
+KDE_NO_EXPORT bool MEncoder::stop () {
     kdDebug () << "MEncoder::stop ()" << endl;
     if (!source () || !m_process || !m_process->isRunning ()) return true;
     if (m_use_slave)
@@ -756,17 +756,17 @@ bool MEncoder::stop () {
 
 //-----------------------------------------------------------------------------
 
-MPlayerDumpstream::MPlayerDumpstream (KMPlayer * player)
+KDE_NO_EXPORT MPlayerDumpstream::MPlayerDumpstream (KMPlayer * player)
     : MPlayerBase (player) {
     }
 
-MPlayerDumpstream::~MPlayerDumpstream () {
+KDE_NO_EXPORT MPlayerDumpstream::~MPlayerDumpstream () {
 }
 
-void MPlayerDumpstream::init () {
+KDE_NO_EXPORT void MPlayerDumpstream::init () {
 }
 
-bool MPlayerDumpstream::play () {
+KDE_NO_EXPORT bool MPlayerDumpstream::play () {
     if (!m_source)
         return false;
     bool success = false;
@@ -803,7 +803,7 @@ bool MPlayerDumpstream::play () {
     return success;
 }
 
-bool MPlayerDumpstream::stop () {
+KDE_NO_EXPORT bool MPlayerDumpstream::stop () {
     kdDebug () << "MPlayerDumpstream::stop ()" << endl;
     if (!source () || !m_process || !m_process->isRunning ()) return true;
     if (m_use_slave)
@@ -965,7 +965,7 @@ private:
     KMPlayerCallbackProcess * m_process;
 };
 
-KMPlayerXMLPreferencesFrame::KMPlayerXMLPreferencesFrame
+KDE_NO_EXPORT KMPlayerXMLPreferencesFrame::KMPlayerXMLPreferencesFrame
 (QWidget * parent, KMPlayerCallbackProcess * p)
  : QFrame (parent), m_process (p){
     QVBoxLayout * layout = new QVBoxLayout (this);
@@ -973,20 +973,20 @@ KMPlayerXMLPreferencesFrame::KMPlayerXMLPreferencesFrame
     layout->addWidget (table);
 }
 
-KMPlayerXMLPreferencesPage::KMPlayerXMLPreferencesPage (KMPlayerCallbackProcess * p)
+KDE_NO_EXPORT KMPlayerXMLPreferencesPage::KMPlayerXMLPreferencesPage (KMPlayerCallbackProcess * p)
  : m_process (p), m_configframe (0L) {
 }
 
-void KMPlayerXMLPreferencesFrame::showEvent (QShowEvent *) {
+KDE_NO_EXPORT void KMPlayerXMLPreferencesFrame::showEvent (QShowEvent *) {
     QByteArray data;
     if (!m_process->haveConfig ())
         m_process->getConfigData ();
 }
 
-void KMPlayerXMLPreferencesPage::write (KConfig *) {
+KDE_NO_EXPORT void KMPlayerXMLPreferencesPage::write (KConfig *) {
 }
 
-void KMPlayerXMLPreferencesPage::read (KConfig *) {
+KDE_NO_EXPORT void KMPlayerXMLPreferencesPage::read (KConfig *) {
 }
 
 static QString attname ("NAME");
@@ -1000,7 +1000,7 @@ static QString valbool ("bool");
 static QString valenum ("enum");
 static QString valstring ("string");
 
-void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
+KDE_NO_EXPORT void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
     QTable * table = m_configframe->table;
     QDomDocument & dom = m_configframe->dom;
     int row = 0;
@@ -1140,30 +1140,30 @@ void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
     }
 }
 
-void KMPlayerXMLPreferencesPage::prefLocation (QString & item, QString & icon, QString & tab) {
+KDE_NO_EXPORT void KMPlayerXMLPreferencesPage::prefLocation (QString & item, QString & icon, QString & tab) {
     item = i18n ("General Options");
     icon = QString ("kmplayer");
     tab = i18n ("Xine");
 }
 
-QFrame * KMPlayerXMLPreferencesPage::prefPage (QWidget * parent) {
+KDE_NO_EXPORT QFrame * KMPlayerXMLPreferencesPage::prefPage (QWidget * parent) {
     m_configframe = new KMPlayerXMLPreferencesFrame (parent, m_process);
     return m_configframe;
 }
 
 //-----------------------------------------------------------------------------
 
-Xine::Xine (KMPlayer * player)
+KDE_NO_EXPORT Xine::Xine (KMPlayer * player)
     : KMPlayerCallbackProcess (player) {
 }
 
-Xine::~Xine () {}
+KDE_NO_EXPORT Xine::~Xine () {}
 
-WId Xine::widget () {
+KDE_NO_EXPORT WId Xine::widget () {
     return static_cast <KMPlayerView *> (m_player->view())->viewer()->embeddedWinId ();
 }
 
-void Xine::initProcess () {
+KDE_NO_EXPORT void Xine::initProcess () {
     KMPlayerProcess::initProcess ();
     connect (m_process, SIGNAL (processExited (KProcess *)),
             this, SLOT (processStopped (KProcess *)));
@@ -1174,7 +1174,7 @@ void Xine::initProcess () {
 }
 // TODO:input.v4l_video_device_path input.v4l_radio_device_path
 // v4l:/Webcam/0   v4l:/Television/21600  v4l:/Radio/96
-bool Xine::play () {
+KDE_NO_EXPORT bool Xine::play () {
     KURL url (m_source ? m_source->current () : QString ());
     if (playing ()) {
         if (m_backend) {
@@ -1270,14 +1270,14 @@ bool Xine::play () {
     return false;
 }
 
-bool Xine::stop () {
+KDE_NO_EXPORT bool Xine::stop () {
     if (!m_process || !m_process->isRunning ()) return true;
     if (m_backend)
         m_backend->stop ();
     return true;
 }
 
-bool Xine::quit () {
+KDE_NO_EXPORT bool Xine::quit () {
     kdDebug () << "Xine::quit ()" << endl;
     if (m_have_config == config_probe)
         m_have_config = config_unknown; // hmm
@@ -1298,7 +1298,7 @@ bool Xine::quit () {
     return true;
 }
 
-void Xine::setFinished () {
+KDE_NO_EXPORT void Xine::setFinished () {
     KMPlayerCallbackProcess::setFinished ();
     if (!m_source) return; // initial case?
     kdDebug () << "Xine::finished () " << endl;
@@ -1311,13 +1311,13 @@ void Xine::setFinished () {
     }
 }
 
-bool Xine::pause () {
+KDE_NO_EXPORT bool Xine::pause () {
     if (!playing () || !m_backend) return false;
     m_backend->pause ();
     return true;
 }
 
-bool Xine::seek (int pos, bool absolute) {
+KDE_NO_EXPORT bool Xine::seek (int pos, bool absolute) {
     if (!playing () ||
             !m_backend ||
             !m_source->hasLength () ||
@@ -1332,13 +1332,13 @@ bool Xine::seek (int pos, bool absolute) {
     return true;
 }
 
-void Xine::processOutput (KProcess *, char * str, int slen) {
+KDE_NO_EXPORT void Xine::processOutput (KProcess *, char * str, int slen) {
     KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
     if (v && slen > 0)
         v->addText (QString::fromLocal8Bit (str, slen));
 }
 
-void Xine::processStopped (KProcess *) {
+KDE_NO_EXPORT void Xine::processStopped (KProcess *) {
     delete m_backend;
     m_backend = 0L;
     QTimer::singleShot (0, this, SLOT (emitFinished ()));
@@ -1348,7 +1348,7 @@ void Xine::processStopped (KProcess *) {
     }
 }
 
-void Xine::setStarted (QByteArray & data) {
+KDE_NO_EXPORT void Xine::setStarted (QByteArray & data) {
     KMPlayerCallbackProcess::setStarted (data);
     QString dcopname;
     dcopname.sprintf ("kxineplayer-%u", m_process->pid ());
@@ -1379,25 +1379,25 @@ void Xine::setStarted (QByteArray & data) {
     m_backend->play ();
 }
 
-bool Xine::saturation (int val, bool) {
+KDE_NO_EXPORT bool Xine::saturation (int val, bool) {
     if (m_backend)
         m_backend->saturation (65535 * (val + 100) / 200, true);
     return !!m_backend;
 }
 
-bool Xine::hue (int val, bool) {
+KDE_NO_EXPORT bool Xine::hue (int val, bool) {
     if (m_backend)
         m_backend->hue (65535 * (val + 100) / 200, true);
     return !!m_backend;
 }
 
-bool Xine::brightness (int val, bool) {
+KDE_NO_EXPORT bool Xine::brightness (int val, bool) {
     if (m_backend)
         m_backend->brightness (65535 * (val + 100) / 200, true);
     return !!m_backend;
 }
 
-bool Xine::contrast (int val, bool) {
+KDE_NO_EXPORT bool Xine::contrast (int val, bool) {
     if (m_backend)
         m_backend->contrast (65535 * (val + 100) / 200, true);
     return !!m_backend;
@@ -1409,13 +1409,13 @@ FFMpeg::FFMpeg (KMPlayer * player)
     : KMPlayerProcess (player) {
 }
 
-FFMpeg::~FFMpeg () {
+KDE_NO_EXPORT FFMpeg::~FFMpeg () {
 }
 
-void FFMpeg::init () {
+KDE_NO_EXPORT void FFMpeg::init () {
 }
 
-bool FFMpeg::play () {
+KDE_NO_EXPORT bool FFMpeg::play () {
     delete m_process;
     m_process = new KProcess;
     m_process->setUseShell (true);
@@ -1461,7 +1461,7 @@ bool FFMpeg::play () {
     return m_process->isRunning ();
 }
 
-bool FFMpeg::stop () {
+KDE_NO_EXPORT bool FFMpeg::stop () {
     kdDebug () << "FFMpeg::stop" << endl;
     if (!playing ()) return true;
     m_process->writeStdin ("q", 1);
@@ -1474,7 +1474,7 @@ bool FFMpeg::stop () {
     return KMPlayerProcess::stop ();
 }
 
-void FFMpeg::processStopped (KProcess *) {
+KDE_NO_EXPORT void FFMpeg::processStopped (KProcess *) {
     QTimer::singleShot (0, this, SLOT (emitFinished ()));
 }
 

@@ -91,7 +91,7 @@ private:
 
 static KMPlayerViewStatic * kmplayerview_static = 0L;
 
-KMPlayerViewStatic::KMPlayerViewStatic () 
+KDE_NO_EXPORT KMPlayerViewStatic::KMPlayerViewStatic () 
 #ifdef USE_ARTS
     : dispatcher ((KArtsDispatcher*) 0), use_count(0) {
 #else
@@ -100,7 +100,7 @@ KMPlayerViewStatic::KMPlayerViewStatic ()
     printf ("KMPlayerViewStatic::KMPlayerViewStatic\n");
 }
 
-KMPlayerViewStatic::~KMPlayerViewStatic () {
+KDE_NO_EXPORT KMPlayerViewStatic::~KMPlayerViewStatic () {
     printf ("KMPlayerViewStatic::~KMPlayerViewStatic\n");
 #ifdef USE_ARTS
     delete dispatcher;
@@ -109,7 +109,7 @@ KMPlayerViewStatic::~KMPlayerViewStatic () {
 }
 
 #ifdef USE_ARTS
-void KMPlayerViewStatic::getDispatcher() {
+KDE_NO_EXPORT void KMPlayerViewStatic::getDispatcher() {
     if (!dispatcher) {
         dispatcher = new KArtsDispatcher;
         use_count = 1;
@@ -117,7 +117,7 @@ void KMPlayerViewStatic::getDispatcher() {
         use_count++;
 }
 
-void KMPlayerViewStatic::releaseDispatcher() {
+KDE_NO_EXPORT void KMPlayerViewStatic::releaseDispatcher() {
     if (--use_count <= 0) {
         delete dispatcher;
         dispatcher = 0L;
@@ -240,7 +240,7 @@ static const char * const broadcast_xpm[] = {
 
 //-----------------------------------------------------------------------------
 
-KMPlayerViewLayer::KMPlayerViewLayer (KMPlayerView * parent, QBoxLayout * b)
+KDE_NO_EXPORT KMPlayerViewLayer::KMPlayerViewLayer (KMPlayerView * parent, QBoxLayout * b)
  : QWidget (parent),
    m_view (parent),
    m_box (b),
@@ -248,7 +248,7 @@ KMPlayerViewLayer::KMPlayerViewLayer (KMPlayerView * parent, QBoxLayout * b)
    m_fullscreen (false) {
 }
 
-void KMPlayerViewLayer::fullScreen () {
+KDE_NO_EXPORT void KMPlayerViewLayer::fullScreen () {
     if (m_fullscreen) {
         showNormal ();
         reparent (m_view, 0, QPoint (0, 0), true);
@@ -267,7 +267,7 @@ void KMPlayerViewLayer::fullScreen () {
     m_view->buttonBar()->popupMenu ()->setItemChecked (KMPlayerControlPanel::menu_fullscreen, m_fullscreen);
 }
 
-void KMPlayerViewLayer::accelActivated () {
+KDE_NO_EXPORT void KMPlayerViewLayer::accelActivated () {
     m_view->buttonBar()->popupMenu ()->activateItemAt (m_view->buttonBar()->popupMenu ()->indexOf (KMPlayerControlPanel::menu_fullscreen)); 
 }
 //-----------------------------------------------------------------------------
@@ -292,7 +292,7 @@ KMPlayerViewerHolder::KMPlayerViewerHolder (QWidget * pa, KMPlayerView * view)
     setAcceptDrops (true);
 }
 
-void KMPlayerViewerHolder::mouseMoveEvent (QMouseEvent * e) {
+KDE_NO_EXPORT void KMPlayerViewerHolder::mouseMoveEvent (QMouseEvent * e) {
     if (e->state () == Qt::NoButton) {
         int vert_buttons_pos = height ();
         int cp_height = m_view->buttonBar ()->maximumSize ().height ();
@@ -301,7 +301,7 @@ void KMPlayerViewerHolder::mouseMoveEvent (QMouseEvent * e) {
     }
 }
 
-void KMPlayerViewerHolder::resizeEvent (QResizeEvent *) {
+KDE_NO_EXPORT void KMPlayerViewerHolder::resizeEvent (QResizeEvent *) {
     int x =0, y = 0;
     int w = width ();
     int h = height ();
@@ -319,11 +319,11 @@ void KMPlayerViewerHolder::resizeEvent (QResizeEvent *) {
     m_view->widgetStack ()->setGeometry (x, y, w, h);
 }
 
-void KMPlayerViewerHolder::dropEvent (QDropEvent * de) {
+KDE_NO_EXPORT void KMPlayerViewerHolder::dropEvent (QDropEvent * de) {
     m_view->dropEvent (de);
 }
 
-void KMPlayerViewerHolder::dragEnterEvent (QDragEnterEvent* dee) {
+KDE_NO_EXPORT void KMPlayerViewerHolder::dragEnterEvent (QDragEnterEvent* dee) {
     m_view->dragEnterEvent (dee);
 }
 //-----------------------------------------------------------------------------
@@ -338,7 +338,7 @@ static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char * const
     return b;
 }
 
-KMPlayerControlPanel::KMPlayerControlPanel (QWidget * parent) : QWidget (parent) {
+KDE_NO_EXPORT KMPlayerControlPanel::KMPlayerControlPanel (QWidget * parent) : QWidget (parent) {
     m_buttonbox = new QHBoxLayout (this, 5, 4);
     m_buttons[button_config] = ctrlButton (this, m_buttonbox, config_xpm);
     m_buttons[button_back] = ctrlButton (this, m_buttonbox, back_xpm);
@@ -426,7 +426,7 @@ void KMPlayerControlPanel::enableSeekButtons (bool enable) {
     }
 }
 
-void KMPlayerControlPanel::setPlaying (bool play) {
+KDE_NO_EXPORT void KMPlayerControlPanel::setPlaying (bool play) {
     if (play != m_buttons[button_play]->isOn ())
         m_buttons[button_play]->toggle ();
     m_posSlider->setValue (0);
@@ -436,7 +436,7 @@ void KMPlayerControlPanel::setPlaying (bool play) {
     }
 }
 
-void KMPlayerControlPanel::setRecording (bool record) {
+KDE_NO_EXPORT void KMPlayerControlPanel::setRecording (bool record) {
     if (record != m_buttons[button_record]->isOn ())
         m_buttons[button_record]->toggle ();
 }
@@ -453,13 +453,13 @@ protected:
     void mousePressEvent (QMouseEvent *);
 };
 
-void KMPlayerPictureWidget::mousePressEvent (QMouseEvent *) {
+KDE_NO_EXPORT void KMPlayerPictureWidget::mousePressEvent (QMouseEvent *) {
     m_view->emitPictureClicked ();
 }
 
 //-----------------------------------------------------------------------------
 
-KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
+KDE_NO_EXPORT KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
   : KMediaPlayer::View (parent, name),
     m_image (0L),
     m_buttonbar (0L),
@@ -480,7 +480,7 @@ KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
     setEraseColor (QColor (0, 0, 255));
 }
 
-void KMPlayerView::dropEvent (QDropEvent * de) {
+KDE_NO_EXPORT void KMPlayerView::dropEvent (QDropEvent * de) {
     KURL url;
     if (KURLDrag::canDecode (de)) {
         KURL::List sl;
@@ -499,7 +499,7 @@ void KMPlayerView::dropEvent (QDropEvent * de) {
     }
 }
 
-void KMPlayerView::dragEnterEvent (QDragEnterEvent* dee) {
+KDE_NO_EXPORT void KMPlayerView::dragEnterEvent (QDragEnterEvent* dee) {
     if (KURLDrag::canDecode (dee)) {
         dee->accept ();
     } else if (QTextDrag::canDecode (dee)) {
@@ -509,7 +509,7 @@ void KMPlayerView::dragEnterEvent (QDragEnterEvent* dee) {
     }
 }
 
-void KMPlayerView::init () {
+KDE_NO_EXPORT void KMPlayerView::init () {
     //setBackgroundMode(Qt::NoBackground);
     QVBoxLayout * viewbox = new QVBoxLayout (this, 0, 0);
     m_layer = new KMPlayerViewLayer (this, viewbox);
@@ -558,14 +558,14 @@ void KMPlayerView::init () {
     kapp->installX11EventFilter (this);
 }
 
-KMPlayerView::~KMPlayerView () {
+KDE_NO_EXPORT KMPlayerView::~KMPlayerView () {
     delete m_image;
     setUseArts (false);
     if (m_layer->parent () != this)
         delete m_layer;
 }
 
-bool KMPlayerView::setPicture (const QString & path) {
+KDE_NO_EXPORT bool KMPlayerView::setPicture (const QString & path) {
     delete m_image;
     if (path.isEmpty ())
         m_image = 0L;
@@ -586,7 +586,7 @@ bool KMPlayerView::setPicture (const QString & path) {
     return m_image;
 }
 
-void KMPlayerView::updateUseArts () {
+KDE_NO_EXPORT void KMPlayerView::updateUseArts () {
 #ifdef USE_ARTS
     if (m_use_arts && !m_artsserver) {
         kmplayerview_static->getDispatcher();
@@ -609,7 +609,7 @@ void KMPlayerView::updateUseArts () {
 #endif
 }
 
-void KMPlayerView::setUseArts (bool b) {
+KDE_NO_EXPORT void KMPlayerView::setUseArts (bool b) {
 #ifdef USE_ARTS
     if (m_use_arts && !b && m_artsserver) {
         m_buttonbar->popupMenu ()->removeItemAt (6);
@@ -654,7 +654,7 @@ void KMPlayerView::setControlPanelMode (ControlPanelMode m) {
     m_holder->setMouseTracking (m_controlpanel_mode == CP_AutoHide && m_playing);
 }
 
-void KMPlayerView::delayedShowButtons (bool show) {
+KDE_NO_EXPORT void KMPlayerView::delayedShowButtons (bool show) {
     if (m_controlpanel_mode != CP_AutoHide || delayed_timer ||
         (m_buttonbar &&
          (show && m_buttonbar->isVisible ()) || 
@@ -663,7 +663,7 @@ void KMPlayerView::delayedShowButtons (bool show) {
     delayed_timer = startTimer (500);
 }
 
-void KMPlayerView::setVolume (int vol) {
+KDE_NO_EXPORT void KMPlayerView::setVolume (int vol) {
 #ifdef USE_ARTS
     if (m_inVolumeUpdate) return;
     float volume = float (0.0004*vol*vol);
@@ -672,7 +672,7 @@ void KMPlayerView::setVolume (int vol) {
 #endif
 }
 
-void KMPlayerView::updateVolume (float v) {
+KDE_NO_EXPORT void KMPlayerView::updateVolume (float v) {
 #ifdef USE_ARTS
     m_inVolumeUpdate = true;
     printf("updateVolume %.4f\n", v);
@@ -681,11 +681,11 @@ void KMPlayerView::updateVolume (float v) {
 #endif
 }
 
-void  KMPlayerView::updateLayout () {
+KDE_NO_EXPORT void  KMPlayerView::updateLayout () {
     m_holder->resizeEvent (0l);
 }
 
-void KMPlayerView::timerEvent (QTimerEvent * e) {
+KDE_NO_EXPORT void KMPlayerView::timerEvent (QTimerEvent * e) {
     killTimer (e->timerId ());
     delayed_timer = 0;
     if (!m_playing)
@@ -704,7 +704,7 @@ void KMPlayerView::timerEvent (QTimerEvent * e) {
             v->m_buttonbar->hide ();
 }
 
-void KMPlayerView::addText (const QString & str) {
+KDE_NO_EXPORT void KMPlayerView::addText (const QString & str) {
     tmplog += str;
     int pos = tmplog.findRev (QChar ('\n'));
     if (pos >= 0) {
@@ -725,14 +725,14 @@ void KMPlayerView::addText (const QString & str) {
     printpainter.end ();
 }*/
 
-void KMPlayerView::startsToPlay () {
+KDE_NO_EXPORT void KMPlayerView::startsToPlay () {
     m_widgetstack->raiseWidget (m_viewer);
     m_playing = true;
     m_revert_fullscreen = !isFullScreen();
     setControlPanelMode (m_old_controlpanel_mode);
 }
 
-void KMPlayerView::showPopupMenu () {
+KDE_NO_EXPORT void KMPlayerView::showPopupMenu () {
 #ifdef USE_ARTS
     if (m_use_arts) {
         updateUseArts ();
@@ -743,12 +743,12 @@ void KMPlayerView::showPopupMenu () {
     m_buttonbar->popupMenu ()->exec (m_buttonbar->configButton()->mapToGlobal (QPoint (0, cp_height)));
 }
 
-void KMPlayerView::leaveEvent (QEvent *) {
+KDE_NO_EXPORT void KMPlayerView::leaveEvent (QEvent *) {
     if (m_controlpanel_mode == CP_AutoHide && m_playing)
         delayedShowButtons (false);
 }
 
-void KMPlayerView::reset () {
+KDE_NO_EXPORT void KMPlayerView::reset () {
     m_playing = false;
     if (m_buttonbar && m_controlpanel_mode == CP_AutoHide) {
         m_buttonbar->show ();
@@ -818,7 +818,7 @@ void KMPlayerView::setForeignViewer (KMPlayerView * other) {
     layout->activate ();
 }
 
-bool KMPlayerView::x11Event (XEvent * e) {
+KDE_NO_EXPORT bool KMPlayerView::x11Event (XEvent * e) {
     switch (e->type) {
         case UnmapNotify:
             if (e->xunmap.event == m_viewer->embeddedWinId ()) {
@@ -864,7 +864,7 @@ bool KMPlayerView::x11Event (XEvent * e) {
 
 //----------------------------------------------------------------------
 
-KMPlayerViewer::KMPlayerViewer (QWidget *parent, KMPlayerView * view)
+KDE_NO_EXPORT KMPlayerViewer::KMPlayerViewer (QWidget *parent, KMPlayerView * view)
   : QXEmbed (parent), m_aspect (0.0),
     m_view (view) {
     /*XWindowAttributes xwa;
@@ -884,10 +884,10 @@ KMPlayerViewer::KMPlayerViewer (QWidget *parent, KMPlayerView * view)
     XClearWindow (qt_xdisplay(), embeddedWinId ());
 }
 
-KMPlayerViewer::~KMPlayerViewer () {
+KDE_NO_EXPORT KMPlayerViewer::~KMPlayerViewer () {
 }
     
-void KMPlayerViewer::mouseMoveEvent (QMouseEvent * e) {
+KDE_NO_EXPORT void KMPlayerViewer::mouseMoveEvent (QMouseEvent * e) {
     if (e->state () == Qt::NoButton) {
         int cp_height = m_view->buttonBar ()->maximumSize ().height ();
         m_view->delayedShowButtons (e->y () > height () - cp_height);
@@ -906,17 +906,17 @@ void KMPlayerViewer::setAspect (float a) {
     emit aspectChanged ();
 }
 
-int KMPlayerViewer::heightForWidth (int w) const {
+KDE_NO_EXPORT int KMPlayerViewer::heightForWidth (int w) const {
     if (m_aspect <= 0.01)
         return 0;
     return int (w/m_aspect); 
 }
 
-void KMPlayerViewer::dropEvent (QDropEvent * de) {
+KDE_NO_EXPORT void KMPlayerViewer::dropEvent (QDropEvent * de) {
     m_view->dropEvent (de);
 }
 
-void KMPlayerViewer::dragEnterEvent (QDragEnterEvent* dee) {
+KDE_NO_EXPORT void KMPlayerViewer::dragEnterEvent (QDragEnterEvent* dee) {
     m_view->dragEnterEvent (dee);
 }
 /*
@@ -933,7 +933,7 @@ void KMPlayerViewer::sendKeyEvent (int key) {
     XSendEvent (qt_xdisplay(), embeddedWinId (), FALSE, KeyPressMask, (XEvent *) &event);
 }
 
-void KMPlayerViewer::sendConfigureEvent () {
+KDE_NO_EXPORT void KMPlayerViewer::sendConfigureEvent () {
     XConfigureEvent c = {
         ConfigureNotify, 0UL, True,
         qt_xdisplay (), embeddedWinId (), winId (),

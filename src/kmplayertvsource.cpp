@@ -65,8 +65,8 @@ static const char * strTVDriver = "Driver";
 struct TableInserter {
     QTable * table;
     int index;
-    TableInserter (QTable * t) : table (t), index (0) {}
-    void operator () (TVChannel * channel) {
+    KDE_NO_EXPORT TableInserter (QTable * t) : table (t), index (0) {}
+    KDE_NO_EXPORT void operator () (TVChannel * channel) {
         table->setItem (index, 0, new QTableItem (table, QTableItem::Always,
                         channel->name));
         table->setItem (index++, 1, new QTableItem (table, QTableItem::Always,
@@ -76,7 +76,7 @@ struct TableInserter {
 
 //-----------------------------------------------------------------------------
 
-KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent, TVDevice * dev)
+KDE_NO_EXPORT KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent, TVDevice * dev)
 : QFrame (parent, "PageTVDevice"), device (dev) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
     QLabel * deviceLabel = new QLabel (QString (i18n ("Video device:")) + device->device, this, 0);
@@ -144,12 +144,12 @@ KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent,
     layout->addLayout (buttonlayout);
 }
 
-void KMPlayerPrefSourcePageTVDevice::slotDelete () {
+KDE_NO_EXPORT void KMPlayerPrefSourcePageTVDevice::slotDelete () {
     if (KMessageBox::warningYesNo (this, i18n ("You're about to remove this device from the Source menu.\nContinue?"), i18n ("Confirm")) == KMessageBox::Yes)
         emit deleted (this);
 }
 
-void KMPlayerPrefSourcePageTVDevice::updateTVDevice () {
+KDE_NO_EXPORT void KMPlayerPrefSourcePageTVDevice::updateTVDevice () {
     device->name = name->text ();
     device->audiodevice = audiodevice->lineEdit()->text ();
     device->noplayback = noplayback->isChecked ();
@@ -177,7 +177,7 @@ void KMPlayerPrefSourcePageTVDevice::updateTVDevice () {
 
 //-----------------------------------------------------------------------------
 
-KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget *parent)
+KDE_NO_EXPORT KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget *parent)
 : QFrame (parent) {
     QVBoxLayout * mainlayout = new QVBoxLayout (this, 5);
     tab = new QTabWidget (this);
@@ -209,11 +209,11 @@ KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget *parent)
 struct TVDevicePageAdder {
     KMPlayerPrefSourcePageTV * page;
     bool show;
-    TVDevicePageAdder (KMPlayerPrefSourcePageTV * p, bool s = false) : page (p), show (s) {}
+    KDE_NO_EXPORT TVDevicePageAdder (KMPlayerPrefSourcePageTV * p, bool s = false) : page (p), show (s) {}
     void operator () (TVDevice * device);
 };
 
-void TVDevicePageAdder::operator () (TVDevice * device) {
+KDE_NO_EXPORT void TVDevicePageAdder::operator () (TVDevice * device) {
     KMPlayerPrefSourcePageTVDevice * devpage = new KMPlayerPrefSourcePageTVDevice (page->tab, device);
     page->tab->insertTab (devpage, device->name);
     devpage->name->setText (device->name);
@@ -227,7 +227,7 @@ void TVDevicePageAdder::operator () (TVDevice * device) {
         page->tab->setCurrentPage (page->tab->indexOf (devpage));
 }
 
-void KMPlayerPrefSourcePageTV::setTVDevices (TVDeviceList * devs) {
+KDE_NO_EXPORT void KMPlayerPrefSourcePageTV::setTVDevices (TVDeviceList * devs) {
     m_devices = devs;
     std::for_each (addeddevices.begin(), addeddevices.end(), Deleter<TVDevice>);
     addeddevices.clear ();
@@ -237,7 +237,7 @@ void KMPlayerPrefSourcePageTV::setTVDevices (TVDeviceList * devs) {
     std::for_each(m_devices->begin(), m_devices->end(),TVDevicePageAdder(this));
 }
 
-void KMPlayerPrefSourcePageTV::slotDeviceDeleted (KMPlayerPrefSourcePageTVDevice * devpage) {
+KDE_NO_EXPORT void KMPlayerPrefSourcePageTV::slotDeviceDeleted (KMPlayerPrefSourcePageTVDevice * devpage) {
     if (std::find (addeddevices.begin (), addeddevices.end (), devpage->device) != addeddevices.end ())
         addeddevices.remove (devpage->device);
     deleteddevices.push_back (devpage->device);
@@ -246,7 +246,7 @@ void KMPlayerPrefSourcePageTV::slotDeviceDeleted (KMPlayerPrefSourcePageTVDevice
     tab->setCurrentPage (0);
 }
 
-void KMPlayerPrefSourcePageTV::slotScan () {
+KDE_NO_EXPORT void KMPlayerPrefSourcePageTV::slotScan () {
     TVDeviceList::iterator dit = std::find (m_devices->begin (),
                                             m_devices->end (), device->lineEdit()->text ());
     if (dit != m_devices->end ()) {
@@ -263,7 +263,7 @@ void KMPlayerPrefSourcePageTV::slotScan () {
              this, SLOT (slotScanFinished (TVDevice *)));
 }
 
-void KMPlayerPrefSourcePageTV::slotScanFinished (TVDevice * _device) {
+KDE_NO_EXPORT void KMPlayerPrefSourcePageTV::slotScanFinished (TVDevice * _device) {
     disconnect (scanner, SIGNAL (scanFinished (TVDevice *)),
                 this, SLOT (slotScanFinished (TVDevice *)));
     if (!_device) {
@@ -274,7 +274,7 @@ void KMPlayerPrefSourcePageTV::slotScanFinished (TVDevice * _device) {
     }
 }
 
-void KMPlayerPrefSourcePageTV::updateTVDevices () {
+KDE_NO_EXPORT void KMPlayerPrefSourcePageTV::updateTVDevices () {
     TVDevicePageList::iterator pit = m_devicepages.begin ();
     for (; pit != m_devicepages.end (); ++pit)
             (*pit)->updateTVDevice ();
@@ -293,20 +293,20 @@ void KMPlayerPrefSourcePageTV::updateTVDevices () {
 
 //-----------------------------------------------------------------------------
 
-TVChannel::TVChannel (const QString & n, int f) : name (n), frequency (f) {}
+KDE_NO_EXPORT TVChannel::TVChannel (const QString & n, int f) : name (n), frequency (f) {}
 
-TVInput::TVInput (const QString & n, int _id) : name (n), id (_id) {}
+KDE_NO_EXPORT TVInput::TVInput (const QString & n, int _id) : name (n), id (_id) {}
 
-void TVInput::clear () {
+KDE_NO_EXPORT void TVInput::clear () {
     std::for_each (channels.begin (), channels.end (), Deleter <TVChannel>);
     channels.clear ();
 }
 
-TVDevice::TVDevice (const QString & d, const QSize & s)
+KDE_NO_EXPORT TVDevice::TVDevice (const QString & d, const QSize & s)
     : device (d), size (s), noplayback (false) {
 }
 
-void TVDevice::clear () {
+KDE_NO_EXPORT void TVDevice::clear () {
     std::for_each (inputs.begin (), inputs.end (), Deleter <TVInput>);
     inputs.clear ();
 }
@@ -327,7 +327,7 @@ void TVDevice::clear () {
  * Size=640,480
  */
 
-KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QPopupMenu * m)
+KDE_NO_EXPORT KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QPopupMenu * m)
     : KMPlayerMenuSource (i18n ("TV"), a, m), m_configpage (0L) {
     m_tvsource = 0L;
     m_menu->insertTearOffHandle ();
@@ -335,11 +335,11 @@ KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QPopupMenu * m)
     m_player->settings ()->pagelist.push_back (this);
 }
 
-KMPlayerTVSource::~KMPlayerTVSource () {
+KDE_NO_EXPORT KMPlayerTVSource::~KMPlayerTVSource () {
     std::for_each (tvdevices.begin (), tvdevices.end (), Deleter <TVDevice>);
 }
 
-void KMPlayerTVSource::activate () {
+KDE_NO_EXPORT void KMPlayerTVSource::activate () {
     m_identified = true;
     m_player->setProcess (m_player->mplayer ());
     buildArguments ();
@@ -349,7 +349,7 @@ void KMPlayerTVSource::activate () {
 /* TODO: playback by
  * ffmpeg -vd /dev/video0 -r 25 -s 768x576 -f rawvideo - |mplayer -nocache -ao arts -rawvideo on:w=768:h=576:fps=25 -quiet -
  */
-void KMPlayerTVSource::buildArguments () {
+KDE_NO_EXPORT void KMPlayerTVSource::buildArguments () {
     if (!m_tvsource)
         return;
     m_identified = true;
@@ -370,12 +370,12 @@ void KMPlayerTVSource::buildArguments () {
     m_frequency = m_tvsource->frequency;
 }
 
-void KMPlayerTVSource::deactivate () {
+KDE_NO_EXPORT void KMPlayerTVSource::deactivate () {
     if (m_app->view () && !m_app->view ()->buttonBar()->broadcastButton ()->isOn ())
         m_app->view ()->buttonBar()->broadcastButton ()->hide ();
 }
 
-void KMPlayerTVSource::buildMenu () {
+KDE_NO_EXPORT void KMPlayerTVSource::buildMenu () {
     QString currentcommand;
     if (m_tvsource)
         currentcommand = m_tvsource->command;
@@ -435,7 +435,7 @@ void KMPlayerTVSource::buildMenu () {
     }
 }
 
-void KMPlayerTVSource::menuClicked (int id) {
+KDE_NO_EXPORT void KMPlayerTVSource::menuClicked (int id) {
     //"channelmenu"
     CommandMap::iterator it = commands.find (id);
     if (it != commands.end ()) {
@@ -460,36 +460,36 @@ void KMPlayerTVSource::menuClicked (int id) {
     }
 }
 
-QString KMPlayerTVSource::filterOptions () {
+KDE_NO_EXPORT QString KMPlayerTVSource::filterOptions () {
     if (! m_player->settings ()->disableppauto)
         return KMPlayerSource::filterOptions ();
     return QString ("-vop pp=lb");
 }
 
-bool KMPlayerTVSource::hasLength () {
+KDE_NO_EXPORT bool KMPlayerTVSource::hasLength () {
     return false;
 }
 
-bool KMPlayerTVSource::isSeekable () {
+KDE_NO_EXPORT bool KMPlayerTVSource::isSeekable () {
     return commands.size () > 0;
 }
 
-void KMPlayerTVSource::forward () {
+KDE_NO_EXPORT void KMPlayerTVSource::forward () {
     menuClicked (m_current_id < commands.size () - 1 ? m_current_id + 1 : 0);
 }
 
-void KMPlayerTVSource::backward () {
+KDE_NO_EXPORT void KMPlayerTVSource::backward () {
     menuClicked (m_current_id > 0 ? m_current_id -1 : commands.size () - 1);
 }
 
-QString KMPlayerTVSource::prettyName () {
+KDE_NO_EXPORT QString KMPlayerTVSource::prettyName () {
     QString name (i18n ("TV"));
     if (m_tvsource)
         name += ' ' + m_tvsource->title;
     return name;
 }
 
-void KMPlayerTVSource::write (KConfig * m_config) {
+KDE_NO_EXPORT void KMPlayerTVSource::write (KConfig * m_config) {
     //TV stuff
     m_config->setGroup (strTV);
     QStringList devicelist = m_config->readListEntry (strTVDevices, ';');
@@ -536,7 +536,7 @@ void KMPlayerTVSource::write (KConfig * m_config) {
     // end TV stuff
 }
 
-void KMPlayerTVSource::read (KConfig * m_config) {
+KDE_NO_EXPORT void KMPlayerTVSource::read (KConfig * m_config) {
     std::for_each (tvdevices.begin (), tvdevices.end (), Deleter <TVDevice>);
     tvdevices.clear ();
     m_config->setGroup(strTV);
@@ -588,7 +588,7 @@ void KMPlayerTVSource::read (KConfig * m_config) {
     }
 }
 
-void KMPlayerTVSource::sync (bool fromUI) {
+KDE_NO_EXPORT void KMPlayerTVSource::sync (bool fromUI) {
     if (tvdevices.size ())
         m_app->showBroadcastConfig ();
     else
@@ -601,13 +601,13 @@ void KMPlayerTVSource::sync (bool fromUI) {
     }
 }
 
-void KMPlayerTVSource::prefLocation (QString & item, QString & icon, QString & tab) {
+KDE_NO_EXPORT void KMPlayerTVSource::prefLocation (QString & item, QString & icon, QString & tab) {
     item = i18n ("Source");
     icon = QString ("source");
     tab = i18n ("TV");
 }
 
-QFrame * KMPlayerTVSource::prefPage (QWidget * parent) {
+KDE_NO_EXPORT QFrame * KMPlayerTVSource::prefPage (QWidget * parent) {
     if (!m_configpage) {
         m_configpage = new KMPlayerPrefSourcePageTV (parent);
         m_configpage->scanner = new TVDeviceScannerSource (m_player);
@@ -617,15 +617,15 @@ QFrame * KMPlayerTVSource::prefPage (QWidget * parent) {
 
 //-----------------------------------------------------------------------------
 
-TVDeviceScannerSource::TVDeviceScannerSource (KMPlayer * player)
+KDE_NO_EXPORT TVDeviceScannerSource::TVDeviceScannerSource (KMPlayer * player)
  : KMPlayerSource (i18n ("TVScanner"), player), m_tvdevice (0) {
     setURL (KURL ("tv://"));
 }
 
-void TVDeviceScannerSource::init () {
+KDE_NO_EXPORT void TVDeviceScannerSource::init () {
 }
 
-bool TVDeviceScannerSource::processOutput (const QString & line) {
+KDE_NO_EXPORT bool TVDeviceScannerSource::processOutput (const QString & line) {
     if (m_nameRegExp.search (line) > -1) {
         m_tvdevice->name = m_nameRegExp.cap (1);
         kdDebug() << "Name " << m_tvdevice->name << endl;
@@ -646,19 +646,19 @@ bool TVDeviceScannerSource::processOutput (const QString & line) {
     return true;
 }
 
-QString TVDeviceScannerSource::filterOptions () {
+KDE_NO_EXPORT QString TVDeviceScannerSource::filterOptions () {
     return QString ("");
 }
 
-bool TVDeviceScannerSource::hasLength () {
+KDE_NO_EXPORT bool TVDeviceScannerSource::hasLength () {
     return false;
 }
 
-bool TVDeviceScannerSource::isSeekable () {
+KDE_NO_EXPORT bool TVDeviceScannerSource::isSeekable () {
     return false;
 }
 
-bool TVDeviceScannerSource::scan (const QString & dev, const QString & dri) {
+KDE_NO_EXPORT bool TVDeviceScannerSource::scan (const QString & dev, const QString & dri) {
     if (m_tvdevice)
         return false;
     m_tvdevice = new TVDevice (dev, QSize ());
@@ -669,14 +669,14 @@ bool TVDeviceScannerSource::scan (const QString & dev, const QString & dri) {
     return !!m_tvdevice;
 }
 
-void TVDeviceScannerSource::activate () {
+KDE_NO_EXPORT void TVDeviceScannerSource::activate () {
     m_player->setProcess (m_player->mplayer ());
     m_nameRegExp.setPattern ("Selected device:\\s*([^\\s].*)");
     m_sizesRegExp.setPattern ("Supported sizes:\\s*([0-9]+)x([0-9]+) => ([0-9]+)x([0-9]+)");
     m_inputRegExp.setPattern ("\\s*([0-9]+):\\s*([^:]+):[^\\(]*\\(tuner:([01]),\\s*norm:([^\\)]+)\\)");
 }
 
-void TVDeviceScannerSource::deactivate () {
+KDE_NO_EXPORT void TVDeviceScannerSource::deactivate () {
     disconnect (m_player, SIGNAL (stopPlaying ()), this, SLOT (finished ()));
     if (m_tvdevice) {
         delete m_tvdevice;
@@ -685,7 +685,7 @@ void TVDeviceScannerSource::deactivate () {
     }
 }
 
-void TVDeviceScannerSource::play () {
+KDE_NO_EXPORT void TVDeviceScannerSource::play () {
     if (!m_tvdevice)
         return;
     QString args;
@@ -698,7 +698,7 @@ void TVDeviceScannerSource::play () {
         deactivate ();
 }
 
-void TVDeviceScannerSource::finished () {
+KDE_NO_EXPORT void TVDeviceScannerSource::finished () {
     TVDevice * dev = 0L;
     if (!m_tvdevice->inputs.size ())
         delete m_tvdevice;

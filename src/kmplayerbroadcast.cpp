@@ -58,7 +58,7 @@ static const char * strFFServerCustomSetting = "Custom Setting";
 static const char * strFFServerProfiles = "Profiles";
 
 
-FFServerSetting::FFServerSetting (int i, const QString & n, const QString & f, const QString & ac, int abr, int asr, const QString & vc, int vbr, int q, int fr, int gs, int w, int h)
+KDE_NO_EXPORT FFServerSetting::FFServerSetting (int i, const QString & n, const QString & f, const QString & ac, int abr, int asr, const QString & vc, int vbr, int q, int fr, int gs, int w, int h)
  : index (i), name (n), format (f), audiocodec (ac),
    audiobitrate (abr > 0 ? QString::number (abr) : QString ()),
    audiosamplerate (asr > 0 ? QString::number (asr) : QString ()),
@@ -70,7 +70,7 @@ FFServerSetting::FFServerSetting (int i, const QString & n, const QString & f, c
    width (w > 0 ? QString::number (w) : QString ()),
    height (h > 0 ? QString::number (h) : QString ()) {}
 
-FFServerSetting & FFServerSetting::operator = (const FFServerSetting & fs) {
+KDE_NO_EXPORT FFServerSetting & FFServerSetting::operator = (const FFServerSetting & fs) {
     format = fs.format;
     audiocodec = fs.audiocodec;
     audiobitrate = fs.audiobitrate;
@@ -85,7 +85,7 @@ FFServerSetting & FFServerSetting::operator = (const FFServerSetting & fs) {
     return *this;
 }
 
-FFServerSetting & FFServerSetting::operator = (const QStringList & sl) {
+KDE_NO_EXPORT FFServerSetting & FFServerSetting::operator = (const QStringList & sl) {
     if (sl.count () < 11) {
         return *this;
     }
@@ -107,7 +107,7 @@ FFServerSetting & FFServerSetting::operator = (const QStringList & sl) {
     return *this;
 }
 
-QString & FFServerSetting::ffconfig (QString & buf) {
+KDE_NO_EXPORT QString & FFServerSetting::ffconfig (QString & buf) {
     QString nl ("\n");
     buf = QString ("Format ") + format + nl;
     if (!audiocodec.isEmpty ())
@@ -131,7 +131,7 @@ QString & FFServerSetting::ffconfig (QString & buf) {
     return buf;
 }
 
-const QStringList FFServerSetting::list () {
+KDE_NO_EXPORT const QStringList FFServerSetting::list () {
     QStringList sl;
     sl.push_back (format);
     sl.push_back (audiocodec);
@@ -152,7 +152,7 @@ const QStringList FFServerSetting::list () {
 
 //-----------------------------------------------------------------------------
 
-KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent) : QFrame (parent) {
+KDE_NO_EXPORT KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent) : QFrame (parent) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5);
     QGridLayout *gridlayout = new QGridLayout (layout, 6, 2, 2);
     QLabel *label = new QLabel (i18n ("Bind address:"), this);
@@ -191,7 +191,7 @@ KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent) : QFrame 
     gridlayout->addWidget (new QLabel (qedit, label, parent), row, 0);  \
     gridlayout->addWidget (qedit, row, 1);
 
-KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *parent, FFServerSettingList & ffs) : QFrame (parent, "BroadcastPage"), profiles (ffs)
+KDE_NO_EXPORT KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *parent, FFServerSettingList & ffs) : QFrame (parent, "BroadcastPage"), profiles (ffs)
 {
     QHBoxLayout *layout = new QHBoxLayout (this, 5);
     QGridLayout *formatlayout = new QGridLayout (11, 2, 2);
@@ -284,7 +284,7 @@ KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *paren
 
 #undef ADDPROPERTY
 
-void KMPlayerPrefBroadcastFormatPage::setSettings (const FFServerSetting & fs) {
+KDE_NO_EXPORT void KMPlayerPrefBroadcastFormatPage::setSettings (const FFServerSetting & fs) {
     if (!fs.format.isEmpty ())
         format->setCurrentText (fs.format);
     audiocodec->setText (fs.audiocodec);
@@ -304,7 +304,7 @@ void KMPlayerPrefBroadcastFormatPage::setSettings (const FFServerSetting & fs) {
         accesslist->setItem (i, 0, new QTableItem (accesslist, QTableItem::Always, *it));
 }
 
-void KMPlayerPrefBroadcastFormatPage::getSettings (FFServerSetting & fs) {
+KDE_NO_EXPORT void KMPlayerPrefBroadcastFormatPage::getSettings (FFServerSetting & fs) {
     fs.format = format->currentText ();
     fs.audiocodec = audiocodec->text ();
     fs.audiobitrate = audiobitrate->text ();
@@ -323,17 +323,17 @@ void KMPlayerPrefBroadcastFormatPage::getSettings (FFServerSetting & fs) {
     }
 }
 
-void KMPlayerPrefBroadcastFormatPage::slotIndexChanged (int index) {
+KDE_NO_EXPORT void KMPlayerPrefBroadcastFormatPage::slotIndexChanged (int index) {
     slotItemHighlighted (index);
     if (index >= 0 && index < (int) profiles.size ())
         setSettings (*profiles[index]);
 }
 
-void KMPlayerPrefBroadcastFormatPage::slotTextChanged (const QString & txt) {
+KDE_NO_EXPORT void KMPlayerPrefBroadcastFormatPage::slotTextChanged (const QString & txt) {
     save->setEnabled (txt.length ());
 }
 
-void KMPlayerPrefBroadcastFormatPage::slotItemHighlighted (int index) {
+KDE_NO_EXPORT void KMPlayerPrefBroadcastFormatPage::slotItemHighlighted (int index) {
     if (index < 0 || index >= (int) profiles.size ()) {
         load->setEnabled (false);
         del->setEnabled (false);
@@ -345,7 +345,7 @@ void KMPlayerPrefBroadcastFormatPage::slotItemHighlighted (int index) {
     }
 }
 
-void KMPlayerPrefBroadcastFormatPage::slotSave () {
+KDE_NO_EXPORT void KMPlayerPrefBroadcastFormatPage::slotSave () {
     for (int i = 0; i < (int) profiles.size (); ++i)
         if (profiles[i]->name == profile->text ()) {
             getSettings (*profiles[i]);
@@ -358,11 +358,11 @@ void KMPlayerPrefBroadcastFormatPage::slotSave () {
     profilelist->insertItem (fs->name);
 }
 
-void KMPlayerPrefBroadcastFormatPage::slotLoad () {
+KDE_NO_EXPORT void KMPlayerPrefBroadcastFormatPage::slotLoad () {
     setSettings (*profiles[profilelist->currentItem ()]);
 }
 
-void KMPlayerPrefBroadcastFormatPage::slotDelete () {
+KDE_NO_EXPORT void KMPlayerPrefBroadcastFormatPage::slotDelete () {
     FFServerSettingList::iterator it = profiles.begin();
     for (int i = 0; i < profilelist->currentItem (); i++)
         ++it;
@@ -401,7 +401,7 @@ static bool stopProcess (KProcess * process, const char * cmd = 0L) {
 }
 
 
-KMPlayerBroadcastConfig::KMPlayerBroadcastConfig (KMPlayer * player, KMPlayerFFServerConfig * fsc)
+KDE_NO_EXPORT KMPlayerBroadcastConfig::KMPlayerBroadcastConfig (KMPlayer * player, KMPlayerFFServerConfig * fsc)
  : m_player (player),
    m_ffserverconfig (fsc),
    m_ffmpeg_process (0L),
@@ -409,11 +409,11 @@ KMPlayerBroadcastConfig::KMPlayerBroadcastConfig (KMPlayer * player, KMPlayerFFS
    m_endserver (true) {
 }
 
-KMPlayerBroadcastConfig::~KMPlayerBroadcastConfig () {
+KDE_NO_EXPORT KMPlayerBroadcastConfig::~KMPlayerBroadcastConfig () {
     stopServer ();
 }
 
-void KMPlayerBroadcastConfig::write (KConfig * config) {
+KDE_NO_EXPORT void KMPlayerBroadcastConfig::write (KConfig * config) {
     config->setGroup (strBroadcast);
     config->writeEntry (strFFServerCustomSetting, ffserversettings.list (), ';');
     QStringList sl;
@@ -424,7 +424,7 @@ void KMPlayerBroadcastConfig::write (KConfig * config) {
     config->writeEntry (strFFServerProfiles, sl, ';');
 }
 
-void KMPlayerBroadcastConfig::read (KConfig * config) {
+KDE_NO_EXPORT void KMPlayerBroadcastConfig::read (KConfig * config) {
     std::for_each (ffserversettingprofiles.begin (), ffserversettingprofiles.end (), Deleter<FFServerSetting>);
     ffserversettingprofiles.clear ();
     config->setGroup (strBroadcast);
@@ -441,7 +441,7 @@ void KMPlayerBroadcastConfig::read (KConfig * config) {
     }
 }
 
-void KMPlayerBroadcastConfig::sync (bool fromUI) {
+KDE_NO_EXPORT void KMPlayerBroadcastConfig::sync (bool fromUI) {
     if (fromUI) {
         m_configpage->getSettings(ffserversettings);
     } else {
@@ -450,7 +450,7 @@ void KMPlayerBroadcastConfig::sync (bool fromUI) {
     }
 }
 
-void KMPlayerBroadcastConfig::prefLocation (QString & item, QString & icon, QString & tab) {
+KDE_NO_EXPORT void KMPlayerBroadcastConfig::prefLocation (QString & item, QString & icon, QString & tab) {
     item = i18n ("Broadcasting");
     icon = QString ("share");
     tab = i18n ("Profiles");
@@ -468,7 +468,7 @@ QFrame * KMPlayerBroadcastConfig::prefPage (QWidget * parent) {
     return m_configpage;
 }
 
-bool KMPlayerBroadcastConfig::broadcasting () const {
+KDE_NO_EXPORT bool KMPlayerBroadcastConfig::broadcasting () const {
     return m_ffserver_process && m_ffserver_process->isRunning ();
 }
 #include <kglobal.h>
@@ -481,7 +481,7 @@ static const char ffserverconf[] =
 "<Stream video.%s>\nFeed kmplayer.ffm\n%s\n%s%s\n</Stream>\n"
 "<Stream stat.html>\nFormat status\nACL allow localhost\n</Stream>\n";
 
-void KMPlayerBroadcastConfig::startServer () {
+KDE_NO_EXPORT void KMPlayerBroadcastConfig::startServer () {
     if (broadcasting ()) {
         stopServer ();
         return;
@@ -523,7 +523,7 @@ void KMPlayerBroadcastConfig::startServer () {
     QTimer::singleShot (500, this, SLOT (startFeed ()));
 }
 
-void KMPlayerBroadcastConfig::stopServer () {
+KDE_NO_EXPORT void KMPlayerBroadcastConfig::stopServer () {
     m_endserver = true;
     if (m_ffmpeg_process)
         m_ffmpeg_process->stop ();
@@ -531,12 +531,12 @@ void KMPlayerBroadcastConfig::stopServer () {
         KMessageBox::error (m_configpage, i18n ("Failed to end ffserver process."), i18n ("Error"));
 }
 
-void KMPlayerBroadcastConfig::processOutput (KProcess * p, char * s, int) {
+KDE_NO_EXPORT void KMPlayerBroadcastConfig::processOutput (KProcess * p, char * s, int) {
     if (p == m_ffserver_process)
         m_ffserver_out += QString (s);
 }
 
-void KMPlayerBroadcastConfig::startFeed () {
+KDE_NO_EXPORT void KMPlayerBroadcastConfig::startFeed () {
     if (!m_configpage) {
         stopServer ();
         return;
@@ -575,7 +575,7 @@ bail_out:
     m_configpage->setCursor (QCursor (Qt::ArrowCursor));
 }
 
-void KMPlayerBroadcastConfig::feedFinished () {
+KDE_NO_EXPORT void KMPlayerBroadcastConfig::feedFinished () {
     if (m_configpage)
         m_configpage->feedled->setState (KLed::Off);
     m_ffmpeg_process->deleteLater ();
@@ -590,7 +590,7 @@ void KMPlayerBroadcastConfig::feedFinished () {
     }
 }
 
-void KMPlayerBroadcastConfig::processStopped (KProcess *) {
+KDE_NO_EXPORT void KMPlayerBroadcastConfig::processStopped (KProcess *) {
     kdDebug () << "ffserver process stopped" << endl;
     if (m_configpage) {
         m_configpage->serverled->setState (KLed::Off);
@@ -603,16 +603,16 @@ void KMPlayerBroadcastConfig::processStopped (KProcess *) {
     emit broadcastStopped ();
 }
 
-void KMPlayerBroadcastConfig::sourceChanged (KMPlayerSource * source) {
+KDE_NO_EXPORT void KMPlayerBroadcastConfig::sourceChanged (KMPlayerSource * source) {
     if (m_configpage)
         m_configpage->startbutton->setEnabled (broadcasting () || (source && !source->videoDevice ().isEmpty ()));
 }
 //-----------------------------------------------------------------------------
 
-KMPlayerFFServerConfig::KMPlayerFFServerConfig () {
+KDE_NO_EXPORT KMPlayerFFServerConfig::KMPlayerFFServerConfig () {
 }
 
-void KMPlayerFFServerConfig::write (KConfig * config) {
+KDE_NO_EXPORT void KMPlayerFFServerConfig::write (KConfig * config) {
     config->setGroup (strBroadcast);
     config->writeEntry (strBindAddress, bindaddress);
     config->writeEntry (strFFServerPort, ffserverport);
@@ -622,7 +622,7 @@ void KMPlayerFFServerConfig::write (KConfig * config) {
     config->writeEntry (strFeedFileSize, feedfilesize);
 }
 
-void KMPlayerFFServerConfig::read (KConfig * config) {
+KDE_NO_EXPORT void KMPlayerFFServerConfig::read (KConfig * config) {
     config->setGroup (strBroadcast);
     bindaddress = config->readEntry (strBindAddress, "0.0.0.0");
     ffserverport = config->readNumEntry (strFFServerPort, 8090);
@@ -632,7 +632,7 @@ void KMPlayerFFServerConfig::read (KConfig * config) {
     feedfilesize = config->readNumEntry (strFeedFileSize, 512);
 }
 
-void KMPlayerFFServerConfig::sync (bool fromUI) {
+KDE_NO_EXPORT void KMPlayerFFServerConfig::sync (bool fromUI) {
     if (fromUI) {
         bindaddress = m_configpage->bindaddress->text ();
         ffserverport = m_configpage->port->text ().toInt ();
@@ -650,13 +650,13 @@ void KMPlayerFFServerConfig::sync (bool fromUI) {
     }
 }
 
-void KMPlayerFFServerConfig::prefLocation (QString & item, QString & icon, QString & tab) {
+KDE_NO_EXPORT void KMPlayerFFServerConfig::prefLocation (QString & item, QString & icon, QString & tab) {
     item = i18n ("Broadcasting");
     icon = QString ("share");
     tab = i18n ("FFServer");
 }
 
-QFrame *KMPlayerFFServerConfig::prefPage (QWidget * parent) {
+KDE_NO_EXPORT QFrame *KMPlayerFFServerConfig::prefPage (QWidget * parent) {
     if (!m_configpage)
         m_configpage = new KMPlayerPrefBroadcastPage (parent);
     return m_configpage;

@@ -71,13 +71,13 @@ static OutputDriver _vds [] = {
 static const int ADRIVER_ARTS_INDEX = 4;
 
 
-KMPlayerSettings::KMPlayerSettings (KMPlayer * player, KConfig * config)
+KDE_NO_EXPORT KMPlayerSettings::KMPlayerSettings (KMPlayer * player, KConfig * config)
   : configdialog (0L), m_config (config), m_player (player) {
     audiodrivers = _ads;
     videodrivers = _vds;
 }
 
-KMPlayerSettings::~KMPlayerSettings () {
+KDE_NO_EXPORT KMPlayerSettings::~KMPlayerSettings () {
     // configdialog should be destroyed when the view is destroyed
     //delete configdialog;
 }
@@ -152,7 +152,7 @@ static const char * strAutoPlayAfterTime = "Auto Play After Recording Time";
 static const char * strRecordingCopy = "Recording Is Copy";
 
 
-void KMPlayerSettings::readConfig () {
+KDE_NO_EXPORT void KMPlayerSettings::readConfig () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
 
     m_config->setGroup (strGeneralGroup);
@@ -239,7 +239,7 @@ void KMPlayerSettings::readConfig () {
         std::bind2nd (std::mem_fun (&KMPlayerPreferencesPage::read), m_config));
 }
 
-bool KMPlayerSettings::createDialog () {
+KDE_NO_EXPORT bool KMPlayerSettings::createDialog () {
     if (configdialog) return false;
     configdialog = new KMPlayerPreferences (m_player, this);
     connect (configdialog, SIGNAL (okClicked ()),
@@ -422,7 +422,7 @@ void KMPlayerSettings::writeConfig () {
     m_config->sync ();
 }
 
-void KMPlayerSettings::okPressed () {
+KDE_NO_EXPORT void KMPlayerSettings::okPressed () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
     if (!view)
         return;
@@ -572,7 +572,7 @@ void KMPlayerSettings::okPressed () {
     }
 }
 
-void KMPlayerSettings::getHelp () {
+KDE_NO_EXPORT void KMPlayerSettings::getHelp () {
     KApplication::kApplication()->invokeBrowser ("man:/mplayer");
 }
 
