@@ -275,6 +275,7 @@ public:
     KDE_NO_CDTOR_EXPORT ~ControlPanel () {}
     void showPositionSlider (bool show);
     void enableSeekButtons (bool enable);
+    void enableRecordButtons (bool enable);
     void setPlaying (bool play);
     void setRecording (bool record);
     void setPlayingProgress (int pos);

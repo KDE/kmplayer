@@ -543,6 +543,14 @@ void ControlPanel::enableSeekButtons (bool enable) {
     }
 }
 
+void ControlPanel::enableRecordButtons (bool enable) {
+    if (!m_auto_controls) return;
+    if (enable)
+        m_buttons[button_record]->show ();
+    else
+        m_buttons[button_record]->hide ();
+}
+
 KDE_NO_EXPORT void ControlPanel::setPlaying (bool play) {
     if (play != m_buttons[button_play]->isOn ())
         m_buttons[button_play]->toggle ();

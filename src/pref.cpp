@@ -204,6 +204,8 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
 	//autoHideSlider = new QCheckBox (i18n("Auto hide position slider"), this, 0);
 	framedrop = new QCheckBox (i18n ("Allow framedrops"), this);
 	QWhatsThis::add (framedrop, i18n ("Allow dropping frames for better audio and video synchronization"));
+	adjustvolume = new QCheckBox (i18n ("Auto set volume on start"), this);
+	QWhatsThis::add (adjustvolume, i18n ("When a new source is selected, the volume will be set according the volume control"));
 
 	QWidget *seekingWidget = new QWidget(this);
 	QHBoxLayout *seekingWidgetLayout = new QHBoxLayout(seekingWidget);
@@ -215,6 +217,7 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
 	layout->addWidget(keepSizeRatio);
 	layout->addWidget(loop);
 	layout->addWidget (framedrop);
+	layout->addWidget (adjustvolume);
 	layout->addWidget (showRecordButton);
 	layout->addWidget (showBroadcastButton);
 	//layout->addWidget(autoHideSlider);

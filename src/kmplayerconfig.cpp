@@ -99,6 +99,7 @@ static const char * strVoDriver = "Video Driver";
 static const char * strAoDriver = "Audio Driver";
 static const char * strLoop = "Loop";
 static const char * strFrameDrop = "Frame Drop";
+static const char * strAdjustVolume = "Auto Adjust Volume";
 static const char * strAddConfigButton = "Add Configure Button";
 static const char * strAddRecordButton = "Add Record Button";
 static const char * strAddBroadcastButton = "Add Broadcast Button";
@@ -175,6 +176,7 @@ KDE_NO_EXPORT void Settings::readConfig () {
     view->setKeepSizeRatio (sizeratio);
     loop = m_config->readBoolEntry (strLoop, false);
     framedrop = m_config->readBoolEntry (strFrameDrop, true);
+    autoadjustvolume = m_config->readBoolEntry (strAdjustVolume, true);
     mplayerpost090 = m_config->readBoolEntry (strPostMPlayer090, true);
     showcnfbutton = m_config->readBoolEntry (strAddConfigButton, true);
     if (showcnfbutton)
@@ -293,6 +295,7 @@ void Settings::show (const char * pagename) {
     configdialog->m_GeneralPageGeneral->keepSizeRatio->setChecked (sizeratio);
     configdialog->m_GeneralPageGeneral->loop->setChecked (loop);
     configdialog->m_GeneralPageGeneral->framedrop->setChecked (framedrop);
+    configdialog->m_GeneralPageGeneral->adjustvolume->setChecked (autoadjustvolume);
     //configdialog->m_GeneralPageGeneral->autoHideSlider->setChecked (autohideslider);
     //configdialog->addConfigButton->setChecked (showcnfbutton);	//not
     configdialog->m_GeneralPageGeneral->showRecordButton->setChecked (showrecordbutton);
@@ -392,6 +395,7 @@ void Settings::writeConfig () {
     m_config->writeEntry (strKeepSizeRatio, view->keepSizeRatio ());
     m_config->writeEntry (strLoop, loop);
     m_config->writeEntry (strFrameDrop, framedrop);
+    m_config->writeEntry (strAdjustVolume, autoadjustvolume);
     m_config->writeEntry (strSeekTime, seektime);
     m_config->writeEntry (strVoDriver, videodriver);
     m_config->writeEntry (strAoDriver, audiodriver);
@@ -514,6 +518,7 @@ KDE_NO_EXPORT void Settings::okPressed () {
     m_player->keepMovieAspect (sizeratio);
     loop = configdialog->m_GeneralPageGeneral->loop->isChecked ();
     framedrop = configdialog->m_GeneralPageGeneral->framedrop->isChecked ();
+    autoadjustvolume = configdialog->m_GeneralPageGeneral->adjustvolume->isChecked ();
     //showcnfbutton = configdialog->m_GeneralPageGeneral->addConfigButton->isChecked ();
     showcnfbutton = true;
     if (showcnfbutton)
@@ -521,10 +526,7 @@ KDE_NO_EXPORT void Settings::okPressed () {
     else
 	view->controlPanel()->button (ControlPanel::button_config)->hide();
     showrecordbutton = configdialog->m_GeneralPageGeneral->showRecordButton->isChecked ();
-    if (showrecordbutton)
-	view->controlPanel()->button (ControlPanel::button_record)->show();
-    else
-        view->controlPanel()->button (ControlPanel::button_record)->hide();
+    view->controlPanel()->enableRecordButtons (showrecordbutton);
     showbroadcastbutton = configdialog->m_GeneralPageGeneral->showBroadcastButton->isChecked ();
     if (!showbroadcastbutton)
         view->controlPanel ()->broadcastButton ()->hide ();

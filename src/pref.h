@@ -98,6 +98,7 @@ public:
     QCheckBox *showRecordButton;
     QCheckBox *showBroadcastButton;
     QCheckBox *framedrop;
+    QCheckBox *adjustvolume;
 
     QSpinBox *seekTime;
 

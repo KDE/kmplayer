@@ -316,8 +316,10 @@ void PartBase::setSource (Source * _source) {
                  m_process, SLOT (play (Source *)));
         disconnect (m_source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
     }
-    if (m_view)
+    if (m_view) {
         m_view->controlPanel ()->setAutoControls (true);
+        m_view->controlPanel ()->enableRecordButtons (m_settings->showrecordbutton);
+    }
     QString p = m_settings->backends [_source->name()];
     if (p.isEmpty ()) {
         m_config->setGroup (strGeneralGroup);
@@ -459,7 +461,7 @@ void PartBase::processStateChange (KMPlayer::Process::State old, KMPlayer::Proce
             m_view->viewer ()->setAspect (src->aspect ());
         m_view->controlPanel ()->showPositionSlider (!!src->length ());
         m_view->controlPanel ()->enableSeekButtons (src->isSeekable ());
-        if (src == m_source)
+        if (m_settings->autoadjustvolume && src == m_source)
            m_process->volume(m_view->controlPanel()->volumeBar()->value(),true);
         emit loading (100);
         emit startPlaying ();
