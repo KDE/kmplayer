@@ -322,6 +322,16 @@ void KMPlayerApp::boadcastClicked () {
     kdDebug () << "ffserver -f " << conffile << endl;
     *m_ffserver_process << "ffserver -f " << conffile;
     m_ffserver_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
+    if (m_player->source () == m_tvsource) {
+        KMPlayerTVSource::TVSource * source = m_tvsource->tvsource ();
+        if (source->frequency >= 0) {
+            KProcess process;
+            process.setUseShell (true);
+            process << "v4lctl -c " << source->videodevice << " setfreq " << QString::number (source->frequency).ascii ();
+            kdDebug () << "v4lctl -c " << source->videodevice << " setfreq " << source->frequency << endl;
+            process.start (KProcess::Block);
+        }
+    }
     QTimer::singleShot (500, this, SLOT (boadcastTimerEvent ()));
 }
 
@@ -983,9 +993,9 @@ void KMPlayerTVSource::activate () {
     static_cast <KMPlayerView*> (m_player->view())->broadcastButton ()->show ();
 }
 
-void KMPlayerTVSource::play () {
+const QString KMPlayerTVSource::buildArguments () {
     if (!m_tvsource)
-        return;
+        return QString ("");
     m_identified = true;
     KMPlayerConfig * config = m_player->configDialog ();
     app->setCaption (QString (i18n ("TV: ")) + m_tvsource->title, false);
@@ -998,7 +1008,11 @@ void KMPlayerTVSource::play () {
     m_ffmpegCommand = QString (" -vd ") + m_tvsource->videodevice;
     if (!m_tvsource->audiodevice.isEmpty ())
         m_ffmpegCommand += QString (" -ad ") + m_tvsource->audiodevice;
-    m_player->run ((QString ("-slave -nocache -quiet ") + args).ascii());
+    return args;
+}
+
+void KMPlayerTVSource::play () {
+    m_player->run ((QString ("-slave -nocache -quiet ") + buildArguments ()).ascii ());
 }
 
 void KMPlayerTVSource::deactivate () {
@@ -1030,6 +1044,8 @@ void KMPlayerTVSource::buildMenu () {
                 devmenu->insertItem (input->name, this, SLOT (menuClicked (int)), 0, counter);
                 source->videodevice = device->device;
                 source->audiodevice = device->audiodevice;
+                source->noplayback = device->noplayback;
+                source->frequency = -1;
                 source->command.sprintf ("device=%s:input=%d", device->device.ascii (), input->id);
                 if (currentcommand == source->command)
                     m_tvsource = source;
@@ -1044,6 +1060,8 @@ void KMPlayerTVSource::buildMenu () {
                     TVSource * source = new TVSource;
                     source->videodevice = device->device;
                     source->audiodevice = device->audiodevice;
+                    source->noplayback = device->noplayback;
+                    source->frequency = channel->frequency;
                     source->size = device->size;
                     inputmenu->insertItem (channel->name, this, SLOT(menuClicked (int)), 0, counter);
                     source->command.sprintf ("device=%s:input=%d:freq=%d", device->device.ascii (), input->id, channel->frequency);
@@ -1065,7 +1083,10 @@ void KMPlayerTVSource::menuClicked (int id) {
         if (m_player->source () != this)
             m_player->setSource (this);
         m_tvsource = it.data ();
-        QTimer::singleShot (0, this, SLOT (play ()));
+        if (!m_tvsource->noplayback)
+            QTimer::singleShot (0, this, SLOT (play ()));
+        else
+            buildArguments ();
     }
 }
 

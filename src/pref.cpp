@@ -221,7 +221,7 @@ KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent,
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
     QLabel * deviceLabel = new QLabel (QString (i18n ("Video device:")) + device->device, this, 0);
     layout->addWidget (deviceLabel);
-    QGridLayout *gridlayout = new QGridLayout (layout, 4, 4);
+    QGridLayout *gridlayout = new QGridLayout (layout, 5, 4);
     QLabel * audioLabel = new QLabel (i18n ("Audio device:"), this);
     audiodevice = new QLineEdit (device->audiodevice, this);
     QLabel * nameLabel = new QLabel (i18n ("Name:"), this, 0);
@@ -230,6 +230,8 @@ KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent,
     sizewidth = new QLineEdit ("", this, 0);
     QLabel *sizeheightLabel = new QLabel (i18n ("Height:"), this, 0);
     sizeheight = new QLineEdit ("", this, 0);
+    noplayback = new QCheckBox (i18n ("Do not immediately play"), this);
+    QToolTip::add (noplayback, i18n ("Only start playing after clicking the play button"));
     inputsTab = new QTabWidget (this);
     TVInput * input;
     for (device->inputs.first (); (input = device->inputs.current ()); device->inputs.next ()) {
@@ -264,6 +266,7 @@ KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent,
     gridlayout->addWidget (sizewidth, 2, 1);
     gridlayout->addWidget (sizeheightLabel, 2, 2);
     gridlayout->addWidget (sizeheight, 2, 3);
+    gridlayout->addMultiCellWidget (noplayback, 3, 3, 0, 3);
     layout->addWidget (inputsTab);
     layout->addSpacing (5);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
@@ -281,6 +284,7 @@ void KMPlayerPrefSourcePageTVDevice::slotDelete () {
 void KMPlayerPrefSourcePageTVDevice::updateTVDevice () {
     device->name = name->text ();
     device->audiodevice = audiodevice->text ();
+    device->noplayback = noplayback->isChecked ();
     device->size = QSize(sizewidth->text().toInt(), sizeheight->text().toInt());
     for (unsigned i = 0; i < device->inputs.count (); i++) {
         TVInput * input = device->inputs.at (i);
@@ -333,6 +337,7 @@ void KMPlayerPrefSourcePageTV::addPage (TVDevice * device, bool show) {
     devpage->name->setText (device->name);
     devpage->sizewidth->setText (QString::number (device->size.width ()));
     devpage->sizeheight->setText (QString::number (device->size.height ()));
+    devpage->noplayback->setChecked (device->noplayback);
     vlay->addWidget (devpage);
     connect (devpage, SIGNAL (deleted (QFrame *)),
             this, SLOT (slotDeviceDeleted (QFrame *)));

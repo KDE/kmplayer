@@ -91,6 +91,7 @@ public:
     QSize minsize;
     QSize maxsize;
     QSize size;
+    bool noplayback;
     QPtrList <TVInput> inputs;
 };
 
@@ -222,6 +223,7 @@ public:
     QLineEdit * audiodevice;
     QLineEdit * sizewidth;
     QLineEdit * sizeheight;
+    QCheckBox * noplayback;
     TVDevice * device;
     void updateTVDevice ();
 signals:

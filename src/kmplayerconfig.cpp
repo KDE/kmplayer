@@ -37,8 +37,8 @@
 #include "pref.h"
 
 FFServerSetting _ffs[] = {
-    { 0, "Modem (32k)", 16, 11025, 50, 15, 3, 3, "160x128" },
-    { 1, "ISDN (64k)", 16, 11025, 50, 15, 3, 3, "320x240" },
+    { 0, "Modem (32k)", 16, 11025, 50, 19, 3, 3, "160x128" },
+    { 1, "ISDN (64k)", 16, 11025, 50, 16, 3, 3, "320x240" },
     { 2, "ISDN2 (128k)", 32, 22050, 80, 10, 10, 12, "320x240" },
     { 3, "LAN (1024k)", 64, 44100, 512, 5, 25, 12, "320x240" },
     { -1, 0, 0, 0, 0, 0, 0, 0, 0 }
@@ -50,7 +50,8 @@ TVInput::TVInput (const QString & n, int _id) : name (n), id (_id) {
     channels.setAutoDelete (true);
 }
 
-TVDevice::TVDevice (const QString & d, const QSize & s) : device (d), size (s) {
+TVDevice::TVDevice (const QString & d, const QSize & s) 
+    : device (d), size (s), noplayback (false) {
     inputs.setAutoDelete (true);
 }
 
@@ -142,6 +143,7 @@ static const char * strTVInputs = "Inputs";
 static const char * strTVSize = "Size";
 static const char * strTVMinSize = "Minimum Size";
 static const char * strTVMaxSize = "Maximum Size";
+static const char * strTVNoPlayback = "No Playback";
 static const char * strTVDriver = "Driver";
 static const char * strBroadcast = "Broadcast";
 static const char * strBindAddress = "Bind Address";
@@ -261,6 +263,7 @@ void KMPlayerConfig::readConfig () {
         device->audiodevice = m_config->readEntry (strTVAudioDevice, "");
         device->minsize = m_config->readSizeEntry (strTVMinSize);
         device->maxsize = m_config->readSizeEntry (strTVMaxSize);
+        device->noplayback = m_config->readBoolEntry (strTVNoPlayback, false);
         QStrList inputlist;
         int inputentries = m_config->readListEntry (strTVInputs, inputlist,';');
         kdDebug() << device->device << " has " << inputentries << " inputs" << endl;
@@ -475,6 +478,7 @@ void KMPlayerConfig::writeConfig () {
         m_config->writeEntry (strTVSize, device->size);
         m_config->writeEntry (strTVMinSize, device->minsize);
         m_config->writeEntry (strTVMaxSize, device->maxsize);
+        m_config->writeEntry (strTVNoPlayback, device->noplayback);
         m_config->writeEntry (strTVDeviceName, device->name);
         m_config->writeEntry (strTVAudioDevice, device->audiodevice);
         QStringList inputlist;

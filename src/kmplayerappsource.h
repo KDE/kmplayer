@@ -137,6 +137,15 @@ private:
 class KMPlayerTVSource : public KMPlayerMenuSource {
     Q_OBJECT
 public:
+    struct TVSource {
+        QSize size;
+        QString command;
+        QString videodevice;
+        QString audiodevice;
+        QString title;
+        int frequency;
+        bool noplayback;
+    };
     KMPlayerTVSource (KMPlayerApp * app, QPopupMenu * m);
     virtual ~KMPlayerTVSource ();
     //virtual bool processOutput (const QString & line);
@@ -144,6 +153,7 @@ public:
     virtual bool hasLength ();
     virtual bool isSeekable ();
     void buildMenu ();
+    TVSource * tvsource () const { return m_tvsource; }
 public slots:
     virtual void activate ();
     virtual void deactivate ();
@@ -152,13 +162,7 @@ public slots:
     //void finished ();
     void menuClicked (int id);
 private:
-    struct TVSource {
-        QSize size;
-        QString command;
-        QString videodevice;
-        QString audiodevice;
-        QString title;
-    };
+    const QString buildArguments ();
     typedef QMap <int, TVSource *> CommandMap;
     TVSource * m_tvsource;
     CommandMap commands;
