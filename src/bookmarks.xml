@@ -1,317 +1,461 @@
 <!DOCTYPE xbel>
 <xbel folded="no" >
  <folder folded="no" icon="bookmark_folder" >
-  <title>slovak</title>
-  <folder folded="no" icon="bookmark_folder" >
-   <title>TV</title>
-   <bookmark icon="video" href="mmsh://mslive2.markiza.sk/markiza/" >
-    <title>markíza</title>
+  <title>Europe</title>
+  <folder folded="yes" icon="bookmark_folder" >
+   <title>czech republic</title>
+   <folder folded="yes" icon="bookmark_folder" >
+    <title>TV</title>
+    <bookmark icon="video" href="rtsp://ct1.server.streaming.visual.cz/ct/Vecernik050204.rm?start=00:01:00&amp;end=00:31:00" >
+     <title>ČT1</title>
+    </bookmark>
+    <bookmark icon="video" href="rtsp://ct1.server.streaming.visual.cz/ct/Vecernik050204.rm" >
+     <title>ČT1--</title>
+    </bookmark>
+   </folder>
+   <folder folded="yes" icon="bookmark_folder" >
+    <title>offline</title>
+    <bookmark icon="sound" href="http://www.radiodragon.cz/" >
+     <title>dragon</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://www.azradio.cz/live/azradio.asx" >
+     <title>AZ radio</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://www.mnul.cz/radio/radionorthmusic.asx" >
+     <title>radio northmusic</title>
+    </bookmark>
+   </folder>
+   <folder folded="yes" icon="bookmark_folder" >
+    <title>radio valc</title>
+    <bookmark icon="sound" href="http://www.radiovalc.cz/asx/valc-5.asx" >
+     <title>radio valc live</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://www.radiovalc.cz/asx/valc1-2.asx" >
+     <title>radio valc 1 gold</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://www.radiovalc.cz/asx/valc2-2.asx" >
+     <title>radio valc 2 country</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://www.radiovalc.cz/asx/valc3-2.asx" >
+     <title>radio valc 3 hit</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://www.radiovalc.cz/asx/valc4-2.asx" >
+     <title>radio valc 4 rock</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://www.radiovalc.cz/asx/valc5-2.asx" >
+     <title>radio valc 5 classic</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://www.radiovalc.cz/asx/valc6-2.asx" >
+     <title>radio valc 6 valcarka</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://www.radiovalc.cz/asx/valc7-2.asx" >
+     <title>radio valc 7 folk</title>
+    </bookmark>
+   </folder>
+   <folder folded="yes" icon="bookmark_folder" >
+    <title>cesky rozhlas</title>
+    <bookmark icon="sound" href="http://live.atlas.cz/cro1/cro1-96.asx" >
+     <title>cro1 radiozurnal</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://live.atlas.cz/cro2/cro2-96.asx" >
+     <title>cro2 praha</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://amp1.cesnet.cz:8000/cro3.ogg" >
+     <title>cro3 vltava</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://live.atlas.cz/crocb/crocb-48.asx" >
+     <title>cro ceske budejovice</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://live.atlas.cz/crohk/crohk-48.asx" >
+     <title>cro hradec kralove</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://live.atlas.cz/crool/crool-48.asx" >
+     <title>cro olomouc</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://live.atlas.cz/croov/croov-48.asx" >
+     <title>cro ostrava</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://live.atlas.cz/croplzen/croplzen64.asx" >
+     <title>cro plzen</title>
+    </bookmark>
+    <bookmark icon="sound" href="http://live.atlas.cz/croregion/croregion-48.asx" >
+     <title>cro stredni cechy</title>
+    </bookmark>
+   </folder>
+   <bookmark icon="sound" href="http://amp.cesnet.cz:8000/akropolis.ogg" >
+    <title>radio akropolis</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://live.atlas.cz/krokodyl/krokodyl32.asx" >
+    <title>krokodyl</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://live.atlas.cz/joeradio/joeradioi64.asx" >
+    <title>joe</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://live.atlas.cz/regina/croregina-48.asx" >
+    <title>regina</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://live.atlas.cz/kisshady/kisshady32.asx" >
+    <title>kiss hady</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://live.atlas.cz/proglas/proglas32.asx" >
+    <title>proglas</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://live.atlas.cz/countryradio/countryradio32.asx" >
+    <title>country radio</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://live.atlas.cz/kiss/kissproton20.asx" >
+    <title>proton</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://netshow3.atlas.cz/beat32" >
+    <title>radio beat</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.abradio.cz/www/expres128.asx" >
+    <title>expresradio</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://live.atlas.cz/kiss/radiokiss32.asx" >
+    <title>kiss 98 fm</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://live.atlas.cz/radio1/radio1-64.asx" >
+    <title>radio1</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://live.atlas.cz/kiss/kisspublikum48.asx" >
+    <title>kiss publikum</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://stream.inext.cz/rapollo" >
+    <title>radio apollo</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://live.atlas.cz/evropa2/evropa2-32.asx" >
+    <title>evropa 2</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://gott.pueblo.cz:8000" >
+    <title>radio crystal</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://live.radiosumava.cz/sumava/index.asx" >
+    <title>radio sumava</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.abradio.cz/www/karolina.asx" >
+    <title>radio karolina</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.internetradio.cz/fajn.asx" >
+    <title>fajn radio</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.internetradio.cz/kissfm.asx" >
+    <title>kiss fm</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.internetradio.cz/kissmorava.asx" >
+    <title>kiss morava</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.internetradio.cz/cernahora.asx" >
+    <title>cerna hora</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.abradio.cz/www/fmplus.asx" >
+    <title>radio fm plus</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.internetradio.cz/helax.asx" >
+    <title>helax</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.internetradio.cz/hity.asx" >
+    <title>radio hity</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.internetradio.cz/impuls.asx" >
+    <title>radio impuls</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.internetradio.cz/info.asx" >
+    <title>radio info</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.internetradio.cz/life.asx" >
+    <title>radio life</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.internetradio.cz/relax.asx" >
+    <title>radio relax</title>
    </bookmark>
   </folder>
-  <bookmark icon="sound" href="http://www.flash.viapvt.sk/Zive_vysielanie.ram" >
-   <title>flash</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://ra.slovakradio.sk:8000/RockFM_Live_32_kb" >
-   <title>RockFM</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.internetradio.cz/zet.asx" >
-   <title>zet</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://ra.slovakradio.sk:8000/SlovakRadio_Live_32_kb" >
-   <title>slovensko</title>
-  </bookmark>
-  <bookmark icon="sound" href="mmsh://195.98.128.202:80/twist" >
-   <title>twist radio</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.rferl.org/realaudio/c13.ram" >
-   <title>Radio Slobodna Europa</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.bbc.co.uk/slovak/vak.ram" >
-   <title>BBC World Service Slovak</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://live.okey.sk/OKEY" >
-   <title>radio okey</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.lumen.sk/real/live.ram" >
-   <title>lumen</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.internetradio.cz/duha.asx" >
-   <title>duha</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://81.0.210.137/nradio" >
-   <title>nradio</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://live.jaseus.sk:8000/rf32.ogg" >
-   <title>frontinus</title>
-  </bookmark>
+  <folder folded="yes" >
+   <folder folded="yes" >
+    <title>TV</title>
+    <bookmark icon="video" href="http://www.itele.fr/smi/direct.smi" >
+     <title>I Télévision</title>
+    </bookmark>
+    <bookmark icon="video" href="http://www.bbc.co.uk/newsa/n5ctrl/tvseq/n24.ram" >
+     <title>bbc news</title>
+    </bookmark>
+   </folder>
+   <title>france</title>
+   <bookmark icon="sound" href="mms://vip8.yacast.fr/encodereurope1" >
+    <title>europe1</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://vip6.yacast.fr/encodercheriefm" >
+    <title>cherie FM</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://viptvr.yacast.fr/tvr_vibration?site" >
+    <title>vibration</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.tv-radio.com/station/rfi/rfi-20k.asx" >
+    <title>rfi</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://ogg.tv-radio.fr:1441/encoderfinter.ogg" >
+    <title>france-inter</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://viptvr2.yacast.fr/encoderfranceinfo" >
+    <title>france info</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://vip6.yacast.fr/encoderrmc" >
+    <title>rmc</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://vip6.yacast.fr/encoderrtl" >
+    <title>rtl</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://vip6.yacast.fr/encodernrj" >
+    <title>nrj</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://vip6.yacast.fr/encodernostalgie" >
+    <title>nostalgie</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://vip2.yacast.fr/encoderfun" >
+    <title>fun</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://stream.servstream.com/ViewWeb/BBCRadio_music/Event/BBCRadio7.asx" >
+    <title>bbc 7</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.live365.com/play/127730?membername=abfjungle" >
+    <title>abf</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://viptvr2.yacast.fr/tvr_europe2" >
+    <title>europe 2</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://ogg.tv-radio.fr:1441/encoderfip.ogg" >
+    <title>fip</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://viptvr.yacast.fr/tvr_franceculture" >
+    <title>franceculture</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://viptvr2.yacast.fr/tvr_rfm" >
+    <title>rfm</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://vip2.yacast.fr/encoderrtl2" >
+    <title>rtl2</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://vip2.yacast.fr/encoderskyrock" >
+    <title>skyrock</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://vip2.yacast.fr/encoderrireetchansons" >
+    <title>rireet chansons</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://viptvr.yacast.fr/tvr_francemusiques2" >
+    <title>france musique</title>
+   </bookmark>
+   <bookmark icon="www" href="http://trevize.letsgozik.com:44444/letsgozik_56" >
+    <title>Let's Go Zik</title>
+   </bookmark>
+  </folder>
+  <folder folded="yes" >
+   <title>germany</title>
+   <folder folded="no" >
+    <title>TV</title>
+    <bookmark icon="www" href="http://www.bloomberg.com/streams/video/LiveDE_nb.asxx" >
+     <title>Bloomberg TV Germany</title>
+    </bookmark>
+   </folder>
+   <bookmark icon="sound" href="mms://213.200.75.252/antenne1$livestream.wma" >
+    <title>hit radio antenne 1</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://213.200.64.231/radiohamburg$livestream.wma" >
+    <title>radio hamburg</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://213.200.64.227/fettesradio$livestream.wma" >
+    <title>89.0 rtl</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://62.146.11.2/2884starfm_live.wmv?cid=47241&amp;dummy=.wmv" >
+    <title>107.8 star fm</title>
+   </bookmark>
+   <bookmark icon="sound" href="rtsp://213.200.64.166/farm/pull2/62.89.187.100%3A2030/encoder/rockland/livestream.rm" >
+    <title>rockland sachsen-anhalt</title>
+   </bookmark>
+  </folder>
+  <folder folded="yes" >
+   <title>greece</title>
+   <bookmark icon="www" href="http://64.246.32.39:8906/" >
+    <title>Cosmoradio</title>
+   </bookmark>
+  </folder>
+  <folder folded="yes" >
+   <title>hungary</title>
+   <bookmark icon="www" href="http://yp.tilos.hu:9000/tilos_high.ogg" >
+    <title>Tilos Radio </title>
+   </bookmark>
+   <bookmark icon="www" href="http://195.184.2.4:8000/" >
+    <title>Csaba Radio</title>
+   </bookmark>
+   <bookmark icon="www" href="http://broadcast.jazzradio.hu/jazzradio-128" >
+    <title>Jazz Radio</title>
+   </bookmark>
+  </folder>
+  <folder folded="no" >
+   <title>ireland</title>
+   <bookmark icon="www" href="http://69.57.152.94:8000" >
+    <title>Live Ireland</title>
+   </bookmark>
+  </folder>
+  <folder folded="yes" >
+   <title>macedonia</title>
+   <bookmark icon="www" href="http://195.26.152.92:8000/" >
+    <title>City Radio</title>
+   </bookmark>
+  </folder>
+  <folder folded="yes" >
+   <title>netherlands</title>
+   <bookmark icon="www" href="http://213.10.138.62:8000" >
+    <title>DBS Radio</title>
+   </bookmark>
+  </folder>
+  <folder folded="yes" >
+   <title>norway</title>
+   <bookmark icon="sound" href="http://radio.metalexpress.no:7128" >
+    <title>metal express</title>
+   </bookmark>
+  </folder>
+  <folder folded="yes" >
+   <title>russia</title>
+   <bookmark icon="www" href="http://horus.mtu.ru:9000/" >
+    <title>Europa Plus</title>
+   </bookmark>
+   <bookmark icon="www" href="http://channel1.region72.ru:8000" >
+    <title>Red Army Radio</title>
+   </bookmark>
+  </folder>
+  <folder folded="yes" >
+   <title>san marino</title>
+   <bookmark icon="video" href="mms://streaming-1.intelcom.sm/Live Radio" >
+    <title>san marino</title>
+   </bookmark>
+  </folder>
+  <folder folded="yes" icon="bookmark_folder" >
+   <title>slovakia</title>
+   <folder folded="yes" icon="bookmark_folder" >
+    <title>TV</title>
+    <bookmark icon="video" href="mmsh://mslive2.markiza.sk/markiza/" >
+     <title>markíza</title>
+    </bookmark>
+   </folder>
+   <bookmark icon="sound" href="http://www.flash.viapvt.sk/Zive_vysielanie.ram" >
+    <title>flash</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://ra.slovakradio.sk:8000/RockFM_Live_32_kb" >
+    <title>RockFM</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.internetradio.cz/zet.asx" >
+    <title>zet</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://ra.slovakradio.sk:8000/SlovakRadio_Live_32_kb" >
+    <title>slovensko</title>
+   </bookmark>
+   <bookmark icon="sound" href="mmsh://195.98.128.202:80/twist" >
+    <title>twist radio</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.rferl.org/realaudio/c13.ram" >
+    <title>Radio Slobodna Europa</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.bbc.co.uk/slovak/vak.ram" >
+    <title>BBC World Service Slovak</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://live.okey.sk/OKEY" >
+    <title>radio okey</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.lumen.sk/real/live.ram" >
+    <title>lumen</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://www.internetradio.cz/duha.asx" >
+    <title>duha</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://81.0.210.137/nradio" >
+    <title>nradio</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://live.jaseus.sk:8000/rf32.ogg" >
+    <title>frontinus</title>
+   </bookmark>
+  </folder>
+  <folder folded="yes" >
+   <title>slovenia</title>
+   <bookmark icon="www" href="http://193.95.242.36:8000/" >
+    <title>Libra Radio</title>
+   </bookmark>
+  </folder>
+  <folder folded="yes" >
+   <title>spain</title>
+   <bookmark icon="www" href="http://www.onamallorca.net:8000/ona.ogg" >
+    <title>Ona Mallorca</title>
+   </bookmark>
+   <bookmark icon="www" href="http://217.125.97.68:80/" >
+    <title>Alpicat Radio</title>
+   </bookmark>
+  </folder>
+  <folder folded="yes" >
+   <title>united kingdom</title>
+   <bookmark icon="www" href="http://live.urn1350.net:8080/urn_high.ogg" >
+    <title>URN</title>
+   </bookmark>
+  </folder>
  </folder>
  <folder folded="yes" icon="bookmark_folder" >
-  <title>czech</title>
-  <folder folded="no" icon="bookmark_folder" >
-   <title>TV</title>
-   <bookmark icon="video" href="rtsp://ct1.server.streaming.visual.cz/ct/Vecernik050204.rm?start=00:01:00&amp;end=00:31:00" >
-    <title>ČT1</title>
-   </bookmark>
-   <bookmark icon="video" href="rtsp://ct1.server.streaming.visual.cz/ct/Vecernik050204.rm" >
-    <title>ČT1--</title>
-   </bookmark>
-  </folder>
-  <folder folded="no" icon="bookmark_folder" >
-   <title>offline</title>
-   <bookmark icon="sound" href="http://www.radiodragon.cz/" >
-    <title>dragon</title>
-   </bookmark>
-   <bookmark icon="sound" href="http://www.azradio.cz/live/azradio.asx" >
-    <title>AZ radio</title>
-   </bookmark>
-   <bookmark icon="sound" href="http://www.mnul.cz/radio/radionorthmusic.asx" >
-    <title>radio northmusic</title>
-   </bookmark>
-  </folder>
-  <folder folded="no" icon="bookmark_folder" >
-   <title>radio valc</title>
-   <bookmark icon="sound" href="http://www.radiovalc.cz/asx/valc-5.asx" >
-    <title>radio valc live</title>
-   </bookmark>
-   <bookmark icon="sound" href="http://www.radiovalc.cz/asx/valc1-2.asx" >
-    <title>radio valc 1 gold</title>
-   </bookmark>
-   <bookmark icon="sound" href="http://www.radiovalc.cz/asx/valc2-2.asx" >
-    <title>radio valc 2 country</title>
-   </bookmark>
-   <bookmark icon="sound" href="http://www.radiovalc.cz/asx/valc3-2.asx" >
-    <title>radio valc 3 hit</title>
-   </bookmark>
-   <bookmark icon="sound" href="http://www.radiovalc.cz/asx/valc4-2.asx" >
-    <title>radio valc 4 rock</title>
-   </bookmark>
-   <bookmark icon="sound" href="http://www.radiovalc.cz/asx/valc5-2.asx" >
-    <title>radio valc 5 classic</title>
-   </bookmark>
-   <bookmark icon="sound" href="http://www.radiovalc.cz/asx/valc6-2.asx" >
-    <title>radio valc 6 valcarka</title>
-   </bookmark>
-   <bookmark icon="sound" href="http://www.radiovalc.cz/asx/valc7-2.asx" >
-    <title>radio valc 7 folk</title>
-   </bookmark>
-  </folder>
-  <folder folded="no" icon="bookmark_folder" >
-   <title>cesky rozhlas</title>
-   <bookmark icon="sound" href="http://live.atlas.cz/cro1/cro1-96.asx" >
-    <title>cro1 radiozurnal</title>
-   </bookmark>
-   <bookmark icon="sound" href="http://live.atlas.cz/cro2/cro2-96.asx" >
-    <title>cro2 praha</title>
-   </bookmark>
-   <bookmark icon="sound" href="http://amp1.cesnet.cz:8000/cro3.ogg" >
-    <title>cro3 vltava</title>
-   </bookmark>
-   <bookmark icon="sound" href="http://live.atlas.cz/crocb/crocb-48.asx" >
-    <title>cro ceske budejovice</title>
-   </bookmark>
-   <bookmark icon="sound" href="http://live.atlas.cz/crohk/crohk-48.asx" >
-    <title>cro hradec kralove</title>
-   </bookmark>
-   <bookmark icon="sound" href="http://live.atlas.cz/crool/crool-48.asx" >
-    <title>cro olomouc</title>
-   </bookmark>
-   <bookmark icon="sound" href="http://live.atlas.cz/croov/croov-48.asx" >
-    <title>cro ostrava</title>
-   </bookmark>
-   <bookmark icon="sound" href="http://live.atlas.cz/croplzen/croplzen64.asx" >
-    <title>cro plzen</title>
-   </bookmark>
-   <bookmark icon="sound" href="http://live.atlas.cz/croregion/croregion-48.asx" >
-    <title>cro stredni cechy</title>
-   </bookmark>
-  </folder>
-  <bookmark icon="sound" href="http://amp.cesnet.cz:8000/akropolis.ogg" >
-   <title>radio akropolis</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://live.atlas.cz/krokodyl/krokodyl32.asx" >
-   <title>krokodyl</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://live.atlas.cz/joeradio/joeradioi64.asx" >
-   <title>joe</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://live.atlas.cz/regina/croregina-48.asx" >
-   <title>regina</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://live.atlas.cz/kisshady/kisshady32.asx" >
-   <title>kiss hady</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://live.atlas.cz/proglas/proglas32.asx" >
-   <title>proglas</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://live.atlas.cz/countryradio/countryradio32.asx" >
-   <title>country radio</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://live.atlas.cz/kiss/kissproton20.asx" >
-   <title>proton</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://netshow3.atlas.cz/beat32" >
-   <title>radio beat</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.abradio.cz/www/expres128.asx" >
-   <title>expresradio</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://live.atlas.cz/kiss/radiokiss32.asx" >
-   <title>kiss 98 fm</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://live.atlas.cz/radio1/radio1-64.asx" >
-   <title>radio1</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://live.atlas.cz/kiss/kisspublikum48.asx" >
-   <title>kiss publikum</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://stream.inext.cz/rapollo" >
-   <title>radio apollo</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://live.atlas.cz/evropa2/evropa2-32.asx" >
-   <title>evropa 2</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://gott.pueblo.cz:8000" >
-   <title>radio crystal</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://live.radiosumava.cz/sumava/index.asx" >
-   <title>radio sumava</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.abradio.cz/www/karolina.asx" >
-   <title>radio karolina</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.internetradio.cz/fajn.asx" >
-   <title>fajn radio</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.internetradio.cz/kissfm.asx" >
-   <title>kiss fm</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.internetradio.cz/kissmorava.asx" >
-   <title>kiss morava</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.internetradio.cz/cernahora.asx" >
-   <title>cerna hora</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.abradio.cz/www/fmplus.asx" >
-   <title>radio fm plus</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.internetradio.cz/helax.asx" >
-   <title>helax</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.internetradio.cz/hity.asx" >
-   <title>radio hity</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.internetradio.cz/impuls.asx" >
-   <title>radio impuls</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.internetradio.cz/info.asx" >
-   <title>radio info</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.internetradio.cz/life.asx" >
-   <title>radio life</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.internetradio.cz/relax.asx" >
-   <title>radio relax</title>
-  </bookmark>
- </folder>
- <folder folded="yes" >
+  <title>North America</title>
   <folder folded="no" >
-   <title>TV</title>
-   <bookmark icon="video" href="http://www.itele.fr/smi/direct.smi" >
-    <title>I Télévision</title>
+   <title>USA</title>
+   <folder folded="yes" >
+    <title>NH</title>
+    <bookmark icon="www" href="http://www.WNTK.COM/audio/wntk.ram" >
+     <title>WNTK</title>
+    </bookmark>
+    <bookmark icon="www" href="http://wunh.unh.edu:8000/" >
+     <title>WUNH</title>
+    </bookmark>
+   </folder>
+   <folder folded="yes" >
+    <title>NY</title>
+    <bookmark icon="www" href="http://205.188.234.68:8002" >
+     <title>Digitally Imported - EuroDance</title>
+    </bookmark>
+    <bookmark icon="www" href="http://64.236.34.97:80/stream/1019" >
+     <title>Digitally Imported - Modern Jazz</title>
+    </bookmark>
+    <bookmark icon="www" href="http://69.31.76.84:8000" >
+     <title>MostlyClassical.com</title>
+    </bookmark>
+   </folder>
+   <bookmark icon="sound" href="mms://media.apex2000.net/KQRX" >
+    <title>kqrx 95x</title>
    </bookmark>
-   <bookmark icon="video" href="http://www.bbc.co.uk/newsa/n5ctrl/tvseq/n24.ram" >
-    <title>bbc news</title>
+   <bookmark icon="sound" href="rtsp://media.monroe.edu/encoder/live2.ra" >
+    <title>wber 90.5 fm</title>
+   </bookmark>
+   <bookmark icon="sound" href="rtsp://streamer.kozt.com/encoder/live.rm" >
+    <title>the coast kozt fm</title>
    </bookmark>
   </folder>
-  <title>france</title>
-  <bookmark icon="sound" href="mms://vip8.yacast.fr/encodereurope1" >
-   <title>europe1</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://vip6.yacast.fr/encodercheriefm" >
-   <title>cherie FM</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://viptvr.yacast.fr/tvr_vibration?site" >
-   <title>vibration</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.tv-radio.com/station/rfi/rfi-20k.asx" >
-   <title>rfi</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://ogg.tv-radio.fr:1441/encoderfinter.ogg" >
-   <title>france-inter</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://viptvr2.yacast.fr/encoderfranceinfo" >
-   <title>france info</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://vip6.yacast.fr/encoderrmc" >
-   <title>rmc</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://vip6.yacast.fr/encoderrtl" >
-   <title>rtl</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://vip6.yacast.fr/encodernrj" >
-   <title>nrj</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://vip6.yacast.fr/encodernostalgie" >
-   <title>nostalgie</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://vip2.yacast.fr/encoderfun" >
-   <title>fun</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://stream.servstream.com/ViewWeb/BBCRadio_music/Event/BBCRadio7.asx" >
-   <title>bbc 7</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://www.live365.com/play/127730?membername=abfjungle" >
-   <title>abf</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://viptvr2.yacast.fr/tvr_europe2" >
-   <title>europe 2</title>
-  </bookmark>
-  <bookmark icon="sound" href="http://ogg.tv-radio.fr:1441/encoderfip.ogg" >
-   <title>fip</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://viptvr.yacast.fr/tvr_franceculture" >
-   <title>franceculture</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://viptvr2.yacast.fr/tvr_rfm" >
-   <title>rfm</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://vip2.yacast.fr/encoderrtl2" >
-   <title>rtl2</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://vip2.yacast.fr/encoderskyrock" >
-   <title>skyrock</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://vip2.yacast.fr/encoderrireetchansons" >
-   <title>rireet chansons</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://viptvr.yacast.fr/tvr_francemusiques2" >
-   <title>france musique</title>
-  </bookmark>
+  <folder folded="yes" >
+   <title>Canada</title>
+   <bookmark icon="www" href="http://caracal.rttinc.com:8002/" >
+    <title>CIZZ Zed 99  </title>
+   </bookmark>
+   <bookmark icon="www" href="http://caracal.rttinc.com:8004/" >
+    <title>CKGY Country  </title>
+   </bookmark>
+  </folder>
+  <folder folded="yes" >
+   <title>Mexico</title>
+   <bookmark icon="www" href="http://66.98.138.13:9520/" >
+    <title>XEMA B15 </title>
+   </bookmark>
+  </folder>
  </folder>
  <folder folded="yes" >
-  <title>german</title>
-  <bookmark icon="sound" href="mms://213.200.75.252/antenne1$livestream.wma" >
-   <title>hit radio antenne 1</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://213.200.64.231/radiohamburg$livestream.wma" >
-   <title>radio hamburg</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://213.200.64.227/fettesradio$livestream.wma" >
-   <title>89.0 rtl</title>
-  </bookmark>
-  <bookmark icon="sound" href="mms://62.146.11.2/2884starfm_live.wmv?cid=47241&amp;dummy=.wmv" >
-   <title>107.8 star fm</title>
-  </bookmark>
-  <bookmark icon="sound" href="rtsp://213.200.64.166/farm/pull2/62.89.187.100%3A2030/encoder/rockland/livestream.rm" >
-   <title>rockland sachsen-anhalt</title>
-  </bookmark>
- </folder>
- <folder folded="yes" >
-  <title>usa</title>
-  <folder folded="no" >
+  <title>unknown</title>
+  <folder folded="yes" >
    <title>radiostorm</title>
    <bookmark icon="sound" href="http://radiost.sc.llnwd.net:12510/" >
     <title>pop top40</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://radiost.sc.llnwd.net:12525/" >
+    <title>hip-hop r&amp;b</title>
    </bookmark>
    <bookmark icon="sound" href="http://radiost.sc.llnwd.net:12540/" >
     <title>alternative</title>
@@ -326,26 +470,8 @@
     <title>hardrock</title>
    </bookmark>
   </folder>
-  <bookmark icon="sound" href="mms://media.apex2000.net/KQRX" >
-   <title>kqrx 95x</title>
-  </bookmark>
-  <bookmark icon="sound" href="rtsp://media.monroe.edu/encoder/live2.ra" >
-   <title>wber 90.5 fm</title>
-  </bookmark>
-  <bookmark icon="sound" href="rtsp://streamer.kozt.com/encoder/live.rm" >
-   <title>the coast kozt fm</title>
-  </bookmark>
- </folder>
- <folder folded="yes" >
-  <title>unknown</title>
   <bookmark icon="sound" href="http://war.str3am.com:7080" >
    <title>heavy metal radio</title>
-  </bookmark>
- </folder>
- <folder folded="yes" >
-  <title>norway</title>
-  <bookmark icon="sound" href="http://radio.metalexpress.no:7128" >
-   <title>metal express</title>
   </bookmark>
  </folder>
 </xbel>
