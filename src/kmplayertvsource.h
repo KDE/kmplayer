@@ -26,7 +26,8 @@
 #include <qframe.h>
 
 #include "kmplayerappsource.h"
-#include "pref.h"
+#include "kmplayerconfig.h"
+
 
 class KMPlayerPrefSourcePageTV;         // source, TV
 class TVDeviceScannerSource;

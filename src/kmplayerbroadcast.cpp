@@ -23,6 +23,7 @@
 #include <qtable.h>
 #include <qstringlist.h>
 #include <qcombobox.h>
+#include <qlistbox.h>
 #include <qlineedit.h>
 #include <qtooltip.h>
 #include <qtabwidget.h>

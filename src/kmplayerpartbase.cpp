@@ -105,8 +105,7 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
 }
 
 void KMPlayer::showConfigDialog () {
-    m_settings->show ();
-    m_settings->configDialog ()->setPage ("GeneralPage");
+    m_settings->show ("GeneralPage");
 }
 
 void KMPlayer::init (KActionCollection * action_collection) {
@@ -135,7 +134,7 @@ void KMPlayer::init (KActionCollection * action_collection) {
     connect (m_view->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));
     connect (m_view, SIGNAL (urlDropped (const KURL &)), this, SLOT (openURL (const KURL &)));
     m_view->popupMenu ()->connectItem (KMPlayerView::menu_config,
-                                       m_settings, SLOT (show ()));
+                                       m_settings, SLOT (show (const char *)));
     setRecorder (m_mencoder);
     //connect (m_view->configButton (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
 }
@@ -404,8 +403,7 @@ void KMPlayer::record () {
         m_recorder->stop ();
     } else {
         m_process->stop ();
-        m_settings->show  ();
-        m_settings->configDialog ()->setPage ("RecordPage");
+        m_settings->show  ("RecordPage");
         if (m_view->recordButton ()->isOn ()) 
             m_view->recordButton ()->toggle ();
     }

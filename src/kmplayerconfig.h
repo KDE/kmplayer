@@ -23,14 +23,40 @@
 #include <config.h>
 #endif
 
+#include <list>
+
 #include <qobject.h>
 #include <qstringlist.h>
 
-#include "pref.h"
 
 class KMPlayer;
 class KConfig;
 class KMPlayerPreferences;
+
+
+class OutputDriver {
+public:
+    const char * driver;
+    const QString description;
+};
+
+template <class T>
+void Deleter (T * t) {
+    delete t;
+}
+
+class KMPlayerPreferencesPage {
+public:
+    virtual ~KMPlayerPreferencesPage () {}
+    virtual void write (KConfig *) = 0;
+    virtual void read (KConfig *) = 0;
+    virtual void sync (bool fromUI) = 0;
+    virtual void prefLocation (QString & item, QString & icon, QString & tab) = 0;
+    virtual QFrame * prefPage (QWidget * parent) = 0;
+};
+
+typedef std::list <KMPlayerPreferencesPage *> KMPlayerPreferencesPageList;
+
 
 class KMPlayerSettings : public QObject {
     Q_OBJECT
@@ -104,7 +130,8 @@ public:
     int cachesize;
     int videodriver;
     int audiodriver;
-    MPlayerAudioDriver *audiodrivers;
+    OutputDriver * audiodrivers;
+    OutputDriver * videodrivers;
     QString dvddevice;
     QString vcddevice;
     QString additionalarguments;
@@ -127,7 +154,7 @@ signals:
 public slots:
     void readConfig ();
     void writeConfig ();
-    void show ();
+    void show (const char * pagename = 0L);
 private slots:
     void okPressed ();
     void getHelp ();

@@ -58,7 +58,7 @@
 #include "kmplayerconfig.h"
 
 
-KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, KMPlayerPreferencesPageList & pagelist, MPlayerAudioDriver * ad)
+KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, KMPlayerSettings * settings)
 : KDialogBase (IconList, i18n ("KMPlayer Preferences"),
 		Help|Default|Ok|Apply|Cancel, Ok, player->view (), 0, false)
 {
@@ -74,7 +74,8 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, KMPlayerPreferencesP
     vlay->addWidget (tab);
     m_GeneralPageGeneral = new KMPlayerPrefGeneralPageGeneral (tab);
     tab->insertTab (m_GeneralPageGeneral, i18n("General"));
-    m_GeneralPageOutput = new KMPlayerPrefGeneralPageOutput (tab, ad);
+    m_GeneralPageOutput = new KMPlayerPrefGeneralPageOutput
+        (tab, settings->audiodrivers, settings->videodrivers);
     tab->insertTab (m_GeneralPageOutput, i18n("Output"));
     m_GeneralPageAdvanced = new KMPlayerPrefGeneralPageAdvanced (tab);
     tab->insertTab (m_GeneralPageAdvanced, i18n("Advanced"));
@@ -111,8 +112,8 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, KMPlayerPreferencesP
     tab->insertTab (m_OPPagePostproc, i18n ("Postprocessing"));
     entries.insert (i18n("Postprocessing"), tab);
 
-    KMPlayerPreferencesPageList::iterator pl_it = pagelist.begin ();
-    for (; pl_it != pagelist.end (); ++pl_it) {
+    KMPlayerPreferencesPageList::iterator pl_it = settings->pagelist.begin ();
+    for (; pl_it != settings->pagelist.end (); ++pl_it) {
         QString item, subitem, icon;
         (*pl_it)->prefLocation (item, icon, subitem);
         if (item.isEmpty ())
@@ -207,7 +208,7 @@ KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     QHBoxLayout * urllayout = new QHBoxLayout ();
     QHBoxLayout * sub_urllayout = new QHBoxLayout ();
-    QLabel *urlLabel = new QLabel (i18n ("URL:"), this, 0);
+    QLabel *urlLabel = new QLabel (i18n ("Location:"), this, 0);
     urllist = new KComboBox (true, this);
     urllist->setMaxCount (20);
     urllist->setDuplicatesEnabled (false); // not that it helps much :(
@@ -220,7 +221,7 @@ KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
     sub_urllist->setDuplicatesEnabled (false); // not that it helps much :(
     sub_url = new KURLRequester (sub_urllist, this);
     sub_url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
-    backend = new QComboBox (this);
+    backend = new QListBox (this);
     backend->insertItem (QString ("MPlayer"), 0);
     backend->insertItem (QString ("Xine"), 1);
     allowhref = new QCheckBox (i18n ("Enable 'Click to Play' support"), this);
@@ -233,12 +234,13 @@ KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
     layout->addLayout (sub_urllayout);
     layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
 #ifdef HAVE_XINE
-    QHBoxLayout * backendlayout = new QHBoxLayout ();
+    QGridLayout * gridlayout = new QGridLayout (2, 2);
     QLabel *backendLabel = new QLabel (i18n ("Use Movie Player:"), this, 0);
     //QToolTip::add (allowhref, i18n ("Explain this in a few lines"));
-    backendlayout->addWidget (backendLabel);
-    backendlayout->addWidget (backend);
-    layout->addLayout (backendlayout);
+    gridlayout->addWidget (backendLabel, 0, 0);
+    gridlayout->addWidget (backend, 1, 0);
+    gridlayout->addMultiCell (new QSpacerItem (0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum), 0, 1, 1, 1);
+    layout->addLayout (gridlayout);
 #else
     backend->hide ();
 #endif
@@ -423,29 +425,23 @@ bool KMPlayerPrefFFMpegPage::sourceSupported (KMPlayerSource * source) {
 }
 
 
-KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidget *parent, MPlayerAudioDriver * ad) : QFrame(parent)
-{
-    QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
-    QHBoxLayout *childLayout1 = new QHBoxLayout (layout);
+KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidget *parent, OutputDriver * ad, OutputDriver * vd)
+ : QFrame (parent) {
+    QGridLayout *layout = new QGridLayout (this, 2, 2, 5);
 
-    videoDriver = new QComboBox(this);
-    videoDriver->insertItem(VDRIVER_XV, VDRIVER_XV_INDEX);
-    videoDriver->insertItem(VDRIVER_X11, VDRIVER_X11_INDEX);
-    videoDriver->insertItem(VDRIVER_XVIDIX, VDRIVER_XVIDIX_INDEX);
-    // by mok: remove this comment when you check if i18n fix is OK.
-    //	QToolTip::add(videoDriver, i18n("Sets video driver, currently only XVideo and X11 work. Unless\nyou haven't got XVideo compatible drivers you should X11, which is much slower."));
+    videoDriver = new QListBox (this);
+    for (int i = 0; vd[i].driver; i++)
+        videoDriver->insertItem (vd[i].description, i);
     QToolTip::add(videoDriver, i18n("Sets video driver. Recommended is XVideo, or, if it is not supported, X11, which is slower."));
-    childLayout1->addWidget(new QLabel(i18n("Video driver:"),this));
-    childLayout1->addWidget(videoDriver);
+    layout->addWidget (new QLabel (i18n ("Video driver:"), this), 0, 0);
+    layout->addWidget (videoDriver, 1, 0);
 
-    QHBoxLayout *childLayout2 = new QHBoxLayout (layout);
-    audioDriver = new QComboBox(this);
-    for (int i = 0; ad[i].audiodriver; i++)
+    audioDriver = new QListBox (this);
+    for (int i = 0; ad[i].driver; i++)
         audioDriver->insertItem (ad[i].description, i);
-    childLayout2->addWidget(new QLabel(i18n("Audio driver:"),this));
-    childLayout2->addWidget(audioDriver);
+    layout->addWidget (new QLabel (i18n ("Audio driver:"), this), 0, 1);
+    layout->addWidget (audioDriver, 1, 1);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-
 }
 
 KMPlayerPrefOPPageGeneral::KMPlayerPrefOPPageGeneral(QWidget *parent)
@@ -784,7 +780,7 @@ void KMPlayerPreferences::setDefaults() {
 	m_GeneralPageGeneral->showPositionSlider->setChecked(true);
 	m_GeneralPageGeneral->seekTime->setValue(10);
 
-	m_GeneralPageOutput->videoDriver->setCurrentItem(VDRIVER_XV_INDEX);
+	m_GeneralPageOutput->videoDriver->setCurrentItem (0);
 	m_GeneralPageOutput->audioDriver->setCurrentItem(0);
 
 	m_GeneralPageAdvanced->dvdLangPattern->setText("\\[open].*audio.*language: ([A-Za-z]+).*aid.*[^0-9]([0-9]+)");

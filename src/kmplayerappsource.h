@@ -31,7 +31,7 @@
 #include <kurl.h>
 
 #include "kmplayersource.h"
-#include "pref.h"
+#include "kmplayerconfig.h"
 
 
 class KMPlayerApp;

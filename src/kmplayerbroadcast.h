@@ -26,7 +26,7 @@
 #include <qframe.h>
 
 #include "kmplayerappsource.h"
-#include "pref.h"
+#include "kmplayerconfig.h"
 
 class KMPlayerPrefBroadcastPage;        // broadcast
 class KMPlayerPrefBroadcastFormatPage;  // broadcast format

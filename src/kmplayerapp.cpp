@@ -543,8 +543,7 @@ void KMPlayerApp::slotFileNewWindow()
 
 void KMPlayerApp::slotFileOpen()
 {
-    m_player->settings ()->show ();
-    m_player->settings ()->configDialog ()->setPage ("URLPage");
+    m_player->settings ()->show ("URLPage");
 }
 
 void KMPlayerApp::slotFileOpenRecent(const KURL& url)

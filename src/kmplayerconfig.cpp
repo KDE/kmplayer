@@ -48,7 +48,7 @@
 #include "kmplayerview.h"
 #include "pref.h"
 
-static MPlayerAudioDriver _ads[] = {
+static OutputDriver _ads[] = {
     { "", i18n ("Default from MPlayer Config file") },
     { "oss", i18n ("Open Sound System") },
     { "sdl", i18n ("Simple DirectMedia Layer") },
@@ -58,12 +58,20 @@ static MPlayerAudioDriver _ads[] = {
     { 0, QString::null }
 };
 
+static OutputDriver _vds [] = {
+    { "xv", i18n ("XVideo") },
+    { "x11", i18n ("X11Shm") },
+    { "xvidix", i18n ("XVidix") },
+    { 0, QString::null }
+};
+
 static const int ADRIVER_ARTS_INDEX = 4;
 
 
 KMPlayerSettings::KMPlayerSettings (KMPlayer * player, KConfig * config)
   : configdialog (0L), m_config (config), m_player (player) {
     audiodrivers = _ads;
+    videodrivers = _vds;
 }
 
 KMPlayerSettings::~KMPlayerSettings () {
@@ -205,7 +213,7 @@ void KMPlayerSettings::readConfig () {
     alwaysbuildindex = m_config->readBoolEntry (strAlwaysBuildIndex, false);
     dvddevice = m_config->readEntry (strDVDDevice, "/dev/dvd");
     vcddevice = m_config->readEntry (strVCDDevice, "/dev/cdrom");
-    videodriver = m_config->readNumEntry (strVoDriver, VDRIVER_XV_INDEX);
+    videodriver = m_config->readNumEntry (strVoDriver, 0);
     audiodriver = m_config->readNumEntry (strAoDriver, 0);
     urlbackend = m_config->readEntry(strUrlBackend, "mplayer");
     allowhref = m_config->readBoolEntry(strAllowHref, false);
@@ -275,9 +283,9 @@ void KMPlayerSettings::readConfig () {
         (*pl_it)->read (m_config);
 }
 
-void KMPlayerSettings::show () {
+void KMPlayerSettings::show (const char * pagename) {
     if (!configdialog) {
-        configdialog = new KMPlayerPreferences (m_player, pagelist, _ads);
+        configdialog = new KMPlayerPreferences (m_player, this);
         connect (configdialog, SIGNAL (okClicked ()),
                 this, SLOT (okPressed ()));
         connect (configdialog, SIGNAL (applyClicked ()),
@@ -309,7 +317,7 @@ void KMPlayerSettings::show () {
 
     configdialog->m_GeneralPageOutput->videoDriver->setCurrentItem (videodriver);
     configdialog->m_GeneralPageOutput->audioDriver->setCurrentItem (audiodriver);
-    configdialog->m_SourcePageURL->backend->setCurrentText (urlbackend);
+    configdialog->m_SourcePageURL->backend->setCurrentItem (configdialog->m_SourcePageURL->backend->findItem (urlbackend));
     configdialog->m_SourcePageURL->allowhref->setChecked (allowhref);
 
     if (cachesize > 0)
@@ -374,7 +382,8 @@ void KMPlayerSettings::show () {
     for (; pl_it != pagelist.end (); ++pl_it)
         (*pl_it)->sync (false);
     //\dynamic stuff
-
+    if (pagename)
+        configDialog ()->setPage (pagename);
     configdialog->show ();
 }
 

@@ -43,7 +43,6 @@
 #include <kcombobox.h>
 #include <kconfig.h>
 
-#include "pref.h"
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
 #include "kmplayerconfig.h"

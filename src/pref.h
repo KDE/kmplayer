@@ -18,12 +18,6 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#define VDRIVER_XV_INDEX 0
-#define VDRIVER_XV "XV"
-#define VDRIVER_X11_INDEX 1
-#define VDRIVER_X11 "X11Shm"
-#define VDRIVER_XVIDIX_INDEX 2
-#define VDRIVER_XVIDIX "XVidix" // this is wrong.. they like it to be in lowercase
 #ifndef _KMPlayerPREF_H_
 #define _KMPlayerPREF_H_
 
@@ -45,6 +39,8 @@ class KMPlayerPrefOPPageGeneral;	// OP = outputplugins, general
 class KMPlayerPrefOPPagePostProc;	// outputplugins, postproc
 class KMPlayer;
 class KMPlayerSource;
+class KMPlayerSettings;
+class OutputDriver;
 class QTabWidget;
 class QTable;
 class QGroupBox;
@@ -61,37 +57,13 @@ class KURLRequester;
 
 typedef std::list<RecorderPage*> RecorderList;
 
-class MPlayerAudioDriver {
-public:
-    const char * audiodriver;
-    const QString description;
-};
-
-template <class T>
-void Deleter (T * t) {
-    delete t;
-}
-
-
-class KMPlayerPreferencesPage {
-public:
-    virtual ~KMPlayerPreferencesPage () {}
-    virtual void write (KConfig *) = 0;
-    virtual void read (KConfig *) = 0;
-    virtual void sync (bool fromUI) = 0;
-    virtual void prefLocation (QString & item, QString & icon, QString & tab) = 0;
-    virtual QFrame * prefPage (QWidget * parent) = 0;
-};
-
-typedef std::list <KMPlayerPreferencesPage *> KMPlayerPreferencesPageList;
-
 
 class KMPlayerPreferences : public KDialogBase
 {
     Q_OBJECT
 public:
 
-    KMPlayerPreferences(KMPlayer *, KMPlayerPreferencesPageList &, MPlayerAudioDriver * ad);
+    KMPlayerPreferences(KMPlayer *, KMPlayerSettings *);
     ~KMPlayerPreferences();
 
     KMPlayerPrefGeneralPageGeneral 	*m_GeneralPageGeneral;
@@ -146,7 +118,7 @@ public:
     KComboBox * urllist;
     KURLRequester * sub_url;
     KComboBox * sub_urllist;
-    QComboBox * backend;
+    QListBox * backend;
     QCheckBox * allowhref;
     bool changed;
 private slots:
@@ -232,11 +204,11 @@ class KMPlayerPrefGeneralPageOutput : public QFrame
 {
     Q_OBJECT
 public:
-    KMPlayerPrefGeneralPageOutput(QWidget *parent,  MPlayerAudioDriver * ad);
+    KMPlayerPrefGeneralPageOutput (QWidget *parent, OutputDriver * ad, OutputDriver * vd);
     ~KMPlayerPrefGeneralPageOutput() {}
 
-    QComboBox *videoDriver;
-    QComboBox *audioDriver;
+    QListBox *videoDriver;
+    QListBox *audioDriver;
 };
 
 class KMPlayerPrefOPPageGeneral : public QFrame

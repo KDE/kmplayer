@@ -340,27 +340,12 @@ bool MPlayer::run (const char * args, const char * pipe) {
         *m_process << "-slave ";
     }
 
-    QString strVideoDriver;
-
-    switch( settings->videodriver ){
-        case VDRIVER_XV_INDEX:
-            strVideoDriver = VDRIVER_XV;
-            break;
-        case VDRIVER_X11_INDEX:
-            strVideoDriver = VDRIVER_X11;
-            strVideoDriver.truncate(3);
-            break;
-        case VDRIVER_XVIDIX_INDEX:
-            strVideoDriver = VDRIVER_XVIDIX;
-            break;
-        default:		
-            strVideoDriver = VDRIVER_XV;
-            break;
+    QString strVideoDriver = QString (settings->videodrivers[settings->videodriver].driver);
+    if (!strVideoDriver.isEmpty ()) {
+        printf (" -vo %s", strVideoDriver.lower().ascii());
+        *m_process << " -vo " << strVideoDriver.lower();
     }
-    printf (" -vo %s", strVideoDriver.lower().ascii());
-    *m_process << " -vo " << strVideoDriver.lower();
-
-    QString strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].audiodriver);
+    QString strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].driver);
     if (strAudioDriver != "") {
         printf (" -ao %s", strAudioDriver.lower().ascii());
         *m_process << " -ao " << strAudioDriver.lower();
@@ -722,26 +707,14 @@ bool Xine::play () {
     printf ("kxineplayer -wid %lu", (unsigned long) widget ()->winId ());
     *m_process << "kxineplayer -wid " << QString::number (widget ()->winId ());
 
-    QString strVideoDriver;
-
-    switch( settings->videodriver ){
-        case VDRIVER_XV_INDEX:
-            strVideoDriver = VDRIVER_XV;
-            break;
-        case VDRIVER_X11_INDEX:
-            strVideoDriver = QString ("xshm");
-            break;
-        case VDRIVER_XVIDIX_INDEX:
-            strVideoDriver = VDRIVER_XVIDIX;
-            break;
-        default:		
-            strVideoDriver = VDRIVER_XV;
-            break;
+    QString strVideoDriver = QString (settings->videodrivers[settings->videodriver].driver);
+    if (strVideoDriver == QString ("x11"))
+        strVideoDriver = QString ("xshm");
+    if (strVideoDriver != "") {
+        printf (" -vo %s", strVideoDriver.lower().ascii());
+        *m_process << " -vo " << strVideoDriver.lower();
     }
-    printf (" -vo %s", strVideoDriver.lower().ascii());
-    *m_process << " -vo " << strVideoDriver.lower();
-
-    QString strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].audiodriver);
+    QString strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].driver);
     if (strAudioDriver != "") {
         printf (" -ao %s", strAudioDriver.lower().ascii());
         *m_process << " -ao " << strAudioDriver.lower();
