@@ -80,8 +80,6 @@ KDE_NO_EXPORT void TimedRegionData::begin () {
     else {
         isstarted = true;
         QTimer::singleShot (0, this, SLOT (started ()));
-        if (mt->duration_time > 0 && mt->duration_time < duration_last_option)
-            dur_timer = startTimer (1000 * mt->duration_time);
     }
 }
     
@@ -90,6 +88,7 @@ KDE_NO_EXPORT void TimedRegionData::end () {
     start_timer = 0;
     killTimer (dur_timer);
     dur_timer = 0;
+    isstarted = false;
 }
 
 KDE_NO_EXPORT void TimedRegionData::timerEvent (QTimerEvent * e) {
@@ -102,31 +101,35 @@ KDE_NO_EXPORT void TimedRegionData::timerEvent (QTimerEvent * e) {
         start_timer = 0;
         isstarted = true;
         QTimer::singleShot (0, this, SLOT (started ()));
-        if (mt->duration_time > 0) {
-            if (mt->duration_time < duration_last_option)
-                dur_timer = startTimer (1000 * mt->duration_time);
-        } else
-            mt->timed_end ();
     } else if (e->timerId () == dur_timer) {
-        killTimer (dur_timer);
-        dur_timer = 0;
+        end ();
         mt->timed_end ();
     }
 }
 
-KDE_NO_EXPORT void TimedRegionData::started () {}
+KDE_NO_EXPORT void TimedRegionData::started () {
+    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (media_element);
+    if (!mt)
+        end ();
+    else if (mt->duration_time > 0) {
+        if (mt->duration_time < duration_last_option)
+            dur_timer = startTimer (1000 * mt->duration_time);
+    } else
+        mt->timed_end (); // no duration set, so mark us finished
+}
 
 KDE_NO_CDTOR_EXPORT AudioVideoData::AudioVideoData(RegionNodePtr r,ElementPtr e)
     : TimedRegionData (r, e) {}
 
 KDE_NO_EXPORT bool AudioVideoData::isAudioVideo () {
-    return true;
+    return isstarted;
 }
 
 KDE_NO_EXPORT void AudioVideoData::started () {
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (media_element);
     if (mt)
         mt->timed_start ();
+    TimedRegionData::started ();
 }
 //-----------------------------------------------------------------------------
 
@@ -488,17 +491,14 @@ KDE_NO_EXPORT void SMIL::MediaType::opened () {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::start () {
-    kdDebug () << "SMIL::MediaType::start " << !!region << endl;
+    kdDebug () << "SMIL::MediaType(" << nodeName() << ")::start " << !!region << endl;
     setState (state_started);
     if (region) {
         region->clearAllData ();
-    kdDebug () << "SMIL::MediaType::start getNewData " << nodeName () << endl;
         region->data = getNewData (region);
         if (region->data)
             static_cast <TimedRegionData*> (region->data.ptr ())->begin ();
     }
-    if (duration_time == 0)
-        stop (); // no duration set, so mark us finished
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::timed_start () {
@@ -515,9 +515,9 @@ KDE_NO_EXPORT void SMIL::MediaType::reset () {
     kdDebug () << "SMIL::MediaType::reset " << endl;
     Mrl::reset ();
     if (region) {
-        region->clearAllData ();
         if (region->data)
             static_cast <TimedRegionData*> (region->data.ptr ())->end ();
+        region->clearAllData ();
     }
 }
 
@@ -633,6 +633,7 @@ KDE_NO_EXPORT void ImageData::started () {
         if (n && region_node)
             n->repaintRegion (region_node);
     }
+    TimedRegionData::started ();
 }
 
 KDE_NO_EXPORT void ImageData::slotResult (KIO::Job*) {
@@ -742,6 +743,7 @@ KDE_NO_EXPORT void TextData::started () {
         if (n && region_node)
             n->repaintRegion (region_node);
     }
+    TimedRegionData::started ();
 }
 
 KDE_NO_EXPORT void TextData::slotResult (KIO::Job*) {
