@@ -48,8 +48,6 @@ class KMPlayerApp : public KMainWindow
 {
     Q_OBJECT
 
-    friend class KMPlayerView;
-
 public:
     KMPlayerApp (QWidget* parent=0, const char* name=0);
     ~KMPlayerApp ();
@@ -59,6 +57,7 @@ public:
     KRecentFilesAction * recentFiles () const { return fileOpenRecent; }
     KMPlayerView *view () const { return m_view; }
     bool broadcasting () const;
+    KMPlayerBroadcastConfig * broadcastConfig () const { return m_broadcastconfig; }
 protected:
     void saveOptions ();
     void readOptions ();

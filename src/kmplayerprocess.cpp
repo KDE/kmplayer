@@ -501,17 +501,20 @@ void MPlayer::processStopped (KProcess * p) {
     if (p && !m_grabfile.isEmpty ()) {
         emit grabReady (m_grabfile);
         m_grabfile.truncate (0);
-    } else if (p && !source ()->identified ()) {
-        if (!m_tmpURL.isEmpty () && m_tmpURL != m_source->url ().url ()) {
-            m_source->referenceUrls ().push_back (m_tmpURL);
-            m_tmpURL.truncate (0);
+    } else {
+        if (p && !source ()->identified ()) {
+            if (!m_tmpURL.isEmpty () && m_tmpURL != m_source->url ().url ()) {
+                m_source->referenceUrls ().push_back (m_tmpURL);
+                m_tmpURL.truncate (0);
+            }
+            if (!m_player->settings ()->mplayerpost090) {
+                source ()->setIdentified ();
+                QTimer::singleShot (0, this, SLOT (play ()));
+                return;
+            }
         }
-        if (!m_player->settings ()->mplayerpost090) {
-            source ()->setIdentified ();
-            QTimer::singleShot (0, this, SLOT (play ()));
-        }
-    } else
         MPlayerBase::processStopped (p);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -785,7 +788,7 @@ void KMPlayerCallbackProcess::setStarted (QByteArray &) {
 }
 
 void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
-    kdDebug () << "setMovieParams " << len << " " << w << "," << h << endl;
+    kdDebug () << "setMovieParams " << len << " " << w << "," << h << " " << a << endl;
     m_source->setWidth (w);
     m_source->setHeight (h);
     m_source->setAspect (a);
@@ -1286,7 +1289,7 @@ bool FFMpeg::play () {
     cmd += QChar (' ') + KProcess::quote (outurl);
     printf ("%s\n", cmd.ascii ());
     *m_process << cmd;
-    m_process->start (KProcess::NotifyOnExit, KProcess::Stdin);
+    m_process->start (KProcess::NotifyOnExit, KProcess::All);
     if (m_process->isRunning ())
         QTimer::singleShot (0, this, SLOT (emitStarted ()));
     return m_process->isRunning ();

@@ -86,7 +86,7 @@ KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       m_pipesource (new KMPlayerPipeSource (this)),
       m_tvsource (new KMPlayerTVSource (this, m_tvmenu)),
       m_ffserverconfig (new KMPlayerFFServerConfig),
-      m_broadcastconfig (new KMPlayerBroadcastConfig (this, m_player, m_ffserverconfig))
+      m_broadcastconfig (new KMPlayerBroadcastConfig (m_player, m_ffserverconfig))
 {
     m_player->settings ()->pagelist.push_back (m_broadcastconfig);
     m_player->settings ()->pagelist.push_back (m_ffserverconfig);
@@ -101,6 +101,7 @@ KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
 }
 
 KMPlayerApp::~KMPlayerApp () {
+    delete m_broadcastconfig;
     delete m_player;
     if (!m_dcopName.isEmpty ()) {
         QCString replytype;
@@ -280,7 +281,7 @@ void KMPlayerApp::resizePlayer (int percentage) {
             source->setWidth (w);
         } else
             source->setAspect (1.0 * w/h);
-        m_view->viewer()->setAspect (m_view->keepSizeRatio() ? source->aspect() : 0.0);
+        //m_view->viewer()->setAspect (m_view->keepSizeRatio() ? source->aspect() : 0.0);
         if (m_player->settings ()->showbuttons &&
             !m_player->settings ()->autohidebuttons)
             h += 2 + m_view->buttonBar()->frameSize ().height ();
@@ -312,6 +313,7 @@ void KMPlayerApp::broadcastClicked () {
         m_broadcastconfig->stopServer ();
     else
         m_player->settings ()->show  ("BroadcastPage");
+    m_view->broadcastButton ()->toggle ();
 }
 
 void KMPlayerApp::broadcastStarted () {
@@ -391,8 +393,6 @@ void KMPlayerApp::readOptions() {
 }
 
 bool KMPlayerApp::queryClose () {
-    if (m_broadcastconfig->broadcasting ())
-        m_broadcastconfig->stopServer ();
     return true;
 }
 

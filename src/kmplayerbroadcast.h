@@ -143,7 +143,7 @@ private:
 class KMPlayerBroadcastConfig : public QObject, public KMPlayerPreferencesPage {
     Q_OBJECT
 public:
-    KMPlayerBroadcastConfig (QObject * parent, KMPlayer * player, KMPlayerFFServerConfig * fsc);
+    KMPlayerBroadcastConfig (KMPlayer * player, KMPlayerFFServerConfig * fsc);
     ~KMPlayerBroadcastConfig ();
 
     virtual void write (KConfig *);

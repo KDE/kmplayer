@@ -48,6 +48,7 @@
 #include "kmplayerconfig.h"
 #include "kmplayertvsource.h"
 #include "kmplayer.h"
+#include "kmplayerbroadcast.h"
 
 static const char * strTV = "TV";
 static const char * strTVDevices = "Devices";
@@ -448,7 +449,7 @@ void KMPlayerTVSource::menuClicked (int id) {
             playing = false;
         }
         if (m_app->broadcasting ())
-            QTimer::singleShot (0, m_app, SLOT (startFeed ()));
+            QTimer::singleShot (0, m_app->broadcastConfig (), SLOT (startFeed ()));
         else {
             m_player->stop ();
             if (!m_tvsource->noplayback || playing)

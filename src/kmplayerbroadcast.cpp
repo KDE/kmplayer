@@ -396,9 +396,8 @@ static bool stopProcess (KProcess * process, const char * cmd = 0L) {
 }
 
 
-KMPlayerBroadcastConfig::KMPlayerBroadcastConfig (QObject * parent, KMPlayer * player, KMPlayerFFServerConfig * fsc)
- : QObject (parent),
-   m_player (player),
+KMPlayerBroadcastConfig::KMPlayerBroadcastConfig (KMPlayer * player, KMPlayerFFServerConfig * fsc)
+ : m_player (player),
    m_ffserverconfig (fsc),
    m_configpage (0L),
    m_ffmpeg_process (0L),
@@ -407,6 +406,7 @@ KMPlayerBroadcastConfig::KMPlayerBroadcastConfig (QObject * parent, KMPlayer * p
 }
 
 KMPlayerBroadcastConfig::~KMPlayerBroadcastConfig () {
+    stopServer ();
 }
 
 void KMPlayerBroadcastConfig::write (KConfig * config) {
@@ -478,8 +478,7 @@ void KMPlayerBroadcastConfig::startServer () {
         stopServer ();
         return;
     }
-    QWidget * w = static_cast<QWidget *> (parent ());
-    w->setCursor (QCursor (Qt::WaitCursor));
+    m_configpage->setCursor (QCursor (Qt::WaitCursor));
     m_ffserver_process = new KProcess;
     m_ffserver_process->setUseShell (true);
     connect (m_ffserver_process, SIGNAL (processExited (KProcess *)),
@@ -516,12 +515,11 @@ void KMPlayerBroadcastConfig::startServer () {
 }
 
 void KMPlayerBroadcastConfig::stopServer () {
-    QWidget * w = static_cast<QWidget *> (parent ());
     m_endserver = true;
     if (m_ffmpeg_process)
         m_ffmpeg_process->stop ();
     if (!stopProcess (m_ffserver_process))
-        KMessageBox::error (w, i18n ("Failed to end ffserver process."), i18n ("Error"));
+        KMessageBox::error (m_configpage, i18n ("Failed to end ffserver process."), i18n ("Error"));
 }
 
 void KMPlayerBroadcastConfig::processOutput (KProcess * p, char * s, int) {
@@ -531,13 +529,15 @@ void KMPlayerBroadcastConfig::processOutput (KProcess * p, char * s, int) {
 
 void KMPlayerBroadcastConfig::startFeed () {
     FFServerSetting & ffs = ffserversettings;
-    QWidget * w = static_cast<QWidget *> (parent ());
     if (!m_ffserver_process || !m_ffserver_process->isRunning ()) {
-        KMessageBox::error (w, i18n ("Failed to start ffserver.\n") + m_ffserver_out, i18n ("Error"));
+        KMessageBox::error (m_configpage, i18n ("Failed to start ffserver.\n") + m_ffserver_out, i18n ("Error"));
         return;
     }
     disconnect (m_ffserver_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
                 this, SLOT (processOutput (KProcess *, char *, int)));
+    if (m_ffmpeg_process)
+        m_ffmpeg_process->stop ();
+    delete m_ffmpeg_process;
     m_ffmpeg_process = new FFMpeg (m_player);
     m_ffmpeg_process->setSource (m_player->process ()->source ());
     connect (m_ffmpeg_process, SIGNAL (finished ()),
@@ -546,7 +546,7 @@ void KMPlayerBroadcastConfig::startFeed () {
     ffurl.sprintf ("http://localhost:%d/kmplayer.ffm", m_ffserverconfig->ffserverport);
     m_ffmpeg_process->setURL (ffurl.ascii ());
     if (!m_ffmpeg_process->play ()) {
-        KMessageBox::error (w, i18n ("Failed to start ffmpeg."), i18n ("Error"));
+        KMessageBox::error (m_configpage, i18n ("Failed to start ffmpeg."), i18n ("Error"));
         stopProcess (m_ffserver_process);
         return;
     }
@@ -557,11 +557,10 @@ void KMPlayerBroadcastConfig::startFeed () {
         m_player->openURL (KURL (m_ffserver_url));
     } else
         stopServer ();
-    static_cast<QWidget *> (parent ())->setCursor (QCursor (Qt::ArrowCursor));
+    m_configpage->setCursor (QCursor (Qt::ArrowCursor));
 }
 
 void KMPlayerBroadcastConfig::feedFinished () {
-    QWidget * w = static_cast<QWidget *> (parent ());
     m_configpage->feedled->setState (KLed::Off);
     m_ffmpeg_process->deleteLater ();
     m_ffmpeg_process = 0L;
@@ -570,7 +569,7 @@ void KMPlayerBroadcastConfig::feedFinished () {
         disconnect (m_ffserver_process,
                 SIGNAL (receivedStderr (KProcess *, char *, int)),
                 this, SLOT (processOutput (KProcess *, char *, int)));
-        KMessageBox::error (w, i18n ("Failed to end ffserver process."), i18n ("Error"));
+        KMessageBox::error (m_configpage, i18n ("Failed to end ffserver process."), i18n ("Error"));
         processStopped (0L);
     }
 }
