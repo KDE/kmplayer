@@ -590,7 +590,6 @@ KDE_NO_EXPORT void TimedRuntime::stopped () {
         }
     } else if (element->state == Element::state_started) {
         element->stop ();
-    kdDebug () << "TimedRuntime::processEvent emit elementStopped " << (element ? element->nodeName() : "-") << endl; 
         emit elementStopped ();
     }
 }
@@ -1714,12 +1713,8 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
         RegionNode * r = region_node.ptr ();
         int w = r->w, h = r->h;
         if (fit == fit_hidden) {
-            int pw = int (d->image->width () * r->xscale);
-            int ph = int (d->image->height () * r->yscale);
-            if (pw < w)
-                w = pw;
-            if (ph < h)
-                h = ph;
+            w = int (d->image->width () * r->xscale);
+            h = int (d->image->height () * r->yscale);
         } else if (fit == fit_meet) { // scale in region, keeping aspects
             if (h > 0 && d->image->height () > 0) {
                 int a = 100 * d->image->width () / d->image->height ();
