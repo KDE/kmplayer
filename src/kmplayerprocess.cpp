@@ -149,14 +149,17 @@ bool MPlayerBase::sendCommand (const QString & cmd) {
 }
 
 bool MPlayerBase::stop () {
-    kdDebug () << "MPlayerBase::stop ()" << endl;
     if (!source () || !m_process || !m_process->isRunning ()) return true;
     if (!m_use_slave) {
         void (*oldhandler)(int) = signal(SIGTERM, SIG_IGN);
         ::kill (-1 * ::getpid (), SIGTERM);
         signal(SIGTERM, oldhandler);
     }
-    KProcessController::theKProcessController->waitForProcessExit (1);
+    QTime t;
+    t.start ();
+    do {
+        KProcessController::theKProcessController->waitForProcessExit (2);
+    } while (t.elapsed () < 2000 && m_process->isRunning ());
     if (m_process->isRunning () && !KMPlayerProcess::stop ())
         processStopped (0L); // give up
     return true;
@@ -481,6 +484,14 @@ bool MEncoder::play () {
     }
     delete dlg;
     return success;
+}
+
+bool MEncoder::stop () {
+    kdDebug () << "MEncoder::stop ()" << endl;
+    if (!source () || !m_process || !m_process->isRunning ()) return true;
+    if (m_use_slave)
+        m_process->kill (SIGINT);
+    return MPlayerBase::stop ();
 }
 
 //-----------------------------------------------------------------------------

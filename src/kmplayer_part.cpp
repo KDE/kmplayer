@@ -460,17 +460,19 @@ void KMPlayer::forward () {
 }
 
 void KMPlayer::record () {
+    if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
     if (m_mencoder->playing ()) {
         m_mencoder->stop ();
-        return;
-    }
-    m_process->stop ();
-    m_mencoder->setSource (m_process->source ());
-    if (m_mencoder->play ()) {
-        if (!m_view->recordButton ()->isOn ()) 
+    } else {
+        m_process->stop ();
+        m_mencoder->setSource (m_process->source ());
+        if (m_mencoder->play ()) {
+            if (!m_view->recordButton ()->isOn ()) 
+                m_view->recordButton ()->toggle ();
+        } else if (m_view->recordButton ()->isOn ()) 
             m_view->recordButton ()->toggle ();
-    } else if (m_view->recordButton ()->isOn ()) 
-        m_view->recordButton ()->toggle ();
+    }
+    if (m_view) m_view->setCursor (QCursor (Qt::ArrowCursor));
 }
 
 void KMPlayer::play () {
@@ -1200,7 +1202,6 @@ void KMPlayerHRefSource::setURL (const KURL & url) {
 
 void KMPlayerHRefSource::play () {
     kdDebug () << "KMPlayerHRefSource::play " << m_url.url() << endl;
-    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
     m_player->setSource (m_player->urlSource ());
 }
 

@@ -128,6 +128,7 @@ public:
     const KURL & recordURL () const { return m_recordurl; }
 public slots:
     virtual bool play ();
+    virtual bool stop ();
 private:
     KURL m_recordurl;
 };
