@@ -122,6 +122,7 @@ public:
     bool allowRedir (const QString & url);
 public slots:
     virtual bool openURL (const KURL & url);
+    virtual bool closeURL ();
     void setMenuZoom (int id);
 protected slots:
     virtual void processStarted ();

@@ -719,6 +719,7 @@ void KMPlayerView::fullScreen () {
 }
 
 void KMPlayerView::setButtonBar (QWidget * bb) {
+    setAutoHideButtons (false);
     bb->reparent (m_layer, m_buttonbar->pos (), true);
     QBoxLayout * layerbox = static_cast<QBoxLayout*>(m_layer->layout ());
     layerbox->addWidget (bb);

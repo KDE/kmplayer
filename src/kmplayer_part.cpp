@@ -116,7 +116,7 @@ K_EXPORT_COMPONENT_FACTORY (libkmplayerpart, KMPlayerFactory)
 KInstance *KMPlayerFactory::s_instance = 0;
 
 KMPlayerFactory::KMPlayerFactory () {
-    s_instance = new KInstance ("KMPlayerPart");
+    s_instance = new KInstance ("kmplayer");
 }
 
 KMPlayerFactory::~KMPlayerFactory () {
@@ -207,17 +207,16 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
             m_view->setAutoHideButtons (false);
             KMPlayerPart * copart = kmplayerpart_static->find (m_group, m_docbase, Feat_Controls);
             if (copart && copart->m_view) {
-                m_view->buttonBar ()->show ();
                 copart->m_view->setButtonBar (m_view->buttonBar ());
             } else
                 m_view->buttonBar ()->hide ();
         }
     } else if (m_features & Feat_Controls) {
         KMPlayerPart * copart = kmplayerpart_static->find (m_group, m_docbase, Feat_Viewer);
-        if (copart && copart->m_view)
+        if (copart && copart->m_view) {
             m_view->setButtonBar (copart->m_view->buttonBar ());
-        m_view->setAutoHideButtons (false);
-        m_view->buttonBar ()->show ();
+            copart->m_view->setAutoHideButtons (false);
+        }
     }
     if (!m_group.isEmpty ())
         kmplayerpart_static->add (m_group, this);
@@ -251,6 +250,14 @@ bool KMPlayerPart::openURL (const KURL & url) {
     }
     m_havehref = false;
     return true;
+}
+
+bool KMPlayerPart::closeURL () {
+    if (!m_group.isEmpty ()) {
+        kmplayerpart_static->remove (m_group, this);
+        m_group.truncate (0);
+    }
+    return KMPlayer::closeURL ();
 }
 
 void KMPlayerPart::processFinished () {
