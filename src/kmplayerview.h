@@ -349,7 +349,7 @@ public:
     void setAspect (float a);
     float aspect () { return m_aspect; }
     void sendKeyEvent (int key);
-    void setBackgroundColor (QColor & c);
+    void setBackgroundColor (const QColor & c);
 public slots:
     void sendConfigureEvent ();
 signals:
@@ -360,6 +360,7 @@ protected:
     void mouseMoveEvent (QMouseEvent * e);
     void contextMenuEvent (QContextMenuEvent * e);
 private:
+    unsigned int m_bgcolor;
     float m_aspect;
     View * m_view;
 };

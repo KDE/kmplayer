@@ -17,6 +17,7 @@
  **/
 
 #include <qtextstream.h>
+#include <qcolor.h>
 #include <kdebug.h>
 #include <kurl.h>
 
@@ -41,7 +42,15 @@ KDE_NO_EXPORT bool RegionData::isImage () {
 }
 
 KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (ElementPtr e)
-    : x (0), y (0), w (0), h (0), regionElement (e) {}
+ : x (0), y (0), w (0), h (0), have_color (false), regionElement (e) {
+    if (e) {
+        QString c = e->getAttribute ("background-color");
+        if (!c.isEmpty ()) {
+            background_color = QColor (c).rgb ();
+            have_color = true;
+        }
+    }
+ }
 
 KDE_NO_CDTOR_EXPORT AudioVideoData::AudioVideoData(RegionNodePtr r,ElementPtr e)
     : RegionData (r), av_element (e) {}

@@ -296,11 +296,8 @@ KDE_NO_EXPORT void ViewLayer::mouseMoveEvent (QMouseEvent * e) {
 }
 
 void RegionNode::paint (QPainter & p) {
-    QString str = regionElement->getAttribute ("background-color"); // cache ??
-    if (!str.isEmpty ()) {
-        QColor color (str);
-        p.fillRect (x, y, w, h, color);
-    }
+    if (have_color)
+        p.fillRect (x, y, w, h, QColor (QRgb (background_color)));
     if (data)
         data->paint (p);
 }
@@ -328,7 +325,7 @@ KDE_NO_EXPORT void ViewLayer::paintEvent (QPaintEvent * pe) {
     }
 }
 
-static void scaleRegions (RegionNodePtr & p, float sx, float sy, int xoff, int yoff, int & x, int & y, int & w, int & h) {
+static void scaleRegions (RegionNodePtr & p, float sx, float sy, int xoff, int yoff, RegionNodePtr & av_rgn) {
     for (RegionNodePtr r = p->firstChild; r; r =r->nextSibling)
         if (r->regionElement) {  // note WeakPtr can be null
             SMIL::Region * smilregion = convertNode <SMIL::Region> (r->regionElement);
@@ -336,15 +333,11 @@ static void scaleRegions (RegionNodePtr & p, float sx, float sy, int xoff, int y
             r->y = yoff + int (sy * smilregion->y);
             r->w = int (sx * smilregion->w);
             r->h = int (sy * smilregion->h);
-            if (r->data && r->data->isAudioVideo ()) {
+            if (r->data && r->data->isAudioVideo ())
                 // hack to get the one and only audio/video widget sizes
-                x = r->x;
-                y = r->y;
-                w = r->w;
-                h = r->h;
-            }
+                av_rgn = r;
             //kdDebug () << "ViewLayer " << r->x << "," << r->y << " " << r->w << "x" << r->h << endl;
-            scaleRegions (r, sx, sy, r->x, r->y, x, y, w, h);
+            scaleRegions (r, sx, sy, r->x, r->y, av_rgn);
         }
 }
 
@@ -379,7 +372,16 @@ KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
             rootLayout->w = wws;
             rootLayout->h = hws;
             wws = hws = 0;
-            scaleRegions (rootLayout, xscale, yscale, x, y, x, y, wws, hws);
+            RegionNodePtr av_rgn;
+            scaleRegions (rootLayout, xscale, yscale, x, y, av_rgn);
+            if (av_rgn) {
+                x = av_rgn->x;
+                y = av_rgn->y;
+                wws = av_rgn->w;
+                hws = av_rgn->h;
+                if (av_rgn->have_color)
+                    m_view->viewer ()->setBackgroundColor (QColor (av_rgn->background_color));
+            }
         }
     }
     // scale video widget inside region
@@ -1336,7 +1338,7 @@ KDE_NO_EXPORT bool View::x11Event (XEvent * e) {
 //----------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT Viewer::Viewer (QWidget *parent, View * view)
-  : QXEmbed (parent), m_aspect (0.0),
+  : QXEmbed (parent), m_bgcolor (0), m_aspect (0.0),
     m_view (view) {
     /*XWindowAttributes xwa;
     XGetWindowAttributes (qt_xdisplay(), winId (), &xwa);
@@ -1420,9 +1422,12 @@ KDE_NO_EXPORT void Viewer::contextMenuEvent (QContextMenuEvent * e) {
     m_view->controlPanel ()->popupMenu ()->exec (e->globalPos ());
 }
 
-KDE_NO_EXPORT void Viewer::setBackgroundColor (QColor & c) {
-    XSetWindowBackground (qt_xdisplay (), embeddedWinId (), c.rgb ());
-    XFlush (qt_xdisplay ());
+KDE_NO_EXPORT void Viewer::setBackgroundColor (const QColor & c) {
+    if (m_bgcolor != c.rgb ()) {
+        m_bgcolor = c.rgb ();
+        XSetWindowBackground (qt_xdisplay (), embeddedWinId (), m_bgcolor);
+        XFlush (qt_xdisplay ());
+    }
 }
 
 #include "kmplayerview.moc"

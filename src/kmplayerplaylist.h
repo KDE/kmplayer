@@ -91,6 +91,14 @@ public:
      */
     int x, y, w, h;
     /**
+     * Cached color
+     */
+    int background_color;
+    /**
+     * Whether background_color is valid
+     */
+    bool have_color;
+    /**
      * Corresponding DOM node (SMIL::Region or SMIL::RootLayout)
      */
     ElementPtrW regionElement;
