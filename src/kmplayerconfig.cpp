@@ -503,6 +503,7 @@ void KMPlayerSettings::show () {
     configdialog->m_SourcePageURL->sub_urllist->clear ();
     configdialog->m_SourcePageURL->sub_urllist->insertStringList (sub_urllist);
     configdialog->m_SourcePageURL->sub_urllist->setCurrentText (m_player->process ()->source ()->subUrl ().prettyURL ());
+    configdialog->m_SourcePageURL->changed = false;
 
     configdialog->m_GeneralPageDVD->autoPlayDVD->setChecked (playdvd); //works if autoplay?
     configdialog->m_GeneralPageDVD->dvdDevicePath->lineEdit()->setText (dvddevice);
@@ -740,18 +741,9 @@ void KMPlayerSettings::okPressed () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
     if (!view)
         return;
-    bool urlchanged = m_player->process ()->source ()->url () != 
-                      KURL (configdialog->m_SourcePageURL->url->url ());
-    if (!(configdialog->m_SourcePageURL->sub_url->url ().isEmpty () &&
-          m_player->process ()->source ()->subUrl ().isEmpty ())) {
-        urlchanged |= (m_player->process ()->source ()->subUrl () !=
-            KURL (configdialog->m_SourcePageURL->sub_url->url ())) &&
-            KURL (configdialog->m_SourcePageURL->sub_url->url ()).isValid ();
-    }
-    if (configdialog->m_SourcePageURL->url->url ().isEmpty () ||
-            !KURL (configdialog->m_SourcePageURL->url->url ()).isValid ())
+    bool urlchanged = configdialog->m_SourcePageURL->changed;
+    if (configdialog->m_SourcePageURL->url->url ().isEmpty ())
         urlchanged = false;
-
     if (urlchanged) {
         KURL url (configdialog->m_SourcePageURL->url->url ());
         m_player->setURL (url);

@@ -241,9 +241,17 @@ KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
     backend->hide ();
 #endif
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    connect (urllist, SIGNAL(textChanged (const QString &)),
+             this, SLOT (slotTextChanged (const QString &)));
+    connect (sub_urllist, SIGNAL(textChanged (const QString &)),
+             this, SLOT (slotTextChanged (const QString &)));
 }
 
 void KMPlayerPrefSourcePageURL::slotBrowse () {
+}
+
+void KMPlayerPrefSourcePageURL::slotTextChanged (const QString &) {
+    changed = true;
 }
 
 KMPlayerPrefGeneralPageDVD::KMPlayerPrefGeneralPageDVD(QWidget *parent) : QFrame(parent)
