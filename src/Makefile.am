@@ -42,5 +42,4 @@ conf_DATA = kmplayerrc
 confdir = $(kde_confdir)
 
 messages: rc.cpp
-	$(EXTRACTRC) */*.ui */*.rc > rc.cpp
-	$(XGETTEXT)) */*.cpp rc.cpp -o $(podir)/kmplayer.pot
+	$(XGETTEXT) *.cpp -o $(podir)/kmplayer.pot
