@@ -249,7 +249,9 @@ KMPlayerViewLayer::KMPlayerViewLayer (KMPlayerView * parent, QBoxLayout * b)
 }
 
 void KMPlayerViewLayer::fullScreen () {
-    if (m_fullscreen) {
+    if (m_foreign_layer) {
+        m_foreign_layer->fullScreen ();
+    } else if (m_fullscreen) {
         showNormal ();
         reparent (m_view, 0, QPoint (0, 0), true);
         m_box->addWidget (this);
@@ -801,6 +803,7 @@ void KMPlayerView::setForeignViewer (KMPlayerView * other) {
     }
     m_holder->hide ();
     other->m_holder->reparent (m_layer, m_holder->pos (), true);
+    other->m_layer->setForeignLayer (m_layer);
     QVBoxLayout * layout = static_cast <QVBoxLayout*> (m_layer->layout ());
     layout->insertWidget (0, other->m_holder);
     if (m_buttonbar && m_controlpanel_mode == CP_AutoHide) {

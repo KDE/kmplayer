@@ -55,6 +55,7 @@ class KMPlayerViewLayer : public QWidget {
 public:
     KMPlayerViewLayer (KMPlayerView * parent, QBoxLayout * b);
     bool isFullScreen () const { return m_fullscreen; }
+    void setForeignLayer (KMPlayerViewLayer * f) { m_foreign_layer = f; }
 public slots:
     void fullScreen ();
     void accelActivated ();
@@ -62,6 +63,7 @@ private:
     KMPlayerView * m_view;
     QBoxLayout * m_box;
     QAccel * m_accel;
+    QGuardedPtr<KMPlayerViewLayer> m_foreign_layer;
     bool m_fullscreen : 1;
 };
 
