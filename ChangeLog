@@ -1,3 +1,7 @@
+Changes since version 0.8.1
+- Fix for Web object having HREF attributes and not 'Click to Play' enabled
+- Allow opening 'vcd://' and 'dvd://' URLs (useful for Xine VCD Nav)
+- Pass vcd/dvd device setting to kxineplayer
 Changes since version 0.8.1-rc1
 - Delay arts volume initialization for faster startup when not build with
   --disable-arts-volume
