@@ -59,97 +59,6 @@ static MPlayerAudioDriver _ads[] = {
 
 static const int ADRIVER_ARTS_INDEX = 4;
 
-FFServerSetting::FFServerSetting (int i, const QString & n, const QString & f, const QString & ac, int abr, int asr, const QString & vc, int vbr, int q, int fr, int gs, int w, int h)
- : index (i), name (n), format (f), audiocodec (ac),
-   audiobitrate (abr > 0 ? QString::number (abr) : QString ()),
-   audiosamplerate (asr > 0 ? QString::number (asr) : QString ()),
-   videocodec (vc),
-   videobitrate (vbr > 0 ? QString::number (vbr) : QString ()),
-   quality (q > 0 ? QString::number (q) : QString ()),
-   framerate (fr > 0 ? QString::number (fr) : QString ()),
-   gopsize (gs > 0 ? QString::number (gs) : QString ()),
-   width (w > 0 ? QString::number (w) : QString ()),
-   height (h > 0 ? QString::number (h) : QString ()) {}
-
-FFServerSetting & FFServerSetting::operator = (const FFServerSetting & fs) {
-    format = fs.format;
-    audiocodec = fs.audiocodec;
-    audiobitrate = fs.audiobitrate;
-    audiosamplerate = fs.audiosamplerate;
-    videocodec = fs.videocodec;
-    videobitrate = fs.videobitrate;
-    quality = fs.quality;
-    framerate = fs.framerate;
-    gopsize = fs.gopsize;
-    width = fs.width;
-    height = fs.height;
-    return *this;
-}
-
-FFServerSetting & FFServerSetting::operator = (const QStringList & sl) {
-    if (sl.count () < 11) {
-        return *this;
-    }
-    QStringList::const_iterator it = sl.begin ();
-    format = *it++;
-    audiocodec = *it++;
-    audiobitrate = *it++;
-    audiosamplerate = *it++;
-    videocodec = *it++;
-    videobitrate = *it++;
-    quality = *it++;
-    framerate = *it++;
-    gopsize = *it++;
-    width = *it++;
-    height = *it++;
-    acl.clear ();
-    for (; it != sl.end (); ++it)
-        acl.push_back (*it);
-    return *this;
-}
-
-QString & FFServerSetting::ffconfig (QString & buf) {
-    QString nl ("\n");
-    buf = QString ("Format ") + format + nl;
-    if (!audiocodec.isEmpty ())
-        buf += QString ("AudioCodec ") + audiocodec + nl;
-    if (!audiobitrate.isEmpty ())
-        buf += QString ("AudioBitRate ") + audiobitrate + nl;
-    if (!audiosamplerate.isEmpty () > 0)
-        buf += QString ("AudioSampleRate ") + audiosamplerate + nl;
-    if (!videocodec.isEmpty ())
-        buf += QString ("VideoCodec ") + videocodec + nl;
-    if (!videobitrate.isEmpty ())
-        buf += QString ("VideoBitRate ") + videobitrate + nl;
-    if (!quality.isEmpty ())
-        buf += QString ("VideoQMin ") + quality + nl;
-    if (!framerate.isEmpty ())
-        buf += QString ("VideoFrameRate ") + framerate + nl;
-    if (!gopsize.isEmpty ())
-        buf += QString ("VideoGopSize ") + gopsize + nl;
-    if (!width.isEmpty () && !height.isEmpty ())
-        buf += QString ("VideoSize ") + width + QString ("x") + height + nl;
-    return buf;
-}
-
-const QStringList FFServerSetting::list () {
-    QStringList sl;
-    sl.push_back (format);
-    sl.push_back (audiocodec);
-    sl.push_back (audiobitrate);
-    sl.push_back (audiosamplerate);
-    sl.push_back (videocodec);
-    sl.push_back (videobitrate);
-    sl.push_back (quality);
-    sl.push_back (framerate);
-    sl.push_back (gopsize);
-    sl.push_back (width);
-    sl.push_back (height);
-    QStringList::const_iterator it = acl.begin ();
-    for (; it != acl.end (); ++it)
-        sl.push_back (*it);
-    return sl;
-}
 
 KMPlayerSettings::KMPlayerSettings (KMPlayer * player, KConfig * config)
   : configdialog (0L), m_config (config), m_player (player) {
@@ -248,17 +157,7 @@ static const char * strRecordingFile = "Last Recording Ouput File";
 static const char * strAutoPlayAfterRecording = "Auto Play After Recording";
 static const char * strAutoPlayAfterTime = "Auto Play After Recording Time";
 static const char * strRecordingCopy = "Recording Is Copy";
-// ffserver
-static const char * strBroadcast = "Broadcast";
-static const char * strBindAddress = "Bind Address";
-static const char * strFFServerPort = "FFServer Port";
-static const char * strMaxClients = "Maximum Connections";
-static const char * strMaxBandwidth = "Maximum Bandwidth";
-static const char * strFeedFile = "Feed File";
-static const char * strFeedFileSize = "Feed File Size";
-//static const char * strFFServerSetting = "FFServer Setting";
-static const char * strFFServerCustomSetting = "Custom Setting";
-static const char * strFFServerProfiles = "Profiles";
+
 
 void KMPlayerSettings::readConfig () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
@@ -370,24 +269,6 @@ void KMPlayerSettings::readConfig () {
     pp_med_int = m_config->readBoolEntry (strPP_Med_Int, false);
     pp_ffmpeg_int = m_config->readBoolEntry (strPP_FFmpeg_Int, false);
 
-    m_config->setGroup (strBroadcast);
-    bindaddress = m_config->readEntry (strBindAddress, "0.0.0.0");
-    ffserverport = m_config->readNumEntry (strFFServerPort, 8090);
-    maxclients = m_config->readNumEntry (strMaxClients, 10);
-    maxbandwidth = m_config->readNumEntry (strMaxBandwidth, 1000);
-    feedfile = m_config->readPathEntry (strFeedFile, "/tmp/kmplayer.ffm");
-    feedfilesize = m_config->readNumEntry (strFeedFileSize, 512);
-    ffserversettings = m_config->readListEntry (strFFServerCustomSetting, ';');
-    QStringList profiles = m_config->readListEntry (strFFServerProfiles, ';');
-    QStringList::iterator pr_it = profiles.begin ();
-    for (; pr_it != profiles.end (); ++pr_it) {
-        QStringList sl = m_config->readListEntry (QString ("Profile_") + *pr_it, ';');
-        if (sl.size () > 10) {
-            FFServerSetting * ffs = new FFServerSetting (sl);
-            ffs->name = *pr_it;
-            ffserversettingprofiles.push_back (ffs);
-        }
-    }
     KMPlayerPreferencesPageList::iterator pl_it = pagelist.begin ();
     for (; pl_it != pagelist.end (); ++pl_it)
         (*pl_it)->read (m_config);
@@ -395,7 +276,7 @@ void KMPlayerSettings::readConfig () {
 
 void KMPlayerSettings::show () {
     if (!configdialog) {
-        configdialog = new KMPlayerPreferences (m_player, pagelist, _ads, ffserversettingprofiles);
+        configdialog = new KMPlayerPreferences (m_player, pagelist, _ads);
         connect (configdialog, SIGNAL (okClicked ()),
                 this, SLOT (okPressed ()));
         connect (configdialog, SIGNAL (applyClicked ()),
@@ -486,15 +367,6 @@ void KMPlayerSettings::show () {
     configdialog->m_MEncoderPage->format->setButton (recordcopy ? 0 : 1);
     configdialog->m_MEncoderPage->formatClicked (recordcopy ? 0 : 1);
     configdialog->m_FFMpegPage->arguments->setText (ffmpegarguments);
-    // broadcast
-    configdialog->m_BroadcastPage->bindaddress->setText (bindaddress);
-    configdialog->m_BroadcastPage->port->setText (QString::number (ffserverport));
-    configdialog->m_BroadcastPage->maxclients->setText (QString::number (maxclients));
-    configdialog->m_BroadcastPage->maxbandwidth->setText (QString::number (maxbandwidth));
-    configdialog->m_BroadcastPage->feedfile->setText (feedfile);
-    configdialog->m_BroadcastPage->feedfilesize->setText (QString::number (feedfilesize));
-    configdialog->m_BroadcastFormatPage->setSettings (ffserversettings);
-    configdialog->m_BroadcastFormatPage->profile->setText (QString::null);
 
     //dynamic stuff
     KMPlayerPreferencesPageList::iterator pl_it = pagelist.begin ();
@@ -591,21 +463,7 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strRecordingCopy, recordcopy);
     m_config->writeEntry (strMencoderArgs, mencoderarguments);
     m_config->writeEntry (strFFMpegArgs, ffmpegarguments);
-    // broadcast
-    m_config->setGroup (strBroadcast);
-    m_config->writeEntry (strBindAddress, bindaddress);
-    m_config->writeEntry (strFFServerPort, ffserverport);
-    m_config->writeEntry (strMaxClients, maxclients);
-    m_config->writeEntry (strMaxBandwidth, maxbandwidth);
-    m_config->writePathEntry (strFeedFile, feedfile);
-    m_config->writeEntry (strFeedFileSize, feedfilesize);
-    m_config->writeEntry (strFFServerCustomSetting, ffserversettings.list (), ';');
-    QStringList sl;
-    for (int i = 0; i < (int) ffserversettingprofiles.size (); i++) {
-        sl.push_back (ffserversettingprofiles[i]->name);
-        m_config->writeEntry (QString ("Profile_") + ffserversettingprofiles[i]->name, ffserversettingprofiles[i]->list(), ';');
-    }
-    m_config->writeEntry (strFFServerProfiles, sl, ';');
+
     //dynamic stuff
     KMPlayerPreferencesPageList::iterator pl_it = pagelist.begin ();
     for (; pl_it != pagelist.end (); ++pl_it)
@@ -764,15 +622,6 @@ void KMPlayerSettings::okPressed () {
 #else
     recordcopy = !configdialog->m_MEncoderPage->format->id (configdialog->m_MEncoderPage->format->selected ());
 #endif
-    // broadcast
-    bindaddress = configdialog->m_BroadcastPage->bindaddress->text ();
-    ffserverport = configdialog->m_BroadcastPage->port->text ().toInt ();
-    maxclients = configdialog->m_BroadcastPage->maxclients->text ().toInt ();
-    maxbandwidth = configdialog->m_BroadcastPage->maxbandwidth->text ().toInt();
-    feedfile = configdialog->m_BroadcastPage->feedfile->text ();
-    feedfilesize = configdialog->m_BroadcastPage->feedfilesize->text ().toInt();
-    configdialog->m_BroadcastFormatPage->getSettings(ffserversettings);
-    writeConfig ();
 
     //dynamic stuff
     KMPlayerPreferencesPageList::iterator pl_it = pagelist.begin ();
@@ -780,6 +629,7 @@ void KMPlayerSettings::okPressed () {
         (*pl_it)->sync (true);
     //\dynamic stuff
 
+    writeConfig ();
     emit configChanged ();
 
     if (urlchanged) {

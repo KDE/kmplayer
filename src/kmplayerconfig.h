@@ -101,14 +101,6 @@ public:
     QString mencoderarguments;
     QString ffmpegarguments;
     QString recordfile;
-    QString bindaddress;
-    int ffserverport;
-    int maxclients;
-    int maxbandwidth;
-    QString feedfile;
-    int feedfilesize;
-    FFServerSetting ffserversettings;
-    FFServerSettingList ffserversettingprofiles;
     int seektime;
     int cachesize;
     int videodriver;

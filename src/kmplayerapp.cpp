@@ -63,6 +63,7 @@
 #include "kmplayerprocess.h"
 #include "kmplayerappsource.h"
 #include "kmplayertvsource.h"
+#include "kmplayerbroadcast.h"
 #include "kmplayerconfig.h"
 
 #define ID_STATUS_MSG 1
@@ -112,10 +113,14 @@ KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       m_vcdsource (new KMPlayerVCDSource (this, m_vcdmenu)),
       m_pipesource (new KMPlayerPipeSource (this)),
       m_tvsource (new KMPlayerTVSource (this, m_tvmenu)),
+      m_broadcastconfig (new KMPlayerBroadcastConfig),
+      m_ffserverconfig (new KMPlayerFFServerConfig),
       m_ffmpeg_process (0L),
       m_ffserver_process (0L),
       m_endserver (true)
 {
+    m_player->settings ()->pagelist.push_back (m_broadcastconfig);
+    m_player->settings ()->pagelist.push_back (m_ffserverconfig);
     initStatusBar();
     m_player->init (actionCollection ());
     initActions();
@@ -280,8 +285,7 @@ void KMPlayerApp::openDocumentFile (const KURL& url)
     m_player->openURL (url);
     if (broadcasting () && url.url() == m_ffserver_url) {
         // speed up replay
-        KMPlayerSettings * conf = m_player->settings ();
-        FFServerSetting & ffs = conf->ffserversettings;
+        FFServerSetting & ffs = m_broadcastconfig->ffserversettings;
         KMPlayerSource * source = m_player->process ()->source ();
         if (!ffs.width.isEmpty () && !ffs.height.isEmpty ()) {
             source->setWidth (ffs.width.toInt ());
@@ -373,18 +377,17 @@ void KMPlayerApp::broadcastClicked () {
     if (m_player->process ()->source () == m_tvsource)
         source = m_tvsource->tvsource ();
     const char * noaudio = source && source->audiodevice.isEmpty () ? "NoAudio" : "";
-    KMPlayerSettings * conf = m_player->settings ();
-    FFServerSetting & ffs = conf->ffserversettings;
+    FFServerSetting & ffs = m_broadcastconfig->ffserversettings;
     QString acl;
     QStringList::iterator it = ffs.acl.begin ();
     for (; it != ffs.acl.end (); ++it)
         acl += QString ("ACL allow ") + *it + QString ("\n");
-    unlink (conf->feedfile.ascii ());
+    unlink (m_ffserverconfig->feedfile.ascii ());
     QFile qfile (conffile);
     qfile.open (IO_WriteOnly);
     QString configdata;
     QString buf;
-    configdata.sprintf (ffserverconf, conf->ffserverport, conf->bindaddress.ascii (), conf->maxclients, conf->maxbandwidth, conf->feedfile.ascii (), conf->feedfilesize, ffs.format.ascii (), acl.ascii (), ffs.ffconfig (buf).ascii (), noaudio);
+    configdata.sprintf (ffserverconf, m_ffserverconfig->ffserverport, m_ffserverconfig->bindaddress.ascii (), m_ffserverconfig->maxclients, m_ffserverconfig->maxbandwidth, m_ffserverconfig->feedfile.ascii (), m_ffserverconfig->feedfilesize, ffs.format.ascii (), acl.ascii (), ffs.ffconfig (buf).ascii (), noaudio);
     qfile.writeBlock (configdata.ascii (), configdata.length ());
     qfile.close ();
     kdDebug () << configdata << endl;
@@ -404,8 +407,7 @@ void KMPlayerApp::processOutput (KProcess * p, char * s, int) {
 }
 
 void KMPlayerApp::startFeed () {
-    KMPlayerSettings * conf = m_player->settings ();
-    FFServerSetting & ffs = conf->ffserversettings;
+    FFServerSetting & ffs = m_broadcastconfig->ffserversettings;
     do {
         if (!m_ffserver_process || !m_ffserver_process->isRunning ()) {
             KMessageBox::error (this, i18n ("Failed to start ffserver.\n") + m_ffserver_out, i18n ("Error"));
@@ -421,7 +423,7 @@ void KMPlayerApp::startFeed () {
                 this, SLOT(ffmpegFinished()));
         m_player->stop ();
         QString ffurl;
-        ffurl.sprintf ("http://localhost:%d/kmplayer.ffm", conf->ffserverport);
+        ffurl.sprintf ("http://localhost:%d/kmplayer.ffm", m_ffserverconfig->ffserverport);
         m_ffmpeg_process->setURL (ffurl.ascii ());
         if (!m_ffmpeg_process->play ()) {
             KMessageBox::error (this, i18n ("Failed to start ffmpeg."), i18n ("Error"));
@@ -435,7 +437,7 @@ void KMPlayerApp::startFeed () {
     if (ok) {
         if (!m_view->broadcastButton ()->isOn ())
             m_view->broadcastButton ()->toggle ();
-        m_ffserver_url.sprintf ("http://localhost:%d/video.%s", conf->ffserverport, ffs.format.ascii ());
+        m_ffserver_url.sprintf ("http://localhost:%d/video.%s", m_ffserverconfig->ffserverport, ffs.format.ascii ());
         openDocumentFile (KURL (m_ffserver_url));
     }
     setCursor (QCursor (Qt::ArrowCursor));

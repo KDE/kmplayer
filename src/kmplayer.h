@@ -41,7 +41,8 @@ class KMPlayerTVSource;
 class FFMpeg;
 class QPopupMenu;
 class QMenuItem;
-
+class KMPlayerBroadcastConfig;
+class KMPlayerFFServerConfig;
 
 class KMPlayerApp : public KMainWindow
 {
@@ -125,6 +126,8 @@ private:
     KMPlayerVCDSource * m_vcdsource;
     KMPlayerPipeSource * m_pipesource;
     KMPlayerTVSource * m_tvsource;
+    KMPlayerBroadcastConfig * m_broadcastconfig;
+    KMPlayerFFServerConfig * m_ffserverconfig;
     QCString m_dcopName;
     FFMpeg * m_ffmpeg_process;
     KProcess * m_ffserver_process;

@@ -28,7 +28,6 @@
 #define _KMPlayerPREF_H_
 
 #include <list>
-#include <vector>
 
 #include <kdialogbase.h>
 #include <qframe.h>
@@ -50,8 +49,6 @@ class KMPlayerPrefRecordPage;           // recording
 class RecorderPage;                     // base recorder
 class KMPlayerPrefMEncoderPage;         // mencoder
 class KMPlayerPrefFFMpegPage;           // ffmpeg
-class KMPlayerPrefBroadcastPage;        // broadcast
-class KMPlayerPrefBroadcastFormatPage;  // broadcast format
 class KMPlayerPrefGeneralPageOutput;	// general, output
 class KMPlayerPrefGeneralPageAdvanced;	// general, advanced, pattern matches etc.
 class KMPlayerPrefOPPageGeneral;	// OP = outputplugins, general
@@ -78,36 +75,10 @@ void Deleter (T * t) {
     delete t;
 }
 
-class FFServerSetting {
-public:
-    FFServerSetting () {}
-    FFServerSetting (int i, const QString & n, const QString & f, const QString & ac, int abr, int asr, const QString & vc, int vbr, int q, int fr, int gs, int w, int h);
-    FFServerSetting (const QStringList & sl) { *this = sl; }
-    int index;
-    QString name;
-    QString format;
-    QString audiocodec;
-    QString audiobitrate;
-    QString audiosamplerate;
-    QString videocodec;
-    QString videobitrate;
-    QString quality;
-    QString framerate;
-    QString gopsize;
-    QString width;
-    QString height;
-    QStringList acl;
-    FFServerSetting & operator = (const QStringList &);
-    FFServerSetting & operator = (const FFServerSetting & fs);
-    const QStringList list ();
-    QString & ffconfig (QString & buf);
-};
-
-typedef std::vector <FFServerSetting *> FFServerSettingList;
-
 
 class KMPlayerPreferencesPage {
 public:
+    virtual ~KMPlayerPreferencesPage () {}
     virtual void write (KConfig *) = 0;
     virtual void read (KConfig *) = 0;
     virtual void sync (bool fromUI) = 0;
@@ -123,7 +94,7 @@ class KMPlayerPreferences : public KDialogBase
     Q_OBJECT
 public:
 
-    KMPlayerPreferences(KMPlayer *, KMPlayerPreferencesPageList &, MPlayerAudioDriver * ad, FFServerSettingList &);
+    KMPlayerPreferences(KMPlayer *, KMPlayerPreferencesPageList &, MPlayerAudioDriver * ad);
     ~KMPlayerPreferences();
 
     KMPlayerPrefGeneralPageGeneral 	*m_GeneralPageGeneral;
@@ -131,8 +102,6 @@ public:
     KMPlayerPrefRecordPage 		*m_RecordPage;
     KMPlayerPrefMEncoderPage            *m_MEncoderPage;
     KMPlayerPrefFFMpegPage              *m_FFMpegPage;
-    KMPlayerPrefBroadcastPage 		*m_BroadcastPage;
-    KMPlayerPrefBroadcastFormatPage 	*m_BroadcastFormatPage;
     KMPlayerPrefGeneralPageOutput 	*m_GeneralPageOutput;
     KMPlayerPrefGeneralPageAdvanced	*m_GeneralPageAdvanced;
     KMPlayerPrefOPPageGeneral 		*m_OPPageGeneral;
@@ -261,57 +230,6 @@ public:
 private:
 };
 
-class KMPlayerPrefBroadcastPage : public QFrame
-{
-    Q_OBJECT
-public:
-    KMPlayerPrefBroadcastPage (QWidget *parent);
-    ~KMPlayerPrefBroadcastPage () {}
-
-    QLineEdit * bindaddress;
-    QLineEdit * port;
-    QLineEdit * maxclients;
-    QLineEdit * maxbandwidth;
-    QLineEdit * feedfile;
-    QLineEdit * feedfilesize;
-};
-
-class KMPlayerPrefBroadcastFormatPage : public QFrame
-{
-    Q_OBJECT
-public:
-    KMPlayerPrefBroadcastFormatPage (QWidget *parent, FFServerSettingList &);
-    ~KMPlayerPrefBroadcastFormatPage () {}
-
-    QListBox * profilelist;
-    QComboBox * format;
-    QLineEdit * audiocodec;
-    QLineEdit * audiobitrate;
-    QLineEdit * audiosamplerate;
-    QLineEdit * videocodec;
-    QLineEdit * videobitrate;
-    QLineEdit * quality;
-    QLineEdit * framerate;
-    QLineEdit * gopsize;
-    QLineEdit * moviewidth;
-    QLineEdit * movieheight;
-    QLineEdit * profile;
-    void setSettings (const FFServerSetting &);
-    void getSettings (FFServerSetting &);
-private slots:
-    void slotIndexChanged (int index);
-    void slotItemHighlighted (int index);
-    void slotTextChanged (const QString &);
-    void slotLoad ();
-    void slotSave ();
-    void slotDelete ();
-private:
-    QTable * accesslist;
-    QPushButton * load;
-    QPushButton * save;
-    QPushButton * del;
-    FFServerSettingList & profiles;
-};
 
 class KMPlayerPrefGeneralPageOutput : public QFrame
 {
