@@ -118,6 +118,10 @@ KDE_NO_EXPORT void KMPlayerApp::initActions()
     fileOpenRecent = KStdAction::openRecent(this, SLOT(slotFileOpenRecent(const KURL&)), actionCollection());
     fileClose = KStdAction::close(this, SLOT(slotFileClose()), actionCollection());
     fileQuit = KStdAction::quit(this, SLOT(slotFileQuit()), actionCollection());
+    
+    new KAction (i18n ("V&ideo"), QString ("video"), KShortcut (), m_player, SLOT (showVideoWindow ()), actionCollection (), "view_video");
+    new KAction (i18n ("Pla&y List"), QString ("player_playlist"), KShortcut (), m_player, SLOT (showPlayListWindow ()), actionCollection (), "view_playlist");
+    new KAction (i18n ("C&onsole"), QString ("konsole"), KShortcut (), m_player, SLOT (showConsoleWindow ()), actionCollection (), "view_console");
     /*KAction *preference =*/ KStdAction::preferences (m_player, SLOT (showConfigDialog ()), actionCollection(), "configure");
     new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), actionCollection (), "view_zoom_50");
     new KAction (i18n ("100%"), 0, 0, this, SLOT (zoom100 ()), actionCollection (), "view_zoom_100");
@@ -169,7 +173,7 @@ KDE_NO_EXPORT void KMPlayerApp::initView ()
     menuBar ()->insertItem (i18n ("&Bookmarks"), bookmarkmenu, -1, 2);
     m_sourcemenu = menuBar ()->findItem (menuBar ()->idAt (0));
     m_sourcemenu->setText (i18n ("S&ource"));
-    m_sourcemenu->popup ()->insertItem (i18n ("&DVD"), m_dvdmenu, -1, 4);
+    m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("dvd_mount"), KIcon::Small, 0, true), i18n ("&DVD"), m_dvdmenu, -1, 4);
 #ifdef HAVE_XINE
     m_dvdnavmenu->insertItem (i18n ("&Start"), this, SLOT (dvdNav ()));
     m_dvdmenu->insertItem (i18n ("&DVD Navigator"), m_dvdnavmenu, -1, 1);
@@ -177,8 +181,8 @@ KDE_NO_EXPORT void KMPlayerApp::initView ()
 #else
     m_dvdmenu->insertItem (i18n ("&Open DVD"), this, SLOT(openDVD ()), 0,-1, 1);
 #endif
-    m_sourcemenu->popup ()->insertItem (i18n ("V&CD"), m_vcdmenu, -1, 5);
-    m_sourcemenu->popup ()->insertItem (i18n ("&TV"), m_tvmenu, -1, 6);
+    m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("cdrom_mount"), KIcon::Small, 0, true), i18n ("V&CD"), m_vcdmenu, -1, 5);
+    m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0, true), i18n ("&TV"), m_tvmenu, -1, 6);
     m_vcdmenu->insertItem (i18n ("&Open VCD"), this, SLOT(openVCD ()), 0,-1, 1);
     m_sourcemenu->popup ()->insertItem (i18n ("&Open Pipe..."), this, SLOT(openPipe ()), 0, -1, 5);
     connect (m_player->settings (), SIGNAL (configChanged ()),

@@ -329,16 +329,16 @@ KDE_NO_CDTOR_EXPORT KMPlayerControlPanel::KMPlayerControlPanel(QWidget * parent)
     m_bookmarkMenu = new KMPlayerPopupMenu (this);
     m_popupMenu->insertItem (i18n("&Bookmarks"), m_bookmarkMenu, menu_bookmark);
     m_viewMenu = new KMPlayerPopupMenu (this);
-    m_viewMenu->insertItem (i18n ("V&ideo"), menu_video);
-    m_viewMenu->insertItem (i18n ("Pla&y List"), menu_playlist);
-    m_viewMenu->insertItem (i18n ("Con&sole"), menu_console);
-    m_popupMenu->insertItem (i18n ("&View"), m_viewMenu, menu_view);
+    m_viewMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("video"), KIcon::Small, 0, true), i18n ("V&ideo"), menu_video);
+    m_viewMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("player_playlist"), KIcon::Small, 0, true), i18n ("Pla&y List"), menu_playlist);
+    m_viewMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("konsole"), KIcon::Small, 0, true), i18n ("Con&sole"), menu_console);
+    m_popupMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("window"), KIcon::Small, 0, false), i18n ("&View"), m_viewMenu, menu_view);
     m_zoomMenu = new KMPlayerPopupMenu (this);
     m_zoomMenu->insertItem (i18n ("50%"), menu_zoom50);
     m_zoomMenu->insertItem (i18n ("100%"), menu_zoom100);
     m_zoomMenu->insertItem (i18n ("150%"), menu_zoom150);
-    m_popupMenu->insertItem (i18n ("&Zoom"), m_zoomMenu, menu_zoom);
-    m_popupMenu->insertItem (i18n ("&Full Screen"), menu_fullscreen);
+    m_popupMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("viewmag"), KIcon::Small, 0, false), i18n ("&Zoom"), m_zoomMenu, menu_zoom);
+    m_popupMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("window_fullscreen"), KIcon::Small, 0, true), i18n ("&Full Screen"), menu_fullscreen);
     m_popupMenu->setAccel (QKeySequence (Qt::Key_F), menu_fullscreen);
     m_popupMenu->insertSeparator ();
     m_colorMenu = new KMPlayerPopupMenu (this);
@@ -358,9 +358,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerControlPanel::KMPlayerControlPanel(QWidget * parent)
     m_colorMenu->insertItem (label);
     m_saturationSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, m_colorMenu);
     m_colorMenu->insertItem (m_saturationSlider);
-    m_popupMenu->insertItem (i18n ("Co&lors"), m_colorMenu);
+    m_popupMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("colorize"), KIcon::Small, 0, true), i18n ("Co&lors"), m_colorMenu);
     m_popupMenu->insertSeparator ();
-    m_popupMenu->insertItem (i18n ("&Configure KMPlayer..."), menu_config);
+    m_popupMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("configure"), KIcon::Small, 0, true), i18n ("&Configure KMPlayer..."), menu_config);
 }
 
 void KMPlayerControlPanel::showPositionSlider (bool show) {
@@ -511,7 +511,6 @@ static void populateTree (ElementPtr e, ElementPtr focus, QListView * tree, QLis
     for (ElementPtr c = e->firstChild (); c; c = c->nextSibling ()) {
         QListViewItem * i = new KMPlayerListViewItem (item, c);
         i->setText (0, c->isMrl () ? c->mrl ()->src : QString (c->tagName ()));
-        item->insertItem (i);
         populateTree (c, focus, tree, i);
     }
 }
@@ -521,7 +520,6 @@ void KMPlayerPlayListView::updateTree (ElementPtr root, ElementPtr active) {
     if (!root) return;
     QListViewItem * item = new KMPlayerListViewItem (this, root);
     item->setText (0, KURL (root->mrl()->src).prettyURL ());
-    insertItem (item);
     populateTree (root, active, this, item);
     //if (root->hasChildNodes ())
 }

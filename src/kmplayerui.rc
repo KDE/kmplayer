@@ -1,5 +1,5 @@
 <!DOCTYPE kpartgui>
-<kpartgui name="kmplayer" version="11">
+<kpartgui name="kmplayer" version="12">
 <MenuBar>
   <Menu name="file"><text>&amp;File</text>
     <Action name="new_window"/>
@@ -7,6 +7,9 @@
   </Menu>
   <Menu name="view"><text>&amp;View</text>
     <Action name="fullscreen"/>
+    <Action name="view_video"/>
+    <Action name="view_playlist"/>
+    <Action name="view_console"/>
     <Menu name="zoom"><text>&amp;Zoom</text>
       <Action name="view_zoom_50"/>
       <Action name="view_zoom_100"/>
