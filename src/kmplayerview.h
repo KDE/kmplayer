@@ -62,13 +62,11 @@ public:
     ListViewItem (QListViewItem *p, const ElementPtr & e, PlayListView * lv);
     ListViewItem (PlayListView *v, const ElementPtr & e);
     KDE_NO_CDTOR_EXPORT ~ListViewItem () {}
-    void init ();
     ElementPtrW m_elm;
     PlayListView * listview;
 };
 
 class KMPLAYER_EXPORT PlayListView : public KListView {
-    friend class ListViewItem;
     Q_OBJECT
 public:
     PlayListView (QWidget * parent, View * view);
@@ -82,13 +80,22 @@ protected:
     void dropEvent (QDropEvent *);
 private slots:
     void contextMenuItem (QListViewItem *, const QPoint &, int);
+    void itemExpanded (QListViewItem *);
     void copyToClipboard ();
     void addBookMark ();
+    void toggleShowAllNodes ();
 private:
+    void populate (ElementPtr e, ElementPtr focus, QListViewItem * item, QListViewItem ** curitem);
     View * m_view;
     QPopupMenu * m_itemmenu;
     QPixmap folder_pix;
     QPixmap video_pix;
+    QPixmap unknown_pix;
+    QPixmap menu_pix;
+    QPixmap config_pix;
+    bool m_show_all_nodes;
+    bool m_have_dark_nodes;
+    bool m_ignore_expanded;
 };
 
 class ViewLayer : public QWidget {

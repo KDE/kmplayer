@@ -630,20 +630,15 @@ KDE_NO_EXPORT void KMPlayerPopupMenu::leaveEvent (QEvent *) {
 //-----------------------------------------------------------------------------
 
 
-KDE_NO_CDTOR_EXPORT ListViewItem::ListViewItem (QListViewItem *p, const ElementPtr & e, PlayListView * lv) : QListViewItem (p), m_elm (e), listview (lv) {
-    init ();
-}
+KDE_NO_CDTOR_EXPORT ListViewItem::ListViewItem (QListViewItem *p, const ElementPtr & e, PlayListView * lv) : QListViewItem (p), m_elm (e), listview (lv) {}
 
-KDE_NO_CDTOR_EXPORT ListViewItem::ListViewItem (PlayListView *v, const ElementPtr & e) : QListViewItem (v), m_elm (e), listview (v) {
-    init ();
-}
+KDE_NO_CDTOR_EXPORT ListViewItem::ListViewItem (PlayListView *v, const ElementPtr & e) : QListViewItem (v), m_elm (e), listview (v) {}
 
-KDE_NO_EXPORT void ListViewItem::init () {
-    setPixmap (0, m_elm->isMrl() ? listview->video_pix : listview->folder_pix);
-}
-
-
-KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view) : KListView (parent, "kde_kmplayer_playlist"), m_view (view) {
+KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view)
+ : KListView (parent, "kde_kmplayer_playlist"),
+   m_view (view),
+   m_show_all_nodes (false),
+   m_ignore_expanded (false) {
     addColumn (QString::null);
     header()->hide ();
     setTreeStepSize (15);
@@ -653,9 +648,14 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view) :
     m_itemmenu = new QPopupMenu (this);
     folder_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder"), KIcon::Small);
     video_pix = KGlobal::iconLoader ()->loadIcon (QString ("video"), KIcon::Small);
+    unknown_pix = KGlobal::iconLoader ()->loadIcon (QString ("unknown"), KIcon::Small);
+    menu_pix = KGlobal::iconLoader ()->loadIcon (QString ("showmenu"), KIcon::Small);
+    config_pix = KGlobal::iconLoader ()->loadIcon (QString ("configure"), KIcon::Small);
     m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("editcopy"), KIcon::Small, 0, true), i18n ("&Copy to Clipboard"), this, SLOT (copyToClipboard ()), 0, 0);
     m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("bookmark_add"), KIcon::Small, 0, true), i18n ("&Add Bookmark"), this, SLOT (addBookMark ()), 0, 1);
+    m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("unknown"), KIcon::Small, 0, true), i18n ("&Show all"), this, SLOT (toggleShowAllNodes ()), 0, 2);
     connect (this, SIGNAL (contextMenuRequested (QListViewItem *, const QPoint &, int)), this, SLOT (contextMenuItem (QListViewItem *, const QPoint &, int)));
+    connect (this, SIGNAL (expanded (QListViewItem *)), this, SLOT (itemExpanded (QListViewItem *)));
     QFont fnt = font ();
     fnt.setPointSize (fnt.pointSize () - 1);
     fnt.setWeight (QFont::DemiBold);
@@ -665,25 +665,55 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view) :
 KDE_NO_CDTOR_EXPORT PlayListView::~PlayListView () {
 }
 
-static void populateTree (ElementPtr e, ElementPtr focus, PlayListView * tree, QListViewItem * item, QListViewItem ** curitem) {
+void PlayListView::populate (ElementPtr e, ElementPtr focus, QListViewItem * item, QListViewItem ** curitem) {
     Mrl * mrl = e->mrl ();
-    item->setText(0, mrl ? (mrl->pretty_name.isEmpty () ? (mrl->src.isEmpty() ? QString(e->nodeName()) : KURL(mrl->src).prettyURL()) : mrl->pretty_name) : QString(e->nodeName()));
+    QString text (e->nodeName());
+    if (mrl && !m_show_all_nodes) {
+        if (mrl->pretty_name.isEmpty ()) {
+            if (!mrl->src.isEmpty())
+                text = KURL(mrl->src).prettyURL();
+        } else
+            text = mrl->pretty_name;
+    } else if (!strcmp (e->nodeName (), "#text"))
+        text = e->nodeValue ();
+    QPixmap & pix = e->isMrl() ? video_pix : (e->hasChildNodes ()) ? folder_pix : unknown_pix;
+    item->setText(0, text);
+    item->setPixmap (0, pix);
     if (focus == e)
         *curitem = item;
-    for (ElementPtr c = e->lastChild (); c; c = c->previousSibling ())
-        if (strcmp (c->nodeName (), "#text") && c->expose ())
-            populateTree(c, focus, tree, new ListViewItem(item,c,tree),curitem);
+    for (ElementPtr c = e->lastChild (); c; c = c->previousSibling ()) {
+        m_have_dark_nodes |= !c->expose ();
+        if (m_show_all_nodes || c->expose ())
+            populate (c, focus, new ListViewItem (item, c, this), curitem);
+    }
+    if (m_show_all_nodes) {
+        ElementPtr a = e->attributes ().item (0);
+        if (a) {
+            ListViewItem * as = new ListViewItem (item, e, this);
+            as->setText (0, i18n ("attributes"));
+            as->setPixmap (0, menu_pix);
+            for (; a; a = a->nextSibling ()) {
+                ListViewItem * ai = new ListViewItem (as, a, this);
+                ai->setText (0, QString ("%1=%2").arg (a->nodeName ()).arg (a->nodeValue ()));
+                ai->setPixmap (0, config_pix);
+            }
+        }
+    }
 }
 
 void PlayListView::updateTree (ElementPtr root, ElementPtr active) {
+    m_ignore_expanded = true;
+    m_have_dark_nodes = false;
     clear ();
     if (!root) return;
     QListViewItem * curitem = 0L;
-    populateTree (root, active, this, new ListViewItem (this, root), &curitem);
+    populate (root, active, new ListViewItem (this, root), &curitem);
     if (curitem) {
         setSelected (curitem, true);
         ensureItemVisible (curitem);
     }
+    m_itemmenu->setItemEnabled (2, m_have_dark_nodes);
+    m_ignore_expanded = false;
 }
 
 void PlayListView::selectItem (const QString & txt) {
@@ -706,6 +736,13 @@ KDE_NO_EXPORT void PlayListView::contextMenuItem (QListViewItem * vi, const QPoi
         m_view->controlPanel ()->popupMenu ()->exec (p);
 }
 
+void PlayListView::itemExpanded (QListViewItem * item) {
+    if (!m_ignore_expanded && item->childCount () == 1) {
+        ListViewItem * child_item = static_cast<ListViewItem*>(item->firstChild ());
+        child_item->setOpen (m_show_all_nodes || (child_item->m_elm && child_item->m_elm->expose ()));
+    }
+}
+
 void PlayListView::copyToClipboard () {
     ListViewItem * item = static_cast <ListViewItem *> (currentItem ());
     if (item->m_elm) {
@@ -720,6 +757,20 @@ void PlayListView::addBookMark () {
         Mrl * mrl = item->m_elm->mrl ();
         KURL url (mrl ? mrl->src : QString (item->m_elm->nodeName ()));
         emit addBookMark (mrl->pretty_name.isEmpty () ? url.prettyURL () : mrl->pretty_name, url.url ());
+    }
+}
+
+void PlayListView::toggleShowAllNodes () {
+    m_show_all_nodes = !m_show_all_nodes;
+    m_itemmenu->setItemChecked (2, m_show_all_nodes);
+    ListViewItem * first_item = static_cast <ListViewItem *> (firstChild ());
+    if (first_item) {
+        ElementPtr root = first_item->m_elm;
+        ElementPtr cur;
+        ListViewItem * cur_item = static_cast <ListViewItem *> (currentItem ());
+        if (cur_item)
+            cur = cur_item->m_elm;
+        updateTree (root, cur);
     }
 }
 

@@ -333,6 +333,12 @@ const char * Attribute::nodeName () const {
     return name.ascii ();
 }
 
+KDE_NO_EXPORT bool Attribute::expose () {
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+
 static bool hasMrlChildren (const ElementPtr & e) {
     for (ElementPtr c = e->firstChild (); c; c = c->nextSibling ())
         if (c->isMrl () || hasMrlChildren (c))
@@ -415,13 +421,27 @@ QString TextNode::nodeValue () const {
     return text;
 }
 
-//-----------------------------------------------------------------------------
-
-KDE_NO_CDTOR_EXPORT Title::Title (ElementPtr & d) : Element (d) {}
-
-KDE_NO_EXPORT bool Title::expose () {
+KDE_NO_EXPORT bool TextNode::expose () {
     return false;
 }
+
+//-----------------------------------------------------------------------------
+
+DarkNode::DarkNode (ElementPtr & d, const QString & n) : Element (d), name (n) {
+}
+
+ElementPtr DarkNode::childFromTag (const QString & tag) {
+    return (new DarkNode (m_doc, tag))->self ();
+}
+
+KDE_NO_EXPORT bool DarkNode::expose () {
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT Title::Title (ElementPtr & d)
+    : DarkNode (d, QString ("title")) {}
 
 //-----------------------------------------------------------------------------
 
@@ -1095,15 +1115,15 @@ bool KMPlayerDocumentBuilder::startTag (const QString & tag, const NodeList & at
         //kdDebug () << "Warning: ignored tag " << tag.latin1 () << " ignore depth = " << m_ignore_depth << endl;
     } else {
         ElementPtr e = m_elm->childFromTag (tag);
-        if (e) {
-            //kdDebug () << "Found tag " << tag.latin1 () << endl;
-            e->setAttributes (attr);
-            m_elm->appendChild (e);
-            m_elm = e;
-        } else {
-            m_ignore_depth = 1;
-            kdDebug () << "Warning: unknown tag " << tag.latin1 () << " ignore depth = " << m_ignore_depth << endl;
+        if (!e) {
+            kdDebug () << "Warning: unknown tag " << tag.latin1 () << endl;
+            ElementPtr doc = m_root->document ()->self ();
+            e = (new DarkNode (doc, tag))->self ();
         }
+        //kdDebug () << "Found tag " << tag.latin1 () << endl;
+        e->setAttributes (attr);
+        m_elm->appendChild (e);
+        m_elm = e;
     }
     return true;
 }

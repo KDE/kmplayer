@@ -516,9 +516,10 @@ void PartBase::forward () {
 void PartBase::playListItemSelected (QListViewItem * item) {
     if (m_in_update_tree) return;
     ListViewItem * vi = static_cast <ListViewItem *> (item);
-    if (vi->m_elm)
-        m_source->jump (vi->m_elm);
-    else
+    if (vi->m_elm) {
+        if (vi->m_elm->expose ())
+            m_source->jump (vi->m_elm);
+    } else
         updateTree ();
 }
 
@@ -1148,6 +1149,7 @@ KDE_NO_EXPORT void URLSource::read (QTextStream & textstream) {
             delete [] entries;
         } else if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
             readXML (cur_elm, textstream, line);
+            cur_elm->normalize ();
         } else if (line.lower () != QString ("[reference]")) do {
             QString mrl = line.stripWhiteSpace ();
             if (mrl.lower ().startsWith (QString ("asf ")))

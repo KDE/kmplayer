@@ -151,6 +151,7 @@ public:
     KDE_NO_CDTOR_EXPORT ~Attribute () {}
     const char * nodeName () const;
     QString nodeValue () const;
+    bool expose ();
 protected:
     QString name;
     QString value;
@@ -199,18 +200,28 @@ public:
     TextNode (ElementPtr & d, const QString & s);
     KDE_NO_CDTOR_EXPORT ~TextNode () {}
     void appendText (const QString & s);
-    KDE_NO_EXPORT const char * nodeName () const { return "#text"; }
+    const char * nodeName () const { return "#text"; }
     QString nodeValue () const;
+    bool expose ();
 protected:
     QString text;
 };
 
-class Title : public Element {
+class DarkNode : public Element {
+public:
+    DarkNode (ElementPtr & d, const QString & n);
+    KDE_NO_CDTOR_EXPORT ~DarkNode () {}
+    const char * nodeName () const { return name.ascii (); }
+    ElementPtr childFromTag (const QString & tag);
+    virtual bool expose ();
+protected:
+    QString name;
+};
+
+class Title : public DarkNode {
 public:
     Title (ElementPtr & d);
     KDE_NO_CDTOR_EXPORT ~Title () {}
-    KDE_NO_EXPORT const char * nodeName () const { return "title"; }
-    virtual bool expose ();
 };
 
 //-----------------------------------------------------------------------------
