@@ -21,8 +21,6 @@
 #ifndef _KMPlayerPREF_H_
 #define _KMPlayerPREF_H_
 
-#include <list>
-
 #include <kdialogbase.h>
 #include <qframe.h>
 #include <qmap.h>
@@ -57,8 +55,6 @@ class KHistoryCombo;
 class KComboBox;
 class KURLRequester;
 
-typedef std::list<RecorderPage*> RecorderList;
-
 
 class KMPlayerPreferences : public KDialogBase
 {
@@ -82,7 +78,7 @@ public:
     void addPrefPage (KMPlayerPreferencesPage *);
     void removePrefPage (KMPlayerPreferencesPage *);
 
-    RecorderList recorders;
+    RecorderPage * recorders;
     QMap<QString, QTabWidget *> entries;
 public slots:
     void confirmDefaults();
@@ -130,7 +126,7 @@ class KMPlayerPrefRecordPage : public QFrame
 {
     Q_OBJECT
 public:
-    KMPlayerPrefRecordPage (QWidget *parent, KMPlayer *, RecorderList &);
+    KMPlayerPrefRecordPage (QWidget *parent, KMPlayer *, RecorderPage *);
     ~KMPlayerPrefRecordPage () {}
 
     KURLRequester * url;
@@ -147,7 +143,7 @@ private slots:
     void recordingFinished ();
 private:
     KMPlayer * m_player;
-    RecorderList & m_recorders;
+    RecorderPage * m_recorders;
     QPushButton * recordButton;
 };
 
@@ -160,6 +156,7 @@ public:
     virtual void record () = 0;
     virtual QString name () = 0;
     virtual bool sourceSupported (KMPlayerSource *) = 0;
+    RecorderPage * next;
 protected:
     KMPlayer * m_player;
 };
