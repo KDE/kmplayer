@@ -97,7 +97,6 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
    m_xine (new Xine (this)),
    m_bookmark_menu (0L),
    m_record_timer (0),
-   m_autoplay (true),
    m_ispart (false),
    m_noresize (false) {
     QString bmfile = locate ("data", "kmplayer/bookmarks.xml");
@@ -620,7 +619,8 @@ KAboutData* KMPlayer::createAboutData () {
 //-----------------------------------------------------------------------------
 
 KMPlayerSource::KMPlayerSource (const QString & name, KMPlayer * player)
-    : QObject (player), m_name (name), m_player (player) {
+ : QObject (player), m_name (name), m_player (player),
+   m_auto_play (true) {
     kdDebug () << "KMPlayerSource::KMPlayerSource" << endl;
     init ();
 }
@@ -839,7 +839,8 @@ void KMPlayerURLSource::activate () {
     buildArguments ();
     if (url ().isEmpty ())
         return;
-    QTimer::singleShot (0, m_player, SLOT (play ()));
+    if (m_auto_play)
+        QTimer::singleShot (0, m_player, SLOT (play ()));
 }
 
 

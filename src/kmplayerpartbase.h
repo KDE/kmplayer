@@ -99,7 +99,6 @@ public:
     Xine * xine () const { return m_xine; }
     KMPlayerURLSource * urlSource () const { return m_urlsource; }
     KConfig * config () const { return m_config; }
-    bool autoPlay () const { return m_autoplay; }
     void enablePlayerMenu (bool enable);
     void addControlPanel (KMPlayerControlPanel *);
     void removeControlPanel (KMPlayerControlPanel *);
@@ -166,7 +165,6 @@ protected:
     KMPlayerBookmarkOwner * m_bookmark_owner;
     KBookmarkMenu * m_bookmark_menu;
     int m_record_timer;
-    bool m_autoplay : 1;
     bool m_ispart : 1;
     bool m_noresize : 1;
     bool m_use_slave : 1;

@@ -76,6 +76,7 @@ public:
     /* setPosition (pos) set position in deci-seconds */
     void setPosition (int pos) { m_position = pos; }
     virtual void setIdentified (bool b = true);
+    void setAutoPlay (bool b) { m_auto_play = b; }
 
     virtual QString prettyName ();
 public slots:
@@ -86,6 +87,7 @@ protected:
     KMPlayer * m_player;
     QString m_recordcmd;
     bool m_identified;
+    bool m_auto_play;
     KURL m_url;
     KURL m_sub_url;
     QStringList m_refurls;

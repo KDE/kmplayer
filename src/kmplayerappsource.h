@@ -97,7 +97,6 @@ private:
     KMPlayerPrefSourcePageDVD * m_configpage;
     int m_current_title;
     bool m_start_play;
-    bool playdvd;
 };
 
 
@@ -152,7 +151,6 @@ private:
     KMPlayerPrefSourcePageVCD * m_configpage;
     int m_current_title;
     bool m_start_play;
-    bool playvcd;
 };
 
 

@@ -672,7 +672,7 @@ bool KMPlayerDVDSource::processOutput (const QString & str) {
 
 void KMPlayerDVDSource::activate () {
     m_player->setProcess (m_player->mplayer ());
-    m_start_play = playdvd;
+    m_start_play = m_auto_play;
     m_current_title = -1;
     buildArguments ();
     if (m_start_play)
@@ -775,20 +775,20 @@ static const char * strPlayDVD = "Immediately Play DVD";
 
 void KMPlayerDVDSource::write (KConfig * config) {
     config->setGroup (strMPlayerGroup);
-    config->writeEntry (strPlayDVD, playdvd);
+    config->writeEntry (strPlayDVD, m_auto_play);
 }
 
 void KMPlayerDVDSource::read (KConfig * config) {
     config->setGroup (strMPlayerGroup);
-    playdvd = config->readBoolEntry (strPlayDVD, true);
+    m_auto_play = config->readBoolEntry (strPlayDVD, true);
 }
 
 void KMPlayerDVDSource::sync (bool fromUI) {
     if (fromUI) {
-        playdvd = m_configpage->autoPlayDVD->isChecked ();
+        m_auto_play = m_configpage->autoPlayDVD->isChecked ();
         m_player->settings ()->dvddevice = m_configpage->dvddevice->lineEdit()->text ();
     } else {
-        m_configpage->autoPlayDVD->setChecked (playdvd);
+        m_configpage->autoPlayDVD->setChecked (m_auto_play);
         m_configpage->dvddevice->lineEdit()->setText (m_player->settings ()->dvddevice);
     }
 }
@@ -918,7 +918,7 @@ void KMPlayerVCDSource::activate () {
     m_player->stop ();
     init ();
     m_player->enablePlayerMenu (true);
-    m_start_play = playvcd;
+    m_start_play = m_auto_play;
     m_current_title = -1;
     buildArguments ();
     if (m_start_play)
@@ -974,20 +974,20 @@ static const char * strPlayVCD = "Immediately Play VCD";
 
 void KMPlayerVCDSource::write (KConfig * config) {
     config->setGroup (strMPlayerGroup);
-    config->writeEntry (strPlayVCD, playvcd);
+    config->writeEntry (strPlayVCD, m_auto_play);
 }
 
 void KMPlayerVCDSource::read (KConfig * config) {
     config->setGroup (strMPlayerGroup);
-    playvcd = config->readBoolEntry (strPlayVCD, true);
+    m_auto_play = config->readBoolEntry (strPlayVCD, true);
 }
 
 void KMPlayerVCDSource::sync (bool fromUI) {
     if (fromUI) {
-        playvcd = m_configpage->autoPlayVCD->isChecked ();
+        m_auto_play = m_configpage->autoPlayVCD->isChecked ();
         m_player->settings ()->vcddevice = m_configpage->vcddevice->lineEdit()->text ();
     } else {
-        m_configpage->autoPlayVCD->setChecked (playvcd);
+        m_configpage->autoPlayVCD->setChecked (m_auto_play);
         m_configpage->vcddevice->lineEdit()->setText (m_player->settings ()->vcddevice);
     }
 }

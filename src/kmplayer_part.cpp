@@ -159,11 +159,10 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
                 m_docbase = KURL (value);
             } else if (name.lower()==QString::fromLatin1("src")) {
                 m_src_url = value;
-            } else if (name.lower()==QString::fromLatin1("autostart")) {
-                m_autoplay = !(value.lower() == QString::fromLatin1("false") ||
-                               value.lower() == QString::fromLatin1("0"));
             } else if (name.lower() == QString::fromLatin1 ("fullscreenmode")) {
-                show_fullscreen= getBoolValue (value);
+                show_fullscreen = getBoolValue (value);
+            } else if (name.lower() == QString::fromLatin1 ("autostart")) {
+                m_urlsource->setAutoPlay (getBoolValue (value));
 	    }
         }
     }
