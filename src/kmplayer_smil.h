@@ -42,7 +42,7 @@ class TextDataPrivate;
 typedef WeakPtr<ElementRuntime> ElementRuntimePtrW;
 
 /**
- * Live representation of a SMIL element
+ * Live representation of a SMIL element having timings
  */
 class TimedRuntime : public QObject, public ElementRuntime {
     Q_OBJECT
@@ -52,7 +52,6 @@ public:
     };
     TimedRuntime (ElementPtr e);
     virtual ~TimedRuntime ();
-    void setDurationItem (DurationTime item, const QString & val);
     /**
      * start, or restart in case of re-use, the durations
      */
@@ -65,7 +64,7 @@ public:
      * change behaviour of this runtime, returns old value
      */
     virtual QString setParam (const QString & name, const QString & value);
-    bool isStarted () const { return isstarted; }
+    bool isStarted () const { return state == state_started; }
     virtual void paint (QPainter &) {}
     /**
      * Duration items, begin/dur/end, length information or connected element
@@ -115,14 +114,16 @@ protected slots:
      */
     virtual void stopped ();
 private:
+    void init ();
     void processEvent (unsigned int event);
     void propagateStop ();
+    void setDurationItem (DurationTime item, const QString & val);
+    void breakConnection (DurationTime item);
 protected:
+    enum { state_reset = 0, state_began, state_started, state_stopped } state;
     int start_timer;
     int dur_timer;
     int repeat_count;
-    bool isstarted;
-    bool isstopped;
 };
 
 /**

@@ -180,10 +180,20 @@ QString ElementRuntime::setParam (const QString & name, const QString & value) {
 
 KDE_NO_CDTOR_EXPORT
 TimedRuntime::TimedRuntime (ElementPtr e)
- : QObject (0L), ElementRuntime (e), start_timer (0), dur_timer (0),
-   repeat_count (0), isstarted (false), isstopped (false) {}
+ : QObject (0L), ElementRuntime (e) {
+    init ();
+}
 
 KDE_NO_CDTOR_EXPORT TimedRuntime::~TimedRuntime () {}
+
+KDE_NO_EXPORT void TimedRuntime::init () {
+    start_timer = 0;
+    dur_timer = 0;
+    repeat_count = 0;
+    state = state_reset;
+    durations [begin_time].durval = durations [end_time].durval = 0;
+    durations [duration_time].durval = duration_media; //intrinsic time duration
+}
 
 KDE_NO_EXPORT
 void TimedRuntime::setDurationItem (DurationTime item, const QString & val) {
@@ -229,6 +239,7 @@ void TimedRuntime::setDurationItem (DurationTime item, const QString & val) {
                         connect (tr, SIGNAL (outOfBoundsEvent ()),
                                  this, SLOT (elementOutOfBoundsEvent ()));
                     }
+                    breakConnection (item);
                     durations [(int) item].connection = rt;
                 }
             }
@@ -245,71 +256,107 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
     kdDebug () << "TimedRuntime::begin " << element->nodeName() << endl; 
     if (start_timer || dur_timer)
         end ();
-
-    // setup timings ..
-    durations [duration_time].durval = duration_media; //intrinsic time duration
-    setDurationItem (begin_time, element->getAttribute ("begin"));
-    setDurationItem (end_time, element->getAttribute ("end"));
-    QString durvalstr = element->getAttribute ("dur").stripWhiteSpace ();
-    if (durvalstr.isEmpty ()) { // update dur if not set
-        if (durations [end_time].durval < duration_last_option &&
-            durations [end_time].durval > durations [begin_time].durval)
-            durations [duration_time].durval = durations [end_time].durval - durations [begin_time].durval;
-    } else
-        setDurationItem (duration_time, durvalstr);
-    if (durations [duration_time].durval == duration_media &&
-            !durations [end_time].durval) {
-        QString es = element->getAttribute ("endsync");
-        if (!es.isEmpty ()) {
-            ElementPtr es_elm = element->document ()->getElementById (es);
-            if (es_elm) {
-                ElementRuntimePtr es_rt = es_elm->getRuntime ();
-                if (es_rt) {
-                    connect (static_cast <TimedRuntime *> (es_rt.ptr ()),
-                             SIGNAL (elementStopped ()),
-                             this, SLOT (elementHasStopped ()));
-                    durations [end_time].durval = duration_element_stopped;
-                    durations [end_time].connection = es_rt;
-                }
-            }
-        }
-    }
-    bool ok;
-    int rc = element->getAttribute ("repeatCount").toInt (&ok);
-    if (ok && rc > 0)
-        repeat_count = rc;
+    state = state_began;
 
     if (durations [begin_time].durval > 0) {
         if (durations [begin_time].durval < duration_last_option)
             start_timer = startTimer (1000 * durations [begin_time].durval);
     } else {
-        isstarted = true;
+        state = state_started;
         QTimer::singleShot (0, this, SLOT (started ()));
     }
 }
-    
+
+KDE_NO_EXPORT void TimedRuntime::breakConnection (DurationTime item) {
+    TimedRuntime * tr = dynamic_cast <TimedRuntime *> (durations [(int) item].connection.ptr ());
+    if (tr) {
+        switch (durations [(int) item].durval) {
+            case duration_element_stopped:
+                disconnect (tr, SIGNAL (elementStopped ()),
+                            this, SLOT (elementHasStopped ()));
+                break;
+            case duration_element_activated:
+                disconnect (tr, SIGNAL (activateEvent ()),
+                            this, SLOT (elementActivateEvent ()));
+                break;
+            case duration_element_inbounds:
+                disconnect (tr, SIGNAL (inBoundsEvent ()),
+                            this, SLOT (elementInBoundsEvent ()));
+                break;
+            case duration_element_outbounds:
+                disconnect (tr, SIGNAL (outOfBoundsEvent ()),
+                            this, SLOT (elementOutOfBoundsEvent ()));
+                break;
+            default:
+                kdWarning () << "Unknown connection, disconnecting all" << endl;
+                disconnect (tr, 0, this, 0);
+        }
+        durations [(int) item].connection = ElementRuntimePtr ();
+        durations [(int) item].durval = 0;
+    }
+}
+
 KDE_NO_EXPORT void TimedRuntime::end () {
     kdDebug () << "TimedRuntime::end " << (element ? element->nodeName() : "-") << endl; 
-    killTimers ();
-    start_timer = 0;
-    dur_timer = 0;
-    isstopped = isstarted = false;
     if (region_node) {
         region_node->clearAll ();
         region_node = RegionNodePtr ();
     }
-    for (int i = 0; i < (int) durtime_last; i++) {
-        if (durations [i].connection) {
-            disconnect (static_cast <TimedRuntime *> (durations [i].connection.ptr ()), 0, this, 0);
-            durations [i].connection = ElementRuntimePtr ();
-        }
-        durations [i].durval = 0;
-    }
+    for (int i = 0; i < (int) durtime_last; i++)
+        breakConnection ((DurationTime) i);
+    killTimers ();
+    init ();
 }
 
 KDE_NO_EXPORT
 QString TimedRuntime::setParam (const QString & name, const QString & val) {
-    return QString::null;
+    kdDebug () << "TimedRuntime::setParam " << name << "=" << val << endl;
+    QString old_val;
+    if (name == QString::fromLatin1 ("begin")) {
+        old_val = QString::number (durations [begin_time].durval);
+        setDurationItem (begin_time, val);
+        if ((state == state_began && !start_timer) || state == state_stopped) {
+            if (durations [begin_time].durval > 0) { // create a timer for start
+                if (durations [begin_time].durval < duration_last_option)
+                    start_timer = startTimer(1000*durations[begin_time].durval);
+            } else {                                // start now
+                state = state_started;
+                QTimer::singleShot (0, this, SLOT (started ()));
+            }
+        }
+    } else if (name == QString::fromLatin1 ("dur")) {
+        old_val = QString::number (durations [duration_time].durval);
+        setDurationItem (duration_time, val);
+    } else if (name == QString::fromLatin1 ("end")) {
+        old_val = QString::number (durations [end_time].durval);
+        setDurationItem (end_time, val);
+        if (durations [end_time].durval < duration_last_option &&
+            durations [end_time].durval > durations [begin_time].durval)
+            durations [duration_time].durval =
+                durations [end_time].durval - durations [begin_time].durval;
+    } else if (name == QString::fromLatin1 ("endsync")) {
+        // TODO: old_val
+        if (durations [duration_time].durval == duration_media &&
+                !durations [end_time].durval) {
+            ElementPtr e = element->document ()->getElementById (val);
+            if (e) {
+                ElementRuntimePtr rt = e->getRuntime ();
+                TimedRuntime * tr = dynamic_cast <TimedRuntime *> (rt.ptr ());
+                if (tr) {
+                    breakConnection (end_time);
+                    connect (tr, SIGNAL (elementStopped ()),
+                             this, SLOT (elementHasStopped ()));
+                    durations [end_time].durval = duration_element_stopped;
+                    durations [end_time].connection = rt;
+                }
+            }
+        }
+    } else if (name == QString::fromLatin1 ("repeatCount")) {
+        old_val = QString::number (repeat_count);
+        repeat_count = val.toInt ();
+    } else
+        return ElementRuntime::setParam (name, val);
+    return old_val;
 }
 
 KDE_NO_EXPORT void TimedRuntime::timerEvent (QTimerEvent * e) {
@@ -317,7 +364,7 @@ KDE_NO_EXPORT void TimedRuntime::timerEvent (QTimerEvent * e) {
     if (e->timerId () == start_timer) {
         killTimer (start_timer);
         start_timer = 0;
-        isstarted = true;
+        state = state_started;
         QTimer::singleShot (0, this, SLOT (started ()));
     } else if (e->timerId () == dur_timer)
         propagateStop ();
@@ -341,12 +388,12 @@ KDE_NO_EXPORT void TimedRuntime::elementHasStopped () {
 
 KDE_NO_EXPORT void TimedRuntime::processEvent (unsigned int event) {
     kdDebug () << "TimedRuntime::processEvent " << event << " " << (element ? element->nodeName() : "-") << endl; 
-    if (!isstarted && durations [begin_time].durval == event) {
-        if (!isstarted) {
-            isstarted = true;
+    if (state != state_started && durations [begin_time].durval == event) {
+        if (state != state_started) {
+            state = state_started;
             QTimer::singleShot (0, this, SLOT (started ()));
         }
-    } else if (isstarted && durations [end_time].durval == event)
+    } else if (state == state_started && durations [end_time].durval == event)
         propagateStop ();
 }
 
@@ -355,11 +402,9 @@ KDE_NO_EXPORT void TimedRuntime::propagateStop () {
         killTimer (dur_timer);
         dur_timer = 0;
     }
-    if (isstarted) {
-        isstarted = false;
+    if (state == state_started)
         QTimer::singleShot (0, this, SLOT (stopped ()));
-    }
-    isstopped = true;
+    state = state_stopped;
 }
 
 KDE_NO_EXPORT void TimedRuntime::started () {
@@ -380,7 +425,7 @@ KDE_NO_EXPORT void TimedRuntime::stopped () {
                 durations [begin_time].durval < duration_last_option) {
             start_timer = startTimer (1000 * durations [begin_time].durval);
         } else {
-            isstarted = true;
+            state = state_started;
             QTimer::singleShot (0, this, SLOT (started ()));
         }
     } else if (element->state == Element::state_started) {
@@ -579,7 +624,7 @@ KDE_NO_CDTOR_EXPORT AudioVideoData::AudioVideoData (ElementPtr e)
     : MediaTypeRuntime (e) {}
 
 KDE_NO_EXPORT bool AudioVideoData::isAudioVideo () {
-    return isstarted;
+    return state == state_started;
 }
 
 KDE_NO_EXPORT
@@ -824,8 +869,13 @@ KDE_NO_EXPORT void SMIL::TimedElement::start () {
     kdDebug () << "SMIL::TimedElement(" << nodeName() << ")::start" << endl;
     setState (state_started);
     ElementRuntimePtr rt = getRuntime ();
-    if (rt)
+    if (rt) {
+        for (ElementPtr a = attributes().item (0); a; a= a->nextSibling()) {
+            Attribute * att = convertNode <Attribute> (a);
+            rt->setParam (QString (att->nodeName ()), att->nodeValue ());
+        }
         rt->begin ();
+    }
 }
 
 KDE_NO_EXPORT void SMIL::TimedElement::stop () {
@@ -1000,12 +1050,8 @@ KDE_NO_EXPORT void SMIL::MediaType::start () {
             firstChild ()->start ();
         }
         if (!in_start) { // all children finished
-            for (ElementPtr a = attributes().item (0); a; a= a->nextSibling()) {
-                Attribute * att = convertNode <Attribute> (a);
-                rt->setParam (QString (att->nodeName ()), att->nodeValue ());
-            }
             rt->setParam (QString ("src"), src);
-            rt->begin ();
+            TimedElement::start (); // sets all attributes and calls rt->begin()
         } // else this points to a playlist
     } else // should not happen
         Element::start ();
@@ -1084,7 +1130,12 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::Set::getRuntime () {
 }
 
 KDE_NO_EXPORT void SMIL::Set::start () {
-    getRuntime ()->begin ();
+    ElementRuntimePtr rt = getRuntime ();
+    for (ElementPtr a = attributes ().item (0); a; a = a->nextSibling ()) {
+        Attribute * att = convertNode <Attribute> (a);
+        rt->setParam (QString (att->nodeName ()), att->nodeValue ());
+    }
+    rt->begin ();
     stop (); // no livetime of itself
 }
 
@@ -1149,8 +1200,8 @@ QString ImageData::setParam (const QString & name, const QString & val) {
 }
 
 KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
-    if ((isstarted ||
-         (mt_d->fill == MediaTypeRuntimePrivate::fill_freeze && isstopped)) &&
+    if ((state == state_started || (state == state_stopped &&
+                      mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)) &&
             d->image && region_node) {
         RegionNode * r = region_node.ptr ();
         p.drawPixmap (QRect (r->x, r->y, r->w, r->h), *d->image);
@@ -1169,8 +1220,9 @@ KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
         QPixmap *pix = new QPixmap (mt_d->data);
         if (!pix->isNull ()) {
             d->image = pix;
-            if (region_node && (isstarted || (isstopped &&
-                          mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)))
+            if (region_node &&
+                (state == state_started || (state == state_stopped &&
+                      mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)))
                 region_node->repaint ();
         } else
             delete pix;
@@ -1253,8 +1305,8 @@ QString TextData::setParam (const QString & name, const QString & val) {
 }
 
 KDE_NO_EXPORT void TextData::paint (QPainter & p) {
-    if ((isstarted ||
-         (mt_d->fill == MediaTypeRuntimePrivate::fill_freeze && isstopped)) &&
+    if ((state == state_started || (state == state_stopped &&
+                       mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)) &&
             region_node) {
         int x = region_node->x;
         int y = region_node->y;
@@ -1291,8 +1343,8 @@ KDE_NO_EXPORT void TextData::slotResult (KIO::Job * job) {
     MediaTypeRuntime::slotResult (job);
     if (mt_d->data.size () && element) {
         d->data = mt_d->data;
-        if (region_node && (isstarted ||
-            (mt_d->fill == MediaTypeRuntimePrivate::fill_freeze && isstopped)))
+        if (region_node && (state == state_started || (state == state_stopped &&
+                         mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)))
             region_node->repaint ();
     }
 }
