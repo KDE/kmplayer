@@ -28,6 +28,7 @@
 #include <qguardedptr.h>
 
 #include <kpopupmenu.h>
+#include <klistview.h>
 #include <kurl.h>
 #include <qxembed.h>
 #include <kmediaplayer/view.h>
@@ -47,6 +48,17 @@ class QSlider;
 class QLabel;
 class QAccel;
 class KPopupMenu;
+
+
+class KMPlayerPlayListView : public KListView {
+    Q_OBJECT
+public:
+    KMPlayerPlayListView (QWidget * parent, KMPlayerView * view);
+    KDE_NO_CDTOR_EXPORT ~KMPlayerPlayListView () {}
+    void updateTree (ElementPtr root, ElementPtr active);
+private:
+    KMPlayerView * m_view;
+};
 
 class KMPlayerViewLayer : public QWidget {
     Q_OBJECT
@@ -98,6 +110,7 @@ public:
     //QMultiLineEdit * consoleOutput () const { return m_multiedit; }
     KDE_NO_EXPORT KMPlayerViewer * viewer () const { return m_viewer; }
     KDE_NO_EXPORT KMPlayerControlPanel * buttonBar () const { return m_buttonbar; }
+    KDE_NO_EXPORT KMPlayerPlayListView * playList () const { return m_playlist; }
     KDE_NO_EXPORT QWidgetStack * widgetStack () const { return m_widgetstack; }
     KDE_NO_EXPORT bool keepSizeRatio () const { return m_keepsizeratio; }
     KDE_NO_EXPORT void setKeepSizeRatio (bool b) { m_keepsizeratio = b; }
@@ -140,14 +153,16 @@ private:
     KMPlayerViewer * m_viewer;
     // console output
     QMultiLineEdit * m_multiedit;
-    // all widget types
-    QWidget * m_widgettypes [WT_Last];
     // widget stack contains m_viewer, m_multiedit and m_picturewidget
     QWidgetStack * m_widgetstack;
     // widget that layouts m_widgetstack for ratio setting
     KMPlayerViewerHolder * m_holder;
     // widget that contains m_holder, m_buttonbar and m_posSlider
     KMPlayerViewLayer * m_layer;
+    // playlist widget
+    KMPlayerPlayListView * m_playlist;
+    // all widget types
+    QWidget * m_widgettypes [WT_Last];
     QString tmplog;
     QPixmap * m_image;
     KMPlayerControlPanel * m_buttonbar;
@@ -156,6 +171,8 @@ private:
     const char * m_mixer_object;
     ControlPanelMode m_controlpanel_mode;
     ControlPanelMode m_old_controlpanel_mode;
+    QPixmap folder_pix;
+    QPixmap video_pix;
     int controlbar_timer;
     int popup_timer;
     int popdown_timer;

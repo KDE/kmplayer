@@ -38,6 +38,9 @@
 #include <qpixmap.h>
 #include <qpainter.h>
 #include <qwidgetstack.h>
+#include <qheader.h>
+
+#include <kiconloader.h>
 
 #include "kmplayerview.h"
 #include "kmplayersource.h"
@@ -463,6 +466,64 @@ KDE_NO_CDTOR_EXPORT KMPlayerPopupMenu::KMPlayerPopupMenu (QWidget * parent)
 KDE_NO_EXPORT void KMPlayerPopupMenu::leaveEvent (QEvent *) {
     emit mouseLeft ();
 }
+
+//-----------------------------------------------------------------------------
+
+static QPixmap * folder_pix;
+static QPixmap * video_pix;
+
+class KMPlayerListViewItem : public QListViewItem {
+public:
+    KMPlayerListViewItem (QListViewItem *p, const ElementPtr & e);
+    KMPlayerListViewItem (QListView *v, const ElementPtr & e);
+    KDE_NO_CDTOR_EXPORT ~KMPlayerListViewItem () {}
+    void init ();
+protected:
+    ElementPtrW m_elm;
+};
+
+KDE_NO_CDTOR_EXPORT KMPlayerListViewItem::KMPlayerListViewItem (QListViewItem *p, const ElementPtr & e) : QListViewItem (p), m_elm (e) {
+    init ();
+}
+
+KDE_NO_CDTOR_EXPORT KMPlayerListViewItem::KMPlayerListViewItem (QListView *v, const ElementPtr & e) : QListViewItem (v), m_elm (e) {
+    init ();
+}
+
+KDE_NO_EXPORT void KMPlayerListViewItem::init () {
+    setText (0, m_elm->isMrl () ? m_elm->mrl()->src : QString (m_elm->tagName ()));
+    setPixmap (0, m_elm->isMrl () ? *video_pix : *folder_pix);
+}
+
+
+KDE_NO_CDTOR_EXPORT KMPlayerPlayListView::KMPlayerPlayListView (QWidget * parent, KMPlayerView * view) : KListView (parent, "kde_kmplayer_playlist"), m_view (view) {
+    addColumn (QString::null);
+    header()->hide ();
+    setTreeStepSize (15);
+    setRootIsDecorated (true);
+}
+
+static void populateTree (ElementPtr e, ElementPtr focus, QListView * tree, QListViewItem *item) {
+    if (focus == e) {
+        tree->setCurrentItem (item);
+        for (QListViewItem * p = item->parent (); p; p = p->parent ())
+            p->setOpen (true);
+    }
+    for (ElementPtr c = e->firstChild (); c; c = c->nextSibling ()) {
+        QListViewItem * i = new KMPlayerListViewItem (item, c);
+        item->insertItem (i);
+        populateTree (c, focus, tree, i);
+    }
+}
+
+void KMPlayerPlayListView::updateTree (ElementPtr root, ElementPtr active) {
+    clear ();
+    if (!root) return;
+    QListViewItem * item = new KMPlayerListViewItem (this, root);
+    insertItem (item);
+    populateTree (root, active, this, item);
+    //if (root->hasChildNodes ())
+}
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
@@ -564,7 +625,17 @@ KDE_NO_EXPORT void KMPlayerView::init () {
     m_multiedit->horizontalScrollBar ()->setPalette (pal);
     m_multiedit->verticalScrollBar ()->setPalette (pal);
     m_widgettypes[WT_Picture] = new KMPlayerPictureWidget (m_widgetstack, this);
-    m_widgettypes[WT_PlayList] = new QWidget (m_widgetstack);
+    folder_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder"), KIcon::Small);
+    ::folder_pix = &folder_pix;
+    video_pix = KGlobal::iconLoader ()->loadIcon (QString ("video"), KIcon::Small);
+    ::video_pix = &video_pix;
+    m_playlist = new KMPlayerPlayListView (m_widgetstack, this);
+    m_playlist->horizontalScrollBar ()->setPalette (pal);
+    m_playlist->verticalScrollBar ()->setPalette (pal);
+    m_playlist->setPaletteBackgroundColor (QColor (0, 0, 0));
+    m_playlist->setPaletteForegroundColor (QColor (0xB2, 0xB2, 0xB2));
+    
+    m_widgettypes[WT_PlayList] = m_playlist;
     m_widgetstack->addWidget (m_viewer);
     m_widgetstack->addWidget (m_multiedit);
     m_widgetstack->addWidget (m_widgettypes[WT_Picture]);
@@ -726,8 +797,7 @@ KDE_NO_EXPORT void KMPlayerView::timerEvent (QTimerEvent * e) {
     } else if (e->timerId () == popdown_timer) {
         popdown_timer = 0;
         if (m_buttonbar->popupMenu ()->isVisible () && !m_buttonbar->popupMenu ()->hasMouse () && !m_buttonbar->playerMenu ()->hasMouse () && !m_buttonbar->viewMenu ()->hasMouse () && !m_buttonbar->zoomMenu ()->hasMouse () && !m_buttonbar->colorMenu ()->hasMouse () && !m_buttonbar->bookmarkMenu ()->hasMouse ())
-            if (!(m_buttonbar->bookmarkMenu ()->isVisible () &&
-                        ::qt_cast <QPopupMenu *> (QWidget::keyboardGrabber ())))
+            if (!(m_buttonbar->bookmarkMenu ()->isVisible () && static_cast <QWidget *> (m_buttonbar->bookmarkMenu ()) != QWidget::keyboardGrabber ()))
                 // not if user entered the bookmark sub menu or if I forgot one
                 m_buttonbar->popupMenu ()->hide ();
     }
@@ -757,7 +827,8 @@ KDE_NO_EXPORT void KMPlayerView::addText (const QString & str) {
 
 KDE_NO_EXPORT void KMPlayerView::videoStart () {
     if (m_playing) return; //FIXME: make symetric with videoStop
-    m_widgetstack->raiseWidget (m_viewer);
+    if (m_widgetstack->visibleWidget () == m_widgettypes[WT_Picture])
+        m_widgetstack->raiseWidget (m_viewer);
     m_playing = true;
     m_revert_fullscreen = !isFullScreen();
     setControlPanelMode (m_old_controlpanel_mode);

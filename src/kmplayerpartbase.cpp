@@ -643,6 +643,9 @@ void KMPlayerSource::setURL (const KURL & url) {
         m_document = (new Document (url.url ()))->self ();
     }
     m_current = m_document;
+    KMPlayerProcess * p = m_player->process ();
+    if (p)
+        p->view ()->playList ()->updateTree (m_document, m_current);
     printTree(m_current);
 }
 
@@ -656,6 +659,9 @@ QString KMPlayerSource::first () {
 
 QString KMPlayerSource::current () {
     printTree(m_current);
+    KMPlayerProcess * p = m_player->process ();
+    if (p && p->view ())
+        p->view ()->playList ()->updateTree (m_document, m_current);
     return m_current ? m_current->mrl()->src : QString ();
 }
 
