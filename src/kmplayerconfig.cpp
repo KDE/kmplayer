@@ -457,7 +457,7 @@ KDE_NO_EXPORT void Settings::okPressed () {
     if (!view)
         return;
     bool urlchanged = configdialog->m_SourcePageURL->changed;
-    bool playerchanged = true;
+    bool playerchanged = false;
     if (urlchanged) {
         if (configdialog->m_SourcePageURL->url->url ().isEmpty ())
             urlchanged = false;

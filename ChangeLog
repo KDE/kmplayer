@@ -1,4 +1,5 @@
 Changes since version 0.8.4-rc5
+- Debian builds now a kmplayer-i18n package too
 - Controlpanel uses paletteForegroundColor for drawing
 - Added a volume control to controlpanel that let backends control the volume
   (unlike the slider in menu, which uses kmix) + two actions for shortcut
