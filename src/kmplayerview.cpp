@@ -356,7 +356,7 @@ KMPlayerControlPanel::KMPlayerControlPanel (QWidget * parent) : QWidget (parent)
     m_posSlider = new QSlider (Qt::Horizontal, this);
     m_posSlider->setEnabled (false);
     m_buttonbox->addWidget (m_posSlider);
-    enablePositionSlider (false, true);
+    enablePositionSlider (true);
     m_popupMenu = new QPopupMenu (this);
     m_playerMenu = new QPopupMenu (this);
     m_playerMenu->setEnabled (false);
