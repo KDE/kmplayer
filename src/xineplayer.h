@@ -29,6 +29,7 @@ public:
     KXinePlayer (int argc, char ** argv);
     ~KXinePlayer ();
     void setURL (const QString & url);
+    void finished ();
 public slots:
     void play ();
     void stop ();

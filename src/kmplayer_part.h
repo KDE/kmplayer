@@ -37,6 +37,7 @@ class KMPlayer;
 class KMPlayerProcess;
 class MPlayer;
 class MEncoder;
+class Xine;
 class KMPlayerSettings;
 class KInstance;
 class KConfig;
@@ -99,7 +100,6 @@ public:
     virtual bool hasLength ();
 
     void setURL (const KURL & url);
-    const KURL & url () const { return m_url; }
 public slots:
     virtual void init ();
     virtual void activate ();
@@ -108,7 +108,6 @@ public slots:
     virtual void finished ();
 private:
     QValueList <KURL> m_urls;
-    KURL m_url;
     KURL m_urlother;
     bool isreference;
     bool foundnonreference;
@@ -125,7 +124,6 @@ public:
 
     //void setURL (const KURL & url) { m_url = url; }
     void setURL (const KURL &);
-    KURL url () const { return m_url; }
 public slots:
     virtual void init ();
     virtual void activate ();
@@ -133,7 +131,6 @@ public slots:
     virtual void play ();
     virtual void finished ();
 private:
-    KURL m_url;
     bool m_finished;
 };
 
@@ -165,6 +162,7 @@ public:
     KMPlayerProcess * process () const { return m_process; }
     MPlayer * mplayer () const { return m_mplayer; }
     MEncoder * mencoder () const { return m_mencoder; }
+    Xine * xine () const { return m_xine; }
     KMPlayerURLSource * urlSource () const { return m_urlsource; }
     KMPlayerHRefSource * hrefSource () const { return m_hrefsource; }
     bool autoPlay () const { return m_autoplay; }
@@ -214,6 +212,7 @@ private:
     KMPlayerProcess * m_process;
     MPlayer * m_mplayer;
     MEncoder * m_mencoder;
+    Xine * m_xine;
     KMPlayerURLSource * m_urlsource;
     KMPlayerHRefSource * m_hrefsource;
     KMPlayerBrowserExtension * m_browserextension;

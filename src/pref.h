@@ -198,6 +198,7 @@ public:
     ~KMPlayerPrefSourcePageURL () {}
 
     QLineEdit *url;
+    QComboBox * backend;
 private slots:
     void slotBrowse ();
 };

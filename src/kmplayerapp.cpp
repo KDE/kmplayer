@@ -782,6 +782,7 @@ bool KMPlayerDVDSource::processOutput (const QString & str) {
 }
 
 void KMPlayerDVDSource::activate () {
+    m_player->setProcess (m_player->mplayer ());
     m_start_play = m_player->settings ()->playdvd;
     langRegExp.setPattern (m_player->settings ()->langpattern);
     subtitleRegExp.setPattern (m_player->settings ()->subtitlespattern);
@@ -929,6 +930,7 @@ bool KMPlayerVCDSource::processOutput (const QString & str) {
 }
 
 void KMPlayerVCDSource::activate () {
+    m_player->setProcess (m_player->mplayer ());
     m_start_play = m_player->settings ()->playvcd;
     trackRegExp.setPattern (m_player->settings ()->trackspattern);
     m_current_title = -1;
@@ -1016,6 +1018,7 @@ bool KMPlayerPipeSource::isSeekable () {
 }
 
 void KMPlayerPipeSource::activate () {
+    m_player->setProcess (m_player->mplayer ());
     init ();
     play ();
     app->slotStatusMsg (i18n ("Ready."));
@@ -1065,6 +1068,7 @@ KMPlayerTVSource::~KMPlayerTVSource () {
 }
 
 void KMPlayerTVSource::activate () {
+    m_player->setProcess (m_player->mplayer ());
     init ();
     if (m_player->settings ()->showbroadcastbutton)
         static_cast <KMPlayerView*> (m_player->view())->broadcastButton ()->show ();

@@ -215,6 +215,7 @@ static const char * strPlayVCD = "Immediately Play VCD";
 static const char * strVCDDevice = "VCD Device";
 static const char * strTrackPattern = "VCD Tracks";
 static const char * strAlwaysBuildIndex = "Always build index";
+static const char * strUrlBackend = "URL Backend";
 // postproc thingies
 static const char * strPPGroup = "Post processing options";
 static const char * strPostProcessing = "Post processing";
@@ -318,6 +319,7 @@ void KMPlayerSettings::readConfig () {
     vcddevice = m_config->readEntry (strVCDDevice, "/dev/cdrom");
     videodriver = m_config->readNumEntry (strVoDriver, VDRIVER_XV_INDEX);
     audiodriver = m_config->readNumEntry (strAoDriver, 0);
+    urlbackend = m_config->readEntry (strUrlBackend, "mplayer");
     view->setUseArts (audiodriver == ADRIVER_ARTS_INDEX);
     additionalarguments = m_config->readEntry (strAddArgs, "");
     mencoderarguments = m_config->readEntry (strMencoderArgs, "-oac copy -ovc copy");
@@ -470,6 +472,7 @@ void KMPlayerSettings::show () {
 
     configdialog->m_GeneralPageOutput->videoDriver->setCurrentItem (videodriver);
     configdialog->m_GeneralPageOutput->audioDriver->setCurrentItem (audiodriver);
+    configdialog->m_SourcePageURL->backend->setCurrentText (urlbackend);
 
 
     if (cachesize > 0)
@@ -553,6 +556,7 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strSeekTime, m_player->seekTime ());
     m_config->writeEntry (strVoDriver, videodriver);
     m_config->writeEntry (strAoDriver, audiodriver);
+    m_config->writeEntry (strUrlBackend, urlbackend);
     m_config->writeEntry (strAddArgs, additionalarguments);
     m_config->writeEntry (strCacheSize, cachesize);
     m_config->writeEntry (strShowControlButtons, showbuttons);
@@ -733,6 +737,7 @@ void KMPlayerSettings::okPressed () {
 
     videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentItem();
     audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentItem();
+    urlbackend = configdialog->m_SourcePageURL->backend->currentText ();
     view->setUseArts(audiodriver == ADRIVER_ARTS_INDEX);
     //postproc
     postprocessing = configdialog->m_OPPagePostproc->postProcessing->isChecked();

@@ -31,6 +31,7 @@ class KProcess;
 class KMPlayer;
 class KMPlayerSource;
 class KMPlayerCallback;
+class KMPlayerBackend_stub;
 
 class KMPlayerProcess : public QObject {
     Q_OBJECT
@@ -52,7 +53,7 @@ signals:
     void output (const QString & msg);
 public slots:
     virtual bool play () = 0;
-    virtual bool stop () = 0;
+    virtual bool stop ();
     virtual bool pause ();
     virtual bool seek (int pos, int absolute);
     virtual bool volume (int pos, int absolute);
@@ -140,8 +141,30 @@ public:
     virtual void setPlaying ();
     virtual void setStarted ();
     virtual void setMovieParams (int length, int width, int height, float aspect);
+signals:
+    void running ();
 protected:
     KMPlayerCallback * m_callback;
+    QStringList m_urls;
+protected slots:
+    void emitRunning () { emit running (); }
+};
+
+class Xine : public KMPlayerCallbackProcess {
+    Q_OBJECT
+public:
+    Xine (KMPlayer * player);
+    ~Xine ();
+    QWidget * widget ();
+public slots:
+    bool play ();
+    bool stop ();
+    void setFinished ();
+private slots:
+    void running ();
+    void processStopped (KProcess *);
+private:
+    KMPlayerBackend_stub * m_backend;
 };
 
 class FFMpeg : public KMPlayerProcess {

@@ -121,6 +121,7 @@ public:
     QString subtitlespattern;
     QString chapterspattern;
     QString trackspattern;
+    QString urlbackend;
 signals:
     void configChanged ();
 public slots:

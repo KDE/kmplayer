@@ -23,6 +23,8 @@
 #include <qfile.h>
 #include <qtimer.h>
 
+#include <dcopobject.h>
+#include <dcopclient.h>
 #include <kprocess.h>
 #include <kdebug.h>
 #include <kprocctrl.h>
@@ -30,12 +32,14 @@
 #include <kfiledialog.h>
 #include <kmessagebox.h>
 #include <klocale.h>
+#include <kapplication.h>
 
 #include "kmplayer_part.h"
 #include "kmplayerprocess.h"
 #include "kmplayersource.h"
 #include "kmplayerconfig.h"
 #include "kmplayer_callback.h"
+#include "kmplayer_backend_stub.h"
 
 KMPlayerProcess::KMPlayerProcess (KMPlayer * player)
     : m_player (player), m_source (0L), m_process (0L) {}
@@ -81,6 +85,21 @@ bool KMPlayerProcess::contrast (int /*pos*/, int /*absolute*/) {
 
 bool KMPlayerProcess::brightness (int /*pos*/, int /*absolute*/) {
     return false;
+}
+
+bool KMPlayerProcess::stop () {
+    do {
+        m_process->kill (SIGTERM);
+        KProcessController::theKProcessController->waitForProcessExit (1);
+        if (!m_process->isRunning ())
+            break;
+        m_process->kill (SIGKILL);
+        KProcessController::theKProcessController->waitForProcessExit (1);
+        if (m_process->isRunning ()) {
+            KMessageBox::error (m_player->view (), i18n ("Failed to end Player process."), i18n ("KMPlayer: Error"));
+        }
+    } while (false);
+    return !m_process->isRunning ();
 }
 
 //-----------------------------------------------------------------------------
@@ -172,28 +191,16 @@ bool MPlayer::stop () {
     kdDebug () << "MPlayer::stop ()" << endl;
     if (!source ()) return false;
     if (!m_process || !m_process->isRunning ()) return true;
-    do {
-        if (m_use_slave) {
-            sendCommand (QString ("quit"));
-            KProcessController::theKProcessController->waitForProcessExit (1);
-            if (!m_process->isRunning ())
-                break;
-            m_process->kill (SIGTERM);
-        } else {
-            void (*oldhandler)(int) = signal(SIGTERM, SIG_IGN);
-            ::kill (-1 * ::getpid (), SIGTERM);
-            signal(SIGTERM, oldhandler);
-        }
-        KProcessController::theKProcessController->waitForProcessExit (1);
-        if (!m_process->isRunning ())
-            break;
-        m_process->kill (SIGKILL);
-        KProcessController::theKProcessController->waitForProcessExit (1);
-        if (m_process->isRunning ()) {
-            processStopped (0L); // give up
-            KMessageBox::error (m_player->view (), i18n ("Failed to end MPlayer process."), i18n ("KMPlayer: Error"));
-        }
-    } while (false);
+    if (m_use_slave) {
+        sendCommand (QString ("quit"));
+    } else {
+        void (*oldhandler)(int) = signal(SIGTERM, SIG_IGN);
+        ::kill (-1 * ::getpid (), SIGTERM);
+        signal(SIGTERM, oldhandler);
+    }
+    KProcessController::theKProcessController->waitForProcessExit (1);
+    if (m_process->isRunning () && !MPlayerBase::stop ())
+        processStopped (0L); // give up
     return true;
 }
 
@@ -290,8 +297,7 @@ bool MPlayer::run (const char * args, const char * pipe) {
     printf (" -vo %s", strVideoDriver.lower().ascii());
     *m_process << " -vo " << strVideoDriver.lower().ascii();
 
-    QString strAudioDriver;
-    strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].audiodriver);
+    QString strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].audiodriver);
     if (strAudioDriver != "") {
         printf (" -ao %s", strAudioDriver.lower().ascii());
         *m_process << " -ao " << strAudioDriver.lower().ascii();
@@ -330,7 +336,7 @@ bool MPlayer::run (const char * args, const char * pipe) {
     printf (" -saturation %d", settings->saturation);
     *m_process << " -saturation " << QString::number(settings->saturation);
 
-    printf (" %s", args);
+    printf (" %s\n", args);
     *m_process << " " << args;
 
     QValueList<QCString>::const_iterator it;
@@ -436,22 +442,10 @@ bool MEncoder::play () {
 bool MEncoder::stop () {
     if (!m_process || !m_process->isRunning ())
         return true;
-    do {
-        m_process->kill (SIGINT);
-        KProcessController::theKProcessController->waitForProcessExit (3);
-        if (!m_process->isRunning ())
-            break;
-        m_process->kill (SIGTERM);
-        KProcessController::theKProcessController->waitForProcessExit (1);
-        if (!m_process->isRunning ())
-            break;
-        m_process->kill (SIGKILL);
-        KProcessController::theKProcessController->waitForProcessExit (1);
-        if (m_process->isRunning ()) {
-            processStopped (0L); // give up
-            KMessageBox::error (m_player->view (), i18n ("Failed to end MPlayer process."), i18n ("KMPlayer: Error"));
-        }
-    } while (false);
+    m_process->kill (SIGINT);
+    KProcessController::theKProcessController->waitForProcessExit (3);
+    if (m_process->isRunning ())
+        return MPlayerBase::stop ();
     return true;
 }
 
@@ -503,6 +497,8 @@ KMPlayerCallbackProcess::~KMPlayerCallbackProcess () {
 }
 
 void KMPlayerCallbackProcess::setURL (const QString & url) {
+    kdDebug () << "Reference mrl " << url << endl;
+    m_urls.push_back (url);
 }
 
 void KMPlayerCallbackProcess::setStatusMessage (const QString & msg) {
@@ -512,12 +508,15 @@ void KMPlayerCallbackProcess::setErrorMessage (int code, const QString & msg) {
 }
 
 void KMPlayerCallbackProcess::setFinished () {
+    QTimer::singleShot (0, this, SLOT (emitFinished ()));
 }
 
 void KMPlayerCallbackProcess::setPlaying () {
+    QTimer::singleShot (0, this, SLOT (emitStarted ()));
 }
 
 void KMPlayerCallbackProcess::setStarted () {
+    QTimer::singleShot (0, this, SLOT (emitRunning ()));
 }
 
 void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
@@ -525,6 +524,110 @@ void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
     m_source->setHeight (h);
     m_source->setAspect (a);
     m_source->setLength (len);
+}
+
+//-----------------------------------------------------------------------------
+
+Xine::Xine (KMPlayer * player) : KMPlayerCallbackProcess (player) {
+    connect (this, SIGNAL (running ()), this, SLOT (running ()));
+}
+
+Xine::~Xine () {}
+
+QWidget * Xine::widget () {
+    kdDebug () << "player " << m_player << " view: " << m_player->view() <<endl;
+    return static_cast <KMPlayerView *> (m_player->view())->viewer();
+}
+
+bool Xine::play () {
+    KMPlayerSettings *settings = m_player->settings ();
+    delete m_process;
+    m_process = new KProcess;
+    m_process->setUseShell (true);
+    connect (m_process, SIGNAL (processExited (KProcess *)),
+            this, SLOT (processStopped (KProcess *)));
+    printf ("kxineplayer -wid %lu", (unsigned long) widget ()->winId ());
+    *m_process << "kxineplayer -wid " << QString::number (widget ()->winId ());
+
+    QString strVideoDriver;
+
+    switch( settings->videodriver ){
+        case VDRIVER_XV_INDEX:
+            strVideoDriver = VDRIVER_XV;
+            break;
+        case VDRIVER_X11_INDEX:
+            strVideoDriver = VDRIVER_X11;
+            strVideoDriver.truncate(3);
+            break;
+        case VDRIVER_XVIDIX_INDEX:
+            strVideoDriver = VDRIVER_XVIDIX;
+            break;
+        default:		
+            strVideoDriver = VDRIVER_XV;
+            break;
+    }
+    printf (" -vo %s", strVideoDriver.lower().ascii());
+    *m_process << " -vo " << strVideoDriver.lower().ascii();
+
+    QString strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].audiodriver);
+    if (strAudioDriver != "") {
+        printf (" -ao %s", strAudioDriver.lower().ascii());
+        *m_process << " -ao " << strAudioDriver.lower().ascii();
+    }
+    QString cbname;
+    cbname.sprintf ("%s/%s", QString (kapp->dcopClient ()->appId ()).ascii (),
+                             QString (m_callback->objId ()).ascii ());
+    printf (" -cb %s", cbname.ascii());
+    *m_process << " -cb " << cbname.ascii();
+    KURL url = m_source->url ();
+    QString myurl = KProcess::quote (url.isLocalFile () ? url.path () : url.url ());
+    printf (" %s\n", myurl.ascii ());
+    *m_process << myurl.ascii();
+    fflush (stdout);
+    m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
+    return m_process->isRunning ();
+}
+
+bool Xine::stop () {
+    kdDebug () << "Xine::stop ()" << endl;
+    if (!source ()) return false;
+    if (!m_process || !m_process->isRunning ()) return true;
+    m_backend->quit ();
+    QTime t;
+    t.start ();
+    do {
+        KProcessController::theKProcessController->waitForProcessExit (2);
+    } while (t.elapsed () < 2000 && m_process->isRunning ());
+    kdDebug () << "DCOP quit " << t.elapsed () << endl;
+    if (m_process->isRunning () && !KMPlayerCallbackProcess::stop ())
+        processStopped (0L); // give up
+    return true;
+}
+
+void Xine::setFinished () {
+    kdDebug () << "Xine::finished () " << m_urls.count () << endl;
+    if (m_urls.count ()) {
+        QString url = m_urls.front ();
+        m_urls.pop_front ();
+        //m_source->setURL (KURL (url));
+        m_backend->setURL (url);
+        m_backend->play ();
+    } else {
+        stop ();
+    }
+}
+void Xine::processStopped (KProcess *) {
+    delete m_backend;
+    m_backend = 0L;
+    QTimer::singleShot (0, this, SLOT (emitFinished ()));
+}
+
+void Xine::running () {
+    QString dcopname;
+    dcopname.sprintf ("kxineplayer-%u", m_process->pid ());
+    kdDebug () << "up and running " << dcopname << endl;
+    m_backend = new KMPlayerBackend_stub (dcopname.ascii (), "KMPlayerBackend");
+    m_backend->play ();
 }
 
 //-----------------------------------------------------------------------------

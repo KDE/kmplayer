@@ -26,7 +26,7 @@ kmplayer_SOURCES= dummy.cpp
 
 kxineplayer_LDADD= $(LIB_XINE)
 kxineplayer_CFLAGS= $(CFLAGS_XINE)
-kxineplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH) -lqt-mt -lDCOP
+kxineplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH) -$(LIB_QT) -lDCOP
 kxineplayer_SOURCES= xineplayer.cpp kmplayer_backend.skel kmplayer_callback.stub
 
 CLEANFILES = dummy.cpp

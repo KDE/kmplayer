@@ -92,6 +92,7 @@ KMPlayer::KMPlayer (QWidget * parent, KConfig * config)
    m_process (0L),
    m_mplayer (new MPlayer (this)),
    m_mencoder (new MEncoder (this)),
+   m_xine (new Xine (this)),
    m_urlsource (new KMPlayerURLSource (this)),
    m_hrefsource (new KMPlayerHRefSource (this)),
    m_liveconnectextension (0L),
@@ -113,6 +114,7 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
    m_process (0L),
    m_mplayer (new MPlayer (this)),
    m_mencoder (new MEncoder (this)),
+   m_xine (new Xine (this)),
    m_urlsource (new KMPlayerURLSource (this)),
    m_hrefsource (new KMPlayerHRefSource (this)),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
@@ -215,8 +217,10 @@ KMediaPlayer::View* KMPlayer::view () {
 void KMPlayer::setProcess (KMPlayerProcess * process) {
     if (m_process == process)
         return;
+    KMPlayerSource * source = m_urlsource;
     if (m_process) {
         m_process->stop ();
+        source = m_process->source ();
         disconnect (m_process, SIGNAL (started ()),
                     this, SLOT (processStarted ()));
         disconnect (m_process, SIGNAL (finished ()),
@@ -231,6 +235,7 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
                     this, SLOT (processOutput (const QString &)));
     }
     m_process = process;
+    m_process->setSource (source);
     connect (m_process, SIGNAL (started ()), this, SLOT (processStarted ()));
     connect (m_process, SIGNAL (finished ()), this, SLOT (processFinished ()));
     connect (m_process, SIGNAL (positionChanged (int)),
@@ -664,6 +669,10 @@ void KMPlayerSource::init () {
     m_recordCommand.truncate (0);
 }
 
+const KURL & KMPlayerSource::url () const {
+    return m_url;
+}
+
 bool KMPlayerSource::processOutput (const QString & str) {
     if (m_identified)
         return false;
@@ -798,7 +807,8 @@ bool KMPlayerSource::isSeekable () {
 //-----------------------------------------------------------------------------
 
 KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, const KURL & url)
-    : KMPlayerSource (player), m_url (url) {
+    : KMPlayerSource (player) {
+    m_url = url;
     kdDebug () << "KMPlayerURLSource::KMPlayerURLSource" << endl;
 }
 
@@ -819,6 +829,7 @@ bool KMPlayerURLSource::hasLength () {
 
 void KMPlayerURLSource::setURL (const KURL & url) { 
     m_url = url;
+    kdDebug () << "KMPlayerURLSource::setURL:" << url.url () << endl;
     isreference = false;
     m_identified = false;
     m_urls.clear ();
@@ -865,6 +876,10 @@ void KMPlayerURLSource::play () {
     QString args;
     m_recordCommand.truncate (0);
     m_ffmpegCommand.truncate (0);
+    if (m_player->settings ()->urlbackend == QString ("Xine")) {
+        QTimer::singleShot (0, m_player, SLOT (play ()));
+        return;
+    }
     int cache = m_player->settings ()->cachesize;
     if (url.isLocalFile () || cache <= 0)
         args.sprintf ("-slave ");
@@ -889,6 +904,13 @@ void KMPlayerURLSource::play () {
 }
 
 void KMPlayerURLSource::activate () {
+    if (m_player->settings ()->urlbackend == QString ("Xine")) {
+        m_player->setProcess (m_player->xine ());
+        if (!url ().isEmpty ())
+            QTimer::singleShot (0, m_player, SLOT (play ()));
+        return;
+    } else
+        m_player->setProcess (m_player->mplayer ());
     init ();
     bool loop = m_player->settings ()->loop;
     m_player->settings ()->loop = false;
@@ -961,6 +983,7 @@ void KMPlayerHRefSource::play () {
 }
 
 void KMPlayerHRefSource::activate () {
+    m_player->setProcess (m_player->mplayer ());
     if (m_finished) {
         QTimer::singleShot (0, this, SLOT (finished ()));
         return;

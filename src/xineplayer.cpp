@@ -40,7 +40,6 @@ public:
     KXinePlayerPrivate()
        : vo_driver ("auto"),
          ao_driver ("auto"),
-         callback (0L),
          window_created (false) {
     }
     char configfile[2048];
@@ -48,11 +47,11 @@ public:
     char * vo_driver;
     char * ao_driver;
     QString mrl;
-    KMPlayerCallback_stub * callback;
     bool window_created;
 };
 
 KXinePlayer * xineapp;
+KMPlayerCallback_stub * callback;
 QMutex mutex;
 
 static xine_t              *xine;
@@ -70,6 +69,7 @@ static double               pixel_aspect;
 
 static int                  running = 0;
 
+extern "C" {
 
 static void dest_size_cb(void *data, int video_width, int video_height, double video_pixel_aspect,
         int *dest_width, int *dest_height, double *dest_pixel_aspect)  {
@@ -101,20 +101,35 @@ static void frame_output_cb(void *data, int video_width, int video_height,
 static void event_listener(void *user_data, const xine_event_t *event) {
     switch(event->type) { 
         case XINE_EVENT_UI_PLAYBACK_FINISHED:
-            //xineapp->stop ();
-            QTimer::singleShot (0, xineapp, SLOT (stop ()));
+            printf ("XINE_EVENT_UI_PLAYBACK_FINISHED\n");
+            xineapp->lock ();
+            xineapp->finished ();
+            xineapp->unlock ();
             break;
 
         case XINE_EVENT_PROGRESS:
             {
                 xine_progress_data_t *pevent = (xine_progress_data_t *) event->data;
-
                 printf("%s [%d%%]\n", pevent->description, pevent->percent);
             }
+            break;
+        case XINE_EVENT_MRL_REFERENCE:
+            printf("XINE_EVENT_MRL_REFERENCE %s\n", 
+            ((xine_mrl_reference_data_t*)event->data)->mrl);
+            if (callback) {
+                xineapp->lock ();
+                callback->setURL (QString (((xine_mrl_reference_data_t*)event->data)->mrl));
+                xineapp->unlock ();
+            }
+            break;
+        case XINE_EVENT_FRAME_FORMAT_CHANGE:
+            printf ("XINE_EVENT_FRAME_FORMAT_CHANGE\n");
             break;
 
     }
 }
+
+} // extern "C"
 
 KMPlayerBackend::KMPlayerBackend ()
     : DCOPObject (QCString ("KMPlayerBackend")) {
@@ -156,7 +171,10 @@ void KMPlayerBackend::volume (int v, bool absolute) {
 }
 
 void KMPlayerBackend::quit () {
-    qApp->quit ();
+    delete callback;
+    callback = 0L;
+    xineapp->stop ();
+    QTimer::singleShot (10, qApp, SLOT (quit ()));
 }
 
 KXinePlayer::KXinePlayer (int _argc, char ** _argv)
@@ -172,9 +190,11 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
         } else if (!strcmp (argv ()[i], "-cb")) {
             QString str = argv ()[++i];
             int pos = str.find ('/');
-            if (pos > -1)
-                d->callback = new KMPlayerCallback_stub 
+            if (pos > -1) {
+                printf ("callback is %s %s\n", str.left (pos).ascii (), str.mid (pos + 1).ascii ());
+                callback = new KMPlayerCallback_stub 
                     (str.left (pos).ascii (), str.mid (pos + 1).ascii ());
+            }
         } else 
             d->mrl = QString (argv ()[i]);
     }
@@ -189,9 +209,7 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
         d->window_created = true;
     }
     XSelectInput (display, wid,
-                  (ExposureMask | KeyPressMask | StructureNotifyMask | StructureNotifyMask));
-    if (d->callback)
-        d->callback->started ();
+                  (ExposureMask | KeyPressMask | StructureNotifyMask | SubstructureNotifyMask));
 }
 
 KXinePlayer::~KXinePlayer () {
@@ -205,7 +223,14 @@ void KXinePlayer::setURL (const QString & url) {
 }
 
 void KXinePlayer::play () {
+    if (running) return;
+    XWindowAttributes attr;
+    XGetWindowAttributes(display, wid, &attr);
+    width = attr.width;
+    height = attr.height;
+    printf ("trying lock 1\n");
     mutex.lock ();
+    printf ("lock 1\n");
     xine = xine_new();
     sprintf(d->configfile, "%s%s", xine_get_homedir(), "/.xine/config2");
     xine_config_load(xine, d->configfile);
@@ -251,41 +276,53 @@ void KXinePlayer::play () {
         mutex.unlock ();
         return;
     }
-    running = 1;
     printf("video info %d,%d len %d\n", xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_WIDTH), xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_HEIGHT), xine_get_stream_info(stream, XINE_STREAM_INFO_FRAME_DURATION));
     if (!xine_play (stream, 0, 0)) {
         printf("Unable to play mrl '%s'\n", d->mrl.ascii ());
         mutex.unlock ();
         return;
     }
+    running = 1;
     mutex.unlock ();
 }
 
 void KXinePlayer::stop () {
+    if (!running) return;
+    printf("stop\n");
+    printf ("trying lock 2\n");
     mutex.lock ();
+    printf ("lock 2\n");
     xine_close (stream);
     running = 0;
     xine_event_dispose_queue (event_queue);
     xine_dispose (stream);
+    stream = 0L;
     xine_close_audio_driver (xine, ao_port);  
     xine_close_video_driver (xine, vo_port);  
     xine_exit (xine);
     mutex.unlock ();
 
     Window root;
-    unsigned int u, w, h;
-    int x, y;
     XLockDisplay (display);
-    XGetGeometry (display, wid, &root, &x, &y, &w, &h, &u, &u);
-    XSetForeground (display, DefaultGC (display, screen),
-                    BlackPixel (display, screen));
-    XFillRectangle (display, wid, DefaultGC (display, screen), x, y, w, h);
     if (d->window_created) {
         printf ("unmap %lu\n", wid);
         XUnmapWindow (display,  wid);
+    } else {
+        printf ("painting\n");
+        unsigned int u, w, h;
+        int x, y;
+        XGetGeometry (display, wid, &root, &x, &y, &w, &h, &u, &u);
+        XSetForeground (display, DefaultGC (display, screen),
+                BlackPixel (display, screen));
+        XFillRectangle (display, wid, DefaultGC (display, screen), x, y, w, h);
     }
     XSync (display, False);
     XUnlockDisplay (display);
+    if (callback) callback->finished ();
+}
+
+void KXinePlayer::finished () {
+    QTimer::singleShot (10, this, SLOT (stop ()));
 }
 
 class XEventThread : public QThread {
@@ -294,6 +331,8 @@ public:
         while (true) {
             XEvent   xevent;
             XNextEvent(display, &xevent);
+            if (xevent.type < LASTEvent)
+                printf ("event %d\n", xevent.type);
             switch(xevent.type) {
                 case ClientMessage:
                     if (xevent.xclient.format == 8 &&
@@ -353,10 +392,13 @@ public:
                     break;
 
                 case Expose:
-                    if(xevent.xexpose.count != 0)
+                    if(xevent.xexpose.count != 0 || !stream)
                         break;
+                    printf ("trying lock 3\n");
                     mutex.lock ();
-                    xine_gui_send_vo_data(stream, XINE_GUI_SEND_EXPOSE_EVENT, &xevent);
+                    printf ("lock 3\n");
+                    if (stream)
+                        xine_gui_send_vo_data(stream, XINE_GUI_SEND_EXPOSE_EVENT, &xevent);
                     mutex.unlock ();
                     break;
 
@@ -407,20 +449,24 @@ int main(int argc, char **argv) {
     XEventThread eventThread;
     eventThread.start ();
 
+    if (callback) callback->started ();
     xineapp->exec ();
 
     XLockDisplay(display);
     XClientMessageEvent ev = {
-        ClientMessage, 0, true, display, wid, 0, 8, "quit_now"
+        ClientMessage, 0, true, display, wid, 
+        XInternAtom (display, "XINE", false), 8, "quit_now"
     };
-    XSendEvent (display, wid, FALSE, NoEventMask, (XEvent *) & ev);
+    XSendEvent (display, wid, FALSE, StructureNotifyMask, (XEvent *) & ev);
     XFlush (display);
-    XLockDisplay(display);
-    eventThread.wait ();
+    XUnlockDisplay(display);
+    eventThread.wait (500);
 
     delete xineapp;
 
+    printf ("closing display\n");
     XCloseDisplay (display);
+    printf ("done\n");
     return 0;
 }
 

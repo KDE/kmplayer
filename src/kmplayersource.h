@@ -23,6 +23,7 @@
 
 #include <qobject.h>
 #include <qstring.h>
+#include <kurl.h>
 
 class KMPlayer;
 
@@ -44,6 +45,7 @@ public:
     void setHeight (int h) { m_height = h; }
     void setAspect (float a) { m_aspect = a; }
     void setLength (int len) { m_length = len; }
+    virtual const KURL & url () const;
     virtual QString recordCommand ();
     virtual QString ffmpegCommand ();
 public slots:
@@ -55,6 +57,7 @@ protected:
     QString m_recordCommand;
     QString m_ffmpegCommand;
     bool m_identified;
+    KURL m_url;
 private:
     int m_width;
     int m_height;

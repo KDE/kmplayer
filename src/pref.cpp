@@ -198,10 +198,16 @@ KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
     QHBoxLayout *buttonlayout = new QHBoxLayout ();
     QLabel *urlLabel = new QLabel (i18n ("URL:"), this, 0);
     url = new QLineEdit ("", this, 0);
+    backend = new QComboBox (this);
+    QLabel *backendLabel = new QLabel (i18n ("Use Movie Player:"), this, 0);
+    backend->insertItem (QString ("MPlayer"), 0);
+    backend->insertItem (QString ("Xine"), 1);
     QPushButton * browse = new QPushButton (i18n ("Browse..."), this);
     connect (browse, SIGNAL (clicked ()), this, SLOT (slotBrowse ()));
     layout->addWidget (urlLabel);
     layout->addWidget (url);
+    layout->addWidget (backendLabel);
+    layout->addWidget (backend);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
     buttonlayout->addWidget (browse);
