@@ -42,7 +42,7 @@
 #include "kmplayer_backend_stub.h"
 
 KMPlayerProcess::KMPlayerProcess (KMPlayer * player)
-    : m_player (player), m_source (0L), m_process (0L) {}
+    : QObject (player), m_player (player), m_source (0L), m_process (0L) {}
 
 KMPlayerProcess::~KMPlayerProcess () {
     delete m_process;
