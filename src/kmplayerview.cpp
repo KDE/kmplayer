@@ -880,10 +880,12 @@ bool KMPlayerViewer::x11Event (XEvent * e) {
         case ColormapNotify:
             printf ("colormap notify\n");
             return true;
-        /*case MapNotify:
-            show();
-            return true;
-        case ConfigureNotify:
+        case MapNotify:
+            if (e->xmap.window == winId ()) {
+                show();
+                return true;
+            }
+        /*case ConfigureNotify:
             break;
             //return true;*/
         default:
