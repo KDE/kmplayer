@@ -489,8 +489,15 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
                             v->viewer ()->setAspect (m_source->aspect ());
                     }
                 } else if (m_startRegExp.search (out) > -1) {
-                    if (m_player->settings ()->mplayerpost090)
+                    if (m_player->settings ()->mplayerpost090) {
+                        if (!m_tmpURL.isEmpty () && m_tmpURL != m_source->url ().url ()) {
+                            m_source->referenceUrls ().insert (m_source->nextUrl (), m_tmpURL);
+                            m_tmpURL.truncate (0);
+                        }
+                        m_source->next ();
+                        m_source->first ();
                         source ()->setIdentified ();
+                    }
                     emit startPlaying ();
                 }
             }
