@@ -871,7 +871,7 @@ bool KMPlayerViewer::x11Event (XEvent * e) {
         case UnmapNotify:
             if (e->xunmap.window == winId ()) {
                 emit aboutToPlay ();
-                hide();
+                //hide();
             }
             break;
         case XKeyPress:
@@ -880,9 +880,9 @@ bool KMPlayerViewer::x11Event (XEvent * e) {
         case ColormapNotify:
             printf ("colormap notify\n");
             return true;
-        case MapNotify:
+        /*case MapNotify:
             if (e->xmap.window == winId () && !isVisible ())
-                show();
+                show();*/
         /*case ConfigureNotify:
             break;
             //return true;*/
