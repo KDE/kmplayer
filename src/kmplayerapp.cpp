@@ -145,7 +145,7 @@ void KMPlayerApp::initActions()
     viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), actionCollection (), "view_keep_ratio");
     viewShowConsoleOutput = new KToggleAction (i18n ("&Show Console Output"), 0, this, SLOT (showConsoleOutput ()), actionCollection (), "view_show_console");
 #if KDE_IS_VERSION(3,1,90)
-    /*KAction *fullscreenact =*/ KStdAction::fullScreen( this, SLOT(fullScreen ()), actionCollection () );
+    /*KAction *fullscreenact =*/ KStdAction::fullScreen( this, SLOT(fullScreen ()), actionCollection (), 0 );
 #else
     /*KAction *fullscreenact =*/ new KAction (i18n("&Full Screen"), 0, 0, this, SLOT(fullScreen ()), actionCollection (), "fullscreen");
 #endif
