@@ -204,7 +204,7 @@ public:
      * paints background if background-color attr. is set and afterwards passes
      * the painter of attached_element's runtime
      */
-    void paint (QPainter & p);
+    void paint (QPainter & p, int x, int y, int h, int w);
     /**
      * repaints region, calls update(x,y,w,h) on view
      */

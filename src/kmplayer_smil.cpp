@@ -98,7 +98,12 @@ KDE_NO_CDTOR_EXPORT void RegionNode::clearAll () {
     repaint ();
 }
 
-KDE_NO_EXPORT void RegionNode::paint (QPainter & p) {
+KDE_NO_EXPORT
+void RegionNode::paint (QPainter & p, int _x, int _y, int _h, int _w) {
+    if ((x + w < _x || _x + _w < x) && (y + h < _y || _y + _h < y))
+        return;
+    p.setClipRect (x, y, w, h, QPainter::CoordPainter);
+
     if (regionElement) {
         ElementRuntimePtr rt = regionElement->getRuntime ();
         if (rt)
@@ -124,10 +129,11 @@ KDE_NO_EXPORT void RegionNode::paint (QPainter & p) {
         for (RegionNodePtr r = firstChild; r; r = r->nextSibling)
             if (r->z_order == cur_index) {
                 kdDebug () << "Painting " << cur_index << endl;
-                r->paint (p);
+                r->paint (p, x, y, w, h);
             }
         done_index = cur_index;
     } while (true);
+    p.setClipping (false);
 }
 
 KDE_NO_EXPORT void RegionNode::repaint () {

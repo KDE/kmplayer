@@ -353,7 +353,7 @@ KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
             m_painter->begin (m_paint_buffer);
             m_painter->translate(-ex, -ey-py);
             m_painter->fillRect (ex, ey+py, ew, ph, QBrush (paletteBackgroundColor ()));
-            rootLayout->paint (*m_painter);
+            rootLayout->paint (*m_painter, ex, ey+py, ew, ph);
             m_painter->end();
             p.drawPixmap (ex, ey+py, *m_paint_buffer, 0, 0, ew, ph);
             py += PAINT_BUFFER_HEIGHT;
