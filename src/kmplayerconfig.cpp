@@ -439,11 +439,18 @@ void KMPlayerSettings::okPressed () {
             if (KURL::fromPathOrURL (configdialog->m_SourcePageURL->url->url ()).isLocalFile () ||
                     KURL::isRelativeURL (configdialog->m_SourcePageURL->url->url ())) {
                 QFileInfo fi (configdialog->m_SourcePageURL->url->url ());
+                int hpos = configdialog->m_SourcePageURL->url->url ().findRev ('#');
+                QString xine_directives ("");
+                while (!fi.exists () && hpos > -1) {
+                    xine_directives = configdialog->m_SourcePageURL->url->url ().mid (hpos);
+                    fi.setFile (configdialog->m_SourcePageURL->url->url ().left (hpos));
+                    hpos = configdialog->m_SourcePageURL->url->url ().findRev ('#', hpos-1);
+                }
                 if (!fi.exists ()) {
                     urlchanged = false;
                     KMessageBox::error (m_player->view (), i18n ("File %1 does not exist.").arg (configdialog->m_SourcePageURL->url->url ()), i18n ("Error"));
                 } else
-                    configdialog->m_SourcePageURL->url->setURL (fi.absFilePath ());
+                    configdialog->m_SourcePageURL->url->setURL (fi.absFilePath () + xine_directives);
             }
             if (urlchanged &&
                     !configdialog->m_SourcePageURL->sub_url->url ().isEmpty () && 
