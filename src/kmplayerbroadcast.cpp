@@ -425,7 +425,7 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::write (KConfig * config) {
 }
 
 KDE_NO_EXPORT void KMPlayerBroadcastConfig::read (KConfig * config) {
-    std::for_each (ffserversettingprofiles.begin (), ffserversettingprofiles.end (), KMPlayer::Deleter<FFServerSetting>);
+    std::for_each (ffserversettingprofiles.begin (), ffserversettingprofiles.end (), KMPlayer::Deleter<FFServerSetting>());
     ffserversettingprofiles.clear ();
     config->setGroup (strBroadcast);
     ffserversettings = config->readListEntry (strFFServerCustomSetting, ';');

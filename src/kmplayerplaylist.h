@@ -63,6 +63,7 @@ class Mrl;
 class RegionNode;
 class ElementRuntime;
 class ImageDataPrivate;
+class NodeList;
 
 typedef SharedPtr<Element> ElementPtr;
 typedef WeakPtr<Element> ElementPtrW;
@@ -70,64 +71,6 @@ typedef SharedPtr<RegionNode> RegionNodePtr;
 typedef WeakPtr<RegionNode> RegionNodePtrW;
 typedef SharedPtr<ElementRuntime> ElementRuntimePtr;
 
-
-/**
- * Node for layout hierarchy as found in SMIL document
- */
-class RegionNode {
-public:
-    RegionNode (ElementPtr e);
-    KDE_NO_CDTOR_EXPORT ~RegionNode () {}
-    /**
-     * paints background if background-color attr. is set and afterwards passes
-     * the painter of attached_element's runtime
-     */
-    void paint (QPainter & p);
-    /**
-     * user clicked w/ the mouse on this region
-     */
-    void pointerClicked ();
-    /**
-     * user entered w/ the mouse this region
-     */
-    void pointerEntered ();
-    /**
-     * user left w/ the mouse this region
-     */
-    void pointerLeft ();
-    /**
-     * boolean for check if pointerEntered/pointerLeft should be called by View
-     */
-    bool has_mouse;
-    /**
-     * (Scaled) Dimensions set by viewer
-     */
-    int x, y, w, h;
-    /**
-     * Corresponding DOM node (SMIL::Region or SMIL::RootLayout)
-     */
-    ElementPtrW regionElement;
-    /**
-     * Attached Element for this region (only one max. ATM)
-     */
-    ElementPtrW attached_element;
-    /**
-     * Make this region and its sibling 0
-     */
-    void clearAll ();
-
-    RegionNodePtr nextSibling;
-    RegionNodePtr firstChild;
-};
-
-class KMPLAYER_EXPORT NodeList {
-    ElementPtrW first_element;
-public:
-    NodeList (ElementPtr e) : first_element (e) {}
-    ~NodeList () {}
-    int length ();
-    ElementPtr item (int i) const;
-};
 
 class KMPLAYER_EXPORT Element {
     friend class DocumentBuilder;
@@ -213,8 +156,8 @@ public:
     KDE_NO_EXPORT ElementPtr lastChild () const { return m_last_child; }
     KDE_NO_EXPORT ElementPtr nextSibling () const { return m_next; }
     KDE_NO_EXPORT ElementPtr previousSibling () const { return m_prev; }
-    KDE_NO_EXPORT NodeList attributes () const { return m_first_attribute; }
-    KDE_NO_EXPORT NodeList childNodes () const { return m_first_child; }
+    KDE_NO_EXPORT NodeList attributes () const;
+    KDE_NO_EXPORT NodeList childNodes () const;
     void setAttribute (const QString & name, const QString & value);
     QString getAttribute (const QString & name);
     /**
@@ -241,6 +184,64 @@ public:
     void setState (State nstate);
 private:
     unsigned int defer_tree_version;
+};
+
+/**
+ * Node for layout hierarchy as found in SMIL document
+ */
+class RegionNode {
+public:
+    RegionNode (ElementPtr e);
+    KDE_NO_CDTOR_EXPORT ~RegionNode () {}
+    /**
+     * paints background if background-color attr. is set and afterwards passes
+     * the painter of attached_element's runtime
+     */
+    void paint (QPainter & p);
+    /**
+     * user clicked w/ the mouse on this region
+     */
+    void pointerClicked ();
+    /**
+     * user entered w/ the mouse this region
+     */
+    void pointerEntered ();
+    /**
+     * user left w/ the mouse this region
+     */
+    void pointerLeft ();
+    /**
+     * boolean for check if pointerEntered/pointerLeft should be called by View
+     */
+    bool has_mouse;
+    /**
+     * (Scaled) Dimensions set by viewer
+     */
+    int x, y, w, h;
+    /**
+     * Corresponding DOM node (SMIL::Region or SMIL::RootLayout)
+     */
+    ElementPtrW regionElement;
+    /**
+     * Attached Element for this region (only one max. ATM)
+     */
+    ElementPtrW attached_element;
+    /**
+     * Make this region and its sibling 0
+     */
+    void clearAll ();
+
+    RegionNodePtr nextSibling;
+    RegionNodePtr firstChild;
+};
+
+class KMPLAYER_EXPORT NodeList {
+    ElementPtrW first_element;
+public:
+    NodeList (ElementPtr e) : first_element (e) {}
+    ~NodeList () {}
+    int length ();
+    ElementPtr item (int i) const;
 };
 
 template <class T>
@@ -439,6 +440,9 @@ public:
 };
 
 void readXML (ElementPtr root, QTextStream & in, const QString & firstline);
+
+inline KDE_NO_EXPORT NodeList Element::attributes () const { return m_first_attribute; }
+inline KDE_NO_EXPORT NodeList Element::childNodes () const { return m_first_child; }
 
 }  // KMPlayer namespace
 

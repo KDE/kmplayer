@@ -57,9 +57,11 @@ public:
 };
 
 template <class T>
-void Deleter (T * t) {
-    delete t;
-}
+struct Deleter {
+    void operator ()(T * t) {
+        delete t;
+    }
+};
 
 class KMPLAYER_EXPORT PreferencesPage {
 public:

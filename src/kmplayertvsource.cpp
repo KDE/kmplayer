@@ -458,7 +458,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::sync (bool fromUI) {
         m_configpage->driver->setText (tvdriver);
         deleteddevices = (new KMPlayer::GenericMrl (m_document))->self ();
         addeddevices = (new KMPlayer::GenericMrl (m_document))->self ();
-        std::for_each (m_devicepages.begin(), m_devicepages.end(), KMPlayer::Deleter<QFrame>);
+        std::for_each (m_devicepages.begin(), m_devicepages.end(), KMPlayer::Deleter<QFrame>());
         m_devicepages.clear ();
         for (KMPlayer::ElementPtr dp = m_document->firstChild (); dp; dp = dp->nextSibling ())
             addTVDevicePage (KMPlayer::convertNode <TVDevice> (dp));
