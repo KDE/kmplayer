@@ -417,7 +417,9 @@ KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidget *parent) : 
 	videoDriver->insertItem(VDRIVER_XV, VDRIVER_XV_INDEX);
 	videoDriver->insertItem(VDRIVER_X11, VDRIVER_X11_INDEX);
 	videoDriver->insertItem(VDRIVER_XVIDIX, VDRIVER_XVIDIX_INDEX);
-	QToolTip::add(videoDriver, i18n("Sets video driver, currently only XVideo and X11 work. Unless\nyou haven't got XVideo compatible drivers you should X11, which is much slower."));
+// by mok: remove this comment when you check if i18n fix is OK.
+//	QToolTip::add(videoDriver, i18n("Sets video driver, currently only XVideo and X11 work. Unless\nyou haven't got XVideo compatible drivers you should X11, which is much slower."));
+	QToolTip::add(videoDriver, i18n("Sets video driver. Recommended is XVideo, or, if it is not supported, X11, which is slower."));
 	childLayout1->addWidget(new QLabel(i18n("Video driver:"),this));
 	childLayout1->addWidget(videoDriver);
 	
