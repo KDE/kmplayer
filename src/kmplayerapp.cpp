@@ -191,7 +191,7 @@ KDE_NO_EXPORT void KMPlayerApp::initView ()
     m_vcdmenu->insertItem (i18n ("&Open VCD"), this, SLOT(openVCD ()), 0,-1, 1);
     m_sourcemenu->popup ()->insertItem (i18n ("&Open Pipe..."), this, SLOT(openPipe ()), 0, -1, 5);
     m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0, true), i18n ("VD&R"), m_vdrmenu, -1, 6);
-    m_vdrmenu->insertItem (i18n ("&Connect"), this, SLOT (openVDR ()));
+    m_vdrmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("connect_established"), KIcon::Small, 0, true), i18n ("&Connect"), this, SLOT (openVDR ()), 0, 0);
     connect (m_player->settings (), SIGNAL (configChanged ()),
              this, SLOT (configChanged ()));
     connect (m_player, SIGNAL (startPlaying ()),

@@ -662,7 +662,8 @@ void KMPlayerSource::setURL (const KURL & url) {
         if (m_document)
             m_document->document ()->dispose ();
         m_document = (new Document (url.url ()))->self ();
-        m_player->updateTree (m_document, m_current);
+        if (m_player->process () && m_player->process ()->source () == this)
+            m_player->updateTree (m_document, m_current);
     }
     m_current = m_document;
 }

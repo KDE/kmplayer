@@ -192,6 +192,8 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     connect (m_socket, SIGNAL (error (int)), this, SLOT (socketError (int)));
     connect (m_player, SIGNAL (startPlaying ()), this, SLOT (processStarted()));
     connect (m_player, SIGNAL (stopPlaying ()), this, SLOT (processStopped ()));
+    m_menu->disconnectItem (0, m_app, SLOT (openVDR ()));
+    m_menu->connectItem (0, this, SLOT (toggleConnected ()));
     KMPlayerControlPanel * panel = m_app->view()->buttonBar ();
     panel->button (KMPlayerControlPanel::button_red)->show ();
     panel->button (KMPlayerControlPanel::button_green)->show ();
@@ -225,6 +227,8 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
     }
     for (int i = 12; i > 0; --i)
         m_menu->removeItemAt (i);
+    m_menu->connectItem (0, m_app, SLOT (openVDR ()));
+    m_menu->disconnectItem (0, this, SLOT (toggleConnected ()));
     processStopped ();
 }
 
@@ -232,7 +236,6 @@ KDE_NO_EXPORT void KMPlayerVDRSource::processStopped () {
     if (m_socket->state () == QSocket::Connected)
         queueCommand ("QUIT\n");
     deleteCommands ();
-    setURL (KURL (QString ("vdr://localhost:%1").arg (tcp_port)));
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::processStarted () {
@@ -245,13 +248,27 @@ KDE_NO_EXPORT void KMPlayerVDRSource::connected () {
     queueCommand (cmd_list_channels);
     killTimer (channel_timer);
     channel_timer = startTimer (3000);
+    m_menu->changeItem (0, KGlobal::iconLoader ()->loadIconSet (QString ("connect_no"), KIcon::Small, 0, true), i18n ("Dis&connect"));
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::disconnected () {
     kdDebug() << "disconnected " << commands << endl;
     deleteCommands ();
-    if (m_player->process ()->source () == this)
+    setURL (KURL (QString ("vdr://localhost:%1").arg (tcp_port)));
+    if (channel_timer && m_player->process ()->source () == this)
         m_player->process ()->stop ();
+    m_menu->changeItem (0, KGlobal::iconLoader ()->loadIconSet (QString ("connect_established"), KIcon::Small, 0, true), i18n ("&Connect"));
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::toggleConnected () {
+    if (m_socket->state () == QSocket::Connected) {
+        queueCommand ("QUIT\n");
+        killTimer (channel_timer);
+        channel_timer = 0;
+    } else {
+        m_socket->connectToHost ("127.0.0.1", tcp_port);
+        commands = new VDRCommand ("connect", commands);
+    }
 }
 
 static struct ReadBuf {

@@ -105,6 +105,7 @@ private slots:
     void socketError (int);
     void processStopped ();
     void processStarted ();
+    void toggleConnected ();
 protected:
     void timerEvent (QTimerEvent *);
 private:

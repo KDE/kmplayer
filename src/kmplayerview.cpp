@@ -975,8 +975,11 @@ void KMPlayerView::addText (const QString & str, bool eol) {
             tmplog = tmplog.mid (pos+1);
         }
     }
-    while (5000 < m_multiedit->paragraphs ())
-        m_multiedit->removeParagraph (0);
+    if (5000 < m_multiedit->paragraphs ()) {
+        m_multiedit->setSelection (0, 0, 501, 0);
+        m_multiedit->removeSelectedText ();
+    }
+    m_multiedit->setCursorPosition (m_multiedit->paragraphs () - 1, 0);
 }
 
 void KMPlayerView::addFullscreenAction (const QString & title, const KShortcut & c, QObject * o, const char * s, const char * name) {
