@@ -1,4 +1,4 @@
-KMPlayer, a simple frontend for MPlayer.
+KMPlayer, a simple frontend for MPlayer/FFMpeg/Xine.
 It can play DVD/VCD movies, from file or url and from a video device. 
 If setup right, KMPlayer can embed inside konqueror. Which means if you click
 on a movie file, the movie is played inside konqueror.
@@ -8,6 +8,7 @@ Broadcasting, http streaming, by using ffserver/ffmpeg. For TV sources, you need
 
 KMPlayer needs KDE3.1 and a working mplayer/mencoder somewhere in you PATH.
 Additonally, for broadcasting, ffserver/ffmpeg/v4lctl also.
+For DVD navigation Xine is used. MPlayer has broken dvdnav support. DVDNav is included in libxine and works fine.
 Unless you reconfigure kmplayer, both mplayer and ffmpeg should be compiled with liblame for mp3.
 
 Quickly installing MPlayer
@@ -15,7 +16,7 @@ Download the sources from http://www.mplayerhq.hu/homepage/.
 If you want quicktime support, also download the quicktime dll's
 (http://www.mplayerhq.hu/MPlayer/releases/codecs/qt6dlls.tar.bz2) and unpack
 them and copy the files to /usr/lib/win32 (make this dir if it doesn't exist).
-Untar the mplayer source package (tar xfj MPlayer-0.90rc3.tar.bz2), change to
+Untar the mplayer source package (tar xfj MPlayer-0.90.tar.bz2), change to
 that directory. Make sure $KDEDIR/bin is in you path (check if you can run
 'artsplay').
 Now run configure (./configure) and make ('make'). Install it as root ('su -c "make install"').
@@ -23,6 +24,10 @@ Finally you must setup the config files in ~/.mplayer ('mkdir ~/.mplayer').
 Copy the files, from the mplayer sources, etc/codecs.conf and etc/example.conf as codecs.conf and config resp 
 ('cp etc/codecs.conf ~/.mplayer; cp etc/example.conf ~/.mplayer/config').
 Next change ~/.mplayer/config with an editor and change the video driver (vo=xv) and audio driver (ao=arts) and remove the last line.
+
+Quickly installing Xine
+Download the sources for libxine (xine-lib-1-beta12.tar.gz) from http://xinehq.de. Unpack it (tar xfz xine-lib-1-beta12.tar.gz) and change to this directory (cd xine-lib-1-beta12). Now run configure (./configure) and make ('make'). Install it as root ('su -c "make install"').
+Recommended, for encrypted DVDs, install libdvdcss from http://developers.videolan.org/libdvdcss too.
 
 Quickly installing ffmpeg/ffserver
 Download the sources from http://ffmpeg.sourceforge.net/. If the current version is 0.4.6, I recommend using a more recent CVS snapshot because it uses less CPU when grabbing a TV device.

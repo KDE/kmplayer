@@ -141,7 +141,7 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
             }
             break;
         case XINE_EVENT_UI_CHANNELS_CHANGED:
-            {
+            if (callback) {
             printf ("Channel changed event\n");
             mutex.lock ();
             int w = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_WIDTH);
@@ -252,6 +252,7 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
         wid = XCreateSimpleWindow(display, XDefaultRootWindow(display),
                 xpos, ypos, width, height, 1, 0, 0);
         d->window_created = true;
+        QTimer::singleShot (10, this, SLOT (play ()));
     }
     XSelectInput (display, wid,
                   (PointerMotionMask | ExposureMask | KeyPressMask | ButtonPressMask | StructureNotifyMask | SubstructureNotifyMask));
@@ -493,7 +494,9 @@ public:
 
                             case XK_q:
                             case XK_Q:
+                                qApp->lock ();
                                 qApp->quit();
+                                qApp->unlock ();
                                 break;
 
                             case XK_p: // previous
