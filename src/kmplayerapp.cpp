@@ -930,7 +930,7 @@ KDE_NO_EXPORT bool KMPlayerVCDSource::processOutput (const QString & str) {
     QRegExp * patterns = static_cast<KMPlayer::MPlayer *> (m_player->players () ["mplayer"])->configPage ()->m_patterns;
     QRegExp & trackRegExp = patterns [KMPlayer::MPlayerPreferencesPage::pat_vcdtrack];
     if (trackRegExp.search (str) > -1) {
-        m_document->appendChild ((new KMPlayer::GenericURL (m_document, QString ("vcd://") + trackRegExp.cap (1), i18n ("Track ") + trackRegExp.cap (1)))->self ());
+        m_document->appendChild ((new KMPlayer::GenericMrl (m_document, QString ("vcd://") + trackRegExp.cap (1), i18n ("Track ") + trackRegExp.cap (1)))->self ());
         kdDebug () << "track " << trackRegExp.cap (1) << endl;
         return true;
     }
@@ -1040,7 +1040,7 @@ KDE_NO_EXPORT void KMPlayerPipeSource::activate () {
     // dangerous !! if (!m_url.protocol ().compare ("kmplayer"))
     //    m_pipecmd = KURL::decode_string (m_url.path ()).mid (1);
     setURL (KURL ("stdin://"));
-    KMPlayer::GenericURL * gen = new KMPlayer::GenericURL (m_document, QString ("stdin://"), m_pipecmd);
+    KMPlayer::GenericMrl * gen = new KMPlayer::GenericMrl (m_document, QString ("stdin://"), m_pipecmd);
     gen->bookmarkable = false;
     m_document->appendChild (gen->self ());
     m_recordcmd = m_options = QString ("-"); // or m_url?

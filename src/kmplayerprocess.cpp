@@ -1266,9 +1266,6 @@ QWidget * TypeNode::createWidget (QWidget * parent) {
     return w;
 }
 
-void TypeNode::closed () {
-}
-
 void TypeNode::changedXML (QTextStream & out) {
     if (!w) return;
     const char * ctype = getAttribute (QString ("TYPE")).ascii ();

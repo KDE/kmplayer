@@ -284,7 +284,6 @@ struct KMPLAYER_EXPORT ConfigNode : public Element {
 struct KMPLAYER_EXPORT TypeNode : public ConfigNode {
     KDE_NO_CDTOR_EXPORT TypeNode (ElementPtr & d) : ConfigNode (d) {}
     KDE_NO_CDTOR_EXPORT ~TypeNode () {}
-    void closed ();
     ElementPtr childFromTag (const QString & tag);
     void changedXML (QTextStream & out);
     QWidget * createWidget (QWidget * parent);

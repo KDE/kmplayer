@@ -110,10 +110,6 @@ public:
      * Open tag is found by parser, attributes are set
      */
     virtual void opened ();
-    /*
-     * Close tag is found by parser
-     */
-    virtual void closed ();
     KDE_NO_EXPORT bool isDocument () const { return m_doc == m_self; }
     KDE_NO_EXPORT bool hasChildNodes () const { return m_first_child != 0L; }
     KDE_NO_EXPORT ElementPtr parentNode () const { return m_parent; }
@@ -310,9 +306,15 @@ public:
 
 class KMPLAYER_EXPORT GenericURL : public Mrl { //just some url, can get a SMIL or ASX childtree
 public:
-    KDE_NO_CDTOR_EXPORT GenericURL (ElementPtr & d) : Mrl (d) {}
     GenericURL(ElementPtr &d, const QString &s, const QString &n=QString::null);
     KDE_NO_EXPORT const char * nodeName () const { return "GenericURL"; }
+};
+
+class KMPLAYER_EXPORT GenericMrl : public Mrl { // non url mrl
+public:
+    KDE_NO_CDTOR_EXPORT GenericMrl (ElementPtr & d) : Mrl (d) {}
+    GenericMrl(ElementPtr &d, const QString &s, const QString &n=QString::null);
+    KDE_NO_EXPORT const char * nodeName () const { return "GenericMrl"; }
     /**
      * Will return false if this document has child nodes
      */

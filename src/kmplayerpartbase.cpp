@@ -1139,10 +1139,8 @@ KDE_NO_EXPORT void URLSource::read (QTextStream & textstream) {
             QString mrl = line.stripWhiteSpace ();
             if (mrl.lower ().startsWith (QString ("asf ")))
                 mrl = mrl.mid (4).stripWhiteSpace ();
-            if (!mrl.isEmpty () && !mrl.startsWith (QChar ('#'))) {
-                KURL url (current (), KURL::fromPathOrURL (mrl).url ());
-                cur_elm->appendChild ((new GenericURL (m_document, KURL::decode_string (url.url ()), KURL::decode_string (mrl)))->self ());
-            }
+            if (!mrl.isEmpty () && !mrl.startsWith (QChar ('#')))
+                cur_elm->appendChild((new GenericURL(m_document, mrl))->self());
             line = textstream.readLine ();
         } while (!line.isNull ()); /* TODO && m_document.size () < 1024 / * support 1k entries * /);*/
     }

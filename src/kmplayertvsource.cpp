@@ -204,12 +204,12 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget 
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT TVChannel::TVChannel (KMPlayer::ElementPtr & d, const QString & n, int f) : KMPlayer::GenericURL (d, QString ("tv://"), n), name (n), frequency (f) {}
+KDE_NO_CDTOR_EXPORT TVChannel::TVChannel (KMPlayer::ElementPtr & d, const QString & n, int f) : KMPlayer::GenericMrl (d, QString ("tv://"), n), name (n), frequency (f) {}
 
-KDE_NO_CDTOR_EXPORT TVInput::TVInput (KMPlayer::ElementPtr & d, const QString & n, int _id) : KMPlayer::GenericURL (d, QString ("tv://"), n), name (n), id (_id) {}
+KDE_NO_CDTOR_EXPORT TVInput::TVInput (KMPlayer::ElementPtr & d, const QString & n, int _id) : KMPlayer::GenericMrl (d, QString ("tv://"), n), name (n), id (_id) {}
 
 KDE_NO_CDTOR_EXPORT TVDevice::TVDevice (KMPlayer::ElementPtr & doc, const QString & d, const QSize & s)
-    : KMPlayer::GenericURL (doc, d), size (s), noplayback (false) {
+    : KMPlayer::GenericMrl (doc, d), size (s), noplayback (false) {
 }
 
 //-----------------------------------------------------------------------------
@@ -462,8 +462,8 @@ KDE_NO_EXPORT void KMPlayerTVSource::sync (bool fromUI) {
         tvdriver = m_configpage->driver->text ();
     } else {
         m_configpage->driver->setText (tvdriver);
-        deleteddevices = (new KMPlayer::GenericURL (m_document))->self ();
-        addeddevices = (new KMPlayer::GenericURL (m_document))->self ();
+        deleteddevices = (new KMPlayer::GenericMrl (m_document))->self ();
+        addeddevices = (new KMPlayer::GenericMrl (m_document))->self ();
         std::for_each (m_devicepages.begin(), m_devicepages.end(), KMPlayer::Deleter<QFrame>);
         m_devicepages.clear ();
         for (KMPlayer::ElementPtr dp = m_document->firstChild (); dp; dp = dp->nextSibling ())

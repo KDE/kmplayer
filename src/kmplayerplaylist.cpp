@@ -18,6 +18,7 @@
 
 #include <qtextstream.h>
 #include <kdebug.h>
+#include <kurl.h>
 
 #include "kmplayerplaylist.h"
 
@@ -293,8 +294,6 @@ bool Element::isMrl () {
 
 void Element::opened () {}
 
-void Element::closed () {}
-
 void Element::setAttribute (const QString & name, const QString & value) {
     ElementPtr last_attribute;
     for (ElementPtr e = m_first_attribute; e; e = e->nextSibling ()) {
@@ -341,6 +340,15 @@ bool Mrl::isMrl () {
     if (cached_ismrl_version != document()->m_tree_version) {
         cached_ismrl = !hasMrlChildren (m_self);
         cached_ismrl_version = document()->m_tree_version;
+        if (!src.isEmpty()) {
+            if (pretty_name.isEmpty ())
+                pretty_name = src;
+            for (ElementPtr e = parentNode (); e; e = e->parentNode ()) {
+                Mrl * mrl = e->mrl ();
+                if (mrl)
+                    src = KURL (mrl->src, src).url ();
+            }
+        }
     }
     return cached_ismrl;
 }
@@ -518,18 +526,25 @@ KDE_NO_EXPORT ElementPtr Entry::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT bool Entry::isMrl () {
     if (cached_ismrl_version != document ()->m_tree_version) {
+        QString pn;
         src.truncate (0);
         bool foundone = false;
         for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
             if (e->isMrl () && !e->hasChildNodes ()) {
-                if (foundone)
+                if (foundone) {
                     src.truncate (0);
-                else
+                    pn.truncate (0);
+                } else {
                     src = e->mrl ()->src;
+                    pn = e->mrl ()->pretty_name;
+                }
                 foundone = true;
             } else if (!strcmp (e->nodeName (), "title"))
                 pretty_name = e->innerText ();
         }
+        if (pretty_name.isEmpty ())
+            pretty_name = pn;
+        cached_ismrl_version = document()->m_tree_version;
     }
     return !src.isEmpty ();
 }
@@ -576,8 +591,18 @@ GenericURL::GenericURL (ElementPtr & d, const QString & s, const QString & name)
     pretty_name = name;
 }
 
-bool GenericURL::isMrl () {
-    return Mrl::isMrl ();
+GenericMrl::GenericMrl (ElementPtr & d, const QString & s, const QString & name)
+ : Mrl (d) {
+    src = s;
+    pretty_name = name;
+}
+
+bool GenericMrl::isMrl () {
+    if (cached_ismrl_version != document()->m_tree_version) {
+        cached_ismrl = !hasMrlChildren (m_self);
+        cached_ismrl_version = document()->m_tree_version;
+    }
+    return cached_ismrl;
 }
 
 //-----------------------------------------------------------------------------

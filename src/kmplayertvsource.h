@@ -42,7 +42,7 @@ class KConfig;
 class KURLRequester;
 
 
-class TVChannel : public KMPlayer::GenericURL {
+class TVChannel : public KMPlayer::GenericMrl {
 public:
     TVChannel (KMPlayer::ElementPtr & d, const QString & n, int f);
     KDE_NO_CDTOR_EXPORT ~TVChannel () {}
@@ -51,7 +51,7 @@ public:
     int frequency;
 };
 
-class TVInput : public KMPlayer::GenericURL {
+class TVInput : public KMPlayer::GenericMrl {
 public:
     TVInput (KMPlayer::ElementPtr & d, const QString & n, int id);
     KDE_NO_CDTOR_EXPORT ~TVInput () {}
@@ -62,7 +62,7 @@ public:
     QString norm;
 };
 
-class TVDevice : public KMPlayer::GenericURL {
+class TVDevice : public KMPlayer::GenericMrl {
 public:
     TVDevice (KMPlayer::ElementPtr & d, const QString & d, const QSize & size);
     KDE_NO_CDTOR_EXPORT ~TVDevice () {}
