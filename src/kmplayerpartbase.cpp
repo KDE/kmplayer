@@ -334,10 +334,6 @@ void KMPlayer::setSource (KMPlayerSource * source) {
     }
     m_process->setSource (source);
     m_recorder->setSource (source);
-    std::for_each (m_panels.begin (),
-                   m_panels.end (),
-                   std::bind2nd (std::mem_fun (&KMPlayerControlPanel::enableSeekButtons),
-                                 source->isSeekable ()));
     source->init ();
     if (source) QTimer::singleShot (0, source, SLOT (activate ()));
     emit sourceChanged (source);
@@ -465,8 +461,11 @@ void KMPlayer::processPlaying () {
         m_view->viewer ()->setAspect (m_process->source ()->aspect ());
     ControlPanelList::iterator e = m_panels.end();
     int len = m_process->source ()->length ();
-    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i)
+    bool seek = m_process->source ()->isSeekable ();
+    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
         (*i)->enablePositionSlider (!!len, len);
+        (*i)->enableSeekButtons (seek);
+    }
     emit loading (100);
     emit startPlaying ();
 }
@@ -825,12 +824,6 @@ bool KMPlayerURLSource::hasLength () {
 
 void KMPlayerURLSource::buildArguments () {
     m_recordcmd = QString ("");
-    int cache = m_player->mplayer ()->configPage ()->cachesize;
-    if (!m_url.isLocalFile () && cache > 0 && 
-            m_url.protocol () != QString ("dvd") &&
-            m_url.protocol () != QString ("vcd") &&
-            m_url.protocol () != QString ("tv"))
-        m_options.sprintf ("-cache %d ", cache);
 
     if (m_player->settings ()->alwaysbuildindex && m_url.isLocalFile ()) {
         if (m_url.path ().lower ().endsWith (".avi") ||
@@ -892,7 +885,8 @@ void KMPlayerURLSource::setURL (const KURL & url) {
     m_refurls.clear ();
     if (url.isLocalFile ()) {
         if (url.url ().lower ().endsWith (QString ("m3u")) ||
-                m_mime == QString ("audio/mpegurl")) {
+                m_mime == QString ("audio/mpegurl") ||
+                m_mime == QString ("video/x-ms-wmp")) {
             char buf[1024];
             QFile file (url.path ());
             if (file.exists () && file.open (IO_ReadOnly)) {
@@ -902,8 +896,8 @@ void KMPlayerURLSource::setURL (const KURL & url) {
                         break;
                     buf[len] = 0;
                     QString mrl = QString::fromLocal8Bit (buf).stripWhiteSpace ();
-                if (!mrl.startsWith (QChar ('#')))
-                    m_refurls.push_back (mrl);
+                    if (!mrl.startsWith (QChar ('#')) && !mrl.isEmpty ())
+                        m_refurls.push_back (mrl);
                 }
             }
         } else if (url.url ().lower ().endsWith (QString ("pls")) ||
@@ -922,8 +916,7 @@ void KMPlayerURLSource::setURL (const KURL & url) {
     }
     if (!m_refurls.size ())
         m_refurls.push_back (url.url ());
-    m_currenturl = m_refurls.begin ();
-    m_nexturl = m_currenturl;
+    m_nexturl = m_currenturl = m_refurls.begin ();
     m_ins_url = ++m_nexturl;
 }
 

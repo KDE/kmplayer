@@ -257,8 +257,15 @@ bool MPlayer::play () {
         if (m_source->url ().isLocalFile ())
             m_process->setWorkingDirectory 
                 (QFileInfo (m_source->url ().path ()).dirPath (true));
-        if (url.isLocalFile ())
+        if (url.isLocalFile ()) {
             m_url = url.path ();
+        } else {
+            int cache = m_configpage->cachesize;
+            if (url.protocol () != QString ("dvd") &&
+                    url.protocol () != QString ("vcd") &&
+                    url.protocol () != QString ("tv"))
+                args += QString ("-cache %1 ").arg (cache); 
+        }
         args += KProcess::quote (QString (QFile::encodeName (m_url)));
     }
     m_tmpURL.truncate (0);
