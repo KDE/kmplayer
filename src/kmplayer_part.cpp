@@ -299,7 +299,7 @@ void KMPlayer::processOutput (KProcess *, char * str, int len) {
         m_movie_position = int (10.0 * m_posRegExp.cap (1).toFloat ());
         if (m_view) {
             QSlider *slider = m_view->positionSlider ();
-            if (m_movie_length <= 0 && m_movie_position >3*slider->maxValue()/4)
+            if (m_movie_length <= 0 && m_movie_position >7*slider->maxValue()/8)
                 slider->setMaxValue (slider->maxValue() * 2);
             else if (slider->maxValue() < m_movie_position)
                 slider->setMaxValue (int (1.4 * slider->maxValue()));
@@ -394,9 +394,9 @@ void KMPlayer::processStopped (KProcess *) {
 }
 
 void KMPlayer::setMovieLength (int len) {
-    m_movie_length = len;
+    m_movie_length = 10 * len;
     if (m_view)
-        m_view->positionSlider()->setMaxValue (len > 0 ? len * 10 : 100);
+        m_view->positionSlider()->setMaxValue (len > 0 ? m_movie_length : 200);
 }
 
 void KMPlayer::pause () {
