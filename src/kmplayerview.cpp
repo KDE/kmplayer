@@ -125,7 +125,7 @@ static KStaticDeleter <KMPlayerViewStatic> kmplayerViewStatic;
 
 //-------------------------------------------------------------------------
 
-static const char * stop_xpm[] = {
+static const char * const stop_xpm[] = {
     "5 7 2 1",
     "       c None",
     ".      c #000000",
@@ -137,7 +137,7 @@ static const char * stop_xpm[] = {
     ".....",
     "     "};
 
-static const char * play_xpm[] = {
+static const char * const play_xpm[] = {
     "5 9 2 1",
     "       c None",
     ".      c #000000",
@@ -151,7 +151,7 @@ static const char * play_xpm[] = {
     "..   ",
     ".    "};
 
-static const char * pause_xpm[] = {
+static const char * const pause_xpm[] = {
     "7 9 2 1",
     "       c None",
     ".      c #000000",
@@ -165,7 +165,7 @@ static const char * pause_xpm[] = {
     "..   ..",
     "       "};
 
-static const char * forward_xpm[] = {
+static const char * const forward_xpm[] = {
     "11 9 2 1",
     "       c None",
     ".      c #000000",
@@ -179,7 +179,7 @@ static const char * forward_xpm[] = {
     "..    ..   ",
     ".     .    "};
 
-static const char * back_xpm[] = {
+static const char * const back_xpm[] = {
     "11 9 2 1",
     "       c None",
     ".      c #000000",
@@ -193,7 +193,7 @@ static const char * back_xpm[] = {
     "   ..    ..",
     "    .     ."};
 
-static const char * config_xpm[] = {
+static const char * const config_xpm[] = {
     "11 8 2 1",
     "       c None",
     ".      c #000000",
@@ -206,16 +206,16 @@ static const char * config_xpm[] = {
     "    ...    ",
     "     .     "};
 
-static const char * record_xpm[] = {
+static const char * const record_xpm[] = {
     "7 7 3 1",
     "       c None",
     ".      c #000000",
     "+      c #FF0000",
     "       ",
     ".......",
-    "..+++..",
-    "..+++..",
-    "..+++..",
+    ".+++++.",
+    ".+++++.",
+    ".+++++.",
     ".......",
     "       "};
 

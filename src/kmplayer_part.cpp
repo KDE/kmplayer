@@ -189,7 +189,6 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
         }
     }
     m_view->init ();
-    m_configdialog->readConfig ();
     m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom50,
                                       this, SLOT (setMenuZoom (int)));
     m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom100,
@@ -206,6 +205,7 @@ void KMPlayer::showConfigDialog () {
 }
 
 void KMPlayer::init () {
+    m_configdialog->readConfig ();
     m_process = 0L;
     m_use_slave = false;
     m_recording = false;
@@ -214,7 +214,7 @@ void KMPlayer::init () {
     m_browserextension = new KMPlayerBrowserExtension (this);
     m_movie_position = 0;
     m_bPosSliderPressed = false;
-    m_posRegExp.setPattern ("V:\\s*([0-9\\.]+)");
+    m_posRegExp.setPattern (m_configdialog->positionpattern);
     connect (m_view->backButton (), SIGNAL (clicked ()), this, SLOT (back ()));
     connect (m_view->playButton (), SIGNAL (clicked ()), this, SLOT (play ()));
     connect (m_view->forwardButton (), SIGNAL (clicked ()), this, SLOT (forward ()));

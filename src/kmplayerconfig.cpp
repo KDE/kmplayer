@@ -67,6 +67,7 @@ static const char * strAddArgs = "Additional Arguments";
 static const char * strMencoderArgs = "Mencoder Arguments";
 static const char * strSize = "Movie Size";
 static const char * strCache = "Cache Fill";
+static const char * strPosPattern = "Movie Position";
 static const char * strIndexPattern = "Index Pattern";
 static const char * strStart = "Start Playing";
 static const char * strShowConsole = "Show Console Output";
@@ -137,8 +138,6 @@ void KMPlayerConfig::readConfig () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
 
     m_config->setGroup (strGeneralGroup);
-    //usearts = m_config->readBoolEntry (strUseArts, true);
-    
 
     m_config->setGroup (strMPlayerGroup);
     sizeratio = m_config->readBoolEntry (strKeepSizeRatio, true);
@@ -158,7 +157,6 @@ void KMPlayerConfig::readConfig () {
         view->positionSlider ()->hide ();
     else
         view->positionSlider ()->show ();
-    //autohideslider = m_config->readBoolEntry(strAutoHideSlider, true);
     showcnfbutton = m_config->readBoolEntry (strAddConfigButton, true);
     if (showcnfbutton)
         view->configButton ()->show ();
@@ -174,10 +172,8 @@ void KMPlayerConfig::readConfig () {
     alwaysbuildindex = m_config->readBoolEntry (strAlwaysBuildIndex, false);
     playdvd = m_config->readBoolEntry (strPlayDVD, true);
     dvddevice = m_config->readEntry (strDVDDevice, "/dev/dvd");
-    //showdvdmenu = m_config->readBoolEntry (strShowDVD, true);
     playvcd = m_config->readBoolEntry (strPlayVCD, true);
     vcddevice = m_config->readEntry (strVCDDevice, "/dev/cdrom");
-    //showvcdmenu = m_config->readBoolEntry (strShowVCD, true);
     videodriver = m_config->readNumEntry (strVoDriver, VDRIVER_XV_INDEX);
     audiodriver = m_config->readNumEntry (strAoDriver, ADRIVER_DEFAULT_INDEX);
     if (audiodriver == ADRIVER_ARTS_INDEX)
@@ -190,6 +186,7 @@ void KMPlayerConfig::readConfig () {
     m_config->setGroup (strMPlayerPatternGroup);
     sizepattern = m_config->readEntry (strSize, "VO:.*[^0-9]([0-9]+)x([0-9]+)");
     cachepattern = m_config->readEntry (strCache, "Cache fill:[^0-9]*([0-9\\.]+)%");
+    positionpattern = m_config->readEntry (strPosPattern, "V:\\s*([0-9\\.]+)");
     indexpattern = m_config->readEntry (strIndexPattern, "Generating Index: +([0-9]+)%");
     startpattern = m_config->readEntry (strStart, "Start[^ ]* play");
     langpattern = m_config->readEntry (strLanguagePattern, "\\[open].*audio.*language: ([A-Za-z]+).*aid.*[^0-9]([0-9]+)");
@@ -287,28 +284,11 @@ void KMPlayerConfig::show () {
                 this, SLOT (okPressed ()));
         connect (configdialog, SIGNAL (applyClicked ()), 
                 this, SLOT (okPressed ()));
-        /*connect (configdialog->showDVDMenu, SIGNAL (toggled (bool)), 
-                configdialog->dvdTab, SLOT (setEnabled (bool)));
-        connect (configdialog->showVCDMenu, SIGNAL (toggled (bool)), 
-                configdialog->vcdTab, SLOT (setEnabled (bool)));
-        connect (configdialog->showControlButtons, SIGNAL (toggled (bool)), 
-                configdialog->addConfigButton, SLOT (setEnabled (bool)));
-        connect (configdialog->showControlButtons, SIGNAL (toggled (bool)), 
-                configdialog->autoHideControlButtons, SLOT (setEnabled (bool)));
-        connect (configdialog->haveVideoDriver, SIGNAL (toggled (bool)), 
-                configdialog->videoDriver, SLOT (setEnabled (bool)));
-        connect (configdialog->haveCache, SIGNAL (toggled (bool)), 
-                configdialog->cacheSize, SLOT (setEnabled (bool)));
-        connect (configdialog->haveArguments, SIGNAL (toggled (bool)), 
-                configdialog->additionalArguments, SLOT (setEnabled (bool)));*/
         if (KApplication::kApplication())
             connect (configdialog, SIGNAL (helpClicked ()),
                      this, SLOT (getHelp ()));
-        /*else
-            configdialog->buttonHelp->hide ();*/
     }
     configdialog->m_GeneralPageGeneral->keepSizeRatio->setChecked (sizeratio);
-    //configdialog->useArts->setChecked (usearts); //replaced in the dialog
     configdialog->m_GeneralPageGeneral->showConsoleOutput->setChecked (showconsole); //works
     configdialog->m_GeneralPageGeneral->loop->setChecked (loop); //works
     configdialog->m_GeneralPageGeneral->showControlButtons->setChecked (showbuttons); //works
@@ -316,36 +296,22 @@ void KMPlayerConfig::show () {
     configdialog->m_GeneralPageGeneral->alwaysBuildIndex->setChecked (alwaysbuildindex);
     //configdialog->m_GeneralPageGeneral->autoHideSlider->setChecked (autohideslider);
     //configdialog->addConfigButton->setChecked (showcnfbutton);	//not
-    //configdialog->addConfigButton->setEnabled (showbuttons);		//yet
     configdialog->m_GeneralPageGeneral->autoHideControlButtons->setChecked (autohidebuttons); //works
-    //configdialog->m_GeneralPageGeneral->autoHideControlButtons->setEnabled (showbuttons);
     configdialog->m_GeneralPageGeneral->seekTime->setValue(seektime);
     configdialog->m_SourcePageURL->url->setText (m_player->url ().url ());
     configdialog->m_GeneralPageDVD->autoPlayDVD->setChecked (playdvd); //works if autoplay?
-    //configdialog->showDVDMenu->setChecked (showdvdmenu);
-    //configdialog->dvdTab->setEnabled (showdvdmenu);
     configdialog->m_GeneralPageDVD->dvdDevicePath->setText (dvddevice);
     configdialog->m_GeneralPageVCD->autoPlayVCD->setChecked (playvcd);
-    //configdialog->showVCDMenu->setChecked (showvcdmenu);
-    //configdialog->vcdTab->setEnabled (showvcdmenu);
     configdialog->m_GeneralPageVCD->vcdDevicePath->setText (vcddevice);
     configdialog->m_SourcePageTV->driver->setText (tvdriver);
     configdialog->m_SourcePageTV->setTVDevices (&tvdevices);
-    //configdialog->haveVideoDriver->setChecked (videodriver.length () > 0);
-    //configdialog->videoDriver->setEnabled (videodriver.length () > 0);
     
     configdialog->m_GeneralPageOutput->videoDriver->setCurrentItem (videodriver);
     configdialog->m_GeneralPageOutput->audioDriver->setCurrentItem (audiodriver);
     
     
-    //configdialog->haveCache->setChecked (cachesize > 0);
-    //configdialog->cacheSize->setEnabled (cachesize > 0);
     if (cachesize > 0)
         configdialog->m_GeneralPageAdvanced->cacheSize->setValue(cachesize);
-    //bool haveArgs = additionalarguments.length () > 0;
-    //configdialog->haveArguments->setChecked (haveArgs);
-    /*configdialog->additionalArguments->setEnabled (haveArgs);
-    if (haveArgs)*/
     configdialog->m_GeneralPageAdvanced->additionalArguments->setText (additionalarguments);
     configdialog->m_GeneralPageAdvanced->sizePattern->setText (sizepattern);
     configdialog->m_GeneralPageAdvanced->cachePattern->setText (cachepattern);
@@ -397,7 +363,6 @@ void KMPlayerConfig::writeConfig () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
     
     m_config->setGroup (strGeneralGroup);
-    //m_config->writeEntry (strUseArts, usearts);
     m_config->setGroup (strMPlayerGroup);
     m_config->writeEntry (strKeepSizeRatio, view->keepSizeRatio ());
     m_config->writeEntry (strShowConsole, view->showConsoleOutput());
@@ -410,7 +375,6 @@ void KMPlayerConfig::writeConfig () {
     m_config->writeEntry (strShowControlButtons, showbuttons);
     m_config->writeEntry (strShowPositionSlider, showposslider);
     m_config->writeEntry (strAlwaysBuildIndex, alwaysbuildindex);
-    //m_config->writeEntry (strAutoHideSlider, autohideslider);
     m_config->writeEntry (strAddConfigButton, showcnfbutton);
     m_config->writeEntry (strAutoHideButtons, autohidebuttons);
     m_config->writeEntry (strPlayDVD, playdvd);
@@ -516,8 +480,6 @@ void KMPlayerConfig::okPressed () {
     
     sizeratio = configdialog->m_GeneralPageGeneral->keepSizeRatio->isChecked ();
     m_player->keepMovieAspect (sizeratio);
-    //usearts = configdialog->useArts->isChecked ();
-    //view->setUseArts (false); //audio driver selection TO BE implemented in another way
     showconsole = configdialog->m_GeneralPageGeneral->showConsoleOutput->isChecked ();
     view->setShowConsoleOutput (showconsole);
     alwaysbuildindex = configdialog->m_GeneralPageGeneral->alwaysBuildIndex->isChecked();
@@ -538,8 +500,6 @@ void KMPlayerConfig::okPressed () {
         view->positionSlider ()->show ();
     else
         view->positionSlider ()->hide ();
-    //autohideslider = configdialog->m_GeneralPageGeneral->autoHideSlider->isChecked();
-    //view->setAutoHideSlider(autohideslider);
     //showcnfbutton = configdialog->m_GeneralPageGeneral->addConfigButton->isChecked ();
     showcnfbutton = true;
     if (showcnfbutton)

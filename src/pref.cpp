@@ -170,14 +170,17 @@ KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
 : QFrame (parent)
 {
     QVBoxLayout *layout = new QVBoxLayout (this);
+    QHBoxLayout *buttonlayout = new QHBoxLayout ();
     QLabel *urlLabel = new QLabel (i18n ("URL:"), this, 0);
     url = new QLineEdit ("", this, 0);
     QPushButton * browse = new QPushButton (i18n ("Browse ..."), this);
     connect (browse, SIGNAL (clicked ()), this, SLOT (slotBrowse ()));
     layout->addWidget (urlLabel);
     layout->addWidget (url);
-    layout->addWidget (browse);
-    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    buttonlayout->addWidget (browse);
+    layout->addLayout (buttonlayout);
 }
 
 void KMPlayerPrefSourcePageURL::slotBrowse () {
@@ -189,19 +192,18 @@ void KMPlayerPrefSourcePageURL::slotBrowse () {
 
 KMPlayerPrefGeneralPageDVD::KMPlayerPrefGeneralPageDVD(QWidget *parent) : QFrame(parent)
 {
-	QVBoxLayout *layout 	= new QVBoxLayout (this);
+    QVBoxLayout *layout = new QVBoxLayout (this, 0, 2);
 
-
-	autoPlayDVD 		= new QCheckBox (i18n("Auto play after opening DVD"), this, 0);
-	QToolTip::add(autoPlayDVD, i18n("Start playing DVD right after opening DVD")); // i don't know about this
-
-	QLabel *dvdDevicePathLabel = new QLabel (i18n("DVD device:"), this, 0);
-	dvdDevicePath 		= new QLineEdit ("/dev/dvd", this, 0);
-	QToolTip::add(dvdDevicePath, i18n("Path to your DVD device, you must have read rights to this device")); 
-	layout->addWidget(autoPlayDVD);
-	layout->addWidget(dvdDevicePathLabel);
-	layout->addWidget(dvdDevicePath);
-	layout->addItem( new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ) );
+    autoPlayDVD = new QCheckBox (i18n ("Auto play after opening DVD"), this, 0);
+    QToolTip::add(autoPlayDVD, i18n ("Start playing DVD right after opening DVD"));
+    QLabel *dvdDevicePathLabel = new QLabel (i18n("DVD device:"), this, 0);
+    dvdDevicePath = new QLineEdit ("/dev/dvd", this, 0);
+    QToolTip::add(dvdDevicePath, i18n ("Path to your DVD device, you must have read rights to this device")); 
+    layout->addWidget (autoPlayDVD);
+    layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    layout->addWidget (dvdDevicePathLabel);
+    layout->addWidget (dvdDevicePath);
+    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 
 }
 
@@ -252,7 +254,10 @@ KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent,
     layout->addWidget (inputsTab);
     layout->addSpacing (5);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
-    layout->addWidget (delButton);
+    QHBoxLayout *buttonlayout = new QHBoxLayout ();
+    buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    buttonlayout->addWidget (delButton);
+    layout->addLayout (buttonlayout);
 }
 
 void KMPlayerPrefSourcePageTVDevice::slotDelete () {
@@ -298,8 +303,11 @@ KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerPre
     gridlayout->addWidget (driver, 0, 1);
     gridlayout->addWidget (deviceLabel, 1, 0);
     gridlayout->addWidget (device, 1, 1);
-    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
-    layout->addWidget (scan);
+    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    QHBoxLayout *buttonlayout = new QHBoxLayout ();
+    buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    buttonlayout->addWidget (scan);
+    layout->addLayout (buttonlayout);
 }
 
 void KMPlayerPrefSourcePageTV::addPage (TVDevice * device, bool show) {
@@ -391,21 +399,20 @@ TVDevice * KMPlayerPrefSourcePageTV::findDevice (QPtrList <TVDevice> & list, con
 
 KMPlayerPrefGeneralPageVCD::KMPlayerPrefGeneralPageVCD(QWidget *parent) : QFrame(parent)
 {
-	QVBoxLayout *layout = new QVBoxLayout (this);
+	QVBoxLayout *layout = new QVBoxLayout (this, 0, 2);
 
+	autoPlayVCD = new QCheckBox (i18n ("Auto play after opening a VCD"), this, 0);
+	QToolTip::add(autoPlayVCD, i18n ("Start playing VCD right after opening VCD")); // i don't know about this
 
-	autoPlayVCD = new QCheckBox (i18n("Auto play after opening a VCD"), this, 0);
-	QToolTip::add(autoPlayVCD, i18n("Start playing VCD right after opening VCD")); // i don't know about this
-
-	QLabel *vcdDevicePathLabel = new QLabel (i18n("VCD (CDROM) device:"), this, 0);
+	QLabel *vcdDevicePathLabel = new QLabel (i18n ("VCD (CDROM) device:"), this, 0);
 	vcdDevicePath = new QLineEdit ("/dev/cdrom", this, 0);
-	QToolTip::add(vcdDevicePath, i18n("Path to your CDROM/DVD device, you must have read rights to this device"));
+	QToolTip::add(vcdDevicePath, i18n ("Path to your CDROM/DVD device, you must have read rights to this device"));
 
-	QSpacerItem* spacer = new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum );
-	layout->addWidget(autoPlayVCD);
-	layout->addWidget(vcdDevicePathLabel);
-	layout->addWidget(vcdDevicePath);
-	layout->addItem( spacer );
+	layout->addWidget (autoPlayVCD);
+	layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
+	layout->addWidget (vcdDevicePathLabel);
+	layout->addWidget (vcdDevicePath);
+	layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
 KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidget *parent) : QFrame(parent)
@@ -469,13 +476,13 @@ KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame
 
 	defaultPreset = new QRadioButton( presetSelection, "defaultPreset" );
 	defaultPreset->setChecked( TRUE );
-	int defaultPresetID = presetSelection->insert(defaultPreset);
+	presetSelection->insert (defaultPreset);
 
 	customPreset = new QRadioButton( presetSelection, "customPreset" );
-	int customPresetID = presetSelection->insert(customPreset);
+	presetSelection->insert (customPreset);
 
 	fastPreset = new QRadioButton( presetSelection, "fastPreset" );
-	int fastPresetID = presetSelection->insert(fastPreset);
+	presetSelection->insert (fastPreset);
 	presetSelection->setRadioButtonExclusive ( true);
 	presetSelectionWidgetLayout->addWidget( presetSelection, 0, 0 );
 	PostprocessingOptions->insertTab( presetSelectionWidget, "" );
@@ -599,15 +606,15 @@ KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame
 	MedianDeinterlacer = new QCheckBox( deinterlacingGroup, "MedianDeinterlacer" );
 	FfmpegDeinterlacer = new QCheckBox( deinterlacingGroup, "FfmpegDeinterlacer" );
 
-	int LinBlendDeinterlacerID = deinterlacingGroup->insert( LinBlendDeinterlacer );
+	deinterlacingGroup->insert( LinBlendDeinterlacer );
 
-	int LinIntDeinterlacerID = deinterlacingGroup->insert( LinIntDeinterlacer );
+	deinterlacingGroup->insert( LinIntDeinterlacer );
 
-	int CubicIntDeinterlacerID = deinterlacingGroup->insert( CubicIntDeinterlacer );
+	deinterlacingGroup->insert( CubicIntDeinterlacer );
 
-	int MedianDeinterlacerID = deinterlacingGroup->insert( MedianDeinterlacer );
+	deinterlacingGroup->insert( MedianDeinterlacer );
 
-	int FfmpegDeinterlacerID = deinterlacingGroup->insert( FfmpegDeinterlacer );
+	deinterlacingGroup->insert( FfmpegDeinterlacer );
 	
 	
 	deintSelectionWidgetLayout->addWidget( deinterlacingGroup, 0, 0 );

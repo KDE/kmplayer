@@ -283,7 +283,6 @@ void KMPlayerApp::readOptions() {
     toolBarPos=(KToolBar::BarPosition) config->readNumEntry("ToolBarPos", KToolBar::Top);
     toolBar("mainToolBar")->setBarPos(toolBarPos);*/
 
-    m_player->configDialog ()->readConfig ();
     keepSizeRatio ();
     keepSizeRatio (); // Lazy, I know :)
     showConsoleOutput ();
@@ -859,7 +858,7 @@ void KMPlayerTVSource::play () {
     setWidth (m_tvsource->size.width ());
     setHeight (m_tvsource->size.height ());
     QString args;
-    args.sprintf ("-tv on:driver=%s:%s:width=%d:height=%d", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
+    args.sprintf ("-tv on:noaudio:driver=%s:%s:width=%d:height=%d", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
     app->resizePlayer (100);
     m_recordCommand = args;
     m_player->run ((QString ("-slave -nocache -quiet ") + args).ascii());

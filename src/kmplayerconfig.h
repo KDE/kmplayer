@@ -30,67 +30,6 @@
 class KMPlayer;
 class KConfig;
 class KMPlayerPreferences;
-/*
-class TVChannel {
-public:
-    TVChannel (const QString & n, int f);
-    QString name;
-    int frequency;
-};
-
-class TVInput {
-public:
-    TVInput (const QString & n, int id);
-    QString name;
-    int id;
-    bool hastuner;
-    QPtrList <TVChannel> channels;
-};
-
-class TVDevice {
-public:
-    TVDevice (const QString & d, const QSize & size);
-    QString device;
-    QString name;
-    QSize minsize;
-    QSize maxsize;
-    QSize size;
-    QPtrList <TVInput> inputs;
-};
-
-class TVDeviceScanner : public QObject {
-    Q_OBJECT
-public:
-    TVDeviceScanner () {}
-    virtual ~TVDeviceScanner () {}
-    virtual bool scan (const QString & device, const QString & driver) = 0;
-signals:
-    void scanFinished (TVDevice * tvdevice);
-};
-class TVDeviceScannerSource : public KMPlayerSource, public TVDeviceScanner {
-    Q_OBJECT
-public:
-    TVDeviceScannerSource (KMPlayer * player);
-    virtual void init ();
-    virtual bool processOutput (const QString & line);
-    virtual QString filterOptions ();
-    virtual bool hasLength ();
-    virtual bool isSeekable ();
-    virtual bool scan (const QString & device, const QString & driver);
-public slots:
-    virtual void activate ();
-    virtual void deactivate ();
-    virtual void play ();
-    void finished ();
-private:
-    TVDevice * m_tvdevice;
-    KMPlayerSource * m_source;
-    QString m_driver;
-    QRegExp m_nameRegExp;
-    QRegExp m_sizesRegExp;
-    QRegExp m_inputRegExp
-};
-*/
 
 class KMPlayerConfig : public QObject {
     Q_OBJECT
@@ -98,50 +37,50 @@ public:
     KMPlayerConfig (KMPlayer *, KConfig * part);
     ~KMPlayerConfig ();
     KMPlayerPreferences *configDialog() const { return configdialog; }
-    bool usearts;
-    bool sizeratio;
-    bool showconsole;
-    bool loop;
-    bool showbuttons;
-    bool showcnfbutton;
-    bool showrecordbutton;
-    bool autoplayafterrecording;
-    bool showposslider;
-    bool autohidebuttons;
-    bool autohideslider;
-    bool alwaysbuildindex;
-    bool playdvd;
-    bool playvcd;
+    bool usearts : 1;
+    bool sizeratio : 1;
+    bool showconsole : 1;
+    bool loop : 1;
+    bool showbuttons : 1;
+    bool showcnfbutton : 1;
+    bool showrecordbutton : 1;
+    bool autoplayafterrecording : 1;
+    bool showposslider : 1;
+    bool autohidebuttons : 1;
+    bool autohideslider : 1;
+    bool alwaysbuildindex : 1;
+    bool playdvd : 1;
+    bool playvcd : 1;
 // postproc thingies
-    bool postprocessing;
-    bool disableppauto;
-    bool pp_default;	// -vop pp=de
-    bool pp_fast;	// -vop pp=fa
-    bool pp_custom;	// coming up
+    bool postprocessing : 1;
+    bool disableppauto : 1;
+    bool pp_default : 1;	// -vop pp=de
+    bool pp_fast : 1;	// -vop pp=fa
+    bool pp_custom : 1;	// coming up
 
-    bool pp_custom_hz; 		// horizontal deblocking
-    bool pp_custom_hz_aq;	//  - autoquality
-    bool pp_custom_hz_ch;	//  - chrominance
+    bool pp_custom_hz : 1; 		// horizontal deblocking
+    bool pp_custom_hz_aq : 1;	//  - autoquality
+    bool pp_custom_hz_ch : 1;	//  - chrominance
 
-    bool pp_custom_vt;          // vertical deblocking
-    bool pp_custom_vt_aq;       //  - autoquality
-    bool pp_custom_vt_ch;       //  - chrominance
+    bool pp_custom_vt : 1;          // vertical deblocking
+    bool pp_custom_vt_aq : 1;       //  - autoquality
+    bool pp_custom_vt_ch : 1;       //  - chrominance
 
-    bool pp_custom_dr;          // dering filter
-    bool pp_custom_dr_aq;       //  - autoquality
-    bool pp_custom_dr_ch;       //  - chrominance
+    bool pp_custom_dr : 1;          // dering filter
+    bool pp_custom_dr_aq : 1;       //  - autoquality
+    bool pp_custom_dr_ch : 1;       //  - chrominance
 
-    bool pp_custom_al;	// pp=al
-    bool pp_custom_al_f;//  - fullrange
+    bool pp_custom_al : 1;	// pp=al
+    bool pp_custom_al_f : 1;//  - fullrange
 
-    bool pp_custom_tn;  // pp=tn
-    int pp_custom_tn_s; //  - noise reducer strength (1 <= x <= 3)
+    bool pp_custom_tn : 1;  // pp=tn
+    int pp_custom_tn_s : 1; //  - noise reducer strength (1 <= x <= 3)
 
-    bool pp_lin_blend_int;	// linear blend deinterlacer
-    bool pp_lin_int;		// - interpolating -
-    bool pp_cub_int;		// cubic - -
-    bool pp_med_int;		// median interlacer
-    bool pp_ffmpeg_int;		// ffmpeg interlacer
+    bool pp_lin_blend_int : 1;	// linear blend deinterlacer
+    bool pp_lin_int : 1;		// - interpolating -
+    bool pp_cub_int : 1;		// cubic - -
+    bool pp_med_int : 1;		// median interlacer
+    bool pp_ffmpeg_int : 1;		// ffmpeg interlacer
 // end of postproc
 // TV stuff
     QString tvdriver;
@@ -157,6 +96,7 @@ public:
     QString mencoderarguments;
     QString sizepattern;
     QString cachepattern;
+    QString positionpattern;
     QString indexpattern;
     QString startpattern;
     QString langpattern;
