@@ -615,6 +615,7 @@ static void printTree (ElementPtr root, QString off=QString()) {
 
 void KMPlayerSource::setURL (const KURL & url) {
     m_url = url;
+    m_back_request = 0L;
     if (m_document && !m_document->hasChildNodes () && m_document->mrl()->src.isEmpty ())
         // special case, mime is set first by plugin FIXME v
         m_document->mrl()->src = url.url ();
@@ -656,6 +657,11 @@ static ElementPtr findDepthFirst (ElementPtr elm) {
 
 QString KMPlayerSource::next () {
     kdDebug() << "KMPlayerSource::next" << endl;
+    if (m_back_request && m_back_request->isMrl ()) {
+        m_current = m_back_request;
+        m_back_request = 0L;
+        return current ();
+    }
     if (!m_current)
         return QString ();
     ElementPtr e = findDepthFirst (m_current->isMrl () ? m_current->nextSibling (): m_current);
@@ -688,7 +694,27 @@ void KMPlayerSource::play () {
 
 void KMPlayerSource::backward () {
     if (m_document->hasChildNodes ()) {
-        // TODO
+        m_back_request = m_current;
+        if (!m_back_request || m_back_request == m_document) {
+            m_back_request = m_document->lastChild ();
+            while (m_back_request->lastChild () && !m_back_request->isMrl ())
+                m_back_request = m_back_request->lastChild ();
+            if (m_back_request->isMrl ())
+                return;
+        }
+        while (m_back_request && m_back_request != m_document) {
+            if (m_back_request->previousSibling ()) {
+                m_back_request = m_back_request->previousSibling ();
+                ElementPtr e = findDepthFirst (m_back_request); // lastDepth..
+                if (e) {
+                    m_back_request = e;
+                    m_player->process ()->stop ();
+                    return;
+                }
+            } else
+                m_back_request = m_back_request->parentNode ();
+        }
+        m_back_request = 0L;
     } else
         m_player->process ()->seek (-1 * m_player->settings ()->seektime * 10, false);
 }

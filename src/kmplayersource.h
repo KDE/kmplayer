@@ -91,6 +91,7 @@ public slots:
 protected:
     ElementPtr m_document;
     ElementPtr m_current;
+    ElementPtrW m_back_request;
     QString m_name;
     KMPlayer * m_player;
     QString m_recordcmd;
