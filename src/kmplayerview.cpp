@@ -372,13 +372,14 @@ KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
     }
     // scale video widget inside region
     if (m_view->keepSizeRatio() && m_view->controlPanelMode() != View::CP_Only){
-        int hfw = m_view->viewer ()->heightForWidth (w);
+        int hfw = m_view->viewer ()->heightForWidth (wws);
         if (hfw > 0)
             if (hfw > hws) {
-                wws = int ((1.0 * hws * w)/(1.0 * hfw));
-                x = (w - wws) / 2;
+                int old_wws = wws;
+                wws = int ((1.0 * hws * wws)/(1.0 * hfw));
+                x += (old_wws - wws) / 2;
             } else {
-                y = (hws - hfw) / 2;
+                y += (hws - hfw) / 2;
                 hws = hfw;
             }
     }
