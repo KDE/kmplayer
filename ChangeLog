@@ -1,3 +1,12 @@
+Changes since version 0.8.3-rc3a
+- Downloading of .m3u/.pls also eats .asx, so try to read this one too. This
+  fixes also MPlayer-1.0pre not been able to read .asx files.
+- Make sure if we're downloading a playlist file, it isn't bigger than 50k
+- More or less revert the alsa5/alsa9 change to just alsa. Seems latest
+  MPlayer doesn't work with alsa5/alsa9. Although they are still available.
+Changes since version 0.8.3-rc3
+- add AM_MAINTAINER_MODE in configure.in.in, no recheck/automake/autoconf
+  version mismatch
 Changes since version 0.8.3-rc2
 - All QtoolTips to QWhatsThis and help from Xine for whatsthis by xine options
 - Store xine settings in ~/.kde/share/apps/kmplayer/xine_config and not in

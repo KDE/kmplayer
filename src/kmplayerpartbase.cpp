@@ -701,9 +701,8 @@ void KMPlayerSource::play () {
 
 void KMPlayerSource::backward () {
     if (m_refurls.size () > 1) {
-        m_nexturl = m_currenturl;
-        if (m_nexturl != m_refurls.begin ())
-            --m_nexturl;
+        if (m_currenturl != m_refurls.begin ())
+            m_nexturl = m_currenturl--;
         m_player->process ()->stop ();
     } else
         m_player->process ()->seek (-1 * m_player->settings ()->seektime * 10, false);

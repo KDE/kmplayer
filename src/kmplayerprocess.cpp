@@ -268,9 +268,9 @@ bool MPlayer::play () {
                 args += QString (" -idx ");
         } else {
             int cache = m_configpage->cachesize;
-            if (url.protocol () != QString ("dvd") &&
+            if (cache > 3 && url.protocol () != QString ("dvd") &&
                     url.protocol () != QString ("vcd") &&
-                    url.protocol () != QString ("tv"))
+                    !url.url ().startsWith (QString ("tv://")))
                 args += QString ("-cache %1 ").arg (cache); 
         }
         args += KProcess::quote (QString (QFile::encodeName (m_url)));
@@ -659,7 +659,7 @@ void MPlayerPreferencesPage::read (KConfig * config) {
                 (_mplayer_patterns[i].name, _mplayer_patterns[i].pattern));
     config->setGroup (strMPlayerGroup);
     additionalarguments = config->readEntry (strAddArgs);
-    cachesize = config->readNumEntry (strCacheSize, 0);
+    cachesize = config->readNumEntry (strCacheSize, 384);
     alwaysbuildindex = config->readBoolEntry (strAlwaysBuildIndex, false);
 }
 
@@ -1115,9 +1115,10 @@ void Xine::initProcess () {
     connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
             this, SLOT (processOutput (KProcess *, char *, int)));
 }
-
+// TODO:input.v4l_video_device_path input.v4l_radio_device_path
+// v4l:/Webcam/0   v4l:/Television/21600  v4l:/Radio/96
 bool Xine::play () {
-    KURL url (m_source->current ());
+    KURL url (m_source ? m_source->current () : QString ());
     if (playing ()) {
         if (m_backend) {
             if (m_status == status_stop) {
