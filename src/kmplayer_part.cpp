@@ -258,6 +258,12 @@ void KMPlayer::initProcess () {
     delete m_process;
     m_process = new KProcess;
     m_process->setUseShell (true);
+    if (!m_urlsource->url ().isEmpty ()) {
+        QString proxy_url;
+        KURL url = m_urlsource->url();
+        if (KProtocolManager::useProxy () && proxyForURL (url, proxy_url))
+            m_process->setEnvironment("http_proxy", proxy_url);
+    }
     connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
             this, SLOT (processOutput (KProcess *, char *, int)));
     connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
@@ -283,8 +289,10 @@ KMediaPlayer::View* KMPlayer::view () {
     return m_view;
 }
 
-void KMPlayer::setSource (KMPlayerSource * source) {
+void KMPlayer::setSource (KMPlayerSource * source, bool keepsizes) {
     KMPlayerSource * oldsource = m_source;
+    int w = movie_width;
+    int h = movie_height;
     if (oldsource) {
         oldsource->deactivate ();
         closeURL ();
@@ -302,6 +310,10 @@ void KMPlayer::setSource (KMPlayerSource * source) {
     } else {
         m_view->forwardButton ()->hide ();
         m_view->backButton ()->hide ();
+    }
+    if (keepsizes) {
+        movie_width = w;
+        movie_height = h;
     }
     if (m_source) QTimer::singleShot (0, m_source, SLOT (activate ()));
 }
@@ -805,12 +817,15 @@ void KMPlayerBrowserExtension::restoreState (QDataStream & stream) {
 //---------------------------------------------------------------------
 
 KMPlayerLiveConnectExtension::KMPlayerLiveConnectExtension (KMPlayer * parent)
-  : KParts::LiveConnectExtension (parent), player (parent), m_started (false) {
+  : KParts::LiveConnectExtension (parent), player (parent),
+    m_started (false),
+    m_enablefinish (false) {
       connect (parent, SIGNAL (started (KIO::Job *)), this, SLOT (started ()));
       connect (parent, SIGNAL (finished ()), this, SLOT (finished ()));
 }
 
 KMPlayerLiveConnectExtension::~KMPlayerLiveConnectExtension() {
+    kdDebug () << "KMPlayerLiveConnectExtension::~KMPlayerLiveConnectExtension()" << endl;
 }
 
 void KMPlayerLiveConnectExtension::started () {
@@ -818,11 +833,12 @@ void KMPlayerLiveConnectExtension::started () {
 }
 
 void KMPlayerLiveConnectExtension::finished () {
-    if (m_started) {
+    if (m_started && m_enablefinish) {
         KParts::LiveConnectExtension::ArgList args;
         args.push_back (qMakePair (KParts::LiveConnectExtension::TypeString, QString("if (window.onFinished) onFinished();")));
         emit partEvent (0, "eval", args);
         m_started = true;
+        m_enablefinish = false;
     }
 }
 
@@ -1054,11 +1070,6 @@ void KMPlayerURLSource::init () {
     isreference = false;
     m_urls.clear ();
     m_urlother = KURL ();
-    if (!m_url.isEmpty ()) {
-        QString proxy_url;
-        if (KProtocolManager::useProxy () && proxyForURL (m_url, proxy_url))
-            m_player->process ()->setEnvironment("http_proxy", proxy_url);
-    }
 }
 
 bool KMPlayerURLSource::hasLength () {
@@ -1132,6 +1143,7 @@ void KMPlayerURLSource::play () {
         m_ffmpegCommand = QString ("-i ") + url.path ();
     args += KProcess::quote (myurl);
     m_player->run (args.latin1 ());
+    m_player->liveconnectextension ()->enableFinishEvent ();
 }
 
 void KMPlayerURLSource::activate () {
@@ -1152,7 +1164,7 @@ void KMPlayerURLSource::finished () {
     kdDebug () << "KMPlayerURLSource::finished()" << m_identified << " "  <<  m_player->hrefSource ()->url ().url () << " " <<  m_player->hrefSource ()->url ().isValid () << endl;
     if (m_identified && m_player->hrefSource ()->url ().isValid ()) {
         disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
-        m_player->setSource (m_player->hrefSource ());
+        m_player->setSource (m_player->hrefSource (), true);
         return;
     }
     if (!m_player->hrefSource ()->url ().isValid ())
@@ -1203,7 +1215,7 @@ void KMPlayerHRefSource::setURL (const KURL & url) {
 
 void KMPlayerHRefSource::play () {
     kdDebug () << "KMPlayerHRefSource::play " << m_url.url() << endl;
-    m_player->setSource (m_player->urlSource ());
+    m_player->setSource (m_player->urlSource (), true);
 }
 
 void KMPlayerHRefSource::activate () {
@@ -1216,9 +1228,6 @@ void KMPlayerHRefSource::activate () {
     m_player->stop ();
     m_player->initProcess ();
     view->consoleOutput ()->clear ();
-    QString proxy_url;
-    if (KProtocolManager::useProxy () && proxyForURL (m_url, proxy_url))
-        m_player->process ()->setEnvironment("http_proxy", proxy_url);
     unlink (locateLocal ("data", "kmplayer/00000001.jpg").ascii ());
     QString outdir = locateLocal ("data", "kmplayer/");
     QString myurl (m_url.isLocalFile () ? m_url.path () : m_url.url ());

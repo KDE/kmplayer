@@ -71,6 +71,8 @@ public:
     void sendEvent(const unsigned long objid, const QString & event, const KParts::LiveConnectExtension::ArgList & args ) {
         emit partEvent(objid, event, args);
     }
+
+    void enableFinishEvent (bool b = true) { m_enablefinish = b; }
 signals:
     void partEvent (const unsigned long, const QString &,
                     const KParts::LiveConnectExtension::ArgList &);
@@ -81,7 +83,8 @@ private slots:
     void finished ();
 private:
     KMPlayer * player;
-    bool m_started;
+    bool m_started : 1;
+    bool m_enablefinish : 1;
 };
 
 
@@ -154,9 +157,11 @@ public:
     void setURL (const KURL & url) { m_urlsource->setURL (url); }
     KMPlayerBrowserExtension * browserextension() const
         { return m_browserextension; }
+    KMPlayerLiveConnectExtension * liveconnectextension () const
+        { return m_liveconnectextension; }
     void sizes (int & w, int & h) const;
     void setMovieLength (int len);
-    void setSource (KMPlayerSource * source);
+    void setSource (KMPlayerSource * source, bool keepsizes = false);
     KMPlayerSource * source () const { return m_source; }
     KMPlayerURLSource * urlSource () const { return m_urlsource; }
     KMPlayerHRefSource * hrefSource () const { return m_hrefsource; }
