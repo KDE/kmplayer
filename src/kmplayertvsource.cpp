@@ -344,7 +344,7 @@ void KMPlayerTVSource::activate () {
     m_player->setProcess (m_player->mplayer ());
     buildArguments ();
     if (m_player->settings ()->showbroadcastbutton)
-        m_app->view()->broadcastButton ()->show ();
+        m_app->view()->buttonBar()->broadcastButton ()->show ();
 }
 /* TODO: playback by
  * ffmpeg -vd /dev/video0 -r 25 -s 768x576 -f rawvideo - |mplayer -nocache -ao arts -rawvideo on:w=768:h=576:fps=25 -quiet -
@@ -371,8 +371,8 @@ void KMPlayerTVSource::buildArguments () {
 }
 
 void KMPlayerTVSource::deactivate () {
-    if (m_app->view () && !m_app->view ()->broadcastButton ()->isOn ())
-        m_app->view ()->broadcastButton ()->hide ();
+    if (m_app->view () && !m_app->view ()->buttonBar()->broadcastButton ()->isOn ())
+        m_app->view ()->buttonBar()->broadcastButton ()->hide ();
 }
 
 void KMPlayerTVSource::buildMenu () {

@@ -25,12 +25,14 @@
 
 #include <qwidget.h>
 #include <qguardedptr.h>
+
 #include <kurl.h>
 #include <kmediaplayer/view.h>
 
 class KMPlayerView;
 class KMPlayerViewer;
 class KMPlayerViewerHolder;
+class KMPlayerControlPanel;
 class QMultiLineEdit;
 class QPixmap;
 class QPushButton;
@@ -80,16 +82,7 @@ public:
 
     QMultiLineEdit * consoleOutput () const { return m_multiedit; }
     KMPlayerViewer * viewer () const { return m_viewer; }
-    QWidget * buttonBar () const { return m_buttonbar; }
-    QPushButton * backButton () const { return m_backButton; }
-    QPushButton * playButton () const { return m_playButton; }
-    QPushButton * forwardButton () const { return m_forwardButton; }
-    QPushButton * pauseButton () const { return m_pauseButton; }
-    QPushButton * stopButton () const { return m_stopButton; }
-    QPushButton * configButton () const { return m_configButton; }
-    QPushButton * recordButton () const { return m_recordButton; }
-    QPushButton * broadcastButton () const { return m_broadcastButton; }
-    QSlider * positionSlider () const { return m_posSlider; }
+    KMPlayerControlPanel * buttonBar () const { return m_buttonbar; }
     QSlider * contrastSlider () const { return m_contrastSlider; }
     QSlider * brightnessSlider () const { return m_brightnessSlider; }
     QSlider * hueSlider () const { return m_hueSlider; }
@@ -98,7 +91,6 @@ public:
     QPopupMenu * popupMenu () const { return m_popupMenu; }
     KPopupMenu * bookmarkMenu () const { return m_bookmarkMenu; }
     QPopupMenu * zoomMenu () const { return m_zoomMenu; }
-    void setButtonBar (QWidget *);
     bool keepSizeRatio () const { return m_keepsizeratio; }
     void setKeepSizeRatio (bool b) { m_keepsizeratio = b; }
     bool useArts () const { return m_use_arts; }
@@ -113,6 +105,7 @@ public:
     bool setPicture (const QString & path);
     QPixmap * image () const { return m_image; }
     bool playing () const { return m_playing; }
+    void setForeignViewer (KMPlayerView *);
 public slots:
     void startsToPlay ();
     void showPopupMenu ();
@@ -130,7 +123,7 @@ protected:
 private:
     void updateUseArts ();
     // widget for player's output
-    KMPlayerViewer * m_viewer;
+    QGuardedPtr<KMPlayerViewer> m_viewer;
     // widget that layouts m_viewer for ratio setting
     KMPlayerViewerHolder * m_holder;
     // widget that contains m_holder, m_buttonbar and m_posSlider
@@ -138,22 +131,13 @@ private:
     QMultiLineEdit * m_multiedit;
     QString tmplog;
     QPixmap * m_image;
-    QGuardedPtr<QWidget> m_buttonbar;
-    QPushButton * m_backButton;
-    QPushButton * m_playButton;
-    QPushButton * m_forwardButton;
-    QPushButton * m_stopButton;
-    QPushButton * m_pauseButton;
-    QPushButton * m_configButton;
-    QPushButton * m_recordButton;
-    QPushButton * m_broadcastButton;
+    KMPlayerControlPanel * m_buttonbar;
     QPopupMenu * m_popupMenu;
     QPopupMenu * m_playerMenu;
     KPopupMenu * m_bookmarkMenu;
     QPopupMenu * m_zoomMenu;
     QLabel * m_arts_label;
     QSlider * m_slider;
-    QSlider * m_posSlider;
     QSlider * m_contrastSlider;
     QSlider * m_brightnessSlider;
     QSlider * m_hueSlider;
@@ -169,6 +153,30 @@ private:
     bool m_use_arts : 1;
     bool m_inVolumeUpdate : 1;
     bool m_sreensaver_disabled : 1;
+};
+
+class KMPlayerControlPanel : public QWidget {
+public:
+    KMPlayerControlPanel (QWidget * parent);
+    QSlider * positionSlider () const { return m_posSlider; }
+    QPushButton * backButton () const { return m_backButton; }
+    QPushButton * playButton () const { return m_playButton; }
+    QPushButton * forwardButton () const { return m_forwardButton; }
+    QPushButton * pauseButton () const { return m_pauseButton; }
+    QPushButton * stopButton () const { return m_stopButton; }
+    QPushButton * configButton () const { return m_configButton; }
+    QPushButton * recordButton () const { return m_recordButton; }
+    QPushButton * broadcastButton () const { return m_broadcastButton; }
+private:
+    QSlider * m_posSlider;
+    QPushButton * m_backButton;
+    QPushButton * m_playButton;
+    QPushButton * m_forwardButton;
+    QPushButton * m_stopButton;
+    QPushButton * m_pauseButton;
+    QPushButton * m_configButton;
+    QPushButton * m_recordButton;
+    QPushButton * m_broadcastButton;
 };
 
 class KMPlayerViewer : public QWidget {

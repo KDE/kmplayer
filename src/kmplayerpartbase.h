@@ -21,6 +21,7 @@
 
 #include <qobject.h>
 #include <qguardedptr.h>
+#include <qvaluelist.h>
 
 #include <kmediaplayer/player.h>
 #include <kurl.h>
@@ -100,6 +101,8 @@ public:
     KConfig * config () const { return m_config; }
     bool autoPlay () const { return m_autoplay; }
     void enablePlayerMenu (bool enable);
+    void addControlPanel (KMPlayerControlPanel *);
+    void removeControlPanel (KMPlayerControlPanel *);
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool closeURL ();
@@ -141,11 +144,14 @@ protected slots:
     void recordingStarted ();
     void recordingFinished ();
     void processPosition (int pos);
+    void controlPanelDestroyed (QObject *);
     virtual void processStarted ();
     virtual void processFinished ();
     virtual void processLoading (int percentage);
     virtual void processPlaying ();
 protected:
+    typedef QValueList <QGuardedPtr <KMPlayerControlPanel> > ControlPanelList;
+    ControlPanelList m_panels;
     KConfig * m_config;
     QGuardedPtr <KMPlayerView> m_view;
     KMPlayerSettings * m_settings;

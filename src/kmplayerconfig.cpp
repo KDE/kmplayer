@@ -181,15 +181,15 @@ void KMPlayerSettings::readConfig () {
     }
     showcnfbutton = m_config->readBoolEntry (strAddConfigButton, true);
     if (showcnfbutton)
-        view->configButton ()->show ();
+        view->buttonBar ()->configButton ()->show ();
     else
-        view->configButton ()->hide ();
+        view->buttonBar ()->configButton ()->hide ();
     showrecordbutton = m_config->readBoolEntry (strAddRecordButton, true);
     showbroadcastbutton = m_config->readBoolEntry (strAddBroadcastButton, true);
     if (showrecordbutton)
-        view->recordButton ()->show ();
+        view->buttonBar ()->recordButton ()->show ();
     else
-        view->recordButton ()->hide ();
+        view->buttonBar ()->recordButton ()->hide ();
     seektime = m_config->readNumEntry (strSeekTime, 10);
     alwaysbuildindex = m_config->readBoolEntry (strAlwaysBuildIndex, false);
     dvddevice = m_config->readEntry (strDVDDevice, "/dev/dvd");
@@ -513,17 +513,17 @@ void KMPlayerSettings::okPressed () {
     //showcnfbutton = configdialog->m_GeneralPageGeneral->addConfigButton->isChecked ();
     showcnfbutton = true;
     if (showcnfbutton)
-	view->configButton ()->show ();
+	view->buttonBar ()->configButton ()->show ();
     else
-        view->configButton ()->hide ();
+        view->buttonBar ()->configButton ()->hide ();
     showrecordbutton = configdialog->m_GeneralPageGeneral->showRecordButton->isChecked ();
     if (showrecordbutton)
-	view->recordButton ()->show ();
+	view->buttonBar ()->recordButton ()->show ();
     else
-        view->recordButton ()->hide ();
+        view->buttonBar ()->recordButton ()->hide ();
     showbroadcastbutton = configdialog->m_GeneralPageGeneral->showBroadcastButton->isChecked ();
     if (!showbroadcastbutton)
-        view->broadcastButton ()->hide ();
+        view->buttonBar ()->broadcastButton ()->hide ();
     seektime = configdialog->m_GeneralPageGeneral->seekTime->value();
 
     videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentItem();

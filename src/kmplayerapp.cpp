@@ -187,7 +187,7 @@ void KMPlayerApp::initView ()
             this, SLOT (zoom150 ()));
     m_view->popupMenu ()->connectItem (KMPlayerView::menu_fullscreen,
             this, SLOT (fullScreen ()));
-    connect (m_view->broadcastButton (), SIGNAL (clicked ()),
+    connect (m_view->buttonBar()->broadcastButton (), SIGNAL (clicked ()),
             this, SLOT (broadcastClicked ()));
     connect (m_view->viewer (), SIGNAL (aspectChanged ()),
             this, SLOT (zoom100 ()));
@@ -318,20 +318,20 @@ void KMPlayerApp::broadcastClicked () {
         m_broadcastconfig->stopServer ();
     else {
         m_player->settings ()->show ("BroadcastPage");
-        m_view->broadcastButton ()->toggle ();
+        m_view->buttonBar()->broadcastButton ()->toggle ();
     }
 }
 
 void KMPlayerApp::broadcastStarted () {
-    if (!m_view->broadcastButton ()->isOn ())
-        m_view->broadcastButton ()->toggle ();
+    if (!m_view->buttonBar()->broadcastButton ()->isOn ())
+        m_view->buttonBar()->broadcastButton ()->toggle ();
 }
 
 void KMPlayerApp::broadcastStopped () {
-    if (m_view->broadcastButton ()->isOn ())
-        m_view->broadcastButton ()->toggle ();
+    if (m_view->buttonBar()->broadcastButton ()->isOn ())
+        m_view->buttonBar()->broadcastButton ()->toggle ();
     if (m_player->process ()->source () != m_tvsource)
-        m_view->broadcastButton ()->hide ();
+        m_view->buttonBar()->broadcastButton ()->hide ();
     setCursor (QCursor (Qt::ArrowCursor));
 }
 

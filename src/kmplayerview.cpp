@@ -263,7 +263,6 @@ KMPlayerViewLayer::KMPlayerViewLayer (KMPlayerView * parent, QBoxLayout * b)
    m_box (b),
    m_accel (0L),
    m_fullscreen (false) {
-    setEraseColor (QColor (255, 0, 0));
 }
 
 void KMPlayerViewLayer::fullScreen () {
@@ -358,11 +357,33 @@ static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char * const
     return b;
 }
 
+KMPlayerControlPanel::KMPlayerControlPanel (QWidget * parent) : QWidget (parent) {
+    QHBoxLayout * buttonbox = new QHBoxLayout (this, 5, 4);
+    m_configButton = ctrlButton (this, buttonbox, config_xpm);
+    m_backButton = ctrlButton (this, buttonbox, back_xpm);
+    m_playButton = ctrlButton (this, buttonbox, play_xpm, Qt::Key_R);
+    m_forwardButton = ctrlButton (this, buttonbox, forward_xpm);
+    m_stopButton = ctrlButton (this, buttonbox, stop_xpm, Qt::Key_S);
+    m_pauseButton = ctrlButton (this, buttonbox, pause_xpm, Qt::Key_P);
+    m_recordButton = ctrlButton (this, buttonbox, record_xpm);
+    m_broadcastButton = ctrlButton (this, buttonbox, broadcast_xpm);
+    m_playButton->setToggleButton (true);
+    m_stopButton->setToggleButton (true);
+    m_recordButton->setToggleButton (true);
+    m_broadcastButton->setToggleButton (true);
+    m_broadcastButton->hide ();
+    m_posSlider = new QSlider (Qt::Horizontal, this);
+    m_posSlider->setEnabled (false);
+    buttonbox->addWidget (m_posSlider);
+}
+
+//-----------------------------------------------------------------------------
+
 KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
   : KMediaPlayer::View (parent, name),
     m_image (0L),
+    m_buttonbar (0L),
     m_playerMenu (0L),
-    m_posSlider (0L),
     m_artsserver (0L),
     m_svc (0L),
     m_watch (0L),
@@ -413,35 +434,15 @@ void KMPlayerView::init () {
     m_layer = new KMPlayerViewLayer (this, viewbox);
     viewbox->addWidget (m_layer);
     QVBoxLayout * layerbox = new QVBoxLayout (m_layer, 0, 0);
-    m_buttonbar = new QWidget (m_layer);
+    m_buttonbar = new KMPlayerControlPanel (m_layer);
+    m_buttonbar->setMaximumSize (2500, button_height + 8);
     m_holder = new KMPlayerViewerHolder (m_layer, this);
     m_viewer = new KMPlayerViewer (m_holder, this);
     layerbox->addWidget (m_holder);
+    layerbox->addWidget (m_buttonbar);
 #if KDE_IS_VERSION(3,1,90)
     setVideoWidget (m_layer);
 #endif
-    
-    QHBoxLayout * buttonbox = new QHBoxLayout (m_buttonbar, 5, 4);
-    m_buttonbar->setMaximumSize (2500, button_height + 8);
-    m_configButton = ctrlButton (m_buttonbar, buttonbox, config_xpm);
-    m_backButton = ctrlButton (m_buttonbar, buttonbox, back_xpm);
-    m_playButton = ctrlButton (m_buttonbar, buttonbox, play_xpm, Qt::Key_R);
-    m_forwardButton = ctrlButton (m_buttonbar, buttonbox, forward_xpm);
-    m_stopButton = ctrlButton (m_buttonbar, buttonbox, stop_xpm, Qt::Key_S);
-    m_pauseButton = ctrlButton (m_buttonbar, buttonbox, pause_xpm, Qt::Key_P);
-    m_recordButton = ctrlButton (m_buttonbar, buttonbox, record_xpm);
-    m_broadcastButton = ctrlButton (m_buttonbar, buttonbox, broadcast_xpm);
-    m_playButton->setToggleButton (true);
-    m_stopButton->setToggleButton (true);
-    m_recordButton->setToggleButton (true);
-    m_broadcastButton->setToggleButton (true);
-    m_broadcastButton->hide ();
-    m_posSlider = new QSlider (Qt::Horizontal, m_buttonbar);
-    m_posSlider->setEnabled (false);
-    buttonbox->addWidget (m_posSlider);
-
-    layerbox->addWidget (m_buttonbar);
-
     m_popupMenu = new QPopupMenu (m_layer);
     m_playerMenu = new QPopupMenu (m_layer);
     m_playerMenu->setEnabled (false);
@@ -493,7 +494,7 @@ void KMPlayerView::init () {
     setFocusPolicy (QWidget::ClickFocus);
 
     connect (m_viewer, SIGNAL (aboutToPlay ()), this, SLOT (startsToPlay ()));
-    connect (m_configButton, SIGNAL (clicked ()), this, SLOT (showPopupMenu()));
+    connect (m_buttonbar->configButton(), SIGNAL (clicked ()), this, SLOT (showPopupMenu()));
 
     setAcceptDrops (true);
     m_holder->resizeEvent (0L);
@@ -665,7 +666,7 @@ void KMPlayerView::showPopupMenu () {
         updateVolume(m_svc->scaleFactor());
     }
 #endif
-    m_popupMenu->exec (m_configButton->mapToGlobal (QPoint (0, button_height)));
+    m_popupMenu->exec (m_buttonbar->configButton()->mapToGlobal (QPoint (0, button_height)));
 }
 
 void KMPlayerView::leaveEvent (QEvent *) {
@@ -718,14 +719,17 @@ void KMPlayerView::fullScreen () {
     }
 }
 
-void KMPlayerView::setButtonBar (QWidget * bb) {
-    setAutoHideButtons (false);
-    bb->reparent (m_layer, m_buttonbar->pos (), true);
-    QBoxLayout * layerbox = static_cast<QBoxLayout*>(m_layer->layout ());
-    layerbox->addWidget (bb);
-    m_buttonbar->hide ();
-    m_buttonbar = bb;
-    layerbox->activate ();
+void KMPlayerView::setForeignViewer (KMPlayerView * other) {
+    if (m_buttonbar && m_auto_hide_buttons) {
+        m_buttonbar->show ();
+        m_viewer->setMouseTracking (false);
+        m_viewer->parentWidget ()->setMouseTracking (false);
+    }
+    m_holder->hide ();
+    other->m_holder->reparent (m_layer, m_holder->pos (), true);
+    QVBoxLayout * layout = ::qt_cast<QVBoxLayout*>(m_layer->layout());
+    layout->insertWidget (0, other->m_holder);
+    layout->activate ();
 }
 //----------------------------------------------------------------------
 

@@ -117,26 +117,57 @@ void KMPlayer::showConfigDialog () {
     m_settings->show ("GeneralPage");
 }
 
+void KMPlayer::addControlPanel (KMPlayerControlPanel * panel) {
+    connect (panel->backButton (), SIGNAL (clicked ()), this, SLOT (back ()));
+    connect (panel->playButton (), SIGNAL (clicked ()), this, SLOT (play ()));
+    connect (panel->forwardButton (), SIGNAL (clicked ()), this, SLOT (forward ()));
+    connect (panel->pauseButton (), SIGNAL (clicked ()), this, SLOT (pause ()));
+    connect (panel->stopButton (), SIGNAL (clicked ()), this, SLOT (stop ()));
+    connect (panel->recordButton(), SIGNAL (clicked()), this, SLOT (record()));
+    connect (panel->positionSlider (), SIGNAL (valueChanged (int)), this, SLOT (positonValueChanged (int)));
+    connect (panel->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
+    connect (panel->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
+    connect (panel, SIGNAL (destroyed(QObject *)), this, SLOT (controlPanelDestroyed(QObject *)));
+    if ((playing () && !panel->playButton ()->isOn ()) ||
+            (!playing () && panel->playButton ()->isOn ()))
+        panel->playButton ()->toggle ();
+    m_panels.push_back (panel);
+}
+
+void KMPlayer::removeControlPanel (KMPlayerControlPanel * panel) {
+    if (!m_panels.contains (panel)) {
+        kdError () << "Control panel not found" << endl;
+        return;
+    }
+    disconnect (panel->backButton (), SIGNAL (clicked ()), this, SLOT (back ()));
+    disconnect (panel->playButton (), SIGNAL (clicked ()), this, SLOT (play ()));
+    disconnect (panel->forwardButton (), SIGNAL (clicked ()), this, SLOT (forward ()));
+    disconnect (panel->pauseButton (), SIGNAL (clicked ()), this, SLOT (pause ()));
+    disconnect (panel->stopButton (), SIGNAL (clicked ()), this, SLOT (stop ()));
+    disconnect (panel->recordButton(), SIGNAL (clicked()), this, SLOT (record()));
+    disconnect (panel->positionSlider (), SIGNAL (valueChanged (int)), this, SLOT (positonValueChanged (int)));
+    disconnect (panel->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
+    disconnect (panel->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
+    disconnect (panel, SIGNAL (destroyed(QObject *)), this, SLOT (controlPanelDestroyed(QObject *)));
+    m_panels.remove (panel);
+}
+
+void KMPlayer::controlPanelDestroyed (QObject * panel) {
+    m_panels.remove (static_cast <KMPlayerControlPanel *> (panel));
+}
+
 void KMPlayer::init (KActionCollection * action_collection) {
     m_view->init ();
     m_settings->readConfig ();
     m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner,
                         m_view->bookmarkMenu (), action_collection, true, true);
     setProcess (m_mplayer);
+    addControlPanel (m_view->buttonBar ());
     m_bPosSliderPressed = false;
     m_view->contrastSlider ()->setValue (m_settings->contrast);
     m_view->brightnessSlider ()->setValue (m_settings->brightness);
     m_view->hueSlider ()->setValue (m_settings->hue);
     m_view->saturationSlider ()->setValue (m_settings->saturation);
-    connect (m_view->backButton (), SIGNAL (clicked ()), this, SLOT (back ()));
-    connect (m_view->playButton (), SIGNAL (clicked ()), this, SLOT (play ()));
-    connect (m_view->forwardButton (), SIGNAL (clicked ()), this, SLOT (forward ()));
-    connect (m_view->pauseButton (), SIGNAL (clicked ()), this, SLOT (pause ()));
-    connect (m_view->stopButton (), SIGNAL (clicked ()), this, SLOT (stop ()));
-    connect (m_view->recordButton(), SIGNAL (clicked()), this, SLOT (record()));
-    connect (m_view->positionSlider (), SIGNAL (valueChanged (int)), this, SLOT (positonValueChanged (int)));
-    connect (m_view->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
-    connect (m_view->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
     connect (m_view->contrastSlider (), SIGNAL (valueChanged(int)), this, SLOT (contrastValueChanged(int)));
     connect (m_view->brightnessSlider (), SIGNAL (valueChanged(int)), this, SLOT (brightnessValueChanged(int)));
     connect (m_view->hueSlider (), SIGNAL (valueChanged(int)), this, SLOT (hueValueChanged(int)));
@@ -274,16 +305,24 @@ void KMPlayer::setSource (KMPlayerSource * source) {
     KMPlayerSource * oldsource = m_process->source ();
     if (oldsource) {
         oldsource->deactivate ();
-        closeURL ();
+        stop ();
+        if (m_view) {
+            if (m_view->viewer ())
+                m_view->viewer ()->setAspect (0.0);
+            m_view->reset ();
+        }
     }
     m_process->setSource (source);
     m_recorder->setSource (source);
-    if (source->isSeekable ()) {
-        m_view->forwardButton ()->show ();
-        m_view->backButton ()->show ();
-    } else {
-        m_view->forwardButton ()->hide ();
-        m_view->backButton ()->hide ();
+    ControlPanelList::iterator e = m_panels.end();
+    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
+        if (source->isSeekable ()) {
+            (*i)->forwardButton ()->show ();
+            (*i)->backButton ()->show ();
+        } else {
+            (*i)->forwardButton ()->hide ();
+            (*i)->backButton ()->hide ();
+        }
     }
     source->init ();
     if (source) QTimer::singleShot (0, source, SLOT (activate ()));
@@ -316,7 +355,8 @@ bool KMPlayer::openURL (const KURL & url) {
 bool KMPlayer::closeURL () {
     stop ();
     if (!m_view) return false;
-    m_view->viewer ()->setAspect (0.0);
+    if (m_view->viewer ())
+        m_view->viewer ()->setAspect (0.0);
     m_view->reset ();
     return true;
 }
@@ -328,13 +368,17 @@ bool KMPlayer::openFile () {
 void KMPlayer::keepMovieAspect (bool b) {
     if (!m_view) return;
     m_view->setKeepSizeRatio (b);
-    m_view->viewer ()->setAspect (b ? m_process->source ()->aspect () : 0.0);
+    if (m_view->viewer ())
+        m_view->viewer ()->setAspect (b ? m_process->source ()->aspect () : 0.0);
 }
 
 void KMPlayer::recordingStarted () {
     if (!m_view) return;
-    if (!m_view->recordButton ()->isOn ()) 
-        m_view->recordButton ()->toggle ();
+    ControlPanelList::iterator e = m_panels.end();
+    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
+        if (!(*i)->recordButton ()->isOn ()) 
+            (*i)->recordButton ()->toggle ();
+    }
     if (m_settings->replayoption == KMPlayerSettings::ReplayAfter)
         m_record_timer = startTimer (1000 * m_settings->replaytime);
     emit startRecording ();
@@ -342,8 +386,11 @@ void KMPlayer::recordingStarted () {
 
 void KMPlayer::recordingFinished () {
     if (!m_view) return;
-    if (m_view->recordButton ()->isOn ()) 
-        m_view->recordButton ()->toggle ();
+    ControlPanelList::iterator e = m_panels.end();
+    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
+        if ((*i)->recordButton ()->isOn ()) 
+            (*i)->recordButton ()->toggle ();
+    }
     emit stopRecording ();
     killTimer (m_record_timer);
     m_record_timer = 0;
@@ -372,29 +419,38 @@ void KMPlayer::processFinished () {
         m_process->source ()->setLength (m_process->source ()->position ());
     m_process->source ()->setPosition (0);
     if (!m_view) return;
-    if (m_view->playButton ()->isOn ())
-        m_view->playButton ()->toggle ();
-    m_view->positionSlider()->setValue (0);
-    m_view->positionSlider()->setEnabled (false);
-    m_view->positionSlider()->show();
+    ControlPanelList::iterator e = m_panels.end();
+    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
+        if ((*i)->playButton ()->isOn ())
+            (*i)->playButton ()->toggle ();
+        (*i)->positionSlider()->setValue (0);
+        (*i)->positionSlider()->setEnabled (false);
+        (*i)->positionSlider()->show();
+    }
     m_view->reset ();
     emit stopPlaying ();
 }
 
 void KMPlayer::processStarted () {
     if (!m_view) return;
-    if (!m_view->playButton ()->isOn ()) m_view->playButton ()->toggle ();
+    ControlPanelList::iterator e = m_panels.end();
+    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
+        if (!(*i)->playButton ()->isOn ()) (*i)->playButton ()->toggle ();
+    }
 }
 
 void KMPlayer::processPosition (int pos) {
     if (!m_view) return;
-    QSlider *slider = m_view->positionSlider ();
-    if (m_process->source ()->length () <= 0 && pos > 7 * slider->maxValue ()/8)
-        slider->setMaxValue (slider->maxValue() * 2);
-    else if (slider->maxValue() < pos)
-        slider->setMaxValue (int (1.4 * slider->maxValue()));
-    if (!m_bPosSliderPressed)
-        slider->setValue (pos);
+    ControlPanelList::iterator e = m_panels.end();
+    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
+        QSlider *slider = (*i)->positionSlider ();
+        if (m_process->source ()->length () <= 0 && pos > 7 * slider->maxValue ()/8)
+            slider->setMaxValue (slider->maxValue() * 2);
+        else if (slider->maxValue() < pos)
+            slider->setMaxValue (int (1.4 * slider->maxValue()));
+        if (!m_bPosSliderPressed)
+            slider->setValue (pos);
+    }
 }
 
 void KMPlayer::processLoading (int percentage) {
@@ -404,13 +460,18 @@ void KMPlayer::processLoading (int percentage) {
 void KMPlayer::processPlaying () {
     if (!m_view) return;
     kdDebug () << "KMPlayer::processPlaying " << endl;
-    if (m_settings->sizeratio)
+    if (m_settings->sizeratio && m_view->viewer ())
         m_view->viewer ()->setAspect (m_process->source ()->aspect ());
-    m_view->positionSlider()->setEnabled (true);
-    if (m_process->source ()->hasLength ())
-        m_view->positionSlider()->show();
-    else
-        m_view->positionSlider()->hide();
+    ControlPanelList::iterator e = m_panels.end();
+    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
+        int len = m_process->source ()->length ();
+        (*i)->positionSlider()->setMaxValue (len > 0 ? len + 9 : 300);
+        (*i)->positionSlider()->setEnabled (true);
+        if (m_process->source ()->hasLength ())
+            (*i)->positionSlider()->show();
+        else
+            (*i)->positionSlider()->hide();
+    }
     emit loading (100);
     emit startPlaying ();
 }
@@ -438,18 +499,21 @@ void KMPlayer::record () {
     } else {
         m_process->stop ();
         m_settings->show  ("RecordPage");
-        if (m_view->recordButton ()->isOn ()) 
-            m_view->recordButton ()->toggle ();
+        ControlPanelList::iterator e = m_panels.end();
+        for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
+            if ((*i)->recordButton ()->isOn ()) 
+                (*i)->recordButton ()->toggle ();
+        }
     }
     if (m_view) m_view->setCursor (QCursor (Qt::ArrowCursor));
 }
 
 void KMPlayer::play () {
     m_process->play ();
-    if (m_process->playing () && !m_view->playButton ()->isOn ())
-        m_view->playButton ()->toggle ();
-    else if (!m_process->playing () && m_view->playButton ()->isOn ())
-        m_view->playButton ()->toggle ();
+    ControlPanelList::iterator e = m_panels.end();
+    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i)
+        if (m_process->playing () ^ (*i)->playButton ()->isOn ())
+            (*i)->playButton ()->toggle ();
 }
 
 bool KMPlayer::playing () const {
@@ -457,14 +521,19 @@ bool KMPlayer::playing () const {
 }
 
 void KMPlayer::stop () {
-    if (m_view && !m_view->stopButton ()->isOn ())
-        m_view->stopButton ()->toggle ();
+    ControlPanelList::iterator e = m_panels.end();
+    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
+        if (!(*i)->stopButton ()->isOn ())
+            (*i)->stopButton ()->toggle ();
+    }
     if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
     m_process->source ()->first ();
     m_process->stop ();
     if (m_view) m_view->setCursor (QCursor (Qt::ArrowCursor));
-    if (m_view && m_view->stopButton ()->isOn ())
-        m_view->stopButton ()->toggle ();
+    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
+        if ((*i)->stopButton ()->isOn ())
+            (*i)->stopButton ()->toggle ();
+    }
 }
 
 void KMPlayer::seek (unsigned long msec) {
@@ -476,7 +545,7 @@ void KMPlayer::adjustVolume (int incdec) {
 }
 
 void KMPlayer::sizes (int & w, int & h) const {
-    if (m_noresize) {
+    if (m_noresize && m_view->viewer ()) {
         w = m_view->viewer ()->width ();
         h = m_view->viewer ()->height ();
     } else {
@@ -491,7 +560,9 @@ void KMPlayer::posSliderPressed () {
 
 void KMPlayer::posSliderReleased () {
     m_bPosSliderPressed=false;
-    m_process->seek (m_view->positionSlider()->value(), true);
+    QSlider * posSlider = ::qt_cast<QSlider *> (sender ());
+    if (posSlider)
+        m_process->seek (posSlider->value(), true);
 }
 
 void KMPlayer::contrastValueChanged (int val) {
@@ -548,9 +619,6 @@ void KMPlayerSource::init () {
 
 void KMPlayerSource::setLength (int len) {
     m_length = len;
-    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
-    if (view && view->positionSlider ())
-        view->positionSlider()->setMaxValue (len > 0 ? len + 9 : 300);
 }
 
 void KMPlayerSource::setURL (const KURL & url) {

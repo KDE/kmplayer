@@ -106,6 +106,7 @@ class KMPlayerPart : public KMPlayer {
     Q_OBJECT
 public:
     enum Features {
+        Feat_Unknown = 0,
         Feat_Viewer = 0x01, Feat_Controls = 0x02, Feat_Label = 0x04,
         Feat_All = 0xff
     };
@@ -119,7 +120,7 @@ public:
         { return m_liveconnectextension; }
     KMPlayerHRefSource * hrefSource () const { return m_hrefsource; }
     bool hasFeature (int f) { return m_features & f; }
-    bool allowRedir (const QString & url);
+    bool allowRedir (const KURL & url);
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool closeURL ();
@@ -134,7 +135,8 @@ protected:
     KMPlayerLiveConnectExtension * m_liveconnectextension;
     KMPlayerHRefSource * m_hrefsource;
     QString m_group;
-    QString m_docbase;
+    KURL m_docbase;
+    QString m_src_url;
     int m_features;
     bool m_started_emited : 1;
     //bool m_noresize : 1;

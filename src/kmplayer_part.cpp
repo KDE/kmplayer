@@ -43,15 +43,11 @@
 #include "kmplayerprocess.h"
 
 typedef QValueList <QGuardedPtr <KMPlayerPart> > KMPlayerPartList;
-typedef QMap <QString, KMPlayerPartList *> KMPlayerPartMap;
 
 struct KMPlayerPartStatic {
     KMPlayerPartStatic () {}
     ~KMPlayerPartStatic ();
-    void add (const QString & g, KMPlayerPart *);
-    void remove (const QString & g, KMPlayerPart *);
-    KMPlayerPart * find (const QString & g, const QString & db, int f);
-    KMPlayerPartMap kmplayer_partmap;
+    KMPlayerPartList kmplayer_parts;
 };
 
 static KMPlayerPartStatic * kmplayerpart_static = 0L;
@@ -59,39 +55,6 @@ static KMPlayerPartStatic * kmplayerpart_static = 0L;
 KMPlayerPartStatic::~KMPlayerPartStatic () {
     kmplayerpart_static = 0L;
     // delete map content
-}
-
-void KMPlayerPartStatic::add (const QString & group, KMPlayerPart * p) {
-    KMPlayerPartMap::iterator i = kmplayer_partmap.find (group);
-    KMPlayerPartList * list;
-    if (i == kmplayer_partmap.end ()) {
-        list = new KMPlayerPartList;
-        kmplayer_partmap.insert (group, list);
-    } else
-        list = i.data ();
-    list->push_back (p);
-}
-
-void KMPlayerPartStatic::remove (const QString & group, KMPlayerPart * p) {
-    KMPlayerPartMap::iterator i = kmplayer_partmap.find (group);
-    if (i == kmplayer_partmap.end ()) return;
-    KMPlayerPartList * list = i.data ();
-    if (!list->remove (p))
-        kdError () << "KMPlayer part not found in kmplayer_partmap" << endl;
-    if (list->size () <= 0) {
-        kmplayer_partmap.erase (i);
-        delete list;
-    }
-}
-
-KMPlayerPart * KMPlayerPartStatic::find (const QString & group, const QString & db, int f) {
-    KMPlayerPartMap::iterator im = kmplayer_partmap.find (group);
-    if (im == kmplayer_partmap.end ()) return 0L;
-    KMPlayerPartList::iterator il = im.data()->begin ();
-    for (; il != im.data()->end (); ++il)
-        if (*il && (*il)->allowRedir (db) && (*il)->hasFeature (f))
-            return (KMPlayerPart *) *il;
-    return 0L;
 }
 
 static KStaticDeleter <KMPlayerPartStatic> kmplayerpart_staticdeleter;
@@ -139,7 +102,7 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
    m_browserextension (new KMPlayerBrowserExtension (this)),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
    m_hrefsource (new KMPlayerHRefSource (this)),
-   m_features (Feat_All),
+   m_features (Feat_Unknown),
    m_started_emited (false),
    m_havehref (false) {
     m_ispart = true;
@@ -172,6 +135,8 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
             } else if (name.lower()==QString::fromLatin1("controls")) {
                 if (value.lower () == QString::fromLatin1("imagewindow")) {
                     m_features = Feat_Viewer;
+                } else if (value.lower () == QString::fromLatin1("all")) {
+                    m_features = Feat_All;
                 } else if (value.lower () == QString::fromLatin1("tacctrl")) {
                     m_features = Feat_Label;
                 } else if (value.lower () == QString::fromLatin1("controlpanel")) {
@@ -184,7 +149,9 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
             } else if (name.lower()==QString::fromLatin1("console")) {
                 m_group = value.isEmpty() ? QString::fromLatin1("_anonymous") : value;
             } else if (name.lower()==QString::fromLatin1("__khtml__pluginbaseurl")) {
-                m_docbase = value;
+                m_docbase = KURL (value);
+            } else if (name.lower()==QString::fromLatin1("src")) {
+                m_src_url = value;
             } else if (name.lower()==QString::fromLatin1("autostart"))
                 m_autoplay = !(value.lower() == QString::fromLatin1("false") ||
                                value.lower() == QString::fromLatin1("0"));
@@ -199,45 +166,60 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
                                       this, SLOT (setMenuZoom (int)));
     KParts::Part::setWidget (m_view);
     setXMLFile("kmplayerpartui.rc");
-    if (m_features & Feat_Viewer) {
-        if (m_features & Feat_Controls) {
-            m_view->setAutoHideButtons (true);
-            m_view->buttonBar ()->show ();
-        } else {
-            m_view->setAutoHideButtons (false);
-            KMPlayerPart * copart = kmplayerpart_static->find (m_group, m_docbase, Feat_Controls);
-            if (copart && copart->m_view) {
-                copart->m_view->setButtonBar (m_view->buttonBar ());
-            } else
-                m_view->buttonBar ()->hide ();
-        }
-    } else if (m_features & Feat_Controls) {
-        KMPlayerPart * copart = kmplayerpart_static->find (m_group, m_docbase, Feat_Viewer);
-        if (copart && copart->m_view) {
-            m_view->setButtonBar (copart->m_view->buttonBar ());
-            copart->m_view->setAutoHideButtons (false);
-        }
-    }
-    if (!m_group.isEmpty ())
-        kmplayerpart_static->add (m_group, this);
+   if (!m_group.isEmpty ())
+        kmplayerpart_static->kmplayer_parts.push_back (this);
 }
 
 KMPlayerPart::~KMPlayerPart () {
     kdDebug() << "KMPlayerPart::~KMPlayerPart" << endl;
     if (!m_group.isEmpty ())
-        kmplayerpart_static->remove (m_group, this);
+        kmplayerpart_static->kmplayer_parts.remove (this);
     delete m_config;
     m_config = 0L;
 }
 
-bool KMPlayerPart::allowRedir (const QString & url) {
-    return kapp->authorizeURLAction ("redirect", KURL (url), KURL (m_docbase));
+bool KMPlayerPart::allowRedir (const KURL & url) {
+    return kapp->authorizeURLAction ("redirect", url, m_docbase);
 }
 
 bool KMPlayerPart::openURL (const KURL & url) {
     kdDebug () << "KMPlayerPart::openURL " << url.url() << endl;
-    if (!(m_features & Feat_Viewer))
+    KMPlayerPart * current_player = 0L;
+    KMPlayerPartList::iterator i = kmplayerpart_static->kmplayer_parts.begin ();
+    for (; i != kmplayerpart_static->kmplayer_parts.end (); ++i) {
+        kdDebug() << "[00;31m" << m_src_url << " other:" << (*i)->m_src_url << "[00m " << (current_player!=(KMPlayerPart*)*i) << " " << (m_group == (*i)->m_group) << ((*i)->m_src_url == m_src_url) <<endl;
+        if (!current_player && *i && (KMPlayerPart*)*i != this &&
+                (*i)->m_src_url == m_src_url &&
+                m_group != QString::fromLatin1("_unique") &&
+                (*i)->m_group != QString::fromLatin1("_unique") &&
+                ((*i)->m_group == m_group ||
+                 (*i)->m_group == QString::fromLatin1("_master") ||
+                 m_group == QString::fromLatin1("_master"))) {
+            current_player = *i;
+            break;
+        }
+    }
+    KMPlayerControlPanel * panel = m_view->buttonBar ();
+    if (m_features & Feat_Controls) {
+        panel->show ();
+        m_view->setAutoHideButtons (false);
+    }
+    if (current_player) {
+        if (m_features & Feat_Controls) {
+            removeControlPanel (panel);
+            current_player->addControlPanel (panel);
+            if (current_player->m_view) {
+                current_player->m_view->setAutoHideButtons (false);
+                current_player->m_view->buttonBar ()->hide ();
+            }
+        }
+        if (m_features & Feat_Viewer) {
+            m_view->setForeignViewer (current_player->m_view);
+            m_view->setAutoHideButtons (false);
+            panel->hide ();
+        }
         return true;
+    }
     if (!m_view || !url.isValid ()) return false;
     if (m_havehref && !kapp->authorizeURLAction ("redirect", url, m_urlsource->url ()))
         m_havehref = false;
@@ -254,7 +236,7 @@ bool KMPlayerPart::openURL (const KURL & url) {
 
 bool KMPlayerPart::closeURL () {
     if (!m_group.isEmpty ()) {
-        kmplayerpart_static->remove (m_group, this);
+        kmplayerpart_static->kmplayer_parts.remove (this);
         m_group.truncate (0);
     }
     return KMPlayer::closeURL ();
@@ -311,8 +293,9 @@ void KMPlayerPart::setMenuZoom (int id) {
     float scale = 1.5;
     if (id == KMPlayerView::menu_zoom50)
         scale = 0.5;
-    m_liveconnectextension->setSize (int (scale * m_view->viewer ()->width ()),
-                                     int (scale * m_view->viewer ()->height()));
+    if (m_view->viewer ())
+        m_liveconnectextension->setSize (int (scale * m_view->viewer ()->width ()),
+                                         int (scale * m_view->viewer ()->height()));
 }
 
 //---------------------------------------------------------------------
@@ -560,10 +543,10 @@ bool KMPlayerLiveConnectExtension::call
                 rval = entry->defaultvalue;
             break;
         case canpause:
-            rval = (player->process ()->playing () && !view->pauseButton ()->isOn ()) ? "true" : "false";
+            rval = (player->process ()->playing () && !view->buttonBar()->pauseButton ()->isOn ()) ? "true" : "false";
             break;
         case canplay:
-            rval = (!player->process ()->playing () || view->pauseButton ()->isOn ()) ? "true" : "false";
+            rval = (!player->process ()->playing () || view->buttonBar()->pauseButton ()->isOn ()) ? "true" : "false";
             break;
         case canstop:
             rval = player->process ()->playing () ? "true" : "false";
@@ -619,8 +602,8 @@ bool KMPlayerLiveConnectExtension::call
         case setsource:
             rval ="false";
             if (args.size ()) {
-                QString url (args.first ());
-                if (player->allowRedir (url) && player->openURL (KURL (url)))
+                KURL url (args.first ());
+                if (player->allowRedir (url) && player->openURL (url))
                     rval = "true";
             }
             break;
@@ -641,8 +624,6 @@ void KMPlayerLiveConnectExtension::setSize (int w, int h) {
     if (view->buttonBar ()->isVisible () &&
             !player->settings ()->autohidebuttons)
         h += view->buttonBar()->height();
-    if (view->positionSlider()->isVisible())
-        h += view->positionSlider()->height();
     QCString jscode;
     //jscode.sprintf("this.width=%d;this.height=%d;kmplayer", w, h);
     KParts::LiveConnectExtension::ArgList args;
@@ -730,15 +711,16 @@ void KMPlayerHRefSource::finished () {
         QTimer::singleShot (0, this, SLOT (play ()));
         return;
     }
-    view->positionSlider()->hide();
-    connect (view->viewer (), SIGNAL (clicked ()), this, SLOT (play ()));
+    if (view->viewer ())
+        connect (view->viewer (), SIGNAL (clicked ()), this, SLOT (play ()));
 }
 
 void KMPlayerHRefSource::deactivate () {
     kdDebug () << "KMPlayerHRefSource::deactivate()" << endl;
     KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
     view->setPicture (QString::null);
-    disconnect (view->viewer (), SIGNAL (clicked ()), this, SLOT (play ()));
+    if (view->viewer ())
+        disconnect (view->viewer (), SIGNAL (clicked ()), this, SLOT (play ()));
 }
 
 QString KMPlayerHRefSource::prettyName () {
