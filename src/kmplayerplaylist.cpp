@@ -137,7 +137,7 @@ void Element::stop () {
     setState (state_finished);
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
         if (e->state != state_init)
-            // children are out of scope now, reset their RegionData
+            // children are out of scope now, reset their Runtime
             e->reset (); // reset will call stop if necessary
         else
             break; // not yet started
@@ -167,10 +167,6 @@ void Element::childDone (ElementPtr child) {
         else
             stop (); // we're done
     }
-}
-
-RegionDataPtr Element::getNewData (RegionNodePtr) {
-    return RegionDataPtr ();
 }
 
 void Element::clear () {

@@ -41,10 +41,8 @@ static const unsigned int duration_last_option = (unsigned int) -3;
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT RegionData::RegionData (RegionNodePtr r) : region_node(r) {}
-
-KDE_NO_EXPORT bool RegionData::isAudioVideo () {
-    return false;
+ElementRuntimePtr Element::getRuntime () {
+    return ElementRuntimePtr ();
 }
 
 KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (ElementPtr e)
@@ -58,20 +56,20 @@ KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (ElementPtr e)
     }
 }
 
-KDE_NO_CDTOR_EXPORT void RegionNode::clearAllData () {
-    kdDebug () << "RegionNode::clearAllData " << endl;
-    data = RegionDataPtr ();
+KDE_NO_CDTOR_EXPORT void RegionNode::clearAll () {
+    kdDebug () << "RegionNode::clearAll " << endl;
+    attached_element = ElementPtr ();
     for (RegionNodePtr r = firstChild; r; r = r->nextSibling)
-        r->clearAllData ();
+        r->clearAll ();
 }
 
 KDE_NO_CDTOR_EXPORT
-TimedRegionData::TimedRegionData (RegionNodePtr r, ElementPtr & e)
-    : RegionData (r), media_element (e), start_timer (0), dur_timer (0), isstarted (false) {}
+ElementRuntime::ElementRuntime (ElementPtr & e)
+    : media_element (e), start_timer (0), dur_timer (0), isstarted (false) {}
 
-KDE_NO_CDTOR_EXPORT TimedRegionData::~TimedRegionData () {}
+KDE_NO_CDTOR_EXPORT ElementRuntime::~ElementRuntime () {}
 
-KDE_NO_EXPORT void TimedRegionData::begin () {
+KDE_NO_EXPORT void ElementRuntime::begin () {
     if (start_timer || dur_timer)
         end ();
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (media_element);
@@ -83,7 +81,7 @@ KDE_NO_EXPORT void TimedRegionData::begin () {
     }
 }
     
-KDE_NO_EXPORT void TimedRegionData::end () {
+KDE_NO_EXPORT void ElementRuntime::end () {
     killTimer (start_timer);
     start_timer = 0;
     killTimer (dur_timer);
@@ -91,8 +89,8 @@ KDE_NO_EXPORT void TimedRegionData::end () {
     isstarted = false;
 }
 
-KDE_NO_EXPORT void TimedRegionData::timerEvent (QTimerEvent * e) {
-    kdDebug () << "TimedRegionData::timerEvent" << endl;
+KDE_NO_EXPORT void ElementRuntime::timerEvent (QTimerEvent * e) {
+    kdDebug () << "ElementRuntime::timerEvent" << endl;
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (media_element);
     if (!mt)
         end ();
@@ -107,7 +105,7 @@ KDE_NO_EXPORT void TimedRegionData::timerEvent (QTimerEvent * e) {
     }
 }
 
-KDE_NO_EXPORT void TimedRegionData::started () {
+KDE_NO_EXPORT void ElementRuntime::started () {
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (media_element);
     if (!mt)
         end ();
@@ -118,8 +116,8 @@ KDE_NO_EXPORT void TimedRegionData::started () {
         mt->timed_end (); // no duration set, so mark us finished
 }
 
-KDE_NO_CDTOR_EXPORT AudioVideoData::AudioVideoData(RegionNodePtr r,ElementPtr e)
-    : TimedRegionData (r, e) {}
+KDE_NO_CDTOR_EXPORT AudioVideoData::AudioVideoData (ElementPtr e)
+    : ElementRuntime (e) {}
 
 KDE_NO_EXPORT bool AudioVideoData::isAudioVideo () {
     return isstarted;
@@ -129,7 +127,7 @@ KDE_NO_EXPORT void AudioVideoData::started () {
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (media_element);
     if (mt)
         mt->timed_start ();
-    TimedRegionData::started ();
+    ElementRuntime::started ();
 }
 //-----------------------------------------------------------------------------
 
@@ -340,7 +338,7 @@ KDE_NO_EXPORT void SMIL::Par::start () {
 
 KDE_NO_EXPORT void SMIL::Par::stop () {
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
-        // children are out of scope now, reset their RegionData
+        // children are out of scope now, reset their ElementRuntime
         e->reset (); // will call stop() if necessary
     Element::stop ();
 }
@@ -494,10 +492,13 @@ KDE_NO_EXPORT void SMIL::MediaType::start () {
     kdDebug () << "SMIL::MediaType(" << nodeName() << ")::start " << !!region << endl;
     setState (state_started);
     if (region) {
-        region->clearAllData ();
-        region->data = getNewData (region);
-        if (region->data)
-            static_cast <TimedRegionData*> (region->data.ptr ())->begin ();
+        region->clearAll ();
+        region->attached_element = m_self;
+        ElementRuntimePtr rt = getRuntime ();
+        if (rt) {
+            rt->region_node = region;
+            rt->begin ();
+        }
     }
 }
 
@@ -514,11 +515,16 @@ KDE_NO_EXPORT void SMIL::MediaType::timed_end () {
 KDE_NO_EXPORT void SMIL::MediaType::reset () {
     kdDebug () << "SMIL::MediaType::reset " << endl;
     Mrl::reset ();
-    if (region) {
-        if (region->data)
-            static_cast <TimedRegionData*> (region->data.ptr ())->end ();
-        region->clearAllData ();
-    }
+    if (runtime)
+        runtime->end ();
+    if (region)
+        region->clearAll ();
+}
+
+KDE_NO_EXPORT ElementRuntimePtr SMIL::MediaType::getRuntime () {
+    if (!runtime)
+        runtime = getNewRuntime ();
+    return runtime;
 }
 
 //-----------------------------------------------------------------------------
@@ -548,8 +554,8 @@ KDE_NO_EXPORT void SMIL::AVMediaType::stop () {
     // TODO stop backend player
 }
 
-KDE_NO_EXPORT RegionDataPtr SMIL::AVMediaType::getNewData (RegionNodePtr r) {
-    return RegionDataPtr (new AudioVideoData (r, m_self));
+KDE_NO_EXPORT ElementRuntimePtr SMIL::AVMediaType::getNewRuntime () {
+    return ElementRuntimePtr (new AudioVideoData (m_self));
 }
 
 //-----------------------------------------------------------------------------
@@ -558,12 +564,9 @@ KDE_NO_CDTOR_EXPORT
 SMIL::ImageMediaType::ImageMediaType (ElementPtr & d)
     : SMIL::MediaType (d, "img") {}
 
-KDE_NO_EXPORT RegionDataPtr SMIL::ImageMediaType::getNewData (RegionNodePtr r) {
-    if (!region_data) {
-        isMrl (); // hack to get relative paths right
-        region_data = RegionDataPtr (new ImageData (r, m_self));
-    }
-    return region_data;
+KDE_NO_EXPORT ElementRuntimePtr SMIL::ImageMediaType::getNewRuntime () {
+    isMrl (); // hack to get relative paths right
+    return ElementRuntimePtr (new ImageData (m_self));
 }
 
 //-----------------------------------------------------------------------------
@@ -572,12 +575,9 @@ KDE_NO_CDTOR_EXPORT
 SMIL::TextMediaType::TextMediaType (ElementPtr & d)
     : SMIL::MediaType (d, "text") {}
 
-KDE_NO_EXPORT RegionDataPtr SMIL::TextMediaType::getNewData (RegionNodePtr r) {
-    if (!region_data) {
-        isMrl (); // hack to get relative paths right
-        region_data = RegionDataPtr (new TextData (r, m_self));
-    }
-    return region_data;
+KDE_NO_EXPORT ElementRuntimePtr SMIL::TextMediaType::getNewRuntime () {
+    isMrl (); // hack to get relative paths right
+    return ElementRuntimePtr (new TextData (m_self));
 }
 
 //-----------------------------------------------------------------------------
@@ -585,8 +585,11 @@ KDE_NO_EXPORT RegionDataPtr SMIL::TextMediaType::getNewData (RegionNodePtr r) {
 void RegionNode::paint (QPainter & p) {
     if (have_color)
         p.fillRect (x, y, w, h, QColor (QRgb (background_color)));
-    if (data)
-        data->paint (p);
+    if (attached_element) {
+        ElementRuntimePtr rt = attached_element->getRuntime ();
+        if (rt)
+            rt->paint (p);
+    }
 }
 
 namespace KMPlayer {
@@ -600,8 +603,8 @@ namespace KMPlayer {
     };
 }
 
-KDE_NO_CDTOR_EXPORT ImageData::ImageData (RegionNodePtr r, ElementPtr e)
- : TimedRegionData (r, e), d (new ImageDataPrivate) {
+KDE_NO_CDTOR_EXPORT ImageData::ImageData (ElementPtr e)
+ : ElementRuntime (e), d (new ImageDataPrivate) {
     Mrl * mrl = media_element ? media_element->mrl () : 0L;
     kdDebug () << "ImageData::ImageData " << (mrl ? mrl->src : QString()) << endl;
     if (mrl && !mrl->src.isEmpty ()) {
@@ -633,7 +636,7 @@ KDE_NO_EXPORT void ImageData::started () {
         if (n && region_node)
             n->repaintRegion (region_node);
     }
-    TimedRegionData::started ();
+    ElementRuntime::started ();
 }
 
 KDE_NO_EXPORT void ImageData::slotResult (KIO::Job*) {
@@ -658,8 +661,8 @@ namespace KMPlayer {
     };
 }
 
-KDE_NO_CDTOR_EXPORT TextData::TextData (RegionNodePtr r, ElementPtr e)
- : TimedRegionData (r, e) {
+KDE_NO_CDTOR_EXPORT TextData::TextData (ElementPtr e)
+ : ElementRuntime (e) {
     d = new TextDataPrivate;
     Mrl * mrl = media_element ? media_element->mrl () : 0L;
     kdDebug () << "TextData::TextData " << (mrl ? mrl->src : QString()) << endl;
@@ -743,7 +746,7 @@ KDE_NO_EXPORT void TextData::started () {
         if (n && region_node)
             n->repaintRegion (region_node);
     }
-    TimedRegionData::started ();
+    ElementRuntime::started ();
 }
 
 KDE_NO_EXPORT void TextData::slotResult (KIO::Job*) {

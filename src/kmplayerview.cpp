@@ -320,9 +320,12 @@ static void scaleRegions (RegionNodePtr & p, float sx, float sy, int xoff, int y
             r->y = yoff + int (sy * smilregion->y);
             r->w = int (sx * smilregion->w);
             r->h = int (sy * smilregion->h);
-            if (r->data && r->data->isAudioVideo ())
+            if (r->attached_element) {
                 // hack to get the one and only audio/video widget sizes
-                av_rgn = r;
+                const char * nn = r->attached_element->nodeName ();
+                if (!strcmp (nn, "video") || !strcmp (nn, "audio"))
+                    av_rgn = r;
+            }
             //kdDebug () << "ViewLayer " << r->x << "," << r->y << " " << r->w << "x" << r->h << endl;
             scaleRegions (r, sx, sy, r->x, r->y, av_rgn);
         }

@@ -39,10 +39,13 @@ namespace KMPlayer {
 class ImageDataPrivate;
 class TextDataPrivate;
 
-class TimedRegionData : public QObject, public RegionData {
+/**
+ * Live representation of a SMIL MediaType element
+ */
+class ElementRuntime : public QObject {
     Q_OBJECT
 public:
-    ~TimedRegionData ();
+    virtual ~ElementRuntime ();
     /**
      * start, or restart in case of re-use, the durations
      */
@@ -51,6 +54,11 @@ public:
      * forced killing of timers
      */
     void end ();
+    virtual void paint (QPainter &) {}
+    /**
+     * If this element is attached to a region, region_node points to it
+     */
+    RegionNodePtrW region_node;
 protected slots:
     void timerEvent (QTimerEvent *);
     /**
@@ -58,17 +66,17 @@ protected slots:
      */
     virtual void started ();
 protected:
-    TimedRegionData (RegionNodePtr r, ElementPtr & e);
+    ElementRuntime (ElementPtr & e);
     ElementPtrW media_element;
     int start_timer;
     int dur_timer;
     bool isstarted;
 };
 
-class AudioVideoData : public TimedRegionData {
+class AudioVideoData : public ElementRuntime {
     Q_OBJECT
 public:
-    AudioVideoData (RegionNodePtr r, ElementPtr e);
+    AudioVideoData (ElementPtr e);
     virtual bool isAudioVideo ();
 protected slots:
     /**
@@ -77,10 +85,10 @@ protected slots:
     virtual void started ();
 };
 
-class ImageData : public TimedRegionData {
+class ImageData : public ElementRuntime {
     Q_OBJECT
 public:
-    ImageData (RegionNodePtr r, ElementPtr e);
+    ImageData (ElementPtr e);
     ~ImageData ();
     void paint (QPainter & p);
     ImageDataPrivate * d;
@@ -94,10 +102,10 @@ private slots:
     void slotData (KIO::Job*, const QByteArray& qb);
 };
 
-class TextData : public TimedRegionData {
+class TextData : public ElementRuntime {
     Q_OBJECT
 public:
-    TextData (RegionNodePtr r, ElementPtr e);
+    TextData (ElementPtr e);
     ~TextData ();
     void paint (QPainter & p);
     TextDataPrivate * d;
@@ -192,25 +200,31 @@ public:
     void childDone (ElementPtr child);
 };
 
+/**
+ * Abstract base for the MediaType classes (video/audio/text/img/..)
+ */
 class MediaType : public Mrl {
 public:
     MediaType (ElementPtr & d, const QString & t);
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
+    ElementRuntimePtr getRuntime ();
     void opened ();
     void start ();
     void reset ();
     /**
-     * Called from the TimedRegionData when 'start' attribute expires
+     * Called from the ElementRuntime when 'start' attribute expires
      * so audio/video clip should start
      */
     void timed_start ();
     /**
-     * Called from the TimedRegionData when 'dur' (or 'end' - 'start' 
+     * Called from the ElementRuntime when 'dur' (or 'end' - 'start' 
      * attribute expires to mark us finished
      */
     void timed_end ();
+    virtual ElementRuntimePtr getNewRuntime () = 0;
     RegionNodePtrW region;
+    ElementRuntimePtr runtime;
     QString m_type;
     unsigned int bitrate;
     unsigned int begin_time;
@@ -221,7 +235,7 @@ public:
 class AVMediaType : public MediaType {
 public:
     AVMediaType (ElementPtr & d, const QString & t);
-    RegionDataPtr getNewData (RegionNodePtr r);
+    ElementRuntimePtr getNewRuntime ();
     void start ();
     void stop ();
 };
@@ -229,21 +243,13 @@ public:
 class ImageMediaType : public MediaType {
 public:
     ImageMediaType (ElementPtr & d);
-    RegionDataPtr getNewData (RegionNodePtr r);
-    /**
-     * cache the region data, so we load image only once
-     */
-    RegionDataPtr region_data;
+    ElementRuntimePtr getNewRuntime ();
 };
 
 class TextMediaType : public MediaType {
 public:
     TextMediaType (ElementPtr & d);
-    RegionDataPtr getNewData (RegionNodePtr r);
-    /**
-     * cache the region data, so we load image only once
-     */
-    RegionDataPtr region_data;
+    ElementRuntimePtr getNewRuntime ();
 };
 
 } // SMIL namespace

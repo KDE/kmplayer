@@ -61,25 +61,15 @@ class Document;
 class Element;
 class Mrl;
 class RegionNode;
-class RegionData;
+class ElementRuntime;
 class ImageDataPrivate;
 
 typedef SharedPtr<Element> ElementPtr;
 typedef WeakPtr<Element> ElementPtrW;
 typedef SharedPtr<RegionNode> RegionNodePtr;
 typedef WeakPtr<RegionNode> RegionNodePtrW;
-typedef SharedPtr<RegionData> RegionDataPtr;
+typedef SharedPtr<ElementRuntime> ElementRuntimePtr;
 
-
-class RegionData {
-public:
-    KDE_NO_CDTOR_EXPORT virtual ~RegionData () {}
-    virtual void paint (QPainter &) {}
-    virtual bool isAudioVideo ();
-protected:
-    RegionData (RegionNodePtr r);
-    RegionNodePtrW region_node;
-};
 
 class RegionNode {
 public:
@@ -103,13 +93,13 @@ public:
      */
     ElementPtrW regionElement;
     /**
-     * Data for this region
+     * Attached Element for this region (only one max. ATM)
      */
-    RegionDataPtr data;
+    ElementPtrW attached_element;
     /**
-     * Make data for this region and its sibling 0
+     * Make this region and its sibling 0
      */
-    void clearAllData ();
+    void clearAll ();
 
     RegionNodePtr nextSibling;
     RegionNodePtr firstChild;
@@ -172,9 +162,9 @@ public:
      */
     virtual void childDone (ElementPtr child);
     /**
-     * Creates a new RegionData object
+     * Creates a new ElementRuntime object
      */
-    virtual RegionDataPtr getNewData (RegionNodePtr r);
+    virtual ElementRuntimePtr getRuntime ();
     void clear ();
     void appendChild (ElementPtr c);
     void insertBefore (ElementPtr c, ElementPtr b);
