@@ -542,7 +542,7 @@ void KMPlayerView::updateUseArts () {
             m_watch = new KArtsFloatWatch(*m_svc, "scaleFactor_changed", this);
             connect (m_watch, SIGNAL (valueChanged (float)), 
                     this, SLOT (updateVolume (float)));
-            m_buttonbar->popupMenu ()->insertItem (m_slider, menu_volume, 5);
+            m_buttonbar->popupMenu ()->insertItem (m_slider, KMPlayerControlPanel::menu_volume, 5);
             m_buttonbar->popupMenu ()->insertSeparator (6);
         }
     }
