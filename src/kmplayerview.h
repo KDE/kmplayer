@@ -215,6 +215,7 @@ private:
     bool m_mixer_init : 1;
     bool m_inVolumeUpdate : 1;
     bool m_sreensaver_disabled : 1;
+    bool m_tmplog_needs_eol : 1;
     bool m_revert_fullscreen : 1;
     bool m_popup_clicked : 1;
 };

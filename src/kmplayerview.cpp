@@ -618,9 +618,8 @@ void KMPlayerPlayListView::selectItem (const QString & txt) {
         return;
     item = findItem (txt, 0);
     if (item) {
-        for (QListViewItem * p = item->parent (); p; p = p->parent ())
-            p->setOpen (true);
         setSelected (item, true);
+        ensureItemVisible (item);
     }
 }
 
@@ -694,6 +693,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerView::KMPlayerView (QWidget *parent, const char *nam
     m_playing (false),
     m_mixer_init (false),
     m_inVolumeUpdate (false),
+    m_tmplog_needs_eol (false),
     m_revert_fullscreen (false),
     m_popup_clicked (false)
 {
@@ -891,6 +891,8 @@ KDE_NO_EXPORT void KMPlayerView::updateVolume () {
 
 void KMPlayerView::showWidget (WidgetType wt) {
     m_widgetstack->raiseWidget (m_widgettypes [wt]);
+    if (m_widgetstack->visibleWidget () == m_widgettypes[WT_Console])
+        addText (QString (""), false);
 }
 
 void KMPlayerView::setControlPanelMode (ControlPanelMode m) {
@@ -964,10 +966,17 @@ KDE_NO_EXPORT void KMPlayerView::timerEvent (QTimerEvent * e) {
 }
 
 void KMPlayerView::addText (const QString & str, bool eol) {
+    if (m_tmplog_needs_eol)
+        tmplog += QChar ('\n');
     tmplog += str;
+    m_tmplog_needs_eol = eol;
+    if (m_widgetstack->visibleWidget () != m_widgettypes[WT_Console] &&
+            tmplog.length () < 7500)
+        return;
     if (eol) {
         m_multiedit->append (tmplog);
         tmplog.truncate (0);
+        m_tmplog_needs_eol = false;
     } else {
         int pos = tmplog.findRev (QChar ('\n'));
         if (pos >= 0) {
@@ -975,8 +984,9 @@ void KMPlayerView::addText (const QString & str, bool eol) {
             tmplog = tmplog.mid (pos+1);
         }
     }
-    if (5000 < m_multiedit->paragraphs ()) {
-        m_multiedit->setSelection (0, 0, 501, 0);
+    int p = m_multiedit->paragraphs ();
+    if (5000 < p) {
+        m_multiedit->setSelection (0, 0, p - 4499, 0);
         m_multiedit->removeSelectedText ();
     }
     m_multiedit->setCursorPosition (m_multiedit->paragraphs () - 1, 0);
