@@ -831,6 +831,18 @@ bool FFMpeg::play () {
             cmd += QString (" -ad ") + m_source->audioDevice ();
         else
             cmd += QString (" -an");
+        if (m_source->frequency () >= 0) {
+            KProcess process;
+            process.setUseShell (true);
+            process << "v4lctl -c " << m_source->videoDevice () << " setnorm " << m_source->videoNorm ();
+            kdDebug () << "v4lctl -c " << m_source->videoDevice () << " setnorm " << m_source->videoNorm () << endl;
+            process.start (KProcess::Block);
+            process.clearArguments();
+            process << "v4lctl -c " << m_source->videoDevice () << " setfreq " << QString::number (m_source->frequency ());
+            kdDebug () << "v4lctl -c " << m_source->videoDevice () << " setfreq " << m_source->frequency () << endl;
+            process.start (KProcess::Block);
+            cmd += QString (" -tvstd ") + m_source->videoNorm ();
+        }
     } else {
         cmd += QString ("-i ") + KProcess::quote (m_source->url ().isLocalFile () ? m_source->url ().path () : m_source->url ().url ());
     }

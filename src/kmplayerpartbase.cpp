@@ -296,12 +296,14 @@ void KMPlayer::recordingStarted () {
     if (!m_view) return;
     if (!m_view->recordButton ()->isOn ()) 
         m_view->recordButton ()->toggle ();
+    emit startRecording ();
 }
 
 void KMPlayer::recordingFinished () {
     if (!m_view) return;
     if (m_view->recordButton ()->isOn ()) 
         m_view->recordButton ()->toggle ();
+    emit stopRecording ();
     if (m_settings->replayoption == KMPlayerSettings::ReplayFinished ||
         (m_settings->replayoption == KMPlayerSettings::ReplayAfter && !playing ())) {
         Recorder * rec = dynamic_cast <Recorder*> (m_recorder);

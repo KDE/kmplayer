@@ -557,8 +557,8 @@ KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * play
     layout->addLayout (buttonlayout);
     layout->addItem (new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     connect (m_player, SIGNAL (sourceChanged(KMPlayerSource*)), this, SLOT (sourceChanged(KMPlayerSource*)));
-    connect (m_player->mencoder(), SIGNAL (started()), this, SLOT (recordingStarted()));
-    connect (m_player->mencoder(), SIGNAL (finished()), this, SLOT (recordingFinished()));
+    connect(m_player, SIGNAL(startRecording()), this, SLOT(recordingStarted()));
+    connect(m_player, SIGNAL(stopRecording()),this,SLOT (recordingFinished()));
     connect (replay, SIGNAL (clicked (int)), this, SLOT (replayClicked (int)));
 }
 

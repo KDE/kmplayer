@@ -334,8 +334,8 @@ static const char ffserverconf[] =
 void KMPlayerApp::broadcastClicked () {
     setCursor (QCursor (Qt::WaitCursor));
     m_endserver = false;
-    delete m_ffmpeg_process;
-    m_ffmpeg_process = 0L;
+    if (m_ffmpeg_process)
+        m_ffmpeg_process->stop ();
     if (!stopProcess (m_ffserver_process))
         KMessageBox::error (this, i18n ("Failed to end ffserver process."), i18n ("Error"));
     delete m_ffserver_process;
@@ -395,24 +395,11 @@ void KMPlayerApp::startFeed () {
         disconnect (m_ffserver_process,
                     SIGNAL (receivedStderr (KProcess *, char *, int)),
                     this, SLOT (processOutput (KProcess *, char *, int)));
+        delete m_ffmpeg_process;
         m_ffmpeg_process = new FFMpeg (m_player);
         m_ffmpeg_process->setSource (m_player->process ()->source ());
         connect(m_ffmpeg_process, SIGNAL(finished()),
                 this, SLOT(ffmpegFinished()));
-        if (m_player->process ()->source () == m_tvsource) {
-            KMPlayerTVSource::TVSource * tvsource = m_tvsource->tvsource ();
-            if (tvsource->frequency >= 0) {
-                KProcess process;
-                process.setUseShell (true);
-                process << "v4lctl -c " << tvsource->videodevice << " setnorm " << tvsource->norm.ascii ();
-                kdDebug () << "v4lctl -c " << tvsource->videodevice << " setnorm " << tvsource->norm << endl;
-                process.start (KProcess::Block);
-                process.clearArguments();
-                process << "v4lctl -c " << tvsource->videodevice << " setfreq " << QString::number (tvsource->frequency).ascii ();
-                kdDebug () << "v4lctl -c " << tvsource->videodevice << " setfreq " << tvsource->frequency << endl;
-                process.start (KProcess::Block);
-            }
-        }
         m_player->stop ();
         QString ffurl;
         ffurl.sprintf ("http://localhost:%d/kmplayer.ffm", conf->ffserverport);
@@ -1148,6 +1135,8 @@ void KMPlayerTVSource::buildArguments () {
         m_app->resizePlayer (100);
     m_audiodevice = m_tvsource->audiodevice;
     m_videodevice = m_tvsource->videodevice;
+    m_videonorm = m_tvsource->norm;
+    m_frequency = m_tvsource->frequency;
 }
 
 void KMPlayerTVSource::deactivate () {

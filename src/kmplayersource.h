@@ -49,6 +49,8 @@ public:
     const KURL & url () const { return m_url; }
     const QString & audioDevice () const { return m_audiodevice; }
     const QString & videoDevice () const { return m_videodevice; }
+    const QString & videoNorm () const { return m_videonorm; }
+    const int frequency () const { return m_frequency; }
     const QString & pipeCmd () const { return m_pipecmd; }
     const QString & options () const { return m_options; }
     const QString & recordCmd () const { return m_recordcmd; }
@@ -73,6 +75,8 @@ protected:
     KURL m_url;
     QString m_audiodevice;
     QString m_videodevice;
+    QString m_videonorm;
+    int m_frequency;
     QString m_pipecmd;
     QString m_options;
 private:

@@ -129,6 +129,8 @@ public:
 signals:
     void startPlaying ();
     void stopPlaying ();
+    void startRecording ();
+    void stopRecording ();
     void sourceChanged (KMPlayerSource *);
     void loading (int percentage);
 protected:
