@@ -501,6 +501,12 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
             } else if (m_cacheRegExp.search (out) > -1) {
                 m_player->processLoaded (int (m_cacheRegExp.cap(1).toDouble()));
             }
+        } else if (!source ()->identified () && out.startsWith ("ID_LENGTH")) {
+            int pos = out.find ('=');
+            if (pos > 0) {
+                m_source->setLength (len);
+                m_player->processLengthFound (10 * out.mid (pos + 1).toInt());
+            }
         } else if (!source ()->identified () && m_refURLRegExp.search (out) > -1) {
             kdDebug () << "Reference mrl " << m_refURLRegExp.cap (1) << endl;
             if (!m_tmpURL.isEmpty ())
@@ -915,6 +921,7 @@ void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
     m_source->setHeight (h);
     m_source->setAspect (a);
     m_source->setLength (len);
+    m_player->processLengthFound (len);
     if (m_player->settings ()->sizeratio) {
         KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
         if (!v) return;

@@ -462,6 +462,12 @@ void KMPlayer::processLoaded (int percentage) {
     emit loading (percentage);
 }
 
+void KMPlayer::processLengthFound (int len) {
+    if (!m_view) return;
+    std::for_each (m_panels.begin (), m_panels.end (),
+            std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setPlayingLength), len));
+}
+
 void KMPlayer::processStartedPlaying () {
     if (!m_view) return;
     m_view->videoStart ();
@@ -473,7 +479,6 @@ void KMPlayer::processStartedPlaying () {
     bool seek = m_process->source ()->isSeekable ();
     for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
         (*i)->showPositionSlider (!!len);
-        (*i)->setPlayingLength (len);
         (*i)->enableSeekButtons (seek);
     }
     emit loading (100);
@@ -733,10 +738,6 @@ bool KMPlayerSource::processOutput (const QString & str) {
         int pos = str.find ('=');
         if (pos > 0)
             setAspect (str.mid (pos + 1).replace (',', '.').toFloat ());
-    } else if (str.startsWith ("ID_LENGTH")) {
-        int pos = str.find ('=');
-        if (pos > 0)
-            setLength (10 * str.mid (pos + 1).toInt());
     } else
         return false;
     return true;

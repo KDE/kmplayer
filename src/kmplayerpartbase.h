@@ -121,6 +121,7 @@ public:
     void changeURL (const QString & url);
     void changeTitle (const QString & title);
     void processPositioned (int pos);
+    void processLengthFound (int len);
     virtual void processLoaded (int percentage);
     virtual void processStartedPlaying ();
 public slots:
