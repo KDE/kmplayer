@@ -472,16 +472,6 @@ KDE_NO_EXPORT void KMPlayerPopupMenu::leaveEvent (QEvent *) {
 static QPixmap * folder_pix;
 static QPixmap * video_pix;
 
-class KMPlayerListViewItem : public QListViewItem {
-public:
-    KMPlayerListViewItem (QListViewItem *p, const ElementPtr & e);
-    KMPlayerListViewItem (QListView *v, const ElementPtr & e);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerListViewItem () {}
-    void init ();
-protected:
-    ElementPtrW m_elm;
-};
-
 KDE_NO_CDTOR_EXPORT KMPlayerListViewItem::KMPlayerListViewItem (QListViewItem *p, const ElementPtr & e) : QListViewItem (p), m_elm (e) {
     init ();
 }

@@ -887,6 +887,13 @@ QString KMPlayerSource::prettyName () {
     return QString (i18n ("Unknown"));
 }
 
+void KMPlayerSource::requestElement (QListViewItem * item) {
+    KMPlayerListViewItem * vi = static_cast <KMPlayerListViewItem *> (item);
+    if (vi && vi->m_elm && vi->m_elm->isMrl ()) {
+        m_back_request = vi->m_elm;
+        m_player->process ()->stop ();
+    }
+}
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, const KURL & url)
@@ -909,6 +916,7 @@ KDE_NO_EXPORT bool KMPlayerURLSource::hasLength () {
 }
 
 KDE_NO_EXPORT void KMPlayerURLSource::activate () {
+    connect (m_player->process ()->view ()->playList (), SIGNAL (executed (QListViewItem *)), this, SLOT (requestElement (QListViewItem *)));
     if (url ().isEmpty ())
         return;
     if (m_auto_play)
@@ -917,6 +925,7 @@ KDE_NO_EXPORT void KMPlayerURLSource::activate () {
 
 KDE_NO_EXPORT void KMPlayerURLSource::deactivate () {
     m_player->enablePlayerMenu (false);
+    disconnect (m_player->process ()->view ()->playList (), SIGNAL (executed (QListViewItem *)), this, SLOT (requestElement (QListViewItem *)));
 }
 
 KDE_NO_EXPORT QString KMPlayerURLSource::prettyName () {

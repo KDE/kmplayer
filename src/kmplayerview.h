@@ -50,6 +50,15 @@ class QAccel;
 class KPopupMenu;
 
 
+class KMPlayerListViewItem : public QListViewItem {
+public:
+    KMPlayerListViewItem (QListViewItem *p, const ElementPtr & e);
+    KMPlayerListViewItem (QListView *v, const ElementPtr & e);
+    KDE_NO_CDTOR_EXPORT ~KMPlayerListViewItem () {}
+    void init ();
+    ElementPtrW m_elm;
+};
+
 class KMPlayerPlayListView : public KListView {
     Q_OBJECT
 public:

@@ -31,6 +31,7 @@ class KMPlayer;
 class KConfig;
 class QWidget;
 class QFrame;
+class QListViewItem;
 class KMPlayerSourcePrivate;
 
 class KMPlayerSource : public QObject {
@@ -88,6 +89,7 @@ public slots:
     virtual void forward ();
     virtual void backward ();
     virtual void play ();
+    void requestElement (QListViewItem *);
 protected:
     ElementPtr m_document;
     ElementPtr m_current;
