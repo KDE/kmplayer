@@ -725,9 +725,11 @@ KDE_NO_EXPORT void KMPlayerView::timerEvent (QTimerEvent * e) {
             showPopupMenu ();
     } else if (e->timerId () == popdown_timer) {
         popdown_timer = 0;
-        if (m_buttonbar->popupMenu ()->isVisible () && !m_buttonbar->popupMenu ()->hasMouse () && !m_buttonbar->playerMenu ()->hasMouse () && !m_buttonbar->viewMenu ()->hasMouse () && !m_buttonbar->zoomMenu ()->hasMouse () && !m_buttonbar->colorMenu ()->hasMouse ())
-            m_buttonbar->popupMenu ()->hide ();
-        // TODO
+        if (m_buttonbar->popupMenu ()->isVisible () && !m_buttonbar->popupMenu ()->hasMouse () && !m_buttonbar->playerMenu ()->hasMouse () && !m_buttonbar->viewMenu ()->hasMouse () && !m_buttonbar->zoomMenu ()->hasMouse () && !m_buttonbar->colorMenu ()->hasMouse () && !m_buttonbar->bookmarkMenu ()->hasMouse ())
+            if (!(m_buttonbar->bookmarkMenu ()->isVisible () &&
+                        ::qt_cast <QPopupMenu *> (QWidget::keyboardGrabber ())))
+                // not if user entered the bookmark sub menu or if I forgot one
+                m_buttonbar->popupMenu ()->hide ();
     }
     killTimer (e->timerId ());
 }
