@@ -28,6 +28,7 @@
 #include <qpopupmenu.h>
 #include <qslider.h>
 #include <qvaluelist.h>
+#include <qfile.h>
 
 #include <kmessagebox.h>
 #include <kaboutdata.h>
@@ -104,7 +105,7 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
     if (localbmfile != bmfile) {
         kdDebug () << "cp " << bmfile << " " << localbmfile << endl;
         KProcess p;
-        p << "/bin/cp" << bmfile.local8Bit () << localbmfile.local8Bit ();
+        p << "/bin/cp" << QFile::encodeName (bmfile) << QFile::encodeName (localbmfile);
         p.start (KProcess::Block);
     }
     m_bookmark_manager = new KMPlayerBookmarkManager (localbmfile);
