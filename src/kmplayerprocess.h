@@ -23,10 +23,13 @@
 
 #include <qobject.h>
 #include <qstring.h>
+#include <qcstring.h>
 #include <qstringlist.h>
 #include <qregexp.h>
 
 #include <kurl.h>
+
+#include "kmplayerconfig.h"
 
 class QWidget;
 class KProcess;
@@ -154,6 +157,9 @@ public slots:
     virtual bool stop ();
 };
 
+class KMPlayerXMLPreferencesPage;
+class KMPlayerXMLPreferencesFrame;
+
 class KMPlayerCallbackProcess : public KMPlayerProcess {
     Q_OBJECT
 public:
@@ -164,16 +170,29 @@ public:
     virtual void setErrorMessage (int code, const QString & msg);
     virtual void setFinished ();
     virtual void setPlaying ();
-    virtual void setStarted ();
+    virtual void setStarted (QByteArray & data);
     virtual void setMovieParams (int length, int width, int height, float aspect);
     virtual void setMoviePosition (int position);
     virtual void setLoadingProgress (int percentage);
-signals:
-    void running ();
+    QByteArray & getConfigData () { return m_configdata; }
 protected:
     KMPlayerCallback * m_callback;
-protected slots:
-    void emitRunning () { emit running (); }
+    QByteArray m_configdata;
+    KMPlayerXMLPreferencesPage * m_configpage;
+};
+
+class KMPlayerXMLPreferencesPage : public KMPlayerPreferencesPage {
+public:
+    KMPlayerXMLPreferencesPage (KMPlayerCallbackProcess *);
+    ~KMPlayerXMLPreferencesPage () {}
+    void write (KConfig *);
+    void read (KConfig *);
+    void sync (bool fromUI);
+    void prefLocation (QString & item, QString & icon, QString & tab);
+    QFrame * prefPage (QWidget * parent);
+private:
+    KMPlayerCallbackProcess * m_process;
+    KMPlayerXMLPreferencesFrame * m_configframe;
 };
 
 class Xine : public KMPlayerCallbackProcess {
@@ -193,8 +212,8 @@ public slots:
     bool contrast (int pos, bool absolute);
     bool brightness (int pos, bool absolute);
     bool seek (int pos, bool absolute);
+    void setStarted (QByteArray & data);
 private slots:
-    void processRunning ();
     void processStopped (KProcess *);
     void processOutput (KProcess *, char *, int);
 private:

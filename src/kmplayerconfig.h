@@ -63,7 +63,9 @@ class KMPlayerSettings : public QObject {
 public:
     KMPlayerSettings (KMPlayer *, KConfig * part);
     ~KMPlayerSettings ();
+    void show (const char * pagename = 0L);
     KMPlayerPreferences *configDialog() const { return configdialog; }
+
     QStringList urllist;
     QStringList sub_urllist;
     int contrast;
@@ -154,7 +156,6 @@ signals:
 public slots:
     void readConfig ();
     void writeConfig ();
-    void show (const char * pagename = 0L);
 private slots:
     void okPressed ();
     void getHelp ();

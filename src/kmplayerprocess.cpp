@@ -589,8 +589,8 @@ void KMPlayerCallback::playing () {
     m_process->setPlaying ();
 }
 
-void KMPlayerCallback::started () {
-    m_process->setStarted ();
+void KMPlayerCallback::started (QByteArray data) {
+    m_process->setStarted (data);
 }
 
 void KMPlayerCallback::movieParams (int length, int w, int h, float aspect) {
@@ -608,11 +608,15 @@ void KMPlayerCallback::loadingProgress (int percentage) {
 //-----------------------------------------------------------------------------
 
 KMPlayerCallbackProcess::KMPlayerCallbackProcess (KMPlayer * player)
-    : KMPlayerProcess (player), m_callback (new KMPlayerCallback (this)) {
+ : KMPlayerProcess (player),
+   m_callback (new KMPlayerCallback (this)),
+   m_configpage (new KMPlayerXMLPreferencesPage (this)) {
+    m_player->settings ()->pagelist.push_back (m_configpage);
 }
 
 KMPlayerCallbackProcess::~KMPlayerCallbackProcess () {
     delete m_callback;
+    delete m_configpage;
 }
 
 void KMPlayerCallbackProcess::setURL (const QString & url) {
@@ -638,8 +642,7 @@ void KMPlayerCallbackProcess::setPlaying () {
     emit startPlaying (); // FIXME TOO :-)
 }
 
-void KMPlayerCallbackProcess::setStarted () {
-    QTimer::singleShot (0, this, SLOT (emitRunning ()));
+void KMPlayerCallbackProcess::setStarted (QByteArray &) {
 }
 
 void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
@@ -665,10 +668,98 @@ void KMPlayerCallbackProcess::setLoadingProgress (int percentage) {
     emit loading (percentage);
 }
 //-----------------------------------------------------------------------------
+#include <qlayout.h>
+#include <qtable.h>
+#include <qlineedit.h>
+#include <qslider.h>
+#include <qcombobox.h>
+#include <qdom.h>
+
+class KMPlayerXMLPreferencesFrame : public QFrame {
+public:
+    KMPlayerXMLPreferencesFrame (QWidget * parent);
+    QTable * table;
+};
+
+KMPlayerXMLPreferencesFrame::KMPlayerXMLPreferencesFrame (QWidget * parent)
+ : QFrame (parent) {
+    QVBoxLayout * layout = new QVBoxLayout (this);
+    table = new QTable (this);
+    layout->addWidget (table);
+}
+
+KMPlayerXMLPreferencesPage::KMPlayerXMLPreferencesPage (KMPlayerCallbackProcess * p)
+ : m_process (p), m_configframe (0L) {
+}
+
+void KMPlayerXMLPreferencesPage::write (KConfig *) {
+}
+
+void KMPlayerXMLPreferencesPage::read (KConfig *) {
+}
+
+void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
+    if (fromUI) {
+        ; // TODO: send changes to Xine
+    } else {
+        QByteArray data = m_process->getConfigData ();
+        // if not have data, get it from Xine
+        if (!data.size ())
+            return;
+        if (m_configframe->table->numCols () < 1) { // not yet created
+            QDomDocument dom;
+            QString err;
+            int line, column;
+            if (!dom.setContent (data, false, &err, &line, &column)) {
+                fprintf (stderr, "%s %d %d\n", err.ascii(), line, column);
+                return;
+            }
+            if (dom.childNodes().length() != 1 || dom.firstChild().childNodes().length() < 1) {
+                fprintf (stderr, "No valid data\n");
+                return;
+            }
+            m_configframe->table->setNumCols (2);
+            m_configframe->table->setNumRows (dom.firstChild().childNodes().length());
+            m_configframe->table->verticalHeader ()->hide ();
+            m_configframe->table->setLeftMargin (0);
+            m_configframe->table->horizontalHeader ()->hide ();
+            m_configframe->table->setTopMargin (0);
+            m_configframe->table->setColumnReadOnly (0, true);
+            m_configframe->table->setColumnWidth (0, 250);
+            // set up the table fields
+            int row = 0;
+            for (QDomNode node = dom.firstChild().firstChild(); !node.isNull (); node = node.nextSibling (), row++) {
+                QDomNamedNodeMap attr = node.attributes ();
+                QDomNode n = attr.namedItem (QString ("NAME"));
+                QDomNode t = attr.namedItem (QString ("TYPE"));
+                kdDebug() << node.nodeName () << " " << node.attributes ().length () << " " << n.isNull() << endl;
+                if (!n.isNull () && !t.isNull ()) {
+                    m_configframe->table->setText (row, 0, n.nodeValue ());
+                    if (t.nodeValue () == QString ("num") || t.nodeValue () == QString ("string")) {
+                        QDomNode v = attr.namedItem (QString ("VALUE"));
+                        m_configframe->table->setText (row, 1, v.nodeValue ());
+                    }
+                }
+            }
+        }
+    }
+}
+
+void KMPlayerXMLPreferencesPage::prefLocation (QString & item, QString & icon, QString & tab) {
+    item = i18n ("General Options");
+    icon = QString ("kmplayer");
+    tab = i18n ("Xine");
+}
+
+QFrame * KMPlayerXMLPreferencesPage::prefPage (QWidget * parent) {
+    m_configframe = new KMPlayerXMLPreferencesFrame (parent);
+    return m_configframe;
+}
+
+//-----------------------------------------------------------------------------
 
 Xine::Xine (KMPlayer * player)
     : KMPlayerCallbackProcess (player), m_backend (0L) {
-    connect (this, SIGNAL (running ()), this, SLOT (processRunning ()));
 }
 
 Xine::~Xine () {}
@@ -813,7 +904,8 @@ void Xine::processStopped (KProcess *) {
     QTimer::singleShot (0, this, SLOT (emitFinished ()));
 }
 
-void Xine::processRunning () {
+void Xine::setStarted (QByteArray & data) {
+    m_configdata = data;
     QString dcopname;
     dcopname.sprintf ("kxineplayer-%u", m_process->pid ());
     kdDebug () << "up and running " << dcopname << endl;

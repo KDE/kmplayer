@@ -22,6 +22,7 @@
 #include <math.h>
 #include <config.h>
 #include <dcopclient.h>
+#include <qcstring.h>
 #include <qtimer.h>
 #include <qthread.h>
 #include <qmutex.h>
@@ -356,6 +357,43 @@ KXinePlayer::~KXinePlayer () {
         XUnlockDisplay (display);
     }
     xineapp = 0L;
+}
+
+void getConfigEntries (QByteArray & buf, int size) {
+    xine_cfg_entry_t entry;
+    int pos = 0;
+    pos += snprintf (buf.data () + pos, size - pos, "<document>\n");
+    for (int i = xine_config_get_first_entry (xine, &entry); i; i = xine_config_get_next_entry (xine, &entry)) {
+        pos += snprintf (buf.data () + pos, size - pos, "<entry NAME=\"%s\" TYPE=", entry.key);
+        switch (entry.type) {
+            case XINE_CONFIG_TYPE_STRING:
+            case XINE_CONFIG_TYPE_UNKNOWN:
+                pos += snprintf (buf.data () + pos, size - pos, "\"string\" VALUE=\"%s\"/>", entry.str_value);
+                break;
+            case XINE_CONFIG_TYPE_RANGE:
+                pos += snprintf (buf.data () + pos, size - pos, "\"range\" START=\"%d\" END=\"%d\"/>", entry.range_min, entry.range_max);
+                break;
+            case XINE_CONFIG_TYPE_ENUM:
+                pos += snprintf (buf.data () + pos, size - pos, "\"enum\" VALUE=\"%d\" DEFAULT=\"%d\">", entry.num_value, entry.num_default);
+                for (int i = 0; entry.enum_values[i]; i++)
+                    pos += snprintf (buf.data () + pos, size - pos, "<item VALUE=\"%s\"/>", entry.enum_values[i]);
+                pos += snprintf (buf.data () + pos, size - pos, "</entry>");
+                break;
+            case XINE_CONFIG_TYPE_NUM:
+                pos += snprintf (buf.data () + pos, size - pos, "\"num\" VALUE=\"%d\" DEFAULT=\"%d\"/>", entry.num_value, entry.num_default);
+                break;
+            case XINE_CONFIG_TYPE_BOOL:
+                pos += snprintf (buf.data () + pos, size - pos, "\"bool\" VALUE=\"%d\" DEFAULT=\"%d\"/>", entry.num_value, entry.num_default);
+                break;
+        }
+        pos += snprintf (buf.data () + pos, size - pos, "\n");
+        if (size - pos < 300) {
+            size *= 2;
+            buf.resize (size);
+        }
+    }
+    pos += snprintf (buf.data () + pos, size - pos, "</document>");
+    buf.resize (pos);
 }
 
 void KXinePlayer::play () {
@@ -784,7 +822,12 @@ int main(int argc, char **argv) {
         xine_config_update_entry (xine,  &cfg_entry);
     }
 
-    if (callback) callback->started ();
+    if (callback) {
+        int size = 512;
+        QByteArray buf (size);
+        getConfigEntries (buf, size);
+        callback->started (buf);
+    }
     xineapp->exec ();
 
     XLockDisplay(display);

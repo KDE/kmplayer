@@ -33,7 +33,7 @@ k_dcop:
     ASYNC errorMessage (int code, QString msg);
     ASYNC finished ();
     ASYNC playing ();
-    ASYNC started ();
+    ASYNC started (QByteArray data);
     ASYNC movieParams (int length, int width, int height, float aspect);
     ASYNC moviePosition (int position);
     ASYNC loadingProgress (int percentage);
