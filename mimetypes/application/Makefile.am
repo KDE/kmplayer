@@ -1,6 +1,4 @@
+mime_DATA = x-mplayer2.desktop
+mimedir = $(kde_mimedir)/application
 
-data_DATA = x-mplayer2.desktop
-
-datadir = $(kde_mimedir)/application
-
-EXTRA_DIST = $(data_DATA)
+EXTRA_DIST = $(mime_DATA)

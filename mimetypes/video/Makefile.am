@@ -1,6 +1,4 @@
-data_DATA =x-ms-wmv.desktop x-ms-asf.desktop
+mime_DATA =x-ms-wmv.desktop x-ms-asf.desktop
+mimedir = $(kde_mimedir)/video
 
-datadir = $(kde_mimedir)/video
-
-EXTRA_DIST = $(data_DATA)
 

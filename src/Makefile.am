@@ -1,7 +1,5 @@
 INCLUDES = -I$(kde_includes)/kio -I$(kde_includes)/arts $(all_includes)
 
-SUBDIRS=
-
 KDE_ICON=AUTO
 
 lib_LTLIBRARIES=kdeinit_kmplayer.la
@@ -37,8 +35,8 @@ applnkdir = $(kde_appsdir)/Multimedia
 
 kde_services_DATA = kmplayer_component.desktop
 
-data_DATA = kmplayerui.rc kmplayerpartui.rc
-datadir = $(kde_datadir)/kmplayer
+rc_DATA = kmplayerui.rc kmplayerpartui.rc
+rcdir = $(kde_datadir)/kmplayer
 
 conf_DATA = kmplayerrc
 confdir = $(kde_confdir)
