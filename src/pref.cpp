@@ -468,228 +468,227 @@ KDE_NO_CDTOR_EXPORT PrefOPPageGeneral::PrefOPPageGeneral(QWidget *parent)
 
 KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : QFrame(parent)
 {
+    QVBoxLayout *tabLayout = new QVBoxLayout (this, 5);
+    postProcessing = new QCheckBox (i18n ("Enable use of postprocessing filters") , this, 0);
+    postProcessing->setEnabled( TRUE );
+    disablePPauto = new QCheckBox (i18n ("Disable use of postprocessing when watching TV/DVD"), this, 0);
 
-	QVBoxLayout *tabLayout = new QVBoxLayout (this, 5);
-	postProcessing = new QCheckBox( i18n("postProcessing"), this, 0 );
-	postProcessing->setEnabled( TRUE );
-	disablePPauto = new QCheckBox (i18n("disablePostProcessingAutomatically"), this, 0);
+    tabLayout->addWidget( postProcessing );
+    tabLayout->addWidget( disablePPauto );
+    tabLayout->addItem ( new QSpacerItem( 5, 5, QSizePolicy::Minimum, QSizePolicy::Minimum ) );
 
-	tabLayout->addWidget( postProcessing );
-	tabLayout->addWidget( disablePPauto );
-	tabLayout->addItem ( new QSpacerItem( 5, 5, QSizePolicy::Minimum, QSizePolicy::Minimum ) );
+    PostprocessingOptions = new QTabWidget( this, "PostprocessingOptions" );
+    PostprocessingOptions->setEnabled( TRUE );
+    PostprocessingOptions->setAutoMask( FALSE );
+    PostprocessingOptions->setTabPosition( QTabWidget::Top );
+    PostprocessingOptions->setTabShape( QTabWidget::Rounded );
+    PostprocessingOptions->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)1, PostprocessingOptions->sizePolicy().hasHeightForWidth() ) );
 
-	PostprocessingOptions = new QTabWidget( this, "PostprocessingOptions" );
-	PostprocessingOptions->setEnabled( TRUE );
-	PostprocessingOptions->setAutoMask( FALSE );
-	PostprocessingOptions->setTabPosition( QTabWidget::Top );
-	PostprocessingOptions->setTabShape( QTabWidget::Rounded );
-	PostprocessingOptions->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)1, PostprocessingOptions->sizePolicy().hasHeightForWidth() ) );
+    QWidget *presetSelectionWidget = new QWidget( PostprocessingOptions, "presetSelectionWidget" );
+    QGridLayout *presetSelectionWidgetLayout = new QGridLayout( presetSelectionWidget, 1, 1, 1);
 
-	QWidget *presetSelectionWidget = new QWidget( PostprocessingOptions, "presetSelectionWidget" );
-	QGridLayout *presetSelectionWidgetLayout = new QGridLayout( presetSelectionWidget, 1, 1, 1);
+    QButtonGroup *presetSelection = new QButtonGroup(3, Qt::Vertical, presetSelectionWidget);
+    presetSelection->setInsideSpacing(KDialog::spacingHint());
 
-	QButtonGroup *presetSelection = new QButtonGroup(3, Qt::Vertical, presetSelectionWidget);
-	presetSelection->setInsideSpacing(KDialog::spacingHint());
+    defaultPreset = new QRadioButton( presetSelection, "defaultPreset" );
+    defaultPreset->setChecked( TRUE );
+    presetSelection->insert (defaultPreset);
 
-	defaultPreset = new QRadioButton( presetSelection, "defaultPreset" );
-	defaultPreset->setChecked( TRUE );
-	presetSelection->insert (defaultPreset);
+    customPreset = new QRadioButton( presetSelection, "customPreset" );
+    presetSelection->insert (customPreset);
 
-	customPreset = new QRadioButton( presetSelection, "customPreset" );
-	presetSelection->insert (customPreset);
+    fastPreset = new QRadioButton( presetSelection, "fastPreset" );
+    presetSelection->insert (fastPreset);
+    presetSelection->setRadioButtonExclusive ( true);
+    presetSelectionWidgetLayout->addWidget( presetSelection, 0, 0 );
+    PostprocessingOptions->insertTab( presetSelectionWidget, "" );
 
-	fastPreset = new QRadioButton( presetSelection, "fastPreset" );
-	presetSelection->insert (fastPreset);
-	presetSelection->setRadioButtonExclusive ( true);
-	presetSelectionWidgetLayout->addWidget( presetSelection, 0, 0 );
-	PostprocessingOptions->insertTab( presetSelectionWidget, "" );
+    //
+    // SECOND!!!
+    //
+    /* I JUST WASN'T ABLE TO GET THIS WORKING WITH QGridLayouts */
 
-	//
-	// SECOND!!!
-	//
-	/* I JUST WASN'T ABLE TO GET THIS WORKING WITH QGridLayouts */
+    QWidget *customFiltersWidget = new QWidget( PostprocessingOptions, "customFiltersWidget" );
+    QVBoxLayout *customFiltersWidgetLayout = new QVBoxLayout( customFiltersWidget );
 
-	QWidget *customFiltersWidget = new QWidget( PostprocessingOptions, "customFiltersWidget" );
-	QVBoxLayout *customFiltersWidgetLayout = new QVBoxLayout( customFiltersWidget );
+    QGroupBox *customFilters = new QGroupBox(0, Qt::Vertical, customFiltersWidget, "customFilters" );
+    customFilters->setSizePolicy(QSizePolicy((QSizePolicy::SizeType)1, (QSizePolicy::SizeType)2));
+    customFilters->setFlat(false);
+    customFilters->setEnabled( FALSE );
+    customFilters->setInsideSpacing(7);
 
-	QGroupBox *customFilters = new QGroupBox(0, Qt::Vertical, customFiltersWidget, "customFilters" );
-	customFilters->setSizePolicy(QSizePolicy((QSizePolicy::SizeType)1, (QSizePolicy::SizeType)2));
-	customFilters->setFlat(false);
-	customFilters->setEnabled( FALSE );
-	customFilters->setInsideSpacing(7);
+    QLayout *customFiltersLayout = customFilters->layout();
+    QHBoxLayout *customFiltersLayout1 = new QHBoxLayout ( customFilters->layout() );
 
-	QLayout *customFiltersLayout = customFilters->layout();
-	QHBoxLayout *customFiltersLayout1 = new QHBoxLayout ( customFilters->layout() );
+    HzDeblockFilter = new QCheckBox( customFilters, "HzDeblockFilter" );
+    HzDeblockAQuality = new QCheckBox( customFilters, "HzDeblockAQuality" );
+    HzDeblockAQuality->setEnabled( FALSE );
+    HzDeblockCFiltering = new QCheckBox( customFilters, "HzDeblockCFiltering" );
+    HzDeblockCFiltering->setEnabled( FALSE );
 
-	HzDeblockFilter = new QCheckBox( customFilters, "HzDeblockFilter" );
-	HzDeblockAQuality = new QCheckBox( customFilters, "HzDeblockAQuality" );
-	HzDeblockAQuality->setEnabled( FALSE );
-	HzDeblockCFiltering = new QCheckBox( customFilters, "HzDeblockCFiltering" );
-	HzDeblockCFiltering->setEnabled( FALSE );
+    customFiltersLayout1->addWidget( HzDeblockFilter );
+    customFiltersLayout1->addItem( new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ) );
+    customFiltersLayout1->addWidget( HzDeblockAQuality );
+    customFiltersLayout1->addWidget( HzDeblockCFiltering );
 
-	customFiltersLayout1->addWidget( HzDeblockFilter );
-	customFiltersLayout1->addItem( new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ) );
-	customFiltersLayout1->addWidget( HzDeblockAQuality );
-	customFiltersLayout1->addWidget( HzDeblockCFiltering );
+    QFrame *line1 = new QFrame( customFilters, "line1" );
+    line1->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)2 ) );
+    line1->setFrameShape( QFrame::HLine );
+    line1->setFrameShadow( QFrame::Sunken );
+    customFiltersLayout->add(line1);
 
-	QFrame *line1 = new QFrame( customFilters, "line1" );
-	line1->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)2 ) );
-	line1->setFrameShape( QFrame::HLine );
-	line1->setFrameShadow( QFrame::Sunken );
-	customFiltersLayout->add(line1);
+    QHBoxLayout *customFiltersLayout2 = new QHBoxLayout ( customFilters->layout() );
 
-	QHBoxLayout *customFiltersLayout2 = new QHBoxLayout ( customFilters->layout() );
+    VtDeblockFilter = new QCheckBox( customFilters, "VtDeblockFilter" );
+    VtDeblockAQuality = new QCheckBox( customFilters, "VtDeblockAQuality" );
+    VtDeblockAQuality->setEnabled( FALSE );
+    VtDeblockCFiltering = new QCheckBox( customFilters, "VtDeblockCFiltering" );
+    VtDeblockCFiltering->setEnabled( FALSE );
 
-	VtDeblockFilter = new QCheckBox( customFilters, "VtDeblockFilter" );
-	VtDeblockAQuality = new QCheckBox( customFilters, "VtDeblockAQuality" );
-	VtDeblockAQuality->setEnabled( FALSE );
-	VtDeblockCFiltering = new QCheckBox( customFilters, "VtDeblockCFiltering" );
-	VtDeblockCFiltering->setEnabled( FALSE );
+    customFiltersLayout2->addWidget( VtDeblockFilter );
+    customFiltersLayout2->addItem( new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ) );
+    customFiltersLayout2->addWidget( VtDeblockAQuality );
+    customFiltersLayout2->addWidget( VtDeblockCFiltering );
 
-	customFiltersLayout2->addWidget( VtDeblockFilter );
-	customFiltersLayout2->addItem( new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ) );
-	customFiltersLayout2->addWidget( VtDeblockAQuality );
-	customFiltersLayout2->addWidget( VtDeblockCFiltering );
+    QFrame *line2 = new QFrame( customFilters, "line2" );
 
-	QFrame *line2 = new QFrame( customFilters, "line2" );
+    line2->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)2 ) );
+    line2->setFrameShape( QFrame::HLine );
+    line2->setFrameShadow( QFrame::Sunken );
+    customFiltersLayout->add(line2);
 
-	line2->setSizePolicy( QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)2 ) );
-	line2->setFrameShape( QFrame::HLine );
-	line2->setFrameShadow( QFrame::Sunken );
-	customFiltersLayout->add(line2);
+    QHBoxLayout *customFiltersLayout3  = new QHBoxLayout ( customFilters->layout() );
 
-	QHBoxLayout *customFiltersLayout3  = new QHBoxLayout ( customFilters->layout() );
+    DeringFilter = new QCheckBox( customFilters, "DeringFilter" );
+    DeringAQuality = new QCheckBox( customFilters, "DeringAQuality" );
+    DeringAQuality->setEnabled( FALSE );
+    DeringCFiltering = new QCheckBox( customFilters, "DeringCFiltering" );
+    DeringCFiltering->setEnabled( FALSE );
 
-	DeringFilter = new QCheckBox( customFilters, "DeringFilter" );
-	DeringAQuality = new QCheckBox( customFilters, "DeringAQuality" );
-	DeringAQuality->setEnabled( FALSE );
-	DeringCFiltering = new QCheckBox( customFilters, "DeringCFiltering" );
-	DeringCFiltering->setEnabled( FALSE );
-
-	customFiltersLayout3->addWidget( DeringFilter );
-	customFiltersLayout3->addItem( new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ) );
-	customFiltersLayout3->addWidget( DeringAQuality );
-	customFiltersLayout3->addWidget( DeringCFiltering );
-
-
-	QFrame *line3 = new QFrame( customFilters, "line3" );
-
-	line3->setFrameShape( QFrame::HLine );
-	line3->setFrameShadow( QFrame::Sunken );
-	line3->setFrameShape( QFrame::HLine );
-
-	customFiltersLayout->add(line3);
-
-	QHBoxLayout *customFiltersLayout4 = new QHBoxLayout (customFilters->layout());
-
-	AutolevelsFilter = new QCheckBox( customFilters, "AutolevelsFilter" );
-	AutolevelsFullrange = new QCheckBox( customFilters, "AutolevelsFullrange" );
-	AutolevelsFullrange->setEnabled( FALSE );
-
-	customFiltersLayout4->addWidget(AutolevelsFilter);
-	customFiltersLayout4->addItem(new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ));
-	customFiltersLayout4->addWidget(AutolevelsFullrange);
-
-	QHBoxLayout *customFiltersLayout5 = new QHBoxLayout (customFilters->layout());
-
-	TmpNoiseFilter = new QCheckBox( customFilters, "TmpNoiseFilter" );
-/*	Note: Change TmpNoiseFilter text back to "Label:" if this slider gets reactivated
-	TmpNoiseSlider = new QSlider( customFilters, "TmpNoiseSlider" );
-	TmpNoiseSlider->setEnabled( FALSE );
-	TmpNoiseSlider->setMinValue( 1 );
-	TmpNoiseSlider->setMaxValue( 3 );
-	TmpNoiseSlider->setValue( 1 );
-	TmpNoiseSlider->setOrientation( QSlider::Horizontal );
-	TmpNoiseSlider->setTickmarks( QSlider::Left );
-	TmpNoiseSlider->setTickInterval( 1 );
-	TmpNoiseSlider->setSizePolicy(QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)1));*/
-
-	/*customFiltersLayout->addWidget(TmpNoiseFilter,7,0);
-	customFiltersLayout->addWidget(TmpNoiseSlider,7,2);*/
-	customFiltersLayout5->addWidget(TmpNoiseFilter);
-	customFiltersLayout5->addItem(new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ));
-	//customFiltersLayout5->addWidget(TmpNoiseSlider);
-	customFiltersWidgetLayout->addWidget( customFilters );
-	PostprocessingOptions->insertTab( customFiltersWidget, "" );
-	//
-	//THIRD!!!
-	//
-	QWidget *deintSelectionWidget = new QWidget( PostprocessingOptions, "deintSelectionWidget" );
-	QVBoxLayout *deintSelectionWidgetLayout = new QVBoxLayout( deintSelectionWidget);
-	QButtonGroup *deinterlacingGroup = new QButtonGroup(5, Qt::Vertical, deintSelectionWidget, "deinterlacingGroup" );
-
-	LinBlendDeinterlacer = new QCheckBox( deinterlacingGroup, "LinBlendDeinterlacer" );
-	LinIntDeinterlacer = new QCheckBox( deinterlacingGroup, "LinIntDeinterlacer" );
-	CubicIntDeinterlacer = new QCheckBox( deinterlacingGroup, "CubicIntDeinterlacer" );
-	MedianDeinterlacer = new QCheckBox( deinterlacingGroup, "MedianDeinterlacer" );
-	FfmpegDeinterlacer = new QCheckBox( deinterlacingGroup, "FfmpegDeinterlacer" );
-
-	deinterlacingGroup->insert( LinBlendDeinterlacer );
-
-	deinterlacingGroup->insert( LinIntDeinterlacer );
-
-	deinterlacingGroup->insert( CubicIntDeinterlacer );
-
-	deinterlacingGroup->insert( MedianDeinterlacer );
-
-	deinterlacingGroup->insert( FfmpegDeinterlacer );
+    customFiltersLayout3->addWidget( DeringFilter );
+    customFiltersLayout3->addItem( new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ) );
+    customFiltersLayout3->addWidget( DeringAQuality );
+    customFiltersLayout3->addWidget( DeringCFiltering );
 
 
-	deintSelectionWidgetLayout->addWidget( deinterlacingGroup, 0, 0 );
+    QFrame *line3 = new QFrame( customFilters, "line3" );
 
-	PostprocessingOptions->insertTab( deintSelectionWidget, "" );
+    line3->setFrameShape( QFrame::HLine );
+    line3->setFrameShadow( QFrame::Sunken );
+    line3->setFrameShape( QFrame::HLine );
 
-	tabLayout->addWidget( PostprocessingOptions/*, 1, 0*/ );
+    customFiltersLayout->add(line3);
 
-	PostprocessingOptions->setEnabled(false);
-	connect( customPreset, SIGNAL (toggled(bool) ), customFilters, SLOT(setEnabled(bool)));
-	connect( postProcessing, SIGNAL( toggled(bool) ), PostprocessingOptions, SLOT( setEnabled(bool) ) );
-	connect( HzDeblockFilter, SIGNAL( toggled(bool) ), HzDeblockAQuality, SLOT( setEnabled(bool) ) );
-	connect( HzDeblockFilter, SIGNAL( toggled(bool) ), HzDeblockCFiltering, SLOT( setEnabled(bool) ) );
-	connect( VtDeblockFilter, SIGNAL( toggled(bool) ), VtDeblockCFiltering, SLOT( setEnabled(bool) ) );
-	connect( VtDeblockFilter, SIGNAL( toggled(bool) ), VtDeblockAQuality, SLOT( setEnabled(bool) ) );
-	connect( DeringFilter, SIGNAL( toggled(bool) ), DeringAQuality, SLOT( setEnabled(bool) ) );
-	connect( DeringFilter, SIGNAL( toggled(bool) ), DeringCFiltering, SLOT( setEnabled(bool) ) );
-	//connect( TmpNoiseFilter, SIGNAL( toggled(bool) ), TmpNoiseSlider, SLOT( setEnabled(bool) ) );
+    QHBoxLayout *customFiltersLayout4 = new QHBoxLayout (customFilters->layout());
 
-	connect( AutolevelsFilter, SIGNAL( toggled(bool) ), AutolevelsFullrange, SLOT( setEnabled(bool) ) );
+    AutolevelsFilter = new QCheckBox( customFilters, "AutolevelsFilter" );
+    AutolevelsFullrange = new QCheckBox( customFilters, "AutolevelsFullrange" );
+    AutolevelsFullrange->setEnabled( FALSE );
 
-	postProcessing->setText( i18n( "Enable use of postprocessing filters" ) );
-	disablePPauto->setText( i18n( "Disable use of postprocessing when watching TV/DVD" ) );
-	defaultPreset->setText( i18n( "Default" ) );
-	QWhatsThis::add( defaultPreset, i18n( "Enable mplayer's default postprocessing filters" ) );
-	customPreset->setText( i18n( "Custom" ) );
-	QWhatsThis::add( customPreset, i18n( "Enable custom postprocessing filters (See: Custom preset -tab)" ) );
-	fastPreset->setText( i18n( "Fast" ) );
-	QWhatsThis::add( fastPreset, i18n( "Enable mplayer's fast postprocessing filters" ) );
-	PostprocessingOptions->changeTab( presetSelectionWidget, i18n( "General" ) );
-	customFilters->setTitle( QString::null );
-	HzDeblockFilter->setText( i18n( "Horizontal deblocking" ) );
-	VtDeblockFilter->setText( i18n( "Vertical deblocking" ) );
-	DeringFilter->setText( i18n( "Dering filter" ) );
-	HzDeblockAQuality->setText( i18n( "Auto quality" ) );
-	QWhatsThis::add( HzDeblockAQuality, i18n( "Filter is used if there's enough CPU" ) );
-	VtDeblockAQuality->setText( i18n( "Auto quality" ) );
-	QWhatsThis::add( VtDeblockAQuality, i18n( "Filter is used if there's enough CPU" ) );
-	DeringAQuality->setText( i18n( "Auto quality" ) );
-	QWhatsThis::add( DeringAQuality, i18n( "Filter is used if there's enough CPU" ) );
-	//QWhatsThis::add( TmpNoiseSlider, i18n( "Strength of the noise reducer" ) );
-	AutolevelsFilter->setText( i18n( "Auto brightness/contrast" ) );
-	AutolevelsFullrange->setText( i18n( "Stretch luminance to full range" ) );
-	QWhatsThis::add( AutolevelsFullrange, i18n( "Stretches luminance to full range (0..255)" ) );
-	HzDeblockCFiltering->setText( i18n( "Chrominance filtering" ) );
-	VtDeblockCFiltering->setText( i18n( "Chrominance filtering" ) );
-	DeringCFiltering->setText( i18n( "Chrominance filtering" ) );
-	TmpNoiseFilter->setText( i18n( "Temporal noise reducer" ) );
-	PostprocessingOptions->changeTab( customFiltersWidget, i18n( "Custom Preset" ) );
-	deinterlacingGroup->setTitle( QString::null );
-	LinBlendDeinterlacer->setText( i18n( "Linear blend deinterlacer" ) );
-	CubicIntDeinterlacer->setText( i18n( "Cubic interpolating deinterlacer" ) );
-	LinIntDeinterlacer->setText( i18n( "Linear interpolating deinterlacer" ) );
-	MedianDeinterlacer->setText( i18n( "Median deinterlacer" ) );
-	FfmpegDeinterlacer->setText( i18n( "FFmpeg deinterlacer" ) );
-	PostprocessingOptions->changeTab( deintSelectionWidget, i18n( "Deinterlacing" ) );
-	PostprocessingOptions->adjustSize();
+    customFiltersLayout4->addWidget(AutolevelsFilter);
+    customFiltersLayout4->addItem(new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ));
+    customFiltersLayout4->addWidget(AutolevelsFullrange);
+
+    QHBoxLayout *customFiltersLayout5 = new QHBoxLayout (customFilters->layout());
+
+    TmpNoiseFilter = new QCheckBox( customFilters, "TmpNoiseFilter" );
+    /*	Note: Change TmpNoiseFilter text back to "Label:" if this slider gets reactivated
+        TmpNoiseSlider = new QSlider( customFilters, "TmpNoiseSlider" );
+        TmpNoiseSlider->setEnabled( FALSE );
+        TmpNoiseSlider->setMinValue( 1 );
+        TmpNoiseSlider->setMaxValue( 3 );
+        TmpNoiseSlider->setValue( 1 );
+        TmpNoiseSlider->setOrientation( QSlider::Horizontal );
+        TmpNoiseSlider->setTickmarks( QSlider::Left );
+        TmpNoiseSlider->setTickInterval( 1 );
+        TmpNoiseSlider->setSizePolicy(QSizePolicy( (QSizePolicy::SizeType)1, (QSizePolicy::SizeType)1));*/
+
+    /*customFiltersLayout->addWidget(TmpNoiseFilter,7,0);
+      customFiltersLayout->addWidget(TmpNoiseSlider,7,2);*/
+    customFiltersLayout5->addWidget(TmpNoiseFilter);
+    customFiltersLayout5->addItem(new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ));
+    //customFiltersLayout5->addWidget(TmpNoiseSlider);
+    customFiltersWidgetLayout->addWidget( customFilters );
+    PostprocessingOptions->insertTab( customFiltersWidget, "" );
+    //
+    //THIRD!!!
+    //
+    QWidget *deintSelectionWidget = new QWidget( PostprocessingOptions, "deintSelectionWidget" );
+    QVBoxLayout *deintSelectionWidgetLayout = new QVBoxLayout( deintSelectionWidget);
+    QButtonGroup *deinterlacingGroup = new QButtonGroup(5, Qt::Vertical, deintSelectionWidget, "deinterlacingGroup" );
+
+    LinBlendDeinterlacer = new QCheckBox( deinterlacingGroup, "LinBlendDeinterlacer" );
+    LinIntDeinterlacer = new QCheckBox( deinterlacingGroup, "LinIntDeinterlacer" );
+    CubicIntDeinterlacer = new QCheckBox( deinterlacingGroup, "CubicIntDeinterlacer" );
+    MedianDeinterlacer = new QCheckBox( deinterlacingGroup, "MedianDeinterlacer" );
+    FfmpegDeinterlacer = new QCheckBox( deinterlacingGroup, "FfmpegDeinterlacer" );
+
+    deinterlacingGroup->insert( LinBlendDeinterlacer );
+
+    deinterlacingGroup->insert( LinIntDeinterlacer );
+
+    deinterlacingGroup->insert( CubicIntDeinterlacer );
+
+    deinterlacingGroup->insert( MedianDeinterlacer );
+
+    deinterlacingGroup->insert( FfmpegDeinterlacer );
+
+
+    deintSelectionWidgetLayout->addWidget( deinterlacingGroup, 0, 0 );
+
+    PostprocessingOptions->insertTab( deintSelectionWidget, "" );
+
+    tabLayout->addWidget( PostprocessingOptions/*, 1, 0*/ );
+
+    PostprocessingOptions->setEnabled(false);
+    connect( customPreset, SIGNAL (toggled(bool) ), customFilters, SLOT(setEnabled(bool)));
+    connect( postProcessing, SIGNAL( toggled(bool) ), PostprocessingOptions, SLOT( setEnabled(bool) ) );
+    connect( HzDeblockFilter, SIGNAL( toggled(bool) ), HzDeblockAQuality, SLOT( setEnabled(bool) ) );
+    connect( HzDeblockFilter, SIGNAL( toggled(bool) ), HzDeblockCFiltering, SLOT( setEnabled(bool) ) );
+    connect( VtDeblockFilter, SIGNAL( toggled(bool) ), VtDeblockCFiltering, SLOT( setEnabled(bool) ) );
+    connect( VtDeblockFilter, SIGNAL( toggled(bool) ), VtDeblockAQuality, SLOT( setEnabled(bool) ) );
+    connect( DeringFilter, SIGNAL( toggled(bool) ), DeringAQuality, SLOT( setEnabled(bool) ) );
+    connect( DeringFilter, SIGNAL( toggled(bool) ), DeringCFiltering, SLOT( setEnabled(bool) ) );
+    //connect( TmpNoiseFilter, SIGNAL( toggled(bool) ), TmpNoiseSlider, SLOT( setEnabled(bool) ) );
+
+    connect( AutolevelsFilter, SIGNAL( toggled(bool) ), AutolevelsFullrange, SLOT( setEnabled(bool) ) );
+
+    postProcessing->setText( i18n( "Enable use of postprocessing filters" ) );
+    disablePPauto->setText( i18n( "Disable use of postprocessing when watching TV/DVD" ) );
+    defaultPreset->setText( i18n( "Default" ) );
+    QWhatsThis::add( defaultPreset, i18n( "Enable mplayer's default postprocessing filters" ) );
+    customPreset->setText( i18n( "Custom" ) );
+    QWhatsThis::add( customPreset, i18n( "Enable custom postprocessing filters (See: Custom preset -tab)" ) );
+    fastPreset->setText( i18n( "Fast" ) );
+    QWhatsThis::add( fastPreset, i18n( "Enable mplayer's fast postprocessing filters" ) );
+    PostprocessingOptions->changeTab( presetSelectionWidget, i18n( "General" ) );
+    customFilters->setTitle( QString::null );
+    HzDeblockFilter->setText( i18n( "Horizontal deblocking" ) );
+    VtDeblockFilter->setText( i18n( "Vertical deblocking" ) );
+    DeringFilter->setText( i18n( "Dering filter" ) );
+    HzDeblockAQuality->setText( i18n( "Auto quality" ) );
+    QWhatsThis::add( HzDeblockAQuality, i18n( "Filter is used if there's enough CPU" ) );
+    VtDeblockAQuality->setText( i18n( "Auto quality" ) );
+    QWhatsThis::add( VtDeblockAQuality, i18n( "Filter is used if there's enough CPU" ) );
+    DeringAQuality->setText( i18n( "Auto quality" ) );
+    QWhatsThis::add( DeringAQuality, i18n( "Filter is used if there's enough CPU" ) );
+    //QWhatsThis::add( TmpNoiseSlider, i18n( "Strength of the noise reducer" ) );
+    AutolevelsFilter->setText( i18n( "Auto brightness/contrast" ) );
+    AutolevelsFullrange->setText( i18n( "Stretch luminance to full range" ) );
+    QWhatsThis::add( AutolevelsFullrange, i18n( "Stretches luminance to full range (0..255)" ) );
+    HzDeblockCFiltering->setText( i18n( "Chrominance filtering" ) );
+    VtDeblockCFiltering->setText( i18n( "Chrominance filtering" ) );
+    DeringCFiltering->setText( i18n( "Chrominance filtering" ) );
+    TmpNoiseFilter->setText( i18n( "Temporal noise reducer" ) );
+    PostprocessingOptions->changeTab( customFiltersWidget, i18n( "Custom Preset" ) );
+    deinterlacingGroup->setTitle( QString::null );
+    LinBlendDeinterlacer->setText( i18n( "Linear blend deinterlacer" ) );
+    CubicIntDeinterlacer->setText( i18n( "Cubic interpolating deinterlacer" ) );
+    LinIntDeinterlacer->setText( i18n( "Linear interpolating deinterlacer" ) );
+    MedianDeinterlacer->setText( i18n( "Median deinterlacer" ) );
+    FfmpegDeinterlacer->setText( i18n( "FFmpeg deinterlacer" ) );
+    PostprocessingOptions->changeTab( deintSelectionWidget, i18n( "Deinterlacing" ) );
+    PostprocessingOptions->adjustSize();
 }
 
 KDE_NO_EXPORT void Preferences::confirmDefaults() {
