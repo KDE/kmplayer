@@ -30,7 +30,6 @@
 #include <qcheckbox.h>
 #include <qspinbox.h>
 #include <qlabel.h>
-#include <qxml.h>
 #include <qfontmetrics.h>
 #include <qwhatsthis.h>
 
@@ -936,6 +935,8 @@ CallbackProcess::CallbackProcess (PartBase * player, const char * n)
 CallbackProcess::~CallbackProcess () {
     delete m_callback;
     delete m_configpage;
+    if (configdoc)
+        configdoc->document()->dispose ();
 }
 
 void CallbackProcess::setStatusMessage (const QString & /*msg*/) {
@@ -972,6 +973,13 @@ void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
     if (m_have_config == config_probe || m_have_config == config_unknown) {
         bool was_probe = m_have_config == config_probe;
         m_have_config = data.size () ? config_yes : config_no;
+        if (m_have_config == config_yes) {
+            configdoc = (new ConfigDocument ())->self();
+            QTextStream ts (data, IO_ReadOnly);
+            readXML (configdoc, ts, QString::null);
+            configdoc->normalize ();
+            //kdDebug () << mydoc->innerText () << endl;
+        }
         emit configReceived ();
         if (m_configpage)
             m_configpage->sync (false);
@@ -1086,26 +1094,25 @@ void CallbackProcess::runForConfig() {}
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT ConfigDocument::ConfigDocument (QWidget * p)
-    : Document (QString::null), parent (p) {}
-
-struct TypeNode : public ConfigNode {
-    KDE_NO_CDTOR_EXPORT TypeNode (ElementPtr d) : ConfigNode (d) {}
-    KDE_NO_CDTOR_EXPORT ~TypeNode () {}
-    void setAttributes (const QXmlAttributes & atts);
-    void closed ();
-    ElementPtr childFromTag (const QString & tag);
-    void changedXML (QTextStream & out);
-    const char * nodeName () const { return "typenode"; }
-};
+KDE_NO_CDTOR_EXPORT ConfigDocument::ConfigDocument ()
+    : Document (QString::null) {}
 
 struct ChoiceNode : public ConfigNode {
     KDE_NO_CDTOR_EXPORT ChoiceNode (ElementPtr d, QComboBox * c)
         : ConfigNode (d), combo (c) {}
     KDE_NO_CDTOR_EXPORT ~ChoiceNode () {}
-    void setAttributes (const QXmlAttributes & atts);
+    void closed () { combo->insertItem (value); }
     const char * nodeName () const { return "choicenode"; }
     QComboBox * combo;
+};
+
+struct SomeNode : public Element {
+    KDE_NO_CDTOR_EXPORT SomeNode (ElementPtr d, const QString t)
+        : Element (d), tag (t) {}
+    KDE_NO_CDTOR_EXPORT ~SomeNode () {}
+    ElementPtr childFromTag (const QString & t);
+    const char * nodeName () const { return tag.ascii (); }
+    QString tag;
 };
 
 KDE_NO_CDTOR_EXPORT ConfigNode::ConfigNode (ElementPtr d)
@@ -1122,34 +1129,37 @@ ElementPtr ConfigNode::childFromTag (const QString &) {
 }
 
 ElementPtr TypeNode::childFromTag (const QString & tag) {
-    if (!tag.compare ("item"))
+    if (!tag.compare ("item") && ::qt_cast <QComboBox*> (w))
         return (new ChoiceNode (m_doc, ::qt_cast <QComboBox*> (w)))->self ();
-    return 0L;
+    return (new SomeNode (m_doc, tag))->self ();
 }
 
-void ConfigNode::setAttributes (const QXmlAttributes & atts) {
+ElementPtr SomeNode::childFromTag (const QString & t) {
+    return (new SomeNode (m_doc, t))->self ();
+}
+
+void ConfigNode::opened () {
     const char * ctype;
-    for (int i = 0; i < atts.length (); i++) {
-        const char * attr = atts.qName (i).ascii ();
+    for (ElementPtr a = attributes (); a; a = a->nextSibling ()) {
+        Attribute * attribute = convertNode <Attribute> (a);
+        const char * attr = attribute->name.ascii ();
         if (!strcmp (attr, "NAME"))
-            name = atts.value (i);
+            name = attribute->value;
         else if (!strcmp (attr, "TYPE")) {
-            type = atts.value (i);
+            type = attribute->value;
             ctype = type.ascii ();
         } else if (!strcmp (attr, "VALUE"))
-            value = atts.value (i);
+            value = attribute->value;
         else if (!strcmp (attr, "START"))
-            range_begin = atts.value (i).toInt ();
+            range_begin = attribute->value.toInt ();
         else if (!strcmp (attr, "END"))
-            range_end = atts.value (i).toInt ();
-        else
-            kdDebug() << "Unknown attr:" << attr << "=" << atts.value(i) <<endl;
+            range_end = attribute->value.toInt ();
+        else if (strcmp (attr, "DEFAULT"))
+            kdDebug() << "Unknown attr:" << attr <<"="<< attribute->value<<endl;
     }
 }
 
-void TypeNode::setAttributes (const QXmlAttributes & atts) {
-    ConfigNode::setAttributes (atts);
-    QWidget * parent = static_cast <ConfigDocument *> (m_doc.ptr ())->parent;
+QWidget * TypeNode::createWidget (QWidget * parent) {
     const char * ctype = type.ascii ();
     if (!strcmp (ctype, "range")) {
         w = new QSlider (range_begin, range_end, 1, value.toInt (), Qt::Horizontal, parent);
@@ -1164,6 +1174,7 @@ void TypeNode::setAttributes (const QXmlAttributes & atts) {
     } else if (!strcmp (ctype, "tree")) {
     } else
         kdDebug() << "Unknown type:" << ctype << endl;
+    return w;
 }
 
 void TypeNode::closed () {
@@ -1192,11 +1203,6 @@ void TypeNode::changedXML (QTextStream & out) {
     }
 }
 
-void ChoiceNode::setAttributes (const QXmlAttributes & atts) {
-    ConfigNode::setAttributes (atts);
-    combo->insertItem (value);
-}
-
 //-----------------------------------------------------------------------------
 
 namespace KMPlayer {
@@ -1204,9 +1210,8 @@ namespace KMPlayer {
 class XMLPreferencesFrame : public QFrame {
 public:
     XMLPreferencesFrame (QWidget * parent, CallbackProcess *);
-    ~XMLPreferencesFrame ();
+    KDE_NO_CDTOR_EXPORT ~XMLPreferencesFrame () {}
     QTable * table;
-    ElementPtr configdoc;
 protected:
     void showEvent (QShowEvent *);
 private:
@@ -1223,13 +1228,11 @@ KDE_NO_CDTOR_EXPORT XMLPreferencesFrame::XMLPreferencesFrame
     layout->addWidget (table);
 }
 
-KDE_NO_CDTOR_EXPORT XMLPreferencesFrame::~XMLPreferencesFrame () {
-    if (configdoc)
-        configdoc->document()->dispose ();
-}
-
 KDE_NO_CDTOR_EXPORT XMLPreferencesPage::XMLPreferencesPage (CallbackProcess * p)
  : m_process (p), m_configframe (0L) {
+}
+
+KDE_NO_CDTOR_EXPORT XMLPreferencesPage::~XMLPreferencesPage () {
 }
 
 KDE_NO_EXPORT void XMLPreferencesFrame::showEvent (QShowEvent *) {
@@ -1248,9 +1251,10 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
     QTable * table = m_configframe->table;
     int row = 0;
     if (fromUI) {
-        if (m_configframe->table->numCols () < 1) // not yet created
+        ElementPtr configdoc = m_process->configDocument ();
+        if (configdoc || m_configframe->table->numCols () < 1) //not yet created
             return;
-        ElementPtr elm = m_configframe->configdoc->firstChild (); // document
+        ElementPtr elm = configdoc->firstChild (); // document
         if (!elm || !elm->hasChildNodes ()) {
             kdDebug () << "No valid data" << endl;
             return;
@@ -1259,7 +1263,7 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
         QTextStream ts (&str, IO_WriteOnly);
         ts << "<document>";
         for (ElementPtr e = elm->firstChild (); e; e = e->nextSibling ())
-            static_cast <TypeNode *> (e.ptr ())->changedXML (ts);
+            convertNode <TypeNode> (e)->changedXML (ts);
         if (str.length () > 10) {
             ts << "</document>";
             QByteArray changeddata = QCString (str.ascii ());
@@ -1270,18 +1274,13 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
     } else {
         if (!m_process->haveConfig ())
             return;
-        QByteArray & data = m_process->configData ();
-        if (!data.size ())
+        ElementPtr configdoc = m_process->configDocument ();
+        if (!configdoc)
             return;
         if (m_configframe->table->numCols () < 1) { // not yet created
-            m_configframe->configdoc = (new ConfigDocument (table->viewport()))->self();
-            QTextStream ts (data, IO_ReadOnly);
-            readXML (m_configframe->configdoc, ts, QString::null);
-            m_configframe->configdoc->normalize ();
-            //kdDebug () << mydoc->innerText () << endl;
             QString err;
             int first_column_width = 50;
-            ElementPtr elm = m_configframe->configdoc->firstChild (); // document
+            ElementPtr elm = configdoc->firstChild (); // document
             if (!elm || !elm->hasChildNodes ()) {
                 kdDebug () << "No valid data" << endl;
                 return;
@@ -1299,14 +1298,15 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
             table->setColumnReadOnly (0, true);
             QFontMetrics metrics (table->font ());
             for (elm=elm->firstChild (); elm; elm=elm->nextSibling (), row++) {
-                TypeNode * tn = static_cast <TypeNode *> (elm.ptr ());
+                TypeNode * tn = convertNode <TypeNode> (elm);
                 m_configframe->table->setText (row, 0, tn->name);
                 int strwid = metrics.boundingRect (tn->name).width ();
                 if (strwid > first_column_width)
                     first_column_width = strwid + 4;
-                if (tn->w) {
-                    table->setCellWidget (row, 1, tn->w);
-                    QWhatsThis::add (tn->w, elm->innerText ());
+                QWidget * w = tn->createWidget (table->viewport ());
+                if (w) {
+                    table->setCellWidget (row, 1, w);
+                    QWhatsThis::add (w, elm->innerText ());
                 } else
                     kdDebug () << "No widget for " << tn->name;
             }

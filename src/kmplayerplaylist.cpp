@@ -65,7 +65,7 @@ Element::~Element () {
 }
 
 Document * Element::document () {
-    return static_cast <Document*> (m_doc.ptr ());
+    return convertNode <Document> (m_doc);
 }
 
 Mrl * Element::mrl () {
@@ -96,6 +96,7 @@ KDE_NO_EXPORT void Element::clear () {
     if (m_first_child)
         m_first_child->m_parent = 0L;
     m_first_child = m_last_child = 0L;
+    m_first_attribute = 0L; // remove attributes
 }
 
 void Element::appendChild (ElementPtr c) {
@@ -167,11 +168,10 @@ KDE_NO_EXPORT ElementPtr Element::childFromTag (const QString &) {
 
 KDE_NO_EXPORT void Element::characterData (const QString & s) {
     document()->m_tree_version++;
-    kdDebug () << !m_last_child << (!m_last_child || strcmp (m_last_child->nodeName (), "#text")) << (m_last_child ? m_last_child->nodeName () : "-") << endl;
     if (!m_last_child || strcmp (m_last_child->nodeName (), "#text"))
         appendChild ((new TextNode (m_doc, s))->self ());
     else
-        static_cast <TextNode *> (m_last_child.ptr ())->appendText (s);
+        convertNode <TextNode> (m_last_child)->appendText (s);
 }
 
 void Element::normalize () {
@@ -179,7 +179,7 @@ void Element::normalize () {
     while (e) {
         ElementPtr tmp = e->nextSibling ();
         if (!strcmp (e->nodeName (), "#text")) {
-            if (static_cast <TextNode *> (e.ptr ())->text.stripWhiteSpace ().isEmpty ())
+            if (convertNode <TextNode> (e)->text.stripWhiteSpace ().isEmpty ())
                 removeChild (e);
         } else
             e->normalize ();
@@ -190,7 +190,7 @@ void Element::normalize () {
 static void getInnerText (const ElementPtr p, QTextOStream & out) {
     for (ElementPtr e = p->firstChild (); e; e = e->nextSibling ()) {
         if (!strcmp (e->nodeName (), "#text"))
-            out << (static_cast <TextNode *> (e.ptr ()))->text;
+            out << (convertNode <TextNode> (e))->text;
         else
             getInnerText (e, out);
     }
@@ -206,7 +206,7 @@ QString Element::innerText () const {
 static void getInnerXML (const ElementPtr p, QTextOStream & out) {
     for (ElementPtr e = p->firstChild (); e; e = e->nextSibling ()) {
         if (!strcmp (e->nodeName (), "#text"))
-            out << (static_cast <TextNode *> (e.ptr ()))->text;
+            out << (convertNode <TextNode> (e))->text;
         else {
             out << QChar ('<') << e->nodeName () << QChar ('>'); //TODO attr.
             getInnerXML (e, out);
@@ -223,15 +223,33 @@ QString Element::innerXML () const {
 
 KDE_NO_EXPORT void Element::setAttributes (const QXmlAttributes & atts) {
     document()->m_tree_version++;
-    for (int i = 0; i < atts.length (); i++)
-        kdDebug () << " " << atts.qName (i) << "=" << atts.value (i) << endl;
+    m_first_attribute = 0L;
+    ElementPtr e = m_first_attribute;
+    ElementPtr p;
+    for (int i = 0; i < atts.length (); i++) {
+        //kdDebug () << " " << atts.qName (i) << "=" << atts.value (i) << endl;
+        e = (new Attribute (m_doc, atts.qName (i), atts.value (i)))->self ();
+        e->m_prev = p;
+        e->m_parent = m_self;
+        if (p)
+            p->m_next = e;
+        else
+            m_first_attribute = e;
+        p = e;
+    }
+    opened ();
 }
 
 bool Element::isMrl () {
     return false;
 }
 
+KDE_NO_EXPORT void Element::opened () {}
+
 KDE_NO_EXPORT void Element::closed () {}
+
+Attribute::Attribute (ElementPtr d, const QString & n, const QString & v)
+  : Element (d), name (n), value (v) {}
 
 static bool hasMrlChildren (const ElementPtr & e) {
     for (ElementPtr c = e->firstChild (); c; c = c->nextSibling ())
@@ -377,17 +395,18 @@ KDE_NO_EXPORT ElementPtr MediaType::childFromTag (const QString & tag) {
     return 0L;
 }
 
-KDE_NO_EXPORT void MediaType::setAttributes (const QXmlAttributes & atts) {
-    for (int i = 0; i < atts.length (); i++) {
-        const char * attr = atts.qName (i).latin1();
-        if (!strcmp (attr, "system-bitrate"))
-            bitrate = atts.value (i).toInt ();
-        else if (!strcmp (attr, "src"))
-            src = atts.value (i);
-        else if (!strcmp (attr, "type"))
-            mimetype = atts.value (i);
+KDE_NO_EXPORT void MediaType::opened () {
+    for (ElementPtr a = attributes (); a; a = a->nextSibling ()) {
+        Attribute * attribute = convertNode <Attribute> (a);
+        const char * cname = attribute->name.latin1 ();
+        if (!strcmp (cname, "system-bitrate"))
+            bitrate = attribute->value.toInt ();
+        else if (!strcmp (cname, "src"))
+            src = attribute->value;
+        else if (!strcmp (cname, "type"))
+            mimetype = attribute->value;
         else
-            kdError () << "Warning: unhandled MediaType attr: " << attr << "=" << atts.value (i) << endl;
+            kdError () << "Warning: unhandled MediaType attr: " << attribute->name << "=" << attribute->value << endl;
     }
     kdDebug () << "MediaType attr found bitrate: " << bitrate << " src: " << (src.isEmpty() ? "-" : src) << " type: " << (mimetype.isEmpty() ? "-" : mimetype) << endl;
 }
@@ -451,23 +470,28 @@ KDE_NO_EXPORT ElementPtr Entry::realMrl () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT void Ref::setAttributes (const QXmlAttributes & atts) {
-    for (int i = 0; i < atts.length (); i++)
-        if (!strcasecmp (atts.qName (i).latin1(), "href"))
-            src = atts.value (i);
+KDE_NO_EXPORT void Ref::opened () {
+    for (ElementPtr a = attributes (); a; a = a->nextSibling ()) {
+        Attribute * attribute = convertNode <Attribute> (a);
+        if (!strcasecmp (attribute->name.latin1(), "href"))
+            src = attribute->value;
         else
-            kdError () << "Warning: unhandled Ref attr: " << atts.qName (i) << "=" << atts.value (i) << endl;
+            kdError () << "Warning: unhandled Ref attr: " << attribute->name << "=" << attribute->value << endl;
+
+    }
     kdDebug () << "Ref attr found src: " << src << endl;
 }
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT void EntryRef::setAttributes (const QXmlAttributes & atts) {
-    for (int i = 0; i < atts.length (); i++)
-        if (!strcasecmp (atts.qName (i).latin1(), "href"))
-            src = atts.value (i);
+KDE_NO_EXPORT void EntryRef::opened () {
+    for (ElementPtr a = attributes (); a; a = a->nextSibling ()) {
+        Attribute * attribute = convertNode <Attribute> (a);
+        if (!strcasecmp (attribute->name.latin1(), "href"))
+            src = attribute->value;
         else
-            kdError () << "unhandled EntryRef attr: " << atts.qName (i) << "=" << atts.value (i) << endl;
+            kdError () << "unhandled EntryRef attr: " << attribute->name << "=" << attribute->value << endl;
+    }
     kdDebug () << "EntryRef attr found src: " << src << endl;
 }
 
@@ -503,7 +527,7 @@ public:
         } else {
             ElementPtr e = m_elm->childFromTag (tag);
             if (e) {
-                kdDebug () << "Found tag " << tag << endl;
+                // kdDebug () << "Found tag " << tag << endl;
                 e->setAttributes (atts);
                 m_elm->appendChild (e);
                 m_elm = e;

@@ -77,7 +77,7 @@ public:
     void characterData (const QString & s);
     QString innerText () const;
     QString innerXML () const;
-    virtual void setAttributes (const QXmlAttributes &);
+    void setAttributes (const QXmlAttributes &);
     virtual const char * nodeName () const;
     /**
      * If this is a derived Mrl object and has a SRC attribute
@@ -96,6 +96,10 @@ public:
      */
     void normalize ();
     /*
+     * Open tag is found by parser, attributes are set
+     */
+    virtual void opened ();
+    /*
      * Close tag is found by parser
      */
     virtual void closed ();
@@ -106,6 +110,7 @@ public:
     KDE_NO_EXPORT ElementPtr lastChild () const { return m_last_child; }
     KDE_NO_EXPORT ElementPtr nextSibling () const { return m_next; }
     KDE_NO_EXPORT ElementPtr previousSibling () const { return m_prev; }
+    KDE_NO_EXPORT ElementPtr attributes () const { return m_first_attribute; }
     /**
      * If not assigned to a Shared pointer, this will result in self destruction
      */
@@ -120,7 +125,21 @@ protected:
     ElementPtrW m_prev;
     ElementPtr m_first_child;
     ElementPtrW m_last_child;
+    ElementPtr m_first_attribute;
     ElementPtrW m_self;
+};
+
+template <class T>
+KDE_NO_EXPORT inline T * convertNode (ElementPtr e) {
+    return static_cast <T *> (e.ptr ());
+}
+        
+class KMPLAYER_EXPORT Attribute : public Element {
+public:
+    Attribute (ElementPtr d, const QString & n, const QString & v);
+    KDE_NO_CDTOR_EXPORT ~Attribute () {}
+    QString name;
+    QString value;
 };
 
 class KMPLAYER_EXPORT Mrl : public Element {
@@ -224,7 +243,7 @@ public:
     MediaType (ElementPtr d, const QString & t);
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
-    void setAttributes (const QXmlAttributes &);
+    void opened ();
     QString m_type;
     int bitrate;
 };
@@ -261,7 +280,7 @@ class Ref : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Ref (ElementPtr d) : Mrl (d) {}
     //ElementPtr childFromTag (const QString & tag);
-    void setAttributes (const QXmlAttributes &);
+    void opened ();
     KDE_NO_EXPORT const char * nodeName () const { return "Ref"; }
 };
 
@@ -269,7 +288,7 @@ class EntryRef : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT EntryRef (ElementPtr d) : Mrl (d) {}
     //ElementPtr childFromTag (const QString & tag);
-    void setAttributes (const QXmlAttributes &);
+    void opened ();
     KDE_NO_EXPORT const char * nodeName () const { return "EntryRef"; }
 };
 
@@ -279,7 +298,6 @@ class KMPLAYER_EXPORT GenericURL : public Mrl { //just some url, can get a SMIL 
 public:
     KDE_NO_CDTOR_EXPORT GenericURL (ElementPtr d) : Mrl (d) {}
     GenericURL(ElementPtr d, const QString &s, const QString &n=QString::null);
-    //void setAttributes (const QXmlAttributes &);
     KDE_NO_EXPORT const char * nodeName () const { return "GenericURL"; }
     /**
      * Will return false if this document has child nodes

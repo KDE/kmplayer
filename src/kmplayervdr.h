@@ -142,27 +142,10 @@ private:
 class XVideo : public KMPlayer::CallbackProcess {
     Q_OBJECT
 public:
-    struct Input {
-        Input (int e, const QString & n, Input * i = 0L)
-            : encoding (e), name (n), next (i) {}
-        int encoding;
-        QString name;
-        Input * next;
-    };
-    struct Port {
-        Port (int p, bool t, Port * n)
-            : port (p), has_tuner (t), inputs (0L), next (n) {}
-        int port;
-        bool has_tuner;
-        Input * inputs;
-        Port * next;
-    };
     XVideo (KMPlayer::PartBase * player);
     ~XVideo ();
     QString menuName () const;
     void initProcess ();
-    void setStarted (QCString dcopname, QByteArray & data);
-    Port * ports () const { return m_ports; }
 public slots:
     virtual bool play ();
     virtual bool quit ();
@@ -171,8 +154,6 @@ protected:
 private slots:
     void processStopped (KProcess *);
     void processOutput (KProcess *, char *, int);
-private:
-    Port * m_ports;
 };
 
 #endif // KMPLAYER_VDR_SOURCE_H

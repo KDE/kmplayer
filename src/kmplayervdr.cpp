@@ -60,6 +60,8 @@
 #include "kmplayervdr.h"
 #include "kmplayer.h"
 
+using namespace KMPlayer;
+
 static const char * strVDR = "VDR";
 static const char * strVDRPort = "Port";
 static const char * strXVPort = "XV Port";
@@ -100,7 +102,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::~KMPlayerPrefSourcePageVDR () {}
 
 KDE_NO_EXPORT void KMPlayerPrefSourcePageVDR::showEvent (QShowEvent *) {
     XVideo * xvideo = static_cast<XVideo *>(m_player->players()["xvideo"]);
-    if (!xvideo->ports ())
+    if (!xvideo->configDocument ())
         xvideo->getConfigData ();
 }
 //-----------------------------------------------------------------------------
@@ -593,24 +595,47 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
     } else {
         m_configpage->tcp_port->setText (QString::number (tcp_port));
         m_configpage->scale->setButton (scale);
-        XVideo::Port * ports = xvideo->ports ();
         QListViewItem * vitem = m_configpage->xv_port->firstChild ();
-        if (ports) {
-            for (QListViewItem * i = vitem->firstChild (); i; i = vitem->firstChild ())
+        ElementPtr configdoc = xvideo->configDocument ();
+        if (configdoc && configdoc->firstChild ()) {
+            for (QListViewItem *i=vitem->firstChild(); i; i=vitem->firstChild())
                 delete i;
-            do {
-                QListViewItem *pi = new QListViewItem (vitem, i18n ("Port ") + QString::number (ports->port));
-                XVideo::Input * inputs = ports->inputs;
-                while (inputs) {
-                    QListViewItem * ii = new XVTreeItem (pi, inputs->name, ports->port, inputs->encoding);
-                    if (m_xvport == ports->port && inputs->encoding == m_xvencoding) {
-                        ii->setSelected (true);
-                        m_configpage->xv_port->ensureItemVisible (ii);
+            ElementPtr elm = configdoc->firstChild ();
+            for (elm = elm->firstChild (); elm; elm = elm->nextSibling ()) {
+                if (convertNode <TypeNode> (elm)->type != QString ("tree"))
+                    continue;
+                for (ElementPtr e = e->firstChild (); e; e=e->nextSibling ()) {
+                    if (strcmp (e->nodeName (), "Port"))
+                        continue;
+                    QString portatt;
+                    int port;
+                    for (ElementPtr a=e->attributes (); a; a=a->nextSibling()) {
+                        Attribute * attribute = convertNode <Attribute> (a);
+                        if (!strcmp (attribute->name.ascii (), "VALUE"))
+                            portatt = attribute->value;
                     }
-                    inputs = inputs->next;
+                    QListViewItem *pi = new QListViewItem (vitem, i18n ("Port ") + portatt);
+                    port = portatt.toInt ();
+                    for (ElementPtr i=e->firstChild(); i; i=i->nextSibling()) {
+                        if (strcmp (i->nodeName (), "Input"))
+                            continue;
+                        QString inp;
+                        int enc;
+                        for (ElementPtr a=i->attributes();a;a=a->nextSibling()){
+                            Attribute * attribute = convertNode <Attribute> (a);
+                            if (!strcmp (attribute->name.ascii (), "NAME"))
+                                inp = attribute->value;
+                            else if (!strcmp (attribute->name.ascii(), "VALUE"))
+                                enc = attribute->value.toInt ();
+                        }
+                        QListViewItem * ii = new XVTreeItem(pi, inp, port, enc);
+                        if (m_xvport == port && enc == m_xvencoding) {
+                            ii->setSelected (true);
+                            m_configpage->xv_port->ensureItemVisible (ii);
+                        }
+                    }
                 }
-                ports = ports->next;
-            } while (ports);
+            }
         } else // wait for showEvent
             connect (xvideo, SIGNAL (configReceived()), this, SLOT (configReceived()));
     }
@@ -635,15 +660,12 @@ KDE_NO_EXPORT QFrame * KMPlayerVDRSource::prefPage (QWidget * parent) {
 }
 //-----------------------------------------------------------------------------
 
-#include <qdom.h>
-
 static const char * xv_supported [] = {
     "tvsource", "vdrsource", 0L
 };
 
 KDE_NO_CDTOR_EXPORT XVideo::XVideo (KMPlayer::PartBase * player)
- : KMPlayer::CallbackProcess (player, "xvideo"),
-   m_ports (0L) {
+ : KMPlayer::CallbackProcess (player, "xvideo") {
     m_supported_sources = xv_supported;
     //m_player->settings ()->addPage (m_configpage);
 }
@@ -665,7 +687,13 @@ KDE_NO_EXPORT QString XVideo::menuName () const {
 }
 
 KDE_NO_EXPORT void XVideo::runForConfig () {
-    play ();
+    if (!playing ()) {
+        initProcess ();
+        QString cmd  = QString ("kxvplayer -wid %3 -cb %4 -c").arg (view()->viewer()->embeddedWinId ()).arg (dcopName ());
+        printf ("%s\n", cmd.latin1 ());
+        *m_process << cmd;
+        m_process->start (KProcess::NotifyOnExit, KProcess::All);
+    }
 }
 
 KDE_NO_EXPORT bool XVideo::play () {
@@ -713,42 +741,6 @@ KDE_NO_EXPORT void XVideo::processOutput (KProcess *, char * str, int slen) {
     KMPlayer::View * v = view ();
     if (v && slen > 0)
         v->addText (QString::fromLocal8Bit (str, slen));
-}
-
-KDE_NO_EXPORT void XVideo::setStarted (QCString dcopname, QByteArray & data) {
-    while (!m_ports && data.size ()) {
-        QDomDocument dom;
-        QString err;
-        int line, column;
-        if (!dom.setContent (data, false, &err, &line, &column)) {
-            kdDebug () << "Config data error " << err << " l:" << line << " c:" << column << endl;
-            break;
-        }
-        if (dom.childNodes().length() != 1 || dom.firstChild().childNodes().length() < 1) {
-            kdDebug () << "No valid data" << endl;
-            break;
-        }
-        QString attvalue ("VALUE");
-        QString attname ("NAME");
-        QString attfreq ("FREQ");
-        QString atttype ("TYPE");
-        QString valtree ("tree");
-        for (QDomNode node = dom.firstChild().firstChild(); !node.isNull (); node = node.nextSibling ()) {
-            if (node.attributes ().namedItem (atttype).nodeValue () == valtree) {
-                for (QDomNode pn = node.firstChild(); !pn.isNull (); pn = pn.nextSibling ()) {
-                    m_ports = new Port (pn.attributes().namedItem (attvalue).nodeValue().toInt (), !pn.attributes().namedItem (attfreq).isNull (), m_ports);
-                    kdDebug () << "Port " << m_ports->port << " " << m_ports->has_tuner << endl;
-                    for (QDomNode in = pn.firstChild(); !in.isNull (); in = in.nextSibling ()) {
-                        QDomNamedNodeMap attr = in.attributes ();
-                        m_ports->inputs = new Input (attr.namedItem (attvalue).nodeValue().toInt (), attr.namedItem (attname).nodeValue (), m_ports->inputs);
-                        kdDebug () << "Input " << m_ports->inputs->name << " " << m_ports->inputs->encoding << endl;
-                    }
-                }
-            }
-        }
-        break;
-    }
-    CallbackProcess::setStarted (dcopname, data);
 }
 
 #include "kmplayervdr.moc"

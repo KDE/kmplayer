@@ -230,6 +230,7 @@ public:
     bool getConfigData ();
     void setChangedData (const QByteArray &);
     QString dcopName ();
+    ElementPtr configDocument () { return configdoc; }
 public slots:
     bool stop ();
     bool pause ();
@@ -246,24 +247,24 @@ protected:
     QByteArray m_configdata;
     QByteArray m_changeddata;
     XMLPreferencesPage * m_configpage;
+    ElementPtr configdoc;
     bool in_gui_update;
     enum { config_unknown, config_probe, config_yes, config_no } m_have_config;
     enum { send_no, send_try, send_new } m_send_config;
     enum { status_stop, status_play, status_start } m_status;
 };
 
-struct ConfigDocument : public Document {
-    ConfigDocument (QWidget * p);
+struct KMPLAYER_EXPORT ConfigDocument : public Document {
+    ConfigDocument ();
     KDE_NO_CDTOR_EXPORT ~ConfigDocument () {}
     ElementPtr childFromTag (const QString & tag);
-    QWidget * parent;
 };
 
-struct ConfigNode : public Element {
+struct KMPLAYER_EXPORT ConfigNode : public Element {
     ConfigNode (ElementPtr d);
     KDE_NO_CDTOR_EXPORT ~ConfigNode () {}
     ElementPtr childFromTag (const QString & tag);
-    void setAttributes (const QXmlAttributes & atts);
+    void opened ();
     QString name;
     QString value;
     QString type;
@@ -272,10 +273,20 @@ struct ConfigNode : public Element {
     QWidget * w;
 };
 
-class XMLPreferencesPage : public PreferencesPage {
+struct KMPLAYER_EXPORT TypeNode : public ConfigNode {
+    KDE_NO_CDTOR_EXPORT TypeNode (ElementPtr d) : ConfigNode (d) {}
+    KDE_NO_CDTOR_EXPORT ~TypeNode () {}
+    void closed ();
+    ElementPtr childFromTag (const QString & tag);
+    void changedXML (QTextStream & out);
+    QWidget * createWidget (QWidget * parent);
+    const char * nodeName () const { return "typenode"; }
+};
+
+class KMPLAYER_EXPORT XMLPreferencesPage : public PreferencesPage {
 public:
     XMLPreferencesPage (CallbackProcess *);
-    KDE_NO_CDTOR_EXPORT ~XMLPreferencesPage () {}
+    ~XMLPreferencesPage ();
     void write (KConfig *);
     void read (KConfig *);
     void sync (bool fromUI);
