@@ -86,6 +86,14 @@ public:
     QString tvdriver;
     QPtrList <TVDevice> tvdevices;
 // end of TV stuff
+    QString bindaddress;
+    int ffserverport;
+    int maxclients;
+    int maxbandwidth;
+    QString feedfile;
+    int feedfilesize;
+    FFServerSetting * ffserversettings;
+    int ffserversetting;
     int seektime;
     int cachesize;
     int videodriver;

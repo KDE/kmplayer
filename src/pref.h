@@ -58,6 +58,7 @@ class KMPlayerPrefSourcePageURL;        // source, url
 class KMPlayerPrefGeneralPageDVD;	// general, dvd
 class KMPlayerPrefGeneralPageVCD;	// general, vcd
 class KMPlayerPrefSourcePageTV;         // source, TV
+class KMPlayerPrefBroadcastPage;        // broadcast
 class KMPlayerPrefGeneralPageOutput;	// general, output
 class KMPlayerPrefGeneralPageAdvanced;	// general, advanced, pattern matches etc.
 class KMPlayerPrefOPPageGeneral;	// OP = outputplugins, general
@@ -93,6 +94,19 @@ public:
     QPtrList <TVInput> inputs;
 };
 
+class FFServerSetting {
+public:
+    int index;
+    const char * name;
+    int audiobitrate;
+    int audiosamplerate;
+    int videobitrate;
+    int quality;
+    int framerate;
+    int gopsize;
+    const char * size;
+};
+
 class TVDeviceScannerSource : public KMPlayerSource {
     Q_OBJECT
 public:
@@ -124,7 +138,7 @@ class KMPlayerPreferences : public KDialogBase
 {
     Q_OBJECT
 public:
-    KMPlayerPreferences(QWidget *parent);
+    KMPlayerPreferences(QWidget *parent, FFServerSetting * ffs);
     ~KMPlayerPreferences();
     
     KMPlayerPrefGeneralPageGeneral 	*m_GeneralPageGeneral;
@@ -132,6 +146,7 @@ public:
     KMPlayerPrefGeneralPageDVD 		*m_GeneralPageDVD;
     KMPlayerPrefGeneralPageVCD 		*m_GeneralPageVCD;
     KMPlayerPrefSourcePageTV 		*m_SourcePageTV;
+    KMPlayerPrefBroadcastPage 		*m_BroadcastPage;
     KMPlayerPrefGeneralPageOutput 	*m_GeneralPageOutput;
     KMPlayerPrefGeneralPageAdvanced	*m_GeneralPageAdvanced;
     KMPlayerPrefOPPageGeneral 		*m_OPPageGeneral;
@@ -241,6 +256,22 @@ private:
     QPtrList <TVDevice> addeddevices;
     QPtrList <QFrame> m_devicepages;
     KMPlayerPreferences * m_preference;
+};
+
+class KMPlayerPrefBroadcastPage : public QFrame
+{
+    Q_OBJECT
+public:
+    KMPlayerPrefBroadcastPage (QWidget *parent, FFServerSetting * ffs);
+    ~KMPlayerPrefBroadcastPage () {}
+
+    QLineEdit * bindaddress;
+    QLineEdit * port;
+    QLineEdit * maxclients;
+    QLineEdit * maxbandwidth;
+    QLineEdit * feedfile;
+    QLineEdit * feedfilesize;
+    QComboBox * optimize;
 };
 
 class KMPlayerPrefGeneralPageOutput : public QFrame

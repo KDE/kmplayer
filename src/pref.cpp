@@ -44,7 +44,7 @@
 
 #include "pref.h"
 
-KMPlayerPreferences::KMPlayerPreferences(QWidget *parent)
+KMPlayerPreferences::KMPlayerPreferences(QWidget *parent, FFServerSetting * ffs)
 : KDialogBase(TreeList, i18n("KMPlayer Preferences"),
 		Help|Default|Ok|Apply|Cancel, Ok, parent, 0, false)
 {
@@ -88,6 +88,13 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent)
 	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
 	m_SourcePageTV = new KMPlayerPrefSourcePageTV (frame, this);
 	vlay->addWidget (m_SourcePageTV);
+
+	hierarchy.clear();
+	hierarchy << i18n ("Broadcasting");
+	frame = addPage (hierarchy, i18n ("Broadcasting (ffserver)"));
+	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
+	m_BroadcastPage = new KMPlayerPrefBroadcastPage (frame, ffs);
+	vlay->addWidget (m_BroadcastPage);
 
 
 	hierarchy.clear();
@@ -402,6 +409,47 @@ TVDevice * KMPlayerPrefSourcePageTV::findDevice (QPtrList <TVDevice> & list, con
     }
     kdDebug() << "device not found " << device << endl;
     return 0L;
+}
+
+KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerSetting * ffs) : QFrame (parent) {
+    QVBoxLayout *layout = new QVBoxLayout (this);
+    QGridLayout *gridlayout = new QGridLayout (layout, 7, 2);
+    QLabel *label = new QLabel (i18n ("Bind address:"), this);
+    bindaddress = new QLineEdit ("", this);
+    gridlayout->addWidget (label, 0, 0);
+    gridlayout->addWidget (bindaddress, 0, 1);
+    label = new QLabel (i18n ("Listen Port:"), this);
+    port = new QLineEdit ("", this);
+    gridlayout->addWidget (label, 1, 0);
+    gridlayout->addWidget (port, 1, 1);
+    label = new QLabel (i18n ("Maximum connections:"), this);
+    maxclients = new QLineEdit ("", this);
+    gridlayout->addWidget (label, 2, 0);
+    gridlayout->addWidget (maxclients, 2, 1);
+    label = new QLabel (i18n ("Maximum bandwidth:"), this);
+    maxbandwidth = new QLineEdit ("", this);
+    gridlayout->addWidget (label, 3, 0);
+    gridlayout->addWidget (maxbandwidth, 3, 1);
+    label = new QLabel (i18n ("Temporary feed file:"), this);
+    feedfile = new QLineEdit ("", this);
+    gridlayout->addWidget (label, 4, 0);
+    gridlayout->addWidget (feedfile, 4, 1);
+    label = new QLabel (i18n ("Feed file size (kB):"), this);
+    feedfilesize = new QLineEdit ("", this);
+    gridlayout->addWidget (label, 5, 0);
+    gridlayout->addWidget (feedfilesize, 5, 1);
+    label = new QLabel (i18n ("Optimize for:"), this);
+    optimize = new QComboBox(this);
+    for (FFServerSetting * s = ffs; s->index >=0; s++)
+        optimize->insertItem (s->name, s->index);
+    gridlayout->addWidget (label, 6, 0);
+    gridlayout->addWidget (optimize, 6, 1);
+    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    //QHBoxLayout *buttonlayout = new QHBoxLayout ();
+    //buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    //QPushButton * addformat = new QPushButton (i18n ("Add movie format ..."), this);
+    //buttonlayout->addWidget (addformat);
+    //layout->addLayout (buttonlayout);
 }
 
 KMPlayerPrefGeneralPageVCD::KMPlayerPrefGeneralPageVCD(QWidget *parent) : QFrame(parent)

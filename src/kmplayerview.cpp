@@ -413,6 +413,7 @@ void KMPlayerView::init () {
     m_stopButton->setToggleButton (true);
     m_recordButton->setToggleButton (true);
     m_broadcastButton->setToggleButton (true);
+    m_broadcastButton->hide ();
 
     m_popupMenu = new QPopupMenu (m_layer);
     m_zoomMenu = new QPopupMenu (m_layer);

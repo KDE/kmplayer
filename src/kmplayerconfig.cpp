@@ -36,6 +36,14 @@
 //#include "configdialog.h"
 #include "pref.h"
 
+FFServerSetting _ffs[] = {
+    { 0, "Modem (32k)", 16, 11025, 50, 15, 3, 3, "160x128" },
+    { 1, "ISDN (64k)", 16, 11025, 50, 15, 3, 3, "320x240" },
+    { 2, "ISDN2 (128k)", 32, 22050, 80, 10, 10, 12, "320x240" },
+    { 3, "LAN (1024k)", 64, 44100, 512, 5, 25, 12, "320x240" },
+    { -1, 0, 0, 0, 0, 0, 0, 0, 0 }
+};
+
 TVChannel::TVChannel (const QString & n, int f) : name (n), frequency (f) {}
 
 TVInput::TVInput (const QString & n, int _id) : name (n), id (_id) {
@@ -49,6 +57,7 @@ TVDevice::TVDevice (const QString & d, const QSize & s) : device (d), size (s) {
 KMPlayerConfig::KMPlayerConfig (KMPlayer * player, KConfig * config)
   : configdialog (0L), m_config (config), m_player (player) {
     tvdevices.setAutoDelete (true);
+    ffserversettings = _ffs;
 }
 
 KMPlayerConfig::~KMPlayerConfig () {
@@ -134,6 +143,14 @@ static const char * strTVSize = "Size";
 static const char * strTVMinSize = "Minimum Size";
 static const char * strTVMaxSize = "Maximum Size";
 static const char * strTVDriver = "Driver";
+static const char * strBroadcast = "Broadcast";
+static const char * strBindAddress = "Bind Address";
+static const char * strFFServerPort = "FFServer Port";
+static const char * strMaxClients = "Maximum Connections";
+static const char * strMaxBandwidth = "Maximum Bandwidth";
+static const char * strFeedFile = "Feed File";
+static const char * strFeedFileSize = "Feed File Size";
+static const char * strFFServerSetting = "FFServer Setting";
 
 void KMPlayerConfig::readConfig () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
@@ -241,7 +258,7 @@ void KMPlayerConfig::readConfig () {
         TVDevice * device = new TVDevice (devlist.at (i), 
                                           m_config->readSizeEntry (strTVSize));
         device->name = m_config->readEntry (strTVDeviceName, "/dev/video");
-        device->audiodevice = m_config->readEntry (strTVAudioDevice, "/dev/audio");
+        device->audiodevice = m_config->readEntry (strTVAudioDevice, "");
         device->minsize = m_config->readSizeEntry (strTVMinSize);
         device->maxsize = m_config->readSizeEntry (strTVMaxSize);
         QStrList inputlist;
@@ -276,11 +293,19 @@ void KMPlayerConfig::readConfig () {
         }
         tvdevices.append (device);
     }
+    m_config->setGroup (strBroadcast);
+    bindaddress = m_config->readEntry (strBindAddress, "0.0.0.0");
+    ffserverport = m_config->readNumEntry (strFFServerPort, 8090);
+    maxclients = m_config->readNumEntry (strMaxClients, 10);
+    maxbandwidth = m_config->readNumEntry (strMaxBandwidth, 1000);
+    feedfile = m_config->readEntry (strFeedFile, "/tmp/kmplayer.ffm");
+    feedfilesize = m_config->readNumEntry (strFeedFileSize, 512);
+    ffserversetting = m_config->readNumEntry (strFFServerSetting, 0);
 }
 
 void KMPlayerConfig::show () {
     if (!configdialog) {
-        configdialog = new KMPlayerPreferences (m_player->view ());
+        configdialog = new KMPlayerPreferences (m_player->view (), _ffs);
         configdialog->m_SourcePageTV->scanner = new TVDeviceScannerSource (m_player);
         connect (configdialog, SIGNAL (okClicked ()), 
                 this, SLOT (okPressed ()));
@@ -357,6 +382,13 @@ void KMPlayerConfig::show () {
     configdialog->m_OPPagePostproc->MedianDeinterlacer->setChecked (pp_med_int);
     configdialog->m_OPPagePostproc->FfmpegDeinterlacer->setChecked (pp_ffmpeg_int);
 
+    configdialog->m_BroadcastPage->bindaddress->setText (bindaddress);
+    configdialog->m_BroadcastPage->port->setText (QString::number (ffserverport));
+    configdialog->m_BroadcastPage->maxclients->setText (QString::number (maxclients));
+    configdialog->m_BroadcastPage->maxbandwidth->setText (QString::number (maxbandwidth));
+    configdialog->m_BroadcastPage->feedfile->setText (feedfile);
+    configdialog->m_BroadcastPage->feedfilesize->setText (QString::number (feedfilesize));
+    configdialog->m_BroadcastPage->optimize->setCurrentItem (ffserversetting);
     configdialog->show ();
 }
 
@@ -466,6 +498,14 @@ void KMPlayerConfig::writeConfig () {
     m_config->writeEntry (strTVDevices, devicelist, ';');
     m_config->writeEntry (strTVDriver, tvdriver);
     // end TV stuff
+    m_config->setGroup (strBroadcast);
+    m_config->writeEntry (strBindAddress, bindaddress);
+    m_config->writeEntry (strFFServerPort, ffserverport);
+    m_config->writeEntry (strMaxClients, maxclients);
+    m_config->writeEntry (strMaxBandwidth, maxbandwidth);
+    m_config->writeEntry (strFeedFile, feedfile);
+    m_config->writeEntry (strFeedFileSize, feedfilesize);
+    m_config->writeEntry (strFFServerSetting, ffserversetting);
     m_config->sync ();
 }
 
@@ -560,7 +600,13 @@ void KMPlayerConfig::okPressed () {
     pp_cub_int = configdialog->m_OPPagePostproc->CubicIntDeinterlacer->isChecked();
     pp_med_int = configdialog->m_OPPagePostproc->MedianDeinterlacer->isChecked();
     pp_ffmpeg_int = configdialog->m_OPPagePostproc->FfmpegDeinterlacer->isChecked();
-    
+    bindaddress = configdialog->m_BroadcastPage->bindaddress->text ();
+    ffserverport = configdialog->m_BroadcastPage->port->text ().toInt ();
+    maxclients = configdialog->m_BroadcastPage->maxclients->text ().toInt ();
+    maxbandwidth = configdialog->m_BroadcastPage->maxbandwidth->text ().toInt();
+    feedfile = configdialog->m_BroadcastPage->feedfile->text ();
+    feedfilesize = configdialog->m_BroadcastPage->feedfilesize->text ().toInt();
+    ffserversetting = configdialog->m_BroadcastPage->optimize->currentItem ();
     writeConfig ();
 
     emit configChanged ();

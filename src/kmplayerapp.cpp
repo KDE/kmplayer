@@ -58,13 +58,6 @@
 
 #define ID_STATUS_MSG 1
 
-static const char * const ffserverconf =
-"Port 8090\nBindAddress 0.0.0.0\nMaxClients 10\nMaxBandwidth 1000\n"
-"CustomLog -\nNoDaemon\n"
-"<Feed kmplayer.ffm>\nFile /dev/shm/kmplayer.ffm\nFileMaxSize 200K\nACL allow 127.0.0.1\n</Feed>\n"
-"<Stream video.avi>\nFeed kmplayer.ffm\nFormat avi\nVideoFrameRate 10\nVideoSize 320x240\nVideoGopSize 3\n</Stream>\n"
-"<Stream stat.html>\nFormat status\nACL allow localhost\n</Stream>\n";
-
 static bool stopProcess (KProcess * process) {
     if (!process || !process->isRunning ()) return true;
     do {
@@ -276,6 +269,13 @@ void KMPlayerApp::zoom150 () {
 #include <kglobal.h>
 #include <kstandarddirs.h>
 
+static const char * const ffserverconf =
+"Port %d\nBindAddress %s\nMaxClients %d\nMaxBandwidth %d\n"
+"CustomLog -\nNoDaemon\n"
+"<Feed kmplayer.ffm>\nFile %s\nFileMaxSize %dK\nACL allow 127.0.0.1\n</Feed>\n"
+"<Stream video.avi>\nFeed kmplayer.ffm\nFormat avi\nVideoBitRate %d\nVideoFrameRate %d\nVideoSize %s\nVideoGopSize %d\nVideoQMin %d\nAudioBitRate %d\nAudioSampleRate %d\nAudioCodec mp3\nVideoCodec mpeg4\n</Stream>\n"
+"<Stream stat.html>\nFormat status\nACL allow localhost\n</Stream>\n";
+
 void KMPlayerApp::boadcastClicked () {
     KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
     setCursor (QCursor (Qt::WaitCursor));
@@ -293,7 +293,6 @@ void KMPlayerApp::boadcastClicked () {
         setCursor (QCursor (Qt::ArrowCursor));
         return;
     }
-    QString conf = locateLocal ("data", "kmplayer/ffserver.conf");
     if (!m_ffmpeg_process) {
         m_ffmpeg_process = new KProcess;
         m_ffmpeg_process->setUseShell (true);
@@ -309,13 +308,19 @@ void KMPlayerApp::boadcastClicked () {
         m_ffserver_process->clearArguments();
         m_ffmpeg_process->clearArguments();
     }
-    if (!QFile::exists (conf)) {
-        QFile qfile (conf);
-        qfile.open (IO_WriteOnly);
-        qfile.writeBlock (ffserverconf, strlen (ffserverconf));
-    }
-    kdDebug () << "ffserver -f " << conf << endl;
-    *m_ffserver_process << "ffserver -f " << conf;
+    QString conffile = locateLocal ("data", "kmplayer/ffserver.conf");
+    KMPlayerConfig * conf = m_player->configDialog ();
+    unlink (conf->feedfile.ascii ());
+    FFServerSetting & ffs = conf->ffserversettings[conf->ffserversetting];
+    QFile qfile (conffile);
+    qfile.open (IO_WriteOnly);
+    QString configdata;
+    configdata.sprintf (ffserverconf, conf->ffserverport, conf->bindaddress.ascii (), conf->maxclients, conf->maxbandwidth, conf->feedfile.ascii (), conf->feedfilesize, ffs.videobitrate, ffs.framerate, ffs.size, ffs.gopsize, ffs.quality, ffs.audiobitrate, ffs.audiosamplerate);
+    qfile.writeBlock (configdata.ascii (), configdata.length ());
+    qfile.close ();
+    kdDebug () << configdata << endl;
+    kdDebug () << "ffserver -f " << conffile << endl;
+    *m_ffserver_process << "ffserver -f " << conffile;
     m_ffserver_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
     QTimer::singleShot (500, this, SLOT (boadcastTimerEvent ()));
 }
@@ -344,16 +349,23 @@ void KMPlayerApp::boadcastTimerEvent () {
         if (!kview->broadcastButton ()->isOn ())
             kview->broadcastButton ()->toggle ();
         m_player->openURL (KURL ("http://localhost:8090/video.avi"));
+        QTimer::singleShot (500, this, SLOT (zoom100 ()));
     }
     setCursor (QCursor (Qt::ArrowCursor));
 }
 
 void KMPlayerApp::processStopped (KProcess * process) {
     KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
-    if (process == m_ffmpeg_process && !stopProcess (m_ffserver_process))
-        KMessageBox::error (this, i18n ("Failed to end ffserver process."), i18n ("Error"));
+    if (process == m_ffmpeg_process) {
+        kdDebug () << "ffmpeg process stopped" << endl; 
+        if (!stopProcess (m_ffserver_process))
+            KMessageBox::error (this, i18n ("Failed to end ffserver process."), i18n ("Error"));
+    } else
+        kdDebug () << "ffserver process stopped" << endl; 
     if (kview && kview->broadcastButton ()->isOn ())
         kview->broadcastButton ()->toggle ();
+    if (m_player->source () != m_tvsource)
+        view->broadcastButton ()->hide ();
 }
 
 void KMPlayerApp::saveOptions()
@@ -968,6 +980,7 @@ KMPlayerTVSource::~KMPlayerTVSource () {
 
 void KMPlayerTVSource::activate () {
     init ();
+    static_cast <KMPlayerView*> (m_player->view())->broadcastButton ()->show ();
 }
 
 void KMPlayerTVSource::play () {
@@ -989,6 +1002,9 @@ void KMPlayerTVSource::play () {
 }
 
 void KMPlayerTVSource::deactivate () {
+    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view());
+    if (!view->broadcastButton ()->isOn ())
+        view->broadcastButton ()->hide ();
 }
 
 void KMPlayerTVSource::buildMenu () {
@@ -1026,6 +1042,8 @@ void KMPlayerTVSource::buildMenu () {
                 TVChannel * channel;
                 for (input->channels.first (); (channel = input->channels.current()); input->channels.next ()) {
                     TVSource * source = new TVSource;
+                    source->videodevice = device->device;
+                    source->audiodevice = device->audiodevice;
                     source->size = device->size;
                     inputmenu->insertItem (channel->name, this, SLOT(menuClicked (int)), 0, counter);
                     source->command.sprintf ("device=%s:input=%d:freq=%d", device->device.ascii (), input->id, channel->frequency);

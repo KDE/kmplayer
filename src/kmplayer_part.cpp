@@ -189,7 +189,6 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
         }
     }
     m_view->init ();
-    m_view->broadcastButton ()->hide ();
     m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom50,
                                       this, SLOT (setMenuZoom (int)));
     m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom100,
