@@ -60,12 +60,12 @@ static Element * fromContentControlGroup (ElementPtr d, const QString & tag) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT Element::~Element () {
+Element::~Element () {
     clear ();
 }
 
 Document * Element::document () {
-    return static_cast<Document*>(static_cast<Element *>(m_doc));
+    return static_cast <Document*> (m_doc.ptr ());
 }
 
 Mrl * Element::mrl () {
@@ -128,7 +128,6 @@ KDE_NO_EXPORT void Element::removeChild (ElementPtr c) {
     document()->m_tree_version++;
     if (c->m_prev) {
         c->m_prev->m_next = c->m_next;
-        c->m_prev = 0L;
     } else
         m_first_child = c->m_next;
     if (c->m_next) {
@@ -136,6 +135,7 @@ KDE_NO_EXPORT void Element::removeChild (ElementPtr c) {
         c->m_next = 0L;
     } else
         m_last_child = c->m_prev;
+    c->m_prev = 0L;
     c->m_parent = 0L;
 }
 
@@ -171,16 +171,28 @@ KDE_NO_EXPORT void Element::characterData (const QString & s) {
     if (!m_last_child || strcmp (m_last_child->nodeName (), "#text"))
         appendChild ((new TextNode (m_doc, s))->self ());
     else
-        static_cast <TextNode *> (static_cast <Element *> (m_last_child))->appendText (s);
+        static_cast <TextNode *> (m_last_child.ptr ())->appendText (s);
+}
+
+void Element::normalize () {
+    ElementPtr e = firstChild ();
+    while (e) {
+        ElementPtr tmp = e->nextSibling ();
+        if (!strcmp (e->nodeName (), "#text")) {
+            if (static_cast <TextNode *> (e.ptr ())->text.stripWhiteSpace ().isEmpty ())
+                removeChild (e);
+        } else
+            e->normalize ();
+        e = tmp;
+    }
 }
 
 static void getInnerText (const ElementPtr p, QTextOStream & out) {
     for (ElementPtr e = p->firstChild (); e; e = e->nextSibling ()) {
         if (!strcmp (e->nodeName (), "#text"))
-            out << (static_cast<TextNode*>(static_cast<Element *>(e)))->text;
+            out << (static_cast <TextNode *> (e.ptr ()))->text;
         else
-            out << QChar ('<') << e->nodeName () << QChar ('>'); //TODO attr.
-        getInnerText (e, out);
+            getInnerText (e, out);
     }
 }
 
@@ -188,6 +200,24 @@ QString Element::innerText () const {
     QString buf;
     QTextOStream out (&buf);
     getInnerText (self (), out);
+    return buf;
+}
+
+static void getInnerXML (const ElementPtr p, QTextOStream & out) {
+    for (ElementPtr e = p->firstChild (); e; e = e->nextSibling ()) {
+        if (!strcmp (e->nodeName (), "#text"))
+            out << (static_cast <TextNode *> (e.ptr ()))->text;
+        else {
+            out << QChar ('<') << e->nodeName () << QChar ('>'); //TODO attr.
+            getInnerXML (e, out);
+        }
+    }
+}
+
+QString Element::innerXML () const {
+    QString buf;
+    QTextOStream out (&buf);
+    getInnerXML (self (), out);
     return buf;
 }
 
@@ -200,6 +230,8 @@ KDE_NO_EXPORT void Element::setAttributes (const QXmlAttributes & atts) {
 bool Element::isMrl () {
     return false;
 }
+
+KDE_NO_EXPORT void Element::closed () {}
 
 static bool hasMrlChildren (const ElementPtr & e) {
     for (ElementPtr c = e->firstChild (); c; c = c->nextSibling ())
@@ -493,6 +525,7 @@ public:
             kdError () << "m_elm == m_start, stack underflow " << endl;
             return false;
         }
+        m_elm->closed ();
         // kdError () << "end tag " << endl;
         m_elm = m_elm->parentNode ();
         return true;

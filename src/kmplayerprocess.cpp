@@ -30,7 +30,7 @@
 #include <qcheckbox.h>
 #include <qspinbox.h>
 #include <qlabel.h>
-#include <qdom.h>
+#include <qxml.h>
 #include <qfontmetrics.h>
 #include <qwhatsthis.h>
 
@@ -1035,7 +1035,7 @@ void CallbackProcess::setChangedData (const QByteArray & data) {
     if (m_send_config == send_try)
         m_backend->setConfig (data);
     else
-        play ();
+        runForConfig ();
 }
 
 bool CallbackProcess::stop () {
@@ -1086,13 +1086,127 @@ void CallbackProcess::runForConfig() {}
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_CDTOR_EXPORT ConfigDocument::ConfigDocument (QWidget * p)
+    : Document (QString::null), parent (p) {}
+
+struct TypeNode : public ConfigNode {
+    KDE_NO_CDTOR_EXPORT TypeNode (ElementPtr d) : ConfigNode (d) {}
+    KDE_NO_CDTOR_EXPORT ~TypeNode () {}
+    void setAttributes (const QXmlAttributes & atts);
+    void closed ();
+    ElementPtr childFromTag (const QString & tag);
+    void changedXML (QTextStream & out);
+    const char * nodeName () const { return "typenode"; }
+};
+
+struct ChoiceNode : public ConfigNode {
+    KDE_NO_CDTOR_EXPORT ChoiceNode (ElementPtr d, QComboBox * c)
+        : ConfigNode (d), combo (c) {}
+    KDE_NO_CDTOR_EXPORT ~ChoiceNode () {}
+    void setAttributes (const QXmlAttributes & atts);
+    const char * nodeName () const { return "choicenode"; }
+    QComboBox * combo;
+};
+
+KDE_NO_CDTOR_EXPORT ConfigNode::ConfigNode (ElementPtr d)
+    : Element (d), w (0L) {}
+
+ElementPtr ConfigDocument::childFromTag (const QString & tag) {
+    if (tag.lower () == QString ("document"))
+        return (new ConfigNode (self ()))->self ();
+    return 0L;
+}
+
+ElementPtr ConfigNode::childFromTag (const QString &) {
+    return (new TypeNode (m_doc))->self ();
+}
+
+ElementPtr TypeNode::childFromTag (const QString & tag) {
+    if (!tag.compare ("item"))
+        return (new ChoiceNode (m_doc, ::qt_cast <QComboBox*> (w)))->self ();
+    return 0L;
+}
+
+void ConfigNode::setAttributes (const QXmlAttributes & atts) {
+    const char * ctype;
+    for (int i = 0; i < atts.length (); i++) {
+        const char * attr = atts.qName (i).ascii ();
+        if (!strcmp (attr, "NAME"))
+            name = atts.value (i);
+        else if (!strcmp (attr, "TYPE")) {
+            type = atts.value (i);
+            ctype = type.ascii ();
+        } else if (!strcmp (attr, "VALUE"))
+            value = atts.value (i);
+        else if (!strcmp (attr, "START"))
+            range_begin = atts.value (i).toInt ();
+        else if (!strcmp (attr, "END"))
+            range_end = atts.value (i).toInt ();
+        else
+            kdDebug() << "Unknown attr:" << attr << "=" << atts.value(i) <<endl;
+    }
+}
+
+void TypeNode::setAttributes (const QXmlAttributes & atts) {
+    ConfigNode::setAttributes (atts);
+    QWidget * parent = static_cast <ConfigDocument *> (m_doc.ptr ())->parent;
+    const char * ctype = type.ascii ();
+    if (!strcmp (ctype, "range")) {
+        w = new QSlider (range_begin, range_end, 1, value.toInt (), Qt::Horizontal, parent);
+    } else if (!strcmp (ctype, "num") || !strcmp (ctype,  "string")) {
+        w = new QLineEdit (value, parent);
+    } else if (!strcmp (ctype, "bool")) {
+        QCheckBox * checkbox = new QCheckBox (parent);
+        checkbox->setChecked (value.toInt ());
+        w = checkbox;
+    } else if (!strcmp (ctype, "enum")) {
+        w = new QComboBox (parent);
+    } else if (!strcmp (ctype, "tree")) {
+    } else
+        kdDebug() << "Unknown type:" << ctype << endl;
+}
+
+void TypeNode::closed () {
+    if (w && !type.compare ("enum"))
+        static_cast <QComboBox *> (w)->setCurrentItem (value.toInt ());
+}
+
+void TypeNode::changedXML (QTextStream & out) {
+    if (!w) return;
+    const char * ctype = type.ascii ();
+    QString newvalue;
+    if (!strcmp (ctype, "range")) {
+        newvalue = QString::number (static_cast <QSlider *> (w)->value ());
+    } else if (!strcmp (ctype, "num") || !strcmp (ctype,  "string")) {
+        newvalue = static_cast <QLineEdit *> (w)->text ();
+    } else if (!strcmp (ctype, "bool")) {
+        newvalue = QString::number (static_cast <QCheckBox *> (w)->isChecked());
+    } else if (!strcmp (ctype, "enum")) {
+        newvalue = QString::number (static_cast<QComboBox *>(w)->currentItem());
+    } else if (!strcmp (ctype, "tree")) {
+    } else
+        kdDebug() << "Unknown type:" << ctype << endl;
+    if (value != newvalue) {
+        value = newvalue;
+        out << "<entry NAME=\"" << name << "\" VALUE=\"" << value << "\" />";
+    }
+}
+
+void ChoiceNode::setAttributes (const QXmlAttributes & atts) {
+    ConfigNode::setAttributes (atts);
+    combo->insertItem (value);
+}
+
+//-----------------------------------------------------------------------------
+
 namespace KMPlayer {
 
 class XMLPreferencesFrame : public QFrame {
 public:
     XMLPreferencesFrame (QWidget * parent, CallbackProcess *);
+    ~XMLPreferencesFrame ();
     QTable * table;
-    QDomDocument dom;
+    ElementPtr configdoc;
 protected:
     void showEvent (QShowEvent *);
 private:
@@ -1107,6 +1221,11 @@ KDE_NO_CDTOR_EXPORT XMLPreferencesFrame::XMLPreferencesFrame
     QVBoxLayout * layout = new QVBoxLayout (this);
     table = new QTable (this);
     layout->addWidget (table);
+}
+
+KDE_NO_CDTOR_EXPORT XMLPreferencesFrame::~XMLPreferencesFrame () {
+    if (configdoc)
+        configdoc->document()->dispose ();
 }
 
 KDE_NO_CDTOR_EXPORT XMLPreferencesPage::XMLPreferencesPage (CallbackProcess * p)
@@ -1124,81 +1243,27 @@ KDE_NO_EXPORT void XMLPreferencesPage::write (KConfig *) {
 KDE_NO_EXPORT void XMLPreferencesPage::read (KConfig *) {
 }
 
-static QString attname ("NAME");
-static QString atttype ("TYPE");
-static QString attvalue ("VALUE");
-static QString attstart ("START");
-static QString attend ("END");
-static QString valrange ("range");
-static QString valnum ("num");
-static QString valbool ("bool");
-static QString valenum ("enum");
-static QString valstring ("string");
-static QString valtree ("tree");
-
 KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
     if (!m_configframe) return;
     QTable * table = m_configframe->table;
-    QDomDocument & dom = m_configframe->dom;
     int row = 0;
     if (fromUI) {
         if (m_configframe->table->numCols () < 1) // not yet created
             return;
-        if (dom.childNodes().length() != 1 || dom.firstChild().childNodes().length() < 1) {
+        ElementPtr elm = m_configframe->configdoc->firstChild (); // document
+        if (!elm || !elm->hasChildNodes ()) {
             kdDebug () << "No valid data" << endl;
             return;
         }
-        QDomDocument changeddom;
-        QDomElement changedroot = changeddom.createElement (QString ("document"));
-        for (QDomNode node = dom.firstChild().firstChild(); !node.isNull (); node = node.nextSibling (), row++) {
-            QDomNamedNodeMap attr = node.attributes ();
-            QDomNode n = attr.namedItem (attname);
-            QDomNode t = attr.namedItem (atttype);
-            if (!n.isNull () && !t.isNull ()) {
-                if (m_configframe->table->text (row, 0) != n.nodeValue ()) {
-                    kdDebug () << "Unexpected table text found at row " << row << endl;
-                    return;
-                }
-                QDomNode v = attr.namedItem (attvalue);
-                bool changed = false;
-                if (t.nodeValue () == valnum || t.nodeValue () == valstring) {
-                    QLineEdit * lineedit = static_cast<QLineEdit *>(table->cellWidget (row, 1));
-                    if (lineedit->text () != v.nodeValue ()) {
-                        v.setNodeValue (lineedit->text ());
-                        changed = true;
-                    }
-                } else if (t.nodeValue () == valrange) {
-                    int i = v.nodeValue ().toInt ();
-                    QSlider * slider = static_cast<QSlider *>(table->cellWidget (row, 1));
-                    if (slider->value () != i) {
-                        v.setNodeValue (QString::number (slider->value ()));
-                        changed = true;
-                    }
-                } else if (t.nodeValue () == valbool) {
-                    bool b = attr.namedItem (attvalue).nodeValue ().toInt ();
-                    QCheckBox * checkbox = static_cast<QCheckBox *>(table->cellWidget (row, 1));
-                    if (checkbox->isChecked () != b) {
-                        //node.toElement ().setAttribute (attvalue, QString::number (b ? 1 : 0));
-                        v.setNodeValue (QString::number (b ? 0 : 1));
-                        changed = true;
-                    }
-                } else if (t.nodeValue () == valenum) {
-                    int i = v.nodeValue ().toInt ();
-                    QComboBox * combobox = static_cast<QComboBox *>(table->cellWidget (row, 1));
-                    if (combobox->currentItem () != i) {
-                        v.setNodeValue (QString::number (combobox->currentItem ()));
-                        changed = true;
-                    }
-                }
-                if (changed)
-                    changedroot.appendChild (node.cloneNode ());
-            }
-        }
-        if (changedroot.childNodes().length() > 0) {
-            changeddom.appendChild (changedroot);
-            QCString str = changeddom.toCString ();
-            kdDebug () << str << endl;
-            QByteArray changeddata = str;
+        QString str;
+        QTextStream ts (&str, IO_WriteOnly);
+        ts << "<document>";
+        for (ElementPtr e = elm->firstChild (); e; e = e->nextSibling ())
+            static_cast <TypeNode *> (e.ptr ())->changedXML (ts);
+        if (str.length () > 10) {
+            ts << "</document>";
+            QByteArray changeddata = QCString (str.ascii ());
+            kdDebug () << str <<  " " << changeddata.size () << str.length () << endl;
             changeddata.resize (str.length ());
             m_process->setChangedData (changeddata);
         }
@@ -1209,67 +1274,41 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
         if (!data.size ())
             return;
         if (m_configframe->table->numCols () < 1) { // not yet created
+            m_configframe->configdoc = (new ConfigDocument (table->viewport()))->self();
+            QTextStream ts (data, IO_ReadOnly);
+            readXML (m_configframe->configdoc, ts, QString::null);
+            m_configframe->configdoc->normalize ();
+            //kdDebug () << mydoc->innerText () << endl;
             QString err;
-            int line, column;
             int first_column_width = 50;
-            if (!dom.setContent (data, false, &err, &line, &column)) {
-                kdDebug () << "Config data error " << err << " l:" << line << " c:" << column << endl;
-                return;
-            }
-            if (dom.childNodes().length() != 1 || dom.firstChild().childNodes().length() < 1) {
+            ElementPtr elm = m_configframe->configdoc->firstChild (); // document
+            if (!elm || !elm->hasChildNodes ()) {
                 kdDebug () << "No valid data" << endl;
                 return;
             }
+            int length = 0;
+            for (ElementPtr e = elm->firstChild (); e; e = e->nextSibling ())
+                length++;
+            // set up the table fields
             table->setNumCols (2);
-            table->setNumRows (dom.firstChild().childNodes().length());
+            table->setNumRows (length);
             table->verticalHeader ()->hide ();
             table->setLeftMargin (0);
             table->horizontalHeader ()->hide ();
             table->setTopMargin (0);
             table->setColumnReadOnly (0, true);
             QFontMetrics metrics (table->font ());
-            dom.firstChild().normalize ();
-            // set up the table fields
-            for (QDomNode node = dom.firstChild().firstChild(); !node.isNull (); node = node.nextSibling (), row++) {
-                QDomNamedNodeMap attr = node.attributes ();
-                QDomNode n = attr.namedItem (attname);
-                QDomNode t = attr.namedItem (atttype);
-                QWidget * w = 0L;
-                if (!n.isNull () && !t.isNull ()) {
-                    m_configframe->table->setText (row, 0, n.nodeValue ());
-                    int strwid = metrics.boundingRect (n.nodeValue ()).width ();
-                    if (strwid > first_column_width)
-                        first_column_width = strwid + 4;
-                    if (t.nodeValue () == valnum || t.nodeValue () == valstring) {
-                        w = new QLineEdit (attr.namedItem (attvalue).nodeValue (), table->viewport ());
-                    } else if (t.nodeValue () == valrange) {
-                        QString v = attr.namedItem (attvalue).nodeValue ();
-                        QString s = attr.namedItem (attstart).nodeValue ();
-                        QString e = attr.namedItem (attend).nodeValue ();
-                        w = new QSlider (s.toInt (), e.toInt (), 1, v.toInt (), Qt::Horizontal, table->viewport());
-                    } else if (t.nodeValue () == valbool) {
-                        QString v = attr.namedItem (attvalue).nodeValue ();
-                        QCheckBox * checkbox = new QCheckBox(table->viewport());
-                        checkbox->setChecked (v.toInt ());
-                        w = checkbox;
-                    } else if (t.nodeValue () == valenum) {
-                        QString v = attr.namedItem (attvalue).nodeValue ();
-                        QComboBox * combobox = new QComboBox(table->viewport());
-                        for (QDomNode d = node.firstChild(); !d.isNull (); d = d.nextSibling ())
-                            if (d.nodeType () != QDomNode::TextNode)
-                                combobox->insertItem (d.attributes ().namedItem (attvalue).nodeValue ());
-                        combobox->setCurrentItem (v.toInt ());
-                        w = combobox;
-                    }
-                    if (w) {
-                        table->setCellWidget (row, 1, w);
-                        for (QDomNode d = node.firstChild(); !d.isNull (); d = d.nextSibling ())
-                            if (d.nodeType () == QDomNode::TextNode) {
-                                QWhatsThis::add (w, d.nodeValue ());
-                                break;
-                            }
-                    }
-                }
+            for (elm=elm->firstChild (); elm; elm=elm->nextSibling (), row++) {
+                TypeNode * tn = static_cast <TypeNode *> (elm.ptr ());
+                m_configframe->table->setText (row, 0, tn->name);
+                int strwid = metrics.boundingRect (tn->name).width ();
+                if (strwid > first_column_width)
+                    first_column_width = strwid + 4;
+                if (tn->w) {
+                    table->setCellWidget (row, 1, tn->w);
+                    QWhatsThis::add (tn->w, elm->innerText ());
+                } else
+                    kdDebug () << "No widget for " << tn->name;
             }
             table->setColumnWidth (0, first_column_width);
             table->setColumnStretchable (1, true);

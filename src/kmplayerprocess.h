@@ -252,6 +252,26 @@ protected:
     enum { status_stop, status_play, status_start } m_status;
 };
 
+struct ConfigDocument : public Document {
+    ConfigDocument (QWidget * p);
+    KDE_NO_CDTOR_EXPORT ~ConfigDocument () {}
+    ElementPtr childFromTag (const QString & tag);
+    QWidget * parent;
+};
+
+struct ConfigNode : public Element {
+    ConfigNode (ElementPtr d);
+    KDE_NO_CDTOR_EXPORT ~ConfigNode () {}
+    ElementPtr childFromTag (const QString & tag);
+    void setAttributes (const QXmlAttributes & atts);
+    QString name;
+    QString value;
+    QString type;
+    int range_begin;
+    int range_end;
+    QWidget * w;
+};
+
 class XMLPreferencesPage : public PreferencesPage {
 public:
     XMLPreferencesPage (CallbackProcess *);

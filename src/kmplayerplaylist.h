@@ -76,6 +76,7 @@ public:
     virtual ElementPtr childFromTag (const QString & tag);
     void characterData (const QString & s);
     QString innerText () const;
+    QString innerXML () const;
     virtual void setAttributes (const QXmlAttributes &);
     virtual const char * nodeName () const;
     /**
@@ -90,6 +91,14 @@ public:
     void insertBefore (ElementPtr c, ElementPtr b);
     void removeChild (ElementPtr c);
     void replaceChild (ElementPtr _new, ElementPtr old);
+    /*
+     * Get rid of whitespace only text nodes
+     */
+    void normalize ();
+    /*
+     * Close tag is found by parser
+     */
+    virtual void closed ();
     KDE_NO_EXPORT bool isDocument () const { return m_doc == m_self; }
     KDE_NO_EXPORT bool hasChildNodes () const { return m_first_child != 0L; }
     KDE_NO_EXPORT ElementPtr parentNode () const { return m_parent; }
