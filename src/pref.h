@@ -62,6 +62,8 @@ class KMPlayerPrefGeneralPageOutput;	// general, output
 class KMPlayerPrefGeneralPageAdvanced;	// general, advanced, pattern matches etc.
 class KMPlayerPrefOPPageGeneral;	// OP = outputplugins, general
 class KMPlayerPrefOPPagePostProc;	// outputplugins, postproc
+class QTabWidget;
+
 
 class TVChannel {
 public:
@@ -204,11 +206,13 @@ public:
     QLineEdit * sizewidth;
     QLineEdit * sizeheight;
     TVDevice * device;
+    void updateTVDevice ();
 signals:
     void deleted (QFrame *);
 private slots:
     void slotDelete ();
-    TVDevice * m_tvdevice;
+private:
+    QTabWidget * inputsTab;
 };
 
 class KMPlayerPrefSourcePageTV : public QFrame
@@ -222,15 +226,17 @@ public:
     QLineEdit * device;
     TVDeviceScannerSource * scanner;
     void setTVDevices (QPtrList <TVDevice> * devs);
-    QPtrList <TVDevice> deleteddevices;
-    QPtrList <TVDevice> addeddevices;
+    void updateTVDevices ();
 private slots:
     void slotScan ();
     void slotScanFinished (TVDevice * device);
     void slotDeviceDeleted (QFrame *);
 private:
-    void addPage (TVDevice *);
+    void addPage (TVDevice *, bool show=false);
+    TVDevice * findDevice (QPtrList <TVDevice> & list, const QString & device);
     QPtrList <TVDevice> * m_devices;
+    QPtrList <TVDevice> deleteddevices;
+    QPtrList <TVDevice> addeddevices;
     QPtrList <QFrame> m_devicepages;
     KMPlayerPreferences * m_preference;
 };

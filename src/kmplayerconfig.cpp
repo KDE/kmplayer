@@ -458,6 +458,7 @@ void KMPlayerConfig::writeConfig () {
     for (unsigned i = 0; i < devicelist.size (); i++)
         m_config->deleteGroup (*devicelist.at (i));
     devicelist.clear ();
+    configdialog->m_SourcePageTV->updateTVDevices ();
     TVDevice * device;
     QString sep = QString (":");
     for (tvdevices.first(); (device = tvdevices.current ()); tvdevices.next()) {
