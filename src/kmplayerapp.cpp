@@ -233,7 +233,7 @@ KDE_NO_EXPORT void KMPlayerApp::loadingProgress (int percentage) {
 
 KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
     KMPlayer::Source * source = m_player->process ()->source ();
-    if (source->inherits ("KMPlayer::KMPlayerURLSource"))
+    if (source->inherits ("KMPlayer::URLSource"))
         recentFiles ()->addURL (source->url ());
 }
 

@@ -49,19 +49,19 @@ namespace KMPlayer {
 class PartBase;
 class Process;
 class MPlayer;
-class KMPlayerBookmarkOwner;
-class KMPlayerBookmarkManager;
+class BookmarkOwner;
+class BookmarkManager;
 class MEncoder;
 class MPlayerDumpstream;
 class FFMpeg;
 class Xine;
 class Settings;
 
-class KMPLAYER_EXPORT KMPlayerURLSource : public Source {
+class KMPLAYER_EXPORT URLSource : public Source {
     Q_OBJECT
 public:
-    KMPlayerURLSource (PartBase * player, const KURL & url = KURL ());
-    virtual ~KMPlayerURLSource ();
+    URLSource (PartBase * player, const KURL & url = KURL ());
+    virtual ~URLSource ();
 
     virtual bool hasLength ();
     virtual QString prettyName ();
@@ -185,8 +185,8 @@ protected:
     ProcessMap m_players;
     ProcessMap m_recorders;
     QMap <QString, Source *> m_sources;
-    KMPlayerBookmarkManager * m_bookmark_manager;
-    KMPlayerBookmarkOwner * m_bookmark_owner;
+    BookmarkManager * m_bookmark_manager;
+    BookmarkOwner * m_bookmark_owner;
     KBookmarkMenu * m_bookmark_menu;
     int m_record_timer;
     bool m_ispart : 1;

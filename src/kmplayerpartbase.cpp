@@ -54,10 +54,10 @@
 
 namespace KMPlayer {
     
-class KMPlayerBookmarkOwner : public KBookmarkOwner {
+class BookmarkOwner : public KBookmarkOwner {
 public:
-    KMPlayerBookmarkOwner (PartBase *);
-    KDE_NO_CDTOR_EXPORT virtual ~KMPlayerBookmarkOwner () {}
+    BookmarkOwner (PartBase *);
+    KDE_NO_CDTOR_EXPORT virtual ~BookmarkOwner () {}
     void openBookmarkURL(const QString& _url);
     QString currentTitle() const;
     QString currentURL() const;
@@ -65,31 +65,31 @@ private:
     PartBase * m_player;
 };
 
-class KMPlayerBookmarkManager : public KBookmarkManager {
+class BookmarkManager : public KBookmarkManager {
 public:
-    KMPlayerBookmarkManager (const QString &);
+    BookmarkManager (const QString &);
 };
 
 } // namespace
 
 using namespace KMPlayer;
 
-KDE_NO_CDTOR_EXPORT KMPlayerBookmarkOwner::KMPlayerBookmarkOwner (PartBase * player)
+KDE_NO_CDTOR_EXPORT BookmarkOwner::BookmarkOwner (PartBase * player)
     : m_player (player) {}
 
-KDE_NO_EXPORT void KMPlayerBookmarkOwner::openBookmarkURL (const QString & url) {
+KDE_NO_EXPORT void BookmarkOwner::openBookmarkURL (const QString & url) {
     m_player->openURL (KURL (url));
 }
 
-KDE_NO_EXPORT QString KMPlayerBookmarkOwner::currentTitle () const {
+KDE_NO_EXPORT QString BookmarkOwner::currentTitle () const {
     return m_player->process ()->source ()->prettyName ();
 }
 
-KDE_NO_EXPORT QString KMPlayerBookmarkOwner::currentURL () const {
+KDE_NO_EXPORT QString BookmarkOwner::currentURL () const {
     return m_player->process ()->source ()->url ().url ();
 }
 
-inline KMPlayerBookmarkManager::KMPlayerBookmarkManager(const QString & bmfile)
+inline BookmarkManager::BookmarkManager(const QString & bmfile)
   : KBookmarkManager (bmfile, false) {
 }
 
@@ -115,7 +115,7 @@ PartBase::PartBase (QWidget * wparent, const char *wname,
     m_recorders ["mencoder"] = new MEncoder (this);
     m_recorders ["mplayerdumpstream"] = new MPlayerDumpstream (this);
     m_recorders ["ffmpeg"] = new FFMpeg (this);
-    m_sources ["urlsource"] = new KMPlayerURLSource (this);
+    m_sources ["urlsource"] = new URLSource (this);
 
     QString bmfile = locate ("data", "kmplayer/bookmarks.xml");
     QString localbmfile = locateLocal ("data", "kmplayer/bookmarks.xml");
@@ -125,8 +125,8 @@ PartBase::PartBase (QWidget * wparent, const char *wname,
         p << "/bin/cp" << QFile::encodeName (bmfile) << QFile::encodeName (localbmfile);
         p.start (KProcess::Block);
     }
-    m_bookmark_manager = new KMPlayerBookmarkManager (localbmfile);
-    m_bookmark_owner = new KMPlayerBookmarkOwner (this);
+    m_bookmark_manager = new BookmarkManager (localbmfile);
+    m_bookmark_owner = new BookmarkOwner (this);
 }
 
 void PartBase::showConfigDialog () {
@@ -628,15 +628,12 @@ KAboutData* PartBase::createAboutData () {
 
 Source::Source (const QString & name, PartBase * player, const char * n)
  : QObject (player, n),
-   m_name (name), m_player (player),
-   m_frequency (0), m_xvport (0), m_xvencoding (0),
-   m_auto_play (true) {
-    kdDebug () << "Source::Source" << endl;
+   m_name (name), m_player (player), m_auto_play (true),
+   m_frequency (0), m_xvport (0), m_xvencoding (0) {
     init ();
 }
 
 Source::~Source () {
-    kdDebug () << "Source::~Source" << endl;
     if (m_document)
         m_document->document ()->dispose ();
 }
@@ -959,32 +956,32 @@ QString Source::prettyName () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT KMPlayerURLSource::KMPlayerURLSource (PartBase * player, const KURL & url)
+KDE_NO_CDTOR_EXPORT URLSource::URLSource (PartBase * player, const KURL & url)
     : Source (i18n ("URL"), player, "urlsource"), m_job (0L) {
     setURL (url);
-    kdDebug () << "KMPlayerURLSource::KMPlayerURLSource" << endl;
+    kdDebug () << "URLSource::URLSource" << endl;
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerURLSource::~KMPlayerURLSource () {
-    kdDebug () << "KMPlayerURLSource::~KMPlayerURLSource" << endl;
+KDE_NO_CDTOR_EXPORT URLSource::~URLSource () {
+    kdDebug () << "URLSource::~URLSource" << endl;
 }
 
-KDE_NO_EXPORT void KMPlayerURLSource::init () {
+KDE_NO_EXPORT void URLSource::init () {
     Source::init ();
 }
 
-KDE_NO_EXPORT bool KMPlayerURLSource::hasLength () {
+KDE_NO_EXPORT bool URLSource::hasLength () {
     return !!length ();
 }
 
-KDE_NO_EXPORT void KMPlayerURLSource::activate () {
+KDE_NO_EXPORT void URLSource::activate () {
     if (url ().isEmpty ())
         return;
     if (m_auto_play)
         play ();
 }
 
-KDE_NO_EXPORT void KMPlayerURLSource::terminateJob () {
+KDE_NO_EXPORT void URLSource::terminateJob () {
     if (m_job) {
         m_job->kill (); // silent, no kioResult signal
         m_player->process ()->view ()->buttonBar ()->setPlaying (m_player->playing ());
@@ -992,11 +989,11 @@ KDE_NO_EXPORT void KMPlayerURLSource::terminateJob () {
     m_job = 0L;
 }
 
-KDE_NO_EXPORT void KMPlayerURLSource::deactivate () {
+KDE_NO_EXPORT void URLSource::deactivate () {
     terminateJob ();
 }
 
-KDE_NO_EXPORT QString KMPlayerURLSource::prettyName () {
+KDE_NO_EXPORT QString URLSource::prettyName () {
     if (m_url.isEmpty ())
         return QString (i18n ("URL"));
     if (m_url.url ().length () > 50) {
@@ -1040,7 +1037,7 @@ static bool isPlayListMime (const QString & mime) {
             !strcmp (mimestr ,"application/x-mplayer2"));
 }
 
-KDE_NO_EXPORT void KMPlayerURLSource::read (QTextStream & textstream) {
+KDE_NO_EXPORT void URLSource::read (QTextStream & textstream) {
     QString line;
     do {
         line = textstream.readLine ();
@@ -1111,11 +1108,21 @@ KDE_NO_EXPORT void KMPlayerURLSource::read (QTextStream & textstream) {
 ;
 }
 
-KDE_NO_EXPORT void KMPlayerURLSource::kioData (KIO::Job *, const QByteArray & d) {
+KDE_NO_EXPORT void URLSource::kioData (KIO::Job *, const QByteArray & d) {
     int size = m_data.size ();
     int newsize = size + d.size ();
-    kdDebug () << "KMPlayerURLSource::kioData: " << newsize << endl;
-    if (newsize > 50000) {
+    if (!size) { // first data
+        int accuraty = 0;
+        KMimeType::Ptr mime = KMimeType::findByContent (d, &accuraty);
+        if (mime) {
+            if (!mime->name ().startsWith (QString ("text/")))
+                newsize = 0;
+            kdDebug () << "URLSource::kioData: " << mime->name () << accuraty << endl;
+        }
+    }
+    kdDebug () << "URLSource::kioData: " << newsize << endl;
+    if (newsize <= 0 || newsize > 50000) {
+        m_data.resize (0);
         m_job->kill (false);
     } else  {
         m_data.resize (newsize);
@@ -1123,14 +1130,14 @@ KDE_NO_EXPORT void KMPlayerURLSource::kioData (KIO::Job *, const QByteArray & d)
     }
 }
 
-KDE_NO_EXPORT void KMPlayerURLSource::kioMimetype (KIO::Job * job, const QString & mimestr) {
-    kdDebug () << "KMPlayerURLSource::kioMimetype " << mimestr << endl;
+KDE_NO_EXPORT void URLSource::kioMimetype (KIO::Job * job, const QString & mimestr) {
+    kdDebug () << "URLSource::kioMimetype " << mimestr << endl;
     setMime (mimestr);
     if (job && !isPlayListMime (mimestr))
         job->kill (false);
 }
 
-KDE_NO_EXPORT void KMPlayerURLSource::kioResult (KIO::Job *) {
+KDE_NO_EXPORT void URLSource::kioResult (KIO::Job *) {
     m_job = 0L; // KIO::Job::kill deletes itself
     QTextStream textstream (m_data, IO_ReadOnly);
     if (isPlayListMime (mime ()))
@@ -1144,7 +1151,7 @@ KDE_NO_EXPORT void KMPlayerURLSource::kioResult (KIO::Job *) {
     m_player->process ()->view ()->buttonBar ()->setPlaying (false);
 }
 
-void KMPlayerURLSource::getCurrent () {
+void URLSource::getCurrent () {
     terminateJob ();
     if (m_current && !m_current->isMrl ())
         next ();
@@ -1161,11 +1168,11 @@ void KMPlayerURLSource::getCurrent () {
         if (plugin_pos > 0)
             mimestr.truncate (plugin_pos);
         bool maybe_playlist = isPlayListMime (mimestr);
-        kdDebug () << "KMPlayerURLSource::getCurrent " << mimestr << maybe_playlist << endl;
+        kdDebug () << "URLSource::getCurrent " << mimestr << maybe_playlist << endl;
         if (url.isLocalFile ()) {
             QFile file (url.path ());
             if (!file.exists ()) {
-                kdDebug () << "KMPlayerURLSource::getCurrent not found " << url.path () << " " << current () << endl;
+                kdDebug () << "URLSource::getCurrent not found " << url.path () << " " << current () << endl;
                 Source::getCurrent ();
                 return;
             }
@@ -1208,7 +1215,7 @@ void KMPlayerURLSource::getCurrent () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerURLSource::play () {
+KDE_NO_EXPORT void URLSource::play () {
     Source::play ();
 }
 
