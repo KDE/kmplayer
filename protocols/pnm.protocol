@@ -1,0 +1,14 @@
+[Protocol]
+exec=kmplayer "%u"
+protocol=pnm
+input=none
+output=none
+helper=true
+reading=false
+listing=false
+writing=false
+makedir=false
+deleting=false
+linking=false
+moving=false
+Icon=kmplayer
