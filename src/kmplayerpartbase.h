@@ -79,8 +79,6 @@ public:
     static KAboutData* createAboutData ();
 
     KMPlayerSettings * settings () const { return m_settings; }
-    int seekTime () const { return m_seektime; }
-    void setSeekTime (int t) { m_seektime = t; }
     void keepMovieAspect (bool);
     KURL url () const { return m_urlsource->url (); }
     void setURL (const KURL & url) { m_urlsource->setURL (url); }
@@ -144,7 +142,6 @@ protected:
     MEncoder * m_mencoder;
     Xine * m_xine;
     KMPlayerURLSource * m_urlsource;
-    int m_seektime;
     int m_movie_position;
     bool m_autoplay : 1;
     bool m_ispart : 1;

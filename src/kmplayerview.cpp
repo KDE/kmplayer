@@ -700,11 +700,13 @@ void KMPlayerView::fullScreen () {
         if (m_keepsizeratio && m_viewer->aspect () < 0.01)
             m_viewer->setAspect (1.0 * m_viewer->width() / m_viewer->height());
         m_layer->fullScreen();
+        m_popupMenu->setItemVisible (menu_zoom, false);
     } else {
         if (m_sreensaver_disabled)
             m_sreensaver_disabled = !kapp->dcopClient()->send
                 ("kdesktop", "KScreensaverIface", "enable(bool)", "true");
         m_layer->fullScreen();
+        m_popupMenu->setItemVisible (menu_zoom, true);
     }
 }
 //----------------------------------------------------------------------

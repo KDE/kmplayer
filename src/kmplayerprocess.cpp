@@ -236,7 +236,7 @@ bool MPlayer::pause () {
 bool MPlayer::seek (int pos, bool absolute) {
     if (!m_source || !m_source->hasLength ()) return false;
     QString cmd;
-    cmd.sprintf ("seek -%d %d", pos, absolute ? 2 : 0);
+    cmd.sprintf ("seek %d %d", pos, absolute ? 2 : 0);
     return sendCommand (cmd);
 }
 

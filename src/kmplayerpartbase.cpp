@@ -315,11 +315,11 @@ void KMPlayer::pause () {
 }
 
 void KMPlayer::back () {
-    m_process->seek (-1 * m_seektime, false);
+    m_process->seek (-1 * m_settings->seektime, false);
 }
 
 void KMPlayer::forward () {
-    m_process->seek (m_seektime, false);
+    m_process->seek (m_settings->seektime, false);
 }
 
 void KMPlayer::record () {

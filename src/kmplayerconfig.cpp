@@ -314,7 +314,6 @@ void KMPlayerSettings::readConfig () {
     else
         view->recordButton ()->hide ();
     seektime = m_config->readNumEntry (strSeekTime, 10);
-    m_player->setSeekTime (seektime);
     alwaysbuildindex = m_config->readBoolEntry (strAlwaysBuildIndex, false);
     playdvd = m_config->readBoolEntry (strPlayDVD, true);
     dvddevice = m_config->readEntry (strDVDDevice, "/dev/dvd");
@@ -558,7 +557,7 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strShowConsole, view->showConsoleOutput());
     m_config->writeEntry (strLoop, loop);
     m_config->writeEntry (strFrameDrop, framedrop);
-    m_config->writeEntry (strSeekTime, m_player->seekTime ());
+    m_config->writeEntry (strSeekTime, seektime);
     m_config->writeEntry (strVoDriver, videodriver);
     m_config->writeEntry (strAoDriver, audiodriver);
     m_config->writeEntry (strUrlBackend, urlbackend);
@@ -727,7 +726,6 @@ void KMPlayerSettings::okPressed () {
     playvcd = configdialog->m_GeneralPageVCD->autoPlayVCD->isChecked ();
     vcddevice = configdialog->m_GeneralPageVCD->vcdDevicePath->lineEdit()->text ();
     seektime = configdialog->m_GeneralPageGeneral->seekTime->value();
-    m_player->setSeekTime (seektime);
 
     additionalarguments = configdialog->m_GeneralPageAdvanced->additionalArguments->text();
     cachesize = configdialog->m_GeneralPageAdvanced->cacheSize->value();
