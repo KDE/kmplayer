@@ -493,7 +493,7 @@ void KMPlayerView::init () {
 
     connect (m_viewer, SIGNAL (aboutToPlay ()), this, SLOT (startsToPlay ()));
     connect (m_buttonbar->configButton(), SIGNAL (clicked ()), this, SLOT (showPopupMenu()));
-    m_buttonbar->popupMenu()->connectItem (KMPlayerControlPanel::menu_config,
+    m_buttonbar->popupMenu()->connectItem (KMPlayerControlPanel::menu_fullscreen,
                                            this, SLOT (fullScreen ()));
     setAcceptDrops (true);
     m_holder->resizeEvent (0L);
@@ -776,7 +776,6 @@ void KMPlayerViewer::resizeEvent (QResizeEvent *) {
     };
     XSendEvent(qt_xdisplay(), c.event, TRUE, StructureNotifyMask, (XEvent*) &c);
     XFlush (qt_xdisplay ());
-    update ();
 }
 
 void KMPlayerViewer::hideEvent (QHideEvent *) {

@@ -127,6 +127,10 @@ void KMPlayer::addControlPanel (KMPlayerControlPanel * panel) {
     connect (panel->positionSlider (), SIGNAL (valueChanged (int)), this, SLOT (positonValueChanged (int)));
     connect (panel->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
     connect (panel->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
+    connect (panel->contrastSlider (), SIGNAL (valueChanged(int)), this, SLOT (contrastValueChanged(int)));
+    connect (panel->brightnessSlider (), SIGNAL (valueChanged(int)), this, SLOT (brightnessValueChanged(int)));
+    connect (panel->hueSlider (), SIGNAL (valueChanged(int)), this, SLOT (hueValueChanged(int)));
+    connect (panel->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));
     connect (panel, SIGNAL (destroyed(QObject *)), this, SLOT (controlPanelDestroyed(QObject *)));
     panel->popupMenu()->connectItem (KMPlayerControlPanel::menu_fullscreen, m_view, SLOT (fullScreen ()));
 #ifdef HAVE_XINE
@@ -154,6 +158,10 @@ void KMPlayer::removeControlPanel (KMPlayerControlPanel * panel) {
     disconnect (panel->positionSlider (), SIGNAL (valueChanged (int)), this, SLOT (positonValueChanged (int)));
     disconnect (panel->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
     disconnect (panel->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
+    disconnect (panel->contrastSlider (), SIGNAL (valueChanged(int)), this, SLOT (contrastValueChanged(int)));
+    disconnect (panel->brightnessSlider (), SIGNAL (valueChanged(int)), this, SLOT (brightnessValueChanged(int)));
+    disconnect (panel->hueSlider (), SIGNAL (valueChanged(int)), this, SLOT (hueValueChanged(int)));
+    disconnect (panel->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));
     disconnect (panel, SIGNAL (destroyed(QObject *)), this, SLOT (controlPanelDestroyed(QObject *)));
     panel->popupMenu()->disconnectItem (KMPlayerControlPanel::menu_fullscreen, m_view, SLOT (fullScreen ()));
 #ifdef HAVE_XINE
@@ -180,10 +188,6 @@ void KMPlayer::init (KActionCollection * action_collection) {
     m_view->buttonBar ()->brightnessSlider ()->setValue (m_settings->brightness);
     m_view->buttonBar ()->hueSlider ()->setValue (m_settings->hue);
     m_view->buttonBar ()->saturationSlider ()->setValue (m_settings->saturation);
-    connect (m_view->buttonBar ()->contrastSlider (), SIGNAL (valueChanged(int)), this, SLOT (contrastValueChanged(int)));
-    connect (m_view->buttonBar ()->brightnessSlider (), SIGNAL (valueChanged(int)), this, SLOT (brightnessValueChanged(int)));
-    connect (m_view->buttonBar ()->hueSlider (), SIGNAL (valueChanged(int)), this, SLOT (hueValueChanged(int)));
-    connect (m_view->buttonBar ()->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));
     connect (m_view, SIGNAL (urlDropped (const KURL &)), this, SLOT (openURL (const KURL &)));
     m_view->buttonBar ()->popupMenu ()->connectItem (KMPlayerControlPanel::menu_config,
                                        this, SLOT (showConfigDialog ()));
