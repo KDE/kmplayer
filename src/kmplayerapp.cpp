@@ -109,7 +109,7 @@ KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       m_endserver (true)
 {
     initStatusBar();
-    m_player->init();
+    m_player->init (actionCollection ());
     initActions();
     initView();
 
@@ -176,6 +176,9 @@ void KMPlayerApp::initView ()
 {
     m_view = static_cast <KMPlayerView*> (m_player->view());
     setCentralWidget (m_view);
+    QPopupMenu * bookmarkmenu = (QPopupMenu *) m_view->bookmarkMenu ();
+    m_view->popupMenu ()->removeItem (KMPlayerView::menu_bookmark);
+    menuBar ()->insertItem (i18n ("&Bookmarks"), bookmarkmenu, -1, 2);
     m_sourcemenu = menuBar ()->findItem (menuBar ()->idAt (0));
     m_sourcemenu->setText (i18n ("S&ource"));
     m_sourcemenu->popup ()->insertItem (i18n ("&DVD"), m_dvdmenu, -1, 4);

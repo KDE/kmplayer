@@ -42,6 +42,8 @@ class MEncoder;
 class Xine;
 class KMPlayerSettings;
 class KInstance;
+class KActionCollection;
+class KBookmarkMenu;
 class KConfig;
 class QIODevice;
 class JSCommandEntry;
@@ -84,7 +86,7 @@ class KMPlayer : public KMediaPlayer::Player {
 public:
     KMPlayer (QWidget * parent,  const char * wname,QObject * parent, const char * name, KConfig *);
     ~KMPlayer ();
-    void init ();
+    void init (KActionCollection * = 0L);
     virtual KMediaPlayer::View* view ();
     static KAboutData* createAboutData ();
 
@@ -154,6 +156,7 @@ protected:
     KMPlayerURLSource * m_urlsource;
     KMPlayerBookmarkManager * m_bookmark_manager;
     KMPlayerBookmarkOwner * m_bookmark_owner;
+    KBookmarkMenu * m_bookmark_menu;
     bool m_autoplay : 1;
     bool m_ispart : 1;
     bool m_noresize : 1;

@@ -85,6 +85,7 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
    m_urlsource (new KMPlayerURLSource (this)),
    m_bookmark_manager (new KMPlayerBookmarkManager),
    m_bookmark_owner (new KMPlayerBookmarkOwner (this)),
+   m_bookmark_menu (0L),
    m_autoplay (true),
    m_ispart (false),
    m_noresize (false) {
@@ -94,11 +95,11 @@ void KMPlayer::showConfigDialog () {
     m_settings->show ();
 }
 
-void KMPlayer::init () {
+void KMPlayer::init (KActionCollection * action_collection) {
     m_view->init ();
     m_settings->readConfig ();
-    new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner,
-                       m_view->bookmarkMenu (), 0L, true, true);
+    m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner,
+                        m_view->bookmarkMenu (), action_collection, true, true);
     setProcess (m_mplayer);
     m_bPosSliderPressed = false;
     m_view->contrastSlider ()->setValue (m_settings->contrast);
@@ -133,6 +134,7 @@ KMPlayer::~KMPlayer () {
     m_view = (KMPlayerView*) 0;
     stop ();
     delete m_settings;
+    delete m_bookmark_menu;
     delete m_bookmark_manager;
     delete m_bookmark_owner;
 }
