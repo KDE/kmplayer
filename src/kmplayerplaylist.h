@@ -89,6 +89,7 @@ public:
     QString outerXML () const;
     void setAttributes (const NodeList & attrs);
     virtual const char * nodeName () const;
+    virtual QString nodeValue () const;
     /**
      * If this is a derived Mrl object and has a SRC attribute
      */
@@ -144,9 +145,13 @@ KDE_NO_EXPORT inline T * convertNode (ElementPtr e) {
 }
         
 class KMPLAYER_EXPORT Attribute : public Element {
+    friend class Element;
 public:
     Attribute (ElementPtr & d, const QString & n, const QString & v);
     KDE_NO_CDTOR_EXPORT ~Attribute () {}
+    KDE_NO_EXPORT const char * nodeName () const { return name.local8Bit (); }
+    QString nodeValue () const;
+protected:
     QString name;
     QString value;
 };
@@ -195,6 +200,8 @@ public:
     KDE_NO_CDTOR_EXPORT ~TextNode () {}
     void appendText (const QString & s);
     KDE_NO_EXPORT const char * nodeName () const { return "#text"; }
+    QString nodeValue () const;
+protected:
     QString text;
 };
 

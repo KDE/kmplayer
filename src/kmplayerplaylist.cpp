@@ -225,7 +225,7 @@ void Element::normalize () {
     while (e) {
         ElementPtr tmp = e->nextSibling ();
         if (!strcmp (e->nodeName (), "#text")) {
-            if (convertNode <TextNode> (e)->text.stripWhiteSpace ().isEmpty ())
+            if (e->nodeValue ().stripWhiteSpace ().isEmpty ())
                 removeChild (e);
         } else
             e->normalize ();
@@ -236,7 +236,7 @@ void Element::normalize () {
 static void getInnerText (const ElementPtr p, QTextOStream & out) {
     for (ElementPtr e = p->firstChild (); e; e = e->nextSibling ()) {
         if (!strcmp (e->nodeName (), "#text"))
-            out << (convertNode <TextNode> (e))->text;
+            out << e->nodeValue ();
         else
             getInnerText (e, out);
     }
@@ -251,13 +251,11 @@ QString Element::innerText () const {
 
 static void getOuterXML (const ElementPtr p, QTextOStream & out) {
     if (!strcmp (p->nodeName (), "#text"))
-        out << XMLStringlet (convertNode <TextNode> (p)->text);
+        out << XMLStringlet (p->nodeValue ());
     else {
         out << QChar ('<') << XMLStringlet (p->nodeName ());
-        for (ElementPtr a = p->attributes().item (0); a; a = a->nextSibling()) {
-            Attribute * attribute = convertNode <Attribute> (a);
-            out << " " << XMLStringlet (attribute->name) << "=\"" << XMLStringlet (attribute->value) << "\"";
-        }
+        for (ElementPtr a = p->attributes().item (0); a; a = a->nextSibling ())
+            out << " " << XMLStringlet (a->nodeName ()) << "=\"" << XMLStringlet (a->nodeValue ()) << "\"";
         if (p->hasChildNodes ()) {
             out << QChar ('>');
             for (ElementPtr e = p->firstChild (); e; e = e->nextSibling ())
@@ -313,15 +311,23 @@ void Element::setAttribute (const QString & name, const QString & value) {
 QString Element::getAttribute (const QString & name) {
     QString value;
     for (ElementPtr e = m_first_attribute; e; e = e->nextSibling ())
-        if (convertNode <Attribute> (e)->name == name) {
-            value = convertNode <Attribute> (e)->value;
+        if (!name.compare (e->nodeName ())) {
+            value = e->nodeValue ();
             break;
         }
     return value;
 }
 
+QString Element::nodeValue () const {
+    return QString::null;
+}
+
 Attribute::Attribute (ElementPtr & d, const QString & n, const QString & v)
   : Element (d), name (n), value (v) {}
+
+QString Attribute::nodeValue () const {
+    return value;
+}
 
 static bool hasMrlChildren (const ElementPtr & e) {
     for (ElementPtr c = e->firstChild (); c; c = c->nextSibling ())
@@ -400,6 +406,11 @@ KDE_NO_CDTOR_EXPORT TextNode::TextNode (ElementPtr & d, const QString & s)
 void TextNode::appendText (const QString & s) {
     text += s;
 }
+
+QString TextNode::nodeValue () const {
+    return text;
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT Title::Title (ElementPtr & d) : Element (d) {}
@@ -478,16 +489,15 @@ KDE_NO_EXPORT ElementPtr MediaType::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT void MediaType::opened () {
     for (ElementPtr a = m_first_attribute; a; a = a->nextSibling ()) {
-        Attribute * attribute = convertNode <Attribute> (a);
-        const char * cname = attribute->name.latin1 ();
+        const char * cname = a->nodeName ();
         if (!strcmp (cname, "system-bitrate"))
-            bitrate = attribute->value.toInt ();
+            bitrate = a->nodeValue ().toInt ();
         else if (!strcmp (cname, "src"))
-            src = attribute->value;
+            src = a->nodeValue ();
         else if (!strcmp (cname, "type"))
-            mimetype = attribute->value;
+            mimetype = a->nodeValue ();
         else
-            kdError () << "Warning: unhandled MediaType attr: " << attribute->name << "=" << attribute->value << endl;
+            kdError () << "Warning: unhandled MediaType attr: " << cname << "=" << a->nodeValue () << endl;
     }
     kdDebug () << "MediaType attr found bitrate: " << bitrate << " src: " << (src.isEmpty() ? "-" : src) << " type: " << (mimetype.isEmpty() ? "-" : mimetype) << endl;
 }
@@ -560,11 +570,10 @@ KDE_NO_EXPORT ElementPtr Entry::realMrl () {
 
 KDE_NO_EXPORT void Ref::opened () {
     for (ElementPtr a = m_first_attribute; a; a = a->nextSibling ()) {
-        Attribute * attribute = convertNode <Attribute> (a);
-        if (!strcasecmp (attribute->name.latin1(), "href"))
-            src = attribute->value;
+        if (!strcasecmp (a->nodeName (), "href"))
+            src = a->nodeValue ();
         else
-            kdError () << "Warning: unhandled Ref attr: " << attribute->name << "=" << attribute->value << endl;
+            kdError () << "Warning: unhandled Ref attr: " << a->nodeName () << "=" << a->nodeValue () << endl;
 
     }
     kdDebug () << "Ref attr found src: " << src << endl;
@@ -574,11 +583,10 @@ KDE_NO_EXPORT void Ref::opened () {
 
 KDE_NO_EXPORT void EntryRef::opened () {
     for (ElementPtr a = m_first_attribute; a; a = a->nextSibling ()) {
-        Attribute * attribute = convertNode <Attribute> (a);
-        if (!strcasecmp (attribute->name.latin1(), "href"))
-            src = attribute->value;
+        if (!strcasecmp (a->nodeName (), "href"))
+            src = a->nodeValue ();
         else
-            kdError () << "unhandled EntryRef attr: " << attribute->name << "=" << attribute->value << endl;
+            kdError () << "unhandled EntryRef attr: " << a->nodeName () << "=" << a->nodeValue () << endl;
     }
     kdDebug () << "EntryRef attr found src: " << src << endl;
 }
