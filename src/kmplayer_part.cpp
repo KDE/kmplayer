@@ -269,6 +269,7 @@ bool KMPlayerPart::openURL (const KURL & url) {
     if (!args.serviceType.isEmpty ())
         m_urlsource->setMime (args.serviceType);
     if (m_urlsource->mime () == QString ("audio/mpegurl") ||
+            m_urlsource->mime () == QString ("audio/x-mpegurl") ||
             m_urlsource->mime () == QString ("audio/x-scpls") ||
             (url.protocol () == QString ("http") &&
              (m_urlsource->mime () == QString ("video/x-ms-wmp") ||
