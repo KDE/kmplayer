@@ -371,6 +371,7 @@ void KMPlayerControlPanel::enableSeekButtons (bool enable) {
 KDE_NO_EXPORT void KMPlayerControlPanel::setPlaying (bool play) {
     if (play != m_buttons[button_play]->isOn ())
         m_buttons[button_play]->toggle ();
+    m_posSlider->setEnabled (false);
     m_posSlider->setValue (0);
     if (!play) {
         showPositionSlider (true);
@@ -650,11 +651,24 @@ KDE_NO_EXPORT void KMPlayerView::addText (const QString & str) {
     printpainter.end ();
 }*/
 
-KDE_NO_EXPORT void KMPlayerView::startsToPlay () {
+KDE_NO_EXPORT void KMPlayerView::videoStart () {
+    if (m_playing) return; //FIXME: make symetric with videoStop
     m_widgetstack->raiseWidget (m_viewer);
     m_playing = true;
     m_revert_fullscreen = !isFullScreen();
     setControlPanelMode (m_old_controlpanel_mode);
+}
+
+KDE_NO_EXPORT void KMPlayerView::videoStop () {
+    if (m_buttonbar && m_controlpanel_mode == CP_AutoHide) {
+        m_buttonbar->show ();
+        m_holder->setMouseTracking (false);
+    }
+    m_playing = false;
+    if (m_show_console_output)
+        m_widgetstack->raiseWidget (m_multiedit);
+    else
+        XClearWindow (qt_xdisplay(), m_viewer->embeddedWinId ());
 }
 
 KDE_NO_EXPORT void KMPlayerView::showPopupMenu () {
@@ -669,19 +683,11 @@ KDE_NO_EXPORT void KMPlayerView::leaveEvent (QEvent *) {
 }
 
 KDE_NO_EXPORT void KMPlayerView::reset () {
-    m_playing = false;
-    if (m_buttonbar && m_controlpanel_mode == CP_AutoHide) {
-        m_buttonbar->show ();
-        m_holder->setMouseTracking (false);
-    }
     if (m_revert_fullscreen && isFullScreen())
         m_buttonbar->popupMenu ()->activateItemAt (m_buttonbar->popupMenu ()->indexOf (KMPlayerControlPanel::menu_fullscreen)); 
         //m_layer->fullScreen ();
+    videoStop ();
     m_viewer->show ();
-    XClearWindow (qt_xdisplay(), m_viewer->embeddedWinId ());
-    if (m_show_console_output) {
-        m_widgetstack->raiseWidget (m_multiedit);
-    }
 }
 
 bool KMPlayerView::isFullScreen () const {
@@ -742,7 +748,7 @@ KDE_NO_EXPORT bool KMPlayerView::x11Event (XEvent * e) {
     switch (e->type) {
         case UnmapNotify:
             if (e->xunmap.event == m_viewer->embeddedWinId ()) {
-                startsToPlay ();
+                videoStart ();
                 //hide();
             }
             break;

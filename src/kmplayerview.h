@@ -97,7 +97,10 @@ public:
     bool playing () const { return m_playing; }
     void setForeignViewer (KMPlayerView *);
 public slots:
-    void startsToPlay ();
+    /* raise video widget, might (auto) hides panel */
+    void videoStart ();
+    /* might raise console widget, shows panel */
+    void videoStop ();
     void showPopupMenu ();
     void setVolume (int);
     void updateVolume ();

@@ -484,6 +484,7 @@ void KMPlayer::processLoaded (int percentage) {
 
 void KMPlayer::processStartedPlaying () {
     if (!m_view) return;
+    m_view->videoStart ();
     kdDebug () << "KMPlayer::processStartedPlaying " << endl;
     if (m_settings->sizeratio && m_view->viewer ())
         m_view->viewer ()->setAspect (m_process->source ()->aspect ());

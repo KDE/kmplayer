@@ -103,7 +103,6 @@ static double               pixel_aspect;
 static int                  running = 0;
 static int                  firstframe = 0;
 static const int            event_finished = QEvent::User;
-static const int            event_position = QEvent::User + 1;
 static const int            event_progress = QEvent::User + 2;
 static const int            event_url = QEvent::User + 3;
 static const int            event_size = QEvent::User + 4;
@@ -140,8 +139,14 @@ static void frame_output_cb(void * /*data*/, int /*video_width*/, int /*video_he
         int *dest_width, int *dest_height, 
         double *dest_pixel_aspect, int *win_x, int *win_y) {
     if (running && firstframe) {
+        int pos;
         fprintf(stderr, "first frame\n");
-        QApplication::postEvent (xineapp, new QEvent ((QEvent::Type) event_position));
+        mutex.lock ();
+        xine_get_pos_length (stream, 0, &pos, &movie_length);
+        movie_width = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_WIDTH);
+        movie_height = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_HEIGHT);
+        mutex.unlock ();
+        QApplication::postEvent (xineapp, new XineSizeEvent (movie_length, movie_width, movie_height, true));
         firstframe = 0;
     }
 
@@ -638,6 +643,7 @@ void KXinePlayer::volume (int val) {
 
 void KXinePlayer::seek (int val) {
     if (running) {
+        fprintf(stderr, "seek %d\n", val);
         mutex.lock ();
         if (!xine_play (stream, 0, val * 100)) {
             fprintf(stderr, "Unable to seek to %d :-(\n", val);
@@ -680,25 +686,15 @@ bool KXinePlayer::event (QEvent * e) {
         }
         case event_size: {
             XineSizeEvent * se = static_cast <XineSizeEvent *> (e);                
-            if (callback)
-                callback->movieParams (se->length/100, se->width, se->height, 1.0*se->width/se->height);
-            break;
-        }
-        case event_position:
             if (callback) {
-                int pos;
-                mutex.lock ();
-                xine_get_pos_length (stream, 0, &pos, &movie_length);
-                movie_width = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_WIDTH);
-                movie_height = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_HEIGHT);
-                mutex.unlock ();
-                fprintf(stderr, "movieParams %dx%d %d\n", movie_width, movie_height, movie_length/100);
-                if (movie_height > 0)
-                    callback->movieParams (movie_length/100, movie_width, movie_height, 1.0*movie_width/movie_height);
-                callback->playing ();
-                QTimer::singleShot (500, this, SLOT (updatePosition ()));
+                callback->movieParams (se->length/100, se->width, se->height, se->height ? 1.0*se->width/se->height : 1.0);
+                if (se->first_frame) {
+                    callback->playing ();
+                    QTimer::singleShot (500, this, SLOT (updatePosition ()));
+                }
             }
             break;
+        }
         case event_progress: {
             XineProgressEvent * pe = static_cast <XineProgressEvent *> (e);                
             if (callback)
@@ -723,8 +719,9 @@ bool KXinePlayer::event (QEvent * e) {
     return true;
 }
 
-XineSizeEvent::XineSizeEvent (int l, int w, int h)
-  : QEvent ((QEvent::Type) event_size), length (l), width (w), height (h) 
+XineSizeEvent::XineSizeEvent (int l, int w, int h, bool ff)
+  : QEvent ((QEvent::Type) event_size),
+    length (l), width (w), height (h), first_frame (ff) 
 {}
 
 XineURLEvent::XineURLEvent (const QString & u)

@@ -25,10 +25,11 @@
 class KXinePlayerPrivate;
 
 struct XineSizeEvent : public QEvent {
-    XineSizeEvent (int l, int w, int h);
+    XineSizeEvent (int l, int w, int h, bool ff=false);
     int length;
     int width;
     int height;
+    bool first_frame;
 };
 
 struct XineURLEvent : public QEvent {

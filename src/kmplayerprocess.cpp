@@ -868,6 +868,7 @@ KMPlayerCallbackProcess::KMPlayerCallbackProcess (KMPlayer * player)
    m_callback (new KMPlayerCallback (this)),
    m_backend (0L),
    m_configpage (new KMPlayerXMLPreferencesPage (this)),
+   in_gui_update (false),
    m_have_config (config_unknown),
    m_send_config (send_no),
    m_status (status_stop) {
@@ -900,9 +901,6 @@ void KMPlayerCallbackProcess::setFinished () {
 
 void KMPlayerCallbackProcess::setPlaying () {
     m_status = status_play;
-    KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
-    if (!v) return;
-    QTimer::singleShot (0, v, SLOT (startsToPlay ())); // FIXME
     m_player->processStartedPlaying ();
 }
 
@@ -912,6 +910,7 @@ void KMPlayerCallbackProcess::setStarted (QByteArray &) {
 
 void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
     kdDebug () << "setMovieParams " << len << " " << w << "," << h << " " << a << endl;
+    in_gui_update = true;
     m_source->setWidth (w);
     m_source->setHeight (h);
     m_source->setAspect (a);
@@ -922,16 +921,21 @@ void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
         v->viewer ()->setAspect (a);
         v->updateLayout ();
     }
+    in_gui_update = false;
 }
 
 void KMPlayerCallbackProcess::setMoviePosition (int position) {
+    in_gui_update = true;
     m_source->setPosition (position);
     m_request_seek = -1;
     m_player->processPositioned (position);
+    in_gui_update = false;
 }
 
 void KMPlayerCallbackProcess::setLoadingProgress (int percentage) {
+    in_gui_update = true;
     m_player->processLoaded (percentage);
+    in_gui_update = false;
 }
 
 bool KMPlayerCallbackProcess::getConfigData () {
@@ -1304,7 +1308,11 @@ KDE_NO_EXPORT void Xine::setFinished () {
     kdDebug () << "Xine::finished () " << endl;
     QString url = m_source->next ();
     if (!url.isEmpty ()) {
-        m_source->play ();
+        KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
+        if (v) {
+            v->videoStop ();
+            m_source->play ();
+        }
     } else {
         m_source->first ();
         quit ();
@@ -1318,7 +1326,7 @@ KDE_NO_EXPORT bool Xine::pause () {
 }
 
 KDE_NO_EXPORT bool Xine::seek (int pos, bool absolute) {
-    if (!playing () ||
+    if (in_gui_update || !playing () ||
             !m_backend ||
             !m_source->hasLength () ||
             (absolute && m_source->position () == pos))
