@@ -124,19 +124,22 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("back"), KIcon::Small, 0, true), i18n ("Back"), this, SLOT (keyBack ()), 0, -1, 3);
     m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("ok"), KIcon::Small, 0, true), i18n ("Ok"), this, SLOT (keyOk ()), 0, -1, 4);
     m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("player_playlist"), KIcon::Small, 0, true), i18n ("Channels"), this, SLOT (keyChannels ()), 0, -1, 5);
-    m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("configure"), KIcon::Small, 0, true), i18n ("Setup"), this, SLOT (keySetup ()), 0, -1, 2);
+    m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("configure"), KIcon::Small, 0, true), i18n ("Setup"), this, SLOT (keySetup ()), 0, -1, 6);
     m_socket->connectToHost ("localhost", tcp_port);
     connect (m_socket, SIGNAL (connected ()), this, SLOT (connected ()));
+    connect (m_socket, SIGNAL (readyRead ()), this, SLOT (readyRead ()));
     connect (m_socket, SIGNAL (bytesWritten (int)), this, SLOT (dataWritten (int)));
     connect (m_socket, SIGNAL (error (int)), this, SLOT (socketError (int)));
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
     disconnect (m_socket, SIGNAL (connected ()), this, SLOT (connected ()));
+    disconnect (m_socket, SIGNAL (readyRead ()), this, SLOT (readyRead ()));
     disconnect (m_socket, SIGNAL (bytesWritten (int)), this, SLOT (dataWritten (int)));
     disconnect (m_socket, SIGNAL (error (int)), this, SLOT (socketError (int)));
     if (m_socket->state () == QSocket::Connected)
         m_socket->close ();
+    m_menu->removeItemAt (6);
     m_menu->removeItemAt (5);
     m_menu->removeItemAt (4);
     m_menu->removeItemAt (3);
@@ -163,6 +166,13 @@ KDE_NO_EXPORT void KMPlayerVDRSource::dataWritten (int) {
         m_socket->writeBlock (commands->command, strlen (commands->command));
         m_socket->flush ();
     }
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
+    unsigned long nr = m_socket->bytesAvailable();
+    char * data = new char [nr + 1];
+    m_socket->readBlock (data, nr);
+    delete [] data;
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::socketError (int code) {
