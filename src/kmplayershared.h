@@ -109,6 +109,7 @@ struct SharedPtr {
     bool operator == (const T * t) const { return (!t && ! data) || (data && data->ptr == t); }
     bool operator != (const SharedPtr<T> & s) const { return data != s.data; }
     bool operator != (const WeakPtr<T> & w) const;
+    bool operator != (const T * t) const { return !operator == (t); }
     operator T * () { return data ? data->ptr : 0L; }
     operator const T * () const { return data ? data->ptr : 0L; }
     mutable SharedData<T> * data;

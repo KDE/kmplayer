@@ -85,7 +85,7 @@ public:
     void removeChild (ElementPtr c);
     void replaceChild (ElementPtr _new, ElementPtr old);
     KDE_NO_EXPORT bool isDocument () const { return m_doc == m_self; }
-    KDE_NO_EXPORT bool hasChildNodes () const { return (bool) m_first_child; }
+    KDE_NO_EXPORT bool hasChildNodes () const { return m_first_child != 0L; }
     KDE_NO_EXPORT ElementPtr parentNode () const { return m_parent; }
     KDE_NO_EXPORT ElementPtr firstChild () const { return m_first_child; }
     KDE_NO_EXPORT ElementPtr lastChild () const { return m_last_child; }
