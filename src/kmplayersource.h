@@ -58,7 +58,6 @@ public:
     QString first ();
     QString current ();
     QString next ();
-    virtual void getCurrent (); // will emit currentURL
     QString mime () const;
     KDE_NO_EXPORT const QString & audioDevice () const { return m_audiodevice; }
     KDE_NO_EXPORT const QString & videoDevice () const { return m_videodevice; }
@@ -93,6 +92,7 @@ public slots:
     virtual void forward ();
     virtual void backward ();
     virtual void play ();
+    virtual void getCurrent (); // will emit currentURL
     virtual void jump (ElementPtr e);
 protected:
     ElementPtr m_document;

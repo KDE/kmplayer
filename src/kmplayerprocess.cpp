@@ -55,6 +55,21 @@
 
 static const char * default_supported [] = { 0L };
 
+static QString getPath (const KURL & url) {
+    QString p = KURL::decode_string (url.url ());
+    if (p.startsWith (QString ("file:/"))) {
+        p = p.mid (5);
+        unsigned int i = 0;
+        for (; i < p.length () && p[i] == QChar ('/'); ++i)
+            ;
+        kdDebug () << "getPath " << p.mid (i-1) << endl;
+        if (i > 0)
+            return p.mid (i-1);
+        return QString (QChar ('/') + p);
+    }
+    return p;
+}
+
 KMPlayerProcess::KMPlayerProcess (KMPlayer * player, const char * n)
     : QObject (player, n), m_player (player), m_source (0L), m_process (0L),
       m_supported_sources (default_supported) {}
@@ -307,7 +322,7 @@ void MPlayer::urlForPlaying (const QString & urlstr) {
             m_process->setWorkingDirectory 
                 (QFileInfo (m_source->url ().path ()).dirPath (true));
         if (url.isLocalFile ()) {
-            m_url = url.path ();
+            m_url = getPath (url);
             if (m_configpage->alwaysbuildindex &&
                     (m_url.lower ().endsWith (".avi") ||
                      m_url.lower ().endsWith (".divx")))
@@ -333,7 +348,7 @@ void MPlayer::urlForPlaying (const QString & urlstr) {
             args += QString (" -sub ");
             const KURL & sub_url (source ()->subUrl ());
             if (!sub_url.isEmpty ()) {
-                QString myurl (sub_url.isLocalFile () ? sub_url.path () : sub_url.url ());
+                QString myurl (sub_url.isLocalFile () ? getPath (sub_url) : sub_url.url ());
                 args += KProcess::quote (QString (QFile::encodeName (myurl)));
             }
         }
@@ -495,7 +510,7 @@ KDE_NO_EXPORT bool MPlayer::grabPicture (const KURL & url, int pos) {
     QString outdir = locateLocal ("data", "kmplayer/");
     m_grabfile = outdir + QString ("00000001.jpg");
     unlink (m_grabfile.ascii ());
-    QString myurl (url.isLocalFile () ? url.path () : url.url ());
+    QString myurl (url.isLocalFile () ? getPath (url) : url.url ());
     QString args ("mplayer -vo jpeg -jpeg outdir=");
     args += KProcess::quote (outdir);
     args += QString (" -frames 1 -nosound -quiet ");
@@ -617,7 +632,7 @@ KDE_NO_EXPORT void MPlayer::processStopped (KProcess * p) {
             MPlayerBase::processStopped (p);
             m_source->first ();
         } else
-            m_source->getCurrent ();
+            QTimer::singleShot (0, m_source, SLOT (getCurrent ()));
     }
 }
 
@@ -767,7 +782,7 @@ void MEncoder::urlForPlaying (const QString & urlstr) {
         margs = QString ("-oac copy -ovc copy");
     args += QString ("mencoder ") + margs + ' ' + m_source->recordCmd ();
     KURL url (urlstr);
-    QString myurl = url.isLocalFile () ? url.path () : url.url ();
+    QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
     bool post090 = m_player->settings ()->mplayerpost090;
     if (!myurl.isEmpty ()) {
         if (!post090 && myurl.startsWith (QString ("tv://")))
@@ -776,12 +791,10 @@ void MEncoder::urlForPlaying (const QString & urlstr) {
             args += myurl.replace (0, 6, QString (" -vcd "));
         else if (!post090 && myurl.startsWith (QString ("dvd://")))
             args += myurl.replace (0, 6, QString (" -dvd "));
-        else {
-            QString myurl = url.isLocalFile () ? url.path () : url.url ();
+        else
             args += ' ' + KProcess::quote (QString (QFile::encodeName (myurl)));
-        }
     }
-    QString outurl = KProcess::quote (QString (QFile::encodeName (m_recordurl.isLocalFile () ? m_recordurl.path () : m_recordurl.url ())));
+    QString outurl = KProcess::quote (QString (QFile::encodeName (m_recordurl.isLocalFile () ? getPath (m_recordurl) : m_recordurl.url ())));
     kdDebug () << args << " -o " << outurl << endl;
     *m_process << args << " -o " << outurl;
     m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
@@ -822,7 +835,7 @@ void MPlayerDumpstream::urlForPlaying (const QString & urlstr) {
         args = m_source->pipeCmd () + QString (" | ");
     args += QString ("mplayer ") + m_source->recordCmd ();
     KURL url (urlstr);
-    QString myurl = url.isLocalFile () ? url.path () : url.url ();
+    QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
     bool post090 = m_player->settings ()->mplayerpost090;
     if (!myurl.isEmpty ()) {
         if (!post090 && myurl.startsWith (QString ("tv://")))
@@ -831,12 +844,10 @@ void MPlayerDumpstream::urlForPlaying (const QString & urlstr) {
             args += myurl.replace (0, 6, QString (" -vcd "));
         else if (!post090 && myurl.startsWith (QString ("dvd://")))
             args += myurl.replace (0, 6, QString (" -dvd "));
-        else {
-            QString myurl = url.isLocalFile () ? url.path () : url.url ();
+        else
             args += ' ' + KProcess::quote (QString (QFile::encodeName (myurl)));
-        }
     }
-    QString outurl = KProcess::quote (QString (QFile::encodeName (m_recordurl.isLocalFile () ? m_recordurl.path () : m_recordurl.url ())));
+    QString outurl = KProcess::quote (QString (QFile::encodeName (m_recordurl.isLocalFile () ? getPath (m_recordurl) : m_recordurl.url ())));
     kdDebug () << args << " -dumpstream -dumpfile " << outurl << endl;
     *m_process << args << " -dumpstream -dumpfile " << outurl;
     m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
@@ -1291,7 +1302,7 @@ KDE_NO_EXPORT bool Xine::play () {
 // v4l:/Webcam/0   v4l:/Television/21600  v4l:/Radio/96
 void Xine::urlForPlaying (const QString & urlstr) {
     KURL url (urlstr);
-    QString myurl = url.isLocalFile () ? url.path () : url.url ();
+    QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
     if (playing ()) {
         if (m_backend) {
             m_backend->setURL (myurl);
@@ -1359,14 +1370,14 @@ void Xine::urlForPlaying (const QString & urlstr) {
     if (!sub_url.isEmpty ()) {
         QString surl = KProcess::quote (QString (QFile::encodeName
                   (sub_url.isLocalFile () ?
-                   QFileInfo (sub_url.path ()).absFilePath () :
+                   QFileInfo (getPath (sub_url)).absFilePath () :
                    sub_url.url ())));
         printf (" -sub %s ", surl.ascii ());
         *m_process <<" -sub " << surl;
     }
     if (m_source->url ().isLocalFile ()) {
         m_process->setWorkingDirectory 
-            (QFileInfo (m_source->url ().path ()).dirPath (true));
+            (QFileInfo (getPath (m_source->url ())).dirPath (true));
     }
     m_url = url.url ();
     myurl = KProcess::quote (QString (QFile::encodeName (myurl)));
@@ -1407,7 +1418,7 @@ KDE_NO_EXPORT void Xine::setFinished () {
         quit ();
         m_source->first ();
     } else
-        m_source->getCurrent ();
+        QTimer::singleShot (0, m_source, SLOT (getCurrent ()));
 }
 
 KDE_NO_EXPORT bool Xine::seek (int pos, bool absolute) {
@@ -1514,7 +1525,7 @@ void GStreamer::urlForPlaying (const QString & urlstr) {
         quit ();
         return;
     }
-    QString myurl = url.isLocalFile () ? QString("file://%1").arg (url.path ()) : url.url ();
+    QString myurl = url.isLocalFile () ? QString("file://%1").arg (KURL::encode_string (getPath (url))) : url.url ();
     if (playing ()) {
         if (m_backend) {
             m_backend->setURL (myurl);
@@ -1546,7 +1557,7 @@ void GStreamer::urlForPlaying (const QString & urlstr) {
     *m_process << " -cb " << dcopName ();
     if (m_source->url ().isLocalFile ()) {
         m_process->setWorkingDirectory 
-            (QFileInfo (m_source->url ().path ()).dirPath (true));
+            (QFileInfo (getPath (m_source->url ())).dirPath (true));
     }
     m_url = url.url ();
     myurl = KProcess::quote (QString (QFile::encodeName (myurl)));
@@ -1583,7 +1594,7 @@ KDE_NO_EXPORT void GStreamer::setFinished () {
         quit ();
         m_source->first ();
     } else
-        m_source->getCurrent ();
+        QTimer::singleShot (0, m_source, SLOT (getCurrent ()));
 }
 
 KDE_NO_EXPORT bool GStreamer::seek (int pos, bool absolute) {
@@ -1638,7 +1649,7 @@ void FFMpeg::urlForPlaying (const QString & urlstr) {
     initProcess ();
     connect (m_process, SIGNAL (processExited (KProcess *)),
             this, SLOT (processStopped (KProcess *)));
-    QString outurl = QString (QFile::encodeName (m_recordurl.isLocalFile () ? m_recordurl.path () : m_recordurl.url ()));
+    QString outurl = QString (QFile::encodeName (m_recordurl.isLocalFile () ? getPath (m_recordurl) : m_recordurl.url ()));
     if (m_recordurl.isLocalFile ())
         QFile (outurl).remove ();
     QString cmd ("ffmpeg ");
@@ -1666,7 +1677,7 @@ void FFMpeg::urlForPlaying (const QString & urlstr) {
         }
     } else {
         KURL url (urlstr);
-        cmd += QString ("-i ") + KProcess::quote (QString (QFile::encodeName (url.isLocalFile () ? url.path () : url.url ())));
+        cmd += QString ("-i ") + KProcess::quote (QString (QFile::encodeName (url.isLocalFile () ? getPath (url) : url.url ())));
     }
     cmd += QChar (' ') + arguments;
     cmd += QChar (' ') + KProcess::quote (QString (QFile::encodeName (outurl)));

@@ -62,11 +62,11 @@ public:
 
     virtual bool hasLength ();
     virtual QString prettyName ();
-    virtual void getCurrent ();
 public slots:
     virtual void init ();
     virtual void activate ();
     virtual void deactivate ();
+    virtual void getCurrent ();
     void play ();
 private slots:
     void kioData (KIO::Job *, const QByteArray &);

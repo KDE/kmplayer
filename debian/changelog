@@ -1,8 +1,20 @@
+kmplayer (0.8.3.93-3) unstable; urgency=low
+
+  *  Another Suse-9.2 compile fix, some kgstplayer fixes, check for > 0.8.6
+
+ -- Koos Vriezen <koos.vriezen@xs4all.nl>  Wed, 16 Dec 2004 19:08:17 +0200
+
+kmplayer (0.8.3.93-2) unstable; urgency=low
+
+  *  Suse-9.2 compile fix.
+
+ -- Koos Vriezen <koos.vriezen@xs4all.nl>  Mon, 13 Dec 2004 20:40:57 +0200
+
 kmplayer (0.8.3.93-1) unstable; urgency=low
 
   *  Release candidate 4 for upcoming 0.8.4.
 
- -- Koos Vriezen <koos.vriezen@xs4all.nl>  Thu, 7 Dec 2004 08:35:57 +0200
+ -- Koos Vriezen <koos.vriezen@xs4all.nl>  Mon, 13 Dec 2004 10:50:57 +0200
 
 kmplayer (0.8.3.92-1) unstable; urgency=high
 

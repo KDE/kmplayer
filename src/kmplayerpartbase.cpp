@@ -56,7 +56,7 @@
 class KMPlayerBookmarkOwner : public KBookmarkOwner {
 public:
     KMPlayerBookmarkOwner (KMPlayer *);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerBookmarkOwner () {}
+    KDE_NO_CDTOR_EXPORT virtual ~KMPlayerBookmarkOwner () {}
     void openBookmarkURL(const QString& _url);
     QString currentTitle() const;
     QString currentURL() const;
@@ -271,17 +271,23 @@ extern const char * strGeneralGroup;
 
 KDE_NO_EXPORT void KMPlayer::slotPlayerMenu (int id) {
     bool playing = m_process->playing ();
+    const char * src = m_process->source()->name ();
     QPopupMenu * menu = m_view->buttonBar ()->playerMenu ();
     ProcessMap::const_iterator pi = m_players.begin(), e = m_players.end();
-    for (unsigned i = 0; i < menu->count(); i++, ++pi) {
+    unsigned i = 0;
+    for (; pi != e && i < menu->count(); ++pi) {
+        KMPlayerProcess * proc = pi.data ();
+        if (!proc->supports (src))
+            continue;
         int menuid = menu->idAt (i);
         menu->setItemChecked (menuid, menuid == id);
         if (menuid == id) {
-            m_settings->backends [m_process->source()->name()] = pi.data ()->name ();
-            if (playing && strcmp (m_process->name (), pi.data ()->name ()))
+            m_settings->backends [src] = proc->name ();
+            if (playing && strcmp (m_process->name (), proc->name ()))
                 m_process->stop ();
-            setProcess (pi.data ()->name ());
+            setProcess (proc->name ());
         }
+        ++i;
     }
     if (playing)
         setSource (m_process->source ()); // re-activate
