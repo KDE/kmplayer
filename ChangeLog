@@ -1,3 +1,17 @@
+Changes since version 0.8.4b
+- More work on SMIL, support for layout/root-layout/region tags so one can
+  position a mediatype in a rectangle, other than video/audio also support
+  for text/img mediatypes and flow control with begin/dur/end attribute that
+  can be time values but also (mouse) events or clip ends
+- Added option to adjust the colors of playlist and viewing area
+- Added option whether backends should set volume on start
+- Original gcc-2.95 compile fixes (Leo Savernik)
+Changes since version 0.8.4a
+- gcc-2.95 compile fixes (Leo Savernik) hopefully correctly backported
+- Read playlist from audio/m3u mimetypes
+- Don't print log to stdout but to stderr instead (BR100422)
+- Don't set volume on starting MPlayer becuase MPlayer sets volume relative
+  to current volume (BR99953)
 Changes since version 0.8.4
 - Fix keyboard shortcuts for increase/decrease volume for fullscreen
 - Better 100% zoom calculation

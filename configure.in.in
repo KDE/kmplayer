@@ -1,4 +1,4 @@
-#AM_INIT_AUTOMAKE(kmplayer,0.8.4a)
+#AM_INIT_AUTOMAKE(kmplayer,0.8.4b)
 
 AC_ARG_VAR(PKGCONFIGFOUND, [Path to pkg-config])
 AC_CHECK_PROG(PKGCONFIGFOUND, pkg-config,[yes])
