@@ -1,6 +1,6 @@
 #MIN_CONFIG(3)
 
-AM_INIT_AUTOMAKE(kmplayer,0.7.4c)
+AM_INIT_AUTOMAKE(kmplayer,0.7.95)
 
 KDE_CHECK_HEADER(koDocument.h,
   have_koffice=yes,
