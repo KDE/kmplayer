@@ -127,7 +127,6 @@ protected slots:
     void saturationValueChanged (int val);
     void recordingFinished ();
     void processPosition (int pos);
-    void processOutput (const QString & msg);
     virtual void processStarted ();
     virtual void processFinished ();
     virtual void processLoading (int percentage);

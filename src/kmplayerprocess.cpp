@@ -402,7 +402,8 @@ bool MPlayer::grabPicture (const KURL & url, int pos) {
 }
 
 void MPlayer::processOutput (KProcess *, char * str, int slen) {
-    if (!m_player->view () || slen <= 0) return;
+    KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
+    if (!v || slen <= 0) return;
 
     do {
         int len = strcspn (str, "\r\n");
@@ -434,7 +435,7 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
                 emit loading (int (m_cacheRegExp.cap (1).toDouble ()));
             }
         } else {
-            emit output (out);
+            v->addText (out + '\n');
             if (!m_source->processOutput (out)) {
                 QRegExp sizeRegExp (m_player->settings ()->sizepattern);
                 QRegExp startRegExp (m_player->settings ()->startpattern);
@@ -656,6 +657,10 @@ bool Xine::play () {
     m_process->setUseShell (true);
     connect (m_process, SIGNAL (processExited (KProcess *)),
             this, SLOT (processStopped (KProcess *)));
+    connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
+            this, SLOT (processOutput (KProcess *, char *, int)));
+    connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
+            this, SLOT (processOutput (KProcess *, char *, int)));
     printf ("kxineplayer -wid %lu", (unsigned long) widget ()->winId ());
     *m_process << "kxineplayer -wid " << QString::number (widget ()->winId ());
 
@@ -693,7 +698,7 @@ bool Xine::play () {
     *m_process << myurl;
     fflush (stdout);
     m_started_emited = false;
-    m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
+    m_process->start (KProcess::NotifyOnExit, KProcess::All);
     return m_process->isRunning ();
 }
 
@@ -738,6 +743,12 @@ bool Xine::seek (int pos, bool absolute) {
     if (!playing () || !m_backend || !m_source->hasLength ()) return false;
     m_backend->seek (absolute ? pos : m_source->position () + pos, true);
     return true;
+}
+
+void Xine::processOutput (KProcess *, char * str, int slen) {
+    KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
+    if (v && slen > 0)
+        v->addText (QString (str));
 }
 
 void Xine::processStopped (KProcess *) {

@@ -120,8 +120,6 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
                     this, SLOT (processLoading (int)));
         disconnect (m_process, SIGNAL (startPlaying ()),
                     this, SLOT (processPlaying ()));
-        disconnect (m_process, SIGNAL (output (const QString &)),
-                    this, SLOT (processOutput (const QString &)));
     }
     m_process = process;
     m_process->setSource (source);
@@ -133,8 +131,6 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
              this, SLOT (processLoading (int)));
     connect (m_process, SIGNAL (startPlaying ()),
              this, SLOT (processPlaying ()));
-    connect (m_process, SIGNAL (output (const QString &)),
-             this, SLOT (processOutput (const QString &)));
 }
 
 extern const char * strUrlBackend;
@@ -289,11 +285,6 @@ void KMPlayer::processPlaying () {
     kdDebug () << "KMPlayer::processPlaying " << endl;
     if (m_settings->sizeratio)
         m_view->viewer ()->setAspect (m_process->source ()->aspect ());
-}
-
-void KMPlayer::processOutput (const QString & msg) {
-    if (m_view)
-        m_view->addText (msg + QString ("\n"));
 }
 
 unsigned long KMPlayer::position () const {

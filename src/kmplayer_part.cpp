@@ -554,9 +554,7 @@ void KMPlayerHRefSource::activate () {
         return;
     }
     init ();
-    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
     m_player->setProcess (m_player->mplayer ());
-    view->consoleOutput ()->clear ();
     if (m_player->process ()->grabPicture (m_url, 0))
         connect (m_player->process (), SIGNAL (grabReady (const QString &)),
                  this, SLOT (grabReady (const QString &)));

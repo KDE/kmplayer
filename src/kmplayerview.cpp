@@ -628,6 +628,8 @@ void KMPlayerView::timerEvent (QTimerEvent * e) {
 
 void KMPlayerView::addText (const QString & str) {
     m_multiedit->append (str);
+    while (5000 < m_multiedit->numLines ())
+        m_multiedit->removeLine (0);
 }
 
 /* void KMPlayerView::print (QPrinter *pPrinter)

@@ -51,7 +51,6 @@ signals:
     void positionChanged (int pos);
     void loading (int percentage);
     void startPlaying ();
-    void output (const QString & msg);
     void grabReady (const QString & path);
 public slots:
     virtual bool play () = 0;
@@ -180,6 +179,7 @@ public slots:
 private slots:
     void processRunning ();
     void processStopped (KProcess *);
+    void processOutput (KProcess *, char *, int);
 private:
     KMPlayerBackend_stub * m_backend;
 };
