@@ -766,7 +766,7 @@ const QString KMPlayerVCDSource::buildArguments () {
     if (i == m_vcdtrackmenu->count ())
         args += " vcd:// ";
     if (m_player->configDialog ()->vcddevice.length () > 0)
-        args += QString(" -cdrom-device") + m_player->configDialog()->vcddevice;
+        args += QString(" -cdrom-device ") + m_player->configDialog()->vcddevice;
     m_recordCommand = args;
     return args;
 }
