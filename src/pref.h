@@ -50,6 +50,7 @@
 #include <qradiobutton.h>
 #include <qslider.h>
 #include <qspinbox.h>
+#include <qstringlist.h>
 
 #include "kmplayersource.h"
 
@@ -101,16 +102,25 @@ public:
 
 class FFServerSetting {
 public:
+    FFServerSetting () {}
+    FFServerSetting (int i, const QString & n, const QString & f, const QString & ac, int abr, int asr, const QString & vc, int vbr, int q, int fr, int gs, int w, int h);
     int index;
     QString name;
-    int audiobitrate;
-    int audiosamplerate;
-    int videobitrate;
-    int quality;
-    int framerate;
-    int gopsize;
-    int width;
-    int height;
+    QString format;
+    QString audiocodec;
+    QString audiobitrate;
+    QString audiosamplerate;
+    QString videocodec;
+    QString videobitrate;
+    QString quality;
+    QString framerate;
+    QString gopsize;
+    QString width;
+    QString height;
+    FFServerSetting & operator = (const QStringList &);
+    FFServerSetting & operator = (const FFServerSetting & fs);
+    const QStringList list ();
+    QString & ffconfig (QString & buf);
 };
 
 class TVDeviceScannerSource : public KMPlayerSource {
@@ -281,14 +291,18 @@ public:
     QLineEdit * feedfilesize;
     QComboBox * optimize;
     QGroupBox * movieparams;
+    QComboBox * format;
+    QLineEdit * audiocodec;
     QLineEdit * audiobitrate;
     QLineEdit * audiosamplerate;
+    QLineEdit * videocodec;
     QLineEdit * videobitrate;
     QLineEdit * quality;
     QLineEdit * framerate;
     QLineEdit * gopsize;
     QLineEdit * moviewidth;
     QLineEdit * movieheight;
+    FFServerSetting custom;
 public slots:
     void slotIndexChanged (int index);
 private:

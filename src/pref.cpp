@@ -83,14 +83,14 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent, FFServerSetting * ffs)
 	vlay->addWidget(m_GeneralPageVCD);
 
 	hierarchy.clear();
-	hierarchy << i18n ("Source") << i18n ("TV");
+	hierarchy << i18n ("Source") << i18n ("TV") << i18n ("General");
 	frame = addPage (hierarchy, i18n ("TV options"));
 	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
 	m_SourcePageTV = new KMPlayerPrefSourcePageTV (frame, this);
 	vlay->addWidget (m_SourcePageTV);
 
 	hierarchy.clear();
-	hierarchy << i18n ("Broadcasting");
+	hierarchy << i18n ("Broadcasting") << i18n ("General");
 	frame = addPage (hierarchy, i18n ("Broadcasting (ffserver)"));
 	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
 	m_BroadcastPage = new KMPlayerPrefBroadcastPage (frame, ffs);
@@ -436,7 +436,7 @@ TVDevice * KMPlayerPrefSourcePageTV::findDevice (QPtrList <TVDevice> & list, con
 
 KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerSetting * _ffs) : QFrame (parent), ffs (_ffs) {
     QVBoxLayout *layout = new QVBoxLayout (this);
-    QGridLayout *gridlayout = new QGridLayout (layout, 7, 2);
+    QGridLayout *gridlayout = new QGridLayout (layout, 8, 2);
     QLabel *label = new QLabel (i18n ("Bind address:"), this);
     bindaddress = new QLineEdit ("", this);
     QToolTip::add (bindaddress, i18n ("If you have multible network devices, you can limit access"));
@@ -450,7 +450,7 @@ KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerS
     maxclients = new QLineEdit ("", this);
     gridlayout->addWidget (label, 2, 0);
     gridlayout->addWidget (maxclients, 2, 1);
-    label = new QLabel (i18n ("Maximum bandwidth:"), this);
+    label = new QLabel (i18n ("Maximum bandwidth (kbit):"), this);
     maxbandwidth = new QLineEdit ("", this);
     gridlayout->addWidget (label, 3, 0);
     gridlayout->addWidget (maxbandwidth, 3, 1);
@@ -470,23 +470,39 @@ KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerS
              this, SLOT (slotIndexChanged (int)));
     gridlayout->addWidget (label, 6, 0);
     gridlayout->addWidget (optimize, 6, 1);
-    movieparams = new QGroupBox (8, Qt::Horizontal, i18n("Movie settings"), this);
+    label = new QLabel (i18n ("Format:"), this);
+    format = new QComboBox (this);
+    format->insertItem (QString ("asf"));
+    format->insertItem (QString ("avi"));
+    format->insertItem (QString ("mpjpeg"));
+    format->insertItem (QString ("mpeg"));
+    format->insertItem (QString ("rm"));
+    format->insertItem (QString ("swf"));
+    QToolTip::add (format, i18n ("Only avi, mpeg and rm work for mplayer playback"));
+    gridlayout->addWidget (label, 7, 0);
+    gridlayout->addWidget (format, 7, 1);
+    movieparams = new QGroupBox (10, Qt::Horizontal, i18n("Optional settings"), this);
     movieparams->setColumns (2);
-    label = new QLabel (i18n ("Audio bit rate:"), movieparams);
+    QToolTip::add (movieparams, i18n ("Leave field empty for default with this format"));
+    label = new QLabel (i18n ("Audio codec:"), movieparams);
+    audiocodec = new QLineEdit ("", movieparams);
+    label = new QLabel (i18n ("Audio bit rate (kbit):"), movieparams);
     audiobitrate = new QLineEdit ("", movieparams);
-    label = new QLabel (i18n ("Audio sample rate:"), movieparams);
+    label = new QLabel (i18n ("Audio sample rate (Hz):"), movieparams);
     audiosamplerate = new QLineEdit ("", movieparams);
-    label = new QLabel (i18n ("Video bit rate:"), movieparams);
+    label = new QLabel (i18n ("Video codec:"), movieparams);
+    videocodec = new QLineEdit ("", movieparams);
+    label = new QLabel (i18n ("Video bit rate (kbit):"), movieparams);
     videobitrate = new QLineEdit ("", movieparams);
-    label = new QLabel (i18n ("Quality:"), movieparams);
+    label = new QLabel (i18n ("Quality (1-31):"), movieparams);
     quality = new QLineEdit ("", movieparams);
-    label = new QLabel (i18n ("Frame rate:"), movieparams);
+    label = new QLabel (i18n ("Frame rate (Hz):"), movieparams);
     framerate = new QLineEdit ("", movieparams);
     label = new QLabel (i18n ("Gop size:"), movieparams);
     gopsize = new QLineEdit ("", movieparams);
-    label = new QLabel (i18n ("Width:"), movieparams);
+    label = new QLabel (i18n ("Width (pixels):"), movieparams);
     moviewidth = new QLineEdit ("", movieparams);
-    label = new QLabel (i18n ("Height:"), movieparams);
+    label = new QLabel (i18n ("Height (pixels):"), movieparams);
     movieheight = new QLineEdit ("", movieparams);
     layout->addWidget (movieparams);
     movieparams->setEnabled (false);
@@ -499,27 +515,36 @@ KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerS
 }
 
 void KMPlayerPrefBroadcastPage::slotIndexChanged (int index) {
-    if (ffs[index].name == i18n ("Custom")) {
-        ffs[index].audiobitrate = audiobitrate->text ().toInt ();
-        ffs[index].audiosamplerate = audiosamplerate->text ().toInt ();
-        ffs[index].videobitrate = videobitrate->text ().toInt ();
-        ffs[index].quality = quality->text ().toInt ();
-        ffs[index].framerate = framerate->text ().toInt ();
-        ffs[index].gopsize = gopsize->text ().toInt ();
-        ffs[index].width = moviewidth->text ().toInt ();
-        ffs[index].height = movieheight->text ().toInt ();
-        movieparams->setEnabled (true);
-    } else {
-        audiobitrate->setText (QString::number (ffs[index].audiobitrate));
-        audiosamplerate->setText (QString::number (ffs[index].audiosamplerate));
-        videobitrate->setText (QString::number (ffs[index].videobitrate));
-        quality->setText (QString::number (ffs[index].quality));
-        framerate->setText (QString::number (ffs[index].framerate));
-        gopsize->setText (QString::number (ffs[index].gopsize));
-        moviewidth->setText (QString::number (ffs[index].width));
-        movieheight->setText (QString::number (ffs[index].height));
-        movieparams->setEnabled (false);
+    bool iscustom = ffs[index].name == i18n ("Custom");
+    FFServerSetting & fs = iscustom ? custom : ffs[index];
+    if (iscustom && !format->currentText ().isEmpty ()) {
+        fs.format = format->currentText ();
+        fs.audiocodec = audiocodec->text ();
+        fs.audiobitrate = audiobitrate->text ();
+        fs.audiosamplerate = audiosamplerate->text ();
+        fs.videocodec = videocodec->text ();
+        fs.videobitrate = videobitrate->text ();
+        fs.quality = quality->text ();
+        fs.framerate = framerate->text ();
+        fs.gopsize = gopsize->text ();
+        fs.width = moviewidth->text ();
+        fs.height = movieheight->text ();
     }
+    if (format->currentText ().isEmpty ())
+        format->removeItem (format->currentItem ());
+    format->setCurrentText (fs.format);
+    audiocodec->setText (fs.audiocodec);
+    audiobitrate->setText (fs.audiobitrate);
+    audiosamplerate->setText (fs.audiosamplerate);
+    videocodec->setText (fs.videocodec);
+    videobitrate->setText (fs.videobitrate);
+    quality->setText (fs.quality);
+    framerate->setText (fs.framerate);
+    gopsize->setText (fs.gopsize);
+    moviewidth->setText (fs.width);
+    movieheight->setText (fs.height);
+    format->setEnabled (iscustom);
+    movieparams->setEnabled (iscustom);
 }
 
 KMPlayerPrefBroadcastACLPage::KMPlayerPrefBroadcastACLPage (QWidget *parent)

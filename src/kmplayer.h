@@ -91,6 +91,7 @@ private slots:
     void zoom100 ();
     void zoom150 ();
     void broadcastClicked ();
+    void processOutput (KProcess *, char *, int);
     void processStopped (KProcess * process);
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
@@ -120,6 +121,7 @@ private:
     QCString m_dcopName;
     KProcess * m_ffmpeg_process;
     KProcess * m_ffserver_process;
+    QString m_ffserver_out;
     bool m_endserver : 1;
     bool m_showToolbar : 1;
     bool m_showStatusbar : 1;

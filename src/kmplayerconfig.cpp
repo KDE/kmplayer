@@ -38,13 +38,99 @@
 //#include "configdialog.h"
 #include "pref.h"
 
+FFServerSetting::FFServerSetting (int i, const QString & n, const QString & f, const QString & ac, int abr, int asr, const QString & vc, int vbr, int q, int fr, int gs, int w, int h) 
+ : index (i), name (n), format (f), audiocodec (ac),
+   audiobitrate (abr > 0 ? QString::number (abr) : QString ()),
+   audiosamplerate (asr > 0 ? QString::number (asr) : QString ()),
+   videocodec (vc),
+   videobitrate (vbr > 0 ? QString::number (vbr) : QString ()),
+   quality (q > 0 ? QString::number (q) : QString ()),
+   framerate (fr > 0 ? QString::number (fr) : QString ()),
+   gopsize (gs > 0 ? QString::number (gs) : QString ()),
+   width (w > 0 ? QString::number (w) : QString ()),
+   height (h > 0 ? QString::number (h) : QString ()) {}
+
+FFServerSetting & FFServerSetting::operator = (const FFServerSetting & fs) {
+    format = fs.format;
+    audiocodec = fs.audiocodec;
+    audiobitrate = fs.audiobitrate;
+    audiosamplerate = fs.audiosamplerate;
+    videocodec = fs.videocodec;
+    videobitrate = fs.videobitrate;
+    quality = fs.quality;
+    framerate = fs.framerate;
+    gopsize = fs.gopsize;
+    width = fs.width;
+    height = fs.height;
+    return *this;
+}
+
+FFServerSetting & FFServerSetting::operator = (const QStringList & sl) {
+    if (sl.count () != 11) {
+        return *this;
+    }
+    QStringList::const_iterator it = sl.begin ();
+    format = *it++;
+    audiocodec = *it++;
+    audiobitrate = *it++;
+    audiosamplerate = *it++;
+    videocodec = *it++;
+    videobitrate = *it++;
+    quality = *it++;
+    framerate = *it++;
+    gopsize = *it++;
+    width = *it++;
+    height = *it++;
+    return *this;
+}
+
+QString & FFServerSetting::ffconfig (QString & buf) {
+    QString nl ("\n");
+    buf = QString ("Format ") + format + nl;
+    if (!audiocodec.isEmpty ())
+        buf += QString ("AudioCodec ") + audiocodec + nl;
+    if (!audiobitrate.isEmpty ())
+        buf += QString ("AudioBitRate ") + audiobitrate + nl;
+    if (!audiosamplerate.isEmpty () > 0)
+        buf += QString ("AudioSampleRate ") + audiosamplerate + nl;
+    if (!videocodec.isEmpty ())
+        buf += QString ("VideoCodec ") + videocodec + nl;
+    if (!videobitrate.isEmpty ())
+        buf += QString ("VideoBitRate ") + videobitrate + nl;
+    if (!quality.isEmpty ())
+        buf += QString ("VideoQMin ") + quality + nl;
+    if (!framerate.isEmpty ())
+        buf += QString ("VideoFrameRate ") + framerate + nl;
+    if (!gopsize.isEmpty ())
+        buf += QString ("VideoGopSize ") + gopsize + nl;
+    if (!width.isEmpty () && !height.isEmpty ())
+        buf += QString ("VideoSize ") + width + QString ("x") + height + nl;
+    return buf;
+}
+
+const QStringList FFServerSetting::list () {
+    QStringList sl;
+    sl.push_back (format);
+    sl.push_back (audiocodec);
+    sl.push_back (audiobitrate);
+    sl.push_back (audiosamplerate);
+    sl.push_back (videocodec);
+    sl.push_back (videobitrate);
+    sl.push_back (quality);
+    sl.push_back (framerate);
+    sl.push_back (gopsize);
+    sl.push_back (width);
+    sl.push_back (height);
+    return sl;
+}
+
 static FFServerSetting _ffs[] = {
-    { 0, i18n ("Modem (32k)"), 16, 11025, 50, 19, 3, 3, 160, 128 },
-    { 1, i18n ("ISDN (64k)"), 16, 11025, 50, 16, 3, 3, 320, 240 },
-    { 2, i18n ("ISDN2 (128k)"), 32, 22050, 80, 10, 10, 12, 320, 240 },
-    { 3, i18n ("LAN (1024k)"), 64, 44100, 512, 5, 25, 12, 320, 240 },
-    { 4, i18n ("Custom"), 0, 0, 0, 0, 0, 0, 0, 0 },
-    { -1, QString::null, 0, 0, 0, 0, 0, 0, 0, 0 }
+    FFServerSetting (0, i18n ("Modem (32k)"), QString ("avi"), QString ("mp3"), 16, 11025, QString ("mpeg4"), 50, 19, 3, 3, 160, 128 ),
+    FFServerSetting (1, i18n ("ISDN (64k)"), QString ("avi"), QString ("mp3"), 16, 11025, QString ("mpeg4"), 50, 16, 3, 3, 320, 240 ),
+    FFServerSetting (2, i18n ("ISDN2 (128k)"), QString ("avi"), QString ("mp3"), 32, 22050, QString ("mpeg4"), 80, 10, 10, 12, 320, 240 ),
+    FFServerSetting (3, i18n ("LAN (1024k)"), QString ("mpeg"), QString::null, 64, 44100, QString::null, 512, 5, 25, 12, 320, 240 ),
+    FFServerSetting (4, i18n ("Custom"), QString::null, QString::null, 0, 0, QString::null, 0, 0, 0, 0, 0, 0 ),
+    FFServerSetting (-1, QString::null, QString::null, QString::null, 0, 0, QString::null, 0, 0, 0, 0, 0, 0 )
 };
 
 TVChannel::TVChannel (const QString & n, int f) : name (n), frequency (f) {}
@@ -149,6 +235,7 @@ static const char * strTVMaxSize = "Maximum Size";
 static const char * strTVNoPlayback = "No Playback";
 static const char * strTVNorm = "Norm";
 static const char * strTVDriver = "Driver";
+// ffserver
 static const char * strBroadcast = "Broadcast";
 static const char * strBindAddress = "Bind Address";
 static const char * strFFServerPort = "FFServer Port";
@@ -157,6 +244,7 @@ static const char * strMaxBandwidth = "Maximum Bandwidth";
 static const char * strFeedFile = "Feed File";
 static const char * strFeedFileSize = "Feed File Size";
 static const char * strFFServerSetting = "FFServer Setting";
+static const char * strFFServerCustomSetting = "Custom Setting";
 static const char * strFFServerACL = "FFServer ACL";
 
 void KMPlayerConfig::readConfig () {
@@ -311,6 +399,8 @@ void KMPlayerConfig::readConfig () {
     feedfile = m_config->readEntry (strFeedFile, "/tmp/kmplayer.ffm");
     feedfilesize = m_config->readNumEntry (strFeedFileSize, 512);
     ffserversetting = m_config->readNumEntry (strFFServerSetting, 0);
+    if (ffserversetting == 4)
+        ffserversettings[4] = m_config->readListEntry (strFFServerCustomSetting, ';');
     ffserveracl = m_config->readListEntry (strFFServerACL, ';');
     if (!ffserveracl.count ()) {
         ffserveracl.push_back (QString ("127.0.0.1"));
@@ -405,6 +495,9 @@ void KMPlayerConfig::show () {
     configdialog->m_BroadcastPage->feedfile->setText (feedfile);
     configdialog->m_BroadcastPage->feedfilesize->setText (QString::number (feedfilesize));
     configdialog->m_BroadcastPage->optimize->setCurrentItem (ffserversetting);
+    configdialog->m_BroadcastPage->custom = ffserversettings[4];
+    configdialog->m_BroadcastPage->format->insertItem (QString (""));
+    configdialog->m_BroadcastPage->format->setCurrentText (QString (""));
     configdialog->m_BroadcastPage->slotIndexChanged (ffserversetting);
     QTable *accesslist = configdialog->m_BroadcastACLPage->accesslist;
     accesslist->setNumRows (0);
@@ -531,6 +624,8 @@ void KMPlayerConfig::writeConfig () {
     m_config->writeEntry (strFeedFile, feedfile);
     m_config->writeEntry (strFeedFileSize, feedfilesize);
     m_config->writeEntry (strFFServerSetting, ffserversetting);
+    if (ffserversetting == 4)
+        m_config->writeEntry (strFFServerCustomSetting, ffserversettings[4].list (), ';');
     m_config->writeEntry (strFFServerACL, ffserveracl, ';');
     m_config->sync ();
 }
@@ -634,6 +729,8 @@ void KMPlayerConfig::okPressed () {
     feedfilesize = configdialog->m_BroadcastPage->feedfilesize->text ().toInt();
     ffserversetting = configdialog->m_BroadcastPage->optimize->currentItem ();
     configdialog->m_BroadcastPage->slotIndexChanged (ffserversetting);
+    if (ffserversetting == 4)
+        ffserversettings[4] = configdialog->m_BroadcastPage->custom;
     ffserveracl.clear ();
     QTable *accesslist = configdialog->m_BroadcastACLPage->accesslist;
     for (int i = 0; i < accesslist->numRows (); ++i) {
