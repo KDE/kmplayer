@@ -52,7 +52,6 @@ namespace KMPlayer {
 
 class View;
 class Viewer;
-class ViewerHolder;
 class ControlPanel;
 class Console;
 class PlayListView;
@@ -101,6 +100,13 @@ public:
 public slots:
     void fullScreen ();
     void accelActivated ();
+protected:
+    void resizeEvent (QResizeEvent *);
+    void showEvent (QShowEvent *);
+    void mouseMoveEvent (QMouseEvent *);
+    void dragEnterEvent (QDragEnterEvent *);
+    void dropEvent (QDropEvent *);
+    void contextMenuEvent (QContextMenuEvent * e);
 private:
     QWidget * m_parent;
     View * m_view;
@@ -121,8 +127,8 @@ protected:
 
 class KMPLAYER_EXPORT View : public KMediaPlayer::View {
     Q_OBJECT
-    friend class ViewerHolder;
     friend class Viewer;
+    friend class ViewLayer;
     friend class PlayListView;
     friend class KMPlayerPictureWidget;
 public:
@@ -143,7 +149,7 @@ public:
 
     //Console * consoleOutput () const { return m_multiedit; }
     KDE_NO_EXPORT Viewer * viewer () const { return m_viewer; }
-    KDE_NO_EXPORT ControlPanel * buttonBar () const { return m_buttonbar; }
+    KDE_NO_EXPORT ControlPanel * controlPanel () const {return m_control_panel;}
     KDE_NO_EXPORT PlayListView * playList () const { return m_playlist; }
     KDE_NO_EXPORT QWidgetStack * widgetStack () const { return m_widgetstack; }
     KDE_NO_EXPORT KDockArea * docArea () const { return m_dockarea; }
@@ -152,7 +158,6 @@ public:
     KDE_NO_EXPORT void setKeepSizeRatio (bool b) { m_keepsizeratio = b; }
     void showWidget (WidgetType w);
     void setControlPanelMode (ControlPanelMode m);
-    //void setAutoHideSlider (bool b);
     KDE_NO_EXPORT ControlPanelMode controlPanelMode () const { return m_controlpanel_mode; }
     void delayedShowButtons (bool show);
     bool isFullScreen () const;
@@ -192,9 +197,7 @@ private:
     Console * m_multiedit;
     // widget stack contains m_viewer, m_multiedit and m_picturewidget
     QWidgetStack * m_widgetstack;
-    // widget that layouts m_widgetstack for ratio setting
-    ViewerHolder * m_holder;
-    // widget that contains m_holder, m_buttonbar and m_posSlider
+    // widget that layouts m_widgetstack for ratio setting and m_control_panel
     ViewLayer * m_layer;
     // playlist widget
     PlayListView * m_playlist;
@@ -205,7 +208,7 @@ private:
     KDockWidget * m_dock_playlist;
     QString tmplog;
     QPixmap * m_image;
-    ControlPanel * m_buttonbar;
+    ControlPanel * m_control_panel;
     QLabel * m_mixer_label;
     QSlider * m_volume_slider;
     const char * m_mixer_object;
@@ -248,7 +251,7 @@ public:
         button_red, button_green, button_yellow, button_blue,
         button_last
     };
-    ControlPanel (QWidget * parent);
+    ControlPanel (QWidget * parent, View * view);
     KDE_NO_CDTOR_EXPORT ~ControlPanel () {}
     void showPositionSlider (bool show);
     void enableSeekButtons (bool enable);
@@ -275,6 +278,7 @@ public:
 private:
     enum { progress_loading, progress_playing } m_progress_mode;
     int m_progress_length;
+    View * m_view;
     QBoxLayout * m_buttonbox;
     QSlider * m_posSlider;
     QSlider * m_contrastSlider;

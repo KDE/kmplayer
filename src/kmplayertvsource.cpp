@@ -241,7 +241,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerTVSource::~KMPlayerTVSource () {
 KDE_NO_EXPORT void KMPlayerTVSource::activate () {
     m_identified = true;
     if (m_player->settings ()->showbroadcastbutton)
-        m_app->view()->buttonBar()->broadcastButton ()->show ();
+        m_app->view()->controlPanel()->broadcastButton ()->show ();
     if (m_cur_tvdevice) {
         if (!m_current) {
             m_current = m_cur_tvdevice;
@@ -257,8 +257,8 @@ KDE_NO_EXPORT void KMPlayerTVSource::activate () {
  */
 
 KDE_NO_EXPORT void KMPlayerTVSource::deactivate () {
-    if (m_player->view () && !m_app->view ()->buttonBar()->broadcastButton ()->isOn ())
-        m_app->view ()->buttonBar()->broadcastButton ()->hide ();
+    if (m_player->view () && !m_app->view ()->controlPanel()->broadcastButton ()->isOn ())
+        m_app->view ()->controlPanel()->broadcastButton ()->hide ();
     m_cur_tvdevice = 0L;
     m_current = 0L;
 }

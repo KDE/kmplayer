@@ -158,7 +158,7 @@ KDE_NO_EXPORT void PartBase::addBookMark (const QString & t, const QString & url
 void PartBase::init (KActionCollection * action_collection) {
     m_view->init ();
     m_settings->readConfig ();
-    ControlPanel * panel = m_view->buttonBar ();
+    ControlPanel * panel = m_view->controlPanel ();
     m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner,
                         panel->bookmarkMenu (), action_collection, true, true);
     m_bPosSliderPressed = false;
@@ -241,9 +241,9 @@ void PartBase::setProcess (const char * name) {
         connect (m_source, SIGNAL (currentURL (Source *)),
                  m_process, SLOT (play (Source *)));
     if (m_process->playing ()) {
-        m_view->buttonBar ()->setPlaying (true);
-        m_view->buttonBar ()->showPositionSlider (!!m_source->length ());
-        m_view->buttonBar ()->enableSeekButtons (m_source->isSeekable ());
+        m_view->controlPanel ()->setPlaying (true);
+        m_view->controlPanel ()->showPositionSlider (!!m_source->length ());
+        m_view->controlPanel ()->enableSeekButtons (m_source->isSeekable ());
     }
     emit processChanged (name);
 }
@@ -266,7 +266,7 @@ extern const char * strGeneralGroup;
 KDE_NO_EXPORT void PartBase::slotPlayerMenu (int id) {
     bool playing = m_process->playing ();
     const char * srcname = m_process->player ()->source ()->name ();
-    QPopupMenu * menu = m_view->buttonBar ()->playerMenu ();
+    QPopupMenu * menu = m_view->controlPanel ()->playerMenu ();
     ProcessMap::const_iterator pi = m_players.begin(), e = m_players.end();
     unsigned i = 0;
     for (; pi != e && i < menu->count(); ++pi) {
@@ -290,7 +290,7 @@ KDE_NO_EXPORT void PartBase::slotPlayerMenu (int id) {
 void PartBase::updatePlayerMenu () {
     if (!m_view || !m_process)
         return;
-    QPopupMenu * menu = m_view->buttonBar ()->playerMenu ();
+    QPopupMenu * menu = m_view->controlPanel ()->playerMenu ();
     menu->clear ();
     Source * src = m_process->player() == this ? m_source : m_process->source();
     if (!src)
@@ -319,7 +319,7 @@ void PartBase::setSource (Source * _source) {
                  m_process, SLOT (play (Source *)));
         disconnect (m_source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
     }
-    m_view->buttonBar ()->setAutoControls (true);
+    m_view->controlPanel ()->setAutoControls (true);
     QString p = m_settings->backends [_source->name()];
     if (p.isEmpty ()) {
         m_config->setGroup (strGeneralGroup);
@@ -417,7 +417,7 @@ static const char * statemap [] = {
 KDE_NO_EXPORT void PartBase::recordingStateChange (KMPlayer::Process::State old, KMPlayer::Process::State state) {
     if (!m_view) return;
     kdDebug () << "recordState " << statemap[old] << " -> " << statemap[state] << endl;
-    m_view->buttonBar ()->setRecording (state > Process::Ready);
+    m_view->controlPanel ()->setRecording (state > Process::Ready);
     if (state == Process::Ready && old > Process::Ready)
         m_recorder->quit ();
     else if (state >= Process::Ready) {
@@ -450,15 +450,15 @@ void PartBase::timerEvent (QTimerEvent * e) {
 
 void PartBase::processStateChange (KMPlayer::Process::State old, KMPlayer::Process::State state) {
     if (!m_view) return;
-    m_view->buttonBar ()->setPlaying (state > Process::Ready);
+    m_view->controlPanel ()->setPlaying (state > Process::Ready);
     kdDebug () << "processState " << statemap[old] << " -> " << statemap[state] << endl;
     Source * src = m_process->player() == this ? m_source : m_process->source();
     if (state == Process::Playing) {
         m_process->view ()->videoStart ();
         if (m_settings->sizeratio && m_view->viewer ())
             m_view->viewer ()->setAspect (src->aspect ());
-        m_view->buttonBar ()->showPositionSlider (!!src->length ());
-        m_view->buttonBar ()->enableSeekButtons (src->isSeekable ());
+        m_view->controlPanel ()->showPositionSlider (!!src->length ());
+        m_view->controlPanel ()->enableSeekButtons (src->isSeekable ());
         emit loading (100);
         emit startPlaying ();
     } else if (state == Process::NotRunning) {
@@ -476,18 +476,18 @@ void PartBase::processStateChange (KMPlayer::Process::State old, KMPlayer::Proce
 
 KDE_NO_EXPORT void PartBase::positioned (int pos) {
     if (m_view && !m_bPosSliderPressed)
-        m_view->buttonBar ()->setPlayingProgress (pos);
+        m_view->controlPanel ()->setPlayingProgress (pos);
 }
 
 void PartBase::loaded (int percentage) {
     if (m_view && !m_bPosSliderPressed)
-        m_view->buttonBar ()->setLoadingProgress (percentage);
+        m_view->controlPanel ()->setLoadingProgress (percentage);
     emit loading (percentage);
 }
 
 void PartBase::lengthFound (int len) {
     if (!m_view) return;
-    m_view->buttonBar ()->setPlayingLength (len);
+    m_view->controlPanel ()->setPlayingLength (len);
 }
 
 unsigned long PartBase::position () const {
@@ -528,7 +528,7 @@ void PartBase::record () {
             m_recorder->stop ();
         } else {
             m_settings->show  ("RecordPage");
-            m_view->buttonBar ()->setRecording (false);
+            m_view->controlPanel ()->setRecording (false);
         }
         if (m_view) m_view->setCursor (QCursor (Qt::ArrowCursor));
     } else
@@ -552,8 +552,8 @@ bool PartBase::playing () const {
 void PartBase::stop () {
     Source * src = m_process->player() == this ? m_source : m_process->source();
     if (m_view) {
-        if (!m_view->buttonBar ()->button (ControlPanel::button_stop)->isOn ())
-        m_view->buttonBar ()->button (ControlPanel::button_stop)->toggle ();
+        if (!m_view->controlPanel ()->button (ControlPanel::button_stop)->isOn ())
+        m_view->controlPanel ()->button (ControlPanel::button_stop)->toggle ();
         m_view->setCursor (QCursor (Qt::WaitCursor));
     }
     if (m_process)
@@ -562,8 +562,8 @@ void PartBase::stop () {
         src->first ();
     if (m_view) {
         m_view->setCursor (QCursor (Qt::ArrowCursor));
-        if (m_view->buttonBar ()->button (ControlPanel::button_stop)->isOn ())
-            m_view->buttonBar ()->button (ControlPanel::button_stop)->toggle ();
+        if (m_view->controlPanel ()->button (ControlPanel::button_stop)->isOn ())
+            m_view->controlPanel ()->button (ControlPanel::button_stop)->toggle ();
     }
 }
 
@@ -1003,7 +1003,7 @@ KDE_NO_EXPORT void URLSource::activate () {
 KDE_NO_EXPORT void URLSource::terminateJob () {
     if (m_job) {
         m_job->kill (); // silent, no kioResult signal
-        m_player->process ()->view ()->buttonBar ()->setPlaying (m_player->playing ());
+        m_player->process ()->view ()->controlPanel ()->setPlaying (m_player->playing ());
     }
     m_job = 0L;
 }
@@ -1167,7 +1167,7 @@ KDE_NO_EXPORT void URLSource::kioResult (KIO::Job *) {
             next ();
         getCurrent ();
     }
-    m_player->process ()->view ()->buttonBar ()->setPlaying (false);
+    m_player->process ()->view ()->controlPanel ()->setPlaying (false);
 }
 
 void URLSource::getCurrent () {
@@ -1222,7 +1222,7 @@ void URLSource::getCurrent () {
                     this, SLOT (kioMimetype (KIO::Job *, const QString &)));
             connect (m_job, SIGNAL (result (KIO::Job *)),
                     this, SLOT (kioResult (KIO::Job *)));
-            m_player->process ()->view ()->buttonBar ()->setPlaying (true);
+            m_player->process ()->view ()->controlPanel ()->setPlaying (true);
         } else {
             m_current->mrl ()->parsed = true;
             getCurrent ();

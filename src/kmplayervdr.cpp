@@ -158,7 +158,7 @@ KDE_NO_EXPORT QString KMPlayerVDRSource::prettyName () {
 KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     connect (m_player, SIGNAL (startPlaying ()), this, SLOT (processStarted()));
     connect (m_player, SIGNAL (stopPlaying ()), this, SLOT (processStopped ()));
-    KMPlayer::ControlPanel * panel = m_app->view()->buttonBar ();
+    KMPlayer::ControlPanel * panel = m_app->view()->controlPanel ();
     panel->button (KMPlayer::ControlPanel::button_red)->show ();
     panel->button (KMPlayer::ControlPanel::button_green)->show ();
     panel->button (KMPlayer::ControlPanel::button_yellow)->show ();
@@ -180,7 +180,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
     disconnect (m_player, SIGNAL(startPlaying()), this, SLOT(processStarted()));
     disconnect (m_player, SIGNAL (stopPlaying()), this, SLOT(processStopped()));
     if (m_player->view ()) {
-        KMPlayer::ControlPanel * panel = m_app->view()->buttonBar ();
+        KMPlayer::ControlPanel * panel = m_app->view()->controlPanel ();
         disconnect (panel->button (KMPlayer::ControlPanel::button_red), SIGNAL (clicked ()), this, SLOT (keyRed ()));
         disconnect (panel->button (KMPlayer::ControlPanel::button_green), SIGNAL (clicked ()), this, SLOT (keyGreen ()));
         disconnect (panel->button (KMPlayer::ControlPanel::button_yellow), SIGNAL (clicked ()), this, SLOT (keyYellow ()));
@@ -256,7 +256,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::disconnected () {
     kdDebug() << "disconnected " << commands << endl;
     setURL (KURL (QString ("vdr://localhost:%1").arg (tcp_port)));
     if (channel_timer && m_player->source () == this)
-        m_player->process ()->stop ();
+        m_player->process ()->quit ();
     deleteCommands ();
     KAction * action = m_app->actionCollection ()->action ("vdr_connect");
     action->setIcon (QString ("connect_established"));

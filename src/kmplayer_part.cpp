@@ -145,7 +145,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     /*KAction *pauseact =*/ new KAction(i18n("&Pause"), 0, 0, this, SLOT(pause ()), actionCollection (), "view_pause");
     /*KAction *stopact =*/ new KAction(i18n("&Stop"), 0, 0, this, SLOT(stop ()), actionCollection (), "view_stop");
     Source * urlsource = m_sources ["urlsource"];
-    KMPlayer::ControlPanel * panel = m_view->buttonBar ();
+    KMPlayer::ControlPanel * panel = m_view->controlPanel ();
     QStringList::const_iterator it = args.begin ();
     for ( ; it != args.end (); ++it) {
         int equalPos = (*it).find("=");
@@ -716,10 +716,10 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
                 rval = entry->defaultvalue;
             break;
         case canpause:
-            rval = (player->process ()->playing () && !view->buttonBar()->button (KMPlayer::ControlPanel::button_pause)->isOn ()) ? "true" : "false";
+            rval = (player->process ()->playing () && !view->controlPanel()->button (KMPlayer::ControlPanel::button_pause)->isOn ()) ? "true" : "false";
             break;
         case canplay:
-            rval = (!player->process ()->playing () || view->buttonBar()->button (KMPlayer::ControlPanel::button_pause)->isOn ()) ? "true" : "false";
+            rval = (!player->process ()->playing () || view->controlPanel()->button (KMPlayer::ControlPanel::button_pause)->isOn ()) ? "true" : "false";
             break;
         case canstop:
             rval = player->process ()->playing () ? "true" : "false";
@@ -795,7 +795,7 @@ KDE_NO_EXPORT void KMPlayerLiveConnectExtension::unregister (const unsigned long
 KDE_NO_EXPORT void KMPlayerLiveConnectExtension::setSize (int w, int h) {
     KMPlayer::View * view = static_cast <KMPlayer::View*> (player->view ());
     if (view->controlPanelMode () == KMPlayer::View::CP_Show)
-        h += view->buttonBar()->height();
+        h += view->controlPanel()->height();
     QCString jscode;
     //jscode.sprintf("this.width=%d;this.height=%d;kmplayer", w, h);
     KParts::LiveConnectExtension::ArgList args;

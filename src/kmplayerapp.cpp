@@ -171,8 +171,8 @@ KDE_NO_EXPORT void KMPlayerApp::initStatusBar()
 
 KDE_NO_EXPORT void KMPlayerApp::initMenu () {
     createGUI (); // first build the one from the kmplayerui.rc
-    QPopupMenu * bookmarkmenu = m_view->buttonBar()->bookmarkMenu ();
-    m_view->buttonBar()->popupMenu ()->removeItem (KMPlayer::ControlPanel::menu_bookmark);
+    QPopupMenu * bookmarkmenu = m_view->controlPanel()->bookmarkMenu ();
+    m_view->controlPanel()->popupMenu ()->removeItem (KMPlayer::ControlPanel::menu_bookmark);
     menuBar ()->insertItem (i18n ("&Bookmarks"), bookmarkmenu, -1, 2);
     m_sourcemenu = menuBar ()->findItem (menuBar ()->idAt (0));
     m_sourcemenu->setText (i18n ("S&ource"));
@@ -207,13 +207,13 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
              SLOT (slotSourceChanged (KMPlayer::Source *)));
     connect (m_player, SIGNAL (titleChanged (const QString &)), this,
              SLOT (setCaption (const QString &)));
-    m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom50,
+    m_view->controlPanel ()->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom50,
             this, SLOT (zoom50 ()));
-    m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom100,
+    m_view->controlPanel ()->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom100,
             this, SLOT (zoom100 ()));
-    m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom150,
+    m_view->controlPanel ()->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom150,
             this, SLOT (zoom150 ()));
-    connect (m_view->buttonBar()->broadcastButton (), SIGNAL (clicked ()),
+    connect (m_view->controlPanel()->broadcastButton (), SIGNAL (clicked ()),
             this, SLOT (broadcastClicked ()));
     connect (m_view->viewer (), SIGNAL (aspectChanged ()),
             this, SLOT (zoom100 ()));
@@ -275,10 +275,10 @@ KDE_NO_EXPORT void KMPlayerApp::openPipe () {
 
 KDE_NO_EXPORT void KMPlayerApp::openVDR () {
     slotStatusMsg(i18n("Opening VDR..."));
-    if (strcmp (m_player->source ()->name (), "vdrsource"))
-        m_player->setSource (m_player->sources () ["vdrsource"]);
-    else
+    if (!strcmp (m_player->source ()->name (), "vdrsource") && m_player->process ()->playing ())
         static_cast<KMPlayerVDRSource *>(m_player->source())->toggleConnected();
+    else
+        m_player->setSource (m_player->sources () ["vdrsource"]);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
@@ -355,20 +355,20 @@ KDE_NO_EXPORT void KMPlayerApp::broadcastClicked () {
         m_broadcastconfig->stopServer ();
     else {
         m_player->settings ()->show ("BroadcastPage");
-        m_view->buttonBar()->broadcastButton ()->toggle ();
+        m_view->controlPanel()->broadcastButton ()->toggle ();
     }
 }
 
 KDE_NO_EXPORT void KMPlayerApp::broadcastStarted () {
-    if (!m_view->buttonBar()->broadcastButton ()->isOn ())
-        m_view->buttonBar()->broadcastButton ()->toggle ();
+    if (!m_view->controlPanel()->broadcastButton ()->isOn ())
+        m_view->controlPanel()->broadcastButton ()->toggle ();
 }
 
 KDE_NO_EXPORT void KMPlayerApp::broadcastStopped () {
-    if (m_view->buttonBar()->broadcastButton ()->isOn ())
-        m_view->buttonBar()->broadcastButton ()->toggle ();
+    if (m_view->controlPanel()->broadcastButton ()->isOn ())
+        m_view->controlPanel()->broadcastButton ()->toggle ();
     if (m_player->source () != m_player->sources () ["tvsource"])
-        m_view->buttonBar()->broadcastButton ()->hide ();
+        m_view->controlPanel()->broadcastButton ()->hide ();
     setCursor (QCursor (Qt::ArrowCursor));
 }
 

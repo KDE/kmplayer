@@ -176,15 +176,15 @@ KDE_NO_EXPORT void Settings::readConfig () {
     mplayerpost090 = m_config->readBoolEntry (strPostMPlayer090, true);
     showcnfbutton = m_config->readBoolEntry (strAddConfigButton, true);
     if (showcnfbutton)
-        view->buttonBar()->button (ControlPanel::button_config)->show();
+        view->controlPanel()->button (ControlPanel::button_config)->show();
     else
-        view->buttonBar()->button (ControlPanel::button_config)->hide();
+        view->controlPanel()->button (ControlPanel::button_config)->hide();
     showrecordbutton = m_config->readBoolEntry (strAddRecordButton, true);
     showbroadcastbutton = m_config->readBoolEntry (strAddBroadcastButton, true);
     if (showrecordbutton)
-        view->buttonBar()->button (ControlPanel::button_record)->show();
+        view->controlPanel()->button (ControlPanel::button_record)->show();
     else
-        view->buttonBar()->button (ControlPanel::button_record)->hide();
+        view->controlPanel()->button (ControlPanel::button_record)->hide();
     seektime = m_config->readNumEntry (strSeekTime, 10);
     dvddevice = m_config->readEntry (strDVDDevice, "/dev/dvd");
     vcddevice = m_config->readEntry (strVCDDevice, "/dev/cdrom");
@@ -513,17 +513,17 @@ KDE_NO_EXPORT void Settings::okPressed () {
     //showcnfbutton = configdialog->m_GeneralPageGeneral->addConfigButton->isChecked ();
     showcnfbutton = true;
     if (showcnfbutton)
-	view->buttonBar()->button (ControlPanel::button_config)->show();
+	view->controlPanel()->button (ControlPanel::button_config)->show();
     else
-	view->buttonBar()->button (ControlPanel::button_config)->hide();
+	view->controlPanel()->button (ControlPanel::button_config)->hide();
     showrecordbutton = configdialog->m_GeneralPageGeneral->showRecordButton->isChecked ();
     if (showrecordbutton)
-	view->buttonBar()->button (ControlPanel::button_record)->show();
+	view->controlPanel()->button (ControlPanel::button_record)->show();
     else
-        view->buttonBar()->button (ControlPanel::button_record)->hide();
+        view->controlPanel()->button (ControlPanel::button_record)->hide();
     showbroadcastbutton = configdialog->m_GeneralPageGeneral->showBroadcastButton->isChecked ();
     if (!showbroadcastbutton)
-        view->buttonBar ()->broadcastButton ()->hide ();
+        view->controlPanel ()->broadcastButton ()->hide ();
     seektime = configdialog->m_GeneralPageGeneral->seekTime->value();
 
     videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentItem();
