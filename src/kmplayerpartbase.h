@@ -82,6 +82,7 @@ private:
 class KMPLAYER_EXPORT KMPlayer : public KMediaPlayer::Player {
     Q_OBJECT
 public:
+    typedef QMap <QString, KMPlayerProcess *> ProcessMap;
     KMPlayer (QWidget * parent,  const char * wname,QObject * parent, const char * name, KConfig *);
     ~KMPlayer ();
     void init (KActionCollection * = 0L);
@@ -177,7 +178,6 @@ protected:
     KMPlayerSettings * m_settings;
     KMPlayerProcess * m_process;
     KMPlayerProcess * m_recorder;
-    typedef QMap <QString, KMPlayerProcess *> ProcessMap;
     ProcessMap m_players;
     ProcessMap m_recorders;
     QMap <QString, KMPlayerSource *> m_sources;
