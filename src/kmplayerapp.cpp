@@ -106,6 +106,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerApp::~KMPlayerApp () {
+    // KMPlayerVDRSource has to wait for pending commands like mute and quit
+    m_player->stop ();
+    static_cast <KMPlayerVDRSource *> (m_player->sources () ["vdrsource"])->waitForConnectionClose ();
     delete m_broadcastconfig;
     if (!m_dcopName.isEmpty ()) {
         QCString replytype;

@@ -75,6 +75,7 @@ public:
     virtual void sync (bool);
     virtual void prefLocation (QString & item, QString & icon, QString & tab);
     virtual QFrame * prefPage (QWidget * parent);
+    void waitForConnectionClose ();
 public slots:
     void activate ();
     void deactivate ();

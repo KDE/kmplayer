@@ -144,12 +144,15 @@ KDE_NO_CDTOR_EXPORT KMPlayerVDRSource::KMPlayerVDRSource (KMPlayerApp * app)
     connect (m_socket, SIGNAL (error (int)), this, SLOT (socketError (int)));
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerVDRSource::~KMPlayerVDRSource () {
+KDE_NO_CDTOR_EXPORT KMPlayerVDRSource::~KMPlayerVDRSource () {}
+
+KDE_NO_CDTOR_EXPORT void KMPlayerVDRSource::waitForConnectionClose () {
     if (timeout_timer) {
         finish_timer = startTimer (500);
         kdDebug () << "VDR connection not yet closed" << endl;
         QApplication::eventLoop ()->enterLoop ();
         kdDebug () << "VDR connection:" << (m_socket->state () == QSocket::Connected) << endl;
+        timeout_timer = 0;
     }
 }
 
