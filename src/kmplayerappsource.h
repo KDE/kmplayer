@@ -80,6 +80,8 @@ public slots:
     void subtitleMenuClicked (int id);
     void languageMenuClicked (int id);
     void chapterMenuClicked (int id);
+private slots:
+    void identify ();
 private:
     QRegExp langRegExp;
     QRegExp subtitleRegExp;
@@ -89,6 +91,8 @@ private:
     QPopupMenu * m_dvdchaptermenu;
     QPopupMenu * m_dvdlanguagemenu;
     QPopupMenu * m_dvdsubtitlemenu;
+    int m_current_title;
+    bool m_start_play;
 };
 
 

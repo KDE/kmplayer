@@ -576,15 +576,25 @@ bool KMPlayerDVDSource::processOutput (const QString & str) {
 }
 
 void KMPlayerDVDSource::activate () {
-    init ();
-    deactivate (); // clearMenus ?
-    QString args ("-v dvd:// -identify -frames 0 -quiet -nocache");
-    if (m_player->configDialog ()->dvddevice.length () > 0)
-        args += QString(" -dvd-device ") + m_player->configDialog ()->dvddevice;
+    m_start_play = m_player->configDialog ()->playdvd;
     langRegExp.setPattern (m_player->configDialog ()->langpattern);
     subtitleRegExp.setPattern (m_player->configDialog ()->subtitlespattern);
     titleRegExp.setPattern (m_player->configDialog ()->titlespattern);
     chapterRegExp.setPattern (m_player->configDialog ()->chapterspattern);
+    m_current_title = -1;
+    identify ();
+}
+
+void KMPlayerDVDSource::identify () {
+    init ();
+    deactivate (); // clearMenus ?
+    QString args ("-v -identify -frames 0 -quiet -nocache");
+    if (m_current_title >= 0)
+        args += QString (" -dvd ") + QString::number (m_current_title + 1);
+    else
+        args += QString (" -v dvd://");
+    if (m_player->configDialog ()->dvddevice.length () > 0)
+        args += QString(" -dvd-device ") + m_player->configDialog ()->dvddevice;
     bool loop = m_player->configDialog ()->loop;
     m_player->configDialog ()->loop = false;
     if (m_player->run (args.ascii()))
@@ -604,28 +614,29 @@ void KMPlayerDVDSource::deactivate () {
 void KMPlayerDVDSource::finished () {
     disconnect (m_player, SIGNAL (finished()), this, SLOT (finished ()));
     m_player->setMovieLength (10 * length ());
-    if (m_dvdtitlemenu->count ()) m_dvdtitlemenu->setItemChecked (0, true);
+    int title = m_current_title;
+    if (title < 0 || title >= m_dvdtitlemenu->count ())
+        title = 0;
+    if (m_dvdtitlemenu->count ()) m_dvdtitlemenu->setItemChecked (title, true);
     if (m_dvdchaptermenu->count ()) m_dvdchaptermenu->setItemChecked (0, true);
     if (m_dvdlanguagemenu->count()) m_dvdlanguagemenu->setItemChecked (m_dvdlanguagemenu->idAt (0), true);
     app->resizePlayer (100);
     m_identified = true;
-    if (m_player->configDialog ()->playdvd)
+    if (m_start_play)
         QTimer::singleShot (0, this, SLOT (play ()));
     app->slotStatusMsg (i18n ("Ready."));
 }
 
 void KMPlayerDVDSource::play () {
+    m_start_play = true;
     QString args;
     unsigned i;
     for (i = 0; i < m_dvdsubtitlemenu->count(); i++)
         if (m_dvdsubtitlemenu->isItemChecked (m_dvdsubtitlemenu->idAt (i)))
             args += " -sid " + QString::number (m_dvdsubtitlemenu->idAt (i));
-    for (i = 0; i < m_dvdtitlemenu->count(); i++)
-        if (m_dvdtitlemenu->isItemChecked (i)) {
-            args += " -dvd " + m_dvdtitlemenu->findItem (i)->text ();
-            break;
-        }
-    if (i == m_dvdtitlemenu->count())
+    if (m_current_title >= 0)
+        args += " -dvd " + m_dvdtitlemenu->findItem (m_current_title)->text();
+    else
         args += " dvd:// ";
     for (i = 0; i < m_dvdchaptermenu->count(); i++)
         if (m_dvdchaptermenu->isItemChecked (i))
@@ -648,23 +659,25 @@ QString KMPlayerDVDSource::filterOptions () {
 }
 
 void KMPlayerDVDSource::titleMenuClicked (int id) {
-    menuItemClicked (m_dvdtitlemenu, id);
-    if (m_player->configDialog ()->playdvd) play ();
+    if (m_current_title != id) {
+        m_current_title = id;
+        QTimer::singleShot (0, this, SLOT (identify ()));
+    }
 }
 
 void KMPlayerDVDSource::subtitleMenuClicked (int id) {
     menuItemClicked (m_dvdsubtitlemenu, id);
-    if (m_player->configDialog ()->playdvd) play ();
+    if (m_start_play) play ();
 }
 
 void KMPlayerDVDSource::languageMenuClicked (int id) {
     menuItemClicked (m_dvdlanguagemenu, id);
-    if (m_player->configDialog ()->playdvd) play ();
+    if (m_start_play) play ();
 }
 
 void KMPlayerDVDSource::chapterMenuClicked (int id) {
     menuItemClicked (m_dvdchaptermenu, id);
-    if (m_player->configDialog ()->playdvd) play ();
+    if (m_start_play) play ();
 }
 
 //-----------------------------------------------------------------------------
