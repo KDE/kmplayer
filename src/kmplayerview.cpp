@@ -449,7 +449,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerView::KMPlayerView (QWidget *parent, const char *nam
     m_show_console_output (false),
     m_playing (false),
     m_mixer_init (false),
-    m_inVolumeUpdate (false)
+    m_inVolumeUpdate (false),
+    m_revert_fullscreen (false)
 {
     setEraseColor (QColor (0, 0, 255));
 }

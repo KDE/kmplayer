@@ -129,7 +129,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
    m_started_emited (false),
    m_havehref (false),
    m_request_fileopen (false) {
-    kdDebug () << "MPlayer::KMPlayer ()" << endl;
+    kdDebug () << "MPlayer(" << this << ")::KMPlayer ()" << endl;
     bool show_fullscreen = false;
     m_ispart = true;
     init ();
@@ -234,8 +234,10 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
             // found viewer and control part, exchange players now
             KMPlayerPart * vp = (m_features & Feat_Viewer) ? this : *i; 
             KMPlayerPart * cp = (m_features & Feat_Viewer) ? *i : this;
-            cp->m_old_players = cp->m_players;
-            cp->m_old_recorders = cp->m_recorders;
+            if (!cp->m_old_players.size ()) {
+                cp->m_old_players = cp->m_players;
+                cp->m_old_recorders = cp->m_recorders;
+            }
             cp->m_players = vp->m_players;
             cp->m_recorders = vp->m_recorders;
             cp->setProcess (0L); // in case this one timed-out
@@ -272,7 +274,7 @@ KDE_NO_EXPORT bool KMPlayerPart::allowRedir (const KURL & url) const {
 }
 
 KDE_NO_EXPORT void KMPlayerPart::viewerPartDestroyed (QObject *) {
-    kdDebug () << "KMPlayerPart::viewerPartDestroyed" << endl;
+    kdDebug () << "KMPlayerPart(" << this << ")::viewerPartDestroyed" << endl;
     m_players = m_old_players;
     m_recorders = m_old_recorders;
     m_process = m_recorder = 0L;

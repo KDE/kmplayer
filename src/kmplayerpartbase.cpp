@@ -95,9 +95,9 @@ inline KMPlayerBookmarkManager::KMPlayerBookmarkManager(const QString & bmfile)
 
 KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
                     QObject * parent, const char *name, KConfig * config)
- : KMediaPlayer::Player (wparent, wname, parent, name),
+ : KMediaPlayer::Player (wparent, wname ? wname : "kde_kmplayer_view", parent, name ? name : "kde_kmplayer_part"),
    m_config (config),
-   m_view (new KMPlayerView (wparent)),
+   m_view (new KMPlayerView (wparent, wname ? wname : "kde_kmplayer_view")),
    m_settings (new KMPlayerSettings (this, config)),
    m_process (0L),
    m_recorder (0L),

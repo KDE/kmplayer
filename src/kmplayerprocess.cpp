@@ -209,6 +209,7 @@ KDE_NO_EXPORT bool MPlayerBase::stop () {
 }
 
 KDE_NO_EXPORT bool MPlayerBase::quit () {
+    if (!m_process || !m_process->isRunning ()) return true;
     disconnect (m_process, SIGNAL (processExited (KProcess *)),
                 this, SLOT (processStopped (KProcess *)));
     return stop ();
