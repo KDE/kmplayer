@@ -768,10 +768,11 @@ void Source::playCurrent () {
         }
     } else if (!m_current)
         emit endOfPlayItems ();
-    else if (m_current->state != Element::state_started) // eg. state_deferred
-        m_current->start ();
-    else
+    else {
+        if (m_current->state == Element::state_deferred)
+            m_current->undefer ();
         emit playURL (this, currentMrl ());
+    }
 }
 
 static ElementPtr findDepthFirst (ElementPtr elm) {
@@ -1257,7 +1258,7 @@ void URLSource::playCurrent () {
     } else {
         QString mimestr = mime ();
         bool maybe_playlist = isPlayListMime (mimestr);
-        m_current->setState (Element::state_deferred); // needs a restart
+        m_current->defer (); // may need a restart
         kdDebug () << "URLSource::playCurrent " << mimestr << maybe_playlist << endl;
         if (url.isLocalFile ()) {
             QFile file (url.path ());

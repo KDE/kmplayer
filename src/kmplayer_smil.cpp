@@ -608,6 +608,10 @@ SMIL::AVMediaType::AVMediaType (ElementPtr & d, const QString & t)
 }
 
 KDE_NO_EXPORT void SMIL::AVMediaType::start () {
+    if (!isMrl ()) { // turned out this URL points to a playlist file
+        Element::start ();
+        return;
+    }
     kdDebug () << "SMIL::AVMediaType::start" << endl;
     ElementPtr p = parentNode ();
     while (p && strcmp (p->nodeName (), "smil"))

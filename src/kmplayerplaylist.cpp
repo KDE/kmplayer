@@ -132,6 +132,22 @@ void Element::start () {
         stop (); // nothing to start
 }
 
+void Element::defer () {
+    if (state == state_started) {
+        setState (state_deferred);
+        defer_tree_version = document ()->m_tree_version;
+    } else
+        kdWarning () << "Element::defer () call on not started element" << endl;
+}
+
+void Element::undefer () {
+    if (state == state_deferred) {
+        if (defer_tree_version != document ()->m_tree_version)
+            start ();
+    } else
+        kdWarning () <<"Element::undefer () call on not defered element"<< endl;
+}
+
 void Element::stop () {
     kdDebug () << nodeName () << " Element::stop" << endl;
     setState (state_finished);

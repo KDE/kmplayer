@@ -172,6 +172,15 @@ public:
      */
     virtual void start ();
     /**
+     * Defers a started, so possible playlists items can be added.
+     */
+    virtual void defer ();
+    /**
+     * Puts a defered element in started again, may call start again if 
+     * child elements were added.
+     */
+    virtual void undefer ();
+    /**
      * Stops element, sets started to false and finished to true.
      * Notifies parent with a childDone call
      */
@@ -238,6 +247,8 @@ protected:
 public:
     State state;
     void setState (State nstate);
+private:
+    unsigned int defer_tree_version;
 };
 
 template <class T>
