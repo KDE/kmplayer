@@ -88,7 +88,16 @@ to:kde-user@kde.org">The &kde; User Mailing list</ulink>.</para>
           <para>Xine starts up slow, why does it have to benchmark my CPU all the time?</para>
         </question>
         <answer>
-            <para>The <application>Xine</application> frontend for &kmplayer;, <application>kxineplayer</application>, uses <filename>~/.xine/config2</filename> for its configuration. Settings for <application>Xine</application> are documented in <filename>README.config_en</filename> found in the <application>xine-lib</application> sources. A simple config file for a pentium 4 contains the line <computeroutput>misc.memcpy_method:sse</computeroutput>. See in the console output for <application>Xine</application>, which memcpy version works the fastest for you (replace <computeroutput>'sse'</computeroutput> with that one).</para>
+            <para>The <application>Xine</application> frontend for &kmplayer;, <application>kxineplayer</application>, uses <filename>~/.xine/config2</filename> for its configuration. Settings for <application>Xine</application> are found in the configuration dialog <quote>General Options</quote>|<quote>Xine</quote>. (If you change an option here and save it, <filename>~/.xine/config2</filename> will contain some explainations too). The CPU benchmarking is caused by the option <computeroutput>misc.memcpy_method</computeroutput> set to <computeroutput>probe</computeroutput>. To see which memcpy version works the fastest for you, enable <quote>Show Console Output</quote> from the <quote>View</quote> menu and look at the results from this benchmarking when you play something with Xine. Configure <computeroutput>misc.memcpy_method</computeroutput> with the method with the lowest time.</para>
+        </answer>
+      </qandaentry>
+      <qandaentry>
+        <question>
+            <para>Any hints to make my CDROM less noisy when playing from it (not VCD://)?</para>
+        </question>
+        <answer>
+            <para>Sure, try <command>hdparm -E 8 /dev/cdrom</command> as root after mounting the device. But be sure to double check <filename>/dev/cdrom</filename> pointing to your CDROM drive.
+            </para>
         </answer>
       </qandaentry>
     </qandaset>
