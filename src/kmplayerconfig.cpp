@@ -236,6 +236,13 @@ KDE_NO_EXPORT void KMPlayerSettings::readConfig () {
 KDE_NO_EXPORT bool KMPlayerSettings::createDialog () {
     if (configdialog) return false;
     configdialog = new KMPlayerPreferences (m_player, this);
+    int id = 0;
+    const KMPlayer::ProcessMap::const_iterator e = m_player->players ().end ();
+    for (KMPlayer::ProcessMap::const_iterator i = m_player->players ().begin(); i != e; ++i) {
+        KMPlayerProcess * p = i.data ();
+        if (p->supports ("urlsource"))
+            configdialog->m_SourcePageURL->backend->insertItem (p->menuName ().remove (QChar ('&')), id++);
+    }
     connect (configdialog, SIGNAL (okClicked ()),
             this, SLOT (okPressed ()));
     connect (configdialog, SIGNAL (applyClicked ()),
@@ -294,6 +301,16 @@ void KMPlayerSettings::show (const char * pagename) {
     configdialog->m_GeneralPageOutput->videoDriver->setCurrentItem (videodriver);
     configdialog->m_GeneralPageOutput->audioDriver->setCurrentItem (audiodriver);
     configdialog->m_SourcePageURL->backend->setCurrentItem (configdialog->m_SourcePageURL->backend->findItem (backends["urlsource"]));
+    int id = 0;
+    const KMPlayer::ProcessMap::const_iterator e = m_player->players ().end ();
+    for (KMPlayer::ProcessMap::const_iterator i = m_player->players ().begin(); i != e; ++i) {
+        KMPlayerProcess * p = i.data ();
+        if (p->supports ("urlsource")) {
+            if (backends["urlsource"] == QString (p->name()))
+                configdialog->m_SourcePageURL->backend->setCurrentItem (id);
+            id++;
+        }
+    }
     configdialog->m_SourcePageURL->allowhref->setChecked (allowhref);
 
     // postproc
@@ -505,7 +522,15 @@ KDE_NO_EXPORT void KMPlayerSettings::okPressed () {
 
     videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentItem();
     audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentItem();
-    backends["urlsource"] = configdialog->m_SourcePageURL->backend->currentText ();
+    int backend = configdialog->m_SourcePageURL->backend->currentItem ();
+    const KMPlayer::ProcessMap::const_iterator e = m_player->players ().end();
+    for (KMPlayer::ProcessMap::const_iterator i = m_player->players ().begin(); backend >=0 && i != e; ++i) {
+        if (backend-- == 0) {
+            backends["urlsource"] = i.data ()->name ();
+            if (i.data () != m_player->process ())
+                m_player->setProcess (i.data ()->name ());
+        }
+    }
     allowhref = configdialog->m_SourcePageURL->allowhref->isChecked ();
     //postproc
     postprocessing = configdialog->m_OPPagePostproc->postProcessing->isChecked();

@@ -241,8 +241,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidge
     sub_url = new KURLRequester (sub_urllist, this);
     sub_url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
     backend = new QListBox (this);
-    backend->insertItem (QString ("MPlayer"), 0);
-    backend->insertItem (QString ("Xine"), 1);
     allowhref = new QCheckBox (i18n ("Enable 'Click to Play' support"), this);
     layout->addWidget (allowhref);
     urllayout->addWidget (urlLabel);
@@ -252,7 +250,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidge
     sub_urllayout->addWidget (sub_url);
     layout->addLayout (sub_urllayout);
     layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
-#ifdef HAVE_XINE
     QGridLayout * gridlayout = new QGridLayout (2, 2);
     QLabel *backendLabel = new QLabel (i18n ("Use movie player:"), this, 0);
     //QWhatsThis::add (allowhref, i18n ("Explain this in a few lines"));
@@ -260,9 +257,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidge
     gridlayout->addWidget (backend, 1, 0);
     gridlayout->addMultiCell (new QSpacerItem (0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum), 0, 1, 1, 1);
     layout->addLayout (gridlayout);
-#else
-    backend->hide ();
-#endif
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     connect (urllist, SIGNAL(textChanged (const QString &)),
              this, SLOT (slotTextChanged (const QString &)));

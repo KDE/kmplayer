@@ -1293,10 +1293,6 @@ KDE_NO_EXPORT bool Xine::play () {
 // v4l:/Webcam/0   v4l:/Television/21600  v4l:/Radio/96
 void Xine::urlForPlaying (const QString & urlstr) {
     KURL url (urlstr);
-    if (url.isEmpty ()) {
-        quit ();
-        return;
-    }
     QString myurl = url.isLocalFile () ? url.path () : url.url ();
     if (playing ()) {
         if (m_backend) {
@@ -1470,6 +1466,161 @@ KDE_NO_EXPORT void Xine::setStarted (QByteArray & data) {
     //const KURL & url = m_source->subUrl ();
     //if (!url.isEmpty ())
     //    m_backend->setSubTitleURL (url.isLocalFile () ? url.path () : url.url ());
+    m_backend->play ();
+}
+
+//-----------------------------------------------------------------------------
+
+static const char * gst_supported [] = {
+    "urlsource", 0L
+};
+
+KDE_NO_CDTOR_EXPORT GStreamer::GStreamer (KMPlayer * player)
+    : KMPlayerCallbackProcess (player, "gst") {
+#ifdef HAVE_GSTREAMER
+    m_supported_sources = gst_supported;
+#endif
+}
+
+KDE_NO_CDTOR_EXPORT GStreamer::~GStreamer () {}
+
+KDE_NO_EXPORT QString GStreamer::menuName () const {
+    return i18n ("&GStreamer");
+}
+
+KDE_NO_EXPORT WId GStreamer::widget () {
+    return view()->viewer()->embeddedWinId ();
+}
+
+KDE_NO_EXPORT void GStreamer::initProcess () {
+    KMPlayerProcess::initProcess ();
+    connect (m_process, SIGNAL (processExited (KProcess *)),
+            this, SLOT (processStopped (KProcess *)));
+    connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
+            this, SLOT (processOutput (KProcess *, char *, int)));
+    connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
+            this, SLOT (processOutput (KProcess *, char *, int)));
+}
+
+KDE_NO_EXPORT bool GStreamer::play () {
+    if (playing () && m_backend && m_status != status_stop) { // paused
+        m_backend->play ();
+        return true;
+    }
+    return KMPlayerProcess::play ();
+}
+
+void GStreamer::urlForPlaying (const QString & urlstr) {
+    KURL url (urlstr);
+    if (url.isEmpty ()) {
+        quit ();
+        return;
+    }
+    QString myurl = url.isLocalFile () ? QString("file://%1").arg (url.path ()) : url.url ();
+    if (playing ()) {
+        if (m_backend) {
+            m_backend->setURL (myurl);
+            m_backend->play ();
+        }
+        return;
+    }
+    initProcess ();
+    m_request_seek = -1;
+    kdDebug() << "GStreamer::play (" << myurl << ")" << endl;
+    KMPlayerSettings *settings = m_player->settings ();
+    initProcess ();
+    printf ("kgstplayer -wid %lu", (unsigned long) widget ());
+    *m_process << "kgstplayer -wid " << QString::number (widget ());
+
+    QString strVideoDriver = QString (settings->videodrivers[settings->videodriver].driver);
+    if (!strVideoDriver.isEmpty ()) {
+        printf (" -vo %s", strVideoDriver.lower().ascii());
+        *m_process << " -vo " << strVideoDriver.lower();
+    }
+    QString strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].driver);
+    if (!strAudioDriver.isEmpty ()) {
+        if (strAudioDriver.startsWith (QString ("alsa")))
+            strAudioDriver = QString ("alsa");
+        printf (" -ao %s", strAudioDriver.lower().ascii());
+        *m_process << " -ao " << strAudioDriver.lower();
+    }
+    printf (" -cb %s", dcopName ().ascii());
+    *m_process << " -cb " << dcopName ();
+    if (m_source->url ().isLocalFile ()) {
+        m_process->setWorkingDirectory 
+            (QFileInfo (m_source->url ().path ()).dirPath (true));
+    }
+    m_url = url.url ();
+    myurl = KProcess::quote (QString (QFile::encodeName (myurl)));
+    printf (" %s\n", myurl.ascii ());
+    *m_process << " " << myurl;
+    m_process->start (KProcess::NotifyOnExit, KProcess::All);
+    if (m_process->isRunning ())
+        QTimer::singleShot (0, this, SLOT (emitStarted ()));
+}
+
+KDE_NO_EXPORT bool GStreamer::quit () {
+    kdDebug () << "Xine::quit ()" << endl;
+    disconnect (m_source, SIGNAL (currentURL (const QString &)), this, SLOT (urlForPlaying (const QString &)));
+    if (!m_process || !m_process->isRunning ()) return true;
+    if (m_backend) {
+        m_backend->quit ();
+        QTime t;
+        t.start ();
+        do {
+            KProcessController::theKProcessController->waitForProcessExit (2);
+        } while (t.elapsed () < 2000 && m_process->isRunning ());
+        kdDebug () << "DCOP quit " << t.elapsed () << endl;
+    }
+    if (m_process->isRunning () && !KMPlayerCallbackProcess::stop ())
+        processStopped (0L); // give up
+    return true;
+}
+
+KDE_NO_EXPORT void GStreamer::setFinished () {
+    KMPlayerCallbackProcess::setFinished ();
+    if (!m_source) return; // initial case?
+    kdDebug () << "Xine::finished () " << endl;
+    if (m_source->next ().isEmpty ()) {
+        quit ();
+        m_source->first ();
+    } else
+        m_source->getCurrent ();
+}
+
+KDE_NO_EXPORT bool GStreamer::seek (int pos, bool absolute) {
+    if (in_gui_update || !playing () ||
+            !m_backend ||
+            !m_source->hasLength () ||
+            (absolute && m_source->position () == pos))
+        return false;
+    if (!absolute)
+        pos = m_source->position () + pos;
+    m_source->setPosition (pos);
+    if (m_request_seek < 0)
+        m_backend->seek (pos, true);
+    m_request_seek = pos;
+    return true;
+}
+
+KDE_NO_EXPORT void GStreamer::processOutput (KProcess *, char * str, int slen) {
+    KMPlayerView * v = view ();
+    if (v && slen > 0)
+        v->addText (QString::fromLocal8Bit (str, slen));
+}
+
+KDE_NO_EXPORT void GStreamer::processStopped (KProcess *) {
+    delete m_backend;
+    m_backend = 0L;
+    QTimer::singleShot (0, this, SLOT (emitFinished ()));
+}
+
+KDE_NO_EXPORT void GStreamer::setStarted (QByteArray & data) {
+    QString dcopname;
+    dcopname.sprintf ("kgstreamerplayer-%u", m_process->pid ());
+    kdDebug () << "up and running " << dcopname << endl;
+    m_backend = new KMPlayerBackend_stub (dcopname.ascii (), "KMPlayerBackend");
+    KMPlayerCallbackProcess::setStarted (data);
     m_backend->play ();
 }
 

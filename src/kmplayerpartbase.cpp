@@ -108,6 +108,7 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
 {
     m_players ["mplayer"] = new MPlayer (this);
     m_players ["xine"] = new Xine (this);
+    m_players ["gst"] = new GStreamer (this);
     m_recorders ["mencoder"] = new MEncoder (this);
     m_recorders ["mplayerdumpstream"] = new MPlayerDumpstream (this);
     m_recorders ["ffmpeg"] = new FFMpeg (this);

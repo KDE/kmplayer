@@ -1,4 +1,4 @@
-INCLUDES= -I$(kde_includes)/kio $(CFLAGS_GST) $(all_includes)
+AM_CPPFLAGS= -I$(kde_includes)/kio $(CFLAGS_GST) $(all_includes)
 
 METASOURCES= AUTO
 
@@ -49,7 +49,7 @@ kxvplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH) -lDCOP -lXv
 kxvplayer_SOURCES= xvplayer.cpp kmplayer_backend.skel kmplayer_callback.stub
 
 kgstplayer_LDADD= $(LIB_GST)
-kgstplayer_CFLAGS= $(CFLAGS_GST)
+kgstplayer_CPPFLAGS= $(CFLAGS_GST)
 kgstplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH) -lDCOP
 kgstplayer_SOURCES= gstplayer.cpp kmplayer_backend.skel kmplayer_callback.stub
 

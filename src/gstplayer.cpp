@@ -60,7 +60,9 @@ static const int            event_finished = QEvent::User;
 static const int            event_playing = QEvent::User + 1;
 static const int            event_size = QEvent::User + 2;
 static QString              mrl;
-GstElement * gst_elm_play, * videosink, * gst_elm_audiosink;
+static const char          *ao_driver;
+static const char          *vo_driver;
+GstElement * gst_elm_play, * videosink, * audiosink;
 static QString elmentry ("entry");
 static QString elmitem ("item");
 static QString attname ("NAME");
@@ -287,11 +289,21 @@ void KGStreamerPlayer::init () {
         fprintf (stderr, "couldn't create playbin\n");
         return;
     }
-    gst_elm_audiosink = gst_element_factory_make ("alsasink", "audiosink");
-    videosink = gst_element_factory_make ("xvimagesink", "videosink");
+    if (ao_driver && !strcmp (vo_driver, "alsa"))
+        audiosink = gst_element_factory_make ("alsasink", "audiosink");
+    else if (ao_driver && !strcmp (vo_driver, "arts"))
+        audiosink = gst_element_factory_make ("artsdsink", "audiosink");
+    else if (ao_driver && !strcmp (vo_driver, "esd"))
+        audiosink = gst_element_factory_make ("esdsink", "audiosink");
+    else
+        audiosink = gst_element_factory_make ("osssink", "audiosink");
+    if (vo_driver && !strcmp (vo_driver, "xv"))
+        videosink = gst_element_factory_make ("xvimagesink", "videosink");
+    else
+        videosink = gst_element_factory_make ("ximagesink", "videosink");
     g_object_set (G_OBJECT (gst_elm_play),
             "video-sink",  videosink,
-            "audio-sink",  gst_elm_audiosink,
+            "audio-sink",  audiosink,
             NULL);
     g_signal_connect (gst_elm_play, "error", G_CALLBACK (cb_error), this);
     g_signal_connect (gst_elm_play, "found-tag", G_CALLBACK (cb_foundtag), this);
@@ -335,6 +347,8 @@ void KGStreamerPlayer::play () {
     gchar *uri = g_strdup (mrl.ascii ());
 
     mutex.lock ();
+    gst_x_overlay_set_xwindow_id (GST_X_OVERLAY (videosink), wid);
+    gst_x_overlay_expose (GST_X_OVERLAY (videosink));
     if (GST_STATE (gst_elm_play) > GST_STATE_READY)
         gst_element_set_state (gst_elm_play, GST_STATE_READY);
 
@@ -411,6 +425,12 @@ bool KGStreamerPlayer::event (QEvent * e) {
             if (callback) {
                 if (se->length < 0) se->length = 0;
                 callback->movieParams (se->length/100, se->width, se->height, se->height ? 1.0*se->width/se->height : 1.0);
+            } 
+            if (window_created && movie_width > 0 && movie_height > 0) {
+                XLockDisplay (display);
+                XResizeWindow (display, wid, movie_width, movie_height);
+                XFlush (display);
+                XUnlockDisplay (display);
             }
             break;
         }
@@ -492,7 +512,9 @@ int main(int argc, char **argv) {
 
     for(int i = 1; i < argc; i++) {
         if (!strcmp (argv [i], "-ao")) {
-            ;// (argv [++i], 0L, 10);
+            ao_driver = argv [++i];
+        } else if (!strcmp (argv [i], "-vo")) {
+            vo_driver = argv [++i];
         } else if (!strcmp (argv [i], "-wid") || !strcmp (argv [i], "-window-id")) {
             wid = atol (argv [++i]);
             window_created = false;

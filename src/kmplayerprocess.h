@@ -280,6 +280,26 @@ private slots:
     void processOutput (KProcess *, char *, int);
 };
 
+class GStreamer : public KMPlayerCallbackProcess {
+    Q_OBJECT
+public:
+    GStreamer (KMPlayer * player);
+    ~GStreamer ();
+    QString menuName () const;
+    WId widget ();
+    void setFinished ();
+    void initProcess ();
+public slots:
+    virtual bool play ();
+    virtual void urlForPlaying (const QString &);
+    bool quit ();
+    bool seek (int pos, bool absolute);
+    void setStarted (QByteArray & data);
+private slots:
+    void processStopped (KProcess *);
+    void processOutput (KProcess *, char *, int);
+};
+
 class KMPLAYER_EXPORT FFMpeg : public KMPlayerProcess, public Recorder {
     Q_OBJECT
 public:
