@@ -22,6 +22,7 @@ email                :
 #include <dcopclient.h>
 
 #include <qguardedptr.h>
+#include <qfileinfo.h>
 
 #include "kmplayer.h"
 
@@ -61,6 +62,8 @@ extern "C" {
 
             if (args->count ()) {
                 KURL url = args->url(args->count() - 1);
+                if (url.url ().find ("://") < 0)
+                    url = KURL (QFileInfo (url.url ()).absFilePath ());
                 if(!url.isMalformed())
                     kmplayer->openDocumentFile (args->url (0));
             }

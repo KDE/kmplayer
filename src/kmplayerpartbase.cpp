@@ -883,21 +883,33 @@ QString KMPlayerURLSource::prettyName () {
 void KMPlayerURLSource::setURL (const KURL & url) {
     m_url = url;
     m_refurls.clear ();
-    while (url.isLocalFile () && url.url ().lower ().endsWith (QString ("m3u"))) {
-        char buf[1024];
-        QFile file (url.path ());
-        if (!file.exists ()) break;
-        if (!file.open (IO_ReadOnly)) break;
-        while (m_refurls.size () < 1024 /* support 1k entries */) { 
-            int len = file.readLine (buf, sizeof (buf));
-            if (len < 0 || len > sizeof (buf) -1)
-                break;
-            buf[len] = 0;
-            QString mrl = QString::fromLocal8Bit (buf).stripWhiteSpace ();
-            if (!mrl.startsWith (QChar ('#')))
-                m_refurls.push_back (mrl);
+    if (url.isLocalFile ()) {
+        if (url.url ().lower ().endsWith (QString ("m3u")) ||
+                m_mime == QString ("audio/mpegurl")) {
+            char buf[1024];
+            QFile file (url.path ());
+            if (file.exists () && file.open (IO_ReadOnly)) {
+                while (m_refurls.size () < 1024 /* support 1k entries */) { 
+                    int len = file.readLine (buf, sizeof (buf));
+                    if (len < 0 || len > sizeof (buf) -1)
+                        break;
+                    buf[len] = 0;
+                    QString mrl = QString::fromLocal8Bit (buf).stripWhiteSpace ();
+                if (!mrl.startsWith (QChar ('#')))
+                    m_refurls.push_back (mrl);
+                }
+            }
+        } else if (url.url ().lower ().endsWith (QString ("pls")) ||
+                m_mime == QString ("audio/x-scpls")) {
+            KConfig kc (url.url ());
+            kc.setGroup ("playlist");
+            int nr = kc.readNumEntry ("numberofentries", 0);
+            for (int i = 0; i < nr; i++) {
+                QString mrl = kc.readEntry (QString ("File%1").arg(i), "");
+                if (!mrl.isEmpty ())
+                    m_refurls.push_back (mrl);
+            }
         }
-        break;
     }
     if (!m_refurls.size ())
         m_refurls.push_back (url.url ());

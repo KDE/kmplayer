@@ -245,11 +245,9 @@ bool MPlayer::play () {
     KURL url (*m_source->currentUrl ());
     if (!url.isEmpty ()) {
         m_url = url.url ();
-        if (url.isLocalFile ()) {
-            QFileInfo fi (url.path ());
-            m_process->setWorkingDirectory (fi.dirPath (true));
-            m_url = url.path ();
-        }
+        if (m_source->url ().isLocalFile ())
+            m_process->setWorkingDirectory 
+                (QFileInfo (m_source->url ().path ()).dirPath (true));
         args += KProcess::quote (QString (QFile::encodeName (m_url)));
     }
     m_tmpURL.truncate (0);
@@ -508,8 +506,9 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
                             m_source->referenceUrls ().insert (m_source->nextUrl (), m_tmpURL);
                             m_tmpURL.truncate (0);
                         }
-                        m_source->next ();
-                        m_source->first ();
+                        // FIXME: why was this needed?
+                        //m_source->next ();
+                        //m_source->first ();
                         source ()->setIdentified ();
                     }
                     emit startPlaying ();
@@ -524,18 +523,22 @@ void MPlayer::processStopped (KProcess * p) {
         emit grabReady (m_grabfile);
         m_grabfile.truncate (0);
     } else {
-        if (p && !m_source->identified ()) {
-            m_source->setIdentified ();
-            if (!m_tmpURL.isEmpty () && m_tmpURL != m_source->url ().url ()) {
-                m_source->referenceUrls ().insert (m_source->nextUrl (), m_tmpURL);
-                m_tmpURL.truncate (0);
-            }
-            m_source->next ();
-            m_source->first ();
-            if (!m_player->settings ()->mplayerpost090) {
+        if (p) {
+            if (!m_source->identified ()) {
+                m_source->setIdentified ();
+                if (!m_tmpURL.isEmpty () && m_tmpURL != m_source->url ().url ()) {
+                    m_source->referenceUrls ().insert (m_source->nextUrl (), m_tmpURL);
+                    m_tmpURL.truncate (0);
+                }
+                m_source->next ();
+                m_source->first ();
+            } else
+                m_source->next ();
+            if (m_source->currentUrl () != m_source->referenceUrls ().end ()) {
                 QTimer::singleShot (0, this, SLOT (play ()));
                 return;
             }
+            m_source->first ();
         }
         MPlayerBase::processStopped (p);
     }

@@ -131,6 +131,7 @@ protected slots:
     virtual void processLoading (int percentage);
     virtual void processPlaying ();
 protected:
+    virtual bool openFile(); // reimplement for KParts::ReadOnlyPart
     KMPlayerBrowserExtension * m_browserextension;
     KMPlayerLiveConnectExtension * m_liveconnectextension;
     KMPlayerHRefSource * m_hrefsource;

@@ -36,7 +36,7 @@ Comment[ta]=வீடியோ சொருகி(விரைவுநேரம
 Comment[xx]=xxVideo player plugin (QuickTime, XMovie, Windows Media and RealPlayer compatible)xx
 X-KDE-Library=libkmplayerpart
 # Keep in sync with the audio types in kmplayer.desktop
-MimeType=audio/x-mp3;audio/x-ms-wma;audio/x-pn-realaudio;audio/x-vorbis;application/x-kmplayer;application/x-mplayer2;application/x-ogg;audio/x-mp2;video/mpeg;audio/x-mpegurl;audio/x-wav;audio/x-mod;video/x-avi;video/x-ms-asf;video/x-ms-wmp;video/x-ms-wmv;video/x-msvideo;video/quicktime;video/x-flic;
+MimeType=audio/x-mp3;audio/mpegurl;audio/x-ms-wma;audio/x-pn-realaudio;audio/x-scpls;audio/x-vorbis;application/x-kmplayer;application/x-mplayer2;application/x-ogg;audio/x-mp2;video/mpeg;audio/x-mpegurl;audio/x-wav;audio/x-mod;video/x-avi;video/x-ms-asf;video/x-ms-wmp;video/x-ms-wmv;video/x-msvideo;video/quicktime;video/x-flic;
 Type=Service
 Icon=kmplayer
 ServiceTypes=KParts/ReadOnlyPart,Browser/View,KMediaPlayer/Player

@@ -57,6 +57,7 @@ public:
     QStringList & referenceUrls () { return m_refurls; }
     void first ();
     void next ();
+    const QString & mime () const { return m_mime; }
     const QString & audioDevice () const { return m_audiodevice; }
     const QString & videoDevice () const { return m_videodevice; }
     const QString & videoNorm () const { return m_videonorm; }
@@ -68,6 +69,7 @@ public:
 
     virtual void setURL (const KURL & url);
     void setSubURL (const KURL & url) { m_sub_url = url; }
+    void setMime (const QString & m) { m_mime = m; }
     void setWidth (int w) { m_width = w; }
     void setHeight (int h) { m_height = h; }
     void setAspect (float a) { m_aspect = a; }
@@ -84,6 +86,7 @@ public slots:
     virtual void deactivate () = 0;
 protected:
     QString m_name;
+    QString m_mime;
     KMPlayer * m_player;
     QString m_recordcmd;
     bool m_identified;

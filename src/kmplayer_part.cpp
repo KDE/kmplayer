@@ -124,22 +124,24 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
     for ( ; it != args.end (); ++it) {
         int equalPos = (*it).find("=");
         if (equalPos > 0) {
-            QString name = (*it).left (equalPos).upper ();
+            QString name = (*it).left (equalPos).lower ();
             QString value = (*it).right ((*it).length () - equalPos - 1);
             if (value.at(0)=='\"')
                 value = value.right (value.length () - 1);
             if (value.at (value.length () - 1) == '\"')
                 value.truncate (value.length () - 1);
             kdDebug () << "name=" << name << " value=" << value << endl;
-            if (name.lower () == "href") {
+            if (name == "href") {
                 m_urlsource->setURL (KURL (value));
                 m_urlsource->setIdentified (false);
                 m_havehref = true;
-            } else if (name.lower()==QString::fromLatin1("width")) {
+            } else if (name == QString::fromLatin1("width")) {
                 m_noresize = true;
-            } else if (name.lower()==QString::fromLatin1("height")) {
+            } else if (name == QString::fromLatin1("height")) {
                 m_noresize = true;
-            } else if (name.lower()==QString::fromLatin1("controls")) {
+            } else if (name == QString::fromLatin1("type")) {
+                m_urlsource->setMime (value);
+            } else if (name == QString::fromLatin1("controls")) {
                 if (value.lower () == QString::fromLatin1("imagewindow")) {
                     m_features = Feat_Viewer;
                 } else if (value.lower () == QString::fromLatin1("all")) {
@@ -149,19 +151,19 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
                 } else if (value.lower () == QString::fromLatin1("controlpanel")) {
                     m_features = Feat_Controls;
                 }
-            } else if (name.lower()==QString::fromLatin1("nolabels")) {
+            } else if (name == QString::fromLatin1("nolabels")) {
                 m_features &= ~Feat_Label;
-            } else if (name.lower()==QString::fromLatin1("nocontrols")) {
+            } else if (name == QString::fromLatin1("nocontrols")) {
                 m_features &= ~Feat_Controls;
-            } else if (name.lower()==QString::fromLatin1("console")) {
+            } else if (name == QString::fromLatin1("console")) {
                 m_group = value.isEmpty() ? QString::fromLatin1("_anonymous") : value;
-            } else if (name.lower()==QString::fromLatin1("__khtml__pluginbaseurl")) {
+            } else if (name == QString::fromLatin1("__khtml__pluginbaseurl")) {
                 m_docbase = KURL (value);
-            } else if (name.lower()==QString::fromLatin1("src")) {
+            } else if (name == QString::fromLatin1("src")) {
                 m_src_url = value;
-            } else if (name.lower() == QString::fromLatin1 ("fullscreenmode")) {
+            } else if (name == QString::fromLatin1 ("fullscreenmode")) {
                 show_fullscreen = getBoolValue (value);
-            } else if (name.lower() == QString::fromLatin1 ("autostart")) {
+            } else if (name == QString::fromLatin1 ("autostart")) {
                 m_urlsource->setAutoPlay (getBoolValue (value));
 	    }
         }
@@ -191,6 +193,13 @@ KMPlayerPart::~KMPlayerPart () {
 
 bool KMPlayerPart::allowRedir (const KURL & url) {
     return kapp->authorizeURLAction ("redirect", url, m_docbase);
+}
+
+bool KMPlayerPart::openFile() {
+    if (m_urlsource->mime () == QString ("audio/mpegurl") ||
+            m_urlsource->mime () == QString ("audio/x-scpls"))
+        return KMPlayer::openURL (KParts::ReadOnlyPart::m_file);
+    return false;
 }
 
 bool KMPlayerPart::openURL (const KURL & url) {
@@ -233,6 +242,9 @@ bool KMPlayerPart::openURL (const KURL & url) {
         return true;
     }
     if (!m_view || !url.isValid ()) return false;
+    if (m_urlsource->mime () == QString ("audio/mpegurl") ||
+            m_urlsource->mime () == QString ("audio/x-scpls"))
+        return KParts::ReadOnlyPart::openURL (url);
     if (m_havehref && !kapp->authorizeURLAction ("redirect", url, m_urlsource->url ()))
         m_havehref = false;
     if (m_havehref && m_settings->allowhref) {
