@@ -233,6 +233,7 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
                     this, SLOT (processPlaying ()));
         disconnect (m_process, SIGNAL (output (const QString &)),
                     this, SLOT (processOutput (const QString &)));
+        source->deactivate ();
     }
     m_process = process;
     m_process->setSource (source);
@@ -246,6 +247,23 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
              this, SLOT (processPlaying ()));
     connect (m_process, SIGNAL (output (const QString &)),
              this, SLOT (processOutput (const QString &)));
+    source->activate ();
+}
+
+extern const char * strUrlBackend;
+
+void KMPlayer::setXine () {
+    m_settings->urlbackend = QString ("Xine");
+    m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
+    m_config->sync ();
+    setProcess (m_xine);
+}
+
+void KMPlayer::setMPlayer () {
+    m_settings->urlbackend = QString ("MPlayer");
+    m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
+    m_config->sync ();
+    setProcess (m_mplayer);
 }
 
 void KMPlayer::setSource (KMPlayerSource * source, bool keepsizes) {
@@ -904,13 +922,22 @@ void KMPlayerURLSource::play () {
 }
 
 void KMPlayerURLSource::activate () {
+    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
+    QPopupMenu * menu = view->playerMenu ();
+    menu->clear ();
+    menu->insertItem (i18n ("&MPlayer"), m_player, SLOT (setMPlayer ()));
+    menu->insertItem (i18n ("&Xine"), m_player, SLOT (setXine ()));
+    menu->setEnabled (true);
     if (m_player->settings ()->urlbackend == QString ("Xine")) {
+        menu->setItemChecked (menu->idAt (1), true);
         m_player->setProcess (m_player->xine ());
         if (!url ().isEmpty ())
             QTimer::singleShot (0, m_player, SLOT (play ()));
         return;
-    } else
+    } else {
         m_player->setProcess (m_player->mplayer ());
+        menu->setItemChecked (menu->idAt (0), true);
+    }
     init ();
     bool loop = m_player->settings ()->loop;
     m_player->settings ()->loop = false;
@@ -945,6 +972,9 @@ void KMPlayerURLSource::finished () {
 
 void KMPlayerURLSource::deactivate () {
     disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
+    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
+    if (view)
+        view->playerMenu ()->setEnabled (false);
 }
 
 //-----------------------------------------------------------------------------

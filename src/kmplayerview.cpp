@@ -420,6 +420,9 @@ void KMPlayerView::init () {
     m_broadcastButton->hide ();
 
     m_popupMenu = new QPopupMenu (m_layer);
+    m_playerMenu = new QPopupMenu (m_layer);
+    m_playerMenu->setEnabled (false);
+    m_popupMenu->insertItem (i18n ("&Play with"), m_playerMenu, menu_player);
     m_zoomMenu = new QPopupMenu (m_layer);
     m_zoomMenu->insertItem (i18n ("50%"), menu_zoom50);
     m_zoomMenu->insertItem (i18n ("100%"), menu_zoom100);
@@ -502,20 +505,20 @@ void KMPlayerView::setUseArts (bool b) {
         m_svc = new Arts::StereoVolumeControl;
         if (m_artsserver && !m_artsserver->isNull()) {
             m_arts_label = new QLabel (i18n ("Volume:"), m_popupMenu);
-            m_popupMenu->insertItem (m_arts_label, -1, 3);
+            m_popupMenu->insertItem (m_arts_label, -1, 4);
             m_slider = new QSlider (0, 100, 10, 40, Qt::Horizontal, m_popupMenu);
             connect(m_slider, SIGNAL(valueChanged(int)), this,SLOT(setVolume(int)));
             *m_svc = m_artsserver->outVolume();
             m_watch = new KArtsFloatWatch(*m_svc, "scaleFactor_changed", this);
             connect (m_watch, SIGNAL (valueChanged (float)), 
                     this, SLOT (updateVolume (float)));
-            m_popupMenu->insertItem (m_slider, menu_volume, 4);
-            m_popupMenu->insertSeparator (5);
+            m_popupMenu->insertItem (m_slider, menu_volume, 5);
+            m_popupMenu->insertSeparator (6);
         }
     } else if (m_use_arts && !b) {
+        m_popupMenu->removeItemAt (6);
         m_popupMenu->removeItemAt (5);
         m_popupMenu->removeItemAt (4);
-        m_popupMenu->removeItemAt (3);
         delete m_watch;
         delete m_artsserver;
         delete m_svc;

@@ -64,7 +64,7 @@ class KMPlayerView : public KMediaPlayer::View {
     friend class KMPlayerViewer;
 public:
     enum MenuID {
-        menu_config = 0, menu_fullscreen, menu_volume, 
+        menu_config = 0, menu_player, menu_fullscreen, menu_volume, 
         menu_zoom, menu_zoom50, menu_zoom100, menu_zoom150
     };
     KMPlayerView(QWidget *parent, const char *name = (char*) 0);
@@ -91,6 +91,7 @@ public:
     QSlider * brightnessSlider () const { return m_brightnessSlider; }
     QSlider * hueSlider () const { return m_hueSlider; }
     QSlider * saturationSlider () const { return m_saturationSlider; }
+    QPopupMenu * playerMenu () const { return m_playerMenu; }
     QPopupMenu * popupMenu () const { return m_popupMenu; }
     QPopupMenu * zoomMenu () const { return m_zoomMenu; }
     bool keepSizeRatio () const { return m_keepsizeratio; }
@@ -134,6 +135,7 @@ private:
     QPushButton * m_recordButton;
     QPushButton * m_broadcastButton;
     QPopupMenu * m_popupMenu;
+    QPopupMenu * m_playerMenu;
     QPopupMenu * m_zoomMenu;
     QLabel * m_arts_label;
     QSlider * m_slider;

@@ -165,6 +165,7 @@ public:
     Xine * xine () const { return m_xine; }
     KMPlayerURLSource * urlSource () const { return m_urlsource; }
     KMPlayerHRefSource * hrefSource () const { return m_hrefsource; }
+    KConfig * config () const { return m_config; }
     bool autoPlay () const { return m_autoplay; }
 public slots:
     virtual bool openURL (const KURL & url);
@@ -178,6 +179,8 @@ public slots:
     bool playing () const;
     void showConfigDialog ();
     void setMenuZoom (int id);
+    void setXine ();
+    void setMPlayer ();
 public:
     virtual bool isSeekable (void) const;
     virtual unsigned long position (void) const { return m_movie_position; }

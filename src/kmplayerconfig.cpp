@@ -215,7 +215,7 @@ static const char * strPlayVCD = "Immediately Play VCD";
 static const char * strVCDDevice = "VCD Device";
 static const char * strTrackPattern = "VCD Tracks";
 static const char * strAlwaysBuildIndex = "Always build index";
-static const char * strUrlBackend = "URL Backend";
+const char * strUrlBackend = "URL Backend";
 // postproc thingies
 static const char * strPPGroup = "Post processing options";
 static const char * strPostProcessing = "Post processing";
