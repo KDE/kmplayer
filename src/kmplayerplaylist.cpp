@@ -228,30 +228,38 @@ QString Element::innerText () const {
     return buf;
 }
 
-static void getInnerXML (const ElementPtr p, QTextOStream & out) {
-    for (ElementPtr e = p->firstChild (); e; e = e->nextSibling ()) {
-        if (!strcmp (e->nodeName (), "#text"))
-            out << XMLStringlet (convertNode <TextNode> (e)->text);
-        else {
-            out << QChar ('<') << XMLStringlet (e->nodeName ());
-            for (ElementPtr a = e->attributes (); a; a = a->nextSibling ()) {
-                Attribute * attribute = convertNode <Attribute> (a);
-                out << " " << XMLStringlet (attribute->name) << "=\"" << XMLStringlet (attribute->value) << "\"";
-            }
-            if (e->hasChildNodes ()) {
-                out << QChar ('>');
-                getInnerXML (e, out);
-                out << QString("</")<<XMLStringlet (e->nodeName())<< QChar('>');
-            } else
-                out << QString ("/>");
+static void getOuterXML (const ElementPtr p, QTextOStream & out) {
+    if (!strcmp (p->nodeName (), "#text"))
+        out << XMLStringlet (convertNode <TextNode> (p)->text);
+    else {
+        out << QChar ('<') << XMLStringlet (p->nodeName ());
+        for (ElementPtr a = p->attributes (); a; a = a->nextSibling ()) {
+            Attribute * attribute = convertNode <Attribute> (a);
+            out << " " << XMLStringlet (attribute->name) << "=\"" << XMLStringlet (attribute->value) << "\"";
         }
+        if (p->hasChildNodes ()) {
+            out << QChar ('>');
+            for (ElementPtr e = p->firstChild (); e; e = e->nextSibling ())
+                getOuterXML (e, out);
+            out << QString("</") << XMLStringlet (p->nodeName()) << QChar ('>');
+        } else
+            out << QString ("/>");
     }
 }
 
 QString Element::innerXML () const {
     QString buf;
     QTextOStream out (&buf);
-    getInnerXML (self (), out);
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
+        getOuterXML (e, out);
+    }
+    return buf;
+}
+
+QString Element::outerXML () const {
+    QString buf;
+    QTextOStream out (&buf);
+    getOuterXML (self (), out);
     return buf;
 }
 

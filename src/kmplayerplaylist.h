@@ -77,6 +77,7 @@ public:
     void characterData (const QString & s);
     QString innerText () const;
     QString innerXML () const;
+    QString outerXML () const;
     void setAttributes (const QXmlAttributes &);
     virtual const char * nodeName () const;
     /**

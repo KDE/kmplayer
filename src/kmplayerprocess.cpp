@@ -1231,7 +1231,12 @@ void TypeNode::changedXML (QTextStream & out) {
         kdDebug() << "Unknown type:" << ctype << endl;
     if (value != newvalue) {
         value = newvalue;
-        out << "<entry NAME=\"" << name << "\" VALUE=\"" << value << "\" />";
+        for (ElementPtr a = attributes (); a; a = a->nextSibling ()) {
+            Attribute * attribute = convertNode <Attribute> (a);
+            if (!strcmp (attribute->name.ascii (), "VALUE"))
+                attribute->value = newvalue;
+        }
+        out << outerXML ();
     }
 }
 
@@ -1284,7 +1289,7 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
     int row = 0;
     if (fromUI) {
         ElementPtr configdoc = m_process->configDocument ();
-        if (configdoc || m_configframe->table->numCols () < 1) //not yet created
+        if (!configdoc || m_configframe->table->numCols () < 1) //not yet created
             return;
         ElementPtr elm = configdoc->firstChild (); // document
         if (!elm || !elm->hasChildNodes ()) {

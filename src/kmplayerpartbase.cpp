@@ -216,17 +216,17 @@ void PartBase::setProcess (const char * name) {
     if (!m_source)
         m_source = m_sources ["urlsource"];
     if (m_process) {
-        disconnect(m_process,SIGNAL(stateChange(Process::State,Process::State)),
-                 this, SLOT(processStateChange(Process::State,Process::State)));
         disconnect (m_process, SIGNAL (positioned (int)),
                     this, SLOT (positioned (int)));
         disconnect (m_process, SIGNAL (loaded (int)),
                     this, SLOT (loaded (int)));
         disconnect (m_process, SIGNAL (lengthFound (int)),
                     this, SLOT (lengthFound (int)));
-        m_process->quit ();
         disconnect (m_source, SIGNAL (currentURL (Source *)),
                     m_process, SLOT (play (Source *)));
+        m_process->quit ();
+        disconnect(m_process,SIGNAL(stateChange(Process::State,Process::State)),
+                 this, SLOT(processStateChange(Process::State,Process::State)));
     }
     m_process = process;
     if (!process)
