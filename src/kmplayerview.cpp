@@ -576,6 +576,15 @@ void KMPlayerView::setUseArts (bool b) {
     m_use_arts = b;
 }
 
+void KMPlayerView::setShowConsoleOutput (bool b) {
+    m_show_console_output = b;
+    if (m_show_console_output) {
+        if (!m_playing)
+            m_widgetstack->raiseWidget (m_multiedit);
+    } else
+        m_widgetstack->raiseWidget (m_viewer);
+}
+
 void KMPlayerView::setAutoHideButtons (bool b) {
     killTimers ();
     m_auto_hide_buttons = b;

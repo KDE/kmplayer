@@ -79,7 +79,7 @@ public:
     void reset ();
     //void print(QPrinter *pPrinter);
 
-    QMultiLineEdit * consoleOutput () const { return m_multiedit; }
+    //QMultiLineEdit * consoleOutput () const { return m_multiedit; }
     KMPlayerViewer * viewer () const { return m_viewer; }
     KMPlayerControlPanel * buttonBar () const { return m_buttonbar; }
     QWidgetStack * widgetStack () const { return m_widgetstack; }
@@ -88,7 +88,7 @@ public:
     bool useArts () const { return m_use_arts; }
     void setUseArts (bool b);
     bool showConsoleOutput () const { return m_show_console_output; }
-    void setShowConsoleOutput (bool b) { m_show_console_output = b; }
+    void setShowConsoleOutput (bool b);
     void setAutoHideButtons (bool b);
     //void setAutoHideSlider (bool b);
     bool autoHideButtons () const { return m_auto_hide_buttons; }

@@ -501,10 +501,6 @@ void KMPlayerSettings::okPressed () {
     alwaysbuildindex = configdialog->m_GeneralPageGeneral->alwaysBuildIndex->isChecked();
     loop = configdialog->m_GeneralPageGeneral->loop->isChecked ();
     framedrop = configdialog->m_GeneralPageGeneral->framedrop->isChecked ();
-    if (showconsole && !m_player->playing ())
-        view->consoleOutput ()->show ();
-    else
-        view->consoleOutput ()->hide ();
     showbuttons = configdialog->m_GeneralPageGeneral->showControlButtons->isChecked ();
     autohidebuttons = configdialog->m_GeneralPageGeneral->autoHideControlButtons->isChecked ();
     view->setAutoHideButtons (showbuttons && autohidebuttons);

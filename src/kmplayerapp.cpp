@@ -562,11 +562,6 @@ void KMPlayerApp::keepSizeRatio () {
 void KMPlayerApp::showConsoleOutput () {
     m_view->setShowConsoleOutput (!m_view->showConsoleOutput ());
     viewShowConsoleOutput->setChecked (m_view->showConsoleOutput ());
-    if (m_view->showConsoleOutput ()) {
-        if (!m_player->playing ())
-            m_view->consoleOutput ()->show ();
-    } else
-        m_view->consoleOutput ()->hide ();
 }
 
 //-----------------------------------------------------------------------------
