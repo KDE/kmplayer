@@ -164,6 +164,17 @@ CXXFLAGS="$CXXFLAGS $all_includes"
 
 AC_COMPILE_IFELSE([
 #include <kdeversion.h>
+#if ! ( KDE_IS_VERSION( 3, 3, 91 ) )
+#error KDE 3.3
+#endif
+],
+    need_kde33_compat="no"
+,
+    need_kde33_compat="yes"
+)
+
+AC_COMPILE_IFELSE([
+#include <kdeversion.h>
 #if ! ( KDE_IS_VERSION( 3, 2, 90 ) )
 #error KDE 3.2
 #endif
@@ -196,6 +207,7 @@ if test "$need_kde31_compat" = "yes"; then
     AC_MSG_RESULT([KDE 3.1.x])
 fi
 
+AM_CONDITIONAL(need_kde33_compatibility, test "$need_kde33_compat" = "yes")
 AM_CONDITIONAL(need_kde32_compatibility, test "$need_kde32_compat" = "yes")
 AM_CONDITIONAL(need_kde31_compatibility, test "$need_kde31_compat" = "yes")
 

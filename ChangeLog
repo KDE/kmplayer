@@ -1,4 +1,8 @@
 Changes since version 0.8.4-rc5
+- Controlpanel uses paletteForegroundColor for drawing
+- Added a volume control to controlpanel that let backends control the volume
+  (unlike the slider in menu, which uses kmix) + two actions for shortcut
+  possibility in 'Configure Shortcuts' dialog
 - Bookmarking a VDR channel now bookmarks it as kmplayer://vdrsource/channel
 - When controlpanel is in autohide mode, move it over the video instead of
   shifting the video up causing annoying flickering (bug 96861)

@@ -160,7 +160,7 @@ KDE_NO_EXPORT void Settings::readConfig () {
     m_config->setGroup (strGeneralGroup);
     urllist = m_config->readListEntry (strURLList, ';');
     sub_urllist = m_config->readListEntry (strSubURLList, ';');
-    volume = m_config->readNumEntry (strVolume, 0);
+    volume = m_config->readNumEntry (strVolume, 80);
     contrast = m_config->readNumEntry (strContrast, 0);
     brightness = m_config->readNumEntry (strBrightness, 0);
     hue = m_config->readNumEntry (strHue, 0);
