@@ -19,8 +19,6 @@
 #ifdef KDE_USE_FINAL
 #undef Always
 #endif
-#include <algorithm>
-#include <functional>
 
 #include <qapplication.h>
 #include <qcstring.h>

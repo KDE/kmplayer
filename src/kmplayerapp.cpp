@@ -297,8 +297,10 @@ KDE_NO_EXPORT void KMPlayerApp::resizePlayer (int percentage) {
         } else
             source->setAspect (1.0 * w/h);
         //m_view->viewer()->setAspect (m_view->keepSizeRatio() ? source->aspect() : 0.0);
-        if (m_view->controlPanelMode () == KMPlayerView::CP_Show)
-            h += 2 + m_view->buttonBar()->frameSize ().height ();
+        QSize s1 = m_view->size ();
+        QSize s2 = m_view->viewer ()->size ();
+        w += s1.width () - s2.width ();
+        h += s1.height () - s2.height ();
         w = int (1.0 * w * percentage/100.0);
         h = int (1.0 * h * percentage/100.0);
         kdDebug () << "resizePlayer (" << w << "," << h << ")" << endl;

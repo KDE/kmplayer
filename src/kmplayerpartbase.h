@@ -19,8 +19,6 @@
 #ifndef KMPLAYERPARTBASE_H
 #define KMPLAYERPARTBASE_H
 
-#include <list>
-
 #include <qobject.h>
 #include <qguardedptr.h>
 #include <qvaluelist.h>
