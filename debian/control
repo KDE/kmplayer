@@ -31,3 +31,9 @@ Depends: kmplayer-lib (= ${Source-Version})
 Description: KMPlayer plugin for khtml/konqueror
  This plugin enables audio/video playback inside konqueror, such as
  movie trailers, web tv or radio.
+
+Package: kmplayer-i18n
+Architecture: any
+Section: sound
+Depends: kmplayer-lib (= ${Source-Version})
+Description: All internationalized (i18n) files for KMPlayer.
