@@ -463,11 +463,8 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
             }
         } else if (!source ()->identified () && m_refURLRegExp.search (out) > -1) {
             kdDebug () << "Reference mrl " << m_refURLRegExp.cap (1) << endl;
-            if (!m_tmpURL.isEmpty ()) {
+            if (!m_tmpURL.isEmpty ())
                 m_source->referenceUrls ().insert (m_source->nextUrl (), m_tmpURL);
-                if (m_source->referenceUrls ().count () == 2)
-                    ++m_source->currentUrl ();
-            }
             m_tmpURL = KURL::fromPathOrURL (m_refURLRegExp.cap (1)).url ();
             if (m_source->url () == m_tmpURL || m_url == m_tmpURL)
                 m_tmpURL.truncate (0);
@@ -513,8 +510,7 @@ void MPlayer::processStopped (KProcess * p) {
                 m_tmpURL.truncate (0);
             }
             m_source->next ();
-            if (m_source->currentUrl () == m_source->referenceUrls ().end ())
-                m_source->first ();
+            m_source->first ();
             if (!m_player->settings ()->mplayerpost090) {
                 QTimer::singleShot (0, this, SLOT (play ()));
                 return;

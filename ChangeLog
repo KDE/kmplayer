@@ -1,3 +1,9 @@
+Changes since version 0.8.2-rc4
+- Let Xine play all URLs in playlist
+- Change alsa to alsa5/alsa9 audio driver for MPlayer
+Changes since version 0.8.2-rc3
+- Compile fix for Qt-3.1
+- Compile fix for xine-lib-1-rc2
 Changes since version 0.8.2-rc2
 - Add audio/x-pn-realaudio to supported mimetypes
 - Fix for filenames containing a #
