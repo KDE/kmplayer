@@ -518,7 +518,7 @@ void KMPlayerLiveConnectExtension::setSize (int w, int h) {
 //-----------------------------------------------------------------------------
 
 KMPlayerHRefSource::KMPlayerHRefSource (KMPlayer * player)
-    : KMPlayerSource (player) {
+    : KMPlayerSource (i18n ("HREF"), player) {
     kdDebug () << "KMPlayerHRefSource::KMPlayerHRefSource" << endl;
 }
 

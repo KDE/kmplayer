@@ -26,7 +26,7 @@ libkmplayerkofficepart_la_LDFLAGS= -avoid-version $(all_libraries) $(KDE_RPATH)
 libkmplayerkofficepart_la_LIBADD= libkmplayercommon.la $(LIB_KOFFICE)
 
 kdeinit_LTLIBRARIES=kmplayer.la
-kmplayer_la_SOURCES= main.cpp kmplayerapp.cpp
+kmplayer_la_SOURCES= main.cpp kmplayerapp.cpp kmplayertvsource.cpp
 kmplayer_la_LIBADD= libkmplayercommon.la
 kmplayer_la_LDFLAGS= -module $(KDE_PLUGIN)
 

@@ -151,31 +151,12 @@ const QStringList FFServerSetting::list () {
     return sl;
 }
 
-TVChannel::TVChannel (const QString & n, int f) : name (n), frequency (f) {}
-
-TVInput::TVInput (const QString & n, int _id) : name (n), id (_id) {}
-
-void TVInput::clear () {
-    std::for_each (channels.begin (), channels.end (), Deleter <TVChannel>);
-    channels.clear ();
-}
-
-TVDevice::TVDevice (const QString & d, const QSize & s)
-    : device (d), size (s), noplayback (false) {
-}
-
-void TVDevice::clear () {
-    std::for_each (inputs.begin (), inputs.end (), Deleter <TVInput>);
-    inputs.clear ();
-}
-
 KMPlayerSettings::KMPlayerSettings (KMPlayer * player, KConfig * config)
   : configdialog (0L), m_config (config), m_player (player) {
     audiodrivers = _ads;
 }
 
 KMPlayerSettings::~KMPlayerSettings () {
-    std::for_each (tvdevices.begin (), tvdevices.end (), Deleter <TVDevice>);
     // configdialog should be destroyed when the view is destroyed
     //delete configdialog;
 }
@@ -260,17 +241,6 @@ static const char * strPP_Cub_Int = "Cubic Interpolating Deinterlacer";
 static const char * strPP_Med_Int = "Median Interpolating Deinterlacer";
 static const char * strPP_FFmpeg_Int = "FFmpeg Interpolating Deinterlacer";
 // end of postproc
-static const char * strTV = "TV";
-static const char * strTVDevices = "Devices";
-static const char * strTVDeviceName = "Name";
-static const char * strTVAudioDevice = "Audio Device";
-static const char * strTVInputs = "Inputs";
-static const char * strTVSize = "Size";
-static const char * strTVMinSize = "Minimum Size";
-static const char * strTVMaxSize = "Maximum Size";
-static const char * strTVNoPlayback = "No Playback";
-static const char * strTVNorm = "Norm";
-static const char * strTVDriver = "Driver";
 // recording
 static const char * strRecordingGroup = "Recording";
 static const char * strRecorder = "Recorder";
@@ -404,56 +374,6 @@ void KMPlayerSettings::readConfig () {
     pp_med_int = m_config->readBoolEntry (strPP_Med_Int, false);
     pp_ffmpeg_int = m_config->readBoolEntry (strPP_FFmpeg_Int, false);
 
-    // TV stuff
-    std::for_each (tvdevices.begin (), tvdevices.end (), Deleter <TVDevice>);
-    tvdevices.clear ();
-    m_config->setGroup(strTV);
-    tvdriver = m_config->readEntry (strTVDriver, "v4l");
-    QStrList devlist;
-    int deviceentries = m_config->readListEntry (strTVDevices, devlist, ';');
-    for (int i = 0; i < deviceentries; i++) {
-        m_config->setGroup (devlist.at (i));
-        TVDevice * device = new TVDevice (devlist.at (i),
-                                          m_config->readSizeEntry (strTVSize));
-        device->name = m_config->readEntry (strTVDeviceName, "/dev/video");
-        device->audiodevice = m_config->readEntry (strTVAudioDevice, "");
-        device->minsize = m_config->readSizeEntry (strTVMinSize);
-        device->maxsize = m_config->readSizeEntry (strTVMaxSize);
-        device->noplayback = m_config->readBoolEntry (strTVNoPlayback, false);
-        QStrList inputlist;
-        int inputentries = m_config->readListEntry (strTVInputs, inputlist,';');
-        kdDebug() << device->device << " has " << inputentries << " inputs" << endl;
-        for (int j = 0; j < inputentries; j++) {
-            QString inputstr = inputlist.at (j);
-            int pos = inputstr.find (':');
-            if (pos < 0) {
-                kdError () << "Wrong input: " << inputstr << endl;
-                continue;
-            }
-            TVInput * input = new TVInput (inputstr.mid (pos + 1),
-                                           inputstr.left (pos).toInt ());
-            QStrList freqlist;
-            int freqentries = m_config->readListEntry(input->name,freqlist,';');
-            kdDebug() << input->name<< " has " << freqentries << " freqs" << endl;
-            input->hastuner = (freqentries > 0);
-            for (int k = 0; k < freqentries; k++) {
-                QString freqstr = freqlist.at (k);
-                int pos = freqstr.find (':');
-                if (pos < 0) {
-                    kdWarning () << "Wrong frequency or none defined: " << freqstr << endl;
-                    continue;
-                }
-                TVChannel * channel = new TVChannel (freqstr.left (pos),
-                                                  freqstr.mid (pos+1).toInt ());
-                kdDebug() << freqstr.left (pos) << " at " << freqstr.mid (pos+1).toInt() << endl;
-                input->channels.push_back (channel);
-            }
-            if (input->hastuner) // what if multiple tuners?
-                input->norm = m_config->readEntry (strTVNorm, "PAL");
-            device->inputs.push_back (input);
-        }
-        tvdevices.push_back (device);
-    }
     m_config->setGroup (strBroadcast);
     bindaddress = m_config->readEntry (strBindAddress, "0.0.0.0");
     ffserverport = m_config->readNumEntry (strFFServerPort, 8090);
@@ -471,14 +391,15 @@ void KMPlayerSettings::readConfig () {
             ffs->name = *pr_it;
             ffserversettingprofiles.push_back (ffs);
         }
-        
     }
+    SourceMap::iterator s_it = m_player->sources ().begin ();
+    for (; s_it != m_player->sources ().end (); ++s_it)
+        s_it.data ()->read (m_config);
 }
 
 void KMPlayerSettings::show () {
     if (!configdialog) {
         configdialog = new KMPlayerPreferences (m_player, _ads, ffserversettingprofiles);
-        configdialog->m_SourcePageTV->scanner = new TVDeviceScannerSource (m_player);
         connect (configdialog, SIGNAL (okClicked ()),
                 this, SLOT (okPressed ()));
         connect (configdialog, SIGNAL (applyClicked ()),
@@ -512,8 +433,6 @@ void KMPlayerSettings::show () {
     configdialog->m_GeneralPageDVD->dvdDevicePath->lineEdit()->setText (dvddevice);
     configdialog->m_GeneralPageVCD->autoPlayVCD->setChecked (playvcd);
     configdialog->m_GeneralPageVCD->vcdDevicePath->lineEdit()->setText (vcddevice);
-    configdialog->m_SourcePageTV->driver->setText (tvdriver);
-    configdialog->m_SourcePageTV->setTVDevices (&tvdevices);
 
     configdialog->m_GeneralPageOutput->videoDriver->setCurrentItem (videodriver);
     configdialog->m_GeneralPageOutput->audioDriver->setCurrentItem (audiodriver);
@@ -585,6 +504,31 @@ void KMPlayerSettings::show () {
     configdialog->m_BroadcastPage->feedfilesize->setText (QString::number (feedfilesize));
     configdialog->m_BroadcastFormatPage->setSettings (ffserversettings);
     configdialog->m_BroadcastFormatPage->profile->setText (QString::null);
+
+    //dynamic stuff
+/*
+struct PrefSubEntry {
+    QString name;
+    QFrame * frame;
+    KMPlayerSource * source;
+};
+typedef std::list <PrefSubEntry *> > TabMap;
+struct PrefEntry {
+    QString name;
+    QString icon;
+    TapMap tabs;
+};
+typedef std::list <PrefEntry *> PrefEntryList;
+*/
+    PrefEntryList::iterator pr_it = configdialog->entries.begin ();
+    for (; pr_it != configdialog->entries.end (); ++pr_it) {
+        TabList & tabs = (*pr_it)->tabs;
+        TabList::iterator t_it = tabs.begin ();
+        for (; t_it != tabs.end (); ++t_it)
+            if ((*t_it)->source)
+                (*t_it)->source->sync ((*t_it)->frame, false);
+    }
+    //\dynamic stuff
 
     configdialog->show ();
 }
@@ -669,50 +613,6 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strPP_Med_Int, pp_med_int);
     m_config->writeEntry (strPP_FFmpeg_Int, pp_ffmpeg_int);
 
-    //TV stuff
-    m_config->setGroup (strTV);
-    QStringList devicelist = m_config->readListEntry (strTVDevices, ';');
-    for (unsigned i = 0; i < devicelist.size (); i++)
-        m_config->deleteGroup (*devicelist.at (i));
-    devicelist.clear ();
-    if (configdialog)
-        configdialog->m_SourcePageTV->updateTVDevices ();
-    QString sep = QString (":");
-    TVDeviceList::iterator dit = tvdevices.begin ();
-    for (; dit != tvdevices.end (); ++dit) {
-        TVDevice * device = *dit;
-        kdDebug() << " writing " << device->device << endl;
-        devicelist.append (device->device);
-        m_config->setGroup (device->device);
-        m_config->writeEntry (strTVSize, device->size);
-        m_config->writeEntry (strTVMinSize, device->minsize);
-        m_config->writeEntry (strTVMaxSize, device->maxsize);
-        m_config->writeEntry (strTVNoPlayback, device->noplayback);
-        m_config->writeEntry (strTVDeviceName, device->name);
-        m_config->writeEntry (strTVAudioDevice, device->audiodevice);
-        QStringList inputlist;
-        TVInputList::iterator iit = device->inputs.begin ();
-        for (; iit != device->inputs.end (); ++iit) {
-            TVInput * input = *iit;
-            inputlist.append (QString::number (input->id) + sep + input->name);
-            if (input->hastuner) {
-                QStringList channellist;
-                TVChannelList::iterator it = input->channels.begin ();
-                for (; it != input->channels.end (); ++it) {
-                    channellist.append ((*it)->name + sep + QString::number ((*it)->frequency));
-                }
-                if (!channellist.size ())
-                    channellist.append (QString ("none"));
-                m_config->writeEntry (input->name, channellist, ';');
-                m_config->writeEntry (strTVNorm, input->norm);
-            }
-        }
-        m_config->writeEntry (strTVInputs, inputlist, ';');
-    }
-    m_config->setGroup (strTV);
-    m_config->writeEntry (strTVDevices, devicelist, ';');
-    m_config->writeEntry (strTVDriver, tvdriver);
-    // end TV stuff
     // recording
     m_config->setGroup (strRecordingGroup);
     m_config->writePathEntry (strRecordingFile, recordfile);
@@ -737,6 +637,16 @@ void KMPlayerSettings::writeConfig () {
         m_config->writeEntry (QString ("Profile_") + ffserversettingprofiles[i]->name, ffserversettingprofiles[i]->list(), ';');
     }
     m_config->writeEntry (strFFServerProfiles, sl, ';');
+    //dynamic stuff
+    PrefEntryList::iterator pr_it = configdialog->entries.begin ();
+    for (; pr_it != configdialog->entries.end (); ++pr_it) {
+        TabList & tabs = (*pr_it)->tabs;
+        TabList::iterator t_it = tabs.begin ();
+        for (; t_it != tabs.end (); ++t_it)
+            if ((*t_it)->source)
+                ;//(*t_it)->source->write (m_config);
+    }
+    //\dynamic stuff
     m_config->sync ();
 }
 
@@ -904,6 +814,16 @@ void KMPlayerSettings::okPressed () {
     configdialog->m_BroadcastFormatPage->getSettings(ffserversettings);
     writeConfig ();
 
+    //dynamic stuff
+    PrefEntryList::iterator pr_it = configdialog->entries.begin ();
+    for (; pr_it != configdialog->entries.end (); ++pr_it) {
+        TabList & tabs = (*pr_it)->tabs;
+        TabList::iterator t_it = tabs.begin ();
+        for (; t_it != tabs.end (); ++t_it)
+            if ((*t_it)->source)
+                (*t_it)->source->sync ((*t_it)->frame, true);
+    }
+    //\dynamic stuff
     emit configChanged ();
 
     if (urlchanged) {
@@ -918,98 +838,6 @@ void KMPlayerSettings::okPressed () {
 
 void KMPlayerSettings::getHelp () {
     KApplication::kApplication()->invokeBrowser ("man:/mplayer");
-}
-
-//-----------------------------------------------------------------------------
-TVDeviceScannerSource::TVDeviceScannerSource (KMPlayer * player)
-    : KMPlayerSource (player), m_tvdevice (0) {}
-
-void TVDeviceScannerSource::init () {
-    ;
-}
-
-bool TVDeviceScannerSource::processOutput (const QString & line) {
-    if (m_nameRegExp.search (line) > -1) {
-        m_tvdevice->name = m_nameRegExp.cap (1);
-        kdDebug() << "Name " << m_tvdevice->name << endl;
-    } else if (m_sizesRegExp.search (line) > -1) {
-        m_tvdevice->minsize = QSize (m_sizesRegExp.cap (1).toInt (),
-                                     m_sizesRegExp.cap (2).toInt ());
-        m_tvdevice->maxsize = QSize (m_sizesRegExp.cap (3).toInt (),
-                                     m_sizesRegExp.cap (4).toInt ());
-        kdDebug() << "MinSize (" << m_tvdevice->minsize.width () << "," << m_tvdevice->minsize.height () << ")" << endl;
-    } else if (m_inputRegExp.search (line) > -1) {
-        TVInput * input = new TVInput (m_inputRegExp.cap (2).stripWhiteSpace (),
-                                       m_inputRegExp.cap (1).toInt ());
-        input->hastuner = m_inputRegExp.cap (3).toInt () == 1;
-        m_tvdevice->inputs.push_back (input);
-        kdDebug() << "Input " << input->id << ": " << input->name << endl;
-    } else
-        return false;
-    return true;
-}
-
-QString TVDeviceScannerSource::filterOptions () {
-    return QString ("");
-}
-
-bool TVDeviceScannerSource::hasLength () {
-    return false;
-}
-
-bool TVDeviceScannerSource::isSeekable () {
-    return false;
-}
-
-bool TVDeviceScannerSource::scan (const QString & dev, const QString & dri) {
-    if (m_tvdevice)
-        return false;
-    m_tvdevice = new TVDevice (dev, QSize ());
-    m_driver = dri;
-    m_source = m_player->process ()->source ();
-    m_player->setSource (this);
-    play ();
-    return !!m_tvdevice;
-}
-
-void TVDeviceScannerSource::activate () {
-    m_player->setProcess (m_player->mplayer ());
-    m_nameRegExp.setPattern ("Selected device:\\s*([^\\s].*)");
-    m_sizesRegExp.setPattern ("Supported sizes:\\s*([0-9]+)x([0-9]+) => ([0-9]+)x([0-9]+)");
-    m_inputRegExp.setPattern ("\\s*([0-9]+):\\s*([^:]+):[^\\(]*\\(tuner:([01]),\\s*norm:([^\\)]+)\\)");
-}
-
-void TVDeviceScannerSource::deactivate () {
-    disconnect (m_player, SIGNAL (stopPlaying ()), this, SLOT (finished ()));
-    if (m_tvdevice) {
-        delete m_tvdevice;
-        m_tvdevice = 0L;
-        emit scanFinished (m_tvdevice);
-    }
-}
-
-void TVDeviceScannerSource::play () {
-    if (!m_tvdevice)
-        return;
-    QString args;
-    args.sprintf ("tv:// -tv driver=%s:device=%s -identify -frames 0", m_driver.ascii (), m_tvdevice->device.ascii ());
-    m_player->stop ();
-    m_player->mplayer ()->initProcess ();
-    if (m_player->mplayer ()->run (args.ascii()))
-        connect (m_player, SIGNAL (stopPlaying ()), this, SLOT (finished ()));
-    else
-        deactivate ();
-}
-
-void TVDeviceScannerSource::finished () {
-    TVDevice * dev = 0L;
-    if (!m_tvdevice->inputs.size ())
-        delete m_tvdevice;
-    else
-        dev = m_tvdevice;
-    m_tvdevice = 0L;
-    m_player->setSource (m_source);
-    emit scanFinished (dev);
 }
 
 #include "kmplayerconfig.moc"

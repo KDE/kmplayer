@@ -26,11 +26,14 @@
 #include <kurl.h>
 
 class KMPlayer;
+class KConfig;
+class QWidget;
+class QFrame;
 
 class KMPlayerSource : public QObject {
     Q_OBJECT
 public:
-    KMPlayerSource (KMPlayer * player);
+    KMPlayerSource (const QString & name, KMPlayer * player);
     virtual ~KMPlayerSource ();
     virtual void init ();
     virtual bool processOutput (const QString & line);
@@ -67,11 +70,18 @@ public:
     /* setPosition (pos) set position in deci-seconds */
     void setPosition (int pos) { m_position = pos; }
     virtual void setIdentified (bool b = true);
+
     virtual QString prettyName ();
+    virtual void write (KConfig *);
+    virtual void read (KConfig *);
+    virtual void sync (QFrame *, bool fromUI);
+    virtual void prefLocation (QString & item, QString & icon, QString & tab);
+    virtual QFrame * prefPage (QWidget * parent);
 public slots:
     virtual void activate () = 0;
     virtual void deactivate () = 0;
 protected:
+    QString m_name;
     KMPlayer * m_player;
     QString m_recordcmd;
     bool m_identified;

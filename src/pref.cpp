@@ -54,6 +54,28 @@
 #include "kmplayerprocess.h"
 #include "kmplayerconfig.h"
 
+PrefSubEntry::PrefSubEntry (const QString & n, QFrame * f, KMPlayerSource * s)
+    : name (n), frame (f), source (s) {}
+
+PrefEntry::PrefEntry (const QString & n, const QString & i, QFrame * f, QTabWidget * t)
+    : name (n), icon (i), frame (f), tab (t) {}
+
+inline bool operator == (const QString & name, const PrefEntry * entry) {
+    return name == entry->name;
+}
+
+inline bool operator == (const PrefEntry * entry, const QString & name) {
+    return name == entry->name;
+}
+
+inline bool operator != (const QString & name, const PrefEntry * entry) {
+    return name != entry->name;
+}
+
+inline bool operator != (const PrefEntry * entry, const QString & name) {
+    return name != entry->name;
+}
+
 KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver * ad, FFServerSettingList & ffs)
 : KDialogBase (IconList, i18n ("KMPlayer Preferences"),
 		Help|Default|Ok|Apply|Cancel, Ok, player->view (), 0, false)
@@ -73,6 +95,11 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
     tab->insertTab (m_GeneralPageOutput, i18n("Output"));
     m_GeneralPageAdvanced = new KMPlayerPrefGeneralPageAdvanced (tab);
     tab->insertTab (m_GeneralPageAdvanced, i18n("Advanced"));
+    PrefEntry * entry = new PrefEntry (i18n("General Options"), QString ("kmplayer"), frame, tab);
+    entry->tabs.push_back (new PrefSubEntry (i18n("General"), m_GeneralPageGeneral, 0L));
+    entry->tabs.push_back (new PrefSubEntry (i18n("Output"), m_GeneralPageOutput, 0L));
+    entry->tabs.push_back (new PrefSubEntry (i18n("Advanced"), m_GeneralPageAdvanced, 0L));
+    entries.push_back (entry);
 
     frame = addPage (i18n ("Source"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("source"), KIcon::NoGroup, 32));
     vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
@@ -84,8 +111,12 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
     tab->insertTab (m_GeneralPageDVD, i18n ("DVD"));
     m_GeneralPageVCD = new KMPlayerPrefGeneralPageVCD (tab);
     tab->insertTab (m_GeneralPageVCD, i18n ("VCD"));
-    m_SourcePageTV = new KMPlayerPrefSourcePageTV (tab, this);
-    tab->insertTab (m_SourcePageTV, i18n ("TV"));
+
+    entry = new PrefEntry (i18n("Source"), QString ("source"), frame, tab);
+    entry->tabs.push_back (new PrefSubEntry (i18n("URL"), m_SourcePageURL, 0L));
+    entry->tabs.push_back (new PrefSubEntry (i18n("DVD"), m_GeneralPageDVD, 0L));
+    entry->tabs.push_back (new PrefSubEntry (i18n("VCD"), m_GeneralPageVCD, 0L));
+    entries.push_back (entry);
 
     frame = addPage (i18n ("Recording"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("video"), KIcon::NoGroup, 32));
     vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
@@ -127,6 +158,28 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
     vlay->addWidget (tab);
     m_OPPagePostproc = new KMPlayerPrefOPPagePostProc (tab);
     tab->insertTab (m_OPPagePostproc, i18n ("Postprocessing"));
+
+    SourceMap::iterator sit = player->sources ().begin ();
+    for (; sit != player->sources ().end (); ++sit) {
+        KMPlayerSource * s = sit.data ();
+        QString item, subitem, icon;
+        s->prefLocation (item, icon, subitem);
+        if (!item.isEmpty ()) {
+            PrefEntryList::iterator pi_it = std::find (entries.begin (), entries.end (), item);
+            if (pi_it == entries.end ()) {
+                frame = addPage (item, QString::null, KGlobal::iconLoader()->loadIcon ((icon), KIcon::NoGroup, 32));
+                vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
+                tab = new QTabWidget (frame);
+                vlay->addWidget (tab);
+                entry = new PrefEntry (item, icon, frame, tab);
+                entries.push_back (entry);
+            } else
+                entry = *pi_it;
+            frame = s->prefPage (entry->tab);
+            entry->tab->insertTab (frame, subitem);
+            entry->tabs.push_back (new PrefSubEntry (subitem, frame, s));
+        }
+    }
 
     connect (this, SIGNAL (defaultClicked ()), SLOT (confirmDefaults ()));
 }
@@ -268,231 +321,6 @@ KMPlayerPrefGeneralPageDVD::KMPlayerPrefGeneralPageDVD(QWidget *parent) : QFrame
     layout->addWidget (dvdDevicePathLabel);
     layout->addWidget (dvdDevicePath);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-}
-
-struct TableInserter {
-    QTable * table;
-    int index;
-    TableInserter (QTable * t) : table (t), index (0) {}
-    void operator () (TVChannel * channel) {
-        table->setItem (index, 0, new QTableItem (table, QTableItem::Always,
-                        channel->name));
-        table->setItem (index++, 1, new QTableItem (table, QTableItem::Always,
-                        QString::number (channel->frequency)));
-    }
-};
-
-KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent, TVDevice * dev)
-: QFrame (parent, "PageTVDevice"), device (dev) {
-    QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
-    QLabel * deviceLabel = new QLabel (QString (i18n ("Video device:")) + device->device, this, 0);
-    layout->addWidget (deviceLabel);
-    QGridLayout *gridlayout = new QGridLayout (layout, 5, 4);
-    QLabel * audioLabel = new QLabel (i18n ("Audio device:"), this);
-    audiodevice = new KURLRequester (device->audiodevice, this);
-    QLabel * nameLabel = new QLabel (i18n ("Name:"), this, 0);
-    name = new QLineEdit ("", this, 0);
-    QLabel *sizewidthLabel = new QLabel (i18n ("Width:"), this, 0);
-    sizewidth = new QLineEdit ("", this, 0);
-    QLabel *sizeheightLabel = new QLabel (i18n ("Height:"), this, 0);
-    sizeheight = new QLineEdit ("", this, 0);
-    noplayback = new QCheckBox (i18n ("Do not immediately play"), this);
-    QToolTip::add (noplayback, i18n ("Only start playing after clicking the play button"));
-    inputsTab = new QTabWidget (this);
-    TVInputList::iterator iit = device->inputs.begin ();
-    for (; iit != device->inputs.end (); ++iit) {
-        TVInput * input = *iit;
-        QWidget * widget = new QWidget (this);
-        QVBoxLayout *tablayout = new QVBoxLayout (widget, 5, 2);
-        QLabel * inputLabel = new QLabel (input->name, widget);
-        tablayout->addWidget (inputLabel);
-        if (input->hastuner) {
-            QHBoxLayout *horzlayout = new QHBoxLayout ();
-            horzlayout->addWidget (new QLabel (i18n ("Norm:"), widget));
-            QComboBox * norms = new QComboBox (widget, "PageTVNorm");
-            norms->insertItem (QString ("NTSC"), 0);
-            norms->insertItem (QString ("PAL"), 1);
-            norms->insertItem (QString ("SECAM"), 2);
-            norms->setCurrentText (input->norm);
-            horzlayout->addWidget (norms);
-            tablayout->addLayout (horzlayout);
-            QTable * table = new QTable (90, 2, widget, "PageTVChannels");
-            table->setColumnWidth (0, 250);
-            table->setColumnWidth (1, 150);
-            QHeader *header = table->horizontalHeader();
-            header->setLabel (0, i18n ("Channel"));
-            header->setLabel (1, i18n ("Frequency"));
-            std::for_each (input->channels.begin(),
-                           input->channels.end(),
-                           TableInserter(table));
-            tablayout->addSpacing (5);
-            tablayout->addWidget (table);
-        }
-        inputsTab->addTab (widget, input->name);
-    }
-    QPushButton * delButton = new QPushButton (i18n ("Delete"), this);
-    connect (delButton, SIGNAL (clicked ()), this, SLOT (slotDelete ()));
-    gridlayout->addWidget (audioLabel, 0, 0);
-    gridlayout->addMultiCellWidget (audiodevice, 0, 0, 1, 3);
-    gridlayout->addWidget (nameLabel, 1, 0);
-    gridlayout->addMultiCellWidget (name, 1, 1, 1, 3);
-    gridlayout->addWidget (sizewidthLabel, 2, 0);
-    gridlayout->addWidget (sizewidth, 2, 1);
-    gridlayout->addWidget (sizeheightLabel, 2, 2);
-    gridlayout->addWidget (sizeheight, 2, 3);
-    gridlayout->addMultiCellWidget (noplayback, 3, 3, 0, 3);
-    layout->addWidget (inputsTab);
-    layout->addSpacing (5);
-    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
-    QHBoxLayout *buttonlayout = new QHBoxLayout ();
-    buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
-    buttonlayout->addWidget (delButton);
-    layout->addLayout (buttonlayout);
-}
-
-void KMPlayerPrefSourcePageTVDevice::slotDelete () {
-    if (KMessageBox::warningYesNo (this, i18n ("You're about to remove this device from the Source menu.\nContinue?"), i18n ("Confirm")) == KMessageBox::Yes)
-        emit deleted (this);
-}
-
-void KMPlayerPrefSourcePageTVDevice::updateTVDevice () {
-    device->name = name->text ();
-    device->audiodevice = audiodevice->lineEdit()->text ();
-    device->noplayback = noplayback->isChecked ();
-    device->size = QSize(sizewidth->text().toInt(), sizeheight->text().toInt());
-    TVInputList::iterator iit = device->inputs.begin ();
-    for (int i = 0; iit != device->inputs.end (); ++iit, i++) {
-        TVInput * input = *iit;
-        if (input->hastuner) {
-            QWidget * widget = inputsTab->page (i);
-            QTable * table = static_cast <QTable *> (widget->child ("PageTVChannels", "QTable"));
-            if (table) {
-                input->clear ();
-                for (int j = 0; j < table->numRows (); ++j) {
-                    if (table->item (j, 0) && table->item (j, 1) && !table->item (j, 0)->text ().isEmpty ())
-                        input->channels.push_back (new TVChannel (table->item (j, 0)->text (), table->item (j, 1)->text ().toInt ()));
-                }
-            }
-            QComboBox * norms = static_cast <QComboBox *> (widget->child ("PageTVNorm", "QComboBox"));
-            if (norms) {
-                input->norm = norms->currentText ();
-            }
-        }
-    }
-}
-
-KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerPreferences * pref)
-: QFrame (parent), m_preference (pref) {
-    QVBoxLayout * mainlayout = new QVBoxLayout (this, 5);
-    tab = new QTabWidget (this);
-    tab->setTabPosition (QTabWidget::Bottom);
-    mainlayout->addWidget (tab);
-    QWidget * general = new QWidget (tab);
-    QVBoxLayout *layout = new QVBoxLayout (general);
-    QGridLayout *gridlayout = new QGridLayout (layout, 2, 2, 2);
-    QLabel *driverLabel = new QLabel (i18n ("Driver:"), general, 0);
-    driver = new QLineEdit ("", general, 0);
-    QToolTip::add (driver, i18n ("dummy, v4l or bsdbt848"));
-    QLabel *deviceLabel = new QLabel (i18n ("Device:"), general, 0);
-    device = new KURLRequester ("/dev/video", general);
-    QToolTip::add (device, i18n("Path to your video device, eg. /dev/video0"));
-    QPushButton * scan = new QPushButton (i18n ("Scan..."), general);
-    connect (scan, SIGNAL (clicked ()), this, SLOT (slotScan ()));
-    gridlayout->addWidget (driverLabel, 0, 0);
-    gridlayout->addWidget (driver, 0, 1);
-    gridlayout->addWidget (deviceLabel, 1, 0);
-    gridlayout->addWidget (device, 1, 1);
-    QHBoxLayout *buttonlayout = new QHBoxLayout ();
-    buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
-    buttonlayout->addWidget (scan);
-    layout->addLayout (buttonlayout);
-    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    tab->insertTab (general, i18n ("General"));
-}
-
-struct TVDevicePageAdder {
-    KMPlayerPrefSourcePageTV * page;
-    bool show;
-    TVDevicePageAdder (KMPlayerPrefSourcePageTV * p, bool s = false) : page (p), show (s) {}
-    void operator () (TVDevice * device);
-};
-
-void TVDevicePageAdder::operator () (TVDevice * device) {
-    KMPlayerPrefSourcePageTVDevice * devpage = new KMPlayerPrefSourcePageTVDevice (page->tab, device);
-    page->tab->insertTab (devpage, device->name);
-    devpage->name->setText (device->name);
-    devpage->sizewidth->setText (QString::number (device->size.width ()));
-    devpage->sizeheight->setText (QString::number (device->size.height ()));
-    devpage->noplayback->setChecked (device->noplayback);
-    page->connect (devpage, SIGNAL (deleted (KMPlayerPrefSourcePageTVDevice *)),
-                   page, SLOT (slotDeviceDeleted (KMPlayerPrefSourcePageTVDevice *)));
-    page->m_devicepages.push_back (devpage);
-    if (show)
-        page->tab->setCurrentPage (page->tab->indexOf (devpage));
-}
-
-void KMPlayerPrefSourcePageTV::setTVDevices (TVDeviceList * devs) {
-    m_devices = devs;
-    std::for_each (addeddevices.begin(), addeddevices.end(), Deleter<TVDevice>);
-    addeddevices.clear ();
-    deleteddevices.clear ();
-    std::for_each (m_devicepages.begin(), m_devicepages.end(), Deleter<QFrame>);
-    m_devicepages.clear ();
-    std::for_each(m_devices->begin(), m_devices->end(),TVDevicePageAdder(this));
-}
-
-void KMPlayerPrefSourcePageTV::slotDeviceDeleted (KMPlayerPrefSourcePageTVDevice * devpage) {
-    if (std::find (addeddevices.begin (), addeddevices.end (), devpage->device) != addeddevices.end ())
-        addeddevices.remove (devpage->device);
-    deleteddevices.push_back (devpage->device);
-    m_devicepages.remove (devpage);
-    devpage->deleteLater ();
-    tab->setCurrentPage (0);
-}
-
-void KMPlayerPrefSourcePageTV::slotScan () {
-    TVDeviceList::iterator dit = std::find (m_devices->begin (),
-                                            m_devices->end (), device->lineEdit()->text ());
-    if (dit != m_devices->end ()) {
-        dit = std::find (deleteddevices.begin (),
-                         deleteddevices.end (), device->lineEdit()->text ());
-        if (dit == deleteddevices.end ()) {
-            KMessageBox::error (this, i18n ("Device already present."),
-                                      i18n ("Error"));
-            return;
-        }
-    }
-    scanner->scan (device->lineEdit()->text (), driver->text());
-    connect (scanner, SIGNAL (scanFinished (TVDevice *)),
-             this, SLOT (slotScanFinished (TVDevice *)));
-}
-
-void KMPlayerPrefSourcePageTV::slotScanFinished (TVDevice * _device) {
-    disconnect (scanner, SIGNAL (scanFinished (TVDevice *)),
-                this, SLOT (slotScanFinished (TVDevice *)));
-    if (!_device) {
-        KMessageBox::error (this, i18n ("No device found."), i18n ("Error"));
-    } else {
-        addeddevices.push_back (_device);
-        TVDevicePageAdder (this, true) (_device);
-    }
-}
-
-void KMPlayerPrefSourcePageTV::updateTVDevices () {
-    TVDevicePageList::iterator pit = m_devicepages.begin ();
-    for (; pit != m_devicepages.end (); ++pit)
-            (*pit)->updateTVDevice ();
-    // remove deleted devices
-    TVDeviceList::iterator deldit = deleteddevices.begin ();
-    for (; deldit != deleteddevices.end (); ++deldit) {
-        TVDeviceList::iterator dit = std::find (m_devices->begin (), m_devices->end (), (*deldit)->device);
-        if (dit != m_devices->end ())
-            m_devices->erase (dit);
-        delete *dit;
-    }
-    deleteddevices.clear ();
-    // move added devices to device list
-    m_devices->splice (m_devices->end (), addeddevices);
 }
 
 KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * player, RecorderList & rl) : QFrame (parent, "RecordPage"), m_player (player), m_recorders (rl) {

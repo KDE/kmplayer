@@ -86,7 +86,6 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
    m_mencoder (new MEncoder (this)),
    m_ffmpeg (new FFMpeg (this)),
    m_xine (new Xine (this)),
-   m_urlsource (new KMPlayerURLSource (this)),
    m_bookmark_manager (new KMPlayerBookmarkManager),
    m_bookmark_owner (new KMPlayerBookmarkOwner (this)),
    m_bookmark_menu (0L),
@@ -94,6 +93,7 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
    m_autoplay (true),
    m_ispart (false),
    m_noresize (false) {
+    m_urlsource = new KMPlayerURLSource (this);
 }
 
 void KMPlayer::showConfigDialog () {
@@ -146,6 +146,10 @@ KMPlayer::~KMPlayer () {
 
 KMediaPlayer::View* KMPlayer::view () {
     return m_view;
+}
+
+void KMPlayer::addSource (const QString & name, KMPlayerSource * source) {
+    m_sources.insert (name, source);
 }
 
 void KMPlayer::setProcess (KMPlayerProcess * process) {
@@ -485,14 +489,17 @@ KAboutData* KMPlayer::createAboutData () {
 
 //-----------------------------------------------------------------------------
 
-KMPlayerSource::KMPlayerSource (KMPlayer * player)
-    : QObject (player), m_player (player) {
+KMPlayerSource::KMPlayerSource (const QString & name, KMPlayer * player)
+    : QObject (player), m_name (name), m_player (player) {
     kdDebug () << "KMPlayerSource::KMPlayerSource" << endl;
+    player->addSource (name, this);
     init ();
 }
 
 KMPlayerSource::~KMPlayerSource () {
     kdDebug () << "KMPlayerSource::~KMPlayerSource" << endl;
+    // TODO: remove stuff (note m_player is deleted already because of auto deletion)
+    //m_player->sources ().remove (m_name);
 }
 
 void KMPlayerSource::init () {
@@ -638,10 +645,22 @@ void KMPlayerSource::setIdentified (bool b) {
 QString KMPlayerSource::prettyName () {
     return QString (i18n ("Unknown"));
 }
+
+void KMPlayerSource::write (KConfig *) {}
+
+void KMPlayerSource::read (KConfig *) {}
+
+void KMPlayerSource::sync (QFrame *, bool) {}
+
+void KMPlayerSource::prefLocation (QString &, QString &, QString &) {}
+
+QFrame * KMPlayerSource::prefPage (QWidget *) {
+    return 0L;
+}
 //-----------------------------------------------------------------------------
 
 KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, const KURL & url)
-    : KMPlayerSource (player) {
+    : KMPlayerSource (i18n ("URL"), player) {
     m_url = url;
     kdDebug () << "KMPlayerURLSource::KMPlayerURLSource" << endl;
 }

@@ -58,6 +58,7 @@
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
 #include "kmplayerappsource.h"
+#include "kmplayertvsource.h"
 #include "kmplayerconfig.h"
 
 #define ID_STATUS_MSG 1
@@ -687,8 +688,8 @@ void KMPlayerApp::showConsoleOutput () {
 
 //-----------------------------------------------------------------------------
 
-KMPlayerMenuSource::KMPlayerMenuSource (KMPlayerApp * a, QPopupMenu * m)
-    : KMPlayerSource (a->player ()), m_menu (m), m_app (a) {
+KMPlayerMenuSource::KMPlayerMenuSource (const QString & n, KMPlayerApp * a, QPopupMenu * m)
+    : KMPlayerSource (n, a->player ()), m_menu (m), m_app (a) {
 }
 
 KMPlayerMenuSource::~KMPlayerMenuSource () {
@@ -711,7 +712,7 @@ void KMPlayerMenuSource::menuItemClicked (QPopupMenu * menu, int id) {
 //-----------------------------------------------------------------------------
 
 KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopupMenu * m)
-    : KMPlayerMenuSource (a, m) {
+    : KMPlayerMenuSource (i18n ("DVD"), a, m) {
     m_menu->insertTearOffHandle ();
     m_dvdtitlemenu = new QPopupMenu (m_app);
     m_dvdsubtitlemenu = new QPopupMenu (m_app);
@@ -875,7 +876,7 @@ QString KMPlayerDVDSource::prettyName () {
 //-----------------------------------------------------------------------------
 
 KMPlayerDVDNavSource::KMPlayerDVDNavSource (KMPlayerApp * app, QPopupMenu * m)
-    : KMPlayerMenuSource (app, m) {
+    : KMPlayerMenuSource (i18n ("DVDNav"), app, m) {
     m_menu->insertTearOffHandle (-1, 0);
     m_url = KURL ("dvd://");
 }
@@ -935,7 +936,7 @@ QString KMPlayerDVDNavSource::prettyName () {
 //-----------------------------------------------------------------------------
                         
 KMPlayerVCDSource::KMPlayerVCDSource (KMPlayerApp * a, QPopupMenu * m)
-    : KMPlayerMenuSource (a, m) {
+    : KMPlayerMenuSource (i18n ("VCD"), a, m) {
     m_menu->insertTearOffHandle ();
     m_vcdtrackmenu = new QPopupMenu (m_app);
     m_vcdtrackmenu->setCheckable (true);
@@ -1021,7 +1022,7 @@ QString KMPlayerVCDSource::prettyName () {
 //-----------------------------------------------------------------------------
 
 KMPlayerPipeSource::KMPlayerPipeSource (KMPlayerApp * a)
-    : KMPlayerSource (a->player ()), m_app (a) {
+    : KMPlayerSource (i18n ("Pipe"), a->player ()), m_app (a) {
 }
 
 KMPlayerPipeSource::~KMPlayerPipeSource () {
@@ -1048,173 +1049,6 @@ void KMPlayerPipeSource::deactivate () {
 
 QString KMPlayerPipeSource::prettyName () {
     return i18n ("Pipe - %1").arg (m_pipecmd);
-}
-
-//-----------------------------------------------------------------------------
-/*
- * [TV]
- * Devices=/dev/video0;/dev/video1
- * Driver=v4l
- *
- * [/dev/video0]
- * Inputs=0:Television;1:Composite1;2:S-Video;3:Composite3
- * Size=768,576
- * Television=Ned1:216;Ned2:184;Ned3:192
- *
- * [/dev/video1]
- * Inputs=0:Webcam
- * Size=640,480
- */
-
-KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QPopupMenu * m)
-    : KMPlayerMenuSource (a, m) {
-    m_tvsource = 0L;
-    m_menu->insertTearOffHandle ();
-    m_url = KURL ("tv://");
-}
-
-KMPlayerTVSource::~KMPlayerTVSource () {
-}
-
-void KMPlayerTVSource::activate () {
-    m_identified = true;
-    m_player->setProcess (m_player->mplayer ());
-    buildArguments ();
-    if (m_player->settings ()->showbroadcastbutton)
-        m_app->view()->broadcastButton ()->show ();
-}
-/* TODO: playback by
- * ffmpeg -vd /dev/video0 -r 25 -s 768x576 -f rawvideo - |mplayer -nocache -ao arts -rawvideo on:w=768:h=576:fps=25 -quiet -
- */
-void KMPlayerTVSource::buildArguments () {
-    if (!m_tvsource)
-        return;
-    m_identified = true;
-    KMPlayerSettings * config = m_player->settings ();
-    m_app->setCaption (QString (i18n ("TV: ")) + m_tvsource->title, false);
-    setWidth (m_tvsource->size.width ());
-    setHeight (m_tvsource->size.height ());
-    m_options.sprintf ("-tv noaudio:driver=%s:%s:width=%d:height=%d -slave -nocache -quiet", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
-    if (config->mplayerpost090)
-        m_recordcmd.sprintf ("-tv %s:driver=%s:%s:width=%d:height=%d", m_tvsource->audiodevice.isEmpty () ? "noaudio" : (QString ("forceaudio:adevice=") + m_tvsource->audiodevice).ascii(), config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
-    else
-        m_recordcmd.sprintf ("-tv on:%s:driver=%s:%s:width=%d:height=%d", m_tvsource->audiodevice.isEmpty () ? "noaudio" : (QString ("forceaudio:adevice=") + m_tvsource->audiodevice).ascii(), config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
-    if (!m_app->broadcasting ())
-        m_app->resizePlayer (100);
-    m_audiodevice = m_tvsource->audiodevice;
-    m_videodevice = m_tvsource->videodevice;
-    m_videonorm = m_tvsource->norm;
-    m_frequency = m_tvsource->frequency;
-}
-
-void KMPlayerTVSource::deactivate () {
-    if (m_app->view () && !m_app->view ()->broadcastButton ()->isOn ())
-        m_app->view ()->broadcastButton ()->hide ();
-}
-
-void KMPlayerTVSource::buildMenu () {
-    KMPlayerSettings * config = m_player->settings ();
-    QString currentcommand;
-    if (m_tvsource)
-        currentcommand = m_tvsource->command;
-    CommandMap::iterator it = commands.begin ();
-    for ( ; it != commands.end (); ++it)
-        delete it.data ();
-    commands.clear ();
-    m_menu->clear ();
-    m_menu->insertTearOffHandle ();
-    m_tvsource = 0L;
-    int counter = 0;
-    TVDeviceList::iterator dit = config->tvdevices.begin ();
-    for (; dit != config->tvdevices.end (); ++dit) {
-        TVDevice * device = *dit;
-        QPopupMenu * devmenu = new QPopupMenu (m_app);
-        TVInputList::iterator iit = device->inputs.begin ();
-        for (; iit != device->inputs.end (); ++iit) {
-            TVInput * input = *iit;
-            if (input->channels.size () <= 0) {
-                TVSource * source = new TVSource;
-                devmenu->insertItem (input->name, this, SLOT (menuClicked (int)), 0, counter);
-                source->videodevice = device->device;
-                source->audiodevice = device->audiodevice;
-                source->noplayback = device->noplayback;
-                source->frequency = -1;
-                source->command.sprintf ("device=%s:input=%d", device->device.ascii (), input->id);
-                if (currentcommand == source->command)
-                    m_tvsource = source;
-                source->size = device->size;
-                source->title = device->name + QString ("-") + input->name;
-                commands.insert (counter++, source);
-            } else {
-                QPopupMenu * inputmenu = new QPopupMenu (m_app);
-                inputmenu->insertTearOffHandle ();
-                TVChannelList::iterator it = input->channels.begin ();
-                for (; it != input->channels.end (); ++it) {
-                    TVSource * source = new TVSource;
-                    source->videodevice = device->device;
-                    source->audiodevice = device->audiodevice;
-                    source->noplayback = device->noplayback;
-                    source->frequency = (*it)->frequency;
-                    source->size = device->size;
-                    source->norm = input->norm;
-                    inputmenu->insertItem ((*it)->name, this, SLOT(menuClicked (int)), 0, counter);
-                    source->command.sprintf ("device=%s:input=%d:freq=%d", device->device.ascii (), input->id, (*it)->frequency);
-                    if (!source->norm.isEmpty ())
-                        source->command += QString (":norm=") + source->norm;
-                    source->title = device->name + QString("-") + (*it)->name;
-                    if (currentcommand == source->command)
-                        m_tvsource = source;
-                    commands.insert (counter++, source);
-                }
-                devmenu->insertItem (input->name, inputmenu, 0, input->id);
-            }
-        }
-        m_menu->insertItem (device->name, devmenu);
-    }
-}
-
-void KMPlayerTVSource::menuClicked (int id) {
-    CommandMap::iterator it = commands.find (id);
-    if (it != commands.end ()) {
-        TVSource * prevsource = m_tvsource;
-        m_tvsource = it.data ();
-        bool playing = prevsource && 
-                       (prevsource->videodevice == m_tvsource->videodevice) &&
-                       m_player->playing ();
-        buildArguments ();
-        if (m_player->process ()->source () != this) {
-            m_player->setSource (this);
-            playing = false;
-        }
-        if (m_app->broadcasting ())
-            QTimer::singleShot (0, m_app, SLOT (startFeed ()));
-        else {
-            m_player->stop ();
-            if (!m_tvsource->noplayback || playing)
-                QTimer::singleShot (0, m_player, SLOT (play ()));
-        }
-    }
-}
-
-QString KMPlayerTVSource::filterOptions () {
-    if (! m_player->settings ()->disableppauto)
-        return KMPlayerSource::filterOptions ();
-    return QString ("-vop pp=lb");
-}
-
-bool KMPlayerTVSource::hasLength () {
-    return false;
-}
-
-bool KMPlayerTVSource::isSeekable () {
-    return false;
-}
-
-QString KMPlayerTVSource::prettyName () {
-    QString name (i18n ("TV"));
-    if (m_tvsource)
-        name += ' ' + m_tvsource->title;
-    return name;
 }
 
 #include "kmplayer.moc"

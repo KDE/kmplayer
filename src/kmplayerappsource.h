@@ -25,6 +25,7 @@
 
 #include <qptrlist.h>
 #include <qmap.h>
+#include <qregexp.h>
 
 #include <kurl.h>
 
@@ -40,7 +41,7 @@ class TVChannel;
 class KMPlayerMenuSource : public KMPlayerSource {
     Q_OBJECT
 public:
-    KMPlayerMenuSource (KMPlayerApp * app, QPopupMenu * m);
+    KMPlayerMenuSource (const QString & n, KMPlayerApp * app, QPopupMenu * m);
     virtual ~KMPlayerMenuSource ();
 protected:
     void menuItemClicked (QPopupMenu * menu, int id);
@@ -137,39 +138,5 @@ private:
     KMPlayerApp * m_app;
 };
 
-
-class KMPlayerTVSource : public KMPlayerMenuSource {
-    Q_OBJECT
-public:
-    struct TVSource {
-        QSize size;
-        QString command;
-        QString videodevice;
-        QString audiodevice;
-        QString title;
-        QString norm;
-        int frequency;
-        bool noplayback;
-    };
-    KMPlayerTVSource (KMPlayerApp * app, QPopupMenu * m);
-    virtual ~KMPlayerTVSource ();
-    virtual QString filterOptions ();
-    virtual bool hasLength ();
-    virtual bool isSeekable ();
-    void buildMenu ();
-    TVSource * tvsource () const { return m_tvsource; }
-    virtual QString prettyName ();
-public slots:
-    virtual void activate ();
-    virtual void deactivate ();
-
-    void menuClicked (int id);
-private:
-    void buildArguments ();
-    typedef QMap <int, TVSource *> CommandMap;
-    TVSource * m_tvsource;
-    CommandMap commands;
-    QPopupMenu * m_channelmenu;
-};
 
 #endif // KMPLAYERAPPSOURCE_H

@@ -50,7 +50,6 @@ class KMPlayerPrefGeneralPageGeneral; 	// general, general
 class KMPlayerPrefSourcePageURL;        // source, url
 class KMPlayerPrefGeneralPageDVD;	// general, dvd
 class KMPlayerPrefGeneralPageVCD;	// general, vcd
-class KMPlayerPrefSourcePageTV;         // source, TV
 class KMPlayerPrefRecordPage;           // recording
 class RecorderPage;                     // base recorder
 class KMPlayerPrefMEncoderPage;         // mencoder
@@ -81,62 +80,6 @@ void Deleter (T * t) {
     delete t;
 }
 
-class TVChannel {
-public:
-    TVChannel (const QString & n, int f);
-    QString name;
-    int frequency;
-};
-
-typedef std::list <TVChannel *> TVChannelList;
-
-class TVInput {
-public:
-    TVInput (const QString & n, int id);
-    ~TVInput () { clear (); }
-    void clear ();
-    QString name;
-    int id;
-    bool hastuner;
-    QString norm;
-    TVChannelList channels;
-};
-
-typedef std::list <TVInput *> TVInputList;
-
-class TVDevice {
-public:
-    TVDevice (const QString & d, const QSize & size);
-    ~TVDevice () { clear (); }
-    void clear ();
-    QString device;
-    QString audiodevice;
-    QString name;
-    QSize minsize;
-    QSize maxsize;
-    QSize size;
-    bool noplayback;
-    TVInputList inputs;
-};
-
-inline bool operator == (const TVDevice * device, const QString & devstr) {
-    return devstr == device->device;
-}
-
-inline bool operator == (const QString & devstr, const TVDevice * device) {
-    return devstr == device->device;
-}
-
-inline bool operator != (const TVDevice * device, const QString & devstr) {
-    return ! (devstr == device);
-}
-
-inline bool operator != (const QString & devstr, const TVDevice * device) {
-    return ! (devstr == device);
-}
-
-typedef std::list <TVDevice *> TVDeviceList;
-
 class FFServerSetting {
 public:
     FFServerSetting () {}
@@ -164,31 +107,25 @@ public:
 
 typedef std::vector <FFServerSetting *> FFServerSettingList;
 
-class TVDeviceScannerSource : public KMPlayerSource {
-    Q_OBJECT
-public:
-    TVDeviceScannerSource (KMPlayer * player);
-    virtual void init ();
-    virtual bool processOutput (const QString & line);
-    virtual QString filterOptions ();
-    virtual bool hasLength ();
-    virtual bool isSeekable ();
-    virtual bool scan (const QString & device, const QString & driver);
-    public slots:
-        virtual void activate ();
-    virtual void deactivate ();
-    virtual void play ();
-    void finished ();
-signals:
-    void scanFinished (TVDevice * tvdevice);
-private:
-    TVDevice * m_tvdevice;
-    KMPlayerSource * m_source;
-    QString m_driver;
-    QRegExp m_nameRegExp;
-    QRegExp m_sizesRegExp;
-    QRegExp m_inputRegExp;
+struct PrefSubEntry {
+    PrefSubEntry (const QString &, QFrame *, KMPlayerSource *); 
+    QString name;
+    QFrame * frame;
+    KMPlayerSource * source;
 };
+
+typedef std::list <PrefSubEntry *> TabList;
+
+struct PrefEntry {
+    PrefEntry (const QString &, const QString &, QFrame *, QTabWidget *);
+    QString name;
+    QString icon;
+    TabList tabs;
+    QFrame * frame;
+    QTabWidget * tab;
+};
+
+typedef std::list <PrefEntry *> PrefEntryList;
 
 
 class KMPlayerPreferences : public KDialogBase
@@ -203,7 +140,6 @@ public:
     KMPlayerPrefSourcePageURL 		*m_SourcePageURL;
     KMPlayerPrefGeneralPageDVD 		*m_GeneralPageDVD;
     KMPlayerPrefGeneralPageVCD 		*m_GeneralPageVCD;
-    KMPlayerPrefSourcePageTV 		*m_SourcePageTV;
     KMPlayerPrefRecordPage 		*m_RecordPage;
     KMPlayerPrefMEncoderPage            *m_MEncoderPage;
     KMPlayerPrefFFMpegPage              *m_FFMpegPage;
@@ -217,6 +153,7 @@ public:
     void setPage (const char *);
 
     RecorderList recorders;
+    PrefEntryList entries;
 public slots:
     void confirmDefaults();
 };
@@ -287,54 +224,6 @@ public:
 
 };
 
-class KMPlayerPrefSourcePageTVDevice : public QFrame
-{
-    Q_OBJECT
-public:
-    KMPlayerPrefSourcePageTVDevice (QWidget *parent, TVDevice * dev);
-    ~KMPlayerPrefSourcePageTVDevice () {}
-
-    QLineEdit * name;
-    KURLRequester * audiodevice;
-    QLineEdit * sizewidth;
-    QLineEdit * sizeheight;
-    QCheckBox * noplayback;
-    TVDevice * device;
-    void updateTVDevice ();
-signals:
-    void deleted (KMPlayerPrefSourcePageTVDevice *);
-private slots:
-    void slotDelete ();
-private:
-    QTabWidget * inputsTab;
-};
-
-class KMPlayerPrefSourcePageTV : public QFrame
-{
-    Q_OBJECT
-    friend class TVDevicePageAdder;
-public:
-    KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerPreferences * pref);
-    ~KMPlayerPrefSourcePageTV () {}
-
-    QLineEdit * driver;
-    KURLRequester * device;
-    QTabWidget * tab;
-    TVDeviceScannerSource * scanner;
-    void setTVDevices (TVDeviceList *);
-    void updateTVDevices ();
-private slots:
-    void slotScan ();
-    void slotScanFinished (TVDevice * device);
-    void slotDeviceDeleted (KMPlayerPrefSourcePageTVDevice *);
-private:
-    TVDeviceList * m_devices;
-    TVDeviceList deleteddevices;
-    TVDeviceList addeddevices;
-    typedef std::list <KMPlayerPrefSourcePageTVDevice *> TVDevicePageList;
-    TVDevicePageList m_devicepages;
-    KMPlayerPreferences * m_preference;
-};
 
 class KMPlayerPrefRecordPage : public QFrame
 {

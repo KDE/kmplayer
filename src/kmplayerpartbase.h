@@ -27,6 +27,7 @@
 #include <qobject.h>
 #include <qvaluelist.h>
 #include <qstringlist.h>
+#include <qmap.h>
 #include <qguardedptr.h>
 #include <qregexp.h>
 #include "kmplayerview.h"
@@ -49,6 +50,7 @@ class KConfig;
 class QIODevice;
 class JSCommandEntry;
 
+typedef QMap <QString, KMPlayerSource *> SourceMap;
 
 class KMPlayerBookmarkManager : public KBookmarkManager {
     Q_OBJECT
@@ -109,6 +111,8 @@ public:
     KMPlayerURLSource * urlSource () const { return m_urlsource; }
     KConfig * config () const { return m_config; }
     bool autoPlay () const { return m_autoplay; }
+    void addSource (const QString & name, KMPlayerSource * source);
+    SourceMap & sources () { return m_sources; }
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool closeURL ();
@@ -165,6 +169,7 @@ protected:
     FFMpeg * m_ffmpeg;
     Xine * m_xine;
     KMPlayerURLSource * m_urlsource;
+    SourceMap m_sources;
     KMPlayerBookmarkManager * m_bookmark_manager;
     KMPlayerBookmarkOwner * m_bookmark_owner;
     KBookmarkMenu * m_bookmark_menu;

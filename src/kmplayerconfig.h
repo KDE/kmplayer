@@ -103,10 +103,6 @@ public:
     QString mencoderarguments;
     QString ffmpegarguments;
     QString recordfile;
-// TV stuff
-    QString tvdriver;
-    TVDeviceList tvdevices;
-// end of TV stuff
     QString bindaddress;
     int ffserverport;
     int maxclients;
