@@ -579,6 +579,10 @@ void KMPlayerTVSource::read (KConfig * m_config) {
 }
 
 void KMPlayerTVSource::sync (bool fromUI) {
+    if (tvdevices.size ())
+        m_app->showBroadcastConfig ();
+    else
+        m_app->hideBroadcastConfig ();
     if (fromUI) {
         tvdriver = m_configpage->driver->text ();
     } else {
@@ -604,10 +608,11 @@ QFrame * KMPlayerTVSource::prefPage (QWidget * parent) {
 //-----------------------------------------------------------------------------
 
 TVDeviceScannerSource::TVDeviceScannerSource (KMPlayer * player)
-    : KMPlayerSource (i18n ("TVScanner"), player), m_tvdevice (0) {}
+ : KMPlayerSource (i18n ("TVScanner"), player), m_tvdevice (0) {
+    setURL (KURL ("tv://"));
+}
 
 void TVDeviceScannerSource::init () {
-    ;
 }
 
 bool TVDeviceScannerSource::processOutput (const QString & line) {

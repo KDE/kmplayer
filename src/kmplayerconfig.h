@@ -65,7 +65,10 @@ class KMPlayerSettings : public QObject {
 public:
     KMPlayerSettings (KMPlayer *, KConfig * part);
     ~KMPlayerSettings ();
+    bool createDialog ();
     void show (const char * pagename = 0L);
+    void addPage (KMPlayerPreferencesPage *);
+    void removePage (KMPlayerPreferencesPage *);
     KMPlayerPreferences *configDialog() const { return configdialog; }
 
     QStringList urllist;

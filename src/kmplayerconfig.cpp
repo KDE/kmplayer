@@ -17,6 +17,7 @@
  **/
 
 #include <algorithm>
+#include <functional>
 
 #include <qcheckbox.h>
 #include <qtextedit.h>
@@ -249,24 +250,42 @@ void KMPlayerSettings::readConfig () {
     pp_med_int = m_config->readBoolEntry (strPP_Med_Int, false);
     pp_ffmpeg_int = m_config->readBoolEntry (strPP_FFmpeg_Int, false);
 
-    KMPlayerPreferencesPageList::iterator pl_it = pagelist.begin ();
-    for (; pl_it != pagelist.end (); ++pl_it)
-        (*pl_it)->read (m_config);
+    std::for_each (pagelist.begin (), pagelist.end (),
+        std::bind2nd (std::mem_fun (&KMPlayerPreferencesPage::read), m_config));
 }
 
-void KMPlayerSettings::show (const char * pagename) {
-    bool created = false;
-    if (!configdialog) {
-        created = true;
-        configdialog = new KMPlayerPreferences (m_player, this);
-        connect (configdialog, SIGNAL (okClicked ()),
-                this, SLOT (okPressed ()));
-        connect (configdialog, SIGNAL (applyClicked ()),
-                this, SLOT (okPressed ()));
-        if (KApplication::kApplication())
-            connect (configdialog, SIGNAL (helpClicked ()),
-                     this, SLOT (getHelp ()));
+bool KMPlayerSettings::createDialog () {
+    if (configdialog) return false;
+    configdialog = new KMPlayerPreferences (m_player, this);
+    connect (configdialog, SIGNAL (okClicked ()),
+            this, SLOT (okPressed ()));
+    connect (configdialog, SIGNAL (applyClicked ()),
+            this, SLOT (okPressed ()));
+    if (KApplication::kApplication())
+        connect (configdialog, SIGNAL (helpClicked ()),
+                this, SLOT (getHelp ()));
+    return true;
+}
+
+void KMPlayerSettings::addPage (KMPlayerPreferencesPage * page) {
+    if (std::find (pagelist.begin (), pagelist.end (), page) != pagelist.end ())
+        return;
+    page->read (m_config);
+    if (configdialog) {
+        configdialog->addPrefPage (page);
+        page->sync (false);
     }
+    pagelist.push_front (page);
+}
+
+void KMPlayerSettings::removePage (KMPlayerPreferencesPage * page) {
+    if (configdialog)
+        configdialog->removePrefPage (page);
+    pagelist.remove (page);
+}
+    
+void KMPlayerSettings::show (const char * pagename) {
+    bool created = createDialog ();
     configdialog->m_GeneralPageGeneral->keepSizeRatio->setChecked (sizeratio);
     configdialog->m_GeneralPageGeneral->showConsoleOutput->setChecked (showconsole);
     configdialog->m_GeneralPageGeneral->loop->setChecked (loop);
@@ -336,9 +355,8 @@ void KMPlayerSettings::show (const char * pagename) {
     configdialog->m_FFMpegPage->arguments->setText (ffmpegarguments);
 
     //dynamic stuff
-    KMPlayerPreferencesPageList::iterator pl_it = pagelist.begin ();
-    for (; pl_it != pagelist.end (); ++pl_it)
-        (*pl_it)->sync (false);
+    std::for_each (pagelist.begin (), pagelist.end (),
+        std::bind2nd (std::mem_fun (&KMPlayerPreferencesPage::sync), false));
     //\dynamic stuff
     if (pagename)
         configDialog ()->setPage (pagename);
@@ -421,9 +439,8 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strFFMpegArgs, ffmpegarguments);
 
     //dynamic stuff
-    KMPlayerPreferencesPageList::iterator pl_it = pagelist.begin ();
-    for (; pl_it != pagelist.end (); ++pl_it)
-        (*pl_it)->write (m_config);
+    std::for_each (pagelist.begin (), pagelist.end (),
+        std::bind2nd (std::mem_fun (&KMPlayerPreferencesPage::write), m_config));
     //\dynamic stuff
     m_config->sync ();
 }
@@ -578,9 +595,8 @@ void KMPlayerSettings::okPressed () {
 #endif
 
     //dynamic stuff
-    KMPlayerPreferencesPageList::iterator pl_it = pagelist.begin ();
-    for (; pl_it != pagelist.end (); ++pl_it)
-        (*pl_it)->sync (true);
+    std::for_each (pagelist.begin (), pagelist.end (),
+        std::bind2nd (std::mem_fun (&KMPlayerPreferencesPage::sync), true));
     //\dynamic stuff
 
     writeConfig ();

@@ -25,6 +25,7 @@
 
 #include <kdialogbase.h>
 #include <qframe.h>
+#include <qmap.h>
 
 
 class KMPlayerPrefGeneralPageGeneral; 	// general, general
@@ -39,6 +40,7 @@ class KMPlayerPrefOPPagePostProc;	// outputplugins, postproc
 class KMPlayer;
 class KMPlayerSource;
 class KMPlayerSettings;
+class KMPlayerPreferencesPage;
 class OutputDriver;
 class QTabWidget;
 class QTable;
@@ -75,8 +77,11 @@ public:
     KMPlayerPrefOPPagePostProc		*m_OPPagePostproc;
     void setDefaults();
     void setPage (const char *);
+    void addPrefPage (KMPlayerPreferencesPage *);
+    void removePrefPage (KMPlayerPreferencesPage *);
 
     RecorderList recorders;
+    QMap<QString, QTabWidget *> entries;
 public slots:
     void confirmDefaults();
 };

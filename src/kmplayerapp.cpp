@@ -88,8 +88,6 @@ KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       m_ffserverconfig (new KMPlayerFFServerConfig),
       m_broadcastconfig (new KMPlayerBroadcastConfig (m_player, m_ffserverconfig))
 {
-    m_player->settings ()->pagelist.push_back (m_broadcastconfig);
-    m_player->settings ()->pagelist.push_back (m_ffserverconfig);
     connect (m_broadcastconfig, SIGNAL (broadcastStarted()), this, SLOT (broadcastStarted()));
     connect (m_broadcastconfig, SIGNAL (broadcastStopped()), this, SLOT (broadcastStopped()));
     initStatusBar();
@@ -306,6 +304,16 @@ void KMPlayerApp::zoom100 () {
 
 void KMPlayerApp::zoom150 () {
     resizePlayer (150);
+}
+
+void KMPlayerApp::showBroadcastConfig () {
+    m_player->settings ()->addPage (m_broadcastconfig);
+    m_player->settings ()->addPage (m_ffserverconfig);
+}
+
+void KMPlayerApp::hideBroadcastConfig () {
+    m_player->settings ()->removePage (m_broadcastconfig);
+    m_player->settings ()->removePage (m_ffserverconfig);
 }
 
 void KMPlayerApp::broadcastClicked () {

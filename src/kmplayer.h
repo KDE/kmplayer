@@ -57,6 +57,8 @@ public:
     KRecentFilesAction * recentFiles () const { return fileOpenRecent; }
     KMPlayerView *view () const { return m_view; }
     bool broadcasting () const;
+    void showBroadcastConfig ();
+    void hideBroadcastConfig ();
     KMPlayerBroadcastConfig * broadcastConfig () const { return m_broadcastconfig; }
 protected:
     void saveOptions ();

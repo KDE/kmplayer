@@ -21,6 +21,7 @@
 #undef Always
 
 #include <algorithm>
+#include <functional>
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -66,7 +67,6 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, KMPlayerSettings * s
     QTabWidget * tab;
     QStringList hierarchy; // typo? :)
     QVBoxLayout *vlay;
-    QMap<QString, QTabWidget *> entries;
 
     frame = addPage(i18n("General Options"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("kmplayer"), KIcon::NoGroup, 32));
     vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
@@ -110,24 +110,8 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, KMPlayerSettings * s
     tab->insertTab (m_OPPagePostproc, i18n ("Postprocessing"));
     entries.insert (i18n("Postprocessing"), tab);
 
-    KMPlayerPreferencesPageList::iterator pl_it = settings->pagelist.begin ();
-    for (; pl_it != settings->pagelist.end (); ++pl_it) {
-        QString item, subitem, icon;
-        (*pl_it)->prefLocation (item, icon, subitem);
-        if (item.isEmpty ())
-            continue;
-        QMap<QString, QTabWidget *>::iterator en_it = entries.find (item);
-        if (en_it == entries.end ()) {
-            frame = addPage (item, QString::null, KGlobal::iconLoader()->loadIcon ((icon), KIcon::NoGroup, 32));
-            vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
-            tab = new QTabWidget (frame);
-            vlay->addWidget (tab);
-            entries.insert (item, tab);
-        } else
-            tab = en_it.data ();
-        frame = (*pl_it)->prefPage (tab);
-        tab->insertTab (frame, subitem);
-    }
+    std::for_each (settings->pagelist.begin (), settings->pagelist.end (),
+            std::bind1st (std::mem_fun (&KMPlayerPreferences::addPrefPage), this));
 
     connect (this, SIGNAL (defaultClicked ()), SLOT (confirmDefaults ()));
 }
@@ -145,6 +129,53 @@ void KMPlayerPreferences::setPage (const char * name) {
     if (!t->parentWidget() || !t->parentWidget()->inherits ("QFrame"))
         return;
     showPage (pageIndex (t->parentWidget ()));
+}
+
+void KMPlayerPreferences::addPrefPage (KMPlayerPreferencesPage * page) {
+    QString item, subitem, icon;
+    QFrame * frame;
+    QTabWidget * tab;
+    QVBoxLayout *vlay;
+    page->prefLocation (item, icon, subitem);
+    if (item.isEmpty ())
+        return;
+    QMap<QString, QTabWidget *>::iterator en_it = entries.find (item);
+    if (en_it == entries.end ()) {
+        frame = addPage (item, QString::null, KGlobal::iconLoader()->loadIcon ((icon), KIcon::NoGroup, 32));
+        vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
+        tab = new QTabWidget (frame);
+        vlay->addWidget (tab);
+        entries.insert (item, tab);
+    } else
+        tab = en_it.data ();
+    frame = page->prefPage (tab);
+    tab->insertTab (frame, subitem);
+}
+
+void KMPlayerPreferences::removePrefPage (KMPlayerPreferencesPage * page) {
+    QString item, subitem, icon;
+    page->prefLocation (item, icon, subitem);
+    if (item.isEmpty ())
+        return;
+    QMap<QString, QTabWidget *>::iterator en_it = entries.find (item);
+    if (en_it == entries.end ())
+        return;
+    QTabWidget * tab = en_it.data ();
+    for (int i = 0; i < tab->count (); i++)
+        if (tab->label (i) == subitem) {
+            QWidget * w = tab->page (i);
+            tab->removePage (w);
+            delete w;
+            break;
+        }
+    if (!tab->count ()) {
+        QWidget * w = en_it.data ()->parentWidget ();
+        while (w && !w->inherits ("QFrame"))
+            w = w->parentWidget ();
+        delete w;
+        entries.erase (en_it);
+        delete tab;
+    }
 }
 
 KMPlayerPreferences::~KMPlayerPreferences() {
