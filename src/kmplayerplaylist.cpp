@@ -143,6 +143,7 @@ void Element::defer () {
 
 void Element::undefer () {
     if (state == state_deferred) {
+        setState (state_started);
         if (defer_tree_version != document ()->m_tree_version)
             start ();
     } else
@@ -153,9 +154,8 @@ void Element::stop () {
     kdDebug () << nodeName () << " Element::stop" << endl;
     setState (state_finished);
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
-        if (e->state != state_init)
-            // children are out of scope now, reset their Runtime
-            e->reset (); // reset will call stop if necessary
+        if (e->state > state_init && e->state < state_finished)
+            e->stop ();
         else
             break; // not yet started
     }

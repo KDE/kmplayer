@@ -72,7 +72,9 @@ typedef SharedPtr<RegionNode> RegionNodePtr;
 typedef WeakPtr<RegionNode> RegionNodePtrW;
 typedef SharedPtr<ElementRuntime> ElementRuntimePtr;
 
-
+/*
+ * Base class of all tree nodes. Provides a w3c's DOM like API
+ */
 class KMPLAYER_EXPORT Element {
     friend class DocumentBuilder;
 public:
@@ -104,7 +106,8 @@ public:
      */
     virtual bool expose ();
     /**
-     * Start element, sets started to true, can call requestPlayURL.
+     * Start element, sets state to state_started. Will call start() on
+     * firstChild or call stop().
      */
     virtual void start ();
     /**
@@ -112,21 +115,23 @@ public:
      */
     virtual void defer ();
     /**
-     * Puts a defered element in started again, may call start again if 
+     * Puts a defered element in started again, may call start() again if 
      * child elements were added.
      */
     virtual void undefer ();
     /**
-     * Stops element, sets started to false and finished to true.
-     * Notifies parent with a childDone call
+     * Stops element, sets state to state_finished. Calls stop() on 
+     * started/defered children. Notifies parent with a childDone call.
      */
     virtual void stop ();
     /**
-     * Resets element, sets started to false and finished to false.
+     * Resets element, calls stop() if state is state_started and sets
+     * state to state_init.
      */
     virtual void reset ();
     /**
-     * Notification from child that it's finished.
+     * Notification from child that it's finished. Call start() on nexSibling
+     * or stop() if there is none.
      */
     virtual void childDone (ElementPtr child);
     /**
@@ -267,6 +272,10 @@ class ElementRuntime {
 public:
     virtual ~ElementRuntime ();
     /**
+     * calls reset() and pulls in the attached_element's attributes
+     */
+    virtual void init ();
+    /**
      * Called when element is pulled in scope, from start()
      */
     virtual void begin () {}
@@ -274,6 +283,10 @@ public:
      * Called when element gets out of scope, from reset()
      */
     virtual void end () {}
+    /**
+     * Reset all data, called from end() and init()
+     */
+    virtual void reset ();
     virtual void paint (QPainter &) {}
     /**
      * change behaviour of this runtime, returns old value
@@ -321,6 +334,9 @@ KDE_NO_EXPORT inline T * convertNode (ElementPtr e) {
     return static_cast <T *> (e.ptr ());
 }
         
+/**
+ * Element's attributes
+ */
 class KMPLAYER_EXPORT Attribute : public Element {
     friend class Element;
 public:
@@ -334,6 +350,9 @@ protected:
     QString value;
 };
 
+/**
+ * Element representing a playable link, like URL to a movie or playlist.
+ */
 class KMPLAYER_EXPORT Mrl : public Element {
 protected:
     Mrl (ElementPtr & d);
@@ -348,6 +367,9 @@ public:
      * If this Mrl hides a child Mrl, return that one or else this one 
      */ 
     virtual ElementPtr realMrl ();
+    /*
+     * Reimplement to callback with requestPlayURL if isMrl()
+     */ 
     virtual void start ();
     QString src;
     QString pretty_name;
@@ -384,6 +406,9 @@ public:
     virtual void avWidgetSizes (RegionNode * region, unsigned int * bg) = 0;
 };
 
+/**
+ * The root of the DOM tree
+ */
 class KMPLAYER_EXPORT Document : public Mrl {
 public:
     Document (const QString &, PlayListNotify * notify = 0L);
@@ -404,6 +429,9 @@ public:
     unsigned int m_tree_version;
 };
 
+/**
+ * Represents XML text, like "some text" in '<foo>some text</foo>'
+ */
 class KMPLAYER_EXPORT TextNode : public Element {
 public:
     TextNode (ElementPtr & d, const QString & s);
@@ -416,6 +444,9 @@ protected:
     QString text;
 };
 
+/**
+ * Unrecognized tag by parent element
+ */
 class DarkNode : public Element {
 public:
     DarkNode (ElementPtr & d, const QString & n);
@@ -427,6 +458,9 @@ protected:
     QString name;
 };
 
+/**
+ * Title element as found in ASX
+ */
 class Title : public DarkNode {
 public:
     Title (ElementPtr & d);
@@ -435,6 +469,9 @@ public:
 
 //-----------------------------------------------------------------------------
 
+/**
+ * '<smil'> tag
+ */
 class Smil : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Smil (ElementPtr & d) : Mrl (d) {}
@@ -456,6 +493,9 @@ public:
 
 namespace ASX {
 
+/**
+ * '<ASX>' tag
+ */
 class Asx : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Asx (ElementPtr & d) : Mrl (d) {}
@@ -467,6 +507,9 @@ public:
     bool isMrl ();
 };
 
+/**
+ * Entry tag as found in ASX for playlist item
+ */
 class Entry : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Entry (ElementPtr & d) : Mrl (d) {}
@@ -482,6 +525,9 @@ public:
     virtual ElementPtr realMrl ();
 };
 
+/**
+ * Ref tag as found in ASX for URL item in playlist item
+ */
 class Ref : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Ref (ElementPtr & d) : Mrl (d) {}
@@ -490,6 +536,9 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "Ref"; }
 };
 
+/**
+ * EntryRef tag as found in ASX for shortcut of Entry plus Ref playlist item
+ */
 class EntryRef : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT EntryRef (ElementPtr & d) : Mrl (d) {}
@@ -502,13 +551,19 @@ public:
 
 //-----------------------------------------------------------------------------
 
-class KMPLAYER_EXPORT GenericURL : public Mrl { //just some url, can get a SMIL or ASX childtree
+/**
+ * just some url, can get a SMIL or ASX childtree
+ */
+class KMPLAYER_EXPORT GenericURL : public Mrl { 
 public:
     GenericURL(ElementPtr &d, const QString &s, const QString &n=QString::null);
     KDE_NO_EXPORT const char * nodeName () const { return "GenericURL"; }
 };
 
-class KMPLAYER_EXPORT GenericMrl : public Mrl { // non url mrl
+/**
+ * Non url mrl
+ */
+class KMPLAYER_EXPORT GenericMrl : public Mrl { 
 public:
     KDE_NO_CDTOR_EXPORT GenericMrl (ElementPtr & d) : Mrl (d) {}
     GenericMrl(ElementPtr &d, const QString &s, const QString &n=QString::null);

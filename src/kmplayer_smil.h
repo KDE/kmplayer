@@ -54,21 +54,13 @@ public:
 
     TimedRuntime (ElementPtr e);
     virtual ~TimedRuntime ();
-    /**
-     * start, or restart in case of re-use, the durations
-     */
     virtual void begin ();
-    /**
-     * forced killing of timers
-     */
     virtual void end ();
-    /**
-     * change behaviour of this runtime, returns old value
-     */
+    virtual void reset ();
     virtual QString setParam (const QString & name, const QString & value);
     TimingState state () const { return timingstate; }
     virtual void paint (QPainter &) {}
-    void propagateStop ();
+    void propagateStop (bool forced);
     /**
      * Duration items, begin/dur/end, length information or connected element
      */
@@ -104,20 +96,10 @@ protected slots:
     void elementActivateEvent ();
     void elementOutOfBoundsEvent ();
     void elementInBoundsEvent ();
-    /**
-     * slot for elementStopped() signal
-     */
     void elementHasStopped ();
-    /**
-     * start_timer timer expired
-     */
     virtual void started ();
-    /**
-     * duration_timer timer expired or no duration set after started
-     */
     virtual void stopped ();
 private:
-    void init ();
     void processEvent (unsigned int event);
     void setDurationItem (DurationTime item, const QString & val);
     void breakConnection (DurationTime item);
@@ -137,12 +119,9 @@ public:
     KDE_NO_CDTOR_EXPORT ~RegionRuntime () {}
     virtual void begin ();
     virtual void end ();
+    virtual void reset ();
     void paint (QPainter & p);
     virtual QString setParam (const QString & name, const QString & value);
-    /**
-     * calls reset() and pulls in the attached_element's attributes
-     */
-    void init ();
     unsigned int background_color;
     QString left;
     QString top;
@@ -152,7 +131,6 @@ public:
     QString bottom;
     bool have_bg_color;
 private:
-    void reset ();
 };
 
 /**
@@ -162,31 +140,13 @@ class MediaTypeRuntime : public TimedRuntime {
     Q_OBJECT
 protected:
     MediaTypeRuntime (ElementPtr e);
-    /**
-     * Gets contents from url and puts it in mt_d->data
-     */
     bool wget (const KURL & url);
-    /**
-     * abort previous wget job
-     */
     void killWGet ();
 public:
     ~MediaTypeRuntime ();
-    /**
-     * re-implement for pending KIO::Job operations
-     */
     virtual void end ();
-    /**
-     * will request a repaint of attached region
-     */
     virtual void started ();
-    /**
-     * will request a repaint of attached region
-     */
     virtual void stopped ();
-    /**
-     * re-implement for regions
-     */
     virtual QString setParam (const QString & name, const QString & value);
 protected:
     MediaTypeRuntimePrivate * mt_d;
@@ -223,9 +183,6 @@ public:
     virtual QString setParam (const QString & name, const QString & value);
     ImageDataPrivate * d;
 protected slots:
-    /**
-     * start_timer timer expired, repaint if we have an image
-     */
     virtual void started ();
 private slots:
     virtual void slotResult (KIO::Job*);
@@ -244,9 +201,6 @@ public:
     virtual QString setParam (const QString & name, const QString & value);
     TextDataPrivate * d;
 protected slots:
-    /**
-     * start_timer timer expired, repaint if we have text
-     */
     virtual void started ();
 private slots:
     virtual void slotResult (KIO::Job*);
@@ -278,13 +232,7 @@ public:
     KDE_NO_CDTOR_EXPORT SetData (ElementPtr e) : AnimateGroupData (e) {}
     KDE_NO_CDTOR_EXPORT ~SetData () {}
 protected slots:
-    /**
-     * start_timer timer expired, execute it
-     */
     virtual void started ();
-    /**
-     * animation finished
-     */
     virtual void stopped ();
 };
 
@@ -297,21 +245,12 @@ public:
     AnimateData (ElementPtr e);
     KDE_NO_CDTOR_EXPORT ~AnimateData () {}
     virtual QString setParam (const QString & name, const QString & value);
+    virtual void reset ();
 protected slots:
-    /**
-     * start_timer timer expired, execute it
-     */
     virtual void started ();
-    /**
-     * undo if necessary
-     */
     virtual void stopped ();
-    /**
-     * for animations
-     */
     void timerEvent (QTimerEvent *);
 private:
-    void init ();
     int anim_timer;
     enum { acc_none, acc_sum } accumulate;
     enum { add_replace, add_sum } additive;
@@ -361,9 +300,6 @@ public:
     KDE_NO_CDTOR_EXPORT Region (ElementPtr & d) : RegionBase (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "region"; }
     ElementPtr childFromTag (const QString & tag);
-    /**
-     * calculates dimensions of this regions with w and h as width and height
-     */
     void calculateBounds (int w, int h);
 };
 
@@ -386,6 +322,7 @@ public:
     void start ();
     void stop ();
     void reset ();
+    void childDone (ElementPtr child);
 protected:
     KDE_NO_CDTOR_EXPORT TimedMrl (ElementPtr & d) : Mrl (d) {}
     ElementRuntimePtr runtime;
@@ -477,10 +414,8 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
     void opened ();
     void start ();
-    void stop ();
     QString m_type;
     unsigned int bitrate;
-    bool in_start;
 };
 
 class AVMediaType : public MediaType {

@@ -4,18 +4,21 @@
     <layout>
       <root-layout width="320" height="240" background-color="green"/>
       <region id="region1" left="5%" top="10%" right="40%" bottom="50%" z-index="2"/>
-      <region id="region2" left="45%" top="40%" right="10%" bottom="5%" z-index="3"/>
+      <region id="region2" left="180" top="140" width="48" height="48" z-index="3" background-color="red"/>
       <region id="region3" z-index="1"/>
     </layout>
   </head>
   <body>
     <par>
-      <text id="text1" src="data:,I'm%20a%20region" region="region1" dur="20">
+      <text id="text1" src="data:,I'm%20a%20region" region="region1">
         <param name="fontColor" value="yellow"/>
         <param name="fontSize" value="+2"/>
         <param name="backgroundColor" value="blue"/>
+        <animate targetElement="region1" attributeName="left" from="5%" to="40%" begin="5" dur="6"/>
       </text> 
-      <animate targetElement="region1" attributeName="left" from="5%" to="40%" begin="5" dur="10"/>
+      <img id="image1" src="../icons/hi48-app-kmplayer.png" region="region2">
+        <animate targetElement="region2" attributeName="left" from="180" to="50" begin="5" dur="10"/>
+      </img>
     </par>
     <par>
       <set targetElement="region2" attributeName="z-index" to="6"/>
