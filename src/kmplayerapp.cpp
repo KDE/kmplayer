@@ -482,6 +482,7 @@ void KMPlayerAppURLSource::activate () {
 
 void KMPlayerAppURLSource::finished () {
     app->resizePlayer (100);
+    app->recentFiles ()->addURL (url ());
     KMPlayerURLSource::finished ();
 }
 

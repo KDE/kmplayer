@@ -1,7 +1,12 @@
 Changes since version 0.7.3
+- Re-identify dvd if another title is selected, because they have different
+  chapters/subtitles/languagues/length
+- Added a record button. Currently only configurable in kmplayerrc, see the
+  mencoder options in mplayer man page. Doesn't work for audio only streams.
 - New config dialog from Joonas Koivunen
 - Support for MPlayer's experimental TV capturing (use with care, I need to 
   rmmod bttv, tvaudio and msp3400 to get xawtv working again afterwards)
+  No audio capturing for now
 - Added a position slider
 - Fixed two cases of double deletes found by valgrind
 Changes since version 0.7.2

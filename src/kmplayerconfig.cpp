@@ -82,14 +82,14 @@ static const char * strAutoPlayAfterRecording = "Auto Play After Recording";
 static const char * strSeekTime = "Forward/Backward Seek Time";
 static const char * strCacheSize = "Cache Size for Streaming";
 static const char * strPlayDVD = "Immediately Play DVD";
-static const char * strShowDVD = "Show DVD Menu";
+//static const char * strShowDVD = "Show DVD Menu";
 static const char * strDVDDevice = "DVD Device";
 static const char * strLanguagePattern = "DVD Language";
 static const char * strSubtitlePattern = "DVD Sub Title";
 static const char * strTitlePattern = "DVD Titles";
 static const char * strChapterPattern = "DVD Chapters";
 static const char * strPlayVCD = "Immediately Play VCD";
-static const char * strShowVCD = "Show VCD Menu";
+//static const char * strShowVCD = "Show VCD Menu";
 static const char * strVCDDevice = "VCD Device";
 static const char * strTrackPattern = "VCD Tracks";
 static const char * strAlwaysBuildIndex = "Always build index";
@@ -489,12 +489,10 @@ void KMPlayerConfig::okPressed () {
     else
         view->consoleOutput ()->hide ();
     showbuttons = configdialog->m_GeneralPageGeneral->showControlButtons->isChecked ();
-    if (showbuttons)
-        view->buttonBar ()->show ();
-    else
-        view->buttonBar ()->hide ();
     autohidebuttons = configdialog->m_GeneralPageGeneral->autoHideControlButtons->isChecked ();
-    view->setAutoHideButtons (autohidebuttons);
+    view->setAutoHideButtons (showbuttons && autohidebuttons);
+    if (!showbuttons)
+        view->buttonBar ()->hide ();
     showposslider = configdialog->m_GeneralPageGeneral->showPositionSlider->isChecked ();
     if (showposslider && m_player->source ()->hasLength ())
         view->positionSlider ()->show ();

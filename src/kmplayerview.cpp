@@ -313,7 +313,7 @@ void KMPlayerSlider::enterEvent (QEvent *) {
 
 //-----------------------------------------------------------------------------
 
-static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char ** p, int key = 0) {
+static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char * const * p, int key = 0) {
     QPushButton * b = new QPushButton (QIconSet (QPixmap(p)), QString::null, w);
     b->setMaximumSize (750, button_height);
     b->setFocusPolicy (QWidget::NoFocus);
@@ -490,7 +490,7 @@ void KMPlayerView::setAutoHideButtons (bool b) {
     	m_slider->show();
 */
 void KMPlayerView::delayedShowButtons (bool show) {
-    if (delayed_timer ||
+    if (!m_auto_hide_buttons || delayed_timer ||
         (show && m_buttonbar->isVisible ()) || 
         (!show && !m_buttonbar->isVisible ()))
         return;
