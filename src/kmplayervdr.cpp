@@ -253,10 +253,10 @@ KDE_NO_EXPORT void KMPlayerVDRSource::connected () {
 
 KDE_NO_EXPORT void KMPlayerVDRSource::disconnected () {
     kdDebug() << "disconnected " << commands << endl;
-    deleteCommands ();
     setURL (KURL (QString ("vdr://localhost:%1").arg (tcp_port)));
     if (channel_timer && m_player->process ()->source () == this)
         m_player->process ()->stop ();
+    deleteCommands ();
     m_menu->changeItem (0, KGlobal::iconLoader ()->loadIconSet (QString ("connect_established"), KIcon::Small, 0, true), i18n ("&Connect"));
 }
 

@@ -1174,6 +1174,7 @@ KDE_NO_EXPORT void KMPlayerURLSource::kioResult (KIO::Job *) {
             next ();
         QTimer::singleShot (0, this, SLOT (play ()));
     }
+    m_player->process ()->view ()->buttonBar ()->setPlaying (false);
 }
 
 KDE_NO_EXPORT void KMPlayerURLSource::play () {
@@ -1223,6 +1224,7 @@ KDE_NO_EXPORT void KMPlayerURLSource::play () {
                     this, SLOT (kioMimetype (KIO::Job *, const QString &)));
             connect (m_job, SIGNAL (result (KIO::Job *)),
                     this, SLOT (kioResult (KIO::Job *)));
+            m_player->process ()->view ()->buttonBar ()->setPlaying (true);
             return;
         }
     }
