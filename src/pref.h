@@ -523,6 +523,8 @@ public:
     QLineEdit *cachePattern;
     QLineEdit *startPattern;
     QLineEdit *indexPattern;
+    QLineEdit *referenceURLPattern;
+    QLineEdit *referencePattern;
     QLineEdit *additionalArguments;
     QSpinBox *cacheSize;
 };

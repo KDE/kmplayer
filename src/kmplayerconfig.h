@@ -133,6 +133,8 @@ public:
     QString subtitlespattern;
     QString chapterspattern;
     QString trackspattern;
+    QString referenceurlpattern;
+    QString referencepattern;
     QString urlbackend;
 signals:
     void configChanged ();

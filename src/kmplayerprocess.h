@@ -43,7 +43,7 @@ public:
     KMPlayerSource * source () const { return m_source; }
     KProcess * process () const { return m_process; }
     virtual QWidget * widget ();
-    void setSource (KMPlayerSource * source) { stop (); m_source = source; }
+    void setSource (KMPlayerSource * source);
     virtual bool grabPicture (const KURL & url, int pos);
 signals:
     // backend process is running
@@ -70,6 +70,7 @@ protected:
     KMPlayer * m_player;
     KMPlayerSource * m_source;
     KProcess * m_process;
+    QStringList m_urls;
 protected slots:
     // QTimer::singleShot slots for the signals
     void emitStarted () { emit started (); }
@@ -124,6 +125,9 @@ private:
     QRegExp m_posRegExp;
     QRegExp m_cacheRegExp;
     QRegExp m_indexRegExp;
+    QRegExp m_refURLRegExp;
+    QRegExp m_refRegExp;
+    QString m_tmpURL;
 };
 
 class Recorder {
@@ -164,7 +168,6 @@ signals:
     void running ();
 protected:
     KMPlayerCallback * m_callback;
-    QStringList m_urls;
 protected slots:
     void emitRunning () { emit running (); }
 };

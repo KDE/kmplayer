@@ -265,6 +265,7 @@ bool KMPlayer::openURL (const KURL & url) {
     kdDebug () << "KMPlayer::openURL " << url.url() << url.isValid () << endl;
     if (!m_view || url.isEmpty ()) return false;
     m_urlsource->setURL (url);
+    m_urlsource->setIdentified (false);
     setSource (m_urlsource);
     return true;
 }
@@ -649,9 +650,6 @@ KMPlayerURLSource::~KMPlayerURLSource () {
 
 void KMPlayerURLSource::init () {
     KMPlayerSource::init ();
-    isreference = false;
-    m_urls.clear ();
-    m_urlother = KURL ();
 #ifdef HAVE_XINE
     KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
     if (!view || !view->playerMenu ())
@@ -676,70 +674,8 @@ bool KMPlayerURLSource::hasLength () {
     return !!length ();
 }
 
-void KMPlayerURLSource::setURL (const KURL & url) { 
-    m_url = url;
-    kdDebug () << "KMPlayerURLSource::setURL:" << url.url () << endl;
-    isreference = false;
-    m_identified = false;
-    m_urls.clear ();
-    m_urlother = KURL ();
-    buildArguments ();
-}
-
-bool KMPlayerURLSource::processOutput (const QString & str) {
-    if (m_identified)
-        return false;
-    if (str.startsWith ("ID_FILENAME")) {
-        int pos = str.find ('=');
-        if (pos < 0) 
-            return false;
-        KURL url (str.mid (pos + 1));
-        if (url.isValid ())
-            m_urls.push_front (url);
-        kdDebug () << "KMPlayerURLSource::processOutput ID_FILENAME=" << url.url () << endl;
-        return true;
-    } else if (str.startsWith ("Playing")) {
-        KURL url(str.mid (8));
-        if (url.isValid ()) {
-            if (!isreference && !m_urlother.isEmpty ()) {
-                m_urls.push_back (m_urlother);
-                return true;
-            }
-            m_urlother = url;
-            isreference = false;
-            kdDebug () << "KMPlayerURLSource::processOutput " << m_url.url () << endl;
-            return true;
-        }
-    } else if (str.find ("Reference Media file") >= 0) {
-        isreference = true;
-    }
-    return KMPlayerSource::processOutput (str);
-}
-
 void KMPlayerURLSource::buildArguments () {
     m_recordcmd = QString ("");
-}
-
-void KMPlayerURLSource::activate () {
-    buildArguments ();
-    if (url ().isEmpty ())
-        return;
-    QTimer::singleShot (0, m_player, SLOT (play ()));
-    //if (m_player->liveconnectextension ())
-    //    m_player->liveconnectextension ()->enableFinishEvent ();
-}
-
-
-void KMPlayerURLSource::setIdentified (bool b) {
-    KMPlayerSource::setIdentified (b);
-    if (!isreference && !m_urlother.isEmpty ())
-        m_urls.push_back (m_urlother);
-    if (m_urls.count () > 0) {
-        m_url = *m_urls.begin ();
-        kdDebug () << "KMPlayerURLSource::setIdentified new url:" << m_url.prettyURL() << endl;
-    }
-    m_urlother = KURL ();
-    buildArguments ();
     int cache = m_player->settings ()->cachesize;
     if (!m_url.isLocalFile () && cache > 0 && 
             m_url.protocol () != QString ("dvd") &&
@@ -754,6 +690,19 @@ void KMPlayerURLSource::setIdentified (bool b) {
             m_recordcmd = QString (" -idx ");
         }
     }
+}
+
+void KMPlayerURLSource::activate () {
+    buildArguments ();
+    if (url ().isEmpty ())
+        return;
+    QTimer::singleShot (0, m_player, SLOT (play ()));
+}
+
+
+void KMPlayerURLSource::setIdentified (bool b) {
+    KMPlayerSource::setIdentified (b);
+    buildArguments ();
 }
 
 void KMPlayerURLSource::deactivate () {

@@ -63,11 +63,8 @@ public:
     KMPlayerURLSource (KMPlayer * player, const KURL & url = KURL ());
     virtual ~KMPlayerURLSource ();
 
-    virtual bool processOutput (const QString & line);
     virtual bool hasLength ();
     virtual void setIdentified (bool b = true);
-
-    void setURL (const KURL & url);
     virtual QString prettyName ();
 public slots:
     virtual void init ();
@@ -75,10 +72,6 @@ public slots:
     virtual void deactivate ();
 private:
     void buildArguments ();
-    QValueList <KURL> m_urls;
-    KURL m_urlother;
-    bool isreference;
-    bool foundnonreference;
 };
 
 

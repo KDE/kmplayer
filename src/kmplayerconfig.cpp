@@ -199,6 +199,8 @@ static const char * strSize = "Movie Size";
 static const char * strCache = "Cache Fill";
 static const char * strPosPattern = "Movie Position";
 static const char * strIndexPattern = "Index Pattern";
+static const char * strReferenceURLPattern = "Reference URL Pattern";
+static const char * strReferencePattern = "Reference Pattern";
 static const char * strStart = "Start Playing";
 static const char * strShowConsole = "Show Console Output";
 static const char * strLoop = "Loop";
@@ -350,6 +352,8 @@ void KMPlayerSettings::readConfig () {
     cachepattern = m_config->readEntry (strCache, "Cache fill:[^0-9]*([0-9\\.]+)%");
     positionpattern = m_config->readEntry (strPosPattern, "V:\\s*([0-9\\.]+)");
     indexpattern = m_config->readEntry (strIndexPattern, "Generating Index: +([0-9]+)%");
+    referenceurlpattern = m_config->readEntry (strReferenceURLPattern, "Playing\\s+(.*[^\\.])\\.?\\s*$");
+    referencepattern = m_config->readEntry (strReferencePattern, "Reference Media file");
     startpattern = m_config->readEntry (strStart, "Start[^ ]* play");
     langpattern = m_config->readEntry (strLanguagePattern, "\\[open].*audio.*language: ([A-Za-z]+).*aid.*[^0-9]([0-9]+)");
     subtitlespattern = m_config->readEntry (strSubtitlePattern, "\\[open].*subtitle.*[^0-9]([0-9]+).*language: ([A-Za-z]+)");
@@ -521,6 +525,8 @@ void KMPlayerSettings::show () {
     configdialog->m_GeneralPageAdvanced->dvdTitlePattern->setText (titlespattern);
     configdialog->m_GeneralPageAdvanced->dvdChapPattern->setText (chapterspattern);
     configdialog->m_GeneralPageAdvanced->vcdTrackPattern->setText (trackspattern);
+    configdialog->m_GeneralPageAdvanced->referenceURLPattern->setText (referenceurlpattern);
+    configdialog->m_GeneralPageAdvanced->referencePattern->setText (referencepattern);
 
     // postproc
     configdialog->m_OPPagePostproc->postProcessing->setChecked (postprocessing);
@@ -630,6 +636,8 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strTitlePattern, titlespattern);
     m_config->writeEntry (strChapterPattern, chapterspattern);
     m_config->writeEntry (strTrackPattern, trackspattern);
+    m_config->writeEntry (strReferenceURLPattern, referenceurlpattern);
+    m_config->writeEntry (strReferencePattern, referencepattern);
     //postprocessing stuff
     m_config->setGroup (strPPGroup);
     m_config->writeEntry (strPostProcessing, postprocessing);
@@ -803,6 +811,8 @@ void KMPlayerSettings::okPressed () {
     subtitlespattern = configdialog->m_GeneralPageAdvanced->dvdSubPattern->text ();
     chapterspattern = configdialog->m_GeneralPageAdvanced->dvdChapPattern->text ();
     trackspattern = configdialog->m_GeneralPageAdvanced->vcdTrackPattern->text ();
+    referenceurlpattern= configdialog->m_GeneralPageAdvanced->referenceURLPattern->text ();
+    referencepattern= configdialog->m_GeneralPageAdvanced->referencePattern->text ();
 
     videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentItem();
     audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentItem();

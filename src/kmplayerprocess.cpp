@@ -109,6 +109,11 @@ bool KMPlayerProcess::stop () {
     return !m_process->isRunning ();
 }
 
+void KMPlayerProcess::setSource (KMPlayerSource * source) {
+    stop ();
+    m_urls.clear();
+    m_source = source;
+}
 //-----------------------------------------------------------------------------
 
 static bool proxyForURL (const KURL& url, QString& proxy) {
@@ -217,9 +222,13 @@ bool MPlayer::play () {
         QString myurl (url.isLocalFile () ? url.path () : url.url ());
         args += KProcess::quote (QString (QFile::encodeName (myurl)));
     }
-    if (!source ()->identified ())
+    m_tmpURL.truncate (0);
+    m_urls.clear ();
+    if (!source ()->identified ()) {
+        m_refURLRegExp.setPattern (m_player->settings ()->referenceurlpattern);
+        m_refRegExp.setPattern (m_player->settings ()->referencepattern);
         args += QString (" -quiet -nocache -identify -frames 0 ");
-    else if (m_player->settings ()->loop)
+    } else if (m_player->settings ()->loop)
         args += QString (" -loop 0");
 
     return run (args.ascii (), source ()->pipeCmd ().ascii ());
@@ -431,6 +440,14 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
             } else if (m_cacheRegExp.search (out) > -1) {
                 emit loading (int (m_cacheRegExp.cap (1).toDouble ()));
             }
+        } else if (!source ()->identified () && m_refURLRegExp.search (out) > -1) {
+            kdDebug () << "Reference mrl " << m_refURLRegExp.cap (1) << endl;
+            if (!m_tmpURL.isEmpty ())
+                m_urls.push_back (m_tmpURL);
+            m_tmpURL = m_refURLRegExp.cap (1);
+        } else if (!source ()->identified () && m_refRegExp.search (out) > -1) {
+            kdDebug () << "Reference File " << endl;
+            m_tmpURL.truncate (0);
         } else {
             v->addText (out + '\n');
             if (!m_source->processOutput (out)) {
@@ -458,6 +475,15 @@ void MPlayer::processStopped (KProcess * p) {
         emit grabReady (m_grabfile);
         m_grabfile.truncate (0);
     } else if (p && !source ()->identified ()) {
+        if (!m_tmpURL.isEmpty ()) {
+            m_urls.push_back (m_tmpURL);
+            m_tmpURL.truncate (0);
+        }
+        if (m_urls.count () > 0) {
+            QString url = m_urls.front ();
+            m_urls.pop_front ();
+            source ()->setURL (KURL (url));
+        }
         source ()->setIdentified ();
         QTimer::singleShot (0, this, SLOT (play ()));
     } else

@@ -70,7 +70,7 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
    m_havehref (false) {
     m_ispart = true;
     kdDebug () << "MPlayer::KMPlayer ()" << endl;
-    setInstance (KMPlayerFactory::instance ());
+    setInstance (KMPlayerFactory::instance (), true);
     /*KAction *playact =*/ new KAction(i18n("P&lay"), 0, 0, this, SLOT(play ()), actionCollection (), "view_play");
     /*KAction *pauseact =*/ new KAction(i18n("&Pause"), 0, 0, this, SLOT(pause ()), actionCollection (), "view_pause");
     /*KAction *stopact =*/ new KAction(i18n("&Stop"), 0, 0, this, SLOT(stop ()), actionCollection (), "view_stop");
@@ -87,6 +87,7 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
             kdDebug () << "name=" << name << " value=" << value << endl;
             if (name.lower () == "href") {
                 m_urlsource->setURL (KURL (value));
+                m_urlsource->setIdentified (false);
                 m_havehref = true;
             } else if (name.lower()==QString::fromLatin1("width")) {
                 m_noresize = true;
@@ -541,6 +542,7 @@ bool KMPlayerHRefSource::processOutput (const QString & /*str*/) {
 
 void KMPlayerHRefSource::setURL (const KURL & url) { 
     m_url = url;
+    m_identified = false;
     m_finished = false;
     kdDebug () << "KMPlayerHRefSource::setURL " << m_url.url() << endl;
 }
