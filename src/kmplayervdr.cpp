@@ -68,12 +68,12 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::KMPlayerPrefSourcePageVDR (QWidge
     QLabel * label = new QLabel (i18n ("XVideo port:"), this);
     gridlayout->addWidget (label, 0, 0);
     xv_port = new QLineEdit ("", this);
-    QWhatsThis::add (xv_port, i18n ("Port base of the X Video extension.\nIf left to default (0), the first available port will be used. However if you have multible XVideo usages, you might have to provide the port to use here.\nSee the output from 'xvinfo' for more information"));
+    QWhatsThis::add (xv_port, i18n ("Port base of the X Video extension.\nIf left to default (0), the first available port will be used. However if you have multiple XVideo instances, you might have to provide the port to use here.\nSee the output from 'xvinfo' for more information"));
     gridlayout->addWidget (xv_port, 0, 1);
     label = new QLabel (i18n ("Communication port:"), this);
     gridlayout->addWidget (label, 1, 0);
     tcp_port = new QLineEdit ("", this);
-    QWhatsThis::add (tcp_port, i18n ("Communation port with VDR. Default is port 2001.\nIf you use another port, with the '-p' option of 'vdr', you must set it here too."));
+    QWhatsThis::add (tcp_port, i18n ("Communication port with VDR. Default is port 2001.\nIf you use another port, with the '-p' option of 'vdr', you must set it here too."));
     gridlayout->addWidget (tcp_port, 1, 1);
     layout->addLayout (gridlayout);
     scale = new QButtonGroup (2, Qt::Vertical, i18n ("Scale"), this);
