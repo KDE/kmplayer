@@ -632,7 +632,7 @@ void PlayListView::selectItem (const QString & txt) {
 KDE_NO_EXPORT void PlayListView::contextMenuItem (QListViewItem * vi, const QPoint & p, int) {
     if (vi) {
         ListViewItem * item = static_cast <ListViewItem *> (vi);
-        m_itemmenu->setItemEnabled (1, item->m_elm && (item->m_elm->isMrl () || item->m_elm->isDocument ()));
+        m_itemmenu->setItemEnabled (1, item->m_elm && (item->m_elm->isMrl () || item->m_elm->isDocument ()) && item->m_elm->mrl ()->bookmarkable);
         m_itemmenu->exec (p);
     } else
         m_view->controlPanel ()->popupMenu ()->exec (p);
@@ -650,7 +650,7 @@ void PlayListView::addBookMark () {
     ListViewItem * item = static_cast <ListViewItem *> (currentItem ());
     if (item->m_elm) {
         Mrl * mrl = item->m_elm->mrl ();
-        KURL url (mrl ? (mrl->bookmark_url.isEmpty () ? mrl->src : mrl->bookmark_url) : QString (item->m_elm->nodeName ()));
+        KURL url (mrl ? mrl->src : QString (item->m_elm->nodeName ()));
         emit addBookMark (mrl->pretty_name.isEmpty () ? url.prettyURL () : mrl->pretty_name, url.url ());
     }
 }

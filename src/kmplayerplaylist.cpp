@@ -327,7 +327,7 @@ static bool hasMrlChildren (const ElementPtr & e) {
     return false;
 }
 
-Mrl::Mrl (ElementPtr & d) : Element (d), cached_ismrl_version (~0), parsed (false) {}
+Mrl::Mrl (ElementPtr & d) : Element (d), cached_ismrl_version (~0), parsed (false), bookmarkable (true) {}
 
 KDE_NO_CDTOR_EXPORT Mrl::Mrl () : cached_ismrl_version (~0), parsed (false) {}
 
