@@ -132,7 +132,6 @@ public slots:
     void show ();
 private slots:
     void okPressed ();
-    void fileOpen ();
     void getHelp ();
 private:
     KMPlayerPreferences * configdialog;

@@ -26,7 +26,6 @@
 #include <qslider.h>
 
 #include <kconfig.h>
-#include <kfiledialog.h>
 #include <kapplication.h>
 #include <kurl.h>
 #include <kdebug.h>
@@ -251,7 +250,7 @@ void KMPlayerConfig::readConfig () {
                 QString freqstr = freqlist.at (k);
                 int pos = freqstr.find (':');
                 if (pos < 0) {
-                    kdError () << "Wrong frequency: " << freqstr << endl;
+                    kdWarning () << "Wrong frequency or none defined: " << freqstr << endl;
                     continue;
                 }
                 TVChannel * channel = new TVChannel (freqstr.left (pos),
@@ -272,9 +271,7 @@ void KMPlayerConfig::show () {
                 this, SLOT (okPressed ()));
         connect (configdialog, SIGNAL (applyClicked ()), 
                 this, SLOT (okPressed ()));
-        /*connect (configdialog->openFile, SIGNAL (clicked ()), 
-                this, SLOT (fileOpen ()));
-        connect (configdialog->showDVDMenu, SIGNAL (toggled (bool)), 
+        /*connect (configdialog->showDVDMenu, SIGNAL (toggled (bool)), 
                 configdialog->dvdTab, SLOT (setEnabled (bool)));
         connect (configdialog->showVCDMenu, SIGNAL (toggled (bool)), 
                 configdialog->vcdTab, SLOT (setEnabled (bool)));
@@ -294,7 +291,7 @@ void KMPlayerConfig::show () {
         /*else
             configdialog->buttonHelp->hide ();*/
     }
-    //configdialog->url->setText (m_player->url ().url ());
+    configdialog->m_SourcePageURL->url->setText (m_player->url ().url ());
     configdialog->m_GeneralPageGeneral->keepSizeRatio->setChecked (sizeratio);
     //configdialog->useArts->setChecked (usearts); //replaced in the dialog
     configdialog->m_GeneralPageGeneral->showConsoleOutput->setChecked (showconsole); //works
@@ -463,13 +460,16 @@ void KMPlayerConfig::writeConfig () {
         TVInput * input;
         for (device->inputs.first (); (input = device->inputs.current ()); device->inputs.next ()) {
             inputlist.append (QString::number (input->id) + sep + input->name);
-            TVChannel * channel;
-            QStringList channellist; 
-            for (input->channels.first (); (channel = input->channels.current()); input->channels.next ()) {
-                channellist.append (channel->name + sep + QString::number (channel->frequency));
-            }
-            if (channellist.size () > 0)
+            if (input->hastuner) {
+                TVChannel * channel;
+                QStringList channellist; 
+                for (input->channels.first (); (channel = input->channels.current()); input->channels.next ()) {
+                    channellist.append (channel->name + sep + QString::number (channel->frequency));
+                }
+                if (!channellist.size ())
+                    channellist.append (QString ("none"));
                 m_config->writeEntry (input->name, channellist, ';');
+            }
         }
         m_config->writeEntry (strTVInputs, inputlist, ';');
     }
@@ -484,12 +484,12 @@ void KMPlayerConfig::okPressed () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
     if (!view)
         return;
-    /*bool urlchanged = m_player->url () != KURL (configdialog->url->text ());
-    if (m_player->url ().isEmpty () && configdialog->url->text ().isEmpty ())
+    bool urlchanged = m_player->url () != KURL (configdialog->m_SourcePageURL->url->text ());
+    if (m_player->url ().isEmpty () && configdialog->m_SourcePageURL->url->text ().isEmpty ())
         urlchanged = false; // hmmm aren't these URLs the same?
 
     if (urlchanged)
-        m_player->setURL (configdialog->url->text ());*/
+        m_player->setURL (configdialog->m_SourcePageURL->url->text ());
     
     sizeratio = configdialog->m_GeneralPageGeneral->keepSizeRatio->isChecked ();
     m_player->keepMovieAspect (sizeratio);
@@ -583,24 +583,8 @@ void KMPlayerConfig::okPressed () {
 
     emit configChanged ();
 
-    /*if (urlchanged) {
-        m_player->stop ();
-        if (m_player->browserextension ())
-            m_player->browserextension ()->urlChanged (m_player->url ().url ());
-        
-        m_player->play ();
-    }*/
-	//m_player->openURL (KURL (configdialog->url->text ()));
-
-    }
-
-
-
-void KMPlayerConfig::fileOpen () {
-    /*KFileDialog *dlg = new KFileDialog (QString::null, QString::null, configdialog, "", true);
-    if (dlg->exec ())
-        configdialog->url->setText (dlg->selectedURL().url ());
-    delete dlg;*/
+    if (urlchanged)
+        m_player->openURL (KURL (configdialog->m_SourcePageURL->url->text ()));
 }
 
 void KMPlayerConfig::getHelp () {

@@ -50,6 +50,7 @@
 
 
 class KMPlayerPrefGeneralPageGeneral; 	// general, general
+class KMPlayerPrefSourcePageURL;        // source, url
 class KMPlayerPrefGeneralPageDVD;	// general, dvd
 class KMPlayerPrefGeneralPageVCD;	// general, vcd
 class KMPlayerPrefGeneralPageOutput;	// general, output
@@ -65,6 +66,7 @@ public:
     ~KMPlayerPreferences();
     
     KMPlayerPrefGeneralPageGeneral 	*m_GeneralPageGeneral;
+    KMPlayerPrefSourcePageURL 		*m_SourcePageURL;
     KMPlayerPrefGeneralPageDVD 		*m_GeneralPageDVD;
     KMPlayerPrefGeneralPageVCD 		*m_GeneralPageVCD;
     KMPlayerPrefGeneralPageOutput 	*m_GeneralPageOutput;
@@ -94,6 +96,18 @@ public:
     
     QSpinBox *seekTime;
         
+};
+
+class KMPlayerPrefSourcePageURL : public QFrame
+{
+    Q_OBJECT
+public:
+    KMPlayerPrefSourcePageURL (QWidget *parent);
+    ~KMPlayerPrefSourcePageURL () {}
+
+    QLineEdit *url;
+private slots:
+    void slotBrowse ();
 };
 
 class KMPlayerPrefGeneralPageDVD : public QFrame

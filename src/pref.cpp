@@ -18,12 +18,9 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "pref.h"
-#include <iostream>
-#include <klocale.h>
-
 #include <qlayout.h>
 #include <qlabel.h>
+#include <qpushbutton.h>
 #include <qcheckbox.h>
 #include <qstringlist.h>
 #include <qcombobox.h>
@@ -35,6 +32,11 @@
 #include <qbuttongroup.h>
 #include <qspinbox.h>
 #include <qmessagebox.h>
+
+#include <klocale.h>
+#include <kfiledialog.h>
+
+#include "pref.h"
 
 KMPlayerPreferences::KMPlayerPreferences(QWidget *parent)
 : KDialogBase(TreeList, i18n("KMPlayer Preferences"),
@@ -51,10 +53,16 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent)
 	
 	m_GeneralPageGeneral = new KMPlayerPrefGeneralPageGeneral(frame);
 	vlay->addWidget(m_GeneralPageGeneral);
-	
 
 	hierarcy.clear();
-	hierarcy << i18n("General") << i18n("DVD");
+	hierarcy << i18n ("Source") << i18n ("URL");
+	frame = addPage (hierarcy, i18n ("URL"));
+	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
+	m_SourcePageURL = new KMPlayerPrefSourcePageURL (frame);
+	vlay->addWidget (m_SourcePageURL);
+	
+	hierarcy.clear();
+	hierarcy << i18n("Source") << i18n("DVD");
 	frame = addPage(hierarcy, i18n("DVD playing options"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	m_GeneralPageDVD = new KMPlayerPrefGeneralPageDVD(frame);
@@ -62,7 +70,7 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent)
 	
 
 	hierarcy.clear();
-	hierarcy << i18n("General") << i18n("VCD");
+	hierarcy << i18n("Source") << i18n("VCD");
 	frame = addPage(hierarcy, i18n("VCD playing options"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	m_GeneralPageVCD = new KMPlayerPrefGeneralPageVCD(frame);
@@ -147,6 +155,26 @@ KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
 	layout->addWidget(seekingWidget);
 }
 
+KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
+: QFrame (parent)
+{
+    QVBoxLayout *layout = new QVBoxLayout (this);
+    QLabel *urlLabel = new QLabel (i18n ("URL:"), this, 0);
+    url = new QLineEdit ("", this, 0);
+    QPushButton * browse = new QPushButton (i18n ("Browse ..."), this);
+    connect (browse, SIGNAL (clicked ()), this, SLOT (slotBrowse ()));
+    layout->addWidget (urlLabel);
+    layout->addWidget (url);
+    layout->addWidget (browse);
+    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
+}
+
+void KMPlayerPrefSourcePageURL::slotBrowse () {
+    KFileDialog *dlg = new KFileDialog (QString::null, QString::null, this, "", true);
+    if (dlg->exec ())
+        url->setText (dlg->selectedURL().url ());
+    delete dlg;
+}
 
 KMPlayerPrefGeneralPageDVD::KMPlayerPrefGeneralPageDVD(QWidget *parent) : QFrame(parent)
 {
