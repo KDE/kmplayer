@@ -1,6 +1,11 @@
-Changes since version 0.7.4a
+Changes since version 0.7.4b
 - Broadcast, http streaming, for video devices (needs ffmpeg/ffserver)
   "Say hi to a friend", if you have a webcam.
+Changes since version 0.7.4a
+- Height calculation fix when position slider is visible
+- Q&D fix for mplayer compiled with locale output (,->. for aspect)
+- Aspect fix for fullscreen when embedded in khtml
+- Position slider fix VCD, re-determine length for each track
 Changes since version 0.7.4
 - Fix VCD playing
 Changes since version 0.7.3
