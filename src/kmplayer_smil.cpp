@@ -952,7 +952,7 @@ KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
         if (!pix->isNull ()) {
             d->image = pix;
             PlayListNotify * n = element->document ()->notify_listener;
-            if (n && region_node)
+            if (isstarted && n && region_node)
                 n->repaintRegion (region_node);
         } else
             delete pix;
@@ -982,20 +982,7 @@ KDE_NO_CDTOR_EXPORT TextData::TextData (ElementPtr e)
     kdDebug () << "TextData::TextData " << (mrl ? mrl->src : QString()) << endl;
     if (mrl && !mrl->src.isEmpty ()) {
         KURL url (mrl->src);
-        if (url.protocol () == "data") {
-            QString s = KURL::decode_string (url.url ());
-            int pos = s.find (QString ("data:"));
-            if (pos > -1) {
-                s = s.mid (pos + 5);
-                pos = s.find (QChar (','));
-                if (pos > -1) {
-                    d->data.resize (s.length () - pos);
-                    memcpy (d->data.data (), s.mid (pos + 1).ascii (), s.length ()- pos - 1);
-                    if (pos > 0)
-                        d->codec =QTextCodec::codecForName(s.left(pos).ascii());
-                }
-            }
-        } else if (url.isLocalFile ()) {
+        if (url.isLocalFile ()) {
             QFile file (url.path ());
             file.open (IO_ReadOnly);
             d->data = file.readAll ();
@@ -1065,7 +1052,7 @@ KDE_NO_EXPORT void TextData::slotResult (KIO::Job * job) {
     if (mt_d->data.size () && element) {
         d->data = mt_d->data;
         PlayListNotify * n = element->document ()->notify_listener;
-        if (n && region_node)
+        if (isstarted && n && region_node)
             n->repaintRegion (region_node);
     }
 }
