@@ -1063,9 +1063,48 @@ bool CallbackProcess::stop () {
     return true;
 }
 
+bool CallbackProcess::quit () {
+    kdDebug () << "CallbackProcess::quit ()" << endl;
+    if (m_have_config == config_probe)
+        m_have_config = config_unknown; // hmm
+    if (m_send_config == send_new)
+        m_send_config = send_no; // oh well
+    if (playing ()) {
+        if (m_backend)
+            m_backend->quit ();
+        else if (view ())
+            view ()->viewer ()->sendKeyEvent ('q');
+#if KDE_IS_VERSION(3, 1, 90)
+        m_process->wait(1);
+#else
+        QTime t;
+        t.start ();
+        do {
+            KProcessController::theKProcessController->waitForProcessExit (2);
+        } while (t.elapsed () < 1000 && m_process->isRunning ());
+#endif
+    }
+    return Process::quit ();
+}
+
 bool CallbackProcess::pause () {
     if (!playing () || !m_backend) return false;
     m_backend->pause ();
+    return true;
+}
+
+bool CallbackProcess::seek (int pos, bool absolute) {
+    if (in_gui_update || !playing () ||
+            !m_backend || !m_source ||
+            !m_source->hasLength () ||
+            (absolute && m_source->position () == pos))
+        return false;
+    if (!absolute)
+        pos = m_source->position () + pos;
+    m_source->setPosition (pos);
+    if (m_request_seek < 0)
+        m_backend->seek (pos, true);
+    m_request_seek = pos;
     return true;
 }
 
@@ -1400,42 +1439,6 @@ bool Xine::ready () {
 
 // TODO:input.v4l_video_device_path input.v4l_radio_device_path
 // v4l:/Webcam/0   v4l:/Television/21600  v4l:/Radio/96
-KDE_NO_EXPORT bool Xine::quit () {
-    kdDebug () << "Xine::quit ()" << endl;
-    if (m_have_config == config_probe)
-        m_have_config = config_unknown; // hmm
-    if (m_send_config == send_new)
-        m_send_config = send_no; // oh well
-    if (!m_process || !m_process->isRunning ()) return true;
-    if (m_backend) {
-        m_backend->quit ();
-        QTime t;
-        t.start ();
-        do {
-            KProcessController::theKProcessController->waitForProcessExit (2);
-        } while (t.elapsed () < 2000 && m_process->isRunning ());
-        kdDebug () << "DCOP quit " << t.elapsed () << endl;
-    }
-    if (m_process->isRunning () && !Process::stop ())
-        processStopped (0L); // give up
-    setState (NotRunning);
-    return true;
-}
-
-KDE_NO_EXPORT bool Xine::seek (int pos, bool absolute) {
-    if (in_gui_update || !playing () ||
-            !m_backend ||
-            !m_source->hasLength () ||
-            (absolute && m_source->position () == pos))
-        return false;
-    if (!absolute)
-        pos = m_source->position () + pos;
-    m_source->setPosition (pos);
-    if (m_request_seek < 0)
-        m_backend->seek (pos, true);
-    m_request_seek = pos;
-    return true;
-}
 
 //-----------------------------------------------------------------------------
 
@@ -1482,39 +1485,6 @@ KDE_NO_EXPORT bool GStreamer::ready () {
     printf (" -cb %s\n", dcopName ().ascii());
     *m_process << " -cb " << dcopName ();
     return m_process->isRunning ();
-}
-
-KDE_NO_EXPORT bool GStreamer::quit () {
-    kdDebug () << "GStreamer::quit ()" << endl;
-    if (!m_process || !m_process->isRunning ()) return true;
-    if (m_backend) {
-        m_backend->quit ();
-        QTime t;
-        t.start ();
-        do {
-            KProcessController::theKProcessController->waitForProcessExit (2);
-        } while (t.elapsed () < 2000 && m_process->isRunning ());
-        kdDebug () << "DCOP quit " << t.elapsed () << endl;
-    }
-    if (m_process->isRunning () && !Process::stop ())
-        processStopped (0L); // give up
-    setState (NotRunning);
-    return true;
-}
-
-KDE_NO_EXPORT bool GStreamer::seek (int pos, bool absolute) {
-    if (in_gui_update || !playing () ||
-            !m_backend ||
-            !m_source->hasLength () ||
-            (absolute && m_source->position () == pos))
-        return false;
-    if (!absolute)
-        pos = m_source->position () + pos;
-    m_source->setPosition (pos);
-    if (m_request_seek < 0)
-        m_backend->seek (pos, true);
-    m_request_seek = pos;
-    return true;
 }
 
 //-----------------------------------------------------------------------------

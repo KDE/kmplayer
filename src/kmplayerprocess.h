@@ -57,6 +57,7 @@ public:
     bool playing () const;
     KDE_NO_EXPORT KProcess * process () const { return m_process; }
     KDE_NO_EXPORT PartBase * player () const { return m_player; }
+    KDE_NO_EXPORT Source * source () const { return m_source; }
     virtual WId widget ();
     View * view ();
     void setSource (Source * src) { m_source = src; }
@@ -236,7 +237,9 @@ public:
 public slots:
     bool play (Source *);
     bool stop ();
+    bool quit ();
     bool pause ();
+    bool seek (int pos, bool absolute);
     bool saturation (int pos, bool absolute);
     bool hue (int pos, bool absolute);
     bool contrast (int pos, bool absolute);
@@ -305,8 +308,6 @@ public:
     WId widget ();
 public slots:
     bool ready ();
-    bool quit ();
-    bool seek (int pos, bool absolute);
 };
 
 class GStreamer : public CallbackProcess {
@@ -318,8 +319,6 @@ public:
     WId widget ();
 public slots:
     virtual bool ready ();
-    bool quit ();
-    bool seek (int pos, bool absolute);
 };
 
 class KMPLAYER_EXPORT FFMpeg : public Process, public Recorder {

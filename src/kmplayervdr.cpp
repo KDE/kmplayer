@@ -690,23 +690,4 @@ KDE_NO_EXPORT bool XVideo::ready () {
     return m_process->isRunning ();
 }
 
-KDE_NO_EXPORT bool XVideo::quit () {
-    if (playing ()) {
-        if (m_backend)
-            m_backend->quit ();
-        else if (view ())
-            view ()->viewer ()->sendKeyEvent ('q');
-#if KDE_IS_VERSION(3, 1, 90)
-        m_process->wait(1);
-#else
-        QTime t;
-        t.start ();
-        do {
-            KProcessController::theKProcessController->waitForProcessExit (2);
-        } while (t.elapsed () < 1000 && m_process->isRunning ());
-#endif
-    }
-    return KMPlayer::Process::quit ();
-}
-
 #include "kmplayervdr.moc"

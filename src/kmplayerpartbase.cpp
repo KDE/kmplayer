@@ -236,7 +236,9 @@ void PartBase::setProcess (const char * name) {
     connect (m_process, SIGNAL (positioned(int)), this, SLOT (positioned(int)));
     connect (m_process, SIGNAL (loaded (int)), this, SLOT (loaded (int)));
     connect (m_process, SIGNAL(lengthFound(int)), this, SLOT(lengthFound(int)));
-    connect(m_source,SIGNAL(currentURL(Source*)),m_process,SLOT(play(Source*)));
+    if (m_process->player () == this)
+        connect (m_source, SIGNAL (currentURL (Source *)),
+                 m_process, SLOT (play (Source *)));
     if (m_process->playing ()) {
         m_view->buttonBar ()->setPlaying (true);
         m_view->buttonBar ()->showPositionSlider (!!m_source->length ());
@@ -340,6 +342,8 @@ void PartBase::setSource (Source * _source) {
     }
     if (p != m_process->name ()) {
         setProcess (p.ascii ());
+        disconnect (m_source, SIGNAL (currentURL (Source *)),
+                    m_process, SLOT (play (Source *)));
     }
     m_settings->backends [_source->name()] = m_process->name ();
     m_source = _source;
@@ -444,25 +448,25 @@ void PartBase::processStateChange (Process::State old, Process::State state) {
     if (!m_view) return;
     m_view->buttonBar ()->setPlaying (state >= Process::Ready);
     kdDebug () << "processState " << statemap[old] << " -> " << statemap[state] << endl;
+    Source * src = m_process->player() == this ? m_source : m_process->source();
     if (state == Process::Playing) {
         m_process->view ()->videoStart ();
         if (m_settings->sizeratio && m_view->viewer ())
-            m_view->viewer ()->setAspect (m_source->aspect ());
-        m_view->buttonBar ()->showPositionSlider (!!m_source->length ());
-        m_view->buttonBar ()->enableSeekButtons (m_source->isSeekable ());
+            m_view->viewer ()->setAspect (src->aspect ());
+        m_view->buttonBar ()->showPositionSlider (!!src->length ());
+        m_view->buttonBar ()->enableSeekButtons (src->isSeekable ());
         emit loading (100);
         emit startPlaying ();
     } else if (state == Process::NotRunning) {
-        if (m_source->hasLength () &&
-                m_source->position() > m_source->length())
-            m_source->setLength (m_source->position ());
-        m_source->setPosition (0);
+        if (src->hasLength () && src->position () > src->length ())
+            src->setLength (src->position ());
+        src->setPosition (0);
         m_view->reset ();
         emit stopPlaying ();
-    } else if (state == Process::Ready) {
+    } else if (state == Process::Ready && m_process->player () == this) {
         if (old > Process::Ready)
-            m_source->next ();
-        m_source->getCurrent ();
+            src->next ();
+        src->getCurrent ();
     }
 }
 
@@ -491,11 +495,13 @@ void PartBase::pause () {
 }
 
 void PartBase::back () {
-    m_source->backward ();
+    Source * src = m_process->player() == this ? m_source : m_process->source();
+    src->backward ();
 }
 
 void PartBase::forward () {
-    m_source->forward ();
+    Source * src = m_process->player() == this ? m_source : m_process->source();
+    src->forward ();
 }
 
 void PartBase::playListItemSelected (QListViewItem * item) {
@@ -524,12 +530,13 @@ void PartBase::record () {
 }
 
 void PartBase::play () {
+    Source * src = m_process->player() == this ? m_source : m_process->source();
     if (m_process->state () == Process::NotRunning) {
         m_process->ready ();
     } else if (m_process->state () == Process::Ready) {
-        m_source->getCurrent ();
+        src->getCurrent ();
     } else
-        m_process->play (m_source);
+        m_process->play (src);
 }
 
 bool PartBase::playing () const {
@@ -537,6 +544,7 @@ bool PartBase::playing () const {
 }
 
 void PartBase::stop () {
+    Source * src = m_process->player() == this ? m_source : m_process->source();
     if (m_view) {
         if (!m_view->buttonBar ()->button (ControlPanel::button_stop)->isOn ())
         m_view->buttonBar ()->button (ControlPanel::button_stop)->toggle ();
@@ -544,8 +552,8 @@ void PartBase::stop () {
     }
     if (m_process)
         m_process->quit ();
-    if (m_source)
-        m_source->first ();
+    if (src)
+        src->first ();
     if (m_view) {
         m_view->setCursor (QCursor (Qt::ArrowCursor));
         if (m_view->buttonBar ()->button (ControlPanel::button_stop)->isOn ())
@@ -821,13 +829,18 @@ QString Source::mime () const {
 }
 
 void Source::setMime (const QString & m) {
-    kdDebug () << "setMime " << m << endl;
+    QString mimestr (m);
+    int plugin_pos = mimestr.find ("-plugin");
+    if (plugin_pos > 0)
+        mimestr.truncate (plugin_pos);
+    kdDebug () << "setMime " << mimestr << endl;
     if (m_current)
-        m_current->mrl ()->mimetype = m;
+        m_current->mrl ()->mimetype = mimestr;
     else {
         if (m_document)
             m_document->document ()->dispose ();
         m_document = (new Document (QString ()))->self ();
+        m_document->mrl ()->mimetype = mimestr;
     }
 }
 
@@ -1132,9 +1145,8 @@ KDE_NO_EXPORT void URLSource::kioData (KIO::Job *, const QByteArray & d) {
 }
 
 KDE_NO_EXPORT void URLSource::kioMimetype (KIO::Job * job, const QString & mimestr) {
-    kdDebug () << "URLSource::kioMimetype " << mimestr << endl;
     setMime (mimestr);
-    if (job && !isPlayListMime (mimestr))
+    if (job && !isPlayListMime (mime ())) // Note: -plugin might be stripped
         job->kill (false);
 }
 
@@ -1165,9 +1177,6 @@ void URLSource::getCurrent () {
         Source::getCurrent ();
     } else {
         QString mimestr = mime ();
-        int plugin_pos = mimestr.find ("-plugin");
-        if (plugin_pos > 0)
-            mimestr.truncate (plugin_pos);
         bool maybe_playlist = isPlayListMime (mimestr);
         kdDebug () << "URLSource::getCurrent " << mimestr << maybe_playlist << endl;
         if (url.isLocalFile ()) {

@@ -148,7 +148,6 @@ public:
     QString menuName () const;
 public slots:
     virtual bool ready ();
-    virtual bool quit ();
 };
 
 #endif // KMPLAYER_VDR_SOURCE_H
