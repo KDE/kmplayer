@@ -100,7 +100,7 @@ struct SharedPtr {
     SharedPtr<T> & operator = (const WeakPtr<T> &);
     SharedPtr<T> & operator = (T *);
     T * operator -> () { return data ? data->ptr : 0L; }
-    const T * operator -> () const { return data ? data->ptr : 0L; }
+    T * operator -> () const { return data ? data->ptr : 0L; }
     T & operator * () { return *data->ptr; }
     const T & operator * () const { return *data->ptr; }
     // operator bool () const { return data && data->ptr; }
