@@ -841,7 +841,8 @@ void KMPlayerViewer::dragEnterEvent (QDragEnterEvent* dee) {
 
 void KMPlayerViewer::paintEvent (QPaintEvent * e) {
     if (!m_view->image ()) {
-        QWidget::paintEvent (e);
+        if (!m_view->playing ())
+            QWidget::paintEvent (e);
         return;
     }
     QPainter paint (this);

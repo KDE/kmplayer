@@ -110,6 +110,7 @@ public:
     bool isFullScreen () const { return m_layer->isFullScreen (); }
     bool setPicture (const QString & path);
     QPixmap * image () const { return m_image; }
+    bool playing () const { return m_playing; }
 public slots:
     void startsToPlay ();
     void showPopupMenu ();
