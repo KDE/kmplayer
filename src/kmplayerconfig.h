@@ -30,7 +30,7 @@
 class KMPlayer;
 class KConfig;
 class KMPlayerPreferences;
-
+/*
 class TVChannel {
 public:
     TVChannel (const QString & n, int f);
@@ -51,9 +51,46 @@ class TVDevice {
 public:
     TVDevice (const QString & d, const QSize & size);
     QString device;
+    QString name;
+    QSize minsize;
+    QSize maxsize;
     QSize size;
     QPtrList <TVInput> inputs;
 };
+
+class TVDeviceScanner : public QObject {
+    Q_OBJECT
+public:
+    TVDeviceScanner () {}
+    virtual ~TVDeviceScanner () {}
+    virtual bool scan (const QString & device, const QString & driver) = 0;
+signals:
+    void scanFinished (TVDevice * tvdevice);
+};
+class TVDeviceScannerSource : public KMPlayerSource, public TVDeviceScanner {
+    Q_OBJECT
+public:
+    TVDeviceScannerSource (KMPlayer * player);
+    virtual void init ();
+    virtual bool processOutput (const QString & line);
+    virtual QString filterOptions ();
+    virtual bool hasLength ();
+    virtual bool isSeekable ();
+    virtual bool scan (const QString & device, const QString & driver);
+public slots:
+    virtual void activate ();
+    virtual void deactivate ();
+    virtual void play ();
+    void finished ();
+private:
+    TVDevice * m_tvdevice;
+    KMPlayerSource * m_source;
+    QString m_driver;
+    QRegExp m_nameRegExp;
+    QRegExp m_sizesRegExp;
+    QRegExp m_inputRegExp
+};
+*/
 
 class KMPlayerConfig : public QObject {
     Q_OBJECT

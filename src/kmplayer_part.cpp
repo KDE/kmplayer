@@ -953,3 +953,4 @@ void KMPlayerURLSource::deactivate () {
 }
 
 #include "kmplayer_part.moc"
+#include "kmplayersource.moc"

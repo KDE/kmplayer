@@ -10,13 +10,13 @@ kparts_kmplayer_la_SOURCES = kmplayer_part.cpp kmplayerview.cpp kmplayerconfig.c
 
 kparts_kmplayer_la_LDFLAGS= $(all_libraries) -module $(KDE_PLUGIN) -lartskde -lm
 kparts_kmplayer_la_LIBADD= $(LIB_KFILE) $(LIB_KPARTS) $(LIB_KIO) -lkmediaplayer
-kparts_kmplayer_la_METASOURCES= kmplayer_part.moc kmplayerview.moc kmplayerconfig.moc pref.moc
+kparts_kmplayer_la_METASOURCES= kmplayer_part.moc kmplayerview.moc kmplayersource.moc kmplayerconfig.moc pref.moc
 
 kdeinit_kmplayer_la_SOURCES= main.cpp kmplayerapp.cpp
 
 kdeinit_kmplayer_la_LIBADD= kparts_kmplayer.la
 kdeinit_kmplayer_la_LDFLAGS= $(all_libraries) $(KDE_RPATH) -module -avoid-version
-kdeinit_kmplayer_la_METASOURCES= kmplayer.moc kmplayersource.moc
+kdeinit_kmplayer_la_METASOURCES= kmplayer.moc kmplayerappsource.moc
 
 bin_PROGRAMS= kmplayer
 

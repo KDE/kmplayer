@@ -1,6 +1,7 @@
 /* This file is part of the KDE project
  *
  * Copyright (C) 2003 Joonas Koivunen <rzei@mbnet.fi>
+ * Copyright (C) 2003 Koos Vriezen <koos.vriezen@xs4all.nl>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -35,6 +36,7 @@
 
 #include <klocale.h>
 #include <kfiledialog.h>
+#include <kmessagebox.h>
 
 #include "pref.h"
 
@@ -67,7 +69,7 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent)
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	m_GeneralPageDVD = new KMPlayerPrefGeneralPageDVD(frame);
 	vlay->addWidget(m_GeneralPageDVD);
-	
+
 
 	hierarcy.clear();
 	hierarcy << i18n("Source") << i18n("VCD");
@@ -75,6 +77,13 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent)
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	m_GeneralPageVCD = new KMPlayerPrefGeneralPageVCD(frame);
 	vlay->addWidget(m_GeneralPageVCD);
+
+	hierarcy.clear();
+	hierarcy << i18n ("Source") << i18n ("TV");
+	frame = addPage (hierarcy, i18n ("TV options"));
+	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
+	m_SourcePageTV = new KMPlayerPrefSourcePageTV (frame, this);
+	vlay->addWidget (m_SourcePageTV);
 
 
 	hierarcy.clear();
@@ -192,6 +201,97 @@ KMPlayerPrefGeneralPageDVD::KMPlayerPrefGeneralPageDVD(QWidget *parent) : QFrame
 	layout->addWidget(dvdDevicePath);
 	layout->addItem( new QSpacerItem( 0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum ) );
 
+}
+
+KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent, TVDevice * dev)
+: QFrame (parent), m_tvdevice (dev) {
+    QVBoxLayout *layout = new QVBoxLayout (this);
+    QLabel * nameLabel = new QLabel (i18n ("Name:"), this, 0);
+    name = new QLineEdit ("", this, 0);
+    QLabel *sizewidthLabel = new QLabel (i18n ("Width:"), this, 0);
+    sizewidth = new QLineEdit ("", this, 0);
+    QLabel *sizeheightLabel = new QLabel (i18n ("Height:"), this, 0);
+    sizeheight = new QLineEdit ("", this, 0);
+    QPushButton * delButton = new QPushButton (i18n ("Delete"), this);
+    connect (delButton, SIGNAL (clicked ()), this, SLOT (slotDelete ()));
+    layout->addWidget (nameLabel);
+    layout->addWidget (name);
+    layout->addWidget (sizewidthLabel);
+    layout->addWidget (sizewidth);
+    layout->addWidget (sizeheightLabel);
+    layout->addWidget (sizeheight);
+    layout->addWidget (delButton);
+    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
+}
+
+void KMPlayerPrefSourcePageTVDevice::slotDelete () {
+    emit deleted (static_cast <QFrame *> (parent ()));
+}
+
+KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerPreferences * pref)
+: QFrame (parent), m_preference (pref) {
+    deleteddevices.setAutoDelete (true);
+    addeddevices.setAutoDelete (true);
+    m_devicepages.setAutoDelete (true);
+    QVBoxLayout *layout = new QVBoxLayout (this);
+    QLabel *driverLabel = new QLabel (i18n ("Driver:"), this, 0);
+    driver = new QLineEdit ("", this, 0);
+    QLabel *deviceLabel = new QLabel (i18n ("Device:"), this, 0);
+    device = new QLineEdit ("", this, 0);
+    QPushButton * scan = new QPushButton (i18n ("Scan ..."), this);
+    connect (scan, SIGNAL (clicked ()), this, SLOT (slotScan ()));
+    layout->addWidget (driverLabel);
+    layout->addWidget (driver);
+    layout->addWidget (deviceLabel);
+    layout->addWidget (device);
+    layout->addWidget (scan);
+    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
+}
+
+void KMPlayerPrefSourcePageTV::addPage (TVDevice * device) {
+    QStringList hierarcy; // typo? :)
+    hierarcy << i18n("Source") << i18n("TV") << device->name;
+    QFrame * frame = m_preference->addPage (hierarcy, device->name);
+    QVBoxLayout *vlay = new QVBoxLayout (frame, m_preference->marginHint(), m_preference->spacingHint());
+    KMPlayerPrefSourcePageTVDevice * devpage = new KMPlayerPrefSourcePageTVDevice (frame, device);
+    devpage->name->setText (device->name);
+    devpage->sizewidth->setText (QString::number (device->size.width ()));
+    devpage->sizeheight->setText (QString::number (device->size.height ()));
+    vlay->addWidget (devpage);
+    connect (devpage, SIGNAL (deleted (QFrame *)),
+            this, SLOT (slotDeviceDeleted (QFrame *)));
+    m_devicepages.append (frame);
+}
+
+void KMPlayerPrefSourcePageTV::setTVDevices (QPtrList <TVDevice> * devs) {
+    m_devices = devs;
+    addeddevices.clear ();
+    deleteddevices.clear ();
+    m_devicepages.clear ();
+    TVDevice * device;
+    for (m_devices->first(); m_devices->current (); m_devices->next())
+        addPage (m_devices->current ());
+}
+
+void KMPlayerPrefSourcePageTV::slotDeviceDeleted (QFrame * frame) {
+    m_devicepages.remove (frame);
+}
+    
+void KMPlayerPrefSourcePageTV::slotScan () {
+    scanner->scan (device->text (), driver->text());
+    connect (scanner, SIGNAL (scanFinished (TVDevice *)), 
+             this, SLOT (slotScanFinished (TVDevice *)));
+}
+
+void KMPlayerPrefSourcePageTV::slotScanFinished (TVDevice * _device) {
+    disconnect (scanner, SIGNAL (scanFinished (TVDevice *)), 
+                this, SLOT (slotScanFinished (TVDevice *)));
+    if (!_device) {
+        KMessageBox::error (this, i18n ("No device found."), i18n ("KMPlayer: Error"));
+    } else {
+        addeddevices.append (_device);
+        addPage (_device);
+    }
 }
 
 KMPlayerPrefGeneralPageVCD::KMPlayerPrefGeneralPageVCD(QWidget *parent) : QFrame(parent)

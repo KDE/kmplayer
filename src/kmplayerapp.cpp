@@ -50,7 +50,7 @@
 #include "kmplayer.h"
 #include "kmplayerview.h"
 #include "kmplayer_part.h"
-#include "kmplayersource.h"
+#include "kmplayerappsource.h"
 #include "kmplayerconfig.h"
 
 #define ID_STATUS_MSG 1
@@ -868,7 +868,7 @@ void KMPlayerTVSource::buildMenu () {
                 devmenu->insertItem (input->name, inputmenu, 0, input->id);
             }
         }
-        m_menu->insertItem (device->device, devmenu);
+        m_menu->insertItem (device->name, devmenu);
     }
 }
 
@@ -900,4 +900,4 @@ bool KMPlayerTVSource::isSeekable () {
 }
 
 #include "kmplayer.moc"
-#include "kmplayersource.moc"
+#include "kmplayerappsource.moc"

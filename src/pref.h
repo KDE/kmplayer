@@ -1,6 +1,7 @@
 /* This file is part of the KDE project
  *
  * Copyright (C) 2003 Joonas Koivunen <rzei@mbnet.fi>
+ * Copyright (C) 2003 Koos Vriezen <koos.vriezen@xs4all.nl>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -40,6 +41,8 @@
 
 #include <kdialogbase.h>
 #include <qframe.h>
+#include <qptrlist.h>
+#include <qregexp.h>
 #include <qcheckbox.h>
 #include <qtextedit.h>
 #include <qcombobox.h>
@@ -48,15 +51,71 @@
 #include <qslider.h>
 #include <qspinbox.h>
 
+#include "kmplayersource.h"
 
 class KMPlayerPrefGeneralPageGeneral; 	// general, general
 class KMPlayerPrefSourcePageURL;        // source, url
 class KMPlayerPrefGeneralPageDVD;	// general, dvd
 class KMPlayerPrefGeneralPageVCD;	// general, vcd
+class KMPlayerPrefSourcePageTV;         // source, TV
 class KMPlayerPrefGeneralPageOutput;	// general, output
 class KMPlayerPrefGeneralPageAdvanced;	// general, advanced, pattern matches etc.
 class KMPlayerPrefOPPageGeneral;	// OP = outputplugins, general
 class KMPlayerPrefOPPagePostProc;	// outputplugins, postproc
+
+class TVChannel {
+public:
+    TVChannel (const QString & n, int f);
+    QString name;
+    int frequency;
+};
+
+class TVInput {
+public:
+    TVInput (const QString & n, int id);
+    QString name;
+    int id;
+    bool hastuner;
+    QPtrList <TVChannel> channels;
+};
+
+class TVDevice {
+public:
+    TVDevice (const QString & d, const QSize & size);
+    QString device;
+    QString name;
+    QSize minsize;
+    QSize maxsize;
+    QSize size;
+    QPtrList <TVInput> inputs;
+};
+
+class TVDeviceScannerSource : public KMPlayerSource {
+    Q_OBJECT
+public:
+    TVDeviceScannerSource (KMPlayer * player);
+    virtual void init ();
+    virtual bool processOutput (const QString & line);
+    virtual QString filterOptions ();
+    virtual bool hasLength ();
+    virtual bool isSeekable ();
+    virtual bool scan (const QString & device, const QString & driver);
+    public slots:
+        virtual void activate ();
+    virtual void deactivate ();
+    virtual void play ();
+    void finished ();
+signals:
+    void scanFinished (TVDevice * tvdevice);
+private:
+    TVDevice * m_tvdevice;
+    KMPlayerSource * m_source;
+    QString m_driver;
+    QRegExp m_nameRegExp;
+    QRegExp m_sizesRegExp;
+    QRegExp m_inputRegExp;
+};
+
 
 class KMPlayerPreferences : public KDialogBase
 {
@@ -69,6 +128,7 @@ public:
     KMPlayerPrefSourcePageURL 		*m_SourcePageURL;
     KMPlayerPrefGeneralPageDVD 		*m_GeneralPageDVD;
     KMPlayerPrefGeneralPageVCD 		*m_GeneralPageVCD;
+    KMPlayerPrefSourcePageTV 		*m_SourcePageTV;
     KMPlayerPrefGeneralPageOutput 	*m_GeneralPageOutput;
     KMPlayerPrefGeneralPageAdvanced	*m_GeneralPageAdvanced;
     KMPlayerPrefOPPageGeneral 		*m_OPPageGeneral;
@@ -131,6 +191,48 @@ public:
     QLineEdit *vcdDevicePath;
     QCheckBox *autoPlayVCD;
     
+};
+
+class KMPlayerPrefSourcePageTVDevice : public QFrame
+{
+    Q_OBJECT
+public:
+    KMPlayerPrefSourcePageTVDevice (QWidget *parent, TVDevice * dev);
+    ~KMPlayerPrefSourcePageTVDevice () {}
+
+    QLineEdit * name;
+    QLineEdit * sizewidth;
+    QLineEdit * sizeheight;
+    TVDevice * device;
+signals:
+    void deleted (QFrame *);
+private slots:
+    void slotDelete ();
+    TVDevice * m_tvdevice;
+};
+
+class KMPlayerPrefSourcePageTV : public QFrame
+{
+    Q_OBJECT
+public:
+    KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerPreferences * pref);
+    ~KMPlayerPrefSourcePageTV () {}
+
+    QLineEdit * driver;
+    QLineEdit * device;
+    TVDeviceScannerSource * scanner;
+    void setTVDevices (QPtrList <TVDevice> * devs);
+    QPtrList <TVDevice> deleteddevices;
+    QPtrList <TVDevice> addeddevices;
+private slots:
+    void slotScan ();
+    void slotScanFinished (TVDevice * device);
+    void slotDeviceDeleted (QFrame *);
+private:
+    void addPage (TVDevice *);
+    QPtrList <TVDevice> * m_devices;
+    QPtrList <QFrame> m_devicepages;
+    KMPlayerPreferences * m_preference;
 };
 
 class KMPlayerPrefGeneralPageOutput : public QFrame

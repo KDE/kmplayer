@@ -27,6 +27,7 @@
 #include <qguardedptr.h>
 #include <qregexp.h>
 #include "kmplayerview.h"
+#include "kmplayersource.h"
 
 
 class KProcess;
@@ -79,38 +80,6 @@ private slots:
 private:
     KMPlayer * player;
     bool m_started;
-};
-
-
-class KMPlayerSource : public QObject {
-    Q_OBJECT
-public:
-    KMPlayerSource (KMPlayer * player);
-    virtual ~KMPlayerSource ();
-    virtual void init ();
-    virtual bool processOutput (const QString & line);
-    virtual QString filterOptions ();
-    virtual bool hasLength ();
-    virtual bool isSeekable ();
-    int width () const { return m_width; }
-    int height () const { return m_height; }
-    int length () const { return m_length; }
-    float aspect () const { return m_aspect; }
-    void setWidth (int w) { m_width = w; }
-    void setHeight (int h) { m_height = h; }
-    void setAspect (float a) { m_aspect = a; }
-    void setLength (int len) { m_length = len; }
-public slots:
-    virtual void activate () = 0;
-    virtual void deactivate () = 0;
-    virtual void play () = 0;
-protected:
-    KMPlayer * m_player;
-private:
-    int m_width;
-    int m_height;
-    float m_aspect;
-    int m_length;
 };
 
 

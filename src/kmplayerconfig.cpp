@@ -123,8 +123,11 @@ static const char * strPP_FFmpeg_Int = "FFmpeg Interpolating Deinterlacer";
 // end of postproc
 static const char * strTV = "TV";
 static const char * strTVDevices = "Devices";
+static const char * strTVDeviceName = "Name";
 static const char * strTVInputs = "Inputs";
 static const char * strTVSize = "Size";
+static const char * strTVMinSize = "Minimum Size";
+static const char * strTVMaxSize = "Maximum Size";
 static const char * strTVDriver = "Driver";
 
 void KMPlayerConfig::readConfig () {
@@ -230,6 +233,9 @@ void KMPlayerConfig::readConfig () {
         m_config->setGroup (devlist.at (i));
         TVDevice * device = new TVDevice (devlist.at (i), 
                                           m_config->readSizeEntry (strTVSize));
+        device->name = m_config->readEntry (strTVDeviceName, device->device);
+        device->minsize = m_config->readSizeEntry (strTVMinSize);
+        device->maxsize = m_config->readSizeEntry (strTVMaxSize);
         QStrList inputlist;
         int inputentries = m_config->readListEntry (strTVInputs, inputlist,';');
         kdDebug() << device->device << " has " << inputentries << " inputs" << endl;
@@ -267,6 +273,7 @@ void KMPlayerConfig::readConfig () {
 void KMPlayerConfig::show () {
     if (!configdialog) {
         configdialog = new KMPlayerPreferences (m_player->view ());
+        configdialog->m_SourcePageTV->scanner = new TVDeviceScannerSource (m_player);
         connect (configdialog, SIGNAL (okClicked ()), 
                 this, SLOT (okPressed ()));
         connect (configdialog, SIGNAL (applyClicked ()), 
@@ -291,7 +298,6 @@ void KMPlayerConfig::show () {
         /*else
             configdialog->buttonHelp->hide ();*/
     }
-    configdialog->m_SourcePageURL->url->setText (m_player->url ().url ());
     configdialog->m_GeneralPageGeneral->keepSizeRatio->setChecked (sizeratio);
     //configdialog->useArts->setChecked (usearts); //replaced in the dialog
     configdialog->m_GeneralPageGeneral->showConsoleOutput->setChecked (showconsole); //works
@@ -305,6 +311,7 @@ void KMPlayerConfig::show () {
     configdialog->m_GeneralPageGeneral->autoHideControlButtons->setChecked (autohidebuttons); //works
     //configdialog->m_GeneralPageGeneral->autoHideControlButtons->setEnabled (showbuttons);
     configdialog->m_GeneralPageGeneral->seekTime->setValue(seektime);
+    configdialog->m_SourcePageURL->url->setText (m_player->url ().url ());
     configdialog->m_GeneralPageDVD->autoPlayDVD->setChecked (playdvd); //works if autoplay?
     //configdialog->showDVDMenu->setChecked (showdvdmenu);
     //configdialog->dvdTab->setEnabled (showdvdmenu);
@@ -313,6 +320,8 @@ void KMPlayerConfig::show () {
     //configdialog->showVCDMenu->setChecked (showvcdmenu);
     //configdialog->vcdTab->setEnabled (showvcdmenu);
     configdialog->m_GeneralPageVCD->vcdDevicePath->setText (vcddevice);
+    configdialog->m_SourcePageTV->driver->setText (tvdriver);
+    configdialog->m_SourcePageTV->setTVDevices (&tvdevices);
     //configdialog->haveVideoDriver->setChecked (videodriver.length () > 0);
     //configdialog->videoDriver->setEnabled (videodriver.length () > 0);
     
@@ -456,6 +465,9 @@ void KMPlayerConfig::writeConfig () {
         devicelist.append (device->device);
         m_config->setGroup (device->device);
         m_config->writeEntry (strTVSize, device->size);
+        m_config->writeEntry (strTVMinSize, device->minsize);
+        m_config->writeEntry (strTVMaxSize, device->maxsize);
+        m_config->writeEntry (strTVDeviceName, device->name);
         QStringList inputlist;
         TVInput * input;
         for (device->inputs.first (); (input = device->inputs.current ()); device->inputs.next ()) {
@@ -589,6 +601,95 @@ void KMPlayerConfig::okPressed () {
 
 void KMPlayerConfig::getHelp () {
     KApplication::kApplication()->invokeBrowser ("man:/mplayer");
+}
+
+//-----------------------------------------------------------------------------
+TVDeviceScannerSource::TVDeviceScannerSource (KMPlayer * player)
+    : KMPlayerSource (player), m_tvdevice (0) {}
+
+void TVDeviceScannerSource::init () {
+    ;
+}
+
+bool TVDeviceScannerSource::processOutput (const QString & line) {
+    if (m_nameRegExp.search (line) > -1) {
+        m_tvdevice->name = m_nameRegExp.cap (1);
+        kdDebug() << "Name " << m_tvdevice->name << endl;
+    } else if (m_sizesRegExp.search (line) > -1) {
+        m_tvdevice->minsize = QSize (m_sizesRegExp.cap (1).toInt (),
+                                     m_sizesRegExp.cap (2).toInt ());
+        m_tvdevice->maxsize = QSize (m_sizesRegExp.cap (3).toInt (),
+                                     m_sizesRegExp.cap (4).toInt ());
+        kdDebug() << "MinSize " << m_tvdevice->minsize << endl;
+    } else if (m_inputRegExp.search (line) > -1) {
+        TVInput * input = new TVInput (m_inputRegExp.cap (2),
+                                       m_inputRegExp.cap (1).toInt ());
+        input->hastuner = m_inputRegExp.cap (3).toInt () == 1;
+        m_tvdevice->inputs.append (input);
+        kdDebug() << "Input " << input->id << ": " << input->name << endl;
+    } else
+        return false;
+    return true;
+}
+
+QString TVDeviceScannerSource::filterOptions () {
+    return QString ("");
+}
+
+bool TVDeviceScannerSource::hasLength () {
+    return false;
+}
+
+bool TVDeviceScannerSource::isSeekable () {
+    return false;
+}
+
+bool TVDeviceScannerSource::scan (const QString & dev, const QString & dri) {
+    if (m_tvdevice)
+        return false;
+    m_tvdevice = new TVDevice (dev, QSize ());
+    m_driver = dri;
+    m_source = m_player->source ();
+    m_player->setSource (this);
+    play ();
+    return !!m_tvdevice;
+}
+
+void TVDeviceScannerSource::activate () {
+    m_nameRegExp.setPattern ("Selected device:\\s*([^\\s].*)");
+    m_sizesRegExp.setPattern ("Supported sizes:\\s*([0-9]+)x([0-9]+) => ([0-9]+)x([0-9]+)");
+    m_inputRegExp.setPattern ("\\s*([0-9]+):\\s*([^:]+):[^\\(]*\\(tuner:([01]),\\s*norm:([^\\)]+)\\)");
+}
+
+void TVDeviceScannerSource::deactivate () {
+    disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
+    if (m_tvdevice) {
+        delete m_tvdevice;
+        m_tvdevice = 0L;
+        emit scanFinished (m_tvdevice);
+    }
+}
+
+void TVDeviceScannerSource::play () {
+    if (!m_tvdevice)
+        return;
+    QString args;
+    args.sprintf ("-tv on:driver=%s:device=%s -identify -frames 0", m_driver.ascii (), m_tvdevice->device.ascii ());
+    if (m_player->run (args.ascii()))
+        connect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
+    else
+        deactivate ();
+}
+
+void TVDeviceScannerSource::finished () {
+    TVDevice * dev = 0L;
+    if (!m_tvdevice->inputs.count ())
+        delete m_tvdevice;
+    else
+        dev = m_tvdevice;
+    m_tvdevice = 0L;
+    m_player->setSource (m_source);
+    emit scanFinished (dev);
 }
 
 #include "kmplayerconfig.moc"

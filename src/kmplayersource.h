@@ -1,161 +1,60 @@
-/***************************************************************************
-                          kmplayersource.h  -  description
-                             -------------------
-    begin                : Sat Mar  24 16:14:51 CET 2003
-    copyright            : (C) 2003 by Koos Vriezen
-    email                : 
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
+/* This file is part of the KDE project
+ *
+ * Copyright (C) 2003 Koos Vriezen <koos.vriezen@xs4all.nl>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Library General Public License
+ * along with this library; see the file COPYING.LIB.  If not, write to
+ * the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
+ */
 
 #ifndef KMPLAYERSOURCE_H
 #define KMPLAYERSOURCE_H
- 
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include <qobject.h>
+#include <qstring.h>
 
-#include <qptrlist.h>
-#include <qmap.h>
+class KMPlayer;
 
-#include <kurl.h>
-
-#include "kmplayer_part.h"
-
-class KMPlayerApp;
-class QPopupMenu;
-class QMenuItem;
-
-
-class KMPlayerAppURLSource : public KMPlayerURLSource {
+class KMPlayerSource : public QObject {
     Q_OBJECT
 public:
-    KMPlayerAppURLSource (KMPlayerApp * app);
-    virtual ~KMPlayerAppURLSource ();
+    KMPlayerSource (KMPlayer * player);
+    virtual ~KMPlayerSource ();
+    virtual void init ();
     virtual bool processOutput (const QString & line);
+    virtual QString filterOptions ();
+    virtual bool hasLength ();
+    virtual bool isSeekable ();
+    int width () const { return m_width; }
+    int height () const { return m_height; }
+    int length () const { return m_length; }
+    float aspect () const { return m_aspect; }
+    void setWidth (int w) { m_width = w; }
+    void setHeight (int h) { m_height = h; }
+    void setAspect (float a) { m_aspect = a; }
+    void setLength (int len) { m_length = len; }
 public slots:
-    virtual void activate ();
-    virtual void deactivate ();
-    void finished ();
-private:
-    KURL m_url;
-    KMPlayerApp * app;
-};
-
-
-class KMPlayerMenuSource : public KMPlayerSource {
-    Q_OBJECT
-public:
-    KMPlayerMenuSource (KMPlayerApp * app, QPopupMenu * m);
-    virtual ~KMPlayerMenuSource ();
+    virtual void activate () = 0;
+    virtual void deactivate () = 0;
+    virtual void play () = 0;
 protected:
-    void menuItemClicked (QPopupMenu * menu, int id);
-    QPopupMenu * m_menu;
-    KMPlayerApp * app;
-};
-
-
-class KMPlayerDVDSource : public KMPlayerMenuSource {
-    Q_OBJECT
-public:
-    KMPlayerDVDSource (KMPlayerApp * app, QPopupMenu * m);
-    virtual ~KMPlayerDVDSource ();
-    virtual bool processOutput (const QString & line);
-    virtual QString filterOptions ();
-public slots:
-    virtual void activate ();
-    virtual void deactivate ();
-    virtual void play ();
-
-    void finished ();
-    void titleMenuClicked (int id);
-    void subtitleMenuClicked (int id);
-    void languageMenuClicked (int id);
-    void chapterMenuClicked (int id);
+    KMPlayer * m_player;
 private:
-    QRegExp langRegExp;
-    QRegExp subtitleRegExp;
-    QRegExp titleRegExp;
-    QRegExp chapterRegExp;
-    QPopupMenu * m_dvdtitlemenu;
-    QPopupMenu * m_dvdchaptermenu;
-    QPopupMenu * m_dvdlanguagemenu;
-    QPopupMenu * m_dvdsubtitlemenu;
+    int m_width;
+    int m_height;
+    float m_aspect;
+    int m_length;
 };
 
-
-class KMPlayerVCDSource : public KMPlayerMenuSource {
-    Q_OBJECT
-public:
-    KMPlayerVCDSource (KMPlayerApp * app, QPopupMenu * m);
-    virtual ~KMPlayerVCDSource ();
-    virtual bool processOutput (const QString & line);
-public slots:
-    virtual void activate ();
-    virtual void deactivate ();
-    virtual void play ();
-
-    void finished ();
-    void trackMenuClicked (int id);
-private:
-    QRegExp trackRegExp;
-    QPopupMenu * m_vcdtrackmenu;
-};
-
-
-class KMPlayerPipeSource : public KMPlayerSource {
-    Q_OBJECT
-public:
-    KMPlayerPipeSource (KMPlayerApp * app);
-    virtual ~KMPlayerPipeSource ();
-    virtual bool hasLength ();
-    virtual bool isSeekable ();
-    void setCommand (const QString & cmd) { m_pipe = cmd; }
-    const QString & command () const { return m_pipe; }
-public slots:
-    virtual void activate ();
-    virtual void deactivate ();
-    virtual void play ();
-private:
-    KMPlayerApp * app;
-    QString m_pipe;
-};
-
-
-class KMPlayerTVSource : public KMPlayerMenuSource {
-    Q_OBJECT
-public:
-    KMPlayerTVSource (KMPlayerApp * app, QPopupMenu * m);
-    virtual ~KMPlayerTVSource ();
-    //virtual bool processOutput (const QString & line);
-    virtual QString filterOptions ();
-    virtual bool hasLength ();
-    virtual bool isSeekable ();
-    void buildMenu ();
-public slots:
-    virtual void activate ();
-    virtual void deactivate ();
-    virtual void play ();
-
-    //void finished ();
-    void menuClicked (int id);
-private:
-    struct TVSource {
-        QSize size;
-        QString command;
-    };
-    typedef QMap <int, TVSource *> CommandMap;
-    TVSource * m_tvsource;
-    CommandMap commands;
-    QPopupMenu * m_channelmenu;
-};
-
-#endif // KMPLAYERSOURCE_H
+#endif
