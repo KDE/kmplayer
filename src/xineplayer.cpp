@@ -99,6 +99,20 @@ static int                  firstframe = 0;
 static QString mrl;
 static QString sub_mrl;
 
+static QString elmentry ("entry");
+static QString elmitem ("item");
+static QString attname ("NAME");
+static QString atttype ("TYPE");
+static QString attdefault ("DEFAULT");
+static QString attvalue ("VALUE");
+static QString attstart ("START");
+static QString attend ("END");
+static QString valrange ("range");
+static QString valnum ("num");
+static QString valbool ("bool");
+static QString valenum ("enum");
+static QString valstring ("string");
+
 extern "C" {
 
 static void dest_size_cb(void * /*data*/, int /*video_width*/, int /*video_height*/, double /*video_pixel_aspect*/,
@@ -281,8 +295,6 @@ bool updateConfigEntry (const QString & name, const QString & value) {
 
 void KMPlayerBackend::setConfig (QByteArray data) {
     QString err;
-    QString attvalue ("VALUE");
-    QString attname ("NAME");
     int line, column;
     QDomDocument dom;
     if (dom.setContent (data, false, &err, &line, &column)) {
@@ -403,41 +415,47 @@ KXinePlayer::~KXinePlayer () {
 
 void getConfigEntries (QByteArray & buf) {
     xine_cfg_entry_t entry;
-    int pos = 0;
-    int size = 1024;
-    buf.resize (size);
-    pos += snprintf (buf.data () + pos, size - pos, "<document>\n");
-    for (int i = xine_config_get_first_entry (xine, &entry); i; i = xine_config_get_next_entry (xine, &entry)) {
-        pos += snprintf (buf.data () + pos, size - pos, "<entry NAME=\"%s\" TYPE=", entry.key);
-        switch (entry.type) {
-            case XINE_CONFIG_TYPE_STRING:
-            case XINE_CONFIG_TYPE_UNKNOWN:
-                pos += snprintf (buf.data () + pos, size - pos, "\"string\" VALUE=\"%s\"/>", entry.str_value);
-                break;
-            case XINE_CONFIG_TYPE_RANGE:
-                pos += snprintf (buf.data () + pos, size - pos, "\"range\" START=\"%d\" END=\"%d\" VALUE=\"%d\"/>", entry.range_min, entry.range_max, entry.num_value);
-                break;
-            case XINE_CONFIG_TYPE_ENUM:
-                pos += snprintf (buf.data () + pos, size - pos, "\"enum\" VALUE=\"%d\" DEFAULT=\"%d\">", entry.num_value, entry.num_default);
-                for (int i = 0; entry.enum_values[i]; i++)
-                    pos += snprintf (buf.data () + pos, size - pos, "<item VALUE=\"%s\"/>", entry.enum_values[i]);
-                pos += snprintf (buf.data () + pos, size - pos, "</entry>");
-                break;
-            case XINE_CONFIG_TYPE_NUM:
-                pos += snprintf (buf.data () + pos, size - pos, "\"num\" VALUE=\"%d\" DEFAULT=\"%d\"/>", entry.num_value, entry.num_default);
-                break;
-            case XINE_CONFIG_TYPE_BOOL:
-                pos += snprintf (buf.data () + pos, size - pos, "\"bool\" VALUE=\"%d\" DEFAULT=\"%d\"/>", entry.num_value, entry.num_default);
-                break;
+    QDomDocument doc;
+    QDomElement root = doc.createElement (QString ("document"));
+    for (int i = xine_config_get_first_entry (xine, &entry);
+            i;
+            i = xine_config_get_next_entry (xine, &entry)) {
+        QDomElement elm = doc.createElement (elmentry);
+        elm.setAttribute (attname, QString (entry.key));
+        if (entry.type == XINE_CONFIG_TYPE_STRING || entry.type == XINE_CONFIG_TYPE_UNKNOWN) {
+            elm.setAttribute (atttype, valstring);
+            elm.setAttribute (attvalue, QString (entry.str_value));
+        } else {
+            elm.setAttribute (attdefault, QString::number (entry.num_default));
+            elm.setAttribute (attvalue, QString::number (entry.num_value));
+            switch (entry.type) {
+                case XINE_CONFIG_TYPE_RANGE:
+                    elm.setAttribute (atttype, valrange);
+                    elm.setAttribute (attstart, QString::number (entry.range_min));
+                    elm.setAttribute (attend, QString::number (entry.range_max));
+                    break;
+                case XINE_CONFIG_TYPE_ENUM:
+                    elm.setAttribute (atttype, valenum);
+                    for (int i = 0; entry.enum_values[i]; i++) {
+                        QDomElement item = doc.createElement (elmitem);
+                        item.setAttribute (attvalue, QString (entry.enum_values[i]));
+                        elm.appendChild (item);
+                    }
+                    break;
+                case XINE_CONFIG_TYPE_NUM:
+                    elm.setAttribute (atttype, valnum);
+                    break;
+                case XINE_CONFIG_TYPE_BOOL:
+                    elm.setAttribute (atttype, valbool);
+                    break;
+            }
         }
-        pos += snprintf (buf.data () + pos, size - pos, "\n");
-        if (size - pos < 300) {
-            size *= 2;
-            buf.resize (size);
-        }
+        root.appendChild (elm);
     }
-    pos += snprintf (buf.data () + pos, size - pos, "</document>");
-    buf.resize (pos);
+    doc.appendChild (root);
+    QCString exp = doc.toCString ();
+    buf = exp;
+    buf.resize (exp.length ()); // strip terminating \0
 }
 
 void KXinePlayer::play () {

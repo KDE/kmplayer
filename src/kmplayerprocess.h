@@ -174,8 +174,8 @@ public:
     virtual void setMovieParams (int length, int width, int height, float aspect);
     virtual void setMoviePosition (int position);
     virtual void setLoadingProgress (int percentage);
-    bool getConfigData (QByteArray &);
-    void sendConfigData (const QByteArray &);
+    bool getConfigData (QByteArray &, bool getnew);
+    void setChangedData (const QByteArray &);
 protected:
     KMPlayerCallback * m_callback;
     KMPlayerBackend_stub * m_backend;

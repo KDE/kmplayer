@@ -679,12 +679,14 @@ void KMPlayerCallbackProcess::setLoadingProgress (int percentage) {
     emit loading (percentage);
 }
 
-bool KMPlayerCallbackProcess::getConfigData (QByteArray & data) {
+bool KMPlayerCallbackProcess::getConfigData (QByteArray & data, bool getnew) {
     if (m_have_config == unknown) {
         if (playing ())
             return false; // it will come ..
-        m_have_config = probe;
-        play ();
+        if (getnew) {
+            m_have_config = probe;
+            play ();
+        }
     } else if (m_have_config == yes) {
         data = m_configdata;
         return true;
@@ -692,7 +694,7 @@ bool KMPlayerCallbackProcess::getConfigData (QByteArray & data) {
     return false;
 }
 
-void KMPlayerCallbackProcess::sendConfigData (const QByteArray & data) {
+void KMPlayerCallbackProcess::setChangedData (const QByteArray & data) {
     m_changeddata = data;
     m_changeddata.resize (data.find (0) - 1); // QDom doesn't like a terminating zero?
     m_send_config = playing () ? send_try : send_new;
@@ -712,13 +714,18 @@ void KMPlayerCallbackProcess::sendConfigData (const QByteArray & data) {
 
 class KMPlayerXMLPreferencesFrame : public QFrame {
 public:
-    KMPlayerXMLPreferencesFrame (QWidget * parent);
+    KMPlayerXMLPreferencesFrame (QWidget * parent, KMPlayerCallbackProcess *);
     QTable * table;
     QDomDocument dom;
+protected:
+    void showEvent (QShowEvent *);
+private:
+    KMPlayerCallbackProcess * m_process;
 };
 
-KMPlayerXMLPreferencesFrame::KMPlayerXMLPreferencesFrame (QWidget * parent)
- : QFrame (parent) {
+KMPlayerXMLPreferencesFrame::KMPlayerXMLPreferencesFrame
+(QWidget * parent, KMPlayerCallbackProcess * p)
+ : QFrame (parent), m_process (p){
     QVBoxLayout * layout = new QVBoxLayout (this);
     table = new QTable (this);
     layout->addWidget (table);
@@ -726,6 +733,11 @@ KMPlayerXMLPreferencesFrame::KMPlayerXMLPreferencesFrame (QWidget * parent)
 
 KMPlayerXMLPreferencesPage::KMPlayerXMLPreferencesPage (KMPlayerCallbackProcess * p)
  : m_process (p), m_configframe (0L) {
+}
+
+void KMPlayerXMLPreferencesFrame::showEvent (QShowEvent *) {
+    QByteArray data;
+    m_process->getConfigData (data, true);
 }
 
 void KMPlayerXMLPreferencesPage::write (KConfig *) {
@@ -804,12 +816,11 @@ void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
         }
         kdDebug () << changeddom.toCString () << endl;
         if (changeddom.firstChild().childNodes().length() > 0)
-            m_process->sendConfigData (changeddom.toCString ());
+            m_process->setChangedData (changeddom.toCString ());
     } else {
         QByteArray data;
-        if (!m_process->getConfigData (data))
+        if (!m_process->getConfigData (data, false))
             return;
-        // if not have data, get it from Xine
         if (!data.size ())
             return;
         if (m_configframe->table->numCols () < 1) { // not yet created
@@ -874,7 +885,7 @@ void KMPlayerXMLPreferencesPage::prefLocation (QString & item, QString & icon, Q
 }
 
 QFrame * KMPlayerXMLPreferencesPage::prefPage (QWidget * parent) {
-    m_configframe = new KMPlayerXMLPreferencesFrame (parent);
+    m_configframe = new KMPlayerXMLPreferencesFrame (parent, m_process);
     return m_configframe;
 }
 
