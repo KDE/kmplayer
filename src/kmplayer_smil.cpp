@@ -590,6 +590,7 @@ KDE_NO_EXPORT void TimedRuntime::stopped () {
         }
     } else if (element->state == Element::state_started) {
         element->stop ();
+    kdDebug () << "TimedRuntime::processEvent emit elementStopped " << (element ? element->nodeName() : "-") << endl; 
         emit elementStopped ();
     }
 }
@@ -1801,6 +1802,7 @@ namespace KMPlayer {
             foreground_color = 0;
             codec = 0L;
             font = QApplication::font ();
+            font_size = font.pointSize ();
             transparent = false;
         }
         QByteArray data;
@@ -1809,6 +1811,7 @@ namespace KMPlayer {
         int olddur;
         QTextCodec * codec;
         QFont font;
+        int font_size;
         bool transparent;
     };
 }
@@ -1852,9 +1855,9 @@ QString TextData::setParam (const QString & name, const QString & val) {
     } else if (name == QString ("fontFace")) {
         ; //FIXME
     } else if (name == QString ("fontPtSize")) {
-        d->font.setPointSize (val.toInt ());
+        d->font_size = val.toInt ();
     } else if (name == QString ("fontSize")) {
-        d->font.setPointSize (d->font.pointSize () + val.toInt ());
+        d->font_size += val.toInt ();
     // TODO: expandTabs fontBackgroundColor fontSize fontStyle fontWeight hAlig vAlign wordWrap
     }
     return MediaTypeRuntime::setParam (name, val);
@@ -1868,6 +1871,7 @@ KDE_NO_EXPORT void TextData::paint (QPainter & p) {
         if (!d->transparent)
             p.fillRect (x, y, region_node->w, region_node->h,
                     QColor (QRgb (d->background_color)));
+        d->font.setPointSize (int (region_node->xscale * d->font_size));
         QFontMetrics metrics (d->font);
         QPainter::TextDirection direction = QApplication::reverseLayout () ?
             QPainter::RTL : QPainter::LTR;
