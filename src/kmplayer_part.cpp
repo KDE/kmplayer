@@ -211,7 +211,7 @@ void KMPlayerBrowserExtension::saveState (QDataStream & stream) {
 void KMPlayerBrowserExtension::restoreState (QDataStream & stream) {
     QString url;
     stream >> url;
-    static_cast <KMPlayer *> (parent ())->openURL (url);
+    static_cast <KMPlayer *> (parent ())->openURL (KURL(url));
 }
 //---------------------------------------------------------------------
 

@@ -51,7 +51,7 @@ class KMPlayerApp : public KMainWindow
 public:
     KMPlayerApp (QWidget* parent=0, const char* name=0);
     ~KMPlayerApp ();
-    void openDocumentFile (const KURL& url=0);
+    void openDocumentFile (const KURL& url=KURL());
     KMPlayer * player () const { return m_player; }
     void resizePlayer (int percentage);
     KRecentFilesAction * recentFiles () const { return fileOpenRecent; }
