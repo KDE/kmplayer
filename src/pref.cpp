@@ -302,7 +302,7 @@ KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent,
     layout->addWidget (deviceLabel);
     QGridLayout *gridlayout = new QGridLayout (layout, 5, 4);
     QLabel * audioLabel = new QLabel (i18n ("Audio device:"), this);
-    audiodevice = new QLineEdit (device->audiodevice, this);
+    audiodevice = new KURLRequester (device->audiodevice, this);
     QLabel * nameLabel = new QLabel (i18n ("Name:"), this, 0);
     name = new QLineEdit ("", this, 0);
     QLabel *sizewidthLabel = new QLabel (i18n ("Width:"), this, 0);
@@ -370,7 +370,7 @@ void KMPlayerPrefSourcePageTVDevice::slotDelete () {
 
 void KMPlayerPrefSourcePageTVDevice::updateTVDevice () {
     device->name = name->text ();
-    device->audiodevice = audiodevice->text ();
+    device->audiodevice = audiodevice->lineEdit()->text ();
     device->noplayback = noplayback->isChecked ();
     device->size = QSize(sizewidth->text().toInt(), sizeheight->text().toInt());
     TVInputList::iterator iit = device->inputs.begin ();
@@ -402,7 +402,7 @@ KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerPre
     driver = new QLineEdit ("", this, 0);
     QToolTip::add (driver, i18n ("dummy, v4l or bsdbt848"));
     QLabel *deviceLabel = new QLabel (i18n ("Device:"), this, 0);
-    device = new QLineEdit ("", this, 0);
+    device = new KURLRequester ("/dev/video", this);
     QToolTip::add (device, i18n("Path to your video device, eg. /dev/video0"));
     QPushButton * scan = new QPushButton (i18n ("Scan..."), this);
     connect (scan, SIGNAL (clicked ()), this, SLOT (slotScan ()));
@@ -467,17 +467,17 @@ void KMPlayerPrefSourcePageTV::slotDeviceDeleted (QFrame * frame) {
 
 void KMPlayerPrefSourcePageTV::slotScan () {
     TVDeviceList::iterator dit = std::find (m_devices->begin (),
-                                            m_devices->end (), device->text ());
+                                            m_devices->end (), device->lineEdit()->text ());
     if (dit != m_devices->end ()) {
         dit = std::find (deleteddevices.begin (),
-                         deleteddevices.end (), device->text ());
+                         deleteddevices.end (), device->lineEdit()->text ());
         if (dit == deleteddevices.end ()) {
             KMessageBox::error (this, i18n ("Device already present."),
                                       i18n ("Error"));
             return;
         }
     }
-    scanner->scan (device->text (), driver->text());
+    scanner->scan (device->lineEdit()->text (), driver->text());
     connect (scanner, SIGNAL (scanFinished (TVDevice *)),
              this, SLOT (slotScanFinished (TVDevice *)));
 }

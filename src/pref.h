@@ -276,7 +276,7 @@ public:
     ~KMPlayerPrefSourcePageTVDevice () {}
 
     QLineEdit * name;
-    QLineEdit * audiodevice;
+    KURLRequester * audiodevice;
     QLineEdit * sizewidth;
     QLineEdit * sizeheight;
     QCheckBox * noplayback;
@@ -299,7 +299,7 @@ public:
     ~KMPlayerPrefSourcePageTV () {}
 
     QLineEdit * driver;
-    QLineEdit * device;
+    KURLRequester * device;
     TVDeviceScannerSource * scanner;
     void setTVDevices (TVDeviceList *);
     void updateTVDevices ();
