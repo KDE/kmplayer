@@ -1,2 +1,1 @@
-
-SUBDIRS = application video
+SUBDIRS = application video audio
