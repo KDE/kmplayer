@@ -91,7 +91,7 @@ void KMPlayerApp::initActions()
     new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), actionCollection (), "view_zoom_50");
     new KAction (i18n ("100%"), 0, 0, this, SLOT (zoom100 ()), actionCollection (), "view_zoom_100");
     new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), actionCollection (), "view_zoom_150");
-    viewKeepRatio = new KToggleAction (i18n ("&Keep width/height ratio"), 0, this, SLOT (keepSizeRatio ()), actionCollection (), "view_keep_ratio");
+    viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), actionCollection (), "view_keep_ratio");
     viewShowConsoleOutput = new KToggleAction (i18n ("&Show Console Output"), 0, this, SLOT (showConsoleOutput ()), actionCollection (), "view_show_console");
     /*KAction *fullscreenact =*/ new KAction (i18n("&Full Screen"), 0, 0, this, SLOT(fullScreen ()), actionCollection (), "view_fullscreen");
     /*KAction *playact =*/ new KAction (i18n ("P&lay"), 0, 0, this, SLOT (play ()), actionCollection (), "view_play");
@@ -162,7 +162,7 @@ void KMPlayerApp::initView ()
     m_havevcdmenu = true;
     m_vcdmenu->insertItem (i18n ("&Open VCD"), this, SLOT(openVCD ()));
     m_vcdmenu->insertItem (i18n ("&Tracks"), m_vcdtrackmenu);
-    m_sourcemenu->popup ()->insertItem (i18n ("&Open Pipe ..."), this, SLOT(openPipe ()), 0, -1, 5);
+    m_sourcemenu->popup ()->insertItem (i18n ("&Open Pipe..."), this, SLOT(openPipe ()), 0, -1, 5);
     connect (view->playButton (), SIGNAL (clicked ()), this, SLOT (playDisc()));
     connect (m_player->configDialog (), SIGNAL (configChanged ()),
              this, SLOT (configChanged ()));
@@ -176,7 +176,7 @@ void KMPlayerApp::initView ()
             this, SLOT (zoom150 ()));
 
     /*QPopupMenu * viewmenu = new QPopupMenu;
-    viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()), 
+    viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()),
                           QKeySequence ("CTRL + Key_F"));
     menuBar ()->insertItem (i18n ("&View"), viewmenu, -1, 2);*/
     toolBar("mainToolBar")->hide();
@@ -232,9 +232,9 @@ void KMPlayerApp::openVCD () {
 }
 
 void KMPlayerApp::openPipe () {
-    slotStatusMsg(i18n("Opening Pipe..."));
+    slotStatusMsg(i18n("Opening pipe..."));
     bool ok;
-    QString cmd = KLineEditDlg::getText (i18n("Read from Pipe"),
+    QString cmd = KLineEditDlg::getText (i18n("Read From Pipe"),
                        i18n ("Enter command:"), m_pipe, &ok, m_player->view());
     if (!ok) {
         slotStatusMsg (i18n ("Ready."));
@@ -724,7 +724,7 @@ void KMPlayerApp::slotFileOpen()
     slotStatusMsg(i18n("Opening file..."));
 
     KURL url=KFileDialog::getOpenURL(QString::null,
-            i18n("*|All files"), this, i18n("Open File..."));
+            i18n("*|All Files"), this, i18n("Open File"));
     if(!url.isEmpty())
     {
         //doc->openDocument(url);
@@ -803,7 +803,7 @@ void KMPlayerApp::slotViewMenuBar() {
         slotStatusMsg(i18n("Ready"));
     } else {
         menuBar()->hide();
-        slotStatusMsg (i18n ((QString ("Show Menubar with ") + 
+        slotStatusMsg (i18n ((QString ("Show Menubar with ") +
                                       viewMenuBar->shortcutText ()).ascii()));
         if (!m_showStatusbar) {
             statusBar()->show();

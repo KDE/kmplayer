@@ -320,7 +320,7 @@ void KMPlayerView::init () {
     m_popupMenu->insertItem (i18n ("&Full Screen"),
                              m_layer, SLOT (fullScreen()), 0, menu_fullscreen);
     m_popupMenu->insertSeparator ();
-    m_popupMenu->insertItem (i18n ("&Configure KMPlayer ..."), menu_config); 
+    m_popupMenu->insertItem (i18n ("&Configure KMPlayer..."), menu_config);
 
     QVBoxLayout * viewerbox = new QVBoxLayout (m_viewer, 0, 0);
     m_multiedit = new QMultiLineEdit (m_viewer, "ConsoleOutput");
