@@ -52,6 +52,7 @@ public slots:
 protected:
     KMPlayer * m_player;
     QString m_recordCommand;
+    bool m_identified;
 private:
     int m_width;
     int m_height;

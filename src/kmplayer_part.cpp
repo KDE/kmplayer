@@ -854,10 +854,13 @@ void KMPlayerSource::init () {
     m_height = 0;
     m_aspect = 0.0;
     m_length = 0;
+    m_identified = false;
     m_recordCommand.truncate (0);
 }
 
 bool KMPlayerSource::processOutput (const QString & str) {
+    if (m_identified)
+        return false;
     if (str.startsWith ("ID_VIDEO_WIDTH")) {
         int pos = str.find ('=');
         if (pos > 0)
@@ -1003,6 +1006,8 @@ void KMPlayerURLSource::setURL (const KURL & url) {
 }
 
 bool KMPlayerURLSource::processOutput (const QString & str) {
+    if (m_identified)
+        return false;
     if (str.startsWith ("ID_FILENAME")) {
         int pos = str.find ('=');
         if (pos < 0) 
@@ -1070,6 +1075,7 @@ void KMPlayerURLSource::finished () {
     if (!isreference && !m_urlother.isEmpty ())
         m_urls.push_back (m_urlother);
     m_urlother = KURL ();
+    m_identified = true;
     kdDebug () << "KMPlayerURLSource::finished()" << endl;
     QTimer::singleShot (0, this, SLOT (play ()));
 }

@@ -541,6 +541,8 @@ KMPlayerDVDSource::~KMPlayerDVDSource () {
 bool KMPlayerDVDSource::processOutput (const QString & str) {
     if (KMPlayerSource::processOutput (str))
         return true;
+    if (m_identified)
+        return false;
     //kdDebug () << "scanning " << cstr << endl;
     if (subtitleRegExp.search (str) > -1) {
         m_dvdsubtitlemenu->insertItem (subtitleRegExp.cap (2), this,
@@ -606,6 +608,7 @@ void KMPlayerDVDSource::finished () {
     if (m_dvdchaptermenu->count ()) m_dvdchaptermenu->setItemChecked (0, true);
     if (m_dvdlanguagemenu->count()) m_dvdlanguagemenu->setItemChecked (m_dvdlanguagemenu->idAt (0), true);
     app->resizePlayer (100);
+    m_identified = true;
     if (m_player->configDialog ()->playdvd)
         QTimer::singleShot (0, this, SLOT (play ()));
     app->slotStatusMsg (i18n ("Ready."));
@@ -680,6 +683,8 @@ KMPlayerVCDSource::~KMPlayerVCDSource () {
 bool KMPlayerVCDSource::processOutput (const QString & str) {
     if (KMPlayerSource::processOutput (str))
         return true;
+    if (m_identified)
+        return false;
     //kdDebug () << "scanning " << cstr << endl;
     if (trackRegExp.search (str) > -1) {
         m_vcdtrackmenu->insertItem (trackRegExp.cap (1), this,
@@ -716,6 +721,7 @@ void KMPlayerVCDSource::finished () {
     m_player->setMovieLength (10 * length ());
     if (m_vcdtrackmenu->count()) m_vcdtrackmenu->setItemChecked (0, true);
     app->resizePlayer (100);
+    m_identified = true;
     if (m_player->configDialog ()->playdvd)
         QTimer::singleShot (0, this, SLOT (play ()));
     app->slotStatusMsg (i18n ("Ready."));
@@ -766,6 +772,7 @@ void KMPlayerPipeSource::activate () {
 }
 
 void KMPlayerPipeSource::play () {
+    m_identified = true;
     QString args ("-");
     m_player->run (args.ascii(), m_pipe.ascii());
     m_player->setMovieLength (10 * length ());
@@ -807,6 +814,7 @@ void KMPlayerTVSource::activate () {
 void KMPlayerTVSource::play () {
     if (!m_tvsource)
         return;
+    m_identified = true;
     KMPlayerConfig * config = m_player->configDialog ();
     app->setCaption (QString (i18n ("TV: ")) + m_tvsource->title, false);
     setWidth (m_tvsource->size.width ());
