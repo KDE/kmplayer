@@ -76,7 +76,6 @@ protected:
     KMPlayer * m_player;
     KMPlayerSource * m_source;
     KProcess * m_process;
-    QStringList m_urls;
     QString m_url;
 protected slots:
     // QTimer::singleShot slots for the signals
@@ -134,6 +133,8 @@ private:
     QRegExp m_indexRegExp;
     QRegExp m_refURLRegExp;
     QRegExp m_refRegExp;
+    QRegExp m_startRegExp;
+    QRegExp m_sizeRegExp;
     QString m_tmpURL;
 };
 

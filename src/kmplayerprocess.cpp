@@ -120,7 +120,6 @@ bool KMPlayerProcess::stop () {
 
 void KMPlayerProcess::setSource (KMPlayerSource * source) {
     stop ();
-    m_urls.clear();
     m_source = source;
 }
 //-----------------------------------------------------------------------------
@@ -226,11 +225,7 @@ bool MPlayer::play () {
     initProcess ();
     source ()->setPosition (0);
     QString args = source ()->options () + ' ';
-    KURL url = m_source->url ();
-    if (m_urls.count () > 0) {
-        url = KURL (m_urls.front ());
-        m_urls.pop_front ();
-    }
+    KURL url = m_source->currentUrl ();
     if (!url.isEmpty ()) {
         m_url = url.url ();
         if (url.isLocalFile ()) {
@@ -241,14 +236,18 @@ bool MPlayer::play () {
         args += KProcess::quote (QString (QFile::encodeName (m_url)));
     }
     m_tmpURL.truncate (0);
-    m_urls.clear ();
+    m_sizeRegExp.setPattern (m_player->settings ()->sizepattern);
+    m_startRegExp.setPattern (m_player->settings ()->startpattern);
     if (!source ()->identified ()) {
         m_refURLRegExp.setPattern (m_player->settings ()->referenceurlpattern);
         m_refRegExp.setPattern (m_player->settings ()->referencepattern);
-        args += QString (" -quiet -nocache -identify -frames 0 ");
+        if (!m_player->settings ()->mplayerpost090)
+            args += QString (" -quiet -nocache -identify -frames 0 ");
     } else {
         if (m_player->settings ()->loop)
             args += QString (" -loop 0");
+        if (m_player->settings ()->mplayerpost090)
+            args += QString (" -identify");
         if (!m_source->subUrl ().isEmpty ()) {
             args += QString (" -sub ");
             const KURL & sub_url (source ()->subUrl ());
@@ -452,8 +451,11 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
             }
         } else if (!source ()->identified () && m_refURLRegExp.search (out) > -1) {
             kdDebug () << "Reference mrl " << m_refURLRegExp.cap (1) << endl;
-            if (!m_tmpURL.isEmpty ())
-                m_urls.push_back (m_tmpURL);
+            if (!m_tmpURL.isEmpty ()) {
+                if (!m_source->referenceUrls ().count ())
+                    m_source->setCurrentURL (KURL (m_tmpURL));
+                m_source->referenceUrls ().push_back (m_tmpURL);
+            }
             m_tmpURL = m_refURLRegExp.cap (1);
             if (m_source->url () == m_tmpURL || m_url == m_tmpURL)
                 m_tmpURL.truncate (0);
@@ -463,13 +465,11 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
         } else {
             v->addText (out + '\n');
             if (!m_source->processOutput (out)) {
-                QRegExp sizeRegExp (m_player->settings ()->sizepattern);
-                QRegExp startRegExp (m_player->settings ()->startpattern);
                 bool ok;
                 int movie_width = m_source->width ();
-                if (movie_width <= 0 && sizeRegExp.search (out) > -1) {
-                    movie_width = sizeRegExp.cap (1).toInt (&ok);
-                    int movie_height = ok ? sizeRegExp.cap (2).toInt (&ok) : 0;
+                if (movie_width <= 0 && m_sizeRegExp.search (out) > -1) {
+                    movie_width = m_sizeRegExp.cap (1).toInt (&ok);
+                    int movie_height = ok ? m_sizeRegExp.cap (2).toInt (&ok) : 0;
                     if (ok && movie_width > 0 && movie_height > 0) {
                         m_source->setWidth (movie_width);
                         m_source->setHeight (movie_height);
@@ -477,8 +477,10 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
                         if (m_player->settings ()->sizeratio)
                             v->viewer ()->setAspect (m_source->aspect ());
                     }
-                } else if (startRegExp.search (out) > -1) {
-                        emit startPlaying ();
+                } else if (m_startRegExp.search (out) > -1) {
+                    if (m_player->settings ()->mplayerpost090)
+                        source ()->setIdentified ();
+                    emit startPlaying ();
                 }
             }
         }
@@ -491,11 +493,13 @@ void MPlayer::processStopped (KProcess * p) {
         m_grabfile.truncate (0);
     } else if (p && !source ()->identified ()) {
         if (!m_tmpURL.isEmpty () && m_tmpURL != m_source->url ().url ()) {
-            m_urls.push_back (m_tmpURL);
+            m_source->referenceUrls ().push_back (m_tmpURL);
             m_tmpURL.truncate (0);
         }
-        source ()->setIdentified ();
-        QTimer::singleShot (0, this, SLOT (play ()));
+        if (!m_player->settings ()->mplayerpost090) {
+            source ()->setIdentified ();
+            QTimer::singleShot (0, this, SLOT (play ()));
+        }
     } else
         MPlayerBase::processStopped (p);
 }
@@ -527,7 +531,7 @@ bool MEncoder::play () {
     if (m_player->settings()->recordcopy)
         margs = QString ("-oac copy -ovc copy");
     args += QString ("mencoder ") + margs + ' ' + m_source->recordCmd ();
-    const KURL & url (source ()->url ());
+    const KURL & url (source ()->currentUrl ());
     QString myurl = url.isLocalFile () ? url.path () : url.url ();
     bool post090 = m_player->settings ()->mplayerpost090;
     if (!myurl.isEmpty ()) {
@@ -627,7 +631,7 @@ KMPlayerCallbackProcess::~KMPlayerCallbackProcess () {
 void KMPlayerCallbackProcess::setURL (const QString & url) {
     kdDebug () << "Reference mrl " << url << endl;
     if (m_source->url ().url () != url && m_url != url)
-        m_urls.push_back (url);
+        m_source->referenceUrls ().push_back (url);
 }
 
 void KMPlayerCallbackProcess::setStatusMessage (const QString & /*msg*/) {
@@ -933,15 +937,15 @@ bool Xine::play () {
         m_process->start (KProcess::NotifyOnExit, KProcess::All);
         return m_process->isRunning ();
     }
-    KURL url = m_source->url ();
-    if (m_urls.count () > 0) {
-        url = KURL (m_urls.front ());
-        m_urls.pop_front ();
+    KURL url = m_source->currentUrl ();
+    if (m_source->referenceUrls ().count () > 0) {
+        url = KURL (m_source->referenceUrls ().front ());
+        m_source->setCurrentURL (url);
+        m_source->referenceUrls ().clear ();
     }
     kdDebug() << "Xine::play (" << url.url() << ")" << endl;
     if (url.isEmpty ())
         return false;
-    m_urls.clear ();
     KMPlayerSettings *settings = m_player->settings ();
     initProcess ();
     printf ("kxineplayer -wid %lu", (unsigned long) widget ()->winId ());
@@ -1022,10 +1026,10 @@ bool Xine::stop () {
 }
 
 void Xine::setFinished () {
-    kdDebug () << "Xine::finished () " << m_urls.count () << endl;
-    if (m_urls.count ()) {
-        QString url = m_urls.front ();
-        m_urls.pop_front ();
+    kdDebug () << "Xine::finished () " << (m_source ? m_source->referenceUrls ().count () : 0) << endl;
+    if (m_source && m_source->referenceUrls ().count ()) {
+        QString url = m_source->referenceUrls ().front ();
+        m_source->referenceUrls ().pop_front ();
         m_backend->setURL (url);
         m_backend->play ();
         return;
@@ -1160,7 +1164,7 @@ bool FFMpeg::play () {
             cmd += QString (" -tvstd ") + m_source->videoNorm ();
         }
     } else {
-        cmd += QString ("-i ") + KProcess::quote (m_source->url ().isLocalFile () ? m_source->url ().path () : m_source->url ().url ());
+        cmd += QString ("-i ") + KProcess::quote (m_source->currentUrl ().isLocalFile () ? m_source->currentUrl ().path () : m_source->currentUrl ().url ());
     }
     cmd += QChar (' ') + arguments;
     cmd += QChar (' ') + KProcess::quote (outurl);

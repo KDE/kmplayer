@@ -188,7 +188,7 @@ void KMPlayerSettings::readConfig () {
     framedrop = m_config->readBoolEntry (strFrameDrop, true);
     showbuttons = m_config->readBoolEntry (strShowControlButtons, true);
     autohidebuttons = m_config->readBoolEntry (strAutoHideButtons, false);
-    mplayerpost090 = m_config->readBoolEntry (strPostMPlayer090, false);
+    mplayerpost090 = m_config->readBoolEntry (strPostMPlayer090, true);
     view->setAutoHideButtons (showbuttons && autohidebuttons);
     if (!showbuttons) {
         view->buttonBar ()->hide ();

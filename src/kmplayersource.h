@@ -23,6 +23,7 @@
 
 #include <qobject.h>
 #include <qstring.h>
+#include <qstringlist.h>
 #include <kurl.h>
 
 class KMPlayer;
@@ -51,6 +52,8 @@ public:
     float aspect () const { return m_aspect > 0.01 ? m_aspect : (m_height > 0 ? (1.0*m_width)/m_height: 0.0); }
     const KURL & url () const { return m_url; }
     const KURL & subUrl () const { return m_sub_url; }
+    const KURL & currentUrl () const { return m_currenturl; }
+    QStringList & referenceUrls () { return m_refurls; }
     const QString & audioDevice () const { return m_audiodevice; }
     const QString & videoDevice () const { return m_videodevice; }
     const QString & videoNorm () const { return m_videonorm; }
@@ -60,7 +63,8 @@ public:
     const QString & recordCmd () const { return m_recordcmd; }
     virtual QString filterOptions ();
 
-    void setURL (const KURL & url) { m_url = url; }
+    void setURL (const KURL & url) { m_currenturl = m_url = url; m_refurls.clear (); }
+    void setCurrentURL (const KURL & url) { m_currenturl = url; }
     void setSubURL (const KURL & url) { m_sub_url = url; }
     void setWidth (int w) { m_width = w; }
     void setHeight (int h) { m_height = h; }
@@ -81,7 +85,9 @@ protected:
     QString m_recordcmd;
     bool m_identified;
     KURL m_url;
+    KURL m_currenturl;
     KURL m_sub_url;
+    QStringList m_refurls;
     QString m_audiodevice;
     QString m_videodevice;
     QString m_videonorm;

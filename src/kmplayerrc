@@ -6,6 +6,7 @@ Show Statusbar=true
 [KFileDialog Speedbar]
 
 [MPlayer]
+Post MPlayer 0.90=true
 Add Configure Button=true
 Additional Arguments=
 Mencoder Arguments=-oac mp3lame -ovc lavc
