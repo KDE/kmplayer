@@ -199,7 +199,7 @@ KDE_NO_EXPORT void KMPlayerViewLayer::fullScreen () {
         m_accel = 0L;
         m_box->activate ();
     } else {
-        reparent (0L, 0, QPoint (0, 0), true);
+        reparent (0L, 0, qApp->desktop()->screenGeometry(this).topLeft(), true);
         showFullScreen ();
         m_accel = new QAccel (this);
         int id = m_accel->insertItem (QKeySequence (Qt::Key_Escape));
