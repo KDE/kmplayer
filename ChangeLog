@@ -1,3 +1,9 @@
+Changes since version 0.8b
+- Optionally use ffmpeg for recording (URL or v4l sources)
+- Fix mplayer v4l device scanning for mplayer > 0.91
+- Bookmarks added
+- Beginning of more configurable mencoder options
+- Fix signaling of backend player play (regression from 0.8b)
 Changes since version 0.8a
 - Layout fixes in configuration dialog
 - Fix loading percentage feedback
