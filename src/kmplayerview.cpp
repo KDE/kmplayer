@@ -66,7 +66,6 @@ static const int button_height_only_buttons = 11;
 #include <klocale.h>
 #include <kapplication.h>
 #include <kurldrag.h>
-#include <kpopupmenu.h>
 #include <dcopclient.h>
 
 //-------------------------------------------------------------------------
@@ -320,13 +319,18 @@ KDE_NO_CDTOR_EXPORT KMPlayerControlPanel::KMPlayerControlPanel(QWidget * parent)
     m_buttonbox->addWidget (m_posSlider);
     showPositionSlider (true);
     m_popupMenu = new KMPlayerPopupMenu (this);
-    m_playerMenu = new QPopupMenu (this);
+    m_playerMenu = new KMPlayerPopupMenu (this);
     m_playerMenu->setEnabled (false);
     m_popupMenu->insertItem (i18n ("&Play with"), m_playerMenu, menu_player);
     m_popupMenu->setItemVisible (menu_player, false);
-    m_bookmarkMenu = new KPopupMenu (this);
+    m_bookmarkMenu = new KMPlayerPopupMenu (this);
     m_popupMenu->insertItem (i18n("&Bookmarks"), m_bookmarkMenu, menu_bookmark);
-    m_zoomMenu = new QPopupMenu (this);
+    m_viewMenu = new KMPlayerPopupMenu (this);
+    m_viewMenu->insertItem (i18n ("V&ideo"), menu_video);
+    m_viewMenu->insertItem (i18n ("Pla&y List"), menu_playlist);
+    m_viewMenu->insertItem (i18n ("Con&sole"), menu_console);
+    m_popupMenu->insertItem (i18n ("&View"), m_viewMenu, menu_view);
+    m_zoomMenu = new KMPlayerPopupMenu (this);
     m_zoomMenu->insertItem (i18n ("50%"), menu_zoom50);
     m_zoomMenu->insertItem (i18n ("100%"), menu_zoom100);
     m_zoomMenu->insertItem (i18n ("150%"), menu_zoom150);
@@ -334,24 +338,24 @@ KDE_NO_CDTOR_EXPORT KMPlayerControlPanel::KMPlayerControlPanel(QWidget * parent)
     m_popupMenu->insertItem (i18n ("&Full Screen"), menu_fullscreen);
     m_popupMenu->setAccel (QKeySequence (Qt::Key_F), menu_fullscreen);
     m_popupMenu->insertSeparator ();
-    QPopupMenu * colorMenu = new QPopupMenu (this);
-    QLabel * label = new QLabel (i18n ("Contrast:"), colorMenu);
-    colorMenu->insertItem (label);
-    m_contrastSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
-    colorMenu->insertItem (m_contrastSlider);
-    label = new QLabel (i18n ("Brightness:"), colorMenu);
-    colorMenu->insertItem (label);
-    m_brightnessSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
-    colorMenu->insertItem (m_brightnessSlider);
-    label = new QLabel (i18n ("Hue:"), colorMenu);
-    colorMenu->insertItem (label);
-    m_hueSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
-    colorMenu->insertItem (m_hueSlider);
-    label = new QLabel (i18n ("Saturation:"), colorMenu);
-    colorMenu->insertItem (label);
-    m_saturationSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
-    colorMenu->insertItem (m_saturationSlider);
-    m_popupMenu->insertItem (i18n ("Co&lors"), colorMenu);
+    m_colorMenu = new KMPlayerPopupMenu (this);
+    QLabel * label = new QLabel (i18n ("Contrast:"), m_colorMenu);
+    m_colorMenu->insertItem (label);
+    m_contrastSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, m_colorMenu);
+    m_colorMenu->insertItem (m_contrastSlider);
+    label = new QLabel (i18n ("Brightness:"), m_colorMenu);
+    m_colorMenu->insertItem (label);
+    m_brightnessSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, m_colorMenu);
+    m_colorMenu->insertItem (m_brightnessSlider);
+    label = new QLabel (i18n ("Hue:"), m_colorMenu);
+    m_colorMenu->insertItem (label);
+    m_hueSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, m_colorMenu);
+    m_colorMenu->insertItem (m_hueSlider);
+    label = new QLabel (i18n ("Saturation:"), m_colorMenu);
+    m_colorMenu->insertItem (label);
+    m_saturationSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, m_colorMenu);
+    m_colorMenu->insertItem (m_saturationSlider);
+    m_popupMenu->insertItem (i18n ("Co&lors"), m_colorMenu);
     m_popupMenu->insertSeparator ();
     m_popupMenu->insertItem (i18n ("&Configure KMPlayer..."), menu_config);
 }
@@ -454,7 +458,7 @@ KDE_NO_EXPORT void KMPlayerPictureWidget::mousePressEvent (QMouseEvent *) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT KMPlayerPopupMenu::KMPlayerPopupMenu (QWidget * parent)
- : QPopupMenu (parent, "kde_kmplayer_popupmenu") {}
+ : KPopupMenu (parent, "kde_kmplayer_popupmenu") {}
 
 KDE_NO_EXPORT void KMPlayerPopupMenu::leaveEvent (QEvent *) {
     emit mouseLeft ();
@@ -473,7 +477,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerView::KMPlayerView (QWidget *parent, const char *nam
     popup_timer (0),
     popdown_timer (0),
     m_keepsizeratio (false),
-    m_show_console_output (false),
     m_playing (false),
     m_mixer_init (false),
     m_inVolumeUpdate (false),
@@ -503,19 +506,23 @@ KDE_NO_EXPORT void KMPlayerView::dropEvent (QDropEvent * de) {
 }
 
 KDE_NO_EXPORT void KMPlayerView::ctrlButtonMouseEntered () {
-    m_popup_clicked = false;
-    popup_timer = startTimer (400);
+    if (!popup_timer && !m_buttonbar->popupMenu ()->isVisible ()) {
+        m_popup_clicked = false;
+        popup_timer = startTimer (400);
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerView::ctrlButtonClicked () {
-    killTimer (popup_timer);
-    popup_timer = 0;
+    if (popup_timer) {
+        killTimer (popup_timer);
+        popup_timer = 0;
+    }
     m_popup_clicked = true;
     showPopupMenu ();
 }
 
 KDE_NO_EXPORT void KMPlayerView::popupMenuMouseLeft () {
-    if (!m_popup_clicked)
+    if (!popdown_timer && !m_popup_clicked)
         popdown_timer = startTimer (400);
 }
 
@@ -540,6 +547,7 @@ KDE_NO_EXPORT void KMPlayerView::init () {
     m_holder = new KMPlayerViewerHolder (m_layer, this);
     m_widgetstack = new QWidgetStack (m_holder);
     m_viewer = new KMPlayerViewer (m_widgetstack, this);
+    m_widgettypes [WT_Video] = m_viewer;
     layerbox->addWidget (m_holder);
     layerbox->addWidget (m_buttonbar);
 #if KDE_IS_VERSION(3,1,90)
@@ -551,19 +559,26 @@ KDE_NO_EXPORT void KMPlayerView::init () {
     m_multiedit->setFamily ("courier");
     m_multiedit->setPaper (QBrush (QColor (0, 0, 0)));
     m_multiedit->setColor (QColor (0xB2, 0xB2, 0xB2));
+    m_widgettypes[WT_Console] = m_multiedit;
     QPalette pal (QColor (64, 64,64), QColor (32, 32, 32));
     m_multiedit->horizontalScrollBar ()->setPalette (pal);
     m_multiedit->verticalScrollBar ()->setPalette (pal);
-    m_picturewidget = new KMPlayerPictureWidget (m_widgetstack, this);
+    m_widgettypes[WT_Picture] = new KMPlayerPictureWidget (m_widgetstack, this);
+    m_widgettypes[WT_PlayList] = new QWidget (m_widgetstack);
     m_widgetstack->addWidget (m_viewer);
     m_widgetstack->addWidget (m_multiedit);
-    m_widgetstack->addWidget (m_picturewidget);
+    m_widgetstack->addWidget (m_widgettypes[WT_Picture]);
+    m_widgetstack->addWidget (m_widgettypes[WT_PlayList]);
 
     setFocusPolicy (QWidget::ClickFocus);
 
     connect (m_buttonbar->configButton(), SIGNAL (clicked ()), this, SLOT (ctrlButtonClicked ()));
     connect (m_buttonbar->configButton(), SIGNAL (mouseEntered ()), this, SLOT (ctrlButtonMouseEntered ()));
     connect (m_buttonbar->popupMenu(), SIGNAL (mouseLeft ()), this, SLOT (popupMenuMouseLeft ()));
+    connect (m_buttonbar->playerMenu(), SIGNAL (mouseLeft ()), this, SLOT (popupMenuMouseLeft ()));
+    connect (m_buttonbar->zoomMenu(), SIGNAL (mouseLeft ()), this, SLOT (popupMenuMouseLeft ()));
+    connect (m_buttonbar->viewMenu(), SIGNAL (mouseLeft ()), this, SLOT (popupMenuMouseLeft ()));
+    connect (m_buttonbar->colorMenu(), SIGNAL (mouseLeft ()), this, SLOT (popupMenuMouseLeft ()));
     setAcceptDrops (true);
     m_holder->resizeEvent (0L);
     kdDebug() << "KMPlayerView " << (unsigned long) (m_viewer->winId()) << endl;
@@ -601,8 +616,8 @@ bool KMPlayerView::setPicture (const QString & path) {
     if (!m_image) {
         m_widgetstack->raiseWidget (m_viewer);
     } else {
-        m_picturewidget->setPaletteBackgroundPixmap (*m_image);
-        m_widgetstack->raiseWidget (m_picturewidget);
+        m_widgettypes[WT_Picture]->setPaletteBackgroundPixmap (*m_image);
+        m_widgetstack->raiseWidget (m_widgettypes[WT_Picture]);
     }
     return m_image;
 }
@@ -644,13 +659,8 @@ KDE_NO_EXPORT void KMPlayerView::updateVolume () {
     m_mixer_init = true;
 }
 
-void KMPlayerView::setShowConsoleOutput (bool b) {
-    m_show_console_output = b;
-    if (m_show_console_output) {
-        if (!m_playing)
-            m_widgetstack->raiseWidget (m_multiedit);
-    } else
-        m_widgetstack->raiseWidget (m_viewer);
+void KMPlayerView::showWidget (WidgetType wt) {
+    m_widgetstack->raiseWidget (m_widgettypes [wt]);
 }
 
 void KMPlayerView::setControlPanelMode (ControlPanelMode m) {
@@ -715,7 +725,7 @@ KDE_NO_EXPORT void KMPlayerView::timerEvent (QTimerEvent * e) {
             showPopupMenu ();
     } else if (e->timerId () == popdown_timer) {
         popdown_timer = 0;
-        if (m_buttonbar->popupMenu ()->isVisible () && !m_buttonbar->popupMenu ()->hasMouse ())
+        if (m_buttonbar->popupMenu ()->isVisible () && !m_buttonbar->popupMenu ()->hasMouse () && !m_buttonbar->playerMenu ()->hasMouse () && !m_buttonbar->viewMenu ()->hasMouse () && !m_buttonbar->zoomMenu ()->hasMouse () && !m_buttonbar->colorMenu ()->hasMouse ())
             m_buttonbar->popupMenu ()->hide ();
         // TODO
     }
@@ -757,10 +767,7 @@ KDE_NO_EXPORT void KMPlayerView::videoStop () {
         m_holder->setMouseTracking (false);
     }
     m_playing = false;
-    if (m_show_console_output)
-        m_widgetstack->raiseWidget (m_multiedit);
-    else
-        XClearWindow (qt_xdisplay(), m_viewer->embeddedWinId ());
+    XClearWindow (qt_xdisplay(), m_viewer->embeddedWinId ());
 }
 
 KDE_NO_EXPORT void KMPlayerView::showPopupMenu () {

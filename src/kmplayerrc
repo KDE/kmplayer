@@ -17,7 +17,6 @@ Immediately Play DVD=true
 Keep Size Ratio=true
 Loop=false
 Frame Drop=true
-Show Console Output=false
 Add Record Button=true
 Add Broadcast Button=true
 Auto Play After Recording=true

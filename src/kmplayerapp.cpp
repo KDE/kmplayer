@@ -123,7 +123,6 @@ KDE_NO_EXPORT void KMPlayerApp::initActions()
     new KAction (i18n ("100%"), 0, 0, this, SLOT (zoom100 ()), actionCollection (), "view_zoom_100");
     new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), actionCollection (), "view_zoom_150");
     viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), actionCollection (), "view_keep_ratio");
-    viewShowConsoleOutput = new KToggleAction (i18n ("&Show Console Output"), 0, this, SLOT (showConsoleOutput ()), actionCollection (), "view_show_console");
 #if KDE_IS_VERSION(3,1,90)
     /*KAction *fullscreenact =*/ KStdAction::fullScreen( this, SLOT(fullScreen ()), actionCollection (), 0 );
 #else
@@ -399,8 +398,6 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
 
     keepSizeRatio ();
     keepSizeRatio (); // Lazy, I know :)
-    showConsoleOutput ();
-    showConsoleOutput ();
 
     // initialize the recent file list
     fileOpenRecent->loadEntries(config,"Recent Files");
@@ -555,7 +552,6 @@ KDE_NO_EXPORT void KMPlayerApp::startArtsControl () {
 
 KDE_NO_EXPORT void KMPlayerApp::configChanged () {
     viewKeepRatio->setChecked (m_player->settings ()->sizeratio);
-    viewShowConsoleOutput->setChecked (m_player->settings ()->showconsole);
     static_cast <KMPlayerTVSource *> (m_player->sources () ["tvsource"])->buildMenu ();
 }
 
@@ -567,11 +563,6 @@ KDE_NO_EXPORT void KMPlayerApp::keepSizeRatio () {
         m_view->viewer ()->setAspect (0.0);
     m_player->settings ()->sizeratio = m_view->keepSizeRatio ();
     viewKeepRatio->setChecked (m_view->keepSizeRatio ());
-}
-
-KDE_NO_EXPORT void KMPlayerApp::showConsoleOutput () {
-    m_view->setShowConsoleOutput (!m_view->showConsoleOutput ());
-    viewShowConsoleOutput->setChecked (m_view->showConsoleOutput ());
 }
 
 //-----------------------------------------------------------------------------

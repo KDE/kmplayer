@@ -96,7 +96,6 @@ public:
     ~KMPlayerPrefGeneralPageGeneral() {}
 
     QCheckBox *keepSizeRatio;
-    QCheckBox *showConsoleOutput;
     QCheckBox *loop;
     QCheckBox *showRecordButton;
     QCheckBox *showBroadcastButton;

@@ -89,7 +89,6 @@ private slots:
     void fullScreen ();
     void configChanged ();
     void keepSizeRatio ();
-    void showConsoleOutput ();
     void startArtsControl();
     void loadingProgress (int percentage);
     void zoom50 ();
@@ -116,7 +115,6 @@ private:
     KToggleAction * viewStatusBar;
     KToggleAction * viewMenuBar;
     KToggleAction * viewKeepRatio;
-    KToggleAction * viewShowConsoleOutput;
     QMenuItem * m_sourcemenu;
     QPopupMenu * m_dvdmenu;
     QPopupMenu * m_dvdnavmenu;

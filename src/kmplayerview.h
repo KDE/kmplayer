@@ -26,8 +26,8 @@
 #include <qwidget.h>
 #include <qpushbutton.h>
 #include <qguardedptr.h>
-#include <qpopupmenu.h>
 
+#include <kpopupmenu.h>
 #include <kurl.h>
 #include <qxembed.h>
 #include <kmediaplayer/view.h>
@@ -63,7 +63,7 @@ private:
     bool m_fullscreen : 1;
 };
 
-class KMPlayerPopupMenu : public QPopupMenu {
+class KMPlayerPopupMenu : public KPopupMenu {
     Q_OBJECT
 public:
     KMPlayerPopupMenu (QWidget *);
@@ -83,6 +83,9 @@ public:
     enum ControlPanelMode {
         CP_Hide, CP_AutoHide, CP_Show
     };
+    enum WidgetType {
+        WT_Video, WT_PlayList, WT_Console, WT_Picture, WT_Last
+    };
 
     KMPlayerView (QWidget *parent, const char *);
     ~KMPlayerView();
@@ -98,8 +101,7 @@ public:
     KDE_NO_EXPORT QWidgetStack * widgetStack () const { return m_widgetstack; }
     KDE_NO_EXPORT bool keepSizeRatio () const { return m_keepsizeratio; }
     KDE_NO_EXPORT void setKeepSizeRatio (bool b) { m_keepsizeratio = b; }
-    KDE_NO_EXPORT bool showConsoleOutput () const { return m_show_console_output; }
-    void setShowConsoleOutput (bool b);
+    void showWidget (WidgetType w);
     void setControlPanelMode (ControlPanelMode m);
     //void setAutoHideSlider (bool b);
     KDE_NO_EXPORT ControlPanelMode controlPanelMode () const { return m_controlpanel_mode; }
@@ -138,8 +140,8 @@ private:
     KMPlayerViewer * m_viewer;
     // console output
     QMultiLineEdit * m_multiedit;
-    // click-to-play widget
-    QWidget * m_picturewidget;
+    // all widget types
+    QWidget * m_widgettypes [WT_Last];
     // widget stack contains m_viewer, m_multiedit and m_picturewidget
     QWidgetStack * m_widgetstack;
     // widget that layouts m_widgetstack for ratio setting
@@ -158,7 +160,6 @@ private:
     int popup_timer;
     int popdown_timer;
     bool m_keepsizeratio : 1;
-    bool m_show_console_output : 1;
     bool m_playing : 1;
     bool m_mixer_init : 1;
     bool m_inVolumeUpdate : 1;
@@ -184,7 +185,8 @@ class KMPlayerControlPanel : public QWidget {
 public:
     enum MenuID {
         menu_config = 0, menu_player, menu_fullscreen, menu_volume, 
-        menu_bookmark, menu_zoom, menu_zoom50, menu_zoom100, menu_zoom150
+        menu_bookmark, menu_zoom, menu_zoom50, menu_zoom100, menu_zoom150,
+        menu_view, menu_video, menu_playlist, menu_console
     };
     enum Button {
         button_config = 0, button_back, button_play, button_forward,
@@ -216,6 +218,8 @@ public:
     KDE_NO_EXPORT KPopupMenu * bookmarkMenu () const { return m_bookmarkMenu; }
     KDE_NO_EXPORT QPopupMenu * zoomMenu () const { return m_zoomMenu; }
     KDE_NO_EXPORT QPopupMenu * playerMenu () const { return m_playerMenu; }
+    KDE_NO_EXPORT QPopupMenu * viewMenu () const { return m_viewMenu; }
+    KDE_NO_EXPORT QPopupMenu * colorMenu () const { return m_colorMenu; }
 private:
     enum { progress_loading, progress_playing } m_progress_mode;
     int m_progress_length;
@@ -227,9 +231,11 @@ private:
     QSlider * m_saturationSlider;
     QPushButton * m_buttons[KMPlayerControlPanelButtons];
     KMPlayerPopupMenu * m_popupMenu;
-    KPopupMenu * m_bookmarkMenu;
-    QPopupMenu * m_zoomMenu;
-    QPopupMenu * m_playerMenu;
+    KMPlayerPopupMenu * m_bookmarkMenu;
+    KMPlayerPopupMenu * m_viewMenu;
+    KMPlayerPopupMenu * m_zoomMenu;
+    KMPlayerPopupMenu * m_playerMenu;
+    KMPlayerPopupMenu * m_colorMenu;
 };
 
 class KMPlayerViewer : public QXEmbed {

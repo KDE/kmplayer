@@ -129,6 +129,18 @@ void KMPlayer::showConfigDialog () {
     m_settings->show ("GeneralPage");
 }
 
+KDE_NO_EXPORT void KMPlayer::showVideoWindow () {
+    m_process->view ()->showWidget (KMPlayerView::WT_Video);
+}
+
+KDE_NO_EXPORT void KMPlayer::showPlayListWindow () {
+    m_process->view ()->showWidget (KMPlayerView::WT_PlayList);
+}
+
+KDE_NO_EXPORT void KMPlayer::showConsoleWindow () {
+    m_process->view ()->showWidget (KMPlayerView::WT_Console);
+}
+
 void KMPlayer::init (KActionCollection * action_collection) {
     m_view->init ();
     m_settings->readConfig ();
@@ -162,6 +174,12 @@ void KMPlayer::init (KActionCollection * action_collection) {
     connect (m_view, SIGNAL (urlDropped (const KURL &)), this, SLOT (openURL (const KURL &)));
     m_view->buttonBar ()->popupMenu ()->connectItem (KMPlayerControlPanel::menu_config,
                                        this, SLOT (showConfigDialog ()));
+    m_view->buttonBar ()->viewMenu ()->connectItem (KMPlayerControlPanel::menu_video,
+                                       this, SLOT (showVideoWindow ()));
+    m_view->buttonBar ()->viewMenu ()->connectItem (KMPlayerControlPanel::menu_playlist,
+                                       this, SLOT (showPlayListWindow ()));
+    m_view->buttonBar ()->viewMenu ()->connectItem (KMPlayerControlPanel::menu_console,
+                                       this, SLOT (showConsoleWindow ()));
     //connect (m_view->configButton (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
 }
 

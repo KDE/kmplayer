@@ -94,7 +94,6 @@ static const char * strSubURLList = "URL Sub Title List";
 //static const char * strUseArts = "Use aRts";
 static const char * strVoDriver = "Video Driver";
 static const char * strAoDriver = "Audio Driver";
-static const char * strShowConsole = "Show Console Output";
 static const char * strLoop = "Loop";
 static const char * strFrameDrop = "Frame Drop";
 static const char * strAddConfigButton = "Add Configure Button";
@@ -166,8 +165,6 @@ KDE_NO_EXPORT void KMPlayerSettings::readConfig () {
     m_config->setGroup (strMPlayerGroup);
     sizeratio = m_config->readBoolEntry (strKeepSizeRatio, true);
     view->setKeepSizeRatio (sizeratio);
-    showconsole = m_config->readBoolEntry (strShowConsole, false);
-    view->setShowConsoleOutput (showconsole);
     loop = m_config->readBoolEntry (strLoop, false);
     framedrop = m_config->readBoolEntry (strFrameDrop, true);
     mplayerpost090 = m_config->readBoolEntry (strPostMPlayer090, true);
@@ -270,7 +267,6 @@ void KMPlayerSettings::removePage (KMPlayerPreferencesPage * page) {
 void KMPlayerSettings::show (const char * pagename) {
     bool created = createDialog ();
     configdialog->m_GeneralPageGeneral->keepSizeRatio->setChecked (sizeratio);
-    configdialog->m_GeneralPageGeneral->showConsoleOutput->setChecked (showconsole);
     configdialog->m_GeneralPageGeneral->loop->setChecked (loop);
     configdialog->m_GeneralPageGeneral->framedrop->setChecked (framedrop);
     //configdialog->m_GeneralPageGeneral->autoHideSlider->setChecked (autohideslider);
@@ -356,7 +352,6 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strSaturation, saturation);
     m_config->setGroup (strMPlayerGroup);
     m_config->writeEntry (strKeepSizeRatio, view->keepSizeRatio ());
-    m_config->writeEntry (strShowConsole, view->showConsoleOutput());
     m_config->writeEntry (strLoop, loop);
     m_config->writeEntry (strFrameDrop, framedrop);
     m_config->writeEntry (strSeekTime, seektime);
@@ -479,8 +474,6 @@ KDE_NO_EXPORT void KMPlayerSettings::okPressed () {
             sub_urllist.push_back (configdialog->m_SourcePageURL->sub_urllist->text (i));
     sizeratio = configdialog->m_GeneralPageGeneral->keepSizeRatio->isChecked ();
     m_player->keepMovieAspect (sizeratio);
-    showconsole = configdialog->m_GeneralPageGeneral->showConsoleOutput->isChecked ();
-    view->setShowConsoleOutput (showconsole);
     loop = configdialog->m_GeneralPageGeneral->loop->isChecked ();
     framedrop = configdialog->m_GeneralPageGeneral->framedrop->isChecked ();
     //showcnfbutton = configdialog->m_GeneralPageGeneral->addConfigButton->isChecked ();

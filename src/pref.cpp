@@ -194,8 +194,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGener
 
 	keepSizeRatio = new QCheckBox (i18n("Keep size ratio"), this, 0);
 	QWhatsThis::add(keepSizeRatio, i18n("When checked, movie will keep its aspect ratio\nwhen window is resized"));
-	showConsoleOutput = new QCheckBox (i18n("Show console output"), this, 0);
-	QWhatsThis::add(showConsoleOutput, i18n("Shows output from mplayer before and after playing the movie"));
 	loop = new QCheckBox (i18n("Loop"), this, 0);
 	QWhatsThis::add(loop, i18n("Makes current movie loop"));
 	showRecordButton = new QCheckBox (i18n ("Show record button"), this);
@@ -214,7 +212,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGener
 	seekingWidgetLayout->addWidget(seekTime);
 	seekingWidgetLayout->addItem(new QSpacerItem(0,0,QSizePolicy::Minimum, QSizePolicy::Minimum));
 	layout->addWidget(keepSizeRatio);
-	layout->addWidget(showConsoleOutput);
 	layout->addWidget(loop);
 	layout->addWidget (framedrop);
 	layout->addWidget (showRecordButton);
@@ -740,7 +737,6 @@ KDE_NO_EXPORT void KMPlayerPreferences::confirmDefaults() {
 
 KDE_NO_EXPORT void KMPlayerPreferences::setDefaults() {
 	m_GeneralPageGeneral->keepSizeRatio->setChecked(true);
-	m_GeneralPageGeneral->showConsoleOutput->setChecked(false);
 	m_GeneralPageGeneral->loop->setChecked(false);
 	m_GeneralPageGeneral->seekTime->setValue(10);
 

@@ -79,7 +79,6 @@ public:
     int saturation;
     bool usearts : 1;
     bool sizeratio : 1;
-    bool showconsole : 1;
     bool loop : 1;
     bool framedrop : 1;
     bool showcnfbutton : 1;
