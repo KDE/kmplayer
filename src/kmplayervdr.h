@@ -78,6 +78,7 @@ public slots:
     void keyChannels ();
     void connected ();
     void dataWritten (int);
+    void readyRead ();
     void socketError (int);
 private:
     void sendCommand (const char * cmd);
