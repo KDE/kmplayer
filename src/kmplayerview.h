@@ -70,6 +70,9 @@ public:
     void updateTree (ElementPtr root, ElementPtr active);
 signals:
     void addBookMark (const QString & title, const QString & url);
+protected:
+    void dragEnterEvent (QDragEnterEvent *);
+    void dropEvent (QDropEvent *);
 private slots:
     void contextMenuItem (QListViewItem *, const QPoint &, int);
     void copyToClipboard ();
@@ -111,6 +114,7 @@ class KMPlayerView : public KMediaPlayer::View {
     Q_OBJECT
     friend class KMPlayerViewerHolder;
     friend class KMPlayerViewer;
+    friend class KMPlayerPlayListView;
     friend class KMPlayerPictureWidget;
 public:
     enum ControlPanelMode {

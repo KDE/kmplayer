@@ -566,6 +566,14 @@ void KMPlayerPlayListView::addBookMark () {
     }
 }
 
+KDE_NO_EXPORT void KMPlayerPlayListView::dropEvent (QDropEvent * de) {
+    m_view->dropEvent (de);
+}
+
+KDE_NO_EXPORT void KMPlayerPlayListView::dragEnterEvent (QDragEnterEvent* dee) {
+    m_view->dragEnterEvent (dee);
+}
+
 //-----------------------------------------------------------------------------
 
 class KMPlayerConsole : public QMultiLineEdit {
