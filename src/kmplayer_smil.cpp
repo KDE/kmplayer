@@ -133,7 +133,7 @@ KDE_NO_EXPORT void RegionNode::repaint () {
     if (regionElement) {
         PlayListNotify * n = regionElement->document()->notify_listener;
         if (n)
-            n->repaintRegion (this);
+            n->repaintRect (x, y, w, h);
     }
 };
 
@@ -614,7 +614,11 @@ KDE_NO_EXPORT void RegionRuntime::paint (QPainter & p) {
 KDE_NO_EXPORT
 QString RegionRuntime::setParam (const QString & name, const QString & val) {
     kdDebug () << "RegionRuntime::setParam " << name << "=" << val << endl;
+    RegionNode * rn = region_node.ptr ();
     bool needs_bounds_calc = false;
+    QRect rect;
+    if (rn)
+        rect = QRect (rn->x, rn->y, rn->w, rn->h);
     if (name == QString::fromLatin1 ("background-color") ||
             name == QString::fromLatin1 ("background-color")) {
         background_color = QColor (val).rgb ();
@@ -641,11 +645,14 @@ QString RegionRuntime::setParam (const QString & name, const QString & val) {
         bottom = val;
         needs_bounds_calc = true;
     }
-    if (active && needs_bounds_calc && element) {
-        RegionNodePtr rn = element->document ()->rootLayout;
-        if (rn && rn->regionElement) {
-            convertNode <RegionBase> (rn->regionElement)->updateLayout ();
-            rn->repaint ();
+    if (active && rn && needs_bounds_calc && element) {
+        RegionNodePtr rootrn = element->document ()->rootLayout;
+        if (rootrn && rootrn->regionElement) {
+            convertNode<RegionBase>(rootrn->regionElement)->updateLayout ();
+            QRect nr = rect.unite (QRect (rn->x, rn->y, rn->w, rn->h));
+            PlayListNotify * n = element->document()->notify_listener;
+            if (n)
+                n->repaintRect (nr.x(), nr.y(), nr.width (), nr.height ());
         }
     }
     return ElementRuntime::setParam (name, val);

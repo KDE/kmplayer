@@ -832,9 +832,9 @@ void Source::stateElementChanged (ElementPtr elm) {
         emit endOfPlayItems (); // played all items
 }
 
-void Source::repaintRegion (RegionNode * r) {
+void Source::repaintRect (int x, int y, int w, int h) {
     if (m_player->view ())
-        m_player->process()->view ()->viewArea ()->update (r->x, r->y, r->w, r->h);
+        m_player->process()->view ()->viewArea ()->update (x, y, w, h);
 }
 
 void Source::avWidgetSizes (RegionNode * r, unsigned int * bg) {

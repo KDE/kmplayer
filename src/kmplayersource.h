@@ -127,7 +127,7 @@ protected:
      */
     bool requestPlayURL (ElementPtr mrl, RegionNodePtr region);
     void stateElementChanged (ElementPtr element);
-    void repaintRegion (RegionNode * region);
+    void repaintRect (int x, int y, int w, int h);
     void avWidgetSizes (RegionNode * region, unsigned int * bg_color);
 
     ElementPtr m_document;

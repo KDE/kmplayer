@@ -337,7 +337,7 @@ public:
 };
 
 template <class T>
-KDE_NO_EXPORT inline T * convertNode (ElementPtr e) {
+inline KDE_NO_EXPORT T * convertNode (ElementPtr e) {
     return static_cast <T *> (e.ptr ());
 }
         
@@ -404,9 +404,9 @@ public:
      */
     virtual void stateElementChanged (ElementPtr element) = 0;
     /**
-     * Some region needs repainting, eg. a timer expired
+     * Some rectangle needs repainting
      */
-    virtual void repaintRegion (RegionNode * region) = 0;
+    virtual void repaintRect (int x, int y, int w, int h) = 0;
     /**
      * Sets the video widget postion and background color if bg not NULL
      */
