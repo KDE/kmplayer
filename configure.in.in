@@ -1,5 +1,25 @@
 #AM_INIT_AUTOMAKE(kmplayer,0.8.3rc1)
 
+if test "$build_arts" = "no"; then
+    not_want_arts_volume="yes"
+else
+        AC_MSG_CHECKING(if arts volume support is wanted)
+        AC_ARG_ENABLE(arts-volume,
+                [  --disable-arts-volume   disable arts volume support],
+                [if test "$enableval" != yes; then
+                       AC_MSG_RESULT(no)
+                       not_want_arts_volume="yes"
+                 else
+                       AC_MSG_RESULT(yes)
+                 fi], [AC_MSG_RESULT(yes); not_want_arts_volume="no"])
+fi
+
+if test "$not_want_arts_volume" != "yes"; then
+        AC_DEFINE(USE_ARTS, 1, [If we use arts volume])
+        LIB_ARTS="-lartskde"
+        AC_SUBST(LIB_ARTS)
+fi
+
 AC_MSG_CHECKING(if koffice-plugin support is wanted)
 AC_ARG_ENABLE(koffice-plugin,
 [  --enable-koffice-plugin enable koffice plugin],
