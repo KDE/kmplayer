@@ -766,6 +766,7 @@ void Source::playCurrent () {
             m_current->undefer ();
         emit playURL (this, currentMrl ());
     }
+    m_player->updateTree ();
 }
 
 static ElementPtr findDepthFirst (ElementPtr elm) {
@@ -1188,10 +1189,9 @@ static bool isPlayListMime (const QString & mime) {
             !strcmp (mimestr ,"audio/vnd.rn-realaudio") ||
             !strcmp (mimestr ,"audio/m3u") ||
             !strcmp (mimestr ,"audio/x-m3u") ||
-            !strcmp (mimestr ,"application/smil") ||
-            !strcmp (mimestr ,"application/xml") ||
-            !strcmp (mimestr ,"text/xml") ||
-            !strcmp (mimestr ,"text/plain") ||
+            !strncasecmp (mimestr ,"application/smil", 16) ||
+            !strncasecmp (mimestr ,"application/xml", 15) ||
+            !strncmp (mimestr ,"text/", 5) ||
             !strcmp (mimestr ,"application/x-mplayer2"));
 }
 
