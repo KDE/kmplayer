@@ -258,8 +258,10 @@ public:
     KComboBox * sub_urllist;
     QComboBox * backend;
     QCheckBox * allowhref;
+    bool changed;
 private slots:
     void slotBrowse ();
+    void slotTextChanged (const QString &);
 };
 
 class KMPlayerPrefGeneralPageDVD : public QFrame
