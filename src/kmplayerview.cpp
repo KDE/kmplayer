@@ -273,6 +273,7 @@ void KMPlayerViewLayer::fullScreen () {
         m_box->addWidget (this);
         delete m_accel;
         m_accel = 0L;
+        m_box->activate ();
     } else {
         reparent (0L, 0, QPoint (0, 0), true);
         showFullScreen ();
