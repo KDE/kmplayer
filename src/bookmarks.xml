@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE xbel>
 <xbel folded="no" >
  <folder folded="no" icon="bookmark_folder" >
@@ -170,6 +171,72 @@
     <title>radio relax</title>
    </bookmark>
   </folder>
+  <folder folded="yes" icon="bookmark_folder" >
+   <title>denmark</title>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e02ch01m?wmcontentbitrate=300000/.wma" >
+    <title>P1</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e02ch02m?wmcontentbitrate=300000/.wma" >
+    <title>P2</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e02ch03m?wmcontentbitrate=300000" >
+    <title>P3</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch04m?wmcontentbitrate=300000/.wma" >
+    <title>Kanal 94</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch06m?wmcontentbitrate=300000/.wma" >
+    <title>Radio Fyn</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch08m?wmcontentbitrate=300000/.wma" >
+    <title>Bornholms Radio</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch07m?wmcontentbitrate=300000/.wma" >
+    <title>Regionalen</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch09m?wmcontentbitrate=300000/.wma" >
+    <title>Københavns Radio</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch05m?wmcontentbitrate=300000/.wma" >
+    <title>Radio Syd</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch03m?wmcontentbitrate=300000/.wma" >
+    <title>Østjyllands Radio</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch02m?wmcontentbitrate=300000/.wma" >
+    <title>Radio Midt &amp; Vest</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e02ch09m?wmcontentbitrate=300000/.wma" >
+    <title>DR Barometer</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e02ch07m?wmcontentbitrate=300000/.wma" >
+    <title>DR Boogieradio</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e02ch08m?wmcontentbitrate=300000/.wma" >
+    <title>DR Ghetto</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e06ch01m?wmcontentbitrate=300000/.wma" >
+    <title>DR Gyldne Genhør</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e02ch05m?wmcontentbitrate=300000/.wma" >
+    <title>DR Jazz</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e02ch06m?wmcontentbitrate=300000/.wma" >
+    <title>DR Klassisk</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch11m?wmcontentbitrate=300000/.wma" >
+    <title>DR Nyheder</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e02ch04m?wmcontentbitrate=300000/.wma" >
+    <title>DR Rock</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wmsc.dr.dk/e04ch10m?wmcontentbitrate=300000/.wma" >
+    <title>DR Soft</title>
+   </bookmark>
+   <bookmark icon="www" href="http://wms.dr.dk/e02ch12m?wmcontentbitrate=300000/.wma" >
+    <title>DR Sport</title>
+   </bookmark>
+  </folder>
   <folder folded="yes" >
    <folder folded="yes" >
     <title>TV</title>
@@ -290,7 +357,7 @@
     <title>Jazz Radio</title>
    </bookmark>
   </folder>
-  <folder folded="no" >
+  <folder folded="yes" >
    <title>ireland</title>
    <bookmark icon="www" href="http://69.57.152.94:8000" >
     <title>Live Ireland</title>
