@@ -76,6 +76,7 @@ public slots:
     void jump (ElementPtr e);
     void forward ();
     void backward ();
+private slots:
     void keyUp ();
     void keyDown ();
     void keyBack ();
@@ -98,13 +99,16 @@ public slots:
     void keyYellow ();
     void keyBlue ();
     void connected ();
-    void dataWritten (int);
+    void disconnected ();
     void readyRead ();
     void socketError (int);
 protected:
     void timerEvent (QTimerEvent *);
 private:
-    void sendCommand (const char * cmd, bool b=false);
+    void queueCommand (const char * cmd);
+    void queueCommand (const char * cmd, int repeat_ms);
+    void sendCommand ();
+    void deleteCommands ();
     KMPlayerPrefSourcePageVDR * m_configpage;
     KAction * act_up;
     KAction * act_down;
@@ -120,6 +124,7 @@ private:
     QSocket * m_socket;
     VDRCommand * commands;
     int channel_timer;
+    int timeout_timer;
     int tcp_port;
     int xv_port;
     int scale;
