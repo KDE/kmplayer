@@ -23,6 +23,9 @@ Auto Play After Recording=true
 Show DVD Menu=true
 Video Driver=xv
 
+[Pipe Command]
+Command1=cat ~/example.avi
+
 [MPlayer Output Matching]
 DVD Chapters=There are ([0-9]+) chapters
 DVD Language=\\[open\\].*audio.*language: ([A-Za-z]+).*aid.*[^0-9]([0-9]+)

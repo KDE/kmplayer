@@ -264,7 +264,7 @@ KDE_NO_EXPORT void KMPlayerApp::openPipe () {
     slotStatusMsg(i18n("Opening pipe..."));
     bool ok;
     QString cmd = KLineEditDlg::getText (i18n("Read From Pipe"),
-      i18n ("Enter command:"), m_player->sources () ["pipesource"]->pipeCmd (), &ok, m_player->view());
+      i18n ("Enter a command that will output an audio/video stream\nto the stdout. This will be piped to a player's stdin.\n\nCommand:"), m_player->sources () ["pipesource"]->pipeCmd (), &ok, m_player->view());
     if (!ok) {
         slotStatusMsg (i18n ("Ready."));
         return;
