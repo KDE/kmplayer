@@ -281,7 +281,7 @@ void KMPlayer::setSource (KMPlayerSource * source) {
         m_view->forwardButton ()->hide ();
         m_view->backButton ()->hide ();
     }
-    if (m_source) m_source->activate ();
+    if (m_source) QTimer::singleShot (0, m_source, SLOT (activate ()));
 }
 
 bool KMPlayer::openURL (const KURL & _url) {
@@ -501,7 +501,8 @@ void KMPlayer::record () {
         m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
         if (!m_process->isRunning () && m_view->recordButton ()->isOn ()) 
             m_view->recordButton ()->toggle ();
-    }
+    } else
+        m_view->recordButton ()->toggle ();
     delete dlg;
 }
 

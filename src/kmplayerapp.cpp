@@ -875,7 +875,7 @@ void KMPlayerTVSource::menuClicked (int id) {
         if (m_player->source () != this)
             m_player->setSource (this);
         m_tvsource = it.data ();
-        play ();
+        QTimer::singleShot (0, this, SLOT (play ()));
     }
 }
 
