@@ -716,9 +716,9 @@ void Source::setURL (const KURL & url) {
         if (m_document)
             m_document->document ()->dispose ();
         m_document = (new Document (url.url ()))->self ();
-        if (m_player->process () && m_player->source () == this)
-            m_player->updateTree ();
     }
+    if (m_player->process () && m_player->source () == this)
+        m_player->updateTree ();
     m_current = m_document;
 }
 

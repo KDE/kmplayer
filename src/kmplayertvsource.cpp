@@ -319,13 +319,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::menuClicked (int id) {
         ;
     m_cur_tvdevice = elm;
     m_current = 0L;
-    if (m_player->source () == this) {
-        m_player->stop ();
-        m_current = m_cur_tvdevice;
-        KMPlayer::Source::next ();
-        jump (m_current);
-    } else
-        m_player->setSource (this);
+    m_player->setSource (this);
 }
 
 KDE_NO_EXPORT QString KMPlayerTVSource::filterOptions () {
