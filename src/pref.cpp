@@ -694,7 +694,7 @@ KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *paren
     QHBoxLayout *layout = new QHBoxLayout (this, 5);
     QGridLayout *formatlayout = new QGridLayout (11, 2, 2);
     formatlayout->setAlignment (Qt::AlignTop);
-    QVBoxLayout *rightlayout = new QVBoxLayout (5);
+    QVBoxLayout *leftlayout = new QVBoxLayout (15);
     format = new QComboBox (this);
     QLabel * label = new QLabel (format, i18n ("Format:"), this);
     format->clear ();
@@ -719,6 +719,8 @@ KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *paren
     ADDPROPERTY (i18n ("Height (pixels):"), movieheight, formatlayout, 10, this);
     label = new QLabel (i18n ("Allow Access from:"), this);
     accesslist = new QTable (40, 1, this);
+    accesslist->verticalHeader ()->hide ();
+    accesslist->setLeftMargin (0);
     accesslist->setColumnWidth (0, 250);
     QToolTip::add (accesslist, i18n ("'Single IP' or 'start-IP end-IP' for IP ranges"));
     QHeader *header = accesslist->horizontalHeader ();
@@ -749,14 +751,14 @@ KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *paren
     profileslayout->addWidget (load, 1, 1);
     profileslayout->addWidget (save, 2, 1);
     profileslayout->addWidget (del, 3, 1);
-    rightlayout->addWidget (profileframe);
+    leftlayout->addWidget (profileframe);
     QFrame * line = new QFrame (this);
     line->setFrameShape (QFrame::HLine);
-    rightlayout->addWidget (line);
-    rightlayout->addWidget (label);
-    rightlayout->addWidget (accesslist);
-    rightlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    layout->addLayout (rightlayout);
+    leftlayout->addWidget (line);
+    leftlayout->addWidget (label);
+    leftlayout->addWidget (accesslist);
+    leftlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    layout->addLayout (leftlayout);
     line = new QFrame (this);
     line->setFrameShape (QFrame::VLine);
     layout->addWidget (line);

@@ -580,6 +580,7 @@ void KMPlayerSettings::show () {
     configdialog->m_BroadcastPage->feedfile->setText (feedfile);
     configdialog->m_BroadcastPage->feedfilesize->setText (QString::number (feedfilesize));
     configdialog->m_BroadcastFormatPage->setSettings (ffserversettings);
+    configdialog->m_BroadcastFormatPage->profile->setText (QString::null);
 
     configdialog->show ();
 }
