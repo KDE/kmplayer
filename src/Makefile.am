@@ -53,7 +53,7 @@ conf_DATA = kmplayerrc
 confdir = $(kde_confdir)
 
 appsdatadir=$(kde_datadir)/kmplayer
-appsdata_DATA= bookmarks.xml
+appsdata_DATA= bookmarks.xml pluginsinfo
 
 dummy.cpp:
 	echo > dummy.cpp

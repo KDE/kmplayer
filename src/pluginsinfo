@@ -1,0 +1,19 @@
+number=3
+
+[0]
+description=RealPlayer LiveConnect-Enabled Plug-In
+file=libkmplayerpart.so
+mime=audio/x-pn-realaudio:rm:Real Audio Stream
+name=RealPlayer
+
+[1]
+description=Windows Media Player Plug-in
+file=libkmplayerpart.so
+mime=audio/x-ms-wma:wma:Windows Media Audio;video/x-ms-asf:asx,asf:Media Files;video/x-ms-wmv:wmv:Windows Media Video
+name=Windows Media Player
+
+[2]
+description=QuickTime Movie
+file=libkmplayerpart.so
+mime=video/quicktime:mov,qt:QuickTime
+name=QuickTime Plug-in
