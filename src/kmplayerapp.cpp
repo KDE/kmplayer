@@ -116,7 +116,8 @@ KDE_NO_EXPORT void KMPlayerApp::initActions()
 {
     fileNewWindow = new KAction(i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), actionCollection(),"new_window");
     fileOpen = KStdAction::open(this, SLOT(slotFileOpen()), actionCollection(), "open");
-    fileOpenRecent = KStdAction::openRecent(this, SLOT(slotFileOpenRecent(const KURL&)), actionCollection());
+    fileOpenRecent = KStdAction::openRecent(this, SLOT(slotFileOpenRecent(const KURL&)), actionCollection(), "open_recent");
+    new KAction (i18n ("Clear &History"), 0, 0, this, SLOT (slotClearHistory ()), actionCollection (), "clear_history");
     fileClose = KStdAction::close(this, SLOT(slotFileClose()), actionCollection());
     fileQuit = KStdAction::quit(this, SLOT(slotFileQuit()), actionCollection());
     
@@ -174,7 +175,7 @@ KDE_NO_EXPORT void KMPlayerApp::initMenu () {
     menuBar ()->insertItem (i18n ("&Bookmarks"), bookmarkmenu, -1, 2);
     m_sourcemenu = menuBar ()->findItem (menuBar ()->idAt (0));
     m_sourcemenu->setText (i18n ("S&ource"));
-    m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("dvd_mount"), KIcon::Small, 0, true), i18n ("&DVD"), m_dvdmenu, -1, 4);
+    m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("dvd_mount"), KIcon::Small, 0, true), i18n ("&DVD"), m_dvdmenu, -1, 5);
     m_dvdmenu->clear ();
 #ifdef HAVE_XINE
     m_dvdnavmenu->clear ();
@@ -184,9 +185,9 @@ KDE_NO_EXPORT void KMPlayerApp::initMenu () {
 #else
     m_dvdmenu->insertItem (i18n ("&Open DVD"), this, SLOT(openDVD ()), 0,-1, 1);
 #endif
-    m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("cdrom_mount"), KIcon::Small, 0, true), i18n ("V&CD"), m_vcdmenu, -1, 5);
+    m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("cdrom_mount"), KIcon::Small, 0, true), i18n ("V&CD"), m_vcdmenu, -1, 6);
     m_vcdmenu->clear ();
-    m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0, true), i18n ("&TV"), m_tvmenu, -1, 6);
+    m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0, true), i18n ("&TV"), m_tvmenu, -1, 7);
     m_vcdmenu->insertItem (i18n ("&Open VCD"), this, SLOT(openVCD ()), 0,-1, 1);
 }
 
@@ -468,6 +469,12 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileOpenRecent(const KURL& url)
 
 }
 
+KDE_NO_EXPORT void KMPlayerApp::slotClearHistory () {
+    fileOpenRecent->clearURLList ();
+    m_player->settings ()->urllist.clear ();
+    m_player->settings ()->sub_urllist.clear ();
+}
+
 KDE_NO_EXPORT void KMPlayerApp::slotFileClose()
 {
     slotStatusMsg(i18n("Closing file..."));
@@ -583,7 +590,7 @@ KDE_NO_EXPORT void KMPlayerApp::configChanged () {
         m_systray = new KSystemTray (this);
         m_systray->setPixmap (KGlobal::iconLoader ()->loadIcon (QString ("kmplayer"), KIcon::NoGroup, 22));
         m_systray->show ();
-    } else {
+    } else if (!m_player->settings ()->docksystray && m_systray) {
         delete m_systray;
         m_systray = 0L;
     }

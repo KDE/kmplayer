@@ -1,9 +1,12 @@
 <!DOCTYPE kpartgui>
-<kpartgui name="kmplayer" version="14">
+<kpartgui name="kmplayer" version="15">
 <MenuBar>
   <Menu name="file"><text>&amp;File</text>
-    <Action name="new_window"/>
     <Action name="open"/>
+    <Action name="new_window"/>
+    <Action name="open_recent"/>
+    <Action name="clear_history"/>
+    <Separator/>
     <Action name="source_pipe"/>
     <Menu name="vdr"><text>VD&amp;R</text>
       <Action name="vdr_connect"/>

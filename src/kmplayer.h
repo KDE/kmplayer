@@ -107,6 +107,7 @@ private slots:
     void broadcastStopped ();
     void playerStarted ();
     void slotConfigureKeys();
+    void slotClearHistory ();
 
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
