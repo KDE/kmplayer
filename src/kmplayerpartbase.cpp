@@ -739,6 +739,23 @@ void KMPlayerURLSource::deactivate () {
 QString KMPlayerURLSource::prettyName () {
     if (m_url.isEmpty ())
         return QString (i18n ("URL"));
+    if (m_url.url ().length () > 50) {
+        QString newurl = m_url.protocol () + QString ("://");
+        if (m_url.hasHost ())
+            newurl += m_url.host ();
+        if (m_url.port ())
+            newurl += QString (":%1").arg (m_url.port ());
+        QString file = m_url.fileName ();
+        int len = newurl.length () + file.length ();
+        KURL path = KURL (m_url.directory ());
+        while (path.url ().length () + len > 50 && path != path.upURL ())
+            path = path.upURL ();
+        QString dir = path.directory ();
+        if (!dir.endsWith (QString ("/")))
+            dir += '/';
+        newurl += dir + QString (".../") + file;
+        return QString (i18n ("URL - %1").arg (newurl));
+    }
     return QString (i18n ("URL - %1").arg (m_url.prettyURL ()));
 }
 
