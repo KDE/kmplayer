@@ -391,11 +391,9 @@ struct JSCommandEntry {
     const KParts::LiveConnectExtension::Type rettype;
 };
 
-const int jscommandentries = 112;
-
 // keep this list in alphabetic order
 // http://service.real.com/help/library/guides/realonescripting/browse/htmfiles/embedmet.htm
-static const JSCommandEntry JSCommandList [jscommandentries] = {
+static const JSCommandEntry JSCommandList [] = {
     { "CanPause", canpause, 0L, KParts::LiveConnectExtension::TypeBool },
     { "CanPlay", canplay, 0L, KParts::LiveConnectExtension::TypeBool },
     { "CanStop", canstop, 0L, KParts::LiveConnectExtension::TypeBool },
@@ -510,7 +508,7 @@ static const JSCommandEntry JSCommandList [jscommandentries] = {
     { "volume", volume, 0L, KParts::LiveConnectExtension::TypeBool },
 };
 
-static const JSCommandEntry * getJSCommandEntry (const char * name, int start = 0, int end = jscommandentries) {
+static const JSCommandEntry * getJSCommandEntry (const char * name, int start = 0, int end = sizeof (JSCommandList)/sizeof (JSCommandEntry)) {
     if (end - start < 2) {
         if (start != end && !strcmp (JSCommandList[start].name, name))
             return &JSCommandList[start];

@@ -68,65 +68,6 @@ static const int button_height_only_buttons = 11;
 #include <kurldrag.h>
 #include <kpopupmenu.h>
 #include <dcopclient.h>
-#ifdef USE_ARTS
-#include <arts/kartsdispatcher.h>
-#include <arts/soundserver.h>
-#include <arts/kartsserver.h>
-#include <arts/kartsfloatwatch.h>
-#endif
-
-
-class KMPlayerViewStatic {
-public:
-    KMPlayerViewStatic ();
-    ~KMPlayerViewStatic ();
-
-#ifdef USE_ARTS
-    void getDispatcher();
-    void releaseDispatcher();
-private:
-    KArtsDispatcher *dispatcher;
-#endif
-    int use_count;
-};
-
-static KMPlayerViewStatic * kmplayerview_static = 0L;
-
-KDE_NO_CDTOR_EXPORT KMPlayerViewStatic::KMPlayerViewStatic () 
-#ifdef USE_ARTS
-    : dispatcher ((KArtsDispatcher*) 0), use_count(0) {
-#else
-    : use_count(0) {
-#endif
-    printf ("KMPlayerViewStatic::KMPlayerViewStatic\n");
-}
-
-KDE_NO_CDTOR_EXPORT KMPlayerViewStatic::~KMPlayerViewStatic () {
-    printf ("KMPlayerViewStatic::~KMPlayerViewStatic\n");
-#ifdef USE_ARTS
-    delete dispatcher;
-#endif
-    kmplayerview_static = 0L;
-}
-
-#ifdef USE_ARTS
-KDE_NO_EXPORT void KMPlayerViewStatic::getDispatcher() {
-    if (!dispatcher) {
-        dispatcher = new KArtsDispatcher;
-        use_count = 1;
-    } else
-        use_count++;
-}
-
-KDE_NO_EXPORT void KMPlayerViewStatic::releaseDispatcher() {
-    if (--use_count <= 0) {
-        delete dispatcher;
-        dispatcher = 0L;
-    }
-}
-#endif
-
-static KStaticDeleter <KMPlayerViewStatic> kmplayerViewStatic;
 
 //-------------------------------------------------------------------------
 
@@ -464,20 +405,17 @@ KDE_NO_CDTOR_EXPORT KMPlayerView::KMPlayerView (QWidget *parent, const char *nam
   : KMediaPlayer::View (parent, name),
     m_image (0L),
     m_buttonbar (0L),
-    m_artsserver (0L),
-    m_svc (0L),
-    m_watch (0L),
+    m_volume_slider (0L),
+    m_mixer_object ("kicker"),
     m_controlpanel_mode (CP_Show),
     m_old_controlpanel_mode (CP_Show),
     delayed_timer (0),
     m_keepsizeratio (false),
     m_show_console_output (false),
     m_playing (false),
-    m_use_arts (false),
+    m_mixer_init (false),
     m_inVolumeUpdate (false)
 {
-    if (!kmplayerview_static)
-        kmplayerview_static = kmplayerViewStatic.setObject (new KMPlayerViewStatic());
     setEraseColor (QColor (0, 0, 255));
 }
 
@@ -561,7 +499,6 @@ KDE_NO_EXPORT void KMPlayerView::init () {
 
 KDE_NO_CDTOR_EXPORT KMPlayerView::~KMPlayerView () {
     delete m_image;
-    setUseArts (false);
     if (m_layer->parent () != this)
         delete m_layer;
 }
@@ -587,45 +524,41 @@ KDE_NO_EXPORT bool KMPlayerView::setPicture (const QString & path) {
     return m_image;
 }
 
-KDE_NO_EXPORT void KMPlayerView::updateUseArts () {
-#ifdef USE_ARTS
-    if (m_use_arts && !m_artsserver) {
-        kmplayerview_static->getDispatcher();
-        m_artsserver = new Arts::SoundServerV2;
-        *m_artsserver = KArtsServer().server();
-        m_svc = new Arts::StereoVolumeControl;
-        if (m_artsserver && !m_artsserver->isNull()) {
-            m_arts_label = new QLabel (i18n ("Volume:"), m_buttonbar->popupMenu ());
-            m_buttonbar->popupMenu ()->insertItem (m_arts_label, -1, 4);
-            m_slider = new QSlider (0, 100, 10, 40, Qt::Horizontal, m_buttonbar->popupMenu ());
-            connect(m_slider, SIGNAL(valueChanged(int)), this,SLOT(setVolume(int)));
-            *m_svc = m_artsserver->outVolume();
-            m_watch = new KArtsFloatWatch(*m_svc, "scaleFactor_changed", this);
-            connect (m_watch, SIGNAL (valueChanged (float)), 
-                    this, SLOT (updateVolume (float)));
-            m_buttonbar->popupMenu ()->insertItem (m_slider, KMPlayerControlPanel::menu_volume, 5);
-            m_buttonbar->popupMenu ()->insertSeparator (6);
-        }
+KDE_NO_EXPORT void KMPlayerView::updateVolume () {
+    if (m_mixer_init && !m_volume_slider)
+        return;
+    QByteArray data, replydata;
+    QCString replyType;
+    int volume;
+    bool has_mixer = kapp->dcopClient ()->call (m_mixer_object, "Mixer0",
+            "masterVolume()", data, replyType, replydata);
+    if (!has_mixer) {
+        m_mixer_object = "kmix";
+        has_mixer = kapp->dcopClient ()->call (m_mixer_object, "Mixer0",
+                "masterVolume()", data, replyType, replydata);
     }
-#endif
-}
-
-KDE_NO_EXPORT void KMPlayerView::setUseArts (bool b) {
-#ifdef USE_ARTS
-    if (m_use_arts && !b && m_artsserver) {
+    if (has_mixer) {
+        QDataStream replystream (replydata, IO_ReadOnly);
+        replystream >> volume;
+        if (!m_mixer_init) {
+            m_mixer_label = new QLabel (i18n ("Volume:"), m_buttonbar->popupMenu ());
+            m_buttonbar->popupMenu ()->insertItem (m_mixer_label, -1, 4);
+            m_volume_slider = new QSlider (0, 100, 10, volume, Qt::Horizontal, m_buttonbar->popupMenu ());
+            connect(m_volume_slider, SIGNAL(valueChanged(int)), this,SLOT(setVolume(int)));
+            m_buttonbar->popupMenu ()->insertItem (m_volume_slider, KMPlayerControlPanel::menu_volume, 5);
+            m_buttonbar->popupMenu ()->insertSeparator (6);
+        } else {
+            m_inVolumeUpdate = true;
+            m_volume_slider->setValue (volume);
+            m_inVolumeUpdate = false;
+        }
+    } else if (m_volume_slider) {
         m_buttonbar->popupMenu ()->removeItemAt (6);
         m_buttonbar->popupMenu ()->removeItemAt (5);
         m_buttonbar->popupMenu ()->removeItemAt (4);
-        delete m_watch;
-        delete m_artsserver;
-        delete m_svc;
-        m_watch = 0L;
-        m_artsserver = 0L;
-        m_svc = 0L;
-        kmplayerview_static->releaseDispatcher();
+        m_volume_slider = 0L;
     }
-#endif
-    m_use_arts = b;
+    m_mixer_init = true;
 }
 
 void KMPlayerView::setShowConsoleOutput (bool b) {
@@ -665,21 +598,12 @@ KDE_NO_EXPORT void KMPlayerView::delayedShowButtons (bool show) {
 }
 
 KDE_NO_EXPORT void KMPlayerView::setVolume (int vol) {
-#ifdef USE_ARTS
     if (m_inVolumeUpdate) return;
-    float volume = float (0.0004*vol*vol);
-    printf("setVolume %d -> %.4f\n", vol, volume);
-    m_svc->scaleFactor (volume);
-#endif
-}
-
-KDE_NO_EXPORT void KMPlayerView::updateVolume (float v) {
-#ifdef USE_ARTS
-    m_inVolumeUpdate = true;
-    printf("updateVolume %.4f\n", v);
-    m_slider->setValue (int (sqrt(v*10000.0/4)));
-    m_inVolumeUpdate = false;
-#endif
+    QByteArray data;
+    QDataStream arg( data, IO_WriteOnly );
+    arg << vol;
+    if (!kapp->dcopClient()->send (m_mixer_object, "Mixer0", "setMasterVolume(int)", data))
+        kdWarning() << "Failed to update volume" << endl;
 }
 
 KDE_NO_EXPORT void  KMPlayerView::updateLayout () {
@@ -734,12 +658,7 @@ KDE_NO_EXPORT void KMPlayerView::startsToPlay () {
 }
 
 KDE_NO_EXPORT void KMPlayerView::showPopupMenu () {
-#ifdef USE_ARTS
-    if (m_use_arts) {
-        updateUseArts ();
-        updateVolume(m_svc->scaleFactor());
-    }
-#endif
+    updateVolume ();
     int cp_height = m_buttonbar->maximumSize ().height ();
     m_buttonbar->popupMenu ()->exec (m_buttonbar->configButton()->mapToGlobal (QPoint (0, cp_height)));
 }

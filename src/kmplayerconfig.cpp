@@ -190,8 +190,6 @@ KDE_NO_EXPORT void KMPlayerSettings::readConfig () {
     urlbackend = m_config->readEntry(strUrlBackend, "mplayer");
     allowhref = m_config->readBoolEntry(strAllowHref, false);
 
-    view->setUseArts (audiodriver == ADRIVER_ARTS_INDEX);
-
     // recording
     m_config->setGroup (strRecordingGroup);
     mencoderarguments = m_config->readEntry (strMencoderArgs, "-oac mp3lame -ovc lavc");
@@ -505,7 +503,6 @@ KDE_NO_EXPORT void KMPlayerSettings::okPressed () {
     audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentItem();
     urlbackend = configdialog->m_SourcePageURL->backend->currentText ();
     allowhref = configdialog->m_SourcePageURL->allowhref->isChecked ();
-    view->setUseArts(audiodriver == ADRIVER_ARTS_INDEX);
     //postproc
     postprocessing = configdialog->m_OPPagePostproc->postProcessing->isChecked();
     disableppauto = configdialog->m_OPPagePostproc->disablePPauto->isChecked();

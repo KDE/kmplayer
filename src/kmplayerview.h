@@ -45,11 +45,6 @@ class QSlider;
 class QLabel;
 class QAccel;
 class KPopupMenu;
-class KArtsFloatWatch;
-namespace Arts {
-    class SoundServerV2;
-    class StereoVolumeControl;
-}
 
 class KMPlayerViewLayer : public QWidget {
     Q_OBJECT
@@ -90,8 +85,6 @@ public:
     KDE_NO_EXPORT QWidgetStack * widgetStack () const { return m_widgetstack; }
     KDE_NO_EXPORT bool keepSizeRatio () const { return m_keepsizeratio; }
     KDE_NO_EXPORT void setKeepSizeRatio (bool b) { m_keepsizeratio = b; }
-    KDE_NO_EXPORT bool useArts () const { return m_use_arts; }
-    void setUseArts (bool b);
     KDE_NO_EXPORT bool showConsoleOutput () const { return m_show_console_output; }
     void setShowConsoleOutput (bool b);
     void setControlPanelMode (ControlPanelMode m);
@@ -107,7 +100,7 @@ public slots:
     void startsToPlay ();
     void showPopupMenu ();
     void setVolume (int);
-    void updateVolume (float);
+    void updateVolume ();
     void fullScreen ();
     void updateLayout ();
 signals:
@@ -121,7 +114,6 @@ protected:
     void dropEvent (QDropEvent *);
     bool x11Event (XEvent *);
 private:
-    void updateUseArts ();
     KDE_NO_EXPORT void emitPictureClicked () { emit pictureClicked (); }
     // widget for player's output
     QGuardedPtr<KMPlayerViewer> m_viewer;
@@ -139,18 +131,16 @@ private:
     QString tmplog;
     QPixmap * m_image;
     KMPlayerControlPanel * m_buttonbar;
-    QLabel * m_arts_label;
-    QSlider * m_slider;
-    Arts::SoundServerV2 * m_artsserver;
-    Arts::StereoVolumeControl * m_svc;
-    KArtsFloatWatch * m_watch;
+    QLabel * m_mixer_label;
+    QSlider * m_volume_slider;
+    const char * m_mixer_object;
     ControlPanelMode m_controlpanel_mode;
     ControlPanelMode m_old_controlpanel_mode;
     int delayed_timer;
     bool m_keepsizeratio : 1;
     bool m_show_console_output : 1;
     bool m_playing : 1;
-    bool m_use_arts : 1;
+    bool m_mixer_init : 1;
     bool m_inVolumeUpdate : 1;
     bool m_sreensaver_disabled : 1;
     bool m_revert_fullscreen : 1;
