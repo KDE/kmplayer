@@ -307,7 +307,7 @@ void Element::setAttribute (const QString & name, const QString & value) {
         last_attribute->m_next = (new Attribute (m_doc, name, value))->self ();
         last_attribute->m_next->m_prev = last_attribute;
     } else
-        last_attribute = (new Attribute (m_doc, name, value))->self ();
+        m_first_attribute = (new Attribute (m_doc, name, value))->self ();
 }
 
 QString Element::getAttribute (const QString & name) {
