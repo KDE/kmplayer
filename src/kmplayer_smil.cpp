@@ -735,9 +735,9 @@ KDE_NO_EXPORT void AnimateData::reset () {
     accumulate = acc_none;
     additive = add_replace;
     change_by = 0;
-    calcMode = calc_discrete;
+    calcMode = calc_linear;
     change_from.truncate (0);
-    change_values.truncate (0);
+    change_values.clear ();
     steps = 0;
     change_delta = change_to_val = change_from_val = 0.0;
     change_from_unit.truncate (0);
@@ -749,6 +749,15 @@ QString AnimateData::setParam (const QString & name, const QString & val) {
         change_by = val.toInt ();
     } else if (name == QString::fromLatin1 ("from")) {
         change_from = val;
+    } else if (name == QString::fromLatin1 ("values")) {
+        change_values = QStringList::split (QString (";"), val);
+    } else if (name.lower () == QString::fromLatin1 ("calcmode")) {
+        if (val == QString::fromLatin1 ("discrete"))
+            calcMode = calc_discrete;
+        else if (val == QString::fromLatin1 ("linear"))
+            calcMode = calc_linear;
+        else if (val == QString::fromLatin1 ("paced"))
+            calcMode = calc_paced;
     } else
         return AnimateGroupData::setParam (name, val);
     return ElementRuntime::setParam (name, val);
@@ -759,44 +768,77 @@ QString AnimateData::setParam (const QString & name, const QString & val) {
  */
 KDE_NO_EXPORT void AnimateData::started () {
     kdDebug () << "AnimateData::started " << durations [duration_time].durval << endl;
-    if (element) {
-        if (target_element) {
-            ElementRuntimePtr rt = target_element->getRuntime ();
-            if (rt) {
-                target_region = rt->region_node;
-                QRegExp reg ("^\\s*([0-9\\.]+)(\\s*[%a-z]*)?");
-                if (change_from.isEmpty ())
-                    change_from = rt->param (changed_attribute);
-                if (!change_from.isEmpty ()) {
-                    old_value = rt->setParam (changed_attribute, change_from);
-                    if (reg.search (change_from) > -1) {
-                        change_from_val = reg.cap (1).toDouble ();
-                        change_from_unit = reg.cap (2);
-                    }
-                } else {
-                    kdDebug () << "AnimateData::started no from found" << endl;
-                    return;
-                }
-                if (!change_to.isEmpty () && reg.search (change_to) > -1) {
-                    change_to_val = reg.cap (1).toDouble ();
-                } else {
-                    kdDebug () << "AnimateData::started no to found" << endl;
-                    return;
-                }
-                steps = durations [duration_time].durval; // 10 per sec
-                if (steps > 0) {
-                    anim_timer = startTimer (100); // 100 ms for now FIXME
-                    change_delta = (change_to_val - change_from_val) / steps;
-                    kdDebug () << "AnimateData::started " << target_element->nodeName () << "." << changed_attribute << " " << change_from_val << "->" << change_to_val << " in " << steps << " using:" << change_delta << " inc" << endl;
-                    if (!change_from.isEmpty () && target_region)
-                        target_region->repaint ();
-                }
-            }
-        } else
+    bool success = false;
+    do {
+        if (!element) {
+            kdWarning () << "set element disappeared" << endl;
+            break;
+        }
+        if (!target_element) {
             kdWarning () << "target element not found" << endl;
-    } else
-        kdWarning () << "set element disappeared" << endl;
-    AnimateGroupData::started ();
+            break;
+        }
+        ElementRuntimePtr rt = target_element->getRuntime ();
+        if (!rt)
+            break;
+        target_region = rt->region_node;
+        if (calcMode == calc_linear) {
+            QRegExp reg ("^\\s*([0-9\\.]+)(\\s*[%a-z]*)?");
+            if (change_from.isEmpty ()) {
+                if (change_values.size () > 0) // check 'values' attribute
+                     change_from = change_values.first ();
+                else
+                    change_from = rt->param (changed_attribute); // take current
+            }
+            if (!change_from.isEmpty ()) {
+                old_value = rt->setParam (changed_attribute, change_from);
+                if (reg.search (change_from) > -1) {
+                    change_from_val = reg.cap (1).toDouble ();
+                    change_from_unit = reg.cap (2);
+                }
+            } else {
+                kdWarning() << "animate couldn't determine start value" << endl;
+                break;
+            }
+            if (change_to.isEmpty () && change_values.size () > 1)
+                change_to = change_values.last (); // check 'values' attribute
+            if (!change_to.isEmpty () && reg.search (change_to) > -1) {
+                change_to_val = reg.cap (1).toDouble ();
+            } else {
+                kdWarning () << "animate couldn't determine end value" << endl;
+                break;
+            }
+            steps = durations [duration_time].durval; // 10 per sec
+            if (steps > 0) {
+                anim_timer = startTimer (100); // 100 ms for now FIXME
+                change_delta = (change_to_val - change_from_val) / steps;
+                kdDebug () << "AnimateData::started " << target_element->nodeName () << "." << changed_attribute << " " << change_from_val << "->" << change_to_val << " in " << steps << " using:" << change_delta << " inc" << endl;
+                success = true;
+            }
+        } else if (calcMode == calc_discrete) {
+            steps = change_values.size () - 1; // we do already the first step
+            if (steps < 1) {
+                 kdWarning () << "animate needs at least two values" << endl;
+                 break;
+            }
+            int interval = 100 * durations [duration_time].durval / (1 + steps);
+            if (interval <= 0 ||
+                    durations [duration_time].durval > duration_last_option) {
+                 kdWarning () << "animate needs a duration time" << endl;
+                 break;
+            }
+            kdDebug () << "AnimateData::started " << target_element->nodeName () << "." << changed_attribute << " " << change_values.first () << "->" << change_values.last () << " in " << steps << " interval:" << interval << endl;
+            anim_timer = startTimer (interval);
+            old_value = rt->setParam (changed_attribute, change_values.first());
+            success = true;
+        }
+        if (target_region)
+            target_region->repaint ();
+    } while (false);
+    if (success)
+        AnimateGroupData::started ();
+    else
+        propagateStop (true);
 }
 
 /**
@@ -814,8 +856,15 @@ KDE_NO_EXPORT void AnimateData::timerEvent (QTimerEvent * e) {
     if (e->timerId () == anim_timer) {
         if (steps-- > 0 && target_element && target_element->getRuntime ()) {
             ElementRuntimePtr rt = target_element->getRuntime ();
-            change_from_val += change_delta;
-            rt->setParam (changed_attribute, QString ("%1%2").arg (change_from_val).arg(change_from_unit));
+            if (calcMode == calc_linear) {
+                change_from_val += change_delta;
+                rt->setParam (changed_attribute, QString ("%1%2").arg (change_from_val).arg(change_from_unit));
+            } else if (calcMode == calc_discrete) {
+                 rt->setParam (changed_attribute, change_values[change_values.size () - steps -1]);
+            }
+            RegionNodePtr target_region = rt->region_node;
+            if (target_region)
+                target_region->repaint ();
         } else {
             killTimer (anim_timer);
             anim_timer = 0;

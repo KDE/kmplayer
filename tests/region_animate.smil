@@ -17,8 +17,9 @@
         <animate targetElement="region1" attributeName="left" to="40%" begin="5" dur="6"/>
       </text> 
       <img id="image1" src="../icons/hi48-app-kmplayer.png" region="region2">
-        <animate targetElement="region2" attributeName="left" from="180" to="50" begin="5" dur="10"/>
+        <animate targetElement="region2" attributeName="background-color" values="red;white;blue" repeatCount="10" calcMode="discrete" dur="1.5"/>
       </img>
+      <animate targetElement="region2" attributeName="left" from="180" to="50" begin="5" dur="10"/>
     </par>
     <par>
       <set targetElement="region2" attributeName="z-index" to="6"/>

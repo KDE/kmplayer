@@ -23,6 +23,7 @@
 
 #include <qobject.h>
 #include <qstring.h>
+#include <qstringlist.h>
 
 #include "kmplayerplaylist.h"
 
@@ -271,7 +272,7 @@ private:
     int change_by;
     enum { calc_discrete, calc_linear, calc_paced } calcMode;
     QString change_from;
-    QString change_values;
+    QStringList change_values;
     int steps;
     float change_delta, change_to_val, change_from_val;
     QString change_from_unit;
