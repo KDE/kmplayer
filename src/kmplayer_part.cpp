@@ -206,9 +206,9 @@ void KMPlayer::init () {
     m_process = 0L;
     m_use_slave = false;
     initProcess ();
+    m_urlsource = new KMPlayerURLSource (this);
     m_browserextension = new KMPlayerBrowserExtension (this);
     m_movie_position = 0;
-    setMovieLength (0);
     m_bPosSliderPressed = false;
     m_posRegExp.setPattern ("V:\\s*([0-9\\.]+)");
     connect (m_view->backButton (), SIGNAL (clicked ()), this, SLOT (back ()));
@@ -221,6 +221,8 @@ void KMPlayer::init () {
     connect (m_view->positionSlider (), SIGNAL (sliderReleased()), SLOT (posSliderReleased()));
     m_view->popupMenu ()->connectItem (KMPlayerView::menu_config,
                                        m_configdialog, SLOT (show ()));
+    setSource (m_urlsource);
+    setMovieLength (0);
     //connect (m_view->configButton (), SIGNAL (clicked ()), m_configdialog, SLOT (show ()));
 }
 
@@ -259,6 +261,17 @@ void KMPlayer::setSource (KMPlayerSource * source) {
     if (m_source) m_source->deactivate ();
     closeURL ();
     m_source = source;
+    if (m_source->hasLength ())
+        m_view->positionSlider()->show ();
+    else
+        m_view->positionSlider()->hide ();
+    if (m_source->isSeekable ()) {
+        m_view->forwardButton ()->show ();
+        m_view->backButton ()->show ();
+    } else {
+        m_view->forwardButton ()->hide ();
+        m_view->backButton ()->hide ();
+    }
     if (m_source) m_source->activate ();
 }
 
@@ -268,7 +281,8 @@ bool KMPlayer::openURL (const KURL & _url) {
     if (!m_href.isEmpty ())
         url = m_href;
     if (url.isValid ()) {
-        setSource (new KMPlayerURLSource (this, url));
+        m_urlsource->setURL (url);
+        setSource (m_urlsource);
         play ();
         m_href == QString::null;
     }
@@ -280,7 +294,8 @@ bool KMPlayer::closeURL () {
     m_href = QString::null;
     movie_height = movie_width = 0;
     if (!m_view) return false;
-    setMovieLength (0);
+    if (m_source)
+        setMovieLength (0);
     m_view->viewer ()->setAspect (0.0);
     m_view->reset ();
     return true;
@@ -315,10 +330,10 @@ void KMPlayer::processOutput (KProcess *, char * str, int slen) {
         slen--;
 
         if (process_stats) {
-            if (m_posRegExp.search (out) > -1) {
+            if (m_source->hasLength () && m_posRegExp.search (out) > -1) {
                 m_movie_position = int (10.0 * m_posRegExp.cap (1).toFloat ());
                 QSlider *slider = m_view->positionSlider ();
-                if (m_movie_length <= 0 &&
+                if (m_source->length () <= 0 &&
                     m_movie_position > 7 * slider->maxValue () / 8)
                     slider->setMaxValue (slider->maxValue() * 2);
                 else if (slider->maxValue() < m_movie_position)
@@ -399,7 +414,7 @@ void KMPlayer::processDataWritten (KProcess *) {
 
 void KMPlayer::processStopped (KProcess *) {
     printf("process stopped\n");
-    if (m_movie_position > m_movie_length)
+    if (m_movie_position > m_source->length ())
         setMovieLength (m_movie_position);
     m_movie_position = 0;
     if (m_started_emited) {
@@ -421,9 +436,9 @@ void KMPlayer::processStopped (KProcess *) {
 }
 
 void KMPlayer::setMovieLength (int len) {
-    m_movie_length = len;
+    m_source->setLength (len);
     if (m_view)
-        m_view->positionSlider()->setMaxValue (len > 0 ? m_movie_length : 300);
+        m_view->positionSlider()->setMaxValue (len > 0 ? m_source->length () : 300);
 }
 
 void KMPlayer::pause () {
@@ -454,10 +469,10 @@ bool KMPlayer::run (const char * args, const char * pipe) {
     if (m_source)
         m_source->init ();
 
-    if (!m_configdialog->showposslider)
-        m_view->positionSlider()->hide();
-    else
+    if (m_configdialog->showposslider && m_source->hasLength ())
         m_view->positionSlider()->show();
+    else
+        m_view->positionSlider()->hide();
 
     m_use_slave = !(pipe && pipe[0]);
     if (!m_use_slave) {
@@ -507,8 +522,8 @@ bool KMPlayer::run (const char * args, const char * pipe) {
         printf (" -ao %s", strAudioDriver.lower().ascii());
         *m_process << " -ao " << strAudioDriver.lower().ascii();
     }
-    if ( (m_configdialog->alwaysbuildindex) && (m_url.protocol() == "file") )  {
-        if ( (m_url.path().lower().endsWith(".avi")) || (m_url.path().lower().endsWith(".divx")) ) {
+    if ( (m_configdialog->alwaysbuildindex) && (url ().protocol() == "file") ) {
+        if ((url().path().lower().endsWith(".avi")) || (url().path().lower().endsWith(".divx")) ) {
             printf (" -idx");
             *m_process << " -idx";
         }
@@ -887,11 +902,19 @@ QString KMPlayerSource::filterOptions () {
     }
     return PPargs;
 }
+
+bool KMPlayerSource::hasLength () {
+    return true;
+}
+
+bool KMPlayerSource::isSeekable () {
+    return true;
+}
+
 //-----------------------------------------------------------------------------
 
 KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, const KURL & url)
     : KMPlayerSource (player), m_url (url) {
-    kdDebug () << "KMPlayerURLSource::KMPlayerURLSource" << endl;
 }
 
 KMPlayerURLSource::~KMPlayerURLSource () {
@@ -927,7 +950,6 @@ void KMPlayerURLSource::activate () {
 }
 
 void KMPlayerURLSource::deactivate () {
-    deleteLater ();
 }
 
 #include "kmplayer_part.moc"

@@ -764,6 +764,14 @@ KMPlayerPipeSource::KMPlayerPipeSource (KMPlayerApp * a)
 KMPlayerPipeSource::~KMPlayerPipeSource () {
 }
 
+bool KMPlayerPipeSource::hasLength () {
+    return false;
+}
+
+bool KMPlayerPipeSource::isSeekable () {
+    return false;
+}
+
 void KMPlayerPipeSource::activate () {
     init ();
     play ();
@@ -817,7 +825,6 @@ void KMPlayerTVSource::play () {
     setHeight (m_tvsource->size.height ());
     QString args;
     args.sprintf ("-tv on:driver=%s:%s:width=%d:height=%d", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
-    m_player->setMovieLength (0x7fffffff);
     app->resizePlayer (100);
     m_player->run (args.ascii());
     kdDebug () << args << endl;
@@ -833,6 +840,7 @@ void KMPlayerTVSource::buildMenu () {
         delete it.data ();
     commands.clear ();
     m_menu->clear ();
+    m_menu->insertTearOffHandle ();
     m_tvsource = 0L;
     int counter = 0;
     TVDevice * device;
@@ -848,6 +856,7 @@ void KMPlayerTVSource::buildMenu () {
                 commands.insert (counter++, source);
             } else {
                 QPopupMenu * inputmenu = new QPopupMenu (app);
+                inputmenu->insertTearOffHandle ();
                 TVChannel * channel;
                 for (input->channels.first (); (channel = input->channels.current()); input->channels.next ()) {
                     TVSource * source = new TVSource;
@@ -880,6 +889,14 @@ QString KMPlayerTVSource::filterOptions () {
     if (!configdialog->disableppauto)
         return KMPlayerSource::filterOptions ();
     return QString ("-vop pp=lb");
+}
+
+bool KMPlayerTVSource::hasLength () {
+    return false;
+}
+
+bool KMPlayerTVSource::isSeekable () {
+    return false;
 }
 
 #include "kmplayer.moc"

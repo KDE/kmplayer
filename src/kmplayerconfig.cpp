@@ -511,7 +511,7 @@ void KMPlayerConfig::okPressed () {
     autohidebuttons = configdialog->m_GeneralPageGeneral->autoHideControlButtons->isChecked ();
     view->setAutoHideButtons (autohidebuttons);
     showposslider = configdialog->m_GeneralPageGeneral->showPositionSlider->isChecked ();
-    if (!showposslider)
+    if (showposslider && m_player->source ()->hasLength ())
         view->positionSlider ()->hide ();
     else
         view->positionSlider ()->show ();

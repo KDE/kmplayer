@@ -116,6 +116,8 @@ class KMPlayerPipeSource : public KMPlayerSource {
 public:
     KMPlayerPipeSource (KMPlayerApp * app);
     virtual ~KMPlayerPipeSource ();
+    virtual bool hasLength ();
+    virtual bool isSeekable ();
     void setCommand (const QString & cmd) { m_pipe = cmd; }
     const QString & command () const { return m_pipe; }
 public slots:
@@ -135,6 +137,8 @@ public:
     virtual ~KMPlayerTVSource ();
     //virtual bool processOutput (const QString & line);
     virtual QString filterOptions ();
+    virtual bool hasLength ();
+    virtual bool isSeekable ();
     void buildMenu ();
 public slots:
     virtual void activate ();

@@ -90,6 +90,8 @@ public:
     virtual void init ();
     virtual bool processOutput (const QString & line);
     virtual QString filterOptions ();
+    virtual bool hasLength ();
+    virtual bool isSeekable ();
     int width () const { return m_width; }
     int height () const { return m_height; }
     int length () const { return m_length; }
@@ -112,6 +114,24 @@ private:
 };
 
 
+class KMPlayerURLSource : public KMPlayerSource {
+    Q_OBJECT
+public:
+    KMPlayerURLSource (KMPlayer * player, const KURL & url = KURL ());
+    virtual ~KMPlayerURLSource ();
+
+    void setURL (const KURL & url) { m_url = url; }
+    const KURL & url () const { return m_url; }
+public slots:
+    virtual void init ();
+    virtual void activate ();
+    virtual void deactivate ();
+    virtual void play ();
+private:
+    KURL m_url;
+};
+
+
 class KMPlayer : public KMediaPlayer::Player  {
     Q_OBJECT
 public:
@@ -129,8 +149,8 @@ public:
     int cacheSize () const { return m_cachesize; }
     void setCacheSize (int s) { m_cachesize = s; }
     void keepMovieAspect (bool);
-    KURL url () const { return m_url; }
-    void setURL (const KURL & url) { m_url = url; }
+    KURL url () const { return m_urlsource->url (); }
+    void setURL (const KURL & url) { m_urlsource->setURL (url); }
     KMPlayerBrowserExtension * browserextension() const
         { return m_browserextension; }
     void setHRef (const QString & h) { m_href = h; }
@@ -154,10 +174,10 @@ public slots:
     void setMenuZoom (int id);
     void posSliderChanged (int pos);
 public:
-    virtual bool isSeekable (void) const { return m_movie_length > 0; }
+    virtual bool isSeekable (void) const { return m_source->isSeekable (); }
     virtual unsigned long position (void) const { return m_movie_position; }
-    virtual bool hasLength (void) const { return m_movie_length > 0; }
-    virtual unsigned long length (void) const { return m_movie_length; }
+    virtual bool hasLength (void) const { return m_source->hasLength (); }
+    virtual unsigned long length (void) const { return m_source->length (); }
 signals:
     void finished ();
 protected:
@@ -179,10 +199,10 @@ private:
     QGuardedPtr <KMPlayerView> m_view;
     KMPlayerConfig * m_configdialog;
     KMPlayerSource * m_source;
+    KMPlayerURLSource * m_urlsource;
     KProcess * m_process;
     KMPlayerBrowserExtension * m_browserextension;
     KMPlayerLiveConnectExtension * m_liveconnectextension;
-    KURL m_url;
     QRegExp m_posRegExp;
     QRegExp m_cacheRegExp;
     QRegExp m_indexRegExp;
@@ -193,7 +213,6 @@ private:
     int m_cachesize;
     int movie_width;
     int movie_height;
-    int m_movie_length;
     int m_movie_position;
     bool m_started_emited : 1;
     bool m_ispart : 1;
@@ -216,21 +235,4 @@ private:
     static KInstance * s_instance;
 };
 
-
-class KMPlayerURLSource : public KMPlayerSource {
-    Q_OBJECT
-public:
-    KMPlayerURLSource (KMPlayer * player, const KURL & url = KURL ());
-    virtual ~KMPlayerURLSource ();
-
-    void setURL (const KURL & url) { m_url = url; }
-    const KURL & url () const { return m_url; }
-public slots:
-    virtual void init ();
-    virtual void activate ();
-    virtual void deactivate ();
-    virtual void play ();
-private:
-    KURL m_url;
-};
 #endif
