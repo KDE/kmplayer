@@ -974,12 +974,16 @@ KDE_NO_EXPORT void KMPlayerURLSource::activate () {
         play ();
 }
 
-KDE_NO_EXPORT void KMPlayerURLSource::deactivate () {
+KDE_NO_EXPORT void KMPlayerURLSource::terminateJob () {
     if (m_job) {
         m_job->kill (); // silent, no kioResult signal
         m_player->process ()->view ()->buttonBar ()->setPlaying (m_player->playing ());
     }
     m_job = 0L;
+}
+
+KDE_NO_EXPORT void KMPlayerURLSource::deactivate () {
+    terminateJob ();
 }
 
 KDE_NO_EXPORT QString KMPlayerURLSource::prettyName () {
@@ -1116,6 +1120,7 @@ static bool isPlayListMime (const QString & mime) {
             !strcmp (mimestr ,"video/x-ms-wmp") ||
             !strcmp (mimestr ,"video/x-ms-asf") ||
             !strcmp (mimestr ,"video/x-ms-wmv") ||
+            !strcmp (mimestr ,"video/x-ms-wvx") ||
             !strcmp (mimestr ,"audio/x-scpls") ||
             !strcmp (mimestr ,"audio/x-pn-realaudio") ||
             !strcmp (mimestr ,"audio/vnd.rn-realaudio") ||
@@ -1212,11 +1217,11 @@ KDE_NO_EXPORT void KMPlayerURLSource::kioData (KIO::Job *, const QByteArray & d)
     }
 }
 
-KDE_NO_EXPORT void KMPlayerURLSource::kioMimetype (KIO::Job *, const QString & mimestr) {
+KDE_NO_EXPORT void KMPlayerURLSource::kioMimetype (KIO::Job * job, const QString & mimestr) {
     kdDebug () << "KMPlayerURLSource::kioMimetype " << mimestr << endl;
     setMime (mimestr);
-    if (!isPlayListMime (mimestr))
-        m_job->kill (false);
+    if (job && !isPlayListMime (mimestr))
+        job->kill (false);
 }
 
 KDE_NO_EXPORT void KMPlayerURLSource::kioResult (KIO::Job *) {
@@ -1234,6 +1239,7 @@ KDE_NO_EXPORT void KMPlayerURLSource::kioResult (KIO::Job *) {
 }
 
 void KMPlayerURLSource::getCurrent () {
+    terminateJob ();
     if (m_current && !m_current->isMrl ())
         next ();
     KURL url (current ());

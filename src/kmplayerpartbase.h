@@ -74,6 +74,7 @@ private slots:
     void kioResult (KIO::Job *);
 private:
     void read (QTextStream &);
+    void terminateJob ();
     KIO::Job * m_job;
     QByteArray m_data;
 };
