@@ -1198,7 +1198,11 @@ void KMPlayerURLSource::getCurrent () {
     if (m_current && !m_current->isMrl ())
         next ();
     KURL url (current ());
-    if (url.isEmpty () || m_current->mrl ()->parsed) {
+    int depth = 0;
+    if (m_current)
+        for (ElementPtr e = m_current; e->parentNode (); e = e->parentNode ())
+            ++depth;
+    if (depth > 40 || url.isEmpty () || m_current->mrl ()->parsed) {
         KMPlayerSource::getCurrent ();
     } else {
         QString mimestr = mime ();
