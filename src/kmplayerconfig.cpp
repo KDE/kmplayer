@@ -371,8 +371,6 @@ void KMPlayerConfig::okPressed () {
     bool urlchanged = m_player->url () != KURL (configdialog->url->text ());
     if (m_player->url ().isEmpty () && configdialog->url->text ().isEmpty ())
         urlchanged = false; // hmmm aren't these URLs the same?
-    if (urlchanged)
-        m_player->setURL (configdialog->url->text ());
     sizeratio = configdialog->keepSizeRatio->isChecked ();
     m_player->keepMovieAspect (sizeratio);
     usearts = configdialog->useArts->isChecked ();
@@ -463,7 +461,7 @@ void KMPlayerConfig::okPressed () {
         m_player->stop ();
         if (m_player->browserextension ())
             m_player->browserextension ()->urlChanged (m_player->url ().url ());
-        m_player->play ();
+        m_player->openURL (KURL (configdialog->url->text ()));
     }
 }
 

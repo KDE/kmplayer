@@ -29,12 +29,16 @@
 #include <kaction.h>
 #include <kurl.h>
 
-class KMPlayerDoc;
 class KMPlayerView;
 class KMPlayer;
 class KProcess;
+class KMPlayerAppURLSource;
+class KMPlayerDVDSource;
+class KMPlayerVCDSource;
+class KMPlayerPipeSource;
 class QPopupMenu;
 class QMenuItem;
+
 
 class KMPlayerApp : public KMainWindow
 {
@@ -46,24 +50,21 @@ public:
     KMPlayerApp (QWidget* parent=0, const char* name=0);
     ~KMPlayerApp ();
     void openDocumentFile (const KURL& url=0);
-    KMPlayerDoc *getDocument () const; 	
     KMPlayer * player () const { return m_player; }
+    void resizePlayer (int percentage);
+    KRecentFilesAction * recentFiles () const { return fileOpenRecent; }
 
 protected:
     void saveOptions ();
     void readOptions ();
     void initActions ();
     void initStatusBar ();
-    void initDocument ();
     void initView ();
     virtual bool queryClose ();
     virtual bool queryExit ();
-    virtual void saveProperties (KConfig *_cfg);
-    virtual void readProperties (KConfig *_cfg);
 
 public slots:
     void slotFileNewWindow ();
-    void slotFileNew ();
     void slotFileOpen ();
     void slotFileOpenRecent (const KURL& url);
     void slotFileClose ();
@@ -73,23 +74,11 @@ public slots:
     void slotViewStatusBar ();
     void slotViewMenuBar ();
     void slotStatusMsg (const QString &text);
-    void playDVD ();
-    void playVCD ();
-    void playPipe ();
 private slots:
-    void finished ();
     void openDVD ();
     void openVCD ();
     void openPipe ();
-    void playDisc ();
-    void finishedOpenDVD ();
-    void finishedOpenVCD ();
     void play ();
-    void titleMenuClicked (int id);
-    void subtitleMenuClicked (int id);
-    void languageMenuClicked (int id);
-    void chapterMenuClicked (int id);
-    void trackMenuClicked (int id);
     void fullScreen ();
     void configChanged ();
     void keepSizeRatio ();
@@ -100,15 +89,12 @@ private slots:
     void zoom100 ();
     void zoom150 ();
 private:
-    void resizePlayer (int percentage);
     void menuItemClicked (QPopupMenu * menu, int id);
     KConfig * config;
     KMPlayerView * view;
     KMPlayer * m_player;
-    KMPlayerDoc * doc;
 
     KAction * fileNewWindow;
-    KAction * fileNew;
     KAction * fileOpen;
     KRecentFilesAction * fileOpenRecent;
     KAction * fileClose;
@@ -120,21 +106,16 @@ private:
     KToggleAction * viewShowConsoleOutput;
     QMenuItem * m_sourcemenu;
     QPopupMenu * m_dvdmenu;
-    QPopupMenu * m_dvdtitlemenu;
-    QPopupMenu * m_dvdchaptermenu;
-    QPopupMenu * m_dvdlanguagemenu;
-    QPopupMenu * m_dvdsubtitlemenu;
     QPopupMenu * m_vcdmenu;
-    QPopupMenu * m_vcdtrackmenu;
+    KMPlayerAppURLSource * m_urlsource;
+    KMPlayerDVDSource * m_dvdsource;
+    KMPlayerVCDSource * m_vcdsource;
+    KMPlayerPipeSource * m_pipesource;
     QCString m_dcopName;
-    QString m_pipe;
     int m_dvdmenuId;
     int m_vcdmenuId;
     bool m_havedvdmenu : 1;
     bool m_havevcdmenu : 1;
-    bool m_opendvd : 1;
-    bool m_openvcd : 1;
-    bool m_openpipe : 1;
     bool m_showToolbar : 1;
     bool m_showStatusbar : 1;
     bool m_showMenubar : 1;

@@ -139,6 +139,7 @@ KMPlayer::KMPlayer (QWidget * parent, KConfig * config)
    m_config (config),
    m_view (new KMPlayerView (parent)),
    m_configdialog (new KMPlayerConfig (this, config)),
+   m_source (0L),
    m_liveconnectextension (0L),
    movie_width (0),
    movie_height (0),
@@ -153,6 +154,7 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
    m_config (new KConfig ("kmplayerrc")),
    m_view (new KMPlayerView (wparent, wname)),
    m_configdialog (new KMPlayerConfig (this, m_config)),
+   m_source (0L),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
    movie_width (0),
    movie_height (0),
@@ -224,11 +226,6 @@ void KMPlayer::initProcess () {
     delete m_process;
     m_process = new KProcess;
     m_process->setUseShell (true);
-    if (!m_url.isEmpty ()) {
-        QString proxy_url;
-        if (KProtocolManager::useProxy () && proxyForURL (m_url, proxy_url))
-            m_process->setEnvironment("http_proxy", proxy_url);
-    }
     connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
             this, SLOT (processOutput (KProcess *, char *, int)));
     connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
@@ -256,10 +253,11 @@ KMediaPlayer::View* KMPlayer::view () {
     return m_view;
 }
 
-void KMPlayer::setURL (const KURL &url) {
-    if (!m_url.isEmpty () && m_url != url)
-        closeURL ();
-    m_url = url;
+void KMPlayer::setSource (KMPlayerSource * source) {
+    if (m_source) m_source->deactivate ();
+    closeURL ();
+    m_source = source;
+    if (m_source) m_source->activate ();
 }
 
 bool KMPlayer::openURL (const KURL & _url) {
@@ -268,15 +266,11 @@ bool KMPlayer::openURL (const KURL & _url) {
     if (!m_href.isEmpty ())
         url = m_href;
     if (url.isValid ()) {
-        setURL (url);
+        setSource (new KMPlayerURLSource (this, url));
         play ();
         m_href == QString::null;
-        if (m_process->isRunning ()) {
-            emit started ((KIO::Job*) 0);
-            return true;
-        }
     }
-    return false;
+    return m_process->isRunning ();
 }
 
 bool KMPlayer::closeURL () {
@@ -329,34 +323,37 @@ void KMPlayer::processOutput (KProcess *, char * str, int slen) {
                     slider->setMaxValue (int (1.4 * slider->maxValue()));
                 if (!m_bPosSliderPressed)
                     slider->setValue (m_movie_position);
+            } else if (m_browserextension) {
+                if (m_cacheRegExp.search (out) > -1) {
+                    double p = m_cacheRegExp.cap (1).toDouble ();
+                    m_browserextension->setLoadingProgress (int (p));
+                    m_browserextension->infoMessage 
+                      (QString (m_cacheRegExp.cap (1)) + i18n ("% Cache fill"));
+                }
             }
         } else {
             m_view->addText (out + QString ("\n"));
-            QRegExp sizeRegExp (m_configdialog->sizepattern);
-            bool ok;
-            if (movie_width <= 0 && sizeRegExp.search (out) > -1) {
-                movie_width = sizeRegExp.cap (1).toInt (&ok);
-                movie_height = ok ? sizeRegExp.cap (2).toInt (&ok) : 0;
-                if (ok && movie_width > 0 && movie_height > 0 && m_view->viewer ()->aspect () < 0.01) {
-                    m_view->viewer ()->setAspect (1.0 * movie_width / movie_height);
-                    if (m_liveconnectextension)
-                        m_liveconnectextension->setSize (movie_width, movie_height);
-                }
-            } else if (m_browserextension) {
-                QRegExp cacheRegExp (m_configdialog->cachepattern);
-                QRegExp startRegExp (m_configdialog->startpattern);
-                if (cacheRegExp.search (out) > -1) {
-                    double p = cacheRegExp.cap (1).toDouble (&ok);
-                    if (ok) {
-                        m_browserextension->setLoadingProgress (int (p));
-                        m_browserextension->infoMessage 
-                            (QString (cacheRegExp.cap (1)) + i18n ("% Cache fill"));
+            if (m_source && m_source->processOutput (out))
+                ;
+            else {
+                QRegExp sizeRegExp (m_configdialog->sizepattern);
+                bool ok;
+                if (movie_width <= 0 && sizeRegExp.search (out) > -1) {
+                    movie_width = sizeRegExp.cap (1).toInt (&ok);
+                    movie_height = ok ? sizeRegExp.cap (2).toInt (&ok) : 0;
+                    if (ok && movie_width > 0 && movie_height > 0 && m_view->viewer ()->aspect () < 0.01) {
+                        m_view->viewer ()->setAspect (1.0 * movie_width / movie_height);
+                        if (m_liveconnectextension)
+                            m_liveconnectextension->setSize (movie_width, movie_height);
                     }
-                } else if (startRegExp.search (out) > -1) {
-                    m_browserextension->setLoadingProgress (100);
-                    emit completed ();
-                    m_started_emited = false;
-                    m_browserextension->infoMessage (i18n("KMPlayer: Playing"));
+                } else if (m_browserextension) {
+                    QRegExp startRegExp (m_configdialog->startpattern);
+                    if (startRegExp.search (out) > -1) {
+                        m_browserextension->setLoadingProgress (100);
+                        emit completed ();
+                        m_started_emited = false;
+                        m_browserextension->infoMessage (i18n("KMPlayer: Playing"));
+                    }
                 }
             }
         }
@@ -440,6 +437,9 @@ bool KMPlayer::run (const char * args, const char * pipe) {
     m_process_output = QString::null;
     m_started_emited = false;
     initProcess ();
+    m_cacheRegExp.setPattern (m_configdialog->cachepattern);
+    if (m_source)
+        m_source->init ();
 
     if (!m_configdialog->showposslider)
         m_view->positionSlider()->hide();
@@ -553,13 +553,6 @@ bool KMPlayer::run (const char * args, const char * pipe) {
     }
     printf (" %s", args);
     *m_process << " " << args;
-    if (!m_url.isEmpty () && m_url.isValid ()) {
-        QString myurl;
-        myurl = m_url.isLocalFile () ? m_url.path () : m_url.url ();
-        printf (" %s\n", KProcess::quote (myurl).latin1 ());
-        *m_process << " " << KProcess::quote (myurl);
-    } else
-        printf ("\n");
 
     QValueList<QCString>::const_iterator it;
     QString sMPArgs;
@@ -588,19 +581,8 @@ void KMPlayer::play () {
     if (m_process->isRunning ()) {
         sendCommand (QString ("gui_play"));
         if (!m_view->playButton ()->isOn ()) m_view->playButton ()->toggle ();
-        return;
-    }
-    if (!m_url.isValid () || m_url.isEmpty ()) {
-        if (m_view->playButton ()->isOn ()) m_view->playButton ()->toggle ();
-        return;
-    }
-    QCString args;
-    if (m_url.isLocalFile () || m_cachesize <= 0)
-        args.sprintf ("-slave");
-    else
-        args.sprintf ("-slave -cache %d", m_cachesize);
-    run (args);
-    emit running ();
+    } else if (m_source)
+        m_source->play ();
 }
 
 bool KMPlayer::playing () const {
@@ -722,7 +704,7 @@ void KMPlayerBrowserExtension::restoreState (QDataStream & stream) {
 
 KMPlayerLiveConnectExtension::KMPlayerLiveConnectExtension (KMPlayer * parent)
   : KParts::LiveConnectExtension (parent), player (parent), m_started (false) {
-      connect (parent, SIGNAL (running ()), this, SLOT (started ()));
+      connect (parent, SIGNAL (started (KIO::Job *)), this, SLOT (started ()));
       connect (parent, SIGNAL (finished ()), this, SLOT (finished ()));
 }
 
@@ -798,6 +780,90 @@ void KMPlayerLiveConnectExtension::setSize (int w, int h) {
     args.push_back (qMakePair (KParts::LiveConnectExtension::TypeString, QString("height")));
     args.push_back (qMakePair (KParts::LiveConnectExtension::TypeNumber, QString::number (h)));
     emit partEvent (0, "this.setAttribute", args);
+}
+
+//-----------------------------------------------------------------------------
+
+KMPlayerSource::KMPlayerSource (KMPlayer * player)
+    : QObject (player), m_player (player) {
+    kdDebug () << "KMPlayerSource::KMPlayerSource" << endl;
+}
+
+KMPlayerSource::~KMPlayerSource () {
+    kdDebug () << "KMPlayerSource::~KMPlayerSource" << endl;
+}
+
+void KMPlayerSource::init () {
+    m_width = 0;
+    m_height = 0;
+    m_aspect = 0.0;
+    m_length = 0;
+}
+
+bool KMPlayerSource::processOutput (const QString & str) {
+    if (str.startsWith ("ID_VIDEO_WIDTH")) {
+        int pos = str.find ('=');
+        if (pos > 0)
+            setWidth (str.mid (pos + 1).toInt());
+        kdDebug () << "KMPlayerSource::processOutput " << width() << endl;
+    } else if (str.startsWith ("ID_VIDEO_HEIGHT")) {
+        int pos = str.find ('=');
+        if (pos > 0)
+            setHeight (str.mid (pos + 1).toInt());
+    } else if (str.startsWith ("ID_VIDEO_ASPECT")) {
+        int pos = str.find ('=');
+        if (pos > 0)
+            setAspect (str.mid (pos + 1).toFloat());
+    } else if (str.startsWith ("ID_LENGTH")) {
+        int pos = str.find ('=');
+        if (pos > 0)
+            setLength (str.mid (pos + 1).toInt());
+    } else
+        return false;
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+
+KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, const KURL & url)
+    : KMPlayerSource (player), m_url (url) {
+    kdDebug () << "KMPlayerURLSource::KMPlayerURLSource" << endl;
+}
+
+KMPlayerURLSource::~KMPlayerURLSource () {
+    kdDebug () << "KMPlayerURLSource::~KMPlayerURLSource" << endl;
+}
+
+void KMPlayerURLSource::init () {
+    KMPlayerSource::init ();
+    if (!m_url.isEmpty ()) {
+        QString proxy_url;
+        if (KProtocolManager::useProxy () && proxyForURL (m_url, proxy_url))
+            m_player->process ()->setEnvironment("http_proxy", proxy_url);
+    }
+}
+
+void KMPlayerURLSource::play () {
+    if (!m_url.isValid () || m_url.isEmpty ())
+        return;
+    m_player->setURL (m_url);
+    QString args;
+    int cache = m_player->cacheSize ();
+    if (m_url.isLocalFile () || cache <= 0)
+        args.sprintf ("-slave ");
+    else
+        args.sprintf ("-slave -cache %d ", cache);
+    QString myurl (m_url.isLocalFile () ? m_url.path () : m_url.url ());
+    printf (" %s\n", KProcess::quote (myurl).latin1 ());
+    args += KProcess::quote (myurl);
+    m_player->run (args.latin1 ());
+}
+
+void KMPlayerURLSource::activate () {
+}
+
+void KMPlayerURLSource::deactivate () {
+    deleteLater ();
 }
 
 #include "kmplayer_part.moc"

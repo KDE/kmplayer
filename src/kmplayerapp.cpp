@@ -49,8 +49,8 @@
 // application specific includes
 #include "kmplayer.h"
 #include "kmplayerview.h"
-#include "kmplayerdoc.h"
 #include "kmplayer_part.h"
+#include "kmplayersource.h"
 #include "kmplayerconfig.h"
 
 #define ID_STATUS_MSG 1
@@ -59,13 +59,15 @@ KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     : KMainWindow(0, name),
       config (kapp->config ()),
       m_player (new KMPlayer (this, config)),
-      m_opendvd (false),
-      m_openvcd (false),
-      m_openpipe (false)
+      m_dvdmenu (new QPopupMenu (this)),
+      m_vcdmenu (new QPopupMenu (this)),
+      m_urlsource (new KMPlayerAppURLSource (this)),
+      m_dvdsource (new KMPlayerDVDSource (this, m_dvdmenu)),
+      m_vcdsource (new KMPlayerVCDSource (this, m_vcdmenu)),
+      m_pipesource (new KMPlayerPipeSource (this))
 {
     initStatusBar();
     initActions();
-    initDocument();
     initView();
 
     readOptions();
@@ -83,7 +85,6 @@ KMPlayerApp::~KMPlayerApp () {
 void KMPlayerApp::initActions()
 {
     fileNewWindow = new KAction(i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), actionCollection(),"file_new_window");
-    fileNew = KStdAction::openNew(this, SLOT(slotFileNew()), actionCollection());
     fileOpen = KStdAction::open(this, SLOT(slotFileOpen()), actionCollection());
     fileOpenRecent = KStdAction::openRecent(this, SLOT(slotFileOpenRecent(const KURL&)), actionCollection());
     fileClose = KStdAction::close(this, SLOT(slotFileClose()), actionCollection());
@@ -103,7 +104,6 @@ void KMPlayerApp::initActions()
     viewStatusBar = KStdAction::showStatusbar(this, SLOT(slotViewStatusBar()), actionCollection());
     viewMenuBar = KStdAction::showMenubar(this, SLOT(slotViewMenuBar()), actionCollection());
     fileNewWindow->setStatusText(i18n("Opens a new application window"));
-    fileNew->setStatusText(i18n("Creates a new document"));
     fileOpen->setStatusText(i18n("Opens an existing document"));
     fileOpenRecent->setStatusText(i18n("Opens a recently used file"));
     fileClose->setStatusText(i18n("Closes the actual document"));
@@ -117,54 +117,22 @@ void KMPlayerApp::initActions()
 
 void KMPlayerApp::initStatusBar()
 {
-    ///////////////////////////////////////////////////////////////////
-    // STATUSBAR
-    // TODO: add your own items you need for displaying current application status.
     statusBar()->insertItem(i18n("Ready."), ID_STATUS_MSG);
-}
-
-void KMPlayerApp::initDocument()
-{
-    doc = new KMPlayerDoc(this);
-    doc->newDocument();
 }
 
 void KMPlayerApp::initView ()
 {
-    ////////////////////////////////////////////////////////////////////
-    // create the main widget here that is managed by KTMainWindow's view-region and
-    // connect the widget to your document to display document contents.
     view = static_cast <KMPlayerView*> (m_player->view());
-    doc->addView (view);
     setCentralWidget (view);
     m_sourcemenu = menuBar ()->findItem (menuBar ()->idAt (0));
     m_sourcemenu->setText (i18n ("S&ource"));
-    m_dvdmenu = new QPopupMenu (this);
-    m_dvdmenu->insertTearOffHandle ();
-    m_dvdtitlemenu = new QPopupMenu (this);
-    m_dvdsubtitlemenu = new QPopupMenu (this);
-    m_dvdchaptermenu = new QPopupMenu (this);
-    m_dvdlanguagemenu = new QPopupMenu (this);
-    m_vcdmenu = new QPopupMenu (this);
-    m_vcdmenu->insertTearOffHandle ();
-    m_vcdtrackmenu = new QPopupMenu (this);
-    m_dvdtitlemenu->setCheckable (true);
-    m_dvdsubtitlemenu->setCheckable (true);
-    m_dvdchaptermenu->setCheckable (true);
-    m_dvdlanguagemenu->setCheckable (true);
     m_dvdmenuId = m_sourcemenu->popup ()->insertItem (i18n ("&DVD"), m_dvdmenu, -1, 3);
     m_havedvdmenu = true;
-    m_dvdmenu->insertItem (i18n ("&Open DVD"), this, SLOT(openDVD ()));
-    m_dvdmenu->insertItem (i18n ("&Titles"), m_dvdtitlemenu);
-    m_dvdmenu->insertItem (i18n ("&Chapters"), m_dvdchaptermenu);
-    m_dvdmenu->insertItem (i18n ("Audio &Language"), m_dvdlanguagemenu);
-    m_dvdmenu->insertItem (i18n ("&SubTitles"), m_dvdsubtitlemenu);
+    m_dvdmenu->insertItem (i18n ("&Open DVD"), this, SLOT(openDVD ()), 0,-1, 0);
     m_vcdmenuId = m_sourcemenu->popup ()->insertItem (i18n ("V&CD"), m_vcdmenu, -1, 4);
     m_havevcdmenu = true;
-    m_vcdmenu->insertItem (i18n ("&Open VCD"), this, SLOT(openVCD ()));
-    m_vcdmenu->insertItem (i18n ("&Tracks"), m_vcdtrackmenu);
+    m_vcdmenu->insertItem (i18n ("&Open VCD"), this, SLOT(openVCD ()), 0,-1, 0);
     m_sourcemenu->popup ()->insertItem (i18n ("&Open Pipe..."), this, SLOT(openPipe ()), 0, -1, 5);
-    connect (view->playButton (), SIGNAL (clicked ()), this, SLOT (playDisc()));
     connect (m_player->configDialog (), SIGNAL (configChanged ()),
              this, SLOT (configChanged ()));
     connect (m_player->browserextension (), SIGNAL (loadingProgress (int)),
@@ -182,7 +150,6 @@ void KMPlayerApp::initView ()
                           QKeySequence ("CTRL + Key_F"));
     menuBar ()->insertItem (i18n ("&View"), viewmenu, -1, 2);*/
     toolBar("mainToolBar")->hide();
-    setCaption (doc->URL (). fileName (), false);
 
 }
 
@@ -194,112 +161,61 @@ void KMPlayerApp::loadingProgress (int percentage) {
 }
 
 void KMPlayerApp::openDVD () {
+    setCaption (i18n ("DVD"), false);
     slotStatusMsg(i18n("Opening DVD..."));
-    doc->newDocument();
-    doc->setAspect (-1.0);
-    m_player->stop ();
-    m_player->setURL (KURL ());
-    QString args ("-v dvd:// -identify -frames 0 -quiet -nocache");
-    if (m_player->configDialog ()->dvddevice.length () > 0)
-        args += QString(" -dvd-device ") + m_player->configDialog ()->dvddevice;
-    bool loop = m_player->configDialog ()->loop;
-    m_player->configDialog ()->loop = false;
-    if (m_player->run (args.ascii())) {
-        connect (m_player, SIGNAL (finished()), this, SLOT(finishedOpenDVD ()));
-        m_openvcd = m_openpipe = false;
-        m_opendvd = true;
-    } else
-        kdDebug () << "openDVD failed" << endl;
-    m_player->configDialog ()->loop = loop;
+    m_player->setSource (m_dvdsource);
 }
 
 void KMPlayerApp::openVCD () {
+    setCaption (i18n ("VCD"), false);
     slotStatusMsg(i18n("Opening VCD..."));
-    doc->newDocument();
-    doc->setAspect (-1.0);
-    m_player->stop ();
-    m_player->setURL (KURL ());
-    QString args ("-v vcd:// -identify -frames 0 -quiet -nocache");
-    if (m_player->configDialog ()->vcddevice.length () > 0)
-        args += QString(" -cdrom-device ")+m_player->configDialog ()->vcddevice;
-    bool loop = m_player->configDialog ()->loop;
-    m_player->configDialog ()->loop = false;
-    if (m_player->run (args.ascii())) {
-        connect (m_player, SIGNAL (finished()), this, SLOT(finishedOpenVCD ()));
-        m_opendvd = m_openpipe = false;
-        m_openvcd = true;
-    } else
-        kdDebug () << "openVCD failed" << endl;
-    m_player->configDialog ()->loop = loop;
+    m_player->setSource (m_vcdsource);
 }
 
 void KMPlayerApp::openPipe () {
     slotStatusMsg(i18n("Opening pipe..."));
     bool ok;
     QString cmd = KLineEditDlg::getText (i18n("Read From Pipe"),
-                       i18n ("Enter command:"), m_pipe, &ok, m_player->view());
+      i18n ("Enter command:"), m_pipesource->command (), &ok, m_player->view());
     if (!ok) {
         slotStatusMsg (i18n ("Ready."));
         return;
     }
-    m_pipe = cmd;
-    playPipe ();
-}
-
-void KMPlayerApp::playPipe () {
-    doc->newDocument();
-    doc->setAspect (-1.0);
-    m_player->stop ();
-    m_player->setURL (KURL ());
-    QString args ("-");
-    m_player->run (args.ascii(), m_pipe.ascii());
-    setCaption (i18n ("Pipe - %1").arg(m_pipe), false);
-    m_openpipe = true;
-    m_openvcd = m_opendvd = false;
-    slotStatusMsg (i18n ("Ready."));
+    setCaption (i18n ("Pipe - %1").arg (cmd), false);
+    m_pipesource->setCommand (cmd);
+    m_player->setSource (m_pipesource);
 }
 
 void KMPlayerApp::openDocumentFile (const KURL& url)
 {
-    if (m_showStatusbar) slotStatusMsg(i18n("Opening file..."));
-    doc->newDocument();
-    doc->setAspect (-1.0);
-    m_openpipe = m_openvcd = m_opendvd = false;
-    m_dvdtitlemenu->clear ();
-    m_dvdsubtitlemenu->clear ();
-    m_dvdchaptermenu->clear ();
-    m_dvdlanguagemenu->clear ();
-    m_player->stop ();
-    m_player->setURL (url);
-    bool loop = m_player->configDialog ()->loop;
-    m_player->configDialog ()->loop = false;
-    if (!url.isEmpty () && m_player->run ("-quiet -nocache -identify -frames 0")) {
-        connect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
-        doc->setURL (url);
-    } else if (m_showStatusbar)
-        slotStatusMsg (i18n ("Ready."));
-    m_player->configDialog ()->loop = loop;
+    slotStatusMsg(i18n("Opening file..."));
+    m_urlsource->setURL (url);
+    m_player->setSource (m_urlsource);
+    setCaption (url.fileName (), false);
 }
 
 void KMPlayerApp::resizePlayer (int percentage) {
-    int w = doc->width ();
-    int h = doc->height ();
+    KMPlayerSource * source = m_player->source ();
+    kdDebug () << "KMPlayerApp::resizePlayer " << source << endl;
+    int w = source->width ();
+    int h = source->height ();
+    kdDebug () << "KMPlayerApp::resizePlayer (" << w << "," << h << ")" << endl;
     if (w <= 0 || h <= 0) {
         m_player->sizes (w, h);
-        doc->setWidth (w);
-        doc->setHeight (h);
+        source->setWidth (w);
+        source->setHeight (h);
     }
     kdDebug () << "KMPlayerApp::resizePlayer (" << w << "," << h << ")" << endl;
     if (w > 0 && h > 0) {
-        if (doc->aspect () > 0.01) {
-            w = int (doc->aspect () * doc->height ());
+        if (source->aspect () > 0.01) {
+            w = int (source->aspect () * source->height ());
             w += w % 2;
-            doc->setWidth (w);
+            source->setWidth (w);
         } else
-            doc->setAspect (1.0 * w/h);
+            source->setAspect (1.0 * w/h);
         KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
-        view->viewer()->setAspect (view->keepSizeRatio() ? doc->aspect() : 0.0);
-        int h = doc->height () + 2 + kview->buttonBar()->frameSize ().height ();
+        view->viewer()->setAspect (view->keepSizeRatio() ? source->aspect() : 0.0);
+        int h = source->height () + 2 + kview->buttonBar()->frameSize ().height ();
         w = int (1.0 * w * percentage/100.0);
         h = int (1.0 * h * percentage/100.0);
         kdDebug () << "resizePlayer (" << w << "," << h << ")" << endl;
@@ -320,277 +236,9 @@ void KMPlayerApp::zoom150 () {
     resizePlayer (150);
 }
 
-void KMPlayerApp::finished () {
-    disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
-    KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
-    QMultiLineEdit * txt = kview->consoleOutput ();
-    int movie_length = 0;
-    for (int i = 0; i < txt->numLines (); i++) {
-        QString str = txt->textLine (i);
-        if (str.startsWith ("ID_VIDEO_WIDTH")) {
-            int pos = str.find ('=');
-            if (pos > 0)
-                doc->setWidth (str.mid (pos + 1).toInt());
-        } else if (str.startsWith ("ID_VIDEO_HEIGHT")) {
-            int pos = str.find ('=');
-            if (pos > 0)
-                doc->setHeight (str.mid (pos + 1).toInt());
-        } else if (str.startsWith ("ID_VIDEO_ASPECT")) {
-            int pos = str.find ('=');
-            if (pos > 0)
-                doc->setAspect (str.mid (pos + 1).toFloat());
-        } else if (str.startsWith ("ID_LENGTH")) {
-            int pos = str.find ('=');
-            if (pos > 0)
-                movie_length = str.mid (pos + 1).toInt();
-        }
-    }
-    m_player->setMovieLength (10 * movie_length);
-    resizePlayer (100);
-    const KURL & url = doc->URL ();
-    if (m_player->openURL (url)) {
-        fileOpenRecent->addURL (url);
-        setCaption (url.fileName (), false);
-    }
-    //doc->openDocument( url);
-    slotStatusMsg (i18n ("Ready."));
-}
-
-void KMPlayerApp::finishedOpenDVD () {
-    disconnect (m_player, SIGNAL (finished()), this, SLOT (finishedOpenDVD ()));
-
-    m_dvdtitlemenu->clear ();
-    m_dvdsubtitlemenu->clear ();
-    m_dvdchaptermenu->clear ();
-    m_dvdlanguagemenu->clear ();
-
-    KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
-    QMultiLineEdit * txt = kview->consoleOutput ();
-    int movie_length = 0;
-    QRegExp langRegExp (m_player->configDialog ()->langpattern);
-    QRegExp subtitleRegExp (m_player->configDialog ()->subtitlespattern);
-    QRegExp titleRegExp (m_player->configDialog ()->titlespattern);
-    QRegExp chapterRegExp (m_player->configDialog ()->chapterspattern);
-    //kdDebug () << "finishedOpenDVD " << txt->numLines () << endl;
-    for (int i = 0; i < txt->numLines (); i++) {
-        QString str = txt->textLine (i);
-        const char * cstr = str.latin1 ();
-        //kdDebug () << "scanning " << cstr << endl;
-        if (str.startsWith ("ID_VIDEO_WIDTH")) {
-            int pos = str.find ('=');
-            if (pos > 0)
-                doc->setWidth (str.mid (pos + 1).toInt());
-        } else if (str.startsWith ("ID_VIDEO_HEIGHT")) {
-            int pos = str.find ('=');
-            if (pos > 0)
-                doc->setHeight (str.mid (pos + 1).toInt());
-        } else if (str.startsWith ("ID_VIDEO_ASPECT")) {
-            int pos = str.find ('=');
-            if (pos > 0)
-                doc->setAspect (str.mid (pos + 1).toFloat());
-        } else if (str.startsWith ("ID_LENGTH")) {
-            int pos = str.find ('=');
-            if (pos > 0)
-                movie_length = str.mid (pos + 1).toInt();
-        } else if (subtitleRegExp.search (cstr) > -1) {
-            m_dvdsubtitlemenu->insertItem (subtitleRegExp.cap (2), this,
-                                           SLOT (subtitleMenuClicked (int)), 0,
-                                           subtitleRegExp.cap (1).toInt ());
-            kdDebug () << "subtitle sid:" << subtitleRegExp.cap (1) <<
-                " lang:" << subtitleRegExp.cap (2) << endl;
-        } else if (langRegExp.search (cstr) > -1) {
-            m_dvdlanguagemenu->insertItem (langRegExp.cap (1), this,
-                                           SLOT (languageMenuClicked (int)), 0,
-                                           langRegExp.cap (2).toInt ());
-            kdDebug () << "lang aid:" << langRegExp.cap (2) <<
-                " lang:" << langRegExp.cap (1) << endl;
-        } else if (titleRegExp.search (cstr) > -1) {
-            kdDebug () << "title " << titleRegExp.cap (1) << endl;
-            unsigned ts = titleRegExp.cap (1).toInt ();
-            if ( ts > 100) ts = 100;
-            for (unsigned t = 0; t < ts; t++)
-                m_dvdtitlemenu->insertItem (QString::number (t + 1), this,
-                                            SLOT (titleMenuClicked(int)), 0, t);
-        } else if (chapterRegExp.search (cstr) > -1) {
-            kdDebug () << "chapter " << chapterRegExp.cap (1) << endl;
-            unsigned chs = chapterRegExp.cap (1).toInt ();
-            if ( chs > 100) chs = 100;
-            for (unsigned c = 0; c < chs; c++)
-                m_dvdchaptermenu->insertItem (QString::number (c + 1), this,
-                                          SLOT (chapterMenuClicked(int)), 0, c);
-        }
-    }
-    m_player->setMovieLength (10 * movie_length);
-    //if (m_dvdsubtitlemenu->count()) m_dvdsubtitlemenu->setItemChecked (m_dvdsubtitlemenu->idAt (0), true);
-    if (m_dvdtitlemenu->count ()) m_dvdtitlemenu->setItemChecked (0, true);
-    if (m_dvdchaptermenu->count ()) m_dvdchaptermenu->setItemChecked (0, true);
-    if (m_dvdlanguagemenu->count()) m_dvdlanguagemenu->setItemChecked (m_dvdlanguagemenu->idAt (0), true);
-    resizePlayer (100);
-    if (m_player->configDialog ()->playdvd)
-        playDVD ();
-    //doc->openDocument( url);
-    setCaption (i18n ("DVD"), false);
-    slotStatusMsg (i18n ("Ready."));
-}
-
-void KMPlayerApp::finishedOpenVCD () {
-    disconnect (m_player, SIGNAL (finished()), this, SLOT (finishedOpenVCD ()));
-
-    m_vcdtrackmenu->clear ();
-
-    KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
-    int movie_length = 0;
-    QMultiLineEdit * txt = kview->consoleOutput ();
-    QRegExp trackRegExp (m_player->configDialog ()->trackspattern);
-    //kdDebug () << "finishedOpenDVD " << txt->numLines () << endl;
-    for (int i = 0; i < txt->numLines (); i++) {
-        QString str = txt->textLine (i);
-        const char * cstr = str.latin1 ();
-        //kdDebug () << "scanning " << cstr << endl;
-        if (str.startsWith ("ID_VIDEO_WIDTH")) {
-            int pos = str.find ('=');
-            if (pos > 0)
-                doc->setWidth (str.mid (pos + 1).toInt());
-        } else if (str.startsWith ("ID_VIDEO_HEIGHT")) {
-            int pos = str.find ('=');
-            if (pos > 0)
-                doc->setHeight (str.mid (pos + 1).toInt());
-        } else if (str.startsWith ("ID_VIDEO_ASPECT")) {
-            int pos = str.find ('=');
-            if (pos > 0)
-                doc->setAspect (str.mid (pos + 1).toFloat());
-        } else if (str.startsWith ("ID_LENGTH")) {
-            int pos = str.find ('=');
-            if (pos > 0)
-                movie_length = str.mid (pos + 1).toInt();
-        } else if (trackRegExp.search (cstr) > -1) {
-            m_vcdtrackmenu->insertItem (trackRegExp.cap (1), this,
-                                        SLOT (trackMenuClicked(int)), 0,
-                                           m_vcdtrackmenu->count ());
-            kdDebug () << "track " << trackRegExp.cap (1) << endl;
-        }
-    }
-    m_player->setMovieLength (10 * movie_length);
-    if (m_vcdtrackmenu->count()) m_vcdtrackmenu->setItemChecked (0, true);
-    resizePlayer (100);
-    if (m_player->configDialog ()->playvcd)
-        playVCD ();
-    //doc->openDocument( url);
-    setCaption (i18n ("VCD"), false);
-    slotStatusMsg (i18n ("Ready."));
-}
-
-void KMPlayerApp::playDVD () {
-    if (!m_opendvd || m_player->playing ())
-        return;
-    QString args;
-    unsigned i;
-    args.sprintf ("-slave");
-    for (i = 0; i < m_dvdsubtitlemenu->count(); i++)
-        if (m_dvdsubtitlemenu->isItemChecked (m_dvdsubtitlemenu->idAt (i)))
-            args += " -sid " + QString::number (m_dvdsubtitlemenu->idAt (i));
-    for (i = 0; i < m_dvdtitlemenu->count(); i++)
-        if (m_dvdtitlemenu->isItemChecked (i)) {
-            args += " -dvd " + m_dvdtitlemenu->findItem (i)->text ();
-            break;
-        }
-    if (i == m_dvdtitlemenu->count())
-        args += " dvd:// ";
-    for (i = 0; i < m_dvdchaptermenu->count(); i++)
-        if (m_dvdchaptermenu->isItemChecked (i))
-            args += " -chapter " + m_dvdchaptermenu->findItem (i)->text ();
-    for (i = 0; i < m_dvdlanguagemenu->count(); i++)
-        if (m_dvdlanguagemenu->isItemChecked (m_dvdlanguagemenu->idAt (i)))
-            args += " -aid " + QString::number (m_dvdlanguagemenu->idAt (i));
-    if (m_player->configDialog ()->dvddevice.length () > 0)
-        args += QString(" -dvd-device ") + m_player->configDialog ()->dvddevice;
-    m_player->run (args.ascii());
-}
-
-void KMPlayerApp::playVCD () {
-    if (!m_openvcd || m_player->playing ())
-        return;
-    QString args;
-    unsigned i;
-    args.sprintf ("-slave");
-    for (i = 0; i < m_vcdtrackmenu->count(); i++)
-        if (m_vcdtrackmenu->isItemChecked (i)) {
-            args += " -vcd " + m_vcdtrackmenu->findItem (i)->text ();
-            break;
-        }
-    if (i == m_vcdtrackmenu->count())
-        args += " vcd:// ";
-    //if (m_player->configDialog ()->dvddevice.length () > 0)
-      //  args += QString(" -dvd-device ") + m_player->configDialog ()->dvddevice;
-    m_player->run (args.ascii());
-}
-
 void KMPlayerApp::play () {
-    if ((!m_opendvd && !m_openvcd && !m_openpipe) || m_player->playing ())
-        m_player->play ();
-    else if (m_opendvd)
-        playDVD ();
-    else if (m_openvcd)
-        playVCD ();
-    else if (m_openpipe)
-        playPipe ();
+    m_player->play ();
 }
-
-void KMPlayerApp::playDisc () {
-    if (m_opendvd)
-        playDVD ();
-    else if (m_openvcd)
-        playVCD ();
-    else if (m_openpipe)
-        playPipe ();
-}
-
-void KMPlayerApp::menuItemClicked (QPopupMenu * menu, int id) {
-    int unsetmenuid = -1;
-    for (unsigned i = 0; i < menu->count(); i++) {
-        int menuid = menu->idAt (i);
-        if (menu->isItemChecked (menuid)) {
-            menu->setItemChecked (menuid, false);
-            unsetmenuid = menuid;
-            break;
-        }
-    }
-    if (unsetmenuid != id)
-        menu->setItemChecked (id, true);
-    if (m_opendvd && player ()->configDialog ()->playdvd) {
-        player ()->stop ();
-        playDVD ();
-    } else if (m_openvcd && player ()->configDialog ()->playvcd) {
-        player ()->stop ();
-        playVCD ();
-    }
-}
-
-void KMPlayerApp::titleMenuClicked (int id) {
-    menuItemClicked (m_dvdtitlemenu, id);
-}
-
-void KMPlayerApp::subtitleMenuClicked (int id) {
-    menuItemClicked (m_dvdsubtitlemenu, id);
-}
-
-void KMPlayerApp::languageMenuClicked (int id) {
-    menuItemClicked (m_dvdlanguagemenu, id);
-}
-
-void KMPlayerApp::chapterMenuClicked (int id) {
-    menuItemClicked (m_dvdchaptermenu, id);
-}
-
-void KMPlayerApp::trackMenuClicked (int id) {
-    menuItemClicked (m_vcdtrackmenu, id);
-}
-
-KMPlayerDoc *KMPlayerApp::getDocument () const
-{
-    return doc;
-}
-
 
 void KMPlayerApp::saveOptions()
 {
@@ -599,9 +247,9 @@ void KMPlayerApp::saveOptions()
     //config->writeEntry ("Show Toolbar", viewToolBar->isChecked());
     config->writeEntry ("Show Statusbar",viewStatusBar->isChecked());
     config->writeEntry ("Show Menubar",viewMenuBar->isChecked());
-    if (!m_pipe.isEmpty ()) {
+    if (!m_pipesource->command ().isEmpty ()) {
         config->setGroup ("Pipe Command");
-        config->writeEntry ("Command1", m_pipe);
+        config->writeEntry ("Command1", m_pipesource->command ());
     }
     //config->writeEntry ("ToolBarPos", (int) toolBar("mainToolBar")->barPos());
     fileOpenRecent->saveEntries (config,"Recent Files");
@@ -631,7 +279,7 @@ void KMPlayerApp::readOptions() {
     slotViewMenuBar();
 
     config->setGroup ("Pipe Command");
-    m_pipe = config->readEntry ("Command1", "");
+    m_pipesource->setCommand (config->readEntry ("Command1", ""));
 
     // bar position settings
     /*KToolBar::BarPosition toolBarPos;
@@ -650,54 +298,7 @@ void KMPlayerApp::readOptions() {
     configChanged ();
 }
 
-void KMPlayerApp::saveProperties(KConfig *_cfg) {
-    if(doc->URL().fileName()!=i18n("Untitled") && !doc->isModified())
-    {
-        // saving to tempfile not necessary
-
-    }
-    else
-    {
-        KURL url=doc->URL();
-        _cfg->writeEntry("filename", url.url());
-        _cfg->writeEntry("modified", doc->isModified());
-        QString tempname = kapp->tempSaveName(url.url());
-        QString tempurl= KURL::encode_string(tempname);
-    }
-}
-
-
-void KMPlayerApp::readProperties(KConfig* _cfg)
-{
-    QString filename = _cfg->readEntry("filename", "");
-    KURL url(filename);
-    bool modified = _cfg->readBoolEntry("modified", false);
-    if(modified)
-    {
-        bool canRecover;
-        QString tempname = kapp->checkRecoverFile(filename, canRecover);
-        KURL _url(tempname);
-
-        if(canRecover)
-        {
-            doc->openDocument(_url);
-            doc->setModified();
-            setCaption(_url.fileName(),true);
-            QFile::remove(tempname);
-        }
-    }
-    else
-    {
-        if(!filename.isEmpty())
-        {
-            doc->openDocument(url);
-            setCaption(url.fileName(),false);
-        }
-    }
-}
-
-bool KMPlayerApp::queryClose ()
-{
+bool KMPlayerApp::queryClose () {
     return true;
 }
 
@@ -717,16 +318,6 @@ void KMPlayerApp::slotFileNewWindow()
     slotStatusMsg(i18n("Ready."));
 }
 
-void KMPlayerApp::slotFileNew()
-{
-    slotStatusMsg(i18n("Creating new document..."));
-
-    doc->newDocument();
-    setCaption(doc->URL().fileName(), false);
-
-    slotStatusMsg(i18n("Ready."));
-}
-
 void KMPlayerApp::slotFileOpen()
 {
     slotStatusMsg(i18n("Opening file..."));
@@ -735,7 +326,6 @@ void KMPlayerApp::slotFileOpen()
             i18n("*|All Files"), this, i18n("Open File"));
     if(!url.isEmpty())
     {
-        //doc->openDocument(url);
         openDocumentFile (url);
     }
 }
@@ -876,7 +466,10 @@ void KMPlayerApp::configChanged () {
 
 void KMPlayerApp::keepSizeRatio () {
     view->setKeepSizeRatio (!view->keepSizeRatio ());
-    view->viewer ()->setAspect (view->keepSizeRatio () ? doc->aspect () : 0.0);
+    if (m_player->source () && view->keepSizeRatio ())
+        view->viewer ()->setAspect (m_player->source ()->aspect ());
+    else
+        view->viewer ()->setAspect (0.0);
     viewKeepRatio->setChecked (view->keepSizeRatio ());
 }
 
@@ -889,4 +482,313 @@ void KMPlayerApp::showConsoleOutput () {
     } else
         view->consoleOutput ()->hide ();
 }
+
+//-----------------------------------------------------------------------------
+
+KMPlayerAppURLSource::KMPlayerAppURLSource (KMPlayerApp * a)
+    : KMPlayerURLSource (a->player ()), app (a) {
+}
+
+KMPlayerAppURLSource::~KMPlayerAppURLSource () {
+}
+
+bool KMPlayerAppURLSource::processOutput (const QString & str) {
+    return KMPlayerSource::processOutput (str);
+}
+
+void KMPlayerAppURLSource::activate () {
+    init ();
+    bool loop = m_player->configDialog ()->loop;
+    m_player->configDialog ()->loop = false;
+    if (!url ().isEmpty ()) {
+        QString args ("-quiet -nocache -identify -frames 0 ");
+        QString myurl (url ().isLocalFile () ? url ().path () : m_url.url ());
+        args += KProcess::quote (myurl);
+        if (m_player->run (args.ascii ()))
+            connect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
+        else
+            app->slotStatusMsg (i18n ("Ready."));
+    }
+    m_player->configDialog ()->loop = loop;
+}
+
+void KMPlayerAppURLSource::finished () {
+    disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
+    m_player->setMovieLength (10 * length ());
+    app->resizePlayer (100);
+    play ();
+    app->recentFiles ()->addURL (url ());
+    app->slotStatusMsg (i18n ("Ready."));
+}
+
+void KMPlayerAppURLSource::deactivate () {
+}
+
+//-----------------------------------------------------------------------------
+
+KMPlayerDiscSource::KMPlayerDiscSource (KMPlayerApp * a, QPopupMenu * m)
+    : KMPlayerSource (a->player ()), m_menu (m), app (a) {
+}
+
+KMPlayerDiscSource::~KMPlayerDiscSource () {
+}
+
+void KMPlayerDiscSource::menuItemClicked (QPopupMenu * menu, int id) {
+    int unsetmenuid = -1;
+    for (unsigned i = 0; i < menu->count(); i++) {
+        int menuid = menu->idAt (i);
+        if (menu->isItemChecked (menuid)) {
+            menu->setItemChecked (menuid, false);
+            unsetmenuid = menuid;
+            break;
+        }
+    }
+    if (unsetmenuid != id)
+        menu->setItemChecked (id, true);
+    if (m_player->configDialog ()->playdvd) {
+        m_player->stop ();
+        play ();
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopupMenu * m)
+    : KMPlayerDiscSource (a, m) {
+    m_menu->insertTearOffHandle ();
+    m_dvdtitlemenu = new QPopupMenu (app);
+    m_dvdsubtitlemenu = new QPopupMenu (app);
+    m_dvdchaptermenu = new QPopupMenu (app);
+    m_dvdlanguagemenu = new QPopupMenu (app);
+    m_dvdtitlemenu->setCheckable (true);
+    m_dvdsubtitlemenu->setCheckable (true);
+    m_dvdchaptermenu->setCheckable (true);
+    m_dvdlanguagemenu->setCheckable (true);
+    m_menu->insertItem (i18n ("&Titles"), m_dvdtitlemenu);
+    m_menu->insertItem (i18n ("&Chapters"), m_dvdchaptermenu);
+    m_menu->insertItem (i18n ("Audio &Language"), m_dvdlanguagemenu);
+    m_menu->insertItem (i18n ("&SubTitles"), m_dvdsubtitlemenu);
+}
+
+KMPlayerDVDSource::~KMPlayerDVDSource () {
+}
+
+bool KMPlayerDVDSource::processOutput (const QString & str) {
+    if (KMPlayerSource::processOutput (str))
+        return true;
+    //kdDebug () << "scanning " << cstr << endl;
+    if (subtitleRegExp.search (str) > -1) {
+        m_dvdsubtitlemenu->insertItem (subtitleRegExp.cap (2), this,
+                SLOT (subtitleMenuClicked (int)), 0,
+                subtitleRegExp.cap (1).toInt ());
+        kdDebug () << "subtitle sid:" << subtitleRegExp.cap (1) <<
+            " lang:" << subtitleRegExp.cap (2) << endl;
+    } else if (langRegExp.search (str) > -1) {
+        m_dvdlanguagemenu->insertItem (langRegExp.cap (1), this,
+                SLOT (languageMenuClicked (int)), 0,
+                langRegExp.cap (2).toInt ());
+        kdDebug () << "lang aid:" << langRegExp.cap (2) <<
+            " lang:" << langRegExp.cap (1) << endl;
+    } else if (titleRegExp.search (str) > -1) {
+        kdDebug () << "title " << titleRegExp.cap (1) << endl;
+        unsigned ts = titleRegExp.cap (1).toInt ();
+        if ( ts > 100) ts = 100;
+        for (unsigned t = 0; t < ts; t++)
+            m_dvdtitlemenu->insertItem (QString::number (t + 1), this,
+                    SLOT (titleMenuClicked(int)), 0, t);
+    } else if (chapterRegExp.search (str) > -1) {
+        kdDebug () << "chapter " << chapterRegExp.cap (1) << endl;
+        unsigned chs = chapterRegExp.cap (1).toInt ();
+        if ( chs > 100) chs = 100;
+        for (unsigned c = 0; c < chs; c++)
+            m_dvdchaptermenu->insertItem (QString::number (c + 1), this,
+                    SLOT (chapterMenuClicked(int)), 0, c);
+    } else
+        return false;
+    return true;
+}
+
+void KMPlayerDVDSource::activate () {
+    init ();
+    deactivate (); // clearMenus ?
+    QString args ("-v dvd:// -identify -frames 0 -quiet -nocache");
+    if (m_player->configDialog ()->dvddevice.length () > 0)
+        args += QString(" -dvd-device ") + m_player->configDialog ()->dvddevice;
+    langRegExp.setPattern (m_player->configDialog ()->langpattern);
+    subtitleRegExp.setPattern (m_player->configDialog ()->subtitlespattern);
+    titleRegExp.setPattern (m_player->configDialog ()->titlespattern);
+    chapterRegExp.setPattern (m_player->configDialog ()->chapterspattern);
+    bool loop = m_player->configDialog ()->loop;
+    m_player->configDialog ()->loop = false;
+    if (m_player->run (args.ascii()))
+        connect (m_player, SIGNAL (finished()), this, SLOT(finished ()));
+    else
+        app->slotStatusMsg (i18n ("Ready."));
+    m_player->configDialog ()->loop = loop;
+}
+
+void KMPlayerDVDSource::deactivate () {
+    m_dvdtitlemenu->clear ();
+    m_dvdsubtitlemenu->clear ();
+    m_dvdchaptermenu->clear ();
+    m_dvdlanguagemenu->clear ();
+}
+
+void KMPlayerDVDSource::finished () {
+    disconnect (m_player, SIGNAL (finished()), this, SLOT (finished ()));
+    m_player->setMovieLength (10 * length ());
+    if (m_dvdtitlemenu->count ()) m_dvdtitlemenu->setItemChecked (0, true);
+    if (m_dvdchaptermenu->count ()) m_dvdchaptermenu->setItemChecked (0, true);
+    if (m_dvdlanguagemenu->count()) m_dvdlanguagemenu->setItemChecked (m_dvdlanguagemenu->idAt (0), true);
+    app->resizePlayer (100);
+    if (m_player->configDialog ()->playdvd)
+        play ();
+    app->slotStatusMsg (i18n ("Ready."));
+}
+
+void KMPlayerDVDSource::play () {
+    QString args;
+    unsigned i;
+    args.sprintf ("-slave");
+    for (i = 0; i < m_dvdsubtitlemenu->count(); i++)
+        if (m_dvdsubtitlemenu->isItemChecked (m_dvdsubtitlemenu->idAt (i)))
+            args += " -sid " + QString::number (m_dvdsubtitlemenu->idAt (i));
+    for (i = 0; i < m_dvdtitlemenu->count(); i++)
+        if (m_dvdtitlemenu->isItemChecked (i)) {
+            args += " -dvd " + m_dvdtitlemenu->findItem (i)->text ();
+            break;
+        }
+    if (i == m_dvdtitlemenu->count())
+        args += " dvd:// ";
+    for (i = 0; i < m_dvdchaptermenu->count(); i++)
+        if (m_dvdchaptermenu->isItemChecked (i))
+            args += " -chapter " + m_dvdchaptermenu->findItem (i)->text ();
+    for (i = 0; i < m_dvdlanguagemenu->count(); i++)
+        if (m_dvdlanguagemenu->isItemChecked (m_dvdlanguagemenu->idAt (i)))
+            args += " -aid " + QString::number (m_dvdlanguagemenu->idAt (i));
+    if (m_player->configDialog ()->dvddevice.length () > 0)
+        args += QString(" -dvd-device ") + m_player->configDialog ()->dvddevice;
+    m_player->run (args.ascii());
+}
+
+void KMPlayerDVDSource::titleMenuClicked (int id) {
+    menuItemClicked (m_dvdtitlemenu, id);
+}
+
+void KMPlayerDVDSource::subtitleMenuClicked (int id) {
+    menuItemClicked (m_dvdsubtitlemenu, id);
+}
+
+void KMPlayerDVDSource::languageMenuClicked (int id) {
+    menuItemClicked (m_dvdlanguagemenu, id);
+}
+
+void KMPlayerDVDSource::chapterMenuClicked (int id) {
+    menuItemClicked (m_dvdchaptermenu, id);
+}
+
+//-----------------------------------------------------------------------------
+
+KMPlayerVCDSource::KMPlayerVCDSource (KMPlayerApp * a, QPopupMenu * m)
+    : KMPlayerDiscSource (a, m) {
+    m_menu->insertTearOffHandle ();
+    m_vcdtrackmenu = new QPopupMenu (app);
+    m_vcdtrackmenu->setCheckable (true);
+    m_menu->insertItem (i18n ("&Tracks"), m_vcdtrackmenu);
+}
+
+KMPlayerVCDSource::~KMPlayerVCDSource () {
+}
+
+bool KMPlayerVCDSource::processOutput (const QString & str) {
+    if (KMPlayerSource::processOutput (str))
+        return true;
+    //kdDebug () << "scanning " << cstr << endl;
+    if (trackRegExp.search (str) > -1) {
+        m_vcdtrackmenu->insertItem (trackRegExp.cap (1), this,
+                                    SLOT (trackMenuClicked(int)), 0,
+                                    m_vcdtrackmenu->count ());
+        kdDebug () << "track " << trackRegExp.cap (1) << endl;
+        return true;
+    }
+    return false;
+}
+
+void KMPlayerVCDSource::activate () {
+    init ();
+    deactivate (); // clearMenus ?
+    QString args ("-v vcd:// -identify -frames 0 -quiet -nocache");
+    if (m_player->configDialog ()->vcddevice.length () > 0)
+        args += QString(" -cdrom-device ")+m_player->configDialog ()->vcddevice;
+    trackRegExp.setPattern (m_player->configDialog ()->trackspattern);
+    bool loop = m_player->configDialog ()->loop;
+    m_player->configDialog ()->loop = false;
+    if (m_player->run (args.ascii()))
+        connect (m_player, SIGNAL (finished()), this, SLOT(finished ()));
+    else
+        app->slotStatusMsg (i18n ("Ready."));
+    m_player->configDialog ()->loop = loop;
+}
+
+void KMPlayerVCDSource::deactivate () {
+    m_vcdtrackmenu->clear ();
+}
+
+void KMPlayerVCDSource::finished () {
+    disconnect (m_player, SIGNAL (finished()), this, SLOT (finished ()));
+    m_player->setMovieLength (10 * length ());
+    if (m_vcdtrackmenu->count()) m_vcdtrackmenu->setItemChecked (0, true);
+    app->resizePlayer (100);
+    if (m_player->configDialog ()->playdvd)
+        play ();
+    app->slotStatusMsg (i18n ("Ready."));
+}
+
+void KMPlayerVCDSource::play () {
+    QString args;
+    unsigned i;
+    args.sprintf ("-slave");
+    for (i = 0; i < m_vcdtrackmenu->count(); i++)
+        if (m_vcdtrackmenu->isItemChecked (i)) {
+            args += " -vcd " + m_vcdtrackmenu->findItem (i)->text ();
+            break;
+        }
+    if (i == m_vcdtrackmenu->count())
+        args += " vcd:// ";
+    if (m_player->configDialog ()->vcddevice.length () > 0)
+        args += QString(" -cdrom-device") + m_player->configDialog()->vcddevice;
+    m_player->run (args.ascii());
+}
+
+void KMPlayerVCDSource::trackMenuClicked (int id) {
+    menuItemClicked (m_vcdtrackmenu, id);
+}
+
+//-----------------------------------------------------------------------------
+
+KMPlayerPipeSource::KMPlayerPipeSource (KMPlayerApp * a)
+    : KMPlayerSource (a->player ()), app (a) {
+}
+
+KMPlayerPipeSource::~KMPlayerPipeSource () {
+}
+
+void KMPlayerPipeSource::activate () {
+    init ();
+    play ();
+    app->slotStatusMsg (i18n ("Ready."));
+}
+
+void KMPlayerPipeSource::play () {
+    QString args ("-");
+    m_player->run (args.ascii(), m_pipe.ascii());
+    m_player->setMovieLength (10 * length ());
+    app->resizePlayer (100);
+}
+
+void KMPlayerPipeSource::deactivate () {
+}
+
+
 #include "kmplayer.moc"
+#include "kmplayersource.moc"
