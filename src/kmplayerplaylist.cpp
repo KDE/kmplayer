@@ -208,7 +208,7 @@ KDE_NO_EXPORT void Element::replaceChild (ElementPtr _new, ElementPtr old) {
 }
 
 ElementPtr Element::childFromTag (const QString &) {
-    return 0L;
+    return ElementPtr ();
 }
 
 KDE_NO_EXPORT void Element::characterData (const QString & s) {
@@ -349,7 +349,7 @@ ElementPtr Mrl::childFromTag (const QString & tag) {
     Element * elm = fromXMLDocumentGroup (m_doc, tag);
     if (elm)
         return elm->self ();
-    return 0L;
+    return ElementPtr ();
 }
 
 ElementPtr Mrl::realMrl () {
@@ -372,7 +372,7 @@ KDE_NO_EXPORT ElementPtr Document::childFromTag (const QString & tag) {
     Element * elm = fromXMLDocumentGroup (m_doc, tag);
     if (elm)
         return elm->self ();
-    return 0L;
+    return ElementPtr ();
 }
 
 void Document::dispose () {
@@ -406,7 +406,7 @@ KDE_NO_EXPORT ElementPtr Smil::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "body"))
         return (new Body (m_doc))->self ();
     // else if head
-    return 0L;
+    return ElementPtr ();
 }
 
 //-----------------------------------------------------------------------------
@@ -417,7 +417,7 @@ KDE_NO_EXPORT ElementPtr Body::childFromTag (const QString & tag) {
     if (!elm) elm = fromContentControlGroup (m_doc, tag);
     if (elm)
         return elm->self ();
-    return 0L;
+    return ElementPtr ();
 }
 
 //-----------------------------------------------------------------------------
@@ -428,7 +428,7 @@ KDE_NO_EXPORT ElementPtr Par::childFromTag (const QString & tag) {
     if (!elm) elm = fromContentControlGroup (m_doc, tag);
     if (elm)
         return elm->self ();
-    return 0L;
+    return ElementPtr ();
 }
 
 //-----------------------------------------------------------------------------
@@ -439,7 +439,7 @@ KDE_NO_EXPORT ElementPtr Seq::childFromTag (const QString & tag) {
     if (!elm) elm = fromContentControlGroup (m_doc, tag);
     if (elm)
         return elm->self ();
-    return 0L;
+    return ElementPtr ();
 }
 
 //-----------------------------------------------------------------------------
@@ -449,7 +449,7 @@ KDE_NO_EXPORT ElementPtr Switch::childFromTag (const QString & tag) {
     if (!elm) elm = fromMediaContentGroup (m_doc, tag);
     if (elm)
         return elm->self ();
-    return 0L;
+    return ElementPtr ();
 }
 
 bool Switch::isMrl () {
@@ -465,7 +465,7 @@ KDE_NO_EXPORT ElementPtr MediaType::childFromTag (const QString & tag) {
     Element * elm = fromContentControlGroup (m_doc, tag);
     if (elm)
         return elm->self ();
-    return 0L;
+    return ElementPtr ();
 }
 
 KDE_NO_EXPORT void MediaType::opened () {
@@ -494,7 +494,7 @@ KDE_NO_EXPORT ElementPtr Asx::childFromTag (const QString & tag) {
         return (new EntryRef (m_doc))->self ();
     else if (!strcasecmp (name, "title"))
         return (new Title (m_doc))->self ();
-    return 0L;
+    return ElementPtr ();
 }
 
 KDE_NO_EXPORT bool Asx::isMrl () {
@@ -513,7 +513,7 @@ KDE_NO_EXPORT ElementPtr Entry::childFromTag (const QString & tag) {
         return (new Ref (m_doc))->self ();
     else if (!strcasecmp (name, "title"))
         return (new Title (m_doc))->self ();
-    return 0L;
+    return ElementPtr ();
 }
 
 KDE_NO_EXPORT bool Entry::isMrl () {

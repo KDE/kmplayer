@@ -96,7 +96,7 @@ template <class T> struct WeakPtr;
 template <class T>
 struct SharedPtr {
     SharedPtr () : data (0L) {};
-    SharedPtr (T * t) : data (t ? new SharedData<T> (t, false) : 0L) {};
+    explicit SharedPtr (T *t) : data (t ? new SharedData<T> (t, false) : 0L) {};
     SharedPtr (const SharedPtr<T> & s) : data (s.data) { if (data) data->addRef (); }
     SharedPtr (const WeakPtr <T> &);
     ~SharedPtr () { if (data) data->release (); }

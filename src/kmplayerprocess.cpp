@@ -1227,7 +1227,7 @@ KDE_NO_CDTOR_EXPORT ConfigNode::ConfigNode (ElementPtr & d)
 ElementPtr ConfigDocument::childFromTag (const QString & tag) {
     if (tag.lower () == QString ("document"))
         return (new ConfigNode (m_doc))->self ();
-    return 0L;
+    return ElementPtr ();
 }
 
 ElementPtr ConfigNode::childFromTag (const QString &) {
