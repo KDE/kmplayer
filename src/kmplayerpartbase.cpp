@@ -495,11 +495,12 @@ void PartBase::lengthFound (int len) {
 }
 
 unsigned long PartBase::position () const {
-    return 100 * m_source->position ();
+    return m_source ? 100 * m_source->position () : 0;
 }
 
 void PartBase::pause () {
-    m_process->pause ();
+    if (m_process)
+        m_process->pause ();
 }
 
 void PartBase::back () {
@@ -540,6 +541,7 @@ void PartBase::record () {
 }
 
 void PartBase::play () {
+    if (!m_process) return;
     Source * src = m_process->player() == this ? m_source : m_process->source();
     if (m_process->state () == Process::NotRunning) {
         m_process->ready ();
@@ -554,25 +556,28 @@ bool PartBase::playing () const {
 }
 
 void PartBase::stop () {
-    Source * src = m_process->player() == this ? m_source : m_process->source();
-    if (m_view) {
-        if (!m_view->controlPanel ()->button (ControlPanel::button_stop)->isOn ())
-        m_view->controlPanel ()->button (ControlPanel::button_stop)->toggle ();
+    QPushButton * b = m_view ? m_view->controlPanel ()->button (ControlPanel::button_stop) : 0L;
+    if (b) {
+        if (!b->isOn ())
+            b->toggle ();
         m_view->setCursor (QCursor (Qt::WaitCursor));
     }
-    if (m_process)
+    if (m_process) {
         m_process->quit ();
-    if (src)
-        src->first ();
+        Source * src = m_process->player()==this ? m_source:m_process->source();
+        if (src)
+            src->first ();
+    }
     if (m_view) {
         m_view->setCursor (QCursor (Qt::ArrowCursor));
-        if (m_view->controlPanel ()->button (ControlPanel::button_stop)->isOn ())
-            m_view->controlPanel ()->button (ControlPanel::button_stop)->toggle ();
+        if (b->isOn ())
+            b->toggle ();
     }
 }
 
 void PartBase::seek (unsigned long msec) {
-    m_process->seek (msec/100, true);
+    if (m_process)
+        m_process->seek (msec/100, true);
 }
 
 void PartBase::adjustVolume (int incdec) {
