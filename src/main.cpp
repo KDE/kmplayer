@@ -38,7 +38,7 @@ static KCmdLineOptions options[] =
 
 extern "C" {
 
-    int kdemain (int argc, char *argv[])
+    KDE_EXPORT int kdemain (int argc, char *argv[])
     {
         setsid ();
 

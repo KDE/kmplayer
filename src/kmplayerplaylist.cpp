@@ -52,7 +52,7 @@ static Element * fromMediaContentGroup (ElementPtr & d, const QString & tag) {
         return new MediaType (d, tag);
     // text, img, animation, textstream, ref, brush
     return 0L;
-};
+}
 
 static Element * fromContentControlGroup (ElementPtr & d, const QString & tag) {
     if (!strcmp (tag.latin1 (), "switch"))
@@ -374,7 +374,7 @@ Document::Document (const QString & s) : m_tree_version (0) {
 
 KDE_NO_CDTOR_EXPORT Document::~Document () {
     kdDebug () << "~Document\n";
-};
+}
 
 KDE_NO_EXPORT ElementPtr Document::childFromTag (const QString & tag) {
     Element * elm = fromXMLDocumentGroup (m_doc, tag);

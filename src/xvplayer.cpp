@@ -238,7 +238,7 @@ void KXVideoPlayer::init () {
                         if (!strcmp (attributes[i].name, "XV_FREQ"))
                             freq_found = true;
                         Atom atom = XInternAtom (display, attributes[i].name, false);
-                        fprintf (stderr, "%s[%d] (%d .. %d)", attributes[i].name, atom, attributes[i].min_value, attributes[i].max_value);
+                        fprintf (stderr, "%s[%d] (%d .. %d)", attributes[i].name, ( int ) atom, attributes[i].min_value, attributes[i].max_value);
                         if (attributes[i].flags & XvGettable && XvGetPortAttribute (display, port, atom, &cur_val) == Success)
                             fprintf (stderr, " current: %d", cur_val);
                         fprintf (stderr, "\n");
@@ -271,7 +271,7 @@ void KXVideoPlayer::init () {
                             item.setAttribute (attvalue, QString::number (encodings[i].encoding_id));
                             item.setAttribute (attname, QString (encodings[i].name));
                             port_item.appendChild (item);
-                            fprintf (stderr, " encoding: %d %s\n", encodings[i].encoding_id, encodings[i].name);
+                            fprintf (stderr, " encoding: %d %s\n", ( int ) encodings[i].encoding_id, encodings[i].name);
                         }
                     }
                     elm.appendChild (port_item);
@@ -480,7 +480,7 @@ protected:
                     XLockDisplay(display);
                     len = XLookupString(&kevent, kbuf, sizeof(kbuf), &ksym, NULL);
                     XUnlockDisplay(display);
-                    fprintf(stderr, "keypressed 0x%x 0x%x\n", kevent.keycode, ksym);
+                    fprintf(stderr, "keypressed 0x%x 0x%x\n", ( int ) kevent.keycode, ( int ) ksym);
                     switch (ksym) {
                         case XK_q:
                         case XK_Q:
@@ -501,7 +501,7 @@ protected:
                         putVideo ();
                     break;
                 case XvVideoNotify:
-                    fprintf (stderr, "xvevent %d\n", ((XvEvent*)&xevent)->xvvideo.reason);
+                    fprintf (stderr, "xvevent %lu\n", ((XvEvent*)&xevent)->xvvideo.reason);
                     break;
                 default:
                     if (xevent.type < LASTEvent)
@@ -593,7 +593,7 @@ int main(int argc, char **argv) {
     XLockDisplay(display);
     XClientMessageEvent ev = {
         ClientMessage, 0, true, display, wid, 
-        XInternAtom (display, "XVIDEO", false), 8, {b: "quit_now"}
+        XInternAtom (display, "XVIDEO", false), 8, {"quit_now"}
     };
     XSendEvent (display, wid, FALSE, StructureNotifyMask, (XEvent *) & ev);
     XFlush (display);
