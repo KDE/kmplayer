@@ -1,0 +1,19 @@
+<smil>
+  <head>
+    <layout>
+      <root-layout width="640" height="240" background-color="yellow"/>
+      <region id="reg_img1" left="5" top="15" width="150" height="210" background-color="red"/>
+      <region id="reg_img2" left="165" top="15" width="150" height="210" background-color="white"/>
+      <region id="reg_img3" left="325" top="15" width="150" height="210" background-color="blue"/>
+      <region id="reg_img4" left="485" top="15" width="150" height="210" background-color="orange"/>
+    </layout>
+  </head>
+  <body>
+    <par dur="10">
+      <img src="../icons/hi128-app-kmplayer.png" region="reg_img1" fit="fill" fill="freeze"/>
+      <img src="../icons/hi128-app-kmplayer.png" region="reg_img2" fit="hidden" fill="freeze"/>
+      <img src="../icons/hi128-app-kmplayer.png" region="reg_img3" fit="meet" fill="freeze"/>
+      <img src="../icons/hi128-app-kmplayer.png" region="reg_img4" fit="slice" fill="freeze"/>
+    </par>
+  </body>
+</smil>

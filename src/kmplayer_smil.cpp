@@ -905,7 +905,7 @@ namespace KMPlayer {
 }
 
 KDE_NO_CDTOR_EXPORT MediaTypeRuntime::MediaTypeRuntime (ElementPtr e)
- : TimedRuntime (e), mt_d (new MediaTypeRuntimePrivate) {}
+ : TimedRuntime (e), mt_d (new MediaTypeRuntimePrivate), fit (fit_hidden) {}
 
 KDE_NO_CDTOR_EXPORT MediaTypeRuntime::~MediaTypeRuntime () {
     killWGet ();
@@ -983,6 +983,17 @@ QString MediaTypeRuntime::setParam (const QString & name, const QString & val) {
             if (!url.isEmpty ())
                 source_url = url;
         }
+    } else if (name == QString::fromLatin1 ("fit")) {
+        if (val == QString::fromLatin1 ("fill"))
+            fit = fit_fill;
+        else if (val == QString::fromLatin1 ("hidden"))
+            fit = fit_hidden;
+        else if (val == QString::fromLatin1 ("meet"))
+            fit = fit_meet;
+        else if (val == QString::fromLatin1 ("scroll"))
+            fit = fit_scroll;
+        else if (val == QString::fromLatin1 ("slice"))
+            fit = fit_slice;
     } else
         return TimedRuntime::setParam (name, val);
     return ElementRuntime::setParam (name, val);
@@ -1686,7 +1697,36 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
     if (d->image && region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
         RegionNode * r = region_node.ptr ();
-        p.drawPixmap (QRect (r->x, r->y, r->w, r->h), *d->image);
+        int w = r->w, h = r->h;
+        if (fit == fit_hidden) {
+            if (d->image->width () < w)
+                w = d->image->width ();
+            if (d->image->height () < h)
+                h = d->image->height ();
+            p.drawPixmap (r->x, r->y, *d->image, 0, 0, w, h);
+        } else if (fit == fit_meet) { // scale in region, keeping aspects
+            if (h > 0 && d->image->height () > 0) {
+                int a = 100 * d->image->width () / d->image->height ();
+                int w1 = a * h / 100;
+                if (w1 > w)
+                    h = 100 * w / a;
+                else
+                    w = w1;
+                p.drawPixmap (QRect (r->x, r->y, w, h), *d->image);
+            }
+        } else if (fit == fit_slice) { // scale in region, keeping aspects
+            if (h > 0 && d->image->height () > 0) {
+                int a = 100 * d->image->width () / d->image->height ();
+                int w1 = a * h / 100;
+                if (w1 > w)
+                    w = w1;
+                else
+                    h = 100 * w / a;
+                p.drawPixmap (QRect (r->x, r->y, w, h), *d->image);
+            }
+        } else //if (fit == fit_fill) { // scale in region
+            p.drawPixmap (QRect (r->x, r->y, w, h), *d->image);
+        // else fit_scroll
     }
 }
 

@@ -1,3 +1,12 @@
+Changes since version 0.9.0-pre2
+- Added 'fit' attribute for SMIL's mediatypes (only used for images now, and
+  value 'scoll' is not implemented)
+- Delayed mouse hiding in fullscreen, patch from Ben Laenen
+- Option for docking in system tray
+- Smarter painting when moving regions in SMIL document
+- Implement animate's 'values' attribute and 'calcMode="discrete"' for SMIL 
+Changes since version 0.9.0-pre1
+- Include tests directory
 Changes since version 0.8.4b
 - Build fix for compiling with -fvisibility=hidden
 - More work on SMIL, support for layout/root-layout/region tags so one can

@@ -158,6 +158,7 @@ protected:
     bool wget (const KURL & url);
     void killWGet ();
 public:
+    enum Fit { fit_fill, fit_hidden, fit_meet, fit_slice, fit_scroll };
     ~MediaTypeRuntime ();
     virtual void end ();
     virtual void started ();
@@ -166,6 +167,7 @@ public:
 protected:
     MediaTypeRuntimePrivate * mt_d;
     QString source_url;
+    Fit fit;
 protected slots:
     virtual void slotResult (KIO::Job*);
     void slotData (KIO::Job*, const QByteArray& qb);
