@@ -27,6 +27,7 @@
 #include <qeventloop.h>
 #include <qapplication.h>
 #include <qcstring.h>
+#include <qregexp.h>
 #include <qmultilineedit.h>
 #include <qpair.h>
 #include <qpushbutton.h>
@@ -41,7 +42,6 @@
 #include <kaboutdata.h>
 #include <kdebug.h>
 #include <kconfig.h>
-#include <kregexp.h>
 #include <kaction.h>
 #include <kprotocolmanager.h>
 
@@ -192,7 +192,7 @@ void KMPlayer::init () {
     movie_width = 0;
     movie_height = 0;
     m_bPosSliderPressed = false;
-    m_posRegExp.compile ("V:[^0-9]*([0-9\\.]+)");
+    m_posRegExp.setPattern ("V:[^0-9]*([0-9\\.]+)");
     connect (m_view->backButton (), SIGNAL (clicked ()), this, SLOT (back ()));
     connect (m_view->playButton (), SIGNAL (clicked ()), this, SLOT (play ()));
     connect (m_view->forwardButton (), SIGNAL (clicked ()), this, SLOT (forward ()));
@@ -290,36 +290,35 @@ bool KMPlayer::openFile () {
 
 void KMPlayer::processOutput (KProcess *, char * str, int len) {
     if (!m_view || len <= 0) return;
-    // str seems to be zero terminated
-    //QCString out (str, len + 1);
-    const char * out = str;
 
-    if (m_posRegExp.match (out)) {
+    QString out = QString::fromLocal8Bit (str, len);
+
+    if (m_posRegExp.search (out) > -1) {
         // during playing, this regexp will match often
-        emit moviePositionChanged (int (atof (m_posRegExp.group (1))));
+        emit moviePositionChanged (int (m_posRegExp.cap (1).toFloat ()));
     } else {
         m_view->addText (out);
-        KRegExp sizeRegExp (m_configdialog->sizepattern.ascii());
+        QRegExp sizeRegExp (m_configdialog->sizepattern);
         bool ok;
-        if (sizeRegExp.match (out)) {
-            movie_width = QString (sizeRegExp.group (1)).toInt (&ok);
-            movie_height = ok ? QString (sizeRegExp.group (2)).toInt (&ok) : 0;
+        if (sizeRegExp.search (out) > -1) {
+            movie_width = sizeRegExp.cap (1).toInt (&ok);
+            movie_height = ok ? sizeRegExp.cap (2).toInt (&ok) : 0;
             if (ok && movie_width > 0 && movie_height > 0 && m_view->viewer ()->aspect () < 0.01) {
                 m_view->viewer ()->setAspect (1.0 * movie_width / movie_height);
                 if (m_liveconnectextension)
                     m_liveconnectextension->setSize (movie_width, movie_height);
             }
         } else if (m_browserextension) {
-            KRegExp cacheRegExp (m_configdialog->cachepattern.ascii());
-            KRegExp startRegExp (m_configdialog->startpattern.ascii());
-            if (cacheRegExp.match (out)) {
-                double p = QString (cacheRegExp.group (1)).toDouble (&ok);
+            QRegExp cacheRegExp (m_configdialog->cachepattern);
+            QRegExp startRegExp (m_configdialog->startpattern);
+            if (cacheRegExp.search (out) > -1) {
+                double p = cacheRegExp.cap (1).toDouble (&ok);
                 if (ok) {
                     m_browserextension->setLoadingProgress (int (p));
                     m_browserextension->infoMessage 
-                        (QString (cacheRegExp.group (1)) + i18n ("% Cache fill"));
+                        (QString (cacheRegExp.cap (1)) + i18n ("% Cache fill"));
                 }
-            } else if (startRegExp.match (out)) {
+            } else if (startRegExp.search (out) > -1) {
                 m_browserextension->setLoadingProgress (100);
                 emit completed ();
                 m_started_emited = false;

@@ -367,7 +367,6 @@ KMPlayerView::~KMPlayerView () {
     if (m_layer->parent () != this)
         delete m_layer;
     setUseArts(false);
-    printf ("~KMPlayer\n");
 }
 
 void KMPlayerView::setUseArts (bool b) {

@@ -19,6 +19,7 @@
 #undef Always
 #include <qdir.h>
 #include <qdatastream.h>
+#include <qregexp.h>
 #include <qiodevice.h>
 #include <qprinter.h>
 #include <qpainter.h>
@@ -41,7 +42,6 @@
 #include <kconfig.h>
 #include <kstdaction.h>
 #include <kdebug.h>
-#include <kregexp.h>
 #include <kprocess.h>
 #include <dcopclient.h>
 
@@ -362,10 +362,10 @@ void KMPlayerApp::finishedOpenDVD () {
 
     KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
     QMultiLineEdit * txt = kview->consoleOutput ();
-    KRegExp langRegExp (m_player->configDialog ()->langpattern.ascii());
-    KRegExp subtitleRegExp (m_player->configDialog ()->subtitlespattern.ascii());
-    KRegExp titleRegExp (m_player->configDialog ()->titlespattern.ascii());
-    KRegExp chapterRegExp (m_player->configDialog ()->chapterspattern.ascii());
+    QRegExp langRegExp (m_player->configDialog ()->langpattern);
+    QRegExp subtitleRegExp (m_player->configDialog ()->subtitlespattern);
+    QRegExp titleRegExp (m_player->configDialog ()->titlespattern);
+    QRegExp chapterRegExp (m_player->configDialog ()->chapterspattern);
     //kdDebug () << "finishedOpenDVD " << txt->numLines () << endl;
     for (int i = 0; i < txt->numLines (); i++) {
         QString str = txt->textLine (i);
@@ -387,28 +387,28 @@ void KMPlayerApp::finishedOpenDVD () {
             int pos = str.find ('=');
             if (pos > 0)
                 kview->positionSlider()->setMaxValue (str.mid (pos + 1).toInt());
-        } else if (subtitleRegExp.match (cstr)) {
-            m_dvdsubtitlemenu->insertItem (subtitleRegExp.group (2), this,
-                                           SLOT (subtitleMenuClicked(int)), 0,
-                                           atoi (subtitleRegExp.group (1)));
-            kdDebug () << "subtitle sid:" << subtitleRegExp.group (1) <<
-                " lang:" << subtitleRegExp.group (2) << endl;
-        } else if (langRegExp.match (cstr)) {
-            m_dvdlanguagemenu->insertItem (langRegExp.group (1), this,
-                                           SLOT (languageMenuClicked(int)), 0,
-                                           atoi (langRegExp.group (2)));
-            kdDebug () << "lang aid:" << langRegExp.group (2) <<
-                " lang:" << langRegExp.group (1) << endl;
-        } else if (titleRegExp.match (cstr)) {
-            kdDebug () << "title " << titleRegExp.group (1) << endl;
-            unsigned ts = QString (titleRegExp.group (1)).toInt ();
+        } else if (subtitleRegExp.search (cstr) > -1) {
+            m_dvdsubtitlemenu->insertItem (subtitleRegExp.cap (2), this,
+                                           SLOT (subtitleMenuClicked (int)), 0,
+                                           subtitleRegExp.cap (1).toInt ());
+            kdDebug () << "subtitle sid:" << subtitleRegExp.cap (1) <<
+                " lang:" << subtitleRegExp.cap (2) << endl;
+        } else if (langRegExp.search (cstr) > -1) {
+            m_dvdlanguagemenu->insertItem (langRegExp.cap (1), this,
+                                           SLOT (languageMenuClicked (int)), 0,
+                                           langRegExp.cap (2).toInt ());
+            kdDebug () << "lang aid:" << langRegExp.cap (2) <<
+                " lang:" << langRegExp.cap (1) << endl;
+        } else if (titleRegExp.search (cstr) > -1) {
+            kdDebug () << "title " << titleRegExp.cap (1) << endl;
+            unsigned ts = titleRegExp.cap (1).toInt ();
             if ( ts > 100) ts = 100;
             for (unsigned t = 0; t < ts; t++)
                 m_dvdtitlemenu->insertItem (QString::number (t + 1), this,
                                             SLOT (titleMenuClicked(int)), 0, t);
-        } else if (chapterRegExp.match (cstr)) {
-            kdDebug () << "chapter " << chapterRegExp.group (1) << endl;
-            unsigned chs = QString (chapterRegExp.group (1)).toInt ();
+        } else if (chapterRegExp.search (cstr) > -1) {
+            kdDebug () << "chapter " << chapterRegExp.cap (1) << endl;
+            unsigned chs = chapterRegExp.cap (1).toInt ();
             if ( chs > 100) chs = 100;
             for (unsigned c = 0; c < chs; c++)
                 m_dvdchaptermenu->insertItem (QString::number (c + 1), this,
@@ -434,7 +434,7 @@ void KMPlayerApp::finishedOpenVCD () {
 
     KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
     QMultiLineEdit * txt = kview->consoleOutput ();
-    KRegExp trackRegExp (m_player->configDialog ()->trackspattern.ascii());
+    QRegExp trackRegExp (m_player->configDialog ()->trackspattern);
     //kdDebug () << "finishedOpenDVD " << txt->numLines () << endl;
     for (int i = 0; i < txt->numLines (); i++) {
         QString str = txt->textLine (i);
@@ -456,11 +456,11 @@ void KMPlayerApp::finishedOpenVCD () {
             int pos = str.find ('=');
             if (pos > 0)
                 kview->positionSlider()->setMaxValue (str.mid (pos + 1).toInt());
-        } else if (trackRegExp.match (cstr)) {
-            m_vcdtrackmenu->insertItem (trackRegExp.group (1), this,
+        } else if (trackRegExp.search (cstr) > -1) {
+            m_vcdtrackmenu->insertItem (trackRegExp.cap (1), this,
                                         SLOT (trackMenuClicked(int)), 0,
                                            m_vcdtrackmenu->count ());
-            kdDebug () << "track " << trackRegExp.group (1) << endl;
+            kdDebug () << "track " << trackRegExp.cap (1) << endl;
         }
     }
     if (m_vcdtrackmenu->count()) m_vcdtrackmenu->setItemChecked (0, true);

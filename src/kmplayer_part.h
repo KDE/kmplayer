@@ -22,10 +22,10 @@
 #include <kparts/browserextension.h>
 #include <kparts/factory.h>
 #include <kurl.h>
-#include <kregexp.h>
 #include <qobject.h>
 #include <qstringlist.h>
 #include <qguardedptr.h>
+#include <qregexp.h>
 #include "kmplayerview.h"
 
 
@@ -149,7 +149,7 @@ private:
     KMPlayerBrowserExtension * m_browserextension;
     KMPlayerLiveConnectExtension * m_liveconnectextension;
     KURL m_url;
-    KRegExp m_posRegExp;
+    QRegExp m_posRegExp;
     QStringList commands;
     QString m_href;
     int m_stoplooplevel;
