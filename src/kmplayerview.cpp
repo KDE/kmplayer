@@ -607,23 +607,25 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view) :
 KDE_NO_CDTOR_EXPORT PlayListView::~PlayListView () {
 }
 
-static void populateTree (ElementPtr e, ElementPtr focus, PlayListView * tree, QListViewItem *item) {
+static void populateTree (ElementPtr e, ElementPtr focus, PlayListView * tree, QListViewItem * item, QListViewItem ** curitem) {
     Mrl * mrl = e->mrl ();
     item->setText(0, mrl ? (mrl->pretty_name.isEmpty () ? (mrl->src.isEmpty() ? QString(e->nodeName()) : KURL(mrl->src).prettyURL()) : mrl->pretty_name) : QString(e->nodeName()));
-    if (focus == e) {
-        for (QListViewItem * p = item->parent (); p; p = p->parent ())
-            p->setOpen (true);
-        tree->setSelected (item, true);
-    }
+    if (focus == e)
+        *curitem = item;
     for (ElementPtr c = e->lastChild (); c; c = c->previousSibling ())
         if (strcmp (c->nodeName (), "#text") && c->expose ())
-            populateTree (c, focus, tree, new ListViewItem (item, c, tree));
+            populateTree(c, focus, tree, new ListViewItem(item,c,tree),curitem);
 }
 
 void PlayListView::updateTree (ElementPtr root, ElementPtr active) {
     clear ();
     if (!root) return;
-    populateTree (root, active, this, new ListViewItem (this, root));
+    QListViewItem * curitem = 0L;
+    populateTree (root, active, this, new ListViewItem (this, root), &curitem);
+    if (curitem) {
+        setSelected (curitem, true);
+        ensureItemVisible (curitem);
+    }
 }
 
 void PlayListView::selectItem (const QString & txt) {
