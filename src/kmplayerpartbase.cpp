@@ -167,7 +167,7 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
         source = m_process->source ();
     }
     m_process = process;
-    m_process->setSource (source);
+    m_process->setSource (source); // will stop the process
     connect (m_process, SIGNAL (started ()), this, SLOT (processStarted ()));
     connect (m_process, SIGNAL (finished ()), this, SLOT (processFinished ()));
     connect (m_process, SIGNAL (positionChanged (int)),
