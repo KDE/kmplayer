@@ -576,9 +576,8 @@ void KMPlayerSettings::okPressed () {
     if (urlchanged) {
         m_player->urlSource ()->setSubURL
             (configdialog->m_SourcePageURL->sub_url->url ());
-        m_player->openURL (KURL (configdialog->m_SourcePageURL->url->url ()));
-        KURL sub_url (configdialog->m_SourcePageURL->sub_url->url ());
-        m_player->process ()->source ()->setSubURL (sub_url);
+        m_player->openURL (makeURL (configdialog->m_SourcePageURL->url->url ()));
+        m_player->process ()->source ()->setSubURL (makeURL (configdialog->m_SourcePageURL->sub_url->url ()));
     }
 }
 

@@ -28,6 +28,8 @@
 #include <qobject.h>
 #include <qstringlist.h>
 
+#include <kurl.h>
+
 
 class KMPlayer;
 class KConfig;
@@ -43,6 +45,15 @@ public:
 template <class T>
 void Deleter (T * t) {
     delete t;
+}
+
+inline KURL makeURL (const QString & s) {
+    KURL url;
+    if (KURL (s).isLocalFile ())
+        url.setPath (s);
+    else
+        url = s;
+    return url;
 }
 
 class KMPlayerPreferencesPage {
