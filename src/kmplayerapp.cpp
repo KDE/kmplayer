@@ -750,7 +750,7 @@ KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopupMenu * m)
     m_menu->insertItem (i18n ("&Chapters"), m_dvdchaptermenu);
     m_menu->insertItem (i18n ("Audio &Language"), m_dvdlanguagemenu);
     m_menu->insertItem (i18n ("&SubTitles"), m_dvdsubtitlemenu);
-    m_url = KURL ("dvd://");
+    setURL (KURL ("dvd://"));
     m_player->settings ()->pagelist.push_back (this);
 }
 
@@ -836,7 +836,7 @@ void KMPlayerDVDSource::buildArguments () {
     QString url ("dvd://");
     if (m_current_title >= 0)
         url += m_dvdtitlemenu->findItem (m_current_title)->text ();
-    m_url = KURL (url);
+    setURL (KURL (url));
     m_options = QString (m_identified ? "" : "-v ");
     if (m_identified) {
         for (unsigned i = 0; i < m_dvdsubtitlemenu->count (); i++)
@@ -938,7 +938,7 @@ QFrame * KMPlayerDVDSource::prefPage (QWidget * parent) {
 KMPlayerDVDNavSource::KMPlayerDVDNavSource (KMPlayerApp * app, QPopupMenu * m)
     : KMPlayerMenuSource (i18n ("DVDNav"), app, m) {
     m_menu->insertTearOffHandle (-1, 0);
-    m_url = KURL ("dvd://");
+    setURL (KURL ("dvd://"));
 }
 
 KMPlayerDVDNavSource::~KMPlayerDVDNavSource () {}
@@ -1018,7 +1018,7 @@ KMPlayerVCDSource::KMPlayerVCDSource (KMPlayerApp * a, QPopupMenu * m)
     m_vcdtrackmenu = new QPopupMenu (m_app);
     m_vcdtrackmenu->setCheckable (true);
     m_menu->insertItem (i18n ("&Tracks"), m_vcdtrackmenu);
-    m_url = KURL ("vcd://");
+    setURL (KURL ("vcd://"));
     m_player->settings ()->pagelist.push_back (this);
 }
 
@@ -1074,7 +1074,7 @@ void KMPlayerVCDSource::buildArguments () {
     QString url ("vcd://");
     if (m_current_title >= 0)
         url += m_vcdtrackmenu->findItem (m_current_title)->text ();
-    m_url = KURL (url);
+    setURL (KURL (url));
     m_options.truncate (0);
     if (m_player->settings ()->vcddevice.length () > 0)
         m_options+=QString(" -cdrom-device ") + m_player->settings()->vcddevice;

@@ -330,7 +330,7 @@ KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QPopupMenu * m)
     : KMPlayerMenuSource (i18n ("TV"), a, m), m_configpage (0L) {
     m_tvsource = 0L;
     m_menu->insertTearOffHandle ();
-    m_url = KURL ("tv://");
+    setURL (KURL ("tv://"));
     m_player->settings ()->pagelist.push_back (this);
 }
 
