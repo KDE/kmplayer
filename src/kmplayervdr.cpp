@@ -75,7 +75,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::KMPlayerPrefSourcePageVDR (QWidge
  : QFrame (parent), m_player (player) {
     //KURLRequester * v4ldevice;
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
-    QGridLayout *gridlayout = new QGridLayout (layout, 1, 2);
+    QGridLayout *gridlayout = new QGridLayout (1, 2);
     xv_port = new KListView (this);
     xv_port->addColumn (QString::null);
     xv_port->header()->hide ();
