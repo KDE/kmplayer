@@ -21,6 +21,7 @@
 #ifndef _KMPLAYER_SMILL_H_
 #define _KMPLAYER_SMILL_H_
 
+#include <qobject.h>
 #include <qstring.h>
 
 #include "kmplayerplaylist.h"
@@ -45,7 +46,8 @@ public:
     ElementPtrW av_element;
 };
 
-class ImageData : public RegionData {
+class ImageData : public QObject, public RegionData {
+    Q_OBJECT
 public:
     ImageData (RegionNodePtr r, ElementPtr e);
     ~ImageData ();
@@ -58,13 +60,17 @@ private slots:
     void slotData (KIO::Job*, const QByteArray& qb);
 };
 
-class TextData : public RegionData {
+class TextData : public QObject, public RegionData {
+    Q_OBJECT
 public:
     TextData (RegionNodePtr r, ElementPtr e);
     ~TextData ();
     void paint (QPainter & p);
     ElementPtrW text_element;
     TextDataPrivate * d;
+private slots:
+    void slotResult (KIO::Job*);
+    void slotData (KIO::Job*, const QByteArray& qb);
 };
 
 //-----------------------------------------------------------------------------

@@ -528,6 +528,12 @@ KDE_NO_CDTOR_EXPORT ImageData::~ImageData () {
     delete image;
 }
 
+KDE_NO_EXPORT void ImageData::slotResult (KIO::Job*) {
+}
+
+KDE_NO_EXPORT void ImageData::slotData (KIO::Job*, const QByteArray& qb) {
+}
+
 //-----------------------------------------------------------------------------
 
 namespace KMPlayer {
@@ -560,3 +566,11 @@ KDE_NO_CDTOR_EXPORT TextData::~TextData () {
 
 KDE_NO_EXPORT void TextData::paint (QPainter & p) {
 }
+
+KDE_NO_EXPORT void TextData::slotResult (KIO::Job*) {
+}
+
+KDE_NO_EXPORT void TextData::slotData (KIO::Job*, const QByteArray& qb) {
+}
+
+#include "kmplayer_smil.moc"
