@@ -413,3 +413,5 @@ KDE_NO_EXPORT void XVideo::processOutput (KProcess *, char * str, int slen) {
     if (v && slen > 0)
         v->addText (QString::fromLocal8Bit (str, slen));
 }
+
+#include "kmplayervdr.moc"
