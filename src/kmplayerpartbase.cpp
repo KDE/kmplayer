@@ -951,22 +951,23 @@ void Source::setMime (const QString & m) {
 }
 
 bool Source::processOutput (const QString & str) {
-    if (m_identified)
-        return false;
     if (str.startsWith ("ID_VIDEO_WIDTH")) {
         int pos = str.find ('=');
         if (pos > 0) {
-            setWidth (str.mid (pos + 1).toInt());
+            int w = str.mid (pos + 1).toInt ();
             if (height () > 0)
-                setDimensions (width (), height ());
+                setDimensions (w, height ());
+            else
+                setWidth (w);
         }
-        kdDebug () << "Source::processOutput " << width() << endl;
     } else if (str.startsWith ("ID_VIDEO_HEIGHT")) {
         int pos = str.find ('=');
         if (pos > 0) {
-            setHeight (str.mid (pos + 1).toInt());
+            int h = str.mid (pos + 1).toInt ();
             if (width () > 0)
-                setDimensions (width (), height ());
+                setDimensions (width (), h);
+            else
+                setHeight (h);
         }
     } else if (str.startsWith ("ID_VIDEO_ASPECT")) {
         int pos = str.find ('=');
