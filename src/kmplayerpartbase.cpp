@@ -384,7 +384,7 @@ void KMPlayer::posSliderPressed () {
 
 void KMPlayer::posSliderReleased () {
     m_bPosSliderPressed=false;
-    seek (m_view->positionSlider()->value());
+    seek (100*m_view->positionSlider()->value());
 }
 
 void KMPlayer::contrastValueChanged (int val) {
