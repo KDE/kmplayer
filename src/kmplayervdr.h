@@ -102,6 +102,8 @@ private slots:
     void disconnected ();
     void readyRead ();
     void socketError (int);
+    void processStopped ();
+    void processStarted ();
 protected:
     void timerEvent (QTimerEvent *);
 private:
