@@ -191,10 +191,6 @@ KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
 	QToolTip::add(showConsoleOutput, i18n("Shows output from mplayer before and after playing the movie"));
 	loop = new QCheckBox (i18n("Loop"), this, 0);
 	QToolTip::add(loop, i18n("Makes current movie loop"));
-	showControlButtons = new QCheckBox (i18n("Show control buttons"), this, 0);
-	QToolTip::add(showControlButtons, i18n("Small buttons will be shown above statusbar to control movie"));
-	autoHideControlButtons = new QCheckBox (i18n("Auto hide control buttons"), this, 0);
-	QToolTip::add(autoHideControlButtons, i18n("When checked, control buttons will get hidden automatically"));
 	showRecordButton = new QCheckBox (i18n ("Show record button"), this);
 	QToolTip::add (showRecordButton, i18n ("Add a record button to the control buttons"));
 	showBroadcastButton = new QCheckBox (i18n ("Show broadcast button"), this);
@@ -216,8 +212,6 @@ KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
 	layout->addWidget(showConsoleOutput);
 	layout->addWidget(loop);
 	layout->addWidget (framedrop);
-	layout->addWidget(showControlButtons);
-	layout->addWidget(autoHideControlButtons);
 	layout->addWidget (showRecordButton);
 	layout->addWidget (showBroadcastButton);
 	//layout->addWidget(autoHideSlider);
@@ -718,8 +712,6 @@ void KMPlayerPreferences::setDefaults() {
 	m_GeneralPageGeneral->keepSizeRatio->setChecked(true);
 	m_GeneralPageGeneral->showConsoleOutput->setChecked(false);
 	m_GeneralPageGeneral->loop->setChecked(false);
-	m_GeneralPageGeneral->showControlButtons->setChecked(true);
-	m_GeneralPageGeneral->autoHideControlButtons->setChecked(false);
 	m_GeneralPageGeneral->seekTime->setValue(10);
 
 	m_GeneralPageOutput->videoDriver->setCurrentItem (0);

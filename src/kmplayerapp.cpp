@@ -205,7 +205,7 @@ void KMPlayerApp::initView ()
                           QKeySequence ("CTRL + Key_F"));
     menuBar ()->insertItem (i18n ("&View"), viewmenu, -1, 2);*/
     //toolBar("mainToolBar")->hide();
-
+    setAcceptDrops (true);
 }
 
 void KMPlayerApp::loadingProgress (int percentage) {
@@ -289,8 +289,7 @@ void KMPlayerApp::resizePlayer (int percentage) {
         } else
             source->setAspect (1.0 * w/h);
         //m_view->viewer()->setAspect (m_view->keepSizeRatio() ? source->aspect() : 0.0);
-        if (m_player->settings ()->showbuttons &&
-            !m_player->settings ()->autohidebuttons)
+        if (m_view->controlPanelMode () == KMPlayerView::CP_Show)
             h += 2 + m_view->buttonBar()->frameSize ().height ();
         w = int (1.0 * w * percentage/100.0);
         h = int (1.0 * h * percentage/100.0);

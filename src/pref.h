@@ -96,11 +96,8 @@ public:
     QCheckBox *keepSizeRatio;
     QCheckBox *showConsoleOutput;
     QCheckBox *loop;
-    QCheckBox *showControlButtons;
     QCheckBox *showRecordButton;
     QCheckBox *showBroadcastButton;
-    QCheckBox *autoHideControlButtons;
-    QCheckBox *autoHideSlider;
     QCheckBox *alwaysBuildIndex;
     QCheckBox *framedrop;
 

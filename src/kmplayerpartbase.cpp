@@ -432,7 +432,8 @@ void KMPlayer::timerEvent (QTimerEvent * e) {
 
 void KMPlayer::processFinished () {
     kdDebug () << "process finished" << endl;
-    if (m_process->source ()->position () > m_process->source ()->length ())
+    if (m_process->source ()->hasLength () &&
+            m_process->source ()->position () > m_process->source ()->length ())
         m_process->source ()->setLength (m_process->source ()->position ());
     m_process->source ()->setPosition (0);
     if (!m_view) return;
@@ -442,7 +443,7 @@ void KMPlayer::processFinished () {
             (*i)->playButton ()->toggle ();
         (*i)->positionSlider()->setValue (0);
         (*i)->positionSlider()->setEnabled (false);
-        (*i)->positionSlider()->show();
+        (*i)->enablePositionSlider (true);
     }
     m_view->reset ();
     emit stopPlaying ();
@@ -484,10 +485,7 @@ void KMPlayer::processPlaying () {
         int len = m_process->source ()->length ();
         (*i)->positionSlider()->setMaxValue (len > 0 ? len + 9 : 300);
         (*i)->positionSlider()->setEnabled (true);
-        if (m_process->source ()->hasLength ())
-            (*i)->positionSlider()->show();
-        else
-            (*i)->positionSlider()->hide();
+        (*i)->enablePositionSlider (m_process->source ()->hasLength ());
     }
     emit loading (100);
     emit startPlaying ();

@@ -219,25 +219,20 @@ bool KMPlayerPart::openURL (const KURL & url) {
             break;
         }
     }
-    KMPlayerControlPanel * panel = m_view->buttonBar ();
     enablePlayerMenu (true);
     if (m_features & Feat_Controls) {
-        panel->show ();
-        m_view->setAutoHideButtons (false);
+        m_view->setControlPanelMode (KMPlayerView::CP_Show);
     }
     if (current_player) {
         if (m_features & Feat_Controls) {
-            removeControlPanel (panel);
-            current_player->addControlPanel (panel);
-            if (current_player->m_view) {
-                current_player->m_view->setAutoHideButtons (false);
-                current_player->m_view->buttonBar ()->hide ();
-            }
+            removeControlPanel (m_view->buttonBar ());
+            current_player->addControlPanel (m_view->buttonBar ());
+            if (current_player->m_view)
+                current_player->m_view->setControlPanelMode (KMPlayerView::CP_Hide);
         }
         if (m_features & Feat_Viewer) {
             m_view->setForeignViewer (current_player->m_view);
-            m_view->setAutoHideButtons (false);
-            panel->hide ();
+            m_view->setControlPanelMode (KMPlayerView::CP_Hide);
         }
         return true;
     }
@@ -645,8 +640,7 @@ void KMPlayerLiveConnectExtension::unregister (const unsigned long) {
 
 void KMPlayerLiveConnectExtension::setSize (int w, int h) {
     KMPlayerView * view = static_cast <KMPlayerView*> (player->view ());
-    if (view->buttonBar ()->isVisible () &&
-            !player->settings ()->autohidebuttons)
+    if (view->controlPanelMode () == KMPlayerView::CP_Show)
         h += view->buttonBar()->height();
     QCString jscode;
     //jscode.sprintf("this.width=%d;this.height=%d;kmplayer", w, h);

@@ -71,6 +71,10 @@ class KMPlayerView : public KMediaPlayer::View {
     friend class KMPlayerViewer;
     friend class KMPlayerPictureWidget;
 public:
+    enum ControlPanelMode {
+        CP_Hide, CP_AutoHide, CP_Show
+    };
+
     KMPlayerView(QWidget *parent, const char *name = (char*) 0);
     ~KMPlayerView();
 
@@ -89,9 +93,9 @@ public:
     void setUseArts (bool b);
     bool showConsoleOutput () const { return m_show_console_output; }
     void setShowConsoleOutput (bool b);
-    void setAutoHideButtons (bool b);
+    void setControlPanelMode (ControlPanelMode m);
     //void setAutoHideSlider (bool b);
-    bool autoHideButtons () const { return m_auto_hide_buttons; }
+    ControlPanelMode controlPanelMode () const { return m_controlpanel_mode; }
     void delayedShowButtons (bool show);
     bool isFullScreen () const { return m_layer->isFullScreen (); }
     bool setPicture (const QString & path);
@@ -138,10 +142,11 @@ private:
     Arts::SoundServerV2 * m_artsserver;
     Arts::StereoVolumeControl * m_svc;
     KArtsFloatWatch * m_watch;
+    ControlPanelMode m_controlpanel_mode;
+    ControlPanelMode m_old_controlpanel_mode;
     int delayed_timer;
     bool m_keepsizeratio : 1;
     bool m_show_console_output : 1;
-    bool m_auto_hide_buttons : 1;
     bool m_playing : 1;
     bool m_use_arts : 1;
     bool m_inVolumeUpdate : 1;
@@ -149,44 +154,45 @@ private:
     bool m_revert_fullscreen : 1;
 };
 
+static const int KMPlayerControlPanelButtons = 8;
+
 class KMPlayerControlPanel : public QWidget {
 public:
     enum MenuID {
         menu_config = 0, menu_player, menu_fullscreen, menu_volume, 
         menu_bookmark, menu_zoom, menu_zoom50, menu_zoom100, menu_zoom150
     };
+    enum Button {
+        button_config = 0, button_back, button_play, button_forward,
+        button_stop, button_pause, button_record, button_broadcast
+    };
     KMPlayerControlPanel (QWidget * parent);
+    void enablePositionSlider (bool enable);
     QSlider * positionSlider () const { return m_posSlider; }
     QSlider * contrastSlider () const { return m_contrastSlider; }
     QSlider * brightnessSlider () const { return m_brightnessSlider; }
     QSlider * hueSlider () const { return m_hueSlider; }
     QSlider * saturationSlider () const { return m_saturationSlider; }
-    QPushButton * backButton () const { return m_backButton; }
-    QPushButton * playButton () const { return m_playButton; }
-    QPushButton * forwardButton () const { return m_forwardButton; }
-    QPushButton * pauseButton () const { return m_pauseButton; }
-    QPushButton * stopButton () const { return m_stopButton; }
-    QPushButton * configButton () const { return m_configButton; }
-    QPushButton * recordButton () const { return m_recordButton; }
-    QPushButton * broadcastButton () const { return m_broadcastButton; }
+    QPushButton * backButton () const { return m_buttons[button_back]; }
+    QPushButton * playButton () const { return m_buttons[button_play]; }
+    QPushButton * forwardButton () const { return m_buttons[button_forward]; }
+    QPushButton * pauseButton () const { return m_buttons[button_pause]; }
+    QPushButton * stopButton () const { return m_buttons[button_stop]; }
+    QPushButton * configButton () const { return m_buttons[button_config]; }
+    QPushButton * recordButton () const { return m_buttons[button_record]; }
+    QPushButton * broadcastButton () const { return m_buttons[button_broadcast]; }
     QPopupMenu * popupMenu () const { return m_popupMenu; }
     KPopupMenu * bookmarkMenu () const { return m_bookmarkMenu; }
     QPopupMenu * zoomMenu () const { return m_zoomMenu; }
     QPopupMenu * playerMenu () const { return m_playerMenu; }
 private:
+    QBoxLayout * m_buttonbox;
     QSlider * m_posSlider;
     QSlider * m_contrastSlider;
     QSlider * m_brightnessSlider;
     QSlider * m_hueSlider;
     QSlider * m_saturationSlider;
-    QPushButton * m_backButton;
-    QPushButton * m_playButton;
-    QPushButton * m_forwardButton;
-    QPushButton * m_stopButton;
-    QPushButton * m_pauseButton;
-    QPushButton * m_configButton;
-    QPushButton * m_recordButton;
-    QPushButton * m_broadcastButton;
+    QPushButton * m_buttons[KMPlayerControlPanelButtons];
     QPopupMenu * m_popupMenu;
     KPopupMenu * m_bookmarkMenu;
     QPopupMenu * m_zoomMenu;

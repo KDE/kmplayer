@@ -96,11 +96,9 @@ static const char * strAoDriver = "Audio Driver";
 static const char * strShowConsole = "Show Console Output";
 static const char * strLoop = "Loop";
 static const char * strFrameDrop = "Frame Drop";
-static const char * strShowControlButtons = "Show Control Buttons";
 static const char * strAddConfigButton = "Add Configure Button";
 static const char * strAddRecordButton = "Add Record Button";
 static const char * strAddBroadcastButton = "Add Broadcast Button";
-static const char * strAutoHideButtons = "Auto Hide Control Buttons";
 static const char * strPostMPlayer090 = "Post MPlayer 0.90";
 //static const char * strAutoHideSlider = "Auto Hide Slider";
 static const char * strSeekTime = "Forward/Backward Seek Time";
@@ -172,13 +170,7 @@ void KMPlayerSettings::readConfig () {
     view->setShowConsoleOutput (showconsole);
     loop = m_config->readBoolEntry (strLoop, false);
     framedrop = m_config->readBoolEntry (strFrameDrop, true);
-    showbuttons = m_config->readBoolEntry (strShowControlButtons, true);
-    autohidebuttons = m_config->readBoolEntry (strAutoHideButtons, false);
     mplayerpost090 = m_config->readBoolEntry (strPostMPlayer090, true);
-    view->setAutoHideButtons (showbuttons && autohidebuttons);
-    if (!showbuttons && view->buttonBar ()) {
-        view->buttonBar ()->hide ();
-    }
     showcnfbutton = m_config->readBoolEntry (strAddConfigButton, true);
     if (showcnfbutton)
         view->buttonBar ()->configButton ()->show ();
@@ -284,13 +276,11 @@ void KMPlayerSettings::show (const char * pagename) {
     configdialog->m_GeneralPageGeneral->showConsoleOutput->setChecked (showconsole);
     configdialog->m_GeneralPageGeneral->loop->setChecked (loop);
     configdialog->m_GeneralPageGeneral->framedrop->setChecked (framedrop);
-    configdialog->m_GeneralPageGeneral->showControlButtons->setChecked (showbuttons);
     configdialog->m_GeneralPageGeneral->alwaysBuildIndex->setChecked (alwaysbuildindex);
     //configdialog->m_GeneralPageGeneral->autoHideSlider->setChecked (autohideslider);
     //configdialog->addConfigButton->setChecked (showcnfbutton);	//not
     configdialog->m_GeneralPageGeneral->showRecordButton->setChecked (showrecordbutton);
     configdialog->m_GeneralPageGeneral->showBroadcastButton->setChecked (showbroadcastbutton);
-    configdialog->m_GeneralPageGeneral->autoHideControlButtons->setChecked (autohidebuttons); //works
     configdialog->m_GeneralPageGeneral->seekTime->setValue(seektime);
     configdialog->m_SourcePageURL->urllist->clear ();
     configdialog->m_SourcePageURL->urllist->insertStringList (urllist);
@@ -378,12 +368,10 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strAoDriver, audiodriver);
     m_config->writeEntry (strUrlBackend, urlbackend);
     m_config->writeEntry (strAllowHref, allowhref);
-    m_config->writeEntry (strShowControlButtons, showbuttons);
     m_config->writeEntry (strAlwaysBuildIndex, alwaysbuildindex);
     m_config->writeEntry (strAddConfigButton, showcnfbutton);
     m_config->writeEntry (strAddRecordButton, showrecordbutton);
     m_config->writeEntry (strAddBroadcastButton, showbroadcastbutton);
-    m_config->writeEntry (strAutoHideButtons, autohidebuttons);
 
     m_config->writeEntry (strDVDDevice, dvddevice);
     m_config->writeEntry (strVCDDevice, vcddevice);
@@ -501,11 +489,6 @@ void KMPlayerSettings::okPressed () {
     alwaysbuildindex = configdialog->m_GeneralPageGeneral->alwaysBuildIndex->isChecked();
     loop = configdialog->m_GeneralPageGeneral->loop->isChecked ();
     framedrop = configdialog->m_GeneralPageGeneral->framedrop->isChecked ();
-    showbuttons = configdialog->m_GeneralPageGeneral->showControlButtons->isChecked ();
-    autohidebuttons = configdialog->m_GeneralPageGeneral->autoHideControlButtons->isChecked ();
-    view->setAutoHideButtons (showbuttons && autohidebuttons);
-    if (!showbuttons && view->buttonBar ())
-        view->buttonBar ()->hide ();
     //showcnfbutton = configdialog->m_GeneralPageGeneral->addConfigButton->isChecked ();
     showcnfbutton = true;
     if (showcnfbutton)

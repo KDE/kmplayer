@@ -82,11 +82,9 @@ public:
     bool showconsole : 1;
     bool loop : 1;
     bool framedrop : 1;
-    bool showbuttons : 1;
     bool showcnfbutton : 1;
     bool showrecordbutton : 1;
     bool showbroadcastbutton : 1;
-    bool autohidebuttons : 1;
     bool autohideslider : 1;
     bool alwaysbuildindex : 1;
     bool mplayerpost090 : 1;
