@@ -30,12 +30,8 @@ using namespace KMPlayer;
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT Region::Region (ElementPtr e)
+KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (ElementPtr e)
     : x (0), y (0), w (0), h (0), m_element (e) {}
-
-KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (ElementPtr e) : Region (e) {}
-
-KDE_NO_CDTOR_EXPORT RootLayout::RootLayout (ElementPtr e) : Region (e) {}
 
 //-----------------------------------------------------------------------------
 
@@ -492,15 +488,49 @@ static int calcLength (const QString & strval, int full) {
     return strval.toInt ();
 }
 
+static void buildRegionNodes (ElementPtr p, RegionNodePtr r) {
+    RegionNodePtr region;
+    RegionNodePtr last_region;
+    for (ElementPtr e = p->firstChild (); e; e = e->nextSibling ())
+        if (!strcmp (e->nodeName (), "region")) {
+            if (region) {
+                last_region->nextSibling = RegionNodePtr (new ::RegionNode (e));
+                last_region = last_region->nextSibling;
+            } else {
+                region = last_region = RegionNodePtr (new RegionNode (e));
+                r->firstChild = region;
+            }
+            buildRegionNodes (e, last_region);
+        }
+}
+
+static void sizeRegionNodes (RegionNodePtr p) {
+    SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (p->m_element);
+    for (RegionNodePtr rg = p->firstChild; rg; rg = rg->nextSibling) {
+        SMIL::Region * smilregion = convertNode <SMIL::Region> (rg->m_element);
+        int l = calcLength (smilregion->getAttribute("left"), rb->w);
+        int t = calcLength (smilregion->getAttribute ("top"), rb->h);
+        int w = calcLength (smilregion->getAttribute ("width"), rb->w);
+        int h = calcLength (smilregion->getAttribute ("height"), rb->h);
+        int r = calcLength (smilregion->getAttribute ("right"), rb->w);
+        int b = calcLength (smilregion->getAttribute ("bottom"), rb->h);
+        smilregion->x = l;
+        smilregion->y = t;
+        smilregion->w = w > 0 ? w : rb->w - l - (r > 0 ? r : 0);
+        smilregion->h = h > 0 ? h : rb->h - t - (b > 0 ? b : 0);
+        sizeRegionNodes (rg);
+    }
+}
+
 KDE_NO_EXPORT void SMIL::Layout::closed () {
-    RootLayoutPtr root;
+    RegionNodePtr root;
     SMIL::RootLayout * smilroot = 0L;
     RegionNodePtr region;
     RegionNodePtr last_region;
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
         const char * name = e->nodeName ();
         if (!strcmp (name, "root-layout")) {
-            root = RootLayoutPtr (new ::RootLayout (e));
+            root = RegionNodePtr (new RegionNode (e));
             if (region)
                 root->firstChild = region;
             smilroot = convertNode <SMIL::RootLayout> (e);
@@ -513,6 +543,7 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
                 if (root)
                     root->firstChild = region;
             }
+            buildRegionNodes (e, last_region);
         }
     }
     if (!root || !region) {
@@ -526,20 +557,14 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
         kdError () << "Root layout not having valid dimensions" << endl;
         return;
     }
-    for (RegionNodePtr r = root->firstChild; r; r = r->nextSibling) {
-        SMIL::Region * smilregion = convertNode <SMIL::Region> (r->m_element);
-        int l = calcLength (smilregion->getAttribute("left"), smilroot->w);
-        int t = calcLength (smilregion->getAttribute ("top"), smilroot->h);
-        int w = calcLength (smilregion->getAttribute ("width"), smilroot->w);
-        int h = calcLength (smilregion->getAttribute ("height"), smilroot->h);
-        int r = calcLength (smilregion->getAttribute ("right"), smilroot->w);
-        int b = calcLength (smilregion->getAttribute ("bottom"), smilroot->h);
-        smilregion->x = l;
-        smilregion->y = t;
-        smilregion->w = w > 0 ? w : smilroot->w - l - (r > 0 ? r : 0);
-        smilregion->h = h > 0 ? h : smilroot->h - t - (b > 0 ? b : 0);
-    }
+    sizeRegionNodes (root);
     document ()->rootLayout = root;
+}
+
+KDE_NO_EXPORT ElementPtr SMIL::Region::childFromTag (const QString & tag) {
+    if (!strcmp (tag.latin1 (), "region"))
+        return (new SMIL::Region (m_doc))->self ();
+    return ElementPtr ();
 }
 
 //-----------------------------------------------------------------------------
@@ -601,6 +626,17 @@ KDE_NO_EXPORT ElementPtr SMIL::MediaType::childFromTag (const QString & tag) {
     return ElementPtr ();
 }
 
+static void addToRegion (RegionNodePtr p, const QString id, ElementPtr e) {
+    for (RegionNodePtr r = p->firstChild; r; r = r->nextSibling) {
+        if (r->m_element->getAttribute ("id") == id) {
+            kdDebug () << "MediaType region found " << id << endl;
+            convertNode <SMIL::Region> (r->m_element)->media_node = e;
+            break;
+        }
+        addToRegion (r, id, e);
+    }
+}
+
 KDE_NO_EXPORT void SMIL::MediaType::opened () {
     for (ElementPtr a = m_first_attribute; a; a = a->nextSibling ()) {
         const char * cname = a->nodeName ();
@@ -611,16 +647,11 @@ KDE_NO_EXPORT void SMIL::MediaType::opened () {
         else if (!strcmp (cname, "type"))
             mimetype = a->nodeValue ();
         else if (!strcmp (cname, "region")) {
-            RootLayoutPtr root = document ()->rootLayout;
+            RegionNodePtr root = document ()->rootLayout;
             if (!root || !root->firstChild)
                 kdError () << "region attribute w/o layout set" << endl;
             else
-                for (RegionNodePtr r = root->firstChild; r; r = r->nextSibling)
-                    if (r->m_element->getAttribute ("id") == a->nodeValue ()) {
-                        kdDebug () << "MediaType region found " << a->nodeValue () << endl;
-                        convertNode <SMIL::Region> (r->m_element)->media_node = m_self;
-                        break;
-                    }
+                addToRegion (root, a->nodeValue (), m_self);
         } else
             kdError () << "Warning: unhandled MediaType attr: " << cname << "=" << a->nodeValue () << endl;
     }

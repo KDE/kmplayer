@@ -59,39 +59,25 @@ class Document;
 class Element;
 class Mrl;
 class RegionNode;
-class RootLayout;
 
 typedef SharedPtr<Element> ElementPtr;
 typedef WeakPtr<Element> ElementPtrW;
 typedef SharedPtr<RegionNode> RegionNodePtr;
-typedef SharedPtr<RootLayout> RootLayoutPtr;
 
-class Region {
+class RegionNode {
 public:
-    KDE_NO_CDTOR_EXPORT ~Region () {}
+    RegionNode (ElementPtr e);
+    KDE_NO_CDTOR_EXPORT ~RegionNode () {}
+    //void paint (QPainter & p);
     /**
-     * Dimensions
+     * (Scaled) Dimensions set by viewer
      */
     int x, y, w, h;
     /**
      * Corresponding DOM node (SMIL::Region or SMIL::RootLayout)
      */
     ElementPtrW m_element;
-protected:
-    Region (ElementPtr e);
-};
-
-class RegionNode : public Region {
-public:
-    RegionNode (ElementPtr e);
-    KDE_NO_CDTOR_EXPORT ~RegionNode () {}
     RegionNodePtr nextSibling;
-};
-
-class RootLayout : public Region {
-public:
-    RootLayout (ElementPtr e);
-    KDE_NO_CDTOR_EXPORT ~RootLayout () {}
     RegionNodePtr firstChild;
 };
 
@@ -229,7 +215,7 @@ public:
      * Will return false if this document has child nodes
      */
     bool isMrl ();
-    RootLayoutPtr rootLayout;
+    RegionNodePtr rootLayout;
     unsigned int m_tree_version;
 };
 
@@ -295,17 +281,24 @@ public:
     void closed ();
 };
 
-class Region : public Element {
+class RegionBase : public Element {
+protected:
+    KDE_NO_CDTOR_EXPORT RegionBase (ElementPtr & d) : Element (d) {}
 public:
-    KDE_NO_CDTOR_EXPORT Region (ElementPtr & d) : Element (d) {}
-    KDE_NO_EXPORT const char * nodeName () const { return "region"; }
     int x, y, w, h;
+};
+
+class Region : public RegionBase {
+public:
+    KDE_NO_CDTOR_EXPORT Region (ElementPtr & d) : RegionBase (d) {}
+    KDE_NO_EXPORT const char * nodeName () const { return "region"; }
+    ElementPtr childFromTag (const QString & tag);
     ElementPtrW media_node;
 };
 
-class RootLayout : public Region {
+class RootLayout : public RegionBase {
 public:
-    KDE_NO_CDTOR_EXPORT RootLayout (ElementPtr & d) : Region (d) {}
+    KDE_NO_CDTOR_EXPORT RootLayout (ElementPtr & d) : RegionBase (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
 };
 

@@ -295,25 +295,43 @@ KDE_NO_EXPORT void ViewLayer::mouseMoveEvent (QMouseEvent * e) {
     }
 }
 
+static void paintRegions (QPainter & p, RegionNodePtr & rn) {
+    QString str = rn->m_element->getAttribute ("background-color");
+    if (!str.isEmpty ()) {
+        QColor color (str);
+        p.fillRect (rn->x, rn->y, rn->w, rn->h, color);
+    }
+    for (RegionNodePtr r = rn->firstChild; r; r = r->nextSibling)
+        paintRegions (p, r);
+}
+
 KDE_NO_EXPORT void ViewLayer::paintEvent (QPaintEvent * pe) {
     QWidget::paintEvent (pe);
     if (rootLayout && rootLayout->m_element) {
         QPainter p;
         p.begin (this);
-        QString str = rootLayout->m_element->getAttribute ("background-color");
-        if (!str.isEmpty ()) {
-            QColor color (str);
-            p.fillRect (0, 0, width (), height (), color);
-        }
-        for (RegionNodePtr r = rootLayout->firstChild; r; r = r->nextSibling) {
-            str = r->m_element->getAttribute ("background-color");
-            if (!str.isEmpty ()) {
-                QColor color (str);
-                p.fillRect (r->x, r->y, r->w, r->h, color);
-            }
-        }
+        paintRegions (p, rootLayout);
         p.end ();
     }
+}
+
+static void scaleRegions (RegionNodePtr & p, float sx, float sy, int xoff, int yoff, int & x, int & y, int & w, int & h) {
+    for (RegionNodePtr r = p->firstChild; r; r =r->nextSibling)
+        if (r->m_element) {  // note WeakPtr can be null
+            SMIL::Region * smilregion = convertNode <SMIL::Region> (r->m_element);
+            r->x = xoff + int (sx * smilregion->x);
+            r->y = yoff + int (sy * smilregion->y);
+            r->w = int (sx * smilregion->w);
+            r->h = int (sy * smilregion->h);
+            if (smilregion->media_node) { // ugh
+                x = r->x;
+                y = r->y;
+                w = r->w;
+                h = r->h;
+            }
+            //kdDebug () << "ViewLayer " << r->x << "," << r->y << " " << r->w << "x" << r->h << endl;
+            scaleRegions (r, sx, sy, r->x, r->y, x, y, w, h);
+        }
 }
 
 KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
@@ -335,21 +353,7 @@ KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
             rootLayout->w = wws;
             rootLayout->h = hws;
             wws = hws = 0;
-            for (RegionNodePtr r = rootLayout->firstChild; r; r =r->nextSibling)
-                if (r->m_element) {
-                    SMIL::Region * smilregion = convertNode <SMIL::Region> (r->m_element);
-                    r->x = int (xscale * smilregion->x);
-                    r->y = int (yscale * smilregion->y);
-                    r->w = int (xscale * smilregion->w);
-                    r->h = int (yscale * smilregion->h);
-                    if (smilregion->media_node) { // ugh
-                        x = r->x;
-                        y = r->y;
-                        wws = r->w;
-                        hws = r->h;
-                    }
-                    kdDebug () << "ViewLayer " << r->x << "," << r->y << " " << r->w << "x" << r->h << endl;
-                }
+            scaleRegions (rootLayout, xscale, yscale, 0, 0, x, y, wws, hws);
         }
     }
     // scale video widget inside region
