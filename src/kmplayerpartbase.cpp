@@ -20,6 +20,7 @@
 #undef Always
 #endif
 
+#include <config.h>
 #include <qapplication.h>
 #include <qcstring.h>
 #include <qcursor.h>

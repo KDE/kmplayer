@@ -18,7 +18,7 @@
 
 #include <algorithm>
 #include <functional>
-
+#include <config.h>
 #include <qcheckbox.h>
 #include <qtextedit.h>
 #include <qpushbutton.h>

@@ -28,6 +28,7 @@
 #define ASSERT Q_ASSERT
 #endif
 
+#include <config.h>
 #include <kdemacros.h>
 
 #undef KDE_NO_CDTOR_EXPORT

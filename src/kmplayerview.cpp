@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <math.h>
 
+#include <config.h>
 // include files for Qt
 #include <qstyle.h>
 #include <qtimer.h>

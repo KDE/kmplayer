@@ -16,9 +16,11 @@ email                :
  ***************************************************************************/
 #include <unistd.h>
 
+#include <config.h>
 #include <kcmdlineargs.h>
 #include <kaboutdata.h>
 #include <klocale.h>
+#include <kdemacros.h>
 #include <dcopclient.h>
 
 #include <qguardedptr.h>
