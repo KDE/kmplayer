@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>567</width>
-            <height>394</height>
+            <height>377</height>
         </rect>
     </property>
     <property name="caption">
@@ -847,9 +847,6 @@ This expression tries to find a match on MPlayer's output.</string>
                         <property name="name">
                             <cstring>PostprocessingOptions</cstring>
                         </property>
-                        <property name="enabled">
-                            <bool>true</bool>
-                        </property>
                         <property name="autoMask">
                             <bool>false</bool>
                         </property>
@@ -866,73 +863,69 @@ This expression tries to find a match on MPlayer's output.</string>
                             <attribute name="title">
                                 <string>General</string>
                             </attribute>
-                            <grid>
+                            <vbox>
                                 <property name="name">
                                     <cstring>unnamed</cstring>
                                 </property>
-                                <widget class="QRadioButton" row="0" column="0">
+                                <widget class="QButtonGroup">
                                     <property name="name">
-                                        <cstring>defaultPreset</cstring>
+                                        <cstring>buttonGroup3</cstring>
                                     </property>
-                                    <property name="text">
-                                        <string>Default</string>
+                                    <property name="title">
+                                        <string></string>
                                     </property>
-                                    <property name="checked">
-                                        <bool>true</bool>
-                                    </property>
-                                    <property name="buttonGroupId">
-                                        <number>-1</number>
-                                    </property>
-                                    <property name="toolTip" stdset="0">
-                                        <string>Enable mplayer's default postprocessing filters</string>
-                                    </property>
+                                    <vbox>
+                                        <property name="name">
+                                            <cstring>unnamed</cstring>
+                                        </property>
+                                        <widget class="QRadioButton">
+                                            <property name="name">
+                                                <cstring>defaultPreset</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>Default</string>
+                                            </property>
+                                            <property name="checked">
+                                                <bool>true</bool>
+                                            </property>
+                                            <property name="buttonGroupId">
+                                                <number>0</number>
+                                            </property>
+                                            <property name="toolTip" stdset="0">
+                                                <string>Enable mplayer's default postprocessing filters</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QRadioButton">
+                                            <property name="name">
+                                                <cstring>fastPreset</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>Fast</string>
+                                            </property>
+                                            <property name="buttonGroupId">
+                                                <number>1</number>
+                                            </property>
+                                            <property name="toolTip" stdset="0">
+                                                <string>Enable mplayer's fast postprocessing filters</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QRadioButton">
+                                            <property name="name">
+                                                <cstring>customPreset</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>Custom</string>
+                                            </property>
+                                            <property name="buttonGroupId">
+                                                <number>2</number>
+                                            </property>
+                                            <property name="toolTip" stdset="0">
+                                                <string>Enable custom postprocessing filters (See: Custom preset -tab)</string>
+                                            </property>
+                                        </widget>
+                                    </vbox>
                                 </widget>
-                                <widget class="QRadioButton" row="2" column="0">
-                                    <property name="name">
-                                        <cstring>customPreset</cstring>
-                                    </property>
-                                    <property name="text">
-                                        <string>Custom</string>
-                                    </property>
-                                    <property name="buttonGroupId">
-                                        <number>-1</number>
-                                    </property>
-                                    <property name="toolTip" stdset="0">
-                                        <string>Enable custom postprocessing filters (See: Custom preset -tab)</string>
-                                    </property>
-                                </widget>
-                                <spacer row="3" column="0">
-                                    <property name="name">
-                                        <cstring>spacer2</cstring>
-                                    </property>
-                                    <property name="orientation">
-                                        <enum>Vertical</enum>
-                                    </property>
-                                    <property name="sizeType">
-                                        <enum>Expanding</enum>
-                                    </property>
-                                    <property name="sizeHint">
-                                        <size>
-                                            <width>20</width>
-                                            <height>41</height>
-                                        </size>
-                                    </property>
-                                </spacer>
-                                <widget class="QRadioButton" row="1" column="0">
-                                    <property name="name">
-                                        <cstring>fastPreset</cstring>
-                                    </property>
-                                    <property name="text">
-                                        <string>Fast</string>
-                                    </property>
-                                    <property name="buttonGroupId">
-                                        <number>-1</number>
-                                    </property>
-                                    <property name="toolTip" stdset="0">
-                                        <string>Enable mplayer's fast postprocessing filters</string>
-                                    </property>
-                                </widget>
-                            </grid>
+                            </vbox>
                         </widget>
                         <widget class="QWidget">
                             <property name="name">
@@ -1523,27 +1516,15 @@ This expression tries to find a match on MPlayer's output.</string>
         <slot>setEnabled(bool)</slot>
     </connection>
     <connection>
-        <sender>TmpNoiseFilter</sender>
-        <signal>toggled(bool)</signal>
-        <receiver>TmpNoiseSlider</receiver>
-        <slot>setEnabled(bool)</slot>
-    </connection>
-    <connection>
         <sender>AutolevelsFilter</sender>
         <signal>toggled(bool)</signal>
         <receiver>AutolevelsFullrange</receiver>
         <slot>setEnabled(bool)</slot>
     </connection>
     <connection>
-        <sender>AutolevelsFilter</sender>
+        <sender>customPreset</sender>
         <signal>toggled(bool)</signal>
-        <receiver>AutolevelsFullrange</receiver>
-        <slot>setEnabled(bool)</slot>
-    </connection>
-    <connection>
-        <sender>AutolevelsFilter</sender>
-        <signal>toggled(bool)</signal>
-        <receiver>AutolevelsFullrange</receiver>
+        <receiver>customFilters</receiver>
         <slot>setEnabled(bool)</slot>
     </connection>
 </connections>
