@@ -818,8 +818,6 @@ void Source::stateElementChanged (ElementPtr elm) {
     kdDebug() << "Source::stateElementChanged " << elm->nodeName () << " started:" << (int) elm->state << endl;
     if (elm == m_document && !m_back_request && elm->state == Element::state_finished)
         emit endOfPlayItems (); // played all items
-    if (m_player->view ())
-        m_player->process()->view ()->fullScreenWidget ()->update ();
 }
 
 void Source::repaintRegion (RegionNodePtr r) {

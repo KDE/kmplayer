@@ -117,8 +117,19 @@ public:
      * re-implement for regions
      */
     virtual void begin ();
+    /**
+     * will request a repaint of attached region
+     */
+    virtual void started ();
+    /**
+     * will request a repaint of attached region
+     */
+    virtual void stopped ();
 };
 
+/**
+ * Data needed for audio/video clips
+ */
 class AudioVideoData : public MediaTypeRuntime {
     Q_OBJECT
 public:
@@ -131,6 +142,9 @@ protected slots:
     virtual void started ();
 };
 
+/**
+ * Data needed for an image
+ */
 class ImageData : public MediaTypeRuntime {
     Q_OBJECT
 public:
@@ -148,6 +162,9 @@ private slots:
     void slotData (KIO::Job*, const QByteArray& qb);
 };
 
+/**
+ * Data needed for text
+ */
 class TextData : public MediaTypeRuntime {
     Q_OBJECT
 public:
@@ -193,6 +210,10 @@ private:
 
 namespace SMIL {
 
+/**
+ * Represents optional 'head' tag of SMIL document as in
+ * &lt;smil&gt;&lt;head/&gt;&lt;body/&gt;&lt;/smil&gt;
+ */
 class Head : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Head (ElementPtr & d) : Element (d) {}
@@ -201,6 +222,9 @@ public:
     bool expose ();
 };
 
+/**
+ * Defines region layout, should reside below 'head' element
+ */
 class Layout : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Layout (ElementPtr & d) : Element (d) {}
@@ -210,6 +234,9 @@ public:
     RegionNodePtr rootLayout;
 };
 
+/**
+ * Base class for Region and RootLayout
+ */
 class RegionBase : public Element {
 protected:
     KDE_NO_CDTOR_EXPORT RegionBase (ElementPtr & d) : Element (d) {}
@@ -217,6 +244,9 @@ public:
     int x, y, w, h;
 };
 
+/**
+ * Represents a rectangle on the viewing area
+ */
 class Region : public RegionBase {
 public:
     KDE_NO_CDTOR_EXPORT Region (ElementPtr & d) : RegionBase (d) {}
@@ -224,6 +254,9 @@ public:
     ElementPtr childFromTag (const QString & tag);
 };
 
+/**
+ * Represents the root area for the other regions
+ */
 class RootLayout : public RegionBase {
 public:
     KDE_NO_CDTOR_EXPORT RootLayout (ElementPtr & d) : RegionBase (d) {}
@@ -272,6 +305,9 @@ public:
     void childDone (ElementPtr child);
 };
 
+/**
+ * A Seq represents sequential processing of all its children
+ */
 class Seq : public GroupBase {
 public:
     KDE_NO_CDTOR_EXPORT Seq (ElementPtr & d) : GroupBase (d) {}
@@ -280,6 +316,10 @@ public:
     void start ();
 };
 
+/**
+ * Represents the 'body' tag of SMIL document as in
+ * &lt;smil&gt;&lt;head/&gt;&lt;body/&gt;&lt;/smil&gt;
+ */
 class Body : public Seq {
 public:
     KDE_NO_CDTOR_EXPORT Body (ElementPtr & d) : Seq (d) {}
@@ -338,7 +378,7 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "set"; }
     ElementRuntimePtr getRuntime ();
     void start ();
-    void stop ();
+    void reset ();
     ElementRuntimePtr runtime;
 };
 

@@ -264,6 +264,7 @@ KDE_NO_CDTOR_EXPORT ViewLayer::ViewLayer (QWidget * parent, View * view)
     new KAction (i18n ("Escape"), KShortcut (Qt::Key_Escape), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_escape");
     new KAction (i18n ("Fullscreen"), KShortcut (Qt::Key_F), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_toggle");
     setMouseTracking (true);
+    setWFlags (getWFlags () | WRepaintNoErase);
 }
 
 KDE_NO_EXPORT void ViewLayer::fullScreen () {

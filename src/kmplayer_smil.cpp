@@ -196,6 +196,8 @@ KDE_NO_EXPORT void ElementRuntime::timerEvent (QTimerEvent * e) {
         isstarted = true;
         QTimer::singleShot (0, this, SLOT (started ()));
     } else if (e->timerId () == dur_timer) {
+        killTimer (dur_timer);
+        dur_timer = 0;
         isstarted = false;
         QTimer::singleShot (0, this, SLOT (stopped ()));
     }
@@ -229,7 +231,7 @@ KDE_NO_EXPORT void ElementRuntime::started () {
     if (durations [duration_time].durval > 0) {
         if (durations [duration_time].durval < duration_last_option)
             dur_timer = startTimer (1000 * durations [duration_time].durval);
-    } else if (durations [end_time].durval < duration_last_option) {
+    } else if (!element || durations [end_time].durval < duration_last_option) {
         // no duration set and no special end, so mark us finished
         isstarted = false;
         QTimer::singleShot (0, this, SLOT (stopped ()));
@@ -310,6 +312,24 @@ KDE_NO_EXPORT void MediaTypeRuntime::begin () {
     ElementRuntime::begin ();
 }
 
+KDE_NO_EXPORT void MediaTypeRuntime::started () {
+    if (element) {
+        PlayListNotify * n = element->document ()->notify_listener;
+        if (n && region_node)
+            n->repaintRegion (region_node);
+    }
+    ElementRuntime::started ();
+}
+
+KDE_NO_EXPORT void MediaTypeRuntime::stopped () {
+    if (element) {
+        PlayListNotify * n = element->document ()->notify_listener;
+        if (n && region_node)
+            n->repaintRegion (region_node);
+    }
+    ElementRuntime::stopped ();
+}
+
 KDE_NO_CDTOR_EXPORT AudioVideoData::AudioVideoData (ElementPtr e)
     : MediaTypeRuntime (e) {}
 
@@ -325,7 +345,7 @@ KDE_NO_EXPORT void AudioVideoData::started () {
         if (n && !mt->src.isEmpty ())
             n->requestPlayURL (element, region_node);
     }
-    ElementRuntime::started ();
+    ElementRuntime::started (); // no repaint necessary
 }
 //-----------------------------------------------------------------------------
 
@@ -518,9 +538,6 @@ KDE_NO_EXPORT void SMIL::TimedElement::start () {
 
 KDE_NO_EXPORT void SMIL::TimedElement::stop () {
     Mrl::stop ();
-    ElementRuntimePtr rt = getRuntime ();
-    if (rt)
-        rt->end ();
 }
 
 KDE_NO_EXPORT void SMIL::TimedElement::reset () {
@@ -747,9 +764,10 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::Set::getRuntime () {
 
 KDE_NO_EXPORT void SMIL::Set::start () {
     getRuntime ()->begin ();
+    stop (); // no livetime of itself
 }
 
-KDE_NO_EXPORT void SMIL::Set::stop () {
+KDE_NO_EXPORT void SMIL::Set::reset () {
     getRuntime ()->end ();
 }
 
@@ -836,14 +854,9 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
 }
 
 KDE_NO_EXPORT void ImageData::started () {
-    if (element && d->image) {
-        PlayListNotify * n = element->document ()->notify_listener;
-        if (n && region_node)
-            n->repaintRegion (region_node);
-    }
     if (durations [duration_time].durval == duration_media)
         durations [duration_time].durval = 0; // intrinsic duration of 0
-    ElementRuntime::started ();
+    MediaTypeRuntime::started ();
 }
 
 KDE_NO_EXPORT void ImageData::slotResult (KIO::Job*) {
@@ -948,14 +961,9 @@ KDE_NO_EXPORT void TextData::paint (QPainter & p) {
 }
 
 KDE_NO_EXPORT void TextData::started () {
-    if (element && d->data.size () > 0) {
-        PlayListNotify * n = element->document ()->notify_listener;
-        if (n && region_node)
-            n->repaintRegion (region_node);
-    }
     if (durations [duration_time].durval == duration_media)
         durations [duration_time].durval = 0; // intrinsic duration of 0
-    ElementRuntime::started ();
+    MediaTypeRuntime::started ();
 }
 
 KDE_NO_EXPORT void TextData::slotResult (KIO::Job*) {
