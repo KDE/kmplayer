@@ -36,11 +36,6 @@
 
 #include "kmplayersource.h"
 
-class KMPlayerView;
-class KMPlayerViewer;
-class KMPlayerViewerHolder;
-class KMPlayerControlPanel;
-class KMPlayerConsole;
 class QWidgetStack;
 class QPixmap;
 class QPopupMenu;
@@ -52,6 +47,14 @@ class KPopupMenu;
 class KActionCollection;
 class KAction;
 class KShortcut;
+
+namespace KMPlayer {
+
+class View;
+class Viewer;
+class ViewerHolder;
+class KMPlayerControlPanel;
+class KMPlayerConsole;
 class KMPlayerPlayListView;
 
 class KMPLAYER_EXPORT KMPlayerListViewItem : public QListViewItem {
@@ -68,7 +71,7 @@ class KMPLAYER_EXPORT KMPlayerPlayListView : public KListView {
     friend class KMPlayerListViewItem;
     Q_OBJECT
 public:
-    KMPlayerPlayListView (QWidget * parent, KMPlayerView * view);
+    KMPlayerPlayListView (QWidget * parent, View * view);
     ~KMPlayerPlayListView ();
     void updateTree (ElementPtr root, ElementPtr active);
     void selectItem (const QString & txt);
@@ -82,24 +85,24 @@ private slots:
     void copyToClipboard ();
     void addBookMark ();
 private:
-    KMPlayerView * m_view;
+    View * m_view;
     QPopupMenu * m_itemmenu;
     QPixmap folder_pix;
     QPixmap video_pix;
 };
 
-class KMPlayerViewLayer : public QWidget {
-    friend class KMPlayerView;
+class ViewLayer : public QWidget {
+    friend class View;
     Q_OBJECT
 public:
-    KMPlayerViewLayer (QWidget * parent, KMPlayerView * view);
+    ViewLayer (QWidget * parent, View * view);
     bool isFullScreen () const { return m_fullscreen; }
 public slots:
     void fullScreen ();
     void accelActivated ();
 private:
     QWidget * m_parent;
-    KMPlayerView * m_view;
+    View * m_view;
     KActionCollection * m_collection;
     bool m_fullscreen : 1;
 };
@@ -115,10 +118,10 @@ protected:
     void leaveEvent (QEvent *);
 };
 
-class KMPLAYER_EXPORT KMPlayerView : public KMediaPlayer::View {
+class KMPLAYER_EXPORT View : public KMediaPlayer::View {
     Q_OBJECT
-    friend class KMPlayerViewerHolder;
-    friend class KMPlayerViewer;
+    friend class ViewerHolder;
+    friend class Viewer;
     friend class KMPlayerPlayListView;
     friend class KMPlayerPictureWidget;
 public:
@@ -129,8 +132,8 @@ public:
         WT_Video, WT_Console, WT_Picture, WT_Last
     };
 
-    KMPlayerView (QWidget *parent, const char *);
-    ~KMPlayerView();
+    View (QWidget *parent, const char *);
+    ~View();
 
     void addText (const QString &, bool eol=false);
     void init ();
@@ -138,7 +141,7 @@ public:
     //void print(QPrinter *pPrinter);
 
     //KMPlayerConsole * consoleOutput () const { return m_multiedit; }
-    KDE_NO_EXPORT KMPlayerViewer * viewer () const { return m_viewer; }
+    KDE_NO_EXPORT Viewer * viewer () const { return m_viewer; }
     KDE_NO_EXPORT KMPlayerControlPanel * buttonBar () const { return m_buttonbar; }
     KDE_NO_EXPORT KMPlayerPlayListView * playList () const { return m_playlist; }
     KDE_NO_EXPORT QWidgetStack * widgetStack () const { return m_widgetstack; }
@@ -183,15 +186,15 @@ private slots:
 private:
     KDE_NO_EXPORT void emitPictureClicked () { emit pictureClicked (); }
     // widget for player's output
-    KMPlayerViewer * m_viewer;
+    Viewer * m_viewer;
     // console output
     KMPlayerConsole * m_multiedit;
     // widget stack contains m_viewer, m_multiedit and m_picturewidget
     QWidgetStack * m_widgetstack;
     // widget that layouts m_widgetstack for ratio setting
-    KMPlayerViewerHolder * m_holder;
+    ViewerHolder * m_holder;
     // widget that contains m_holder, m_buttonbar and m_posSlider
-    KMPlayerViewLayer * m_layer;
+    ViewLayer * m_layer;
     // playlist widget
     KMPlayerPlayListView * m_playlist;
     // all widget types
@@ -287,11 +290,11 @@ private:
     bool m_auto_controls; // depending on source caps
 };
 
-class KMPLAYER_EXPORT KMPlayerViewer : public QXEmbed {
+class KMPLAYER_EXPORT Viewer : public QXEmbed {
     Q_OBJECT
 public:
-    KMPlayerViewer(QWidget *parent, KMPlayerView * view);
-    ~KMPlayerViewer();
+    Viewer(QWidget *parent, View * view);
+    ~Viewer();
 
     int heightForWidth (int w) const;
 
@@ -309,7 +312,9 @@ protected:
     void contextMenuEvent (QContextMenuEvent * e);
 private:
     float m_aspect;
-    KMPlayerView * m_view;
+    View * m_view;
 };
+
+} // namespace
 
 #endif // KMPLAYERVIEW_H

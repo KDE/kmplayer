@@ -148,10 +148,10 @@ private:
 };
 
 
-class TVDeviceScannerSource : public KMPlayerSource {
+class TVDeviceScannerSource : public KMPlayer::Source {
     Q_OBJECT
 public:
-    TVDeviceScannerSource (KMPlayer * player);
+    TVDeviceScannerSource (KMPlayer::PartBase * player);
     KDE_NO_CDTOR_EXPORT ~TVDeviceScannerSource () {};
     virtual void init ();
     virtual bool processOutput (const QString & line);
@@ -168,14 +168,14 @@ signals:
     void scanFinished (TVDevice * tvdevice);
 private:
     TVDevice * m_tvdevice;
-    KMPlayerSource * m_source;
+    KMPlayer::Source * m_source;
     QString m_driver;
     QRegExp m_nameRegExp;
     QRegExp m_sizesRegExp;
     QRegExp m_inputRegExp;
 };
 
-class KMPlayerTVSource : public KMPlayerMenuSource, public KMPlayerPreferencesPage {
+class KMPlayerTVSource : public KMPlayerMenuSource, public KMPlayer::KMPlayerPreferencesPage {
     Q_OBJECT
 public:
     struct TVSource {

@@ -24,6 +24,8 @@
 #include <kdebug.h>
 #include "kmplayerplaylist.h"
 
+using namespace KMPlayer;
+
 static Element * fromXMLDocumentGroup (ElementPtr d, const QString & tag) {
     const char * const name = tag.latin1 ();
     if (!strcmp (name, "smil"))
@@ -549,6 +551,8 @@ KDE_NO_EXPORT void FilteredInputSource::fetchData () {
     buffer += textstream.readLine ();
 }
 
+namespace KMPlayer {
+    
 void readXML (ElementPtr root, QTextStream & in, const QString & firstline) {
     QXmlSimpleReader reader;
     MMXmlContentHandler content_handler (root);
@@ -558,3 +562,4 @@ void readXML (ElementPtr root, QTextStream & in, const QString & firstline) {
     reader.parse (&input_source);
 }
 
+} // namespace

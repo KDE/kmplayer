@@ -57,7 +57,9 @@
 #include "kmplayerconfig.h"
 
 
-KDE_NO_CDTOR_EXPORT KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, KMPlayerSettings * settings)
+using namespace KMPlayer;
+
+KDE_NO_CDTOR_EXPORT KMPlayerPreferences::KMPlayerPreferences(PartBase * player, Settings * settings)
 : KDialogBase (IconList, i18n ("Preferences"),
 		Help|Default|Ok|Apply|Cancel, Ok, player->view (), 0, false)
 {
@@ -271,7 +273,7 @@ KDE_NO_EXPORT void KMPlayerPrefSourcePageURL::slotTextChanged (const QString &) 
     changed = true;
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * player, RecorderPage * rl) : QFrame (parent, "RecordPage"), m_player (player), m_recorders (rl) {
+KDE_NO_CDTOR_EXPORT KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, PartBase * player, RecorderPage * rl) : QFrame (parent, "RecordPage"), m_player (player), m_recorders (rl) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     QHBoxLayout * urllayout = new QHBoxLayout ();
     QLabel *urlLabel = new QLabel (i18n ("Output file:"), this);
@@ -311,7 +313,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *par
     layout->addItem (new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
     layout->addLayout (buttonlayout);
     layout->addItem (new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    connect (m_player, SIGNAL (sourceChanged(KMPlayerSource*)), this, SLOT (sourceChanged(KMPlayerSource*)));
+    connect (m_player, SIGNAL (sourceChanged(KMPlayer::Source*)), this, SLOT (sourceChanged(KMPlayer::Source*)));
     connect(m_player, SIGNAL(startRecording()), this, SLOT(recordingStarted()));
     connect(m_player, SIGNAL(stopRecording()),this,SLOT (recordingFinished()));
     connect (replay, SIGNAL (clicked (int)), this, SLOT (replayClicked (int)));
@@ -328,7 +330,7 @@ KDE_NO_EXPORT void KMPlayerPrefRecordPage::recordingFinished () {
     url->setEnabled (true);
 }
 
-KDE_NO_EXPORT void KMPlayerPrefRecordPage::sourceChanged (KMPlayerSource * src) {
+KDE_NO_EXPORT void KMPlayerPrefRecordPage::sourceChanged (Source * src) {
     source->setText (i18n ("Current Source: ") + src->prettyName ());
     int id = 0;
     for (RecorderPage * p = m_recorders; p; p = p->next, ++id) {
@@ -338,7 +340,7 @@ KDE_NO_EXPORT void KMPlayerPrefRecordPage::sourceChanged (KMPlayerSource * src) 
 }
 
 KDE_NO_EXPORT void KMPlayerPrefRecordPage::replayClicked (int id) {
-    replaytime->setEnabled (id == KMPlayerSettings::ReplayAfter);
+    replaytime->setEnabled (id == Settings::ReplayAfter);
 }
 
 KDE_NO_EXPORT void KMPlayerPrefRecordPage::slotRecord () {
@@ -353,18 +355,18 @@ KDE_NO_EXPORT void KMPlayerPrefRecordPage::slotRecord () {
         int id = recorder->id (recorder->selected ());
         int replayid = replay->id (replay->selectedId ());
 #endif
-        m_player->settings ()->recorder = KMPlayerSettings::Recorder (id);
-        m_player->settings ()->replayoption = KMPlayerSettings::ReplayOption (replayid);
+        m_player->settings ()->recorder = Settings::Recorder (id);
+        m_player->settings ()->replayoption = Settings::ReplayOption (replayid);
         for (RecorderPage * p = m_recorders; p; p = p->next)
             if (id-- == 0)
                 p->record ();
     }
 }
 
-KDE_NO_CDTOR_EXPORT RecorderPage::RecorderPage (QWidget *parent, KMPlayer * player)
+KDE_NO_CDTOR_EXPORT RecorderPage::RecorderPage (QWidget *parent, PartBase * player)
  : QFrame (parent), next (0L), m_player (player) {}
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefMEncoderPage::KMPlayerPrefMEncoderPage (QWidget *parent, KMPlayer * player) : RecorderPage (parent, player) {
+KDE_NO_CDTOR_EXPORT KMPlayerPrefMEncoderPage::KMPlayerPrefMEncoderPage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     format = new QButtonGroup (3, Qt::Vertical, i18n ("Format"), this);
     new QRadioButton (i18n ("Same as source"), format);
@@ -404,11 +406,11 @@ KDE_NO_EXPORT QString KMPlayerPrefMEncoderPage::name () {
     return i18n ("&MEncoder");
 }
 
-KDE_NO_EXPORT bool KMPlayerPrefMEncoderPage::sourceSupported (KMPlayerSource *) {
+KDE_NO_EXPORT bool KMPlayerPrefMEncoderPage::sourceSupported (Source *) {
     return true;
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefMPlayerDumpstreamPage::KMPlayerPrefMPlayerDumpstreamPage (QWidget *parent, KMPlayer * player) : RecorderPage (parent, player) {
+KDE_NO_CDTOR_EXPORT KMPlayerPrefMPlayerDumpstreamPage::KMPlayerPrefMPlayerDumpstreamPage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
     hide();
 }
 
@@ -426,11 +428,11 @@ KDE_NO_EXPORT QString KMPlayerPrefMPlayerDumpstreamPage::name () {
     return i18n ("MPlayer -&dumpstream");
 }
 
-KDE_NO_EXPORT bool KMPlayerPrefMPlayerDumpstreamPage::sourceSupported (KMPlayerSource *) {
+KDE_NO_EXPORT bool KMPlayerPrefMPlayerDumpstreamPage::sourceSupported (Source *) {
     return true;
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefFFMpegPage::KMPlayerPrefFFMpegPage (QWidget *parent, KMPlayer * player) : RecorderPage (parent, player) {
+KDE_NO_CDTOR_EXPORT KMPlayerPrefFFMpegPage::KMPlayerPrefFFMpegPage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     QGridLayout *gridlayout = new QGridLayout (1, 2, 2);
     QLabel *argLabel = new QLabel (i18n("FFMpeg arguments:"), this);
@@ -453,7 +455,7 @@ KDE_NO_EXPORT QString KMPlayerPrefFFMpegPage::name () {
     return i18n ("&FFMpeg");
 }
 
-KDE_NO_EXPORT bool KMPlayerPrefFFMpegPage::sourceSupported (KMPlayerSource * source) {
+KDE_NO_EXPORT bool KMPlayerPrefFFMpegPage::sourceSupported (Source * source) {
     QString protocol = source->url ().protocol ();
     return !source->audioDevice ().isEmpty () ||
            !source->videoDevice ().isEmpty () ||

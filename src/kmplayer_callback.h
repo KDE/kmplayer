@@ -21,6 +21,8 @@
 
 #include <dcopobject.h>
 
+namespace KMPlayer {
+
 class KMPlayerCallbackProcess;
 
 class KMPlayerCallback : public DCOPObject {
@@ -40,5 +42,7 @@ k_dcop:
 private:
     KMPlayerCallbackProcess * m_process;
 };
+
+} // namespace
 
 #endif //_KMPLAYER_CALLBACK_H_

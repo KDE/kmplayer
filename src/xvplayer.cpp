@@ -46,7 +46,7 @@ static char                 configfile[2048];
 
 static Display             *display;
 static KXVideoPlayer       *xvapp;
-static KMPlayerCallback_stub * callback;
+static KMPlayer::KMPlayerCallback_stub * callback;
 static Window               wid;
 static GC                   gc;
 static bool                 window_created = true;
@@ -94,6 +94,8 @@ static void putVideo () {
     XGetWindowAttributes (display, wid, &attr);
     XvPutVideo (display, xvport, wid, gc, 0, 0, attr.width, attr.height, 0, 0, attr.width, attr.height);
 }
+
+using namespace KMPlayer;
 
 KMPlayerBackend::KMPlayerBackend ()
     : DCOPObject (QCString ("KMPlayerBackend")) {
@@ -486,7 +488,7 @@ int main(int argc, char **argv) {
             int pos = str.find ('/');
             if (pos > -1) {
                 fprintf (stderr, "callback is %s %s\n", str.left (pos).ascii (), str.mid (pos + 1).ascii ());
-                callback = new KMPlayerCallback_stub 
+                callback = new KMPlayer::KMPlayerCallback_stub 
                     (str.left (pos).ascii (), str.mid (pos + 1).ascii ());
             }
         } else if (!strcmp (argv [i], "-enc")) {

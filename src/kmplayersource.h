@@ -27,18 +27,20 @@
 
 #include "kmplayerplaylist.h"
 
-class KMPlayer;
 class KConfig;
 class QWidget;
 class QFrame;
 class QListViewItem;
-class KMPlayerSourcePrivate;
 
-class KMPLAYER_EXPORT KMPlayerSource : public QObject {
+namespace KMPlayer {
+    
+class PartBase;
+
+class KMPLAYER_EXPORT Source : public QObject {
     Q_OBJECT
 public:
-    KMPlayerSource (const QString & name, KMPlayer * player, const char * src);
-    virtual ~KMPlayerSource ();
+    Source (const QString & name, PartBase * player, const char * src);
+    virtual ~Source ();
     virtual void init ();
     virtual bool processOutput (const QString & line);
 
@@ -101,7 +103,7 @@ protected:
     ElementPtr m_current;
     ElementPtrW m_back_request;
     QString m_name;
-    KMPlayer * m_player;
+    PartBase * m_player;
     QString m_recordcmd;
     bool m_identified;
     bool m_auto_play;
@@ -122,5 +124,7 @@ private:
     int m_length;
     int m_position;
 };
+
+} // namespace
 
 #endif

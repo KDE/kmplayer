@@ -45,7 +45,7 @@ static char                 configfile[2048];
 
 static Display             *display;
 static KGStreamerPlayer   *gstapp;
-static KMPlayerCallback_stub * callback;
+static KMPlayer::KMPlayerCallback_stub * callback;
 static Window               wid;
 static QMutex               mutex (true);
 static bool                 window_created = true;
@@ -185,6 +185,8 @@ GstSizeEvent::GstSizeEvent (int l, int w, int h)
   : QEvent ((QEvent::Type) event_size),
     length (l), width (w), height (h) 
 {}
+
+using namespace KMPlayer;
 
 KMPlayerBackend::KMPlayerBackend ()
     : DCOPObject (QCString ("KMPlayerBackend")) {
@@ -565,7 +567,7 @@ int main(int argc, char **argv) {
             int pos = str.find ('/');
             if (pos > -1) {
                 fprintf (stderr, "callback is %s %s\n", str.left (pos).ascii (), str.mid (pos + 1).ascii ());
-                callback = new KMPlayerCallback_stub 
+                callback = new KMPlayer::KMPlayerCallback_stub 
                     (str.left (pos).ascii (), str.mid (pos + 1).ascii ());
             }
         } else if (!strncmp (argv [i], "-", 1)) {

@@ -34,27 +34,30 @@
 
 class QWidget;
 class KProcess;
-class KMPlayer;
-class KMPlayerView;
-class KMPlayerSource;
+
+namespace KMPlayer {
+    
+class PartBase;
+class View;
+class Source;
 class KMPlayerCallback;
 class KMPlayerBackend_stub;
 
-class KMPLAYER_EXPORT KMPlayerProcess : public QObject {
+class KMPLAYER_EXPORT Process : public QObject {
     Q_OBJECT
 public:
-    KMPlayerProcess (KMPlayer * player, const char * n);
-    virtual ~KMPlayerProcess ();
+    Process (PartBase * player, const char * n);
+    virtual ~Process ();
     virtual void init ();
     virtual void initProcess ();
     virtual QString menuName () const;
     bool playing () const;
-    KDE_NO_EXPORT KMPlayerSource * source () const { return m_source; }
+    KDE_NO_EXPORT Source * source () const { return m_source; }
     KDE_NO_EXPORT KProcess * process () const { return m_process; }
-    KDE_NO_EXPORT KMPlayer * player () const { return m_player; }
+    KDE_NO_EXPORT PartBase * player () const { return m_player; }
     virtual WId widget ();
-    KMPlayerView * view ();
-    void setSource (KMPlayerSource * source);
+    View * view ();
+    void setSource (Source * source);
     virtual bool grabPicture (const KURL & url, int pos);
     bool supports (const char * source) const;
 signals:
@@ -81,8 +84,8 @@ public slots:
     virtual bool contrast (int pos, bool absolute);
     virtual bool brightness (int pos, bool absolute);
 protected:
-    KMPlayer * m_player;
-    KMPlayerSource * m_source;
+    PartBase * m_player;
+    Source * m_source;
     KProcess * m_process;
     QString m_url;
     int m_request_seek;
@@ -94,10 +97,10 @@ protected slots:
     void emitFinished () { emit finished (); }
 };
 
-class MPlayerBase : public KMPlayerProcess {
+class MPlayerBase : public Process {
     Q_OBJECT
 public:
-    MPlayerBase (KMPlayer * player, const char * n);
+    MPlayerBase (PartBase * player, const char * n);
     ~MPlayerBase ();
     void initProcess ();
 public slots:
@@ -119,7 +122,7 @@ class MPlayerPreferencesFrame;
 class MPlayer : public MPlayerBase {
     Q_OBJECT
 public:
-    MPlayer (KMPlayer * player);
+    MPlayer (PartBase * player);
     ~MPlayer ();
     virtual void init ();
     virtual QString menuName () const;
@@ -185,7 +188,7 @@ protected:
 class MEncoder : public MPlayerBase, public Recorder {
     Q_OBJECT
 public:
-    MEncoder (KMPlayer * player);
+    MEncoder (PartBase * player);
     ~MEncoder ();
     virtual void init ();
     KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
@@ -197,7 +200,7 @@ public slots:
 class MPlayerDumpstream : public MPlayerBase, public Recorder {
     Q_OBJECT
 public:
-    MPlayerDumpstream (KMPlayer * player);
+    MPlayerDumpstream (PartBase * player);
     ~MPlayerDumpstream ();
     virtual void init ();
     KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
@@ -209,10 +212,10 @@ public slots:
 class KMPlayerXMLPreferencesPage;
 class KMPlayerXMLPreferencesFrame;
 
-class KMPLAYER_EXPORT KMPlayerCallbackProcess : public KMPlayerProcess {
+class KMPLAYER_EXPORT KMPlayerCallbackProcess : public Process {
     Q_OBJECT
 public:
-    KMPlayerCallbackProcess (KMPlayer * player, const char * n);
+    KMPlayerCallbackProcess (PartBase * player, const char * n);
     ~KMPlayerCallbackProcess ();
     virtual void setStatusMessage (const QString & msg);
     virtual void setErrorMessage (int code, const QString & msg);
@@ -266,7 +269,7 @@ private:
 class Xine : public KMPlayerCallbackProcess {
     Q_OBJECT
 public:
-    Xine (KMPlayer * player);
+    Xine (PartBase * player);
     ~Xine ();
     QString menuName () const;
     WId widget ();
@@ -287,7 +290,7 @@ private slots:
 class GStreamer : public KMPlayerCallbackProcess {
     Q_OBJECT
 public:
-    GStreamer (KMPlayer * player);
+    GStreamer (PartBase * player);
     ~GStreamer ();
     QString menuName () const;
     WId widget ();
@@ -303,10 +306,10 @@ private slots:
     void processOutput (KProcess *, char *, int);
 };
 
-class KMPLAYER_EXPORT FFMpeg : public KMPlayerProcess, public Recorder {
+class KMPLAYER_EXPORT FFMpeg : public Process, public Recorder {
     Q_OBJECT
 public:
-    FFMpeg (KMPlayer * player);
+    FFMpeg (PartBase * player);
     ~FFMpeg ();
     virtual void init ();
     void setArguments (const QString & args) { arguments = args; }
@@ -318,5 +321,7 @@ private slots:
 private:
     QString arguments;
 };
+
+} // namespace
 
 #endif //_KMPLAYERPROCESS_H_

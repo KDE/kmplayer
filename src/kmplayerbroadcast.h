@@ -31,7 +31,6 @@
 
 class KMPlayerPrefBroadcastPage;        // broadcast
 class KMPlayerPrefBroadcastFormatPage;  // broadcast format
-class FFMpeg;
 class QListBox;
 class QComboBox;
 class QLineEdit;
@@ -39,6 +38,9 @@ class QTable;
 class QPushButton;
 class KLed;
 
+namespace KMPlayer {
+    class FFMpeg;
+}
 
 class FFServerSetting {
 public:
@@ -123,7 +125,7 @@ private:
 };
 
 
-class KMPlayerFFServerConfig : public KMPlayerPreferencesPage {
+class KMPlayerFFServerConfig : public KMPlayer::KMPlayerPreferencesPage {
 public:
     KMPlayerFFServerConfig ();
     KDE_NO_CDTOR_EXPORT ~KMPlayerFFServerConfig () {}
@@ -142,10 +144,10 @@ private:
     QGuardedPtr <KMPlayerPrefBroadcastPage> m_configpage;
 };
 
-class KMPlayerBroadcastConfig : public QObject, public KMPlayerPreferencesPage {
+class KMPlayerBroadcastConfig : public QObject, public KMPlayer::KMPlayerPreferencesPage {
     Q_OBJECT
 public:
-    KMPlayerBroadcastConfig (KMPlayer * player, KMPlayerFFServerConfig * fsc);
+    KMPlayerBroadcastConfig (KMPlayer::PartBase * player, KMPlayerFFServerConfig * fsc);
     KDE_NO_CDTOR_EXPORT ~KMPlayerBroadcastConfig ();
 
     virtual void write (KConfig *);
@@ -169,12 +171,12 @@ private slots:
     void startServer ();
     void startFeed ();
     void feedFinished ();
-    void sourceChanged (KMPlayerSource *);
+    void sourceChanged (KMPlayer::Source *);
 private:
-    KMPlayer * m_player;
+    KMPlayer::PartBase * m_player;
     KMPlayerFFServerConfig * m_ffserverconfig;
     QGuardedPtr <KMPlayerPrefBroadcastFormatPage> m_configpage;
-    FFMpeg * m_ffmpeg_process;
+    KMPlayer::FFMpeg * m_ffmpeg_process;
     KProcess * m_ffserver_process;
     bool m_endserver;
     QString m_ffserver_out;

@@ -21,6 +21,8 @@
 
 #include <dcopobject.h>
 
+namespace KMPlayer {
+
 class KMPlayerBackendPrivate;
 
 class KMPlayerBackend : public DCOPObject {
@@ -47,5 +49,7 @@ k_dcop:
 private:
     KMPlayerBackendPrivate * d;
 };
+
+} // namespace
 
 #endif //_KMPLAYER_BACKEND_H_

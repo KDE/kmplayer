@@ -151,7 +151,7 @@ KoView* KOfficeMPlayer::createViewInstance (QWidget* parent, const char* name) {
 
 KOfficeMPlayerView::KOfficeMPlayerView (KOfficeMPlayer* part, QWidget* parent, const char* name)
     : KoView (part, parent, name),
-      m_view (static_cast <KMPlayerView*> (part->player ()->view ())) {
+      m_view (static_cast <KMPlayer::View*> (part->player ()->view ())) {
     kdDebug() << "KOfficeMPlayerView::KOfficeMPlayerView this:" << this << " parent:" << parent << endl;
     m_oldparent = static_cast <QWidget*> (m_view->parent());
     m_view->reparent (this, QPoint (0, 0));

@@ -29,11 +29,10 @@ class KMPlayerPart;
 class KInstance;
 class JSCommandEntry;
 
-
-class KMPlayerHRefSource : public KMPlayerSource {
+class KMPlayerHRefSource : public KMPlayer::Source {
     Q_OBJECT
 public:
-    KMPlayerHRefSource (KMPlayer * player);
+    KMPlayerHRefSource (KMPlayer::PartBase * player);
     virtual ~KMPlayerHRefSource ();
     virtual bool processOutput (const QString & line);
     virtual bool hasLength ();
@@ -102,7 +101,7 @@ private:
 };
 
 
-class KMPlayerPart : public KMPlayer {
+class KMPlayerPart : public KMPlayer::PartBase {
     Q_OBJECT
     friend struct GroupPredicate;
 public:
@@ -141,8 +140,8 @@ private:
     QString m_group;
     KURL m_docbase;
     QString m_src_url;
-    QMap <QString, KMPlayerProcess *> m_old_players;
-    QMap <QString, KMPlayerProcess *> m_old_recorders;
+    QMap <QString, KMPlayer::Process *> m_old_players;
+    QMap <QString, KMPlayer::Process *> m_old_recorders;
     int m_features;
     bool m_started_emited : 1;
     //bool m_noresize : 1;

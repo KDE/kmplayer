@@ -43,7 +43,7 @@ class TVInput;
 class TVChannel;
 
 
-class KMPlayerMenuSource : public KMPlayerSource {
+class KMPlayerMenuSource : public KMPlayer::Source {
     Q_OBJECT
 public:
     KMPlayerMenuSource (const QString & n, KMPlayerApp * app, QPopupMenu * m, const char * src);
@@ -66,7 +66,7 @@ public:
 };
 
 
-class KMPlayerDVDSource : public KMPlayerMenuSource, public KMPlayerPreferencesPage {
+class KMPlayerDVDSource : public KMPlayerMenuSource, public KMPlayer::KMPlayerPreferencesPage {
     Q_OBJECT
 public:
     KMPlayerDVDSource (KMPlayerApp * app, QPopupMenu * m);
@@ -127,7 +127,7 @@ public:
 };
 
 
-class KMPlayerVCDSource : public KMPlayerMenuSource, public KMPlayerPreferencesPage {
+class KMPlayerVCDSource : public KMPlayerMenuSource, public KMPlayer::KMPlayerPreferencesPage {
     Q_OBJECT
 public:
     KMPlayerVCDSource (KMPlayerApp * app, QPopupMenu * m);
@@ -143,7 +143,7 @@ public:
 public slots:
     virtual void activate ();
     virtual void deactivate ();
-    virtual void jump (ElementPtr e);
+    virtual void jump (KMPlayer::ElementPtr e);
 private:
     void buildArguments ();
     KMPlayerPrefSourcePageVCD * m_configpage;
@@ -151,7 +151,7 @@ private:
 };
 
 
-class KMPlayerPipeSource : public KMPlayerSource {
+class KMPlayerPipeSource : public KMPlayer::Source {
     Q_OBJECT
 public:
     KMPlayerPipeSource (KMPlayerApp * app);

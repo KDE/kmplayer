@@ -29,20 +29,24 @@
 #include <kaction.h>
 #include <kurl.h>
 
-class KMPlayerView;
-class KMPlayer;
-class KProcess;
-class KMPlayerSource;
-class KMPlayerDVDSource;
-class KMPlayerDVDNavSource;
-class KMPlayerVCDSource;
-class KMPlayerPipeSource;
-class KMPlayerTVSource;
-class FFMpeg;
 class QPopupMenu;
 class QMenuItem;
+class KProcess;
 class KMPlayerBroadcastConfig;
 class KMPlayerFFServerConfig;
+
+namespace KMPlayer {
+    class View;
+    class PartBase;
+    class Source;
+    class KMPlayerDVDSource;
+    class KMPlayerDVDNavSource;
+    class KMPlayerVCDSource;
+    class KMPlayerPipeSource;
+    class KMPlayerTVSource;
+    class FFMpeg;
+} // namespace
+
 
 class KMPlayerApp : public KMainWindow
 {
@@ -52,10 +56,10 @@ public:
     KMPlayerApp (QWidget* parent=0, const char* name=0);
     ~KMPlayerApp ();
     void openDocumentFile (const KURL& url=KURL());
-    KMPlayer * player () const { return m_player; }
+    KMPlayer::PartBase * player () const { return m_player; }
     void resizePlayer (int percentage);
     KDE_NO_EXPORT KRecentFilesAction * recentFiles () const { return fileOpenRecent; }
-    KDE_NO_EXPORT KMPlayerView *view () const { return m_view; }
+    KDE_NO_EXPORT KMPlayer::View *view () const { return m_view; }
     bool broadcasting () const;
     void showBroadcastConfig ();
     void hideBroadcastConfig ();
@@ -80,7 +84,7 @@ public slots:
     void slotViewStatusBar ();
     void slotViewMenuBar ();
     void slotStatusMsg (const QString &text);
-    void slotSourceChanged (KMPlayerSource *);
+    void slotSourceChanged (KMPlayer::Source *);
 private slots:
     void dvdNav ();
     void openDVD ();
@@ -104,8 +108,8 @@ private slots:
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
     KConfig * config;
-    KMPlayerView * m_view;
-    KMPlayer * m_player;
+    KMPlayer::View * m_view;
+    KMPlayer::PartBase * m_player;
 
     KAction * fileNewWindow;
     KAction * fileOpen;

@@ -63,7 +63,6 @@ static const char * strTVNoPlayback = "No Playback";
 static const char * strTVNorm = "Norm";
 static const char * strTVDriver = "Driver";
 
-
 KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent, TVDevice * dev)
 : QFrame (parent, "PageTVDevice"), device (dev) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
@@ -226,10 +225,10 @@ KDE_NO_EXPORT void TVDevicePageAdder::operator () (TVDevice * device) {
 
 KDE_NO_EXPORT void KMPlayerPrefSourcePageTV::setTVDevices (TVDeviceList * devs) {
     m_devices = devs;
-    std::for_each (addeddevices.begin(), addeddevices.end(), Deleter<TVDevice>);
+    std::for_each (addeddevices.begin(), addeddevices.end(), KMPlayer::Deleter<TVDevice>);
     addeddevices.clear ();
     deleteddevices.clear ();
-    std::for_each (m_devicepages.begin(), m_devicepages.end(), Deleter<QFrame>);
+    std::for_each (m_devicepages.begin(), m_devicepages.end(), KMPlayer::Deleter<QFrame>);
     m_devicepages.clear ();
     std::for_each(m_devices->begin(), m_devices->end(),TVDevicePageAdder(this));
 }
@@ -343,7 +342,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QPopupM
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerTVSource::~KMPlayerTVSource () {
-    std::for_each (tvdevices.begin (), tvdevices.end (), Deleter <TVDevice>);
+    std::for_each (tvdevices.begin (), tvdevices.end (), KMPlayer::Deleter <TVDevice>);
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::activate () {
@@ -359,7 +358,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::buildArguments () {
     if (!m_tvsource)
         return;
     m_identified = true;
-    KMPlayerSettings * config = m_player->settings ();
+    KMPlayer::Settings * config = m_player->settings ();
     m_app->setCaption (QString (i18n ("TV: ")) + m_tvsource->title, false);
     setWidth (m_tvsource->size.width ());
     setHeight (m_tvsource->size.height ());
@@ -465,7 +464,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::menuClicked (int id) {
 
 KDE_NO_EXPORT QString KMPlayerTVSource::filterOptions () {
     if (! m_player->settings ()->disableppauto)
-        return KMPlayerSource::filterOptions ();
+        return KMPlayer::Source::filterOptions ();
     return QString ("-vop pp=lb");
 }
 
@@ -536,7 +535,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::write (KConfig * m_config) {
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::read (KConfig * m_config) {
-    std::for_each (tvdevices.begin (), tvdevices.end (), Deleter <TVDevice>);
+    std::for_each (tvdevices.begin (), tvdevices.end (), KMPlayer::Deleter <TVDevice>);
     tvdevices.clear ();
     m_config->setGroup(strTV);
     tvdriver = m_config->readEntry (strTVDriver, "v4l");
@@ -622,8 +621,8 @@ KDE_NO_EXPORT QFrame * KMPlayerTVSource::prefPage (QWidget * parent) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT TVDeviceScannerSource::TVDeviceScannerSource (KMPlayer * player)
- : KMPlayerSource (i18n ("TVScanner"), player, "tvscanner"), m_tvdevice (0) {
+KDE_NO_CDTOR_EXPORT TVDeviceScannerSource::TVDeviceScannerSource (KMPlayer::PartBase * player)
+ : KMPlayer::Source (i18n ("TVScanner"), player, "tvscanner"), m_tvdevice (0) {
     setURL (KURL ("tv://"));
 }
 
@@ -705,7 +704,7 @@ KDE_NO_EXPORT void TVDeviceScannerSource::play () {
     args.sprintf ("tv:// -tv driver=%s:device=%s -identify -frames 0", m_driver.ascii (), m_tvdevice->device.ascii ());
     m_player->stop ();
     m_player->process ()->initProcess ();
-    if (static_cast <MPlayer *> (m_player->players () ["mplayer"])->run (args.ascii()))
+    if (static_cast <KMPlayer::MPlayer *> (m_player->players () ["mplayer"])->run (args.ascii()))
         connect (m_player, SIGNAL (stopPlaying ()), this, SLOT (finished ()));
     else
         deactivate ();

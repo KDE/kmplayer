@@ -40,7 +40,6 @@
 class KProcess;
 class KAboutData;
 class KMPlayer;
-class KMPlayerSettings;
 class KInstance;
 class KConfig;
 class QIODevice;
@@ -55,7 +54,7 @@ public:
     ~KOfficeMPlayerView ();
     void updateReadWrite(bool) {}
 private:
-    KMPlayerView * m_view;
+    KMPlayer::View * m_view;
     QGuardedPtr <QWidget> m_oldparent;
 };
 

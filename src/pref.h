@@ -25,22 +25,6 @@
 #include <qframe.h>
 #include <qmap.h>
 
-
-class KMPlayerPrefGeneralPageGeneral; 	// general, general
-class KMPlayerPrefSourcePageURL;        // source, url
-class KMPlayerPrefRecordPage;           // recording
-class RecorderPage;                     // base recorder
-class KMPlayerPrefMEncoderPage;         // mencoder
-class KMPlayerPrefMPlayerDumpstreamPage; // mplayer -dumpstream
-class KMPlayerPrefFFMpegPage;           // ffmpeg
-class KMPlayerPrefGeneralPageOutput;	// general, output
-class KMPlayerPrefOPPageGeneral;	// OP = outputplugins, general
-class KMPlayerPrefOPPagePostProc;	// outputplugins, postproc
-class KMPlayer;
-class KMPlayerSource;
-class KMPlayerSettings;
-class KMPlayerPreferencesPage;
-class OutputDriver;
 class QTabWidget;
 class QTable;
 class QGroupBox;
@@ -55,13 +39,31 @@ class KHistoryCombo;
 class KComboBox;
 class KURLRequester;
 
+namespace KMPlayer {
+    
+class KMPlayerPrefGeneralPageGeneral; 	// general, general
+class KMPlayerPrefSourcePageURL;        // source, url
+class KMPlayerPrefRecordPage;           // recording
+class RecorderPage;                     // base recorder
+class KMPlayerPrefMEncoderPage;         // mencoder
+class KMPlayerPrefMPlayerDumpstreamPage; // mplayer -dumpstream
+class KMPlayerPrefFFMpegPage;           // ffmpeg
+class KMPlayerPrefGeneralPageOutput;	// general, output
+class KMPlayerPrefOPPageGeneral;	// OP = outputplugins, general
+class KMPlayerPrefOPPagePostProc;	// outputplugins, postproc
+class PartBase;
+class Source;
+class Settings;
+class KMPlayerPreferencesPage;
+class OutputDriver;
+
 
 class KMPlayerPreferences : public KDialogBase
 {
     Q_OBJECT
 public:
 
-    KMPlayerPreferences(KMPlayer *, KMPlayerSettings *);
+    KMPlayerPreferences(PartBase *, Settings *);
     ~KMPlayerPreferences();
 
     KMPlayerPrefGeneralPageGeneral 	*m_GeneralPageGeneral;
@@ -126,7 +128,7 @@ class KMPlayerPrefRecordPage : public QFrame
 {
     Q_OBJECT
 public:
-    KMPlayerPrefRecordPage (QWidget *parent, KMPlayer *, RecorderPage *);
+    KMPlayerPrefRecordPage (QWidget *parent, PartBase *, RecorderPage *);
     ~KMPlayerPrefRecordPage () {}
 
     KURLRequester * url;
@@ -138,11 +140,11 @@ public slots:
     void replayClicked (int id);
 private slots:
     void slotRecord ();
-    void sourceChanged (KMPlayerSource *);
+    void sourceChanged (KMPlayer::Source *);
     void recordingStarted ();
     void recordingFinished ();
 private:
-    KMPlayer * m_player;
+    PartBase * m_player;
     RecorderPage * m_recorders;
     QPushButton * recordButton;
 };
@@ -151,26 +153,26 @@ class RecorderPage : public QFrame
 {
     Q_OBJECT
 public:
-    RecorderPage (QWidget *parent, KMPlayer *);
+    RecorderPage (QWidget *parent, PartBase *);
     virtual ~RecorderPage () {};
     virtual void record () = 0;
     virtual QString name () = 0;
-    virtual bool sourceSupported (KMPlayerSource *) = 0;
+    virtual bool sourceSupported (Source *) = 0;
     RecorderPage * next;
 protected:
-    KMPlayer * m_player;
+    PartBase * m_player;
 };
 
 class KMPlayerPrefMEncoderPage : public RecorderPage 
 {
     Q_OBJECT
 public:
-    KMPlayerPrefMEncoderPage (QWidget *parent, KMPlayer *);
+    KMPlayerPrefMEncoderPage (QWidget *parent, PartBase *);
     ~KMPlayerPrefMEncoderPage () {}
 
     void record ();
     QString name ();
-    bool sourceSupported (KMPlayerSource *);
+    bool sourceSupported (Source *);
 
     QLineEdit * arguments;
     QButtonGroup * format;
@@ -183,12 +185,12 @@ class KMPlayerPrefMPlayerDumpstreamPage : public RecorderPage
 {
     Q_OBJECT
 public:
-    KMPlayerPrefMPlayerDumpstreamPage (QWidget *parent, KMPlayer *);
+    KMPlayerPrefMPlayerDumpstreamPage (QWidget *parent, PartBase *);
     ~KMPlayerPrefMPlayerDumpstreamPage () {}
 
     void record ();
     QString name ();
-    bool sourceSupported (KMPlayerSource *);
+    bool sourceSupported (Source *);
 
     QLineEdit * arguments;
     QButtonGroup * format;
@@ -199,12 +201,12 @@ class KMPlayerPrefFFMpegPage : public RecorderPage
 {
     Q_OBJECT
 public:
-    KMPlayerPrefFFMpegPage (QWidget *parent, KMPlayer *);
+    KMPlayerPrefFFMpegPage (QWidget *parent, PartBase *);
     ~KMPlayerPrefFFMpegPage () {}
 
     void record ();
     QString name ();
-    bool sourceSupported (KMPlayerSource *);
+    bool sourceSupported (Source *);
 
     QLineEdit * arguments;
     QButtonGroup * format;
@@ -268,5 +270,6 @@ public:
     QCheckBox* FfmpegDeinterlacer;
 };
 
+} // namespace
 
 #endif // _KMPlayerPREF_H_

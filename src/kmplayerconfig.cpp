@@ -49,6 +49,8 @@
 #include "kmplayerview.h"
 #include "pref.h"
 
+using namespace KMPlayer;
+
 static OutputDriver _ads[] = {
     { "", i18n ("Default from MPlayer Config File") },
     { "oss", i18n ("Open Sound System") },
@@ -71,13 +73,13 @@ static OutputDriver _vds [] = {
 static const int ADRIVER_ARTS_INDEX = 4;
 
 
-KDE_NO_CDTOR_EXPORT KMPlayerSettings::KMPlayerSettings (KMPlayer * player, KConfig * config)
+KDE_NO_CDTOR_EXPORT Settings::Settings (PartBase * player, KConfig * config)
   : pagelist (0L), configdialog (0L), m_config (config), m_player (player) {
     audiodrivers = _ads;
     videodrivers = _vds;
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerSettings::~KMPlayerSettings () {
+KDE_NO_CDTOR_EXPORT Settings::~Settings () {
     // configdialog should be destroyed when the view is destroyed
     //delete configdialog;
 }
@@ -151,8 +153,8 @@ static const char * strAutoPlayAfterTime = "Auto Play After Recording Time";
 static const char * strRecordingCopy = "Recording Is Copy";
 
 
-KDE_NO_EXPORT void KMPlayerSettings::readConfig () {
-    KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
+KDE_NO_EXPORT void Settings::readConfig () {
+    View *view = static_cast <View *> (m_player->view ());
 
     m_config->setGroup (strGeneralGroup);
     urllist = m_config->readListEntry (strURLList, ';');
@@ -161,8 +163,8 @@ KDE_NO_EXPORT void KMPlayerSettings::readConfig () {
     brightness = m_config->readNumEntry (strBrightness, 0);
     hue = m_config->readNumEntry (strHue, 0);
     saturation = m_config->readNumEntry (strSaturation, 0);
-    const QMap <QString, KMPlayerSource*>::const_iterator e = m_player->sources ().end ();
-    QMap <QString, KMPlayerSource *>::const_iterator i = m_player->sources().begin ();
+    const QMap <QString, Source*>::const_iterator e = m_player->sources ().end ();
+    QMap <QString, Source *>::const_iterator i = m_player->sources().begin ();
     for (; i != e; ++i)
         backends[i.data()->name ()] = m_config->readEntry (i.data()->name ());
 
@@ -237,13 +239,13 @@ KDE_NO_EXPORT void KMPlayerSettings::readConfig () {
         p->read (m_config);
 }
 
-KDE_NO_EXPORT bool KMPlayerSettings::createDialog () {
+KDE_NO_EXPORT bool Settings::createDialog () {
     if (configdialog) return false;
     configdialog = new KMPlayerPreferences (m_player, this);
     int id = 0;
-    const KMPlayer::ProcessMap::const_iterator e = m_player->players ().end ();
-    for (KMPlayer::ProcessMap::const_iterator i = m_player->players ().begin(); i != e; ++i) {
-        KMPlayerProcess * p = i.data ();
+    const PartBase::ProcessMap::const_iterator e = m_player->players ().end ();
+    for (PartBase::ProcessMap::const_iterator i = m_player->players ().begin(); i != e; ++i) {
+        Process * p = i.data ();
         if (p->supports ("urlsource"))
             configdialog->m_SourcePageURL->backend->insertItem (p->menuName ().remove (QChar ('&')), id++);
     }
@@ -257,7 +259,7 @@ KDE_NO_EXPORT bool KMPlayerSettings::createDialog () {
     return true;
 }
 
-void KMPlayerSettings::addPage (KMPlayerPreferencesPage * page) {
+void Settings::addPage (KMPlayerPreferencesPage * page) {
     for (KMPlayerPreferencesPage * p = pagelist; p; p = p->next)
         if (p == page)
             return;
@@ -270,7 +272,7 @@ void KMPlayerSettings::addPage (KMPlayerPreferencesPage * page) {
     pagelist = page;
 }
 
-void KMPlayerSettings::removePage (KMPlayerPreferencesPage * page) {
+void Settings::removePage (KMPlayerPreferencesPage * page) {
     if (configdialog)
         configdialog->removePrefPage (page);
     KMPlayerPreferencesPage * prev = 0L;
@@ -284,7 +286,7 @@ void KMPlayerSettings::removePage (KMPlayerPreferencesPage * page) {
         }
 }
     
-void KMPlayerSettings::show (const char * pagename) {
+void Settings::show (const char * pagename) {
     bool created = createDialog ();
     configdialog->m_GeneralPageGeneral->keepSizeRatio->setChecked (sizeratio);
     configdialog->m_GeneralPageGeneral->loop->setChecked (loop);
@@ -306,9 +308,9 @@ void KMPlayerSettings::show (const char * pagename) {
     configdialog->m_GeneralPageOutput->audioDriver->setCurrentItem (audiodriver);
     configdialog->m_SourcePageURL->backend->setCurrentItem (configdialog->m_SourcePageURL->backend->findItem (backends["urlsource"]));
     int id = 0;
-    const KMPlayer::ProcessMap::const_iterator e = m_player->players ().end ();
-    for (KMPlayer::ProcessMap::const_iterator i = m_player->players ().begin(); i != e; ++i) {
-        KMPlayerProcess * p = i.data ();
+    const PartBase::ProcessMap::const_iterator e = m_player->players ().end ();
+    for (PartBase::ProcessMap::const_iterator i = m_player->players ().begin(); i != e; ++i) {
+        Process * p = i.data ();
         if (p->supports ("urlsource")) {
             if (backends["urlsource"] == QString (p->name()))
                 configdialog->m_SourcePageURL->backend->setCurrentItem (id);
@@ -370,8 +372,8 @@ void KMPlayerSettings::show (const char * pagename) {
     configdialog->show ();
 }
 
-void KMPlayerSettings::writeConfig () {
-    KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
+void Settings::writeConfig () {
+    View *view = static_cast <View *> (m_player->view ());
 
     m_config->setGroup (strGeneralGroup);
     m_config->writeEntry (strURLList, urllist, ';');
@@ -447,8 +449,8 @@ void KMPlayerSettings::writeConfig () {
     m_config->sync ();
 }
 
-KDE_NO_EXPORT void KMPlayerSettings::okPressed () {
-    KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
+KDE_NO_EXPORT void Settings::okPressed () {
+    View *view = static_cast <View *> (m_player->view ());
     if (!view)
         return;
     bool urlchanged = configdialog->m_SourcePageURL->changed;
@@ -527,9 +529,9 @@ KDE_NO_EXPORT void KMPlayerSettings::okPressed () {
     videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentItem();
     audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentItem();
     int backend = configdialog->m_SourcePageURL->backend->currentItem ();
-    const KMPlayer::ProcessMap::const_iterator e = m_player->players ().end();
-    for (KMPlayer::ProcessMap::const_iterator i = m_player->players ().begin(); backend >=0 && i != e; ++i) {
-        KMPlayerProcess * proc = i.data ();
+    const PartBase::ProcessMap::const_iterator e = m_player->players ().end();
+    for (PartBase::ProcessMap::const_iterator i = m_player->players ().begin(); backend >=0 && i != e; ++i) {
+        Process * proc = i.data ();
         if (proc->supports ("urlsource") && backend-- == 0) {
             backends["urlsource"] = proc->name ();
             if (proc != m_player->process ())
@@ -601,7 +603,7 @@ KDE_NO_EXPORT void KMPlayerSettings::okPressed () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerSettings::getHelp () {
+KDE_NO_EXPORT void Settings::getHelp () {
     KApplication::kApplication()->invokeBrowser ("man:/mplayer");
 }
 

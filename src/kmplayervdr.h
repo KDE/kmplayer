@@ -49,7 +49,7 @@ class KListView;
 class KMPlayerPrefSourcePageVDR : public QFrame {
     Q_OBJECT
 public:
-    KMPlayerPrefSourcePageVDR (QWidget * parent, KMPlayer * player);
+    KMPlayerPrefSourcePageVDR (QWidget * parent, KMPlayer::PartBase * player);
     ~KMPlayerPrefSourcePageVDR ();
     KURLRequester * vcddevice;
     KListView * xv_port;
@@ -58,11 +58,11 @@ public:
 protected:
     void showEvent (QShowEvent *);
 private:
-    KMPlayer * m_player;
+    KMPlayer::PartBase * m_player;
 };
 
 
-class KMPlayerVDRSource : public KMPlayerMenuSource, public KMPlayerPreferencesPage {
+class KMPlayerVDRSource : public KMPlayerMenuSource, public KMPlayer::KMPlayerPreferencesPage {
     Q_OBJECT
 public:
     KMPlayerVDRSource (KMPlayerApp * app, QPopupMenu *);
@@ -78,7 +78,7 @@ public:
 public slots:
     void activate ();
     void deactivate ();
-    void jump (ElementPtr e);
+    void jump (KMPlayer::ElementPtr e);
     void forward ();
     void backward ();
 private slots:
@@ -139,7 +139,7 @@ private:
     int scale;
 };
 
-class XVideo : public KMPlayerCallbackProcess {
+class XVideo : public KMPlayer::KMPlayerCallbackProcess {
     Q_OBJECT
 public:
     struct Input {
@@ -157,7 +157,7 @@ public:
         Input * inputs;
         Port * next;
     };
-    XVideo (KMPlayer * player);
+    XVideo (KMPlayer::PartBase * player);
     ~XVideo ();
     QString menuName () const;
     void initProcess ();

@@ -33,8 +33,21 @@
 
 
 class KAboutData;
-class KMPlayer;
-class KMPlayerProcess;
+class KInstance;
+class KActionCollection;
+class KBookmarkMenu;
+class KConfig;
+class QIODevice;
+class QTextStream;
+
+namespace KIO {
+    class Job;
+}
+
+namespace KMPlayer {
+    
+class PartBase;
+class Process;
 class MPlayer;
 class KMPlayerBookmarkOwner;
 class KMPlayerBookmarkManager;
@@ -42,22 +55,12 @@ class MEncoder;
 class MPlayerDumpstream;
 class FFMpeg;
 class Xine;
-class KMPlayerSettings;
-class KInstance;
-class KActionCollection;
-class KBookmarkMenu;
-class KConfig;
-class QIODevice;
-class QTextStream;
-class JSCommandEntry;
-namespace KIO {
-    class Job;
-}
+class Settings;
 
-class KMPLAYER_EXPORT KMPlayerURLSource : public KMPlayerSource {
+class KMPLAYER_EXPORT KMPlayerURLSource : public Source {
     Q_OBJECT
 public:
-    KMPlayerURLSource (KMPlayer * player, const KURL & url = KURL ());
+    KMPlayerURLSource (PartBase * player, const KURL & url = KURL ());
     virtual ~KMPlayerURLSource ();
 
     virtual bool hasLength ();
@@ -80,17 +83,17 @@ private:
 };
 
 
-class KMPLAYER_EXPORT KMPlayer : public KMediaPlayer::Player {
+class KMPLAYER_EXPORT PartBase : public KMediaPlayer::Player {
     Q_OBJECT
 public:
-    typedef QMap <QString, KMPlayerProcess *> ProcessMap;
-    KMPlayer (QWidget * parent,  const char * wname,QObject * parent, const char * name, KConfig *);
-    ~KMPlayer ();
+    typedef QMap <QString, Process *> ProcessMap;
+    PartBase (QWidget * parent,  const char * wname,QObject * parent, const char * name, KConfig *);
+    ~PartBase ();
     void init (KActionCollection * = 0L);
     virtual KMediaPlayer::View* view ();
     static KAboutData* createAboutData ();
 
-    KDE_NO_EXPORT KMPlayerSettings * settings () const { return m_settings; }
+    KDE_NO_EXPORT Settings * settings () const { return m_settings; }
     void keepMovieAspect (bool);
     KDE_NO_EXPORT KURL url () const { return m_sources ["urlsource"]->url (); }
     KDE_NO_EXPORT void setURL (const KURL & url) { m_sources ["urlsource"]->setURL (url); }
@@ -105,16 +108,16 @@ public:
     /* Changes the source,
      * calls init() and reschedules an activate() on the source
      * */
-    void setSource (KMPlayerSource * source);
-    KDE_NO_EXPORT KMPlayerProcess * process () const { return m_process; }
-    KDE_NO_EXPORT KMPlayerProcess * recorder () const { return m_recorder; }
-    QMap <QString, KMPlayerProcess *> & players () { return m_players; }
-    QMap <QString, KMPlayerProcess *> & recorders () { return m_recorders; }
-    QMap <QString, KMPlayerSource *> & sources () { return m_sources; }
+    void setSource (Source * source);
+    KDE_NO_EXPORT Process * process () const { return m_process; }
+    KDE_NO_EXPORT Process * recorder () const { return m_recorder; }
+    QMap <QString, Process *> & players () { return m_players; }
+    QMap <QString, Process *> & recorders () { return m_recorders; }
+    QMap <QString, Source *> & sources () { return m_sources; }
     KDE_NO_EXPORT KConfig * config () const { return m_config; }
     void updatePlayerMenu ();
 
-    // these are called from KMPlayerProcess
+    // these are called from Process
     void changeURL (const QString & url);
     void changeTitle (const QString & title);
     void updateTree (const ElementPtr & d, const ElementPtr & c);
@@ -146,7 +149,7 @@ signals:
     void stopPlaying ();
     void startRecording ();
     void stopRecording ();
-    void sourceChanged (KMPlayerSource *);
+    void sourceChanged (KMPlayer::Source *);
     void loading (int percentage);
     void urlAdded (const QString & url);
     void urlChanged (const QString & url);
@@ -175,13 +178,13 @@ protected slots:
     void playListItemSelected (QListViewItem *);
 protected:
     KConfig * m_config;
-    QGuardedPtr <KMPlayerView> m_view;
-    KMPlayerSettings * m_settings;
-    KMPlayerProcess * m_process;
-    KMPlayerProcess * m_recorder;
+    QGuardedPtr <View> m_view;
+    Settings * m_settings;
+    Process * m_process;
+    Process * m_recorder;
     ProcessMap m_players;
     ProcessMap m_recorders;
-    QMap <QString, KMPlayerSource *> m_sources;
+    QMap <QString, Source *> m_sources;
     KMPlayerBookmarkManager * m_bookmark_manager;
     KMPlayerBookmarkOwner * m_bookmark_owner;
     KBookmarkMenu * m_bookmark_menu;
@@ -192,5 +195,7 @@ protected:
     bool m_bPosSliderPressed : 1;
     bool m_in_update_tree : 1;
 };
+
+} // namespace
 
 #endif

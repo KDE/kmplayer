@@ -401,7 +401,7 @@ static bool stopProcess (KProcess * process, const char * cmd = 0L) {
 }
 
 
-KDE_NO_CDTOR_EXPORT KMPlayerBroadcastConfig::KMPlayerBroadcastConfig (KMPlayer * player, KMPlayerFFServerConfig * fsc)
+KDE_NO_CDTOR_EXPORT KMPlayerBroadcastConfig::KMPlayerBroadcastConfig (KMPlayer::PartBase * player, KMPlayerFFServerConfig * fsc)
  : m_player (player),
    m_ffserverconfig (fsc),
    m_ffmpeg_process (0L),
@@ -425,7 +425,7 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::write (KConfig * config) {
 }
 
 KDE_NO_EXPORT void KMPlayerBroadcastConfig::read (KConfig * config) {
-    std::for_each (ffserversettingprofiles.begin (), ffserversettingprofiles.end (), Deleter<FFServerSetting>);
+    std::for_each (ffserversettingprofiles.begin (), ffserversettingprofiles.end (), KMPlayer::Deleter<FFServerSetting>);
     ffserversettingprofiles.clear ();
     config->setGroup (strBroadcast);
     ffserversettings = config->readListEntry (strFFServerCustomSetting, ';');
@@ -460,8 +460,8 @@ QFrame * KMPlayerBroadcastConfig::prefPage (QWidget * parent) {
     if (!m_configpage) {
         m_configpage = new KMPlayerPrefBroadcastFormatPage (parent, ffserversettingprofiles);
         connect (m_configpage->startbutton, SIGNAL (clicked ()), this, SLOT (startServer ()));
-        connect (m_player, SIGNAL (sourceChanged (KMPlayerSource *)),
-                 this, SLOT (sourceChanged (KMPlayerSource *)));
+        connect (m_player, SIGNAL (sourceChanged (KMPlayer::Source *)),
+                 this, SLOT (sourceChanged (KMPlayer::Source *)));
         m_configpage->startbutton->setEnabled
             (!m_player->process ()->source ()->videoDevice ().isEmpty ());
     }
@@ -553,7 +553,7 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::startFeed () {
     if (m_ffmpeg_process)
         m_ffmpeg_process->stop ();
     delete m_ffmpeg_process;
-    m_ffmpeg_process = new FFMpeg (m_player);
+    m_ffmpeg_process = new KMPlayer::FFMpeg (m_player);
     m_ffmpeg_process->setSource (m_player->process ()->source ());
     connect (m_ffmpeg_process, SIGNAL (finished ()),
              this, SLOT (feedFinished ()));
@@ -603,7 +603,7 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::processStopped (KProcess *) {
     emit broadcastStopped ();
 }
 
-KDE_NO_EXPORT void KMPlayerBroadcastConfig::sourceChanged (KMPlayerSource * source) {
+KDE_NO_EXPORT void KMPlayerBroadcastConfig::sourceChanged (KMPlayer::Source * source) {
     if (m_configpage)
         m_configpage->startbutton->setEnabled (broadcasting () || (source && !source->videoDevice ().isEmpty ()));
 }

@@ -53,6 +53,9 @@
 
 class QXmlAttributes;
 class QTextStream;
+
+namespace KMPlayer {
+
 class Document;
 class Element;
 class Mrl;
@@ -276,5 +279,7 @@ public:
 };
 
 void readXML (ElementPtr root, QTextStream & in, const QString & firstline);
+
+}  // namespace
 
 #endif //_KMPLAYER_PLAYLIST_H_

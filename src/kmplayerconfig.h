@@ -29,10 +29,12 @@
 
 #include <kurl.h>
 
-class KMPlayer;
 class KConfig;
-class KMPlayerPreferences;
 
+namespace KMPlayer {
+    
+class PartBase;
+class KMPlayerPreferences;
 
 class OutputDriver {
 public:
@@ -56,11 +58,11 @@ public:
     KMPlayerPreferencesPage * next;
 };
 
-class KMPLAYER_EXPORT KMPlayerSettings : public QObject {
+class KMPLAYER_EXPORT Settings : public QObject {
     Q_OBJECT
 public:
-    KMPlayerSettings (KMPlayer *, KConfig * part);
-    ~KMPlayerSettings ();
+    Settings (PartBase *, KConfig * part);
+    ~Settings ();
     bool createDialog ();
     void show (const char * pagename = 0L);
     void addPage (KMPlayerPreferencesPage *);
@@ -144,7 +146,9 @@ private slots:
 private:
     KMPlayerPreferences * configdialog;
     KConfig * m_config;
-    KMPlayer * m_player;
+    PartBase * m_player;
 };
+
+} // namespace
 
 #endif //_KMPLAYERCONFIG_H_

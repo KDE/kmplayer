@@ -44,6 +44,8 @@
 #include "kmplayerconfig.h"
 #include "kmplayerprocess.h"
 
+using namespace KMPlayer;
+
 typedef std::list <KMPlayerPart *> KMPlayerPartList;
 
 struct KMPlayerPartStatic {
@@ -125,7 +127,7 @@ static bool getBoolValue (const QString & value) {
 
 KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
                     QObject * parent, const char *name, const QStringList &args)
- : KMPlayer (wparent, wname, parent, name, new KSimpleConfig ("kmplayerrc")),
+ : PartBase (wparent, wname, parent, name, new KSimpleConfig ("kmplayerrc")),
    m_browserextension (new KMPlayerBrowserExtension (this)),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
    m_features (Feat_Unknown),
@@ -142,7 +144,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     /*KAction *playact =*/ new KAction(i18n("P&lay"), 0, 0, this, SLOT(play ()), actionCollection (), "view_play");
     /*KAction *pauseact =*/ new KAction(i18n("&Pause"), 0, 0, this, SLOT(pause ()), actionCollection (), "view_pause");
     /*KAction *stopact =*/ new KAction(i18n("&Stop"), 0, 0, this, SLOT(stop ()), actionCollection (), "view_stop");
-    KMPlayerSource * urlsource = m_sources ["urlsource"];
+    Source * urlsource = m_sources ["urlsource"];
     KMPlayerControlPanel * panel = m_view->buttonBar ();
     QStringList::const_iterator it = args.begin ();
     for ( ; it != args.end (); ++it) {
@@ -246,11 +248,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                                       this, SLOT (setMenuZoom (int)));
 
     if (m_features & Feat_Controls)
-        m_view->setControlPanelMode (KMPlayerView::CP_Show);
+        m_view->setControlPanelMode (KMPlayer::View::CP_Show);
     else if (m_features != Feat_Unknown)
-        m_view->setControlPanelMode (KMPlayerView::CP_Hide);
+        m_view->setControlPanelMode (KMPlayer::View::CP_Hide);
     else
-        m_view->setControlPanelMode (KMPlayerView::CP_AutoHide);
+        m_view->setControlPanelMode (KMPlayer::View::CP_AutoHide);
     bool group_member = !m_group.isEmpty () && m_group != QString::fromLatin1("_unique") && m_features != Feat_Unknown;
     if (!group_member || m_features & Feat_Viewer) {
         // not part of a group or we're the viewer
@@ -323,7 +325,7 @@ KDE_NO_EXPORT void KMPlayerPart::viewerPartProcessChanged (const char * pname) {
 
 KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
     kdDebug () << "KMPlayerPart::openURL " << _url.url() << endl;
-    KMPlayerSource * urlsource = m_sources ["urlsource"];
+    Source * urlsource = m_sources ["urlsource"];
     KMPlayerHRefSource * hrefsource = static_cast <KMPlayerHRefSource *>(m_sources ["hrefsource"]);
     KMPlayerPartList::iterator i =kmplayerpart_static->partlist.begin ();
     KMPlayerPartList::iterator e =kmplayerpart_static->partlist.end ();
@@ -373,7 +375,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
         setSource (hrefsource);
     } else {
         hrefsource->clear ();
-        KMPlayer::openURL (m_havehref ? m_sources ["urlsource"]->url () : url);
+        PartBase::openURL (m_havehref ? m_sources ["urlsource"]->url () : url);
     }
     m_havehref = false;
     return true;
@@ -387,7 +389,7 @@ KDE_NO_EXPORT void KMPlayerPart::waitForImageWindowTimeOut () {
         if (i == e || *i == this) {
             setProcess ("mplayer");
             setRecorder ("mencoder");
-            KMPlayer::openURL (url ());
+            PartBase::openURL (url ());
         } else {
             m_old_players = m_players;
             m_old_recorders = m_recorders;
@@ -408,11 +410,11 @@ KDE_NO_EXPORT bool KMPlayerPart::closeURL () {
         kmplayerpart_static->partlist.remove (this);
         m_group.truncate (0);
     }
-    return KMPlayer::closeURL ();
+    return PartBase::closeURL ();
 }
 
 KDE_NO_EXPORT void KMPlayerPart::processFinished () {
-    KMPlayer::processFinished ();
+    PartBase::processFinished ();
     if (m_started_emited) {
         m_started_emited = false;
         m_browserextension->setLoadingProgress (100);
@@ -425,7 +427,7 @@ KDE_NO_EXPORT void KMPlayerPart::processFinished () {
 }
 
 KDE_NO_EXPORT void KMPlayerPart::loaded (int percentage) {
-    KMPlayer::loaded (percentage);
+    PartBase::loaded (percentage);
     if (percentage < 100) {
         m_browserextension->setLoadingProgress (percentage);
         m_browserextension->infoMessage 
@@ -434,7 +436,7 @@ KDE_NO_EXPORT void KMPlayerPart::loaded (int percentage) {
 }
 
 KDE_NO_EXPORT void KMPlayerPart::processStarted () {
-    KMPlayer::processStarted ();
+    PartBase::processStarted ();
     emit started (0L);
     m_started_emited = true;
 }
@@ -442,7 +444,7 @@ KDE_NO_EXPORT void KMPlayerPart::processStarted () {
 KDE_NO_EXPORT void KMPlayerPart::processStartedPlaying () {
     if (!m_view) return;
     kdDebug () << "KMPlayerPart::processStartedPlaying " << endl;
-    KMPlayer::processStartedPlaying ();
+    PartBase::processStartedPlaying ();
     if (m_settings->sizeratio && !m_noresize)
         m_liveconnectextension->setSize (m_process->source ()->width (),
                                          m_process->source ()->height ());
@@ -482,13 +484,13 @@ KDE_NO_EXPORT void KMPlayerBrowserExtension::setLoadingProgress (int percentage)
 }
 
 KDE_NO_EXPORT void KMPlayerBrowserExtension::saveState (QDataStream & stream) {
-    stream << static_cast <KMPlayer *> (parent ())->url ().url ();
+    stream << static_cast <PartBase *> (parent ())->url ().url ();
 }
 
 KDE_NO_EXPORT void KMPlayerBrowserExtension::restoreState (QDataStream & stream) {
     QString url;
     stream >> url;
-    static_cast <KMPlayer *> (parent ())->openURL (KURL(url));
+    static_cast <PartBase *> (parent ())->openURL (KURL(url));
 }
 //---------------------------------------------------------------------
 
@@ -696,7 +698,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
     if (!entry)
         return false;
     kdDebug () << "entry " << entry->name << endl;
-    KMPlayerView * view = static_cast <KMPlayerView*> (player->view ());
+    KMPlayer::View * view = static_cast <KMPlayer::View*> (player->view ());
     if (!view)
         return false;
     rid = id;
@@ -743,7 +745,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
             rval = player->settings ()->sizeratio ? "true" : "false";
             break;
         case isfullscreen:
-            rval = static_cast <KMPlayerView*> (player->view ())->isFullScreen () ? "true" : "false";
+            rval = static_cast <KMPlayer::View*> (player->view ())->isFullScreen () ? "true" : "false";
             break;
         case length:
             rval.setNum (player->process ()->source ()->length ());
@@ -784,8 +786,8 @@ KDE_NO_EXPORT void KMPlayerLiveConnectExtension::unregister (const unsigned long
 }
 
 KDE_NO_EXPORT void KMPlayerLiveConnectExtension::setSize (int w, int h) {
-    KMPlayerView * view = static_cast <KMPlayerView*> (player->view ());
-    if (view->controlPanelMode () == KMPlayerView::CP_Show)
+    KMPlayer::View * view = static_cast <KMPlayer::View*> (player->view ());
+    if (view->controlPanelMode () == KMPlayer::View::CP_Show)
         h += view->buttonBar()->height();
     QCString jscode;
     //jscode.sprintf("this.width=%d;this.height=%d;kmplayer", w, h);
@@ -801,8 +803,8 @@ KDE_NO_EXPORT void KMPlayerLiveConnectExtension::setSize (int w, int h) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT KMPlayerHRefSource::KMPlayerHRefSource (KMPlayer * player)
-    : KMPlayerSource (i18n ("HREF"), player, "hrefsource") {
+KDE_NO_CDTOR_EXPORT KMPlayerHRefSource::KMPlayerHRefSource (PartBase * player)
+    : Source (i18n ("HREF"), player, "hrefsource") {
     kdDebug () << "KMPlayerHRefSource::KMPlayerHRefSource" << endl;
 }
 
@@ -811,7 +813,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerHRefSource::~KMPlayerHRefSource () {
 }
 
 KDE_NO_EXPORT void KMPlayerHRefSource::init () {
-    KMPlayerSource::init ();
+    Source::init ();
     setIdentified ();
 }
 
@@ -820,7 +822,7 @@ KDE_NO_EXPORT bool KMPlayerHRefSource::hasLength () {
 }
 
 KDE_NO_EXPORT bool KMPlayerHRefSource::processOutput (const QString & /*str*/) {
-    //return KMPlayerSource::processOutput (str);
+    //return Source::processOutput (str);
     return true;
 }
 
@@ -828,7 +830,7 @@ KDE_NO_EXPORT void KMPlayerHRefSource::setURL (const KURL & url) {
     m_url = url;
     m_identified = false;
     m_finished = false;
-    KMPlayerSource::setURL (url);
+    Source::setURL (url);
     kdDebug () << "KMPlayerHRefSource::setURL " << m_url.url() << endl;
 }
 
@@ -869,7 +871,7 @@ KDE_NO_EXPORT void KMPlayerHRefSource::grabReady (const QString & path) {
 
 KDE_NO_EXPORT void KMPlayerHRefSource::finished () {
     kdDebug () << "KMPlayerHRefSource::finished()" << endl;
-    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
+    KMPlayer::View * view = static_cast <KMPlayer::View*> (m_player->view ());
     if (!view) return;
     if (!view->setPicture (m_grabfile)) {
         clear ();
@@ -882,7 +884,7 @@ KDE_NO_EXPORT void KMPlayerHRefSource::finished () {
 
 KDE_NO_EXPORT void KMPlayerHRefSource::deactivate () {
     kdDebug () << "KMPlayerHRefSource::deactivate()" << endl;
-    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
+    KMPlayer::View * view = static_cast <KMPlayer::View*> (m_player->view ());
     if (!view) return;
     view->setPicture (QString::null);
     if (view->viewer ())

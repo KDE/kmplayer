@@ -71,7 +71,7 @@ public:
 };
 
 static KXinePlayer * xineapp;
-static KMPlayerCallback_stub * callback;
+static KMPlayer::KMPlayerCallback_stub * callback;
 static QMutex mutex (true);
 
 static xine_t              *xine;
@@ -235,6 +235,8 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
 
 } // extern "C"
 
+using namespace KMPlayer;
+
 KMPlayerBackend::KMPlayerBackend ()
     : DCOPObject (QCString ("KMPlayerBackend")) {
 }
@@ -373,7 +375,7 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
             int pos = str.find ('/');
             if (pos > -1) {
                 fprintf (stderr, "callback is %s %s\n", str.left (pos).ascii (), str.mid (pos + 1).ascii ());
-                callback = new KMPlayerCallback_stub 
+                callback = new KMPlayer::KMPlayerCallback_stub 
                     (str.left (pos).ascii (), str.mid (pos + 1).ascii ());
             }
         } else 
@@ -714,13 +716,13 @@ bool KXinePlayer::event (QEvent * e) {
         case event_url: {
             XineURLEvent * ue = static_cast <XineURLEvent *> (e);                
             if (callback)
-                callback->statusMessage ((int) KMPlayerCallback::stat_addurl, ue->url);
+                callback->statusMessage ((int) KMPlayer::KMPlayerCallback::stat_addurl, ue->url);
             break;
         }
         case event_title: {
             XineTitleEvent * ue = static_cast <XineTitleEvent *> (e);                
             if (callback)
-                callback->statusMessage ((int) KMPlayerCallback::stat_newtitle, ue->title);
+                callback->statusMessage ((int) KMPlayer::KMPlayerCallback::stat_newtitle, ue->title);
             break;
         }
         default:

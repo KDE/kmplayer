@@ -66,7 +66,7 @@ static const char * strXVPort = "XV Port";
 static const char * strXVEncoding = "XV Encoding";
 static const char * strXVScale = "XV Scale";
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::KMPlayerPrefSourcePageVDR (QWidget * parent, KMPlayer * player)
+KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::KMPlayerPrefSourcePageVDR (QWidget * parent, KMPlayer::PartBase * player)
  : QFrame (parent), m_player (player) {
     //KURLRequester * v4ldevice;
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
@@ -160,7 +160,7 @@ KDE_NO_EXPORT QString KMPlayerVDRSource::prettyName () {
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
-    KMPlayerView * view = static_cast <KMPlayerView *> (m_player->view ());
+    KMPlayer::View * view = static_cast <KMPlayer::View *> (m_player->view ());
     view->addFullscreenAction (i18n ("VDR Key Up"), act_up->shortcut (), this, SLOT (keyUp ()), "vdr_key_up");
     view->addFullscreenAction (i18n ("VDR Key Down"), act_down->shortcut (), this, SLOT (keyDown ()), "vdr_key_down");
     view->addFullscreenAction (i18n ("VDR Key Ok"), act_ok->shortcut (), this, SLOT (keyOk ()), "vdr_key_ok");
@@ -204,17 +204,17 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     connect (m_player, SIGNAL (stopPlaying ()), this, SLOT (processStopped ()));
     m_menu->disconnectItem (0, m_app, SLOT (openVDR ()));
     m_menu->connectItem (0, this, SLOT (toggleConnected ()));
-    KMPlayerControlPanel * panel = m_app->view()->buttonBar ();
-    panel->button (KMPlayerControlPanel::button_red)->show ();
-    panel->button (KMPlayerControlPanel::button_green)->show ();
-    panel->button (KMPlayerControlPanel::button_yellow)->show ();
-    panel->button (KMPlayerControlPanel::button_blue)->show ();
-    panel->button (KMPlayerControlPanel::button_pause)->hide ();
-    panel->button (KMPlayerControlPanel::button_record)->hide ();
-    connect (panel->button (KMPlayerControlPanel::button_red), SIGNAL (clicked ()), this, SLOT (keyRed ()));
-    connect (panel->button (KMPlayerControlPanel::button_green), SIGNAL (clicked ()), this, SLOT (keyGreen ()));
-    connect (panel->button (KMPlayerControlPanel::button_yellow), SIGNAL (clicked ()), this, SLOT (keyYellow ()));
-    connect (panel->button (KMPlayerControlPanel::button_blue), SIGNAL (clicked ()), this, SLOT (keyBlue ()));
+    KMPlayer::KMPlayerControlPanel * panel = m_app->view()->buttonBar ();
+    panel->button (KMPlayer::KMPlayerControlPanel::button_red)->show ();
+    panel->button (KMPlayer::KMPlayerControlPanel::button_green)->show ();
+    panel->button (KMPlayer::KMPlayerControlPanel::button_yellow)->show ();
+    panel->button (KMPlayer::KMPlayerControlPanel::button_blue)->show ();
+    panel->button (KMPlayer::KMPlayerControlPanel::button_pause)->hide ();
+    panel->button (KMPlayer::KMPlayerControlPanel::button_record)->hide ();
+    connect (panel->button (KMPlayer::KMPlayerControlPanel::button_red), SIGNAL (clicked ()), this, SLOT (keyRed ()));
+    connect (panel->button (KMPlayer::KMPlayerControlPanel::button_green), SIGNAL (clicked ()), this, SLOT (keyGreen ()));
+    connect (panel->button (KMPlayer::KMPlayerControlPanel::button_yellow), SIGNAL (clicked ()), this, SLOT (keyYellow ()));
+    connect (panel->button (KMPlayer::KMPlayerControlPanel::button_blue), SIGNAL (clicked ()), this, SLOT (keyBlue ()));
     setAspect (scale ? 16.0/9 : 1.33);
     if (m_player->settings ()->sizeratio)
         view->viewer ()->setAspect (aspect ());
@@ -229,11 +229,11 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
     disconnect (m_player, SIGNAL(startPlaying()), this, SLOT(processStarted()));
     disconnect (m_player, SIGNAL (stopPlaying()), this, SLOT(processStopped()));
     if (m_player->view ()) {
-        KMPlayerControlPanel * panel = m_app->view()->buttonBar ();
-        disconnect (panel->button (KMPlayerControlPanel::button_red), SIGNAL (clicked ()), this, SLOT (keyRed ()));
-        disconnect (panel->button (KMPlayerControlPanel::button_green), SIGNAL (clicked ()), this, SLOT (keyGreen ()));
-        disconnect (panel->button (KMPlayerControlPanel::button_yellow), SIGNAL (clicked ()), this, SLOT (keyYellow ()));
-        disconnect (panel->button (KMPlayerControlPanel::button_blue), SIGNAL (clicked ()), this, SLOT (keyBlue ()));
+        KMPlayer::KMPlayerControlPanel * panel = m_app->view()->buttonBar ();
+        disconnect (panel->button (KMPlayer::KMPlayerControlPanel::button_red), SIGNAL (clicked ()), this, SLOT (keyRed ()));
+        disconnect (panel->button (KMPlayer::KMPlayerControlPanel::button_green), SIGNAL (clicked ()), this, SLOT (keyGreen ()));
+        disconnect (panel->button (KMPlayer::KMPlayerControlPanel::button_yellow), SIGNAL (clicked ()), this, SLOT (keyYellow ()));
+        disconnect (panel->button (KMPlayer::KMPlayerControlPanel::button_blue), SIGNAL (clicked ()), this, SLOT (keyBlue ()));
     }
     for (int i = 12; i > 0; --i)
         m_menu->removeItemAt (i);
@@ -328,7 +328,7 @@ KDE_NO_EXPORT QCString ReadBuf::getReadLine () {
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
-    KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
+    KMPlayer::View * v = static_cast <KMPlayer::View *> (m_player->view ());
     long nr = m_socket->bytesAvailable();
     char * data = new char [nr + 1];
     m_socket->readBlock (data, nr);
@@ -350,7 +350,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
                     p = q;
                 if (p > 0)
                     line.truncate (p);
-                m_document->appendChild ((new GenericURL (m_document, line.mid (4)))->self ());
+                m_document->appendChild ((new KMPlayer::GenericURL (m_document, line.mid (4)))->self ());
                 if (cmd_done)
                     m_player->updateTree (m_document, m_current);
             } else if (!strcmp (commands->command, cmd_chan_query)) {
@@ -450,7 +450,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deleteCommands () {
     readbuf.clear ();
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::jump (ElementPtr e) {
+KDE_NO_EXPORT void KMPlayerVDRSource::jump (KMPlayer::ElementPtr e) {
     if (!e->isMrl ()) return;
     m_current = e;
     QCString c ("CHAN ");
@@ -641,8 +641,8 @@ static const char * xv_supported [] = {
     "tvsource", "vdrsource", 0L
 };
 
-KDE_NO_CDTOR_EXPORT XVideo::XVideo (KMPlayer * player)
- : KMPlayerCallbackProcess (player, "xvideo"),
+KDE_NO_CDTOR_EXPORT XVideo::XVideo (KMPlayer::PartBase * player)
+ : KMPlayer::KMPlayerCallbackProcess (player, "xvideo"),
    m_ports (0L) {
     m_supported_sources = xv_supported;
     //m_player->settings ()->addPage (m_configpage);
@@ -651,7 +651,7 @@ KDE_NO_CDTOR_EXPORT XVideo::XVideo (KMPlayer * player)
 KDE_NO_CDTOR_EXPORT XVideo::~XVideo () {}
 
 KDE_NO_EXPORT void XVideo::initProcess () {
-    KMPlayerProcess::initProcess ();
+    KMPlayer::Process::initProcess ();
     connect (m_process, SIGNAL (processExited (KProcess *)),
             this, SLOT (processStopped (KProcess *)));
     connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
@@ -702,7 +702,7 @@ KDE_NO_EXPORT bool XVideo::quit () {
         KProcessController::theKProcessController->waitForProcessExit (2);
     } while (t.elapsed () < 2000 && m_process->isRunning ());
 #endif
-    return KMPlayerProcess::stop ();
+    return KMPlayer::Process::stop ();
 }
 
 KDE_NO_EXPORT void XVideo::processStopped (KProcess *) {
@@ -710,7 +710,7 @@ KDE_NO_EXPORT void XVideo::processStopped (KProcess *) {
 }
 
 KDE_NO_EXPORT void XVideo::processOutput (KProcess *, char * str, int slen) {
-    KMPlayerView * v = view ();
+    KMPlayer::View * v = view ();
     if (v && slen > 0)
         v->addText (QString::fromLocal8Bit (str, slen));
 }
