@@ -1,0 +1,31 @@
+<!-- test for moving a region with the animate element -->
+<smil>
+  <head>
+    <layout>
+      <root-layout width="320" height="240" background-color="green"/>
+      <region id="region1" left="5%" top="10%" right="40%" bottom="50%" z-index="2"/>
+      <region id="region2" left="45%" top="40%" right="10%" bottom="5%" z-index="3"/>
+      <region id="region3" z-index="1"/>
+    </layout>
+  </head>
+  <body>
+    <par>
+      <text id="text1" src="data:,I'm%20a%20region" region="region1" dur="20">
+        <param name="fontColor" value="yellow"/>
+        <param name="fontSize" value="+2"/>
+        <param name="backgroundColor" value="blue"/>
+      </text> 
+      <animate targetElement="region1" attributeName="left" from="5%" to="40%" begin="5" dur="10"/>
+    </par>
+    <par>
+      <set targetElement="region2" attributeName="z-index" to="6"/>
+      <set targetElement="region3" attributeName="background-color" to="black"/>
+      <set targetElement="region3" attributeName="z-index" to="5"/>
+      <text src="data:,that's%20all%20folks" region="region2" dur="2">
+        <param name="fontColor" value="green"/>
+        <param name="fontSize" value="+2"/>
+        <param name="backgroundColor" value="black"/>
+      </text> 
+    </par>
+  </body>
+</smil>

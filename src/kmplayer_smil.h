@@ -303,7 +303,7 @@ protected slots:
      */
     virtual void started ();
     /**
-     * undo set execute
+     * undo if necessary
      */
     virtual void stopped ();
     /**
@@ -319,6 +319,9 @@ private:
     enum { calc_discrete, calc_linear, calc_paced } calcMode;
     QString change_from;
     QString change_values;
+    int steps;
+    float change_delta, change_to_val, change_from_val;
+    QString change_from_unit;
 };
 
 //-----------------------------------------------------------------------------

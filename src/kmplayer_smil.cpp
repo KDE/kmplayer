@@ -318,8 +318,9 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
     timingstate = timings_began;
 
     if (durations [begin_time].durval > 0) {
-        if (durations [begin_time].durval < duration_last_option)
+        if (durations [begin_time].durval < duration_last_option) {
             start_timer = startTimer (1000 * durations [begin_time].durval);
+        }
     } else {
         timingstate = timings_started;
         QTimer::singleShot (0, this, SLOT (started ()));
@@ -664,6 +665,9 @@ KDE_NO_EXPORT void AnimateData::init () {
     calcMode = calc_discrete;
     change_from.truncate (0);
     change_values.truncate (0);
+    steps = 0;
+    change_delta = change_to_val = change_from_val = 0.0;
+    change_from_unit.truncate (0);
 }
 
 QString AnimateData::setParam (const QString & name, const QString & val) {
@@ -672,22 +676,72 @@ QString AnimateData::setParam (const QString & name, const QString & val) {
     if (name == QString::fromLatin1 ("change_by")) {
         old_val = QString::number (change_by);
         change_by = val.toInt ();
+    } else if (name == QString::fromLatin1 ("from")) {
+        old_val = change_from;
+        change_from = val;
     } else
         return AnimateGroupData::setParam (name, val);
     return old_val;
 }
 
 KDE_NO_EXPORT void AnimateData::started () {
+    kdDebug () << "AnimateData::started " << durations [duration_time].durval << endl;
+    if (element) {
+        if (target_element) {
+            ElementRuntimePtr rt = target_element->getRuntime ();
+            if (rt) {
+                target_region = rt->region_node;
+                QRegExp reg ("^\\s*([0-9\\.]+)(\\s*[%a-z]*)?");
+                if (!change_from.isEmpty ()) {
+                    old_value = rt->setParam (changed_attribute, change_from);
+                    if (reg.search (change_from) > -1) {
+                        change_from_val = reg.cap (1).toDouble ();
+                        change_from_unit = reg.cap (2);
+                    }
+                } else {
+                    kdDebug () << "AnimateData::started no from found" << endl;
+                    return;
+                }
+                if (!change_to.isEmpty () && reg.search (change_to) > -1) {
+                    change_to_val = reg.cap (1).toDouble ();
+                } else {
+                    kdDebug () << "AnimateData::started no to found" << endl;
+                    return;
+                }
+                steps = durations [duration_time].durval * 1000 / 100;
+                if (steps > 0) {
+                    anim_timer = startTimer (100); // 100 ms for now FIXME
+                    change_delta = (change_to_val - change_from_val) / steps;
+                    kdDebug () << "AnimateData::started " << target_element->nodeName () << "." << changed_attribute << " " << change_from_val << "->" << change_to_val << " in " << steps << endl;
+                    if (!change_from.isEmpty () && target_region)
+                        target_region->repaint ();
+                }
+            }
+        } else
+            kdWarning () << "target element not found" << endl;
+    } else
+        kdWarning () << "set element disappeared" << endl;
     AnimateGroupData::started ();
 }
 
 KDE_NO_EXPORT void AnimateData::stopped () {
+    kdDebug () << "AnimateData::stopped " << element->state << endl;
     AnimateGroupData::stopped ();
 }
 
-KDE_NO_EXPORT void AnimateData::timerEvent (QTimerEvent *) {
-    killTimer (anim_timer);
-    anim_timer = 0;
+KDE_NO_EXPORT void AnimateData::timerEvent (QTimerEvent * e) {
+    if (e->timerId () == anim_timer) {
+        if (steps-- > 0 && target_element && target_element->getRuntime ()) {
+            ElementRuntimePtr rt = target_element->getRuntime ();
+            change_from_val += change_delta;
+            rt->setParam (changed_attribute, QString ("%1%2").arg (change_from_val).arg(change_from_unit));
+        } else {
+            killTimer (anim_timer);
+            anim_timer = 0;
+            propagateStop ();
+        }
+    } else
+        AnimateGroupData::timerEvent (e);
 }
 
 //-----------------------------------------------------------------------------
@@ -977,8 +1031,8 @@ static int calcLength (const QString & strval, int full) {
         return 0;
     int p = strval.find (QChar ('%'));
     if (p > -1)
-        return strval.left (p).toInt () * full / 100;
-    return strval.toInt ();
+        return int (strval.left (p).toDouble () * full / 100);
+    return int (strval.toInt ());
 }
 
 static void buildRegionNodes (ElementPtr p, RegionNodePtr r) {
@@ -1159,6 +1213,7 @@ KDE_NO_EXPORT void SMIL::TimedElement::start () {
         rt->setParam (QString (att->nodeName ()), att->nodeValue ());
     }
     rt->begin ();
+    setState (state_started);
 }
 
 KDE_NO_EXPORT void SMIL::TimedElement::stop () {
