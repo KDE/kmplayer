@@ -72,14 +72,8 @@ KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (ElementPtr e)
  : x (0), y (0), w (0), h (0), z_order (1), regionElement (e) {
     self = RegionNodePtrW (this);
     ElementRuntimePtr rt = e->getRuntime ();
-    if (rt) {
+    if (rt)
         rt->region_node = self;
-        // move this to RegionBase::begin() one day ..
-        for (ElementPtr a = e->attributes().item (0); a; a= a->nextSibling()) {
-            Attribute * att = convertNode <Attribute> (a);
-            rt->setParam (QString (att->nodeName ()), att->nodeValue ());
-        }
-    }
 }
 
 KDE_NO_CDTOR_EXPORT void RegionNode::clearAll () {
@@ -394,6 +388,20 @@ QString RegionRuntime::setParam (const QString & name, const QString & val) {
     return old_val;
 }
 
+KDE_NO_EXPORT void RegionRuntime::begin () {
+    if (element)
+        for (ElementPtr a=element->attributes().item(0); a;a=a->nextSibling()) {
+            Attribute * att = convertNode <Attribute> (a);
+            setParam (QString (att->nodeName ()), att->nodeValue ());
+        }
+    ElementRuntime::begin ();
+}
+
+KDE_NO_EXPORT void RegionRuntime::end () {
+    have_bg_color = false;
+    ElementRuntime::end ();
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT void SetData::started () {
@@ -606,16 +614,42 @@ KDE_NO_EXPORT ElementPtr Smil::childFromTag (const QString & tag) {
     return ElementPtr ();
 }
 
+static void beginOrEndRegions (RegionNodePtr rn, bool b) {
+    if (rn->regionElement) {
+        ElementRuntimePtr rt = rn->regionElement->getRuntime ();
+        if (rt) {
+            if (b)
+                rt->begin ();
+            else
+                rt->end ();
+        }
+    }
+    for (RegionNodePtr c = rn->firstChild; c; c = c->nextSibling)
+        beginOrEndRegions (c, b);
+}
+
 KDE_NO_EXPORT void Smil::start () {
     kdDebug () << "Smil::start" << endl;
     current_av_media_type = ElementPtr ();
     setState (state_started);
+    if (document ()->rootLayout) {
+        beginOrEndRegions (document ()->rootLayout, true);
+        document ()->rootLayout->repaint ();
+    }
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
         if (!strcmp (e->nodeName (), "body")) {
             e->start ();
             return;
         }
     stop (); //source->emitEndOfPlayItems ();
+}
+
+KDE_NO_EXPORT void Smil::stop () {
+    Mrl::stop ();
+    if (document ()->rootLayout) {
+        beginOrEndRegions (document ()->rootLayout, false);
+        document ()->rootLayout->repaint ();
+    }
 }
 
 KDE_NO_EXPORT ElementPtr Smil::realMrl () {
@@ -1115,7 +1149,15 @@ KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
 namespace KMPlayer {
     class TextDataPrivate {
     public:
-        TextDataPrivate () : background_color (0xFFFFFF), foreground_color (0), codec (0L), font (QApplication::font ()), transparent (false) {
+        TextDataPrivate () {
+            reset ();
+        }
+        void reset () {
+            background_color  = 0xFFFFFF;
+            foreground_color = 0;
+            codec = 0L;
+            font = QApplication::font ();
+            transparent = false;
         }
         QByteArray data;
         unsigned int background_color;
@@ -1132,6 +1174,11 @@ KDE_NO_CDTOR_EXPORT TextData::TextData (ElementPtr e)
 
 KDE_NO_CDTOR_EXPORT TextData::~TextData () {
     delete d;
+}
+
+KDE_NO_EXPORT void TextData::end () {
+    d->reset ();
+    MediaTypeRuntime::end ();
 }
 
 KDE_NO_EXPORT

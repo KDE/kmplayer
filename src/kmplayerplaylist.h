@@ -245,12 +245,18 @@ public:
 };
 
 /**
- * Base class for live elelemRegion and RootLayout
+ * Base class representing live time of elements
  */
 class ElementRuntime {
 public:
     virtual ~ElementRuntime ();
+    /**
+     * Called when element is pulled in scope, from start()
+     */
     virtual void begin () {}
+    /**
+     * Called when element gets out of scope, from reset()
+     */
     virtual void end () {}
     virtual void paint (QPainter &) {}
     /**
@@ -412,6 +418,7 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "smil"; }
     bool isMrl ();
     void start ();
+    void stop ();
     void childDone (ElementPtr child);
     /**
      * Hack to mark the currently playing MediaType as finished

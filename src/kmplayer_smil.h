@@ -132,6 +132,8 @@ class RegionRuntime : public ElementRuntime {
 public:
     RegionRuntime (ElementPtr e);
     KDE_NO_CDTOR_EXPORT ~RegionRuntime () {}
+    virtual void begin ();
+    virtual void end ();
     void paint (QPainter & p);
     virtual QString setParam (const QString & name, const QString & value);
     unsigned int background_color;
@@ -222,6 +224,7 @@ public:
     TextData (ElementPtr e);
     ~TextData ();
     void paint (QPainter & p);
+    void end ();
     virtual QString setParam (const QString & name, const QString & value);
     TextDataPrivate * d;
 protected slots:
