@@ -97,6 +97,7 @@ private slots:
     void broadcastClicked ();
     void processOutput (KProcess *, char *, int);
     void processStopped (KProcess * process);
+    void playerStarted ();
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
     KConfig * config;

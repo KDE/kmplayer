@@ -366,7 +366,7 @@ KMPlayerLiveConnectExtension::KMPlayerLiveConnectExtension (KMPlayerPart * paren
     m_started (false),
     m_enablefinish (false) {
       connect (parent, SIGNAL (started (KIO::Job *)), this, SLOT (started ()));
-      connect (parent, SIGNAL (finished ()), this, SLOT (finished ()));
+      connect (parent, SIGNAL (stopPlaying ()), this, SLOT (finished ()));
 }
 
 KMPlayerLiveConnectExtension::~KMPlayerLiveConnectExtension() {
@@ -569,14 +569,14 @@ void KMPlayerHRefSource::activate () {
 
 void KMPlayerHRefSource::clear () {
     setURL (KURL ());
-    disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
+    disconnect (m_player, SIGNAL (stopPlaying ()), this, SLOT (finished ()));
 }
 
 void KMPlayerHRefSource::grabReady (const QString & path) {
     kdDebug () << "KMPlayerHRefSource::grabReady(" << path << ")" << endl;
     m_finished = true;
     m_grabfile = path;
-    connect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
+    connect (m_player, SIGNAL (stopPlaying ()), this, SLOT (finished ()));
     finished ();
 }
 

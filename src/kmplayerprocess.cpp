@@ -283,7 +283,6 @@ bool MPlayer::run (const char * args, const char * pipe) {
     stop ();
     //m_view->consoleOutput ()->clear ();
     m_process_output = QString::null;
-    //m_started_emited = false;
     initProcess ();
     connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
             this, SLOT (processOutput (KProcess *, char *, int)));
@@ -374,11 +373,10 @@ bool MPlayer::run (const char * args, const char * pipe) {
 
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
 
-    if (m_process->isRunning () && source ()->identified ()) {
+    if (m_process->isRunning ()) {
         QTimer::singleShot (0, this, SLOT (emitStarted ()));
         return true;
     }
-    QTimer::singleShot (0, this, SLOT (emitFinished ()));
     return false;
 }
 
@@ -620,10 +618,6 @@ void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
         v->viewer ()->setAspect (a);
         v->updateLayout ();
     }
-    if (!m_started_emited) {
-        m_started_emited = true;
-        QTimer::singleShot (0, this, SLOT (emitStarted ()));
-    }
 }
 
 void KMPlayerCallbackProcess::setMoviePosition (int position) {
@@ -705,9 +699,12 @@ bool Xine::play () {
     printf (" %s\n", myurl.ascii ());
     *m_process << myurl;
     fflush (stdout);
-    m_started_emited = false;
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
-    return m_process->isRunning ();
+    if (m_process->isRunning ()) {
+        QTimer::singleShot (0, this, SLOT (emitStarted ()));
+        return true;
+    }
+    return false;
 }
 
 bool Xine::stop () {

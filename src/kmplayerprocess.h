@@ -46,10 +46,13 @@ public:
     void setSource (KMPlayerSource * source) { m_source = source; }
     virtual bool grabPicture (const KURL & url, int pos);
 signals:
+    // backend process is running
     void started ();
+    // backend process has ended
     void finished ();
     void positionChanged (int pos);
     void loading (int percentage);
+    // backend process start to play (after filling its cache)
     void startPlaying ();
     void grabReady (const QString & path);
 public slots:
@@ -67,7 +70,6 @@ protected:
     KMPlayer * m_player;
     KMPlayerSource * m_source;
     KProcess * m_process;
-    bool m_started_emited;
 protected slots:
     // QTimer::singleShot slots for the signals
     void emitStarted () { emit started (); }

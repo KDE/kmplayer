@@ -61,7 +61,7 @@ void KMPlayerBookmarkOwner::openBookmarkURL (const QString & url) {
 }
 
 QString KMPlayerBookmarkOwner::currentTitle () const {
-    return m_player->process ()->source ()->url ().prettyURL ();
+    return m_player->process ()->source ()->prettyName ();
 }
 
 QString KMPlayerBookmarkOwner::currentURL () const {
@@ -71,6 +71,8 @@ QString KMPlayerBookmarkOwner::currentURL () const {
 KMPlayerBookmarkManager::KMPlayerBookmarkManager()
   : KBookmarkManager (locateLocal ("data", "kmplayer/bookmarks.xml"), false) {
 }
+
+//-----------------------------------------------------------------------------
 
 KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
                     QObject * parent, const char *name, KConfig * config)
@@ -299,7 +301,7 @@ void KMPlayer::processFinished () {
     }
     if (m_view) {
         m_view->reset ();
-        emit finished ();
+        emit stopPlaying ();
     }
 }
 
@@ -334,6 +336,7 @@ void KMPlayer::processPlaying () {
     if (m_settings->sizeratio)
         m_view->viewer ()->setAspect (m_process->source ()->aspect ());
     emit loading (100);
+    emit startPlaying ();
 }
 
 unsigned long KMPlayer::position () const {
@@ -748,12 +751,17 @@ QString KMPlayerURLSource::prettyName () {
         QString file = m_url.fileName ();
         int len = newurl.length () + file.length ();
         KURL path = KURL (m_url.directory ());
-        while (path.url ().length () + len > 50 && path != path.upURL ())
+        bool modified = false;
+        while (path.url ().length () + len > 50 && path != path.upURL ()) {
             path = path.upURL ();
+            modified = true;
+        }
         QString dir = path.directory ();
         if (!dir.endsWith (QString ("/")))
             dir += '/';
-        newurl += dir + QString (".../") + file;
+        if (modified)
+            dir += QString (".../");
+        newurl += dir + file;
         return QString (i18n ("URL - %1").arg (newurl));
     }
     return QString (i18n ("URL - %1").arg (m_url.prettyURL ()));

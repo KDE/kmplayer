@@ -195,6 +195,8 @@ void KMPlayerApp::initView ()
     m_sourcemenu->popup ()->insertItem (i18n ("&Open Pipe..."), this, SLOT(openPipe ()), 0, -1, 5);
     connect (m_player->settings (), SIGNAL (configChanged ()),
              this, SLOT (configChanged ()));
+    connect (m_player, SIGNAL (startPlaying ()),
+             this, SLOT (playerStarted ()));
     connect (m_player, SIGNAL (loading (int)),
              this, SLOT (loadingProgress (int)));
     connect (m_player, SIGNAL (sourceChanged (KMPlayerSource *)), this,
@@ -222,6 +224,11 @@ void KMPlayerApp::loadingProgress (int percentage) {
         slotStatusMsg(i18n("Ready"));
     else
         slotStatusMsg (QString::number (percentage) + "%");
+}
+
+void KMPlayerApp::playerStarted () {
+    if (m_player->process ()->source () != m_tvsource)
+        resizePlayer (100);
 }
 
 void KMPlayerApp::slotSourceChanged (KMPlayerSource * source) {
@@ -732,10 +739,8 @@ void KMPlayerAppURLSource::activate () {
 
 void KMPlayerAppURLSource::setIdentified (bool b) {
     KMPlayerURLSource::setIdentified (b);
-    if (b) {
-        m_app->resizePlayer (100);
+    if (b)
         m_app->recentFiles ()->addURL (url ());
-    }
 }
 
 //-----------------------------------------------------------------------------
@@ -850,9 +855,6 @@ void KMPlayerDVDSource::setIdentified (bool b) {
     if (m_dvdlanguagemenu->count())
         m_dvdlanguagemenu->setItemChecked (m_dvdlanguagemenu->idAt (0), true);
     buildArguments ();
-    if (b) {
-        m_app->resizePlayer (100);
-    }
     m_app->slotStatusMsg (i18n ("Ready."));
 }
 
@@ -957,13 +959,11 @@ void KMPlayerDVDNavSource::play () {
         m_menu->insertItem (i18n ("&Up"), this, SLOT (navMenuClicked (int)), 0, DVDNav_up);
     }
     QTimer::singleShot (0, m_player->process (), SLOT (play ()));
-    connect (m_player->process (), SIGNAL (startPlaying ()),
-             m_app, SLOT(zoom100 ()));
-    connect (m_player, SIGNAL (finished()), this, SLOT(finished ()));
+    connect (m_player, SIGNAL (stopPlaying ()), this, SLOT(finished ()));
 }
 
 void KMPlayerDVDNavSource::finished () {
-    disconnect (m_player, SIGNAL (finished()), this, SLOT(finished ()));
+    disconnect (m_player, SIGNAL (stopPlaying ()), this, SLOT(finished ()));
     m_menu->removeItem (DVDNav_previous);
     m_menu->removeItem (DVDNav_next);
     m_menu->removeItem (DVDNav_root);
@@ -1048,9 +1048,6 @@ void KMPlayerVCDSource::setIdentified (bool b) {
     else
         m_current_title = -1; // hmmm
     buildArguments ();
-    if (b) {
-        m_app->resizePlayer (100);
-    }
     m_app->slotStatusMsg (i18n ("Ready."));
 }
 

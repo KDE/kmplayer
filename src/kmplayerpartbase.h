@@ -123,7 +123,8 @@ public:
     virtual bool hasLength (void) const;
     virtual unsigned long length (void) const;
 signals:
-    void finished ();
+    void startPlaying ();
+    void stopPlaying ();
     void sourceChanged (KMPlayerSource *);
     void loading (int percentage);
 protected:

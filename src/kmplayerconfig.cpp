@@ -883,7 +883,7 @@ void TVDeviceScannerSource::activate () {
 }
 
 void TVDeviceScannerSource::deactivate () {
-    disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
+    disconnect (m_player, SIGNAL (stopPlaying ()), this, SLOT (finished ()));
     if (m_tvdevice) {
         delete m_tvdevice;
         m_tvdevice = 0L;
@@ -897,7 +897,7 @@ void TVDeviceScannerSource::play () {
     QString args;
     args.sprintf ("tv://on:driver=%s:device=%s -identify -frames 0", m_driver.ascii (), m_tvdevice->device.ascii ());
     if (m_player->mplayer ()->run (args.ascii()))
-        connect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
+        connect (m_player, SIGNAL (stopPlaying ()), this, SLOT (finished ()));
     else
         deactivate ();
 }
