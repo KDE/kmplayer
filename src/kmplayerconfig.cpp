@@ -25,6 +25,7 @@
 #include <qmultilineedit.h>
 #include <qtabwidget.h>
 #include <qslider.h>
+#include <qspinbox.h>
 #include <qlabel.h>
 #include <qbuttongroup.h>
 #include <qfileinfo.h>

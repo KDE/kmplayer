@@ -33,6 +33,7 @@
 #include <kaboutdata.h>
 #include <kdebug.h>
 #include <kbookmarkmenu.h>
+#include <kbookmarkmanager.h>
 #include <kconfig.h>
 #include <kaction.h>
 #include <kprocess.h>
@@ -53,22 +54,29 @@ private:
     KMPlayer * m_player;
 };
 
-KMPlayerBookmarkOwner::KMPlayerBookmarkOwner (KMPlayer * player)
+inline KMPlayerBookmarkOwner::KMPlayerBookmarkOwner (KMPlayer * player)
     : m_player (player) {}
 
-void KMPlayerBookmarkOwner::openBookmarkURL (const QString & url) {
+inline void KMPlayerBookmarkOwner::openBookmarkURL (const QString & url) {
     m_player->openURL (KURL (url));
 }
 
-QString KMPlayerBookmarkOwner::currentTitle () const {
+inline QString KMPlayerBookmarkOwner::currentTitle () const {
     return m_player->process ()->source ()->prettyName ();
 }
 
-QString KMPlayerBookmarkOwner::currentURL () const {
+inline QString KMPlayerBookmarkOwner::currentURL () const {
     return m_player->process ()->source ()->url ().url ();
 }
 
-KMPlayerBookmarkManager::KMPlayerBookmarkManager()
+//-----------------------------------------------------------------------------
+
+class KMPlayerBookmarkManager : public KBookmarkManager {
+public:
+    KMPlayerBookmarkManager();
+};
+
+inline KMPlayerBookmarkManager::KMPlayerBookmarkManager()
   : KBookmarkManager (locateLocal ("data", "kmplayer/bookmarks.xml"), false) {
 }
 
@@ -146,10 +154,6 @@ KMPlayer::~KMPlayer () {
 
 KMediaPlayer::View* KMPlayer::view () {
     return m_view;
-}
-
-void KMPlayer::addSource (const QString & name, KMPlayerSource * source) {
-    m_sources.insert (name, source);
 }
 
 void KMPlayer::setProcess (KMPlayerProcess * process) {
@@ -492,14 +496,11 @@ KAboutData* KMPlayer::createAboutData () {
 KMPlayerSource::KMPlayerSource (const QString & name, KMPlayer * player)
     : QObject (player), m_name (name), m_player (player) {
     kdDebug () << "KMPlayerSource::KMPlayerSource" << endl;
-    player->addSource (name, this);
     init ();
 }
 
 KMPlayerSource::~KMPlayerSource () {
     kdDebug () << "KMPlayerSource::~KMPlayerSource" << endl;
-    // TODO: remove stuff (note m_player is deleted already because of auto deletion)
-    //m_player->sources ().remove (m_name);
 }
 
 void KMPlayerSource::init () {

@@ -455,3 +455,4 @@ QFrame *KMPlayerFFServerConfig:: prefPage (QWidget * parent) {
 }
 
 
+#include "kmplayerbroadcast.moc"

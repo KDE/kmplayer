@@ -23,6 +23,7 @@
 #include <qpopupmenu.h>
 #include <qtimer.h>
 #include <qpushbutton.h>
+#include <qslider.h>
 
 #include <klibloader.h>
 #include <kdebug.h>

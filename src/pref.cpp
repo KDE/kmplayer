@@ -27,6 +27,7 @@
 #include <qlayout.h>
 #include <qlabel.h>
 #include <qpushbutton.h>
+#include <qradiobutton.h>
 #include <qcheckbox.h>
 #include <qtable.h>
 #include <qstringlist.h>

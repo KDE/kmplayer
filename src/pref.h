@@ -31,16 +31,6 @@
 
 #include <kdialogbase.h>
 #include <qframe.h>
-#include <qptrlist.h>
-#include <qregexp.h>
-#include <qcheckbox.h>
-#include <qtextedit.h>
-#include <qcombobox.h>
-#include <qlineedit.h>
-#include <qradiobutton.h>
-#include <qslider.h>
-#include <qspinbox.h>
-#include <qstringlist.h>
 
 
 class KMPlayerPrefGeneralPageGeneral; 	// general, general
@@ -58,6 +48,13 @@ class KMPlayerSource;
 class QTabWidget;
 class QTable;
 class QGroupBox;
+class QCheckBox;
+class QComboBox;
+class QLineEdit;
+class QRadioButton;
+class QSlider;
+class QSpinBox;
+class QButtonGroup;
 class KHistoryCombo;
 class KComboBox;
 class KURLRequester;

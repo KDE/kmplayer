@@ -24,7 +24,6 @@
 #endif
 
 #include <qobject.h>
-#include <qsize.h>
 #include <qstringlist.h>
 
 #include "pref.h"

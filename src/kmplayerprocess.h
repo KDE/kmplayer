@@ -24,6 +24,8 @@
 #include <qobject.h>
 #include <qstring.h>
 #include <qstringlist.h>
+#include <qregexp.h>
+
 #include <kurl.h>
 
 class QWidget;

@@ -694,4 +694,4 @@ void TVDeviceScannerSource::finished () {
     emit scanFinished (dev);
 }
 
-
+#include "kmplayertvsource.moc"
