@@ -1149,7 +1149,7 @@ void Xine::setFinished () {
     kdDebug () << "Xine::finished () " << (m_source ? m_source->referenceUrls ().count () : 0) << endl;
     if (m_source) {
         m_source->next ();
-        if (m_source->currentUrl () != m_source->referenceUrls ().end ()) {
+        if (m_backend && m_source->currentUrl () != m_source->referenceUrls ().end ()) {
             QString url = *m_source->currentUrl ();
             m_backend->setURL (url);
             m_backend->play ();

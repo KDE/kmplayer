@@ -52,8 +52,8 @@ public:
     float aspect () const { return m_aspect > 0.01 ? m_aspect : (m_height > 0 ? (1.0*m_width)/m_height: 0.0); }
     const KURL & url () const { return m_url; }
     const KURL & subUrl () const { return m_sub_url; }
-    QStringList::iterator currentUrl () const { return m_currenturl; }
-    QStringList::iterator nextUrl () const { return m_nexturl; }
+    QStringList::iterator & currentUrl () { return m_currenturl; }
+    QStringList::iterator & nextUrl () { return m_nexturl; }
     QStringList & referenceUrls () { return m_refurls; }
     void first ();
     void next ();
