@@ -351,7 +351,7 @@ void PartBase::setSource (Source * _source) {
     m_source = _source;
     m_process->setSource (m_source);
     connect (m_source, SIGNAL (playURL (Source *, const QString &)),
-            m_process, SLOT (play (Source *)));
+            m_process, SLOT (play (Source *, const QString &)));
     connect (m_source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
     updatePlayerMenu ();
     m_source->init ();
