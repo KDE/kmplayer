@@ -28,8 +28,8 @@ class KXinePlayer : public QApplication {
 public:
     KXinePlayer (int argc, char ** argv);
     ~KXinePlayer ();
-    bool x11EventFilter (XEvent *);
     void setURL (const QString & url);
+public slots:
     void play ();
     void stop ();
 private:
