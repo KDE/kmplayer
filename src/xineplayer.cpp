@@ -180,7 +180,7 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
         case XINE_EVENT_MRL_REFERENCE:
             fprintf(stderr, "XINE_EVENT_MRL_REFERENCE %s\n", 
             ((xine_mrl_reference_data_t*)event->data)->mrl);
-            QApplication::postEvent (xineapp, new XineURLEvent (QString (((xine_mrl_reference_data_t*)event->data)->mrl)));
+            QApplication::postEvent (xineapp, new XineURLEvent (QString::fromLocal8Bit (((xine_mrl_reference_data_t*)event->data)->mrl)));
             break;
         case XINE_EVENT_FRAME_FORMAT_CHANGE:
             fprintf (stderr, "XINE_EVENT_FRAME_FORMAT_CHANGE\n");
@@ -284,7 +284,7 @@ void KMPlayerBackend::quit () {
 }
 
 bool updateConfigEntry (const QString & name, const QString & value) {
-    fprintf (stderr, "%s=%s\n", name.ascii (), value.ascii ());
+    fprintf (stderr, "%s=%s\n", name.ascii (), (const char *) value.local8Bit ());
     xine_cfg_entry_t cfg_entry;
     if (!xine_config_lookup_entry (xine, name.ascii (), &cfg_entry))
         return false;
@@ -347,9 +347,9 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
                     (str.left (pos).ascii (), str.mid (pos + 1).ascii ());
             }
         } else 
-            mrl = QString (argv ()[i]);
+            mrl = QString::fromLocal8Bit (argv ()[i]);
     }
-    fprintf(stderr, "mrl: '%s'\n", mrl.ascii ());
+    fprintf(stderr, "mrl: '%s'\n", (const char *) mrl.local8Bit ());
     xpos    = 0;
     ypos    = 0;
     width   = 320;
@@ -498,26 +498,26 @@ void KXinePlayer::play () {
     if (d->hue)
         xine_set_param (stream, XINE_PARAM_VO_HUE, d->hue);
     running = 1;
-    if (!xine_open (stream, mrl.local8Bit ())) {
-        fprintf(stderr, "Unable to open mrl '%s'\n", mrl.ascii ());
+    if (!xine_open (stream, (const char *) mrl.local8Bit ())) {
+        fprintf(stderr, "Unable to open mrl '%s'\n", (const char *) mrl.local8Bit ());
         mutex.unlock ();
         finished ();
         return;
     }
     if (!sub_mrl.isEmpty ()) {
-        fprintf(stderr, "Using subtitles from '%s'\n", sub_mrl.ascii ());
+        fprintf(stderr, "Using subtitles from '%s'\n", (const char *) sub_mrl.local8Bit ());
         sub_stream = xine_stream_new (xine, NULL, vo_port);
-        if (xine_open (sub_stream, sub_mrl.local8Bit ())) {
+        if (xine_open (sub_stream, (const char *) sub_mrl.local8Bit ())) {
             xine_stream_master_slave (stream, sub_stream,
                     XINE_MASTER_SLAVE_PLAY | XINE_MASTER_SLAVE_STOP);
         } else {
-            fprintf(stderr, "Unable to open subtitles from '%s'\n", sub_mrl.ascii ());
+            fprintf(stderr, "Unable to open subtitles from '%s'\n", (const char *) sub_mrl.local8Bit ());
             xine_dispose (sub_stream);
             sub_stream = 0L;
         }
     }
     if (!xine_play (stream, 0, 0)) {
-        fprintf(stderr, "Unable to play mrl '%s'\n", mrl.ascii ());
+        fprintf(stderr, "Unable to play mrl '%s'\n", (const char *) mrl.local8Bit ());
         mutex.unlock ();
         finished ();
         return;
@@ -712,7 +712,7 @@ XineProgressEvent::XineProgressEvent (const int p)
 //static bool translateCoordinates (int wx, int wy, int mx, int my) {
 //    movie_width
 class XEventThread : public QThread {
-public:
+protected:
     void run () {
         while (true) {
             XEvent   xevent;
@@ -939,8 +939,8 @@ int main(int argc, char **argv) {
     dcopclient.registerAs ("kxineplayer");
     KMPlayerBackend player;
 
-    XEventThread eventThread;
-    eventThread.start ();
+    XEventThread * eventThread = new XEventThread;
+    eventThread->start ();
 
     xine = xine_new();
     if (xine_verbose)
@@ -967,11 +967,13 @@ int main(int argc, char **argv) {
     XLockDisplay(display);
     XClientMessageEvent ev = {
         ClientMessage, 0, true, display, wid, 
-        XInternAtom (display, "XINE", false), 8, "quit_now"
+        XInternAtom (display, "XINE", false), 8, {b: "quit_now"}
     };
     XSendEvent (display, wid, FALSE, StructureNotifyMask, (XEvent *) & ev);
+    XFlush (display);
     XUnlockDisplay(display);
-    eventThread.wait (500);
+    eventThread->wait (500);
+    delete eventThread;
 
     xineapp->stop ();
     delete xineapp;

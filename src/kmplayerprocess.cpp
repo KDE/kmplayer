@@ -1113,7 +1113,7 @@ bool Xine::play () {
         m_process->setWorkingDirectory (fi.dirPath (true));
         m_url = url.path ();
     }
-    QString myurl = KProcess::quote (m_url);
+    QString myurl = KProcess::quote (QString (QFile::encodeName (m_url)));
     printf (" %s\n", myurl.ascii ());
     *m_process << " " << myurl;
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
@@ -1175,7 +1175,7 @@ bool Xine::seek (int pos, bool absolute) {
 void Xine::processOutput (KProcess *, char * str, int slen) {
     KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
     if (v && slen > 0)
-        v->addText (QString (str));
+        v->addText (QString::fromLocal8Bit (str, slen));
 }
 
 void Xine::processStopped (KProcess *) {
@@ -1288,11 +1288,11 @@ bool FFMpeg::play () {
         }
     } else {
         KURL url (*m_source->currentUrl ());
-        cmd += QString ("-i ") + KProcess::quote (url.isLocalFile () ? url.path () : url.url ());
+        cmd += QString ("-i ") + KProcess::quote (QString (QFile::encodeName (url.isLocalFile () ? url.path () : url.url ())));
     }
     cmd += QChar (' ') + arguments;
-    cmd += QChar (' ') + KProcess::quote (outurl);
-    printf ("%s\n", cmd.ascii ());
+    cmd += QChar (' ') + KProcess::quote (QString (QFile::encodeName (outurl)));
+    printf ("%s\n", (const char *) cmd.local8Bit ());
     *m_process << cmd;
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
     if (m_process->isRunning ())
