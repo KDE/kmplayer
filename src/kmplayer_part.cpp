@@ -246,6 +246,10 @@ bool KMPlayerPart::openURL (const KURL & url) {
         return true;
     }
     if (!m_view || !url.isValid ()) return false;
+    if (m_urlsource->mime ().isEmpty ()) {
+        KParts::URLArgs args = m_browserextension->urlArgs();
+        m_urlsource->setMime (args.serviceType);
+    }
     if (m_urlsource->mime () == QString ("audio/mpegurl") ||
             m_urlsource->mime () == QString ("audio/x-scpls") ||
             (url.protocol () == QString ("http") &&
@@ -342,9 +346,6 @@ void KMPlayerBrowserExtension::urlChanged (const QString & url) {
 
 void KMPlayerBrowserExtension::setLoadingProgress (int percentage) {
     emit loadingProgress (percentage);
-}
-
-void KMPlayerBrowserExtension::setURLArgs (const KParts::URLArgs & /*args*/) {
 }
 
 void KMPlayerBrowserExtension::saveState (QDataStream & stream) {
