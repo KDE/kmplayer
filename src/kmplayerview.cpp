@@ -392,8 +392,6 @@ void KMPlayerView::setUseArts (bool b) {
         m_popupMenu->removeItemAt (5);
         m_popupMenu->removeItemAt (4);
         m_popupMenu->removeItemAt (3);
-        delete m_arts_label;
-        delete m_slider;
         delete m_watch;
         delete m_artsserver;
         delete m_svc;
