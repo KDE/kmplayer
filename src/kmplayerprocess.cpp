@@ -53,8 +53,11 @@
 #include "kmplayer_callback.h"
 #include "kmplayer_backend_stub.h"
 
+static const char * default_supported [] = { 0L };
+
 KMPlayerProcess::KMPlayerProcess (KMPlayer * player, const char * n)
-    : QObject (player, n), m_player (player), m_source (0L), m_process (0L) {}
+    : QObject (player, n), m_player (player), m_source (0L), m_process (0L),
+      m_supported_sources (default_supported) {}
 
 KMPlayerProcess::~KMPlayerProcess () {
     stop ();
@@ -1252,7 +1255,9 @@ static const char * xine_supported [] = {
 
 KDE_NO_CDTOR_EXPORT Xine::Xine (KMPlayer * player)
     : KMPlayerCallbackProcess (player, "xine") {
+#ifdef HAVE_XINE
     m_supported_sources = xine_supported;
+#endif
 }
 
 KDE_NO_CDTOR_EXPORT Xine::~Xine () {}
