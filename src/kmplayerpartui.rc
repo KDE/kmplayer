@@ -1,0 +1,10 @@
+<!DOCTYPE kpartgui>
+<kpartgui name="kmplayer" version="7">
+<MenuBar>
+  <Menu name="view"><text>&amp;View</text>
+    <Action name="view_play"/>
+    <Action name="view_pause"/>
+    <Action name="view_stop"/>
+  </Menu>
+</MenuBar>
+</kpartgui>

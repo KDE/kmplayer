@@ -1,0 +1,93 @@
+Changes since version 0.7.1
+- Check for an onFinished handler before emiting it
+- Great patch from Joonas Koivunen, add postprocessing filter configuration
+Changes since version 0.7a
+- Added a 'Open Pipe' item to 'Source' menu for mplayer reading from stdin.
+  Of course slave commands doesn't work here (forward/backward/pause/...)
+  And I had some hard time killing mplayer this way (make 'stop' work).
+  Not available for the embedded part.
+- Add tearoff handle to 'DVD'/'VCD' menus
+- Changed 'File' menu to 'Source' menu and move 'DVD'/'VCD' to it
+- Use KProtocolManager::proxyForURL to determine if http_proxy should be set.
+  Copied some code from KProtocolManager::slaveProtocol for the exceptions.
+  MPlayer seems to only support http protocol proxies.
+- End fullscreen mode when movie ends when embedded
+- Zoom fix when embedded, 100% resets original movie size
+- Move config button to front, makes it accessable for very small movies
+- Also delay hiding of control buttons a bit
+Changes since version 0.7
+- Arts::Dispatcher -> KArtsDispatcher, fix multible use crash
+Changes since version 0.6.5b
+- Zoom sub menu added in popup menu
+- Arts volume slider added in popup menu
+- Fullscreen mode for part (when embedded)
+- Small config button shows a popup menu now
+- Set environment variable http_proxy in mplayer's process when defined
+- Use LiveConnect for automatic resizing to movie size when embedded in khtml
+  fixes movie sizes at http://wwwa.accuweather.com, needs KDE-3.1 from cvs
+- Typo in application/x-mplayer2 mimetype
+Changes since version 0.6.5a
+- Remove -mpentium4 from admin/acinclude.m4.in (build fix)
+Changes since version 0.6.5
+- Changed regexp in wrong string fix
+Changes since version 0.6.4
+- Don't set a subtitle automatically
+- Put some basic install instructions in README
+- Get rid of the compiler warnings
+- Added ; at end of Patterns in mimetypes. Lets hope this fixes the mimetype
+  install
+- Changed regexp; mplayer rc3 changed "Start playing" to "Starting playback"
+- Fix uncheck of subtitle/language DVD menu
+Changes since version 0.6.3a
+- View Arts Control menu option (kdemultimedia)
+- disable screensaver in fullscreen mode
+- more user feedback; BrowserExtension::infoMessage for cache fill
+- start hiding buttons when the movie starts, not when mplayer is executed
+- do a lowercase match on HREF, fixes more on http://www.apple.com/switch/ads/
+Changes since version 0.6.3
+- compile fix for KDE-3.1 'kdDebug () << KURL' works only in HEAD
+Changes since version 0.6.2
+- Play HREF's if given, fixes movies at http://www.apple.com/trailers
+Changes since version 0.6.1
+- added auto hide buttons option
+- drop -alang and -slang in favor of -aid and -sid (fix duplicate languages)
+= synchronious killing of mplayer in KMPlayer's part dtor, fix possible crash
+- implemented some BrowserExtension functions,
+    loadingProgress, better progress feedback in konqueror of cache fill
+    save/restoreState, backward/forward works now in konqueror
+    setLocationBarURL when url changes in config dialog, updates locationbar
+- added video/x-ms-asf mimetype, now I can watch webtv from www.dsltv.nl :-)
+- sync config after each Ok/Apply
+- fix url argument (was broken by fix file argument)
+- fix crash, ConfigDialog already destoyed by view
+Changes since version 0.6
+- fix kmplayer file argument without path
+- fix some memory leaks
+- fix ratio settings when setting a new URL from the configure dialog
+- make loop non default (MPlayer bug workaround)
+- drop quoteURL, use KProcess:quote
+- add VCD menu
+- --enable-final fix
+- gcc-2.95.x compile fix
+Changes since version 0.5
+- Made colors of console output window darker
+- Fix for not restoring main window size
+- Don't have an useless toolbar
+- Make DVD menu optional
+- Make buttonbar optional
+- Add loop option
+- Config dialog added
+- Quick fix for File|Quit hang
+- Fix escaping bug
+- Make keep width/height ratio default
+Changes since version 0.4
+- Make small control buttons even smaller and flat
+- Play and Stop buttons are toggles
+- Try even harder to kill mplayer
+- Make console output window optional
+- More config options, eg. mplayer output patterns 
+  (use vi .kde/share/config/kmplayerrc for now)
+- Added an extra mimetype application/x-mplayer2 (how many are ther for wmf?)
+  I hope someone can tell me why these mimetypes doesn't show up in file
+  associatives.
+- a patch for mplayer x11 video driver, for those that don't have xv

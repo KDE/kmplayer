@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Embedded MPlayer for KDE
+X-KDE-Library=kparts_kmplayer
+Icon=kmplayer
+# Keep in sync with the audio types in kmplayer.desktop
+MimeType=audio/x-mp3;audio/x-vorbis;application/x-mplayer2;application/x-ogg;audio/x-mp2;video/mpeg;audio/x-mpegurl;audio/x-wav;audio/x-mod;video/x-avi;video/x-ms-asf;video/x-ms-wmv;video/x-msvideo;video/quicktime;video/x-flic;
+ServiceTypes=KParts/ReadOnlyPart,Browser/View,KMediaPlayer/Player
+Type=Service
+InitialPreference=9

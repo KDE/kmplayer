@@ -1,0 +1,33 @@
+[General Options]
+Show Statusbar=true
+
+[KFileDialog Settings]
+
+[KFileDialog Speedbar]
+
+[MPlayer]
+Add Configure Button=true
+Additional Arguments=
+Cache Size for Streaming=128
+DVD Device=/dev/dvd
+Forward/Backward Seek Time=10
+Immediately Play DVD=true
+Keep Size Ratio=true
+Loop=false
+Show Console Output=false
+Show Control Buttons=true
+Auto Hide Control Buttons=false
+Show DVD Menu=true
+Video Driver=xv
+
+[MPlayer Output Matching]
+DVD Chapters=There are ([0-9]+) chapters
+DVD Language=\\[open].*audio.*language: ([A-Za-z]+).*aid.*[^0-9]([0-9]+)
+DVD Sub Title=\\[open].*subtitle.*[^0-9]([0-9]+).*language: ([A-Za-z]+)
+DVD Titles=There are ([0-9]+) titles
+Movie Size=VO:.*[^0-9]([0-9]+)x([0-9]+)
+Cache Fill=Cache fill:[^0-9]*([0-9\\.]+)%
+Start Playing=Start[^ ]* play
+VCD Tracks=track ([0-9]+):
+
+[Recent Files]

@@ -1,0 +1,33 @@
+KMPlayer, a simple frontend for MPlayer.
+It can play DVD/VCD movies and from file or url. 
+If setup right, KMPlayer can embed inside konqueror. Which means if you click
+on a movie file, the movie is played inside konqueror.
+It can also embed inside khtml, enabling movie playback inside a html page.
+
+KMPlayer needs KDE3.1 and a working mplayer somewhere in you PATH.
+
+Quickly installing MPlayer
+Download the sources from http://www.mplayerhq.hu/homepage/.
+If you want quicktime support, also download the quicktime dll's
+(http://www.mplayerhq.hu/MPlayer/releases/codecs/qt6dlls.tar.bz2) and unpack
+them and copy the files to /usr/lib/win32 (make this dir if it doesn't exist).
+Untar the mplayer source package (tar xfj MPlayer-0.90rc3.tar.bz2), change to
+that directory. Make sure $KDEDIR/bin is in you path (check if you can run
+'artsplay').
+Now run configure (./configure) and make ('make'). Install it as root ('su -c "make install"').
+Finally you must setup the config files in ~/.mplayer ('mkdir ~/.mplayer').
+Copy the files, from the mplayer sources, etc/codecs.conf and etc/example.conf as codecs.conf and config resp 
+('cp etc/codecs.conf ~/.mplayer; cp etc/example.conf ~/.mplayer/config').
+Next change ~/.mplayer/config with an editor and change the video driver (vo=xv) and audio driver (ao=arts) and remove the last line.
+
+Quickly installing KMPlayer
+Untar the source package, run './configure' and 'make'. Install as root 'su -c "make install"'.
+
+KMPlayer doesn't work with all the video drivers that mplayer supports. 
+I tested only xv (X Video Extension) and x11 (Image/Shm). If none work, you 
+might try the patch for the x11 driver and see if that works for you (not needed anymore for mplayer version >= 0.90-rc4).
+You might need to change mimetype settings (Control Center | KDE Components | File Associations) to make sure KMPlayer (or 'Embedded MPlayer for KDE' in embedded tab) is set for all the formats you want to play with KMPlayer.
+Also make sure in the 'Embedding' tab 'Show file in embedded viewer' is set.
+
+Enjoy!
+

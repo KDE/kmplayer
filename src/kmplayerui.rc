@@ -1,0 +1,32 @@
+<!DOCTYPE kpartgui>
+<kpartgui name="kmplayer" version="8">
+<MenuBar>
+  <Menu name="file"><text>&amp;File</text>
+    <Action name="file_new_window"/>
+  </Menu>
+  <Menu name="view"><text>&amp;View</text>
+    <Action name="view_fullscreen"/>
+    <Menu name="zoom"><text>&amp;Zoom</text>
+      <Action name="view_zoom_50"/>
+      <Action name="view_zoom_100"/>
+      <Action name="view_zoom_150"/>
+    </Menu>
+    <Action name="view_keep_ratio"/>
+    <Separator />
+    <Action name="view_show_console"/>
+    <Separator />
+    <Action name="view_play"/>
+    <Action name="view_pause"/>
+    <Action name="view_stop"/>
+    <Separator />
+    <Action name="view_arts_control"/>
+  </Menu>
+</MenuBar>
+<ActionProperties>
+  <Action shortcut="F" name="view_fullscreen" />
+  <Action shortcut="R" name="view_play" />
+  <Action shortcut="P" name="view_pause" />
+  <Action shortcut="S" name="view_stop" />
+  <Action shortcut="C" name="view_arts_control" />
+</ActionProperties>
+</kpartgui>
