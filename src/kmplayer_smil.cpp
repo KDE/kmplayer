@@ -94,6 +94,7 @@ KDE_NO_CDTOR_EXPORT void RegionNode::clearAll () {
     attached_element = ElementPtr ();
     for (RegionNodePtr r = firstChild; r; r = r->nextSibling)
         r->clearAll ();
+    repaint ();
 }
 
 KDE_NO_EXPORT void RegionNode::paint (QPainter & p) {
@@ -286,6 +287,7 @@ KDE_NO_EXPORT void TimedRuntime::reset () {
     dur_timer = 0;
     repeat_count = 0;
     timingstate = timings_reset;
+    fill = fill_unknown;
     durations [begin_time].durval = 0;
     durations [duration_time].durval = durations [end_time].durval = duration_media; //intrinsic time duration
     ElementRuntime::reset ();
@@ -353,8 +355,10 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
         return;
     }
     kdDebug () << "TimedRuntime::begin " << element->nodeName() << endl; 
-    if (start_timer || dur_timer)
+    if (start_timer || dur_timer) {
         end ();
+        init ();
+    }
     timingstate = timings_began;
 
     if (durations [begin_time].durval > 0) {
@@ -453,6 +457,12 @@ QString TimedRuntime::setParam (const QString & name, const QString & val) {
                 }
             }
         }
+    } else if (name == QString::fromLatin1 ("fill")) {
+        if (val == QString::fromLatin1 ("freeze"))
+            fill = fill_freeze;
+        else
+            fill = fill_unknown;
+        // else all other fill options ..
     } else if (name == QString::fromLatin1 ("repeatCount")) {
         repeat_count = val.toInt ();
     }
@@ -501,10 +511,6 @@ KDE_NO_EXPORT void TimedRuntime::processEvent (unsigned int event) {
 }
 
 KDE_NO_EXPORT void TimedRuntime::propagateStop (bool forced) {
-    if (dur_timer) {
-        killTimer (dur_timer);
-        dur_timer = 0;
-    }
     if (!forced && element) {
         if (durations [end_time].durval > duration_last_option &&
                 durations [end_time].durval != duration_media)
@@ -513,6 +519,10 @@ KDE_NO_EXPORT void TimedRuntime::propagateStop (bool forced) {
         for (ElementPtr c = element->firstChild (); c; c = c->nextSibling ())
             if (c->state == Element::state_started)
                 return; // a child still running
+    }
+    if (dur_timer) {
+        killTimer (dur_timer);
+        dur_timer = 0;
     }
     if (timingstate == timings_started)
         QTimer::singleShot (0, this, SLOT (stopped ()));
@@ -566,6 +576,7 @@ KDE_NO_CDTOR_EXPORT RegionRuntime::RegionRuntime (ElementPtr e)
 KDE_NO_EXPORT void RegionRuntime::reset () {
     // Keep region_node, so no ElementRuntime::reset (); or set it back again
     have_bg_color = false;
+    active = false;
     left.truncate (0);
     top.truncate (0);
     width.truncate (0);
@@ -611,9 +622,7 @@ QString RegionRuntime::setParam (const QString & name, const QString & val) {
         bottom = val;
         needs_bounds_calc = true;
     }
-  //if (attached_element && attached_element->state () < Element::state_started)
-    //    needs_bounds_calc = false;
-    if (needs_bounds_calc && element) {
+    if (active && needs_bounds_calc && element) {
         RegionNodePtr rn = element->document ()->rootLayout;
         if (rn && rn->regionElement) {
             convertNode <RegionBase> (rn->regionElement)->updateLayout ();
@@ -624,6 +633,7 @@ QString RegionRuntime::setParam (const QString & name, const QString & val) {
 }
 
 KDE_NO_EXPORT void RegionRuntime::begin () {
+    active = true;
     ElementRuntime::begin ();
 }
 
@@ -643,8 +653,9 @@ QString AnimateGroupData::setParam (const QString & name, const QString & val) {
         changed_attribute = val;
     } else if (name == QString::fromLatin1 ("to")) {
         change_to = val;
-    }
-    return TimedRuntime::setParam (name, val);
+    } else
+        return TimedRuntime::setParam (name, val);
+    return ElementRuntime::setParam (name, val);
 }
 
 //-----------------------------------------------------------------------------
@@ -719,8 +730,9 @@ QString AnimateData::setParam (const QString & name, const QString & val) {
         change_by = val.toInt ();
     } else if (name == QString::fromLatin1 ("from")) {
         change_from = val;
-    }
-    return AnimateGroupData::setParam (name, val);
+    } else
+        return AnimateGroupData::setParam (name, val);
+    return ElementRuntime::setParam (name, val);
 }
 
 /**
@@ -811,11 +823,9 @@ namespace KMPlayer {
                 job->kill (); // quiet, no result signal
                 job = 0L; // KIO::Job::kill deletes itself
             }
-            fill = fill_freeze;
         }
         KIO::Job * job;
         QByteArray data;
-        enum { fill_unknown, fill_freeze } fill;
     };
 }
 
@@ -874,7 +884,7 @@ KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::end () {
 }
 
 /**
- * re-implement for regions, fill and src attributes
+ * re-implement for regions and src attributes
  */
 KDE_NO_EXPORT
 QString MediaTypeRuntime::setParam (const QString & name, const QString & val) {
@@ -891,12 +901,6 @@ QString MediaTypeRuntime::setParam (const QString & name, const QString & val) {
                     kdWarning() << "region " << val << " not found" << endl;
             }
         }
-    } else if (name == QString::fromLatin1 ("fill")) {
-        if (val == QString::fromLatin1 ("freeze"))
-            mt_d->fill = MediaTypeRuntimePrivate::fill_freeze;
-        else
-            mt_d->fill = MediaTypeRuntimePrivate::fill_unknown;
-        // else all other fill options ..
     } else if (name == QString::fromLatin1 ("src")) {
         source_url = val;
         if (element) {
@@ -904,8 +908,9 @@ QString MediaTypeRuntime::setParam (const QString & name, const QString & val) {
             if (!url.isEmpty ())
                 source_url = url;
         }
-    }
-    return TimedRuntime::setParam (name, val);
+    } else
+        return TimedRuntime::setParam (name, val);
+    return ElementRuntime::setParam (name, val);
 }
 
 /**
@@ -1328,12 +1333,19 @@ KDE_NO_EXPORT ElementPtr SMIL::Par::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT void SMIL::Par::start () {
     kdDebug () << "SMIL::Par::start" << endl;
-    GroupBase::start ();
-    if (firstChild ()) {
+    GroupBase::start (); // calls init() and begin() on runtime
+    if (firstChild ()) { // wait for childDone() notifications
         for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
             e->start ();
-    } else
+    } else { // no children, stop if runtime started and no duration set
+        TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
+        if (tr && tr->state () == TimedRuntime::timings_started) {
+            if (tr->durations[(int)TimedRuntime::duration_time].durval == duration_media)
+                tr->propagateStop (false);
+            return; // still running, wait for runtime to finish
+        }
         stop (); // no children to run in parallel
+    }
 }
 
 KDE_NO_EXPORT void SMIL::Par::stop () {
@@ -1442,7 +1454,6 @@ KDE_NO_EXPORT ElementPtr SMIL::MediaType::childFromTag (const QString & tag) {
 KDE_NO_EXPORT void SMIL::MediaType::opened () {
     for (ElementPtr a = m_first_attribute; a; a = a->nextSibling ()) {
         const char * cname = a->nodeName ();
-        kdDebug () << "MediaType attr:" << cname <<"="<< a->nodeValue() << endl;
         if (!strcmp (cname, "system-bitrate"))
             bitrate = a->nodeValue ().toInt ();
         else if (!strcmp (cname, "src"))
@@ -1597,10 +1608,8 @@ QString ImageData::setParam (const QString & name, const QString & val) {
 }
 
 KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
-    if ((timingstate == timings_started ||
-                (timingstate == timings_stopped &&
-                 mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)) &&
-            d->image && region_node) {
+    if (d->image && region_node && (timingstate == timings_started ||
+                (timingstate == timings_stopped && fill == fill_freeze))) {
         RegionNode * r = region_node.ptr ();
         p.drawPixmap (QRect (r->x, r->y, r->w, r->h), *d->image);
     }
@@ -1627,10 +1636,8 @@ KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
         QPixmap *pix = new QPixmap (mt_d->data);
         if (!pix->isNull ()) {
             d->image = pix;
-            if (region_node &&
-                (timingstate == timings_started ||
-                 (timingstate == timings_stopped &&
-                  mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)))
+            if (region_node && (timingstate == timings_started ||
+                 (timingstate == timings_stopped && fill == fill_freeze)))
                 region_node->repaint ();
         } else
             delete pix;
@@ -1715,10 +1722,8 @@ QString TextData::setParam (const QString & name, const QString & val) {
 }
 
 KDE_NO_EXPORT void TextData::paint (QPainter & p) {
-    if ((timingstate == timings_started ||
-                (timingstate == timings_stopped &&
-                 mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)) &&
-            region_node) {
+    if (region_node && (timingstate == timings_started ||
+                (timingstate == timings_stopped && fill == fill_freeze))) {
         int x = region_node->x;
         int y = region_node->y;
         if (!d->transparent)
@@ -1764,10 +1769,8 @@ KDE_NO_EXPORT void TextData::slotResult (KIO::Job * job) {
         d->data = mt_d->data;
         if (d->data.size () > 0 && !d->data [d->data.size () - 1])
             d->data.resize (d->data.size () - 1); // strip zero terminate char
-        if (region_node &&
-                (timingstate == timings_started ||
-                 (timingstate == timings_stopped &&
-                  mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)))
+        if (region_node && (timingstate == timings_started ||
+                    (timingstate == timings_stopped && fill == fill_freeze)))
             region_node->repaint ();
     }
     if (timingstate == timings_started &&

@@ -51,6 +51,7 @@ public:
         timings_reset = 0, timings_began, timings_started, timings_stopped
     };
     enum DurationTime { begin_time = 0, duration_time, end_time, durtime_last };
+    enum Fill { fill_unknown, fill_freeze };
 
     TimedRuntime (ElementPtr e);
     virtual ~TimedRuntime ();
@@ -105,6 +106,7 @@ private:
     void breakConnection (DurationTime item);
 protected:
     TimingState timingstate;
+    Fill fill;
     int start_timer;
     int dur_timer;
     int repeat_count;
@@ -131,6 +133,7 @@ public:
     QString bottom;
     bool have_bg_color;
 private:
+    bool active;
 };
 
 /**
