@@ -55,6 +55,7 @@ static bool                 verbose;
 static bool                 running;
 static bool                 have_freq;
 static bool                 xv_success;
+static bool                 reset_xv_autopaint_colorkey;
 static int                  xvport;
 static int                  xv_encoding = -1;
 static QString              xv_norm;
@@ -322,6 +323,12 @@ void KXVideoPlayer::play () {
         gc = XCreateGC (display, wid, 0, NULL);
         XvSelectPortNotify (display, xvport, 1);
         XvSelectVideoNotify (display, wid, 1);
+        int cur_val;
+        if (XvGetPortAttribute (display, xvport, xv_autopaint_colorkey_atom, &cur_val) == Success && cur_val == 0) {
+            printf ("XV_AUTOPAINT_COLORKEY is 0\n");
+            XvSetPortAttribute (display, xvport, xv_autopaint_colorkey_atom, 1);
+            reset_xv_autopaint_colorkey = true;
+        }
         if (xv_frequency > 0)
             XvSetPortAttribute (display, xvport, xv_freq_atom, int (1.0*xv_frequency/6.25));
         if (xv_encoding >= 0)
@@ -340,7 +347,12 @@ void KXVideoPlayer::stop () {
         running = false;
         XLockDisplay (display);
         XvStopVideo (display, xvport, wid);
+        if (reset_xv_autopaint_colorkey) {
+            XvSetPortAttribute (display, xvport, xv_autopaint_colorkey_atom, 0);
+            reset_xv_autopaint_colorkey = false;
+        }
         XvUngrabPort (display, xvport, CurrentTime);
+        XFreeGC (display, gc);
         XClearArea (display, wid, 0, 0, 0, 0, true);
         XUnlockDisplay (display);
     }
