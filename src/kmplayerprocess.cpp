@@ -1396,7 +1396,7 @@ KDE_NO_EXPORT bool Xine::quit () {
         } while (t.elapsed () < 2000 && m_process->isRunning ());
         kdDebug () << "DCOP quit " << t.elapsed () << endl;
     }
-    if (m_process->isRunning () && !KMPlayerCallbackProcess::stop ())
+    if (m_process->isRunning () && !KMPlayerProcess::stop ())
         processStopped (0L); // give up
     return true;
 }
@@ -1560,7 +1560,7 @@ void GStreamer::urlForPlaying (const QString & urlstr) {
 }
 
 KDE_NO_EXPORT bool GStreamer::quit () {
-    kdDebug () << "Xine::quit ()" << endl;
+    kdDebug () << "GStreamer::quit ()" << endl;
     disconnect (m_source, SIGNAL (currentURL (const QString &)), this, SLOT (urlForPlaying (const QString &)));
     if (!m_process || !m_process->isRunning ()) return true;
     if (m_backend) {
@@ -1572,7 +1572,7 @@ KDE_NO_EXPORT bool GStreamer::quit () {
         } while (t.elapsed () < 2000 && m_process->isRunning ());
         kdDebug () << "DCOP quit " << t.elapsed () << endl;
     }
-    if (m_process->isRunning () && !KMPlayerCallbackProcess::stop ())
+    if (m_process->isRunning () && !KMPlayerProcess::stop ())
         processStopped (0L); // give up
     return true;
 }
@@ -1580,7 +1580,7 @@ KDE_NO_EXPORT bool GStreamer::quit () {
 KDE_NO_EXPORT void GStreamer::setFinished () {
     KMPlayerCallbackProcess::setFinished ();
     if (!m_source) return; // initial case?
-    kdDebug () << "Xine::finished () " << endl;
+    kdDebug () << "GStreamer::finished () " << endl;
     if (m_source->next ().isEmpty ()) {
         quit ();
         m_source->first ();

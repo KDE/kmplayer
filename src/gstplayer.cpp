@@ -283,17 +283,18 @@ void KGStreamerPlayer::init () {
     XSelectInput (display, wid,
                   (PointerMotionMask | ExposureMask | KeyPressMask | ButtonPressMask | StructureNotifyMask)); // | SubstructureNotifyMask));
 
+    XUnlockDisplay(display);
     mutex.lock ();
     gst_elm_play = gst_element_factory_make ("playbin", "player");
     if (! gst_elm_play) {
         fprintf (stderr, "couldn't create playbin\n");
         return;
     }
-    if (ao_driver && !strcmp (vo_driver, "alsa"))
+    if (ao_driver && !strcmp (ao_driver, "alsa"))
         audiosink = gst_element_factory_make ("alsasink", "audiosink");
-    else if (ao_driver && !strcmp (vo_driver, "arts"))
+    else if (ao_driver && !strcmp (ao_driver, "arts"))
         audiosink = gst_element_factory_make ("artsdsink", "audiosink");
-    else if (ao_driver && !strcmp (vo_driver, "esd"))
+    else if (ao_driver && !strcmp (ao_driver, "esd"))
         audiosink = gst_element_factory_make ("esdsink", "audiosink");
     else
         audiosink = gst_element_factory_make ("osssink", "audiosink");
@@ -313,10 +314,11 @@ void KGStreamerPlayer::init () {
     mutex.unlock ();
     if (window_created) {
         fprintf (stderr, "map %lu\n", wid);
+        XLockDisplay(display);
         XMapRaised(display, wid);
         XSync(display, False);
+        XUnlockDisplay(display);
     }
-    XUnlockDisplay(display);
 }
 
 KGStreamerPlayer::~KGStreamerPlayer () {
@@ -369,6 +371,7 @@ void KGStreamerPlayer::pause () {
 }
 
 void KGStreamerPlayer::stop () {
+    fprintf (stderr, "stop %s\n", mrl.ascii ());
     mutex.lock ();
     gst_element_set_state (gst_elm_play, GST_STATE_NULL);
 
@@ -376,8 +379,7 @@ void KGStreamerPlayer::stop () {
         gst_x_overlay_set_xwindow_id (GST_X_OVERLAY (videosink), 0);
     }
     mutex.unlock ();
-
-    QTimer::singleShot (0, qApp, SLOT (quit ()));
+    QApplication::postEvent (gstapp, new QEvent ((QEvent::Type)event_finished));
 }
 
 void KGStreamerPlayer::finished () {
