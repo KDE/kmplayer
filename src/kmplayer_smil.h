@@ -92,6 +92,7 @@ public:
     TimingState state () const { return timingstate; }
     virtual void paint (QPainter &) {}
     void propagateStop (bool forced);
+    void propagateStart ();
     /**
      * Duration items, begin/dur/end, length information or connected element
      */
@@ -102,6 +103,7 @@ public:
     } durations [(const int) durtime_last];
 signals:
     void elementStopped ();
+    void elementAboutToStart (ElementPtr child);
 public slots:
     void emitElementStopped () { emit elementStopped (); }
 protected slots:
@@ -149,6 +151,30 @@ private:
 };
 
 /**
+ * Runtime data for 'par' group, will start all children in started()
+ */
+class ParRuntime : public TimedRuntime {
+    Q_OBJECT
+public:
+    ParRuntime (ElementPtr e);
+    virtual void started ();
+    virtual void stopped ();
+};
+
+/**
+ * Runtime data for 'excl' group, taking care of only one child can run
+ */
+class ExclRuntime : public TimedRuntime {
+    Q_OBJECT
+public:
+    ExclRuntime (ElementPtr e);
+    virtual void begin ();
+    virtual void reset ();
+private slots:
+    void elementAboutToStart (ElementPtr child);
+};
+
+/**
  * Some common runtime data for all mediatype classes
  */
 class MediaTypeRuntime : public TimedRuntime {
@@ -182,10 +208,7 @@ public:
     AudioVideoData (ElementPtr e);
     virtual bool isAudioVideo ();
     virtual QString setParam (const QString & name, const QString & value);
-    /**
-     * start_timer timer expired, start the audio/video clip
-     */
-    virtual void started () {}
+    virtual void started ();
 };
 
 /**
@@ -387,6 +410,7 @@ public:
     void stop ();
     void reset ();
     void childDone (ElementPtr child);
+    ElementRuntimePtr getNewRuntime ();
 };
 
 /**
@@ -410,6 +434,22 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "body"; }
 };
 
+/**
+ * An Excl represents exclusive processing of one of its children
+ */
+class Excl : public GroupBase {
+public:
+    KDE_NO_CDTOR_EXPORT Excl (ElementPtr & d) : GroupBase (d) {}
+    ElementPtr childFromTag (const QString & tag);
+    KDE_NO_EXPORT const char * nodeName () const { return "excl"; }
+    void start ();
+    void childDone (ElementPtr child);
+    virtual ElementRuntimePtr getNewRuntime ();
+};
+
+/*
+ * An automatic selection between child elements based on a condition
+ */
 class Switch : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Switch (ElementPtr & d) : Element (d) {}

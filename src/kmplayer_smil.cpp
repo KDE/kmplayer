@@ -128,7 +128,7 @@ void RegionNode::paint (QPainter & p, int _x, int _y, int _w, int _h) {
             break;
         for (RegionNodePtr r = firstChild; r; r = r->nextSibling)
             if (r->z_order == cur_index) {
-                kdDebug () << "Painting " << cur_index << endl;
+                //kdDebug () << "Painting " << cur_index << endl;
                 r->paint (p, _x, _y, _w, _h);
             }
         done_index = cur_index;
@@ -313,6 +313,8 @@ KDE_NO_EXPORT void TimedRuntime::reset () {
     repeat_count = 0;
     timingstate = timings_reset;
     fill = fill_unknown;
+    for (int i = 0; i < (int) durtime_last; i++)
+        breakConnection ((DurationTime) i);
     durations [begin_time].durval = 0;
     durations [duration_time].durval = durations [end_time].durval = duration_media; //intrinsic time duration
     ElementRuntime::reset ();
@@ -388,13 +390,10 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
     timingstate = timings_began;
 
     if (durations [begin_time].durval > 0) {
-        if (durations [begin_time].durval < duration_last_option) {
+        if (durations [begin_time].durval < duration_last_option)
             start_timer = startTimer (100 * durations [begin_time].durval);
-        }
-    } else {
-        timingstate = timings_started;
-        QTimer::singleShot (0, this, SLOT (started ()));
-    }
+    } else
+        propagateStart ();
 }
 
 KDE_NO_EXPORT void TimedRuntime::breakConnection (DurationTime item) {
@@ -437,8 +436,6 @@ KDE_NO_EXPORT void TimedRuntime::end () {
         region_node->clearAll ();
         region_node = RegionNodePtr ();
     }
-    for (int i = 0; i < (int) durtime_last; i++)
-        breakConnection ((DurationTime) i);
     killTimers ();
     reset ();
 }
@@ -456,10 +453,8 @@ QString TimedRuntime::setParam (const QString & name, const QString & val) {
             if (durations [begin_time].durval > 0) { // create a timer for start
                 if (durations [begin_time].durval < duration_last_option)
                     start_timer = startTimer(100*durations[begin_time].durval);
-            } else {                                // start now
-                timingstate = timings_started;
-                QTimer::singleShot (0, this, SLOT (started ()));
-            }
+            } else                                // start now
+                propagateStart ();
         }
     } else if (name == QString::fromLatin1 ("dur")) {
         setDurationItem (duration_time, val);
@@ -502,8 +497,7 @@ KDE_NO_EXPORT void TimedRuntime::timerEvent (QTimerEvent * e) {
     if (e->timerId () == start_timer) {
         killTimer (start_timer);
         start_timer = 0;
-        timingstate = timings_started;
-        QTimer::singleShot (0, this, SLOT (started ()));
+        propagateStart ();
     } else if (e->timerId () == dur_timer)
         propagateStop (true);
 }
@@ -530,10 +524,8 @@ KDE_NO_EXPORT void TimedRuntime::elementHasStopped () {
 KDE_NO_EXPORT void TimedRuntime::processEvent (unsigned int event) {
     kdDebug () << "TimedRuntime::processEvent " << event << " " << (element ? element->nodeName() : "-") << endl; 
     if (timingstate != timings_started && durations [begin_time].durval == event) {
-        if (timingstate != timings_started) {
-            timingstate = timings_started;
-            QTimer::singleShot (0, this, SLOT (started ()));
-        }
+        if (timingstate != timings_started)
+            propagateStart ();
     } else if (timingstate == timings_started && durations [end_time].durval == event)
         propagateStop (true);
 }
@@ -555,6 +547,12 @@ KDE_NO_EXPORT void TimedRuntime::propagateStop (bool forced) {
     if (timingstate == timings_started)
         QTimer::singleShot (0, this, SLOT (stopped ()));
     timingstate = timings_stopped;
+}
+
+KDE_NO_EXPORT void TimedRuntime::propagateStart () {
+    emit elementAboutToStart (element);
+    timingstate = timings_started;
+    QTimer::singleShot (0, this, SLOT (started ()));
 }
 
 /**
@@ -584,10 +582,8 @@ KDE_NO_EXPORT void TimedRuntime::stopped () {
         if (durations [begin_time].durval > 0 &&
                 durations [begin_time].durval < duration_last_option) {
             start_timer = startTimer (100 * durations [begin_time].durval);
-        } else {
-            timingstate = timings_started;
-            QTimer::singleShot (0, this, SLOT (started ()));
-        }
+        } else
+            propagateStart ();
     } else if (element->state == Element::state_started) {
         element->stop ();
         emit elementStopped ();
@@ -675,6 +671,66 @@ KDE_NO_EXPORT void RegionRuntime::begin () {
 KDE_NO_EXPORT void RegionRuntime::end () {
     reset ();
     ElementRuntime::end ();
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT ParRuntime::ParRuntime (ElementPtr e) : TimedRuntime (e) {}
+
+KDE_NO_EXPORT void ParRuntime::started () {
+    if (element && element->firstChild ()) // start all children
+        for (ElementPtr e = element->firstChild (); e; e = e->nextSibling ())
+            e->start ();
+    else if (durations[(int)TimedRuntime::duration_time].durval==duration_media)
+        durations[(int)TimedRuntime::duration_time].durval = 0;
+    TimedRuntime::started ();
+}
+
+KDE_NO_EXPORT void ParRuntime::stopped () {
+    if (element) // start all children
+        for (ElementPtr e = element->firstChild (); e; e = e->nextSibling ())
+            // children are out of scope now, reset their ElementRuntime
+            e->reset (); // will call stop() if necessary
+    TimedRuntime::stopped ();
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT ExclRuntime::ExclRuntime (ElementPtr e) : TimedRuntime (e) {
+}
+
+KDE_NO_EXPORT void ExclRuntime::begin () {
+    if (element) // setup connections with elementAboutToStart
+        for (ElementPtr e = element->firstChild (); e; e = e->nextSibling ()) {
+            TimedRuntime *tr=dynamic_cast<TimedRuntime*>(e->getRuntime().ptr());
+            if (tr)
+                connect (tr, SIGNAL (elementAboutToStart (ElementPtr)),
+                         this, SLOT (elementAboutToStart (ElementPtr)));
+        }
+    TimedRuntime::begin ();
+}
+
+KDE_NO_EXPORT void ExclRuntime::reset () {
+    if (element) // break connections with elementAboutToStart
+        for (ElementPtr e = element->firstChild (); e; e = e->nextSibling ()) {
+            TimedRuntime *tr=dynamic_cast<TimedRuntime*>(e->getRuntime().ptr());
+            if (tr)
+                disconnect (tr, SIGNAL (elementAboutToStart (ElementPtr)),
+                            this, SLOT (elementAboutToStart (ElementPtr)));
+        }
+    TimedRuntime::reset ();
+}
+
+KDE_NO_EXPORT void ExclRuntime::elementAboutToStart (ElementPtr child) {
+    kdDebug () << "ExclRuntime::elementAboutToStart " <<child->nodeName()<<endl;
+    if (element) // break connections with elementAboutToStart
+        for (ElementPtr e = element->firstChild (); e; e = e->nextSibling ()) {
+            if (e == child)
+                continue;
+            TimedRuntime *tr=dynamic_cast<TimedRuntime*>(e->getRuntime().ptr());
+            if (tr && tr->state()>timings_reset && tr->state()<timings_stopped)
+                tr->propagateStop (true);
+        }
 }
 
 //-----------------------------------------------------------------------------
@@ -862,6 +918,10 @@ KDE_NO_EXPORT void AnimateData::started () {
  */
 KDE_NO_EXPORT void AnimateData::stopped () {
     kdDebug () << "AnimateData::stopped " << element->state << endl;
+    if (anim_timer) { // make sure timers are stopped
+        killTimer (anim_timer);
+        anim_timer = 0;
+    }
     AnimateGroupData::stopped ();
 }
 
@@ -972,20 +1032,7 @@ KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::end () {
  */
 KDE_NO_EXPORT
 QString MediaTypeRuntime::setParam (const QString & name, const QString & val) {
-    if (name == QString::fromLatin1 ("region")) {
-        // setup region ..
-        if (element && !val.isEmpty ()) {
-            RegionNodePtr root = element->document ()->rootLayout;
-            if (root) {
-                region_node = findRegion (root, val);
-                if (region_node) {
-                    region_node->clearAll ();
-                    region_node->attached_element = element;
-                } else
-                    kdWarning() << "region " << val << " not found" << endl;
-            }
-        }
-    } else if (name == QString::fromLatin1 ("src")) {
+    if (name == QString::fromLatin1 ("src")) {
         source_url = val;
         if (element) {
             QString url = convertNode <SMIL::MediaType> (element)->src;
@@ -1012,8 +1059,9 @@ QString MediaTypeRuntime::setParam (const QString & name, const QString & val) {
  * find region node and request a repaint of attached region then
  */
 KDE_NO_EXPORT void MediaTypeRuntime::started () {
-    if (!region_node && element && element->document ()->rootLayout) {
-        region_node = findRegion(element->document()->rootLayout,QString::null);
+    if (element && element->document ()->rootLayout) {
+        region_node = findRegion (element->document()->rootLayout,
+                                  param (QString::fromLatin1 ("region")));
         if (region_node)
             region_node->attached_element = element;
     }
@@ -1038,12 +1086,25 @@ KDE_NO_EXPORT bool AudioVideoData::isAudioVideo () {
     return timingstate == timings_started;
 }
 
+/**
+ * reimplement for request backend to play audio/video
+ */
+KDE_NO_EXPORT void AudioVideoData::started () {
+    MediaTypeRuntime::started ();
+    if (region_node && element) {
+        kdDebug () << "AudioVideoData::started " << source_url << endl;
+        PlayListNotify * n = element->document ()->notify_listener;
+        if (n && !source_url.isEmpty ())
+            n->requestPlayURL (element, region_node);
+    }
+}
+
 KDE_NO_EXPORT
 QString AudioVideoData::setParam (const QString & name, const QString & val) {
     kdDebug () << "AudioVideoData::setParam " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("src")) {
         QString old_val = MediaTypeRuntime::setParam (name, val);
-        if (element) {
+        if (timingstate == timings_started && element) {
             PlayListNotify * n = element->document ()->notify_listener;
             if (n && !source_url.isEmpty ())
                 n->requestPlayURL (element, region_node);
@@ -1059,8 +1120,8 @@ static Element * fromScheduleGroup (ElementPtr & d, const QString & tag) {
         return new SMIL::Par (d);
     else if (!strcmp (tag.latin1 (), "seq"))
         return new SMIL::Seq (d);
-    // else if (!strcmp (tag.latin1 (), "excl"))
-    //    return new Seq (d, p);
+    else if (!strcmp (tag.latin1 (), "excl"))
+        return new SMIL::Excl (d);
     return 0L;
 }
 
@@ -1325,7 +1386,7 @@ KDE_NO_EXPORT void SMIL::Region::calculateBounds (int _w, int _h) {
         int b = calcLength (rr->bottom, _h);
         w = w1 > 0 ? w1 : _w - x - (r > 0 ? r : 0);
         h = h1 > 0 ? h1 : _h - y - (b > 0 ? b : 0);
-        kdDebug () << "Region::calculateBounds " << x << "," << y << " " << w << "x" << h << endl;
+        //kdDebug () << "Region::calculateBounds " << x << "," << y << " " << w << "x" << h << endl;
     }
 }
 
@@ -1429,26 +1490,16 @@ KDE_NO_EXPORT ElementPtr SMIL::Par::childFromTag (const QString & tag) {
 KDE_NO_EXPORT void SMIL::Par::start () {
     kdDebug () << "SMIL::Par::start" << endl;
     GroupBase::start (); // calls init() and begin() on runtime
-    if (firstChild ()) { // wait for childDone() notifications
-        for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
-            e->start ();
-    } else { // no children, stop if runtime started and no duration set
-        TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
-        if (tr && tr->state () == TimedRuntime::timings_started) {
-            if (tr->durations[(int)TimedRuntime::duration_time].durval == duration_media)
-                tr->propagateStop (false);
-            return; // still running, wait for runtime to finish
-        }
-        stop (); // no children to run in parallel
-    }
 }
 
 KDE_NO_EXPORT void SMIL::Par::stop () {
     kdDebug () << "SMIL::Par::stop" << endl;
     setState (state_finished); // prevent recursion via childDone
-    for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
-        // children are out of scope now, reset their ElementRuntime
-        e->reset (); // will call stop() if necessary
+    TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
+    if (tr && tr->state () == TimedRuntime::timings_started) {
+        tr->propagateStop (true);
+        return; // wait for runtime to call stop()
+    }
     GroupBase::stop ();
 }
 
@@ -1475,6 +1526,9 @@ KDE_NO_EXPORT void SMIL::Par::childDone (ElementPtr) {
     }
 }
 
+KDE_NO_EXPORT ElementRuntimePtr SMIL::Par::getNewRuntime () {
+    return ElementRuntimePtr (new ParRuntime (m_self));
+}
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementPtr SMIL::Seq::childFromTag (const QString & tag) {
@@ -1490,6 +1544,46 @@ KDE_NO_EXPORT ElementPtr SMIL::Seq::childFromTag (const QString & tag) {
 KDE_NO_EXPORT void SMIL::Seq::start () {
     GroupBase::start ();
     Element::start ();
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_EXPORT ElementPtr SMIL::Excl::childFromTag (const QString & tag) {
+    Element * elm = fromScheduleGroup (m_doc, tag);
+    if (!elm) elm = fromMediaContentGroup (m_doc, tag);
+    if (!elm) elm = fromContentControlGroup (m_doc, tag);
+    if (!elm) elm = fromAnimateGroup (m_doc, tag);
+    if (elm)
+        return elm->self ();
+    return ElementPtr ();
+}
+
+KDE_NO_EXPORT void SMIL::Excl::start () {
+    kdDebug () << "SMIL::Excl::start" << endl;
+    setState (state_started);
+    TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
+    if (tr)
+        tr->init ();
+    if (tr && firstChild ()) { // init children
+        for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
+            e->start ();
+        tr->begin (); // sets up aboutToStart connection with children
+    } else { // no children, stop if runtime started and no duration set
+        if (tr && tr->state () == TimedRuntime::timings_started) {
+            if (tr->durations[(int)TimedRuntime::duration_time].durval == duration_media)
+                tr->propagateStop (false);
+            return; // still running, wait for runtime to finish
+        }
+        stop (); // no children to run
+    }
+}
+
+KDE_NO_EXPORT void SMIL::Excl::childDone (ElementPtr /*child*/) {
+    // do nothing
+}
+
+KDE_NO_EXPORT ElementRuntimePtr SMIL::Excl::getNewRuntime () {
+    return ElementRuntimePtr (new ExclRuntime (m_self));
 }
 
 //-----------------------------------------------------------------------------
@@ -1781,7 +1875,7 @@ KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
     if (timingstate == timings_started &&
             durations [duration_time].durval == duration_data_download) {
         durations [duration_time].durval = d->olddur;
-        QTimer::singleShot (0, this, SLOT (started ()));
+        propagateStart ();
     }
 }
 
@@ -1915,7 +2009,7 @@ KDE_NO_EXPORT void TextData::slotResult (KIO::Job * job) {
     if (timingstate == timings_started &&
             durations [duration_time].durval == duration_data_download) {
         durations [duration_time].durval = d->olddur;
-        QTimer::singleShot (0, this, SLOT (started ()));
+        propagateStart ();
     }
 }
 

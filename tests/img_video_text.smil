@@ -21,7 +21,7 @@
         <param name="fontSize" value="-2"/>
         <param name="backgroundColor" value="blue"/>
       </text>
-      <video src="file:///home/koos/doc/example.avi" id="video1" region="reg_vid"/>
+      <video src="file:///home/koos/doc/example.avi" id="video1" region="reg_vid" begin="3"/>
       <text src="data:,Stop" id="text2" region="reg_text2" fill="freeze">
         <param name="backgroundColor" value="gray"/>
       </text>

@@ -1,0 +1,49 @@
+<smil>
+  <head>
+    <layout>
+      <root-layout width="320" height="240" background-color="yellow"/>
+      <region id="reg_but1" left="5" top="15" width="80" height="40" background-color="red"/>
+      <region id="reg_but2" left="5" top="65" width="80" height="40" background-color="red"/>
+      <region id="reg_but3" left="5" top="115" width="80" height="40" background-color="red"/>
+      <region id="reg_but4" left="5" top="175" width="80" height="40" background-color="red"/>
+      <region id="reg_img1" left="95" top="15" width="210" height="210" background-color="blue"/>
+      <region id="reg_img2" left="100" top="20" width="64" height="64" background-color="orange"/>
+    </layout>
+  </head>
+  <body>
+    <par end="but4.activateEvent">
+      <text src="data:,Horizontal" id="but1" region="reg_but1" fill="freeze">
+        <param name="fontColor" value="yellow"/>
+        <param name="fontSize" value="+1"/>
+        <param name="backgroundColor" value="blue"/>
+      </text>
+      <set targetElement="but1" attributeName="backgroundColor" to="red" begin="but1.activateEvent" dur="0.1"/>
+      <text src="data:,Vertical" id="but2" region="reg_but2" fill="freeze">
+        <param name="fontColor" value="yellow"/>
+        <param name="fontSize" value="+1"/>
+        <param name="backgroundColor" value="blue"/>
+      </text>
+      <set targetElement="but2" attributeName="backgroundColor" to="red" begin="but2.activateEvent" dur="0.1"/>
+      <text src="data:,Diagonal" id="but3" region="reg_but3" fill="freeze">
+        <param name="fontColor" value="yellow"/>
+        <param name="fontSize" value="+1"/>
+        <param name="backgroundColor" value="blue"/>
+      </text>
+      <set targetElement="but3" attributeName="backgroundColor" to="red" begin="but3.activateEvent" dur="0.1"/>
+      <text src="data:,Stop" id="but4" region="reg_but4" fill="freeze">
+        <param name="fontColor" value="green"/>
+        <param name="fontSize" value="+1"/>
+        <param name="backgroundColor" value="red"/>
+      </text>
+      <img src="../icons/hi64-app-kmplayer.png" region="reg_img2" fill="freeze"/>
+      <excl dur="indefinite">
+        <animate targetElement="reg_img2" attributeName="left" from="100" to="235" begin="but1.activateEvent" dur="10"/>
+        <animate targetElement="reg_img2" attributeName="top" from="20" to="155" begin="reg_but2.activateEvent" dur="10"/>
+        <par begin="reg_but3.activateEvent">
+          <animate targetElement="reg_img2" attributeName="left" from="100" to="235" dur="10"/>
+          <animate targetElement="reg_img2" attributeName="top" from="20" to="155" dur="10"/>
+        </par>
+      </excl>
+    </par>
+  </body>
+</smil>
