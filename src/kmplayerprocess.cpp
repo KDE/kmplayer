@@ -202,7 +202,7 @@ bool MPlayerBase::stop () {
 bool MPlayerBase::quit () {
     disconnect (m_process, SIGNAL (processExited (KProcess *)),
                 this, SLOT (processStopped (KProcess *)));
-    stop ();
+    return stop ();
 }
 
 void MPlayerBase::dataWritten (KProcess *) {
@@ -1205,7 +1205,7 @@ void Xine::setFinished () {
         } else
             m_source->first ();
     }
-    stop ();
+    quit ();
 }
 
 bool Xine::pause () {
