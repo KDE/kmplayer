@@ -554,8 +554,7 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::startFeed () {
         m_ffmpeg_process->stop ();
     delete m_ffmpeg_process;
     m_ffmpeg_process = new KMPlayer::FFMpeg (m_player);
-    connect (m_ffmpeg_process, SIGNAL (finished ()),
-             this, SLOT (feedFinished ()));
+    connect (m_ffmpeg_process, SIGNAL (stateChange (KMPlayer::Process::State, KMPlayer::Process::State)), this, SLOT (stateChange (KMPlayer::Process::State, KMPlayer::Process::State)));
     ffurl.sprintf ("http://localhost:%d/kmplayer.ffm", m_ffserverconfig->ffserverport);
     m_ffmpeg_process->setURL (KURL(ffurl));
     if (!m_ffmpeg_process->play (m_player->source ())) {
@@ -574,18 +573,20 @@ bail_out:
     m_configpage->setCursor (QCursor (Qt::ArrowCursor));
 }
 
-KDE_NO_EXPORT void KMPlayerBroadcastConfig::feedFinished () {
-    if (m_configpage)
-        m_configpage->feedled->setState (KLed::Off);
-    m_ffmpeg_process->deleteLater ();
-    m_ffmpeg_process = 0L;
-    kdDebug () << "ffmpeg process stopped " << m_endserver << endl;
-    if (m_endserver && !stopProcess (m_ffserver_process)) {
-        disconnect (m_ffserver_process,
-                SIGNAL (receivedStderr (KProcess *, char *, int)),
-                this, SLOT (processOutput (KProcess *, char *, int)));
-        KMessageBox::error (m_configpage, i18n ("Failed to end ffserver process."), i18n ("Error"));
-        processStopped (0L);
+KDE_NO_EXPORT void KMPlayerBroadcastConfig::stateChange (KMPlayer::Process::State old, KMPlayer::Process::State state) {
+    if (state < KMPlayer::Process::Buffering && old >KMPlayer::Process::Ready) {
+        if (m_configpage)
+            m_configpage->feedled->setState (KLed::Off);
+        m_ffmpeg_process->deleteLater ();
+        m_ffmpeg_process = 0L;
+        kdDebug () << "ffmpeg process stopped " << m_endserver << endl;
+        if (m_endserver && !stopProcess (m_ffserver_process)) {
+            disconnect (m_ffserver_process,
+                    SIGNAL (receivedStderr (KProcess *, char *, int)),
+                    this, SLOT (processOutput (KProcess *, char *, int)));
+            KMessageBox::error (m_configpage, i18n ("Failed to end ffserver process."), i18n ("Error"));
+            processStopped (0L);
+        }
     }
 }
 

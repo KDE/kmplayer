@@ -66,7 +66,7 @@ public:
     State state () const { return m_state; }
 signals:
     // backend process state changed
-    void stateChange (Process::State oldstate, Process::State newstate);
+    void stateChange (KMPlayer::Process::State oldstate, KMPlayer::Process::State newstate);
     void grabReady (const QString & path);
     void loaded (int percentage);
     void positioned (int pos);

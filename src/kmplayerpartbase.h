@@ -168,8 +168,8 @@ protected slots:
     void brightnessValueChanged (int val);
     void hueValueChanged (int val);
     void saturationValueChanged (int val);
-    virtual void processStateChange (Process::State, Process::State);
-    void recordingStateChange (Process::State, Process::State);
+    virtual void processStateChange (KMPlayer::Process::State, KMPlayer::Process::State);
+    void recordingStateChange (KMPlayer::Process::State, KMPlayer::Process::State);
     void positioned (int pos);
     void lengthFound (int len);
     virtual void loaded (int percentage);

@@ -228,14 +228,12 @@ void PartBase::setProcess (const char * name) {
         disconnect (m_source, SIGNAL (currentURL (Source *)),
                     m_process, SLOT (play (Source *)));
         m_process->quit ();
-        disconnect(m_process,SIGNAL(stateChange(Process::State,Process::State)),
-                 this, SLOT(processStateChange(Process::State,Process::State)));
+        disconnect(m_process,SIGNAL(stateChange(KMPlayer::Process::State,KMPlayer::Process::State)), this, SLOT(processStateChange(KMPlayer::Process::State,KMPlayer::Process::State)));
     }
     m_process = process;
     if (!process)
         return;
-    connect (m_process, SIGNAL (stateChange (Process::State, Process::State)),
-            this, SLOT (processStateChange (Process::State, Process::State)));
+    connect (m_process, SIGNAL (stateChange (KMPlayer::Process::State, KMPlayer::Process::State)), this, SLOT (processStateChange (KMPlayer::Process::State, KMPlayer::Process::State)));
     connect (m_process, SIGNAL (positioned(int)), this, SLOT (positioned(int)));
     connect (m_process, SIGNAL (loaded (int)), this, SLOT (loaded (int)));
     connect (m_process, SIGNAL(lengthFound(int)), this, SLOT(lengthFound(int)));
@@ -255,14 +253,12 @@ void PartBase::setRecorder (const char * name) {
     if (m_recorder == recorder)
         return;
     if (m_recorder) {
-        disconnect(recorder, SIGNAL(stateChange(Process::State,Process::State)),
-              this, SLOT (recordingStateChange(Process::State,Process::State)));
+        disconnect(recorder, SIGNAL(stateChange(KMPlayer::Process::State,KMPlayer::Process::State)), this, SLOT (recordingStateChange(KMPlayer::Process::State,KMPlayer::Process::State)));
         m_recorder->quit ();
     }
     m_recorder = recorder;
     if (recorder)
-        connect (recorder, SIGNAL (stateChange (Process::State,Process::State)),
-             this, SLOT (recordingStateChange (Process::State,Process::State)));
+        connect (recorder, SIGNAL (stateChange (KMPlayer::Process::State,KMPlayer::Process::State)), this, SLOT (recordingStateChange (KMPlayer::Process::State,KMPlayer::Process::State)));
 }
 
 extern const char * strGeneralGroup;
@@ -418,7 +414,7 @@ static const char * statemap [] = {
     "NotRunning", "Ready", "Buffering", "Playing"
 };
 
-KDE_NO_EXPORT void PartBase::recordingStateChange (Process::State old, Process::State state) {
+KDE_NO_EXPORT void PartBase::recordingStateChange (KMPlayer::Process::State old, KMPlayer::Process::State state) {
     if (!m_view) return;
     kdDebug () << "recordState " << statemap[old] << " -> " << statemap[state] << endl;
     m_view->buttonBar ()->setRecording (state > Process::Ready);
@@ -452,7 +448,7 @@ void PartBase::timerEvent (QTimerEvent * e) {
     }
 }
 
-void PartBase::processStateChange (Process::State old, Process::State state) {
+void PartBase::processStateChange (KMPlayer::Process::State old, KMPlayer::Process::State state) {
     if (!m_view) return;
     m_view->buttonBar ()->setPlaying (state > Process::Ready);
     kdDebug () << "processState " << statemap[old] << " -> " << statemap[state] << endl;
