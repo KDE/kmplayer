@@ -418,7 +418,9 @@ void KGStreamerPlayer::contrast (int val) {
 void KGStreamerPlayer::brightness (int val) {
 }
 
-void KGStreamerPlayer::volume (int) {
+void KGStreamerPlayer::volume (int val) {
+    if (gst_elm_play)
+        g_object_set (G_OBJECT (gst_elm_play), "volume", 1.0*val/100, 0L);
 }
 
 void KGStreamerPlayer::updatePosition () {
