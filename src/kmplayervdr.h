@@ -82,7 +82,7 @@ public slots:
     void jump (KMPlayer::ElementPtr e);
     void forward ();
     void backward ();
-    void getCurrent ();
+    void playCurrent ();
     void toggleConnected ();
     void volumeChanged (int);
 private slots:

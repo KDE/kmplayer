@@ -73,7 +73,7 @@ signals:
     void lengthFound (int len);
 public slots:
     virtual bool ready ();
-    virtual bool play (Source *);
+    virtual bool play (Source *, const QString &);
     virtual bool stop ();
     virtual bool quit ();
     virtual bool pause ();
@@ -134,7 +134,7 @@ public:
     virtual bool grabPicture (const KURL & url, int pos);
     bool run (const char * args, const char * pipe = 0L);
 public slots:
-    virtual bool play (Source *);
+    virtual bool play (Source *, const QString &);
     virtual bool stop ();
     virtual bool pause ();
     virtual bool seek (int pos, bool absolute);
@@ -197,7 +197,7 @@ public:
     virtual void init ();
     KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
 public slots:
-    virtual bool play (Source *);
+    virtual bool play (Source *, const QString &);
     virtual bool stop ();
 };
 
@@ -209,7 +209,7 @@ public:
     virtual void init ();
     KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
 public slots:
-    virtual bool play (Source *);
+    virtual bool play (Source *, const QString &);
     virtual bool stop ();
 };
 
@@ -240,7 +240,7 @@ public:
     ElementPtr configDocument () { return configdoc; }
     void initProcess ();
 public slots:
-    bool play (Source *);
+    bool play (Source *, const QString &);
     bool stop ();
     bool quit ();
     bool pause ();
@@ -330,7 +330,7 @@ public:
     virtual void init ();
     void setArguments (const QString & args) { arguments = args; }
 public slots:
-    virtual bool play (Source *);
+    virtual bool play (Source *, const QString &);
     virtual bool stop ();
 private slots:
     void processStopped (KProcess *);

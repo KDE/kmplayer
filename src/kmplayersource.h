@@ -90,8 +90,14 @@ public:
 
     virtual QString prettyName ();
 signals:
-    // in respond to 'getCurrent()' call
-    void currentURL (Source *);
+    /**
+     * Signal for that this source wants to play an url.
+     * (in respond to 'playCurrent()' call)
+     */
+    void playURL (Source *, const QString & url);
+    /**
+     * Signal for notifying this source is at the end of play items
+     */
     void endOfPlayItems ();
 public slots:
     virtual void activate () = 0;
@@ -99,7 +105,11 @@ public slots:
     virtual void forward ();
     virtual void backward ();
     virtual void play ();
-    virtual void getCurrent (); // will emit currentURL or endOfPlayItems
+    /**
+     * Continuing playing where current is now
+     * May emit playURL if a video needs to play or endOfPlayItems when done
+     */
+    virtual void playCurrent ();
     virtual void jump (ElementPtr e);
 protected:
     ElementPtr m_document;

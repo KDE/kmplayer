@@ -401,7 +401,7 @@ KDE_NO_EXPORT void RecorderPage::record () {
     m_player->setRecorder (recorderName ());
     if (!proc->playing ()) {
         dynamic_cast <Recorder *> (proc)->setURL (KURL (m_player->settings ()->recordfile));
-        proc->play (m_player->source ());
+        proc->play (m_player->source (), m_player->source ()->currentMrl ());
     } else
         proc->stop ();
 }

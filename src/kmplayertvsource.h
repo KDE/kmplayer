@@ -155,7 +155,7 @@ public:
 public slots:
     virtual void activate ();
     virtual void deactivate ();
-    virtual void getCurrent ();
+    virtual void playCurrent ();
     void menuClicked (int id);
 private slots:
     void slotScan ();

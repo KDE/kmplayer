@@ -226,8 +226,8 @@ void PartBase::setProcess (const char * name) {
                     this, SLOT (loaded (int)));
         disconnect (m_process, SIGNAL (lengthFound (int)),
                     this, SLOT (lengthFound (int)));
-        disconnect (m_source, SIGNAL (currentURL (Source *)),
-                    m_process, SLOT (play (Source *)));
+        disconnect (m_source, SIGNAL (playURL (Source *, const QString &)),
+                    m_process, SLOT (play (Source *, const QString &)));
         m_process->quit ();
         disconnect(m_process,SIGNAL(stateChange(KMPlayer::Process::State,KMPlayer::Process::State)), this, SLOT(processStateChange(KMPlayer::Process::State,KMPlayer::Process::State)));
     }
@@ -239,8 +239,8 @@ void PartBase::setProcess (const char * name) {
     connect (m_process, SIGNAL (loaded (int)), this, SLOT (loaded (int)));
     connect (m_process, SIGNAL(lengthFound(int)), this, SLOT(lengthFound(int)));
     if (m_process->player () == this)
-        connect (m_source, SIGNAL (currentURL (Source *)),
-                 m_process, SLOT (play (Source *)));
+        connect (m_source, SIGNAL (playURL (Source *, const QString &)),
+                 m_process, SLOT (play (Source *, const QString &)));
     if (m_process->playing ()) {
         m_view->controlPanel ()->setPlaying (true);
         m_view->controlPanel ()->showPositionSlider (!!m_source->length ());
@@ -313,8 +313,8 @@ void PartBase::setSource (Source * _source) {
         stop ();
         if (m_view)
             m_view->reset ();
-        disconnect (m_source, SIGNAL (currentURL (Source *)),
-                 m_process, SLOT (play (Source *)));
+        disconnect (m_source, SIGNAL (playURL (Source *, const QString &)),
+                 m_process, SLOT (play (Source *, const QString &)));
         disconnect (m_source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
     }
     if (m_view) {
@@ -344,13 +344,13 @@ void PartBase::setSource (Source * _source) {
     }
     if (p != m_process->name ()) {
         setProcess (p.ascii ());
-        disconnect (m_source, SIGNAL (currentURL (Source *)),
-                    m_process, SLOT (play (Source *)));
+        disconnect (m_source, SIGNAL (playURL (Source *, const QString &)),
+                    m_process, SLOT (play (Source *, const QString &)));
     }
     m_settings->backends [_source->name()] = m_process->name ();
     m_source = _source;
     m_process->setSource (m_source);
-    connect (m_source, SIGNAL (currentURL (Source *)),
+    connect (m_source, SIGNAL (playURL (Source *, const QString &)),
             m_process, SLOT (play (Source *)));
     connect (m_source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
     updatePlayerMenu ();
@@ -478,7 +478,7 @@ void PartBase::processStateChange (KMPlayer::Process::State old, KMPlayer::Proce
     } else if (state == Process::Ready && m_process->player () == this) {
         if (old > Process::Ready)
             src->next ();
-        src->getCurrent ();
+        src->playCurrent ();
     }
 }
 
@@ -559,9 +559,9 @@ void PartBase::play () {
     if (m_process->state () == Process::NotRunning) {
         m_process->ready ();
     } else if (m_process->state () == Process::Ready) {
-        src->getCurrent ();
+        src->playCurrent ();
     } else
-        m_process->play (src);
+        m_process->play (src, src->currentMrl ());
 }
 
 bool PartBase::playing () const {
@@ -744,7 +744,7 @@ QString Source::currentMrl () {
     return m_current ? m_current->mrl()->src : QString ();
 }
 
-void Source::getCurrent () {
+void Source::playCurrent () {
     QString url = currentMrl ();
     m_player->changeURL (url);
     if (m_player->process () && m_player->process ()->view ())
@@ -754,7 +754,7 @@ void Source::getCurrent () {
     if (url.isEmpty ())
         emit endOfPlayItems ();
     else
-        emit currentURL (this);
+        emit playURL (this, currentMrl ());
 }
 
 static ElementPtr findDepthFirst (ElementPtr elm) {
@@ -1205,12 +1205,12 @@ KDE_NO_EXPORT void URLSource::kioResult (KIO::Job *) {
         m_current->mrl ()->parsed = true;
         if (!m_current->isMrl ())
             next ();
-        getCurrent ();
+        playCurrent ();
     }
     m_player->process ()->view ()->controlPanel ()->setPlaying (false);
 }
 
-void URLSource::getCurrent () {
+void URLSource::playCurrent () {
     terminateJob ();
     if (m_current && !m_current->isMrl ())
         next ();
@@ -1220,16 +1220,16 @@ void URLSource::getCurrent () {
         for (ElementPtr e = m_current; e->parentNode (); e = e->parentNode ())
             ++depth;
     if (depth > 40 || url.isEmpty () || m_current->mrl ()->parsed) {
-        Source::getCurrent ();
+        Source::playCurrent ();
     } else {
         QString mimestr = mime ();
         bool maybe_playlist = isPlayListMime (mimestr);
-        kdDebug () << "URLSource::getCurrent " << mimestr << maybe_playlist << endl;
+        kdDebug () << "URLSource::playCurrent " << mimestr << maybe_playlist << endl;
         if (url.isLocalFile ()) {
             QFile file (url.path ());
             if (!file.exists ()) {
-                kdDebug () << "URLSource::getCurrent not found " << url.path () << " " << currentMrl () << endl;
-                Source::getCurrent ();
+                kdDebug () << "URLSource::playCurrent not found " << url.path () << " " << currentMrl () << endl;
+                Source::playCurrent ();
                 return;
             }
             if (mimestr.isEmpty ()) {
@@ -1244,7 +1244,7 @@ void URLSource::getCurrent () {
                 read (textstream);
             }
             m_current->mrl ()->parsed = true;
-            getCurrent ();
+            playCurrent ();
         } else if ((maybe_playlist &&
                     url.protocol ().compare (QString ("mms")) &&
                     url.protocol ().compare (QString ("rtsp")) &&
@@ -1265,7 +1265,7 @@ void URLSource::getCurrent () {
             m_player->process ()->view ()->controlPanel ()->setPlaying (true);
         } else {
             m_current->mrl ()->parsed = true;
-            getCurrent ();
+            playCurrent ();
         }
     }
 }

@@ -249,7 +249,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::activate () {
         }
     } else
         KMPlayer::Source::first ();
-    getCurrent (); // initialize some values for others to see device/frequency
+    playCurrent (); // initialize some values for others to see device/frequency
     if (m_current)
         jump (m_current);
 }
@@ -271,7 +271,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::buildMenu () {
          m_menu->insertItem (KMPlayer::convertNode <TVDevice> (dp)->pretty_name, this, SLOT (menuClicked (int)), 0, counter++);
 }
 
-KDE_NO_EXPORT void KMPlayerTVSource::getCurrent () {
+KDE_NO_EXPORT void KMPlayerTVSource::playCurrent () {
     QString old_dev;
     TVChannel * channel = 0L;
     TVInput * input = 0L;
@@ -310,7 +310,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::getCurrent () {
     if (m_app->broadcasting ())
         QTimer::singleShot (0, m_app->broadcastConfig (), SLOT (startFeed ()));
     else
-        KMPlayer::Source::getCurrent ();
+        KMPlayer::Source::playCurrent ();
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::menuClicked (int id) {

@@ -557,7 +557,7 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::startFeed () {
     connect (m_ffmpeg_process, SIGNAL (stateChange (KMPlayer::Process::State, KMPlayer::Process::State)), this, SLOT (stateChange (KMPlayer::Process::State, KMPlayer::Process::State)));
     ffurl.sprintf ("http://localhost:%d/kmplayer.ffm", m_ffserverconfig->ffserverport);
     m_ffmpeg_process->setURL (KURL(ffurl));
-    if (!m_ffmpeg_process->play (m_player->source ())) {
+    if (!m_ffmpeg_process->play (m_player->source (), QString::null)) {
         KMessageBox::error (m_configpage, i18n ("Failed to start ffmpeg."), i18n ("Error"));
         stopProcess (m_ffserver_process);
         goto bail_out;
