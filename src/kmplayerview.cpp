@@ -758,6 +758,7 @@ void KMPlayerView::reset () {
         m_buttonbar->popupMenu ()->activateItemAt (m_buttonbar->popupMenu ()->indexOf (KMPlayerControlPanel::menu_fullscreen)); 
         //m_layer->fullScreen ();
     m_viewer->show ();
+    XClearWindow (qt_xdisplay(), m_viewer->embeddedWinId ());
     if (m_show_console_output) {
         m_widgetstack->raiseWidget (m_multiedit);
     }
@@ -867,12 +868,12 @@ KMPlayerViewer::KMPlayerViewer (QWidget *parent, KMPlayerView * view)
     create (XCreateWindow (qt_xdisplay (), parent->winId (), 0, 0, 10, 10, 0, 
                            x11Depth (), InputOutput, (Visual*)x11Visual (),
                            CWBackPixel | CWBorderPixel | CWColormap, &xswa));*/
-    setBackgroundMode (Qt::NoBackground);
     setAcceptDrops (true);
 #if KDE_IS_VERSION(3,1,1)
     setProtocol(QXEmbed::XPLAIN);
 #endif
-    embed (XCreateSimpleWindow (qt_xdisplay(), winId (), 0, 0, width(), height(), 1, 0, 0));
+    embed (XCreateSimpleWindow (qt_xdisplay(), view->winId (), 0, 0, width(), height(), 1, 0, 0));
+    XClearWindow (qt_xdisplay(), embeddedWinId ());
 }
 
 KMPlayerViewer::~KMPlayerViewer () {

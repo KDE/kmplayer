@@ -188,6 +188,8 @@ void KMPlayerApp::initView ()
              this, SLOT (loadingProgress (int)));
     connect (m_player, SIGNAL (sourceChanged (KMPlayerSource *)), this,
              SLOT (slotSourceChanged (KMPlayerSource *)));
+    connect (m_player, SIGNAL (titleChanged (const QString &)), this,
+             SLOT (setCaption (const QString &)));
     m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayerControlPanel::menu_zoom50,
             this, SLOT (zoom50 ()));
     m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayerControlPanel::menu_zoom100,
