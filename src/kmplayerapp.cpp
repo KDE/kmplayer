@@ -100,7 +100,9 @@ void KMPlayerApp::initActions()
     /*KAction *pauseact =*/ new KAction (i18n ("&Pause"), 0, 0, m_player, SLOT (pause ()), actionCollection (), "view_pause");
     /*KAction *stopact =*/ new KAction (i18n ("&Stop"), 0, 0, m_player, SLOT (stop ()), actionCollection (), "view_stop");
     /*KAction *artsctrl =*/ new KAction (i18n ("&Arts Control"), 0, 0, this, SLOT (startArtsControl ()), actionCollection (), "view_arts_control");
+#ifdef KDE_VERSION_MAJOR >= 3 && KDE_VERSION_MINOR > 1
     createStandardStatusBarAction();
+#endif
     setStandardToolBarMenuEnabled(true);
 
     viewMenuBar = KStdAction::showMenubar(this, SLOT(slotViewMenuBar()), actionCollection());
