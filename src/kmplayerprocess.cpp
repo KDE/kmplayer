@@ -1098,6 +1098,7 @@ bool Xine::play () {
     QString cbname;
     cbname.sprintf ("%s/%s", QString (kapp->dcopClient ()->appId ()).ascii (),
                              QString (m_callback->objId ()).ascii ());
+    QString xine_config = locateLocal ("data", "kmplayer/") + QString ("xine_config");
     if (m_have_config == config_probe || m_send_config == send_new) {
         initProcess ();
         printf ("kxineplayer -wid %lu", (unsigned long) widget ());
@@ -1106,6 +1107,8 @@ bool Xine::play () {
             printf (" -c");
             *m_process << " -c ";
         }
+        printf (" -f %s", xine_config.ascii ());
+        *m_process << " -f " << xine_config;
         printf (" -cb %s nomovie\n", cbname.ascii());
         *m_process << " -cb " << cbname << " nomovie";
         m_process->start (KProcess::NotifyOnExit, KProcess::All);
@@ -1120,6 +1123,8 @@ bool Xine::play () {
     initProcess ();
     printf ("kxineplayer -wid %lu", (unsigned long) widget ());
     *m_process << "kxineplayer -wid " << QString::number (widget ());
+    printf (" -f %s", xine_config.ascii ());
+    *m_process << " -f " << xine_config;
 
     QString strVideoDriver = QString (settings->videodrivers[settings->videodriver].driver);
     if (strVideoDriver == QString ("x11"))

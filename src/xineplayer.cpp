@@ -24,6 +24,7 @@
 #include <dcopclient.h>
 #include <qcstring.h>
 #include <qtimer.h>
+#include <qfile.h>
 #include <qthread.h>
 #include <qmutex.h>
 #include <qdom.h>
@@ -351,6 +352,9 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
             xine_verbose = xine_vverbose = true;
         } else if (!strcmp (argv ()[i], "-c")) {
             wants_config = true;
+        } else if (!strcmp (argv ()[i], "-f") && i < argc () - 1) {
+            strncpy (configfile, argv ()[++i], sizeof (configfile));
+            configfile[sizeof (configfile) - 1] = 0;
         } else if (!strcmp (argv ()[i], "-cb")) {
             QString str = argv ()[++i];
             int pos = str.find ('/');
@@ -946,10 +950,12 @@ int main(int argc, char **argv) {
     display = XOpenDisplay(NULL);
     screen  = XDefaultScreen(display);
 
+    snprintf(configfile, sizeof (configfile), "%s%s", xine_get_homedir(), "/.xine/config2");
     xineapp = new KXinePlayer (argc, argv);
+    bool config_exists = QFile (configfile).exists ();
 
     if (!callback && mrl.isEmpty ()) {
-        fprintf (stderr, "usage: %s [-vo (xv|xshm)] [-ao (arts|esd|..)] [-dvd-device <device>] [-vcd-device <device>] [-wid <X11 Window>|-window-id <X11 Window>|-root] [-sub <subtitle url>] [(-v|-vv)] [-cb <DCOP callback name> [-c]] [<url>]\n", argv[0]);
+        fprintf (stderr, "usage: %s [-vo (xv|xshm)] [-ao (arts|esd|..)] [-f <xine config file>] [-dvd-device <device>] [-vcd-device <device>] [-wid <X11 Window>|-window-id <X11 Window>|-root] [-sub <subtitle url>] [(-v|-vv)] [-cb <DCOP callback name> [-c]] [<url>]\n", argv[0]);
         delete xineapp;
         return 1;
     }
@@ -964,11 +970,12 @@ int main(int argc, char **argv) {
     xine = xine_new();
     if (xine_verbose)
         xine_engine_set_param (xine, XINE_ENGINE_PARAM_VERBOSITY, xine_vverbose ? XINE_VERBOSITY_DEBUG : XINE_VERBOSITY_LOG);
-    snprintf(configfile, sizeof (configfile), "%s%s", xine_get_homedir(), "/.xine/config2");
     xine_config_load(xine, configfile);
     xine_init(xine);
 
     xineapp->init ();
+    if (!config_exists)
+        xine_config_save (xine, configfile);
 
     if (dvd_device)
         updateConfigEntry (QString ("input.dvd_device"), QString (dvd_device));

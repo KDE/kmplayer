@@ -1,5 +1,10 @@
 Changes since version 0.8.3-rc2
-- Added a debian build directory
+- Store xine settings in ~/.kde/share/apps/kmplayer/xine_config and not in
+  ~/.xine/config2. Save the first time if file does not exist (Automaticly
+  sets the misc.memcpy_method).
+- Added a debian build directory, builds a kmplayer-lib, kmplayer-plugin and a
+  kmplayer-app package. Eg. install only kmplayer-lib and kmplayer-plugin if 
+  you prefer another player but do want the plugin for konqueror.
 - Added protocol files for mms://, rtsp:// and pnm://
 - Position slider now also shows progress of the cache fill
 Changes since version 0.8.3-rc1
