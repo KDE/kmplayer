@@ -1,3 +1,10 @@
+Changes since version 0.8.2-rc1
+- Don't fill X log with ffmpeg output
+- Jump to broadcast config page first when clicking broadcast button
+- 'Start' button on broadcast config page and two leds for ffserver and ffmpeg
+- dvd/vcd fix (regression from '-frames 0' removal
+- put mplayer's output patterns in a QTable 
+- default to asf for ffserver
 Changes since version 0.8.1a
 - MPlayer-1.0-pre is default now ([MPlayer] Post MPlayer 0.90=true in
   kmplayerrc)

@@ -529,9 +529,10 @@ void KMPlayerBroadcastConfig::processOutput (KProcess * p, char * s, int) {
 
 void KMPlayerBroadcastConfig::startFeed () {
     FFServerSetting & ffs = ffserversettings;
+    QString ffurl;
     if (!m_ffserver_process || !m_ffserver_process->isRunning ()) {
         KMessageBox::error (m_configpage, i18n ("Failed to start ffserver.\n") + m_ffserver_out, i18n ("Error"));
-        return;
+        goto bail_out;
     }
     disconnect (m_ffserver_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
                 this, SLOT (processOutput (KProcess *, char *, int)));
@@ -542,13 +543,12 @@ void KMPlayerBroadcastConfig::startFeed () {
     m_ffmpeg_process->setSource (m_player->process ()->source ());
     connect (m_ffmpeg_process, SIGNAL (finished ()),
              this, SLOT (feedFinished ()));
-    QString ffurl;
     ffurl.sprintf ("http://localhost:%d/kmplayer.ffm", m_ffserverconfig->ffserverport);
     m_ffmpeg_process->setURL (ffurl.ascii ());
     if (!m_ffmpeg_process->play ()) {
         KMessageBox::error (m_configpage, i18n ("Failed to start ffmpeg."), i18n ("Error"));
         stopProcess (m_ffserver_process);
-        return;
+        goto bail_out;
     }
     if (m_ffmpeg_process->playing ()) {
         m_ffserver_url.sprintf ("http://localhost:%d/video.%s", m_ffserverconfig->ffserverport, ffs.format.ascii ());
@@ -557,6 +557,7 @@ void KMPlayerBroadcastConfig::startFeed () {
         m_player->openURL (KURL (m_ffserver_url));
     } else
         stopServer ();
+bail_out:
     m_configpage->setCursor (QCursor (Qt::ArrowCursor));
 }
 

@@ -254,7 +254,9 @@ void KMPlayerSettings::readConfig () {
 }
 
 void KMPlayerSettings::show (const char * pagename) {
+    bool created = false;
     if (!configdialog) {
+        created = true;
         configdialog = new KMPlayerPreferences (m_player, this);
         connect (configdialog, SIGNAL (okClicked ()),
                 this, SLOT (okPressed ()));
@@ -339,6 +341,8 @@ void KMPlayerSettings::show (const char * pagename) {
     //\dynamic stuff
     if (pagename)
         configDialog ()->setPage (pagename);
+    if (created)
+        configdialog->resize (configdialog->minimumSize ());
     configdialog->show ();
 }
 
