@@ -834,7 +834,7 @@ void Source::stateElementChanged (ElementPtr elm) {
 
 void Source::repaintRect (int x, int y, int w, int h) {
     if (m_player->view ())
-        m_player->process()->view ()->viewArea ()->update (x, y, w, h);
+        m_player->process()->view ()->viewArea ()->sheduleRepaint (x, y, w, h);
 }
 
 void Source::avWidgetSizes (RegionNode * r, unsigned int * bg) {

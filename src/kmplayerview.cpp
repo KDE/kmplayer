@@ -267,6 +267,7 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
    m_paint_buffer (0L),
    m_collection (new KActionCollection (this)),
    m_mouse_invisible_timer (0),
+   m_repaint_timer (0),
    m_fullscreen (false) {
     setEraseColor (QColor (0, 0, 0));
     setAcceptDrops (true);
@@ -447,11 +448,23 @@ KDE_NO_EXPORT void ViewArea::mouseMoved () {
     }
 }
 
+KDE_NO_EXPORT void ViewArea::sheduleRepaint (int x, int y, int w, int h) {
+    if (m_repaint_timer)
+        m_repaint_rect = m_repaint_rect.unite (QRect (x, y, w, h));
+    else {
+        m_repaint_rect = QRect (x, y, w, h);
+        m_repaint_timer = startTimer (40); // 25 per sec should do
+    }
+}
+
 KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
     if (e->timerId () == m_mouse_invisible_timer) {
         m_mouse_invisible_timer = 0;
         if (m_fullscreen)
             setCursor (BlankCursor);
+    } else if (e->timerId () == m_repaint_timer) {
+        m_repaint_timer = 0;
+        repaint (m_repaint_rect, false);
     }
     killTimer (e->timerId ());
 }

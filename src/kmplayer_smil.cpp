@@ -100,7 +100,7 @@ KDE_NO_CDTOR_EXPORT void RegionNode::clearAll () {
 
 KDE_NO_EXPORT
 void RegionNode::paint (QPainter & p, int _x, int _y, int _h, int _w) {
-    if ((x + w < _x || _x + _w < x) && (y + h < _y || _y + _h < y))
+    if (x + w < _x || _x + _w < x || y + h < _y || _y + _h < y)
         return;
     p.setClipRect (x, y, w, h, QPainter::CoordPainter);
 

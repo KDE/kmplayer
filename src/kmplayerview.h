@@ -120,6 +120,7 @@ public:
     void setRootLayout (RegionNodePtr rl);
     void setAudioVideoGeometry (int x, int y, int w, int y, unsigned int * bg);
     void mouseMoved ();
+    void sheduleRepaint (int x, int y, int w, int y);
 public slots:
     void fullScreen ();
     void accelActivated ();
@@ -141,7 +142,9 @@ private:
     KActionCollection * m_collection;
     RegionNodePtr rootLayout;
     QRect m_av_geometry;
+    QRect m_repaint_rect;
     int m_mouse_invisible_timer;
+    int m_repaint_timer;
     bool m_fullscreen : 1;
 };
 
