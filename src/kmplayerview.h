@@ -167,7 +167,10 @@ public:
         button_stop, button_pause, button_record, button_broadcast
     };
     KMPlayerControlPanel (QWidget * parent);
-    void enablePositionSlider (bool enable);
+    void enablePositionSlider (bool visible, int len = 0);
+    void enableSeekButtons (bool enable);
+    void setPlaying (bool play);
+    void setRecording (bool record);
     QSlider * positionSlider () const { return m_posSlider; }
     QSlider * contrastSlider () const { return m_contrastSlider; }
     QSlider * brightnessSlider () const { return m_brightnessSlider; }

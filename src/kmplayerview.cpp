@@ -356,7 +356,7 @@ KMPlayerControlPanel::KMPlayerControlPanel (QWidget * parent) : QWidget (parent)
     m_posSlider = new QSlider (Qt::Horizontal, this);
     m_posSlider->setEnabled (false);
     m_buttonbox->addWidget (m_posSlider);
-    enablePositionSlider (true);
+    enablePositionSlider (false, true);
     m_popupMenu = new QPopupMenu (this);
     m_playerMenu = new QPopupMenu (this);
     m_playerMenu->setEnabled (false);
@@ -394,9 +394,11 @@ KMPlayerControlPanel::KMPlayerControlPanel (QWidget * parent) : QWidget (parent)
     m_popupMenu->insertItem (i18n ("&Configure KMPlayer..."), menu_config);
 }
 
-void KMPlayerControlPanel::enablePositionSlider (bool enable) {
-    int h = enable ? button_height_with_slider : button_height_only_buttons;
-    if (enable) {
+void KMPlayerControlPanel::enablePositionSlider (bool visible, int len) {
+    int h = visible ? button_height_with_slider : button_height_only_buttons;
+    m_posSlider->setMaxValue (len);
+    m_posSlider->setEnabled (len > 0);
+    if (visible) {
         m_posSlider->show ();
         m_buttonbox->setMargin (4);
         m_buttonbox->setSpacing (4);
@@ -411,7 +413,32 @@ void KMPlayerControlPanel::enablePositionSlider (bool enable) {
         m_buttons[i]->setMinimumSize (15, h-1);
         m_buttons[i]->setMaximumSize (750, h);
     }
-    setMaximumSize (2500, h + (enable ? 8 : 2 ));
+    setMaximumSize (2500, h + (visible ? 8 : 2 ));
+}
+
+void KMPlayerControlPanel::enableSeekButtons (bool enable) {
+    if (enable) {
+        m_buttons[button_back]->show ();
+        m_buttons[button_forward]->show ();
+    } else {
+        m_buttons[button_back]->hide ();
+        m_buttons[button_forward]->hide ();
+    }
+}
+
+void KMPlayerControlPanel::setPlaying (bool play) {
+    if (play != m_buttons[button_play]->isOn ())
+        m_buttons[button_play]->toggle ();
+    if (!play) {
+        m_posSlider->setValue (0);
+        enablePositionSlider (true);
+        enableSeekButtons (true);
+    }
+}
+
+void KMPlayerControlPanel::setRecording (bool record) {
+    if (record != m_buttons[button_record]->isOn ())
+        m_buttons[button_record]->toggle ();
 }
 
 //-----------------------------------------------------------------------------

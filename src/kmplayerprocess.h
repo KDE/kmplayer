@@ -64,6 +64,7 @@ signals:
 public slots:
     virtual bool play () = 0;
     virtual bool stop ();
+    virtual bool quit ();
     virtual bool pause ();
     /* seek (pos, abs) seek positon in deci-seconds */
     virtual bool seek (int pos, bool absolute);
@@ -92,6 +93,7 @@ public:
     void initProcess ();
 public slots:
     virtual bool stop ();
+    virtual bool quit ();
 protected:
     bool sendCommand (const QString &);
     QStringList commands;
@@ -236,6 +238,7 @@ public:
 public slots:
     bool play ();
     bool stop ();
+    bool quit ();
     bool pause ();
     bool saturation (int pos, bool absolute);
     bool hue (int pos, bool absolute);

@@ -19,6 +19,8 @@
 #ifndef KMPLAYERPARTBASE_H
 #define KMPLAYERPARTBASE_H
 
+#include <list>
+
 #include <qobject.h>
 #include <qguardedptr.h>
 #include <qvaluelist.h>
@@ -150,7 +152,7 @@ protected slots:
     virtual void processLoading (int percentage);
     virtual void processPlaying ();
 protected:
-    typedef QValueList <QGuardedPtr <KMPlayerControlPanel> > ControlPanelList;
+    typedef std::list <KMPlayerControlPanel *> ControlPanelList;
     ControlPanelList m_panels;
     KConfig * m_config;
     QGuardedPtr <KMPlayerView> m_view;

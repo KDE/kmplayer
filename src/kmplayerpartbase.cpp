@@ -19,6 +19,9 @@
 #ifdef KDE_USE_FINAL
 #undef Always
 #endif
+#include <algorithm>
+#include <functional>
+
 #include <qapplication.h>
 #include <qcstring.h>
 #include <qcursor.h>
@@ -144,7 +147,7 @@ void KMPlayer::addControlPanel (KMPlayerControlPanel * panel) {
 }
 
 void KMPlayer::removeControlPanel (KMPlayerControlPanel * panel) {
-    if (!m_panels.contains (panel)) {
+    if (std::find (m_panels.begin(), m_panels.end(), panel) == m_panels.end()) {
         kdError () << "Control panel not found" << endl;
         return;
     }
@@ -225,7 +228,7 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
                     this, SLOT (processLoading (int)));
         disconnect (m_process, SIGNAL (startPlaying ()),
                     this, SLOT (processPlaying ()));
-        m_process->stop ();
+        m_process->quit ();
         source = m_process->source ();
     }
     m_process = process;
@@ -248,7 +251,7 @@ void KMPlayer::setRecorder (KMPlayerProcess * recorder) {
                     this, SLOT (processFinished ()));
         disconnect (recorder, SIGNAL (started()),
                     this, SLOT (recordingStarted()));
-        m_recorder->stop ();
+        m_recorder->quit ();
     }
     m_recorder = recorder;
     connect (m_recorder, SIGNAL (started()), this, SLOT (recordingStarted()));
@@ -331,16 +334,10 @@ void KMPlayer::setSource (KMPlayerSource * source) {
     }
     m_process->setSource (source);
     m_recorder->setSource (source);
-    ControlPanelList::iterator e = m_panels.end();
-    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
-        if (source->isSeekable ()) {
-            (*i)->forwardButton ()->show ();
-            (*i)->backButton ()->show ();
-        } else {
-            (*i)->forwardButton ()->hide ();
-            (*i)->backButton ()->hide ();
-        }
-    }
+    std::for_each (m_panels.begin (),
+                   m_panels.end (),
+                   std::bind2nd (std::mem_fun (&KMPlayerControlPanel::enableSeekButtons),
+                                 source->isSeekable ()));
     source->init ();
     if (source) QTimer::singleShot (0, source, SLOT (activate ()));
     emit sourceChanged (source);
@@ -391,11 +388,8 @@ void KMPlayer::keepMovieAspect (bool b) {
 
 void KMPlayer::recordingStarted () {
     if (!m_view) return;
-    ControlPanelList::iterator e = m_panels.end();
-    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
-        if (!(*i)->recordButton ()->isOn ()) 
-            (*i)->recordButton ()->toggle ();
-    }
+    std::for_each (m_panels.begin (), m_panels.end (),
+            std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setRecording), true));
     if (m_settings->replayoption == KMPlayerSettings::ReplayAfter)
         m_record_timer = startTimer (1000 * m_settings->replaytime);
     emit startRecording ();
@@ -403,11 +397,8 @@ void KMPlayer::recordingStarted () {
 
 void KMPlayer::recordingFinished () {
     if (!m_view) return;
-    ControlPanelList::iterator e = m_panels.end();
-    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
-        if ((*i)->recordButton ()->isOn ()) 
-            (*i)->recordButton ()->toggle ();
-    }
+    std::for_each (m_panels.begin (), m_panels.end (),
+            std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setRecording), false));
     emit stopRecording ();
     killTimer (m_record_timer);
     m_record_timer = 0;
@@ -437,24 +428,16 @@ void KMPlayer::processFinished () {
         m_process->source ()->setLength (m_process->source ()->position ());
     m_process->source ()->setPosition (0);
     if (!m_view) return;
-    ControlPanelList::iterator e = m_panels.end();
-    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
-        if ((*i)->playButton ()->isOn ())
-            (*i)->playButton ()->toggle ();
-        (*i)->positionSlider()->setValue (0);
-        (*i)->positionSlider()->setEnabled (false);
-        (*i)->enablePositionSlider (true);
-    }
+    std::for_each (m_panels.begin (), m_panels.end (),
+            std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setPlaying), false));
     m_view->reset ();
     emit stopPlaying ();
 }
 
 void KMPlayer::processStarted () {
     if (!m_view) return;
-    ControlPanelList::iterator e = m_panels.end();
-    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
-        if (!(*i)->playButton ()->isOn ()) (*i)->playButton ()->toggle ();
-    }
+    std::for_each (m_panels.begin (), m_panels.end (),
+            std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setPlaying), true));
 }
 
 void KMPlayer::processPosition (int pos) {
@@ -481,12 +464,9 @@ void KMPlayer::processPlaying () {
     if (m_settings->sizeratio && m_view->viewer ())
         m_view->viewer ()->setAspect (m_process->source ()->aspect ());
     ControlPanelList::iterator e = m_panels.end();
-    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
-        int len = m_process->source ()->length ();
-        (*i)->positionSlider()->setMaxValue (len > 0 ? len + 9 : 300);
-        (*i)->positionSlider()->setEnabled (true);
-        (*i)->enablePositionSlider (m_process->source ()->hasLength ());
-    }
+    int len = m_process->source ()->length ();
+    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i)
+        (*i)->enablePositionSlider (!!len, len);
     emit loading (100);
     emit startPlaying ();
 }
@@ -500,11 +480,11 @@ void KMPlayer::pause () {
 }
 
 void KMPlayer::back () {
-    m_process->seek (-1 * m_settings->seektime * 10, false);
+    m_process->source ()->backward ();
 }
 
 void KMPlayer::forward () {
-    m_process->seek (m_settings->seektime * 10, false);
+    m_process->source ()->forward ();
 }
 
 void KMPlayer::record () {
@@ -514,21 +494,17 @@ void KMPlayer::record () {
     } else {
         m_process->stop ();
         m_settings->show  ("RecordPage");
-        ControlPanelList::iterator e = m_panels.end();
-        for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
-            if ((*i)->recordButton ()->isOn ()) 
-                (*i)->recordButton ()->toggle ();
-        }
+        std::for_each (m_panels.begin (), m_panels.end (),
+                std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setRecording), false));
     }
     if (m_view) m_view->setCursor (QCursor (Qt::ArrowCursor));
 }
 
 void KMPlayer::play () {
     m_process->play ();
-    ControlPanelList::iterator e = m_panels.end();
-    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i)
-        if (m_process->playing () ^ (*i)->playButton ()->isOn ())
-            (*i)->playButton ()->toggle ();
+    std::for_each (m_panels.begin (), m_panels.end (),
+            std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setPlaying),
+                m_process->playing ()));
 }
 
 bool KMPlayer::playing () const {
@@ -543,7 +519,7 @@ void KMPlayer::stop () {
     }
     if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
     m_process->source ()->first ();
-    m_process->stop ();
+    m_process->quit ();
     if (m_view) m_view->setCursor (QCursor (Qt::ArrowCursor));
     for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
         if ((*i)->stopButton ()->isOn ())
@@ -645,25 +621,58 @@ void KMPlayerSource::setURL (const KURL & url) {
     m_refurls.clear ();
     m_refurls.push_back (url.url ());
     m_currenturl = m_refurls.begin ();
-    m_nexturl = m_refurls.end ();
+    m_ins_url = m_nexturl = m_refurls.end ();
 }
 
-void KMPlayerSource::first () {
+QString KMPlayerSource::first () {
+    current (); // update insertions
     m_nexturl = m_currenturl = m_refurls.begin ();
-    ++m_nexturl;
+    m_ins_url = ++m_nexturl;
+    return m_currenturl == m_refurls.end () ? QString () : *m_currenturl;
 }
 
-void KMPlayerSource::next () {
+QString KMPlayerSource::current () {
     QStringList::iterator tmp = m_currenturl;
-    if (m_nexturl != ++tmp) {
+    if (tmp != m_refurls.end () && m_ins_url != ++tmp) {
+        kdDebug () << "Erasing " << *m_currenturl << endl;
         m_refurls.erase (m_currenturl);
         m_currenturl = tmp;
-        m_nexturl = ++tmp;
-    } else {
-        m_nexturl = ++m_currenturl;
-        if (m_nexturl != m_refurls.end ())
-            ++m_nexturl;
+        m_ins_url = m_nexturl = ++tmp;
     }
+    return m_currenturl == m_refurls.end () ? QString () : *m_currenturl;
+}
+
+QString KMPlayerSource::next () {
+    QStringList::iterator tmp = m_nexturl;
+    current (); // update insertions
+    m_currenturl = tmp;
+    if (tmp != m_refurls.end ())
+        m_nexturl = ++tmp;
+    m_ins_url = m_nexturl;
+    return m_currenturl == m_refurls.end () ? QString () : *m_currenturl;
+}
+
+void KMPlayerSource::insertURL (const QString & url) {
+    QStringList::iterator tmp = m_refurls.insert (m_ins_url, url);
+    if (m_ins_url == m_nexturl)
+        m_nexturl = tmp;
+}
+
+void KMPlayerSource::backward () {
+    if (m_refurls.size () > 1) {
+        m_nexturl = m_currenturl;
+        if (m_nexturl != m_refurls.begin ())
+            --m_nexturl;
+        m_player->process ()->stop ();
+    } else
+        m_player->process ()->seek (-1 * m_player->settings ()->seektime * 10, false);
+}
+
+void KMPlayerSource::forward () {
+    if (m_refurls.size () > 1) {
+        m_player->process ()->stop ();
+    } else
+        m_player->process ()->seek (m_player->settings ()->seektime * 10, false);
 }
 
 bool KMPlayerSource::processOutput (const QString & str) {
@@ -915,7 +924,7 @@ void KMPlayerURLSource::setURL (const KURL & url) {
         m_refurls.push_back (url.url ());
     m_currenturl = m_refurls.begin ();
     m_nexturl = m_currenturl;
-    ++m_nexturl;
+    m_ins_url = ++m_nexturl;
 }
 
 #include "kmplayerpartbase.moc"

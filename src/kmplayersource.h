@@ -52,11 +52,9 @@ public:
     float aspect () const { return m_aspect > 0.01 ? m_aspect : (m_height > 0 ? (1.0*m_width)/m_height: 0.0); }
     const KURL & url () const { return m_url; }
     const KURL & subUrl () const { return m_sub_url; }
-    QStringList::iterator & currentUrl () { return m_currenturl; }
-    QStringList::iterator & nextUrl () { return m_nexturl; }
-    QStringList & referenceUrls () { return m_refurls; }
-    void first ();
-    void next ();
+    QString first ();
+    QString current ();
+    QString next ();
     const QString & mime () const { return m_mime; }
     const QString & audioDevice () const { return m_audiodevice; }
     const QString & videoDevice () const { return m_videodevice; }
@@ -68,6 +66,7 @@ public:
     virtual QString filterOptions ();
 
     virtual void setURL (const KURL & url);
+    void insertURL (const QString & url);
     void setSubURL (const KURL & url) { m_sub_url = url; }
     void setMime (const QString & m) { m_mime = m; }
     void setWidth (int w) { m_width = w; }
@@ -84,6 +83,8 @@ public:
 public slots:
     virtual void activate () = 0;
     virtual void deactivate () = 0;
+    virtual void forward ();
+    virtual void backward ();
 protected:
     QString m_name;
     QString m_mime;
@@ -95,6 +96,7 @@ protected:
     KURL m_sub_url;
     QStringList m_refurls;
     QStringList::iterator m_currenturl;
+    QStringList::iterator m_ins_url;
     QStringList::iterator m_nexturl;
     QString m_audiodevice;
     QString m_videodevice;

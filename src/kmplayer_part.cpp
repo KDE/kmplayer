@@ -681,6 +681,7 @@ void KMPlayerHRefSource::setURL (const KURL & url) {
     m_url = url;
     m_identified = false;
     m_finished = false;
+    KMPlayerSource::setURL (url);
     kdDebug () << "KMPlayerHRefSource::setURL " << m_url.url() << endl;
 }
 
