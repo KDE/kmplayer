@@ -559,20 +559,22 @@ void KMPlayerSettings::okPressed () {
     pp_med_int = configdialog->m_OPPagePostproc->MedianDeinterlacer->isChecked();
     pp_ffmpeg_int = configdialog->m_OPPagePostproc->FfmpegDeinterlacer->isChecked();
     // recording
-#if KDE_IS_VERSION(3,1,90)
-    replayoption = ReplayOption (configdialog->m_RecordPage->replay->selectedId ());
-#else
+#if (QT_VERSION < 0x030200)
     replayoption = ReplayOption (configdialog->m_RecordPage->replay->id (configdialog->m_RecordPage->replay->selected ()));
+    recorder = Recorder (configdialog->m_RecordPage->recorder->id (configdialog->m_RecordPage->recorder->selected ()));
+#else
+    replayoption = ReplayOption (configdialog->m_RecordPage->replay->selectedId ());
+    recorder = Recorder (configdialog->m_RecordPage->recorder->selectedId ());
 #endif
     replaytime = configdialog->m_RecordPage->replaytime->text ().toInt ();
     configdialog->m_RecordPage->replaytime->setText (QString::number (replaytime));
     recordfile = configdialog->m_RecordPage->url->lineEdit()->text ();
     mencoderarguments = configdialog->m_MEncoderPage->arguments->text ();
     ffmpegarguments = configdialog->m_FFMpegPage->arguments->text ();
-#if KDE_IS_VERSION(3,1,90)
-    recordcopy = !configdialog->m_MEncoderPage->format->selectedId ();
-#else
+#if (QT_VERSION < 0x030200)
     recordcopy = !configdialog->m_MEncoderPage->format->id (configdialog->m_MEncoderPage->format->selected ());
+#else
+    recordcopy = !configdialog->m_MEncoderPage->format->selectedId ();
 #endif
 
     //dynamic stuff
