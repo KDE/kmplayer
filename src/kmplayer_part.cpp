@@ -122,7 +122,7 @@ bool KMPlayerPart::openURL (const KURL & url) {
         setSource (m_hrefsource);
     } else {
         m_hrefsource->clear ();
-        KMPlayer::openURL (url);
+        KMPlayer::openURL (m_havehref ? m_urlsource->url () : url);
     }
     m_havehref = false;
     return true;
