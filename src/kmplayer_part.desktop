@@ -29,6 +29,7 @@ Comment[el]=Πρόσθετο αναπαραγωγέα βίντεο (συμβατ
 Comment[es]=Complemento de reproducción de vídeo (compatible con QuickTime, XMovie, Windows Media y RealPlayer)
 Comment[et]=Videomängija plugin (QuickTime, XMovie, Windows Media ja RealPlayer)
 Comment[fr]=Module de lecture de vidéos (compatible QuickTime, XMovie, Windows Media et RealPlayer)
+Comment[hi]=वीडियो प्लेयर प्लगइन (क्विक-टाइम, एक्समूवी, विंडोज़ मीडिया तथा रीयल-प्लेयर कंपेटिबल)
 Comment[it]=Plugin lettore video (compatibile con QuickTime, XMovie, Windows Media e RealPlayer)
 Comment[nl]=Videospelerplugin (ondersteuning voor Quicktime, XMovie, Windows Media- en RealAudio-speler)
 Comment[pt]='Plugin' de reprodução de vídeo (compatível com QuickTime, XMovie, Windows Media e RealPlayer)
@@ -40,7 +41,7 @@ Comment[tr]=Video oynatıcı eklentisi (QuickTime, XMovie, Windows Media ve Real
 Comment[xx]=xxVideo player plugin (QuickTime, XMovie, Windows Media and RealPlayer compatible)xx
 X-KDE-Library=libkmplayerpart
 # Keep in sync with the audio types in kmplayer.desktop
-MimeType=audio/x-mp3;audio/mpegurl;audio/x-ms-wma;audio/x-pn-realaudio;audio/x-scpls;audio/x-vorbis;application/x-kmplayer;application/x-mplayer2;application/x-ogg;audio/x-mp2;video/mpeg;audio/x-mpegurl;audio/x-wav;audio/x-mod;video/x-avi;video/x-ms-asf;video/x-ms-wmp;video/x-ms-wmv;video/x-msvideo;video/quicktime;video/x-flic;uri/mms;uri/pnm;
+MimeType=audio/x-mp3;audio/m3u;audio/mpegurl;audio/x-m3u;audio/x-ms-wma;audio/x-pn-realaudio;audio/x-scpls;audio/x-vorbis;application/x-kmplayer;application/x-mplayer2;application/x-ogg;audio/x-mp2;video/mpeg;audio/x-mpegurl;audio/x-wav;audio/x-mod;video/x-avi;video/x-ms-asf;video/x-ms-wmp;video/x-ms-wmv;video/x-msvideo;video/quicktime;video/x-flic;uri/mms;uri/pnm;
 Type=Service
 Icon=kmplayer
 ServiceTypes=KParts/ReadOnlyPart,Browser/View,KMediaPlayer/Player
