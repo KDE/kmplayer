@@ -712,7 +712,7 @@ KDE_NO_EXPORT void AnimateData::started () {
                 if (steps > 0) {
                     anim_timer = startTimer (100); // 100 ms for now FIXME
                     change_delta = (change_to_val - change_from_val) / steps;
-                    kdDebug () << "AnimateData::started " << target_element->nodeName () << "." << changed_attribute << " " << change_from_val << "->" << change_to_val << " in " << steps << endl;
+                    kdDebug () << "AnimateData::started " << target_element->nodeName () << "." << changed_attribute << " " << change_from_val << "->" << change_to_val << " in " << steps << " using:" << change_delta << " inc" << endl;
                     if (!change_from.isEmpty () && target_region)
                         target_region->repaint ();
                 }
@@ -1032,7 +1032,7 @@ static int calcLength (const QString & strval, int full) {
     int p = strval.find (QChar ('%'));
     if (p > -1)
         return int (strval.left (p).toDouble () * full / 100);
-    return int (strval.toInt ());
+    return int (strval.toDouble ());
 }
 
 static void buildRegionNodes (ElementPtr p, RegionNodePtr r) {
