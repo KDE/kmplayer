@@ -84,7 +84,7 @@ KDE_NO_CDTOR_EXPORT Settings::~Settings () {
     //delete configdialog;
 }
 
-const char * strMPlayerGroup = "MPlayer";
+KDE_EXPORT const char * strMPlayerGroup = "MPlayer";
 const char * strGeneralGroup = "General Options";
 static const char * strKeepSizeRatio = "Keep Size Ratio";
 static const char * strVolume = "Volume";

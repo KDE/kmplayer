@@ -123,7 +123,7 @@ private slots:
 class MPlayerPreferencesPage;
 class MPlayerPreferencesFrame;
 
-class MPlayer : public MPlayerBase {
+class KDE_EXPORT MPlayer : public MPlayerBase {
     Q_OBJECT
 public:
     MPlayer (PartBase * player);
