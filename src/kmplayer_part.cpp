@@ -294,8 +294,9 @@ bool KMPlayer::openURL (const KURL & _url) {
         setSource (m_urlsource);
         //play ();
         m_href = QString::null;
+        return true;
     }
-    return m_process->isRunning ();
+    return false;
 }
 
 bool KMPlayer::closeURL () {
@@ -426,7 +427,7 @@ void KMPlayer::processStopped (KProcess *) {
     commands.clear ();
     if (m_recording) {
         m_recording = false;
-        if (m_view->recordButton ()->isOn ()) 
+        if (m_view && m_view->recordButton ()->isOn ()) 
             m_view->recordButton ()->toggle ();
         if (m_configdialog->autoplayafterrecording)
             openURL (m_recordurl);
