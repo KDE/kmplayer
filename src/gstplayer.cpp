@@ -147,15 +147,20 @@ cb_state (GstElement *play,
 {
     if (old_state >= GST_STATE_PLAYING && new_state <= GST_STATE_PAUSED) {
         QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_finished));
-    } else if (old_state <= GST_STATE_PAUSED && new_state >= GST_STATE_PLAYING) {
+    } else if (old_state == GST_STATE_PAUSED && new_state >= GST_STATE_PLAYING) {
         QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_playing));
     }
     if (old_state <= GST_STATE_READY && new_state >= GST_STATE_PAUSED) {
         const GList *list = NULL;
+        gint64 len_val = 0; // usec
 
         mutex.lock ();
+        GstFormat fmt = GST_FORMAT_TIME;
+        gst_element_query (gst_elm_play, GST_QUERY_TOTAL, &fmt, &len_val);
+        movie_length = len_val / (GST_MSECOND * 100);
         g_object_get (G_OBJECT (gst_elm_play), "stream-info", &list, NULL);
         mutex.unlock ();
+        bool is_video = false;
         for ( ; list != NULL; list = list->next) {
             GObject *info = (GObject *) list->data;
             gint type;
@@ -168,6 +173,7 @@ cb_state (GstElement *play,
             val = g_enum_get_value (G_PARAM_SPEC_ENUM (pspec)->enum_class, type);
 
             if (strstr (val->value_name, "VIDEO")) {
+                is_video = true;
                 g_object_get (info, "object", &pad, NULL);
                 pad = (GstPad *) GST_PAD_REALIZE (pad);
                 if (GST_PAD_CAPS (pad)) {
@@ -178,6 +184,8 @@ cb_state (GstElement *play,
                 }
             }
         }
+        if (!is_video)
+            QApplication::postEvent (gstapp, new GstSizeEvent (movie_length, 0, 0));
     }
 }
 
@@ -333,6 +341,7 @@ void KGStreamerPlayer::play () {
     if (mrl.isEmpty ())
         return;
     gchar *uri;
+    movie_length = movie_width = movie_height = 0;
     mutex.lock ();
     gst_elm_play = gst_element_factory_make ("playbin", "player");
     if (!gst_elm_play) {
@@ -424,7 +433,15 @@ void KGStreamerPlayer::volume (int val) {
 }
 
 void KGStreamerPlayer::updatePosition () {
-    QTimer::singleShot (500, this, SLOT (updatePosition ()));
+    if (gst_elm_play && callback) {
+        mutex.lock ();
+        GstFormat fmt = GST_FORMAT_TIME;
+        gint64 val = 0; // usec
+        gst_element_query (gst_elm_play, GST_QUERY_POSITION, &fmt, &val);
+        callback->moviePosition (int (val / (GST_MSECOND * 100)));
+        mutex.unlock ();
+        QTimer::singleShot (500, this, SLOT (updatePosition ()));
+    }
 }
 
 bool KGStreamerPlayer::event (QEvent * e) {
@@ -452,27 +469,28 @@ bool KGStreamerPlayer::event (QEvent * e) {
                 QTimer::singleShot (0, this, SLOT (quit ()));
             break;
         }
-        case event_playing:
-            if (callback) {
-                callback->playing ();
-                QTimer::singleShot (500, this, SLOT (updatePosition ()));
-            }
-            break;
                 //callback->movieParams (se->length/100, se->width, se->height, se->height ? 1.0*se->width/se->height : 1.0);
         case event_size: {
             GstSizeEvent * se = static_cast <GstSizeEvent *> (e);                
+            fprintf (stderr, "movie parms: %d %d %d\n", se->length, se->width, se->height);
             if (callback) {
                 if (se->length < 0) se->length = 0;
-                callback->movieParams (se->length/100, se->width, se->height, se->height ? 1.0*se->width/se->height : 1.0);
-            } 
+                callback->movieParams (se->length, se->width, se->height, se->height ? 1.0*se->width/se->height : 1.0);
+            }
             if (window_created && movie_width > 0 && movie_height > 0) {
                 XLockDisplay (display);
                 XResizeWindow (display, wid, movie_width, movie_height);
                 XFlush (display);
                 XUnlockDisplay (display);
             }
-            break;
+            // fall through
         }
+        case event_playing:
+            if (callback) {
+                callback->playing ();
+                QTimer::singleShot (500, this, SLOT (updatePosition ()));
+            }
+            break;
         default:
             return false;
     }
