@@ -423,7 +423,7 @@ void KMPlayerSettings::readConfig () {
                 kdDebug() << freqstr.left (pos) << " at " << freqstr.mid (pos+1).toInt() << endl;
                 input->channels.append (channel);
             }
-            if (input->hastuner) // what if multible tuners?
+            if (input->hastuner) // what if multiple tuners?
                 input->norm = m_config->readEntry (strTVNorm, "PAL");
             device->inputs.append (input);
         }

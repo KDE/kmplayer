@@ -75,7 +75,7 @@ Changes since version 0.7a
 - Move config button to front, makes it accessable for very small movies
 - Also delay hiding of control buttons a bit
 Changes since version 0.7
-- Arts::Dispatcher -> KArtsDispatcher, fix multible use crash
+- Arts::Dispatcher -> KArtsDispatcher, fix multiple use crash
 Changes since version 0.6.5b
 - Zoom sub menu added in popup menu
 - Arts volume slider added in popup menu

@@ -549,7 +549,7 @@ KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerS
     QGridLayout *gridlayout = new QGridLayout (layout, 8, 2, 2);
     QLabel *label = new QLabel (i18n ("Bind address:"), this);
     bindaddress = new QLineEdit ("", this);
-    QToolTip::add (bindaddress, i18n ("If you have multible network devices, you can limit access"));
+    QToolTip::add (bindaddress, i18n ("If you have multiple network devices, you can limit access"));
     gridlayout->addWidget (label, 0, 0);
     gridlayout->addWidget (bindaddress, 0, 1);
     label = new QLabel (i18n ("Listen port:"), this);
@@ -928,8 +928,8 @@ KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame
 	QToolTip::add( DeringAQuality, i18n( "Filter is used if there's enough CPU" ) );
 	//QToolTip::add( TmpNoiseSlider, i18n( "Strength of the noise reducer" ) );
 	AutolevelsFilter->setText( i18n( "Auto brightness/contrast" ) );
-	AutolevelsFullrange->setText( i18n( "Strech luminance to full range" ) );
-	QToolTip::add( AutolevelsFullrange, i18n( "Streches luminance to full range (0..255)" ) );
+	AutolevelsFullrange->setText( i18n( "Stretch luminance to full range" ) );
+	QToolTip::add( AutolevelsFullrange, i18n( "Stretches luminance to full range (0..255)" ) );
 	HzDeblockCFiltering->setText( i18n( "Chrominance filtering" ) );
 	VtDeblockCFiltering->setText( i18n( "Chrominance filtering" ) );
 	DeringCFiltering->setText( i18n( "Chrominance filtering" ) );
