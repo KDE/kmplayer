@@ -217,7 +217,7 @@ bool MPlayer::play () {
         return sendCommand (QString ("gui_play"));
     source ()->setPosition (0);
     QString args = source ()->options () + ' ';
-    const KURL & url (source ()->url ());
+    const KURL & url = m_source->url ();
     if (!url.isEmpty ()) {
         QString myurl (url.isLocalFile () ? url.path () : url.url ());
         args += KProcess::quote (QString (QFile::encodeName (myurl)));
@@ -491,10 +491,13 @@ void MPlayer::processStopped (KProcess * p) {
             m_urls.push_back (m_tmpURL);
             m_tmpURL.truncate (0);
         }
-        if (m_urls.count () > 0) {
+        while (m_urls.count () > 0) {
             QString url = m_urls.front ();
             m_urls.pop_front ();
+            if (m_source->url () == url)
+                continue;
             source ()->setURL (KURL (url));
+            break;
         }
         source ()->setIdentified ();
         QTimer::singleShot (0, this, SLOT (play ()));
@@ -780,15 +783,17 @@ bool Xine::stop () {
 
 void Xine::setFinished () {
     kdDebug () << "Xine::finished () " << m_urls.count () << endl;
-    if (m_urls.count ()) {
+    while (m_urls.count ()) {
         QString url = m_urls.front ();
         m_urls.pop_front ();
-        //m_source->setURL (KURL (url));
+        if (m_source->url ().url () == url)
+            continue;
+        m_source->setURL (KURL (url));
         m_backend->setURL (url);
         m_backend->play ();
-    } else {
-        stop ();
+        return;
     }
+    stop ();
 }
 
 bool Xine::pause () {
