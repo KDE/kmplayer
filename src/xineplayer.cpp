@@ -448,6 +448,7 @@ KXinePlayer::~KXinePlayer () {
         XSync (display, False);
         XUnlockDisplay (display);
     }
+	delete d;
     xineapp = 0L;
 }
 
