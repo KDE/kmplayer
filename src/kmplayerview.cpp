@@ -1313,7 +1313,7 @@ KDE_NO_EXPORT bool View::x11Event (XEvent * e) {
             }
             break;
         /*case ColormapNotify:
-            printf ("colormap notify\n");
+            fprintf (stderr, "colormap notify\n");
             return true;*/
         case MotionNotify:
             if (m_playing && e->xmotion.window == m_viewer->embeddedWinId ())

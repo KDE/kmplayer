@@ -725,7 +725,7 @@ KDE_NO_EXPORT bool XVideo::ready () {
         if (freq > 0)
             cmd += QString (" -freq %1").arg (freq);
     }
-    printf ("%s\n", cmd.latin1 ());
+    fprintf (stderr, "%s\n", cmd.latin1 ());
     *m_process << cmd;
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
     return m_process->isRunning ();

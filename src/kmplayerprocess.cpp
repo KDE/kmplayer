@@ -228,7 +228,7 @@ KDE_NO_EXPORT void MPlayerBase::initProcess () {
 KDE_NO_EXPORT bool MPlayerBase::sendCommand (const QString & cmd) {
     if (playing () && m_use_slave) {
         commands.push_front (cmd + "\n");
-        printf ("eval %s", commands.last ().latin1 ());
+        fprintf (stderr, "eval %s", commands.last ().latin1 ());
         if (commands.size () < 2)
             m_process->writeStdin (QFile::encodeName(commands.last ()),
                     commands.last ().length ());
@@ -446,54 +446,54 @@ bool MPlayer::run (const char * args, const char * pipe) {
     Settings *settings = m_player->settings ();
     m_use_slave = !(pipe && pipe[0]);
     if (!m_use_slave) {
-        printf ("%s | ", pipe);
+        fprintf (stderr, "%s | ", pipe);
         *m_process << pipe << " | ";
     }
-    printf ("mplayer -wid %lu ", (unsigned long) widget ());
+    fprintf (stderr, "mplayer -wid %lu ", (unsigned long) widget ());
     *m_process << "mplayer -wid " << QString::number (widget ());
 
     if (m_use_slave) {
-        printf ("-slave ");
+        fprintf (stderr, "-slave ");
         *m_process << "-slave ";
     }
 
     QString strVideoDriver = QString (settings->videodrivers[settings->videodriver].driver);
     if (!strVideoDriver.isEmpty ()) {
-        printf (" -vo %s", strVideoDriver.lower().ascii());
+        fprintf (stderr, " -vo %s", strVideoDriver.lower().ascii());
         *m_process << " -vo " << strVideoDriver.lower();
     }
     QString strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].driver);
     if (!strAudioDriver.isEmpty ()) {
-        printf (" -ao %s", strAudioDriver.lower().ascii());
+        fprintf (stderr, " -ao %s", strAudioDriver.lower().ascii());
         *m_process << " -ao " << strAudioDriver.lower();
     }
     if (settings->framedrop) {
-        printf (" -framedrop");
+        fprintf (stderr, " -framedrop");
         *m_process << " -framedrop";
     }
 
     if (m_configpage->additionalarguments.length () > 0) {
-        printf (" %s", m_configpage->additionalarguments.ascii());
+        fprintf (stderr, " %s", m_configpage->additionalarguments.ascii());
         *m_process << " " << m_configpage->additionalarguments;
     }
     // postproc thingies
 
-    printf (" %s", m_source->filterOptions ().ascii ());
+    fprintf (stderr, " %s", m_source->filterOptions ().ascii ());
     *m_process << " " << m_source->filterOptions ();
 
-    printf (" -contrast %d", settings->contrast);
+    fprintf (stderr, " -contrast %d", settings->contrast);
     *m_process << " -contrast " << QString::number (settings->contrast);
 
-    printf (" -brightness %d", settings->brightness);
+    fprintf (stderr, " -brightness %d", settings->brightness);
     *m_process << " -brightness " << QString::number(settings->brightness);
 
-    printf (" -hue %d", settings->hue);
+    fprintf (stderr, " -hue %d", settings->hue);
     *m_process << " -hue " << QString::number (settings->hue);
 
-    printf (" -saturation %d", settings->saturation);
+    fprintf (stderr, " -saturation %d", settings->saturation);
     *m_process << " -saturation " << QString::number(settings->saturation);
 
-    printf (" %s\n", args);
+    fprintf (stderr, " %s\n", args);
     *m_process << " " << args;
 
     QValueList<QCString>::const_iterator it;
@@ -1439,43 +1439,43 @@ bool Xine::ready () {
     m_request_seek = -1;
     Settings *settings = m_player->settings ();
     if (m_source && !m_source->pipeCmd ().isEmpty ()) {
-        printf ("%s | ", m_source->pipeCmd ().ascii ());
+        fprintf (stderr, "%s | ", m_source->pipeCmd ().ascii ());
         *m_process << m_source->pipeCmd ().ascii () << " | ";
     }
-    printf ("kxineplayer -wid %lu", (unsigned long) widget ());
+    fprintf (stderr, "kxineplayer -wid %lu", (unsigned long) widget ());
     *m_process << "kxineplayer -wid " << QString::number (widget ());
-    printf (" -f %s", xine_config.ascii ());
+    fprintf (stderr, " -f %s", xine_config.ascii ());
     *m_process << " -f " << xine_config;
 
     QString strVideoDriver = QString (settings->videodrivers[settings->videodriver].driver);
     if (!strVideoDriver.isEmpty ()) {
-        printf (" -vo %s", strVideoDriver.lower().ascii());
+        fprintf (stderr, " -vo %s", strVideoDriver.lower().ascii());
         *m_process << " -vo " << strVideoDriver.lower();
     }
     QString strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].driver);
     if (!strAudioDriver.isEmpty ()) {
         if (strAudioDriver.startsWith (QString ("alsa")))
             strAudioDriver = QString ("alsa");
-        printf (" -ao %s", strAudioDriver.lower().ascii());
+        fprintf (stderr, " -ao %s", strAudioDriver.lower().ascii());
         *m_process << " -ao " << strAudioDriver.lower();
     }
-    printf (" -cb %s", dcopName ().ascii());
+    fprintf (stderr, " -cb %s", dcopName ().ascii());
     *m_process << " -cb " << dcopName ();
     if (m_have_config == config_unknown || m_have_config == config_probe) {
-        printf (" -c");
+        fprintf (stderr, " -c");
         *m_process << " -c";
     }
     if (m_source)
         if (m_source->url ().url ().startsWith (QString ("dvd://")) &&
                 !settings->dvddevice.isEmpty ()) {
-            printf (" -dvd-device %s", settings->dvddevice.ascii ());
+            fprintf (stderr, " -dvd-device %s", settings->dvddevice.ascii ());
             *m_process << " -dvd-device " << settings->dvddevice;
         } else if (m_source->url ().url ().startsWith (QString ("vcd://")) &&
                 !settings->vcddevice.isEmpty ()) {
-            printf (" -vcd-device %s", settings->vcddevice.ascii ());
+            fprintf (stderr, " -vcd-device %s", settings->vcddevice.ascii ());
             *m_process << " -vcd-device " << settings->vcddevice;
         }
-    printf ("\n");
+    fprintf (stderr, "\n");
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
     return m_process->isRunning ();
 }
@@ -1502,22 +1502,22 @@ KDE_NO_EXPORT bool GStreamer::ready () {
     initProcess ();
     m_request_seek = -1;
     Settings *settings = m_player->settings ();
-    printf ("kgstplayer -wid %lu", (unsigned long) widget ());
+    fprintf (stderr, "kgstplayer -wid %lu", (unsigned long) widget ());
     *m_process << "kgstplayer -wid " << QString::number (widget ());
 
     QString strVideoDriver = QString (settings->videodrivers[settings->videodriver].driver);
     if (!strVideoDriver.isEmpty ()) {
-        printf (" -vo %s", strVideoDriver.lower().ascii());
+        fprintf (stderr, " -vo %s", strVideoDriver.lower().ascii());
         *m_process << " -vo " << strVideoDriver.lower();
     }
     QString strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].driver);
     if (!strAudioDriver.isEmpty ()) {
         if (strAudioDriver.startsWith (QString ("alsa")))
             strAudioDriver = QString ("alsa");
-        printf (" -ao %s", strAudioDriver.lower().ascii());
+        fprintf (stderr, " -ao %s", strAudioDriver.lower().ascii());
         *m_process << " -ao " << strAudioDriver.lower();
     }
-    printf (" -cb %s\n", dcopName ().ascii());
+    fprintf (stderr, " -cb %s\n", dcopName ().ascii());
     *m_process << " -cb " << dcopName ();
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
     return m_process->isRunning ();
@@ -1579,7 +1579,7 @@ bool FFMpeg::play (Source * source, const QString & mrl) {
     }
     cmd += QChar (' ') + arguments;
     cmd += QChar (' ') + KProcess::quote (QString (QFile::encodeName (outurl)));
-    printf ("%s\n", (const char *) cmd.local8Bit ());
+    fprintf (stderr, "%s\n", (const char *) cmd.local8Bit ());
     *m_process << cmd;
     if (m_player->source () == source) // ugly
         m_player->stop ();
