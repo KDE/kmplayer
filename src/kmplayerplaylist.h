@@ -149,7 +149,7 @@ class KMPLAYER_EXPORT Attribute : public Element {
 public:
     Attribute (ElementPtr & d, const QString & n, const QString & v);
     KDE_NO_CDTOR_EXPORT ~Attribute () {}
-    KDE_NO_EXPORT const char * nodeName () const { return name.local8Bit (); }
+    const char * nodeName () const;
     QString nodeValue () const;
 protected:
     QString name;

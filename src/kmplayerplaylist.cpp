@@ -329,6 +329,10 @@ QString Attribute::nodeValue () const {
     return value;
 }
 
+const char * Attribute::nodeName () const {
+    return name.ascii ();
+}
+
 static bool hasMrlChildren (const ElementPtr & e) {
     for (ElementPtr c = e->firstChild (); c; c = c->nextSibling ())
         if (c->isMrl () || hasMrlChildren (c))
