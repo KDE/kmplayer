@@ -1,4 +1,4 @@
-#AM_INIT_AUTOMAKE(kmplayer,0.8.2)
+#AM_INIT_AUTOMAKE(kmplayer,0.8.3rc1)
 
 AC_MSG_CHECKING(if koffice-plugin support is wanted)
 AC_ARG_ENABLE(koffice-plugin,
@@ -47,3 +47,5 @@ if test "$have_xine" = "yes"; then
 fi
 
 AM_CONDITIONAL(include_kxineplayer, test "$have_xine" = "yes")
+
+KDE_CHECK_BINUTILS
