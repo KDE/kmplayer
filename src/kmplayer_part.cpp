@@ -179,11 +179,16 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                     m_features = Feat_Controls;
                 } else if (val_lower == QString::fromLatin1("infovolumepanel")){
                     m_features = Feat_Controls; // TODO
-                } else if (val_lower == QString::fromLatin1("positionfield")) {
+                } else if (val_lower == QString::fromLatin1("positionfield") ||
+                        val_lower == QString::fromLatin1("positionslider")) {
                     panel->setAutoControls (false);
                     panel->positionSlider ()->show ();
                     m_features = Feat_Controls;
-                } else if (val_lower == QString::fromLatin1("mutectrl")) {
+                } else if ( val_lower == QString::fromLatin1("homectrl")) {
+                    panel->setAutoControls (false);
+                    panel->button (KMPlayerControlPanel::button_config)->show();
+                } else if (val_lower == QString::fromLatin1("mutectrl") ||
+                        val_lower == QString::fromLatin1("mutevolume")) {
                     panel->setAutoControls (false);
                     panel->button (KMPlayerControlPanel::button_config)->show (); // TODO: add a mute
                     m_features = Feat_Controls;
@@ -193,7 +198,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                     m_features = Feat_Controls;
                 } else if ( val_lower == QString::fromLatin1("ffctrl")) {
                     panel->setAutoControls (false);
-                    panel->button (KMPlayerControlPanel::button_forward)->show ();
+                    panel->button(KMPlayerControlPanel::button_forward)->show();
                     m_features = Feat_Controls;
                 } else if ( val_lower == QString::fromLatin1("stopbutton")) {
                     panel->setAutoControls (false);
