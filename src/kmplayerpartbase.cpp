@@ -575,15 +575,17 @@ KAboutData* KMPlayer::createAboutData () {
 //-----------------------------------------------------------------------------
 
 KMPlayerSource::KMPlayerSource (const QString & name, KMPlayer * player, const char * n)
- : QObject (player, n), m_name (name), m_player (player),
-   m_auto_play (true),
-   m_currenturl (m_refurls.end ()) {
+ : QObject (player, n),
+   m_name (name), m_player (player),
+   m_auto_play (true) {
     kdDebug () << "KMPlayerSource::KMPlayerSource" << endl;
     init ();
 }
 
 KMPlayerSource::~KMPlayerSource () {
     kdDebug () << "KMPlayerSource::~KMPlayerSource" << endl;
+    if (m_document)
+        m_document->document ()->dispose ();
 }
 
 void KMPlayerSource::init () {
@@ -600,62 +602,84 @@ void KMPlayerSource::setLength (int len) {
     m_length = len;
 }
 
-void KMPlayerSource::setURL (const KURL & url) {
-    m_url = url;
-    if (m_refurls.size () == 1 && m_refurls.begin ()->url.isEmpty ())
-        m_refurls.begin ()->url = url.url ();
-    else {
-        m_refurls.clear ();
-        m_refurls.push_back (url.url ());
+static void printTree (ElementPtr root, QString off=QString()) {
+    if (!root) {
+        kdDebug() << off << "[null]" << endl;
+        return;
     }
-    m_currenturl = m_refurls.begin ();
-    m_nexturl = m_refurls.end ();
+    kdDebug() << off << root->tagName() << " " << (Element*)root << (root->isMrl() ? root->mrl ()->src : QString ("-")) << endl;
+    off += QString ("  ");
+    for (ElementPtr e = root->firstChild(); e; e = e->nextSibling())
+        printTree(e, off);
 }
 
-KDE_NO_EXPORT void KMPlayerSource::checkList () {
-    URLInfoList::iterator tmp = m_currenturl;
-    if (tmp != m_refurls.end () && m_nexturl != ++tmp) {
-        kdDebug () << "Erasing " << m_currenturl->url << endl;
-        tmp = m_currenturl = m_refurls.erase (m_currenturl);
-        m_nexturl = tmp == m_refurls.end () ? tmp : ++tmp;
+void KMPlayerSource::setURL (const KURL & url) {
+    m_url = url;
+    if (m_document && !m_document->hasChildNodes () && m_document->mrl()->src.isEmpty ())
+        // special case, mime is set first by plugin FIXME v
+        m_document->mrl()->src = url.url ();
+    else {
+        if (m_document)
+            m_document->document ()->dispose ();
+        m_document = (new Document (url.url ()))->self ();
     }
+    m_current = m_document;
+    printTree(m_current);
 }
 
 QString KMPlayerSource::first () {
-    checkList (); // update insertions
-    m_nexturl = m_currenturl = m_refurls.begin ();
-    if (m_currenturl == m_refurls.end ())
-        return QString ();
-    ++m_nexturl;
-    return m_currenturl->url;
+    kdDebug() << "KMPlayerSource::first" << endl;
+    m_current = m_document;
+    if (m_document->hasChildNodes ())
+        next ();
+    return current ();
 }
 
 QString KMPlayerSource::current () {
-    checkList (); // update insertions
-    return m_currenturl == m_refurls.end () ? QString () : m_currenturl->url;
+    printTree(m_current);
+    return m_current ? m_current->mrl()->src : QString ();
+}
+
+static ElementPtr findDepthFirst (ElementPtr elm) {
+    if (!elm)
+        return ElementPtr ();
+    ElementPtr tmp = elm;
+    for ( ; tmp; tmp = tmp->nextSibling ()) {
+        if (tmp->isMrl ())
+            return tmp;
+        ElementPtr tmp2 = findDepthFirst (tmp->firstChild ());
+        if (tmp2)
+            return tmp2;
+    }
+    return ElementPtr ();
 }
 
 QString KMPlayerSource::next () {
-    URLInfoList::iterator tmp = m_currenturl;
-    if (tmp == m_refurls.end ())
+    kdDebug() << "KMPlayerSource::next" << endl;
+    if (!m_current)
         return QString ();
-    checkList (); // update insertions
-    if (m_currenturl == tmp)
-        m_nexturl = m_currenturl = ++tmp;
-    else
-        tmp = m_nexturl = m_currenturl;
-    if (m_currenturl == m_refurls.end ())
-        return QString ();
-    m_nexturl = ++tmp;
-    return m_currenturl->url;
+    ElementPtr e = findDepthFirst (m_current->isMrl () ? m_current->nextSibling (): m_current);
+    if (e) {
+        m_current = e;
+    } else while (m_current) {
+        m_current = m_current->parentNode ();
+        if (m_current && m_current->nextSibling ()) {
+            m_current = m_current->nextSibling ();
+            e = findDepthFirst (m_current);
+            if (e) {
+                m_current = e;
+                break;
+            }
+        }
+    }
+    return current ();
 }
 
 void KMPlayerSource::insertURL (const QString & url) {
-    URLInfoList::iterator tmp = m_refurls.begin ();
-    for (; tmp != m_refurls.end (); ++tmp)
-        if (tmp->url == url)
-            return;
-    m_refurls.insert (m_nexturl, URLInfo (url));
+    kdDebug() << "KMPlayerSource::insertURL " << (Element*)m_current << url << endl;
+    if (m_current)
+        m_current->appendChild ((new GenericURL (m_document, url))->self ());
+    printTree(m_document);
 }
 
 void KMPlayerSource::play () {
@@ -663,30 +687,31 @@ void KMPlayerSource::play () {
 }
 
 void KMPlayerSource::backward () {
-    if (m_refurls.size () > 1) {
-        if (m_currenturl != m_refurls.begin ())
-            m_nexturl = m_currenturl--;
-        m_player->process ()->stop ();
+    if (m_document->hasChildNodes ()) {
+        // TODO
     } else
         m_player->process ()->seek (-1 * m_player->settings ()->seektime * 10, false);
 }
 
 void KMPlayerSource::forward () {
-    if (m_refurls.size () > 1) {
+    if (m_document->hasChildNodes ()) {
         m_player->process ()->stop ();
     } else
         m_player->process ()->seek (m_player->settings()->seektime * 10, false);
 }
 
 QString KMPlayerSource::mime () const {
-    return m_currenturl == m_refurls.end () ? QString () : m_currenturl->mime;
+    return m_current ? m_current->mrl ()->mimetype : QString ();
 }
 
 void KMPlayerSource::setMime (const QString & m) {
-    if (m_currenturl != m_refurls.end ())
-        m_currenturl->mime = m;
-    else
-        m_refurls.push_back (URLInfo (QString (), m));
+    if (m_current)
+        m_current->mrl ()->mimetype = m;
+    else {
+        if (m_document)
+            m_document->document ()->dispose ();
+        m_document = (new Document (QString ()))->self ();
+    }
 }
 
 bool KMPlayerSource::processOutput (const QString & str) {
@@ -875,22 +900,55 @@ KDE_NO_EXPORT QString KMPlayerURLSource::prettyName () {
 class MMXmlContentHandler : public QXmlDefaultHandler {
     KMPlayerURLSource * m_urlsource;
 public:
-    KDE_NO_CDTOR_EXPORT MMXmlContentHandler (KMPlayerURLSource * source) : m_urlsource (source) {}
+    KDE_NO_CDTOR_EXPORT MMXmlContentHandler (ElementPtr d) : m_doc (d), m_elm (d->self ()), m_ignore_depth (0) {}
     KDE_NO_CDTOR_EXPORT ~MMXmlContentHandler () {}
-    KDE_NO_EXPORT bool startElement (const QString &, const QString &,
-                       const QString & elm, const QXmlAttributes & atts) {
-        kdDebug() << "startElement=" << elm << endl;
-        if (elm.lower () == QString ("entryref") ||
-                elm.lower () == QString ("ref") ||
-                elm.lower () == QString ("video"))
-            for (int i = 0; i < atts.length (); i++)
-                if (atts.qName (i).lower () == QString ("href") ||
-                    atts.qName (i).lower () == QString ("src")) {
-                    kdDebug() << atts.qName(i) << "=" << atts.value(i) << endl;
-                    m_urlsource->insertURL (atts.value (i));
-                }
+    KDE_NO_EXPORT bool startDocument () {
+        return m_doc->self () == m_elm;
+    }
+    KDE_NO_EXPORT bool endDocument () {
+        return m_doc->self () == m_elm;
+    }
+    KDE_NO_EXPORT bool startElement (const QString &, const QString &, const QString & tag,
+            const QXmlAttributes & atts) {
+        if (m_ignore_depth) {
+            kdDebug () << "Warning: ignored tag " << tag << endl;
+            m_ignore_depth++;
+        } else {
+            ElementPtr e = m_elm->childFromTag (m_doc, tag);
+            if (e) {
+                kdDebug () << "Found tag " << tag << endl;
+                e->setAttributes (atts);
+                m_elm->appendChild (e);
+                m_elm = e;
+            } else {
+                kdError () << "Warning: unknown tag " << tag << endl;
+                m_ignore_depth = 1;
+            }
+        }
         return true;
     }
+    KDE_NO_EXPORT bool endElement (const QString & /*nsURI*/,
+                   const QString & /*tag*/, const QString & /*fqtag*/) {
+        if (m_ignore_depth) {
+            // kdError () << "Warning: ignored end tag " << endl;
+            m_ignore_depth--;
+            return true;
+        }
+        if (m_elm == m_doc->self ()) {
+            kdError () << "m_elm == m_doc, stack underflow " << endl;
+            return false;
+        }
+        // kdError () << "end tag " << endl;
+        m_elm = m_elm->parentNode ();
+        return true;
+    }
+    KDE_NO_EXPORT bool fatalError (const QXmlParseException & ex) {
+        kdError () << "fatal error " << ex.message () << endl;
+        return true;
+    }
+    ElementPtr m_doc;
+    ElementPtr m_elm;
+    int m_ignore_depth;
 };
 
 class FilteredInputSource : public QXmlInputSource {
@@ -938,7 +996,7 @@ KDE_NO_EXPORT void KMPlayerURLSource::read (QTextStream & textstream) {
     if (!line.isNull ()) {
         if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
             QXmlSimpleReader reader;
-            MMXmlContentHandler content_handler (this);
+            MMXmlContentHandler content_handler (m_document);
             FilteredInputSource input_source (textstream, line);
             reader.setContentHandler (&content_handler);
             reader.setErrorHandler (&content_handler);
@@ -950,7 +1008,7 @@ KDE_NO_EXPORT void KMPlayerURLSource::read (QTextStream & textstream) {
             if (!mrl.isEmpty () && !mrl.startsWith (QChar ('#')))
                 insertURL (mrl);
             line = textstream.readLine ();
-        } while (!line.isNull () && m_refurls.size () < 1024 /* support 1k entries */);
+        } while (!line.isNull ()); /* TODO && m_document.size () < 1024 / * support 1k entries * /);*/
     }
 ;
 }
@@ -977,9 +1035,8 @@ KDE_NO_EXPORT void KMPlayerURLSource::kioResult (KIO::Job *) {
     m_job = 0L; // KIO::Job::kill deletes itself
     QTextStream textstream (m_data, IO_ReadOnly);
     read (textstream);
-    if (m_currenturl != m_refurls.end ()) {
-        m_currenturl->dereferenced = true;
-        checkList ();
+    if (m_current) {
+        m_current->mrl ()->parsed = true;
         QTimer::singleShot (0, this, SLOT (play ()));
     }
 }
@@ -997,7 +1054,7 @@ KDE_NO_EXPORT void KMPlayerURLSource::play () {
             mimestr == QString ("video/x-ms-asf") ||
             mimestr == QString ("application/smil") ||
             mimestr == QString ("application/x-mplayer2"));
-    if (!m_currenturl->dereferenced && url.isLocalFile ()) {
+    if (!m_current->mrl ()->parsed && url.isLocalFile ()) {
         QFile file (url.path ());
         if (!file.exists ())
             return;
@@ -1017,8 +1074,8 @@ KDE_NO_EXPORT void KMPlayerURLSource::play () {
             QTextStream textstream (&file);
             read (textstream);
         }
-        m_currenturl->dereferenced = true;
-    } else if (!m_currenturl->dereferenced && maybe_playlist) {
+        m_current->mrl ()->parsed = true;
+    } else if (!m_current->mrl ()->parsed && maybe_playlist) {
         m_data.truncate (0);
         m_job = KIO::get (url, false, false);
         m_job->addMetaData ("PropagateHttpHeader", "true");

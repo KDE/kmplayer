@@ -21,23 +21,17 @@
 #ifndef KMPLAYERSOURCE_H
 #define KMPLAYERSOURCE_H
 
-#include <list>
-
 #include <qobject.h>
 #include <qstring.h>
 #include <kurl.h>
-#include <kdemacros.h>
 
-#if __GNUC__ - 0 > 3 || (__GNUC__ - 0 == 3 && __GNUC_MINOR__ - 0 > 3)
-  #define KDE_NO_CDTOR_EXPORT __attribute__ ((visibility("hidden")))
-#else
-  #define KDE_NO_CDTOR_EXPORT
-#endif
+#include "kmplayerplaylist.h"
 
 class KMPlayer;
 class KConfig;
 class QWidget;
 class QFrame;
+class KMPlayerSourcePrivate;
 
 class KMPlayerSource : public QObject {
     Q_OBJECT
@@ -95,7 +89,8 @@ public slots:
     virtual void backward ();
     virtual void play ();
 protected:
-    void checkList ();
+    ElementPtr m_document;
+    ElementPtr m_current;
     QString m_name;
     KMPlayer * m_player;
     QString m_recordcmd;
@@ -103,17 +98,6 @@ protected:
     bool m_auto_play;
     KURL m_url;
     KURL m_sub_url;
-    struct URLInfo {
-        KDE_NO_CDTOR_EXPORT URLInfo (const QString & u, const QString & m = QString ())
-            : url (u), mime (m), dereferenced (false) {}
-        QString url;
-        QString mime;
-        bool dereferenced;
-    };
-    typedef std::list <URLInfo> URLInfoList;
-    URLInfoList m_refurls;
-    URLInfoList::iterator m_currenturl;
-    URLInfoList::iterator m_nexturl;
     QString m_audiodevice;
     QString m_videodevice;
     QString m_videonorm;
