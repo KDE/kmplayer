@@ -45,7 +45,6 @@ public:
     double res_h, res_v;
     char * vo_driver;
     char * ao_driver;
-    QString mrl;
     int brightness, contrast, hue, saturation, volume;
     bool window_created;
 };
@@ -56,6 +55,7 @@ QMutex mutex;
 
 static xine_t              *xine;
 static xine_stream_t       *stream;
+static xine_stream_t       *sub_stream;
 static xine_video_port_t   *vo_port;
 static xine_audio_port_t   *ao_port;
 static xine_event_queue_t  *event_queue;
@@ -71,7 +71,11 @@ static int                  movie_width, movie_height, movie_length;
 static double               pixel_aspect;
 
 static int                  running = 0;
+static int                  isplaying = 0;
 static int                  firstframe = 0;
+
+static QString mrl;
+static QString sub_mrl;
 
 extern "C" {
 
@@ -90,7 +94,7 @@ static void frame_output_cb(void * /*data*/, int /*video_width*/, int /*video_he
         double /*video_pixel_aspect*/, int *dest_x, int *dest_y,
         int *dest_width, int *dest_height, 
         double *dest_pixel_aspect, int *win_x, int *win_y) {
-    if(!running)
+    if(!isplaying)
         return;
     if (firstframe) {
         fprintf(stderr, "first frame\n");
@@ -147,8 +151,7 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
                 fprintf (stderr, "Set title event %s\n", data->str);
             }
             break;
-        case XINE_EVENT_UI_CHANNELS_CHANGED:
-            if (callback) {
+        case XINE_EVENT_UI_CHANNELS_CHANGED: {
             fprintf (stderr, "Channel changed event\n");
             mutex.lock ();
             int w = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_WIDTH);
@@ -161,12 +164,19 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
                 movie_width = w;
                 movie_height = h;
                 movie_length = l;
-                xineapp->lock ();
-                callback->movieParams (l/100, w, h, 1.0*w/h);
-                xineapp->unlock ();
-            }
+                if (callback) {
+                    xineapp->lock ();
+                    callback->movieParams (l/100, w, h, 1.0*w/h);
+                    xineapp->unlock ();
+                } else {
+                    XLockDisplay (display);
+                    XResizeWindow (display, wid, movie_width, movie_height);
+                    XFlush (display);
+                    XUnlockDisplay (display);
+                }
             }
             break;
+        }
         case XINE_EVENT_INPUT_MOUSE_MOVE:
             break;
         default:
@@ -184,7 +194,11 @@ KMPlayerBackend::KMPlayerBackend ()
 KMPlayerBackend::~KMPlayerBackend () {}
 
 void KMPlayerBackend::setURL (QString url) {
-    xineapp->setURL (url);
+    mrl = url;
+}
+
+void KMPlayerBackend::setSubTitleURL (QString url) {
+    sub_mrl = url;
 }
 
 void KMPlayerBackend::play () {
@@ -244,6 +258,8 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
             vcd_device = argv ()[++i];
         } else if (!strcmp (argv ()[i], "-wid")) {
             wid = atol (argv ()[++i]);
+        } else if (!strcmp (argv ()[i], "-sub")) {
+            sub_mrl = QString (argv ()[++i]);
         } else if (!strcmp (argv ()[i], "-cb")) {
             QString str = argv ()[++i];
             int pos = str.find ('/');
@@ -253,9 +269,9 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
                     (str.left (pos).ascii (), str.mid (pos + 1).ascii ());
             }
         } else 
-            d->mrl = QString (argv ()[i]);
+            mrl = QString (argv ()[i]);
     }
-    fprintf(stderr, "mrl: '%s'\n", d->mrl.ascii ());
+    fprintf(stderr, "mrl: '%s'\n", mrl.ascii ());
     xpos    = 0;
     ypos    = 0;
     width   = 320;
@@ -277,7 +293,6 @@ void KXinePlayer::init () {
     XGetWindowAttributes(display, wid, &attr);
     width = attr.width;
     height = attr.height;
-    mutex.lock ();
     if (XShmQueryExtension(display) == True)
         completion_event = XShmGetEventBase(display) + ShmCompletion;
     else
@@ -326,13 +341,9 @@ KXinePlayer::~KXinePlayer () {
     xineapp = 0L;
 }
 
-void KXinePlayer::setURL (const QString & url) {
-    d->mrl = url;
-}
-
 void KXinePlayer::play () {
+    mutex.lock ();
     if (running) {
-        mutex.lock ();
         if (xine_get_status (stream) == XINE_STATUS_PLAY &&
             xine_get_param (stream, XINE_PARAM_SPEED) == XINE_SPEED_PAUSE)
             xine_set_param( stream, XINE_PARAM_SPEED, XINE_SPEED_NORMAL);
@@ -358,29 +369,48 @@ void KXinePlayer::play () {
     if (d->hue)
         xine_set_param (stream, XINE_PARAM_VO_HUE, d->hue);
     running = 1;
-    if (!xine_open (stream, d->mrl.ascii ())) {
-        fprintf(stderr, "Unable to open mrl '%s'\n", d->mrl.ascii ());
+    if (!xine_open (stream, mrl.local8Bit ())) {
+        fprintf(stderr, "Unable to open mrl '%s'\n", mrl.ascii ());
         mutex.unlock ();
         finished ();
         return;
     }
+    if (!sub_mrl.isEmpty ()) {
+        fprintf(stderr, "Using subtitles from '%s'\n", sub_mrl.ascii ());
+        sub_stream = xine_stream_new (xine, NULL, vo_port);
+        if (xine_open (sub_stream, sub_mrl.local8Bit ())) {
+            xine_stream_master_slave (stream, sub_stream,
+                    XINE_MASTER_SLAVE_PLAY | XINE_MASTER_SLAVE_STOP);
+        } else {
+            fprintf(stderr, "Unable to open subtitles from '%s'\n", sub_mrl.ascii ());
+            xine_dispose (sub_stream);
+            sub_stream = 0L;
+        }
+    }
     if (callback)
         firstframe = 1;
     if (!xine_play (stream, 0, 0)) {
-        fprintf(stderr, "Unable to play mrl '%s'\n", d->mrl.ascii ());
+        fprintf(stderr, "Unable to play mrl '%s'\n", mrl.ascii ());
         mutex.unlock ();
         finished ();
         return;
     }
     mutex.unlock ();
+    isplaying = 1;
 }
 
 void KXinePlayer::stop () {
     if (!running) return;
     fprintf(stderr, "stop\n");
     mutex.lock ();
+    if (sub_stream) {
+        xine_stop (sub_stream);
+        xine_dispose (sub_stream);
+        sub_stream = 0L;
+    }
     xine_stop (stream);
     running = 0;
+    isplaying = 0;
     xine_event_dispose_queue (event_queue);
     xine_dispose (stream);
     stream = 0L;
@@ -733,6 +763,7 @@ int main(int argc, char **argv) {
     XUnlockDisplay(display);
     eventThread.wait (500);
 
+    xineapp->stop ();
     delete xineapp;
 
     xine_exit (xine);

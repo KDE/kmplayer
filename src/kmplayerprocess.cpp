@@ -228,9 +228,18 @@ bool MPlayer::play () {
         m_refURLRegExp.setPattern (m_player->settings ()->referenceurlpattern);
         m_refRegExp.setPattern (m_player->settings ()->referencepattern);
         args += QString (" -quiet -nocache -identify -frames 0 ");
-    } else if (m_player->settings ()->loop)
-        args += QString (" -loop 0");
-
+    } else {
+        if (m_player->settings ()->loop)
+            args += QString (" -loop 0");
+        if (!m_source->subUrl ().isEmpty ()) {
+            args += QString (" -sub ");
+            const KURL & sub_url (source ()->subUrl ());
+            if (!sub_url.isEmpty ()) {
+                QString myurl (sub_url.isLocalFile () ? sub_url.path () : sub_url.url ());
+                args += KProcess::quote (QString (QFile::encodeName (myurl)));
+            }
+        }
+    }
     return run (args.ascii (), source ()->pipeCmd ().ascii ());
 }
 
@@ -732,6 +741,13 @@ bool Xine::play () {
         printf (" -vcd-device %s", settings->vcddevice.ascii ());
         *m_process << " -vcd-device " << settings->vcddevice;
     }
+    const KURL & sub_url = m_source->subUrl ();
+    if (!sub_url.isEmpty ()) {
+        QString surl = KProcess::quote (QString (QFile::encodeName
+                  (sub_url.isLocalFile () ? sub_url.path () : sub_url.url ())));
+        printf (" -sub %s ", surl.ascii ());
+        *m_process <<" -sub " << surl;
+    }
     QString myurl = KProcess::quote (QString (QFile::encodeName (url.isLocalFile () ? url.path () : url.url ())));
     printf (" %s\n", myurl.ascii ());
     *m_process << " " << myurl;
@@ -809,6 +825,9 @@ void Xine::processRunning () {
     hue (settings->hue, true);
     brightness (settings->brightness, true);
     contrast (settings->contrast, true);
+    //const KURL & url = m_source->subUrl ();
+    //if (!url.isEmpty ())
+    //    m_backend->setSubTitleURL (url.isLocalFile () ? url.path () : url.url ());
     m_backend->play ();
 }
 

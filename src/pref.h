@@ -251,6 +251,8 @@ public:
     KURLRequester * url;
     //KHistoryCombo * url;
     KComboBox * urllist;
+    KURLRequester * sub_url;
+    KComboBox * sub_urllist;
     QComboBox * backend;
     QCheckBox * allowhref;
 private slots:

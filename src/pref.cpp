@@ -206,6 +206,7 @@ KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
 {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     QHBoxLayout * urllayout = new QHBoxLayout ();
+    QHBoxLayout * sub_urllayout = new QHBoxLayout ();
     QLabel *urlLabel = new QLabel (i18n ("URL:"), this, 0);
     urllist = new KComboBox (true, this);
     urllist->setMaxCount (20);
@@ -213,6 +214,12 @@ KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
     url = new KURLRequester (urllist, this);
     //url->setShowLocalProtocol (true);
     url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
+    QLabel *sub_urlLabel = new QLabel (i18n ("Sub Title:"), this, 0);
+    sub_urllist = new KComboBox (true, this);
+    sub_urllist->setMaxCount (20);
+    sub_urllist->setDuplicatesEnabled (false); // not that it helps much :(
+    sub_url = new KURLRequester (sub_urllist, this);
+    sub_url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
     backend = new QComboBox (this);
     backend->insertItem (QString ("MPlayer"), 0);
     backend->insertItem (QString ("Xine"), 1);
@@ -221,6 +228,9 @@ KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
     urllayout->addWidget (urlLabel);
     urllayout->addWidget (url);
     layout->addLayout (urllayout);
+    sub_urllayout->addWidget (sub_urlLabel);
+    sub_urllayout->addWidget (sub_url);
+    layout->addLayout (sub_urllayout);
     layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
 #ifdef HAVE_XINE
     QHBoxLayout * backendlayout = new QHBoxLayout ();

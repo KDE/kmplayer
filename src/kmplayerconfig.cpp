@@ -744,6 +744,8 @@ void KMPlayerSettings::okPressed () {
         return;
     bool urlchanged = m_player->process ()->source ()->url () != 
                       configdialog->m_SourcePageURL->url->url ();
+    urlchanged |= m_player->process ()->source ()->subUrl () !=
+                      configdialog->m_SourcePageURL->sub_url->url ();
     if (configdialog->m_SourcePageURL->url->url ().isEmpty ())
         urlchanged = false;
 
@@ -887,8 +889,12 @@ void KMPlayerSettings::okPressed () {
 
     emit configChanged ();
 
-    if (urlchanged)
+    if (urlchanged) {
+        m_player->urlSource ()->setSubURL
+            (configdialog->m_SourcePageURL->sub_url->url ());
+        kdDebug() << "SUB: " << m_player->urlSource ()->subUrl();
         m_player->openURL (KURL (configdialog->m_SourcePageURL->url->url ()));
+    }
 }
 
 void KMPlayerSettings::getHelp () {

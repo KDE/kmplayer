@@ -30,6 +30,7 @@ public:
     virtual ~KMPlayerBackend ();
 k_dcop:
     virtual ASYNC setURL (QString url);
+    virtual ASYNC setSubTitleURL (QString url);
     virtual ASYNC play ();
     virtual ASYNC stop ();
     virtual ASYNC pause ();
