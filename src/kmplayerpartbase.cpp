@@ -358,7 +358,7 @@ void PartBase::setSource (Source * _source) {
     if (m_view && m_view->viewer ()) {
         m_view->viewer ()->setAspect (0.0);
         m_view->fullScreenWidget ()->setRootLayout (m_source->document () ?
-           m_source->document ()->document ()->rootLayout : RegionNodePtr (0L));
+           m_source->document ()->document()->rootLayout : RegionNodePtrW (0L));
     }
     if (m_source) QTimer::singleShot (0, m_source, SLOT (activate ()));
     emit sourceChanged (m_source);
@@ -741,7 +741,13 @@ QString Source::first () {
 }
 
 QString Source::currentMrl () {
+    kdDebug() << "Source::currentMrl " << (m_current ? m_current->nodeName():"") << " src:" << (m_current ? m_current->mrl()->src  : QString ()) << endl;
     return m_current ? m_current->mrl()->src : QString ();
+}
+
+void Source::emitPlayURL (const QString & url) {
+    kdDebug () << "Source::emitPlayURL" << endl;
+    emit playURL (this, url);
 }
 
 void Source::playCurrent () {
@@ -751,10 +757,16 @@ void Source::playCurrent () {
         m_player->process ()->view ()->videoStop (); // show buttonbar
     if (m_player->view () && m_document)
         m_player->process ()->view ()->fullScreenWidget ()->setRootLayout (m_document->document ()->rootLayout);
-    if (url.isEmpty ())
+    kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():"") << endl;
+    if (!m_current || !m_current->isMrl ())
         emit endOfPlayItems ();
-    else
-        emit playURL (this, currentMrl ());
+    else if (!(m_current->started && !m_current->finished && !strcmp (m_current->nodeName (), "smil"))) { // freaking ugly!!
+        RegionNodePtr r = m_current->document ()->rootLayout;
+        if (r)
+            r->clearAllData ();
+        m_current->reset ();
+        m_current->start (this);
+    }
 }
 
 static ElementPtr findDepthFirst (ElementPtr elm) {
@@ -1279,10 +1291,40 @@ KDE_NO_EXPORT void URLSource::play () {
 }
 
 KDE_NO_EXPORT void URLSource::playURLDone () {
-    Source::playURLDone (); // for now
+    // notify a finish event
+    if (m_current && !strcmp (m_current->nodeName (), "smil")) {
+    kdDebug () << "URLSource::playURLDone " << m_current->finished << endl;
+        m_current->mrl ()->realMrl ()->stop ();
+        if (m_current->finished)
+            next ();
+    kdDebug () << "URLSource::playURLDone repaint" << endl;
+        m_player->process()->view ()->fullScreenWidget ()->repaint ();
+    } else
+        Source::playURLDone (); // for now
 }
 
 //-----------------------------------------------------------------------------
+
+void Mrl::start (Source * source) {
+    kdDebug () << "Mrl::start" << endl;
+    Element::start (source);
+    if (!src.isEmpty ())
+        source->emitPlayURL (src);
+}
+
+KDE_NO_EXPORT void SMIL::AVMediaType::start (Source * s) {
+    kdDebug () << "SMIL::AVMediaType::start" << endl;
+    MediaType::start (s);
+    if (s->current () && !strcmp (s->current ()->nodeName (), "smil")) {
+        convertNode <SMIL::Smil> (s->current())->current_av_media_type = m_self;
+        if (!src.isEmpty ())
+            s->emitPlayURL (src);
+        else
+            stop ();
+    } else
+        kdError () << nodeName () << " playing and current is not Smil" << endl;
+}
+
 class ImageDataPrivate {
 public:
     ImageDataPrivate () {}
@@ -1294,6 +1336,7 @@ public:
 KDE_NO_CDTOR_EXPORT ImageData::ImageData (RegionNodePtr r, ElementPtr e)
  : RegionData (r), image_element (e), image (0L) {
     Mrl * mrl = image_element ? image_element->mrl () : 0L;
+    kdDebug () << "ImageData::ImageData " << (mrl ? mrl->src : QString()) << endl;
     if (mrl && !mrl->src.isEmpty ()) {
         KURL url (mrl->src);
         if (url.isLocalFile ()) {

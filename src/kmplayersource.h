@@ -111,6 +111,10 @@ public slots:
      */
     virtual void playCurrent ();
     virtual void playURLDone ();
+    /**
+     * publicly allow to emit playURL(const QString &)
+     */
+    void emitPlayURL (const QString & url);
     virtual void jump (ElementPtr e);
 protected:
     ElementPtr m_document;

@@ -57,6 +57,7 @@ class QPainter;
 
 namespace KMPlayer {
 
+class Source;
 class Document;
 class Element;
 class Mrl;
@@ -106,6 +107,10 @@ public:
      * Data for this region
      */
     RegionDataPtr data;
+    /**
+     * Make data for this region and its sibling 0
+     */
+    void clearAllData ();
 
     RegionNodePtr nextSibling;
     RegionNodePtr firstChild;
@@ -165,6 +170,28 @@ public:
      * If this node should be visible to the user
      */
     virtual bool expose ();
+    /**
+     * Start element, sets started to true, will emit playURL if it has one.
+     * Source is this document's owner.
+     */
+    virtual void start (Source *);
+    /**
+     * Stops element, sets started to false and finished to true.
+     * Notifies parent with a childDone call
+     */
+    virtual void stop ();
+    /**
+     * Resets element, sets started to false and finished to false.
+     */
+    virtual void reset ();
+    /**
+     * Notification from child that it's finished.
+     */
+    virtual void childDone (ElementPtr child);
+    /**
+     * Creates a new RegionData object
+     */
+    virtual RegionDataPtr getNewData (RegionNodePtr r);
     void clear ();
     void appendChild (ElementPtr c);
     void insertBefore (ElementPtr c, ElementPtr b);
@@ -198,8 +225,12 @@ public:
      */
     KDE_NO_EXPORT ElementPtr self () const { return m_self; }
 protected:
-    KDE_NO_CDTOR_EXPORT Element (ElementPtr & d) : m_doc (d), m_self (this) {}
-    KDE_NO_CDTOR_EXPORT Element () {} // for Document
+    Element (ElementPtr & d);
+    /**
+     * Constructor that doesn't set the document and is for Document
+     * only due to a problem with m_self and m_doc
+     */
+    Element ();
     ElementPtr m_doc;
     ElementPtrW m_parent;
     ElementPtr m_next;
@@ -208,6 +239,9 @@ protected:
     ElementPtrW m_last_child;
     ElementPtr m_first_attribute;
     ElementPtrW m_self;
+public:
+    bool started;
+    bool finished;
 };
 
 template <class T>
@@ -242,6 +276,7 @@ public:
      * If this Mrl hides a child Mrl, return that one or else this one 
      */ 
     virtual ElementPtr realMrl ();
+    virtual void start (Source *);
     QString src;
     QString pretty_name;
     QString mimetype;
@@ -263,7 +298,7 @@ public:
      * Will return false if this document has child nodes
      */
     bool isMrl ();
-    RegionNodePtr rootLayout;
+    RegionNodePtrW rootLayout;
     unsigned int m_tree_version;
 };
 
@@ -300,11 +335,20 @@ public:
 
 namespace SMIL {
 
-class Smil : public Element {
+class Smil : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Smil (ElementPtr & d) : Element (d) {}
+    KDE_NO_CDTOR_EXPORT Smil (ElementPtr & d) : Mrl (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "smil"; }
+    bool isMrl ();
+    void start (Source *);
+    void childDone (ElementPtr child);
+    /**
+     * Hack to mark the currently playing MediaType as finished
+     * FIXME: think of a descent callback way for this
+     */
+    ElementPtr realMrl ();
+    ElementPtr current_av_media_type;
 };
 
 class Head : public Element {
@@ -315,19 +359,13 @@ public:
     bool expose ();
 };
 
-class Body : public Element {
-public:
-    KDE_NO_CDTOR_EXPORT Body (ElementPtr & d) : Element (d) {}
-    ElementPtr childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return "body"; }
-};
-
 class Layout : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Layout (ElementPtr & d) : Element (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "layout"; }
     void closed ();
+    RegionNodePtr rootLayout;
 };
 
 class RegionBase : public Element {
@@ -350,11 +388,18 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
 };
 
+/**
+ * A Par represends parallel processing of all its children
+ */
 class Par : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Par (ElementPtr & d) : Element (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "par"; }
+    void start (Source *);
+    void stop ();
+    void reset ();
+    void childDone (ElementPtr child);
 };
 
 class Seq : public Element {
@@ -362,18 +407,30 @@ public:
     KDE_NO_CDTOR_EXPORT Seq (ElementPtr & d) : Element (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "seq"; }
+    void start (Source *);
+    void stop ();
+    void reset ();
+    void childDone (ElementPtr child);
+    Source * m_source;
 };
 
-class Switch : public Mrl {
+class Body : public Seq {
 public:
-    KDE_NO_CDTOR_EXPORT Switch (ElementPtr & d) : Mrl (d) {}
+    KDE_NO_CDTOR_EXPORT Body (ElementPtr & d) : Seq (d) {}
+    ElementPtr childFromTag (const QString & tag);
+    KDE_NO_EXPORT const char * nodeName () const { return "body"; }
+};
+
+class Switch : public Element {
+public:
+    KDE_NO_CDTOR_EXPORT Switch (ElementPtr & d) : Element (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "switch"; }
-    /**
-     * Will return false if no children or none has a condition that evals true
-     */
-    bool isMrl ();
     // Condition
+    void start (Source *);
+    void stop ();
+    void reset ();
+    void childDone (ElementPtr child);
 };
 
 class MediaType : public Mrl {
@@ -382,16 +439,30 @@ public:
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
     void opened ();
-    virtual RegionData * getNewData (RegionNodePtr r);
+    void start (Source *);
+    void reset ();
+    RegionNodePtrW region;
     QString m_type;
     int bitrate;
 };
 
+class AVMediaType : public MediaType {
+public:
+    AVMediaType (ElementPtr & d, const QString & t);
+    RegionDataPtr getNewData (RegionNodePtr r);
+    void start (Source *);
+    void stop ();
+};
+
 class ImageMediaType : public MediaType {
 public:
-    ImageMediaType (ElementPtr & d, const QString & t);
-    RegionData * getNewData (RegionNodePtr r);
-    bool isMrl ();
+    ImageMediaType (ElementPtr & d);
+    RegionDataPtr getNewData (RegionNodePtr r);
+    void start (Source *);
+    /**
+     * cache the region data, so we load image only once
+     */
+    RegionDataPtr region_data;
 };
 
 } // SMIL namespace

@@ -50,7 +50,14 @@ KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (ElementPtr e)
             have_color = true;
         }
     }
- }
+}
+
+KDE_NO_CDTOR_EXPORT void RegionNode::clearAllData () {
+    kdDebug () << "RegionNode::clearAllData " << endl;
+    data = RegionDataPtr ();
+    for (RegionNodePtr r = firstChild; r; r = r->nextSibling)
+        r->clearAllData ();
+}
 
 KDE_NO_CDTOR_EXPORT AudioVideoData::AudioVideoData(RegionNodePtr r,ElementPtr e)
     : RegionData (r), av_element (e) {}
@@ -82,9 +89,9 @@ static Element * fromScheduleGroup (ElementPtr & d, const QString & tag) {
 
 static Element * fromMediaContentGroup (ElementPtr & d, const QString & tag) {
     if (!strcmp (tag.latin1 (), "video") || !strcmp (tag.latin1 (), "audio"))
-        return new SMIL::MediaType (d, tag);
+        return new SMIL::AVMediaType (d, tag);
     else if (!strcmp (tag.latin1 (), "img"))
-        return new SMIL::ImageMediaType (d, tag);
+        return new SMIL::ImageMediaType (d);
     // text, animation, textstream, ref, brush
     return 0L;
 }
@@ -141,6 +148,11 @@ ElementPtr NodeList::item (int i) const {
     
 //-----------------------------------------------------------------------------
 
+KDE_NO_CDTOR_EXPORT Element::Element (ElementPtr & d)
+ : m_doc (d), m_self (this), started (false), finished (false) {}
+
+KDE_NO_CDTOR_EXPORT Element::Element () : started (false), finished (false) {}
+
 Element::~Element () {
     clear ();
 }
@@ -163,6 +175,29 @@ KDE_NO_EXPORT const char * Element::nodeName () const {
 
 bool Element::expose () {
     return true;
+}
+
+void Element::start (Source *) {
+    started = true;
+}
+
+void Element::stop () {
+    finished = true;
+    if (m_parent)
+        m_parent->childDone (m_self);
+}
+
+void Element::reset () {
+    if (started && !finished)
+        stop ();
+    finished = started = false;
+}
+
+void Element::childDone (ElementPtr) {
+}
+
+RegionDataPtr Element::getNewData (RegionNodePtr) {
+    return RegionDataPtr ();
 }
 
 void Element::clear () {
@@ -489,6 +524,30 @@ KDE_NO_EXPORT ElementPtr SMIL::Smil::childFromTag (const QString & tag) {
     return ElementPtr ();
 }
 
+KDE_NO_EXPORT void SMIL::Smil::start (Source * source) {
+    kdDebug () << "SMIL::Smil::start" << endl;
+    current_av_media_type = ElementPtr ();
+    Element::start (source);
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
+        if (!strcmp (e->nodeName (), "body")) {
+            e->start (source);
+            return;
+        }
+    stop (); //source->emitEndOfPlayItems ();
+}
+
+KDE_NO_EXPORT ElementPtr SMIL::Smil::realMrl () {
+    return current_av_media_type;
+}
+
+KDE_NO_EXPORT bool SMIL::Smil::isMrl () {
+    return true;
+}
+
+KDE_NO_EXPORT void SMIL::Smil::childDone (ElementPtr child) {
+    kdDebug () << "SMIL::Smil::childDone" << endl;
+    stop ();
+}
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementPtr SMIL::Head::childFromTag (const QString & tag) {
@@ -590,6 +649,7 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
         return;
     }
     sizeRegionNodes (root);
+    rootLayout = root;
     document ()->rootLayout = root;
 }
 
@@ -597,6 +657,18 @@ KDE_NO_EXPORT ElementPtr SMIL::Region::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "region"))
         return (new SMIL::Region (m_doc))->self ();
     return ElementPtr ();
+}
+
+static ElementPtr findLayout (ElementPtr e) {
+    if (!e)
+        return ElementPtr ();
+    if (!strcmp (e->nodeName (), "smil"))
+        for (ElementPtr c = e->firstChild (); c; c = c->nextSibling ())
+            if (!strcmp (c->nodeName (), "head"))
+                for (ElementPtr d = c->firstChild (); d; d = d->nextSibling ())
+                    if (!strcmp (d->nodeName (), "layout"))
+                        return d;
+    return findLayout (e->parentNode ());
 }
 
 //-----------------------------------------------------------------------------
@@ -621,41 +693,40 @@ KDE_NO_EXPORT ElementPtr SMIL::Par::childFromTag (const QString & tag) {
     return ElementPtr ();
 }
 
-//-----------------------------------------------------------------------------
-
-KDE_NO_EXPORT ElementPtr SMIL::Seq::childFromTag (const QString & tag) {
-    Element * elm = fromScheduleGroup (m_doc, tag);
-    if (!elm) elm = fromMediaContentGroup (m_doc, tag);
-    if (!elm) elm = fromContentControlGroup (m_doc, tag);
-    if (elm)
-        return elm->self ();
-    return ElementPtr ();
+KDE_NO_EXPORT void SMIL::Par::start (Source * source) {
+    kdDebug () << "SMIL::Par::start" << endl;
+    Element::start (source);
+    if (firstChild ()) {
+        for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
+            e->start (source);
+    } else
+        stop ();
 }
 
-//-----------------------------------------------------------------------------
-
-KDE_NO_EXPORT ElementPtr SMIL::Switch::childFromTag (const QString & tag) {
-    Element * elm = fromContentControlGroup (m_doc, tag);
-    if (!elm) elm = fromMediaContentGroup (m_doc, tag);
-    if (elm)
-        return elm->self ();
-    return ElementPtr ();
+KDE_NO_EXPORT void SMIL::Par::stop () {
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
+        if (e->started && !e->finished)
+            e->stop ();
+    // children are out of scope now, reset their RegionData
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
+        e->reset ();
+    Element::stop ();
 }
 
-bool SMIL::Switch::isMrl () {
-    return false; // TODO eval conditions on children and choose one
+KDE_NO_EXPORT void SMIL::Par::reset () {
+    Element::reset ();
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
+        e->reset ();
 }
 
-//-----------------------------------------------------------------------------
-
-KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (ElementPtr &d, const QString &t)
-    : Mrl (d), m_type (t), bitrate (0) {}
-
-KDE_NO_EXPORT ElementPtr SMIL::MediaType::childFromTag (const QString & tag) {
-    Element * elm = fromContentControlGroup (m_doc, tag);
-    if (elm)
-        return elm->self ();
-    return ElementPtr ();
+KDE_NO_EXPORT void SMIL::Par::childDone (ElementPtr) {
+    kdDebug () << "SMIL::Par::childDone" << endl;
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
+    kdDebug () << "  childDone" << e->nodeName () << " " << e->finished << endl;
+        if (!e->finished)
+            return; // not all done
+    }
+    stop (); // we're done
 }
 
 static RegionNodePtr findRegion (RegionNodePtr p, const QString & id) {
@@ -671,6 +742,111 @@ static RegionNodePtr findRegion (RegionNodePtr p, const QString & id) {
     return RegionNodePtr ();
 }
 
+//-----------------------------------------------------------------------------
+
+KDE_NO_EXPORT ElementPtr SMIL::Seq::childFromTag (const QString & tag) {
+    Element * elm = fromScheduleGroup (m_doc, tag);
+    if (!elm) elm = fromMediaContentGroup (m_doc, tag);
+    if (!elm) elm = fromContentControlGroup (m_doc, tag);
+    if (elm)
+        return elm->self ();
+    return ElementPtr ();
+}
+
+KDE_NO_EXPORT void SMIL::Seq::start (Source * source) {
+    kdDebug () << "SMIL::Seq::start" << endl;
+    m_source = source;
+    Element::start (source);
+    if (firstChild ())
+        firstChild ()->start (source); // start only the first
+    else
+        stop (); // nothing to start
+}
+
+KDE_NO_EXPORT void SMIL::Seq::stop () {
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
+        if (e->started && !e->finished) {
+            e->stop ();
+            break; // stop only the one running
+        }
+    }
+    // children are out of scope now, reset their RegionData
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
+        e->reset ();
+    Element::stop ();
+}
+
+KDE_NO_EXPORT void SMIL::Seq::reset () {
+    Element::reset ();
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
+        if (e->started)
+            e->reset ();
+        else
+            break; // rest not started yet
+    }
+}
+
+KDE_NO_EXPORT void SMIL::Seq::childDone (ElementPtr child) {
+    kdDebug () << "SMIL::Seq::childDone" << endl;
+    if (child->nextSibling ())
+        child->nextSibling ()->start (m_source);
+    else
+        stop (); // we're done
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_EXPORT ElementPtr SMIL::Switch::childFromTag (const QString & tag) {
+    Element * elm = fromContentControlGroup (m_doc, tag);
+    if (!elm) elm = fromMediaContentGroup (m_doc, tag);
+    if (elm)
+        return elm->self ();
+    return ElementPtr ();
+}
+
+KDE_NO_EXPORT void SMIL::Switch::start (Source *source) {
+    kdDebug () << "SMIL::Switch::start" << endl;
+    Element::start (source);
+    if (firstChild ())
+        firstChild ()->start (source); // start only the first for now FIXME: condition
+    else
+        stop ();
+}
+
+KDE_NO_EXPORT void SMIL::Switch::stop () {
+    Element::stop ();
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
+        if (e->started && !e->finished) {
+            e->stop ();
+            break; // stop only the one running
+        }
+}
+
+KDE_NO_EXPORT void SMIL::Switch::reset () {
+    Element::reset ();
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
+        if (e->started || e->finished)
+            e->reset ();
+    }
+}
+
+KDE_NO_EXPORT void SMIL::Switch::childDone (ElementPtr) {
+    kdDebug () << "SMIL::Switch::childDone" << endl;
+    stop (); // only one child can run
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (ElementPtr &d, const QString &t)
+    : Mrl (d), m_type (t), bitrate (0) {}
+
+KDE_NO_EXPORT ElementPtr SMIL::MediaType::childFromTag (const QString & tag) {
+    Element * elm = fromContentControlGroup (m_doc, tag);
+    if (elm)
+        return elm->self ();
+    return ElementPtr ();
+}
+
 KDE_NO_EXPORT void SMIL::MediaType::opened () {
     for (ElementPtr a = m_first_attribute; a; a = a->nextSibling ()) {
         const char * cname = a->nodeName ();
@@ -682,36 +858,68 @@ KDE_NO_EXPORT void SMIL::MediaType::opened () {
             mimetype = a->nodeValue ();
         else if (!strcmp (cname, "region")) {
             RegionNodePtr root = document ()->rootLayout;
-            if (!root || !root->firstChild)
-                kdError () << "region attribute w/o layout set" << endl;
-            else {
-                RegionNodePtr rn = findRegion (root, a->nodeValue ());
-                if (rn)
-                    rn->data = RegionDataPtr (getNewData (rn));
-            }
+            if (root)
+                region = findRegion (root, a->nodeValue ());
+            if (!region)
+                kdWarning() << "region " << a->nodeValue()<<" not found"<< endl;
         } else
-            kdError () << "Warning: unhandled MediaType attr: " << cname << "=" << a->nodeValue () << endl;
+            kdWarning () << "unhandled MediaType attr: " << cname << "=" << a->nodeValue () << endl;
     }
     kdDebug () << "MediaType attr found bitrate: " << bitrate << " src: " << (src.isEmpty() ? "-" : src) << " type: " << (mimetype.isEmpty() ? "-" : mimetype) << endl;
 }
 
-KDE_NO_EXPORT RegionData * SMIL::MediaType::getNewData (RegionNodePtr r) {
-    return new AudioVideoData (r, m_self);
+KDE_NO_EXPORT void SMIL::MediaType::start (Source *) {
+    kdDebug () << "SMIL::MediaType::start " << !!region << endl;
+    if (region) {
+        region->clearAllData ();
+    kdDebug () << "SMIL::MediaType::start getNewData " << nodeName () << endl;
+        region->data = getNewData (region);
+    }
+}
+
+KDE_NO_EXPORT void SMIL::MediaType::reset () {
+    kdDebug () << "SMIL::MediaType::reset " << endl;
+    Mrl::reset ();
+    if (region)
+        region->clearAllData ();
 }
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT
-SMIL::ImageMediaType::ImageMediaType (ElementPtr & d, const QString & t)
+KDE_NO_CDTOR_EXPORT
+SMIL::AVMediaType::AVMediaType (ElementPtr & d, const QString & t)
     : SMIL::MediaType (d, t) {}
 
-KDE_NO_EXPORT RegionData * SMIL::ImageMediaType::getNewData (RegionNodePtr r) {
-    return new ImageData (r, m_self);
+//KDE_NO_EXPORT void SMIL::AVMediaType::start (Source *source) {
+//    MediaType::start (source);
+    // TODO start backend player
+//}
+
+KDE_NO_EXPORT void SMIL::AVMediaType::stop () {
+    Element::stop ();
+    // TODO stop backend player
 }
 
-KDE_NO_EXPORT bool SMIL::ImageMediaType::isMrl () {
-    MediaType::isMrl (); // hack to update src field
-    return false;
+KDE_NO_EXPORT RegionDataPtr SMIL::AVMediaType::getNewData (RegionNodePtr r) {
+    return RegionDataPtr (new AudioVideoData (r, m_self));
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT
+SMIL::ImageMediaType::ImageMediaType (ElementPtr & d)
+    : SMIL::MediaType (d, "img") {}
+
+KDE_NO_EXPORT RegionDataPtr SMIL::ImageMediaType::getNewData (RegionNodePtr r) {
+    if (!region_data)
+        region_data = RegionDataPtr (new ImageData (r, m_self));
+    return region_data;
+}
+
+KDE_NO_EXPORT void SMIL::ImageMediaType::start (Source * source) {
+    kdDebug () << "SMIL::ImageMediaType::start" << endl;
+    MediaType::start (source); // creates ImageData and loads image
+    stop (); // no duration yet, so mark us finished
 }
 
 //-----------------------------------------------------------------------------
@@ -1317,7 +1525,7 @@ bool KMPlayerDocumentBuilder::startTag (const QString & tag, const NodeList & at
     return true;
 }
 
-bool KMPlayerDocumentBuilder::endTag (const QString & tag) {
+bool KMPlayerDocumentBuilder::endTag (const QString & /*tag*/) {
     if (m_ignore_depth) { // endtag to ignore
         m_ignore_depth--;
         kdDebug () << "Warning: ignored end tag " << " ignore depth = " << m_ignore_depth <<  endl;
