@@ -741,10 +741,15 @@ void KMPlayerSettings::okPressed () {
     if (!view)
         return;
     bool urlchanged = m_player->process ()->source ()->url () != 
-                      configdialog->m_SourcePageURL->url->url ();
-    urlchanged |= m_player->process ()->source ()->subUrl () !=
-                      configdialog->m_SourcePageURL->sub_url->url ();
-    if (configdialog->m_SourcePageURL->url->url ().isEmpty ())
+                      KURL (configdialog->m_SourcePageURL->url->url ());
+    if (!(configdialog->m_SourcePageURL->sub_url->url ().isEmpty () &&
+          m_player->process ()->source ()->subUrl ().isEmpty ())) {
+        urlchanged |= (m_player->process ()->source ()->subUrl () !=
+            KURL (configdialog->m_SourcePageURL->sub_url->url ())) &&
+            KURL (configdialog->m_SourcePageURL->sub_url->url ()).isValid ();
+    }
+    if (configdialog->m_SourcePageURL->url->url ().isEmpty () ||
+            !KURL (configdialog->m_SourcePageURL->url->url ()).isValid ())
         urlchanged = false;
 
     if (urlchanged) {
