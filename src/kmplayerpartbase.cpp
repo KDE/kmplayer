@@ -606,7 +606,9 @@ KDE_NO_EXPORT void KMPlayer::saturationValueChanged (int val) {
 }
 
 KDE_NO_EXPORT void KMPlayer::positionValueChanged (int pos) {
-    m_process->seek (pos, true);
+    QSlider * slider = ::qt_cast <QSlider *> (sender ());
+    if (slider && slider->isEnabled ())
+        m_process->seek (pos, true);
 }
 
 KAboutData* KMPlayer::createAboutData () {
