@@ -1446,6 +1446,7 @@ KDE_NO_EXPORT void SMIL::Par::start () {
 
 KDE_NO_EXPORT void SMIL::Par::stop () {
     kdDebug () << "SMIL::Par::stop" << endl;
+    setState (state_finished); // prevent recursion via childDone
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
         // children are out of scope now, reset their ElementRuntime
         e->reset (); // will call stop() if necessary
