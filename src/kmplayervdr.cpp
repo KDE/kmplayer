@@ -226,10 +226,13 @@ KDE_NO_EXPORT void KMPlayerVDRSource::dataWritten (int) {
 }
 
 static struct ReadBuf {
-    ReadBuf () : buf (0L), length (0) {}
     char * buf;
     int length;
-    void operator += (const char * s) {
+    KDE_NO_CDTOR_EXPORT ReadBuf () : buf (0L), length (0) {}
+    KDE_NO_CDTOR_EXPORT ~ReadBuf () {
+        clear ();
+    }
+    KDE_NO_EXPORT void operator += (const char * s) {
         int l = strlen (s);
         char * b = new char [length + l + 1];
         if (length)
@@ -239,16 +242,21 @@ static struct ReadBuf {
         delete buf;
         buf = b;
     }
-    QCString mid (int p) {
+    KDE_NO_EXPORT QCString mid (int p) {
         return QCString (buf + p);
     }
-    QCString left (int p) {
+    KDE_NO_EXPORT QCString left (int p) {
         return QCString (buf, p);
     }
-    QCString getReadLine ();
+    KDE_NO_EXPORT QCString getReadLine ();
+    KDE_NO_EXPORT void clear () {
+        delete [] buf;
+        buf = 0;
+        length = 0;
+    }
 } readbuf;
 
-QCString ReadBuf::getReadLine () {
+KDE_NO_EXPORT QCString ReadBuf::getReadLine () {
     QCString out;
     if (!length)
         return out;
@@ -272,9 +280,9 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
         return;
     data [nr] = 0;
     readbuf += data;
+    QCString line = readbuf.getReadLine ();
     if (commands && commands->waitForResponse) {
         bool cmd_done = false;
-        QCString line = readbuf.getReadLine ();
         if (!strcmp (commands->command, cmd_chan_query)) {
             if (line.length () > 4) {
                 m_player->changeTitle (line.mid (4));
@@ -308,7 +316,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
             }
         }
     } else {
-            v->addText (QString::fromLocal8Bit (data, nr));
+        v->addText (QString::fromLocal8Bit (data, nr));
     }
     delete [] data;
 }
@@ -325,6 +333,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sendCommand (const char * cmd, bool b) {
     if (m_player->process ()->source () != this)
         return;
     if (!commands) {
+        readbuf.clear ();
         commands = new VDRCommand (cmd, b);
         if (m_socket->state () == QSocket::Connected) {
             m_socket->writeBlock (commands->command, strlen(commands->command));
@@ -465,7 +474,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::write (KConfig * m_config) {
 KDE_NO_EXPORT void KMPlayerVDRSource::read (KConfig * m_config) {
     m_config->setGroup (strVDR);
     tcp_port = m_config->readNumEntry (strVDRPort, 2001);
-    xv_port = m_config->readNumEntry (strXVPort, 146);
+    xv_port = m_config->readNumEntry (strXVPort, 0);
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {

@@ -1,3 +1,10 @@
+Changes since version 0.8.4-rc2
+- Added a XVideo player (kxvplayer) process. Used now for viewing VDR
+- Fixed various crash cases with the playlist
+Changes since version 0.8.4-rc1
+- Oops, left an ugly hack in the icon loading for the playlist tree, can crash
+  konqueror.
+- Some playlist tree visualization ordering fixes
 Changes since version 0.8.3a
 - Nice icons from Marcel Dierkes, thanks!!!
 - Replaced internal playlist structure from std::list to DOM
