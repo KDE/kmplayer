@@ -590,7 +590,7 @@ bool TVDeviceScannerSource::processOutput (const QString & line) {
                                      m_sizesRegExp.cap (4).toInt ());
         kdDebug() << "MinSize (" << m_tvdevice->minsize.width () << "," << m_tvdevice->minsize.height () << ")" << endl;
     } else if (m_inputRegExp.search (line) > -1) {
-        TVInput * input = new TVInput (m_inputRegExp.cap (2),
+        TVInput * input = new TVInput (m_inputRegExp.cap (2).stripWhiteSpace (),
                                        m_inputRegExp.cap (1).toInt ());
         input->hastuner = m_inputRegExp.cap (3).toInt () == 1;
         m_tvdevice->inputs.append (input);

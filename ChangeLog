@@ -1,4 +1,5 @@
 Changes since version 0.7.3
+- Re-added the main application toolbar
 - Re-identify dvd if another title is selected, because they have different
   chapters/subtitles/languagues/length
 - Added a record button. Currently only configurable in kmplayerrc, see the
