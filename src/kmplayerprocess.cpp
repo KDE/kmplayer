@@ -241,9 +241,12 @@ bool MPlayer::play () {
     if (!url.isEmpty ()) {
         m_url = url.url ();
         if (url.isLocalFile ()) {
-            QFileInfo fi (url.path ());
+            QString str = url.url();
+            if (str.startsWith (QString ("file:")))
+                str = str.mid (5);
+            QFileInfo fi (str);
             m_process->setWorkingDirectory (fi.dirPath (true));
-            m_url = fi.fileName ();
+            m_url = KURL::decode_string (fi.absFilePath ());
         }
         args += KProcess::quote (QString (QFile::encodeName (m_url)));
     }
@@ -1108,9 +1111,12 @@ bool Xine::play () {
     }
     m_url = url.url ();
     if (url.isLocalFile ()) {
-        QFileInfo fi (url.path ());
+        QString str = url.url();
+        if (str.startsWith (QString ("file:")))
+            str = str.mid (5);
+        QFileInfo fi (str);
         m_process->setWorkingDirectory (fi.dirPath (true));
-        m_url = fi.fileName ();
+        m_url = KURL::decode_string (fi.absFilePath ());
     }
     QString myurl = KProcess::quote (m_url);
     printf (" %s\n", myurl.ascii ());
