@@ -602,28 +602,4 @@ KDE_NO_EXPORT void XVideo::processOutput (KProcess *, char * str, int slen) {
         v->addText (QString::fromLocal8Bit (str, slen));
 }
 
-KDE_NO_EXPORT bool XVideo::saturation (int val, bool) {
-    if (m_backend)
-        m_backend->saturation (10 * val, true);
-    return !!m_backend;
-}
-
-KDE_NO_EXPORT bool XVideo::hue (int val, bool) {
-    if (m_backend)
-        m_backend->hue (10 * val, true);
-    return !!m_backend;
-}
-
-KDE_NO_EXPORT bool XVideo::brightness (int val, bool) {
-    if (m_backend)
-        m_backend->brightness (10 * val, true);
-    return !!m_backend;
-}
-
-KDE_NO_EXPORT bool XVideo::contrast (int val, bool) {
-    if (m_backend)
-        m_backend->contrast (10 * val, true);
-    return !!m_backend;
-}
-
 #include "kmplayervdr.moc"

@@ -110,19 +110,19 @@ void KMPlayerBackend::seek (int, bool /*absolute*/) {
 }
 
 void KMPlayerBackend::hue (int h, bool) {
-    xvapp->hue (h);
+    xvapp->hue (10 * h);
 }
 
 void KMPlayerBackend::saturation (int s, bool) {
-    xvapp->saturation (s);
+    xvapp->saturation (10 * s);
 }
 
 void KMPlayerBackend::contrast (int c, bool) {
-    xvapp->contrast (c);
+    xvapp->contrast (10 * c);
 }
 
 void KMPlayerBackend::brightness (int b, bool) {
-    xvapp->brightness (b);
+    xvapp->brightness (10 * b);
 }
 
 void KMPlayerBackend::volume (int v, bool) {

@@ -993,6 +993,30 @@ bool KMPlayerCallbackProcess::pause () {
     return true;
 }
 
+bool KMPlayerCallbackProcess::saturation (int val, bool b) {
+    if (m_backend)
+        m_backend->saturation (val, b);
+    return !!m_backend;
+}
+
+bool KMPlayerCallbackProcess::hue (int val, bool b) {
+    if (m_backend)
+        m_backend->hue (val, b);
+    return !!m_backend;
+}
+
+bool KMPlayerCallbackProcess::brightness (int val, bool b) {
+    if (m_backend)
+        m_backend->brightness (val, b);
+    return !!m_backend;
+}
+
+bool KMPlayerCallbackProcess::contrast (int val, bool b) {
+    if (m_backend)
+        m_backend->contrast (val, b);
+    return !!m_backend;
+}
+
 QString KMPlayerCallbackProcess::dcopName () {
     QString cbname;
     cbname.sprintf ("%s/%s", QString (kapp->dcopClient ()->appId ()).ascii (),
@@ -1408,30 +1432,6 @@ KDE_NO_EXPORT void Xine::setStarted (QByteArray & data) {
     //if (!url.isEmpty ())
     //    m_backend->setSubTitleURL (url.isLocalFile () ? url.path () : url.url ());
     m_backend->play ();
-}
-
-KDE_NO_EXPORT bool Xine::saturation (int val, bool) {
-    if (m_backend)
-        m_backend->saturation (65535 * (val + 100) / 200, true);
-    return !!m_backend;
-}
-
-KDE_NO_EXPORT bool Xine::hue (int val, bool) {
-    if (m_backend)
-        m_backend->hue (65535 * (val + 100) / 200, true);
-    return !!m_backend;
-}
-
-KDE_NO_EXPORT bool Xine::brightness (int val, bool) {
-    if (m_backend)
-        m_backend->brightness (65535 * (val + 100) / 200, true);
-    return !!m_backend;
-}
-
-KDE_NO_EXPORT bool Xine::contrast (int val, bool) {
-    if (m_backend)
-        m_backend->contrast (65535 * (val + 100) / 200, true);
-    return !!m_backend;
 }
 
 //-----------------------------------------------------------------------------

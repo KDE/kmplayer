@@ -266,19 +266,19 @@ void KMPlayerBackend::seek (int pos, bool /*absolute*/) {
 }
 
 void KMPlayerBackend::hue (int h, bool) {
-    xineapp->hue (h);
+    xineapp->hue (65535 * (h + 100) / 200);
 }
 
 void KMPlayerBackend::saturation (int s, bool) {
-    xineapp->saturation (s);
+    xineapp->saturation (65535 * (s + 100) / 200);
 }
 
 void KMPlayerBackend::contrast (int c, bool) {
-    xineapp->contrast (c);
+    xineapp->contrast (65535 * (c + 100) / 200);
 }
 
 void KMPlayerBackend::brightness (int b, bool) {
-    xineapp->brightness (b);
+    xineapp->brightness (65535 * (b + 100) / 200);
 }
 
 void KMPlayerBackend::volume (int v, bool) {

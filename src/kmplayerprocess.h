@@ -224,6 +224,10 @@ public:
 public slots:
     bool stop ();
     bool pause ();
+    bool saturation (int pos, bool absolute);
+    bool hue (int pos, bool absolute);
+    bool contrast (int pos, bool absolute);
+    bool brightness (int pos, bool absolute);
 protected:
     KMPlayerCallback * m_callback;
     KMPlayerBackend_stub * m_backend;
@@ -262,10 +266,6 @@ public slots:
     bool play ();
     bool quit ();
     bool seek (int pos, bool absolute);
-    bool saturation (int pos, bool absolute);
-    bool hue (int pos, bool absolute);
-    bool contrast (int pos, bool absolute);
-    bool brightness (int pos, bool absolute);
     void setStarted (QByteArray & data);
 private slots:
     void processStopped (KProcess *);

@@ -136,10 +136,6 @@ public:
 public slots:
     virtual bool play ();
     virtual bool quit ();
-    bool saturation (int pos, bool absolute);
-    bool hue (int pos, bool absolute);
-    bool contrast (int pos, bool absolute);
-    bool brightness (int pos, bool absolute);
 private slots:
     void processStopped (KProcess *);
     void processOutput (KProcess *, char *, int);
