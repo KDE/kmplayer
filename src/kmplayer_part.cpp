@@ -209,6 +209,7 @@ void KMPlayer::init () {
     m_process = 0L;
     m_use_slave = false;
     m_recording = false;
+    m_started_emited = false;
     initProcess ();
     m_urlsource = new KMPlayerURLSource (this);
     m_browserextension = new KMPlayerBrowserExtension (this);

@@ -27,7 +27,8 @@
   </Menu>
 </MenuBar>
 <ActionProperties>
-  <Action name="play" icon="1rightarrow"/>
+  <Action name="new_window" icon="window_new"/>
+  <Action name="play" icon="player_play"/>
   <Action name="pause" icon="player_pause"/>
   <Action name="stop" icon="player_stop"/>
   <Action shortcut="F" name="view_fullscreen" />

@@ -326,8 +326,7 @@ void KMPlayerConfig::show () {
     // postproc
     configdialog->m_OPPagePostproc->postProcessing->setChecked (postprocessing);
     configdialog->m_OPPagePostproc->postProcessing->setChecked (disableppauto);
-    if (postprocessing)
-            configdialog->m_OPPagePostproc->PostprocessingOptions->setEnabled (true);
+    configdialog->m_OPPagePostproc->PostprocessingOptions->setEnabled (postprocessing);
     
     configdialog->m_OPPagePostproc->defaultPreset->setChecked (pp_default);
     configdialog->m_OPPagePostproc->fastPreset->setChecked (pp_fast);

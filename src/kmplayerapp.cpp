@@ -653,7 +653,6 @@ const QString KMPlayerDVDSource::buildArguments () {
 
 QString KMPlayerDVDSource::filterOptions () {
     KMPlayerConfig * configdialog = m_player->configDialog ();
-    QString fops;
     if (!configdialog->disableppauto)
         return KMPlayerSource::filterOptions ();
     return QString ("");
@@ -928,7 +927,6 @@ void KMPlayerTVSource::menuClicked (int id) {
 
 QString KMPlayerTVSource::filterOptions () {
     KMPlayerConfig * configdialog = m_player->configDialog ();
-    QString fops;
     if (!configdialog->disableppauto)
         return KMPlayerSource::filterOptions ();
     return QString ("-vop pp=lb");
