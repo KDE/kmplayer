@@ -35,7 +35,6 @@ email                :
 #include <qslider.h>
 #include <qlabel.h>
 #include <qdatastream.h>
-#include <qdragobject.h>
 
 #include <X11/Xlib.h>
 #include <X11/Intrinsic.h>
@@ -53,6 +52,7 @@ static const int button_height = 11;
 #include <kdebug.h>
 #include <klocale.h>
 #include <kapplication.h>
+#include <kurldrag.h>
 #include <dcopclient.h>
 #include <arts/kartsdispatcher.h>
 #include <arts/soundserver.h>
@@ -356,11 +356,11 @@ KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
 
 void KMPlayerView::dropEvent (QDropEvent * de) {
     KURL url;
-    if (QUriDrag::canDecode (de)) {
-        QStrList sl;
-        QUriDrag::decode (de, sl);
+    if (KURLDrag::canDecode (de)) {
+        KURL::List sl;
+        KURLDrag::decode (de, sl);
         if (sl.count () > 0)
-            url = KURL (sl.at (0));
+            url = sl.first();
     } else if (QTextDrag::canDecode (de)) {
         QString text;
         QTextDrag::decode (de, text);
@@ -373,7 +373,7 @@ void KMPlayerView::dropEvent (QDropEvent * de) {
 }
 
 void KMPlayerView::dragEnterEvent (QDragEnterEvent* dee) {
-    if (QUriDrag::canDecode (dee)) {
+    if (KURLDrag::canDecode (dee)) {
         dee->accept ();
     } else if (QTextDrag::canDecode (dee)) {
         QString text;
