@@ -167,6 +167,8 @@ public:
 
     void setAspect (float a);
     float aspect () { return m_aspect; }
+public slots:
+    void setMouseTracking (bool enable);
 signals:
     void aboutToPlay ();
     void clicked ();

@@ -67,6 +67,7 @@ public:
     virtual ~KMPlayerDVDSource ();
     virtual bool processOutput (const QString & line);
     virtual QString filterOptions ();
+    virtual const KURL & url () const { return m_url; }
 public slots:
     virtual void activate ();
     virtual void deactivate ();
@@ -89,6 +90,7 @@ private:
     QPopupMenu * m_dvdchaptermenu;
     QPopupMenu * m_dvdlanguagemenu;
     QPopupMenu * m_dvdsubtitlemenu;
+    KURL m_url;
     int m_current_title;
     bool m_start_play;
 };

@@ -65,6 +65,7 @@ static Window               wid;
 static int                  screen;
 static int                  completion_event;
 static int                  xpos, ypos, width, height;
+static int                  movie_width, movie_height;
 static double               pixel_aspect;
 
 static int                  running = 0;
@@ -225,7 +226,7 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
         d->window_created = true;
     }
     XSelectInput (display, wid,
-                  (ExposureMask | KeyPressMask | StructureNotifyMask | SubstructureNotifyMask));
+                  (PointerMotionMask | ExposureMask | KeyPressMask | ButtonPressMask | StructureNotifyMask | SubstructureNotifyMask));
 }
 
 KXinePlayer::~KXinePlayer () {
@@ -251,6 +252,8 @@ void KXinePlayer::play () {
     XGetWindowAttributes(display, wid, &attr);
     width = attr.width;
     height = attr.height;
+    movie_width = 0;
+    movie_height = 0;
     printf ("trying lock 1\n");
     mutex.lock ();
     printf ("lock 1\n");
@@ -364,19 +367,18 @@ void KXinePlayer::finished () {
 
 void KXinePlayer::updatePosition () {
     if (!running) return;
-    int h, w, pos, len;
+    int pos, len;
     mutex.lock ();
     xine_get_pos_length (stream, 0, &pos, &len);
     if (firstframe) {
-        w = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_WIDTH);
-        h = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_HEIGHT);
-
+        movie_width = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_WIDTH);
+        movie_height = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_HEIGHT);
     }
     mutex.unlock ();
     if (firstframe) {
-        printf("movieParams %dx%d %d\n", w, h, len/100);
-        if (h > 0)
-            callback->movieParams (len/100, w, h, 1.0*w/h);
+        printf("movieParams %dx%d %d\n", movie_width, movie_height, len/100);
+        if (movie_height > 0)
+            callback->movieParams (len/100, movie_width, movie_height, 1.0*movie_width/movie_height);
         callback->playing ();
     } else {
         callback->moviePosition (pos/100);
@@ -429,6 +431,8 @@ void KXinePlayer::volume (int val) {
     }
 }
 
+//static bool translateCoordinates (int wx, int wy, int mx, int my) {
+//    movie_width
 class XEventThread : public QThread {
 public:
     void run () {
@@ -528,9 +532,48 @@ public:
                         }
                     }
                     break;
+                case MotionNotify:
+                    if (stream) {
+                        XMotionEvent *mev = (XMotionEvent *) &xevent;
+                        x11_rectangle_t rect = { mev->x, mev->y, 0, 0 };
+                        if (xine_gui_send_vo_data (stream, XINE_GUI_SEND_TRANSLATE_GUI_TO_VIDEO, (void*) &rect) == -1)
+                            break;
+                        xine_input_data_t data;
+                        data.x = rect.x;
+                        data.y = rect.y;
+                        data.button = 0;
+                        xine_event_t xine_event =  { 
+                                XINE_EVENT_INPUT_MOUSE_MOVE,
+                                stream, &data, sizeof (xine_input_data_t), 0
+                        };
+                        mutex.lock ();
+                        xine_event_send (stream, &xine_event);
+                        mutex.unlock ();
+                    }
+                    break;
+                case ButtonPress:
+                    if (stream) {
+                        printf("ButtonPress\n");
+                        XButtonEvent *bev = (XButtonEvent *) &xevent;
+                        x11_rectangle_t rect = { bev->x, bev->y, 0, 0 };
+                        if (xine_gui_send_vo_data (stream, XINE_GUI_SEND_TRANSLATE_GUI_TO_VIDEO, (void*) &rect) == -1)
+                            break;
+                        xine_input_data_t data;
+                        data.x = rect.x;
+                        data.y = rect.y;
+                        data.button = 1;
+                        xine_event_t xine_event =  { 
+                                XINE_EVENT_INPUT_MOUSE_BUTTON,
+                                stream, &data, sizeof (xine_input_data_t), 0
+                        };
+                        mutex.lock ();
+                        xine_event_send (stream, &xine_event);
+                        mutex.unlock ();
+                    }
+                    break;
             }
 
-            if(xevent.type == completion_event) 
+            if(xevent.type == completion_event && stream)
                 xine_gui_send_vo_data(stream, XINE_GUI_SEND_COMPLETION_EVENT, &xevent);
         }
     }

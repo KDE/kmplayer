@@ -727,6 +727,23 @@ void KMPlayerViewer::mousePressEvent (QMouseEvent *) {
     emit clicked ();
 }
 
+void KMPlayerViewer::setMouseTracking (bool enable) {
+    if (enable)
+        setWState (WState_MouseTracking);
+    else
+        clearWState (WState_MouseTracking);
+    XSelectInput (qt_xdisplay (), winId (), 
+               KeyPressMask | KeyReleaseMask |
+               ButtonMotionMask |
+               EnterWindowMask | LeaveWindowMask |
+               FocusChangeMask |
+               ExposureMask |
+               PropertyChangeMask |
+               StructureNotifyMask | SubstructureRedirectMask |
+               (enable ? PointerMotionMask : 0)
+              );
+}
+
 void KMPlayerViewer::setAspect (float a) {
     m_aspect = a;
     QWidget * w = static_cast <QWidget *> (parent ());

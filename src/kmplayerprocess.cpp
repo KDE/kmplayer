@@ -559,7 +559,8 @@ bool Xine::play () {
         return true;
     }
     KURL url = m_source->url ();
-    if (!url.isValid ())
+    kdDebug() << "Xine::play (" << url.url() << ")" << endl;
+    if (!url.isValid () && !url.url().startsWith("dvd://"))
         return false;
     m_urls.clear ();
     KMPlayerSettings *settings = m_player->settings ();

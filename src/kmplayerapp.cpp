@@ -737,7 +737,8 @@ void KMPlayerMenuSource::menuItemClicked (QPopupMenu * menu, int id) {
 //-----------------------------------------------------------------------------
 
 KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopupMenu * m)
-    : KMPlayerMenuSource (a, m) {
+    : KMPlayerMenuSource (a, m),
+      m_url ("dvd://") {
     m_menu->insertTearOffHandle ();
     m_dvdtitlemenu = new QPopupMenu (app);
     m_dvdsubtitlemenu = new QPopupMenu (app);
@@ -794,6 +795,11 @@ bool KMPlayerDVDSource::processOutput (const QString & str) {
 }
 
 void KMPlayerDVDSource::activate () {
+    if (m_player->settings ()->urlbackend == QString ("Xine")) {
+        m_player->setProcess (m_player->xine ());
+        QTimer::singleShot (0, m_player, SLOT (play ()));
+        return;
+    }
     m_player->setProcess (m_player->mplayer ());
     m_start_play = m_player->settings ()->playdvd;
     langRegExp.setPattern (m_player->settings ()->langpattern);
@@ -1081,6 +1087,8 @@ KMPlayerTVSource::~KMPlayerTVSource () {
 
 void KMPlayerTVSource::activate () {
     init ();
+    m_player->setProcess (m_player->mplayer ());
+    buildArguments ();
     if (m_player->settings ()->showbroadcastbutton)
         static_cast <KMPlayerView*> (m_player->view())->broadcastButton ()->show ();
 }
@@ -1096,7 +1104,7 @@ const QString KMPlayerTVSource::buildArguments () {
     setWidth (m_tvsource->size.width ());
     setHeight (m_tvsource->size.height ());
     QString args;
-    args.sprintf ("tv://on:noaudio:driver=%s:%s:width=%d:height=%d", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
+    args.sprintf ("tv:// on:noaudio:driver=%s:%s:width=%d:height=%d", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
     if (!app->broadcasting ())
         app->resizePlayer (100);
     m_recordCommand = args;
@@ -1107,7 +1115,6 @@ const QString KMPlayerTVSource::buildArguments () {
 }
 
 void KMPlayerTVSource::play () {
-    m_player->setProcess (m_player->mplayer ());
     m_player->mplayer ()->run ((QString ("-slave -nocache -quiet ") + buildArguments ()).ascii ());
 }
 
