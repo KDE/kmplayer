@@ -360,7 +360,6 @@ KDE_NO_EXPORT bool MPlayer::play (Source * source) {
 
 KDE_NO_EXPORT bool MPlayer::stop () {
     if (!m_source || !m_process || !m_process->isRunning ()) return true;
-    kdDebug () << "MPlayer::stop ()" << kdBacktrace () << endl;
     if (m_use_slave)
         sendCommand (QString ("quit"));
     return MPlayerBase::stop ();

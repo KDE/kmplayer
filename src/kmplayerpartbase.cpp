@@ -224,9 +224,9 @@ void PartBase::setProcess (const char * name) {
                     this, SLOT (loaded (int)));
         disconnect (m_process, SIGNAL (lengthFound (int)),
                     this, SLOT (lengthFound (int)));
+        m_process->quit ();
         disconnect (m_source, SIGNAL (currentURL (Source *)),
                     m_process, SLOT (play (Source *)));
-        m_process->quit ();
     }
     m_process = process;
     if (!process)
