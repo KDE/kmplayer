@@ -374,22 +374,20 @@ void KMPlayerApp::readOptions() {
     if (!size.isEmpty ())
         resize(size);
 
-    // bar status settings
-    bool bViewToolbar = config->readBoolEntry("Show Toolbar", false);
-    viewToolBar->setChecked(bViewToolbar);
-    slotViewToolBar();
-
     // bar position settings
     KToolBar::BarPosition toolBarPos;
     toolBarPos=(KToolBar::BarPosition) config->readNumEntry("ToolBarPos", KToolBar::Top);
     toolBar("mainToolBar")->setBarPos(toolBarPos);
 
+    // bar status settings
+    viewToolBar->setChecked (config->readBoolEntry("Show Toolbar", false));
+    slotViewToolBar();
+
     bool bViewStatusbar = config->readBoolEntry("Show Statusbar", false);
     viewStatusBar->setChecked(bViewStatusbar);
     slotViewStatusBar();
 
-    bool bViewMenubar = config->readBoolEntry("Show Menubar", true);
-    viewMenuBar->setChecked(bViewMenubar);
+    viewMenuBar->setChecked (config->readBoolEntry("Show Menubar", true));
     slotViewMenuBar();
 
     config->setGroup ("Pipe Command");

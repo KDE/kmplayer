@@ -902,6 +902,8 @@ void KMPlayerURLSource::setURL (const KURL & url) {
             KConfig kc (url.path (), true);
             kc.setGroup ("playlist");
             int nr = kc.readNumEntry ("numberofentries", 0);
+            if (nr == 0)
+                nr = kc.readNumEntry ("NumberOfEntries", 0);
             for (int i = 0; i < nr; i++) {
                 QString mrl = kc.readEntry (QString ("File%1").arg(i+1), "");
                 if (!mrl.isEmpty ())
