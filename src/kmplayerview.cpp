@@ -363,11 +363,23 @@ KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
         if (smilroot->w > 0 && smilroot->h > 0) {
             float xscale = 1.0 + 1.0 * (wws - smilroot->w) / smilroot->w;
             float yscale = 1.0 + 1.0 * (hws - smilroot->h) / smilroot->h;
-            rootLayout->x = rootLayout->y = 0;
+            if (m_view->keepSizeRatio ())
+                if (xscale > yscale) {
+                    xscale = yscale;
+                    wws = int ((xscale - 1.0) * smilroot->w + smilroot->w);
+                    x = (w - wws) / 2;
+                } else {
+                    yscale = xscale;
+                    int old_hws = hws;
+                    hws = int ((yscale - 1.0) * smilroot->h + smilroot->h);
+                    y = (old_hws - hws) / 2;
+                }
+            rootLayout->x = x;
+            rootLayout->y = y;
             rootLayout->w = wws;
             rootLayout->h = hws;
             wws = hws = 0;
-            scaleRegions (rootLayout, xscale, yscale, 0, 0, x, y, wws, hws);
+            scaleRegions (rootLayout, xscale, yscale, x, y, x, y, wws, hws);
         }
     }
     // scale video widget inside region
