@@ -61,6 +61,7 @@ static const int button_height = 11;
 #include <klocale.h>
 #include <kapplication.h>
 #include <kurldrag.h>
+#include <kpopupmenu.h>
 #include <dcopclient.h>
 #ifdef USE_ARTS
 #include <arts/kartsdispatcher.h>
@@ -458,6 +459,8 @@ void KMPlayerView::init () {
     m_playerMenu->setEnabled (false);
     m_popupMenu->insertItem (i18n ("&Play with"), m_playerMenu, menu_player);
     m_popupMenu->setItemVisible (menu_player, false);
+    m_bookmarkMenu = new KPopupMenu (m_layer);
+    m_popupMenu->insertItem (i18n("&Bookmarks"), m_bookmarkMenu, menu_bookmark);
     m_zoomMenu = new QPopupMenu (m_layer);
     m_zoomMenu->insertItem (i18n ("50%"), menu_zoom50);
     m_zoomMenu->insertItem (i18n ("100%"), menu_zoom100);

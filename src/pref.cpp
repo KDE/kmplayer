@@ -59,7 +59,7 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
 	QVBoxLayout *vlay;
 
 
-	hierarchy << i18n("General") << i18n("General");
+	hierarchy << i18n("General");
 	frame = addPage(hierarchy, i18n("General Options"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 
@@ -67,7 +67,7 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
 	vlay->addWidget(m_GeneralPageGeneral);
 
 	hierarchy.clear();
-	hierarchy << i18n ("Source") << i18n ("URL");
+	hierarchy << i18n ("Source");
 	frame = addPage (hierarchy, i18n ("URL"));
 	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
 	m_SourcePageURL = new KMPlayerPrefSourcePageURL (frame);
@@ -96,14 +96,14 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
 	vlay->addWidget (m_SourcePageTV);
 
 	hierarchy.clear();
-	hierarchy << i18n ("Recording") << i18n ("General");
+	hierarchy << i18n ("Recording");
 	frame = addPage (hierarchy, i18n ("Recording"));
 	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
 	m_RecordPage = new KMPlayerPrefRecordPage (frame, player);
 	vlay->addWidget (m_RecordPage);
 
 	hierarchy.clear();
-	hierarchy << i18n ("Broadcasting") << i18n ("General");
+	hierarchy << i18n ("Broadcasting");
 	frame = addPage (hierarchy, i18n ("Broadcasting (ffserver)"));
 	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
 	m_BroadcastPage = new KMPlayerPrefBroadcastPage (frame, ffs);

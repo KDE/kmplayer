@@ -22,6 +22,7 @@
 #include <kmediaplayer/player.h>
 #include <kparts/browserextension.h>
 #include <kparts/factory.h>
+#include <kbookmarkmanager.h>
 #include <kurl.h>
 #include <qobject.h>
 #include <qvaluelist.h>
@@ -36,6 +37,7 @@ class KAboutData;
 class KMPlayer;
 class KMPlayerProcess;
 class MPlayer;
+class KMPlayerBookmarkOwner;
 class MEncoder;
 class Xine;
 class KMPlayerSettings;
@@ -44,6 +46,13 @@ class KConfig;
 class QIODevice;
 class JSCommandEntry;
 
+
+class KMPlayerBookmarkManager : public KBookmarkManager {
+    Q_OBJECT
+public:
+    KMPlayerBookmarkManager();
+
+};
 
 class KMPlayerURLSource : public KMPlayerSource {
     Q_OBJECT
@@ -143,6 +152,8 @@ protected:
     MEncoder * m_mencoder;
     Xine * m_xine;
     KMPlayerURLSource * m_urlsource;
+    KMPlayerBookmarkManager * m_bookmark_manager;
+    KMPlayerBookmarkOwner * m_bookmark_owner;
     bool m_autoplay : 1;
     bool m_ispart : 1;
     bool m_noresize : 1;

@@ -32,14 +32,45 @@
 #include <kmessagebox.h>
 #include <kaboutdata.h>
 #include <kdebug.h>
+#include <kbookmarkmenu.h>
 #include <kconfig.h>
 #include <kaction.h>
 #include <kprocess.h>
+#include <kstandarddirs.h>
 
 #include "kmplayerpartbase.h"
 #include "kmplayerview.h"
 #include "kmplayerconfig.h"
 #include "kmplayerprocess.h"
+
+class KMPlayerBookmarkOwner : public KBookmarkOwner {
+public:
+    KMPlayerBookmarkOwner (KMPlayer *);
+    virtual void openBookmarkURL(const QString& _url);
+    virtual QString currentTitle() const;
+    virtual QString currentURL() const;
+private:
+    KMPlayer * m_player;
+};
+
+KMPlayerBookmarkOwner::KMPlayerBookmarkOwner (KMPlayer * player)
+    : m_player (player) {}
+
+void KMPlayerBookmarkOwner::openBookmarkURL (const QString & url) {
+    m_player->openURL (KURL (url));
+}
+
+QString KMPlayerBookmarkOwner::currentTitle () const {
+    return m_player->process ()->source ()->url ().url ();
+}
+
+QString KMPlayerBookmarkOwner::currentURL () const {
+    return m_player->process ()->source ()->url ().url ();
+}
+
+KMPlayerBookmarkManager::KMPlayerBookmarkManager()
+  : KBookmarkManager (locateLocal ("data", "kmplayer/bookmarks.xml"), false) {
+}
 
 KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
                     QObject * parent, const char *name, KConfig * config)
@@ -52,6 +83,8 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
    m_mencoder (new MEncoder (this)),
    m_xine (new Xine (this)),
    m_urlsource (new KMPlayerURLSource (this)),
+   m_bookmark_manager (new KMPlayerBookmarkManager),
+   m_bookmark_owner (new KMPlayerBookmarkOwner (this)),
    m_autoplay (true),
    m_ispart (false),
    m_noresize (false) {
@@ -64,6 +97,8 @@ void KMPlayer::showConfigDialog () {
 void KMPlayer::init () {
     m_view->init ();
     m_settings->readConfig ();
+    new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner,
+                       m_view->bookmarkMenu (), 0L, true, true);
     setProcess (m_mplayer);
     m_bPosSliderPressed = false;
     m_view->contrastSlider ()->setValue (m_settings->contrast);
@@ -98,6 +133,8 @@ KMPlayer::~KMPlayer () {
     m_view = (KMPlayerView*) 0;
     stop ();
     delete m_settings;
+    delete m_bookmark_manager;
+    delete m_bookmark_owner;
 }
 
 KMediaPlayer::View* KMPlayer::view () {
