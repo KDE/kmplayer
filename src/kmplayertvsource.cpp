@@ -285,7 +285,6 @@ KDE_NO_EXPORT void KMPlayerTVSource::getCurrent () {
         return;
     m_cur_tvdevice = input->parentNode ();
     TVDevice * tvdevice = KMPlayer::convertNode <TVDevice> (m_cur_tvdevice);
-    bool playing = (old_dev == tvdevice->src) && m_player->playing ();
     m_identified = true;
     m_audiodevice = tvdevice->audiodevice;
     m_videodevice = tvdevice->src;

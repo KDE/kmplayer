@@ -269,12 +269,6 @@ struct KMPLAYER_EXPORT ConfigNode : public Element {
     ConfigNode (ElementPtr d);
     KDE_NO_CDTOR_EXPORT ~ConfigNode () {}
     ElementPtr childFromTag (const QString & tag);
-    void opened ();
-    QString name;
-    QString value;
-    QString type;
-    int range_begin;
-    int range_end;
     QWidget * w;
 };
 

@@ -1167,31 +1167,11 @@ ElementPtr SomeNode::childFromTag (const QString & t) {
     return (new SomeNode (m_doc, t))->self ();
 }
 
-void ConfigNode::opened () {
-    const char * ctype;
-    for (ElementPtr a = attributes (); a; a = a->nextSibling ()) {
-        Attribute * attribute = convertNode <Attribute> (a);
-        const char * attr = attribute->name.ascii ();
-        if (!strcmp (attr, "NAME"))
-            name = attribute->value;
-        else if (!strcmp (attr, "TYPE")) {
-            type = attribute->value;
-            ctype = type.ascii ();
-        } else if (!strcmp (attr, "VALUE"))
-            value = attribute->value;
-        else if (!strcmp (attr, "START"))
-            range_begin = attribute->value.toInt ();
-        else if (!strcmp (attr, "END"))
-            range_end = attribute->value.toInt ();
-        else if (strcmp (attr, "DEFAULT"))
-            kdDebug() << "Unknown attr:" << attr <<"="<< attribute->value<<endl;
-    }
-}
-
 QWidget * TypeNode::createWidget (QWidget * parent) {
-    const char * ctype = type.ascii ();
+    const char * ctype = getAttribute (QString ("TYPE")).ascii ();
+    QString value = getAttribute (QString ("VALUE"));
     if (!strcmp (ctype, "range")) {
-        w = new QSlider (range_begin, range_end, 1, value.toInt (), Qt::Horizontal, parent);
+        w = new QSlider (getAttribute (QString ("START")).toInt (), getAttribute (QString ("END")).toInt (), 1, value.toInt (), Qt::Horizontal, parent);
     } else if (!strcmp (ctype, "num") || !strcmp (ctype,  "string")) {
         w = new QLineEdit (value, parent);
     } else if (!strcmp (ctype, "bool")) {
@@ -1202,7 +1182,7 @@ QWidget * TypeNode::createWidget (QWidget * parent) {
         QComboBox * combo = new QComboBox (parent);
         for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
             if (!strcmp (e->nodeName (), "item"))
-                combo->insertItem (convertNode <ConfigNode> (e)->value);
+                combo->insertItem (e->getAttribute (QString ("VALUE")));
         combo->setCurrentItem (value.toInt ());
         w = combo;
     } else if (!strcmp (ctype, "tree")) {
@@ -1216,7 +1196,8 @@ void TypeNode::closed () {
 
 void TypeNode::changedXML (QTextStream & out) {
     if (!w) return;
-    const char * ctype = type.ascii ();
+    const char * ctype = getAttribute (QString ("TYPE")).ascii ();
+    QString value = getAttribute (QString ("VALUE"));
     QString newvalue;
     if (!strcmp (ctype, "range")) {
         newvalue = QString::number (static_cast <QSlider *> (w)->value ());
@@ -1231,11 +1212,7 @@ void TypeNode::changedXML (QTextStream & out) {
         kdDebug() << "Unknown type:" << ctype << endl;
     if (value != newvalue) {
         value = newvalue;
-        for (ElementPtr a = attributes (); a; a = a->nextSibling ()) {
-            Attribute * attribute = convertNode <Attribute> (a);
-            if (!strcmp (attribute->name.ascii (), "VALUE"))
-                attribute->value = newvalue;
-        }
+        setAttribute (QString ("VALUE"), newvalue);
         out << outerXML ();
     }
 }
@@ -1322,12 +1299,9 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
                 kdDebug () << "No valid data" << endl;
                 return;
             }
-            int length = 0;
-            for (ElementPtr e = elm->firstChild (); e; e = e->nextSibling ())
-                length++;
             // set up the table fields
             table->setNumCols (2);
-            table->setNumRows (length);
+            table->setNumRows (elm->childNodes ().length ());
             table->verticalHeader ()->hide ();
             table->setLeftMargin (0);
             table->horizontalHeader ()->hide ();
@@ -1336,8 +1310,9 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
             QFontMetrics metrics (table->font ());
             for (elm=elm->firstChild (); elm; elm=elm->nextSibling (), row++) {
                 TypeNode * tn = convertNode <TypeNode> (elm);
-                m_configframe->table->setText (row, 0, tn->name);
-                int strwid = metrics.boundingRect (tn->name).width ();
+                QString name = tn->getAttribute (QString ("NAME"));
+                m_configframe->table->setText (row, 0, name);
+                int strwid = metrics.boundingRect (name).width ();
                 if (strwid > first_column_width)
                     first_column_width = strwid + 4;
                 QWidget * w = tn->createWidget (table->viewport ());
@@ -1345,7 +1320,7 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
                     table->setCellWidget (row, 1, w);
                     QWhatsThis::add (w, elm->innerText ());
                 } else
-                    kdDebug () << "No widget for " << tn->name;
+                    kdDebug () << "No widget for " << name;
             }
             table->setColumnWidth (0, first_column_width);
             table->setColumnStretchable (1, true);

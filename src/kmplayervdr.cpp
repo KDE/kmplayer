@@ -606,32 +606,20 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
                 delete i;
             ElementPtr elm = configdoc->firstChild ();
             for (elm = elm->firstChild (); elm; elm = elm->nextSibling ()) {
-                if (convertNode <TypeNode> (elm)->type != QString ("tree"))
+                if (elm->getAttribute (QString ("TYPE")) != QString ("tree"))
                     continue;
                 for (ElementPtr e=elm->firstChild (); e; e=e->nextSibling ()) {
                     if (strcmp (e->nodeName (), "Port"))
                         continue;
-                    QString portatt;
+                    QString portatt = e->getAttribute (QString ("VALUE"));
                     int port;
-                    for (ElementPtr a=e->attributes (); a; a=a->nextSibling()) {
-                        Attribute * attribute = convertNode <Attribute> (a);
-                        if (!strcmp (attribute->name.ascii (), "VALUE"))
-                            portatt = attribute->value;
-                    }
                     QListViewItem *pi = new QListViewItem (vitem, i18n ("Port ") + portatt);
                     port = portatt.toInt ();
                     for (ElementPtr i=e->firstChild(); i; i=i->nextSibling()) {
                         if (strcmp (i->nodeName (), "Input"))
                             continue;
-                        QString inp;
-                        int enc;
-                        for (ElementPtr a=i->attributes();a;a=a->nextSibling()){
-                            Attribute * attribute = convertNode <Attribute> (a);
-                            if (!strcmp (attribute->name.ascii (), "NAME"))
-                                inp = attribute->value;
-                            else if (!strcmp (attribute->name.ascii(), "VALUE"))
-                                enc = attribute->value.toInt ();
-                        }
+                        QString inp = i->getAttribute (QString ("NAME"));
+                        int enc = i->getAttribute (QString ("VALUE")).toInt ();
                         QListViewItem * ii = new XVTreeItem(pi, inp, port, enc);
                         if (m_xvport == port && enc == m_xvencoding) {
                             ii->setSelected (true);

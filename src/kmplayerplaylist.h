@@ -63,6 +63,15 @@ class Mrl;
 typedef SharedPtr<Element> ElementPtr;
 typedef WeakPtr<Element> ElementPtrW;
 
+class NodeList {
+    ElementPtrW first_element;
+public:
+    NodeList (ElementPtr e) : first_element (e) {}
+    ~NodeList () {}
+    int length ();
+    ElementPtr item (int i);
+};
+
 class KMPLAYER_EXPORT Element {
 public:
     virtual ~Element ();
@@ -112,7 +121,10 @@ public:
     KDE_NO_EXPORT ElementPtr lastChild () const { return m_last_child; }
     KDE_NO_EXPORT ElementPtr nextSibling () const { return m_next; }
     KDE_NO_EXPORT ElementPtr previousSibling () const { return m_prev; }
-    KDE_NO_EXPORT ElementPtr attributes () const { return m_first_attribute; }
+    KDE_NO_EXPORT NodeList attributes () const { return m_first_attribute; }
+    KDE_NO_EXPORT NodeList childNodes () const { return m_first_child; }
+    void setAttribute (const QString & name, const QString & value);
+    QString getAttribute (const QString & name);
     /**
      * If not assigned to a Shared pointer, this will result in self destruction
      */

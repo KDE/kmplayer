@@ -85,6 +85,25 @@ QTextStream & operator << (QTextStream & out, const XMLStringlet & txt) {
 }
 //-----------------------------------------------------------------------------
 
+int NodeList::length () {
+    int len = 0;
+    for (ElementPtr e = first_element; e; e = e->nextSibling ())
+        len++;
+    return len;
+}
+
+ElementPtr NodeList::item (int i) {
+    ElementPtr elm;
+    for (ElementPtr e = first_element; e; e = e->nextSibling (), i--)
+        if (i == 0) {
+            elm = e;
+            break;
+        }
+    return elm;
+}
+    
+//-----------------------------------------------------------------------------
+
 Element::~Element () {
     clear ();
 }
@@ -233,7 +252,7 @@ static void getOuterXML (const ElementPtr p, QTextOStream & out) {
         out << XMLStringlet (convertNode <TextNode> (p)->text);
     else {
         out << QChar ('<') << XMLStringlet (p->nodeName ());
-        for (ElementPtr a = p->attributes (); a; a = a->nextSibling ()) {
+        for (ElementPtr a = p->attributes().item (0); a; a = a->nextSibling()) {
             Attribute * attribute = convertNode <Attribute> (a);
             out << " " << XMLStringlet (attribute->name) << "=\"" << XMLStringlet (attribute->value) << "\"";
         }
@@ -250,9 +269,8 @@ static void getOuterXML (const ElementPtr p, QTextOStream & out) {
 QString Element::innerXML () const {
     QString buf;
     QTextOStream out (&buf);
-    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
         getOuterXML (e, out);
-    }
     return buf;
 }
 
@@ -289,6 +307,32 @@ bool Element::isMrl () {
 void Element::opened () {}
 
 void Element::closed () {}
+
+void Element::setAttribute (const QString & name, const QString & value) {
+    ElementPtr last_attribute;
+    for (ElementPtr e = m_first_attribute; e; e = e->nextSibling ()) {
+        if (convertNode <Attribute> (e)->name == name) {
+            convertNode <Attribute> (e)->value = value;
+            return;
+        }
+        last_attribute = e;
+    }
+    if (last_attribute) {
+        last_attribute->m_next = (new Attribute (m_doc, name, value))->self ();
+        last_attribute->m_next->m_prev = last_attribute;
+    } else
+        last_attribute = (new Attribute (m_doc, name, value))->self ();
+}
+
+QString Element::getAttribute (const QString & name) {
+    QString value;
+    for (ElementPtr e = m_first_attribute; e; e = e->nextSibling ())
+        if (convertNode <Attribute> (e)->name == name) {
+            value = convertNode <Attribute> (e)->value;
+            break;
+        }
+    return value;
+}
 
 Attribute::Attribute (ElementPtr d, const QString & n, const QString & v)
   : Element (d), name (n), value (v) {}
@@ -438,7 +482,7 @@ KDE_NO_EXPORT ElementPtr MediaType::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void MediaType::opened () {
-    for (ElementPtr a = attributes (); a; a = a->nextSibling ()) {
+    for (ElementPtr a = m_first_attribute; a; a = a->nextSibling ()) {
         Attribute * attribute = convertNode <Attribute> (a);
         const char * cname = attribute->name.latin1 ();
         if (!strcmp (cname, "system-bitrate"))
@@ -513,7 +557,7 @@ KDE_NO_EXPORT ElementPtr Entry::realMrl () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT void Ref::opened () {
-    for (ElementPtr a = attributes (); a; a = a->nextSibling ()) {
+    for (ElementPtr a = m_first_attribute; a; a = a->nextSibling ()) {
         Attribute * attribute = convertNode <Attribute> (a);
         if (!strcasecmp (attribute->name.latin1(), "href"))
             src = attribute->value;
@@ -527,7 +571,7 @@ KDE_NO_EXPORT void Ref::opened () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT void EntryRef::opened () {
-    for (ElementPtr a = attributes (); a; a = a->nextSibling ()) {
+    for (ElementPtr a = m_first_attribute; a; a = a->nextSibling ()) {
         Attribute * attribute = convertNode <Attribute> (a);
         if (!strcasecmp (attribute->name.latin1(), "href"))
             src = attribute->value;
