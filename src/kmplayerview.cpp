@@ -633,6 +633,8 @@ void KMPlayerView::fullScreen () {
                 m_sreensaver_disabled = kapp->dcopClient()->send
                     ("kdesktop", "KScreensaverIface", "enable(bool)", "false");
         }
+        if (m_keepsizeratio && m_viewer->aspect () < 0.01)
+            m_viewer->setAspect (1.0 * m_viewer->width() / m_viewer->height());
         m_layer->fullScreen();
     } else {
         if (m_sreensaver_disabled)
