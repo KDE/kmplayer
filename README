@@ -1,10 +1,14 @@
 KMPlayer, a simple frontend for MPlayer.
-It can play DVD/VCD movies and from file or url. 
+It can play DVD/VCD movies, from file or url and from a video device. 
 If setup right, KMPlayer can embed inside konqueror. Which means if you click
 on a movie file, the movie is played inside konqueror.
 It can also embed inside khtml, enabling movie playback inside a html page.
+Movie recording using mencoder (part of the mplayer package). No video during recording, but you can always open a new window and play it there.
+Broadcasting, http streaming, by using ffserver/ffmpeg. For TV sources, you need v4lctl (part of the xawtv package).
 
-KMPlayer needs KDE3.1 and a working mplayer somewhere in you PATH.
+KMPlayer needs KDE3.1 and a working mplayer/mencoder somewhere in you PATH.
+Additonally, for broadcasting, ffserver/ffmpeg/v4lctl also.
+Unless you reconfigure kmplayer, both mplayer and ffmpeg should be compiled with liblame for mp3.
 
 Quickly installing MPlayer
 Download the sources from http://www.mplayerhq.hu/homepage/.
@@ -20,8 +24,9 @@ Copy the files, from the mplayer sources, etc/codecs.conf and etc/example.conf a
 ('cp etc/codecs.conf ~/.mplayer; cp etc/example.conf ~/.mplayer/config').
 Next change ~/.mplayer/config with an editor and change the video driver (vo=xv) and audio driver (ao=arts) and remove the last line.
 
-Quickly installing KMPlayer
-Untar the source package, run './configure' and 'make'. Install as root 'su -c "make install"'.
+Quickly installing ffmpeg/ffserver
+Download the sources from http://ffmpeg.sourceforge.net/. If the current version is 0.4.6, I recommend using a more recent CVS snapshot because it uses less CPU when grabbing a TV device.
+Untar the source package, run './configure --enable-mp3lame' and 'make'. Install as root 'su -c "make install"'.
 
 KMPlayer doesn't work with all the video drivers that mplayer supports. 
 I tested only xv (X Video Extension) and x11 (Image/Shm). If none work, you 

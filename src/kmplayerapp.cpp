@@ -1046,7 +1046,8 @@ const QString KMPlayerTVSource::buildArguments () {
     setHeight (m_tvsource->size.height ());
     QString args;
     args.sprintf ("-tv on:noaudio:driver=%s:%s:width=%d:height=%d", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
-    app->resizePlayer (100);
+    if (!app->broadcasting ())
+        app->resizePlayer (100);
     m_recordCommand = args;
     m_ffmpegCommand = QString (" -vd ") + m_tvsource->videodevice;
     if (!m_tvsource->audiodevice.isEmpty ())
