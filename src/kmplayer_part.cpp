@@ -277,12 +277,15 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
             cp->m_recorders = vp->m_recorders;
             cp->setProcess (0L); // in case this one timed-out
             cp->setProcess (vp->process()->name());
+            cp->updatePlayerMenu ();
             cp->setRecorder (0L);
             cp->setRecorder (vp->recorder()->name());
             connect (vp, SIGNAL (destroyed (QObject *)),
                     cp, SLOT (viewerPartDestroyed (QObject *)));
             connect (vp, SIGNAL (processChanged (const char *)),
                     cp, SLOT (viewerPartProcessChanged (const char *)));
+            connect (vp, SIGNAL (sourceChanged (KMPlayer::Source *)),
+                    cp, SLOT (viewerPartSourceChanged (KMPlayer::Source *)));
         }
         kmplayerpart_static->partlist.push_back (this);
     } else
@@ -314,6 +317,7 @@ KDE_NO_EXPORT void KMPlayerPart::viewerPartDestroyed (QObject *) {
     m_recorders = m_old_recorders;
     m_process = m_recorder = 0L;
     setProcess ("mplayer");
+    updatePlayerMenu ();
     setRecorder ("mencoder");
 }
 
@@ -321,6 +325,11 @@ KDE_NO_EXPORT void KMPlayerPart::viewerPartProcessChanged (const char * pname) {
     setProcess (0L); // make sure to disconnect to signals
     setRecorder (0L);
     setProcess (pname);
+    updatePlayerMenu ();
+}
+
+KDE_NO_EXPORT void KMPlayerPart::viewerPartSourceChanged (Source *) {
+    updatePlayerMenu ();
 }
 
 KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
@@ -401,7 +410,10 @@ KDE_NO_EXPORT void KMPlayerPart::waitForImageWindowTimeOut () {
                     this, SLOT (viewerPartDestroyed (QObject *)));
             connect (*i, SIGNAL (processChanged (const char *)),
                     this, SLOT (viewerPartProcessChanged (const char *)));
+            connect (*i, SIGNAL (sourceChanged (KMPlayer::Source *)),
+                    this, SLOT (viewerPartSourceChanged (KMPlayer::Source *)));
         }
+        updatePlayerMenu ();
     }
 }
 

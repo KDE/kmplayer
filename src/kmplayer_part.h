@@ -131,6 +131,7 @@ protected slots:
     virtual void loaded (int percentage);
     void viewerPartDestroyed (QObject *);
     void viewerPartProcessChanged (const char *);
+    void viewerPartSourceChanged (KMPlayer::Source *);
     void waitForImageWindowTimeOut ();
 private:
     KMPlayerBrowserExtension * m_browserextension;

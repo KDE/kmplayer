@@ -267,37 +267,40 @@ extern const char * strGeneralGroup;
 
 KDE_NO_EXPORT void PartBase::slotPlayerMenu (int id) {
     bool playing = m_process->playing ();
-    const char * src = m_source->name ();
+    const char * srcname = m_process->player ()->source ()->name ();
     QPopupMenu * menu = m_view->buttonBar ()->playerMenu ();
     ProcessMap::const_iterator pi = m_players.begin(), e = m_players.end();
     unsigned i = 0;
     for (; pi != e && i < menu->count(); ++pi) {
         Process * proc = pi.data ();
-        if (!proc->supports (src))
+        if (!proc->supports (srcname))
             continue;
         int menuid = menu->idAt (i);
         menu->setItemChecked (menuid, menuid == id);
         if (menuid == id) {
-            m_settings->backends [src] = proc->name ();
+            m_process->player()->settings()->backends [srcname] = proc->name ();
             if (playing && strcmp (m_process->name (), proc->name ()))
-                m_process->stop ();
-            setProcess (proc->name ());
+                m_process->quit ();
+            m_process->player ()->setProcess (proc->name ());
         }
         ++i;
     }
     if (playing)
-        setSource (m_source); // re-activate
+        m_process->player ()->setSource (m_process->player ()->source ()); // re-activate
 }
 
 void PartBase::updatePlayerMenu () {
-    if (!m_view || !m_process || !m_source)
+    if (!m_view || !m_process)
         return;
     QPopupMenu * menu = m_view->buttonBar ()->playerMenu ();
     menu->clear ();
+    Source * src = m_process->player() == this ? m_source : m_process->source();
+    if (!src)
+        return;
     const ProcessMap::const_iterator e = m_players.end();
     for (ProcessMap::const_iterator i = m_players.begin(); i != e; ++i) {
         Process * p = i.data ();
-        if (p->supports (m_source->name ())) {
+        if (p->supports (src->name ())) {
             int id = menu->insertItem (p->menuName (), this, SLOT (slotPlayerMenu (int)));
             if (i.data() == m_process)
                 menu->setItemChecked (id, true);
@@ -376,7 +379,7 @@ bool PartBase::hasLength () const {
 unsigned long PartBase::length () const {
     return m_source->length ();
 }
-            
+
 bool PartBase::openURL (const KURL & url) {
     kdDebug () << "PartBase::openURL " << url.url() << url.isValid () << endl;
     if (!m_view || url.isEmpty ()) return false;
@@ -1187,11 +1190,10 @@ void URLSource::getCurrent () {
                 return;
             }
             if (mimestr.isEmpty ()) {
-                KMimeType::Ptr mime = KMimeType::findByURL (url);
-                if (mime) {
-                    mimestr = mime->name ();
-                    setMime (mimestr);
-                    maybe_playlist = isPlayListMime (mimestr);
+                KMimeType::Ptr mimeptr = KMimeType::findByURL (url);
+                if (mimeptr) {
+                    setMime (mimeptr->name ());
+                    maybe_playlist = isPlayListMime (mime ()); // get new mime
                 }
             }
             if (maybe_playlist && file.size () < 50000 && file.open (IO_ReadOnly)) {

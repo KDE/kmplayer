@@ -922,8 +922,7 @@ CallbackProcess::CallbackProcess (PartBase * player, const char * n, const QStri
    m_configpage (new XMLPreferencesPage (this)),
    in_gui_update (false),
    m_have_config (config_unknown),
-   m_send_config (send_no),
-   m_status (status_stop) {
+   m_send_config (send_no) {
 }
 
 CallbackProcess::~CallbackProcess () {
@@ -950,17 +949,14 @@ void CallbackProcess::setErrorMessage (int code, const QString & msg) {
 }
 
 void CallbackProcess::setFinished () {
-    m_status = status_stop;
     setState (Ready);
 }
 
 void CallbackProcess::setPlaying () {
-    m_status = status_play;
     setState (Playing);
 }
 
 void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
-    m_status = status_start;
     if (data.size ())
         m_configdata = data;
     kdDebug () << "up and running " << dcopname << endl;
