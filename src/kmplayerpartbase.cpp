@@ -1082,64 +1082,65 @@ KDE_NO_EXPORT void URLSource::init () {
 }
 
 int URLSource::width () {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    return mrl ? mrl->width : 0;
+    if (m_document && m_document->document ()->rootLayout) {
+        Mrl * mrl = m_current ? m_current->mrl () : 0L;
+        return mrl ? mrl->width : 0;
+    } else
+        return Source::width ();
 }
 
 int URLSource::height () {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    return mrl ? mrl->height : 0;
+    if (m_document && m_document->document ()->rootLayout) {
+        Mrl * mrl = m_current ? m_current->mrl () : 0L;
+        return mrl ? mrl->height : 0;
+    } else
+        return Source::height ();
 }
 
 float URLSource::aspect () {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    return mrl ? mrl->aspect : 0.0;
+    if (m_document && m_document->document ()->rootLayout) {
+        Mrl * mrl = m_current ? m_current->mrl () : 0L;
+        return mrl ? mrl->aspect : 0.0;
+    } else
+        return Source::aspect ();
 }
 
 void URLSource::dimensions (int & w, int & h) {
     if (!m_player->mayResize () && m_player->view ()) {
         w = m_player->process ()->view ()->viewer ()->width ();
         h = m_player->process ()->view ()->viewer ()->height ();
-    } else {
-        ElementPtr doc = m_document;
-        if (doc) {
-            RegionNodePtr rl = doc->document ()->rootLayout;
-            if (rl) {
-                RegionBase *root = convertNode <RegionBase> (rl->regionElement);
-                if (root) {
-                    w = root->w;
-                    h = root->h;
-                    if (w && h)
-                        return;
-                }
-                w = rl->w;
-                h = rl->h;
-                if (w && h)
-                    return;
-            }
-            Mrl *mrl = m_current ? m_current->mrl () : 0L;
-            if (mrl) {
-                w = mrl->width;
-                h = mrl->height;
-                if (w && h)
-                    return;
-            }
+    } else if (m_document && m_document->document ()->rootLayout) {
+        RegionNodePtr rl = m_document->document ()->rootLayout;
+        RegionBase *root = convertNode <RegionBase> (rl->regionElement);
+        if (root) {
+            w = root->w;
+            h = root->h;
+            if (w && h)
+                return;
         }
-        w = width ();
-        h = height ();
-    }
+        w = rl->w;
+        h = rl->h;
+    } else
+        Source::dimensions (w, h);
+    
 }
 
 void URLSource::setWidth (int w) {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    if (mrl)
-        mrl->width = w;
+    if (m_document && m_document->document ()->rootLayout) {
+        Mrl * mrl = m_current ? m_current->mrl () : 0L;
+        if (mrl)
+            mrl->width = w;
+    } else
+        Source::setWidth (w);
 }
 
 void URLSource::setHeight (int w) {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    if (mrl)
-        mrl->height = w;
+    if (m_document && m_document->document ()->rootLayout) {
+        Mrl * mrl = m_current ? m_current->mrl () : 0L;
+        if (mrl)
+            mrl->height = w;
+    } else
+        Source::setHeight (w);
 }
 
 void URLSource::setDimensions (int w, int h) {
@@ -1160,9 +1161,12 @@ void URLSource::setDimensions (int w, int h) {
 }
 
 void URLSource::setAspect (float w) {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    if (mrl)
-        mrl->aspect = w;
+    if (m_document && m_document->document ()->rootLayout) {
+        Mrl * mrl = m_current ? m_current->mrl () : 0L;
+        if (mrl)
+            mrl->aspect = w;
+    } else
+        Source::setAspect (w);
 }
 
 KDE_NO_EXPORT bool URLSource::hasLength () {
