@@ -254,7 +254,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                                       this, SLOT (setMenuZoom (int)));
 
     if (m_features & (Feat_Controls | Feat_VolumeSlider))
-        m_view->setControlPanelMode (KMPlayer::View::CP_Show);
+        m_view->setControlPanelMode (m_features & Feat_Viewer ? KMPlayer::View::CP_Show : KMPlayer::View::CP_Only);
     else if (m_features != Feat_Unknown)
         m_view->setControlPanelMode (KMPlayer::View::CP_Hide);
     else

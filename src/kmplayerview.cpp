@@ -300,11 +300,11 @@ KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
     int x =0, y = 0;
     int w = width ();
     int h = height ();
-    int hcp = m_view->controlPanel ()->isVisible () ? m_view->controlPanel ()->maximumSize ().height () : 0;
+    int hcp = m_view->controlPanel ()->isVisible () ? (m_view->controlPanelMode () == View::CP_Only ? h : m_view->controlPanel()->maximumSize ().height ()) : 0;
     int wws = w;
     // move controlpanel over video when autohiding and playing
     int hws = h - (m_view->controlPanelMode () == View::CP_AutoHide && m_view->widgetStack ()->visibleWidget () == m_view->viewer () ? 0 : hcp);
-    if (m_view->keepSizeRatio ()) {
+    if (m_view->keepSizeRatio() && m_view->controlPanelMode() != View::CP_Only){
         int hfw = m_view->viewer ()->heightForWidth (w);
         if (hfw > 0)
             if (hfw > hws) {
@@ -986,7 +986,7 @@ void View::setControlPanelMode (ControlPanelMode m) {
     if (m_playing && isFullScreen())
         m_controlpanel_mode = CP_AutoHide;
     if (m_control_panel)
-        if (m_controlpanel_mode == CP_Show)
+        if (m_controlpanel_mode == CP_Show || m_controlpanel_mode == CP_Only)
             m_control_panel->show ();
         else if (m_controlpanel_mode == CP_AutoHide) { 
             if (m_playing)
@@ -1018,6 +1018,8 @@ KDE_NO_EXPORT void View::setVolume (int vol) {
 }
 
 KDE_NO_EXPORT void  View::updateLayout () {
+    if (m_controlpanel_mode == CP_Only)
+        m_control_panel->setMaximumSize (2500, height ());
     m_layer->resizeEvent (0l);
 }
 

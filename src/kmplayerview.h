@@ -134,7 +134,7 @@ class KMPLAYER_EXPORT View : public KMediaPlayer::View {
     friend class KMPlayerPictureWidget;
 public:
     enum ControlPanelMode {
-        CP_Hide, CP_AutoHide, CP_Show
+        CP_Hide, CP_AutoHide, CP_Show, CP_Only /* no video widget */
     };
     enum WidgetType {
         WT_Video, WT_Console, WT_Picture, WT_Last
@@ -163,12 +163,12 @@ public:
     void delayedShowButtons (bool show);
     bool isFullScreen () const;
     bool setPicture (const QString & path);
-    QPixmap * image () const { return m_image; }
-    bool playing () const { return m_playing; }
+    KDE_NO_EXPORT QPixmap * image () const { return m_image; }
+    KDE_NO_EXPORT bool videoStarted () const { return m_playing; }
 public slots:
     /* raise video widget, might (auto) hides panel */
     void videoStart ();
-    /* might raise console widget, shows panel */
+    /* shows panel */
     void videoStop ();
     void showPopupMenu ();
     void setVolume (int);
