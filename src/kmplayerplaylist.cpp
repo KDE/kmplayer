@@ -31,10 +31,7 @@ using namespace KMPlayer;
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT Region::Region (ElementPtr e)
-    : x (0), y (0), w (0), h (0), m_element (e), isForAudioVideo (false) {}
-
-KDE_NO_CDTOR_EXPORT Region::Region ()
-    : x (0), y (0), w (0), h (0), isForAudioVideo (true) {}
+    : x (0), y (0), w (0), h (0), m_element (e) {}
 
 KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (ElementPtr e) : Region (e) {}
 
@@ -297,7 +294,6 @@ QString Element::outerXML () const {
 
 void Element::setAttributes (const NodeList & attrs) {
     m_first_attribute = attrs.item (0);
-    opened ();
 }
 
 bool Element::isMrl () {
@@ -398,9 +394,7 @@ ElementPtr Mrl::realMrl () {
 
 //-----------------------------------------------------------------------------
 
-Document::Document (const QString & s)
- : rootLayout (new RootLayout),
- m_tree_version (0) {
+Document::Document (const QString & s) : m_tree_version (0) {
     m_doc = this;
     m_self = m_doc;
     src = s;
@@ -489,8 +483,63 @@ KDE_NO_EXPORT ElementPtr SMIL::Layout::childFromTag (const QString & tag) {
     return ElementPtr ();
 }
 
+static int calcLength (const QString & strval, int full) {
+    if (strval.isEmpty ())
+        return 0;
+    int p = strval.find (QChar ('%'));
+    if (p > -1)
+        return strval.left (p).toInt () * full / 100;
+    return strval.toInt ();
+}
+
 KDE_NO_EXPORT void SMIL::Layout::closed () {
-    // TODO construct the KMPlayer::RootLayout tree and pass to view
+    RootLayoutPtr root;
+    SMIL::RootLayout * smilroot = 0L;
+    RegionNodePtr region;
+    RegionNodePtr last_region;
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
+        const char * name = e->nodeName ();
+        if (!strcmp (name, "root-layout")) {
+            root = RootLayoutPtr (new ::RootLayout (e));
+            if (region)
+                root->firstChild = region;
+            smilroot = convertNode <SMIL::RootLayout> (e);
+        } else if (!strcmp (name, "region")) {
+            if (region) {
+                last_region->nextSibling = RegionNodePtr (new ::RegionNode (e));
+                last_region = last_region->nextSibling;
+            } else {
+                region = last_region = RegionNodePtr (new RegionNode (e));
+                if (root)
+                    root->firstChild = region;
+            }
+        }
+    }
+    if (!root || !region) {
+        kdError () << "Layout w/o a root-layout w/ regions" << endl;
+        return;
+    }
+    smilroot->x = smilroot->y = 0;
+    smilroot->w = smilroot->getAttribute ("width").toInt ();
+    smilroot->h = smilroot->getAttribute ("height").toInt ();
+    if (smilroot->w <= 0 || smilroot->h <= 0) {
+        kdError () << "Root layout not having valid dimensions" << endl;
+        return;
+    }
+    for (RegionNodePtr r = root->firstChild; r; r = r->nextSibling) {
+        SMIL::Region * smilregion = convertNode <SMIL::Region> (r->m_element);
+        int l = calcLength (smilregion->getAttribute("left"), smilroot->w);
+        int t = calcLength (smilregion->getAttribute ("top"), smilroot->h);
+        int w = calcLength (smilregion->getAttribute ("width"), smilroot->w);
+        int h = calcLength (smilregion->getAttribute ("height"), smilroot->h);
+        int r = calcLength (smilregion->getAttribute ("right"), smilroot->w);
+        int b = calcLength (smilregion->getAttribute ("bottom"), smilroot->h);
+        smilregion->x = l;
+        smilregion->y = t;
+        smilregion->w = w > 0 ? w : smilroot->w - l - (r > 0 ? r : 0);
+        smilregion->h = h > 0 ? h : smilroot->h - t - (b > 0 ? b : 0);
+    }
+    document ()->rootLayout = root;
 }
 
 //-----------------------------------------------------------------------------
@@ -561,7 +610,18 @@ KDE_NO_EXPORT void SMIL::MediaType::opened () {
             src = a->nodeValue ();
         else if (!strcmp (cname, "type"))
             mimetype = a->nodeValue ();
-        else
+        else if (!strcmp (cname, "region")) {
+            RootLayoutPtr root = document ()->rootLayout;
+            if (!root || !root->firstChild)
+                kdError () << "region attribute w/o layout set" << endl;
+            else
+                for (RegionNodePtr r = root->firstChild; r; r = r->nextSibling)
+                    if (r->m_element->getAttribute ("id") == a->nodeValue ()) {
+                        kdDebug () << "MediaType region found " << a->nodeValue () << endl;
+                        convertNode <SMIL::Region> (r->m_element)->media_node = m_self;
+                        break;
+                    }
+        } else
             kdError () << "Warning: unhandled MediaType attr: " << cname << "=" << a->nodeValue () << endl;
     }
     kdDebug () << "MediaType attr found bitrate: " << bitrate << " src: " << (src.isEmpty() ? "-" : src) << " type: " << (mimetype.isEmpty() ? "-" : mimetype) << endl;
@@ -1164,6 +1224,7 @@ bool KMPlayerDocumentBuilder::startTag (const QString & tag, const NodeList & at
         //kdDebug () << "Found tag " << tag.latin1 () << endl;
         e->setAttributes (attr);
         m_elm->appendChild (e);
+        e->opened ();
         m_elm = e;
     }
     return true;
@@ -1179,6 +1240,7 @@ bool KMPlayerDocumentBuilder::endTag (const QString & tag) {
             return false;
         }
         //kdDebug () << "end tag " << tag.latin1 () << endl;
+        m_elm->closed ();
         m_elm = m_elm->parentNode ();
     }
     return true;

@@ -745,6 +745,8 @@ void Source::getCurrent () {
     m_player->changeURL (url);
     if (m_player->process () && m_player->process ()->view ())
         m_player->process ()->view ()->videoStop (); // show buttonbar
+    if (m_player->view () && m_document)
+        m_player->process ()->view ()->fullScreenWidget ()->setRootLayout (m_document->document ()->rootLayout);
     if (url.isEmpty ())
         emit endOfPlayItems ();
     else

@@ -77,12 +77,7 @@ public:
      * Corresponding DOM node (SMIL::Region or SMIL::RootLayout)
      */
     ElementPtrW m_element;
-    /**
-     * This completely sucks, whether this region shows the video FIXME
-     */
-    bool isForAudioVideo;
 protected:
-    Region ();
     Region (ElementPtr e);
 };
 
@@ -96,7 +91,6 @@ public:
 class RootLayout : public Region {
 public:
     RootLayout (ElementPtr e);
-    KDE_NO_CDTOR_EXPORT RootLayout () {}
     KDE_NO_CDTOR_EXPORT ~RootLayout () {}
     RegionNodePtr firstChild;
 };
@@ -301,16 +295,18 @@ public:
     void closed ();
 };
 
-class RootLayout : public Element {
-public:
-    KDE_NO_CDTOR_EXPORT RootLayout (ElementPtr & d) : Element (d) {}
-    KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
-};
-
 class Region : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Region (ElementPtr & d) : Element (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "region"; }
+    int x, y, w, h;
+    ElementPtrW media_node;
+};
+
+class RootLayout : public Region {
+public:
+    KDE_NO_CDTOR_EXPORT RootLayout (ElementPtr & d) : Region (d) {}
+    KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
 };
 
 class Par : public Element {

@@ -306,29 +306,28 @@ KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
     int hws = h - (m_view->controlPanelMode () == View::CP_AutoHide && m_view->widgetStack ()->visibleWidget () == m_view->viewer () ? 0 : hcp);
     // now scale the regions and find video region
     if (rootLayout && rootLayout->m_element && wws > 0  && hws > 0) {
-        rootLayout->w = rootLayout->m_element->getAttribute ("width").toInt ();
-        rootLayout->h = rootLayout->m_element->getAttribute ("height").toInt ();
-        float xscale = 1.0 + 1.0 * (wws - rootLayout->w) / wws;
-        float yscale = 1.0 + 1.0 * (hws - rootLayout->h) / hws;
+        SMIL::RootLayout * smilroot = convertNode <SMIL::RootLayout> (rootLayout->m_element);
+        float xscale = 1.0 + 1.0 * (wws - smilroot->w) / wws;
+        float yscale = 1.0 + 1.0 * (hws - smilroot->h) / hws;
         rootLayout->x = rootLayout->y = 0;
         rootLayout->w = wws;
         rootLayout->h = hws;
-        if (rootLayout->firstChild) {
-            wws = hws = 0;
-            for (RegionNodePtr r =rootLayout->firstChild; r; r = r->nextSibling)
+        wws = hws = 0;
+        for (RegionNodePtr r = rootLayout->firstChild; r; r = r->nextSibling)
              if (r->m_element) {
-              r->x = int(xscale * r->m_element->getAttribute ("left").toInt());
-              r->y = int(yscale *r->m_element->getAttribute ("top").toInt ());
-              r->w = int(xscale * r->m_element->getAttribute("width").toInt());
-              r->h = int(yscale *r->m_element->getAttribute("height").toInt());
-              if (r->isForAudioVideo) { // ugh
-                  x = r->x;
-                  y = r->y;
-                  wws = r->w;
-                  hws = r->h;
-              }
+                 SMIL::Region * smilregion = convertNode <SMIL::Region> (r->m_element);
+                 r->x = int (xscale * smilregion->x);
+                 r->y = int (yscale * smilregion->y);
+                 r->w = int (xscale * smilregion->w);
+                 r->h = int (yscale * smilregion->h);
+                 if (smilregion->media_node) { // ugh
+                     x = r->x;
+                     y = r->y;
+                     wws = r->w;
+                     hws = r->h;
+                 }
+                 kdDebug () << "ViewLayer " << r->x << "," << r->y << " " << r->w << "x" << r->h << endl;
              }
-        }
     }
     // scale video widget inside region
     if (m_view->keepSizeRatio() && m_view->controlPanelMode() != View::CP_Only){
