@@ -795,6 +795,13 @@ void KMPlayerPipeSource::play () {
 void KMPlayerPipeSource::deactivate () {
 }
 
+QString KMPlayerPipeSource::recordCommand () {
+    if (m_pipe.isEmpty ())
+        return QString::null;
+    return m_pipe + QString ("|") + QString ("mencoder - ") + 
+           m_player->configDialog ()->mencoderarguments;
+}
+
 //-----------------------------------------------------------------------------
 /*
  * [TV]

@@ -208,6 +208,7 @@ void KMPlayer::showConfigDialog () {
 void KMPlayer::init () {
     m_process = 0L;
     m_use_slave = false;
+    m_recording = false;
     initProcess ();
     m_urlsource = new KMPlayerURLSource (this);
     m_browserextension = new KMPlayerBrowserExtension (this);
@@ -494,11 +495,9 @@ void KMPlayer::record () {
         initProcess ();
         m_recording = true;
         m_recordurl = dlg->selectedURL().url ();
-        QString myurl (m_recordurl.isLocalFile () ? m_recordurl.path () : m_recordurl.url ());
-        kdDebug () << "mencoder " << m_configdialog->mencoderarguments
-            << " -o " << myurl << " " << m_source->recordCommand () << endl;
-        *m_process << "mencoder " << m_configdialog->mencoderarguments
-            << " -o " << myurl << " " << m_source->recordCommand ();
+        QString myurl = KProcess::quote (m_recordurl.isLocalFile () ? m_recordurl.path () : m_recordurl.url ());
+        kdDebug () << m_source->recordCommand () << " -o " << myurl << endl;
+        *m_process << m_source->recordCommand () << " -o " << myurl;
         m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
         if (!m_process->isRunning () && m_view->recordButton ()->isOn ()) 
             m_view->recordButton ()->toggle ();
@@ -967,6 +966,11 @@ QString KMPlayerSource::filterOptions () {
             PPargs.truncate(PPargs.length()-1);
     }
     return PPargs;
+}
+
+QString KMPlayerSource::recordCommand () {
+    return QString ("mencoder ") + m_player->configDialog()->mencoderarguments +
+           QString (" ") + m_recordCommand;
 }
 
 bool KMPlayerSource::hasLength () {

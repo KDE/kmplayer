@@ -44,7 +44,7 @@ public:
     void setHeight (int h) { m_height = h; }
     void setAspect (float a) { m_aspect = a; }
     void setLength (int len) { m_length = len; }
-    const QString & recordCommand () const { return m_recordCommand; }
+    virtual QString recordCommand ();
 public slots:
     virtual void activate () = 0;
     virtual void deactivate () = 0;
