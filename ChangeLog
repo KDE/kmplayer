@@ -1,4 +1,8 @@
+Changes since version 0.8.2-rc5
+- Don't show ffserver setting when no v4l devices are configured
+- Stream detection fix for MPlayer-1.0prex (needed for recording)
 Changes since version 0.8.2-rc4
+- Locale fixes for Xine
 - Let Xine play all URLs in playlist
 - Change alsa to alsa5/alsa9 audio driver for MPlayer
 Changes since version 0.8.2-rc3
