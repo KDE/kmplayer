@@ -512,11 +512,9 @@ KDE_NO_EXPORT bool XVideo::play () {
         return true;
     }
     initProcess ();
-    QString cmd  = QString ("kxvplayer -port %1 -wid %2 ").arg (xv_port).arg (view()->viewer()->embeddedWinId ());
+    QString cmd  = QString ("kxvplayer -port %1 -wid %2 -cb %3 ").arg (xv_port).arg (view()->viewer()->embeddedWinId ()).arg (dcopName ());
     printf ("%s\n", cmd.latin1 ());
     *m_process << cmd;
-    printf (" -cb %s\n", dcopName ().ascii());
-    *m_process << " -cb " << dcopName ();
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
     if (m_process->isRunning ())
         emit startedPlaying ();

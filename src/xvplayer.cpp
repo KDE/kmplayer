@@ -165,11 +165,15 @@ void KMPlayerBackend::setConfig (QByteArray data) {
 
 KXVideoPlayer::KXVideoPlayer (int _argc, char ** _argv)
   : QApplication (_argc, _argv, false) {
+}
+
+void KXVideoPlayer::init () {
     int xpos    = 0;
     int ypos    = 0;
     int width   = 320;
     int height  = 200;
 
+    XLockDisplay(display);
     if (window_created)
         wid = XCreateSimpleWindow(display, XDefaultRootWindow(display),
                 xpos, ypos, width, height, 1, 0, 0);
@@ -177,10 +181,6 @@ KXVideoPlayer::KXVideoPlayer (int _argc, char ** _argv)
         QTimer::singleShot (10, this, SLOT (play ()));
     XSelectInput (display, wid,
                   (PointerMotionMask | ExposureMask | KeyPressMask | ButtonPressMask | StructureNotifyMask)); // | SubstructureNotifyMask));
-}
-
-void KXVideoPlayer::init () {
-    XLockDisplay(display);
     XvAdaptorInfo * ai;
     unsigned int adaptors;
     if (!xvport && XvQueryAdaptors (display, XDefaultRootWindow (display), &adaptors, &ai) == Success) {
