@@ -89,6 +89,7 @@ public:
     virtual ~KMPlayerSource ();
     virtual void init ();
     virtual bool processOutput (const QString & line);
+    virtual QString filterOptions ();
     int width () const { return m_width; }
     int height () const { return m_height; }
     int length () const { return m_length; }
@@ -184,6 +185,7 @@ private:
     KURL m_url;
     QRegExp m_posRegExp;
     QRegExp m_cacheRegExp;
+    QRegExp m_indexRegExp;
     QStringList commands;
     QString m_href;
     QString m_process_output;

@@ -70,6 +70,7 @@ public:
     KMPlayerDVDSource (KMPlayerApp * app, QPopupMenu * m);
     virtual ~KMPlayerDVDSource ();
     virtual bool processOutput (const QString & line);
+    virtual QString filterOptions ();
 public slots:
     virtual void activate ();
     virtual void deactivate ();
@@ -134,6 +135,7 @@ public:
     KMPlayerTVSource (KMPlayerApp * app, QPopupMenu * m);
     virtual ~KMPlayerTVSource ();
     //virtual bool processOutput (const QString & line);
+    virtual QString filterOptions ();
     void readConfig (KConfig * config);
 public slots:
     virtual void activate ();

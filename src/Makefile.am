@@ -6,11 +6,11 @@ lib_LTLIBRARIES=kdeinit_kmplayer.la
 
 kde_module_LTLIBRARIES = kparts_kmplayer.la
 
-kparts_kmplayer_la_SOURCES= kmplayer_part.cpp kmplayerview.cpp configdialog.ui kmplayerconfig.cpp
+kparts_kmplayer_la_SOURCES = kmplayer_part.cpp kmplayerview.cpp kmplayerconfig.cpp pref.cpp
 
 kparts_kmplayer_la_LDFLAGS= $(all_libraries) -module $(KDE_PLUGIN) -lartskde -lm
 kparts_kmplayer_la_LIBADD= $(LIB_KFILE) $(LIB_KPARTS) $(LIB_KIO) -lkmediaplayer
-kparts_kmplayer_la_METASOURCES= kmplayer_part.moc kmplayerview.moc configdialog.moc kmplayerconfig.moc
+kparts_kmplayer_la_METASOURCES= kmplayer_part.moc kmplayerview.moc kmplayerconfig.moc pref.moc
 
 kdeinit_kmplayer_la_SOURCES= main.cpp kmplayerapp.cpp
 

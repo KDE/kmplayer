@@ -90,6 +90,7 @@ public:
     bool showConsoleOutput () const { return m_show_console_output; }
     void setShowConsoleOutput (bool b) { m_show_console_output = b; }
     void setAutoHideButtons (bool b);
+    //void setAutoHideSlider (bool b);
     bool autoHideButtons () const { return m_auto_hide_buttons; }
     void delayedShowButtons (bool show);
     bool isFullScreen () const { return m_layer->isFullScreen (); }

@@ -21,6 +21,8 @@
 #include <sys/types.h>
 #include <signal.h>
 
+#include <iostream>
+
 #ifdef KDE_USE_FINAL
 #undef Always
 #include <qdir.h>
@@ -331,6 +333,7 @@ void KMPlayer::processOutput (KProcess *, char * str, int slen) {
                       (QString (m_cacheRegExp.cap (1)) + i18n ("% Cache fill"));
                 }
             }
+	    
         } else {
             m_view->addText (out + QString ("\n"));
             if (m_source && m_source->processOutput (out))
@@ -357,6 +360,14 @@ void KMPlayer::processOutput (KProcess *, char * str, int slen) {
                 }
             }
         }
+    // WHERE SHOULD THIS BE?
+    // how can we write to statusbar from here?
+    
+    /*if (m_indexRegExp.search (out) > -1) {
+			double p = m_indexRegExp.cap (1).toDouble();
+			//parent->setLoadingProgress (int (p));
+			parent->slotStatusMsg (QString (i18n("Opening file...") + m_indexRegExp.cap (1) + "%");
+		}*/
     } while (slen > 0);
 }
 
@@ -439,6 +450,7 @@ bool KMPlayer::run (const char * args, const char * pipe) {
     m_started_emited = false;
     initProcess ();
     m_cacheRegExp.setPattern (m_configdialog->cachepattern);
+    m_indexRegExp.setPattern (m_configdialog->indexpattern);
     if (m_source)
         m_source->init ();
 
@@ -454,112 +466,80 @@ bool KMPlayer::run (const char * args, const char * pipe) {
     }
     printf ("mplayer -wid %lu", (unsigned long) m_view->viewer ()->winId ());
     *m_process << "mplayer -wid " << QString::number (m_view->viewer ()->winId());
-    if (m_configdialog->videodriver.length () > 0) {
-        printf (" -vo %s", m_configdialog->videodriver.latin1 ());
-        *m_process << " -vo " << m_configdialog->videodriver;
+
+    QString strVideoDriver;
+
+    switch( m_configdialog->videodriver ){
+        case VDRIVER_XV_INDEX:
+            strVideoDriver = VDRIVER_XV;
+            break;
+        case VDRIVER_X11_INDEX:
+            strVideoDriver = VDRIVER_X11;
+            strVideoDriver.truncate(3);
+            break;
+        case VDRIVER_XVIDIX_INDEX:
+            strVideoDriver = VDRIVER_XVIDIX;
+            break;
+        default:		
+            strVideoDriver = VDRIVER_XV;
+            break;
     }
+    printf (" -vo %s", strVideoDriver.lower().ascii());
+    *m_process << " -vo " << strVideoDriver.lower().ascii();
+
+    QString strAudioDriver;
+    strAudioDriver = "";
+    switch (m_configdialog->audiodriver) {
+        case ADRIVER_OSS_INDEX:
+            strAudioDriver = ADRIVER_OSS;
+            break;
+        case ADRIVER_SDL_INDEX:
+            strAudioDriver = ADRIVER_SDL;
+            break;
+        case ADRIVER_ALSA_INDEX:
+            strAudioDriver = ADRIVER_ALSA;
+            break;
+        case ADRIVER_ARTS_INDEX:	
+            strAudioDriver = ADRIVER_ARTS;
+            break;
+    }
+    if (strAudioDriver != "") {
+        printf (" -ao %s", strAudioDriver.lower().ascii());
+        *m_process << " -ao " << strAudioDriver.lower().ascii();
+    }
+    if ( (m_configdialog->alwaysbuildindex) && (m_url.protocol() == "file") )  {
+        if ( (m_url.path().lower().endsWith(".avi")) || (m_url.path().lower().endsWith(".divx")) ) {
+            printf (" -idx");
+            *m_process << " -idx";
+        }
+    }
+
     if (m_configdialog->loop) {
         printf (" -loop 0");
         *m_process << " -loop 0 ";
     }
-    if (m_configdialog->usearts) {
-        printf (" -ao arts");
-        *m_process << " -ao arts";
-    }
+
+    /*if (!m_configdialog->audiodriver.contains("default", false)){
+      printf (" -ao %s", m_configdialog->audiodriver.lower().latin1());
+     *m_process << " -ao " << m_configdialog->audiodriver.lower().latin1();
+     }*/
     if (m_configdialog->additionalarguments.length () > 0) {
-        printf (" %s", m_configdialog->additionalarguments.latin1 ());
-        *m_process << " " << m_configdialog->additionalarguments;
+        printf (" %s", m_configdialog->additionalarguments.ascii());
+        *m_process << " " << m_configdialog->additionalarguments.ascii();
     }
     // postproc thingies
-    if (m_configdialog->postprocessing)
-    {
-        QString PPargs;
-        if (m_configdialog->pp_default)
-            PPargs = "-vop pp=de";
-        else if (m_configdialog->pp_fast)
-            PPargs = "-vop pp=fa";
-        else if (m_configdialog->pp_custom) {
-            PPargs = "-vop pp=";
-            if (m_configdialog->pp_custom_hz) {
-                PPargs += "hb";
-                if (m_configdialog->pp_custom_hz_aq && \
-                        m_configdialog->pp_custom_hz_ch)
-                    PPargs += ":ac";
-                else if (m_configdialog->pp_custom_hz_aq)
-                    PPargs += ":a";
-                else if (m_configdialog->pp_custom_hz_ch)
-                    PPargs += ":c";
-                PPargs += "/";
-            }
-            if (m_configdialog->pp_custom_vt) {
-                PPargs += "vb";
-                if (m_configdialog->pp_custom_vt_aq && \
-                        m_configdialog->pp_custom_vt_ch)
-                    PPargs += ":ac";
-                else if (m_configdialog->pp_custom_vt_aq)
-                    PPargs += ":a";
-                else if (m_configdialog->pp_custom_vt_ch)
-                    PPargs += ":c";
-                PPargs += "/";
-            }
-            if (m_configdialog->pp_custom_dr) {
-                PPargs += "dr";
-                if (m_configdialog->pp_custom_dr_aq && \
-                        m_configdialog->pp_custom_dr_ch)
-                    PPargs += ":ac";
-                else if (m_configdialog->pp_custom_dr_aq)
-                    PPargs += ":a";
-                else if (m_configdialog->pp_custom_dr_ch)
-                    PPargs += ":c";
-                PPargs += "/";
-            }
-            if (m_configdialog->pp_custom_al) {
-                PPargs += "al";
-                if (m_configdialog->pp_custom_al_f)
-                    PPargs += ":f";
-                PPargs += "/";
-            }
-            if (m_configdialog->pp_custom_tn) {
-                PPargs += "tn";
-                if (1 <= m_configdialog->pp_custom_tn_s <= 3)
-                    PPargs += m_configdialog->pp_custom_tn_s;
-                PPargs += "/";
-            }
-            if (m_configdialog->pp_lin_blend_int) {
-                PPargs += "lb";
-                PPargs += "/";
-            }
-            if (m_configdialog->pp_lin_int) {
-                PPargs += "li";
-                PPargs += "/";
-            }
-            if (m_configdialog->pp_cub_int) {
-                PPargs += "ci";
-                PPargs += "/";
-            }
-            if (m_configdialog->pp_med_int) {
-                PPargs += "md";
-                PPargs += "/";
-            }
-            if (m_configdialog->pp_ffmpeg_int) {
-                PPargs += "fd";
-                PPargs += "/";
-            }
-        }
-        if (PPargs.endsWith("/"))
-            PPargs.truncate(PPargs.length()-1);
 
-        printf (" %s", PPargs.ascii());
-        *m_process << " " << PPargs;
-    }
+    printf (" %s", source ()->filterOptions ().ascii ());
+    *m_process << " " << source ()->filterOptions ().ascii ();
+
     printf (" %s", args);
     *m_process << " " << args;
 
     QValueList<QCString>::const_iterator it;
     QString sMPArgs;
-    for ( it = m_process->args().begin(); it != m_process->args().end(); ++it )
+    for ( it = m_process->args().begin(); it != m_process->args().end(); ++it ){
         sMPArgs += (*it);
-
+    }
     m_view->addText( sMPArgs.simplifyWhiteSpace() );
 
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
@@ -575,7 +555,6 @@ bool KMPlayer::run (const char * args, const char * pipe) {
         emit canceled (i18n ("Could not start MPlayer"));
         return false;
     }
-
 }
 
 void KMPlayer::play () {
@@ -824,6 +803,90 @@ bool KMPlayerSource::processOutput (const QString & str) {
     return true;
 }
 
+QString KMPlayerSource::filterOptions () {
+    KMPlayerConfig* m_configdialog = m_player->configDialog ();
+    QString PPargs ("");
+    if (m_configdialog->postprocessing)
+    {
+        if (m_configdialog->pp_default)
+            PPargs = "-vop pp=de";
+        else if (m_configdialog->pp_fast)
+            PPargs = "-vop pp=fa";
+        else if (m_configdialog->pp_custom) {
+            PPargs = "-vop pp=";
+            if (m_configdialog->pp_custom_hz) {
+                PPargs += "hb";
+                if (m_configdialog->pp_custom_hz_aq && \
+                        m_configdialog->pp_custom_hz_ch)
+                    PPargs += ":ac";
+                else if (m_configdialog->pp_custom_hz_aq)
+                    PPargs += ":a";
+                else if (m_configdialog->pp_custom_hz_ch)
+                    PPargs += ":c";
+                PPargs += "/";
+            }
+            if (m_configdialog->pp_custom_vt) {
+                PPargs += "vb";
+                if (m_configdialog->pp_custom_vt_aq && \
+                        m_configdialog->pp_custom_vt_ch)
+                    PPargs += ":ac";
+                else if (m_configdialog->pp_custom_vt_aq)
+                    PPargs += ":a";
+                else if (m_configdialog->pp_custom_vt_ch)
+                    PPargs += ":c";
+                PPargs += "/";
+            }
+            if (m_configdialog->pp_custom_dr) {
+                PPargs += "dr";
+                if (m_configdialog->pp_custom_dr_aq && \
+                        m_configdialog->pp_custom_dr_ch)
+                    PPargs += ":ac";
+                else if (m_configdialog->pp_custom_dr_aq)
+                    PPargs += ":a";
+                else if (m_configdialog->pp_custom_dr_ch)
+                    PPargs += ":c";
+                PPargs += "/";
+            }
+            if (m_configdialog->pp_custom_al) {
+                PPargs += "al";
+                if (m_configdialog->pp_custom_al_f)
+                    PPargs += ":f";
+                PPargs += "/";
+            }
+            if (m_configdialog->pp_custom_tn) {
+                PPargs += "tn";
+                /*if (1 <= m_configdialog->pp_custom_tn_s <= 3){
+                    PPargs += ":";
+                    PPargs += m_configdialog->pp_custom_tn_s;
+                    }*/ //disabled 'cos this is wrong
+                PPargs += "/";
+            }
+            if (m_configdialog->pp_lin_blend_int) {
+                PPargs += "lb";
+                PPargs += "/";
+            }
+            if (m_configdialog->pp_lin_int) {
+                PPargs += "li";
+                PPargs += "/";
+            }
+            if (m_configdialog->pp_cub_int) {
+                PPargs += "ci";
+                PPargs += "/";
+            }
+            if (m_configdialog->pp_med_int) {
+                PPargs += "md";
+                PPargs += "/";
+            }
+            if (m_configdialog->pp_ffmpeg_int) {
+                PPargs += "fd";
+                PPargs += "/";
+            }
+        }
+        if (PPargs.endsWith("/"))
+            PPargs.truncate(PPargs.length()-1);
+    }
+    return PPargs;
+}
 //-----------------------------------------------------------------------------
 
 KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, const KURL & url)

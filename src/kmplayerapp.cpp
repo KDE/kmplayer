@@ -128,11 +128,9 @@ void KMPlayerApp::initView ()
     setCentralWidget (view);
     m_sourcemenu = menuBar ()->findItem (menuBar ()->idAt (0));
     m_sourcemenu->setText (i18n ("S&ource"));
-    m_dvdmenuId = m_sourcemenu->popup ()->insertItem (i18n ("&DVD"), m_dvdmenu, -1, 3);
-    m_havedvdmenu = true;
+    m_sourcemenu->popup ()->insertItem (i18n ("&DVD"), m_dvdmenu, -1, 3);
     m_dvdmenu->insertItem (i18n ("&Open DVD"), this, SLOT(openDVD ()), 0,-1, 1);
-    m_vcdmenuId = m_sourcemenu->popup ()->insertItem (i18n ("V&CD"), m_vcdmenu, -1, 4);
-    m_havevcdmenu = true;
+    m_sourcemenu->popup ()->insertItem (i18n ("V&CD"), m_vcdmenu, -1, 4);
     m_sourcemenu->popup ()->insertItem (i18n ("&TV"), m_tvmenu, -1, 5);
     m_vcdmenu->insertItem (i18n ("&Open VCD"), this, SLOT(openVCD ()), 0,-1, 1);
     m_sourcemenu->popup ()->insertItem (i18n ("&Open Pipe..."), this, SLOT(openPipe ()), 0, -1, 5);
@@ -351,7 +349,7 @@ void KMPlayerApp::slotFileQuit()
     slotStatusMsg(i18n("Exiting..."));
     saveOptions();
 
-    // however implemented this should fix it too, work around ..
+    // whoever implemented this should fix it too, work around ..
     if (memberList->count () > 1)
         deleteLater ();
     else {
@@ -445,20 +443,6 @@ void KMPlayerApp::startArtsControl () {
 }
 
 void KMPlayerApp::configChanged () {
-    if (m_player->configDialog ()->showdvdmenu && !m_havedvdmenu) {
-        m_dvdmenuId = m_sourcemenu->popup ()->insertItem (i18n ("&DVD"), m_dvdmenu, -1, 3);
-        m_havedvdmenu = true;
-    } else if (!m_player->configDialog ()->showdvdmenu && m_havedvdmenu) {
-        menuBar ()->removeItem (m_dvdmenuId);
-        m_havedvdmenu = false;
-    }
-    if (m_player->configDialog ()->showvcdmenu && !m_havevcdmenu) {
-        m_vcdmenuId = m_sourcemenu->popup ()->insertItem (i18n ("V&CD"), m_vcdmenu, -1, m_havedvdmenu ? 4 : 3);
-        m_havevcdmenu = true;
-    } else if (!m_player->configDialog ()->showvcdmenu && m_havevcdmenu) {
-        menuBar ()->removeItem (m_vcdmenuId);
-        m_havevcdmenu = false;
-    }
     viewKeepRatio->setChecked (m_player->configDialog ()->sizeratio);
     viewShowConsoleOutput->setChecked (m_player->configDialog ()->showconsole);
 }
@@ -666,6 +650,14 @@ void KMPlayerDVDSource::play () {
     m_player->run (args.ascii());
 }
 
+QString KMPlayerDVDSource::filterOptions () {
+    KMPlayerConfig * configdialog = m_player->configDialog ();
+    QString fops;
+    if (!configdialog->disableppauto)
+        return KMPlayerSource::filterOptions ();
+    return QString ("");
+}
+
 void KMPlayerDVDSource::titleMenuClicked (int id) {
     menuItemClicked (m_dvdtitlemenu, id);
     if (m_player->configDialog ()->playdvd) play ();
@@ -836,6 +828,7 @@ void KMPlayerTVSource::deactivate () {
 }
 
 void KMPlayerTVSource::readConfig (KConfig * config) {
+    devices.first ();
     while (devices.current ()) {
         m_menu->removeItem (devices.current ()->menuid);
         devices.remove ();
@@ -901,6 +894,14 @@ void KMPlayerTVSource::menuClicked (int id) {
         kdDebug() << "KMPlayerTVSource::menuClickedt " << m_command << endl;
         play ();
     }
+}
+
+QString KMPlayerTVSource::filterOptions () {
+    KMPlayerConfig * configdialog = m_player->configDialog ();
+    QString fops;
+    if (!configdialog->disableppauto)
+        return KMPlayerSource::filterOptions ();
+    return QString ("-vop pp=lb");
 }
 
 #include "kmplayer.moc"

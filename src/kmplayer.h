@@ -114,10 +114,6 @@ private:
     KMPlayerPipeSource * m_pipesource;
     KMPlayerTVSource * m_tvsource;
     QCString m_dcopName;
-    int m_dvdmenuId;
-    int m_vcdmenuId;
-    bool m_havedvdmenu : 1;
-    bool m_havevcdmenu : 1;
     bool m_showToolbar : 1;
     bool m_showStatusbar : 1;
     bool m_showMenubar : 1;

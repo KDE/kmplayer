@@ -24,16 +24,18 @@
 
 #include <qobject.h>
 
+#include "pref.h"
 
 class KMPlayer;
 class KConfig;
-class ConfigDialog;
+class KMPlayerPreferences;
 
 class KMPlayerConfig : public QObject {
     Q_OBJECT
 public:
     KMPlayerConfig (KMPlayer *, KConfig * part);
     ~KMPlayerConfig ();
+    KMPlayerPreferences *configDialog() const { return configdialog; }
     bool usearts;
     bool sizeratio;
     bool showconsole;
@@ -42,13 +44,13 @@ public:
     bool showcnfbutton;
     bool showposslider;
     bool autohidebuttons;
-    bool showdvdmenu;
-    bool showvcdmenu;
+    bool autohideslider;
+    bool alwaysbuildindex;
     bool playdvd;
     bool playvcd;
 // postproc thingies
     bool postprocessing;
-
+    bool disableppauto;
     bool pp_default;	// -vop pp=de
     bool pp_fast;	// -vop pp=fa
     bool pp_custom;	// coming up
@@ -79,12 +81,14 @@ public:
 // end of postproc
     int seektime;
     int cachesize;
-    QString videodriver;
+    int videodriver;
+    int audiodriver;
     QString dvddevice;
     QString vcddevice;
     QString additionalarguments;
     QString sizepattern;
     QString cachepattern;
+    QString indexpattern;
     QString startpattern;
     QString langpattern;
     QString titlespattern;
@@ -102,7 +106,7 @@ private slots:
     void fileOpen ();
     void getHelp ();
 private:
-    ConfigDialog * configdialog;
+    KMPlayerPreferences * configdialog;
     KConfig * m_config;
     KMPlayer * m_player;
 };
