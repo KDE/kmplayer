@@ -121,6 +121,8 @@ public:
     KMPlayerHRefSource * hrefSource () const { return m_hrefsource; }
     bool hasFeature (int f) { return m_features & f; }
     bool allowRedir (const KURL & url);
+    virtual void processLoaded (int percentage);
+    virtual void processStartedPlaying ();
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool closeURL ();
@@ -128,8 +130,6 @@ public slots:
 protected slots:
     virtual void processStarted ();
     virtual void processFinished ();
-    virtual void processLoading (int percentage);
-    virtual void processPlaying ();
 protected:
     virtual bool openFile(); // reimplement for KParts::ReadOnlyPart
 private:

@@ -29,6 +29,7 @@
 #include <qdom.h>
 #include "kmplayer_backend.h"
 #include "kmplayer_callback_stub.h"
+#include "kmplayer_callback.h"
 #include "xineplayer.h"
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -104,6 +105,7 @@ static const int            event_position = QEvent::User + 1;
 static const int            event_progress = QEvent::User + 2;
 static const int            event_url = QEvent::User + 3;
 static const int            event_size = QEvent::User + 4;
+static const int            event_title = QEvent::User + 5;
 static QString mrl;
 static QString sub_mrl;
 
@@ -189,6 +191,7 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
         case XINE_EVENT_UI_SET_TITLE:
             {
                 xine_ui_data_t * data = (xine_ui_data_t *) event->data;
+                QApplication::postEvent(xineapp, new XineTitleEvent(data->str));
                 fprintf (stderr, "Set title event %s\n", data->str);
             }
             break;
@@ -694,7 +697,13 @@ bool KXinePlayer::event (QEvent * e) {
         case event_url: {
             XineURLEvent * ue = static_cast <XineURLEvent *> (e);                
             if (callback)
-                callback->setURL (ue->url);
+                callback->statusMessage ((int) KMPlayerCallback::stat_addurl, ue->url);
+            break;
+        }
+        case event_title: {
+            XineTitleEvent * ue = static_cast <XineTitleEvent *> (e);                
+            if (callback)
+                callback->statusMessage ((int) KMPlayerCallback::stat_newtitle, ue->title);
             break;
         }
         default:
@@ -709,6 +718,10 @@ XineSizeEvent::XineSizeEvent (int l, int w, int h)
 
 XineURLEvent::XineURLEvent (const QString & u)
   : QEvent ((QEvent::Type) event_url), url (u) 
+{}
+
+XineTitleEvent::XineTitleEvent (const char * t)
+  : QEvent ((QEvent::Type) event_title), title (QString::fromLocal8Bit (t)) 
 {}
 
 XineProgressEvent::XineProgressEvent (const int p)

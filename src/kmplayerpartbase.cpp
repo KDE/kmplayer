@@ -222,12 +222,6 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
                     this, SLOT (processFinished ()));
         disconnect (m_process, SIGNAL (started ()),
                     this, SLOT (processStarted ()));
-        disconnect (m_process, SIGNAL (positionChanged (int)),
-                    this, SLOT (processPosition (int)));
-        disconnect (m_process, SIGNAL (loading (int)),
-                    this, SLOT (processLoading (int)));
-        disconnect (m_process, SIGNAL (startPlaying ()),
-                    this, SLOT (processPlaying ()));
         m_process->quit ();
         source = m_process->source ();
     }
@@ -235,12 +229,6 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
     m_process->setSource (source); // will stop the process
     connect (m_process, SIGNAL (started ()), this, SLOT (processStarted ()));
     connect (m_process, SIGNAL (finished ()), this, SLOT (processFinished ()));
-    connect (m_process, SIGNAL (positionChanged (int)),
-             this, SLOT (processPosition (int)));
-    connect (m_process, SIGNAL (loading (int)),
-             this, SLOT (processLoading (int)));
-    connect (m_process, SIGNAL (startPlaying ()),
-             this, SLOT (processPlaying ()));
 }
 
 void KMPlayer::setRecorder (KMPlayerProcess * recorder) {
@@ -337,6 +325,22 @@ void KMPlayer::setSource (KMPlayerSource * source) {
     source->init ();
     if (source) QTimer::singleShot (0, source, SLOT (activate ()));
     emit sourceChanged (source);
+}
+
+void KMPlayer::addURL (const QString & _url) {
+    QString url = KURL::fromPathOrURL (_url).url ();
+    kdDebug () << "mrl added: " << url << endl;
+    if (m_process->source ()->url ().url () != url && m_url != url)
+        m_process->source ()->insertURL (url);
+    emit urlAdded (url);
+}
+
+void KMPlayer::changeURL (const QString & url) {
+    emit urlChanged (url);
+}
+
+void KMPlayer::changeTitle (const QString & title) {
+    emit titleChanged (title);
 }
 
 bool KMPlayer::isSeekable (void) const {
@@ -436,7 +440,7 @@ void KMPlayer::processStarted () {
             std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setPlaying), true));
 }
 
-void KMPlayer::processPosition (int pos) {
+void KMPlayer::processPositioned (int pos) {
     if (!m_view) return;
     ControlPanelList::iterator e = m_panels.end();
     for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
@@ -450,13 +454,13 @@ void KMPlayer::processPosition (int pos) {
     }
 }
 
-void KMPlayer::processLoading (int percentage) {
+void KMPlayer::processLoaded (int percentage) {
     emit loading (percentage);
 }
 
-void KMPlayer::processPlaying () {
+void KMPlayer::processStartedPlaying () {
     if (!m_view) return;
-    kdDebug () << "KMPlayer::processPlaying " << endl;
+    kdDebug () << "KMPlayer::processStartedPlaying " << endl;
     if (m_settings->sizeratio && m_view->viewer ())
         m_view->viewer ()->setAspect (m_process->source ()->aspect ());
     ControlPanelList::iterator e = m_panels.end();

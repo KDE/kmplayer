@@ -48,6 +48,7 @@ public:
     bool playing () const;
     KMPlayerSource * source () const { return m_source; }
     KProcess * process () const { return m_process; }
+    KMPlayer * player () const { return m_player; }
     virtual WId widget ();
     void setSource (KMPlayerSource * source);
     virtual bool grabPicture (const KURL & url, int pos);
@@ -56,10 +57,6 @@ signals:
     void started ();
     // backend process has ended
     void finished ();
-    void positionChanged (int pos);
-    void loading (int percentage);
-    // backend process start to play (after filling its cache)
-    void startPlaying ();
     void grabReady (const QString & path);
 public slots:
     virtual bool play () = 0;
@@ -190,7 +187,6 @@ class KMPlayerCallbackProcess : public KMPlayerProcess {
 public:
     KMPlayerCallbackProcess (KMPlayer * player);
     ~KMPlayerCallbackProcess ();
-    virtual void setURL (const QString & url);
     virtual void setStatusMessage (const QString & msg);
     virtual void setErrorMessage (int code, const QString & msg);
     virtual void setFinished ();

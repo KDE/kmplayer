@@ -134,6 +134,7 @@ void KMPlayerProcess::setSource (KMPlayerSource * source) {
     stop ();
     m_source = source;
 }
+
 //-----------------------------------------------------------------------------
 
 static bool proxyForURL (const KURL& url, QString& proxy) {
@@ -494,14 +495,14 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
                 int pos = int (10.0 * m_posRegExp.cap (1).toFloat ());
                 source ()->setPosition (pos);
                 m_request_seek = -1;
-                emit positionChanged (pos);
+                m_player->processPositioned (pos);
             } else if (m_cacheRegExp.search (out) > -1) {
-                emit loading (int (m_cacheRegExp.cap (1).toDouble ()));
+                m_player->processLoaded (int (m_cacheRegExp.cap(1).toDouble()));
             }
         } else if (!source ()->identified () && m_refURLRegExp.search (out) > -1) {
             kdDebug () << "Reference mrl " << m_refURLRegExp.cap (1) << endl;
             if (!m_tmpURL.isEmpty ())
-                m_source->insertURL (m_tmpURL);
+                m_player->addURL (m_tmpURL);
             m_tmpURL = KURL::fromPathOrURL (m_refURLRegExp.cap (1)).url ();
             if (m_source->url () == m_tmpURL || m_url == m_tmpURL)
                 m_tmpURL.truncate (0);
@@ -527,15 +528,15 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
                     }
                 } else if (m_startRegExp.search (out) > -1) {
                     if (m_player->settings ()->mplayerpost090) {
-                        if (!m_tmpURL.isEmpty () && m_tmpURL != m_source->url ().url ()) {
-                            m_source->insertURL (m_tmpURL);
+                        if (!m_tmpURL.isEmpty ()) {
+                            m_player->addURL (m_tmpURL);
                             m_tmpURL.truncate (0);
                         }
                         // update currentUrl if this was a playlist
                         m_source->current ();
                         source ()->setIdentified ();
                     }
-                    emit startPlaying ();
+                    m_player->processStartedPlaying ();
                 }
             }
         }
@@ -551,13 +552,16 @@ void MPlayer::processStopped (KProcess * p) {
             QString url;
             if (!m_source->identified ()) {
                 m_source->setIdentified ();
-                if (!m_tmpURL.isEmpty () && m_tmpURL != m_source->url ().url ()) {
-                    m_source->insertURL (m_tmpURL);
+                if (!m_tmpURL.isEmpty ()) {
+                    m_player->addURL (m_tmpURL);
                     m_tmpURL.truncate (0);
                 }
                 url = m_source->first ();
-            } else
+            } else {
                 url = m_source->next ();
+                if (!url.isEmpty ())
+                    m_player->changeURL (url);
+            }
             if (!url.isEmpty ()) {
                 QTimer::singleShot (0, this, SLOT (play ()));
                 return;
@@ -751,12 +755,17 @@ KMPlayerCallback::KMPlayerCallback (KMPlayerCallbackProcess * process)
                            QString::number (callback_counter++)).ascii ()),
       m_process (process) {}
 
-void KMPlayerCallback::setURL (QString url) {
-    m_process->setURL (url);
-}
-
-void KMPlayerCallback::statusMessage (QString msg) {
-    m_process->setStatusMessage (msg);
+void KMPlayerCallback::statusMessage (int code, QString msg) {
+    switch ((StatusCode) code) {
+        case stat_newtitle:
+            m_process->player ()->changeTitle (msg);
+            break;
+        case stat_addurl:
+            m_process->player ()->addURL (msg);
+            break;
+        default:
+            m_process->setStatusMessage (msg);
+    };
 }
 
 void KMPlayerCallback::errorMessage (int code, QString msg) {
@@ -806,13 +815,6 @@ KMPlayerCallbackProcess::~KMPlayerCallbackProcess () {
     delete m_configpage;
 }
 
-void KMPlayerCallbackProcess::setURL (const QString & _url) {
-    QString url = KURL::fromPathOrURL (_url).url ();
-    kdDebug () << "Reference mrl " << url << endl;
-    if (m_source->url ().url () != url && m_url != url)
-        m_source->insertURL (url);
-}
-
 void KMPlayerCallbackProcess::setStatusMessage (const QString & /*msg*/) {
 }
 
@@ -833,7 +835,7 @@ void KMPlayerCallbackProcess::setPlaying () {
     KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
     if (!v) return;
     QTimer::singleShot (0, v, SLOT (startsToPlay ())); // FIXME
-    emit startPlaying (); // FIXME TOO :-)
+    m_player->processStartedPlaying ();
 }
 
 void KMPlayerCallbackProcess::setStarted (QByteArray &) {
@@ -856,11 +858,11 @@ void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
 void KMPlayerCallbackProcess::setMoviePosition (int position) {
     m_source->setPosition (position);
     m_request_seek = -1;
-    emit positionChanged (position);
+    m_player->processPositioned (position);
 }
 
 void KMPlayerCallbackProcess::setLoadingProgress (int percentage) {
-    emit loading (percentage);
+    m_player->processLoaded (percentage);
 }
 
 bool KMPlayerCallbackProcess::getConfigData () {
@@ -1202,17 +1204,17 @@ bool Xine::quit () {
 }
 
 void Xine::setFinished () {
+    if (!m_source) return; // initial case?
     kdDebug () << "Xine::finished () " << endl;
-    if (m_source) {
-        QString url = m_source->next ();
-        if (!url.isEmpty ()) {
-            m_backend->setURL (url);
-            m_backend->play ();
-            return;
-        } else
-            m_source->first ();
+    QString url = m_source->next ();
+    if (!url.isEmpty ()) {
+        m_backend->setURL (url);
+        m_backend->play ();
+        m_player->changeURL (url);
+    } else {
+        m_source->first ();
+        quit ();
     }
-    quit ();
 }
 
 bool Xine::pause () {

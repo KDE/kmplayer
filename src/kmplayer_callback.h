@@ -26,10 +26,10 @@ class KMPlayerCallbackProcess;
 class KMPlayerCallback : public DCOPObject {
     K_DCOP
 public:
+    enum StatusCode { stat_addurl = 0, stat_newtitle };
     KMPlayerCallback (KMPlayerCallbackProcess *);
 k_dcop:
-    ASYNC setURL (QString url);
-    ASYNC statusMessage (QString msg);
+    ASYNC statusMessage (int code, QString msg);
     ASYNC errorMessage (int code, QString msg);
     ASYNC finished ();
     ASYNC playing ();

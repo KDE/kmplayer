@@ -310,8 +310,8 @@ void KMPlayerPart::processFinished () {
         m_browserextension->infoMessage (i18n ("KMPlayer: Stop Playing"));
 }
 
-void KMPlayerPart::processLoading (int percentage) {
-    KMPlayer::processLoading (percentage);
+void KMPlayerPart::processLoaded (int percentage) {
+    KMPlayer::processLoaded (percentage);
     if (percentage < 100) {
         m_browserextension->setLoadingProgress (percentage);
         m_browserextension->infoMessage 
@@ -325,10 +325,10 @@ void KMPlayerPart::processStarted () {
     m_started_emited = true;
 }
 
-void KMPlayerPart::processPlaying () {
+void KMPlayerPart::processStartedPlaying () {
     if (!m_view) return;
-    kdDebug () << "KMPlayerPart::processPlaying " << endl;
-    KMPlayer::processPlaying ();
+    kdDebug () << "KMPlayerPart::processStartedPlaying " << endl;
+    KMPlayer::processStartedPlaying ();
     if (m_settings->sizeratio && !m_noresize)
         m_liveconnectextension->setSize (m_process->source ()->width (),
                                          m_process->source ()->height ());

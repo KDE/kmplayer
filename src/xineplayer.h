@@ -36,6 +36,11 @@ struct XineURLEvent : public QEvent {
     QString url;
 };
 
+struct XineTitleEvent : public QEvent {
+    XineTitleEvent (const char *);
+    QString title;
+};
+
 struct XineProgressEvent : public QEvent {
     XineProgressEvent (int p);
     int progress;

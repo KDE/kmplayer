@@ -105,6 +105,13 @@ public:
     void enablePlayerMenu (bool enable);
     void addControlPanel (KMPlayerControlPanel *);
     void removeControlPanel (KMPlayerControlPanel *);
+
+    // these are called from KMPlayerProcess
+    void changeURL (const QString & url);
+    void changeTitle (const QString & title);
+    void processPositioned (int pos);
+    virtual void processLoaded (int percentage);
+    virtual void processStartedPlaying ();
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool closeURL ();
@@ -120,6 +127,7 @@ public slots:
     void setMPlayer (int id);
     void back ();
     void forward ();
+    void addURL (const QString & url);
 public:
     virtual bool isSeekable (void) const;
     virtual unsigned long position (void) const;
@@ -132,6 +140,9 @@ signals:
     void stopRecording ();
     void sourceChanged (KMPlayerSource *);
     void loading (int percentage);
+    void urlAdded (const QString & url);
+    void urlChanged (const QString & url);
+    void titleChanged (const QString & title);
 protected:
     bool openFile();
     virtual void timerEvent (QTimerEvent *);
@@ -145,12 +156,9 @@ protected slots:
     void saturationValueChanged (int val);
     void recordingStarted ();
     void recordingFinished ();
-    void processPosition (int pos);
     void controlPanelDestroyed (QObject *);
     virtual void processStarted ();
     virtual void processFinished ();
-    virtual void processLoading (int percentage);
-    virtual void processPlaying ();
 protected:
     typedef std::list <KMPlayerControlPanel *> ControlPanelList;
     ControlPanelList m_panels;
