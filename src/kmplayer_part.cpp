@@ -153,6 +153,10 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
                     m_features = Feat_Controls;
                 } else if (value.lower () == QString::fromLatin1("statusbar")) {
                     m_features = Feat_StatusBar;
+                } else if (value.lower () == QString::fromLatin1("infopanel")) {
+                    m_features = Feat_InfoPanel;
+                } else if (value.lower () == QString::fromLatin1("volumeslider")) {
+                    m_features = Feat_VolumeSlider;
                 }
             } else if (name == QString::fromLatin1("nolabels")) {
                 m_features &= ~Feat_Label;

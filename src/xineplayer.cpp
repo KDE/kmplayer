@@ -25,6 +25,7 @@
 #include <qcstring.h>
 #include <qtimer.h>
 #include <qfile.h>
+#include <qurl.h>
 #include <qthread.h>
 #include <qmutex.h>
 #include <qdom.h>
@@ -731,8 +732,10 @@ XineURLEvent::XineURLEvent (const QString & u)
 {}
 
 XineTitleEvent::XineTitleEvent (const char * t)
-  : QEvent ((QEvent::Type) event_title), title (QString::fromLocal8Bit (t)) 
-{}
+  : QEvent ((QEvent::Type) event_title), title (QString::fromUtf8 (t)) 
+{
+    QUrl::decode (title);
+}
 
 XineProgressEvent::XineProgressEvent (const int p)
   : QEvent ((QEvent::Type) event_progress), progress (p) 
