@@ -145,7 +145,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     /*KAction *pauseact =*/ new KAction(i18n("&Pause"), 0, 0, this, SLOT(pause ()), actionCollection (), "view_pause");
     /*KAction *stopact =*/ new KAction(i18n("&Stop"), 0, 0, this, SLOT(stop ()), actionCollection (), "view_stop");
     Source * urlsource = m_sources ["urlsource"];
-    KMPlayerControlPanel * panel = m_view->buttonBar ();
+    KMPlayer::ControlPanel * panel = m_view->buttonBar ();
     QStringList::const_iterator it = args.begin ();
     for ( ; it != args.end (); ++it) {
         int equalPos = (*it).find("=");
@@ -187,32 +187,32 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                     m_features = Feat_Controls;
                 } else if ( val_lower == QString::fromLatin1("homectrl")) {
                     panel->setAutoControls (false);
-                    panel->button (KMPlayerControlPanel::button_config)->show();
+                    panel->button (KMPlayer::ControlPanel::button_config)->show();
                 } else if (val_lower == QString::fromLatin1("mutectrl") ||
                         val_lower == QString::fromLatin1("mutevolume")) {
                     panel->setAutoControls (false);
-                    panel->button (KMPlayerControlPanel::button_config)->show (); // TODO: add a mute
+                    panel->button (KMPlayer::ControlPanel::button_config)->show (); // TODO: add a mute
                     m_features = Feat_Controls;
                 } else if (val_lower == QString::fromLatin1("rwctrl")) {
                     panel->setAutoControls (false);
-                    panel->button (KMPlayerControlPanel::button_back)->show (); // rewind ?
+                    panel->button (KMPlayer::ControlPanel::button_back)->show (); // rewind ?
                     m_features = Feat_Controls;
                 } else if ( val_lower == QString::fromLatin1("ffctrl")) {
                     panel->setAutoControls (false);
-                    panel->button(KMPlayerControlPanel::button_forward)->show();
+                    panel->button(KMPlayer::ControlPanel::button_forward)->show();
                     m_features = Feat_Controls;
                 } else if ( val_lower == QString::fromLatin1("stopbutton")) {
                     panel->setAutoControls (false);
-                    panel->button (KMPlayerControlPanel::button_stop)->show ();
+                    panel->button (KMPlayer::ControlPanel::button_stop)->show ();
                     m_features = Feat_Controls;
                 } else if (val_lower == QString::fromLatin1("playbutton") ||
                         val_lower == QString::fromLatin1("playonlybutton")) {
                     panel->setAutoControls (false);
-                    panel->button (KMPlayerControlPanel::button_play)->show ();
+                    panel->button (KMPlayer::ControlPanel::button_play)->show ();
                     m_features = Feat_Controls;
                 } else if (val_lower == QString::fromLatin1("pausebutton")) {
                     panel->setAutoControls (false);
-                    panel->button (KMPlayerControlPanel::button_pause)->show ();
+                    panel->button (KMPlayer::ControlPanel::button_pause)->show ();
                     m_features = Feat_Controls;
                 } else if (val_lower == QString::fromLatin1("statusbar")) {
                     m_features = Feat_StatusBar;
@@ -240,11 +240,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     }
     KParts::Part::setWidget (m_view);
     setXMLFile("kmplayerpartui.rc");
-    panel->zoomMenu ()->connectItem (KMPlayerControlPanel::menu_zoom50,
+    panel->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom50,
                                       this, SLOT (setMenuZoom (int)));
-    panel->zoomMenu ()->connectItem (KMPlayerControlPanel::menu_zoom100,
+    panel->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom100,
                                       this, SLOT (setMenuZoom (int)));
-    panel->zoomMenu ()->connectItem (KMPlayerControlPanel::menu_zoom150,
+    panel->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom150,
                                       this, SLOT (setMenuZoom (int)));
 
     if (m_features & Feat_Controls)
@@ -457,12 +457,12 @@ KDE_NO_EXPORT void KMPlayerPart::processStartedPlaying () {
 KDE_NO_EXPORT void KMPlayerPart::setMenuZoom (int id) {
     int w, h;
     sizes (w, h);
-    if (id == KMPlayerControlPanel::menu_zoom100) {
+    if (id == KMPlayer::ControlPanel::menu_zoom100) {
         m_liveconnectextension->setSize (w, h);
         return;
     }
     float scale = 1.5;
-    if (id == KMPlayerControlPanel::menu_zoom50)
+    if (id == KMPlayer::ControlPanel::menu_zoom50)
         scale = 0.5;
     if (m_view->viewer ())
         m_liveconnectextension->setSize (int (scale * m_view->viewer ()->width ()),
@@ -709,10 +709,10 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
                 rval = entry->defaultvalue;
             break;
         case canpause:
-            rval = (player->process ()->playing () && !view->buttonBar()->button (KMPlayerControlPanel::button_pause)->isOn ()) ? "true" : "false";
+            rval = (player->process ()->playing () && !view->buttonBar()->button (KMPlayer::ControlPanel::button_pause)->isOn ()) ? "true" : "false";
             break;
         case canplay:
-            rval = (!player->process ()->playing () || view->buttonBar()->button (KMPlayerControlPanel::button_pause)->isOn ()) ? "true" : "false";
+            rval = (!player->process ()->playing () || view->buttonBar()->button (KMPlayer::ControlPanel::button_pause)->isOn ()) ? "true" : "false";
             break;
         case canstop:
             rval = player->process ()->playing () ? "true" : "false";

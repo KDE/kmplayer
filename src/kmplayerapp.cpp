@@ -176,7 +176,7 @@ KDE_NO_EXPORT void KMPlayerApp::initView ()
     m_view->docArea ()->readDockConfig (config, QString ("Window Layout"));
     setCentralWidget (m_view);
     QPopupMenu * bookmarkmenu = m_view->buttonBar()->bookmarkMenu ();
-    m_view->buttonBar()->popupMenu ()->removeItem (KMPlayer::KMPlayerControlPanel::menu_bookmark);
+    m_view->buttonBar()->popupMenu ()->removeItem (KMPlayer::ControlPanel::menu_bookmark);
     menuBar ()->insertItem (i18n ("&Bookmarks"), bookmarkmenu, -1, 2);
     m_sourcemenu = menuBar ()->findItem (menuBar ()->idAt (0));
     m_sourcemenu->setText (i18n ("S&ource"));
@@ -204,11 +204,11 @@ KDE_NO_EXPORT void KMPlayerApp::initView ()
              SLOT (slotSourceChanged (KMPlayer::Source *)));
     connect (m_player, SIGNAL (titleChanged (const QString &)), this,
              SLOT (setCaption (const QString &)));
-    m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayer::KMPlayerControlPanel::menu_zoom50,
+    m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom50,
             this, SLOT (zoom50 ()));
-    m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayer::KMPlayerControlPanel::menu_zoom100,
+    m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom100,
             this, SLOT (zoom100 ()));
-    m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayer::KMPlayerControlPanel::menu_zoom150,
+    m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom150,
             this, SLOT (zoom150 ()));
     connect (m_view->buttonBar()->broadcastButton (), SIGNAL (clicked ()),
             this, SLOT (broadcastClicked ()));

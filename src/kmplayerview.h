@@ -53,26 +53,26 @@ namespace KMPlayer {
 class View;
 class Viewer;
 class ViewerHolder;
-class KMPlayerControlPanel;
-class KMPlayerConsole;
-class KMPlayerPlayListView;
+class ControlPanel;
+class Console;
+class PlayListView;
 
-class KMPLAYER_EXPORT KMPlayerListViewItem : public QListViewItem {
+class KMPLAYER_EXPORT ListViewItem : public QListViewItem {
 public:
-    KMPlayerListViewItem (QListViewItem *p, const ElementPtr & e, KMPlayerPlayListView * lv);
-    KMPlayerListViewItem (KMPlayerPlayListView *v, const ElementPtr & e);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerListViewItem () {}
+    ListViewItem (QListViewItem *p, const ElementPtr & e, PlayListView * lv);
+    ListViewItem (PlayListView *v, const ElementPtr & e);
+    KDE_NO_CDTOR_EXPORT ~ListViewItem () {}
     void init ();
     ElementPtrW m_elm;
-    KMPlayerPlayListView * listview;
+    PlayListView * listview;
 };
 
-class KMPLAYER_EXPORT KMPlayerPlayListView : public KListView {
-    friend class KMPlayerListViewItem;
+class KMPLAYER_EXPORT PlayListView : public KListView {
+    friend class ListViewItem;
     Q_OBJECT
 public:
-    KMPlayerPlayListView (QWidget * parent, View * view);
-    ~KMPlayerPlayListView ();
+    PlayListView (QWidget * parent, View * view);
+    ~PlayListView ();
     void updateTree (ElementPtr root, ElementPtr active);
     void selectItem (const QString & txt);
 signals:
@@ -122,7 +122,7 @@ class KMPLAYER_EXPORT View : public KMediaPlayer::View {
     Q_OBJECT
     friend class ViewerHolder;
     friend class Viewer;
-    friend class KMPlayerPlayListView;
+    friend class PlayListView;
     friend class KMPlayerPictureWidget;
 public:
     enum ControlPanelMode {
@@ -140,10 +140,10 @@ public:
     void reset ();
     //void print(QPrinter *pPrinter);
 
-    //KMPlayerConsole * consoleOutput () const { return m_multiedit; }
+    //Console * consoleOutput () const { return m_multiedit; }
     KDE_NO_EXPORT Viewer * viewer () const { return m_viewer; }
-    KDE_NO_EXPORT KMPlayerControlPanel * buttonBar () const { return m_buttonbar; }
-    KDE_NO_EXPORT KMPlayerPlayListView * playList () const { return m_playlist; }
+    KDE_NO_EXPORT ControlPanel * buttonBar () const { return m_buttonbar; }
+    KDE_NO_EXPORT PlayListView * playList () const { return m_playlist; }
     KDE_NO_EXPORT QWidgetStack * widgetStack () const { return m_widgetstack; }
     KDE_NO_EXPORT KDockArea * docArea () const { return m_dockarea; }
     KDE_NO_EXPORT bool keepSizeRatio () const { return m_keepsizeratio; }
@@ -188,7 +188,7 @@ private:
     // widget for player's output
     Viewer * m_viewer;
     // console output
-    KMPlayerConsole * m_multiedit;
+    Console * m_multiedit;
     // widget stack contains m_viewer, m_multiedit and m_picturewidget
     QWidgetStack * m_widgetstack;
     // widget that layouts m_widgetstack for ratio setting
@@ -196,7 +196,7 @@ private:
     // widget that contains m_holder, m_buttonbar and m_posSlider
     ViewLayer * m_layer;
     // playlist widget
-    KMPlayerPlayListView * m_playlist;
+    PlayListView * m_playlist;
     // all widget types
     QWidget * m_widgettypes [WT_Last];
     KDockArea * m_dockarea;
@@ -204,7 +204,7 @@ private:
     KDockWidget * m_dock_playlist;
     QString tmplog;
     QPixmap * m_image;
-    KMPlayerControlPanel * m_buttonbar;
+    ControlPanel * m_buttonbar;
     QLabel * m_mixer_label;
     QSlider * m_volume_slider;
     const char * m_mixer_object;
@@ -234,7 +234,7 @@ protected:
     void enterEvent (QEvent *);
 };
 
-class KMPLAYER_EXPORT KMPlayerControlPanel : public QWidget {
+class KMPLAYER_EXPORT ControlPanel : public QWidget {
 public:
     enum MenuID {
         menu_config = 0, menu_player, menu_fullscreen, menu_volume, 
@@ -247,8 +247,8 @@ public:
         button_red, button_green, button_yellow, button_blue,
         button_last
     };
-    KMPlayerControlPanel (QWidget * parent);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerControlPanel () {}
+    ControlPanel (QWidget * parent);
+    KDE_NO_CDTOR_EXPORT ~ControlPanel () {}
     void showPositionSlider (bool show);
     void enableSeekButtons (bool enable);
     void setPlaying (bool play);

@@ -154,7 +154,7 @@ KDE_NO_EXPORT void PartBase::addBookMark (const QString & t, const QString & url
 void PartBase::init (KActionCollection * action_collection) {
     m_view->init ();
     m_settings->readConfig ();
-    KMPlayerControlPanel * panel = m_view->buttonBar ();
+    ControlPanel * panel = m_view->buttonBar ();
     m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner,
                         panel->bookmarkMenu (), action_collection, true, true);
     m_bPosSliderPressed = false;
@@ -162,12 +162,12 @@ void PartBase::init (KActionCollection * action_collection) {
     panel->brightnessSlider ()->setValue (m_settings->brightness);
     panel->hueSlider ()->setValue (m_settings->hue);
     panel->saturationSlider ()->setValue (m_settings->saturation);
-    connect (panel->button (KMPlayerControlPanel::button_back), SIGNAL (clicked ()), this, SLOT (back ()));
-    connect (panel->button (KMPlayerControlPanel::button_play), SIGNAL (clicked ()), this, SLOT (play ()));
-    connect (panel->button (KMPlayerControlPanel::button_forward), SIGNAL (clicked ()), this, SLOT (forward ()));
-    connect (panel->button (KMPlayerControlPanel::button_pause), SIGNAL (clicked ()), this, SLOT (pause ()));
-    connect (panel->button (KMPlayerControlPanel::button_stop), SIGNAL (clicked ()), this, SLOT (stop ()));
-    connect (panel->button (KMPlayerControlPanel::button_record), SIGNAL (clicked()), this, SLOT (record()));
+    connect (panel->button (ControlPanel::button_back), SIGNAL (clicked ()), this, SLOT (back ()));
+    connect (panel->button (ControlPanel::button_play), SIGNAL (clicked ()), this, SLOT (play ()));
+    connect (panel->button (ControlPanel::button_forward), SIGNAL (clicked ()), this, SLOT (forward ()));
+    connect (panel->button (ControlPanel::button_pause), SIGNAL (clicked ()), this, SLOT (pause ()));
+    connect (panel->button (ControlPanel::button_stop), SIGNAL (clicked ()), this, SLOT (stop ()));
+    connect (panel->button (ControlPanel::button_record), SIGNAL (clicked()), this, SLOT (record()));
     connect (panel->positionSlider (), SIGNAL (valueChanged (int)), this, SLOT (positionValueChanged (int)));
     connect (panel->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
     connect (panel->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
@@ -177,15 +177,15 @@ void PartBase::init (KActionCollection * action_collection) {
     connect (panel->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));
     connect (m_view->playList (), SIGNAL (addBookMark (const QString &, const QString &)), this, SLOT (addBookMark (const QString &, const QString &)));
     connect (m_view->playList (), SIGNAL (executed (QListViewItem *)), this, SLOT (playListItemSelected (QListViewItem *)));
-    panel->popupMenu()->connectItem (KMPlayerControlPanel::menu_fullscreen, this, SLOT (fullScreen ()));
+    panel->popupMenu()->connectItem (ControlPanel::menu_fullscreen, this, SLOT (fullScreen ()));
     connect (m_view, SIGNAL (urlDropped (const KURL &)), this, SLOT (openURL (const KURL &)));
-    panel->popupMenu ()->connectItem (KMPlayerControlPanel::menu_config,
+    panel->popupMenu ()->connectItem (ControlPanel::menu_config,
                                        this, SLOT (showConfigDialog ()));
-    panel->viewMenu ()->connectItem (KMPlayerControlPanel::menu_video,
+    panel->viewMenu ()->connectItem (ControlPanel::menu_video,
                                        this, SLOT (showVideoWindow ()));
-    panel->viewMenu ()->connectItem (KMPlayerControlPanel::menu_playlist,
+    panel->viewMenu ()->connectItem (ControlPanel::menu_playlist,
                                        this, SLOT (showPlayListWindow ()));
-    panel->viewMenu ()->connectItem (KMPlayerControlPanel::menu_console,
+    panel->viewMenu ()->connectItem (ControlPanel::menu_console,
                                        this, SLOT (showConsoleWindow ()));
     //connect (panel (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
 }
@@ -507,7 +507,7 @@ void PartBase::forward () {
 
 void PartBase::playListItemSelected (QListViewItem * item) {
     if (m_in_update_tree) return;
-    KMPlayerListViewItem * vi = static_cast <KMPlayerListViewItem *> (item);
+    ListViewItem * vi = static_cast <ListViewItem *> (item);
     m_process->source ()->jump (vi->m_elm);
 }
 
@@ -541,8 +541,8 @@ bool PartBase::playing () const {
 
 void PartBase::stop () {
     if (m_view) {
-        if (!m_view->buttonBar ()->button (KMPlayerControlPanel::button_stop)->isOn ())
-        m_view->buttonBar ()->button (KMPlayerControlPanel::button_stop)->toggle ();
+        if (!m_view->buttonBar ()->button (ControlPanel::button_stop)->isOn ())
+        m_view->buttonBar ()->button (ControlPanel::button_stop)->toggle ();
         m_view->setCursor (QCursor (Qt::WaitCursor));
     }
     if (m_process) {
@@ -551,8 +551,8 @@ void PartBase::stop () {
     }
     if (m_view) {
         m_view->setCursor (QCursor (Qt::ArrowCursor));
-        if (m_view->buttonBar ()->button (KMPlayerControlPanel::button_stop)->isOn ())
-            m_view->buttonBar ()->button (KMPlayerControlPanel::button_stop)->toggle ();
+        if (m_view->buttonBar ()->button (ControlPanel::button_stop)->isOn ())
+            m_view->buttonBar ()->button (ControlPanel::button_stop)->toggle ();
     }
 }
 

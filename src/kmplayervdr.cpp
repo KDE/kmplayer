@@ -204,17 +204,17 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     connect (m_player, SIGNAL (stopPlaying ()), this, SLOT (processStopped ()));
     m_menu->disconnectItem (0, m_app, SLOT (openVDR ()));
     m_menu->connectItem (0, this, SLOT (toggleConnected ()));
-    KMPlayer::KMPlayerControlPanel * panel = m_app->view()->buttonBar ();
-    panel->button (KMPlayer::KMPlayerControlPanel::button_red)->show ();
-    panel->button (KMPlayer::KMPlayerControlPanel::button_green)->show ();
-    panel->button (KMPlayer::KMPlayerControlPanel::button_yellow)->show ();
-    panel->button (KMPlayer::KMPlayerControlPanel::button_blue)->show ();
-    panel->button (KMPlayer::KMPlayerControlPanel::button_pause)->hide ();
-    panel->button (KMPlayer::KMPlayerControlPanel::button_record)->hide ();
-    connect (panel->button (KMPlayer::KMPlayerControlPanel::button_red), SIGNAL (clicked ()), this, SLOT (keyRed ()));
-    connect (panel->button (KMPlayer::KMPlayerControlPanel::button_green), SIGNAL (clicked ()), this, SLOT (keyGreen ()));
-    connect (panel->button (KMPlayer::KMPlayerControlPanel::button_yellow), SIGNAL (clicked ()), this, SLOT (keyYellow ()));
-    connect (panel->button (KMPlayer::KMPlayerControlPanel::button_blue), SIGNAL (clicked ()), this, SLOT (keyBlue ()));
+    KMPlayer::ControlPanel * panel = m_app->view()->buttonBar ();
+    panel->button (KMPlayer::ControlPanel::button_red)->show ();
+    panel->button (KMPlayer::ControlPanel::button_green)->show ();
+    panel->button (KMPlayer::ControlPanel::button_yellow)->show ();
+    panel->button (KMPlayer::ControlPanel::button_blue)->show ();
+    panel->button (KMPlayer::ControlPanel::button_pause)->hide ();
+    panel->button (KMPlayer::ControlPanel::button_record)->hide ();
+    connect (panel->button (KMPlayer::ControlPanel::button_red), SIGNAL (clicked ()), this, SLOT (keyRed ()));
+    connect (panel->button (KMPlayer::ControlPanel::button_green), SIGNAL (clicked ()), this, SLOT (keyGreen ()));
+    connect (panel->button (KMPlayer::ControlPanel::button_yellow), SIGNAL (clicked ()), this, SLOT (keyYellow ()));
+    connect (panel->button (KMPlayer::ControlPanel::button_blue), SIGNAL (clicked ()), this, SLOT (keyBlue ()));
     setAspect (scale ? 16.0/9 : 1.33);
     if (m_player->settings ()->sizeratio)
         view->viewer ()->setAspect (aspect ());
@@ -229,11 +229,11 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
     disconnect (m_player, SIGNAL(startPlaying()), this, SLOT(processStarted()));
     disconnect (m_player, SIGNAL (stopPlaying()), this, SLOT(processStopped()));
     if (m_player->view ()) {
-        KMPlayer::KMPlayerControlPanel * panel = m_app->view()->buttonBar ();
-        disconnect (panel->button (KMPlayer::KMPlayerControlPanel::button_red), SIGNAL (clicked ()), this, SLOT (keyRed ()));
-        disconnect (panel->button (KMPlayer::KMPlayerControlPanel::button_green), SIGNAL (clicked ()), this, SLOT (keyGreen ()));
-        disconnect (panel->button (KMPlayer::KMPlayerControlPanel::button_yellow), SIGNAL (clicked ()), this, SLOT (keyYellow ()));
-        disconnect (panel->button (KMPlayer::KMPlayerControlPanel::button_blue), SIGNAL (clicked ()), this, SLOT (keyBlue ()));
+        KMPlayer::ControlPanel * panel = m_app->view()->buttonBar ();
+        disconnect (panel->button (KMPlayer::ControlPanel::button_red), SIGNAL (clicked ()), this, SLOT (keyRed ()));
+        disconnect (panel->button (KMPlayer::ControlPanel::button_green), SIGNAL (clicked ()), this, SLOT (keyGreen ()));
+        disconnect (panel->button (KMPlayer::ControlPanel::button_yellow), SIGNAL (clicked ()), this, SLOT (keyYellow ()));
+        disconnect (panel->button (KMPlayer::ControlPanel::button_blue), SIGNAL (clicked ()), this, SLOT (keyBlue ()));
     }
     for (int i = 12; i > 0; --i)
         m_menu->removeItemAt (i);
