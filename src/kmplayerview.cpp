@@ -394,8 +394,8 @@ void VolumeBar::paintEvent (QPaintEvent * e) {
     p.setPen (Qt::black);
     int w = width () - 6;
     int vx = m_value * w / 100;
-    p.fillRect (3, 2, vx, 7, Qt::black);
-    p.drawRect (vx + 3, 2, w - vx, 7);
+    p.fillRect (3, 3, vx, 7, Qt::black);
+    p.drawRect (vx + 3, 3, w - vx, 7);
     p.end ();
     //kdDebug () << "w=" << w << " vx=" << vx << endl;
 }
@@ -406,10 +406,8 @@ void VolumeBar::mousePressEvent (QMouseEvent * e) {
 }
 
 void VolumeBar::mouseMoveEvent (QMouseEvent * e) {
-    if (e->button () == Qt::LeftButton) {
-        setValue (100 * (e->x () - 3) / (width () - 6));
-        e->accept ();
-    }
+    setValue (100 * (e->x () - 3) / (width () - 6));
+    e->accept ();
 }
 
 //-----------------------------------------------------------------------------
