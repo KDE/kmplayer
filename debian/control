@@ -1,0 +1,29 @@
+Source: kmplayer
+Section: kde
+Priority: optional
+Maintainer: Koos Vriezen <koos.vriezen@xs4all.nl>
+Build-Depends: debhelper (>= 4.0.0), kdelibs4-dev, libxine-dev, xlibs-dev
+Standards-Version: 3.6.0
+
+Package: kmplayer
+Architecture: any
+Depends: kmplayer-lib (>= ${Source-Version}), kmplayer-app (>= ${Source-Version}), kmplayer-plugin (>= ${Source-Version})
+Description: KMPlayer metapackage
+
+Package: kmplayer-lib
+Architecture: any
+Depends: kdelibs4 >= 4:3.1.0-1), libxine1
+Description: KMPlayer shared library
+
+Package: kmplayer-app
+Architecture: any
+Depends: kmplayer-lib (>= ${Source-Version})
+Description: KMPlayer stand-alone application
+ Basic audio/video viewer application for KDE.
+
+Package: kmplayer-plugin
+Architecture: any
+Depends: kmplayer-lib (>= ${Source-Version})
+Description: KMPlayer plugin for khtml/konqueror
+ This plugin enables audio/video playback inside konqueror, such as
+ movie trailers, web tv or radio.

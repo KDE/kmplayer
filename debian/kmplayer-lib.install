@@ -1,0 +1,13 @@
+debian/tmp/usr/lib/libkmplayercommon.so
+debian/tmp/usr/lib/libkmplayercommon.la
+debian/tmp/usr/bin/kxineplayer
+debian/tmp/usr/share/config/kmplayerrc
+debian/tmp/usr/share/apps/kmplayer/bookmarks.xml
+debian/tmp/usr/share/services/pnm.protocol
+debian/tmp/usr/share/mimelnk/application/x-kmplayer.desktop
+debian/tmp/usr/share/mimelnk/application/x-mplayer2.desktop
+debian/tmp/usr/share/mimelnk/audio/x-ms-wma.desktop
+debian/tmp/usr/share/mimelnk/video/x-ms-wmp.desktop
+debian/tmp/usr/share/icons/crystalsvg/32x32/apps/kmplayer.png
+debian/tmp/usr/share/icons/locolor/16x16/apps/kmplayer.png
+debian/tmp/usr/share/icons/locolor/32x32/apps/kmplayer.png
