@@ -105,11 +105,11 @@ KDE_NO_EXPORT const char * Element::nodeName () const {
     return "element";
 }
 
-KDE_NO_EXPORT bool Element::expose () {
+bool Element::expose () {
     return true;
 }
 
-KDE_NO_EXPORT void Element::clear () {
+void Element::clear () {
     if (m_doc)
         document()->m_tree_version++;
     while (m_first_child != m_last_child) {
@@ -150,7 +150,7 @@ KDE_NO_EXPORT void Element::insertBefore (ElementPtr c, ElementPtr b) {
     c->m_parent = m_self;
 }
 
-KDE_NO_EXPORT void Element::removeChild (ElementPtr c) {
+void Element::removeChild (ElementPtr c) {
     document()->m_tree_version++;
     if (c->m_prev) {
         c->m_prev->m_next = c->m_next;
@@ -187,7 +187,7 @@ KDE_NO_EXPORT void Element::replaceChild (ElementPtr _new, ElementPtr old) {
     old->m_parent = 0L;
 }
 
-KDE_NO_EXPORT ElementPtr Element::childFromTag (const QString &) {
+ElementPtr Element::childFromTag (const QString &) {
     return 0L;
 }
 
@@ -278,9 +278,9 @@ bool Element::isMrl () {
     return false;
 }
 
-KDE_NO_EXPORT void Element::opened () {}
+void Element::opened () {}
 
-KDE_NO_EXPORT void Element::closed () {}
+void Element::closed () {}
 
 Attribute::Attribute (ElementPtr d, const QString & n, const QString & v)
   : Element (d), name (n), value (v) {}
@@ -296,7 +296,7 @@ Mrl::Mrl (ElementPtr d) : Element (d), cached_ismrl_version (~0), parsed (false)
 
 KDE_NO_CDTOR_EXPORT Mrl::Mrl () : cached_ismrl_version (~0), parsed (false) {}
 
-KDE_NO_CDTOR_EXPORT Mrl::~Mrl () {}
+Mrl::~Mrl () {}
 
 bool Mrl::isMrl () {
     if (cached_ismrl_version != document()->m_tree_version) {
@@ -306,14 +306,14 @@ bool Mrl::isMrl () {
     return cached_ismrl;
 }
 
-KDE_NO_EXPORT ElementPtr Mrl::childFromTag (const QString & tag) {
+ElementPtr Mrl::childFromTag (const QString & tag) {
     Element * elm = fromXMLDocumentGroup (m_doc, tag);
     if (elm)
         return elm->self ();
     return 0L;
 }
 
-KDE_NO_EXPORT ElementPtr Mrl::realMrl () {
+ElementPtr Mrl::realMrl () {
     return m_self;
 }
 

@@ -87,6 +87,7 @@ public:
      * If this node should be visible to the user
      */
     virtual bool expose ();
+    void clear ();
     void appendChild (ElementPtr c);
     void insertBefore (ElementPtr c, ElementPtr b);
     void removeChild (ElementPtr c);
@@ -118,7 +119,6 @@ public:
 protected:
     KDE_NO_CDTOR_EXPORT Element (ElementPtr d) : m_doc (d), m_self (this) {}
     KDE_NO_CDTOR_EXPORT Element () {} // for Document
-    void clear ();
     ElementPtr m_doc;
     ElementPtrW m_parent;
     ElementPtr m_next;

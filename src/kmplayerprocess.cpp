@@ -276,7 +276,7 @@ KDE_NO_EXPORT void MPlayerBase::processStopped (KProcess *) {
 //-----------------------------------------------------------------------------
 
 static const char * mplayer_supports [] = {
-    "dvdsource", "hrefsource", "pipesource", "tvsource", "urlsource", "vcdsource", 0L
+    "dvdsource", "hrefsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", 0L
 };
 
 KDE_NO_CDTOR_EXPORT MPlayer::MPlayer (PartBase * player)

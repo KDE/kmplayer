@@ -43,67 +43,43 @@ class KConfig;
 class KURLRequester;
 
 
-class TVChannel {
+class TVChannel : public KMPlayer::GenericURL {
 public:
-    TVChannel (const QString & n, int f);
+    TVChannel (KMPlayer::ElementPtr d, const QString & n, int f);
     KDE_NO_CDTOR_EXPORT ~TVChannel () {}
+    KDE_NO_EXPORT const char * nodeName () const { return "tvchannel"; }
     QString name;
     int frequency;
-    TVChannel * next;
 };
 
-class TVInput {
+class TVInput : public KMPlayer::GenericURL {
 public:
-    TVInput (const QString & n, int id);
-    KDE_NO_CDTOR_EXPORT ~TVInput () { clear (); }
-    void clear ();
+    TVInput (KMPlayer::ElementPtr d, const QString & n, int id);
+    KDE_NO_CDTOR_EXPORT ~TVInput () {}
+    KDE_NO_EXPORT const char * nodeName () const { return "tvinput"; }
     QString name;
     int id;
     bool hastuner;
     QString norm;
-    TVChannel * channels;
-    TVInput * next;
 };
 
-class TVDevice {
+class TVDevice : public KMPlayer::GenericURL {
 public:
-    TVDevice (const QString & d, const QSize & size);
-    KDE_NO_CDTOR_EXPORT ~TVDevice () { clear (); }
-    void clear ();
-    QString device;
+    TVDevice (KMPlayer::ElementPtr d, const QString & d, const QSize & size);
+    KDE_NO_CDTOR_EXPORT ~TVDevice () {}
+    KDE_NO_EXPORT const char * nodeName () const { return "tvdevice"; }
     QString audiodevice;
-    QString name;
     QSize minsize;
     QSize maxsize;
     QSize size;
     bool noplayback;
-    TVInput * inputs;
 };
-
-inline bool operator == (const TVDevice * device, const QString & devstr) {
-    return devstr == device->device;
-}
-
-inline bool operator == (const QString & devstr, const TVDevice * device) {
-    return devstr == device->device;
-}
-
-inline bool operator != (const TVDevice * device, const QString & devstr) {
-    return ! (devstr == device);
-}
-
-inline bool operator != (const QString & devstr, const TVDevice * device) {
-    return ! (devstr == device);
-}
-
-typedef std::list <TVDevice *> TVDeviceList;
-
 
 class KMPlayerPrefSourcePageTVDevice : public QFrame
 {
     Q_OBJECT
 public:
-    KMPlayerPrefSourcePageTVDevice (QWidget *parent, TVDevice * dev);
+    KMPlayerPrefSourcePageTVDevice (QWidget *parent, KMPlayer::ElementPtr dev);
     KDE_NO_CDTOR_EXPORT ~KMPlayerPrefSourcePageTVDevice () {}
 
     QLineEdit * name;
@@ -111,7 +87,7 @@ public:
     QLineEdit * sizewidth;
     QLineEdit * sizeheight;
     QCheckBox * noplayback;
-    TVDevice * device;
+    KMPlayer::ElementPtr device_doc;
     void updateTVDevice ();
 signals:
     void deleted (KMPlayerPrefSourcePageTVDevice *);
@@ -124,7 +100,6 @@ private:
 class KMPlayerPrefSourcePageTV : public QFrame
 {
     Q_OBJECT
-    friend class TVDevicePageAdder;
 public:
     KMPlayerPrefSourcePageTV (QWidget *parent);
     KDE_NO_CDTOR_EXPORT ~KMPlayerPrefSourcePageTV () {}
@@ -133,16 +108,17 @@ public:
     KURLRequester * device;
     QTabWidget * tab;
     TVDeviceScannerSource * scanner;
-    void setTVDevices (TVDeviceList *);
+    void setTVDocument (KMPlayer::ElementPtr doc);
     void updateTVDevices ();
 private slots:
     void slotScan ();
     void slotScanFinished (TVDevice * device);
     void slotDeviceDeleted (KMPlayerPrefSourcePageTVDevice *);
 private:
-    TVDeviceList * m_devices;
-    TVDeviceList deleteddevices;
-    TVDeviceList addeddevices;
+    void addTVDevicePage (TVDevice * dev, bool show=false);
+    KMPlayer::ElementPtr m_document;
+    KMPlayer::ElementPtr deleteddevices;
+    KMPlayer::ElementPtr addeddevices;
     typedef std::list <KMPlayerPrefSourcePageTVDevice *> TVDevicePageList;
     TVDevicePageList m_devicepages;
 };
@@ -151,7 +127,7 @@ private:
 class TVDeviceScannerSource : public KMPlayer::Source {
     Q_OBJECT
 public:
-    TVDeviceScannerSource (KMPlayer::PartBase * player);
+    TVDeviceScannerSource (KMPlayer::ElementPtr d, KMPlayer::PartBase * player);
     KDE_NO_CDTOR_EXPORT ~TVDeviceScannerSource () {};
     virtual void init ();
     virtual bool processOutput (const QString & line);
@@ -159,14 +135,15 @@ public:
     virtual bool hasLength ();
     virtual bool isSeekable ();
     virtual bool scan (const QString & device, const QString & driver);
-    public slots:
-        virtual void activate ();
+public slots:
+    virtual void activate ();
     virtual void deactivate ();
     virtual void play ();
     void finished ();
 signals:
     void scanFinished (TVDevice * tvdevice);
 private:
+    KMPlayer::ElementPtr m_doc;
     TVDevice * m_tvdevice;
     KMPlayer::Source * m_source;
     QString m_driver;
@@ -178,23 +155,12 @@ private:
 class KMPlayerTVSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
-    struct TVSource {
-        QSize size;
-        QString command;
-        QString videodevice;
-        QString audiodevice;
-        QString title;
-        QString norm;
-        int frequency;
-        bool noplayback;
-    };
     KMPlayerTVSource (KMPlayerApp * app, QPopupMenu * m);
     virtual ~KMPlayerTVSource ();
     virtual QString filterOptions ();
     virtual bool hasLength ();
     virtual bool isSeekable ();
     void buildMenu ();
-    KDE_NO_EXPORT TVSource * tvsource () const { return m_tvsource; }
     virtual QString prettyName ();
     virtual void write (KConfig *);
     virtual void read (KConfig *);
@@ -204,20 +170,16 @@ public:
 public slots:
     virtual void activate ();
     virtual void deactivate ();
-    virtual void forward ();
-    virtual void backward ();
 
     void menuClicked (int id);
+protected:
+    void jump (KMPlayer::ElementPtr e);
 private:
     void buildArguments ();
-    typedef QMap <int, TVSource *> CommandMap;
-    TVSource * m_tvsource;
-    CommandMap commands;
+    KMPlayer::ElementPtr m_cur_tvdevice;
     QPopupMenu * m_channelmenu;
     QString tvdriver;
-    TVDeviceList tvdevices;
     KMPlayerPrefSourcePageTV * m_configpage;
-    int m_current_id;
 };
 
 #endif //_KMPLAYER_TV_SOURCE_H_
