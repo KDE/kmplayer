@@ -659,18 +659,6 @@ KDE_NO_EXPORT ElementPtr SMIL::Region::childFromTag (const QString & tag) {
     return ElementPtr ();
 }
 
-static ElementPtr findLayout (ElementPtr e) {
-    if (!e)
-        return ElementPtr ();
-    if (!strcmp (e->nodeName (), "smil"))
-        for (ElementPtr c = e->firstChild (); c; c = c->nextSibling ())
-            if (!strcmp (c->nodeName (), "head"))
-                for (ElementPtr d = c->firstChild (); d; d = d->nextSibling ())
-                    if (!strcmp (d->nodeName (), "layout"))
-                        return d;
-    return findLayout (e->parentNode ());
-}
-
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementPtr SMIL::Body::childFromTag (const QString & tag) {
@@ -700,16 +688,13 @@ KDE_NO_EXPORT void SMIL::Par::start (Source * source) {
         for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
             e->start (source);
     } else
-        stop ();
+        stop (); // no children to run in parallel
 }
 
 KDE_NO_EXPORT void SMIL::Par::stop () {
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
-        if (e->started && !e->finished)
-            e->stop ();
-    // children are out of scope now, reset their RegionData
-    for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
-        e->reset ();
+        // children are out of scope now, reset their RegionData
+        e->reset (); // will call stop() if necessary
     Element::stop ();
 }
 
@@ -722,24 +707,10 @@ KDE_NO_EXPORT void SMIL::Par::reset () {
 KDE_NO_EXPORT void SMIL::Par::childDone (ElementPtr) {
     kdDebug () << "SMIL::Par::childDone" << endl;
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
-    kdDebug () << "  childDone" << e->nodeName () << " " << e->finished << endl;
         if (!e->finished)
             return; // not all done
     }
     stop (); // we're done
-}
-
-static RegionNodePtr findRegion (RegionNodePtr p, const QString & id) {
-    for (RegionNodePtr r = p->firstChild; r; r = r->nextSibling) {
-        if (r->regionElement->getAttribute ("id") == id) {
-            kdDebug () << "MediaType region found " << id << endl;
-            return r;
-        }
-        RegionNodePtr r1 = findRegion (r, id);
-        if (r1)
-            return r1;
-    }
-    return RegionNodePtr ();
 }
 
 //-----------------------------------------------------------------------------
@@ -765,14 +736,12 @@ KDE_NO_EXPORT void SMIL::Seq::start (Source * source) {
 
 KDE_NO_EXPORT void SMIL::Seq::stop () {
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
-        if (e->started && !e->finished) {
-            e->stop ();
-            break; // stop only the one running
-        }
+        if (e->started)
+            // children are out of scope now, reset their RegionData
+            e->reset (); // reset will call stop if necessary
+        else
+            break; // not yet started
     }
-    // children are out of scope now, reset their RegionData
-    for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
-        e->reset ();
     Element::stop ();
 }
 
@@ -845,6 +814,19 @@ KDE_NO_EXPORT ElementPtr SMIL::MediaType::childFromTag (const QString & tag) {
     if (elm)
         return elm->self ();
     return ElementPtr ();
+}
+
+static RegionNodePtr findRegion (RegionNodePtr p, const QString & id) {
+    for (RegionNodePtr r = p->firstChild; r; r = r->nextSibling) {
+        if (r->regionElement->getAttribute ("id") == id) {
+            kdDebug () << "MediaType region found " << id << endl;
+            return r;
+        }
+        RegionNodePtr r1 = findRegion (r, id);
+        if (r1)
+            return r1;
+    }
+    return RegionNodePtr ();
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::opened () {
