@@ -110,12 +110,18 @@ protected:
 
 class KMPLAYER_EXPORT Mrl : public Element {
 protected:
-    Mrl (ElementPtr d) : Element (d), parsed (false) {}
-    KDE_NO_CDTOR_EXPORT Mrl () : parsed (false) {} // for Document
+    Mrl (ElementPtr d);
+    Mrl (); // for Document
     ElementPtr childFromTag (const QString & tag);
+    unsigned int cached_ismrl_version;
+    bool cached_ismrl;
 public:
     ~Mrl ();
     bool isMrl ();
+    /*
+     * If this Mrl hides a child Mrl, return that one or else this one 
+     */ 
+    virtual ElementPtr realMrl ();
     QString src;
     QString pretty_name;
     QString mimetype;
@@ -136,8 +142,7 @@ public:
      * Will return false if this document has child nodes
      */
     bool isMrl ();
-private:
-    ElementPtr m_current;
+    unsigned int m_tree_version;
 };
 
 class KMPLAYER_EXPORT TextNode : public Element {
@@ -231,6 +236,10 @@ public:
      * True if has a Ref child
      */
     bool isMrl ();
+    /**
+     * Returns Ref child if isMrl() return true
+     */
+    virtual ElementPtr realMrl ();
 };
 
 class Ref : public Mrl {

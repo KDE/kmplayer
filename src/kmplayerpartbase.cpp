@@ -744,8 +744,18 @@ void KMPlayerSource::insertURL (const QString & mrl) {
         kdError () << "try to append non-valid url" << endl;
     else if (KURL (current ()) == url)
         kdError () << "try to append url to itself" << endl;
-    else if (m_current)
-        m_current->appendChild ((new GenericURL (m_document, KURL::decode_string (url.url ()), KURL::decode_string (mrl)))->self ());
+    else if (m_current) {
+        int depth = 0;
+        for (ElementPtr e = m_current; e->parentNode (); e = e->parentNode ())
+            ++depth;
+        if (depth < 40) {
+            ElementPtr e = m_current;
+            if (m_current->isMrl ())
+                e = m_current->mrl ()->realMrl ();
+            e->appendChild ((new GenericURL (m_document, KURL::decode_string (url.url ()), KURL::decode_string (mrl)))->self ());
+        } else
+            kdError () << "insertURL exceeds limit" << endl;
+    }
 }
 
 void KMPlayerSource::play () {
@@ -965,8 +975,10 @@ KDE_NO_EXPORT void KMPlayerURLSource::activate () {
 }
 
 KDE_NO_EXPORT void KMPlayerURLSource::deactivate () {
-    if (m_job)
+    if (m_job) {
         m_job->kill (); // silent, no kioResult signal
+        m_player->process ()->view ()->buttonBar ()->setPlaying (m_player->playing ());
+    }
     m_job = 0L;
 }
 
@@ -1147,7 +1159,8 @@ KDE_NO_EXPORT void KMPlayerURLSource::read (QTextStream & textstream) {
             } while (!line.isNull ());
         } else if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
             QXmlSimpleReader reader;
-            MMXmlContentHandler content_handler (m_current);
+            Mrl * mrl = m_current->mrl ();
+            MMXmlContentHandler content_handler (mrl ? mrl->realMrl () : m_current);
             FilteredInputSource input_source (textstream, line);
             reader.setContentHandler (&content_handler);
             reader.setErrorHandler (&content_handler);

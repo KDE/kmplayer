@@ -599,7 +599,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPlayListView::~KMPlayerPlayListView () {
 
 static void populateTree (ElementPtr e, ElementPtr focus, KMPlayerPlayListView * tree, QListViewItem *item) {
     Mrl * mrl = e->mrl ();
-    item->setText(0, mrl ? (mrl->pretty_name.isEmpty () ? KURL(mrl->src).prettyURL() : mrl->pretty_name) : QString(e->nodeName()));
+    item->setText(0, mrl ? (mrl->pretty_name.isEmpty () ? (mrl->src.isEmpty() ? QString(e->nodeName()) : KURL(mrl->src).prettyURL()) : mrl->pretty_name) : QString(e->nodeName()));
     if (focus == e) {
         for (QListViewItem * p = item->parent (); p; p = p->parent ())
             p->setOpen (true);

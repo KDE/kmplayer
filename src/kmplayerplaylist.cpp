@@ -83,6 +83,8 @@ KDE_NO_EXPORT bool Element::expose () {
 }
 
 KDE_NO_EXPORT void Element::clear () {
+    if (m_doc)
+        document()->m_tree_version++;
     while (m_first_child != m_last_child) {
         // avoid stack abuse with 10k children derefing each other
         m_last_child->m_parent = 0L;
@@ -95,6 +97,7 @@ KDE_NO_EXPORT void Element::clear () {
 }
 
 void Element::appendChild (ElementPtr c) {
+    document()->m_tree_version++;
     if (!m_first_child) {
         m_first_child = m_last_child = c;
     } else {
@@ -106,6 +109,7 @@ void Element::appendChild (ElementPtr c) {
 }
 
 KDE_NO_EXPORT void Element::insertBefore (ElementPtr c, ElementPtr b) {
+    document()->m_tree_version++;
     if (b->m_prev) {
         b->m_prev->m_next = c;
         c->m_prev = b->m_prev;
@@ -119,6 +123,7 @@ KDE_NO_EXPORT void Element::insertBefore (ElementPtr c, ElementPtr b) {
 }
 
 KDE_NO_EXPORT void Element::removeChild (ElementPtr c) {
+    document()->m_tree_version++;
     if (c->m_prev) {
         c->m_prev->m_next = c->m_next;
         c->m_prev = 0L;
@@ -133,6 +138,7 @@ KDE_NO_EXPORT void Element::removeChild (ElementPtr c) {
 }
 
 KDE_NO_EXPORT void Element::replaceChild (ElementPtr _new, ElementPtr old) {
+    document()->m_tree_version++;
     if (old->m_prev) {
         old->m_prev->m_next = _new;
         _new->m_prev = old->m_prev;
@@ -158,6 +164,7 @@ KDE_NO_EXPORT ElementPtr Element::childFromTag (const QString &) {
 }
 
 KDE_NO_EXPORT void Element::characterData (const QString & s) {
+    document()->m_tree_version++;
     kdDebug () << !m_last_child << (!m_last_child || strcmp (m_last_child->nodeName (), "#text")) << (m_last_child ? m_last_child->nodeName () : "-") << endl;
     if (!m_last_child || strcmp (m_last_child->nodeName (), "#text"))
         appendChild ((new TextNode (m_doc, s))->self ());
@@ -165,24 +172,25 @@ KDE_NO_EXPORT void Element::characterData (const QString & s) {
         static_cast <TextNode *> (static_cast <Element *> (m_last_child))->appendText (s);
 }
 
-static QString getInnerText (const ElementPtr p) {
-    QString buf;
-    QTextOStream out (&buf);
+static void getInnerText (const ElementPtr p, QTextOStream & out) {
     for (ElementPtr e = p->firstChild (); e; e = e->nextSibling ()) {
         if (!strcmp (e->nodeName (), "#text"))
             out << (static_cast<TextNode*>(static_cast<Element *>(e)))->text;
         else
             out << QChar ('<') << e->nodeName () << QChar ('>'); //TODO attr.
-        out << getInnerText (e);
+        getInnerText (e, out);
     }
-    return buf;
 }
 
 QString Element::innerText () const {
-    return getInnerText (self ());
+    QString buf;
+    QTextOStream out (&buf);
+    getInnerText (self (), out);
+    return buf;
 }
 
 KDE_NO_EXPORT void Element::setAttributes (const QXmlAttributes & atts) {
+    document()->m_tree_version++;
     for (int i = 0; i < atts.length (); i++)
         kdDebug () << " " << atts.qName (i) << "=" << atts.value (i) << endl;
 }
@@ -191,17 +199,25 @@ bool Element::isMrl () {
     return false;
 }
 
-static bool hasMrlChildren (ElementPtr e) {
+static bool hasMrlChildren (const ElementPtr & e) {
     for (ElementPtr c = e->firstChild (); c; c = c->nextSibling ())
         if (c->isMrl () || hasMrlChildren (c))
             return true;
     return false;
 }
 
+Mrl::Mrl (ElementPtr d) : Element (d), cached_ismrl_version (~0), parsed (false) {}
+
+KDE_NO_CDTOR_EXPORT Mrl::Mrl () : cached_ismrl_version (~0), parsed (false) {}
+
 KDE_NO_CDTOR_EXPORT Mrl::~Mrl () {}
 
 bool Mrl::isMrl () {
-    return !hasMrlChildren (m_self);
+    if (cached_ismrl_version != document()->m_tree_version) {
+        cached_ismrl = !hasMrlChildren (m_self);
+        cached_ismrl_version = document()->m_tree_version;
+    }
+    return cached_ismrl;
 }
 
 KDE_NO_EXPORT ElementPtr Mrl::childFromTag (const QString & tag) {
@@ -211,9 +227,13 @@ KDE_NO_EXPORT ElementPtr Mrl::childFromTag (const QString & tag) {
     return 0L;
 }
 
+KDE_NO_EXPORT ElementPtr Mrl::realMrl () {
+    return m_self;
+}
+
 //-----------------------------------------------------------------------------
 
-Document::Document (const QString & s) {
+Document::Document (const QString & s) : m_tree_version (0) {
     m_doc = this;
     m_self = m_doc;
     src = s;
@@ -236,7 +256,7 @@ void Document::dispose () {
 }
 
 bool Document::isMrl () {
-    return !hasMrlChildren (m_self);
+    return Mrl::isMrl ();
 }
 
 //-----------------------------------------------------------------------------
@@ -352,9 +372,10 @@ KDE_NO_EXPORT ElementPtr Asx::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT bool Asx::isMrl () {
-    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
-        if (!strcmp (e->nodeName (), "title"))
-            pretty_name = e->innerText ();
+    if (cached_ismrl_version != document ()->m_tree_version) {
+        for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
+            if (!strcmp (e->nodeName (), "title"))
+                pretty_name = e->innerText ();
     }
     return Mrl::isMrl ();
 }
@@ -370,15 +391,30 @@ KDE_NO_EXPORT ElementPtr Entry::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT bool Entry::isMrl () {
-    src.truncate (0); // FIXME cache tree changes
-    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
-        if (e->isMrl ())
-            src = e->mrl ()->src;
-        else if (!strcmp (e->nodeName (), "title"))
-            pretty_name = e->innerText ();
+    if (cached_ismrl_version != document ()->m_tree_version) {
+        src.truncate (0);
+        bool foundone = false;
+        for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
+            if (e->isMrl () && !e->hasChildNodes ()) {
+                if (foundone)
+                    src.truncate (0);
+                else
+                    src = e->mrl ()->src;
+                foundone = true;
+            } else if (!strcmp (e->nodeName (), "title"))
+                pretty_name = e->innerText ();
+        }
     }
     return !src.isEmpty ();
 }
+
+KDE_NO_EXPORT ElementPtr Entry::realMrl () {
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
+        if (e->isMrl ())
+            return e;
+    return m_self;
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT void Ref::setAttributes (const QXmlAttributes & atts) {
@@ -410,7 +446,7 @@ GenericURL::GenericURL (ElementPtr d, const QString & s, const QString & name)
 }
 
 bool GenericURL::isMrl () {
-    return !hasMrlChildren (m_self);
+    return Mrl::isMrl ();
 }
 
 //-----------------------------------------------------------------------------
