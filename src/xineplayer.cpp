@@ -670,13 +670,9 @@ bool KXinePlayer::event (QEvent * e) {
             xine_event_dispose_queue (event_queue);
             xine_dispose (stream);
             stream = 0L;
-            xine_close_video_driver (xine, vo_port);  
-            mutex.unlock ();
             XLockDisplay (display);
             XClearWindow (display, wid);
             XUnlockDisplay (display);
-            mutex.lock ();
-            vo_port = xine_open_video_driver(xine, d->vo_driver, XINE_VISUAL_TYPE_X11, (void *) &vis);
             mutex.unlock ();
             if (callback)
                 callback->finished ();
