@@ -115,6 +115,7 @@ protected slots:
     virtual void stopped ();
 private:
     void processEvent (unsigned int event);
+    void propagateStop ();
 protected:
     ElementPtrW element;
     int start_timer;

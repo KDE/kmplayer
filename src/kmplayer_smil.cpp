@@ -212,12 +212,8 @@ KDE_NO_EXPORT void ElementRuntime::timerEvent (QTimerEvent * e) {
         start_timer = 0;
         isstarted = true;
         QTimer::singleShot (0, this, SLOT (started ()));
-    } else if (e->timerId () == dur_timer) {
-        killTimer (dur_timer);
-        dur_timer = 0;
-        isstarted = false;
-        QTimer::singleShot (0, this, SLOT (stopped ()));
-    }
+    } else if (e->timerId () == dur_timer)
+        propagateStop ();
 }
 
 KDE_NO_EXPORT void ElementRuntime::elementActivateEvent () {
@@ -239,9 +235,20 @@ KDE_NO_EXPORT void ElementRuntime::elementHasStopped () {
 KDE_NO_EXPORT void ElementRuntime::processEvent (unsigned int event) {
     kdDebug () << "ElementRuntime::processEvent " << event << " " << (element ? element->nodeName() : "-") << endl; 
     if (!isstarted && durations [begin_time].durval == event) {
-        isstarted = true;
-        QTimer::singleShot (0, this, SLOT (started ()));
-    } else if (isstarted && durations [end_time].durval == event) {
+        if (!isstarted) {
+            isstarted = true;
+            QTimer::singleShot (0, this, SLOT (started ()));
+        }
+    } else if (isstarted && durations [end_time].durval == event)
+        propagateStop ();
+}
+
+KDE_NO_EXPORT void ElementRuntime::propagateStop () {
+    if (dur_timer) {
+        killTimer (dur_timer);
+        dur_timer = 0;
+    }
+    if (isstarted) {
         isstarted = false;
         QTimer::singleShot (0, this, SLOT (stopped ()));
     }
@@ -252,11 +259,9 @@ KDE_NO_EXPORT void ElementRuntime::started () {
     if (durations [duration_time].durval > 0) {
         if (durations [duration_time].durval < duration_last_option)
             dur_timer = startTimer (1000 * durations [duration_time].durval);
-    } else if (!element || durations [end_time].durval < duration_last_option) {
+    } else if (!element || durations [end_time].durval < duration_last_option)
         // no duration set and no special end, so mark us finished
-        isstarted = false;
-        QTimer::singleShot (0, this, SLOT (stopped ()));
-    }
+        propagateStop ();
 }
 
 KDE_NO_EXPORT void ElementRuntime::stopped () {
@@ -619,10 +624,10 @@ KDE_NO_EXPORT void SMIL::Par::start () {
 }
 
 KDE_NO_EXPORT void SMIL::Par::stop () {
+    TimedElement::stop ();
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
         // children are out of scope now, reset their ElementRuntime
         e->reset (); // will call stop() if necessary
-    TimedElement::stop ();
 }
 
 KDE_NO_EXPORT void SMIL::Par::reset () {
@@ -632,12 +637,14 @@ KDE_NO_EXPORT void SMIL::Par::reset () {
 }
 
 KDE_NO_EXPORT void SMIL::Par::childDone (ElementPtr) {
-    kdDebug () << "SMIL::Par::childDone" << endl;
-    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
-        if (e->state != state_finished)
-            return; // not all done
+    if (state != state_finished) {
+        kdDebug () << "SMIL::Par::childDone" << endl;
+        for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
+            if (e->state != state_finished)
+                return; // not all done
+        }
+        stop (); // we're done
     }
-    stop (); // we're done
 }
 
 //-----------------------------------------------------------------------------
