@@ -122,15 +122,21 @@ private:
     int xv_port;
 };
 
-class XVideo : public KMPlayerProcess {
+class XVideo : public KMPlayerCallbackProcess {
     Q_OBJECT
 public:
     XVideo (KMPlayer * player);
     ~XVideo ();
     KDE_NO_EXPORT void setPort (int xvport) { xv_port = xvport; }
+    void setStarted (QByteArray & data);
+    void initProcess ();
 public slots:
     virtual bool play ();
-    virtual bool stop ();
+    virtual bool quit ();
+    bool saturation (int pos, bool absolute);
+    bool hue (int pos, bool absolute);
+    bool contrast (int pos, bool absolute);
+    bool brightness (int pos, bool absolute);
 private slots:
     void processStopped (KProcess *);
     void processOutput (KProcess *, char *, int);

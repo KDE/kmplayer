@@ -220,6 +220,10 @@ public:
     KDE_NO_EXPORT bool haveConfig () { return m_have_config == config_yes; }
     bool getConfigData ();
     void setChangedData (const QByteArray &);
+    QString dcopName ();
+public slots:
+    bool stop ();
+    bool pause ();
 protected:
     KMPlayerCallback * m_callback;
     KMPlayerBackend_stub * m_backend;
@@ -256,14 +260,12 @@ public:
     void initProcess ();
 public slots:
     bool play ();
-    bool stop ();
     bool quit ();
-    bool pause ();
+    bool seek (int pos, bool absolute);
     bool saturation (int pos, bool absolute);
     bool hue (int pos, bool absolute);
     bool contrast (int pos, bool absolute);
     bool brightness (int pos, bool absolute);
-    bool seek (int pos, bool absolute);
     void setStarted (QByteArray & data);
 private slots:
     void processStopped (KProcess *);

@@ -46,6 +46,8 @@
 #include <kaction.h>
 #include <kiconloader.h>
 
+#include "kmplayer_backend_stub.h"
+#include "kmplayer_callback.h"
 #include "kmplayerpartbase.h"
 #include "kmplayerconfig.h"
 #include "kmplayervdr.h"
@@ -491,32 +493,41 @@ KDE_NO_EXPORT QFrame * KMPlayerVDRSource::prefPage (QWidget * parent) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT XVideo::XVideo (KMPlayer * player)
- : KMPlayerProcess  (player, "xvideo"), xv_port (0) {}
+ : KMPlayerCallbackProcess (player, "xvideo"), xv_port (0) {}
 
 KDE_NO_CDTOR_EXPORT XVideo::~XVideo () {}
 
-KDE_NO_EXPORT bool XVideo::play () {
-    delete m_process;
-    m_process = new KProcess;
-    m_process->setUseShell (true);
+KDE_NO_EXPORT void XVideo::initProcess () {
+    KMPlayerProcess::initProcess ();
     connect (m_process, SIGNAL (processExited (KProcess *)),
             this, SLOT (processStopped (KProcess *)));
     connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
             this, SLOT (processOutput (KProcess *, char *, int)));
     connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
             this, SLOT (processOutput (KProcess *, char *, int)));
-    QString cmd  = QString ("rootv -port %1 -id %2 ").arg (xv_port).arg (view()->viewer()->embeddedWinId ());
+}
+
+KDE_NO_EXPORT bool XVideo::play () {
+    if (playing ()) {
+        return true;
+    }
+    initProcess ();
+    QString cmd  = QString ("kxvplayer -port %1 -wid %2 ").arg (xv_port).arg (view()->viewer()->embeddedWinId ());
     printf ("%s\n", cmd.latin1 ());
     *m_process << cmd;
+    printf (" -cb %s\n", dcopName ().ascii());
+    *m_process << " -cb " << dcopName ();
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
     if (m_process->isRunning ())
         emit startedPlaying ();
     return m_process->isRunning ();
 }
 
-KDE_NO_EXPORT bool XVideo::stop () {
+KDE_NO_EXPORT bool XVideo::quit () {
     if (!playing ()) return true;
-    if (view ())
+    if (m_backend)
+        m_backend->quit ();
+    else if (view ())
         view ()->viewer ()->sendKeyEvent ('q');
 #if KDE_IS_VERSION(3, 1, 90)
     m_process->wait(2);
@@ -530,6 +541,15 @@ KDE_NO_EXPORT bool XVideo::stop () {
     return KMPlayerProcess::stop ();
 }
 
+KDE_NO_EXPORT void XVideo::setStarted (QByteArray & data) {
+    QString dcopname;
+    dcopname.sprintf ("kxvideoplayer-%u", m_process->pid ());
+    kdDebug () << "up and running " << dcopname << endl;
+    m_backend = new KMPlayerBackend_stub (dcopname.ascii (), "KMPlayerBackend");
+    KMPlayerCallbackProcess::setStarted (data);
+    m_backend->play ();
+}
+
 KDE_NO_EXPORT void XVideo::processStopped (KProcess *) {
     QTimer::singleShot (0, this, SLOT (emitFinished ()));
 }
@@ -538,6 +558,30 @@ KDE_NO_EXPORT void XVideo::processOutput (KProcess *, char * str, int slen) {
     KMPlayerView * v = view ();
     if (v && slen > 0)
         v->addText (QString::fromLocal8Bit (str, slen));
+}
+
+KDE_NO_EXPORT bool XVideo::saturation (int val, bool) {
+    if (m_backend)
+        m_backend->saturation (10 * val, true);
+    return !!m_backend;
+}
+
+KDE_NO_EXPORT bool XVideo::hue (int val, bool) {
+    if (m_backend)
+        m_backend->hue (10 * val, true);
+    return !!m_backend;
+}
+
+KDE_NO_EXPORT bool XVideo::brightness (int val, bool) {
+    if (m_backend)
+        m_backend->brightness (10 * val, true);
+    return !!m_backend;
+}
+
+KDE_NO_EXPORT bool XVideo::contrast (int val, bool) {
+    if (m_backend)
+        m_backend->contrast (10 * val, true);
+    return !!m_backend;
 }
 
 #include "kmplayervdr.moc"

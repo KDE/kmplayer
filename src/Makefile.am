@@ -28,17 +28,22 @@ kmplayer_la_SOURCES= main.cpp kmplayerapp.cpp kmplayertvsource.cpp kmplayerbroad
 kmplayer_la_LIBADD= libkmplayercommon.la
 kmplayer_la_LDFLAGS= -module $(KDE_PLUGIN)
 
-EXTRA_PROGRAMS = kxineplayer
+EXTRA_PROGRAMS = kxineplayer kxvplayer
 if include_kxineplayer
 kxineplayer_app = kxineplayer
 endif
 
-bin_PROGRAMS= $(kxineplayer_app)
+bin_PROGRAMS= $(kxineplayer_app) kxvplayer
 
 kxineplayer_LDADD= $(LIB_XINE)
 kxineplayer_CFLAGS= $(CFLAGS_XINE)
 kxineplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH) -lDCOP
 kxineplayer_SOURCES= xineplayer.cpp kmplayer_backend.skel kmplayer_callback.stub
+
+kxvplayer_LDADD=
+kxvplayer_CFLAGS=
+kxvplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH) -lDCOP -lXv
+kxvplayer_SOURCES= xvplayer.cpp kmplayer_backend.skel kmplayer_callback.stub
 
 xdg_apps_DATA = kmplayer.desktop
 

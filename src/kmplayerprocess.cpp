@@ -923,6 +923,11 @@ void KMPlayerCallbackProcess::setPlaying () {
 
 void KMPlayerCallbackProcess::setStarted (QByteArray &) {
     m_status = status_start;
+    KMPlayerSettings * settings = m_player->settings ();
+    saturation (settings->saturation, true);
+    hue (settings->hue, true);
+    brightness (settings->brightness, true);
+    contrast (settings->contrast, true);
 }
 
 void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
@@ -974,6 +979,27 @@ void KMPlayerCallbackProcess::setChangedData (const QByteArray & data) {
     else
         play ();
 }
+
+bool KMPlayerCallbackProcess::stop () {
+    if (!m_process || !m_process->isRunning ()) return true;
+    if (m_backend)
+        m_backend->stop ();
+    return true;
+}
+
+bool KMPlayerCallbackProcess::pause () {
+    if (!playing () || !m_backend) return false;
+    m_backend->pause ();
+    return true;
+}
+
+QString KMPlayerCallbackProcess::dcopName () {
+    QString cbname;
+    cbname.sprintf ("%s/%s", QString (kapp->dcopClient ()->appId ()).ascii (),
+                             QString (m_callback->objId ()).ascii ());
+    return cbname;
+}
+
 //-----------------------------------------------------------------------------
 
 class KMPlayerXMLPreferencesFrame : public QFrame {
@@ -1208,9 +1234,6 @@ KDE_NO_EXPORT bool Xine::play () {
         }
         return true;
     }
-    QString cbname;
-    cbname.sprintf ("%s/%s", QString (kapp->dcopClient ()->appId ()).ascii (),
-                             QString (m_callback->objId ()).ascii ());
     QString xine_config = KProcess::quote (QString (QFile::encodeName (locateLocal ("data", "kmplayer/") + QString ("xine_config"))));
     if (m_have_config == config_probe || m_send_config == send_new) {
         initProcess ();
@@ -1222,8 +1245,8 @@ KDE_NO_EXPORT bool Xine::play () {
         }
         printf (" -f %s", xine_config.ascii ());
         *m_process << " -f " << xine_config;
-        printf (" -cb %s nomovie\n", cbname.ascii());
-        *m_process << " -cb " << cbname << " nomovie";
+        printf (" -cb %s nomovie\n", dcopName ().ascii());
+        *m_process << " -cb " << dcopName () << " nomovie";
         m_process->start (KProcess::NotifyOnExit, KProcess::All);
         return m_process->isRunning ();
     }
@@ -1252,8 +1275,8 @@ KDE_NO_EXPORT bool Xine::play () {
         printf (" -ao %s", strAudioDriver.lower().ascii());
         *m_process << " -ao " << strAudioDriver.lower();
     }
-    printf (" -cb %s", cbname.ascii());
-    *m_process << " -cb " << cbname;
+    printf (" -cb %s", dcopName ().ascii());
+    *m_process << " -cb " << dcopName ();
     if (m_have_config == config_unknown) {
         printf (" -c");
         *m_process << " -c";
@@ -1290,13 +1313,6 @@ KDE_NO_EXPORT bool Xine::play () {
         return true;
     }
     return false;
-}
-
-KDE_NO_EXPORT bool Xine::stop () {
-    if (!m_process || !m_process->isRunning ()) return true;
-    if (m_backend)
-        m_backend->stop ();
-    return true;
 }
 
 KDE_NO_EXPORT bool Xine::quit () {
@@ -1337,12 +1353,6 @@ KDE_NO_EXPORT void Xine::setFinished () {
     }
 }
 
-KDE_NO_EXPORT bool Xine::pause () {
-    if (!playing () || !m_backend) return false;
-    m_backend->pause ();
-    return true;
-}
-
 KDE_NO_EXPORT bool Xine::seek (int pos, bool absolute) {
     if (in_gui_update || !playing () ||
             !m_backend ||
@@ -1375,11 +1385,11 @@ KDE_NO_EXPORT void Xine::processStopped (KProcess *) {
 }
 
 KDE_NO_EXPORT void Xine::setStarted (QByteArray & data) {
-    KMPlayerCallbackProcess::setStarted (data);
     QString dcopname;
     dcopname.sprintf ("kxineplayer-%u", m_process->pid ());
     kdDebug () << "up and running " << dcopname << endl;
     m_backend = new KMPlayerBackend_stub (dcopname.ascii (), "KMPlayerBackend");
+    KMPlayerCallbackProcess::setStarted (data);
     if (m_have_config == config_probe || m_have_config == config_unknown) {
         m_configdata = data;
         if (m_have_config == config_probe) {
@@ -1394,11 +1404,6 @@ KDE_NO_EXPORT void Xine::setStarted (QByteArray & data) {
         m_backend->setConfig (m_changeddata);
         return;
     }
-    KMPlayerSettings * settings = m_player->settings ();
-    saturation (settings->saturation, true);
-    hue (settings->hue, true);
-    brightness (settings->brightness, true);
-    contrast (settings->contrast, true);
     //const KURL & url = m_source->subUrl ();
     //if (!url.isEmpty ())
     //    m_backend->setSubTitleURL (url.isLocalFile () ? url.path () : url.url ());
