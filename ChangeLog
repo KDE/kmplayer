@@ -1,4 +1,5 @@
 Changes since version 0.8.4b
+- Build fix for compiling with -fvisibility=hidden
 - More work on SMIL, support for layout/root-layout/region tags so one can
   position a mediatype in a rectangle, other than video/audio also support
   for text/img mediatypes and flow control with begin/dur/end attribute that
