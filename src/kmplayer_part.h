@@ -152,15 +152,13 @@ private:
     QRegExp m_posRegExp;
     QStringList commands;
     QString m_href;
-    int m_stoplooplevel;
+    QString m_process_output;
     int m_seektime;
     int m_cachesize;
     int movie_width;
     int movie_height;
     int m_movie_length;
     int m_movie_position;
-    bool m_term_signal_send : 1;
-    bool m_kill_signal_send : 1;
     bool m_started_emited : 1;
     bool m_ispart : 1;
     bool m_use_slave : 1;

@@ -28,6 +28,7 @@ email                :
 #include <qmultilineedit.h>
 #include <qapplication.h>
 #include <qiconset.h>
+#include <qaccel.h>
 #include <qcursor.h>
 #include <qpopupmenu.h>
 #include <qkeysequence.h>
@@ -208,7 +209,11 @@ static const char * config_xpm[] = {
 //-----------------------------------------------------------------------------
 
 KMPlayerViewLayer::KMPlayerViewLayer (KMPlayerView * parent, QBoxLayout * b)
- : QWidget (parent), m_view (parent), m_box (b), m_fullscreen (false) {
+ : QWidget (parent),
+   m_view (parent),
+   m_box (b),
+   m_accel (0L),
+   m_fullscreen (false) {
     setEraseColor (QColor (0, 0, 0));
 }
 
@@ -217,15 +222,23 @@ void KMPlayerViewLayer::fullScreen () {
         showNormal ();
         reparent (m_view, 0, QPoint (0, 0), true);
         m_box->addWidget (this);
+        delete m_accel;
+        m_accel = 0L;
     } else {
         reparent (0L, 0, QPoint (0, 0), true);
         showFullScreen ();
+        m_accel = new QAccel (this);
+        int id = m_accel->insertItem (QKeySequence (Qt::Key_Escape));
+        m_accel->connectItem (id, this, SLOT (accelActivated ()));
     }
     m_fullscreen = !m_fullscreen;
     m_view->popupMenu ()->setItemChecked (KMPlayerView::menu_fullscreen, 
                                           m_fullscreen);
 }
 
+void KMPlayerViewLayer::accelActivated () {
+    m_view->popupMenu ()->activateItemAt (m_view->popupMenu ()->indexOf (KMPlayerView::menu_fullscreen)); 
+}
 //-----------------------------------------------------------------------------
 
 KMPlayerViewerHolder::KMPlayerViewerHolder (QWidget * pa, KMPlayerView * view)

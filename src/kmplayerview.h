@@ -34,6 +34,7 @@ class QPopupMenu;
 class QBoxLayout;
 class QSlider;
 class QLabel;
+class QAccel;
 class KArtsFloatWatch;
 namespace Arts {
     class SoundServerV2;
@@ -47,9 +48,11 @@ public:
     bool isFullScreen () const { return m_fullscreen; }
 public slots:
     void fullScreen ();
+    void accelActivated ();
 private:
     KMPlayerView * m_view;
     QBoxLayout * m_box;
+    QAccel * m_accel;
     bool m_fullscreen : 1;
 };
 

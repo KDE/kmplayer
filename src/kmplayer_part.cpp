@@ -15,6 +15,7 @@
  *                                                                         *
  ***************************************************************************/
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -24,7 +25,6 @@
 #undef Always
 #include <qdir.h>
 #endif
-#include <qeventloop.h>
 #include <qapplication.h>
 #include <qcstring.h>
 #include <qregexp.h>
@@ -140,7 +140,6 @@ KMPlayer::KMPlayer (QWidget * parent, KConfig * config)
    m_view (new KMPlayerView (parent)),
    m_configdialog (new KMPlayerConfig (this, config)),
    m_liveconnectextension (0L),
-   m_stoplooplevel (-1),
    movie_width (0),
    movie_height (0),
    m_ispart (false) {
@@ -155,7 +154,6 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
    m_view (new KMPlayerView (wparent, wname)),
    m_configdialog (new KMPlayerConfig (this, m_config)),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
-   m_stoplooplevel (-1),
    movie_width (0),
    movie_height (0),
    m_ispart (true) {
@@ -245,24 +243,7 @@ KMPlayer::~KMPlayer () {
     if (!m_ispart)
         delete (KMPlayerView*) m_view;
     m_view = (KMPlayerView*) 0;
-    if (m_process->isRunning ()) {
-        do {
-            // in rare cases enter_loop can cause a crash in konqueror
-            if (qApp->eventLoop ()->loopLevel () == m_stoplooplevel)
-                qApp->eventLoop ()->exitLoop ();
-            else
-                sendCommand (QString ("quit"));
-            KProcessController::theKProcessController->waitForProcessExit (1);
-            if (!m_process->isRunning ())
-                break;
-            m_process->kill (SIGTERM);
-            KProcessController::theKProcessController->waitForProcessExit (1);
-            if (!m_process->isRunning ())
-                break;
-            m_process->kill (SIGKILL);
-            KProcessController::theKProcessController->waitForProcessExit (1);
-        } while (false);
-    }
+    stop ();
     delete m_configdialog;
     delete m_process;
     delete m_browserextension;
@@ -313,55 +294,73 @@ bool KMPlayer::openFile () {
     return false;
 }
 
-void KMPlayer::processOutput (KProcess *, char * str, int len) {
-    if (!m_view || len <= 0) return;
+void KMPlayer::processOutput (KProcess *, char * str, int slen) {
+    if (!m_view || slen <= 0) return;
 
-    QString out = QString::fromLocal8Bit (str, len);
-
-    if (out.contains (QChar ('\r'))) {
-        // playing stats
-        if (m_posRegExp.search (out) < 0)
-            return;
-        m_movie_position = int (10.0 * m_posRegExp.cap (1).toFloat ());
-        if (m_view) {
-            QSlider *slider = m_view->positionSlider ();
-            if (m_movie_length <= 0 && m_movie_position >7*slider->maxValue()/8)
-                slider->setMaxValue (slider->maxValue() * 2);
-            else if (slider->maxValue() < m_movie_position)
-                slider->setMaxValue (int (1.4 * slider->maxValue()));
-            if (!m_bPosSliderPressed)
-                slider->setValue (m_movie_position);
+    do {
+        int len = strcspn (str, "\r\n");
+        QString out = m_process_output + QString::fromLocal8Bit (str, len);
+        m_process_output = QString::null;
+        str += len;
+        slen -= len;
+        if (slen <= 0) {
+            m_process_output = out;
+            break;
         }
-    } else {
-        m_view->addText (out);
-        QRegExp sizeRegExp (m_configdialog->sizepattern);
-        bool ok;
-        if (movie_width <= 0 && sizeRegExp.search (out) > -1) {
-            movie_width = sizeRegExp.cap (1).toInt (&ok);
-            movie_height = ok ? sizeRegExp.cap (2).toInt (&ok) : 0;
-            if (ok && movie_width > 0 && movie_height > 0 && m_view->viewer ()->aspect () < 0.01) {
-                m_view->viewer ()->setAspect (1.0 * movie_width / movie_height);
-                if (m_liveconnectextension)
-                    m_liveconnectextension->setSize (movie_width, movie_height);
+        bool process_stats = false;
+        if (str[0] == '\r') {
+            if (slen > 1 && str[1] == '\n') {
+                str++;
+                slen--;
+            } else
+                process_stats = true;
+        }
+        str++;
+        slen--;
+
+        if (process_stats) {
+            if (m_posRegExp.search (out) > -1) {
+                m_movie_position = int (10.0 * m_posRegExp.cap (1).toFloat ());
+                QSlider *slider = m_view->positionSlider ();
+                if (m_movie_length <= 0 &&
+                    m_movie_position > 7 * slider->maxValue () / 8)
+                    slider->setMaxValue (slider->maxValue() * 2);
+                else if (slider->maxValue() < m_movie_position)
+                    slider->setMaxValue (int (1.4 * slider->maxValue()));
+                if (!m_bPosSliderPressed)
+                    slider->setValue (m_movie_position);
             }
-        } else if (m_browserextension) {
-            QRegExp cacheRegExp (m_configdialog->cachepattern);
-            QRegExp startRegExp (m_configdialog->startpattern);
-            if (cacheRegExp.search (out) > -1) {
-                double p = cacheRegExp.cap (1).toDouble (&ok);
-                if (ok) {
-                    m_browserextension->setLoadingProgress (int (p));
-                    m_browserextension->infoMessage 
-                        (QString (cacheRegExp.cap (1)) + i18n ("% Cache fill"));
+        } else {
+            m_view->addText (out + QString ("\n"));
+            QRegExp sizeRegExp (m_configdialog->sizepattern);
+            bool ok;
+            if (movie_width <= 0 && sizeRegExp.search (out) > -1) {
+                movie_width = sizeRegExp.cap (1).toInt (&ok);
+                movie_height = ok ? sizeRegExp.cap (2).toInt (&ok) : 0;
+                if (ok && movie_width > 0 && movie_height > 0 && m_view->viewer ()->aspect () < 0.01) {
+                    m_view->viewer ()->setAspect (1.0 * movie_width / movie_height);
+                    if (m_liveconnectextension)
+                        m_liveconnectextension->setSize (movie_width, movie_height);
                 }
-            } else if (startRegExp.search (out) > -1) {
-                m_browserextension->setLoadingProgress (100);
-                emit completed ();
-                m_started_emited = false;
-                m_browserextension->infoMessage (i18n ("KMPlayer: Playing"));
+            } else if (m_browserextension) {
+                QRegExp cacheRegExp (m_configdialog->cachepattern);
+                QRegExp startRegExp (m_configdialog->startpattern);
+                if (cacheRegExp.search (out) > -1) {
+                    double p = cacheRegExp.cap (1).toDouble (&ok);
+                    if (ok) {
+                        m_browserextension->setLoadingProgress (int (p));
+                        m_browserextension->infoMessage 
+                            (QString (cacheRegExp.cap (1)) + i18n ("% Cache fill"));
+                    }
+                } else if (startRegExp.search (out) > -1) {
+                    m_browserextension->setLoadingProgress (100);
+                    emit completed ();
+                    m_started_emited = false;
+                    m_browserextension->infoMessage (i18n("KMPlayer: Playing"));
+                }
             }
         }
-    }
+    } while (slen > 0);
 }
 
 void KMPlayer::keepMovieAspect (bool b) {
@@ -392,8 +391,6 @@ void KMPlayer::processDataWritten (KProcess *) {
 
 void KMPlayer::processStopped (KProcess *) {
     printf("process stopped\n");
-
-    killTimers ();
     if (m_movie_position > m_movie_length)
         setMovieLength (m_movie_position);
     m_movie_position = 0;
@@ -406,10 +403,6 @@ void KMPlayer::processStopped (KProcess *) {
         m_view->playButton ()->toggle ();
         m_view->positionSlider()->setEnabled (false);
         m_view->positionSlider()->setValue (0);
-    }
-    if (qApp->eventLoop ()->loopLevel () == m_stoplooplevel) {
-        qApp->eventLoop ()->exitLoop ();
-        m_stoplooplevel = -1;
     }
     if (m_view) {
         m_view->reset ();
@@ -444,6 +437,7 @@ void KMPlayer::forward () {
 bool KMPlayer::run (const char * args, const char * pipe) {
     m_movie_position = 0;
     m_view->consoleOutput ()->clear ();
+    m_process_output = QString::null;
     m_started_emited = false;
     initProcess ();
 
@@ -614,42 +608,37 @@ bool KMPlayer::playing () const {
 }
 
 void KMPlayer::stop () {
-    if (m_process->isRunning () &&
-        m_stoplooplevel != qApp->eventLoop ()->loopLevel ()) {
-        sendCommand (QString ("quit"));
-        m_term_signal_send = false;
-        m_kill_signal_send = false;
-        startTimer (200);
-        m_stoplooplevel = 1 + qApp->eventLoop ()->loopLevel ();
+    if (m_process->isRunning ()) {
         if (m_view && !m_view->stopButton ()->isOn ())
             m_view->stopButton ()->toggle ();
-        qApp->eventLoop ()->enterLoop ();
+        do {
+            if (m_use_slave) {
+                sendCommand (QString ("quit"));
+                KProcessController::theKProcessController->waitForProcessExit (1);
+                if (!m_process->isRunning ())
+                    break;
+                m_process->kill (SIGTERM);
+            } else {
+                void (*oldhandler)(int) = signal(SIGTERM, SIG_IGN);
+                ::kill (-1 * ::getpid (), SIGTERM);
+                signal(SIGTERM, oldhandler);
+            }
+            KProcessController::theKProcessController->waitForProcessExit (1);
+            if (!m_process->isRunning ())
+                break;
+            m_process->kill (SIGKILL);
+            KProcessController::theKProcessController->waitForProcessExit (1);
+            if (m_process->isRunning ()) {
+                processStopped (0L); // give up
+                KMessageBox::error (m_view, i18n ("Failed to end MPlayer process."), i18n ("KMPlayer: Error"));
+            }
+        } while (false);
     }
     if (m_view && m_view->stopButton ()->isOn ())
         m_view->stopButton ()->toggle ();
 }
 
 void KMPlayer::timerEvent (QTimerEvent *) {
-    printf ("timerEvent\n");
-    if (m_term_signal_send) {
-        if (m_kill_signal_send)
-            processStopped (0L); // give up
-        else {
-            m_kill_signal_send = true;
-            printf ("timerEvent kill\n");
-            m_process->kill (SIGKILL);
-        }
-    } else {
-        m_term_signal_send = true;
-        printf ("timerEvent term\n");
-        if (m_ispart)
-            m_process->kill (SIGTERM);
-        else {
-            void (*oldhandler)(int) = signal(SIGTERM, SIG_IGN);
-            ::kill (-1 * ::getpid (), SIGTERM);
-            signal(SIGTERM, oldhandler);
-        }
-    }
 }
 
 void KMPlayer::seek (unsigned long msec) {
