@@ -100,9 +100,8 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, KMPlayerSettings * s
     tab->insertTab (m_FFMpegPage, i18n ("FFMpeg"));
     recorders.push_back (m_FFMpegPage);
 
-//    m_MPlayerDumpstreamPage = new KMPlayerPrefMPlayerDumpstreamPage (tab, player);
-    m_MPlayerDumpstreamPage = new KMPlayerPrefMPlayerDumpstreamPage (NULL, player);
-//    tab->insertTab (m_MPlayerDumpstreamPage, i18n ("MPlayer -dumpstream"));
+    m_MPlayerDumpstreamPage = new KMPlayerPrefMPlayerDumpstreamPage (tab, player);
+    // tab->insertTab (m_MPlayerDumpstreamPage, i18n ("MPlayer -dumpstream"));
     recorders.push_back (m_MPlayerDumpstreamPage);
 
     m_RecordPage = new KMPlayerPrefRecordPage (tab, player, recorders);
@@ -418,6 +417,7 @@ bool KMPlayerPrefMEncoderPage::sourceSupported (KMPlayerSource *) {
 }
 
 KMPlayerPrefMPlayerDumpstreamPage::KMPlayerPrefMPlayerDumpstreamPage (QWidget *parent, KMPlayer * player) : RecorderPage (parent, player) {
+    hide();
 }
 
 void KMPlayerPrefMPlayerDumpstreamPage::record () {

@@ -615,7 +615,8 @@ KAboutData* KMPlayer::createAboutData () {
 
 KMPlayerSource::KMPlayerSource (const QString & name, KMPlayer * player)
  : QObject (player), m_name (name), m_player (player),
-   m_auto_play (true) {
+   m_auto_play (true),
+   m_currenturl (m_refurls.end ()) {
     kdDebug () << "KMPlayerSource::KMPlayerSource" << endl;
     init ();
 }
@@ -632,7 +633,6 @@ void KMPlayerSource::init () {
     m_position = 0;
     m_identified = false;
     m_recordcmd.truncate (0);
-    m_currenturl = m_refurls.end ();
 }
 
 void KMPlayerSource::setLength (int len) {
