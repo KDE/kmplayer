@@ -59,6 +59,8 @@ static xine_stream_t       *stream;
 static xine_video_port_t   *vo_port;
 static xine_audio_port_t   *ao_port;
 static xine_event_queue_t  *event_queue;
+static char                *dvd_device;
+static char                *vcd_device;
 
 static Display             *display;
 static Window               wid;
@@ -236,6 +238,10 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
             d->vo_driver = argv ()[++i];
         } else if (!strcmp (argv ()[i], "-ao")) {
             d->ao_driver = argv ()[++i];
+        } else if (!strcmp (argv ()[i], "-dvd-device")) {
+            dvd_device = argv ()[++i];
+        } else if (!strcmp (argv ()[i], "-vcd-device")) {
+            vcd_device = argv ()[++i];
         } else if (!strcmp (argv ()[i], "-wid")) {
             wid = atol (argv ()[++i]);
         } else if (!strcmp (argv ()[i], "-cb")) {
@@ -703,6 +709,17 @@ int main(int argc, char **argv) {
     xine_init(xine);
 
     xineapp->init ();
+
+    xine_cfg_entry_t cfg_entry;
+    if (dvd_device && xine_config_lookup_entry (xine, "input.dvd_device", &cfg_entry)) {
+        cfg_entry.str_value = dvd_device;
+        xine_config_update_entry (xine,  &cfg_entry);
+    }
+    if (vcd_device && xine_config_lookup_entry (xine, "input.vcd_device", &cfg_entry)) {
+        cfg_entry.str_value = vcd_device;
+        xine_config_update_entry (xine,  &cfg_entry);
+    }
+
     if (callback) callback->started ();
     xineapp->exec ();
 

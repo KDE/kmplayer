@@ -649,7 +649,7 @@ bool Xine::play () {
     m_source->setPosition (0);
     KURL url = m_source->url ();
     kdDebug() << "Xine::play (" << url.url() << ")" << endl;
-    if (!url.isValid () && !url.url().startsWith("dvd://"))
+    if (url.isEmpty ())
         return false;
     m_urls.clear ();
     KMPlayerSettings *settings = m_player->settings ();
@@ -694,9 +694,18 @@ bool Xine::play () {
                              QString (m_callback->objId ()).ascii ());
     printf (" -cb %s", cbname.ascii());
     *m_process << " -cb " << cbname;
+    if (url.url ().startsWith (QString::fromLatin1 ("dvd://")) &&
+            !settings->dvddevice.isEmpty ()) {
+        printf (" -dvd-device %s", settings->dvddevice.ascii ());
+        *m_process << " -dvd-device " << settings->dvddevice;
+    } else if (url.url ().startsWith (QString::fromLatin1 ("vcd://")) &&
+            !settings->vcddevice.isEmpty ()) {
+        printf (" -vcd-device %s", settings->vcddevice.ascii ());
+        *m_process << " -vcd-device " << settings->vcddevice;
+    }
     QString myurl = KProcess::quote (QString (QFile::encodeName (url.isLocalFile () ? url.path () : url.url ())));
     printf (" %s\n", myurl.ascii ());
-    *m_process << myurl;
+    *m_process << " " << myurl;
     fflush (stdout);
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
     if (m_process->isRunning ()) {
