@@ -229,6 +229,8 @@ void RegionNode::scaleRegion (float sx, float sy, int xoff, int yoff) {
         y = yoff + int (sy * smilregion->y);
         w = int (sx * smilregion->w);
         h = int (sy * smilregion->h);
+        xscale = sx;
+        yscale = sy;
         if (attached_element) {
             // hack to get the one and only audio/video widget sizes
             const char * nn = attached_element->nodeName ();
@@ -1699,11 +1701,12 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
         RegionNode * r = region_node.ptr ();
         int w = r->w, h = r->h;
         if (fit == fit_hidden) {
-            if (d->image->width () < w)
-                w = d->image->width ();
-            if (d->image->height () < h)
-                h = d->image->height ();
-            p.drawPixmap (r->x, r->y, *d->image, 0, 0, w, h);
+            int pw = int (d->image->width () * r->xscale);
+            int ph = int (d->image->height () * r->yscale);
+            if (pw < w)
+                w = pw;
+            if (ph < h)
+                h = ph;
         } else if (fit == fit_meet) { // scale in region, keeping aspects
             if (h > 0 && d->image->height () > 0) {
                 int a = 100 * d->image->width () / d->image->height ();
@@ -1712,7 +1715,6 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
                     h = 100 * w / a;
                 else
                     w = w1;
-                p.drawPixmap (QRect (r->x, r->y, w, h), *d->image);
             }
         } else if (fit == fit_slice) { // scale in region, keeping aspects
             if (h > 0 && d->image->height () > 0) {
@@ -1722,11 +1724,10 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
                     w = w1;
                 else
                     h = 100 * w / a;
-                p.drawPixmap (QRect (r->x, r->y, w, h), *d->image);
             }
-        } else //if (fit == fit_fill) { // scale in region
-            p.drawPixmap (QRect (r->x, r->y, w, h), *d->image);
+        } //else if (fit == fit_fill) { // scale in region
         // else fit_scroll
+        p.drawPixmap (QRect (r->x, r->y, w, h), *d->image);
     }
 }
 
