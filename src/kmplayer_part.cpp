@@ -418,6 +418,7 @@ void KMPlayer::processDataWritten (KProcess *) {
 
 void KMPlayer::processStopped (KProcess *) {
     printf("process stopped\n");
+    commands.clear ();
     if (m_movie_position > m_source->length ())
         setMovieLength (m_movie_position);
     m_movie_position = 0;
@@ -472,7 +473,6 @@ bool KMPlayer::run (const char * args, const char * pipe) {
     initProcess ();
     m_cacheRegExp.setPattern (m_configdialog->cachepattern);
     m_indexRegExp.setPattern (m_configdialog->indexpattern);
-    m_source->init ();
 
     if (m_configdialog->showposslider && m_source->hasLength ())
         m_view->positionSlider()->show();
@@ -666,10 +666,10 @@ void KMPlayer::posSliderPressed () {
 
 void KMPlayer::posSliderReleased () {
     m_bPosSliderPressed=false;
+    seekPercent (100.0 * m_view->positionSlider()->value() / m_view->positionSlider()->maxValue());
 }
 
-void KMPlayer::posSliderChanged (int pos) {
-    seekPercent (100.0 * pos / m_view->positionSlider()->maxValue());
+void KMPlayer::posSliderChanged (int /*pos*/) {
 }
 
 KAboutData* KMPlayer::createAboutData () {
