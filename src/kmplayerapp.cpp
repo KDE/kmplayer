@@ -170,7 +170,7 @@ void KMPlayerApp::initView ()
     m_sourcemenu->popup ()->insertItem (i18n ("&TV"), m_tvmenu, -1, 6);
     m_vcdmenu->insertItem (i18n ("&Open VCD"), this, SLOT(openVCD ()), 0,-1, 1);
     m_sourcemenu->popup ()->insertItem (i18n ("&Open Pipe..."), this, SLOT(openPipe ()), 0, -1, 5);
-    connect (m_player->configDialog (), SIGNAL (configChanged ()),
+    connect (m_player->settings (), SIGNAL (configChanged ()),
              this, SLOT (configChanged ()));
     connect (m_player->browserextension (), SIGNAL (loadingProgress (int)),
              this, SLOT (loadingProgress (int)));
@@ -251,11 +251,11 @@ void KMPlayerApp::resizePlayer (int percentage) {
         } else
             source->setAspect (1.0 * w/h);
         view->viewer()->setAspect (view->keepSizeRatio() ? source->aspect() : 0.0);
-        if (m_player->configDialog ()->showbuttons &&
-            !m_player->configDialog ()->autohidebuttons)
+        if (m_player->settings ()->showbuttons &&
+            !m_player->settings ()->autohidebuttons)
             h += 2 + view->buttonBar()->frameSize ().height ();
         if (m_player->source ()->hasLength () && 
-            m_player->configDialog ()->showposslider)
+            m_player->settings ()->showposslider)
             h += 2 + view->positionSlider ()->height ();
         w = int (1.0 * w * percentage/100.0);
         h = int (1.0 * h * percentage/100.0);
@@ -327,7 +327,7 @@ void KMPlayerApp::broadcastClicked () {
     if (m_player->source () == m_tvsource)
         source = m_tvsource->tvsource ();
     const char * noaudio = source && source->audiodevice.isEmpty () ? "NoAudio" : "";
-    KMPlayerConfig * conf = m_player->configDialog ();
+    KMPlayerSettings * conf = m_player->settings ();
     QString acl;
     QStringList::iterator it = conf->ffserveracl.begin ();
     for (; it != conf->ffserveracl.end (); ++it)
@@ -359,7 +359,7 @@ void KMPlayerApp::processOutput (KProcess * p, char * s, int) {
 
 void KMPlayerApp::startFeed () {
     QString ffmpegcmd = m_player->source ()->ffmpegCommand ();
-    KMPlayerConfig * conf = m_player->configDialog ();
+    KMPlayerSettings * conf = m_player->settings ();
     FFServerSetting & ffs = conf->ffserversettings[conf->ffserversetting];
     do {
         if (!m_ffserver_process->isRunning ()) {
@@ -449,9 +449,9 @@ void KMPlayerApp::saveOptions()
         config->writeEntry ("Command1", m_pipesource->command ());
     }
     fileOpenRecent->saveEntries (config,"Recent Files");
-    disconnect (m_player->configDialog (), SIGNAL (configChanged ()),
+    disconnect (m_player->settings (), SIGNAL (configChanged ()),
                 this, SLOT (configChanged ()));
-    m_player->configDialog ()->writeConfig ();
+    m_player->settings ()->writeConfig ();
 }
 
 
@@ -642,8 +642,8 @@ void KMPlayerApp::startArtsControl () {
 }
 
 void KMPlayerApp::configChanged () {
-    viewKeepRatio->setChecked (m_player->configDialog ()->sizeratio);
-    viewShowConsoleOutput->setChecked (m_player->configDialog ()->showconsole);
+    viewKeepRatio->setChecked (m_player->settings ()->sizeratio);
+    viewShowConsoleOutput->setChecked (m_player->settings ()->showconsole);
     m_tvsource->buildMenu ();
 }
 
@@ -678,7 +678,7 @@ KMPlayerAppURLSource::~KMPlayerAppURLSource () {
 void KMPlayerAppURLSource::activate () {
     if (app->broadcasting ()) {
         init ();
-        KMPlayerConfig * conf = m_player->configDialog ();
+        KMPlayerSettings * conf = m_player->settings ();
         FFServerSetting & ffs = conf->ffserversettings[conf->ffserversetting];
         m_player->setMovieLength (0);
         if (!ffs.width.isEmpty () && !ffs.height.isEmpty ()) {
@@ -781,11 +781,11 @@ bool KMPlayerDVDSource::processOutput (const QString & str) {
 }
 
 void KMPlayerDVDSource::activate () {
-    m_start_play = m_player->configDialog ()->playdvd;
-    langRegExp.setPattern (m_player->configDialog ()->langpattern);
-    subtitleRegExp.setPattern (m_player->configDialog ()->subtitlespattern);
-    titleRegExp.setPattern (m_player->configDialog ()->titlespattern);
-    chapterRegExp.setPattern (m_player->configDialog ()->chapterspattern);
+    m_start_play = m_player->settings ()->playdvd;
+    langRegExp.setPattern (m_player->settings ()->langpattern);
+    subtitleRegExp.setPattern (m_player->settings ()->subtitlespattern);
+    titleRegExp.setPattern (m_player->settings ()->titlespattern);
+    chapterRegExp.setPattern (m_player->settings ()->chapterspattern);
     m_current_title = -1;
     identify ();
 }
@@ -797,15 +797,15 @@ void KMPlayerDVDSource::identify () {
     if (m_current_title >= 0)
         args += QString::number (m_current_title + 1);
     args += QString (" -v -identify -frames 0 -quiet -nocache");
-    if (m_player->configDialog ()->dvddevice.length () > 0)
-        args += QString(" -dvd-device ") + m_player->configDialog ()->dvddevice;
-    bool loop = m_player->configDialog ()->loop;
-    m_player->configDialog ()->loop = false;
+    if (m_player->settings ()->dvddevice.length () > 0)
+        args += QString(" -dvd-device ") + m_player->settings ()->dvddevice;
+    bool loop = m_player->settings ()->loop;
+    m_player->settings ()->loop = false;
     if (m_player->run (args.ascii()))
         connect (m_player, SIGNAL (finished()), this, SLOT(finished ()));
     else
         app->slotStatusMsg (i18n ("Ready."));
-    m_player->configDialog ()->loop = loop;
+    m_player->settings ()->loop = loop;
 }
 
 void KMPlayerDVDSource::deactivate () {
@@ -854,15 +854,15 @@ const QString KMPlayerDVDSource::buildArguments () {
     for (i = 0; i < m_dvdlanguagemenu->count (); i++)
         if (m_dvdlanguagemenu->isItemChecked (m_dvdlanguagemenu->idAt (i)))
             args += " -aid " + QString::number (m_dvdlanguagemenu->idAt (i));
-    if (m_player->configDialog ()->dvddevice.length () > 0)
-        args += QString(" -dvd-device ") + m_player->configDialog ()->dvddevice;
+    if (m_player->settings ()->dvddevice.length () > 0)
+        args += QString(" -dvd-device ") + m_player->settings ()->dvddevice;
     m_recordCommand = args + QString (" -vop scale -zoom");
     return args;
 }
 
 QString KMPlayerDVDSource::filterOptions () {
-    KMPlayerConfig * configdialog = m_player->configDialog ();
-    if (!configdialog->disableppauto)
+    KMPlayerSettings * settings = m_player->settings ();
+    if (!settings->disableppauto)
         return KMPlayerSource::filterOptions ();
     return QString ("");
 }
@@ -928,8 +928,8 @@ bool KMPlayerVCDSource::processOutput (const QString & str) {
 }
 
 void KMPlayerVCDSource::activate () {
-    m_start_play = m_player->configDialog ()->playvcd;
-    trackRegExp.setPattern (m_player->configDialog ()->trackspattern);
+    m_start_play = m_player->settings ()->playvcd;
+    trackRegExp.setPattern (m_player->settings ()->trackspattern);
     m_current_title = -1;
     identify ();
 }
@@ -941,15 +941,15 @@ void KMPlayerVCDSource::identify () {
     if (m_current_title >= 0)
         args += QString::number (m_current_title + 1);
     args += QString (" -v -identify -frames 0 -quiet -nocache");
-    if (m_player->configDialog ()->vcddevice.length () > 0)
-        args += QString(" -cdrom-device ")+m_player->configDialog ()->vcddevice;
-    bool loop = m_player->configDialog ()->loop;
-    m_player->configDialog ()->loop = false;
+    if (m_player->settings ()->vcddevice.length () > 0)
+        args += QString(" -cdrom-device ")+m_player->settings ()->vcddevice;
+    bool loop = m_player->settings ()->loop;
+    m_player->settings ()->loop = false;
     if (m_player->run (args.ascii()))
         connect (m_player, SIGNAL (finished()), this, SLOT(finished ()));
     else
         app->slotStatusMsg (i18n ("Ready."));
-    m_player->configDialog ()->loop = loop;
+    m_player->settings ()->loop = loop;
 }
 
 void KMPlayerVCDSource::deactivate () {
@@ -983,8 +983,8 @@ const QString KMPlayerVCDSource::buildArguments () {
     QString args ("vcd://");
     if (m_current_title >= 0)
         args += m_vcdtrackmenu->findItem (m_current_title)->text ();
-    if (m_player->configDialog ()->vcddevice.length () > 0)
-        args +=QString(" -cdrom-device ") + m_player->configDialog()->vcddevice;
+    if (m_player->settings ()->vcddevice.length () > 0)
+        args +=QString(" -cdrom-device ") + m_player->settings()->vcddevice;
     m_recordCommand = args;
     return args;
 }
@@ -1035,7 +1035,7 @@ QString KMPlayerPipeSource::recordCommand () {
     if (m_pipe.isEmpty ())
         return QString::null;
     return m_pipe + QString ("|") + QString ("mencoder - ") + 
-           m_player->configDialog ()->mencoderarguments;
+           m_player->settings ()->mencoderarguments;
 }
 
 //-----------------------------------------------------------------------------
@@ -1065,7 +1065,7 @@ KMPlayerTVSource::~KMPlayerTVSource () {
 
 void KMPlayerTVSource::activate () {
     init ();
-    if (m_player->configDialog ()->showbroadcastbutton)
+    if (m_player->settings ()->showbroadcastbutton)
         static_cast <KMPlayerView*> (m_player->view())->broadcastButton ()->show ();
 }
 /* TODO: playback by
@@ -1075,7 +1075,7 @@ const QString KMPlayerTVSource::buildArguments () {
     if (!m_tvsource)
         return QString ("");
     m_identified = true;
-    KMPlayerConfig * config = m_player->configDialog ();
+    KMPlayerSettings * config = m_player->settings ();
     app->setCaption (QString (i18n ("TV: ")) + m_tvsource->title, false);
     setWidth (m_tvsource->size.width ());
     setHeight (m_tvsource->size.height ());
@@ -1101,7 +1101,7 @@ void KMPlayerTVSource::deactivate () {
 }
 
 void KMPlayerTVSource::buildMenu () {
-    KMPlayerConfig * config = m_player->configDialog ();
+    KMPlayerSettings * config = m_player->settings ();
     QString currentcommand;
     if (m_tvsource)
         currentcommand = m_tvsource->command;
@@ -1174,8 +1174,7 @@ void KMPlayerTVSource::menuClicked (int id) {
 }
 
 QString KMPlayerTVSource::filterOptions () {
-    KMPlayerConfig * configdialog = m_player->configDialog ();
-    if (!configdialog->disableppauto)
+    if (! m_player->settings ()->disableppauto)
         return KMPlayerSource::filterOptions ();
     return QString ("-vop pp=lb");
 }

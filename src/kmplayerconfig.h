@@ -32,11 +32,11 @@ class KMPlayer;
 class KConfig;
 class KMPlayerPreferences;
 
-class KMPlayerConfig : public QObject {
+class KMPlayerSettings : public QObject {
     Q_OBJECT
 public:
-    KMPlayerConfig (KMPlayer *, KConfig * part);
-    ~KMPlayerConfig ();
+    KMPlayerSettings (KMPlayer *, KConfig * part);
+    ~KMPlayerSettings ();
     KMPlayerPreferences *configDialog() const { return configdialog; }
     int contrast;
     int brightness;
@@ -106,6 +106,7 @@ public:
     int cachesize;
     int videodriver;
     int audiodriver;
+    MPlayerAudioDriver *audiodrivers;
     QString dvddevice;
     QString vcddevice;
     QString additionalarguments;

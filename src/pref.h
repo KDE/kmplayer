@@ -18,17 +18,6 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#define ADRIVER_DEFAULT_INDEX 0
-#define ADRIVER_DEFAULT "Default"
-#define ADRIVER_OSS_INDEX 1
-#define ADRIVER_OSS "Oss"
-#define ADRIVER_SDL_INDEX 2
-#define ADRIVER_SDL "SDL"
-#define ADRIVER_ALSA_INDEX 3
-#define ADRIVER_ALSA "ALSA"
-#define ADRIVER_ARTS_INDEX 4
-#define ADRIVER_ARTS "Arts"
-
 #define VDRIVER_XV_INDEX 0
 #define VDRIVER_XV "XV"
 #define VDRIVER_X11_INDEX 1
@@ -69,6 +58,11 @@ class QTabWidget;
 class QTable;
 class QGroupBox;
 
+class MPlayerAudioDriver {
+public:
+    const char * audiodriver;
+    const QString description;
+};
 
 class TVChannel {
 public:
@@ -154,7 +148,7 @@ class KMPlayerPreferences : public KDialogBase
 {
     Q_OBJECT
 public:
-    KMPlayerPreferences(QWidget *parent, FFServerSetting * ffs);
+    KMPlayerPreferences(QWidget *parent, MPlayerAudioDriver * ad, FFServerSetting *ffs);
     ~KMPlayerPreferences();
 
     KMPlayerPrefGeneralPageGeneral 	*m_GeneralPageGeneral;
@@ -325,7 +319,7 @@ class KMPlayerPrefGeneralPageOutput : public QFrame
 {
     Q_OBJECT
 public:
-    KMPlayerPrefGeneralPageOutput(QWidget *parent = 0);
+    KMPlayerPrefGeneralPageOutput(QWidget *parent,  MPlayerAudioDriver * ad);
     ~KMPlayerPrefGeneralPageOutput() {}
 
     QComboBox *videoDriver;

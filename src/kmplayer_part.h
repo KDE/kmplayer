@@ -35,7 +35,7 @@
 class KProcess;
 class KAboutData;
 class KMPlayer;
-class KMPlayerConfig;
+class KMPlayerSettings;
 class KInstance;
 class KConfig;
 
@@ -121,7 +121,7 @@ public:
     virtual KMediaPlayer::View* view ();
     static KAboutData* createAboutData ();
 
-    KMPlayerConfig * configDialog () const { return m_configdialog; }
+    KMPlayerSettings * settings () const { return m_settings; }
     KProcess * process () const { return m_process; }
     int seekTime () const { return m_seektime; }
     void setSeekTime (int t) { m_seektime = t; }
@@ -180,7 +180,7 @@ private:
     void sendCommand (const QString &);
     KConfig * m_config;
     QGuardedPtr <KMPlayerView> m_view;
-    KMPlayerConfig * m_configdialog;
+    KMPlayerSettings * m_settings;
     KMPlayerSource * m_source;
     KMPlayerURLSource * m_urlsource;
     KProcess * m_process;

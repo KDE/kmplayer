@@ -44,7 +44,7 @@
 
 #include "pref.h"
 
-KMPlayerPreferences::KMPlayerPreferences(QWidget *parent, FFServerSetting * ffs)
+KMPlayerPreferences::KMPlayerPreferences(QWidget *parent, MPlayerAudioDriver * ad, FFServerSetting * ffs)
 : KDialogBase(TreeList, i18n("KMPlayer Preferences"),
 		Help|Default|Ok|Apply|Cancel, Ok, parent, 0, false)
 {
@@ -108,7 +108,7 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent, FFServerSetting * ffs)
 	hierarchy << i18n("General") << i18n("Output");
 	frame = addPage(hierarchy, i18n("Video & Audio Output Options"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
-	m_GeneralPageOutput = new KMPlayerPrefGeneralPageOutput(frame);
+	m_GeneralPageOutput = new KMPlayerPrefGeneralPageOutput(frame, ad);
 	vlay->addWidget(m_GeneralPageOutput);
 
 	hierarchy.clear();
@@ -587,30 +587,27 @@ KMPlayerPrefGeneralPageVCD::KMPlayerPrefGeneralPageVCD(QWidget *parent) : QFrame
 	layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
-KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidget *parent) : QFrame(parent)
+KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidget *parent, MPlayerAudioDriver * ad) : QFrame(parent)
 {
-	QVBoxLayout *layout = new QVBoxLayout (this);
-	QHBoxLayout *childLayout1 = new QHBoxLayout (layout);
+    QVBoxLayout *layout = new QVBoxLayout (this);
+    QHBoxLayout *childLayout1 = new QHBoxLayout (layout);
 
-	videoDriver = new QComboBox(this);
-	videoDriver->insertItem(VDRIVER_XV, VDRIVER_XV_INDEX);
-	videoDriver->insertItem(VDRIVER_X11, VDRIVER_X11_INDEX);
-	videoDriver->insertItem(VDRIVER_XVIDIX, VDRIVER_XVIDIX_INDEX);
-// by mok: remove this comment when you check if i18n fix is OK.
-//	QToolTip::add(videoDriver, i18n("Sets video driver, currently only XVideo and X11 work. Unless\nyou haven't got XVideo compatible drivers you should X11, which is much slower."));
-	QToolTip::add(videoDriver, i18n("Sets video driver. Recommended is XVideo, or, if it is not supported, X11, which is slower."));
-	childLayout1->addWidget(new QLabel(i18n("Video driver:"),this));
-	childLayout1->addWidget(videoDriver);
+    videoDriver = new QComboBox(this);
+    videoDriver->insertItem(VDRIVER_XV, VDRIVER_XV_INDEX);
+    videoDriver->insertItem(VDRIVER_X11, VDRIVER_X11_INDEX);
+    videoDriver->insertItem(VDRIVER_XVIDIX, VDRIVER_XVIDIX_INDEX);
+    // by mok: remove this comment when you check if i18n fix is OK.
+    //	QToolTip::add(videoDriver, i18n("Sets video driver, currently only XVideo and X11 work. Unless\nyou haven't got XVideo compatible drivers you should X11, which is much slower."));
+    QToolTip::add(videoDriver, i18n("Sets video driver. Recommended is XVideo, or, if it is not supported, X11, which is slower."));
+    childLayout1->addWidget(new QLabel(i18n("Video driver:"),this));
+    childLayout1->addWidget(videoDriver);
 
-	QHBoxLayout *childLayout2 = new QHBoxLayout (layout);
-	audioDriver = new QComboBox(this);
-	audioDriver->insertItem(ADRIVER_DEFAULT, ADRIVER_DEFAULT_INDEX);
-	audioDriver->insertItem(ADRIVER_OSS, ADRIVER_OSS_INDEX);
-	audioDriver->insertItem(ADRIVER_SDL, ADRIVER_SDL_INDEX);
-	audioDriver->insertItem(ADRIVER_ALSA, ADRIVER_ALSA_INDEX);
-	audioDriver->insertItem(ADRIVER_ARTS, ADRIVER_ARTS_INDEX);
-	childLayout2->addWidget(new QLabel(i18n("Audio driver:"),this));
-	childLayout2->addWidget(audioDriver);
+    QHBoxLayout *childLayout2 = new QHBoxLayout (layout);
+    audioDriver = new QComboBox(this);
+    for (int i = 0; ad[i].audiodriver; i++)
+        audioDriver->insertItem (ad[i].description, i);
+    childLayout2->addWidget(new QLabel(i18n("Audio driver:"),this));
+    childLayout2->addWidget(audioDriver);
 
 }
 
@@ -947,7 +944,7 @@ void KMPlayerPreferences::setDefaults() {
 	m_GeneralPageVCD->vcdDevicePath->lineEdit()->setText("/dev/cdrom");
 
 	m_GeneralPageOutput->videoDriver->setCurrentItem(VDRIVER_XV_INDEX);
-	m_GeneralPageOutput->audioDriver->setCurrentItem(ADRIVER_DEFAULT_INDEX);
+	m_GeneralPageOutput->audioDriver->setCurrentItem(0);
 
 	m_GeneralPageAdvanced->dvdLangPattern->setText("\\[open].*audio.*language: ([A-Za-z]+).*aid.*[^0-9]([0-9]+)");
 	m_GeneralPageAdvanced->dvdTitlePattern->setText("There are ([0-9]+) titles");

@@ -41,6 +41,18 @@
 //#include "configdialog.h"
 #include "pref.h"
 
+static MPlayerAudioDriver _ads[] = {
+    { "", i18n ("Default from MPlayer Config file") },
+    { "oss", i18n ("Open Sound System") },
+    { "sdl", i18n ("Simple DirectMedia Layer") },
+    { "alsa", i18n ("Advanced Linux Sound Architecture") },
+    { "arts", i18n ("Analog Real-time Synthesizer") },
+    { "esd", i18n ("Enlightened Sound Daemon") },
+    { 0, QString::null }
+};
+
+static const int ADRIVER_ARTS_INDEX = 2;
+
 FFServerSetting::FFServerSetting (int i, const QString & n, const QString & f, const QString & ac, int abr, int asr, const QString & vc, int vbr, int q, int fr, int gs, int w, int h)
  : index (i), name (n), format (f), audiocodec (ac),
    audiobitrate (abr > 0 ? QString::number (abr) : QString ()),
@@ -147,13 +159,14 @@ TVDevice::TVDevice (const QString & d, const QSize & s)
     inputs.setAutoDelete (true);
 }
 
-KMPlayerConfig::KMPlayerConfig (KMPlayer * player, KConfig * config)
+KMPlayerSettings::KMPlayerSettings (KMPlayer * player, KConfig * config)
   : configdialog (0L), m_config (config), m_player (player) {
     tvdevices.setAutoDelete (true);
+    audiodrivers = _ads;
     ffserversettings = _ffs;
 }
 
-KMPlayerConfig::~KMPlayerConfig () {
+KMPlayerSettings::~KMPlayerSettings () {
     // configdialog should be destroyed when the view is destroyed
     //delete configdialog;
 }
@@ -256,7 +269,7 @@ static const char * strFFServerSetting = "FFServer Setting";
 static const char * strFFServerCustomSetting = "Custom Setting";
 static const char * strFFServerACL = "FFServer ACL";
 
-void KMPlayerConfig::readConfig () {
+void KMPlayerSettings::readConfig () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
 
     m_config->setGroup (strGeneralGroup);
@@ -303,7 +316,7 @@ void KMPlayerConfig::readConfig () {
     playvcd = m_config->readBoolEntry (strPlayVCD, true);
     vcddevice = m_config->readEntry (strVCDDevice, "/dev/cdrom");
     videodriver = m_config->readNumEntry (strVoDriver, VDRIVER_XV_INDEX);
-    audiodriver = m_config->readNumEntry (strAoDriver, ADRIVER_DEFAULT_INDEX);
+    audiodriver = m_config->readNumEntry (strAoDriver, 0);
     if (audiodriver == ADRIVER_ARTS_INDEX)
     	view->setUseArts (true);
     else
@@ -424,9 +437,9 @@ void KMPlayerConfig::readConfig () {
     }
 }
 
-void KMPlayerConfig::show () {
+void KMPlayerSettings::show () {
     if (!configdialog) {
-        configdialog = new KMPlayerPreferences (m_player->view (), _ffs);
+        configdialog = new KMPlayerPreferences (m_player->view (), _ads, _ffs);
         configdialog->m_SourcePageTV->scanner = new TVDeviceScannerSource (m_player);
         connect (configdialog, SIGNAL (okClicked ()),
                 this, SLOT (okPressed ()));
@@ -526,7 +539,7 @@ void KMPlayerConfig::show () {
     configdialog->show ();
 }
 
-void KMPlayerConfig::writeConfig () {
+void KMPlayerSettings::writeConfig () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
 
     m_config->setGroup (strGeneralGroup);
@@ -655,7 +668,7 @@ void KMPlayerConfig::writeConfig () {
     m_config->sync ();
 }
 
-void KMPlayerConfig::okPressed () {
+void KMPlayerSettings::okPressed () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
     if (!view)
         return;
@@ -779,7 +792,7 @@ void KMPlayerConfig::okPressed () {
         m_player->openURL (KURL (configdialog->m_SourcePageURL->url->text ()));
 }
 
-void KMPlayerConfig::getHelp () {
+void KMPlayerSettings::getHelp () {
     KApplication::kApplication()->invokeBrowser ("man:/mplayer");
 }
 

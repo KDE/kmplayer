@@ -145,7 +145,7 @@ KMPlayer::KMPlayer (QWidget * parent, KConfig * config)
  : KMediaPlayer::Player (parent, ""),
    m_config (config),
    m_view (new KMPlayerView (parent)),
-   m_configdialog (new KMPlayerConfig (this, config)),
+   m_settings (new KMPlayerSettings (this, config)),
    m_source (0L),
    m_liveconnectextension (0L),
    movie_width (0),
@@ -161,7 +161,7 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
  : KMediaPlayer::Player (wparent, wname, parent, name),
    m_config (new KConfig ("kmplayerrc")),
    m_view (new KMPlayerView (wparent, wname)),
-   m_configdialog (new KMPlayerConfig (this, m_config)),
+   m_settings (new KMPlayerSettings (this, m_config)),
    m_source (0L),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
    movie_width (0),
@@ -208,11 +208,11 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
 }
 
 void KMPlayer::showConfigDialog () {
-    m_configdialog->show ();
+    m_settings->show ();
 }
 
 void KMPlayer::init () {
-    m_configdialog->readConfig ();
+    m_settings->readConfig ();
     m_process = 0L;
     m_use_slave = false;
     m_recording = false;
@@ -222,11 +222,11 @@ void KMPlayer::init () {
     m_browserextension = new KMPlayerBrowserExtension (this);
     m_movie_position = 0;
     m_bPosSliderPressed = false;
-    m_view->contrastSlider ()->setValue (m_configdialog->contrast);
-    m_view->brightnessSlider ()->setValue (m_configdialog->brightness);
-    m_view->hueSlider ()->setValue (m_configdialog->hue);
-    m_view->saturationSlider ()->setValue (m_configdialog->saturation);
-    m_posRegExp.setPattern (m_configdialog->positionpattern);
+    m_view->contrastSlider ()->setValue (m_settings->contrast);
+    m_view->brightnessSlider ()->setValue (m_settings->brightness);
+    m_view->hueSlider ()->setValue (m_settings->hue);
+    m_view->saturationSlider ()->setValue (m_settings->saturation);
+    m_posRegExp.setPattern (m_settings->positionpattern);
     connect (m_view->backButton (), SIGNAL (clicked ()), this, SLOT (back ()));
     connect (m_view->playButton (), SIGNAL (clicked ()), this, SLOT (play ()));
     connect (m_view->forwardButton (), SIGNAL (clicked ()), this, SLOT (forward ()));
@@ -242,9 +242,9 @@ void KMPlayer::init () {
     connect (m_view->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));
     connect (m_view, SIGNAL (urlDropped (const KURL &)), this, SLOT (openURL (const KURL &)));
     m_view->popupMenu ()->connectItem (KMPlayerView::menu_config,
-                                       m_configdialog, SLOT (show ()));
+                                       m_settings, SLOT (show ()));
     setMovieLength (0);
-    //connect (m_view->configButton (), SIGNAL (clicked ()), m_configdialog, SLOT (show ()));
+    //connect (m_view->configButton (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
 }
 
 void KMPlayer::initProcess () {
@@ -266,7 +266,7 @@ KMPlayer::~KMPlayer () {
         delete (KMPlayerView*) m_view;
     m_view = (KMPlayerView*) 0;
     stop ();
-    delete m_configdialog;
+    delete m_settings;
     delete m_process;
     delete m_browserextension;
     delete m_liveconnectextension;
@@ -287,7 +287,7 @@ void KMPlayer::setSource (KMPlayerSource * source) {
     m_source = source;
     if (!oldsource)
         setMovieLength (0);
-    if (m_source->hasLength () && m_configdialog->showposslider)
+    if (m_source->hasLength () && m_settings->showposslider)
         m_view->positionSlider()->show ();
     else
         m_view->positionSlider()->hide ();
@@ -380,7 +380,7 @@ void KMPlayer::processOutput (KProcess *, char * str, int slen) {
             if (m_source->processOutput (out))
                 ;
             else {
-                QRegExp sizeRegExp (m_configdialog->sizepattern);
+                QRegExp sizeRegExp (m_settings->sizepattern);
                 bool ok;
                 if (movie_width <= 0 && sizeRegExp.search (out) > -1) {
                     movie_width = sizeRegExp.cap (1).toInt (&ok);
@@ -391,7 +391,7 @@ void KMPlayer::processOutput (KProcess *, char * str, int slen) {
                             m_liveconnectextension->setSize (movie_width, movie_height);
                     }
                 } else if (m_browserextension) {
-                    QRegExp startRegExp (m_configdialog->startpattern);
+                    QRegExp startRegExp (m_settings->startpattern);
                     if (startRegExp.search (out) > -1) {
                         m_browserextension->setLoadingProgress (100);
                         emit completed ();
@@ -446,7 +446,7 @@ void KMPlayer::processStopped (KProcess *) {
         m_recording = false;
         if (m_view && m_view->recordButton ()->isOn ()) 
             m_view->recordButton ()->toggle ();
-        if (m_configdialog->autoplayafterrecording)
+        if (m_settings->autoplayafterrecording)
             openURL (m_recordurl);
         return;
     }
@@ -529,10 +529,10 @@ bool KMPlayer::run (const char * args, const char * pipe) {
     m_process_output = QString::null;
     m_started_emited = false;
     initProcess ();
-    m_cacheRegExp.setPattern (m_configdialog->cachepattern);
-    m_indexRegExp.setPattern (m_configdialog->indexpattern);
+    m_cacheRegExp.setPattern (m_settings->cachepattern);
+    m_indexRegExp.setPattern (m_settings->indexpattern);
 
-    if (m_configdialog->showposslider && m_source->hasLength ())
+    if (m_settings->showposslider && m_source->hasLength ())
         m_view->positionSlider()->show();
     else
         m_view->positionSlider()->hide();
@@ -547,7 +547,7 @@ bool KMPlayer::run (const char * args, const char * pipe) {
 
     QString strVideoDriver;
 
-    switch( m_configdialog->videodriver ){
+    switch( m_settings->videodriver ){
         case VDRIVER_XV_INDEX:
             strVideoDriver = VDRIVER_XV;
             break;
@@ -566,58 +566,44 @@ bool KMPlayer::run (const char * args, const char * pipe) {
     *m_process << " -vo " << strVideoDriver.lower().ascii();
 
     QString strAudioDriver;
-    strAudioDriver = "";
-    switch (m_configdialog->audiodriver) {
-        case ADRIVER_OSS_INDEX:
-            strAudioDriver = ADRIVER_OSS;
-            break;
-        case ADRIVER_SDL_INDEX:
-            strAudioDriver = ADRIVER_SDL;
-            break;
-        case ADRIVER_ALSA_INDEX:
-            strAudioDriver = ADRIVER_ALSA;
-            break;
-        case ADRIVER_ARTS_INDEX:	
-            strAudioDriver = ADRIVER_ARTS;
-            break;
-    }
+    strAudioDriver = QString (m_settings->audiodrivers[m_settings->audiodriver].audiodriver);
     if (strAudioDriver != "") {
         printf (" -ao %s", strAudioDriver.lower().ascii());
         *m_process << " -ao " << strAudioDriver.lower().ascii();
     }
-    if (m_configdialog->loop) {
+    if (m_settings->loop) {
         printf (" -loop 0");
         *m_process << " -loop 0";
     }
-    if (m_configdialog->framedrop) {
+    if (m_settings->framedrop) {
         printf (" -framedrop");
         *m_process << " -framedrop";
     }
 
-    /*if (!m_configdialog->audiodriver.contains("default", false)){
-      printf (" -ao %s", m_configdialog->audiodriver.lower().latin1());
-     *m_process << " -ao " << m_configdialog->audiodriver.lower().latin1();
+    /*if (!m_settings->audiodriver.contains("default", false)){
+      printf (" -ao %s", m_settings->audiodriver.lower().latin1());
+     *m_process << " -ao " << m_settings->audiodriver.lower().latin1();
      }*/
-    if (m_configdialog->additionalarguments.length () > 0) {
-        printf (" %s", m_configdialog->additionalarguments.ascii());
-        *m_process << " " << m_configdialog->additionalarguments.ascii();
+    if (m_settings->additionalarguments.length () > 0) {
+        printf (" %s", m_settings->additionalarguments.ascii());
+        *m_process << " " << m_settings->additionalarguments.ascii();
     }
     // postproc thingies
 
     printf (" %s", source ()->filterOptions ().ascii ());
     *m_process << " " << source ()->filterOptions ().ascii ();
 
-    printf (" -contrast %d", m_configdialog->contrast);
-    *m_process << " -contrast" << QString::number (m_configdialog->contrast);
+    printf (" -contrast %d", m_settings->contrast);
+    *m_process << " -contrast" << QString::number (m_settings->contrast);
 
-    printf (" -brightness %d", m_configdialog->brightness);
-    *m_process << " -brightness" << QString::number(m_configdialog->brightness);
+    printf (" -brightness %d", m_settings->brightness);
+    *m_process << " -brightness" << QString::number(m_settings->brightness);
 
-    printf (" -hue %d", m_configdialog->hue);
-    *m_process << " -hue" << QString::number (m_configdialog->hue);
+    printf (" -hue %d", m_settings->hue);
+    *m_process << " -hue" << QString::number (m_settings->hue);
 
-    printf (" -saturation %d", m_configdialog->saturation);
-    *m_process << " -saturation" << QString::number(m_configdialog->saturation);
+    printf (" -saturation %d", m_settings->saturation);
+    *m_process << " -saturation" << QString::number(m_settings->saturation);
 
     printf (" %s", args);
     *m_process << " " << args;
@@ -747,28 +733,28 @@ void KMPlayer::posSliderReleased () {
 }
 
 void KMPlayer::contrastValueChanged (int val) {
-    m_configdialog->contrast = val;
+    m_settings->contrast = val;
     QString cmd;
     cmd.sprintf ("contrast %d 1", val);
     sendCommand (cmd);
 }
 
 void KMPlayer::brightnessValueChanged (int val) {
-    m_configdialog->brightness = val;
+    m_settings->brightness = val;
     QString cmd;
     cmd.sprintf ("brightness %d 1", val);
     sendCommand (cmd);
 }
 
 void KMPlayer::hueValueChanged (int val) {
-    m_configdialog->hue = val;
+    m_settings->hue = val;
     QString cmd;
     cmd.sprintf ("hue %d 1", val);
     sendCommand (cmd);
 }
 
 void KMPlayer::saturationValueChanged (int val) {
-    m_configdialog->saturation = val;
+    m_settings->saturation = val;
     QString cmd;
     cmd.sprintf ("saturation %d 1", val);
     sendCommand (cmd);
@@ -877,7 +863,7 @@ void KMPlayerLiveConnectExtension::unregister (const unsigned long) {
 void KMPlayerLiveConnectExtension::setSize (int w, int h) {
     KMPlayerView * view = static_cast <KMPlayerView*> (player->view ());
     if (view->buttonBar ()->isVisible () &&
-            !player->configDialog ()->autohidebuttons)
+            !player->settings ()->autohidebuttons)
         h += view->buttonBar()->height();
     if (view->positionSlider()->isVisible())
         h += view->positionSlider()->height();
@@ -928,7 +914,7 @@ bool KMPlayerSource::processOutput (const QString & str) {
     } else if (str.startsWith ("ID_VIDEO_ASPECT")) {
         int pos = str.find ('=');
         if (pos > 0)
-            setAspect (str.mid (pos + 1).toFloat());
+            setAspect (str.mid (pos + 1).replace (',', '.').toFloat ());
     } else if (str.startsWith ("ID_LENGTH")) {
         int pos = str.find ('=');
         if (pos > 0)
@@ -939,80 +925,80 @@ bool KMPlayerSource::processOutput (const QString & str) {
 }
 
 QString KMPlayerSource::filterOptions () {
-    KMPlayerConfig* m_configdialog = m_player->configDialog ();
+    KMPlayerSettings* m_settings = m_player->settings ();
     QString PPargs ("");
-    if (m_configdialog->postprocessing)
+    if (m_settings->postprocessing)
     {
-        if (m_configdialog->pp_default)
+        if (m_settings->pp_default)
             PPargs = "-vop pp=de";
-        else if (m_configdialog->pp_fast)
+        else if (m_settings->pp_fast)
             PPargs = "-vop pp=fa";
-        else if (m_configdialog->pp_custom) {
+        else if (m_settings->pp_custom) {
             PPargs = "-vop pp=";
-            if (m_configdialog->pp_custom_hz) {
+            if (m_settings->pp_custom_hz) {
                 PPargs += "hb";
-                if (m_configdialog->pp_custom_hz_aq && \
-                        m_configdialog->pp_custom_hz_ch)
+                if (m_settings->pp_custom_hz_aq && \
+                        m_settings->pp_custom_hz_ch)
                     PPargs += ":ac";
-                else if (m_configdialog->pp_custom_hz_aq)
+                else if (m_settings->pp_custom_hz_aq)
                     PPargs += ":a";
-                else if (m_configdialog->pp_custom_hz_ch)
+                else if (m_settings->pp_custom_hz_ch)
                     PPargs += ":c";
                 PPargs += "/";
             }
-            if (m_configdialog->pp_custom_vt) {
+            if (m_settings->pp_custom_vt) {
                 PPargs += "vb";
-                if (m_configdialog->pp_custom_vt_aq && \
-                        m_configdialog->pp_custom_vt_ch)
+                if (m_settings->pp_custom_vt_aq && \
+                        m_settings->pp_custom_vt_ch)
                     PPargs += ":ac";
-                else if (m_configdialog->pp_custom_vt_aq)
+                else if (m_settings->pp_custom_vt_aq)
                     PPargs += ":a";
-                else if (m_configdialog->pp_custom_vt_ch)
+                else if (m_settings->pp_custom_vt_ch)
                     PPargs += ":c";
                 PPargs += "/";
             }
-            if (m_configdialog->pp_custom_dr) {
+            if (m_settings->pp_custom_dr) {
                 PPargs += "dr";
-                if (m_configdialog->pp_custom_dr_aq && \
-                        m_configdialog->pp_custom_dr_ch)
+                if (m_settings->pp_custom_dr_aq && \
+                        m_settings->pp_custom_dr_ch)
                     PPargs += ":ac";
-                else if (m_configdialog->pp_custom_dr_aq)
+                else if (m_settings->pp_custom_dr_aq)
                     PPargs += ":a";
-                else if (m_configdialog->pp_custom_dr_ch)
+                else if (m_settings->pp_custom_dr_ch)
                     PPargs += ":c";
                 PPargs += "/";
             }
-            if (m_configdialog->pp_custom_al) {
+            if (m_settings->pp_custom_al) {
                 PPargs += "al";
-                if (m_configdialog->pp_custom_al_f)
+                if (m_settings->pp_custom_al_f)
                     PPargs += ":f";
                 PPargs += "/";
             }
-            if (m_configdialog->pp_custom_tn) {
+            if (m_settings->pp_custom_tn) {
                 PPargs += "tn";
-                /*if (1 <= m_configdialog->pp_custom_tn_s <= 3){
+                /*if (1 <= m_settings->pp_custom_tn_s <= 3){
                     PPargs += ":";
-                    PPargs += m_configdialog->pp_custom_tn_s;
+                    PPargs += m_settings->pp_custom_tn_s;
                     }*/ //disabled 'cos this is wrong
                 PPargs += "/";
             }
-            if (m_configdialog->pp_lin_blend_int) {
+            if (m_settings->pp_lin_blend_int) {
                 PPargs += "lb";
                 PPargs += "/";
             }
-            if (m_configdialog->pp_lin_int) {
+            if (m_settings->pp_lin_int) {
                 PPargs += "li";
                 PPargs += "/";
             }
-            if (m_configdialog->pp_cub_int) {
+            if (m_settings->pp_cub_int) {
                 PPargs += "ci";
                 PPargs += "/";
             }
-            if (m_configdialog->pp_med_int) {
+            if (m_settings->pp_med_int) {
                 PPargs += "md";
                 PPargs += "/";
             }
-            if (m_configdialog->pp_ffmpeg_int) {
+            if (m_settings->pp_ffmpeg_int) {
                 PPargs += "fd";
                 PPargs += "/";
             }
@@ -1026,7 +1012,7 @@ QString KMPlayerSource::filterOptions () {
 QString KMPlayerSource::recordCommand () {
     if (m_recordCommand.isEmpty ())
         return QString::null;
-    return QString ("mencoder ") + m_player->configDialog()->mencoderarguments +
+    return QString ("mencoder ") + m_player->settings()->mencoderarguments +
            QString (" ") + m_recordCommand;
 }
 
@@ -1117,13 +1103,13 @@ void KMPlayerURLSource::play () {
     QString args;
     m_recordCommand.truncate (0);
     m_ffmpegCommand.truncate (0);
-    int cache = m_player->configDialog ()->cachesize;
+    int cache = m_player->settings ()->cachesize;
     if (url.isLocalFile () || cache <= 0)
         args.sprintf ("-slave ");
     else
         args.sprintf ("-slave -cache %d ", cache);
 
-    if (m_player->configDialog ()->alwaysbuildindex && url.isLocalFile ()) {
+    if (m_player->settings ()->alwaysbuildindex && url.isLocalFile ()) {
         if (url.path ().lower ().endsWith (".avi") ||
             url.path ().lower ().endsWith (".divx")) {
             args += QString (" -idx ");
@@ -1140,8 +1126,8 @@ void KMPlayerURLSource::play () {
 
 void KMPlayerURLSource::activate () {
     init ();
-    bool loop = m_player->configDialog ()->loop;
-    m_player->configDialog ()->loop = false;
+    bool loop = m_player->settings ()->loop;
+    m_player->settings ()->loop = false;
     if (!url ().isEmpty ()) {
         QString args ("-quiet -nocache -identify -frames 0 ");
         QString myurl (url ().isLocalFile () ? url ().path () : m_url.url ());
@@ -1149,7 +1135,7 @@ void KMPlayerURLSource::activate () {
         if (m_player->run (args.ascii ()))
             connect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
     }
-    m_player->configDialog ()->loop = loop;
+    m_player->settings ()->loop = loop;
 }
 
 void KMPlayerURLSource::finished () {
