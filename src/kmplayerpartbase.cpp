@@ -662,6 +662,8 @@ void KMPlayerURLSource::init () {
     m_urlother = KURL ();
 #ifdef HAVE_XINE
     KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
+    if (!view || !view->playerMenu ())
+        return;
     QPopupMenu * menu = view->playerMenu ();
     menu->clear ();
     menu->insertItem (i18n ("&MPlayer"), m_player, SLOT (setMPlayer (int)));
