@@ -902,6 +902,7 @@ void KMPlayerURLSource::setURL (const KURL & url) {
     m_refurls.clear ();
     if (url.isLocalFile ()) {
         if (url.url ().lower ().endsWith (QString ("m3u")) ||
+                url.url ().lower ().endsWith (QString ("asx")) ||
                 m_mime == QString ("audio/mpegurl") ||
                 m_mime == QString ("audio/x-mpegurl") ||
                 m_mime == QString ("video/x-ms-wmp") ||
@@ -910,22 +911,30 @@ void KMPlayerURLSource::setURL (const KURL & url) {
                 m_mime == QString ("application/x-mplayer2")) {
             char buf[1024];
             QFile file (url.path ());
-            if (file.exists () && file.open (IO_ReadOnly)) {
-                int len = file.readLine (buf, sizeof (buf));
+            if (file.exists () && file.size () < 50000 && file.open (IO_ReadOnly)) {
+                int len;
+                do {
+                    len = file.readLine (buf, sizeof (buf));
+                    buf[len] = 0;
+                } while (len >= 0 && len < sizeof (buf) -1 &&
+                         QString (buf).stripWhiteSpace () == 0);
                 if (len > 0 && len < sizeof (buf) -1) {
                     buf[len] = 0;
                     if (QString (buf).stripWhiteSpace ().startsWith (QChar ('<'))) {
                         file.close ();
                         QDomDocument doc;
-                        doc.setContent (&file, false);
-                        scanDomTree (doc.firstChild(), m_refurls);
+                        QString errorMsg;
+                        int errLine, errCol;
+                        bool succes = doc.setContent (&file, false, &errorMsg, &errLine, &errCol);
+                        if (!doc.isNull ())
+                            scanDomTree (doc.firstChild(), m_refurls);
+                        else if (!succes)
+                            kdDebug () << "XML error: " << errorMsg << " at " << errLine << "," << errCol << endl;
                     } else do {
                         QString mrl = QString::fromLocal8Bit (buf).stripWhiteSpace ();
                         if (!mrl.startsWith (QChar ('#')) && !mrl.isEmpty ())
                             m_refurls.push_back (mrl);
-                        int len = file.readLine (buf, sizeof (buf));
-                        if (len < 0 || len > sizeof (buf) -1)
-                            break;
+                        len = file.readLine (buf, sizeof (buf));
                         buf[len] = 0;
                     } while (len > 0 && len < sizeof (buf) -1 && 
                              m_refurls.size () < 1024 /* support 1k entries */);
