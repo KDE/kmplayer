@@ -1,10 +1,14 @@
 Changes since version 0.8.4-rc3
-- Begin of GStreamer backend support
+- Look for title entries in ASX and .pls files for playlist items
+- DemiBold font for playlist and console log window for readability
+- Begin of GStreamer backend support, local file only
+- Allow disconnect/connect for VDR while still playing, allows other apps to 
+  access the VDR port
 - Actively determine mime-type for playlist detection (was guess on extension
   or use the one the plugin got from konqueror)
 - VCD tracks are, for MPlayer only, displayed in playlist and not in menu
 - Added custom command for VDR, output to console view
-- Made command interaction with VDR much more relyable
+- Made command interaction with VDR much more reliable
 Changes since version 0.8.4-rc2
 - Added a XVideo player (kxvplayer) process. Used now for viewing VDR
 - Fixed various crash cases with the playlist

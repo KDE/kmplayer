@@ -1,6 +1,7 @@
 debian/tmp/usr/lib/libkmplayercommon.so
 debian/tmp/usr/lib/libkmplayercommon.la
 debian/tmp/usr/bin/kxineplayer
+debian/tmp/usr/bin/kgstplayer
 debian/tmp/usr/share/config/kmplayerrc
 debian/tmp/usr/share/apps/kmplayer/bookmarks.xml
 debian/tmp/usr/share/services/pnm.protocol

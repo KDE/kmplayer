@@ -2,7 +2,7 @@ Source: kmplayer
 Section: kde
 Priority: optional
 Maintainer: Koos Vriezen <koos.vriezen@xs4all.nl>
-Build-Depends: debhelper (>= 4.0.0), kdelibs4-dev, libxine-dev, xlibs-dev
+Build-Depends: debhelper (>= 4.0.0), kdelibs4-dev, libxine-dev, xlibs-dev, libgstreamer0.8-dev, libgstreamer-plugins0.8-dev
 Standards-Version: 3.6.0
 
 Package: kmplayer
@@ -14,7 +14,7 @@ Description: KMPlayer metapackage
 Package: kmplayer-lib
 Architecture: any
 Section: sound
-Depends: kdelibs4 >= 4:3.1.0-1), libxine1
+Depends: kdelibs4 (>= 4:3.1.0-1), libxine1, libgstreamer0.8-0, libgstreamer-plugins0.8-0
 Description: KMPlayer shared library
 
 Package: kmplayer-app
