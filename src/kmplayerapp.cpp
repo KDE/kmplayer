@@ -1068,7 +1068,6 @@ KMPlayerTVSource::~KMPlayerTVSource () {
 }
 
 void KMPlayerTVSource::activate () {
-    m_player->setProcess (m_player->mplayer ());
     init ();
     if (m_player->settings ()->showbroadcastbutton)
         static_cast <KMPlayerView*> (m_player->view())->broadcastButton ()->show ();
@@ -1096,6 +1095,7 @@ const QString KMPlayerTVSource::buildArguments () {
 }
 
 void KMPlayerTVSource::play () {
+    m_player->setProcess (m_player->mplayer ());
     m_player->mplayer ()->run ((QString ("-slave -nocache -quiet ") + buildArguments ()).ascii ());
 }
 

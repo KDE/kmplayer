@@ -114,6 +114,7 @@ static bool proxyForURL (const KURL& url, QString& proxy) {
 
 MPlayerBase::MPlayerBase (KMPlayer * player)
     : KMPlayerProcess (player), m_use_slave (true) {
+    m_process = new KProcess;
 }
 
 MPlayerBase::~MPlayerBase () {
@@ -182,7 +183,7 @@ QWidget * MPlayer::widget () {
 
 bool MPlayer::play () {
     if (!source ()) return false;
-    if (m_process->isRunning ())
+    if (playing ())
         return sendCommand (QString ("gui_play"));
     m_source->play ();
     return m_process->isRunning ();

@@ -42,7 +42,7 @@ class KMPlayerSettings;
 class KInstance;
 class KConfig;
 class QIODevice;
-
+class JSCommandEntry;
 
 class KMPlayerBrowserExtension : public KParts::BrowserExtension {
     Q_OBJECT
@@ -85,6 +85,7 @@ private slots:
     void finished ();
 private:
     KMPlayer * player;
+    const JSCommandEntry * lastJSCommandEntry;
     bool m_started : 1;
     bool m_enablefinish : 1;
 };

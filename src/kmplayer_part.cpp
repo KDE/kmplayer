@@ -233,7 +233,6 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
                     this, SLOT (processPlaying ()));
         disconnect (m_process, SIGNAL (output (const QString &)),
                     this, SLOT (processOutput (const QString &)));
-        source->deactivate ();
     }
     m_process = process;
     m_process->setSource (source);
@@ -247,23 +246,32 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
              this, SLOT (processPlaying ()));
     connect (m_process, SIGNAL (output (const QString &)),
              this, SLOT (processOutput (const QString &)));
-    source->activate ();
 }
 
 extern const char * strUrlBackend;
 
 void KMPlayer::setXine () {
+    bool playing = m_process->playing ();
+    if (playing)
+        m_process->source ()->deactivate ();
     m_settings->urlbackend = QString ("Xine");
     m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
     m_config->sync ();
     setProcess (m_xine);
+    if (playing)
+        m_process->source ()->activate ();
 }
 
 void KMPlayer::setMPlayer () {
+    bool playing = m_process->playing ();
+    if (playing)
+        m_process->source ()->deactivate ();
     m_settings->urlbackend = QString ("MPlayer");
     m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
     m_config->sync ();
     setProcess (m_mplayer);
+    if (playing)
+        m_process->source ()->activate ();
 }
 
 void KMPlayer::setSource (KMPlayerSource * source, bool keepsizes) {
@@ -580,8 +588,98 @@ void KMPlayerBrowserExtension::restoreState (QDataStream & stream) {
 }
 //---------------------------------------------------------------------
 
+enum JSCommand {
+    notsupported,
+    canpause, canplay, canstop, canseek, 
+    isfullscreen, isloop, isaspect,
+    length, width, height, playstate,
+    gotourl, nextentry, jsc_pause, play, preventry, stop, volume
+};
+
+struct JSCommandEntry {
+    const char * name;
+    JSCommand command;
+    const char * defaultvalue;
+    const KParts::LiveConnectExtension::Type rettype;
+};
+
+const int jscommandentries = 63;
+
+// keep this list in alphabetic order
+static const JSCommandEntry JSCommandList [jscommandentries] = {
+    { "CanPause", canpause, "true", KParts::LiveConnectExtension::TypeBool },
+    { "CanPlay", canplay, "true", KParts::LiveConnectExtension::TypeBool },
+    { "CanStop", canstop, "true", KParts::LiveConnectExtension::TypeBool },
+    { "DoGotoURL", gotourl, "true", KParts::LiveConnectExtension::TypeBool },
+    { "DoNextEntry", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "DoPause", jsc_pause, "true", KParts::LiveConnectExtension::TypeBool },
+    { "DoPlay", play, "true", KParts::LiveConnectExtension::TypeBool },
+    { "DoPrevEntry", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "DoStop", stop, "true", KParts::LiveConnectExtension::TypeBool },
+    { "GetAuthor", notsupported, "noname", KParts::LiveConnectExtension::TypeString },
+    { "GetAutoGoToURL", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
+    { "GetBackgroundColor", notsupported, "ffffff", KParts::LiveConnectExtension::TypeNumber },
+    { "GetBandwidthAverage", notsupported, "64", KParts::LiveConnectExtension::TypeNumber },
+    { "GetBandwidthCurrent", notsupported, "64", KParts::LiveConnectExtension::TypeNumber },
+    { "GetBufferingTimeElapsed", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
+    { "GetBufferingTimeRemaining", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
+    { "GetCanSeek", canseek, "false", KParts::LiveConnectExtension::TypeBool },
+    { "GetCenter", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "GetClipHeight", height, 0L, KParts::LiveConnectExtension::TypeNumber }, 
+    { "GetClipWidth", width, 0L, KParts::LiveConnectExtension::TypeNumber }, 
+    { "GetConnectionBandwidth", notsupported, "64", KParts::LiveConnectExtension::TypeNumber },
+    { "GetConsole", notsupported, "unknown", KParts::LiveConnectExtension::TypeString },
+    { "GetConsoleEvents", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
+    { "GetControls", notsupported, "buttons", KParts::LiveConnectExtension::TypeString },
+    { "GetCopyright", notsupported, "(c) whoever", KParts::LiveConnectExtension::TypeString },
+    { "GetCurrentEntry", notsupported, "1", KParts::LiveConnectExtension::TypeNumber },
+    { "GetDRMInfo", notsupported, "RNBA", KParts::LiveConnectExtension::TypeString },
+    { "GetDoubleSize", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
+    { "GetEntryAbstract", notsupported, "abstract", KParts::LiveConnectExtension::TypeString },
+    { "GetEntryAuthor", notsupported, "noname", KParts::LiveConnectExtension::TypeString },
+    { "GetEntryCopyright", notsupported, "(c)", KParts::LiveConnectExtension::TypeString },
+    { "GetEntryTitle", notsupported, "title", KParts::LiveConnectExtension::TypeString },
+    { "GetFullScreen", isfullscreen, "false", KParts::LiveConnectExtension::TypeBool }, 
+    { "GetImageStatus", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
+    { "GetLastErrorMoreInfoURL", notsupported, "no error", KParts::LiveConnectExtension::TypeString },
+    { "GetLastErrorSeverity", notsupported, "6", KParts::LiveConnectExtension::TypeNumber },
+    { "GetLastErrorUserCode", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
+    { "GetLastErrorUserString", notsupported, "no error", KParts::LiveConnectExtension::TypeString },
+    { "GetLastMessage", notsupported, "no error", KParts::LiveConnectExtension::TypeString },
+    { "GetLastStatus", notsupported, "no error", KParts::LiveConnectExtension::TypeString },
+    { "GetLength", length, 0L, KParts::LiveConnectExtension::TypeNumber },
+    { "GetLiveState", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
+    { "GetLoop", isloop, 0L, KParts::LiveConnectExtension::TypeBool },
+    { "GetMaintainAspect", isaspect, 0L, KParts::LiveConnectExtension::TypeBool },
+    { "GetPlayState", length, 0L, KParts::LiveConnectExtension::TypeNumber },
+    { "Pause", jsc_pause, 0L, KParts::LiveConnectExtension::TypeBool },
+    { "Play", play, 0L, KParts::LiveConnectExtension::TypeBool },
+    { "Stop", stop, 0L, KParts::LiveConnectExtension::TypeBool },
+    { "Volume", volume, 0L, KParts::LiveConnectExtension::TypeBool },
+    { "pause", jsc_pause, 0L, KParts::LiveConnectExtension::TypeBool },
+    { "play", play, 0L, KParts::LiveConnectExtension::TypeBool },
+    { "stop", stop, 0L, KParts::LiveConnectExtension::TypeBool },
+    { "volume", volume, 0L, KParts::LiveConnectExtension::TypeBool },
+};
+
+const JSCommandEntry * getJSCommandEntry (const char * name, int start = 0, int end = jscommandentries) {
+    if (end - start < 2) {
+        if (start != end && !strcmp (JSCommandList[start].name, name))
+            return &JSCommandList[start];
+        return 0L;
+    }
+    int mid = (start + end) / 2;
+    int cmp = strcmp (JSCommandList[mid].name, name);
+    if (cmp < 0)
+        return getJSCommandEntry (name, mid + 1, end);
+    if (cmp > 0)
+        return getJSCommandEntry (name, start, mid);
+    return &JSCommandList[mid];
+}
+
 KMPlayerLiveConnectExtension::KMPlayerLiveConnectExtension (KMPlayer * parent)
   : KParts::LiveConnectExtension (parent), player (parent),
+    lastJSCommandEntry (0L),
     m_started (false),
     m_enablefinish (false) {
       connect (parent, SIGNAL (started (KIO::Job *)), this, SLOT (started ()));
@@ -607,11 +705,12 @@ void KMPlayerLiveConnectExtension::finished () {
 }
 
 bool KMPlayerLiveConnectExtension::get
-  (const unsigned long id, const QString & _name,
+  (const unsigned long id, const QString & name,
    KParts::LiveConnectExtension::Type & type, unsigned long & rid, QString &) {
-    QString name = _name.lower ();
-    printf("get %s\n", name.latin1());
-    if (name == "play" || name == "stop" || name == "pause" || name == "volume") {
+    const char * str = name.ascii ();
+    printf("get %s\n", str);
+    lastJSCommandEntry = getJSCommandEntry (str);
+    if (lastJSCommandEntry) {
         type = KParts::LiveConnectExtension::TypeFunction;
         rid = id;
         return true;
@@ -625,24 +724,68 @@ bool KMPlayerLiveConnectExtension::put
 }
 
 bool KMPlayerLiveConnectExtension::call
-  (const unsigned long id, const QString & _name,
+  (const unsigned long id, const QString & name,
    const QStringList & args, KParts::LiveConnectExtension::Type & type,
-   unsigned long & rid, QString &) {
-    QString name = _name.lower ();
-    if (name == "play" || name == "stop" || name == "pause" || name == "volume") {
-        type = KParts::LiveConnectExtension::TypeVoid;
-        rid = id;
-        if (name == "play")
+   unsigned long & rid, QString & rval) {
+    const JSCommandEntry * entry = lastJSCommandEntry;
+    const char * str = name.ascii ();
+    if (!entry || strcmp (entry->name, str))
+        entry = getJSCommandEntry (str);
+    if (!entry)
+        return false;
+    kdDebug () << "entry " << entry->name << endl;
+    rid = id;
+    type = entry->rettype;
+    switch (entry->command) {
+        case notsupported:
+            rval = entry->defaultvalue;
+            break;
+        case play:
             player->play ();
-        else if (name == "stop")
+            rval = "true";
+            break;
+        case stop:
             player->stop ();
-        else if (name == "pause")
+            rval = "true";
+            break;
+        case jsc_pause:
             player->pause ();
-        else if (name == "volume" && args.size () > 0)
+            rval = "true";
+            break;
+        case volume:
+            if (!args.size ())
+                return false;
             player->adjustVolume (args.first ().toInt ());
-        return true;
+            rval = "true";
+            break;
+        case isloop:
+            rval = player->settings ()->loop ? "true" : "false";
+            break;
+        case isaspect:
+            rval = player->settings ()->sizeratio ? "true" : "false";
+            break;
+        case isfullscreen:
+            rval = static_cast <KMPlayerView*> (player->view ())->isFullScreen () ? "true" : "false";
+            break;
+        case canseek:
+            rval = player->process ()->source ()->isSeekable () ? "true" : "false";
+            break;
+        case length:
+            rval.setNum (player->process ()->source ()->length ());
+            break;
+        case width:
+            rval.setNum (player->process ()->source ()->width ());
+            break;
+        case height:
+            rval.setNum (player->process ()->source ()->height ());
+            break;
+        case playstate: // FIXME 0-6
+            rval = player->process ()->playing () ? "3" : "0";
+            break;
+        default:
+            return false;
     }
-    return false;
+    return true;
 }
 
 void KMPlayerLiveConnectExtension::unregister (const unsigned long) {
