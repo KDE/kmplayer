@@ -183,7 +183,7 @@ void KMPlayerApp::initView ()
     view->popupMenu ()->connectItem (KMPlayerView::menu_fullscreen,
             this, SLOT (fullScreen ()));
     connect (view->broadcastButton (), SIGNAL (clicked ()),
-            this, SLOT (boadcastClicked ()));
+            this, SLOT (broadcastClicked ()));
     /*QPopupMenu * viewmenu = new QPopupMenu;
     viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()),
                           QKeySequence ("CTRL + Key_F"));
@@ -276,7 +276,7 @@ void KMPlayerApp::zoom150 () {
 #include <kglobal.h>
 #include <kstandarddirs.h>
 
-bool KMPlayerApp::boadcasting () const {
+bool KMPlayerApp::broadcasting () const {
     return m_ffserver_process && m_ffserver_process->isRunning ();
 }
 
@@ -284,10 +284,10 @@ static const char * const ffserverconf =
 "Port %d\nBindAddress %s\nMaxClients %d\nMaxBandwidth %d\n"
 "CustomLog -\nNoDaemon\n"
 "<Feed kmplayer.ffm>\nFile %s\nFileMaxSize %dK\nACL allow 127.0.0.1\n</Feed>\n"
-"<Stream video.avi>\nFeed kmplayer.ffm\nFormat avi\nVideoBitRate %d\nVideoFrameRate %d\nVideoSize %s\nVideoGopSize %d\nVideoQMin %d\nAudioBitRate %d\nAudioSampleRate %d\nAudioCodec mp3\nVideoCodec mpeg4\n%s\n</Stream>\n"
+"<Stream video.avi>\nFeed kmplayer.ffm\nFormat avi\nVideoBitRate %d\nVideoFrameRate %d\nVideoSize %dx%d\nVideoGopSize %d\nVideoQMin %d\nAudioBitRate %d\nAudioSampleRate %d\nAudioCodec mp3\nVideoCodec mpeg4\n%s\n</Stream>\n"
 "<Stream stat.html>\nFormat status\nACL allow localhost\n</Stream>\n";
 
-void KMPlayerApp::boadcastClicked () {
+void KMPlayerApp::broadcastClicked () {
     KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
     setCursor (QCursor (Qt::WaitCursor));
     m_endserver = false;
@@ -330,7 +330,7 @@ void KMPlayerApp::boadcastClicked () {
     QFile qfile (conffile);
     qfile.open (IO_WriteOnly);
     QString configdata;
-    configdata.sprintf (ffserverconf, conf->ffserverport, conf->bindaddress.ascii (), conf->maxclients, conf->maxbandwidth, conf->feedfile.ascii (), conf->feedfilesize, ffs.videobitrate, ffs.framerate, ffs.size, ffs.gopsize, ffs.quality, ffs.audiobitrate, ffs.audiosamplerate, noaudio);
+    configdata.sprintf (ffserverconf, conf->ffserverport, conf->bindaddress.ascii (), conf->maxclients, conf->maxbandwidth, conf->feedfile.ascii (), conf->feedfilesize, ffs.videobitrate, ffs.framerate, ffs.width, ffs.height, ffs.gopsize, ffs.quality, ffs.audiobitrate, ffs.audiosamplerate, noaudio);
     qfile.writeBlock (configdata.ascii (), configdata.length ());
     qfile.close ();
     kdDebug () << configdata << endl;
@@ -354,7 +354,7 @@ void KMPlayerApp::startFeed () {
             if (!stopProcess (m_ffmpeg_process, "q"))
                 KMessageBox::error (this, i18n ("Failed to end ffmpeg process."), i18n ("Error"));
             else
-                QTimer::singleShot (1000, this, SLOT (startFeed ()));
+                QTimer::singleShot (100, this, SLOT (startFeed ()));
             m_endserver = true;
             return;
         }
@@ -650,7 +650,17 @@ KMPlayerAppURLSource::~KMPlayerAppURLSource () {
 }
 
 void KMPlayerAppURLSource::activate () {
-    KMPlayerURLSource::activate ();
+    if (app->broadcasting ()) {
+        init ();
+        KMPlayerConfig * conf = m_player->configDialog ();
+        FFServerSetting & ffs = conf->ffserversettings[conf->ffserversetting];
+        m_player->setMovieLength (0);
+        setWidth (ffs.width);
+        setHeight (ffs.height);
+        kdDebug () << "KMPlayerAppURLSource::activate()" << endl;
+        QTimer::singleShot (0, this, SLOT (finished ()));
+    } else
+        KMPlayerURLSource::activate ();
     app->slotStatusMsg (i18n ("Ready."));
 }
 
@@ -1116,7 +1126,7 @@ void KMPlayerTVSource::menuClicked (int id) {
         if (m_player->source () != this)
             m_player->setSource (this);
         m_tvsource = it.data ();
-        if (app->boadcasting ()) {
+        if (app->broadcasting ()) {
             buildArguments ();
             QTimer::singleShot (0, app, SLOT (startFeed ()));
         } else if (!m_tvsource->noplayback)

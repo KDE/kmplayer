@@ -105,7 +105,8 @@ public:
     int quality;
     int framerate;
     int gopsize;
-    const char * size;
+    int width;
+    int height;
 };
 
 class TVDeviceScannerSource : public KMPlayerSource {

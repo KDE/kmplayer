@@ -54,7 +54,7 @@ public:
     KMPlayer * player () const { return m_player; }
     void resizePlayer (int percentage);
     KRecentFilesAction * recentFiles () const { return fileOpenRecent; }
-    bool boadcasting () const;
+    bool broadcasting () const;
 
 protected:
     void saveOptions ();
@@ -90,7 +90,7 @@ private slots:
     void zoom50 ();
     void zoom100 ();
     void zoom150 ();
-    void boadcastClicked ();
+    void broadcastClicked ();
     void processStopped (KProcess * process);
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
