@@ -1256,6 +1256,7 @@ void URLSource::playCurrent () {
             QFile file (url.path ());
             if (!file.exists ()) {
                 kdDebug () << "URLSource::playCurrent not found " << url.path () << " " << currentMrl () << endl;
+                m_current->mrl ()->parsed = true;
                 Source::playCurrent ();
                 return;
             }
