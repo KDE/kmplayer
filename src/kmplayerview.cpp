@@ -50,7 +50,7 @@ static const int XKeyPress = KeyPress;
 #undef Status
 #undef Unsorted
 
-static const int button_height = 11;
+static const int button_height = 15;
 
 // application specific includes
 #include "kmplayerview.h"
@@ -438,12 +438,8 @@ void KMPlayerView::init () {
     setVideoWidget (m_layer);
 #endif
     
-    layerbox->addWidget (m_buttonbar);
-    m_posSlider = new KMPlayerSlider (Qt::Horizontal, m_layer, this);
-    layerbox->addWidget (m_posSlider);
-
-    QHBoxLayout * buttonbox = new QHBoxLayout (m_buttonbar, 1);
-    m_buttonbar->setMaximumSize (2500, button_height);
+    QHBoxLayout * buttonbox = new QHBoxLayout (m_buttonbar, 5, 4);
+    m_buttonbar->setMaximumSize (2500, button_height + 8);
     m_buttonbar->setEraseColor (QColor (0, 0, 0));
     m_configButton = ctrlButton (m_buttonbar, buttonbox, config_xpm);
     m_backButton = ctrlButton (m_buttonbar, buttonbox, back_xpm);
@@ -458,6 +454,10 @@ void KMPlayerView::init () {
     m_recordButton->setToggleButton (true);
     m_broadcastButton->setToggleButton (true);
     m_broadcastButton->hide ();
+    m_posSlider = new KMPlayerSlider (Qt::Horizontal, m_buttonbar, this);
+    buttonbox->addWidget (m_posSlider);
+
+    layerbox->addWidget (m_buttonbar);
 
     m_popupMenu = new QPopupMenu (m_layer);
     m_playerMenu = new QPopupMenu (m_layer);
@@ -587,10 +587,11 @@ void KMPlayerView::setUseArts (bool b) {
 void KMPlayerView::setAutoHideButtons (bool b) {
     killTimers ();
     m_auto_hide_buttons = b;
-    if (b && m_playing)
-        m_buttonbar->hide ();
-    else
-        m_buttonbar->show ();
+    if (m_buttonbar)
+        if (b && m_playing && m_buttonbar)
+            m_buttonbar->hide ();
+        else
+            m_buttonbar->show ();
     m_viewer->setMouseTracking (b && m_playing);
     m_viewer->parentWidget ()->setMouseTracking (b && m_playing);
     m_posSlider->setMouseTracking (b && m_playing);
@@ -598,6 +599,7 @@ void KMPlayerView::setAutoHideButtons (bool b) {
 
 void KMPlayerView::delayedShowButtons (bool show) {
     if (!m_auto_hide_buttons || delayed_timer ||
+        m_buttonbar &&
         (show && m_buttonbar->isVisible ()) || 
         (!show && !m_buttonbar->isVisible ()))
         return;
@@ -638,10 +640,11 @@ void KMPlayerView::timerEvent (QTimerEvent * e) {
     bool mouse_on_buttons = (m_layer->hasMouse () && 
                              mouse_pos >= vert_buttons_pos - button_height && 
                              mouse_pos <= vert_buttons_pos);
-    if (mouse_on_buttons && !m_buttonbar->isVisible ())
-        m_buttonbar->show ();
-    else if (!mouse_on_buttons && m_buttonbar->isVisible ())
-        m_buttonbar->hide ();
+    if (m_buttonbar)
+        if (mouse_on_buttons && !m_buttonbar->isVisible ())
+            m_buttonbar->show ();
+        else if (!mouse_on_buttons && m_buttonbar->isVisible ())
+            m_buttonbar->hide ();
 }
 
 void KMPlayerView::addText (const QString & str) {
@@ -668,7 +671,7 @@ void KMPlayerView::addText (const QString & str) {
 void KMPlayerView::startsToPlay () {
     m_multiedit->hide ();
     m_playing = true;
-    if (m_auto_hide_buttons) {
+    if (m_buttonbar && m_auto_hide_buttons) {
         m_buttonbar->hide ();
         m_viewer->setMouseTracking (true);
         m_viewer->parentWidget ()->setMouseTracking (true);
@@ -693,7 +696,7 @@ void KMPlayerView::leaveEvent (QEvent *) {
 
 void KMPlayerView::reset () {
     m_playing = false;
-    if (m_auto_hide_buttons) {
+    if (m_buttonbar && m_auto_hide_buttons) {
         m_buttonbar->show ();
         m_viewer->setMouseTracking (false);
         m_viewer->parentWidget ()->setMouseTracking (false);
@@ -735,6 +738,15 @@ void KMPlayerView::fullScreen () {
         m_layer->fullScreen();
         m_popupMenu->setItemVisible (menu_zoom, true);
     }
+}
+
+void KMPlayerView::setButtonBar (QWidget * bb) {
+    bb->reparent (m_layer, m_buttonbar->pos (), true);
+    QBoxLayout * layerbox = static_cast<QBoxLayout*>(m_layer->layout ());
+    layerbox->addWidget (bb);
+    m_buttonbar->hide ();
+    m_buttonbar = bb;
+    layerbox->activate ();
 }
 //----------------------------------------------------------------------
 

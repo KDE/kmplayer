@@ -113,6 +113,8 @@ public slots:
     void showConfigDialog ();
     void setXine (int id);
     void setMPlayer (int id);
+    void back ();
+    void forward ();
 public:
     virtual bool isSeekable (void) const;
     virtual unsigned long position (void) const;
@@ -129,8 +131,6 @@ protected:
     bool openFile();
     virtual void timerEvent (QTimerEvent *);
 protected slots:
-    void back ();
-    void forward ();
     void posSliderPressed ();
     void posSliderReleased ();
     void positonValueChanged (int val);

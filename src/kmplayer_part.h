@@ -20,7 +20,6 @@
 #define KMPLAYER_PART_H
 
 #include <kparts/browserextension.h>
-#include <kparts/factory.h>
 #include "kmplayerpartbase.h"
 #include "kmplayersource.h"
 
@@ -106,6 +105,10 @@ private:
 class KMPlayerPart : public KMPlayer {
     Q_OBJECT
 public:
+    enum Features {
+        Feat_Viewer = 0x01, Feat_Controls = 0x02, Feat_Label = 0x04,
+        Feat_All = 0xff
+    };
     KMPlayerPart (QWidget * wparent, const char * wname,
               QObject * parent, const char * name, const QStringList &args);
     ~KMPlayerPart ();
@@ -115,6 +118,8 @@ public:
     KMPlayerLiveConnectExtension * liveconnectextension () const
         { return m_liveconnectextension; }
     KMPlayerHRefSource * hrefSource () const { return m_hrefsource; }
+    bool hasFeature (int f) { return m_features & f; }
+    bool allowRedir (const QString & url);
 public slots:
     virtual bool openURL (const KURL & url);
     void setMenuZoom (int id);
@@ -127,23 +132,13 @@ protected:
     KMPlayerBrowserExtension * m_browserextension;
     KMPlayerLiveConnectExtension * m_liveconnectextension;
     KMPlayerHRefSource * m_hrefsource;
+    QString m_group;
+    QString m_docbase;
+    int m_features;
     bool m_started_emited : 1;
     //bool m_noresize : 1;
     bool m_havehref : 1;
 };
 
-class KMPlayerFactory : public KParts::Factory {
-    Q_OBJECT
-public:
-    KMPlayerFactory ();
-    virtual ~KMPlayerFactory ();
-    virtual KParts::Part *createPartObject 
-        (QWidget *wparent, const char *wname,
-         QObject *parent, const char *name,
-         const char *className, const QStringList &args);
-    static KInstance * instance () { return s_instance; }
-private:
-    static KInstance * s_instance;
-};
 
 #endif

@@ -177,7 +177,7 @@ void KMPlayerSettings::readConfig () {
     autohidebuttons = m_config->readBoolEntry (strAutoHideButtons, false);
     mplayerpost090 = m_config->readBoolEntry (strPostMPlayer090, true);
     view->setAutoHideButtons (showbuttons && autohidebuttons);
-    if (!showbuttons) {
+    if (!showbuttons && view->buttonBar ()) {
         view->buttonBar ()->hide ();
     }
     showposslider = m_config->readBoolEntry(strShowPositionSlider, true);
@@ -516,7 +516,7 @@ void KMPlayerSettings::okPressed () {
     showbuttons = configdialog->m_GeneralPageGeneral->showControlButtons->isChecked ();
     autohidebuttons = configdialog->m_GeneralPageGeneral->autoHideControlButtons->isChecked ();
     view->setAutoHideButtons (showbuttons && autohidebuttons);
-    if (!showbuttons)
+    if (!showbuttons && view->buttonBar ())
         view->buttonBar ()->hide ();
     showposslider = configdialog->m_GeneralPageGeneral->showPositionSlider->isChecked ();
     if (showposslider && m_player->process ()->source ()->hasLength ())

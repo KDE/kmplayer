@@ -24,6 +24,7 @@
 #endif 
 
 #include <qwidget.h>
+#include <qguardedptr.h>
 #include <kurl.h>
 #include <kmediaplayer/view.h>
 
@@ -97,6 +98,7 @@ public:
     QPopupMenu * popupMenu () const { return m_popupMenu; }
     KPopupMenu * bookmarkMenu () const { return m_bookmarkMenu; }
     QPopupMenu * zoomMenu () const { return m_zoomMenu; }
+    void setButtonBar (QWidget *);
     bool keepSizeRatio () const { return m_keepsizeratio; }
     void setKeepSizeRatio (bool b) { m_keepsizeratio = b; }
     bool useArts () const { return m_use_arts; }
@@ -136,7 +138,7 @@ private:
     QMultiLineEdit * m_multiedit;
     QString tmplog;
     QPixmap * m_image;
-    QWidget * m_buttonbar;
+    QGuardedPtr<QWidget> m_buttonbar;
     QPushButton * m_backButton;
     QPushButton * m_playButton;
     QPushButton * m_forwardButton;

@@ -710,7 +710,7 @@ QString KMPlayerSource::prettyName () {
 
 KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, const KURL & url)
     : KMPlayerSource (i18n ("URL"), player) {
-    m_url = url;
+    setURL (url);
     kdDebug () << "KMPlayerURLSource::KMPlayerURLSource" << endl;
 }
 

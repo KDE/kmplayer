@@ -954,7 +954,7 @@ int main(int argc, char **argv) {
     xine = xine_new();
     if (xine_verbose)
         xine_engine_set_param (xine, XINE_ENGINE_PARAM_VERBOSITY, xine_vverbose ? XINE_VERBOSITY_DEBUG : XINE_VERBOSITY_LOG);
-    sprintf(configfile, "%s%s", xine_get_homedir(), "/.xine/config2");
+    snprintf(configfile, sizeof (configfile), "%s%s", xine_get_homedir(), "/.xine/config2");
     xine_config_load(xine, configfile);
     xine_init(xine);
 
