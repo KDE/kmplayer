@@ -334,6 +334,7 @@ public:
     KDE_NO_CDTOR_EXPORT Head (ElementPtr & d) : Element (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "head"; }
+    void closed ();
     bool expose ();
 };
 

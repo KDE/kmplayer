@@ -49,11 +49,13 @@ static const unsigned int duration_last_option = (unsigned int) -8;
 //-----------------------------------------------------------------------------
 
 static RegionNodePtr findRegion (RegionNodePtr p, const QString & id) {
-    if (p->regionElement->getAttribute ("id") == id) {
-        kdDebug () << "MediaType region found " << id << endl;
-        return p;
-    }
     for (RegionNodePtr r = p->firstChild; r; r = r->nextSibling) {
+        QString val = r->regionElement->getAttribute ("id");
+        if ((val.isEmpty () && id.isEmpty ()) ||
+                r->regionElement->getAttribute ("id") == id) {
+            kdDebug () << "MediaType region found " << id << endl;
+            return r;
+        }
         RegionNodePtr r1 = findRegion (r, id);
         if (r1)
             return r1;
@@ -785,6 +787,11 @@ QString MediaTypeRuntime::setParam (const QString & name, const QString & val) {
 }
 
 KDE_NO_EXPORT void MediaTypeRuntime::started () {
+    if (!region_node && element && element->document ()->rootLayout) {
+        region_node = findRegion(element->document()->rootLayout,QString::null);
+        if (region_node)
+            region_node->attached_element = element;
+    }
     if (region_node)
         region_node->repaint ();
     TimedRuntime::started ();
@@ -937,6 +944,15 @@ KDE_NO_EXPORT bool SMIL::Head::expose () {
     return false;
 }
 
+KDE_NO_EXPORT void SMIL::Head::closed () {
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
+        if (!strcmp (e->nodeName (), "layout"))
+            return;
+    SMIL::Layout * layout = new SMIL::Layout (m_doc);
+    appendChild (layout->self ());
+    layout->closed (); // add root-layout and a region
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementPtr SMIL::Layout::childFromTag (const QString & tag) {
@@ -996,9 +1012,38 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
             buildRegionNodes (e, last_region);
         }
     }
-    if (!root && region && region->regionElement) {
-        smilroot = convertNode <RegionBase> (region->regionElement);
-        root = region;
+    if (!root) {
+        int w, h;
+        smilroot = new SMIL::RootLayout (m_doc);
+        appendChild (smilroot->self ());
+        if (!region) {
+            w = 20; h = 20; // have something to start with
+            SMIL::Region * r = new SMIL::Region (m_doc);
+            appendChild (r->self ());
+            region = (new RegionNode (r->self ()))->self;
+        } else {
+            for (RegionNodePtr rn = region; rn; rn = rn->nextSibling) {
+                SMIL::Region *rb = convertNode<SMIL::Region>(rn->regionElement);
+                if (rb) {
+                    ElementRuntimePtr rt = rb->getRuntime ();
+                    static_cast <RegionRuntime *> (rt.ptr ())->init ();
+                    rb->calculateBounds (0, 0);
+                    if (rb->x + rb->w > w)
+                        w = rb->x + rb->w;
+                    if (rb->y + rb->h > h)
+                        h = rb->y + rb->h;
+                }
+            }
+        }
+        smilroot->setAttribute ("width", QString::number (w));
+        smilroot->setAttribute ("height", QString::number (h));
+        root = (new RegionNode (smilroot->self ()))->self;
+        root->firstChild = region;
+    } else if (!region) {
+        SMIL::Region * r = new SMIL::Region (m_doc);
+        appendChild (r->self ());
+        region = (new RegionNode (r->self ()))->self;
+        root->firstChild = region;
     }
     if (!root || !region) {
         kdError () << "Layout w/o a root-layout w/ regions" << endl;
