@@ -1151,7 +1151,7 @@ void KMPlayerURLSource::setIdentified (bool b) {
         m_urls.push_back (m_urlother);
     if (m_urls.count () > 0) {
         m_url = *m_urls.begin ();
-        kdDebug () << "KMPlayerURLSource::setIdentified new url:" << m_url << endl;
+        kdDebug () << "KMPlayerURLSource::setIdentified new url:" << m_url.prettyURL() << endl;
     }
     m_urlother = KURL ();
     buildArguments ();
