@@ -1,3 +1,15 @@
+kmplayer (0.8.3-1) unstable; urgency=low
+
+  *  New upstream release.
+
+ -- Koos Vriezen <koos.vriezen@xs4all.nl>  Sat, 28 Sep 2004 10:51:44 +0200
+
+kmplayer (0.8.3rc5-1) unstable; urgency=low
+
+  *  New upstream release.
+
+ -- Koos Vriezen <koos.vriezen@xs4all.nl>  Sat, 18 Sep 2004 13:53:37 +0200
+
 kmplayer (0.8.3rc4-2) unstable; urgency=low
 
   *  kdelibs-data 4:3.3.0-1.1 clash.

@@ -1,3 +1,8 @@
+Changes since version 0.8.3-rc5
+- Two more regression fixes in show cache progress, get rid of spurious seek
+  command caused by switching progress slider usage and don't update playing
+  position if there is no position change (might fill cache instead).
+- Xinerama fix, fullscreen on display where video widget is on.
 Changes since version 0.8.3-rc4
 - Fix regression in show cache progress in 0.8.3-rc2, which made the xine
   backend hang on some web movies
