@@ -617,7 +617,12 @@ void KMPlayerView::setControlPanelMode (ControlPanelMode m) {
     if (m_buttonbar)
         if (m_controlpanel_mode == CP_Show)
             m_buttonbar->show ();
-        else
+        else if (m_controlpanel_mode == CP_AutoHide) { 
+            if (m_playing)
+                delayedShowButtons (false);
+            else
+                m_buttonbar->show ();
+        } else
             m_buttonbar->hide ();
     m_holder->setMouseTracking (m_controlpanel_mode == CP_AutoHide && m_playing);
 }
@@ -628,7 +633,7 @@ void KMPlayerView::delayedShowButtons (bool show) {
         (show && m_buttonbar->isVisible ()) || 
         (!show && !m_buttonbar->isVisible ()))
         return;
-    delayed_timer = startTimer (300);
+    delayed_timer = startTimer (500);
 }
 
 void KMPlayerView::setVolume (int vol) {
