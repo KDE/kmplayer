@@ -480,7 +480,6 @@ public:
     bool isMrl ();
     void start ();
     void stop ();
-    void childDone (ElementPtr child);
     /**
      * Hack to mark the currently playing MediaType as finished
      * FIXME: think of a descent callback way for this

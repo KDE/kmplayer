@@ -288,6 +288,7 @@ public:
     KDE_NO_CDTOR_EXPORT Layout (ElementPtr & d) : Element (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "layout"; }
+    void start ();
     void closed ();
     RegionNodePtr rootLayout;
 };

@@ -353,7 +353,7 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
 
 KDE_NO_EXPORT void TimedRuntime::breakConnection (DurationTime item) {
     TimedRuntime * tr = dynamic_cast <TimedRuntime *> (durations [(int) item].connection.ptr ());
-    if (tr) {
+    if (tr && durations [(int) item].connection) {
         switch (durations [(int) item].durval) {
             case duration_element_stopped:
                 disconnect (tr, SIGNAL (elementStopped ()),
@@ -1039,19 +1039,7 @@ static void beginOrEndRegions (RegionNodePtr rn, bool b) {
 KDE_NO_EXPORT void Smil::start () {
     kdDebug () << "Smil::start" << endl;
     current_av_media_type = ElementPtr ();
-    setState (state_started);
-    RegionNodePtr rn = document ()->rootLayout;
-    if (rn && rn->regionElement) {
-        beginOrEndRegions (rn, true);
-        convertNode <RegionBase> (rn->regionElement)->updateLayout ();
-        document ()->rootLayout->repaint ();
-    }
-    for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
-        if (!strcmp (e->nodeName (), "body")) {
-            e->start ();
-            return;
-        }
-    stop (); //source->emitEndOfPlayItems ();
+    Element::start ();
 }
 
 KDE_NO_EXPORT void Smil::stop () {
@@ -1070,10 +1058,6 @@ KDE_NO_EXPORT bool Smil::isMrl () {
     return true;
 }
 
-KDE_NO_EXPORT void Smil::childDone (ElementPtr child) {
-    kdDebug () << "SMIL::Smil::childDone " << child->nodeName () << endl;
-    stop ();
-}
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementPtr SMIL::Head::childFromTag (const QString & tag) {
@@ -1198,6 +1182,18 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
     }
     rootLayout = root;
     document ()->rootLayout = root;
+}
+
+KDE_NO_EXPORT void SMIL::Layout::start () {
+    kdDebug () << "SMIL::Layout::start" << endl;
+    setState (state_started);
+    RegionNodePtr rn = document ()->rootLayout;
+    if (rn && rn->regionElement) {
+        beginOrEndRegions (rn, true);
+        convertNode <RegionBase> (rn->regionElement)->updateLayout ();
+        document ()->rootLayout->repaint ();
+    }
+    stop (); // that's fast :-)
 }
 
 //-----------------------------------------------------------------------------

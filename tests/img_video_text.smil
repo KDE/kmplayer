@@ -11,7 +11,7 @@
   </head>
   <body>
     <par end="text2.activateEvent">
-      <img src="file:///home/koos/doc/kastle_pub.jpg" region="reg_img" fill="freeze"/>
+      <img src="../icons/hi128-app-kmplayer.png" region="reg_img" fill="freeze"/>
       <text src="data:,This%20is%20inline%20text." region="reg_text1" begin="5" dur="5">
         <param name="charset" value="iso-8859-1"/>
         <param name="fontFace" value="System"/>
