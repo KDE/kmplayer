@@ -1034,7 +1034,8 @@ KDE_NO_EXPORT void URLSource::activate () {
 KDE_NO_EXPORT void URLSource::terminateJob () {
     if (m_job) {
         m_job->kill (); // silent, no kioResult signal
-        m_player->process ()->view ()->controlPanel ()->setPlaying (m_player->playing ());
+        if (m_player->view ())
+            m_player->process ()->view ()->controlPanel ()->setPlaying (m_player->playing ());
     }
     m_job = 0L;
 }

@@ -106,15 +106,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerApp::~KMPlayerApp () {
-    // KMPlayerVDRSource has to wait for pending commands like mute and quit
-    m_player->stop ();
-    static_cast <KMPlayerVDRSource *> (m_player->sources () ["vdrsource"])->waitForConnectionClose ();
     delete m_broadcastconfig;
-    if (!m_dcopName.isEmpty ()) {
-        QCString replytype;
-        QByteArray data, replydata;
-        kapp->dcopClient ()->call (m_dcopName, "MainApplication-Interface", "quit()", data, replytype, replydata);
-    }
 }
 
 
@@ -436,6 +428,15 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
 }
 
 KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
+    // KMPlayerVDRSource has to wait for pending commands like mute and quit
+    m_player->stop ();
+    static_cast <KMPlayerVDRSource *> (m_player->sources () ["vdrsource"])->waitForConnectionClose ();
+    // is arts control still running
+    if (!m_dcopName.isEmpty ()) {
+        QCString replytype;
+        QByteArray data, replydata;
+        kapp->dcopClient ()->call (m_dcopName, "MainApplication-Interface", "quit()", data, replytype, replydata);
+    }
     return true;
 }
 
@@ -480,15 +481,12 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileClose()
 KDE_NO_EXPORT void KMPlayerApp::slotFileQuit()
 {
     slotStatusMsg(i18n("Exiting..."));
-    saveOptions();
 
     // whoever implemented this should fix it too, work around ..
     if (memberList->count () > 1)
         deleteLater ();
-    else {
-        delete this;
+    else
         qApp->quit ();
-    }
     // close the first window, the list makes the next one the first again.
     // This ensures that queryClose() is called on each window to ask for closing
     /*KMainWindow* w;
@@ -727,10 +725,12 @@ KDE_NO_EXPORT void KMPlayerDVDSource::setIdentified (bool b) {
 }
 
 KDE_NO_EXPORT void KMPlayerDVDSource::deactivate () {
-    m_dvdtitlemenu->clear ();
-    m_dvdsubtitlemenu->clear ();
-    m_dvdchaptermenu->clear ();
-    m_dvdlanguagemenu->clear ();
+    if (m_player->view ()) {
+        m_dvdtitlemenu->clear ();
+        m_dvdsubtitlemenu->clear ();
+        m_dvdchaptermenu->clear ();
+        m_dvdlanguagemenu->clear ();
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerDVDSource::buildArguments () {
@@ -949,7 +949,6 @@ KDE_NO_EXPORT void KMPlayerVCDSource::activate () {
 }
 
 KDE_NO_EXPORT void KMPlayerVCDSource::deactivate () {
-    setURL (KURL ("vcd://"));
 }
 
 KDE_NO_EXPORT void KMPlayerVCDSource::setIdentified (bool b) {
