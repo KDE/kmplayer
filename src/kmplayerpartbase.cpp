@@ -354,8 +354,11 @@ void PartBase::setSource (Source * _source) {
     connect (m_source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
     updatePlayerMenu ();
     m_source->init ();
-    if (m_view && m_view->viewer ())
+    if (m_view && m_view->viewer ()) {
         m_view->viewer ()->setAspect (0.0);
+        m_view->fullScreenWidget ()->setRootLayout (m_source->document () ?
+           m_source->document ()->document ()->rootLayout : RegionNodePtr (0L));
+    }
     if (m_source) QTimer::singleShot (0, m_source, SLOT (activate ()));
     emit sourceChanged (m_source);
 }
@@ -1268,6 +1271,34 @@ void URLSource::getCurrent () {
 
 KDE_NO_EXPORT void URLSource::play () {
     Source::play ();
+}
+
+//-----------------------------------------------------------------------------
+class ImageDataPrivate {
+public:
+    ImageDataPrivate () {}
+    ~ImageDataPrivate () {}
+    //void slotResult (KIO::Job*);
+    //void slotData (KIO::Job*, const QByteArray& qb);
+};
+
+KDE_NO_CDTOR_EXPORT ImageData::ImageData (RegionNodePtr r, ElementPtr e)
+ : RegionData (r), image_element (e), image (0L) {
+    Mrl * mrl = image_element ? image_element->mrl () : 0L;
+    if (mrl && !mrl->src.isEmpty ()) {
+        KURL url (mrl->src);
+        if (url.isLocalFile ()) {
+            QPixmap *pix = new QPixmap (url.path ());
+            if (pix->isNull ())
+                delete pix;
+            else
+                image = pix;
+        }
+    }
+}
+
+KDE_NO_CDTOR_EXPORT ImageData::~ImageData () {
+    delete image;
 }
 
 #include "kmplayerpartbase.moc"

@@ -52,6 +52,8 @@
 #include "kmplayershared.h"
 
 class QTextStream;
+class QPixmap;
+class QPainter;
 
 namespace KMPlayer {
 
@@ -59,16 +61,31 @@ class Document;
 class Element;
 class Mrl;
 class RegionNode;
+class RegionData;
+class ImageDataPrivate;
 
 typedef SharedPtr<Element> ElementPtr;
 typedef WeakPtr<Element> ElementPtrW;
 typedef SharedPtr<RegionNode> RegionNodePtr;
+typedef WeakPtr<RegionNode> RegionNodePtrW;
+typedef SharedPtr<RegionData> RegionDataPtr;
+
+class RegionData {
+public:
+    KDE_NO_CDTOR_EXPORT virtual ~RegionData () {}
+    virtual void paint (QPainter &) {}
+    virtual bool isAudioVideo ();
+    virtual bool isImage ();
+protected:
+    RegionData (RegionNodePtr r);
+    RegionNodePtrW region_node;
+};
 
 class RegionNode {
 public:
     RegionNode (ElementPtr e);
     KDE_NO_CDTOR_EXPORT ~RegionNode () {}
-    //void paint (QPainter & p);
+    void paint (QPainter & p);
     /**
      * (Scaled) Dimensions set by viewer
      */
@@ -76,9 +93,32 @@ public:
     /**
      * Corresponding DOM node (SMIL::Region or SMIL::RootLayout)
      */
-    ElementPtrW m_element;
+    ElementPtrW regionElement;
+    /**
+     * Data for this region
+     */
+    RegionDataPtr data;
+
     RegionNodePtr nextSibling;
     RegionNodePtr firstChild;
+};
+
+class AudioVideoData : public RegionData {
+public:
+    AudioVideoData (RegionNodePtr r, ElementPtr e);
+    virtual bool isAudioVideo ();
+    ElementPtrW av_element;
+};
+
+class ImageData : public RegionData {
+public:
+    ImageData (RegionNodePtr r, ElementPtr e);
+    ~ImageData ();
+    bool isImage () { return true; }
+    void paint (QPainter & p);
+    ElementPtrW image_element;
+    QPixmap * image;
+    ImageDataPrivate * d;
 };
 
 class KMPLAYER_EXPORT NodeList {
@@ -293,7 +333,6 @@ public:
     KDE_NO_CDTOR_EXPORT Region (ElementPtr & d) : RegionBase (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "region"; }
     ElementPtr childFromTag (const QString & tag);
-    ElementPtrW media_node;
 };
 
 class RootLayout : public RegionBase {
@@ -334,8 +373,16 @@ public:
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
     void opened ();
+    virtual RegionData * getNewData (RegionNodePtr r);
     QString m_type;
     int bitrate;
+};
+
+class ImageMediaType : public MediaType {
+public:
+    ImageMediaType (ElementPtr & d, const QString & t);
+    RegionData * getNewData (RegionNodePtr r);
+    bool isMrl ();
 };
 
 } // SMIL namespace

@@ -295,19 +295,32 @@ KDE_NO_EXPORT void ViewLayer::mouseMoveEvent (QMouseEvent * e) {
     }
 }
 
-static void paintRegions (QPainter & p, RegionNodePtr & rn) {
-    QString str = rn->m_element->getAttribute ("background-color");
+void RegionNode::paint (QPainter & p) {
+    QString str = regionElement->getAttribute ("background-color"); // cache ??
     if (!str.isEmpty ()) {
         QColor color (str);
-        p.fillRect (rn->x, rn->y, rn->w, rn->h, color);
+        p.fillRect (x, y, w, h, color);
     }
+    if (data)
+        data->paint (p);
+}
+
+KDE_NO_CDTOR_EXPORT void ImageData::paint (QPainter & p) {
+    if (image && region_node) {
+        RegionNode * r = region_node.ptr ();
+        p.drawPixmap (QRect (r->x, r->y, r->w, r->h), *image);
+    }
+}
+
+static void paintRegions (QPainter & p, RegionNodePtr & rn) {
+    rn->paint (p);
     for (RegionNodePtr r = rn->firstChild; r; r = r->nextSibling)
         paintRegions (p, r);
 }
 
 KDE_NO_EXPORT void ViewLayer::paintEvent (QPaintEvent * pe) {
     QWidget::paintEvent (pe);
-    if (rootLayout && rootLayout->m_element) {
+    if (rootLayout && rootLayout->regionElement) {
         QPainter p;
         p.begin (this);
         paintRegions (p, rootLayout);
@@ -317,13 +330,14 @@ KDE_NO_EXPORT void ViewLayer::paintEvent (QPaintEvent * pe) {
 
 static void scaleRegions (RegionNodePtr & p, float sx, float sy, int xoff, int yoff, int & x, int & y, int & w, int & h) {
     for (RegionNodePtr r = p->firstChild; r; r =r->nextSibling)
-        if (r->m_element) {  // note WeakPtr can be null
-            SMIL::Region * smilregion = convertNode <SMIL::Region> (r->m_element);
+        if (r->regionElement) {  // note WeakPtr can be null
+            SMIL::Region * smilregion = convertNode <SMIL::Region> (r->regionElement);
             r->x = xoff + int (sx * smilregion->x);
             r->y = yoff + int (sy * smilregion->y);
             r->w = int (sx * smilregion->w);
             r->h = int (sy * smilregion->h);
-            if (smilregion->media_node) { // ugh
+            if (r->data && r->data->isAudioVideo ()) {
+                // hack to get the one and only audio/video widget sizes
                 x = r->x;
                 y = r->y;
                 w = r->w;
@@ -344,8 +358,8 @@ KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
     // move controlpanel over video when autohiding and playing
     int hws = h - (m_view->controlPanelMode () == View::CP_AutoHide && m_view->widgetStack ()->visibleWidget () == m_view->viewer () ? 0 : hcp);
     // now scale the regions and find video region
-    if (rootLayout && rootLayout->m_element && wws > 0 && hws > 0) {
-        SMIL::RootLayout * smilroot = convertNode <SMIL::RootLayout> (rootLayout->m_element);
+    if (rootLayout && rootLayout->regionElement && wws > 0 && hws > 0) {
+        SMIL::RootLayout * smilroot = convertNode <SMIL::RootLayout> (rootLayout->regionElement);
         if (smilroot->w > 0 && smilroot->h > 0) {
             float xscale = 1.0 + 1.0 * (wws - smilroot->w) / smilroot->w;
             float yscale = 1.0 + 1.0 * (hws - smilroot->h) / smilroot->h;

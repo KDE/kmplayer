@@ -30,8 +30,25 @@ using namespace KMPlayer;
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_CDTOR_EXPORT RegionData::RegionData (RegionNodePtr r) : region_node(r) {}
+
+KDE_NO_EXPORT bool RegionData::isAudioVideo () {
+    return false;
+}
+
+KDE_NO_EXPORT bool RegionData::isImage () {
+    return false;
+}
+
 KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (ElementPtr e)
-    : x (0), y (0), w (0), h (0), m_element (e) {}
+    : x (0), y (0), w (0), h (0), regionElement (e) {}
+
+KDE_NO_CDTOR_EXPORT AudioVideoData::AudioVideoData(RegionNodePtr r,ElementPtr e)
+    : RegionData (r), av_element (e) {}
+
+KDE_NO_EXPORT bool AudioVideoData::isAudioVideo () {
+    return true;
+}
 
 //-----------------------------------------------------------------------------
 
@@ -57,7 +74,9 @@ static Element * fromScheduleGroup (ElementPtr & d, const QString & tag) {
 static Element * fromMediaContentGroup (ElementPtr & d, const QString & tag) {
     if (!strcmp (tag.latin1 (), "video") || !strcmp (tag.latin1 (), "audio"))
         return new SMIL::MediaType (d, tag);
-    // text, img, animation, textstream, ref, brush
+    else if (!strcmp (tag.latin1 (), "img"))
+        return new SMIL::ImageMediaType (d, tag);
+    // text, animation, textstream, ref, brush
     return 0L;
 }
 
@@ -505,9 +524,9 @@ static void buildRegionNodes (ElementPtr p, RegionNodePtr r) {
 }
 
 static void sizeRegionNodes (RegionNodePtr p) {
-    SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (p->m_element);
+    SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (p->regionElement);
     for (RegionNodePtr rg = p->firstChild; rg; rg = rg->nextSibling) {
-        SMIL::Region * smilregion = convertNode <SMIL::Region> (rg->m_element);
+        SMIL::Region *smilregion = convertNode<SMIL::Region>(rg->regionElement);
         int l = calcLength (smilregion->getAttribute("left"), rb->w);
         int t = calcLength (smilregion->getAttribute ("top"), rb->h);
         int w = calcLength (smilregion->getAttribute ("width"), rb->w);
@@ -626,15 +645,17 @@ KDE_NO_EXPORT ElementPtr SMIL::MediaType::childFromTag (const QString & tag) {
     return ElementPtr ();
 }
 
-static void addToRegion (RegionNodePtr p, const QString id, ElementPtr e) {
+static RegionNodePtr findRegion (RegionNodePtr p, const QString & id) {
     for (RegionNodePtr r = p->firstChild; r; r = r->nextSibling) {
-        if (r->m_element->getAttribute ("id") == id) {
+        if (r->regionElement->getAttribute ("id") == id) {
             kdDebug () << "MediaType region found " << id << endl;
-            convertNode <SMIL::Region> (r->m_element)->media_node = e;
-            break;
+            return r;
         }
-        addToRegion (r, id, e);
+        RegionNodePtr r1 = findRegion (r, id);
+        if (r1)
+            return r1;
     }
+    return RegionNodePtr ();
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::opened () {
@@ -650,12 +671,34 @@ KDE_NO_EXPORT void SMIL::MediaType::opened () {
             RegionNodePtr root = document ()->rootLayout;
             if (!root || !root->firstChild)
                 kdError () << "region attribute w/o layout set" << endl;
-            else
-                addToRegion (root, a->nodeValue (), m_self);
+            else {
+                RegionNodePtr rn = findRegion (root, a->nodeValue ());
+                if (rn)
+                    rn->data = RegionDataPtr (getNewData (rn));
+            }
         } else
             kdError () << "Warning: unhandled MediaType attr: " << cname << "=" << a->nodeValue () << endl;
     }
     kdDebug () << "MediaType attr found bitrate: " << bitrate << " src: " << (src.isEmpty() ? "-" : src) << " type: " << (mimetype.isEmpty() ? "-" : mimetype) << endl;
+}
+
+KDE_NO_EXPORT RegionData * SMIL::MediaType::getNewData (RegionNodePtr r) {
+    return new AudioVideoData (r, m_self);
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_EXPORT
+SMIL::ImageMediaType::ImageMediaType (ElementPtr & d, const QString & t)
+    : SMIL::MediaType (d, t) {}
+
+KDE_NO_EXPORT RegionData * SMIL::ImageMediaType::getNewData (RegionNodePtr r) {
+    return new ImageData (r, m_self);
+}
+
+KDE_NO_EXPORT bool SMIL::ImageMediaType::isMrl () {
+    MediaType::isMrl (); // hack to update src field
+    return false;
 }
 
 //-----------------------------------------------------------------------------
