@@ -329,8 +329,24 @@ KDE_NO_EXPORT void ViewLayer::mouseMoveEvent (QMouseEvent * e) {
 
 static void paintRegions (QPainter & p, RegionNodePtr & rn) {
     rn->paint (p);
-    for (RegionNodePtr r = rn->firstChild; r; r = r->nextSibling)
-        paintRegions (p, r);
+    int done_index = -1;
+    do {
+        int cur_index = 1 << 8 * sizeof (int) - 2;  // should be enough :-)
+        int check_index = cur_index;
+        for (RegionNodePtr r = rn->firstChild; r; r = r->nextSibling) {
+            kdDebug () << "Region with z-index " << r->z_order << endl;
+            if (r->z_order > done_index && r->z_order < cur_index)
+                cur_index = r->z_order;
+        }
+        if (check_index == cur_index)
+            break;
+        for (RegionNodePtr r = rn->firstChild; r; r = r->nextSibling)
+            if (r->z_order == cur_index) {
+                kdDebug () << "Painting " << cur_index << endl;
+                paintRegions (p, r);
+            }
+        done_index = cur_index;
+    } while (true);
 }
 
 KDE_NO_EXPORT void ViewLayer::paintEvent (QPaintEvent * pe) {

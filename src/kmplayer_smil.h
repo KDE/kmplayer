@@ -44,14 +44,14 @@ typedef WeakPtr<ElementRuntime> ElementRuntimePtrW;
 /**
  * Live representation of a SMIL element
  */
-class ElementRuntime : public QObject {
+class TimedRuntime : public QObject, public ElementRuntime {
     Q_OBJECT
 public:
     enum DurationTime {
         begin_time = 0, duration_time, end_time, durtime_last
     };
-    ElementRuntime (ElementPtr e);
-    virtual ~ElementRuntime ();
+    TimedRuntime (ElementPtr e);
+    virtual ~TimedRuntime ();
     void setDurationItem (DurationTime item, const QString & val);
     /**
      * start, or restart in case of re-use, the durations
@@ -67,10 +67,6 @@ public:
     virtual QString setParam (const QString & name, const QString & value);
     bool isStarted () const { return isstarted; }
     virtual void paint (QPainter &) {}
-    /**
-     * If this element is attached to a region, region_node points to it
-     */
-    RegionNodePtrW region_node;
     /**
      * Duration items, begin/dur/end, length information or connected element
      */
@@ -122,7 +118,6 @@ private:
     void processEvent (unsigned int event);
     void propagateStop ();
 protected:
-    ElementPtrW element;
     int start_timer;
     int dur_timer;
     int repeat_count;
@@ -131,9 +126,22 @@ protected:
 };
 
 /**
+ * Runtime data for a region
+ */
+class RegionRuntime : public ElementRuntime {
+public:
+    RegionRuntime (ElementPtr e);
+    KDE_NO_CDTOR_EXPORT ~RegionRuntime () {}
+    void paint (QPainter & p);
+    virtual QString setParam (const QString & name, const QString & value);
+    unsigned int background_color;
+    bool have_bg_color;
+};
+
+/**
  * Some common runtime data for all mediatype classes
  */
-class MediaTypeRuntime : public ElementRuntime {
+class MediaTypeRuntime : public TimedRuntime {
     Q_OBJECT
 protected:
     MediaTypeRuntime (ElementPtr e);
@@ -228,10 +236,10 @@ private slots:
 /**
  * Stores runtime data of set element
  */
-class SetData : public ElementRuntime {
+class SetData : public TimedRuntime {
     Q_OBJECT
 public:
-    KDE_NO_CDTOR_EXPORT SetData (ElementPtr e) : ElementRuntime (e) {}
+    KDE_NO_CDTOR_EXPORT SetData (ElementPtr e) : TimedRuntime (e) {}
     KDE_NO_CDTOR_EXPORT ~SetData () {}
 protected slots:
     /**
@@ -356,7 +364,6 @@ public:
 class Body : public Seq {
 public:
     KDE_NO_CDTOR_EXPORT Body (ElementPtr & d) : Seq (d) {}
-    ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "body"; }
 };
 

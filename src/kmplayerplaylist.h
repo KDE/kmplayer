@@ -199,6 +199,10 @@ public:
      */
     void paint (QPainter & p);
     /**
+     * repaints region, calls update(x,y,w,h) on view
+     */
+    void repaint ();
+    /**
      * user clicked w/ the mouse on this region
      */
     void pointerClicked ();
@@ -219,6 +223,10 @@ public:
      */
     int x, y, w, h;
     /**
+     * z-order of this region
+     */
+    int z_order;
+    /**
      * Corresponding DOM node (SMIL::Region or SMIL::RootLayout)
      */
     ElementPtrW regionElement;
@@ -231,8 +239,31 @@ public:
      */
     void clearAll ();
 
+    RegionNodePtrW self;
     RegionNodePtr nextSibling;
     RegionNodePtr firstChild;
+};
+
+/**
+ * Base class for live elelemRegion and RootLayout
+ */
+class ElementRuntime {
+public:
+    virtual ~ElementRuntime ();
+    virtual void begin () {}
+    virtual void end () {}
+    virtual void paint (QPainter &) {}
+    /**
+     * change behaviour of this runtime, returns old value
+     */
+    virtual QString setParam (const QString & name, const QString & value);
+    /**
+     * If this element is attached to a region, region_node points to it
+     */
+    RegionNodePtrW region_node;
+protected:
+    ElementRuntime (ElementPtr e);
+    ElementPtrW element;
 };
 
 /**
@@ -241,7 +272,9 @@ public:
 class RegionBase : public Element {
 protected:
     KDE_NO_CDTOR_EXPORT RegionBase (ElementPtr & d) : Element (d) {}
+    ElementRuntimePtr runtime;
 public:
+    virtual ElementRuntimePtr getRuntime ();
     int x, y, w, h;
 };
 
@@ -318,7 +351,7 @@ public:
     /**
      * Some region needs repainting, eg. a timer expired
      */
-    virtual void repaintRegion (RegionNodePtr region) = 0;
+    virtual void repaintRegion (RegionNode * region) = 0;
 };
 
 class KMPLAYER_EXPORT Document : public Mrl {

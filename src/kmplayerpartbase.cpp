@@ -871,7 +871,7 @@ void Source::stateElementChanged (ElementPtr elm) {
         emit endOfPlayItems (); // played all items
 }
 
-void Source::repaintRegion (RegionNodePtr r) {
+void Source::repaintRegion (RegionNode * r) {
     if (m_player->view ())
         m_player->process()->view ()->fullScreenWidget ()->update (r->x, r->y, r->w, r->h);
 }

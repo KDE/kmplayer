@@ -1,0 +1,31 @@
+<!-- test for mouse events, region z-index changes when entering the red region -->
+<smil>
+  <head>
+    <layout>
+      <root-layout width="320" height="240" background-color="green"/>
+      <region id="region1" left="5%" top="10%" right="30%" bottom="40%" z-index="2"/>
+      <region id="region2" left="45%" top="40%" right="10%" bottom="5%" z-index="3" background-color="red"/>
+      <region id="region3" z-index="1"/>
+    </layout>
+  </head>
+  <body>
+    <par>
+      <text id="text1" src="data:,move here" region="region1" dur="10">
+        <param name="fontColor" value="yellow"/>
+        <param name="fontSize" value="+2"/>
+        <param name="backgroundColor" value="blue"/>
+      </text> 
+      <set targetElement="region1" attributeName="z-index" to="4" begin="text1.inBoundsEvent" end="text1.outOfBoundsEvent"/>
+    </par>
+    <set targetElement="region3" attributeName="background-color" to="black" fill="freeze"/>
+    <set targetElement="region3" attributeName="z-index" to="5" fill="freeze"/>
+    <par>
+      <set targetElement="region2" attributeName="z-index" to="6" fill="freeze"/>
+      <text src="data:,that's all folks" region="region2" dur="2">
+        <param name="fontColor" value="green"/>
+        <param name="fontSize" value="+2"/>
+        <param name="backgroundColor" value="black"/>
+      </text> 
+    </par>
+  </body>
+</smil>
