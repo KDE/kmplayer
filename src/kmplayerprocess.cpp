@@ -17,6 +17,7 @@
  * the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 02111-1307, USA.
  */
+#include <math.h>
 
 #include <qstring.h>
 #include <qfile.h>
@@ -1134,7 +1135,8 @@ bool CallbackProcess::seek (int pos, bool absolute) {
 
 bool CallbackProcess::volume (int val, bool b) {
     if (m_backend)
-        m_backend->volume (val, b);
+        m_backend->volume (int (sqrt (val*100)), b);
+    //m_backend->volume (100 * log (1.0*val) / log (100.0), b);
     return !!m_backend;
 }
 

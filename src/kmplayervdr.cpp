@@ -17,6 +17,8 @@
    Boston, MA 02111-1307, USA.
 */
 
+#include <math.h>
+
 #include <qlayout.h>
 #include <qlabel.h>
 #include <qmap.h>
@@ -300,7 +302,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::toggleConnected () {
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::volumeChanged (int val) {
-    queueCommand (QString ("VOLU %1\n").arg (255 * val / 100).ascii ());
+    queueCommand (QString ("VOLU %1\n").arg (int (sqrt (255 * 255 * val / 100))).ascii ());
 }
 
 static struct ReadBuf {
@@ -360,8 +362,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
     if (commands) {
         bool cmd_done = false;
         while (!line.isEmpty ()) {
-            if (v)
-                v->addText (QString (line), true);
+            bool toconsole = true;
             cmd_done = (line.length () > 3 && line[3] == ' '); // from svdrpsend.pl
             // kdDebug () << "readyRead " << cmd_done << " " << commands->command << endl;
             if (!strcmp (commands->command, cmd_list_channels) && m_document) {
@@ -380,6 +381,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
                         m_request_jump.truncate (0);
                     }
                 }
+                toconsole = false;
             } else if (!strcmp (commands->command, cmd_chan_query)) {
                 if (v && line.length () > 4) {
                     m_player->changeTitle (line.mid (4));
@@ -397,6 +399,8 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
                         volumeChanged (m_app->view ()->controlPanel ()->volumeBar ()->value ());
                 }
             }
+            if (v && toconsole)
+                v->addText (QString (line), true);
             line = readbuf.getReadLine ();
         }
         if (cmd_done) {

@@ -349,7 +349,7 @@ void KXVideoPlayer::play () {
             reset_xv_mute = true;
         }
         XvAttribute *attributes = XvQueryPortAttributes (display, xvport, &nr);
-        if (attributes)
+        if (attributes) {
             for (int i = 0; i < nr; i++) {
                 Limit * limit = 0;
                 Atom atom = XInternAtom (display, attributes[i].name, false);
@@ -368,6 +368,8 @@ void KXVideoPlayer::play () {
                 limit->min = attributes[i].min_value;
                 limit->max = attributes[i].max_value;
             }
+            XFree (attributes);
+        }
         if (xv_frequency > 0)
             XvSetPortAttribute (display, xvport, xv_freq_atom, int (1.0*xv_frequency/6.25));
         if (xv_encoding >= 0)
