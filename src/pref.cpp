@@ -45,6 +45,7 @@
 #include <kfiledialog.h>
 #include <kmessagebox.h>
 #include <klineedit.h>
+#include <kdeversion.h>
 
 #include "pref.h"
 #include "kmplayerpartbase.h"
