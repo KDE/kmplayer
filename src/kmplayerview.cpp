@@ -41,6 +41,7 @@
 #include <qwidgetstack.h>
 
 #include <X11/Xlib.h>
+#include <X11/keysym.h>
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
 
@@ -496,6 +497,7 @@ void KMPlayerView::init () {
 
     XSelectInput (qt_xdisplay (), m_viewer->embeddedWinId (), 
                //KeyPressMask | KeyReleaseMask |
+               KeyPressMask |
                //EnterWindowMask | LeaveWindowMask |
                //FocusChangeMask |
                ExposureMask |
@@ -712,6 +714,7 @@ void KMPlayerView::fullScreen () {
         //    m_viewer->setAspect (1.0 * m_viewer->width() / m_viewer->height());
         m_layer->fullScreen();
         m_buttonbar->popupMenu ()->setItemVisible (KMPlayerControlPanel::menu_zoom, false);
+        m_widgetstack->visibleWidget ()->setFocus ();
     } else {
         if (m_sreensaver_disabled)
             m_sreensaver_disabled = !kapp->dcopClient()->send
@@ -743,7 +746,16 @@ bool KMPlayerView::x11Event (XEvent * e) {
             }
             break;
         case XKeyPress:
-            printf ("key\n");
+            if (e->xkey.window == m_viewer->embeddedWinId ()) {
+                KeySym ksym;
+                char kbuf[16];
+                XLookupString (&e->xkey, kbuf, sizeof(kbuf), &ksym, NULL);
+                switch (ksym) {
+                    case XK_f:
+                    case XK_F:
+                        fullScreen ();
+                };
+            }
             break;
         /*case ColormapNotify:
             printf ("colormap notify\n");
