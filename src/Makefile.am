@@ -1,4 +1,4 @@
-INCLUDES= -I$(kde_includes)/kio $(all_includes)
+INCLUDES= -I$(kde_includes)/kio $(CFLAGS_GST) $(all_includes)
 
 METASOURCES= AUTO
 
