@@ -25,14 +25,12 @@
 #include <qpainter.h>
 #include <qmetaobject.h>
 #include <qlayout.h>
-#include <qpushbutton.h>
 #include <qpixmap.h>
 #include <qmultilineedit.h>
 #include <qapplication.h>
 #include <qiconset.h>
 #include <qaccel.h>
 #include <qcursor.h>
-#include <qpopupmenu.h>
 #include <qkeysequence.h>
 #include <qslider.h>
 #include <qlabel.h>
@@ -40,6 +38,9 @@
 #include <qpixmap.h>
 #include <qpainter.h>
 #include <qwidgetstack.h>
+
+#include "kmplayerview.h"
+#include "kmplayersource.h"
 
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
@@ -52,13 +53,12 @@ static const int XKeyPress = KeyPress;
 #undef Never
 #undef Status
 #undef Unsorted
+#undef Bool
 
 static const int button_height_with_slider = 15;
 static const int button_height_only_buttons = 11;
 
 // application specific includes
-#include "kmplayerview.h"
-#include "kmplayersource.h"
 //#include "kmplayer.h"
 
 #include <kstaticdeleter.h>
@@ -268,6 +268,7 @@ KDE_NO_EXPORT void KMPlayerViewerHolder::dropEvent (QDropEvent * de) {
 KDE_NO_EXPORT void KMPlayerViewerHolder::dragEnterEvent (QDragEnterEvent* dee) {
     m_view->dragEnterEvent (dee);
 }
+
 //-----------------------------------------------------------------------------
 
 static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char * const * p, int key = 0) {
@@ -280,12 +281,28 @@ static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char * const
     return b;
 }
 
+KDE_NO_CDTOR_EXPORT
+KMPlayerControlButton::KMPlayerControlButton (QWidget * parent, QBoxLayout * l, const char * const * p, int key)
+ : QPushButton (QIconSet (QPixmap(p)), QString::null, parent, "kde_kmplayer_control_button") {
+   setFocusPolicy (QWidget::NoFocus);
+   setFlat (true);
+   if (key)
+       setAccel (QKeySequence (key));
+   l->addWidget (this);
+}
+
+KDE_NO_EXPORT void KMPlayerControlButton::enterEvent (QEvent *) {
+    emit mouseEntered ();
+}
+        
+//-----------------------------------------------------------------------------
+
 KDE_NO_CDTOR_EXPORT KMPlayerControlPanel::KMPlayerControlPanel(QWidget * parent)
  : QWidget (parent),
    m_progress_mode (progress_playing),
    m_progress_length (0) {
     m_buttonbox = new QHBoxLayout (this, 5, 4);
-    m_buttons[button_config] = ctrlButton (this, m_buttonbox, config_xpm);
+    m_buttons[button_config] = new KMPlayerControlButton (this, m_buttonbox, config_xpm);
     m_buttons[button_back] = ctrlButton (this, m_buttonbox, back_xpm);
     m_buttons[button_play] = ctrlButton (this, m_buttonbox, play_xpm, Qt::Key_R);
     m_buttons[button_forward] = ctrlButton (this, m_buttonbox, forward_xpm);
@@ -302,7 +319,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerControlPanel::KMPlayerControlPanel(QWidget * parent)
     m_posSlider->setEnabled (false);
     m_buttonbox->addWidget (m_posSlider);
     showPositionSlider (true);
-    m_popupMenu = new QPopupMenu (this);
+    m_popupMenu = new KMPlayerPopupMenu (this);
     m_playerMenu = new QPopupMenu (this);
     m_playerMenu->setEnabled (false);
     m_popupMenu->insertItem (i18n ("&Play with"), m_playerMenu, menu_player);
@@ -436,6 +453,14 @@ KDE_NO_EXPORT void KMPlayerPictureWidget::mousePressEvent (QMouseEvent *) {
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_CDTOR_EXPORT KMPlayerPopupMenu::KMPlayerPopupMenu (QWidget * parent)
+ : QPopupMenu (parent, "kde_kmplayer_popupmenu") {}
+
+KDE_NO_EXPORT void KMPlayerPopupMenu::leaveEvent (QEvent *) {
+    emit mouseLeft ();
+}
+//-----------------------------------------------------------------------------
+
 KDE_NO_CDTOR_EXPORT KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
   : KMediaPlayer::View (parent, name),
     m_image (0L),
@@ -444,13 +469,16 @@ KDE_NO_CDTOR_EXPORT KMPlayerView::KMPlayerView (QWidget *parent, const char *nam
     m_mixer_object ("kicker"),
     m_controlpanel_mode (CP_Show),
     m_old_controlpanel_mode (CP_Show),
-    delayed_timer (0),
+    controlbar_timer (0),
+    popup_timer (0),
+    popdown_timer (0),
     m_keepsizeratio (false),
     m_show_console_output (false),
     m_playing (false),
     m_mixer_init (false),
     m_inVolumeUpdate (false),
-    m_revert_fullscreen (false)
+    m_revert_fullscreen (false),
+    m_popup_clicked (false)
 {
     setEraseColor (QColor (0, 0, 255));
 }
@@ -472,6 +500,23 @@ KDE_NO_EXPORT void KMPlayerView::dropEvent (QDropEvent * de) {
         emit urlDropped (url);
         de->accept ();
     }
+}
+
+KDE_NO_EXPORT void KMPlayerView::ctrlButtonMouseEntered () {
+    m_popup_clicked = false;
+    popup_timer = startTimer (400);
+}
+
+KDE_NO_EXPORT void KMPlayerView::ctrlButtonClicked () {
+    killTimer (popup_timer);
+    popup_timer = 0;
+    m_popup_clicked = true;
+    showPopupMenu ();
+}
+
+KDE_NO_EXPORT void KMPlayerView::popupMenuMouseLeft () {
+    if (!m_popup_clicked)
+        popdown_timer = startTimer (400);
 }
 
 KDE_NO_EXPORT void KMPlayerView::dragEnterEvent (QDragEnterEvent* dee) {
@@ -516,7 +561,9 @@ KDE_NO_EXPORT void KMPlayerView::init () {
 
     setFocusPolicy (QWidget::ClickFocus);
 
-    connect (m_buttonbar->configButton(), SIGNAL (clicked ()), this, SLOT (showPopupMenu()));
+    connect (m_buttonbar->configButton(), SIGNAL (clicked ()), this, SLOT (ctrlButtonClicked ()));
+    connect (m_buttonbar->configButton(), SIGNAL (mouseEntered ()), this, SLOT (ctrlButtonMouseEntered ()));
+    connect (m_buttonbar->popupMenu(), SIGNAL (mouseLeft ()), this, SLOT (popupMenuMouseLeft ()));
     setAcceptDrops (true);
     m_holder->resizeEvent (0L);
     kdDebug() << "KMPlayerView " << (unsigned long) (m_viewer->winId()) << endl;
@@ -607,7 +654,7 @@ void KMPlayerView::setShowConsoleOutput (bool b) {
 }
 
 void KMPlayerView::setControlPanelMode (ControlPanelMode m) {
-    killTimers ();
+    killTimer (controlbar_timer);
     m_old_controlpanel_mode = m_controlpanel_mode = m;
     if (m_playing && isFullScreen())
         m_controlpanel_mode = CP_AutoHide;
@@ -625,12 +672,12 @@ void KMPlayerView::setControlPanelMode (ControlPanelMode m) {
 }
 
 KDE_NO_EXPORT void KMPlayerView::delayedShowButtons (bool show) {
-    if (m_controlpanel_mode != CP_AutoHide || delayed_timer ||
+    if (m_controlpanel_mode != CP_AutoHide || controlbar_timer ||
         (m_buttonbar &&
          (show && m_buttonbar->isVisible ()) || 
          (!show && !m_buttonbar->isVisible ())))
         return;
-    delayed_timer = startTimer (500);
+    controlbar_timer = startTimer (500);
 }
 
 KDE_NO_EXPORT void KMPlayerView::setVolume (int vol) {
@@ -647,21 +694,32 @@ KDE_NO_EXPORT void  KMPlayerView::updateLayout () {
 }
 
 KDE_NO_EXPORT void KMPlayerView::timerEvent (QTimerEvent * e) {
+    if (e->timerId () == controlbar_timer) {
+        controlbar_timer = 0;
+        if (!m_playing)
+            return;
+        int vert_buttons_pos = m_layer->height ();
+        int mouse_pos = m_layer->mapFromGlobal (QCursor::pos ()).y();
+        int cp_height = m_buttonbar->maximumSize ().height ();
+        bool mouse_on_buttons = (//m_layer->hasMouse () && 
+                mouse_pos >= vert_buttons_pos-cp_height &&
+                mouse_pos <= vert_buttons_pos);
+        if (m_buttonbar)
+            if (mouse_on_buttons && !m_buttonbar->isVisible ())
+                m_buttonbar->show ();
+            else if (!mouse_on_buttons && m_buttonbar->isVisible ())
+                m_buttonbar->hide ();
+    } else if (e->timerId () == popup_timer) {
+        popup_timer = 0;
+        if (m_buttonbar->configButton ()->hasMouse () && !m_buttonbar->popupMenu ()->isVisible ())
+            showPopupMenu ();
+    } else if (e->timerId () == popdown_timer) {
+        popdown_timer = 0;
+        if (m_buttonbar->popupMenu ()->isVisible () && !m_buttonbar->popupMenu ()->hasMouse ())
+            m_buttonbar->popupMenu ()->hide ();
+        // TODO
+    }
     killTimer (e->timerId ());
-    delayed_timer = 0;
-    if (!m_playing)
-        return;
-    int vert_buttons_pos = m_layer->height ();
-    int mouse_pos = m_layer->mapFromGlobal (QCursor::pos ()).y();
-    int cp_height = m_buttonbar->maximumSize ().height ();
-    bool mouse_on_buttons = (//m_layer->hasMouse () && 
-                             mouse_pos >= vert_buttons_pos-cp_height &&
-                             mouse_pos <= vert_buttons_pos);
-    if (m_buttonbar)
-        if (mouse_on_buttons && !m_buttonbar->isVisible ())
-            m_buttonbar->show ();
-        else if (!mouse_on_buttons && m_buttonbar->isVisible ())
-            m_buttonbar->hide ();
 }
 
 KDE_NO_EXPORT void KMPlayerView::addText (const QString & str) {

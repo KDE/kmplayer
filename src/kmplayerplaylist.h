@@ -55,7 +55,7 @@ public:
     virtual ~Element ();
     Document * document ();
     /**
-     * Return a cast to a Mrl pointer, make sure to check type first
+     * Return a dynamic cast to a Mrl pointer
      * \sa isMrl()
      */
     Mrl * mrl ();
@@ -77,6 +77,9 @@ public:
     KDE_NO_EXPORT ElementPtr lastChild () { return m_last_child; }
     KDE_NO_EXPORT ElementPtr nextSibling () { return m_next; }
     KDE_NO_EXPORT ElementPtr previousSibling () { return m_prev; }
+    /**
+     * If not assigned to a Shared pointer, this will result in self destruction
+     */
     KDE_NO_EXPORT ElementPtr self () { return m_self; }
 protected:
     KDE_NO_CDTOR_EXPORT Element (ElementPtr d) : m_doc (d), m_self (this) {}

@@ -24,12 +24,15 @@
 #endif 
 
 #include <qwidget.h>
+#include <qpushbutton.h>
 #include <qguardedptr.h>
+#include <qpopupmenu.h>
 
 #include <kurl.h>
 #include <qxembed.h>
-#include <kdemacros.h>
 #include <kmediaplayer/view.h>
+
+#include "kmplayersource.h"
 
 class KMPlayerView;
 class KMPlayerViewer;
@@ -38,7 +41,6 @@ class KMPlayerControlPanel;
 class QMultiLineEdit;
 class QWidgetStack;
 class QPixmap;
-class QPushButton;
 class QPopupMenu;
 class QBoxLayout;
 class QSlider;
@@ -61,6 +63,17 @@ private:
     bool m_fullscreen : 1;
 };
 
+class KMPlayerPopupMenu : public QPopupMenu {
+    Q_OBJECT
+public:
+    KMPlayerPopupMenu (QWidget *);
+    KDE_NO_CDTOR_EXPORT ~KMPlayerPopupMenu () {}
+signals:
+    void mouseLeft ();
+protected:
+    void leaveEvent (QEvent *);
+};
+
 class KMPlayerView : public KMediaPlayer::View {
     Q_OBJECT
     friend class KMPlayerViewerHolder;
@@ -71,7 +84,7 @@ public:
         CP_Hide, CP_AutoHide, CP_Show
     };
 
-    KMPlayerView(QWidget *parent, const char *name = (char*) 0);
+    KMPlayerView (QWidget *parent, const char *);
     ~KMPlayerView();
 
     void addText (const QString &);
@@ -115,6 +128,10 @@ protected:
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
     bool x11Event (XEvent *);
+private slots:
+    void ctrlButtonMouseEntered ();
+    void ctrlButtonClicked ();
+    void popupMenuMouseLeft ();
 private:
     KDE_NO_EXPORT void emitPictureClicked () { emit pictureClicked (); }
     // widget for player's output
@@ -137,7 +154,9 @@ private:
     const char * m_mixer_object;
     ControlPanelMode m_controlpanel_mode;
     ControlPanelMode m_old_controlpanel_mode;
-    int delayed_timer;
+    int controlbar_timer;
+    int popup_timer;
+    int popdown_timer;
     bool m_keepsizeratio : 1;
     bool m_show_console_output : 1;
     bool m_playing : 1;
@@ -145,9 +164,21 @@ private:
     bool m_inVolumeUpdate : 1;
     bool m_sreensaver_disabled : 1;
     bool m_revert_fullscreen : 1;
+    bool m_popup_clicked : 1;
 };
 
 static const int KMPlayerControlPanelButtons = 8;
+
+class KMPlayerControlButton : public QPushButton {
+    Q_OBJECT
+public:
+    KMPlayerControlButton (QWidget *, QBoxLayout *,const char * const *, int=0);
+    KDE_NO_CDTOR_EXPORT ~KMPlayerControlButton () {}
+signals:
+    void mouseEntered ();
+protected:
+    void enterEvent (QEvent *);
+};
 
 class KMPlayerControlPanel : public QWidget {
 public:
@@ -160,6 +191,7 @@ public:
         button_stop, button_pause, button_record, button_broadcast
     };
     KMPlayerControlPanel (QWidget * parent);
+    KDE_NO_CDTOR_EXPORT ~KMPlayerControlPanel () {}
     void showPositionSlider (bool show);
     void enableSeekButtons (bool enable);
     void setPlaying (bool play);
@@ -180,7 +212,7 @@ public:
     KDE_NO_EXPORT QPushButton * configButton () const { return m_buttons[button_config]; }
     KDE_NO_EXPORT QPushButton * recordButton () const { return m_buttons[button_record]; }
     KDE_NO_EXPORT QPushButton * broadcastButton () const { return m_buttons[button_broadcast]; }
-    KDE_NO_EXPORT QPopupMenu * popupMenu () const { return m_popupMenu; }
+    KDE_NO_EXPORT KMPlayerPopupMenu * popupMenu () const { return m_popupMenu; }
     KDE_NO_EXPORT KPopupMenu * bookmarkMenu () const { return m_bookmarkMenu; }
     KDE_NO_EXPORT QPopupMenu * zoomMenu () const { return m_zoomMenu; }
     KDE_NO_EXPORT QPopupMenu * playerMenu () const { return m_playerMenu; }
@@ -194,7 +226,7 @@ private:
     QSlider * m_hueSlider;
     QSlider * m_saturationSlider;
     QPushButton * m_buttons[KMPlayerControlPanelButtons];
-    QPopupMenu * m_popupMenu;
+    KMPlayerPopupMenu * m_popupMenu;
     KPopupMenu * m_bookmarkMenu;
     QPopupMenu * m_zoomMenu;
     QPopupMenu * m_playerMenu;

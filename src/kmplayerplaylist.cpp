@@ -63,7 +63,7 @@ KDE_NO_CDTOR_EXPORT Element::~Element () {
 }
 
 KDE_NO_EXPORT Document * Element::document () {
-    return dynamic_cast<Document*>(static_cast<Element *>(m_doc));
+    return static_cast<Document*>(static_cast<Element *>(m_doc));
 }
 
 KDE_NO_EXPORT Mrl * Element::mrl () {
