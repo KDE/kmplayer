@@ -1,0 +1,34 @@
+<!-- test for timing for 'par' tags -->
+<smil>
+  <head>
+    <layout>
+      <root-layout width="320" height="240" background-color="green"/>
+      <region id="region1" left="5%" top="10%" right="5%" bottom="50%" z-index="2"/>
+      <region id="region2" left="25%" top="60%" right="10%" bottom="5%" z-index="3" background-color="red"/>
+      <region id="region3" z-index="4"/>
+    </layout>
+  </head>
+  <body>
+    <par end="text1.inBoundsEvent">
+      <text id="text1" src="data:,par%20end%3Dtext1.inBoundsEvent%0D%0Atext%20dur%3Dindefinite%0D%0Amove%20here%20to%20end%20'par'" region="region1" dur="indefinite"/>
+      <text id="text2" src="data:,dur%3D5s" region="region2" dur="5"/>
+    </par>
+    <par endsync="text1">
+      <text id="text1" src="data:,par%20endsync%3Dtext1%0D%0Atext%20dur%3D7s" region="region1" dur="7s"/>
+      <text id="text2" src="data:,dur%3D5" region="region2" dur="5"/>
+    </par>
+    <par dur="7s">
+      <text id="text1" src="data:,par%20dur%3D7s%0D%0Atext%20dur%3Dindefinite" region="region1" dur="indefinite"/>
+      <text id="text2" src="data:,dur%3D5" region="region2" dur="5"/>
+    </par>
+    <par end="7s">
+      <text id="text1" src="data:,par%20end%3D7s%0D%0Atext%20dur%3Dindefinite" region="region1" dur="indefinite"/>
+      <text id="text2" src="data:,dur%3D5" region="region2" dur="5"/>
+    </par>
+    <par>
+      <text id="text1" src="data:,par%20no%20dur%20set%0D%0Atext%20dur%3D7" region="region1" dur="7"/>
+      <text id="text2" src="data:,dur%3D5" region="region2" dur="5"/>
+    </par>
+    <text src="data:,that's%20all%20folks" region="region3" dur="2s" backgroundColor="black" fontColor="white"/>
+  </body>
+</smil>

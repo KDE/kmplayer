@@ -47,9 +47,11 @@ typedef WeakPtr<ElementRuntime> ElementRuntimePtrW;
 class TimedRuntime : public QObject, public ElementRuntime {
     Q_OBJECT
 public:
-    enum DurationTime {
-        begin_time = 0, duration_time, end_time, durtime_last
+    enum TimingState {
+        timings_reset = 0, timings_began, timings_started, timings_stopped
     };
+    enum DurationTime { begin_time = 0, duration_time, end_time, durtime_last };
+
     TimedRuntime (ElementPtr e);
     virtual ~TimedRuntime ();
     /**
@@ -64,8 +66,9 @@ public:
      * change behaviour of this runtime, returns old value
      */
     virtual QString setParam (const QString & name, const QString & value);
-    bool isStarted () const { return state == state_started; }
+    TimingState state () const { return timingstate; }
     virtual void paint (QPainter &) {}
+    void propagateStop ();
     /**
      * Duration items, begin/dur/end, length information or connected element
      */
@@ -116,11 +119,10 @@ protected slots:
 private:
     void init ();
     void processEvent (unsigned int event);
-    void propagateStop ();
     void setDurationItem (DurationTime item, const QString & val);
     void breakConnection (DurationTime item);
 protected:
-    enum { state_reset = 0, state_began, state_started, state_stopped } state;
+    TimingState timingstate;
     int start_timer;
     int dur_timer;
     int repeat_count;

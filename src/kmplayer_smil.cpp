@@ -190,7 +190,7 @@ KDE_NO_EXPORT void TimedRuntime::init () {
     start_timer = 0;
     dur_timer = 0;
     repeat_count = 0;
-    state = state_reset;
+    timingstate = timings_reset;
     durations [begin_time].durval = durations [end_time].durval = 0;
     durations [duration_time].durval = duration_media; //intrinsic time duration
 }
@@ -256,13 +256,13 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
     kdDebug () << "TimedRuntime::begin " << element->nodeName() << endl; 
     if (start_timer || dur_timer)
         end ();
-    state = state_began;
+    timingstate = timings_began;
 
     if (durations [begin_time].durval > 0) {
         if (durations [begin_time].durval < duration_last_option)
             start_timer = startTimer (1000 * durations [begin_time].durval);
     } else {
-        state = state_started;
+        timingstate = timings_started;
         QTimer::singleShot (0, this, SLOT (started ()));
     }
 }
@@ -315,12 +315,13 @@ QString TimedRuntime::setParam (const QString & name, const QString & val) {
     if (name == QString::fromLatin1 ("begin")) {
         old_val = QString::number (durations [begin_time].durval);
         setDurationItem (begin_time, val);
-        if ((state == state_began && !start_timer) || state == state_stopped) {
+        if ((timingstate == timings_began && !start_timer) ||
+                timingstate == timings_stopped) {
             if (durations [begin_time].durval > 0) { // create a timer for start
                 if (durations [begin_time].durval < duration_last_option)
                     start_timer = startTimer(1000*durations[begin_time].durval);
             } else {                                // start now
-                state = state_started;
+                timingstate = timings_started;
                 QTimer::singleShot (0, this, SLOT (started ()));
             }
         }
@@ -364,7 +365,7 @@ KDE_NO_EXPORT void TimedRuntime::timerEvent (QTimerEvent * e) {
     if (e->timerId () == start_timer) {
         killTimer (start_timer);
         start_timer = 0;
-        state = state_started;
+        timingstate = timings_started;
         QTimer::singleShot (0, this, SLOT (started ()));
     } else if (e->timerId () == dur_timer)
         propagateStop ();
@@ -388,12 +389,12 @@ KDE_NO_EXPORT void TimedRuntime::elementHasStopped () {
 
 KDE_NO_EXPORT void TimedRuntime::processEvent (unsigned int event) {
     kdDebug () << "TimedRuntime::processEvent " << event << " " << (element ? element->nodeName() : "-") << endl; 
-    if (state != state_started && durations [begin_time].durval == event) {
-        if (state != state_started) {
-            state = state_started;
+    if (timingstate != timings_started && durations [begin_time].durval == event) {
+        if (timingstate != timings_started) {
+            timingstate = timings_started;
             QTimer::singleShot (0, this, SLOT (started ()));
         }
-    } else if (state == state_started && durations [end_time].durval == event)
+    } else if (timingstate == timings_started && durations [end_time].durval == event)
         propagateStop ();
 }
 
@@ -402,13 +403,13 @@ KDE_NO_EXPORT void TimedRuntime::propagateStop () {
         killTimer (dur_timer);
         dur_timer = 0;
     }
-    if (state == state_started)
+    if (timingstate == timings_started)
         QTimer::singleShot (0, this, SLOT (stopped ()));
-    state = state_stopped;
+    timingstate = timings_stopped;
 }
 
 KDE_NO_EXPORT void TimedRuntime::started () {
-    kdDebug () << "TimedRuntime::started " << (element ? element->nodeName() : "-") << " dur:" << durations [duration_time].durval << endl; 
+    kdDebug () << "TimedRuntime::started " << (element ? element->nodeName() : "-") << endl; 
     if (durations [duration_time].durval > 0) {
         if (durations [duration_time].durval < duration_last_option)
             dur_timer = startTimer (1000 * durations [duration_time].durval);
@@ -425,7 +426,7 @@ KDE_NO_EXPORT void TimedRuntime::stopped () {
                 durations [begin_time].durval < duration_last_option) {
             start_timer = startTimer (1000 * durations [begin_time].durval);
         } else {
-            state = state_started;
+            timingstate = timings_started;
             QTimer::singleShot (0, this, SLOT (started ()));
         }
     } else if (element->state == Element::state_started) {
@@ -624,7 +625,7 @@ KDE_NO_CDTOR_EXPORT AudioVideoData::AudioVideoData (ElementPtr e)
     : MediaTypeRuntime (e) {}
 
 KDE_NO_EXPORT bool AudioVideoData::isAudioVideo () {
-    return state == state_started;
+    return timingstate == timings_started;
 }
 
 KDE_NO_EXPORT
@@ -932,7 +933,8 @@ KDE_NO_EXPORT void SMIL::Par::start () {
 }
 
 KDE_NO_EXPORT void SMIL::Par::stop () {
-    TimedElement::stop ();
+    kdDebug () << "SMIL::Par::stop" << endl;
+    GroupBase::stop ();
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
         // children are out of scope now, reset their ElementRuntime
         e->reset (); // will call stop() if necessary
@@ -950,6 +952,12 @@ KDE_NO_EXPORT void SMIL::Par::childDone (ElementPtr) {
         for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
             if (e->state != state_finished)
                 return; // not all done
+        }
+        TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
+        if (tr && tr->state () == TimedRuntime::timings_started) {
+            if (tr->durations[(int)TimedRuntime::duration_time].durval == duration_media)
+                tr->propagateStop ();
+            return; // wait for runtime to finish
         }
         stop (); // we're done
     }
@@ -1090,8 +1098,8 @@ KDE_NO_EXPORT void SMIL::AVMediaType::start () {
 KDE_NO_EXPORT void SMIL::AVMediaType::stop () {
     TimedElement::stop ();
     TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
-    if (tr && tr->isStarted ()) // are we called from backends
-        tr->emitElementStopped ();
+    if (tr && tr->state () == TimedRuntime::timings_started)
+        tr->emitElementStopped (); // called from backends
     // TODO stop backend player
 }
 
@@ -1200,8 +1208,9 @@ QString ImageData::setParam (const QString & name, const QString & val) {
 }
 
 KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
-    if ((state == state_started || (state == state_stopped &&
-                      mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)) &&
+    if ((timingstate == timings_started ||
+                (timingstate == timings_stopped &&
+                 mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)) &&
             d->image && region_node) {
         RegionNode * r = region_node.ptr ();
         p.drawPixmap (QRect (r->x, r->y, r->w, r->h), *d->image);
@@ -1221,8 +1230,9 @@ KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
         if (!pix->isNull ()) {
             d->image = pix;
             if (region_node &&
-                (state == state_started || (state == state_stopped &&
-                      mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)))
+                (timingstate == timings_started ||
+                 (timingstate == timings_stopped &&
+                  mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)))
                 region_node->repaint ();
         } else
             delete pix;
@@ -1305,8 +1315,9 @@ QString TextData::setParam (const QString & name, const QString & val) {
 }
 
 KDE_NO_EXPORT void TextData::paint (QPainter & p) {
-    if ((state == state_started || (state == state_stopped &&
-                       mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)) &&
+    if ((timingstate == timings_started ||
+                (timingstate == timings_stopped &&
+                 mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)) &&
             region_node) {
         int x = region_node->x;
         int y = region_node->y;
@@ -1343,8 +1354,10 @@ KDE_NO_EXPORT void TextData::slotResult (KIO::Job * job) {
     MediaTypeRuntime::slotResult (job);
     if (mt_d->data.size () && element) {
         d->data = mt_d->data;
-        if (region_node && (state == state_started || (state == state_stopped &&
-                         mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)))
+        if (region_node &&
+                (timingstate == timings_started ||
+                 (timingstate == timings_stopped &&
+                  mt_d->fill == MediaTypeRuntimePrivate::fill_freeze)))
             region_node->repaint ();
     }
 }
