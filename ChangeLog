@@ -1,3 +1,11 @@
+Changes since version 0.8.3-rc4
+- Fix regression in show cache progress in 0.8.3-rc2, which made the xine
+  backend hang on some web movies
+- Ripped out the arts volume slider. Now you only get a volume slider if you
+  run kmix standalone or as an applet in kicker.
+- Try to limit symbols in the shared objects by using KDE_NO_EXPORT. Although
+  hard to measure, hopefully speed up loading the plugin
+- New recorder (mplayer -dumpstream) from Stefan Siegel
 Changes since version 0.8.3-rc3a
 - Downloading of .m3u/.pls also eats .asx, so try to read this one too. This
   fixes also MPlayer-1.0pre not been able to read .asx files.
