@@ -22,6 +22,7 @@
 #include <qmap.h>
 #include <qtimer.h>
 #include <qpushbutton.h>
+#include <qbuttongroup.h>
 #include <qcheckbox.h>
 #include <qtable.h>
 #include <qstringlist.h>
@@ -31,6 +32,7 @@
 #include <qwhatsthis.h>
 #include <qtabwidget.h>
 #include <qbuttongroup.h>
+#include <qradiobutton.h>
 #include <qmessagebox.h>
 #include <qpopupmenu.h>
 #include <qsocket.h>
@@ -56,6 +58,7 @@
 static const char * strVDR = "VDR";
 static const char * strVDRPort = "Port";
 static const char * strXVPort = "XV Port";
+static const char * strXVScale = "XV Scale";
 
 KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::KMPlayerPrefSourcePageVDR (QWidget * parent)
  : QFrame (parent) {
@@ -71,6 +74,12 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::KMPlayerPrefSourcePageVDR (QWidge
     tcp_port = new QLineEdit ("", this);
     gridlayout->addWidget (tcp_port, 1, 1);
     layout->addLayout (gridlayout);
+    scale = new QButtonGroup (2, Qt::Vertical, i18n ("Scale"), this);
+    new QRadioButton (i18n ("4:3"), scale);
+    new QRadioButton (i18n ("16:9"), scale);
+    scale->setButton (0);
+    layout->addWidget (scale);
+    layout->addItem (new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::~KMPlayerPrefSourcePageVDR () {}
@@ -183,6 +192,9 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     channel_timer = startTimer (30000);
     m_document = (new Document (QString ("VDR")))->self ();
     sendCommand (cmd_list_channels, true);
+    setAspect (scale ? 16.0/9 : 1.25);
+    if (m_player->settings ()->sizeratio)
+        view->viewer ()->setAspect (aspect ());
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
@@ -487,22 +499,27 @@ KDE_NO_EXPORT void KMPlayerVDRSource::write (KConfig * m_config) {
     m_config->setGroup (strVDR);
     m_config->writeEntry (strVDRPort, tcp_port);
     m_config->writeEntry (strXVPort, xv_port);
+    m_config->writeEntry (strXVScale, scale);
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::read (KConfig * m_config) {
     m_config->setGroup (strVDR);
     tcp_port = m_config->readNumEntry (strVDRPort, 2001);
     xv_port = m_config->readNumEntry (strXVPort, 0);
+    scale = m_config->readNumEntry (strXVScale, 0);
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
     if (fromUI) {
         tcp_port = m_configpage->tcp_port->text ().toInt ();
         xv_port = m_configpage->xv_port->text ().toInt ();
+        scale = m_configpage->scale->id (m_configpage->scale->selected ());
+        setAspect (scale ? 16.0/9 : 1.25);
         static_cast<XVideo *>(m_player->players()["xvideo"])->setPort(xv_port);
     } else {
         m_configpage->tcp_port->setText (QString::number (tcp_port));
         m_configpage->xv_port->setText (QString::number (xv_port));
+        m_configpage->scale->setButton (scale);
     }
 }
 

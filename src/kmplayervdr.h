@@ -37,6 +37,7 @@ class KMPlayerApp;
 class VDRCommand;
 class KURLRequester;
 class QPopupMenu;
+class QButtonGroup;
 class QMenuItem;
 class QCheckBox;
 class QLineEdit;
@@ -52,6 +53,7 @@ public:
     KURLRequester * vcddevice;
     QLineEdit * xv_port;
     QLineEdit * tcp_port;
+    QButtonGroup * scale;
 };
 
 
@@ -120,6 +122,7 @@ private:
     int channel_timer;
     int tcp_port;
     int xv_port;
+    int scale;
 };
 
 class XVideo : public KMPlayerCallbackProcess {
