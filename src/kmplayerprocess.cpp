@@ -483,39 +483,36 @@ bool MEncoder::play () {
     if (!m_source || m_source->recordCmd ().isNull ())
         return false;
     bool success = false;
-    KFileDialog *dlg = new KFileDialog (QString::null, QString::null, m_player->view (), "", true);
-    if (dlg->exec ()) {
-        stop ();
-        initProcess ();
-        source ()->setPosition (0);
-        QString args;
-        m_use_slave = m_source->pipeCmd ().isEmpty ();
-        if (!m_use_slave)
-            args = m_source->pipeCmd () + QString (" | ");
-        args += QString ("mencoder ") + m_player->settings()->mencoderarguments + ' ' + m_source->recordCmd ();
-        const KURL & url (source ()->url ());
-        QString myurl = url.isLocalFile () ? url.path () : url.url ();
-        bool post090 = m_player->settings ()->mplayerpost090;
-        if (!myurl.isEmpty ()) {
-            if (!post090 && myurl.startsWith (QString ("tv://")))
-                ; // skip it
-            else if (!post090 && myurl.startsWith (QString ("vcd://")))
-                args += myurl.replace (0, 6, QString (" -vcd "));
-            else if (!post090 && myurl.startsWith (QString ("dvd://")))
-                args += myurl.replace (0, 6, QString (" -dvd "));
-            else {
-                QString myurl = url.isLocalFile () ? url.path () : url.url ();
-                args += ' ' + KProcess::quote (QString (QFile::encodeName (myurl)));
-            }
+    stop ();
+    initProcess ();
+    source ()->setPosition (0);
+    QString args;
+    m_use_slave = m_source->pipeCmd ().isEmpty ();
+    if (!m_use_slave)
+        args = m_source->pipeCmd () + QString (" | ");
+    args += QString ("mencoder ") + m_player->settings()->mencoderarguments + ' ' + m_source->recordCmd ();
+    const KURL & url (source ()->url ());
+    QString myurl = url.isLocalFile () ? url.path () : url.url ();
+    bool post090 = m_player->settings ()->mplayerpost090;
+    if (!myurl.isEmpty ()) {
+        if (!post090 && myurl.startsWith (QString ("tv://")))
+            ; // skip it
+        else if (!post090 && myurl.startsWith (QString ("vcd://")))
+            args += myurl.replace (0, 6, QString (" -vcd "));
+        else if (!post090 && myurl.startsWith (QString ("dvd://")))
+            args += myurl.replace (0, 6, QString (" -dvd "));
+        else {
+            QString myurl = url.isLocalFile () ? url.path () : url.url ();
+            args += ' ' + KProcess::quote (QString (QFile::encodeName (myurl)));
         }
-        m_recordurl = dlg->selectedURL().url ();
-        QString outurl = KProcess::quote (QString (QFile::encodeName (m_recordurl.isLocalFile () ? m_recordurl.path () : m_recordurl.url ())));
-        kdDebug () << args << " -o " << outurl << endl;
-        *m_process << args << " -o " << outurl;
-        m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
-        success = m_process->isRunning ();
     }
-    delete dlg;
+    QString outurl = KProcess::quote (QString (QFile::encodeName (m_recordurl.isLocalFile () ? m_recordurl.path () : m_recordurl.url ())));
+    kdDebug () << args << " -o " << outurl << endl;
+    *m_process << args << " -o " << outurl;
+    m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
+    success = m_process->isRunning ();
+    if (success)
+        emitStarted ();
     return success;
 }
 

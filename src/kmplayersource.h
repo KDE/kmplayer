@@ -61,6 +61,7 @@ public:
     void setPosition (int pos) { m_position = pos; }
     virtual void setIdentified (bool b = true);
     virtual QString ffmpegCommand ();
+    virtual QString prettyName ();
 public slots:
     virtual void activate () = 0;
     virtual void deactivate () = 0;

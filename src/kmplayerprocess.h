@@ -131,6 +131,7 @@ public:
     ~MEncoder ();
     virtual void init ();
     const KURL & recordURL () const { return m_recordurl; }
+    void setURL (const KURL & url) { m_recordurl = url; }
 public slots:
     virtual bool play ();
     virtual bool stop ();

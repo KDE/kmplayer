@@ -41,6 +41,7 @@ public:
 
     void setURL (const KURL &);
     void clear ();
+    virtual QString prettyName ();
 public slots:
     virtual void init ();
     virtual void activate ();

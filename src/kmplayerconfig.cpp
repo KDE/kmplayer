@@ -25,6 +25,7 @@
 #include <qmultilineedit.h>
 #include <qtabwidget.h>
 #include <qslider.h>
+#include <qlabel.h>
 #include <qtable.h>
 #include <kurlrequester.h>
 #include <klineedit.h>
@@ -185,6 +186,7 @@ static const char * strVoDriver = "Video Driver";
 static const char * strAoDriver = "Audio Driver";
 static const char * strAddArgs = "Additional Arguments";
 static const char * strMencoderArgs = "Mencoder Arguments";
+static const char * strRecordingFile = "Last Recording Ouput File";
 static const char * strSize = "Movie Size";
 static const char * strCache = "Cache Fill";
 static const char * strPosPattern = "Movie Position";
@@ -326,6 +328,7 @@ void KMPlayerSettings::readConfig () {
 
     view->setUseArts (audiodriver == ADRIVER_ARTS_INDEX);
     additionalarguments = m_config->readEntry (strAddArgs, "");
+    recordfile = m_config->readEntry(strRecordingFile, QDir::homeDirPath () + "/record");
     mencoderarguments = m_config->readEntry (strMencoderArgs, "-oac copy -ovc copy");
     cachesize = m_config->readNumEntry (strCacheSize, 0);
     m_config->setGroup (strMPlayerPatternGroup);
@@ -441,9 +444,9 @@ void KMPlayerSettings::readConfig () {
     }
 }
 
-void KMPlayerSettings::show () {
+void KMPlayerSettings::show (KMPlayerPreferences::Page page) {
     if (!configdialog) {
-        configdialog = new KMPlayerPreferences (m_player->view (), _ads, _ffs);
+        configdialog = new KMPlayerPreferences (m_player, _ads, _ffs);
         configdialog->m_SourcePageTV->scanner = new TVDeviceScannerSource (m_player);
         connect (configdialog, SIGNAL (okClicked ()),
                 this, SLOT (okPressed ()));
@@ -524,6 +527,9 @@ void KMPlayerSettings::show () {
     configdialog->m_OPPagePostproc->MedianDeinterlacer->setChecked (pp_med_int);
     configdialog->m_OPPagePostproc->FfmpegDeinterlacer->setChecked (pp_ffmpeg_int);
 
+    configdialog->m_RecordPage->source->setText (i18n ("Current source ") + m_player->process ()->source ()->prettyName ());
+    configdialog->m_RecordPage->arguments->setText (mencoderarguments);
+    configdialog->m_RecordPage->url->lineEdit()->setText (recordfile);
     configdialog->m_BroadcastPage->bindaddress->setText (bindaddress);
     configdialog->m_BroadcastPage->port->setText (QString::number (ffserverport));
     configdialog->m_BroadcastPage->maxclients->setText (QString::number (maxclients));
@@ -541,6 +547,8 @@ void KMPlayerSettings::show () {
     QStringList::iterator it = ffserveracl.begin ();
     for (int i = 0; it != ffserveracl.end (); ++i, ++it)
         accesslist->setItem (i, 0, new QTableItem (accesslist, QTableItem::Always, *it));
+
+    configdialog->setPage (page);
     configdialog->show ();
 }
 
@@ -577,6 +585,10 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strPlayVCD, playvcd);
 
     m_config->writeEntry (strVCDDevice, vcddevice);
+
+    m_config->writeEntry (strRecordingFile, recordfile);
+    m_config->writeEntry (strMencoderArgs, mencoderarguments);
+
     m_config->setGroup (strMPlayerPatternGroup);
     m_config->writeEntry (strSize, sizepattern);
     m_config->writeEntry (strCache, cachepattern);
@@ -775,6 +787,8 @@ void KMPlayerSettings::okPressed () {
     pp_cub_int = configdialog->m_OPPagePostproc->CubicIntDeinterlacer->isChecked();
     pp_med_int = configdialog->m_OPPagePostproc->MedianDeinterlacer->isChecked();
     pp_ffmpeg_int = configdialog->m_OPPagePostproc->FfmpegDeinterlacer->isChecked();
+    mencoderarguments = configdialog->m_RecordPage->arguments->text ();
+    recordfile = configdialog->m_RecordPage->url->lineEdit()->text ();
     bindaddress = configdialog->m_BroadcastPage->bindaddress->text ();
     ffserverport = configdialog->m_BroadcastPage->port->text ().toInt ();
     maxclients = configdialog->m_BroadcastPage->maxclients->text ().toInt ();

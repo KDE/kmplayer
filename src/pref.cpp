@@ -46,10 +46,12 @@
 #include <klineedit.h>
 
 #include "pref.h"
+#include "kmplayerpartbase.h"
+#include "kmplayerprocess.h"
 
-KMPlayerPreferences::KMPlayerPreferences(QWidget *parent, MPlayerAudioDriver * ad, FFServerSetting * ffs)
+KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver * ad, FFServerSetting * ffs)
 : KDialogBase(TreeList, i18n("KMPlayer Preferences"),
-		Help|Default|Ok|Apply|Cancel, Ok, parent, 0, false)
+		Help|Default|Ok|Apply|Cancel, Ok, player->view (), 0, false)
 {
 	QFrame *frame;
 	QStringList hierarchy; // typo? :)
@@ -91,6 +93,13 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent, MPlayerAudioDriver * a
 	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
 	m_SourcePageTV = new KMPlayerPrefSourcePageTV (frame, this);
 	vlay->addWidget (m_SourcePageTV);
+
+	hierarchy.clear();
+	hierarchy << i18n ("Recording") << i18n ("General");
+	frame = addPage (hierarchy, i18n ("Recording"));
+	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
+	m_RecordPage = new KMPlayerPrefRecordPage (frame, player);
+	vlay->addWidget (m_RecordPage);
 
 	hierarchy.clear();
 	hierarchy << i18n ("Broadcasting") << i18n ("General");
@@ -140,11 +149,20 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent, MPlayerAudioDriver * a
 	m_OPPagePostproc = new KMPlayerPrefOPPagePostProc(frame);
 	vlay->addWidget(m_OPPagePostproc);
 
-	connect(this, SIGNAL( defaultClicked() ), SLOT( confirmDefaults() ));
+	connect (this, SIGNAL (defaultClicked ()), SLOT (confirmDefaults ()));
 	this->setTreeListAutoResize(true);
+    pages = new QFrame *[2];
+    pages[PageRecording] = m_RecordPage;
 }
 
-KMPlayerPreferences::~KMPlayerPreferences() {}
+void KMPlayerPreferences::setPage (Page page) {
+    if (page != NoPage)
+    showPage (pageIndex (pages [page]->parentWidget ()));
+}
+
+KMPlayerPreferences::~KMPlayerPreferences() {
+    delete [] pages;
+}
 
 KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
 : QFrame(parent)
@@ -454,6 +472,40 @@ TVDevice * KMPlayerPrefSourcePageTV::findDevice (QPtrList <TVDevice> & list, con
     }
     kdDebug() << "device not found " << device << endl;
     return 0L;
+}
+
+KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * player) : QFrame (parent), m_player (player) {
+    QVBoxLayout *layout = new QVBoxLayout (this, 0, 5);
+    source = new QLabel (this);
+    QHBoxLayout * urllayout = new QHBoxLayout ();
+    QLabel *urlLabel = new QLabel (i18n ("URL:"), this, 0);
+    url = new KURLRequester ("", this, 0);
+    url->setShowLocalProtocol (true);
+    urllayout->addWidget (urlLabel);
+    urllayout->addWidget (url);
+    QPushButton * record = new QPushButton (i18n ("Start Recording"), this);
+    connect (record, SIGNAL (clicked ()), this, SLOT (slotRecord ()));
+    QHBoxLayout *buttonlayout = new QHBoxLayout ();
+    buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    buttonlayout->addWidget (record);
+    QGroupBox *mencoderBox = new QGroupBox (i18n ("Mencoder Settings"), this);
+    mencoderBox->setFlat( false );
+    mencoderBox->setInsideMargin( 7 );
+    QGridLayout *gridlayout = new QGridLayout (mencoderBox->layout (), 1, 2, 2);
+    QLabel *argLabel = new QLabel (i18n("Mencoder arguments:"), mencoderBox, 0);
+    arguments = new QLineEdit ("", mencoderBox);
+    gridlayout->addWidget (argLabel, 0, 0);
+    gridlayout->addWidget (arguments, 0, 1);
+    layout->addWidget (source);
+    layout->addLayout (urllayout);
+    layout->addLayout (buttonlayout);
+    layout->addWidget (mencoderBox);
+    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+}
+
+void KMPlayerPrefRecordPage::slotRecord () {
+    m_player->mencoder ()->setURL (KURL (url->lineEdit ()->text ()));
+    m_player->mencoder ()->play ();
 }
 
 KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerSetting * _ffs) : QFrame (parent), ffs (_ffs) {

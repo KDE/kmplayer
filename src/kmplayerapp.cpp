@@ -923,6 +923,9 @@ void KMPlayerDVDSource::chapterMenuClicked (int id) {
     play ();
 }
 
+QString KMPlayerDVDSource::prettyName () {
+    return QString (i18n ("DVD"));
+}
 //-----------------------------------------------------------------------------
 
 KMPlayerDVDNavSource::KMPlayerDVDNavSource (KMPlayerApp * app, QPopupMenu * m)
@@ -980,6 +983,10 @@ void KMPlayerDVDNavSource::navMenuClicked (int id) {
             m_app->view ()->viewer ()->sendKeyEvent ('u');
             break;
     } 
+}
+
+QString KMPlayerDVDNavSource::prettyName () {
+    return QString (i18n ("DVD"));
 }
 
 //-----------------------------------------------------------------------------
@@ -1067,6 +1074,10 @@ void KMPlayerVCDSource::trackMenuClicked (int id) {
     }
 }
 
+QString KMPlayerVCDSource::prettyName () {
+    return QString (i18n ("VCD"));
+}
+
 //-----------------------------------------------------------------------------
 
 KMPlayerPipeSource::KMPlayerPipeSource (KMPlayerApp * a)
@@ -1094,6 +1105,10 @@ void KMPlayerPipeSource::activate () {
 }
 
 void KMPlayerPipeSource::deactivate () {
+}
+
+QString KMPlayerPipeSource::prettyName () {
+    return QString (i18n ("Pipe"));
 }
 
 //-----------------------------------------------------------------------------
@@ -1250,6 +1265,13 @@ bool KMPlayerTVSource::hasLength () {
 
 bool KMPlayerTVSource::isSeekable () {
     return false;
+}
+
+QString KMPlayerTVSource::prettyName () {
+    QString name (i18n ("TV"));
+    if (m_tvsource)
+        name += ' ' + m_tvsource->title;
+    return name;
 }
 
 #include "kmplayer.moc"

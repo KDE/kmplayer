@@ -56,6 +56,7 @@ public:
     virtual void setIdentified (bool b = true);
 
     void setURL (const KURL & url);
+    virtual QString prettyName ();
 public slots:
     virtual void init ();
     virtual void activate ();
@@ -125,6 +126,7 @@ protected slots:
     void brightnessValueChanged (int val);
     void hueValueChanged (int val);
     void saturationValueChanged (int val);
+    void recordingStarted ();
     void recordingFinished ();
     void processPosition (int pos);
     virtual void processStarted ();

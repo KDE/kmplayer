@@ -86,6 +86,7 @@ void KMPlayer::init () {
     connect (m_view, SIGNAL (urlDropped (const KURL &)), this, SLOT (openURL (const KURL &)));
     m_view->popupMenu ()->connectItem (KMPlayerView::menu_config,
                                        m_settings, SLOT (show ()));
+    connect (m_mencoder, SIGNAL (started()), this, SLOT (recordingStarted()));
     connect (m_mencoder, SIGNAL (finished()), this, SLOT (recordingFinished()));
     //connect (m_view->configButton (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
 }
@@ -231,6 +232,12 @@ void KMPlayer::keepMovieAspect (bool b) {
     m_view->viewer ()->setAspect (b ? m_process->source ()->aspect () : 0.0);
 }
 
+void KMPlayer::recordingStarted () {
+    if (!m_view) return;
+    if (!m_view->recordButton ()->isOn ()) 
+        m_view->recordButton ()->toggle ();
+}
+
 void KMPlayer::recordingFinished () {
     if (!m_view) return;
     if (m_view->recordButton ()->isOn ()) 
@@ -311,11 +318,7 @@ void KMPlayer::record () {
     } else {
         m_process->stop ();
         m_mencoder->setSource (m_process->source ());
-        if (m_mencoder->play ()) {
-            if (!m_view->recordButton ()->isOn ()) 
-                m_view->recordButton ()->toggle ();
-        } else if (m_view->recordButton ()->isOn ()) 
-            m_view->recordButton ()->toggle ();
+        m_settings->show (KMPlayerPreferences::PageRecording);
     }
     if (m_view) m_view->setCursor (QCursor (Qt::ArrowCursor));
 }
@@ -555,6 +558,10 @@ void KMPlayerSource::setIdentified (bool b) {
     kdDebug () << "KMPlayerSource::setIdentified " << m_identified << b <<endl;
     m_identified = b;
 }
+
+QString KMPlayerSource::prettyName () {
+    return QString (i18n ("Unknown"));
+}
 //-----------------------------------------------------------------------------
 
 KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, const KURL & url)
@@ -685,6 +692,10 @@ void KMPlayerURLSource::deactivate () {
     if (view)
         view->popupMenu ()->setItemVisible (KMPlayerView::menu_player, false);
 #endif
+}
+
+QString KMPlayerURLSource::prettyName () {
+    return QString (i18n ("URL"));
 }
 
 #include "kmplayerpartbase.moc"

@@ -48,12 +48,14 @@ class KMPlayerPrefSourcePageURL;        // source, url
 class KMPlayerPrefGeneralPageDVD;	// general, dvd
 class KMPlayerPrefGeneralPageVCD;	// general, vcd
 class KMPlayerPrefSourcePageTV;         // source, TV
+class KMPlayerPrefRecordPage;           // recording
 class KMPlayerPrefBroadcastPage;        // broadcast
 class KMPlayerPrefBroadcastACLPage;     // broadcast ACL
 class KMPlayerPrefGeneralPageOutput;	// general, output
 class KMPlayerPrefGeneralPageAdvanced;	// general, advanced, pattern matches etc.
 class KMPlayerPrefOPPageGeneral;	// OP = outputplugins, general
 class KMPlayerPrefOPPagePostProc;	// outputplugins, postproc
+class KMPlayer;
 class QTabWidget;
 class QTable;
 class QGroupBox;
@@ -148,7 +150,9 @@ class KMPlayerPreferences : public KDialogBase
 {
     Q_OBJECT
 public:
-    KMPlayerPreferences(QWidget *parent, MPlayerAudioDriver * ad, FFServerSetting *ffs);
+    enum Page { NoPage = 0, PageRecording };
+
+    KMPlayerPreferences(KMPlayer *, MPlayerAudioDriver * ad, FFServerSetting *ffs);
     ~KMPlayerPreferences();
 
     KMPlayerPrefGeneralPageGeneral 	*m_GeneralPageGeneral;
@@ -156,6 +160,7 @@ public:
     KMPlayerPrefGeneralPageDVD 		*m_GeneralPageDVD;
     KMPlayerPrefGeneralPageVCD 		*m_GeneralPageVCD;
     KMPlayerPrefSourcePageTV 		*m_SourcePageTV;
+    KMPlayerPrefRecordPage 		*m_RecordPage;
     KMPlayerPrefBroadcastPage 		*m_BroadcastPage;
     KMPlayerPrefBroadcastACLPage 	*m_BroadcastACLPage;
     KMPlayerPrefGeneralPageOutput 	*m_GeneralPageOutput;
@@ -163,6 +168,9 @@ public:
     KMPlayerPrefOPPageGeneral 		*m_OPPageGeneral;
     KMPlayerPrefOPPagePostProc		*m_OPPagePostproc;
     void setDefaults();
+    void setPage (Page page);
+
+    QFrame ** pages;
 public slots:
     void confirmDefaults();
 };
@@ -273,6 +281,22 @@ private:
     QPtrList <TVDevice> addeddevices;
     QPtrList <QFrame> m_devicepages;
     KMPlayerPreferences * m_preference;
+};
+
+class KMPlayerPrefRecordPage : public QFrame
+{
+    Q_OBJECT
+public:
+    KMPlayerPrefRecordPage (QWidget *parent, KMPlayer *);
+    ~KMPlayerPrefRecordPage () {}
+
+    KURLRequester * url;
+    QLabel * source;
+    QLineEdit * arguments;
+private slots:
+    void slotRecord ();
+private:
+    KMPlayer * m_player;
 };
 
 class KMPlayerPrefBroadcastPage : public QFrame

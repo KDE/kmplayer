@@ -68,6 +68,7 @@ public:
     virtual bool processOutput (const QString & line);
     virtual QString filterOptions ();
     virtual void setIdentified (bool b = true);
+    virtual QString prettyName ();
 public slots:
     virtual void activate ();
     virtual void deactivate ();
@@ -97,6 +98,7 @@ class KMPlayerDVDNavSource : public KMPlayerMenuSource {
 public:
     KMPlayerDVDNavSource (KMPlayerApp * app, QPopupMenu * m);
     virtual ~KMPlayerDVDNavSource ();
+    virtual QString prettyName ();
 public slots:
     virtual void activate ();
     virtual void deactivate ();
@@ -114,6 +116,7 @@ public:
     virtual ~KMPlayerVCDSource ();
     virtual bool processOutput (const QString & line);
     virtual void setIdentified (bool b = true);
+    virtual QString prettyName ();
 public slots:
     virtual void activate ();
     virtual void deactivate ();
@@ -137,6 +140,7 @@ public:
     virtual bool hasLength ();
     virtual bool isSeekable ();
     void setCommand (const QString & cmd) { m_pipecmd = cmd; }
+    virtual QString prettyName ();
 public slots:
     virtual void activate ();
     virtual void deactivate ();
@@ -165,6 +169,7 @@ public:
     virtual bool isSeekable ();
     void buildMenu ();
     TVSource * tvsource () const { return m_tvsource; }
+    virtual QString prettyName ();
 public slots:
     virtual void activate ();
     virtual void deactivate ();

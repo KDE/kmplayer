@@ -599,4 +599,8 @@ void KMPlayerHRefSource::deactivate () {
     disconnect (view->viewer (), SIGNAL (clicked ()), this, SLOT (play ()));
 }
 
+QString KMPlayerHRefSource::prettyName () {
+    return QString (i18n ("WEB"));
+}
+
 #include "kmplayer_part.moc"

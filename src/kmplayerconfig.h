@@ -113,6 +113,7 @@ public:
     QString vcddevice;
     QString additionalarguments;
     QString mencoderarguments;
+    QString recordfile;
     QString sizepattern;
     QString cachepattern;
     QString positionpattern;
@@ -129,7 +130,7 @@ signals:
 public slots:
     void readConfig ();
     void writeConfig ();
-    void show ();
+    void show (KMPlayerPreferences::Page page = KMPlayerPreferences::NoPage);
 private slots:
     void okPressed ();
     void getHelp ();
