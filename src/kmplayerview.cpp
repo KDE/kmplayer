@@ -280,7 +280,10 @@ static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char * const
     return b;
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerControlPanel::KMPlayerControlPanel (QWidget * parent) : QWidget (parent) {
+KDE_NO_CDTOR_EXPORT KMPlayerControlPanel::KMPlayerControlPanel(QWidget * parent)
+ : QWidget (parent),
+   m_progress_mode (progress_playing),
+   m_progress_length (0) {
     m_buttonbox = new QHBoxLayout (this, 5, 4);
     m_buttons[button_config] = ctrlButton (this, m_buttonbox, config_xpm);
     m_buttons[button_back] = ctrlButton (this, m_buttonbox, back_xpm);
@@ -382,6 +385,37 @@ KDE_NO_EXPORT void KMPlayerControlPanel::setPlaying (bool play) {
 KDE_NO_EXPORT void KMPlayerControlPanel::setRecording (bool record) {
     if (record != m_buttons[button_record]->isOn ())
         m_buttons[button_record]->toggle ();
+}
+
+KDE_NO_EXPORT void KMPlayerControlPanel::setPlayingProgress (int pos) {
+    m_posSlider->setEnabled (false);
+    if (m_progress_mode != progress_playing) {
+        m_posSlider->setMaxValue (m_progress_length);
+        m_progress_mode = progress_playing;
+    }
+    if (m_progress_length <= 0 && pos > 7 * m_posSlider->maxValue ()/8)
+        m_posSlider->setMaxValue (m_posSlider->maxValue() * 2);
+    else if (m_posSlider->maxValue() < pos)
+        m_posSlider->setMaxValue (int (1.4 * m_posSlider->maxValue()));
+    m_posSlider->setValue (pos);
+    m_posSlider->setEnabled (true);
+}
+
+KDE_NO_EXPORT void KMPlayerControlPanel::setLoadingProgress (int pos) {
+    m_posSlider->setEnabled (false);
+    if (m_progress_mode != progress_loading) {
+        m_posSlider->setMaxValue (100);
+        m_progress_mode = progress_loading;
+    }
+    m_posSlider->setValue (pos);
+}
+
+KDE_NO_EXPORT void KMPlayerControlPanel::setPlayingLength (int len) {
+    m_posSlider->setEnabled (false);
+    m_progress_length = len;
+    m_posSlider->setMaxValue (m_progress_length);
+    m_progress_mode = progress_playing;
+    m_posSlider->setEnabled (true);
 }
 
 //-----------------------------------------------------------------------------

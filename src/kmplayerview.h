@@ -166,6 +166,9 @@ public:
     void enableSeekButtons (bool enable);
     void setPlaying (bool play);
     void setRecording (bool record);
+    void setPlayingProgress (int pos);
+    void setLoadingProgress (int pos);
+    void setPlayingLength (int len);
     KDE_NO_EXPORT QSlider * positionSlider () const { return m_posSlider; }
     KDE_NO_EXPORT QSlider * contrastSlider () const { return m_contrastSlider; }
     KDE_NO_EXPORT QSlider * brightnessSlider () const { return m_brightnessSlider; }
@@ -184,6 +187,8 @@ public:
     KDE_NO_EXPORT QPopupMenu * zoomMenu () const { return m_zoomMenu; }
     KDE_NO_EXPORT QPopupMenu * playerMenu () const { return m_playerMenu; }
 private:
+    enum { progress_loading, progress_playing } m_progress_mode;
+    int m_progress_length;
     QBoxLayout * m_buttonbox;
     QSlider * m_posSlider;
     QSlider * m_contrastSlider;
