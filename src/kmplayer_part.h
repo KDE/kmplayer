@@ -105,6 +105,7 @@ public:
     void setMovieLength (int len);
 public slots:
     virtual bool openURL (const KURL & url);
+    virtual bool closeURL ();
     virtual void pause (void);
     virtual void play (void);
     virtual void stop (void);

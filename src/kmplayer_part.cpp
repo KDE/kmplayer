@@ -141,6 +141,8 @@ KMPlayer::KMPlayer (QWidget * parent, KConfig * config)
    m_configdialog (new KMPlayerConfig (this, config)),
    m_liveconnectextension (0L),
    m_stoplooplevel (-1),
+   movie_width (0),
+   movie_height (0),
    m_ispart (false) {
     m_view->init ();
     init();
@@ -154,6 +156,8 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
    m_configdialog (new KMPlayerConfig (this, m_config)),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
    m_stoplooplevel (-1),
+   movie_width (0),
+   movie_height (0),
    m_ispart (true) {
     printf("MPlayer::KMPlayer ()\n");
     setInstance (KMPlayerFactory::instance ());
@@ -162,10 +166,22 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
     /*KAction *stopact =*/ new KAction(i18n("&Stop"), 0, 0, this, SLOT(stop ()), actionCollection (), "view_stop");
     QStringList::const_iterator it = args.begin ();
     for ( ; it != args.end (); ++it) {
-        if ((*it).left (6).lower () == "href=\"")
-            m_href = (*it).mid (6, (*it).length () - 7);
-        else if ((*it).left (5).lower () == "href=")
-            m_href = (*it).mid (5);
+        int equalPos = (*it).find("=");
+        if (equalPos > 0) {
+            QString name = (*it).left (equalPos).upper ();
+            QString value = (*it).right ((*it).length () - equalPos - 1);
+            if (value.at(0)=='\"')
+                value = value.right (value.length () - 1);
+            if (value.at (value.length () - 1) == '\"')
+                value = value.left(value.length()-1);
+            kdDebug () << "name=" << name << " value=" << value << endl;
+            if (name.lower () == "href")
+                m_href = value;
+            else if (name.lower()==QString::fromLatin1("width"))
+                movie_width = value.toInt();
+            else if (name.lower()==QString::fromLatin1("height"))
+                movie_height = value.toInt();
+        }
     }
     m_view->init ();
     m_configdialog->readConfig ();
@@ -189,12 +205,10 @@ void KMPlayer::init () {
     m_use_slave = false;
     initProcess ();
     m_browserextension = new KMPlayerBrowserExtension (this);
-    movie_width = 0;
-    movie_height = 0;
     m_movie_position = 0;
-    m_movie_length = 0;
+    setMovieLength (0);
     m_bPosSliderPressed = false;
-    m_posRegExp.setPattern ("V:\\s+([0-9\\.]+)");
+    m_posRegExp.setPattern ("V:\\s*([0-9\\.]+)");
     connect (m_view->backButton (), SIGNAL (clicked ()), this, SLOT (back ()));
     connect (m_view->playButton (), SIGNAL (clicked ()), this, SLOT (play ()));
     connect (m_view->forwardButton (), SIGNAL (clicked ()), this, SLOT (forward ()));
@@ -262,13 +276,12 @@ KMediaPlayer::View* KMPlayer::view () {
 }
 
 void KMPlayer::setURL (const KURL &url) {
+    if (!m_url.isEmpty () && m_url != url)
+        closeURL ();
     m_url = url;
-    m_view->viewer ()->setAspect (0.0);
-    movie_height = movie_width = 0;
 }
 
 bool KMPlayer::openURL (const KURL & _url) {
-    stop ();
     if (!m_view) return false;
     KURL url = _url;
     if (!m_href.isEmpty ())
@@ -285,6 +298,17 @@ bool KMPlayer::openURL (const KURL & _url) {
     return false;
 }
 
+bool KMPlayer::closeURL () {
+    stop ();
+    m_href = QString::null;
+    movie_height = movie_width = 0;
+    if (!m_view) return false;
+    setMovieLength (0);
+    m_view->viewer ()->setAspect (0.0);
+    m_view->reset ();
+    return true;
+}
+
 bool KMPlayer::openFile () {
     return false;
 }
@@ -294,8 +318,10 @@ void KMPlayer::processOutput (KProcess *, char * str, int len) {
 
     QString out = QString::fromLocal8Bit (str, len);
 
-    if (m_posRegExp.search (out) > -1) {
-        // during playing, this regexp will match often
+    if (out.contains (QChar ('\r'))) {
+        // playing stats
+        if (m_posRegExp.search (out) < 0)
+            return;
         m_movie_position = int (10.0 * m_posRegExp.cap (1).toFloat ());
         if (m_view) {
             QSlider *slider = m_view->positionSlider ();
@@ -310,7 +336,7 @@ void KMPlayer::processOutput (KProcess *, char * str, int len) {
         m_view->addText (out);
         QRegExp sizeRegExp (m_configdialog->sizepattern);
         bool ok;
-        if (sizeRegExp.search (out) > -1) {
+        if (movie_width <= 0 && sizeRegExp.search (out) > -1) {
             movie_width = sizeRegExp.cap (1).toInt (&ok);
             movie_height = ok ? sizeRegExp.cap (2).toInt (&ok) : 0;
             if (ok && movie_width > 0 && movie_height > 0 && m_view->viewer ()->aspect () < 0.01) {
@@ -396,7 +422,7 @@ void KMPlayer::processStopped (KProcess *) {
 void KMPlayer::setMovieLength (int len) {
     m_movie_length = len;
     if (m_view)
-        m_view->positionSlider()->setMaxValue (len > 0 ? m_movie_length : 200);
+        m_view->positionSlider()->setMaxValue (len > 0 ? m_movie_length : 300);
 }
 
 void KMPlayer::pause () {
