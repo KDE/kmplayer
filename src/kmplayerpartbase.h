@@ -40,6 +40,7 @@ class MPlayer;
 class KMPlayerBookmarkOwner;
 class KMPlayerBookmarkManager;
 class MEncoder;
+class MPlayerDumpstream;
 class FFMpeg;
 class Xine;
 class KMPlayerSettings;
@@ -107,6 +108,7 @@ public:
     KMPlayerProcess * recorder () const { return m_recorder; }
     MPlayer * mplayer () const { return m_mplayer; }
     MEncoder * mencoder () const { return m_mencoder; }
+    MPlayerDumpstream * mplayerdumpstream () const { return m_mplayerdumpstream; }
     FFMpeg * ffmpeg () const { return m_ffmpeg; }
     Xine * xine () const { return m_xine; }
     KMPlayerURLSource * urlSource () const { return m_urlsource; }
@@ -178,6 +180,7 @@ protected:
     KMPlayerProcess * m_recorder;
     MPlayer * m_mplayer;
     MEncoder * m_mencoder;
+    MPlayerDumpstream * m_mplayerdumpstream;
     FFMpeg * m_ffmpeg;
     Xine * m_xine;
     KMPlayerURLSource * m_urlsource;

@@ -91,12 +91,20 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, KMPlayerSettings * s
     vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
+
     m_MEncoderPage = new KMPlayerPrefMEncoderPage (tab, player);
     tab->insertTab (m_MEncoderPage, i18n ("MEncoder"));
     recorders.push_back (m_MEncoderPage);
+
     m_FFMpegPage = new KMPlayerPrefFFMpegPage (tab, player);
     tab->insertTab (m_FFMpegPage, i18n ("FFMpeg"));
     recorders.push_back (m_FFMpegPage);
+
+//    m_MPlayerDumpstreamPage = new KMPlayerPrefMPlayerDumpstreamPage (tab, player);
+    m_MPlayerDumpstreamPage = new KMPlayerPrefMPlayerDumpstreamPage (NULL, player);
+//    tab->insertTab (m_MPlayerDumpstreamPage, i18n ("MPlayer -dumpstream"));
+    recorders.push_back (m_MPlayerDumpstreamPage);
+
     m_RecordPage = new KMPlayerPrefRecordPage (tab, player, recorders);
     tab->insertTab (m_RecordPage, i18n ("General"), 0);
     tab->setCurrentPage (0);
@@ -406,6 +414,26 @@ QString KMPlayerPrefMEncoderPage::name () {
 }
 
 bool KMPlayerPrefMEncoderPage::sourceSupported (KMPlayerSource *) {
+    return true;
+}
+
+KMPlayerPrefMPlayerDumpstreamPage::KMPlayerPrefMPlayerDumpstreamPage (QWidget *parent, KMPlayer * player) : RecorderPage (parent, player) {
+}
+
+void KMPlayerPrefMPlayerDumpstreamPage::record () {
+    m_player->setRecorder (m_player->mplayerdumpstream ());
+    if (!m_player->mplayerdumpstream()->playing ()) {
+        m_player->mplayerdumpstream ()->setURL (KURL (m_player->settings ()->recordfile));
+        m_player->mplayerdumpstream ()->play ();
+    } else
+        m_player->mplayerdumpstream ()->stop ();
+}
+
+QString KMPlayerPrefMPlayerDumpstreamPage::name () {
+    return i18n ("MPlayer -&dumpstream");
+}
+
+bool KMPlayerPrefMPlayerDumpstreamPage::sourceSupported (KMPlayerSource *) {
     return true;
 }
 

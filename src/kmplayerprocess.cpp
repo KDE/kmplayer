@@ -756,6 +756,63 @@ bool MEncoder::stop () {
 
 //-----------------------------------------------------------------------------
 
+MPlayerDumpstream::MPlayerDumpstream (KMPlayer * player)
+    : MPlayerBase (player) {
+    }
+
+MPlayerDumpstream::~MPlayerDumpstream () {
+}
+
+void MPlayerDumpstream::init () {
+}
+
+bool MPlayerDumpstream::play () {
+    if (!m_source)
+        return false;
+    bool success = false;
+    stop ();
+    initProcess ();
+    source ()->setPosition (0);
+    QString args;
+    m_use_slave = m_source->pipeCmd ().isEmpty ();
+    if (!m_use_slave)
+        args = m_source->pipeCmd () + QString (" | ");
+    args += QString ("mplayer ") + m_source->recordCmd ();
+    KURL url (m_source->current ());
+    QString myurl = url.isLocalFile () ? url.path () : url.url ();
+    bool post090 = m_player->settings ()->mplayerpost090;
+    if (!myurl.isEmpty ()) {
+        if (!post090 && myurl.startsWith (QString ("tv://")))
+            ; // skip it
+        else if (!post090 && myurl.startsWith (QString ("vcd://")))
+            args += myurl.replace (0, 6, QString (" -vcd "));
+        else if (!post090 && myurl.startsWith (QString ("dvd://")))
+            args += myurl.replace (0, 6, QString (" -dvd "));
+        else {
+            QString myurl = url.isLocalFile () ? url.path () : url.url ();
+            args += ' ' + KProcess::quote (QString (QFile::encodeName (myurl)));
+        }
+    }
+    QString outurl = KProcess::quote (QString (QFile::encodeName (m_recordurl.isLocalFile () ? m_recordurl.path () : m_recordurl.url ())));
+    kdDebug () << args << " -dumpstream -dumpfile " << outurl << endl;
+    *m_process << args << " -dumpstream -dumpfile " << outurl;
+    m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
+    success = m_process->isRunning ();
+    if (success)
+        emitStarted ();
+    return success;
+}
+
+bool MPlayerDumpstream::stop () {
+    kdDebug () << "MPlayerDumpstream::stop ()" << endl;
+    if (!source () || !m_process || !m_process->isRunning ()) return true;
+    if (m_use_slave)
+        m_process->kill (SIGINT);
+    return MPlayerBase::stop ();
+}
+
+//-----------------------------------------------------------------------------
+
 static int callback_counter = 0;
 
 KMPlayerCallback::KMPlayerCallback (KMPlayerCallbackProcess * process)

@@ -33,6 +33,7 @@ class KMPlayerPrefSourcePageURL;        // source, url
 class KMPlayerPrefRecordPage;           // recording
 class RecorderPage;                     // base recorder
 class KMPlayerPrefMEncoderPage;         // mencoder
+class KMPlayerPrefMPlayerDumpstreamPage; // mplayer -dumpstream
 class KMPlayerPrefFFMpegPage;           // ffmpeg
 class KMPlayerPrefGeneralPageOutput;	// general, output
 class KMPlayerPrefOPPageGeneral;	// OP = outputplugins, general
@@ -71,6 +72,7 @@ public:
     KMPlayerPrefSourcePageURL 		*m_SourcePageURL;
     KMPlayerPrefRecordPage 		*m_RecordPage;
     KMPlayerPrefMEncoderPage            *m_MEncoderPage;
+    KMPlayerPrefMPlayerDumpstreamPage   *m_MPlayerDumpstreamPage;
     KMPlayerPrefFFMpegPage              *m_FFMpegPage;
     KMPlayerPrefGeneralPageOutput 	*m_GeneralPageOutput;
     KMPlayerPrefOPPageGeneral 		*m_OPPageGeneral;
@@ -178,6 +180,22 @@ public:
     QButtonGroup * format;
 public slots:
     void formatClicked (int id);
+private:
+};
+
+class KMPlayerPrefMPlayerDumpstreamPage : public RecorderPage 
+{
+    Q_OBJECT
+public:
+    KMPlayerPrefMPlayerDumpstreamPage (QWidget *parent, KMPlayer *);
+    ~KMPlayerPrefMPlayerDumpstreamPage () {}
+
+    void record ();
+    QString name ();
+    bool sourceSupported (KMPlayerSource *);
+
+    QLineEdit * arguments;
+    QButtonGroup * format;
 private:
 };
 

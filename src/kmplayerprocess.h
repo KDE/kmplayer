@@ -180,6 +180,18 @@ public slots:
     virtual bool stop ();
 };
 
+class MPlayerDumpstream : public MPlayerBase, public Recorder {
+    Q_OBJECT
+public:
+    MPlayerDumpstream (KMPlayer * player);
+    ~MPlayerDumpstream ();
+    virtual void init ();
+    const KURL & recordURL () const { return m_recordurl; }
+public slots:
+    virtual bool play ();
+    virtual bool stop ();
+};
+
 class KMPlayerXMLPreferencesPage;
 class KMPlayerXMLPreferencesFrame;
 

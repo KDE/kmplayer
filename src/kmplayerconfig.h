@@ -121,7 +121,7 @@ public:
 // end of postproc
     // recording
     bool recordcopy : 1;
-    enum Recorder { MEncoder = 0, FFMpeg };
+    enum Recorder { MEncoder = 0, FFMpeg, MPlayerDumpstream };
     Recorder recorder;
     enum ReplayOption { ReplayNo = 0, ReplayFinished, ReplayAfter };
     ReplayOption replayoption;
