@@ -21,6 +21,7 @@
 
 // include files for Qt
 #include <qprinter.h>
+#include <qtimer.h>
 #include <qpainter.h>
 #include <qmetaobject.h>
 #include <qlayout.h>
@@ -774,8 +775,10 @@ bool KMPlayerView::x11Event (XEvent * e) {
                 delayedShowButtons (e->xmotion.y > height () - (8+button_height));
             break;
         case MapNotify:
-            if (e->xunmap.event == m_viewer->embeddedWinId ())
+            if (e->xmap.event == m_viewer->embeddedWinId ()) {
                 show ();
+                QTimer::singleShot (10, m_viewer, SLOT (sendConfigureEvent ()));
+            }
             break;
         /*case ConfigureNotify:
             break;
@@ -853,6 +856,17 @@ void KMPlayerViewer::sendKeyEvent (int key) {
         0, XKeysymToKeycode (qt_xdisplay (), keysym), true
     };
     XSendEvent (qt_xdisplay(), embeddedWinId (), FALSE, KeyPressMask, (XEvent *) &event);
+}
+
+void KMPlayerViewer::sendConfigureEvent () {
+    XConfigureEvent c = {
+        ConfigureNotify, 0UL, True,
+        qt_xdisplay (), embeddedWinId (), winId (),
+        x (), y (), width (), height (),
+        0, None, False
+    };
+    XSendEvent(qt_xdisplay(), c.event, TRUE, StructureNotifyMask, (XEvent*) &c);
+    XFlush (qt_xdisplay ());
 }
 
 #include "kmplayerview.moc"

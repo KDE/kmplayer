@@ -203,6 +203,8 @@ public:
     void setAspect (float a);
     float aspect () { return m_aspect; }
     void sendKeyEvent (int key);
+public slots:
+    void sendConfigureEvent ();
 signals:
     void aspectChanged ();
 protected:
