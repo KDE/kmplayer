@@ -192,7 +192,6 @@ protected:
     BookmarkOwner * m_bookmark_owner;
     KBookmarkMenu * m_bookmark_menu;
     int m_record_timer;
-    bool m_ispart : 1;
     bool m_noresize : 1;
     bool m_use_slave : 1;
     bool m_bPosSliderPressed : 1;

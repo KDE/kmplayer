@@ -106,7 +106,6 @@ PartBase::PartBase (QWidget * wparent, const char *wname,
    m_source (0L),
    m_bookmark_menu (0L),
    m_record_timer (0),
-   m_ispart (false),
    m_noresize (false),
    m_in_update_tree (false)
 {
@@ -156,6 +155,7 @@ KDE_NO_EXPORT void PartBase::addBookMark (const QString & t, const QString & url
 }
 
 void PartBase::init (KActionCollection * action_collection) {
+    KParts::Part::setWidget (m_view);
     m_view->init ();
     m_settings->readConfig ();
     ControlPanel * panel = m_view->controlPanel ();
@@ -198,8 +198,6 @@ void PartBase::init (KActionCollection * action_collection) {
 
 PartBase::~PartBase () {
     kdDebug() << "PartBase::~PartBase" << endl;
-    if (!m_ispart)
-        delete (View*) m_view;
     m_view = (View*) 0;
     stop ();
     if (m_source)

@@ -107,7 +107,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
 
 KDE_NO_CDTOR_EXPORT KMPlayerApp::~KMPlayerApp () {
     delete m_broadcastconfig;
-    delete m_player;
     if (!m_dcopName.isEmpty ()) {
         QCString replytype;
         QByteArray data, replydata;

@@ -135,12 +135,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
    m_havehref (false) {
     kdDebug () << "MPlayer(" << this << ")::KMPlayer ()" << endl;
     bool show_fullscreen = false;
-    m_ispart = true;
-    init ();
-    m_sources ["hrefsource"] = (new KMPlayerHRefSource (this));
     if (!kmplayerpart_static)
         kmplayerpart_static = kmplayerpart_staticdeleter.setObject (new KMPlayerPartStatic ());
     setInstance (KMPlayerFactory::instance (), true);
+    init ();
+    m_sources ["hrefsource"] = (new KMPlayerHRefSource (this));
     /*KAction *playact =*/ new KAction(i18n("P&lay"), QString ("player_play"), KShortcut (), this, SLOT(play ()), actionCollection (), "play");
     /*KAction *pauseact =*/ new KAction(i18n("&Pause"), QString ("player_pause"), KShortcut (), this, SLOT(pause ()), actionCollection (), "pause");
     /*KAction *stopact =*/ new KAction(i18n("&Stop"), QString ("player_stop"), KShortcut (), this, SLOT(stop ()), actionCollection (), "stop");
@@ -244,7 +243,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
 	    }
         }
     }
-    KParts::Part::setWidget (m_view);
+    //KParts::Part::setWidget (m_view);
     setXMLFile("kmplayerpartui.rc");
     panel->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom50,
                                       this, SLOT (setMenuZoom (int)));
