@@ -1099,6 +1099,32 @@ QString CallbackProcess::dcopName () {
     return cbname;
 }
 
+void CallbackProcess::initProcess () {
+    Process::initProcess ();
+    connect (m_process, SIGNAL (processExited (KProcess *)),
+            this, SLOT (processStopped (KProcess *)));
+    connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
+            this, SLOT (processOutput (KProcess *, char *, int)));
+    connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
+            this, SLOT (processOutput (KProcess *, char *, int)));
+}
+
+KDE_NO_EXPORT void CallbackProcess::processOutput (KProcess *, char * str, int slen) {
+    View * v = view ();
+    if (v && slen > 0)
+        v->addText (QString::fromLocal8Bit (str, slen));
+}
+
+KDE_NO_EXPORT void CallbackProcess::processStopped (KProcess *) {
+    delete m_backend;
+    m_backend = 0L;
+    setState (NotRunning);
+    if (m_send_config == send_try) {
+        m_send_config = send_new; // we failed, retry ..
+        ready ();
+    }
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT ConfigDocument::ConfigDocument ()
@@ -1364,16 +1390,6 @@ KDE_NO_EXPORT WId Xine::widget () {
     return view()->viewer()->embeddedWinId ();
 }
 
-KDE_NO_EXPORT void Xine::initProcess () {
-    Process::initProcess ();
-    connect (m_process, SIGNAL (processExited (KProcess *)),
-            this, SLOT (processStopped (KProcess *)));
-    connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
-            this, SLOT (processOutput (KProcess *, char *, int)));
-    connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
-            this, SLOT (processOutput (KProcess *, char *, int)));
-}
-
 bool Xine::ready () {
     initProcess ();
     QString xine_config = KProcess::quote (QString (QFile::encodeName (locateLocal ("data", "kmplayer/") + QString ("xine_config"))));
@@ -1448,22 +1464,6 @@ KDE_NO_EXPORT bool Xine::seek (int pos, bool absolute) {
     return true;
 }
 
-KDE_NO_EXPORT void Xine::processOutput (KProcess *, char * str, int slen) {
-    View * v = view ();
-    if (v && slen > 0)
-        v->addText (QString::fromLocal8Bit (str, slen));
-}
-
-KDE_NO_EXPORT void Xine::processStopped (KProcess *) {
-    delete m_backend;
-    m_backend = 0L;
-    setState (NotRunning);
-    if (m_send_config == send_try) {
-        m_send_config = send_new; // we failed, retry ..
-        ready ();
-    }
-}
-
 //-----------------------------------------------------------------------------
 
 static const char * gst_supported [] = {
@@ -1485,16 +1485,6 @@ KDE_NO_EXPORT QString GStreamer::menuName () const {
 
 KDE_NO_EXPORT WId GStreamer::widget () {
     return view()->viewer()->embeddedWinId ();
-}
-
-KDE_NO_EXPORT void GStreamer::initProcess () {
-    Process::initProcess ();
-    connect (m_process, SIGNAL (processExited (KProcess *)),
-            this, SLOT (processStopped (KProcess *)));
-    connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
-            this, SLOT (processOutput (KProcess *, char *, int)));
-    connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
-            this, SLOT (processOutput (KProcess *, char *, int)));
 }
 
 KDE_NO_EXPORT bool GStreamer::ready () {
@@ -1552,18 +1542,6 @@ KDE_NO_EXPORT bool GStreamer::seek (int pos, bool absolute) {
         m_backend->seek (pos, true);
     m_request_seek = pos;
     return true;
-}
-
-KDE_NO_EXPORT void GStreamer::processOutput (KProcess *, char * str, int slen) {
-    View * v = view ();
-    if (v && slen > 0)
-        v->addText (QString::fromLocal8Bit (str, slen));
-}
-
-KDE_NO_EXPORT void GStreamer::processStopped (KProcess *) {
-    delete m_backend;
-    m_backend = 0L;
-    setState (NotRunning);
 }
 
 //-----------------------------------------------------------------------------

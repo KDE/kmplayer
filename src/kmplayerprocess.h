@@ -232,6 +232,7 @@ public:
     void setChangedData (const QByteArray &);
     QString dcopName ();
     ElementPtr configDocument () { return configdoc; }
+    void initProcess ();
 public slots:
     bool play (Source *);
     bool stop ();
@@ -242,6 +243,9 @@ public slots:
     bool brightness (int pos, bool absolute);
 signals:
     void configReceived ();
+protected slots:
+    void processStopped (KProcess *);
+    void processOutput (KProcess *, char *, int);
 protected:
     Callback * m_callback;
     Backend_stub * m_backend;
@@ -305,14 +309,10 @@ public:
     ~Xine ();
     QString menuName () const;
     WId widget ();
-    void initProcess ();
 public slots:
     bool ready ();
     bool quit ();
     bool seek (int pos, bool absolute);
-private slots:
-    void processStopped (KProcess *);
-    void processOutput (KProcess *, char *, int);
 };
 
 class GStreamer : public CallbackProcess {
@@ -322,14 +322,10 @@ public:
     ~GStreamer ();
     QString menuName () const;
     WId widget ();
-    void initProcess ();
 public slots:
     virtual bool ready ();
     bool quit ();
     bool seek (int pos, bool absolute);
-private slots:
-    void processStopped (KProcess *);
-    void processOutput (KProcess *, char *, int);
 };
 
 class KMPLAYER_EXPORT FFMpeg : public Process, public Recorder {

@@ -146,13 +146,9 @@ public:
     XVideo (KMPlayer::PartBase * player);
     ~XVideo ();
     QString menuName () const;
-    void initProcess ();
 public slots:
     virtual bool ready ();
     virtual bool quit ();
-private slots:
-    void processStopped (KProcess *);
-    void processOutput (KProcess *, char *, int);
 };
 
 #endif // KMPLAYER_VDR_SOURCE_H

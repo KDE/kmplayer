@@ -676,16 +676,6 @@ KDE_NO_CDTOR_EXPORT XVideo::XVideo (KMPlayer::PartBase * player)
 
 KDE_NO_CDTOR_EXPORT XVideo::~XVideo () {}
 
-KDE_NO_EXPORT void XVideo::initProcess () {
-    KMPlayer::Process::initProcess ();
-    connect (m_process, SIGNAL (processExited (KProcess *)),
-            this, SLOT (processStopped (KProcess *)));
-    connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
-            this, SLOT (processOutput (KProcess *, char *, int)));
-    connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
-            this, SLOT (processOutput (KProcess *, char *, int)));
-}
-
 KDE_NO_EXPORT QString XVideo::menuName () const {
     return i18n ("X&Video");
 }
@@ -728,16 +718,6 @@ KDE_NO_EXPORT bool XVideo::quit () {
     } while (t.elapsed () < 2000 && m_process->isRunning ());
 #endif
     return KMPlayer::Process::stop ();
-}
-
-KDE_NO_EXPORT void XVideo::processStopped (KProcess *) {
-    setState (KMPlayer::Process::NotRunning);
-}
-
-KDE_NO_EXPORT void XVideo::processOutput (KProcess *, char * str, int slen) {
-    KMPlayer::View * v = view ();
-    if (v && slen > 0)
-        v->addText (QString::fromLocal8Bit (str, slen));
 }
 
 #include "kmplayervdr.moc"
