@@ -171,6 +171,7 @@ signals:
 protected:
     void showEvent (QShowEvent *);
     void hideEvent (QHideEvent *);
+    void resizeEvent (QResizeEvent *);
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
     bool x11Event (XEvent *);

@@ -701,6 +701,17 @@ void KMPlayerViewer::showEvent (QShowEvent *) {
     XFlush (qt_xdisplay ());
 }
 
+void KMPlayerViewer::resizeEvent (QResizeEvent *) {
+    XConfigureEvent c = {
+        ConfigureNotify, 0UL, True,
+        qt_xdisplay (), winId (), parentWidget ()->winId (),
+        0, 0, width (), height (),
+        0, None, False
+    };
+    XSendEvent(qt_xdisplay(), c.event, TRUE, StructureNotifyMask, (XEvent*) &c);
+    XFlush (qt_xdisplay ());
+}
+
 void KMPlayerViewer::hideEvent (QHideEvent *) {
     printf ("hide\n");
 }

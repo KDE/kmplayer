@@ -41,87 +41,21 @@
 #include <qslider.h>
 #include <qvaluelist.h>
 
-#include <kprocess.h>
-#include <kprocctrl.h>
 #include <klibloader.h>
 #include <kmessagebox.h>
 #include <kaboutdata.h>
 #include <kdebug.h>
 #include <kconfig.h>
 #include <kaction.h>
-#include <kprotocolmanager.h>
-#include <kfiledialog.h>
 #include <kstandarddirs.h>
+#include <kprocess.h>
 
 #include "kmplayer_part.h"
 #include "kmplayer_koffice_part.h"
 #include "kmplayerview.h"
 #include "kmplayerconfig.h"
-#include <qfile.h>
+#include "kmplayerprocess.h"
 
-//merge KProtocolManager::proxyForURL and KProtocolManager::slaveProtocol
-static bool revmatch(const char *host, const char *nplist) {
-    if (host == 0) return false;
-
-    const char *hptr = host + strlen( host ) - 1;
-    const char *nptr = nplist + strlen( nplist ) - 1;
-    const char *shptr = hptr;
-
-    while (nptr >= nplist) {
-        if (*hptr != *nptr) {
-            hptr = shptr;
-
-            // Try to find another domain or host in the list
-            while (--nptr >= nplist && *nptr != ',' && *nptr != ' ');
-
-            // Strip out multiple spaces and commas
-            while (--nptr >= nplist && (*nptr == ',' || *nptr == ' '));
-        } else {
-            if (nptr == nplist || nptr[-1] == ',' || nptr[-1] == ' ')
-                return true;
-            hptr--;
-            nptr--;
-        }
-    }
-    return false;
-}
-
-static bool proxyForURL (KURL & url, QString & proxy) {
-    QString protocol = url.protocol ();
-    bool protocol_hack = false;
-    if (protocol != "http" || protocol != "https" || protocol != "ftp") {
-        protocol_hack = true;
-        url.setProtocol ("http");
-    }
-    proxy = KProtocolManager::proxyForURL (url);
-    if (protocol_hack)
-        url.setProtocol (protocol);
-    if (!proxy.isEmpty() && proxy != QString::fromLatin1 ("DIRECT")) {
-        QString noProxy = KProtocolManager::noProxyFor ();
-        KProtocolManager::ProxyType type = KProtocolManager::proxyType();
-        bool useRevProxy = ((type == KProtocolManager::ManualProxy ||
-                             type == KProtocolManager::EnvVarProxy) &&
-                            KProtocolManager::useReverseProxy ());
-        bool isRevMatch = false;
-
-        if (!noProxy.isEmpty()) {
-            QString qhost = url.host().lower();
-            const char *host = qhost.latin1();
-            QString qno_proxy = noProxy.stripWhiteSpace().lower();
-            const char *no_proxy = qno_proxy.latin1();
-            isRevMatch = revmatch(host, no_proxy);
-            // If the hostname does not contain a dot, check if
-            // <local> is part of noProxy.
-            if (!isRevMatch && host && (strchr(host, '.') == NULL))
-                isRevMatch = revmatch("<local>", no_proxy);
-        }
-        if ((!useRevProxy && !isRevMatch) || (useRevProxy && isRevMatch))
-            return true;
-    }
-    return false;
-}
-
-//-----------------------------------------------------------------------------
 
 K_EXPORT_COMPONENT_FACTORY (kparts_kmplayer, KMPlayerFactory);
 
@@ -155,7 +89,9 @@ KMPlayer::KMPlayer (QWidget * parent, KConfig * config)
    m_config (config),
    m_view (new KMPlayerView (parent)),
    m_settings (new KMPlayerSettings (this, config)),
-   m_source (0L),
+   m_process (0L),
+   m_mplayer (new MPlayer (this)),
+   m_mencoder (new MEncoder (this)),
    m_urlsource (new KMPlayerURLSource (this)),
    m_hrefsource (new KMPlayerHRefSource (this)),
    m_liveconnectextension (0L),
@@ -174,7 +110,9 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
    m_config (new KConfig ("kmplayerrc")),
    m_view (new KMPlayerView (wparent, wname)),
    m_settings (new KMPlayerSettings (this, m_config)),
-   m_source (0L),
+   m_process (0L),
+   m_mplayer (new MPlayer (this)),
+   m_mencoder (new MEncoder (this)),
    m_urlsource (new KMPlayerURLSource (this)),
    m_hrefsource (new KMPlayerHRefSource (this)),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
@@ -229,11 +167,9 @@ void KMPlayer::showConfigDialog () {
 
 void KMPlayer::init () {
     m_settings->readConfig ();
-    m_process = 0L;
-    m_use_slave = false;
+    setProcess (m_mplayer);
     m_recording = false;
     m_started_emited = false;
-    initProcess ();
     m_browserextension = new KMPlayerBrowserExtension (this);
     m_movie_position = 0;
     m_bPosSliderPressed = false;
@@ -241,7 +177,6 @@ void KMPlayer::init () {
     m_view->brightnessSlider ()->setValue (m_settings->brightness);
     m_view->hueSlider ()->setValue (m_settings->hue);
     m_view->saturationSlider ()->setValue (m_settings->saturation);
-    m_posRegExp.setPattern (m_settings->positionpattern);
     connect (m_view->backButton (), SIGNAL (clicked ()), this, SLOT (back ()));
     connect (m_view->playButton (), SIGNAL (clicked ()), this, SLOT (play ()));
     connect (m_view->forwardButton (), SIGNAL (clicked ()), this, SLOT (forward ()));
@@ -258,28 +193,10 @@ void KMPlayer::init () {
     connect (m_view, SIGNAL (urlDropped (const KURL &)), this, SLOT (openURL (const KURL &)));
     m_view->popupMenu ()->connectItem (KMPlayerView::menu_config,
                                        m_settings, SLOT (show ()));
+    connect (m_mencoder, SIGNAL (finished ()),
+             m_view->recordButton (), SLOT (toggle ()));
     setMovieLength (0);
     //connect (m_view->configButton (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
-}
-
-void KMPlayer::initProcess () {
-    delete m_process;
-    m_process = new KProcess;
-    m_process->setUseShell (true);
-    if (!m_urlsource->url ().isEmpty ()) {
-        QString proxy_url;
-        KURL url = m_urlsource->url();
-        if (KProtocolManager::useProxy () && proxyForURL (url, proxy_url))
-            m_process->setEnvironment("http_proxy", proxy_url);
-    }
-    connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
-            this, SLOT (processOutput (KProcess *, char *, int)));
-    connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
-            this, SLOT (processOutput (KProcess *, char *, int)));
-    connect (m_process, SIGNAL (wroteStdin (KProcess *)),
-            this, SLOT (processDataWritten (KProcess *)));
-    connect (m_process, SIGNAL (processExited (KProcess *)),
-            this, SLOT (processStopped (KProcess *)));
 }
 
 KMPlayer::~KMPlayer () {
@@ -289,7 +206,6 @@ KMPlayer::~KMPlayer () {
     m_view = (KMPlayerView*) 0;
     stop ();
     delete m_settings;
-    delete m_process;
     if (m_ispart)
         delete m_config;
 }
@@ -298,22 +214,49 @@ KMediaPlayer::View* KMPlayer::view () {
     return m_view;
 }
 
+void KMPlayer::setProcess (KMPlayerProcess * process) {
+    if (m_process == process)
+        return;
+    if (m_process) {
+        m_process->stop ();
+        disconnect (m_process, SIGNAL (started ()),
+                    this, SLOT (processStarted ()));
+        disconnect (m_process, SIGNAL (finished ()),
+                    this, SLOT (processFinished ()));
+        disconnect (m_process, SIGNAL (positionChanged (int)),
+                    this, SLOT (processPosition (int)));
+        disconnect (m_process, SIGNAL (loading (int)),
+                    this, SLOT (processLoading (int)));
+        disconnect (m_process, SIGNAL (startPlaying ()),
+                    this, SLOT (processPlaying ()));
+    }
+    m_process = process;
+    connect (m_process, SIGNAL (started ()), this, SLOT (processStarted ()));
+    connect (m_process, SIGNAL (finished ()), this, SLOT (processFinished ()));
+    connect (m_process, SIGNAL (positionChanged (int)),
+             this, SLOT (processPosition (int)));
+    connect (m_process, SIGNAL (loading (int)),
+             this, SLOT (processLoading (int)));
+    connect (m_process, SIGNAL (startPlaying ()),
+             this, SLOT (processPlaying ()));
+}
+
 void KMPlayer::setSource (KMPlayerSource * source, bool keepsizes) {
-    KMPlayerSource * oldsource = m_source;
+    KMPlayerSource * oldsource = m_process->source ();
     int w = movie_width;
     int h = movie_height;
     if (oldsource) {
         oldsource->deactivate ();
         closeURL ();
     }
-    m_source = source;
+    m_process->setSource (source);
     if (!oldsource)
         setMovieLength (0);
-    if (m_source->hasLength () && m_settings->showposslider)
+    if (source->hasLength () && m_settings->showposslider)
         m_view->positionSlider()->show ();
     else
         m_view->positionSlider()->hide ();
-    if (m_source->isSeekable ()) {
+    if (source->isSeekable ()) {
         m_view->forwardButton ()->show ();
         m_view->backButton ()->show ();
     } else {
@@ -324,9 +267,25 @@ void KMPlayer::setSource (KMPlayerSource * source, bool keepsizes) {
         movie_width = w;
         movie_height = h;
     }
-    if (m_source) QTimer::singleShot (0, m_source, SLOT (activate ()));
+    if (source) QTimer::singleShot (0, source, SLOT (activate ()));
 }
 
+KMPlayerSource * KMPlayer::source () const {
+    return m_process->source ();
+}
+
+bool KMPlayer::isSeekable (void) const {
+    return m_process->source ()->isSeekable ();
+}
+
+bool KMPlayer::hasLength () const {
+    return m_process->source ()->hasLength (); 
+}
+
+unsigned long KMPlayer::length () const {
+    return m_process->source ()->length ();
+}
+            
 bool KMPlayer::openURL (const KURL & url) {
     kdDebug () << "KMPlayer::openURL " << url.url() << endl;
     if (!m_view || !url.isValid ()) return false;
@@ -357,87 +316,6 @@ bool KMPlayer::openFile () {
     return false;
 }
 
-void KMPlayer::processOutput (KProcess *, char * str, int slen) {
-    if (!m_view || slen <= 0) return;
-
-    do {
-        int len = strcspn (str, "\r\n");
-        QString out = m_process_output + QString::fromLocal8Bit (str, len);
-        m_process_output = QString::null;
-        str += len;
-        slen -= len;
-        if (slen <= 0) {
-            m_process_output = out;
-            break;
-        }
-        bool process_stats = false;
-        if (str[0] == '\r') {
-            if (slen > 1 && str[1] == '\n') {
-                str++;
-                slen--;
-            } else
-                process_stats = true;
-        }
-        str++;
-        slen--;
-
-        if (process_stats) {
-            if (m_source->hasLength () && m_posRegExp.search (out) > -1) {
-                m_movie_position = int (10.0 * m_posRegExp.cap (1).toFloat ());
-                QSlider *slider = m_view->positionSlider ();
-                if (m_source->length () <= 0 &&
-                    m_movie_position > 7 * slider->maxValue () / 8)
-                    slider->setMaxValue (slider->maxValue() * 2);
-                else if (slider->maxValue() < m_movie_position)
-                    slider->setMaxValue (int (1.4 * slider->maxValue()));
-                if (!m_bPosSliderPressed)
-                    slider->setValue (m_movie_position);
-            } else if (m_browserextension) {
-                if (m_cacheRegExp.search (out) > -1) {
-                    double p = m_cacheRegExp.cap (1).toDouble ();
-                    m_browserextension->setLoadingProgress (int (p));
-                    m_browserextension->infoMessage 
-                      (QString (m_cacheRegExp.cap (1)) + i18n ("% Cache fill"));
-                }
-            }
-	    
-        } else {
-            m_view->addText (out + QString ("\n"));
-            if (m_source->processOutput (out))
-                ;
-            else {
-                QRegExp sizeRegExp (m_settings->sizepattern);
-                bool ok;
-                if (movie_width <= 0 && sizeRegExp.search (out) > -1) {
-                    movie_width = sizeRegExp.cap (1).toInt (&ok);
-                    movie_height = ok ? sizeRegExp.cap (2).toInt (&ok) : 0;
-                    if (ok && movie_width > 0 && movie_height > 0 && m_view->viewer ()->aspect () < 0.01) {
-                        m_view->viewer ()->setAspect (1.0 * movie_width / movie_height);
-                        if (m_liveconnectextension)
-                            m_liveconnectextension->setSize (movie_width, movie_height);
-                    }
-                } else if (m_browserextension) {
-                    QRegExp startRegExp (m_settings->startpattern);
-                    if (startRegExp.search (out) > -1) {
-                        m_browserextension->setLoadingProgress (100);
-                        emit completed ();
-                        m_started_emited = false;
-                        m_browserextension->infoMessage (i18n("KMPlayer: Playing"));
-                    }
-                }
-            }
-        }
-    // WHERE SHOULD THIS BE?
-    // how can we write to statusbar from here?
-    
-    /*if (m_indexRegExp.search (out) > -1) {
-			double p = m_indexRegExp.cap (1).toDouble();
-			//parent->setLoadingProgress (int (p));
-			parent->slotStatusMsg (QString (i18n("Opening file...") + m_indexRegExp.cap (1) + "%");
-		}*/
-    } while (slen > 0);
-}
-
 void KMPlayer::keepMovieAspect (bool b) {
     m_view->setKeepSizeRatio (b);
     if (b) {
@@ -447,27 +325,8 @@ void KMPlayer::keepMovieAspect (bool b) {
         m_view->viewer ()->setAspect (0.0);
 }
 
-void KMPlayer::sendCommand (const QString & cmd) {
-    if (m_process->isRunning () && m_use_slave && !m_recording) {
-        commands.push_front (cmd + "\n");
-        printf ("eval %s", commands.last ().latin1 ());
-        m_process->writeStdin (QFile::encodeName(commands.last ()),
-                               commands.last ().length ());
-    }
-}
-
-void KMPlayer::processDataWritten (KProcess *) {
-    if (!commands.size ()) return;
-    printf ("eval done %s", commands.last ().latin1 ());
-    commands.pop_back ();
-    if (commands.size ())
-        m_process->writeStdin (QFile::encodeName(commands.last ()),
-                             commands.last ().length ());
-}
-
-void KMPlayer::processStopped (KProcess *) {
-    printf("process stopped\n");
-    commands.clear ();
+void KMPlayer::processFinished () {
+    kdDebug () << "process finished" << endl;
     if (m_recording) {
         m_recording = false;
         if (m_view && m_view->recordButton ()->isOn ()) 
@@ -476,7 +335,7 @@ void KMPlayer::processStopped (KProcess *) {
             openURL (m_recordurl);
         return;
     }
-    if (m_movie_position > m_source->length ())
+    if (m_movie_position > m_process->source ()->length ())
         setMovieLength (m_movie_position);
     m_movie_position = 0;
     if (m_started_emited) {
@@ -497,239 +356,114 @@ void KMPlayer::processStopped (KProcess *) {
     }
 }
 
-void KMPlayer::setMovieLength (int len) {
-    if (!m_source)
-        return;
-    m_source->setLength (len);
-    if (m_view)
-        m_view->positionSlider()->setMaxValue (len > 0 ? m_source->length () + 9 : 300);
-}
-
-void KMPlayer::pause () {
-    sendCommand (QString ("pause"));
-}
-
-void KMPlayer::back () {
-    QString cmd;
-    cmd.sprintf ("seek -%d 0", m_seektime);
-    sendCommand (cmd);
-}
-
-void KMPlayer::forward () {
-    QString cmd;
-    cmd.sprintf ("seek %d 0", m_seektime);
-    sendCommand (cmd);
-}
-
-void KMPlayer::record () {
-    if (!m_source || m_source->recordCommand ().isEmpty ()) {
-        if (m_view->recordButton ()->isOn ()) 
-            m_view->recordButton ()->toggle ();
-        return;
-    }
-    if (m_recording) {
-        stop ();
-        return;
-    }
-    KFileDialog *dlg = new KFileDialog (QString::null, QString::null, m_view, "", true);
-    if (dlg->exec ()) {
-        stop ();
-        initProcess ();
-        m_recording = true;
-        m_recordurl = dlg->selectedURL().url ();
-        QString myurl = KProcess::quote (m_recordurl.isLocalFile () ? m_recordurl.path () : m_recordurl.url ());
-        kdDebug () << m_source->recordCommand () << " -o " << myurl << endl;
-        *m_process << m_source->recordCommand () << " -o " << myurl;
-        m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
-        if (!m_process->isRunning () && m_view->recordButton ()->isOn ()) 
-            m_view->recordButton ()->toggle ();
-    } else
-        m_view->recordButton ()->toggle ();
-    delete dlg;
-}
-
-bool KMPlayer::run (const char * args, const char * pipe) {
-    stop ();
-    m_movie_position = 0;
-    m_view->consoleOutput ()->clear ();
-    m_process_output = QString::null;
-    m_started_emited = false;
-    initProcess ();
-    m_cacheRegExp.setPattern (m_settings->cachepattern);
-    m_indexRegExp.setPattern (m_settings->indexpattern);
-
-    if (m_settings->showposslider && m_source->hasLength ())
+void KMPlayer::processStarted () {
+    kdDebug () << "process started" << endl;
+    if (m_settings->showposslider && m_process->source ()->hasLength ())
         m_view->positionSlider()->show();
     else
         m_view->positionSlider()->hide();
-
-    m_use_slave = !(pipe && pipe[0]);
-    if (!m_use_slave) {
-        printf ("%s | ", pipe);
-        *m_process << pipe << " | ";
-    }
-    printf ("mplayer -wid %lu", (unsigned long) m_view->viewer ()->winId ());
-    *m_process << "mplayer -wid " << QString::number (m_view->viewer ()->winId());
-
-    QString strVideoDriver;
-
-    switch( m_settings->videodriver ){
-        case VDRIVER_XV_INDEX:
-            strVideoDriver = VDRIVER_XV;
-            break;
-        case VDRIVER_X11_INDEX:
-            strVideoDriver = VDRIVER_X11;
-            strVideoDriver.truncate(3);
-            break;
-        case VDRIVER_XVIDIX_INDEX:
-            strVideoDriver = VDRIVER_XVIDIX;
-            break;
-        default:		
-            strVideoDriver = VDRIVER_XV;
-            break;
-    }
-    printf (" -vo %s", strVideoDriver.lower().ascii());
-    *m_process << " -vo " << strVideoDriver.lower().ascii();
-
-    QString strAudioDriver;
-    strAudioDriver = QString (m_settings->audiodrivers[m_settings->audiodriver].audiodriver);
-    if (strAudioDriver != "") {
-        printf (" -ao %s", strAudioDriver.lower().ascii());
-        *m_process << " -ao " << strAudioDriver.lower().ascii();
-    }
-    if (m_settings->loop) {
-        printf (" -loop 0");
-        *m_process << " -loop 0";
-    }
-    if (m_settings->framedrop) {
-        printf (" -framedrop");
-        *m_process << " -framedrop";
-    }
-
-    /*if (!m_settings->audiodriver.contains("default", false)){
-      printf (" -ao %s", m_settings->audiodriver.lower().latin1());
-     *m_process << " -ao " << m_settings->audiodriver.lower().latin1();
-     }*/
-    if (m_settings->additionalarguments.length () > 0) {
-        printf (" %s", m_settings->additionalarguments.ascii());
-        *m_process << " " << m_settings->additionalarguments.ascii();
-    }
-    // postproc thingies
-
-    printf (" %s", source ()->filterOptions ().ascii ());
-    *m_process << " " << source ()->filterOptions ().ascii ();
-
-    printf (" -contrast %d", m_settings->contrast);
-    *m_process << " -contrast " << QString::number (m_settings->contrast);
-
-    printf (" -brightness %d", m_settings->brightness);
-    *m_process << " -brightness " << QString::number(m_settings->brightness);
-
-    printf (" -hue %d", m_settings->hue);
-    *m_process << " -hue " << QString::number (m_settings->hue);
-
-    printf (" -saturation %d", m_settings->saturation);
-    *m_process << " -saturation " << QString::number(m_settings->saturation);
-
-    printf (" %s", args);
-    *m_process << " " << args;
-
-    QValueList<QCString>::const_iterator it;
-    QString sMPArgs;
-    for ( it = m_process->args().begin(); it != m_process->args().end(); ++it ){
-        sMPArgs += (*it);
-    }
-    m_view->addText( sMPArgs.simplifyWhiteSpace() );
-
-    m_process->start (KProcess::NotifyOnExit, KProcess::All);
-
-    if (m_process->isRunning ()) {
-        if (!m_view->playButton ()->isOn ()) m_view->playButton ()->toggle ();
-        emit started (0L);
-        m_started_emited = true;
-        m_view->positionSlider()->setEnabled (true);
-        return true;
-    } else {
-        if (m_view->playButton ()->isOn ()) m_view->playButton ()->toggle ();
+    if (!m_view->playButton ()->isOn ()) m_view->playButton ()->toggle ();
+    emit started (0L);
+    m_started_emited = true;
+    m_view->positionSlider()->setEnabled (true);
+        /*if (m_view->playButton ()->isOn ()) m_view->playButton ()->toggle ();
         emit canceled (i18n ("Could not start MPlayer"));
-        return false;
+        return false; */
+}
+
+void KMPlayer::processPosition (int pos) {
+    m_movie_position = pos;
+    QSlider *slider = m_view->positionSlider ();
+    if (m_process->source ()->length () <= 0 && pos > 7 * slider->maxValue ()/8)
+        slider->setMaxValue (slider->maxValue() * 2);
+    else if (slider->maxValue() < pos)
+        slider->setMaxValue (int (1.4 * slider->maxValue()));
+    if (!m_bPosSliderPressed)
+        slider->setValue (pos);
+}
+
+void KMPlayer::processLoading (int percentage) {
+    if (m_browserextension) {
+        m_browserextension->setLoadingProgress (percentage);
+        m_browserextension->infoMessage 
+            (QString::number (percentage) + i18n ("% Cache fill"));
     }
+}
+
+void KMPlayer::processPlaying () {
+    if (movie_width <= 0) {
+        movie_width = m_process->source ()->width ();
+        movie_height = m_process->source ()->height ();
+    }
+    kdDebug () << "KMPlayer::processPlaying " << movie_width << "," << movie_height << endl;
+    m_view->viewer ()->setAspect (1.0 * movie_width / movie_height);
+    if (m_liveconnectextension)
+        m_liveconnectextension->setSize (movie_width, movie_height);
+    if (m_browserextension) {
+        m_browserextension->setLoadingProgress (100);
+        emit completed ();
+        m_started_emited = false;
+        m_browserextension->infoMessage (i18n("KMPlayer: Playing"));
+    }
+}
+
+void KMPlayer::setMovieLength (int len) {
+    if (!m_process->source ())
+        return;
+    m_process->source ()->setLength (len);
+    if (m_view)
+        m_view->positionSlider()->setMaxValue (len > 0 ? m_process->source ()->length () + 9 : 300);
+}
+
+void KMPlayer::pause () {
+    m_process->pause ();
+}
+
+void KMPlayer::back () {
+    m_process->seek (-1 * m_seektime, false);
+}
+
+void KMPlayer::forward () {
+    m_process->seek (m_seektime, false);
+}
+
+void KMPlayer::record () {
+    m_mencoder->setSource (m_process->source ());
+    if (m_mencoder->play ()) {
+        if (!m_view->recordButton ()->isOn ()) 
+            m_view->recordButton ()->toggle ();
+    } else if (m_view->recordButton ()->isOn ()) 
+        m_view->recordButton ()->toggle ();
 }
 
 void KMPlayer::play () {
-    if (m_process->isRunning ()) {
-        sendCommand (QString ("gui_play"));
-        if (!m_view->playButton ()->isOn ()) m_view->playButton ()->toggle ();
-    } else if (m_source) {
-        m_source->play ();
-        if (m_view->playButton ()->isOn () && !playing ())
-            m_view->playButton ()->toggle ();
-    }
+    m_process->play ();
+    if (m_process->playing () && !m_view->playButton ()->isOn ())
+        m_view->playButton ()->toggle ();
+    else if (!m_process->playing () && m_view->playButton ()->isOn ())
+        m_view->playButton ()->toggle ();
 }
 
 bool KMPlayer::playing () const {
-    return m_process->isRunning ();
+    return m_process && m_process->playing ();
 }
 
 void KMPlayer::stop () {
-    kdDebug () << "KMPlayer::stop ()" << endl;
-    if (m_process->isRunning ()) {
-        if (m_view && !m_view->stopButton ()->isOn ())
-            m_view->stopButton ()->toggle ();
-        if (m_view)
-            m_view->setCursor (QCursor (Qt::WaitCursor));
-        do {
-            if (m_recording) {
-                m_process->kill (SIGINT);
-                KProcessController::theKProcessController->waitForProcessExit (3);
-                if (!m_process->isRunning ())
-                    break;
-                m_process->kill (SIGTERM);
-            } else if (m_use_slave) {
-                sendCommand (QString ("quit"));
-                KProcessController::theKProcessController->waitForProcessExit (1);
-                if (!m_process->isRunning ())
-                    break;
-                m_process->kill (SIGTERM);
-            } else {
-                void (*oldhandler)(int) = signal(SIGTERM, SIG_IGN);
-                ::kill (-1 * ::getpid (), SIGTERM);
-                signal(SIGTERM, oldhandler);
-            }
-            KProcessController::theKProcessController->waitForProcessExit (1);
-            if (!m_process->isRunning ())
-                break;
-            m_process->kill (SIGKILL);
-            KProcessController::theKProcessController->waitForProcessExit (1);
-            if (m_process->isRunning ()) {
-                processStopped (0L); // give up
-                KMessageBox::error (m_view, i18n ("Failed to end MPlayer process."), i18n ("KMPlayer: Error"));
-            }
-        } while (false);
-        if (m_view)
-            m_view->setCursor (QCursor (Qt::ArrowCursor));
-    }
+    if (m_view && !m_view->stopButton ()->isOn ())
+        m_view->stopButton ()->toggle ();
+    if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
+    m_process->stop ();
+    if (m_view) m_view->setCursor (QCursor (Qt::ArrowCursor));
     if (m_view && m_view->stopButton ()->isOn ())
         m_view->stopButton ()->toggle ();
 }
 
-void KMPlayer::timerEvent (QTimerEvent *) {
-}
-
 void KMPlayer::seek (unsigned long msec) {
-    QString cmd;
-    cmd.sprintf ("seek %lu 2", msec/1000);
-    sendCommand (cmd);
-}
-
-void KMPlayer::seekPercent (float per) {
-    QString cmd;
-    cmd.sprintf ("seek %f 1", per);
-    sendCommand (cmd);
+    m_process->seek (msec/1000, true);
 }
 
 void KMPlayer::adjustVolume (int incdec) {
-    sendCommand (QString ("volume ") + QString::number (incdec));
+    m_process->volume (incdec, false);
 }
 
 void KMPlayer::sizes (int & w, int & h) const {
@@ -756,35 +490,27 @@ void KMPlayer::posSliderPressed () {
 
 void KMPlayer::posSliderReleased () {
     m_bPosSliderPressed=false;
-    seekPercent (100.0 * m_view->positionSlider()->value() / m_view->positionSlider()->maxValue());
+    seek (m_view->positionSlider()->value());
 }
 
 void KMPlayer::contrastValueChanged (int val) {
     m_settings->contrast = val;
-    QString cmd;
-    cmd.sprintf ("contrast %d 1", val);
-    sendCommand (cmd);
+    m_process->contrast (val, true);
 }
 
 void KMPlayer::brightnessValueChanged (int val) {
     m_settings->brightness = val;
-    QString cmd;
-    cmd.sprintf ("brightness %d 1", val);
-    sendCommand (cmd);
+    m_process->brightness (val, true);
 }
 
 void KMPlayer::hueValueChanged (int val) {
     m_settings->hue = val;
-    QString cmd;
-    cmd.sprintf ("hue %d 1", val);
-    sendCommand (cmd);
+    m_process->hue (val, true);
 }
 
 void KMPlayer::saturationValueChanged (int val) {
     m_settings->saturation = val;
-    QString cmd;
-    cmd.sprintf ("saturation %d 1", val);
-    sendCommand (cmd);
+    m_process->saturation (val, true);
 }
 
 void KMPlayer::positonValueChanged (int /*pos*/) {
@@ -1151,7 +877,7 @@ void KMPlayerURLSource::play () {
     if (url.isLocalFile ())
         m_ffmpegCommand = QString ("-i ") + url.path ();
     args += KProcess::quote (myurl);
-    m_player->run (args.latin1 ());
+    m_player->mplayer ()->run (args.latin1 ());
     if (m_player->liveconnectextension ())
         m_player->liveconnectextension ()->enableFinishEvent ();
 }
@@ -1164,7 +890,7 @@ void KMPlayerURLSource::activate () {
         QString args ("-quiet -nocache -identify -frames 0 ");
         QString myurl (url ().isLocalFile () ? url ().path () : m_url.url ());
         args += KProcess::quote (myurl);
-        if (m_player->run (args.ascii ()))
+        if (m_player->mplayer ()->run (args.ascii ()))
             connect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
     }
     m_player->settings ()->loop = loop;
@@ -1212,7 +938,7 @@ bool KMPlayerHRefSource::hasLength () {
     return false;
 }
 
-bool KMPlayerHRefSource::processOutput (const QString & str) {
+bool KMPlayerHRefSource::processOutput (const QString & /*str*/) {
     //return KMPlayerSource::processOutput (str);
     return true;
 }
@@ -1236,18 +962,18 @@ void KMPlayerHRefSource::activate () {
     KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
     init ();
     m_player->stop ();
-    m_player->initProcess ();
+    m_player->mplayer ()->initProcess ();
     view->consoleOutput ()->clear ();
     unlink (locateLocal ("data", "kmplayer/00000001.jpg").ascii ());
     QString outdir = locateLocal ("data", "kmplayer/");
     QString myurl (m_url.isLocalFile () ? m_url.path () : m_url.url ());
     QString args;
     args.sprintf ("mplayer -vo jpeg -jpeg outdir=%s -frames 1 -nosound -quiet %s", KProcess::quote (outdir).ascii (), KProcess::quote (myurl).ascii ());
-    *m_player->process () << args;
+    *m_player->mplayer ()->process () << args;
     kdDebug () << args << endl;
-    m_player->process ()->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
+    m_player->mplayer ()->process ()->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
 
-    if (m_player->process ()->isRunning ())
+    if (m_player->playing ())
         connect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
     else {
         setURL (KURL ());

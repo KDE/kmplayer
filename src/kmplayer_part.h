@@ -32,17 +32,17 @@
 #include "kmplayersource.h"
 
 
-class KProcess;
 class KAboutData;
 class KMPlayer;
+class KMPlayerProcess;
+class MPlayer;
+class MEncoder;
 class KMPlayerSettings;
 class KInstance;
 class KConfig;
 class QIODevice;
 
-/**
-  *@author Koos Vriezen
-  */
+
 class KMPlayerBrowserExtension : public KParts::BrowserExtension {
     Q_OBJECT
 public:
@@ -149,8 +149,6 @@ public:
     static KAboutData* createAboutData ();
 
     KMPlayerSettings * settings () const { return m_settings; }
-    KProcess * process () const { return m_process; }
-    void initProcess ();
     int seekTime () const { return m_seektime; }
     void setSeekTime (int t) { m_seektime = t; }
     void keepMovieAspect (bool);
@@ -162,8 +160,12 @@ public:
         { return m_liveconnectextension; }
     void sizes (int & w, int & h) const;
     void setMovieLength (int len);
+    void setProcess (KMPlayerProcess *);
     void setSource (KMPlayerSource * source, bool keepsizes = false);
-    KMPlayerSource * source () const { return m_source; }
+    KMPlayerProcess * process () const { return m_process; }
+    MPlayer * mplayer () const { return m_mplayer; }
+    MEncoder * mencoder () const { return m_mencoder; }
+    KMPlayerSource * source () const;
     KMPlayerURLSource * urlSource () const { return m_urlsource; }
     KMPlayerHRefSource * hrefSource () const { return m_hrefsource; }
     bool autoPlay () const { return m_autoplay; }
@@ -175,27 +177,20 @@ public slots:
     virtual void stop (void);
     void record ();
     virtual void seek (unsigned long msec);
-    virtual void seekPercent (float per);
-
     void adjustVolume (int incdec);
-    bool run (const char * args, const char * pipe = 0L);
     bool playing () const;
     void showConfigDialog ();
     void setMenuZoom (int id);
 public:
-    virtual bool isSeekable (void) const { return m_source->isSeekable (); }
+    virtual bool isSeekable (void) const;
     virtual unsigned long position (void) const { return m_movie_position; }
-    virtual bool hasLength (void) const { return m_source->hasLength (); }
-    virtual unsigned long length (void) const { return m_source->length (); }
+    virtual bool hasLength (void) const;
+    virtual unsigned long length (void) const;
 signals:
     void finished ();
 protected:
     bool openFile();
-    void timerEvent (QTimerEvent *);
 private slots:
-    void processOutput (KProcess *, char *, int);
-    void processStopped (KProcess *);
-    void processDataWritten (KProcess *);
     void back ();
     void forward ();
     void posSliderPressed ();
@@ -205,24 +200,24 @@ private slots:
     void brightnessValueChanged (int val);
     void hueValueChanged (int val);
     void saturationValueChanged (int val);
+    void processStarted ();
+    void processFinished ();
+    void processPosition (int pos);
+    void processLoading (int percentage);
+    void processPlaying ();
 private:
     void init ();
-    void sendCommand (const QString &);
     KConfig * m_config;
     QGuardedPtr <KMPlayerView> m_view;
     KMPlayerSettings * m_settings;
-    KMPlayerSource * m_source;
+    KMPlayerProcess * m_process;
+    MPlayer * m_mplayer;
+    MEncoder * m_mencoder;
     KMPlayerURLSource * m_urlsource;
     KMPlayerHRefSource * m_hrefsource;
-    KProcess * m_process;
     KMPlayerBrowserExtension * m_browserextension;
     KMPlayerLiveConnectExtension * m_liveconnectextension;
-    QRegExp m_posRegExp;
-    QRegExp m_cacheRegExp;
-    QRegExp m_indexRegExp;
-    QStringList commands;
     KURL m_recordurl;
-    QString m_process_output;
     int m_seektime;
     int movie_width;
     int movie_height;

@@ -1,0 +1,143 @@
+/* This file is part of the KDE project
+ *
+ * Copyright (C) 2003 Koos Vriezen <koos.vriezen@xs4all.nl>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Library General Public License
+ * along with this library; see the file COPYING.LIB.  If not, write to
+ * the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
+ */
+
+#ifndef _KMPLAYERPROCESS_H_
+#define _KMPLAYERPROCESS_H_
+
+#include <qobject.h>
+#include <qstring.h>
+#include <qstringlist.h>
+#include <kurl.h>
+
+class QWidget;
+class KProcess;
+class KMPlayer;
+class KMPlayerSource;
+
+class KMPlayerProcess : public QObject {
+    Q_OBJECT
+public:
+    KMPlayerProcess (KMPlayer * player);
+    virtual ~KMPlayerProcess ();
+    virtual void init ();
+    bool playing () const;
+    KMPlayerSource * source () const { return m_source; }
+    KProcess * process () const { return m_process; }
+    virtual QWidget * widget ();
+    void setSource (KMPlayerSource * source) { m_source = source; }
+signals:
+    void started ();
+    void finished ();
+    void positionChanged (int pos);
+    void loading (int percentage);
+    void startPlaying ();
+public slots:
+    virtual bool play () = 0;
+    virtual bool stop () = 0;
+    virtual bool pause ();
+    virtual bool seek (int pos, int absolute);
+    virtual bool volume (int pos, int absolute);
+    virtual bool saturation (int pos, int absolute);
+    virtual bool hue (int pos, int absolute);
+    virtual bool contrast (int pos, int absolute);
+    virtual bool brightness (int pos, int absolute);
+protected:
+    KMPlayer * m_player;
+    KMPlayerSource * m_source;
+    KProcess * m_process;
+protected slots:
+    // QTimer::singleShot slots for the signals
+    void emitStarted () { emit started (); }
+    void emitFinished () { emit finished (); }
+};
+
+class MPlayerBase : public KMPlayerProcess {
+    Q_OBJECT
+public:
+    MPlayerBase (KMPlayer * player);
+    ~MPlayerBase ();
+    void initProcess ();
+protected:
+    bool sendCommand (const QString &);
+    QStringList commands;
+    bool m_use_slave : 1;
+protected slots:
+    void processStopped (KProcess *);
+private slots:
+    void dataWritten (KProcess *);
+};
+
+class MPlayer : public MPlayerBase {
+    Q_OBJECT
+public:
+    MPlayer (KMPlayer * player);
+    ~MPlayer ();
+    virtual void init ();
+    virtual QWidget * widget ();
+    bool run (const char * args, const char * pipe = 0L);
+public slots:
+    virtual bool play ();
+    virtual bool stop ();
+    virtual bool pause ();
+    virtual bool seek (int pos, int absolute);
+    virtual bool volume (int pos, int absolute);
+    virtual bool saturation (int pos, int absolute);
+    virtual bool hue (int pos, int absolute);
+    virtual bool contrast (int pos, int absolute);
+    virtual bool brightness (int pos, int absolute);
+private slots:
+    void processOutput (KProcess *, char *, int);
+private:
+    QString m_process_output;
+    QWidget * m_widget;
+    QRegExp m_posRegExp;
+    QRegExp m_cacheRegExp;
+    QRegExp m_indexRegExp;
+};
+
+class MEncoder : public MPlayerBase {
+    Q_OBJECT
+public:
+    MEncoder (KMPlayer * player);
+    ~MEncoder ();
+    virtual void init ();
+public slots:
+    virtual bool play ();
+    virtual bool stop ();
+private slots:
+    void processStopped (KProcess *);
+private:
+    KURL m_recordurl;
+};
+
+class FFMpeg : public KMPlayerProcess {
+    Q_OBJECT
+public:
+    FFMpeg (KMPlayer * player);
+    ~FFMpeg ();
+    virtual void init ();
+public slots:
+    virtual bool play ();
+    virtual bool stop ();
+private slots:
+    void processStopped (KProcess *);
+};
+
+#endif //_KMPLAYERPROCESS_H_

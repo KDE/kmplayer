@@ -53,6 +53,7 @@
 #include "kmplayer.h"
 #include "kmplayerview.h"
 #include "kmplayer_part.h"
+#include "kmplayerprocess.h"
 #include "kmplayerappsource.h"
 #include "kmplayerconfig.h"
 
@@ -801,7 +802,7 @@ void KMPlayerDVDSource::identify () {
         args += QString(" -dvd-device ") + m_player->settings ()->dvddevice;
     bool loop = m_player->settings ()->loop;
     m_player->settings ()->loop = false;
-    if (m_player->run (args.ascii()))
+    if (m_player->mplayer ()->run (args.ascii()))
         connect (m_player, SIGNAL (finished()), this, SLOT(finished ()));
     else
         app->slotStatusMsg (i18n ("Ready."));
@@ -837,7 +838,7 @@ void KMPlayerDVDSource::finished () {
 
 void KMPlayerDVDSource::play () {
     m_start_play = true;
-    m_player->run ((QString ("-slave ") + buildArguments ()).ascii ());
+    m_player->mplayer ()->run ((QString ("-slave ") + buildArguments ()).ascii ());
 }
 
 const QString KMPlayerDVDSource::buildArguments () {
@@ -945,7 +946,7 @@ void KMPlayerVCDSource::identify () {
         args += QString(" -cdrom-device ")+m_player->settings ()->vcddevice;
     bool loop = m_player->settings ()->loop;
     m_player->settings ()->loop = false;
-    if (m_player->run (args.ascii()))
+    if (m_player->mplayer ()->run (args.ascii()))
         connect (m_player, SIGNAL (finished()), this, SLOT(finished ()));
     else
         app->slotStatusMsg (i18n ("Ready."));
@@ -976,7 +977,7 @@ void KMPlayerVCDSource::finished () {
 
 void KMPlayerVCDSource::play () {
     m_start_play = true;
-    m_player->run ((QString ("-slave ") + buildArguments ()).ascii ());
+    m_player->mplayer ()->run ((QString ("-slave ") + buildArguments ()).ascii ());
 }
 
 const QString KMPlayerVCDSource::buildArguments () {
@@ -1023,7 +1024,7 @@ void KMPlayerPipeSource::activate () {
 void KMPlayerPipeSource::play () {
     m_identified = true;
     QString args ("-");
-    m_player->run (args.ascii(), m_pipe.ascii());
+    m_player->mplayer ()->run (args.ascii(), m_pipe.ascii());
     m_player->setMovieLength (10 * length ());
     app->resizePlayer (100);
 }
@@ -1091,7 +1092,7 @@ const QString KMPlayerTVSource::buildArguments () {
 }
 
 void KMPlayerTVSource::play () {
-    m_player->run ((QString ("-slave -nocache -quiet ") + buildArguments ()).ascii ());
+    m_player->mplayer ()->run ((QString ("-slave -nocache -quiet ") + buildArguments ()).ascii ());
 }
 
 void KMPlayerTVSource::deactivate () {

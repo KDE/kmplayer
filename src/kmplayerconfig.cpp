@@ -37,6 +37,7 @@
 
 #include "kmplayerconfig.h"
 #include "kmplayer_part.h"
+#include "kmplayerprocess.h"
 #include "kmplayerview.h"
 //#include "configdialog.h"
 #include "pref.h"
@@ -864,7 +865,7 @@ void TVDeviceScannerSource::play () {
         return;
     QString args;
     args.sprintf ("-tv on:driver=%s:device=%s -identify -frames 0", m_driver.ascii (), m_tvdevice->device.ascii ());
-    if (m_player->run (args.ascii()))
+    if (m_player->mplayer ()->run (args.ascii()))
         connect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
     else
         deactivate ();
