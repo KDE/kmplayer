@@ -726,7 +726,7 @@ KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *paren
     QHeader *header = accesslist->horizontalHeader ();
     header->setLabel (0, i18n ("Host/IP or IP range"));
     QFrame *profileframe = new QFrame (this);
-    QGridLayout *profileslayout = new QGridLayout (profileframe, 4, 2, 2);
+    QGridLayout *profileslayout = new QGridLayout (profileframe, 5, 2, 2);
     profile = new QLineEdit ("", profileframe);
     connect (profile, SIGNAL(textChanged (const QString &)),
              this, SLOT (slotTextChanged (const QString &)));
@@ -747,7 +747,8 @@ KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *paren
     connect (save, SIGNAL (clicked ()), this, SLOT (slotSave ()));
     connect (del, SIGNAL (clicked ()), this, SLOT (slotDelete ()));
     profileslayout->addWidget (profile, 0, 0);
-    profileslayout->addMultiCellWidget (profilelist, 1, 3, 0, 0);
+    profileslayout->setRowSpacing (4, 60);
+    profileslayout->addMultiCellWidget (profilelist, 1, 4, 0, 0);
     profileslayout->addWidget (load, 1, 1);
     profileslayout->addWidget (save, 2, 1);
     profileslayout->addWidget (del, 3, 1);
@@ -809,7 +810,7 @@ void KMPlayerPrefBroadcastFormatPage::getSettings (FFServerSetting & fs) {
 
 void KMPlayerPrefBroadcastFormatPage::slotIndexChanged (int index) {
     slotItemHighlighted (index);
-    if (index > 0 && index < (int) profiles.size ())
+    if (index >= 0 && index < (int) profiles.size ())
         setSettings (*profiles[index]);
 }
 
