@@ -606,9 +606,8 @@ void KMPlayer::saturationValueChanged (int val) {
     m_process->saturation (val, true);
 }
 
-void KMPlayer::positonValueChanged (int /*pos*/) {
-    if (!m_bPosSliderPressed)
-        return;
+void KMPlayer::positonValueChanged (int pos) {
+    m_process->seek (pos, true);
 }
 
 KAboutData* KMPlayer::createAboutData () {

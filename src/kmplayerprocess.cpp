@@ -165,8 +165,9 @@ bool MPlayerBase::sendCommand (const QString & cmd) {
     if (playing () && m_use_slave) {
         commands.push_front (cmd + "\n");
         printf ("eval %s", commands.last ().latin1 ());
-        m_process->writeStdin (QFile::encodeName(commands.last ()),
-                               commands.last ().length ());
+        if (commands.size () < 2)
+            m_process->writeStdin (QFile::encodeName(commands.last ()),
+                    commands.last ().length ());
         return true;
     }
     return false;
@@ -284,9 +285,22 @@ bool MPlayer::pause () {
 }
 
 bool MPlayer::seek (int pos, bool absolute) {
-    if (!m_source || !m_source->hasLength ()) return false;
+    if (!m_source || !m_source->hasLength () ||
+            (absolute && m_source->position () == pos))
+        return false;
+    if (commands.size () > 1) {
+        QStringList::iterator i = commands.begin ();
+        for (++i; i != commands.end (); )
+            if ((*i).startsWith (QString ("seek")))
+                i = commands.erase (i);
+            else 
+                ++i;
+    }
     QString cmd;
     cmd.sprintf ("seek %d %d", pos/10, absolute ? 2 : 0);
+    if (!absolute)
+        pos = m_source->position () + pos;
+    m_source->setPosition (pos);
     return sendCommand (cmd);
 }
 
@@ -1174,8 +1188,15 @@ bool Xine::pause () {
 }
 
 bool Xine::seek (int pos, bool absolute) {
-    if (!playing () || !m_backend || !m_source->hasLength ()) return false;
-    m_backend->seek (absolute ? pos : m_source->position () + pos, true);
+    if (!playing () ||
+            !m_backend ||
+            !m_source->hasLength () ||
+            (absolute && m_source->position () == pos))
+        return false;
+    if (!absolute)
+        pos = m_source->position () + pos;
+    m_source->setPosition (pos);
+    m_backend->seek (pos, true);
     return true;
 }
 
