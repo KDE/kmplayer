@@ -1185,6 +1185,7 @@ KDE_NO_EXPORT void KMPlayerURLSource::play () {
         if (plugin_pos > 0)
             mimestr.truncate (plugin_pos);
         bool maybe_playlist = isPlayListMime (mimestr);
+        kdDebug () << "KMPlayerURLSource::play " << mimestr << maybe_playlist << endl;
         if (url.isLocalFile ()) {
             QFile file (url.path ());
             if (!file.exists ())
