@@ -36,7 +36,7 @@
 #include <klocale.h>
 
 #include "kmplayerconfig.h"
-#include "kmplayer_part.h"
+#include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
 #include "kmplayersource.h"
 #include "kmplayerview.h"

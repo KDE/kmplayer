@@ -35,7 +35,7 @@
 #include <kapplication.h>
 #include <kstandarddirs.h>
 
-#include "kmplayer_part.h"
+#include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
 #include "kmplayersource.h"
 #include "kmplayerconfig.h"
@@ -207,7 +207,7 @@ bool MPlayer::play () {
     if (!source ()) return false;
     if (playing ())
         return sendCommand (QString ("gui_play"));
-    QString args = source ()->options () + QString (" ");
+    QString args = source ()->options () + ' ';
     const KURL & url (source ()->url ());
     if (!url.isEmpty ()) {
         QString myurl (url.isLocalFile () ? url.path () : url.url ());
@@ -321,12 +321,12 @@ bool MPlayer::run (const char * args, const char * pipe) {
             break;
     }
     printf (" -vo %s", strVideoDriver.lower().ascii());
-    *m_process << " -vo " << strVideoDriver.lower().ascii();
+    *m_process << " -vo " << strVideoDriver.lower();
 
     QString strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].audiodriver);
     if (strAudioDriver != "") {
         printf (" -ao %s", strAudioDriver.lower().ascii());
-        *m_process << " -ao " << strAudioDriver.lower().ascii();
+        *m_process << " -ao " << strAudioDriver.lower();
     }
     if (settings->framedrop) {
         printf (" -framedrop");
@@ -339,12 +339,12 @@ bool MPlayer::run (const char * args, const char * pipe) {
      }*/
     if (settings->additionalarguments.length () > 0) {
         printf (" %s", settings->additionalarguments.ascii());
-        *m_process << " " << settings->additionalarguments.ascii();
+        *m_process << " " << settings->additionalarguments;
     }
     // postproc thingies
 
     printf (" %s", source ()->filterOptions ().ascii ());
-    *m_process << " " << source ()->filterOptions ().ascii ();
+    *m_process << " " << source ()->filterOptions ();
 
     printf (" -contrast %d", settings->contrast);
     *m_process << " -contrast " << QString::number (settings->contrast);
@@ -390,7 +390,7 @@ bool MPlayer::grabPicture (const KURL & url, int pos) {
     args += QString (" -frames 1 -nosound -quiet ");
     if (pos > 0)
         args += QString ("-ss %1 ").arg (pos);
-    args += KProcess::quote (QString (QFile::encodeName (myurl))).ascii ();
+    args += KProcess::quote (QString (QFile::encodeName (myurl)));
     *m_process << args;
     kdDebug () << args << endl;
     m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
@@ -484,7 +484,7 @@ bool MEncoder::play () {
         m_use_slave = m_source->pipeCmd ().isEmpty ();
         if (!m_use_slave)
             args = m_source->pipeCmd () + QString (" | ");
-        args += QString ("mencoder ") + m_player->settings()->mencoderarguments + QString (" ") + m_source->recordCmd ();
+        args += QString ("mencoder ") + m_player->settings()->mencoderarguments + ' ' + m_source->recordCmd ();
         const KURL & url (source ()->url ());
         QString myurl = url.isLocalFile () ? url.path () : url.url ();
         bool post090 = m_player->settings ()->mplayerpost090;
@@ -497,7 +497,7 @@ bool MEncoder::play () {
                 args += myurl.replace (0, 6, QString (" -dvd "));
             else {
                 QString myurl = url.isLocalFile () ? url.path () : url.url ();
-                args += QString (" ") + KProcess::quote (QString (QFile::encodeName (myurl)));
+                args += ' ' + KProcess::quote (QString (QFile::encodeName (myurl)));
             }
         }
         m_recordurl = dlg->selectedURL().url ();
@@ -664,21 +664,21 @@ bool Xine::play () {
             break;
     }
     printf (" -vo %s", strVideoDriver.lower().ascii());
-    *m_process << " -vo " << strVideoDriver.lower().ascii();
+    *m_process << " -vo " << strVideoDriver.lower();
 
     QString strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].audiodriver);
     if (strAudioDriver != "") {
         printf (" -ao %s", strAudioDriver.lower().ascii());
-        *m_process << " -ao " << strAudioDriver.lower().ascii();
+        *m_process << " -ao " << strAudioDriver.lower();
     }
     QString cbname;
     cbname.sprintf ("%s/%s", QString (kapp->dcopClient ()->appId ()).ascii (),
                              QString (m_callback->objId ()).ascii ());
     printf (" -cb %s", cbname.ascii());
-    *m_process << " -cb " << cbname.ascii();
+    *m_process << " -cb " << cbname;
     QString myurl = KProcess::quote (QString (QFile::encodeName (url.isLocalFile () ? url.path () : url.url ())));
     printf (" %s\n", myurl.ascii ());
-    *m_process << myurl.ascii();
+    *m_process << myurl;
     fflush (stdout);
     m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
     return m_process->isRunning ();

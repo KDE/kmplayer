@@ -53,7 +53,7 @@
 // application specific includes
 #include "kmplayer.h"
 #include "kmplayerview.h"
-#include "kmplayer_part.h"
+#include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
 #include "kmplayerappsource.h"
 #include "kmplayerconfig.h"
@@ -93,7 +93,7 @@ static bool stopProcess (KProcess * process, const char * cmd = 0L) {
 KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     : KMainWindow(0, name),
       config (kapp->config ()),
-      m_player (new KMPlayer (this, config)),
+      m_player (new KMPlayer (this, 0L, 0L, 0L, config)),
       m_dvdmenu (new QPopupMenu (this)),
       m_dvdnavmenu (new QPopupMenu (this)),
       m_vcdmenu (new QPopupMenu (this)),
@@ -109,6 +109,7 @@ KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       m_endserver (true)
 {
     initStatusBar();
+    m_player->init();
     initActions();
     initView();
 
@@ -187,7 +188,7 @@ void KMPlayerApp::initView ()
     m_sourcemenu->popup ()->insertItem (i18n ("&Open Pipe..."), this, SLOT(openPipe ()), 0, -1, 5);
     connect (m_player->settings (), SIGNAL (configChanged ()),
              this, SLOT (configChanged ()));
-    connect (m_player->browserextension (), SIGNAL (loadingProgress (int)),
+    connect (m_player, SIGNAL (loading (int)),
              this, SLOT (loadingProgress (int)));
     m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom50,
             this, SLOT (zoom50 ()));
