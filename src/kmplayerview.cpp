@@ -1020,7 +1020,7 @@ KDE_NO_EXPORT void View::setVolume (int vol) {
 KDE_NO_EXPORT void  View::updateLayout () {
     if (m_controlpanel_mode == CP_Only)
         m_control_panel->setMaximumSize (2500, height ());
-    m_layer->resizeEvent (0l);
+    m_layer->resizeEvent (0L);
 }
 
 KDE_NO_EXPORT void View::timerEvent (QTimerEvent * e) {
