@@ -42,6 +42,9 @@ class KConfig;
 class KURLRequester;
 
 
+/*
+ * Element for channels
+ */
 class TVChannel : public KMPlayer::GenericMrl {
 public:
     TVChannel (KMPlayer::ElementPtr & d, const QString & n, int f);
@@ -51,6 +54,9 @@ public:
     int frequency;
 };
 
+/*
+ * Element for inputs
+ */
 class TVInput : public KMPlayer::GenericMrl {
 public:
     TVInput (KMPlayer::ElementPtr & d, const QString & n, int id);
@@ -62,6 +68,9 @@ public:
     QString norm;
 };
 
+/*
+ * Element for TV devices
+ */
 class TVDevice : public KMPlayer::GenericMrl {
 public:
     TVDevice (KMPlayer::ElementPtr & d, const QString & d, const QSize & size);
@@ -109,6 +118,9 @@ public:
 };
 
 
+/*
+ * Source form scanning TV devices
+ */
 class TVDeviceScannerSource : public KMPlayer::Source {
     Q_OBJECT
 public:
@@ -137,6 +149,9 @@ private:
     QRegExp m_inputRegExp;
 };
 
+/*
+ * Source form TV devices, also implementing preference page for it
+ */
 class KMPlayerTVSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:

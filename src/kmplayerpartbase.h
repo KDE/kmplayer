@@ -58,6 +58,9 @@ class FFMpeg;
 class Xine;
 class Settings;
 
+/*
+ * Source from URLs
+ */
 class KMPLAYER_EXPORT URLSource : public Source {
     Q_OBJECT
 public:
@@ -92,7 +95,9 @@ private:
     QByteArray m_data;
 };
 
-
+/*
+ * KDE's KMediaPlayer::Player implementation and base for KMPlayerPart
+ */
 class KMPLAYER_EXPORT PartBase : public KMediaPlayer::Player {
     Q_OBJECT
 public:

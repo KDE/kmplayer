@@ -36,6 +36,9 @@ namespace KMPlayer {
     
 class PartBase;
 
+/**
+ * Class for a certain media, like URL, DVD, TV etc
+ */
 class KMPLAYER_EXPORT Source : public QObject, public PlayListNotify {
     Q_OBJECT
 public:

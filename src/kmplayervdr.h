@@ -46,6 +46,9 @@ class QSocket;
 class QTimerEvent;
 class KListView;
 
+/*
+ * Preference page for VDR
+ */
 class KMPlayerPrefSourcePageVDR : public QFrame {
     Q_OBJECT
 public:
@@ -62,6 +65,9 @@ private:
 };
 
 
+/*
+ * Source from VDR (XVideo actually) and socket connection
+ */
 class KMPlayerVDRSource : public KMPlayer::Source, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:

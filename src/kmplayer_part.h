@@ -29,6 +29,9 @@ class KMPlayerPart;
 class KInstance;
 class JSCommandEntry;
 
+/*
+ * Wrapper source for URLSource that has a HREF attribute
+ */
 class KMPlayerHRefSource : public KMPlayer::Source {
     Q_OBJECT
 public:
@@ -54,6 +57,9 @@ private:
 };
 
 
+/*
+ * Part notifications to hosting application
+ */
 class KMPlayerBrowserExtension : public KParts::BrowserExtension {
     Q_OBJECT
 public:
@@ -66,6 +72,9 @@ public:
     void restoreState (QDataStream & stream);
 };
 
+/*
+ * Part javascript support
+ */
 class KMPlayerLiveConnectExtension : public KParts::LiveConnectExtension {
     Q_OBJECT
 public:
@@ -101,6 +110,9 @@ private:
 };
 
 
+/*
+ * Part that gets created when used a KPart
+ */
 class KMPlayerPart : public KMPlayer::PartBase {
     Q_OBJECT
     friend struct GroupPredicate;

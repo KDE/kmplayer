@@ -1206,6 +1206,9 @@ KDE_NO_CDTOR_EXPORT ConfigDocument::~ConfigDocument () {
 }
 
 namespace KMPlayer {
+    /*
+     * Element for ConfigDocument
+     */
     struct SomeNode : public ConfigNode {
         KDE_NO_CDTOR_EXPORT SomeNode (ElementPtr & d, const QString t)
             : ConfigNode (d), tag (t) {}

@@ -43,6 +43,9 @@ class Source;
 class Callback;
 class Backend_stub;
 
+/*
+ * Base class for all backend processes
+ */
 class KMPLAYER_EXPORT Process : public QObject {
     Q_OBJECT
 public:
@@ -101,6 +104,9 @@ protected slots:
     void emitStateChange () { emit stateChange (m_old_state, m_state); }
 };
 
+/*
+ * Base class for all MPlayer based processes
+ */
 class MPlayerBase : public Process {
     Q_OBJECT
 public:
@@ -123,6 +129,9 @@ private slots:
 class MPlayerPreferencesPage;
 class MPlayerPreferencesFrame;
 
+/*
+ * MPlayer process
+ */
 class KDE_EXPORT MPlayer : public MPlayerBase {
     Q_OBJECT
 public:
@@ -157,6 +166,9 @@ private:
     int old_volume;
 };
 
+/*
+ * MPlayer preferences page
+ */
 class MPlayerPreferencesPage : public PreferencesPage {
 public:
     enum Pattern {
@@ -181,6 +193,9 @@ private:
     MPlayerPreferencesFrame * m_configframe;
 };
 
+/*
+ * Base class for all recorders
+ */
 class KMPLAYER_EXPORT Recorder {
 public:
     KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
@@ -189,6 +204,9 @@ protected:
     KURL m_recordurl;
 };
 
+/*
+ * MEncoder recorder
+ */
 class MEncoder : public MPlayerBase, public Recorder {
     Q_OBJECT
 public:
@@ -201,6 +219,9 @@ public slots:
     virtual bool stop ();
 };
 
+/*
+ * MPlayer recorder, runs 'mplayer -dumpstream'
+ */
 class MPlayerDumpstream : public MPlayerBase, public Recorder {
     Q_OBJECT
 public:
@@ -216,6 +237,9 @@ public slots:
 class XMLPreferencesPage;
 class XMLPreferencesFrame;
 
+/*
+ * Base class for all backend processes having the KMPlayer::Backend interface
+ */
 class KMPLAYER_EXPORT CallbackProcess : public Process {
     Q_OBJECT
     friend class Callback;
@@ -268,12 +292,18 @@ protected:
     enum { send_no, send_try, send_new } m_send_config;
 };
 
+/*
+ * Config document as used by kxineplayer backend
+ */
 struct KMPLAYER_EXPORT ConfigDocument : public Document {
     ConfigDocument ();
     ~ConfigDocument ();
     ElementPtr childFromTag (const QString & tag);
 };
 
+/*
+ * Element for ConfigDocument
+ */
 struct KMPLAYER_EXPORT ConfigNode : public Element {
     ConfigNode (ElementPtr & d);
     KDE_NO_CDTOR_EXPORT ~ConfigNode () {}
@@ -281,6 +311,9 @@ struct KMPLAYER_EXPORT ConfigNode : public Element {
     QWidget * w;
 };
 
+/*
+ * Element for ConfigDocument, defining type of config item
+ */
 struct KMPLAYER_EXPORT TypeNode : public ConfigNode {
     KDE_NO_CDTOR_EXPORT TypeNode (ElementPtr & d) : ConfigNode (d) {}
     KDE_NO_CDTOR_EXPORT ~TypeNode () {}
@@ -290,6 +323,9 @@ struct KMPLAYER_EXPORT TypeNode : public ConfigNode {
     const char * nodeName () const { return "typenode"; }
 };
 
+/*
+ * Preference page for XML type of docuement
+ */
 class KMPLAYER_EXPORT XMLPreferencesPage : public PreferencesPage {
 public:
     XMLPreferencesPage (CallbackProcess *);
@@ -304,6 +340,9 @@ private:
     XMLPreferencesFrame * m_configframe;
 };
 
+/*
+ * Xine backend process
+ */
 class Xine : public CallbackProcess {
     Q_OBJECT
 public:
@@ -313,6 +352,9 @@ public slots:
     bool ready ();
 };
 
+/*
+ * GStreamer backend process
+ */
 class GStreamer : public CallbackProcess {
     Q_OBJECT
 public:
@@ -322,6 +364,9 @@ public slots:
     virtual bool ready ();
 };
 
+/*
+ * ffmpeg backend recorder
+ */
 class KMPLAYER_EXPORT FFMpeg : public Process, public Recorder {
     Q_OBJECT
 public:

@@ -126,6 +126,9 @@ private:
 };
 
 
+/*
+ * Preference page for ffmpeg commandline arguments
+ */
 class KMPlayerFFServerConfig : public KMPlayer::PreferencesPage {
 public:
     KMPlayerFFServerConfig ();
@@ -145,6 +148,9 @@ private:
     QGuardedPtr <KMPlayerPrefBroadcastPage> m_configpage;
 };
 
+/*
+ * Preference page for ffserver
+ */
 class KMPlayerBroadcastConfig : public QObject, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:

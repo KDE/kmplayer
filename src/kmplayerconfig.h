@@ -63,6 +63,9 @@ struct Deleter {
     }
 };
 
+/*
+ * Base class for all dynamic preferance pages
+ */
 class KMPLAYER_EXPORT PreferencesPage {
 public:
     virtual ~PreferencesPage () {}
@@ -74,6 +77,9 @@ public:
     PreferencesPage * next;
 };
 
+/*
+ * Class for storing all actual settings and reading/writing them
+ */
 class KMPLAYER_EXPORT Settings : public QObject {
     Q_OBJECT
 public:

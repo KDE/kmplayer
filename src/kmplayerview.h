@@ -59,6 +59,9 @@ class VolumeBar;
 class Console;
 class PlayListView;
 
+/*
+ * An item in the playlist
+ */
 class KMPLAYER_EXPORT ListViewItem : public QListViewItem {
 public:
     ListViewItem (QListViewItem *p, const ElementPtr & e, PlayListView * lv);
@@ -68,6 +71,9 @@ public:
     PlayListView * listview;
 };
 
+/*
+ * The playlist GUI
+ */
 class KMPLAYER_EXPORT PlayListView : public KListView {
     Q_OBJECT
 public:
@@ -100,6 +106,9 @@ private:
     bool m_ignore_expanded;
 };
 
+/*
+ * The area in which the video widget and controlpanel are laid out
+ */
 class ViewArea : public QWidget {
     friend class View;
     Q_OBJECT
@@ -133,6 +142,9 @@ private:
     bool m_fullscreen : 1;
 };
 
+/*
+ * The console GUI
+ */
 class Console : public QTextEdit {
 public:
     Console (QWidget * parent, View * view);
@@ -142,6 +154,9 @@ private:
     View * m_view;
 };
 
+/*
+ * The pop down menu from the controlpanel
+ */
 class KMPLAYER_EXPORT KMPlayerPopupMenu : public KPopupMenu {
     Q_OBJECT
 public:
@@ -153,6 +168,9 @@ protected:
     void leaveEvent (QEvent *);
 };
 
+/*
+ * The view containing ViewArea and playlist
+ */
 class KMPLAYER_EXPORT View : public KMediaPlayer::View {
     Q_OBJECT
     friend class Viewer;
@@ -255,6 +273,9 @@ private:
     bool m_popup_clicked : 1;
 };
 
+/*
+ * A button from the controlpanel
+ */
 class KMPlayerControlButton : public QPushButton {
     Q_OBJECT
 public:
@@ -266,6 +287,9 @@ protected:
     void enterEvent (QEvent *);
 };
 
+/*
+ * The volume bar from the controlpanel
+ */
 class VolumeBar : public QWidget {
     Q_OBJECT
 public:
@@ -285,6 +309,9 @@ private:
     int m_value;
 };
 
+/*
+ * The controlpanel GUI
+ */
 class KMPLAYER_EXPORT ControlPanel : public QWidget {
 public:
     enum MenuID {
@@ -345,6 +372,9 @@ private:
     bool m_auto_controls; // depending on source caps
 };
 
+/*
+ * The video widget
+ */
 class KMPLAYER_EXPORT Viewer : public QXEmbed {
     Q_OBJECT
 public:

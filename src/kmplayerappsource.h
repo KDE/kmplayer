@@ -40,7 +40,9 @@ class QLineEdit;
 class TVInput;
 class TVChannel;
 
-
+/*
+ * Base class for sources having a sub menu in the application
+ */
 class KMPlayerMenuSource : public KMPlayer::Source {
     Q_OBJECT
 public:
@@ -52,7 +54,9 @@ protected:
     KMPlayerApp * m_app;
 };
 
-
+/*
+ * Preference page for DVD
+ */
 class KMPlayerPrefSourcePageDVD : public QFrame {
     Q_OBJECT
 public:
@@ -63,7 +67,9 @@ public:
     KURLRequester * dvddevice;
 };
 
-
+/*
+ * Source from DVD
+ */
 class KMPlayerDVDSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
@@ -99,6 +105,9 @@ private:
 };
 
 
+/*
+ * Source from DVDNav
+ */
 class KMPlayerDVDNavSource : public KMPlayerMenuSource {
     Q_OBJECT
 public:
@@ -115,6 +124,9 @@ public slots:
 };
 
 
+/*
+ * Preference page for VCD
+ */
 class KMPlayerPrefSourcePageVCD : public QFrame {
     Q_OBJECT
 public:
@@ -125,6 +137,9 @@ public:
 };
 
 
+/*
+ * Source from VCD
+ */
 class KMPlayerVCDSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
@@ -149,6 +164,9 @@ private:
 };
 
 
+/*
+ * Source from stdin (for the backends, not kmplayer)
+ */
 class KMPlayerPipeSource : public KMPlayer::Source {
     Q_OBJECT
 public:
