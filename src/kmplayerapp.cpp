@@ -197,7 +197,7 @@ void KMPlayerApp::openDVD () {
     doc->setAspect (-1.0);
     m_player->stop ();
     m_player->setURL (KURL ());
-    QString args ("-v dvd:// -identify -quiet -nocache");
+    QString args ("-v dvd:// -identify -frames 0 -quiet -nocache");
     if (m_player->configDialog ()->dvddevice.length () > 0)
         args += QString(" -dvd-device ") + m_player->configDialog ()->dvddevice;
     bool loop = m_player->configDialog ()->loop;
@@ -217,7 +217,7 @@ void KMPlayerApp::openVCD () {
     doc->setAspect (-1.0);
     m_player->stop ();
     m_player->setURL (KURL ());
-    QString args ("-v vcd:// -identify -quiet -nocache");
+    QString args ("-v vcd:// -identify -frames 0 -quiet -nocache");
     if (m_player->configDialog ()->vcddevice.length () > 0)
         args += QString(" -cdrom-device ")+m_player->configDialog ()->vcddevice;
     bool loop = m_player->configDialog ()->loop;
@@ -271,7 +271,7 @@ void KMPlayerApp::openDocumentFile (const KURL& url)
     m_player->setURL (url);
     bool loop = m_player->configDialog ()->loop;
     m_player->configDialog ()->loop = false;
-    if (!url.isEmpty () && m_player->run ("-quiet -nocache -identify")) {
+    if (!url.isEmpty () && m_player->run ("-quiet -nocache -identify -frames 0")) {
         connect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
         doc->setURL (url);
     } else if (m_showStatusbar)
