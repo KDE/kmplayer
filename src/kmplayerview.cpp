@@ -476,19 +476,17 @@ KDE_NO_EXPORT void KMPlayerPopupMenu::leaveEvent (QEvent *) {
 
 //-----------------------------------------------------------------------------
 
-static QPixmap * folder_pix;
-static QPixmap * video_pix;
 
-KDE_NO_CDTOR_EXPORT KMPlayerListViewItem::KMPlayerListViewItem (QListViewItem *p, const ElementPtr & e) : QListViewItem (p), m_elm (e) {
+KDE_NO_CDTOR_EXPORT KMPlayerListViewItem::KMPlayerListViewItem (QListViewItem *p, const ElementPtr & e, KMPlayerPlayListView * lv) : QListViewItem (p), m_elm (e), listview (lv) {
     init ();
 }
 
-KDE_NO_CDTOR_EXPORT KMPlayerListViewItem::KMPlayerListViewItem (QListView *v, const ElementPtr & e) : QListViewItem (v), m_elm (e) {
+KDE_NO_CDTOR_EXPORT KMPlayerListViewItem::KMPlayerListViewItem (KMPlayerPlayListView *v, const ElementPtr & e) : QListViewItem (v), m_elm (e), listview (v) {
     init ();
 }
 
 KDE_NO_EXPORT void KMPlayerListViewItem::init () {
-    setPixmap (0, m_elm->isMrl () ? *video_pix : *folder_pix);
+    setPixmap (0, m_elm->isMrl() ? listview->video_pix : listview->folder_pix);
 }
 
 
@@ -499,12 +497,14 @@ KDE_NO_CDTOR_EXPORT KMPlayerPlayListView::KMPlayerPlayListView (QWidget * parent
     setRootIsDecorated (true);
     setSorting (-1);
     m_itemmenu = new QPopupMenu (this);
+    folder_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder"), KIcon::Small);
+    video_pix = KGlobal::iconLoader ()->loadIcon (QString ("video"), KIcon::Small);
     m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("editcopy"), KIcon::Small, 0, true), i18n ("&Copy to Clipboard"), this, SLOT (copyToClipboard ()), 0, 0);
     m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("bookmark_add"), KIcon::Small, 0, true), i18n ("&Add Bookmark"), this, SLOT (addBookMark ()), 0, 1);
     connect (this, SIGNAL (contextMenuRequested (QListViewItem *, const QPoint &, int)), this, SLOT (contextMenuItem (QListViewItem *, const QPoint &, int)));
 }
 
-static void populateTree (ElementPtr e, ElementPtr focus, QListView * tree, QListViewItem *item) {
+static void populateTree (ElementPtr e, ElementPtr focus, KMPlayerPlayListView * tree, QListViewItem *item) {
     Mrl * mrl = e->mrl ();
     item->setText(0, mrl ? KURL(mrl->src).prettyURL() : QString(e->nodeName()));
     if (focus == e) {
@@ -514,7 +514,7 @@ static void populateTree (ElementPtr e, ElementPtr focus, QListView * tree, QLis
     }
     for (ElementPtr c = e->lastChild (); c; c = c->previousSibling ())
         if (strcmp (c->nodeName (), "#text"))
-            populateTree (c, focus, tree, new KMPlayerListViewItem (item, c));
+            populateTree (c, focus, tree, new KMPlayerListViewItem (item, c, tree));
 }
 
 void KMPlayerPlayListView::updateTree (ElementPtr root, ElementPtr active) {
@@ -667,10 +667,6 @@ KDE_NO_EXPORT void KMPlayerView::init () {
     m_multiedit->horizontalScrollBar ()->setPalette (pal);
     m_multiedit->verticalScrollBar ()->setPalette (pal);
     m_widgettypes[WT_Picture] = new KMPlayerPictureWidget (m_widgetstack, this);
-    folder_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder"), KIcon::Small);
-    ::folder_pix = &folder_pix;
-    video_pix = KGlobal::iconLoader ()->loadIcon (QString ("video"), KIcon::Small);
-    ::video_pix = &video_pix;
     m_playlist = new KMPlayerPlayListView (m_widgetstack, this);
     m_playlist->horizontalScrollBar ()->setPalette (pal);
     m_playlist->verticalScrollBar ()->setPalette (pal);

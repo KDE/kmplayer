@@ -48,18 +48,20 @@ class QSlider;
 class QLabel;
 class QAccel;
 class KPopupMenu;
-
+class KMPlayerPlayListView;
 
 class KMPlayerListViewItem : public QListViewItem {
 public:
-    KMPlayerListViewItem (QListViewItem *p, const ElementPtr & e);
-    KMPlayerListViewItem (QListView *v, const ElementPtr & e);
+    KMPlayerListViewItem (QListViewItem *p, const ElementPtr & e, KMPlayerPlayListView * lv);
+    KMPlayerListViewItem (KMPlayerPlayListView *v, const ElementPtr & e);
     KDE_NO_CDTOR_EXPORT ~KMPlayerListViewItem () {}
     void init ();
     ElementPtrW m_elm;
+    KMPlayerPlayListView * listview;
 };
 
 class KMPlayerPlayListView : public KListView {
+    friend class KMPlayerListViewItem;
     Q_OBJECT
 public:
     KMPlayerPlayListView (QWidget * parent, KMPlayerView * view);
@@ -74,6 +76,8 @@ private slots:
 private:
     KMPlayerView * m_view;
     QPopupMenu * m_itemmenu;
+    QPixmap folder_pix;
+    QPixmap video_pix;
 };
 
 class KMPlayerViewLayer : public QWidget {
@@ -187,8 +191,6 @@ private:
     const char * m_mixer_object;
     ControlPanelMode m_controlpanel_mode;
     ControlPanelMode m_old_controlpanel_mode;
-    QPixmap folder_pix;
-    QPixmap video_pix;
     int controlbar_timer;
     int popup_timer;
     int popdown_timer;
