@@ -71,6 +71,7 @@ public:
     KMPlayerPlayListView (QWidget * parent, KMPlayerView * view);
     ~KMPlayerPlayListView ();
     void updateTree (ElementPtr root, ElementPtr active);
+    void selectItem (const QString & txt);
 signals:
     void addBookMark (const QString & title, const QString & url);
 protected:

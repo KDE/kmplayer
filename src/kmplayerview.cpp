@@ -548,6 +548,18 @@ void KMPlayerPlayListView::updateTree (ElementPtr root, ElementPtr active) {
     populateTree (root, active, this, new KMPlayerListViewItem (this, root));
 }
 
+void KMPlayerPlayListView::selectItem (const QString & txt) {
+    QListViewItem * item = selectedItem ();
+    if (item && item->text (0) == txt)
+        return;
+    item = findItem (txt, 0);
+    if (item) {
+        for (QListViewItem * p = item->parent (); p; p = p->parent ())
+            p->setOpen (true);
+        setSelected (item, true);
+    }
+}
+
 KDE_NO_EXPORT void KMPlayerPlayListView::contextMenuItem (QListViewItem * vi, const QPoint & p, int) {
     if (vi) {
         KMPlayerListViewItem * item = static_cast <KMPlayerListViewItem *> (vi);
