@@ -195,8 +195,6 @@ KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
 	QToolTip::add(showControlButtons, i18n("Small buttons will be shown above statusbar to control movie"));
 	autoHideControlButtons = new QCheckBox (i18n("Auto hide control buttons"), this, 0);
 	QToolTip::add(autoHideControlButtons, i18n("When checked, control buttons will get hidden automatically"));
-	showPositionSlider	= new QCheckBox (i18n("Show position slider"), this, 0);
-	QToolTip::add(showPositionSlider, i18n("When enabled, will show a seeking slider under the control buttons"));
 	showRecordButton = new QCheckBox (i18n ("Show record button"), this);
 	QToolTip::add (showRecordButton, i18n ("Add a record button to the control buttons"));
 	showBroadcastButton = new QCheckBox (i18n ("Show broadcast button"), this);
@@ -220,7 +218,6 @@ KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
 	layout->addWidget (framedrop);
 	layout->addWidget(showControlButtons);
 	layout->addWidget(autoHideControlButtons);
-	layout->addWidget(showPositionSlider);
 	layout->addWidget (showRecordButton);
 	layout->addWidget (showBroadcastButton);
 	//layout->addWidget(autoHideSlider);
@@ -723,7 +720,6 @@ void KMPlayerPreferences::setDefaults() {
 	m_GeneralPageGeneral->loop->setChecked(false);
 	m_GeneralPageGeneral->showControlButtons->setChecked(true);
 	m_GeneralPageGeneral->autoHideControlButtons->setChecked(false);
-	m_GeneralPageGeneral->showPositionSlider->setChecked(true);
 	m_GeneralPageGeneral->seekTime->setValue(10);
 
 	m_GeneralPageOutput->videoDriver->setCurrentItem (0);

@@ -100,7 +100,6 @@ public:
     QCheckBox *showRecordButton;
     QCheckBox *showBroadcastButton;
     QCheckBox *autoHideControlButtons;
-    QCheckBox *showPositionSlider;
     QCheckBox *autoHideSlider;
     QCheckBox *alwaysBuildIndex;
     QCheckBox *framedrop;

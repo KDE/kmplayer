@@ -440,7 +440,6 @@ void KMPlayerView::init () {
     
     QHBoxLayout * buttonbox = new QHBoxLayout (m_buttonbar, 5, 4);
     m_buttonbar->setMaximumSize (2500, button_height + 8);
-    m_buttonbar->setEraseColor (QColor (0, 0, 0));
     m_configButton = ctrlButton (m_buttonbar, buttonbox, config_xpm);
     m_backButton = ctrlButton (m_buttonbar, buttonbox, back_xpm);
     m_playButton = ctrlButton (m_buttonbar, buttonbox, play_xpm, Qt::Key_R);
@@ -455,6 +454,7 @@ void KMPlayerView::init () {
     m_broadcastButton->setToggleButton (true);
     m_broadcastButton->hide ();
     m_posSlider = new KMPlayerSlider (Qt::Horizontal, m_buttonbar, this);
+    m_posSlider->setEnabled (false);
     buttonbox->addWidget (m_posSlider);
 
     layerbox->addWidget (m_buttonbar);

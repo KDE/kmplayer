@@ -283,8 +283,7 @@ void KMPlayerApp::resizePlayer (int percentage) {
         if (m_player->settings ()->showbuttons &&
             !m_player->settings ()->autohidebuttons)
             h += 2 + m_view->buttonBar()->frameSize ().height ();
-        if (source->hasLength () && 
-            m_player->settings ()->showposslider)
+        if (source->hasLength ())
             h += 2 + m_view->positionSlider ()->height ();
         w = int (1.0 * w * percentage/100.0);
         h = int (1.0 * h * percentage/100.0);

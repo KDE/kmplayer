@@ -97,7 +97,6 @@ static const char * strShowConsole = "Show Console Output";
 static const char * strLoop = "Loop";
 static const char * strFrameDrop = "Frame Drop";
 static const char * strShowControlButtons = "Show Control Buttons";
-static const char * strShowPositionSlider = "Show Position Slider";
 static const char * strAddConfigButton = "Add Configure Button";
 static const char * strAddRecordButton = "Add Record Button";
 static const char * strAddBroadcastButton = "Add Broadcast Button";
@@ -180,11 +179,6 @@ void KMPlayerSettings::readConfig () {
     if (!showbuttons && view->buttonBar ()) {
         view->buttonBar ()->hide ();
     }
-    showposslider = m_config->readBoolEntry(strShowPositionSlider, true);
-    if (!showposslider)
-        view->positionSlider ()->hide ();
-    else
-        view->positionSlider ()->show ();
     showcnfbutton = m_config->readBoolEntry (strAddConfigButton, true);
     if (showcnfbutton)
         view->configButton ()->show ();
@@ -291,7 +285,6 @@ void KMPlayerSettings::show (const char * pagename) {
     configdialog->m_GeneralPageGeneral->loop->setChecked (loop);
     configdialog->m_GeneralPageGeneral->framedrop->setChecked (framedrop);
     configdialog->m_GeneralPageGeneral->showControlButtons->setChecked (showbuttons);
-    configdialog->m_GeneralPageGeneral->showPositionSlider->setChecked (showposslider);
     configdialog->m_GeneralPageGeneral->alwaysBuildIndex->setChecked (alwaysbuildindex);
     //configdialog->m_GeneralPageGeneral->autoHideSlider->setChecked (autohideslider);
     //configdialog->addConfigButton->setChecked (showcnfbutton);	//not
@@ -386,7 +379,6 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strUrlBackend, urlbackend);
     m_config->writeEntry (strAllowHref, allowhref);
     m_config->writeEntry (strShowControlButtons, showbuttons);
-    m_config->writeEntry (strShowPositionSlider, showposslider);
     m_config->writeEntry (strAlwaysBuildIndex, alwaysbuildindex);
     m_config->writeEntry (strAddConfigButton, showcnfbutton);
     m_config->writeEntry (strAddRecordButton, showrecordbutton);
@@ -518,11 +510,6 @@ void KMPlayerSettings::okPressed () {
     view->setAutoHideButtons (showbuttons && autohidebuttons);
     if (!showbuttons && view->buttonBar ())
         view->buttonBar ()->hide ();
-    showposslider = configdialog->m_GeneralPageGeneral->showPositionSlider->isChecked ();
-    if (showposslider && m_player->process ()->source ()->hasLength ())
-        view->positionSlider ()->show ();
-    else
-        view->positionSlider ()->hide ();
     //showcnfbutton = configdialog->m_GeneralPageGeneral->addConfigButton->isChecked ();
     showcnfbutton = true;
     if (showcnfbutton)

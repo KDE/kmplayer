@@ -376,7 +376,7 @@ void KMPlayer::processFinished () {
         m_view->playButton ()->toggle ();
     m_view->positionSlider()->setValue (0);
     m_view->positionSlider()->setEnabled (false);
-    m_view->positionSlider()->hide();
+    m_view->positionSlider()->show();
     m_view->reset ();
     emit stopPlaying ();
 }
@@ -407,7 +407,7 @@ void KMPlayer::processPlaying () {
     if (m_settings->sizeratio)
         m_view->viewer ()->setAspect (m_process->source ()->aspect ());
     m_view->positionSlider()->setEnabled (true);
-    if (m_settings->showposslider && m_process->source ()->hasLength ())
+    if (m_process->source ()->hasLength ())
         m_view->positionSlider()->show();
     else
         m_view->positionSlider()->hide();

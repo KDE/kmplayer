@@ -86,7 +86,6 @@ public:
     bool showcnfbutton : 1;
     bool showrecordbutton : 1;
     bool showbroadcastbutton : 1;
-    bool showposslider : 1;
     bool autohidebuttons : 1;
     bool autohideslider : 1;
     bool alwaysbuildindex : 1;
