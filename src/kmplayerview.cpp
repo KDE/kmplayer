@@ -761,7 +761,6 @@ void KMPlayerViewer::showEvent (QShowEvent *) {
     QWidget * w = static_cast <QWidget *> (parent ());
     QResizeEvent ev (w->size (), w->size ());
     QApplication::sendEvent (w, &ev);
-    QWidget * parent = parentWidget ();
     XConfigureEvent c = {
         ConfigureNotify, 0UL, True,
         qt_xdisplay (), winId (), parentWidget ()->winId (),

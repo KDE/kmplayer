@@ -1057,11 +1057,6 @@ bool Xine::play () {
         return m_process->isRunning ();
     }
     KURL url = m_source->currentUrl ();
-    if (m_source->referenceUrls ().count () > 0) {
-        url = KURL::fromPathOrURL (m_source->referenceUrls ().front ());
-        m_source->setCurrentURL (url);
-        m_source->referenceUrls ().clear ();
-    }
     kdDebug() << "Xine::play (" << url.url() << ")" << endl;
     if (url.isEmpty ())
         return false;
@@ -1150,6 +1145,7 @@ void Xine::setFinished () {
         QString url = m_source->referenceUrls ().front ();
         m_source->referenceUrls ().pop_front ();
         m_backend->setURL (url);
+        m_source->setCurrentURL (KURL::fromPathOrURL (url));
         m_backend->play ();
         return;
     }

@@ -451,6 +451,7 @@ void KMPlayer::stop () {
     if (m_view && !m_view->stopButton ()->isOn ())
         m_view->stopButton ()->toggle ();
     if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
+    m_process->source ()->referenceUrls ().clear ();
     m_process->stop ();
     if (m_view) m_view->setCursor (QCursor (Qt::ArrowCursor));
     if (m_view && m_view->stopButton ()->isOn ())
