@@ -46,7 +46,6 @@
 #include <kdebug.h>
 #include <kconfig.h>
 #include <kaction.h>
-#include <kstandarddirs.h>
 #include <kprocess.h>
 
 #include "kmplayer_part.h"
@@ -1206,39 +1205,36 @@ void KMPlayerHRefSource::play () {
 }
 
 void KMPlayerHRefSource::activate () {
+    m_player->stop ();
     if (m_finished) {
         QTimer::singleShot (0, this, SLOT (finished ()));
         return;
     }
-    m_player->setProcess (m_player->mplayer ());
-    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
     init ();
-    m_player->stop ();
-    m_player->mplayer ()->initProcess ();
+    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
+    m_player->setProcess (m_player->mplayer ());
     view->consoleOutput ()->clear ();
-    unlink (locateLocal ("data", "kmplayer/00000001.jpg").ascii ());
-    QString outdir = locateLocal ("data", "kmplayer/");
-    QString myurl (m_url.isLocalFile () ? m_url.path () : m_url.url ());
-    QString args;
-    args.sprintf ("mplayer -vo jpeg -jpeg outdir=%s -frames 1 -nosound -quiet %s", KProcess::quote (outdir).ascii (), KProcess::quote (myurl).ascii ());
-    *m_player->mplayer ()->process () << args;
-    kdDebug () << args << endl;
-    m_player->mplayer ()->process ()->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
-
-    if (m_player->playing ())
-        connect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
+    if (m_player->process ()->grabPicture (m_url, 0))
+        connect (m_player->process (), SIGNAL (grabReady (const QString &)),
+                 this, SLOT (grabReady (const QString &)));
     else {
         setURL (KURL ());
         QTimer::singleShot (0, this, SLOT (play ()));
     }
 }
 
-void KMPlayerHRefSource::finished () {
-    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
+void KMPlayerHRefSource::grabReady (const QString & path) {
+    kdDebug () << "KMPlayerHRefSource::grabReady(" << path << ")" << endl;
     m_finished = true;
+    m_grabfile = path;
+    connect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
+    QTimer::singleShot (0, this, SLOT (finished ()));
+}
+
+void KMPlayerHRefSource::finished () {
     kdDebug () << "KMPlayerHRefSource::finished()" << endl;
-    QString outfile = locateLocal ("data", "kmplayer/00000001.jpg");
-    if (!view->setPicture (outfile)) {
+    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
+    if (!view->setPicture (m_grabfile)) {
         setURL (KURL ());
         disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
         QTimer::singleShot (0, this, SLOT (play ()));

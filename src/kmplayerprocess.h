@@ -44,6 +44,7 @@ public:
     KProcess * process () const { return m_process; }
     virtual QWidget * widget ();
     void setSource (KMPlayerSource * source) { m_source = source; }
+    virtual bool grabPicture (const KURL & url, int pos);
 signals:
     void started ();
     void finished ();
@@ -51,6 +52,7 @@ signals:
     void loading (int percentage);
     void startPlaying ();
     void output (const QString & msg);
+    void grabReady (const QString & path);
 public slots:
     virtual bool play () = 0;
     virtual bool stop ();
@@ -96,6 +98,7 @@ public:
     ~MPlayer ();
     virtual void init ();
     virtual QWidget * widget ();
+    virtual bool grabPicture (const KURL & url, int pos);
     bool run (const char * args, const char * pipe = 0L);
 public slots:
     virtual bool play ();
@@ -113,6 +116,7 @@ private slots:
     void processOutput (KProcess *, char *, int);
 private:
     QString m_process_output;
+    QString m_grabfile;
     QWidget * m_widget;
     QRegExp m_posRegExp;
     QRegExp m_cacheRegExp;

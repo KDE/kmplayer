@@ -129,9 +129,12 @@ public slots:
     virtual void init ();
     virtual void activate ();
     virtual void deactivate ();
-    virtual void play ();
-    virtual void finished ();
+private slots:
+    void grabReady (const QString & path);
+    void play ();
+    void finished ();
 private:
+    QString m_grabfile;
     bool m_finished;
 };
 

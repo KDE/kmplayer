@@ -33,6 +33,7 @@
 #include <kmessagebox.h>
 #include <klocale.h>
 #include <kapplication.h>
+#include <kstandarddirs.h>
 
 #include "kmplayer_part.h"
 #include "kmplayerprocess.h"
@@ -85,6 +86,10 @@ bool KMPlayerProcess::contrast (int /*pos*/, bool /*absolute*/) {
 }
 
 bool KMPlayerProcess::brightness (int /*pos*/, bool /*absolute*/) {
+    return false;
+}
+
+bool KMPlayerProcess::grabPicture (const KURL & /*url*/, int /*pos*/) {
     return false;
 }
 
@@ -217,8 +222,8 @@ bool MPlayer::play () {
 }
 
 bool MPlayer::stop () {
-    kdDebug () << "MPlayer::stop ()" << endl;
     if (!source () || !m_process || !m_process->isRunning ()) return true;
+    kdDebug () << "MPlayer::stop ()" << endl;
     if (m_use_slave)
         sendCommand (QString ("quit"));
     return MPlayerBase::stop ();
@@ -377,6 +382,25 @@ bool MPlayer::run (const char * args, const char * pipe) {
     return false;
 }
 
+bool MPlayer::grabPicture (const KURL & url, int pos) {
+    stop ();
+    initProcess ();
+    QString outdir = locateLocal ("data", "kmplayer/");
+    m_grabfile = outdir + QString ("00000001.jpg");
+    unlink (m_grabfile.ascii ());
+    QString myurl (url.isLocalFile () ? url.path () : url.url ());
+    QString args ("mplayer -vo jpeg -jpeg outdir=");
+    args += KProcess::quote (outdir);
+    args += QString (" -frames 1 -nosound -quiet ");
+    if (pos > 0)
+        args += QString ("-ss %1 ").arg (pos);
+    args += KProcess::quote (myurl).ascii ();
+    *m_process << args;
+    kdDebug () << args << endl;
+    m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
+    return m_process->isRunning ();
+}
+
 void MPlayer::processOutput (KProcess *, char * str, int slen) {
     if (!m_player->view () || slen <= 0) return;
 
@@ -429,12 +453,15 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
     } while (slen > 0);
 }
 
-void MPlayer::processStopped (KProcess *) {
-    if (!source ()->identified ()) {
+void MPlayer::processStopped (KProcess * p) {
+    if (!m_grabfile.isEmpty ()) {
+        emit grabReady (m_grabfile);
+        m_grabfile.truncate (0);
+    } else if (!source ()->identified ()) {
         source ()->setIdentified ();
         QTimer::singleShot (0, this, SLOT (play ()));
     } else
-        MPlayerBase::processStopped (0L);
+        MPlayerBase::processStopped (p);
 }
 
 //-----------------------------------------------------------------------------
