@@ -88,6 +88,7 @@ static Display             *display;
 static Window               wid;
 static bool                 window_created;
 static bool                 xine_verbose;
+static bool                 xine_vverbose;
 static bool                 wants_config;
 static bool                 audio_vis;
 static int                  screen;
@@ -321,6 +322,7 @@ void KMPlayerBackend::setConfig (QByteArray data) {
 KXinePlayer::KXinePlayer (int _argc, char ** _argv)
   : QApplication (_argc, _argv, false) {
     d = new KXinePlayerPrivate;
+    window_created = true;
     for(int i = 1; i < argc (); i++) {
         if (!strcmp (argv ()[i], "-vo")) {
             d->vo_driver = argv ()[++i];
@@ -330,12 +332,20 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
             dvd_device = argv ()[++i];
         } else if (!strcmp (argv ()[i], "-vcd-device")) {
             vcd_device = argv ()[++i];
-        } else if (!strcmp (argv ()[i], "-wid")) {
+        } else if (!strcmp (argv ()[i], "-wid") || !strcmp (argv ()[i], "-window-id")) {
             wid = atol (argv ()[++i]);
+            window_created = false;
+        } else if (!strcmp (argv ()[i], "-root")) {
+            wid =  XDefaultRootWindow (display);
+            window_created = false;
+        } else if (!strcmp (argv ()[i], "-window")) {
+            ;
         } else if (!strcmp (argv ()[i], "-sub")) {
             sub_mrl = QString (argv ()[++i]);
         } else if (!strcmp (argv ()[i], "-v")) {
             xine_verbose = true;
+        } else if (!strcmp (argv ()[i], "-vv")) {
+            xine_verbose = xine_vverbose = true;
         } else if (!strcmp (argv ()[i], "-c")) {
             wants_config = true;
         } else if (!strcmp (argv ()[i], "-cb")) {
@@ -355,12 +365,11 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
     width   = 320;
     height  = 200;
 
-    if (!wid) {
+    if (window_created)
         wid = XCreateSimpleWindow(display, XDefaultRootWindow(display),
                 xpos, ypos, width, height, 1, 0, 0);
-        window_created = true;
+    if (!callback)
         QTimer::singleShot (10, this, SLOT (play ()));
-    }
     XSelectInput (display, wid,
                   (PointerMotionMask | ExposureMask | KeyPressMask | ButtonPressMask | StructureNotifyMask)); // | SubstructureNotifyMask));
 }
@@ -930,7 +939,7 @@ int main(int argc, char **argv) {
     xineapp = new KXinePlayer (argc, argv);
 
     if (!callback && mrl.isEmpty ()) {
-        fprintf (stderr, "usage: %s [-vo (xv|xshm)] [-ao (arts|esd|..)] [-dvd-device <device>] [-vcd-device <device>] [-wid <X11 Window>] [-sub <subtitle url>] [-v] [-cb <DCOP callback name> [-c]] [<url>]\n", argv[0]);
+        fprintf (stderr, "usage: %s [-vo (xv|xshm)] [-ao (arts|esd|..)] [-dvd-device <device>] [-vcd-device <device>] [-wid <X11 Window>|-window-id <X11 Window>|-root] [-sub <subtitle url>] [(-v|-vv)] [-cb <DCOP callback name> [-c]] [<url>]\n", argv[0]);
         delete xineapp;
         return 1;
     }
@@ -944,7 +953,7 @@ int main(int argc, char **argv) {
 
     xine = xine_new();
     if (xine_verbose)
-        xine_engine_set_param (xine, XINE_ENGINE_PARAM_VERBOSITY, XINE_VERBOSITY_LOG);
+        xine_engine_set_param (xine, XINE_ENGINE_PARAM_VERBOSITY, xine_vverbose ? XINE_VERBOSITY_DEBUG : XINE_VERBOSITY_LOG);
     sprintf(configfile, "%s%s", xine_get_homedir(), "/.xine/config2");
     xine_config_load(xine, configfile);
     xine_init(xine);
