@@ -293,10 +293,14 @@ public:
     KURLRequester * url;
     QLabel * source;
     QLineEdit * arguments;
+    QButtonGroup * format;
+public slots:
+    void formatClicked (int id);
 private slots:
     void slotRecord ();
     void recordingStarted ();
     void recordingFinished ();
+    void sourceChanged (KMPlayerSource *);
 private:
     KMPlayer * m_player;
     QPushButton * recordButton;

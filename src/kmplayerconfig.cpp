@@ -27,6 +27,7 @@
 #include <qslider.h>
 #include <qlabel.h>
 #include <qtable.h>
+#include <qbuttongroup.h>
 #include <kurlrequester.h>
 #include <klineedit.h>
 
@@ -187,6 +188,7 @@ static const char * strAoDriver = "Audio Driver";
 static const char * strAddArgs = "Additional Arguments";
 static const char * strMencoderArgs = "Mencoder Arguments";
 static const char * strRecordingFile = "Last Recording Ouput File";
+static const char * strRecordingCopy = "Recording Is Copy";
 static const char * strSize = "Movie Size";
 static const char * strCache = "Cache Fill";
 static const char * strPosPattern = "Movie Position";
@@ -329,6 +331,7 @@ void KMPlayerSettings::readConfig () {
     view->setUseArts (audiodriver == ADRIVER_ARTS_INDEX);
     additionalarguments = m_config->readEntry (strAddArgs, "");
     recordfile = m_config->readEntry(strRecordingFile, QDir::homeDirPath () + "/record");
+    recordcopy = m_config->readBoolEntry(strRecordingCopy, true);
     mencoderarguments = m_config->readEntry (strMencoderArgs, "-oac copy -ovc copy");
     cachesize = m_config->readNumEntry (strCacheSize, 0);
     m_config->setGroup (strMPlayerPatternGroup);
@@ -527,9 +530,10 @@ void KMPlayerSettings::show (KMPlayerPreferences::Page page) {
     configdialog->m_OPPagePostproc->MedianDeinterlacer->setChecked (pp_med_int);
     configdialog->m_OPPagePostproc->FfmpegDeinterlacer->setChecked (pp_ffmpeg_int);
 
-    configdialog->m_RecordPage->source->setText (i18n ("Current source ") + m_player->process ()->source ()->prettyName ());
     configdialog->m_RecordPage->arguments->setText (mencoderarguments);
     configdialog->m_RecordPage->url->lineEdit()->setText (recordfile);
+    configdialog->m_RecordPage->format->setButton (recordcopy ? 0 : 1);
+    configdialog->m_RecordPage->formatClicked (recordcopy ? 0 : 1);
     configdialog->m_BroadcastPage->bindaddress->setText (bindaddress);
     configdialog->m_BroadcastPage->port->setText (QString::number (ffserverport));
     configdialog->m_BroadcastPage->maxclients->setText (QString::number (maxclients));
@@ -587,6 +591,7 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strVCDDevice, vcddevice);
 
     m_config->writeEntry (strRecordingFile, recordfile);
+    m_config->writeEntry (strRecordingCopy, recordcopy);
     m_config->writeEntry (strMencoderArgs, mencoderarguments);
 
     m_config->setGroup (strMPlayerPatternGroup);
@@ -789,6 +794,7 @@ void KMPlayerSettings::okPressed () {
     pp_ffmpeg_int = configdialog->m_OPPagePostproc->FfmpegDeinterlacer->isChecked();
     mencoderarguments = configdialog->m_RecordPage->arguments->text ();
     recordfile = configdialog->m_RecordPage->url->lineEdit()->text ();
+    recordcopy = !configdialog->m_RecordPage->format->selectedId ();
     bindaddress = configdialog->m_BroadcastPage->bindaddress->text ();
     ffserverport = configdialog->m_BroadcastPage->port->text ().toInt ();
     maxclients = configdialog->m_BroadcastPage->maxclients->text ().toInt ();

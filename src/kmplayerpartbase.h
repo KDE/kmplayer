@@ -113,6 +113,7 @@ public:
     virtual unsigned long length (void) const;
 signals:
     void finished ();
+    void sourceChanged (KMPlayerSource *);
     void loading (int percentage);
 protected:
     bool openFile();

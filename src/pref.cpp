@@ -48,6 +48,7 @@
 #include "pref.h"
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
+#include "kmplayerconfig.h"
 
 KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver * ad, FFServerSetting * ffs)
 : KDialogBase(TreeList, i18n("KMPlayer Preferences"),
@@ -476,7 +477,7 @@ TVDevice * KMPlayerPrefSourcePageTV::findDevice (QPtrList <TVDevice> & list, con
 
 KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * player) : QFrame (parent), m_player (player) {
     QVBoxLayout *layout = new QVBoxLayout (this, 0, 5);
-    source = new QLabel (this);
+    source = new QLabel (i18n ("Current source ") + m_player->process ()->source ()->prettyName (), this);
     QHBoxLayout * urllayout = new QHBoxLayout ();
     QLabel *urlLabel = new QLabel (i18n ("URL:"), this, 0);
     url = new KURLRequester ("", this, 0);
@@ -488,25 +489,35 @@ KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * play
     QHBoxLayout *buttonlayout = new QHBoxLayout ();
     buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
     buttonlayout->addWidget (recordButton);
-    QGroupBox *mencoderBox = new QGroupBox (i18n ("Mencoder Settings"), this);
+    QGroupBox * mencoderBox = new QGroupBox (i18n ("Mencoder Settings"), this);
+    QVBoxLayout * mencoderBoxLayout = new QVBoxLayout (mencoderBox);
     mencoderBox->setFlat( false );
     mencoderBox->setInsideMargin( 7 );
-    QGridLayout *gridlayout = new QGridLayout (mencoderBox->layout (), 1, 2, 2);
-    QLabel *argLabel = new QLabel (i18n("Mencoder arguments:"), mencoderBox, 0);
-    arguments = new QLineEdit ("", mencoderBox);
+    format = new QButtonGroup (3, Qt::Vertical, i18n ("Format"), mencoderBox);
+    new QRadioButton (i18n ("Same as Source"), format);
+    new QRadioButton (i18n ("Custom"), format);
+    QWidget * customopts = new QWidget (format);
+    QGridLayout *gridlayout = new QGridLayout (customopts, 1, 2, 2);
+    QLabel *argLabel = new QLabel (i18n("Mencoder arguments:"), customopts, 0);
+    arguments = new QLineEdit ("", customopts);
     gridlayout->addWidget (argLabel, 0, 0);
     gridlayout->addWidget (arguments, 0, 1);
+    mencoderBoxLayout->addWidget (format);
     layout->addWidget (source);
     layout->addLayout (urllayout);
     layout->addLayout (buttonlayout);
     layout->addWidget (mencoderBox);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    connect (m_player, SIGNAL (sourceChanged(KMPlayerSource*)), this, SLOT (sourceChanged(KMPlayerSource*)));
     connect (m_player->mencoder(), SIGNAL (started()), this, SLOT (recordingStarted()));
     connect (m_player->mencoder(), SIGNAL (finished()), this, SLOT (recordingFinished()));
+    connect (format, SIGNAL (clicked (int)), this, SLOT (formatClicked (int)));
 }
 
 void KMPlayerPrefRecordPage::slotRecord () {
     if (!m_player->mencoder()->playing()) {
+        m_player->settings ()->mencoderarguments = arguments->text ();
+        m_player->settings ()->recordcopy = !format->selectedId ();
         if (!url->lineEdit()->text().isEmpty()) {
             m_player->mencoder ()->setURL (KURL (url->lineEdit ()->text ()));
             m_player->mencoder ()->play ();
@@ -517,10 +528,20 @@ void KMPlayerPrefRecordPage::slotRecord () {
 
 void KMPlayerPrefRecordPage::recordingStarted () {
     recordButton->setText (i18n ("Stop Recording"));
+    url->setEnabled (false);
 }
 
 void KMPlayerPrefRecordPage::recordingFinished () {
     recordButton->setText (i18n ("Start Recording"));
+    url->setEnabled (true);
+}
+
+void KMPlayerPrefRecordPage::sourceChanged (KMPlayerSource * src) {
+    source->setText (i18n ("Current source ") + src->prettyName ());
+}
+
+void KMPlayerPrefRecordPage::formatClicked (int id) {
+    arguments->setEnabled (!!id);
 }
 
 KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerSetting * _ffs) : QFrame (parent), ffs (_ffs) {

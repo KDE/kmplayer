@@ -490,7 +490,10 @@ bool MEncoder::play () {
     m_use_slave = m_source->pipeCmd ().isEmpty ();
     if (!m_use_slave)
         args = m_source->pipeCmd () + QString (" | ");
-    args += QString ("mencoder ") + m_player->settings()->mencoderarguments + ' ' + m_source->recordCmd ();
+    QString margs = m_player->settings()->mencoderarguments;
+    if (m_player->settings()->recordcopy)
+        margs = QString ("-oac copy -ovc copy");
+    args += QString ("mencoder ") + margs + ' ' + m_source->recordCmd ();
     const KURL & url (source ()->url ());
     QString myurl = url.isLocalFile () ? url.path () : url.url ();
     bool post090 = m_player->settings ()->mplayerpost090;

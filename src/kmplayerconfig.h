@@ -91,6 +91,7 @@ public:
     bool pp_med_int : 1;		// median interlacer
     bool pp_ffmpeg_int : 1;		// ffmpeg interlacer
 // end of postproc
+    bool recordcopy : 1;
 // TV stuff
     QString tvdriver;
     QPtrList <TVDevice> tvdevices;

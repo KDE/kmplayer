@@ -180,6 +180,7 @@ void KMPlayer::setSource (KMPlayerSource * source) {
         closeURL ();
     }
     m_process->setSource (source);
+    m_mencoder->setSource (source);
     if (source->hasLength () && m_settings->showposslider)
         m_view->positionSlider()->show ();
     else
@@ -192,6 +193,7 @@ void KMPlayer::setSource (KMPlayerSource * source) {
         m_view->backButton ()->hide ();
     }
     if (source) QTimer::singleShot (0, source, SLOT (activate ()));
+    emit sourceChanged (source);
 }
 
 bool KMPlayer::isSeekable (void) const {
@@ -317,7 +319,6 @@ void KMPlayer::record () {
         m_mencoder->stop ();
     } else {
         m_process->stop ();
-        m_mencoder->setSource (m_process->source ());
         m_settings->show (KMPlayerPreferences::PageRecording);
         if (m_view->recordButton ()->isOn ()) 
             m_view->recordButton ()->toggle ();
