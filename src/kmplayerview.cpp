@@ -668,7 +668,6 @@ void KMPlayerView::addText (const QString & str) {
 void KMPlayerView::startsToPlay () {
     m_multiedit->hide ();
     m_playing = true;
-    m_viewer->setBackgroundMode(Qt::NoBackground);
     if (m_auto_hide_buttons) {
         m_buttonbar->hide ();
         m_viewer->setMouseTracking (true);
@@ -694,8 +693,6 @@ void KMPlayerView::leaveEvent (QEvent *) {
 
 void KMPlayerView::reset () {
     m_playing = false;
-    m_viewer->setBackgroundMode(Qt::FixedColor);
-    m_viewer->setEraseColor (QColor (0, 0, 0));
     if (m_auto_hide_buttons) {
         m_buttonbar->show ();
         m_viewer->setMouseTracking (false);
@@ -753,6 +750,7 @@ KMPlayerViewer::KMPlayerViewer (QWidget *parent, KMPlayerView * view)
     create (XCreateWindow (qt_xdisplay (), parent->winId (), 0, 0, 10, 10, 0, 
                            x11Depth (), InputOutput, (Visual*)x11Visual (),
                            CWBackPixel | CWBorderPixel | CWColormap, &xswa));*/
+    setBackgroundMode (Qt::FixedColor);
     setEraseColor (QColor (0, 0, 0));
     setAcceptDrops (true);
 }
