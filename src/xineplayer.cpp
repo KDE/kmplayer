@@ -91,7 +91,7 @@ static void frame_output_cb(void * /*data*/, int /*video_width*/, int /*video_he
     if(!running)
         return;
     if (firstframe) {
-        printf("first frame\n");
+        fprintf(stderr, "first frame\n");
         xineapp->lock ();
         xineapp->updatePosition ();
         xineapp->unlock ();
@@ -110,7 +110,7 @@ static void frame_output_cb(void * /*data*/, int /*video_width*/, int /*video_he
 static void event_listener(void * /*user_data*/, const xine_event_t *event) {
     switch(event->type) { 
         case XINE_EVENT_UI_PLAYBACK_FINISHED:
-            printf ("XINE_EVENT_UI_PLAYBACK_FINISHED\n");
+            fprintf (stderr, "XINE_EVENT_UI_PLAYBACK_FINISHED\n");
             xineapp->lock ();
             xineapp->finished ();
             xineapp->unlock ();
@@ -124,11 +124,11 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
                     callback->loadingProgress ((int) pevent->percent);
                     xineapp->unlock ();
                 } else
-                    printf("%s [%d%%]\n", pevent->description, pevent->percent);
+                    fprintf(stderr, "%s [%d%%]\n", pevent->description, pevent->percent);
             }
             break;
         case XINE_EVENT_MRL_REFERENCE:
-            printf("XINE_EVENT_MRL_REFERENCE %s\n", 
+            fprintf(stderr, "XINE_EVENT_MRL_REFERENCE %s\n", 
             ((xine_mrl_reference_data_t*)event->data)->mrl);
             if (callback) {
                 xineapp->lock ();
@@ -137,17 +137,17 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
             }
             break;
         case XINE_EVENT_FRAME_FORMAT_CHANGE:
-            printf ("XINE_EVENT_FRAME_FORMAT_CHANGE\n");
+            fprintf (stderr, "XINE_EVENT_FRAME_FORMAT_CHANGE\n");
             break;
         case XINE_EVENT_UI_SET_TITLE:
             {
                 xine_ui_data_t * data = (xine_ui_data_t *) event->data;
-                printf ("Set title event %s\n", data->str);
+                fprintf (stderr, "Set title event %s\n", data->str);
             }
             break;
         case XINE_EVENT_UI_CHANNELS_CHANGED:
             if (callback) {
-            printf ("Channel changed event\n");
+            fprintf (stderr, "Channel changed event\n");
             mutex.lock ();
             int w = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_WIDTH);
             int h = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_HEIGHT);
@@ -168,7 +168,7 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
         case XINE_EVENT_INPUT_MOUSE_MOVE:
             break;
         default:
-            printf ("event_listener %d\n", event->type);
+            fprintf (stderr, "event_listener %d\n", event->type);
 
     }
 }
@@ -242,14 +242,14 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
             QString str = argv ()[++i];
             int pos = str.find ('/');
             if (pos > -1) {
-                printf ("callback is %s %s\n", str.left (pos).ascii (), str.mid (pos + 1).ascii ());
+                fprintf (stderr, "callback is %s %s\n", str.left (pos).ascii (), str.mid (pos + 1).ascii ());
                 callback = new KMPlayerCallback_stub 
                     (str.left (pos).ascii (), str.mid (pos + 1).ascii ());
             }
         } else 
             d->mrl = QString (argv ()[i]);
     }
-    printf("mrl: '%s'\n", d->mrl.ascii ());
+    fprintf(stderr, "mrl: '%s'\n", d->mrl.ascii ());
     xpos    = 0;
     ypos    = 0;
     width   = 320;
@@ -277,7 +277,7 @@ void KXinePlayer::init () {
     else
         completion_event = -1;
     if (d->window_created) {
-        printf ("map %lu\n", wid);
+        fprintf (stderr, "map %lu\n", wid);
         XMapRaised(display, wid);
     }
     d->res_h = (DisplayWidth(display, screen) * 1000 / DisplayWidthMM(display, screen));
@@ -309,7 +309,7 @@ KXinePlayer::~KXinePlayer () {
 
     XLockDisplay (display);
     if (d->window_created) {
-        printf ("unmap %lu\n", wid);
+        fprintf (stderr, "unmap %lu\n", wid);
         XUnmapWindow (display,  wid);
     } else {
     }
@@ -353,7 +353,7 @@ void KXinePlayer::play () {
         xine_set_param (stream, XINE_PARAM_VO_HUE, d->hue);
     running = 1;
     if (!xine_open (stream, d->mrl.ascii ())) {
-        printf("Unable to open mrl '%s'\n", d->mrl.ascii ());
+        fprintf(stderr, "Unable to open mrl '%s'\n", d->mrl.ascii ());
         mutex.unlock ();
         finished ();
         return;
@@ -361,7 +361,7 @@ void KXinePlayer::play () {
     if (callback)
         firstframe = 1;
     if (!xine_play (stream, 0, 0)) {
-        printf("Unable to play mrl '%s'\n", d->mrl.ascii ());
+        fprintf(stderr, "Unable to play mrl '%s'\n", d->mrl.ascii ());
         mutex.unlock ();
         finished ();
         return;
@@ -371,7 +371,7 @@ void KXinePlayer::play () {
 
 void KXinePlayer::stop () {
     if (!running) return;
-    printf("stop\n");
+    fprintf(stderr, "stop\n");
     mutex.lock ();
     xine_close (stream);
     running = 0;
@@ -380,7 +380,7 @@ void KXinePlayer::stop () {
     stream = 0L;
     mutex.unlock ();
     XLockDisplay (display);
-    printf ("painting\n");
+    fprintf (stderr, "painting\n");
     unsigned int u, w, h;
     int x, y;
     Window root;
@@ -415,7 +415,7 @@ void KXinePlayer::updatePosition () {
     }
     mutex.unlock ();
     if (firstframe) {
-        printf("movieParams %dx%d %d\n", movie_width, movie_height, movie_length/100);
+        fprintf(stderr, "movieParams %dx%d %d\n", movie_width, movie_height, movie_length/100);
         if (movie_height > 0)
             callback->movieParams (movie_length/100, movie_width, movie_height, 1.0*movie_width/movie_height);
         callback->playing ();
@@ -474,7 +474,7 @@ void KXinePlayer::seek (int val) {
     if (running) {
         mutex.lock ();
         if (!xine_play (stream, 0, val * 100)) {
-            printf("Unable to seek to %d :-(\n", val);
+            fprintf(stderr, "Unable to seek to %d :-(\n", val);
         }
         mutex.unlock ();
     }
@@ -492,7 +492,7 @@ public:
                 case ClientMessage:
                     if (xevent.xclient.format == 8 &&
                             !strncmp(xevent.xclient.data.b, "quit_now", 8)) {
-                        printf("request quit\n");
+                        fprintf(stderr, "request quit\n");
                         return;
                     }
                     break;
@@ -508,7 +508,7 @@ public:
                         XLockDisplay(display);
                         len = XLookupString(&kevent, kbuf, sizeof(kbuf), &ksym, NULL);
                         XUnlockDisplay(display);
-                        printf("keypressed 0x%x 0x%x\n", kevent.keycode, ksym);
+                        fprintf(stderr, "keypressed 0x%x 0x%x\n", kevent.keycode, ksym);
 
                         switch (ksym) {
 
@@ -649,7 +649,7 @@ public:
                     break;
                 case ButtonPress:
                     if (stream) {
-                        printf("ButtonPress\n");
+                        fprintf(stderr, "ButtonPress\n");
                         XButtonEvent *bev = (XButtonEvent *) &xevent;
                         x11_rectangle_t rect = { bev->x, bev->y, 0, 0 };
                         if (xine_gui_send_vo_data (stream, XINE_GUI_SEND_TRANSLATE_GUI_TO_VIDEO, (void*) &rect) == -1)
@@ -670,7 +670,7 @@ public:
                     break;
                 default:
                     if (xevent.type < LASTEvent)
-                        printf ("event %d\n", xevent.type);
+                        fprintf (stderr, "event %d\n", xevent.type);
             }
 
             if(xevent.type == completion_event && stream)
@@ -681,7 +681,7 @@ public:
 
 int main(int argc, char **argv) {
     if (!XInitThreads ()) {
-        printf ("XInitThreads () failed\n");
+        fprintf (stderr, "XInitThreads () failed\n");
         return 1;
     }
     display = XOpenDisplay(NULL);
@@ -720,9 +720,9 @@ int main(int argc, char **argv) {
 
     xine_exit (xine);
 
-    printf ("closing display\n");
+    fprintf (stderr, "closing display\n");
     XCloseDisplay (display);
-    printf ("done\n");
+    fprintf (stderr, "done\n");
     return 0;
 }
 
