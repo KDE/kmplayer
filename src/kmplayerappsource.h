@@ -23,8 +23,6 @@
 #include <config.h>
 #endif
 
-#include <qptrlist.h>
-#include <qmap.h>
 #include <qframe.h>
 
 #include <kurl.h>
@@ -158,7 +156,7 @@ public:
     virtual ~KMPlayerPipeSource ();
     virtual bool hasLength ();
     virtual bool isSeekable ();
-    void setCommand (const QString & cmd) { m_pipecmd = cmd; }
+    void setCommand (const QString & cmd);
     virtual QString prettyName ();
 public slots:
     virtual void activate ();

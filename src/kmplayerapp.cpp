@@ -1012,7 +1012,8 @@ KDE_NO_EXPORT QFrame * KMPlayerVCDSource::prefPage (QWidget * parent) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT KMPlayerPipeSource::KMPlayerPipeSource (KMPlayerApp * a)
-    : KMPlayer::Source (i18n ("Pipe"), a->player (), "pipesource"), m_app (a) {
+ : KMPlayer::Source (i18n ("Pipe"), a->player (), "pipesource"), m_app (a) {
+    setURL (KURL ("stdin://"));
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerPipeSource::~KMPlayerPipeSource () {
@@ -1029,6 +1030,7 @@ KDE_NO_EXPORT bool KMPlayerPipeSource::isSeekable () {
 KDE_NO_EXPORT void KMPlayerPipeSource::activate () {
     m_recordcmd = m_options = QString ("-"); // or m_url?
     m_identified = true;
+    first ();
     QTimer::singleShot (0, m_player, SLOT (play ()));
     m_app->slotStatusMsg (i18n ("Ready."));
 }
@@ -1038,6 +1040,12 @@ KDE_NO_EXPORT void KMPlayerPipeSource::deactivate () {
 
 KDE_NO_EXPORT QString KMPlayerPipeSource::prettyName () {
     return i18n ("Pipe - %1").arg (m_pipecmd);
+}
+
+KDE_NO_EXPORT void KMPlayerPipeSource::setCommand (const QString & cmd) {
+    m_pipecmd = cmd;
+    if (m_document)
+        m_document->mrl ()->pretty_name = cmd;
 }
 
 #include "kmplayer.moc"

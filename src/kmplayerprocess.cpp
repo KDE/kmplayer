@@ -151,7 +151,12 @@ bool Process::supports (const char * source) const {
 bool Process::stop () {
     if (!playing ()) return true;
     do {
-        m_process->kill (SIGTERM);
+        if (m_source && !m_source->pipeCmd ().isEmpty ()) {
+            void (*oldhandler)(int) = signal(SIGTERM, SIG_IGN);
+            ::kill (-1 * ::getpid (), SIGTERM);
+            signal(SIGTERM, oldhandler);
+        } else
+            m_process->kill (SIGTERM);
         KProcessController::theKProcessController->waitForProcessExit (1);
         if (!m_process->isRunning ())
             break;
@@ -336,7 +341,8 @@ KDE_NO_EXPORT bool MPlayer::play (Source * source) {
                     !url.url ().startsWith (QString ("tv://")))
                 args += QString ("-cache %1 ").arg (cache); 
         }
-        args += KProcess::quote (QString (QFile::encodeName (m_url)));
+        if (url.protocol () != QString ("stdin"))
+            args += KProcess::quote (QString (QFile::encodeName (m_url)));
     }
     m_tmpURL.truncate (0);
     if (!source->identified () && !m_player->settings ()->mplayerpost090) {
@@ -1386,7 +1392,7 @@ KDE_NO_EXPORT QFrame * XMLPreferencesPage::prefPage (QWidget * parent) {
 //-----------------------------------------------------------------------------
 
 static const char * xine_supported [] = {
-    "dvdnavsource", "urlsource", "vcdsource", 0L
+    "dvdnavsource", "pipesource", "urlsource", "vcdsource", 0L
 };
 
 KDE_NO_CDTOR_EXPORT Xine::Xine (PartBase * player)
@@ -1404,6 +1410,10 @@ bool Xine::ready () {
     QString xine_config = KProcess::quote (QString (QFile::encodeName (locateLocal ("data", "kmplayer/") + QString ("xine_config"))));
     m_request_seek = -1;
     Settings *settings = m_player->settings ();
+    if (m_source && !m_source->pipeCmd ().isEmpty ()) {
+        printf ("%s | ", m_source->pipeCmd ().ascii ());
+        *m_process << m_source->pipeCmd ().ascii () << " | ";
+    }
     printf ("kxineplayer -wid %lu", (unsigned long) widget ());
     *m_process << "kxineplayer -wid " << QString::number (widget ());
     printf (" -f %s", xine_config.ascii ());
