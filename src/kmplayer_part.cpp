@@ -572,7 +572,11 @@ bool KMPlayer::run (const char * args, const char * pipe) {
     }
     if (m_configdialog->loop) {
         printf (" -loop 0");
-        *m_process << " -loop 0 ";
+        *m_process << " -loop 0";
+    }
+    if (m_configdialog->framedrop) {
+        printf (" -framedrop");
+        *m_process << " -framedrop";
     }
 
     /*if (!m_configdialog->audiodriver.contains("default", false)){

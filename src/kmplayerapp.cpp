@@ -1059,7 +1059,8 @@ KMPlayerTVSource::~KMPlayerTVSource () {
 
 void KMPlayerTVSource::activate () {
     init ();
-    static_cast <KMPlayerView*> (m_player->view())->broadcastButton ()->show ();
+    if (m_player->configDialog ()->showbroadcastbutton)
+        static_cast <KMPlayerView*> (m_player->view())->broadcastButton ()->show ();
 }
 /* TODO: playback by
  * ffmpeg -vd /dev/video0 -r 25 -s 768x576 -f rawvideo - |mplayer -nocache -ao arts -rawvideo on:w=768:h=576:fps=25 -quiet -

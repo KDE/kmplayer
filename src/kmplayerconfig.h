@@ -41,9 +41,11 @@ public:
     bool sizeratio : 1;
     bool showconsole : 1;
     bool loop : 1;
+    bool framedrop : 1;
     bool showbuttons : 1;
     bool showcnfbutton : 1;
     bool showrecordbutton : 1;
+    bool showbroadcastbutton : 1;
     bool autoplayafterrecording : 1;
     bool showposslider : 1;
     bool autohidebuttons : 1;

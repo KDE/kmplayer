@@ -171,10 +171,12 @@ static const char * strIndexPattern = "Index Pattern";
 static const char * strStart = "Start Playing";
 static const char * strShowConsole = "Show Console Output";
 static const char * strLoop = "Loop";
+static const char * strFrameDrop = "Frame Drop";
 static const char * strShowControlButtons = "Show Control Buttons";
 static const char * strShowPositionSlider = "Show Position Slider";
 static const char * strAddConfigButton = "Add Configure Button";
 static const char * strAddRecordButton = "Add Record Button";
+static const char * strAddBroadcastButton = "Add Broadcast Button";
 static const char * strAutoHideButtons = "Auto Hide Control Buttons";
 static const char * strAutoPlayAfterRecording = "Auto Play After Recording";
 //static const char * strAutoHideSlider = "Auto Hide Slider"; 
@@ -258,6 +260,7 @@ void KMPlayerConfig::readConfig () {
     showconsole = m_config->readBoolEntry (strShowConsole, false);
     view->setShowConsoleOutput (showconsole);
     loop = m_config->readBoolEntry (strLoop, false);
+    framedrop = m_config->readBoolEntry (strFrameDrop, true);
     showbuttons = m_config->readBoolEntry (strShowControlButtons, true);
     autohidebuttons = m_config->readBoolEntry (strAutoHideButtons, false);
     autoplayafterrecording = m_config->readBoolEntry (strAutoPlayAfterRecording, true);
@@ -276,6 +279,7 @@ void KMPlayerConfig::readConfig () {
     else
         view->configButton ()->hide ();
     showrecordbutton = m_config->readBoolEntry (strAddRecordButton, true);
+    showbroadcastbutton = m_config->readBoolEntry (strAddBroadcastButton, true);
     if (showrecordbutton)
         view->recordButton ()->show ();
     else
@@ -422,13 +426,16 @@ void KMPlayerConfig::show () {
                      this, SLOT (getHelp ()));
     }
     configdialog->m_GeneralPageGeneral->keepSizeRatio->setChecked (sizeratio);
-    configdialog->m_GeneralPageGeneral->showConsoleOutput->setChecked (showconsole); //works
-    configdialog->m_GeneralPageGeneral->loop->setChecked (loop); //works
-    configdialog->m_GeneralPageGeneral->showControlButtons->setChecked (showbuttons); //works
+    configdialog->m_GeneralPageGeneral->showConsoleOutput->setChecked (showconsole);
+    configdialog->m_GeneralPageGeneral->loop->setChecked (loop);
+    configdialog->m_GeneralPageGeneral->framedrop->setChecked (framedrop);
+    configdialog->m_GeneralPageGeneral->showControlButtons->setChecked (showbuttons);
     configdialog->m_GeneralPageGeneral->showPositionSlider->setChecked (showposslider);
     configdialog->m_GeneralPageGeneral->alwaysBuildIndex->setChecked (alwaysbuildindex);
     //configdialog->m_GeneralPageGeneral->autoHideSlider->setChecked (autohideslider);
     //configdialog->addConfigButton->setChecked (showcnfbutton);	//not
+    configdialog->m_GeneralPageGeneral->showRecordButton->setChecked (showrecordbutton);
+    configdialog->m_GeneralPageGeneral->showBroadcastButton->setChecked (showbroadcastbutton);
     configdialog->m_GeneralPageGeneral->autoHideControlButtons->setChecked (autohidebuttons); //works
     configdialog->m_GeneralPageGeneral->seekTime->setValue(seektime);
     configdialog->m_SourcePageURL->url->setText (m_player->url ().url ());
@@ -516,6 +523,7 @@ void KMPlayerConfig::writeConfig () {
     m_config->writeEntry (strKeepSizeRatio, view->keepSizeRatio ());
     m_config->writeEntry (strShowConsole, view->showConsoleOutput());
     m_config->writeEntry (strLoop, loop);
+    m_config->writeEntry (strFrameDrop, framedrop);
     m_config->writeEntry (strSeekTime, m_player->seekTime ());
     m_config->writeEntry (strVoDriver, videodriver);
     m_config->writeEntry (strAoDriver, audiodriver);
@@ -525,6 +533,8 @@ void KMPlayerConfig::writeConfig () {
     m_config->writeEntry (strShowPositionSlider, showposslider);
     m_config->writeEntry (strAlwaysBuildIndex, alwaysbuildindex);
     m_config->writeEntry (strAddConfigButton, showcnfbutton);
+    m_config->writeEntry (strAddRecordButton, showrecordbutton);
+    m_config->writeEntry (strAddBroadcastButton, showbroadcastbutton);
     m_config->writeEntry (strAutoHideButtons, autohidebuttons);
     m_config->writeEntry (strPlayDVD, playdvd);
     
@@ -647,6 +657,7 @@ void KMPlayerConfig::okPressed () {
     view->setShowConsoleOutput (showconsole);
     alwaysbuildindex = configdialog->m_GeneralPageGeneral->alwaysBuildIndex->isChecked();
     loop = configdialog->m_GeneralPageGeneral->loop->isChecked ();
+    framedrop = configdialog->m_GeneralPageGeneral->framedrop->isChecked ();
     if (showconsole && !m_player->playing ())
         view->consoleOutput ()->show ();
     else
@@ -667,6 +678,14 @@ void KMPlayerConfig::okPressed () {
 	view->configButton ()->show ();
     else
         view->configButton ()->hide ();
+    showrecordbutton = configdialog->m_GeneralPageGeneral->showRecordButton->isChecked ();
+    if (showrecordbutton)
+	view->recordButton ()->show ();
+    else
+        view->recordButton ()->hide ();
+    showbroadcastbutton = configdialog->m_GeneralPageGeneral->showBroadcastButton->isChecked ();
+    if (!showbroadcastbutton)
+        view->broadcastButton ()->hide ();
     playdvd = configdialog->m_GeneralPageDVD->autoPlayDVD->isChecked ();
     dvddevice = configdialog->m_GeneralPageDVD->dvdDevicePath->text ();
     playvcd = configdialog->m_GeneralPageVCD->autoPlayVCD->isChecked ();
