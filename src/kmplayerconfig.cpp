@@ -44,8 +44,10 @@ KMPlayerConfig::~KMPlayerConfig () {
 }
 
 static const char * strMPlayerGroup = "MPlayer";
+static const char * strGeneralGroup = "General Options";
 static const char * strMPlayerPatternGroup = "MPlayer Output Matching";
 static const char * strKeepSizeRatio = "Keep Size Ratio";
+static const char * strUseArts = "Use aRts";
 static const char * strVoDriver = "Video Driver";
 static const char * strAddArgs = "Additional Arguments";
 static const char * strSize = "Movie Size";
@@ -54,6 +56,7 @@ static const char * strStart = "Start Playing";
 static const char * strShowConsole = "Show Console Output";
 static const char * strLoop = "Loop";
 static const char * strShowControlButtons = "Show Control Buttons";
+static const char * strShowPositionSlider = "Show Position Slider";
 static const char * strAddConfigButton = "Add Configure Button";
 static const char * strAutoHideButtons = "Auto Hide Control Buttons";
 static const char * strSeekTime = "Forward/Backward Seek Time";
@@ -103,8 +106,12 @@ static const char * strPP_FFmpeg_Int = "FFmpeg Interpolating Deinterlacer";
 
 void KMPlayerConfig::readConfig () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
-    m_config->setGroup (strMPlayerGroup);
 
+    m_config->setGroup (strGeneralGroup);
+    usearts = m_config->readBoolEntry (strUseArts, true);
+    view->setUseArts (usearts);
+
+    m_config->setGroup (strMPlayerGroup);
     sizeratio = m_config->readBoolEntry (strKeepSizeRatio, true);
     view->setKeepSizeRatio (sizeratio);
     showconsole = m_config->readBoolEntry (strShowConsole, false);
@@ -116,6 +123,11 @@ void KMPlayerConfig::readConfig () {
     if (!showbuttons) {
         view->buttonBar ()->hide ();
     }
+    showposslider = m_config->readBoolEntry(strShowPositionSlider, true);
+    if (!showposslider)
+        view->positionSlider ()->hide ();
+    else
+        view->positionSlider ()->show ();
     showcnfbutton = m_config->readBoolEntry (strAddConfigButton, true);
     if (showcnfbutton)
         view->configButton ()->show ();
@@ -207,9 +219,11 @@ void KMPlayerConfig::show () {
     }
     configdialog->url->setText (m_player->url ().url ());
     configdialog->keepSizeRatio->setChecked (sizeratio);
+    configdialog->useArts->setChecked (usearts);
     configdialog->showConsoleOutput->setChecked (showconsole);
     configdialog->loop->setChecked (loop);
     configdialog->showControlButtons->setChecked (showbuttons);
+    configdialog->showPositionSlider->setChecked (showposslider);
     configdialog->addConfigButton->setChecked (showcnfbutton);
     configdialog->addConfigButton->setEnabled (showbuttons);
     configdialog->autoHideControlButtons->setChecked (autohidebuttons);
@@ -287,6 +301,8 @@ void KMPlayerConfig::show () {
 
 void KMPlayerConfig::writeConfig () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
+    m_config->setGroup (strGeneralGroup);
+    m_config->writeEntry (strUseArts, usearts);
     m_config->setGroup (strMPlayerGroup);
     m_config->writeEntry (strKeepSizeRatio, view->keepSizeRatio ());
     m_config->writeEntry (strShowConsole, view->showConsoleOutput());
@@ -296,6 +312,7 @@ void KMPlayerConfig::writeConfig () {
     m_config->writeEntry (strAddArgs, additionalarguments);
     m_config->writeEntry (strCacheSize, m_player->cacheSize ());
     m_config->writeEntry (strShowControlButtons, showbuttons);
+    m_config->writeEntry (strShowPositionSlider, showposslider);
     m_config->writeEntry (strAddConfigButton, showcnfbutton);
     m_config->writeEntry (strAutoHideButtons, autohidebuttons);
     m_config->writeEntry (strPlayDVD, playdvd);
@@ -358,6 +375,8 @@ void KMPlayerConfig::okPressed () {
         m_player->setURL (configdialog->url->text ());
     sizeratio = configdialog->keepSizeRatio->isChecked ();
     m_player->keepMovieAspect (sizeratio);
+    usearts = configdialog->useArts->isChecked ();
+    view->setUseArts (usearts);
     showconsole = configdialog->showConsoleOutput->isChecked ();
     view->setShowConsoleOutput (showconsole);
     loop = configdialog->loop->isChecked ();
@@ -372,6 +391,11 @@ void KMPlayerConfig::okPressed () {
         view->buttonBar ()->show ();
     else
         view->buttonBar ()->hide ();
+    showposslider = configdialog->showPositionSlider->isChecked ();
+    if (!showposslider)
+        view->positionSlider ()->hide ();
+    else
+        view->positionSlider ()->show ();
     showcnfbutton = configdialog->addConfigButton->isChecked ();
     if (showcnfbutton)
         view->configButton ()->show ();

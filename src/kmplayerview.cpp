@@ -33,6 +33,9 @@ email                :
 #include <qslider.h>
 #include <qlabel.h>
 
+#include <arts/soundserver.h>
+#include <arts/kartsserver.h>
+
 #include <X11/Xlib.h>
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
@@ -73,28 +76,50 @@ static int qxembed_x11_event_filter (XEvent* e) {
     return false;
 }
 
-class KMPlayerEventFiter {
+class KMPlayerViewStatic {
 public:
-    KMPlayerEventFiter ();
-    ~KMPlayerEventFiter ();
+    KMPlayerViewStatic ();
+    ~KMPlayerViewStatic ();
+
+    void getDispatcher();
+    void releaseDispatcher();
+private:
+    KArtsDispatcher *dispatcher;
+    int use_count;
 };
 
-static KMPlayerEventFiter * kmplayer_event_filter = 0L;
+static KMPlayerViewStatic * kmplayerview_static = 0L;
 
-KMPlayerEventFiter::KMPlayerEventFiter () {
-    printf ("KMPlayerEventFiter::KMPlayerEventFiter\n");
+KMPlayerViewStatic::KMPlayerViewStatic () 
+    : dispatcher ((KArtsDispatcher*) 0), use_count(0) {
+    printf ("KMPlayerViewStatic::KMPlayerViewStatic\n");
     oldFilter = qt_set_x11_event_filter (qxembed_x11_event_filter);
 }
 
-KMPlayerEventFiter::~KMPlayerEventFiter () {
-    printf ("KMPlayerEventFiter::~KMPlayerEventFiter\n");
+KMPlayerViewStatic::~KMPlayerViewStatic () {
+    printf ("KMPlayerViewStatic::~KMPlayerViewStatic\n");
+    delete dispatcher;
     qt_set_x11_event_filter (oldFilter);
-    kmplayer_event_filter = 0L;
+    kmplayerview_static = 0L;
 }
 
-static KStaticDeleter <KMPlayerEventFiter> eventFiterDeleter;
+void KMPlayerViewStatic::getDispatcher() {
+    if (!dispatcher) {
+        dispatcher = new KArtsDispatcher;
+        use_count = 1;
+    } else
+        use_count++;
+}
 
-KArtsDispatcher dispatcher;
+void KMPlayerViewStatic::releaseDispatcher() {
+    if (--use_count <= 0) {
+        delete dispatcher;
+        dispatcher = 0L;
+    }
+}
+
+static KStaticDeleter <KMPlayerViewStatic> kmplayerViewStatic;
+
 //-------------------------------------------------------------------------
 
 static const char * stop_xpm[] = {
@@ -244,14 +269,21 @@ static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char ** p) {
 
 KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
   : KMediaPlayer::View (parent, name),
-    m_artsserver (KArtsServer().server()),
+    m_artsserver (0L),
+    m_svc (0L),
     delayed_timer (0),
     m_keepsizeratio (false),
     m_show_console_output (false),
     m_auto_hide_buttons (false),
     m_playing (false),
+    m_use_arts (false),
     m_inVolumeUpdate (false)
 {
+    if (!kmplayerview_static)
+        kmplayerview_static = kmplayerViewStatic.setObject (new KMPlayerViewStatic());
+}
+
+void KMPlayerView::init () {
     //setBackgroundMode(Qt::NoBackground);
     QVBoxLayout * viewbox = new QVBoxLayout (this, 0, 0);
     m_layer = new KMPlayerViewLayer (this, viewbox);
@@ -262,6 +294,9 @@ KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
     m_viewer = new KMPlayerViewer (w1, this);
     //w1->setEraseColor (QColor (0, 0, 0));
     layerbox->addWidget (w1);
+    
+    m_posSlider = new QSlider (Qt::Horizontal, m_layer);
+    layerbox->addWidget (m_posSlider);
     layerbox->addWidget (m_buttonbar);
 
     QHBoxLayout * buttonbox = new QHBoxLayout (m_buttonbar, 1);
@@ -285,18 +320,6 @@ KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
     m_popupMenu->insertItem (i18n ("&Full Screen"),
                              m_layer, SLOT (fullScreen()), 0, menu_fullscreen);
     m_popupMenu->insertSeparator ();
-    if (!m_artsserver.isNull()) {
-        QLabel * label = new QLabel (i18n ("Volume:"), m_popupMenu);
-        m_popupMenu->insertItem (label);
-        m_slider = new QSlider (0, 100, 10, 40, Qt::Horizontal, m_popupMenu);
-        connect(m_slider, SIGNAL(valueChanged(int)), this,SLOT(setVolume(int)));
-        m_svc = m_artsserver.outVolume();
-        KArtsFloatWatch *watch = new KArtsFloatWatch(m_svc, "scaleFactor_changed", this);
-        connect (watch, SIGNAL (valueChanged (float)), 
-                 this, SLOT (updateVolume (float)));
-        m_popupMenu->insertItem (m_slider, menu_volume);
-        m_popupMenu->insertSeparator ();
-    }
     m_popupMenu->insertItem (i18n ("&Configure KMPlayer ..."), menu_config); 
 
     QVBoxLayout * viewerbox = new QVBoxLayout (m_viewer, 0, 0);
@@ -318,16 +341,47 @@ KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
 
     XSelectInput (qt_xdisplay (), m_viewer->winId (), 
             ExposureMask | StructureNotifyMask | KeyPressMask);
+    printf ("KMPlayerView %u %u\n", m_viewer->winId(), kmplayerview_static);
 
-    if (!kmplayer_event_filter)
-        kmplayer_event_filter = eventFiterDeleter.setObject (new KMPlayerEventFiter());
-    printf ("KMPlayerView %u %u\n", m_viewer->winId(), kmplayer_event_filter);
 }
 
 KMPlayerView::~KMPlayerView () {
     if (m_layer->parent () != this)
         delete m_layer;
+    setUseArts(false);
     printf ("~KMPlayer\n");
+}
+
+void KMPlayerView::setUseArts (bool b) {
+    if (!m_use_arts && b) {
+        kmplayerview_static->getDispatcher();
+        m_artsserver = new Arts::SoundServerV2;
+        *m_artsserver = KArtsServer().server();
+        m_svc = new Arts::StereoVolumeControl;
+        if (m_artsserver && !m_artsserver->isNull()) {
+            m_arts_label = new QLabel (i18n ("Volume:"), m_popupMenu);
+            m_popupMenu->insertItem (m_arts_label, -1, 3);
+            m_slider = new QSlider (0, 100, 10, 40, Qt::Horizontal, m_popupMenu);
+            connect(m_slider, SIGNAL(valueChanged(int)), this,SLOT(setVolume(int)));
+            *m_svc = m_artsserver->outVolume();
+            m_watch = new KArtsFloatWatch(*m_svc, "scaleFactor_changed", this);
+            connect (m_watch, SIGNAL (valueChanged (float)), 
+                    this, SLOT (updateVolume (float)));
+            m_popupMenu->insertItem (m_slider, menu_volume, 4);
+            m_popupMenu->insertSeparator (5);
+        }
+    } else if (m_use_arts && !b) {
+        m_popupMenu->removeItemAt (5);
+        m_popupMenu->removeItemAt (4);
+        m_popupMenu->removeItemAt (3);
+        delete m_arts_label;
+        delete m_slider;
+        delete m_watch;
+        delete m_artsserver;
+        delete m_svc;
+        kmplayerview_static->releaseDispatcher();
+    }
+    m_use_arts = b;
 }
 
 void KMPlayerView::setAutoHideButtons (bool b) {
@@ -353,7 +407,7 @@ void KMPlayerView::setVolume (int vol) {
     if (m_inVolumeUpdate) return;
     float volume = float (0.0004*vol*vol);
     printf("setVolume %d -> %.4f\n", vol, volume);
-    m_svc.scaleFactor (volume);
+    m_svc->scaleFactor (volume);
 }
 
 void KMPlayerView::updateVolume (float v) {
@@ -398,7 +452,8 @@ void KMPlayerView::startsToPlay () {
 }
 
 void KMPlayerView::showPopupMenu () {
-    updateVolume(m_svc.scaleFactor());
+    if (m_use_arts)
+        updateVolume(m_svc->scaleFactor());
     m_popupMenu->exec (m_configButton->mapToGlobal (QPoint (0, button_height)));
 }
 

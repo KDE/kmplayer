@@ -26,9 +26,14 @@
 #endif
 #include <qeventloop.h>
 #include <qapplication.h>
+#include <qcstring.h>
 #include <qmultilineedit.h>
+#include <qpair.h>
 #include <qpushbutton.h>
 #include <qpopupmenu.h>
+#include <qregexp.h>
+#include <qslider.h>
+#include <qvaluelist.h>
 
 #include <kprocess.h>
 #include <kprocctrl.h>
@@ -131,20 +136,21 @@ KParts::Part *KMPlayerFactory::createPartObject
 
 KMPlayer::KMPlayer (QWidget * parent, KConfig * config)
  : KMediaPlayer::Player (parent, ""),
-   m_view (new KMPlayerView (parent)),
    m_config (config),
+   m_view (new KMPlayerView (parent)),
    m_configdialog (new KMPlayerConfig (this, config)),
    m_liveconnectextension (0L),
    m_stoplooplevel (-1),
    m_ispart (false) {
-     init();
+    m_view->init ();
+    init();
 }
 
 KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
                     QObject * parent, const char *name, const QStringList &args)
  : KMediaPlayer::Player (wparent, wname, parent, name),
-   m_view (new KMPlayerView (wparent, wname)),
    m_config (new KConfig ("kmplayerrc")),
+   m_view (new KMPlayerView (wparent, wname)),
    m_configdialog (new KMPlayerConfig (this, m_config)),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
    m_stoplooplevel (-1),
@@ -154,6 +160,15 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
     /*KAction *playact =*/ new KAction(i18n("P&lay"), 0, 0, this, SLOT(play ()), actionCollection (), "view_play");
     /*KAction *pauseact =*/ new KAction(i18n("&Pause"), 0, 0, this, SLOT(pause ()), actionCollection (), "view_pause");
     /*KAction *stopact =*/ new KAction(i18n("&Stop"), 0, 0, this, SLOT(stop ()), actionCollection (), "view_stop");
+    QStringList::const_iterator it = args.begin ();
+    for ( ; it != args.end (); ++it) {
+        if ((*it).left (6).lower () == "href=\"")
+            m_href = (*it).mid (6, (*it).length () - 7);
+        else if ((*it).left (5).lower () == "href=")
+            m_href = (*it).mid (5);
+    }
+    m_view->init ();
+    m_configdialog->readConfig ();
     m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom50,
                                       this, SLOT (setMenuZoom (int)));
     m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom100,
@@ -162,14 +177,6 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
                                       this, SLOT (setMenuZoom (int)));
     KParts::Part::setWidget (m_view);
     setXMLFile("kmplayerpartui.rc");
-    QStringList::const_iterator it = args.begin ();
-    for ( ; it != args.end (); ++it) {
-        if ((*it).left (6).lower () == "href=\"")
-            m_href = (*it).mid (6, (*it).length () - 7);
-        else if ((*it).left (5).lower () == "href=")
-            m_href = (*it).mid (5);
-    }
-    m_configdialog->readConfig ();
     init ();
 }
 
@@ -184,12 +191,17 @@ void KMPlayer::init () {
     m_browserextension = new KMPlayerBrowserExtension (this);
     movie_width = 0;
     movie_height = 0;
+    m_bReceivedPos = false;
+    m_bPosSliderPressed = false;
     connect (m_view->backButton (), SIGNAL (clicked ()), this, SLOT (back ()));
     connect (m_view->playButton (), SIGNAL (clicked ()), this, SLOT (play ()));
     connect (m_view->forwardButton (), SIGNAL (clicked ()), this, SLOT (forward ()));
-    connect (m_view->pauseButton (), SIGNAL (clicked ()), 
-            this, SLOT (pause ()));
+    connect (m_view->pauseButton (), SIGNAL (clicked ()), this, SLOT (pause ()));
     connect (m_view->stopButton (), SIGNAL (clicked ()), this, SLOT (stop ()));
+    connect (this, SIGNAL (moviePositionChanged (int)), SLOT (setPosSlider (int)));
+    connect (m_view->positionSlider (), SIGNAL (sliderMoved (int)), SLOT (posSliderChanged (int)));
+    connect (m_view->positionSlider (), SIGNAL (sliderPressed()), SLOT (posSliderPressed()));
+    connect (m_view->positionSlider (), SIGNAL (sliderReleased()), SLOT (posSliderReleased()));
     m_view->popupMenu ()->connectItem (KMPlayerView::menu_config,
                                        m_configdialog, SLOT (show ()));
     //connect (m_view->configButton (), SIGNAL (clicked ()), m_configdialog, SLOT (show ()));
@@ -262,7 +274,10 @@ bool KMPlayer::openURL (const KURL & _url) {
         setURL (url);
         play ();
         m_href == QString::null;
-        return m_process->isRunning ();
+        if (m_process->isRunning ()) {
+            emit started ((KIO::Job*) 0);
+            return true;
+        }
     }
     return false;
 }
@@ -270,12 +285,21 @@ bool KMPlayer::openURL (const KURL & _url) {
 bool KMPlayer::openFile () {
     return false;
 }
-#include <qpair.h>
+
 void KMPlayer::processOutput (KProcess *, char * str, int len) {
     if (!m_view) return;
     QString out = QString::fromLatin1 (str, len);
-    m_view->addText (out);
+    if ( !m_bReceivedPos )
+        m_view->addText (out); // Add output until we receive first pos marker
+    QRegExp rePos( "V\\:\\s*([\\d\\.]+)\\s*" );
     KRegExp sizeRegExp (m_configdialog->sizepattern.ascii());
+
+    if (rePos.search( out ) >= 0) {
+        m_bReceivedPos=true;
+        m_pos = rePos.cap (1).toFloat();
+        emit moviePositionChanged( (int) m_pos );
+    }
+    
     bool ok;
     if (sizeRegExp.match (out.latin1 ())) {
         movie_width = QString (sizeRegExp.group (1)).toInt (&ok);
@@ -332,14 +356,19 @@ void KMPlayer::processDataWritten (KProcess *) {
 
 void KMPlayer::processStopped (KProcess *) {
     printf("process stopped\n");
+    
     killTimers ();
     if (m_started_emited) {
         m_started_emited = false;
         m_browserextension->setLoadingProgress (100);
         emit completed ();
     }
-    if (m_view && m_view->playButton ()->isOn ())
+    if (m_view && m_view->playButton ()->isOn ()) {
         m_view->playButton ()->toggle ();
+        m_view->positionSlider()->setEnabled (false);
+        m_view->positionSlider()->setValue (0);
+        m_view->positionSlider()->setMaxValue (0);
+    }
     if (qApp->eventLoop ()->loopLevel () == m_stoplooplevel) {
         qApp->eventLoop ()->exitLoop ();
         m_stoplooplevel = -1;
@@ -350,6 +379,7 @@ void KMPlayer::processStopped (KProcess *) {
             m_browserextension->infoMessage (i18n ("KMPlayer: Stop Playing"));
         emit finished ();
     }
+    m_bReceivedPos=false;
 }
 
 bool KMPlayer::isSeekable () const {
@@ -374,13 +404,13 @@ void KMPlayer::pause () {
 
 void KMPlayer::back () {
     QString cmd;
-    cmd.sprintf ("seek -%d type=0", m_seektime);
+    cmd.sprintf ("seek -%d 0", m_seektime);
     sendCommand (cmd);
 }
 
 void KMPlayer::forward () {
     QString cmd;
-    cmd.sprintf ("seek %d type=0", m_seektime);
+    cmd.sprintf ("seek %d 0", m_seektime);
     sendCommand (cmd);
 }
 
@@ -388,6 +418,12 @@ bool KMPlayer::run (const char * args, const char * pipe) {
     m_view->consoleOutput ()->clear ();
     m_started_emited = false;
     initProcess ();
+
+    if ( m_view->positionSlider()->maxValue() == 0 || !m_configdialog->showposslider )
+        m_view->positionSlider()->hide();
+    else
+        m_view->positionSlider()->show();
+    
     m_use_slave = !(pipe && pipe[0]);
     if (!m_use_slave) {
         printf ("%s | ", pipe);
@@ -402,6 +438,10 @@ bool KMPlayer::run (const char * args, const char * pipe) {
     if (m_configdialog->loop) {
         printf (" -loop 0");
         *m_process << " -loop 0 ";
+    }
+    if (m_configdialog->usearts) {
+        printf (" -ao arts");
+        *m_process << " -ao arts";
     }
     if (m_configdialog->additionalarguments.length () > 0) {
         printf (" %s", m_configdialog->additionalarguments.latin1 ());
@@ -499,18 +539,27 @@ bool KMPlayer::run (const char * args, const char * pipe) {
     } else
         printf ("\n");
 
+    QValueList<QCString>::const_iterator it;
+    QString sMPArgs;
+    for ( it = m_process->args().begin(); it != m_process->args().end(); ++it )
+        sMPArgs += (*it);
+    
+    m_view->addText( sMPArgs.simplifyWhiteSpace() );
+    
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
 
     if (m_process->isRunning ()) {
         if (!m_view->playButton ()->isOn ()) m_view->playButton ()->toggle ();
         emit started (0L);
         m_started_emited = true;
+        m_view->positionSlider()->setEnabled (true);
         return true;
     } else {
         if (m_view->playButton ()->isOn ()) m_view->playButton ()->toggle ();
         emit canceled (i18n ("Could not start MPlayer"));
         return false;
     }
+
 }
 
 void KMPlayer::play () {
@@ -525,9 +574,11 @@ void KMPlayer::play () {
     }
     QCString args;
     if (m_url.isLocalFile () || m_cachesize <= 0)
-        args.sprintf ("-quiet -slave");
+        args.sprintf ("-slave");
     else
-        args.sprintf ("-quiet -slave -cache %d", m_cachesize);
+        args.sprintf ("-slave -cache %d", m_cachesize);
+    if (!m_configdialog->showposslider)
+        args.append (" -quiet");
     run (args);
     emit running ();
 }
@@ -577,7 +628,13 @@ void KMPlayer::timerEvent (QTimerEvent *) {
 
 void KMPlayer::seek (unsigned long msec) {
     QString cmd;
-    cmd.sprintf ("seek %lu type=2", msec/1000);
+    cmd.sprintf ("seek %lu 2", msec/1000);
+    sendCommand (cmd);
+}
+
+void KMPlayer::seekPercent (float per) {
+    QString cmd;
+    cmd.sprintf ("seek %f 1", per);
     sendCommand (cmd);
 }
 
@@ -601,6 +658,34 @@ void KMPlayer::setMenuZoom (int id) {
         scale = 0.5;
     m_liveconnectextension->setSize (int (scale * m_view->viewer ()->width ()),
                                      int (scale * m_view->viewer ()->height()));
+}
+
+void KMPlayer::setPosSlider(int iNewPos)
+{
+    QSlider *slider = m_view->positionSlider ();
+    
+    if (slider->isVisible () && slider->isEnabled () && !m_bPosSliderPressed)
+        slider->setValue (iNewPos);
+}
+
+void KMPlayer::posSliderPressed()
+{
+    m_bPosSliderPressed=true;
+}
+
+void KMPlayer::posSliderReleased()
+{
+    m_bPosSliderPressed=false;
+}
+
+void KMPlayer::posSliderChanged(int iNewPos)
+{
+        static int iOldPos=-1;
+
+        if ( iNewPos != iOldPos ) {
+            seekPercent( (float) iNewPos / m_view->positionSlider()->maxValue() * 100 );
+            iOldPos = iNewPos;
+        }
 }
 
 KAboutData* KMPlayer::createAboutData () {

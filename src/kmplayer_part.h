@@ -105,6 +105,7 @@ public slots:
     virtual void play (void);
     virtual void stop (void);
     virtual void seek (unsigned long msec);
+    virtual void seekPercent (float per);
 
     void adjustVolume (int incdec);
     void setURL (const KURL & url);
@@ -112,6 +113,8 @@ public slots:
     bool playing () const;
     void showConfigDialog ();
     void setMenuZoom (int id);
+    void setPosSlider(int);
+    void posSliderChanged(int);
 public:
     virtual bool isSeekable (void) const;
     virtual unsigned long position (void) const;
@@ -120,6 +123,7 @@ public:
 signals:
     void running ();
     void finished ();
+    void moviePositionChanged (int);
 protected:
     bool openFile();
     void timerEvent (QTimerEvent *);
@@ -129,12 +133,14 @@ private slots:
     void processDataWritten (KProcess *);
     void back ();
     void forward ();
+    void posSliderPressed ();
+    void posSliderReleased ();
 private:
     void init ();
     void initProcess ();
     void sendCommand (const QString &);
-    KMPlayerView * m_view;
     KConfig * m_config;
+    KMPlayerView * m_view;
     KMPlayerConfig * m_configdialog;
     KProcess * m_process;
     KMPlayerBrowserExtension * m_browserextension;
@@ -147,11 +153,14 @@ private:
     int m_cachesize;
     int movie_width;
     int movie_height;
+    double m_pos;
     bool m_term_signal_send : 1;
     bool m_kill_signal_send : 1;
     bool m_started_emited : 1;
     bool m_ispart : 1;
     bool m_use_slave : 1;
+    bool m_bReceivedPos : 1;
+    bool m_bPosSliderPressed : 1;
 };
 
 class KMPlayerFactory : public KParts::Factory {

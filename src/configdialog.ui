@@ -183,63 +183,6 @@
                 </widget>
                 <widget class="QCheckBox">
                     <property name="name">
-                        <cstring>autoHideControlButtons</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>270</x>
-                            <y>170</y>
-                            <width>240</width>
-                            <height>30</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Auto Hide Control Buttons</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Auto hide the buttons when mouse is not at the bottom of the view</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>showDVDMenu</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>20</x>
-                            <y>200</y>
-                            <width>370</width>
-                            <height>30</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Show DVD Menu</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Enable this if you have a DVD player device</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>showControlButtons</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>20</x>
-                            <y>140</y>
-                            <width>250</width>
-                            <height>30</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Show Control Buttons</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Show small backward/play/forward/stop/pause buttons</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
                         <cstring>showConsoleOutput</cstring>
                     </property>
                     <property name="geometry">
@@ -293,6 +236,101 @@
                     </property>
                     <property name="whatsThis" stdset="0">
                         <string>Try to keep movie aspect</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>autoHideControlButtons</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>270</x>
+                            <y>170</y>
+                            <width>240</width>
+                            <height>30</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Auto Hide Control Buttons</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Auto hide the buttons when mouse is not at the bottom of the view</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>showDVDMenu</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>280</x>
+                            <y>230</y>
+                            <width>210</width>
+                            <height>30</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Show DVD Menu</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Enable this if you have a DVD player device</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>useArts</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>20</x>
+                            <y>200</y>
+                            <width>240</width>
+                            <height>30</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Use aRts audio driver</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Use aRts audio driver and add a volume slider</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>showControlButtons</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>20</x>
+                            <y>140</y>
+                            <width>250</width>
+                            <height>30</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Show Control Buttons</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Show small backward/play/forward/stop/pause buttons</string>
+                    </property>
+                </widget>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>showPositionSlider</cstring>
+                    </property>
+                    <property name="geometry">
+                        <rect>
+                            <x>20</x>
+                            <y>170</y>
+                            <width>250</width>
+                            <height>30</height>
+                        </rect>
+                    </property>
+                    <property name="text">
+                        <string>Show position slider</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Show small backward/play/forward/stop/pause buttons</string>
                     </property>
                 </widget>
             </widget>

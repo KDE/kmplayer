@@ -34,11 +34,13 @@ class KMPlayerConfig : public QObject {
 public:
     KMPlayerConfig (KMPlayer *, KConfig * part);
     ~KMPlayerConfig ();
+    bool usearts;
     bool sizeratio;
     bool showconsole;
     bool loop;
     bool showbuttons;
     bool showcnfbutton;
+    bool showposslider;
     bool autohidebuttons;
     bool showdvdmenu;
     bool showvcdmenu;

@@ -24,8 +24,6 @@ email                :
 
 #include <qwidget.h>
 #include <kmediaplayer/view.h>
-#include <arts/soundserver.h>
-#include <arts/kartsserver.h>
 
 class KMPlayerDoc;
 class KMPlayerView;
@@ -35,6 +33,12 @@ class QPushButton;
 class QPopupMenu;
 class QBoxLayout;
 class QSlider;
+class QLabel;
+class KArtsFloatWatch;
+namespace Arts {
+    class SoundServerV2;
+    class StereoVolumeControl;
+}
 
 class KMPlayerViewLayer : public QWidget {
     Q_OBJECT
@@ -56,15 +60,16 @@ public:
         menu_config = 0, menu_fullscreen, menu_volume, 
         menu_zoom, menu_zoom50, menu_zoom100, menu_zoom150
     };
-    KMPlayerView(QWidget *parent = 0, const char *name=0);
+    KMPlayerView(QWidget *parent, const char *name = (char*) 0);
     ~KMPlayerView();
 
-    KMPlayerViewer * viewer () const { return m_viewer; }
-
     void addText (const QString &);
+    void init ();
     void reset ();
     void print(QPrinter *pPrinter);
+
     QMultiLineEdit * consoleOutput () const { return m_multiedit; }
+    KMPlayerViewer * viewer () const { return m_viewer; }
     QWidget * buttonBar () const { return m_buttonbar; }
     QPushButton * backButton () const { return m_backButton; }
     QPushButton * playButton () const { return m_playButton; }
@@ -72,10 +77,13 @@ public:
     QPushButton * pauseButton () const { return m_pauseButton; }
     QPushButton * stopButton () const { return m_stopButton; }
     QPushButton * configButton () const { return m_configButton; }
+    QSlider * positionSlider () const { return m_posSlider; }
     QPopupMenu * popupMenu () const { return m_popupMenu; }
     QPopupMenu * zoomMenu () const { return m_zoomMenu; }
     bool keepSizeRatio () const { return m_keepsizeratio; }
     void setKeepSizeRatio (bool b) { m_keepsizeratio = b; }
+    bool useArts () const { return m_use_arts; }
+    void setUseArts (bool b);
     bool showConsoleOutput () const { return m_show_console_output; }
     void setShowConsoleOutput (bool b) { m_show_console_output = b; }
     void setAutoHideButtons (bool b);
@@ -102,14 +110,18 @@ private:
     QPushButton * m_configButton;
     QPopupMenu * m_popupMenu;
     QPopupMenu * m_zoomMenu;
+    QLabel * m_arts_label;
     QSlider * m_slider;
-    Arts::SoundServerV2 m_artsserver;
-    Arts::StereoVolumeControl m_svc;
+    QSlider * m_posSlider;
+    Arts::SoundServerV2 * m_artsserver;
+    Arts::StereoVolumeControl * m_svc;
+    KArtsFloatWatch * m_watch;
     int delayed_timer;
     bool m_keepsizeratio : 1;
     bool m_show_console_output : 1;
     bool m_auto_hide_buttons : 1;
     bool m_playing : 1;
+    bool m_use_arts : 1;
     bool m_inVolumeUpdate : 1;
 };
 

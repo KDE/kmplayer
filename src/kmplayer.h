@@ -71,6 +71,7 @@ public slots:
     void slotPreferences ();
     void slotViewToolBar ();
     void slotViewStatusBar ();
+    void slotViewMenuBar ();
     void slotStatusMsg (const QString &text);
     void playDVD ();
     void playVCD ();
@@ -114,6 +115,7 @@ private:
     KAction * fileQuit;
     KToggleAction * viewToolBar;
     KToggleAction * viewStatusBar;
+    KToggleAction * viewMenuBar;
     KToggleAction * viewKeepRatio;
     KToggleAction * viewShowConsoleOutput;
     QMenuItem * m_sourcemenu;
@@ -136,6 +138,7 @@ private:
     bool m_fullscreen : 1;
     bool m_showToolbar : 1;
     bool m_showStatusbar : 1;
+    bool m_showMenubar : 1;
     bool m_sreensaverdisabled : 1;
 };
 

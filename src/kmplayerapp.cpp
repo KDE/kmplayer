@@ -27,6 +27,8 @@
 #include <qpushbutton.h>
 #include <qkeysequence.h>
 #include <qapplication.h>
+#include <qslider.h>
+#include <qtimer.h>
 
 // include files for KDE
 #include <kiconloader.h>
@@ -98,7 +100,7 @@ void KMPlayerApp::initActions()
     /*KAction *artsctrl =*/ new KAction (i18n ("&Arts Control"), 0, 0, this, SLOT (startArtsControl ()), actionCollection (), "view_arts_control");
     //viewToolBar = KStdAction::showToolbar(this, SLOT(slotViewToolBar()), actionCollection());
     viewStatusBar = KStdAction::showStatusbar(this, SLOT(slotViewStatusBar()), actionCollection());
-
+    viewMenuBar = KStdAction::showMenubar(this, SLOT(slotViewMenuBar()), actionCollection());
     fileNewWindow->setStatusText(i18n("Opens a new application window"));
     fileNew->setStatusText(i18n("Creates a new document"));
     fileOpen->setStatusText(i18n("Opens an existing document"));
@@ -107,7 +109,7 @@ void KMPlayerApp::initActions()
     fileQuit->setStatusText(i18n("Quits the application"));
     //viewToolBar->setStatusText(i18n("Enables/disables the toolbar"));
     viewStatusBar->setStatusText(i18n("Enables/disables the statusbar"));
-
+    viewMenuBar->setStatusText(i18n("Enables/disables the menubar"));
     // use the absolute path to your kmplayerui.rc file for testing purpose in createGUI();
     createGUI();
 }
@@ -257,7 +259,7 @@ void KMPlayerApp::playPipe () {
 
 void KMPlayerApp::openDocumentFile (const KURL& url)
 {
-    slotStatusMsg(i18n("Opening file..."));
+    if (m_showStatusbar) slotStatusMsg(i18n("Opening file..."));
     doc->newDocument();		
     doc->setAspect (-1.0);
     m_openpipe = m_openvcd = m_opendvd = false;
@@ -272,7 +274,7 @@ void KMPlayerApp::openDocumentFile (const KURL& url)
     if (!url.isEmpty () && m_player->run ("-quiet -nocache -identify")) {
         connect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
         doc->setURL (url);
-    } else
+    } else if (m_showStatusbar)
         slotStatusMsg (i18n ("Ready."));
     m_player->configDialog ()->loop = loop;
 }
@@ -334,6 +336,10 @@ void KMPlayerApp::finished () {
             int pos = str.find ('=');
             if (pos > 0)
                 doc->setAspect (str.mid (pos + 1).toFloat());
+        } else if (str.startsWith ("ID_LENGTH")) {
+            int pos = str.find ('=');
+            if (pos > 0)
+                kview->positionSlider()->setMaxValue (str.mid (pos + 1).toInt());
         }
     }
     resizePlayer (100);
@@ -377,6 +383,10 @@ void KMPlayerApp::finishedOpenDVD () {
             int pos = str.find ('=');
             if (pos > 0)
                 doc->setAspect (str.mid (pos + 1).toFloat());
+        } else if (str.startsWith ("ID_LENGTH")) {
+            int pos = str.find ('=');
+            if (pos > 0)
+                kview->positionSlider()->setMaxValue (str.mid (pos + 1).toInt());
         } else if (subtitleRegExp.match (cstr)) {
             m_dvdsubtitlemenu->insertItem (subtitleRegExp.group (2), this,
                                            SLOT (subtitleMenuClicked(int)), 0, 
@@ -442,6 +452,10 @@ void KMPlayerApp::finishedOpenVCD () {
             int pos = str.find ('=');
             if (pos > 0)
                 doc->setAspect (str.mid (pos + 1).toFloat());
+        } else if (str.startsWith ("ID_LENGTH")) {
+            int pos = str.find ('=');
+            if (pos > 0)
+                kview->positionSlider()->setMaxValue (str.mid (pos + 1).toInt());
         } else if (trackRegExp.match (cstr)) {
             m_vcdtrackmenu->insertItem (trackRegExp.group (1), this,
                                         SLOT (trackMenuClicked(int)), 0, 
@@ -576,6 +590,7 @@ void KMPlayerApp::saveOptions()
     config->writeEntry ("Geometry", size());
     //config->writeEntry ("Show Toolbar", viewToolBar->isChecked());
     config->writeEntry ("Show Statusbar",viewStatusBar->isChecked());
+    config->writeEntry ("Show Menubar",viewMenuBar->isChecked());
     if (!m_pipe.isEmpty ()) {
         config->setGroup ("Pipe Command");
         config->writeEntry ("Command1", m_pipe);
@@ -602,6 +617,10 @@ void KMPlayerApp::readOptions() {
     bool bViewStatusbar = config->readBoolEntry("Show Statusbar", false);
     viewStatusBar->setChecked(bViewStatusbar);
     slotViewStatusBar();
+    
+    bool bViewMenubar = config->readBoolEntry("Show Menubar", true);
+    viewMenuBar->setChecked(bViewMenubar);
+    slotViewMenuBar();
 
     config->setGroup ("Pipe Command");
     m_pipe = config->readEntry ("Command1", "");
@@ -777,6 +796,21 @@ void KMPlayerApp::slotViewStatusBar() {
         statusBar()->hide();
 }
 
+void KMPlayerApp::slotViewMenuBar() {
+    m_showMenubar = viewMenuBar->isChecked();
+    if (m_showMenubar) {
+        menuBar()->show();
+        slotStatusMsg(i18n("Ready"));
+    } else {
+        menuBar()->hide();
+        slotStatusMsg (i18n ((QString ("Show Menubar with ") + 
+                                      viewMenuBar->shortcutText ()).ascii()));
+        if (!m_showStatusbar) {
+            statusBar()->show();
+            QTimer::singleShot (3000, statusBar(), SLOT (hide ()));
+        }
+    }
+}
 
 void KMPlayerApp::slotStatusMsg(const QString &text) {
     statusBar()->clear();
@@ -807,6 +841,7 @@ void KMPlayerApp::fullScreen () {
         menuBar ()->show ();
         //if (m_showToolbar) toolBar("mainToolBar")->show();
         if (m_showStatusbar) statusBar()->show();
+	if (m_showMenubar) menuBar()->show();
         if (m_sreensaverdisabled)
             m_sreensaverdisabled = !kapp->dcopClient()->send
                 ("kdesktop", "KScreensaverIface", "enable(bool)", "true");
