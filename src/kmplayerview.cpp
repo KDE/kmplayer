@@ -258,6 +258,24 @@ void KMPlayerViewerHolder::resizeEvent (QResizeEvent *) {
 
 //-----------------------------------------------------------------------------
 
+class KMPlayerSlider : public QSlider {
+public:
+    KMPlayerSlider (Qt::Orientation orient, QWidget *parent, KMPlayerView *view)
+        : QSlider (orient, parent), m_view (view) {
+    }
+protected:
+    void mouseMoveEvent (QMouseEvent * e);
+private:
+    KMPlayerView * m_view;
+};
+
+void KMPlayerSlider::mouseMoveEvent (QMouseEvent * e) {
+    if (e->state () == Qt::NoButton)
+        m_view->delayedShowButtons (e->y () > height () - 5);
+}
+
+//-----------------------------------------------------------------------------
+
 static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char ** p) {
     QPushButton * b = new QPushButton (QIconSet (QPixmap(p)), QString::null, w);
     b->setMaximumSize (750, button_height);
@@ -295,7 +313,7 @@ void KMPlayerView::init () {
     //w1->setEraseColor (QColor (0, 0, 0));
     layerbox->addWidget (w1);
     
-    m_posSlider = new QSlider (Qt::Horizontal, m_layer);
+    m_posSlider = new KMPlayerSlider (Qt::Horizontal, m_layer, this);
     layerbox->addWidget (m_posSlider);
     layerbox->addWidget (m_buttonbar);
 
@@ -393,6 +411,7 @@ void KMPlayerView::setAutoHideButtons (bool b) {
         m_buttonbar->show ();
     m_viewer->setMouseTracking (b && m_playing);
     m_viewer->parentWidget ()->setMouseTracking (b && m_playing);
+    m_posSlider->setMouseTracking (b && m_playing);
 }
 
 void KMPlayerView::delayedShowButtons (bool show) {
@@ -448,6 +467,7 @@ void KMPlayerView::startsToPlay () {
         m_buttonbar->hide ();
         m_viewer->setMouseTracking (true);
         m_viewer->parentWidget ()->setMouseTracking (true);
+        m_posSlider->setMouseTracking (true);
     }
 }
 
@@ -468,6 +488,7 @@ void KMPlayerView::reset () {
         m_buttonbar->show ();
         m_viewer->setMouseTracking (false);
         m_viewer->parentWidget ()->setMouseTracking (false);
+        m_posSlider->setMouseTracking (false);
     }
     if (m_layer->fullscreen())
         m_layer->fullScreen ();
