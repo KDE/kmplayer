@@ -137,6 +137,7 @@ public:
     KDE_NO_EXPORT KMPlayerControlPanel * buttonBar () const { return m_buttonbar; }
     KDE_NO_EXPORT KMPlayerPlayListView * playList () const { return m_playlist; }
     KDE_NO_EXPORT QWidgetStack * widgetStack () const { return m_widgetstack; }
+    KDE_NO_EXPORT KDockArea * docArea () const { return m_dockarea; }
     KDE_NO_EXPORT bool keepSizeRatio () const { return m_keepsizeratio; }
     KDE_NO_EXPORT void setKeepSizeRatio (bool b) { m_keepsizeratio = b; }
     void showWidget (WidgetType w);

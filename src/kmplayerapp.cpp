@@ -167,6 +167,7 @@ KDE_NO_EXPORT void KMPlayerApp::initStatusBar()
 KDE_NO_EXPORT void KMPlayerApp::initView ()
 {
     m_view = static_cast <KMPlayerView*> (m_player->view());
+    m_view->docArea ()->readDockConfig (config, QString ("Window Layout"));
     setCentralWidget (m_view);
     QPopupMenu * bookmarkmenu = m_view->buttonBar()->bookmarkMenu ();
     m_view->buttonBar()->popupMenu ()->removeItem (KMPlayerControlPanel::menu_bookmark);
@@ -370,6 +371,7 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
     disconnect (m_player->settings (), SIGNAL (configChanged ()),
                 this, SLOT (configChanged ()));
     m_player->settings ()->writeConfig ();
+    m_view->docArea ()->writeDockConfig (config, QString ("Window Layout"));
 }
 
 
