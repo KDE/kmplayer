@@ -47,7 +47,6 @@
 
 #include "kmplayerview.h"
 #include "kmplayersource.h"
-#include "kmplayer_smil.h"
 
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
@@ -347,7 +346,7 @@ KDE_NO_EXPORT void ViewLayer::paintEvent (QPaintEvent * pe) {
 static void scaleRegions (RegionNodePtr & p, float sx, float sy, int xoff, int yoff, RegionNodePtr & av_rgn) {
     for (RegionNodePtr r = p->firstChild; r; r =r->nextSibling)
         if (r->regionElement) {  // note WeakPtr can be null
-            SMIL::Region * smilregion = convertNode <SMIL::Region> (r->regionElement);
+            RegionBase * smilregion = convertNode<RegionBase>(r->regionElement);
             r->x = xoff + int (sx * smilregion->x);
             r->y = yoff + int (sy * smilregion->y);
             r->w = int (sx * smilregion->w);
@@ -374,19 +373,20 @@ KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
     int hws = h - (m_view->controlPanelMode () == View::CP_AutoHide && m_view->widgetStack ()->visibleWidget () == m_view->viewer () ? 0 : hcp);
     // now scale the regions and find video region
     if (rootLayout && rootLayout->regionElement && wws > 0 && hws > 0) {
-        SMIL::RootLayout * smilroot = convertNode <SMIL::RootLayout> (rootLayout->regionElement);
-        if (smilroot->w > 0 && smilroot->h > 0) {
-            float xscale = 1.0 + 1.0 * (wws - smilroot->w) / smilroot->w;
-            float yscale = 1.0 + 1.0 * (hws - smilroot->h) / smilroot->h;
+        RegionBase *region = convertNode<RegionBase>(rootLayout->regionElement);
+        if (region->w > 0 && region->h > 0) {
+            m_view->viewer ()->setAspect (region->w / region->h);
+            float xscale = 1.0 + 1.0 * (wws - region->w) / region->w;
+            float yscale = 1.0 + 1.0 * (hws - region->h) / region->h;
             if (m_view->keepSizeRatio ())
                 if (xscale > yscale) {
                     xscale = yscale;
-                    wws = int ((xscale - 1.0) * smilroot->w + smilroot->w);
+                    wws = int ((xscale - 1.0) * region->w + region->w);
                     x = (w - wws) / 2;
                 } else {
                     yscale = xscale;
                     int old_hws = hws;
-                    hws = int ((yscale - 1.0) * smilroot->h + smilroot->h);
+                    hws = int ((yscale - 1.0) * region->h + region->h);
                     y = (old_hws - hws) / 2;
                 }
             rootLayout->x = x;

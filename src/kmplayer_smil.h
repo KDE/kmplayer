@@ -268,16 +268,6 @@ public:
 };
 
 /**
- * Base class for Region and RootLayout
- */
-class RegionBase : public Element {
-protected:
-    KDE_NO_CDTOR_EXPORT RegionBase (ElementPtr & d) : Element (d) {}
-public:
-    int x, y, w, h;
-};
-
-/**
  * Represents a rectangle on the viewing area
  */
 class Region : public RegionBase {

@@ -235,6 +235,19 @@ public:
     RegionNodePtr firstChild;
 };
 
+/**
+ * Base class for Region and RootLayout
+ */
+class RegionBase : public Element {
+protected:
+    KDE_NO_CDTOR_EXPORT RegionBase (ElementPtr & d) : Element (d) {}
+public:
+    int x, y, w, h;
+};
+
+/**
+ * Element wrapper to give it list functionality
+ */
 class KMPLAYER_EXPORT NodeList {
     ElementPtrW first_element;
 public:

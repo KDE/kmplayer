@@ -308,6 +308,7 @@ KDE_NO_EXPORT void KMPlayerApp::resizePlayer (int percentage) {
             w = int (source->aspect () * h);
             w += w % 2;
             source->setWidth (w);
+            source->setHeight (h);
         } else
             source->setAspect (1.0 * w/h);
         if (m_view->controlPanel ()->isVisible ())
@@ -319,7 +320,11 @@ KDE_NO_EXPORT void KMPlayerApp::resizePlayer (int percentage) {
         w = int (1.0 * w * percentage/100.0);
         h = int (1.0 * h * percentage/100.0);
         QSize s = sizeForCentralWidgetSize (QSize (w, h));
-        resize (s);
+        if (s.width () != width () || s.height () != height ()) {
+            QSize oldsize = m_view->fullScreenWidget ()->size ();
+            resize (s);
+            QApplication::postEvent (m_view->fullScreenWidget (), new QResizeEvent (m_view->fullScreenWidget ()->size (), oldsize));
+        }
     }
 }
 

@@ -609,6 +609,23 @@ void PartBase::decreaseVolume () {
 }
 
 void PartBase::sizes (int & w, int & h) const {
+    ElementPtr doc = m_source->document ();
+    if (doc) {
+        RegionNodePtr rl = doc->document ()->rootLayout;
+        if (rl) {
+            RegionBase * root = convertNode <RegionBase> (rl->regionElement);
+            if (!m_noresize && root) {
+                w = root->w;
+                h = root->h;
+                if (w && h)
+                    return;
+            }
+            w = rl->w;
+            h = rl->h;
+            if (w && h)
+                return;
+        }
+    }
     w = m_source->width ();
     h = m_source->height ();
     if ((m_noresize || w <= 0 || h <= 0) && m_view->viewer ()) {
@@ -1188,6 +1205,15 @@ KDE_NO_EXPORT void URLSource::read (QTextStream & textstream) {
         } else if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
             readXML (cur_elm, textstream, line);
             cur_elm->normalize ();
+            if (m_document) { // SMIL documents might have set its sizes
+                RegionNodePtr rl = m_document->document ()->rootLayout;
+                if (rl) {
+                    RegionBase *root=convertNode<RegionBase>(rl->regionElement);
+                    setWidth (root->w);
+                    setHeight (root->h);
+                    setAspect (root->h > 0 ? 1.0 * root->w / root->h : 0.0);
+                }
+            }
         } else if (line.lower () != QString ("[reference]")) do {
             QString mrl = line.stripWhiteSpace ();
             if (mrl.lower ().startsWith (QString ("asf ")))

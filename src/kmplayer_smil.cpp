@@ -552,7 +552,7 @@ static void buildRegionNodes (ElementPtr p, RegionNodePtr r) {
 }
 
 static void sizeRegionNodes (RegionNodePtr p) {
-    SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (p->regionElement);
+    RegionBase * rb = convertNode <RegionBase> (p->regionElement);
     for (RegionNodePtr rg = p->firstChild; rg; rg = rg->nextSibling) {
         SMIL::Region *smilregion = convertNode<SMIL::Region>(rg->regionElement);
         int l = calcLength (smilregion->getAttribute("left"), rb->w);
