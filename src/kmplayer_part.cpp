@@ -46,14 +46,14 @@
 typedef QValueList <QGuardedPtr <KMPlayerPart> > KMPlayerPartList;
 
 struct KMPlayerPartStatic {
-    KMPlayerPartStatic () {}
+    KDE_NO_CDTOR_EXPORT KMPlayerPartStatic () {}
     ~KMPlayerPartStatic ();
     KMPlayerPartList kmplayer_parts;
 };
 
 static KMPlayerPartStatic * kmplayerpart_static = 0L;
 
-KDE_NO_EXPORT KMPlayerPartStatic::~KMPlayerPartStatic () {
+KDE_NO_CDTOR_EXPORT KMPlayerPartStatic::~KMPlayerPartStatic () {
     kmplayerpart_static = 0L;
     // delete map content
 }
@@ -79,11 +79,11 @@ K_EXPORT_COMPONENT_FACTORY (libkmplayerpart, KMPlayerFactory)
 
 KInstance *KMPlayerFactory::s_instance = 0;
 
-KDE_NO_EXPORT KMPlayerFactory::KMPlayerFactory () {
+KDE_NO_CDTOR_EXPORT KMPlayerFactory::KMPlayerFactory () {
     s_instance = new KInstance ("kmplayer");
 }
 
-KDE_NO_EXPORT KMPlayerFactory::~KMPlayerFactory () {
+KDE_NO_CDTOR_EXPORT KMPlayerFactory::~KMPlayerFactory () {
     delete s_instance;
 }
 
@@ -103,7 +103,7 @@ static bool getBoolValue (const QString & value) {
             value.lower() != QString::fromLatin1("0"));
 }
 
-KDE_NO_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
+KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
                     QObject * parent, const char *name, const QStringList &args)
  : KMPlayer (wparent, wname, parent, name, new KSimpleConfig ("kmplayerrc")),
    m_browserextension (new KMPlayerBrowserExtension (this)),
@@ -209,7 +209,7 @@ KDE_NO_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
         m_view->fullScreen ();
 }
 
-KDE_NO_EXPORT KMPlayerPart::~KMPlayerPart () {
+KDE_NO_CDTOR_EXPORT KMPlayerPart::~KMPlayerPart () {
     kdDebug() << "KMPlayerPart::~KMPlayerPart" << endl;
     if (!m_group.isEmpty ())
         kmplayerpart_static->kmplayer_parts.remove (this);
@@ -353,7 +353,7 @@ KDE_NO_EXPORT void KMPlayerPart::setMenuZoom (int id) {
 
 //---------------------------------------------------------------------
 
-KDE_NO_EXPORT KMPlayerBrowserExtension::KMPlayerBrowserExtension (KMPlayerPart * parent)
+KDE_NO_CDTOR_EXPORT KMPlayerBrowserExtension::KMPlayerBrowserExtension (KMPlayerPart * parent)
   : KParts::BrowserExtension (parent, "KMPlayer Browser Extension") {
 }
 
@@ -525,7 +525,7 @@ static const JSCommandEntry * getJSCommandEntry (const char * name, int start = 
     return &JSCommandList[mid];
 }
 
-KDE_NO_EXPORT KMPlayerLiveConnectExtension::KMPlayerLiveConnectExtension (KMPlayerPart * parent)
+KDE_NO_CDTOR_EXPORT KMPlayerLiveConnectExtension::KMPlayerLiveConnectExtension (KMPlayerPart * parent)
   : KParts::LiveConnectExtension (parent), player (parent),
     lastJSCommandEntry (0L),
     m_started (false),
@@ -534,7 +534,7 @@ KDE_NO_EXPORT KMPlayerLiveConnectExtension::KMPlayerLiveConnectExtension (KMPlay
       connect (parent, SIGNAL (stopPlaying ()), this, SLOT (finished ()));
 }
 
-KDE_NO_EXPORT KMPlayerLiveConnectExtension::~KMPlayerLiveConnectExtension() {
+KDE_NO_CDTOR_EXPORT KMPlayerLiveConnectExtension::~KMPlayerLiveConnectExtension() {
     kdDebug () << "KMPlayerLiveConnectExtension::~KMPlayerLiveConnectExtension()" << endl;
 }
 
@@ -687,12 +687,12 @@ KDE_NO_EXPORT void KMPlayerLiveConnectExtension::setSize (int w, int h) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT KMPlayerHRefSource::KMPlayerHRefSource (KMPlayer * player)
+KDE_NO_CDTOR_EXPORT KMPlayerHRefSource::KMPlayerHRefSource (KMPlayer * player)
     : KMPlayerSource (i18n ("HREF"), player) {
     kdDebug () << "KMPlayerHRefSource::KMPlayerHRefSource" << endl;
 }
 
-KDE_NO_EXPORT KMPlayerHRefSource::~KMPlayerHRefSource () {
+KDE_NO_CDTOR_EXPORT KMPlayerHRefSource::~KMPlayerHRefSource () {
     kdDebug () << "KMPlayerHRefSource::~KMPlayerHRefSource" << endl;
 }
 

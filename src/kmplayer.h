@@ -54,12 +54,12 @@ public:
     void openDocumentFile (const KURL& url=KURL());
     KMPlayer * player () const { return m_player; }
     void resizePlayer (int percentage);
-    KRecentFilesAction * recentFiles () const { return fileOpenRecent; }
-    KMPlayerView *view () const { return m_view; }
+    KDE_NO_EXPORT KRecentFilesAction * recentFiles () const { return fileOpenRecent; }
+    KDE_NO_EXPORT KMPlayerView *view () const { return m_view; }
     bool broadcasting () const;
     void showBroadcastConfig ();
     void hideBroadcastConfig ();
-    KMPlayerBroadcastConfig * broadcastConfig () const { return m_broadcastconfig; }
+    KDE_NO_EXPORT KMPlayerBroadcastConfig * broadcastConfig () const { return m_broadcastconfig; }
 protected:
     void saveOptions ();
     void readOptions ();

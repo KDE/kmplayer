@@ -59,7 +59,7 @@
 #include "kmplayerconfig.h"
 
 
-KDE_NO_EXPORT KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, KMPlayerSettings * settings)
+KDE_NO_CDTOR_EXPORT KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, KMPlayerSettings * settings)
 : KDialogBase (IconList, i18n ("Preferences"),
 		Help|Default|Ok|Apply|Cancel, Ok, player->view (), 0, false)
 {
@@ -184,10 +184,10 @@ KDE_NO_EXPORT void KMPlayerPreferences::removePrefPage (KMPlayerPreferencesPage 
     }
 }
 
-KDE_NO_EXPORT KMPlayerPreferences::~KMPlayerPreferences() {
+KDE_NO_CDTOR_EXPORT KMPlayerPreferences::~KMPlayerPreferences() {
 }
 
-KDE_NO_EXPORT KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
+KDE_NO_CDTOR_EXPORT KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
 : QFrame (parent, "GeneralPage")
 {
 	QVBoxLayout *layout = new QVBoxLayout(this, 5, 2);
@@ -225,7 +225,7 @@ KDE_NO_EXPORT KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWi
         layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
-KDE_NO_EXPORT KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
+KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
 : QFrame (parent, "URLPage")
 {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
@@ -281,7 +281,7 @@ KDE_NO_EXPORT void KMPlayerPrefSourcePageURL::slotTextChanged (const QString &) 
     changed = true;
 }
 
-KDE_NO_EXPORT KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * player, RecorderList & rl) : QFrame (parent, "RecordPage"), m_player (player), m_recorders (rl) {
+KDE_NO_CDTOR_EXPORT KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * player, RecorderList & rl) : QFrame (parent, "RecordPage"), m_player (player), m_recorders (rl) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     QHBoxLayout * urllayout = new QHBoxLayout ();
     QLabel *urlLabel = new QLabel (i18n ("Output file:"), this);
@@ -370,10 +370,10 @@ KDE_NO_EXPORT void KMPlayerPrefRecordPage::slotRecord () {
     }
 }
 
-KDE_NO_EXPORT RecorderPage::RecorderPage (QWidget *parent, KMPlayer * player)
+KDE_NO_CDTOR_EXPORT RecorderPage::RecorderPage (QWidget *parent, KMPlayer * player)
  : QFrame (parent), m_player (player) {}
 
-KDE_NO_EXPORT KMPlayerPrefMEncoderPage::KMPlayerPrefMEncoderPage (QWidget *parent, KMPlayer * player) : RecorderPage (parent, player) {
+KDE_NO_CDTOR_EXPORT KMPlayerPrefMEncoderPage::KMPlayerPrefMEncoderPage (QWidget *parent, KMPlayer * player) : RecorderPage (parent, player) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     format = new QButtonGroup (3, Qt::Vertical, i18n ("Format"), this);
     new QRadioButton (i18n ("Same as source"), format);
@@ -416,7 +416,7 @@ KDE_NO_EXPORT bool KMPlayerPrefMEncoderPage::sourceSupported (KMPlayerSource *) 
     return true;
 }
 
-KDE_NO_EXPORT KMPlayerPrefMPlayerDumpstreamPage::KMPlayerPrefMPlayerDumpstreamPage (QWidget *parent, KMPlayer * player) : RecorderPage (parent, player) {
+KDE_NO_CDTOR_EXPORT KMPlayerPrefMPlayerDumpstreamPage::KMPlayerPrefMPlayerDumpstreamPage (QWidget *parent, KMPlayer * player) : RecorderPage (parent, player) {
     hide();
 }
 
@@ -437,7 +437,7 @@ KDE_NO_EXPORT bool KMPlayerPrefMPlayerDumpstreamPage::sourceSupported (KMPlayerS
     return true;
 }
 
-KDE_NO_EXPORT KMPlayerPrefFFMpegPage::KMPlayerPrefFFMpegPage (QWidget *parent, KMPlayer * player) : RecorderPage (parent, player) {
+KDE_NO_CDTOR_EXPORT KMPlayerPrefFFMpegPage::KMPlayerPrefFFMpegPage (QWidget *parent, KMPlayer * player) : RecorderPage (parent, player) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     QGridLayout *gridlayout = new QGridLayout (1, 2, 2);
     QLabel *argLabel = new QLabel (i18n("FFMpeg arguments:"), this);
@@ -469,7 +469,7 @@ KDE_NO_EXPORT bool KMPlayerPrefFFMpegPage::sourceSupported (KMPlayerSource * sou
 }
 
 
-KDE_NO_EXPORT KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidget *parent, OutputDriver * ad, OutputDriver * vd)
+KDE_NO_CDTOR_EXPORT KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidget *parent, OutputDriver * ad, OutputDriver * vd)
  : QFrame (parent) {
     QGridLayout *layout = new QGridLayout (this, 2, 2, 5);
 
@@ -488,14 +488,14 @@ KDE_NO_EXPORT KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidg
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
-KDE_NO_EXPORT KMPlayerPrefOPPageGeneral::KMPlayerPrefOPPageGeneral(QWidget *parent)
+KDE_NO_CDTOR_EXPORT KMPlayerPrefOPPageGeneral::KMPlayerPrefOPPageGeneral(QWidget *parent)
 : QFrame(parent)
 {
     QVBoxLayout *layout = new QVBoxLayout (this, 5);
     layout->setAutoAdd (true);
 }
 
-KDE_NO_EXPORT KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame(parent)
+KDE_NO_CDTOR_EXPORT KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame(parent)
 {
 
 	QVBoxLayout *tabLayout = new QVBoxLayout (this, 5);

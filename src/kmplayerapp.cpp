@@ -73,7 +73,7 @@ const int DVDNav_up = 5;
 
 extern const char * strMPlayerGroup;
 
-KDE_NO_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
+KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     : KMainWindow(0, name),
       config (kapp->config ()),
       m_player (new KMPlayer (this, 0L, 0L, 0L, config)),
@@ -99,7 +99,7 @@ KDE_NO_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     readOptions();
 }
 
-KDE_NO_EXPORT KMPlayerApp::~KMPlayerApp () {
+KDE_NO_CDTOR_EXPORT KMPlayerApp::~KMPlayerApp () {
     delete m_broadcastconfig;
     delete m_player;
     if (!m_dcopName.isEmpty ()) {
@@ -574,11 +574,11 @@ KDE_NO_EXPORT void KMPlayerApp::showConsoleOutput () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT KMPlayerMenuSource::KMPlayerMenuSource (const QString & n, KMPlayerApp * a, QPopupMenu * m)
+KDE_NO_CDTOR_EXPORT KMPlayerMenuSource::KMPlayerMenuSource (const QString & n, KMPlayerApp * a, QPopupMenu * m)
     : KMPlayerSource (n, a->player ()), m_menu (m), m_app (a) {
 }
 
-KDE_NO_EXPORT KMPlayerMenuSource::~KMPlayerMenuSource () {
+KDE_NO_CDTOR_EXPORT KMPlayerMenuSource::~KMPlayerMenuSource () {
 }
 
 KDE_NO_EXPORT void KMPlayerMenuSource::menuItemClicked (QPopupMenu * menu, int id) {
@@ -597,7 +597,7 @@ KDE_NO_EXPORT void KMPlayerMenuSource::menuItemClicked (QPopupMenu * menu, int i
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT KMPlayerPrefSourcePageDVD::KMPlayerPrefSourcePageDVD (QWidget * parent)
+KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageDVD::KMPlayerPrefSourcePageDVD (QWidget * parent)
  : QFrame(parent) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
     autoPlayDVD = new QCheckBox (i18n ("Auto play after opening DVD"), this, 0);
@@ -614,7 +614,7 @@ KDE_NO_EXPORT KMPlayerPrefSourcePageDVD::KMPlayerPrefSourcePageDVD (QWidget * pa
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopupMenu * m)
+KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopupMenu * m)
     : KMPlayerMenuSource (i18n ("DVD"), a, m), m_configpage (0L) {
     m_menu->insertTearOffHandle ();
     m_dvdtitlemenu = new QPopupMenu (m_app);
@@ -633,7 +633,7 @@ KDE_NO_EXPORT KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopupMenu 
     m_player->settings ()->pagelist.push_back (this);
 }
 
-KDE_NO_EXPORT KMPlayerDVDSource::~KMPlayerDVDSource () {
+KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::~KMPlayerDVDSource () {
 }
 
 KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
@@ -814,13 +814,13 @@ KDE_NO_EXPORT QFrame * KMPlayerDVDSource::prefPage (QWidget * parent) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT KMPlayerDVDNavSource::KMPlayerDVDNavSource (KMPlayerApp * app, QPopupMenu * m)
+KDE_NO_CDTOR_EXPORT KMPlayerDVDNavSource::KMPlayerDVDNavSource (KMPlayerApp * app, QPopupMenu * m)
     : KMPlayerMenuSource (i18n ("DVDNav"), app, m) {
     m_menu->insertTearOffHandle (-1, 0);
     setURL (KURL ("dvd://"));
 }
 
-KDE_NO_EXPORT KMPlayerDVDNavSource::~KMPlayerDVDNavSource () {}
+KDE_NO_CDTOR_EXPORT KMPlayerDVDNavSource::~KMPlayerDVDNavSource () {}
 
 KDE_NO_EXPORT void KMPlayerDVDNavSource::activate () {
     m_player->setProcess (m_player->xine ());
@@ -874,7 +874,7 @@ KDE_NO_EXPORT QString KMPlayerDVDNavSource::prettyName () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT KMPlayerPrefSourcePageVCD::KMPlayerPrefSourcePageVCD (QWidget * parent)
+KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVCD::KMPlayerPrefSourcePageVCD (QWidget * parent)
  : QFrame (parent) {
      QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
      autoPlayVCD = new QCheckBox (i18n ("Auto play after opening a VCD"), this, 0);
@@ -891,7 +891,7 @@ KDE_NO_EXPORT KMPlayerPrefSourcePageVCD::KMPlayerPrefSourcePageVCD (QWidget * pa
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT KMPlayerVCDSource::KMPlayerVCDSource (KMPlayerApp * a, QPopupMenu * m)
+KDE_NO_CDTOR_EXPORT KMPlayerVCDSource::KMPlayerVCDSource (KMPlayerApp * a, QPopupMenu * m)
     : KMPlayerMenuSource (i18n ("VCD"), a, m), m_configpage (0L) {
     m_menu->insertTearOffHandle ();
     m_vcdtrackmenu = new QPopupMenu (m_app);
@@ -901,7 +901,7 @@ KDE_NO_EXPORT KMPlayerVCDSource::KMPlayerVCDSource (KMPlayerApp * a, QPopupMenu 
     m_player->settings ()->pagelist.push_back (this);
 }
 
-KDE_NO_EXPORT KMPlayerVCDSource::~KMPlayerVCDSource () {
+KDE_NO_CDTOR_EXPORT KMPlayerVCDSource::~KMPlayerVCDSource () {
 }
 
 KDE_NO_EXPORT bool KMPlayerVCDSource::processOutput (const QString & str) {
@@ -1013,11 +1013,11 @@ KDE_NO_EXPORT QFrame * KMPlayerVCDSource::prefPage (QWidget * parent) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT KMPlayerPipeSource::KMPlayerPipeSource (KMPlayerApp * a)
+KDE_NO_CDTOR_EXPORT KMPlayerPipeSource::KMPlayerPipeSource (KMPlayerApp * a)
     : KMPlayerSource (i18n ("Pipe"), a->player ()), m_app (a) {
 }
 
-KDE_NO_EXPORT KMPlayerPipeSource::~KMPlayerPipeSource () {
+KDE_NO_CDTOR_EXPORT KMPlayerPipeSource::~KMPlayerPipeSource () {
 }
 
 KDE_NO_EXPORT bool KMPlayerPipeSource::hasLength () {

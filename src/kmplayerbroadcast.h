@@ -42,9 +42,10 @@ class KLed;
 
 class FFServerSetting {
 public:
-    FFServerSetting () {}
+    KDE_NO_CDTOR_EXPORT FFServerSetting () {}
     FFServerSetting (int i, const QString & n, const QString & f, const QString & ac, int abr, int asr, const QString & vc, int vbr, int q, int fr, int gs, int w, int h);
-    FFServerSetting (const QStringList & sl) { *this = sl; }
+    KDE_NO_CDTOR_EXPORT FFServerSetting (const QStringList & sl) { *this = sl; }
+    KDE_NO_CDTOR_EXPORT ~FFServerSetting () {}
     int index;
     QString name;
     QString format;
@@ -72,7 +73,7 @@ class KMPlayerPrefBroadcastPage : public QFrame {
     Q_OBJECT
 public:
     KMPlayerPrefBroadcastPage (QWidget * parent);
-    ~KMPlayerPrefBroadcastPage () {}
+    KDE_NO_CDTOR_EXPORT ~KMPlayerPrefBroadcastPage () {}
 
     QLineEdit * bindaddress;
     QLineEdit * port;
@@ -86,7 +87,7 @@ class KMPlayerPrefBroadcastFormatPage : public QFrame {
     Q_OBJECT
 public:
     KMPlayerPrefBroadcastFormatPage (QWidget * parent, FFServerSettingList &);
-    ~KMPlayerPrefBroadcastFormatPage () {}
+    KDE_NO_CDTOR_EXPORT ~KMPlayerPrefBroadcastFormatPage () {}
 
     QListBox * profilelist;
     QComboBox * format;
@@ -125,7 +126,7 @@ private:
 class KMPlayerFFServerConfig : public KMPlayerPreferencesPage {
 public:
     KMPlayerFFServerConfig ();
-    ~KMPlayerFFServerConfig () {}
+    KDE_NO_CDTOR_EXPORT ~KMPlayerFFServerConfig () {}
     virtual void write (KConfig *);
     virtual void read (KConfig *);
     virtual void sync (bool fromUI);
@@ -145,7 +146,7 @@ class KMPlayerBroadcastConfig : public QObject, public KMPlayerPreferencesPage {
     Q_OBJECT
 public:
     KMPlayerBroadcastConfig (KMPlayer * player, KMPlayerFFServerConfig * fsc);
-    ~KMPlayerBroadcastConfig ();
+    KDE_NO_CDTOR_EXPORT ~KMPlayerBroadcastConfig ();
 
     virtual void write (KConfig *);
     virtual void read (KConfig *);
@@ -155,7 +156,7 @@ public:
 
     bool broadcasting () const;
     void stopServer ();
-    const QString & serverURL () const { return m_ffserver_url; }
+    KDE_NO_EXPORT const QString & serverURL () const { return m_ffserver_url; }
 
     FFServerSetting ffserversettings;
     FFServerSettingList ffserversettingprofiles;

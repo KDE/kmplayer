@@ -55,7 +55,7 @@ typedef std::list <TVChannel *> TVChannelList;
 class TVInput {
 public:
     TVInput (const QString & n, int id);
-    ~TVInput () { clear (); }
+    KDE_NO_CDTOR_EXPORT ~TVInput () { clear (); }
     void clear ();
     QString name;
     int id;
@@ -69,7 +69,7 @@ typedef std::list <TVInput *> TVInputList;
 class TVDevice {
 public:
     TVDevice (const QString & d, const QSize & size);
-    ~TVDevice () { clear (); }
+    KDE_NO_CDTOR_EXPORT ~TVDevice () { clear (); }
     void clear ();
     QString device;
     QString audiodevice;
@@ -105,7 +105,7 @@ class KMPlayerPrefSourcePageTVDevice : public QFrame
     Q_OBJECT
 public:
     KMPlayerPrefSourcePageTVDevice (QWidget *parent, TVDevice * dev);
-    ~KMPlayerPrefSourcePageTVDevice () {}
+    KDE_NO_CDTOR_EXPORT ~KMPlayerPrefSourcePageTVDevice () {}
 
     QLineEdit * name;
     KURLRequester * audiodevice;
@@ -128,7 +128,7 @@ class KMPlayerPrefSourcePageTV : public QFrame
     friend class TVDevicePageAdder;
 public:
     KMPlayerPrefSourcePageTV (QWidget *parent);
-    ~KMPlayerPrefSourcePageTV () {}
+    KDE_NO_CDTOR_EXPORT ~KMPlayerPrefSourcePageTV () {}
 
     QLineEdit * driver;
     KURLRequester * device;
@@ -153,6 +153,7 @@ class TVDeviceScannerSource : public KMPlayerSource {
     Q_OBJECT
 public:
     TVDeviceScannerSource (KMPlayer * player);
+    KDE_NO_CDTOR_EXPORT ~TVDeviceScannerSource () {};
     virtual void init ();
     virtual bool processOutput (const QString & line);
     virtual QString filterOptions ();
@@ -194,7 +195,7 @@ public:
     virtual bool hasLength ();
     virtual bool isSeekable ();
     void buildMenu ();
-    TVSource * tvsource () const { return m_tvsource; }
+    KDE_NO_EXPORT TVSource * tvsource () const { return m_tvsource; }
     virtual QString prettyName ();
     virtual void write (KConfig *);
     virtual void read (KConfig *);

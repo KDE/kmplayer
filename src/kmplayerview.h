@@ -28,6 +28,7 @@
 
 #include <kurl.h>
 #include <qxembed.h>
+#include <kdemacros.h>
 #include <kmediaplayer/view.h>
 
 class KMPlayerView;
@@ -84,18 +85,18 @@ public:
     //void print(QPrinter *pPrinter);
 
     //QMultiLineEdit * consoleOutput () const { return m_multiedit; }
-    KMPlayerViewer * viewer () const { return m_viewer; }
-    KMPlayerControlPanel * buttonBar () const { return m_buttonbar; }
-    QWidgetStack * widgetStack () const { return m_widgetstack; }
-    bool keepSizeRatio () const { return m_keepsizeratio; }
-    void setKeepSizeRatio (bool b) { m_keepsizeratio = b; }
-    bool useArts () const { return m_use_arts; }
+    KDE_NO_EXPORT KMPlayerViewer * viewer () const { return m_viewer; }
+    KDE_NO_EXPORT KMPlayerControlPanel * buttonBar () const { return m_buttonbar; }
+    KDE_NO_EXPORT QWidgetStack * widgetStack () const { return m_widgetstack; }
+    KDE_NO_EXPORT bool keepSizeRatio () const { return m_keepsizeratio; }
+    KDE_NO_EXPORT void setKeepSizeRatio (bool b) { m_keepsizeratio = b; }
+    KDE_NO_EXPORT bool useArts () const { return m_use_arts; }
     void setUseArts (bool b);
-    bool showConsoleOutput () const { return m_show_console_output; }
+    KDE_NO_EXPORT bool showConsoleOutput () const { return m_show_console_output; }
     void setShowConsoleOutput (bool b);
     void setControlPanelMode (ControlPanelMode m);
     //void setAutoHideSlider (bool b);
-    ControlPanelMode controlPanelMode () const { return m_controlpanel_mode; }
+    KDE_NO_EXPORT ControlPanelMode controlPanelMode () const { return m_controlpanel_mode; }
     void delayedShowButtons (bool show);
     bool isFullScreen () const;
     bool setPicture (const QString & path);
@@ -121,7 +122,7 @@ protected:
     bool x11Event (XEvent *);
 private:
     void updateUseArts ();
-    void emitPictureClicked () { emit pictureClicked (); }
+    KDE_NO_EXPORT void emitPictureClicked () { emit pictureClicked (); }
     // widget for player's output
     QGuardedPtr<KMPlayerViewer> m_viewer;
     QGuardedPtr<KMPlayerView> m_foreign_view;
@@ -172,23 +173,23 @@ public:
     void enableSeekButtons (bool enable);
     void setPlaying (bool play);
     void setRecording (bool record);
-    QSlider * positionSlider () const { return m_posSlider; }
-    QSlider * contrastSlider () const { return m_contrastSlider; }
-    QSlider * brightnessSlider () const { return m_brightnessSlider; }
-    QSlider * hueSlider () const { return m_hueSlider; }
-    QSlider * saturationSlider () const { return m_saturationSlider; }
-    QPushButton * backButton () const { return m_buttons[button_back]; }
-    QPushButton * playButton () const { return m_buttons[button_play]; }
-    QPushButton * forwardButton () const { return m_buttons[button_forward]; }
-    QPushButton * pauseButton () const { return m_buttons[button_pause]; }
-    QPushButton * stopButton () const { return m_buttons[button_stop]; }
-    QPushButton * configButton () const { return m_buttons[button_config]; }
-    QPushButton * recordButton () const { return m_buttons[button_record]; }
-    QPushButton * broadcastButton () const { return m_buttons[button_broadcast]; }
-    QPopupMenu * popupMenu () const { return m_popupMenu; }
-    KPopupMenu * bookmarkMenu () const { return m_bookmarkMenu; }
-    QPopupMenu * zoomMenu () const { return m_zoomMenu; }
-    QPopupMenu * playerMenu () const { return m_playerMenu; }
+    KDE_NO_EXPORT QSlider * positionSlider () const { return m_posSlider; }
+    KDE_NO_EXPORT QSlider * contrastSlider () const { return m_contrastSlider; }
+    KDE_NO_EXPORT QSlider * brightnessSlider () const { return m_brightnessSlider; }
+    KDE_NO_EXPORT QSlider * hueSlider () const { return m_hueSlider; }
+    KDE_NO_EXPORT QSlider * saturationSlider () const { return m_saturationSlider; }
+    KDE_NO_EXPORT QPushButton * backButton () const { return m_buttons[button_back]; }
+    KDE_NO_EXPORT QPushButton * playButton () const { return m_buttons[button_play]; }
+    KDE_NO_EXPORT QPushButton * forwardButton () const { return m_buttons[button_forward]; }
+    KDE_NO_EXPORT QPushButton * pauseButton () const { return m_buttons[button_pause]; }
+    KDE_NO_EXPORT QPushButton * stopButton () const { return m_buttons[button_stop]; }
+    KDE_NO_EXPORT QPushButton * configButton () const { return m_buttons[button_config]; }
+    KDE_NO_EXPORT QPushButton * recordButton () const { return m_buttons[button_record]; }
+    KDE_NO_EXPORT QPushButton * broadcastButton () const { return m_buttons[button_broadcast]; }
+    KDE_NO_EXPORT QPopupMenu * popupMenu () const { return m_popupMenu; }
+    KDE_NO_EXPORT KPopupMenu * bookmarkMenu () const { return m_bookmarkMenu; }
+    KDE_NO_EXPORT QPopupMenu * zoomMenu () const { return m_zoomMenu; }
+    KDE_NO_EXPORT QPopupMenu * playerMenu () const { return m_playerMenu; }
 private:
     QBoxLayout * m_buttonbox;
     QSlider * m_posSlider;

@@ -58,7 +58,7 @@ static const char * strFFServerCustomSetting = "Custom Setting";
 static const char * strFFServerProfiles = "Profiles";
 
 
-KDE_NO_EXPORT FFServerSetting::FFServerSetting (int i, const QString & n, const QString & f, const QString & ac, int abr, int asr, const QString & vc, int vbr, int q, int fr, int gs, int w, int h)
+KDE_NO_CDTOR_EXPORT FFServerSetting::FFServerSetting (int i, const QString & n, const QString & f, const QString & ac, int abr, int asr, const QString & vc, int vbr, int q, int fr, int gs, int w, int h)
  : index (i), name (n), format (f), audiocodec (ac),
    audiobitrate (abr > 0 ? QString::number (abr) : QString ()),
    audiosamplerate (asr > 0 ? QString::number (asr) : QString ()),
@@ -152,7 +152,7 @@ KDE_NO_EXPORT const QStringList FFServerSetting::list () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent) : QFrame (parent) {
+KDE_NO_CDTOR_EXPORT KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent) : QFrame (parent) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5);
     QGridLayout *gridlayout = new QGridLayout (layout, 6, 2, 2);
     QLabel *label = new QLabel (i18n ("Bind address:"), this);
@@ -191,7 +191,7 @@ KDE_NO_EXPORT KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *par
     gridlayout->addWidget (new QLabel (qedit, label, parent), row, 0);  \
     gridlayout->addWidget (qedit, row, 1);
 
-KDE_NO_EXPORT KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *parent, FFServerSettingList & ffs) : QFrame (parent, "BroadcastPage"), profiles (ffs)
+KDE_NO_CDTOR_EXPORT KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *parent, FFServerSettingList & ffs) : QFrame (parent, "BroadcastPage"), profiles (ffs)
 {
     QHBoxLayout *layout = new QHBoxLayout (this, 5);
     QGridLayout *formatlayout = new QGridLayout (11, 2, 2);
@@ -401,7 +401,7 @@ static bool stopProcess (KProcess * process, const char * cmd = 0L) {
 }
 
 
-KDE_NO_EXPORT KMPlayerBroadcastConfig::KMPlayerBroadcastConfig (KMPlayer * player, KMPlayerFFServerConfig * fsc)
+KDE_NO_CDTOR_EXPORT KMPlayerBroadcastConfig::KMPlayerBroadcastConfig (KMPlayer * player, KMPlayerFFServerConfig * fsc)
  : m_player (player),
    m_ffserverconfig (fsc),
    m_ffmpeg_process (0L),
@@ -409,7 +409,7 @@ KDE_NO_EXPORT KMPlayerBroadcastConfig::KMPlayerBroadcastConfig (KMPlayer * playe
    m_endserver (true) {
 }
 
-KDE_NO_EXPORT KMPlayerBroadcastConfig::~KMPlayerBroadcastConfig () {
+KDE_NO_CDTOR_EXPORT KMPlayerBroadcastConfig::~KMPlayerBroadcastConfig () {
     stopServer ();
 }
 
@@ -609,7 +609,7 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::sourceChanged (KMPlayerSource * sour
 }
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT KMPlayerFFServerConfig::KMPlayerFFServerConfig () {
+KDE_NO_CDTOR_EXPORT KMPlayerFFServerConfig::KMPlayerFFServerConfig () {
 }
 
 KDE_NO_EXPORT void KMPlayerFFServerConfig::write (KConfig * config) {

@@ -146,12 +146,12 @@ static bool proxyForURL (const KURL& url, QString& proxy) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT MPlayerBase::MPlayerBase (KMPlayer * player)
+KDE_NO_CDTOR_EXPORT MPlayerBase::MPlayerBase (KMPlayer * player)
     : KMPlayerProcess (player), m_use_slave (true) {
     m_process = new KProcess;
 }
 
-KDE_NO_EXPORT MPlayerBase::~MPlayerBase () {
+KDE_NO_CDTOR_EXPORT MPlayerBase::~MPlayerBase () {
 }
 
 KDE_NO_EXPORT void MPlayerBase::initProcess () {
@@ -225,14 +225,14 @@ KDE_NO_EXPORT void MPlayerBase::processStopped (KProcess *) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT MPlayer::MPlayer (KMPlayer * player)
+KDE_NO_CDTOR_EXPORT MPlayer::MPlayer (KMPlayer * player)
  : MPlayerBase (player),
    m_widget (0L),
    m_configpage (new MPlayerPreferencesPage (this)) {
     m_player->settings ()->pagelist.push_back (m_configpage);
 }
 
-KDE_NO_EXPORT MPlayer::~MPlayer () {
+KDE_NO_CDTOR_EXPORT MPlayer::~MPlayer () {
     if (m_widget && !m_widget->parent ())
         delete m_widget;
     delete m_configpage;
@@ -608,7 +608,7 @@ public:
     QTable * table;
 };
 
-KDE_NO_EXPORT MPlayerPreferencesFrame::MPlayerPreferencesFrame (QWidget * parent)
+KDE_NO_CDTOR_EXPORT MPlayerPreferencesFrame::MPlayerPreferencesFrame (QWidget * parent)
  : QFrame (parent) {
     QVBoxLayout * layout = new QVBoxLayout (this);
     table = new QTable (int (MPlayerPreferencesPage::pat_last)+non_patterns, 2, this);
@@ -637,7 +637,7 @@ KDE_NO_EXPORT MPlayerPreferencesFrame::MPlayerPreferencesFrame (QWidget * parent
     layout->addWidget (table);
 }
 
-KDE_NO_EXPORT MPlayerPreferencesPage::MPlayerPreferencesPage (MPlayer * p)
+KDE_NO_CDTOR_EXPORT MPlayerPreferencesPage::MPlayerPreferencesPage (MPlayer * p)
  : m_process (p), m_configframe (0L) {
 }
 
@@ -696,11 +696,11 @@ KDE_NO_EXPORT QFrame * MPlayerPreferencesPage::prefPage (QWidget * parent) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT MEncoder::MEncoder (KMPlayer * player)
+KDE_NO_CDTOR_EXPORT MEncoder::MEncoder (KMPlayer * player)
     : MPlayerBase (player) {
     }
 
-KDE_NO_EXPORT MEncoder::~MEncoder () {
+KDE_NO_CDTOR_EXPORT MEncoder::~MEncoder () {
 }
 
 KDE_NO_EXPORT void MEncoder::init () {
@@ -756,11 +756,11 @@ KDE_NO_EXPORT bool MEncoder::stop () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT MPlayerDumpstream::MPlayerDumpstream (KMPlayer * player)
+KDE_NO_CDTOR_EXPORT MPlayerDumpstream::MPlayerDumpstream (KMPlayer * player)
     : MPlayerBase (player) {
     }
 
-KDE_NO_EXPORT MPlayerDumpstream::~MPlayerDumpstream () {
+KDE_NO_CDTOR_EXPORT MPlayerDumpstream::~MPlayerDumpstream () {
 }
 
 KDE_NO_EXPORT void MPlayerDumpstream::init () {
@@ -965,7 +965,7 @@ private:
     KMPlayerCallbackProcess * m_process;
 };
 
-KDE_NO_EXPORT KMPlayerXMLPreferencesFrame::KMPlayerXMLPreferencesFrame
+KDE_NO_CDTOR_EXPORT KMPlayerXMLPreferencesFrame::KMPlayerXMLPreferencesFrame
 (QWidget * parent, KMPlayerCallbackProcess * p)
  : QFrame (parent), m_process (p){
     QVBoxLayout * layout = new QVBoxLayout (this);
@@ -973,7 +973,7 @@ KDE_NO_EXPORT KMPlayerXMLPreferencesFrame::KMPlayerXMLPreferencesFrame
     layout->addWidget (table);
 }
 
-KDE_NO_EXPORT KMPlayerXMLPreferencesPage::KMPlayerXMLPreferencesPage (KMPlayerCallbackProcess * p)
+KDE_NO_CDTOR_EXPORT KMPlayerXMLPreferencesPage::KMPlayerXMLPreferencesPage (KMPlayerCallbackProcess * p)
  : m_process (p), m_configframe (0L) {
 }
 
@@ -1153,11 +1153,11 @@ KDE_NO_EXPORT QFrame * KMPlayerXMLPreferencesPage::prefPage (QWidget * parent) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT Xine::Xine (KMPlayer * player)
+KDE_NO_CDTOR_EXPORT Xine::Xine (KMPlayer * player)
     : KMPlayerCallbackProcess (player) {
 }
 
-KDE_NO_EXPORT Xine::~Xine () {}
+KDE_NO_CDTOR_EXPORT Xine::~Xine () {}
 
 KDE_NO_EXPORT WId Xine::widget () {
     return static_cast <KMPlayerView *> (m_player->view())->viewer()->embeddedWinId ();
@@ -1409,7 +1409,7 @@ FFMpeg::FFMpeg (KMPlayer * player)
     : KMPlayerProcess (player) {
 }
 
-KDE_NO_EXPORT FFMpeg::~FFMpeg () {
+KDE_NO_CDTOR_EXPORT FFMpeg::~FFMpeg () {
 }
 
 KDE_NO_EXPORT void FFMpeg::init () {

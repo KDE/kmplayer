@@ -57,6 +57,7 @@
 class KMPlayerBookmarkOwner : public KBookmarkOwner {
 public:
     KMPlayerBookmarkOwner (KMPlayer *);
+    KDE_NO_CDTOR_EXPORT ~KMPlayerBookmarkOwner () {}
     virtual void openBookmarkURL(const QString& _url);
     virtual QString currentTitle() const;
     virtual QString currentURL() const;
@@ -64,7 +65,7 @@ private:
     KMPlayer * m_player;
 };
 
-inline KMPlayerBookmarkOwner::KMPlayerBookmarkOwner (KMPlayer * player)
+KDE_NO_CDTOR_EXPORT KMPlayerBookmarkOwner::KMPlayerBookmarkOwner (KMPlayer * player)
     : m_player (player) {}
 
 KDE_NO_EXPORT void KMPlayerBookmarkOwner::openBookmarkURL (const QString & url) {
@@ -858,7 +859,7 @@ QString KMPlayerSource::prettyName () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, const KURL & url)
+KDE_NO_CDTOR_EXPORT KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, const KURL & url)
     : KMPlayerSource (i18n ("URL"), player), m_job (0L) {
     setURL (url);
     kdDebug () << "KMPlayerURLSource::KMPlayerURLSource" << endl;
@@ -919,7 +920,8 @@ KDE_NO_EXPORT QString KMPlayerURLSource::prettyName () {
 class MMXmlContentHandler : public QXmlDefaultHandler {
     KMPlayerURLSource * m_urlsource;
 public:
-    MMXmlContentHandler (KMPlayerURLSource * source) : m_urlsource (source) {}
+    KDE_NO_CDTOR_EXPORT MMXmlContentHandler (KMPlayerURLSource * source) : m_urlsource (source) {}
+    KDE_NO_CDTOR_EXPORT ~MMXmlContentHandler () {}
     KDE_NO_EXPORT bool startElement (const QString &, const QString &,
                        const QString & elm, const QXmlAttributes & atts) {
         kdDebug() << "startElement=" << elm << endl;
@@ -941,7 +943,8 @@ class FilteredInputSource : public QXmlInputSource {
     QString & buffer;
     int pos;
 public:
-    FilteredInputSource (QTextStream & ts, QString & b) : textstream (ts), buffer (b), pos (0) {}
+    KDE_NO_CDTOR_EXPORT FilteredInputSource (QTextStream & ts, QString & b) : textstream (ts), buffer (b), pos (0) {}
+    KDE_NO_CDTOR_EXPORT ~FilteredInputSource () {}
     KDE_NO_EXPORT QString data () { return textstream.read (); }
     void fetchData ();
     QChar next ();

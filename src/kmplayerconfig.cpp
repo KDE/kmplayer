@@ -71,13 +71,13 @@ static OutputDriver _vds [] = {
 static const int ADRIVER_ARTS_INDEX = 4;
 
 
-KDE_NO_EXPORT KMPlayerSettings::KMPlayerSettings (KMPlayer * player, KConfig * config)
+KDE_NO_CDTOR_EXPORT KMPlayerSettings::KMPlayerSettings (KMPlayer * player, KConfig * config)
   : configdialog (0L), m_config (config), m_player (player) {
     audiodrivers = _ads;
     videodrivers = _vds;
 }
 
-KDE_NO_EXPORT KMPlayerSettings::~KMPlayerSettings () {
+KDE_NO_CDTOR_EXPORT KMPlayerSettings::~KMPlayerSettings () {
     // configdialog should be destroyed when the view is destroyed
     //delete configdialog;
 }

@@ -59,6 +59,7 @@ class KMPlayerBrowserExtension : public KParts::BrowserExtension {
     Q_OBJECT
 public:
     KMPlayerBrowserExtension(KMPlayerPart *parent);
+    KDE_NO_CDTOR_EXPORT ~KMPlayerBrowserExtension () {}
     void urlChanged (const QString & url);
     void setLoadingProgress (int percentage);
 
@@ -115,12 +116,12 @@ public:
               QObject * parent, const char * name, const QStringList &args);
     ~KMPlayerPart ();
 
-    KMPlayerBrowserExtension * browserextension() const
+    KDE_NO_EXPORT KMPlayerBrowserExtension * browserextension() const
         { return m_browserextension; }
     KMPlayerLiveConnectExtension * liveconnectextension () const
         { return m_liveconnectextension; }
-    KMPlayerHRefSource * hrefSource () const { return m_hrefsource; }
-    bool hasFeature (int f) { return m_features & f; }
+    KDE_NO_EXPORT KMPlayerHRefSource * hrefSource () const { return m_hrefsource; }
+    KDE_NO_EXPORT bool hasFeature (int f) { return m_features & f; }
     bool allowRedir (const KURL & url);
     virtual void processLoaded (int percentage);
     virtual void processStartedPlaying ();

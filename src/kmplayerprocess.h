@@ -30,6 +30,7 @@
 #include <kurl.h>
 
 #include "kmplayerconfig.h"
+#include "kmplayersource.h"
 
 class QWidget;
 class KProcess;
@@ -46,9 +47,9 @@ public:
     virtual void init ();
     virtual void initProcess ();
     bool playing () const;
-    KMPlayerSource * source () const { return m_source; }
-    KProcess * process () const { return m_process; }
-    KMPlayer * player () const { return m_player; }
+    KDE_NO_EXPORT KMPlayerSource * source () const { return m_source; }
+    KDE_NO_EXPORT KProcess * process () const { return m_process; }
+    KDE_NO_EXPORT KMPlayer * player () const { return m_player; }
     virtual WId widget ();
     void setSource (KMPlayerSource * source);
     virtual bool grabPicture (const KURL & url, int pos);
@@ -145,7 +146,7 @@ public:
         pat_last
     };
     MPlayerPreferencesPage (MPlayer *);
-    ~MPlayerPreferencesPage () {}
+    KDE_NO_CDTOR_EXPORT ~MPlayerPreferencesPage () {}
     void write (KConfig *);
     void read (KConfig *);
     void sync (bool fromUI);
@@ -162,8 +163,8 @@ private:
 
 class Recorder {
 public:
-    const KURL & recordURL () const { return m_recordurl; }
-    void setURL (const KURL & url) { m_recordurl = url; }
+    KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
+    KDE_NO_EXPORT void setURL (const KURL & url) { m_recordurl = url; }
 protected:
     KURL m_recordurl;
 };
@@ -174,7 +175,7 @@ public:
     MEncoder (KMPlayer * player);
     ~MEncoder ();
     virtual void init ();
-    const KURL & recordURL () const { return m_recordurl; }
+    KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
 public slots:
     virtual bool play ();
     virtual bool stop ();
@@ -186,7 +187,7 @@ public:
     MPlayerDumpstream (KMPlayer * player);
     ~MPlayerDumpstream ();
     virtual void init ();
-    const KURL & recordURL () const { return m_recordurl; }
+    KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
 public slots:
     virtual bool play ();
     virtual bool stop ();
@@ -208,8 +209,8 @@ public:
     virtual void setMovieParams (int length, int width, int height, float aspect);
     virtual void setMoviePosition (int position);
     virtual void setLoadingProgress (int percentage);
-    QByteArray & configData () { return m_configdata; }
-    bool haveConfig () { return m_have_config == config_yes; }
+    KDE_NO_EXPORT QByteArray & configData () { return m_configdata; }
+    KDE_NO_EXPORT bool haveConfig () { return m_have_config == config_yes; }
     bool getConfigData ();
     void setChangedData (const QByteArray &);
 protected:
@@ -226,7 +227,7 @@ protected:
 class KMPlayerXMLPreferencesPage : public KMPlayerPreferencesPage {
 public:
     KMPlayerXMLPreferencesPage (KMPlayerCallbackProcess *);
-    ~KMPlayerXMLPreferencesPage () {}
+    KDE_NO_CDTOR_EXPORT ~KMPlayerXMLPreferencesPage () {}
     void write (KConfig *);
     void read (KConfig *);
     void sync (bool fromUI);

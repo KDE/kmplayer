@@ -58,6 +58,7 @@ static const int button_height_only_buttons = 11;
 
 // application specific includes
 #include "kmplayerview.h"
+#include "kmplayersource.h"
 //#include "kmplayer.h"
 
 #include <kstaticdeleter.h>
@@ -91,7 +92,7 @@ private:
 
 static KMPlayerViewStatic * kmplayerview_static = 0L;
 
-KDE_NO_EXPORT KMPlayerViewStatic::KMPlayerViewStatic () 
+KDE_NO_CDTOR_EXPORT KMPlayerViewStatic::KMPlayerViewStatic () 
 #ifdef USE_ARTS
     : dispatcher ((KArtsDispatcher*) 0), use_count(0) {
 #else
@@ -100,7 +101,7 @@ KDE_NO_EXPORT KMPlayerViewStatic::KMPlayerViewStatic ()
     printf ("KMPlayerViewStatic::KMPlayerViewStatic\n");
 }
 
-KDE_NO_EXPORT KMPlayerViewStatic::~KMPlayerViewStatic () {
+KDE_NO_CDTOR_EXPORT KMPlayerViewStatic::~KMPlayerViewStatic () {
     printf ("KMPlayerViewStatic::~KMPlayerViewStatic\n");
 #ifdef USE_ARTS
     delete dispatcher;
@@ -240,7 +241,7 @@ static const char * const broadcast_xpm[] = {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT KMPlayerViewLayer::KMPlayerViewLayer (KMPlayerView * parent, QBoxLayout * b)
+KDE_NO_CDTOR_EXPORT KMPlayerViewLayer::KMPlayerViewLayer (KMPlayerView * parent, QBoxLayout * b)
  : QWidget (parent),
    m_view (parent),
    m_box (b),
@@ -338,7 +339,7 @@ static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char * const
     return b;
 }
 
-KDE_NO_EXPORT KMPlayerControlPanel::KMPlayerControlPanel (QWidget * parent) : QWidget (parent) {
+KDE_NO_CDTOR_EXPORT KMPlayerControlPanel::KMPlayerControlPanel (QWidget * parent) : QWidget (parent) {
     m_buttonbox = new QHBoxLayout (this, 5, 4);
     m_buttons[button_config] = ctrlButton (this, m_buttonbox, config_xpm);
     m_buttons[button_back] = ctrlButton (this, m_buttonbox, back_xpm);
@@ -446,9 +447,9 @@ KDE_NO_EXPORT void KMPlayerControlPanel::setRecording (bool record) {
 class KMPlayerPictureWidget : public QWidget {
     KMPlayerView * m_view;
 public:
-    KMPlayerPictureWidget (QWidget * parent, KMPlayerView * view)
+    KDE_NO_CDTOR_EXPORT KMPlayerPictureWidget (QWidget * parent, KMPlayerView * view)
         : QWidget (parent), m_view (view) {}
-    ~KMPlayerPictureWidget () {}
+    KDE_NO_CDTOR_EXPORT ~KMPlayerPictureWidget () {}
 protected:
     void mousePressEvent (QMouseEvent *);
 };
@@ -459,7 +460,7 @@ KDE_NO_EXPORT void KMPlayerPictureWidget::mousePressEvent (QMouseEvent *) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
+KDE_NO_CDTOR_EXPORT KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
   : KMediaPlayer::View (parent, name),
     m_image (0L),
     m_buttonbar (0L),
@@ -864,7 +865,7 @@ KDE_NO_EXPORT bool KMPlayerView::x11Event (XEvent * e) {
 
 //----------------------------------------------------------------------
 
-KDE_NO_EXPORT KMPlayerViewer::KMPlayerViewer (QWidget *parent, KMPlayerView * view)
+KDE_NO_CDTOR_EXPORT KMPlayerViewer::KMPlayerViewer (QWidget *parent, KMPlayerView * view)
   : QXEmbed (parent), m_aspect (0.0),
     m_view (view) {
     /*XWindowAttributes xwa;
@@ -884,7 +885,7 @@ KDE_NO_EXPORT KMPlayerViewer::KMPlayerViewer (QWidget *parent, KMPlayerView * vi
     XClearWindow (qt_xdisplay(), embeddedWinId ());
 }
 
-KDE_NO_EXPORT KMPlayerViewer::~KMPlayerViewer () {
+KDE_NO_CDTOR_EXPORT KMPlayerViewer::~KMPlayerViewer () {
 }
     
 KDE_NO_EXPORT void KMPlayerViewer::mouseMoveEvent (QMouseEvent * e) {

@@ -88,10 +88,10 @@ public:
     virtual KMediaPlayer::View* view ();
     static KAboutData* createAboutData ();
 
-    KMPlayerSettings * settings () const { return m_settings; }
+    KDE_NO_EXPORT KMPlayerSettings * settings () const { return m_settings; }
     void keepMovieAspect (bool);
-    KURL url () const { return m_urlsource->url (); }
-    void setURL (const KURL & url) { m_urlsource->setURL (url); }
+    KDE_NO_EXPORT KURL url () const { return m_urlsource->url (); }
+    KDE_NO_EXPORT void setURL (const KURL & url) { m_urlsource->setURL (url); }
     void sizes (int & w, int & h) const;
 
     /* Changes the process,
@@ -104,15 +104,15 @@ public:
      * calls init() and reschedules an activate() on the source
      * */
     void setSource (KMPlayerSource * source);
-    KMPlayerProcess * process () const { return m_process; }
-    KMPlayerProcess * recorder () const { return m_recorder; }
-    MPlayer * mplayer () const { return m_mplayer; }
-    MEncoder * mencoder () const { return m_mencoder; }
-    MPlayerDumpstream * mplayerdumpstream () const { return m_mplayerdumpstream; }
-    FFMpeg * ffmpeg () const { return m_ffmpeg; }
-    Xine * xine () const { return m_xine; }
-    KMPlayerURLSource * urlSource () const { return m_urlsource; }
-    KConfig * config () const { return m_config; }
+    KDE_NO_EXPORT KMPlayerProcess * process () const { return m_process; }
+    KDE_NO_EXPORT KMPlayerProcess * recorder () const { return m_recorder; }
+    KDE_NO_EXPORT MPlayer * mplayer () const { return m_mplayer; }
+    KDE_NO_EXPORT MEncoder * mencoder () const { return m_mencoder; }
+    KDE_NO_EXPORT MPlayerDumpstream * mplayerdumpstream () const { return m_mplayerdumpstream; }
+    KDE_NO_EXPORT FFMpeg * ffmpeg () const { return m_ffmpeg; }
+    KDE_NO_EXPORT Xine * xine () const { return m_xine; }
+    KDE_NO_EXPORT KMPlayerURLSource * urlSource () const { return m_urlsource; }
+    KDE_NO_EXPORT KConfig * config () const { return m_config; }
     void enablePlayerMenu (bool enable);
     void addControlPanel (KMPlayerControlPanel *);
     void removeControlPanel (KMPlayerControlPanel *);

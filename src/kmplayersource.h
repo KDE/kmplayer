@@ -26,6 +26,13 @@
 #include <qobject.h>
 #include <qstring.h>
 #include <kurl.h>
+#include <kdemacros.h>
+
+#if __GNUC__ - 0 > 3 || (__GNUC__ - 0 == 3 && __GNUC_MINOR__ - 0 > 3)
+  #define KDE_NO_CDTOR_EXPORT __attribute__ ((visibility("hidden")))
+#else
+  #define KDE_NO_CDTOR_EXPORT
+#endif
 
 class KMPlayer;
 class KConfig;
@@ -44,41 +51,41 @@ public:
     virtual bool hasLength ();
     virtual bool isSeekable ();
 
-    int width () const { return m_width; }
-    int height () const { return m_height; }
+    KDE_NO_EXPORT int width () const { return m_width; }
+    KDE_NO_EXPORT int height () const { return m_height; }
     /* length () returns length in deci-seconds */
-    int length () const { return m_length; }
+    KDE_NO_EXPORT int length () const { return m_length; }
     /* position () returns position in deci-seconds */
-    int position () const { return m_position; }
-    float aspect () const { return m_aspect > 0.01 ? m_aspect : (m_height > 0 ? (1.0*m_width)/m_height: 0.0); }
-    const KURL & url () const { return m_url; }
-    const KURL & subUrl () const { return m_sub_url; }
+    KDE_NO_EXPORT int position () const { return m_position; }
+    KDE_NO_EXPORT float aspect () const { return m_aspect > 0.01 ? m_aspect : (m_height > 0 ? (1.0*m_width)/m_height: 0.0); }
+    KDE_NO_EXPORT const KURL & url () const { return m_url; }
+    KDE_NO_EXPORT const KURL & subUrl () const { return m_sub_url; }
     QString first ();
     QString current ();
     QString next ();
     QString mime () const;
-    const QString & audioDevice () const { return m_audiodevice; }
-    const QString & videoDevice () const { return m_videodevice; }
-    const QString & videoNorm () const { return m_videonorm; }
-    const int frequency () const { return m_frequency; }
-    const QString & pipeCmd () const { return m_pipecmd; }
-    const QString & options () const { return m_options; }
-    const QString & recordCmd () const { return m_recordcmd; }
+    KDE_NO_EXPORT const QString & audioDevice () const { return m_audiodevice; }
+    KDE_NO_EXPORT const QString & videoDevice () const { return m_videodevice; }
+    KDE_NO_EXPORT const QString & videoNorm () const { return m_videonorm; }
+    KDE_NO_EXPORT const int frequency () const { return m_frequency; }
+    KDE_NO_EXPORT const QString & pipeCmd () const { return m_pipecmd; }
+    KDE_NO_EXPORT const QString & options () const { return m_options; }
+    KDE_NO_EXPORT const QString & recordCmd () const { return m_recordcmd; }
     virtual QString filterOptions ();
 
     void setURL (const KURL & url);
     void insertURL (const QString & url);
-    void setSubURL (const KURL & url) { m_sub_url = url; }
+    KDE_NO_EXPORT void setSubURL (const KURL & url) { m_sub_url = url; }
     void setMime (const QString & m);
-    void setWidth (int w) { m_width = w; }
-    void setHeight (int h) { m_height = h; }
-    void setAspect (float a) { m_aspect = a; }
+    KDE_NO_EXPORT void setWidth (int w) { m_width = w; }
+    KDE_NO_EXPORT void setHeight (int h) { m_height = h; }
+    KDE_NO_EXPORT void setAspect (float a) { m_aspect = a; }
     /* setLength (len) set length in deci-seconds */
     void setLength (int len);
     /* setPosition (pos) set position in deci-seconds */
-    void setPosition (int pos) { m_position = pos; }
+    KDE_NO_EXPORT void setPosition (int pos) { m_position = pos; }
     virtual void setIdentified (bool b = true);
-    void setAutoPlay (bool b) { m_auto_play = b; }
+    KDE_NO_EXPORT void setAutoPlay (bool b) { m_auto_play = b; }
 
     virtual QString prettyName ();
 public slots:
@@ -97,7 +104,7 @@ protected:
     KURL m_url;
     KURL m_sub_url;
     struct URLInfo {
-        URLInfo (const QString & u, const QString & m = QString ())
+        KDE_NO_CDTOR_EXPORT URLInfo (const QString & u, const QString & m = QString ())
             : url (u), mime (m), dereferenced (false) {}
         QString url;
         QString mime;
