@@ -151,6 +151,7 @@ private:
     struct TVSource {
         QSize size;
         QString command;
+        QString title;
     };
     typedef QMap <int, TVSource *> CommandMap;
     TVSource * m_tvsource;

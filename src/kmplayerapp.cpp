@@ -822,14 +822,13 @@ void KMPlayerTVSource::play () {
     if (!m_tvsource)
         return;
     KMPlayerConfig * config = m_player->configDialog ();
-    app->setCaption (QString (i18n ("TV: ")) + m_tvsource->command, false);
+    app->setCaption (QString (i18n ("TV: ")) + m_tvsource->title, false);
     setWidth (m_tvsource->size.width ());
     setHeight (m_tvsource->size.height ());
     QString args;
-    args.sprintf ("-tv on:driver=%s:%s:width=%d:height=%d", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
+    args.sprintf ("-tv on:driver=%s:%s:width=%d:height=%d -nocache -quiet", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
     app->resizePlayer (100);
     m_player->run (args.ascii());
-    kdDebug () << args << endl;
 }
 
 void KMPlayerTVSource::deactivate () {
@@ -860,6 +859,7 @@ void KMPlayerTVSource::buildMenu () {
                 if (currentcommand == source->command)
                     m_tvsource = source;
                 source->size = device->size;
+                source->title = device->name + QString ("-") + input->name;
                 commands.insert (counter++, source);
             } else {
                 QPopupMenu * inputmenu = new QPopupMenu (app);
@@ -870,6 +870,7 @@ void KMPlayerTVSource::buildMenu () {
                     source->size = device->size;
                     inputmenu->insertItem (channel->name, this, SLOT(menuClicked (int)), 0, counter);
                     source->command.sprintf ("device=%s:input=%d:freq=%d", device->device.ascii (), input->id, channel->frequency);
+                    source->title = device->name + QString("-") + channel->name;
                     if (currentcommand == source->command)
                         m_tvsource = source;
                     commands.insert (counter++, source);
