@@ -2,7 +2,7 @@
 <!DOCTYPE book PUBLIC "-//KDE//DTD DocBook XML V4.1.2-Based Variant V1.1//EN" "dtd/kdex.dtd" [
   <!ENTITY kmplayer '<application>Kmplayer</application>'>
   <!ENTITY kappname "&kmplayer;"><!-- replace kmplayer here -->
-  <!ENTITY package "none">
+  <!ENTITY package "kdeextragear-2">
   <!ENTITY % addindex "IGNORE">
   <!ENTITY % English "INCLUDE"><!-- change language only here -->
  
