@@ -45,6 +45,10 @@
 
 static const int XKeyPress = KeyPress;
 #undef KeyPress
+#undef Always
+#undef Never
+#undef Status
+
 static const int button_height = 11;
 
 // application specific includes
