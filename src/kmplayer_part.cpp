@@ -831,8 +831,9 @@ void KMPlayerLiveConnectExtension::finished () {
 }
 
 bool KMPlayerLiveConnectExtension::get
-  (const unsigned long id, const QString & name,
+  (const unsigned long id, const QString & _name,
    KParts::LiveConnectExtension::Type & type, unsigned long & rid, QString &) {
+    QString name = _name.lower ();
     printf("get %s\n", name.latin1());
     if (name == "play" || name == "stop" || name == "pause" || name == "volume") {
         type = KParts::LiveConnectExtension::TypeFunction;
@@ -848,9 +849,10 @@ bool KMPlayerLiveConnectExtension::put
 }
 
 bool KMPlayerLiveConnectExtension::call
-  (const unsigned long id, const QString & name,
+  (const unsigned long id, const QString & _name,
    const QStringList & args, KParts::LiveConnectExtension::Type & type,
    unsigned long & rid, QString &) {
+    QString name = _name.lower ();
     if (name == "play" || name == "stop" || name == "pause" || name == "volume") {
         type = KParts::LiveConnectExtension::TypeVoid;
         rid = id;

@@ -250,9 +250,13 @@ void KMPlayerApp::resizePlayer (int percentage) {
             source->setWidth (w);
         } else
             source->setAspect (1.0 * w/h);
-        KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
         view->viewer()->setAspect (view->keepSizeRatio() ? source->aspect() : 0.0);
-        int h = source->height () + 2 + kview->buttonBar()->frameSize ().height ();
+        if (m_player->configDialog ()->showbuttons &&
+            !m_player->configDialog ()->autohidebuttons)
+            h += 2 + view->buttonBar()->frameSize ().height ();
+        if (m_player->source ()->hasLength () && 
+            m_player->configDialog ()->showposslider)
+            h += 2 + view->positionSlider ()->height ();
         w = int (1.0 * w * percentage/100.0);
         h = int (1.0 * h * percentage/100.0);
         kdDebug () << "resizePlayer (" << w << "," << h << ")" << endl;
@@ -288,7 +292,6 @@ static const char * const ffserverconf =
 "<Stream stat.html>\nFormat status\nACL allow localhost\n</Stream>\n";
 
 void KMPlayerApp::broadcastClicked () {
-    KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
     setCursor (QCursor (Qt::WaitCursor));
     m_endserver = false;
     if (!stopProcess (m_ffmpeg_process, "q"))
@@ -296,12 +299,12 @@ void KMPlayerApp::broadcastClicked () {
     if (!stopProcess (m_ffserver_process))
         KMessageBox::error (this, i18n ("Failed to end ffserver process."), i18n ("Error"));
     m_endserver = true;
-    if (!kview->broadcastButton ()->isOn ()) {
+    if (!view->broadcastButton ()->isOn ()) {
         setCursor (QCursor (Qt::ArrowCursor));
         return;
     }
     if (m_player->source ()->ffmpegCommand ().isEmpty ()) {
-        kview->broadcastButton ()->toggle ();
+        view->broadcastButton ()->toggle ();
         setCursor (QCursor (Qt::ArrowCursor));
         return;
     }
@@ -355,7 +358,6 @@ void KMPlayerApp::processOutput (KProcess * p, char * s, int) {
 }
 
 void KMPlayerApp::startFeed () {
-    KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
     QString ffmpegcmd = m_player->source ()->ffmpegCommand ();
     KMPlayerConfig * conf = m_player->configDialog ();
     FFServerSetting & ffs = conf->ffserversettings[conf->ffserversetting];
@@ -403,11 +405,11 @@ void KMPlayerApp::startFeed () {
             break;
         }
     } while (false);
-    if (!m_ffmpeg_process->isRunning () && kview->broadcastButton ()->isOn ())
-        kview->broadcastButton ()->toggle ();
+    if (!m_ffmpeg_process->isRunning () && view->broadcastButton ()->isOn ())
+        view->broadcastButton ()->toggle ();
     if (m_ffmpeg_process->isRunning ()) {
-        if (!kview->broadcastButton ()->isOn ())
-            kview->broadcastButton ()->toggle ();
+        if (!view->broadcastButton ()->isOn ())
+            view->broadcastButton ()->toggle ();
         QString ffurl;
         ffurl.sprintf ("http://localhost:%d/video.%s", conf->ffserverport, ffs.format.ascii ());
         openDocumentFile (KURL (ffurl));
@@ -417,7 +419,6 @@ void KMPlayerApp::startFeed () {
 }
 
 void KMPlayerApp::processStopped (KProcess * process) {
-    KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
     if (process == m_ffmpeg_process) {
         kdDebug () << "ffmpeg process stopped " << m_endserver << endl; 
         if (m_endserver && !stopProcess (m_ffserver_process)) {
@@ -428,8 +429,8 @@ void KMPlayerApp::processStopped (KProcess * process) {
         }
     } else {
         kdDebug () << "ffserver process stopped" << endl; 
-        if (kview && kview->broadcastButton ()->isOn ())
-            kview->broadcastButton ()->toggle ();
+        if (view && view->broadcastButton ()->isOn ())
+            view->broadcastButton ()->toggle ();
     }
     if (!m_ffserver_process->isRunning () && m_player->source () != m_tvsource)
         view->broadcastButton ()->hide ();
@@ -611,10 +612,9 @@ void KMPlayerApp::slotStatusMsg(const QString &text) {
 }
 
 void KMPlayerApp::fullScreen () {
-    KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
     if (sender ()->metaObject ()->inherits ("KAction"))
-        kview->fullScreen();
-    if (kview->isFullScreen())
+        view->fullScreen();
+    if (view->isFullScreen())
         hide ();
     else
         show ();
