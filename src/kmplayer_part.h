@@ -25,10 +25,12 @@
 #include <kregexp.h>
 #include <qobject.h>
 #include <qstringlist.h>
+#include <qguardedptr.h>
+#include "kmplayerview.h"
+
 
 class KProcess;
 class KAboutData;
-class KMPlayerView;
 class KMPlayer;
 class KMPlayerConfig;
 class KInstance;
@@ -141,7 +143,7 @@ private:
     void initProcess ();
     void sendCommand (const QString &);
     KConfig * m_config;
-    KMPlayerView * m_view;
+    QGuardedPtr <KMPlayerView> m_view;
     KMPlayerConfig * m_configdialog;
     KProcess * m_process;
     KMPlayerBrowserExtension * m_browserextension;

@@ -21,6 +21,8 @@ email                :
 #include <klocale.h>
 #include <dcopclient.h>
 
+#include <qguardedptr.h>
+
 #include "kmplayer.h"
 
 static const char *description =
@@ -47,7 +49,7 @@ int main (int argc, char *argv[])
     KCmdLineArgs::addCmdLineOptions (options); // Add our own options.
 
     KApplication app;
-    KMPlayerApp *kmplayer = 0L;
+    QGuardedPtr <KMPlayerApp> kmplayer;
 
     if (app.isRestored ()) {
         RESTORE (KMPlayerApp);
