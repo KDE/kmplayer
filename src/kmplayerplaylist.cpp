@@ -451,3 +451,110 @@ bool GenericURL::isMrl () {
 
 //-----------------------------------------------------------------------------
 
+class MMXmlContentHandler : public QXmlDefaultHandler {
+public:
+    KDE_NO_CDTOR_EXPORT MMXmlContentHandler (ElementPtr d) : m_start (d), m_elm (d), m_ignore_depth (0) {}
+    KDE_NO_CDTOR_EXPORT ~MMXmlContentHandler () {}
+    KDE_NO_EXPORT bool startDocument () {
+        return m_start->self () == m_elm;
+    }
+    KDE_NO_EXPORT bool endDocument () {
+        return m_start->self () == m_elm;
+    }
+    KDE_NO_EXPORT bool startElement (const QString &, const QString &, const QString & tag,
+            const QXmlAttributes & atts) {
+        if (m_ignore_depth) {
+            kdDebug () << "Warning: ignored tag " << tag << endl;
+            m_ignore_depth++;
+        } else {
+            ElementPtr e = m_elm->childFromTag (tag);
+            if (e) {
+                kdDebug () << "Found tag " << tag << endl;
+                e->setAttributes (atts);
+                m_elm->appendChild (e);
+                m_elm = e;
+            } else {
+                kdError () << "Warning: unknown tag " << tag << endl;
+                m_ignore_depth = 1;
+            }
+        }
+        return true;
+    }
+    KDE_NO_EXPORT bool endElement (const QString & /*nsURI*/,
+                   const QString & /*tag*/, const QString & /*fqtag*/) {
+        if (m_ignore_depth) {
+            // kdError () << "Warning: ignored end tag " << endl;
+            m_ignore_depth--;
+            return true;
+        }
+        if (m_elm == m_start->self ()) {
+            kdError () << "m_elm == m_start, stack underflow " << endl;
+            return false;
+        }
+        // kdError () << "end tag " << endl;
+        m_elm = m_elm->parentNode ();
+        return true;
+    }
+    KDE_NO_EXPORT bool characters (const QString & ch) {
+        if (m_ignore_depth)
+            return true;
+        if (!m_elm)
+            return false;
+        m_elm->characterData (ch);
+        return true;
+    }
+    KDE_NO_EXPORT bool fatalError (const QXmlParseException & ex) {
+        kdError () << "fatal error " << ex.message () << endl;
+        return true;
+    }
+    ElementPtr m_start;
+    ElementPtr m_elm;
+    int m_ignore_depth;
+};
+
+class FilteredInputSource : public QXmlInputSource {
+    QTextStream  & textstream;
+    QString buffer;
+    int pos;
+public:
+    KDE_NO_CDTOR_EXPORT FilteredInputSource (QTextStream & ts, const QString & b) : textstream (ts), buffer (b), pos (0) {}
+    KDE_NO_CDTOR_EXPORT ~FilteredInputSource () {}
+    KDE_NO_EXPORT QString data () { return textstream.read (); }
+    void fetchData ();
+    QChar next ();
+};
+
+KDE_NO_EXPORT QChar FilteredInputSource::next () {
+    if (pos + 8 >= (int) buffer.length ())
+        fetchData ();
+    if (pos >= (int) buffer.length ())
+        return QXmlInputSource::EndOfData;
+    QChar ch = buffer.at (pos++);
+    if (ch == QChar ('&')) {
+        QRegExp exp (QString ("\\w+;"));
+        if (buffer.find (exp, pos) != pos) {
+            buffer = QString ("&amp;") + buffer.mid (pos);
+            pos = 1;
+        }
+    }
+    return ch;
+}
+
+KDE_NO_EXPORT void FilteredInputSource::fetchData () {
+    if (pos > 0)
+        buffer = buffer.mid (pos);
+    pos = 0;
+    if (textstream.atEnd ())
+        return;
+    buffer += textstream.readLine ();
+}
+
+void readXML (ElementPtr root, QTextStream & in, const QString & firstline) {
+    QXmlSimpleReader reader;
+    MMXmlContentHandler content_handler (root);
+    FilteredInputSource input_source (in, firstline);
+    reader.setContentHandler (&content_handler);
+    reader.setErrorHandler (&content_handler);
+    reader.parse (&input_source);
+}
+

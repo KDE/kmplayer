@@ -52,6 +52,7 @@
 #include "kmplayershared.h"
 
 class QXmlAttributes;
+class QTextStream;
 class Document;
 class Element;
 class Mrl;
@@ -273,5 +274,7 @@ public:
      */
     bool isMrl ();
 };
+
+void readXML (ElementPtr root, QTextStream & in, const QString & firstline);
 
 #endif //_KMPLAYER_PLAYLIST_H_
