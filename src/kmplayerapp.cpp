@@ -793,11 +793,10 @@ void KMPlayerDVDSource::activate () {
 void KMPlayerDVDSource::identify () {
     init ();
     deactivate (); // clearMenus ?
-    QString args ("-v -identify -frames 0 -quiet -nocache");
+    QString args ("dvd://");
     if (m_current_title >= 0)
-        args += QString (" -dvd ") + QString::number (m_current_title + 1);
-    else
-        args += QString (" -v dvd://");
+        args += QString::number (m_current_title + 1);
+    args += QString (" -v -identify -frames 0 -quiet -nocache");
     if (m_player->configDialog ()->dvddevice.length () > 0)
         args += QString(" -dvd-device ") + m_player->configDialog ()->dvddevice;
     bool loop = m_player->configDialog ()->loop;
@@ -842,15 +841,13 @@ void KMPlayerDVDSource::play () {
 }
 
 const QString KMPlayerDVDSource::buildArguments () {
-    QString args;
+    QString args ("dvd://");
+    if (m_current_title >= 0)
+        args += m_dvdtitlemenu->findItem (m_current_title)->text ();
     unsigned i;
     for (i = 0; i < m_dvdsubtitlemenu->count (); i++)
         if (m_dvdsubtitlemenu->isItemChecked (m_dvdsubtitlemenu->idAt (i)))
             args += " -sid " + QString::number (m_dvdsubtitlemenu->idAt (i));
-    if (m_current_title >= 0)
-        args += " -dvd " + m_dvdtitlemenu->findItem (m_current_title)->text ();
-    else
-        args += " dvd:// ";
     for (i = 0; i < m_dvdchaptermenu->count (); i++)
         if (m_dvdchaptermenu->isItemChecked (i))
             args += " -chapter " + m_dvdchaptermenu->findItem (i)->text ();
@@ -940,11 +937,10 @@ void KMPlayerVCDSource::activate () {
 void KMPlayerVCDSource::identify () {
     init ();
     deactivate (); // clearMenus ?
-    QString args ("-v -identify -frames 0 -quiet -nocache");
+    QString args ("vcd://");
     if (m_current_title >= 0)
-        args += QString (" -vcd ") + QString::number (m_current_title + 1);
-    else
-        args += QString (" vcd://");
+        args += QString::number (m_current_title + 1);
+    args += QString (" -v -identify -frames 0 -quiet -nocache");
     if (m_player->configDialog ()->vcddevice.length () > 0)
         args += QString(" -cdrom-device ")+m_player->configDialog ()->vcddevice;
     bool loop = m_player->configDialog ()->loop;
@@ -984,11 +980,9 @@ void KMPlayerVCDSource::play () {
 }
 
 const QString KMPlayerVCDSource::buildArguments () {
-    QString args;
+    QString args ("vcd://");
     if (m_current_title >= 0)
-        args += " -vcd " + m_vcdtrackmenu->findItem (m_current_title)->text ();
-    else
-        args += " vcd:// ";
+        args += m_vcdtrackmenu->findItem (m_current_title)->text ();
     if (m_player->configDialog ()->vcddevice.length () > 0)
         args +=QString(" -cdrom-device ") + m_player->configDialog()->vcddevice;
     m_recordCommand = args;
@@ -1086,7 +1080,7 @@ const QString KMPlayerTVSource::buildArguments () {
     setWidth (m_tvsource->size.width ());
     setHeight (m_tvsource->size.height ());
     QString args;
-    args.sprintf ("-tv on:noaudio:driver=%s:%s:width=%d:height=%d", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
+    args.sprintf ("tv:// on:noaudio:driver=%s:%s:width=%d:height=%d", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
     if (!app->broadcasting ())
         app->resizePlayer (100);
     m_recordCommand = args;
