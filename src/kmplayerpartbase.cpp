@@ -1129,9 +1129,15 @@ KDE_NO_EXPORT void KMPlayerURLSource::read (QTextStream & textstream) {
         line = textstream.readLine ();
     } while (!line.isNull () && line.stripWhiteSpace ().isEmpty ());
     if (!line.isNull ()) {
+        ElementPtr cur_elm = m_current;
+        if (m_current->isMrl ())
+            cur_elm = m_current->mrl ()->realMrl ();
         if (mime () == QString ("audio/x-scpls")) {
             bool groupfound = false;
             int nr = -1;
+            struct Entry {
+                QString url, title;
+            } * entries = 0L;
             do {
                 line = line.stripWhiteSpace ();
                 if (!line.isEmpty ()) {
@@ -1147,20 +1153,34 @@ KDE_NO_EXPORT void KMPlayerURLSource::read (QTextStream & textstream) {
                             if (line.lower ().startsWith (QString ("numberofentries"))) {
                                 nr = line.mid (eq_pos + 1).stripWhiteSpace ().toInt ();
                                 kdDebug () << "numberofentries : " << nr << endl;
-                            } else if (nr > 0 && line.lower ().startsWith (QString ("file"))) {
-                                QString mrl = line.mid (eq_pos + 1).stripWhiteSpace ();
-                                if (!mrl.isEmpty ())
-                                    insertURL (mrl);
+                                if (nr > 0 && nr < 1024)
+                                    entries = new Entry[nr];
+                                else
+                                    nr = 0;
+                            } else if (nr > 0) {
+                                QString ll = line.lower ();
+                                if (ll.startsWith (QString ("file"))) {
+                                    int i = line.mid (4, eq_pos-4).toInt ();
+                                    if (i > 0 && i <= nr)
+                                        entries[i-1].url = line.mid (eq_pos + 1).stripWhiteSpace ();
+                                } else if (ll.startsWith (QString ("title"))) {
+                                    int i = line.mid (5, eq_pos-5).toInt ();
+                                    if (i > 0 && i <= nr)
+                                        entries[i-1].title = line.mid (eq_pos + 1).stripWhiteSpace ();
+                                }
                             }
                         }
                     }
                 }
                 line = textstream.readLine ();
             } while (!line.isNull ());
+            for (int i = 0; i < nr; i++)
+                if (!entries[i].url.isEmpty ())
+                    cur_elm->appendChild ((new GenericURL (m_document, KURL::decode_string (entries[i].url), entries[i].title))->self ());
+            delete [] entries;
         } else if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
             QXmlSimpleReader reader;
-            Mrl * mrl = m_current->mrl ();
-            MMXmlContentHandler content_handler (mrl ? mrl->realMrl () : m_current);
+            MMXmlContentHandler content_handler (cur_elm);
             FilteredInputSource input_source (textstream, line);
             reader.setContentHandler (&content_handler);
             reader.setErrorHandler (&content_handler);
@@ -1169,8 +1189,10 @@ KDE_NO_EXPORT void KMPlayerURLSource::read (QTextStream & textstream) {
             QString mrl = line.stripWhiteSpace ();
             if (mrl.lower ().startsWith (QString ("asf ")))
                 mrl = mrl.mid (4).stripWhiteSpace ();
-            if (!mrl.isEmpty () && !mrl.startsWith (QChar ('#')))
-                insertURL (mrl);
+            if (!mrl.isEmpty () && !mrl.startsWith (QChar ('#'))) {
+                KURL url (current (), mrl);
+                cur_elm->appendChild ((new GenericURL (m_document, KURL::decode_string (url.url ()), KURL::decode_string (mrl)))->self ());
+            }
             line = textstream.readLine ();
         } while (!line.isNull ()); /* TODO && m_document.size () < 1024 / * support 1k entries * /);*/
     }
