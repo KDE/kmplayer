@@ -432,6 +432,7 @@ void KMPlayer::forward () {
 }
 
 bool KMPlayer::run (const char * args, const char * pipe) {
+    stop ();
     m_movie_position = 0;
     m_view->consoleOutput ()->clear ();
     m_process_output = QString::null;

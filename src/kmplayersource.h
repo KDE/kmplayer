@@ -1,7 +1,7 @@
 /***************************************************************************
                           kmplayersource.h  -  description
                              -------------------
-    begin                : Sat Dec  24 16:14:51 CET 2003
+    begin                : Sat Mar  24 16:14:51 CET 2003
     copyright            : (C) 2003 by Koos Vriezen
     email                : 
  ***************************************************************************/
@@ -48,11 +48,11 @@ private:
 };
 
 
-class KMPlayerDiscSource : public KMPlayerSource {
+class KMPlayerMenuSource : public KMPlayerSource {
     Q_OBJECT
 public:
-    KMPlayerDiscSource (KMPlayerApp * app, QPopupMenu * m);
-    virtual ~KMPlayerDiscSource ();
+    KMPlayerMenuSource (KMPlayerApp * app, QPopupMenu * m);
+    virtual ~KMPlayerMenuSource ();
 protected:
     void menuItemClicked (QPopupMenu * menu, int id);
     QPopupMenu * m_menu;
@@ -60,7 +60,7 @@ protected:
 };
 
 
-class KMPlayerDVDSource : public KMPlayerDiscSource {
+class KMPlayerDVDSource : public KMPlayerMenuSource {
     Q_OBJECT
 public:
     KMPlayerDVDSource (KMPlayerApp * app, QPopupMenu * m);
@@ -88,7 +88,7 @@ private:
 };
 
 
-class KMPlayerVCDSource : public KMPlayerDiscSource {
+class KMPlayerVCDSource : public KMPlayerMenuSource {
     Q_OBJECT
 public:
     KMPlayerVCDSource (KMPlayerApp * app, QPopupMenu * m);
@@ -105,6 +105,7 @@ private:
     QRegExp trackRegExp;
     QPopupMenu * m_vcdtrackmenu;
 };
+
 
 class KMPlayerPipeSource : public KMPlayerSource {
     Q_OBJECT

@@ -196,10 +196,8 @@ void KMPlayerApp::openDocumentFile (const KURL& url)
 
 void KMPlayerApp::resizePlayer (int percentage) {
     KMPlayerSource * source = m_player->source ();
-    kdDebug () << "KMPlayerApp::resizePlayer " << source << endl;
     int w = source->width ();
     int h = source->height ();
-    kdDebug () << "KMPlayerApp::resizePlayer (" << w << "," << h << ")" << endl;
     if (w <= 0 || h <= 0) {
         m_player->sizes (w, h);
         source->setWidth (w);
@@ -526,14 +524,14 @@ void KMPlayerAppURLSource::deactivate () {
 
 //-----------------------------------------------------------------------------
 
-KMPlayerDiscSource::KMPlayerDiscSource (KMPlayerApp * a, QPopupMenu * m)
+KMPlayerMenuSource::KMPlayerMenuSource (KMPlayerApp * a, QPopupMenu * m)
     : KMPlayerSource (a->player ()), m_menu (m), app (a) {
 }
 
-KMPlayerDiscSource::~KMPlayerDiscSource () {
+KMPlayerMenuSource::~KMPlayerMenuSource () {
 }
 
-void KMPlayerDiscSource::menuItemClicked (QPopupMenu * menu, int id) {
+void KMPlayerMenuSource::menuItemClicked (QPopupMenu * menu, int id) {
     int unsetmenuid = -1;
     for (unsigned i = 0; i < menu->count(); i++) {
         int menuid = menu->idAt (i);
@@ -545,16 +543,12 @@ void KMPlayerDiscSource::menuItemClicked (QPopupMenu * menu, int id) {
     }
     if (unsetmenuid != id)
         menu->setItemChecked (id, true);
-    if (m_player->configDialog ()->playdvd) {
-        m_player->stop ();
-        play ();
-    }
 }
 
 //-----------------------------------------------------------------------------
 
 KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopupMenu * m)
-    : KMPlayerDiscSource (a, m) {
+    : KMPlayerMenuSource (a, m) {
     m_menu->insertTearOffHandle ();
     m_dvdtitlemenu = new QPopupMenu (app);
     m_dvdsubtitlemenu = new QPopupMenu (app);
@@ -673,24 +667,28 @@ void KMPlayerDVDSource::play () {
 
 void KMPlayerDVDSource::titleMenuClicked (int id) {
     menuItemClicked (m_dvdtitlemenu, id);
+    if (m_player->configDialog ()->playdvd) play ();
 }
 
 void KMPlayerDVDSource::subtitleMenuClicked (int id) {
     menuItemClicked (m_dvdsubtitlemenu, id);
+    if (m_player->configDialog ()->playdvd) play ();
 }
 
 void KMPlayerDVDSource::languageMenuClicked (int id) {
     menuItemClicked (m_dvdlanguagemenu, id);
+    if (m_player->configDialog ()->playdvd) play ();
 }
 
 void KMPlayerDVDSource::chapterMenuClicked (int id) {
     menuItemClicked (m_dvdchaptermenu, id);
+    if (m_player->configDialog ()->playdvd) play ();
 }
 
 //-----------------------------------------------------------------------------
 
 KMPlayerVCDSource::KMPlayerVCDSource (KMPlayerApp * a, QPopupMenu * m)
-    : KMPlayerDiscSource (a, m) {
+    : KMPlayerMenuSource (a, m) {
     m_menu->insertTearOffHandle ();
     m_vcdtrackmenu = new QPopupMenu (app);
     m_vcdtrackmenu->setCheckable (true);
@@ -762,6 +760,7 @@ void KMPlayerVCDSource::play () {
 
 void KMPlayerVCDSource::trackMenuClicked (int id) {
     menuItemClicked (m_vcdtrackmenu, id);
+    if (m_player->configDialog ()->playvcd) play ();
 }
 
 //-----------------------------------------------------------------------------
