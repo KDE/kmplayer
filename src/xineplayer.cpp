@@ -119,7 +119,12 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
         case XINE_EVENT_PROGRESS:
             {
                 xine_progress_data_t *pevent = (xine_progress_data_t *) event->data;
-                printf("%s [%d%%]\n", pevent->description, pevent->percent);
+                if (callback) {
+                    xineapp->lock ();
+                    callback->loadingProgress ((int) pevent->percent);
+                    xineapp->unlock ();
+                } else
+                    printf("%s [%d%%]\n", pevent->description, pevent->percent);
             }
             break;
         case XINE_EVENT_MRL_REFERENCE:

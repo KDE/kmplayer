@@ -151,6 +151,7 @@ public:
     virtual void setStarted ();
     virtual void setMovieParams (int length, int width, int height, float aspect);
     virtual void setMoviePosition (int position);
+    virtual void setLoadingProgress (int percentage);
 signals:
     void running ();
 protected:

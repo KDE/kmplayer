@@ -285,6 +285,7 @@ void KMPlayer::processPlaying () {
     kdDebug () << "KMPlayer::processPlaying " << endl;
     if (m_settings->sizeratio)
         m_view->viewer ()->setAspect (m_process->source ()->aspect ());
+    emit loading (100);
 }
 
 unsigned long KMPlayer::position () const {

@@ -130,7 +130,7 @@ void MPlayerBase::initProcess () {
     delete m_process;
     m_process = new KProcess;
     m_process->setUseShell (true);
-    KURL url = m_player->urlSource ()->url ();
+    const KURL & url (source ()->url ());
     if (!url.isEmpty ()) {
         QString proxy_url;
         if (KProtocolManager::useProxy () && proxyForURL (url, proxy_url))
@@ -568,6 +568,10 @@ void KMPlayerCallback::moviePosition (int position) {
     m_process->setMoviePosition (position);
 }
 
+void KMPlayerCallback::loadingProgress (int percentage) {
+    m_process->setLoadingProgress (percentage);
+}
+
 //-----------------------------------------------------------------------------
 
 KMPlayerCallbackProcess::KMPlayerCallbackProcess (KMPlayer * player)
@@ -625,6 +629,10 @@ void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
 void KMPlayerCallbackProcess::setMoviePosition (int position) {
     m_source->setPosition (position);
     emit positionChanged (position);
+}
+
+void KMPlayerCallbackProcess::setLoadingProgress (int percentage) {
+    emit loading (percentage);
 }
 //-----------------------------------------------------------------------------
 

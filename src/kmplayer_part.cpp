@@ -143,9 +143,11 @@ void KMPlayerPart::processFinished () {
 
 void KMPlayerPart::processLoading (int percentage) {
     KMPlayer::processLoading (percentage);
-    m_browserextension->setLoadingProgress (percentage);
-    m_browserextension->infoMessage 
-        (QString::number (percentage) + i18n ("% Cache fill"));
+    if (percentage < 100) {
+        m_browserextension->setLoadingProgress (percentage);
+        m_browserextension->infoMessage 
+            (QString::number (percentage) + i18n ("% Cache fill"));
+    }
 }
 
 void KMPlayerPart::processStarted () {
