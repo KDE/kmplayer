@@ -832,7 +832,7 @@ bool FFMpeg::play () {
         else
             cmd += QString (" -an");
     } else {
-        cmd += QString ("-i ") + KProcess::quote (m_recordurl.isLocalFile () ? m_recordurl.path () : m_recordurl.url ());
+        cmd += QString ("-i ") + KProcess::quote (m_source->url ().isLocalFile () ? m_source->url ().path () : m_source->url ().url ());
     }
     cmd += QChar (' ') + arguments;
     cmd += QChar (' ') + KProcess::quote (outurl);
