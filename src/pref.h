@@ -64,6 +64,7 @@ class KMPlayer;
 class QTabWidget;
 class QTable;
 class QGroupBox;
+class KHistoryCombo;
 
 typedef std::list<RecorderPage*> RecorderList;
 
@@ -291,7 +292,7 @@ public:
     TVDevice * device;
     void updateTVDevice ();
 signals:
-    void deleted (QFrame *);
+    void deleted (KMPlayerPrefSourcePageTVDevice *);
 private slots:
     void slotDelete ();
 private:
@@ -308,18 +309,19 @@ public:
 
     QLineEdit * driver;
     KURLRequester * device;
+    QTabWidget * tab;
     TVDeviceScannerSource * scanner;
     void setTVDevices (TVDeviceList *);
     void updateTVDevices ();
 private slots:
     void slotScan ();
     void slotScanFinished (TVDevice * device);
-    void slotDeviceDeleted (QFrame *);
+    void slotDeviceDeleted (KMPlayerPrefSourcePageTVDevice *);
 private:
     TVDeviceList * m_devices;
     TVDeviceList deleteddevices;
     TVDeviceList addeddevices;
-    typedef std::list <QFrame *> TVDevicePageList;
+    typedef std::list <KMPlayerPrefSourcePageTVDevice *> TVDevicePageList;
     TVDevicePageList m_devicepages;
     KMPlayerPreferences * m_preference;
 };

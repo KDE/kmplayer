@@ -45,6 +45,7 @@
 #include <kfiledialog.h>
 #include <kmessagebox.h>
 #include <klineedit.h>
+#include <kiconloader.h>
 #include <kdeversion.h>
 
 #include "pref.h"
@@ -53,106 +54,65 @@
 #include "kmplayerconfig.h"
 
 KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver * ad, FFServerSetting * ffs)
-: KDialogBase(TreeList, i18n("KMPlayer Preferences"),
-		Help|Default|Ok|Apply|Cancel, Ok, player->view (), 0, false)
+: KDialogBase (IconList, i18n ("KMPlayer Preferences"),
+		Help|Default|Ok|Apply|Cancel, Ok, player->view (), 0, false),
+  pages (new QFrame *[int (LastPage)])
 {
-	QFrame *frame;
-	QStringList hierarchy; // typo? :)
-	QVBoxLayout *vlay;
+    QFrame *frame;
+    QTabWidget * tab;
+    QStringList hierarchy; // typo? :)
+    QVBoxLayout *vlay;
 
+    frame = addPage(i18n("General Options"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("kmplayer"), KIcon::NoGroup, 32));
+    vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
+    tab = new QTabWidget (frame);
+    vlay->addWidget (tab);
+    m_GeneralPageGeneral = new KMPlayerPrefGeneralPageGeneral (tab);
+    tab->insertTab (m_GeneralPageGeneral, i18n("General"));
+    m_GeneralPageOutput = new KMPlayerPrefGeneralPageOutput (tab, ad);
+    tab->insertTab (m_GeneralPageOutput, i18n("Output"));
+    m_GeneralPageAdvanced = new KMPlayerPrefGeneralPageAdvanced (tab);
+    tab->insertTab (m_GeneralPageAdvanced, i18n("Advanced"));
 
-	hierarchy << i18n("General");
-	frame = addPage(hierarchy, i18n("General Options"));
-	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
-
-	m_GeneralPageGeneral = new KMPlayerPrefGeneralPageGeneral(frame);
-	vlay->addWidget(m_GeneralPageGeneral);
-
-	hierarchy.clear();
-	hierarchy << i18n ("Source");
-	frame = addPage (hierarchy, i18n ("URL"));
-	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
-	m_SourcePageURL = new KMPlayerPrefSourcePageURL (frame);
-	vlay->addWidget (m_SourcePageURL);
-
-	hierarchy.clear();
-	hierarchy << i18n("Source") << i18n("DVD");
-	frame = addPage(hierarchy, i18n("DVD Playing Options"));
-	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
-	m_GeneralPageDVD = new KMPlayerPrefGeneralPageDVD(frame);
-	vlay->addWidget(m_GeneralPageDVD);
-
-
-	hierarchy.clear();
-	hierarchy << i18n("Source") << i18n("VCD");
-	frame = addPage(hierarchy, i18n("VCD Playing Options"));
-	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
-	m_GeneralPageVCD = new KMPlayerPrefGeneralPageVCD(frame);
-	vlay->addWidget(m_GeneralPageVCD);
-
-	hierarchy.clear();
-	hierarchy << i18n ("Source") << i18n ("TV") << i18n ("General");
-	frame = addPage (hierarchy, i18n ("TV Options"));
-	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
-	m_SourcePageTV = new KMPlayerPrefSourcePageTV (frame, this);
-	vlay->addWidget (m_SourcePageTV);
-
-    hierarchy.clear();
-    hierarchy << i18n ("Recording");
-    QFrame * recordframe = addPage (hierarchy, i18n ("Recording"));
-
-    hierarchy.clear();
-    hierarchy << i18n ("Recording") << i18n ("MEncoder");
-    frame = addPage (hierarchy, i18n ("MEncoder"));
+    frame = addPage (i18n ("Source"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("source"), KIcon::NoGroup, 32));
     vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
-    m_MEncoderPage = new KMPlayerPrefMEncoderPage (frame, player);
+    tab = new QTabWidget (frame);
+    vlay->addWidget (tab);
+    m_SourcePageURL = new KMPlayerPrefSourcePageURL (tab);
+    tab->insertTab (m_SourcePageURL, i18n ("URL"));
+    m_GeneralPageDVD = new KMPlayerPrefGeneralPageDVD (tab);
+    tab->insertTab (m_GeneralPageDVD, i18n ("DVD"));
+    m_GeneralPageVCD = new KMPlayerPrefGeneralPageVCD (tab);
+    tab->insertTab (m_GeneralPageVCD, i18n ("VCD"));
+    m_SourcePageTV = new KMPlayerPrefSourcePageTV (tab, this);
+    tab->insertTab (m_SourcePageTV, i18n ("TV"));
+
+    frame = addPage (i18n ("Recording"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("video"), KIcon::NoGroup, 32));
+    vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
+    tab = new QTabWidget (frame);
+    vlay->addWidget (tab);
+    m_RecordPage = new KMPlayerPrefRecordPage (tab, player, recorders);
+    tab->insertTab (m_RecordPage, i18n ("General"));
+    m_MEncoderPage = new KMPlayerPrefMEncoderPage (tab, player);
+    tab->insertTab (m_MEncoderPage, i18n ("MEncoder"));
     recorders.push_back (m_MEncoderPage);
-    vlay->addWidget (m_MEncoderPage);
-
-    hierarchy.clear();
-    hierarchy << i18n ("Recording") << i18n ("FFMpeg");
-    frame = addPage (hierarchy, i18n ("FFMpeg"));
-    vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
-    m_FFMpegPage = new KMPlayerPrefFFMpegPage (frame, player);
+    m_FFMpegPage = new KMPlayerPrefFFMpegPage (tab, player);
+    tab->insertTab (m_FFMpegPage, i18n ("FFMpeg"));
     recorders.push_back (m_FFMpegPage);
-    vlay->addWidget (m_FFMpegPage);
+    pages[PageRecording] = frame;
 
-    vlay = new QVBoxLayout (recordframe, marginHint(), spacingHint());
-    m_RecordPage = new KMPlayerPrefRecordPage (recordframe, player, recorders);
-    vlay->addWidget (m_RecordPage);
+    frame = addPage (i18n ("Broadcasting"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("share"), KIcon::NoGroup, 32));
+    vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
+    tab = new QTabWidget (frame);
+    vlay->addWidget (tab);
+    m_BroadcastPage = new KMPlayerPrefBroadcastPage (tab, ffs);
+    tab->insertTab (m_BroadcastPage, i18n ("Broadcasting (ffserver)"));
+    m_BroadcastACLPage = new KMPlayerPrefBroadcastACLPage (tab);
+    tab->insertTab (m_BroadcastACLPage, i18n ("ACL"));
 
-	hierarchy.clear();
-	hierarchy << i18n ("Broadcasting");
-	frame = addPage (hierarchy, i18n ("Broadcasting (ffserver)"));
-	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
-	m_BroadcastPage = new KMPlayerPrefBroadcastPage (frame, ffs);
-	vlay->addWidget (m_BroadcastPage);
-
-	hierarchy.clear();
-	hierarchy << i18n ("Broadcasting") << i18n ("ACL");
-	frame = addPage (hierarchy, i18n ("Access Lists"));
-	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
-	m_BroadcastACLPage = new KMPlayerPrefBroadcastACLPage (frame);
-	vlay->addWidget (m_BroadcastACLPage);
-
-
-	hierarchy.clear();
-	hierarchy << i18n("General") << i18n("Output");
-	frame = addPage(hierarchy, i18n("Video & Audio Output Options"));
-	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
-	m_GeneralPageOutput = new KMPlayerPrefGeneralPageOutput(frame, ad);
-	vlay->addWidget(m_GeneralPageOutput);
-
-	hierarchy.clear();
-	hierarchy << i18n("General") << i18n("Advanced");
-	frame = addPage(hierarchy, i18n("Advanced Options"));
-	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
-	m_GeneralPageAdvanced = new KMPlayerPrefGeneralPageAdvanced(frame);
-	vlay->addWidget(m_GeneralPageAdvanced);
-
-/*
-* not yet needed...
- */
+    /*
+     * not yet needed...
+     */
 
 	/*hierarchy.clear();
 	hierarchy << i18n("Output plugins") << i18n("General");
@@ -161,24 +121,21 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
 	m_OPPageGeneral = new KMPlayerPrefOPPageGeneral(frame);
 	vlay->addWidget(m_OPPageGeneral);*/
 
+    frame = addPage (i18n ("Output plugins"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("image"), KIcon::NoGroup, 32));
+    vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
+    tab = new QTabWidget (frame);
+    vlay->addWidget (tab);
+    m_OPPagePostproc = new KMPlayerPrefOPPagePostProc (tab);
+    tab->insertTab (m_OPPagePostproc, i18n ("Postprocessing"));
 
-	hierarchy.clear();
-	hierarchy << i18n("Output plugins") << i18n("Postprocessing");
-	frame = addPage(hierarchy, i18n("Postprocessing Options"));
-	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
-	m_OPPagePostproc = new KMPlayerPrefOPPagePostProc(frame);
-	vlay->addWidget(m_OPPagePostproc);
+    connect (this, SIGNAL (defaultClicked ()), SLOT (confirmDefaults ()));
 
-	connect (this, SIGNAL (defaultClicked ()), SLOT (confirmDefaults ()));
-	this->setTreeListAutoResize(true);
-    pages = new QFrame *[int (LastPage)];
-    pages[PageRecording] = m_RecordPage;
     pages[PageTVSource] = m_SourcePageTV;
 }
 
 void KMPlayerPreferences::setPage (Page page) {
     if (page != NoPage)
-    showPage (pageIndex (pages [page]->parentWidget ()));
+        showPage (pageIndex (pages [page]));
 }
 
 KMPlayerPreferences::~KMPlayerPreferences() {
@@ -188,7 +145,7 @@ KMPlayerPreferences::~KMPlayerPreferences() {
 KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
 : QFrame(parent)
 {
-	QVBoxLayout *layout = new QVBoxLayout(this);
+	QVBoxLayout *layout = new QVBoxLayout(this, 5, 2);
 
 	keepSizeRatio = new QCheckBox (i18n("Keep size ratio"), this, 0);
 	QToolTip::add(keepSizeRatio, i18n("When checked, movie will keep its aspect ratio\nwhen window is resized"));
@@ -238,7 +195,7 @@ KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
 KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
 : QFrame (parent)
 {
-    QVBoxLayout *layout = new QVBoxLayout (this, 0, 5);
+    QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     QHBoxLayout * urllayout = new QHBoxLayout ();
     QLabel *urlLabel = new QLabel (i18n ("URL:"), this, 0);
     url = new KURLRequester ("", this, 0);
@@ -270,7 +227,7 @@ void KMPlayerPrefSourcePageURL::slotBrowse () {
 
 KMPlayerPrefGeneralPageDVD::KMPlayerPrefGeneralPageDVD(QWidget *parent) : QFrame(parent)
 {
-    QVBoxLayout *layout = new QVBoxLayout (this, 0, 2);
+    QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
 
     autoPlayDVD = new QCheckBox (i18n ("Auto play after opening DVD"), this, 0);
     QToolTip::add(autoPlayDVD, i18n ("Start playing DVD right after opening DVD"));
@@ -366,7 +323,7 @@ KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent,
 
 void KMPlayerPrefSourcePageTVDevice::slotDelete () {
     if (KMessageBox::warningYesNo (this, i18n ("You're about to remove this device from the Source menu.\nContinue?"), i18n ("Confirm")) == KMessageBox::Yes)
-        emit deleted (static_cast <QFrame *> (parent ()));
+        emit deleted (this);
 }
 
 void KMPlayerPrefSourcePageTVDevice::updateTVDevice () {
@@ -397,25 +354,31 @@ void KMPlayerPrefSourcePageTVDevice::updateTVDevice () {
 
 KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerPreferences * pref)
 : QFrame (parent), m_preference (pref) {
-    QVBoxLayout *layout = new QVBoxLayout (this);
+    QVBoxLayout * mainlayout = new QVBoxLayout (this, 5);
+    tab = new QTabWidget (this);
+    tab->setTabPosition (QTabWidget::Bottom);
+    mainlayout->addWidget (tab);
+    QWidget * general = new QWidget (tab);
+    QVBoxLayout *layout = new QVBoxLayout (general);
     QGridLayout *gridlayout = new QGridLayout (layout, 2, 2, 2);
-    QLabel *driverLabel = new QLabel (i18n ("Driver:"), this, 0);
-    driver = new QLineEdit ("", this, 0);
+    QLabel *driverLabel = new QLabel (i18n ("Driver:"), general, 0);
+    driver = new QLineEdit ("", general, 0);
     QToolTip::add (driver, i18n ("dummy, v4l or bsdbt848"));
-    QLabel *deviceLabel = new QLabel (i18n ("Device:"), this, 0);
-    device = new KURLRequester ("/dev/video", this);
+    QLabel *deviceLabel = new QLabel (i18n ("Device:"), general, 0);
+    device = new KURLRequester ("/dev/video", general);
     QToolTip::add (device, i18n("Path to your video device, eg. /dev/video0"));
-    QPushButton * scan = new QPushButton (i18n ("Scan..."), this);
+    QPushButton * scan = new QPushButton (i18n ("Scan..."), general);
     connect (scan, SIGNAL (clicked ()), this, SLOT (slotScan ()));
     gridlayout->addWidget (driverLabel, 0, 0);
     gridlayout->addWidget (driver, 0, 1);
     gridlayout->addWidget (deviceLabel, 1, 0);
     gridlayout->addWidget (device, 1, 1);
-    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     QHBoxLayout *buttonlayout = new QHBoxLayout ();
     buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
     buttonlayout->addWidget (scan);
     layout->addLayout (buttonlayout);
+    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    tab->insertTab (general, i18n ("General"));
 }
 
 struct TVDevicePageAdder {
@@ -426,21 +389,17 @@ struct TVDevicePageAdder {
 };
 
 void TVDevicePageAdder::operator () (TVDevice * device) {
-    QStringList hierarchy; // typo? :)
-    hierarchy << i18n("Source") << i18n("TV") << device->name;
-    QFrame * frame = page->m_preference->addPage (hierarchy, device->name);
-    QVBoxLayout *vlay = new QVBoxLayout (frame, page->m_preference->marginHint(), page->m_preference->spacingHint());
-    KMPlayerPrefSourcePageTVDevice * devpage = new KMPlayerPrefSourcePageTVDevice (frame, device);
+    KMPlayerPrefSourcePageTVDevice * devpage = new KMPlayerPrefSourcePageTVDevice (page->tab, device);
+    page->tab->insertTab (devpage, device->name);
     devpage->name->setText (device->name);
     devpage->sizewidth->setText (QString::number (device->size.width ()));
     devpage->sizeheight->setText (QString::number (device->size.height ()));
     devpage->noplayback->setChecked (device->noplayback);
-    vlay->addWidget (devpage);
-    page->connect (devpage, SIGNAL (deleted (QFrame *)),
-                   page, SLOT (slotDeviceDeleted (QFrame *)));
-    page->m_devicepages.push_back (frame);
+    page->connect (devpage, SIGNAL (deleted (KMPlayerPrefSourcePageTVDevice *)),
+                   page, SLOT (slotDeviceDeleted (KMPlayerPrefSourcePageTVDevice *)));
+    page->m_devicepages.push_back (devpage);
     if (show)
-        page->m_preference->showPage (page->m_preference->pageIndex (frame));
+        page->tab->setCurrentPage (page->tab->indexOf (devpage));
 }
 
 void KMPlayerPrefSourcePageTV::setTVDevices (TVDeviceList * devs) {
@@ -453,17 +412,13 @@ void KMPlayerPrefSourcePageTV::setTVDevices (TVDeviceList * devs) {
     std::for_each(m_devices->begin(), m_devices->end(),TVDevicePageAdder(this));
 }
 
-void KMPlayerPrefSourcePageTV::slotDeviceDeleted (QFrame * frame) {
-    KMPlayerPrefSourcePageTVDevice * devpage = static_cast <KMPlayerPrefSourcePageTVDevice*> (frame->child ("PageTVDevice", "KMPlayerPrefSourcePageTVDevice"));
-    if (devpage) {
-        if (std::find (addeddevices.begin (), addeddevices.end (), devpage->device) != addeddevices.end ())
-            addeddevices.remove (devpage->device);
-        deleteddevices.push_back (devpage->device);
-    } else
-        kdError() << "Deleted page has no KMPlayerPrefSourcePageTVDevice" << endl;
-    m_devicepages.remove (frame);
-    delete frame;
-    m_preference->setPage (KMPlayerPreferences::PageTVSource);
+void KMPlayerPrefSourcePageTV::slotDeviceDeleted (KMPlayerPrefSourcePageTVDevice * devpage) {
+    if (std::find (addeddevices.begin (), addeddevices.end (), devpage->device) != addeddevices.end ())
+        addeddevices.remove (devpage->device);
+    deleteddevices.push_back (devpage->device);
+    m_devicepages.remove (devpage);
+    devpage->deleteLater ();
+    tab->setCurrentPage (0);
 }
 
 void KMPlayerPrefSourcePageTV::slotScan () {
@@ -517,7 +472,7 @@ void KMPlayerPrefSourcePageTV::updateTVDevices () {
 }
 
 KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * player, RecorderList & rl) : QFrame (parent), m_player (player), m_recorders (rl) {
-    QVBoxLayout *layout = new QVBoxLayout (this, 0, 5);
+    QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     QHBoxLayout * urllayout = new QHBoxLayout ();
     QLabel *urlLabel = new QLabel (i18n ("Output File:"), this);
     url = new KURLRequester ("", this);
@@ -609,7 +564,7 @@ RecorderPage::RecorderPage (QWidget *parent, KMPlayer * player)
  : QFrame (parent), m_player (player) {}
 
 KMPlayerPrefMEncoderPage::KMPlayerPrefMEncoderPage (QWidget *parent, KMPlayer * player) : RecorderPage (parent, player) {
-    QVBoxLayout *layout = new QVBoxLayout (this, 0, 5);
+    QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     format = new QButtonGroup (3, Qt::Vertical, i18n ("Format"), this);
     new QRadioButton (i18n ("Same as Source"), format);
     new QRadioButton (i18n ("Custom"), format);
@@ -652,7 +607,7 @@ bool KMPlayerPrefMEncoderPage::sourceSupported (KMPlayerSource *) {
 }
 
 KMPlayerPrefFFMpegPage::KMPlayerPrefFFMpegPage (QWidget *parent, KMPlayer * player) : RecorderPage (parent, player) {
-    QVBoxLayout *layout = new QVBoxLayout (this, 0, 5);
+    QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     QGridLayout *gridlayout = new QGridLayout (1, 2, 2);
     QLabel *argLabel = new QLabel (i18n("FFMpeg arguments:"), this);
     arguments = new QLineEdit ("", this);
@@ -683,7 +638,7 @@ bool KMPlayerPrefFFMpegPage::sourceSupported (KMPlayerSource * source) {
 }
 
 KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerSetting * _ffs) : QFrame (parent), ffs (_ffs) {
-    QVBoxLayout *layout = new QVBoxLayout (this);
+    QVBoxLayout *layout = new QVBoxLayout (this, 5);
     QGridLayout *gridlayout = new QGridLayout (layout, 8, 2, 2);
     QLabel *label = new QLabel (i18n ("Bind address:"), this);
     bindaddress = new QLineEdit ("", this);
@@ -797,7 +752,7 @@ void KMPlayerPrefBroadcastPage::slotIndexChanged (int index) {
 
 KMPlayerPrefBroadcastACLPage::KMPlayerPrefBroadcastACLPage (QWidget *parent)
 : QFrame (parent) {
-    QVBoxLayout *layout = new QVBoxLayout (this);
+    QVBoxLayout *layout = new QVBoxLayout (this, 5);
     QLabel * label = new QLabel (i18n ("Allow access from:"), this);
     layout->addWidget (label);
     accesslist = new QTable (40, 1, this);
@@ -810,7 +765,7 @@ KMPlayerPrefBroadcastACLPage::KMPlayerPrefBroadcastACLPage (QWidget *parent)
 
 KMPlayerPrefGeneralPageVCD::KMPlayerPrefGeneralPageVCD(QWidget *parent) : QFrame(parent)
 {
-	QVBoxLayout *layout = new QVBoxLayout (this, 0, 2);
+	QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
 
 	autoPlayVCD = new QCheckBox (i18n ("Auto play after opening a VCD"), this, 0);
 	QToolTip::add(autoPlayVCD, i18n ("Start playing VCD right after opening VCD")); // i don't know about this
@@ -828,7 +783,7 @@ KMPlayerPrefGeneralPageVCD::KMPlayerPrefGeneralPageVCD(QWidget *parent) : QFrame
 
 KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidget *parent, MPlayerAudioDriver * ad) : QFrame(parent)
 {
-    QVBoxLayout *layout = new QVBoxLayout (this, 0, 5);
+    QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     QHBoxLayout *childLayout1 = new QHBoxLayout (layout);
 
     videoDriver = new QComboBox(this);
@@ -854,14 +809,14 @@ KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidget *parent, MP
 KMPlayerPrefOPPageGeneral::KMPlayerPrefOPPageGeneral(QWidget *parent)
 : QFrame(parent)
 {
-	QVBoxLayout *layout = new QVBoxLayout(this);
-	layout->setAutoAdd(true);
+    QVBoxLayout *layout = new QVBoxLayout (this, 5);
+    layout->setAutoAdd (true);
 }
 
 KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame(parent)
 {
 
-	QVBoxLayout *tabLayout = new QVBoxLayout (this);
+	QVBoxLayout *tabLayout = new QVBoxLayout (this, 5);
 	postProcessing = new QCheckBox( i18n("postProcessing"), this, 0 );
 	postProcessing->setEnabled( TRUE );
 	disablePPauto = new QCheckBox (i18n("disablePostProcessingAutomatically"), this, 0);
