@@ -406,6 +406,8 @@ KDE_NO_EXPORT bool MPlayer::seek (int pos, bool absolute) {
 KDE_NO_EXPORT bool MPlayer::volume (int incdec, bool absolute) {
     if (absolute)
         incdec -= old_volume;
+    if (incdec == 0)
+        return true;
     old_volume += incdec;
     return sendCommand (QString ("volume ") + QString::number (incdec));
 }
@@ -502,7 +504,7 @@ bool MPlayer::run (const char * args, const char * pipe) {
 
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
 
-    old_volume = 100;
+    old_volume = view ()->controlPanel ()->volumeBar ()->value ();
 
     if (m_process->isRunning ()) {
         setState (Buffering); // wait for start regexp for state Playing
