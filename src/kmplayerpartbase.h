@@ -25,6 +25,7 @@
 #include <qcstring.h>
 #include <qmap.h>
 
+#include <dcopobject.h>
 #include <kmediaplayer/player.h>
 #include <kurl.h>
 
@@ -100,6 +101,7 @@ private:
  */
 class KMPLAYER_EXPORT PartBase : public KMediaPlayer::Player {
     Q_OBJECT
+    K_DCOP
 public:
     typedef QMap <QString, Process *> ProcessMap;
     PartBase (QWidget * parent,  const char * wname,QObject * parent, const char * name, KConfig *);
@@ -108,10 +110,10 @@ public:
     virtual KMediaPlayer::View* view ();
     static KAboutData* createAboutData ();
 
-    KDE_NO_EXPORT Settings * settings () const { return m_settings; }
+    Settings * settings () const { return m_settings; }
     void keepMovieAspect (bool);
-    KDE_NO_EXPORT KURL url () const { return m_sources ["urlsource"]->url (); }
-    KDE_NO_EXPORT void setURL (const KURL & url) { m_sources ["urlsource"]->setURL (url); }
+    KURL url () const { return m_sources ["urlsource"]->url (); }
+    void setURL (const KURL & url) { m_sources ["urlsource"]->setURL (url); }
 
     /* Changes the process,
      * calls setSource if process was playing
@@ -123,14 +125,14 @@ public:
      * calls init() and reschedules an activate() on the source
      * */
     void setSource (Source * source);
-    KDE_NO_EXPORT Process * process () const { return m_process; }
-    KDE_NO_EXPORT Process * recorder () const { return m_recorder; }
-    KDE_NO_EXPORT Source * source () const { return m_source; }
+    Process * process () const { return m_process; }
+    Process * recorder () const { return m_recorder; }
+    Source * source () const { return m_source; }
     QMap <QString, Process *> & players () { return m_players; }
     QMap <QString, Process *> & recorders () { return m_recorders; }
     QMap <QString, Source *> & sources () { return m_sources; }
-    KDE_NO_EXPORT KConfig * config () const { return m_config; }
-    KDE_NO_EXPORT bool mayResize () const { return !m_noresize; }
+    KConfig * config () const { return m_config; }
+    bool mayResize () const { return !m_noresize; }
     void updatePlayerMenu ();
 
     // these are called from Process
@@ -163,6 +165,8 @@ public:
     virtual unsigned long position (void) const;
     virtual bool hasLength (void) const;
     virtual unsigned long length (void) const;
+k_dcop:
+    void toggleFullScreen ();
 signals:
     void startPlaying ();
     void stopPlaying ();

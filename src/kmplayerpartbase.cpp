@@ -671,6 +671,10 @@ KDE_NO_EXPORT void PartBase::fullScreen () {
     m_process->view ()->fullScreen ();
 }
 
+KDE_NO_EXPORT void PartBase::toggleFullScreen () {
+    m_process->view ()->fullScreen ();
+}
+
 KAboutData* PartBase::createAboutData () {
     KMessageBox::error(0L, "createAboutData", "KMPlayer");
     return 0;
