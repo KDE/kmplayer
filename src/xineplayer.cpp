@@ -1,3 +1,22 @@
+/* This file is part of the KMPlayer application
+   Copyright (C) 2003 Koos Vriezen <koos.vriezen@xs4all.nl>
+
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public
+   License as published by the Free Software Foundation; either
+   version 2 of the License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; see the file COPYING.  If not, write to
+   the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.
+*/
+
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -41,7 +60,6 @@ public:
          ao_driver ("auto"),
          brightness (0), contrast (0), hue (0), saturation (0), volume (0) {
     }
-    double res_h, res_v;
     char * vo_driver;
     char * ao_driver;
     int brightness, contrast, hue, saturation, volume;
@@ -301,10 +319,10 @@ void KXinePlayer::init () {
     if (window_created) {
         fprintf (stderr, "map %lu\n", wid);
         XMapRaised(display, wid);
+        XSync(display, False);
     }
-    d->res_h = 1.0 * DisplayWidth(display, screen) / DisplayWidthMM(display, screen);
-    d->res_v = 1.0 * DisplayHeight(display, screen) / DisplayHeightMM(display, screen);
-    XSync(display, False);
+    //double d->res_h = 1.0 * DisplayWidth(display, screen) / DisplayWidthMM(display, screen);
+    //double d->res_v = 1.0 * DisplayHeight(display, screen) / DisplayHeightMM(display, screen);
     XUnlockDisplay(display);
     vis.display           = display;
     vis.screen            = screen;
@@ -312,9 +330,9 @@ void KXinePlayer::init () {
     vis.dest_size_cb      = dest_size_cb;
     vis.frame_output_cb   = frame_output_cb;
     vis.user_data         = NULL;
-    pixel_aspect          = d->res_v / d->res_h;
+    //pixel_aspect          = d->res_v / d->res_h;
 
-    if(fabs(pixel_aspect - 1.0) < 0.01)
+    //if(fabs(pixel_aspect - 1.0) < 0.01)
         pixel_aspect = 1.0;
 
     vo_port = xine_open_video_driver(xine, d->vo_driver, XINE_VISUAL_TYPE_X11, (void *) &vis);

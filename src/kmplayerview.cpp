@@ -764,8 +764,8 @@ void KMPlayerViewer::showEvent (QShowEvent *) {
     QWidget * parent = parentWidget ();
     XConfigureEvent c = {
         ConfigureNotify, 0UL, True,
-        qt_xdisplay (), winId (), parent->winId (),
-        0, 0, parent->width (), parent->height (),
+        qt_xdisplay (), winId (), parentWidget ()->winId (),
+        x (), y (), width (), height (),
         0, None, False
     };
     XSendEvent(qt_xdisplay(), c.event, TRUE, StructureNotifyMask, (XEvent*) &c);
@@ -776,7 +776,7 @@ void KMPlayerViewer::resizeEvent (QResizeEvent *) {
     XConfigureEvent c = {
         ConfigureNotify, 0UL, True,
         qt_xdisplay (), winId (), parentWidget ()->winId (),
-        0, 0, width (), height (),
+        x (), y (), width (), height (),
         0, None, False
     };
     XSendEvent(qt_xdisplay(), c.event, TRUE, StructureNotifyMask, (XEvent*) &c);
