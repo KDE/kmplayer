@@ -278,11 +278,13 @@ void KMPlayerSlider::enterEvent (QEvent *) {
 
 //-----------------------------------------------------------------------------
 
-static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char ** p) {
+static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char ** p, int key = 0) {
     QPushButton * b = new QPushButton (QIconSet (QPixmap(p)), QString::null, w);
     b->setMaximumSize (750, button_height);
     b->setFocusPolicy (QWidget::NoFocus);
     b->setFlat (true);
+    if (key)
+        b->setAccel (QKeySequence (key));
     l->addWidget (b);
     return b;
 }
@@ -324,10 +326,10 @@ void KMPlayerView::init () {
     m_buttonbar->setEraseColor (QColor (0, 0, 0));
     m_configButton = ctrlButton (m_buttonbar, buttonbox, config_xpm);
     m_backButton = ctrlButton (m_buttonbar, buttonbox, back_xpm);
-    m_playButton = ctrlButton (m_buttonbar, buttonbox, play_xpm);
+    m_playButton = ctrlButton (m_buttonbar, buttonbox, play_xpm, Qt::Key_R);
     m_forwardButton = ctrlButton (m_buttonbar, buttonbox, forward_xpm);
-    m_stopButton = ctrlButton (m_buttonbar, buttonbox, stop_xpm);
-    m_pauseButton = ctrlButton (m_buttonbar, buttonbox, pause_xpm);
+    m_stopButton = ctrlButton (m_buttonbar, buttonbox, stop_xpm, Qt::Key_S);
+    m_pauseButton = ctrlButton (m_buttonbar, buttonbox, pause_xpm, Qt::Key_P);
     m_playButton->setToggleButton (true);
     m_stopButton->setToggleButton (true);
 
@@ -498,7 +500,8 @@ void KMPlayerView::reset () {
         m_posSlider->setMouseTracking (false);
     }
     if (m_layer->isFullScreen())
-        m_layer->fullScreen ();
+        popupMenu ()->activateItemAt (popupMenu ()->indexOf (KMPlayerView::menu_fullscreen)); 
+        //m_layer->fullScreen ();
     m_multiedit->hide ();
     if (m_show_console_output) {
         m_multiedit->show ();
@@ -544,6 +547,7 @@ KMPlayerViewer::KMPlayerViewer (QWidget *parent, KMPlayerView * view)
                            x11Depth (), InputOutput, (Visual*)x11Visual (),
                            CWBackPixel | CWBorderPixel | CWColormap, &xswa));*/
     setEraseColor (QColor (0, 0, 0));
+    setFocusPolicy (QWidget::NoFocus);
 }
 
 KMPlayerViewer::~KMPlayerViewer () {
