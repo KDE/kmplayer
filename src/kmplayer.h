@@ -118,6 +118,8 @@ private:
     KRecentFilesAction * fileOpenRecent;
     KAction * fileClose;
     KAction * fileQuit;
+    KAction * editVolumeInc;
+    KAction * editVolumeDec;
     KToggleAction * viewToolBar;
     KToggleAction * viewStatusBar;
     KToggleAction * viewMenuBar;
