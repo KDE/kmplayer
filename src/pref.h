@@ -55,6 +55,7 @@ class RecorderPage;                     // base recorder
 class KMPlayerPrefMEncoderPage;         // mencoder
 class KMPlayerPrefFFMpegPage;           // ffmpeg
 class KMPlayerPrefBroadcastPage;        // broadcast
+class KMPlayerPrefBroadcastFormatPage;  // broadcast format
 class KMPlayerPrefBroadcastACLPage;     // broadcast ACL
 class KMPlayerPrefGeneralPageOutput;	// general, output
 class KMPlayerPrefGeneralPageAdvanced;	// general, advanced, pattern matches etc.
@@ -203,6 +204,7 @@ public:
     KMPlayerPrefMEncoderPage            *m_MEncoderPage;
     KMPlayerPrefFFMpegPage              *m_FFMpegPage;
     KMPlayerPrefBroadcastPage 		*m_BroadcastPage;
+    KMPlayerPrefBroadcastFormatPage 	*m_BroadcastFormatPage;
     KMPlayerPrefBroadcastACLPage 	*m_BroadcastACLPage;
     KMPlayerPrefGeneralPageOutput 	*m_GeneralPageOutput;
     KMPlayerPrefGeneralPageAdvanced	*m_GeneralPageAdvanced;
@@ -402,7 +404,7 @@ class KMPlayerPrefBroadcastPage : public QFrame
 {
     Q_OBJECT
 public:
-    KMPlayerPrefBroadcastPage (QWidget *parent, FFServerSetting * _ffs);
+    KMPlayerPrefBroadcastPage (QWidget *parent);
     ~KMPlayerPrefBroadcastPage () {}
 
     QLineEdit * bindaddress;
@@ -411,6 +413,15 @@ public:
     QLineEdit * maxbandwidth;
     QLineEdit * feedfile;
     QLineEdit * feedfilesize;
+};
+
+class KMPlayerPrefBroadcastFormatPage : public QFrame
+{
+    Q_OBJECT
+public:
+    KMPlayerPrefBroadcastFormatPage (QWidget *parent, FFServerSetting * _ffs);
+    ~KMPlayerPrefBroadcastFormatPage () {}
+
     QComboBox * optimize;
     QGroupBox * movieparams;
     QComboBox * format;

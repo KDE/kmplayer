@@ -91,22 +91,24 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
     vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
-    m_RecordPage = new KMPlayerPrefRecordPage (tab, player, recorders);
-    tab->insertTab (m_RecordPage, i18n ("General"));
     m_MEncoderPage = new KMPlayerPrefMEncoderPage (tab, player);
     tab->insertTab (m_MEncoderPage, i18n ("MEncoder"));
     recorders.push_back (m_MEncoderPage);
     m_FFMpegPage = new KMPlayerPrefFFMpegPage (tab, player);
     tab->insertTab (m_FFMpegPage, i18n ("FFMpeg"));
     recorders.push_back (m_FFMpegPage);
+    m_RecordPage = new KMPlayerPrefRecordPage (tab, player, recorders);
+    tab->insertTab (m_RecordPage, i18n ("General"), 0);
     pages[PageRecording] = frame;
 
     frame = addPage (i18n ("Broadcasting"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("share"), KIcon::NoGroup, 32));
     vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
-    m_BroadcastPage = new KMPlayerPrefBroadcastPage (tab, ffs);
+    m_BroadcastPage = new KMPlayerPrefBroadcastPage (tab);
     tab->insertTab (m_BroadcastPage, i18n ("Broadcasting (ffserver)"));
+    m_BroadcastFormatPage = new KMPlayerPrefBroadcastFormatPage (tab, ffs);
+    tab->insertTab (m_BroadcastFormatPage, i18n ("Format"));
     m_BroadcastACLPage = new KMPlayerPrefBroadcastACLPage (tab);
     tab->insertTab (m_BroadcastACLPage, i18n ("ACL"));
 
@@ -451,13 +453,8 @@ void KMPlayerPrefSourcePageTV::slotScanFinished (TVDevice * _device) {
 
 void KMPlayerPrefSourcePageTV::updateTVDevices () {
     TVDevicePageList::iterator pit = m_devicepages.begin ();
-    for (; pit != m_devicepages.end (); ++pit) {
-        KMPlayerPrefSourcePageTVDevice *devpage = static_cast<KMPlayerPrefSourcePageTVDevice*>((*pit)->child("PageTVDevice", "KMPlayerPrefSourcePageTVDevice"));
-        if (devpage)
-            devpage->updateTVDevice ();
-        else
-            kdError() << "page has no KMPlayerPrefSourcePageTVDevice" << endl;
-    }
+    for (; pit != m_devicepages.end (); ++pit)
+            (*pit)->updateTVDevice ();
     // remove deleted devices
     TVDeviceList::iterator deldit = deleteddevices.begin ();
     for (; deldit != deleteddevices.end (); ++deldit) {
@@ -637,9 +634,9 @@ bool KMPlayerPrefFFMpegPage::sourceSupported (KMPlayerSource * source) {
              protocol.startsWith (QString ("vcd")));
 }
 
-KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerSetting * _ffs) : QFrame (parent), ffs (_ffs) {
+KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent) : QFrame (parent) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5);
-    QGridLayout *gridlayout = new QGridLayout (layout, 8, 2, 2);
+    QGridLayout *gridlayout = new QGridLayout (layout, 6, 2, 2);
     QLabel *label = new QLabel (i18n ("Bind address:"), this);
     bindaddress = new QLineEdit ("", this);
     QToolTip::add (bindaddress, i18n ("If you have multiple network devices, you can limit access"));
@@ -665,14 +662,21 @@ KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerS
     feedfilesize = new QLineEdit ("", this);
     gridlayout->addWidget (label, 5, 0);
     gridlayout->addWidget (feedfilesize, 5, 1);
-    label = new QLabel (i18n ("Optimize for:"), this);
+    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+}
+
+KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *parent, FFServerSetting * _ffs) : QFrame (parent), ffs (_ffs) 
+{
+    QVBoxLayout *layout = new QVBoxLayout (this, 5);
+    QGridLayout *gridlayout = new QGridLayout (layout, 2, 2, 2);
+    QLabel * label = new QLabel (i18n ("Optimize for:"), this);
     optimize = new QComboBox(this);
     for (FFServerSetting * s = ffs; s->index >=0; s++)
         optimize->insertItem (s->name, s->index);
     connect (optimize, SIGNAL (activated (int)),
              this, SLOT (slotIndexChanged (int)));
-    gridlayout->addWidget (label, 6, 0);
-    gridlayout->addWidget (optimize, 6, 1);
+    gridlayout->addWidget (label, 0, 0);
+    gridlayout->addWidget (optimize, 0, 1);
     label = new QLabel (i18n ("Format:"), this);
     format = new QComboBox (this);
     format->insertItem (QString ("asf"));
@@ -682,8 +686,8 @@ KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerS
     format->insertItem (QString ("rm"));
     format->insertItem (QString ("swf"));
     QToolTip::add (format, i18n ("Only avi, mpeg and rm work for mplayer playback"));
-    gridlayout->addWidget (label, 7, 0);
-    gridlayout->addWidget (format, 7, 1);
+    gridlayout->addWidget (label, 1, 0);
+    gridlayout->addWidget (format, 1, 1);
     movieparams = new QGroupBox (10, Qt::Horizontal, i18n("Optional Settings"), this);
     movieparams->setColumns (2);
     QToolTip::add (movieparams, i18n ("Leave field empty for default with this format"));
@@ -717,7 +721,7 @@ KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerS
     //layout->addLayout (buttonlayout);
 }
 
-void KMPlayerPrefBroadcastPage::slotIndexChanged (int index) {
+void KMPlayerPrefBroadcastFormatPage::slotIndexChanged (int index) {
     bool iscustom = ffs[index].name == i18n ("Custom");
     FFServerSetting & fs = iscustom ? custom : ffs[index];
     if (iscustom && !format->currentText ().isEmpty ()) {

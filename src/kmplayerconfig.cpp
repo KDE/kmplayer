@@ -564,11 +564,11 @@ void KMPlayerSettings::show (KMPlayerPreferences::Page page) {
     configdialog->m_BroadcastPage->maxbandwidth->setText (QString::number (maxbandwidth));
     configdialog->m_BroadcastPage->feedfile->setText (feedfile);
     configdialog->m_BroadcastPage->feedfilesize->setText (QString::number (feedfilesize));
-    configdialog->m_BroadcastPage->optimize->setCurrentItem (ffserversetting);
-    configdialog->m_BroadcastPage->custom = ffserversettings[4];
-    configdialog->m_BroadcastPage->format->insertItem (QString (""));
-    configdialog->m_BroadcastPage->format->setCurrentText (QString (""));
-    configdialog->m_BroadcastPage->slotIndexChanged (ffserversetting);
+    configdialog->m_BroadcastFormatPage->optimize->setCurrentItem (ffserversetting);
+    configdialog->m_BroadcastFormatPage->custom = ffserversettings[4];
+    configdialog->m_BroadcastFormatPage->format->insertItem (QString (""));
+    configdialog->m_BroadcastFormatPage->format->setCurrentText (QString (""));
+    configdialog->m_BroadcastFormatPage->slotIndexChanged (ffserversetting);
     QTable *accesslist = configdialog->m_BroadcastACLPage->accesslist;
     accesslist->setNumRows (0);
     accesslist->setNumRows (50);
@@ -847,10 +847,10 @@ void KMPlayerSettings::okPressed () {
     maxbandwidth = configdialog->m_BroadcastPage->maxbandwidth->text ().toInt();
     feedfile = configdialog->m_BroadcastPage->feedfile->text ();
     feedfilesize = configdialog->m_BroadcastPage->feedfilesize->text ().toInt();
-    ffserversetting = configdialog->m_BroadcastPage->optimize->currentItem ();
-    configdialog->m_BroadcastPage->slotIndexChanged (ffserversetting);
+    ffserversetting = configdialog->m_BroadcastFormatPage->optimize->currentItem ();
+    configdialog->m_BroadcastFormatPage->slotIndexChanged (ffserversetting);
     if (ffserversetting == 4)
-        ffserversettings[4] = configdialog->m_BroadcastPage->custom;
+        ffserversettings[4] = configdialog->m_BroadcastFormatPage->custom;
     ffserveracl.clear ();
     QTable *accesslist = configdialog->m_BroadcastACLPage->accesslist;
     for (int i = 0; i < accesslist->numRows (); ++i) {
