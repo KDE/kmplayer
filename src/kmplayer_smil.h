@@ -36,6 +36,7 @@ namespace KIO {
 
 namespace KMPlayer {
 
+class MediaTypeRuntimePrivate;
 class ImageDataPrivate;
 class TextDataPrivate;
 typedef WeakPtr<ElementRuntime> ElementRuntimePtrW;
@@ -59,7 +60,7 @@ public:
     /**
      * forced killing of timers
      */
-    void end ();
+    virtual void end ();
     bool isStarted () const { return isstarted; }
     virtual void paint (QPainter &) {}
     /**
@@ -130,13 +131,21 @@ protected:
 class MediaTypeRuntime : public ElementRuntime {
     Q_OBJECT
 protected:
-    KDE_NO_CDTOR_EXPORT MediaTypeRuntime (ElementPtr e) : ElementRuntime (e) {}
+    MediaTypeRuntime (ElementPtr e);
+    /**
+     * Gets contents from url and puts it in mt_d->data
+     */
+    bool wget (const KURL & url);
 public:
-    KDE_NO_CDTOR_EXPORT ~MediaTypeRuntime () {}
+    ~MediaTypeRuntime ();
     /**
      * re-implement for regions
      */
     virtual void begin ();
+    /**
+     * re-implement for pending KIO::Job operations
+     */
+    virtual void end ();
     /**
      * will request a repaint of attached region
      */
@@ -145,6 +154,11 @@ public:
      * will request a repaint of attached region
      */
     virtual void stopped ();
+protected:
+    MediaTypeRuntimePrivate * mt_d;
+protected slots:
+    virtual void slotResult (KIO::Job*);
+    void slotData (KIO::Job*, const QByteArray& qb);
 };
 
 /**
@@ -178,8 +192,7 @@ protected slots:
      */
     virtual void started ();
 private slots:
-    void slotResult (KIO::Job*);
-    void slotData (KIO::Job*, const QByteArray& qb);
+    virtual void slotResult (KIO::Job*);
 };
 
 /**
@@ -198,8 +211,7 @@ protected slots:
      */
     virtual void started ();
 private slots:
-    void slotResult (KIO::Job*);
-    void slotData (KIO::Job*, const QByteArray& qb);
+    virtual void slotResult (KIO::Job*);
 };
 
 /**

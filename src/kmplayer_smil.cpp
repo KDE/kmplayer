@@ -30,6 +30,8 @@
 
 #include <kdebug.h>
 #include <kurl.h>
+#include <kio/job.h>
+#include <kio/jobclasses.h>
 
 #include "kmplayer_smil.h"
 
@@ -321,6 +323,48 @@ KDE_NO_EXPORT void SetData::stopped () {
 
 //-----------------------------------------------------------------------------
 
+namespace KMPlayer {
+    class MediaTypeRuntimePrivate {
+    public:
+        KDE_NO_CDTOR_EXPORT MediaTypeRuntimePrivate () : job (0L) {}
+        KDE_NO_CDTOR_EXPORT ~MediaTypeRuntimePrivate () {
+            delete job;
+        }
+        KIO::Job * job;
+        QByteArray data;
+    };
+}
+
+KDE_NO_CDTOR_EXPORT MediaTypeRuntime::MediaTypeRuntime (ElementPtr e)
+ : ElementRuntime (e), mt_d (new MediaTypeRuntimePrivate) {}
+
+KDE_NO_CDTOR_EXPORT MediaTypeRuntime::~MediaTypeRuntime () {
+    delete mt_d;
+}
+
+KDE_NO_EXPORT bool MediaTypeRuntime::wget (const KURL & url) {
+    mt_d->job = KIO::get (url, false, false);
+    connect (mt_d->job, SIGNAL (data (KIO::Job *, const QByteArray &)),
+             this, SLOT (slotData (KIO::Job *, const QByteArray &)));
+    connect (mt_d->job, SIGNAL (result (KIO::Job *)),
+             this, SLOT (slotResult (KIO::Job *)));
+    return true;
+}
+
+KDE_NO_EXPORT void MediaTypeRuntime::slotResult (KIO::Job *) {
+    if (mt_d->job->error ())
+        mt_d->data.resize (0);
+    mt_d->job = 0L; // signal KIO::Job::result deletes itself
+}
+
+KDE_NO_EXPORT void MediaTypeRuntime::slotData (KIO::Job*, const QByteArray& qb) {
+    if (qb.size ()) {
+        int old_size = mt_d->data.size ();
+        mt_d->data.resize (old_size + qb.size ());
+        memcpy (mt_d->data.data () + old_size, qb.data (), qb.size ());
+    }
+}
+
 KDE_NO_EXPORT void MediaTypeRuntime::begin () {
     if (element) {
         // setup region ..
@@ -338,6 +382,14 @@ KDE_NO_EXPORT void MediaTypeRuntime::begin () {
         }
     }
     ElementRuntime::begin ();
+}
+
+KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::end () {
+    if (mt_d->job) {
+        mt_d->job->kill (); // quiet, no result signal
+        mt_d->job = 0L; // KIO::Job::kill deletes itself
+    }
+    ElementRuntime::end ();
 }
 
 KDE_NO_EXPORT void MediaTypeRuntime::started () {
@@ -871,7 +923,8 @@ KDE_NO_CDTOR_EXPORT ImageData::ImageData (ElementPtr e)
                 delete pix;
             else
                 d->image = pix;
-        }
+        } else
+            wget (url);
     }
 }
 
@@ -892,10 +945,18 @@ KDE_NO_EXPORT void ImageData::started () {
     MediaTypeRuntime::started ();
 }
 
-KDE_NO_EXPORT void ImageData::slotResult (KIO::Job*) {
-}
-
-KDE_NO_EXPORT void ImageData::slotData (KIO::Job*, const QByteArray& qb) {
+KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
+    MediaTypeRuntime::slotResult (job);
+    if (mt_d->data.size () && element) {
+        QPixmap *pix = new QPixmap (mt_d->data);
+        if (!pix->isNull ()) {
+            d->image = pix;
+            PlayListNotify * n = element->document ()->notify_listener;
+            if (n && region_node)
+                n->repaintRegion (region_node);
+        } else
+            delete pix;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -939,7 +1000,7 @@ KDE_NO_CDTOR_EXPORT TextData::TextData (ElementPtr e)
             file.open (IO_ReadOnly);
             d->data = file.readAll ();
         } else
-            ; // FIXME
+            wget (url);
     }
     for (ElementPtr p = element->firstChild (); p; p = p->nextSibling())
         if (!strcmp (p->nodeName (), "param")) {
@@ -999,10 +1060,14 @@ KDE_NO_EXPORT void TextData::started () {
     MediaTypeRuntime::started ();
 }
 
-KDE_NO_EXPORT void TextData::slotResult (KIO::Job*) {
-}
-
-KDE_NO_EXPORT void TextData::slotData (KIO::Job*, const QByteArray& qb) {
+KDE_NO_EXPORT void TextData::slotResult (KIO::Job * job) {
+    MediaTypeRuntime::slotResult (job);
+    if (mt_d->data.size () && element) {
+        d->data = mt_d->data;
+        PlayListNotify * n = element->document ()->notify_listener;
+        if (n && region_node)
+            n->repaintRegion (region_node);
+    }
 }
 
 #include "kmplayer_smil.moc"
