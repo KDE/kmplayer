@@ -222,7 +222,6 @@ void KMPlayer::init () {
     connect (m_view, SIGNAL (urlDropped (const KURL &)), this, SLOT (openURL (const KURL &)));
     m_view->popupMenu ()->connectItem (KMPlayerView::menu_config,
                                        m_configdialog, SLOT (show ()));
-    setSource (m_urlsource);
     setMovieLength (0);
     //connect (m_view->configButton (), SIGNAL (clicked ()), m_configdialog, SLOT (show ()));
 }
@@ -259,10 +258,15 @@ KMediaPlayer::View* KMPlayer::view () {
 }
 
 void KMPlayer::setSource (KMPlayerSource * source) {
-    if (m_source) m_source->deactivate ();
-    closeURL ();
+    KMPlayerSource * oldsource = m_source;
+    if (oldsource) {
+        oldsource->deactivate ();
+        closeURL ();
+    }
     m_source = source;
-    if (m_source->hasLength ())
+    if (!oldsource)
+        setMovieLength (0);
+    if (m_source->hasLength () && m_configdialog->showposslider)
         m_view->positionSlider()->show ();
     else
         m_view->positionSlider()->hide ();
@@ -278,7 +282,6 @@ void KMPlayer::setSource (KMPlayerSource * source) {
 
 bool KMPlayer::openURL (const KURL & _url) {
     if (!m_view) return false;
-    kdDebug () << "openURL " << _url << endl; 
     KURL url = _url;
     if (!m_href.isEmpty ())
         url = m_href;
@@ -296,8 +299,7 @@ bool KMPlayer::closeURL () {
     m_href = QString::null;
     movie_height = movie_width = 0;
     if (!m_view) return false;
-    if (m_source)
-        setMovieLength (0);
+    setMovieLength (0);
     m_view->viewer ()->setAspect (0.0);
     m_view->reset ();
     return true;
@@ -353,7 +355,7 @@ void KMPlayer::processOutput (KProcess *, char * str, int slen) {
 	    
         } else {
             m_view->addText (out + QString ("\n"));
-            if (m_source && m_source->processOutput (out))
+            if (m_source->processOutput (out))
                 ;
             else {
                 QRegExp sizeRegExp (m_configdialog->sizepattern);
@@ -438,6 +440,8 @@ void KMPlayer::processStopped (KProcess *) {
 }
 
 void KMPlayer::setMovieLength (int len) {
+    if (!m_source)
+        return;
     m_source->setLength (len);
     if (m_view)
         m_view->positionSlider()->setMaxValue (len > 0 ? m_source->length () : 300);
@@ -468,8 +472,7 @@ bool KMPlayer::run (const char * args, const char * pipe) {
     initProcess ();
     m_cacheRegExp.setPattern (m_configdialog->cachepattern);
     m_indexRegExp.setPattern (m_configdialog->indexpattern);
-    if (m_source)
-        m_source->init ();
+    m_source->init ();
 
     if (m_configdialog->showposslider && m_source->hasLength ())
         m_view->positionSlider()->show();
@@ -766,7 +769,8 @@ void KMPlayerLiveConnectExtension::unregister (const unsigned long) {
 
 void KMPlayerLiveConnectExtension::setSize (int w, int h) {
     KMPlayerView * view = static_cast <KMPlayerView*> (player->view ());
-    if (view->buttonBar()->isVisible())
+    if (view->buttonBar ()->isVisible () &&
+            !player->configDialog ()->autohidebuttons)
         h += view->buttonBar()->height();
     if (view->positionSlider()->isVisible())
         h += view->positionSlider()->height();

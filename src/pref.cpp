@@ -133,7 +133,7 @@ KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
 	QVBoxLayout *layout = new QVBoxLayout(this);
 
 	keepSizeRatio = new QCheckBox (i18n("Keep size ratio"), this, 0);
-	QToolTip::add(keepSizeRatio, i18n("When checked, movie will keep it's aspect ratio\nwhen window is resized"));
+	QToolTip::add(keepSizeRatio, i18n("When checked, movie will keep its aspect ratio\nwhen window is resized"));
 	showConsoleOutput = new QCheckBox (i18n("Show console output"), this, 0);
 	QToolTip::add(showConsoleOutput, i18n("Shows output from mplayer before and after playing the movie"));
 	loop = new QCheckBox (i18n("Loop"), this, 0);
@@ -143,7 +143,7 @@ KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
 	autoHideControlButtons = new QCheckBox (i18n("Auto hide control buttons"), this, 0);
 	QToolTip::add(autoHideControlButtons, i18n("When checked, control buttons will get hidden automatically"));
 	showPositionSlider	= new QCheckBox (i18n("Show position slider"), this, 0);
-	QToolTip::add(showPositionSlider, i18n("When enabled, will show seeking slider above control buttons"));
+	QToolTip::add(showPositionSlider, i18n("When enabled, will show a seeking slider under the control buttons"));
 	//autoHideSlider = new QCheckBox (i18n("Auto hide position slider"), this, 0);
 	alwaysBuildIndex = new QCheckBox ( i18n("Build new index when possible"), this);
 	QToolTip::add(alwaysBuildIndex, i18n("Allows seeking in indexed files (AVIs)"));
@@ -256,7 +256,7 @@ KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent,
 }
 
 void KMPlayerPrefSourcePageTVDevice::slotDelete () {
-    if (KMessageBox::warningYesNo (this, i18n ("You're about to remove this device from the Source menu.\nContinue?"), i18n ("KMPlayer: Confirm")) == KMessageBox::Yes)
+    if (KMessageBox::warningYesNo (this, i18n ("You're about to remove this device from the Source menu.\nContinue?"), i18n ("Confirm")) == KMessageBox::Yes)
         emit deleted (static_cast <QFrame *> (parent ()));
 }
 
@@ -288,8 +288,10 @@ KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerPre
     QGridLayout *gridlayout = new QGridLayout (layout, 2, 2);
     QLabel *driverLabel = new QLabel (i18n ("Driver:"), this, 0);
     driver = new QLineEdit ("", this, 0);
+    QToolTip::add (driver, i18n ("dummy, v4l or bsdbt848")); 
     QLabel *deviceLabel = new QLabel (i18n ("Device:"), this, 0);
     device = new QLineEdit ("", this, 0);
+    QToolTip::add (device, i18n("Path to your video device, eg. /dev/video0")); 
     QPushButton * scan = new QPushButton (i18n ("Scan ..."), this);
     connect (scan, SIGNAL (clicked ()), this, SLOT (slotScan ()));
     gridlayout->addWidget (driverLabel, 0, 0);
@@ -341,7 +343,7 @@ void KMPlayerPrefSourcePageTV::slotDeviceDeleted (QFrame * frame) {
 void KMPlayerPrefSourcePageTV::slotScan () {
     TVDevice *dev = findDevice (*m_devices, device->text ());
     if (dev && !findDevice (deleteddevices, device->text ())) {
-        KMessageBox::error (this, i18n ("Device already present."), i18n ("KMPlayer: Error"));
+        KMessageBox::error (this, i18n ("Device already present."), i18n ("Error"));
         return;
     }
     scanner->scan (device->text (), driver->text());
@@ -353,7 +355,7 @@ void KMPlayerPrefSourcePageTV::slotScanFinished (TVDevice * _device) {
     disconnect (scanner, SIGNAL (scanFinished (TVDevice *)), 
                 this, SLOT (slotScanFinished (TVDevice *)));
     if (!_device) {
-        KMessageBox::error (this, i18n ("No device found."), i18n ("KMPlayer: Error"));
+        KMessageBox::error (this, i18n ("No device found."), i18n ("Error"));
     } else {
         addeddevices.append (_device);
         addPage (_device, true);
