@@ -33,6 +33,7 @@ k_dcop:
     virtual ASYNC play ();
     virtual ASYNC stop ();
     virtual ASYNC pause ();
+    /* seek (pos, abs) seek position in deci-seconds */
     virtual ASYNC seek (int pos, bool absolute);
     virtual ASYNC hue (int h, bool absolute);
     virtual ASYNC saturation (int s, bool absolute);

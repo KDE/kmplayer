@@ -34,22 +34,31 @@ public:
     virtual ~KMPlayerSource ();
     virtual void init ();
     virtual bool processOutput (const QString & line);
-    virtual QString filterOptions ();
+
+    bool identified () const { return m_identified; }
     virtual bool hasLength ();
     virtual bool isSeekable ();
+
     int width () const { return m_width; }
     int height () const { return m_height; }
+    /* length () returns length in deci-seconds */
     int length () const { return m_length; }
+    /* position () returns position in deci-seconds */
+    int position () const { return m_position; }
     float aspect () const { return m_aspect > 0.01 ? m_aspect : (m_height > 0 ? (1.0*m_width)/m_height: 0.0); }
-    void setWidth (int w) { m_width = w; }
-    void setHeight (int h) { m_height = h; }
-    void setAspect (float a) { m_aspect = a; }
-    void setLength (int len) { m_length = len; }
     const KURL & url () const { return m_url; }
     const QString & options () const { return m_options; }
     const QString & pipeCmd () const { return m_pipecmd; }
     const QString & recordCmd () const { return m_recordcmd; }
-    bool identified () const { return m_identified; }
+    virtual QString filterOptions ();
+
+    void setWidth (int w) { m_width = w; }
+    void setHeight (int h) { m_height = h; }
+    void setAspect (float a) { m_aspect = a; }
+    /* setLength (len) set length in deci-seconds */
+    void setLength (int len) { m_length = len; }
+    /* setPosition (pos) set position in deci-seconds */
+    void setPosition (int pos) { m_position = pos; }
     virtual void setIdentified (bool b = true);
     virtual QString ffmpegCommand ();
 public slots:
@@ -68,6 +77,7 @@ private:
     int m_height;
     float m_aspect;
     int m_length;
+    int m_position;
 };
 
 #endif

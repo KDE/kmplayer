@@ -315,11 +315,11 @@ void KMPlayer::pause () {
 }
 
 void KMPlayer::back () {
-    m_process->seek (-1 * m_settings->seektime, false);
+    m_process->seek (-1 * m_settings->seektime * 10, false);
 }
 
 void KMPlayer::forward () {
-    m_process->seek (m_settings->seektime, false);
+    m_process->seek (m_settings->seektime * 10, false);
 }
 
 void KMPlayer::record () {
@@ -361,7 +361,7 @@ void KMPlayer::stop () {
 }
 
 void KMPlayer::seek (unsigned long msec) {
-    m_process->seek (msec/1000, true);
+    m_process->seek (msec/100, true);
 }
 
 void KMPlayer::adjustVolume (int incdec) {
@@ -384,7 +384,7 @@ void KMPlayer::posSliderPressed () {
 
 void KMPlayer::posSliderReleased () {
     m_bPosSliderPressed=false;
-    seek (100*m_view->positionSlider()->value());
+    m_process->seek (m_view->positionSlider()->value(), true);
 }
 
 void KMPlayer::contrastValueChanged (int val) {
@@ -456,7 +456,7 @@ bool KMPlayerSource::processOutput (const QString & str) {
     } else if (str.startsWith ("ID_LENGTH")) {
         int pos = str.find ('=');
         if (pos > 0)
-            setLength (str.mid (pos + 1).toInt());
+            setLength (10 * str.mid (pos + 1).toInt());
     } else
         return false;
     return true;
@@ -564,7 +564,7 @@ bool KMPlayerSource::isSeekable () {
 void KMPlayerSource::setIdentified (bool b) {
     m_identified = b;
     if (b)
-        m_player->setMovieLength (10 * length ());
+        m_player->setMovieLength (length ());
 }
 //-----------------------------------------------------------------------------
 

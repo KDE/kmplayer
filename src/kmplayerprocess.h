@@ -57,6 +57,7 @@ public slots:
     virtual bool play () = 0;
     virtual bool stop ();
     virtual bool pause ();
+    /* seek (pos, abs) seek positon in deci-seconds */
     virtual bool seek (int pos, bool absolute);
     virtual bool volume (int pos, bool absolute);
     virtual bool saturation (int pos, bool absolute);
@@ -175,6 +176,7 @@ public slots:
     bool hue (int pos, bool absolute);
     bool contrast (int pos, bool absolute);
     bool brightness (int pos, bool absolute);
+    bool seek (int pos, bool absolute);
 private slots:
     void processRunning ();
     void processStopped (KProcess *);

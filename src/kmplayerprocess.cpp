@@ -207,6 +207,7 @@ bool MPlayer::play () {
     if (!source ()) return false;
     if (playing ())
         return sendCommand (QString ("gui_play"));
+    source ()->setPosition (0);
     QString args = source ()->options () + ' ';
     const KURL & url (source ()->url ());
     if (!url.isEmpty ()) {
@@ -236,7 +237,7 @@ bool MPlayer::pause () {
 bool MPlayer::seek (int pos, bool absolute) {
     if (!m_source || !m_source->hasLength ()) return false;
     QString cmd;
-    cmd.sprintf ("seek %d %d", pos, absolute ? 2 : 0);
+    cmd.sprintf ("seek %d %d", pos/10, absolute ? 2 : 0);
     return sendCommand (cmd);
 }
 
@@ -423,7 +424,9 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
 
         if (process_stats) {
             if (m_source->hasLength () && m_posRegExp.search (out) > -1) {
-                emit positionChanged (int(10.0 * m_posRegExp.cap(1).toFloat()));
+                int pos = int (10.0 * m_posRegExp.cap (1).toFloat ());
+                source ()->setPosition (pos);
+                emit positionChanged (pos);
             } else if (m_cacheRegExp.search (out) > -1) {
                 emit loading (int (m_cacheRegExp.cap (1).toDouble ()));
             }
@@ -480,6 +483,7 @@ bool MEncoder::play () {
     if (dlg->exec ()) {
         stop ();
         initProcess ();
+        source ()->setPosition (0);
         QString args;
         m_use_slave = m_source->pipeCmd ().isEmpty ();
         if (!m_use_slave)
@@ -616,6 +620,7 @@ void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
 }
 
 void KMPlayerCallbackProcess::setMoviePosition (int position) {
+    m_source->setPosition (position);
     emit positionChanged (position);
 }
 //-----------------------------------------------------------------------------
@@ -637,6 +642,7 @@ bool Xine::play () {
             m_backend->play ();
         return true;
     }
+    m_source->setPosition (0);
     KURL url = m_source->url ();
     kdDebug() << "Xine::play (" << url.url() << ")" << endl;
     if (!url.isValid () && !url.url().startsWith("dvd://"))
@@ -725,7 +731,13 @@ bool Xine::pause () {
     m_backend->pause ();
     return true;
 }
-   
+
+bool Xine::seek (int pos, bool absolute) {
+    if (!playing () || !m_backend || !m_source->hasLength ()) return false;
+    m_backend->seek (absolute ? pos : m_source->position () + pos, true);
+    return true;
+}
+
 void Xine::processStopped (KProcess *) {
     delete m_backend;
     m_backend = 0L;

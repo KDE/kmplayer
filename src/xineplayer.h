@@ -37,6 +37,7 @@ public:
     void contrast (int val);
     void brightness (int val);
     void volume (int val);
+    void seek (int val);
 public slots:
     void play ();
     void stop ();

@@ -192,7 +192,8 @@ void KMPlayerBackend::pause () {
     xineapp->pause ();
 }
 
-void KMPlayerBackend::seek (int pos, bool absolute) {
+void KMPlayerBackend::seek (int pos, bool /*absolute*/) {
+    xineapp->seek (pos);
 }
 
 void KMPlayerBackend::hue (int h, bool) {
@@ -462,6 +463,16 @@ void KXinePlayer::volume (int val) {
     if (running) {
         mutex.lock ();
         xine_set_param( stream, XINE_PARAM_AUDIO_VOLUME, val);
+        mutex.unlock ();
+    }
+}
+
+void KXinePlayer::seek (int val) {
+    if (running) {
+        mutex.lock ();
+        if (!xine_play (stream, 0, val * 100)) {
+            printf("Unable to seek to %d :-(\n", val);
+        }
         mutex.unlock ();
     }
 }
