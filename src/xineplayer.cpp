@@ -248,6 +248,7 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
     ypos    = 0;
     width   = 320;
     height  = 200;
+
     if (!wid) {
         wid = XCreateSimpleWindow(display, XDefaultRootWindow(display),
                 xpos, ypos, width, height, 1, 0, 0);
@@ -258,35 +259,15 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
                   (PointerMotionMask | ExposureMask | KeyPressMask | ButtonPressMask | StructureNotifyMask | SubstructureNotifyMask));
 }
 
-KXinePlayer::~KXinePlayer () {
-    if (d->window_created)
-        XDestroyWindow(display,  wid);
-    xineapp = 0L;
-}
-
-void KXinePlayer::setURL (const QString & url) {
-    d->mrl = url;
-}
-
-void KXinePlayer::play () {
-    if (running) {
-        mutex.lock ();
-        if (xine_get_status (stream) == XINE_STATUS_PLAY &&
-            xine_get_param (stream, XINE_PARAM_SPEED) == XINE_SPEED_PAUSE)
-            xine_set_param( stream, XINE_PARAM_SPEED, XINE_SPEED_NORMAL);
-        mutex.unlock ();
-        return;
-    }
+void KXinePlayer::init () {
+    XLockDisplay(display);
     XWindowAttributes attr;
     XGetWindowAttributes(display, wid, &attr);
     width = attr.width;
     height = attr.height;
-    movie_width = 0;
-    movie_height = 0;
     printf ("trying lock 1\n");
     mutex.lock ();
     printf ("lock 1\n");
-    XLockDisplay(display);
     if (XShmQueryExtension(display) == True)
         completion_event = XShmGetEventBase(display) + ShmCompletion;
     else
@@ -314,6 +295,42 @@ void KXinePlayer::play () {
     vo_port = xine_open_video_driver(xine, d->vo_driver, XINE_VISUAL_TYPE_X11, (void *) &vis);
 
     ao_port = xine_open_audio_driver (xine, d->ao_driver, NULL);
+}
+
+KXinePlayer::~KXinePlayer () {
+    mutex.lock ();
+    xine_close_audio_driver (xine, ao_port);  
+    xine_close_video_driver (xine, vo_port);  
+    mutex.unlock ();
+
+    XLockDisplay (display);
+    if (d->window_created) {
+        printf ("unmap %lu\n", wid);
+        XUnmapWindow (display,  wid);
+    } else {
+    }
+    XSync (display, False);
+    XUnlockDisplay (display);
+    if (d->window_created)
+        XDestroyWindow(display,  wid);
+    xineapp = 0L;
+}
+
+void KXinePlayer::setURL (const QString & url) {
+    d->mrl = url;
+}
+
+void KXinePlayer::play () {
+    if (running) {
+        mutex.lock ();
+        if (xine_get_status (stream) == XINE_STATUS_PLAY &&
+            xine_get_param (stream, XINE_PARAM_SPEED) == XINE_SPEED_PAUSE)
+            xine_set_param( stream, XINE_PARAM_SPEED, XINE_SPEED_NORMAL);
+        mutex.unlock ();
+        return;
+    }
+    movie_width = 0;
+    movie_height = 0;
 
     stream = xine_stream_new (xine, ao_port, vo_port);
     event_queue = xine_event_new_queue (stream);
@@ -351,33 +368,22 @@ void KXinePlayer::play () {
 void KXinePlayer::stop () {
     if (!running) return;
     printf("stop\n");
-    printf ("trying lock 2\n");
     mutex.lock ();
-    printf ("lock 2\n");
     xine_close (stream);
     running = 0;
     xine_event_dispose_queue (event_queue);
     xine_dispose (stream);
     stream = 0L;
-    xine_close_audio_driver (xine, ao_port);  
-    xine_close_video_driver (xine, vo_port);  
     mutex.unlock ();
-
-    Window root;
     XLockDisplay (display);
-    if (d->window_created) {
-        printf ("unmap %lu\n", wid);
-        XUnmapWindow (display,  wid);
-    } else {
-        printf ("painting\n");
-        unsigned int u, w, h;
-        int x, y;
-        XGetGeometry (display, wid, &root, &x, &y, &w, &h, &u, &u);
-        XSetForeground (display, DefaultGC (display, screen),
-                BlackPixel (display, screen));
-        XFillRectangle (display, wid, DefaultGC (display, screen), x, y, w, h);
-    }
-    XSync (display, False);
+    printf ("painting\n");
+    unsigned int u, w, h;
+    int x, y;
+    Window root;
+    XGetGeometry (display, wid, &root, &x, &y, &w, &h, &u, &u);
+    XSetForeground (display, DefaultGC (display, screen),
+                    BlackPixel (display, screen));
+    XFillRectangle (display, wid, DefaultGC (display, screen), x, y, w, h);
     XUnlockDisplay (display);
     if (callback) callback->finished ();
 }
@@ -686,6 +692,7 @@ int main(int argc, char **argv) {
     xine_config_load(xine, configfile);
     xine_init(xine);
 
+    xineapp->init ();
     if (callback) callback->started ();
     xineapp->exec ();
 
@@ -699,9 +706,9 @@ int main(int argc, char **argv) {
     XUnlockDisplay(display);
     eventThread.wait (500);
 
-    xine_exit (xine);
-
     delete xineapp;
+
+    xine_exit (xine);
 
     printf ("closing display\n");
     XCloseDisplay (display);

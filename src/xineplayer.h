@@ -28,6 +28,8 @@ class KXinePlayer : public QApplication {
 public:
     KXinePlayer (int argc, char ** argv);
     ~KXinePlayer ();
+
+    void init ();
     void setURL (const QString & url);
     void finished ();
     void saturation (int val);

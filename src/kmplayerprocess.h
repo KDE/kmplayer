@@ -166,10 +166,10 @@ public:
     Xine (KMPlayer * player);
     ~Xine ();
     QWidget * widget ();
+    void setFinished ();
 public slots:
     bool play ();
     bool stop ();
-    void setFinished ();
     bool pause ();
     bool saturation (int pos, bool absolute);
     bool hue (int pos, bool absolute);
