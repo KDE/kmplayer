@@ -1,6 +1,9 @@
-Changes since version 0.7.4b
+Changes since version 0.7.4c
 - Broadcast, http streaming, for video devices (needs ffmpeg/ffserver)
   "Say hi to a friend", if you have a webcam.
+Changes since version 0.7.4b
+- Fix postprocessing checkbox
+- Fix proxy setting for mplayer process
 Changes since version 0.7.4a
 - Height calculation fix when position slider is visible
 - Q&D fix for mplayer compiled with locale output (,->. for aspect)
