@@ -4,4 +4,3 @@ debian/tmp/usr/bin/kmplayer
 debian/tmp/usr/bin/kxvplayer
 debian/tmp/usr/share/apps/kmplayer/kmplayerui.rc
 debian/tmp/usr/share/applications/kde/kmplayer.desktop
-debian/tmp/usr/share/services/kmplayer.protocol

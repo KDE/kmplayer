@@ -1,8 +1,6 @@
 Changes since version 0.8.4-rc5
 - Bookmarking a VDR channel now bookmarks it as kmplayer://vdrsource/channel
   Same for pipe command, bookmarked as kmplayer://pipesource/command
-  Added a kmplayer.protocol for it so this should work (application only)
-    kmplayer 'kmplayer://pipesource/cat ~/example.avi'
 - When controlpanel is in autohide mode, move it over the video instead of
   shifting the video up causing annoying flickering (bug 96861)
 - up/down/ok/back/menu for VDR are added to the toolbar as well when connected
