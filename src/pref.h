@@ -1,5 +1,4 @@
-/* This file is part of the KDE project
- *
+/**
  * Copyright (C) 2003 Joonas Koivunen <rzei@mbnet.fi>
  * Copyright (C) 2003 Koos Vriezen <koos.vriezen@xs4all.nl>
  *
