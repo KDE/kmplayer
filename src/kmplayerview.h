@@ -116,6 +116,7 @@ protected:
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
     void contextMenuEvent (QContextMenuEvent * e);
+    void paintEvent (QPaintEvent *);
 private:
     QWidget * m_parent;
     View * m_view;

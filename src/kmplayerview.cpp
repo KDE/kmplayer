@@ -295,6 +295,27 @@ KDE_NO_EXPORT void ViewLayer::mouseMoveEvent (QMouseEvent * e) {
     }
 }
 
+KDE_NO_EXPORT void ViewLayer::paintEvent (QPaintEvent * pe) {
+    QWidget::paintEvent (pe);
+    if (rootLayout && rootLayout->m_element) {
+        QPainter p;
+        p.begin (this);
+        QString str = rootLayout->m_element->getAttribute ("background-color");
+        if (!str.isEmpty ()) {
+            QColor color (str);
+            p.fillRect (0, 0, width (), height (), color);
+        }
+        for (RegionNodePtr r = rootLayout->firstChild; r; r = r->nextSibling) {
+            str = r->m_element->getAttribute ("background-color");
+            if (!str.isEmpty ()) {
+                QColor color (str);
+                p.fillRect (r->x, r->y, r->w, r->h, color);
+            }
+        }
+        p.end ();
+    }
+}
+
 KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
     if (!m_view->controlPanel ()) return;
     int x =0, y = 0;
