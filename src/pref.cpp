@@ -649,7 +649,7 @@ KMPlayerPrefFFMpegPage::KMPlayerPrefFFMpegPage (QWidget *parent, KMPlayer * play
     gridlayout->addWidget (arguments, 0, 1);
     layout->addLayout (gridlayout);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-};
+}
 
 void KMPlayerPrefFFMpegPage::record () {
     kdDebug() << "KMPlayerPrefFFMpegPage::record" << endl;
