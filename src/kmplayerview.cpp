@@ -80,10 +80,12 @@ using namespace KMPlayer;
 
 //-------------------------------------------------------------------------
 
-static const char * const stop_xpm[] = {
+static char xpm_fg_color [32] = ".      c #000000";
+
+static const char * stop_xpm[] = {
     "5 7 2 1",
     "       c None",
-    ".      c #000000",
+    xpm_fg_color,
     "     ",
     ".....",
     ".....",
@@ -92,10 +94,10 @@ static const char * const stop_xpm[] = {
     ".....",
     "     "};
 
-static const char * const play_xpm[] = {
+static const char * play_xpm[] = {
     "5 9 2 1",
     "       c None",
-    ".      c #000000",
+    xpm_fg_color,
     ".    ",
     "..   ",
     "...  ",
@@ -106,10 +108,10 @@ static const char * const play_xpm[] = {
     "..   ",
     ".    "};
 
-static const char * const pause_xpm[] = {
+static const char * pause_xpm[] = {
     "7 9 2 1",
     "       c None",
-    ".      c #000000",
+    xpm_fg_color,
     "       ",
     "..   ..",
     "..   ..",
@@ -120,10 +122,10 @@ static const char * const pause_xpm[] = {
     "..   ..",
     "       "};
 
-static const char * const forward_xpm[] = {
+static const char * forward_xpm[] = {
     "11 9 2 1",
     "       c None",
-    ".      c #000000",
+    xpm_fg_color,
     ".     .    ",
     "..    ..   ",
     "...   ...  ",
@@ -134,10 +136,10 @@ static const char * const forward_xpm[] = {
     "..    ..   ",
     ".     .    "};
 
-static const char * const back_xpm[] = {
+static const char * back_xpm[] = {
     "11 9 2 1",
     "       c None",
-    ".      c #000000",
+    xpm_fg_color,
     "    .     .",
     "   ..    ..",
     "  ...   ...",
@@ -148,10 +150,10 @@ static const char * const back_xpm[] = {
     "   ..    ..",
     "    .     ."};
 
-static const char * const config_xpm[] = {
+static const char * config_xpm[] = {
     "11 8 2 1",
     "       c None",
-    ".      c #000000",
+    xpm_fg_color,
     "           ",
     "           ",
     "...........",
@@ -161,10 +163,10 @@ static const char * const config_xpm[] = {
     "    ...    ",
     "     .     "};
 
-static const char * const record_xpm[] = {
+static const char * record_xpm[] = {
     "7 7 3 1",
     "       c None",
-    ".      c #000000",
+    xpm_fg_color,
     "+      c #FF0000",
     "       ",
     ".......",
@@ -174,10 +176,10 @@ static const char * const record_xpm[] = {
     ".......",
     "       "};
 
-static const char * const broadcast_xpm[] = {
+static const char * broadcast_xpm[] = {
 "21 9 2 1",
 "       c None",
-".      c #000000",
+xpm_fg_color,
 "                     ",
 " ..  ..       ..  .. ",
 "..  ..   ...   ..  ..",
@@ -188,10 +190,10 @@ static const char * const broadcast_xpm[] = {
 " ..  ..       ..  .. ",
 "                     "};
 
-static const char * const red_xpm[] = {
+static const char * red_xpm[] = {
     "7 9 3 1",
     "       c None",
-    ".      c #000000",
+    xpm_fg_color,
     "+      c #FF0000",
     "       ",
     ".......",
@@ -203,10 +205,10 @@ static const char * const red_xpm[] = {
     ".......",
     "       "};
 
-static const char * const green_xpm[] = {
+static const char * green_xpm[] = {
     "7 9 3 1",
     "       c None",
-    ".      c #000000",
+    xpm_fg_color,
     "+      c #00FF00",
     "       ",
     ".......",
@@ -218,10 +220,10 @@ static const char * const green_xpm[] = {
     ".......",
     "       "};
 
-static const char * const yellow_xpm[] = {
+static const char * yellow_xpm[] = {
     "7 9 3 1",
     "       c None",
-    ".      c #000000",
+    xpm_fg_color,
     "+      c #FFFF00",
     "       ",
     ".......",
@@ -233,10 +235,10 @@ static const char * const yellow_xpm[] = {
     ".......",
     "       "};
 
-static const char * const blue_xpm[] = {
+static const char * blue_xpm[] = {
     "7 9 3 1",
     "       c None",
-    ".      c #000000",
+    xpm_fg_color,
     "+      c #0080FF00",
     "       ",
     ".......",
@@ -336,7 +338,7 @@ KDE_NO_EXPORT void ViewLayer::contextMenuEvent (QContextMenuEvent * e) {
 
 //-----------------------------------------------------------------------------
 
-static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char * const * p, int key = 0) {
+static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char ** p, int key = 0) {
     QPushButton * b = new QPushButton (QIconSet (QPixmap(p)), QString::null, w);
     b->setFocusPolicy (QWidget::NoFocus);
     b->setFlat (true);
@@ -347,7 +349,7 @@ static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char * const
 }
 
 KDE_NO_CDTOR_EXPORT
-KMPlayerControlButton::KMPlayerControlButton (QWidget * parent, QBoxLayout * l, const char * const * p, int key)
+KMPlayerControlButton::KMPlayerControlButton (QWidget * parent, QBoxLayout * l, const char ** p, int key)
  : QPushButton (QIconSet (QPixmap(p)), QString::null, parent, "kde_kmplayer_control_button") {
    setFocusPolicy (QWidget::NoFocus);
    setFlat (true);
@@ -391,10 +393,11 @@ void VolumeBar::paintEvent (QPaintEvent * e) {
     QWidget::paintEvent (e);
     QPainter p;
     p.begin (this);
-    p.setPen (Qt::black);
+    QColor color = paletteForegroundColor ();
+    p.setPen (color);
     int w = width () - 6;
     int vx = m_value * w / 100;
-    p.fillRect (3, 3, vx, 7, Qt::black);
+    p.fillRect (3, 3, vx, 7, color);
     p.drawRect (vx + 3, 3, w - vx, 7);
     p.end ();
     //kdDebug () << "w=" << w << " vx=" << vx << endl;
@@ -419,6 +422,9 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
    m_view (view),
    m_auto_controls (true) {
     m_buttonbox = new QHBoxLayout (this, 5, 4);
+    QColor c = paletteForegroundColor ();
+    strncpy (xpm_fg_color, QString().sprintf(".      c #%02x%02x%02x", c.red(), c.green(),c.blue()).ascii(), 31);
+    xpm_fg_color[31] = 0;
     m_buttons[button_config] = new KMPlayerControlButton (this, m_buttonbox, config_xpm);
     m_buttons[button_back] = ctrlButton (this, m_buttonbox, back_xpm);
     m_buttons[button_play] = ctrlButton (this, m_buttonbox, play_xpm, Qt::Key_R);

@@ -231,7 +231,7 @@ private:
 class KMPlayerControlButton : public QPushButton {
     Q_OBJECT
 public:
-    KMPlayerControlButton (QWidget *, QBoxLayout *,const char * const *, int=0);
+    KMPlayerControlButton (QWidget *, QBoxLayout *, const char **, int = 0);
     KDE_NO_CDTOR_EXPORT ~KMPlayerControlButton () {}
 signals:
     void mouseEntered ();
