@@ -559,7 +559,7 @@ KDE_NO_EXPORT void KMPlayerView::init () {
     kapp->installX11EventFilter (this);
 }
 
-KDE_NO_EXPORT KMPlayerView::~KMPlayerView () {
+KDE_NO_CDTOR_EXPORT KMPlayerView::~KMPlayerView () {
     delete m_image;
     setUseArts (false);
     if (m_layer->parent () != this)

@@ -209,7 +209,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget 
 struct TVDevicePageAdder {
     KMPlayerPrefSourcePageTV * page;
     bool show;
-    KDE_NO_EXPORT TVDevicePageAdder (KMPlayerPrefSourcePageTV * p, bool s = false) : page (p), show (s) {}
+    KDE_NO_CDTOR_EXPORT TVDevicePageAdder (KMPlayerPrefSourcePageTV * p, bool s = false) : page (p), show (s) {}
     void operator () (TVDevice * device);
 };
 

@@ -865,7 +865,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, con
     kdDebug () << "KMPlayerURLSource::KMPlayerURLSource" << endl;
 }
 
-KDE_NO_EXPORT KMPlayerURLSource::~KMPlayerURLSource () {
+KDE_NO_CDTOR_EXPORT KMPlayerURLSource::~KMPlayerURLSource () {
     kdDebug () << "KMPlayerURLSource::~KMPlayerURLSource" << endl;
 }
 
