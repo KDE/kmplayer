@@ -666,7 +666,6 @@ QString KMPlayerSource::first () {
 }
 
 QString KMPlayerSource::current () {
-    printTree(m_current);
     KMPlayerProcess * p = m_player->process ();
     if (p && p->view ())
         p->view ()->playList ()->updateTree (m_document, m_current);
@@ -717,7 +716,6 @@ void KMPlayerSource::insertURL (const QString & url) {
     kdDebug() << "KMPlayerSource::insertURL " << (Element*)m_current << url << endl;
     if (m_current)
         m_current->appendChild ((new GenericURL (m_document, url))->self ());
-    printTree(m_document);
 }
 
 void KMPlayerSource::play () {
@@ -1108,6 +1106,8 @@ KDE_NO_EXPORT void KMPlayerURLSource::kioResult (KIO::Job *) {
     read (textstream);
     if (m_current) {
         m_current->mrl ()->parsed = true;
+        if (m_current->hasChildNodes ())
+            next ();
         QTimer::singleShot (0, this, SLOT (play ()));
     }
 }
@@ -1156,6 +1156,8 @@ KDE_NO_EXPORT void KMPlayerURLSource::play () {
             read (textstream);
         }
         m_current->mrl ()->parsed = true;
+        if (m_current->hasChildNodes ())
+            next ();
     } else if (!m_current->mrl ()->parsed && maybe_playlist) {
         m_data.truncate (0);
         m_job = KIO::get (url, false, false);

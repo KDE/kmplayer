@@ -61,6 +61,7 @@ public:
     Mrl * mrl ();
     const Mrl * mrl () const;
     virtual ElementPtr childFromTag (ElementPtr doc, const QString & tag);
+    void characterData (const QString & s);
     virtual void setAttributes (const QXmlAttributes &);
     virtual const char * tagName () const;
     /**
@@ -123,6 +124,15 @@ public:
     bool isMrl ();
 private:
     ElementPtr m_current;
+};
+
+class TextNode : public Element {
+public:
+    TextNode (ElementPtr d, const QString & s);
+    KDE_NO_CDTOR_EXPORT ~TextNode () {}
+    void appendText (const QString & s);
+    KDE_NO_EXPORT const char * tagName () const { return "#text"; }
+    QString text;
 };
 
 //-----------------------------------------------------------------------------

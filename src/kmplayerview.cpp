@@ -536,14 +536,17 @@ KDE_NO_EXPORT void KMPlayerPlayListView::contextMenuItem (QListViewItem * vi, co
 
 void KMPlayerPlayListView::copyToClipboard () {
     KMPlayerListViewItem * item = static_cast <KMPlayerListViewItem *> (currentItem ());
-    if (item->m_elm)
-        QApplication::clipboard()->setText (item->m_elm->isMrl () ? item->m_elm->mrl ()->src : item->m_elm->tagName ());
+    if (item->m_elm) {
+        Mrl * mrl = item->m_elm->mrl ();
+        QApplication::clipboard()->setText (mrl ? mrl->src : item->m_elm->tagName ());
+    }
 }
 
 void KMPlayerPlayListView::addBookMark () {
     KMPlayerListViewItem * item = static_cast <KMPlayerListViewItem *> (currentItem ());
     if (item->m_elm) {
-        KURL url (item->m_elm->isMrl () ? item->m_elm->mrl ()->src : item->m_elm->tagName ());
+        Mrl * mrl = item->m_elm->mrl ();
+        KURL url (mrl ? mrl->src : item->m_elm->tagName ());
         emit addBookMark (url.prettyURL (), url.url ());
     }
 }

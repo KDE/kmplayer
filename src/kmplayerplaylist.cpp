@@ -154,6 +154,13 @@ KDE_NO_EXPORT ElementPtr Element::childFromTag (ElementPtr, const QString &) {
     return 0L;
 }
 
+KDE_NO_EXPORT void Element::characterData (const QString & s) {
+    if (!m_last_child || strcmp (m_last_child->tagName (), "#text"))
+        appendChild ((new TextNode (m_doc, s))->self ());
+    else
+        static_cast <TextNode *> (this)->appendText (s);
+}
+
 KDE_NO_EXPORT void Element::setAttributes (const QXmlAttributes & atts) {
     for (int i = 0; i < atts.length (); i++)
         kdDebug () << " " << atts.qName (i) << "=" << atts.value (i) << endl;
@@ -197,6 +204,14 @@ bool Document::isMrl () {
     return !hasChildNodes ();
 }
 
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT TextNode::TextNode (ElementPtr d, const QString & s)
+ : Element (d), text (s) {}
+
+void TextNode::appendText (const QString & s) {
+    text += s;
+}
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementPtr Smil::childFromTag (ElementPtr d, const QString & tag) {
