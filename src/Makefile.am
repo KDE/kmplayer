@@ -44,7 +44,7 @@ kxineplayer_SOURCES= xineplayer.cpp kmplayer_backend.skel kmplayer_callback.stub
 
 xdg_apps_DATA = kmplayer.desktop
 
-kde_services_DATA = kmplayer_component.desktop $(SERVICES_KOFFICE)
+kde_services_DATA = kmplayer_part.desktop $(SERVICES_KOFFICE)
 
 rc_DATA = kmplayerui.rc kmplayerpartui.rc
 rcdir = $(kde_datadir)/kmplayer
