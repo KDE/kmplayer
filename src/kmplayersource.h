@@ -45,7 +45,8 @@ public:
     void setHeight (int h) { m_height = h; }
     void setAspect (float a) { m_aspect = a; }
     void setLength (int len) { m_length = len; }
-    virtual const KURL & url () const;
+    const KURL & url () const { return m_url; }
+    const QString & options () const { return m_options; }
     virtual QString recordCommand ();
     virtual QString ffmpegCommand ();
 public slots:
@@ -58,6 +59,7 @@ protected:
     QString m_ffmpegCommand;
     bool m_identified;
     KURL m_url;
+    QString m_options;
 private:
     int m_width;
     int m_height;

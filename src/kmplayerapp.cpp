@@ -1151,6 +1151,7 @@ KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QPopupMenu * m)
     : KMPlayerMenuSource (a, m) {
     m_tvsource = 0L;
     m_menu->insertTearOffHandle ();
+    m_url = KURL ("tv://");
 }
 
 KMPlayerTVSource::~KMPlayerTVSource () {
@@ -1161,7 +1162,7 @@ void KMPlayerTVSource::activate () {
     m_player->setProcess (m_player->mplayer ());
     buildArguments ();
     if (m_player->settings ()->showbroadcastbutton)
-        static_cast <KMPlayerView*> (m_player->view())->broadcastButton ()->show ();
+        m_app->view()->broadcastButton ()->show ();
 }
 /* TODO: playback by
  * ffmpeg -vd /dev/video0 -r 25 -s 768x576 -f rawvideo - |mplayer -nocache -ao arts -rawvideo on:w=768:h=576:fps=25 -quiet -
@@ -1174,19 +1175,18 @@ const QString KMPlayerTVSource::buildArguments () {
     m_app->setCaption (QString (i18n ("TV: ")) + m_tvsource->title, false);
     setWidth (m_tvsource->size.width ());
     setHeight (m_tvsource->size.height ());
-    QString args;
-    args.sprintf ("tv:// on:noaudio:driver=%s:%s:width=%d:height=%d", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
+    m_options.sprintf ("-tv noaudio:driver=%s:%s:width=%d:height=%d -slave -nocache -quiet", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
+    m_recordCommand.sprintf ("-tv on:%s:driver=%s:%s:width=%d:height=%d", m_tvsource->audiodevice.isEmpty () ? "noaudio" : (QString ("forceaudio:adevice=") + m_tvsource->audiodevice).ascii(), config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
     if (!m_app->broadcasting ())
         m_app->resizePlayer (100);
-    m_recordCommand = args;
     m_ffmpegCommand = QString (" -vd ") + m_tvsource->videodevice;
-    if (!m_tvsource->audiodevice.isEmpty ())
-        m_ffmpegCommand += QString (" -ad ") + m_tvsource->audiodevice;
-    return args;
+    m_ffmpegCommand += m_tvsource->audiodevice.isEmpty () ?
+        QString (" -an") : QString (" -ad ") + m_tvsource->audiodevice;
+    return m_url.url() + QString(" ") + m_options;
 }
 
 void KMPlayerTVSource::play () {
-    m_player->mplayer ()->run ((QString ("-slave -nocache -quiet ") + buildArguments ()).ascii ());
+    m_player->mplayer ()->run (buildArguments ().ascii ());
 }
 
 void KMPlayerTVSource::deactivate () {

@@ -917,10 +917,6 @@ void KMPlayerSource::init () {
     m_recordCommand.truncate (0);
 }
 
-const KURL & KMPlayerSource::url () const {
-    return m_url;
-}
-
 bool KMPlayerSource::processOutput (const QString & str) {
     if (m_identified)
         return false;
