@@ -6,10 +6,15 @@ Changes since version 0.8.4-rc4
   local url's w/o file:// prefix.
 - Internals: re-implement backend XML config and TV config data using own
   DOM-like classes for no less reason than increasing the code coolness :-)
+- Added view video/playlist/console to toolbar
+- Playlist will default appear on top if there are only a few items
 - TV inputs/channels are now displayed inside the playlist, instead of a menu
-- kxvplayer also accounts for frequency setting when guessing the xvideo port
+- kxvplayer also accounts for frequency setting when guessing the xvideo port,
+  more usable for TV viewing
 - Move all library classes to the KMPlayer namespace and strip the KMPlayer
   prefix in the name. Rename class KMPlayer itself to PartBase.
+- Binary data detection when reading a playlist that turns out to be
+  video/audio stream (instead of creating a playlist w/ wierd names)
 Changes since version 0.8.4-rc3
 - Look for title entries in ASX and .pls files for playlist items
 - DemiBold font for playlist and console log window for readability
