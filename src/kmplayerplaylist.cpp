@@ -158,7 +158,7 @@ KDE_NO_EXPORT void Element::characterData (const QString & s) {
     if (!m_last_child || strcmp (m_last_child->tagName (), "#text"))
         appendChild ((new TextNode (m_doc, s))->self ());
     else
-        static_cast <TextNode *> (this)->appendText (s);
+        static_cast <TextNode *> (static_cast <Element *> (m_last_child))->appendText (s);
 }
 
 KDE_NO_EXPORT void Element::setAttributes (const QXmlAttributes & atts) {

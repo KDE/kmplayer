@@ -402,7 +402,7 @@ bool MPlayer::run (const char * args, const char * pipe) {
         *m_process << " -vo " << strVideoDriver.lower();
     }
     QString strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].driver);
-    if (strAudioDriver != "") {
+    if (!strAudioDriver.isEmpty ()) {
         printf (" -ao %s", strAudioDriver.lower().ascii());
         *m_process << " -ao " << strAudioDriver.lower();
     }
@@ -1241,12 +1241,12 @@ KDE_NO_EXPORT bool Xine::play () {
     QString strVideoDriver = QString (settings->videodrivers[settings->videodriver].driver);
     if (strVideoDriver == QString ("x11"))
         strVideoDriver = QString ("xshm");
-    if (strVideoDriver != "") {
+    if (!strVideoDriver.isEmpty ()) {
         printf (" -vo %s", strVideoDriver.lower().ascii());
         *m_process << " -vo " << strVideoDriver.lower();
     }
     QString strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].driver);
-    if (strAudioDriver != "") {
+    if (!strAudioDriver.isEmpty ()) {
         if (strAudioDriver.startsWith (QString ("alsa")))
             strAudioDriver = QString ("alsa");
         printf (" -ao %s", strAudioDriver.lower().ascii());
