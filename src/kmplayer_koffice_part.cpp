@@ -99,7 +99,7 @@ KOfficeMPlayer::KOfficeMPlayer (QWidget *parentWidget, const char *widgetName, Q
     setInstance (KMPlayerFactory::instance (), false);
     setReadWrite (false);
     m_player->init();
-    m_player->setSource (m_player->urlSource ());
+    m_player->setSource (m_player->sources () ["urlsource"]);
     //setWidget (view);
 }
 
@@ -126,6 +126,10 @@ bool KOfficeMPlayer::loadXML (QIODevice *, const QDomDocument & doc) {
     node = node.firstChild ();
     if (node.isNull () || !node.isText ()) return true;
     m_player->setURL (KURL (node.toText ().data ()));
+    return true;
+}
+
+bool KOfficeMPlayer::loadOasis (const QDomDocument &, KoOasisStyles &, const QDomDocument &, KoStore *) {
     return true;
 }
 

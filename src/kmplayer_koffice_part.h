@@ -69,6 +69,7 @@ public:
             bool transparent = false, double zoomX = 1.0, double zoomY = 1.0);
     virtual bool initDoc ();
     virtual bool loadXML (QIODevice *, const QDomDocument &);
+    virtual bool loadOasis (const QDomDocument &, KoOasisStyles &, const QDomDocument &, KoStore *);
     virtual QDomDocument saveXML ();
     virtual QCString mimeType() const { return "application/x-kmplayer"; }
 
