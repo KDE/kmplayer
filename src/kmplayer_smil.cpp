@@ -21,6 +21,7 @@
 #include <qcolor.h>
 #include <qpainter.h>
 #include <qpixmap.h>
+#include <qimage.h>
 #include <qtextcodec.h>
 #include <qfont.h>
 #include <qfontmetrics.h>
@@ -1654,11 +1655,13 @@ KDE_NO_EXPORT void SMIL::Param::start () {
 namespace KMPlayer {
     class ImageDataPrivate {
         public:
-            ImageDataPrivate () : image (0L) {}
+            ImageDataPrivate () : image (0L), cache_image (0) {}
             ~ImageDataPrivate () {
                 delete image;
+                delete cache_image;
             }
             QPixmap * image;
+            QPixmap * cache_image; // scaled cache
             int olddur;
     };
 }
@@ -1686,6 +1689,8 @@ QString ImageData::setParam (const QString & name, const QString & val) {
                 else {
                     delete d->image;
                     d->image = pix;
+                    delete d->cache_image;
+                    d->cache_image = 0;
                 }
             } else
                 wget (url);
@@ -1727,7 +1732,17 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
             }
         } //else if (fit == fit_fill) { // scale in region
         // else fit_scroll
-        p.drawPixmap (QRect (r->x, r->y, w, h), *d->image);
+        if (w == d->image->width () && h == d->image->height ())
+            p.drawPixmap (QRect (r->x, r->y, w, h), *d->image);
+        else {
+            if (!d->cache_image || w != d->cache_image->width () || h != d->cache_image->height ()) {
+                delete d->cache_image;
+                QImage img;
+                img = *d->image;
+                d->cache_image = new QPixmap (img.scale (w, h));
+            }
+            p.drawPixmap (QRect (r->x, r->y, w, h), *d->cache_image);
+        }
     }
 }
 
@@ -1752,6 +1767,8 @@ KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
         QPixmap *pix = new QPixmap (mt_d->data);
         if (!pix->isNull ()) {
             d->image = pix;
+            delete d->cache_image;
+            d->cache_image = 0;
             if (region_node && (timingstate == timings_started ||
                  (timingstate == timings_stopped && fill == fill_freeze)))
                 region_node->repaint ();
