@@ -32,7 +32,6 @@
 class KMPlayerView;
 class KMPlayer;
 class KProcess;
-class KMPlayerAppURLSource;
 class KMPlayerSource;
 class KMPlayerDVDSource;
 class KMPlayerDVDNavSource;
@@ -121,7 +120,6 @@ private:
     QPopupMenu * m_dvdnavmenu;
     QPopupMenu * m_vcdmenu;
     QPopupMenu * m_tvmenu;
-    KMPlayerAppURLSource * m_urlsource;
     KMPlayerDVDSource * m_dvdsource;
     KMPlayerDVDNavSource * m_dvdnavsource;
     KMPlayerVCDSource * m_vcdsource;
@@ -131,6 +129,7 @@ private:
     FFMpeg * m_ffmpeg_process;
     KProcess * m_ffserver_process;
     QString m_ffserver_out;
+    QString m_ffserver_url;
     bool m_endserver : 1;
     bool m_showToolbar : 1;
     bool m_showStatusbar : 1;

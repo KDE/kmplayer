@@ -100,7 +100,6 @@ KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       m_dvdnavmenu (new QPopupMenu (this)),
       m_vcdmenu (new QPopupMenu (this)),
       m_tvmenu (new QPopupMenu (this)),
-      m_urlsource (new KMPlayerAppURLSource (this)),
       m_dvdsource (new KMPlayerDVDSource (this, m_dvdmenu)),
       m_dvdnavsource (new KMPlayerDVDNavSource (this, m_dvdnavmenu)),
       m_vcdsource (new KMPlayerVCDSource (this, m_vcdmenu)),
@@ -229,11 +228,10 @@ void KMPlayerApp::loadingProgress (int percentage) {
 
 void KMPlayerApp::playerStarted () {
     KMPlayerSource * source = m_player->process ()->source ();
-    if (source != m_tvsource && m_player->settings ()->sizeratio) {
+    if (source != m_tvsource && m_player->settings ()->sizeratio)
         resizePlayer (100);
-        if (source->inherits ("KMPlayerURLSource"))
-            recentFiles ()->addURL (source->url ());
-    }
+    if (source->inherits ("KMPlayerURLSource"))
+        recentFiles ()->addURL (source->url ());
 }
 
 void KMPlayerApp::slotSourceChanged (KMPlayerSource * source) {
@@ -272,8 +270,19 @@ void KMPlayerApp::openPipe () {
 void KMPlayerApp::openDocumentFile (const KURL& url)
 {
     slotStatusMsg(i18n("Opening file..."));
-    m_urlsource->setURL (url);
-    m_player->setSource (m_urlsource);
+    m_player->openURL (url);
+    if (broadcasting () && url.url() == m_ffserver_url) {
+        // speed up replay
+        KMPlayerSettings * conf = m_player->settings ();
+        FFServerSetting & ffs = conf->ffserversettings[conf->ffserversetting];
+        KMPlayerSource * source = m_player->process ()->source ();
+        if (!ffs.width.isEmpty () && !ffs.height.isEmpty ()) {
+            source->setWidth (ffs.width.toInt ());
+            source->setHeight (ffs.height.toInt ());
+        }
+        source->setIdentified ();
+    }
+    slotStatusMsg (i18n ("Ready."));
 }
 
 void KMPlayerApp::resizePlayer (int percentage) {
@@ -419,10 +428,8 @@ void KMPlayerApp::startFeed () {
     if (ok) {
         if (!m_view->broadcastButton ()->isOn ())
             m_view->broadcastButton ()->toggle ();
-        QString ffurl;
-        ffurl.sprintf ("http://localhost:%d/video.%s", conf->ffserverport, ffs.format.ascii ());
-        openDocumentFile (KURL (ffurl));
-        //QTimer::singleShot (500, this, SLOT (zoom100 ()));
+        m_ffserver_url.sprintf ("http://localhost:%d/video.%s", conf->ffserverport, ffs.format.ascii ());
+        openDocumentFile (KURL (m_ffserver_url));
     }
     setCursor (QCursor (Qt::ArrowCursor));
 }
@@ -679,32 +686,6 @@ void KMPlayerApp::showConsoleOutput () {
 
 //-----------------------------------------------------------------------------
 
-KMPlayerAppURLSource::KMPlayerAppURLSource (KMPlayerApp * a)
-    : KMPlayerURLSource (a->player ()), m_app (a) {
-}
-
-KMPlayerAppURLSource::~KMPlayerAppURLSource () {
-}
-
-void KMPlayerAppURLSource::activate () {
-    if (m_app->broadcasting ()) {
-        init ();
-        KMPlayerSettings * conf = m_player->settings ();
-        FFServerSetting & ffs = conf->ffserversettings[conf->ffserversetting];
-        if (!ffs.width.isEmpty () && !ffs.height.isEmpty ()) {
-            setWidth (ffs.width.toInt ());
-            setHeight (ffs.height.toInt ());
-        }
-        kdDebug () << "KMPlayerAppURLSource::activate()" << endl;
-        setIdentified ();
-        QTimer::singleShot (0, m_player, SLOT (play ()));
-    } else
-        KMPlayerURLSource::activate ();
-    m_app->slotStatusMsg (i18n ("Ready."));
-}
-
-//-----------------------------------------------------------------------------
-
 KMPlayerMenuSource::KMPlayerMenuSource (KMPlayerApp * a, QPopupMenu * m)
     : KMPlayerSource (a->player ()), m_menu (m), m_app (a) {
 }
@@ -787,8 +768,6 @@ bool KMPlayerDVDSource::processOutput (const QString & str) {
 }
 
 void KMPlayerDVDSource::activate () {
-    m_player->stop ();
-    init ();
     m_player->setProcess (m_player->mplayer ());
     m_start_play = m_player->settings ()->playdvd;
     langRegExp.setPattern (m_player->settings ()->langpattern);
@@ -903,7 +882,6 @@ KMPlayerDVDNavSource::KMPlayerDVDNavSource (KMPlayerApp * app, QPopupMenu * m)
 KMPlayerDVDNavSource::~KMPlayerDVDNavSource () {}
 
 void KMPlayerDVDNavSource::activate () {
-    m_player->stop ();
     m_player->setProcess (m_player->xine ());
     play ();
 }
@@ -1058,7 +1036,6 @@ bool KMPlayerPipeSource::isSeekable () {
 
 void KMPlayerPipeSource::activate () {
     m_player->setProcess (m_player->mplayer ());
-    init ();
     m_recordcmd = m_options = QString ("-"); // or m_url?
     m_identified = true;
     QTimer::singleShot (0, m_player, SLOT (play ()));
@@ -1099,7 +1076,6 @@ KMPlayerTVSource::~KMPlayerTVSource () {
 }
 
 void KMPlayerTVSource::activate () {
-    init ();
     m_identified = true;
     m_player->setProcess (m_player->mplayer ());
     buildArguments ();

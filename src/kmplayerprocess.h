@@ -43,7 +43,7 @@ public:
     KMPlayerSource * source () const { return m_source; }
     KProcess * process () const { return m_process; }
     virtual QWidget * widget ();
-    void setSource (KMPlayerSource * source) { m_source = source; }
+    void setSource (KMPlayerSource * source) { stop (); m_source = source; }
     virtual bool grabPicture (const KURL & url, int pos);
 signals:
     // backend process is running

@@ -96,8 +96,16 @@ public:
     KURL url () const { return m_urlsource->url (); }
     void setURL (const KURL & url) { m_urlsource->setURL (url); }
     void sizes (int & w, int & h) const;
+
+    /* Changes the process,
+     * calls setSource if process was playing
+     * */
     void setProcess (KMPlayerProcess *);
     void setRecorder (KMPlayerProcess *);
+
+    /* Changes the source,
+     * calls init() and reschedules an activate() on the source
+     * */
     void setSource (KMPlayerSource * source);
     KMPlayerProcess * process () const { return m_process; }
     KMPlayerProcess * recorder () const { return m_recorder; }

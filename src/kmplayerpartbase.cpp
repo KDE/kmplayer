@@ -199,8 +199,6 @@ extern const char * strMPlayerGroup;
 
 void KMPlayer::setXine (int id) {
     bool playing = m_process->playing ();
-    if (playing)
-        m_process->source ()->deactivate ();
     m_settings->urlbackend = QString ("Xine");
     m_config->setGroup (strMPlayerGroup);
     m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
@@ -212,13 +210,11 @@ void KMPlayer::setXine (int id) {
         menu->setItemChecked (menuid, menuid == id);
     }
     if (playing)
-        m_process->source ()->activate ();
+        setSource (m_process->source ()); // re-activate
 }
 
 void KMPlayer::setMPlayer (int id) {
     bool playing = m_process->playing ();
-    if (playing)
-        m_process->source ()->deactivate ();
     m_settings->urlbackend = QString ("MPlayer");
     m_config->setGroup (strMPlayerGroup);
     m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
@@ -230,7 +226,7 @@ void KMPlayer::setMPlayer (int id) {
         menu->setItemChecked (menuid, menuid == id);
     }
     if (playing)
-        m_process->source ()->activate ();
+        setSource (m_process->source ()); // re-activate
 }
 
 void KMPlayer::setSource (KMPlayerSource * source) {
@@ -241,10 +237,6 @@ void KMPlayer::setSource (KMPlayerSource * source) {
     }
     m_process->setSource (source);
     m_recorder->setSource (source);
-    if (source->hasLength () && m_settings->showposslider)
-        m_view->positionSlider()->show ();
-    else
-        m_view->positionSlider()->hide ();
     if (source->isSeekable ()) {
         m_view->forwardButton ()->show ();
         m_view->backButton ()->show ();
@@ -252,6 +244,7 @@ void KMPlayer::setSource (KMPlayerSource * source) {
         m_view->forwardButton ()->hide ();
         m_view->backButton ()->hide ();
     }
+    source->init ();
     if (source) QTimer::singleShot (0, source, SLOT (activate ()));
     emit sourceChanged (source);
 }
@@ -728,7 +721,6 @@ void KMPlayerURLSource::buildArguments () {
 }
 
 void KMPlayerURLSource::activate () {
-    init ();
     buildArguments ();
     if (url ().isEmpty ())
         return;

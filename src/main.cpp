@@ -63,10 +63,6 @@ extern "C" {
                 KURL url = args->url(args->count() - 1);
                 if(!url.isMalformed())
                     kmplayer->openDocumentFile (args->url (0));
-                else
-                    kmplayer->openDocumentFile ();
-            } else {
-                kmplayer->openDocumentFile ();
             }
             args->clear ();
         }

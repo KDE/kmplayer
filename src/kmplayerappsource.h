@@ -36,17 +36,6 @@ class QMenuItem;
 class TVInput;
 class TVChannel;
 
-class KMPlayerAppURLSource : public KMPlayerURLSource {
-    Q_OBJECT
-public:
-    KMPlayerAppURLSource (KMPlayerApp * app);
-    virtual ~KMPlayerAppURLSource ();
-public slots:
-    virtual void activate ();
-private:
-    KMPlayerApp * m_app;
-};
-
 
 class KMPlayerMenuSource : public KMPlayerSource {
     Q_OBJECT
