@@ -64,6 +64,10 @@ KMPlayerProcess::~KMPlayerProcess () {
 void KMPlayerProcess::init () {
 }
 
+QString KMPlayerProcess::menuName () const {
+    return QString (className ());
+}
+
 void KMPlayerProcess::initProcess () {
     delete m_process;
     m_process = new KProcess;
@@ -113,6 +117,14 @@ bool KMPlayerProcess::brightness (int /*pos*/, bool /*absolute*/) {
 }
 
 bool KMPlayerProcess::grabPicture (const KURL & /*url*/, int /*pos*/) {
+    return false;
+}
+
+bool KMPlayerProcess::supports (const char * source) const {
+    for (const char ** s = m_supported_sources; s[0]; ++s) {
+        if (!strcmp (s[0], source))
+            return true;
+    }
     return false;
 }
 
@@ -232,10 +244,15 @@ KDE_NO_EXPORT void MPlayerBase::processStopped (KProcess *) {
 
 //-----------------------------------------------------------------------------
 
+static const char * mplayer_supports [] = {
+    "dvdsource", "pipesource", "tvsource", "urlsource", "vcdsource", 0L
+};
+
 KDE_NO_CDTOR_EXPORT MPlayer::MPlayer (KMPlayer * player)
  : MPlayerBase (player, "mplayer"),
    m_widget (0L),
    m_configpage (new MPlayerPreferencesPage (this)) {
+       m_supported_sources = mplayer_supports;
     m_player->settings ()->addPage (m_configpage);
 }
 
@@ -246,6 +263,10 @@ KDE_NO_CDTOR_EXPORT MPlayer::~MPlayer () {
 }
 
 KDE_NO_EXPORT void MPlayer::init () {
+}
+
+QString MPlayer::menuName () const {
+    return i18n ("&MPlayer");
 }
 
 KDE_NO_EXPORT WId MPlayer::widget () {
@@ -1225,11 +1246,20 @@ KDE_NO_EXPORT QFrame * KMPlayerXMLPreferencesPage::prefPage (QWidget * parent) {
 
 //-----------------------------------------------------------------------------
 
+static const char * xine_supported [] = {
+    "dvdnavsource", "urlsource", "vcdsource", 0L
+};
+
 KDE_NO_CDTOR_EXPORT Xine::Xine (KMPlayer * player)
     : KMPlayerCallbackProcess (player, "xine") {
+    m_supported_sources = xine_supported;
 }
 
 KDE_NO_CDTOR_EXPORT Xine::~Xine () {}
+
+KDE_NO_EXPORT QString Xine::menuName () const {
+    return i18n ("&Xine");
+}
 
 KDE_NO_EXPORT WId Xine::widget () {
     return view()->viewer()->embeddedWinId ();

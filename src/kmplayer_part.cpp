@@ -371,7 +371,6 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
         kdError () << "Not the ImageWindow and no ImageWindow found" << endl;
         return true;
     }
-    enablePlayerMenu (true);
     if (!m_view || !url.isValid ()) return false;
     KParts::URLArgs args = m_browserextension->urlArgs();
     if (!args.serviceType.isEmpty ())

@@ -164,7 +164,6 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     view->addFullscreenAction (i18n ("VDR Key Green"), act_green->shortcut (), this, SLOT (keyGreen ()), "vdr_key_green");
     view->addFullscreenAction (i18n ("VDR Key Yellow"), act_yellow->shortcut (), this, SLOT (keyYellow ()), "vdr_key_yellow");
     view->addFullscreenAction (i18n ("VDR Key Blue"), act_blue->shortcut (), this, SLOT (keyBlue ()), "vdr_key_blue");
-    m_player->setProcess ("xvideo");
     static_cast<XVideo *>(m_player->players () ["xvideo"])->setPort (xv_port);
     m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("up"), KIcon::Small, 0, true), i18n ("Up"), this, SLOT (keyUp ()), 0, -1, 1);
     m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("down"), KIcon::Small, 0, true), i18n ("Down"), this, SLOT (keyUp ()), 0, -1, 2);
@@ -541,8 +540,14 @@ KDE_NO_EXPORT QFrame * KMPlayerVDRSource::prefPage (QWidget * parent) {
 }
 //-----------------------------------------------------------------------------
 
+static const char * xv_supported [] = {
+    "tvsource", "vdrsource", 0L
+};
+
 KDE_NO_CDTOR_EXPORT XVideo::XVideo (KMPlayer * player)
- : KMPlayerCallbackProcess (player, "xvideo"), xv_port (0) {}
+ : KMPlayerCallbackProcess (player, "xvideo"), xv_port (0) {
+    m_supported_sources = xv_supported;
+}
 
 KDE_NO_CDTOR_EXPORT XVideo::~XVideo () {}
 
@@ -554,6 +559,10 @@ KDE_NO_EXPORT void XVideo::initProcess () {
             this, SLOT (processOutput (KProcess *, char *, int)));
     connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
             this, SLOT (processOutput (KProcess *, char *, int)));
+}
+
+KDE_NO_EXPORT QString XVideo::menuName () const {
+    return i18n ("X&Video");
 }
 
 KDE_NO_EXPORT bool XVideo::play () {

@@ -399,9 +399,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerControlPanel::KMPlayerControlPanel(QWidget * parent)
     showPositionSlider (true);
     m_popupMenu = new KMPlayerPopupMenu (this);
     m_playerMenu = new KMPlayerPopupMenu (this);
-    m_playerMenu->setEnabled (false);
     m_popupMenu->insertItem (i18n ("&Play with"), m_playerMenu, menu_player);
-    m_popupMenu->setItemVisible (menu_player, false);
     m_bookmarkMenu = new KMPlayerPopupMenu (this);
     m_popupMenu->insertItem (i18n("&Bookmarks"), m_bookmarkMenu, menu_bookmark);
     m_viewMenu = new KMPlayerPopupMenu (this);

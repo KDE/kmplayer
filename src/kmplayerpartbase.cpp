@@ -173,11 +173,6 @@ void KMPlayer::init (KActionCollection * action_collection) {
     connect (m_view->playList (), SIGNAL (addBookMark (const QString &, const QString &)), this, SLOT (addBookMark (const QString &, const QString &)));
     connect (m_view->playList (), SIGNAL (executed (QListViewItem *)), this, SLOT (playListItemSelected (QListViewItem *)));
     panel->popupMenu()->connectItem (KMPlayerControlPanel::menu_fullscreen, this, SLOT (fullScreen ()));
-#ifdef HAVE_XINE
-    QPopupMenu *menu = panel->playerMenu ();
-    menu->connectItem (menu->idAt(0), this, SLOT (setMPlayer (int)));
-    menu->connectItem (menu->idAt(1), this, SLOT (setXine (int)));
-#endif
     connect (m_view, SIGNAL (urlDropped (const KURL &)), this, SLOT (openURL (const KURL &)));
     panel->popupMenu ()->connectItem (KMPlayerControlPanel::menu_config,
                                        this, SLOT (showConfigDialog ()));
@@ -268,64 +263,38 @@ void KMPlayer::setRecorder (const char * name) {
     m_recorder->setSource (m_process->source ());
 }
 
+extern const char * strGeneralGroup;
 
-extern const char * strUrlBackend;
-extern const char * strMPlayerGroup;
-
-KDE_NO_EXPORT void KMPlayer::setXine (int id) {
+KDE_NO_EXPORT void KMPlayer::slotPlayerMenu (int id) {
     bool playing = m_process->playing ();
-    m_settings->urlbackend = QString ("Xine");
-    m_config->setGroup (strMPlayerGroup);
-    m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
-    m_config->sync ();
-    setProcess ("xine");
     QPopupMenu * menu = m_view->buttonBar ()->playerMenu ();
-    for (unsigned i = 0; i < menu->count(); i++) {
+    ProcessMap::const_iterator pi = m_players.begin(), e = m_players.end();
+    for (unsigned i = 0; i < menu->count(); i++, ++pi) {
         int menuid = menu->idAt (i);
         menu->setItemChecked (menuid, menuid == id);
-    }
-    if (playing)
-        setSource (m_process->source ()); // re-activate
-}
-
-KDE_NO_EXPORT void KMPlayer::setMPlayer (int id) {
-    bool playing = m_process->playing ();
-    m_settings->urlbackend = QString ("MPlayer");
-    m_config->setGroup (strMPlayerGroup);
-    m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
-    m_config->sync ();
-    setProcess ("mplayer");
-    QPopupMenu * menu = m_view->buttonBar ()->playerMenu ();
-    for (unsigned i = 0; i < menu->count(); i++) {
-        int menuid = menu->idAt (i);
-        menu->setItemChecked (menuid, menuid == id);
-    }
-    if (playing)
-        setSource (m_process->source ()); // re-activate
-}
-
-void KMPlayer::enablePlayerMenu (bool enable) {
-#ifdef HAVE_XINE
-    if (!m_view)
-        return;
-    if (enable) {
-        QPopupMenu * menu = m_view->buttonBar ()->playerMenu ();
-        menu->clear ();
-        menu->insertItem (i18n ("&MPlayer"), this, SLOT (setMPlayer (int)));
-        menu->insertItem (i18n ("&Xine"), this, SLOT (setXine (int)));
-        menu->setEnabled (true);
-        if (m_settings->urlbackend == QString ("Xine")) {
-            menu->setItemChecked (menu->idAt (1), true);
-            setProcess ("xine");
-        } else {
-            setProcess ("mplayer");
-            menu->setItemChecked (menu->idAt (0), true);
+        if (menuid == id) {
+            m_settings->backends [m_process->source()->name()] = pi.data ()->name ();
+            setProcess (pi.data ()->name ());
         }
-        m_view->buttonBar ()->popupMenu ()->setItemVisible (KMPlayerControlPanel::menu_player, true);
-    } else {
-        m_view->buttonBar ()->popupMenu ()->setItemVisible (KMPlayerControlPanel::menu_player, false);
     }
-#endif
+    if (playing)
+        setSource (m_process->source ()); // re-activate
+}
+
+void KMPlayer::updatePlayerMenu () {
+    if (!m_view || !m_process || !m_process->source ())
+        return;
+    QPopupMenu * menu = m_view->buttonBar ()->playerMenu ();
+    menu->clear ();
+    const ProcessMap::const_iterator e = m_players.end();
+    for (ProcessMap::const_iterator i = m_players.begin(); i != e; ++i) {
+        KMPlayerProcess * p = i.data ();
+        if (p->supports (m_process->source ()->name ())) {
+            int id = menu->insertItem (p->menuName (), this, SLOT (slotPlayerMenu (int)));
+            if (i.data() == m_process)
+                menu->setItemChecked (id, true);
+        }
+    }
 }
 
 void KMPlayer::setSource (KMPlayerSource * source) {
@@ -340,9 +309,36 @@ void KMPlayer::setSource (KMPlayerSource * source) {
         }
     }
     m_view->buttonBar ()->setAutoControls (true);
+    QString p = m_settings->backends [source->name()];
+    if (p.isEmpty ()) {
+        m_config->setGroup (strGeneralGroup);
+        p = m_config->readEntry (source->name(), "");
+    }
+    if (p.isEmpty () || !m_players [p]->supports (source->name ())) {
+        p.truncate (0);
+        if (!m_process->supports (source->name ())) {
+            ProcessMap::const_iterator i, e = m_players.end();
+            for (i = m_players.begin(); i != e; ++i)
+                if (i.data ()->supports (source->name ())) {
+                    p = QString (i.data ()->name ());
+                    break;
+                }
+            if (i == e) {
+                kdError() << "Source has no player" << endl;
+                return;
+            }
+        } else
+            p = QString (m_process->name ());
+    }
+    if (p != m_process->name ()) {
+        m_players [p]->setSource (source);
+        setProcess (p.ascii ());
+    }
+    m_settings->backends [source->name()] = m_process->name ();
     m_process->setSource (source);
     if (!m_recorder->playing ())
         m_recorder->setSource (source);
+    updatePlayerMenu ();
     source->init ();
     if (source) QTimer::singleShot (0, source, SLOT (activate ()));
     emit sourceChanged (source);
@@ -934,7 +930,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerURLSource::~KMPlayerURLSource () {
 
 KDE_NO_EXPORT void KMPlayerURLSource::init () {
     KMPlayerSource::init ();
-    m_player->enablePlayerMenu (true);
 }
 
 KDE_NO_EXPORT bool KMPlayerURLSource::hasLength () {
@@ -949,7 +944,6 @@ KDE_NO_EXPORT void KMPlayerURLSource::activate () {
 }
 
 KDE_NO_EXPORT void KMPlayerURLSource::deactivate () {
-    m_player->enablePlayerMenu (false);
 }
 
 KDE_NO_EXPORT QString KMPlayerURLSource::prettyName () {

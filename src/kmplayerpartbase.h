@@ -109,7 +109,7 @@ public:
     QMap <QString, KMPlayerProcess *> & recorders () { return m_recorders; }
     QMap <QString, KMPlayerSource *> & sources () { return m_sources; }
     KDE_NO_EXPORT KConfig * config () const { return m_config; }
-    void enablePlayerMenu (bool enable);
+    void updatePlayerMenu ();
 
     // these are called from KMPlayerProcess
     void changeURL (const QString & url);
@@ -129,8 +129,7 @@ public slots:
     void showVideoWindow ();
     void showPlayListWindow ();
     void showConsoleWindow ();
-    void setXine (int id);
-    void setMPlayer (int id);
+    void slotPlayerMenu (int);
     void back ();
     void forward ();
     void addBookMark (const QString & title, const QString & url);
@@ -177,8 +176,9 @@ protected:
     KMPlayerSettings * m_settings;
     KMPlayerProcess * m_process;
     KMPlayerProcess * m_recorder;
-    QMap <QString, KMPlayerProcess *> m_players;
-    QMap <QString, KMPlayerProcess *> m_recorders;
+    typedef QMap <QString, KMPlayerProcess *> ProcessMap;
+    ProcessMap m_players;
+    ProcessMap m_recorders;
     QMap <QString, KMPlayerSource *> m_sources;
     KMPlayerBookmarkManager * m_bookmark_manager;
     KMPlayerBookmarkOwner * m_bookmark_owner;

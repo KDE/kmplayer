@@ -691,7 +691,6 @@ KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
 }
 
 KDE_NO_EXPORT void KMPlayerDVDSource::activate () {
-    m_player->setProcess ("mplayer");
     m_start_play = m_auto_play;
     m_current_title = -1;
     buildArguments ();
@@ -835,7 +834,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerDVDNavSource::KMPlayerDVDNavSource (KMPlayerApp * ap
 KDE_NO_CDTOR_EXPORT KMPlayerDVDNavSource::~KMPlayerDVDNavSource () {}
 
 KDE_NO_EXPORT void KMPlayerDVDNavSource::activate () {
-    m_player->setProcess ("xine");
     play ();
 }
 
@@ -937,7 +935,6 @@ KDE_NO_EXPORT bool KMPlayerVCDSource::processOutput (const QString & str) {
 KDE_NO_EXPORT void KMPlayerVCDSource::activate () {
     m_player->stop ();
     init ();
-    m_player->enablePlayerMenu (true);
     m_start_play = m_auto_play;
     m_current_title = -1;
     buildArguments ();
@@ -947,7 +944,6 @@ KDE_NO_EXPORT void KMPlayerVCDSource::activate () {
 
 KDE_NO_EXPORT void KMPlayerVCDSource::deactivate () {
     m_vcdtrackmenu->clear ();
-    m_player->enablePlayerMenu (false);
 }
 
 KDE_NO_EXPORT void KMPlayerVCDSource::setIdentified (bool b) {
@@ -1041,7 +1037,6 @@ KDE_NO_EXPORT bool KMPlayerPipeSource::isSeekable () {
 }
 
 KDE_NO_EXPORT void KMPlayerPipeSource::activate () {
-    m_player->setProcess ("mplayer");
     m_recordcmd = m_options = QString ("-"); // or m_url?
     m_identified = true;
     QTimer::singleShot (0, m_player, SLOT (play ()));

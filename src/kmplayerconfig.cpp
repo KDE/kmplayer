@@ -83,7 +83,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerSettings::~KMPlayerSettings () {
 }
 
 const char * strMPlayerGroup = "MPlayer";
-static const char * strGeneralGroup = "General Options";
+const char * strGeneralGroup = "General Options";
 static const char * strKeepSizeRatio = "Keep Size Ratio";
 static const char * strContrast = "Contrast";
 static const char * strBrightness = "Brightness";
@@ -184,7 +184,6 @@ KDE_NO_EXPORT void KMPlayerSettings::readConfig () {
     vcddevice = m_config->readEntry (strVCDDevice, "/dev/cdrom");
     videodriver = m_config->readNumEntry (strVoDriver, 0);
     audiodriver = m_config->readNumEntry (strAoDriver, 0);
-    urlbackend = m_config->readEntry(strUrlBackend, "mplayer");
     allowhref = m_config->readBoolEntry(strAllowHref, false);
 
     // recording
@@ -294,7 +293,7 @@ void KMPlayerSettings::show (const char * pagename) {
 
     configdialog->m_GeneralPageOutput->videoDriver->setCurrentItem (videodriver);
     configdialog->m_GeneralPageOutput->audioDriver->setCurrentItem (audiodriver);
-    configdialog->m_SourcePageURL->backend->setCurrentItem (configdialog->m_SourcePageURL->backend->findItem (urlbackend));
+    configdialog->m_SourcePageURL->backend->setCurrentItem (configdialog->m_SourcePageURL->backend->findItem (backends["urlsource"]));
     configdialog->m_SourcePageURL->allowhref->setChecked (allowhref);
 
     // postproc
@@ -360,6 +359,9 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strBrightness, brightness);
     m_config->writeEntry (strHue, hue);
     m_config->writeEntry (strSaturation, saturation);
+    const QMap<QString,QString>::iterator b_end = backends.end ();
+    for (QMap<QString,QString>::iterator i = backends.begin(); i != b_end; ++i)
+        m_config->writeEntry (i.key (), i.data ());
     m_config->setGroup (strMPlayerGroup);
     m_config->writeEntry (strKeepSizeRatio, view->keepSizeRatio ());
     m_config->writeEntry (strLoop, loop);
@@ -367,7 +369,6 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strSeekTime, seektime);
     m_config->writeEntry (strVoDriver, videodriver);
     m_config->writeEntry (strAoDriver, audiodriver);
-    m_config->writeEntry (strUrlBackend, urlbackend);
     m_config->writeEntry (strAllowHref, allowhref);
     m_config->writeEntry (strAddConfigButton, showcnfbutton);
     m_config->writeEntry (strAddRecordButton, showrecordbutton);
@@ -504,7 +505,7 @@ KDE_NO_EXPORT void KMPlayerSettings::okPressed () {
 
     videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentItem();
     audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentItem();
-    urlbackend = configdialog->m_SourcePageURL->backend->currentText ();
+    backends["urlsource"] = configdialog->m_SourcePageURL->backend->currentText ();
     allowhref = configdialog->m_SourcePageURL->allowhref->isChecked ();
     //postproc
     postprocessing = configdialog->m_OPPagePostproc->postProcessing->isChecked();

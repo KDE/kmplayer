@@ -342,7 +342,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerTVSource::~KMPlayerTVSource () {
 
 KDE_NO_EXPORT void KMPlayerTVSource::activate () {
     m_identified = true;
-    m_player->setProcess ("mplayer");
     buildArguments ();
     if (m_player->settings ()->showbroadcastbutton)
         m_app->view()->buttonBar()->broadcastButton ()->show ();
@@ -372,7 +371,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::buildArguments () {
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::deactivate () {
-    if (m_app->view () && !m_app->view ()->buttonBar()->broadcastButton ()->isOn ())
+    if (m_player->view () && !m_app->view ()->buttonBar()->broadcastButton ()->isOn ())
         m_app->view ()->buttonBar()->broadcastButton ()->hide ();
 }
 
@@ -393,7 +392,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::buildMenu () {
         TVDevice * device = *dit;
         QPopupMenu * devmenu = new QPopupMenu (m_app);
         for (TVInput * input = device->inputs; input; input = input->next) {
-            if (input->channels) {
+            if (!input->channels) {
                 TVSource * source = new TVSource;
                 devmenu->insertItem (input->name, this, SLOT (menuClicked (int)), 0, counter);
                 source->videodevice = device->device;
@@ -672,6 +671,7 @@ KDE_NO_EXPORT bool TVDeviceScannerSource::scan (const QString & dev, const QStri
     m_driver = dri;
     m_source = m_player->process ()->source ();
     m_player->setSource (this);
+    m_identified = true;
     play ();
     return !!m_tvdevice;
 }

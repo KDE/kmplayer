@@ -25,6 +25,7 @@
 
 #include <qobject.h>
 #include <qstringlist.h>
+#include <qmap.h>
 
 #include <kurl.h>
 
@@ -130,7 +131,7 @@ public:
     OutputDriver * videodrivers;
     QString dvddevice;
     QString vcddevice;
-    QString urlbackend;
+    QMap <QString, QString> backends;
     KMPlayerPreferencesPage * pagelist;
 signals:
     void configChanged ();

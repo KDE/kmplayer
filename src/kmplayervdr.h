@@ -135,6 +135,7 @@ class XVideo : public KMPlayerCallbackProcess {
 public:
     XVideo (KMPlayer * player);
     ~XVideo ();
+    QString menuName () const;
     KDE_NO_EXPORT void setPort (int xvport) { xv_port = xvport; }
     void setStarted (QByteArray & data);
     void initProcess ();

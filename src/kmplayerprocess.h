@@ -47,6 +47,7 @@ public:
     virtual ~KMPlayerProcess ();
     virtual void init ();
     virtual void initProcess ();
+    virtual QString menuName () const;
     bool playing () const;
     KDE_NO_EXPORT KMPlayerSource * source () const { return m_source; }
     KDE_NO_EXPORT KProcess * process () const { return m_process; }
@@ -55,6 +56,7 @@ public:
     KMPlayerView * view ();
     void setSource (KMPlayerSource * source);
     virtual bool grabPicture (const KURL & url, int pos);
+    bool supports (const char * source) const;
 signals:
     // backend process is running
     void started ();
@@ -84,6 +86,7 @@ protected:
     KProcess * m_process;
     QString m_url;
     int m_request_seek;
+    const char ** m_supported_sources;
 protected slots:
     // QTimer::singleShot slots for the signals
     void emitStarted () { emit started (); }
@@ -118,6 +121,7 @@ public:
     MPlayer (KMPlayer * player);
     ~MPlayer ();
     virtual void init ();
+    virtual QString menuName () const;
     virtual WId widget ();
     virtual bool grabPicture (const KURL & url, int pos);
     bool run (const char * args, const char * pipe = 0L);
@@ -259,6 +263,7 @@ class Xine : public KMPlayerCallbackProcess {
 public:
     Xine (KMPlayer * player);
     ~Xine ();
+    QString menuName () const;
     WId widget ();
     void setFinished ();
     void initProcess ();
