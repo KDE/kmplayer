@@ -1,0 +1,26 @@
+<smil>
+  <head>
+    <layout>
+      <root-layout width="640" height="240"/>
+      <region id="reg_img" >
+        <region id="reg_text1" left="10%" top="25%" right="60%" bottom="25%"/>
+        <region id="reg_vid" left="55%" top="5%" right="5%" bottom="60%"/>
+        <region id="reg_text2" left="70%" top="85%" right="10%" bottom="5%"/>
+      </region>
+    </layout>
+  </head>
+  <body>
+    <par end="text2.activateEvent">
+      <img src="file:///home/koos/doc/kastle_pub.jpg" region="reg_img" fill="freeze"/>
+      <text src="data:,This%20is%20inline%20text." region="reg_text1" begin="5" dur="5">
+        <param name="charset" value="iso-8859-1"/>
+        <param name="fontFace" value="System"/>
+        <param name="fontColor" value="yellow"/>
+        <param name="fontSize" value="-2"/>
+        <param name="backgroundColor" value="blue"/>
+      </text>
+      <video src="file:///home/koos/doc/example.avi" id="video1" region="reg_vid"/>
+      <text src="data:,Stop" id="text2" region="reg_text2" fill="freeze"/>
+    </par>
+  </body>
+</smil>
