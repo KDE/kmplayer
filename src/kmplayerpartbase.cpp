@@ -73,11 +73,11 @@ inline QString KMPlayerBookmarkOwner::currentURL () const {
 
 class KMPlayerBookmarkManager : public KBookmarkManager {
 public:
-    KMPlayerBookmarkManager();
+    KMPlayerBookmarkManager (const QString &);
 };
 
-inline KMPlayerBookmarkManager::KMPlayerBookmarkManager()
-  : KBookmarkManager (locateLocal ("data", "kmplayer/bookmarks.xml"), false) {
+inline KMPlayerBookmarkManager::KMPlayerBookmarkManager(const QString & bmfile)
+  : KBookmarkManager (bmfile, false) {
 }
 
 //-----------------------------------------------------------------------------
@@ -94,13 +94,26 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
    m_mencoder (new MEncoder (this)),
    m_ffmpeg (new FFMpeg (this)),
    m_xine (new Xine (this)),
-   m_bookmark_manager (new KMPlayerBookmarkManager),
-   m_bookmark_owner (new KMPlayerBookmarkOwner (this)),
    m_bookmark_menu (0L),
    m_record_timer (0),
    m_autoplay (true),
    m_ispart (false),
    m_noresize (false) {
+    QString bmfile = locate ("data", "kmplayer/bookmarks.xml");
+    QString localbmfile = locateLocal ("data", "kmplayer/bookmarks.xml");
+    if (localbmfile != bmfile) {
+        int dummy;
+        kdDebug () << "cp " << bmfile.local8Bit () << " " << localbmfile.local8Bit () << endl;
+        QApplication::flushX ();
+        if (!fork ()) {
+            execlp ("cp", "cp", (const char *) bmfile.local8Bit (), (const char *) localbmfile.local8Bit (), 0L);
+            exit (1);
+        } else {
+            wait(&dummy);
+        }
+    }
+    m_bookmark_manager = new KMPlayerBookmarkManager (localbmfile);
+    m_bookmark_owner = new KMPlayerBookmarkOwner (this);
     m_urlsource = new KMPlayerURLSource (this);
 }
 
