@@ -336,8 +336,8 @@ void KMPlayerSettings::readConfig () {
     allowhref = m_config->readBoolEntry(strAllowHref, false);
 
     view->setUseArts (audiodriver == ADRIVER_ARTS_INDEX);
-    additionalarguments = m_config->readEntry (strAddArgs, "");
-    recordfile = m_config->readEntry(strRecordingFile, QDir::homeDirPath () + "/record");
+    additionalarguments = m_config->readEntry (strAddArgs);
+    recordfile = m_config->readPathEntry(strRecordingFile, QDir::homeDirPath () + "/record");
     recordcopy = m_config->readBoolEntry(strRecordingCopy, true);
     mencoderarguments = m_config->readEntry (strMencoderArgs, "-oac copy -ovc copy");
     cachesize = m_config->readNumEntry (strCacheSize, 0);
@@ -598,7 +598,7 @@ void KMPlayerSettings::writeConfig () {
 
     m_config->writeEntry (strVCDDevice, vcddevice);
 
-    m_config->writeEntry (strRecordingFile, recordfile);
+    m_config->writePathEntry (strRecordingFile, recordfile);
     m_config->writeEntry (strRecordingCopy, recordcopy);
     m_config->writeEntry (strMencoderArgs, mencoderarguments);
 
