@@ -18,7 +18,12 @@ kdeinit_kmplayer_la_SOURCES= main.cpp kmplayerapp.cpp
 kdeinit_kmplayer_la_LIBADD= kparts_kmplayer.la
 kdeinit_kmplayer_la_LDFLAGS= $(all_libraries) $(KDE_RPATH) -module -avoid-version
 
-bin_PROGRAMS= kmplayer kxineplayer
+EXTRA_PROGRAMS = kxineplayer
+if include_kxineplayer
+kxineplayer_app = kxineplayer
+endif
+
+bin_PROGRAMS= kmplayer $(kxineplayer_app)
 
 kmplayer_LDADD= kdeinit_kmplayer.la
 kmplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH)

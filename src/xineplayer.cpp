@@ -9,7 +9,6 @@
 #include "kmplayer_backend.h"
 #include "kmplayer_callback_stub.h"
 #include "xineplayer.h"
-#ifdef HAVE_XINE
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -582,7 +581,3 @@ int main(int argc, char **argv) {
 }
 
 #include "xineplayer.moc"
-
-#else //HAVE_XINE
-int main() { return -1; }
-#endif //HAVE_XINE

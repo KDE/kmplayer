@@ -2,10 +2,12 @@
 
 AM_INIT_AUTOMAKE(kmplayer,0.7.4c)
 
-have_koffice=yes
-if test "$have_koffice" = "yes"; then
-        KDE_CHECK_HEADER(koDocument.h,,have_koffice=no)
-fi
+KDE_CHECK_HEADER(koDocument.h,
+  have_koffice=yes,
+  have_koffice=no)
+
+AC_MSG_CHECKING([if kmplayer can be compiled with koffice support])
+AC_MSG_RESULT($have_koffice)
 
 if test "$have_koffice" = "yes"; then
         AC_DEFINE(HAVE_KOFFICE, 1, [If we have koffice installed])
@@ -13,10 +15,12 @@ if test "$have_koffice" = "yes"; then
         AC_SUBST(LIB_KOFFICE)
 fi
 
-have_xine=yes
-if test "$have_xine" = "yes"; then
-        KDE_CHECK_HEADER(xine.h,,have_xine=no)
-fi
+KDE_CHECK_HEADER(xine.h,
+   have_xine=yes,
+   have_xine=no)
+
+AC_MSG_CHECKING([if kxineplayer can be compiled])
+AC_MSG_RESULT($have_xine)
 
 if test "$have_xine" = "yes"; then
         AC_DEFINE(HAVE_XINE, 1, [If we have libxine installed])
@@ -25,3 +29,5 @@ if test "$have_xine" = "yes"; then
         CFLAGS_XINE="`xine-config --cflags`"
         AC_SUBST(CFLAGS_XINE)
 fi
+
+AM_CONDITIONAL(include_kxineplayer, test "$have_xine" = "yes")
