@@ -62,6 +62,7 @@ public:
 
     virtual bool hasLength ();
     virtual QString prettyName ();
+    virtual void getCurrent ();
 public slots:
     virtual void init ();
     virtual void activate ();

@@ -275,6 +275,8 @@ KDE_NO_EXPORT void KMPlayer::slotPlayerMenu (int id) {
         menu->setItemChecked (menuid, menuid == id);
         if (menuid == id) {
             m_settings->backends [m_process->source()->name()] = pi.data ()->name ();
+            if (playing && strcmp (m_process->name (), pi.data ()->name ()))
+                m_process->stop ();
             setProcess (pi.data ()->name ());
         }
     }
@@ -669,18 +671,26 @@ void KMPlayerSource::setURL (const KURL & url) {
 }
 
 QString KMPlayerSource::first () {
-    if (!m_document) return QString ();  // non-url based sources
-    kdDebug() << "KMPlayerSource::first" << endl;
-    m_current = m_document;
-    if (!m_document->isMrl ())
-        next ();
-    else
+    if (m_document) {
+        kdDebug() << "KMPlayerSource::first" << endl;
+        m_current = m_document;
+        if (!m_document->isMrl ())
+            return next ();
         m_player->updateTree (m_document, m_current);
+    }
     return current ();
 }
 
 QString KMPlayerSource::current () {
     return m_current ? m_current->mrl()->src : QString ();
+}
+
+void KMPlayerSource::getCurrent () {
+    QString url = current ();
+    m_player->changeURL (url);
+    if (m_player->process () && m_player->process ()->view ())
+        m_player->process ()->view ()->videoStop (); // show buttonbar
+    emit currentURL (url);
 }
 
 static ElementPtr findDepthFirst (ElementPtr elm) {
@@ -698,28 +708,29 @@ static ElementPtr findDepthFirst (ElementPtr elm) {
 }
 
 QString KMPlayerSource::next () {
-    if (!m_document) return QString ();  // non-url based sources
-    kdDebug() << "KMPlayerSource::next" << endl;
-    if (m_back_request && m_back_request->isMrl ()) {
-        m_current = m_back_request;
-        m_back_request = 0L;
-    } else if (m_current) {
-        ElementPtr e = findDepthFirst (m_current->isMrl () ? m_current->nextSibling (): m_current);
-        if (e) {
-            m_current = e;
-        } else while (m_current) {
-            m_current = m_current->parentNode ();
-            if (m_current && m_current->nextSibling ()) {
-                m_current = m_current->nextSibling ();
-                e = findDepthFirst (m_current);
-                if (e) {
-                    m_current = e;
-                    break;
+    if (m_document) {
+        kdDebug() << "KMPlayerSource::next" << endl;
+        if (m_back_request && m_back_request->isMrl ()) {
+            m_current = m_back_request;
+            m_back_request = 0L;
+        } else if (m_current) {
+            ElementPtr e = findDepthFirst (m_current->isMrl () ? m_current->nextSibling (): m_current);
+            if (e) {
+                m_current = e;
+            } else while (m_current) {
+                m_current = m_current->parentNode ();
+                if (m_current && m_current->nextSibling ()) {
+                    m_current = m_current->nextSibling ();
+                    e = findDepthFirst (m_current);
+                    if (e) {
+                        m_current = e;
+                        break;
+                    }
                 }
             }
         }
+        m_player->updateTree (m_document, m_current);
     }
-    m_player->updateTree (m_document, m_current);
     return current ();
 }
 
@@ -776,8 +787,11 @@ void KMPlayerSource::forward () {
 
 void KMPlayerSource::jump (ElementPtr e) {
     if (e->isMrl ()) {
-        m_back_request = e;
-        m_player->process ()->stop ();
+        if (m_player->playing ()) {
+            m_back_request = e;
+            m_player->process ()->stop ();
+        } else
+            m_current = e;
     } else
         m_player->updateTree (m_document, m_current);
 }
@@ -948,6 +962,9 @@ KDE_NO_EXPORT void KMPlayerURLSource::activate () {
 }
 
 KDE_NO_EXPORT void KMPlayerURLSource::deactivate () {
+    if (m_job)
+        m_job->kill (); // silent, no kioResult signal
+    m_job = 0L;
 }
 
 KDE_NO_EXPORT QString KMPlayerURLSource::prettyName () {
@@ -981,13 +998,13 @@ KDE_NO_EXPORT QString KMPlayerURLSource::prettyName () {
 class MMXmlContentHandler : public QXmlDefaultHandler {
     KMPlayerURLSource * m_urlsource;
 public:
-    KDE_NO_CDTOR_EXPORT MMXmlContentHandler (ElementPtr d) : m_doc (d), m_elm (d->self ()), m_ignore_depth (0) {}
+    KDE_NO_CDTOR_EXPORT MMXmlContentHandler (ElementPtr d) : m_start (d), m_elm (d), m_ignore_depth (0) {}
     KDE_NO_CDTOR_EXPORT ~MMXmlContentHandler () {}
     KDE_NO_EXPORT bool startDocument () {
-        return m_doc->self () == m_elm;
+        return m_start->self () == m_elm;
     }
     KDE_NO_EXPORT bool endDocument () {
-        return m_doc->self () == m_elm;
+        return m_start->self () == m_elm;
     }
     KDE_NO_EXPORT bool startElement (const QString &, const QString &, const QString & tag,
             const QXmlAttributes & atts) {
@@ -995,7 +1012,7 @@ public:
             kdDebug () << "Warning: ignored tag " << tag << endl;
             m_ignore_depth++;
         } else {
-            ElementPtr e = m_elm->childFromTag (m_doc, tag);
+            ElementPtr e = m_elm->childFromTag (tag);
             if (e) {
                 kdDebug () << "Found tag " << tag << endl;
                 e->setAttributes (atts);
@@ -1015,8 +1032,8 @@ public:
             m_ignore_depth--;
             return true;
         }
-        if (m_elm == m_doc->self ()) {
-            kdError () << "m_elm == m_doc, stack underflow " << endl;
+        if (m_elm == m_start->self ()) {
+            kdError () << "m_elm == m_start, stack underflow " << endl;
             return false;
         }
         // kdError () << "end tag " << endl;
@@ -1035,7 +1052,7 @@ public:
         kdError () << "fatal error " << ex.message () << endl;
         return true;
     }
-    ElementPtr m_doc;
+    ElementPtr m_start;
     ElementPtr m_elm;
     int m_ignore_depth;
 };
@@ -1127,7 +1144,7 @@ KDE_NO_EXPORT void KMPlayerURLSource::read (QTextStream & textstream) {
             } while (!line.isNull ());
         } else if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
             QXmlSimpleReader reader;
-            MMXmlContentHandler content_handler (m_document);
+            MMXmlContentHandler content_handler (m_current);
             FilteredInputSource input_source (textstream, line);
             reader.setContentHandler (&content_handler);
             reader.setErrorHandler (&content_handler);
@@ -1172,22 +1189,24 @@ KDE_NO_EXPORT void KMPlayerURLSource::kioResult (KIO::Job *) {
         m_current->mrl ()->parsed = true;
         if (!m_current->isMrl ())
             next ();
-        QTimer::singleShot (0, this, SLOT (play ()));
+        getCurrent ();
     }
     m_player->process ()->view ()->buttonBar ()->setPlaying (false);
 }
 
-KDE_NO_EXPORT void KMPlayerURLSource::play () {
+void KMPlayerURLSource::getCurrent () {
+    if (m_current && !m_current->isMrl ())
+        next ();
     KURL url (current ());
-    if (url.isEmpty ())
-        return;
-    if (!m_current->mrl ()->parsed) {
+    if (url.isEmpty () || m_current->mrl ()->parsed) {
+        KMPlayerSource::getCurrent ();
+    } else {
         QString mimestr = mime ();
         int plugin_pos = mimestr.find ("-plugin");
         if (plugin_pos > 0)
             mimestr.truncate (plugin_pos);
         bool maybe_playlist = isPlayListMime (mimestr);
-        kdDebug () << "KMPlayerURLSource::play " << mimestr << maybe_playlist << endl;
+        kdDebug () << "KMPlayerURLSource::getCurrent " << mimestr << maybe_playlist << endl;
         if (url.isLocalFile ()) {
             QFile file (url.path ());
             if (!file.exists ())
@@ -1205,8 +1224,7 @@ KDE_NO_EXPORT void KMPlayerURLSource::play () {
                 read (textstream);
             }
             m_current->mrl ()->parsed = true;
-            if (!m_current->isMrl ())
-                next ();
+            getCurrent ();
         } else if ((maybe_playlist &&
                     url.protocol ().compare (QString ("mms")) &&
                     url.protocol ().compare (QString ("rtsp")) &&
@@ -1225,9 +1243,14 @@ KDE_NO_EXPORT void KMPlayerURLSource::play () {
             connect (m_job, SIGNAL (result (KIO::Job *)),
                     this, SLOT (kioResult (KIO::Job *)));
             m_player->process ()->view ()->buttonBar ()->setPlaying (true);
-            return;
+        } else {
+            m_current->mrl ()->parsed = true;
+            getCurrent ();
         }
     }
+}
+
+KDE_NO_EXPORT void KMPlayerURLSource::play () {
     KMPlayerSource::play ();
 }
 

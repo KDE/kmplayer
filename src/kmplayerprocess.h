@@ -69,7 +69,7 @@ signals:
     void positioned (int pos);
     void lengthFound (int len);
 public slots:
-    virtual bool play () = 0;
+    virtual bool play ();
     virtual bool stop ();
     virtual bool quit ();
     virtual bool pause ();
@@ -88,6 +88,7 @@ protected:
     int m_request_seek;
     const char ** m_supported_sources;
 protected slots:
+    virtual void urlForPlaying (const QString &);
     // QTimer::singleShot slots for the signals
     void emitStarted () { emit started (); }
     void emitFinished () { emit finished (); }
@@ -138,6 +139,7 @@ public slots:
     MPlayerPreferencesPage * configPage () const { return m_configpage; }
 protected slots:
     void processStopped (KProcess *);
+    void urlForPlaying (const QString &);
 private slots:
     void processOutput (KProcess *, char *, int);
 private:
@@ -188,7 +190,7 @@ public:
     virtual void init ();
     KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
 public slots:
-    virtual bool play ();
+    virtual void urlForPlaying (const QString &);
     virtual bool stop ();
 };
 
@@ -200,7 +202,7 @@ public:
     virtual void init ();
     KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
 public slots:
-    virtual bool play ();
+    virtual void urlForPlaying (const QString &);
     virtual bool stop ();
 };
 
@@ -268,7 +270,8 @@ public:
     void setFinished ();
     void initProcess ();
 public slots:
-    bool play ();
+    virtual bool play ();
+    virtual void urlForPlaying (const QString &);
     bool quit ();
     bool seek (int pos, bool absolute);
     void setStarted (QByteArray & data);
@@ -285,7 +288,7 @@ public:
     virtual void init ();
     void setArguments (const QString & args) { arguments = args; }
 public slots:
-    virtual bool play ();
+    virtual void urlForPlaying (const QString &);
     virtual bool stop ();
 private slots:
     void processStopped (KProcess *);

@@ -151,6 +151,17 @@ bool KMPlayerProcess::quit () {
     return stop ();
 }
 
+KDE_NO_EXPORT bool KMPlayerProcess::play () {
+    if (!source ()) return false;
+    stop ();
+    connect (m_source, SIGNAL (currentURL (const QString &)), this, SLOT (urlForPlaying (const QString &)));
+    m_source->getCurrent ();
+    return true;
+}
+
+void KMPlayerProcess::urlForPlaying (const QString &) {
+}
+
 void KMPlayerProcess::setSource (KMPlayerSource * source) {
     if (source != m_source) {
         stop ();
@@ -242,6 +253,7 @@ KDE_NO_EXPORT void MPlayerBase::dataWritten (KProcess *) {
 KDE_NO_EXPORT void MPlayerBase::processStopped (KProcess *) {
     kdDebug() << "process stopped" << endl;
     commands.clear ();
+    disconnect (m_source, SIGNAL (currentURL (const QString &)), this, SLOT (urlForPlaying (const QString &)));
     QTimer::singleShot (0, this, SLOT (emitFinished ()));
 }
 
@@ -277,17 +289,20 @@ KDE_NO_EXPORT WId MPlayer::widget () {
 }
 
 KDE_NO_EXPORT bool MPlayer::play () {
-    if (!source ()) return false;
     if (playing ())
         return sendCommand (QString ("gui_play"));
+    return KMPlayerProcess::play ();
+}
+
+void MPlayer::urlForPlaying (const QString & urlstr) {
+    KURL url (urlstr);
     stop ();
     initProcess ();
     source ()->setPosition (0);
     m_request_seek = -1;
     QString args = source ()->options () + ' ';
-    KURL url (m_source->current ());
+    m_url = url.url ();
     if (!url.isEmpty ()) {
-        m_url = url.url ();
         if (m_source->url ().isLocalFile ())
             m_process->setWorkingDirectory 
                 (QFileInfo (m_source->url ().path ()).dirPath (true));
@@ -323,7 +338,7 @@ KDE_NO_EXPORT bool MPlayer::play () {
             }
         }
     }
-    return run (args.ascii (), source ()->pipeCmd ().ascii ());
+    run (args.ascii (), source ()->pipeCmd ().ascii ());
 }
 
 KDE_NO_EXPORT bool MPlayer::stop () {
@@ -544,7 +559,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
             }
         } else if (!source ()->identified () && m_refURLRegExp.search (out) > -1) {
             kdDebug () << "Reference mrl " << m_refURLRegExp.cap (1) << endl;
-            if (!m_tmpURL.isEmpty () && m_source->current () != m_tmpURL)
+            if (!m_tmpURL.isEmpty () && m_url != m_tmpURL)
                 m_source->insertURL (m_tmpURL);;
             m_tmpURL = KURL::fromPathOrURL (m_refURLRegExp.cap (1)).url ();
             if (m_source->url () == m_tmpURL || m_url == m_tmpURL)
@@ -570,12 +585,10 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                     }
                 } else if (m_startRegExp.search (out) > -1) {
                     if (m_player->settings ()->mplayerpost090) {
-                        if (!m_tmpURL.isEmpty () && m_source->current () != m_tmpURL) {
+                        if (!m_tmpURL.isEmpty () && m_url != m_tmpURL) {
                             m_source->insertURL (m_tmpURL);;
                             m_tmpURL.truncate (0);
                         }
-                        // update currentUrl if this was a playlist
-                        m_source->current ();
                         source ()->setIdentified ();
                     }
                     emit startedPlaying ();
@@ -589,28 +602,22 @@ KDE_NO_EXPORT void MPlayer::processStopped (KProcess * p) {
     if (p && !m_grabfile.isEmpty ()) {
         emit grabReady (m_grabfile);
         m_grabfile.truncate (0);
-    } else {
-        if (p) {
-            QString url;
-            if (!m_source->identified ()) {
-                m_source->setIdentified ();
-                if (!m_tmpURL.isEmpty () && m_source->current () != m_tmpURL) {
-                    m_source->insertURL (url);;
-                    m_tmpURL.truncate (0);
-                }
-                url = m_source->first ();
-            } else {
-                url = m_source->next ();
-                if (!url.isEmpty ())
-                    m_player->changeURL (url);
+    } else if (p) {
+        QString url;
+        if (!m_source->identified ()) {
+            m_source->setIdentified ();
+            if (!m_tmpURL.isEmpty () && m_url != m_tmpURL) {
+                m_source->insertURL (m_tmpURL);;
+                m_tmpURL.truncate (0);
             }
-            if (!url.isEmpty ()) {
-                QTimer::singleShot (0, m_source, SLOT (play ()));
-                return;
-            }
+            url = m_source->first ();
+        } else
+            url = m_source->next ();
+        if (url.isEmpty ()) {
+            MPlayerBase::processStopped (p);
             m_source->first ();
-        }
-        MPlayerBase::processStopped (p);
+        } else
+            m_source->getCurrent ();
     }
 }
 
@@ -746,9 +753,7 @@ KDE_NO_CDTOR_EXPORT MEncoder::~MEncoder () {
 KDE_NO_EXPORT void MEncoder::init () {
 }
 
-KDE_NO_EXPORT bool MEncoder::play () {
-    if (!m_source)
-        return false;
+void MEncoder::urlForPlaying (const QString & urlstr) {
     bool success = false;
     stop ();
     initProcess ();
@@ -761,7 +766,7 @@ KDE_NO_EXPORT bool MEncoder::play () {
     if (m_player->settings()->recordcopy)
         margs = QString ("-oac copy -ovc copy");
     args += QString ("mencoder ") + margs + ' ' + m_source->recordCmd ();
-    KURL url (m_source->current ());
+    KURL url (urlstr);
     QString myurl = url.isLocalFile () ? url.path () : url.url ();
     bool post090 = m_player->settings ()->mplayerpost090;
     if (!myurl.isEmpty ()) {
@@ -783,7 +788,6 @@ KDE_NO_EXPORT bool MEncoder::play () {
     success = m_process->isRunning ();
     if (success)
         emitStarted ();
-    return success;
 }
 
 KDE_NO_EXPORT bool MEncoder::stop () {
@@ -807,9 +811,7 @@ KDE_NO_CDTOR_EXPORT MPlayerDumpstream::~MPlayerDumpstream () {
 KDE_NO_EXPORT void MPlayerDumpstream::init () {
 }
 
-KDE_NO_EXPORT bool MPlayerDumpstream::play () {
-    if (!m_source)
-        return false;
+void MPlayerDumpstream::urlForPlaying (const QString & urlstr) {
     bool success = false;
     stop ();
     initProcess ();
@@ -819,7 +821,7 @@ KDE_NO_EXPORT bool MPlayerDumpstream::play () {
     if (!m_use_slave)
         args = m_source->pipeCmd () + QString (" | ");
     args += QString ("mplayer ") + m_source->recordCmd ();
-    KURL url (m_source->current ());
+    KURL url (urlstr);
     QString myurl = url.isLocalFile () ? url.path () : url.url ();
     bool post090 = m_player->settings ()->mplayerpost090;
     if (!myurl.isEmpty ()) {
@@ -841,7 +843,6 @@ KDE_NO_EXPORT bool MPlayerDumpstream::play () {
     success = m_process->isRunning ();
     if (success)
         emitStarted ();
-    return success;
 }
 
 KDE_NO_EXPORT bool MPlayerDumpstream::stop () {
@@ -1279,24 +1280,34 @@ KDE_NO_EXPORT void Xine::initProcess () {
     connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
             this, SLOT (processOutput (KProcess *, char *, int)));
 }
+
+KDE_NO_EXPORT bool Xine::play () {
+    if (playing () && m_backend && m_status != status_stop) { // paused
+        m_backend->play ();
+        return true;
+    }
+    return KMPlayerProcess::play ();
+}
+
 // TODO:input.v4l_video_device_path input.v4l_radio_device_path
 // v4l:/Webcam/0   v4l:/Television/21600  v4l:/Radio/96
-KDE_NO_EXPORT bool Xine::play () {
-    KURL url (m_source ? m_source->current () : QString ());
+void Xine::urlForPlaying (const QString & urlstr) {
+    KURL url (urlstr);
+    if (url.isEmpty ()) {
+        quit ();
+        return;
+    }
     QString myurl = url.isLocalFile () ? url.path () : url.url ();
     if (playing ()) {
         if (m_backend) {
-            if (m_status == status_stop) {
-                m_backend->setURL (myurl);
-                m_player->changeURL (url.url ());
-            }
+            m_backend->setURL (myurl);
             m_backend->play ();
         }
-        return true;
+        return;
     }
+    initProcess ();
     QString xine_config = KProcess::quote (QString (QFile::encodeName (locateLocal ("data", "kmplayer/") + QString ("xine_config"))));
     if (m_have_config == config_probe || m_send_config == send_new) {
-        initProcess ();
         printf ("kxineplayer -wid %lu", (unsigned long) widget ());
         *m_process << "kxineplayer -wid " << QString::number (widget ());
         if (m_have_config == config_probe) {
@@ -1308,12 +1319,12 @@ KDE_NO_EXPORT bool Xine::play () {
         printf (" -cb %s nomovie\n", dcopName ().ascii());
         *m_process << " -cb " << dcopName () << " nomovie";
         m_process->start (KProcess::NotifyOnExit, KProcess::All);
-        return m_process->isRunning ();
+        return;
     }
     m_request_seek = -1;
     kdDebug() << "Xine::play (" << myurl << ")" << endl;
     if (url.isEmpty ())
-        return false;
+        return;
     KMPlayerSettings *settings = m_player->settings ();
     initProcess ();
     printf ("kxineplayer -wid %lu", (unsigned long) widget ());
@@ -1368,15 +1379,13 @@ KDE_NO_EXPORT bool Xine::play () {
     printf (" %s\n", myurl.ascii ());
     *m_process << " " << myurl;
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
-    if (m_process->isRunning ()) {
+    if (m_process->isRunning ())
         QTimer::singleShot (0, this, SLOT (emitStarted ()));
-        return true;
-    }
-    return false;
 }
 
 KDE_NO_EXPORT bool Xine::quit () {
     kdDebug () << "Xine::quit ()" << endl;
+    disconnect (m_source, SIGNAL (currentURL (const QString &)), this, SLOT (urlForPlaying (const QString &)));
     if (m_have_config == config_probe)
         m_have_config = config_unknown; // hmm
     if (m_send_config == send_new)
@@ -1400,17 +1409,11 @@ KDE_NO_EXPORT void Xine::setFinished () {
     KMPlayerCallbackProcess::setFinished ();
     if (!m_source) return; // initial case?
     kdDebug () << "Xine::finished () " << endl;
-    QString url = m_source->next ();
-    if (!url.isEmpty ()) {
-        KMPlayerView * v = view ();
-        if (v) {
-            v->videoStop ();
-            m_source->play ();
-        }
-    } else {
-        m_source->first ();
+    if (m_source->next ().isEmpty ()) {
         quit ();
-    }
+        m_source->first ();
+    } else
+        m_source->getCurrent ();
 }
 
 KDE_NO_EXPORT bool Xine::seek (int pos, bool absolute) {
@@ -1482,10 +1485,8 @@ KDE_NO_CDTOR_EXPORT FFMpeg::~FFMpeg () {
 KDE_NO_EXPORT void FFMpeg::init () {
 }
 
-KDE_NO_EXPORT bool FFMpeg::play () {
-    delete m_process;
-    m_process = new KProcess;
-    m_process->setUseShell (true);
+void FFMpeg::urlForPlaying (const QString & urlstr) {
+    initProcess ();
     connect (m_process, SIGNAL (processExited (KProcess *)),
             this, SLOT (processStopped (KProcess *)));
     QString outurl = QString (QFile::encodeName (m_recordurl.isLocalFile () ? m_recordurl.path () : m_recordurl.url ()));
@@ -1515,7 +1516,7 @@ KDE_NO_EXPORT bool FFMpeg::play () {
             cmd += QString (" -tvstd ") + m_source->videoNorm ();
         }
     } else {
-        KURL url (m_source->current ());
+        KURL url (urlstr);
         cmd += QString ("-i ") + KProcess::quote (QString (QFile::encodeName (url.isLocalFile () ? url.path () : url.url ())));
     }
     cmd += QChar (' ') + arguments;
@@ -1525,7 +1526,6 @@ KDE_NO_EXPORT bool FFMpeg::play () {
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
     if (m_process->isRunning ())
         QTimer::singleShot (0, this, SLOT (emitStarted ()));
-    return m_process->isRunning ();
 }
 
 KDE_NO_EXPORT bool FFMpeg::stop () {
@@ -1542,6 +1542,7 @@ KDE_NO_EXPORT bool FFMpeg::stop () {
 }
 
 KDE_NO_EXPORT void FFMpeg::processStopped (KProcess *) {
+    disconnect (m_source, SIGNAL (currentURL (const QString &)), this, SLOT (urlForPlaying (const QString &)));
     QTimer::singleShot (0, this, SLOT (emitFinished ()));
 }
 

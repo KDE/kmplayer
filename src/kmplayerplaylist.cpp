@@ -149,7 +149,7 @@ KDE_NO_EXPORT void Element::replaceChild (ElementPtr _new, ElementPtr old) {
     old->m_parent = 0L;
 }
 
-KDE_NO_EXPORT ElementPtr Element::childFromTag (ElementPtr, const QString &) {
+KDE_NO_EXPORT ElementPtr Element::childFromTag (const QString &) {
     return 0L;
 }
 
@@ -170,18 +170,26 @@ bool Element::isMrl () {
     return false;
 }
 
-KDE_NO_CDTOR_EXPORT Mrl::~Mrl () {}
-
-bool Mrl::isMrl () {
-    return !src.isEmpty ();
-}
-
 static bool hasMrlChildren (ElementPtr e) {
     for (ElementPtr c = e->firstChild (); c; c = c->nextSibling ())
         if (c->isMrl () || hasMrlChildren (c))
             return true;
     return false;
 }
+
+KDE_NO_CDTOR_EXPORT Mrl::~Mrl () {}
+
+bool Mrl::isMrl () {
+    return !hasMrlChildren (m_self);
+}
+
+KDE_NO_EXPORT ElementPtr Mrl::childFromTag (const QString & tag) {
+    Element * elm = fromXMLDocumentGroup (m_doc, tag);
+    if (elm)
+        return elm->self ();
+    return 0L;
+}
+
 //-----------------------------------------------------------------------------
 
 Document::Document (const QString & s) {
@@ -194,8 +202,8 @@ KDE_NO_CDTOR_EXPORT Document::~Document () {
     kdDebug () << "~Document\n";
 };
 
-KDE_NO_EXPORT ElementPtr Document::childFromTag (ElementPtr d, const QString & tag) {
-    Element * elm = fromXMLDocumentGroup (d, tag);
+KDE_NO_EXPORT ElementPtr Document::childFromTag (const QString & tag) {
+    Element * elm = fromXMLDocumentGroup (m_doc, tag);
     if (elm)
         return elm->self ();
     return 0L;
@@ -220,19 +228,19 @@ void TextNode::appendText (const QString & s) {
 }
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT ElementPtr Smil::childFromTag (ElementPtr d, const QString & tag) {
+KDE_NO_EXPORT ElementPtr Smil::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "body"))
-        return (new Body (d))->self ();
+        return (new Body (m_doc))->self ();
     // else if head
     return 0L;
 }
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT ElementPtr Body::childFromTag (ElementPtr d, const QString & tag) {
-    Element * elm = fromScheduleGroup (d, tag);
-    if (!elm) elm = fromMediaContentGroup (d, tag);
-    if (!elm) elm = fromContentControlGroup (d, tag);
+KDE_NO_EXPORT ElementPtr Body::childFromTag (const QString & tag) {
+    Element * elm = fromScheduleGroup (m_doc, tag);
+    if (!elm) elm = fromMediaContentGroup (m_doc, tag);
+    if (!elm) elm = fromContentControlGroup (m_doc, tag);
     if (elm)
         return elm->self ();
     return 0L;
@@ -240,10 +248,10 @@ KDE_NO_EXPORT ElementPtr Body::childFromTag (ElementPtr d, const QString & tag) 
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT ElementPtr Par::childFromTag (ElementPtr d, const QString & tag) {
-    Element * elm = fromScheduleGroup (d, tag);
-    if (!elm) elm = fromMediaContentGroup (d, tag);
-    if (!elm) elm = fromContentControlGroup (d, tag);
+KDE_NO_EXPORT ElementPtr Par::childFromTag (const QString & tag) {
+    Element * elm = fromScheduleGroup (m_doc, tag);
+    if (!elm) elm = fromMediaContentGroup (m_doc, tag);
+    if (!elm) elm = fromContentControlGroup (m_doc, tag);
     if (elm)
         return elm->self ();
     return 0L;
@@ -251,10 +259,10 @@ KDE_NO_EXPORT ElementPtr Par::childFromTag (ElementPtr d, const QString & tag) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT ElementPtr Seq::childFromTag (ElementPtr d, const QString & tag) {
-    Element * elm = fromScheduleGroup (d, tag);
-    if (!elm) elm = fromMediaContentGroup (d, tag);
-    if (!elm) elm = fromContentControlGroup (d, tag);
+KDE_NO_EXPORT ElementPtr Seq::childFromTag (const QString & tag) {
+    Element * elm = fromScheduleGroup (m_doc, tag);
+    if (!elm) elm = fromMediaContentGroup (m_doc, tag);
+    if (!elm) elm = fromContentControlGroup (m_doc, tag);
     if (elm)
         return elm->self ();
     return 0L;
@@ -262,9 +270,9 @@ KDE_NO_EXPORT ElementPtr Seq::childFromTag (ElementPtr d, const QString & tag) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT ElementPtr Switch::childFromTag (ElementPtr d, const QString & tag) {
-    Element * elm = fromContentControlGroup (d, tag);
-    if (!elm) elm = fromMediaContentGroup (d, tag);
+KDE_NO_EXPORT ElementPtr Switch::childFromTag (const QString & tag) {
+    Element * elm = fromContentControlGroup (m_doc, tag);
+    if (!elm) elm = fromMediaContentGroup (m_doc, tag);
     if (elm)
         return elm->self ();
     return 0L;
@@ -279,8 +287,8 @@ bool Switch::isMrl () {
 KDE_NO_CDTOR_EXPORT MediaType::MediaType (ElementPtr d, const QString & t)
     : Mrl (d), m_type (t), bitrate (0) {}
 
-KDE_NO_EXPORT ElementPtr MediaType::childFromTag (ElementPtr d, const QString & tag) {
-    Element * elm = fromContentControlGroup (d, tag);
+KDE_NO_EXPORT ElementPtr MediaType::childFromTag (const QString & tag) {
+    Element * elm = fromContentControlGroup (m_doc, tag);
     if (elm)
         return elm->self ();
     return 0L;
@@ -303,21 +311,21 @@ KDE_NO_EXPORT void MediaType::setAttributes (const QXmlAttributes & atts) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT ElementPtr Asx::childFromTag (ElementPtr d, const QString & tag) {
+KDE_NO_EXPORT ElementPtr Asx::childFromTag (const QString & tag) {
     const char * name = tag.latin1 ();
     if (!strcasecmp (name, "entry"))
-        return (new Entry (d))->self ();
+        return (new Entry (m_doc))->self ();
     else if (!strcasecmp (name, "entryref"))
-        return (new EntryRef (d))->self ();
+        return (new EntryRef (m_doc))->self ();
     return 0L;
 }
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT ElementPtr Entry::childFromTag (ElementPtr d, const QString & tag) {
+KDE_NO_EXPORT ElementPtr Entry::childFromTag (const QString & tag) {
     const char * name = tag.latin1 ();
     if (!strcasecmp (name, "ref"))
-        return (new Ref (d))->self ();
+        return (new Ref (m_doc))->self ();
     return 0L;
 }
 
@@ -349,13 +357,6 @@ GenericURL::GenericURL (ElementPtr d, const QString & s, const QString & name)
  : Mrl (d) {
     src = s;
     pretty_name = name;
-}
-
-KDE_NO_EXPORT ElementPtr GenericURL::childFromTag (ElementPtr d, const QString & tag) {
-    Element * elm = fromXMLDocumentGroup (d, tag);
-    if (elm)
-        return elm->self ();
-    return 0L;
 }
 
 bool GenericURL::isMrl () {

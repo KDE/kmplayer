@@ -58,6 +58,7 @@ public:
     QString first ();
     QString current ();
     QString next ();
+    virtual void getCurrent (); // will emit currentURL
     QString mime () const;
     KDE_NO_EXPORT const QString & audioDevice () const { return m_audiodevice; }
     KDE_NO_EXPORT const QString & videoDevice () const { return m_videodevice; }
@@ -83,6 +84,9 @@ public:
     KDE_NO_EXPORT void setAutoPlay (bool b) { m_auto_play = b; }
 
     virtual QString prettyName ();
+signals:
+    // in respond to 'first'/'current'/'next'/'previous' call
+    void currentURL (const QString &);
 public slots:
     virtual void activate () = 0;
     virtual void deactivate () = 0;
