@@ -17,10 +17,10 @@
       </text> 
       <set targetElement="region1" attributeName="z-index" to="4" begin="text1.inBoundsEvent" end="text1.outOfBoundsEvent"/>
     </par>
-    <set targetElement="region3" attributeName="background-color" to="black"/>
-    <set targetElement="region3" attributeName="z-index" to="5"/>
     <par>
       <set targetElement="region2" attributeName="z-index" to="6"/>
+      <set targetElement="region3" attributeName="background-color" to="black"/>
+      <set targetElement="region3" attributeName="z-index" to="5"/>
       <text src="data:,that's all folks" region="region2" dur="2">
         <param name="fontColor" value="green"/>
         <param name="fontSize" value="+2"/>
