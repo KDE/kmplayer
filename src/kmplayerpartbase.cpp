@@ -111,6 +111,7 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
     m_recorders ["mencoder"] = new MEncoder (this);
     m_recorders ["mplayerdumpstream"] = new MPlayerDumpstream (this);
     m_recorders ["ffmpeg"] = new FFMpeg (this);
+    m_sources ["urlsource"] = new KMPlayerURLSource (this);
 
     QString bmfile = locate ("data", "kmplayer/bookmarks.xml");
     QString localbmfile = locateLocal ("data", "kmplayer/bookmarks.xml");
@@ -122,7 +123,6 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
     }
     m_bookmark_manager = new KMPlayerBookmarkManager (localbmfile);
     m_bookmark_owner = new KMPlayerBookmarkOwner (this);
-    m_urlsource = new KMPlayerURLSource (this);
 }
 
 void KMPlayer::showConfigDialog () {
@@ -187,7 +187,7 @@ KMediaPlayer::View* KMPlayer::view () {
 void KMPlayer::setProcess (KMPlayerProcess * process) {
     if (m_process == process)
         return;
-    KMPlayerSource * source = m_urlsource;
+    KMPlayerSource * source = m_sources ["urlsource"];
     if (m_process) {
         disconnect (m_process, SIGNAL (finished ()),
                     this, SLOT (processFinished ()));
@@ -340,10 +340,11 @@ bool KMPlayer::openURL (const KURL & url) {
     kdDebug () << "KMPlayer::openURL " << url.url() << url.isValid () << endl;
     if (!m_view || url.isEmpty ()) return false;
     stop ();
-    m_urlsource->setSubURL (KURL ());
-    m_urlsource->setURL (url);
-    m_urlsource->setIdentified (false);
-    setSource (m_urlsource);
+    KMPlayerSource * source = m_sources ["urlsource"];
+    source->setSubURL (KURL ());
+    source->setURL (url);
+    source->setIdentified (false);
+    setSource (source);
     return true;
 }
 
@@ -567,8 +568,8 @@ KAboutData* KMPlayer::createAboutData () {
 
 //-----------------------------------------------------------------------------
 
-KMPlayerSource::KMPlayerSource (const QString & name, KMPlayer * player)
- : QObject (player), m_name (name), m_player (player),
+KMPlayerSource::KMPlayerSource (const QString & name, KMPlayer * player, const char * n)
+ : QObject (player, n), m_name (name), m_player (player),
    m_auto_play (true),
    m_currenturl (m_refurls.end ()) {
     kdDebug () << "KMPlayerSource::KMPlayerSource" << endl;
@@ -808,7 +809,7 @@ QString KMPlayerSource::prettyName () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, const KURL & url)
-    : KMPlayerSource (i18n ("URL"), player), m_job (0L) {
+    : KMPlayerSource (i18n ("URL"), player, "urlsource"), m_job (0L) {
     setURL (url);
     kdDebug () << "KMPlayerURLSource::KMPlayerURLSource" << endl;
 }

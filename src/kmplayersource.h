@@ -42,7 +42,7 @@ class QFrame;
 class KMPlayerSource : public QObject {
     Q_OBJECT
 public:
-    KMPlayerSource (const QString & name, KMPlayer * player);
+    KMPlayerSource (const QString & name, KMPlayer * player, const char * src);
     virtual ~KMPlayerSource ();
     virtual void init ();
     virtual bool processOutput (const QString & line);

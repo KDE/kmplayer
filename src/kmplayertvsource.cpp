@@ -328,7 +328,7 @@ KDE_NO_EXPORT void TVDevice::clear () {
  */
 
 KDE_NO_CDTOR_EXPORT KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QPopupMenu * m)
-    : KMPlayerMenuSource (i18n ("TV"), a, m), m_configpage (0L) {
+    : KMPlayerMenuSource (i18n ("TV"), a, m, "tvsource"), m_configpage (0L) {
     m_tvsource = 0L;
     m_menu->insertTearOffHandle ();
     setURL (KURL ("tv://"));
@@ -618,7 +618,7 @@ KDE_NO_EXPORT QFrame * KMPlayerTVSource::prefPage (QWidget * parent) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT TVDeviceScannerSource::TVDeviceScannerSource (KMPlayer * player)
- : KMPlayerSource (i18n ("TVScanner"), player), m_tvdevice (0) {
+ : KMPlayerSource (i18n ("TVScanner"), player, "tvscanner"), m_tvdevice (0) {
     setURL (KURL ("tv://"));
 }
 

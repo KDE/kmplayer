@@ -560,7 +560,7 @@ KDE_NO_EXPORT void KMPlayerSettings::okPressed () {
     emit configChanged ();
 
     if (urlchanged) {
-        m_player->urlSource ()->setSubURL
+        m_player->sources () ["urlsource"]->setSubURL
             (KURL(configdialog->m_SourcePageURL->sub_url->url()));
         m_player->openURL (KURL::fromPathOrURL (configdialog->m_SourcePageURL->url->url ()));
         m_player->process ()->source ()->setSubURL (KURL::fromPathOrURL (configdialog->m_SourcePageURL->sub_url->url ()));

@@ -91,8 +91,8 @@ public:
 
     KDE_NO_EXPORT KMPlayerSettings * settings () const { return m_settings; }
     void keepMovieAspect (bool);
-    KDE_NO_EXPORT KURL url () const { return m_urlsource->url (); }
-    KDE_NO_EXPORT void setURL (const KURL & url) { m_urlsource->setURL (url); }
+    KDE_NO_EXPORT KURL url () const { return m_sources ["urlsource"]->url (); }
+    KDE_NO_EXPORT void setURL (const KURL & url) { m_sources ["urlsource"]->setURL (url); }
     void sizes (int & w, int & h) const;
 
     /* Changes the process,
@@ -109,7 +109,7 @@ public:
     KDE_NO_EXPORT KMPlayerProcess * recorder () const { return m_recorder; }
     QMap <QString, KMPlayerProcess *> & players () { return m_players; }
     QMap <QString, KMPlayerProcess *> & recorders () { return m_recorders; }
-    KDE_NO_EXPORT KMPlayerURLSource * urlSource () const { return m_urlsource; }
+    QMap <QString, KMPlayerSource *> & sources () { return m_sources; }
     KDE_NO_EXPORT KConfig * config () const { return m_config; }
     void enablePlayerMenu (bool enable);
 
@@ -175,7 +175,7 @@ protected:
     KMPlayerProcess * m_recorder;
     QMap <QString, KMPlayerProcess *> m_players;
     QMap <QString, KMPlayerProcess *> m_recorders;
-    KMPlayerURLSource * m_urlsource;
+    QMap <QString, KMPlayerSource *> m_sources;
     KMPlayerBookmarkManager * m_bookmark_manager;
     KMPlayerBookmarkOwner * m_bookmark_owner;
     KBookmarkMenu * m_bookmark_menu;

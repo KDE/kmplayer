@@ -45,7 +45,7 @@ class TVChannel;
 class KMPlayerMenuSource : public KMPlayerSource {
     Q_OBJECT
 public:
-    KMPlayerMenuSource (const QString & n, KMPlayerApp * app, QPopupMenu * m);
+    KMPlayerMenuSource (const QString & n, KMPlayerApp * app, QPopupMenu * m, const char * src);
     virtual ~KMPlayerMenuSource ();
 protected:
     void menuItemClicked (QPopupMenu * menu, int id);

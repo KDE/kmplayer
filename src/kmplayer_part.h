@@ -120,7 +120,6 @@ public:
         { return m_browserextension; }
     KMPlayerLiveConnectExtension * liveconnectextension () const
         { return m_liveconnectextension; }
-    KDE_NO_EXPORT KMPlayerHRefSource * hrefSource () const { return m_hrefsource; }
     KDE_NO_EXPORT bool hasFeature (int f) { return m_features & f; }
     bool allowRedir (const KURL & url);
 public slots:
@@ -138,7 +137,6 @@ protected:
 private:
     KMPlayerBrowserExtension * m_browserextension;
     KMPlayerLiveConnectExtension * m_liveconnectextension;
-    KMPlayerHRefSource * m_hrefsource;
     QString m_group;
     KURL m_docbase;
     QString m_src_url;

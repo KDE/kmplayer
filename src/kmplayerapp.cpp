@@ -81,11 +81,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       m_dvdnavmenu (new QPopupMenu (this)),
       m_vcdmenu (new QPopupMenu (this)),
       m_tvmenu (new QPopupMenu (this)),
-      m_dvdsource (new KMPlayerDVDSource (this, m_dvdmenu)),
-      m_dvdnavsource (new KMPlayerDVDNavSource (this, m_dvdnavmenu)),
-      m_vcdsource (new KMPlayerVCDSource (this, m_vcdmenu)),
-      m_pipesource (new KMPlayerPipeSource (this)),
-      m_tvsource (new KMPlayerTVSource (this, m_tvmenu)),
       m_ffserverconfig (new KMPlayerFFServerConfig),
       m_broadcastconfig (new KMPlayerBroadcastConfig (m_player, m_ffserverconfig))
 {
@@ -93,6 +88,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     connect (m_broadcastconfig, SIGNAL (broadcastStopped()), this, SLOT (broadcastStopped()));
     initStatusBar();
     m_player->init (actionCollection ());
+    m_player->sources () ["dvdsource"] = new KMPlayerDVDSource(this, m_dvdmenu);
+    m_player->sources () ["dvdnavsource"] = new KMPlayerDVDNavSource (this, m_dvdnavmenu);
+    m_player->sources () ["vcdsource"] = new KMPlayerVCDSource(this, m_vcdmenu);
+    m_player->sources () ["pipesource"] = new KMPlayerPipeSource (this);
+    m_player->sources () ["tvsource"] = new KMPlayerTVSource (this, m_tvmenu);
     initActions();
     initView();
 
@@ -229,31 +229,31 @@ KDE_NO_EXPORT void KMPlayerApp::slotSourceChanged (KMPlayerSource * source) {
 
 KDE_NO_EXPORT void KMPlayerApp::dvdNav () {
     slotStatusMsg(i18n("DVD Navigation ..."));
-    m_player->setSource (m_dvdnavsource);
+    m_player->setSource (m_player->sources () ["dvdnavsource"]);
     slotStatusMsg(i18n("Ready"));
 }
 
 KDE_NO_EXPORT void KMPlayerApp::openDVD () {
     slotStatusMsg(i18n("Opening DVD..."));
-    m_player->setSource (m_dvdsource);
+    m_player->setSource (m_player->sources () ["dvdsource"]);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::openVCD () {
     slotStatusMsg(i18n("Opening VCD..."));
-    m_player->setSource (m_vcdsource);
+    m_player->setSource (m_player->sources () ["vcdsource"]);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::openPipe () {
     slotStatusMsg(i18n("Opening pipe..."));
     bool ok;
     QString cmd = KLineEditDlg::getText (i18n("Read From Pipe"),
-      i18n ("Enter command:"), m_pipesource->pipeCmd (), &ok, m_player->view());
+      i18n ("Enter command:"), m_player->sources () ["pipesource"]->pipeCmd (), &ok, m_player->view());
     if (!ok) {
         slotStatusMsg (i18n ("Ready."));
         return;
     }
-    m_pipesource->setCommand (cmd);
-    m_player->setSource (m_pipesource);
+    static_cast <KMPlayerPipeSource *> (m_player->sources () ["pipesource"])->setCommand (cmd);
+    m_player->setSource (m_player->sources () ["pipesource"]);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
@@ -340,7 +340,7 @@ KDE_NO_EXPORT void KMPlayerApp::broadcastStarted () {
 KDE_NO_EXPORT void KMPlayerApp::broadcastStopped () {
     if (m_view->buttonBar()->broadcastButton ()->isOn ())
         m_view->buttonBar()->broadcastButton ()->toggle ();
-    if (m_player->process ()->source () != m_tvsource)
+    if (m_player->process ()->source () != m_player->sources () ["tvsource"])
         m_view->buttonBar()->broadcastButton ()->hide ();
     setCursor (QCursor (Qt::ArrowCursor));
 }
@@ -357,9 +357,9 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
     config->writeEntry ("ToolBarPos", (int) toolBar("mainToolBar")->barPos());
     config->writeEntry ("Show Statusbar",viewStatusBar->isChecked());
     config->writeEntry ("Show Menubar",viewMenuBar->isChecked());
-    if (!m_pipesource->pipeCmd ().isEmpty ()) {
+    if (!m_player->sources () ["pipesource"]->pipeCmd ().isEmpty ()) {
         config->setGroup ("Pipe Command");
-        config->writeEntry ("Command1", m_pipesource->pipeCmd ());
+        config->writeEntry ("Command1", m_player->sources () ["pipesource"]->pipeCmd ());
     }
     fileOpenRecent->saveEntries (config,"Recent Files");
     disconnect (m_player->settings (), SIGNAL (configChanged ()),
@@ -393,7 +393,7 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     slotViewMenuBar();
 
     config->setGroup ("Pipe Command");
-    m_pipesource->setCommand (config->readEntry ("Command1", ""));
+    static_cast <KMPlayerPipeSource *> (m_player->sources () ["pipesource"])->setCommand (config->readEntry ("Command1", ""));
 
     keepSizeRatio ();
     keepSizeRatio (); // Lazy, I know :)
@@ -554,7 +554,7 @@ KDE_NO_EXPORT void KMPlayerApp::startArtsControl () {
 KDE_NO_EXPORT void KMPlayerApp::configChanged () {
     viewKeepRatio->setChecked (m_player->settings ()->sizeratio);
     viewShowConsoleOutput->setChecked (m_player->settings ()->showconsole);
-    m_tvsource->buildMenu ();
+    static_cast <KMPlayerTVSource *> (m_player->sources () ["tvsource"])->buildMenu ();
 }
 
 KDE_NO_EXPORT void KMPlayerApp::keepSizeRatio () {
@@ -574,8 +574,8 @@ KDE_NO_EXPORT void KMPlayerApp::showConsoleOutput () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT KMPlayerMenuSource::KMPlayerMenuSource (const QString & n, KMPlayerApp * a, QPopupMenu * m)
-    : KMPlayerSource (n, a->player ()), m_menu (m), m_app (a) {
+KDE_NO_CDTOR_EXPORT KMPlayerMenuSource::KMPlayerMenuSource (const QString & n, KMPlayerApp * a, QPopupMenu * m, const char * src)
+    : KMPlayerSource (n, a->player (), src), m_menu (m), m_app (a) {
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerMenuSource::~KMPlayerMenuSource () {
@@ -615,7 +615,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageDVD::KMPlayerPrefSourcePageDVD (QWidge
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopupMenu * m)
-    : KMPlayerMenuSource (i18n ("DVD"), a, m), m_configpage (0L) {
+    : KMPlayerMenuSource (i18n ("DVD"), a, m, "dvdsource"), m_configpage (0L) {
     m_menu->insertTearOffHandle ();
     m_dvdtitlemenu = new QPopupMenu (m_app);
     m_dvdsubtitlemenu = new QPopupMenu (m_app);
@@ -815,7 +815,7 @@ KDE_NO_EXPORT QFrame * KMPlayerDVDSource::prefPage (QWidget * parent) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT KMPlayerDVDNavSource::KMPlayerDVDNavSource (KMPlayerApp * app, QPopupMenu * m)
-    : KMPlayerMenuSource (i18n ("DVDNav"), app, m) {
+    : KMPlayerMenuSource (i18n ("DVDNav"), app, m, "dvdnavsource") {
     m_menu->insertTearOffHandle (-1, 0);
     setURL (KURL ("dvd://"));
 }
@@ -892,7 +892,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVCD::KMPlayerPrefSourcePageVCD (QWidge
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT KMPlayerVCDSource::KMPlayerVCDSource (KMPlayerApp * a, QPopupMenu * m)
-    : KMPlayerMenuSource (i18n ("VCD"), a, m), m_configpage (0L) {
+    : KMPlayerMenuSource (i18n ("VCD"), a, m, "vcdsource"), m_configpage (0L) {
     m_menu->insertTearOffHandle ();
     m_vcdtrackmenu = new QPopupMenu (m_app);
     m_vcdtrackmenu->setCheckable (true);
@@ -1014,7 +1014,7 @@ KDE_NO_EXPORT QFrame * KMPlayerVCDSource::prefPage (QWidget * parent) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT KMPlayerPipeSource::KMPlayerPipeSource (KMPlayerApp * a)
-    : KMPlayerSource (i18n ("Pipe"), a->player ()), m_app (a) {
+    : KMPlayerSource (i18n ("Pipe"), a->player (), "pipesource"), m_app (a) {
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerPipeSource::~KMPlayerPipeSource () {
