@@ -167,7 +167,7 @@ public slots:
     bool contrast (int pos, bool absolute);
     bool brightness (int pos, bool absolute);
 private slots:
-    void running ();
+    void processRunning ();
     void processStopped (KProcess *);
 private:
     KMPlayerBackend_stub * m_backend;

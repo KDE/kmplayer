@@ -45,6 +45,7 @@ KMPlayerProcess::KMPlayerProcess (KMPlayer * player)
     : QObject (player), m_player (player), m_source (0L), m_process (0L) {}
 
 KMPlayerProcess::~KMPlayerProcess () {
+    stop ();
     delete m_process;
 }
 
@@ -540,8 +541,9 @@ void KMPlayerCallbackProcess::setMoviePosition (int position) {
 }
 //-----------------------------------------------------------------------------
 
-Xine::Xine (KMPlayer * player) : KMPlayerCallbackProcess (player) {
-    connect (this, SIGNAL (running ()), this, SLOT (running ()));
+Xine::Xine (KMPlayer * player)
+    : KMPlayerCallbackProcess (player), m_backend (0L) {
+    connect (this, SIGNAL (running ()), this, SLOT (processRunning ()));
 }
 
 Xine::~Xine () {}
@@ -552,12 +554,14 @@ QWidget * Xine::widget () {
 
 bool Xine::play () {
     if (playing ()) {
-        m_backend->play ();
+        if (m_backend)
+            m_backend->play ();
         return true;
     }
     KURL url = m_source->url ();
     if (!url.isValid ())
         return false;
+    m_urls.clear ();
     KMPlayerSettings *settings = m_player->settings ();
     delete m_process;
     m_process = new KProcess;
@@ -608,13 +612,15 @@ bool Xine::stop () {
     kdDebug () << "Xine::stop ()" << endl;
     if (!source ()) return false;
     if (!m_process || !m_process->isRunning ()) return true;
-    m_backend->quit ();
-    QTime t;
-    t.start ();
-    do {
-        KProcessController::theKProcessController->waitForProcessExit (2);
-    } while (t.elapsed () < 2000 && m_process->isRunning ());
-    kdDebug () << "DCOP quit " << t.elapsed () << endl;
+    if (m_backend) {
+        m_backend->quit ();
+        QTime t;
+        t.start ();
+        do {
+            KProcessController::theKProcessController->waitForProcessExit (2);
+        } while (t.elapsed () < 2000 && m_process->isRunning ());
+        kdDebug () << "DCOP quit " << t.elapsed () << endl;
+    }
     if (m_process->isRunning () && !KMPlayerCallbackProcess::stop ())
         processStopped (0L); // give up
     return true;
@@ -634,7 +640,7 @@ void Xine::setFinished () {
 }
 
 bool Xine::pause () {
-    if (!playing ()) return false;
+    if (!playing () || !m_backend) return false;
     m_backend->pause ();
     return true;
 }
@@ -645,7 +651,7 @@ void Xine::processStopped (KProcess *) {
     QTimer::singleShot (0, this, SLOT (emitFinished ()));
 }
 
-void Xine::running () {
+void Xine::processRunning () {
     QString dcopname;
     dcopname.sprintf ("kxineplayer-%u", m_process->pid ());
     kdDebug () << "up and running " << dcopname << endl;

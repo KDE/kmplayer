@@ -42,7 +42,6 @@ public:
          brightness (0), contrast (0), hue (0), saturation (0), volume (0),
          window_created (false) {
     }
-    char configfile[2048];
     double res_h, res_v;
     char * vo_driver;
     char * ao_driver;
@@ -255,10 +254,6 @@ void KXinePlayer::play () {
     printf ("trying lock 1\n");
     mutex.lock ();
     printf ("lock 1\n");
-    xine = xine_new();
-    sprintf(d->configfile, "%s%s", xine_get_homedir(), "/.xine/config2");
-    xine_config_load(xine, d->configfile);
-    xine_init(xine);
     XLockDisplay(display);
     if (XShmQueryExtension(display) == True)
         completion_event = XShmGetEventBase(display) + ShmCompletion;
@@ -334,7 +329,6 @@ void KXinePlayer::stop () {
     stream = 0L;
     xine_close_audio_driver (xine, ao_port);  
     xine_close_video_driver (xine, vo_port);  
-    xine_exit (xine);
     mutex.unlock ();
 
     Window root;
@@ -559,6 +553,12 @@ int main(int argc, char **argv) {
     XEventThread eventThread;
     eventThread.start ();
 
+    xine = xine_new();
+    char configfile[2048];
+    sprintf(configfile, "%s%s", xine_get_homedir(), "/.xine/config2");
+    xine_config_load(xine, configfile);
+    xine_init(xine);
+
     if (callback) callback->started ();
     xineapp->exec ();
 
@@ -571,6 +571,8 @@ int main(int argc, char **argv) {
     XFlush (display);
     XUnlockDisplay(display);
     eventThread.wait (500);
+
+    xine_exit (xine);
 
     delete xineapp;
 
