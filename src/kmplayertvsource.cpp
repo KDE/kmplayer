@@ -62,19 +62,6 @@ static const char * strTVNoPlayback = "No Playback";
 static const char * strTVNorm = "Norm";
 static const char * strTVDriver = "Driver";
 
-struct TableInserter {
-    QTable * table;
-    int index;
-    KDE_NO_CDTOR_EXPORT TableInserter (QTable * t) : table (t), index (0) {}
-    KDE_NO_EXPORT void operator () (TVChannel * channel) {
-        table->setItem (index, 0, new QTableItem (table, QTableItem::Always,
-                        channel->name));
-        table->setItem (index++, 1, new QTableItem (table, QTableItem::Always,
-                        QString::number (channel->frequency)));
-    }
-};
-
-//-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent, TVDevice * dev)
 : QFrame (parent, "PageTVDevice"), device (dev) {
@@ -93,9 +80,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevi
     noplayback = new QCheckBox (i18n ("Do not immediately play"), this);
     QWhatsThis::add (noplayback, i18n ("Only start playing after clicking the play button"));
     inputsTab = new QTabWidget (this);
-    TVInputList::iterator iit = device->inputs.begin ();
-    for (; iit != device->inputs.end (); ++iit) {
-        TVInput * input = *iit;
+    for (TVInput * input = device->inputs; input; input = input->next) {
         QWidget * widget = new QWidget (this);
         QVBoxLayout *tablayout = new QVBoxLayout (widget, 5, 2);
         QLabel * inputLabel = new QLabel (input->name, widget);
@@ -116,9 +101,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevi
             QHeader *header = table->horizontalHeader();
             header->setLabel (0, i18n ("Channel"));
             header->setLabel (1, i18n ("Frequency"));
-            std::for_each (input->channels.begin(),
-                           input->channels.end(),
-                           TableInserter(table));
+            int index = 0;
+            for (TVChannel * c = input->channels; c; c = c->next, index++) {
+                table->setItem (index, 0, new QTableItem (table, QTableItem::Always, c->name));
+                table->setItem (index++, 1, new QTableItem (table, QTableItem::Always, QString::number (c->frequency)));
+            }
             tablayout->addSpacing (5);
             tablayout->addWidget (table);
         }
@@ -154,17 +141,21 @@ KDE_NO_EXPORT void KMPlayerPrefSourcePageTVDevice::updateTVDevice () {
     device->audiodevice = audiodevice->lineEdit()->text ();
     device->noplayback = noplayback->isChecked ();
     device->size = QSize(sizewidth->text().toInt(), sizeheight->text().toInt());
-    TVInputList::iterator iit = device->inputs.begin ();
-    for (int i = 0; iit != device->inputs.end (); ++iit, i++) {
-        TVInput * input = *iit;
+    int i = 0;
+    for (TVInput * input = device->inputs; input; input = input->next, ++i) {
         if (input->hastuner) {
             QWidget * widget = inputsTab->page (i);
             QTable * table = static_cast <QTable *> (widget->child ("PageTVChannels", "QTable"));
             if (table) {
                 input->clear ();
+                TVChannel * channel = 0L;
                 for (int j = 0; j < table->numRows (); ++j) {
-                    if (table->item (j, 0) && table->item (j, 1) && !table->item (j, 0)->text ().isEmpty ())
-                        input->channels.push_back (new TVChannel (table->item (j, 0)->text (), table->item (j, 1)->text ().toInt ()));
+                    if (table->item (j, 0) && table->item (j, 1) && !table->item (j, 0)->text ().isEmpty ()) {
+                        if (!channel)
+                            channel = input->channels = new TVChannel (table->item (j, 0)->text (), table->item (j, 1)->text ().toInt ());
+                        else
+                            channel = channel->next = new TVChannel (table->item (j, 0)->text (), table->item (j, 1)->text ().toInt ());
+                    }
                 }
             }
             QComboBox * norms = static_cast <QComboBox *> (widget->child ("PageTVNorm", "QComboBox"));
@@ -293,22 +284,32 @@ KDE_NO_EXPORT void KMPlayerPrefSourcePageTV::updateTVDevices () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT TVChannel::TVChannel (const QString & n, int f) : name (n), frequency (f) {}
+KDE_NO_CDTOR_EXPORT TVChannel::TVChannel (const QString & n, int f) : name (n), frequency (f), next (0L) {}
 
-KDE_NO_CDTOR_EXPORT TVInput::TVInput (const QString & n, int _id) : name (n), id (_id) {}
+KDE_NO_CDTOR_EXPORT TVInput::TVInput (const QString & n, int _id) : name (n), id (_id), channels (0L), next (0) {}
 
 KDE_NO_EXPORT void TVInput::clear () {
-    std::for_each (channels.begin (), channels.end (), Deleter <TVChannel>);
-    channels.clear ();
+    TVChannel * c = channels;
+    while (c) {
+        TVChannel * tmp = c->next;
+        delete c;
+        c = tmp;
+    }
+    channels = 0L;
 }
 
 KDE_NO_CDTOR_EXPORT TVDevice::TVDevice (const QString & d, const QSize & s)
-    : device (d), size (s), noplayback (false) {
+    : device (d), size (s), noplayback (false), inputs (0L) {
 }
 
 KDE_NO_EXPORT void TVDevice::clear () {
-    std::for_each (inputs.begin (), inputs.end (), Deleter <TVInput>);
-    inputs.clear ();
+    TVInput * i = inputs;
+    while (i) {
+        TVInput * tmp = i->next;
+        delete i;
+        i = tmp;
+    }
+    inputs = 0L;
 }
 
 //-----------------------------------------------------------------------------
@@ -391,10 +392,8 @@ KDE_NO_EXPORT void KMPlayerTVSource::buildMenu () {
     for (; dit != tvdevices.end (); ++dit) {
         TVDevice * device = *dit;
         QPopupMenu * devmenu = new QPopupMenu (m_app);
-        TVInputList::iterator iit = device->inputs.begin ();
-        for (; iit != device->inputs.end (); ++iit) {
-            TVInput * input = *iit;
-            if (input->channels.size () <= 0) {
+        for (TVInput * input = device->inputs; input; input = input->next) {
+            if (input->channels) {
                 TVSource * source = new TVSource;
                 devmenu->insertItem (input->name, this, SLOT (menuClicked (int)), 0, counter);
                 source->videodevice = device->device;
@@ -410,20 +409,19 @@ KDE_NO_EXPORT void KMPlayerTVSource::buildMenu () {
             } else {
                 QPopupMenu * inputmenu = new QPopupMenu (m_app, "channelmenu");
                 inputmenu->insertTearOffHandle ();
-                TVChannelList::iterator it = input->channels.begin ();
-                for (; it != input->channels.end (); ++it) {
+                for (TVChannel * c = input->channels; c; c = c->next) {
                     TVSource * source = new TVSource;
                     source->videodevice = device->device;
                     source->audiodevice = device->audiodevice;
                     source->noplayback = device->noplayback;
-                    source->frequency = (*it)->frequency;
+                    source->frequency = c->frequency;
                     source->size = device->size;
                     source->norm = input->norm;
-                    inputmenu->insertItem ((*it)->name, this, SLOT(menuClicked (int)), 0, counter);
-                    source->command.sprintf ("device=%s:input=%d:freq=%d", device->device.ascii (), input->id, (*it)->frequency);
+                    inputmenu->insertItem (c->name, this, SLOT(menuClicked (int)), 0, counter);
+                    source->command.sprintf ("device=%s:input=%d:freq=%d", device->device.ascii (), input->id, c->frequency);
                     if (!source->norm.isEmpty ())
                         source->command += QString (":norm=") + source->norm;
-                    source->title = device->name + QString("-") + (*it)->name;
+                    source->title = device->name + QString("-") + c->name;
                     if (currentcommand == source->command)
                         m_tvsource = source;
                     commands.insert (counter++, source);
@@ -512,16 +510,12 @@ KDE_NO_EXPORT void KMPlayerTVSource::write (KConfig * m_config) {
         m_config->writeEntry (strTVDeviceName, device->name);
         m_config->writeEntry (strTVAudioDevice, device->audiodevice);
         QStringList inputlist;
-        TVInputList::iterator iit = device->inputs.begin ();
-        for (; iit != device->inputs.end (); ++iit) {
-            TVInput * input = *iit;
+        for (TVInput * input = device->inputs; input; input = input->next) {
             inputlist.append (QString::number (input->id) + sep + input->name);
             if (input->hastuner) {
                 QStringList channellist;
-                TVChannelList::iterator it = input->channels.begin ();
-                for (; it != input->channels.end (); ++it) {
-                    channellist.append ((*it)->name + sep + QString::number ((*it)->frequency));
-                }
+                for (TVChannel * c = input->channels; c; c = c->next)
+                    channellist.append (c->name + sep + QString::number (c->frequency));
                 if (!channellist.size ())
                     channellist.append (QString ("none"));
                 m_config->writeEntry (input->name, channellist, ';');
@@ -555,6 +549,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::read (KConfig * m_config) {
         QStrList inputlist;
         int inputentries = m_config->readListEntry (strTVInputs, inputlist,';');
         kdDebug() << device->device << " has " << inputentries << " inputs" << endl;
+        TVInput * input = 0;
         for (int j = 0; j < inputentries; j++) {
             QString inputstr = inputlist.at (j);
             int pos = inputstr.find (':');
@@ -562,12 +557,17 @@ KDE_NO_EXPORT void KMPlayerTVSource::read (KConfig * m_config) {
                 kdError () << "Wrong input: " << inputstr << endl;
                 continue;
             }
-            TVInput * input = new TVInput (inputstr.mid (pos + 1),
-                                           inputstr.left (pos).toInt ());
+            if (!input)
+                input = device->inputs = new TVInput (inputstr.mid (pos + 1),
+                                                  inputstr.left (pos).toInt ());
+            else
+                input = input->next = new TVInput (inputstr.mid (pos + 1),
+                                                  inputstr.left (pos).toInt ());
             QStrList freqlist;
             int freqentries = m_config->readListEntry(input->name,freqlist,';');
             kdDebug() << input->name<< " has " << freqentries << " freqs" << endl;
             input->hastuner = (freqentries > 0);
+            TVChannel * channel = 0;
             for (int k = 0; k < freqentries; k++) {
                 QString freqstr = freqlist.at (k);
                 int pos = freqstr.find (':');
@@ -575,14 +575,14 @@ KDE_NO_EXPORT void KMPlayerTVSource::read (KConfig * m_config) {
                     kdWarning () << "Wrong frequency or none defined: " << freqstr << endl;
                     continue;
                 }
-                TVChannel * channel = new TVChannel (freqstr.left (pos),
-                                                  freqstr.mid (pos+1).toInt ());
+                if (!channel)
+                    channel = input->channels = new TVChannel (freqstr.left (pos), freqstr.mid (pos+1).toInt ());
+                else
+                    channel = channel->next = new TVChannel (freqstr.left (pos), freqstr.mid (pos+1).toInt ());
                 kdDebug() << freqstr.left (pos) << " at " << freqstr.mid (pos+1).toInt() << endl;
-                input->channels.push_back (channel);
             }
             if (input->hastuner) // what if multiple tuners?
                 input->norm = m_config->readEntry (strTVNorm, "PAL");
-            device->inputs.push_back (input);
         }
         tvdevices.push_back (device);
     }
@@ -639,7 +639,14 @@ KDE_NO_EXPORT bool TVDeviceScannerSource::processOutput (const QString & line) {
         TVInput * input = new TVInput (m_inputRegExp.cap (2).stripWhiteSpace (),
                                        m_inputRegExp.cap (1).toInt ());
         input->hastuner = m_inputRegExp.cap (3).toInt () == 1;
-        m_tvdevice->inputs.push_back (input);
+        if (!m_tvdevice->inputs)
+            m_tvdevice->inputs = input;
+        else {
+            TVInput * tmp = m_tvdevice->inputs;
+            while (tmp->next)
+                tmp = tmp->next;
+            tmp->next = input;
+        }
         kdDebug() << "Input " << input->id << ": " << input->name << endl;
     } else
         return false;
@@ -700,7 +707,7 @@ KDE_NO_EXPORT void TVDeviceScannerSource::play () {
 
 KDE_NO_EXPORT void TVDeviceScannerSource::finished () {
     TVDevice * dev = 0L;
-    if (!m_tvdevice->inputs.size ())
+    if (!m_tvdevice->inputs)
         delete m_tvdevice;
     else
         dev = m_tvdevice;

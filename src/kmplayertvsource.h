@@ -46,11 +46,11 @@ class KURLRequester;
 class TVChannel {
 public:
     TVChannel (const QString & n, int f);
+    KDE_NO_CDTOR_EXPORT ~TVChannel () {}
     QString name;
     int frequency;
+    TVChannel * next;
 };
-
-typedef std::list <TVChannel *> TVChannelList;
 
 class TVInput {
 public:
@@ -61,10 +61,9 @@ public:
     int id;
     bool hastuner;
     QString norm;
-    TVChannelList channels;
+    TVChannel * channels;
+    TVInput * next;
 };
-
-typedef std::list <TVInput *> TVInputList;
 
 class TVDevice {
 public:
@@ -78,7 +77,7 @@ public:
     QSize maxsize;
     QSize size;
     bool noplayback;
-    TVInputList inputs;
+    TVInput * inputs;
 };
 
 inline bool operator == (const TVDevice * device, const QString & devstr) {
