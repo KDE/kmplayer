@@ -375,7 +375,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
                 QString channel_name = line.mid (4);
                 m_document->appendChild ((new KMPlayer::GenericMrl (m_document, QString ("kmplayer://vdrsource/%1").arg(channel_name), channel_name))->self ());
                 if (cmd_done) {
-                    m_player->updateTree (m_document, m_current);
+                    m_player->updateTree ();
                     if (!m_request_jump.isEmpty ()) {
                         jump (m_request_jump);
                         m_request_jump.truncate (0);

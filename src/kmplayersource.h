@@ -58,7 +58,7 @@ public:
     KDE_NO_EXPORT const KURL & url () const { return m_url; }
     KDE_NO_EXPORT const KURL & subUrl () const { return m_sub_url; }
     QString first ();
-    QString current ();
+    QString currentMrl ();
     QString next ();
     QString mime () const;
     KDE_NO_EXPORT const QString & audioDevice () const { return m_audiodevice; }
@@ -70,6 +70,8 @@ public:
     KDE_NO_EXPORT const QString & pipeCmd () const { return m_pipecmd; }
     KDE_NO_EXPORT const QString & options () const { return m_options; }
     KDE_NO_EXPORT const QString & recordCmd () const { return m_recordcmd; }
+    KDE_NO_EXPORT ElementPtr current () const { return m_current; }
+    KDE_NO_EXPORT ElementPtr document () const { return m_document; }
     virtual QString filterOptions ();
 
     void setURL (const KURL & url);

@@ -122,7 +122,7 @@ public:
     // these are called from Process
     void changeURL (const QString & url);
     void changeTitle (const QString & title);
-    void updateTree (const ElementPtr & d, const ElementPtr & c);
+    void updateTree ();
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool closeURL ();

@@ -955,7 +955,7 @@ KDE_NO_EXPORT void KMPlayerVCDSource::setIdentified (bool b) {
     KMPlayer::Source::setIdentified (b);
     if (!m_document->hasChildNodes ())
         m_current = m_document;
-    m_player->updateTree (m_document, m_current);
+    m_player->updateTree ();
     buildArguments ();
     m_app->slotStatusMsg (i18n ("Ready."));
 }

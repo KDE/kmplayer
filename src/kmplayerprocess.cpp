@@ -319,7 +319,7 @@ KDE_NO_EXPORT bool MPlayer::play (Source * source) {
         return sendCommand (QString ("gui_play"));
     stop ();
     m_source = source;
-    KURL url (source->current ());
+    KURL url (source->currentMrl ());
     initProcess ();
     source->setPosition (0);
     m_request_seek = -1;
@@ -791,7 +791,7 @@ bool MEncoder::play (Source * source) {
     if (m_player->settings()->recordcopy)
         margs = QString ("-oac copy -ovc copy");
     args += QString ("mencoder ") + margs + ' ' + m_source->recordCmd ();
-    KURL url (source->current ());
+    KURL url (source->currentMrl ());
     if (m_player->source () == source) // ugly
         m_player->stop ();
     QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
@@ -853,7 +853,7 @@ bool MPlayerDumpstream::play (Source * source) {
     if (!m_use_slave)
         args = m_source->pipeCmd () + QString (" | ");
     args += QString ("mplayer ") + m_source->recordCmd ();
-    KURL url (source->current ());
+    KURL url (source->currentMrl ());
     if (m_player->source () == source) // ugly
         m_player->stop ();
     QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
@@ -1068,7 +1068,7 @@ bool CallbackProcess::play (Source * source) {
     if (!m_backend)
         return false;
     m_source = source;
-    KURL url (source->current ());
+    KURL url (source->currentMrl ());
     QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
     m_backend->setURL (QFile::encodeName (myurl));
     const KURL & sub_url = m_source->subUrl ();
@@ -1568,7 +1568,7 @@ bool FFMpeg::play (Source * source) {
             process.start (KProcess::Block);
         }
     } else {
-        KURL url (source->current ());
+        KURL url (source->currentMrl ());
         cmd += QString ("-i ") + KProcess::quote (QString (QFile::encodeName (url.isLocalFile () ? getPath (url) : url.url ())));
     }
     cmd += QChar (' ') + arguments;

@@ -516,13 +516,21 @@ void PartBase::forward () {
 void PartBase::playListItemSelected (QListViewItem * item) {
     if (m_in_update_tree) return;
     ListViewItem * vi = static_cast <ListViewItem *> (item);
-    m_source->jump (vi->m_elm);
+    if (vi->m_elm)
+        m_source->jump (vi->m_elm);
+    else
+        updateTree ();
 }
 
-void PartBase::updateTree (const ElementPtr & d, const ElementPtr & c) {
+void PartBase::updateTree () {
     m_in_update_tree = true;
-    if (m_process && m_process->view ())
-        m_process->view ()->playList ()->updateTree (d, c);
+    if (m_process && m_process->view ()) {
+        if (m_process->player () != this)
+            m_process->player ()->updateTree ();
+        else if (m_source)
+            m_process->view ()->playList ()->updateTree
+                (m_source->document (), m_source->current ());
+    }
     m_in_update_tree = false;
 }
 
@@ -712,7 +720,7 @@ void Source::setURL (const KURL & url) {
             m_document->document ()->dispose ();
         m_document = (new Document (url.url ()))->self ();
         if (m_player->process () && m_player->source () == this)
-            m_player->updateTree (m_document, m_current);
+            m_player->updateTree ();
     }
     m_current = m_document;
 }
@@ -723,17 +731,17 @@ QString Source::first () {
         m_current = m_document;
         if (!m_document->isMrl ())
             return next ();
-        m_player->updateTree (m_document, m_current);
+        m_player->updateTree ();
     }
-    return current ();
+    return currentMrl ();
 }
 
-QString Source::current () {
+QString Source::currentMrl () {
     return m_current ? m_current->mrl()->src : QString ();
 }
 
 void Source::getCurrent () {
-    QString url = current ();
+    QString url = currentMrl ();
     m_player->changeURL (url);
     if (m_player->process () && m_player->process ()->view ())
         m_player->process ()->view ()->videoStop (); // show buttonbar
@@ -779,17 +787,17 @@ QString Source::next () {
                 }
             }
         }
-        m_player->updateTree (m_document, m_current);
+        m_player->updateTree ();
     }
-    return current ();
+    return currentMrl ();
 }
 
 void Source::insertURL (const QString & mrl) {
     kdDebug() << "Source::insertURL " << (Element*)m_current << mrl << endl;
-    KURL url (current (), mrl);
+    KURL url (currentMrl (), mrl);
     if (!url.isValid ())
         kdError () << "try to append non-valid url" << endl;
-    else if (KURL (current ()) == url)
+    else if (KURL (currentMrl ()) == url)
         kdError () << "try to append url to itself" << endl;
     else if (m_current) {
         int depth = 0;
@@ -806,7 +814,7 @@ void Source::insertURL (const QString & mrl) {
 }
 
 void Source::play () {
-    m_player->updateTree (m_document, m_current);
+    m_player->updateTree ();
     QTimer::singleShot (0, m_player, SLOT (play ()));
     printTree (m_document);
 }
@@ -853,7 +861,7 @@ void Source::jump (ElementPtr e) {
         } else
             m_current = e;
     } else
-        m_player->updateTree (m_document, m_current);
+        m_player->updateTree ();
 }
 
 QString Source::mime () const {
@@ -1198,7 +1206,7 @@ void URLSource::getCurrent () {
     terminateJob ();
     if (m_current && !m_current->isMrl ())
         next ();
-    KURL url (current ());
+    KURL url (currentMrl ());
     int depth = 0;
     if (m_current)
         for (ElementPtr e = m_current; e->parentNode (); e = e->parentNode ())
@@ -1212,7 +1220,7 @@ void URLSource::getCurrent () {
         if (url.isLocalFile ()) {
             QFile file (url.path ());
             if (!file.exists ()) {
-                kdDebug () << "URLSource::getCurrent not found " << url.path () << " " << current () << endl;
+                kdDebug () << "URLSource::getCurrent not found " << url.path () << " " << currentMrl () << endl;
                 Source::getCurrent ();
                 return;
             }
