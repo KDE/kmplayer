@@ -758,9 +758,14 @@ KDE_NO_EXPORT QFrame * MPlayerPreferencesPage::prefPage (QWidget * parent) {
 
 //-----------------------------------------------------------------------------
 
+static const char * mencoder_supports [] = {
+    "dvdsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", 0L
+};
+
 KDE_NO_CDTOR_EXPORT MEncoder::MEncoder (PartBase * player)
-    : MPlayerBase (player, "mencoder") {
-    }
+ : MPlayerBase (player, "mencoder") {
+    m_supported_sources = mencoder_supports;
+}
 
 KDE_NO_CDTOR_EXPORT MEncoder::~MEncoder () {
 }
@@ -783,6 +788,8 @@ bool MEncoder::play (Source * source) {
         margs = QString ("-oac copy -ovc copy");
     args += QString ("mencoder ") + margs + ' ' + m_source->recordCmd ();
     KURL url (source->current ());
+    if (m_player->source () == source) // ugly
+        m_player->stop ();
     QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
     bool post090 = m_player->settings ()->mplayerpost090;
     if (!myurl.isEmpty ()) {
@@ -815,9 +822,14 @@ KDE_NO_EXPORT bool MEncoder::stop () {
 
 //-----------------------------------------------------------------------------
 
+static const char * mplayerdump_supports [] = {
+    "dvdsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", 0L
+};
+
 KDE_NO_CDTOR_EXPORT
 MPlayerDumpstream::MPlayerDumpstream (PartBase * player)
     : MPlayerBase (player, "mplayerdumpstream") {
+    m_supported_sources = mplayerdump_supports;
     }
 
 KDE_NO_CDTOR_EXPORT MPlayerDumpstream::~MPlayerDumpstream () {
@@ -838,6 +850,8 @@ bool MPlayerDumpstream::play (Source * source) {
         args = m_source->pipeCmd () + QString (" | ");
     args += QString ("mplayer ") + m_source->recordCmd ();
     KURL url (source->current ());
+    if (m_player->source () == source) // ugly
+        m_player->stop ();
     QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
     bool post090 = m_player->settings ()->mplayerpost090;
     if (!myurl.isEmpty ()) {
@@ -1487,8 +1501,13 @@ KDE_NO_EXPORT bool GStreamer::ready () {
 
 //-----------------------------------------------------------------------------
 
+static const char * ffmpeg_supports [] = {
+    "tvsource", "urlsource", 0L
+};
+
 FFMpeg::FFMpeg (PartBase * player)
-    : Process (player, "ffmpeg") {
+ : Process (player, "ffmpeg") {
+    m_supported_sources = ffmpeg_supports;
 }
 
 KDE_NO_CDTOR_EXPORT FFMpeg::~FFMpeg () {
@@ -1536,6 +1555,8 @@ bool FFMpeg::play (Source * source) {
     cmd += QChar (' ') + KProcess::quote (QString (QFile::encodeName (outurl)));
     printf ("%s\n", (const char *) cmd.local8Bit ());
     *m_process << cmd;
+    if (m_player->source () == source) // ugly
+        m_player->stop ();
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
     if (m_process->isRunning ())
         setState (Playing);

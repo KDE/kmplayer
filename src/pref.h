@@ -155,9 +155,9 @@ class RecorderPage : public QFrame
 public:
     RecorderPage (QWidget *parent, PartBase *);
     virtual ~RecorderPage () {};
-    virtual void record () = 0;
+    virtual void record ();
     virtual QString name () = 0;
-    virtual bool sourceSupported (Source *) = 0;
+    virtual const char * recorderName () = 0;
     RecorderPage * next;
 protected:
     PartBase * m_player;
@@ -172,7 +172,7 @@ public:
 
     void record ();
     QString name ();
-    bool sourceSupported (Source *);
+    const char * recorderName () { return "mencoder"; }
 
     QLineEdit * arguments;
     QButtonGroup * format;
@@ -188,9 +188,8 @@ public:
     PrefMPlayerDumpstreamPage (QWidget *parent, PartBase *);
     ~PrefMPlayerDumpstreamPage () {}
 
-    void record ();
     QString name ();
-    bool sourceSupported (Source *);
+    const char * recorderName () { return "mplayerdumpstream"; }
 
     QLineEdit * arguments;
     QButtonGroup * format;
@@ -206,7 +205,7 @@ public:
 
     void record ();
     QString name ();
-    bool sourceSupported (Source *);
+    const char * recorderName () { return "ffmpeg"; }
 
     QLineEdit * arguments;
     QButtonGroup * format;

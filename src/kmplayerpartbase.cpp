@@ -131,7 +131,10 @@ PartBase::PartBase (QWidget * wparent, const char *wname,
 }
 
 void PartBase::showConfigDialog () {
-    m_settings->show ("GeneralPage");
+    if (m_process->player () == this)
+        m_settings->show ("GeneralPage");
+    else
+        m_process->player ()->showConfigDialog ();
 }
 
 KDE_NO_EXPORT void PartBase::showVideoWindow () {
@@ -523,15 +526,17 @@ void PartBase::updateTree (const ElementPtr & d, const ElementPtr & c) {
 }
 
 void PartBase::record () {
-    if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
-    if (m_recorder->playing ()) {
-        m_recorder->stop ();
-    } else {
-        m_process->quit ();
-        m_settings->show  ("RecordPage");
-        m_view->buttonBar ()->setRecording (false);
-    }
-    if (m_view) m_view->setCursor (QCursor (Qt::ArrowCursor));
+    if (m_process->player () == this) { 
+        if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
+        if (m_recorder->playing ()) {
+            m_recorder->stop ();
+        } else {
+            m_settings->show  ("RecordPage");
+            m_view->buttonBar ()->setRecording (false);
+        }
+        if (m_view) m_view->setCursor (QCursor (Qt::ArrowCursor));
+    } else
+        m_process->player ()->record ();
 }
 
 void PartBase::play () {
