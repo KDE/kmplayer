@@ -91,6 +91,7 @@ public:
     virtual ~KMPlayerURLSource ();
 
     virtual bool processOutput (const QString & line);
+    virtual bool hasLength ();
 
     void setURL (const KURL & url);
     const KURL & url () const { return m_url; }
@@ -123,8 +124,6 @@ public:
     KProcess * process () const { return m_process; }
     int seekTime () const { return m_seektime; }
     void setSeekTime (int t) { m_seektime = t; }
-    int cacheSize () const { return m_cachesize; }
-    void setCacheSize (int s) { m_cachesize = s; }
     void keepMovieAspect (bool);
     KURL url () const { return m_urlsource->url (); }
     void setURL (const KURL & url) { m_urlsource->setURL (url); }
@@ -189,7 +188,6 @@ private:
     KURL m_recordurl;
     QString m_process_output;
     int m_seektime;
-    int m_cachesize;
     int movie_width;
     int movie_height;
     int m_movie_position;

@@ -40,13 +40,10 @@ class KMPlayerAppURLSource : public KMPlayerURLSource {
 public:
     KMPlayerAppURLSource (KMPlayerApp * app);
     virtual ~KMPlayerAppURLSource ();
-    virtual bool processOutput (const QString & line);
 public slots:
     virtual void activate ();
-    virtual void deactivate ();
     void finished ();
 private:
-    KURL m_url;
     KMPlayerApp * app;
 };
 
@@ -83,6 +80,7 @@ public slots:
 private slots:
     void identify ();
 private:
+    const QString buildArguments ();
     QRegExp langRegExp;
     QRegExp subtitleRegExp;
     QRegExp titleRegExp;
@@ -110,6 +108,7 @@ public slots:
     void finished ();
     void trackMenuClicked (int id);
 private:
+    const QString buildArguments ();
     QRegExp trackRegExp;
     QPopupMenu * m_vcdtrackmenu;
 };

@@ -187,7 +187,6 @@ void KMPlayerConfig::readConfig () {
     additionalarguments = m_config->readEntry (strAddArgs, "");
     mencoderarguments = m_config->readEntry (strMencoderArgs, "-oac copy -ovc copy");
     cachesize = m_config->readNumEntry (strCacheSize, 0);
-    m_player->setCacheSize (cachesize);
     m_config->setGroup (strMPlayerPatternGroup);
     sizepattern = m_config->readEntry (strSize, "VO:.*[^0-9]([0-9]+)x([0-9]+)");
     cachepattern = m_config->readEntry (strCache, "Cache fill:[^0-9]*([0-9\\.]+)%");
@@ -407,7 +406,7 @@ void KMPlayerConfig::writeConfig () {
     m_config->writeEntry (strVoDriver, videodriver);
     m_config->writeEntry (strAoDriver, audiodriver);
     m_config->writeEntry (strAddArgs, additionalarguments);
-    m_config->writeEntry (strCacheSize, m_player->cacheSize ());
+    m_config->writeEntry (strCacheSize, cachesize);
     m_config->writeEntry (strShowControlButtons, showbuttons);
     m_config->writeEntry (strShowPositionSlider, showposslider);
     m_config->writeEntry (strAlwaysBuildIndex, alwaysbuildindex);
@@ -556,7 +555,6 @@ void KMPlayerConfig::okPressed () {
     
     additionalarguments = configdialog->m_GeneralPageAdvanced->additionalArguments->text();
     cachesize = configdialog->m_GeneralPageAdvanced->cacheSize->value(); 
-    m_player->setCacheSize (cachesize);
     sizepattern = configdialog->m_GeneralPageAdvanced->sizePattern->text ();
     cachepattern = configdialog->m_GeneralPageAdvanced->cachePattern->text ();
     startpattern = configdialog->m_GeneralPageAdvanced->startPattern->text ();

@@ -460,7 +460,7 @@ void KMPlayer::setMovieLength (int len) {
         return;
     m_source->setLength (len);
     if (m_view)
-        m_view->positionSlider()->setMaxValue (len > 0 ? m_source->length () : 300);
+        m_view->positionSlider()->setMaxValue (len > 0 ? m_source->length () + 9 : 300);
 }
 
 void KMPlayer::pause () {
@@ -569,13 +569,6 @@ bool KMPlayer::run (const char * args, const char * pipe) {
         printf (" -ao %s", strAudioDriver.lower().ascii());
         *m_process << " -ao " << strAudioDriver.lower().ascii();
     }
-    if ( (m_configdialog->alwaysbuildindex) && (url ().protocol() == "file") ) {
-        if ((url().path().lower().endsWith(".avi")) || (url().path().lower().endsWith(".divx")) ) {
-            printf (" -idx");
-            *m_process << " -idx";
-        }
-    }
-
     if (m_configdialog->loop) {
         printf (" -loop 0");
         *m_process << " -loop 0 ";
@@ -969,6 +962,8 @@ QString KMPlayerSource::filterOptions () {
 }
 
 QString KMPlayerSource::recordCommand () {
+    if (m_recordCommand.isEmpty ())
+        return QString::null;
     return QString ("mencoder ") + m_player->configDialog()->mencoderarguments +
            QString (" ") + m_recordCommand;
 }
@@ -1001,6 +996,10 @@ void KMPlayerURLSource::init () {
         if (KProtocolManager::useProxy () && proxyForURL (m_url, proxy_url))
             m_player->process ()->setEnvironment("http_proxy", proxy_url);
     }
+}
+
+bool KMPlayerURLSource::hasLength () {
+    return !!length ();
 }
 
 void KMPlayerURLSource::setURL (const KURL & url) { 
@@ -1048,14 +1047,22 @@ void KMPlayerURLSource::play () {
         return;
     m_player->setURL (url);
     QString args;
-    int cache = m_player->cacheSize ();
+    m_recordCommand.truncate (0);
+    int cache = m_player->configDialog ()->cachesize;
     if (url.isLocalFile () || cache <= 0)
         args.sprintf ("-slave ");
     else
         args.sprintf ("-slave -cache %d ", cache);
+
+    if (m_player->configDialog ()->alwaysbuildindex && url.isLocalFile ()) {
+        if (url.path ().lower ().endsWith (".avi") ||
+            url.path ().lower ().endsWith (".divx")) {
+            args += QString (" -idx ");
+            m_recordCommand = QString (" -idx ");
+        }
+    }
     QString myurl (url.isLocalFile () ? url.path () : url.url ());
-    m_recordCommand = myurl;
-    printf (" %s\n", KProcess::quote (myurl).latin1 ());
+    m_recordCommand += myurl;
     args += KProcess::quote (myurl);
     m_player->run (args.latin1 ());
 }
