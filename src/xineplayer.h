@@ -30,6 +30,11 @@ public:
     ~KXinePlayer ();
     void setURL (const QString & url);
     void finished ();
+    void saturation (int val);
+    void hue (int val);
+    void contrast (int val);
+    void brightness (int val);
+    void volume (int val);
 public slots:
     void play ();
     void stop ();

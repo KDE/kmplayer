@@ -55,12 +55,12 @@ public slots:
     virtual bool play () = 0;
     virtual bool stop ();
     virtual bool pause ();
-    virtual bool seek (int pos, int absolute);
-    virtual bool volume (int pos, int absolute);
-    virtual bool saturation (int pos, int absolute);
-    virtual bool hue (int pos, int absolute);
-    virtual bool contrast (int pos, int absolute);
-    virtual bool brightness (int pos, int absolute);
+    virtual bool seek (int pos, bool absolute);
+    virtual bool volume (int pos, bool absolute);
+    virtual bool saturation (int pos, bool absolute);
+    virtual bool hue (int pos, bool absolute);
+    virtual bool contrast (int pos, bool absolute);
+    virtual bool brightness (int pos, bool absolute);
 protected:
     KMPlayer * m_player;
     KMPlayerSource * m_source;
@@ -99,12 +99,12 @@ public slots:
     virtual bool play ();
     virtual bool stop ();
     virtual bool pause ();
-    virtual bool seek (int pos, int absolute);
-    virtual bool volume (int pos, int absolute);
-    virtual bool saturation (int pos, int absolute);
-    virtual bool hue (int pos, int absolute);
-    virtual bool contrast (int pos, int absolute);
-    virtual bool brightness (int pos, int absolute);
+    virtual bool seek (int pos, bool absolute);
+    virtual bool volume (int pos, bool absolute);
+    virtual bool saturation (int pos, bool absolute);
+    virtual bool hue (int pos, bool absolute);
+    virtual bool contrast (int pos, bool absolute);
+    virtual bool brightness (int pos, bool absolute);
 private slots:
     void processOutput (KProcess *, char *, int);
 private:
@@ -162,6 +162,10 @@ public slots:
     bool stop ();
     void setFinished ();
     bool pause ();
+    bool saturation (int pos, bool absolute);
+    bool hue (int pos, bool absolute);
+    bool contrast (int pos, bool absolute);
+    bool brightness (int pos, bool absolute);
 private slots:
     void running ();
     void processStopped (KProcess *);

@@ -63,27 +63,27 @@ bool KMPlayerProcess::pause () {
     return false;
 }
 
-bool KMPlayerProcess::seek (int /*pos*/, int /*absolute*/) {
+bool KMPlayerProcess::seek (int /*pos*/, bool /*absolute*/) {
     return false;
 }
 
-bool KMPlayerProcess::volume (int /*pos*/, int /*absolute*/) {
+bool KMPlayerProcess::volume (int /*pos*/, bool /*absolute*/) {
     return false;
 }
 
-bool KMPlayerProcess::saturation (int /*pos*/, int /*absolute*/) {
+bool KMPlayerProcess::saturation (int /*pos*/, bool /*absolute*/) {
     return false;
 }
 
-bool KMPlayerProcess::hue (int /*pos*/, int /*absolute*/) {
+bool KMPlayerProcess::hue (int /*pos*/, bool /*absolute*/) {
     return false;
 }
 
-bool KMPlayerProcess::contrast (int /*pos*/, int /*absolute*/) {
+bool KMPlayerProcess::contrast (int /*pos*/, bool /*absolute*/) {
     return false;
 }
 
-bool KMPlayerProcess::brightness (int /*pos*/, int /*absolute*/) {
+bool KMPlayerProcess::brightness (int /*pos*/, bool /*absolute*/) {
     return false;
 }
 
@@ -209,21 +209,21 @@ bool MPlayer::pause () {
     return sendCommand (QString ("pause"));
 }
 
-bool MPlayer::seek (int pos, int absolute) {
+bool MPlayer::seek (int pos, bool absolute) {
     if (!m_source || !m_source->hasLength ()) return false;
     QString cmd;
     cmd.sprintf ("seek -%d %d", pos, absolute ? 2 : 0);
     return sendCommand (cmd);
 }
 
-bool MPlayer::volume (int incdec, int absolute) {
+bool MPlayer::volume (int incdec, bool absolute) {
     if (!source ()) return false;
     if (!absolute)
         return sendCommand (QString ("volume ") + QString::number (incdec));
     return false;
 }
 
-bool MPlayer::saturation (int val, int absolute) {
+bool MPlayer::saturation (int val, bool absolute) {
     if (!source ()) return false;
     if (!m_widget) return false;
     QString cmd;
@@ -231,7 +231,7 @@ bool MPlayer::saturation (int val, int absolute) {
     return sendCommand (cmd);
 }
 
-bool MPlayer::hue (int val, int absolute) {
+bool MPlayer::hue (int val, bool absolute) {
     if (!source ()) return false;
     if (!m_widget) return false;
     QString cmd;
@@ -239,7 +239,7 @@ bool MPlayer::hue (int val, int absolute) {
     return sendCommand (cmd);
 }
 
-bool MPlayer::contrast (int val, int /*absolute*/) {
+bool MPlayer::contrast (int val, bool /*absolute*/) {
     if (!source ()) return false;
     if (!m_widget) return false;
     QString cmd;
@@ -247,7 +247,7 @@ bool MPlayer::contrast (int val, int /*absolute*/) {
     return sendCommand (cmd);
 }
 
-bool MPlayer::brightness (int val, int /*absolute*/) {
+bool MPlayer::brightness (int val, bool /*absolute*/) {
     if (!source ()) return false;
     if (!m_widget) return false;
     QString cmd;
@@ -570,8 +570,7 @@ bool Xine::play () {
             strVideoDriver = VDRIVER_XV;
             break;
         case VDRIVER_X11_INDEX:
-            strVideoDriver = VDRIVER_X11;
-            strVideoDriver.truncate(3);
+            strVideoDriver = QString ("xshm");
             break;
         case VDRIVER_XVIDIX_INDEX:
             strVideoDriver = VDRIVER_XVIDIX;
@@ -648,7 +647,36 @@ void Xine::running () {
     dcopname.sprintf ("kxineplayer-%u", m_process->pid ());
     kdDebug () << "up and running " << dcopname << endl;
     m_backend = new KMPlayerBackend_stub (dcopname.ascii (), "KMPlayerBackend");
+    KMPlayerSettings * settings = m_player->settings ();
+    saturation (settings->saturation, true);
+    hue (settings->hue, true);
+    brightness (settings->brightness, true);
+    contrast (settings->contrast, true);
     m_backend->play ();
+}
+
+bool Xine::saturation (int val, bool) {
+    if (m_backend)
+        m_backend->saturation (65535 * (val + 100) / 200, true);
+    return !!m_backend;
+}
+
+bool Xine::hue (int val, bool) {
+    if (m_backend)
+        m_backend->hue (65535 * (val + 100) / 200, true);
+    return !!m_backend;
+}
+
+bool Xine::brightness (int val, bool) {
+    if (m_backend)
+        m_backend->brightness (65535 * (val + 100) / 200, true);
+    return !!m_backend;
+}
+
+bool Xine::contrast (int val, bool) {
+    if (m_backend)
+        m_backend->contrast (65535 * (val + 100) / 200, true);
+    return !!m_backend;
 }
 
 //-----------------------------------------------------------------------------

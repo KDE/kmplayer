@@ -40,6 +40,7 @@ public:
     KXinePlayerPrivate()
        : vo_driver ("auto"),
          ao_driver ("auto"),
+         brightness (0), contrast (0), hue (0), saturation (0), volume (0),
          window_created (false) {
     }
     char configfile[2048];
@@ -47,6 +48,7 @@ public:
     char * vo_driver;
     char * ao_driver;
     QString mrl;
+    int brightness, contrast, hue, saturation, volume;
     bool window_created;
 };
 
@@ -166,19 +168,24 @@ void KMPlayerBackend::pause () {
 void KMPlayerBackend::seek (int pos, bool absolute) {
 }
 
-void KMPlayerBackend::hue (int h, bool absolute) {
+void KMPlayerBackend::hue (int h, bool) {
+    xineapp->hue (h);
 }
 
-void KMPlayerBackend::saturation (int s, bool absolute) {
+void KMPlayerBackend::saturation (int s, bool) {
+    xineapp->saturation (s);
 }
 
-void KMPlayerBackend::contrast (int c, bool absolute) {
+void KMPlayerBackend::contrast (int c, bool) {
+    xineapp->contrast (c);
 }
 
-void KMPlayerBackend::brightness (int b, bool absolute) {
+void KMPlayerBackend::brightness (int b, bool) {
+    xineapp->brightness (b);
 }
 
-void KMPlayerBackend::volume (int v, bool absolute) {
+void KMPlayerBackend::volume (int v, bool) {
+    xineapp->volume (v);
 }
 
 void KMPlayerBackend::quit () {
@@ -289,6 +296,15 @@ void KXinePlayer::play () {
     xine_gui_send_vo_data (stream, XINE_GUI_SEND_DRAWABLE_CHANGED, (void *)wid);
     xine_gui_send_vo_data(stream, XINE_GUI_SEND_VIDEOWIN_VISIBLE, (void *) 1);
 
+    if (d->saturation)
+        xine_set_param( stream, XINE_PARAM_VO_SATURATION, d->saturation);
+    if (d->brightness)
+        xine_set_param (stream, XINE_PARAM_VO_BRIGHTNESS, d->brightness);
+    if (d->contrast)
+        xine_set_param (stream, XINE_PARAM_VO_CONTRAST, d->contrast);
+    if (d->hue)
+        xine_set_param (stream, XINE_PARAM_VO_HUE, d->hue);
+    running = 1;
     if (!xine_open (stream, d->mrl.ascii ())) {
         printf("Unable to open mrl '%s'\n", d->mrl.ascii ());
         mutex.unlock ();
@@ -303,7 +319,6 @@ void KXinePlayer::play () {
         finished ();
         return;
     }
-    running = 1;
     mutex.unlock ();
 }
 
@@ -374,6 +389,51 @@ void KXinePlayer::updatePosition () {
         callback->moviePosition (pos/100);
     }
     QTimer::singleShot (500, this, SLOT (updatePosition ()));
+}
+
+void KXinePlayer::saturation (int val) {
+    d->saturation = val;
+    if (running) {
+        mutex.lock ();
+        xine_set_param (stream, XINE_PARAM_VO_SATURATION, val);
+        mutex.unlock ();
+    }
+}
+
+void KXinePlayer::hue (int val) {
+    d->saturation = val;
+    if (running) {
+        mutex.lock ();
+        xine_set_param (stream, XINE_PARAM_VO_HUE, val);
+        mutex.unlock ();
+    }
+}
+
+void KXinePlayer::contrast (int val) {
+    d->saturation = val;
+    if (running) {
+        mutex.lock ();
+        xine_set_param (stream, XINE_PARAM_VO_CONTRAST, val);
+        mutex.unlock ();
+    }
+}
+
+void KXinePlayer::brightness (int val) {
+    d->saturation = val;
+    if (running) {
+        mutex.lock ();
+        xine_set_param (stream, XINE_PARAM_VO_BRIGHTNESS, val);
+        mutex.unlock ();
+    }
+}
+
+void KXinePlayer::volume (int val) {
+    d->saturation = val;
+    if (running) {
+        mutex.lock ();
+        xine_set_param( stream, XINE_PARAM_AUDIO_VOLUME, val);
+        mutex.unlock ();
+    }
 }
 
 class XEventThread : public QThread {
