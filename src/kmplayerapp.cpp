@@ -290,8 +290,6 @@ void KMPlayerApp::readOptions() {
     // initialize the recent file list
     fileOpenRecent->loadEntries(config,"Recent Files");
 
-    m_tvsource->buildMenu ();
-
     configChanged ();
 }
 
@@ -445,6 +443,7 @@ void KMPlayerApp::startArtsControl () {
 void KMPlayerApp::configChanged () {
     viewKeepRatio->setChecked (m_player->configDialog ()->sizeratio);
     viewShowConsoleOutput->setChecked (m_player->configDialog ()->showconsole);
+    m_tvsource->buildMenu ();
 }
 
 void KMPlayerApp::keepSizeRatio () {

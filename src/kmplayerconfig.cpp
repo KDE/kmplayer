@@ -49,6 +49,7 @@ TVDevice::TVDevice (const QString & d, const QSize & s) : device (d), size (s) {
 
 KMPlayerConfig::KMPlayerConfig (KMPlayer * player, KConfig * config)
   : configdialog (0L), m_config (config), m_player (player) {
+    tvdevices.setAutoDelete (true);
 }
 
 KMPlayerConfig::~KMPlayerConfig () {
@@ -121,6 +122,11 @@ static const char * strPP_Cub_Int = "Cubic Interpolating Deinterlacer";
 static const char * strPP_Med_Int = "Median Interpolating Deinterlacer";
 static const char * strPP_FFmpeg_Int = "FFmpeg Interpolating Deinterlacer";
 // end of postproc
+static const char * strTV = "TV";
+static const char * strTVDevices = "Devices";
+static const char * strTVInputs = "Inputs";
+static const char * strTVSize = "Size";
+static const char * strTVDriver = "Driver";
 
 void KMPlayerConfig::readConfig () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
@@ -217,16 +223,16 @@ void KMPlayerConfig::readConfig () {
 
     // TV stuff
     tvdevices.clear ();
-    m_config->setGroup("TV");
-    tvdriver = m_config->readEntry ("Driver", "v4l");
+    m_config->setGroup(strTV);
+    tvdriver = m_config->readEntry (strTVDriver, "v4l");
     QStrList devlist;
-    int deviceentries = m_config->readListEntry ("Devices", devlist, ';');
+    int deviceentries = m_config->readListEntry (strTVDevices, devlist, ';');
     for (int i = 0; i < deviceentries; i++) {
         m_config->setGroup (devlist.at (i));
         TVDevice * device = new TVDevice (devlist.at (i), 
-                                          m_config->readSizeEntry ("Size"));
+                                          m_config->readSizeEntry (strTVSize));
         QStrList inputlist;
-        int inputentries = m_config->readListEntry ("Inputs", inputlist, ';');
+        int inputentries = m_config->readListEntry (strTVInputs, inputlist,';');
         kdDebug() << device->device << " has " << inputentries << " inputs" << endl;
         for (int j = 0; j < inputentries; j++) {
             QString inputstr = inputlist.at (j);
@@ -441,6 +447,36 @@ void KMPlayerConfig::writeConfig () {
     m_config->writeEntry (strPP_Med_Int, pp_med_int);
     m_config->writeEntry (strPP_FFmpeg_Int, pp_ffmpeg_int);
 
+    //TV stuff
+    QStringList devicelist = m_config->readListEntry (strTVDevices, ';');
+    for (unsigned i = 0; i < devicelist.size (); i++)
+        m_config->deleteGroup (*devicelist.at (i));
+    devicelist.clear ();
+    TVDevice * device;
+    QString sep = QString (":");
+    for (tvdevices.first(); (device = tvdevices.current ()); tvdevices.next()) {
+        kdDebug() << " writing " << device->device << endl;
+        devicelist.append (device->device);
+        m_config->setGroup (device->device);
+        m_config->writeEntry (strTVSize, device->size);
+        QStringList inputlist;
+        TVInput * input;
+        for (device->inputs.first (); (input = device->inputs.current ()); device->inputs.next ()) {
+            inputlist.append (QString::number (input->id) + sep + input->name);
+            TVChannel * channel;
+            QStringList channellist; 
+            for (input->channels.first (); (channel = input->channels.current()); input->channels.next ()) {
+                channellist.append (channel->name + sep + QString::number (channel->frequency));
+            }
+            if (channellist.size () > 0)
+                m_config->writeEntry (input->name, channellist, ';');
+        }
+        m_config->writeEntry (strTVInputs, inputlist, ';');
+    }
+    m_config->setGroup (strTV);
+    m_config->writeEntry (strTVDevices, devicelist, ';');
+    m_config->writeEntry (strTVDriver, tvdriver);
+    // end TV stuff
     m_config->sync ();
 }
 
