@@ -34,6 +34,7 @@
 #include <qbuttongroup.h>
 #include <qmessagebox.h>
 #include <qpopupmenu.h>
+#include <qfontmetrics.h>
 
 #include <klocale.h>
 #include <kdebug.h>
@@ -68,7 +69,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevi
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
     QLabel * deviceLabel = new QLabel (i18n ("Video device:") + device->device, this, 0);
     layout->addWidget (deviceLabel);
-    QGridLayout *gridlayout = new QGridLayout (layout, 5, 4);
+    QGridLayout *gridlayout = new QGridLayout (layout, 3, 4);
     QLabel * audioLabel = new QLabel (i18n ("Audio device:"), this);
     audiodevice = new KURLRequester (device->audiodevice, this);
     QLabel * nameLabel = new QLabel (i18n ("Name:"), this, 0);
@@ -82,11 +83,10 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevi
     inputsTab = new QTabWidget (this);
     for (TVInput * input = device->inputs; input; input = input->next) {
         QWidget * widget = new QWidget (this);
-        QVBoxLayout *tablayout = new QVBoxLayout (widget, 5, 2);
-        QLabel * inputLabel = new QLabel (input->name, widget);
-        tablayout->addWidget (inputLabel);
+        QHBoxLayout *tablayout = new QHBoxLayout (widget, 5, 2);
         if (input->hastuner) {
             QHBoxLayout *horzlayout = new QHBoxLayout ();
+            QVBoxLayout *vertlayout = new QVBoxLayout ();
             horzlayout->addWidget (new QLabel (i18n ("Norm:"), widget));
             QComboBox * norms = new QComboBox (widget, "PageTVNorm");
             norms->insertItem (QString ("NTSC"), 0);
@@ -94,20 +94,26 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevi
             norms->insertItem (QString ("SECAM"), 2);
             norms->setCurrentText (input->norm);
             horzlayout->addWidget (norms);
-            tablayout->addLayout (horzlayout);
+            vertlayout->addLayout (horzlayout);
+            vertlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
             QTable * table = new QTable (90, 2, widget, "PageTVChannels");
-            table->setColumnWidth (0, 250);
-            table->setColumnWidth (1, 150);
+            QFontMetrics metrics (table->font ());
             QHeader *header = table->horizontalHeader();
             header->setLabel (0, i18n ("Channel"));
             header->setLabel (1, i18n ("Frequency"));
             int index = 0;
-            for (TVChannel * c = input->channels; c; c = c->next, index++) {
+            int first_column_width = QFontMetrics (header->font ()).boundingRect (header->label (0)).width () + 20;
+            for (TVChannel * c = input->channels; c; c = c->next) {
+                int strwid = metrics.boundingRect (c->name).width ();
+                if (strwid > first_column_width)
+                    first_column_width = strwid + 4;
                 table->setItem (index, 0, new QTableItem (table, QTableItem::Always, c->name));
                 table->setItem (index++, 1, new QTableItem (table, QTableItem::Always, QString::number (c->frequency)));
             }
-            tablayout->addSpacing (5);
+            table->setColumnWidth (0, first_column_width);
+            table->setColumnStretchable (1, true);
             tablayout->addWidget (table);
+            tablayout->addLayout (vertlayout);
         }
         inputsTab->addTab (widget, input->name);
     }
@@ -121,12 +127,12 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevi
     gridlayout->addWidget (sizewidth, 2, 1);
     gridlayout->addWidget (sizeheightLabel, 2, 2);
     gridlayout->addWidget (sizeheight, 2, 3);
-    gridlayout->addMultiCellWidget (noplayback, 3, 3, 0, 3);
     layout->addWidget (inputsTab);
     layout->addSpacing (5);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
     QHBoxLayout *buttonlayout = new QHBoxLayout ();
-    buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    buttonlayout->addWidget (noplayback);
+    buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
     buttonlayout->addWidget (delButton);
     layout->addLayout (buttonlayout);
 }
