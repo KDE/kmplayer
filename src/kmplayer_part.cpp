@@ -191,12 +191,11 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
         KMPlayerPart * master = masterKMPlayerPart ();
         if (master) {
             // found a master, exchange controls now
-            if (m_features & Feat_Controls) {
-                removeControlPanel (m_view->buttonBar ());
-                master->addControlPanel (m_view->buttonBar ());
-            }
+            removeControlPanel (m_view->buttonBar ());
+            master->addControlPanel (m_view->buttonBar ());
             if (m_features & Feat_Viewer) {
                 m_view->setForeignViewer (master->m_view);
+                master->addControlPanel (m_view->buttonBar ());
             }
         }
         kmplayerpart_static->kmplayer_parts.push_back (this);
@@ -253,11 +252,9 @@ bool KMPlayerPart::openURL (const KURL & url) {
         for (; i != kmplayerpart_static->kmplayer_parts.end (); ++i) {
             if (!*i || !(*i)->m_view || ((KMPlayerPart*)*i) == this)
                 continue;
-            if ((*i)->m_features & Feat_Controls) {
-                KMPlayerControlPanel * panel = (*i)->m_view->buttonBar ();
-                (*i)->removeControlPanel (panel);
-                addControlPanel (panel);
-            }
+            KMPlayerControlPanel * panel = (*i)->m_view->buttonBar ();
+            addControlPanel (panel);
+            (*i)->removeControlPanel (panel);
             if ((*i)->m_features & Feat_Viewer) {
                 (*i)->m_view->setForeignViewer (m_view);
             }

@@ -290,16 +290,20 @@ void KMPlayerBackend::quit () {
 
 bool updateConfigEntry (const QString & name, const QString & value) {
     fprintf (stderr, "%s=%s\n", name.ascii (), (const char *) value.local8Bit ());
+    bool changed = false;
     xine_cfg_entry_t cfg_entry;
     if (!xine_config_lookup_entry (xine, name.ascii (), &cfg_entry))
         return false;
     if (cfg_entry.type == XINE_CONFIG_TYPE_STRING ||
-            cfg_entry.type == XINE_CONFIG_TYPE_UNKNOWN)
+            cfg_entry.type == XINE_CONFIG_TYPE_UNKNOWN) {
+        changed = strcmp (cfg_entry.str_value, value.ascii ());
         cfg_entry.str_value = (char *) value.ascii ();
-    else
+    } else {
+        changed = cfg_entry.num_value != value.toInt ();
         cfg_entry.num_value = value.toInt ();
+    }
     xine_config_update_entry (xine,  &cfg_entry);
-    return true;
+    return changed;
 }
 
 void KMPlayerBackend::setConfig (QByteArray data) {
@@ -952,7 +956,7 @@ int main(int argc, char **argv) {
 
     snprintf(configfile, sizeof (configfile), "%s%s", xine_get_homedir(), "/.xine/config2");
     xineapp = new KXinePlayer (argc, argv);
-    bool config_exists = QFile (configfile).exists ();
+    bool config_changed = !QFile (configfile).exists ();
 
     if (!callback && mrl.isEmpty ()) {
         fprintf (stderr, "usage: %s [-vo (xv|xshm)] [-ao (arts|esd|..)] [-f <xine config file>] [-dvd-device <device>] [-vcd-device <device>] [-wid <X11 Window>|-window-id <X11 Window>|-root] [-sub <subtitle url>] [(-v|-vv)] [-cb <DCOP callback name> [-c]] [<url>]\n", argv[0]);
@@ -974,13 +978,14 @@ int main(int argc, char **argv) {
     xine_init(xine);
 
     xineapp->init ();
-    if (!config_exists)
-        xine_config_save (xine, configfile);
 
     if (dvd_device)
-        updateConfigEntry (QString ("input.dvd_device"), QString (dvd_device));
+        config_changed |= updateConfigEntry (QString ("input.dvd_device"), QString (dvd_device));
     if (vcd_device)
-        updateConfigEntry (QString ("input.vcd_device"), QString (vcd_device));
+        config_changed |= updateConfigEntry (QString ("input.vcd_device"), QString (vcd_device));
+
+    if (config_changed)
+        xine_config_save (xine, configfile);
 
     if (callback) {
         QByteArray buf;

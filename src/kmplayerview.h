@@ -55,7 +55,6 @@ class KMPlayerViewLayer : public QWidget {
 public:
     KMPlayerViewLayer (KMPlayerView * parent, QBoxLayout * b);
     bool isFullScreen () const { return m_fullscreen; }
-    void setForeignLayer (KMPlayerViewLayer * f) { m_foreign_layer = f; }
 public slots:
     void fullScreen ();
     void accelActivated ();
@@ -63,7 +62,6 @@ private:
     KMPlayerView * m_view;
     QBoxLayout * m_box;
     QAccel * m_accel;
-    QGuardedPtr<KMPlayerViewLayer> m_foreign_layer;
     bool m_fullscreen : 1;
 };
 
@@ -99,7 +97,7 @@ public:
     //void setAutoHideSlider (bool b);
     ControlPanelMode controlPanelMode () const { return m_controlpanel_mode; }
     void delayedShowButtons (bool show);
-    bool isFullScreen () const { return m_layer->isFullScreen (); }
+    bool isFullScreen () const;
     bool setPicture (const QString & path);
     QPixmap * image () const { return m_image; }
     bool playing () const { return m_playing; }
@@ -126,6 +124,7 @@ private:
     void emitPictureClicked () { emit pictureClicked (); }
     // widget for player's output
     QGuardedPtr<KMPlayerViewer> m_viewer;
+    QGuardedPtr<KMPlayerView> m_foreign_view;
     // console output
     QMultiLineEdit * m_multiedit;
     // click-to-play widget
