@@ -134,7 +134,7 @@ void KMPlayer::init (KActionCollection * action_collection) {
     connect (m_view->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));
     connect (m_view, SIGNAL (urlDropped (const KURL &)), this, SLOT (openURL (const KURL &)));
     m_view->popupMenu ()->connectItem (KMPlayerView::menu_config,
-                                       m_settings, SLOT (show (const char *)));
+                                       this, SLOT (showConfigDialog ()));
     setRecorder (m_mencoder);
     //connect (m_view->configButton (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
 }
