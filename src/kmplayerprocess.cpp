@@ -345,13 +345,8 @@ bool MPlayer::run (const char * args, const char * pipe) {
         QTimer::singleShot (0, this, SLOT (emitStarted ()));
         return true;
     }
+    QTimer::singleShot (0, this, SLOT (emitFinished ()));
     return false;
-}
-
-void processStopped (KProcess *) {
-}
-
-void dataWritten (KProcess *) {
 }
 
 void MPlayer::processOutput (KProcess *, char * str, int slen) {
@@ -385,7 +380,7 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
                 emit loading (int (m_cacheRegExp.cap (1).toDouble ()));
             }
         } else {
-            //m_view->addText (out + QString ("\n"));
+            emit output (out);
             if (!m_source->processOutput (out)) {
                 QRegExp sizeRegExp (m_player->settings ()->sizepattern);
                 QRegExp startRegExp (m_player->settings ()->startpattern);
@@ -438,7 +433,7 @@ bool MEncoder::play () {
 }
 
 bool MEncoder::stop () {
-    if (!m_process->isRunning ())
+    if (!m_process || !m_process->isRunning ())
         return true;
     do {
         m_process->kill (SIGINT);
@@ -459,9 +454,6 @@ bool MEncoder::stop () {
     return true;
 }
 
-void MEncoder::processStopped (KProcess *) {
-}
-
 //-----------------------------------------------------------------------------
 
 FFMpeg::FFMpeg (KMPlayer * player)
@@ -475,6 +467,7 @@ void FFMpeg::init () {
 }
 
 bool FFMpeg::play () {
+    return true;
 }
 
 bool FFMpeg::stop () {

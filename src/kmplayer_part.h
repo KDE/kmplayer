@@ -202,9 +202,11 @@ private slots:
     void saturationValueChanged (int val);
     void processStarted ();
     void processFinished ();
+    void recordingFinished ();
     void processPosition (int pos);
     void processLoading (int percentage);
     void processPlaying ();
+    void processOutput (const QString & msg);
 private:
     void init ();
     KConfig * m_config;
@@ -217,7 +219,6 @@ private:
     KMPlayerHRefSource * m_hrefsource;
     KMPlayerBrowserExtension * m_browserextension;
     KMPlayerLiveConnectExtension * m_liveconnectextension;
-    KURL m_recordurl;
     int m_seektime;
     int movie_width;
     int movie_height;
@@ -226,7 +227,6 @@ private:
     bool m_autoplay : 1;
     bool m_ispart : 1;
     bool m_use_slave : 1;
-    bool m_recording : 1;
     bool m_bPosSliderPressed : 1;
     bool m_havehref : 1;
 };

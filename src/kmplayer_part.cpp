@@ -168,7 +168,6 @@ void KMPlayer::showConfigDialog () {
 void KMPlayer::init () {
     m_settings->readConfig ();
     setProcess (m_mplayer);
-    m_recording = false;
     m_started_emited = false;
     m_browserextension = new KMPlayerBrowserExtension (this);
     m_movie_position = 0;
@@ -193,14 +192,13 @@ void KMPlayer::init () {
     connect (m_view, SIGNAL (urlDropped (const KURL &)), this, SLOT (openURL (const KURL &)));
     m_view->popupMenu ()->connectItem (KMPlayerView::menu_config,
                                        m_settings, SLOT (show ()));
-    connect (m_mencoder, SIGNAL (finished ()),
-             m_view->recordButton (), SLOT (toggle ()));
+    connect (m_mencoder, SIGNAL (finished()), this, SLOT (recordingFinished()));
     setMovieLength (0);
     //connect (m_view->configButton (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
 }
 
 KMPlayer::~KMPlayer () {
-    kdDebug() << "KMPlayer::~KMPlayer" << kdBacktrace() << endl;
+    kdDebug() << "KMPlayer::~KMPlayer" << endl;
     if (!m_ispart)
         delete (KMPlayerView*) m_view;
     m_view = (KMPlayerView*) 0;
@@ -229,6 +227,8 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
                     this, SLOT (processLoading (int)));
         disconnect (m_process, SIGNAL (startPlaying ()),
                     this, SLOT (processPlaying ()));
+        disconnect (m_process, SIGNAL (output (const QString &)),
+                    this, SLOT (processOutput (const QString &)));
     }
     m_process = process;
     connect (m_process, SIGNAL (started ()), this, SLOT (processStarted ()));
@@ -239,6 +239,8 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
              this, SLOT (processLoading (int)));
     connect (m_process, SIGNAL (startPlaying ()),
              this, SLOT (processPlaying ()));
+    connect (m_process, SIGNAL (output (const QString &)),
+             this, SLOT (processOutput (const QString &)));
 }
 
 void KMPlayer::setSource (KMPlayerSource * source, bool keepsizes) {
@@ -325,16 +327,15 @@ void KMPlayer::keepMovieAspect (bool b) {
         m_view->viewer ()->setAspect (0.0);
 }
 
+void KMPlayer::recordingFinished () {
+    if (m_view && m_view->recordButton ()->isOn ()) 
+        m_view->recordButton ()->toggle ();
+    if (m_settings->autoplayafterrecording)
+        openURL (m_mencoder->recordURL ());
+}
+
 void KMPlayer::processFinished () {
     kdDebug () << "process finished" << endl;
-    if (m_recording) {
-        m_recording = false;
-        if (m_view && m_view->recordButton ()->isOn ()) 
-            m_view->recordButton ()->toggle ();
-        if (m_settings->autoplayafterrecording)
-            openURL (m_recordurl);
-        return;
-    }
     if (m_movie_position > m_process->source ()->length ())
         setMovieLength (m_movie_position);
     m_movie_position = 0;
@@ -342,6 +343,8 @@ void KMPlayer::processFinished () {
         m_started_emited = false;
         m_browserextension->setLoadingProgress (100);
         emit completed ();
+    } else {
+        emit canceled (i18n ("Could not start MPlayer"));
     }
     if (m_view && m_view->playButton ()->isOn ()) {
         m_view->playButton ()->toggle ();
@@ -366,9 +369,6 @@ void KMPlayer::processStarted () {
     emit started (0L);
     m_started_emited = true;
     m_view->positionSlider()->setEnabled (true);
-        /*if (m_view->playButton ()->isOn ()) m_view->playButton ()->toggle ();
-        emit canceled (i18n ("Could not start MPlayer"));
-        return false; */
 }
 
 void KMPlayer::processPosition (int pos) {
@@ -407,6 +407,11 @@ void KMPlayer::processPlaying () {
     }
 }
 
+void KMPlayer::processOutput (const QString & msg) {
+    if (m_view)
+        m_view->addText (msg + QString ("\n"));
+}
+
 void KMPlayer::setMovieLength (int len) {
     if (!m_process->source ())
         return;
@@ -428,6 +433,11 @@ void KMPlayer::forward () {
 }
 
 void KMPlayer::record () {
+    if (m_mencoder->playing ()) {
+        m_mencoder->stop ();
+        return;
+    }
+    m_process->stop ();
     m_mencoder->setSource (m_process->source ());
     if (m_mencoder->play ()) {
         if (!m_view->recordButton ()->isOn ()) 

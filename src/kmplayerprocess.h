@@ -48,6 +48,7 @@ signals:
     void positionChanged (int pos);
     void loading (int percentage);
     void startPlaying ();
+    void output (const QString & msg);
 public slots:
     virtual bool play () = 0;
     virtual bool stop () = 0;
@@ -118,11 +119,10 @@ public:
     MEncoder (KMPlayer * player);
     ~MEncoder ();
     virtual void init ();
+    const KURL & recordURL () const { return m_recordurl; }
 public slots:
     virtual bool play ();
     virtual bool stop ();
-private slots:
-    void processStopped (KProcess *);
 private:
     KURL m_recordurl;
 };
