@@ -358,7 +358,7 @@ KDE_NO_EXPORT void KMPlayerPart::waitForImageWindowTimeOut () {
         // still no ImageWindow attached, eg. audio only 
         setProcess ("mplayer");
         setRecorder ("mencoder");
-        KParts::ReadOnlyPart::openURL (url ());
+        KMPlayer::openURL (url ());
     }
 }
 
