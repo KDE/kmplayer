@@ -241,6 +241,7 @@ bool MPlayer::play () {
     stop ();
     initProcess ();
     source ()->setPosition (0);
+    m_request_seek = -1;
     QString args = source ()->options () + ' ';
     KURL url (*m_source->currentUrl ());
     if (!url.isEmpty ()) {
@@ -248,6 +249,8 @@ bool MPlayer::play () {
         if (m_source->url ().isLocalFile ())
             m_process->setWorkingDirectory 
                 (QFileInfo (m_source->url ().path ()).dirPath (true));
+        if (url.isLocalFile ())
+            m_url = url.path ();
         args += KProcess::quote (QString (QFile::encodeName (m_url)));
     }
     m_tmpURL.truncate (0);
@@ -286,14 +289,20 @@ bool MPlayer::seek (int pos, bool absolute) {
     if (!m_source || !m_source->hasLength () ||
             (absolute && m_source->position () == pos))
         return false;
-    if (commands.size () > 1) {
+    if (m_request_seek >= 0 && commands.size () > 1) {
         QStringList::iterator i = commands.begin ();
-        for (++i; i != commands.end (); )
-            if ((*i).startsWith (QString ("seek")))
+        for (++i; i != commands.end (); ++i)
+            if ((*i).startsWith (QString ("seek"))) {
                 i = commands.erase (i);
-            else 
-                ++i;
+                m_request_seek = -1;
+                break;
+            }
     }
+    if (m_request_seek >= 0) {
+        //m_request_seek = pos;
+        return false;
+    }
+    m_request_seek = pos;
     QString cmd;
     cmd.sprintf ("seek %d %d", pos/10, absolute ? 2 : 0);
     if (!absolute)
@@ -469,6 +478,7 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
             if (m_source->hasLength () && m_posRegExp.search (out) > -1) {
                 int pos = int (10.0 * m_posRegExp.cap (1).toFloat ());
                 source ()->setPosition (pos);
+                m_request_seek = -1;
                 emit positionChanged (pos);
             } else if (m_cacheRegExp.search (out) > -1) {
                 emit loading (int (m_cacheRegExp.cap (1).toDouble ()));
@@ -506,9 +516,10 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
                             m_source->referenceUrls ().insert (m_source->nextUrl (), m_tmpURL);
                             m_tmpURL.truncate (0);
                         }
-                        // FIXME: why was this needed?
-                        //m_source->next ();
-                        //m_source->first ();
+                        // update currentUrl if this was a playlist
+                        QStringList::iterator tmp = m_source->currentUrl ();
+                        if (m_source->nextUrl () != ++tmp)
+                            m_source->next ();
                         source ()->setIdentified ();
                     }
                     emit startPlaying ();
@@ -831,6 +842,7 @@ void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
 
 void KMPlayerCallbackProcess::setMoviePosition (int position) {
     m_source->setPosition (position);
+    m_request_seek = -1;
     emit positionChanged (position);
 }
 
@@ -1084,6 +1096,7 @@ bool Xine::play () {
         m_process->start (KProcess::NotifyOnExit, KProcess::All);
         return m_process->isRunning ();
     }
+    m_request_seek = -1;
     KURL url (*m_source->currentUrl ());
     kdDebug() << "Xine::play (" << url.url() << ")" << endl;
     if (url.isEmpty ())
@@ -1198,7 +1211,9 @@ bool Xine::seek (int pos, bool absolute) {
     if (!absolute)
         pos = m_source->position () + pos;
     m_source->setPosition (pos);
-    m_backend->seek (pos, true);
+    if (m_request_seek < 0)
+        m_backend->seek (pos, true);
+    m_request_seek = pos;
     return true;
 }
 

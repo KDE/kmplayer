@@ -77,6 +77,7 @@ protected:
     KMPlayerSource * m_source;
     KProcess * m_process;
     QString m_url;
+    int m_request_seek;
 protected slots:
     // QTimer::singleShot slots for the signals
     void emitStarted () { emit started (); }
