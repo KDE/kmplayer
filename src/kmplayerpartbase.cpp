@@ -646,17 +646,6 @@ QString KMPlayerSource::prettyName () {
     return QString (i18n ("Unknown"));
 }
 
-void KMPlayerSource::write (KConfig *) {}
-
-void KMPlayerSource::read (KConfig *) {}
-
-void KMPlayerSource::sync (QFrame *, bool) {}
-
-void KMPlayerSource::prefLocation (QString &, QString &, QString &) {}
-
-QFrame * KMPlayerSource::prefPage (QWidget *) {
-    return 0L;
-}
 //-----------------------------------------------------------------------------
 
 KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, const KURL & url)

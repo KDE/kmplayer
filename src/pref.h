@@ -42,14 +42,10 @@
 #include <qslider.h>
 #include <qspinbox.h>
 #include <qstringlist.h>
-#include <kurlrequester.h>
 
-#include "kmplayersource.h"
 
 class KMPlayerPrefGeneralPageGeneral; 	// general, general
 class KMPlayerPrefSourcePageURL;        // source, url
-class KMPlayerPrefGeneralPageDVD;	// general, dvd
-class KMPlayerPrefGeneralPageVCD;	// general, vcd
 class KMPlayerPrefRecordPage;           // recording
 class RecorderPage;                     // base recorder
 class KMPlayerPrefMEncoderPage;         // mencoder
@@ -61,11 +57,13 @@ class KMPlayerPrefGeneralPageAdvanced;	// general, advanced, pattern matches etc
 class KMPlayerPrefOPPageGeneral;	// OP = outputplugins, general
 class KMPlayerPrefOPPagePostProc;	// outputplugins, postproc
 class KMPlayer;
+class KMPlayerSource;
 class QTabWidget;
 class QTable;
 class QGroupBox;
 class KHistoryCombo;
 class KComboBox;
+class KURLRequester;
 
 typedef std::list<RecorderPage*> RecorderList;
 
@@ -107,25 +105,17 @@ public:
 
 typedef std::vector <FFServerSetting *> FFServerSettingList;
 
-struct PrefSubEntry {
-    PrefSubEntry (const QString &, QFrame *, KMPlayerSource *); 
-    QString name;
-    QFrame * frame;
-    KMPlayerSource * source;
+
+class KMPlayerPreferencesPage {
+public:
+    virtual void write (KConfig *) = 0;
+    virtual void read (KConfig *) = 0;
+    virtual void sync (bool fromUI) = 0;
+    virtual void prefLocation (QString & item, QString & icon, QString & tab) = 0;
+    virtual QFrame * prefPage (QWidget * parent) = 0;
 };
 
-typedef std::list <PrefSubEntry *> TabList;
-
-struct PrefEntry {
-    PrefEntry (const QString &, const QString &, QFrame *, QTabWidget *);
-    QString name;
-    QString icon;
-    TabList tabs;
-    QFrame * frame;
-    QTabWidget * tab;
-};
-
-typedef std::list <PrefEntry *> PrefEntryList;
+typedef std::list <KMPlayerPreferencesPage *> KMPlayerPreferencesPageList;
 
 
 class KMPlayerPreferences : public KDialogBase
@@ -133,13 +123,11 @@ class KMPlayerPreferences : public KDialogBase
     Q_OBJECT
 public:
 
-    KMPlayerPreferences(KMPlayer *, MPlayerAudioDriver * ad, FFServerSettingList &);
+    KMPlayerPreferences(KMPlayer *, KMPlayerPreferencesPageList &, MPlayerAudioDriver * ad, FFServerSettingList &);
     ~KMPlayerPreferences();
 
     KMPlayerPrefGeneralPageGeneral 	*m_GeneralPageGeneral;
     KMPlayerPrefSourcePageURL 		*m_SourcePageURL;
-    KMPlayerPrefGeneralPageDVD 		*m_GeneralPageDVD;
-    KMPlayerPrefGeneralPageVCD 		*m_GeneralPageVCD;
     KMPlayerPrefRecordPage 		*m_RecordPage;
     KMPlayerPrefMEncoderPage            *m_MEncoderPage;
     KMPlayerPrefFFMpegPage              *m_FFMpegPage;
@@ -153,7 +141,6 @@ public:
     void setPage (const char *);
 
     RecorderList recorders;
-    PrefEntryList entries;
 public slots:
     void confirmDefaults();
 };
@@ -199,29 +186,6 @@ public:
 private slots:
     void slotBrowse ();
     void slotTextChanged (const QString &);
-};
-
-class KMPlayerPrefGeneralPageDVD : public QFrame
-{
-    Q_OBJECT
-public:
-    KMPlayerPrefGeneralPageDVD(QWidget *parent = 0);
-    ~KMPlayerPrefGeneralPageDVD() {}
-
-    QCheckBox *autoPlayDVD;
-    KURLRequester *dvdDevicePath;
-
-};
-
-class KMPlayerPrefGeneralPageVCD : public QFrame
-{
-    Q_OBJECT
-public:
-    KMPlayerPrefGeneralPageVCD(QWidget *parent = 0);
-    ~KMPlayerPrefGeneralPageVCD() {}
-    KURLRequester *vcdDevicePath;
-    QCheckBox *autoPlayVCD;
-
 };
 
 

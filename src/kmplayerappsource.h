@@ -26,14 +26,19 @@
 #include <qptrlist.h>
 #include <qmap.h>
 #include <qregexp.h>
+#include <qframe.h>
 
 #include <kurl.h>
 
 #include "kmplayersource.h"
+#include "pref.h"
+
 
 class KMPlayerApp;
+class KURLRequester;
 class QPopupMenu;
 class QMenuItem;
+class QCheckBox;
 class TVInput;
 class TVChannel;
 
@@ -50,7 +55,18 @@ protected:
 };
 
 
-class KMPlayerDVDSource : public KMPlayerMenuSource {
+class KMPlayerPrefSourcePageDVD : public QFrame {
+    Q_OBJECT
+public:
+    KMPlayerPrefSourcePageDVD (QWidget * parent);
+    ~KMPlayerPrefSourcePageDVD () {}
+
+    QCheckBox * autoPlayDVD;
+    KURLRequester * dvddevice;
+};
+
+
+class KMPlayerDVDSource : public KMPlayerMenuSource, public KMPlayerPreferencesPage {
     Q_OBJECT
 public:
     KMPlayerDVDSource (KMPlayerApp * app, QPopupMenu * m);
@@ -59,6 +75,11 @@ public:
     virtual QString filterOptions ();
     virtual void setIdentified (bool b = true);
     virtual QString prettyName ();
+    virtual void write (KConfig *);
+    virtual void read (KConfig *);
+    virtual void sync (bool);
+    virtual void prefLocation (QString & item, QString & icon, QString & tab);
+    virtual QFrame * prefPage (QWidget * parent);
 public slots:
     virtual void activate ();
     virtual void deactivate ();
@@ -78,8 +99,10 @@ private:
     QPopupMenu * m_dvdchaptermenu;
     QPopupMenu * m_dvdlanguagemenu;
     QPopupMenu * m_dvdsubtitlemenu;
+    KMPlayerPrefSourcePageDVD * m_configpage;
     int m_current_title;
     bool m_start_play;
+    bool playdvd;
 };
 
 
@@ -99,7 +122,17 @@ public slots:
 };
 
 
-class KMPlayerVCDSource : public KMPlayerMenuSource {
+class KMPlayerPrefSourcePageVCD : public QFrame {
+    Q_OBJECT
+public:
+    KMPlayerPrefSourcePageVCD (QWidget * parent);
+    ~KMPlayerPrefSourcePageVCD () {}
+    KURLRequester * vcddevice;
+    QCheckBox *autoPlayVCD;
+};
+
+
+class KMPlayerVCDSource : public KMPlayerMenuSource, public KMPlayerPreferencesPage {
     Q_OBJECT
 public:
     KMPlayerVCDSource (KMPlayerApp * app, QPopupMenu * m);
@@ -107,6 +140,11 @@ public:
     virtual bool processOutput (const QString & line);
     virtual void setIdentified (bool b = true);
     virtual QString prettyName ();
+    virtual void write (KConfig *);
+    virtual void read (KConfig *);
+    virtual void sync (bool);
+    virtual void prefLocation (QString & item, QString & icon, QString & tab);
+    virtual QFrame * prefPage (QWidget * parent);
 public slots:
     virtual void activate ();
     virtual void deactivate ();
@@ -117,8 +155,10 @@ private:
     void buildArguments ();
     QRegExp trackRegExp;
     QPopupMenu * m_vcdtrackmenu;
+    KMPlayerPrefSourcePageVCD * m_configpage;
     int m_current_title;
     bool m_start_play;
+    bool playvcd;
 };
 
 

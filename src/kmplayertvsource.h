@@ -26,6 +26,7 @@
 #include <qframe.h>
 
 #include "kmplayerappsource.h"
+#include "pref.h"
 
 class KMPlayerPrefSourcePageTV;         // source, TV
 class TVDeviceScannerSource;
@@ -173,7 +174,7 @@ private:
     QRegExp m_inputRegExp;
 };
 
-class KMPlayerTVSource : public KMPlayerMenuSource {
+class KMPlayerTVSource : public KMPlayerMenuSource, public KMPlayerPreferencesPage {
     Q_OBJECT
 public:
     struct TVSource {
@@ -196,7 +197,7 @@ public:
     virtual QString prettyName ();
     virtual void write (KConfig *);
     virtual void read (KConfig *);
-    virtual void sync (QFrame *, bool);
+    virtual void sync (bool);
     virtual void prefLocation (QString & item, QString & icon, QString & tab);
     virtual QFrame * prefPage (QWidget * parent);
 public slots:
@@ -210,11 +211,9 @@ private:
     TVSource * m_tvsource;
     CommandMap commands;
     QPopupMenu * m_channelmenu;
-// TV config stuff
     QString tvdriver;
     TVDeviceList tvdevices;
     KMPlayerPrefSourcePageTV * m_configpage;
-// end of TV stuff
 };
 
 #endif //_KMPLAYER_TV_SOURCE_H_

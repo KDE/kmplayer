@@ -195,14 +195,12 @@ static const char * strPostMPlayer090 = "Post MPlayer 0.90";
 //static const char * strAutoHideSlider = "Auto Hide Slider";
 static const char * strSeekTime = "Forward/Backward Seek Time";
 static const char * strCacheSize = "Cache Size for Streaming";
-static const char * strPlayDVD = "Immediately Play DVD";
-//static const char * strShowDVD = "Show DVD Menu";
 static const char * strDVDDevice = "DVD Device";
+//static const char * strShowDVD = "Show DVD Menu";
 static const char * strLanguagePattern = "DVD Language";
 static const char * strSubtitlePattern = "DVD Sub Title";
 static const char * strTitlePattern = "DVD Titles";
 static const char * strChapterPattern = "DVD Chapters";
-static const char * strPlayVCD = "Immediately Play VCD";
 //static const char * strShowVCD = "Show VCD Menu";
 static const char * strVCDDevice = "VCD Device";
 static const char * strTrackPattern = "VCD Tracks";
@@ -305,9 +303,7 @@ void KMPlayerSettings::readConfig () {
         view->recordButton ()->hide ();
     seektime = m_config->readNumEntry (strSeekTime, 10);
     alwaysbuildindex = m_config->readBoolEntry (strAlwaysBuildIndex, false);
-    playdvd = m_config->readBoolEntry (strPlayDVD, true);
     dvddevice = m_config->readEntry (strDVDDevice, "/dev/dvd");
-    playvcd = m_config->readBoolEntry (strPlayVCD, true);
     vcddevice = m_config->readEntry (strVCDDevice, "/dev/cdrom");
     videodriver = m_config->readNumEntry (strVoDriver, VDRIVER_XV_INDEX);
     audiodriver = m_config->readNumEntry (strAoDriver, 0);
@@ -392,14 +388,14 @@ void KMPlayerSettings::readConfig () {
             ffserversettingprofiles.push_back (ffs);
         }
     }
-    SourceMap::iterator s_it = m_player->sources ().begin ();
-    for (; s_it != m_player->sources ().end (); ++s_it)
-        s_it.data ()->read (m_config);
+    KMPlayerPreferencesPageList::iterator pl_it = pagelist.begin ();
+    for (; pl_it != pagelist.end (); ++pl_it)
+        (*pl_it)->read (m_config);
 }
 
 void KMPlayerSettings::show () {
     if (!configdialog) {
-        configdialog = new KMPlayerPreferences (m_player, _ads, ffserversettingprofiles);
+        configdialog = new KMPlayerPreferences (m_player, pagelist, _ads, ffserversettingprofiles);
         connect (configdialog, SIGNAL (okClicked ()),
                 this, SLOT (okPressed ()));
         connect (configdialog, SIGNAL (applyClicked ()),
@@ -428,11 +424,6 @@ void KMPlayerSettings::show () {
     configdialog->m_SourcePageURL->sub_urllist->insertStringList (sub_urllist);
     configdialog->m_SourcePageURL->sub_urllist->setCurrentText (m_player->process ()->source ()->subUrl ().prettyURL ());
     configdialog->m_SourcePageURL->changed = false;
-
-    configdialog->m_GeneralPageDVD->autoPlayDVD->setChecked (playdvd); //works if autoplay?
-    configdialog->m_GeneralPageDVD->dvdDevicePath->lineEdit()->setText (dvddevice);
-    configdialog->m_GeneralPageVCD->autoPlayVCD->setChecked (playvcd);
-    configdialog->m_GeneralPageVCD->vcdDevicePath->lineEdit()->setText (vcddevice);
 
     configdialog->m_GeneralPageOutput->videoDriver->setCurrentItem (videodriver);
     configdialog->m_GeneralPageOutput->audioDriver->setCurrentItem (audiodriver);
@@ -506,28 +497,9 @@ void KMPlayerSettings::show () {
     configdialog->m_BroadcastFormatPage->profile->setText (QString::null);
 
     //dynamic stuff
-/*
-struct PrefSubEntry {
-    QString name;
-    QFrame * frame;
-    KMPlayerSource * source;
-};
-typedef std::list <PrefSubEntry *> > TabMap;
-struct PrefEntry {
-    QString name;
-    QString icon;
-    TapMap tabs;
-};
-typedef std::list <PrefEntry *> PrefEntryList;
-*/
-    PrefEntryList::iterator pr_it = configdialog->entries.begin ();
-    for (; pr_it != configdialog->entries.end (); ++pr_it) {
-        TabList & tabs = (*pr_it)->tabs;
-        TabList::iterator t_it = tabs.begin ();
-        for (; t_it != tabs.end (); ++t_it)
-            if ((*t_it)->source)
-                (*t_it)->source->sync ((*t_it)->frame, false);
-    }
+    KMPlayerPreferencesPageList::iterator pl_it = pagelist.begin ();
+    for (; pl_it != pagelist.end (); ++pl_it)
+        (*pl_it)->sync (false);
     //\dynamic stuff
 
     configdialog->show ();
@@ -562,11 +534,8 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strAddRecordButton, showrecordbutton);
     m_config->writeEntry (strAddBroadcastButton, showbroadcastbutton);
     m_config->writeEntry (strAutoHideButtons, autohidebuttons);
-    m_config->writeEntry (strPlayDVD, playdvd);
 
     m_config->writeEntry (strDVDDevice, dvddevice);
-    m_config->writeEntry (strPlayVCD, playvcd);
-
     m_config->writeEntry (strVCDDevice, vcddevice);
 
     m_config->setGroup (strMPlayerPatternGroup);
@@ -638,14 +607,9 @@ void KMPlayerSettings::writeConfig () {
     }
     m_config->writeEntry (strFFServerProfiles, sl, ';');
     //dynamic stuff
-    PrefEntryList::iterator pr_it = configdialog->entries.begin ();
-    for (; pr_it != configdialog->entries.end (); ++pr_it) {
-        TabList & tabs = (*pr_it)->tabs;
-        TabList::iterator t_it = tabs.begin ();
-        for (; t_it != tabs.end (); ++t_it)
-            if ((*t_it)->source)
-                ;//(*t_it)->source->write (m_config);
-    }
+    KMPlayerPreferencesPageList::iterator pl_it = pagelist.begin ();
+    for (; pl_it != pagelist.end (); ++pl_it)
+        (*pl_it)->write (m_config);
     //\dynamic stuff
     m_config->sync ();
 }
@@ -732,10 +696,6 @@ void KMPlayerSettings::okPressed () {
     showbroadcastbutton = configdialog->m_GeneralPageGeneral->showBroadcastButton->isChecked ();
     if (!showbroadcastbutton)
         view->broadcastButton ()->hide ();
-    playdvd = configdialog->m_GeneralPageDVD->autoPlayDVD->isChecked ();
-    dvddevice = configdialog->m_GeneralPageDVD->dvdDevicePath->lineEdit()->text ();
-    playvcd = configdialog->m_GeneralPageVCD->autoPlayVCD->isChecked ();
-    vcddevice = configdialog->m_GeneralPageVCD->vcdDevicePath->lineEdit()->text ();
     seektime = configdialog->m_GeneralPageGeneral->seekTime->value();
 
     additionalarguments = configdialog->m_GeneralPageAdvanced->additionalArguments->text();
@@ -815,15 +775,11 @@ void KMPlayerSettings::okPressed () {
     writeConfig ();
 
     //dynamic stuff
-    PrefEntryList::iterator pr_it = configdialog->entries.begin ();
-    for (; pr_it != configdialog->entries.end (); ++pr_it) {
-        TabList & tabs = (*pr_it)->tabs;
-        TabList::iterator t_it = tabs.begin ();
-        for (; t_it != tabs.end (); ++t_it)
-            if ((*t_it)->source)
-                (*t_it)->source->sync ((*t_it)->frame, true);
-    }
+    KMPlayerPreferencesPageList::iterator pl_it = pagelist.begin ();
+    for (; pl_it != pagelist.end (); ++pl_it)
+        (*pl_it)->sync (true);
     //\dynamic stuff
+
     emit configChanged ();
 
     if (urlchanged) {

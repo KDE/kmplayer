@@ -31,20 +31,17 @@
 #include <qgroupbox.h>
 #include <qtooltip.h>
 #include <qtabwidget.h>
-#include <qslider.h>
 #include <qbuttongroup.h>
-#include <qspinbox.h>
 #include <qmessagebox.h>
 #include <qpopupmenu.h>
 
 #include <klocale.h>
 #include <kdebug.h>
-#include <kfiledialog.h>
 #include <kmessagebox.h>
 #include <klineedit.h>
-#include <kiconloader.h>
-#include <kdeversion.h>
+#include <kurlrequester.h>
 #include <kcombobox.h>
+#include <kconfig.h>
 
 #include "pref.h"
 #include "kmplayerpartbase.h"
@@ -335,6 +332,7 @@ KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QPopupMenu * m)
     m_tvsource = 0L;
     m_menu->insertTearOffHandle ();
     m_url = KURL ("tv://");
+    m_player->settings ()->pagelist.push_back (this);
 }
 
 KMPlayerTVSource::~KMPlayerTVSource () {
@@ -580,13 +578,12 @@ void KMPlayerTVSource::read (KConfig * m_config) {
     }
 }
 
-void KMPlayerTVSource::sync (QFrame * frame, bool fromUI) {
-    KMPlayerPrefSourcePageTV * page = static_cast <KMPlayerPrefSourcePageTV*> (frame);
+void KMPlayerTVSource::sync (bool fromUI) {
     if (fromUI) {
-        tvdriver = page->driver->text ();
+        tvdriver = m_configpage->driver->text ();
     } else {
-        page->driver->setText (tvdriver);
-        page->setTVDevices (&tvdevices);
+        m_configpage->driver->setText (tvdriver);
+        m_configpage->setTVDevices (&tvdevices);
     }
 }
 

@@ -39,6 +39,7 @@
 #include <qbuttongroup.h>
 #include <qspinbox.h>
 #include <qmessagebox.h>
+#include <qmap.h>
 
 #include <klocale.h>
 #include <kdebug.h>
@@ -48,35 +49,15 @@
 #include <kiconloader.h>
 #include <kdeversion.h>
 #include <kcombobox.h>
+#include <kurlrequester.h>
 
 #include "pref.h"
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
 #include "kmplayerconfig.h"
 
-PrefSubEntry::PrefSubEntry (const QString & n, QFrame * f, KMPlayerSource * s)
-    : name (n), frame (f), source (s) {}
 
-PrefEntry::PrefEntry (const QString & n, const QString & i, QFrame * f, QTabWidget * t)
-    : name (n), icon (i), frame (f), tab (t) {}
-
-inline bool operator == (const QString & name, const PrefEntry * entry) {
-    return name == entry->name;
-}
-
-inline bool operator == (const PrefEntry * entry, const QString & name) {
-    return name == entry->name;
-}
-
-inline bool operator != (const QString & name, const PrefEntry * entry) {
-    return name != entry->name;
-}
-
-inline bool operator != (const PrefEntry * entry, const QString & name) {
-    return name != entry->name;
-}
-
-KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver * ad, FFServerSettingList & ffs)
+KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, KMPlayerPreferencesPageList & pagelist, MPlayerAudioDriver * ad, FFServerSettingList & ffs)
 : KDialogBase (IconList, i18n ("KMPlayer Preferences"),
 		Help|Default|Ok|Apply|Cancel, Ok, player->view (), 0, false)
 {
@@ -84,6 +65,7 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
     QTabWidget * tab;
     QStringList hierarchy; // typo? :)
     QVBoxLayout *vlay;
+    QMap<QString, QTabWidget *> entries;
 
     frame = addPage(i18n("General Options"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("kmplayer"), KIcon::NoGroup, 32));
     vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
@@ -95,11 +77,7 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
     tab->insertTab (m_GeneralPageOutput, i18n("Output"));
     m_GeneralPageAdvanced = new KMPlayerPrefGeneralPageAdvanced (tab);
     tab->insertTab (m_GeneralPageAdvanced, i18n("Advanced"));
-    PrefEntry * entry = new PrefEntry (i18n("General Options"), QString ("kmplayer"), frame, tab);
-    entry->tabs.push_back (new PrefSubEntry (i18n("General"), m_GeneralPageGeneral, 0L));
-    entry->tabs.push_back (new PrefSubEntry (i18n("Output"), m_GeneralPageOutput, 0L));
-    entry->tabs.push_back (new PrefSubEntry (i18n("Advanced"), m_GeneralPageAdvanced, 0L));
-    entries.push_back (entry);
+    entries.insert (i18n("General Options"), tab);
 
     frame = addPage (i18n ("Source"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("source"), KIcon::NoGroup, 32));
     vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
@@ -107,16 +85,7 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
     vlay->addWidget (tab);
     m_SourcePageURL = new KMPlayerPrefSourcePageURL (tab);
     tab->insertTab (m_SourcePageURL, i18n ("URL"));
-    m_GeneralPageDVD = new KMPlayerPrefGeneralPageDVD (tab);
-    tab->insertTab (m_GeneralPageDVD, i18n ("DVD"));
-    m_GeneralPageVCD = new KMPlayerPrefGeneralPageVCD (tab);
-    tab->insertTab (m_GeneralPageVCD, i18n ("VCD"));
-
-    entry = new PrefEntry (i18n("Source"), QString ("source"), frame, tab);
-    entry->tabs.push_back (new PrefSubEntry (i18n("URL"), m_SourcePageURL, 0L));
-    entry->tabs.push_back (new PrefSubEntry (i18n("DVD"), m_GeneralPageDVD, 0L));
-    entry->tabs.push_back (new PrefSubEntry (i18n("VCD"), m_GeneralPageVCD, 0L));
-    entries.push_back (entry);
+    entries.insert (i18n("Source"), tab);
 
     frame = addPage (i18n ("Recording"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("video"), KIcon::NoGroup, 32));
     vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
@@ -131,6 +100,7 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
     m_RecordPage = new KMPlayerPrefRecordPage (tab, player, recorders);
     tab->insertTab (m_RecordPage, i18n ("General"), 0);
     tab->setCurrentPage (0);
+    entries.insert (i18n("Recording"), tab);
 
     frame = addPage (i18n ("Broadcasting"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("share"), KIcon::NoGroup, 32));
     vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
@@ -140,6 +110,7 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
     tab->insertTab (m_BroadcastFormatPage, i18n ("Profiles"));
     m_BroadcastPage = new KMPlayerPrefBroadcastPage (tab);
     tab->insertTab (m_BroadcastPage, i18n ("FFServer"));
+    entries.insert (i18n("Broadcasting"), tab);
 
     /*
      * not yet needed...
@@ -158,27 +129,25 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
     vlay->addWidget (tab);
     m_OPPagePostproc = new KMPlayerPrefOPPagePostProc (tab);
     tab->insertTab (m_OPPagePostproc, i18n ("Postprocessing"));
+    entries.insert (i18n("Postprocessing"), tab);
 
-    SourceMap::iterator sit = player->sources ().begin ();
-    for (; sit != player->sources ().end (); ++sit) {
-        KMPlayerSource * s = sit.data ();
+    KMPlayerPreferencesPageList::iterator pl_it = pagelist.begin ();
+    for (; pl_it != pagelist.end (); ++pl_it) {
         QString item, subitem, icon;
-        s->prefLocation (item, icon, subitem);
-        if (!item.isEmpty ()) {
-            PrefEntryList::iterator pi_it = std::find (entries.begin (), entries.end (), item);
-            if (pi_it == entries.end ()) {
-                frame = addPage (item, QString::null, KGlobal::iconLoader()->loadIcon ((icon), KIcon::NoGroup, 32));
-                vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
-                tab = new QTabWidget (frame);
-                vlay->addWidget (tab);
-                entry = new PrefEntry (item, icon, frame, tab);
-                entries.push_back (entry);
-            } else
-                entry = *pi_it;
-            frame = s->prefPage (entry->tab);
-            entry->tab->insertTab (frame, subitem);
-            entry->tabs.push_back (new PrefSubEntry (subitem, frame, s));
-        }
+        (*pl_it)->prefLocation (item, icon, subitem);
+        if (item.isEmpty ())
+            continue;
+        QMap<QString, QTabWidget *>::iterator en_it = entries.find (item);
+        if (en_it == entries.end ()) {
+            frame = addPage (item, QString::null, KGlobal::iconLoader()->loadIcon ((icon), KIcon::NoGroup, 32));
+            vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
+            tab = new QTabWidget (frame);
+            vlay->addWidget (tab);
+            entries.insert (item, tab);
+        } else
+            tab = en_it.data ();
+        frame = (*pl_it)->prefPage (tab);
+        tab->insertTab (frame, subitem);
     }
 
     connect (this, SIGNAL (defaultClicked ()), SLOT (confirmDefaults ()));
@@ -305,22 +274,6 @@ void KMPlayerPrefSourcePageURL::slotBrowse () {
 
 void KMPlayerPrefSourcePageURL::slotTextChanged (const QString &) {
     changed = true;
-}
-
-KMPlayerPrefGeneralPageDVD::KMPlayerPrefGeneralPageDVD(QWidget *parent) : QFrame(parent)
-{
-    QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
-
-    autoPlayDVD = new QCheckBox (i18n ("Auto play after opening DVD"), this, 0);
-    QToolTip::add(autoPlayDVD, i18n ("Start playing DVD right after opening DVD"));
-    QLabel *dvdDevicePathLabel = new QLabel (i18n("DVD device:"), this, 0);
-    dvdDevicePath = new KURLRequester ("/dev/dvd", this, 0);
-    QToolTip::add(dvdDevicePath, i18n ("Path to your DVD device, you must have read rights to this device"));
-    layout->addWidget (autoPlayDVD);
-    layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
-    layout->addWidget (dvdDevicePathLabel);
-    layout->addWidget (dvdDevicePath);
-    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
 KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * player, RecorderList & rl) : QFrame (parent, "RecordPage"), m_player (player), m_recorders (rl) {
@@ -694,23 +647,6 @@ void KMPlayerPrefBroadcastFormatPage::slotDelete () {
     del->setEnabled (false);
 }
 
-KMPlayerPrefGeneralPageVCD::KMPlayerPrefGeneralPageVCD(QWidget *parent) : QFrame(parent)
-{
-	QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
-
-	autoPlayVCD = new QCheckBox (i18n ("Auto play after opening a VCD"), this, 0);
-	QToolTip::add(autoPlayVCD, i18n ("Start playing VCD right after opening VCD")); // i don't know about this
-
-	QLabel *vcdDevicePathLabel = new QLabel (i18n ("VCD (CDROM) device:"), this, 0);
-	vcdDevicePath = new KURLRequester ("/dev/cdrom", this, 0);
-	QToolTip::add(vcdDevicePath, i18n ("Path to your CDROM/DVD device, you must have read rights to this device"));
-
-	layout->addWidget (autoPlayVCD);
-	layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
-	layout->addWidget (vcdDevicePathLabel);
-	layout->addWidget (vcdDevicePath);
-	layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-}
 
 KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidget *parent, MPlayerAudioDriver * ad) : QFrame(parent)
 {
@@ -1072,12 +1008,6 @@ void KMPlayerPreferences::setDefaults() {
 	m_GeneralPageGeneral->autoHideControlButtons->setChecked(false);
 	m_GeneralPageGeneral->showPositionSlider->setChecked(true);
 	m_GeneralPageGeneral->seekTime->setValue(10);
-
-	m_GeneralPageDVD->autoPlayDVD->setChecked(true);
-	m_GeneralPageDVD->dvdDevicePath->lineEdit()->setText("/dev/dvd");
-
-	m_GeneralPageVCD->autoPlayVCD->setChecked(true);
-	m_GeneralPageVCD->vcdDevicePath->lineEdit()->setText("/dev/cdrom");
 
 	m_GeneralPageOutput->videoDriver->setCurrentItem(VDRIVER_XV_INDEX);
 	m_GeneralPageOutput->audioDriver->setCurrentItem(0);

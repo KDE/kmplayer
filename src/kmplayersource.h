@@ -72,11 +72,6 @@ public:
     virtual void setIdentified (bool b = true);
 
     virtual QString prettyName ();
-    virtual void write (KConfig *);
-    virtual void read (KConfig *);
-    virtual void sync (QFrame *, bool fromUI);
-    virtual void prefLocation (QString & item, QString & icon, QString & tab);
-    virtual QFrame * prefPage (QWidget * parent);
 public slots:
     virtual void activate () = 0;
     virtual void deactivate () = 0;

@@ -32,6 +32,8 @@
 #include <qkeysequence.h>
 #include <qapplication.h>
 #include <qslider.h>
+#include <qlayout.h>
+#include <qtooltip.h>
 #include <qtimer.h>
 #include <qmetaobject.h>
 
@@ -51,6 +53,8 @@
 #include <kprocctrl.h>
 #include <dcopclient.h>
 #include <kpopupmenu.h>
+#include <kurlrequester.h>
+#include <klineedit.h>
 
 // application specific includes
 #include "kmplayer.h"
@@ -67,6 +71,8 @@ const int DVDNav_previous = 2;
 const int DVDNav_next = 3;
 const int DVDNav_root = 4;
 const int DVDNav_up = 5;
+
+extern const char * strMPlayerGroup;
 
 static bool stopProcess (KProcess * process, const char * cmd = 0L) {
     if (!process || !process->isRunning ()) return true;
@@ -711,8 +717,25 @@ void KMPlayerMenuSource::menuItemClicked (QPopupMenu * menu, int id) {
 
 //-----------------------------------------------------------------------------
 
+KMPlayerPrefSourcePageDVD::KMPlayerPrefSourcePageDVD (QWidget * parent)
+ : QFrame(parent) {
+    QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
+    autoPlayDVD = new QCheckBox (i18n ("Auto play after opening DVD"), this, 0);
+    QToolTip::add(autoPlayDVD, i18n ("Start playing DVD right after opening DVD"));
+    QLabel *dvdDevicePathLabel = new QLabel (i18n("DVD device:"), this, 0);
+    dvddevice = new KURLRequester ("/dev/dvd", this, 0);
+    QToolTip::add(dvddevice, i18n ("Path to your DVD device, you must have read rights to this device"));
+    layout->addWidget (autoPlayDVD);
+    layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    layout->addWidget (dvdDevicePathLabel);
+    layout->addWidget (dvddevice);
+    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+}
+
+//-----------------------------------------------------------------------------
+
 KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopupMenu * m)
-    : KMPlayerMenuSource (i18n ("DVD"), a, m) {
+    : KMPlayerMenuSource (i18n ("DVD"), a, m), m_configpage (0L) {
     m_menu->insertTearOffHandle ();
     m_dvdtitlemenu = new QPopupMenu (m_app);
     m_dvdsubtitlemenu = new QPopupMenu (m_app);
@@ -727,6 +750,7 @@ KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopupMenu * m)
     m_menu->insertItem (i18n ("Audio &Language"), m_dvdlanguagemenu);
     m_menu->insertItem (i18n ("&SubTitles"), m_dvdsubtitlemenu);
     m_url = KURL ("dvd://");
+    m_player->settings ()->pagelist.push_back (this);
 }
 
 KMPlayerDVDSource::~KMPlayerDVDSource () {
@@ -771,7 +795,7 @@ bool KMPlayerDVDSource::processOutput (const QString & str) {
 
 void KMPlayerDVDSource::activate () {
     m_player->setProcess (m_player->mplayer ());
-    m_start_play = m_player->settings ()->playdvd;
+    m_start_play = playdvd;
     langRegExp.setPattern (m_player->settings ()->langpattern);
     subtitleRegExp.setPattern (m_player->settings ()->subtitlespattern);
     titleRegExp.setPattern (m_player->settings ()->titlespattern);
@@ -873,6 +897,40 @@ void KMPlayerDVDSource::chapterMenuClicked (int id) {
 QString KMPlayerDVDSource::prettyName () {
     return QString (i18n ("DVD"));
 }
+
+static const char * strPlayDVD = "Immediately Play DVD";
+
+void KMPlayerDVDSource::write (KConfig * config) {
+    config->setGroup (strMPlayerGroup);
+    config->writeEntry (strPlayDVD, playdvd);
+}
+
+void KMPlayerDVDSource::read (KConfig * config) {
+    config->setGroup (strMPlayerGroup);
+    playdvd = config->readBoolEntry (strPlayDVD, true);
+}
+
+void KMPlayerDVDSource::sync (bool fromUI) {
+    if (fromUI) {
+        playdvd = m_configpage->autoPlayDVD->isChecked ();
+        m_player->settings ()->dvddevice = m_configpage->dvddevice->lineEdit()->text ();
+    } else {
+        m_configpage->autoPlayDVD->setChecked (playdvd);
+        m_configpage->dvddevice->lineEdit()->setText (m_player->settings ()->dvddevice);
+    }
+}
+
+void KMPlayerDVDSource::prefLocation (QString & item, QString & icon, QString & tab) {
+    item = i18n ("Source");
+    icon = QString ("source");
+    tab = i18n ("DVD");
+}
+
+QFrame * KMPlayerDVDSource::prefPage (QWidget * parent) {
+    m_configpage = new KMPlayerPrefSourcePageDVD (parent);
+    return m_configpage;
+}
+
 //-----------------------------------------------------------------------------
 
 KMPlayerDVDNavSource::KMPlayerDVDNavSource (KMPlayerApp * app, QPopupMenu * m)
@@ -934,14 +992,32 @@ QString KMPlayerDVDNavSource::prettyName () {
 }
 
 //-----------------------------------------------------------------------------
+
+KMPlayerPrefSourcePageVCD::KMPlayerPrefSourcePageVCD (QWidget * parent)
+ : QFrame (parent) {
+     QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
+     autoPlayVCD = new QCheckBox (i18n ("Auto play after opening a VCD"), this, 0);
+     QToolTip::add(autoPlayVCD, i18n ("Start playing VCD right after opening VCD"));
+     QLabel *vcdDevicePathLabel = new QLabel (i18n ("VCD (CDROM) device:"), this, 0);
+     vcddevice= new KURLRequester ("/dev/cdrom", this, 0);
+     QToolTip::add(vcddevice, i18n ("Path to your CDROM/DVD device, you must have read rights to this device"));
+     layout->addWidget (autoPlayVCD);
+     layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
+     layout->addWidget (vcdDevicePathLabel);
+     layout->addWidget (vcddevice);
+     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+}
+
+//-----------------------------------------------------------------------------
                         
 KMPlayerVCDSource::KMPlayerVCDSource (KMPlayerApp * a, QPopupMenu * m)
-    : KMPlayerMenuSource (i18n ("VCD"), a, m) {
+    : KMPlayerMenuSource (i18n ("VCD"), a, m), m_configpage (0L) {
     m_menu->insertTearOffHandle ();
     m_vcdtrackmenu = new QPopupMenu (m_app);
     m_vcdtrackmenu->setCheckable (true);
     m_menu->insertItem (i18n ("&Tracks"), m_vcdtrackmenu);
     m_url = KURL ("vcd://");
+    m_player->settings ()->pagelist.push_back (this);
 }
 
 KMPlayerVCDSource::~KMPlayerVCDSource () {
@@ -967,7 +1043,7 @@ void KMPlayerVCDSource::activate () {
     m_player->stop ();
     init ();
     m_player->setProcess (m_player->mplayer ());
-    m_start_play = m_player->settings ()->playvcd;
+    m_start_play = playvcd;
     trackRegExp.setPattern (m_player->settings ()->trackspattern);
     m_current_title = -1;
     buildArguments ();
@@ -1017,6 +1093,39 @@ void KMPlayerVCDSource::trackMenuClicked (int id) {
 
 QString KMPlayerVCDSource::prettyName () {
     return QString (i18n ("VCD"));
+}
+
+static const char * strPlayVCD = "Immediately Play VCD";
+
+void KMPlayerVCDSource::write (KConfig * config) {
+    config->setGroup (strMPlayerGroup);
+    config->writeEntry (strPlayVCD, playvcd);
+}
+
+void KMPlayerVCDSource::read (KConfig * config) {
+    config->setGroup (strMPlayerGroup);
+    playvcd = config->readBoolEntry (strPlayVCD, true);
+}
+
+void KMPlayerVCDSource::sync (bool fromUI) {
+    if (fromUI) {
+        playvcd = m_configpage->autoPlayVCD->isChecked ();
+        m_player->settings ()->vcddevice = m_configpage->vcddevice->lineEdit()->text ();
+    } else {
+        m_configpage->autoPlayVCD->setChecked (playvcd);
+        m_configpage->vcddevice->lineEdit()->setText (m_player->settings ()->vcddevice);
+    }
+}
+
+void KMPlayerVCDSource::prefLocation (QString & item, QString & icon, QString & tab) {
+    item = i18n ("Source");
+    icon = QString ("source");
+    tab = i18n ("VCD");
+}
+
+QFrame * KMPlayerVCDSource::prefPage (QWidget * parent) {
+    m_configpage = new KMPlayerPrefSourcePageVCD (parent);
+    return m_configpage;
 }
 
 //-----------------------------------------------------------------------------

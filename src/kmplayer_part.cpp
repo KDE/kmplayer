@@ -20,10 +20,9 @@
 #undef Always
 #endif
 #include <qcstring.h>
-#include <qpair.h>
 #include <qpopupmenu.h>
 #include <qtimer.h>
-#include <qmultilineedit.h>
+#include <qpushbutton.h>
 
 #include <klibloader.h>
 #include <kdebug.h>

@@ -59,8 +59,6 @@ public:
     bool autohideslider : 1;
     bool alwaysbuildindex : 1;
     bool mplayerpost090 : 1;
-    bool playdvd : 1;
-    bool playvcd : 1;
     bool allowhref : 1;
 // postproc thingies
     bool postprocessing : 1;
@@ -132,6 +130,7 @@ public:
     QString referenceurlpattern;
     QString referencepattern;
     QString urlbackend;
+    KMPlayerPreferencesPageList pagelist;
 signals:
     void configChanged ();
 public slots:
