@@ -459,8 +459,11 @@ protected:
                         break;
                     mutex.lock ();
                     if (videosink && GST_IS_X_OVERLAY (videosink)) {
+                        fprintf (stderr, "gst_x_overlay_set_xwindow_id\n");
                         gst_x_overlay_set_xwindow_id (GST_X_OVERLAY (videosink), wid);
+                        fprintf (stderr, "gst_x_overlay_set_xwindow_id 2\n");
                         gst_x_overlay_expose (GST_X_OVERLAY (videosink));
+                        fprintf (stderr, "gst_x_overlay_set_xwindow_id 3\n");
                     }
                     mutex.unlock ();
                     break;
