@@ -28,7 +28,7 @@
 
 <copyright>
 <year>2002</year>
-<year>2002</year>
+<year>2003</year>
 <holder>Koos Vriezen</holder>
 </copyright>
 <!-- Translators: put here the copyright notice of the translation -->
@@ -37,7 +37,7 @@
 <legalnotice>&FDLNotice;</legalnotice>
 
 
-<date>2003-04-02</date>
+<date>2003-12-24</date>
 <releaseinfo>0.05.00</releaseinfo>
 
 <!-- Abstract about this handbook -->
@@ -64,10 +64,10 @@
 
 
 <para>
-&kmplayer; is a simple frontend to <application>MPlayer</application>. You
+&kmplayer; is a simple frontend to <application>MPlayer</application>, <application>Xine</application> and <application>FFMpeg</application>. You
 can use it for watching all the movie file formats that
-<application>MPlayer</application> supports as well as watching
-<acronym>DVD</acronym>s.
+<application>MPlayer</application>/<application>Xine</application> supports as well as watching
+<acronym>DVD</acronym>s, <acronym>VCD</acronym> or <acronym>TV</acronym>/<acronym>camera</acronym>.
 </para>
 
 <para>The documentation for &kappname; was not finished when &kde; was
@@ -78,7 +78,22 @@ to:kde-user@kde.org">The &kde; User Mailing list</ulink>.</para>
 <para><emphasis>The &kde; Team</emphasis></para>
 
 </chapter>
+<chapter id="questionsanswersandtips">
+    <title>Questions, Answers, and Tips</title>
 
+    <qandaset id="faq">
+      <title>Frequently asked questions</title>
+      <qandaentry>
+        <question>
+          <para>Xine starts up slow, why does it have to benchmark my CPU all the time?</para>
+        </question>
+        <answer>
+            <para>The <application>Xine</application> frontend for &kmplayer;, <application>kxineplayer</application>, uses <filename>~/.xine/config2</filename> for its configuration. Settings for <application>Xine</application> are documented in <filename>README.config_en</filename> found in the <application>xine-lib</application> sources. A simple config file for a pentium 4 contains the line <computeroutput>misc.memcpy_method:sse</computeroutput>. See in the console output for <application>Xine</application>, which memcpy version works the fastest for you (replace <computeroutput>'sse'</computeroutput> with that one).</para>
+        </answer>
+      </qandaentry>
+    </qandaset>
+
+  </chapter>
 <chapter id="credits-and-licenses">
 <title>Credits and Licenses</title>
 
