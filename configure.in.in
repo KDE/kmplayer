@@ -1,0 +1,14 @@
+#MIN_CONFIG(3)
+
+AM_INIT_AUTOMAKE(kmplayer,0.7.4c)
+
+have_koffice=yes
+if test "$have_koffice" = "yes"; then
+        KDE_CHECK_HEADER(koDocument.h,,have_koffice=no)
+fi
+
+if test "$have_koffice" = "yes"; then
+        AC_DEFINE(HAVE_KOFFICE, 1, [If we have koffice installed])
+        LIB_KOFFICE="-lkofficecore -lkofficeui"
+        AC_SUBST(LIB_KOFFICE)
+fi

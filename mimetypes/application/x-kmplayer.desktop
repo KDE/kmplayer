@@ -1,0 +1,8 @@
+# KDE Config File
+[Desktop Entry]
+Encoding=UTF-8
+MimeType=application/x-kmplayer
+Comment=KMPlayer Document
+Icon=kmplayer
+Type=MimeType
+X-KDE-AutoEmbed=true

@@ -19,10 +19,15 @@
 #ifndef KMPLAYER_PART_H
 #define KMPLAYER_PART_H
 
+#include <config.h>
 #include <kmediaplayer/player.h>
 #include <kparts/browserextension.h>
 #include <kparts/factory.h>
 #include <kurl.h>
+#ifdef HAVE_KOFFICE
+#include <koDocument.h>
+#include <koView.h>
+#endif //HAVE_KOFFICE
 #include <qobject.h>
 #include <qvaluelist.h>
 #include <qstringlist.h>
@@ -38,6 +43,7 @@ class KMPlayer;
 class KMPlayerSettings;
 class KInstance;
 class KConfig;
+class QIODevice;
 
 /**
   *@author Koos Vriezen
@@ -234,6 +240,44 @@ private:
     bool m_bPosSliderPressed : 1;
     bool m_havehref : 1;
 };
+
+
+#ifdef HAVE_KOFFICE
+class KOfficeMPlayer;
+
+class KOfficeMPlayerView : public KoView {
+    Q_OBJECT
+public:
+    KOfficeMPlayerView (KOfficeMPlayer* part, QWidget* parent, const char* name = 0 );
+    ~KOfficeMPlayerView ();
+    void updateReadWrite(bool) {}
+private:
+    KMPlayerView * m_view;
+    QGuardedPtr <QWidget> m_oldparent;
+};
+
+class KOfficeMPlayer : public KoDocument {
+    Q_OBJECT
+public:
+    KOfficeMPlayer (QWidget *parentWidget = 0, const char *widgetName = 0, QObject* parent = 0, const char* name = 0, bool singleViewMode = false);
+    ~KOfficeMPlayer ();
+
+    virtual void paintContent (QPainter& painter, const QRect& rect,
+            bool transparent = false, double zoomX = 1.0, double zoomY = 1.0);
+    virtual bool initDoc ();
+    virtual bool loadXML (QIODevice *, const QDomDocument &);
+    virtual QDomDocument saveXML ();
+    virtual QCString mimeType() const { return "application/x-kmplayer"; }
+
+    KMPlayer * player () const { return m_player; }
+protected:
+    virtual KoView* createViewInstance (QWidget* parent, const char* name);
+private:
+    KConfig * m_config;
+    KMPlayer * m_player;
+    KOfficeMPlayerView * m_view; 
+};
+#endif //HAVE_KOFFICE
 
 
 class KMPlayerFactory : public KParts::Factory {

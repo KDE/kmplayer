@@ -1,19 +1,11 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=Embedded MPlayer for KDE
-Name[da]=Indlejret MPlayer for KDE
-Name[el]=Ενσωματωμένος MPlayer για το KDE
-Name[es]=MPlayer embebido para KDE
-Name[fr]=MPlayer intégré pour KDE
-Name[nl]=Ingebedde MPlayer voor KDE
-Name[pt]=MPlayer Embebido para o KDE
-Name[pt_BR]=MPlayer Integrado ao KDE
-Name[sv]=Inbäddad Mplayer för KDE
+Name=KMPlayer
 GenericName=KMPlayer
 X-KDE-Library=kparts_kmplayer
-# Keep in sync with the audio types in kmplayer.desktop
 MimeType=audio/x-mp3;audio/x-vorbis;application/x-mplayer2;application/x-ogg;audio/x-mp2;video/mpeg;audio/x-mpegurl;audio/x-wav;audio/x-mod;video/x-avi;video/x-ms-asf;video/x-ms-wmv;video/x-msvideo;video/quicktime;video/x-flic;
 Type=Service
 Icon=kmplayer
 ServiceTypes=KOfficePart,KParts/ReadOnlyPart,KParts/ReadWritePart,Browser/View,KMediaPlayer/Player
+X-KDE-NativeMimeType=application/x-kmplayer
 InitialPreference=9
