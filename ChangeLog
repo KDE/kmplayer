@@ -1,10 +1,14 @@
 Changes since version 0.9.0-pre2
-- Added 'fit' attribute for SMIL's mediatypes (only used for images now, and
-  value 'scoll' is not implemented)
+- Store current url in KDE's session config
+- Added a 'Clear History' action, that will clear recent files and URL source
+  history
 - Delayed mouse hiding in fullscreen, patch from Ben Laenen
 - Option for docking in system tray
 - Smarter painting when moving regions in SMIL document
-- Implement animate's 'values' attribute and 'calcMode="discrete"' for SMIL 
+- More work on SMIL support. Implemented animate's 'values' attribute and
+  'calcMode="discrete"' for SMIL. Added 'fit' attribute for SMIL's mediatypes
+  (only used for images now, and value 'scoll' is not implemented). Group
+  'excl' is now supported. Updated applications in tests/ directory
 Changes since version 0.9.0-pre1
 - Include tests directory
 Changes since version 0.8.4b

@@ -299,6 +299,18 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
     slotStatusMsg (i18n ("Ready."));
 }
 
+KDE_NO_EXPORT void KMPlayerApp::saveProperties (KConfig * config) {
+    config->writeEntry ("URL", m_player->source ()->url ().url ());
+    config->writeEntry ("Visible", isVisible ());
+}
+
+KDE_NO_EXPORT void KMPlayerApp::readProperties (KConfig * config) {
+    KURL url (config->readEntry ("URL", QString ()));
+    openDocumentFile (url);
+    if (!config->readBoolEntry ("Visible", true) && m_systray)
+        hide ();
+}
+
 KDE_NO_EXPORT void KMPlayerApp::resizePlayer (int percentage) {
     KMPlayer::Source * source = m_player->source ();
     if (!source)

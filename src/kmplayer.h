@@ -70,6 +70,8 @@ public:
 protected:
     void saveOptions ();
     void readOptions ();
+    void saveProperties (KConfig * config);
+    void readProperties (KConfig * config);
     void initActions ();
     void initStatusBar ();
     void initView ();
