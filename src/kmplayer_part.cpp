@@ -227,7 +227,9 @@ void KMPlayer::initProcess () {
 }
 
 KMPlayer::~KMPlayer () {
-    delete m_view;
+    if (!m_ispart)
+        delete (KMPlayerView*) m_view;
+    m_view = (KMPlayerView*) 0;
     if (m_process->isRunning ()) {
         do {
             // in rare cases enter_loop can cause a crash in konqueror
