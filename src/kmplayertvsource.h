@@ -21,7 +21,6 @@
 #define _KMPLAYER_TV_SOURCE_H_
 
 #include <list>
-#include <vector>
 
 #include <qframe.h>
 
@@ -103,24 +102,10 @@ class KMPlayerPrefSourcePageTV : public QFrame
 public:
     KMPlayerPrefSourcePageTV (QWidget *parent);
     KDE_NO_CDTOR_EXPORT ~KMPlayerPrefSourcePageTV () {}
-
     QLineEdit * driver;
     KURLRequester * device;
+    QPushButton * scan;
     QTabWidget * tab;
-    TVDeviceScannerSource * scanner;
-    void setTVDocument (KMPlayer::ElementPtr doc);
-    void updateTVDevices ();
-private slots:
-    void slotScan ();
-    void slotScanFinished (TVDevice * device);
-    void slotDeviceDeleted (KMPlayerPrefSourcePageTVDevice *);
-private:
-    void addTVDevicePage (TVDevice * dev, bool show=false);
-    KMPlayer::ElementPtr m_document;
-    KMPlayer::ElementPtr deleteddevices;
-    KMPlayer::ElementPtr addeddevices;
-    typedef std::list <KMPlayerPrefSourcePageTVDevice *> TVDevicePageList;
-    TVDevicePageList m_devicepages;
 };
 
 
@@ -174,12 +159,21 @@ public slots:
     void menuClicked (int id);
 protected:
     void jump (KMPlayer::ElementPtr e);
+private slots:
+    void slotScan ();
+    void slotScanFinished (TVDevice * device);
+    void slotDeviceDeleted (KMPlayerPrefSourcePageTVDevice *);
 private:
-    void buildArguments ();
+    void addTVDevicePage (TVDevice * dev, bool show=false);
     KMPlayer::ElementPtr m_cur_tvdevice;
+    KMPlayer::ElementPtr deleteddevices;
+    KMPlayer::ElementPtr addeddevices;
     QPopupMenu * m_channelmenu;
     QString tvdriver;
     KMPlayerPrefSourcePageTV * m_configpage;
+    TVDeviceScannerSource * scanner;
+    typedef std::list <KMPlayerPrefSourcePageTVDevice *> TVDevicePageList;
+    TVDevicePageList m_devicepages;
 };
 
 #endif //_KMPLAYER_TV_SOURCE_H_
