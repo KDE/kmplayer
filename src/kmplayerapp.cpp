@@ -629,7 +629,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopu
     m_menu->insertItem (i18n ("Audio &Language"), m_dvdlanguagemenu);
     m_menu->insertItem (i18n ("&SubTitles"), m_dvdsubtitlemenu);
     setURL (KURL ("dvd://"));
-    m_player->settings ()->pagelist.push_back (this);
+    m_player->settings ()->addPage (this);
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::~KMPlayerDVDSource () {
@@ -897,7 +897,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerVCDSource::KMPlayerVCDSource (KMPlayerApp * a, QPopu
     m_vcdtrackmenu->setCheckable (true);
     m_menu->insertItem (i18n ("&Tracks"), m_vcdtrackmenu);
     setURL (KURL ("vcd://"));
-    m_player->settings ()->pagelist.push_back (this);
+    m_player->settings ()->addPage (this);
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerVCDSource::~KMPlayerVCDSource () {

@@ -117,8 +117,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, 
     tab->insertTab (m_OPPagePostproc, i18n ("Postprocessing"));
     entries.insert (i18n("Postprocessing"), tab);
 
-    std::for_each (settings->pagelist.begin (), settings->pagelist.end (),
-            std::bind1st (std::mem_fun (&KMPlayerPreferences::addPrefPage), this));
+    for (KMPlayerPreferencesPage * p = settings->pagelist; p; p = p->next)
+        addPrefPage (p);
+        
 
     connect (this, SIGNAL (defaultClicked ()), SLOT (confirmDefaults ()));
 }

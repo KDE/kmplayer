@@ -23,13 +23,10 @@
 #include <config.h>
 #endif
 
-#include <list>
-
 #include <qobject.h>
 #include <qstringlist.h>
 
 #include <kurl.h>
-
 
 class KMPlayer;
 class KConfig;
@@ -55,10 +52,8 @@ public:
     virtual void sync (bool fromUI) = 0;
     virtual void prefLocation (QString & item, QString & icon, QString & tab) = 0;
     virtual QFrame * prefPage (QWidget * parent) = 0;
+    KMPlayerPreferencesPage * next;
 };
-
-typedef std::list <KMPlayerPreferencesPage *> KMPlayerPreferencesPageList;
-
 
 class KMPlayerSettings : public QObject {
     Q_OBJECT
@@ -136,7 +131,7 @@ public:
     QString dvddevice;
     QString vcddevice;
     QString urlbackend;
-    KMPlayerPreferencesPageList pagelist;
+    KMPlayerPreferencesPage * pagelist;
 signals:
     void configChanged ();
 public slots:

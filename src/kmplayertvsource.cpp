@@ -332,7 +332,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QPopupM
     m_tvsource = 0L;
     m_menu->insertTearOffHandle ();
     setURL (KURL ("tv://"));
-    m_player->settings ()->pagelist.push_back (this);
+    m_player->settings ()->addPage (this);
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerTVSource::~KMPlayerTVSource () {

@@ -72,7 +72,7 @@ static const int ADRIVER_ARTS_INDEX = 4;
 
 
 KDE_NO_CDTOR_EXPORT KMPlayerSettings::KMPlayerSettings (KMPlayer * player, KConfig * config)
-  : configdialog (0L), m_config (config), m_player (player) {
+  : pagelist (0L), configdialog (0L), m_config (config), m_player (player) {
     audiodrivers = _ads;
     videodrivers = _vds;
 }
@@ -230,8 +230,8 @@ KDE_NO_EXPORT void KMPlayerSettings::readConfig () {
     pp_med_int = m_config->readBoolEntry (strPP_Med_Int, false);
     pp_ffmpeg_int = m_config->readBoolEntry (strPP_FFmpeg_Int, false);
 
-    std::for_each (pagelist.begin (), pagelist.end (),
-        std::bind2nd (std::mem_fun (&KMPlayerPreferencesPage::read), m_config));
+    for (KMPlayerPreferencesPage * p = pagelist; p; p = p->next)
+        p->read (m_config);
 }
 
 KDE_NO_EXPORT bool KMPlayerSettings::createDialog () {
@@ -248,20 +248,30 @@ KDE_NO_EXPORT bool KMPlayerSettings::createDialog () {
 }
 
 void KMPlayerSettings::addPage (KMPlayerPreferencesPage * page) {
-    if (std::find (pagelist.begin (), pagelist.end (), page) != pagelist.end ())
-        return;
+    for (KMPlayerPreferencesPage * p = pagelist; p; p = p->next)
+        if (p == page)
+            return;
     page->read (m_config);
     if (configdialog) {
         configdialog->addPrefPage (page);
         page->sync (false);
     }
-    pagelist.push_front (page);
+    page->next = pagelist;
+    pagelist = page;
 }
 
 void KMPlayerSettings::removePage (KMPlayerPreferencesPage * page) {
     if (configdialog)
         configdialog->removePrefPage (page);
-    pagelist.remove (page);
+    KMPlayerPreferencesPage * prev = 0L;
+    for (KMPlayerPreferencesPage * p = pagelist; p; prev = p, p = p->next)
+        if (p == page) {
+            if (prev)
+                prev->next = p->next;
+            else
+                pagelist = p->next;
+            break;
+        }
 }
     
 void KMPlayerSettings::show (const char * pagename) {
@@ -330,8 +340,8 @@ void KMPlayerSettings::show (const char * pagename) {
     configdialog->m_FFMpegPage->arguments->setText (ffmpegarguments);
 
     //dynamic stuff
-    std::for_each (pagelist.begin (), pagelist.end (),
-        std::bind2nd (std::mem_fun (&KMPlayerPreferencesPage::sync), false));
+    for (KMPlayerPreferencesPage * p = pagelist; p; p = p->next)
+        p->sync (false);
     //\dynamic stuff
     if (pagename)
         configDialog ()->setPage (pagename);
@@ -409,8 +419,8 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strFFMpegArgs, ffmpegarguments);
 
     //dynamic stuff
-    std::for_each (pagelist.begin (), pagelist.end (),
-        std::bind2nd (std::mem_fun (&KMPlayerPreferencesPage::write), m_config));
+    for (KMPlayerPreferencesPage * p = pagelist; p; p = p->next)
+        p->write (m_config);
     //\dynamic stuff
     m_config->sync ();
 }
@@ -545,8 +555,8 @@ KDE_NO_EXPORT void KMPlayerSettings::okPressed () {
 #endif
 
     //dynamic stuff
-    std::for_each (pagelist.begin (), pagelist.end (),
-        std::bind2nd (std::mem_fun (&KMPlayerPreferencesPage::sync), true));
+    for (KMPlayerPreferencesPage * p = pagelist; p; p = p->next)
+        p->sync (true);
     //\dynamic stuff
 
     writeConfig ();

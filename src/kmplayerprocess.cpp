@@ -236,7 +236,7 @@ KDE_NO_CDTOR_EXPORT MPlayer::MPlayer (KMPlayer * player)
  : MPlayerBase (player, "mplayer"),
    m_widget (0L),
    m_configpage (new MPlayerPreferencesPage (this)) {
-    m_player->settings ()->pagelist.push_back (m_configpage);
+    m_player->settings ()->addPage (m_configpage);
 }
 
 KDE_NO_CDTOR_EXPORT MPlayer::~MPlayer () {
@@ -890,7 +890,7 @@ KMPlayerCallbackProcess::KMPlayerCallbackProcess (KMPlayer * player, const char 
    m_send_config (send_no),
    m_status (status_stop) {
 #ifdef HAVE_XINE
-    m_player->settings ()->pagelist.push_back (m_configpage);
+    m_player->settings ()->addPage (m_configpage);
 #endif
 }
 
