@@ -203,8 +203,6 @@ private:
     bool m_popup_clicked : 1;
 };
 
-static const int KMPlayerControlPanelButtons = 8;
-
 class KMPlayerControlButton : public QPushButton {
     Q_OBJECT
 public:
@@ -225,7 +223,8 @@ public:
     };
     enum Button {
         button_config = 0, button_back, button_play, button_forward,
-        button_stop, button_pause, button_record, button_broadcast
+        button_stop, button_pause, button_record, button_broadcast,
+        button_last
     };
     KMPlayerControlPanel (QWidget * parent);
     KDE_NO_CDTOR_EXPORT ~KMPlayerControlPanel () {}
@@ -236,18 +235,14 @@ public:
     void setPlayingProgress (int pos);
     void setLoadingProgress (int pos);
     void setPlayingLength (int len);
+    void setAutoControls (bool b);
+    KDE_NO_EXPORT bool autoControls () const { return m_auto_controls; }
     KDE_NO_EXPORT QSlider * positionSlider () const { return m_posSlider; }
     KDE_NO_EXPORT QSlider * contrastSlider () const { return m_contrastSlider; }
     KDE_NO_EXPORT QSlider * brightnessSlider () const { return m_brightnessSlider; }
     KDE_NO_EXPORT QSlider * hueSlider () const { return m_hueSlider; }
     KDE_NO_EXPORT QSlider * saturationSlider () const { return m_saturationSlider; }
-    KDE_NO_EXPORT QPushButton * backButton () const { return m_buttons[button_back]; }
-    KDE_NO_EXPORT QPushButton * playButton () const { return m_buttons[button_play]; }
-    KDE_NO_EXPORT QPushButton * forwardButton () const { return m_buttons[button_forward]; }
-    KDE_NO_EXPORT QPushButton * pauseButton () const { return m_buttons[button_pause]; }
-    KDE_NO_EXPORT QPushButton * stopButton () const { return m_buttons[button_stop]; }
-    KDE_NO_EXPORT QPushButton * configButton () const { return m_buttons[button_config]; }
-    KDE_NO_EXPORT QPushButton * recordButton () const { return m_buttons[button_record]; }
+    QPushButton * button (Button b) const { return m_buttons [(int) b]; }
     KDE_NO_EXPORT QPushButton * broadcastButton () const { return m_buttons[button_broadcast]; }
     KDE_NO_EXPORT KMPlayerPopupMenu * popupMenu () const { return m_popupMenu; }
     KDE_NO_EXPORT KPopupMenu * bookmarkMenu () const { return m_bookmarkMenu; }
@@ -264,13 +259,14 @@ private:
     QSlider * m_brightnessSlider;
     QSlider * m_hueSlider;
     QSlider * m_saturationSlider;
-    QPushButton * m_buttons[KMPlayerControlPanelButtons];
+    QPushButton * m_buttons [button_last];
     KMPlayerPopupMenu * m_popupMenu;
     KMPlayerPopupMenu * m_bookmarkMenu;
     KMPlayerPopupMenu * m_viewMenu;
     KMPlayerPopupMenu * m_zoomMenu;
     KMPlayerPopupMenu * m_playerMenu;
     KMPlayerPopupMenu * m_colorMenu;
+    bool m_auto_controls; // depending on source caps
 };
 
 class KMPlayerViewer : public QXEmbed {

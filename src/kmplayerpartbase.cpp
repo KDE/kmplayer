@@ -154,12 +154,12 @@ void KMPlayer::init (KActionCollection * action_collection) {
     m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner,
                         m_view->buttonBar ()->bookmarkMenu (), action_collection, true, true);
     KMPlayerControlPanel * panel = m_view->buttonBar ();
-    connect (panel->backButton (), SIGNAL (clicked ()), this, SLOT (back ()));
-    connect (panel->playButton (), SIGNAL (clicked ()), this, SLOT (play ()));
-    connect (panel->forwardButton (), SIGNAL (clicked ()), this, SLOT (forward ()));
-    connect (panel->pauseButton (), SIGNAL (clicked ()), this, SLOT (pause ()));
-    connect (panel->stopButton (), SIGNAL (clicked ()), this, SLOT (stop ()));
-    connect (panel->recordButton(), SIGNAL (clicked()), this, SLOT (record()));
+    connect (panel->button (KMPlayerControlPanel::button_back), SIGNAL (clicked ()), this, SLOT (back ()));
+    connect (panel->button (KMPlayerControlPanel::button_play), SIGNAL (clicked ()), this, SLOT (play ()));
+    connect (panel->button (KMPlayerControlPanel::button_forward), SIGNAL (clicked ()), this, SLOT (forward ()));
+    connect (panel->button (KMPlayerControlPanel::button_pause), SIGNAL (clicked ()), this, SLOT (pause ()));
+    connect (panel->button (KMPlayerControlPanel::button_stop), SIGNAL (clicked ()), this, SLOT (stop ()));
+    connect (panel->button (KMPlayerControlPanel::button_record), SIGNAL (clicked()), this, SLOT (record()));
     connect (panel->positionSlider (), SIGNAL (valueChanged (int)), this, SLOT (positionValueChanged (int)));
     connect (panel->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
     connect (panel->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
@@ -529,8 +529,8 @@ bool KMPlayer::playing () const {
 
 void KMPlayer::stop () {
     if (m_view) {
-        if (!m_view->buttonBar ()->stopButton ()->isOn ())
-        m_view->buttonBar ()->stopButton ()->toggle ();
+        if (!m_view->buttonBar ()->button (KMPlayerControlPanel::button_stop)->isOn ())
+        m_view->buttonBar ()->button (KMPlayerControlPanel::button_stop)->toggle ();
         m_view->setCursor (QCursor (Qt::WaitCursor));
     }
     if (m_process) {
@@ -539,8 +539,8 @@ void KMPlayer::stop () {
     }
     if (m_view) {
         m_view->setCursor (QCursor (Qt::ArrowCursor));
-        if (m_view->buttonBar ()->stopButton ()->isOn ())
-            m_view->buttonBar ()->stopButton ()->toggle ();
+        if (m_view->buttonBar ()->button (KMPlayerControlPanel::button_stop)->isOn ())
+            m_view->buttonBar ()->button (KMPlayerControlPanel::button_stop)->toggle ();
     }
 }
 
