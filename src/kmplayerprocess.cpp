@@ -1128,12 +1128,11 @@ bool Xine::play () {
         printf (" -sub %s ", surl.ascii ());
         *m_process <<" -sub " << surl;
     }
-    m_url = url.url ();
-    if (url.isLocalFile ()) {
-        QFileInfo fi (url.path ());
-        m_process->setWorkingDirectory (fi.dirPath (true));
-        m_url = url.path ();
+    if (m_source->url ().isLocalFile ()) {
+        m_process->setWorkingDirectory 
+            (QFileInfo (m_source->url ().path ()).dirPath (true));
     }
+    m_url = url.url ();
     QString myurl = KProcess::quote (QString (QFile::encodeName (m_url)));
     printf (" %s\n", myurl.ascii ());
     *m_process << " " << myurl;

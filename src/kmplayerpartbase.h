@@ -57,6 +57,7 @@ public:
     virtual bool hasLength ();
     virtual void setIdentified (bool b = true);
     virtual QString prettyName ();
+    virtual void setURL (const KURL & url);
 public slots:
     virtual void init ();
     virtual void activate ();
@@ -135,7 +136,7 @@ protected:
 protected slots:
     void posSliderPressed ();
     void posSliderReleased ();
-    void positonValueChanged (int val);
+    void positionValueChanged (int val);
     void contrastValueChanged (int val);
     void brightnessValueChanged (int val);
     void hueValueChanged (int val);

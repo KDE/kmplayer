@@ -123,7 +123,7 @@ void KMPlayer::addControlPanel (KMPlayerControlPanel * panel) {
     connect (panel->pauseButton (), SIGNAL (clicked ()), this, SLOT (pause ()));
     connect (panel->stopButton (), SIGNAL (clicked ()), this, SLOT (stop ()));
     connect (panel->recordButton(), SIGNAL (clicked()), this, SLOT (record()));
-    connect (panel->positionSlider (), SIGNAL (valueChanged (int)), this, SLOT (positonValueChanged (int)));
+    connect (panel->positionSlider (), SIGNAL (valueChanged (int)), this, SLOT (positionValueChanged (int)));
     connect (panel->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
     connect (panel->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
     connect (panel->contrastSlider (), SIGNAL (valueChanged(int)), this, SLOT (contrastValueChanged(int)));
@@ -154,7 +154,7 @@ void KMPlayer::removeControlPanel (KMPlayerControlPanel * panel) {
     disconnect (panel->pauseButton (), SIGNAL (clicked ()), this, SLOT (pause ()));
     disconnect (panel->stopButton (), SIGNAL (clicked ()), this, SLOT (stop ()));
     disconnect (panel->recordButton(), SIGNAL (clicked()), this, SLOT (record()));
-    disconnect (panel->positionSlider (), SIGNAL (valueChanged (int)), this, SLOT (positonValueChanged (int)));
+    disconnect (panel->positionSlider (), SIGNAL (valueChanged (int)), this, SLOT (positionValueChanged (int)));
     disconnect (panel->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
     disconnect (panel->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
     disconnect (panel->contrastSlider (), SIGNAL (valueChanged(int)), this, SLOT (contrastValueChanged(int)));
@@ -606,7 +606,7 @@ void KMPlayer::saturationValueChanged (int val) {
     m_process->saturation (val, true);
 }
 
-void KMPlayer::positonValueChanged (int pos) {
+void KMPlayer::positionValueChanged (int pos) {
     m_process->seek (pos, true);
 }
 
@@ -878,6 +878,32 @@ QString KMPlayerURLSource::prettyName () {
         return QString (i18n ("URL - %1").arg (newurl));
     }
     return QString (i18n ("URL - %1").arg (m_url.prettyURL ()));
+}
+
+void KMPlayerURLSource::setURL (const KURL & url) {
+    m_url = url;
+    m_refurls.clear ();
+    while (url.isLocalFile () && url.url ().lower ().endsWith (QString ("m3u"))) {
+        char buf[1024];
+        QFile file (url.path ());
+        if (!file.exists ()) break;
+        if (!file.open (IO_ReadOnly)) break;
+        while (m_refurls.size () < 1024 /* support 1k entries */) { 
+            int len = file.readLine (buf, sizeof (buf));
+            if (len < 0 || len > sizeof (buf) -1)
+                break;
+            buf[len] = 0;
+            QString mrl = QString::fromLocal8Bit (buf).stripWhiteSpace ();
+            if (!mrl.startsWith (QChar ('#')))
+                m_refurls.push_back (mrl);
+        }
+        break;
+    }
+    if (!m_refurls.size ())
+        m_refurls.push_back (url.url ());
+    m_currenturl = m_refurls.begin ();
+    m_nexturl = m_currenturl;
+    ++m_nexturl;
 }
 
 #include "kmplayerpartbase.moc"

@@ -66,7 +66,7 @@ public:
     const QString & recordCmd () const { return m_recordcmd; }
     virtual QString filterOptions ();
 
-    void setURL (const KURL & url);
+    virtual void setURL (const KURL & url);
     void setSubURL (const KURL & url) { m_sub_url = url; }
     void setWidth (int w) { m_width = w; }
     void setHeight (int h) { m_height = h; }
