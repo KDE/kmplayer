@@ -26,6 +26,7 @@
 #include <qtimer.h>
 #include <qthread.h>
 #include <qmutex.h>
+#include <qdom.h>
 #include "kmplayer_backend.h"
 #include "kmplayer_callback_stub.h"
 #include "xineplayer.h"
@@ -265,6 +266,7 @@ void KMPlayerBackend::quit () {
 }
 
 bool updateConfigEntry (const QString & name, const QString & value) {
+    fprintf (stderr, "%s=%s\n", name.ascii (), value.ascii ());
     xine_cfg_entry_t cfg_entry;
     if (!xine_config_lookup_entry (xine, name.ascii (), &cfg_entry))
         return false;
@@ -277,19 +279,12 @@ bool updateConfigEntry (const QString & name, const QString & value) {
     return true;
 }
 
-#include <qdom.h>
 void KMPlayerBackend::setConfig (QByteArray data) {
-    fprintf (stderr, "%s\n", data.data ());
     QString err;
     QString attvalue ("VALUE");
     QString attname ("NAME");
     int line, column;
     QDomDocument dom;
-    char * docend = strstr (data.data (), "</document>");
-    if (docend && (docend + strlen ("</document>") - data.data () < data.size ())) {
-        fprintf (stderr, "warning truncating data\n");
-        data.resize (docend + strlen ("</document>") - data.data ());
-    }
     if (dom.setContent (data, false, &err, &line, &column)) {
         if (dom.childNodes().length() == 1) {
             for (QDomNode node = dom.firstChild().firstChild();

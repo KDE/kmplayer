@@ -694,6 +694,7 @@ bool KMPlayerCallbackProcess::getConfigData (QByteArray & data) {
 
 void KMPlayerCallbackProcess::sendConfigData (const QByteArray & data) {
     m_changeddata = data;
+    m_changeddata.resize (data.find (0) - 1); // QDom doesn't like a terminating zero?
     m_send_config = playing () ? send_try : send_new;
     if (m_send_config == send_try)
         m_backend->setConfig (data);
@@ -758,7 +759,6 @@ void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
         QDomDocument changeddom;
         if (!changeddom.setContent (QCString ("<document></document>")))
             kdDebug () << "changed doc error" << endl;
-        kdDebug () << changeddom.toCString () << endl;
         for (QDomNode node = dom.firstChild().firstChild(); !node.isNull (); node = node.nextSibling (), row++) {
             QDomNamedNodeMap attr = node.attributes ();
             QDomNode n = attr.namedItem (attname);
