@@ -16,12 +16,9 @@
  *  Boston, MA 02111-1307, USA.
  **/
 
-#include <qdom.h>
-#include <qxml.h>
-#include <qfile.h>
-#include <qregexp.h>
 #include <qtextstream.h>
 #include <kdebug.h>
+
 #include "kmplayerplaylist.h"
 
 using namespace KMPlayer;
@@ -92,7 +89,7 @@ int NodeList::length () {
     return len;
 }
 
-ElementPtr NodeList::item (int i) {
+ElementPtr NodeList::item (int i) const {
     ElementPtr elm;
     for (ElementPtr e = first_element; e; e = e->nextSibling (), i--)
         if (i == 0) {
@@ -281,22 +278,8 @@ QString Element::outerXML () const {
     return buf;
 }
 
-KDE_NO_EXPORT void Element::setAttributes (const QXmlAttributes & atts) {
-    document()->m_tree_version++;
-    m_first_attribute = 0L;
-    ElementPtr e = m_first_attribute;
-    ElementPtr p;
-    for (int i = 0; i < atts.length (); i++) {
-        //kdDebug () << " " << atts.qName (i) << "=" << atts.value (i) << endl;
-        e = (new Attribute (m_doc, atts.qName (i), atts.value (i)))->self ();
-        e->m_prev = p;
-        e->m_parent = m_self;
-        if (p)
-            p->m_next = e;
-        else
-            m_first_attribute = e;
-        p = e;
-    }
+void Element::setAttributes (const NodeList & attrs) {
+    m_first_attribute = attrs.item (0);
     opened ();
 }
 
@@ -595,114 +578,497 @@ bool GenericURL::isMrl () {
 
 //-----------------------------------------------------------------------------
 
-class MMXmlContentHandler : public QXmlDefaultHandler {
-public:
-    KDE_NO_CDTOR_EXPORT MMXmlContentHandler (ElementPtr d) : m_start (d), m_elm (d), m_ignore_depth (0) {}
-    KDE_NO_CDTOR_EXPORT ~MMXmlContentHandler () {}
-    KDE_NO_EXPORT bool startDocument () {
-        return m_start->self () == m_elm;
-    }
-    KDE_NO_EXPORT bool endDocument () {
-        return m_start->self () == m_elm;
-    }
-    KDE_NO_EXPORT bool startElement (const QString &, const QString &, const QString & tag,
-            const QXmlAttributes & atts) {
-        if (m_ignore_depth) {
-            kdDebug () << "Warning: ignored tag " << tag << endl;
-            m_ignore_depth++;
-        } else {
-            ElementPtr e = m_elm->childFromTag (tag);
-            if (e) {
-                // kdDebug () << "Found tag " << tag << endl;
-                e->setAttributes (atts);
-                m_elm->appendChild (e);
-                m_elm = e;
-            } else {
-                kdError () << "Warning: unknown tag " << tag << endl;
-                m_ignore_depth = 1;
-            }
-        }
-        return true;
-    }
-    KDE_NO_EXPORT bool endElement (const QString & /*nsURI*/,
-                   const QString & /*tag*/, const QString & /*fqtag*/) {
-        if (m_ignore_depth) {
-            // kdError () << "Warning: ignored end tag " << endl;
-            m_ignore_depth--;
-            return true;
-        }
-        if (m_elm == m_start->self ()) {
-            kdError () << "m_elm == m_start, stack underflow " << endl;
-            return false;
-        }
-        m_elm->closed ();
-        // kdError () << "end tag " << endl;
-        m_elm = m_elm->parentNode ();
-        return true;
-    }
-    KDE_NO_EXPORT bool characters (const QString & ch) {
-        if (m_ignore_depth)
-            return true;
-        if (!m_elm)
-            return false;
-        m_elm->characterData (ch);
-        return true;
-    }
-    KDE_NO_EXPORT bool fatalError (const QXmlParseException & ex) {
-        kdError () << "fatal error " << ex.message () << endl;
-        return true;
-    }
-    ElementPtr m_start;
-    ElementPtr m_elm;
-    int m_ignore_depth;
-};
-
-class FilteredInputSource : public QXmlInputSource {
-    QTextStream  & textstream;
-    QString buffer;
-    int pos;
-public:
-    KDE_NO_CDTOR_EXPORT FilteredInputSource (QTextStream & ts, const QString & b) : textstream (ts), buffer (b), pos (0) {}
-    KDE_NO_CDTOR_EXPORT ~FilteredInputSource () {}
-    KDE_NO_EXPORT QString data () { return textstream.read (); }
-    void fetchData ();
-    QChar next ();
-};
-
-KDE_NO_EXPORT QChar FilteredInputSource::next () {
-    if (pos + 8 >= (int) buffer.length ())
-        fetchData ();
-    if (pos >= (int) buffer.length ())
-        return QXmlInputSource::EndOfData;
-    QChar ch = buffer.at (pos++);
-    if (ch == QChar ('&')) {
-        QRegExp exp (QString ("\\w+;"));
-        if (buffer.find (exp, pos) != pos) {
-            buffer = QString ("&amp;") + buffer.mid (pos);
-            pos = 1;
-        }
-    }
-    return ch;
-}
-
-KDE_NO_EXPORT void FilteredInputSource::fetchData () {
-    if (pos > 0)
-        buffer = buffer.mid (pos);
-    pos = 0;
-    if (textstream.atEnd ())
-        return;
-    buffer += textstream.readLine ();
-}
-
 namespace KMPlayer {
-    
+
+class DocumentBuilder {
+public:
+    DocumentBuilder (ElementPtr d) : position (0), m_doc (d), equal_seen (false), in_dbl_quote (false), in_sngl_quote (false), have_error (false) {}
+    virtual ~DocumentBuilder () {};
+    bool parse (QTextStream & d);
+protected:
+    virtual bool startTag (const QString & tag, const NodeList & attr)=0;
+    virtual bool endTag (const QString & tag)=0;
+    virtual bool characterData (const QString & data)= 0;
+private:
+    QTextStream * data;
+    int position;
+    QChar next_char;
+    enum Token { tok_empty, tok_text, tok_white_space, tok_angle_open, tok_equal, tok_double_quote, tok_single_quote, tok_angle_close, tok_slash, tok_exclamation, tok_amp, tok_hash, tok_semi_colon, tok_question_mark };
+    enum State {
+        InTag, InStartTag, InPITag, InDTDTag, InEndTag, InAttributes, InContent, InCDATA, InComment
+    };
+    struct TokenInfo {
+        TokenInfo () : token (tok_empty) {}
+        Token token;
+        QString string;
+        SharedPtr <TokenInfo> next;
+    };
+    typedef SharedPtr <TokenInfo> TokenInfoPtr;
+    struct StateInfo {
+        StateInfo (State s, SharedPtr <StateInfo> n) : state (s), next (n) {}
+        State state;
+        QString data;
+        SharedPtr <StateInfo> next;
+    };
+    SharedPtr <StateInfo> m_state;
+    TokenInfoPtr next_token, token, prev_token;
+    // for element reading
+    QString tagname;
+    ElementPtr m_doc;
+    ElementPtr m_first_attribute, m_last_attribute;
+    QString attr_name, attr_value;
+    QString cdata;
+    bool equal_seen;
+    bool in_dbl_quote;
+    bool in_sngl_quote;
+    bool have_error;
+
+    bool readTag ();
+    bool readEndTag ();
+    bool readAttributes ();
+    bool readPI ();
+    bool readDTD ();
+    bool readCDATA ();
+    bool readComment ();
+    bool nextToken ();
+    void push ();
+    void push_attribute ();
+};
+
+class KMPlayerDocumentBuilder : public DocumentBuilder {
+    int m_ignore_depth;
+    ElementPtr m_elm;
+    ElementPtr m_root;
+public:
+    KMPlayerDocumentBuilder (ElementPtr d);
+    ~KMPlayerDocumentBuilder () {}
+protected:
+    bool startTag (const QString & tag, const NodeList & attr);
+    bool endTag (const QString & tag);
+    bool characterData (const QString & data);
+};
+
 void readXML (ElementPtr root, QTextStream & in, const QString & firstline) {
-    QXmlSimpleReader reader;
-    MMXmlContentHandler content_handler (root);
-    FilteredInputSource input_source (in, firstline);
-    reader.setContentHandler (&content_handler);
-    reader.setErrorHandler (&content_handler);
-    reader.parse (&input_source);
+    KMPlayerDocumentBuilder builder (root);
+    if (!firstline.isEmpty ()) {
+        QString str (firstline + QChar ('\n'));
+        QTextStream fl_in (&str, IO_ReadOnly);
+        builder.parse (fl_in);
+    }
+    builder.parse (in);
+    //doc->normalize ();
+    //kdDebug () << root->outerXML ();
 }
 
 } // namespace
+
+void DocumentBuilder::push () {
+    if (next_token->string.length ()) {
+        prev_token = token;
+        token = next_token;
+        if (prev_token)
+            prev_token->next = token;
+        next_token = TokenInfoPtr (new TokenInfo);
+        //kdDebug () << "push " << token->string << endl;
+    }
+}
+
+void DocumentBuilder::push_attribute () {
+    //kdDebug () << "attribute " << attr_name.latin1 () << "=" << attr_value.latin1 () << endl;
+    if (m_first_attribute) {
+        m_last_attribute->m_next = (new Attribute (m_doc, attr_name, attr_value))->self();
+        m_last_attribute->m_next->m_prev = m_last_attribute;
+        m_last_attribute = m_last_attribute->m_next;
+    } else
+        m_first_attribute = m_last_attribute = (new Attribute (m_doc, attr_name, attr_value))->self();
+    attr_name.truncate (0);
+    attr_value.truncate (0);
+    equal_seen = in_sngl_quote = in_dbl_quote = false;
+}
+
+bool DocumentBuilder::nextToken () {
+    if (token && token->next) {
+        token = token->next;
+        //kdDebug () << "nextToken: token->next found\n";
+        return true;
+    }
+    TokenInfoPtr cur_token = token;
+    while (!data->atEnd () && cur_token == token) {
+        *data >> next_char;
+        bool append_char = true;
+        if (next_char.isSpace ()) {
+            if (next_token->token != tok_white_space)
+                push ();
+            next_token->token = tok_white_space;
+        } else if (!next_char.isLetterOrNumber ()) {
+            if (next_char == QChar ('#')) {
+                if (next_token->token != tok_text) { // check last item on stack &
+                    push ();
+                    next_token->token = tok_hash;
+                }
+            } else if (next_char == QChar ('/')) {
+                push ();
+                next_token->token = tok_slash;
+            } else if (next_char == QChar ('!')) {
+                push ();
+                next_token->token = tok_exclamation;
+            } else if (next_char == QChar ('?')) {
+                push ();
+                next_token->token = tok_question_mark;
+            } else if (next_char == QChar ('<')) {
+                push ();
+                next_token->token = tok_angle_open;
+            } else if (next_char == QChar ('>')) {
+                push ();
+                next_token->token = tok_angle_close;
+            } else if (next_char == QChar (';')) {
+                push ();
+                next_token->token = tok_semi_colon;
+            } else if (next_char == QChar ('=')) {
+                push ();
+                next_token->token = tok_equal;
+            } else if (next_char == QChar ('"')) {
+                push ();
+                next_token->token = tok_double_quote;
+            } else if (next_char == QChar ('\'')) {
+                push ();
+                next_token->token = tok_single_quote;
+            } else if (next_char == QChar ('&')) {
+                push ();
+                append_char = false;
+                TokenInfoPtr tmp = token;
+                next_token->token = tok_text;
+                if (nextToken () && token->token == tok_text &&
+                        nextToken () && token->token == tok_semi_colon) {
+                    if (prev_token->string == QString ("amp"))
+                        token->string = QChar ('&');
+                    else if (prev_token->string == QString ("lt"))
+                        token->string = QChar ('<');
+                    else if (prev_token->string == QString ("gt"))
+                        token->string = QChar ('>');
+                    else if (prev_token->string == QString ("quote"))
+                        token->string = QChar ('"');
+                    else if (prev_token->string == QString ("apos"))
+                        token->string = QChar ('\'');
+                    else
+                        ;  // TODO lookup
+                    if (tmp) {
+                        tmp->next = token;
+                        token = tmp;
+                    }
+                    //kdDebug () << "entity found " << prev_token->string.latin1() << endl;
+                } else {
+                    token = tmp;
+                    tmp = TokenInfoPtr (new TokenInfo);
+                    tmp->token = tok_amp;
+                    tmp->string += QChar ('&');
+                    tmp->next = token->next;
+                    if (token)
+                        token->next = tmp;
+                    else
+                        token = tmp; // hmm
+                }
+            } else if (next_token->token != tok_text) {
+                push ();
+                next_token->token = tok_text;
+            }
+        } else if (next_token->token != tok_text) {
+            push ();
+            next_token->token = tok_text;
+        }
+        if (append_char)
+            next_token->string += next_char;
+    }
+    if (token == cur_token) {
+        if (next_token->string.length ()) {
+            push (); // last token
+            return true;
+        }
+        return false;
+    }
+    return true;
+}
+
+bool DocumentBuilder::readAttributes () {
+    bool closed = false;
+    while (true) {
+        if (!nextToken ()) return false;
+        //kdDebug () << "readAttributes " << token->string.latin1() << endl;
+        if ((in_dbl_quote && token->token != tok_double_quote) ||
+                    (in_sngl_quote && token->token != tok_single_quote)) {
+            attr_value += token->string;
+        } else if (token->token == tok_equal) {
+            if (attr_name.isEmpty ())
+                return false;
+            if (equal_seen)
+                attr_value += token->string; // EQ=a=2c ???
+            //kdDebug () << "equal_seen"<< endl;
+            equal_seen = true;
+        } else if (token->token == tok_white_space) {
+            if (!attr_value.isEmpty ())
+                push_attribute ();
+        } else if (token->token == tok_single_quote) {
+            if (!equal_seen)
+                attr_name += token->string; // D'OH=xxx ???
+            else if (in_sngl_quote) { // found one
+                push_attribute ();
+            } else if (attr_value.isEmpty ())
+                in_sngl_quote = true;
+            else
+                attr_value += token->string;
+        } else if (token->token == tok_double_quote) {
+            if (!equal_seen)
+                attr_name += token->string; // hmm
+            else if (in_dbl_quote) { // found one
+                push_attribute ();
+            } else if (attr_value.isEmpty ())
+                in_dbl_quote = true;
+            else
+                attr_value += token->string;
+            //kdDebug () << "in_dbl_quote:"<< in_dbl_quote << endl;
+        } else if (token->token == tok_slash) {
+            TokenInfoPtr mark_token = token;
+            if (nextToken () &&
+                    (token->token != tok_white_space || nextToken()) &&//<e / >
+                    token->token == tok_angle_close) {
+            //kdDebug () << "close mark:"<< endl;
+                closed = true;
+                break;
+            } else {
+                token = mark_token;
+            //kdDebug () << "not end mark:"<< equal_seen << endl;
+                if (equal_seen)
+                    attr_value += token->string; // ABBR=w/o ???
+                else
+                    attr_name += token->string;
+            }
+        } else if (token->token == tok_angle_close) {
+            if (!attr_name.isEmpty ())
+                push_attribute ();
+            break;
+        } else if (equal_seen) {
+            attr_value += token->string;
+        } else {
+            attr_name += token->string;
+        }
+    }
+    m_state = m_state->next;
+    if (m_state->state == InPITag) {
+        if (tagname == QString ("xml")) {
+            /*const AttributeMap::const_iterator e = attr.end ();
+            for (AttributeMap::const_iterator i = attr.begin (); i != e; ++i)
+                if (!strcasecmp (i.key ().latin1 (), "encoding"))
+                  kdDebug () << "encodeing " << i.data().latin1() << endl;*/
+        }
+    } else {
+        have_error = startTag (tagname, NodeList (m_first_attribute));
+        if (closed)
+            have_error &= endTag (tagname);
+        //kdDebug () << "readTag " << tagname << " closed:" << closed << " ok:" << have_error << endl;
+    }
+    m_state = m_state->next; // pop Element or PI
+    return true;
+}
+
+bool DocumentBuilder::readPI () {
+    // TODO: <?xml .. encoding="ENC" .. ?>
+    if (!nextToken ()) return false;
+    if (token->token == tok_text && !token->string.compare ("xml")) {
+        m_state = new StateInfo (InAttributes, m_state);
+        return readAttributes ();
+    } else {
+        while (nextToken ())
+            if (token->token == tok_angle_close) {
+                m_state = m_state->next;
+                return true;
+            }
+    }
+    return false;
+}
+
+bool DocumentBuilder::readDTD () {
+    //TODO: <!ENTITY ..>
+    if (!nextToken ()) return false;
+    if (token->token == tok_text && token->string.startsWith (QString ("--"))) {
+        m_state = new StateInfo (InComment, m_state->next); // note: pop DTD
+        return readComment ();
+    }
+    //kdDebug () << "readDTD: " << token->string.latin1 () << endl;
+    if (token->token == tok_text && token->string.startsWith (QString ("[CDATA["))) {
+        m_state = new StateInfo (InCDATA, m_state->next); // note: pop DTD
+        cdata.truncate (0);
+        return readCDATA ();
+    }
+    while (nextToken ())
+        if (token->token == tok_angle_close) {
+            m_state = m_state->next;
+            return true;
+        }
+    return false;
+}
+
+bool DocumentBuilder::readCDATA () {
+    while (!data->atEnd ()) {
+        *data >> next_char;
+        if (next_char == QChar ('>') && cdata.endsWith (QString ("]]"))) {
+            cdata.truncate (cdata.length () - 2);
+            m_state = m_state->next;
+            if (m_state->state == InContent)
+                have_error = characterData (cdata);
+            else if (m_state->state == InAttributes) {
+                if (equal_seen)
+                    attr_value += cdata;
+                else
+                    attr_name += cdata;
+            }
+            return true;
+        }
+        cdata += next_char;
+    }
+    return false;
+}
+
+bool DocumentBuilder::readComment () {
+    while (nextToken ()) {
+        if (token->token == tok_angle_close && prev_token)
+            if (prev_token->string.endsWith (QString ("--")))
+                return true;
+    }
+    m_state = m_state->next;
+    return false;
+}
+
+bool DocumentBuilder::readEndTag () {
+    if (!nextToken ()) return false;
+    if (token->token == tok_white_space)
+        if (!nextToken ()) return false;
+    tagname = token->string;
+    if (!nextToken ()) return false;
+    if (token->token == tok_white_space)
+        if (!nextToken ()) return false;
+    if (token->token != tok_angle_close)
+        return false;
+    have_error = endTag (tagname);
+    m_state = m_state->next;
+    return true;
+}
+
+// TODO: <!ENTITY ..> &#1234;
+bool DocumentBuilder::readTag () {
+    if (!nextToken ()) return false;
+    if (token->token == tok_exclamation) {
+        m_state = new StateInfo (InDTDTag, m_state->next);
+    //kdDebug () << "readTag: " << token->string.latin1 () << endl;
+        return readDTD ();
+    }
+    if (token->token == tok_white_space)
+        if (!nextToken ()) return false; // allow '< / foo', '<  foo', '< ? foo'
+    if (token->token == tok_question_mark) {
+        m_state = new StateInfo (InPITag, m_state->next);
+        return readPI ();
+    }
+    if (token->token == tok_slash) {
+        m_state = new StateInfo (InEndTag, m_state->next);
+        return readEndTag ();
+    }
+    if (token->token != tok_text)
+        return false; // FIXME entities
+    tagname = token->string;
+    //kdDebug () << "readTag " << tagname.latin1() << endl;
+    m_state = new StateInfo (InAttributes, m_state);
+    return readAttributes ();
+}
+
+bool DocumentBuilder::parse (QTextStream & d) {
+    data = &d;
+    if (!next_token) {
+        next_token = TokenInfoPtr (new TokenInfo);
+        m_state = new StateInfo (InContent, m_state);
+    }
+    bool ok = true;
+    while (ok) {
+        switch (m_state->state) {
+            case InTag:
+                ok = readTag ();
+                break;
+            case InPITag:
+                ok = readPI ();
+                break;
+            case InDTDTag:
+                ok = readDTD ();
+                break;
+            case InEndTag:
+                ok = readEndTag ();
+                break;
+            case InAttributes:
+                ok = readAttributes ();
+                break;
+            case InCDATA:
+                ok = readCDATA ();
+                break;
+            case InComment:
+                ok = readComment ();
+                break;
+            default:
+                if ((ok = nextToken ())) {
+                    if (token->token == tok_angle_open) {
+                        attr_name.truncate (0);
+                        attr_value.truncate (0);
+                        m_first_attribute = m_last_attribute = 0L;
+                        equal_seen = in_sngl_quote = in_dbl_quote = false;
+                        m_state = new StateInfo (InTag, m_state);
+                        ok = readTag ();
+                    } else
+                        have_error = characterData (token->string);
+                }
+        }
+        if (!m_state)
+            return true; // end document
+    }
+    return false; // need more data
+}
+
+KMPlayerDocumentBuilder::KMPlayerDocumentBuilder (ElementPtr d)
+ : DocumentBuilder (d->document ()->self ()), m_ignore_depth (0),
+   m_elm (d), m_root (d) {}
+
+bool KMPlayerDocumentBuilder::startTag (const QString & tag, const NodeList & attr) {
+    if (m_ignore_depth) {
+        m_ignore_depth++;
+        //kdDebug () << "Warning: ignored tag " << tag.latin1 () << " ignore depth = " << m_ignore_depth << endl;
+    } else {
+        ElementPtr e = m_elm->childFromTag (tag);
+        if (e) {
+            //kdDebug () << "Found tag " << tag.latin1 () << endl;
+            e->setAttributes (attr);
+            m_elm->appendChild (e);
+            m_elm = e;
+        } else {
+            m_ignore_depth = 1;
+            kdDebug () << "Warning: unknown tag " << tag.latin1 () << " ignore depth = " << m_ignore_depth << endl;
+        }
+    }
+    return true;
+}
+
+bool KMPlayerDocumentBuilder::endTag (const QString & tag) {
+    if (m_ignore_depth) { // endtag to ignore
+        m_ignore_depth--;
+        kdDebug () << "Warning: ignored end tag " << " ignore depth = " << m_ignore_depth <<  endl;
+    } else {  // endtag
+        if (m_elm == m_root) {
+            kdDebug () << "m_elm == m_doc, stack underflow " << endl;
+            return false;
+        }
+        //kdDebug () << "end tag " << tag.latin1 () << endl;
+        m_elm = m_elm->parentNode ();
+    }
+    return true;
+}
+
+bool KMPlayerDocumentBuilder::characterData (const QString & data) {
+    if (!m_ignore_depth)
+        m_elm->characterData (data);
+    //kdDebug () << "characterData " << d.latin1() << endl;
+    return true;
+}

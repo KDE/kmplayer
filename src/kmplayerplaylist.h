@@ -51,7 +51,6 @@
 
 #include "kmplayershared.h"
 
-class QXmlAttributes;
 class QTextStream;
 
 namespace KMPlayer {
@@ -69,10 +68,11 @@ public:
     NodeList (ElementPtr e) : first_element (e) {}
     ~NodeList () {}
     int length ();
-    ElementPtr item (int i);
+    ElementPtr item (int i) const;
 };
 
 class KMPLAYER_EXPORT Element {
+    friend class DocumentBuilder;
 public:
     virtual ~Element ();
     Document * document ();
@@ -87,7 +87,7 @@ public:
     QString innerText () const;
     QString innerXML () const;
     QString outerXML () const;
-    void setAttributes (const QXmlAttributes &);
+    void setAttributes (const NodeList & attrs);
     virtual const char * nodeName () const;
     /**
      * If this is a derived Mrl object and has a SRC attribute
