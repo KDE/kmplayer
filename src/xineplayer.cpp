@@ -373,7 +373,7 @@ void KXinePlayer::stop () {
     if (!running) return;
     fprintf(stderr, "stop\n");
     mutex.lock ();
-    xine_close (stream);
+    xine_stop (stream);
     running = 0;
     xine_event_dispose_queue (event_queue);
     xine_dispose (stream);
