@@ -81,7 +81,6 @@ KDE_NO_EXPORT const char * Element::nodeName () const {
 KDE_NO_EXPORT void Element::clear () {
     while (m_first_child != m_last_child) {
         // avoid stack abuse with 10k children derefing each other
-        if (m_last_child->m_parent)
         m_last_child->m_parent = 0L;
         m_last_child = m_last_child->m_prev;
         m_last_child->m_next = 0L;

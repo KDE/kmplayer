@@ -317,9 +317,11 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
                     break;
                 }
     }
-    if (m_havehref && !kapp->authorizeURLAction ("redirect", url, urlsource->url ()))
+    if (m_havehref && (!kapp->authorizeURLAction ("redirect", url, urlsource->url ()) || !m_settings->allowhref)) {
         m_havehref = false;
-    if (!m_havehref || !m_settings->allowhref)
+        url = urlsource->url ();
+    }
+    if (!m_havehref)
         setURL (url);
     if (url.isEmpty ())
         return true;
