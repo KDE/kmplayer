@@ -38,6 +38,7 @@ namespace KMPlayer {
 
 class ImageDataPrivate;
 class TextDataPrivate;
+typedef WeakPtr<ElementRuntime> ElementRuntimePtrW;
 
 /**
  * Live representation of a SMIL MediaType element
@@ -45,7 +46,11 @@ class TextDataPrivate;
 class ElementRuntime : public QObject {
     Q_OBJECT
 public:
+    enum DurationTime {
+        begin_time = 0, duration_time, end_time, durtime_last
+    };
     virtual ~ElementRuntime ();
+    void setDurationItem (DurationTime item, const QString & val);
     /**
      * start, or restart in case of re-use, the durations
      */
@@ -70,15 +75,24 @@ public slots:
 protected slots:
     void timerEvent (QTimerEvent *);
     void elementActivateEvent ();
+    void elementOutOfBoundsEvent ();
+    void elementInBoundsEvent ();
     /**
      * start_timer timer expired
      */
     virtual void started ();
+private:
+    void processEvent (unsigned int event);
 protected:
     ElementRuntime (ElementPtr & e);
     ElementPtrW media_element;
     int start_timer;
     int dur_timer;
+    struct DurationItem {
+        DurationItem () : durval (0) {}
+        unsigned int durval;
+        ElementRuntimePtrW connection;
+    } durations [(const int) durtime_last];
     bool isstarted;
 };
 
@@ -227,7 +241,7 @@ public:
      */
     void timed_start ();
     /**
-     * Called from the ElementRuntime when 'dur' (or 'end' - 'start' 
+     * Called from the ElementRuntime when 'dur' (or 'end' - 'start')
      * attribute expires to mark us finished
      */
     void timed_end ();
