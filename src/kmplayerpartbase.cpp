@@ -129,7 +129,14 @@ void KMPlayer::showConfigDialog () {
     m_settings->show ("GeneralPage");
 }
 
-void KMPlayer::addControlPanel (KMPlayerControlPanel * panel) {
+void KMPlayer::init (KActionCollection * action_collection) {
+    m_view->init ();
+    m_settings->readConfig ();
+    setProcess (m_players ["mplayer"]);
+    setRecorder (m_recorders ["mencoder"]);
+    m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner,
+                        m_view->buttonBar ()->bookmarkMenu (), action_collection, true, true);
+    KMPlayerControlPanel * panel = m_view->buttonBar ();
     connect (panel->backButton (), SIGNAL (clicked ()), this, SLOT (back ()));
     connect (panel->playButton (), SIGNAL (clicked ()), this, SLOT (play ()));
     connect (panel->forwardButton (), SIGNAL (clicked ()), this, SLOT (forward ()));
@@ -144,58 +151,12 @@ void KMPlayer::addControlPanel (KMPlayerControlPanel * panel) {
     connect (panel->hueSlider (), SIGNAL (valueChanged(int)), this, SLOT (hueValueChanged(int)));
     connect (panel->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));
     connect (panel, SIGNAL (destroyed(QObject *)), this, SLOT (controlPanelDestroyed(QObject *)));
-    panel->popupMenu()->connectItem (KMPlayerControlPanel::menu_fullscreen, m_view, SLOT (fullScreen ()));
+    panel->popupMenu()->connectItem (KMPlayerControlPanel::menu_fullscreen, this, SLOT (fullScreen ()));
 #ifdef HAVE_XINE
     QPopupMenu *menu = panel->playerMenu ();
     menu->connectItem (menu->idAt(0), this, SLOT (setMPlayer (int)));
     menu->connectItem (menu->idAt(1), this, SLOT (setXine (int)));
 #endif
-    if ((playing () && !panel->playButton ()->isOn ()) ||
-            (!playing () && panel->playButton ()->isOn ()))
-        panel->playButton ()->toggle ();
-    m_panels.push_back (panel);
-}
-
-void KMPlayer::removeControlPanel (KMPlayerControlPanel * panel) {
-    if (std::find (m_panels.begin(), m_panels.end(), panel) == m_panels.end()) {
-        kdError () << "Control panel not found" << endl;
-        return;
-    }
-    disconnect (panel->backButton (), SIGNAL (clicked ()), this, SLOT (back ()));
-    disconnect (panel->playButton (), SIGNAL (clicked ()), this, SLOT (play ()));
-    disconnect (panel->forwardButton (), SIGNAL (clicked ()), this, SLOT (forward ()));
-    disconnect (panel->pauseButton (), SIGNAL (clicked ()), this, SLOT (pause ()));
-    disconnect (panel->stopButton (), SIGNAL (clicked ()), this, SLOT (stop ()));
-    disconnect (panel->recordButton(), SIGNAL (clicked()), this, SLOT (record()));
-    disconnect (panel->positionSlider (), SIGNAL (valueChanged (int)), this, SLOT (positionValueChanged (int)));
-    disconnect (panel->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
-    disconnect (panel->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
-    disconnect (panel->contrastSlider (), SIGNAL (valueChanged(int)), this, SLOT (contrastValueChanged(int)));
-    disconnect (panel->brightnessSlider (), SIGNAL (valueChanged(int)), this, SLOT (brightnessValueChanged(int)));
-    disconnect (panel->hueSlider (), SIGNAL (valueChanged(int)), this, SLOT (hueValueChanged(int)));
-    disconnect (panel->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));
-    disconnect (panel, SIGNAL (destroyed(QObject *)), this, SLOT (controlPanelDestroyed(QObject *)));
-    panel->popupMenu()->disconnectItem (KMPlayerControlPanel::menu_fullscreen, m_view, SLOT (fullScreen ()));
-#ifdef HAVE_XINE
-    QPopupMenu *menu = panel->playerMenu ();
-    menu->disconnectItem (menu->idAt(0), this, SLOT (setMPlayer (int)));
-    menu->disconnectItem (menu->idAt(1), this, SLOT (setXine (int)));
-#endif
-    m_panels.remove (panel);
-}
-
-KDE_NO_EXPORT void KMPlayer::controlPanelDestroyed (QObject * panel) {
-    m_panels.remove (static_cast <KMPlayerControlPanel *> (panel));
-}
-
-void KMPlayer::init (KActionCollection * action_collection) {
-    m_view->init ();
-    m_settings->readConfig ();
-    setProcess (m_players ["mplayer"]);
-    setRecorder (m_recorders ["mencoder"]);
-    m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner,
-                        m_view->buttonBar ()->bookmarkMenu (), action_collection, true, true);
-    addControlPanel (m_view->buttonBar ());
     m_bPosSliderPressed = false;
     m_view->buttonBar ()->contrastSlider ()->setValue (m_settings->contrast);
     m_view->buttonBar ()->brightnessSlider ()->setValue (m_settings->brightness);
@@ -232,13 +193,25 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
                     this, SLOT (processFinished ()));
         disconnect (m_process, SIGNAL (started ()),
                     this, SLOT (processStarted ()));
+        disconnect (m_process, SIGNAL (startedPlaying ()),
+                    this, SLOT (processStartedPlaying ()));
+        disconnect (m_process, SIGNAL (positioned (int)),
+                    this, SLOT (positioned (int)));
+        disconnect (m_process, SIGNAL (loaded (int)),
+                    this, SLOT (loaded (int)));
+        disconnect (m_process, SIGNAL (lengthFound (int)),
+                    this, SLOT (lengthFound (int)));
         m_process->quit ();
         source = m_process->source ();
     }
     m_process = process;
     m_process->setSource (source); // will stop the process
     connect (m_process, SIGNAL (started ()), this, SLOT (processStarted ()));
+    connect (m_process, SIGNAL (startedPlaying ()), this, SLOT (processStartedPlaying ()));
     connect (m_process, SIGNAL (finished ()), this, SLOT (processFinished ()));
+    connect (m_process, SIGNAL (positioned(int)), this, SLOT (positioned(int)));
+    connect (m_process, SIGNAL (loaded (int)), this, SLOT (loaded (int)));
+    connect (m_process, SIGNAL(lengthFound(int)), this, SLOT(lengthFound(int)));
 }
 
 void KMPlayer::setRecorder (KMPlayerProcess * recorder) {
@@ -296,25 +269,22 @@ void KMPlayer::enablePlayerMenu (bool enable) {
 #ifdef HAVE_XINE
     if (!m_view)
         return;
-    ControlPanelList::iterator e = m_panels.end();
-    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
-        if (enable) {
-            QPopupMenu * menu = (*i)->playerMenu ();
-            menu->clear ();
-            menu->insertItem (i18n ("&MPlayer"), this, SLOT (setMPlayer (int)));
-            menu->insertItem (i18n ("&Xine"), this, SLOT (setXine (int)));
-            menu->setEnabled (true);
-            if (m_settings->urlbackend == QString ("Xine")) {
-                menu->setItemChecked (menu->idAt (1), true);
-                setProcess (m_players ["xine"]);
-            } else {
-                setProcess (m_players ["mplayer"]);
-                menu->setItemChecked (menu->idAt (0), true);
-            }
-            (*i)->popupMenu ()->setItemVisible (KMPlayerControlPanel::menu_player, true);
+    if (enable) {
+        QPopupMenu * menu = m_view->buttonBar ()->playerMenu ();
+        menu->clear ();
+        menu->insertItem (i18n ("&MPlayer"), this, SLOT (setMPlayer (int)));
+        menu->insertItem (i18n ("&Xine"), this, SLOT (setXine (int)));
+        menu->setEnabled (true);
+        if (m_settings->urlbackend == QString ("Xine")) {
+            menu->setItemChecked (menu->idAt (1), true);
+            setProcess (m_players ["xine"]);
         } else {
-            (*i)->popupMenu ()->setItemVisible (KMPlayerControlPanel::menu_player, false);
+            setProcess (m_players ["mplayer"]);
+            menu->setItemChecked (menu->idAt (0), true);
         }
+        m_view->buttonBar ()->popupMenu ()->setItemVisible (KMPlayerControlPanel::menu_player, true);
+    } else {
+        m_view->buttonBar ()->popupMenu ()->setItemVisible (KMPlayerControlPanel::menu_player, false);
     }
 #endif
 }
@@ -399,8 +369,7 @@ void KMPlayer::keepMovieAspect (bool b) {
 
 KDE_NO_EXPORT void KMPlayer::recordingStarted () {
     if (!m_view) return;
-    std::for_each (m_panels.begin (), m_panels.end (),
-            std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setRecording), true));
+    m_view->buttonBar ()->setRecording (true);
     if (m_settings->replayoption == KMPlayerSettings::ReplayAfter)
         m_record_timer = startTimer (1000 * m_settings->replaytime);
     emit startRecording ();
@@ -408,8 +377,7 @@ KDE_NO_EXPORT void KMPlayer::recordingStarted () {
 
 KDE_NO_EXPORT void KMPlayer::recordingFinished () {
     if (!m_view) return;
-    std::for_each (m_panels.begin (), m_panels.end (),
-            std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setRecording), false));
+    m_view->buttonBar ()->setRecording (false);
     emit stopRecording ();
     killTimer (m_record_timer);
     m_record_timer = 0;
@@ -439,35 +407,30 @@ void KMPlayer::processFinished () {
         m_process->source ()->setLength (m_process->source ()->position ());
     m_process->source ()->setPosition (0);
     if (!m_view) return;
-    std::for_each (m_panels.begin (), m_panels.end (),
-            std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setPlaying), false));
+    m_view->buttonBar ()->setPlaying (false);
     m_view->reset ();
     emit stopPlaying ();
 }
 
 void KMPlayer::processStarted () {
     if (!m_view) return;
-    std::for_each (m_panels.begin (), m_panels.end (),
-            std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setPlaying), true));
+    m_view->buttonBar ()->setPlaying (true);
 }
 
-KDE_NO_EXPORT void KMPlayer::processPositioned (int pos) {
+KDE_NO_EXPORT void KMPlayer::positioned (int pos) {
     if (m_view && !m_bPosSliderPressed)
-        std::for_each (m_panels.begin (), m_panels.end (),
-            std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setPlayingProgress), pos));
+        m_view->buttonBar ()->setPlayingProgress (pos);
 }
 
-void KMPlayer::processLoaded (int percentage) {
+void KMPlayer::loaded (int percentage) {
     if (m_view && !m_bPosSliderPressed)
-        std::for_each (m_panels.begin (), m_panels.end (),
-                std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setLoadingProgress), percentage));
+        m_view->buttonBar ()->setLoadingProgress (percentage);
     emit loading (percentage);
 }
 
-void KMPlayer::processLengthFound (int len) {
+void KMPlayer::lengthFound (int len) {
     if (!m_view) return;
-    std::for_each (m_panels.begin (), m_panels.end (),
-            std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setPlayingLength), len));
+    m_view->buttonBar ()->setPlayingLength (len);
 }
 
 void KMPlayer::processStartedPlaying () {
@@ -476,13 +439,8 @@ void KMPlayer::processStartedPlaying () {
     kdDebug () << "KMPlayer::processStartedPlaying " << endl;
     if (m_settings->sizeratio && m_view->viewer ())
         m_view->viewer ()->setAspect (m_process->source ()->aspect ());
-    ControlPanelList::iterator e = m_panels.end();
-    int len = m_process->source ()->length ();
-    bool seek = m_process->source ()->isSeekable ();
-    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
-        (*i)->showPositionSlider (!!len);
-        (*i)->enableSeekButtons (seek);
-    }
+    m_view->buttonBar ()->showPositionSlider (!!m_process->source ()->length());
+    m_view->buttonBar ()->enableSeekButtons (m_process->source()->isSeekable());
     emit loading (100);
     emit startPlaying ();
 }
@@ -510,17 +468,14 @@ void KMPlayer::record () {
     } else {
         m_process->stop ();
         m_settings->show  ("RecordPage");
-        std::for_each (m_panels.begin (), m_panels.end (),
-                std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setRecording), false));
+        m_view->buttonBar ()->setRecording (false);
     }
     if (m_view) m_view->setCursor (QCursor (Qt::ArrowCursor));
 }
 
 void KMPlayer::play () {
     m_process->play ();
-    std::for_each (m_panels.begin (), m_panels.end (),
-            std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setPlaying),
-                m_process->playing ()));
+    m_view->buttonBar ()->setPlaying (m_process->playing ());
 }
 
 bool KMPlayer::playing () const {
@@ -528,18 +483,17 @@ bool KMPlayer::playing () const {
 }
 
 void KMPlayer::stop () {
-    ControlPanelList::iterator e = m_panels.end();
-    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
-        if (!(*i)->stopButton ()->isOn ())
-            (*i)->stopButton ()->toggle ();
+    if (m_view) {
+        if (!m_view->buttonBar ()->stopButton ()->isOn ())
+        m_view->buttonBar ()->stopButton ()->toggle ();
+        m_view->setCursor (QCursor (Qt::WaitCursor));
     }
-    if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
     m_process->source ()->first ();
     m_process->quit ();
-    if (m_view) m_view->setCursor (QCursor (Qt::ArrowCursor));
-    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
-        if ((*i)->stopButton ()->isOn ())
-            (*i)->stopButton ()->toggle ();
+    if (m_view) {
+        m_view->setCursor (QCursor (Qt::ArrowCursor));
+        if (m_view->buttonBar ()->stopButton ()->isOn ())
+            m_view->buttonBar ()->stopButton ()->toggle ();
     }
 }
 
@@ -600,6 +554,10 @@ KDE_NO_EXPORT void KMPlayer::positionValueChanged (int pos) {
     QSlider * slider = ::qt_cast <QSlider *> (sender ());
     if (slider && slider->isEnabled ())
         m_process->seek (pos, true);
+}
+
+KDE_NO_EXPORT void KMPlayer::fullScreen () {
+    m_process->view ()->fullScreen ();
 }
 
 KAboutData* KMPlayer::createAboutData () {

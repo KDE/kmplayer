@@ -192,16 +192,26 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
         m_view->setControlPanelMode (KMPlayerView::CP_Hide);
     else
         m_view->setControlPanelMode (KMPlayerView::CP_AutoHide);
-    if (!m_group.isEmpty ()) {
-        KMPlayerPart * master = masterKMPlayerPart ();
-        if (master) {
-            // found a master, exchange controls now
-            removeControlPanel (m_view->buttonBar ());
-            master->addControlPanel (m_view->buttonBar ());
-            if (m_features & Feat_Viewer) {
-                m_view->setForeignViewer (master->m_view);
-                master->addControlPanel (m_view->buttonBar ());
-            }
+    if (!m_group.isEmpty () && m_group != QString::fromLatin1("_unique") && m_features != Feat_Unknown) {
+        KMPlayerPartList::iterator i = kmplayerpart_static->kmplayer_parts.begin ();
+        for (; i != kmplayerpart_static->kmplayer_parts.end (); ++i)
+            if (*i && ((KMPlayerPart*)*i) != this &&
+                allowRedir ((*i)->m_docbase) &&
+                ((*i)->m_group == m_group ||
+                 (*i)->m_group == QString::fromLatin1("_master") ||
+                 m_group == QString::fromLatin1("_master")) &&
+                (m_features & Feat_Viewer) != ((*i)->m_features & Feat_Viewer)) {
+                // found viewer and control part, exchange players now
+                KMPlayerPart * vp = (m_features & Feat_Viewer) ? this : (*i).operator-> (); 
+                KMPlayerPart * cp = (m_features & Feat_Viewer) ? (*i).operator-> () : this;
+                cp->m_old_players = m_players;
+                cp->m_old_recorders = m_recorders;
+                cp->setProcess (vp->m_players [QString(cp->process()->name())]);
+                cp->setRecorder (vp->m_recorders [QString(cp->recorder()->name())]);
+                cp->m_players = vp->m_players;
+                cp->m_recorders = vp->m_recorders;
+                connect (vp, SIGNAL (destroyed (QObject *)),
+                         cp, SLOT (viewerPartDestroyed (QObject *)));
         }
         kmplayerpart_static->kmplayer_parts.push_back (this);
     }
@@ -221,19 +231,13 @@ KDE_NO_EXPORT bool KMPlayerPart::allowRedir (const KURL & url) {
     return kapp->authorizeURLAction ("redirect", url, m_docbase);
 }
 
-KDE_NO_EXPORT KMPlayerPart * KMPlayerPart::masterKMPlayerPart () {
-    KMPlayerPartList::iterator i = kmplayerpart_static->kmplayer_parts.begin ();
-    for (; i != kmplayerpart_static->kmplayer_parts.end (); ++i)
-        if (*i && ((KMPlayerPart*)*i) != this &&
-                allowRedir ((*i)->m_docbase) &&
-                m_group != QString::fromLatin1("_unique") &&
-                (*i)->m_group != QString::fromLatin1("_unique") &&
-                ((*i)->m_group == m_group ||
-                 (*i)->m_group == QString::fromLatin1("_master") ||
-                 m_group == QString::fromLatin1("_master")) &&
-                !(*i)->process()->source ()->url().isEmpty ())
-            return *i;
-    return 0L;
+KDE_NO_EXPORT void KMPlayerPart::viewerPartDestroyed (QObject * obj) {
+    kdDebug () << "KMPlayerPart::viewerPartDestroyed" << endl;
+    KMPlayerPart * part = static_cast <KMPlayerPart *> (obj);
+    setProcess (m_old_players [QString (part->process ()->name ())]);
+    setRecorder (m_old_recorders [QString (part->recorder ()->name ())]);
+    m_players = m_old_players;
+    m_recorders = m_old_recorders;
 }
 
 KDE_NO_EXPORT bool KMPlayerPart::openFile() {
@@ -249,21 +253,8 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & url) {
         return true;
     if (!m_group.isEmpty ()) {
         // check for another KPart with the same group name already playing
-        if (masterKMPlayerPart ())
-            // found one, nothing to do ..
+        if (m_process->playing () && m_process->source ()->url () == url)
             return true;
-        // ok this is the master, now exchange controls
-        KMPlayerPartList::iterator i = kmplayerpart_static->kmplayer_parts.begin ();
-        for (; i != kmplayerpart_static->kmplayer_parts.end (); ++i) {
-            if (!*i || !(*i)->m_view || ((KMPlayerPart*)*i) == this)
-                continue;
-            KMPlayerControlPanel * panel = (*i)->m_view->buttonBar ();
-            addControlPanel (panel);
-            (*i)->removeControlPanel (panel);
-            if ((*i)->m_features & Feat_Viewer) {
-                (*i)->m_view->setForeignViewer (m_view);
-            }
-        }
     }
     enablePlayerMenu (true);
     if (!m_view || !url.isValid ()) return false;
@@ -308,8 +299,8 @@ KDE_NO_EXPORT void KMPlayerPart::processFinished () {
         m_browserextension->infoMessage (i18n ("KMPlayer: Stop Playing"));
 }
 
-KDE_NO_EXPORT void KMPlayerPart::processLoaded (int percentage) {
-    KMPlayer::processLoaded (percentage);
+KDE_NO_EXPORT void KMPlayerPart::loaded (int percentage) {
+    KMPlayer::loaded (percentage);
     if (percentage < 100) {
         m_browserextension->setLoadingProgress (percentage);
         m_browserextension->infoMessage 

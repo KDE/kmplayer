@@ -650,18 +650,17 @@ KDE_NO_EXPORT void KMPlayerView::timerEvent (QTimerEvent * e) {
     delayed_timer = 0;
     if (!m_playing)
         return;
-    KMPlayerView * v = m_foreign_view ? m_foreign_view.operator-> () : this;
-    int vert_buttons_pos = v->m_layer->height ();
-    int mouse_pos = v->m_layer->mapFromGlobal (QCursor::pos ()).y();
-    int cp_height = v->m_buttonbar->maximumSize ().height ();
+    int vert_buttons_pos = m_layer->height ();
+    int mouse_pos = m_layer->mapFromGlobal (QCursor::pos ()).y();
+    int cp_height = m_buttonbar->maximumSize ().height ();
     bool mouse_on_buttons = (//m_layer->hasMouse () && 
                              mouse_pos >= vert_buttons_pos-cp_height &&
                              mouse_pos <= vert_buttons_pos);
-    if (v->m_buttonbar)
-        if (mouse_on_buttons && !v->m_buttonbar->isVisible ())
-            v->m_buttonbar->show ();
-        else if (!mouse_on_buttons && v->m_buttonbar->isVisible ())
-            v->m_buttonbar->hide ();
+    if (m_buttonbar)
+        if (mouse_on_buttons && !m_buttonbar->isVisible ())
+            m_buttonbar->show ();
+        else if (!mouse_on_buttons && m_buttonbar->isVisible ())
+            m_buttonbar->hide ();
 }
 
 KDE_NO_EXPORT void KMPlayerView::addText (const QString & str) {
@@ -725,14 +724,11 @@ KDE_NO_EXPORT void KMPlayerView::reset () {
 }
 
 bool KMPlayerView::isFullScreen () const {
-    KMPlayerViewLayer * l = m_foreign_view ? m_foreign_view->m_layer : m_layer;
-    return l->isFullScreen ();
+    return m_layer->isFullScreen ();
 }
 
 void KMPlayerView::fullScreen () {
-    if (m_foreign_view) {
-        m_foreign_view->fullScreen ();
-    } else if (!m_layer->isFullScreen()) {
+    if (!m_layer->isFullScreen()) {
         m_sreensaver_disabled = false;
         QByteArray data, replydata;
         QCString replyType;
@@ -759,23 +755,6 @@ void KMPlayerView::fullScreen () {
     }
     setControlPanelMode (m_old_controlpanel_mode);
     emit fullScreenChanged ();
-}
-
-void KMPlayerView::setForeignViewer (KMPlayerView * other) {
-    if (m_buttonbar && m_controlpanel_mode == CP_AutoHide) {
-        m_buttonbar->show ();
-        m_holder->setMouseTracking (false);
-    }
-    m_holder->hide ();
-    other->m_holder->reparent (m_layer, m_holder->pos (), true);
-    other->m_foreign_view = this;
-    QVBoxLayout * layout = static_cast <QVBoxLayout*> (m_layer->layout ());
-    layout->insertWidget (0, other->m_holder);
-    if (m_buttonbar && m_controlpanel_mode == CP_AutoHide) {
-        m_buttonbar->hide ();
-        m_holder->setMouseTracking (true);
-    }
-    layout->activate ();
 }
 
 KDE_NO_EXPORT bool KMPlayerView::x11Event (XEvent * e) {

@@ -112,16 +112,10 @@ public:
     KDE_NO_EXPORT KMPlayerURLSource * urlSource () const { return m_urlsource; }
     KDE_NO_EXPORT KConfig * config () const { return m_config; }
     void enablePlayerMenu (bool enable);
-    void addControlPanel (KMPlayerControlPanel *);
-    void removeControlPanel (KMPlayerControlPanel *);
 
     // these are called from KMPlayerProcess
     void changeURL (const QString & url);
     void changeTitle (const QString & title);
-    void processPositioned (int pos);
-    void processLengthFound (int len);
-    virtual void processLoaded (int percentage);
-    virtual void processStartedPlaying ();
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool closeURL ();
@@ -166,12 +160,14 @@ protected slots:
     void saturationValueChanged (int val);
     void recordingStarted ();
     void recordingFinished ();
-    void controlPanelDestroyed (QObject *);
     virtual void processStarted ();
+    virtual void processStartedPlaying ();
     virtual void processFinished ();
+    void positioned (int pos);
+    void lengthFound (int len);
+    virtual void loaded (int percentage);
+    void fullScreen ();
 protected:
-    typedef std::list <KMPlayerControlPanel *> ControlPanelList;
-    ControlPanelList m_panels;
     KConfig * m_config;
     QGuardedPtr <KMPlayerView> m_view;
     KMPlayerSettings * m_settings;

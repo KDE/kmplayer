@@ -123,29 +123,27 @@ public:
     KDE_NO_EXPORT KMPlayerHRefSource * hrefSource () const { return m_hrefsource; }
     KDE_NO_EXPORT bool hasFeature (int f) { return m_features & f; }
     bool allowRedir (const KURL & url);
-    virtual void processLoaded (int percentage);
-    virtual void processStartedPlaying ();
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool closeURL ();
     void setMenuZoom (int id);
 protected slots:
     virtual void processStarted ();
+    virtual void processStartedPlaying ();
     virtual void processFinished ();
+    virtual void loaded (int percentage);
+    void viewerPartDestroyed (QObject *);
 protected:
     virtual bool openFile(); // reimplement for KParts::ReadOnlyPart
 private:
-    /**
-     * Returns another KPart with the same group name on which openURL is
-     * already called.
-     */
-    KMPlayerPart * masterKMPlayerPart ();
     KMPlayerBrowserExtension * m_browserextension;
     KMPlayerLiveConnectExtension * m_liveconnectextension;
     KMPlayerHRefSource * m_hrefsource;
     QString m_group;
     KURL m_docbase;
     QString m_src_url;
+    QMap <QString, KMPlayerProcess *> m_old_players;
+    QMap <QString, KMPlayerProcess *> m_old_recorders;
     int m_features;
     bool m_started_emited : 1;
     //bool m_noresize : 1;

@@ -35,6 +35,7 @@
 class QWidget;
 class KProcess;
 class KMPlayer;
+class KMPlayerView;
 class KMPlayerSource;
 class KMPlayerCallback;
 class KMPlayerBackend_stub;
@@ -51,14 +52,20 @@ public:
     KDE_NO_EXPORT KProcess * process () const { return m_process; }
     KDE_NO_EXPORT KMPlayer * player () const { return m_player; }
     virtual WId widget ();
+    KMPlayerView * view ();
     void setSource (KMPlayerSource * source);
     virtual bool grabPicture (const KURL & url, int pos);
 signals:
     // backend process is running
     void started ();
+    // backend process is playing
+    void startedPlaying ();
     // backend process has ended
     void finished ();
     void grabReady (const QString & path);
+    void loaded (int percentage);
+    void positioned (int pos);
+    void lengthFound (int len);
 public slots:
     virtual bool play () = 0;
     virtual bool stop ();

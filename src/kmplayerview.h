@@ -95,7 +95,6 @@ public:
     bool setPicture (const QString & path);
     QPixmap * image () const { return m_image; }
     bool playing () const { return m_playing; }
-    void setForeignViewer (KMPlayerView *);
 public slots:
     /* raise video widget, might (auto) hides panel */
     void videoStart ();
@@ -119,8 +118,7 @@ protected:
 private:
     KDE_NO_EXPORT void emitPictureClicked () { emit pictureClicked (); }
     // widget for player's output
-    QGuardedPtr<KMPlayerViewer> m_viewer;
-    QGuardedPtr<KMPlayerView> m_foreign_view;
+    KMPlayerViewer * m_viewer;
     // console output
     QMultiLineEdit * m_multiedit;
     // click-to-play widget

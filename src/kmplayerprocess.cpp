@@ -76,6 +76,10 @@ WId KMPlayerProcess::widget () {
     return 0;
 }
 
+KMPlayerView * KMPlayerProcess::view () {
+    return static_cast <KMPlayerView *> (m_player->view ());
+}
+
 bool KMPlayerProcess::playing () const {
     return m_process && m_process->isRunning ();
 }
@@ -242,7 +246,7 @@ KDE_NO_EXPORT void MPlayer::init () {
 }
 
 KDE_NO_EXPORT WId MPlayer::widget () {
-    return static_cast <KMPlayerView *> (m_player->view())->viewer()->embeddedWinId ();
+    return view()->viewer()->embeddedWinId ();
 }
 
 KDE_NO_EXPORT bool MPlayer::play () {
@@ -463,7 +467,7 @@ KDE_NO_EXPORT bool MPlayer::grabPicture (const KURL & url, int pos) {
 }
 
 KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
-    KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
+    KMPlayerView * v = view ();
     if (!v || slen <= 0) return;
 
     QRegExp * patterns = m_configpage->m_patterns;
@@ -497,15 +501,15 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                 int pos = int (10.0 * m_posRegExp.cap (1).toFloat ());
                 source ()->setPosition (pos);
                 m_request_seek = -1;
-                m_player->processPositioned (pos);
+                emit positioned (pos);
             } else if (m_cacheRegExp.search (out) > -1) {
-                m_player->processLoaded (int (m_cacheRegExp.cap(1).toDouble()));
+                emit loaded (int (m_cacheRegExp.cap(1).toDouble()));
             }
         } else if (!source ()->identified () && out.startsWith ("ID_LENGTH")) {
             int pos = out.find ('=');
             if (pos > 0) {
                 m_source->setLength (len);
-                m_player->processLengthFound (10 * out.mid (pos + 1).toInt());
+                emit lengthFound (10 * out.mid (pos + 1).toInt());
             }
         } else if (!source ()->identified () && m_refURLRegExp.search (out) > -1) {
             kdDebug () << "Reference mrl " << m_refURLRegExp.cap (1) << endl;
@@ -544,7 +548,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                         m_source->current ();
                         source ()->setIdentified ();
                     }
-                    m_player->processStartedPlaying ();
+                    emit startedPlaying ();
                 }
             }
         }
@@ -908,7 +912,7 @@ void KMPlayerCallbackProcess::setFinished () {
 
 void KMPlayerCallbackProcess::setPlaying () {
     m_status = status_play;
-    m_player->processStartedPlaying ();
+    emit startedPlaying ();
 }
 
 void KMPlayerCallbackProcess::setStarted (QByteArray &) {
@@ -922,9 +926,9 @@ void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
     m_source->setHeight (h);
     m_source->setAspect (a);
     m_source->setLength (len);
-    m_player->processLengthFound (len);
+    emit lengthFound (len);
     if (m_player->settings ()->sizeratio) {
-        KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
+        KMPlayerView * v = view ();
         if (!v) return;
         v->viewer ()->setAspect (a);
         v->updateLayout ();
@@ -936,13 +940,13 @@ void KMPlayerCallbackProcess::setMoviePosition (int position) {
     in_gui_update = true;
     m_source->setPosition (position);
     m_request_seek = -1;
-    m_player->processPositioned (position);
+    emit positioned (position);
     in_gui_update = false;
 }
 
 void KMPlayerCallbackProcess::setLoadingProgress (int percentage) {
     in_gui_update = true;
-    m_player->processLoaded (percentage);
+    emit loaded (percentage);
     in_gui_update = false;
 }
 
@@ -1172,7 +1176,7 @@ KDE_NO_CDTOR_EXPORT Xine::Xine (KMPlayer * player)
 KDE_NO_CDTOR_EXPORT Xine::~Xine () {}
 
 KDE_NO_EXPORT WId Xine::widget () {
-    return static_cast <KMPlayerView *> (m_player->view())->viewer()->embeddedWinId ();
+    return view()->viewer()->embeddedWinId ();
 }
 
 KDE_NO_EXPORT void Xine::initProcess () {
@@ -1316,7 +1320,7 @@ KDE_NO_EXPORT void Xine::setFinished () {
     kdDebug () << "Xine::finished () " << endl;
     QString url = m_source->next ();
     if (!url.isEmpty ()) {
-        KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
+        KMPlayerView * v = view ();
         if (v) {
             v->videoStop ();
             m_source->play ();
@@ -1349,7 +1353,7 @@ KDE_NO_EXPORT bool Xine::seek (int pos, bool absolute) {
 }
 
 KDE_NO_EXPORT void Xine::processOutput (KProcess *, char * str, int slen) {
-    KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
+    KMPlayerView * v = view ();
     if (v && slen > 0)
         v->addText (QString::fromLocal8Bit (str, slen));
 }
