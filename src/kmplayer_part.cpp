@@ -201,20 +201,23 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
     setXMLFile("kmplayerpartui.rc");
     if (m_features & Feat_Viewer) {
         if (m_features & Feat_Controls) {
-            m_view->buttonBar ()->show ();
             m_view->setAutoHideButtons (true);
+            m_view->buttonBar ()->show ();
         } else {
-            m_view->buttonBar ()->hide ();
+            m_view->setAutoHideButtons (false);
             KMPlayerPart * copart = kmplayerpart_static->find (m_group, m_docbase, Feat_Controls);
-            if (copart && copart->m_view)
+            if (copart && copart->m_view) {
+                m_view->buttonBar ()->show ();
                 copart->m_view->setButtonBar (m_view->buttonBar ());
+            } else
+                m_view->buttonBar ()->hide ();
         }
     } else if (m_features & Feat_Controls) {
-        m_view->setAutoHideButtons (false);
-        m_view->buttonBar ()->show ();
         KMPlayerPart * copart = kmplayerpart_static->find (m_group, m_docbase, Feat_Viewer);
         if (copart && copart->m_view)
             m_view->setButtonBar (copart->m_view->buttonBar ());
+        m_view->setAutoHideButtons (false);
+        m_view->buttonBar ()->show ();
     }
     if (!m_group.isEmpty ())
         kmplayerpart_static->add (m_group, this);
