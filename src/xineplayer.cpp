@@ -419,9 +419,6 @@ void KXinePlayer::init () {
     //if(fabs(pixel_aspect - 1.0) < 0.01)
         pixel_aspect = 1.0;
 
-    vo_port = xine_open_video_driver(xine, d->vo_driver, XINE_VISUAL_TYPE_X11, (void *) &vis);
-
-    ao_port = xine_open_audio_driver (xine, d->ao_driver, NULL);
     const char *const * pp = xine_list_post_plugins_typed (xine, XINE_POST_TYPE_AUDIO_VISUALIZATION);
     int i;
     for (i = 0; pp[i]; i++);
@@ -436,8 +433,10 @@ void KXinePlayer::init () {
 KXinePlayer::~KXinePlayer () {
     if (xine) {
         mutex.lock ();
-        xine_close_audio_driver (xine, ao_port);  
-        xine_close_video_driver (xine, vo_port);  
+        if (ao_port)
+            xine_close_audio_driver (xine, ao_port);  
+        if (vo_port)
+            xine_close_video_driver (xine, vo_port);  
         mutex.unlock ();
     }
     if (window_created) {
@@ -513,6 +512,8 @@ void KXinePlayer::play () {
     movie_width = 0;
     movie_height = 0;
 
+    vo_port = xine_open_video_driver(xine, d->vo_driver, XINE_VISUAL_TYPE_X11, (void *) &vis);
+    ao_port = xine_open_audio_driver (xine, d->ao_driver, NULL);
     stream = xine_stream_new (xine, ao_port, vo_port);
     event_queue = xine_event_new_queue (stream);
     xine_event_create_listener_thread (event_queue, event_listener, NULL);
@@ -675,14 +676,14 @@ bool KXinePlayer::event (QEvent * e) {
             xine_event_dispose_queue (event_queue);
             xine_dispose (stream);
             stream = 0L;
+            xine_close_audio_driver (xine, ao_port);  
             xine_close_video_driver (xine, vo_port);  
             mutex.unlock ();
+            vo_port = 0L;
+            ao_port = 0L;
             XLockDisplay (display);
             XClearWindow (display, wid);
             XUnlockDisplay (display);
-            mutex.lock ();
-            vo_port = xine_open_video_driver(xine, d->vo_driver, XINE_VISUAL_TYPE_X11, (void *) &vis);
-            mutex.unlock ();
             if (callback)
                 callback->finished ();
             else

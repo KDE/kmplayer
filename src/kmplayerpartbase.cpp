@@ -1191,7 +1191,7 @@ KDE_NO_EXPORT void KMPlayerURLSource::read (QTextStream & textstream) {
             if (mrl.lower ().startsWith (QString ("asf ")))
                 mrl = mrl.mid (4).stripWhiteSpace ();
             if (!mrl.isEmpty () && !mrl.startsWith (QChar ('#'))) {
-                KURL url (current (), mrl);
+                KURL url (current (), KURL::fromPathOrURL (mrl).url ());
                 cur_elm->appendChild ((new GenericURL (m_document, KURL::decode_string (url.url ()), KURL::decode_string (mrl)))->self ());
             }
             line = textstream.readLine ();
@@ -1252,8 +1252,11 @@ void KMPlayerURLSource::getCurrent () {
         kdDebug () << "KMPlayerURLSource::getCurrent " << mimestr << maybe_playlist << endl;
         if (url.isLocalFile ()) {
             QFile file (url.path ());
-            if (!file.exists ())
+            if (!file.exists ()) {
+                kdDebug () << "KMPlayerURLSource::getCurrent not found " << url.path () << " " << current () << endl;
+                KMPlayerSource::getCurrent ();
                 return;
+            }
             if (mimestr.isEmpty ()) {
                 KMimeType::Ptr mime = KMimeType::findByURL (url);
                 if (mime) {

@@ -914,9 +914,6 @@ KMPlayerCallbackProcess::KMPlayerCallbackProcess (KMPlayer * player, const char 
    m_have_config (config_unknown),
    m_send_config (send_no),
    m_status (status_stop) {
-#ifdef HAVE_XINE
-    m_player->settings ()->addPage (m_configpage);
-#endif
 }
 
 KMPlayerCallbackProcess::~KMPlayerCallbackProcess () {
@@ -1258,6 +1255,7 @@ KDE_NO_CDTOR_EXPORT Xine::Xine (KMPlayer * player)
     : KMPlayerCallbackProcess (player, "xine") {
 #ifdef HAVE_XINE
     m_supported_sources = xine_supported;
+    m_player->settings ()->addPage (m_configpage);
 #endif
 }
 
