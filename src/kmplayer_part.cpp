@@ -162,9 +162,6 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
                 m_group = value.isEmpty() ? QString::fromLatin1("_anonymous") : value;
             } else if (name == QString::fromLatin1("__khtml__pluginbaseurl")) {
                 m_docbase = KURL (value);
-            } else if (name == QString::fromLatin1("__khtml__classid")) {
-                if (value.lower ().contains(QString::fromLatin1 ("22d6f312-b0f6-11d0-94ab-0080c74c7e95")))
-                    m_urlsource->setMime (QString ("video/x-ms-wmp"));
             } else if (name == QString::fromLatin1("src")) {
                 m_src_url = value;
             } else if (name == QString::fromLatin1 ("fullscreenmode")) {
@@ -215,6 +212,9 @@ bool KMPlayerPart::openFile() {
 
 bool KMPlayerPart::openURL (const KURL & url) {
     kdDebug () << "KMPlayerPart::openURL " << url.url() << endl;
+    if (url == m_docbase)
+        // if url is the container document, then it's an empty URL
+        return true;
     KMPlayerPart * current_player = 0L;
     KMPlayerPartList::iterator i = kmplayerpart_static->kmplayer_parts.begin ();
     for (; i != kmplayerpart_static->kmplayer_parts.end (); ++i) {
@@ -246,14 +246,14 @@ bool KMPlayerPart::openURL (const KURL & url) {
         return true;
     }
     if (!m_view || !url.isValid ()) return false;
-    if (m_urlsource->mime ().isEmpty ()) {
-        KParts::URLArgs args = m_browserextension->urlArgs();
+    KParts::URLArgs args = m_browserextension->urlArgs();
+    if (!args.serviceType.isEmpty ())
         m_urlsource->setMime (args.serviceType);
-    }
     if (m_urlsource->mime () == QString ("audio/mpegurl") ||
             m_urlsource->mime () == QString ("audio/x-scpls") ||
             (url.protocol () == QString ("http") &&
-             (m_urlsource->mime () == QString ("video/x-ms-wmp")))) {
+             (m_urlsource->mime () == QString ("video/x-ms-wmp") ||
+              m_urlsource->mime () == QString ("application/x-mplayer2")))) {
         m_request_fileopen = true;
         return KParts::ReadOnlyPart::openURL (url);
     }

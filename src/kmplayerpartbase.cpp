@@ -886,7 +886,8 @@ void KMPlayerURLSource::setURL (const KURL & url) {
     if (url.isLocalFile ()) {
         if (url.url ().lower ().endsWith (QString ("m3u")) ||
                 m_mime == QString ("audio/mpegurl") ||
-                m_mime == QString ("video/x-ms-wmp")) {
+                m_mime == QString ("video/x-ms-wmp") ||
+                m_mime == QString ("application/x-mplayer2")) {
             char buf[1024];
             QFile file (url.path ());
             if (file.exists () && file.open (IO_ReadOnly)) {
