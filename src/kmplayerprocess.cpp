@@ -1078,6 +1078,8 @@ bool Xine::play () {
     }
     QString strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].driver);
     if (strAudioDriver != "") {
+        if (strAudioDriver.startsWith (QString ("alsa")))
+            strAudioDriver = QString ("alsa");
         printf (" -ao %s", strAudioDriver.lower().ascii());
         *m_process << " -ao " << strAudioDriver.lower();
     }

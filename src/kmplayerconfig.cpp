@@ -52,9 +52,10 @@ static OutputDriver _ads[] = {
     { "", i18n ("Default from MPlayer Config file") },
     { "oss", i18n ("Open Sound System") },
     { "sdl", i18n ("Simple DirectMedia Layer") },
-    { "alsa", i18n ("Advanced Linux Sound Architecture") },
+    { "alsa9", i18n ("Advanced Linux Sound Architecture v0.9") },
     { "arts", i18n ("Analog Real-time Synthesizer") },
     { "esd", i18n ("Enlightened Sound Daemon") },
+    { "alsa5", i18n ("Advanced Linux Sound Architecture v0.5") },
     { 0, QString::null }
 };
 
