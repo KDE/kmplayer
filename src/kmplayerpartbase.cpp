@@ -417,7 +417,7 @@ KDE_NO_EXPORT void KMPlayer::recordingFinished () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayer::timerEvent (QTimerEvent * e) {
+void KMPlayer::timerEvent (QTimerEvent * e) {
     kdDebug () << "record timer event" << (m_recorder->playing () && !playing ()) << endl;
     killTimer (e->timerId ());
     m_record_timer = 0;
@@ -428,7 +428,7 @@ KDE_NO_EXPORT void KMPlayer::timerEvent (QTimerEvent * e) {
     }
 }
 
-KDE_NO_EXPORT void KMPlayer::processFinished () {
+void KMPlayer::processFinished () {
     kdDebug () << "process finished" << endl;
     if (m_process->source ()->hasLength () &&
             m_process->source ()->position () > m_process->source ()->length ())
@@ -441,7 +441,7 @@ KDE_NO_EXPORT void KMPlayer::processFinished () {
     emit stopPlaying ();
 }
 
-KDE_NO_EXPORT void KMPlayer::processStarted () {
+void KMPlayer::processStarted () {
     if (!m_view) return;
     std::for_each (m_panels.begin (), m_panels.end (),
             std::bind2nd (std::mem_fun (&KMPlayerControlPanel::setPlaying), true));
@@ -464,7 +464,7 @@ KDE_NO_EXPORT void KMPlayer::processPositioned (int pos) {
     }
 }
 
-KDE_NO_EXPORT void KMPlayer::processLoaded (int percentage) {
+void KMPlayer::processLoaded (int percentage) {
     if (!m_view) return;
     ControlPanelList::iterator e = m_panels.end();
     for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
@@ -478,7 +478,7 @@ KDE_NO_EXPORT void KMPlayer::processLoaded (int percentage) {
     emit loading (percentage);
 }
 
-KDE_NO_EXPORT void KMPlayer::processStartedPlaying () {
+void KMPlayer::processStartedPlaying () {
     if (!m_view) return;
     kdDebug () << "KMPlayer::processStartedPlaying " << endl;
     if (m_settings->sizeratio && m_view->viewer ())
