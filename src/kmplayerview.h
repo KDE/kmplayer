@@ -240,6 +240,7 @@ public:
     enum Button {
         button_config = 0, button_back, button_play, button_forward,
         button_stop, button_pause, button_record, button_broadcast,
+        button_red, button_green, button_yellow, button_blue,
         button_last
     };
     KMPlayerControlPanel (QWidget * parent);

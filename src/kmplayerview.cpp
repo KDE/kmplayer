@@ -185,6 +185,66 @@ static const char * const broadcast_xpm[] = {
 " ..  ..       ..  .. ",
 "                     "};
 
+static const char * const red_xpm[] = {
+    "7 9 3 1",
+    "       c None",
+    ".      c #000000",
+    "+      c #FF0000",
+    "       ",
+    ".......",
+    ".+++++.",
+    ".+++++.",
+    ".+++++.",
+    ".+++++.",
+    ".+++++.",
+    ".......",
+    "       "};
+
+static const char * const green_xpm[] = {
+    "7 9 3 1",
+    "       c None",
+    ".      c #000000",
+    "+      c #00FF00",
+    "       ",
+    ".......",
+    ".+++++.",
+    ".+++++.",
+    ".+++++.",
+    ".+++++.",
+    ".+++++.",
+    ".......",
+    "       "};
+
+static const char * const yellow_xpm[] = {
+    "7 9 3 1",
+    "       c None",
+    ".      c #000000",
+    "+      c #FFFF00",
+    "       ",
+    ".......",
+    ".+++++.",
+    ".+++++.",
+    ".+++++.",
+    ".+++++.",
+    ".+++++.",
+    ".......",
+    "       "};
+
+static const char * const blue_xpm[] = {
+    "7 9 3 1",
+    "       c None",
+    ".      c #000000",
+    "+      c #0080FF00",
+    "       ",
+    ".......",
+    ".+++++.",
+    ".+++++.",
+    ".+++++.",
+    ".+++++.",
+    ".+++++.",
+    ".......",
+    "       "};
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT KMPlayerViewLayer::KMPlayerViewLayer (QWidget * parent, KMPlayerView * view)
@@ -325,11 +385,14 @@ KDE_NO_CDTOR_EXPORT KMPlayerControlPanel::KMPlayerControlPanel(QWidget * parent)
     m_buttons[button_pause] = ctrlButton (this, m_buttonbox, pause_xpm, Qt::Key_P);
     m_buttons[button_record] = ctrlButton (this, m_buttonbox, record_xpm);
     m_buttons[button_broadcast] = ctrlButton (this, m_buttonbox, broadcast_xpm);
+    m_buttons[button_red] = ctrlButton (this, m_buttonbox, red_xpm);
+    m_buttons[button_green] = ctrlButton (this, m_buttonbox, green_xpm);
+    m_buttons[button_yellow] = ctrlButton (this, m_buttonbox, yellow_xpm);
+    m_buttons[button_blue] = ctrlButton (this, m_buttonbox, blue_xpm);
     m_buttons[button_play]->setToggleButton (true);
     m_buttons[button_stop]->setToggleButton (true);
     m_buttons[button_record]->setToggleButton (true);
     m_buttons[button_broadcast]->setToggleButton (true);
-    m_buttons[button_broadcast]->hide ();
     m_posSlider = new QSlider (Qt::Horizontal, this);
     m_posSlider->setEnabled (false);
     m_buttonbox->addWidget (m_posSlider);
@@ -374,13 +437,16 @@ KDE_NO_CDTOR_EXPORT KMPlayerControlPanel::KMPlayerControlPanel(QWidget * parent)
     m_popupMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("colorize"), KIcon::Small, 0, true), i18n ("Co&lors"), m_colorMenu);
     m_popupMenu->insertSeparator ();
     m_popupMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("configure"), KIcon::Small, 0, true), i18n ("&Configure KMPlayer..."), menu_config);
+    setAutoControls (true);
 }
 
 void KMPlayerControlPanel::setAutoControls (bool b) {
     m_auto_controls = b;
     if (m_auto_controls) {
-        for (int i = 0; i < (int) button_last; i++)
+        for (int i = 0; i < (int) button_broadcast; i++)
             m_buttons [i]->show ();
+        for (int i = button_broadcast; i < (int) button_last; i++)
+            m_buttons [i]->hide ();
         m_posSlider->show ();
     } else { // hide everything
         for (int i = 0; i < (int) button_last; i++)

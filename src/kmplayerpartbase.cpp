@@ -339,6 +339,7 @@ void KMPlayer::setSource (KMPlayerSource * source) {
             m_view->reset ();
         }
     }
+    m_view->buttonBar ()->setAutoControls (true);
     m_process->setSource (source);
     if (!m_recorder->playing ())
         m_recorder->setSource (source);

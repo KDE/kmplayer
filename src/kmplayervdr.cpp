@@ -169,6 +169,17 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     connect (m_socket, SIGNAL (readyRead ()), this, SLOT (readyRead ()));
     connect (m_socket, SIGNAL (bytesWritten (int)), this, SLOT (dataWritten (int)));
     connect (m_socket, SIGNAL (error (int)), this, SLOT (socketError (int)));
+    KMPlayerControlPanel * panel = m_app->view()->buttonBar ();
+    panel->button (KMPlayerControlPanel::button_red)->show ();
+    panel->button (KMPlayerControlPanel::button_green)->show ();
+    panel->button (KMPlayerControlPanel::button_yellow)->show ();
+    panel->button (KMPlayerControlPanel::button_blue)->show ();
+    panel->button (KMPlayerControlPanel::button_pause)->hide ();
+    panel->button (KMPlayerControlPanel::button_record)->hide ();
+    connect (panel->button (KMPlayerControlPanel::button_red), SIGNAL (clicked ()), this, SLOT (keyRed ()));
+    connect (panel->button (KMPlayerControlPanel::button_green), SIGNAL (clicked ()), this, SLOT (keyGreen ()));
+    connect (panel->button (KMPlayerControlPanel::button_yellow), SIGNAL (clicked ()), this, SLOT (keyYellow ()));
+    connect (panel->button (KMPlayerControlPanel::button_blue), SIGNAL (clicked ()), this, SLOT (keyBlue ()));
     channel_timer = startTimer (30000);
     m_document = (new Document (QString ("VDR")))->self ();
     sendCommand (cmd_list_channels, true);
@@ -179,6 +190,13 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
     disconnect (m_socket, SIGNAL (readyRead ()), this, SLOT (readyRead ()));
     disconnect (m_socket, SIGNAL (bytesWritten (int)), this, SLOT (dataWritten (int)));
     disconnect (m_socket, SIGNAL (error (int)), this, SLOT (socketError (int)));
+    if (m_player->view ()) {
+        KMPlayerControlPanel * panel = m_app->view()->buttonBar ();
+        disconnect (panel->button (KMPlayerControlPanel::button_red), SIGNAL (clicked ()), this, SLOT (keyRed ()));
+        disconnect (panel->button (KMPlayerControlPanel::button_green), SIGNAL (clicked ()), this, SLOT (keyGreen ()));
+        disconnect (panel->button (KMPlayerControlPanel::button_yellow), SIGNAL (clicked ()), this, SLOT (keyYellow ()));
+        disconnect (panel->button (KMPlayerControlPanel::button_blue), SIGNAL (clicked ()), this, SLOT (keyBlue ()));
+    }
     if (m_socket->state () == QSocket::Connected)
         sendCommand ("QUIT\n");
     m_menu->removeItemAt (11);
