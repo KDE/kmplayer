@@ -61,10 +61,12 @@ KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       m_player (new KMPlayer (this, config)),
       m_dvdmenu (new QPopupMenu (this)),
       m_vcdmenu (new QPopupMenu (this)),
+      m_tvmenu (new QPopupMenu (this)),
       m_urlsource (new KMPlayerAppURLSource (this)),
       m_dvdsource (new KMPlayerDVDSource (this, m_dvdmenu)),
       m_vcdsource (new KMPlayerVCDSource (this, m_vcdmenu)),
-      m_pipesource (new KMPlayerPipeSource (this))
+      m_pipesource (new KMPlayerPipeSource (this)),
+      m_tvsource (new KMPlayerTVSource (this, m_tvmenu))
 {
     initStatusBar();
     initActions();
@@ -96,7 +98,7 @@ void KMPlayerApp::initActions()
     viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), actionCollection (), "view_keep_ratio");
     viewShowConsoleOutput = new KToggleAction (i18n ("&Show Console Output"), 0, this, SLOT (showConsoleOutput ()), actionCollection (), "view_show_console");
     /*KAction *fullscreenact =*/ new KAction (i18n("&Full Screen"), 0, 0, this, SLOT(fullScreen ()), actionCollection (), "view_fullscreen");
-    /*KAction *playact =*/ new KAction (i18n ("P&lay"), 0, 0, this, SLOT (play ()), actionCollection (), "view_play");
+    /*KAction *playact =*/ new KAction (i18n ("P&lay"), 0, 0, m_player, SLOT (play ()), actionCollection (), "view_play");
     /*KAction *pauseact =*/ new KAction (i18n ("&Pause"), 0, 0, m_player, SLOT (pause ()), actionCollection (), "view_pause");
     /*KAction *stopact =*/ new KAction (i18n ("&Stop"), 0, 0, m_player, SLOT (stop ()), actionCollection (), "view_stop");
     /*KAction *artsctrl =*/ new KAction (i18n ("&Arts Control"), 0, 0, this, SLOT (startArtsControl ()), actionCollection (), "view_arts_control");
@@ -128,10 +130,11 @@ void KMPlayerApp::initView ()
     m_sourcemenu->setText (i18n ("S&ource"));
     m_dvdmenuId = m_sourcemenu->popup ()->insertItem (i18n ("&DVD"), m_dvdmenu, -1, 3);
     m_havedvdmenu = true;
-    m_dvdmenu->insertItem (i18n ("&Open DVD"), this, SLOT(openDVD ()), 0,-1, 0);
+    m_dvdmenu->insertItem (i18n ("&Open DVD"), this, SLOT(openDVD ()), 0,-1, 1);
     m_vcdmenuId = m_sourcemenu->popup ()->insertItem (i18n ("V&CD"), m_vcdmenu, -1, 4);
     m_havevcdmenu = true;
-    m_vcdmenu->insertItem (i18n ("&Open VCD"), this, SLOT(openVCD ()), 0,-1, 0);
+    m_sourcemenu->popup ()->insertItem (i18n ("&TV"), m_tvmenu, -1, 5);
+    m_vcdmenu->insertItem (i18n ("&Open VCD"), this, SLOT(openVCD ()), 0,-1, 1);
     m_sourcemenu->popup ()->insertItem (i18n ("&Open Pipe..."), this, SLOT(openPipe ()), 0, -1, 5);
     connect (m_player->configDialog (), SIGNAL (configChanged ()),
              this, SLOT (configChanged ()));
@@ -234,10 +237,6 @@ void KMPlayerApp::zoom150 () {
     resizePlayer (150);
 }
 
-void KMPlayerApp::play () {
-    m_player->play ();
-}
-
 void KMPlayerApp::saveOptions()
 {
     config->setGroup ("General Options");
@@ -292,6 +291,8 @@ void KMPlayerApp::readOptions() {
 
     // initialize the recent file list
     fileOpenRecent->loadEntries(config,"Recent Files");
+
+    m_tvsource->readConfig (config);
 
     configChanged ();
 }
@@ -788,6 +789,119 @@ void KMPlayerPipeSource::play () {
 void KMPlayerPipeSource::deactivate () {
 }
 
+//-----------------------------------------------------------------------------
+/*
+ * [TV]
+ * Devices=/dev/video0;/dev/video1
+ * Driver=v4l
+ *
+ * [/dev/video0]
+ * Inputs=0:Television;1:Composite1;2:S-Video;3:Composite3
+ * Size=768,576
+ * Television=Ned1:216;Ned2:184;Ned3:192
+ *
+ * [/dev/video1]
+ * Inputs=0:Webcam
+ * Size=640,480
+ */
+
+KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QPopupMenu * m)
+    : KMPlayerMenuSource (a, m) {
+    m_menu->insertTearOffHandle ();
+    devices.setAutoDelete (true);
+}
+
+KMPlayerTVSource::~KMPlayerTVSource () {
+}
+
+void KMPlayerTVSource::activate () {
+    init ();
+}
+
+void KMPlayerTVSource::play () {
+    if (!m_device)
+        return;
+    app->setCaption (QString (i18n ("TV: ")) + m_command, false);
+    setWidth (m_device->size.width ());
+    setHeight (m_device->size.height ());
+    QString args;
+    args.sprintf ("-tv on:driver=%s:%s:width=%d:height=%d", m_driver.ascii (), m_command.ascii (), width (), height ());
+    m_player->setMovieLength (0x7fffffff);
+    app->resizePlayer (100);
+    m_player->run (args.ascii());
+    kdDebug () << args << endl;
+}
+
+void KMPlayerTVSource::deactivate () {
+}
+
+void KMPlayerTVSource::readConfig (KConfig * config) {
+    while (devices.current ()) {
+        m_menu->removeItem (devices.current ()->menuid);
+        devices.remove ();
+    }
+    commands.clear ();
+    m_device = 0L;
+    int counter = 0;
+    QString cmd;
+    config->setGroup("TV");
+    m_driver = config->readEntry ("Driver", "v4l");
+    QStrList devlist;
+    int deventries = config->readListEntry ("Devices", devlist, ';');
+    for (int i = 0; i < deventries; i++) {
+        Device * device = new Device;
+        QString devstr = devlist.at (i);
+        QPopupMenu * devmenu = new QPopupMenu (app);
+        config->setGroup (devstr);
+        device->size = config->readSizeEntry ("Size");
+        QStrList inputlist;
+        int inputentries = config->readListEntry ("Inputs", inputlist, ';');
+        kdDebug() << devstr << " has " << inputentries << " inputs" << endl;
+        for (int j = 0; j < inputentries; j++) {
+            QString inputstr = inputlist.at (j);
+            int pos = inputstr.find (':');
+            if (pos < 0)
+                continue;
+            int inputid = inputstr.left (pos).toInt ();
+            QString inputname = inputstr.mid (pos + 1);
+            QStrList freqlist;
+            int freqentries = config->readListEntry (inputname, freqlist, ';');
+            kdDebug() << inputname<< " has " << freqentries << " freqs" << endl;
+            if (freqentries <= 0) {
+                devmenu->insertItem (inputname, this, SLOT (menuClicked (int)), 0, counter);
+                cmd.sprintf ("device=%s:input=%d", devstr.ascii (), inputid);
+                commands.insert (counter++, qMakePair (device, cmd));
+            } else {
+                QPopupMenu * inputmenu = new QPopupMenu (app);
+                for (int k = 0; k < freqentries; k++) {
+                    QString freqstr = freqlist.at (k);
+                    int pos = freqstr.find (':');
+                    if (pos < 0)
+                        continue;
+                    kdDebug() << freqstr.left (pos) << " at " << freqstr.mid (pos+1).toInt() << endl;
+                    inputmenu->insertItem (freqstr.left (pos), this, SLOT(menuClicked (int)), 0, counter);
+                    cmd.sprintf ("device=%s:input=%d:freq=%s", devstr.ascii (), inputid, freqstr.mid (pos+1).ascii ());
+                    commands.insert (counter++, qMakePair (device,cmd));
+                }
+                devmenu->insertItem (inputname, inputmenu, 0, inputid);
+            }
+        }
+        device->menuid = m_menu->insertItem (devstr, devmenu);
+        devices.append (device);
+    }
+}
+
+void KMPlayerTVSource::menuClicked (int id) {
+    CommandMap::iterator it = commands.find (id);
+    if (it != commands.end ()) {
+        if (m_player->source () != this)
+            m_player->setSource (this);
+        m_device = it.data ().first;
+        m_command = it.data ().second;
+        kdDebug() << "KMPlayerTVSource::menuClickedt " << m_command << endl;
+        play ();
+    }
+}
 
 #include "kmplayer.moc"
 #include "kmplayersource.moc"

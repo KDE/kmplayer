@@ -36,6 +36,7 @@ class KMPlayerAppURLSource;
 class KMPlayerDVDSource;
 class KMPlayerVCDSource;
 class KMPlayerPipeSource;
+class KMPlayerTVSource;
 class QPopupMenu;
 class QMenuItem;
 
@@ -78,7 +79,6 @@ private slots:
     void openDVD ();
     void openVCD ();
     void openPipe ();
-    void play ();
     void fullScreen ();
     void configChanged ();
     void keepSizeRatio ();
@@ -107,10 +107,12 @@ private:
     QMenuItem * m_sourcemenu;
     QPopupMenu * m_dvdmenu;
     QPopupMenu * m_vcdmenu;
+    QPopupMenu * m_tvmenu;
     KMPlayerAppURLSource * m_urlsource;
     KMPlayerDVDSource * m_dvdsource;
     KMPlayerVCDSource * m_vcdsource;
     KMPlayerPipeSource * m_pipesource;
+    KMPlayerTVSource * m_tvsource;
     QCString m_dcopName;
     int m_dvdmenuId;
     int m_vcdmenuId;

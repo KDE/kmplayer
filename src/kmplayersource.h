@@ -23,6 +23,10 @@
 #include <config.h>
 #endif
 
+#include <qptrlist.h>
+#include <qmap.h>
+#include <qpair.h>
+
 #include <kurl.h>
 
 #include "kmplayer_part.h"
@@ -121,6 +125,35 @@ public slots:
 private:
     KMPlayerApp * app;
     QString m_pipe;
+};
+
+
+class KMPlayerTVSource : public KMPlayerMenuSource {
+    Q_OBJECT
+public:
+    KMPlayerTVSource (KMPlayerApp * app, QPopupMenu * m);
+    virtual ~KMPlayerTVSource ();
+    //virtual bool processOutput (const QString & line);
+    void readConfig (KConfig * config);
+public slots:
+    virtual void activate ();
+    virtual void deactivate ();
+    virtual void play ();
+
+    //void finished ();
+    void menuClicked (int id);
+private:
+    struct Device {
+        QSize size;
+        int menuid;
+    };
+    typedef QMap <int, QPair <Device *, QString> > CommandMap;
+    QString m_driver;
+    Device * m_device;
+    QString m_command;
+    QPtrList <Device> devices;
+    CommandMap commands;
+    QPopupMenu * m_channelmenu;
 };
 
 #endif // KMPLAYERSOURCE_H
