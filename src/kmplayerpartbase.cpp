@@ -639,8 +639,12 @@ void KMPlayerSource::setLength (int len) {
 
 void KMPlayerSource::setURL (const KURL & url) {
     m_url = url;
-    m_refurls.clear ();
-    m_refurls.push_back (url.url ());
+    if (m_refurls.size () == 1 && m_refurls.begin ()->url.isEmpty ())
+        m_refurls.begin ()->url = url.url ();
+    else {
+        m_refurls.clear ();
+        m_refurls.push_back (url.url ());
+    }
     m_currenturl = m_refurls.begin ();
     m_nexturl = m_refurls.end ();
 }
@@ -719,6 +723,8 @@ QString KMPlayerSource::mime () const {
 void KMPlayerSource::setMime (const QString & m) {
     if (m_currenturl != m_refurls.end ())
         m_currenturl->mime = m;
+    else
+        m_refurls.push_back (URLInfo (QString (), m));
 }
 
 bool KMPlayerSource::processOutput (const QString & str) {
@@ -940,9 +946,9 @@ public:
 };
 
 QChar FilteredInputSource::next () {
-    if (pos + 8 >= buffer.length ())
+    if (pos + 8 >= (int) buffer.length ())
         fetchData ();
-    if (pos >= buffer.length ())
+    if (pos >= (int) buffer.length ())
         return QXmlInputSource::EndOfData;
     QChar ch = buffer.at (pos++);
     if (ch == QChar ('&')) {
@@ -979,6 +985,8 @@ void KMPlayerURLSource::read (QTextStream & textstream) {
             reader.parse (&input_source);
         } else if (line.lower () != QString ("[reference]")) do {
             QString mrl = line.stripWhiteSpace ();
+            if (mrl.lower ().startsWith (QString ("asf ")))
+                mrl = mrl.mid (4).stripWhiteSpace ();
             if (!mrl.isEmpty () && !mrl.startsWith (QChar ('#')))
                 insertURL (mrl);
             line = textstream.readLine ();
@@ -1065,14 +1073,6 @@ void KMPlayerURLSource::play () {
         return;
     }
     KMPlayerSource::play ();
-}
-
-void KMPlayerURLSource::setURL (const KURL & url) {
-    m_url = url;
-    m_refurls.clear ();
-    m_refurls.push_back (url.url ());
-    m_nexturl = m_currenturl = m_refurls.begin ();
-    ++m_nexturl;
 }
 
 #include "kmplayerpartbase.moc"

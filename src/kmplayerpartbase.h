@@ -62,7 +62,6 @@ public:
 
     virtual bool hasLength ();
     virtual QString prettyName ();
-    virtual void setURL (const KURL & url);
 public slots:
     virtual void init ();
     virtual void activate ();

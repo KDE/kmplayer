@@ -66,7 +66,7 @@ public:
     const QString & recordCmd () const { return m_recordcmd; }
     virtual QString filterOptions ();
 
-    virtual void setURL (const KURL & url);
+    void setURL (const KURL & url);
     void insertURL (const QString & url);
     void setSubURL (const KURL & url) { m_sub_url = url; }
     void setMime (const QString & m);
@@ -97,7 +97,8 @@ protected:
     KURL m_url;
     KURL m_sub_url;
     struct URLInfo {
-        URLInfo (const QString & u) : url (u), dereferenced (false) {}
+        URLInfo (const QString & u, const QString & m = QString ())
+            : url (u), mime (m), dereferenced (false) {}
         QString url;
         QString mime;
         bool dereferenced;
