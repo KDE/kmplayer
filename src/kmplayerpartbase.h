@@ -67,14 +67,12 @@ public slots:
     virtual void init ();
     virtual void activate ();
     virtual void deactivate ();
+    void play ();
 private slots:
     void kioData (KIO::Job *, const QByteArray &);
     void kioMimetype (KIO::Job *, const QString &);
     void kioResult (KIO::Job *);
-protected:
-    void checkList ();
 private:
-    void play (const KURL & url, const QString & mime);
     void read (QTextStream &);
     KIO::Job * m_job;
     QByteArray m_data;

@@ -21,9 +21,10 @@
 #ifndef KMPLAYERSOURCE_H
 #define KMPLAYERSOURCE_H
 
+#include <list>
+
 #include <qobject.h>
 #include <qstring.h>
-#include <qstringlist.h>
 #include <kurl.h>
 
 class KMPlayer;
@@ -55,7 +56,7 @@ public:
     QString first ();
     QString current ();
     QString next ();
-    const QString & mime () const { return m_mime; }
+    QString mime () const;
     const QString & audioDevice () const { return m_audiodevice; }
     const QString & videoDevice () const { return m_videodevice; }
     const QString & videoNorm () const { return m_videonorm; }
@@ -68,7 +69,7 @@ public:
     virtual void setURL (const KURL & url);
     void insertURL (const QString & url);
     void setSubURL (const KURL & url) { m_sub_url = url; }
-    void setMime (const QString & m) { m_mime = m; }
+    void setMime (const QString & m);
     void setWidth (int w) { m_width = w; }
     void setHeight (int h) { m_height = h; }
     void setAspect (float a) { m_aspect = a; }
@@ -85,20 +86,26 @@ public slots:
     virtual void deactivate () = 0;
     virtual void forward ();
     virtual void backward ();
+    virtual void play ();
 protected:
     void checkList ();
     QString m_name;
-    QString m_mime;
     KMPlayer * m_player;
     QString m_recordcmd;
     bool m_identified;
     bool m_auto_play;
     KURL m_url;
     KURL m_sub_url;
-    QStringList m_refurls;
-    QStringList::iterator m_currenturl;
-    QStringList::iterator m_ins_url;
-    QStringList::iterator m_nexturl;
+    struct URLInfo {
+        URLInfo (const QString & u) : url (u), dereferenced (false) {}
+        QString url;
+        QString mime;
+        bool dereferenced;
+    };
+    typedef std::list <URLInfo> URLInfoList;
+    URLInfoList m_refurls;
+    URLInfoList::iterator m_currenturl;
+    URLInfoList::iterator m_nexturl;
     QString m_audiodevice;
     QString m_videodevice;
     QString m_videonorm;

@@ -208,6 +208,7 @@ protected:
     KMPlayerXMLPreferencesPage * m_configpage;
     enum { config_unknown, config_probe, config_yes, config_no } m_have_config;
     enum { send_no, send_try, send_new } m_send_config;
+    enum { status_stop, status_play, status_start } m_status;
 };
 
 class KMPlayerXMLPreferencesPage : public KMPlayerPreferencesPage {

@@ -408,7 +408,7 @@ void KMPlayerTVSource::buildMenu () {
                 source->title = device->name + QString ("-") + input->name;
                 commands.insert (counter++, source);
             } else {
-                QPopupMenu * inputmenu = new QPopupMenu (m_app);
+                QPopupMenu * inputmenu = new QPopupMenu (m_app, "channelmenu");
                 inputmenu->insertTearOffHandle ();
                 TVChannelList::iterator it = input->channels.begin ();
                 for (; it != input->channels.end (); ++it) {
@@ -436,6 +436,8 @@ void KMPlayerTVSource::buildMenu () {
 }
 
 void KMPlayerTVSource::menuClicked (int id) {
+    //"channelmenu"
+    kdDebug () << "menuClicked" << sender ()->name () << endl;
     CommandMap::iterator it = commands.find (id);
     if (it != commands.end ()) {
         TVSource * prevsource = m_tvsource;
@@ -448,6 +450,7 @@ void KMPlayerTVSource::menuClicked (int id) {
             m_player->setSource (this);
             playing = false;
         }
+        m_current_id = id;
         if (m_app->broadcasting ())
             QTimer::singleShot (0, m_app->broadcastConfig (), SLOT (startFeed ()));
         else {
@@ -469,7 +472,15 @@ bool KMPlayerTVSource::hasLength () {
 }
 
 bool KMPlayerTVSource::isSeekable () {
-    return false;
+    return commands.size () > 0;
+}
+
+void KMPlayerTVSource::forward () {
+    menuClicked (m_current_id < commands.size () - 1 ? m_current_id + 1 : 0);
+}
+
+void KMPlayerTVSource::backward () {
+    menuClicked (m_current_id > 0 ? m_current_id -1 : commands.size () - 1);
 }
 
 QString KMPlayerTVSource::prettyName () {

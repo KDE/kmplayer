@@ -565,7 +565,7 @@ void MPlayer::processStopped (KProcess * p) {
                     m_player->changeURL (url);
             }
             if (!url.isEmpty ()) {
-                QTimer::singleShot (0, this, SLOT (play ()));
+                QTimer::singleShot (0, m_source, SLOT (play ()));
                 return;
             }
             m_source->first ();
@@ -812,7 +812,8 @@ KMPlayerCallbackProcess::KMPlayerCallbackProcess (KMPlayer * player)
    m_backend (0L),
    m_configpage (new KMPlayerXMLPreferencesPage (this)),
    m_have_config (config_unknown),
-   m_send_config (send_no) {
+   m_send_config (send_no),
+   m_status (status_stop) {
 #ifdef HAVE_XINE
     m_player->settings ()->pagelist.push_back (m_configpage);
 #endif
@@ -836,10 +837,12 @@ void KMPlayerCallbackProcess::setErrorMessage (int code, const QString & msg) {
 }
 
 void KMPlayerCallbackProcess::setFinished () {
-    QTimer::singleShot (0, this, SLOT (emitFinished ()));
+    m_status = status_stop;
+    //QTimer::singleShot (0, this, SLOT (emitFinished ()));
 }
 
 void KMPlayerCallbackProcess::setPlaying () {
+    m_status = status_play;
     KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
     if (!v) return;
     QTimer::singleShot (0, v, SLOT (startsToPlay ())); // FIXME
@@ -847,6 +850,7 @@ void KMPlayerCallbackProcess::setPlaying () {
 }
 
 void KMPlayerCallbackProcess::setStarted (QByteArray &) {
+    m_status = status_start;
 }
 
 void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
@@ -1113,9 +1117,15 @@ void Xine::initProcess () {
 }
 
 bool Xine::play () {
+    KURL url (m_source->current ());
     if (playing ()) {
-        if (m_backend)
+        if (m_backend) {
+            if (m_status == status_stop) {
+                m_backend->setURL (url.url ());
+                m_player->changeURL (url.url ());
+            }
             m_backend->play ();
+        }
         return true;
     }
     QString cbname;
@@ -1138,7 +1148,6 @@ bool Xine::play () {
         return m_process->isRunning ();
     }
     m_request_seek = -1;
-    KURL url (m_source->current ());
     kdDebug() << "Xine::play (" << url.url() << ")" << endl;
     if (url.isEmpty ())
         return false;
@@ -1232,13 +1241,12 @@ bool Xine::quit () {
 }
 
 void Xine::setFinished () {
+    KMPlayerCallbackProcess::setFinished ();
     if (!m_source) return; // initial case?
     kdDebug () << "Xine::finished () " << endl;
     QString url = m_source->next ();
     if (!url.isEmpty ()) {
-        m_backend->setURL (url);
-        m_backend->play ();
-        m_player->changeURL (url);
+        m_source->play ();
     } else {
         m_source->first ();
         quit ();
@@ -1283,6 +1291,7 @@ void Xine::processStopped (KProcess *) {
 }
 
 void Xine::setStarted (QByteArray & data) {
+    KMPlayerCallbackProcess::setStarted (data);
     QString dcopname;
     dcopname.sprintf ("kxineplayer-%u", m_process->pid ());
     kdDebug () << "up and running " << dcopname << endl;

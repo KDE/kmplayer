@@ -642,45 +642,57 @@ void KMPlayerSource::setURL (const KURL & url) {
     m_refurls.clear ();
     m_refurls.push_back (url.url ());
     m_currenturl = m_refurls.begin ();
-    m_ins_url = m_nexturl = m_refurls.end ();
+    m_nexturl = m_refurls.end ();
 }
 
 void KMPlayerSource::checkList () {
-    QStringList::iterator tmp = m_currenturl;
-    if (tmp != m_refurls.end () && m_ins_url != ++tmp) {
-        kdDebug () << "Erasing " << *m_currenturl << endl;
-        m_refurls.erase (m_currenturl);
-        m_currenturl = tmp;
-        m_ins_url = m_nexturl = ++tmp;
+    URLInfoList::iterator tmp = m_currenturl;
+    if (tmp != m_refurls.end () && m_nexturl != ++tmp) {
+        kdDebug () << "Erasing " << m_currenturl->url << endl;
+        tmp = m_currenturl = m_refurls.erase (m_currenturl);
+        m_nexturl = tmp == m_refurls.end () ? tmp : ++tmp;
     }
 }
 
 QString KMPlayerSource::first () {
     checkList (); // update insertions
     m_nexturl = m_currenturl = m_refurls.begin ();
-    m_ins_url = ++m_nexturl;
-    return m_currenturl == m_refurls.end () ? QString () : *m_currenturl;
+    if (m_currenturl == m_refurls.end ())
+        return QString ();
+    ++m_nexturl;
+    return m_currenturl->url;
 }
 
 QString KMPlayerSource::current () {
     checkList (); // update insertions
-    return m_currenturl == m_refurls.end () ? QString () : *m_currenturl;
+    return m_currenturl == m_refurls.end () ? QString () : m_currenturl->url;
 }
 
 QString KMPlayerSource::next () {
-    QStringList::iterator tmp = m_nexturl;
+    URLInfoList::iterator tmp = m_currenturl;
+    if (tmp == m_refurls.end ())
+        return QString ();
     checkList (); // update insertions
-    m_currenturl = tmp;
-    if (tmp != m_refurls.end ())
-        m_nexturl = ++tmp;
-    m_ins_url = m_nexturl;
-    return m_currenturl == m_refurls.end () ? QString () : *m_currenturl;
+    if (m_currenturl == tmp)
+        m_nexturl = m_currenturl = ++tmp;
+    else
+        tmp = m_nexturl = m_currenturl;
+    if (m_currenturl == m_refurls.end ())
+        return QString ();
+    m_nexturl = ++tmp;
+    return m_currenturl->url;
 }
 
 void KMPlayerSource::insertURL (const QString & url) {
-    QStringList::iterator tmp = m_refurls.insert (m_ins_url, url);
-    if (m_ins_url == m_nexturl)
-        m_nexturl = tmp;
+    URLInfoList::iterator tmp = m_refurls.begin ();
+    for (; tmp != m_refurls.end (); ++tmp)
+        if (tmp->url == url)
+            return;
+    m_refurls.insert (m_nexturl, URLInfo (url));
+}
+
+void KMPlayerSource::play () {
+    QTimer::singleShot (0, m_player, SLOT (play ()));
 }
 
 void KMPlayerSource::backward () {
@@ -697,7 +709,16 @@ void KMPlayerSource::forward () {
     if (m_refurls.size () > 1) {
         m_player->process ()->stop ();
     } else
-        m_player->process ()->seek (m_player->settings ()->seektime * 10, false);
+        m_player->process ()->seek (m_player->settings()->seektime * 10, false);
+}
+
+QString KMPlayerSource::mime () const {
+    return m_currenturl == m_refurls.end () ? QString () : m_currenturl->mime;
+}
+
+void KMPlayerSource::setMime (const QString & m) {
+    if (m_currenturl != m_refurls.end ())
+        m_currenturl->mime = m;
 }
 
 bool KMPlayerSource::processOutput (const QString & str) {
@@ -852,7 +873,7 @@ void KMPlayerURLSource::activate () {
     if (url ().isEmpty ())
         return;
     if (m_auto_play)
-        play (m_url, m_mime);
+        play ();
 }
 
 void KMPlayerURLSource::deactivate () {
@@ -893,6 +914,7 @@ public:
     MMXmlContentHandler (KMPlayerURLSource * source) : m_urlsource (source) {}
     bool startElement (const QString &, const QString &,
                        const QString & elm, const QXmlAttributes & atts) {
+        kdDebug() << "startElement=" << elm << endl;
         if (elm.lower () == QString ("entryref") ||
                 elm.lower () == QString ("ref") ||
                 elm.lower () == QString ("video"))
@@ -918,7 +940,7 @@ public:
 };
 
 QChar FilteredInputSource::next () {
-    if (pos + 4 >= buffer.length ())
+    if (pos + 8 >= buffer.length ())
         fetchData ();
     if (pos >= buffer.length ())
         return QXmlInputSource::EndOfData;
@@ -955,7 +977,7 @@ void KMPlayerURLSource::read (QTextStream & textstream) {
             reader.setContentHandler (&content_handler);
             reader.setErrorHandler (&content_handler);
             reader.parse (&input_source);
-        } else do {
+        } else if (line.lower () != QString ("[reference]")) do {
             QString mrl = line.stripWhiteSpace ();
             if (!mrl.isEmpty () && !mrl.startsWith (QChar ('#')))
                 insertURL (mrl);
@@ -970,40 +992,49 @@ void KMPlayerURLSource::kioData (KIO::Job *, const QByteArray & d) {
     int newsize = size + d.size ();
     if (newsize > 50000) {
         kdDebug () << "KMPlayerURLSource::kioData: " << newsize << endl;
-        d->job->kill();
-        d->job = 0L; // KIO::Job::kill deletes itself
+        m_job->kill();
+        m_job = 0L; // KIO::Job::kill deletes itself
     } else  {
-        m_data.resize (size + d.size ());
-        memcpy (m_data.data () + size, d.data (), d.size ());
+        m_data.resize (newsize);
+        memcpy (m_data.data () + size, d.data (), newsize - size);
     }
 }
 
-void KMPlayerURLSource::kioMimetype (KIO::Job *, const QString & mime) {
-    kdDebug () << "KMPlayerURLSource::kioMimetype " << mime << endl;
+void KMPlayerURLSource::kioMimetype (KIO::Job *, const QString & mimestr) {
+    kdDebug () << "KMPlayerURLSource::kioMimetype " << mimestr << endl;
+    setMime (mimestr);
 }
 
 void KMPlayerURLSource::kioResult (KIO::Job *) {
-    d->job = 0L; // KIO::Job::kill deletes itself
+    m_job = 0L; // KIO::Job::kill deletes itself
     QTextStream textstream (m_data, IO_ReadOnly);
     read (textstream);
-    QTimer::singleShot (0, m_player, SLOT (play ()));
+    if (m_currenturl != m_refurls.end ()) {
+        m_currenturl->dereferenced = true;
+        checkList ();
+        QTimer::singleShot (0, this, SLOT (play ()));
+    }
 }
 
-void KMPlayerURLSource::play (const KURL & url, const QString & mime) {
+void KMPlayerURLSource::play () {
+    KURL url (current ());
+    if (url.isEmpty ())
+        return;
+    QString mimestr = mime ();
     bool maybe_playlist = (url.url ().lower ().endsWith (QString ("m3u")) ||
             url.url ().lower ().endsWith (QString ("asx")) ||
-            mime == QString ("audio/mpegurl") ||
-            mime == QString ("audio/x-mpegurl") ||
-            mime == QString ("video/x-ms-wmp") ||
-            mime == QString ("video/x-ms-asf") ||
-            mime == QString ("application/smil") ||
-            mime == QString ("application/x-mplayer2"));
-    if (url.isLocalFile ()) {
+            mimestr == QString ("audio/mpegurl") ||
+            mimestr == QString ("audio/x-mpegurl") ||
+            mimestr == QString ("video/x-ms-wmp") ||
+            mimestr == QString ("video/x-ms-asf") ||
+            mimestr == QString ("application/smil") ||
+            mimestr == QString ("application/x-mplayer2"));
+    if (!m_currenturl->dereferenced && url.isLocalFile ()) {
         QFile file (url.path ());
         if (!file.exists ())
             return;
         if (url.url ().lower ().endsWith (QString ("pls")) ||
-                m_mime == QString ("audio/x-scpls")) {
+                mimestr == QString ("audio/x-scpls")) {
             KConfig kc (url.path (), true);
             kc.setGroup ("playlist");
             int nr = kc.readNumEntry ("numberofentries", 0);
@@ -1018,9 +1049,10 @@ void KMPlayerURLSource::play (const KURL & url, const QString & mime) {
             QTextStream textstream (&file);
             read (textstream);
         }
-    } else if (maybe_playlist) {
+        m_currenturl->dereferenced = true;
+    } else if (!m_currenturl->dereferenced && maybe_playlist) {
         m_data.truncate (0);
-        m_job = KIO::get (m_url, false, false);
+        m_job = KIO::get (url, false, false);
         m_job->addMetaData ("PropagateHttpHeader", "true");
         connect (m_job, SIGNAL (data (KIO::Job *, const QByteArray &)),
                  this, SLOT (kioData (KIO::Job *, const QByteArray &)));
@@ -1032,7 +1064,7 @@ void KMPlayerURLSource::play (const KURL & url, const QString & mime) {
                  this, SLOT (kioResult (KIO::Job *)));
         return;
     }
-    QTimer::singleShot (0, m_player, SLOT (play ()));
+    KMPlayerSource::play ();
 }
 
 void KMPlayerURLSource::setURL (const KURL & url) {
@@ -1040,7 +1072,7 @@ void KMPlayerURLSource::setURL (const KURL & url) {
     m_refurls.clear ();
     m_refurls.push_back (url.url ());
     m_nexturl = m_currenturl = m_refurls.begin ();
-    m_ins_url = ++m_nexturl;
+    ++m_nexturl;
 }
 
 #include "kmplayerpartbase.moc"

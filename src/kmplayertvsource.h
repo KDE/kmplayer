@@ -204,6 +204,8 @@ public:
 public slots:
     virtual void activate ();
     virtual void deactivate ();
+    virtual void forward ();
+    virtual void backward ();
 
     void menuClicked (int id);
 private:
@@ -215,6 +217,7 @@ private:
     QString tvdriver;
     TVDeviceList tvdevices;
     KMPlayerPrefSourcePageTV * m_configpage;
+    int m_current_id;
 };
 
 #endif //_KMPLAYER_TV_SOURCE_H_
