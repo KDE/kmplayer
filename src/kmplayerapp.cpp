@@ -844,6 +844,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerDVDNavSource::KMPlayerDVDNavSource (KMPlayerApp * ap
 KDE_NO_CDTOR_EXPORT KMPlayerDVDNavSource::~KMPlayerDVDNavSource () {}
 
 KDE_NO_EXPORT void KMPlayerDVDNavSource::activate () {
+    setURL (KURL ("dvd://"));
     play ();
 }
 
@@ -857,7 +858,7 @@ KDE_NO_EXPORT void KMPlayerDVDNavSource::play () {
         m_menu->insertItem (i18n ("&Root"), this, SLOT (navMenuClicked (int)), 0, DVDNav_root);
         m_menu->insertItem (i18n ("&Up"), this, SLOT (navMenuClicked (int)), 0, DVDNav_up);
     }
-    QTimer::singleShot (0, m_player->process (), SLOT (play ()));
+    QTimer::singleShot (0, m_player, SLOT (play ()));
     connect (m_player, SIGNAL (stopPlaying ()), this, SLOT(finished ()));
 }
 
@@ -914,6 +915,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVCD::KMPlayerPrefSourcePageVCD (QWidge
 KDE_NO_CDTOR_EXPORT KMPlayerVCDSource::KMPlayerVCDSource (KMPlayerApp * a, QPopupMenu * m)
     : KMPlayerMenuSource (i18n ("VCD"), a, m, "vcdsource"), m_configpage (0L) {
     m_player->settings ()->addPage (this);
+    setURL (KURL ("vcd://"));
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerVCDSource::~KMPlayerVCDSource () {

@@ -1462,6 +1462,16 @@ bool Xine::ready () {
         printf (" -c");
         *m_process << " -c";
     }
+    if (m_source)
+        if (m_source->url ().url ().startsWith (QString ("dvd://")) &&
+                !settings->dvddevice.isEmpty ()) {
+            printf (" -dvd-device %s", settings->dvddevice.ascii ());
+            *m_process << " -dvd-device " << settings->dvddevice;
+        } else if (m_source->url ().url ().startsWith (QString ("vcd://")) &&
+                !settings->vcddevice.isEmpty ()) {
+            printf (" -vcd-device %s", settings->vcddevice.ascii ());
+            *m_process << " -vcd-device " << settings->vcddevice;
+        }
     printf ("\n");
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
     return m_process->isRunning ();
