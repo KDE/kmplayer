@@ -240,13 +240,50 @@ private slots:
 };
 
 /**
- * Stores runtime data of set element
+ * Stores runtime data of elements from animate group set/animate/..
  */
-class SetData : public TimedRuntime {
+class AnimateGroupData : public TimedRuntime {
     Q_OBJECT
 public:
-    KDE_NO_CDTOR_EXPORT SetData (ElementPtr e) : TimedRuntime (e) {}
+    KDE_NO_CDTOR_EXPORT ~AnimateGroupData () {}
+    virtual QString setParam (const QString & name, const QString & value);
+protected:
+    KDE_NO_CDTOR_EXPORT AnimateGroupData (ElementPtr e) : TimedRuntime (e) {}
+    ElementPtrW target_element;
+    RegionNodePtrW target_region;
+    QString changed_attribute;
+    QString change_to;
+    QString old_value;
+};
+
+/**
+ * Stores runtime data of set element
+ */
+class SetData : public AnimateGroupData {
+    Q_OBJECT
+public:
+    KDE_NO_CDTOR_EXPORT SetData (ElementPtr e) : AnimateGroupData (e) {}
     KDE_NO_CDTOR_EXPORT ~SetData () {}
+protected slots:
+    /**
+     * start_timer timer expired, execute it
+     */
+    virtual void started ();
+    /**
+     * animation finished
+     */
+    virtual void stopped ();
+};
+
+/**
+ * Stores runtime data of animate element
+ */
+class AnimateData : public AnimateGroupData {
+    Q_OBJECT
+public:
+    AnimateData (ElementPtr e);
+    KDE_NO_CDTOR_EXPORT ~AnimateData () {}
+    virtual QString setParam (const QString & name, const QString & value);
 protected slots:
     /**
      * start_timer timer expired, execute it
@@ -256,11 +293,19 @@ protected slots:
      * undo set execute
      */
     virtual void stopped ();
+    /**
+     * for animations
+     */
+    void timerEvent (QTimerEvent *);
 private:
-    ElementPtrW target_element;
-    RegionNodePtrW target_region;
-    QString changed_attribute;
-    QString old_value;
+    void init ();
+    int anim_timer;
+    enum { acc_none, acc_sum } accumulate;
+    enum { add_replace, add_sum } additive;
+    int change_by;
+    enum { calc_discrete, calc_linear, calc_paced } calcMode;
+    QString change_from;
+    QString change_values;
 };
 
 //-----------------------------------------------------------------------------

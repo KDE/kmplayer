@@ -483,21 +483,38 @@ KDE_NO_EXPORT void RegionRuntime::end () {
 
 //-----------------------------------------------------------------------------
 
+QString AnimateGroupData::setParam (const QString & name, const QString & val) {
+    kdDebug () << "AnimateGroupData::setParam " << name << "=" << val << endl;
+    QString old_val;
+    if (name == QString::fromLatin1 ("targetElement")) {
+        if (target_element)
+            old_val = target_element->getAttribute ("id");
+        if (element)
+            target_element = element->document ()->getElementById (val);
+    } else if (name == QString::fromLatin1 ("attributeName")) {
+        old_val = changed_attribute;
+        changed_attribute = val;
+    } else if (name == QString::fromLatin1 ("to")) {
+        old_val = change_to;
+        change_to = val;
+    } else
+        return TimedRuntime::setParam (name, val);
+    return old_val;
+}
+
+//-----------------------------------------------------------------------------
+
 KDE_NO_EXPORT void SetData::started () {
     kdDebug () << "SetData::started " << durations [duration_time].durval << endl;
     if (durations [duration_time].durval == duration_media)
         durations [duration_time].durval = 0; // intrinsic duration of 0
     if (element) {
-        QString elm_id = element->getAttribute ("targetElement");
-        target_element = element->document ()->getElementById (elm_id);
-        changed_attribute = element->getAttribute ("attributeName");
-        QString to = element->getAttribute ("to");
         if (target_element) {
             ElementRuntimePtr rt = target_element->getRuntime ();
             if (rt) {
                 target_region = rt->region_node;
-                old_value = rt->setParam (changed_attribute, to);
-                kdDebug () << "SetData::started " << target_element->nodeName () << "." << changed_attribute << " " << old_value << "->" << to << endl;
+                old_value = rt->setParam (changed_attribute, change_to);
+                kdDebug () << "SetData::started " << target_element->nodeName () << "." << changed_attribute << " " << old_value << "->" << change_to << endl;
                 if (target_region)
                     target_region->repaint ();
             }
@@ -505,7 +522,7 @@ KDE_NO_EXPORT void SetData::started () {
             kdWarning () << "target element not found" << endl;
     } else
         kdWarning () << "set element disappeared" << endl;
-    TimedRuntime::started ();
+    AnimateGroupData::started ();
 }
 
 KDE_NO_EXPORT void SetData::stopped () {
@@ -519,7 +536,51 @@ KDE_NO_EXPORT void SetData::stopped () {
         }
     } else
         kdWarning () << "target element not found" << endl;
-    TimedRuntime::stopped ();
+    AnimateGroupData::stopped ();
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT AnimateData::AnimateData (ElementPtr e)
+ : AnimateGroupData (e), anim_timer (0) {
+    init ();
+}
+
+KDE_NO_EXPORT void AnimateData::init () {
+    if (anim_timer) {
+        killTimer (anim_timer);
+        anim_timer = 0;
+    }
+    accumulate = acc_none;
+    additive = add_replace;
+    change_by = 0;
+    calcMode = calc_discrete;
+    change_from.truncate (0);
+    change_values.truncate (0);
+}
+
+QString AnimateData::setParam (const QString & name, const QString & val) {
+    kdDebug () << "AnimateData::setParam " << name << "=" << val << endl;
+    QString old_val;
+    if (name == QString::fromLatin1 ("change_by")) {
+        old_val = QString::number (change_by);
+        change_by = val.toInt ();
+    } else
+        return AnimateGroupData::setParam (name, val);
+    return old_val;
+}
+
+KDE_NO_EXPORT void AnimateData::started () {
+    AnimateGroupData::started ();
+}
+
+KDE_NO_EXPORT void AnimateData::stopped () {
+    AnimateGroupData::stopped ();
+}
+
+KDE_NO_EXPORT void AnimateData::timerEvent (QTimerEvent *) {
+    killTimer (anim_timer);
+    anim_timer = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -1170,7 +1231,7 @@ KDE_NO_EXPORT void SMIL::Set::start () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::Animate::getNewRuntime () {
-    return ElementRuntimePtr (new SetData (m_self));
+    return ElementRuntimePtr (new AnimateData (m_self));
 }
 
 //-----------------------------------------------------------------------------
@@ -1376,6 +1437,8 @@ KDE_NO_EXPORT void TextData::slotResult (KIO::Job * job) {
     MediaTypeRuntime::slotResult (job);
     if (mt_d->data.size () && element) {
         d->data = mt_d->data;
+        if (d->data.size () > 0 && !d->data [d->data.size () - 1])
+            d->data.resize (d->data.size () - 1); // strip zero terminate char
         if (region_node &&
                 (timingstate == timings_started ||
                  (timingstate == timings_stopped &&
