@@ -1,4 +1,6 @@
 Changes since version 0.8.4-rc4
+- Recording now stops movie playing after hitting 'Start Recording'
+- Be less strict with parsing ASX (and SMIL) play list files
 - Internals: merge code from backends, with the 'never reaching' goal to add
   a new backend just by configuration (plus a backend player of course)
 - Internals: move playlist handling to Partbase, instead of each process have

@@ -1,4 +1,4 @@
-#AM_INIT_AUTOMAKE(kmplayer,0.8.4-rc4b)
+#AM_INIT_AUTOMAKE(kmplayer,0.8.4-rc5)
 
 AC_DEFUN([KDE_PKG_CHECK_MODULES], [
   succeeded=no
