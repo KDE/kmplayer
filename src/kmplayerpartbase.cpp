@@ -264,6 +264,8 @@ unsigned long KMPlayer::length () const {
 bool KMPlayer::openURL (const KURL & url) {
     kdDebug () << "KMPlayer::openURL " << url.url() << url.isValid () << endl;
     if (!m_view || url.isEmpty ()) return false;
+    stop ();
+    m_urlsource->setSubURL (KURL ());
     m_urlsource->setURL (url);
     m_urlsource->setIdentified (false);
     setSource (m_urlsource);

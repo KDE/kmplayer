@@ -21,6 +21,7 @@
 #include <qstring.h>
 
 #include <qfile.h>
+#include <qfileinfo.h>
 #include <qtimer.h>
 
 #include <dcopobject.h>
@@ -51,6 +52,14 @@ KMPlayerProcess::~KMPlayerProcess () {
 }
 
 void KMPlayerProcess::init () {
+}
+
+void KMPlayerProcess::initProcess () {
+    delete m_process;
+    m_process = new KProcess;
+    m_process->setUseShell (true);
+    m_source->setPosition (0);
+    m_url.truncate (0);
 }
 
 QWidget * KMPlayerProcess::widget () {
@@ -132,9 +141,7 @@ MPlayerBase::~MPlayerBase () {
 }
 
 void MPlayerBase::initProcess () {
-    delete m_process;
-    m_process = new KProcess;
-    m_process->setUseShell (true);
+    KMPlayerProcess::initProcess ();
     const KURL & url (source ()->url ());
     if (!url.isEmpty ()) {
         QString proxy_url;
@@ -215,12 +222,23 @@ bool MPlayer::play () {
     if (!source ()) return false;
     if (playing ())
         return sendCommand (QString ("gui_play"));
+    stop ();
+    initProcess ();
     source ()->setPosition (0);
     QString args = source ()->options () + ' ';
-    const KURL & url = m_source->url ();
+    KURL url = m_source->url ();
+    if (m_urls.count () > 0) {
+        url = KURL (m_urls.front ());
+        m_urls.pop_front ();
+    }
     if (!url.isEmpty ()) {
-        QString myurl (url.isLocalFile () ? url.path () : url.url ());
-        args += KProcess::quote (QString (QFile::encodeName (myurl)));
+        m_url = url.url ();
+        if (url.isLocalFile ()) {
+            QFileInfo fi (url.path ());
+            m_process->setWorkingDirectory (fi.dirPath (true));
+            m_url = fi.fileName ();
+        }
+        args += KProcess::quote (QString (QFile::encodeName (m_url)));
     }
     m_tmpURL.truncate (0);
     m_urls.clear ();
@@ -298,10 +316,8 @@ bool MPlayer::brightness (int val, bool /*absolute*/) {
 }
 
 bool MPlayer::run (const char * args, const char * pipe) {
-    stop ();
     //m_view->consoleOutput ()->clear ();
     m_process_output = QString::null;
-    initProcess ();
     connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
             this, SLOT (processOutput (KProcess *, char *, int)));
     connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
@@ -454,6 +470,8 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
             if (!m_tmpURL.isEmpty ())
                 m_urls.push_back (m_tmpURL);
             m_tmpURL = m_refURLRegExp.cap (1);
+            if (m_source->url () == m_tmpURL || m_url == m_tmpURL)
+                m_tmpURL.truncate (0);
         } else if (!source ()->identified () && m_refRegExp.search (out) > -1) {
             kdDebug () << "Reference File " << endl;
             m_tmpURL.truncate (0);
@@ -487,17 +505,9 @@ void MPlayer::processStopped (KProcess * p) {
         emit grabReady (m_grabfile);
         m_grabfile.truncate (0);
     } else if (p && !source ()->identified ()) {
-        if (!m_tmpURL.isEmpty ()) {
+        if (!m_tmpURL.isEmpty () && m_tmpURL != m_source->url ().url ()) {
             m_urls.push_back (m_tmpURL);
             m_tmpURL.truncate (0);
-        }
-        while (m_urls.count () > 0) {
-            QString url = m_urls.front ();
-            m_urls.pop_front ();
-            if (m_source->url () == url)
-                continue;
-            source ()->setURL (KURL (url));
-            break;
         }
         source ()->setIdentified ();
         QTimer::singleShot (0, this, SLOT (play ()));
@@ -622,7 +632,8 @@ KMPlayerCallbackProcess::~KMPlayerCallbackProcess () {
 
 void KMPlayerCallbackProcess::setURL (const QString & url) {
     kdDebug () << "Reference mrl " << url << endl;
-    m_urls.push_back (url);
+    if (m_source->url ().url () != url && m_url != url)
+        m_urls.push_back (url);
 }
 
 void KMPlayerCallbackProcess::setStatusMessage (const QString & /*msg*/) {
@@ -681,28 +692,33 @@ QWidget * Xine::widget () {
     return static_cast <KMPlayerView *> (m_player->view())->viewer();
 }
 
-bool Xine::play () {
-    if (playing ()) {
-        if (m_backend)
-            m_backend->play ();
-        return true;
-    }
-    m_source->setPosition (0);
-    KURL url = m_source->url ();
-    kdDebug() << "Xine::play (" << url.url() << ")" << endl;
-    if (url.isEmpty ())
-        return false;
-    m_urls.clear ();
-    KMPlayerSettings *settings = m_player->settings ();
-    delete m_process;
-    m_process = new KProcess;
-    m_process->setUseShell (true);
+void Xine::initProcess () {
+    KMPlayerProcess::initProcess ();
     connect (m_process, SIGNAL (processExited (KProcess *)),
             this, SLOT (processStopped (KProcess *)));
     connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
             this, SLOT (processOutput (KProcess *, char *, int)));
     connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
             this, SLOT (processOutput (KProcess *, char *, int)));
+}
+
+bool Xine::play () {
+    if (playing ()) {
+        if (m_backend)
+            m_backend->play ();
+        return true;
+    }
+    KURL url = m_source->url ();
+    if (m_urls.count () > 0) {
+        url = KURL (m_urls.front ());
+        m_urls.pop_front ();
+    }
+    kdDebug() << "Xine::play (" << url.url() << ")" << endl;
+    if (url.isEmpty ())
+        return false;
+    m_urls.clear ();
+    KMPlayerSettings *settings = m_player->settings ();
+    initProcess ();
     printf ("kxineplayer -wid %lu", (unsigned long) widget ()->winId ());
     *m_process << "kxineplayer -wid " << QString::number (widget ()->winId ());
 
@@ -747,14 +763,21 @@ bool Xine::play () {
     const KURL & sub_url = m_source->subUrl ();
     if (!sub_url.isEmpty ()) {
         QString surl = KProcess::quote (QString (QFile::encodeName
-                  (sub_url.isLocalFile () ? sub_url.path () : sub_url.url ())));
+                  (sub_url.isLocalFile () ? 
+                   QFileInfo (sub_url.path ()).absFilePath () :
+                   sub_url.url ())));
         printf (" -sub %s ", surl.ascii ());
         *m_process <<" -sub " << surl;
     }
-    QString myurl = KProcess::quote (QString (QFile::encodeName (url.isLocalFile () ? url.path () : url.url ())));
+    m_url = url.url ();
+    if (url.isLocalFile ()) {
+        QFileInfo fi (url.path ());
+        m_process->setWorkingDirectory (fi.dirPath (true));
+        m_url = fi.fileName ();
+    }
+    QString myurl = KProcess::quote (m_url);
     printf (" %s\n", myurl.ascii ());
     *m_process << " " << myurl;
-    fflush (stdout);
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
     if (m_process->isRunning ()) {
         QTimer::singleShot (0, this, SLOT (emitStarted ()));
@@ -783,12 +806,9 @@ bool Xine::stop () {
 
 void Xine::setFinished () {
     kdDebug () << "Xine::finished () " << m_urls.count () << endl;
-    while (m_urls.count ()) {
+    if (m_urls.count ()) {
         QString url = m_urls.front ();
         m_urls.pop_front ();
-        if (m_source->url ().url () == url)
-            continue;
-        m_source->setURL (KURL (url));
         m_backend->setURL (url);
         m_backend->play ();
         return;

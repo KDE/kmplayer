@@ -39,6 +39,7 @@ public:
     KMPlayerProcess (KMPlayer * player);
     virtual ~KMPlayerProcess ();
     virtual void init ();
+    virtual void initProcess ();
     bool playing () const;
     KMPlayerSource * source () const { return m_source; }
     KProcess * process () const { return m_process; }
@@ -71,6 +72,7 @@ protected:
     KMPlayerSource * m_source;
     KProcess * m_process;
     QStringList m_urls;
+    QString m_url;
 protected slots:
     // QTimer::singleShot slots for the signals
     void emitStarted () { emit started (); }
@@ -179,6 +181,7 @@ public:
     ~Xine ();
     QWidget * widget ();
     void setFinished ();
+    void initProcess ();
 public slots:
     bool play ();
     bool stop ();

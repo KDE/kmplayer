@@ -27,6 +27,8 @@
 #include <qslider.h>
 #include <qlabel.h>
 #include <qbuttongroup.h>
+#include <qfileinfo.h>
+
 #include <kurlrequester.h>
 #include <klineedit.h>
 
@@ -36,6 +38,7 @@
 #include <kdebug.h>
 #include <klocale.h>
 #include <kcombobox.h>
+#include <kmessagebox.h>
 
 #include "kmplayerconfig.h"
 #include "kmplayerpartbase.h"
@@ -742,15 +745,35 @@ void KMPlayerSettings::okPressed () {
     if (!view)
         return;
     bool urlchanged = configdialog->m_SourcePageURL->changed;
-    if (configdialog->m_SourcePageURL->url->url ().isEmpty ())
-        urlchanged = false;
+    if (urlchanged) {
+        if (configdialog->m_SourcePageURL->url->url ().isEmpty ())
+            urlchanged = false;
+        else {
+            if (configdialog->m_SourcePageURL->url->url ().find ("://") == -1) {
+                QFileInfo fi (configdialog->m_SourcePageURL->url->url ());
+                if (!fi.exists ()) {
+                    urlchanged = false;
+                    KMessageBox::error (m_player->view (), i18n ("File %1 does not exist.").arg (configdialog->m_SourcePageURL->url->url ()), i18n ("Error"));
+                } else {
+                    configdialog->m_SourcePageURL->url->setURL (fi.absFilePath ());
+                    if (!configdialog->m_SourcePageURL->sub_url->url ().isEmpty () && configdialog->m_SourcePageURL->sub_url->url ().find ("://") == -1) {
+                        QFileInfo sfi (configdialog->m_SourcePageURL->sub_url->url ());
+                        if (!sfi.exists ()) {
+                            KMessageBox::error (m_player->view (), i18n ("Sub title file %1 does not exist.").arg (configdialog->m_SourcePageURL->sub_url->url ()), i18n ("Error"));
+                            configdialog->m_SourcePageURL->sub_url->setURL (QString::null);
+                        } else
+                            configdialog->m_SourcePageURL->sub_url->setURL (sfi.absFilePath ());
+                    }
+                }
+            }
+        }
+    }
     if (urlchanged) {
         KURL url (configdialog->m_SourcePageURL->url->url ());
         m_player->setURL (url);
         if (urllist.find (url.prettyURL ()) == urllist.end ())
             configdialog->m_SourcePageURL->urllist->insertItem (url.prettyURL (), 0);
         KURL sub_url (configdialog->m_SourcePageURL->sub_url->url ());
-        m_player->process ()->source ()->setSubURL (sub_url);
         if (sub_urllist.find (sub_url.prettyURL ()) == sub_urllist.end ())
             configdialog->m_SourcePageURL->sub_urllist->insertItem (sub_url.prettyURL (), 0);
     }
@@ -888,6 +911,8 @@ void KMPlayerSettings::okPressed () {
             (configdialog->m_SourcePageURL->sub_url->url ());
         kdDebug() << "SUB: " << m_player->urlSource ()->subUrl();
         m_player->openURL (KURL (configdialog->m_SourcePageURL->url->url ()));
+        KURL sub_url (configdialog->m_SourcePageURL->sub_url->url ());
+        m_player->process ()->source ()->setSubURL (sub_url);
     }
 }
 
@@ -968,6 +993,8 @@ void TVDeviceScannerSource::play () {
         return;
     QString args;
     args.sprintf ("tv:// -tv driver=%s:device=%s -identify -frames 0", m_driver.ascii (), m_tvdevice->device.ascii ());
+    m_player->stop ();
+    m_player->mplayer ()->initProcess ();
     if (m_player->mplayer ()->run (args.ascii()))
         connect (m_player, SIGNAL (stopPlaying ()), this, SLOT (finished ()));
     else
