@@ -220,9 +220,7 @@ bool KMPlayerPart::openURL (const KURL & url) {
         }
     }
     enablePlayerMenu (true);
-    if (m_features & Feat_Controls) {
-        m_view->setControlPanelMode (KMPlayerView::CP_Show);
-    }
+    m_view->setControlPanelMode (m_features & Feat_Controls ? KMPlayerView::CP_Show : KMPlayerView::CP_AutoHide);
     if (current_player) {
         if (m_features & Feat_Controls) {
             removeControlPanel (m_view->buttonBar ());

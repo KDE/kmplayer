@@ -615,8 +615,7 @@ void KMPlayerView::setControlPanelMode (ControlPanelMode m) {
     if (m_playing && m_layer->isFullScreen())
         m_controlpanel_mode = CP_AutoHide;
     if (m_buttonbar)
-        if (m_controlpanel_mode == CP_Show ||
-                (m_controlpanel_mode == CP_AutoHide && m_playing))
+        if (m_controlpanel_mode == CP_Show)
             m_buttonbar->show ();
         else
             m_buttonbar->hide ();
