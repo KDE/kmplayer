@@ -23,12 +23,37 @@
 #endif
 
 #include <qobject.h>
+#include <qsize.h>
 
 #include "pref.h"
 
 class KMPlayer;
 class KConfig;
 class KMPlayerPreferences;
+
+class TVChannel {
+public:
+    TVChannel (const QString & n, int f);
+    QString name;
+    int frequency;
+};
+
+class TVInput {
+public:
+    TVInput (const QString & n, int id);
+    QString name;
+    int id;
+    bool hastuner;
+    QPtrList <TVChannel> channels;
+};
+
+class TVDevice {
+public:
+    TVDevice (const QString & d, const QSize & size);
+    QString device;
+    QSize size;
+    QPtrList <TVInput> inputs;
+};
 
 class KMPlayerConfig : public QObject {
     Q_OBJECT
@@ -79,6 +104,10 @@ public:
     bool pp_med_int;		// median interlacer
     bool pp_ffmpeg_int;		// ffmpeg interlacer
 // end of postproc
+// TV stuff
+    QString tvdriver;
+    QPtrList <TVDevice> tvdevices;
+// end of TV stuff
     int seektime;
     int cachesize;
     int videodriver;

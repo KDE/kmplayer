@@ -25,7 +25,6 @@
 
 #include <qptrlist.h>
 #include <qmap.h>
-#include <qpair.h>
 
 #include <kurl.h>
 
@@ -136,7 +135,7 @@ public:
     virtual ~KMPlayerTVSource ();
     //virtual bool processOutput (const QString & line);
     virtual QString filterOptions ();
-    void readConfig (KConfig * config);
+    void buildMenu ();
 public slots:
     virtual void activate ();
     virtual void deactivate ();
@@ -145,15 +144,12 @@ public slots:
     //void finished ();
     void menuClicked (int id);
 private:
-    struct Device {
+    struct TVSource {
         QSize size;
-        int menuid;
+        QString command;
     };
-    typedef QMap <int, QPair <Device *, QString> > CommandMap;
-    QString m_driver;
-    Device * m_device;
-    QString m_command;
-    QPtrList <Device> devices;
+    typedef QMap <int, TVSource *> CommandMap;
+    TVSource * m_tvsource;
     CommandMap commands;
     QPopupMenu * m_channelmenu;
 };

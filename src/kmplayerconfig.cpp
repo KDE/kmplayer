@@ -37,6 +37,16 @@
 //#include "configdialog.h"
 #include "pref.h"
 
+TVChannel::TVChannel (const QString & n, int f) : name (n), frequency (f) {}
+
+TVInput::TVInput (const QString & n, int _id) : name (n), id (_id) {
+    channels.setAutoDelete (true);
+}
+
+TVDevice::TVDevice (const QString & d, const QSize & s) : device (d), size (s) {
+    inputs.setAutoDelete (true);
+}
+
 KMPlayerConfig::KMPlayerConfig (KMPlayer * player, KConfig * config)
   : configdialog (0L), m_config (config), m_player (player) {
 }
@@ -205,6 +215,48 @@ void KMPlayerConfig::readConfig () {
     pp_med_int = m_config->readBoolEntry (strPP_Med_Int, false);
     pp_ffmpeg_int = m_config->readBoolEntry (strPP_FFmpeg_Int, false);
 
+    // TV stuff
+    tvdevices.clear ();
+    m_config->setGroup("TV");
+    tvdriver = m_config->readEntry ("Driver", "v4l");
+    QStrList devlist;
+    int deviceentries = m_config->readListEntry ("Devices", devlist, ';');
+    for (int i = 0; i < deviceentries; i++) {
+        m_config->setGroup (devlist.at (i));
+        TVDevice * device = new TVDevice (devlist.at (i), 
+                                          m_config->readSizeEntry ("Size"));
+        QStrList inputlist;
+        int inputentries = m_config->readListEntry ("Inputs", inputlist, ';');
+        kdDebug() << device->device << " has " << inputentries << " inputs" << endl;
+        for (int j = 0; j < inputentries; j++) {
+            QString inputstr = inputlist.at (j);
+            int pos = inputstr.find (':');
+            if (pos < 0) {
+                kdError () << "Wrong input: " << inputstr << endl;
+                continue;
+            }
+            TVInput * input = new TVInput (inputstr.mid (pos + 1),
+                                           inputstr.left (pos).toInt ());
+            QStrList freqlist;
+            int freqentries = m_config->readListEntry(input->name,freqlist,';');
+            kdDebug() << input->name<< " has " << freqentries << " freqs" << endl;
+            input->hastuner = (freqentries > 0);
+            for (int k = 0; k < freqentries; k++) {
+                QString freqstr = freqlist.at (k);
+                int pos = freqstr.find (':');
+                if (pos < 0) {
+                    kdError () << "Wrong frequency: " << freqstr << endl;
+                    continue;
+                }
+                TVChannel * channel = new TVChannel (freqstr.left (pos),
+                                                  freqstr.mid (pos+1).toInt ());
+                kdDebug() << freqstr.left (pos) << " at " << freqstr.mid (pos+1).toInt() << endl;
+                input->channels.append (channel);
+            }
+            device->inputs.append (input);
+        }
+        tvdevices.append (device);
+    }
 }
 
 void KMPlayerConfig::show () {

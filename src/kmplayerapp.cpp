@@ -290,7 +290,7 @@ void KMPlayerApp::readOptions() {
     // initialize the recent file list
     fileOpenRecent->loadEntries(config,"Recent Files");
 
-    m_tvsource->readConfig (config);
+    m_tvsource->buildMenu ();
 
     configChanged ();
 }
@@ -800,7 +800,6 @@ void KMPlayerPipeSource::deactivate () {
 KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QPopupMenu * m)
     : KMPlayerMenuSource (a, m) {
     m_menu->insertTearOffHandle ();
-    devices.setAutoDelete (true);
 }
 
 KMPlayerTVSource::~KMPlayerTVSource () {
@@ -811,13 +810,14 @@ void KMPlayerTVSource::activate () {
 }
 
 void KMPlayerTVSource::play () {
-    if (!m_device)
+    if (!m_tvsource)
         return;
-    app->setCaption (QString (i18n ("TV: ")) + m_command, false);
-    setWidth (m_device->size.width ());
-    setHeight (m_device->size.height ());
+    KMPlayerConfig * config = m_player->configDialog ();
+    app->setCaption (QString (i18n ("TV: ")) + m_tvsource->command, false);
+    setWidth (m_tvsource->size.width ());
+    setHeight (m_tvsource->size.height ());
     QString args;
-    args.sprintf ("-tv on:driver=%s:%s:width=%d:height=%d", m_driver.ascii (), m_command.ascii (), width (), height ());
+    args.sprintf ("-tv on:driver=%s:%s:width=%d:height=%d", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
     m_player->setMovieLength (0x7fffffff);
     app->resizePlayer (100);
     m_player->run (args.ascii());
@@ -827,60 +827,40 @@ void KMPlayerTVSource::play () {
 void KMPlayerTVSource::deactivate () {
 }
 
-void KMPlayerTVSource::readConfig (KConfig * config) {
-    devices.first ();
-    while (devices.current ()) {
-        m_menu->removeItem (devices.current ()->menuid);
-        devices.remove ();
-    }
+void KMPlayerTVSource::buildMenu () {
+    KMPlayerConfig * config = m_player->configDialog ();
+    CommandMap::iterator it = commands.begin ();
+    for ( ; it != commands.end (); ++it)
+        delete it.data ();
     commands.clear ();
-    m_device = 0L;
+    m_menu->clear ();
+    m_tvsource = 0L;
     int counter = 0;
-    QString cmd;
-    config->setGroup("TV");
-    m_driver = config->readEntry ("Driver", "v4l");
-    QStrList devlist;
-    int deventries = config->readListEntry ("Devices", devlist, ';');
-    for (int i = 0; i < deventries; i++) {
-        Device * device = new Device;
-        QString devstr = devlist.at (i);
+    TVDevice * device;
+    for (config->tvdevices.first(); (device = config->tvdevices.current ()); config->tvdevices.next ()) {
         QPopupMenu * devmenu = new QPopupMenu (app);
-        config->setGroup (devstr);
-        device->size = config->readSizeEntry ("Size");
-        QStrList inputlist;
-        int inputentries = config->readListEntry ("Inputs", inputlist, ';');
-        kdDebug() << devstr << " has " << inputentries << " inputs" << endl;
-        for (int j = 0; j < inputentries; j++) {
-            QString inputstr = inputlist.at (j);
-            int pos = inputstr.find (':');
-            if (pos < 0)
-                continue;
-            int inputid = inputstr.left (pos).toInt ();
-            QString inputname = inputstr.mid (pos + 1);
-            QStrList freqlist;
-            int freqentries = config->readListEntry (inputname, freqlist, ';');
-            kdDebug() << inputname<< " has " << freqentries << " freqs" << endl;
-            if (freqentries <= 0) {
-                devmenu->insertItem (inputname, this, SLOT (menuClicked (int)), 0, counter);
-                cmd.sprintf ("device=%s:input=%d", devstr.ascii (), inputid);
-                commands.insert (counter++, qMakePair (device, cmd));
+        TVInput * input;
+        for (device->inputs.first (); (input = device->inputs.current ());device->inputs.next ()) {
+            if (input->channels.count () <= 0) {
+                TVSource * source = new TVSource;
+                devmenu->insertItem (input->name, this, SLOT (menuClicked (int)), 0, counter);
+                source->command.sprintf ("device=%s:input=%d", device->device.ascii (), input->id);
+                source->size = device->size;
+                commands.insert (counter++, source);
             } else {
                 QPopupMenu * inputmenu = new QPopupMenu (app);
-                for (int k = 0; k < freqentries; k++) {
-                    QString freqstr = freqlist.at (k);
-                    int pos = freqstr.find (':');
-                    if (pos < 0)
-                        continue;
-                    kdDebug() << freqstr.left (pos) << " at " << freqstr.mid (pos+1).toInt() << endl;
-                    inputmenu->insertItem (freqstr.left (pos), this, SLOT(menuClicked (int)), 0, counter);
-                    cmd.sprintf ("device=%s:input=%d:freq=%s", devstr.ascii (), inputid, freqstr.mid (pos+1).ascii ());
-                    commands.insert (counter++, qMakePair (device,cmd));
+                TVChannel * channel;
+                for (input->channels.first (); (channel = input->channels.current()); input->channels.next ()) {
+                    TVSource * source = new TVSource;
+                    source->size = device->size;
+                    inputmenu->insertItem (channel->name, this, SLOT(menuClicked (int)), 0, counter);
+                    source->command.sprintf ("device=%s:input=%d:freq=%d", device->device.ascii (), input->id, channel->frequency);
+                    commands.insert (counter++, source);
                 }
-                devmenu->insertItem (inputname, inputmenu, 0, inputid);
+                devmenu->insertItem (input->name, inputmenu, 0, input->id);
             }
         }
-        device->menuid = m_menu->insertItem (devstr, devmenu);
-        devices.append (device);
+        m_menu->insertItem (device->device, devmenu);
     }
 }
 
@@ -889,9 +869,8 @@ void KMPlayerTVSource::menuClicked (int id) {
     if (it != commands.end ()) {
         if (m_player->source () != this)
             m_player->setSource (this);
-        m_device = it.data ().first;
-        m_command = it.data ().second;
-        kdDebug() << "KMPlayerTVSource::menuClickedt " << m_command << endl;
+        m_tvsource = it.data ();
+        kdDebug() << "KMPlayerTVSource::menuClickedt " << m_tvsource->command << endl;
         play ();
     }
 }
