@@ -26,7 +26,7 @@
 #include <qcombobox.h>
 #include <qlistbox.h>
 #include <qlineedit.h>
-#include <qtooltip.h>
+#include <qwhatsthis.h>
 #include <qtabwidget.h>
 #include <qcursor.h>
 #include <qdir.h>
@@ -157,7 +157,7 @@ KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent) : QFrame 
     QGridLayout *gridlayout = new QGridLayout (layout, 6, 2, 2);
     QLabel *label = new QLabel (i18n ("Bind address:"), this);
     bindaddress = new QLineEdit ("", this);
-    QToolTip::add (bindaddress, i18n ("If you have multiple network devices, you can limit access"));
+    QWhatsThis::add (bindaddress, i18n ("If you have multiple network devices, you can limit access"));
     gridlayout->addWidget (label, 0, 0);
     gridlayout->addWidget (bindaddress, 0, 1);
     label = new QLabel (i18n ("Listen port:"), this);
@@ -207,7 +207,7 @@ KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *paren
     format->insertItem (QString ("mpeg"));
     format->insertItem (QString ("rm"));
     format->insertItem (QString ("swf"));
-    QToolTip::add (format, i18n ("Only avi, mpeg and rm work for mplayer playback"));
+    QWhatsThis::add (format, i18n ("Only avi, mpeg and rm work for mplayer playback"));
     formatlayout->addWidget (label, 0, 0);
     formatlayout->addWidget (format, 0, 1);
     ADDPROPERTY (i18n ("Audio codec:"), audiocodec, formatlayout, 1, this);
@@ -225,7 +225,7 @@ KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *paren
     accesslist->verticalHeader ()->hide ();
     accesslist->setLeftMargin (0);
     accesslist->setColumnWidth (0, 250);
-    QToolTip::add (accesslist, i18n ("'Single IP' or 'start-IP end-IP' for IP ranges"));
+    QWhatsThis::add (accesslist, i18n ("'Single IP' or 'start-IP end-IP' for IP ranges"));
     QHeader *header = accesslist->horizontalHeader ();
     header->setLabel (0, i18n ("Host/IP or IP Range"));
     QFrame *profileframe = new QFrame (this);

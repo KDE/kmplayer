@@ -29,7 +29,7 @@
 #include <qcombobox.h>
 #include <qlineedit.h>
 #include <qgroupbox.h>
-#include <qtooltip.h>
+#include <qwhatsthis.h>
 #include <qtabwidget.h>
 #include <qbuttongroup.h>
 #include <qmessagebox.h>
@@ -91,7 +91,7 @@ KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent,
     QLabel *sizeheightLabel = new QLabel (i18n ("Height:"), this, 0);
     sizeheight = new QLineEdit ("", this, 0);
     noplayback = new QCheckBox (i18n ("Do not immediately play"), this);
-    QToolTip::add (noplayback, i18n ("Only start playing after clicking the play button"));
+    QWhatsThis::add (noplayback, i18n ("Only start playing after clicking the play button"));
     inputsTab = new QTabWidget (this);
     TVInputList::iterator iit = device->inputs.begin ();
     for (; iit != device->inputs.end (); ++iit) {
@@ -188,10 +188,10 @@ KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget *parent)
     QGridLayout *gridlayout = new QGridLayout (layout, 2, 2, 2);
     QLabel *driverLabel = new QLabel (i18n ("Driver:"), general, 0);
     driver = new QLineEdit ("", general, 0);
-    QToolTip::add (driver, i18n ("dummy, v4l or bsdbt848"));
+    QWhatsThis::add (driver, i18n ("dummy, v4l or bsdbt848"));
     QLabel *deviceLabel = new QLabel (i18n ("Device:"), general, 0);
     device = new KURLRequester ("/dev/video", general);
-    QToolTip::add (device, i18n("Path to your video device, eg. /dev/video0"));
+    QWhatsThis::add(device, i18n("Path to your video device, eg. /dev/video0"));
     QPushButton * scan = new QPushButton (i18n ("Scan..."), general);
     connect (scan, SIGNAL (clicked ()), this, SLOT (slotScan ()));
     gridlayout->addWidget (driverLabel, 0, 0);

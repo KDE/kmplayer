@@ -35,7 +35,7 @@
 #include <qcombobox.h>
 #include <qlineedit.h>
 #include <qgroupbox.h>
-#include <qtooltip.h>
+#include <qwhatsthis.h>
 #include <qtabwidget.h>
 #include <qslider.h>
 #include <qbuttongroup.h>
@@ -186,18 +186,18 @@ KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
 	QVBoxLayout *layout = new QVBoxLayout(this, 5, 2);
 
 	keepSizeRatio = new QCheckBox (i18n("Keep size ratio"), this, 0);
-	QToolTip::add(keepSizeRatio, i18n("When checked, movie will keep its aspect ratio\nwhen window is resized"));
+	QWhatsThis::add(keepSizeRatio, i18n("When checked, movie will keep its aspect ratio\nwhen window is resized"));
 	showConsoleOutput = new QCheckBox (i18n("Show console output"), this, 0);
-	QToolTip::add(showConsoleOutput, i18n("Shows output from mplayer before and after playing the movie"));
+	QWhatsThis::add(showConsoleOutput, i18n("Shows output from mplayer before and after playing the movie"));
 	loop = new QCheckBox (i18n("Loop"), this, 0);
-	QToolTip::add(loop, i18n("Makes current movie loop"));
+	QWhatsThis::add(loop, i18n("Makes current movie loop"));
 	showRecordButton = new QCheckBox (i18n ("Show record button"), this);
-	QToolTip::add (showRecordButton, i18n ("Add a record button to the control buttons"));
+	QWhatsThis::add (showRecordButton, i18n ("Add a record button to the control buttons"));
 	showBroadcastButton = new QCheckBox (i18n ("Show broadcast button"), this);
-	QToolTip::add (showBroadcastButton, i18n ("Add a broadcast button to the control buttons"));
+	QWhatsThis::add (showBroadcastButton, i18n ("Add a broadcast button to the control buttons"));
 	//autoHideSlider = new QCheckBox (i18n("Auto hide position slider"), this, 0);
 	framedrop = new QCheckBox (i18n ("Allow framedrops"), this);
-	QToolTip::add (framedrop, i18n ("Allow dropping frames for better audio and video synchronization"));
+	QWhatsThis::add (framedrop, i18n ("Allow dropping frames for better audio and video synchronization"));
 
 	QWidget *seekingWidget = new QWidget(this);
 	QHBoxLayout *seekingWidgetLayout = new QHBoxLayout(seekingWidget);
@@ -252,7 +252,7 @@ KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
 #ifdef HAVE_XINE
     QGridLayout * gridlayout = new QGridLayout (2, 2);
     QLabel *backendLabel = new QLabel (i18n ("Use movie player:"), this, 0);
-    //QToolTip::add (allowhref, i18n ("Explain this in a few lines"));
+    //QWhatsThis::add (allowhref, i18n ("Explain this in a few lines"));
     gridlayout->addWidget (backendLabel, 0, 0);
     gridlayout->addWidget (backend, 1, 0);
     gridlayout->addMultiCell (new QSpacerItem (0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum), 0, 1, 1, 1);
@@ -448,7 +448,7 @@ KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidget *parent, Ou
     videoDriver = new QListBox (this);
     for (int i = 0; vd[i].driver; i++)
         videoDriver->insertItem (vd[i].description, i);
-    QToolTip::add(videoDriver, i18n("Sets video driver. Recommended is XVideo, or, if it is not supported, X11, which is slower."));
+    QWhatsThis::add(videoDriver, i18n("Sets video driver. Recommended is XVideo, or, if it is not supported, X11, which is slower."));
     layout->addWidget (new QLabel (i18n ("Video driver:"), this), 0, 0);
     layout->addWidget (videoDriver, 1, 0);
 
@@ -658,26 +658,26 @@ KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame
 	postProcessing->setText( i18n( "Enable use of postprocessing filters" ) );
 	disablePPauto->setText( i18n( "Disable use of postprocessing when watching TV/DVD" ) );
 	defaultPreset->setText( i18n( "Default" ) );
-	QToolTip::add( defaultPreset, i18n( "Enable mplayer's default postprocessing filters" ) );
+	QWhatsThis::add( defaultPreset, i18n( "Enable mplayer's default postprocessing filters" ) );
 	customPreset->setText( i18n( "Custom" ) );
-	QToolTip::add( customPreset, i18n( "Enable custom postprocessing filters (See: Custom preset -tab)" ) );
+	QWhatsThis::add( customPreset, i18n( "Enable custom postprocessing filters (See: Custom preset -tab)" ) );
 	fastPreset->setText( i18n( "Fast" ) );
-	QToolTip::add( fastPreset, i18n( "Enable mplayer's fast postprocessing filters" ) );
+	QWhatsThis::add( fastPreset, i18n( "Enable mplayer's fast postprocessing filters" ) );
 	PostprocessingOptions->changeTab( presetSelectionWidget, i18n( "General" ) );
 	customFilters->setTitle( QString::null );
 	HzDeblockFilter->setText( i18n( "Horizontal deblocking" ) );
 	VtDeblockFilter->setText( i18n( "Vertical deblocking" ) );
 	DeringFilter->setText( i18n( "Dering filter" ) );
 	HzDeblockAQuality->setText( i18n( "Auto quality" ) );
-	QToolTip::add( HzDeblockAQuality, i18n( "Filter is used if there's enough CPU" ) );
+	QWhatsThis::add( HzDeblockAQuality, i18n( "Filter is used if there's enough CPU" ) );
 	VtDeblockAQuality->setText( i18n( "Auto quality" ) );
-	QToolTip::add( VtDeblockAQuality, i18n( "Filter is used if there's enough CPU" ) );
+	QWhatsThis::add( VtDeblockAQuality, i18n( "Filter is used if there's enough CPU" ) );
 	DeringAQuality->setText( i18n( "Auto quality" ) );
-	QToolTip::add( DeringAQuality, i18n( "Filter is used if there's enough CPU" ) );
-	//QToolTip::add( TmpNoiseSlider, i18n( "Strength of the noise reducer" ) );
+	QWhatsThis::add( DeringAQuality, i18n( "Filter is used if there's enough CPU" ) );
+	//QWhatsThis::add( TmpNoiseSlider, i18n( "Strength of the noise reducer" ) );
 	AutolevelsFilter->setText( i18n( "Auto brightness/contrast" ) );
 	AutolevelsFullrange->setText( i18n( "Stretch luminance to full range" ) );
-	QToolTip::add( AutolevelsFullrange, i18n( "Stretches luminance to full range (0..255)" ) );
+	QWhatsThis::add( AutolevelsFullrange, i18n( "Stretches luminance to full range (0..255)" ) );
 	HzDeblockCFiltering->setText( i18n( "Chrominance filtering" ) );
 	VtDeblockCFiltering->setText( i18n( "Chrominance filtering" ) );
 	DeringCFiltering->setText( i18n( "Chrominance filtering" ) );
