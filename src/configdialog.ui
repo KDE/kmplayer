@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>567</width>
-            <height>390</height>
+            <height>394</height>
         </rect>
     </property>
     <property name="caption">
@@ -32,6 +32,14 @@
             <property name="name">
                 <cstring>tabWidget</cstring>
             </property>
+            <property name="sizePolicy">
+                <sizepolicy>
+                    <hsizetype>3</hsizetype>
+                    <vsizetype>7</vsizetype>
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                </sizepolicy>
+            </property>
             <widget class="QWidget">
                 <property name="name">
                     <cstring>General</cstring>
@@ -39,300 +47,216 @@
                 <attribute name="title">
                     <string>General</string>
                 </attribute>
-                <widget class="QPushButton">
+                <grid>
                     <property name="name">
-                        <cstring>openFile</cstring>
+                        <cstring>unnamed</cstring>
                     </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>510</x>
-                            <y>20</y>
-                            <width>20</width>
-                            <height>20</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>..</string>
-                    </property>
-                </widget>
-                <widget class="QTextEdit">
-                    <property name="name">
-                        <cstring>seekTime</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>350</x>
-                            <y>260</y>
-                            <width>110</width>
-                            <height>24</height>
-                        </rect>
-                    </property>
-                    <property name="maximumSize">
-                        <size>
-                            <width>32767</width>
-                            <height>24</height>
-                        </size>
-                    </property>
-                    <property name="vScrollBarMode">
-                        <enum>AlwaysOff</enum>
-                    </property>
-                    <property name="hScrollBarMode">
-                        <enum>AlwaysOff</enum>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Time for the backward/forward buttons</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>loop</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>20</x>
-                            <y>110</y>
-                            <width>370</width>
-                            <height>30</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Loop</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Restart movie after finishing playing</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>useArts</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>20</x>
-                            <y>200</y>
-                            <width>240</width>
-                            <height>30</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Use aRts audio driver</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Use aRts audio driver and add a volume slider</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>showPositionSlider</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>20</x>
-                            <y>170</y>
-                            <width>250</width>
-                            <height>30</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Show position slider</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Show small backward/play/forward/stop/pause buttons</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>keepSizeRatio</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>20</x>
-                            <y>50</y>
-                            <width>370</width>
-                            <height>30</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Keep width/height ratio</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Try to keep movie aspect</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>showConsoleOutput</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>20</x>
-                            <y>80</y>
-                            <width>370</width>
-                            <height>30</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Show console output</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Show MPlayer's output before/after playing a movie</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>showControlButtons</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>20</x>
-                            <y>140</y>
-                            <width>250</width>
-                            <height>30</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Show control buttons</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Show small backward/play/forward/stop/pause buttons</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>showVCDMenu</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>20</x>
-                            <y>230</y>
-                            <width>370</width>
-                            <height>30</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Show VCD menu</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Enable this if you have a DVD player device</string>
-                    </property>
-                </widget>
-                <widget class="QLabel">
-                    <property name="name">
-                        <cstring>textLabel1_7</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>20</x>
-                            <y>260</y>
-                            <width>290</width>
-                            <height>30</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Forward/backward seek time (sec):</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>showDVDMenu</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>280</x>
-                            <y>230</y>
-                            <width>210</width>
-                            <height>30</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Show DVD menu</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Enable this if you have a DVD player device</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>addConfigButton</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>270</x>
-                            <y>140</y>
-                            <width>240</width>
-                            <height>30</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Add configure button</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Also add a button for the configure dialog</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>autoHideControlButtons</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>270</x>
-                            <y>170</y>
-                            <width>240</width>
-                            <height>30</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Auto hide control buttons</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Auto hide the buttons when mouse is not at the bottom of the view</string>
-                    </property>
-                </widget>
-                <widget class="QLabel">
-                    <property name="name">
-                        <cstring>textLabel1_8</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>18</x>
-                            <y>19</y>
-                            <width>80</width>
-                            <height>21</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>URL:</string>
-                    </property>
-                </widget>
-                <widget class="QTextEdit">
-                    <property name="name">
-                        <cstring>url</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>90</x>
-                            <y>20</y>
-                            <width>420</width>
-                            <height>24</height>
-                        </rect>
-                    </property>
-                    <property name="maximumSize">
-                        <size>
-                            <width>32767</width>
-                            <height>24</height>
-                        </size>
-                    </property>
-                    <property name="vScrollBarMode">
-                        <enum>AlwaysOff</enum>
-                    </property>
-                    <property name="hScrollBarMode">
-                        <enum>AlwaysOff</enum>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>File or URL of movie</string>
-                    </property>
-                </widget>
+                    <widget class="QCheckBox" row="1" column="2">
+                        <property name="name">
+                            <cstring>useArts</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Use aRts audio driver</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Use aRts audio driver and add a volume slider</string>
+                        </property>
+                    </widget>
+                    <widget class="QCheckBox" row="2" column="0" rowspan="1" colspan="2">
+                        <property name="name">
+                            <cstring>loop</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Loop</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Restart movie after finishing playing</string>
+                        </property>
+                    </widget>
+                    <widget class="QCheckBox" row="2" column="2">
+                        <property name="name">
+                            <cstring>showConsoleOutput</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Show console output</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Show MPlayer's output before/after playing a movie</string>
+                        </property>
+                    </widget>
+                    <widget class="QTextEdit" row="0" column="1" rowspan="1" colspan="2">
+                        <property name="name">
+                            <cstring>url</cstring>
+                        </property>
+                        <property name="maximumSize">
+                            <size>
+                                <width>32767</width>
+                                <height>24</height>
+                            </size>
+                        </property>
+                        <property name="vScrollBarMode">
+                            <enum>AlwaysOff</enum>
+                        </property>
+                        <property name="hScrollBarMode">
+                            <enum>AlwaysOff</enum>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>File or URL of movie</string>
+                        </property>
+                    </widget>
+                    <spacer row="8" column="2">
+                        <property name="name">
+                            <cstring>spacer6</cstring>
+                        </property>
+                        <property name="orientation">
+                            <enum>Vertical</enum>
+                        </property>
+                        <property name="sizeType">
+                            <enum>Expanding</enum>
+                        </property>
+                        <property name="sizeHint">
+                            <size>
+                                <width>20</width>
+                                <height>20</height>
+                            </size>
+                        </property>
+                    </spacer>
+                    <widget class="QLabel" row="7" column="0" rowspan="1" colspan="2">
+                        <property name="name">
+                            <cstring>textLabel1_7</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Forward/backward seek time (sec):</string>
+                        </property>
+                    </widget>
+                    <widget class="QTextEdit" row="7" column="2" rowspan="1" colspan="2">
+                        <property name="name">
+                            <cstring>seekTime</cstring>
+                        </property>
+                        <property name="maximumSize">
+                            <size>
+                                <width>32767</width>
+                                <height>24</height>
+                            </size>
+                        </property>
+                        <property name="vScrollBarMode">
+                            <enum>AlwaysOff</enum>
+                        </property>
+                        <property name="hScrollBarMode">
+                            <enum>AlwaysOff</enum>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Time for the backward/forward buttons</string>
+                        </property>
+                    </widget>
+                    <widget class="Line" row="6" column="0" rowspan="1" colspan="4">
+                        <property name="name">
+                            <cstring>line8</cstring>
+                        </property>
+                        <property name="frameShape">
+                            <enum>HLine</enum>
+                        </property>
+                        <property name="frameShadow">
+                            <enum>Sunken</enum>
+                        </property>
+                        <property name="orientation">
+                            <enum>Horizontal</enum>
+                        </property>
+                    </widget>
+                    <widget class="QCheckBox" row="5" column="0" rowspan="1" colspan="2">
+                        <property name="name">
+                            <cstring>showPositionSlider</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Show position slider</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Show small backward/play/forward/stop/pause buttons</string>
+                        </property>
+                    </widget>
+                    <widget class="QCheckBox" row="5" column="2">
+                        <property name="name">
+                            <cstring>autoHideControlButtons</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Auto hide control buttons</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Auto hide the buttons when mouse is not at the bottom of the view</string>
+                        </property>
+                    </widget>
+                    <widget class="QCheckBox" row="4" column="0" rowspan="1" colspan="2">
+                        <property name="name">
+                            <cstring>showControlButtons</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Show control buttons</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Show small backward/play/forward/stop/pause buttons</string>
+                        </property>
+                    </widget>
+                    <widget class="QCheckBox" row="4" column="2">
+                        <property name="name">
+                            <cstring>addConfigButton</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Add configure button</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Also add a button for the configure dialog</string>
+                        </property>
+                    </widget>
+                    <widget class="Line" row="3" column="0" rowspan="1" colspan="4">
+                        <property name="name">
+                            <cstring>line7</cstring>
+                        </property>
+                        <property name="frameShape">
+                            <enum>HLine</enum>
+                        </property>
+                        <property name="frameShadow">
+                            <enum>Sunken</enum>
+                        </property>
+                        <property name="orientation">
+                            <enum>Horizontal</enum>
+                        </property>
+                    </widget>
+                    <widget class="QCheckBox" row="1" column="0" rowspan="1" colspan="2">
+                        <property name="name">
+                            <cstring>keepSizeRatio</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Keep width/height ratio</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Try to keep movie aspect</string>
+                        </property>
+                    </widget>
+                    <widget class="QPushButton" row="0" column="3">
+                        <property name="name">
+                            <cstring>openFile</cstring>
+                        </property>
+                        <property name="sizePolicy">
+                            <sizepolicy>
+                                <hsizetype>0</hsizetype>
+                                <vsizetype>0</vsizetype>
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                            </sizepolicy>
+                        </property>
+                        <property name="text">
+                            <string>...</string>
+                        </property>
+                    </widget>
+                    <widget class="QLabel" row="0" column="0">
+                        <property name="name">
+                            <cstring>textLabel1_8</cstring>
+                        </property>
+                        <property name="text">
+                            <string>URL:</string>
+                        </property>
+                    </widget>
+                </grid>
             </widget>
             <widget class="QWidget">
                 <property name="name">
@@ -341,60 +265,13 @@
                 <attribute name="title">
                     <string>DVD</string>
                 </attribute>
-                <widget class="QTextEdit">
+                <grid>
                     <property name="name">
-                        <cstring>dvdDevice</cstring>
+                        <cstring>unnamed</cstring>
                     </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>200</x>
-                            <y>50</y>
-                            <width>330</width>
-                            <height>24</height>
-                        </rect>
-                    </property>
-                    <property name="maximumSize">
-                        <size>
-                            <width>32767</width>
-                            <height>24</height>
-                        </size>
-                    </property>
-                    <property name="vScrollBarMode">
-                        <enum>AlwaysOff</enum>
-                    </property>
-                    <property name="hScrollBarMode">
-                        <enum>AlwaysOff</enum>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Your DVD device. Eg. /dev/dvd or /dev/hdc</string>
-                    </property>
-                </widget>
-                <widget class="QGroupBox">
-                    <property name="name">
-                        <cstring>groupBox1</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>10</x>
-                            <y>90</y>
-                            <width>530</width>
-                            <height>170</height>
-                        </rect>
-                    </property>
-                    <property name="title">
-                        <string>Output Pattern Matching</string>
-                    </property>
-                    <widget class="QTextEdit">
+                    <widget class="QTextEdit" row="1" column="1">
                         <property name="name">
-                            <cstring>titlesPattern</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>190</x>
-                                <y>70</y>
-                                <width>330</width>
-                                <height>24</height>
-                            </rect>
+                            <cstring>dvdDevice</cstring>
                         </property>
                         <property name="maximumSize">
                             <size>
@@ -409,198 +286,187 @@
                             <enum>AlwaysOff</enum>
                         </property>
                         <property name="whatsThis" stdset="0">
-                            <string>Regular expression for retrieving number of titles on DVD.
-This expression tries to find a match on MPlayer's output.</string>
+                            <string>Your DVD device. Eg. /dev/dvd or /dev/hdc</string>
                         </property>
                     </widget>
-                    <widget class="QTextEdit">
+                    <widget class="QCheckBox" row="0" column="0" rowspan="1" colspan="2">
                         <property name="name">
-                            <cstring>chaptersPattern</cstring>
+                            <cstring>dvdPlay</cstring>
                         </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>190</x>
-                                <y>131</y>
-                                <width>330</width>
-                                <height>24</height>
-                            </rect>
-                        </property>
-                        <property name="maximumSize">
-                            <size>
-                                <width>32767</width>
-                                <height>24</height>
-                            </size>
-                        </property>
-                        <property name="vScrollBarMode">
-                            <enum>AlwaysOff</enum>
-                        </property>
-                        <property name="hScrollBarMode">
-                            <enum>AlwaysOff</enum>
+                        <property name="text">
+                            <string>Auto play after opening DVD</string>
                         </property>
                         <property name="whatsThis" stdset="0">
-                            <string>Regular expression for retrieving number of chapters on DVD.
-This expression tries to find a match on MPlayer's output.</string>
-                        </property>
-                    </widget>
-                    <widget class="QTextEdit">
-                        <property name="name">
-                            <cstring>langPattern</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>190</x>
-                                <y>40</y>
-                                <width>330</width>
-                                <height>24</height>
-                            </rect>
-                        </property>
-                        <property name="maximumSize">
-                            <size>
-                                <width>32767</width>
-                                <height>24</height>
-                            </size>
-                        </property>
-                        <property name="vScrollBarMode">
-                            <enum>AlwaysOff</enum>
-                        </property>
-                        <property name="hScrollBarMode">
-                            <enum>AlwaysOff</enum>
-                        </property>
-                        <property name="whatsThis" stdset="0">
-                            <string>Regular expression for retrieving audio id and languages.
-This expression tries to find a match on MPlayer's output.</string>
-                        </property>
-                    </widget>
-                    <widget class="QTextEdit">
-                        <property name="name">
-                            <cstring>subtitlesPattern</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>190</x>
-                                <y>101</y>
-                                <width>330</width>
-                                <height>24</height>
-                            </rect>
-                        </property>
-                        <property name="maximumSize">
-                            <size>
-                                <width>32767</width>
-                                <height>24</height>
-                            </size>
-                        </property>
-                        <property name="vScrollBarMode">
-                            <enum>AlwaysOff</enum>
-                        </property>
-                        <property name="hScrollBarMode">
-                            <enum>AlwaysOff</enum>
-                        </property>
-                        <property name="whatsThis" stdset="0">
-                            <string>Regular expression for retrieving subtitle id and languages.
-This expression tries to find a match on MPlayer's output.</string>
-                        </property>
-                    </widget>
-                    <widget class="QLabel">
-                        <property name="name">
-                            <cstring>textLabel1_2</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>14</x>
-                                <y>42</y>
-                                <width>161</width>
-                                <height>21</height>
-                            </rect>
-                        </property>
-                        <property name="text">
-                            <string>Language pattern:</string>
-                        </property>
-                    </widget>
-                    <widget class="QLabel">
-                        <property name="name">
-                            <cstring>textLabel1_3</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>12</x>
-                                <y>71</y>
-                                <width>161</width>
-                                <height>21</height>
-                            </rect>
-                        </property>
-                        <property name="text">
-                            <string>Titles pattern:</string>
-                        </property>
-                    </widget>
-                    <widget class="QLabel">
-                        <property name="name">
-                            <cstring>textLabel1_4</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>12</x>
-                                <y>101</y>
-                                <width>161</width>
-                                <height>21</height>
-                            </rect>
-                        </property>
-                        <property name="text">
-                            <string>Subtitle pattern:</string>
-                        </property>
-                    </widget>
-                    <widget class="QLabel">
-                        <property name="name">
-                            <cstring>textLabel1_5</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>12</x>
-                                <y>131</y>
-                                <width>161</width>
-                                <height>21</height>
-                            </rect>
-                        </property>
-                        <property name="text">
-                            <string>Chapters pattern:</string>
-                        </property>
-                    </widget>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>dvdPlay</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>18</x>
-                            <y>19</y>
-                            <width>381</width>
-                            <height>31</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Auto play after opening DVD</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Directly play from DVD after selecting 'Open DVD' from 
+                            <string>Directly play from DVD after selecting 'Open DVD' from 
 the DVD menu</string>
-                    </property>
-                </widget>
-                <widget class="QLabel">
-                    <property name="name">
-                        <cstring>textLabel1</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>20</x>
-                            <y>50</y>
-                            <width>161</width>
-                            <height>21</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>DVD device:</string>
-                    </property>
-                </widget>
+                        </property>
+                    </widget>
+                    <widget class="QLabel" row="1" column="0">
+                        <property name="name">
+                            <cstring>textLabel1</cstring>
+                        </property>
+                        <property name="text">
+                            <string>DVD device:</string>
+                        </property>
+                    </widget>
+                    <widget class="QGroupBox" row="2" column="0" rowspan="1" colspan="2">
+                        <property name="name">
+                            <cstring>groupBox1</cstring>
+                        </property>
+                        <property name="title">
+                            <string>Output Pattern Matching</string>
+                        </property>
+                        <grid>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QTextEdit" row="1" column="1">
+                                <property name="name">
+                                    <cstring>titlesPattern</cstring>
+                                </property>
+                                <property name="maximumSize">
+                                    <size>
+                                        <width>32767</width>
+                                        <height>24</height>
+                                    </size>
+                                </property>
+                                <property name="vScrollBarMode">
+                                    <enum>AlwaysOff</enum>
+                                </property>
+                                <property name="hScrollBarMode">
+                                    <enum>AlwaysOff</enum>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Regular expression for retrieving number of titles on DVD.
+This expression tries to find a match on MPlayer's output.</string>
+                                </property>
+                            </widget>
+                            <widget class="QTextEdit" row="3" column="1">
+                                <property name="name">
+                                    <cstring>chaptersPattern</cstring>
+                                </property>
+                                <property name="maximumSize">
+                                    <size>
+                                        <width>32767</width>
+                                        <height>24</height>
+                                    </size>
+                                </property>
+                                <property name="vScrollBarMode">
+                                    <enum>AlwaysOff</enum>
+                                </property>
+                                <property name="hScrollBarMode">
+                                    <enum>AlwaysOff</enum>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Regular expression for retrieving number of chapters on DVD.
+This expression tries to find a match on MPlayer's output.</string>
+                                </property>
+                            </widget>
+                            <widget class="QTextEdit" row="0" column="1">
+                                <property name="name">
+                                    <cstring>langPattern</cstring>
+                                </property>
+                                <property name="maximumSize">
+                                    <size>
+                                        <width>32767</width>
+                                        <height>24</height>
+                                    </size>
+                                </property>
+                                <property name="vScrollBarMode">
+                                    <enum>AlwaysOff</enum>
+                                </property>
+                                <property name="hScrollBarMode">
+                                    <enum>AlwaysOff</enum>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Regular expression for retrieving audio id and languages.
+This expression tries to find a match on MPlayer's output.</string>
+                                </property>
+                            </widget>
+                            <widget class="QTextEdit" row="2" column="1">
+                                <property name="name">
+                                    <cstring>subtitlesPattern</cstring>
+                                </property>
+                                <property name="maximumSize">
+                                    <size>
+                                        <width>32767</width>
+                                        <height>24</height>
+                                    </size>
+                                </property>
+                                <property name="vScrollBarMode">
+                                    <enum>AlwaysOff</enum>
+                                </property>
+                                <property name="hScrollBarMode">
+                                    <enum>AlwaysOff</enum>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Regular expression for retrieving subtitle id and languages.
+This expression tries to find a match on MPlayer's output.</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="0" column="0">
+                                <property name="name">
+                                    <cstring>textLabel1_2</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Language pattern:</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="1" column="0">
+                                <property name="name">
+                                    <cstring>textLabel1_3</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Titles pattern:</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="2" column="0">
+                                <property name="name">
+                                    <cstring>textLabel1_4</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Subtitle pattern:</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="3" column="0">
+                                <property name="name">
+                                    <cstring>textLabel1_5</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Chapters pattern:</string>
+                                </property>
+                            </widget>
+                        </grid>
+                    </widget>
+                    <widget class="QCheckBox" row="3" column="0">
+                        <property name="name">
+                            <cstring>showDVDMenu</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Show DVD menu</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Enable this if you have a DVD player device</string>
+                        </property>
+                    </widget>
+                    <spacer row="4" column="1">
+                        <property name="name">
+                            <cstring>spacer5</cstring>
+                        </property>
+                        <property name="orientation">
+                            <enum>Vertical</enum>
+                        </property>
+                        <property name="sizeType">
+                            <enum>Expanding</enum>
+                        </property>
+                        <property name="sizeHint">
+                            <size>
+                                <width>20</width>
+                                <height>31</height>
+                            </size>
+                        </property>
+                    </spacer>
+                </grid>
             </widget>
             <widget class="QWidget">
                 <property name="name">
@@ -609,32 +475,25 @@ the DVD menu</string>
                 <attribute name="title">
                     <string>VCD</string>
                 </attribute>
-                <widget class="QGroupBox">
+                <grid>
                     <property name="name">
-                        <cstring>groupBox2</cstring>
+                        <cstring>unnamed</cstring>
                     </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>10</x>
-                            <y>160</y>
-                            <width>530</width>
-                            <height>100</height>
-                        </rect>
-                    </property>
-                    <property name="title">
-                        <string>Output Pattern Matching</string>
-                    </property>
-                    <widget class="QTextEdit">
+                    <widget class="QCheckBox" row="0" column="0" rowspan="1" colspan="2">
                         <property name="name">
-                            <cstring>tracksPattern</cstring>
+                            <cstring>vcdPlay</cstring>
                         </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>190</x>
-                                <y>50</y>
-                                <width>330</width>
-                                <height>24</height>
-                            </rect>
+                        <property name="text">
+                            <string>Auto play after opening VCD</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Directly play from VCD after selecting 'Open VCD' from 
+the VCD menu</string>
+                        </property>
+                    </widget>
+                    <widget class="QTextEdit" row="1" column="1">
+                        <property name="name">
+                            <cstring>vcdDevice</cstring>
                         </property>
                         <property name="maximumSize">
                             <size>
@@ -649,91 +508,88 @@ the DVD menu</string>
                             <enum>AlwaysOff</enum>
                         </property>
                         <property name="whatsThis" stdset="0">
-                            <string>Regular expression for retrieving tracks on VCD.
-This expression tries to find a match on MPlayer's output.</string>
+                            <string>Your CD-ROM device. Eg. /dev/cdrom, /dev/hdc or /dev/scd0</string>
                         </property>
                     </widget>
-                    <widget class="QLabel">
+                    <widget class="QLabel" row="1" column="0">
                         <property name="name">
-                            <cstring>textLabelTrackPattern</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>10</x>
-                                <y>50</y>
-                                <width>161</width>
-                                <height>21</height>
-                            </rect>
+                            <cstring>textLabelVCDDevice</cstring>
                         </property>
                         <property name="text">
-                            <string>Track pattern:</string>
+                            <string>VCD device:</string>
                         </property>
                     </widget>
-                </widget>
-                <widget class="QTextEdit">
-                    <property name="name">
-                        <cstring>vcdDevice</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>200</x>
-                            <y>50</y>
-                            <width>330</width>
-                            <height>24</height>
-                        </rect>
-                    </property>
-                    <property name="maximumSize">
-                        <size>
-                            <width>32767</width>
-                            <height>24</height>
-                        </size>
-                    </property>
-                    <property name="vScrollBarMode">
-                        <enum>AlwaysOff</enum>
-                    </property>
-                    <property name="hScrollBarMode">
-                        <enum>AlwaysOff</enum>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Your CD-ROM device. Eg. /dev/cdrom, /dev/hdc or /dev/scd0</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>vcdPlay</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>18</x>
-                            <y>19</y>
-                            <width>381</width>
-                            <height>31</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Auto play after opening VCD</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Directly play from VCD after selecting 'Open VCD' from 
-the VCD menu</string>
-                    </property>
-                </widget>
-                <widget class="QLabel">
-                    <property name="name">
-                        <cstring>textLabelVCDDevice</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>20</x>
-                            <y>50</y>
-                            <width>161</width>
-                            <height>21</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>VCD device:</string>
-                    </property>
-                </widget>
+                    <widget class="QGroupBox" row="2" column="0" rowspan="1" colspan="2">
+                        <property name="name">
+                            <cstring>groupBox2</cstring>
+                        </property>
+                        <property name="title">
+                            <string>Output Pattern Matching</string>
+                        </property>
+                        <grid>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QTextEdit" row="0" column="1">
+                                <property name="name">
+                                    <cstring>tracksPattern</cstring>
+                                </property>
+                                <property name="maximumSize">
+                                    <size>
+                                        <width>32767</width>
+                                        <height>24</height>
+                                    </size>
+                                </property>
+                                <property name="vScrollBarMode">
+                                    <enum>AlwaysOff</enum>
+                                </property>
+                                <property name="hScrollBarMode">
+                                    <enum>AlwaysOff</enum>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Regular expression for retrieving tracks on VCD.
+This expression tries to find a match on MPlayer's output.</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="0" column="0">
+                                <property name="name">
+                                    <cstring>textLabelTrackPattern</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Track pattern:</string>
+                                </property>
+                            </widget>
+                        </grid>
+                    </widget>
+                    <widget class="QCheckBox" row="3" column="0">
+                        <property name="name">
+                            <cstring>showVCDMenu</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Show VCD menu</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Enable this if you have a DVD player device</string>
+                        </property>
+                    </widget>
+                    <spacer row="4" column="1">
+                        <property name="name">
+                            <cstring>spacer3</cstring>
+                        </property>
+                        <property name="orientation">
+                            <enum>Vertical</enum>
+                        </property>
+                        <property name="sizeType">
+                            <enum>Expanding</enum>
+                        </property>
+                        <property name="sizeHint">
+                            <size>
+                                <width>20</width>
+                                <height>71</height>
+                            </size>
+                        </property>
+                    </spacer>
+                </grid>
             </widget>
             <widget class="QWidget">
                 <property name="name">
@@ -742,90 +598,213 @@ the VCD menu</string>
                 <attribute name="title">
                     <string>MPlayer</string>
                 </attribute>
-                <widget class="QTextEdit">
+                <grid>
                     <property name="name">
-                        <cstring>cacheSize</cstring>
+                        <cstring>unnamed</cstring>
                     </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>380</x>
-                            <y>50</y>
-                            <width>110</width>
-                            <height>24</height>
-                        </rect>
-                    </property>
-                    <property name="maximumSize">
-                        <size>
-                            <width>32767</width>
-                            <height>24</height>
-                        </size>
-                    </property>
-                    <property name="vScrollBarMode">
-                        <enum>AlwaysOff</enum>
-                    </property>
-                    <property name="hScrollBarMode">
-                        <enum>AlwaysOff</enum>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>A higher cache gives better playing, 
+                    <widget class="QTextEdit" row="1" column="1">
+                        <property name="name">
+                            <cstring>cacheSize</cstring>
+                        </property>
+                        <property name="maximumSize">
+                            <size>
+                                <width>32767</width>
+                                <height>24</height>
+                            </size>
+                        </property>
+                        <property name="vScrollBarMode">
+                            <enum>AlwaysOff</enum>
+                        </property>
+                        <property name="hScrollBarMode">
+                            <enum>AlwaysOff</enum>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>A higher cache gives better playing, 
 but it also takes longer before the movie starts.</string>
-                    </property>
-                </widget>
-                <widget class="QTextEdit">
-                    <property name="name">
-                        <cstring>videoDriver</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>380</x>
-                            <y>20</y>
-                            <width>110</width>
-                            <height>24</height>
-                        </rect>
-                    </property>
-                    <property name="maximumSize">
-                        <size>
-                            <width>32767</width>
-                            <height>24</height>
-                        </size>
-                    </property>
-                    <property name="vScrollBarMode">
-                        <enum>AlwaysOff</enum>
-                    </property>
-                    <property name="hScrollBarMode">
-                        <enum>AlwaysOff</enum>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>A video driver for MPlayer, eg, xv, x11 and xvidix (See 'mplayer -vo help' for more).
+                        </property>
+                    </widget>
+                    <widget class="QTextEdit" row="0" column="1">
+                        <property name="name">
+                            <cstring>videoDriver</cstring>
+                        </property>
+                        <property name="maximumSize">
+                            <size>
+                                <width>32767</width>
+                                <height>24</height>
+                            </size>
+                        </property>
+                        <property name="vScrollBarMode">
+                            <enum>AlwaysOff</enum>
+                        </property>
+                        <property name="hScrollBarMode">
+                            <enum>AlwaysOff</enum>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>A video driver for MPlayer, eg, xv, x11 and xvidix (See 'mplayer -vo help' for more).
 Some drivers don't work with KMPlayer</string>
-                    </property>
-                </widget>
-                <widget class="QGroupBox">
-                    <property name="name">
-                        <cstring>groupBox3</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>11</x>
-                            <y>151</y>
-                            <width>520</width>
-                            <height>130</height>
-                        </rect>
-                    </property>
-                    <property name="title">
-                        <string>Output Pattern Matching</string>
-                    </property>
-                    <widget class="QTextEdit">
-                        <property name="name">
-                            <cstring>sizePattern</cstring>
                         </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>180</x>
-                                <y>30</y>
-                                <width>320</width>
-                                <height>24</height>
-                            </rect>
+                    </widget>
+                    <widget class="QCheckBox" row="0" column="0">
+                        <property name="name">
+                            <cstring>haveVideoDriver</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Override video driver:</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Don't use video driver as configured in MPlayer's config file</string>
+                        </property>
+                    </widget>
+                    <widget class="QCheckBox" row="1" column="0">
+                        <property name="name">
+                            <cstring>haveCache</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Override cache size for streaming (kb):</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Don't use cache as configured in MPlayer's config file.</string>
+                        </property>
+                    </widget>
+                    <widget class="QCheckBox" row="2" column="0" rowspan="1" colspan="2">
+                        <property name="name">
+                            <cstring>haveArguments</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Additional arguments for MPlayer:</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Press 'Help' for more MPlayer commandline options</string>
+                        </property>
+                    </widget>
+                    <widget class="QGroupBox" row="4" column="0" rowspan="1" colspan="2">
+                        <property name="name">
+                            <cstring>groupBox3</cstring>
+                        </property>
+                        <property name="sizePolicy">
+                            <sizepolicy>
+                                <hsizetype>3</hsizetype>
+                                <vsizetype>3</vsizetype>
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                            </sizepolicy>
+                        </property>
+                        <property name="title">
+                            <string>Output Pattern Matching</string>
+                        </property>
+                        <grid>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QTextEdit" row="0" column="1">
+                                <property name="name">
+                                    <cstring>sizePattern</cstring>
+                                </property>
+                                <property name="maximumSize">
+                                    <size>
+                                        <width>32767</width>
+                                        <height>24</height>
+                                    </size>
+                                </property>
+                                <property name="vScrollBarMode">
+                                    <enum>AlwaysOff</enum>
+                                </property>
+                                <property name="hScrollBarMode">
+                                    <enum>AlwaysOff</enum>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Regular expression for retrieving the movie width and height.
+This expression tries to find a match on MPlayer's output.</string>
+                                </property>
+                            </widget>
+                            <widget class="QTextEdit" row="1" column="1">
+                                <property name="name">
+                                    <cstring>cachePattern</cstring>
+                                </property>
+                                <property name="maximumSize">
+                                    <size>
+                                        <width>32767</width>
+                                        <height>24</height>
+                                    </size>
+                                </property>
+                                <property name="vScrollBarMode">
+                                    <enum>AlwaysOff</enum>
+                                </property>
+                                <property name="hScrollBarMode">
+                                    <enum>AlwaysOff</enum>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Regular expression for retrieving cache fill percentage.
+This expression tries to find a match on MPlayer's output.</string>
+                                </property>
+                            </widget>
+                            <widget class="QTextEdit" row="2" column="1">
+                                <property name="name">
+                                    <cstring>startPattern</cstring>
+                                </property>
+                                <property name="maximumSize">
+                                    <size>
+                                        <width>32767</width>
+                                        <height>24</height>
+                                    </size>
+                                </property>
+                                <property name="vScrollBarMode">
+                                    <enum>AlwaysOff</enum>
+                                </property>
+                                <property name="hScrollBarMode">
+                                    <enum>AlwaysOff</enum>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Regular expression for retrieving the start movie playing string.
+This expression tries to find a match on MPlayer's output.</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="0" column="0">
+                                <property name="name">
+                                    <cstring>textLabel1_6</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Movie size pattern:</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="1" column="0">
+                                <property name="name">
+                                    <cstring>textLabel1_6_2</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Cache fill pattern:</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="2" column="0">
+                                <property name="name">
+                                    <cstring>textLabel1_6_3</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Movie start pattern:</string>
+                                </property>
+                            </widget>
+                        </grid>
+                    </widget>
+                    <spacer row="5" column="0">
+                        <property name="name">
+                            <cstring>spacer4</cstring>
+                        </property>
+                        <property name="orientation">
+                            <enum>Vertical</enum>
+                        </property>
+                        <property name="sizeType">
+                            <enum>Expanding</enum>
+                        </property>
+                        <property name="sizeHint">
+                            <size>
+                                <width>20</width>
+                                <height>71</height>
+                            </size>
+                        </property>
+                    </spacer>
+                    <widget class="QTextEdit" row="3" column="0" rowspan="1" colspan="2">
+                        <property name="name">
+                            <cstring>additionalArguments</cstring>
                         </property>
                         <property name="maximumSize">
                             <size>
@@ -839,200 +818,8 @@ Some drivers don't work with KMPlayer</string>
                         <property name="hScrollBarMode">
                             <enum>AlwaysOff</enum>
                         </property>
-                        <property name="whatsThis" stdset="0">
-                            <string>Regular expression for retrieving the movie width and height.
-This expression tries to find a match on MPlayer's output.</string>
-                        </property>
                     </widget>
-                    <widget class="QTextEdit">
-                        <property name="name">
-                            <cstring>cachePattern</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>180</x>
-                                <y>60</y>
-                                <width>320</width>
-                                <height>24</height>
-                            </rect>
-                        </property>
-                        <property name="maximumSize">
-                            <size>
-                                <width>32767</width>
-                                <height>24</height>
-                            </size>
-                        </property>
-                        <property name="vScrollBarMode">
-                            <enum>AlwaysOff</enum>
-                        </property>
-                        <property name="hScrollBarMode">
-                            <enum>AlwaysOff</enum>
-                        </property>
-                        <property name="whatsThis" stdset="0">
-                            <string>Regular expression for retrieving cache fill percentage.
-This expression tries to find a match on MPlayer's output.</string>
-                        </property>
-                    </widget>
-                    <widget class="QTextEdit">
-                        <property name="name">
-                            <cstring>startPattern</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>180</x>
-                                <y>90</y>
-                                <width>320</width>
-                                <height>24</height>
-                            </rect>
-                        </property>
-                        <property name="maximumSize">
-                            <size>
-                                <width>32767</width>
-                                <height>24</height>
-                            </size>
-                        </property>
-                        <property name="vScrollBarMode">
-                            <enum>AlwaysOff</enum>
-                        </property>
-                        <property name="hScrollBarMode">
-                            <enum>AlwaysOff</enum>
-                        </property>
-                        <property name="whatsThis" stdset="0">
-                            <string>Regular expression for retrieving the start movie playing string.
-This expression tries to find a match on MPlayer's output.</string>
-                        </property>
-                    </widget>
-                    <widget class="QLabel">
-                        <property name="name">
-                            <cstring>textLabel1_6</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>10</x>
-                                <y>30</y>
-                                <width>161</width>
-                                <height>21</height>
-                            </rect>
-                        </property>
-                        <property name="text">
-                            <string>Movie size pattern:</string>
-                        </property>
-                    </widget>
-                    <widget class="QLabel">
-                        <property name="name">
-                            <cstring>textLabel1_6_2</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>10</x>
-                                <y>60</y>
-                                <width>161</width>
-                                <height>21</height>
-                            </rect>
-                        </property>
-                        <property name="text">
-                            <string>Cache fill pattern:</string>
-                        </property>
-                    </widget>
-                    <widget class="QLabel">
-                        <property name="name">
-                            <cstring>textLabel1_6_3</cstring>
-                        </property>
-                        <property name="geometry">
-                            <rect>
-                                <x>10</x>
-                                <y>90</y>
-                                <width>161</width>
-                                <height>21</height>
-                            </rect>
-                        </property>
-                        <property name="text">
-                            <string>Movie start pattern:</string>
-                        </property>
-                    </widget>
-                </widget>
-                <widget class="QTextEdit">
-                    <property name="name">
-                        <cstring>additionalArguments</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>70</x>
-                            <y>110</y>
-                            <width>460</width>
-                            <height>24</height>
-                        </rect>
-                    </property>
-                    <property name="maximumSize">
-                        <size>
-                            <width>32767</width>
-                            <height>24</height>
-                        </size>
-                    </property>
-                    <property name="vScrollBarMode">
-                        <enum>AlwaysOff</enum>
-                    </property>
-                    <property name="hScrollBarMode">
-                        <enum>AlwaysOff</enum>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>haveVideoDriver</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>30</x>
-                            <y>20</y>
-                            <width>220</width>
-                            <height>31</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Override video driver:</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Don't use video driver as configured in MPlayer's config file</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>haveCache</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>30</x>
-                            <y>50</y>
-                            <width>350</width>
-                            <height>31</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Override cache size for streaming (kb):</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Don't use cache as configured in MPlayer's config file.</string>
-                    </property>
-                </widget>
-                <widget class="QCheckBox">
-                    <property name="name">
-                        <cstring>haveArguments</cstring>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>30</x>
-                            <y>80</y>
-                            <width>391</width>
-                            <height>31</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Additional arguments for MPlayer:</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Press 'Help' for more MPlayer commandline options</string>
-                    </property>
-                </widget>
+                </grid>
             </widget>
             <widget class="QWidget">
                 <property name="name">
@@ -1041,602 +828,540 @@ This expression tries to find a match on MPlayer's output.</string>
                 <attribute name="title">
                     <string>Postprocessing</string>
                 </attribute>
-                <widget class="QCheckBox">
+                <grid>
                     <property name="name">
-                        <cstring>postProcessing</cstring>
+                        <cstring>unnamed</cstring>
                     </property>
-                    <property name="enabled">
-                        <bool>true</bool>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>40</x>
-                            <y>10</y>
-                            <width>350</width>
-                            <height>20</height>
-                        </rect>
-                    </property>
-                    <property name="text">
-                        <string>Enable use of postprocessing filters</string>
-                    </property>
-                </widget>
-                <widget class="QTabWidget">
-                    <property name="name">
-                        <cstring>PostprocessingOptions</cstring>
-                    </property>
-                    <property name="enabled">
-                        <bool>true</bool>
-                    </property>
-                    <property name="geometry">
-                        <rect>
-                            <x>11</x>
-                            <y>40</y>
-                            <width>520</width>
-                            <height>251</height>
-                        </rect>
-                    </property>
-                    <property name="autoMask">
-                        <bool>false</bool>
-                    </property>
-                    <property name="tabPosition">
-                        <enum>Top</enum>
-                    </property>
-                    <property name="tabShape">
-                        <enum>Rounded</enum>
-                    </property>
-                    <widget class="QWidget">
+                    <widget class="QCheckBox" row="0" column="0">
                         <property name="name">
-                            <cstring>tab</cstring>
+                            <cstring>postProcessing</cstring>
                         </property>
-                        <attribute name="title">
-                            <string>General</string>
-                        </attribute>
-                        <widget class="QButtonGroup">
+                        <property name="enabled">
+                            <bool>true</bool>
+                        </property>
+                        <property name="text">
+                            <string>Enable use of postprocessing filters</string>
+                        </property>
+                    </widget>
+                    <widget class="QTabWidget" row="1" column="0">
+                        <property name="name">
+                            <cstring>PostprocessingOptions</cstring>
+                        </property>
+                        <property name="enabled">
+                            <bool>true</bool>
+                        </property>
+                        <property name="autoMask">
+                            <bool>false</bool>
+                        </property>
+                        <property name="tabPosition">
+                            <enum>Top</enum>
+                        </property>
+                        <property name="tabShape">
+                            <enum>Rounded</enum>
+                        </property>
+                        <widget class="QWidget">
                             <property name="name">
-                                <cstring>generalGroup</cstring>
+                                <cstring>tab</cstring>
                             </property>
-                            <property name="geometry">
-                                <rect>
-                                    <x>8</x>
-                                    <y>13</y>
-                                    <width>490</width>
-                                    <height>201</height>
-                                </rect>
+                            <attribute name="title">
+                                <string>General</string>
+                            </attribute>
+                            <grid>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QRadioButton" row="0" column="0">
+                                    <property name="name">
+                                        <cstring>defaultPreset</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>Default</string>
+                                    </property>
+                                    <property name="checked">
+                                        <bool>true</bool>
+                                    </property>
+                                    <property name="buttonGroupId">
+                                        <number>-1</number>
+                                    </property>
+                                    <property name="toolTip" stdset="0">
+                                        <string>Enable mplayer's default postprocessing filters</string>
+                                    </property>
+                                </widget>
+                                <widget class="QRadioButton" row="2" column="0">
+                                    <property name="name">
+                                        <cstring>customPreset</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>Custom</string>
+                                    </property>
+                                    <property name="buttonGroupId">
+                                        <number>-1</number>
+                                    </property>
+                                    <property name="toolTip" stdset="0">
+                                        <string>Enable custom postprocessing filters (See: Custom preset -tab)</string>
+                                    </property>
+                                </widget>
+                                <spacer row="3" column="0">
+                                    <property name="name">
+                                        <cstring>spacer2</cstring>
+                                    </property>
+                                    <property name="orientation">
+                                        <enum>Vertical</enum>
+                                    </property>
+                                    <property name="sizeType">
+                                        <enum>Expanding</enum>
+                                    </property>
+                                    <property name="sizeHint">
+                                        <size>
+                                            <width>20</width>
+                                            <height>41</height>
+                                        </size>
+                                    </property>
+                                </spacer>
+                                <widget class="QRadioButton" row="1" column="0">
+                                    <property name="name">
+                                        <cstring>fastPreset</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>Fast</string>
+                                    </property>
+                                    <property name="buttonGroupId">
+                                        <number>-1</number>
+                                    </property>
+                                    <property name="toolTip" stdset="0">
+                                        <string>Enable mplayer's fast postprocessing filters</string>
+                                    </property>
+                                </widget>
+                            </grid>
+                        </widget>
+                        <widget class="QWidget">
+                            <property name="name">
+                                <cstring>tab</cstring>
                             </property>
-                            <property name="title">
-                                <string></string>
+                            <attribute name="title">
+                                <string>Custom Preset</string>
+                            </attribute>
+                            <grid>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QGroupBox" row="0" column="0">
+                                    <property name="name">
+                                        <cstring>customFilters</cstring>
+                                    </property>
+                                    <property name="enabled">
+                                        <bool>false</bool>
+                                    </property>
+                                    <property name="sizePolicy">
+                                        <sizepolicy>
+                                            <hsizetype>5</hsizetype>
+                                            <vsizetype>3</vsizetype>
+                                            <horstretch>0</horstretch>
+                                            <verstretch>0</verstretch>
+                                        </sizepolicy>
+                                    </property>
+                                    <property name="title">
+                                        <string></string>
+                                    </property>
+                                    <widget class="Line">
+                                        <property name="name">
+                                            <cstring>line1</cstring>
+                                        </property>
+                                        <property name="geometry">
+                                            <rect>
+                                                <x>7</x>
+                                                <y>33</y>
+                                                <width>471</width>
+                                                <height>20</height>
+                                            </rect>
+                                        </property>
+                                        <property name="frameShape">
+                                            <enum>HLine</enum>
+                                        </property>
+                                        <property name="frameShadow">
+                                            <enum>Sunken</enum>
+                                        </property>
+                                        <property name="orientation">
+                                            <enum>Horizontal</enum>
+                                        </property>
+                                    </widget>
+                                    <widget class="Line">
+                                        <property name="name">
+                                            <cstring>line2</cstring>
+                                        </property>
+                                        <property name="geometry">
+                                            <rect>
+                                                <x>10</x>
+                                                <y>70</y>
+                                                <width>471</width>
+                                                <height>20</height>
+                                            </rect>
+                                        </property>
+                                        <property name="frameShape">
+                                            <enum>HLine</enum>
+                                        </property>
+                                        <property name="frameShadow">
+                                            <enum>Sunken</enum>
+                                        </property>
+                                        <property name="orientation">
+                                            <enum>Horizontal</enum>
+                                        </property>
+                                    </widget>
+                                    <widget class="QCheckBox">
+                                        <property name="name">
+                                            <cstring>HzDeblockFilter</cstring>
+                                        </property>
+                                        <property name="geometry">
+                                            <rect>
+                                                <x>9</x>
+                                                <y>11</y>
+                                                <width>200</width>
+                                                <height>21</height>
+                                            </rect>
+                                        </property>
+                                        <property name="text">
+                                            <string>Horizontal deblocking</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QCheckBox">
+                                        <property name="name">
+                                            <cstring>VtDeblockFilter</cstring>
+                                        </property>
+                                        <property name="geometry">
+                                            <rect>
+                                                <x>10</x>
+                                                <y>50</y>
+                                                <width>200</width>
+                                                <height>21</height>
+                                            </rect>
+                                        </property>
+                                        <property name="text">
+                                            <string>Vertical deblocking</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QCheckBox">
+                                        <property name="name">
+                                            <cstring>DeringFilter</cstring>
+                                        </property>
+                                        <property name="geometry">
+                                            <rect>
+                                                <x>10</x>
+                                                <y>90</y>
+                                                <width>200</width>
+                                                <height>21</height>
+                                            </rect>
+                                        </property>
+                                        <property name="text">
+                                            <string>Dering filter</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QCheckBox">
+                                        <property name="name">
+                                            <cstring>HzDeblockAQuality</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>false</bool>
+                                        </property>
+                                        <property name="geometry">
+                                            <rect>
+                                                <x>200</x>
+                                                <y>10</y>
+                                                <width>120</width>
+                                                <height>21</height>
+                                            </rect>
+                                        </property>
+                                        <property name="text">
+                                            <string>Auto quality</string>
+                                        </property>
+                                        <property name="toolTip" stdset="0">
+                                            <string>Filter is used if there's enough CPU</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QCheckBox">
+                                        <property name="name">
+                                            <cstring>VtDeblockAQuality</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>false</bool>
+                                        </property>
+                                        <property name="geometry">
+                                            <rect>
+                                                <x>200</x>
+                                                <y>50</y>
+                                                <width>120</width>
+                                                <height>21</height>
+                                            </rect>
+                                        </property>
+                                        <property name="text">
+                                            <string>Auto quality</string>
+                                        </property>
+                                        <property name="toolTip" stdset="0">
+                                            <string>Filter is used if there's enough CPU</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QCheckBox">
+                                        <property name="name">
+                                            <cstring>DeringAQuality</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>false</bool>
+                                        </property>
+                                        <property name="geometry">
+                                            <rect>
+                                                <x>200</x>
+                                                <y>90</y>
+                                                <width>120</width>
+                                                <height>21</height>
+                                            </rect>
+                                        </property>
+                                        <property name="text">
+                                            <string>Auto quality</string>
+                                        </property>
+                                        <property name="toolTip" stdset="0">
+                                            <string>Filter is used if there's enough CPU</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="Line">
+                                        <property name="name">
+                                            <cstring>line3</cstring>
+                                        </property>
+                                        <property name="geometry">
+                                            <rect>
+                                                <x>7</x>
+                                                <y>113</y>
+                                                <width>471</width>
+                                                <height>20</height>
+                                            </rect>
+                                        </property>
+                                        <property name="frameShape">
+                                            <enum>HLine</enum>
+                                        </property>
+                                        <property name="frameShadow">
+                                            <enum>Sunken</enum>
+                                        </property>
+                                        <property name="orientation">
+                                            <enum>Horizontal</enum>
+                                        </property>
+                                    </widget>
+                                    <widget class="QSlider">
+                                        <property name="name">
+                                            <cstring>TmpNoiseSlider</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>false</bool>
+                                        </property>
+                                        <property name="geometry">
+                                            <rect>
+                                                <x>250</x>
+                                                <y>165</y>
+                                                <width>220</width>
+                                                <height>24</height>
+                                            </rect>
+                                        </property>
+                                        <property name="minValue">
+                                            <number>1</number>
+                                        </property>
+                                        <property name="maxValue">
+                                            <number>3</number>
+                                        </property>
+                                        <property name="value">
+                                            <number>1</number>
+                                        </property>
+                                        <property name="orientation">
+                                            <enum>Horizontal</enum>
+                                        </property>
+                                        <property name="tickmarks">
+                                            <enum>Left</enum>
+                                        </property>
+                                        <property name="tickInterval">
+                                            <number>1</number>
+                                        </property>
+                                        <property name="toolTip" stdset="0">
+                                            <string>Strength of the noise reducer</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QCheckBox">
+                                        <property name="name">
+                                            <cstring>AutolevelsFilter</cstring>
+                                        </property>
+                                        <property name="geometry">
+                                            <rect>
+                                                <x>10</x>
+                                                <y>135</y>
+                                                <width>230</width>
+                                                <height>20</height>
+                                            </rect>
+                                        </property>
+                                        <property name="text">
+                                            <string>Auto brightness/contrast</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QCheckBox">
+                                        <property name="name">
+                                            <cstring>AutolevelsFullrange</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>false</bool>
+                                        </property>
+                                        <property name="geometry">
+                                            <rect>
+                                                <x>250</x>
+                                                <y>135</y>
+                                                <width>240</width>
+                                                <height>21</height>
+                                            </rect>
+                                        </property>
+                                        <property name="text">
+                                            <string>Strech luminance to full range</string>
+                                        </property>
+                                        <property name="toolTip" stdset="0">
+                                            <string>Streches luminance to full range (0..255)</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QCheckBox">
+                                        <property name="name">
+                                            <cstring>HzDeblockCFiltering</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>false</bool>
+                                        </property>
+                                        <property name="geometry">
+                                            <rect>
+                                                <x>320</x>
+                                                <y>10</y>
+                                                <width>170</width>
+                                                <height>21</height>
+                                            </rect>
+                                        </property>
+                                        <property name="text">
+                                            <string>Chrominance filtering</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QCheckBox">
+                                        <property name="name">
+                                            <cstring>VtDeblockCFiltering</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>false</bool>
+                                        </property>
+                                        <property name="geometry">
+                                            <rect>
+                                                <x>320</x>
+                                                <y>50</y>
+                                                <width>170</width>
+                                                <height>21</height>
+                                            </rect>
+                                        </property>
+                                        <property name="text">
+                                            <string>Chrominance filtering</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QCheckBox">
+                                        <property name="name">
+                                            <cstring>DeringCFiltering</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>false</bool>
+                                        </property>
+                                        <property name="geometry">
+                                            <rect>
+                                                <x>320</x>
+                                                <y>90</y>
+                                                <width>170</width>
+                                                <height>21</height>
+                                            </rect>
+                                        </property>
+                                        <property name="text">
+                                            <string>Chrominance filtering</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QCheckBox">
+                                        <property name="name">
+                                            <cstring>TmpNoiseFilter</cstring>
+                                        </property>
+                                        <property name="geometry">
+                                            <rect>
+                                                <x>10</x>
+                                                <y>165</y>
+                                                <width>210</width>
+                                                <height>21</height>
+                                            </rect>
+                                        </property>
+                                        <property name="text">
+                                            <string>Temporal noise reducer:</string>
+                                        </property>
+                                    </widget>
+                                </widget>
+                            </grid>
+                        </widget>
+                        <widget class="QWidget">
+                            <property name="name">
+                                <cstring>tab</cstring>
                             </property>
-                            <widget class="QRadioButton">
+                            <attribute name="title">
+                                <string>Deinterlacing</string>
+                            </attribute>
+                            <grid>
                                 <property name="name">
-                                    <cstring>defaultPreset</cstring>
+                                    <cstring>unnamed</cstring>
                                 </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>20</x>
-                                        <y>20</y>
-                                        <width>99</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Default</string>
-                                </property>
-                                <property name="checked">
-                                    <bool>true</bool>
-                                </property>
-                                <property name="buttonGroupId">
-                                    <number>1</number>
-                                </property>
-                                <property name="toolTip" stdset="0">
-                                    <string>Enable mplayer's default postprocessing filters</string>
-                                </property>
-                            </widget>
-                            <widget class="QRadioButton">
-                                <property name="name">
-                                    <cstring>fastPreset</cstring>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>20</x>
-                                        <y>50</y>
-                                        <width>99</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Fast</string>
-                                </property>
-                                <property name="buttonGroupId">
-                                    <number>1</number>
-                                </property>
-                                <property name="toolTip" stdset="0">
-                                    <string>Enable mplayer's fast postprocessing filters</string>
-                                </property>
-                            </widget>
-                            <widget class="QRadioButton">
-                                <property name="name">
-                                    <cstring>customPreset</cstring>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>20</x>
-                                        <y>80</y>
-                                        <width>99</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Custom</string>
-                                </property>
-                                <property name="buttonGroupId">
-                                    <number>1</number>
-                                </property>
-                                <property name="toolTip" stdset="0">
-                                    <string>Enable custom postprocessing filters (See: Custom preset -tab)</string>
-                                </property>
-                            </widget>
+                                <widget class="QButtonGroup" row="0" column="0">
+                                    <property name="name">
+                                        <cstring>deinterlacingGroup</cstring>
+                                    </property>
+                                    <property name="title">
+                                        <string></string>
+                                    </property>
+                                    <grid>
+                                        <property name="name">
+                                            <cstring>unnamed</cstring>
+                                        </property>
+                                        <widget class="QCheckBox" row="0" column="0">
+                                            <property name="name">
+                                                <cstring>LinBlendDeinterlacer</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>Linear blend deinterlacer</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QCheckBox" row="2" column="0">
+                                            <property name="name">
+                                                <cstring>CubicIntDeinterlacer</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>Cubic interpolating deinterlacer</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QCheckBox" row="1" column="0">
+                                            <property name="name">
+                                                <cstring>LinIntDeinterlacer</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>Linear interpolating deinterlacer</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QCheckBox" row="3" column="0">
+                                            <property name="name">
+                                                <cstring>MedianDeinterlacer</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>Median deinterlacer</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QCheckBox" row="4" column="0">
+                                            <property name="name">
+                                                <cstring>FfmpegDeinterlacer</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>FFmpeg deinterlacer</string>
+                                            </property>
+                                        </widget>
+                                    </grid>
+                                </widget>
+                            </grid>
                         </widget>
                     </widget>
-                    <widget class="QWidget">
-                        <property name="name">
-                            <cstring>tab</cstring>
-                        </property>
-                        <attribute name="title">
-                            <string>Custom Preset</string>
-                        </attribute>
-                        <widget class="QGroupBox">
-                            <property name="name">
-                                <cstring>customFilters</cstring>
-                            </property>
-                            <property name="enabled">
-                                <bool>false</bool>
-                            </property>
-                            <property name="geometry">
-                                <rect>
-                                    <x>10</x>
-                                    <y>10</y>
-                                    <width>500</width>
-                                    <height>200</height>
-                                </rect>
-                            </property>
-                            <property name="title">
-                                <string></string>
-                            </property>
-                            <widget class="Line">
-                                <property name="name">
-                                    <cstring>line1</cstring>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>7</x>
-                                        <y>33</y>
-                                        <width>471</width>
-                                        <height>20</height>
-                                    </rect>
-                                </property>
-                                <property name="frameShape">
-                                    <enum>HLine</enum>
-                                </property>
-                                <property name="frameShadow">
-                                    <enum>Sunken</enum>
-                                </property>
-                                <property name="orientation">
-                                    <enum>Horizontal</enum>
-                                </property>
-                            </widget>
-                            <widget class="Line">
-                                <property name="name">
-                                    <cstring>line2</cstring>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>10</x>
-                                        <y>70</y>
-                                        <width>471</width>
-                                        <height>20</height>
-                                    </rect>
-                                </property>
-                                <property name="frameShape">
-                                    <enum>HLine</enum>
-                                </property>
-                                <property name="frameShadow">
-                                    <enum>Sunken</enum>
-                                </property>
-                                <property name="orientation">
-                                    <enum>Horizontal</enum>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox">
-                                <property name="name">
-                                    <cstring>HzDeblockFilter</cstring>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>9</x>
-                                        <y>11</y>
-                                        <width>200</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Horizontal deblocking</string>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox">
-                                <property name="name">
-                                    <cstring>VtDeblockFilter</cstring>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>10</x>
-                                        <y>50</y>
-                                        <width>200</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Vertical deblocking</string>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox">
-                                <property name="name">
-                                    <cstring>DeringFilter</cstring>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>10</x>
-                                        <y>90</y>
-                                        <width>200</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Dering filter</string>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox">
-                                <property name="name">
-                                    <cstring>HzDeblockAQuality</cstring>
-                                </property>
-                                <property name="enabled">
-                                    <bool>false</bool>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>200</x>
-                                        <y>10</y>
-                                        <width>120</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Auto quality</string>
-                                </property>
-                                <property name="toolTip" stdset="0">
-                                    <string>Filter is used if there's enough CPU</string>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox">
-                                <property name="name">
-                                    <cstring>VtDeblockAQuality</cstring>
-                                </property>
-                                <property name="enabled">
-                                    <bool>false</bool>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>200</x>
-                                        <y>50</y>
-                                        <width>120</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Auto quality</string>
-                                </property>
-                                <property name="toolTip" stdset="0">
-                                    <string>Filter is used if there's enough CPU</string>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox">
-                                <property name="name">
-                                    <cstring>DeringAQuality</cstring>
-                                </property>
-                                <property name="enabled">
-                                    <bool>false</bool>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>200</x>
-                                        <y>90</y>
-                                        <width>120</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Auto quality</string>
-                                </property>
-                                <property name="toolTip" stdset="0">
-                                    <string>Filter is used if there's enough CPU</string>
-                                </property>
-                            </widget>
-                            <widget class="Line">
-                                <property name="name">
-                                    <cstring>line3</cstring>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>7</x>
-                                        <y>113</y>
-                                        <width>471</width>
-                                        <height>20</height>
-                                    </rect>
-                                </property>
-                                <property name="frameShape">
-                                    <enum>HLine</enum>
-                                </property>
-                                <property name="frameShadow">
-                                    <enum>Sunken</enum>
-                                </property>
-                                <property name="orientation">
-                                    <enum>Horizontal</enum>
-                                </property>
-                            </widget>
-                            <widget class="QSlider">
-                                <property name="name">
-                                    <cstring>TmpNoiseSlider</cstring>
-                                </property>
-                                <property name="enabled">
-                                    <bool>false</bool>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>250</x>
-                                        <y>165</y>
-                                        <width>220</width>
-                                        <height>24</height>
-                                    </rect>
-                                </property>
-                                <property name="minValue">
-                                    <number>1</number>
-                                </property>
-                                <property name="maxValue">
-                                    <number>3</number>
-                                </property>
-                                <property name="value">
-                                    <number>1</number>
-                                </property>
-                                <property name="orientation">
-                                    <enum>Horizontal</enum>
-                                </property>
-                                <property name="tickmarks">
-                                    <enum>Left</enum>
-                                </property>
-                                <property name="tickInterval">
-                                    <number>1</number>
-                                </property>
-                                <property name="toolTip" stdset="0">
-                                    <string>Strength of the noise reducer</string>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox">
-                                <property name="name">
-                                    <cstring>AutolevelsFilter</cstring>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>10</x>
-                                        <y>135</y>
-                                        <width>230</width>
-                                        <height>20</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Auto brightness/contrast</string>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox">
-                                <property name="name">
-                                    <cstring>AutolevelsFullrange</cstring>
-                                </property>
-                                <property name="enabled">
-                                    <bool>false</bool>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>250</x>
-                                        <y>135</y>
-                                        <width>240</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Strech luminance to full range</string>
-                                </property>
-                                <property name="toolTip" stdset="0">
-                                    <string>Streches luminance to full range (0..255)</string>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox">
-                                <property name="name">
-                                    <cstring>HzDeblockCFiltering</cstring>
-                                </property>
-                                <property name="enabled">
-                                    <bool>false</bool>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>320</x>
-                                        <y>10</y>
-                                        <width>170</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Chrominance filtering</string>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox">
-                                <property name="name">
-                                    <cstring>VtDeblockCFiltering</cstring>
-                                </property>
-                                <property name="enabled">
-                                    <bool>false</bool>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>320</x>
-                                        <y>50</y>
-                                        <width>170</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Chrominance filtering</string>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox">
-                                <property name="name">
-                                    <cstring>DeringCFiltering</cstring>
-                                </property>
-                                <property name="enabled">
-                                    <bool>false</bool>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>320</x>
-                                        <y>90</y>
-                                        <width>170</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Chrominance filtering</string>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox">
-                                <property name="name">
-                                    <cstring>TmpNoiseFilter</cstring>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>10</x>
-                                        <y>165</y>
-                                        <width>210</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Temporal noise reducer:</string>
-                                </property>
-                            </widget>
-                        </widget>
-                    </widget>
-                    <widget class="QWidget">
-                        <property name="name">
-                            <cstring>tab</cstring>
-                        </property>
-                        <attribute name="title">
-                            <string>Deinterlacing</string>
-                        </attribute>
-                        <widget class="QButtonGroup">
-                            <property name="name">
-                                <cstring>deinterlacingGroup</cstring>
-                            </property>
-                            <property name="geometry">
-                                <rect>
-                                    <x>8</x>
-                                    <y>13</y>
-                                    <width>490</width>
-                                    <height>201</height>
-                                </rect>
-                            </property>
-                            <property name="title">
-                                <string></string>
-                            </property>
-                            <widget class="QCheckBox">
-                                <property name="name">
-                                    <cstring>LinBlendDeinterlacer</cstring>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>20</x>
-                                        <y>20</y>
-                                        <width>260</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Linear blend deinterlacer</string>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox">
-                                <property name="name">
-                                    <cstring>CubicIntDeinterlacer</cstring>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>20</x>
-                                        <y>80</y>
-                                        <width>290</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Cubic interpolating deinterlacer</string>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox">
-                                <property name="name">
-                                    <cstring>LinIntDeinterlacer</cstring>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>20</x>
-                                        <y>50</y>
-                                        <width>300</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Linear interpolating deinterlacer</string>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox">
-                                <property name="name">
-                                    <cstring>MedianDeinterlacer</cstring>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>20</x>
-                                        <y>110</y>
-                                        <width>270</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>Median deinterlacer</string>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox">
-                                <property name="name">
-                                    <cstring>FfmpegDeinterlacer</cstring>
-                                </property>
-                                <property name="geometry">
-                                    <rect>
-                                        <x>20</x>
-                                        <y>140</y>
-                                        <width>250</width>
-                                        <height>21</height>
-                                    </rect>
-                                </property>
-                                <property name="text">
-                                    <string>FFmpeg deinterlacer</string>
-                                </property>
-                            </widget>
-                        </widget>
-                    </widget>
-                </widget>
+                </grid>
             </widget>
         </widget>
         <widget class="QLayoutWidget">
@@ -1750,21 +1475,9 @@ This expression tries to find a match on MPlayer's output.</string>
         <slot>reject()</slot>
     </connection>
     <connection>
-        <sender>AutolevelsFilter</sender>
+        <sender>postProcessing</sender>
         <signal>toggled(bool)</signal>
-        <receiver>AutolevelsFullrange</receiver>
-        <slot>setEnabled(bool)</slot>
-    </connection>
-    <connection>
-        <sender>TmpNoiseFilter</sender>
-        <signal>toggled(bool)</signal>
-        <receiver>TmpNoiseSlider</receiver>
-        <slot>setEnabled(bool)</slot>
-    </connection>
-    <connection>
-        <sender>AutolevelsFilter</sender>
-        <signal>toggled(bool)</signal>
-        <receiver>AutolevelsFullrange</receiver>
+        <receiver>PostprocessingOptions</receiver>
         <slot>setEnabled(bool)</slot>
     </connection>
     <connection>
@@ -1786,6 +1499,12 @@ This expression tries to find a match on MPlayer's output.</string>
         <slot>setEnabled(bool)</slot>
     </connection>
     <connection>
+        <sender>VtDeblockFilter</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>VtDeblockAQuality</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
         <sender>DeringFilter</sender>
         <signal>toggled(bool)</signal>
         <receiver>DeringAQuality</receiver>
@@ -1798,9 +1517,9 @@ This expression tries to find a match on MPlayer's output.</string>
         <slot>setEnabled(bool)</slot>
     </connection>
     <connection>
-        <sender>AutolevelsFilter</sender>
+        <sender>TmpNoiseFilter</sender>
         <signal>toggled(bool)</signal>
-        <receiver>AutolevelsFullrange</receiver>
+        <receiver>TmpNoiseSlider</receiver>
         <slot>setEnabled(bool)</slot>
     </connection>
     <connection>
@@ -1810,21 +1529,21 @@ This expression tries to find a match on MPlayer's output.</string>
         <slot>setEnabled(bool)</slot>
     </connection>
     <connection>
-        <sender>VtDeblockFilter</sender>
+        <sender>AutolevelsFilter</sender>
         <signal>toggled(bool)</signal>
-        <receiver>VtDeblockAQuality</receiver>
+        <receiver>AutolevelsFullrange</receiver>
         <slot>setEnabled(bool)</slot>
     </connection>
     <connection>
-        <sender>postProcessing</sender>
+        <sender>AutolevelsFilter</sender>
         <signal>toggled(bool)</signal>
-        <receiver>PostprocessingOptions</receiver>
+        <receiver>AutolevelsFullrange</receiver>
         <slot>setEnabled(bool)</slot>
     </connection>
     <connection>
-        <sender>customPreset</sender>
+        <sender>AutolevelsFilter</sender>
         <signal>toggled(bool)</signal>
-        <receiver>customFilters</receiver>
+        <receiver>AutolevelsFullrange</receiver>
         <slot>setEnabled(bool)</slot>
     </connection>
 </connections>
@@ -1833,10 +1552,8 @@ This expression tries to find a match on MPlayer's output.</string>
     <tabstop>openFile</tabstop>
     <tabstop>url</tabstop>
     <tabstop>seekTime</tabstop>
-    <tabstop>showVCDMenu</tabstop>
     <tabstop>addConfigButton</tabstop>
     <tabstop>autoHideControlButtons</tabstop>
-    <tabstop>showDVDMenu</tabstop>
     <tabstop>showControlButtons</tabstop>
     <tabstop>showConsoleOutput</tabstop>
     <tabstop>loop</tabstop>

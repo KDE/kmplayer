@@ -3,7 +3,7 @@
                              -------------------
     begin                : Sat Dec  7 16:14:51 CET 2002
     copyright            : (C) 2002 by Koos Vriezen
-    email                : 
+    email                :
  ***************************************************************************/
 
 /***************************************************************************
@@ -57,7 +57,7 @@
 KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     : KMainWindow(0, name),
       config (kapp->config ()),
-      m_player (new KMPlayer (this, config)), 
+      m_player (new KMPlayer (this, config)),
       m_opendvd (false),
       m_openvcd (false),
       m_openpipe (false)
@@ -129,7 +129,7 @@ void KMPlayerApp::initDocument()
 }
 
 void KMPlayerApp::initView ()
-{ 
+{
     ////////////////////////////////////////////////////////////////////
     // create the main widget here that is managed by KTMainWindow's view-region and
     // connect the widget to your document to display document contents.
@@ -251,7 +251,7 @@ void KMPlayerApp::playPipe () {
     m_player->setURL (KURL ());
     QString args ("-quiet -");
     m_player->run (args.ascii(), m_pipe.ascii());
-    setCaption (i18n ("Pipe - ") + m_pipe, false);
+    setCaption (i18n ("Pipe - %1").arg(m_pipe), false);
     m_openpipe = true;
     m_openvcd = m_opendvd = false;
     slotStatusMsg (i18n ("Ready."));
@@ -260,7 +260,7 @@ void KMPlayerApp::playPipe () {
 void KMPlayerApp::openDocumentFile (const KURL& url)
 {
     if (m_showStatusbar) slotStatusMsg(i18n("Opening file..."));
-    doc->newDocument();		
+    doc->newDocument();
     doc->setAspect (-1.0);
     m_openpipe = m_openvcd = m_opendvd = false;
     m_dvdtitlemenu->clear ();
@@ -309,7 +309,7 @@ void KMPlayerApp::resizePlayer (int percentage) {
 void KMPlayerApp::zoom50 () {
     resizePlayer (50);
 }
-        
+
 void KMPlayerApp::zoom100 () {
     resizePlayer (100);
 }
@@ -317,7 +317,7 @@ void KMPlayerApp::zoom100 () {
 void KMPlayerApp::zoom150 () {
     resizePlayer (150);
 }
-        
+
 void KMPlayerApp::finished () {
     disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
     KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
@@ -389,22 +389,22 @@ void KMPlayerApp::finishedOpenDVD () {
                 kview->positionSlider()->setMaxValue (str.mid (pos + 1).toInt());
         } else if (subtitleRegExp.match (cstr)) {
             m_dvdsubtitlemenu->insertItem (subtitleRegExp.group (2), this,
-                                           SLOT (subtitleMenuClicked(int)), 0, 
+                                           SLOT (subtitleMenuClicked(int)), 0,
                                            atoi (subtitleRegExp.group (1)));
-            kdDebug () << "subtitle sid:" << subtitleRegExp.group (1) << 
+            kdDebug () << "subtitle sid:" << subtitleRegExp.group (1) <<
                 " lang:" << subtitleRegExp.group (2) << endl;
         } else if (langRegExp.match (cstr)) {
             m_dvdlanguagemenu->insertItem (langRegExp.group (1), this,
                                            SLOT (languageMenuClicked(int)), 0,
                                            atoi (langRegExp.group (2)));
-            kdDebug () << "lang aid:" << langRegExp.group (2) << 
+            kdDebug () << "lang aid:" << langRegExp.group (2) <<
                 " lang:" << langRegExp.group (1) << endl;
         } else if (titleRegExp.match (cstr)) {
             kdDebug () << "title " << titleRegExp.group (1) << endl;
             unsigned ts = QString (titleRegExp.group (1)).toInt ();
             if ( ts > 100) ts = 100;
             for (unsigned t = 0; t < ts; t++)
-                m_dvdtitlemenu->insertItem (QString::number (t + 1), this, 
+                m_dvdtitlemenu->insertItem (QString::number (t + 1), this,
                                             SLOT (titleMenuClicked(int)), 0, t);
         } else if (chapterRegExp.match (cstr)) {
             kdDebug () << "chapter " << chapterRegExp.group (1) << endl;
@@ -458,7 +458,7 @@ void KMPlayerApp::finishedOpenVCD () {
                 kview->positionSlider()->setMaxValue (str.mid (pos + 1).toInt());
         } else if (trackRegExp.match (cstr)) {
             m_vcdtrackmenu->insertItem (trackRegExp.group (1), this,
-                                        SLOT (trackMenuClicked(int)), 0, 
+                                        SLOT (trackMenuClicked(int)), 0,
                                            m_vcdtrackmenu->count ());
             kdDebug () << "track " << trackRegExp.group (1) << endl;
         }
@@ -585,7 +585,7 @@ KMPlayerDoc *KMPlayerApp::getDocument () const
 
 
 void KMPlayerApp::saveOptions()
-{	
+{
     config->setGroup ("General Options");
     config->writeEntry ("Geometry", size());
     //config->writeEntry ("Show Toolbar", viewToolBar->isChecked());
@@ -617,7 +617,7 @@ void KMPlayerApp::readOptions() {
     bool bViewStatusbar = config->readBoolEntry("Show Statusbar", false);
     viewStatusBar->setChecked(bViewStatusbar);
     slotViewStatusBar();
-    
+
     bool bViewMenubar = config->readBoolEntry("Show Menubar", true);
     viewMenuBar->setChecked(bViewMenubar);
     slotViewMenuBar();
@@ -635,7 +635,7 @@ void KMPlayerApp::readOptions() {
     keepSizeRatio (); // Lazy, I know :)
     showConsoleOutput ();
     showConsoleOutput ();
-    
+
     // initialize the recent file list
     fileOpenRecent->loadEntries(config,"Recent Files");
 
@@ -650,7 +650,7 @@ void KMPlayerApp::saveProperties(KConfig *_cfg) {
     }
     else
     {
-        KURL url=doc->URL();	
+        KURL url=doc->URL();
         _cfg->writeEntry("filename", url.url());
         _cfg->writeEntry("modified", doc->isModified());
         QString tempname = kapp->tempSaveName(url.url());
@@ -686,7 +686,7 @@ void KMPlayerApp::readProperties(KConfig* _cfg)
             setCaption(url.fileName(),false);
         }
     }
-}		
+}
 
 bool KMPlayerApp::queryClose ()
 {
@@ -713,7 +713,7 @@ void KMPlayerApp::slotFileNew()
 {
     slotStatusMsg(i18n("Creating new document..."));
 
-    doc->newDocument();		
+    doc->newDocument();
     setCaption(doc->URL().fileName(), false);
 
     slotStatusMsg(i18n("Ready."));
@@ -773,7 +773,7 @@ void KMPlayerApp::slotFileQuit()
             if(!w->close())
                 break;
         }
-    }*/	
+    }*/
 }
 
 void KMPlayerApp::slotPreferences () {
@@ -803,8 +803,7 @@ void KMPlayerApp::slotViewMenuBar() {
         slotStatusMsg(i18n("Ready"));
     } else {
         menuBar()->hide();
-        slotStatusMsg (i18n ((QString ("Show Menubar with ") +
-                                      viewMenuBar->shortcutText ()).ascii()));
+        slotStatusMsg (i18n ("Show Menubar with %1").arg(viewMenuBar->shortcutText()));
         if (!m_showStatusbar) {
             statusBar()->show();
             QTimer::singleShot (3000, statusBar(), SLOT (hide ()));
@@ -854,7 +853,7 @@ void KMPlayerApp::startArtsControl () {
     QCStringList apps = kapp->dcopClient ()->registeredApplications();
     for( QCStringList::ConstIterator it = apps.begin(); it != apps.end(); ++it)
         if (!strncmp ((*it).data (), "artscontrol", 11)) {
-            kapp->dcopClient ()->findObject 
+            kapp->dcopClient ()->findObject
                 (*it, "artscontrol-mainwindow#1", "raise()", data, fApp, fObj);
             return;
         }

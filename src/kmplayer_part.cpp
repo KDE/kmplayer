@@ -3,7 +3,7 @@
                              -------------------
     begin                : Sun Dec 8 2002
     copyright            : (C) 2002 by Koos Vriezen
-    email                : 
+    email                :
  ***************************************************************************/
 
 /***************************************************************************
@@ -49,6 +49,7 @@
 #include "kmplayer_part.h"
 #include "kmplayerview.h"
 #include "kmplayerconfig.h"
+#include <qfile.h>
 
 //merge KProtocolManager::proxyForURL and KProtocolManager::slaveProtocol
 static bool revmatch(const char *host, const char *nplist) {
@@ -90,7 +91,7 @@ static bool proxyForURL (KURL & url, QString & proxy) {
     if (!proxy.isEmpty() && proxy != QString::fromLatin1 ("DIRECT")) {
         QString noProxy = KProtocolManager::noProxyFor ();
         KProtocolManager::ProxyType type = KProtocolManager::proxyType();
-        bool useRevProxy = ((type == KProtocolManager::ManualProxy || 
+        bool useRevProxy = ((type == KProtocolManager::ManualProxy ||
                              type == KProtocolManager::EnvVarProxy) &&
                             KProtocolManager::useReverseProxy ());
         bool isRevMatch = false;
@@ -288,7 +289,7 @@ bool KMPlayer::openFile () {
 
 void KMPlayer::processOutput (KProcess *, char * str, int len) {
     if (!m_view) return;
-    QString out = QString::fromLatin1 (str, len);
+    QString out = QString::fromLocal8Bit (str, len);
     if ( !m_bReceivedPos )
         m_view->addText (out); // Add output until we receive first pos marker
     QRegExp rePos( "V\\:\\s*([\\d\\.]+)\\s*" );
@@ -299,9 +300,9 @@ void KMPlayer::processOutput (KProcess *, char * str, int len) {
         m_pos = rePos.cap (1).toFloat();
         emit moviePositionChanged( (int) m_pos );
     }
-    
+
     bool ok;
-    if (sizeRegExp.match (out.latin1 ())) {
+    if (sizeRegExp.match (out.local8Bit ())) {
         movie_width = QString (sizeRegExp.group (1)).toInt (&ok);
         movie_height = ok ? QString (sizeRegExp.group (2)).toInt (&ok) : 0;
         if (ok && movie_width > 0 && movie_height > 0 && m_view->viewer ()->aspect () < 0.01) {
@@ -312,14 +313,13 @@ void KMPlayer::processOutput (KProcess *, char * str, int len) {
     } else if (m_browserextension) {
         KRegExp cacheRegExp (m_configdialog->cachepattern.ascii());
         KRegExp startRegExp (m_configdialog->startpattern.ascii());
-        if (cacheRegExp.match (out.latin1 ())) {
+        if (cacheRegExp.match (out.local8Bit ())) {
             double p = QString (cacheRegExp.group (1)).toDouble (&ok);
             if (ok) {
                 m_browserextension->setLoadingProgress (int (p));
-                m_browserextension->infoMessage 
-                    (QString (cacheRegExp.group (1)) + i18n ("% Cache fill"));
+                m_browserextension->infoMessage(i18n ("%1% Cache fill").arg(cacheRegExp.group (1)));
             }
-        } else if (startRegExp.match (out.latin1 ())) {
+        } else if (startRegExp.match (out.local8Bit ())) {
             m_browserextension->setLoadingProgress (100);
             emit completed ();
             m_started_emited = false;
@@ -341,8 +341,8 @@ void KMPlayer::sendCommand (const QString & cmd) {
     if (m_process->isRunning () && m_use_slave) {
         commands.push_front (cmd + "\n");
         printf ("eval %s", commands.last ().latin1 ());
-        m_process->writeStdin (commands.last ().latin1 (), 
-                             commands.last ().length ());
+        m_process->writeStdin (QFile::encodeName(commands.last ()),
+                               commands.last ().length ());
     }
 }
 
@@ -350,13 +350,13 @@ void KMPlayer::processDataWritten (KProcess *) {
     printf ("eval done %s", commands.last ().latin1 ());
     commands.pop_back ();
     if (commands.size ())
-        m_process->writeStdin (commands.last ().latin1 (), 
+        m_process->writeStdin (QFile::encodeName(commands.last ()),
                              commands.last ().length ());
 }
 
 void KMPlayer::processStopped (KProcess *) {
     printf("process stopped\n");
-    
+
     killTimers ();
     if (m_started_emited) {
         m_started_emited = false;
@@ -423,7 +423,7 @@ bool KMPlayer::run (const char * args, const char * pipe) {
         m_view->positionSlider()->hide();
     else
         m_view->positionSlider()->show();
-    
+
     m_use_slave = !(pipe && pipe[0]);
     if (!m_use_slave) {
         printf ("%s | ", pipe);
@@ -543,9 +543,9 @@ bool KMPlayer::run (const char * args, const char * pipe) {
     QString sMPArgs;
     for ( it = m_process->args().begin(); it != m_process->args().end(); ++it )
         sMPArgs += (*it);
-    
+
     m_view->addText( sMPArgs.simplifyWhiteSpace() );
-    
+
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
 
     if (m_process->isRunning ()) {
@@ -584,11 +584,11 @@ void KMPlayer::play () {
 }
 
 bool KMPlayer::playing () const {
-    return m_process->isRunning (); 
+    return m_process->isRunning ();
 }
 
 void KMPlayer::stop () {
-    if (m_process->isRunning () && 
+    if (m_process->isRunning () &&
         m_stoplooplevel != qApp->eventLoop ()->loopLevel ()) {
         sendCommand (QString ("quit"));
         m_term_signal_send = false;
@@ -663,7 +663,7 @@ void KMPlayer::setMenuZoom (int id) {
 void KMPlayer::setPosSlider(int iNewPos)
 {
     QSlider *slider = m_view->positionSlider ();
-    
+
     if (slider->isVisible () && slider->isEnabled () && !m_bPosSliderPressed)
         slider->setValue (iNewPos);
 }
@@ -762,7 +762,7 @@ bool KMPlayerLiveConnectExtension::put
 
 bool KMPlayerLiveConnectExtension::call
   (const unsigned long id, const QString & name,
-   const QStringList & args, KParts::LiveConnectExtension::Type & type, 
+   const QStringList & args, KParts::LiveConnectExtension::Type & type,
    unsigned long & rid, QString &) {
     if (name == "play" || name == "stop" || name == "pause" || name == "volume") {
         type = KParts::LiveConnectExtension::TypeVoid;
