@@ -78,6 +78,11 @@ static const int button_height_only_buttons = 11;
 #include <dcopclient.h>
 #include <kglobalsettings.h>
 
+
+/* mouse invisible: define the time (in 1/1000 seconds) before mouse goes invisible */
+#define MOUSE_INVISIBLE_DELAY 2000
+
+
 using namespace KMPlayer;
 
 //-------------------------------------------------------------------------
@@ -261,6 +266,7 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
    m_painter (0L),
    m_paint_buffer (0L),
    m_collection (new KActionCollection (this)),
+   m_mouse_invisible_timer (0),
    m_fullscreen (false) {
     setEraseColor (QColor (0, 0, 0));
     setAcceptDrops (true);
@@ -291,6 +297,16 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
     }
     m_fullscreen = !m_fullscreen;
     m_view->controlPanel()->popupMenu ()->setItemChecked (ControlPanel::menu_fullscreen, m_fullscreen);
+
+    if (m_fullscreen) {
+        m_mouse_invisible_timer = startTimer(MOUSE_INVISIBLE_DELAY);
+    } else {
+        if (m_mouse_invisible_timer) {
+            killTimer (m_mouse_invisible_timer);
+            m_mouse_invisible_timer = 0;
+        }
+        unsetCursor();
+    }
 }
 
 KDE_NO_EXPORT void ViewArea::accelActivated () {
@@ -313,6 +329,7 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
     if (rootLayout)
         if (rootLayout->pointerMoved (e->x (), e->y ()))
             e->accept ();
+    mouseMoved (); // for m_mouse_invisible_timer
 }
 
 KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
@@ -420,6 +437,26 @@ KDE_NO_EXPORT void ViewArea::dragEnterEvent (QDragEnterEvent* dee) {
 KDE_NO_EXPORT void ViewArea::contextMenuEvent (QContextMenuEvent * e) {
     m_view->controlPanel ()->popupMenu ()->exec (e->globalPos ());
 }
+
+KDE_NO_EXPORT void ViewArea::mouseMoved () {
+    if (m_fullscreen) {
+        if (m_mouse_invisible_timer)
+            killTimer (m_mouse_invisible_timer);
+        unsetCursor ();
+        m_mouse_invisible_timer = startTimer (MOUSE_INVISIBLE_DELAY);
+    }
+}
+
+KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
+    if (e->timerId () == m_mouse_invisible_timer) {
+        m_mouse_invisible_timer = 0;
+        if (m_fullscreen)
+            setCursor (BlankCursor);
+    }
+    killTimer (e->timerId ());
+}
+
+
 
 //-----------------------------------------------------------------------------
 
@@ -1327,6 +1364,7 @@ KDE_NO_EXPORT bool View::x11Event (XEvent * e) {
             if (m_playing && e->xmotion.window == m_viewer->embeddedWinId ())
                 delayedShowButtons (e->xmotion.y > m_viewer->height () -
                                     m_control_panel->maximumSize ().height ());
+            m_view_area->mouseMoved ();
             break;
         case MapNotify:
             if (e->xmap.event == m_viewer->embeddedWinId ()) {
@@ -1373,6 +1411,7 @@ KDE_NO_EXPORT void Viewer::mouseMoveEvent (QMouseEvent * e) {
         int cp_height = m_view->controlPanel ()->maximumSize ().height ();
         m_view->delayedShowButtons (e->y () > height () - cp_height);
     }
+    m_view->m_view_area->mouseMoved ();
 }
 
 void Viewer::setAspect (float a) {

@@ -119,6 +119,7 @@ public:
     KActionCollection * actionCollection () const { return m_collection; }
     void setRootLayout (RegionNodePtr rl);
     void setAudioVideoGeometry (int x, int y, int w, int y, unsigned int * bg);
+    void mouseMoved ();
 public slots:
     void fullScreen ();
     void accelActivated ();
@@ -131,6 +132,7 @@ protected:
     void dropEvent (QDropEvent *);
     void contextMenuEvent (QContextMenuEvent * e);
     void paintEvent (QPaintEvent *);
+    void timerEvent (QTimerEvent * e);
 private:
     QWidget * m_parent;
     View * m_view;
@@ -139,6 +141,7 @@ private:
     KActionCollection * m_collection;
     RegionNodePtr rootLayout;
     QRect m_av_geometry;
+    int m_mouse_invisible_timer;
     bool m_fullscreen : 1;
 };
 

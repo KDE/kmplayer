@@ -229,6 +229,7 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
                  this, SLOT (colorCanged (const QColor &)));
 	seekingWidgetLayout->addItem(new QSpacerItem(0,0,QSizePolicy::Minimum, QSizePolicy::Minimum));
 	layout->addWidget(keepSizeRatio);
+	layout->addWidget (dockSysTray);
 	layout->addWidget(loop);
 	layout->addWidget (framedrop);
 	layout->addWidget (adjustvolume);
