@@ -64,6 +64,14 @@ public:
      * If this element is attached to a region, region_node points to it
      */
     RegionNodePtrW region_node;
+    /**
+     * Duration items, begin/dur/end, length information or connected element
+     */
+    struct DurationItem {
+        DurationItem () : durval (0) {}
+        unsigned int durval;
+        ElementRuntimePtrW connection;
+    } durations [(const int) durtime_last];
 signals:
     void activateEvent ();
     void outOfBoundsEvent ();
@@ -81,6 +89,10 @@ protected slots:
      * start_timer timer expired
      */
     virtual void started ();
+    /**
+     * duration_timer timer expired or no duration set after started
+     */
+    virtual void stopped ();
 private:
     void processEvent (unsigned int event);
 protected:
@@ -88,15 +100,23 @@ protected:
     ElementPtrW media_element;
     int start_timer;
     int dur_timer;
-    struct DurationItem {
-        DurationItem () : durval (0) {}
-        unsigned int durval;
-        ElementRuntimePtrW connection;
-    } durations [(const int) durtime_last];
     bool isstarted;
 };
 
-class AudioVideoData : public ElementRuntime {
+/**
+ * Some common runtime data for all mediatype classes
+ */
+class MediaTypeRuntime : public ElementRuntime {
+    Q_OBJECT
+protected:
+    KDE_NO_CDTOR_EXPORT MediaTypeRuntime (ElementPtr e) : ElementRuntime (e) {}
+public:
+    KDE_NO_CDTOR_EXPORT ~MediaTypeRuntime () {}
+protected slots:
+    virtual void stopped ();
+};
+
+class AudioVideoData : public MediaTypeRuntime {
     Q_OBJECT
 public:
     AudioVideoData (ElementPtr e);
@@ -108,7 +128,7 @@ protected slots:
     virtual void started ();
 };
 
-class ImageData : public ElementRuntime {
+class ImageData : public MediaTypeRuntime {
     Q_OBJECT
 public:
     ImageData (ElementPtr e);
@@ -125,7 +145,7 @@ private slots:
     void slotData (KIO::Job*, const QByteArray& qb);
 };
 
-class TextData : public ElementRuntime {
+class TextData : public MediaTypeRuntime {
     Q_OBJECT
 public:
     TextData (ElementPtr e);
@@ -140,6 +160,30 @@ protected slots:
 private slots:
     void slotResult (KIO::Job*);
     void slotData (KIO::Job*, const QByteArray& qb);
+};
+
+/**
+ * Stores runtime data of set element
+ */
+class SetData : public ElementRuntime {
+    Q_OBJECT
+public:
+    KDE_NO_CDTOR_EXPORT SetData (ElementPtr e) : ElementRuntime (e) {}
+    KDE_NO_CDTOR_EXPORT ~SetData () {}
+protected slots:
+    /**
+     * start_timer timer expired, execute it
+     */
+    virtual void started ();
+    /**
+     * undo set execute
+     */
+    virtual void stopped ();
+private:
+    ElementPtrW target_element;
+    RegionNodePtrW target_region;
+    QString changed_attribute;
+    QString old_value;
 };
 
 //-----------------------------------------------------------------------------
@@ -273,6 +317,16 @@ class TextMediaType : public MediaType {
 public:
     TextMediaType (ElementPtr & d);
     ElementRuntimePtr getNewRuntime ();
+};
+
+class Set : public Element {
+public:
+    KDE_NO_CDTOR_EXPORT Set (ElementPtr & d) : Element (d) {}
+    KDE_NO_EXPORT const char * nodeName () const { return "set"; }
+    ElementRuntimePtr getRuntime ();
+    void start ();
+    void stop ();
+    ElementRuntimePtr runtime;
 };
 
 } // SMIL namespace

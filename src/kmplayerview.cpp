@@ -399,8 +399,11 @@ KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
                 y = av_rgn->y;
                 wws = av_rgn->w;
                 hws = av_rgn->h;
-                if (av_rgn->have_color)
-                    m_view->viewer ()->setBackgroundColor (QColor (av_rgn->background_color));
+                if (av_rgn->attached_element) {
+                    QString colstr = av_rgn->attached_element->getAttribute ("background-color");
+                    if (!colstr.isEmpty ())
+                        m_view->viewer ()->setBackgroundColor (QColor (colstr));
+                }
             }
         }
     }

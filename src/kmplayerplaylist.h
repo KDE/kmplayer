@@ -79,7 +79,7 @@ public:
     RegionNode (ElementPtr e);
     KDE_NO_CDTOR_EXPORT ~RegionNode () {}
     /**
-     * paints background if background-color set and afterwards passes
+     * paints background if background-color attr. is set and afterwards passes
      * the painter of attached_element's runtime
      */
     void paint (QPainter & p);
@@ -103,14 +103,6 @@ public:
      * (Scaled) Dimensions set by viewer
      */
     int x, y, w, h;
-    /**
-     * Cached color
-     */
-    int background_color;
-    /**
-     * Whether background_color is valid
-     */
-    bool have_color;
     /**
      * Corresponding DOM node (SMIL::Region or SMIL::RootLayout)
      */

@@ -44,20 +44,27 @@ static const unsigned int duration_last_option = (unsigned int) -6;
 
 //-----------------------------------------------------------------------------
 
+static RegionNodePtr findRegion (RegionNodePtr p, const QString & id) {
+    for (RegionNodePtr r = p->firstChild; r; r = r->nextSibling) {
+        if (r->regionElement->getAttribute ("id") == id) {
+            kdDebug () << "MediaType region found " << id << endl;
+            return r;
+        }
+        RegionNodePtr r1 = findRegion (r, id);
+        if (r1)
+            return r1;
+    }
+    return RegionNodePtr ();
+}
+
+//-----------------------------------------------------------------------------
+
 ElementRuntimePtr Element::getRuntime () {
     return ElementRuntimePtr ();
 }
 
 KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (ElementPtr e)
- : x (0), y (0), w (0), h (0), have_color (false), regionElement (e) {
-    if (e) {
-        QString c = e->getAttribute ("background-color");
-        if (!c.isEmpty ()) {
-            background_color = QColor (c).rgb ();
-            have_color = true;
-        }
-    }
-}
+ : x (0), y (0), w (0), h (0), regionElement (e) {}
 
 KDE_NO_CDTOR_EXPORT void RegionNode::clearAll () {
     kdDebug () << "RegionNode::clearAll " << endl;
@@ -135,8 +142,7 @@ KDE_NO_EXPORT void ElementRuntime::begin () {
         if (durations [end_time].durval < duration_last_option &&
             durations [end_time].durval > durations [begin_time].durval)
             durations [duration_time].durval = durations [end_time].durval - durations [begin_time].durval;
-        else // else use intrinsic time duration
-            durations [duration_time].durval = convertNode <SMIL::MediaType> (media_element)->duration_time;
+        // else use intrinsic time duration
     } else
         setDurationItem (duration_time, durvalstr);
     if (durations [begin_time].durval > 0) {
@@ -165,17 +171,14 @@ KDE_NO_EXPORT void ElementRuntime::end () {
 
 KDE_NO_EXPORT void ElementRuntime::timerEvent (QTimerEvent * e) {
     kdDebug () << "ElementRuntime::timerEvent " << (media_element ? media_element->nodeName() : "-") << endl; 
-    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (media_element);
-    if (!mt)
-        end ();
-    else if (e->timerId () == start_timer) {
+    if (e->timerId () == start_timer) {
         killTimer (start_timer);
         start_timer = 0;
         isstarted = true;
         QTimer::singleShot (0, this, SLOT (started ()));
     } else if (e->timerId () == dur_timer) {
         end ();
-        mt->timed_end ();
+        QTimer::singleShot (0, this, SLOT (stopped ()));
     }
 }
 
@@ -193,33 +196,80 @@ KDE_NO_EXPORT void ElementRuntime::elementOutOfBoundsEvent () {
 
 KDE_NO_EXPORT void ElementRuntime::processEvent (unsigned int event) {
     kdDebug () << "ElementRuntime::processEvent " << event << " " << (media_element ? media_element->nodeName() : "-") << endl; 
-    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (media_element);
-    if (!mt)
-        end ();
-    else if (!isstarted && durations [begin_time].durval == event) {
+    if (!isstarted && durations [begin_time].durval == event) {
         isstarted = true;
         QTimer::singleShot (0, this, SLOT (started ()));
     } else if (isstarted && durations [end_time].durval == event) {
         end ();
-        mt->timed_end ();
+        QTimer::singleShot (0, this, SLOT (stopped ()));
     }
 }
 
 KDE_NO_EXPORT void ElementRuntime::started () {
     kdDebug () << "ElementRuntime::started " << (media_element ? media_element->nodeName() : "-") << " dur:" << durations [duration_time].durval << endl; 
-    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (media_element);
-    if (!mt)
-        end ();
-    else if (durations [duration_time].durval > 0) {
+    if (durations [duration_time].durval > 0) {
         if (durations [duration_time].durval < duration_last_option)
             dur_timer = startTimer (1000 * durations [duration_time].durval);
     } else if (durations [end_time].durval < duration_last_option)
         // no duration set and no special end, so mark us finished
+        QTimer::singleShot (0, this, SLOT (stopped ()));
+}
+
+KDE_NO_EXPORT void ElementRuntime::stopped () {
+    end ();
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_EXPORT void MediaTypeRuntime::stopped () {
+    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (media_element);
+    if (!mt)
+        end ();
+    else
         mt->timed_end ();
 }
 
+//-----------------------------------------------------------------------------
+
+KDE_NO_EXPORT void SetData::started () {
+    kdDebug () << "SetData::started" << endl;
+    if (media_element) {
+        QString elm_id = media_element->getAttribute ("targetElement");
+        target_element = media_element->document ()->getElementById (elm_id);
+        changed_attribute = media_element->getAttribute ("attributeName");
+        QString to = media_element->getAttribute ("to");
+        if (target_element) {
+            old_value = target_element->getAttribute (changed_attribute);
+            target_element->setAttribute (changed_attribute, to);
+            PlayListNotify * n = target_element->document ()->notify_listener;
+            ElementRuntimePtr rt = target_element->getRuntime ();
+            if (rt)
+                target_region = rt->region_node;
+            else if (!strcmp (target_element->nodeName (), "region"))
+                target_region = findRegion (target_element->document ()->rootLayout, elm_id);
+    kdDebug () << "SetData::started " << target_element->nodeName () << "." << changed_attribute << " " << old_value << "->" << to << endl;
+            if (n && target_region)
+                n->repaintRegion (target_region);
+        } else
+            kdWarning () << "target element not found" << endl;
+    } else
+        kdWarning () << "set element disappeared" << endl;
+}
+
+KDE_NO_EXPORT void SetData::stopped () {
+    if (target_element) {
+        target_element->setAttribute (changed_attribute, old_value);
+        PlayListNotify * n = target_element->document ()->notify_listener;
+        if (n && target_region)
+            n->repaintRegion (target_region);
+    } else
+        kdWarning () << "target element not found" << endl;
+}
+
+//-----------------------------------------------------------------------------
+
 KDE_NO_CDTOR_EXPORT AudioVideoData::AudioVideoData (ElementPtr e)
-    : ElementRuntime (e) {}
+    : MediaTypeRuntime (e) {}
 
 KDE_NO_EXPORT bool AudioVideoData::isAudioVideo () {
     return isstarted;
@@ -252,6 +302,8 @@ static Element * fromMediaContentGroup (ElementPtr & d, const QString & tag) {
         return new SMIL::ImageMediaType (d);
     else if (!strcmp (taglatin, "text"))
         return new SMIL::TextMediaType (d);
+    else if (!strcmp (tag.latin1 (), "set")) // not sure if correct ..
+        return new SMIL::Set (d);
     // animation, textstream, ref, brush
     return 0L;
 }
@@ -259,6 +311,8 @@ static Element * fromMediaContentGroup (ElementPtr & d, const QString & tag) {
 static Element * fromContentControlGroup (ElementPtr & d, const QString & tag) {
     if (!strcmp (tag.latin1 (), "switch"))
         return new SMIL::Switch (d);
+    else if (!strcmp (tag.latin1 (), "set"))
+        return new SMIL::Set (d);
     return 0L;
 }
 
@@ -525,19 +579,6 @@ KDE_NO_EXPORT ElementPtr SMIL::MediaType::childFromTag (const QString & tag) {
     return ElementPtr ();
 }
 
-static RegionNodePtr findRegion (RegionNodePtr p, const QString & id) {
-    for (RegionNodePtr r = p->firstChild; r; r = r->nextSibling) {
-        if (r->regionElement->getAttribute ("id") == id) {
-            kdDebug () << "MediaType region found " << id << endl;
-            return r;
-        }
-        RegionNodePtr r1 = findRegion (r, id);
-        if (r1)
-            return r1;
-    }
-    return RegionNodePtr ();
-}
-
 KDE_NO_EXPORT void SMIL::MediaType::opened () {
     for (ElementPtr a = m_first_attribute; a; a = a->nextSibling ()) {
         const char * cname = a->nodeName ();
@@ -569,6 +610,7 @@ KDE_NO_EXPORT void SMIL::MediaType::start () {
         ElementRuntimePtr rt = getRuntime ();
         if (rt) {
             rt->region_node = region;
+            rt->durations [ElementRuntime::duration_time].durval =duration_time;
             rt->begin ();
         }
     }
@@ -658,9 +700,28 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::TextMediaType::getNewRuntime () {
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_EXPORT ElementRuntimePtr SMIL::Set::getRuntime () {
+    if (!runtime) // bah code duplicate
+        runtime = ElementRuntimePtr (new SetData (m_self));
+    return runtime;
+}
+
+KDE_NO_EXPORT void SMIL::Set::start () {
+    getRuntime ()->begin ();
+}
+
+KDE_NO_EXPORT void SMIL::Set::stop () {
+    getRuntime ()->end ();
+}
+
+//-----------------------------------------------------------------------------
+
 void RegionNode::paint (QPainter & p) {
-    if (have_color)
-        p.fillRect (x, y, w, h, QColor (QRgb (background_color)));
+    if (regionElement) {
+        QString colstr = regionElement->getAttribute ("background-color");
+        if (!colstr.isEmpty ())
+            p.fillRect (x, y, w, h, QColor (colstr));
+    }
     if (attached_element) {
         ElementRuntimePtr rt = attached_element->getRuntime ();
         if (rt)
@@ -709,7 +770,7 @@ namespace KMPlayer {
 }
 
 KDE_NO_CDTOR_EXPORT ImageData::ImageData (ElementPtr e)
- : ElementRuntime (e), d (new ImageDataPrivate) {
+ : MediaTypeRuntime (e), d (new ImageDataPrivate) {
     Mrl * mrl = media_element ? media_element->mrl () : 0L;
     kdDebug () << "ImageData::ImageData " << (mrl ? mrl->src : QString()) << endl;
     if (mrl && !mrl->src.isEmpty ()) {
@@ -767,7 +828,7 @@ namespace KMPlayer {
 }
 
 KDE_NO_CDTOR_EXPORT TextData::TextData (ElementPtr e)
- : ElementRuntime (e) {
+ : MediaTypeRuntime (e) {
     d = new TextDataPrivate;
     Mrl * mrl = media_element ? media_element->mrl () : 0L;
     kdDebug () << "TextData::TextData " << (mrl ? mrl->src : QString()) << endl;
