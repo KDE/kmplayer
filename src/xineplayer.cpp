@@ -71,7 +71,6 @@ static int                  movie_width, movie_height, movie_length;
 static double               pixel_aspect;
 
 static int                  running = 0;
-static int                  isplaying = 0;
 static int                  firstframe = 0;
 
 static QString mrl;
@@ -94,9 +93,7 @@ static void frame_output_cb(void * /*data*/, int /*video_width*/, int /*video_he
         double /*video_pixel_aspect*/, int *dest_x, int *dest_y,
         int *dest_width, int *dest_height, 
         double *dest_pixel_aspect, int *win_x, int *win_y) {
-    if(!isplaying)
-        return;
-    if (firstframe) {
+    if (running && firstframe) {
         fprintf(stderr, "first frame\n");
         xineapp->lock ();
         xineapp->updatePosition ();
@@ -114,6 +111,8 @@ static void frame_output_cb(void * /*data*/, int /*video_width*/, int /*video_he
 }
 
 static void event_listener(void * /*user_data*/, const xine_event_t *event) {
+    if (event->stream != stream)
+        return; // not interested in sub_stream events
     switch(event->type) { 
         case XINE_EVENT_UI_PLAYBACK_FINISHED:
             fprintf (stderr, "XINE_EVENT_UI_PLAYBACK_FINISHED\n");
@@ -301,8 +300,8 @@ void KXinePlayer::init () {
         fprintf (stderr, "map %lu\n", wid);
         XMapRaised(display, wid);
     }
-    d->res_h = (DisplayWidth(display, screen) * 1000 / DisplayWidthMM(display, screen));
-    d->res_v = (DisplayHeight(display, screen) * 1000 / DisplayHeightMM(display, screen));
+    d->res_h = 1.0 * DisplayWidth(display, screen) / DisplayWidthMM(display, screen);
+    d->res_v = 1.0 * DisplayHeight(display, screen) / DisplayHeightMM(display, screen);
     XSync(display, False);
     XUnlockDisplay(display);
     x11_visual_t vis;
@@ -342,8 +341,8 @@ KXinePlayer::~KXinePlayer () {
 }
 
 void KXinePlayer::play () {
+    mutex.lock ();
     if (running) {
-        mutex.lock ();
         if (xine_get_status (stream) == XINE_STATUS_PLAY &&
             xine_get_param (stream, XINE_PARAM_SPEED) == XINE_SPEED_PAUSE)
             xine_set_param( stream, XINE_PARAM_SPEED, XINE_SPEED_NORMAL);
@@ -371,6 +370,7 @@ void KXinePlayer::play () {
     running = 1;
     if (!xine_open (stream, mrl.local8Bit ())) {
         fprintf(stderr, "Unable to open mrl '%s'\n", mrl.ascii ());
+        mutex.unlock ();
         finished ();
         return;
     }
@@ -386,14 +386,15 @@ void KXinePlayer::play () {
             sub_stream = 0L;
         }
     }
-    if (callback)
-        firstframe = 1;
     if (!xine_play (stream, 0, 0)) {
         fprintf(stderr, "Unable to play mrl '%s'\n", mrl.ascii ());
+        mutex.unlock ();
         finished ();
         return;
     }
-    isplaying = 1;
+    mutex.unlock ();
+    if (callback)
+        firstframe = 1;
 }
 
 void KXinePlayer::stop () {
@@ -407,7 +408,7 @@ void KXinePlayer::stop () {
     }
     xine_stop (stream);
     running = 0;
-    isplaying = 0;
+    firstframe = 0;
     xine_event_dispose_queue (event_queue);
     xine_dispose (stream);
     stream = 0L;
