@@ -356,7 +356,7 @@ void KMPlayerSettings::readConfig () {
 
     // recording
     m_config->setGroup (strRecordingGroup);
-    mencoderarguments = m_config->readEntry (strMencoderArgs, "-oac copy -ovc copy");
+    mencoderarguments = m_config->readEntry (strMencoderArgs, "-oac mp3lame -ovc lavc");
     ffmpegarguments = m_config->readEntry (strFFMpegArgs, "-f avi -acodec mp3 -vcodec mpeg4");
     recordfile = m_config->readPathEntry(strRecordingFile, QDir::homeDirPath () + "/record.avi");
     recorder = Recorder (m_config->readNumEntry (strRecorder, int (MEncoder)));

@@ -566,6 +566,7 @@ KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * play
 void KMPlayerPrefRecordPage::recordingStarted () {
     recordButton->setText (i18n ("Stop Recording"));
     url->setEnabled (false);
+    topLevelWidget ()->hide ();
 }
 
 void KMPlayerPrefRecordPage::recordingFinished () {
@@ -590,6 +591,7 @@ void KMPlayerPrefRecordPage::slotRecord () {
     if (!url->lineEdit()->text().isEmpty()) {
         m_player->stop ();
         m_player->settings ()->recordfile = url->lineEdit()->text();
+        m_player->settings ()->replaytime = replaytime->text ().toInt ();
 #if KDE_IS_VERSION(3,1,90)
         int id = recorder->selectedId ();
 #else

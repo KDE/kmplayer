@@ -135,6 +135,7 @@ signals:
     void loading (int percentage);
 protected:
     bool openFile();
+    virtual void timerEvent (QTimerEvent *);
 protected slots:
     void back ();
     void forward ();
@@ -166,6 +167,7 @@ protected:
     KMPlayerBookmarkManager * m_bookmark_manager;
     KMPlayerBookmarkOwner * m_bookmark_owner;
     KBookmarkMenu * m_bookmark_menu;
+    int m_record_timer;
     bool m_autoplay : 1;
     bool m_ispart : 1;
     bool m_noresize : 1;

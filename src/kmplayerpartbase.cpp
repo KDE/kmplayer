@@ -90,6 +90,7 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
    m_bookmark_manager (new KMPlayerBookmarkManager),
    m_bookmark_owner (new KMPlayerBookmarkOwner (this)),
    m_bookmark_menu (0L),
+   m_record_timer (0),
    m_autoplay (true),
    m_ispart (false),
    m_noresize (false) {
@@ -296,6 +297,8 @@ void KMPlayer::recordingStarted () {
     if (!m_view) return;
     if (!m_view->recordButton ()->isOn ()) 
         m_view->recordButton ()->toggle ();
+    if (m_settings->replayoption == KMPlayerSettings::ReplayAfter)
+        m_record_timer = startTimer (1000 * m_settings->replaytime);
     emit startRecording ();
 }
 
@@ -304,8 +307,21 @@ void KMPlayer::recordingFinished () {
     if (m_view->recordButton ()->isOn ()) 
         m_view->recordButton ()->toggle ();
     emit stopRecording ();
+    killTimer (m_record_timer);
+    m_record_timer = 0;
     if (m_settings->replayoption == KMPlayerSettings::ReplayFinished ||
         (m_settings->replayoption == KMPlayerSettings::ReplayAfter && !playing ())) {
+        Recorder * rec = dynamic_cast <Recorder*> (m_recorder);
+        if (rec)
+            openURL (rec->recordURL ());
+    }
+}
+
+void KMPlayer::timerEvent (QTimerEvent * e) {
+    kdDebug () << "record timer event" << (m_recorder->playing () && !playing ()) << endl;
+    killTimer (e->timerId ());
+    m_record_timer = 0;
+    if (m_recorder->playing () && !playing ()) {
         Recorder * rec = dynamic_cast <Recorder*> (m_recorder);
         if (rec)
             openURL (rec->recordURL ());

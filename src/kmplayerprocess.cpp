@@ -168,7 +168,7 @@ bool MPlayerBase::stop () {
         KProcessController::theKProcessController->waitForProcessExit (2);
     } while (t.elapsed () < 2000 && m_process->isRunning ());
     if (m_process->isRunning ())
-        return KMPlayerProcess::stop ();
+        KMPlayerProcess::stop ();
     processStopped (0L);
     return true;
 }
