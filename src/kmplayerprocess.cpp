@@ -181,11 +181,15 @@ bool MPlayerBase::stop () {
         ::kill (-1 * ::getpid (), SIGTERM);
         signal(SIGTERM, oldhandler);
     }
+#if KDE_IS_VERSION(3, 1, 90)
+    m_process->wait(2);
+#else
     QTime t;
     t.start ();
     do {
         KProcessController::theKProcessController->waitForProcessExit (2);
     } while (t.elapsed () < 2000 && m_process->isRunning ());
+#endif
     if (m_process->isRunning ())
         KMPlayerProcess::stop ();
     processStopped (0L);
