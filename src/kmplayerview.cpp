@@ -341,8 +341,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerControlPanel::KMPlayerControlPanel(QWidget * parent)
 
 void KMPlayerControlPanel::showPositionSlider (bool show) {
     int h = show ? button_height_with_slider : button_height_only_buttons;
-    m_posSlider->setValue (0);
     m_posSlider->setEnabled (false);
+    m_posSlider->setValue (0);
     if (show) {
         m_posSlider->show ();
         m_buttonbox->setMargin (4);

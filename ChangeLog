@@ -1,3 +1,8 @@
+Changes since version 0.8.3
+- Auto hiding in fullscreen fix
+- Mencoder recording fix for URLs
+- Yet another spurious seek locking Xine when playing a playlist
+- Comment out NoExpose debug line with kxineplayer
 Changes since version 0.8.3-rc5
 - Two more regression fixes in show cache progress, get rid of spurious seek
   command caused by switching progress slider usage and don't update playing
