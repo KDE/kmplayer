@@ -1191,6 +1191,8 @@ void KMPlayerTVSource::buildMenu () {
                     source->norm = input->norm;
                     inputmenu->insertItem ((*it)->name, this, SLOT(menuClicked (int)), 0, counter);
                     source->command.sprintf ("device=%s:input=%d:freq=%d", device->device.ascii (), input->id, (*it)->frequency);
+                    if (!source->norm.isEmpty ())
+                        source->command += QString (":norm=") + source->norm;
                     source->title = device->name + QString("-") + (*it)->name;
                     if (currentcommand == source->command)
                         m_tvsource = source;

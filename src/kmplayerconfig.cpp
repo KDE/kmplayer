@@ -933,7 +933,7 @@ void TVDeviceScannerSource::play () {
     if (!m_tvdevice)
         return;
     QString args;
-    args.sprintf ("tv://on:driver=%s:device=%s -identify -frames 0", m_driver.ascii (), m_tvdevice->device.ascii ());
+    args.sprintf ("tv:// -tv driver=%s:device=%s -identify -frames 0", m_driver.ascii (), m_tvdevice->device.ascii ());
     if (m_player->mplayer ()->run (args.ascii()))
         connect (m_player, SIGNAL (stopPlaying ()), this, SLOT (finished ()));
     else

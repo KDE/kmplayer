@@ -471,7 +471,7 @@ void KMPlayerPrefSourcePageTV::slotScan () {
     if (dit != m_devices->end ()) {
         dit = std::find (deleteddevices.begin (),
                          deleteddevices.end (), device->text ());
-        if (dit != deleteddevices.end ()) {
+        if (dit == deleteddevices.end ()) {
             KMessageBox::error (this, i18n ("Device already present."),
                                       i18n ("Error"));
             return;
