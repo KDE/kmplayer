@@ -211,6 +211,8 @@ void KMPlayerApp::initView ()
             this, SLOT (fullScreen ()));
     connect (m_view->broadcastButton (), SIGNAL (clicked ()),
             this, SLOT (broadcastClicked ()));
+    connect (m_view->viewer (), SIGNAL (aspectChanged ()),
+            this, SLOT (zoom100 ()));
     /*QPopupMenu * viewmenu = new QPopupMenu;
     viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()),
                           QKeySequence ("CTRL + Key_F"));
@@ -228,8 +230,6 @@ void KMPlayerApp::loadingProgress (int percentage) {
 
 void KMPlayerApp::playerStarted () {
     KMPlayerSource * source = m_player->process ()->source ();
-    if (source != m_tvsource && m_player->settings ()->sizeratio)
-        resizePlayer (100);
     if (source->inherits ("KMPlayerURLSource"))
         recentFiles ()->addURL (source->url ());
 }
@@ -671,6 +671,7 @@ void KMPlayerApp::keepSizeRatio () {
         m_view->viewer ()->setAspect (m_player->process ()->source ()->aspect ());
     else
         m_view->viewer ()->setAspect (0.0);
+    m_player->settings ()->sizeratio = m_view->keepSizeRatio ();
     viewKeepRatio->setChecked (m_view->keepSizeRatio ());
 }
 

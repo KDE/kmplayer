@@ -461,6 +461,9 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
                     if (ok && movie_width > 0 && movie_height > 0) {
                         m_source->setWidth (movie_width);
                         m_source->setHeight (movie_height);
+                        m_source->setAspect (1.0*movie_width/movie_height);
+                        if (m_player->settings ()->sizeratio)
+                            v->viewer ()->setAspect (m_source->aspect ());
                     }
                 } else if (startRegExp.search (out) > -1) {
                         emit startPlaying ();

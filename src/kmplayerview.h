@@ -184,6 +184,7 @@ public slots:
 signals:
     void aboutToPlay ();
     void clicked ();
+    void aspectChanged ();
 protected:
     void showEvent (QShowEvent *);
     void hideEvent (QHideEvent *);

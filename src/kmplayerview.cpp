@@ -815,10 +815,15 @@ void KMPlayerViewer::setMouseTracking (bool enable) {
 }
 
 void KMPlayerViewer::setAspect (float a) {
+    float da = m_aspect - a;
+    if (da < 0) da *= -1;
+    if (da < 0.0001)
+        return;
     m_aspect = a;
     QWidget * w = static_cast <QWidget *> (parent ());
     QResizeEvent ev (w->size (), w->size ());
     QApplication::sendEvent (w, &ev);
+    emit aspectChanged ();
 }
 
 int KMPlayerViewer::heightForWidth (int w) const {
