@@ -1,4 +1,4 @@
-INCLUDES = -I$(kde_includes)/kio -I$(kde_includes)/arts $(all_includes)
+INCLUDES = -I$(kde_includes)/kio $(all_includes)
 
 KDE_ICON=AUTO
 
@@ -10,7 +10,7 @@ kde_module_LTLIBRARIES = kparts_kmplayer.la
 
 kparts_kmplayer_la_SOURCES = kmplayer_part.cpp kmplayer_koffice_part.cpp kmplayerview.cpp kmplayerconfig.cpp pref.cpp kmplayerprocess.cpp kmplayer_callback.skel kmplayer_backend.stub
 
-kparts_kmplayer_la_LDFLAGS= $(all_libraries) -module $(KDE_PLUGIN) -lartskde -lm
+kparts_kmplayer_la_LDFLAGS= $(all_libraries) -module $(KDE_PLUGIN) $(LIB_ARTS) -lm
 kparts_kmplayer_la_LIBADD= $(LIB_KFILE) $(LIB_KPARTS) $(LIB_KIO) $(LIB_KOFFICE) -lkmediaplayer
 
 kdeinit_kmplayer_la_SOURCES= main.cpp kmplayerapp.cpp
@@ -42,7 +42,7 @@ dummy.cpp:
 applnk_DATA = kmplayer.desktop
 applnkdir = $(kde_appsdir)/Multimedia
 
-kde_services_DATA = kmplayer_component.desktop kmplayer_koffice.desktop
+kde_services_DATA = kmplayer_component.desktop $(SERVICES_KOFFICE)
 
 rc_DATA = kmplayerui.rc kmplayerpartui.rc
 rcdir = $(kde_datadir)/kmplayer

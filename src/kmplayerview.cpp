@@ -61,10 +61,12 @@ static const int button_height = 11;
 #include <kapplication.h>
 #include <kurldrag.h>
 #include <dcopclient.h>
+#ifdef USE_ARTS
 #include <arts/kartsdispatcher.h>
 #include <arts/soundserver.h>
 #include <arts/kartsserver.h>
 #include <arts/kartsfloatwatch.h>
+#endif
 
 typedef int (*QX11EventFilter) (XEvent*);
 static QX11EventFilter oldFilter = 0;
@@ -91,28 +93,37 @@ public:
     KMPlayerViewStatic ();
     ~KMPlayerViewStatic ();
 
+#ifdef USE_ARTS
     void getDispatcher();
     void releaseDispatcher();
 private:
     KArtsDispatcher *dispatcher;
+#endif
     int use_count;
 };
 
 static KMPlayerViewStatic * kmplayerview_static = 0L;
 
 KMPlayerViewStatic::KMPlayerViewStatic () 
+#ifdef USE_ARTS
     : dispatcher ((KArtsDispatcher*) 0), use_count(0) {
+#else
+    : use_count(0) {
+#endif
     printf ("KMPlayerViewStatic::KMPlayerViewStatic\n");
     oldFilter = qt_set_x11_event_filter (qxembed_x11_event_filter);
 }
 
 KMPlayerViewStatic::~KMPlayerViewStatic () {
     printf ("KMPlayerViewStatic::~KMPlayerViewStatic\n");
+#ifdef USE_ARTS
     delete dispatcher;
+#endif
     qt_set_x11_event_filter (oldFilter);
     kmplayerview_static = 0L;
 }
 
+#ifdef USE_ARTS
 void KMPlayerViewStatic::getDispatcher() {
     if (!dispatcher) {
         dispatcher = new KArtsDispatcher;
@@ -127,6 +138,7 @@ void KMPlayerViewStatic::releaseDispatcher() {
         dispatcher = 0L;
     }
 }
+#endif
 
 static KStaticDeleter <KMPlayerViewStatic> kmplayerViewStatic;
 
@@ -276,6 +288,20 @@ void KMPlayerViewLayer::accelActivated () {
 }
 //-----------------------------------------------------------------------------
 
+class KMPlayerViewerHolder : public QWidget {
+    friend class KMPlayerView;
+public:
+    KMPlayerViewerHolder (QWidget * parent, KMPlayerView * view);
+protected:
+    void resizeEvent (QResizeEvent *);
+    void mouseMoveEvent (QMouseEvent *);
+    void dragEnterEvent (QDragEnterEvent *);
+    void dropEvent (QDropEvent *);
+private:
+    KMPlayerView * m_view;
+};
+
+inline
 KMPlayerViewerHolder::KMPlayerViewerHolder (QWidget * pa, KMPlayerView * view)
  : QWidget (pa), m_view (view) {
     setEraseColor (QColor (0, 0, 0));
@@ -507,6 +533,7 @@ bool KMPlayerView::setPicture (const QString & path) {
 }
 
 void KMPlayerView::setUseArts (bool b) {
+#ifdef USE_ARTS
     if (!m_use_arts && b) {
         kmplayerview_static->getDispatcher();
         m_artsserver = new Arts::SoundServerV2;
@@ -533,6 +560,7 @@ void KMPlayerView::setUseArts (bool b) {
         delete m_svc;
         kmplayerview_static->releaseDispatcher();
     }
+#endif
     m_use_arts = b;
 }
 
@@ -557,17 +585,21 @@ void KMPlayerView::delayedShowButtons (bool show) {
 }
 
 void KMPlayerView::setVolume (int vol) {
+#ifdef USE_ARTS
     if (m_inVolumeUpdate) return;
     float volume = float (0.0004*vol*vol);
     printf("setVolume %d -> %.4f\n", vol, volume);
     m_svc->scaleFactor (volume);
+#endif
 }
 
 void KMPlayerView::updateVolume (float v) {
+#ifdef USE_ARTS
     m_inVolumeUpdate = true;
     printf("updateVolume %.4f\n", v);
     m_slider->setValue (int (sqrt(v*10000.0/4)));
     m_inVolumeUpdate = false;
+#endif
 }
 
 void  KMPlayerView::updateLayout () {
@@ -618,8 +650,10 @@ void KMPlayerView::startsToPlay () {
 }
 
 void KMPlayerView::showPopupMenu () {
+#ifdef USE_ARTS
     if (m_use_arts)
         updateVolume(m_svc->scaleFactor());
+#endif
     m_popupMenu->exec (m_configButton->mapToGlobal (QPoint (0, button_height)));
 }
 

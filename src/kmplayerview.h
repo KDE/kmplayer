@@ -29,6 +29,7 @@
 
 class KMPlayerView;
 class KMPlayerViewer;
+class KMPlayerViewerHolder;
 class QMultiLineEdit;
 class QPixmap;
 class QPushButton;
@@ -190,20 +191,6 @@ protected:
     void paintEvent (QPaintEvent * e);
 private:
     float m_aspect;
-    KMPlayerView * m_view;
-};
-
-class KMPlayerViewerHolder : public QWidget {
-    friend class KMPlayerView;
-    Q_OBJECT
-public:
-    KMPlayerViewerHolder (QWidget * parent, KMPlayerView * view);
-protected:
-    void resizeEvent (QResizeEvent *);
-    void mouseMoveEvent (QMouseEvent *);
-    void dragEnterEvent (QDragEnterEvent *);
-    void dropEvent (QDropEvent *);
-private:
     KMPlayerView * m_view;
 };
 
