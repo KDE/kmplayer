@@ -191,6 +191,7 @@ static const char * strBrightness = "Brightness";
 static const char * strHue = "Hue";
 static const char * strSaturation = "Saturation";
 static const char * strURLList = "URL List";
+static const char * strSubURLList = "URL Sub Title List";
 //static const char * strUseArts = "Use aRts";
 static const char * strVoDriver = "Video Driver";
 static const char * strAoDriver = "Audio Driver";
@@ -298,6 +299,7 @@ void KMPlayerSettings::readConfig () {
 
     m_config->setGroup (strGeneralGroup);
     urllist = m_config->readListEntry (strURLList, ';');
+    sub_urllist = m_config->readListEntry (strSubURLList, ';');
     contrast = m_config->readNumEntry (strContrast, 0);
     brightness = m_config->readNumEntry (strBrightness, 0);
     hue = m_config->readNumEntry (strHue, 0);
@@ -500,6 +502,9 @@ void KMPlayerSettings::show () {
     configdialog->m_SourcePageURL->urllist->clear ();
     configdialog->m_SourcePageURL->urllist->insertStringList (urllist);
     configdialog->m_SourcePageURL->urllist->setCurrentText (m_player->process ()->source ()->url ().prettyURL ());
+    configdialog->m_SourcePageURL->sub_urllist->clear ();
+    configdialog->m_SourcePageURL->sub_urllist->insertStringList (sub_urllist);
+    configdialog->m_SourcePageURL->sub_urllist->setCurrentText (m_player->process ()->source ()->subUrl ().prettyURL ());
 
     configdialog->m_GeneralPageDVD->autoPlayDVD->setChecked (playdvd); //works if autoplay?
     configdialog->m_GeneralPageDVD->dvdDevicePath->lineEdit()->setText (dvddevice);
@@ -596,6 +601,7 @@ void KMPlayerSettings::writeConfig () {
 
     m_config->setGroup (strGeneralGroup);
     m_config->writeEntry (strURLList, urllist, ';');
+    m_config->writeEntry (strSubURLList, sub_urllist, ';');
     m_config->writeEntry (strContrast, contrast);
     m_config->writeEntry (strBrightness, brightness);
     m_config->writeEntry (strHue, hue);
@@ -754,6 +760,10 @@ void KMPlayerSettings::okPressed () {
         m_player->setURL (url);
         if (urllist.find (url.prettyURL ()) == urllist.end ())
             configdialog->m_SourcePageURL->urllist->insertItem (url.prettyURL (), 0);
+        KURL sub_url (configdialog->m_SourcePageURL->sub_url->url ());
+        m_player->process ()->source ()->setSubURL (sub_url);
+        if (sub_urllist.find (sub_url.prettyURL ()) == sub_urllist.end ())
+            configdialog->m_SourcePageURL->sub_urllist->insertItem (sub_url.prettyURL (), 0);
     }
     urllist.clear ();
     for (int i = 0; i < configdialog->m_SourcePageURL->urllist->count () && i < 20; ++i)
@@ -761,6 +771,10 @@ void KMPlayerSettings::okPressed () {
         // and why can I put a qstringlist in it, but cannot get it out of it again..
         if (!configdialog->m_SourcePageURL->urllist->text (i).isEmpty ())
             urllist.push_back (configdialog->m_SourcePageURL->urllist->text (i));
+    sub_urllist.clear ();
+    for (int i = 0; i < configdialog->m_SourcePageURL->sub_urllist->count () && i < 20; ++i)
+        if (!configdialog->m_SourcePageURL->sub_urllist->text (i).isEmpty ())
+            sub_urllist.push_back (configdialog->m_SourcePageURL->sub_urllist->text (i));
     sizeratio = configdialog->m_GeneralPageGeneral->keepSizeRatio->isChecked ();
     m_player->keepMovieAspect (sizeratio);
     showconsole = configdialog->m_GeneralPageGeneral->showConsoleOutput->isChecked ();

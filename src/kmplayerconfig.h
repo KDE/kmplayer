@@ -40,6 +40,7 @@ public:
     ~KMPlayerSettings ();
     KMPlayerPreferences *configDialog() const { return configdialog; }
     QStringList urllist;
+    QStringList sub_urllist;
     int contrast;
     int brightness;
     int hue;

@@ -342,8 +342,8 @@ KXinePlayer::~KXinePlayer () {
 }
 
 void KXinePlayer::play () {
-    mutex.lock ();
     if (running) {
+        mutex.lock ();
         if (xine_get_status (stream) == XINE_STATUS_PLAY &&
             xine_get_param (stream, XINE_PARAM_SPEED) == XINE_SPEED_PAUSE)
             xine_set_param( stream, XINE_PARAM_SPEED, XINE_SPEED_NORMAL);
@@ -371,7 +371,6 @@ void KXinePlayer::play () {
     running = 1;
     if (!xine_open (stream, mrl.local8Bit ())) {
         fprintf(stderr, "Unable to open mrl '%s'\n", mrl.ascii ());
-        mutex.unlock ();
         finished ();
         return;
     }
@@ -391,11 +390,9 @@ void KXinePlayer::play () {
         firstframe = 1;
     if (!xine_play (stream, 0, 0)) {
         fprintf(stderr, "Unable to play mrl '%s'\n", mrl.ascii ());
-        mutex.unlock ();
         finished ();
         return;
     }
-    mutex.unlock ();
     isplaying = 1;
 }
 
