@@ -367,6 +367,27 @@
    </bookmark>
   </folder>
   <folder folded="yes" >
+   <title>italy</title>
+   <bookmark icon="sound" href="mms://62.101.104.172/company" >
+    <title>Company</title>
+   </bookmark>
+   <bookmark icon="sound" href="http://213.92.19.12:80/radiodeejay2?MSWMExt=.asf" >
+    <title>DeeJay</title>
+   </bookmark>
+   <bookmark icon="sound" href="mms://livemedia.kataweb.it/Radio_m2o" >
+    <title>M2O</title>
+   </bookmark>
+   <bookmark icon="sound" href="rtsp://live.media.rai.it/broadcast/radiouno.rm" >
+    <title>Radio Uno</title>
+   </bookmark>
+   <bookmark icon="sound" href="rtsp://live.media.rai.it/broadcast/radiodue.rm" >
+    <title>Radio Due</title>
+   </bookmark>
+   <bookmark icon="sound" href="rtsp://live.media.rai.it/broadcast/radiotre.rm" >
+    <title>Radio Tre</title>
+   </bookmark>
+  </folder>
+  <folder folded="yes" >
    <title>macedonia</title>
    <bookmark icon="www" href="http://195.26.152.92:8000/" >
     <title>City Radio</title>
