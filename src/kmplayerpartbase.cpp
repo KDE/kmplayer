@@ -451,7 +451,7 @@ void KMPlayer::stop () {
     if (m_view && !m_view->stopButton ()->isOn ())
         m_view->stopButton ()->toggle ();
     if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
-    m_process->source ()->referenceUrls ().clear ();
+    m_process->source ()->first ();
     m_process->stop ();
     if (m_view) m_view->setCursor (QCursor (Qt::ArrowCursor));
     if (m_view && m_view->stopButton ()->isOn ())
@@ -542,6 +542,32 @@ void KMPlayerSource::setLength (int len) {
     KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
     if (view && view->positionSlider ())
         view->positionSlider()->setMaxValue (len > 0 ? len + 9 : 300);
+}
+
+void KMPlayerSource::setURL (const KURL & url) {
+    m_url = url;
+    m_refurls.clear ();
+    m_refurls.push_back (url.url ());
+    m_currenturl = m_refurls.begin ();
+    m_nexturl = m_refurls.end ();
+}
+
+void KMPlayerSource::first () {
+    m_nexturl = m_currenturl = m_refurls.begin ();
+    ++m_nexturl;
+}
+
+void KMPlayerSource::next () {
+    QStringList::iterator tmp = m_currenturl;
+    if (m_nexturl != ++tmp) {
+        m_refurls.erase (m_currenturl);
+        m_currenturl = tmp;
+        m_nexturl = ++tmp;
+    } else {
+        m_nexturl = ++m_currenturl;
+        if (m_nexturl != m_refurls.end ())
+            ++m_nexturl;
+    }
 }
 
 bool KMPlayerSource::processOutput (const QString & str) {

@@ -329,7 +329,7 @@ void KMPlayerPrefRecordPage::replayClicked (int id) {
 
 void KMPlayerPrefRecordPage::slotRecord () {
     if (!url->lineEdit()->text().isEmpty()) {
-        m_player->stop ();
+        m_player->process ()->stop ();
         m_player->settings ()->recordfile = url->lineEdit()->text();
         m_player->settings ()->replaytime = replaytime->text ().toInt ();
 #if KDE_IS_VERSION(3,1,90)
