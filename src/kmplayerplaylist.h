@@ -27,12 +27,15 @@
 #ifndef ASSERT
 #define ASSERT Q_ASSERT
 #endif
-#include "kmplayershared.h"
 
 #include <kdemacros.h>
 
 #undef KDE_NO_CDTOR_EXPORT
 #undef KDE_NO_EXPORT
+#ifndef KDE_EXPORT
+  #define KDE_EXPORT
+#endif
+#define KMPLAYER_EXPORT KDE_EXPORT
 #if __GNUC__ - 0 > 3 || (__GNUC__ - 0 == 3 && __GNUC_MINOR__ - 0 > 3)
   #define KDE_NO_CDTOR_EXPORT __attribute__ ((visibility("hidden")))
   #define KDE_NO_EXPORT __attribute__ ((visibility("hidden")))
@@ -44,6 +47,8 @@
   #define KDE_NO_EXPORT
 #endif
 
+#include "kmplayershared.h"
+
 class QXmlAttributes;
 class Document;
 class Element;
@@ -52,7 +57,7 @@ class Mrl;
 typedef SharedPtr<Element> ElementPtr;
 typedef WeakPtr<Element> ElementPtrW;
 
-class Element {
+class KMPLAYER_EXPORT Element {
 public:
     virtual ~Element ();
     Document * document ();
@@ -98,7 +103,7 @@ protected:
     ElementPtrW m_self;
 };
 
-class Mrl : public Element {
+class KMPLAYER_EXPORT Mrl : public Element {
 protected:
     KDE_NO_CDTOR_EXPORT Mrl (ElementPtr d) : Element (d), parsed (false) {}
     KDE_NO_CDTOR_EXPORT Mrl () : parsed (false) {} // for Document
@@ -110,7 +115,7 @@ public:
     bool parsed;
 };
 
-class Document : public Mrl {
+class KMPLAYER_EXPORT Document : public Mrl {
 public:
     Document (const QString &);
     ~Document ();
@@ -128,7 +133,7 @@ private:
     ElementPtr m_current;
 };
 
-class TextNode : public Element {
+class KMPLAYER_EXPORT TextNode : public Element {
 public:
     TextNode (ElementPtr d, const QString & s);
     KDE_NO_CDTOR_EXPORT ~TextNode () {}
@@ -223,7 +228,7 @@ public:
 
 //-----------------------------------------------------------------------------
 
-class GenericURL : public Mrl { //just some url, can get a SMIL or ASX childtree
+class KMPLAYER_EXPORT GenericURL : public Mrl { //just some url, can get a SMIL or ASX childtree
 public:
     KDE_NO_CDTOR_EXPORT GenericURL (ElementPtr d) : Mrl (d) {}
     GenericURL (ElementPtr d, const QString & s);

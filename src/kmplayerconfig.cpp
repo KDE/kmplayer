@@ -42,10 +42,10 @@
 #include <kcombobox.h>
 #include <kmessagebox.h>
 
+#include "kmplayersource.h"
 #include "kmplayerconfig.h"
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
-#include "kmplayersource.h"
 #include "kmplayerview.h"
 #include "pref.h"
 

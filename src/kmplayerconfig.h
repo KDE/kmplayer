@@ -44,7 +44,7 @@ void Deleter (T * t) {
     delete t;
 }
 
-class KMPlayerPreferencesPage {
+class KMPLAYER_EXPORT KMPlayerPreferencesPage {
 public:
     virtual ~KMPlayerPreferencesPage () {}
     virtual void write (KConfig *) = 0;
@@ -55,7 +55,7 @@ public:
     KMPlayerPreferencesPage * next;
 };
 
-class KMPlayerSettings : public QObject {
+class KMPLAYER_EXPORT KMPlayerSettings : public QObject {
     Q_OBJECT
 public:
     KMPlayerSettings (KMPlayer *, KConfig * part);

@@ -34,7 +34,7 @@ class QFrame;
 class QListViewItem;
 class KMPlayerSourcePrivate;
 
-class KMPlayerSource : public QObject {
+class KMPLAYER_EXPORT KMPlayerSource : public QObject {
     Q_OBJECT
 public:
     KMPlayerSource (const QString & name, KMPlayer * player, const char * src);

@@ -54,7 +54,7 @@ class KAction;
 class KShortcut;
 class KMPlayerPlayListView;
 
-class KMPlayerListViewItem : public QListViewItem {
+class KMPLAYER_EXPORT KMPlayerListViewItem : public QListViewItem {
 public:
     KMPlayerListViewItem (QListViewItem *p, const ElementPtr & e, KMPlayerPlayListView * lv);
     KMPlayerListViewItem (KMPlayerPlayListView *v, const ElementPtr & e);
@@ -64,7 +64,7 @@ public:
     KMPlayerPlayListView * listview;
 };
 
-class KMPlayerPlayListView : public KListView {
+class KMPLAYER_EXPORT KMPlayerPlayListView : public KListView {
     friend class KMPlayerListViewItem;
     Q_OBJECT
 public:
@@ -104,7 +104,7 @@ private:
     bool m_fullscreen : 1;
 };
 
-class KMPlayerPopupMenu : public KPopupMenu {
+class KMPLAYER_EXPORT KMPlayerPopupMenu : public KPopupMenu {
     Q_OBJECT
 public:
     KMPlayerPopupMenu (QWidget *);
@@ -115,7 +115,7 @@ protected:
     void leaveEvent (QEvent *);
 };
 
-class KMPlayerView : public KMediaPlayer::View {
+class KMPLAYER_EXPORT KMPlayerView : public KMediaPlayer::View {
     Q_OBJECT
     friend class KMPlayerViewerHolder;
     friend class KMPlayerViewer;
@@ -230,7 +230,7 @@ protected:
     void enterEvent (QEvent *);
 };
 
-class KMPlayerControlPanel : public QWidget {
+class KMPLAYER_EXPORT KMPlayerControlPanel : public QWidget {
 public:
     enum MenuID {
         menu_config = 0, menu_player, menu_fullscreen, menu_volume, 
@@ -286,7 +286,7 @@ private:
     bool m_auto_controls; // depending on source caps
 };
 
-class KMPlayerViewer : public QXEmbed {
+class KMPLAYER_EXPORT KMPlayerViewer : public QXEmbed {
     Q_OBJECT
 public:
     KMPlayerViewer(QWidget *parent, KMPlayerView * view);

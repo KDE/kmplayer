@@ -40,7 +40,7 @@ class KMPlayerSource;
 class KMPlayerCallback;
 class KMPlayerBackend_stub;
 
-class KMPlayerProcess : public QObject {
+class KMPLAYER_EXPORT KMPlayerProcess : public QObject {
     Q_OBJECT
 public:
     KMPlayerProcess (KMPlayer * player, const char * n);
@@ -168,7 +168,7 @@ private:
     MPlayerPreferencesFrame * m_configframe;
 };
 
-class Recorder {
+class KMPLAYER_EXPORT Recorder {
 public:
     KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
     KDE_NO_EXPORT void setURL (const KURL & url) { m_recordurl = url; }
@@ -203,7 +203,7 @@ public slots:
 class KMPlayerXMLPreferencesPage;
 class KMPlayerXMLPreferencesFrame;
 
-class KMPlayerCallbackProcess : public KMPlayerProcess {
+class KMPLAYER_EXPORT KMPlayerCallbackProcess : public KMPlayerProcess {
     Q_OBJECT
 public:
     KMPlayerCallbackProcess (KMPlayer * player, const char * n);
@@ -272,7 +272,7 @@ private slots:
     void processOutput (KProcess *, char *, int);
 };
 
-class FFMpeg : public KMPlayerProcess, public Recorder {
+class KMPLAYER_EXPORT FFMpeg : public KMPlayerProcess, public Recorder {
     Q_OBJECT
 public:
     FFMpeg (KMPlayer * player);

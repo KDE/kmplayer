@@ -54,7 +54,7 @@ namespace KIO {
     class Job;
 }
 
-class KMPlayerURLSource : public KMPlayerSource {
+class KMPLAYER_EXPORT KMPlayerURLSource : public KMPlayerSource {
     Q_OBJECT
 public:
     KMPlayerURLSource (KMPlayer * player, const KURL & url = KURL ());
@@ -78,7 +78,7 @@ private:
 };
 
 
-class KMPlayer : public KMediaPlayer::Player {
+class KMPLAYER_EXPORT KMPlayer : public KMediaPlayer::Player {
     Q_OBJECT
 public:
     KMPlayer (QWidget * parent,  const char * wname,QObject * parent, const char * name, KConfig *);
