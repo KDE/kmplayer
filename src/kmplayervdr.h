@@ -136,8 +136,6 @@ private:
     int channel_timer;
     int timeout_timer;
     int tcp_port;
-    int xv_port;
-    int xv_encoding;
     int scale;
 };
 
@@ -152,16 +150,16 @@ public:
         Input * next;
     };
     struct Port {
-        Port (int p, Port * n) : port (p), inputs (0L), next (n) {}
+        Port (int p, bool t, Port * n)
+            : port (p), has_tuner (t), inputs (0L), next (n) {}
         int port;
+        bool has_tuner;
         Input * inputs;
         Port * next;
     };
     XVideo (KMPlayer * player);
     ~XVideo ();
     QString menuName () const;
-    KDE_NO_EXPORT void setPort (int xvport) { xv_port = xvport; }
-    KDE_NO_EXPORT void setEncoding (int xvenc) { xv_encoding = xvenc; }
     void initProcess ();
     void setStarted (QCString dcopname, QByteArray & data);
     Port * ports () const { return m_ports; }
@@ -175,8 +173,6 @@ private slots:
     void processOutput (KProcess *, char *, int);
 private:
     Port * m_ports;
-    int xv_port;
-    int xv_encoding;
 };
 
 #endif // KMPLAYER_VDR_SOURCE_H

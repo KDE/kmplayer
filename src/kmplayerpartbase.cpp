@@ -626,6 +626,7 @@ KAboutData* KMPlayer::createAboutData () {
 KMPlayerSource::KMPlayerSource (const QString & name, KMPlayer * player, const char * n)
  : QObject (player, n),
    m_name (name), m_player (player),
+   m_frequency (0), m_xvport (0), m_xvencoding (0),
    m_auto_play (true) {
     kdDebug () << "KMPlayerSource::KMPlayerSource" << endl;
     init ();

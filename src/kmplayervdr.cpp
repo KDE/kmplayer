@@ -126,9 +126,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerVDRSource::KMPlayerVDRSource (KMPlayerApp * app, QPo
    commands (0L),
    channel_timer (0),
    timeout_timer (0),
-   tcp_port (0),
-   xv_port (0),
-   xv_encoding (0) {
+   tcp_port (0) {
     m_player->settings ()->addPage (this);
     act_up = new KAction (i18n ("VDR Key Up"), 0, 0, this, SLOT (keyUp ()), m_app->actionCollection (),"vdr_key_up");
     act_down = new KAction (i18n ("VDR Key Down"), 0, 0, this, SLOT (keyDown ()), m_app->actionCollection (),"vdr_key_down");
@@ -184,7 +182,6 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     view->addFullscreenAction (i18n ("VDR Key Green"), act_green->shortcut (), this, SLOT (keyGreen ()), "vdr_key_green");
     view->addFullscreenAction (i18n ("VDR Key Yellow"), act_yellow->shortcut (), this, SLOT (keyYellow ()), "vdr_key_yellow");
     view->addFullscreenAction (i18n ("VDR Key Blue"), act_blue->shortcut (), this, SLOT (keyBlue ()), "vdr_key_blue");
-    static_cast<XVideo *>(m_player->players () ["xvideo"])->setPort (xv_port);
     m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("up"), KIcon::Small, 0, true), i18n ("Up"), this, SLOT (keyUp ()), 0, -1, 1);
     m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("down"), KIcon::Small, 0, true), i18n ("Down"), this, SLOT (keyUp ()), 0, -1, 2);
     m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("back"), KIcon::Small, 0, true), i18n ("Back"), this, SLOT (keyBack ()), 0, -1, 3);
@@ -562,16 +559,16 @@ KDE_NO_EXPORT void KMPlayerVDRSource::keyBlue () {
 KDE_NO_EXPORT void KMPlayerVDRSource::write (KConfig * m_config) {
     m_config->setGroup (strVDR);
     m_config->writeEntry (strVDRPort, tcp_port);
-    m_config->writeEntry (strXVPort, xv_port);
-    m_config->writeEntry (strXVEncoding, xv_encoding);
+    m_config->writeEntry (strXVPort, m_xvport);
+    m_config->writeEntry (strXVEncoding, m_xvencoding);
     m_config->writeEntry (strXVScale, scale);
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::read (KConfig * m_config) {
     m_config->setGroup (strVDR);
     tcp_port = m_config->readNumEntry (strVDRPort, 2001);
-    xv_port = m_config->readNumEntry (strXVPort, 0);
-    xv_encoding = m_config->readNumEntry (strXVEncoding, 0);
+    m_xvport = m_config->readNumEntry (strXVPort, 0);
+    m_xvencoding = m_config->readNumEntry (strXVEncoding, 0);
     scale = m_config->readNumEntry (strXVScale, 0);
 }
 
@@ -586,16 +583,13 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
     XVideo * xvideo = static_cast<XVideo *>(m_player->players()["xvideo"]);
     if (fromUI) {
         tcp_port = m_configpage->tcp_port->text ().toInt ();
-        //xv_port = m_configpage->xv_port->text ().toInt ();
         scale = m_configpage->scale->id (m_configpage->scale->selected ());
         setAspect (scale ? 16.0/9 : 1.25);
         XVTreeItem * vitem = dynamic_cast <XVTreeItem *> (m_configpage->xv_port->selectedItem ());
         if (vitem) {
-            xv_port = vitem->port;
-            xv_encoding = vitem->encoding;
+            m_xvport = vitem->port;
+            m_xvencoding = vitem->encoding;
         }
-        xvideo->setPort (xv_port);
-        xvideo->setEncoding (xv_encoding);
     } else {
         m_configpage->tcp_port->setText (QString::number (tcp_port));
         m_configpage->scale->setButton (scale);
@@ -609,7 +603,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
                 XVideo::Input * inputs = ports->inputs;
                 while (inputs) {
                     QListViewItem * ii = new XVTreeItem (pi, inputs->name, ports->port, inputs->encoding);
-                    if (xv_port == ports->port && inputs->encoding == xv_encoding) {
+                    if (m_xvport == ports->port && inputs->encoding == m_xvencoding) {
                         ii->setSelected (true);
                         m_configpage->xv_port->ensureItemVisible (ii);
                     }
@@ -649,11 +643,9 @@ static const char * xv_supported [] = {
 
 KDE_NO_CDTOR_EXPORT XVideo::XVideo (KMPlayer * player)
  : KMPlayerCallbackProcess (player, "xvideo"),
-   m_ports (0L),
-   xv_port (0),
-   xv_encoding (0) {
+   m_ports (0L) {
     m_supported_sources = xv_supported;
-    m_player->settings ()->addPage (m_configpage);
+    //m_player->settings ()->addPage (m_configpage);
 }
 
 KDE_NO_CDTOR_EXPORT XVideo::~XVideo () {}
@@ -681,7 +673,12 @@ KDE_NO_EXPORT bool XVideo::play () {
         return true;
     }
     initProcess ();
+    int xv_port = m_source->xvPort ();
+    int xv_encoding = m_source->xvEncoding ();
+    int freq = m_source->frequency ();
     QString cmd  = QString ("kxvplayer -port %1 -enc %2 -wid %3 -cb %4 ").arg (xv_port).arg (xv_encoding).arg (view()->viewer()->embeddedWinId ()).arg (dcopName ());
+    if (freq > 0)
+        cmd += QString ("-freq %1 ").arg (freq);
     printf ("%s\n", cmd.latin1 ());
     *m_process << cmd;
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
@@ -733,13 +730,14 @@ KDE_NO_EXPORT void XVideo::setStarted (QCString dcopname, QByteArray & data) {
         }
         QString attvalue ("VALUE");
         QString attname ("NAME");
+        QString attfreq ("FREQ");
         QString atttype ("TYPE");
         QString valtree ("tree");
         for (QDomNode node = dom.firstChild().firstChild(); !node.isNull (); node = node.nextSibling ()) {
             if (node.attributes ().namedItem (atttype).nodeValue () == valtree) {
                 for (QDomNode pn = node.firstChild(); !pn.isNull (); pn = pn.nextSibling ()) {
-                    m_ports = new Port (pn.attributes().namedItem (attvalue).nodeValue().toInt (), m_ports);
-                    kdDebug () << "Port " << m_ports->port << endl;
+                    m_ports = new Port (pn.attributes().namedItem (attvalue).nodeValue().toInt (), !pn.attributes().namedItem (attfreq).isNull (), m_ports);
+                    kdDebug () << "Port " << m_ports->port << " " << m_ports->has_tuner << endl;
                     for (QDomNode in = pn.firstChild(); !in.isNull (); in = in.nextSibling ()) {
                         QDomNamedNodeMap attr = in.attributes ();
                         m_ports->inputs = new Input (attr.namedItem (attvalue).nodeValue().toInt (), attr.namedItem (attname).nodeValue (), m_ports->inputs);

@@ -55,9 +55,9 @@ static bool                 verbose;
 static bool                 running;
 static bool                 have_freq;
 static bool                 xv_success;
-static int                  freq;
 static int                  xvport;
 static int                  xv_encoding = -1;
+static int                  xv_frequency;
 static int                  screen;
 static int                  movie_width;
 static int                  movie_height;
@@ -223,7 +223,7 @@ void KXVideoPlayer::init () {
                     }
                     XFree(attributes);
                 }
-                if (!xvport) {
+                if (!xvport && ((xv_frequency > 0) == freq_found)) {
                     fprintf (stderr, "using xvport %d\n", port);
                     xvport = port;
                 }
@@ -312,8 +312,8 @@ void KXVideoPlayer::play () {
         gc = XCreateGC (display, wid, 0, NULL);
         XvSelectPortNotify (display, xvport, 1);
         XvSelectVideoNotify (display, wid, 1);
-        if (freq)
-            XvSetPortAttribute (display, xvport, xv_freq_atom, int (1.0*freq/6.25));
+        if (xv_frequency > 0)
+            XvSetPortAttribute (display, xvport, xv_freq_atom, int (1.0*xv_frequency/6.25));
         if (xv_encoding >= 0)
             XvSetPortAttribute (display, xvport, xv_enc_atom, xv_encoding);
         //XvGetVideo (..
@@ -375,7 +375,7 @@ void KXVideoPlayer::volume (int val) {
 }
 
 void KXVideoPlayer::frequency (int val) {
-    freq = val;
+    xv_frequency = val;
     if (running && have_freq) {
         XLockDisplay(display);
         XvSetPortAttribute (display, xvport, xv_freq_atom, int (1.0*val/6.25));
@@ -491,8 +491,10 @@ int main(int argc, char **argv) {
             }
         } else if (!strcmp (argv [i], "-enc")) {
             xv_encoding = strtol (argv [++i], 0L, 10);
+        } else if (!strcmp (argv [i], "-freq")) {
+            xv_frequency = strtol (argv [++i], 0L, 10);
         } else  {
-            fprintf (stderr, "usage: %s [-port <xv port>] [-enc <encoding>] [-f <config file>] [-v] [(-wid|-window-id) <window>] [(-root|-window)] [-cb <DCOP callback name> [-c]]\n", argv[0]);
+            fprintf (stderr, "usage: %s [-port <xv port>] [-enc <encoding>] [-freq <frequency>] [-f <config file>] [-v] [(-wid|-window-id) <window>] [(-root|-window)] [-cb <DCOP callback name> [-c]]\n", argv[0]);
             delete xvapp;
             return 1;
         }

@@ -62,7 +62,9 @@ public:
     KDE_NO_EXPORT const QString & audioDevice () const { return m_audiodevice; }
     KDE_NO_EXPORT const QString & videoDevice () const { return m_videodevice; }
     KDE_NO_EXPORT const QString & videoNorm () const { return m_videonorm; }
-    KDE_NO_EXPORT const int frequency () const { return m_frequency; }
+    KDE_NO_EXPORT int frequency () const { return m_frequency; }
+    KDE_NO_EXPORT int xvPort () const { return m_xvport; }
+    KDE_NO_EXPORT int xvEncoding () const { return m_xvencoding; }
     KDE_NO_EXPORT const QString & pipeCmd () const { return m_pipecmd; }
     KDE_NO_EXPORT const QString & options () const { return m_options; }
     KDE_NO_EXPORT const QString & recordCmd () const { return m_recordcmd; }
@@ -109,6 +111,8 @@ protected:
     QString m_videodevice;
     QString m_videonorm;
     int m_frequency;
+    int m_xvport;
+    int m_xvencoding;
     QString m_pipecmd;
     QString m_options;
 private:
