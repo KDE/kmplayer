@@ -69,27 +69,32 @@ public:
     const Mrl * mrl () const;
     virtual ElementPtr childFromTag (const QString & tag);
     void characterData (const QString & s);
+    QString innerText () const;
     virtual void setAttributes (const QXmlAttributes &);
     virtual const char * nodeName () const;
     /**
      * If this is a derived Mrl object and has a SRC attribute
      */
     virtual bool isMrl ();
+    /**
+     * If this node should be visible to the user
+     */
+    virtual bool expose ();
     void appendChild (ElementPtr c);
     void insertBefore (ElementPtr c, ElementPtr b);
     void removeChild (ElementPtr c);
     void replaceChild (ElementPtr _new, ElementPtr old);
-    KDE_NO_EXPORT bool isDocument () { return m_doc == m_self; }
+    KDE_NO_EXPORT bool isDocument () const { return m_doc == m_self; }
     KDE_NO_EXPORT bool hasChildNodes () const { return (bool) m_first_child; }
-    KDE_NO_EXPORT ElementPtr parentNode () { return m_parent; }
-    KDE_NO_EXPORT ElementPtr firstChild () { return m_first_child; }
-    KDE_NO_EXPORT ElementPtr lastChild () { return m_last_child; }
-    KDE_NO_EXPORT ElementPtr nextSibling () { return m_next; }
-    KDE_NO_EXPORT ElementPtr previousSibling () { return m_prev; }
+    KDE_NO_EXPORT ElementPtr parentNode () const { return m_parent; }
+    KDE_NO_EXPORT ElementPtr firstChild () const { return m_first_child; }
+    KDE_NO_EXPORT ElementPtr lastChild () const { return m_last_child; }
+    KDE_NO_EXPORT ElementPtr nextSibling () const { return m_next; }
+    KDE_NO_EXPORT ElementPtr previousSibling () const { return m_prev; }
     /**
      * If not assigned to a Shared pointer, this will result in self destruction
      */
-    KDE_NO_EXPORT ElementPtr self () { return m_self; }
+    KDE_NO_EXPORT ElementPtr self () const { return m_self; }
 protected:
     KDE_NO_CDTOR_EXPORT Element (ElementPtr d) : m_doc (d), m_self (this) {}
     KDE_NO_CDTOR_EXPORT Element () {} // for Document
@@ -142,6 +147,14 @@ public:
     void appendText (const QString & s);
     KDE_NO_EXPORT const char * nodeName () const { return "#text"; }
     QString text;
+};
+
+class Title : public Element {
+public:
+    Title (ElementPtr d);
+    KDE_NO_CDTOR_EXPORT ~Title () {}
+    KDE_NO_EXPORT const char * nodeName () const { return "title"; }
+    virtual bool expose ();
 };
 
 //-----------------------------------------------------------------------------
@@ -198,18 +211,26 @@ public:
 
 //-----------------------------------------------------------------------------
 
-class Asx : public Element {
+class Asx : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Asx (ElementPtr d) : Element (d) {}
+    KDE_NO_CDTOR_EXPORT Asx (ElementPtr d) : Mrl (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "ASX"; }
+    /**
+     * True if no mrl children
+     */
+    bool isMrl ();
 };
 
-class Entry : public Element {
+class Entry : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Entry (ElementPtr d) : Element (d) {}
+    KDE_NO_CDTOR_EXPORT Entry (ElementPtr d) : Mrl (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "Entry"; }
+    /**
+     * True if has a Ref child
+     */
+    bool isMrl ();
 };
 
 class Ref : public Mrl {

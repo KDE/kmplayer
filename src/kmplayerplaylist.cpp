@@ -78,6 +78,10 @@ KDE_NO_EXPORT const char * Element::nodeName () const {
     return "element";
 }
 
+KDE_NO_EXPORT bool Element::expose () {
+    return true;
+}
+
 KDE_NO_EXPORT void Element::clear () {
     while (m_first_child != m_last_child) {
         // avoid stack abuse with 10k children derefing each other
@@ -161,6 +165,23 @@ KDE_NO_EXPORT void Element::characterData (const QString & s) {
         static_cast <TextNode *> (static_cast <Element *> (m_last_child))->appendText (s);
 }
 
+static QString getInnerText (const ElementPtr p) {
+    QString buf;
+    QTextOStream out (&buf);
+    for (ElementPtr e = p->firstChild (); e; e = e->nextSibling ()) {
+        if (!strcmp (e->nodeName (), "#text"))
+            out << (static_cast<TextNode*>(static_cast<Element *>(e)))->text;
+        else
+            out << QChar ('<') << e->nodeName () << QChar ('>'); //TODO attr.
+        out << getInnerText (e);
+    }
+    return buf;
+}
+
+QString Element::innerText () const {
+    return getInnerText (self ());
+}
+
 KDE_NO_EXPORT void Element::setAttributes (const QXmlAttributes & atts) {
     for (int i = 0; i < atts.length (); i++)
         kdDebug () << " " << atts.qName (i) << "=" << atts.value (i) << endl;
@@ -226,6 +247,14 @@ KDE_NO_CDTOR_EXPORT TextNode::TextNode (ElementPtr d, const QString & s)
 void TextNode::appendText (const QString & s) {
     text += s;
 }
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT Title::Title (ElementPtr d) : Element (d) {}
+
+KDE_NO_EXPORT bool Title::expose () {
+    return false;
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementPtr Smil::childFromTag (const QString & tag) {
@@ -317,18 +346,39 @@ KDE_NO_EXPORT ElementPtr Asx::childFromTag (const QString & tag) {
         return (new Entry (m_doc))->self ();
     else if (!strcasecmp (name, "entryref"))
         return (new EntryRef (m_doc))->self ();
+    else if (!strcasecmp (name, "title"))
+        return (new Title (m_doc))->self ();
     return 0L;
 }
 
+KDE_NO_EXPORT bool Asx::isMrl () {
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
+        if (!strcmp (e->nodeName (), "title"))
+            pretty_name = e->innerText ();
+    }
+    return Mrl::isMrl ();
+}
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementPtr Entry::childFromTag (const QString & tag) {
     const char * name = tag.latin1 ();
     if (!strcasecmp (name, "ref"))
         return (new Ref (m_doc))->self ();
+    else if (!strcasecmp (name, "title"))
+        return (new Title (m_doc))->self ();
     return 0L;
 }
 
+KDE_NO_EXPORT bool Entry::isMrl () {
+    src.truncate (0); // FIXME cache tree changes
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
+        if (e->isMrl ())
+            src = e->mrl ()->src;
+        else if (!strcmp (e->nodeName (), "title"))
+            pretty_name = e->innerText ();
+    }
+    return !src.isEmpty ();
+}
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT void Ref::setAttributes (const QXmlAttributes & atts) {

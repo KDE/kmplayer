@@ -445,7 +445,7 @@ void KMPlayerControlPanel::setAutoControls (bool b) {
             m_buttons [i]->show ();
         for (int i = button_broadcast; i < (int) button_last; i++)
             m_buttons [i]->hide ();
-        m_posSlider->show ();
+        showPositionSlider (true);
     } else { // hide everything
         for (int i = 0; i < (int) button_last; i++)
             m_buttons [i]->hide ();
@@ -588,6 +588,10 @@ KDE_NO_CDTOR_EXPORT KMPlayerPlayListView::KMPlayerPlayListView (QWidget * parent
     m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("editcopy"), KIcon::Small, 0, true), i18n ("&Copy to Clipboard"), this, SLOT (copyToClipboard ()), 0, 0);
     m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("bookmark_add"), KIcon::Small, 0, true), i18n ("&Add Bookmark"), this, SLOT (addBookMark ()), 0, 1);
     connect (this, SIGNAL (contextMenuRequested (QListViewItem *, const QPoint &, int)), this, SLOT (contextMenuItem (QListViewItem *, const QPoint &, int)));
+    QFont fnt = font ();
+    fnt.setPointSize (fnt.pointSize () - 1);
+    fnt.setWeight (QFont::DemiBold);
+    setFont (fnt);
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerPlayListView::~KMPlayerPlayListView () {
@@ -602,7 +606,7 @@ static void populateTree (ElementPtr e, ElementPtr focus, KMPlayerPlayListView *
         tree->setSelected (item, true);
     }
     for (ElementPtr c = e->lastChild (); c; c = c->previousSibling ())
-        if (strcmp (c->nodeName (), "#text"))
+        if (strcmp (c->nodeName (), "#text") && c->expose ())
             populateTree (c, focus, tree, new KMPlayerListViewItem (item, c, tree));
 }
 
@@ -669,7 +673,12 @@ private:
 };
 
 KDE_NO_CDTOR_EXPORT KMPlayerConsole::KMPlayerConsole (QWidget * parent, KMPlayerView * view) : QTextEdit (parent, "kde_kmplayer_console"), m_view (view) {
-    setTextFormat(Qt::PlainText);
+    setTextFormat (Qt::PlainText);
+    setReadOnly (true);
+    QFont fnt = font ();
+    fnt.setFamily ("courier");
+    fnt.setWeight (QFont::DemiBold);
+    setFont (fnt);
 }
 
 KDE_NO_EXPORT void KMPlayerConsole::contextMenuEvent (QContextMenuEvent * e) {
@@ -783,8 +792,6 @@ KDE_NO_EXPORT void KMPlayerView::init () {
 #endif
 
     m_multiedit = new KMPlayerConsole (m_widgetstack, this);
-    m_multiedit->setReadOnly (true);
-    m_multiedit->setFamily ("courier");
     m_multiedit->setPaper (QBrush (QColor (0, 0, 0)));
     m_multiedit->setColor (QColor (0xB2, 0xB2, 0xB2));
     m_widgettypes[WT_Console] = m_multiedit;
