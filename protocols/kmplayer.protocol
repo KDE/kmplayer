@@ -1,5 +1,5 @@
 [Protocol]
-Class=:internet
+Class=:local
 Description=KMPlayer protocol
 exec=kmplayer "%u"
 protocol=kmplayer
