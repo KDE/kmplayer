@@ -86,6 +86,7 @@ public slots:
     virtual void forward ();
     virtual void backward ();
 protected:
+    void checkList ();
     QString m_name;
     QString m_mime;
     KMPlayer * m_player;

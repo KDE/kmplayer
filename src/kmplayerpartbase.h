@@ -24,6 +24,7 @@
 #include <qobject.h>
 #include <qguardedptr.h>
 #include <qvaluelist.h>
+#include <qcstring.h>
 
 #include <kmediaplayer/player.h>
 #include <kurl.h>
@@ -47,8 +48,11 @@ class KActionCollection;
 class KBookmarkMenu;
 class KConfig;
 class QIODevice;
+class QTextStream;
 class JSCommandEntry;
-
+namespace KIO {
+    class Job;
+}
 
 class KMPlayerURLSource : public KMPlayerSource {
     Q_OBJECT
@@ -63,6 +67,17 @@ public slots:
     virtual void init ();
     virtual void activate ();
     virtual void deactivate ();
+private slots:
+    void kioData (KIO::Job *, const QByteArray &);
+    void kioMimetype (KIO::Job *, const QString &);
+    void kioResult (KIO::Job *);
+protected:
+    void checkList ();
+private:
+    void play (const KURL & url, const QString & mime);
+    void read (QTextStream &);
+    KIO::Job * m_job;
+    QByteArray m_data;
 };
 
 

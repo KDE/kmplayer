@@ -265,14 +265,7 @@ bool KMPlayerPart::openURL (const KURL & url) {
     KParts::URLArgs args = m_browserextension->urlArgs();
     if (!args.serviceType.isEmpty ())
         m_urlsource->setMime (args.serviceType);
-    if (m_urlsource->mime () == QString ("audio/mpegurl") ||
-            m_urlsource->mime () == QString ("audio/x-mpegurl") ||
-            m_urlsource->mime () == QString ("audio/x-scpls") ||
-            m_urlsource->mime () == QString ("application/smil") ||
-            (url.protocol () == QString ("http") &&
-             (m_urlsource->mime () == QString ("video/x-ms-wmp") ||
-              m_urlsource->mime () == QString ("video/x-ms-asf") ||
-              m_urlsource->mime () == QString ("application/x-mplayer2")))) {
+    if (!url.isLocalFile() && m_urlsource->mime() == QString("audio/x-scpls")) {
         m_request_fileopen = true;
         return KParts::ReadOnlyPart::openURL (url);
     }

@@ -402,7 +402,7 @@ void KMPlayerControlPanel::showPositionSlider (bool show) {
         m_posSlider->show ();
         m_buttonbox->setMargin (4);
         m_buttonbox->setSpacing (4);
-        setEraseColor (parentWidget ()->eraseColor ());
+        setEraseColor (parentWidget ()->paletteBackgroundColor ());
     } else {
         m_posSlider->hide ();
         m_buttonbox->setMargin (1);

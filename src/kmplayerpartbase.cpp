@@ -32,7 +32,9 @@
 #include <qslider.h>
 #include <qvaluelist.h>
 #include <qfile.h>
-#include <qdom.h>
+#include <qxml.h>
+#include <qregexp.h>
+#include <qtextstream.h>
 
 #include <kmessagebox.h>
 #include <kaboutdata.h>
@@ -43,6 +45,8 @@
 #include <kaction.h>
 #include <kprocess.h>
 #include <kstandarddirs.h>
+#include <kio/job.h>
+#include <kio/jobclasses.h>
 
 #include "kmplayerpartbase.h"
 #include "kmplayerview.h"
@@ -641,14 +645,7 @@ void KMPlayerSource::setURL (const KURL & url) {
     m_ins_url = m_nexturl = m_refurls.end ();
 }
 
-QString KMPlayerSource::first () {
-    current (); // update insertions
-    m_nexturl = m_currenturl = m_refurls.begin ();
-    m_ins_url = ++m_nexturl;
-    return m_currenturl == m_refurls.end () ? QString () : *m_currenturl;
-}
-
-QString KMPlayerSource::current () {
+void KMPlayerSource::checkList () {
     QStringList::iterator tmp = m_currenturl;
     if (tmp != m_refurls.end () && m_ins_url != ++tmp) {
         kdDebug () << "Erasing " << *m_currenturl << endl;
@@ -656,12 +653,23 @@ QString KMPlayerSource::current () {
         m_currenturl = tmp;
         m_ins_url = m_nexturl = ++tmp;
     }
+}
+
+QString KMPlayerSource::first () {
+    checkList (); // update insertions
+    m_nexturl = m_currenturl = m_refurls.begin ();
+    m_ins_url = ++m_nexturl;
+    return m_currenturl == m_refurls.end () ? QString () : *m_currenturl;
+}
+
+QString KMPlayerSource::current () {
+    checkList (); // update insertions
     return m_currenturl == m_refurls.end () ? QString () : *m_currenturl;
 }
 
 QString KMPlayerSource::next () {
     QStringList::iterator tmp = m_nexturl;
-    current (); // update insertions
+    checkList (); // update insertions
     m_currenturl = tmp;
     if (tmp != m_refurls.end ())
         m_nexturl = ++tmp;
@@ -822,7 +830,7 @@ QString KMPlayerSource::prettyName () {
 //-----------------------------------------------------------------------------
 
 KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, const KURL & url)
-    : KMPlayerSource (i18n ("URL"), player) {
+    : KMPlayerSource (i18n ("URL"), player), m_job (0L) {
     setURL (url);
     kdDebug () << "KMPlayerURLSource::KMPlayerURLSource" << endl;
 }
@@ -844,7 +852,7 @@ void KMPlayerURLSource::activate () {
     if (url ().isEmpty ())
         return;
     if (m_auto_play)
-        QTimer::singleShot (0, m_player, SLOT (play ()));
+        play (m_url, m_mime);
 }
 
 void KMPlayerURLSource::deactivate () {
@@ -879,68 +887,122 @@ QString KMPlayerURLSource::prettyName () {
     return QString (i18n ("URL - %1").arg (m_url.prettyURL ()));
 }
 
-static void scanDomTree (const QDomNode & node, QStringList & refurls) {
-    if (node.nodeName ().lower () == QString ("entryref") ||
-            node.nodeName ().lower () == QString ("ref") ||
-            node.nodeName ().lower () == QString ("video")) {
-        kdDebug () << node.nodeName () << endl;
-        QDomNamedNodeMap attr (node.attributes ());
-        for (unsigned i = 0; i < attr.length (); i++)
-        if (attr.item (i).nodeName ().lower () == QString ("href") ||
-                attr.item (i).nodeName ().lower () == QString ("src")) {
-            kdDebug () << attr.item (i).nodeName () << "=" << attr.item (i).nodeValue () << endl;
-            refurls.push_back (attr.item (i).nodeValue ());
+class MMXmlContentHandler : public QXmlDefaultHandler {
+    KMPlayerURLSource * m_urlsource;
+public:
+    MMXmlContentHandler (KMPlayerURLSource * source) : m_urlsource (source) {}
+    bool startElement (const QString &, const QString &,
+                       const QString & elm, const QXmlAttributes & atts) {
+        if (elm.lower () == QString ("entryref") ||
+                elm.lower () == QString ("ref") ||
+                elm.lower () == QString ("video"))
+            for (int i = 0; i < atts.length (); i++)
+                if (atts.qName (i).lower () == QString ("href") ||
+                    atts.qName (i).lower () == QString ("src")) {
+                    kdDebug() << atts.qName(i) << "=" << atts.value(i) << endl;
+                    m_urlsource->insertURL (atts.value (i));
+                }
+        return true;
+    }
+};
+
+class FilteredInputSource : public QXmlInputSource {
+    QTextStream  & textstream;
+    QString & buffer;
+    int pos;
+public:
+    FilteredInputSource (QTextStream & ts, QString & b) : textstream (ts), buffer (b), pos (0) {}
+    QString data () { return textstream.read (); }
+    void fetchData ();
+    QChar next ();
+};
+
+QChar FilteredInputSource::next () {
+    if (pos + 4 >= buffer.length ())
+        fetchData ();
+    if (pos >= buffer.length ())
+        return QXmlInputSource::EndOfData;
+    QChar ch = buffer.at (pos++);
+    if (ch == QChar ('&')) {
+        QRegExp exp (QString ("\\w+;"));
+        if (buffer.find (exp, pos) != pos) {
+            buffer = QString ("&amp;") + buffer.mid (pos);
+            pos = 1;
         }
     }
-    for (QDomNode n = node.firstChild(); !n.isNull (); n = n.nextSibling ())
-        scanDomTree (n, refurls);
+    return ch;
 }
 
+void FilteredInputSource::fetchData () {
+    if (pos > 0)
+        buffer = buffer.mid (pos);
+    pos = 0;
+    if (textstream.atEnd ())
+        return;
+    buffer += textstream.readLine ();
+}
 
-void KMPlayerURLSource::setURL (const KURL & url) {
-    m_url = url;
-    m_refurls.clear ();
+void KMPlayerURLSource::read (QTextStream & textstream) {
+    QString line;
+    do {
+        line = textstream.readLine ();
+    } while (!line.isNull () && line.stripWhiteSpace ().isEmpty ());
+    if (!line.isNull ()) {
+        if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
+            QXmlSimpleReader reader;
+            MMXmlContentHandler content_handler (this);
+            FilteredInputSource input_source (textstream, line);
+            reader.setContentHandler (&content_handler);
+            reader.setErrorHandler (&content_handler);
+            reader.parse (&input_source);
+        } else do {
+            QString mrl = line.stripWhiteSpace ();
+            if (!mrl.isEmpty () && !mrl.startsWith (QChar ('#')))
+                insertURL (mrl);
+            line = textstream.readLine ();
+        } while (!line.isNull () && m_refurls.size () < 1024 /* support 1k entries */);
+    }
+;
+}
+
+void KMPlayerURLSource::kioData (KIO::Job *, const QByteArray & d) {
+    int size = m_data.size ();
+    int newsize = size + d.size ();
+    if (newsize > 50000) {
+        kdDebug () << "KMPlayerURLSource::kioData: " << newsize << endl;
+        d->job->kill();
+        d->job = 0L; // KIO::Job::kill deletes itself
+    } else  {
+        m_data.resize (size + d.size ());
+        memcpy (m_data.data () + size, d.data (), d.size ());
+    }
+}
+
+void KMPlayerURLSource::kioMimetype (KIO::Job *, const QString & mime) {
+    kdDebug () << "KMPlayerURLSource::kioMimetype " << mime << endl;
+}
+
+void KMPlayerURLSource::kioResult (KIO::Job *) {
+    d->job = 0L; // KIO::Job::kill deletes itself
+    QTextStream textstream (m_data, IO_ReadOnly);
+    read (textstream);
+    QTimer::singleShot (0, m_player, SLOT (play ()));
+}
+
+void KMPlayerURLSource::play (const KURL & url, const QString & mime) {
+    bool maybe_playlist = (url.url ().lower ().endsWith (QString ("m3u")) ||
+            url.url ().lower ().endsWith (QString ("asx")) ||
+            mime == QString ("audio/mpegurl") ||
+            mime == QString ("audio/x-mpegurl") ||
+            mime == QString ("video/x-ms-wmp") ||
+            mime == QString ("video/x-ms-asf") ||
+            mime == QString ("application/smil") ||
+            mime == QString ("application/x-mplayer2"));
     if (url.isLocalFile ()) {
-        if (url.url ().lower ().endsWith (QString ("m3u")) ||
-                url.url ().lower ().endsWith (QString ("asx")) ||
-                m_mime == QString ("audio/mpegurl") ||
-                m_mime == QString ("audio/x-mpegurl") ||
-                m_mime == QString ("video/x-ms-wmp") ||
-                m_mime == QString ("video/x-ms-asf") ||
-                m_mime == QString ("application/smil") ||
-                m_mime == QString ("application/x-mplayer2")) {
-            char buf[1024];
-            QFile file (url.path ());
-            if (file.exists () && file.size () < 50000 && file.open (IO_ReadOnly)) {
-                int len;
-                do {
-                    len = file.readLine (buf, sizeof (buf));
-                    buf[len] = 0;
-                } while (len >= 0 && len < sizeof (buf) -1 &&
-                         QString (buf).stripWhiteSpace () == 0);
-                if (len > 0 && len < sizeof (buf) -1) {
-                    buf[len] = 0;
-                    if (QString (buf).stripWhiteSpace ().startsWith (QChar ('<'))) {
-                        file.close ();
-                        QDomDocument doc;
-                        QString errorMsg;
-                        int errLine, errCol;
-                        bool succes = doc.setContent (&file, false, &errorMsg, &errLine, &errCol);
-                        if (!doc.isNull ())
-                            scanDomTree (doc.firstChild(), m_refurls);
-                        else if (!succes)
-                            kdDebug () << "XML error: " << errorMsg << " at " << errLine << "," << errCol << endl;
-                    } else do {
-                        QString mrl = QString::fromLocal8Bit (buf).stripWhiteSpace ();
-                        if (!mrl.startsWith (QChar ('#')) && !mrl.isEmpty ())
-                            m_refurls.push_back (mrl);
-                        len = file.readLine (buf, sizeof (buf));
-                        buf[len] = 0;
-                    } while (len > 0 && len < sizeof (buf) -1 && 
-                             m_refurls.size () < 1024 /* support 1k entries */);
-                }
-            }
-        } else if (url.url ().lower ().endsWith (QString ("pls")) ||
+        QFile file (url.path ());
+        if (!file.exists ())
+            return;
+        if (url.url ().lower ().endsWith (QString ("pls")) ||
                 m_mime == QString ("audio/x-scpls")) {
             KConfig kc (url.path (), true);
             kc.setGroup ("playlist");
@@ -950,12 +1012,33 @@ void KMPlayerURLSource::setURL (const KURL & url) {
             for (int i = 0; i < nr; i++) {
                 QString mrl = kc.readEntry (QString ("File%1").arg(i+1), "");
                 if (!mrl.isEmpty ())
-                    m_refurls.push_back (mrl);
+                    insertURL (mrl);
             }
+        } else if (maybe_playlist && file.size () < 50000 && file.open (IO_ReadOnly)) {
+            QTextStream textstream (&file);
+            read (textstream);
         }
+    } else if (maybe_playlist) {
+        m_data.truncate (0);
+        m_job = KIO::get (m_url, false, false);
+        m_job->addMetaData ("PropagateHttpHeader", "true");
+        connect (m_job, SIGNAL (data (KIO::Job *, const QByteArray &)),
+                 this, SLOT (kioData (KIO::Job *, const QByteArray &)));
+    //connect( m_job, SIGNAL(connected(KIO::Job*)),
+    //         this, SLOT(slotConnected(KIO::Job*)));
+        connect (m_job, SIGNAL (mimetype (KIO::Job *, const QString &)),
+                 this, SLOT (kioMimetype (KIO::Job *, const QString &)));
+        connect (m_job, SIGNAL (result (KIO::Job *)),
+                 this, SLOT (kioResult (KIO::Job *)));
+        return;
     }
-    if (!m_refurls.size ())
-        m_refurls.push_back (url.url ());
+    QTimer::singleShot (0, m_player, SLOT (play ()));
+}
+
+void KMPlayerURLSource::setURL (const KURL & url) {
+    m_url = url;
+    m_refurls.clear ();
+    m_refurls.push_back (url.url ());
     m_nexturl = m_currenturl = m_refurls.begin ();
     m_ins_url = ++m_nexturl;
 }
