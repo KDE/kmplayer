@@ -728,7 +728,7 @@ KDE_NO_EXPORT void KMPlayerHRefSource::activate () {
         return;
     }
     init ();
-    m_player->setProcess (m_player->mplayer ());
+    m_player->setProcess (m_player->players () ["player"]);
     if (m_player->process ()->grabPicture (m_url, 0))
         connect (m_player->process (), SIGNAL (grabReady (const QString &)),
                  this, SLOT (grabReady (const QString &)));

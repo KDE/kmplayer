@@ -25,6 +25,7 @@
 #include <qguardedptr.h>
 #include <qvaluelist.h>
 #include <qcstring.h>
+#include <qmap.h>
 
 #include <kmediaplayer/player.h>
 #include <kurl.h>
@@ -106,11 +107,8 @@ public:
     void setSource (KMPlayerSource * source);
     KDE_NO_EXPORT KMPlayerProcess * process () const { return m_process; }
     KDE_NO_EXPORT KMPlayerProcess * recorder () const { return m_recorder; }
-    KDE_NO_EXPORT MPlayer * mplayer () const { return m_mplayer; }
-    KDE_NO_EXPORT MEncoder * mencoder () const { return m_mencoder; }
-    KDE_NO_EXPORT MPlayerDumpstream * mplayerdumpstream () const { return m_mplayerdumpstream; }
-    KDE_NO_EXPORT FFMpeg * ffmpeg () const { return m_ffmpeg; }
-    KDE_NO_EXPORT Xine * xine () const { return m_xine; }
+    QMap <QString, KMPlayerProcess *> & players () { return m_players; }
+    QMap <QString, KMPlayerProcess *> & recorders () { return m_recorders; }
     KDE_NO_EXPORT KMPlayerURLSource * urlSource () const { return m_urlsource; }
     KDE_NO_EXPORT KConfig * config () const { return m_config; }
     void enablePlayerMenu (bool enable);
@@ -179,11 +177,8 @@ protected:
     KMPlayerSettings * m_settings;
     KMPlayerProcess * m_process;
     KMPlayerProcess * m_recorder;
-    MPlayer * m_mplayer;
-    MEncoder * m_mencoder;
-    MPlayerDumpstream * m_mplayerdumpstream;
-    FFMpeg * m_ffmpeg;
-    Xine * m_xine;
+    QMap <QString, KMPlayerProcess *> m_players;
+    QMap <QString, KMPlayerProcess *> m_recorders;
     KMPlayerURLSource * m_urlsource;
     KMPlayerBookmarkManager * m_bookmark_manager;
     KMPlayerBookmarkOwner * m_bookmark_owner;

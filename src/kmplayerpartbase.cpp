@@ -101,15 +101,17 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
    m_settings (new KMPlayerSettings (this, config)),
    m_process (0L),
    m_recorder (0L),
-   m_mplayer (new MPlayer (this)),
-   m_mencoder (new MEncoder (this)),
-   m_mplayerdumpstream (new MPlayerDumpstream (this)),
-   m_ffmpeg (new FFMpeg (this)),
-   m_xine (new Xine (this)),
    m_bookmark_menu (0L),
    m_record_timer (0),
    m_ispart (false),
-   m_noresize (false) {
+   m_noresize (false)
+{
+    m_players ["mplayer"] = new MPlayer (this);
+    m_players ["xine"] = new Xine (this);
+    m_recorders ["mencoder"] = new MEncoder (this);
+    m_recorders ["mplayerdumpstream"] = new MPlayerDumpstream (this);
+    m_recorders ["ffmpeg"] = new FFMpeg (this);
+
     QString bmfile = locate ("data", "kmplayer/bookmarks.xml");
     QString localbmfile = locateLocal ("data", "kmplayer/bookmarks.xml");
     if (localbmfile != bmfile) {
@@ -189,9 +191,10 @@ KDE_NO_EXPORT void KMPlayer::controlPanelDestroyed (QObject * panel) {
 void KMPlayer::init (KActionCollection * action_collection) {
     m_view->init ();
     m_settings->readConfig ();
+    setProcess (m_players ["mplayer"]);
+    setRecorder (m_recorders ["mencoder"]);
     m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner,
                         m_view->buttonBar ()->bookmarkMenu (), action_collection, true, true);
-    setProcess (m_mplayer);
     addControlPanel (m_view->buttonBar ());
     m_bPosSliderPressed = false;
     m_view->buttonBar ()->contrastSlider ()->setValue (m_settings->contrast);
@@ -201,7 +204,6 @@ void KMPlayer::init (KActionCollection * action_collection) {
     connect (m_view, SIGNAL (urlDropped (const KURL &)), this, SLOT (openURL (const KURL &)));
     m_view->buttonBar ()->popupMenu ()->connectItem (KMPlayerControlPanel::menu_config,
                                        this, SLOT (showConfigDialog ()));
-    setRecorder (m_mencoder);
     //connect (m_view->configButton (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
 }
 
@@ -264,7 +266,7 @@ KDE_NO_EXPORT void KMPlayer::setXine (int id) {
     m_config->setGroup (strMPlayerGroup);
     m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
     m_config->sync ();
-    setProcess (m_xine);
+    setProcess (m_players ["xine"]);
     QPopupMenu * menu = m_view->buttonBar ()->playerMenu ();
     for (unsigned i = 0; i < menu->count(); i++) {
         int menuid = menu->idAt (i);
@@ -280,7 +282,7 @@ KDE_NO_EXPORT void KMPlayer::setMPlayer (int id) {
     m_config->setGroup (strMPlayerGroup);
     m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
     m_config->sync ();
-    setProcess (m_mplayer);
+    setProcess (m_players ["mplayer"]);
     QPopupMenu * menu = m_view->buttonBar ()->playerMenu ();
     for (unsigned i = 0; i < menu->count(); i++) {
         int menuid = menu->idAt (i);
@@ -304,9 +306,9 @@ void KMPlayer::enablePlayerMenu (bool enable) {
             menu->setEnabled (true);
             if (m_settings->urlbackend == QString ("Xine")) {
                 menu->setItemChecked (menu->idAt (1), true);
-                setProcess (m_xine);
+                setProcess (m_players ["xine"]);
             } else {
-                setProcess (m_mplayer);
+                setProcess (m_players ["mplayer"]);
                 menu->setItemChecked (menu->idAt (0), true);
             }
             (*i)->popupMenu ()->setItemVisible (KMPlayerControlPanel::menu_player, true);

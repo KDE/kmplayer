@@ -713,7 +713,7 @@ KDE_NO_EXPORT void MEncoder::init () {
 }
 
 KDE_NO_EXPORT bool MEncoder::play () {
-    if (!m_source || m_source->recordCmd ().isNull ())
+    if (!m_source)
         return false;
     bool success = false;
     stop ();

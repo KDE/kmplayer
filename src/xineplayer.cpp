@@ -926,7 +926,7 @@ protected:
                     }
                     break;
                 case NoExpose:
-                    fprintf (stderr, "NoExpose %lu\n", xevent.xnoexpose.drawable);
+                    //fprintf (stderr, "NoExpose %lu\n", xevent.xnoexpose.drawable);
                     break;
                 case CreateNotify:
                     fprintf (stderr, "CreateNotify: %lu %lu %d,%d %dx%d\n",

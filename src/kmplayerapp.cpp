@@ -642,7 +642,7 @@ KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
     if (m_identified)
         return false;
     //kdDebug () << "scanning " << cstr << endl;
-    QRegExp * patterns = m_player->mplayer ()->configPage ()->m_patterns;
+    QRegExp * patterns = static_cast <MPlayer *> (m_player->players () ["mplayer"])->configPage ()->m_patterns;
     QRegExp & langRegExp = patterns[MPlayerPreferencesPage::pat_dvdlang];
     QRegExp & subtitleRegExp = patterns[MPlayerPreferencesPage::pat_dvdsub];
     QRegExp & titleRegExp = patterns[MPlayerPreferencesPage::pat_dvdtitle];
@@ -679,7 +679,7 @@ KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
 }
 
 KDE_NO_EXPORT void KMPlayerDVDSource::activate () {
-    m_player->setProcess (m_player->mplayer ());
+    m_player->setProcess (m_player->players () ["mplayer"]);
     m_start_play = m_auto_play;
     m_current_title = -1;
     buildArguments ();
@@ -823,7 +823,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerDVDNavSource::KMPlayerDVDNavSource (KMPlayerApp * ap
 KDE_NO_CDTOR_EXPORT KMPlayerDVDNavSource::~KMPlayerDVDNavSource () {}
 
 KDE_NO_EXPORT void KMPlayerDVDNavSource::activate () {
-    m_player->setProcess (m_player->xine ());
+    m_player->setProcess (m_player->players () ["xine"]);
     play ();
 }
 
@@ -910,7 +910,7 @@ KDE_NO_EXPORT bool KMPlayerVCDSource::processOutput (const QString & str) {
     if (m_identified)
         return false;
     //kdDebug () << "scanning " << cstr << endl;
-    QRegExp * patterns = m_player->mplayer ()->configPage ()->m_patterns;
+    QRegExp * patterns = static_cast<MPlayer *> (m_player->players () ["mplayer"])->configPage ()->m_patterns;
     QRegExp & trackRegExp = patterns [MPlayerPreferencesPage::pat_vcdtrack];
     if (trackRegExp.search (str) > -1) {
         m_vcdtrackmenu->insertItem (trackRegExp.cap (1), this,
@@ -1029,7 +1029,7 @@ KDE_NO_EXPORT bool KMPlayerPipeSource::isSeekable () {
 }
 
 KDE_NO_EXPORT void KMPlayerPipeSource::activate () {
-    m_player->setProcess (m_player->mplayer ());
+    m_player->setProcess (m_player->players () ["mplayer"]);
     m_recordcmd = m_options = QString ("-"); // or m_url?
     m_identified = true;
     QTimer::singleShot (0, m_player, SLOT (play ()));

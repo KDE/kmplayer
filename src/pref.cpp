@@ -397,18 +397,19 @@ KDE_NO_EXPORT void KMPlayerPrefMEncoderPage::formatClicked (int id) {
 }
 
 KDE_NO_EXPORT void KMPlayerPrefMEncoderPage::record () {
-    m_player->setRecorder (m_player->mencoder ());
-    if (!m_player->mencoder()->playing ()) {
+    MEncoder *rec = static_cast<MEncoder*>(m_player->recorders () ["mencoder"]);
+    m_player->setRecorder (rec);
+    if (!rec->playing ()) {
         m_player->settings ()->mencoderarguments = arguments->text ();
 #if KDE_IS_VERSION(3,1,90)
         m_player->settings ()->recordcopy = !format->selectedId ();
 #else
         m_player->settings ()->recordcopy = !format->id (format->selected ());
 #endif
-        m_player->mencoder ()->setURL (KURL (m_player->settings ()->recordfile));
-        m_player->mencoder ()->play ();
+        rec->setURL (KURL (m_player->settings ()->recordfile));
+        rec->play ();
     } else
-        m_player->mencoder ()->stop ();
+        rec->stop ();
 }
 
 KDE_NO_EXPORT QString KMPlayerPrefMEncoderPage::name () {
@@ -424,12 +425,13 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefMPlayerDumpstreamPage::KMPlayerPrefMPlayerDumpst
 }
 
 KDE_NO_EXPORT void KMPlayerPrefMPlayerDumpstreamPage::record () {
-    m_player->setRecorder (m_player->mplayerdumpstream ());
-    if (!m_player->mplayerdumpstream()->playing ()) {
-        m_player->mplayerdumpstream ()->setURL (KURL (m_player->settings ()->recordfile));
-        m_player->mplayerdumpstream ()->play ();
+    MPlayerDumpstream  * rec = static_cast <MPlayerDumpstream *> (m_player->recorders () ["mplayerdumpstream"]);
+    m_player->setRecorder (rec);
+    if (!rec->playing ()) {
+        rec->setURL (KURL (m_player->settings ()->recordfile));
+        rec->play ();
     } else
-        m_player->mplayerdumpstream ()->stop ();
+        rec->stop ();
 }
 
 KDE_NO_EXPORT QString KMPlayerPrefMPlayerDumpstreamPage::name () {
@@ -452,11 +454,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefFFMpegPage::KMPlayerPrefFFMpegPage (QWidget *par
 }
 
 KDE_NO_EXPORT void KMPlayerPrefFFMpegPage::record () {
-    kdDebug() << "KMPlayerPrefFFMpegPage::record" << endl;
-    m_player->setRecorder (m_player->ffmpeg ());
-    m_player->ffmpeg ()->setURL (KURL::fromPathOrURL (m_player->settings ()->recordfile));
-    m_player->ffmpeg ()->setArguments (arguments->text ());
-    m_player->recorder ()->play ();
+    FFMpeg  * rec = static_cast <FFMpeg *> (m_player->recorders () ["ffmpeg"]);
+    m_player->setRecorder (rec);
+    rec->setURL (KURL::fromPathOrURL (m_player->settings ()->recordfile));
+    rec->setArguments (arguments->text ());
+    rec->play ();
 }
 
 KDE_NO_EXPORT QString KMPlayerPrefFFMpegPage::name () {

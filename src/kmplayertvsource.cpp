@@ -341,7 +341,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerTVSource::~KMPlayerTVSource () {
 
 KDE_NO_EXPORT void KMPlayerTVSource::activate () {
     m_identified = true;
-    m_player->setProcess (m_player->mplayer ());
+    m_player->setProcess (m_player->players () ["mplayer"]);
     buildArguments ();
     if (m_player->settings ()->showbroadcastbutton)
         m_app->view()->buttonBar()->broadcastButton ()->show ();
@@ -670,7 +670,7 @@ KDE_NO_EXPORT bool TVDeviceScannerSource::scan (const QString & dev, const QStri
 }
 
 KDE_NO_EXPORT void TVDeviceScannerSource::activate () {
-    m_player->setProcess (m_player->mplayer ());
+    m_player->setProcess (m_player->players () ["mplayer"]);
     m_nameRegExp.setPattern ("Selected device:\\s*([^\\s].*)");
     m_sizesRegExp.setPattern ("Supported sizes:\\s*([0-9]+)x([0-9]+) => ([0-9]+)x([0-9]+)");
     m_inputRegExp.setPattern ("\\s*([0-9]+):\\s*([^:]+):[^\\(]*\\(tuner:([01]),\\s*norm:([^\\)]+)\\)");
@@ -691,8 +691,8 @@ KDE_NO_EXPORT void TVDeviceScannerSource::play () {
     QString args;
     args.sprintf ("tv:// -tv driver=%s:device=%s -identify -frames 0", m_driver.ascii (), m_tvdevice->device.ascii ());
     m_player->stop ();
-    m_player->mplayer ()->initProcess ();
-    if (m_player->mplayer ()->run (args.ascii()))
+    m_player->process ()->initProcess ();
+    if (static_cast <MPlayer *> (m_player->players () ["mplayer"])->run (args.ascii()))
         connect (m_player, SIGNAL (stopPlaying ()), this, SLOT (finished ()));
     else
         deactivate ();
