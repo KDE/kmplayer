@@ -36,46 +36,45 @@ static KCmdLineOptions options[] =
 };
 
 extern "C" {
-int kdemain (int argc, char *argv[]);
-}
 
-int kdemain (int argc, char *argv[])
-{
-    setsid ();
+    int kdemain (int argc, char *argv[])
+    {
+        setsid ();
 
-    KAboutData aboutData ("kmplayer", I18N_NOOP ("KMPlayer"),
-            VERSION, description, KAboutData::License_GPL,
-            "(c) 2002, Koos Vriezen", 0, 0, "");
-    aboutData.addAuthor( "Koos Vriezen",0, "");
-    KCmdLineArgs::init (argc, argv, &aboutData);
-    KCmdLineArgs::addCmdLineOptions (options); // Add our own options.
+        KAboutData aboutData ("kmplayer", I18N_NOOP ("KMPlayer"),
+                VERSION, description, KAboutData::License_GPL,
+                "(c) 2002, Koos Vriezen", 0, 0, "");
+        aboutData.addAuthor( "Koos Vriezen",0, "");
+        KCmdLineArgs::init (argc, argv, &aboutData);
+        KCmdLineArgs::addCmdLineOptions (options); // Add our own options.
 
-    KApplication app;
-    QGuardedPtr <KMPlayerApp> kmplayer;
+        KApplication app;
+        QGuardedPtr <KMPlayerApp> kmplayer;
 
-    if (app.isRestored ()) {
-        RESTORE (KMPlayerApp);
-    } else {
-        kmplayer = new KMPlayerApp ();
-        kmplayer->show();
-
-        KCmdLineArgs *args = KCmdLineArgs::parsedArgs();
-
-        if (args->count ()) {
-            KURL url = args->url(args->count() - 1);
-            if(!url.isMalformed())
-                kmplayer->openDocumentFile (args->url (0));
-            else
-                kmplayer->openDocumentFile ();
+        if (app.isRestored ()) {
+            RESTORE (KMPlayerApp);
         } else {
-            kmplayer->openDocumentFile ();
+            kmplayer = new KMPlayerApp ();
+            kmplayer->show();
+
+            KCmdLineArgs *args = KCmdLineArgs::parsedArgs();
+
+            if (args->count ()) {
+                KURL url = args->url(args->count() - 1);
+                if(!url.isMalformed())
+                    kmplayer->openDocumentFile (args->url (0));
+                else
+                    kmplayer->openDocumentFile ();
+            } else {
+                kmplayer->openDocumentFile ();
+            }
+            args->clear ();
         }
-        args->clear ();
+        app.dcopClient()->registerAs("kmplayer");
+        int retvalue = app.exec ();
+
+        delete kmplayer;
+
+        return retvalue;
     }
-    app.dcopClient()->registerAs("kmplayer");
-    int retvalue = app.exec ();
-
-    delete kmplayer;
-
-    return retvalue;
 }
