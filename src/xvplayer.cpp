@@ -56,6 +56,7 @@ static bool                 running;
 static bool                 have_freq;
 static bool                 xv_success;
 static bool                 reset_xv_autopaint_colorkey;
+static bool                 reset_xv_mute;
 static int                  xvport;
 static int                  xv_encoding = -1;
 static QString              xv_norm;
@@ -271,7 +272,7 @@ void KXVideoPlayer::init () {
     doc.appendChild (root);
     QCString exp = doc.toCString ();
     config_buf = exp;
-    fprintf (stderr, "%s\n", (const char *)exp);
+    //fprintf (stderr, "%s\n", (const char *)exp);
     config_buf.resize (exp.length ()); // strip terminating \0
 
     if (xvport <= 0) {
@@ -325,9 +326,14 @@ void KXVideoPlayer::play () {
         XvSelectVideoNotify (display, wid, 1);
         int cur_val;
         if (XvGetPortAttribute (display, xvport, xv_autopaint_colorkey_atom, &cur_val) == Success && cur_val == 0) {
-            printf ("XV_AUTOPAINT_COLORKEY is 0\n");
+            fprintf (stderr, "XV_AUTOPAINT_COLORKEY is 0\n");
             XvSetPortAttribute (display, xvport, xv_autopaint_colorkey_atom, 1);
             reset_xv_autopaint_colorkey = true;
+        }
+        if (XvGetPortAttribute (display, xvport, xv_mute_atom, &cur_val) == Success && cur_val == 1) {
+            fprintf (stderr, "XV_MUTE is 1\n");
+            XvSetPortAttribute (display, xvport, xv_mute_atom, 0);
+            reset_xv_mute = true;
         }
         if (xv_frequency > 0)
             XvSetPortAttribute (display, xvport, xv_freq_atom, int (1.0*xv_frequency/6.25));
@@ -351,6 +357,10 @@ void KXVideoPlayer::stop () {
         if (reset_xv_autopaint_colorkey) {
             XvSetPortAttribute (display, xvport, xv_autopaint_colorkey_atom, 0);
             reset_xv_autopaint_colorkey = false;
+        }
+        if (reset_xv_mute) {
+            XvSetPortAttribute (display, xvport, xv_mute_atom, 1);
+            reset_xv_mute = false;
         }
         XvUngrabPort (display, xvport, CurrentTime);
         XFreeGC (display, gc);
