@@ -758,9 +758,15 @@ void Source::playCurrent () {
     if (m_player->view () && m_document)
         m_player->process ()->view ()->fullScreenWidget ()->setRootLayout (m_document->document ()->rootLayout);
     kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():"") <<  (m_document && m_document->state != Element::state_started) << (!m_current) << (m_current && m_current->state != Element::state_started) <<  endl;
-    if (m_document && m_document->state != Element::state_started)
-        m_document->start ();
-    else if (!m_current)
+    if (m_document && m_document->state != Element::state_started) {
+        if (!m_current)
+            m_document->start ();
+        else { // ugly code duplicate w/ back_request
+            for (ElementPtr p = m_current->parentNode(); p; p = p->parentNode())
+                p->setState (Element::state_started);
+            m_current->start ();
+        }
+    } else if (!m_current)
         emit endOfPlayItems ();
     else if (m_current->state != Element::state_started) // eg. state_deferred
         m_current->start ();
@@ -812,7 +818,7 @@ void Source::stateElementChanged (ElementPtr elm) {
     if (elm == m_document && !m_back_request && elm->state == Element::state_finished)
         emit endOfPlayItems (); // played all items
     if (m_player->view ())
-        m_player->process()->view ()->fullScreenWidget ()->repaint ();
+        m_player->process()->view ()->fullScreenWidget ()->update ();
 }
 
 void Source::insertURL (const QString & mrl) {
@@ -881,8 +887,10 @@ void Source::jump (ElementPtr e) {
         if (m_player->playing ()) {
             m_back_request = e;
             m_player->process ()->stop ();
-        } else
+        } else {
             m_current = e;
+            QTimer::singleShot (0, m_player, SLOT (play ()));
+        }
     } else
         m_player->updateTree ();
 }
