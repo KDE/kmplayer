@@ -44,16 +44,21 @@ class QLineEdit;
 class KAction;
 class QSocket;
 class QTimerEvent;
+class KListView;
 
 class KMPlayerPrefSourcePageVDR : public QFrame {
     Q_OBJECT
 public:
-    KMPlayerPrefSourcePageVDR (QWidget * parent);
+    KMPlayerPrefSourcePageVDR (QWidget * parent, KMPlayer * player);
     ~KMPlayerPrefSourcePageVDR ();
     KURLRequester * vcddevice;
-    QLineEdit * xv_port;
+    KListView * xv_port;
     QLineEdit * tcp_port;
     QButtonGroup * scale;
+protected:
+    void showEvent (QShowEvent *);
+private:
+    KMPlayer * m_player;
 };
 
 
@@ -106,6 +111,7 @@ private slots:
     void processStopped ();
     void processStarted ();
     void toggleConnected ();
+    void configReceived ();
 protected:
     void timerEvent (QTimerEvent *);
 private:
@@ -131,25 +137,46 @@ private:
     int timeout_timer;
     int tcp_port;
     int xv_port;
+    int xv_encoding;
     int scale;
 };
 
 class XVideo : public KMPlayerCallbackProcess {
     Q_OBJECT
 public:
+    struct Input {
+        Input (int e, const QString & n, Input * i = 0L)
+            : encoding (e), name (n), next (i) {}
+        int encoding;
+        QString name;
+        Input * next;
+    };
+    struct Port {
+        Port (int p, Port * n) : port (p), inputs (0L), next (n) {}
+        int port;
+        Input * inputs;
+        Port * next;
+    };
     XVideo (KMPlayer * player);
     ~XVideo ();
     QString menuName () const;
     KDE_NO_EXPORT void setPort (int xvport) { xv_port = xvport; }
+    KDE_NO_EXPORT void setEncoding (int xvenc) { xv_encoding = xvenc; }
     void initProcess ();
+    void setStarted (QCString dcopname, QByteArray & data);
+    Port * ports () const { return m_ports; }
 public slots:
     virtual bool play ();
     virtual bool quit ();
+protected:
+    virtual void runForConfig ();
 private slots:
     void processStopped (KProcess *);
     void processOutput (KProcess *, char *, int);
 private:
+    Port * m_ports;
     int xv_port;
+    int xv_encoding;
 };
 
 #endif // KMPLAYER_VDR_SOURCE_H

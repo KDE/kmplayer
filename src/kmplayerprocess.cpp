@@ -966,6 +966,7 @@ void KMPlayerCallbackProcess::setStarted (QCString dcopname, QByteArray & data) 
     if (m_have_config == config_probe || m_have_config == config_unknown) {
         bool was_probe = m_have_config == config_probe;
         m_have_config = data.size () ? config_yes : config_no;
+        emit configReceived ();
         if (m_configpage)
             m_configpage->sync (false);
         if (was_probe) {
@@ -1017,7 +1018,7 @@ bool KMPlayerCallbackProcess::getConfigData () {
         return false;
     if (m_have_config == config_unknown && !playing ()) {
         m_have_config = config_probe;
-        urlForPlaying (QString::null);
+        runForConfig ();
     }
     return true;
 }
@@ -1075,6 +1076,8 @@ QString KMPlayerCallbackProcess::dcopName () {
     return cbname;
 }
 
+void KMPlayerCallbackProcess::runForConfig() {}
+
 //-----------------------------------------------------------------------------
 
 class KMPlayerXMLPreferencesFrame : public QFrame {
@@ -1101,7 +1104,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerXMLPreferencesPage::KMPlayerXMLPreferencesPage (KMPl
 }
 
 KDE_NO_EXPORT void KMPlayerXMLPreferencesFrame::showEvent (QShowEvent *) {
-    QByteArray data;
     if (!m_process->haveConfig ())
         m_process->getConfigData ();
 }
@@ -1122,6 +1124,7 @@ static QString valnum ("num");
 static QString valbool ("bool");
 static QString valenum ("enum");
 static QString valstring ("string");
+static QString valtree ("tree");
 
 KDE_NO_EXPORT void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
     if (!m_configframe) return;
@@ -1267,7 +1270,7 @@ KDE_NO_EXPORT void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
 KDE_NO_EXPORT void KMPlayerXMLPreferencesPage::prefLocation (QString & item, QString & icon, QString & tab) {
     item = i18n ("General Options");
     icon = QString ("kmplayer");
-    tab = i18n ("Xine");
+    tab = m_process->menuName ();
 }
 
 KDE_NO_EXPORT QFrame * KMPlayerXMLPreferencesPage::prefPage (QWidget * parent) {
@@ -1317,6 +1320,23 @@ KDE_NO_EXPORT bool Xine::play () {
     return KMPlayerProcess::play ();
 }
 
+void Xine::runForConfig () {
+    initProcess ();
+    QString xine_config = KProcess::quote (QString (QFile::encodeName (locateLocal ("data", "kmplayer/") + QString ("xine_config"))));
+    printf ("kxineplayer -wid %lu", (unsigned long) widget ());
+    *m_process << "kxineplayer -wid " << QString::number (widget ());
+    if (m_have_config == config_probe) {
+        printf (" -c");
+        *m_process << " -c ";
+    }
+    printf (" -f %s", xine_config.ascii ());
+    *m_process << " -f " << xine_config;
+    printf (" -cb %s nomovie\n", dcopName ().ascii());
+    *m_process << " -cb " << dcopName () << " nomovie";
+    m_process->start (KProcess::NotifyOnExit, KProcess::All);
+    return;
+}
+
 // TODO:input.v4l_video_device_path input.v4l_radio_device_path
 // v4l:/Webcam/0   v4l:/Television/21600  v4l:/Radio/96
 void Xine::urlForPlaying (const QString & urlstr) {
@@ -1329,22 +1349,12 @@ void Xine::urlForPlaying (const QString & urlstr) {
         }
         return;
     }
-    initProcess ();
-    QString xine_config = KProcess::quote (QString (QFile::encodeName (locateLocal ("data", "kmplayer/") + QString ("xine_config"))));
     if (m_have_config == config_probe || m_send_config == send_new) {
-        printf ("kxineplayer -wid %lu", (unsigned long) widget ());
-        *m_process << "kxineplayer -wid " << QString::number (widget ());
-        if (m_have_config == config_probe) {
-            printf (" -c");
-            *m_process << " -c ";
-        }
-        printf (" -f %s", xine_config.ascii ());
-        *m_process << " -f " << xine_config;
-        printf (" -cb %s nomovie\n", dcopName ().ascii());
-        *m_process << " -cb " << dcopName () << " nomovie";
-        m_process->start (KProcess::NotifyOnExit, KProcess::All);
+        runForConfig ();
         return;
     }
+    initProcess ();
+    QString xine_config = KProcess::quote (QString (QFile::encodeName (locateLocal ("data", "kmplayer/") + QString ("xine_config"))));
     m_request_seek = -1;
     kdDebug() << "Xine::play (" << myurl << ")" << endl;
     if (url.isEmpty ())

@@ -47,6 +47,7 @@
 #include <kconfig.h>
 #include <kaction.h>
 #include <kiconloader.h>
+#include <klistview.h>
 #include <kdeversion.h>
 #if KDE_IS_VERSION(3, 1, 90)
 #include <kinputdialog.h>
@@ -62,23 +63,29 @@
 static const char * strVDR = "VDR";
 static const char * strVDRPort = "Port";
 static const char * strXVPort = "XV Port";
+static const char * strXVEncoding = "XV Encoding";
 static const char * strXVScale = "XV Scale";
 
-KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::KMPlayerPrefSourcePageVDR (QWidget * parent)
- : QFrame (parent) {
+KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::KMPlayerPrefSourcePageVDR (QWidget * parent, KMPlayer * player)
+ : QFrame (parent), m_player (player) {
     //KURLRequester * v4ldevice;
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
-    QGridLayout *gridlayout = new QGridLayout (layout, 2, 2);
-    QLabel * label = new QLabel (i18n ("XVideo port:"), this);
-    gridlayout->addWidget (label, 0, 0);
-    xv_port = new QLineEdit ("", this);
+    QGridLayout *gridlayout = new QGridLayout (layout, 1, 2);
+    xv_port = new KListView (this);
+    xv_port->addColumn (QString::null);
+    xv_port->header()->hide ();
+    xv_port->setTreeStepSize (15);
+    //xv_port->setRootIsDecorated (true);
+    //xv_port->setSorting (-1);
+    QListViewItem * vitem = new QListViewItem (xv_port, i18n ("XVideo port"));
+    vitem->setOpen (true);
     QWhatsThis::add (xv_port, i18n ("Port base of the X Video extension.\nIf left to default (0), the first available port will be used. However if you have multiple XVideo instances, you might have to provide the port to use here.\nSee the output from 'xvinfo' for more information"));
-    gridlayout->addWidget (xv_port, 0, 1);
-    label = new QLabel (i18n ("Communication port:"), this);
-    gridlayout->addWidget (label, 1, 0);
+    QLabel * label = new QLabel (i18n ("Communication port:"), this);
+    gridlayout->addWidget (label, 0, 0);
     tcp_port = new QLineEdit ("", this);
     QWhatsThis::add (tcp_port, i18n ("Communication port with VDR. Default is port 2001.\nIf you use another port, with the '-p' option of 'vdr', you must set it here too."));
-    gridlayout->addWidget (tcp_port, 1, 1);
+    gridlayout->addWidget (tcp_port, 0, 1);
+    layout->addWidget (xv_port);
     layout->addLayout (gridlayout);
     scale = new QButtonGroup (2, Qt::Vertical, i18n ("Scale"), this);
     new QRadioButton (i18n ("4:3"), scale);
@@ -91,6 +98,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::KMPlayerPrefSourcePageVDR (QWidge
 
 KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::~KMPlayerPrefSourcePageVDR () {}
 
+KDE_NO_EXPORT void KMPlayerPrefSourcePageVDR::showEvent (QShowEvent *) {
+    XVideo * xvideo = static_cast<XVideo *>(m_player->players()["xvideo"]);
+    if (!xvideo->ports ())
+        xvideo->getConfigData ();
+}
 //-----------------------------------------------------------------------------
 
 static const char * cmd_chan_query = "CHAN\n";
@@ -115,7 +127,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerVDRSource::KMPlayerVDRSource (KMPlayerApp * app, QPo
    channel_timer (0),
    timeout_timer (0),
    tcp_port (0),
-   xv_port (0) {
+   xv_port (0),
+   xv_encoding (0) {
     m_player->settings ()->addPage (this);
     act_up = new KAction (i18n ("VDR Key Up"), 0, 0, this, SLOT (keyUp ()), m_app->actionCollection (),"vdr_key_up");
     act_down = new KAction (i18n ("VDR Key Down"), 0, 0, this, SLOT (keyDown ()), m_app->actionCollection (),"vdr_key_down");
@@ -550,6 +563,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::write (KConfig * m_config) {
     m_config->setGroup (strVDR);
     m_config->writeEntry (strVDRPort, tcp_port);
     m_config->writeEntry (strXVPort, xv_port);
+    m_config->writeEntry (strXVEncoding, xv_encoding);
     m_config->writeEntry (strXVScale, scale);
 }
 
@@ -557,21 +571,61 @@ KDE_NO_EXPORT void KMPlayerVDRSource::read (KConfig * m_config) {
     m_config->setGroup (strVDR);
     tcp_port = m_config->readNumEntry (strVDRPort, 2001);
     xv_port = m_config->readNumEntry (strXVPort, 0);
+    xv_encoding = m_config->readNumEntry (strXVEncoding, 0);
     scale = m_config->readNumEntry (strXVScale, 0);
 }
 
+struct XVTreeItem : public QListViewItem {
+    XVTreeItem (QListViewItem *parent, const QString & t, int p, int e)
+        : QListViewItem (parent, t), port (p), encoding (e) {}
+    int port;
+    int encoding;
+};
+
 KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
+    XVideo * xvideo = static_cast<XVideo *>(m_player->players()["xvideo"]);
     if (fromUI) {
         tcp_port = m_configpage->tcp_port->text ().toInt ();
-        xv_port = m_configpage->xv_port->text ().toInt ();
+        //xv_port = m_configpage->xv_port->text ().toInt ();
         scale = m_configpage->scale->id (m_configpage->scale->selected ());
         setAspect (scale ? 16.0/9 : 1.25);
-        static_cast<XVideo *>(m_player->players()["xvideo"])->setPort(xv_port);
+        XVTreeItem * vitem = dynamic_cast <XVTreeItem *> (m_configpage->xv_port->selectedItem ());
+        if (vitem) {
+            xv_port = vitem->port;
+            xv_encoding = vitem->encoding;
+        }
+        xvideo->setPort (xv_port);
+        xvideo->setEncoding (xv_encoding);
     } else {
         m_configpage->tcp_port->setText (QString::number (tcp_port));
-        m_configpage->xv_port->setText (QString::number (xv_port));
         m_configpage->scale->setButton (scale);
+        XVideo::Port * ports = xvideo->ports ();
+        QListViewItem * vitem = m_configpage->xv_port->firstChild ();
+        if (ports) {
+            for (QListViewItem * i = vitem->firstChild (); i; i = vitem->firstChild ())
+                delete i;
+            do {
+                QListViewItem *pi = new QListViewItem (vitem, i18n ("Port ") + QString::number (ports->port));
+                XVideo::Input * inputs = ports->inputs;
+                while (inputs) {
+                    QListViewItem * ii = new XVTreeItem (pi, inputs->name, ports->port, inputs->encoding);
+                    if (xv_port == ports->port && inputs->encoding == xv_encoding) {
+                        ii->setSelected (true);
+                        m_configpage->xv_port->ensureItemVisible (ii);
+                    }
+                    inputs = inputs->next;
+                }
+                ports = ports->next;
+            } while (ports);
+        } else // wait for showEvent
+            connect (xvideo, SIGNAL (configReceived()), this, SLOT (configReceived()));
     }
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::configReceived () {
+    XVideo * xvideo = static_cast<XVideo *>(m_player->players()["xvideo"]);
+    disconnect (xvideo, SIGNAL (configReceived()), this, SLOT (configReceived()));
+    sync (false);
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::prefLocation (QString & item, QString & icon, QString & tab) {
@@ -582,18 +636,24 @@ KDE_NO_EXPORT void KMPlayerVDRSource::prefLocation (QString & item, QString & ic
 
 KDE_NO_EXPORT QFrame * KMPlayerVDRSource::prefPage (QWidget * parent) {
     if (!m_configpage)
-        m_configpage = new KMPlayerPrefSourcePageVDR (parent);
+        m_configpage = new KMPlayerPrefSourcePageVDR (parent, m_player);
     return m_configpage;
 }
 //-----------------------------------------------------------------------------
+
+#include <qdom.h>
 
 static const char * xv_supported [] = {
     "tvsource", "vdrsource", 0L
 };
 
 KDE_NO_CDTOR_EXPORT XVideo::XVideo (KMPlayer * player)
- : KMPlayerCallbackProcess (player, "xvideo"), xv_port (0) {
+ : KMPlayerCallbackProcess (player, "xvideo"),
+   m_ports (0L),
+   xv_port (0),
+   xv_encoding (0) {
     m_supported_sources = xv_supported;
+    m_player->settings ()->addPage (m_configpage);
 }
 
 KDE_NO_CDTOR_EXPORT XVideo::~XVideo () {}
@@ -612,12 +672,16 @@ KDE_NO_EXPORT QString XVideo::menuName () const {
     return i18n ("X&Video");
 }
 
+KDE_NO_EXPORT void XVideo::runForConfig () {
+    play ();
+}
+
 KDE_NO_EXPORT bool XVideo::play () {
     if (playing ()) {
         return true;
     }
     initProcess ();
-    QString cmd  = QString ("kxvplayer -port %1 -wid %2 -cb %3 ").arg (xv_port).arg (view()->viewer()->embeddedWinId ()).arg (dcopName ());
+    QString cmd  = QString ("kxvplayer -port %1 -enc %2 -wid %3 -cb %4 ").arg (xv_port).arg (xv_encoding).arg (view()->viewer()->embeddedWinId ()).arg (dcopName ());
     printf ("%s\n", cmd.latin1 ());
     *m_process << cmd;
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
@@ -652,6 +716,41 @@ KDE_NO_EXPORT void XVideo::processOutput (KProcess *, char * str, int slen) {
     KMPlayerView * v = view ();
     if (v && slen > 0)
         v->addText (QString::fromLocal8Bit (str, slen));
+}
+
+KDE_NO_EXPORT void XVideo::setStarted (QCString dcopname, QByteArray & data) {
+    while (!m_ports && data.size ()) {
+        QDomDocument dom;
+        QString err;
+        int line, column;
+        if (!dom.setContent (data, false, &err, &line, &column)) {
+            kdDebug () << "Config data error " << err << " l:" << line << " c:" << column << endl;
+            break;
+        }
+        if (dom.childNodes().length() != 1 || dom.firstChild().childNodes().length() < 1) {
+            kdDebug () << "No valid data" << endl;
+            break;
+        }
+        QString attvalue ("VALUE");
+        QString attname ("NAME");
+        QString atttype ("TYPE");
+        QString valtree ("tree");
+        for (QDomNode node = dom.firstChild().firstChild(); !node.isNull (); node = node.nextSibling ()) {
+            if (node.attributes ().namedItem (atttype).nodeValue () == valtree) {
+                for (QDomNode pn = node.firstChild(); !pn.isNull (); pn = pn.nextSibling ()) {
+                    m_ports = new Port (pn.attributes().namedItem (attvalue).nodeValue().toInt (), m_ports);
+                    kdDebug () << "Port " << m_ports->port << endl;
+                    for (QDomNode in = pn.firstChild(); !in.isNull (); in = in.nextSibling ()) {
+                        QDomNamedNodeMap attr = in.attributes ();
+                        m_ports->inputs = new Input (attr.namedItem (attvalue).nodeValue().toInt (), attr.namedItem (attname).nodeValue (), m_ports->inputs);
+                        kdDebug () << "Input " << m_ports->inputs->name << " " << m_ports->inputs->encoding << endl;
+                    }
+                }
+            }
+        }
+        break;
+    }
+    KMPlayerCallbackProcess::setStarted (dcopname, data);
 }
 
 #include "kmplayervdr.moc"

@@ -75,13 +75,14 @@ static QString attname ("NAME");
 static QString atttype ("TYPE");
 static QString attdefault ("DEFAULT");
 static QString attvalue ("VALUE");
-static QString attstart ("START");
-static QString attend ("END");
-static QString valrange ("range");
-static QString valnum ("num");
-static QString valbool ("bool");
-static QString valenum ("enum");
-static QString valstring ("string");
+//static QString attstart ("START");
+//static QString attend ("END");
+//static QString valrange ("range");
+//static QString valnum ("num");
+//static QString valbool ("bool");
+//static QString valenum ("enum");
+//static QString valstring ("string");
+static QString valtree ("tree");
 static QByteArray config_buf;
 
 extern "C" {
@@ -204,45 +205,51 @@ void KXVideoPlayer::init () {
     if (XvQueryAdaptors (display, XDefaultRootWindow (display), &adaptors, &ai) == Success) {
         QDomElement elm = doc.createElement (elmentry);
         elm.setAttribute (attname, QString ("XVideo"));
-        elm.setAttribute (atttype, valenum);
+        elm.setAttribute (atttype, valtree);
         for (int i = 0; i < adaptors; i++) {
             if ((ai[i].type & XvInputMask) &&
                     (ai[i].type & XvVideoMask) &&
                     ai[i].base_id > 0) {
                 int port = ai[i].base_id;
-                if (!xvport) {
-                    fprintf (stderr, "using xvport %d\n", port);
-                    xvport = port;
-                }
-                int dummy;
-                if (XvGetPortAttribute (display, port, xv_freq_atom, &dummy) == Success)
-                    have_freq = true;
-                fprintf (stderr, "freq %d %d\n", have_freq, dummy);
+                bool freq_found = false;
                 XvAttribute *attributes = 0L;
                 int nr_attr;
                 attributes = XvQueryPortAttributes (display, port, &nr_attr);
                 if (attributes) {
-                    for (int i = 0; i < nr_attr; i++)
+                    for (int i = 0; i < nr_attr; i++) {
+                        if (!strcmp (attributes[i].name, "XV_FREQ"))
+                            freq_found = true;
                         fprintf (stderr, "%s (%d .. %d)\n", attributes[i].name, attributes[i].min_value, attributes[i].max_value);
+                    }
                     XFree(attributes);
                 }
+                if (!xvport) {
+                    fprintf (stderr, "using xvport %d\n", port);
+                    xvport = port;
+                }
+                if (xvport == port)
+                    have_freq = freq_found;
                 XvEncodingInfo * encodings = 0L;
                 unsigned nr_encode;
                 XvQueryEncodings (display, port, &nr_encode, &encodings);
                 if (encodings) {
+                    QDomElement port_item = doc.createElement (QString("Port"));
+                    port_item.setAttribute (attvalue, QString::number (port));
+                    if (freq_found)
+                        port_item.setAttribute (QString("FREQ"), QString("1"));
                     for (int i = 0; i < nr_encode; i++) {
                         if (strcmp (encodings[i].name, "XV_IMAGE")) {
                             if (port == xvport && encodings[i].encoding_id == xv_encoding) {
                                 movie_width = encodings[i].width;
                                 movie_height = encodings[i].height;
                             }
-                            char buf [256];
-                            snprintf (buf, sizeof (buf), "Port %d: %d - %s", port, encodings[i].encoding_id, encodings[i].name);
-                            QDomElement item = doc.createElement (elmitem);
-                            item.setAttribute (attvalue, QString (buf));
-                            elm.appendChild (item);
+                            QDomElement item = doc.createElement (QString ("Input"));
+                            item.setAttribute (attvalue, QString::number (encodings[i].encoding_id));
+                            item.setAttribute (attname, QString (encodings[i].name));
+                            port_item.appendChild (item);
                         }
                     }
+                    elm.appendChild (port_item);
                     XvFreeEncodingInfo (encodings);
                 }
             }
@@ -369,7 +376,7 @@ void KXVideoPlayer::volume (int val) {
 
 void KXVideoPlayer::frequency (int val) {
     freq = val;
-    if (running) {
+    if (running && have_freq) {
         XLockDisplay(display);
         XvSetPortAttribute (display, xvport, xv_freq_atom, int (1.0*val/6.25));
         XFlush (display);
@@ -499,9 +506,9 @@ int main(int argc, char **argv) {
     eventThread->start ();
 
     xvapp->init ();
-    if (callback) {
+
+    if (callback)
         callback->started (dcopclient.appId (), config_buf);
-    }
 
     xvapp->exec ();
 

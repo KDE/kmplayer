@@ -234,7 +234,10 @@ public slots:
     bool hue (int pos, bool absolute);
     bool contrast (int pos, bool absolute);
     bool brightness (int pos, bool absolute);
+signals:
+    void configReceived ();
 protected:
+    virtual void runForConfig ();
     KMPlayerCallback * m_callback;
     KMPlayerBackend_stub * m_backend;
     QByteArray m_configdata;
@@ -274,6 +277,8 @@ public slots:
     virtual void urlForPlaying (const QString &);
     bool quit ();
     bool seek (int pos, bool absolute);
+protected:
+    virtual void runForConfig ();
 private slots:
     void processStopped (KProcess *);
     void processOutput (KProcess *, char *, int);
