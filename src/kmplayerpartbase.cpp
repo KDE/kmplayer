@@ -225,6 +225,8 @@ void KMPlayer::setProcess (const char * name) {
                     this, SLOT (loaded (int)));
         disconnect (m_process, SIGNAL (lengthFound (int)),
                     this, SLOT (lengthFound (int)));
+        disconnect (source, SIGNAL (currentURL (const QString &)),
+                    m_process, SLOT (urlForPlaying (const QString &)));
         m_process->quit ();
         source = m_process->source ();
     }

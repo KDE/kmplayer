@@ -165,9 +165,6 @@ KDE_NO_EXPORT void KMPlayerSettings::readConfig () {
     QMap <QString, KMPlayerSource *>::const_iterator i = m_player->sources().begin ();
     for (; i != e; ++i)
         backends[i.data()->name ()] = m_config->readEntry (i.data()->name ());
-    const QMap<QString,QString>::iterator b_end = backends.end ();
-    for (QMap<QString,QString>::iterator i = backends.begin(); i != b_end; ++i)
-        m_config->writeEntry (i.key (), i.data ());
 
     m_config->setGroup (strMPlayerGroup);
     sizeratio = m_config->readBoolEntry (strKeepSizeRatio, true);

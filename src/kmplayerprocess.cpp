@@ -991,7 +991,7 @@ bool KMPlayerCallbackProcess::getConfigData () {
         return false;
     if (m_have_config == config_unknown && !playing ()) {
         m_have_config = config_probe;
-        play ();
+        urlForPlaying (QString::null);
     }
     return true;
 }
