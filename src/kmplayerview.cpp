@@ -76,6 +76,7 @@ static const int button_height_only_buttons = 11;
 #include <kshortcut.h>
 #include <kurldrag.h>
 #include <dcopclient.h>
+#include <kglobalsettings.h>
 
 using namespace KMPlayer;
 
@@ -904,9 +905,7 @@ KDE_NO_EXPORT void PlayListView::dragEnterEvent (QDragEnterEvent* dee) {
 KDE_NO_CDTOR_EXPORT Console::Console (QWidget * parent, View * view) : QTextEdit (parent, "kde_kmplayer_console"), m_view (view) {
     setTextFormat (Qt::PlainText);
     setReadOnly (true);
-    QFont fnt = font ();
-    fnt.setFamily ("courier");
-    fnt.setWeight (QFont::DemiBold);
+    QFont fnt = KGlobalSettings::fixedFont ();
     setFont (fnt);
 }
 
