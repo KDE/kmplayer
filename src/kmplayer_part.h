@@ -168,6 +168,10 @@ private slots:
     void forward ();
     void posSliderPressed ();
     void posSliderReleased ();
+    void contrastValueChanged (int val);
+    void brightnessValueChanged (int val);
+    void hueValueChanged (int val);
+    void saturationValueChanged (int val);
 private:
     void init ();
     void initProcess ();

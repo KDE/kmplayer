@@ -37,6 +37,10 @@ public:
     KMPlayerConfig (KMPlayer *, KConfig * part);
     ~KMPlayerConfig ();
     KMPlayerPreferences *configDialog() const { return configdialog; }
+    int contrast;
+    int brightness;
+    int hue;
+    int saturation;
     bool usearts : 1;
     bool sizeratio : 1;
     bool showconsole : 1;

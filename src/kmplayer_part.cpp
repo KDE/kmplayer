@@ -215,6 +215,10 @@ void KMPlayer::init () {
     m_browserextension = new KMPlayerBrowserExtension (this);
     m_movie_position = 0;
     m_bPosSliderPressed = false;
+    m_view->contrastSlider ()->setValue (m_configdialog->contrast);
+    m_view->brightnessSlider ()->setValue (m_configdialog->brightness);
+    m_view->hueSlider ()->setValue (m_configdialog->hue);
+    m_view->saturationSlider ()->setValue (m_configdialog->saturation);
     m_posRegExp.setPattern (m_configdialog->positionpattern);
     connect (m_view->backButton (), SIGNAL (clicked ()), this, SLOT (back ()));
     connect (m_view->playButton (), SIGNAL (clicked ()), this, SLOT (play ()));
@@ -225,6 +229,10 @@ void KMPlayer::init () {
     connect (m_view->positionSlider (), SIGNAL (sliderMoved (int)), this, SLOT (posSliderChanged (int)));
     connect (m_view->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
     connect (m_view->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
+    connect (m_view->contrastSlider (), SIGNAL (valueChanged(int)), this, SLOT (contrastValueChanged(int)));
+    connect (m_view->brightnessSlider (), SIGNAL (valueChanged(int)), this, SLOT (brightnessValueChanged(int)));
+    connect (m_view->hueSlider (), SIGNAL (valueChanged(int)), this, SLOT (hueValueChanged(int)));
+    connect (m_view->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));
     connect (m_view, SIGNAL (urlDropped (const KURL &)), this, SLOT (openURL (const KURL &)));
     m_view->popupMenu ()->connectItem (KMPlayerView::menu_config,
                                        m_configdialog, SLOT (show ()));
@@ -592,6 +600,18 @@ bool KMPlayer::run (const char * args, const char * pipe) {
     printf (" %s", source ()->filterOptions ().ascii ());
     *m_process << " " << source ()->filterOptions ().ascii ();
 
+    printf (" -contrast %d", m_configdialog->contrast);
+    *m_process << " -contrast" << QString::number (m_configdialog->contrast);
+
+    printf (" -brightness %d", m_configdialog->brightness);
+    *m_process << " -brightness" << QString::number(m_configdialog->brightness);
+
+    printf (" -hue %d", m_configdialog->hue);
+    *m_process << " -hue" << QString::number (m_configdialog->hue);
+
+    printf (" -saturation %d", m_configdialog->saturation);
+    *m_process << " -saturation" << QString::number(m_configdialog->saturation);
+
     printf (" %s", args);
     *m_process << " " << args;
 
@@ -717,6 +737,34 @@ void KMPlayer::posSliderPressed () {
 void KMPlayer::posSliderReleased () {
     m_bPosSliderPressed=false;
     seekPercent (100.0 * m_view->positionSlider()->value() / m_view->positionSlider()->maxValue());
+}
+
+void KMPlayer::contrastValueChanged (int val) {
+    m_configdialog->contrast = val;
+    QString cmd;
+    cmd.sprintf ("contrast %d 1", val);
+    sendCommand (cmd);
+}
+
+void KMPlayer::brightnessValueChanged (int val) {
+    m_configdialog->brightness = val;
+    QString cmd;
+    cmd.sprintf ("brightness %d 1", val);
+    sendCommand (cmd);
+}
+
+void KMPlayer::hueValueChanged (int val) {
+    m_configdialog->hue = val;
+    QString cmd;
+    cmd.sprintf ("hue %d 1", val);
+    sendCommand (cmd);
+}
+
+void KMPlayer::saturationValueChanged (int val) {
+    m_configdialog->saturation = val;
+    QString cmd;
+    cmd.sprintf ("saturation %d 1", val);
+    sendCommand (cmd);
 }
 
 void KMPlayer::posSliderChanged (int /*pos*/) {

@@ -159,6 +159,10 @@ static const char * strMPlayerGroup = "MPlayer";
 static const char * strGeneralGroup = "General Options";
 static const char * strMPlayerPatternGroup = "MPlayer Output Matching";
 static const char * strKeepSizeRatio = "Keep Size Ratio";
+static const char * strContrast = "Contrast";
+static const char * strBrightness = "Brightness";
+static const char * strHue = "Hue";
+static const char * strSaturation = "Saturation";
 //static const char * strUseArts = "Use aRts";
 static const char * strVoDriver = "Video Driver";
 static const char * strAoDriver = "Audio Driver";
@@ -253,6 +257,10 @@ void KMPlayerConfig::readConfig () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
 
     m_config->setGroup (strGeneralGroup);
+    contrast = m_config->readNumEntry (strContrast, 0);
+    brightness = m_config->readNumEntry (strBrightness, 0);
+    hue = m_config->readNumEntry (strHue, 0);
+    saturation = m_config->readNumEntry (strSaturation, 0);
 
     m_config->setGroup (strMPlayerGroup);
     sizeratio = m_config->readBoolEntry (strKeepSizeRatio, true);
@@ -519,6 +527,10 @@ void KMPlayerConfig::writeConfig () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
     
     m_config->setGroup (strGeneralGroup);
+    m_config->writeEntry (strContrast, contrast);
+    m_config->writeEntry (strBrightness, brightness);
+    m_config->writeEntry (strHue, hue);
+    m_config->writeEntry (strSaturation, saturation);
     m_config->setGroup (strMPlayerGroup);
     m_config->writeEntry (strKeepSizeRatio, view->keepSizeRatio ());
     m_config->writeEntry (strShowConsole, view->showConsoleOutput());

@@ -85,6 +85,10 @@ public:
     QPushButton * recordButton () const { return m_recordButton; }
     QPushButton * broadcastButton () const { return m_broadcastButton; }
     QSlider * positionSlider () const { return m_posSlider; }
+    QSlider * contrastSlider () const { return m_contrastSlider; }
+    QSlider * brightnessSlider () const { return m_brightnessSlider; }
+    QSlider * hueSlider () const { return m_hueSlider; }
+    QSlider * saturationSlider () const { return m_saturationSlider; }
     QPopupMenu * popupMenu () const { return m_popupMenu; }
     QPopupMenu * zoomMenu () const { return m_zoomMenu; }
     bool keepSizeRatio () const { return m_keepsizeratio; }
@@ -129,6 +133,10 @@ private:
     QLabel * m_arts_label;
     QSlider * m_slider;
     QSlider * m_posSlider;
+    QSlider * m_contrastSlider;
+    QSlider * m_brightnessSlider;
+    QSlider * m_hueSlider;
+    QSlider * m_saturationSlider;
     Arts::SoundServerV2 * m_artsserver;
     Arts::StereoVolumeControl * m_svc;
     KArtsFloatWatch * m_watch;
