@@ -1,4 +1,4 @@
-INCLUDES = -I$(kde_includes)/kio -I$(kde_includes)/arts $(all_includes)
+INCLUDES = -I$(kde_includes)/kio -I$(kde_includes)/arts $(all_includes) -I$(top_srcdir)/kmplayer
 
 KDE_ICON=AUTO
 
