@@ -1,3 +1,15 @@
+Changes since version 0.8.4-rc4
+- Internals: merge code from backends, with the 'never reaching' goal to add
+  a new backend just by configuration (plus a backend player of course)
+- Internals: move playlist handling to Partbase, instead of each process have
+  their own tricks. Also kxineplayer accepts '-vo x11' now, kgstreamer eats
+  local url's w/o file:// prefix.
+- Internals: re-implement backend XML config and TV config data using own
+  DOM-like classes for no less reason than increasing the code coolness :-)
+- TV inputs/channels are now displayed inside the playlist, instead of a menu
+- kxvplayer also accounts for frequency setting when guessing the xvideo port
+- Move all library classes to the KMPlayer namespace and strip the KMPlayer
+  prefix in the name. Rename class KMPlayer itself to PartBase.
 Changes since version 0.8.4-rc3
 - Look for title entries in ASX and .pls files for playlist items
 - DemiBold font for playlist and console log window for readability
