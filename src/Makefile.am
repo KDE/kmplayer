@@ -30,7 +30,7 @@ bin_PROGRAMS= $(kxineplayer_app)
 
 kxineplayer_LDADD= $(LIB_XINE)
 kxineplayer_CFLAGS= $(CFLAGS_XINE)
-kxineplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH)
+kxineplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH) -lDCOP
 kxineplayer_SOURCES= xineplayer.cpp kmplayer_backend.skel kmplayer_callback.stub
 
 applnk_DATA = kmplayer.desktop

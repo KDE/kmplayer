@@ -663,7 +663,7 @@ public:
     }
 };
 
-int kdemain(int argc, char **argv) {
+int main(int argc, char **argv) {
     if (!XInitThreads ()) {
         printf ("XInitThreads () failed\n");
         return 1;
