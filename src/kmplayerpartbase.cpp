@@ -32,6 +32,7 @@
 #include <qslider.h>
 #include <qvaluelist.h>
 #include <qfile.h>
+#include <qdom.h>
 
 #include <kmessagebox.h>
 #include <kaboutdata.h>
@@ -878,6 +879,24 @@ QString KMPlayerURLSource::prettyName () {
     return QString (i18n ("URL - %1").arg (m_url.prettyURL ()));
 }
 
+static void scanDomTree (const QDomNode & node, QStringList & refurls) {
+    if (node.nodeName ().lower () == QString ("entryref") ||
+            node.nodeName ().lower () == QString ("ref") ||
+            node.nodeName ().lower () == QString ("video")) {
+        kdDebug () << node.nodeName () << endl;
+        QDomNamedNodeMap attr (node.attributes ());
+        for (unsigned i = 0; i < attr.length (); i++)
+        if (attr.item (i).nodeName ().lower () == QString ("href") ||
+                attr.item (i).nodeName ().lower () == QString ("src")) {
+            kdDebug () << attr.item (i).nodeName () << "=" << attr.item (i).nodeValue () << endl;
+            refurls.push_back (attr.item (i).nodeValue ());
+        }
+    }
+    for (QDomNode n = node.firstChild(); !n.isNull (); n = n.nextSibling ())
+        scanDomTree (n, refurls);
+}
+
+
 void KMPlayerURLSource::setURL (const KURL & url) {
     m_url = url;
     m_refurls.clear ();
@@ -886,18 +905,30 @@ void KMPlayerURLSource::setURL (const KURL & url) {
                 m_mime == QString ("audio/mpegurl") ||
                 m_mime == QString ("audio/x-mpegurl") ||
                 m_mime == QString ("video/x-ms-wmp") ||
+                m_mime == QString ("video/x-ms-asf") ||
+                m_mime == QString ("application/smil") ||
                 m_mime == QString ("application/x-mplayer2")) {
             char buf[1024];
             QFile file (url.path ());
             if (file.exists () && file.open (IO_ReadOnly)) {
-                while (m_refurls.size () < 1024 /* support 1k entries */) { 
-                    int len = file.readLine (buf, sizeof (buf));
-                    if (len < 0 || len > sizeof (buf) -1)
-                        break;
+                int len = file.readLine (buf, sizeof (buf));
+                if (len > 0 && len < sizeof (buf) -1) {
                     buf[len] = 0;
-                    QString mrl = QString::fromLocal8Bit (buf).stripWhiteSpace ();
-                    if (!mrl.startsWith (QChar ('#')) && !mrl.isEmpty ())
-                        m_refurls.push_back (mrl);
+                    if (QString (buf).stripWhiteSpace ().startsWith (QChar ('<'))) {
+                        file.close ();
+                        QDomDocument doc;
+                        doc.setContent (&file, false);
+                        scanDomTree (doc.firstChild(), m_refurls);
+                    } else do {
+                        QString mrl = QString::fromLocal8Bit (buf).stripWhiteSpace ();
+                        if (!mrl.startsWith (QChar ('#')) && !mrl.isEmpty ())
+                            m_refurls.push_back (mrl);
+                        int len = file.readLine (buf, sizeof (buf));
+                        if (len < 0 || len > sizeof (buf) -1)
+                            break;
+                        buf[len] = 0;
+                    } while (len > 0 && len < sizeof (buf) -1 && 
+                             m_refurls.size () < 1024 /* support 1k entries */);
                 }
             }
         } else if (url.url ().lower ().endsWith (QString ("pls")) ||
