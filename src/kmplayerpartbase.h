@@ -98,8 +98,8 @@ public:
     /* Changes the process,
      * calls setSource if process was playing
      * */
-    virtual void setProcess (const char *);
-    virtual void setRecorder (const char *);
+    void setProcess (const char *);
+    void setRecorder (const char *);
 
     /* Changes the source,
      * calls init() and reschedules an activate() on the source

@@ -163,19 +163,27 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
             } else if (name == QString::fromLatin1("type")) {
                 urlsource->setMime (value);
             } else if (name == QString::fromLatin1("controls")) {
-                if (value.lower () == QString::fromLatin1("imagewindow")) {
+                //http://service.real.com/help/library/guides/production8/realpgd.htm?src=noref,rnhmpg_080301,rnhmtn,nosrc
+                QString val_lower (value.lower ());
+                if (val_lower == QString::fromLatin1("imagewindow")) {
                     m_features = Feat_Viewer;
-                } else if (value.lower () == QString::fromLatin1("all")) {
+                } else if (val_lower == QString::fromLatin1("all")) {
                     m_features = Feat_All;
-                } else if (value.lower () == QString::fromLatin1("tacctrl")) {
+                } else if (val_lower == QString::fromLatin1("tacctrl")) {
                     m_features = Feat_Label;
-                } else if (value.lower () == QString::fromLatin1("controlpanel")) {
+                } else if (val_lower == QString::fromLatin1("controlpanel") ||
+                        val_lower == QString::fromLatin1("infovolumepanel") ||
+                        val_lower == QString::fromLatin1("positionfield") ||
+                        val_lower == QString::fromLatin1("rwctrl") ||
+                        val_lower == QString::fromLatin1("ffctrl") ||
+                        val_lower == QString::fromLatin1("stopbutton") ||
+                        val_lower == QString::fromLatin1("playbutton")) {
                     m_features = Feat_Controls;
-                } else if (value.lower () == QString::fromLatin1("statusbar")) {
+                } else if (val_lower == QString::fromLatin1("statusbar")) {
                     m_features = Feat_StatusBar;
-                } else if (value.lower () == QString::fromLatin1("infopanel")) {
+                } else if (val_lower == QString::fromLatin1("infopanel")) {
                     m_features = Feat_InfoPanel;
-                } else if (value.lower () == QString::fromLatin1("volumeslider")) {
+                } else if (val_lower == QString::fromLatin1("volumeslider")) {
                     m_features = Feat_VolumeSlider;
                 }
             } else if (name == QString::fromLatin1("nolabels")) {
@@ -230,7 +238,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
             cp->m_old_recorders = cp->m_recorders;
             cp->m_players = vp->m_players;
             cp->m_recorders = vp->m_recorders;
+            cp->setProcess (0L); // in case this one timed-out
             cp->setProcess (vp->process()->name());
+            cp->setRecorder (0L);
             cp->setRecorder (vp->recorder()->name());
             connect (vp, SIGNAL (destroyed (QObject *)),
                     cp, SLOT (viewerPartDestroyed (QObject *)));
@@ -271,7 +281,8 @@ KDE_NO_EXPORT void KMPlayerPart::viewerPartDestroyed (QObject *) {
 }
 
 KDE_NO_EXPORT void KMPlayerPart::viewerPartProcessChanged (const char * pname) {
-    m_process = 0L;
+    setProcess (0L); // make sure to disconnect to signals
+    setRecorder (0L);
     setProcess (pname);
 }
 
@@ -307,9 +318,11 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
         setURL (url);
     if (url.isEmpty ())
         return true;
-    if (!process ())
-        // no process set, we'll have to wait for a viewer to attach
+    if (!process ()) {
+        // no process set, we'll have to wait for a viewer to attach or timeout
+        QTimer::singleShot (50, this, SLOT (waitForImageWindowTimeOut ()));
         return true;
+    }
     if (!m_group.isEmpty () && !(m_features & Feat_Viewer)) {
         // group member, not the image window
         for (i = std::find_if (i, e, pred);
@@ -317,6 +330,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
                 i = std::find_if (++i, e, pred))
             if ((*i)->url ().isEmpty ()) // image window created w/o url
                 return (*i)->openURL (_url);
+        kdError () << "Not the ImageWindow and no ImageWindow found" << endl;
         return true;
     }
     enablePlayerMenu (true);
@@ -337,6 +351,15 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
     }
     m_havehref = false;
     return true;
+}
+
+KDE_NO_EXPORT void KMPlayerPart::waitForImageWindowTimeOut () {
+    if (!process ()) {
+        // still no ImageWindow attached, eg. audio only 
+        setProcess ("mplayer");
+        setRecorder ("mencoder");
+        KParts::ReadOnlyPart::openURL (url ());
+    }
 }
 
 KDE_NO_EXPORT bool KMPlayerPart::closeURL () {

@@ -134,6 +134,7 @@ protected slots:
     virtual void loaded (int percentage);
     void viewerPartDestroyed (QObject *);
     void viewerPartProcessChanged (const char *);
+    void waitForImageWindowTimeOut ();
 protected:
     virtual bool openFile(); // reimplement for KParts::ReadOnlyPart
 private:

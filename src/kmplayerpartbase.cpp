@@ -148,7 +148,6 @@ void KMPlayer::init (KActionCollection * action_collection) {
     connect (panel->brightnessSlider (), SIGNAL (valueChanged(int)), this, SLOT (brightnessValueChanged(int)));
     connect (panel->hueSlider (), SIGNAL (valueChanged(int)), this, SLOT (hueValueChanged(int)));
     connect (panel->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));
-    connect (panel, SIGNAL (destroyed(QObject *)), this, SLOT (controlPanelDestroyed(QObject *)));
     panel->popupMenu()->connectItem (KMPlayerControlPanel::menu_fullscreen, this, SLOT (fullScreen ()));
 #ifdef HAVE_XINE
     QPopupMenu *menu = panel->playerMenu ();
@@ -183,10 +182,10 @@ KMediaPlayer::View* KMPlayer::view () {
 }
 
 void KMPlayer::setProcess (const char * name) {
-    KMPlayerProcess * process = m_players [name];
+    KMPlayerProcess * process = name ? m_players [name] : 0L;
     if (m_process == process)
         return;
-    KMPlayerSource * source = process->source ();
+    KMPlayerSource * source = process ? process->source () : 0L;
     if (!source)
         source = m_sources ["urlsource"];
     if (m_process) {
@@ -206,6 +205,8 @@ void KMPlayer::setProcess (const char * name) {
         source = m_process->source ();
     }
     m_process = process;
+    if (!process)
+        return;
     m_process->setSource (source); // will stop the process if new source
     connect (m_process, SIGNAL (started ()), this, SLOT (processStarted ()));
     connect (m_process, SIGNAL (startedPlaying ()), this, SLOT (processStartedPlaying ()));
@@ -222,7 +223,7 @@ void KMPlayer::setProcess (const char * name) {
 }
 
 void KMPlayer::setRecorder (const char * name) {
-    KMPlayerProcess * recorder = m_recorders [name];
+    KMPlayerProcess * recorder = name ? m_recorders [name] : 0L;
     if (m_recorder == recorder)
         return;
     if (m_recorder) {
@@ -233,6 +234,8 @@ void KMPlayer::setRecorder (const char * name) {
         m_recorder->quit ();
     }
     m_recorder = recorder;
+    if (!recorder)
+        return;
     connect (m_recorder, SIGNAL (started()), this, SLOT (recordingStarted()));
     connect (m_recorder, SIGNAL (finished()), this, SLOT (recordingFinished()));
     m_recorder->setSource (m_process->source ());
