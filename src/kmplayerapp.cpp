@@ -58,9 +58,14 @@
 
 #define ID_STATUS_MSG 1
 
-static bool stopProcess (KProcess * process) {
+static bool stopProcess (KProcess * process, const char * cmd = 0L) {
     if (!process || !process->isRunning ()) return true;
     do {
+        if (cmd)
+            process->writeStdin (cmd, strlen (cmd));
+        KProcessController::theKProcessController->waitForProcessExit (1);
+        if (!process->isRunning ())
+            break;
         process->kill (SIGINT);
         KProcessController::theKProcessController->waitForProcessExit (3);
         if (!process->isRunning ())
@@ -101,7 +106,7 @@ KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
 }
 
 KMPlayerApp::~KMPlayerApp () {
-    stopProcess (m_ffmpeg_process);
+    stopProcess (m_ffmpeg_process, "q");
     stopProcess (m_ffserver_process);
     delete m_ffmpeg_process;
     delete m_ffserver_process;
@@ -273,13 +278,13 @@ static const char * const ffserverconf =
 "Port %d\nBindAddress %s\nMaxClients %d\nMaxBandwidth %d\n"
 "CustomLog -\nNoDaemon\n"
 "<Feed kmplayer.ffm>\nFile %s\nFileMaxSize %dK\nACL allow 127.0.0.1\n</Feed>\n"
-"<Stream video.avi>\nFeed kmplayer.ffm\nFormat avi\nVideoBitRate %d\nVideoFrameRate %d\nVideoSize %s\nVideoGopSize %d\nVideoQMin %d\nAudioBitRate %d\nAudioSampleRate %d\nAudioCodec mp3\nVideoCodec mpeg4\n</Stream>\n"
+"<Stream video.avi>\nFeed kmplayer.ffm\nFormat avi\nVideoBitRate %d\nVideoFrameRate %d\nVideoSize %s\nVideoGopSize %d\nVideoQMin %d\nAudioBitRate %d\nAudioSampleRate %d\nAudioCodec mp3\nVideoCodec mpeg4\n%s\n</Stream>\n"
 "<Stream stat.html>\nFormat status\nACL allow localhost\n</Stream>\n";
 
 void KMPlayerApp::boadcastClicked () {
     KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
     setCursor (QCursor (Qt::WaitCursor));
-    if (!stopProcess (m_ffmpeg_process))
+    if (!stopProcess (m_ffmpeg_process, "q"))
         KMessageBox::error (this, i18n ("Failed to end ffmpeg process."), i18n ("Error"));
     if (!stopProcess (m_ffserver_process))
         KMessageBox::error (this, i18n ("Failed to end ffserver process."), i18n ("Error"));
@@ -309,28 +314,29 @@ void KMPlayerApp::boadcastClicked () {
         m_ffmpeg_process->clearArguments();
     }
     QString conffile = locateLocal ("data", "kmplayer/ffserver.conf");
+    KMPlayerTVSource::TVSource * source = 0L;
+    if (m_player->source () == m_tvsource)
+        source = m_tvsource->tvsource ();
+    const char * noaudio = source && source->audiodevice.isEmpty () ? "NoAudio" : "";
     KMPlayerConfig * conf = m_player->configDialog ();
     unlink (conf->feedfile.ascii ());
     FFServerSetting & ffs = conf->ffserversettings[conf->ffserversetting];
     QFile qfile (conffile);
     qfile.open (IO_WriteOnly);
     QString configdata;
-    configdata.sprintf (ffserverconf, conf->ffserverport, conf->bindaddress.ascii (), conf->maxclients, conf->maxbandwidth, conf->feedfile.ascii (), conf->feedfilesize, ffs.videobitrate, ffs.framerate, ffs.size, ffs.gopsize, ffs.quality, ffs.audiobitrate, ffs.audiosamplerate);
+    configdata.sprintf (ffserverconf, conf->ffserverport, conf->bindaddress.ascii (), conf->maxclients, conf->maxbandwidth, conf->feedfile.ascii (), conf->feedfilesize, ffs.videobitrate, ffs.framerate, ffs.size, ffs.gopsize, ffs.quality, ffs.audiobitrate, ffs.audiosamplerate, noaudio);
     qfile.writeBlock (configdata.ascii (), configdata.length ());
     qfile.close ();
     kdDebug () << configdata << endl;
     kdDebug () << "ffserver -f " << conffile << endl;
     *m_ffserver_process << "ffserver -f " << conffile;
     m_ffserver_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
-    if (m_player->source () == m_tvsource) {
-        KMPlayerTVSource::TVSource * source = m_tvsource->tvsource ();
-        if (source->frequency >= 0) {
-            KProcess process;
-            process.setUseShell (true);
-            process << "v4lctl -c " << source->videodevice << " setfreq " << QString::number (source->frequency).ascii ();
-            kdDebug () << "v4lctl -c " << source->videodevice << " setfreq " << source->frequency << endl;
-            process.start (KProcess::Block);
-        }
+    if (source && source->frequency >= 0) {
+        KProcess process;
+        process.setUseShell (true);
+        process << "v4lctl -c " << source->videodevice << " setfreq " << QString::number (source->frequency).ascii ();
+        kdDebug () << "v4lctl -c " << source->videodevice << " setfreq " << source->frequency << endl;
+        process.start (KProcess::Block);
     }
     QTimer::singleShot (500, this, SLOT (boadcastTimerEvent ()));
 }
@@ -338,15 +344,18 @@ void KMPlayerApp::boadcastClicked () {
 void KMPlayerApp::boadcastTimerEvent () {
     KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
     QString ffmpegcmd = m_player->source ()->ffmpegCommand ();
+    KMPlayerConfig * conf = m_player->configDialog ();
     do {
         if (!m_ffserver_process->isRunning ()) {
             KMessageBox::error (this, i18n ("Failed to start ffserver."), i18n ("Error"));
             break;
         }
         m_player->stop ();
-        kdDebug () << ffmpegcmd << " http://localhost:8090/kmplayer.ffm" <<endl;
-        *m_ffmpeg_process << ffmpegcmd << " http://localhost:8090/kmplayer.ffm";
-        m_ffmpeg_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
+        QString ffurl;
+        ffurl.sprintf (" http://localhost:%d/kmplayer.ffm", conf->ffserverport);
+        kdDebug () << ffmpegcmd << ffurl <<endl;
+        *m_ffmpeg_process << ffmpegcmd << ffurl.ascii ();
+        m_ffmpeg_process->start (KProcess::NotifyOnExit, KProcess::Stdin);
         if (!m_ffmpeg_process->isRunning ()) {
             KMessageBox::error (this, i18n ("Failed to start ffmpeg."), i18n ("Error"));
             stopProcess (m_ffserver_process);
@@ -358,7 +367,9 @@ void KMPlayerApp::boadcastTimerEvent () {
     if (m_ffmpeg_process->isRunning ()) {
         if (!kview->broadcastButton ()->isOn ())
             kview->broadcastButton ()->toggle ();
-        m_player->openURL (KURL ("http://localhost:8090/video.avi"));
+        QString ffurl;
+        ffurl.sprintf ("http://localhost:%d/video.avi", conf->ffserverport);
+        m_player->openURL (KURL (ffurl));
         QTimer::singleShot (500, this, SLOT (zoom100 ()));
     }
     setCursor (QCursor (Qt::ArrowCursor));
@@ -992,7 +1003,9 @@ void KMPlayerTVSource::activate () {
     init ();
     static_cast <KMPlayerView*> (m_player->view())->broadcastButton ()->show ();
 }
-
+/* TODO: playback by
+ * ffmpeg -vd /dev/video0 -r 25 -s 768x576 -f rawvideo - |mplayer -nocache -ao arts -rawvideo on:w=768:h=576:fps=25 -quiet -
+ */
 const QString KMPlayerTVSource::buildArguments () {
     if (!m_tvsource)
         return QString ("");
