@@ -42,8 +42,7 @@ kxineplayer_CFLAGS= $(CFLAGS_XINE)
 kxineplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH) -lDCOP
 kxineplayer_SOURCES= xineplayer.cpp kmplayer_backend.skel kmplayer_callback.stub
 
-applnk_DATA = kmplayer.desktop
-applnkdir = $(kde_appsdir)/Multimedia
+xdg_apps_DATA = kmplayer.desktop
 
 kde_services_DATA = kmplayer_component.desktop $(SERVICES_KOFFICE)
 
