@@ -3,7 +3,7 @@
   -------------------
 begin                : Sat Dec  7 16:14:51 CET 2002
 copyright            : (C) 2002 by Koos Vriezen
-email                : 
+email                :
  ***************************************************************************/
 
 /***************************************************************************
@@ -33,7 +33,7 @@ I18N_NOOP("KMPlayer");
 static KCmdLineOptions options[] =
 {
     { "+[File]", I18N_NOOP("file to open"), 0 },
-    { 0, 0, 0 }
+    KCmdLineLastOption
     // INSERT YOUR COMMANDLINE OPTIONS HERE
 };
 
@@ -72,7 +72,7 @@ int main (int argc, char *argv[])
     }
     app.dcopClient()->registerAs("kmplayer");
     int retvalue = app.exec ();
-    
+
     delete kmplayer;
 
     return retvalue;
