@@ -401,6 +401,9 @@ void KMPlayerView::init () {
     m_viewer = new KMPlayerViewer (w1, this);
     //w1->setEraseColor (QColor (0, 0, 0));
     layerbox->addWidget (w1);
+#if KDE_IS_VERSION(3,1,90)
+    setVideoWidget (m_layer);
+#endif
     
     layerbox->addWidget (m_buttonbar);
     m_posSlider = new KMPlayerSlider (Qt::Horizontal, m_layer, this);
