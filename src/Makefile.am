@@ -2,6 +2,8 @@ INCLUDES = -I$(kde_includes)/kio -I$(kde_includes)/arts $(all_includes)
 
 SUBDIRS=
 
+KDE_ICON=AUTO
+
 lib_LTLIBRARIES=kdeinit_kmplayer.la
 
 kde_module_LTLIBRARIES = kparts_kmplayer.la
