@@ -150,6 +150,8 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
                     m_features = Feat_Label;
                 } else if (value.lower () == QString::fromLatin1("controlpanel")) {
                     m_features = Feat_Controls;
+                } else if (value.lower () == QString::fromLatin1("statusbar")) {
+                    m_features = Feat_StatusBar;
                 }
             } else if (name == QString::fromLatin1("nolabels")) {
                 m_features &= ~Feat_Label;
@@ -169,6 +171,12 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
         }
     }
     init ();
+    if (m_features & Feat_Controls)
+        m_view->setControlPanelMode (KMPlayerView::CP_Show);
+    else if (m_features != Feat_Unknown)
+        m_view->setControlPanelMode (KMPlayerView::CP_Hide);
+    else
+        m_view->setControlPanelMode (KMPlayerView::CP_AutoHide);
     m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayerControlPanel::menu_zoom50,
                                       this, SLOT (setMenuZoom (int)));
     m_view->buttonBar ()->zoomMenu ()->connectItem (KMPlayerControlPanel::menu_zoom100,
@@ -209,7 +217,7 @@ bool KMPlayerPart::openURL (const KURL & url) {
     for (; i != kmplayerpart_static->kmplayer_parts.end (); ++i) {
         kdDebug() << "[00;31m" << m_src_url << " other:" << (*i)->m_src_url << "[00m " << (current_player!=(KMPlayerPart*)*i) << " " << (m_group == (*i)->m_group) << ((*i)->m_src_url == m_src_url) <<endl;
         if (!current_player && *i && (KMPlayerPart*)*i != this &&
-                (*i)->m_src_url == m_src_url &&
+                ((*i)->m_src_url == m_src_url || (*i)->m_src_url.isEmpty ()) &&
                 m_group != QString::fromLatin1("_unique") &&
                 (*i)->m_group != QString::fromLatin1("_unique") &&
                 ((*i)->m_group == m_group ||
@@ -220,18 +228,16 @@ bool KMPlayerPart::openURL (const KURL & url) {
         }
     }
     enablePlayerMenu (true);
-    m_view->setControlPanelMode (m_features & Feat_Controls ? KMPlayerView::CP_Show : KMPlayerView::CP_AutoHide);
-    if (current_player) {
+    if (!m_src_url.isEmpty () && current_player) {
         if (m_features & Feat_Controls) {
             removeControlPanel (m_view->buttonBar ());
             current_player->addControlPanel (m_view->buttonBar ());
-            if (current_player->m_view)
-                current_player->m_view->setControlPanelMode (KMPlayerView::CP_Hide);
         }
         if (m_features & Feat_Viewer) {
             m_view->setForeignViewer (current_player->m_view);
-            m_view->setControlPanelMode (KMPlayerView::CP_Hide);
         }
+        if (current_player->m_src_url.isEmpty ())
+            return current_player->openURL (url);
         return true;
     }
     if (!m_view || !url.isValid ()) return false;

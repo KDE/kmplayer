@@ -107,7 +107,8 @@ class KMPlayerPart : public KMPlayer {
 public:
     enum Features {
         Feat_Unknown = 0,
-        Feat_Viewer = 0x01, Feat_Controls = 0x02, Feat_Label = 0x04,
+        Feat_Viewer = 0x01, Feat_Controls = 0x02,
+        Feat_Label = 0x04, Feat_StatusBar = 0x08,
         Feat_All = 0xff
     };
     KMPlayerPart (QWidget * wparent, const char * wname,
