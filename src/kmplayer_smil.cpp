@@ -40,7 +40,8 @@ static const unsigned int duration_media = (unsigned int) -2;
 static const unsigned int duration_element_activated = (unsigned int) -3;
 static const unsigned int duration_element_inbounds = (unsigned int) -4;
 static const unsigned int duration_element_outbounds = (unsigned int) -5;
-static const unsigned int duration_last_option = (unsigned int) -6;
+static const unsigned int duration_element_stopped = (unsigned int) -6;
+static const unsigned int duration_last_option = (unsigned int) -7;
 
 //-----------------------------------------------------------------------------
 
@@ -155,6 +156,22 @@ KDE_NO_EXPORT void ElementRuntime::begin () {
             durations [duration_time].durval = durations [end_time].durval - durations [begin_time].durval;
     } else
         setDurationItem (duration_time, durvalstr);
+    if (durations [duration_time].durval == duration_media &&
+            !durations [end_time].durval) {
+        QString es = element->getAttribute ("endsync");
+        if (!es.isEmpty ()) {
+            ElementPtr es_elm = element->document ()->getElementById (es);
+            if (es_elm) {
+                ElementRuntimePtr es_rt = es_elm->getRuntime ();
+                if (es_rt) {
+                    connect (es_rt.ptr (), SIGNAL (elementStopped ()),
+                             this, SLOT (elementHasStopped ()));
+                    durations [end_time].durval = duration_element_stopped;
+                    durations [end_time].connection = es_rt;
+                }
+            }
+        }
+    }
     bool ok;
     int rc = element->getAttribute ("repeatCount").toInt (&ok);
     if (ok && rc > 0)
@@ -215,6 +232,10 @@ KDE_NO_EXPORT void ElementRuntime::elementOutOfBoundsEvent () {
     processEvent (duration_element_outbounds);
 }
 
+KDE_NO_EXPORT void ElementRuntime::elementHasStopped () {
+    processEvent (duration_element_stopped);
+}
+
 KDE_NO_EXPORT void ElementRuntime::processEvent (unsigned int event) {
     kdDebug () << "ElementRuntime::processEvent " << event << " " << (element ? element->nodeName() : "-") << endl; 
     if (!isstarted && durations [begin_time].durval == event) {
@@ -249,8 +270,10 @@ KDE_NO_EXPORT void ElementRuntime::stopped () {
             isstarted = true;
             QTimer::singleShot (0, this, SLOT (started ()));
         }
-    } else
+    } else if (element->state == Element::state_started) {
         element->stop ();
+        emit elementStopped ();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -725,6 +748,9 @@ KDE_NO_EXPORT void SMIL::AVMediaType::start () {
 
 KDE_NO_EXPORT void SMIL::AVMediaType::stop () {
     TimedElement::stop ();
+    ElementRuntimePtr rt = getRuntime ();
+    if (rt && rt->isStarted ()) // are we called from backends
+        rt->emitElementStopped ();
     // TODO stop backend player
 }
 

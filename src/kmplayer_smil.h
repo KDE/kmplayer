@@ -60,6 +60,7 @@ public:
      * forced killing of timers
      */
     void end ();
+    bool isStarted () const { return isstarted; }
     virtual void paint (QPainter &) {}
     /**
      * If this element is attached to a region, region_node points to it
@@ -74,18 +75,36 @@ public:
         ElementRuntimePtrW connection;
     } durations [(const int) durtime_last];
 signals:
+    /**
+     * mouse has clicked the region_node
+     */
     void activateEvent ();
+    /**
+     * mouse has left the region_node
+     */
     void outOfBoundsEvent ();
+    /**
+     * mouse has entered the region_node
+     */
     void inBoundsEvent ();
+    /**
+     * element has stopped, usefull for 'endsync="elm_id"
+     */
+    void elementStopped ();
 public slots:
     void emitActivateEvent () { emit activateEvent (); }
     void emitOutOfBoundsEvent () { emit outOfBoundsEvent (); }
     void emitInBoundsEvent () { emit inBoundsEvent (); }
+    void emitElementStopped () { emit elementStopped (); }
 protected slots:
     void timerEvent (QTimerEvent *);
     void elementActivateEvent ();
     void elementOutOfBoundsEvent ();
     void elementInBoundsEvent ();
+    /**
+     * slot for elementStopped() signal
+     */
+    void elementHasStopped ();
     /**
      * start_timer timer expired
      */
