@@ -809,10 +809,15 @@ void Source::playURLDone () {
     kdDebug() << "Source::playURLDone" << endl;
     // notify a finish event
     if (m_back_request && m_back_request->isMrl ()) {
-        m_document->reset (); // stop everything
-        for (ElementPtr p = m_back_request->parentNode(); p; p =p->parentNode())
-            p->setState (Element::state_started);
-        m_back_request->start ();
+        m_current = m_back_request;
+        if (m_document->document ()->rootLayout) {
+            playCurrent (); // don't mess with SMIL, just play the damn link
+        } else {
+            m_document->reset (); // stop everything
+            for (ElementPtr p = m_current->parentNode(); p; p = p->parentNode())
+                p->setState (Element::state_started);
+            m_current->start ();
+        }
         m_back_request = ElementPtr ();
     } else {
         Mrl * mrl = m_current ? m_current->mrl () : 0L;
@@ -824,9 +829,14 @@ void Source::playURLDone () {
 
 bool Source::requestPlayURL (ElementPtr mrl, RegionNodePtr /*region*/) {
     kdDebug() << "Source::requestPlayURL " << mrl->mrl ()->src << endl;
-    m_current = mrl;
-    m_player->updateTree ();
-    playCurrent ();
+    if (m_player->process ()->state () > Process::Ready) {
+        m_back_request = mrl; // still playing, schedule it
+        m_player->process ()->stop ();
+    } else {
+        m_current = mrl;
+        m_player->updateTree ();
+        playCurrent ();
+    }
     return m_player->process ()->playing ();
 }
 
