@@ -96,6 +96,13 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent, FFServerSetting * ffs)
 	m_BroadcastPage = new KMPlayerPrefBroadcastPage (frame, ffs);
 	vlay->addWidget (m_BroadcastPage);
 
+	hierarchy.clear();
+	hierarchy << i18n ("Broadcasting") << i18n ("ACL");
+	frame = addPage (hierarchy, i18n ("Access lists"));
+	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
+	m_BroadcastACLPage = new KMPlayerPrefBroadcastACLPage (frame);
+	vlay->addWidget (m_BroadcastACLPage);
+
 
 	hierarchy.clear();
 	hierarchy << i18n("General") << i18n("Output");
@@ -416,7 +423,7 @@ TVDevice * KMPlayerPrefSourcePageTV::findDevice (QPtrList <TVDevice> & list, con
     return 0L;
 }
 
-KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerSetting * ffs) : QFrame (parent) {
+KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerSetting * _ffs) : QFrame (parent), ffs (_ffs) {
     QVBoxLayout *layout = new QVBoxLayout (this);
     QGridLayout *gridlayout = new QGridLayout (layout, 7, 2);
     QLabel *label = new QLabel (i18n ("Bind address:"), this);
@@ -448,22 +455,73 @@ KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerS
     optimize = new QComboBox(this);
     for (FFServerSetting * s = ffs; s->index >=0; s++)
         optimize->insertItem (s->name, s->index);
+    connect (optimize, SIGNAL (activated (int)),
+             this, SLOT (slotIndexChanged (int)));
     gridlayout->addWidget (label, 6, 0);
     gridlayout->addWidget (optimize, 6, 1);
-    label = new QLabel (i18n ("Allow access from:"), this);
-    layout->addWidget (label);
-    accesslist = new QTable (40, 1, this);
-    accesslist->setColumnWidth (0, 300);
-    QToolTip::add (accesslist, i18n ("'Single IP' or 'start-IP end-IP' for IP ranges"));
-    QHeader *header = accesslist->horizontalHeader();
-    header->setLabel (0, i18n ("Host/IP or IP range"));
-    layout->addWidget (accesslist);
+    movieparams = new QGroupBox (8, Qt::Horizontal, i18n("Movie settings"), this);
+    movieparams->setColumns (2);
+    label = new QLabel (i18n ("Audio bit rate:"), movieparams);
+    audiobitrate = new QLineEdit ("", movieparams);
+    label = new QLabel (i18n ("Audio sample rate:"), movieparams);
+    audiosamplerate = new QLineEdit ("", movieparams);
+    label = new QLabel (i18n ("Video bit rate:"), movieparams);
+    videobitrate = new QLineEdit ("", movieparams);
+    label = new QLabel (i18n ("Quality:"), movieparams);
+    quality = new QLineEdit ("", movieparams);
+    label = new QLabel (i18n ("Frame rate:"), movieparams);
+    framerate = new QLineEdit ("", movieparams);
+    label = new QLabel (i18n ("Gop size:"), movieparams);
+    gopsize = new QLineEdit ("", movieparams);
+    label = new QLabel (i18n ("Width:"), movieparams);
+    moviewidth = new QLineEdit ("", movieparams);
+    label = new QLabel (i18n ("Height:"), movieparams);
+    movieheight = new QLineEdit ("", movieparams);
+    layout->addWidget (movieparams);
+    movieparams->setEnabled (false);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     //QHBoxLayout *buttonlayout = new QHBoxLayout ();
     //buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
     //QPushButton * addformat = new QPushButton (i18n ("Add movie format ..."), this);
     //buttonlayout->addWidget (addformat);
     //layout->addLayout (buttonlayout);
+}
+
+void KMPlayerPrefBroadcastPage::slotIndexChanged (int index) {
+    if (ffs[index].name == i18n ("Custom")) {
+        ffs[index].audiobitrate = audiobitrate->text ().toInt ();
+        ffs[index].audiosamplerate = audiosamplerate->text ().toInt ();
+        ffs[index].videobitrate = videobitrate->text ().toInt ();
+        ffs[index].quality = quality->text ().toInt ();
+        ffs[index].framerate = framerate->text ().toInt ();
+        ffs[index].gopsize = gopsize->text ().toInt ();
+        ffs[index].width = moviewidth->text ().toInt ();
+        ffs[index].height = movieheight->text ().toInt ();
+        movieparams->setEnabled (true);
+    } else {
+        audiobitrate->setText (QString::number (ffs[index].audiobitrate));
+        audiosamplerate->setText (QString::number (ffs[index].audiosamplerate));
+        videobitrate->setText (QString::number (ffs[index].videobitrate));
+        quality->setText (QString::number (ffs[index].quality));
+        framerate->setText (QString::number (ffs[index].framerate));
+        gopsize->setText (QString::number (ffs[index].gopsize));
+        moviewidth->setText (QString::number (ffs[index].width));
+        movieheight->setText (QString::number (ffs[index].height));
+        movieparams->setEnabled (false);
+    }
+}
+
+KMPlayerPrefBroadcastACLPage::KMPlayerPrefBroadcastACLPage (QWidget *parent)
+: QFrame (parent) {
+    QVBoxLayout *layout = new QVBoxLayout (this);
+    QLabel * label = new QLabel (i18n ("Allow access from:"), this);
+    layout->addWidget (label);
+    accesslist = new QTable (40, 1, this);
+    accesslist->setColumnWidth (0, 300);
+    QToolTip::add (accesslist, i18n ("'Single IP' or 'start-IP end-IP' for IP ranges"));
+    QHeader *header = accesslist->horizontalHeader ();
+    header->setLabel (0, i18n ("Host/IP or IP range"));
+    layout->addWidget (accesslist);
 }
 
 KMPlayerPrefGeneralPageVCD::KMPlayerPrefGeneralPageVCD(QWidget *parent) : QFrame(parent)

@@ -30,6 +30,7 @@
 #include <kapplication.h>
 #include <kurl.h>
 #include <kdebug.h>
+#include <klocale.h>
 
 #include "kmplayerconfig.h"
 #include "kmplayer_part.h"
@@ -37,12 +38,13 @@
 //#include "configdialog.h"
 #include "pref.h"
 
-FFServerSetting _ffs[] = {
-    { 0, "Modem (32k)", 16, 11025, 50, 19, 3, 3, 160, 128 },
-    { 1, "ISDN (64k)", 16, 11025, 50, 16, 3, 3, 320, 240 },
-    { 2, "ISDN2 (128k)", 32, 22050, 80, 10, 10, 12, 320, 240 },
-    { 3, "LAN (1024k)", 64, 44100, 512, 5, 25, 12, 320, 240 },
-    { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+static FFServerSetting _ffs[] = {
+    { 0, i18n ("Modem (32k)"), 16, 11025, 50, 19, 3, 3, 160, 128 },
+    { 1, i18n ("ISDN (64k)"), 16, 11025, 50, 16, 3, 3, 320, 240 },
+    { 2, i18n ("ISDN2 (128k)"), 32, 22050, 80, 10, 10, 12, 320, 240 },
+    { 3, i18n ("LAN (1024k)"), 64, 44100, 512, 5, 25, 12, 320, 240 },
+    { 4, i18n ("Custom"), 0, 0, 0, 0, 0, 0, 0, 0 },
+    { -1, QString::null, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 
 TVChannel::TVChannel (const QString & n, int f) : name (n), frequency (f) {}
@@ -400,7 +402,8 @@ void KMPlayerConfig::show () {
     configdialog->m_BroadcastPage->feedfile->setText (feedfile);
     configdialog->m_BroadcastPage->feedfilesize->setText (QString::number (feedfilesize));
     configdialog->m_BroadcastPage->optimize->setCurrentItem (ffserversetting);
-    QTable *accesslist = configdialog->m_BroadcastPage->accesslist;
+    configdialog->m_BroadcastPage->slotIndexChanged (ffserversetting);
+    QTable *accesslist = configdialog->m_BroadcastACLPage->accesslist;
     accesslist->setNumRows (0);
     accesslist->setNumRows (50);
     QStringList::iterator it = ffserveracl.begin ();
@@ -626,8 +629,9 @@ void KMPlayerConfig::okPressed () {
     feedfile = configdialog->m_BroadcastPage->feedfile->text ();
     feedfilesize = configdialog->m_BroadcastPage->feedfilesize->text ().toInt();
     ffserversetting = configdialog->m_BroadcastPage->optimize->currentItem ();
+    configdialog->m_BroadcastPage->slotIndexChanged (ffserversetting);
     ffserveracl.clear ();
-    QTable *accesslist = configdialog->m_BroadcastPage->accesslist;
+    QTable *accesslist = configdialog->m_BroadcastACLPage->accesslist;
     for (int i = 0; i < accesslist->numRows (); ++i) {
         if (accesslist->item (i, 0) && !accesslist->item (i, 0)->text ().isEmpty ())
             ffserveracl.push_back (accesslist->item (i, 0)->text ());

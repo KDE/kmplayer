@@ -59,12 +59,14 @@ class KMPlayerPrefGeneralPageDVD;	// general, dvd
 class KMPlayerPrefGeneralPageVCD;	// general, vcd
 class KMPlayerPrefSourcePageTV;         // source, TV
 class KMPlayerPrefBroadcastPage;        // broadcast
+class KMPlayerPrefBroadcastACLPage;     // broadcast ACL
 class KMPlayerPrefGeneralPageOutput;	// general, output
 class KMPlayerPrefGeneralPageAdvanced;	// general, advanced, pattern matches etc.
 class KMPlayerPrefOPPageGeneral;	// OP = outputplugins, general
 class KMPlayerPrefOPPagePostProc;	// outputplugins, postproc
 class QTabWidget;
 class QTable;
+class QGroupBox;
 
 
 class TVChannel {
@@ -99,7 +101,7 @@ public:
 class FFServerSetting {
 public:
     int index;
-    const char * name;
+    QString name;
     int audiobitrate;
     int audiosamplerate;
     int videobitrate;
@@ -150,6 +152,7 @@ public:
     KMPlayerPrefGeneralPageVCD 		*m_GeneralPageVCD;
     KMPlayerPrefSourcePageTV 		*m_SourcePageTV;
     KMPlayerPrefBroadcastPage 		*m_BroadcastPage;
+    KMPlayerPrefBroadcastACLPage 	*m_BroadcastACLPage;
     KMPlayerPrefGeneralPageOutput 	*m_GeneralPageOutput;
     KMPlayerPrefGeneralPageAdvanced	*m_GeneralPageAdvanced;
     KMPlayerPrefOPPageGeneral 		*m_OPPageGeneral;
@@ -266,7 +269,7 @@ class KMPlayerPrefBroadcastPage : public QFrame
 {
     Q_OBJECT
 public:
-    KMPlayerPrefBroadcastPage (QWidget *parent, FFServerSetting * ffs);
+    KMPlayerPrefBroadcastPage (QWidget *parent, FFServerSetting * _ffs);
     ~KMPlayerPrefBroadcastPage () {}
 
     QLineEdit * bindaddress;
@@ -276,6 +279,27 @@ public:
     QLineEdit * feedfile;
     QLineEdit * feedfilesize;
     QComboBox * optimize;
+    QGroupBox * movieparams;
+    QLineEdit * audiobitrate;
+    QLineEdit * audiosamplerate;
+    QLineEdit * videobitrate;
+    QLineEdit * quality;
+    QLineEdit * framerate;
+    QLineEdit * gopsize;
+    QLineEdit * moviewidth;
+    QLineEdit * movieheight;
+public slots:
+    void slotIndexChanged (int index);
+private:
+    FFServerSetting * ffs;
+};
+
+class KMPlayerPrefBroadcastACLPage : public QFrame
+{
+    Q_OBJECT
+public:
+    KMPlayerPrefBroadcastACLPage (QWidget *parent);
+    ~KMPlayerPrefBroadcastACLPage () {}
     QTable * accesslist;
 };
 
