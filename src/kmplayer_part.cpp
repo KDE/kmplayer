@@ -603,7 +603,7 @@ struct JSCommandEntry {
     const KParts::LiveConnectExtension::Type rettype;
 };
 
-const int jscommandentries = 63;
+const int jscommandentries = 53;
 
 // keep this list in alphabetic order
 static const JSCommandEntry JSCommandList [jscommandentries] = {
@@ -662,7 +662,7 @@ static const JSCommandEntry JSCommandList [jscommandentries] = {
     { "volume", volume, 0L, KParts::LiveConnectExtension::TypeBool },
 };
 
-const JSCommandEntry * getJSCommandEntry (const char * name, int start = 0, int end = jscommandentries) {
+static const JSCommandEntry * getJSCommandEntry (const char * name, int start = 0, int end = jscommandentries) {
     if (end - start < 2) {
         if (start != end && !strcmp (JSCommandList[start].name, name))
             return &JSCommandList[start];
@@ -708,7 +708,7 @@ bool KMPlayerLiveConnectExtension::get
   (const unsigned long id, const QString & name,
    KParts::LiveConnectExtension::Type & type, unsigned long & rid, QString &) {
     const char * str = name.ascii ();
-    printf("get %s\n", str);
+    kdDebug () << "get: " << str << endl;
     lastJSCommandEntry = getJSCommandEntry (str);
     if (lastJSCommandEntry) {
         type = KParts::LiveConnectExtension::TypeFunction;
