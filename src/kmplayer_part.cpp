@@ -30,6 +30,7 @@
 #include <kconfig.h>
 #include <kaction.h>
 #include <klocale.h>
+#include <kinstance.h>
 
 #include "kmplayer_part.h"
 #include "kmplayerview.h"
