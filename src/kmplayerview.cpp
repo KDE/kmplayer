@@ -653,7 +653,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view)
     config_pix = KGlobal::iconLoader ()->loadIcon (QString ("configure"), KIcon::Small);
     m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("editcopy"), KIcon::Small, 0, true), i18n ("&Copy to Clipboard"), this, SLOT (copyToClipboard ()), 0, 0);
     m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("bookmark_add"), KIcon::Small, 0, true), i18n ("&Add Bookmark"), this, SLOT (addBookMark ()), 0, 1);
-    m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("unknown"), KIcon::Small, 0, true), i18n ("&Show all"), this, SLOT (toggleShowAllNodes ()), 0, 2);
+    m_itemmenu->insertItem (i18n ("&Show all"), this, SLOT (toggleShowAllNodes ()), 0, 2);
     connect (this, SIGNAL (contextMenuRequested (QListViewItem *, const QPoint &, int)), this, SLOT (contextMenuItem (QListViewItem *, const QPoint &, int)));
     connect (this, SIGNAL (expanded (QListViewItem *)), this, SLOT (itemExpanded (QListViewItem *)));
     QFont fnt = font ();
@@ -690,7 +690,7 @@ void PlayListView::populate (ElementPtr e, ElementPtr focus, QListViewItem * ite
         ElementPtr a = e->attributes ().item (0);
         if (a) {
             ListViewItem * as = new ListViewItem (item, e, this);
-            as->setText (0, i18n ("attributes"));
+            as->setText (0, i18n ("[attributes]"));
             as->setPixmap (0, menu_pix);
             for (; a; a = a->nextSibling ()) {
                 ListViewItem * ai = new ListViewItem (as, a, this);
@@ -745,10 +745,13 @@ void PlayListView::itemExpanded (QListViewItem * item) {
 
 void PlayListView::copyToClipboard () {
     ListViewItem * item = static_cast <ListViewItem *> (currentItem ());
+    QString text = item->text (0);
     if (item->m_elm) {
         Mrl * mrl = item->m_elm->mrl ();
-        QApplication::clipboard()->setText (mrl ? mrl->src : QString (item->m_elm->nodeName ()));
+        if (mrl)
+            text = mrl->src;
     }
+    QApplication::clipboard()->setText (text);
 }
 
 void PlayListView::addBookMark () {
