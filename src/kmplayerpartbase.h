@@ -70,6 +70,7 @@ public:
     virtual void dimensions (int & w, int & h);
     virtual void setWidth (int w);
     virtual void setHeight (int h);
+    virtual void setDimensions (int w, int h);
     virtual void setAspect (float a);
     virtual bool hasLength ();
     virtual QString prettyName ();
@@ -163,6 +164,7 @@ signals:
     void startRecording ();
     void stopRecording ();
     void sourceChanged (KMPlayer::Source *);
+    void sourceDimensionChanged ();
     void loading (int percentage);
     void urlAdded (const QString & url);
     void urlChanged (const QString & url);
@@ -179,6 +181,7 @@ protected slots:
     void brightnessValueChanged (int val);
     void hueValueChanged (int val);
     void saturationValueChanged (int val);
+    void sourceHasChangedDimensions ();
     virtual void processStateChange (KMPlayer::Process::State, KMPlayer::Process::State);
     void recordingStateChange (KMPlayer::Process::State, KMPlayer::Process::State);
     void positioned (int pos);

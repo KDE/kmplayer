@@ -600,13 +600,8 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                 if (movie_width <= 0 && m_sizeRegExp.search (out) > -1) {
                     movie_width = m_sizeRegExp.cap (1).toInt (&ok);
                     int movie_height = ok ? m_sizeRegExp.cap (2).toInt (&ok) : 0;
-                    if (ok && movie_width > 0 && movie_height > 0) {
-                        m_source->setWidth (movie_width);
-                        m_source->setHeight (movie_height);
-                        m_source->setAspect (1.0*movie_width/movie_height);
-                        if (m_player->settings ()->sizeratio)
-                            v->viewer ()->setAspect (m_source->aspect ());
-                    }
+                    if (ok && movie_width > 0 && movie_height > 0)
+                        m_source->setDimensions (movie_width, movie_height);
                 } else if (m_startRegExp.search (out) > -1) {
                     if (m_player->settings ()->mplayerpost090) {
                         if (!m_tmpURL.isEmpty () && m_url != m_tmpURL) {
@@ -1022,17 +1017,10 @@ void CallbackProcess::setMovieParams (int len, int w, int h, float a) {
     if (!m_source) return;
     kdDebug () << "setMovieParams " << len << " " << w << "," << h << " " << a << endl;
     in_gui_update = true;
-    m_source->setWidth (w);
-    m_source->setHeight (h);
+    m_source->setDimensions (w, h);
     m_source->setAspect (a);
     m_source->setLength (len);
     emit lengthFound (len);
-    if (m_player->settings ()->sizeratio) {
-        View * v = view ();
-        if (!v) return;
-        v->viewer ()->setAspect (a);
-        v->updateLayout ();
-    }
     in_gui_update = false;
 }
 

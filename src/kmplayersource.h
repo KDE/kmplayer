@@ -80,6 +80,7 @@ public:
     void setMime (const QString & m);
     virtual void setWidth (int w) { m_width = w; }
     virtual void setHeight (int h) { m_height = h; }
+    virtual void setDimensions (int w, int h);
     virtual void setAspect (float a) { m_aspect = a; }
     /* setLength (len) set length in deci-seconds */
     void setLength (int len);
@@ -99,6 +100,7 @@ signals:
      * Signal for notifying this source is at the end of play items
      */
     void endOfPlayItems ();
+    void dimensionsChanged ();
 public slots:
     virtual void activate () = 0;
     virtual void deactivate () = 0;

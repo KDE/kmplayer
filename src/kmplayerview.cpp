@@ -342,28 +342,29 @@ KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
     } else
         m_av_geometry = QRect (x, y, wws, hws);
 
-    // scale video widget inside region
-    if (m_view->keepSizeRatio() && m_view->controlPanelMode() != View::CP_Only){
-        int hfw = m_view->viewer ()->heightForWidth (wws);
-        if (hfw > 0)
-            if (hfw > hws) {
-                int old_wws = wws;
-                wws = int ((1.0 * hws * wws)/(1.0 * hfw));
-                x += (old_wws - wws) / 2;
-            } else {
-                y += (hws - hfw) / 2;
-                hws = hfw;
-            }
-    }
     // finally resize controlpanel and video widget
     if (m_view->controlPanel ()->isVisible ())
         m_view->controlPanel ()->setGeometry (0, h-hcp, w, hcp);
     if (!av_geometry_changed)
-        m_view->widgetStack ()->setGeometry (x, y, wws, hws);
+        setAudioVideoGeometry (x, y, wws, hws, 0L);
 }
 
 KDE_NO_EXPORT
 void ViewLayer::setAudioVideoGeometry (int x, int y, int w, int h, unsigned int * bg_color) {
+    if (m_view->controlPanelMode() == View::CP_Only) {
+        w = h = 0;
+    } else if (m_view->keepSizeRatio ()) { // scale video widget inside region
+        int hfw = m_view->viewer ()->heightForWidth (w);
+        if (hfw > 0)
+            if (hfw > h) {
+                int old_w = w;
+                w = int ((1.0 * h * w)/(1.0 * hfw));
+                x += (old_w - w) / 2;
+            } else {
+                y += (h - hfw) / 2;
+                h = hfw;
+            }
+    }
     m_av_geometry = QRect (x, y, w, h);
     m_view->widgetStack ()->setGeometry (x, y, w, h);
     if (bg_color)
@@ -1345,10 +1346,6 @@ void Viewer::setAspect (float a) {
     if (da < 0.0001)
         return;
     m_aspect = a;
-    QWidget * w = static_cast <QWidget *> (parent ());
-    QResizeEvent ev (w->size (), w->size ());
-    QApplication::sendEvent (w, &ev);
-    emit aspectChanged ();
 }
 
 KDE_NO_EXPORT int Viewer::heightForWidth (int w) const {

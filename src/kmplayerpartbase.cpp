@@ -317,6 +317,8 @@ void PartBase::setSource (Source * _source) {
         disconnect (m_source, SIGNAL (playURL (Source *, const QString &)),
                  m_process, SLOT (play (Source *, const QString &)));
         disconnect (m_source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
+        disconnect (m_source, SIGNAL (dimensionsChanged ()),
+                    this, SLOT (sourceHasChangedDimensions ()));
     }
     if (m_view) {
         m_view->controlPanel ()->setAutoControls (true);
@@ -354,6 +356,8 @@ void PartBase::setSource (Source * _source) {
     connect (m_source, SIGNAL (playURL (Source *, const QString &)),
             m_process, SLOT (play (Source *, const QString &)));
     connect (m_source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
+    connect (m_source, SIGNAL (dimensionsChanged ()),
+             this, SLOT (sourceHasChangedDimensions ()));
     updatePlayerMenu ();
     m_source->init ();
     if (m_view && m_view->viewer ()) {
@@ -461,7 +465,7 @@ void PartBase::processStateChange (KMPlayer::Process::State old, KMPlayer::Proce
     Source * src = m_process->player() == this ? m_source : m_process->source();
     if (state == Process::Playing) {
         m_process->view ()->videoStart ();
-        m_view->viewer ()->setAspect (m_source->aspect ());
+        //m_view->viewer ()->setAspect (m_source->aspect ());
         m_view->controlPanel ()->showPositionSlider (!!src->length ());
         m_view->controlPanel ()->enableSeekButtons (src->isSeekable ());
         if (m_settings->autoadjustvolume && src == m_source)
@@ -649,6 +653,14 @@ KDE_NO_EXPORT void PartBase::saturationValueChanged (int val) {
     m_process->saturation (val, true);
 }
 
+KDE_NO_EXPORT void PartBase::sourceHasChangedDimensions () {
+    if (m_view) {
+        m_view->viewer ()->setAspect (m_source->aspect ());
+        m_view->updateLayout ();
+    }
+    emit sourceDimensionChanged ();
+}
+
 KDE_NO_EXPORT void PartBase::positionValueChanged (int pos) {
     QSlider * slider = ::qt_cast <QSlider *> (sender ());
     if (slider && slider->isEnabled ())
@@ -686,6 +698,15 @@ void Source::init () {
     m_position = 0;
     m_identified = false;
     m_recordcmd.truncate (0);
+}
+
+void Source::setDimensions (int w, int h) {
+    if (m_width != w || m_height != h) {
+        m_width = w;
+        m_height = h;
+        setAspect (h > 0 ? 1.0 * w / h : 0.0);
+        emit dimensionsChanged ();
+    }
 }
 
 void Source::setLength (int len) {
@@ -920,13 +941,19 @@ bool Source::processOutput (const QString & str) {
         return false;
     if (str.startsWith ("ID_VIDEO_WIDTH")) {
         int pos = str.find ('=');
-        if (pos > 0)
+        if (pos > 0) {
             setWidth (str.mid (pos + 1).toInt());
+            if (height () > 0)
+                setDimensions (width (), height ());
+        }
         kdDebug () << "Source::processOutput " << width() << endl;
     } else if (str.startsWith ("ID_VIDEO_HEIGHT")) {
         int pos = str.find ('=');
-        if (pos > 0)
+        if (pos > 0) {
             setHeight (str.mid (pos + 1).toInt());
+            if (width () > 0)
+                setDimensions (width (), height ());
+        }
     } else if (str.startsWith ("ID_VIDEO_ASPECT")) {
         int pos = str.find ('=');
         if (pos > 0)
@@ -1115,6 +1142,23 @@ void URLSource::setHeight (int w) {
         mrl->height = w;
 }
 
+void URLSource::setDimensions (int w, int h) {
+    if (m_document && m_document->document ()->rootLayout) {
+        Mrl * mrl = m_current ? m_current->mrl () : 0L;
+        if (mrl && m_player->view ()) {
+            mrl->width = w;
+            mrl->height = h;
+            if (h > 0) {
+                float a = 1.0 * w / h;
+                mrl->aspect = a;
+                m_player->process ()->view ()->viewer ()->setAspect (a);
+                m_player->process ()->view ()->updateLayout ();
+            }
+        }
+    } else
+        Source::setDimensions (w, h);
+}
+
 void URLSource::setAspect (float w) {
     Mrl * mrl = m_current ? m_current->mrl () : 0L;
     if (mrl)
@@ -1254,11 +1298,7 @@ KDE_NO_EXPORT void URLSource::read (QTextStream & textstream) {
                 RegionNodePtr rl = m_document->document ()->rootLayout;
                 if (rl) {
                     RegionBase *root=convertNode<RegionBase>(rl->regionElement);
-                    setWidth (root->w);
-                    setHeight (root->h);
-                    setAspect (root->h > 0 ? 1.0 * root->w / root->h : 0.0);
-                    if (m_player->view ())
-                        m_player->process ()->view ()->viewer ()->setAspect (aspect ()); // obviously this sucks
+                    Source::setDimensions (root->w, root->h);
                 }
             }
         } else if (line.lower () != QString ("[reference]")) do {

@@ -355,8 +355,6 @@ public:
     void setBackgroundColor (const QColor & c);
 public slots:
     void sendConfigureEvent ();
-signals:
-    void aspectChanged ();
 protected:
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);

@@ -213,7 +213,7 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
             this, SLOT (zoom150 ()));
     connect (m_view->controlPanel()->broadcastButton (), SIGNAL (clicked ()),
             this, SLOT (broadcastClicked ()));
-    connect (m_view->viewer (), SIGNAL (aspectChanged ()),
+    connect (m_player, SIGNAL (sourceDimensionChanged ()),
             this, SLOT (zoom100 ()));
     connect (m_view, SIGNAL (fullScreenChanged ()),
             this, SLOT (fullScreen ()));
@@ -316,7 +316,6 @@ KDE_NO_EXPORT void KMPlayerApp::resizePlayer (int percentage) {
         if (s.width () != width () || s.height () != height ()) {
             QSize oldsize = m_view->fullScreenWidget ()->size ();
             resize (s);
-            QApplication::postEvent (m_view->fullScreenWidget (), new QResizeEvent (m_view->fullScreenWidget ()->size (), oldsize));
         }
     }
 }
