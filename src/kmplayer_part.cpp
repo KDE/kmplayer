@@ -30,6 +30,7 @@
 #include <klibloader.h>
 #include <kdebug.h>
 #include <kconfig.h>
+#include <ksimpleconfig.h>
 #include <kaction.h>
 #include <kapplication.h>
 #include <klocale.h>
@@ -104,7 +105,7 @@ static bool getBoolValue (const QString & value) {
 
 KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
                     QObject * parent, const char *name, const QStringList &args)
- : KMPlayer (wparent, wname, parent, name, new KConfig ("kmplayerrc")),
+ : KMPlayer (wparent, wname, parent, name, new KSimpleConfig ("kmplayerrc")),
    m_browserextension (new KMPlayerBrowserExtension (this)),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
    m_hrefsource (new KMPlayerHRefSource (this)),

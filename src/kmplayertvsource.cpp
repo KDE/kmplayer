@@ -437,7 +437,6 @@ void KMPlayerTVSource::buildMenu () {
 
 void KMPlayerTVSource::menuClicked (int id) {
     //"channelmenu"
-    kdDebug () << "menuClicked" << sender ()->name () << endl;
     CommandMap::iterator it = commands.find (id);
     if (it != commands.end ()) {
         TVSource * prevsource = m_tvsource;

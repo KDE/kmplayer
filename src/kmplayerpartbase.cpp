@@ -42,6 +42,7 @@
 #include <kbookmarkmenu.h>
 #include <kbookmarkmanager.h>
 #include <kconfig.h>
+#include <ksimpleconfig.h>
 #include <kaction.h>
 #include <kprocess.h>
 #include <kstandarddirs.h>
@@ -1044,7 +1045,7 @@ void KMPlayerURLSource::play () {
             return;
         if (url.url ().lower ().endsWith (QString ("pls")) ||
                 mimestr == QString ("audio/x-scpls")) {
-            KConfig kc (url.path (), true);
+            KSimpleConfig kc (url.path (), true);
             kc.setGroup ("playlist");
             int nr = kc.readNumEntry ("numberofentries", 0);
             if (nr == 0)
