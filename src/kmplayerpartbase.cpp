@@ -1115,6 +1115,7 @@ static bool isPlayListMime (const QString & mime) {
             !strcmp (mimestr ,"audio/x-mpegurl") ||
             !strcmp (mimestr ,"video/x-ms-wmp") ||
             !strcmp (mimestr ,"video/x-ms-asf") ||
+            !strcmp (mimestr ,"video/x-ms-wmv") ||
             !strcmp (mimestr ,"audio/x-scpls") ||
             !strcmp (mimestr ,"audio/x-pn-realaudio") ||
             !strcmp (mimestr ,"audio/vnd.rn-realaudio") ||

@@ -649,7 +649,7 @@ void KMPlayerPlayListView::addBookMark () {
     if (item->m_elm) {
         Mrl * mrl = item->m_elm->mrl ();
         KURL url (mrl ? mrl->src : QString (item->m_elm->nodeName ()));
-        emit addBookMark (url.prettyURL (), url.url ());
+        emit addBookMark (mrl->pretty_name.isEmpty () ? url.prettyURL () : mrl->pretty_name, url.url ());
     }
 }
 
