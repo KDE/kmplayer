@@ -662,6 +662,8 @@ static Element * fromParamGroup (ElementPtr & d, const QString & tag) {
 static Element * fromAnimateGroup (ElementPtr & d, const QString & tag) {
     if (!strcmp (tag.latin1 (), "set"))
         return new SMIL::Set (d);
+    else if (!strcmp (tag.latin1 (), "animate"))
+        return new SMIL::Animate (d);
     return 0L;
 }
 
@@ -866,8 +868,8 @@ KDE_NO_EXPORT ElementPtr SMIL::Region::childFromTag (const QString & tag) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT void SMIL::TimedElement::start () {
-    kdDebug () << "SMIL::TimedElement(" << nodeName() << ")::start" << endl;
+KDE_NO_EXPORT void SMIL::TimedMrl::start () {
+    kdDebug () << "SMIL::TimedMrl(" << nodeName() << ")::start" << endl;
     setState (state_started);
     ElementRuntimePtr rt = getRuntime ();
     if (rt) {
@@ -879,21 +881,46 @@ KDE_NO_EXPORT void SMIL::TimedElement::start () {
     }
 }
 
-KDE_NO_EXPORT void SMIL::TimedElement::stop () {
+KDE_NO_EXPORT void SMIL::TimedMrl::stop () {
     Mrl::stop ();
 }
 
-KDE_NO_EXPORT void SMIL::TimedElement::reset () {
-    kdDebug () << "SMIL::TimedElement::reset " << endl;
+KDE_NO_EXPORT void SMIL::TimedMrl::reset () {
+    kdDebug () << "SMIL::TimedMrl::reset " << endl;
     Mrl::reset ();
     if (runtime)
         runtime->end ();
 }
 
+KDE_NO_EXPORT ElementRuntimePtr SMIL::TimedMrl::getRuntime () {
+    if (!runtime)
+        runtime = getNewRuntime ();
+    return runtime;
+}
+
+//-----------------------------------------------------------------------------
+
 KDE_NO_EXPORT ElementRuntimePtr SMIL::TimedElement::getRuntime () {
     if (!runtime)
         runtime = getNewRuntime ();
     return runtime;
+}
+
+KDE_NO_EXPORT void SMIL::TimedElement::start () {
+    ElementRuntimePtr rt = getRuntime ();
+    for (ElementPtr a = attributes ().item (0); a; a = a->nextSibling ()) {
+        Attribute * att = convertNode <Attribute> (a);
+        rt->setParam (QString (att->nodeName ()), att->nodeValue ());
+    }
+    rt->begin ();
+}
+
+KDE_NO_EXPORT void SMIL::TimedElement::stop () {
+    Element::stop ();
+}
+
+KDE_NO_EXPORT void SMIL::TimedElement::reset () {
+    getRuntime ()->end ();
 }
 
 //-----------------------------------------------------------------------------
@@ -1024,7 +1051,7 @@ KDE_NO_EXPORT void SMIL::Switch::childDone (ElementPtr) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (ElementPtr &d, const QString &t)
-    : TimedElement (d), m_type (t), bitrate (0) {}
+    : TimedMrl (d), m_type (t), bitrate (0) {}
 
 KDE_NO_EXPORT ElementPtr SMIL::MediaType::childFromTag (const QString & tag) {
     Element * elm = fromContentControlGroup (m_doc, tag);
@@ -1059,7 +1086,7 @@ KDE_NO_EXPORT void SMIL::MediaType::start () {
         }
         if (!in_start) { // all children finished
             rt->setParam (QString ("src"), src);
-            TimedElement::start (); // sets all attributes and calls rt->begin()
+            TimedMrl::start (); // sets all attributes and calls rt->begin()
         } // else this points to a playlist
     } else // should not happen
         Element::start ();
@@ -1069,7 +1096,7 @@ KDE_NO_EXPORT void SMIL::MediaType::stop () {
     if (in_start) // all children stopped while still in the start() proc
         in_start = false;
     else
-        SMIL::TimedElement::stop ();
+        SMIL::TimedMrl::stop ();
 }
 //-----------------------------------------------------------------------------
 
@@ -1096,7 +1123,7 @@ KDE_NO_EXPORT void SMIL::AVMediaType::start () {
 }
 
 KDE_NO_EXPORT void SMIL::AVMediaType::stop () {
-    TimedElement::stop ();
+    TimedMrl::stop ();
     TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
     if (tr && tr->state () == TimedRuntime::timings_started)
         tr->emitElementStopped (); // called from backends
@@ -1131,24 +1158,19 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::TextMediaType::getNewRuntime () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT ElementRuntimePtr SMIL::Set::getRuntime () {
-    if (!runtime) // bah code duplicate
-        runtime = ElementRuntimePtr (new SetData (m_self));
-    return runtime;
+KDE_NO_EXPORT ElementRuntimePtr SMIL::Set::getNewRuntime () {
+    return ElementRuntimePtr (new SetData (m_self));
 }
 
 KDE_NO_EXPORT void SMIL::Set::start () {
-    ElementRuntimePtr rt = getRuntime ();
-    for (ElementPtr a = attributes ().item (0); a; a = a->nextSibling ()) {
-        Attribute * att = convertNode <Attribute> (a);
-        rt->setParam (QString (att->nodeName ()), att->nodeValue ());
-    }
-    rt->begin ();
+    TimedElement::start ();
     stop (); // no livetime of itself
 }
 
-KDE_NO_EXPORT void SMIL::Set::reset () {
-    getRuntime ()->end ();
+//-----------------------------------------------------------------------------
+
+KDE_NO_EXPORT ElementRuntimePtr SMIL::Animate::getNewRuntime () {
+    return ElementRuntimePtr (new SetData (m_self));
 }
 
 //-----------------------------------------------------------------------------

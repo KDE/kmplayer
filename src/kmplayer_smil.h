@@ -311,9 +311,25 @@ public:
 };
 
 /**
+ * Abstract base for all SMIL media elements having begin/dur/end/.. attributes
+ */
+class TimedMrl : public Mrl {
+public:
+    KDE_NO_CDTOR_EXPORT ~TimedMrl () {}
+    ElementRuntimePtr getRuntime ();
+    void start ();
+    void stop ();
+    void reset ();
+protected:
+    KDE_NO_CDTOR_EXPORT TimedMrl (ElementPtr & d) : Mrl (d) {}
+    ElementRuntimePtr runtime;
+    virtual ElementRuntimePtr getNewRuntime () = 0;
+};
+
+/**
  * Abstract base for all SMIL element having begin/dur/end/.. attributes
  */
-class TimedElement : public Mrl {
+class TimedElement : public Element {
 public:
     KDE_NO_CDTOR_EXPORT ~TimedElement () {}
     ElementRuntimePtr getRuntime ();
@@ -321,7 +337,7 @@ public:
     void stop ();
     void reset ();
 protected:
-    KDE_NO_CDTOR_EXPORT TimedElement (ElementPtr & d) : Mrl (d) {}
+    KDE_NO_CDTOR_EXPORT TimedElement (ElementPtr & d) : Element (d) {}
     ElementRuntimePtr runtime;
     virtual ElementRuntimePtr getNewRuntime () = 0;
 };
@@ -329,12 +345,12 @@ protected:
 /**
  * Abstract base for the group elements (par/seq/excl/..)
  */
-class GroupBase : public TimedElement {
+class GroupBase : public TimedMrl {
 public:
     KDE_NO_CDTOR_EXPORT ~GroupBase () {}
     bool isMrl ();
 protected:
-    KDE_NO_CDTOR_EXPORT GroupBase (ElementPtr & d) : TimedElement (d) {}
+    KDE_NO_CDTOR_EXPORT GroupBase (ElementPtr & d) : TimedMrl (d) {}
     virtual ElementRuntimePtr getNewRuntime ();
 };
 
@@ -388,7 +404,7 @@ public:
 /**
  * Abstract base for the MediaType classes (video/audio/text/img/..)
  */
-class MediaType : public TimedElement {
+class MediaType : public TimedMrl {
 public:
     MediaType (ElementPtr & d, const QString & t);
     ElementPtr childFromTag (const QString & tag);
@@ -421,14 +437,19 @@ public:
     ElementRuntimePtr getNewRuntime ();
 };
 
-class Set : public Element {
+class Set : public TimedElement {
 public:
-    KDE_NO_CDTOR_EXPORT Set (ElementPtr & d) : Element (d) {}
+    KDE_NO_CDTOR_EXPORT Set (ElementPtr & d) : TimedElement (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "set"; }
-    ElementRuntimePtr getRuntime ();
-    void start ();
-    void reset ();
-    ElementRuntimePtr runtime;
+    virtual ElementRuntimePtr getNewRuntime ();
+    virtual void start ();
+};
+
+class Animate : public TimedElement {
+public:
+    KDE_NO_CDTOR_EXPORT Animate (ElementPtr & d) : TimedElement (d) {}
+    KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
+    virtual ElementRuntimePtr getNewRuntime ();
 };
 
 class Param : public Element {
