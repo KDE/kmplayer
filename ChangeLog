@@ -1,3 +1,15 @@
+Changes since version 0.8.3-rc1
+- Support for AUTOSTART attribute
+- Support for FULLSCREENMODE attribute
+- Seeking while sliding :-)
+- Local .pls and .m3u playlist files support. Works too if autodownloaded, eg
+  pls' on http://www.shoutcast.com should work now
+Changes since version 0.8.2
+- fix for the "video window stays (sometimes/often) black" bug, which seems to
+  occur more with the latest Qt versions. KMPlayer uses a XSimpleWindow now
+  that is managed by QXEmbed
+- Support for Real's CONTROLS/CONSOLE attributes. This makes it possible
+  multible plugins cooperate sharing imagewindow/controlpanel
 Changes since version 0.8.2-rc5
 - Don't show ffserver setting when no v4l devices are configured
 - Stream detection fix for MPlayer-1.0prex (needed for recording)

@@ -16,6 +16,7 @@ Download the sources from http://www.mplayerhq.hu/homepage/.
 If you want quicktime support, also download the quicktime dll's
 (http://www.mplayerhq.hu/MPlayer/releases/codecs/qt6dlls.tar.bz2) and unpack
 them and copy the files to /usr/lib/win32 (make this dir if it doesn't exist).
+Or download the 'All in one' package and have even more codecs.
 Untar the mplayer source package (tar xfj MPlayer-0.90.tar.bz2), change to
 that directory. Make sure $KDEDIR/bin is in you path (check if you can run
 'artsplay').
@@ -28,6 +29,11 @@ Next change ~/.mplayer/config with an editor and change the video driver (vo=xv)
 Quickly installing Xine
 Download the sources for libxine (xine-lib-1-beta12.tar.gz) from http://xinehq.de. Unpack it (tar xfz xine-lib-1-beta12.tar.gz) and change to this directory (cd xine-lib-1-beta12). Now run configure (./configure) and make ('make'). Install it as root ('su -c "make install"').
 Recommended, for encrypted DVDs, install libdvdcss from http://developers.videolan.org/libdvdcss too.
+Xine can use the codecs for MPlayer in /usr/lib/win32, however it can't find
+the real codecs in there. Eg run
+  $ strings /usr/local/lib/xine/plugins/1.0.0/xineplug_decode_real.so |grep drv
+after installing to see where it looks for the Real codecs. Either copy or 
+symlink for Xine to find them.
 
 Quickly installing ffmpeg/ffserver
 Download the sources from http://ffmpeg.sourceforge.net/. If the current version is 0.4.6, I recommend using a more recent CVS snapshot because it uses less CPU when grabbing a TV device.
@@ -39,7 +45,9 @@ might try the patch for the x11 driver and see if that works for you (not needed
 You might need to change mimetype settings (Control Center | KDE Components | File Associations) to make sure KMPlayer (or 'Embedded MPlayer for KDE' in embedded tab) is set for all the formats you want to play with KMPlayer.
 Also make sure in the 'Embedding' tab 'Show file in embedded viewer' is set.
 
-If you run MPlayer from CVS, Set 'Post MPlayer 0.90=true' in .kde/share/config/kmplayer.rc under group [MPlayer]. It will change some of the mencoder arguments (for recording).
+If you run an older versio of MPlayer (0.9x), set 'Post MPlayer 0.90=false' in
+.kde/share/config/kmplayer.rc under group [MPlayer]. It will change some of the
+mencoder arguments (for recording).
 
 Enjoy!
 
