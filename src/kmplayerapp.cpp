@@ -106,9 +106,9 @@ void KMPlayerApp::initActions()
     viewStatusBar = KStdAction::showStatusbar(this, SLOT(slotViewStatusBar()), actionCollection());
     viewMenuBar = KStdAction::showMenubar(this, SLOT(slotViewMenuBar()), actionCollection());
     fileNewWindow->setStatusText(i18n("Opens a new application window"));
-    fileOpen->setStatusText(i18n("Opens an existing document"));
+    fileOpen->setStatusText(i18n("Opens an existing file"));
     fileOpenRecent->setStatusText(i18n("Opens a recently used file"));
-    fileClose->setStatusText(i18n("Closes the actual document"));
+    fileClose->setStatusText(i18n("Closes the actual source"));
     fileQuit->setStatusText(i18n("Quits the application"));
     //viewToolBar->setStatusText(i18n("Enables/disables the toolbar"));
     viewStatusBar->setStatusText(i18n("Enables/disables the statusbar"));
