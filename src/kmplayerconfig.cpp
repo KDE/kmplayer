@@ -147,6 +147,7 @@ static const char * strTVSize = "Size";
 static const char * strTVMinSize = "Minimum Size";
 static const char * strTVMaxSize = "Maximum Size";
 static const char * strTVNoPlayback = "No Playback";
+static const char * strTVNorm = "Norm";
 static const char * strTVDriver = "Driver";
 static const char * strBroadcast = "Broadcast";
 static const char * strBindAddress = "Bind Address";
@@ -296,6 +297,8 @@ void KMPlayerConfig::readConfig () {
                 kdDebug() << freqstr.left (pos) << " at " << freqstr.mid (pos+1).toInt() << endl;
                 input->channels.append (channel);
             }
+            if (input->hastuner) // what if multible tuners?
+                input->norm = m_config->readEntry (strTVNorm, "PAL");
             device->inputs.append (input);
         }
         tvdevices.append (device);
@@ -511,6 +514,7 @@ void KMPlayerConfig::writeConfig () {
                 if (!channellist.size ())
                     channellist.append (QString ("none"));
                 m_config->writeEntry (input->name, channellist, ';');
+                m_config->writeEntry (strTVNorm, input->norm);
             }
         }
         m_config->writeEntry (strTVInputs, inputlist, ';');

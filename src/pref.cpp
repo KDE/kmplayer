@@ -247,6 +247,15 @@ KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent,
         QLabel * inputLabel = new QLabel (input->name, widget);
         tablayout->addWidget (inputLabel);
         if (device->inputs.current()->hastuner) {
+            QHBoxLayout *horzlayout = new QHBoxLayout ();
+            horzlayout->addWidget (new QLabel (i18n ("Norm:"), widget));
+            QComboBox * norms = new QComboBox (widget, "PageTVNorm");
+            norms->insertItem (QString ("NTSC"), 0);
+            norms->insertItem (QString ("PAL"), 1);
+            norms->insertItem (QString ("SECAM"), 2);
+            norms->setCurrentText (input->norm);
+            horzlayout->addWidget (norms);
+            tablayout->addLayout (horzlayout);
             QTable * table = new QTable (90, 2, widget, "PageTVChannels");
             table->setColumnWidth (0, 250);
             table->setColumnWidth (1, 150);
@@ -298,14 +307,16 @@ void KMPlayerPrefSourcePageTVDevice::updateTVDevice () {
         if (input->hastuner) {
             QWidget * widget = inputsTab->page (i);
             QTable * table = static_cast <QTable *> (widget->child ("PageTVChannels", "QTable"));
-            if (!table) {
-                kdError () << "Table not found" << endl;
-                continue;
+            if (table) {
+                input->channels.clear ();
+                for (int j = 0; j < table->numRows (); ++j) {
+                    if (table->item (j, 0) && table->item (j, 1) && !table->item (j, 0)->text ().isEmpty ())
+                        input->channels.append (new TVChannel (table->item (j, 0)->text (), table->item (j, 1)->text ().toInt ()));
+                }
             }
-            input->channels.clear ();
-            for (int j = 0; j < table->numRows (); ++j) {
-                if (table->item (j, 0) && table->item (j, 1) && !table->item (j, 0)->text ().isEmpty ())
-                    input->channels.append (new TVChannel (table->item (j, 0)->text (), table->item (j, 1)->text ().toInt ()));
+            QComboBox * norms = static_cast <QComboBox *> (widget->child ("PageTVNorm", "QComboBox"));
+            if (norms) {
+                input->norm = norms->currentText ();
             }
         }
     }

@@ -143,6 +143,7 @@ public:
         QString videodevice;
         QString audiodevice;
         QString title;
+        QString norm;
         int frequency;
         bool noplayback;
     };

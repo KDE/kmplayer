@@ -82,6 +82,7 @@ public:
     QString name;
     int id;
     bool hastuner;
+    QString norm;
     QPtrList <TVChannel> channels;
 };
 

@@ -367,6 +367,10 @@ void KMPlayerApp::startFeed () {
             if (tvsource->frequency >= 0) {
                 KProcess process;
                 process.setUseShell (true);
+                process << "v4lctl -c " << tvsource->videodevice << " setnorm " << tvsource->norm.ascii ();
+                kdDebug () << "v4lctl -c " << tvsource->videodevice << " setnorm " << tvsource->norm << endl;
+                process.start (KProcess::Block);
+                process.clearArguments();
                 process << "v4lctl -c " << tvsource->videodevice << " setfreq " << QString::number (tvsource->frequency).ascii ();
                 kdDebug () << "v4lctl -c " << tvsource->videodevice << " setfreq " << tvsource->frequency << endl;
                 process.start (KProcess::Block);
@@ -1111,6 +1115,7 @@ void KMPlayerTVSource::buildMenu () {
                     source->noplayback = device->noplayback;
                     source->frequency = channel->frequency;
                     source->size = device->size;
+                    source->norm = input->norm;
                     inputmenu->insertItem (channel->name, this, SLOT(menuClicked (int)), 0, counter);
                     source->command.sprintf ("device=%s:input=%d:freq=%d", device->device.ascii (), input->id, channel->frequency);
                     source->title = device->name + QString("-") + channel->name;
