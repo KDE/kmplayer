@@ -283,6 +283,8 @@ KDE_NO_EXPORT bool KMPlayerPart::openFile() {
 
 KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
     kdDebug () << "KMPlayerPart::openURL " << _url.url() << endl;
+    KMPlayerSource * urlsource = m_sources ["urlsource"];
+    KMPlayerHRefSource * hrefsource = static_cast <KMPlayerHRefSource *>(m_sources ["hrefsource"]);
     KMPlayerPartList::iterator i =kmplayerpart_static->partlist.begin ();
     KMPlayerPartList::iterator e =kmplayerpart_static->partlist.end ();
     GroupPredicate pred (this, m_group);
@@ -299,6 +301,10 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
                     break;
                 }
     }
+    if (m_havehref && !kapp->authorizeURLAction ("redirect", url, urlsource->url ()))
+        m_havehref = false;
+    if (!m_havehref || !m_settings->allowhref)
+        setURL (url);
     if (url.isEmpty ())
         return true;
     if (!process ())
@@ -313,8 +319,6 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
                 return (*i)->openURL (_url);
         return true;
     }
-    KMPlayerHRefSource * hrefsource = static_cast <KMPlayerHRefSource *>(m_sources ["hrefsource"]);
-    KMPlayerSource * urlsource = m_sources ["urlsource"];
     enablePlayerMenu (true);
     if (!m_view || !url.isValid ()) return false;
     KParts::URLArgs args = m_browserextension->urlArgs();
@@ -324,8 +328,6 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
         m_request_fileopen = true;
         return KParts::ReadOnlyPart::openURL (url);
     }
-    if (m_havehref && !kapp->authorizeURLAction ("redirect", url, urlsource->url ()))
-        m_havehref = false;
     if (m_havehref && m_settings->allowhref) {
         hrefsource->setURL (url);
         setSource (hrefsource);
