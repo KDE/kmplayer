@@ -125,8 +125,8 @@ const QStringList FFServerSetting::list () {
 }
 
 static FFServerSetting _ffs[] = {
-    FFServerSetting (0, i18n ("Modem (32k)"), QString ("avi"), QString ("mp3"), 16, 11025, QString ("mpeg4"), 50, 19, 3, 3, 160, 128 ),
-    FFServerSetting (1, i18n ("ISDN (64k)"), QString ("avi"), QString ("mp3"), 16, 11025, QString ("mpeg4"), 50, 16, 3, 3, 320, 240 ),
+    FFServerSetting (0, i18n ("Modem (32k)"), QString ("avi"), QString ("mp3"), 8, 11025, QString ("mpeg4"), 50, 19, 3, 3, 160, 128 ),
+    FFServerSetting (1, i18n ("ISDN (64k)"), QString ("avi"), QString ("mp3"), 8, 11025, QString ("mpeg4"), 50, 16, 3, 3, 320, 240 ),
     FFServerSetting (2, i18n ("ISDN2 (128k)"), QString ("avi"), QString ("mp3"), 32, 22050, QString ("mpeg4"), 80, 10, 10, 12, 320, 240 ),
     FFServerSetting (3, i18n ("LAN (1024k)"), QString ("mpeg"), QString::null, 64, 44100, QString::null, 512, 5, 25, 12, 320, 240 ),
     FFServerSetting (4, i18n ("Custom"), QString::null, QString::null, 0, 0, QString::null, 0, 0, 0, 0, 0, 0 ),
