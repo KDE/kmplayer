@@ -176,6 +176,12 @@ bool Mrl::isMrl () {
     return !src.isEmpty ();
 }
 
+static bool hasMrlChildren (ElementPtr e) {
+    for (ElementPtr c = e->firstChild (); c; c = c->nextSibling ())
+        if (c->isMrl () || hasMrlChildren (c))
+            return true;
+    return false;
+}
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT Document::Document (const QString & s) {
@@ -201,7 +207,7 @@ KDE_NO_EXPORT void Document::dispose () {
 }
 
 bool Document::isMrl () {
-    return !hasChildNodes ();
+    return !hasMrlChildren (m_self);
 }
 
 //-----------------------------------------------------------------------------
@@ -352,7 +358,7 @@ KDE_NO_EXPORT ElementPtr GenericURL::childFromTag (ElementPtr d, const QString &
 }
 
 bool GenericURL::isMrl () {
-    return !hasChildNodes ();
+    return !hasMrlChildren (m_self);
 }
 
 //-----------------------------------------------------------------------------

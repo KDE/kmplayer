@@ -151,9 +151,14 @@ KDE_NO_EXPORT void KMPlayer::addBookMark (const QString & t, const QString & url
 void KMPlayer::init (KActionCollection * action_collection) {
     m_view->init ();
     m_settings->readConfig ();
-    m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner,
-                        m_view->buttonBar ()->bookmarkMenu (), action_collection, true, true);
     KMPlayerControlPanel * panel = m_view->buttonBar ();
+    m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner,
+                        panel->bookmarkMenu (), action_collection, true, true);
+    m_bPosSliderPressed = false;
+    panel->contrastSlider ()->setValue (m_settings->contrast);
+    panel->brightnessSlider ()->setValue (m_settings->brightness);
+    panel->hueSlider ()->setValue (m_settings->hue);
+    panel->saturationSlider ()->setValue (m_settings->saturation);
     connect (panel->button (KMPlayerControlPanel::button_back), SIGNAL (clicked ()), this, SLOT (back ()));
     connect (panel->button (KMPlayerControlPanel::button_play), SIGNAL (clicked ()), this, SLOT (play ()));
     connect (panel->button (KMPlayerControlPanel::button_forward), SIGNAL (clicked ()), this, SLOT (forward ()));
@@ -175,21 +180,16 @@ void KMPlayer::init (KActionCollection * action_collection) {
     menu->connectItem (menu->idAt(0), this, SLOT (setMPlayer (int)));
     menu->connectItem (menu->idAt(1), this, SLOT (setXine (int)));
 #endif
-    m_bPosSliderPressed = false;
-    m_view->buttonBar ()->contrastSlider ()->setValue (m_settings->contrast);
-    m_view->buttonBar ()->brightnessSlider ()->setValue (m_settings->brightness);
-    m_view->buttonBar ()->hueSlider ()->setValue (m_settings->hue);
-    m_view->buttonBar ()->saturationSlider ()->setValue (m_settings->saturation);
     connect (m_view, SIGNAL (urlDropped (const KURL &)), this, SLOT (openURL (const KURL &)));
-    m_view->buttonBar ()->popupMenu ()->connectItem (KMPlayerControlPanel::menu_config,
+    panel->popupMenu ()->connectItem (KMPlayerControlPanel::menu_config,
                                        this, SLOT (showConfigDialog ()));
-    m_view->buttonBar ()->viewMenu ()->connectItem (KMPlayerControlPanel::menu_video,
+    panel->viewMenu ()->connectItem (KMPlayerControlPanel::menu_video,
                                        this, SLOT (showVideoWindow ()));
-    m_view->buttonBar ()->viewMenu ()->connectItem (KMPlayerControlPanel::menu_playlist,
+    panel->viewMenu ()->connectItem (KMPlayerControlPanel::menu_playlist,
                                        this, SLOT (showPlayListWindow ()));
-    m_view->buttonBar ()->viewMenu ()->connectItem (KMPlayerControlPanel::menu_console,
+    panel->viewMenu ()->connectItem (KMPlayerControlPanel::menu_console,
                                        this, SLOT (showConsoleWindow ()));
-    //connect (m_view->configButton (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
+    //connect (panel (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
 }
 
 KMPlayer::~KMPlayer () {
@@ -671,7 +671,7 @@ void KMPlayerSource::setURL (const KURL & url) {
 QString KMPlayerSource::first () {
     kdDebug() << "KMPlayerSource::first" << endl;
     m_current = m_document;
-    if (m_document->hasChildNodes ())
+    if (!m_document->isMrl ())
         next ();
     else
         m_player->updateTree (m_document, m_current);
@@ -1125,7 +1125,7 @@ KDE_NO_EXPORT void KMPlayerURLSource::kioResult (KIO::Job *) {
     read (textstream);
     if (m_current) {
         m_current->mrl ()->parsed = true;
-        if (m_current->hasChildNodes ())
+        if (!m_current->isMrl ())
             next ();
         QTimer::singleShot (0, this, SLOT (play ()));
     }
@@ -1174,7 +1174,7 @@ KDE_NO_EXPORT void KMPlayerURLSource::play () {
             read (textstream);
         }
         m_current->mrl ()->parsed = true;
-        if (m_current->hasChildNodes ())
+        if (!m_current->isMrl ())
             next ();
     } else if (!m_current->mrl ()->parsed && maybe_playlist) {
         m_data.truncate (0);
