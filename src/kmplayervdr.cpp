@@ -232,17 +232,11 @@ KDE_NO_EXPORT void KMPlayerVDRSource::processStopped () {
     if (m_socket->state () == QSocket::Connected)
         queueCommand ("QUIT\n");
     deleteCommands ();
-    if (m_document)
-        m_document->document ()->dispose ();
-    m_document = 0L;
-    m_current = 0L;
-    m_document = (new Document (QString ("VDR")))->self ();
-    m_player->updateTree (m_document, m_current);
+    setURL (KURL (QString ("vdr://localhost:%1").arg (tcp_port)));
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::processStarted () {
-    if (!m_document)
-        m_document = (new Document (QString ("VDR")))->self ();
+    setURL (KURL (QString ("vdr://localhost:%1").arg (tcp_port)));
     m_socket->connectToHost ("127.0.0.1", tcp_port);
     commands = new VDRCommand ("connect", commands);
 }
@@ -431,6 +425,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deleteCommands () {
 
 KDE_NO_EXPORT void KMPlayerVDRSource::jump (ElementPtr e) {
     if (!e->isMrl ()) return;
+    m_current = e;
     QCString c ("CHAN ");
     QCString ch = e->mrl ()->src.local8Bit ();
     int p = ch.find (' ');

@@ -903,11 +903,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVCD::KMPlayerPrefSourcePageVCD (QWidge
 
 KDE_NO_CDTOR_EXPORT KMPlayerVCDSource::KMPlayerVCDSource (KMPlayerApp * a, QPopupMenu * m)
     : KMPlayerMenuSource (i18n ("VCD"), a, m, "vcdsource"), m_configpage (0L) {
-    m_menu->insertTearOffHandle ();
-    m_vcdtrackmenu = new QPopupMenu (m_app);
-    m_vcdtrackmenu->setCheckable (true);
-    m_menu->insertItem (i18n ("&Tracks"), m_vcdtrackmenu);
-    setURL (KURL ("vcd://"));
     m_player->settings ()->addPage (this);
 }
 
@@ -923,9 +918,7 @@ KDE_NO_EXPORT bool KMPlayerVCDSource::processOutput (const QString & str) {
     QRegExp * patterns = static_cast<MPlayer *> (m_player->players () ["mplayer"])->configPage ()->m_patterns;
     QRegExp & trackRegExp = patterns [MPlayerPreferencesPage::pat_vcdtrack];
     if (trackRegExp.search (str) > -1) {
-        m_vcdtrackmenu->insertItem (trackRegExp.cap (1), this,
-                                    SLOT (trackMenuClicked(int)), 0,
-                                    m_vcdtrackmenu->count ());
+        m_document->appendChild ((new GenericURL (m_document, QString ("vcd://") + trackRegExp.cap (1)))->self ());
         kdDebug () << "track " << trackRegExp.cap (1) << endl;
         return true;
     }
@@ -936,47 +929,42 @@ KDE_NO_EXPORT void KMPlayerVCDSource::activate () {
     m_player->stop ();
     init ();
     m_start_play = m_auto_play;
-    m_current_title = -1;
+    setURL (KURL ("vcd://"));
     buildArguments ();
     if (m_start_play)
         QTimer::singleShot (0, m_player, SLOT (play ()));
 }
 
 KDE_NO_EXPORT void KMPlayerVCDSource::deactivate () {
-    m_vcdtrackmenu->clear ();
+    setURL (KURL ("vcd://"));
 }
 
 KDE_NO_EXPORT void KMPlayerVCDSource::setIdentified (bool b) {
     KMPlayerSource::setIdentified (b);
-    if (m_current_title < 0 || m_current_title >= int (m_vcdtrackmenu->count()))
-        m_current_title = 0;
-    if (m_vcdtrackmenu->count ())
-        m_vcdtrackmenu->setItemChecked (m_current_title, true);
-    else
-        m_current_title = -1; // hmmm
+    if (!m_document->hasChildNodes ())
+        m_current = m_document;
+    m_player->updateTree (m_document, m_current);
     buildArguments ();
     m_app->slotStatusMsg (i18n ("Ready."));
 }
 
 KDE_NO_EXPORT void KMPlayerVCDSource::buildArguments () {
     QString url ("vcd://");
-    if (m_current_title >= 0)
-        url += m_vcdtrackmenu->findItem (m_current_title)->text ();
-    setURL (KURL (url));
+    if (m_current != m_document)
+        url += m_current->mrl ()->src;
     m_options.truncate (0);
     if (m_player->settings ()->vcddevice.length () > 0)
         m_options+=QString(" -cdrom-device ") + m_player->settings()->vcddevice;
     m_recordcmd = m_options;
 }
 
-KDE_NO_EXPORT void KMPlayerVCDSource::trackMenuClicked (int id) {
-    menuItemClicked (m_vcdtrackmenu, id);
-    if (m_current_title != id) {
+KDE_NO_EXPORT void KMPlayerVCDSource::jump (ElementPtr e) {
+    if (m_current != e) {
         m_player->stop ();
-        m_current_title = id;
+        m_current = e;
         m_identified = false;
+        setURL (KURL ("vcd://"));
         buildArguments ();
-        m_vcdtrackmenu->clear ();
         if (m_start_play)
             QTimer::singleShot (0, m_player, SLOT (play ()));
     }

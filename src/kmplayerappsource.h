@@ -143,14 +143,10 @@ public:
 public slots:
     virtual void activate ();
     virtual void deactivate ();
-
-private slots:
-    void trackMenuClicked (int id);
+    virtual void jump (ElementPtr e);
 private:
     void buildArguments ();
-    QPopupMenu * m_vcdtrackmenu;
     KMPlayerPrefSourcePageVCD * m_configpage;
-    int m_current_title;
     bool m_start_play;
 };
 

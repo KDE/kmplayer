@@ -314,7 +314,7 @@ void KMPlayer::setSource (KMPlayerSource * source) {
         m_config->setGroup (strGeneralGroup);
         p = m_config->readEntry (source->name(), "");
     }
-    if (p.isEmpty () || !m_players [p]->supports (source->name ())) {
+    if (p.isEmpty () || !m_players.contains (p) || !m_players [p]->supports (source->name ())) {
         p.truncate (0);
         if (!m_process->supports (source->name ())) {
             ProcessMap::const_iterator i, e = m_players.end();
@@ -661,6 +661,7 @@ void KMPlayerSource::setURL (const KURL & url) {
         if (m_document)
             m_document->document ()->dispose ();
         m_document = (new Document (url.url ()))->self ();
+        m_player->updateTree (m_document, m_current);
     }
     m_current = m_document;
 }
