@@ -1,3 +1,14 @@
+Changes since version 0.7.3
+- New config dialog from Joonas Koivunen
+- Support for MPlayer's experimental TV capturing (use with care, I need to 
+  rmmod bttv, tvaudio and msp3400 to get xawtv working again afterwards)
+- Added a position slider
+- Fixed two cases of double deletes found by valgrind
+Changes since version 0.7.2
+- Make using of arts optional, now that the volume slider automatic starts
+  artsd
+- Patch from Rainer Blessing; show/hide menubar. Enhanced it a bit for
+  people, like me, who forget how to get it back again.
 Changes since version 0.7.1
 - Check for an onFinished handler before emiting it
 - Great patch from Joonas Koivunen, add postprocessing filter configuration
