@@ -116,12 +116,20 @@ if test "$build_gstreamer" != "no"; then
             have_gst_plugins=yes,have_gst_plugins=no)
         KDE_PKG_CHECK_MODULES(GST_INTERFACES, gstreamer-interfaces-$GST_MAJORMINOR >= $GST_REQ, \
             have_gst_interfaces=yes,have_gst_interfaces=no)
-
+        LIB_GST=""
+        CFLAGS_GST=""
+        LIB_GST_PLUGINS=""
         dnl Give error if we don't have gstreamer
         if test "x$have_gst" = "xyes"; then
             AC_SUBST(GST_MAJORMINOR)
             AC_DEFINE(HAVE_GSTREAMER, 1, [have GStreamer])
+            LIB_GST=$GST_LIBS
+            CFLAGS_GST=$GST_CFLAGS
+            LIB_GST_PLUGINS=$GST_INTERFACES_LIBS
         fi
+        AC_SUBST(LIB_GST)
+        AC_SUBST(CFLAGS_GST)
+        AC_SUBST(LIB_GST_PLUGINS)
     fi
 fi
 AC_MSG_CHECKING([if kgstplayer can be compiled])
