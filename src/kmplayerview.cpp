@@ -802,10 +802,9 @@ KDE_NO_EXPORT bool KMPlayerView::x11Event (XEvent * e) {
             printf ("colormap notify\n");
             return true;*/
         case MotionNotify:
-            if (e->xmotion.window == m_viewer->embeddedWinId () && !e->xmotion.state) {
-                int cp_height = m_buttonbar->maximumSize ().height ();
-                delayedShowButtons (e->xmotion.y > m_viewer->height () - cp_height);
-            }
+            if (m_playing && e->xmotion.window == m_viewer->embeddedWinId ())
+                delayedShowButtons (e->xmotion.y > m_viewer->height () -
+                                    m_buttonbar->maximumSize ().height ());
             break;
         case MapNotify:
             if (e->xmap.event == m_viewer->embeddedWinId ()) {
