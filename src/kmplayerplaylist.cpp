@@ -488,6 +488,10 @@ KDE_NO_EXPORT ElementPtr SMIL::Head::childFromTag (const QString & tag) {
     return ElementPtr ();
 }
 
+KDE_NO_EXPORT bool SMIL::Head::expose () {
+    return false;
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementPtr SMIL::Layout::childFromTag (const QString & tag) {
