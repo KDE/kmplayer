@@ -192,7 +192,7 @@ KDE_NO_EXPORT void Settings::applyColorSetting (bool only_changed_ones) {
                    view->console()->setColor(colors[i].color);
                    break;
                 case ColorSetting::video_background:
-                   view->viewer()->setPaletteBackgroundColor(colors[i].color);
+                   view->viewer ()->setBackgroundColor (colors[i].color);
                    break;
                 case ColorSetting::area_background:
                    view->fullScreenWidget()->setPaletteBackgroundColor(colors[i].color);

@@ -1420,4 +1420,9 @@ KDE_NO_EXPORT void Viewer::contextMenuEvent (QContextMenuEvent * e) {
     m_view->controlPanel ()->popupMenu ()->exec (e->globalPos ());
 }
 
+KDE_NO_EXPORT void Viewer::setBackgroundColor (QColor & c) {
+    XSetWindowBackground (qt_xdisplay (), embeddedWinId (), c.rgb ());
+    XFlush (qt_xdisplay ());
+}
+
 #include "kmplayerview.moc"

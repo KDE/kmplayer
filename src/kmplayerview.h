@@ -349,6 +349,7 @@ public:
     void setAspect (float a);
     float aspect () { return m_aspect; }
     void sendKeyEvent (int key);
+    void setBackgroundColor (QColor & c);
 public slots:
     void sendConfigureEvent ();
 signals:
