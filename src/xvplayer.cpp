@@ -78,7 +78,7 @@ enum {
     limit_hue, limit_contrast, limit_brightness, limit_saturation,
     limit_last
 };
-struct Limit { int min; int max; } xv_limits [limit_last];
+static struct Limit { int min; int max; } xv_limits [limit_last];
 static QString elmentry ("entry");
 static QString elmitem ("item");
 static QString attname ("NAME");
