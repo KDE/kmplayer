@@ -10,11 +10,20 @@ libkmplayercommon_la_SOURCES = kmplayerview.cpp kmplayerconfig.cpp pref.cpp kmpl
 libkmplayercommon_la_LDFLAGS = -avoid-version $(all_libraries)
 libkmplayercommon_la_LIBADD = -lkmediaplayer $(LIB_KPARTS) $(LIB_ARTS) -lm
 
-kde_module_LTLIBRARIES= libkmplayerpart.la
+if include_koffice_support
+kofficeplugin_lib= libkmplayerkofficepart.la
+SERVICES_KOFFICE = kmplayer_koffice.desktop
+endif
 
-libkmplayerpart_la_SOURCES= kmplayer_part.cpp kmplayer_koffice_part.cpp
+kde_module_LTLIBRARIES= libkmplayerpart.la $(kofficeplugin_lib)
+
+libkmplayerpart_la_SOURCES= kmplayer_part.cpp
 libkmplayerpart_la_LDFLAGS= -avoid-version $(all_libraries) $(KDE_RPATH)
-libkmplayerpart_la_LIBADD= libkmplayercommon.la $(LIB_KOFFICE)
+libkmplayerpart_la_LIBADD= libkmplayercommon.la
+
+libkmplayerkofficepart_la_SOURCES=kmplayer_koffice_part.cpp
+libkmplayerkofficepart_la_LDFLAGS= -avoid-version $(all_libraries) $(KDE_RPATH)
+libkmplayerkofficepart_la_LIBADD= libkmplayercommon.la $(LIB_KOFFICE)
 
 kdeinit_LTLIBRARIES=kmplayer.la
 kmplayer_la_SOURCES= main.cpp kmplayerapp.cpp
@@ -35,10 +44,6 @@ kxineplayer_SOURCES= xineplayer.cpp kmplayer_backend.skel kmplayer_callback.stub
 
 applnk_DATA = kmplayer.desktop
 applnkdir = $(kde_appsdir)/Multimedia
-
-if include_koffice_support
-SERVICES_KOFFICE = kmplayer_koffice.desktop
-endif
 
 kde_services_DATA = kmplayer_component.desktop $(SERVICES_KOFFICE)
 

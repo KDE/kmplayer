@@ -10,13 +10,15 @@ Name[nl]=Ingebedde MPlayer voor KDE
 Name[pt]=MPlayer Embebido para o KDE
 Name[pt_BR]=MPlayer Integrado ao KDE
 Name[sv]=Inbäddad Mplayer för KDE
+Name[xx]=xxEmbedded MPlayer for KDExx
 Name[zh_CN]=KDE 的内嵌 MPlayer
 GenericName=KMPlayer
 GenericName[sv]=Kmplayer
+GenericName[xx]=xxKMPlayerxx
 X-KDE-Library=libkmplayerpart
 # Keep in sync with the audio types in kmplayer.desktop
 MimeType=audio/x-mp3;audio/x-ms-wma;audio/x-vorbis;application/x-mplayer2;application/x-ogg;audio/x-mp2;video/mpeg;audio/x-mpegurl;audio/x-wav;audio/x-mod;video/x-avi;video/x-ms-asf;video/x-ms-wmp;video/x-ms-wmv;video/x-msvideo;video/quicktime;video/x-flic;
 Type=Service
 Icon=kmplayer
-ServiceTypes=KParts/ReadOnlyPart,KParts/ReadWritePart,Browser/View,KMediaPlayer/Player
+ServiceTypes=KParts/ReadOnlyPart,Browser/View,KMediaPlayer/Player
 InitialPreference=9

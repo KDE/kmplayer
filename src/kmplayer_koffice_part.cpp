@@ -39,8 +39,9 @@
 #include <kconfig.h>
 #include <kaction.h>
 #include <kstandarddirs.h>
+#include <kparts/factory.h>
 
-#include "kmplayer_part.h"
+#include "kmplayerpartbase.h"
 #include "kmplayer_koffice_part.h"
 #include "kmplayerview.h"
 #include "kmplayerconfig.h"
@@ -54,13 +55,50 @@
 #include <qpainter.h>
 #include <koFrame.h>
 
+class KMPlayerFactory : public KParts::Factory {
+public:
+    KMPlayerFactory ();
+    virtual ~KMPlayerFactory ();
+    virtual KParts::Part *createPartObject
+        (QWidget *wparent, const char *wname, QObject *parent, const char *name,
+         const char *className, const QStringList &args);
+    static KInstance * instance () { return s_instance; }
+private:
+    static KInstance * s_instance;
+};
+
+K_EXPORT_COMPONENT_FACTORY (libkmplayerkofficepart, KMPlayerFactory)
+
+KInstance *KMPlayerFactory::s_instance = 0;
+
+KMPlayerFactory::KMPlayerFactory () {
+    s_instance = new KInstance ("KMPlayerKofficePart");
+}
+
+KMPlayerFactory::~KMPlayerFactory () {
+    delete s_instance;
+}
+
+KParts::Part *KMPlayerFactory::createPartObject
+  (QWidget *wparent, const char *wname,
+   QObject *parent, const char * name,
+   const char * cls, const QStringList & args) {
+    if (strstr (cls, "KoDocument"))
+        return new KOfficeMPlayer (wparent, wname, parent, name);
+    return 0L;
+}
+
+//-----------------------------------------------------------------------------
+
+
 KOfficeMPlayer::KOfficeMPlayer (QWidget *parentWidget, const char *widgetName, QObject* parent, const char* name, bool singleViewMode) 
   : KoDocument (parentWidget, widgetName, parent, name, singleViewMode),
     m_config (new KConfig ("kmplayerrc")),
-    m_player (new KMPlayer (parentWidget, m_config))
+    m_player (new KMPlayer (parentWidget, 0L, 0L, 0L, m_config))
 {
     setInstance (KMPlayerFactory::instance (), false);
     setReadWrite (false);
+    m_player->init();
     m_player->setSource (m_player->urlSource ());
     //setWidget (view);
 }
