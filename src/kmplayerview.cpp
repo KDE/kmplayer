@@ -36,6 +36,8 @@
 #include <qslider.h>
 #include <qlabel.h>
 #include <qdatastream.h>
+#include <qpixmap.h>
+#include <qpainter.h>
 
 #include <X11/Xlib.h>
 #include <X11/Intrinsic.h>
@@ -341,6 +343,7 @@ static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char * const
 
 KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
   : KMediaPlayer::View (parent, name),
+    m_image (0L),
     m_artsserver (0L),
     m_svc (0L),
     delayed_timer (0),
@@ -469,9 +472,26 @@ void KMPlayerView::init () {
 }
 
 KMPlayerView::~KMPlayerView () {
+    delete m_image;
     setUseArts (false);
     if (m_layer->parent () != this)
         delete m_layer;
+}
+
+bool KMPlayerView::setPicture (const QString & path) {
+    delete m_image;
+    if (path.isEmpty ())
+        m_image = 0L;
+    else {
+        m_image = new QPixmap (path);
+        if (m_image->isNull ()) {
+            delete m_image;
+            m_image = 0L;
+        } else
+            m_multiedit->hide ();
+    }
+    m_viewer->repaint ();
+    return m_image;
 }
 
 void KMPlayerView::setUseArts (bool b) {
@@ -690,6 +710,10 @@ void KMPlayerViewer::mouseMoveEvent (QMouseEvent * e) {
         m_view->delayedShowButtons (e->y () > height () - button_height);
 }
 
+void KMPlayerViewer::mousePressEvent (QMouseEvent *) {
+    emit clicked ();
+}
+
 void KMPlayerViewer::setAspect (float a) {
     m_aspect = a;
     QWidget * w = static_cast <QWidget *> (parent ());
@@ -709,6 +733,16 @@ void KMPlayerViewer::dropEvent (QDropEvent * de) {
 
 void KMPlayerViewer::dragEnterEvent (QDragEnterEvent* dee) {
     m_view->dragEnterEvent (dee);
+}
+
+void KMPlayerViewer::paintEvent (QPaintEvent * e) {
+    if (!m_view->image ()) {
+        QWidget::paintEvent (e);
+        return;
+    }
+    QPainter paint (this);
+    paint.setClipRect (e->rect ());
+    paint.drawPixmap (0, 0, *m_view->image ());
 }
 
 bool KMPlayerViewer::x11Event (XEvent * e) {

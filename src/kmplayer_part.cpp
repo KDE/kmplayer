@@ -51,6 +51,7 @@
 #include <kaction.h>
 #include <kprotocolmanager.h>
 #include <kfiledialog.h>
+#include <kstandarddirs.h>
 
 #include "kmplayer_part.h"
 #include "kmplayerview.h"
@@ -147,11 +148,14 @@ KMPlayer::KMPlayer (QWidget * parent, KConfig * config)
    m_view (new KMPlayerView (parent)),
    m_settings (new KMPlayerSettings (this, config)),
    m_source (0L),
+   m_urlsource (new KMPlayerURLSource (this)),
+   m_hrefsource (new KMPlayerHRefSource (this)),
    m_liveconnectextension (0L),
    movie_width (0),
    movie_height (0),
    m_autoplay (true),
-   m_ispart (false) {
+   m_ispart (false),
+   m_havehref (false) {
     m_view->init ();
     init();
 }
@@ -163,11 +167,14 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
    m_view (new KMPlayerView (wparent, wname)),
    m_settings (new KMPlayerSettings (this, m_config)),
    m_source (0L),
+   m_urlsource (new KMPlayerURLSource (this)),
+   m_hrefsource (new KMPlayerHRefSource (this)),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
    movie_width (0),
    movie_height (0),
    m_autoplay (true),
-   m_ispart (true) {
+   m_ispart (true),
+   m_havehref (false) {
     printf("MPlayer::KMPlayer ()\n");
     setInstance (KMPlayerFactory::instance ());
     /*KAction *playact =*/ new KAction(i18n("P&lay"), 0, 0, this, SLOT(play ()), actionCollection (), "view_play");
@@ -182,11 +189,12 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
             if (value.at(0)=='\"')
                 value = value.right (value.length () - 1);
             if (value.at (value.length () - 1) == '\"')
-                value = value.left(value.length()-1);
+                value.truncate (value.length () - 1);
             kdDebug () << "name=" << name << " value=" << value << endl;
-            if (name.lower () == "href")
-                m_href = value;
-            else if (name.lower()==QString::fromLatin1("width"))
+            if (name.lower () == "href") {
+                m_urlsource->setURL (KURL (value));
+                m_havehref = true;
+            } else if (name.lower()==QString::fromLatin1("width"))
                 movie_width = value.toInt();
             else if (name.lower()==QString::fromLatin1("height"))
                 movie_height = value.toInt();
@@ -218,7 +226,6 @@ void KMPlayer::init () {
     m_recording = false;
     m_started_emited = false;
     initProcess ();
-    m_urlsource = new KMPlayerURLSource (this);
     m_browserextension = new KMPlayerBrowserExtension (this);
     m_movie_position = 0;
     m_bPosSliderPressed = false;
@@ -233,7 +240,7 @@ void KMPlayer::init () {
     connect (m_view->pauseButton (), SIGNAL (clicked ()), this, SLOT (pause ()));
     connect (m_view->stopButton (), SIGNAL (clicked ()), this, SLOT (stop ()));
     connect (m_view->recordButton(), SIGNAL (clicked()), this, SLOT (record()));
-    connect (m_view->positionSlider (), SIGNAL (sliderMoved (int)), this, SLOT (posSliderChanged (int)));
+    connect (m_view->positionSlider (), SIGNAL (valueChanged (int)), this, SLOT (positonValueChanged (int)));
     connect (m_view->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
     connect (m_view->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
     connect (m_view->contrastSlider (), SIGNAL (valueChanged(int)), this, SLOT (contrastValueChanged(int)));
@@ -268,8 +275,6 @@ KMPlayer::~KMPlayer () {
     stop ();
     delete m_settings;
     delete m_process;
-    delete m_browserextension;
-    delete m_liveconnectextension;
     if (m_ispart)
         delete m_config;
 }
@@ -301,24 +306,24 @@ void KMPlayer::setSource (KMPlayerSource * source) {
     if (m_source) QTimer::singleShot (0, m_source, SLOT (activate ()));
 }
 
-bool KMPlayer::openURL (const KURL & _url) {
-    if (!m_view) return false;
-    KURL url = _url;
-    if (!m_href.isEmpty ())
-        url = m_href;
-    if (url.isValid ()) {
+bool KMPlayer::openURL (const KURL & url) {
+    kdDebug () << "KMPlayer::openURL " << url.url() << endl;
+    if (!m_view || !url.isValid ()) return false;
+    if (m_havehref) {
+        m_havehref = false;
+        m_hrefsource->setURL (url);
+        setSource (m_hrefsource);
+    } else {
         m_urlsource->setURL (url);
+        m_hrefsource->setURL (KURL ());
         setSource (m_urlsource);
         //play ();
-        m_href = QString::null;
-        return true;
     }
-    return false;
+    return true;
 }
 
 bool KMPlayer::closeURL () {
     stop ();
-    m_href = QString::null;
     movie_height = movie_width = 0;
     if (!m_view) return false;
     setMovieLength (0);
@@ -594,16 +599,16 @@ bool KMPlayer::run (const char * args, const char * pipe) {
     *m_process << " " << source ()->filterOptions ().ascii ();
 
     printf (" -contrast %d", m_settings->contrast);
-    *m_process << " -contrast" << QString::number (m_settings->contrast);
+    *m_process << " -contrast " << QString::number (m_settings->contrast);
 
     printf (" -brightness %d", m_settings->brightness);
-    *m_process << " -brightness" << QString::number(m_settings->brightness);
+    *m_process << " -brightness " << QString::number(m_settings->brightness);
 
     printf (" -hue %d", m_settings->hue);
-    *m_process << " -hue" << QString::number (m_settings->hue);
+    *m_process << " -hue " << QString::number (m_settings->hue);
 
     printf (" -saturation %d", m_settings->saturation);
-    *m_process << " -saturation" << QString::number(m_settings->saturation);
+    *m_process << " -saturation " << QString::number(m_settings->saturation);
 
     printf (" %s", args);
     *m_process << " " << args;
@@ -646,6 +651,7 @@ bool KMPlayer::playing () const {
 }
 
 void KMPlayer::stop () {
+    kdDebug () << "KMPlayer::stop ()" << endl;
     if (m_process->isRunning ()) {
         if (m_view && !m_view->stopButton ()->isOn ())
             m_view->stopButton ()->toggle ();
@@ -760,7 +766,9 @@ void KMPlayer::saturationValueChanged (int val) {
     sendCommand (cmd);
 }
 
-void KMPlayer::posSliderChanged (int /*pos*/) {
+void KMPlayer::positonValueChanged (int /*pos*/) {
+    if (!m_bPosSliderPressed)
+        return;
 }
 
 KAboutData* KMPlayer::createAboutData () {
@@ -1034,6 +1042,7 @@ bool KMPlayerSource::isSeekable () {
 
 KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, const KURL & url)
     : KMPlayerSource (player), m_url (url) {
+    kdDebug () << "KMPlayerURLSource::KMPlayerURLSource" << endl;
 }
 
 KMPlayerURLSource::~KMPlayerURLSource () {
@@ -1059,6 +1068,7 @@ bool KMPlayerURLSource::hasLength () {
 void KMPlayerURLSource::setURL (const KURL & url) { 
     m_url = url;
     isreference = false;
+    m_identified = false;
     m_urls.clear ();
     m_urlother = KURL ();
 }
@@ -1094,12 +1104,12 @@ bool KMPlayerURLSource::processOutput (const QString & str) {
 }
 
 void KMPlayerURLSource::play () {
+    kdDebug () << "KMPlayerURLSource::play() " << m_url.url() << endl;
     KURL url = m_url;
     if (m_urls.count () > 0)
         url = *m_urls.begin ();
     if (!url.isValid () || url.isEmpty ())
         return;
-    m_player->setURL (url);
     QString args;
     m_recordCommand.truncate (0);
     m_ffmpegCommand.truncate (0);
@@ -1139,18 +1149,113 @@ void KMPlayerURLSource::activate () {
 }
 
 void KMPlayerURLSource::finished () {
-    disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
+    kdDebug () << "KMPlayerURLSource::finished()" << m_identified << " "  <<  m_player->hrefSource ()->url ().url () << " " <<  m_player->hrefSource ()->url ().isValid () << endl;
+    if (m_identified && m_player->hrefSource ()->url ().isValid ()) {
+        disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
+        m_player->setSource (m_player->hrefSource ());
+        return;
+    }
+    if (!m_player->hrefSource ()->url ().isValid ())
+        disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
     m_player->setMovieLength (10 * length ());
     if (!isreference && !m_urlother.isEmpty ())
         m_urls.push_back (m_urlother);
     m_urlother = KURL ();
     m_identified = true;
-    kdDebug () << "KMPlayerURLSource::finished()" << endl;
+    kdDebug () << "KMPlayerURLSource::finished()" << m_player->autoPlay() << endl;
     if (m_player->autoPlay())
         QTimer::singleShot (0, this, SLOT (play ()));
 }
 
 void KMPlayerURLSource::deactivate () {
+    disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
+}
+
+//-----------------------------------------------------------------------------
+
+KMPlayerHRefSource::KMPlayerHRefSource (KMPlayer * player)
+    : KMPlayerSource (player) {
+    kdDebug () << "KMPlayerHRefSource::KMPlayerHRefSource" << endl;
+}
+
+KMPlayerHRefSource::~KMPlayerHRefSource () {
+    kdDebug () << "KMPlayerHRefSource::~KMPlayerHRefSource" << endl;
+}
+
+void KMPlayerHRefSource::init () {
+    KMPlayerSource::init ();
+}
+
+bool KMPlayerHRefSource::hasLength () {
+    return false;
+}
+
+bool KMPlayerHRefSource::processOutput (const QString & str) {
+    //return KMPlayerSource::processOutput (str);
+    return true;
+}
+
+void KMPlayerHRefSource::setURL (const KURL & url) { 
+    m_url = url;
+    m_finished = false;
+    kdDebug () << "KMPlayerHRefSource::setURL " << m_url.url() << endl;
+}
+
+void KMPlayerHRefSource::play () {
+    kdDebug () << "KMPlayerHRefSource::play " << m_url.url() << endl;
+    m_player->setSource (m_player->urlSource ());
+}
+
+void KMPlayerHRefSource::activate () {
+    if (m_finished) {
+        QTimer::singleShot (0, this, SLOT (finished ()));
+        return;
+    }
+    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
+    init ();
+    m_player->stop ();
+    m_player->initProcess ();
+    view->consoleOutput ()->clear ();
+    QString proxy_url;
+    if (KProtocolManager::useProxy () && proxyForURL (m_url, proxy_url))
+        m_player->process ()->setEnvironment("http_proxy", proxy_url);
+    unlink (locateLocal ("data", "kmplayer/00000001.jpg").ascii ());
+    QString outdir = locateLocal ("data", "kmplayer/");
+    QString myurl (m_url.isLocalFile () ? m_url.path () : m_url.url ());
+    QString args;
+    args.sprintf ("mplayer -vo jpeg -jpeg outdir=%s -frames 1 -nosound -quiet %s", KProcess::quote (outdir).ascii (), KProcess::quote (myurl).ascii ());
+    *m_player->process () << args;
+    kdDebug () << args << endl;
+    m_player->process ()->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
+
+    if (m_player->process ()->isRunning ())
+        connect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
+    else {
+        setURL (KURL ());
+        QTimer::singleShot (0, this, SLOT (play ()));
+    }
+}
+
+void KMPlayerHRefSource::finished () {
+    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
+    m_finished = true;
+    disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
+    kdDebug () << "KMPlayerHRefSource::finished()" << endl;
+    QString outfile = locateLocal ("data", "kmplayer/00000001.jpg");
+    if (!view->setPicture (outfile)) {
+        setURL (KURL ());
+        QTimer::singleShot (0, this, SLOT (play ()));
+        return;
+    }
+    view->positionSlider()->hide();
+    connect (view->viewer (), SIGNAL (clicked ()), this, SLOT (play ()));
+}
+
+void KMPlayerHRefSource::deactivate () {
+    kdDebug () << "KMPlayerHRefSource::deactivate()" << endl;
+    KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
+    view->setPicture (QString::null);
+    disconnect (view->viewer (), SIGNAL (clicked ()), this, SLOT (play ()));
 }
 
 #include "kmplayer_part.moc"

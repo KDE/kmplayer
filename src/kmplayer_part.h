@@ -111,6 +111,29 @@ private:
 };
 
 
+class KMPlayerHRefSource : public KMPlayerSource {
+    Q_OBJECT
+public:
+    KMPlayerHRefSource (KMPlayer * player);
+    virtual ~KMPlayerHRefSource ();
+    virtual bool processOutput (const QString & line);
+    virtual bool hasLength ();
+
+    //void setURL (const KURL & url) { m_url = url; }
+    void setURL (const KURL &);
+    KURL url () const { return m_url; }
+public slots:
+    virtual void init ();
+    virtual void activate ();
+    virtual void deactivate ();
+    virtual void play ();
+    virtual void finished ();
+private:
+    KURL m_url;
+    bool m_finished;
+};
+
+
 class KMPlayer : public KMediaPlayer::Player  {
     Q_OBJECT
 public:
@@ -123,6 +146,7 @@ public:
 
     KMPlayerSettings * settings () const { return m_settings; }
     KProcess * process () const { return m_process; }
+    void initProcess ();
     int seekTime () const { return m_seektime; }
     void setSeekTime (int t) { m_seektime = t; }
     void keepMovieAspect (bool);
@@ -130,11 +154,12 @@ public:
     void setURL (const KURL & url) { m_urlsource->setURL (url); }
     KMPlayerBrowserExtension * browserextension() const
         { return m_browserextension; }
-    void setHRef (const QString & h) { m_href = h; }
     void sizes (int & w, int & h) const;
     void setMovieLength (int len);
     void setSource (KMPlayerSource * source);
     KMPlayerSource * source () const { return m_source; }
+    KMPlayerURLSource * urlSource () const { return m_urlsource; }
+    KMPlayerHRefSource * hrefSource () const { return m_hrefsource; }
     bool autoPlay () const { return m_autoplay; }
 public slots:
     virtual bool openURL (const KURL & url);
@@ -151,7 +176,6 @@ public slots:
     bool playing () const;
     void showConfigDialog ();
     void setMenuZoom (int id);
-    void posSliderChanged (int pos);
 public:
     virtual bool isSeekable (void) const { return m_source->isSeekable (); }
     virtual unsigned long position (void) const { return m_movie_position; }
@@ -170,19 +194,20 @@ private slots:
     void forward ();
     void posSliderPressed ();
     void posSliderReleased ();
+    void positonValueChanged (int val);
     void contrastValueChanged (int val);
     void brightnessValueChanged (int val);
     void hueValueChanged (int val);
     void saturationValueChanged (int val);
 private:
     void init ();
-    void initProcess ();
     void sendCommand (const QString &);
     KConfig * m_config;
     QGuardedPtr <KMPlayerView> m_view;
     KMPlayerSettings * m_settings;
     KMPlayerSource * m_source;
     KMPlayerURLSource * m_urlsource;
+    KMPlayerHRefSource * m_hrefsource;
     KProcess * m_process;
     KMPlayerBrowserExtension * m_browserextension;
     KMPlayerLiveConnectExtension * m_liveconnectextension;
@@ -190,7 +215,6 @@ private:
     QRegExp m_cacheRegExp;
     QRegExp m_indexRegExp;
     QStringList commands;
-    QString m_href;
     KURL m_recordurl;
     QString m_process_output;
     int m_seektime;
@@ -203,6 +227,7 @@ private:
     bool m_use_slave : 1;
     bool m_recording : 1;
     bool m_bPosSliderPressed : 1;
+    bool m_havehref : 1;
 };
 
 

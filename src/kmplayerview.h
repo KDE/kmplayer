@@ -30,6 +30,7 @@
 class KMPlayerView;
 class KMPlayerViewer;
 class QMultiLineEdit;
+class QPixmap;
 class QPushButton;
 class QPopupMenu;
 class QBoxLayout;
@@ -103,6 +104,8 @@ public:
     bool autoHideButtons () const { return m_auto_hide_buttons; }
     void delayedShowButtons (bool show);
     bool isFullScreen () const { return m_layer->isFullScreen (); }
+    bool setPicture (const QString & path);
+    QPixmap * image () const { return m_image; }
 public slots:
     void startsToPlay ();
     void showPopupMenu ();
@@ -120,6 +123,7 @@ private:
     KMPlayerViewer * m_viewer;
     KMPlayerViewLayer * m_layer;
     QMultiLineEdit * m_multiedit;
+    QPixmap * m_image;
     QWidget * m_buttonbar;
     QPushButton * m_backButton;
     QPushButton * m_playButton;
@@ -163,6 +167,7 @@ public:
     float aspect () { return m_aspect; }
 signals:
     void aboutToPlay ();
+    void clicked ();
 protected:
     void showEvent (QShowEvent *);
     void hideEvent (QHideEvent *);
@@ -170,6 +175,8 @@ protected:
     void dropEvent (QDropEvent *);
     bool x11Event (XEvent *);
     void mouseMoveEvent (QMouseEvent * e);
+    void mousePressEvent (QMouseEvent * e);
+    void paintEvent (QPaintEvent * e);
 private:
     float m_aspect;
     KMPlayerView * m_view;

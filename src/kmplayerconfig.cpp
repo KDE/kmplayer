@@ -317,10 +317,7 @@ void KMPlayerSettings::readConfig () {
     vcddevice = m_config->readEntry (strVCDDevice, "/dev/cdrom");
     videodriver = m_config->readNumEntry (strVoDriver, VDRIVER_XV_INDEX);
     audiodriver = m_config->readNumEntry (strAoDriver, 0);
-    if (audiodriver == ADRIVER_ARTS_INDEX)
-    	view->setUseArts (true);
-    else
-    	view->setUseArts (false);
+    view->setUseArts (audiodriver == ADRIVER_ARTS_INDEX);
     additionalarguments = m_config->readEntry (strAddArgs, "");
     mencoderarguments = m_config->readEntry (strMencoderArgs, "-oac copy -ovc copy");
     cachesize = m_config->readNumEntry (strCacheSize, 0);
