@@ -100,6 +100,7 @@ protected:
     ElementPtrW element;
     int start_timer;
     int dur_timer;
+    int repeat_count;
     bool isstarted;
 };
 
@@ -237,6 +238,7 @@ public:
     KDE_NO_CDTOR_EXPORT ~TimedElement () {}
     ElementRuntimePtr getRuntime ();
     void start ();
+    void stop ();
     void reset ();
 protected:
     KDE_NO_CDTOR_EXPORT TimedElement (ElementPtr & d) : Mrl (d) {}

@@ -79,7 +79,8 @@ KDE_NO_CDTOR_EXPORT void RegionNode::clearAll () {
 
 KDE_NO_CDTOR_EXPORT
 ElementRuntime::ElementRuntime (ElementPtr e)
- : element (e), start_timer (0), dur_timer (0), isstarted (false) {}
+ : element (e), start_timer (0), dur_timer (0),
+   repeat_count (0), isstarted (false) {}
 
 KDE_NO_CDTOR_EXPORT ElementRuntime::~ElementRuntime () {}
 
@@ -146,15 +147,18 @@ KDE_NO_EXPORT void ElementRuntime::begin () {
     // setup timings ..
     setDurationItem (begin_time, element->getAttribute ("begin"));
     setDurationItem (end_time, element->getAttribute ("end"));
-    durations [duration_time].durval = duration_media;
+    durations [duration_time].durval = duration_media; //intrinsic time duration
     QString durvalstr = element->getAttribute ("dur").stripWhiteSpace ();
     if (durvalstr.isEmpty ()) { // update dur if not set
         if (durations [end_time].durval < duration_last_option &&
             durations [end_time].durval > durations [begin_time].durval)
             durations [duration_time].durval = durations [end_time].durval - durations [begin_time].durval;
-        // else use intrinsic time duration
     } else
         setDurationItem (duration_time, durvalstr);
+    bool ok;
+    int rc = element->getAttribute ("repeatCount").toInt (&ok);
+    if (ok && rc > 0)
+        repeat_count = rc;
 
     if (durations [begin_time].durval > 0) {
         if (durations [begin_time].durval < duration_last_option)
@@ -171,8 +175,10 @@ KDE_NO_EXPORT void ElementRuntime::end () {
     start_timer = 0;
     dur_timer = 0;
     isstarted = false;
-    if (region_node)
+    if (region_node) {
         region_node->clearAll ();
+        region_node = RegionNodePtr ();
+    }
     for (int i = 0; i < (int) durtime_last; i++) {
         if (durations [i].connection) {
             disconnect (durations [i].connection, 0, this, 0);
@@ -233,7 +239,15 @@ KDE_NO_EXPORT void ElementRuntime::started () {
 KDE_NO_EXPORT void ElementRuntime::stopped () {
     if (!element)
         end ();
-    else
+    else if (0 < repeat_count--) {
+        if (durations [begin_time].durval > 0) {
+            if (durations [begin_time].durval < duration_last_option)
+                start_timer = startTimer (1000 * durations [begin_time].durval);
+        } else {
+            isstarted = true;
+            QTimer::singleShot (0, this, SLOT (started ()));
+        }
+    } else
         element->stop ();
 }
 
@@ -272,6 +286,7 @@ KDE_NO_EXPORT void SetData::stopped () {
             n->repaintRegion (target_region);
     } else
         kdWarning () << "target element not found" << endl;
+    isstarted = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -501,6 +516,13 @@ KDE_NO_EXPORT void SMIL::TimedElement::start () {
         rt->begin ();
 }
 
+KDE_NO_EXPORT void SMIL::TimedElement::stop () {
+    Mrl::stop ();
+    ElementRuntimePtr rt = getRuntime ();
+    if (rt)
+        rt->end ();
+}
+
 KDE_NO_EXPORT void SMIL::TimedElement::reset () {
     kdDebug () << "SMIL::TimedElement::reset " << endl;
     Mrl::reset ();
@@ -560,7 +582,7 @@ KDE_NO_EXPORT void SMIL::Par::stop () {
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
         // children are out of scope now, reset their ElementRuntime
         e->reset (); // will call stop() if necessary
-    Element::stop ();
+    TimedElement::stop ();
 }
 
 KDE_NO_EXPORT void SMIL::Par::reset () {
@@ -685,7 +707,7 @@ KDE_NO_EXPORT void SMIL::AVMediaType::start () {
 }
 
 KDE_NO_EXPORT void SMIL::AVMediaType::stop () {
-    Element::stop ();
+    TimedElement::stop ();
     // TODO stop backend player
 }
 
