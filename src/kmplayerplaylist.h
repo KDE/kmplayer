@@ -63,6 +63,7 @@ class Element;
 class Mrl;
 class RegionNode;
 class ElementRuntime;
+class ElementRuntimePrivate;
 class ImageDataPrivate;
 class NodeList;
 
@@ -293,12 +294,18 @@ public:
      */
     virtual QString setParam (const QString & name, const QString & value);
     /**
+     * get the current value of param name that's set by setParam(name,value)
+     */
+    virtual QString param (const QString & name);
+    /**
      * If this element is attached to a region, region_node points to it
      */
     RegionNodePtrW region_node;
 protected:
     ElementRuntime (ElementPtr e);
     ElementPtrW element;
+private:
+    ElementRuntimePrivate * d;
 };
 
 /**

@@ -14,7 +14,7 @@
         <param name="fontColor" value="yellow"/>
         <param name="fontSize" value="+2"/>
         <param name="backgroundColor" value="blue"/>
-        <animate targetElement="region1" attributeName="left" from="5%" to="40%" begin="5" dur="6"/>
+        <animate targetElement="region1" attributeName="left" to="40%" begin="5" dur="6"/>
       </text> 
       <img id="image1" src="../icons/hi48-app-kmplayer.png" region="region2">
         <animate targetElement="region2" attributeName="left" from="180" to="50" begin="5" dur="10"/>

@@ -28,6 +28,7 @@
 #include <qapplication.h>
 #include <qregexp.h>
 #include <qtimer.h>
+#include <qmap.h>
 
 #include <kdebug.h>
 #include <kurl.h>
@@ -233,14 +234,28 @@ void RegionNode::scaleRegion (float sx, float sy, int xoff, int yoff) {
 }
 
 //-----------------------------------------------------------------------------
+namespace KMPlayer {
+    class ElementRuntimePrivate {
+    public:
+        QMap <QString, QString> params;
+    };
+}
 
 ElementRuntime::ElementRuntime (ElementPtr e)
-  : element (e) {}
+  : element (e), d (new ElementRuntimePrivate) {}
 
-ElementRuntime::~ElementRuntime () {}
+ElementRuntime::~ElementRuntime () {
+    delete d;
+}
 
 QString ElementRuntime::setParam (const QString & name, const QString & value) {
-    return QString::null;
+    QString old_val = d->params [name];
+    d->params.insert (name, value);
+    return old_val;
+}
+
+QString ElementRuntime::param (const QString & name) {
+    return d->params [name];
 }
 
 KDE_NO_EXPORT void ElementRuntime::init () {
@@ -253,6 +268,7 @@ KDE_NO_EXPORT void ElementRuntime::init () {
 
 KDE_NO_EXPORT void ElementRuntime::reset () {
     region_node = RegionNodePtr ();
+    d->params.clear ();
 }
 
 //-----------------------------------------------------------------------------
@@ -401,9 +417,7 @@ KDE_NO_EXPORT void TimedRuntime::end () {
 KDE_NO_EXPORT
 QString TimedRuntime::setParam (const QString & name, const QString & val) {
     kdDebug () << "TimedRuntime::setParam " << name << "=" << val << endl;
-    QString old_val;
     if (name == QString::fromLatin1 ("begin")) {
-        old_val = QString::number (durations [begin_time].durval);
         setDurationItem (begin_time, val);
         if ((timingstate == timings_began && !start_timer) ||
                 timingstate == timings_stopped) {
@@ -416,17 +430,14 @@ QString TimedRuntime::setParam (const QString & name, const QString & val) {
             }
         }
     } else if (name == QString::fromLatin1 ("dur")) {
-        old_val = QString::number (durations [duration_time].durval);
         setDurationItem (duration_time, val);
     } else if (name == QString::fromLatin1 ("end")) {
-        old_val = QString::number (durations [end_time].durval);
         setDurationItem (end_time, val);
         if (durations [end_time].durval < duration_last_option &&
             durations [end_time].durval > durations [begin_time].durval)
             durations [duration_time].durval =
                 durations [end_time].durval - durations [begin_time].durval;
     } else if (name == QString::fromLatin1 ("endsync")) {
-        // TODO: old_val
         if (durations [duration_time].durval == duration_media &&
                 durations [end_time].durval == duration_media) {
             ElementPtr e = element->document ()->getElementById (val);
@@ -443,11 +454,9 @@ QString TimedRuntime::setParam (const QString & name, const QString & val) {
             }
         }
     } else if (name == QString::fromLatin1 ("repeatCount")) {
-        old_val = QString::number (repeat_count);
         repeat_count = val.toInt ();
-    } else
-        return ElementRuntime::setParam (name, val);
-    return old_val;
+    }
+    return ElementRuntime::setParam (name, val);
 }
 
 KDE_NO_EXPORT void TimedRuntime::timerEvent (QTimerEvent * e) {
@@ -575,45 +584,33 @@ KDE_NO_EXPORT void RegionRuntime::paint (QPainter & p) {
 KDE_NO_EXPORT
 QString RegionRuntime::setParam (const QString & name, const QString & val) {
     kdDebug () << "RegionRuntime::setParam " << name << "=" << val << endl;
-    QString old_val;
     bool needs_bounds_calc = false;
     if (name == QString::fromLatin1 ("background-color") ||
             name == QString::fromLatin1 ("background-color")) {
-        if (have_bg_color)
-            old_val = QColor(QRgb(background_color)).name ();
         background_color = QColor (val).rgb ();
         have_bg_color = true;
     } else if (name == QString::fromLatin1 ("z-index")) {
-        if (region_node) {
-            old_val = QString::number (region_node->z_order);
+        if (region_node)
             region_node->z_order = val.toInt ();
-        }
     } else if (name == QString::fromLatin1 ("left")) {
-        old_val = left;
         left = val;
         needs_bounds_calc = true;
     } else if (name == QString::fromLatin1 ("top")) {
-        old_val = top;
         top = val;
         needs_bounds_calc = true;
     } else if (name == QString::fromLatin1 ("width")) {
-        old_val = width;
         width = val;
         needs_bounds_calc = true;
     } else if (name == QString::fromLatin1 ("height")) {
-        old_val = height;
         height = val;
         needs_bounds_calc = true;
     } else if (name == QString::fromLatin1 ("right")) {
-        old_val = right;
         right = val;
         needs_bounds_calc = true;
     } else if (name == QString::fromLatin1 ("bottom")) {
-        old_val = bottom;
         bottom = val;
         needs_bounds_calc = true;
-    } else
-        return ElementRuntime::setParam (name, val);
+    }
   //if (attached_element && attached_element->state () < Element::state_started)
     //    needs_bounds_calc = false;
     if (needs_bounds_calc && element) {
@@ -623,7 +620,7 @@ QString RegionRuntime::setParam (const QString & name, const QString & val) {
             rn->repaint ();
         }
     }
-    return old_val;
+    return ElementRuntime::setParam (name, val);
 }
 
 KDE_NO_EXPORT void RegionRuntime::begin () {
@@ -639,21 +636,15 @@ KDE_NO_EXPORT void RegionRuntime::end () {
 
 QString AnimateGroupData::setParam (const QString & name, const QString & val) {
     kdDebug () << "AnimateGroupData::setParam " << name << "=" << val << endl;
-    QString old_val;
     if (name == QString::fromLatin1 ("targetElement")) {
-        if (target_element)
-            old_val = target_element->getAttribute ("id");
         if (element)
             target_element = element->document ()->getElementById (val);
     } else if (name == QString::fromLatin1 ("attributeName")) {
-        old_val = changed_attribute;
         changed_attribute = val;
     } else if (name == QString::fromLatin1 ("to")) {
-        old_val = change_to;
         change_to = val;
-    } else
-        return TimedRuntime::setParam (name, val);
-    return old_val;
+    }
+    return TimedRuntime::setParam (name, val);
 }
 
 //-----------------------------------------------------------------------------
@@ -724,16 +715,12 @@ KDE_NO_EXPORT void AnimateData::reset () {
 
 QString AnimateData::setParam (const QString & name, const QString & val) {
     kdDebug () << "AnimateData::setParam " << name << "=" << val << endl;
-    QString old_val;
     if (name == QString::fromLatin1 ("change_by")) {
-        old_val = QString::number (change_by);
         change_by = val.toInt ();
     } else if (name == QString::fromLatin1 ("from")) {
-        old_val = change_from;
         change_from = val;
-    } else
-        return AnimateGroupData::setParam (name, val);
-    return old_val;
+    }
+    return AnimateGroupData::setParam (name, val);
 }
 
 /**
@@ -747,6 +734,8 @@ KDE_NO_EXPORT void AnimateData::started () {
             if (rt) {
                 target_region = rt->region_node;
                 QRegExp reg ("^\\s*([0-9\\.]+)(\\s*[%a-z]*)?");
+                if (change_from.isEmpty ())
+                    change_from = rt->param (changed_attribute);
                 if (!change_from.isEmpty ()) {
                     old_value = rt->setParam (changed_attribute, change_from);
                     if (reg.search (change_from) > -1) {
@@ -889,7 +878,6 @@ KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::end () {
  */
 KDE_NO_EXPORT
 QString MediaTypeRuntime::setParam (const QString & name, const QString & val) {
-    QString old_val;
     if (name == QString::fromLatin1 ("region")) {
         // setup region ..
         if (element && !val.isEmpty ()) {
@@ -910,16 +898,14 @@ QString MediaTypeRuntime::setParam (const QString & name, const QString & val) {
             mt_d->fill = MediaTypeRuntimePrivate::fill_unknown;
         // else all other fill options ..
     } else if (name == QString::fromLatin1 ("src")) {
-        old_val = source_url;
         source_url = val;
         if (element) {
             QString url = convertNode <SMIL::MediaType> (element)->src;
             if (!url.isEmpty ())
                 source_url = url;
         }
-    } else
-        return TimedRuntime::setParam (name, val);
-    return old_val;
+    }
+    return TimedRuntime::setParam (name, val);
 }
 
 /**
@@ -955,17 +941,16 @@ KDE_NO_EXPORT bool AudioVideoData::isAudioVideo () {
 KDE_NO_EXPORT
 QString AudioVideoData::setParam (const QString & name, const QString & val) {
     kdDebug () << "AudioVideoData::setParam " << name << "=" << val << endl;
-    QString old_val;
     if (name == QString::fromLatin1 ("src")) {
-        old_val = MediaTypeRuntime::setParam (name, val);
+        QString old_val = MediaTypeRuntime::setParam (name, val);
         if (element) {
             PlayListNotify * n = element->document ()->notify_listener;
             if (n && !source_url.isEmpty ())
                 n->requestPlayURL (element, region_node);
         }
-    } else
-        return MediaTypeRuntime::setParam (name, val);
-    return old_val;
+        return old_val;
+    }
+    return MediaTypeRuntime::setParam (name, val);
 }
 //-----------------------------------------------------------------------------
 
@@ -1590,10 +1575,9 @@ KDE_NO_CDTOR_EXPORT ImageData::~ImageData () {
 KDE_NO_EXPORT
 QString ImageData::setParam (const QString & name, const QString & val) {
     kdDebug () << "ImageData::param " << name << "=" << val << endl;
-    QString old_val;
     if (name == QString::fromLatin1 ("src")) {
         killWGet ();
-        old_val = MediaTypeRuntime::setParam (name, val);
+        QString old_val = MediaTypeRuntime::setParam (name, val);
         if (!val.isEmpty ()) {
             KURL url (source_url);
             if (url.isLocalFile ()) {
@@ -1607,9 +1591,9 @@ QString ImageData::setParam (const QString & name, const QString & val) {
             } else
                 wget (url);
         }
-    } else
-        return MediaTypeRuntime::setParam (name, val);
-    return old_val;
+        return old_val;
+    }
+    return MediaTypeRuntime::setParam (name, val);
 }
 
 KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
@@ -1699,11 +1683,10 @@ KDE_NO_EXPORT void TextData::end () {
 KDE_NO_EXPORT
 QString TextData::setParam (const QString & name, const QString & val) {
     kdDebug () << "TextData::setParam " << name << "=" << val << endl;
-    QString old_val;
     if (name == QString::fromLatin1 ("src")) {
         d->data.resize (0);
         killWGet ();
-        old_val = MediaTypeRuntime::setParam (name, val);
+        QString old_val = MediaTypeRuntime::setParam (name, val);
         if (!val.isEmpty ()) {
             KURL url (source_url);
             if (url.isLocalFile ()) {
@@ -1713,26 +1696,22 @@ QString TextData::setParam (const QString & name, const QString & val) {
             } else
                 wget (url);
         }
+        return old_val;
     } else if (name == QString::fromLatin1 ("backgroundColor")) {
-        old_val = QColor (QRgb (d->background_color)).name ();
         d->background_color = QColor (val).rgb ();
     } else if (name == QString ("fontColor")) {
-        old_val = QColor (QRgb (d->foreground_color)).name ();
         d->foreground_color = QColor (val).rgb ();
     } else if (name == QString ("charset")) {
         d->codec = QTextCodec::codecForName (val.ascii ());
     } else if (name == QString ("fontFace")) {
         ; //FIXME
     } else if (name == QString ("fontPtSize")) {
-        old_val = QString::number (d->font.pointSize ());
         d->font.setPointSize (val.toInt ());
     } else if (name == QString ("fontSize")) {
-        old_val = QString::number (0); // -1 * val.toInt () ??
         d->font.setPointSize (d->font.pointSize () + val.toInt ());
     // TODO: expandTabs fontBackgroundColor fontSize fontStyle fontWeight hAlig vAlign wordWrap
-    } else
-        return MediaTypeRuntime::setParam (name, val);
-    return old_val;
+    }
+    return MediaTypeRuntime::setParam (name, val);
 }
 
 KDE_NO_EXPORT void TextData::paint (QPainter & p) {
