@@ -524,14 +524,8 @@ void KMPlayerApp::slotFileNewWindow()
 
 void KMPlayerApp::slotFileOpen()
 {
-    slotStatusMsg(i18n("Opening file..."));
-
-    KURL url=KFileDialog::getOpenURL(QString::null,
-            i18n("*|All Files"), this, i18n("Open File"));
-    if(!url.isEmpty())
-    {
-        openDocumentFile (url);
-    }
+    m_player->settings ()->show ();
+    m_player->settings ()->configDialog ()->setPage ("URLPage");
 }
 
 void KMPlayerApp::slotFileOpenRecent(const KURL& url)

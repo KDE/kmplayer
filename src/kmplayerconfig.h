@@ -25,6 +25,7 @@
 
 #include <qobject.h>
 #include <qsize.h>
+#include <qstringlist.h>
 
 #include "pref.h"
 
@@ -38,6 +39,7 @@ public:
     KMPlayerSettings (KMPlayer *, KConfig * part);
     ~KMPlayerSettings ();
     KMPlayerPreferences *configDialog() const { return configdialog; }
+    QStringList urllist;
     int contrast;
     int brightness;
     int hue;
@@ -137,7 +139,7 @@ signals:
 public slots:
     void readConfig ();
     void writeConfig ();
-    void show (KMPlayerPreferences::Page page = KMPlayerPreferences::NoPage);
+    void show ();
 private slots:
     void okPressed ();
     void getHelp ();

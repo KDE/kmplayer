@@ -47,6 +47,7 @@
 #include <klineedit.h>
 #include <kiconloader.h>
 #include <kdeversion.h>
+#include <kcombobox.h>
 
 #include "pref.h"
 #include "kmplayerpartbase.h"
@@ -55,8 +56,7 @@
 
 KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver * ad, FFServerSetting * ffs)
 : KDialogBase (IconList, i18n ("KMPlayer Preferences"),
-		Help|Default|Ok|Apply|Cancel, Ok, player->view (), 0, false),
-  pages (new QFrame *[int (LastPage)])
+		Help|Default|Ok|Apply|Cancel, Ok, player->view (), 0, false)
 {
     QFrame *frame;
     QTabWidget * tab;
@@ -99,7 +99,6 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
     recorders.push_back (m_FFMpegPage);
     m_RecordPage = new KMPlayerPrefRecordPage (tab, player, recorders);
     tab->insertTab (m_RecordPage, i18n ("General"), 0);
-    pages[PageRecording] = frame;
 
     frame = addPage (i18n ("Broadcasting"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("share"), KIcon::NoGroup, 32));
     vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
@@ -131,17 +130,24 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
     tab->insertTab (m_OPPagePostproc, i18n ("Postprocessing"));
 
     connect (this, SIGNAL (defaultClicked ()), SLOT (confirmDefaults ()));
-
-    pages[PageTVSource] = m_SourcePageTV;
 }
 
-void KMPlayerPreferences::setPage (Page page) {
-    if (page != NoPage)
-        showPage (pageIndex (pages [page]));
+void KMPlayerPreferences::setPage (const char * name) {
+    QObject * o = child (name, "QFrame");
+    if (!o) return;
+    QFrame * page = static_cast <QFrame *> (o);
+    QWidget * w = page->parentWidget ();
+    while (w && !w->inherits ("QTabWidget"))
+        w = w->parentWidget ();
+    if (!w) return;
+    QTabWidget * t = static_cast <QTabWidget*> (w);
+    t->setCurrentPage (t->indexOf(page));
+    if (!t->parentWidget() || !t->parentWidget()->inherits ("QFrame"))
+        return;
+    showPage (pageIndex (t->parentWidget ()));
 }
 
 KMPlayerPreferences::~KMPlayerPreferences() {
-    delete pages; // don't call destructors !!
 }
 
 KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
@@ -195,13 +201,17 @@ KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
 }
 
 KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
-: QFrame (parent)
+: QFrame (parent, "URLPage")
 {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     QHBoxLayout * urllayout = new QHBoxLayout ();
     QLabel *urlLabel = new QLabel (i18n ("URL:"), this, 0);
-    url = new KURLRequester ("", this, 0);
-    url->setShowLocalProtocol (true);
+    urllist = new KComboBox (true, this);
+    urllist->setMaxCount (20);
+    urllist->setDuplicatesEnabled (false); // not that it helps much :(
+    url = new KURLRequester (urllist, this);
+    //url->setShowLocalProtocol (true);
+    url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
     backend = new QComboBox (this);
     backend->insertItem (QString ("MPlayer"), 0);
     backend->insertItem (QString ("Xine"), 1);
@@ -468,7 +478,7 @@ void KMPlayerPrefSourcePageTV::updateTVDevices () {
     m_devices->splice (m_devices->end (), addeddevices);
 }
 
-KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * player, RecorderList & rl) : QFrame (parent), m_player (player), m_recorders (rl) {
+KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * player, RecorderList & rl) : QFrame (parent, "RecordPage"), m_player (player), m_recorders (rl) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     QHBoxLayout * urllayout = new QHBoxLayout ();
     QLabel *urlLabel = new QLabel (i18n ("Output File:"), this);

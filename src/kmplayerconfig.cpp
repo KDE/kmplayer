@@ -36,6 +36,7 @@
 #include <kurl.h>
 #include <kdebug.h>
 #include <klocale.h>
+#include <kcombobox.h>
 
 #include "kmplayerconfig.h"
 #include "kmplayerpartbase.h"
@@ -189,6 +190,7 @@ static const char * strContrast = "Contrast";
 static const char * strBrightness = "Brightness";
 static const char * strHue = "Hue";
 static const char * strSaturation = "Saturation";
+static const char * strURLList = "URL List";
 //static const char * strUseArts = "Use aRts";
 static const char * strVoDriver = "Video Driver";
 static const char * strAoDriver = "Audio Driver";
@@ -293,6 +295,7 @@ void KMPlayerSettings::readConfig () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
 
     m_config->setGroup (strGeneralGroup);
+    urllist = m_config->readListEntry (strURLList, ';');
     contrast = m_config->readNumEntry (strContrast, 0);
     brightness = m_config->readNumEntry (strBrightness, 0);
     hue = m_config->readNumEntry (strHue, 0);
@@ -465,7 +468,7 @@ void KMPlayerSettings::readConfig () {
     }
 }
 
-void KMPlayerSettings::show (KMPlayerPreferences::Page page) {
+void KMPlayerSettings::show () {
     if (!configdialog) {
         configdialog = new KMPlayerPreferences (m_player, _ads, _ffs);
         configdialog->m_SourcePageTV->scanner = new TVDeviceScannerSource (m_player);
@@ -490,7 +493,10 @@ void KMPlayerSettings::show (KMPlayerPreferences::Page page) {
     configdialog->m_GeneralPageGeneral->showBroadcastButton->setChecked (showbroadcastbutton);
     configdialog->m_GeneralPageGeneral->autoHideControlButtons->setChecked (autohidebuttons); //works
     configdialog->m_GeneralPageGeneral->seekTime->setValue(seektime);
-    configdialog->m_SourcePageURL->url->setURL (m_player->process ()->source ()->url ().url ());
+    configdialog->m_SourcePageURL->urllist->clear ();
+    configdialog->m_SourcePageURL->urllist->insertStringList (urllist);
+    configdialog->m_SourcePageURL->urllist->setCurrentText (m_player->process ()->source ()->url ().prettyURL ());
+
     configdialog->m_GeneralPageDVD->autoPlayDVD->setChecked (playdvd); //works if autoplay?
     configdialog->m_GeneralPageDVD->dvdDevicePath->lineEdit()->setText (dvddevice);
     configdialog->m_GeneralPageVCD->autoPlayVCD->setChecked (playvcd);
@@ -576,7 +582,6 @@ void KMPlayerSettings::show (KMPlayerPreferences::Page page) {
     for (int i = 0; it != ffserveracl.end (); ++i, ++it)
         accesslist->setItem (i, 0, new QTableItem (accesslist, QTableItem::Always, *it));
 
-    configdialog->setPage (page);
     configdialog->show ();
 }
 
@@ -584,6 +589,7 @@ void KMPlayerSettings::writeConfig () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
 
     m_config->setGroup (strGeneralGroup);
+    m_config->writeEntry (strURLList, urllist, ';');
     m_config->writeEntry (strContrast, contrast);
     m_config->writeEntry (strBrightness, brightness);
     m_config->writeEntry (strHue, hue);
@@ -728,13 +734,23 @@ void KMPlayerSettings::okPressed () {
     KMPlayerView *view = static_cast <KMPlayerView *> (m_player->view ());
     if (!view)
         return;
-    bool urlchanged = m_player->process ()->source ()->url () != configdialog->m_SourcePageURL->url->url ();
-    if (m_player->process ()->source ()->url ().isEmpty () && configdialog->m_SourcePageURL->url->url ().isEmpty ())
-        urlchanged = false; // hmmm aren't these URLs the same?
+    bool urlchanged = m_player->process ()->source ()->url () != 
+                      configdialog->m_SourcePageURL->url->url ();
+    if (configdialog->m_SourcePageURL->url->url ().isEmpty ())
+        urlchanged = false;
 
-    if (urlchanged)
-        m_player->setURL (configdialog->m_SourcePageURL->url->url ());
-
+    if (urlchanged) {
+        KURL url (configdialog->m_SourcePageURL->url->url ());
+        m_player->setURL (url);
+        if (urllist.find (url.prettyURL ()) == urllist.end ())
+            configdialog->m_SourcePageURL->urllist->insertItem (url.prettyURL (), 0);
+    }
+    urllist.clear ();
+    for (int i = 0; i < configdialog->m_SourcePageURL->urllist->count () && i < 20; ++i)
+        // damnit why don't maxCount and setDuplicatesEnabled(false) work :(
+        // and why can I put a qstringlist in it, but cannot get it out of it again..
+        if (!configdialog->m_SourcePageURL->urllist->text (i).isEmpty ())
+            urllist.push_back (configdialog->m_SourcePageURL->urllist->text (i));
     sizeratio = configdialog->m_GeneralPageGeneral->keepSizeRatio->isChecked ();
     m_player->keepMovieAspect (sizeratio);
     showconsole = configdialog->m_GeneralPageGeneral->showConsoleOutput->isChecked ();
@@ -862,7 +878,7 @@ void KMPlayerSettings::okPressed () {
     emit configChanged ();
 
     if (urlchanged)
-        m_player->openURL (configdialog->m_SourcePageURL->url->url ());
+        m_player->openURL (KURL (configdialog->m_SourcePageURL->url->url ()));
 }
 
 void KMPlayerSettings::getHelp () {

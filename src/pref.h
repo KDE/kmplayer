@@ -66,6 +66,7 @@ class QTabWidget;
 class QTable;
 class QGroupBox;
 class KHistoryCombo;
+class KComboBox;
 
 typedef std::list<RecorderPage*> RecorderList;
 
@@ -190,7 +191,6 @@ class KMPlayerPreferences : public KDialogBase
 {
     Q_OBJECT
 public:
-    enum Page { NoPage = 0, PageRecording, PageMEncoder, PageFFMpeg, PageTVSource, LastPage };
 
     KMPlayerPreferences(KMPlayer *, MPlayerAudioDriver * ad, FFServerSetting *ffs);
     ~KMPlayerPreferences();
@@ -211,9 +211,8 @@ public:
     KMPlayerPrefOPPageGeneral 		*m_OPPageGeneral;
     KMPlayerPrefOPPagePostProc		*m_OPPagePostproc;
     void setDefaults();
-    void setPage (Page page);
+    void setPage (const char *);
 
-    QFrame ** pages;
     RecorderList recorders;
 public slots:
     void confirmDefaults();
@@ -250,6 +249,8 @@ public:
     ~KMPlayerPrefSourcePageURL () {}
 
     KURLRequester * url;
+    //KHistoryCombo * url;
+    KComboBox * urllist;
     QComboBox * backend;
     QCheckBox * allowhref;
 private slots:

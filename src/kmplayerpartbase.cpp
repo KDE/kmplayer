@@ -400,7 +400,8 @@ void KMPlayer::record () {
         m_recorder->stop ();
     } else {
         m_process->stop ();
-        m_settings->show (KMPlayerPreferences::PageRecording);
+        m_settings->show  ();
+        m_settings->configDialog ()->setPage ("RecordPage");
         if (m_view->recordButton ()->isOn ()) 
             m_view->recordButton ()->toggle ();
     }
