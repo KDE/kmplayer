@@ -190,6 +190,7 @@ public:
     virtual QString setParam (const QString & name, const QString & value);
 protected:
     MediaTypeRuntimePrivate * mt_d;
+    QString source_url;
 protected slots:
     virtual void slotResult (KIO::Job*);
     void slotData (KIO::Job*, const QByteArray& qb);

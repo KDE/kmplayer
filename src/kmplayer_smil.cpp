@@ -720,6 +720,7 @@ KDE_NO_EXPORT void MediaTypeRuntime::killWGet () {
 
 KDE_NO_EXPORT bool MediaTypeRuntime::wget (const KURL & url) {
     killWGet ();
+    kdDebug () << "MediaTypeRuntime::wget " << url.url () << endl;
     mt_d->job = KIO::get (url, false, false);
     connect (mt_d->job, SIGNAL (data (KIO::Job *, const QByteArray &)),
              this, SLOT (slotData (KIO::Job *, const QByteArray &)));
@@ -752,6 +753,7 @@ KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::end () {
 
 KDE_NO_EXPORT
 QString MediaTypeRuntime::setParam (const QString & name, const QString & val) {
+    QString old_val;
     if (name == QString::fromLatin1 ("region")) {
         // setup region ..
         if (element && !val.isEmpty ()) {
@@ -769,9 +771,17 @@ QString MediaTypeRuntime::setParam (const QString & name, const QString & val) {
         if (val == QString::fromLatin1 ("freeze"))
             mt_d->fill = MediaTypeRuntimePrivate::fill_freeze;
             // else all other fill options ..
+    } else if (name == QString::fromLatin1 ("src")) {
+        old_val = source_url;
+        source_url = val;
+        if (element) {
+            QString url = convertNode <SMIL::MediaType> (element)->src;
+            if (!url.isEmpty ())
+                source_url = url;
+        }
     } else
         return TimedRuntime::setParam (name, val);
-    return QString::null;
+    return old_val;
 }
 
 KDE_NO_EXPORT void MediaTypeRuntime::started () {
@@ -796,15 +806,17 @@ KDE_NO_EXPORT bool AudioVideoData::isAudioVideo () {
 KDE_NO_EXPORT
 QString AudioVideoData::setParam (const QString & name, const QString & val) {
     kdDebug () << "AudioVideoData::setParam " << name << "=" << val << endl;
+    QString old_val;
     if (name == QString::fromLatin1 ("src")) {
+        old_val = MediaTypeRuntime::setParam (name, val);
         if (element) {
             PlayListNotify * n = element->document ()->notify_listener;
-            if (n && !val.isEmpty ())
+            if (n && !source_url.isEmpty ())
                 n->requestPlayURL (element, region_node);
         }
     } else
         return MediaTypeRuntime::setParam (name, val);
-    return QString::null;
+    return old_val;
 }
 //-----------------------------------------------------------------------------
 
@@ -1265,7 +1277,6 @@ KDE_NO_EXPORT void SMIL::MediaType::start () {
             firstChild ()->start ();
         }
         if (!in_start) { // all children finished
-            rt->setParam (QString ("src"), src);
             TimedMrl::start (); // sets all attributes and calls rt->begin()
         } // else this points to a playlist
     } else // should not happen
@@ -1390,10 +1401,12 @@ KDE_NO_CDTOR_EXPORT ImageData::~ImageData () {
 KDE_NO_EXPORT
 QString ImageData::setParam (const QString & name, const QString & val) {
     kdDebug () << "ImageData::param " << name << "=" << val << endl;
+    QString old_val;
     if (name == QString::fromLatin1 ("src")) {
         killWGet ();
+        old_val = MediaTypeRuntime::setParam (name, val);
         if (!val.isEmpty ()) {
-            KURL url (val);
+            KURL url (source_url);
             if (url.isLocalFile ()) {
                 QPixmap *pix = new QPixmap (url.path ());
                 if (pix->isNull ())
@@ -1407,7 +1420,7 @@ QString ImageData::setParam (const QString & name, const QString & val) {
         }
     } else
         return MediaTypeRuntime::setParam (name, val);
-    return QString::null;
+    return old_val;
 }
 
 KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
@@ -1498,8 +1511,9 @@ QString TextData::setParam (const QString & name, const QString & val) {
     if (name == QString::fromLatin1 ("src")) {
         d->data.resize (0);
         killWGet ();
+        old_val = MediaTypeRuntime::setParam (name, val);
         if (!val.isEmpty ()) {
-            KURL url (val);
+            KURL url (source_url);
             if (url.isLocalFile ()) {
                 QFile file (url.path ());
                 file.open (IO_ReadOnly);
