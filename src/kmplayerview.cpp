@@ -356,7 +356,7 @@ KMPlayerControlPanel::KMPlayerControlPanel (QWidget * parent) : QWidget (parent)
     m_posSlider = new QSlider (Qt::Horizontal, this);
     m_posSlider->setEnabled (false);
     m_buttonbox->addWidget (m_posSlider);
-    enablePositionSlider (true);
+    showPositionSlider (true);
     m_popupMenu = new QPopupMenu (this);
     m_playerMenu = new QPopupMenu (this);
     m_playerMenu->setEnabled (false);
@@ -394,11 +394,11 @@ KMPlayerControlPanel::KMPlayerControlPanel (QWidget * parent) : QWidget (parent)
     m_popupMenu->insertItem (i18n ("&Configure KMPlayer..."), menu_config);
 }
 
-void KMPlayerControlPanel::enablePositionSlider (bool visible, int len) {
-    int h = visible ? button_height_with_slider : button_height_only_buttons;
-    m_posSlider->setMaxValue (len);
-    m_posSlider->setEnabled (len > 0);
-    if (visible) {
+void KMPlayerControlPanel::showPositionSlider (bool show) {
+    int h = show ? button_height_with_slider : button_height_only_buttons;
+    m_posSlider->setValue (0);
+    m_posSlider->setEnabled (false);
+    if (show) {
         m_posSlider->show ();
         m_buttonbox->setMargin (4);
         m_buttonbox->setSpacing (4);
@@ -413,7 +413,7 @@ void KMPlayerControlPanel::enablePositionSlider (bool visible, int len) {
         m_buttons[i]->setMinimumSize (15, h-1);
         m_buttons[i]->setMaximumSize (750, h);
     }
-    setMaximumSize (2500, h + (visible ? 8 : 2 ));
+    setMaximumSize (2500, h + (show ? 8 : 2 ));
 }
 
 void KMPlayerControlPanel::enableSeekButtons (bool enable) {
@@ -429,9 +429,9 @@ void KMPlayerControlPanel::enableSeekButtons (bool enable) {
 void KMPlayerControlPanel::setPlaying (bool play) {
     if (play != m_buttons[button_play]->isOn ())
         m_buttons[button_play]->toggle ();
+    m_posSlider->setValue (0);
     if (!play) {
-        m_posSlider->setValue (0);
-        enablePositionSlider (true);
+        showPositionSlider (true);
         enableSeekButtons (true);
     }
 }

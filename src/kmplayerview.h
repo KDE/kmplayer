@@ -167,7 +167,7 @@ public:
         button_stop, button_pause, button_record, button_broadcast
     };
     KMPlayerControlPanel (QWidget * parent);
-    void enablePositionSlider (bool visible, int len = 0);
+    void showPositionSlider (bool show);
     void enableSeekButtons (bool enable);
     void setPlaying (bool play);
     void setRecording (bool record);

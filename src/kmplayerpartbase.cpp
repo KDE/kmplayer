@@ -445,16 +445,29 @@ void KMPlayer::processPositioned (int pos) {
     ControlPanelList::iterator e = m_panels.end();
     for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
         QSlider *slider = (*i)->positionSlider ();
-        if (m_process->source ()->length () <= 0 && pos > 7 * slider->maxValue ()/8)
+        if (m_process->source ()->length () > slider->maxValue ())
+            slider->setMaxValue (m_process->source ()->length ());
+        else if (m_process->source ()->length () <= 0 && pos > 7 * slider->maxValue ()/8)
             slider->setMaxValue (slider->maxValue() * 2);
         else if (slider->maxValue() < pos)
             slider->setMaxValue (int (1.4 * slider->maxValue()));
         if (!m_bPosSliderPressed)
             slider->setValue (pos);
+        slider->setEnabled (true);
     }
 }
 
 void KMPlayer::processLoaded (int percentage) {
+    if (!m_view) return;
+    ControlPanelList::iterator e = m_panels.end();
+    for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
+        QSlider *slider = (*i)->positionSlider ();
+        slider->setEnabled (false);
+        if (slider->maxValue () != 100)
+            slider->setMaxValue (100);
+        if (!m_bPosSliderPressed)
+            slider->setValue (percentage);
+    }
     emit loading (percentage);
 }
 
@@ -467,7 +480,7 @@ void KMPlayer::processStartedPlaying () {
     int len = m_process->source ()->length ();
     bool seek = m_process->source ()->isSeekable ();
     for (ControlPanelList::iterator i = m_panels.begin (); i != e; ++i) {
-        (*i)->enablePositionSlider (!!len, len);
+        (*i)->showPositionSlider (!!len);
         (*i)->enableSeekButtons (seek);
     }
     emit loading (100);
