@@ -183,13 +183,12 @@ static const char * const broadcast_xpm[] = {
 " ..  ..       ..  .. ",
 "                     "};
 
-
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT KMPlayerViewLayer::KMPlayerViewLayer (KMPlayerView * parent, QBoxLayout * b)
+KDE_NO_CDTOR_EXPORT KMPlayerViewLayer::KMPlayerViewLayer (QWidget * parent, KMPlayerView * view)
  : QWidget (parent),
-   m_view (parent),
-   m_box (b),
+   m_parent (parent),
+   m_view (view),
    m_accel (0L),
    m_fullscreen (false) {
 }
@@ -197,11 +196,10 @@ KDE_NO_CDTOR_EXPORT KMPlayerViewLayer::KMPlayerViewLayer (KMPlayerView * parent,
 KDE_NO_EXPORT void KMPlayerViewLayer::fullScreen () {
     if (m_fullscreen) {
         showNormal ();
-        reparent (m_view, 0, QPoint (0, 0), true);
-        m_box->addWidget (this);
+        reparent (m_parent, 0, QPoint (0, 0), true);
+        static_cast <KDockWidget *> (m_parent)->setWidget (this);
         delete m_accel;
         m_accel = 0L;
-        m_box->activate ();
     } else {
         reparent (0L, 0, qApp->desktop()->screenGeometry(this).topLeft(), true);
         showFullScreen ();
@@ -520,6 +518,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerPlayListView::KMPlayerPlayListView (QWidget * parent
     connect (this, SIGNAL (contextMenuRequested (QListViewItem *, const QPoint &, int)), this, SLOT (contextMenuItem (QListViewItem *, const QPoint &, int)));
 }
 
+KDE_NO_CDTOR_EXPORT KMPlayerPlayListView::~KMPlayerPlayListView () {
+}
+
 static void populateTree (ElementPtr e, ElementPtr focus, KMPlayerPlayListView * tree, QListViewItem *item) {
     Mrl * mrl = e->mrl ();
     item->setText(0, mrl ? KURL(mrl->src).prettyURL() : QString(e->nodeName()));
@@ -657,9 +658,23 @@ KDE_NO_EXPORT void KMPlayerView::dragEnterEvent (QDragEnterEvent* dee) {
 
 KDE_NO_EXPORT void KMPlayerView::init () {
     //setBackgroundMode(Qt::NoBackground);
+    QPalette pal (QColor (64, 64,64), QColor (32, 32, 32));
     QVBoxLayout * viewbox = new QVBoxLayout (this, 0, 0);
-    m_layer = new KMPlayerViewLayer (this, viewbox);
-    viewbox->addWidget (m_layer);
+    m_dockarea = new KDockArea (this, "kde_kmplayer_dock_area");
+    m_dock_video = new KDockWidget (m_dockarea->manager (), 0, KGlobal::iconLoader ()->loadIcon (QString ("kmplayer"), KIcon::Small), m_dockarea);
+    m_dock_video->setDockSite (KDockWidget::DockLeft | KDockWidget::DockBottom | KDockWidget::DockRight | KDockWidget::DockTop);
+    m_dock_video->setEnableDocking(KDockWidget::DockNone);
+    m_layer = new KMPlayerViewLayer (m_dock_video, this);
+    m_dock_video->setWidget (m_layer);
+    m_dockarea->setMainDockWidget (m_dock_video);
+    m_dock_playlist = m_dockarea->createDockWidget (QString ("PlayList"), KGlobal::iconLoader ()->loadIcon (QString ("player_playlist"), KIcon::Small));
+    m_playlist = new KMPlayerPlayListView (m_dock_playlist, this);
+    m_playlist->horizontalScrollBar ()->setPalette (pal);
+    m_playlist->verticalScrollBar ()->setPalette (pal);
+    m_playlist->setPaletteBackgroundColor (QColor (0, 0, 0));
+    m_playlist->setPaletteForegroundColor (QColor (0xB2, 0xB2, 0xB2));
+    m_dock_playlist->setWidget (m_playlist);
+    viewbox->addWidget (m_dockarea);
     QVBoxLayout * layerbox = new QVBoxLayout (m_layer, 0, 0);
     m_buttonbar = new KMPlayerControlPanel (m_layer);
     m_buttonbar->setMaximumSize (2500, buttonBar ()->maximumSize ().height ());
@@ -679,21 +694,13 @@ KDE_NO_EXPORT void KMPlayerView::init () {
     m_multiedit->setPaper (QBrush (QColor (0, 0, 0)));
     m_multiedit->setColor (QColor (0xB2, 0xB2, 0xB2));
     m_widgettypes[WT_Console] = m_multiedit;
-    QPalette pal (QColor (64, 64,64), QColor (32, 32, 32));
     m_multiedit->horizontalScrollBar ()->setPalette (pal);
     m_multiedit->verticalScrollBar ()->setPalette (pal);
     m_widgettypes[WT_Picture] = new KMPlayerPictureWidget (m_widgetstack, this);
-    m_playlist = new KMPlayerPlayListView (m_widgetstack, this);
-    m_playlist->horizontalScrollBar ()->setPalette (pal);
-    m_playlist->verticalScrollBar ()->setPalette (pal);
-    m_playlist->setPaletteBackgroundColor (QColor (0, 0, 0));
-    m_playlist->setPaletteForegroundColor (QColor (0xB2, 0xB2, 0xB2));
-    
-    m_widgettypes[WT_PlayList] = m_playlist;
+
     m_widgetstack->addWidget (m_viewer);
     m_widgetstack->addWidget (m_multiedit);
     m_widgetstack->addWidget (m_widgettypes[WT_Picture]);
-    m_widgetstack->addWidget (m_widgettypes[WT_PlayList]);
 
     setFocusPolicy (QWidget::ClickFocus);
 
@@ -724,6 +731,10 @@ KDE_NO_CDTOR_EXPORT KMPlayerView::~KMPlayerView () {
     delete m_image;
     if (m_layer->parent () != this)
         delete m_layer;
+}
+
+void KMPlayerView::showPlaylist () {
+    m_dock_playlist->manualDock (m_dock_video, KDockWidget::DockLeft, 30);
 }
 
 bool KMPlayerView::setPicture (const QString & path) {

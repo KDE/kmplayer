@@ -27,6 +27,7 @@
 #include <qpushbutton.h>
 #include <qguardedptr.h>
 
+#include <kdockwidget.h>
 #include <kpopupmenu.h>
 #include <klistview.h>
 #include <kurl.h>
@@ -65,7 +66,7 @@ class KMPlayerPlayListView : public KListView {
     Q_OBJECT
 public:
     KMPlayerPlayListView (QWidget * parent, KMPlayerView * view);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerPlayListView () {}
+    ~KMPlayerPlayListView ();
     void updateTree (ElementPtr root, ElementPtr active);
 signals:
     void addBookMark (const QString & title, const QString & url);
@@ -83,14 +84,14 @@ private:
 class KMPlayerViewLayer : public QWidget {
     Q_OBJECT
 public:
-    KMPlayerViewLayer (KMPlayerView * parent, QBoxLayout * b);
+    KMPlayerViewLayer (QWidget * parent, KMPlayerView * view);
     bool isFullScreen () const { return m_fullscreen; }
 public slots:
     void fullScreen ();
     void accelActivated ();
 private:
+    QWidget * m_parent;
     KMPlayerView * m_view;
-    QBoxLayout * m_box;
     QAccel * m_accel;
     bool m_fullscreen : 1;
 };
@@ -116,7 +117,7 @@ public:
         CP_Hide, CP_AutoHide, CP_Show
     };
     enum WidgetType {
-        WT_Video, WT_PlayList, WT_Console, WT_Picture, WT_Last
+        WT_Video, WT_Console, WT_Picture, WT_Last
     };
 
     KMPlayerView (QWidget *parent, const char *);
@@ -153,6 +154,7 @@ public slots:
     void updateVolume ();
     void fullScreen ();
     void updateLayout ();
+    void showPlaylist ();
 signals:
     void urlDropped (const KURL & url);
     void pictureClicked ();
@@ -183,6 +185,9 @@ private:
     KMPlayerPlayListView * m_playlist;
     // all widget types
     QWidget * m_widgettypes [WT_Last];
+    KDockArea * m_dockarea;
+    KDockWidget * m_dock_video;
+    KDockWidget * m_dock_playlist;
     QString tmplog;
     QPixmap * m_image;
     KMPlayerControlPanel * m_buttonbar;

@@ -135,7 +135,7 @@ KDE_NO_EXPORT void KMPlayer::showVideoWindow () {
 }
 
 KDE_NO_EXPORT void KMPlayer::showPlayListWindow () {
-    m_process->view ()->showWidget (KMPlayerView::WT_PlayList);
+    m_process->view ()->showPlaylist ();
 }
 
 KDE_NO_EXPORT void KMPlayer::showConsoleWindow () {
