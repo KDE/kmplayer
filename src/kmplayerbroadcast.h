@@ -30,11 +30,13 @@
 
 class KMPlayerPrefBroadcastPage;        // broadcast
 class KMPlayerPrefBroadcastFormatPage;  // broadcast format
+class FFMpeg;
 class QListBox;
 class QComboBox;
 class QLineEdit;
 class QTable;
 class QPushButton;
+class KLed;
 
 
 class FFServerSetting {
@@ -98,6 +100,9 @@ public:
     QLineEdit * moviewidth;
     QLineEdit * movieheight;
     QLineEdit * profile;
+    QPushButton * startbutton;
+    KLed * serverled;
+    KLed * feedled;
     void setSettings (const FFServerSetting &);
     void getSettings (FFServerSetting &);
 private slots:
@@ -113,22 +118,6 @@ private:
     QPushButton * save;
     QPushButton * del;
     FFServerSettingList & profiles;
-};
-
-
-class KMPlayerBroadcastConfig : public KMPlayerPreferencesPage {
-public:
-    KMPlayerBroadcastConfig ();
-    ~KMPlayerBroadcastConfig () {}
-    virtual void write (KConfig *);
-    virtual void read (KConfig *);
-    virtual void sync (bool fromUI);
-    virtual void prefLocation (QString & item, QString & icon, QString & tab);
-    virtual QFrame * prefPage (QWidget * parent);
-    FFServerSetting ffserversettings;
-    FFServerSettingList ffserversettingprofiles;
-private:
-    KMPlayerPrefBroadcastFormatPage * m_configpage;
 };
 
 
@@ -150,5 +139,45 @@ public:
 private:
     KMPlayerPrefBroadcastPage * m_configpage;
 };
+
+class KMPlayerBroadcastConfig : public QObject, public KMPlayerPreferencesPage {
+    Q_OBJECT
+public:
+    KMPlayerBroadcastConfig (QObject * parent, KMPlayer * player, KMPlayerFFServerConfig * fsc);
+    ~KMPlayerBroadcastConfig ();
+
+    virtual void write (KConfig *);
+    virtual void read (KConfig *);
+    virtual void sync (bool fromUI);
+    virtual void prefLocation (QString & item, QString & icon, QString & tab);
+    virtual QFrame * prefPage (QWidget * parent);
+
+    bool broadcasting () const;
+    void stopServer ();
+    const QString & serverURL () const { return m_ffserver_url; }
+
+    FFServerSetting ffserversettings;
+    FFServerSettingList ffserversettingprofiles;
+signals:
+    void broadcastStarted ();
+    void broadcastStopped ();
+private slots:
+    void processOutput (KProcess *, char *, int);
+    void processStopped (KProcess * process);
+    void startServer ();
+    void startFeed ();
+    void feedFinished ();
+    void sourceChanged (KMPlayerSource *);
+private:
+    KMPlayer * m_player;
+    KMPlayerFFServerConfig * m_ffserverconfig;
+    KMPlayerPrefBroadcastFormatPage * m_configpage;
+    FFMpeg * m_ffmpeg_process;
+    KProcess * m_ffserver_process;
+    bool m_endserver;
+    QString m_ffserver_out;
+    QString m_ffserver_url;
+};
+
 
 #endif //_KMPLAYER_BROADCAST_SOURCE_H_

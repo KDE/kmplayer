@@ -27,12 +27,23 @@
 #include <qlineedit.h>
 #include <qtooltip.h>
 #include <qtabwidget.h>
+#include <qcursor.h>
+#include <qdir.h>
+#include <qfile.h>
+#include <qtimer.h>
 
 #include <klocale.h>
 #include <kdebug.h>
+#include <kled.h>
 #include <kconfig.h>
+#include <kprocess.h>
+#include <kprocctrl.h>
+#include <kmessagebox.h>
 
 #include "kmplayerbroadcast.h"
+#include "kmplayerprocess.h"
+#include "kmplayerview.h"
+#include "kmplayerpartbase.h"
 
 static const char * strBroadcast = "Broadcast";
 static const char * strBindAddress = "Bind Address";
@@ -179,12 +190,13 @@ KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent) : QFrame 
     gridlayout->addWidget (new QLabel (qedit, label, parent), row, 0);  \
     gridlayout->addWidget (qedit, row, 1);
 
-KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *parent, FFServerSettingList & ffs) : QFrame (parent), profiles (ffs) 
+KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *parent, FFServerSettingList & ffs) : QFrame (parent, "BroadcastPage"), profiles (ffs) 
 {
     QHBoxLayout *layout = new QHBoxLayout (this, 5);
     QGridLayout *formatlayout = new QGridLayout (11, 2, 2);
     formatlayout->setAlignment (Qt::AlignTop);
     QVBoxLayout *leftlayout = new QVBoxLayout (15);
+    QHBoxLayout *ledlayout = new QHBoxLayout (5);
     format = new QComboBox (this);
     QLabel * label = new QLabel (format, i18n ("Format:"), this);
     format->clear ();
@@ -243,6 +255,14 @@ KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *paren
     profileslayout->addWidget (save, 2, 1);
     profileslayout->addWidget (del, 3, 1);
     leftlayout->addWidget (profileframe);
+    startbutton = new QPushButton (i18n ("Start"), this);
+    serverled = new KLed (Qt::green, KLed::Off, KLed::Raised, KLed::Circular, this);
+    feedled = new KLed (Qt::green, KLed::Off, KLed::Raised, KLed::Circular, this);
+    ledlayout->addWidget (startbutton);
+    ledlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
+    ledlayout->addWidget (serverled);
+    ledlayout->addWidget (feedled);
+    leftlayout->addLayout (ledlayout);
     QFrame * line = new QFrame (this);
     line->setFrameShape (QFrame::HLine);
     leftlayout->addWidget (line);
@@ -350,7 +370,43 @@ void KMPlayerPrefBroadcastFormatPage::slotDelete () {
 
 //-----------------------------------------------------------------------------
 
-KMPlayerBroadcastConfig::KMPlayerBroadcastConfig () : m_configpage (0L) {
+static bool stopProcess (KProcess * process, const char * cmd = 0L) {
+    if (!process || !process->isRunning ()) return true;
+    do {
+        if (cmd)
+            process->writeStdin (cmd, strlen (cmd));
+        KProcessController::theKProcessController->waitForProcessExit (1);
+        if (!process->isRunning ())
+            break;
+        process->kill (SIGINT);
+        KProcessController::theKProcessController->waitForProcessExit (3);
+        if (!process->isRunning ())
+            break;
+        process->kill (SIGTERM);
+        KProcessController::theKProcessController->waitForProcessExit (1);
+        if (!process->isRunning ())
+            break;
+        process->kill (SIGKILL);
+        KProcessController::theKProcessController->waitForProcessExit (1);
+        if (process->isRunning ()) {
+            return false; // give up
+        }
+    } while (false);
+    return true;
+}
+
+
+KMPlayerBroadcastConfig::KMPlayerBroadcastConfig (QObject * parent, KMPlayer * player, KMPlayerFFServerConfig * fsc)
+ : QObject (parent),
+   m_player (player),
+   m_ffserverconfig (fsc),
+   m_configpage (0L),
+   m_ffmpeg_process (0L),
+   m_ffserver_process (0L),
+   m_endserver (true) {
+}
+
+KMPlayerBroadcastConfig::~KMPlayerBroadcastConfig () {
 }
 
 void KMPlayerBroadcastConfig::write (KConfig * config) {
@@ -394,12 +450,145 @@ void KMPlayerBroadcastConfig::prefLocation (QString & item, QString & icon, QStr
     tab = i18n ("Profiles");
 }
 
-QFrame *KMPlayerBroadcastConfig:: prefPage (QWidget * parent) {
-    if (!m_configpage)
-        m_configpage = new KMPlayerPrefBroadcastFormatPage (parent, ffserversettingprofiles);
+QFrame * KMPlayerBroadcastConfig::prefPage (QWidget * parent) {
+    m_configpage = new KMPlayerPrefBroadcastFormatPage (parent, ffserversettingprofiles);
+    connect (m_configpage->startbutton, SIGNAL (clicked ()), this, SLOT (startServer ()));
+    connect (m_player, SIGNAL (sourceChanged (KMPlayerSource *)),
+             this, SLOT (sourceChanged (KMPlayerSource *)));
+    m_configpage->startbutton->setEnabled
+        (!m_player->process ()->source ()->videoDevice ().isEmpty ());
     return m_configpage;
 }
 
+bool KMPlayerBroadcastConfig::broadcasting () const {
+    return m_ffserver_process && m_ffserver_process->isRunning ();
+}
+#include <kglobal.h>
+#include <kstandarddirs.h>
+
+static const char ffserverconf[] =
+"Port %d\nBindAddress %s\nMaxClients %d\nMaxBandwidth %d\n"
+"CustomLog -\nNoDaemon\n"
+"<Feed kmplayer.ffm>\nFile %s\nFileMaxSize %dK\nACL allow 127.0.0.1\n</Feed>\n"
+"<Stream video.%s>\nFeed kmplayer.ffm\n%s\n%s%s\n</Stream>\n"
+"<Stream stat.html>\nFormat status\nACL allow localhost\n</Stream>\n";
+
+void KMPlayerBroadcastConfig::startServer () {
+    if (broadcasting ()) {
+        stopServer ();
+        return;
+    }
+    QWidget * w = static_cast<QWidget *> (parent ());
+    w->setCursor (QCursor (Qt::WaitCursor));
+    m_ffserver_process = new KProcess;
+    m_ffserver_process->setUseShell (true);
+    connect (m_ffserver_process, SIGNAL (processExited (KProcess *)),
+             this, SLOT (processStopped (KProcess *)));
+    QString conffile = locateLocal ("data", "kmplayer/ffserver.conf");
+    const char * noaudio = m_player->process ()->source ()->audioDevice ().isEmpty () ? "NoAudio" : "";
+    FFServerSetting & ffs = ffserversettings;
+    QString acl;
+    QStringList::iterator it = ffs.acl.begin ();
+    for (; it != ffs.acl.end (); ++it)
+        acl += QString ("ACL allow ") + *it + QString ("\n");
+    unlink (m_ffserverconfig->feedfile.ascii ());
+    QFile qfile (conffile);
+    qfile.open (IO_WriteOnly);
+    QString configdata;
+    QString buf;
+    configdata.sprintf (ffserverconf, m_ffserverconfig->ffserverport, m_ffserverconfig->bindaddress.ascii (), m_ffserverconfig->maxclients, m_ffserverconfig->maxbandwidth, m_ffserverconfig->feedfile.ascii (), m_ffserverconfig->feedfilesize, ffs.format.ascii (), acl.ascii (), ffs.ffconfig (buf).ascii (), noaudio);
+    qfile.writeBlock (configdata.ascii (), configdata.length ());
+    qfile.close ();
+    kdDebug () << configdata << endl;
+    kdDebug () << "ffserver -f " << conffile << endl;
+    *m_ffserver_process << "ffserver -f " << conffile;
+    m_ffserver_out.truncate (0);
+    connect (m_ffserver_process,
+             SIGNAL (receivedStderr (KProcess *, char *, int)),
+             this, SLOT (processOutput (KProcess *, char *, int)));
+    m_ffserver_process->start (KProcess::NotifyOnExit, KProcess::Stderr);
+    if (m_ffserver_process->isRunning ()) {
+        m_configpage->startbutton->setText (i18n ("Stop"));
+        m_configpage->serverled->setState (KLed::On);
+        emit broadcastStarted ();
+    }
+    QTimer::singleShot (500, this, SLOT (startFeed ()));
+}
+
+void KMPlayerBroadcastConfig::stopServer () {
+    QWidget * w = static_cast<QWidget *> (parent ());
+    m_endserver = true;
+    if (m_ffmpeg_process)
+        m_ffmpeg_process->stop ();
+    if (!stopProcess (m_ffserver_process))
+        KMessageBox::error (w, i18n ("Failed to end ffserver process."), i18n ("Error"));
+}
+
+void KMPlayerBroadcastConfig::processOutput (KProcess * p, char * s, int) {
+    if (p == m_ffserver_process)
+        m_ffserver_out += QString (s);
+}
+
+void KMPlayerBroadcastConfig::startFeed () {
+    FFServerSetting & ffs = ffserversettings;
+    QWidget * w = static_cast<QWidget *> (parent ());
+    if (!m_ffserver_process || !m_ffserver_process->isRunning ()) {
+        KMessageBox::error (w, i18n ("Failed to start ffserver.\n") + m_ffserver_out, i18n ("Error"));
+        return;
+    }
+    disconnect (m_ffserver_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
+                this, SLOT (processOutput (KProcess *, char *, int)));
+    m_ffmpeg_process = new FFMpeg (m_player);
+    m_ffmpeg_process->setSource (m_player->process ()->source ());
+    connect (m_ffmpeg_process, SIGNAL (finished ()),
+             this, SLOT (feedFinished ()));
+    QString ffurl;
+    ffurl.sprintf ("http://localhost:%d/kmplayer.ffm", m_ffserverconfig->ffserverport);
+    m_ffmpeg_process->setURL (ffurl.ascii ());
+    if (!m_ffmpeg_process->play ()) {
+        KMessageBox::error (w, i18n ("Failed to start ffmpeg."), i18n ("Error"));
+        stopProcess (m_ffserver_process);
+        return;
+    }
+    if (m_ffmpeg_process->playing ()) {
+        m_ffserver_url.sprintf ("http://localhost:%d/video.%s", m_ffserverconfig->ffserverport, ffs.format.ascii ());
+        m_endserver = false;
+        m_configpage->feedled->setState (KLed::On);
+        m_player->openURL (KURL (m_ffserver_url));
+    } else
+        stopServer ();
+    static_cast<QWidget *> (parent ())->setCursor (QCursor (Qt::ArrowCursor));
+}
+
+void KMPlayerBroadcastConfig::feedFinished () {
+    QWidget * w = static_cast<QWidget *> (parent ());
+    m_configpage->feedled->setState (KLed::Off);
+    m_ffmpeg_process->deleteLater ();
+    m_ffmpeg_process = 0L;
+    kdDebug () << "ffmpeg process stopped " << m_endserver << endl; 
+    if (m_endserver && !stopProcess (m_ffserver_process)) {
+        disconnect (m_ffserver_process,
+                SIGNAL (receivedStderr (KProcess *, char *, int)),
+                this, SLOT (processOutput (KProcess *, char *, int)));
+        KMessageBox::error (w, i18n ("Failed to end ffserver process."), i18n ("Error"));
+        processStopped (0L);
+    }
+}
+
+void KMPlayerBroadcastConfig::processStopped (KProcess *) {
+    kdDebug () << "ffserver process stopped" << endl; 
+    m_configpage->serverled->setState (KLed::Off);
+    m_configpage->startbutton->setText (i18n ("Start"));
+    m_configpage->startbutton->setEnabled
+        (!m_player->process ()->source ()->videoDevice ().isEmpty ());
+    m_ffserver_process->deleteLater ();
+    m_ffserver_process = 0L;
+    emit broadcastStopped ();
+}
+
+void KMPlayerBroadcastConfig::sourceChanged (KMPlayerSource * source) {
+    m_configpage->startbutton->setEnabled (broadcasting () || !source->videoDevice ().isEmpty ());
+}
 //-----------------------------------------------------------------------------
 
 KMPlayerFFServerConfig::KMPlayerFFServerConfig () : m_configpage (0L) {

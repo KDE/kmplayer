@@ -57,8 +57,8 @@ public:
     KMPlayer * player () const { return m_player; }
     void resizePlayer (int percentage);
     KRecentFilesAction * recentFiles () const { return fileOpenRecent; }
-    bool broadcasting () const;
     KMPlayerView *view () const { return m_view; }
+    bool broadcasting () const;
 protected:
     void saveOptions ();
     void readOptions ();
@@ -80,7 +80,6 @@ public slots:
     void slotViewMenuBar ();
     void slotStatusMsg (const QString &text);
     void slotSourceChanged (KMPlayerSource *);
-    void startFeed ();
 private slots:
     void dvdNav ();
     void openDVD ();
@@ -96,10 +95,9 @@ private slots:
     void zoom100 ();
     void zoom150 ();
     void broadcastClicked ();
-    void processOutput (KProcess *, char *, int);
-    void processStopped (KProcess * process);
+    void broadcastStarted ();
+    void broadcastStopped ();
     void playerStarted ();
-    void ffmpegFinished ();
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
     KConfig * config;
@@ -126,14 +124,9 @@ private:
     KMPlayerVCDSource * m_vcdsource;
     KMPlayerPipeSource * m_pipesource;
     KMPlayerTVSource * m_tvsource;
-    KMPlayerBroadcastConfig * m_broadcastconfig;
     KMPlayerFFServerConfig * m_ffserverconfig;
+    KMPlayerBroadcastConfig * m_broadcastconfig;
     QCString m_dcopName;
-    FFMpeg * m_ffmpeg_process;
-    KProcess * m_ffserver_process;
-    QString m_ffserver_out;
-    QString m_ffserver_url;
-    bool m_endserver : 1;
     bool m_showToolbar : 1;
     bool m_showStatusbar : 1;
     bool m_showMenubar : 1;
