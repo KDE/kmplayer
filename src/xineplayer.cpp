@@ -371,7 +371,6 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
         } else 
             mrl = QString::fromLocal8Bit (argv ()[i]);
     }
-    fprintf(stderr, "mrl: '%s'\n", (const char *) mrl.local8Bit ());
     xpos    = 0;
     ypos    = 0;
     width   = 320;
@@ -495,6 +494,7 @@ void getConfigEntries (QByteArray & buf) {
 }
 
 void KXinePlayer::play () {
+    fprintf (stderr, "play mrl: '%s'\n", (const char *) mrl.local8Bit ());
     mutex.lock ();
     if (running) {
         if (xine_get_status (stream) == XINE_STATUS_PLAY &&

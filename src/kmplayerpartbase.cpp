@@ -460,8 +460,10 @@ KDE_NO_EXPORT void KMPlayer::processPositioned (int pos) {
             slider->setMaxValue (slider->maxValue() * 2);
         else if (slider->maxValue() < pos)
             slider->setMaxValue (int (1.4 * slider->maxValue()));
-        if (!m_bPosSliderPressed)
+        if (!m_bPosSliderPressed) {
+            slider->setEnabled (false);
             slider->setValue (pos);
+        }
         slider->setEnabled (true);
     }
 }
