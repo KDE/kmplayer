@@ -538,7 +538,7 @@ void KMPlayerPlayListView::copyToClipboard () {
     KMPlayerListViewItem * item = static_cast <KMPlayerListViewItem *> (currentItem ());
     if (item->m_elm) {
         Mrl * mrl = item->m_elm->mrl ();
-        QApplication::clipboard()->setText (mrl ? mrl->src : item->m_elm->tagName ());
+        QApplication::clipboard()->setText (mrl ? mrl->src : QString (item->m_elm->tagName ()));
     }
 }
 
@@ -546,7 +546,7 @@ void KMPlayerPlayListView::addBookMark () {
     KMPlayerListViewItem * item = static_cast <KMPlayerListViewItem *> (currentItem ());
     if (item->m_elm) {
         Mrl * mrl = item->m_elm->mrl ();
-        KURL url (mrl ? mrl->src : item->m_elm->tagName ());
+        KURL url (mrl ? mrl->src : QString (item->m_elm->tagName ()));
         emit addBookMark (url.prettyURL (), url.url ());
     }
 }

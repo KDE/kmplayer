@@ -64,7 +64,7 @@ extern "C" {
                 KURL url = args->url(args->count() - 1);
                 if (url.url ().find ("://") < 0)
                     url = KURL (QFileInfo (url.url ()).absFilePath ());
-                if(!url.isMalformed())
+                if(url.isValid ())
                     kmplayer->openDocumentFile (args->url (0));
             }
             args->clear ();

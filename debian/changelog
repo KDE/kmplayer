@@ -1,3 +1,9 @@
+kmplayer (0.8.3.90-1) unstable; urgency=low
+
+  *  Release candidate 1 for upcoming 0.8.4.
+
+ -- Koos Vriezen <koos.vriezen@xs4all.nl>  Mon, 01 Nov 2004 09:02:15 +0200
+
 kmplayer (0.8.3a-1) unstable; urgency=low
 
   *  New upstream release.

@@ -1,3 +1,11 @@
+Changes since version 0.8.3a
+- Nice icons from Marcel Dierkes, thanks!!!
+- Replaced internal playlist structure from std::list to DOM
+- Removed the 'Show Console' option, now one can always switch to the console
+  output window
+- Visualization of internal playlist, becomes one of the
+  video/playlist/console views of the data
+- More icons in the menus and some context menus added
 Changes since version 0.8.3
 - Auto hiding in fullscreen fix
 - Mencoder recording fix for URLs

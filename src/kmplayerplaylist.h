@@ -24,7 +24,9 @@
 #define _KMPLAYER_PLAYLIST_H_
 
 #include <qstring.h>
+#ifndef ASSERT
 #define ASSERT Q_ASSERT
+#endif
 #include "kmplayershared.h"
 
 #include <kdemacros.h>

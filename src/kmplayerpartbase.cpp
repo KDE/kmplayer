@@ -621,6 +621,10 @@ void KMPlayerSource::init () {
     m_position = 0;
     m_identified = false;
     m_recordcmd.truncate (0);
+    KMPlayerProcess * p = m_player->process ();
+    if (p && p->view ())
+    if (p)
+        p->view ()->playList ()->updateTree (m_document, m_current);
 }
 
 void KMPlayerSource::setLength (int len) {
@@ -662,13 +666,15 @@ QString KMPlayerSource::first () {
     m_current = m_document;
     if (m_document->hasChildNodes ())
         next ();
+    else {
+        KMPlayerProcess * p = m_player->process ();
+        if (p && p->view ())
+            p->view ()->playList ()->updateTree (m_document, m_current);
+    }
     return current ();
 }
 
 QString KMPlayerSource::current () {
-    KMPlayerProcess * p = m_player->process ();
-    if (p && p->view ())
-        p->view ()->playList ()->updateTree (m_document, m_current);
     return m_current ? m_current->mrl()->src : QString ();
 }
 
@@ -691,24 +697,25 @@ QString KMPlayerSource::next () {
     if (m_back_request && m_back_request->isMrl ()) {
         m_current = m_back_request;
         m_back_request = 0L;
-        return current ();
-    }
-    if (!m_current)
-        return QString ();
-    ElementPtr e = findDepthFirst (m_current->isMrl () ? m_current->nextSibling (): m_current);
-    if (e) {
-        m_current = e;
-    } else while (m_current) {
-        m_current = m_current->parentNode ();
-        if (m_current && m_current->nextSibling ()) {
-            m_current = m_current->nextSibling ();
-            e = findDepthFirst (m_current);
-            if (e) {
-                m_current = e;
-                break;
+    } else if (m_current) {
+        ElementPtr e = findDepthFirst (m_current->isMrl () ? m_current->nextSibling (): m_current);
+        if (e) {
+            m_current = e;
+        } else while (m_current) {
+            m_current = m_current->parentNode ();
+            if (m_current && m_current->nextSibling ()) {
+                m_current = m_current->nextSibling ();
+                e = findDepthFirst (m_current);
+                if (e) {
+                    m_current = e;
+                    break;
+                }
             }
         }
     }
+    KMPlayerProcess * p = m_player->process ();
+    if (p && p->view ())
+        p->view ()->playList ()->updateTree (m_document, m_current);
     return current ();
 }
 
