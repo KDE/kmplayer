@@ -124,7 +124,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions()
     fileClose = KStdAction::close(this, SLOT(slotFileClose()), actionCollection());
     fileQuit = KStdAction::quit(this, SLOT(slotFileQuit()), actionCollection());
     
-    new KAction (i18n ("&Open Pipe..."), QString ("filesys-pipe"), KShortcut (), this, SLOT(openPipe ()), actionCollection (), "source_pipe");
+    new KAction (i18n ("&Open Pipe..."), QString ("pipe"), KShortcut (), this, SLOT(openPipe ()), actionCollection (), "source_pipe");
     //KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0,true)
     new KAction (i18n ("&Connect"), QString ("connect_established"), KShortcut (), this, SLOT (openVDR ()), actionCollection (), "vdr_connect");
     new KAction (i18n ("V&ideo"), QString ("video"), KShortcut (), m_player, SLOT (showVideoWindow ()), actionCollection (), "view_video");
@@ -140,10 +140,10 @@ KDE_NO_EXPORT void KMPlayerApp::initActions()
 #else
     /*KAction *fullscreenact =*/ new KAction (i18n("&Full Screen"), 0, 0, this, SLOT(fullScreen ()), actionCollection (), "fullscreen");
 #endif
-    /*KAction *playact =*/ new KAction (i18n ("P&lay"), 0, 0, m_player, SLOT (play ()), actionCollection (), "play");
-    /*KAction *pauseact =*/ new KAction (i18n ("&Pause"), 0, 0, m_player, SLOT (pause ()), actionCollection (), "pause");
-    /*KAction *stopact =*/ new KAction (i18n ("&Stop"), 0, 0, m_player, SLOT (stop ()), actionCollection (), "stop");
-    /*KAction *artsctrl =*/ new KAction (i18n ("&Arts Control"), 0, 0, this, SLOT (startArtsControl ()), actionCollection (), "view_arts_control");
+    /*KAction *playact =*/ new KAction (i18n ("P&lay"), QString ("player_play"), KShortcut (), m_player, SLOT (play ()), actionCollection (), "play");
+    /*KAction *pauseact =*/ new KAction (i18n ("&Pause"), QString ("player_pause"), KShortcut (), m_player, SLOT (pause ()), actionCollection (), "pause");
+    /*KAction *stopact =*/ new KAction (i18n ("&Stop"), QString ("player_stop"), KShortcut (), m_player, SLOT (stop ()), actionCollection (), "stop");
+    /*KAction *artsctrl =*/ new KAction (i18n ("&Arts Control"), QString ("player_volume"), KShortcut (), this, SLOT (startArtsControl ()), actionCollection (), "view_arts_control");
     viewToolBar = KStdAction::showToolbar(this, SLOT(slotViewToolBar()), actionCollection());
     viewStatusBar = KStdAction::showStatusbar(this, SLOT(slotViewStatusBar()), actionCollection());
     viewMenuBar = KStdAction::showMenubar(this, SLOT(slotViewMenuBar()), actionCollection());
