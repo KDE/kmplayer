@@ -584,6 +584,7 @@ void KMPlayerURLSource::init () {
     isreference = false;
     m_urls.clear ();
     m_urlother = KURL ();
+#ifdef HAVE_XINE
     KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
     QPopupMenu * menu = view->playerMenu ();
     menu->clear ();
@@ -597,6 +598,8 @@ void KMPlayerURLSource::init () {
         m_player->setProcess (m_player->mplayer ());
         menu->setItemChecked (menu->idAt (0), true);
     }
+    view->popupMenu ()->setItemVisible (KMPlayerView::menu_player, true);
+#endif
 }
 
 bool KMPlayerURLSource::hasLength () {
@@ -689,9 +692,11 @@ void KMPlayerURLSource::setIdentified (bool b) {
 }
 
 void KMPlayerURLSource::deactivate () {
+#ifdef HAVE_XINE
     KMPlayerView * view = static_cast <KMPlayerView*> (m_player->view ());
     if (view)
-        view->playerMenu ()->setEnabled (false);
+        view->popupMenu ()->setItemVisible (KMPlayerView::menu_player, false);
+#endif
 }
 
 #include "kmplayerpartbase.moc"

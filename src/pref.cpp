@@ -20,6 +20,9 @@
 
 #undef Always
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include <qlayout.h>
 #include <qlabel.h>
 #include <qpushbutton.h>
@@ -196,23 +199,27 @@ KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
 {
     QVBoxLayout *layout = new QVBoxLayout (this, 0, 2);
     QHBoxLayout * urllayout = new QHBoxLayout ();
-    QHBoxLayout * backendlayout = new QHBoxLayout ();
     QLabel *urlLabel = new QLabel (i18n ("URL:"), this, 0);
     url = new KURLRequester ("", this, 0);
     url->setShowLocalProtocol (true);
     backend = new QComboBox (this);
-    QLabel *backendLabel = new QLabel (i18n ("Use Movie Player:"), this, 0);
-    allowhref = new QCheckBox (i18n ("Enable 'Click to Play' support"), this);
-    //QToolTip::add (allowhref, i18n ("Explain this in a few lines"));
     backend->insertItem (QString ("MPlayer"), 0);
     backend->insertItem (QString ("Xine"), 1);
+    allowhref = new QCheckBox (i18n ("Enable 'Click to Play' support"), this);
     urllayout->addWidget (urlLabel);
     urllayout->addWidget (url);
     layout->addLayout (urllayout);
     layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
+#ifdef HAVE_XINE
+    QHBoxLayout * backendlayout = new QHBoxLayout ();
+    QLabel *backendLabel = new QLabel (i18n ("Use Movie Player:"), this, 0);
+    //QToolTip::add (allowhref, i18n ("Explain this in a few lines"));
     backendlayout->addWidget (backendLabel);
     backendlayout->addWidget (backend);
     layout->addLayout (backendlayout);
+#else
+    backend->hide ();
+#endif
     layout->addWidget (allowhref);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }

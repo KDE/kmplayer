@@ -457,6 +457,7 @@ void KMPlayerView::init () {
     m_playerMenu = new QPopupMenu (m_layer);
     m_playerMenu->setEnabled (false);
     m_popupMenu->insertItem (i18n ("&Play with"), m_playerMenu, menu_player);
+    m_popupMenu->setItemVisible (menu_player, false);
     m_zoomMenu = new QPopupMenu (m_layer);
     m_zoomMenu->insertItem (i18n ("50%"), menu_zoom50);
     m_zoomMenu->insertItem (i18n ("100%"), menu_zoom100);
