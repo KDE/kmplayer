@@ -212,6 +212,7 @@ KDE_NO_CDTOR_EXPORT MPlayerBase::~MPlayerBase () {
 
 KDE_NO_EXPORT void MPlayerBase::initProcess () {
     Process::initProcess ();
+    commands.clear ();
     const KURL & url (m_source->url ());
     if (!url.isEmpty ()) {
         QString proxy_url;

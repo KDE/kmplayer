@@ -314,14 +314,14 @@ KDE_NO_EXPORT void KMPlayerApp::resizePlayer (int percentage) {
             source->setWidth (w);
         } else
             source->setAspect (1.0 * w/h);
-        //m_view->viewer()->setAspect (m_view->keepSizeRatio() ? source->aspect() : 0.0);
-        QSize s1 = m_view->size ();
-        QSize s2 = m_view->viewer ()->size ();
+        if (m_view->controlPanel ()->isVisible ())
+            h += m_view->controlPanel ()->size ().height ();
+        QSize s1 = size ();
+        QSize s2 = m_view->fullScreenWidget ()->size ();
         w += s1.width () - s2.width ();
         h += s1.height () - s2.height ();
         w = int (1.0 * w * percentage/100.0);
         h = int (1.0 * h * percentage/100.0);
-        kdDebug () << "resizePlayer (" << w << "," << h << ")" << endl;
         QSize s = sizeForCentralWidgetSize (QSize (w, h));
         resize (s);
     }
