@@ -1218,14 +1218,23 @@ void KMPlayerTVSource::buildMenu () {
 void KMPlayerTVSource::menuClicked (int id) {
     CommandMap::iterator it = commands.find (id);
     if (it != commands.end ()) {
-        if (m_player->process ()->source () != this)
-            m_player->setSource (this);
+        TVSource * prevsource = m_tvsource;
         m_tvsource = it.data ();
+        bool playing = prevsource && 
+                       (prevsource->videodevice == m_tvsource->videodevice) &&
+                       m_player->playing ();
+        if (m_player->process ()->source () != this) {
+            m_player->setSource (this);
+            playing = false;
+        }
         buildArguments ();
         if (m_app->broadcasting ())
             QTimer::singleShot (0, m_app, SLOT (startFeed ()));
-        else if (!m_tvsource->noplayback)
-            QTimer::singleShot (0, m_player, SLOT (play ()));
+        else {
+            m_player->stop ();
+            if (!m_tvsource->noplayback || playing)
+                QTimer::singleShot (0, m_player, SLOT (play ()));
+        }
     }
 }
 
