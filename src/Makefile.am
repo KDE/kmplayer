@@ -1,7 +1,5 @@
 INCLUDES= -I$(kde_includes)/kio $(all_includes)
 
-KDE_ICON=AUTO
-
 METASOURCES= AUTO
 
 lib_LTLIBRARIES= libkmplayercommon.la
