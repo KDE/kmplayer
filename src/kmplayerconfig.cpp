@@ -16,7 +16,7 @@
  *  Boston, MA 02111-1307, USA.
  **/
 
-#include <iostream>
+#include <algorithm>
 
 #include <qcheckbox.h>
 #include <qtextedit.h>
@@ -153,23 +153,30 @@ static FFServerSetting _ffs[] = {
 
 TVChannel::TVChannel (const QString & n, int f) : name (n), frequency (f) {}
 
-TVInput::TVInput (const QString & n, int _id) : name (n), id (_id) {
-    channels.setAutoDelete (true);
+TVInput::TVInput (const QString & n, int _id) : name (n), id (_id) {}
+
+void TVInput::clear () {
+    std::for_each (channels.begin (), channels.end (), Deleter <TVChannel>);
+    channels.clear ();
 }
 
 TVDevice::TVDevice (const QString & d, const QSize & s)
     : device (d), size (s), noplayback (false) {
-    inputs.setAutoDelete (true);
+}
+
+void TVDevice::clear () {
+    std::for_each (inputs.begin (), inputs.end (), Deleter <TVInput>);
+    inputs.clear ();
 }
 
 KMPlayerSettings::KMPlayerSettings (KMPlayer * player, KConfig * config)
   : configdialog (0L), m_config (config), m_player (player) {
-    tvdevices.setAutoDelete (true);
     audiodrivers = _ads;
     ffserversettings = _ffs;
 }
 
 KMPlayerSettings::~KMPlayerSettings () {
+    std::for_each (tvdevices.begin (), tvdevices.end (), Deleter <TVDevice>);
     // configdialog should be destroyed when the view is destroyed
     //delete configdialog;
 }
@@ -381,6 +388,7 @@ void KMPlayerSettings::readConfig () {
     pp_ffmpeg_int = m_config->readBoolEntry (strPP_FFmpeg_Int, false);
 
     // TV stuff
+    std::for_each (tvdevices.begin (), tvdevices.end (), Deleter <TVDevice>);
     tvdevices.clear ();
     m_config->setGroup(strTV);
     tvdriver = m_config->readEntry (strTVDriver, "v4l");
@@ -421,13 +429,13 @@ void KMPlayerSettings::readConfig () {
                 TVChannel * channel = new TVChannel (freqstr.left (pos),
                                                   freqstr.mid (pos+1).toInt ());
                 kdDebug() << freqstr.left (pos) << " at " << freqstr.mid (pos+1).toInt() << endl;
-                input->channels.append (channel);
+                input->channels.push_back (channel);
             }
             if (input->hastuner) // what if multiple tuners?
                 input->norm = m_config->readEntry (strTVNorm, "PAL");
-            device->inputs.append (input);
+            device->inputs.push_back (input);
         }
-        tvdevices.append (device);
+        tvdevices.push_back (device);
     }
     m_config->setGroup (strBroadcast);
     bindaddress = m_config->readEntry (strBindAddress, "0.0.0.0");
@@ -644,9 +652,10 @@ void KMPlayerSettings::writeConfig () {
     devicelist.clear ();
     if (configdialog)
         configdialog->m_SourcePageTV->updateTVDevices ();
-    TVDevice * device;
     QString sep = QString (":");
-    for (tvdevices.first(); (device = tvdevices.current ()); tvdevices.next()) {
+    TVDeviceList::iterator dit = tvdevices.begin ();
+    for (; dit != tvdevices.end (); ++dit) {
+        TVDevice * device = *dit;
         kdDebug() << " writing " << device->device << endl;
         devicelist.append (device->device);
         m_config->setGroup (device->device);
@@ -657,14 +666,15 @@ void KMPlayerSettings::writeConfig () {
         m_config->writeEntry (strTVDeviceName, device->name);
         m_config->writeEntry (strTVAudioDevice, device->audiodevice);
         QStringList inputlist;
-        TVInput * input;
-        for (device->inputs.first (); (input = device->inputs.current ()); device->inputs.next ()) {
+        TVInputList::iterator iit = device->inputs.begin ();
+        for (; iit != device->inputs.end (); ++iit) {
+            TVInput * input = *iit;
             inputlist.append (QString::number (input->id) + sep + input->name);
             if (input->hastuner) {
-                TVChannel * channel;
                 QStringList channellist;
-                for (input->channels.first (); (channel = input->channels.current()); input->channels.next ()) {
-                    channellist.append (channel->name + sep + QString::number (channel->frequency));
+                TVChannelList::iterator it = input->channels.begin ();
+                for (; it != input->channels.end (); ++it) {
+                    channellist.append ((*it)->name + sep + QString::number ((*it)->frequency));
                 }
                 if (!channellist.size ())
                     channellist.append (QString ("none"));
@@ -845,7 +855,7 @@ bool TVDeviceScannerSource::processOutput (const QString & line) {
         TVInput * input = new TVInput (m_inputRegExp.cap (2).stripWhiteSpace (),
                                        m_inputRegExp.cap (1).toInt ());
         input->hastuner = m_inputRegExp.cap (3).toInt () == 1;
-        m_tvdevice->inputs.append (input);
+        m_tvdevice->inputs.push_back (input);
         kdDebug() << "Input " << input->id << ": " << input->name << endl;
     } else
         return false;
@@ -904,7 +914,7 @@ void TVDeviceScannerSource::play () {
 
 void TVDeviceScannerSource::finished () {
     TVDevice * dev = 0L;
-    if (!m_tvdevice->inputs.count ())
+    if (!m_tvdevice->inputs.size ())
         delete m_tvdevice;
     else
         dev = m_tvdevice;

@@ -129,7 +129,6 @@ bool KMPlayerPart::openURL (const KURL & url) {
 }
 
 void KMPlayerPart::processFinished () {
-    kdDebug () << "process finished" << endl;
     KMPlayer::processFinished ();
     if (m_started_emited) {
         m_started_emited = false;
@@ -528,6 +527,7 @@ KMPlayerHRefSource::~KMPlayerHRefSource () {
 
 void KMPlayerHRefSource::init () {
     KMPlayerSource::init ();
+    setIdentified ();
 }
 
 bool KMPlayerHRefSource::hasLength () {

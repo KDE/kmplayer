@@ -94,7 +94,7 @@ public:
     bool recordcopy : 1;
 // TV stuff
     QString tvdriver;
-    QPtrList <TVDevice> tvdevices;
+    TVDeviceList tvdevices;
 // end of TV stuff
     QString bindaddress;
     int ffserverport;

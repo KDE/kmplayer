@@ -33,7 +33,8 @@
 class KMPlayerApp;
 class QPopupMenu;
 class QMenuItem;
-
+class TVInput;
+class TVChannel;
 
 class KMPlayerAppURLSource : public KMPlayerURLSource {
     Q_OBJECT

@@ -15,8 +15,9 @@
  *                                                                         *
  ***************************************************************************/
 
-// include files for QT
 #undef Always
+
+// include files for QT
 #include <qdir.h>
 #include <qfile.h>
 #include <qdatastream.h>
@@ -227,7 +228,8 @@ void KMPlayerApp::loadingProgress (int percentage) {
 }
 
 void KMPlayerApp::playerStarted () {
-    if (m_player->process ()->source () != m_tvsource)
+    if (m_player->process ()->source () != m_tvsource && 
+        m_player->settings ()->sizeratio)
         resizePlayer (100);
 }
 
@@ -1187,12 +1189,14 @@ void KMPlayerTVSource::buildMenu () {
     m_menu->insertTearOffHandle ();
     m_tvsource = 0L;
     int counter = 0;
-    TVDevice * device;
-    for (config->tvdevices.first(); (device = config->tvdevices.current ()); config->tvdevices.next ()) {
+    TVDeviceList::iterator dit = config->tvdevices.begin ();
+    for (; dit != config->tvdevices.end (); ++dit) {
+        TVDevice * device = *dit;
         QPopupMenu * devmenu = new QPopupMenu (m_app);
-        TVInput * input;
-        for (device->inputs.first (); (input = device->inputs.current ());device->inputs.next ()) {
-            if (input->channels.count () <= 0) {
+        TVInputList::iterator iit = device->inputs.begin ();
+        for (; iit != device->inputs.end (); ++iit) {
+            TVInput * input = *iit;
+            if (input->channels.size () <= 0) {
                 TVSource * source = new TVSource;
                 devmenu->insertItem (input->name, this, SLOT (menuClicked (int)), 0, counter);
                 source->videodevice = device->device;
@@ -1208,18 +1212,18 @@ void KMPlayerTVSource::buildMenu () {
             } else {
                 QPopupMenu * inputmenu = new QPopupMenu (m_app);
                 inputmenu->insertTearOffHandle ();
-                TVChannel * channel;
-                for (input->channels.first (); (channel = input->channels.current()); input->channels.next ()) {
+                TVChannelList::iterator it = input->channels.begin ();
+                for (; it != input->channels.end (); ++it) {
                     TVSource * source = new TVSource;
                     source->videodevice = device->device;
                     source->audiodevice = device->audiodevice;
                     source->noplayback = device->noplayback;
-                    source->frequency = channel->frequency;
+                    source->frequency = (*it)->frequency;
                     source->size = device->size;
                     source->norm = input->norm;
-                    inputmenu->insertItem (channel->name, this, SLOT(menuClicked (int)), 0, counter);
-                    source->command.sprintf ("device=%s:input=%d:freq=%d", device->device.ascii (), input->id, channel->frequency);
-                    source->title = device->name + QString("-") + channel->name;
+                    inputmenu->insertItem ((*it)->name, this, SLOT(menuClicked (int)), 0, counter);
+                    source->command.sprintf ("device=%s:input=%d:freq=%d", device->device.ascii (), input->id, (*it)->frequency);
+                    source->title = device->name + QString("-") + (*it)->name;
                     if (currentcommand == source->command)
                         m_tvsource = source;
                     commands.insert (counter++, source);

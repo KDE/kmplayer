@@ -27,6 +27,8 @@
 #ifndef _KMPlayerPREF_H_
 #define _KMPlayerPREF_H_
 
+#include <list>
+
 #include <kdialogbase.h>
 #include <qframe.h>
 #include <qptrlist.h>
@@ -66,6 +68,11 @@ public:
     const QString description;
 };
 
+template <class T>
+void Deleter (T * t) {
+    delete t;
+}
+
 class TVChannel {
 public:
     TVChannel (const QString & n, int f);
@@ -73,19 +80,27 @@ public:
     int frequency;
 };
 
+typedef std::list <TVChannel *> TVChannelList;
+
 class TVInput {
 public:
     TVInput (const QString & n, int id);
+    ~TVInput () { clear (); }
+    void clear ();
     QString name;
     int id;
     bool hastuner;
     QString norm;
-    QPtrList <TVChannel> channels;
+    TVChannelList channels;
 };
+
+typedef std::list <TVInput *> TVInputList;
 
 class TVDevice {
 public:
     TVDevice (const QString & d, const QSize & size);
+    ~TVDevice () { clear (); }
+    void clear ();
     QString device;
     QString audiodevice;
     QString name;
@@ -93,8 +108,18 @@ public:
     QSize maxsize;
     QSize size;
     bool noplayback;
-    QPtrList <TVInput> inputs;
+    TVInputList inputs;
 };
+
+inline bool operator == (const TVDevice * device, const QString & devstr) {
+    return devstr == device->device;
+}
+
+inline bool operator == (const QString & devstr, const TVDevice * device) {
+    return devstr == device->device;
+}
+
+typedef std::list <TVDevice *> TVDeviceList;
 
 class FFServerSetting {
 public:
@@ -150,7 +175,7 @@ class KMPlayerPreferences : public KDialogBase
 {
     Q_OBJECT
 public:
-    enum Page { NoPage = 0, PageRecording };
+    enum Page { NoPage = 0, PageRecording, PageTVSource };
 
     KMPlayerPreferences(KMPlayer *, MPlayerAudioDriver * ad, FFServerSetting *ffs);
     ~KMPlayerPreferences();
@@ -260,6 +285,7 @@ private:
 class KMPlayerPrefSourcePageTV : public QFrame
 {
     Q_OBJECT
+    friend class TVDevicePageAdder;
 public:
     KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerPreferences * pref);
     ~KMPlayerPrefSourcePageTV () {}
@@ -267,19 +293,18 @@ public:
     QLineEdit * driver;
     QLineEdit * device;
     TVDeviceScannerSource * scanner;
-    void setTVDevices (QPtrList <TVDevice> * devs);
+    void setTVDevices (TVDeviceList *);
     void updateTVDevices ();
 private slots:
     void slotScan ();
     void slotScanFinished (TVDevice * device);
     void slotDeviceDeleted (QFrame *);
 private:
-    void addPage (TVDevice *, bool show=false);
-    TVDevice * findDevice (QPtrList <TVDevice> & list, const QString & device);
-    QPtrList <TVDevice> * m_devices;
-    QPtrList <TVDevice> deleteddevices;
-    QPtrList <TVDevice> addeddevices;
-    QPtrList <QFrame> m_devicepages;
+    TVDeviceList * m_devices;
+    TVDeviceList deleteddevices;
+    TVDeviceList addeddevices;
+    typedef std::list <QFrame *> TVDevicePageList;
+    TVDevicePageList m_devicepages;
     KMPlayerPreferences * m_preference;
 };
 
