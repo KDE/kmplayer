@@ -35,6 +35,7 @@
 #include <qmetaobject.h>
 
 // include files for KDE
+#include <kdeversion.h>
 #include <kiconloader.h>
 #include <kmessagebox.h>
 #include <kfiledialog.h>
@@ -134,7 +135,11 @@ void KMPlayerApp::initActions()
     new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), actionCollection (), "view_zoom_150");
     viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), actionCollection (), "view_keep_ratio");
     viewShowConsoleOutput = new KToggleAction (i18n ("&Show Console Output"), 0, this, SLOT (showConsoleOutput ()), actionCollection (), "view_show_console");
-    /*KAction *fullscreenact =*/ new KAction (i18n("&Full Screen"), 0, 0, this, SLOT(fullScreen ()), actionCollection (), "view_fullscreen");
+#if KDE_IS_VERSION(3,1,90)
+    /*KAction *fullscreenact =*/ KStdAction::fullScreen( this, SLOT(fullScreen ()), actionCollection () );
+#else
+    /*KAction *fullscreenact =*/ new KAction (i18n("&Full Screen"), 0, 0, this, SLOT(fullScreen ()), actionCollection (), "fullscreen");
+#endif
     /*KAction *playact =*/ new KAction (i18n ("P&lay"), 0, 0, m_player, SLOT (play ()), actionCollection (), "play");
     /*KAction *pauseact =*/ new KAction (i18n ("&Pause"), 0, 0, m_player, SLOT (pause ()), actionCollection (), "pause");
     /*KAction *stopact =*/ new KAction (i18n ("&Stop"), 0, 0, m_player, SLOT (stop ()), actionCollection (), "stop");
@@ -615,6 +620,13 @@ void KMPlayerApp::slotStatusMsg(const QString &text) {
 void KMPlayerApp::fullScreen () {
     if (sender ()->metaObject ()->inherits ("KAction"))
         view->fullScreen();
+        
+#if KDE_IS_VERSION(3,1,90)
+    KToggleAction *fullScreenAction = static_cast<KToggleAction*>(action("fullscreen"));
+    if (fullScreenAction)
+       fullScreenAction->setChecked(view->isFullScreen());
+#endif
+        
     if (view->isFullScreen())
         hide ();
     else

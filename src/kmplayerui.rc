@@ -23,6 +23,7 @@
     <Action name="view_arts_control"/>
   </Menu>
   <Menu name="settings"><text>&amp;Settings</text>
+    <Action name="fullscreen"/ append="show_merge">
     <Action name="configure"/>
   </Menu>
 </MenuBar>
@@ -31,7 +32,7 @@
   <Action name="play" icon="player_play"/>
   <Action name="pause" icon="player_pause"/>
   <Action name="stop" icon="player_stop"/>
-  <Action shortcut="F" name="view_fullscreen" />
+  <Action shortcut="F" name="fullscreen" />
   <Action shortcut="R" name="play" />
   <Action shortcut="P" name="pause" />
   <Action shortcut="S" name="stop" />
