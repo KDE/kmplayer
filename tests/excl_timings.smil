@@ -37,11 +37,11 @@
       </text>
       <img src="../icons/hi64-app-kmplayer.png" region="reg_img2" fill="freeze"/>
       <excl dur="indefinite">
-        <animate targetElement="reg_img2" attributeName="left" from="100" to="235" begin="but1.activateEvent" dur="10"/>
-        <animate targetElement="reg_img2" attributeName="top" from="20" to="155" begin="reg_but2.activateEvent" dur="10"/>
+        <animate targetElement="reg_img2" attributeName="left" from="100" to="235" begin="but1.activateEvent" dur="5"/>
+        <animate targetElement="reg_img2" attributeName="top" from="20" to="155" begin="reg_but2.activateEvent" dur="5"/>
         <par begin="reg_but3.activateEvent">
-          <animate targetElement="reg_img2" attributeName="left" from="100" to="235" dur="10"/>
-          <animate targetElement="reg_img2" attributeName="top" from="20" to="155" dur="10"/>
+          <animate targetElement="reg_img2" attributeName="left" from="100" to="235" dur="5"/>
+          <animate targetElement="reg_img2" attributeName="top" from="20" to="155" dur="5"/>
         </par>
       </excl>
     </par>

@@ -52,7 +52,7 @@
 using namespace KMPlayer;
 
 static OutputDriver _ads[] = {
-    { "", i18n ("Default from MPlayer Config File") },
+    { "", i18n ("Use back-end defaults") },
     { "oss", i18n ("Open Sound System") },
     { "sdl", i18n ("Simple DirectMedia Layer") },
     { "alsa", i18n ("Advanced Linux Sound Architecture") },
