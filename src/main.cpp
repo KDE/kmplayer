@@ -25,9 +25,7 @@ email                :
 
 #include "kmplayer.h"
 
-static const char *description =
-I18N_NOOP("KMPlayer");
-// INSERT A DESCRIPTION FOR YOUR APPLICATION HERE
+static const char description[] = I18N_NOOP("KMPlayer");
 
 
 static KCmdLineOptions options[] =

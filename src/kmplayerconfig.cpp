@@ -319,7 +319,7 @@ void KMPlayerSettings::readConfig () {
     vcddevice = m_config->readEntry (strVCDDevice, "/dev/cdrom");
     videodriver = m_config->readNumEntry (strVoDriver, VDRIVER_XV_INDEX);
     audiodriver = m_config->readNumEntry (strAoDriver, 0);
-    urlbackend = m_config->readEntry (strUrlBackend, "mplayer");
+    urlbackend = m_config->readPathEntry(strUrlBackend, "mplayer");
     view->setUseArts (audiodriver == ADRIVER_ARTS_INDEX);
     additionalarguments = m_config->readEntry (strAddArgs, "");
     mencoderarguments = m_config->readEntry (strMencoderArgs, "-oac copy -ovc copy");
@@ -424,7 +424,7 @@ void KMPlayerSettings::readConfig () {
     ffserverport = m_config->readNumEntry (strFFServerPort, 8090);
     maxclients = m_config->readNumEntry (strMaxClients, 10);
     maxbandwidth = m_config->readNumEntry (strMaxBandwidth, 1000);
-    feedfile = m_config->readEntry (strFeedFile, "/tmp/kmplayer.ffm");
+    feedfile = m_config->readPathEntry (strFeedFile, "/tmp/kmplayer.ffm");
     feedfilesize = m_config->readNumEntry (strFeedFileSize, 512);
     ffserversetting = m_config->readNumEntry (strFFServerSetting, 0);
     if (ffserversetting == 4)
@@ -556,7 +556,7 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strSeekTime, m_player->seekTime ());
     m_config->writeEntry (strVoDriver, videodriver);
     m_config->writeEntry (strAoDriver, audiodriver);
-    m_config->writeEntry (strUrlBackend, urlbackend);
+    m_config->writePathEntry (strUrlBackend, urlbackend);
     m_config->writeEntry (strAddArgs, additionalarguments);
     m_config->writeEntry (strCacheSize, cachesize);
     m_config->writeEntry (strShowControlButtons, showbuttons);
@@ -661,7 +661,7 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strFFServerPort, ffserverport);
     m_config->writeEntry (strMaxClients, maxclients);
     m_config->writeEntry (strMaxBandwidth, maxbandwidth);
-    m_config->writeEntry (strFeedFile, feedfile);
+    m_config->writePathEntry (strFeedFile, feedfile);
     m_config->writeEntry (strFeedFileSize, feedfilesize);
     m_config->writeEntry (strFFServerSetting, ffserversetting);
     if (ffserversetting == 4)

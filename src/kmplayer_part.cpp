@@ -255,7 +255,7 @@ void KMPlayer::setXine (int id) {
     if (playing)
         m_process->source ()->deactivate ();
     m_settings->urlbackend = QString ("Xine");
-    m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
+    m_config->writePathEntry (strUrlBackend, m_settings->urlbackend);
     m_config->sync ();
     setProcess (m_xine);
     QPopupMenu * menu = m_view->playerMenu ();
@@ -272,7 +272,7 @@ void KMPlayer::setMPlayer (int id) {
     if (playing)
         m_process->source ()->deactivate ();
     m_settings->urlbackend = QString ("MPlayer");
-    m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
+    m_config->writePathEntry (strUrlBackend, m_settings->urlbackend);
     m_config->sync ();
     setProcess (m_mplayer);
     QPopupMenu * menu = m_view->playerMenu ();

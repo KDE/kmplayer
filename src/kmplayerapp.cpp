@@ -290,7 +290,7 @@ bool KMPlayerApp::broadcasting () const {
     return m_ffserver_process && m_ffserver_process->isRunning ();
 }
 
-static const char * const ffserverconf =
+static const char ffserverconf[] =
 "Port %d\nBindAddress %s\nMaxClients %d\nMaxBandwidth %d\n"
 "CustomLog -\nNoDaemon\n"
 "<Feed kmplayer.ffm>\nFile %s\nFileMaxSize %dK\nACL allow 127.0.0.1\n</Feed>\n"
