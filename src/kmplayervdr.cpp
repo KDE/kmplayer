@@ -313,7 +313,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
     if (commands) {
         bool cmd_done = false;
         while (!line.isEmpty ()) {
-            v->addText (QString (line) + QChar ('\n'));
+            v->addText (QString (line), true);
             cmd_done = (line.length () > 3 && line[3] == ' '); // from svdrpsend.pl
             // kdDebug () << "readyRead " << cmd_done << " " << commands->command << endl;
             if (!strcmp (commands->command, cmd_list_channels) && m_document) {

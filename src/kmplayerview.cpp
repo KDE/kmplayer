@@ -595,7 +595,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPlayListView::~KMPlayerPlayListView () {
 
 static void populateTree (ElementPtr e, ElementPtr focus, KMPlayerPlayListView * tree, QListViewItem *item) {
     Mrl * mrl = e->mrl ();
-    item->setText(0, mrl ? KURL(mrl->src).prettyURL() : QString(e->nodeName()));
+    item->setText(0, mrl ? (mrl->pretty_name.isEmpty () ? KURL(mrl->src).prettyURL() : mrl->pretty_name) : QString(e->nodeName()));
     if (focus == e) {
         for (QListViewItem * p = item->parent (); p; p = p->parent ())
             p->setOpen (true);
@@ -961,15 +961,20 @@ KDE_NO_EXPORT void KMPlayerView::timerEvent (QTimerEvent * e) {
     killTimer (e->timerId ());
 }
 
-void KMPlayerView::addText (const QString & str) {
+void KMPlayerView::addText (const QString & str, bool eol) {
     tmplog += str;
-    int pos = tmplog.findRev (QChar ('\n'));
-    if (pos >= 0) {
-        m_multiedit->append (tmplog.left (pos));
-        tmplog = tmplog.mid (pos+1);
-        while (5000 < m_multiedit->numLines ())
-            m_multiedit->removeLine (0);
+    if (eol) {
+        m_multiedit->append (tmplog);
+        tmplog.truncate (0);
+    } else {
+        int pos = tmplog.findRev (QChar ('\n'));
+        if (pos >= 0) {
+            m_multiedit->append (tmplog.left (pos));
+            tmplog = tmplog.mid (pos+1);
+        }
     }
+    while (5000 < m_multiedit->numLines ())
+        m_multiedit->removeLine (0);
 }
 
 void KMPlayerView::addFullscreenAction (const QString & title, const KShortcut & c, QObject * o, const char * s, const char * name) {

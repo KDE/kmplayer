@@ -555,7 +555,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
         } else {
             QRegExp & m_startRegExp = patterns[MPlayerPreferencesPage::pat_start];
             QRegExp & m_sizeRegExp = patterns[MPlayerPreferencesPage::pat_size];
-            v->addText (out + '\n');
+            v->addText (out, true);
             if (!m_source->processOutput (out)) {
                 int movie_width = m_source->width ();
                 if (movie_width <= 0 && m_sizeRegExp.search (out) > -1) {

@@ -729,7 +729,7 @@ void KMPlayerSource::insertURL (const QString & mrl) {
     else if (KURL (current ()) == url)
         kdError () << "try to append url to itself" << endl;
     else if (m_current)
-        m_current->appendChild ((new GenericURL (m_document, KURL::decode_string (url.url ())))->self ());
+        m_current->appendChild ((new GenericURL (m_document, KURL::decode_string (url.url ()), KURL::decode_string (mrl)))->self ());
 }
 
 void KMPlayerSource::play () {
@@ -785,6 +785,7 @@ QString KMPlayerSource::mime () const {
 }
 
 void KMPlayerSource::setMime (const QString & m) {
+    kdDebug () << "setMime " << m << endl;
     if (m_current)
         m_current->mrl ()->mimetype = m;
     else {

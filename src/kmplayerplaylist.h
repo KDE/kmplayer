@@ -105,12 +105,13 @@ protected:
 
 class KMPLAYER_EXPORT Mrl : public Element {
 protected:
-    KDE_NO_CDTOR_EXPORT Mrl (ElementPtr d) : Element (d), parsed (false) {}
+    Mrl (ElementPtr d) : Element (d), parsed (false) {}
     KDE_NO_CDTOR_EXPORT Mrl () : parsed (false) {} // for Document
 public:
     ~Mrl ();
     bool isMrl ();
     QString src;
+    QString pretty_name;
     QString mimetype;
     bool parsed;
 };
@@ -231,7 +232,7 @@ public:
 class KMPLAYER_EXPORT GenericURL : public Mrl { //just some url, can get a SMIL or ASX childtree
 public:
     KDE_NO_CDTOR_EXPORT GenericURL (ElementPtr d) : Mrl (d) {}
-    GenericURL (ElementPtr d, const QString & s);
+    GenericURL(ElementPtr d, const QString &s, const QString &n=QString::null);
     ElementPtr childFromTag (ElementPtr d, const QString & tag);
     //void setAttributes (const QXmlAttributes &);
     KDE_NO_EXPORT const char * nodeName () const { return "GenericURL"; }

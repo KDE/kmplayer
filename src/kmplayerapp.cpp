@@ -918,7 +918,7 @@ KDE_NO_EXPORT bool KMPlayerVCDSource::processOutput (const QString & str) {
     QRegExp * patterns = static_cast<MPlayer *> (m_player->players () ["mplayer"])->configPage ()->m_patterns;
     QRegExp & trackRegExp = patterns [MPlayerPreferencesPage::pat_vcdtrack];
     if (trackRegExp.search (str) > -1) {
-        m_document->appendChild ((new GenericURL (m_document, QString ("vcd://") + trackRegExp.cap (1)))->self ());
+        m_document->appendChild ((new GenericURL (m_document, QString ("vcd://") + trackRegExp.cap (1), i18n ("Track ") + trackRegExp.cap (1)))->self ());
         kdDebug () << "track " << trackRegExp.cap (1) << endl;
         return true;
     }

@@ -345,9 +345,10 @@ KDE_NO_EXPORT void EntryRef::setAttributes (const QXmlAttributes & atts) {
 
 //-----------------------------------------------------------------------------
 
-GenericURL::GenericURL (ElementPtr d, const QString & s)
+GenericURL::GenericURL (ElementPtr d, const QString & s, const QString & name)
  : Mrl (d) {
     src = s;
+    pretty_name = name;
 }
 
 KDE_NO_EXPORT ElementPtr GenericURL::childFromTag (ElementPtr d, const QString & tag) {

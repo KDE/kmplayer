@@ -132,7 +132,7 @@ public:
     KMPlayerView (QWidget *parent, const char *);
     ~KMPlayerView();
 
-    void addText (const QString &);
+    void addText (const QString &, bool eol=false);
     void init ();
     void reset ();
     //void print(QPrinter *pPrinter);
