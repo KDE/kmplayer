@@ -592,7 +592,7 @@ enum JSCommand {
     notsupported,
     canpause, canplay, canstop, canseek, 
     isfullscreen, isloop, isaspect,
-    length, width, height, playstate,
+    length, width, height, playstate, position, source, protocol,
     gotourl, nextentry, jsc_pause, play, preventry, stop, volume
 };
 
@@ -603,27 +603,28 @@ struct JSCommandEntry {
     const KParts::LiveConnectExtension::Type rettype;
 };
 
-const int jscommandentries = 53;
+const int jscommandentries = 111;
 
 // keep this list in alphabetic order
+// http://service.real.com/help/library/guides/realonescripting/browse/htmfiles/embedmet.htm
 static const JSCommandEntry JSCommandList [jscommandentries] = {
-    { "CanPause", canpause, "true", KParts::LiveConnectExtension::TypeBool },
-    { "CanPlay", canplay, "true", KParts::LiveConnectExtension::TypeBool },
-    { "CanStop", canstop, "true", KParts::LiveConnectExtension::TypeBool },
-    { "DoGotoURL", gotourl, "true", KParts::LiveConnectExtension::TypeBool },
-    { "DoNextEntry", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "CanPause", canpause, 0L, KParts::LiveConnectExtension::TypeBool },
+    { "CanPlay", canplay, 0L, KParts::LiveConnectExtension::TypeBool },
+    { "CanStop", canstop, 0L, KParts::LiveConnectExtension::TypeBool },
+    { "DoGotoURL", notsupported, 0L, KParts::LiveConnectExtension::TypeVoid },
+    { "DoNextEntry", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
     { "DoPause", jsc_pause, "true", KParts::LiveConnectExtension::TypeBool },
-    { "DoPlay", play, "true", KParts::LiveConnectExtension::TypeBool },
-    { "DoPrevEntry", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
-    { "DoStop", stop, "true", KParts::LiveConnectExtension::TypeBool },
+    { "DoPlay", play, 0L, KParts::LiveConnectExtension::TypeBool },
+    { "DoPrevEntry", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
+    { "DoStop", stop, 0L, KParts::LiveConnectExtension::TypeBool },
     { "GetAuthor", notsupported, "noname", KParts::LiveConnectExtension::TypeString },
-    { "GetAutoGoToURL", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
-    { "GetBackgroundColor", notsupported, "ffffff", KParts::LiveConnectExtension::TypeNumber },
+    { "GetAutoGoToURL", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "GetBackgroundColor", notsupported, "#ffffff", KParts::LiveConnectExtension::TypeString },
     { "GetBandwidthAverage", notsupported, "64", KParts::LiveConnectExtension::TypeNumber },
     { "GetBandwidthCurrent", notsupported, "64", KParts::LiveConnectExtension::TypeNumber },
     { "GetBufferingTimeElapsed", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
     { "GetBufferingTimeRemaining", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
-    { "GetCanSeek", canseek, "false", KParts::LiveConnectExtension::TypeBool },
+    { "GetCanSeek", canseek, 0L, KParts::LiveConnectExtension::TypeBool },
     { "GetCenter", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "GetClipHeight", height, 0L, KParts::LiveConnectExtension::TypeNumber }, 
     { "GetClipWidth", width, 0L, KParts::LiveConnectExtension::TypeNumber }, 
@@ -639,9 +640,10 @@ static const JSCommandEntry JSCommandList [jscommandentries] = {
     { "GetEntryAuthor", notsupported, "noname", KParts::LiveConnectExtension::TypeString },
     { "GetEntryCopyright", notsupported, "(c)", KParts::LiveConnectExtension::TypeString },
     { "GetEntryTitle", notsupported, "title", KParts::LiveConnectExtension::TypeString },
-    { "GetFullScreen", isfullscreen, "false", KParts::LiveConnectExtension::TypeBool }, 
+    { "GetFullScreen", isfullscreen, 0L, KParts::LiveConnectExtension::TypeBool }, 
     { "GetImageStatus", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
     { "GetLastErrorMoreInfoURL", notsupported, "no error", KParts::LiveConnectExtension::TypeString },
+    { "GetLastErrorRMACode", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
     { "GetLastErrorSeverity", notsupported, "6", KParts::LiveConnectExtension::TypeNumber },
     { "GetLastErrorUserCode", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
     { "GetLastErrorUserString", notsupported, "no error", KParts::LiveConnectExtension::TypeString },
@@ -651,9 +653,66 @@ static const JSCommandEntry JSCommandList [jscommandentries] = {
     { "GetLiveState", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
     { "GetLoop", isloop, 0L, KParts::LiveConnectExtension::TypeBool },
     { "GetMaintainAspect", isaspect, 0L, KParts::LiveConnectExtension::TypeBool },
-    { "GetPlayState", length, 0L, KParts::LiveConnectExtension::TypeNumber },
+    { "GetMute", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
+    { "GetNumEntries", notsupported, "1", KParts::LiveConnectExtension::TypeNumber },
+    { "GetNumLoop", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
+    { "GetNumSources", notsupported, "1", KParts::LiveConnectExtension::TypeNumber },
+    { "GetOriginalSize", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "GetPacketsEarly", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
+    { "GetPacketsLate", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
+    { "GetPacketsMissing", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
+    { "GetPacketsOutOfOrder", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
+    { "GetPacketsReceived", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
+    { "GetPacketsTotal", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
+    { "GetPlayState", playstate, 0L, KParts::LiveConnectExtension::TypeNumber },
+    { "GetPosition", position, 0L, KParts::LiveConnectExtension::TypeNumber },
+    { "GetPreFetch", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
+    { "GetShowAbout", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
+    { "GetShowPreferences", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
+    { "GetShowStatistics", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
+    { "GetShuffle", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
+    { "GetSource", source, 0L, KParts::LiveConnectExtension::TypeString },
+    { "GetSourceTransport", protocol, 0L, KParts::LiveConnectExtension::TypeString },
+    { "GetStereoState", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "GetTitle", notsupported, "title", KParts::LiveConnectExtension::TypeString },
+    { "GetVersionInfo", notsupported, "version", KParts::LiveConnectExtension::TypeString },
+    { "GetVolume", notsupported, "100", KParts::LiveConnectExtension::TypeNumber },
+    { "GetWantErrors", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
+    { "GetWantKeyboardEvents", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
+    { "GetWantMouseEvents", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
+    { "HasNextEntry", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
     { "Pause", jsc_pause, 0L, KParts::LiveConnectExtension::TypeBool },
     { "Play", play, 0L, KParts::LiveConnectExtension::TypeBool },
+    { "SetAuthor", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetAutoGoToURL", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetAutoStart", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetBackgroundColor", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetCanSeek", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetCenter", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetConsole", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetConsoleEvents", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetControls", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetCopyright", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetDoubleSize", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetFullScreen", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetImageStatus", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetLoop", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetMaintainAspect", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetMute", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetNumLoop", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetOriginalSize", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetPosition", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetPreFetch", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetShowAbout", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetShowPreferences", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetShowStatistics", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetShuffle", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetSource" /*Do NOT support this for the part*/, notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetTitle", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetVolume", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetWantErrors", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetWantKeyboardEvents", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetWantMouseEvents", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "Stop", stop, 0L, KParts::LiveConnectExtension::TypeBool },
     { "Volume", volume, 0L, KParts::LiveConnectExtension::TypeBool },
     { "pause", jsc_pause, 0L, KParts::LiveConnectExtension::TypeBool },
@@ -734,11 +793,27 @@ bool KMPlayerLiveConnectExtension::call
     if (!entry)
         return false;
     kdDebug () << "entry " << entry->name << endl;
+    KMPlayerView * view = static_cast <KMPlayerView*> (player->view ());
+    if (!view)
+        return false;
     rid = id;
     type = entry->rettype;
     switch (entry->command) {
         case notsupported:
-            rval = entry->defaultvalue;
+            if (entry->rettype != KParts::LiveConnectExtension::TypeVoid)
+                rval = entry->defaultvalue;
+            break;
+        case canpause:
+            rval = (player->process ()->playing () && !view->pauseButton ()->isOn ()) ? "true" : "false";
+            break;
+        case canplay:
+            rval = (!player->process ()->playing () || view->pauseButton ()->isOn ()) ? "true" : "false";
+            break;
+        case canstop:
+            rval = player->process ()->playing () ? "true" : "false";
+            break;
+        case canseek:
+            rval = player->process ()->source ()->isSeekable () ? "true" : "false";
             break;
         case play:
             player->play ();
@@ -767,9 +842,6 @@ bool KMPlayerLiveConnectExtension::call
         case isfullscreen:
             rval = static_cast <KMPlayerView*> (player->view ())->isFullScreen () ? "true" : "false";
             break;
-        case canseek:
-            rval = player->process ()->source ()->isSeekable () ? "true" : "false";
-            break;
         case length:
             rval.setNum (player->process ()->source ()->length ());
             break;
@@ -781,6 +853,15 @@ bool KMPlayerLiveConnectExtension::call
             break;
         case playstate: // FIXME 0-6
             rval = player->process ()->playing () ? "3" : "0";
+            break;
+        case position:
+            rval.setNum (player->position ());
+            break;
+        case source:
+            rval = player->url ().url ();
+            break;
+        case protocol:
+            rval = player->url ().protocol ();
             break;
         default:
             return false;

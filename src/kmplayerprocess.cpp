@@ -555,6 +555,9 @@ bool Xine::play () {
         m_backend->play ();
         return true;
     }
+    KURL url = m_source->url ();
+    if (!url.isValid ())
+        return false;
     KMPlayerSettings *settings = m_player->settings ();
     delete m_process;
     m_process = new KProcess;
@@ -593,7 +596,6 @@ bool Xine::play () {
                              QString (m_callback->objId ()).ascii ());
     printf (" -cb %s", cbname.ascii());
     *m_process << " -cb " << cbname.ascii();
-    KURL url = m_source->url ();
     QString myurl = KProcess::quote (url.isLocalFile () ? url.path () : url.url ());
     printf (" %s\n", myurl.ascii ());
     *m_process << myurl.ascii();
