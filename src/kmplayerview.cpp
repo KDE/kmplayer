@@ -538,9 +538,9 @@ bool KMPlayerView::setPicture (const QString & path) {
     return m_image;
 }
 
-void KMPlayerView::setUseArts (bool b) {
+void KMPlayerView::updateUseArts () {
 #ifdef USE_ARTS
-    if (!m_use_arts && b) {
+    if (m_use_arts && !m_artsserver) {
         kmplayerview_static->getDispatcher();
         m_artsserver = new Arts::SoundServerV2;
         *m_artsserver = KArtsServer().server();
@@ -557,13 +557,22 @@ void KMPlayerView::setUseArts (bool b) {
             m_popupMenu->insertItem (m_slider, menu_volume, 5);
             m_popupMenu->insertSeparator (6);
         }
-    } else if (m_use_arts && !b) {
+    }
+#endif
+}
+
+void KMPlayerView::setUseArts (bool b) {
+#ifdef USE_ARTS
+    if (m_use_arts && !b && m_artsserver) {
         m_popupMenu->removeItemAt (6);
         m_popupMenu->removeItemAt (5);
         m_popupMenu->removeItemAt (4);
         delete m_watch;
         delete m_artsserver;
         delete m_svc;
+        m_watch = 0L;
+        m_artsserver = 0L;
+        m_svc = 0L;
         kmplayerview_static->releaseDispatcher();
     }
 #endif
@@ -664,8 +673,10 @@ void KMPlayerView::startsToPlay () {
 
 void KMPlayerView::showPopupMenu () {
 #ifdef USE_ARTS
-    if (m_use_arts)
+    if (m_use_arts) {
+        updateUseArts ();
         updateVolume(m_svc->scaleFactor());
+    }
 #endif
     m_popupMenu->exec (m_configButton->mapToGlobal (QPoint (0, button_height)));
 }

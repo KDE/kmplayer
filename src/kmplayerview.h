@@ -125,6 +125,7 @@ protected:
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
 private:
+    void updateUseArts ();
     // widget for player's output
     KMPlayerViewer * m_viewer;
     // widget that layouts m_viewer for ratio setting

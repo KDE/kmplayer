@@ -99,6 +99,7 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
     recorders.push_back (m_FFMpegPage);
     m_RecordPage = new KMPlayerPrefRecordPage (tab, player, recorders);
     tab->insertTab (m_RecordPage, i18n ("General"), 0);
+    tab->setCurrentPage (0);
 
     frame = addPage (i18n ("Broadcasting"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("share"), KIcon::NoGroup, 32));
     vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
@@ -151,7 +152,7 @@ KMPlayerPreferences::~KMPlayerPreferences() {
 }
 
 KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
-: QFrame(parent)
+: QFrame (parent, "GeneralPage")
 {
 	QVBoxLayout *layout = new QVBoxLayout(this, 5, 2);
 

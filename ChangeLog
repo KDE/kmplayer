@@ -1,4 +1,11 @@
+Changes since version 0.8.1-rc1
+- Delay arts volume initialization for faster startup when not build with
+  --disable-arts-volume
+- First jump to URL source page when opening an URL
+- Added history combo for URL on URL source page
+- Replaced tree for icons with tabs in settings dialog
 Changes since version 0.8b
+- First jump to recording page when pressing the record button
 - Optionally use ffmpeg for recording (URL or v4l sources)
 - Fix mplayer v4l device scanning for mplayer > 0.91
 - Bookmarks added

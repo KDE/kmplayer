@@ -98,6 +98,7 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
 
 void KMPlayer::showConfigDialog () {
     m_settings->show ();
+    m_settings->configDialog ()->setPage ("GeneralPage");
 }
 
 void KMPlayer::init (KActionCollection * action_collection) {
