@@ -124,6 +124,14 @@ inline bool operator == (const QString & devstr, const TVDevice * device) {
     return devstr == device->device;
 }
 
+inline bool operator != (const TVDevice * device, const QString & devstr) {
+    return ! (devstr == device);
+}
+
+inline bool operator != (const QString & devstr, const TVDevice * device) {
+    return ! (devstr == device);
+}
+
 typedef std::list <TVDevice *> TVDeviceList;
 
 class FFServerSetting {
