@@ -96,7 +96,8 @@ KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       m_pipesource (new KMPlayerPipeSource (this)),
       m_tvsource (new KMPlayerTVSource (this, m_tvmenu)),
       m_ffmpeg_process (0L),
-      m_ffserver_process (0L)
+      m_ffserver_process (0L),
+      m_endserver (true)
 {
     initStatusBar();
     initActions();
@@ -106,6 +107,7 @@ KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
 }
 
 KMPlayerApp::~KMPlayerApp () {
+    m_endserver = false;
     stopProcess (m_ffmpeg_process, "q");
     stopProcess (m_ffserver_process);
     delete m_ffmpeg_process;
@@ -274,6 +276,10 @@ void KMPlayerApp::zoom150 () {
 #include <kglobal.h>
 #include <kstandarddirs.h>
 
+bool KMPlayerApp::boadcasting () const {
+    return m_ffserver_process && m_ffserver_process->isRunning ();
+}
+
 static const char * const ffserverconf =
 "Port %d\nBindAddress %s\nMaxClients %d\nMaxBandwidth %d\n"
 "CustomLog -\nNoDaemon\n"
@@ -284,16 +290,17 @@ static const char * const ffserverconf =
 void KMPlayerApp::boadcastClicked () {
     KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
     setCursor (QCursor (Qt::WaitCursor));
+    m_endserver = false;
     if (!stopProcess (m_ffmpeg_process, "q"))
         KMessageBox::error (this, i18n ("Failed to end ffmpeg process."), i18n ("Error"));
     if (!stopProcess (m_ffserver_process))
         KMessageBox::error (this, i18n ("Failed to end ffserver process."), i18n ("Error"));
+    m_endserver = true;
     if (!kview->broadcastButton ()->isOn ()) {
         setCursor (QCursor (Qt::ArrowCursor));
         return;
     }
-    QString ffmpegcmd = m_player->source ()->ffmpegCommand ();
-    if (ffmpegcmd.isEmpty ()) {
+    if (m_player->source ()->ffmpegCommand ().isEmpty ()) {
         kview->broadcastButton ()->toggle ();
         setCursor (QCursor (Qt::ArrowCursor));
         return;
@@ -311,7 +318,6 @@ void KMPlayerApp::boadcastClicked () {
         //        this, SLOT (processOutput (KProcess *, char *, int)));
     } else {
         m_ffserver_process->clearArguments();
-        m_ffmpeg_process->clearArguments();
     }
     QString conffile = locateLocal ("data", "kmplayer/ffserver.conf");
     KMPlayerTVSource::TVSource * source = 0L;
@@ -331,17 +337,10 @@ void KMPlayerApp::boadcastClicked () {
     kdDebug () << "ffserver -f " << conffile << endl;
     *m_ffserver_process << "ffserver -f " << conffile;
     m_ffserver_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
-    if (source && source->frequency >= 0) {
-        KProcess process;
-        process.setUseShell (true);
-        process << "v4lctl -c " << source->videodevice << " setfreq " << QString::number (source->frequency).ascii ();
-        kdDebug () << "v4lctl -c " << source->videodevice << " setfreq " << source->frequency << endl;
-        process.start (KProcess::Block);
-    }
-    QTimer::singleShot (500, this, SLOT (boadcastTimerEvent ()));
+    QTimer::singleShot (500, this, SLOT (startFeed ()));
 }
 
-void KMPlayerApp::boadcastTimerEvent () {
+void KMPlayerApp::startFeed () {
     KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
     QString ffmpegcmd = m_player->source ()->ffmpegCommand ();
     KMPlayerConfig * conf = m_player->configDialog ();
@@ -350,8 +349,28 @@ void KMPlayerApp::boadcastTimerEvent () {
             KMessageBox::error (this, i18n ("Failed to start ffserver."), i18n ("Error"));
             break;
         }
+        if (m_ffmpeg_process && m_ffmpeg_process->isRunning ()) {
+            m_endserver = false;
+            if (!stopProcess (m_ffmpeg_process, "q"))
+                KMessageBox::error (this, i18n ("Failed to end ffmpeg process."), i18n ("Error"));
+            else
+                QTimer::singleShot (1000, this, SLOT (startFeed ()));
+            m_endserver = true;
+            return;
+        }
+        if (m_player->source () == m_tvsource) {
+            KMPlayerTVSource::TVSource * tvsource = m_tvsource->tvsource ();
+            if (tvsource->frequency >= 0) {
+                KProcess process;
+                process.setUseShell (true);
+                process << "v4lctl -c " << tvsource->videodevice << " setfreq " << QString::number (tvsource->frequency).ascii ();
+                kdDebug () << "v4lctl -c " << tvsource->videodevice << " setfreq " << tvsource->frequency << endl;
+                process.start (KProcess::Block);
+            }
+        }
         m_player->stop ();
         QString ffurl;
+        m_ffmpeg_process->clearArguments();
         ffurl.sprintf (" http://localhost:%d/kmplayer.ffm", conf->ffserverport);
         kdDebug () << ffmpegcmd << ffurl <<endl;
         *m_ffmpeg_process << ffmpegcmd << ffurl.ascii ();
@@ -369,8 +388,8 @@ void KMPlayerApp::boadcastTimerEvent () {
             kview->broadcastButton ()->toggle ();
         QString ffurl;
         ffurl.sprintf ("http://localhost:%d/video.avi", conf->ffserverport);
-        m_player->openURL (KURL (ffurl));
-        QTimer::singleShot (500, this, SLOT (zoom100 ()));
+        openDocumentFile (KURL (ffurl));
+        //QTimer::singleShot (500, this, SLOT (zoom100 ()));
     }
     setCursor (QCursor (Qt::ArrowCursor));
 }
@@ -378,14 +397,15 @@ void KMPlayerApp::boadcastTimerEvent () {
 void KMPlayerApp::processStopped (KProcess * process) {
     KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
     if (process == m_ffmpeg_process) {
-        kdDebug () << "ffmpeg process stopped" << endl; 
-        if (!stopProcess (m_ffserver_process))
+        kdDebug () << "ffmpeg process stopped " << m_endserver << endl; 
+        if (m_endserver && !stopProcess (m_ffserver_process))
             KMessageBox::error (this, i18n ("Failed to end ffserver process."), i18n ("Error"));
-    } else
+    } else {
         kdDebug () << "ffserver process stopped" << endl; 
-    if (kview && kview->broadcastButton ()->isOn ())
-        kview->broadcastButton ()->toggle ();
-    if (m_player->source () != m_tvsource)
+        if (kview && kview->broadcastButton ()->isOn ())
+            kview->broadcastButton ()->toggle ();
+    }
+    if (!m_ffserver_process->isRunning () && m_player->source () != m_tvsource)
         view->broadcastButton ()->hide ();
 }
 
@@ -1096,7 +1116,10 @@ void KMPlayerTVSource::menuClicked (int id) {
         if (m_player->source () != this)
             m_player->setSource (this);
         m_tvsource = it.data ();
-        if (!m_tvsource->noplayback)
+        if (app->boadcasting ()) {
+            buildArguments ();
+            QTimer::singleShot (0, app, SLOT (startFeed ()));
+        } else if (!m_tvsource->noplayback)
             QTimer::singleShot (0, this, SLOT (play ()));
         else
             buildArguments ();

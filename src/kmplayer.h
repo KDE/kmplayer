@@ -54,6 +54,7 @@ public:
     KMPlayer * player () const { return m_player; }
     void resizePlayer (int percentage);
     KRecentFilesAction * recentFiles () const { return fileOpenRecent; }
+    bool boadcasting () const;
 
 protected:
     void saveOptions ();
@@ -75,6 +76,7 @@ public slots:
     void slotViewStatusBar ();
     void slotViewMenuBar ();
     void slotStatusMsg (const QString &text);
+    void startFeed ();
 private slots:
     void openDVD ();
     void openVCD ();
@@ -89,7 +91,6 @@ private slots:
     void zoom100 ();
     void zoom150 ();
     void boadcastClicked ();
-    void boadcastTimerEvent ();
     void processStopped (KProcess * process);
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
@@ -119,6 +120,7 @@ private:
     QCString m_dcopName;
     KProcess * m_ffmpeg_process;
     KProcess * m_ffserver_process;
+    bool m_endserver : 1;
     bool m_showToolbar : 1;
     bool m_showStatusbar : 1;
     bool m_showMenubar : 1;
