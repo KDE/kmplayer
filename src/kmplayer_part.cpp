@@ -62,15 +62,18 @@ KDE_NO_CDTOR_EXPORT KMPlayerPartStatic::~KMPlayerPartStatic () {
 struct GroupPredicate {
     const KMPlayerPart * m_part;
     const QString & m_group;
-    GroupPredicate (const KMPlayerPart * part, const QString & group)
-        : m_part (part), m_group (group) {}
+    bool m_get_first;
+    GroupPredicate(const KMPlayerPart *part, const QString &group, bool b=false)
+        : m_part (part), m_group (group), m_get_first (b) {}
     bool operator () (const KMPlayerPart * part) const {
-        return (part != m_part &&
+        return ((m_get_first || part != m_part) &&
                 m_part->allowRedir (part->m_docbase) &&
                 (part->m_group == m_part->m_group ||
                  part->m_group == QString::fromLatin1("_master") ||
                  m_part->m_group == QString::fromLatin1("_master")) &&
-                (part->m_features & KMPlayerPart::Feat_Viewer) !=
+                (!m_get_first || !part->url ().isEmpty ()) &&
+                (m_get_first ||
+                 part->m_features & KMPlayerPart::Feat_Viewer) !=
                  (m_part->m_features & KMPlayerPart::Feat_Viewer));
     }
 };
@@ -358,9 +361,24 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
 KDE_NO_EXPORT void KMPlayerPart::waitForImageWindowTimeOut () {
     if (!process ()) {
         // still no ImageWindow attached, eg. audio only 
-        setProcess ("mplayer");
-        setRecorder ("mencoder");
-        KMPlayer::openURL (url ());
+        const KMPlayerPartList::iterator e =kmplayerpart_static->partlist.end();
+        KMPlayerPartList::iterator i = std::find_if (kmplayerpart_static->partlist.begin (), e, GroupPredicate (this, m_group, true));
+        if (i == e || *i == this) {
+            setProcess ("mplayer");
+            setRecorder ("mencoder");
+            KMPlayer::openURL (url ());
+        } else {
+            m_old_players = m_players;
+            m_old_recorders = m_recorders;
+            m_players = (*i)->m_players;
+            m_recorders = (*i)->m_recorders;
+            setProcess ((*i)->process()->name());
+            setRecorder ((*i)->recorder()->name());
+            connect (*i, SIGNAL (destroyed (QObject *)),
+                    this, SLOT (viewerPartDestroyed (QObject *)));
+            connect (*i, SIGNAL (processChanged (const char *)),
+                    this, SLOT (viewerPartProcessChanged (const char *)));
+        }
     }
 }
 

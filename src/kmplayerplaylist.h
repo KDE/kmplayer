@@ -65,7 +65,7 @@ public:
     virtual ElementPtr childFromTag (ElementPtr doc, const QString & tag);
     void characterData (const QString & s);
     virtual void setAttributes (const QXmlAttributes &);
-    virtual const char * tagName () const;
+    virtual const char * nodeName () const;
     /**
      * If this is a derived Mrl object and has a SRC attribute
      */
@@ -119,7 +119,7 @@ public:
      * */
     void dispose ();
     ElementPtr childFromTag (ElementPtr d, const QString & tag);
-    KDE_NO_EXPORT const char * tagName () const { return "document"; }
+    KDE_NO_EXPORT const char * nodeName () const { return "document"; }
     /**
      * Will return false if this document has child nodes
      */
@@ -133,7 +133,7 @@ public:
     TextNode (ElementPtr d, const QString & s);
     KDE_NO_CDTOR_EXPORT ~TextNode () {}
     void appendText (const QString & s);
-    KDE_NO_EXPORT const char * tagName () const { return "#text"; }
+    KDE_NO_EXPORT const char * nodeName () const { return "#text"; }
     QString text;
 };
 
@@ -143,35 +143,35 @@ class Smil : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Smil (ElementPtr d) : Element (d) {}
     ElementPtr childFromTag (ElementPtr d, const QString & tag);
-    KDE_NO_EXPORT const char * tagName () const { return "smil"; }
+    KDE_NO_EXPORT const char * nodeName () const { return "smil"; }
 };
 
 class Body : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Body (ElementPtr d) : Element (d) {}
     ElementPtr childFromTag (ElementPtr d, const QString & tag);
-    KDE_NO_EXPORT const char * tagName () const { return "body"; }
+    KDE_NO_EXPORT const char * nodeName () const { return "body"; }
 };
 
 class Par : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Par (ElementPtr d) : Element (d) {}
     ElementPtr childFromTag (ElementPtr d, const QString & tag);
-    KDE_NO_EXPORT const char * tagName () const { return "par"; }
+    KDE_NO_EXPORT const char * nodeName () const { return "par"; }
 };
 
 class Seq : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Seq (ElementPtr d) : Element (d) {}
     ElementPtr childFromTag (ElementPtr d, const QString & tag);
-    KDE_NO_EXPORT const char * tagName () const { return "seq"; }
+    KDE_NO_EXPORT const char * nodeName () const { return "seq"; }
 };
 
 class Switch : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Switch (ElementPtr d) : Mrl (d) {}
     ElementPtr childFromTag (ElementPtr d, const QString & tag);
-    KDE_NO_EXPORT const char * tagName () const { return "switch"; }
+    KDE_NO_EXPORT const char * nodeName () const { return "switch"; }
     /**
      * Will return false if no children or none has a condition that evals true
      */
@@ -183,7 +183,7 @@ class MediaType : public Mrl {
 public:
     MediaType (ElementPtr d, const QString & t);
     ElementPtr childFromTag (ElementPtr d, const QString & tag);
-    KDE_NO_EXPORT const char * tagName () const { return m_type.latin1 (); }
+    KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
     void setAttributes (const QXmlAttributes &);
     QString m_type;
     int bitrate;
@@ -195,14 +195,14 @@ class Asx : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Asx (ElementPtr d) : Element (d) {}
     ElementPtr childFromTag (ElementPtr d, const QString & tag);
-    KDE_NO_EXPORT const char * tagName () const { return "ASX"; }
+    KDE_NO_EXPORT const char * nodeName () const { return "ASX"; }
 };
 
 class Entry : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Entry (ElementPtr d) : Element (d) {}
     ElementPtr childFromTag (ElementPtr d, const QString & tag);
-    KDE_NO_EXPORT const char * tagName () const { return "Entry"; }
+    KDE_NO_EXPORT const char * nodeName () const { return "Entry"; }
 };
 
 class Ref : public Mrl {
@@ -210,7 +210,7 @@ public:
     KDE_NO_CDTOR_EXPORT Ref (ElementPtr d) : Mrl (d) {}
     //ElementPtr childFromTag (ElementPtr d, const QString & tag);
     void setAttributes (const QXmlAttributes &);
-    KDE_NO_EXPORT const char * tagName () const { return "Ref"; }
+    KDE_NO_EXPORT const char * nodeName () const { return "Ref"; }
 };
 
 class EntryRef : public Mrl {
@@ -218,7 +218,7 @@ public:
     KDE_NO_CDTOR_EXPORT EntryRef (ElementPtr d) : Mrl (d) {}
     //ElementPtr childFromTag (ElementPtr d, const QString & tag);
     void setAttributes (const QXmlAttributes &);
-    KDE_NO_EXPORT const char * tagName () const { return "EntryRef"; }
+    KDE_NO_EXPORT const char * nodeName () const { return "EntryRef"; }
 };
 
 //-----------------------------------------------------------------------------
@@ -229,7 +229,7 @@ public:
     GenericURL (ElementPtr d, const QString & s);
     ElementPtr childFromTag (ElementPtr d, const QString & tag);
     //void setAttributes (const QXmlAttributes &);
-    KDE_NO_EXPORT const char * tagName () const { return "GenericURL"; }
+    KDE_NO_EXPORT const char * nodeName () const { return "GenericURL"; }
     /**
      * Will return false if this document has child nodes
      */

@@ -497,6 +497,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPlayListView::KMPlayerPlayListView (QWidget * parent
     header()->hide ();
     setTreeStepSize (15);
     setRootIsDecorated (true);
+    setSorting (-1);
     m_itemmenu = new QPopupMenu (this);
     m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("editcopy"), KIcon::Small, 0, true), i18n ("&Copy to Clipboard"), this, SLOT (copyToClipboard ()), 0, 0);
     m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("bookmark_add"), KIcon::Small, 0, true), i18n ("&Add Bookmark"), this, SLOT (addBookMark ()), 0, 1);
@@ -504,25 +505,22 @@ KDE_NO_CDTOR_EXPORT KMPlayerPlayListView::KMPlayerPlayListView (QWidget * parent
 }
 
 static void populateTree (ElementPtr e, ElementPtr focus, QListView * tree, QListViewItem *item) {
+    Mrl * mrl = e->mrl ();
+    item->setText(0, mrl ? KURL(mrl->src).prettyURL() : QString(e->nodeName()));
     if (focus == e) {
-        tree->setCurrentItem (item);
         for (QListViewItem * p = item->parent (); p; p = p->parent ())
             p->setOpen (true);
+        tree->setSelected (item, true);
     }
-    for (ElementPtr c = e->firstChild (); c; c = c->nextSibling ()) {
-        QListViewItem * i = new KMPlayerListViewItem (item, c);
-        i->setText (0, c->isMrl () ? c->mrl ()->src : QString (c->tagName ()));
-        populateTree (c, focus, tree, i);
-    }
+    for (ElementPtr c = e->lastChild (); c; c = c->previousSibling ())
+        if (strcmp (c->nodeName (), "#text"))
+            populateTree (c, focus, tree, new KMPlayerListViewItem (item, c));
 }
 
 void KMPlayerPlayListView::updateTree (ElementPtr root, ElementPtr active) {
     clear ();
     if (!root) return;
-    QListViewItem * item = new KMPlayerListViewItem (this, root);
-    item->setText (0, KURL (root->mrl()->src).prettyURL ());
-    populateTree (root, active, this, item);
-    //if (root->hasChildNodes ())
+    populateTree (root, active, this, new KMPlayerListViewItem (this, root));
 }
 
 KDE_NO_EXPORT void KMPlayerPlayListView::contextMenuItem (QListViewItem * vi, const QPoint & p, int) {
@@ -538,7 +536,7 @@ void KMPlayerPlayListView::copyToClipboard () {
     KMPlayerListViewItem * item = static_cast <KMPlayerListViewItem *> (currentItem ());
     if (item->m_elm) {
         Mrl * mrl = item->m_elm->mrl ();
-        QApplication::clipboard()->setText (mrl ? mrl->src : QString (item->m_elm->tagName ()));
+        QApplication::clipboard()->setText (mrl ? mrl->src : QString (item->m_elm->nodeName ()));
     }
 }
 
@@ -546,7 +544,7 @@ void KMPlayerPlayListView::addBookMark () {
     KMPlayerListViewItem * item = static_cast <KMPlayerListViewItem *> (currentItem ());
     if (item->m_elm) {
         Mrl * mrl = item->m_elm->mrl ();
-        KURL url (mrl ? mrl->src : QString (item->m_elm->tagName ()));
+        KURL url (mrl ? mrl->src : QString (item->m_elm->nodeName ()));
         emit addBookMark (url.prettyURL (), url.url ());
     }
 }

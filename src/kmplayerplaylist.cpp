@@ -74,7 +74,7 @@ KDE_NO_EXPORT const Mrl * Element::mrl () const {
     return dynamic_cast<const Mrl*>(this);
 }
 
-KDE_NO_EXPORT const char * Element::tagName () const {
+KDE_NO_EXPORT const char * Element::nodeName () const {
     return "element";
 }
 
@@ -155,7 +155,8 @@ KDE_NO_EXPORT ElementPtr Element::childFromTag (ElementPtr, const QString &) {
 }
 
 KDE_NO_EXPORT void Element::characterData (const QString & s) {
-    if (!m_last_child || strcmp (m_last_child->tagName (), "#text"))
+    kdDebug () << !m_last_child << (!m_last_child || strcmp (m_last_child->nodeName (), "#text")) << (m_last_child ? m_last_child->nodeName () : "-") << endl;
+    if (!m_last_child || strcmp (m_last_child->nodeName (), "#text"))
         appendChild ((new TextNode (m_doc, s))->self ());
     else
         static_cast <TextNode *> (static_cast <Element *> (m_last_child))->appendText (s);

@@ -89,7 +89,7 @@ public slots:
     virtual void forward ();
     virtual void backward ();
     virtual void play ();
-    void requestElement (QListViewItem *);
+    virtual void jump (ElementPtr e);
 protected:
     ElementPtr m_document;
     ElementPtr m_current;

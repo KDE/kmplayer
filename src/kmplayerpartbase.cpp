@@ -104,7 +104,8 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
    m_bookmark_menu (0L),
    m_record_timer (0),
    m_ispart (false),
-   m_noresize (false)
+   m_noresize (false),
+   m_in_update_tree (false)
 {
     m_players ["mplayer"] = new MPlayer (this);
     m_players ["xine"] = new Xine (this);
@@ -167,6 +168,7 @@ void KMPlayer::init (KActionCollection * action_collection) {
     connect (panel->hueSlider (), SIGNAL (valueChanged(int)), this, SLOT (hueValueChanged(int)));
     connect (panel->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));
     connect (m_view->playList (), SIGNAL (addBookMark (const QString &, const QString &)), this, SLOT (addBookMark (const QString &, const QString &)));
+    connect (m_view->playList (), SIGNAL (executed (QListViewItem *)), this, SLOT (playListItemSelected (QListViewItem *)));
     panel->popupMenu()->connectItem (KMPlayerControlPanel::menu_fullscreen, this, SLOT (fullScreen ()));
 #ifdef HAVE_XINE
     QPopupMenu *menu = panel->playerMenu ();
@@ -491,6 +493,19 @@ void KMPlayer::forward () {
     m_process->source ()->forward ();
 }
 
+void KMPlayer::playListItemSelected (QListViewItem * item) {
+    if (m_in_update_tree) return;
+    KMPlayerListViewItem * vi = static_cast <KMPlayerListViewItem *> (item);
+    m_process->source ()->jump (vi->m_elm);
+}
+
+void KMPlayer::updateTree (const ElementPtr & d, const ElementPtr & c) {
+    m_in_update_tree = true;
+    if (m_process && m_process->view ())
+        m_process->view ()->playList ()->updateTree (d, c);
+    m_in_update_tree = false;
+}
+
 void KMPlayer::record () {
     if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
     if (m_recorder->playing ()) {
@@ -621,10 +636,6 @@ void KMPlayerSource::init () {
     m_position = 0;
     m_identified = false;
     m_recordcmd.truncate (0);
-    KMPlayerProcess * p = m_player->process ();
-    if (p && p->view ())
-    if (p)
-        p->view ()->playList ()->updateTree (m_document, m_current);
 }
 
 void KMPlayerSource::setLength (int len) {
@@ -636,7 +647,7 @@ static void printTree (ElementPtr root, QString off=QString()) {
         kdDebug() << off << "[null]" << endl;
         return;
     }
-    kdDebug() << off << root->tagName() << " " << (Element*)root << (root->isMrl() ? root->mrl ()->src : QString ("-")) << endl;
+    kdDebug() << off << root->nodeName() << " " << (Element*)root << (root->isMrl() ? root->mrl ()->src : QString ("-")) << endl;
     off += QString ("  ");
     for (ElementPtr e = root->firstChild(); e; e = e->nextSibling())
         printTree(e, off);
@@ -655,10 +666,6 @@ void KMPlayerSource::setURL (const KURL & url) {
         m_document = (new Document (url.url ()))->self ();
     }
     m_current = m_document;
-    KMPlayerProcess * p = m_player->process ();
-    if (p)
-        p->view ()->playList ()->updateTree (m_document, m_current);
-    printTree(m_current);
 }
 
 QString KMPlayerSource::first () {
@@ -666,11 +673,8 @@ QString KMPlayerSource::first () {
     m_current = m_document;
     if (m_document->hasChildNodes ())
         next ();
-    else {
-        KMPlayerProcess * p = m_player->process ();
-        if (p && p->view ())
-            p->view ()->playList ()->updateTree (m_document, m_current);
-    }
+    else
+        m_player->updateTree (m_document, m_current);
     return current ();
 }
 
@@ -713,20 +717,25 @@ QString KMPlayerSource::next () {
             }
         }
     }
-    KMPlayerProcess * p = m_player->process ();
-    if (p && p->view ())
-        p->view ()->playList ()->updateTree (m_document, m_current);
+    m_player->updateTree (m_document, m_current);
     return current ();
 }
 
-void KMPlayerSource::insertURL (const QString & url) {
-    kdDebug() << "KMPlayerSource::insertURL " << (Element*)m_current << url << endl;
-    if (m_current)
-        m_current->appendChild ((new GenericURL (m_document, url))->self ());
+void KMPlayerSource::insertURL (const QString & mrl) {
+    kdDebug() << "KMPlayerSource::insertURL " << (Element*)m_current << mrl << endl;
+    KURL url (current (), mrl);
+    if (!url.isValid ())
+        kdError () << "try to append non-valid url" << endl;
+    else if (KURL (current ()) == url)
+        kdError () << "try to append url to itself" << endl;
+    else if (m_current)
+        m_current->appendChild ((new GenericURL (m_document, KURL::decode_string (url.url ())))->self ());
 }
 
 void KMPlayerSource::play () {
+    m_player->updateTree (m_document, m_current);
     QTimer::singleShot (0, m_player, SLOT (play ()));
+    printTree (m_document);
 }
 
 void KMPlayerSource::backward () {
@@ -761,6 +770,14 @@ void KMPlayerSource::forward () {
         m_player->process ()->stop ();
     } else
         m_player->process ()->seek (m_player->settings()->seektime * 10, false);
+}
+
+void KMPlayerSource::jump (ElementPtr e) {
+    if (e->isMrl ()) {
+        m_back_request = e;
+        m_player->process ()->stop ();
+    } else
+        m_player->updateTree (m_document, m_current);
 }
 
 QString KMPlayerSource::mime () const {
@@ -900,14 +917,6 @@ QString KMPlayerSource::prettyName () {
     return QString (i18n ("Unknown"));
 }
 
-void KMPlayerSource::requestElement (QListViewItem * item) {
-    KMPlayerListViewItem * vi = static_cast <KMPlayerListViewItem *> (item);
-    if (vi && vi->m_elm && vi->m_elm->isMrl ()) {
-        m_back_request = vi->m_elm;
-        m_player->process ()->stop ();
-    } else
-        m_player->process ()->view ()->playList ()->updateTree (m_document, m_current);
-}
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT KMPlayerURLSource::KMPlayerURLSource (KMPlayer * player, const KURL & url)
@@ -930,7 +939,6 @@ KDE_NO_EXPORT bool KMPlayerURLSource::hasLength () {
 }
 
 KDE_NO_EXPORT void KMPlayerURLSource::activate () {
-    connect (m_player->process ()->view ()->playList (), SIGNAL (executed (QListViewItem *)), this, SLOT (requestElement (QListViewItem *)));
     if (url ().isEmpty ())
         return;
     if (m_auto_play)
@@ -939,7 +947,6 @@ KDE_NO_EXPORT void KMPlayerURLSource::activate () {
 
 KDE_NO_EXPORT void KMPlayerURLSource::deactivate () {
     m_player->enablePlayerMenu (false);
-    disconnect (m_player->process ()->view ()->playList (), SIGNAL (executed (QListViewItem *)), this, SLOT (requestElement (QListViewItem *)));
 }
 
 KDE_NO_EXPORT QString KMPlayerURLSource::prettyName () {
@@ -1015,6 +1022,14 @@ public:
         m_elm = m_elm->parentNode ();
         return true;
     }
+    KDE_NO_EXPORT bool characters (const QString & ch) {
+        if (m_ignore_depth)
+            return true;
+        if (!m_elm)
+            return false;
+        m_elm->characterData (ch);
+        return true;
+    }
     KDE_NO_EXPORT bool fatalError (const QXmlParseException & ex) {
         kdError () << "fatal error " << ex.message () << endl;
         return true;
@@ -1078,11 +1093,8 @@ KDE_NO_EXPORT void KMPlayerURLSource::read (QTextStream & textstream) {
             QString mrl = line.stripWhiteSpace ();
             if (mrl.lower ().startsWith (QString ("asf ")))
                 mrl = mrl.mid (4).stripWhiteSpace ();
-            if (!mrl.isEmpty () && !mrl.startsWith (QChar ('#'))) {
-                KURL url (current (), mrl);
-                if (url.isValid ())
-                    insertURL (KURL::decode_string (url.url ()));
-            }
+            if (!mrl.isEmpty () && !mrl.startsWith (QChar ('#')))
+                insertURL (mrl);
             line = textstream.readLine ();
         } while (!line.isNull ()); /* TODO && m_document.size () < 1024 / * support 1k entries * /);*/
     }
@@ -1127,19 +1139,18 @@ KDE_NO_EXPORT void KMPlayerURLSource::play () {
     int plugin_pos = mimestr.find ("-plugin");
     if (plugin_pos > 0)
         mimestr.truncate (plugin_pos);
-    if (mimestr == QString ("audio/vnd.rn-realaudio") ||
-            (url.isLocalFile () &&
-             url.url ().lower ().endsWith (QString ("ram"))))
-        setMime (QString ("audio/x-pn-realaudio"));
     bool maybe_playlist = (url.url ().lower ().endsWith (QString ("m3u")) ||
             url.url ().lower ().endsWith (QString ("asx")) ||
             mimestr == QString ("audio/mpegurl") ||
             mimestr == QString ("audio/x-mpegurl") ||
             mimestr == QString ("video/x-ms-wmp") ||
             mimestr == QString ("video/x-ms-asf") ||
-            (mimestr == QString ("audio/x-pn-realaudio") &&
-             (url.protocol ().compare (QString ("rtsp")) ||
-              url.protocol ().compare (QString ("rtp")))) ||
+            ((mimestr == QString ("audio/x-pn-realaudio") ||
+              mimestr == QString ("audio/vnd.rn-realaudio") ||
+              url.url ().lower ().endsWith (QString (".ram")) ||
+              url.url ().lower ().endsWith (QString (".rpm"))) &&
+             url.protocol ().compare (QString ("rtsp")) &&
+             url.protocol ().compare (QString ("rtp"))) ||
             mimestr == QString ("application/smil") ||
             mimestr == QString ("application/x-mplayer2"));
     if (!m_current->mrl ()->parsed && url.isLocalFile ()) {

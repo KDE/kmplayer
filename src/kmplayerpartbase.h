@@ -116,6 +116,7 @@ public:
     // these are called from KMPlayerProcess
     void changeURL (const QString & url);
     void changeTitle (const QString & title);
+    void updateTree (const ElementPtr & d, const ElementPtr & c);
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool closeURL ();
@@ -171,6 +172,7 @@ protected slots:
     void lengthFound (int len);
     virtual void loaded (int percentage);
     void fullScreen ();
+    void playListItemSelected (QListViewItem *);
 protected:
     KConfig * m_config;
     QGuardedPtr <KMPlayerView> m_view;
@@ -188,6 +190,7 @@ protected:
     bool m_noresize : 1;
     bool m_use_slave : 1;
     bool m_bPosSliderPressed : 1;
+    bool m_in_update_tree : 1;
 };
 
 #endif
