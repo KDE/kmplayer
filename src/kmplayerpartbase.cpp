@@ -411,11 +411,9 @@ bool PartBase::openFile () {
 }
 
 void PartBase::keepMovieAspect (bool b) {
-    if (!m_view) return;
+    if (!m_view || !m_source) return;
     m_view->setKeepSizeRatio (b);
-    Mrl * mrl = m_source->current () ? m_source->current ()->mrl () : 0L;
-    if (m_view->viewer ())
-        m_view->viewer ()->setAspect (b && mrl ? mrl->aspect : 0.0);
+    m_view->viewer ()->setAspect (b ? m_source->aspect () : 0.0);
 }
 
 static const char * statemap [] = {
@@ -462,9 +460,8 @@ void PartBase::processStateChange (KMPlayer::Process::State old, KMPlayer::Proce
     kdDebug () << "processState " << statemap[old] << " -> " << statemap[state] << endl;
     Source * src = m_process->player() == this ? m_source : m_process->source();
     if (state == Process::Playing) {
-        Mrl * mrl = m_source->current () ? m_source->current ()->mrl () : 0L;
         m_process->view ()->videoStart ();
-        m_view->viewer ()->setAspect (m_settings->sizeratio && mrl ? mrl->aspect : 0.0);
+        m_view->viewer ()->setAspect (m_source->aspect ());
         m_view->controlPanel ()->showPositionSlider (!!src->length ());
         m_view->controlPanel ()->enableSeekButtons (src->isSeekable ());
         if (m_settings->autoadjustvolume && src == m_source)
