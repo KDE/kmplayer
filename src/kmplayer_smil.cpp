@@ -24,6 +24,7 @@
 #include <qfont.h>
 #include <qfontmetrics.h>
 #include <qfile.h>
+#include <qapplication.h>
 
 #include <kdebug.h>
 #include <kurl.h>
@@ -539,7 +540,14 @@ KDE_NO_EXPORT void ImageData::slotData (KIO::Job*, const QByteArray& qb) {
 namespace KMPlayer {
     class TextDataPrivate {
     public:
+        TextDataPrivate () : background_color (0xFFFFFF), foreground_color (0), codec (0L), font (QApplication::font ()), transparent (false) {
+        }
         QByteArray data;
+        unsigned int background_color;
+        unsigned int foreground_color;
+        QTextCodec * codec;
+        QFont font;
+        bool transparent;
     };
 }
 
@@ -551,6 +559,18 @@ KDE_NO_CDTOR_EXPORT TextData::TextData (RegionNodePtr r, ElementPtr e)
     if (mrl && !mrl->src.isEmpty ()) {
         KURL url (mrl->src);
         if (url.protocol () == "data") {
+            QString s = KURL::decode_string (url.url ());
+            int pos = s.find (QString ("data:"));
+            if (pos > -1) {
+                s = s.mid (pos + 5);
+                pos = s.find (QChar (','));
+                if (pos > -1) {
+                    d->data.resize (s.length () - pos);
+                    memcpy (d->data.data (), s.mid (pos + 1).ascii(), s.length () - pos);
+                    if (pos > 0)
+                        d->codec =QTextCodec::codecForName(s.left(pos).ascii());
+                }
+            }
         } else if (url.isLocalFile ()) {
             QFile file (url.path ());
             file.open (IO_ReadOnly);
@@ -558,6 +578,23 @@ KDE_NO_CDTOR_EXPORT TextData::TextData (RegionNodePtr r, ElementPtr e)
         } else
             ; // FIXME
     }
+    for (ElementPtr p = text_element->firstChild (); p; p = p->nextSibling())
+        if (!strcmp (p->nodeName (), "param")) {
+            QString name = p->getAttribute ("name");
+            QString value = p->getAttribute ("value");
+            kdDebug () << "TextData param " << name << "=" << value << endl;
+            if (name == QString ("backgroundColor"))
+                d->background_color = QColor (value).rgb ();
+            else if (name == QString ("fontColor"))
+                d->foreground_color = QColor (value).rgb ();
+            else if (name == QString ("charset"))
+                d->codec = QTextCodec::codecForName (value.ascii ());
+            else if (name == QString ("fontFace"))
+                ;
+            else if (name == QString ("fontPtSize"))
+                d->font.setPointSize (value.toInt ());
+            // TODO: expandTabs fontBackgroundColor fontSize fontStyle fontWeight hAlig vAlign wordWrap
+        }
 }
 
 KDE_NO_CDTOR_EXPORT TextData::~TextData () {
@@ -565,6 +602,30 @@ KDE_NO_CDTOR_EXPORT TextData::~TextData () {
 }
 
 KDE_NO_EXPORT void TextData::paint (QPainter & p) {
+    if (region_node) {
+        int x = region_node->x;
+        int y = region_node->y;
+        if (!d->transparent)
+            p.fillRect (x, y, region_node->w, region_node->h,
+                    QColor (QRgb (d->background_color)));
+        QFontMetrics metrics (d->font);
+        QPainter::TextDirection direction = QApplication::reverseLayout () ?
+            QPainter::RTL : QPainter::LTR;
+        if (direction == QPainter::RTL)
+            x += region_node->w;
+        int yoff = metrics.lineSpacing ();
+        p.setFont (d->font);
+        p.setPen (QRgb (d->foreground_color));
+        QTextStream text (d->data, IO_ReadOnly);
+        if (d->codec)
+            text.setCodec (d->codec);
+        QString line = text.readLine (); // FIXME word wrap
+        while (!line.isNull () && yoff < region_node->h) {
+            p.drawText (x, y+yoff, line, region_node->w, direction);
+            line = text.readLine ();
+            yoff += metrics.lineSpacing ();
+        }
+    }
 }
 
 KDE_NO_EXPORT void TextData::slotResult (KIO::Job*) {
