@@ -52,6 +52,7 @@
 #include <kpopupmenu.h>
 #include <kurlrequester.h>
 #include <klineedit.h>
+#include <kkeydialog.h>
 
 // application specific includes
 #include "kmplayer.h"
@@ -141,9 +142,17 @@ void KMPlayerApp::initActions()
     //viewToolBar->setStatusText(i18n("Enables/disables the toolbar"));
     viewStatusBar->setStatusText(i18n("Enables/disables the statusbar"));
     viewMenuBar->setStatusText(i18n("Enables/disables the menubar"));
-    // use the absolute path to your kmplayerui.rc file for testing purpose in createGUI();
+    KStdAction::keyBindings( this, SLOT( slotConfigureKeys() ), actionCollection() );
+
+// use the absolute path to your kmplayerui.rc file for testing purpose in createGUI();
     createGUI();
 }
+
+void KMPlayerApp::slotConfigureKeys()
+{
+  KKeyDialog::configure( actionCollection(), this );
+}
+
 
 void KMPlayerApp::initStatusBar()
 {
@@ -515,7 +524,7 @@ void KMPlayerApp::fullScreen () {
     if (fullScreenAction)
        fullScreenAction->setChecked(m_view->isFullScreen());
 #endif
-        
+
     if (m_view->isFullScreen())
         hide ();
     else
@@ -857,7 +866,7 @@ void KMPlayerDVDNavSource::navMenuClicked (int id) {
         case DVDNav_up:
             m_app->view ()->viewer ()->sendKeyEvent ('u');
             break;
-    } 
+    }
 }
 
 QString KMPlayerDVDNavSource::prettyName () {
@@ -882,7 +891,7 @@ KMPlayerPrefSourcePageVCD::KMPlayerPrefSourcePageVCD (QWidget * parent)
 }
 
 //-----------------------------------------------------------------------------
-                        
+
 KMPlayerVCDSource::KMPlayerVCDSource (KMPlayerApp * a, QPopupMenu * m)
     : KMPlayerMenuSource (i18n ("VCD"), a, m), m_configpage (0L) {
     m_menu->insertTearOffHandle ();

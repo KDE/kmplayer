@@ -3,7 +3,7 @@
                              -------------------
     begin                : Sat Dec  7 16:14:51 CET 2002
     copyright            : (C) 2002 by Koos Vriezen
-    email                : 
+    email                :
  ***************************************************************************/
 
 /***************************************************************************
@@ -17,7 +17,7 @@
 
 #ifndef KMPLAYER_H
 #define KMPLAYER_H
- 
+
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -99,6 +99,8 @@ private slots:
     void broadcastStarted ();
     void broadcastStopped ();
     void playerStarted ();
+    void slotConfigureKeys();
+
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
     KConfig * config;
