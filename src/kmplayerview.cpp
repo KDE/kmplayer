@@ -398,7 +398,7 @@ void KMPlayerControlPanel::enablePositionSlider (bool enable) {
     int h = enable ? button_height_with_slider : button_height_only_buttons;
     if (enable) {
         m_posSlider->show ();
-        m_buttonbox->setMargin (5);
+        m_buttonbox->setMargin (4);
         m_buttonbox->setSpacing (4);
         setEraseColor (parentWidget ()->eraseColor ());
     } else {

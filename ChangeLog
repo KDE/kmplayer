@@ -1,4 +1,8 @@
 Changes since version 0.8.3-rc1
+- Remove configure options for control buttons. Simply always autohide for
+  fullscreen and embedded part and show them otherwise
+- Fix another case of video widget stays black cause in kxineplayer
+- If position slider is hidden, make buttons small again (like <= 0.8.2)
 - Support for AUTOSTART attribute
 - Support for FULLSCREENMODE attribute
 - Seeking while sliding :-)
@@ -9,7 +13,8 @@ Changes since version 0.8.2
   occur more with the latest Qt versions. KMPlayer uses a XSimpleWindow now
   that is managed by QXEmbed
 - Support for Real's CONTROLS/CONSOLE attributes. This makes it possible
-  multible plugins cooperate sharing imagewindow/controlpanel
+  multible plugins cooperate with imagewindow/controlpanel
+- Combine control buttons and position slider to one control panel
 Changes since version 0.8.2-rc5
 - Don't show ffserver setting when no v4l devices are configured
 - Stream detection fix for MPlayer-1.0prex (needed for recording)
