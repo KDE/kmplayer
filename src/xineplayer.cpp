@@ -161,7 +161,7 @@ static void xine_config_cb (void * /*user_data*/, xine_cfg_entry_t * entry) {
     }
     if (audio_vis && strcmp (entry->enum_values[entry->num_value], "none")) {
         post_plugin = xine_post_init (xine, entry->enum_values[entry->num_value], 0, &ao_port, &vo_port);
-        xine_post_wire (xine_get_audio_source (stream), xine_post_input (post_plugin, (char *) "audio in"));
+        xine_post_wire (xine_get_audio_source (stream), (xine_post_in_t *) xine_post_input (post_plugin, (char *) "audio in"));
     }
     mutex.unlock ();
 }
