@@ -362,7 +362,7 @@ void PartBase::setSource (Source * _source) {
     m_source->init ();
     if (m_view && m_view->viewer ()) {
         m_view->viewer ()->setAspect (0.0);
-        m_view->fullScreenWidget ()->setRootLayout (m_source->document () ?
+        m_view->viewArea ()->setRootLayout (m_source->document () ?
            m_source->document ()->document()->rootLayout : RegionNodePtrW (0L));
     }
     if (m_source) QTimer::singleShot (0, m_source, SLOT (activate ()));
@@ -767,7 +767,7 @@ void Source::playCurrent () {
     if (m_player->process () && m_player->process ()->view ())
         m_player->process ()->view ()->videoStop (); // show buttonbar
     if (m_player->view () && m_document)
-        m_player->process ()->view ()->fullScreenWidget ()->setRootLayout (m_document->document ()->rootLayout);
+        m_player->process ()->view ()->viewArea ()->setRootLayout (m_document->document ()->rootLayout);
     kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():"") <<  (m_document && m_document->state != Element::state_started) << (!m_current) << (m_current && m_current->state != Element::state_started) <<  endl;
     if (m_document && m_document->state != Element::state_started) {
         if (!m_current)
@@ -815,7 +815,7 @@ void Source::playURLDone () {
         if (mrl)
             mrl->realMrl ()->stop ();
     }
-    m_player->process()->view ()->fullScreenWidget ()->repaint ();
+    m_player->process()->view ()->viewArea ()->repaint ();
 }
 
 bool Source::requestPlayURL (ElementPtr mrl, RegionNodePtr /*region*/) {
@@ -834,12 +834,12 @@ void Source::stateElementChanged (ElementPtr elm) {
 
 void Source::repaintRegion (RegionNode * r) {
     if (m_player->view ())
-        m_player->process()->view ()->fullScreenWidget ()->update (r->x, r->y, r->w, r->h);
+        m_player->process()->view ()->viewArea ()->update (r->x, r->y, r->w, r->h);
 }
 
 void Source::avWidgetSizes (RegionNode * r, unsigned int * bg) {
     if (m_player->view ())
-        m_player->process()->view ()->fullScreenWidget ()->setAudioVideoGeometry (r->x, r->y, r->w, r->h, bg);
+        m_player->process()->view ()->viewArea ()->setAudioVideoGeometry (r->x, r->y, r->w, r->h, bg);
 }
 
 void Source::insertURL (const QString & mrl) {

@@ -254,7 +254,7 @@ static const char * blue_xpm[] = {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT ViewLayer::ViewLayer (QWidget * parent, View * view)
+KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
  : QWidget (parent),
    m_parent (parent),
    m_view (view),
@@ -268,7 +268,7 @@ KDE_NO_CDTOR_EXPORT ViewLayer::ViewLayer (QWidget * parent, View * view)
     //setWFlags (getWFlags () | WRepaintNoErase);
 }
 
-KDE_NO_EXPORT void ViewLayer::fullScreen () {
+KDE_NO_EXPORT void ViewArea::fullScreen () {
     if (m_fullscreen) {
         showNormal ();
         reparent (m_parent, 0, QPoint (0, 0), true);
@@ -286,17 +286,17 @@ KDE_NO_EXPORT void ViewLayer::fullScreen () {
     m_view->controlPanel()->popupMenu ()->setItemChecked (ControlPanel::menu_fullscreen, m_fullscreen);
 }
 
-KDE_NO_EXPORT void ViewLayer::accelActivated () {
+KDE_NO_EXPORT void ViewArea::accelActivated () {
     m_view->controlPanel()->popupMenu ()->activateItemAt (m_view->controlPanel()->popupMenu ()->indexOf (ControlPanel::menu_fullscreen)); 
 }
 
-KDE_NO_EXPORT void ViewLayer::mousePressEvent (QMouseEvent * e) {
+KDE_NO_EXPORT void ViewArea::mousePressEvent (QMouseEvent * e) {
     if (rootLayout)
         if (rootLayout->pointerClicked (e->x (), e->y ()))
             e->accept ();
 }
 
-KDE_NO_EXPORT void ViewLayer::mouseMoveEvent (QMouseEvent * e) {
+KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
     if (e->state () == Qt::NoButton) {
         int vert_buttons_pos = height ();
         int cp_height = m_view->controlPanel ()->maximumSize ().height ();
@@ -308,7 +308,7 @@ KDE_NO_EXPORT void ViewLayer::mouseMoveEvent (QMouseEvent * e) {
             e->accept ();
 }
 
-KDE_NO_EXPORT void ViewLayer::paintEvent (QPaintEvent * pe) {
+KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
     QWidget::paintEvent (pe);
     if (rootLayout && rootLayout->regionElement) {
         QPainter p;
@@ -318,7 +318,7 @@ KDE_NO_EXPORT void ViewLayer::paintEvent (QPaintEvent * pe) {
     }
 }
 
-KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
+KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     if (!m_view->controlPanel ()) return;
     int x =0, y = 0;
     int w = width ();
@@ -350,7 +350,7 @@ KDE_NO_EXPORT void ViewLayer::resizeEvent (QResizeEvent *) {
 }
 
 KDE_NO_EXPORT
-void ViewLayer::setAudioVideoGeometry (int x, int y, int w, int h, unsigned int * bg_color) {
+void ViewArea::setAudioVideoGeometry (int x, int y, int w, int h, unsigned int * bg_color) {
     if (m_view->controlPanelMode() == View::CP_Only) {
         w = h = 0;
     } else if (m_view->keepSizeRatio ()) { // scale video widget inside region
@@ -371,26 +371,26 @@ void ViewLayer::setAudioVideoGeometry (int x, int y, int w, int h, unsigned int 
         m_view->viewer ()->setBackgroundColor (QColor (QRgb (*bg_color)));
 }
 
-KDE_NO_EXPORT void ViewLayer::setRootLayout (RegionNodePtr rl) {
+KDE_NO_EXPORT void ViewArea::setRootLayout (RegionNodePtr rl) {
     if (rootLayout != rl) {
         rootLayout = rl;
         resizeEvent (0L);
     }
 }
 
-KDE_NO_EXPORT void ViewLayer::showEvent (QShowEvent *) {
+KDE_NO_EXPORT void ViewArea::showEvent (QShowEvent *) {
     resizeEvent (0L);
 }
 
-KDE_NO_EXPORT void ViewLayer::dropEvent (QDropEvent * de) {
+KDE_NO_EXPORT void ViewArea::dropEvent (QDropEvent * de) {
     m_view->dropEvent (de);
 }
 
-KDE_NO_EXPORT void ViewLayer::dragEnterEvent (QDragEnterEvent* dee) {
+KDE_NO_EXPORT void ViewArea::dragEnterEvent (QDragEnterEvent* dee) {
     m_view->dragEnterEvent (dee);
 }
 
-KDE_NO_EXPORT void ViewLayer::contextMenuEvent (QContextMenuEvent * e) {
+KDE_NO_EXPORT void ViewArea::contextMenuEvent (QContextMenuEvent * e) {
     m_view->controlPanel ()->popupMenu ()->exec (e->globalPos ());
 }
 
@@ -938,8 +938,8 @@ KDE_NO_EXPORT void View::init () {
     m_dock_video = new KDockWidget (m_dockarea->manager (), 0, KGlobal::iconLoader ()->loadIcon (QString ("kmplayer"), KIcon::Small), m_dockarea);
     m_dock_video->setDockSite (KDockWidget::DockLeft | KDockWidget::DockBottom | KDockWidget::DockRight | KDockWidget::DockTop);
     m_dock_video->setEnableDocking(KDockWidget::DockNone);
-    m_layer = new ViewLayer (m_dock_video, this);
-    m_dock_video->setWidget (m_layer);
+    m_view_area = new ViewArea (m_dock_video, this);
+    m_dock_video->setWidget (m_view_area);
     m_dockarea->setMainDockWidget (m_dock_video);
     m_dock_playlist = m_dockarea->createDockWidget (QString ("PlayList"), KGlobal::iconLoader ()->loadIcon (QString ("player_playlist"), KIcon::Small));
     m_playlist = new PlayListView (m_dock_playlist, this);
@@ -947,13 +947,13 @@ KDE_NO_EXPORT void View::init () {
     m_playlist->setPaletteForegroundColor (QColor (0xB2, 0xB2, 0xB2));
     m_dock_playlist->setWidget (m_playlist);
     viewbox->addWidget (m_dockarea);
-    m_widgetstack = new QWidgetStack (m_layer);
-    m_control_panel = new ControlPanel (m_layer, this);
+    m_widgetstack = new QWidgetStack (m_view_area);
+    m_control_panel = new ControlPanel (m_view_area, this);
     m_control_panel->setMaximumSize (2500, controlPanel ()->maximumSize ().height ());
     m_viewer = new Viewer (m_widgetstack, this);
     m_widgettypes [WT_Video] = m_viewer;
 #if KDE_IS_VERSION(3,1,90)
-    setVideoWidget (m_layer);
+    setVideoWidget (m_view_area);
 #endif
 
     m_multiedit = new Console (m_widgetstack, this);
@@ -976,7 +976,7 @@ KDE_NO_EXPORT void View::init () {
     connect (m_control_panel->viewMenu(), SIGNAL (mouseLeft ()), this, SLOT (popupMenuMouseLeft ()));
     connect (m_control_panel->colorMenu(), SIGNAL (mouseLeft ()), this, SLOT (popupMenuMouseLeft ()));
     setAcceptDrops (true);
-    m_layer->resizeEvent (0L);
+    m_view_area->resizeEvent (0L);
     kdDebug() << "View " << (unsigned long) (m_viewer->embeddedWinId()) << endl;
 
     XSelectInput (qt_xdisplay (), m_viewer->embeddedWinId (), 
@@ -993,8 +993,8 @@ KDE_NO_EXPORT void View::init () {
 
 KDE_NO_CDTOR_EXPORT View::~View () {
     delete m_image;
-    if (m_layer->parent () != this)
-        delete m_layer;
+    if (m_view_area->parent () != this)
+        delete m_view_area;
 }
 
 void View::showPlaylist () {
@@ -1096,8 +1096,8 @@ void View::setControlPanelMode (ControlPanelMode m) {
                 m_control_panel->show ();
         } else
             m_control_panel->hide ();
-    //m_layer->setMouseTracking (m_controlpanel_mode == CP_AutoHide && m_playing);
-    m_layer->resizeEvent (0L);
+    //m_view_area->setMouseTracking (m_controlpanel_mode == CP_AutoHide && m_playing);
+    m_view_area->resizeEvent (0L);
 }
 
 KDE_NO_EXPORT void View::delayedShowButtons (bool show) {
@@ -1121,7 +1121,15 @@ KDE_NO_EXPORT void View::setVolume (int vol) {
 KDE_NO_EXPORT void  View::updateLayout () {
     if (m_controlpanel_mode == CP_Only)
         m_control_panel->setMaximumSize (2500, height ());
-    m_layer->resizeEvent (0L);
+    m_view_area->resizeEvent (0L);
+}
+
+void View::setKeepSizeRatio (bool b) {
+    if (m_keepsizeratio != b) {
+        m_keepsizeratio = b;
+        updateLayout ();
+        m_view_area->update ();
+    }
 }
 
 KDE_NO_EXPORT void View::timerEvent (QTimerEvent * e) {
@@ -1129,10 +1137,10 @@ KDE_NO_EXPORT void View::timerEvent (QTimerEvent * e) {
         controlbar_timer = 0;
         if (!m_playing)
             return;
-        int vert_buttons_pos = m_layer->height ();
-        int mouse_pos = m_layer->mapFromGlobal (QCursor::pos ()).y();
+        int vert_buttons_pos = m_view_area->height ();
+        int mouse_pos = m_view_area->mapFromGlobal (QCursor::pos ()).y();
         int cp_height = m_control_panel->maximumSize ().height ();
-        bool mouse_on_buttons = (//m_layer->hasMouse () && 
+        bool mouse_on_buttons = (//m_view_area->hasMouse () && 
                 mouse_pos >= vert_buttons_pos-cp_height &&
                 mouse_pos <= vert_buttons_pos);
         if (m_control_panel)
@@ -1152,7 +1160,7 @@ KDE_NO_EXPORT void View::timerEvent (QTimerEvent * e) {
                 m_control_panel->popupMenu ()->hide ();
     }
     killTimer (e->timerId ());
-    m_layer->resizeEvent (0L);
+    m_view_area->resizeEvent (0L);
 }
 
 void View::addText (const QString & str, bool eol) {
@@ -1204,11 +1212,11 @@ KDE_NO_EXPORT void View::videoStart () {
 KDE_NO_EXPORT void View::videoStop () {
     if (m_control_panel && m_controlpanel_mode == CP_AutoHide) {
         m_control_panel->show ();
-        //m_layer->setMouseTracking (false);
+        //m_view_area->setMouseTracking (false);
     }
     m_playing = false;
     XClearWindow (qt_xdisplay(), m_viewer->embeddedWinId ());
-    m_layer->resizeEvent (0L);
+    m_view_area->resizeEvent (0L);
 }
 
 KDE_NO_EXPORT void View::showPopupMenu () {
@@ -1225,17 +1233,17 @@ KDE_NO_EXPORT void View::leaveEvent (QEvent *) {
 KDE_NO_EXPORT void View::reset () {
     if (m_revert_fullscreen && isFullScreen())
         m_control_panel->popupMenu ()->activateItemAt (m_control_panel->popupMenu ()->indexOf (ControlPanel::menu_fullscreen)); 
-        //m_layer->fullScreen ();
+        //m_view_area->fullScreen ();
     videoStop ();
     m_viewer->show ();
 }
 
 bool View::isFullScreen () const {
-    return m_layer->isFullScreen ();
+    return m_view_area->isFullScreen ();
 }
 
 void View::fullScreen () {
-    if (!m_layer->isFullScreen()) {
+    if (!m_view_area->isFullScreen()) {
         m_sreensaver_disabled = false;
         QByteArray data, replydata;
         QCString replyType;
@@ -1250,14 +1258,14 @@ void View::fullScreen () {
         }
         //if (m_keepsizeratio && m_viewer->aspect () < 0.01)
         //    m_viewer->setAspect (1.0 * m_viewer->width() / m_viewer->height());
-        m_layer->fullScreen();
+        m_view_area->fullScreen();
         m_control_panel->popupMenu ()->setItemVisible (ControlPanel::menu_zoom, false);
         m_widgetstack->visibleWidget ()->setFocus ();
     } else {
         if (m_sreensaver_disabled)
             m_sreensaver_disabled = !kapp->dcopClient()->send
                 ("kdesktop", "KScreensaverIface", "enable(bool)", "true");
-        m_layer->fullScreen();
+        m_view_area->fullScreen();
         m_control_panel->popupMenu ()->setItemVisible (ControlPanel::menu_zoom, true);
     }
     setControlPanelMode (m_old_controlpanel_mode);

@@ -99,11 +99,11 @@ private:
     bool m_ignore_expanded;
 };
 
-class ViewLayer : public QWidget {
+class ViewArea : public QWidget {
     friend class View;
     Q_OBJECT
 public:
-    ViewLayer (QWidget * parent, View * view);
+    ViewArea (QWidget * parent, View * view);
     bool isFullScreen () const { return m_fullscreen; }
     KActionCollection * actionCollection () const { return m_collection; }
     void setRootLayout (RegionNodePtr rl);
@@ -152,7 +152,7 @@ protected:
 class KMPLAYER_EXPORT View : public KMediaPlayer::View {
     Q_OBJECT
     friend class Viewer;
-    friend class ViewLayer;
+    friend class ViewArea;
     friend class PlayListView;
     friend class KMPlayerPictureWidget;
 public:
@@ -177,9 +177,9 @@ public:
     KDE_NO_EXPORT PlayListView * playList () const { return m_playlist; }
     KDE_NO_EXPORT QWidgetStack * widgetStack () const { return m_widgetstack; }
     KDE_NO_EXPORT KDockArea * docArea () const { return m_dockarea; }
-    KDE_NO_EXPORT ViewLayer * fullScreenWidget () const { return m_layer; }
+    KDE_NO_EXPORT ViewArea * viewArea () const { return m_view_area; }
     KDE_NO_EXPORT bool keepSizeRatio () const { return m_keepsizeratio; }
-    KDE_NO_EXPORT void setKeepSizeRatio (bool b) { m_keepsizeratio = b; }
+    void setKeepSizeRatio (bool b);
     void showWidget (WidgetType w);
     void setControlPanelMode (ControlPanelMode m);
     KDE_NO_EXPORT ControlPanelMode controlPanelMode () const { return m_controlpanel_mode; }
@@ -222,7 +222,7 @@ private:
     // widget stack contains m_viewer, m_multiedit and m_picturewidget
     QWidgetStack * m_widgetstack;
     // widget that layouts m_widgetstack for ratio setting and m_control_panel
-    ViewLayer * m_layer;
+    ViewArea * m_view_area;
     // playlist widget
     PlayListView * m_playlist;
     // all widget types

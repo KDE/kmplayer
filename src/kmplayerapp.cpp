@@ -193,8 +193,8 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
     m_view->docArea ()->readDockConfig (config, QString ("Window Layout"));
     setCentralWidget (m_view);
     initMenu ();
-    new KAction (i18n ("Increase Volume"), editVolumeInc->shortcut (), m_player, SLOT (increaseVolume ()), m_view->fullScreenWidget ()->actionCollection (), "edit_volume_up");
-    new KAction (i18n ("Decrease Volume"), editVolumeDec->shortcut (), m_player, SLOT(decreaseVolume ()), m_view->fullScreenWidget ()->actionCollection (), "edit_volume_down");
+    new KAction (i18n ("Increase Volume"), editVolumeInc->shortcut (), m_player, SLOT (increaseVolume ()), m_view->viewArea ()->actionCollection (), "edit_volume_up");
+    new KAction (i18n ("Decrease Volume"), editVolumeDec->shortcut (), m_player, SLOT(decreaseVolume ()), m_view->viewArea ()->actionCollection (), "edit_volume_down");
     connect (m_player->settings (), SIGNAL (configChanged ()),
              this, SLOT (configChanged ()));
     connect (m_player, SIGNAL (startPlaying ()),
@@ -307,14 +307,14 @@ KDE_NO_EXPORT void KMPlayerApp::resizePlayer (int percentage) {
         if (m_view->controlPanel ()->isVisible ())
             h += m_view->controlPanel ()->size ().height ();
         QSize s1 = size ();
-        QSize s2 = m_view->fullScreenWidget ()->size ();
+        QSize s2 = m_view->viewArea ()->size ();
         w += s1.width () - s2.width ();
         h += s1.height () - s2.height ();
         w = int (1.0 * w * percentage/100.0);
         h = int (1.0 * h * percentage/100.0);
         QSize s = sizeForCentralWidgetSize (QSize (w, h));
         if (s.width () != width () || s.height () != height ()) {
-            QSize oldsize = m_view->fullScreenWidget ()->size ();
+            QSize oldsize = m_view->viewArea ()->size ();
             resize (s);
         }
     }
@@ -582,10 +582,6 @@ KDE_NO_EXPORT void KMPlayerApp::configChanged () {
 
 KDE_NO_EXPORT void KMPlayerApp::keepSizeRatio () {
     m_view->setKeepSizeRatio (!m_view->keepSizeRatio ());
-    if (m_player->source () && m_view->keepSizeRatio ())
-        m_view->viewer ()->setAspect (m_player->source ()->aspect ());
-    else
-        m_view->viewer ()->setAspect (0.0);
     m_player->settings ()->sizeratio = m_view->keepSizeRatio ();
     viewKeepRatio->setChecked (m_view->keepSizeRatio ());
 }

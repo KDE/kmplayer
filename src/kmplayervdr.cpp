@@ -224,7 +224,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::processStarted () {
 
 #define DEF_ACT(i,text,pix,scut,slot,name) \
     m_actions [i] = new KAction (text, QString (pix), KShortcut (scut), this, slot, m_app->actionCollection (), name); \
-    m_fullscreen_actions [i] = new KAction (text, KShortcut (scut), this, slot, m_app->view ()->fullScreenWidget ()->actionCollection (), name)
+    m_fullscreen_actions [i] = new KAction (text, KShortcut (scut), this, slot, m_app->view ()->viewArea ()->actionCollection (), name)
 
 KDE_NO_EXPORT void KMPlayerVDRSource::connected () {
     queueCommand (cmd_list_channels);
@@ -259,7 +259,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::connected () {
     DEF_ACT (act_7, i18n ("VDR Key 7"), "7", Qt::Key_7, SLOT (key7 ()), "vdr_key_7");
     DEF_ACT (act_8, i18n ("VDR Key 8"), "8", Qt::Key_8, SLOT (key8 ()), "vdr_key_8");
     DEF_ACT (act_9, i18n ("VDR Key 9"), "9", Qt::Key_9, SLOT (key9 ()), "vdr_key_9");
-    //KMPlayer::ViewLayer * layer = m_app->view ()->fullScreenWidget ();
+    //KMPlayer::ViewLayer * layer = m_app->view ()->viewArea ();
     for (int i = 0; i < int (act_last); ++i)
         // somehow, the configured shortcuts only show up after createGUI() call
         m_fullscreen_actions [i]->setShortcut (m_actions [i]->shortcut ());
@@ -284,7 +284,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::disconnected () {
     m_app->guiFactory ()->removeClient (m_app);// crash w/ m_actions[i]->unplugAll (); in for loop below
     for (int i = 0; i < int (act_last); ++i)
         if (m_player->view () && m_actions[i]) {
-            m_fullscreen_actions[i]->unplug (m_app->view()->fullScreenWidget());
+            m_fullscreen_actions[i]->unplug (m_app->view()->viewArea());
             delete m_actions[i];
             delete m_fullscreen_actions[i];
         }
