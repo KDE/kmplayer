@@ -901,11 +901,11 @@ void KMPlayerURLSource::setURL (const KURL & url) {
             }
         } else if (url.url ().lower ().endsWith (QString ("pls")) ||
                 m_mime == QString ("audio/x-scpls")) {
-            KConfig kc (url.url ());
+            KConfig kc (url.path (), true);
             kc.setGroup ("playlist");
             int nr = kc.readNumEntry ("numberofentries", 0);
             for (int i = 0; i < nr; i++) {
-                QString mrl = kc.readEntry (QString ("File%1").arg(i), "");
+                QString mrl = kc.readEntry (QString ("File%1").arg(i+1), "");
                 if (!mrl.isEmpty ())
                     m_refurls.push_back (mrl);
             }
