@@ -839,30 +839,11 @@ bool KMPlayerURLSource::hasLength () {
     return !!length ();
 }
 
-void KMPlayerURLSource::buildArguments () {
-    m_recordcmd = QString ("");
-
-    if (m_player->settings ()->alwaysbuildindex && m_url.isLocalFile ()) {
-        if (m_url.path ().lower ().endsWith (".avi") ||
-                m_url.path ().lower ().endsWith (".divx")) {
-            m_options += QString (" -idx ");
-            m_recordcmd = QString (" -idx ");
-        }
-    }
-}
-
 void KMPlayerURLSource::activate () {
-    buildArguments ();
     if (url ().isEmpty ())
         return;
     if (m_auto_play)
         QTimer::singleShot (0, m_player, SLOT (play ()));
-}
-
-
-void KMPlayerURLSource::setIdentified (bool b) {
-    KMPlayerSource::setIdentified (b);
-    buildArguments ();
 }
 
 void KMPlayerURLSource::deactivate () {

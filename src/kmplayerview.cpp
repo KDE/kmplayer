@@ -697,7 +697,6 @@ void KMPlayerView::timerEvent (QTimerEvent * e) {
     bool mouse_on_buttons = (//m_layer->hasMouse () && 
                              mouse_pos >= vert_buttons_pos-cp_height &&
                              mouse_pos <= vert_buttons_pos);
-    printf("timer event %d %d %d %d %d\n", vert_buttons_pos, mouse_pos, mouse_on_buttons, v->m_buttonbar, (v->m_buttonbar && v->m_buttonbar->isVisible ()));
     if (v->m_buttonbar)
         if (mouse_on_buttons && !v->m_buttonbar->isVisible ())
             v->m_buttonbar->show ();
@@ -799,7 +798,6 @@ void KMPlayerView::fullScreen () {
         m_buttonbar->popupMenu ()->setItemVisible (KMPlayerControlPanel::menu_zoom, true);
     }
     setControlPanelMode (m_old_controlpanel_mode);
-    kdDebug() << "setControlPanelMode: " << (int) m_old_controlpanel_mode << "=>" << m_controlpanel_mode << endl;
     emit fullScreenChanged ();
 }
 

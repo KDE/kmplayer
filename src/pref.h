@@ -98,7 +98,6 @@ public:
     QCheckBox *loop;
     QCheckBox *showRecordButton;
     QCheckBox *showBroadcastButton;
-    QCheckBox *alwaysBuildIndex;
     QCheckBox *framedrop;
 
     QSpinBox *seekTime;

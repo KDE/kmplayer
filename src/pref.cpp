@@ -196,8 +196,6 @@ KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
 	showBroadcastButton = new QCheckBox (i18n ("Show broadcast button"), this);
 	QToolTip::add (showBroadcastButton, i18n ("Add a broadcast button to the control buttons"));
 	//autoHideSlider = new QCheckBox (i18n("Auto hide position slider"), this, 0);
-	alwaysBuildIndex = new QCheckBox ( i18n("Build new index when possible"), this);
-	QToolTip::add(alwaysBuildIndex, i18n("Allows seeking in indexed files (AVIs)"));
 	framedrop = new QCheckBox (i18n ("Allow framedrops"), this);
 	QToolTip::add (framedrop, i18n ("Allow dropping frames for better audio and video synchronization"));
 
@@ -215,7 +213,6 @@ KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
 	layout->addWidget (showRecordButton);
 	layout->addWidget (showBroadcastButton);
 	//layout->addWidget(autoHideSlider);
-	layout->addWidget(alwaysBuildIndex);
 	layout->addItem (new QSpacerItem (0, 5));
 	layout->addWidget(seekingWidget);
         layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));

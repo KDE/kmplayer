@@ -106,7 +106,6 @@ static const char * strDVDDevice = "DVD Device";
 //static const char * strShowDVD = "Show DVD Menu";
 //static const char * strShowVCD = "Show VCD Menu";
 static const char * strVCDDevice = "VCD Device";
-static const char * strAlwaysBuildIndex = "Always build index";
 const char * strUrlBackend = "URL Backend";
 static const char * strAllowHref = "Allow HREF";
 // postproc thingies
@@ -183,7 +182,6 @@ void KMPlayerSettings::readConfig () {
     else
         view->buttonBar ()->recordButton ()->hide ();
     seektime = m_config->readNumEntry (strSeekTime, 10);
-    alwaysbuildindex = m_config->readBoolEntry (strAlwaysBuildIndex, false);
     dvddevice = m_config->readEntry (strDVDDevice, "/dev/dvd");
     vcddevice = m_config->readEntry (strVCDDevice, "/dev/cdrom");
     videodriver = m_config->readNumEntry (strVoDriver, 0);
@@ -276,7 +274,6 @@ void KMPlayerSettings::show (const char * pagename) {
     configdialog->m_GeneralPageGeneral->showConsoleOutput->setChecked (showconsole);
     configdialog->m_GeneralPageGeneral->loop->setChecked (loop);
     configdialog->m_GeneralPageGeneral->framedrop->setChecked (framedrop);
-    configdialog->m_GeneralPageGeneral->alwaysBuildIndex->setChecked (alwaysbuildindex);
     //configdialog->m_GeneralPageGeneral->autoHideSlider->setChecked (autohideslider);
     //configdialog->addConfigButton->setChecked (showcnfbutton);	//not
     configdialog->m_GeneralPageGeneral->showRecordButton->setChecked (showrecordbutton);
@@ -368,7 +365,6 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strAoDriver, audiodriver);
     m_config->writeEntry (strUrlBackend, urlbackend);
     m_config->writeEntry (strAllowHref, allowhref);
-    m_config->writeEntry (strAlwaysBuildIndex, alwaysbuildindex);
     m_config->writeEntry (strAddConfigButton, showcnfbutton);
     m_config->writeEntry (strAddRecordButton, showrecordbutton);
     m_config->writeEntry (strAddBroadcastButton, showbroadcastbutton);
@@ -486,7 +482,6 @@ void KMPlayerSettings::okPressed () {
     m_player->keepMovieAspect (sizeratio);
     showconsole = configdialog->m_GeneralPageGeneral->showConsoleOutput->isChecked ();
     view->setShowConsoleOutput (showconsole);
-    alwaysbuildindex = configdialog->m_GeneralPageGeneral->alwaysBuildIndex->isChecked();
     loop = configdialog->m_GeneralPageGeneral->loop->isChecked ();
     framedrop = configdialog->m_GeneralPageGeneral->framedrop->isChecked ();
     //showcnfbutton = configdialog->m_GeneralPageGeneral->addConfigButton->isChecked ();

@@ -86,7 +86,6 @@ public:
     bool showrecordbutton : 1;
     bool showbroadcastbutton : 1;
     bool autohideslider : 1;
-    bool alwaysbuildindex : 1;
     bool mplayerpost090 : 1;
     bool allowhref : 1;
 // postproc thingies

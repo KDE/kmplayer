@@ -57,15 +57,12 @@ public:
     virtual ~KMPlayerURLSource ();
 
     virtual bool hasLength ();
-    virtual void setIdentified (bool b = true);
     virtual QString prettyName ();
     virtual void setURL (const KURL & url);
 public slots:
     virtual void init ();
     virtual void activate ();
     virtual void deactivate ();
-private:
-    void buildArguments ();
 };
 
 

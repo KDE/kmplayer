@@ -31,6 +31,8 @@
 #include <qspinbox.h>
 #include <qlabel.h>
 #include <qdom.h>
+#include <qtooltip.h>
+#include <qfontmetrics.h>
 
 #include <dcopobject.h>
 #include <dcopclient.h>
@@ -260,6 +262,10 @@ bool MPlayer::play () {
                 (QFileInfo (m_source->url ().path ()).dirPath (true));
         if (url.isLocalFile ()) {
             m_url = url.path ();
+            if (m_configpage->alwaysbuildindex &&
+                    (m_url.lower ().endsWith (".avi") ||
+                     m_url.lower ().endsWith (".divx")))
+                args += QString (" -idx ");
         } else {
             int cache = m_configpage->cachesize;
             if (url.protocol () != QString ("dvd") &&
@@ -398,10 +404,6 @@ bool MPlayer::run (const char * args, const char * pipe) {
         *m_process << " -framedrop";
     }
 
-    /*if (!settings->audiodriver.contains("default", false)){
-      printf (" -ao %s", settings->audiodriver.lower().latin1());
-     *m_process << " -ao " << settings->audiodriver.lower().latin1();
-     }*/
     if (m_configpage->additionalarguments.length () > 0) {
         printf (" %s", m_configpage->additionalarguments.ascii());
         *m_process << " " << m_configpage->additionalarguments;
@@ -578,6 +580,8 @@ extern const char * strMPlayerGroup;
 static const char * strMPlayerPatternGroup = "MPlayer Output Matching";
 static const char * strAddArgs = "Additional Arguments";
 static const char * strCacheSize = "Cache Size for Streaming";
+static const char * strAlwaysBuildIndex = "Always build index";
+static const int non_patterns = 3;
 
 static struct MPlayerPattern {
     QString caption;
@@ -602,36 +606,34 @@ class MPlayerPreferencesFrame : public QFrame {
 public:
     MPlayerPreferencesFrame (QWidget * parent);
     QTable * table;
-    QLineEdit * additionalArguments;
-    QSpinBox * cacheSize;
 };
 
 MPlayerPreferencesFrame::MPlayerPreferencesFrame (QWidget * parent)
  : QFrame (parent) {
-    QVBoxLayout * layout = new QVBoxLayout (this, 5);
-    layout->addWidget(new QLabel (i18n("Additional command line arguments:"),this));
-    additionalArguments = new QLineEdit(this);
-    layout->addWidget(additionalArguments);
-    QHBoxLayout * cacheLayout = new QHBoxLayout (layout);
-    cacheLayout->addWidget (new QLabel (i18n ("Cache size:"), this));
-    cacheSize = new QSpinBox (0, 32767, 32, this);
-    cacheLayout->addWidget (cacheSize);
-    cacheLayout->addWidget (new QLabel (i18n ("kB"), this));
-    QFrame * line = new QFrame (this);
-    line->setFrameShape (QFrame::HLine);
-    layout->addWidget (line);
-    QLabel * patternLabel = new QLabel (i18n ("Output Pattern Matching"), this);
-    layout->addWidget (patternLabel);
-    table = new QTable (int (MPlayerPreferencesPage::pat_last), 2, this);
+    QVBoxLayout * layout = new QVBoxLayout (this);
+    table = new QTable (int (MPlayerPreferencesPage::pat_last)+non_patterns, 2, this);
     table->verticalHeader ()->hide ();
     table->setLeftMargin (0);
     table->horizontalHeader ()->hide ();
     table->setTopMargin (0);
     table->setColumnReadOnly (0, true);
-    table->setColumnWidth (0, 250);
-    table->setColumnStretchable (1, true);
+    table->setText (0, 0, i18n ("Additional command line arguments:"));
+    table->setText (1, 0, QString("%1 (%2)").arg (i18n ("Cache size:")).arg (i18n ("kB"))); // FIXME for new translations
+    table->setCellWidget (1, 1, new QSpinBox (0, 32767, 32, table));
+    table->setText (2, 0, i18n ("Build new index when possible"));
+    table->setCellWidget (2, 1, new QCheckBox (table));
+    QToolTip::add (table->cellWidget (2, 1), i18n ("Allows seeking in indexed files (AVIs)"));
     for (int i = 0; i < int (MPlayerPreferencesPage::pat_last); i++)
-        table->setText (i, 0, _mplayer_patterns[i].caption);
+        table->setText (i+non_patterns, 0, _mplayer_patterns[i].caption);
+    QFontMetrics metrics (table->font ());
+    int first_column_width = 50;
+    for (int i = 0; i < int (MPlayerPreferencesPage::pat_last+non_patterns); i++) {
+        int strwidth = metrics.boundingRect (table->text (i, 0)).width ();
+        if (strwidth > first_column_width)
+            first_column_width = strwidth + 4;
+    }
+    table->setColumnWidth (0, first_column_width);
+    table->setColumnStretchable (1, true);
     layout->addWidget (table);
 }
 
@@ -647,6 +649,7 @@ void MPlayerPreferencesPage::write (KConfig * config) {
     config->setGroup (strMPlayerGroup);
     config->writeEntry (strAddArgs, additionalarguments);
     config->writeEntry (strCacheSize, cachesize);
+    config->writeEntry (strAlwaysBuildIndex, alwaysbuildindex);
 }
 
 void MPlayerPreferencesPage::read (KConfig * config) {
@@ -657,21 +660,26 @@ void MPlayerPreferencesPage::read (KConfig * config) {
     config->setGroup (strMPlayerGroup);
     additionalarguments = config->readEntry (strAddArgs);
     cachesize = config->readNumEntry (strCacheSize, 0);
+    alwaysbuildindex = config->readBoolEntry (strAlwaysBuildIndex, false);
 }
 
 void MPlayerPreferencesPage::sync (bool fromUI) {
     QTable * table = m_configframe->table;
+    QSpinBox * cacheSize = static_cast<QSpinBox *>(table->cellWidget (1, 1));
+    QCheckBox * buildIndex = static_cast<QCheckBox *>(table->cellWidget (2, 1));
     if (fromUI) {
+        additionalarguments = table->text (0, 1);
         for (int i = 0; i < int (pat_last); i++)
-            m_patterns[i].setPattern (table->text (i, 1));
-        additionalarguments = m_configframe->additionalArguments->text();
-        cachesize = m_configframe->cacheSize->value();
+            m_patterns[i].setPattern (table->text (i+non_patterns, 1));
+        cachesize = cacheSize->value();
+        alwaysbuildindex = buildIndex->isChecked ();
     } else {
+        table->setText (0, 1, additionalarguments);
         for (int i = 0; i < int (pat_last); i++)
-            table->setText (i, 1, m_patterns[i].pattern ());
+            table->setText (i+non_patterns, 1, m_patterns[i].pattern ());
         if (cachesize > 0)
-            m_configframe->cacheSize->setValue(cachesize);
-        m_configframe->additionalArguments->setText (additionalarguments);
+            cacheSize->setValue(cachesize);
+        buildIndex->setChecked (alwaysbuildindex);
     }
 }
 
@@ -1004,6 +1012,7 @@ void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
         if (m_configframe->table->numCols () < 1) { // not yet created
             QString err;
             int line, column;
+            int first_column_width = 50;
             if (!dom.setContent (data, false, &err, &line, &column)) {
                 kdDebug () << "Config data error " << err << " l:" << line << " c:" << column << endl;
                 return;
@@ -1019,8 +1028,7 @@ void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
             table->horizontalHeader ()->hide ();
             table->setTopMargin (0);
             table->setColumnReadOnly (0, true);
-            table->setColumnWidth (0, 250);
-            table->setColumnWidth (1, 250);
+            QFontMetrics metrics (table->font ());
             // set up the table fields
             for (QDomNode node = dom.firstChild().firstChild(); !node.isNull (); node = node.nextSibling (), row++) {
                 QDomNamedNodeMap attr = node.attributes ();
@@ -1028,6 +1036,9 @@ void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
                 QDomNode t = attr.namedItem (atttype);
                 if (!n.isNull () && !t.isNull ()) {
                     m_configframe->table->setText (row, 0, n.nodeValue ());
+                    int strwid = metrics.boundingRect (n.nodeValue ()).width ();
+                    if (strwid > first_column_width)
+                        first_column_width = strwid + 4;
                     if (t.nodeValue () == valnum || t.nodeValue () == valstring) {
                         QString v = attr.namedItem (attvalue).nodeValue ();
                         table->setText (row, 1, v);
@@ -1052,6 +1063,8 @@ void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
                     }
                 }
             }
+            table->setColumnWidth (0, first_column_width);
+            table->setColumnStretchable (1, true);
         }
     }
 }
@@ -1098,7 +1111,7 @@ bool Xine::play () {
     QString cbname;
     cbname.sprintf ("%s/%s", QString (kapp->dcopClient ()->appId ()).ascii (),
                              QString (m_callback->objId ()).ascii ());
-    QString xine_config = locateLocal ("data", "kmplayer/") + QString ("xine_config");
+    QString xine_config = KProcess::quote (QString (QFile::encodeName (locateLocal ("data", "kmplayer/") + QString ("xine_config"))));
     if (m_have_config == config_probe || m_send_config == send_new) {
         initProcess ();
         printf ("kxineplayer -wid %lu", (unsigned long) widget ());

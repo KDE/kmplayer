@@ -154,6 +154,7 @@ public:
     QRegExp m_patterns[pat_last];
     int cachesize;
     QString additionalarguments;
+    bool alwaysbuildindex;
 private:
     MPlayer * m_process;
     MPlayerPreferencesFrame * m_configframe;
