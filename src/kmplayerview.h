@@ -97,6 +97,7 @@ class ViewLayer : public QWidget {
 public:
     ViewLayer (QWidget * parent, View * view);
     bool isFullScreen () const { return m_fullscreen; }
+    KActionCollection * actionCollection () const { return m_collection; }
 public slots:
     void fullScreen ();
     void accelActivated ();
@@ -146,6 +147,7 @@ public:
     KDE_NO_EXPORT PlayListView * playList () const { return m_playlist; }
     KDE_NO_EXPORT QWidgetStack * widgetStack () const { return m_widgetstack; }
     KDE_NO_EXPORT KDockArea * docArea () const { return m_dockarea; }
+    KDE_NO_EXPORT ViewLayer * fullScreenWidget () const { return m_layer; }
     KDE_NO_EXPORT bool keepSizeRatio () const { return m_keepsizeratio; }
     KDE_NO_EXPORT void setKeepSizeRatio (bool b) { m_keepsizeratio = b; }
     void showWidget (WidgetType w);
@@ -153,7 +155,6 @@ public:
     //void setAutoHideSlider (bool b);
     KDE_NO_EXPORT ControlPanelMode controlPanelMode () const { return m_controlpanel_mode; }
     void delayedShowButtons (bool show);
-    void addFullscreenAction (const QString &, const KShortcut &, QObject *, const char *, const char *);
     bool isFullScreen () const;
     bool setPicture (const QString & path);
     QPixmap * image () const { return m_image; }

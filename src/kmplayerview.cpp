@@ -1030,14 +1030,6 @@ void View::addText (const QString & str, bool eol) {
     m_multiedit->setCursorPosition (m_multiedit->paragraphs () - 1, 0);
 }
 
-void View::addFullscreenAction (const QString & title, const KShortcut & c, QObject * o, const char * s, const char * name) {
-    KAction * action = m_layer->m_collection->action (name);
-    if (action) {
-        action->unplug (m_layer);
-        delete action;
-    }
-    new KAction (title, c, o, s, m_layer->m_collection, name);
-}
 /* void View::print (QPrinter *pPrinter)
 {
     QPainter printpainter;

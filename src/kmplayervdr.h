@@ -116,24 +116,24 @@ private slots:
 protected:
     void timerEvent (QTimerEvent *);
 private:
+    enum {
+        act_up = 0, act_down, act_back, act_ok,
+        act_setup, act_channels, act_menu,
+        act_red, act_green, act_yellow, act_blue,
+        act_0, act_1, act_2, act_3, act_4, act_5, act_6, act_7, act_8, act_9,
+#if KDE_IS_VERSION(3, 1, 90)
+        act_custom,
+#endif
+        act_last
+    };
     void queueCommand (const char * cmd);
     void queueCommand (const char * cmd, int repeat_ms);
     void sendCommand ();
     void deleteCommands ();
     KMPlayerApp * m_app;
     KMPlayerPrefSourcePageVDR * m_configpage;
-    KAction * act_up;
-    KAction * act_down;
-    KAction * act_back;
-    KAction * act_ok;
-    KAction * act_setup;
-    KAction * act_channels;
-    KAction * act_menu;
-    KAction * act_red;
-    KAction * act_green;
-    KAction * act_yellow;
-    KAction * act_blue;
-    KAction * act_custom;
+    KAction * m_actions [act_last];
+    KAction * m_fullscreen_actions [act_last];
     QSocket * m_socket;
     VDRCommand * commands;
     int channel_timer;

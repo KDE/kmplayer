@@ -126,13 +126,13 @@ KDE_NO_CDTOR_EXPORT KMPlayerVDRSource::KMPlayerVDRSource (KMPlayerApp * app)
  : KMPlayer::Source (QString ("VDR"), app->player (), "vdrsource"),
    m_app (app),
    m_configpage (0),
-   act_custom  (0L),
    m_socket (new QSocket (this)), 
    commands (0L),
    channel_timer (0),
    timeout_timer (0),
    tcp_port (0),
    m_stored_volume (0) {
+    memset (m_actions, 0, sizeof (KAction *) * int (act_last));
     m_player->settings ()->addPage (this);
     connect (m_socket, SIGNAL (connectionClosed()), this, SLOT(disconnected()));
     connect (m_socket, SIGNAL (connected ()), this, SLOT (connected ()));
@@ -205,7 +205,11 @@ KDE_NO_EXPORT void KMPlayerVDRSource::processStarted () {
     m_socket->connectToHost ("127.0.0.1", tcp_port);
     commands = new VDRCommand ("connect", commands);
 }
-    
+
+#define DEF_ACT(i,text,pix,scut,slot,name) \
+    m_actions [i] = new KAction (text, QString (pix), KShortcut (scut), this, slot, m_app->actionCollection (), name); \
+    m_fullscreen_actions [i] = new KAction (text, KShortcut (scut), this, slot, m_app->view ()->fullScreenWidget ()->actionCollection (), name)
+
 KDE_NO_EXPORT void KMPlayerVDRSource::connected () {
     queueCommand (cmd_list_channels);
     queueCommand (cmd_volume_query);
@@ -214,45 +218,39 @@ KDE_NO_EXPORT void KMPlayerVDRSource::connected () {
     KAction * action = m_app->actionCollection ()->action ("vdr_connect");
     action->setIcon (QString ("connect_no"));
     action->setText (i18n ("Dis&connect"));
-    KMPlayer::View * view = static_cast <KMPlayer::View *> (m_player->view ());
-    act_up = new KAction (i18n ("VDR Key Up"), QString ("up"), KShortcut (), this, SLOT (keyUp ()), m_app->actionCollection (),"vdr_key_up");
-    act_down = new KAction (i18n ("VDR Key Down"), QString ("down"), KShortcut (), this, SLOT (keyDown ()), m_app->actionCollection (), "vdr_key_down");
-    act_back = new KAction (i18n ("VDR Key Back"), QString ("back"), KShortcut (), this, SLOT (keyBack ()), m_app->actionCollection (),"vdr_key_back");
-    act_ok = new KAction (i18n ("VDR Key Ok"), QString ("ok"), KShortcut (), this, SLOT (keyOk ()), m_app->actionCollection (),"vdr_key_ok");
-    act_setup = new KAction (i18n ("VDR Key Setup"), QString ("configure"), KShortcut (), this, SLOT (keySetup ()), m_app->actionCollection (),"vdr_key_setup");
-    act_channels = new KAction (i18n ("VDR Key Channels"), QString ("player_playlist"), KShortcut (), this, SLOT (keyChannels ()), m_app->actionCollection (),"vdr_key_channels");
-    act_menu = new KAction (i18n ("VDR Key Menu"), QString ("showmenu"), KShortcut (), this, SLOT (keyMenu ()), m_app->actionCollection (),"vdr_key_menu");
-    act_red = new KAction (i18n ("VDR Key Red"), QString ("red"), KShortcut (), this, SLOT (keyRed ()), m_app->actionCollection (),"vdr_key_red");
-    act_green = new KAction (i18n ("VDR Key Green"), QString ("green"), KShortcut (), this, SLOT (keyGreen ()), m_app->actionCollection (),"vdr_key_green");
-    act_yellow = new KAction (i18n ("VDR Key Yellow"), QString ("yellow"), KShortcut(), this, SLOT (keyYellow ()), m_app->actionCollection (),"vdr_key_yellow");
-    act_blue = new KAction (i18n ("VDR Key Blue"), QString ("blue"), KShortcut (), this, SLOT (keyBlue ()), m_app->actionCollection (),"vdr_key_blue");
+    DEF_ACT (act_up, i18n ("VDR Key Up"), "up", , SLOT (keyUp ()), "vdr_key_up");
+    DEF_ACT (act_down, i18n ("VDR Key Down"), "down", , SLOT (keyDown ()), "vdr_key_down");
+    DEF_ACT (act_back, i18n ("VDR Key Back"), "back", , SLOT (keyBack ()), "vdr_key_back");
+    DEF_ACT (act_ok, i18n ("VDR Key Ok"), "ok", , SLOT (keyOk ()), "vdr_key_ok");
+    DEF_ACT (act_setup, i18n ("VDR Key Setup"), "configure", , SLOT (keySetup ()), "vdr_key_setup");
+    DEF_ACT (act_channels, i18n ("VDR Key Channels"), "player_playlist", , SLOT (keyChannels ()), "vdr_key_channels");
+    DEF_ACT (act_menu, i18n ("VDR Key Menu"), "showmenu", , SLOT (keyMenu ()), "vdr_key_menu");
+    DEF_ACT (act_red, i18n ("VDR Key Red"), "red", , SLOT (keyRed ()), "vdr_key_red");
+    DEF_ACT (act_green, i18n ("VDR Key Green"), "green", , SLOT (keyGreen ()), "vdr_key_green");
+    DEF_ACT (act_yellow, i18n ("VDR Key Yellow"), "yellow", , SLOT (keyYellow ()), "vdr_key_yellow");
+    DEF_ACT (act_blue, i18n ("VDR Key Blue"), "blue", , SLOT (keyBlue ()), "vdr_key_blue");
 #if KDE_IS_VERSION(3, 1, 90)
-    act_custom = new KAction (i18n("VDR Custom Command"), QString("exec"), KShortcut(), this, SLOT (customCmd ()), m_app->actionCollection (),"vdr_key_custom");
+    DEF_ACT (act_custom, "VDR Custom Command", "exec", , SLOT (customCmd ()), "vdr_key_custom");
 #endif
-    m_app->createGUI ();
-    m_app->initMenu ();
-    view->addFullscreenAction (i18n ("VDR Key Up"), act_up->shortcut (), this, SLOT (keyUp ()), "vdr_key_up");
-    view->addFullscreenAction (i18n ("VDR Key Down"), act_down->shortcut (), this, SLOT (keyDown ()), "vdr_key_down");
-    view->addFullscreenAction (i18n ("VDR Key Ok"), act_ok->shortcut (), this, SLOT (keyOk ()), "vdr_key_ok");
-    view->addFullscreenAction (i18n ("VDR Key Back"), act_back->shortcut (), this, SLOT (keyBack ()), "vdr_key_back");
-    view->addFullscreenAction (i18n ("VDR Key Setup"), act_setup->shortcut (), this, SLOT (keySetup ()), "vdr_key_setup");
-    view->addFullscreenAction (i18n ("VDR Key Channels"), act_channels->shortcut (), this, SLOT (keyChannels ()), "vdr_key_channels");
-    view->addFullscreenAction (i18n ("VDR Key Menu"), act_menu->shortcut (), this, SLOT (keyMenu ()), "vdr_key_menu");
-    view->addFullscreenAction (i18n ("VDR Key 0"), KShortcut (Qt::Key_0), this, SLOT (key0 ()), "vdr_key_0");
-    view->addFullscreenAction (i18n ("VDR Key 1"), KShortcut (Qt::Key_1), this, SLOT (key1 ()), "vdr_key_1");
-    view->addFullscreenAction (i18n ("VDR Key 2"), KShortcut (Qt::Key_2), this, SLOT (key2 ()), "vdr_key_2");
-    view->addFullscreenAction (i18n ("VDR Key 3"), KShortcut (Qt::Key_3), this, SLOT (key3 ()), "vdr_key_3");
-    view->addFullscreenAction (i18n ("VDR Key 4"), KShortcut (Qt::Key_4), this, SLOT (key4 ()), "vdr_key_4");
-    view->addFullscreenAction (i18n ("VDR Key 5"), KShortcut (Qt::Key_5), this, SLOT (key5 ()), "vdr_key_5");
-    view->addFullscreenAction (i18n ("VDR Key 6"), KShortcut (Qt::Key_6), this, SLOT (key6 ()), "vdr_key_6");
-    view->addFullscreenAction (i18n ("VDR Key 7"), KShortcut (Qt::Key_7), this, SLOT (key7 ()), "vdr_key_7");
-    view->addFullscreenAction (i18n ("VDR Key 8"), KShortcut (Qt::Key_8), this, SLOT (key8 ()), "vdr_key_8");
-    view->addFullscreenAction (i18n ("VDR Key 9"), KShortcut (Qt::Key_9), this, SLOT (key9 ()), "vdr_key_9");
-    view->addFullscreenAction (i18n ("VDR Key Red"), act_red->shortcut (), this, SLOT (keyRed ()), "vdr_key_red");
-    view->addFullscreenAction (i18n ("VDR Key Green"), act_green->shortcut (), this, SLOT (keyGreen ()), "vdr_key_green");
-    view->addFullscreenAction (i18n ("VDR Key Yellow"), act_yellow->shortcut (), this, SLOT (keyYellow ()), "vdr_key_yellow");
-    view->addFullscreenAction (i18n ("VDR Key Blue"), act_blue->shortcut (), this, SLOT (keyBlue ()), "vdr_key_blue");
+    m_app->initMenu (); // update menu and toolbar
+    DEF_ACT (act_0, i18n ("VDR Key 0"), "0", Qt::Key_0, SLOT (key0 ()), "vdr_key_0");
+    DEF_ACT (act_1, i18n ("VDR Key 1"), "1", Qt::Key_1, SLOT (key1 ()), "vdr_key_1");
+    DEF_ACT (act_2, i18n ("VDR Key 2"), "2", Qt::Key_2, SLOT (key2 ()), "vdr_key_2");
+    DEF_ACT (act_3, i18n ("VDR Key 3"), "3", Qt::Key_3, SLOT (key3 ()), "vdr_key_3");
+    DEF_ACT (act_4, i18n ("VDR Key 4"), "4", Qt::Key_4, SLOT (key4 ()), "vdr_key_4");
+    DEF_ACT (act_5, i18n ("VDR Key 5"), "5", Qt::Key_5, SLOT (key5 ()), "vdr_key_5");
+    DEF_ACT (act_6, i18n ("VDR Key 6"), "6", Qt::Key_6, SLOT (key6 ()), "vdr_key_6");
+    DEF_ACT (act_7, i18n ("VDR Key 7"), "7", Qt::Key_7, SLOT (key7 ()), "vdr_key_7");
+    DEF_ACT (act_8, i18n ("VDR Key 8"), "8", Qt::Key_8, SLOT (key8 ()), "vdr_key_8");
+    DEF_ACT (act_9, i18n ("VDR Key 9"), "9", Qt::Key_9, SLOT (key9 ()), "vdr_key_9");
+    //KMPlayer::ViewLayer * layer = m_app->view ()->fullScreenWidget ();
+    for (int i = 0; i < int (act_last); ++i)
+        // somehow, the configured shortcuts only show up after createGUI() call
+        m_fullscreen_actions [i]->setShortcut (m_actions [i]->shortcut ());
+    //    m_fullscreen_actions[i]->plug (layer);
 }
+
+#undef DEF_ACT
 
 KDE_NO_EXPORT void KMPlayerVDRSource::disconnected () {
     kdDebug() << "disconnected " << commands << endl;
@@ -263,20 +261,13 @@ KDE_NO_EXPORT void KMPlayerVDRSource::disconnected () {
     KAction * action = m_app->actionCollection ()->action ("vdr_connect");
     action->setIcon (QString ("connect_established"));
     action->setText (i18n ("&Connect"));
-    m_app->guiFactory ()->removeClient (m_app);
-    delete (act_up);
-    delete (act_down);   
-    delete (act_back);
-    delete (act_ok);
-    delete (act_setup);
-    delete (act_channels);
-    delete (act_menu);
-    delete (act_red);
-    delete (act_green);
-    delete (act_yellow);
-    delete (act_blue);
-    delete (act_custom);
-    m_app->createGUI ();
+    m_app->guiFactory ()->removeClient (m_app);// crash w/ m_actions[i]->unplugAll (); in for loop below
+    for (int i = 0; i < int (act_last); ++i)
+        if (m_player->view () && m_actions[i]) {
+            m_fullscreen_actions[i]->unplug (m_app->view()->fullScreenWidget());
+            delete m_actions[i];
+            delete m_fullscreen_actions[i];
+        }
     m_app->initMenu ();
 }
 

@@ -156,9 +156,6 @@ KDE_NO_EXPORT void KMPlayerApp::initActions()
     viewStatusBar->setStatusText(i18n("Enables/disables the statusbar"));
     viewMenuBar->setStatusText(i18n("Enables/disables the menubar"));
     KStdAction::keyBindings( this, SLOT( slotConfigureKeys() ), actionCollection() );
-
-// use the absolute path to your kmplayerui.rc file for testing purpose in createGUI();
-    createGUI();
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotConfigureKeys()
@@ -173,6 +170,7 @@ KDE_NO_EXPORT void KMPlayerApp::initStatusBar()
 }
 
 KDE_NO_EXPORT void KMPlayerApp::initMenu () {
+    createGUI (); // first build the one from the kmplayerui.rc
     QPopupMenu * bookmarkmenu = m_view->buttonBar()->bookmarkMenu ();
     m_view->buttonBar()->popupMenu ()->removeItem (KMPlayer::ControlPanel::menu_bookmark);
     menuBar ()->insertItem (i18n ("&Bookmarks"), bookmarkmenu, -1, 2);
