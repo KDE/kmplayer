@@ -217,6 +217,7 @@ void KXVideoPlayer::init () {
                     (ai[i].type & XvVideoMask) &&
                     ai[i].base_id > 0) {
                 int port = ai[i].base_id;
+                fprintf (stderr, "xvport %d\n", port);
                 bool freq_found = false;
                 XvAttribute *attributes = 0L;
                 int nr_attr, cur_val;
@@ -259,6 +260,7 @@ void KXVideoPlayer::init () {
                             item.setAttribute (attvalue, QString::number (encodings[i].encoding_id));
                             item.setAttribute (attname, QString (encodings[i].name));
                             port_item.appendChild (item);
+                            fprintf (stderr, " encoding: %d %s\n", encodings[i].encoding_id, encodings[i].name);
                         }
                     }
                     elm.appendChild (port_item);

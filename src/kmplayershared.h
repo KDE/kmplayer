@@ -23,8 +23,12 @@
 #ifndef _SHAREDPTR_H_
 #define _SHAREDPTR_H_
 
-// #define SHAREDPTR_DEBUG
-// static int shared_data_count;
+//#define SHAREDPTR_DEBUG
+
+#ifdef SHAREDPTR_DEBUG
+extern int shared_data_count;
+#include <iostream>
+#endif
 
 template <class T>
 struct SharedData {

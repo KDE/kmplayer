@@ -53,6 +53,7 @@ namespace KMPlayer {
 class View;
 class Viewer;
 class ControlPanel;
+class VolumeBar;
 class Console;
 class PlayListView;
 
@@ -238,6 +239,25 @@ protected:
     void enterEvent (QEvent *);
 };
 
+class VolumeBar : public QWidget {
+    Q_OBJECT
+public:
+    VolumeBar (QWidget * parent, View * view);
+    ~VolumeBar ();
+    KDE_NO_EXPORT int value () const { return m_value; }
+    void setValue (int v);
+signals:
+    void volumeChanged (int); // 0 - 100
+protected:
+    void wheelEvent (QWheelEvent * e);
+    void paintEvent (QPaintEvent *);
+    void mousePressEvent (QMouseEvent * e);
+    void mouseMoveEvent (QMouseEvent * e);
+private:
+    View * m_view;
+    int m_value;
+};
+
 class KMPLAYER_EXPORT ControlPanel : public QWidget {
 public:
     enum MenuID {
@@ -269,6 +289,7 @@ public:
     KDE_NO_EXPORT QSlider * saturationSlider () const { return m_saturationSlider; }
     QPushButton * button (Button b) const { return m_buttons [(int) b]; }
     KDE_NO_EXPORT QPushButton * broadcastButton () const { return m_buttons[button_broadcast]; }
+    KDE_NO_EXPORT VolumeBar * volumeBar () const { return m_volume; }
     KDE_NO_EXPORT KMPlayerPopupMenu * popupMenu () const { return m_popupMenu; }
     KDE_NO_EXPORT KPopupMenu * bookmarkMenu () const { return m_bookmarkMenu; }
     KDE_NO_EXPORT QPopupMenu * zoomMenu () const { return m_zoomMenu; }
@@ -286,6 +307,7 @@ private:
     QSlider * m_hueSlider;
     QSlider * m_saturationSlider;
     QPushButton * m_buttons [button_last];
+    VolumeBar * m_volume;
     KMPlayerPopupMenu * m_popupMenu;
     KMPlayerPopupMenu * m_bookmarkMenu;
     KMPlayerPopupMenu * m_viewMenu;

@@ -191,7 +191,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                 } else if (val_lower == QString::fromLatin1("mutectrl") ||
                         val_lower == QString::fromLatin1("mutevolume")) {
                     panel->setAutoControls (false);
-                    panel->button (KMPlayer::ControlPanel::button_config)->show (); // TODO: add a mute
+                    panel->volumeBar()->setMinimumSize (QSize (20, panel->volumeBar()->minimumSize ().height ()));
+                    panel->volumeBar()->show ();
                     m_features = Feat_Controls;
                 } else if (val_lower == QString::fromLatin1("rwctrl")) {
                     panel->setAutoControls (false);
@@ -220,6 +221,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                     m_features = Feat_InfoPanel;
                 } else if (val_lower == QString::fromLatin1("volumeslider")) {
                     m_features = Feat_VolumeSlider;
+                    panel->setAutoControls (false);
+                    panel->volumeBar()->show ();
+                    panel->volumeBar()->setMinimumSize (QSize (20, panel->volumeBar()->minimumSize ().height ()));
                 }
             } else if (name == QString::fromLatin1("nolabels")) {
                 m_features &= ~Feat_Label;
@@ -247,7 +251,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     panel->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom150,
                                       this, SLOT (setMenuZoom (int)));
 
-    if (m_features & Feat_Controls)
+    if (m_features & (Feat_Controls | Feat_VolumeSlider))
         m_view->setControlPanelMode (KMPlayer::View::CP_Show);
     else if (m_features != Feat_Unknown)
         m_view->setControlPanelMode (KMPlayer::View::CP_Hide);

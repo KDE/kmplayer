@@ -79,7 +79,9 @@ public slots:
     virtual bool pause ();
     /* seek (pos, abs) seek positon in deci-seconds */
     virtual bool seek (int pos, bool absolute);
+    /* volume from 0 to 100 */
     virtual bool volume (int pos, bool absolute);
+    /* saturation/hue/contrast/brightness from -100 to 100 */
     virtual bool saturation (int pos, bool absolute);
     virtual bool hue (int pos, bool absolute);
     virtual bool contrast (int pos, bool absolute);
@@ -152,6 +154,7 @@ private:
     QWidget * m_widget;
     MPlayerPreferencesPage * m_configpage;
     QString m_tmpURL;
+    int old_volume;
 };
 
 class MPlayerPreferencesPage : public PreferencesPage {
@@ -242,6 +245,7 @@ public slots:
     bool quit ();
     bool pause ();
     bool seek (int pos, bool absolute);
+    bool volume (int pos, bool absolute);
     bool saturation (int pos, bool absolute);
     bool hue (int pos, bool absolute);
     bool contrast (int pos, bool absolute);

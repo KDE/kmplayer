@@ -21,6 +21,10 @@
 
 #include "kmplayerplaylist.h"
 
+#ifdef SHAREDPTR_DEBUG
+int shared_data_count;
+#endif
+
 using namespace KMPlayer;
 
 static Element * fromXMLDocumentGroup (ElementPtr & d, const QString & tag) {

@@ -166,12 +166,14 @@ void PartBase::init (KActionCollection * action_collection) {
     panel->brightnessSlider ()->setValue (m_settings->brightness);
     panel->hueSlider ()->setValue (m_settings->hue);
     panel->saturationSlider ()->setValue (m_settings->saturation);
+    panel->volumeBar ()->setValue (m_settings->volume);
     connect (panel->button (ControlPanel::button_back), SIGNAL (clicked ()), this, SLOT (back ()));
     connect (panel->button (ControlPanel::button_play), SIGNAL (clicked ()), this, SLOT (play ()));
     connect (panel->button (ControlPanel::button_forward), SIGNAL (clicked ()), this, SLOT (forward ()));
     connect (panel->button (ControlPanel::button_pause), SIGNAL (clicked ()), this, SLOT (pause ()));
     connect (panel->button (ControlPanel::button_stop), SIGNAL (clicked ()), this, SLOT (stop ()));
     connect (panel->button (ControlPanel::button_record), SIGNAL (clicked()), this, SLOT (record()));
+    connect (panel->volumeBar (), SIGNAL (volumeChanged (int)), this, SLOT (volumeChanged (int)));
     connect (panel->positionSlider (), SIGNAL (valueChanged (int)), this, SLOT (positionValueChanged (int)));
     connect (panel->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
     connect (panel->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
@@ -459,6 +461,8 @@ void PartBase::processStateChange (KMPlayer::Process::State old, KMPlayer::Proce
             m_view->viewer ()->setAspect (src->aspect ());
         m_view->controlPanel ()->showPositionSlider (!!src->length ());
         m_view->controlPanel ()->enableSeekButtons (src->isSeekable ());
+        if (src == m_source)
+           m_process->volume(m_view->controlPanel()->volumeBar()->value(),true);
         emit loading (100);
         emit startPlaying ();
     } else if (state == Process::NotRunning) {
@@ -598,6 +602,13 @@ KDE_NO_EXPORT void PartBase::posSliderReleased () {
 #endif
     if (posSlider)
         m_process->seek (posSlider->value(), true);
+}
+
+KDE_NO_EXPORT void PartBase::volumeChanged (int val) {
+    if (m_process) {
+        m_settings->volume = val;
+        m_process->volume (val, true);
+    }
 }
 
 KDE_NO_EXPORT void PartBase::contrastValueChanged (int val) {

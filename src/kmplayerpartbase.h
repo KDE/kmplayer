@@ -141,6 +141,7 @@ public slots:
     void back ();
     void forward ();
     void addBookMark (const QString & title, const QString & url);
+    void volumeChanged (int);
 public:
     virtual bool isSeekable (void) const;
     virtual unsigned long position (void) const;

@@ -87,6 +87,7 @@ KDE_NO_CDTOR_EXPORT Settings::~Settings () {
 const char * strMPlayerGroup = "MPlayer";
 const char * strGeneralGroup = "General Options";
 static const char * strKeepSizeRatio = "Keep Size Ratio";
+static const char * strVolume = "Volume";
 static const char * strContrast = "Contrast";
 static const char * strBrightness = "Brightness";
 static const char * strHue = "Hue";
@@ -159,6 +160,7 @@ KDE_NO_EXPORT void Settings::readConfig () {
     m_config->setGroup (strGeneralGroup);
     urllist = m_config->readListEntry (strURLList, ';');
     sub_urllist = m_config->readListEntry (strSubURLList, ';');
+    volume = m_config->readNumEntry (strVolume, 0);
     contrast = m_config->readNumEntry (strContrast, 0);
     brightness = m_config->readNumEntry (strBrightness, 0);
     hue = m_config->readNumEntry (strHue, 0);
@@ -378,6 +380,7 @@ void Settings::writeConfig () {
     m_config->setGroup (strGeneralGroup);
     m_config->writeEntry (strURLList, urllist, ';');
     m_config->writeEntry (strSubURLList, sub_urllist, ';');
+    m_config->writeEntry (strVolume, volume);
     m_config->writeEntry (strContrast, contrast);
     m_config->writeEntry (strBrightness, brightness);
     m_config->writeEntry (strHue, hue);

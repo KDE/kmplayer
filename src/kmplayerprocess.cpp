@@ -402,9 +402,10 @@ KDE_NO_EXPORT bool MPlayer::seek (int pos, bool absolute) {
 }
 
 KDE_NO_EXPORT bool MPlayer::volume (int incdec, bool absolute) {
-    if (!absolute)
-        return sendCommand (QString ("volume ") + QString::number (incdec));
-    return false;
+    if (absolute)
+        incdec -= old_volume;
+    old_volume += incdec;
+    return sendCommand (QString ("volume ") + QString::number (incdec));
 }
 
 KDE_NO_EXPORT bool MPlayer::saturation (int val, bool absolute) {
@@ -498,6 +499,8 @@ bool MPlayer::run (const char * args, const char * pipe) {
     }
 
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
+
+    old_volume = view ()->controlPanel()->volumeBar()->value ();
 
     if (m_process->isRunning ()) {
         setState (Buffering); // wait for start regexp for state Playing
@@ -1127,6 +1130,12 @@ bool CallbackProcess::seek (int pos, bool absolute) {
         m_backend->seek (pos, true);
     m_request_seek = pos;
     return true;
+}
+
+bool CallbackProcess::volume (int val, bool b) {
+    if (m_backend)
+        m_backend->volume (val, b);
+    return !!m_backend;
 }
 
 bool CallbackProcess::saturation (int val, bool b) {

@@ -27,6 +27,7 @@
 #include <qlayout.h>
 #include <qpixmap.h>
 #include <qtextedit.h>
+#include <qtooltip.h>
 #include <qapplication.h>
 #include <qiconset.h>
 #include <qaccel.h>
@@ -274,9 +275,6 @@ KDE_NO_EXPORT void ViewLayer::fullScreen () {
         for (unsigned i = 0; i < m_collection->count (); ++i)
             m_collection->action (i)->setEnabled (true);
 
-        //m_accel = new QAccel (this);
-        //int id = m_accel->insertItem (QKeySequence (Qt::Key_Escape));
-        //m_accel->connectItem (id, this, SLOT (accelActivated ()));
     }
     m_fullscreen = !m_fullscreen;
     m_view->controlPanel()->popupMenu ()->setItemChecked (ControlPanel::menu_fullscreen, m_fullscreen);
@@ -364,6 +362,58 @@ KDE_NO_EXPORT void KMPlayerControlButton::enterEvent (QEvent *) {
         
 //-----------------------------------------------------------------------------
 
+KDE_NO_CDTOR_EXPORT VolumeBar::VolumeBar (QWidget * parent, View * view)
+ : QWidget (parent), m_view (view), m_value (100) {
+    setSizePolicy( QSizePolicy (QSizePolicy::Minimum, QSizePolicy::Fixed));
+    setMinimumSize (QSize (51, button_height_only_buttons + 2));
+    QToolTip::add (this, i18n ("Volume is %1").arg (m_value));
+}
+
+KDE_NO_CDTOR_EXPORT VolumeBar::~VolumeBar () {
+}
+
+void VolumeBar::setValue (int v) {
+    m_value = v;
+    if (m_value < 0) m_value = 0;
+    if (m_value > 100) m_value = 100;
+    QToolTip::remove (this);
+    QToolTip::add (this, i18n ("Volume is %1").arg (m_value));
+    repaint (true);
+    emit volumeChanged (m_value);
+}
+
+void VolumeBar::wheelEvent (QWheelEvent * e) {
+    setValue (m_value + (e->delta () > 0 ? 2 : -2));
+    e->accept ();
+}
+
+void VolumeBar::paintEvent (QPaintEvent * e) {
+    QWidget::paintEvent (e);
+    QPainter p;
+    p.begin (this);
+    p.setPen (Qt::black);
+    int w = width () - 6;
+    int vx = m_value * w / 100;
+    p.fillRect (3, 2, vx, 7, Qt::black);
+    p.drawRect (vx + 3, 2, w - vx, 7);
+    p.end ();
+    //kdDebug () << "w=" << w << " vx=" << vx << endl;
+}
+
+void VolumeBar::mousePressEvent (QMouseEvent * e) {
+    setValue (100 * (e->x () - 3) / (width () - 6));
+    e->accept ();
+}
+
+void VolumeBar::mouseMoveEvent (QMouseEvent * e) {
+    if (e->button () == Qt::LeftButton) {
+        setValue (100 * (e->x () - 3) / (width () - 6));
+        e->accept ();
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
  : QWidget (parent),
    m_progress_mode (progress_playing),
@@ -391,6 +441,8 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     m_posSlider->setEnabled (false);
     m_buttonbox->addWidget (m_posSlider);
     showPositionSlider (true);
+    m_volume = new VolumeBar (this, m_view);
+    m_buttonbox->addWidget (m_volume);
     m_popupMenu = new KMPlayerPopupMenu (this);
     m_playerMenu = new KMPlayerPopupMenu (this);
     m_popupMenu->insertItem (i18n ("&Play with"), m_playerMenu, menu_player);
@@ -440,10 +492,14 @@ void ControlPanel::setAutoControls (bool b) {
         for (int i = button_broadcast; i < (int) button_last; i++)
             m_buttons [i]->hide ();
         showPositionSlider (true);
+        m_volume->show ();
+        if (m_buttons [button_broadcast]->isOn ()) // still broadcasting
+            m_buttons [button_broadcast]->show ();
     } else { // hide everything
         for (int i = 0; i < (int) button_last; i++)
             m_buttons [i]->hide ();
         m_posSlider->hide ();
+        m_volume->hide ();
     }
     m_view->updateLayout ();
 }

@@ -71,6 +71,7 @@ public:
 
     QStringList urllist;
     QStringList sub_urllist;
+    int volume;
     int contrast;
     int brightness;
     int hue;
