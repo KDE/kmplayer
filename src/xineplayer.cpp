@@ -688,6 +688,7 @@ bool KXinePlayer::event (QEvent * e) {
         case event_size: {
             XineSizeEvent * se = static_cast <XineSizeEvent *> (e);                
             if (callback) {
+                if (se->length < 0) se->length = 0;
                 callback->movieParams (se->length/100, se->width, se->height, se->height ? 1.0*se->width/se->height : 1.0);
                 if (se->first_frame) {
                     callback->playing ();

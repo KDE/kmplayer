@@ -473,6 +473,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
     KMPlayerView * v = view ();
     if (!v || slen <= 0) return;
 
+    bool ok;
     QRegExp * patterns = m_configpage->m_patterns;
     QRegExp & m_refURLRegExp = patterns[MPlayerPreferencesPage::pat_refurl];
     QRegExp & m_refRegExp = patterns[MPlayerPreferencesPage::pat_ref];
@@ -511,8 +512,11 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
         } else if (!source ()->identified () && out.startsWith ("ID_LENGTH")) {
             int pos = out.find ('=');
             if (pos > 0) {
-                m_source->setLength (len);
-                emit lengthFound (10 * out.mid (pos + 1).toInt());
+                int l = out.mid (pos + 1).toInt (&ok);
+                if (ok && l >= 0) {
+                    m_source->setLength (10 * l);
+                    emit lengthFound (10 * l);
+                }
             }
         } else if (!source ()->identified () && m_refURLRegExp.search (out) > -1) {
             kdDebug () << "Reference mrl " << m_refURLRegExp.cap (1) << endl;
@@ -529,7 +533,6 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
             QRegExp & m_sizeRegExp = patterns[MPlayerPreferencesPage::pat_size];
             v->addText (out + '\n');
             if (!m_source->processOutput (out)) {
-                bool ok;
                 int movie_width = m_source->width ();
                 if (movie_width <= 0 && m_sizeRegExp.search (out) > -1) {
                     movie_width = m_sizeRegExp.cap (1).toInt (&ok);
@@ -1349,7 +1352,6 @@ KDE_NO_EXPORT bool Xine::seek (int pos, bool absolute) {
     if (!absolute)
         pos = m_source->position () + pos;
     m_source->setPosition (pos);
-    kdDebug () << kdBacktrace () << endl;
     if (m_request_seek < 0)
         m_backend->seek (pos, true);
     m_request_seek = pos;
