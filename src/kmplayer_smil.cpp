@@ -389,28 +389,30 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
 }
 
 KDE_NO_EXPORT void TimedRuntime::breakConnection (DurationTime item) {
-    TimedRuntime * tr = dynamic_cast <TimedRuntime *> (durations [(int) item].connection.ptr ());
-    if (tr && durations [(int) item].connection) {
+    RegionSignalerRuntime * rs = dynamic_cast <RegionSignalerRuntime*> (durations [(int) item].connection.ptr ());
+    if (rs && durations [(int) item].connection) {
         switch (durations [(int) item].durval) {
             case duration_element_stopped:
-                disconnect (tr, SIGNAL (elementStopped ()),
-                            this, SLOT (elementHasStopped ()));
+                if (dynamic_cast <TimedRuntime *> (rs))
+                    disconnect (static_cast <TimedRuntime *> (rs),
+                                SIGNAL (elementStopped ()),
+                                this, SLOT (elementHasStopped ()));
                 break;
             case duration_element_activated:
-                disconnect (tr, SIGNAL (activateEvent ()),
+                disconnect (rs, SIGNAL (activateEvent ()),
                             this, SLOT (elementActivateEvent ()));
                 break;
             case duration_element_inbounds:
-                disconnect (tr, SIGNAL (inBoundsEvent ()),
+                disconnect (rs, SIGNAL (inBoundsEvent ()),
                             this, SLOT (elementInBoundsEvent ()));
                 break;
             case duration_element_outbounds:
-                disconnect (tr, SIGNAL (outOfBoundsEvent ()),
+                disconnect (rs, SIGNAL (outOfBoundsEvent ()),
                             this, SLOT (elementOutOfBoundsEvent ()));
                 break;
             default:
                 kdWarning () << "Unknown connection, disconnecting all" << endl;
-                disconnect (tr, 0, this, 0);
+                disconnect (rs, 0, this, 0);
         }
         durations [(int) item].connection = ElementRuntimePtr ();
         durations [(int) item].durval = 0;
