@@ -1013,11 +1013,11 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
         }
     }
     if (!root) {
-        int w, h;
+        int w =0, h = 0;
         smilroot = new SMIL::RootLayout (m_doc);
         appendChild (smilroot->self ());
         if (!region) {
-            w = 20; h = 20; // have something to start with
+            w = 100; h = 100; // have something to start with
             SMIL::Region * r = new SMIL::Region (m_doc);
             appendChild (r->self ());
             region = (new RegionNode (r->self ()))->self;
