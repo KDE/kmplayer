@@ -732,7 +732,7 @@ void KMPlayerView::setForeignViewer (KMPlayerView * other) {
     }
     m_holder->hide ();
     other->m_holder->reparent (m_layer, m_holder->pos (), true);
-    QVBoxLayout * layout = ::qt_cast<QVBoxLayout*>(m_layer->layout());
+    QVBoxLayout * layout = static_cast <QVBoxLayout*> (m_layer->layout ());
     layout->insertWidget (0, other->m_holder);
     layout->activate ();
 }
@@ -793,7 +793,9 @@ KMPlayerViewer::KMPlayerViewer (QWidget *parent, KMPlayerView * view)
                            CWBackPixel | CWBorderPixel | CWColormap, &xswa));*/
     setBackgroundMode (Qt::NoBackground);
     setAcceptDrops (true);
+#if KDE_IS_VERSION(3,1,1)
     setProtocol(QXEmbed::XPLAIN);
+#endif
     embed (XCreateSimpleWindow (qt_xdisplay(), winId (), 0, 0, width(), height(), 1, 0, 0));
 }
 
