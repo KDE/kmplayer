@@ -31,7 +31,6 @@
 #endif
 #include <qapplication.h>
 #include <qcstring.h>
-#include <qregexp.h>
 #include <qcursor.h>
 #include <qtimer.h>
 #include <qmultilineedit.h>
@@ -96,10 +95,9 @@ KMPlayer::KMPlayer (QWidget * parent, KConfig * config)
    m_urlsource (new KMPlayerURLSource (this)),
    m_hrefsource (new KMPlayerHRefSource (this)),
    m_liveconnectextension (0L),
-   movie_width (0),
-   movie_height (0),
    m_autoplay (true),
    m_ispart (false),
+   m_noresize (false),
    m_havehref (false) {
     m_view->init ();
     init();
@@ -118,10 +116,9 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
    m_urlsource (new KMPlayerURLSource (this)),
    m_hrefsource (new KMPlayerHRefSource (this)),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
-   movie_width (0),
-   movie_height (0),
    m_autoplay (true),
    m_ispart (true),
+   m_noresize (false),
    m_havehref (false) {
     printf("MPlayer::KMPlayer ()\n");
     setInstance (KMPlayerFactory::instance ());
@@ -142,10 +139,10 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
             if (name.lower () == "href") {
                 m_urlsource->setURL (KURL (value));
                 m_havehref = true;
-            } else if (name.lower()==QString::fromLatin1("width"))
-                movie_width = value.toInt();
-            else if (name.lower()==QString::fromLatin1("height"))
-                movie_height = value.toInt();
+            } else if (name.lower()==QString::fromLatin1("width")) {
+                m_noresize = true;
+            } else if (name.lower()==QString::fromLatin1("height"))
+                m_noresize = true;
             else if (name.lower()==QString::fromLatin1("autostart"))
                 m_autoplay = !(value.lower() == QString::fromLatin1("false") ||
                                value.lower() == QString::fromLatin1("0"));
@@ -249,13 +246,15 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
 }
 
 extern const char * strUrlBackend;
+extern const char * strMPlayerGroup;
 
 void KMPlayer::setXine (int id) {
     bool playing = m_process->playing ();
     if (playing)
         m_process->source ()->deactivate ();
     m_settings->urlbackend = QString ("Xine");
-    m_config->writePathEntry (strUrlBackend, m_settings->urlbackend);
+    m_config->setGroup (strMPlayerGroup);
+    m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
     m_config->sync ();
     setProcess (m_xine);
     QPopupMenu * menu = m_view->playerMenu ();
@@ -272,7 +271,8 @@ void KMPlayer::setMPlayer (int id) {
     if (playing)
         m_process->source ()->deactivate ();
     m_settings->urlbackend = QString ("MPlayer");
-    m_config->writePathEntry (strUrlBackend, m_settings->urlbackend);
+    m_config->setGroup (strMPlayerGroup);
+    m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
     m_config->sync ();
     setProcess (m_mplayer);
     QPopupMenu * menu = m_view->playerMenu ();
@@ -284,10 +284,8 @@ void KMPlayer::setMPlayer (int id) {
         m_process->source ()->activate ();
 }
 
-void KMPlayer::setSource (KMPlayerSource * source, bool keepsizes) {
+void KMPlayer::setSource (KMPlayerSource * source) {
     KMPlayerSource * oldsource = m_process->source ();
-    int w = movie_width;
-    int h = movie_height;
     if (oldsource) {
         oldsource->deactivate ();
         closeURL ();
@@ -305,10 +303,6 @@ void KMPlayer::setSource (KMPlayerSource * source, bool keepsizes) {
     } else {
         m_view->forwardButton ()->hide ();
         m_view->backButton ()->hide ();
-    }
-    if (keepsizes) {
-        movie_width = w;
-        movie_height = h;
     }
     if (source) QTimer::singleShot (0, source, SLOT (activate ()));
 }
@@ -336,14 +330,12 @@ bool KMPlayer::openURL (const KURL & url) {
         m_urlsource->setURL (url);
         m_hrefsource->setURL (KURL ());
         setSource (m_urlsource);
-        //play ();
     }
     return true;
 }
 
 bool KMPlayer::closeURL () {
     stop ();
-    movie_height = movie_width = 0;
     if (!m_view) return false;
     setMovieLength (0);
     m_view->viewer ()->setAspect (0.0);
@@ -358,8 +350,7 @@ bool KMPlayer::openFile () {
 void KMPlayer::keepMovieAspect (bool b) {
     m_view->setKeepSizeRatio (b);
     if (b) {
-        if (m_view->viewer ()->aspect () < 0.01 && movie_height > 0)
-            m_view->viewer ()->setAspect (1.0 * movie_width / movie_height);
+        m_view->viewer ()->setAspect (m_process->source ()->aspect ());
     } else
         m_view->viewer ()->setAspect (0.0);
 }
@@ -428,14 +419,13 @@ void KMPlayer::processLoading (int percentage) {
 }
 
 void KMPlayer::processPlaying () {
-    if (movie_width <= 0) {
-        movie_width = m_process->source ()->width ();
-        movie_height = m_process->source ()->height ();
+    kdDebug () << "KMPlayer::processPlaying " << endl;
+    if (m_settings->sizeratio) {
+        m_view->viewer ()->setAspect (m_process->source ()->aspect ());
+        if (!m_noresize && m_liveconnectextension)
+            m_liveconnectextension->setSize (m_process->source ()->width (),
+                                             m_process->source ()->height ());
     }
-    kdDebug () << "KMPlayer::processPlaying " << movie_width << "," << movie_height << endl;
-    m_view->viewer ()->setAspect (1.0 * movie_width / movie_height);
-    if (m_liveconnectextension)
-        m_liveconnectextension->setSize (movie_width, movie_height);
     if (m_browserextension) {
         m_browserextension->setLoadingProgress (100);
         emit completed ();
@@ -514,14 +504,20 @@ void KMPlayer::adjustVolume (int incdec) {
 }
 
 void KMPlayer::sizes (int & w, int & h) const {
-    w = movie_width == 0 ? m_view->viewer ()->width () : movie_width;
-    h = movie_height == 0 ? m_view->viewer ()->height () : movie_height;
+    if (m_noresize) {
+        w = m_view->viewer ()->width ();
+        h = m_view->viewer ()->height ();
+    } else {
+        w = m_process->source ()->width ();
+        h = m_process->source ()->height ();
+    }
 }
 
 void KMPlayer::setMenuZoom (int id) {
-    sizes (movie_width, movie_height);
+    int w, h;
+    sizes (w, h);
     if (id == KMPlayerView::menu_zoom100) {
-        m_liveconnectextension->setSize (movie_width, movie_height);
+        m_liveconnectextension->setSize (w, h);
         return;
     }
     float scale = 1.5;
@@ -1131,6 +1127,16 @@ bool KMPlayerURLSource::processOutput (const QString & str) {
     return KMPlayerSource::processOutput (str);
 }
 
+const QString KMPlayerURLSource::buildArguments () {
+    m_recordCommand.truncate (0);
+    m_ffmpegCommand.truncate (0);
+    QString myurl (KProcess::quote (m_url.isLocalFile () ? m_url.path () : m_url.url ()));
+    m_recordCommand += myurl;
+    if (m_url.isLocalFile ())
+        m_ffmpegCommand = QString ("-i ") + myurl;
+    return myurl;
+}
+
 void KMPlayerURLSource::play () {
     kdDebug () << "KMPlayerURLSource::play() " << m_url.url() << endl;
     KURL url = m_url;
@@ -1139,9 +1145,8 @@ void KMPlayerURLSource::play () {
     if (!url.isValid () || url.isEmpty ())
         return;
     QString args;
-    m_recordCommand.truncate (0);
-    m_ffmpegCommand.truncate (0);
     if (m_player->settings ()->urlbackend == QString ("Xine")) {
+        buildArguments ();
         QTimer::singleShot (0, m_player, SLOT (play ()));
         return;
     }
@@ -1158,11 +1163,7 @@ void KMPlayerURLSource::play () {
             m_recordCommand = QString (" -idx ");
         }
     }
-    QString myurl (url.isLocalFile () ? url.path () : url.url ());
-    m_recordCommand += myurl;
-    if (url.isLocalFile ())
-        m_ffmpegCommand = QString ("-i ") + url.path ();
-    args += KProcess::quote (myurl);
+    args += buildArguments ();
     m_player->mplayer ()->run (args.latin1 ());
     if (m_player->liveconnectextension ())
         m_player->liveconnectextension ()->enableFinishEvent ();
@@ -1171,6 +1172,7 @@ void KMPlayerURLSource::play () {
 void KMPlayerURLSource::activate () {
     init ();
     if (m_player->settings ()->urlbackend == QString ("Xine")) {
+        buildArguments ();
         if (!url ().isEmpty ())
             QTimer::singleShot (0, m_player, SLOT (play ()));
         return;
@@ -1191,7 +1193,7 @@ void KMPlayerURLSource::finished () {
     kdDebug () << "KMPlayerURLSource::finished()" << m_identified << " "  <<  m_player->hrefSource ()->url ().url () << " " <<  m_player->hrefSource ()->url ().isValid () << endl;
     if (m_identified && m_player->hrefSource ()->url ().isValid ()) {
         disconnect (m_player, SIGNAL (finished ()), this, SLOT (finished ()));
-        m_player->setSource (m_player->hrefSource (), true);
+        m_player->setSource (m_player->hrefSource ());
         return;
     }
     if (!m_player->hrefSource ()->url ().isValid ())
@@ -1245,7 +1247,7 @@ void KMPlayerHRefSource::setURL (const KURL & url) {
 
 void KMPlayerHRefSource::play () {
     kdDebug () << "KMPlayerHRefSource::play " << m_url.url() << endl;
-    m_player->setSource (m_player->urlSource (), true);
+    m_player->setSource (m_player->urlSource ());
 }
 
 void KMPlayerHRefSource::activate () {

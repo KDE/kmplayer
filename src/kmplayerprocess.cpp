@@ -520,8 +520,8 @@ void KMPlayerCallbackProcess::setFinished () {
 
 void KMPlayerCallbackProcess::setPlaying () {
     KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
-    QTimer::singleShot (0, this, SLOT (emitStarted ()));
     QTimer::singleShot (0, v, SLOT (startsToPlay ())); // FIXME
+    emit startPlaying (); // FIXME TOO :-)
 }
 
 void KMPlayerCallbackProcess::setStarted () {
@@ -662,6 +662,7 @@ void Xine::processRunning () {
     brightness (settings->brightness, true);
     contrast (settings->contrast, true);
     m_backend->play ();
+    QTimer::singleShot (0, this, SLOT (emitStarted ()));
 }
 
 bool Xine::saturation (int val, bool) {

@@ -172,7 +172,7 @@ KMPlayerSettings::~KMPlayerSettings () {
     //delete configdialog;
 }
 
-static const char * strMPlayerGroup = "MPlayer";
+const char * strMPlayerGroup = "MPlayer";
 static const char * strGeneralGroup = "General Options";
 static const char * strMPlayerPatternGroup = "MPlayer Output Matching";
 static const char * strKeepSizeRatio = "Keep Size Ratio";
@@ -319,7 +319,7 @@ void KMPlayerSettings::readConfig () {
     vcddevice = m_config->readEntry (strVCDDevice, "/dev/cdrom");
     videodriver = m_config->readNumEntry (strVoDriver, VDRIVER_XV_INDEX);
     audiodriver = m_config->readNumEntry (strAoDriver, 0);
-    urlbackend = m_config->readPathEntry(strUrlBackend, "mplayer");
+    urlbackend = m_config->readEntry(strUrlBackend, "mplayer");
     view->setUseArts (audiodriver == ADRIVER_ARTS_INDEX);
     additionalarguments = m_config->readEntry (strAddArgs, "");
     mencoderarguments = m_config->readEntry (strMencoderArgs, "-oac copy -ovc copy");
@@ -556,7 +556,7 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strSeekTime, m_player->seekTime ());
     m_config->writeEntry (strVoDriver, videodriver);
     m_config->writeEntry (strAoDriver, audiodriver);
-    m_config->writePathEntry (strUrlBackend, urlbackend);
+    m_config->writeEntry (strUrlBackend, urlbackend);
     m_config->writeEntry (strAddArgs, additionalarguments);
     m_config->writeEntry (strCacheSize, cachesize);
     m_config->writeEntry (strShowControlButtons, showbuttons);

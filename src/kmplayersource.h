@@ -40,7 +40,7 @@ public:
     int width () const { return m_width; }
     int height () const { return m_height; }
     int length () const { return m_length; }
-    float aspect () const { return m_aspect; }
+    float aspect () const { return m_aspect > 0.01 ? m_aspect : (m_height > 0 ? (1.0*m_width)/m_height: 0.0); }
     void setWidth (int w) { m_width = w; }
     void setHeight (int h) { m_height = h; }
     void setAspect (float a) { m_aspect = a; }

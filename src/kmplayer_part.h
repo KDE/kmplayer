@@ -108,6 +108,7 @@ public slots:
     virtual void play ();
     virtual void finished ();
 private:
+    const QString buildArguments ();
     QValueList <KURL> m_urls;
     KURL m_urlother;
     bool isreference;
@@ -159,7 +160,7 @@ public:
     void sizes (int & w, int & h) const;
     void setMovieLength (int len);
     void setProcess (KMPlayerProcess *);
-    void setSource (KMPlayerSource * source, bool keepsizes = false);
+    void setSource (KMPlayerSource * source);
     KMPlayerProcess * process () const { return m_process; }
     MPlayer * mplayer () const { return m_mplayer; }
     MEncoder * mencoder () const { return m_mencoder; }
@@ -222,12 +223,11 @@ private:
     KMPlayerBrowserExtension * m_browserextension;
     KMPlayerLiveConnectExtension * m_liveconnectextension;
     int m_seektime;
-    int movie_width;
-    int movie_height;
     int m_movie_position;
     bool m_started_emited : 1;
     bool m_autoplay : 1;
     bool m_ispart : 1;
+    bool m_noresize : 1;
     bool m_use_slave : 1;
     bool m_bPosSliderPressed : 1;
     bool m_havehref : 1;
