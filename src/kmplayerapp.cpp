@@ -86,23 +86,23 @@ KMPlayerApp::~KMPlayerApp () {
 
 void KMPlayerApp::initActions()
 {
-    fileNewWindow = new KAction(i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), actionCollection(),"file_new_window");
-    fileOpen = KStdAction::open(this, SLOT(slotFileOpen()), actionCollection());
+    fileNewWindow = new KAction(i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), actionCollection(),"new_window");
+    fileOpen = KStdAction::open(this, SLOT(slotFileOpen()), actionCollection(), "open");
     fileOpenRecent = KStdAction::openRecent(this, SLOT(slotFileOpenRecent(const KURL&)), actionCollection());
     fileClose = KStdAction::close(this, SLOT(slotFileClose()), actionCollection());
     fileQuit = KStdAction::quit(this, SLOT(slotFileQuit()), actionCollection());
-    /*KAction *preference =*/ KStdAction::preferences (m_player, SLOT (showConfigDialog ()), actionCollection());
+    /*KAction *preference =*/ KStdAction::preferences (m_player, SLOT (showConfigDialog ()), actionCollection(), "configure");
     new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), actionCollection (), "view_zoom_50");
     new KAction (i18n ("100%"), 0, 0, this, SLOT (zoom100 ()), actionCollection (), "view_zoom_100");
     new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), actionCollection (), "view_zoom_150");
     viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), actionCollection (), "view_keep_ratio");
     viewShowConsoleOutput = new KToggleAction (i18n ("&Show Console Output"), 0, this, SLOT (showConsoleOutput ()), actionCollection (), "view_show_console");
     /*KAction *fullscreenact =*/ new KAction (i18n("&Full Screen"), 0, 0, this, SLOT(fullScreen ()), actionCollection (), "view_fullscreen");
-    /*KAction *playact =*/ new KAction (i18n ("P&lay"), 0, 0, m_player, SLOT (play ()), actionCollection (), "view_play");
-    /*KAction *pauseact =*/ new KAction (i18n ("&Pause"), 0, 0, m_player, SLOT (pause ()), actionCollection (), "view_pause");
-    /*KAction *stopact =*/ new KAction (i18n ("&Stop"), 0, 0, m_player, SLOT (stop ()), actionCollection (), "view_stop");
+    /*KAction *playact =*/ new KAction (i18n ("P&lay"), 0, 0, m_player, SLOT (play ()), actionCollection (), "play");
+    /*KAction *pauseact =*/ new KAction (i18n ("&Pause"), 0, 0, m_player, SLOT (pause ()), actionCollection (), "pause");
+    /*KAction *stopact =*/ new KAction (i18n ("&Stop"), 0, 0, m_player, SLOT (stop ()), actionCollection (), "stop");
     /*KAction *artsctrl =*/ new KAction (i18n ("&Arts Control"), 0, 0, this, SLOT (startArtsControl ()), actionCollection (), "view_arts_control");
-    //viewToolBar = KStdAction::showToolbar(this, SLOT(slotViewToolBar()), actionCollection());
+    viewToolBar = KStdAction::showToolbar(this, SLOT(slotViewToolBar()), actionCollection());
     viewStatusBar = KStdAction::showStatusbar(this, SLOT(slotViewStatusBar()), actionCollection());
     viewMenuBar = KStdAction::showMenubar(this, SLOT(slotViewMenuBar()), actionCollection());
     fileNewWindow->setStatusText(i18n("Opens a new application window"));
@@ -150,7 +150,7 @@ void KMPlayerApp::initView ()
     viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()),
                           QKeySequence ("CTRL + Key_F"));
     menuBar ()->insertItem (i18n ("&View"), viewmenu, -1, 2);*/
-    toolBar("mainToolBar")->hide();
+    //toolBar("mainToolBar")->hide();
 
 }
 
@@ -239,14 +239,14 @@ void KMPlayerApp::saveOptions()
 {
     config->setGroup ("General Options");
     config->writeEntry ("Geometry", size());
-    //config->writeEntry ("Show Toolbar", viewToolBar->isChecked());
+    config->writeEntry ("Show Toolbar", viewToolBar->isChecked());
+    config->writeEntry ("ToolBarPos", (int) toolBar("mainToolBar")->barPos());
     config->writeEntry ("Show Statusbar",viewStatusBar->isChecked());
     config->writeEntry ("Show Menubar",viewMenuBar->isChecked());
     if (!m_pipesource->command ().isEmpty ()) {
         config->setGroup ("Pipe Command");
         config->writeEntry ("Command1", m_pipesource->command ());
     }
-    //config->writeEntry ("ToolBarPos", (int) toolBar("mainToolBar")->barPos());
     fileOpenRecent->saveEntries (config,"Recent Files");
     disconnect (m_player->configDialog (), SIGNAL (configChanged ()),
                 this, SLOT (configChanged ()));
@@ -263,9 +263,14 @@ void KMPlayerApp::readOptions() {
         resize(size);
 
     // bar status settings
-    //bool bViewToolbar = config->readBoolEntry("Show Toolbar", false);
-    //viewToolBar->setChecked(bViewToolbar);
-    //slotViewToolBar();
+    bool bViewToolbar = config->readBoolEntry("Show Toolbar", false);
+    viewToolBar->setChecked(bViewToolbar);
+    slotViewToolBar();
+
+    // bar position settings
+    KToolBar::BarPosition toolBarPos;
+    toolBarPos=(KToolBar::BarPosition) config->readNumEntry("ToolBarPos", KToolBar::Top);
+    toolBar("mainToolBar")->setBarPos(toolBarPos);
 
     bool bViewStatusbar = config->readBoolEntry("Show Statusbar", false);
     viewStatusBar->setChecked(bViewStatusbar);
@@ -277,11 +282,6 @@ void KMPlayerApp::readOptions() {
 
     config->setGroup ("Pipe Command");
     m_pipesource->setCommand (config->readEntry ("Command1", ""));
-
-    // bar position settings
-    /*KToolBar::BarPosition toolBarPos;
-    toolBarPos=(KToolBar::BarPosition) config->readNumEntry("ToolBarPos", KToolBar::Top);
-    toolBar("mainToolBar")->setBarPos(toolBarPos);*/
 
     keepSizeRatio ();
     keepSizeRatio (); // Lazy, I know :)
