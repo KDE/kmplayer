@@ -45,6 +45,7 @@ public:
     void setAspect (float a) { m_aspect = a; }
     void setLength (int len) { m_length = len; }
     virtual QString recordCommand ();
+    virtual QString ffmpegCommand ();
 public slots:
     virtual void activate () = 0;
     virtual void deactivate () = 0;
@@ -52,6 +53,7 @@ public slots:
 protected:
     KMPlayer * m_player;
     QString m_recordCommand;
+    QString m_ffmpegCommand;
     bool m_identified;
 private:
     int m_width;

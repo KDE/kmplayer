@@ -219,6 +219,20 @@ static const char * const record_xpm[] = {
     ".......",
     "       "};
 
+static const char * const broadcast_xpm[] = {
+"21 9 2 1",
+"       c None",
+".      c #000000",
+"                     ",
+" ..  ..       ..  .. ",
+"..  ..   ...   ..  ..",
+"..  ..  .....  ..  ..",
+"..  ..  .....  ..  ..",
+"..  ..  .....  ..  ..",
+"..  ..   ...   ..  ..",
+" ..  ..       ..  .. ",
+"                     "};
+
 
 //-----------------------------------------------------------------------------
 
@@ -394,9 +408,11 @@ void KMPlayerView::init () {
     m_stopButton = ctrlButton (m_buttonbar, buttonbox, stop_xpm, Qt::Key_S);
     m_pauseButton = ctrlButton (m_buttonbar, buttonbox, pause_xpm, Qt::Key_P);
     m_recordButton = ctrlButton (m_buttonbar, buttonbox, record_xpm);
+    m_broadcastButton = ctrlButton (m_buttonbar, buttonbox, broadcast_xpm);
     m_playButton->setToggleButton (true);
     m_stopButton->setToggleButton (true);
     m_recordButton->setToggleButton (true);
+    m_broadcastButton->setToggleButton (true);
 
     m_popupMenu = new QPopupMenu (m_layer);
     m_zoomMenu = new QPopupMenu (m_layer);

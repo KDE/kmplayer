@@ -18,10 +18,12 @@
 // include files for QT
 #undef Always
 #include <qdir.h>
+#include <qfile.h>
 #include <qdatastream.h>
 #include <qregexp.h>
 #include <qiodevice.h>
 #include <qprinter.h>
+#include <qcursor.h>
 #include <qpainter.h>
 #include <qcheckbox.h>
 #include <qmultilineedit.h>
@@ -44,6 +46,7 @@
 #include <kstdaction.h>
 #include <kdebug.h>
 #include <kprocess.h>
+#include <kprocctrl.h>
 #include <dcopclient.h>
 
 // application specific includes
@@ -54,6 +57,33 @@
 #include "kmplayerconfig.h"
 
 #define ID_STATUS_MSG 1
+
+static const char * const ffserverconf =
+"Port 8090\nBindAddress 0.0.0.0\nMaxClients 10\nMaxBandwidth 1000\n"
+"CustomLog -\nNoDaemon\n"
+"<Feed kmplayer.ffm>\nFile /dev/shm/kmplayer.ffm\nFileMaxSize 200K\nACL allow 127.0.0.1\n</Feed>\n"
+"<Stream video.avi>\nFeed kmplayer.ffm\nFormat avi\nVideoFrameRate 10\nVideoSize 320x240\nVideoGopSize 3\n</Stream>\n"
+"<Stream stat.html>\nFormat status\nACL allow localhost\n</Stream>\n";
+
+static bool stopProcess (KProcess * process) {
+    if (!process || !process->isRunning ()) return true;
+    do {
+        process->kill (SIGINT);
+        KProcessController::theKProcessController->waitForProcessExit (3);
+        if (!process->isRunning ())
+            break;
+        process->kill (SIGTERM);
+        KProcessController::theKProcessController->waitForProcessExit (1);
+        if (!process->isRunning ())
+            break;
+        process->kill (SIGKILL);
+        KProcessController::theKProcessController->waitForProcessExit (1);
+        if (process->isRunning ()) {
+            return false; // give up
+        }
+    } while (false);
+    return true;
+}
 
 KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     : KMainWindow(0, name),
@@ -66,7 +96,9 @@ KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       m_dvdsource (new KMPlayerDVDSource (this, m_dvdmenu)),
       m_vcdsource (new KMPlayerVCDSource (this, m_vcdmenu)),
       m_pipesource (new KMPlayerPipeSource (this)),
-      m_tvsource (new KMPlayerTVSource (this, m_tvmenu))
+      m_tvsource (new KMPlayerTVSource (this, m_tvmenu)),
+      m_ffmpeg_process (0L),
+      m_ffserver_process (0L)
 {
     initStatusBar();
     initActions();
@@ -76,6 +108,10 @@ KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
 }
 
 KMPlayerApp::~KMPlayerApp () {
+    stopProcess (m_ffmpeg_process);
+    stopProcess (m_ffserver_process);
+    delete m_ffmpeg_process;
+    delete m_ffserver_process;
     delete m_player;
     if (!m_dcopName.isEmpty ()) {
         QCString replytype;
@@ -146,6 +182,8 @@ void KMPlayerApp::initView ()
             this, SLOT (zoom150 ()));
     view->popupMenu ()->connectItem (KMPlayerView::menu_fullscreen,
             this, SLOT (fullScreen ()));
+    connect (view->broadcastButton (), SIGNAL (clicked ()),
+            this, SLOT (boadcastClicked ()));
     /*QPopupMenu * viewmenu = new QPopupMenu;
     viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()),
                           QKeySequence ("CTRL + Key_F"));
@@ -233,6 +271,89 @@ void KMPlayerApp::zoom100 () {
 
 void KMPlayerApp::zoom150 () {
     resizePlayer (150);
+}
+
+#include <kglobal.h>
+#include <kstandarddirs.h>
+
+void KMPlayerApp::boadcastClicked () {
+    KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
+    setCursor (QCursor (Qt::WaitCursor));
+    if (!stopProcess (m_ffmpeg_process))
+        KMessageBox::error (this, i18n ("Failed to end ffmpeg process."), i18n ("Error"));
+    if (!stopProcess (m_ffserver_process))
+        KMessageBox::error (this, i18n ("Failed to end ffserver process."), i18n ("Error"));
+    if (!kview->broadcastButton ()->isOn ()) {
+        setCursor (QCursor (Qt::ArrowCursor));
+        return;
+    }
+    QString ffmpegcmd = m_player->source ()->ffmpegCommand ();
+    if (ffmpegcmd.isEmpty ()) {
+        kview->broadcastButton ()->toggle ();
+        setCursor (QCursor (Qt::ArrowCursor));
+        return;
+    }
+    QString conf = locateLocal ("data", "kmplayer/ffserver.conf");
+    if (!m_ffmpeg_process) {
+        m_ffmpeg_process = new KProcess;
+        m_ffmpeg_process->setUseShell (true);
+        connect (m_ffmpeg_process, SIGNAL (processExited (KProcess *)),
+                 this, SLOT (processStopped (KProcess *)));
+        m_ffserver_process = new KProcess;
+        m_ffserver_process->setUseShell (true);
+        connect (m_ffserver_process, SIGNAL (processExited (KProcess *)),
+                 this, SLOT (processStopped (KProcess *)));
+        //connect (m_process, SIGNAL(receivedStdout(KProcess *, char *, int)),
+        //        this, SLOT (processOutput (KProcess *, char *, int)));
+    } else {
+        m_ffserver_process->clearArguments();
+        m_ffmpeg_process->clearArguments();
+    }
+    if (!QFile::exists (conf)) {
+        QFile qfile (conf);
+        qfile.open (IO_WriteOnly);
+        qfile.writeBlock (ffserverconf, strlen (ffserverconf));
+    }
+    kdDebug () << "ffserver -f " << conf << endl;
+    *m_ffserver_process << "ffserver -f " << conf;
+    m_ffserver_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
+    QTimer::singleShot (500, this, SLOT (boadcastTimerEvent ()));
+}
+
+void KMPlayerApp::boadcastTimerEvent () {
+    KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
+    QString ffmpegcmd = m_player->source ()->ffmpegCommand ();
+    do {
+        if (!m_ffserver_process->isRunning ()) {
+            KMessageBox::error (this, i18n ("Failed to start ffserver."), i18n ("Error"));
+            break;
+        }
+        m_player->stop ();
+        kdDebug () << ffmpegcmd << " http://localhost:8090/kmplayer.ffm" <<endl;
+        *m_ffmpeg_process << ffmpegcmd << " http://localhost:8090/kmplayer.ffm";
+        m_ffmpeg_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
+        if (!m_ffmpeg_process->isRunning ()) {
+            KMessageBox::error (this, i18n ("Failed to start ffmpeg."), i18n ("Error"));
+            stopProcess (m_ffserver_process);
+            break;
+        }
+    } while (false);
+    if (!m_ffmpeg_process->isRunning () && kview->broadcastButton ()->isOn ())
+        kview->broadcastButton ()->toggle ();
+    if (m_ffmpeg_process->isRunning ()) {
+        if (!kview->broadcastButton ()->isOn ())
+            kview->broadcastButton ()->toggle ();
+        m_player->openURL (KURL ("http://localhost:8090/video.avi"));
+    }
+    setCursor (QCursor (Qt::ArrowCursor));
+}
+
+void KMPlayerApp::processStopped (KProcess * process) {
+    KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
+    if (process == m_ffmpeg_process && !stopProcess (m_ffserver_process))
+        KMessageBox::error (this, i18n ("Failed to end ffserver process."), i18n ("Error"));
+    if (kview && kview->broadcastButton ()->isOn ())
+        kview->broadcastButton ()->toggle ();
 }
 
 void KMPlayerApp::saveOptions()
@@ -861,6 +982,9 @@ void KMPlayerTVSource::play () {
     args.sprintf ("-tv on:noaudio:driver=%s:%s:width=%d:height=%d", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
     app->resizePlayer (100);
     m_recordCommand = args;
+    m_ffmpegCommand = QString (" -vd ") + m_tvsource->videodevice;
+    if (!m_tvsource->audiodevice.isEmpty ())
+        m_ffmpegCommand += QString (" -ad ") + m_tvsource->audiodevice;
     m_player->run ((QString ("-slave -nocache -quiet ") + args).ascii());
 }
 
@@ -888,6 +1012,8 @@ void KMPlayerTVSource::buildMenu () {
             if (input->channels.count () <= 0) {
                 TVSource * source = new TVSource;
                 devmenu->insertItem (input->name, this, SLOT (menuClicked (int)), 0, counter);
+                source->videodevice = device->device;
+                source->audiodevice = device->audiodevice;
                 source->command.sprintf ("device=%s:input=%d", device->device.ascii (), input->id);
                 if (currentcommand == source->command)
                     m_tvsource = source;

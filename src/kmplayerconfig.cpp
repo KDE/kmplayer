@@ -128,6 +128,7 @@ static const char * strPP_FFmpeg_Int = "FFmpeg Interpolating Deinterlacer";
 static const char * strTV = "TV";
 static const char * strTVDevices = "Devices";
 static const char * strTVDeviceName = "Name";
+static const char * strTVAudioDevice = "Audio Device";
 static const char * strTVInputs = "Inputs";
 static const char * strTVSize = "Size";
 static const char * strTVMinSize = "Minimum Size";
@@ -239,7 +240,8 @@ void KMPlayerConfig::readConfig () {
         m_config->setGroup (devlist.at (i));
         TVDevice * device = new TVDevice (devlist.at (i), 
                                           m_config->readSizeEntry (strTVSize));
-        device->name = m_config->readEntry (strTVDeviceName, device->device);
+        device->name = m_config->readEntry (strTVDeviceName, "/dev/video");
+        device->audiodevice = m_config->readEntry (strTVAudioDevice, "/dev/audio");
         device->minsize = m_config->readSizeEntry (strTVMinSize);
         device->maxsize = m_config->readSizeEntry (strTVMaxSize);
         QStrList inputlist;
@@ -442,6 +444,7 @@ void KMPlayerConfig::writeConfig () {
         m_config->writeEntry (strTVMinSize, device->minsize);
         m_config->writeEntry (strTVMaxSize, device->maxsize);
         m_config->writeEntry (strTVDeviceName, device->name);
+        m_config->writeEntry (strTVAudioDevice, device->audiodevice);
         QStringList inputlist;
         TVInput * input;
         for (device->inputs.first (); (input = device->inputs.current ()); device->inputs.next ()) {

@@ -88,6 +88,9 @@ private slots:
     void zoom50 ();
     void zoom100 ();
     void zoom150 ();
+    void boadcastClicked ();
+    void boadcastTimerEvent ();
+    void processStopped (KProcess * process);
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
     KConfig * config;
@@ -114,6 +117,8 @@ private:
     KMPlayerPipeSource * m_pipesource;
     KMPlayerTVSource * m_tvsource;
     QCString m_dcopName;
+    KProcess * m_ffmpeg_process;
+    KProcess * m_ffserver_process;
     bool m_showToolbar : 1;
     bool m_showStatusbar : 1;
     bool m_showMenubar : 1;

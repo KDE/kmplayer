@@ -189,6 +189,7 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
         }
     }
     m_view->init ();
+    m_view->broadcastButton ()->hide ();
     m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom50,
                                       this, SLOT (setMenuZoom (int)));
     m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom100,
@@ -969,6 +970,12 @@ QString KMPlayerSource::recordCommand () {
            QString (" ") + m_recordCommand;
 }
 
+QString KMPlayerSource::ffmpegCommand () {
+    if (m_ffmpegCommand.isEmpty ())
+        return QString::null;
+    return QString ("ffmpeg ") + QString (" ") + m_ffmpegCommand;
+}
+
 bool KMPlayerSource::hasLength () {
     return true;
 }
@@ -1049,6 +1056,7 @@ void KMPlayerURLSource::play () {
     m_player->setURL (url);
     QString args;
     m_recordCommand.truncate (0);
+    m_ffmpegCommand.truncate (0);
     int cache = m_player->configDialog ()->cachesize;
     if (url.isLocalFile () || cache <= 0)
         args.sprintf ("-slave ");
@@ -1064,6 +1072,8 @@ void KMPlayerURLSource::play () {
     }
     QString myurl (url.isLocalFile () ? url.path () : url.url ());
     m_recordCommand += myurl;
+    if (url.isLocalFile ())
+        m_ffmpegCommand = QString ("-i ") + url.path ();
     args += KProcess::quote (myurl);
     m_player->run (args.latin1 ());
 }

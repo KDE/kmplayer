@@ -85,6 +85,7 @@ class TVDevice {
 public:
     TVDevice (const QString & d, const QSize & size);
     QString device;
+    QString audiodevice;
     QString name;
     QSize minsize;
     QSize maxsize;
@@ -203,6 +204,7 @@ public:
     ~KMPlayerPrefSourcePageTVDevice () {}
 
     QLineEdit * name;
+    QLineEdit * audiodevice;
     QLineEdit * sizewidth;
     QLineEdit * sizeheight;
     TVDevice * device;

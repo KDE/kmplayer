@@ -83,6 +83,7 @@ public:
     QPushButton * stopButton () const { return m_stopButton; }
     QPushButton * configButton () const { return m_configButton; }
     QPushButton * recordButton () const { return m_recordButton; }
+    QPushButton * broadcastButton () const { return m_broadcastButton; }
     QSlider * positionSlider () const { return m_posSlider; }
     QPopupMenu * popupMenu () const { return m_popupMenu; }
     QPopupMenu * zoomMenu () const { return m_zoomMenu; }
@@ -122,6 +123,7 @@ private:
     QPushButton * m_pauseButton;
     QPushButton * m_configButton;
     QPushButton * m_recordButton;
+    QPushButton * m_broadcastButton;
     QPopupMenu * m_popupMenu;
     QPopupMenu * m_zoomMenu;
     QLabel * m_arts_label;

@@ -212,9 +212,11 @@ KMPlayerPrefGeneralPageDVD::KMPlayerPrefGeneralPageDVD(QWidget *parent) : QFrame
 KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent, TVDevice * dev)
 : QFrame (parent, "PageTVDevice"), device (dev) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
-    QLabel * deviceLabel = new QLabel (QString (i18n ("Device:")) + device->device, this, 0);
+    QLabel * deviceLabel = new QLabel (QString (i18n ("Video device:")) + device->device, this, 0);
     layout->addWidget (deviceLabel);
     QGridLayout *gridlayout = new QGridLayout (layout, 4, 4);
+    QLabel * audioLabel = new QLabel (i18n ("Audio device:"), this);
+    audiodevice = new QLineEdit (device->audiodevice, this);
     QLabel * nameLabel = new QLabel (i18n ("Name:"), this, 0);
     name = new QLineEdit ("", this, 0);
     QLabel *sizewidthLabel = new QLabel (i18n ("Width:"), this, 0);
@@ -247,12 +249,14 @@ KMPlayerPrefSourcePageTVDevice::KMPlayerPrefSourcePageTVDevice (QWidget *parent,
     }
     QPushButton * delButton = new QPushButton (i18n ("Delete"), this);
     connect (delButton, SIGNAL (clicked ()), this, SLOT (slotDelete ()));
-    gridlayout->addWidget (nameLabel, 0, 0);
-    gridlayout->addMultiCellWidget (name, 0, 0, 1, 3);
-    gridlayout->addWidget (sizewidthLabel, 1, 0);
-    gridlayout->addWidget (sizewidth, 1, 1);
-    gridlayout->addWidget (sizeheightLabel, 1, 2);
-    gridlayout->addWidget (sizeheight, 1, 3);
+    gridlayout->addWidget (audioLabel, 0, 0);
+    gridlayout->addMultiCellWidget (audiodevice, 0, 0, 1, 3);
+    gridlayout->addWidget (nameLabel, 1, 0);
+    gridlayout->addMultiCellWidget (name, 1, 1, 1, 3);
+    gridlayout->addWidget (sizewidthLabel, 2, 0);
+    gridlayout->addWidget (sizewidth, 2, 1);
+    gridlayout->addWidget (sizeheightLabel, 2, 2);
+    gridlayout->addWidget (sizeheight, 2, 3);
     layout->addWidget (inputsTab);
     layout->addSpacing (5);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
@@ -269,6 +273,7 @@ void KMPlayerPrefSourcePageTVDevice::slotDelete () {
 
 void KMPlayerPrefSourcePageTVDevice::updateTVDevice () {
     device->name = name->text ();
+    device->audiodevice = audiodevice->text ();
     device->size = QSize(sizewidth->text().toInt(), sizeheight->text().toInt());
     for (unsigned i = 0; i < device->inputs.count (); i++) {
         TVInput * input = device->inputs.at (i);
