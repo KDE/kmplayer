@@ -245,10 +245,10 @@ KDE_NO_EXPORT void KMPlayerTVSource::activate () {
     if (m_cur_tvdevice) {
         if (!m_current) {
             m_current = m_cur_tvdevice;
-            KMPlayer::Source::next ();
+            //KMPlayer::Source::next ();
         }
     } else
-        KMPlayer::Source::first ();
+        KMPlayer::Source::reset ();
     playCurrent (); // initialize some values for others to see device/frequency
     if (m_current)
         jump (m_current);

@@ -1071,6 +1071,7 @@ void CallbackProcess::setChangedData (const QByteArray & data) {
 }
 
 bool CallbackProcess::play (Source * source, const QString & mrl) {
+    kdDebug () << "CallbackProcess::play " << mrl << endl;
     if (!m_backend)
         return false;
     m_source = source;

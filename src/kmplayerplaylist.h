@@ -57,7 +57,6 @@ class QPainter;
 
 namespace KMPlayer {
 
-class Source;
 class Document;
 class Element;
 class Mrl;
@@ -146,6 +145,9 @@ public:
 class KMPLAYER_EXPORT Element {
     friend class DocumentBuilder;
 public:
+    enum State {
+        state_init, state_started, state_finished
+    };
     virtual ~Element ();
     Document * document ();
     /**
@@ -171,10 +173,9 @@ public:
      */
     virtual bool expose ();
     /**
-     * Start element, sets started to true, will emit playURL if it has one.
-     * Source is this document's owner.
+     * Start element, sets started to true, can call requestPlayURL.
      */
-    virtual void start (Source *);
+    virtual void start ();
     /**
      * Stops element, sets started to false and finished to true.
      * Notifies parent with a childDone call
@@ -240,8 +241,8 @@ protected:
     ElementPtr m_first_attribute;
     ElementPtrW m_self;
 public:
-    bool started;
-    bool finished;
+    State state;
+    void setState (State nstate);
 };
 
 template <class T>
@@ -276,7 +277,7 @@ public:
      * If this Mrl hides a child Mrl, return that one or else this one 
      */ 
     virtual ElementPtr realMrl ();
-    virtual void start (Source *);
+    virtual void start ();
     QString src;
     QString pretty_name;
     QString mimetype;
@@ -284,9 +285,26 @@ public:
     bool bookmarkable;
 };
 
+/**
+ * Document listener interface
+ */
+class KMPLAYER_EXPORT PlayListNotify {
+public:
+    virtual ~PlayListNotify () {}
+    /**
+     * Ask for playing a video/audio mrl inside region
+     * If returning false, the element will be set to finished
+     */
+    virtual bool requestPlayURL (ElementPtr mrl, RegionNodePtr region) = 0;
+    /**
+     * Element has started or stopped notification
+     */
+    virtual void stateElementChanged (ElementPtr element) = 0;
+};
+
 class KMPLAYER_EXPORT Document : public Mrl {
 public:
-    Document (const QString &);
+    Document (const QString &, PlayListNotify * notify = 0L);
     ~Document ();
     /** All nodes have shared pointers to Document,
      * so explicitly dispose it (calls clean and set m_doc to 0L)
@@ -299,6 +317,7 @@ public:
      */
     bool isMrl ();
     RegionNodePtrW rootLayout;
+    PlayListNotify * notify_listener;
     unsigned int m_tree_version;
 };
 
@@ -341,7 +360,7 @@ public:
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "smil"; }
     bool isMrl ();
-    void start (Source *);
+    void start ();
     void childDone (ElementPtr child);
     /**
      * Hack to mark the currently playing MediaType as finished
@@ -396,7 +415,7 @@ public:
     KDE_NO_CDTOR_EXPORT Par (ElementPtr & d) : Element (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "par"; }
-    void start (Source *);
+    void start ();
     void stop ();
     void reset ();
     void childDone (ElementPtr child);
@@ -407,11 +426,6 @@ public:
     KDE_NO_CDTOR_EXPORT Seq (ElementPtr & d) : Element (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "seq"; }
-    void start (Source *);
-    void stop ();
-    void reset ();
-    void childDone (ElementPtr child);
-    Source * m_source;
 };
 
 class Body : public Seq {
@@ -427,7 +441,7 @@ public:
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "switch"; }
     // Condition
-    void start (Source *);
+    void start ();
     void stop ();
     void reset ();
     void childDone (ElementPtr child);
@@ -439,7 +453,7 @@ public:
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
     void opened ();
-    void start (Source *);
+    void start ();
     void reset ();
     RegionNodePtrW region;
     QString m_type;
@@ -450,7 +464,7 @@ class AVMediaType : public MediaType {
 public:
     AVMediaType (ElementPtr & d, const QString & t);
     RegionDataPtr getNewData (RegionNodePtr r);
-    void start (Source *);
+    void start ();
     void stop ();
 };
 
@@ -458,7 +472,7 @@ class ImageMediaType : public MediaType {
 public:
     ImageMediaType (ElementPtr & d);
     RegionDataPtr getNewData (RegionNodePtr r);
-    void start (Source *);
+    void start ();
     /**
      * cache the region data, so we load image only once
      */

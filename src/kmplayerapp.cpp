@@ -1045,7 +1045,7 @@ KDE_NO_EXPORT void KMPlayerPipeSource::activate () {
     m_document->appendChild (gen->self ());
     m_recordcmd = m_options = QString ("-"); // or m_url?
     m_identified = true;
-    first ();
+    reset ();
     QTimer::singleShot (0, m_player, SLOT (play ()));
     m_app->slotStatusMsg (i18n ("Ready."));
 }

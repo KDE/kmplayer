@@ -149,9 +149,9 @@ ElementPtr NodeList::item (int i) const {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT Element::Element (ElementPtr & d)
- : m_doc (d), m_self (this), started (false), finished (false) {}
+ : m_doc (d), m_self (this), state (state_init) {}
 
-KDE_NO_CDTOR_EXPORT Element::Element () : started (false), finished (false) {}
+KDE_NO_CDTOR_EXPORT Element::Element () : state (state_init) {}
 
 Element::~Element () {
     clear ();
@@ -173,27 +173,62 @@ KDE_NO_EXPORT const char * Element::nodeName () const {
     return "element";
 }
 
+void Element::setState (State nstate) {
+    if (state != nstate) {
+        state = nstate;
+        if (document ()->notify_listener)
+            document ()->notify_listener->stateElementChanged (self ());
+    }
+}
+
 bool Element::expose () {
     return true;
 }
 
-void Element::start (Source *) {
-    started = true;
+void Element::start () {
+    kdDebug () << nodeName () << " Element::start" << endl;
+    setState (state_started);
+    if (firstChild ())
+        firstChild ()->start (); // start only the first
+    else
+        stop (); // nothing to start
 }
 
 void Element::stop () {
-    finished = true;
+    kdDebug () << nodeName () << " Element::stop" << endl;
+    setState (state_finished);
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
+        if (e->state != state_init)
+            // children are out of scope now, reset their RegionData
+            e->reset (); // reset will call stop if necessary
+        else
+            break; // not yet started
+    }
     if (m_parent)
         m_parent->childDone (m_self);
 }
 
 void Element::reset () {
-    if (started && !finished)
+    kdDebug () << nodeName () << " Element::reset" << endl;
+    if (state == state_started)
         stop ();
-    finished = started = false;
+    setState (state_init);
+    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
+        if (e->state != state_init)
+            e->reset ();
+        else
+            break; // rest not started yet
+    }
 }
 
-void Element::childDone (ElementPtr) {
+void Element::childDone (ElementPtr child) {
+    kdDebug () << nodeName () << " Element::childDone" << endl;
+    if (state == state_started) {
+        if (child->nextSibling ())
+            child->nextSibling ()->start ();
+        else
+            stop (); // we're done
+    }
 }
 
 RegionDataPtr Element::getNewData (RegionNodePtr) {
@@ -451,9 +486,23 @@ ElementPtr Mrl::realMrl () {
     return m_self;
 }
 
+void Mrl::start () {
+    if (!isMrl ()) {
+        Element::start ();
+        return;
+    }
+    kdDebug () << "Mrl::start" << endl;
+    setState (state_started);
+    if (document ()->notify_listener && !src.isEmpty ())
+        document ()->notify_listener->requestPlayURL (m_self, RegionNodePtr ());
+    else
+        stop (); // nothing to start
+}
+
 //-----------------------------------------------------------------------------
 
-Document::Document (const QString & s) : m_tree_version (0) {
+Document::Document (const QString & s, PlayListNotify * n)
+ : notify_listener (n), m_tree_version (0) {
     m_doc = this;
     m_self = m_doc;
     src = s;
@@ -524,13 +573,13 @@ KDE_NO_EXPORT ElementPtr SMIL::Smil::childFromTag (const QString & tag) {
     return ElementPtr ();
 }
 
-KDE_NO_EXPORT void SMIL::Smil::start (Source * source) {
+KDE_NO_EXPORT void SMIL::Smil::start () {
     kdDebug () << "SMIL::Smil::start" << endl;
     current_av_media_type = ElementPtr ();
-    Element::start (source);
+    setState (state_started);
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
         if (!strcmp (e->nodeName (), "body")) {
-            e->start (source);
+            e->start ();
             return;
         }
     stop (); //source->emitEndOfPlayItems ();
@@ -681,12 +730,12 @@ KDE_NO_EXPORT ElementPtr SMIL::Par::childFromTag (const QString & tag) {
     return ElementPtr ();
 }
 
-KDE_NO_EXPORT void SMIL::Par::start (Source * source) {
+KDE_NO_EXPORT void SMIL::Par::start () {
     kdDebug () << "SMIL::Par::start" << endl;
-    Element::start (source);
+    setState (state_started);
     if (firstChild ()) {
         for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
-            e->start (source);
+            e->start ();
     } else
         stop (); // no children to run in parallel
 }
@@ -707,7 +756,7 @@ KDE_NO_EXPORT void SMIL::Par::reset () {
 KDE_NO_EXPORT void SMIL::Par::childDone (ElementPtr) {
     kdDebug () << "SMIL::Par::childDone" << endl;
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
-        if (!e->finished)
+        if (e->state != state_finished)
             return; // not all done
     }
     stop (); // we're done
@@ -724,45 +773,6 @@ KDE_NO_EXPORT ElementPtr SMIL::Seq::childFromTag (const QString & tag) {
     return ElementPtr ();
 }
 
-KDE_NO_EXPORT void SMIL::Seq::start (Source * source) {
-    kdDebug () << "SMIL::Seq::start" << endl;
-    m_source = source;
-    Element::start (source);
-    if (firstChild ())
-        firstChild ()->start (source); // start only the first
-    else
-        stop (); // nothing to start
-}
-
-KDE_NO_EXPORT void SMIL::Seq::stop () {
-    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
-        if (e->started)
-            // children are out of scope now, reset their RegionData
-            e->reset (); // reset will call stop if necessary
-        else
-            break; // not yet started
-    }
-    Element::stop ();
-}
-
-KDE_NO_EXPORT void SMIL::Seq::reset () {
-    Element::reset ();
-    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
-        if (e->started)
-            e->reset ();
-        else
-            break; // rest not started yet
-    }
-}
-
-KDE_NO_EXPORT void SMIL::Seq::childDone (ElementPtr child) {
-    kdDebug () << "SMIL::Seq::childDone" << endl;
-    if (child->nextSibling ())
-        child->nextSibling ()->start (m_source);
-    else
-        stop (); // we're done
-}
-
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementPtr SMIL::Switch::childFromTag (const QString & tag) {
@@ -773,11 +783,11 @@ KDE_NO_EXPORT ElementPtr SMIL::Switch::childFromTag (const QString & tag) {
     return ElementPtr ();
 }
 
-KDE_NO_EXPORT void SMIL::Switch::start (Source *source) {
+KDE_NO_EXPORT void SMIL::Switch::start () {
     kdDebug () << "SMIL::Switch::start" << endl;
-    Element::start (source);
+    setState (state_started);
     if (firstChild ())
-        firstChild ()->start (source); // start only the first for now FIXME: condition
+        firstChild ()->start (); // start only the first for now FIXME: condition
     else
         stop ();
 }
@@ -785,7 +795,7 @@ KDE_NO_EXPORT void SMIL::Switch::start (Source *source) {
 KDE_NO_EXPORT void SMIL::Switch::stop () {
     Element::stop ();
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
-        if (e->started && !e->finished) {
+        if (e->state == state_started) {
             e->stop ();
             break; // stop only the one running
         }
@@ -794,7 +804,7 @@ KDE_NO_EXPORT void SMIL::Switch::stop () {
 KDE_NO_EXPORT void SMIL::Switch::reset () {
     Element::reset ();
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
-        if (e->started || e->finished)
+        if (e->state != state_init)
             e->reset ();
     }
 }
@@ -850,13 +860,15 @@ KDE_NO_EXPORT void SMIL::MediaType::opened () {
     kdDebug () << "MediaType attr found bitrate: " << bitrate << " src: " << (src.isEmpty() ? "-" : src) << " type: " << (mimetype.isEmpty() ? "-" : mimetype) << endl;
 }
 
-KDE_NO_EXPORT void SMIL::MediaType::start (Source *) {
+KDE_NO_EXPORT void SMIL::MediaType::start () {
     kdDebug () << "SMIL::MediaType::start " << !!region << endl;
     if (region) {
         region->clearAllData ();
     kdDebug () << "SMIL::MediaType::start getNewData " << nodeName () << endl;
         region->data = getNewData (region);
     }
+    // FIXME for non av media Mrl::start ();
+    setState (state_started);
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::reset () {
@@ -872,10 +884,20 @@ KDE_NO_CDTOR_EXPORT
 SMIL::AVMediaType::AVMediaType (ElementPtr & d, const QString & t)
     : SMIL::MediaType (d, t) {}
 
-//KDE_NO_EXPORT void SMIL::AVMediaType::start (Source *source) {
-//    MediaType::start (source);
-    // TODO start backend player
-//}
+KDE_NO_EXPORT void SMIL::AVMediaType::start () {
+    kdDebug () << "SMIL::AVMediaType::start" << endl;
+    ElementPtr p = parentNode ();
+    while (p && strcmp (p->nodeName (), "smil"))
+        p = p->parentNode ();
+    if (p) { // this works only because we can only play one at a time FIXME
+        convertNode <SMIL::Smil> (p)->current_av_media_type = m_self;
+        MediaType::start ();
+        Mrl::start (); // see FIXME comment at MediaType::start
+    } else {
+        kdError () << nodeName () << " playing and current is not Smil" << endl;
+        stop ();
+    }
+}
 
 KDE_NO_EXPORT void SMIL::AVMediaType::stop () {
     Element::stop ();
@@ -898,9 +920,9 @@ KDE_NO_EXPORT RegionDataPtr SMIL::ImageMediaType::getNewData (RegionNodePtr r) {
     return region_data;
 }
 
-KDE_NO_EXPORT void SMIL::ImageMediaType::start (Source * source) {
+KDE_NO_EXPORT void SMIL::ImageMediaType::start () {
     kdDebug () << "SMIL::ImageMediaType::start" << endl;
-    MediaType::start (source); // creates ImageData and loads image
+    MediaType::start (); // creates ImageData and loads image
     stop (); // no duration yet, so mark us finished
 }
 

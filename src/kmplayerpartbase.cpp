@@ -478,7 +478,8 @@ void PartBase::processStateChange (KMPlayer::Process::State old, KMPlayer::Proce
     } else if (state == Process::Ready && m_process->player () == this) {
         if (old > Process::Ready)
             src->playURLDone ();
-        src->playCurrent ();
+        else
+            src->playCurrent ();
     }
 }
 
@@ -579,7 +580,7 @@ void PartBase::stop () {
         m_process->quit ();
         Source * src = m_process->player()==this ? m_source:m_process->source();
         if (src)
-            src->first ();
+            src->reset ();
     }
     if (m_view) {
         m_view->setCursor (QCursor (Qt::ArrowCursor));
@@ -722,27 +723,26 @@ void Source::setURL (const KURL & url) {
     else {
         if (m_document)
             m_document->document ()->dispose ();
-        m_document = (new Document (url.url ()))->self ();
+        m_document = (new Document (url.url (), this))->self ();
     }
     if (m_player->process () && m_player->source () == this)
         m_player->updateTree ();
     m_current = m_document;
 }
 
-QString Source::first () {
+void Source::reset () {
     if (m_document) {
         kdDebug() << "Source::first" << endl;
-        m_current = m_document;
-        if (!m_document->isMrl ())
-            return next ();
+        m_current = ElementPtr ();
+        m_document->reset ();
         m_player->updateTree ();
     }
-    return currentMrl ();
 }
 
 QString Source::currentMrl () {
-    kdDebug() << "Source::currentMrl " << (m_current ? m_current->nodeName():"") << " src:" << (m_current ? m_current->mrl()->src  : QString ()) << endl;
-    return m_current ? m_current->mrl()->src : QString ();
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    kdDebug() << "Source::currentMrl " << (m_current ? m_current->nodeName():"") << " src:" << (mrl ? mrl->src  : QString ()) << endl;
+    return mrl ? mrl->src : QString ();
 }
 
 void Source::emitPlayURL (const QString & url) {
@@ -757,16 +757,15 @@ void Source::playCurrent () {
         m_player->process ()->view ()->videoStop (); // show buttonbar
     if (m_player->view () && m_document)
         m_player->process ()->view ()->fullScreenWidget ()->setRootLayout (m_document->document ()->rootLayout);
-    kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():"") << endl;
-    if (!m_current || !m_current->isMrl ())
+    kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():"") <<  (m_document && m_document->state != Element::state_started) << (!m_current) << (m_current && m_current->state != Element::state_started) <<  endl;
+    if (m_document && m_document->state != Element::state_started)
+        m_document->start ();
+    else if (!m_current)
         emit endOfPlayItems ();
-    else if (!(m_current->started && !m_current->finished && !strcmp (m_current->nodeName (), "smil"))) { // freaking ugly!!
-        RegionNodePtr r = m_current->document ()->rootLayout;
-        if (r)
-            r->clearAllData ();
-        m_current->reset ();
-        m_current->start (this);
-    }
+    else if (m_current->state != Element::state_started)
+        m_current->start ();
+    else
+        emit playURL (this, currentMrl ());
 }
 
 static ElementPtr findDepthFirst (ElementPtr elm) {
@@ -783,35 +782,36 @@ static ElementPtr findDepthFirst (ElementPtr elm) {
     return ElementPtr ();
 }
 
-QString Source::next () {
-    if (m_document) {
-        kdDebug() << "Source::next" << endl;
-        if (m_back_request && m_back_request->isMrl ()) {
-            m_current = m_back_request;
-            m_back_request = 0L;
-        } else if (m_current) {
-            ElementPtr e = findDepthFirst (m_current->isMrl () ? m_current->nextSibling (): m_current);
-            if (e) {
-                m_current = e;
-            } else while (m_current) {
-                m_current = m_current->parentNode ();
-                if (m_current && m_current->nextSibling ()) {
-                    m_current = m_current->nextSibling ();
-                    e = findDepthFirst (m_current);
-                    if (e) {
-                        m_current = e;
-                        break;
-                    }
-                }
-            }
-        }
-        m_player->updateTree ();
+void Source::playURLDone () {
+    kdDebug() << "Source::playURLDone" << endl;
+    // notify a finish event
+    if (m_back_request && m_back_request->isMrl ()) {
+        m_document->reset (); // stop everything
+        for (ElementPtr p = m_back_request->parentNode(); p; p =p->parentNode())
+            p->setState (Element::state_started);
+        m_back_request->start ();
+    } else {
+        Mrl * mrl = m_current ? m_current->mrl () : 0L;
+        if (mrl)
+            mrl->realMrl ()->stop ();
     }
-    return currentMrl ();
+    m_player->process()->view ()->fullScreenWidget ()->repaint ();
 }
 
-void Source::playURLDone () {
-    next ();
+bool Source::requestPlayURL (ElementPtr mrl, RegionNodePtr region) {
+    kdDebug() << "Source::requestPlayURL " << mrl->mrl ()->src << endl;
+    m_current = mrl;
+    m_player->updateTree ();
+    playCurrent ();
+    return m_player->process ()->playing ();
+}
+
+void Source::stateElementChanged (ElementPtr elm) {
+    kdDebug() << "Source::stateElementChanged " << elm->nodeName () << " started:" << (int) elm->state << endl;
+    if (elm == m_document && !m_back_request && elm->state == Element::state_finished)
+        emit endOfPlayItems (); // played all items
+    if (m_player->view ())
+        m_player->process()->view ()->fullScreenWidget ()->repaint ();
 }
 
 void Source::insertURL (const QString & mrl) {
@@ -901,7 +901,7 @@ void Source::setMime (const QString & m) {
     else {
         if (m_document)
             m_document->document ()->dispose ();
-        m_document = (new Document (QString ()))->self ();
+        m_document = (new Document (QString (), this))->self ();
         m_document->mrl ()->mimetype = mimestr;
     }
 }
@@ -1219,8 +1219,6 @@ KDE_NO_EXPORT void URLSource::kioResult (KIO::Job *) {
         read (textstream);
     if (m_current) {
         m_current->mrl ()->parsed = true;
-        if (!m_current->isMrl ())
-            next ();
         playCurrent ();
     }
     m_player->process ()->view ()->controlPanel ()->setPlaying (false);
@@ -1228,8 +1226,11 @@ KDE_NO_EXPORT void URLSource::kioResult (KIO::Job *) {
 
 void URLSource::playCurrent () {
     terminateJob ();
-    if (m_current && !m_current->isMrl ())
-        next ();
+    if (!m_current) {
+        // run m_document->start() first
+        Source::playCurrent ();
+        return;
+    }
     KURL url (currentMrl ());
     int depth = 0;
     if (m_current)
@@ -1291,39 +1292,11 @@ KDE_NO_EXPORT void URLSource::play () {
 }
 
 KDE_NO_EXPORT void URLSource::playURLDone () {
-    // notify a finish event
-    if (m_current && !strcmp (m_current->nodeName (), "smil")) {
-    kdDebug () << "URLSource::playURLDone " << m_current->finished << endl;
-        m_current->mrl ()->realMrl ()->stop ();
-        if (m_current->finished)
-            next ();
-    kdDebug () << "URLSource::playURLDone repaint" << endl;
-        m_player->process()->view ()->fullScreenWidget ()->repaint ();
-    } else
-        Source::playURLDone (); // for now
+    kdDebug () << "URLSource::playURLDone" << endl;
+    Source::playURLDone (); // for now
 }
 
 //-----------------------------------------------------------------------------
-
-void Mrl::start (Source * source) {
-    kdDebug () << "Mrl::start" << endl;
-    Element::start (source);
-    if (!src.isEmpty ())
-        source->emitPlayURL (src);
-}
-
-KDE_NO_EXPORT void SMIL::AVMediaType::start (Source * s) {
-    kdDebug () << "SMIL::AVMediaType::start" << endl;
-    MediaType::start (s);
-    if (s->current () && !strcmp (s->current ()->nodeName (), "smil")) {
-        convertNode <SMIL::Smil> (s->current())->current_av_media_type = m_self;
-        if (!src.isEmpty ())
-            s->emitPlayURL (src);
-        else
-            stop ();
-    } else
-        kdError () << nodeName () << " playing and current is not Smil" << endl;
-}
 
 class ImageDataPrivate {
 public:

@@ -36,7 +36,7 @@ namespace KMPlayer {
     
 class PartBase;
 
-class KMPLAYER_EXPORT Source : public QObject {
+class KMPLAYER_EXPORT Source : public QObject, public PlayListNotify {
     Q_OBJECT
 public:
     Source (const QString & name, PartBase * player, const char * src);
@@ -57,9 +57,8 @@ public:
     KDE_NO_EXPORT float aspect () const { return m_aspect > 0.01 ? m_aspect : (m_height > 0 ? (1.0*m_width)/m_height: 0.0); }
     KDE_NO_EXPORT const KURL & url () const { return m_url; }
     KDE_NO_EXPORT const KURL & subUrl () const { return m_sub_url; }
-    QString first ();
+    void reset ();
     QString currentMrl ();
-    QString next ();
     QString mime () const;
     KDE_NO_EXPORT const QString & audioDevice () const { return m_audiodevice; }
     KDE_NO_EXPORT const QString & videoDevice () const { return m_videodevice; }
@@ -117,6 +116,12 @@ public slots:
     void emitPlayURL (const QString & url);
     virtual void jump (ElementPtr e);
 protected:
+    /**
+     * PlayListNotify implementation
+     */
+    bool requestPlayURL (ElementPtr mrl, RegionNodePtr region);
+    void stateElementChanged (ElementPtr element);
+
     ElementPtr m_document;
     ElementPtr m_current;
     ElementPtrW m_back_request;
