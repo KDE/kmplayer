@@ -1143,7 +1143,8 @@ void KMPlayerURLSource::play () {
         m_ffmpegCommand = QString ("-i ") + url.path ();
     args += KProcess::quote (myurl);
     m_player->run (args.latin1 ());
-    m_player->liveconnectextension ()->enableFinishEvent ();
+    if (m_player->liveconnectextension ())
+        m_player->liveconnectextension ()->enableFinishEvent ();
 }
 
 void KMPlayerURLSource::activate () {
