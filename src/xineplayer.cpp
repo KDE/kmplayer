@@ -483,6 +483,8 @@ void getConfigEntries (QByteArray & buf) {
                     break;
             }
         }
+        if (entry.help)
+            elm.appendChild (doc.createTextNode (QString::fromUtf8 (entry.help)));
         root.appendChild (elm);
     }
     doc.appendChild (root);

@@ -31,8 +31,8 @@
 #include <qspinbox.h>
 #include <qlabel.h>
 #include <qdom.h>
-#include <qtooltip.h>
 #include <qfontmetrics.h>
+#include <qwhatsthis.h>
 
 #include <dcopobject.h>
 #include <dcopclient.h>
@@ -619,10 +619,10 @@ MPlayerPreferencesFrame::MPlayerPreferencesFrame (QWidget * parent)
     table->setColumnReadOnly (0, true);
     table->setText (0, 0, i18n ("Additional command line arguments:"));
     table->setText (1, 0, QString("%1 (%2)").arg (i18n ("Cache size:")).arg (i18n ("kB"))); // FIXME for new translations
-    table->setCellWidget (1, 1, new QSpinBox (0, 32767, 32, table));
+    table->setCellWidget (1, 1, new QSpinBox (0, 32767, 32, table->viewport()));
     table->setText (2, 0, i18n ("Build new index when possible"));
-    table->setCellWidget (2, 1, new QCheckBox (table));
-    QToolTip::add (table->cellWidget (2, 1), i18n ("Allows seeking in indexed files (AVIs)"));
+    table->setCellWidget (2, 1, new QCheckBox (table->viewport()));
+    QWhatsThis::add (table->cellWidget (2, 1), i18n ("Allows seeking in indexed files (AVIs)"));
     for (int i = 0; i < int (MPlayerPreferencesPage::pat_last); i++)
         table->setText (i+non_patterns, 0, _mplayer_patterns[i].caption);
     QFontMetrics metrics (table->font ());
@@ -964,8 +964,9 @@ void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
                 QDomNode v = attr.namedItem (attvalue);
                 bool changed = false;
                 if (t.nodeValue () == valnum || t.nodeValue () == valstring) {
-                    if (table->text (row, 1) != v.nodeValue ()) {
-                        v.setNodeValue (table->text (row, 1));
+                    QLineEdit * lineedit = static_cast<QLineEdit *>(table->cellWidget (row, 1));
+                    if (lineedit->text () != v.nodeValue ()) {
+                        v.setNodeValue (lineedit->text ());
                         changed = true;
                     }
                 } else if (t.nodeValue () == valrange) {
@@ -1029,37 +1030,46 @@ void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
             table->setTopMargin (0);
             table->setColumnReadOnly (0, true);
             QFontMetrics metrics (table->font ());
+            dom.firstChild().normalize ();
             // set up the table fields
             for (QDomNode node = dom.firstChild().firstChild(); !node.isNull (); node = node.nextSibling (), row++) {
                 QDomNamedNodeMap attr = node.attributes ();
                 QDomNode n = attr.namedItem (attname);
                 QDomNode t = attr.namedItem (atttype);
+                QWidget * w = 0L;
                 if (!n.isNull () && !t.isNull ()) {
                     m_configframe->table->setText (row, 0, n.nodeValue ());
                     int strwid = metrics.boundingRect (n.nodeValue ()).width ();
                     if (strwid > first_column_width)
                         first_column_width = strwid + 4;
                     if (t.nodeValue () == valnum || t.nodeValue () == valstring) {
-                        QString v = attr.namedItem (attvalue).nodeValue ();
-                        table->setText (row, 1, v);
+                        w = new QLineEdit (attr.namedItem (attvalue).nodeValue (), table->viewport ());
                     } else if (t.nodeValue () == valrange) {
                         QString v = attr.namedItem (attvalue).nodeValue ();
                         QString s = attr.namedItem (attstart).nodeValue ();
                         QString e = attr.namedItem (attend).nodeValue ();
-                        QSlider * slider = new QSlider (s.toInt (), e.toInt (), 1, v.toInt (), Qt::Horizontal, table);
-                        table->setCellWidget (row, 1, slider);
+                        w = new QSlider (s.toInt (), e.toInt (), 1, v.toInt (), Qt::Horizontal, table->viewport());
                     } else if (t.nodeValue () == valbool) {
                         QString v = attr.namedItem (attvalue).nodeValue ();
-                        QCheckBox * checkbox = new QCheckBox (table);
+                        QCheckBox * checkbox = new QCheckBox(table->viewport());
                         checkbox->setChecked (v.toInt ());
-                        table->setCellWidget (row, 1, checkbox);
+                        w = checkbox;
                     } else if (t.nodeValue () == valenum) {
                         QString v = attr.namedItem (attvalue).nodeValue ();
-                        QComboBox * combobox = new QComboBox (table);
+                        QComboBox * combobox = new QComboBox(table->viewport());
                         for (QDomNode d = node.firstChild(); !d.isNull (); d = d.nextSibling ())
-                            combobox->insertItem (d.attributes ().namedItem (attvalue).nodeValue ());
+                            if (d.nodeType () != QDomNode::TextNode)
+                                combobox->insertItem (d.attributes ().namedItem (attvalue).nodeValue ());
                         combobox->setCurrentItem (v.toInt ());
-                        table->setCellWidget (row, 1, combobox);
+                        w = combobox;
+                    }
+                    if (w) {
+                        table->setCellWidget (row, 1, w);
+                        for (QDomNode d = node.firstChild(); !d.isNull (); d = d.nextSibling ())
+                            if (d.nodeType () == QDomNode::TextNode) {
+                                QWhatsThis::add (w, d.nodeValue ());
+                                break;
+                            }
                     }
                 }
             }
