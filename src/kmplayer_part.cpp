@@ -31,7 +31,6 @@
 #include <qpair.h>
 #include <qpushbutton.h>
 #include <qpopupmenu.h>
-#include <qregexp.h>
 #include <qslider.h>
 #include <qvaluelist.h>
 
@@ -192,8 +191,8 @@ void KMPlayer::init () {
     m_browserextension = new KMPlayerBrowserExtension (this);
     movie_width = 0;
     movie_height = 0;
-    m_bReceivedPos = false;
     m_bPosSliderPressed = false;
+    m_posRegExp.compile ("V:[^0-9]*([0-9\\.]+)");
     connect (m_view->backButton (), SIGNAL (clicked ()), this, SLOT (back ()));
     connect (m_view->playButton (), SIGNAL (clicked ()), this, SLOT (play ()));
     connect (m_view->forwardButton (), SIGNAL (clicked ()), this, SLOT (forward ()));
@@ -288,42 +287,42 @@ bool KMPlayer::openFile () {
 }
 
 void KMPlayer::processOutput (KProcess *, char * str, int len) {
-    if (!m_view) return;
-    QString out = QString::fromLocal8Bit (str, len);
-    if ( !m_bReceivedPos )
-        m_view->addText (out); // Add output until we receive first pos marker
-    QRegExp rePos( "V\\:\\s*([\\d\\.]+)\\s*" );
-    KRegExp sizeRegExp (m_configdialog->sizepattern.ascii());
+    if (!m_view || len <= 0) return;
+    // str seems to be zero terminated
+    //QCString out (str, len + 1);
+    const char * out = str;
 
-    if (rePos.search( out ) >= 0) {
-        m_bReceivedPos=true;
-        m_pos = rePos.cap (1).toFloat();
-        emit moviePositionChanged( (int) m_pos );
-    }
-
-    bool ok;
-    if (sizeRegExp.match (out.local8Bit ())) {
-        movie_width = QString (sizeRegExp.group (1)).toInt (&ok);
-        movie_height = ok ? QString (sizeRegExp.group (2)).toInt (&ok) : 0;
-        if (ok && movie_width > 0 && movie_height > 0 && m_view->viewer ()->aspect () < 0.01) {
-            m_view->viewer ()->setAspect (1.0 * movie_width / movie_height);
-            if (m_liveconnectextension)
-                m_liveconnectextension->setSize (movie_width, movie_height);
-        }
-    } else if (m_browserextension) {
-        KRegExp cacheRegExp (m_configdialog->cachepattern.ascii());
-        KRegExp startRegExp (m_configdialog->startpattern.ascii());
-        if (cacheRegExp.match (out.local8Bit ())) {
-            double p = QString (cacheRegExp.group (1)).toDouble (&ok);
-            if (ok) {
-                m_browserextension->setLoadingProgress (int (p));
-                m_browserextension->infoMessage(i18n ("%1% Cache fill").arg(cacheRegExp.group (1)));
+    if (m_posRegExp.match (out)) {
+        // during playing, this regexp will match often
+        emit moviePositionChanged (int (atof (m_posRegExp.group (1))));
+    } else {
+        m_view->addText (out);
+        KRegExp sizeRegExp (m_configdialog->sizepattern.ascii());
+        bool ok;
+        if (sizeRegExp.match (out)) {
+            movie_width = QString (sizeRegExp.group (1)).toInt (&ok);
+            movie_height = ok ? QString (sizeRegExp.group (2)).toInt (&ok) : 0;
+            if (ok && movie_width > 0 && movie_height > 0 && m_view->viewer ()->aspect () < 0.01) {
+                m_view->viewer ()->setAspect (1.0 * movie_width / movie_height);
+                if (m_liveconnectextension)
+                    m_liveconnectextension->setSize (movie_width, movie_height);
             }
-        } else if (startRegExp.match (out.local8Bit ())) {
-            m_browserextension->setLoadingProgress (100);
-            emit completed ();
-            m_started_emited = false;
-            m_browserextension->infoMessage (i18n ("KMPlayer: Playing"));
+        } else if (m_browserextension) {
+            KRegExp cacheRegExp (m_configdialog->cachepattern.ascii());
+            KRegExp startRegExp (m_configdialog->startpattern.ascii());
+            if (cacheRegExp.match (out)) {
+                double p = QString (cacheRegExp.group (1)).toDouble (&ok);
+                if (ok) {
+                    m_browserextension->setLoadingProgress (int (p));
+                    m_browserextension->infoMessage 
+                        (QString (cacheRegExp.group (1)) + i18n ("% Cache fill"));
+                }
+            } else if (startRegExp.match (out)) {
+                m_browserextension->setLoadingProgress (100);
+                emit completed ();
+                m_started_emited = false;
+                m_browserextension->infoMessage (i18n ("KMPlayer: Playing"));
+            }
         }
     }
 }
@@ -379,7 +378,6 @@ void KMPlayer::processStopped (KProcess *) {
             m_browserextension->infoMessage (i18n ("KMPlayer: Stop Playing"));
         emit finished ();
     }
-    m_bReceivedPos=false;
 }
 
 bool KMPlayer::isSeekable () const {

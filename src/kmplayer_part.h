@@ -22,6 +22,7 @@
 #include <kparts/browserextension.h>
 #include <kparts/factory.h>
 #include <kurl.h>
+#include <kregexp.h>
 #include <qobject.h>
 #include <qstringlist.h>
 
@@ -146,6 +147,7 @@ private:
     KMPlayerBrowserExtension * m_browserextension;
     KMPlayerLiveConnectExtension * m_liveconnectextension;
     KURL m_url;
+    KRegExp m_posRegExp;
     QStringList commands;
     QString m_href;
     int m_stoplooplevel;
@@ -153,13 +155,11 @@ private:
     int m_cachesize;
     int movie_width;
     int movie_height;
-    double m_pos;
     bool m_term_signal_send : 1;
     bool m_kill_signal_send : 1;
     bool m_started_emited : 1;
     bool m_ispart : 1;
     bool m_use_slave : 1;
-    bool m_bReceivedPos : 1;
     bool m_bPosSliderPressed : 1;
 };
 
