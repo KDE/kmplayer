@@ -191,13 +191,15 @@ KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
 	layout->addWidget (showBroadcastButton);
 	//layout->addWidget(autoHideSlider);
 	layout->addWidget(alwaysBuildIndex);
+	layout->addItem (new QSpacerItem (0, 5));
 	layout->addWidget(seekingWidget);
+        layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
 KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
 : QFrame (parent)
 {
-    QVBoxLayout *layout = new QVBoxLayout (this, 0, 2);
+    QVBoxLayout *layout = new QVBoxLayout (this, 0, 5);
     QHBoxLayout * urllayout = new QHBoxLayout ();
     QLabel *urlLabel = new QLabel (i18n ("URL:"), this, 0);
     url = new KURLRequester ("", this, 0);
@@ -206,6 +208,7 @@ KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
     backend->insertItem (QString ("MPlayer"), 0);
     backend->insertItem (QString ("Xine"), 1);
     allowhref = new QCheckBox (i18n ("Enable 'Click to Play' support"), this);
+    layout->addWidget (allowhref);
     urllayout->addWidget (urlLabel);
     urllayout->addWidget (url);
     layout->addLayout (urllayout);
@@ -220,7 +223,6 @@ KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
 #else
     backend->hide ();
 #endif
-    layout->addWidget (allowhref);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
@@ -346,7 +348,7 @@ KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerPre
 : QFrame (parent), m_preference (pref) {
     m_devicepages.setAutoDelete (true);
     QVBoxLayout *layout = new QVBoxLayout (this);
-    QGridLayout *gridlayout = new QGridLayout (layout, 2, 2);
+    QGridLayout *gridlayout = new QGridLayout (layout, 2, 2, 2);
     QLabel *driverLabel = new QLabel (i18n ("Driver:"), this, 0);
     driver = new QLineEdit ("", this, 0);
     QToolTip::add (driver, i18n ("dummy, v4l or bsdbt848"));
@@ -456,7 +458,7 @@ TVDevice * KMPlayerPrefSourcePageTV::findDevice (QPtrList <TVDevice> & list, con
 
 KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerSetting * _ffs) : QFrame (parent), ffs (_ffs) {
     QVBoxLayout *layout = new QVBoxLayout (this);
-    QGridLayout *gridlayout = new QGridLayout (layout, 8, 2);
+    QGridLayout *gridlayout = new QGridLayout (layout, 8, 2, 2);
     QLabel *label = new QLabel (i18n ("Bind address:"), this);
     bindaddress = new QLineEdit ("", this);
     QToolTip::add (bindaddress, i18n ("If you have multible network devices, you can limit access"));
@@ -600,7 +602,7 @@ KMPlayerPrefGeneralPageVCD::KMPlayerPrefGeneralPageVCD(QWidget *parent) : QFrame
 
 KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidget *parent, MPlayerAudioDriver * ad) : QFrame(parent)
 {
-    QVBoxLayout *layout = new QVBoxLayout (this);
+    QVBoxLayout *layout = new QVBoxLayout (this, 0, 5);
     QHBoxLayout *childLayout1 = new QHBoxLayout (layout);
 
     videoDriver = new QComboBox(this);
@@ -619,6 +621,7 @@ KMPlayerPrefGeneralPageOutput::KMPlayerPrefGeneralPageOutput(QWidget *parent, MP
         audioDriver->insertItem (ad[i].description, i);
     childLayout2->addWidget(new QLabel(i18n("Audio driver:"),this));
     childLayout2->addWidget(audioDriver);
+    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 
 }
 
@@ -853,17 +856,17 @@ KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame
 	PostprocessingOptions->changeTab( deintSelectionWidget, i18n( "Deinterlacing" ) );
 	PostprocessingOptions->adjustSize();
 }
+
 KMPlayerPrefGeneralPageAdvanced::KMPlayerPrefGeneralPageAdvanced(QWidget *parent) : QFrame(parent)
 {
-	QVBoxLayout *layout = new QVBoxLayout (this);
-	layout->setSpacing(2);
+	QVBoxLayout *layout = new QVBoxLayout (this, 0, 5);
 	QGroupBox *realGroupBox = new QGroupBox ( i18n("Pattern Matching"), this, "realGroupBox");
 
 	realGroupBox->setFlat( false );
 	realGroupBox->setInsideMargin( 7 );
 	QVBoxLayout *realGroupBoxLayout = new QVBoxLayout (realGroupBox->layout());
 
-	QGridLayout *groupBoxLayout = new QGridLayout (realGroupBoxLayout,1,1);
+	QGridLayout *groupBoxLayout = new QGridLayout (realGroupBoxLayout,1,1, 2);
 
 	QLabel *langPattLabel = new QLabel (i18n("DVD language pattern:"), realGroupBox, 0);
 	dvdLangPattern = new QLineEdit (realGroupBox);
@@ -925,7 +928,7 @@ KMPlayerPrefGeneralPageAdvanced::KMPlayerPrefGeneralPageAdvanced(QWidget *parent
 	addLayout2->addWidget(cacheSize);
 	addLayout2->addWidget(new QLabel (i18n("kB"),this));
 
-	layout->addItem(new QSpacerItem(1,1, QSizePolicy::Minimum, QSizePolicy::Minimum));
+	layout->addItem(new QSpacerItem(1,1, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
 void KMPlayerPreferences::confirmDefaults() {

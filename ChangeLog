@@ -1,3 +1,8 @@
+Changes since version 0.8a
+- Layout fixes in configuration dialog
+- Fix loading percentage feedback
+- Fix console output for kxineplayer
+- Fix tv channel switching
 Changes since version 0.8
 - Fix forward/backward/position seek for mplayer and implemented for kxineplayer
 - Hide zoom sub menu when in fullscreen
