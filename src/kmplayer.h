@@ -135,11 +135,9 @@ private:
     bool m_opendvd : 1;
     bool m_openvcd : 1;
     bool m_openpipe : 1;
-    bool m_fullscreen : 1;
     bool m_showToolbar : 1;
     bool m_showStatusbar : 1;
     bool m_showMenubar : 1;
-    bool m_sreensaverdisabled : 1;
 };
 
 #endif // KMPLAYER_H

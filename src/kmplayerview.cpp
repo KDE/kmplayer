@@ -30,11 +30,10 @@ email                :
 #include <qiconset.h>
 #include <qcursor.h>
 #include <qpopupmenu.h>
+#include <qkeysequence.h>
 #include <qslider.h>
 #include <qlabel.h>
-
-#include <arts/soundserver.h>
-#include <arts/kartsserver.h>
+#include <qdatastream.h>
 
 #include <X11/Xlib.h>
 #include <X11/Intrinsic.h>
@@ -51,6 +50,8 @@ static const int button_height = 11;
 #include <kstaticdeleter.h>
 #include <kdebug.h>
 #include <klocale.h>
+#include <kapplication.h>
+#include <dcopclient.h>
 #include <arts/kartsdispatcher.h>
 #include <arts/soundserver.h>
 #include <arts/kartsserver.h>
@@ -337,7 +338,7 @@ void KMPlayerView::init () {
     m_zoomMenu->insertItem (i18n ("150%"), menu_zoom150);
     m_popupMenu->insertItem (i18n ("&Zoom"), m_zoomMenu, menu_zoom);
     m_popupMenu->insertItem (i18n ("&Full Screen"),
-                             m_layer, SLOT (fullScreen()), 0, menu_fullscreen);
+          this, SLOT (fullScreen()), QKeySequence (Qt::Key_F), menu_fullscreen);
     m_popupMenu->insertSeparator ();
     m_popupMenu->insertItem (i18n ("&Configure KMPlayer..."), menu_config);
 
@@ -365,9 +366,9 @@ void KMPlayerView::init () {
 }
 
 KMPlayerView::~KMPlayerView () {
+    setUseArts (false);
     if (m_layer->parent () != this)
         delete m_layer;
-    setUseArts(false);
 }
 
 void KMPlayerView::setUseArts (bool b) {
@@ -496,7 +497,7 @@ void KMPlayerView::reset () {
         m_viewer->parentWidget ()->setMouseTracking (false);
         m_posSlider->setMouseTracking (false);
     }
-    if (m_layer->fullscreen())
+    if (m_layer->isFullScreen())
         m_layer->fullScreen ();
     m_multiedit->hide ();
     if (m_show_console_output) {
@@ -504,6 +505,29 @@ void KMPlayerView::reset () {
         m_multiedit->resize (m_viewer->width (), m_viewer->height ());//Qt bug?
     }
     m_viewer->show ();
+}
+
+void KMPlayerView::fullScreen () {
+    if (!m_layer->isFullScreen()) {
+        m_sreensaver_disabled = false;
+        QByteArray data, replydata;
+        QCString replyType;
+        if (kapp->dcopClient ()->call ("kdesktop", "KScreensaverIface",
+                    "isEnabled()", data, replyType, replydata)) {
+            bool enabled;
+            QDataStream replystream (replydata, IO_ReadOnly);
+            replystream >> enabled;
+            if (enabled)
+                m_sreensaver_disabled = kapp->dcopClient()->send
+                    ("kdesktop", "KScreensaverIface", "enable(bool)", "false");
+        }
+        m_layer->fullScreen();
+    } else {
+        if (m_sreensaver_disabled)
+            m_sreensaver_disabled = !kapp->dcopClient()->send
+                ("kdesktop", "KScreensaverIface", "enable(bool)", "true");
+        m_layer->fullScreen();
+    }
 }
 //----------------------------------------------------------------------
 

@@ -44,7 +44,7 @@ class KMPlayerViewLayer : public QWidget {
     Q_OBJECT
 public:
     KMPlayerViewLayer (KMPlayerView * parent, QBoxLayout * b);
-    bool fullscreen () const { return m_fullscreen; }
+    bool isFullScreen () const { return m_fullscreen; }
 public slots:
     void fullScreen ();
 private:
@@ -89,11 +89,13 @@ public:
     void setAutoHideButtons (bool b);
     bool autoHideButtons () const { return m_auto_hide_buttons; }
     void delayedShowButtons (bool show);
+    bool isFullScreen () const { return m_layer->isFullScreen (); }
 public slots:
     void startsToPlay ();
     void showPopupMenu ();
     void setVolume (int);
     void updateVolume (float);
+    void fullScreen ();
 protected:
     void leaveEvent (QEvent *);
     void timerEvent (QTimerEvent *);
@@ -123,6 +125,7 @@ private:
     bool m_playing : 1;
     bool m_use_arts : 1;
     bool m_inVolumeUpdate : 1;
+    bool m_sreensaver_disabled : 1;
 };
 
 class KMPlayerViewer : public QWidget {

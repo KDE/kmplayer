@@ -30,6 +30,7 @@
 #include <qapplication.h>
 #include <qslider.h>
 #include <qtimer.h>
+#include <qmetaobject.h>
 
 // include files for KDE
 #include <kiconloader.h>
@@ -174,7 +175,8 @@ void KMPlayerApp::initView ()
             this, SLOT (zoom100 ()));
     view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom150,
             this, SLOT (zoom150 ()));
-
+    view->popupMenu ()->connectItem (KMPlayerView::menu_fullscreen,
+            this, SLOT (fullScreen ()));
     /*QPopupMenu * viewmenu = new QPopupMenu;
     viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()),
                           QKeySequence ("CTRL + Key_F"));
@@ -823,34 +825,13 @@ void KMPlayerApp::slotStatusMsg(const QString &text) {
 }
 
 void KMPlayerApp::fullScreen () {
-    m_fullscreen = !m_fullscreen;
-    if (m_fullscreen) {
-        showFullScreen ();
-        menuBar ()->hide ();
-        statusBar()->hide();
-        //toolBar("mainToolBar")->hide();
-        m_sreensaverdisabled = false;
-        QByteArray data, replydata;
-        QCString replyType;
-        if (kapp->dcopClient ()->call ("kdesktop", "KScreensaverIface",
-                             "isEnabled()", data, replyType, replydata)) {
-            bool enabled;
-            QDataStream replystream (replydata, IO_ReadOnly);
-            replystream >> enabled;
-            if (enabled)
-                m_sreensaverdisabled = kapp->dcopClient()->send
-                    ("kdesktop", "KScreensaverIface", "enable(bool)", "false");
-        }
-    } else {
-        showNormal ();
-        menuBar ()->show ();
-        //if (m_showToolbar) toolBar("mainToolBar")->show();
-        if (m_showStatusbar) statusBar()->show();
-	if (m_showMenubar) menuBar()->show();
-        if (m_sreensaverdisabled)
-            m_sreensaverdisabled = !kapp->dcopClient()->send
-                ("kdesktop", "KScreensaverIface", "enable(bool)", "true");
-    }
+    KMPlayerView * kview = static_cast <KMPlayerView*> (m_player->view());
+    if (sender ()->metaObject ()->inherits ("KAction"))
+        kview->fullScreen();
+    if (kview->isFullScreen())
+        hide ();
+    else
+        show ();
 }
 
 void KMPlayerApp::startArtsControl () {
