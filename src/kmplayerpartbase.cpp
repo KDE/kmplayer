@@ -477,7 +477,7 @@ void PartBase::processStateChange (KMPlayer::Process::State old, KMPlayer::Proce
         emit stopPlaying ();
     } else if (state == Process::Ready && m_process->player () == this) {
         if (old > Process::Ready)
-            src->next ();
+            src->playURLDone ();
         src->playCurrent ();
     }
 }
@@ -796,6 +796,10 @@ QString Source::next () {
         m_player->updateTree ();
     }
     return currentMrl ();
+}
+
+void Source::playURLDone () {
+    next ();
 }
 
 void Source::insertURL (const QString & mrl) {
@@ -1272,6 +1276,10 @@ void URLSource::playCurrent () {
 
 KDE_NO_EXPORT void URLSource::play () {
     Source::play ();
+}
+
+KDE_NO_EXPORT void URLSource::playURLDone () {
+    Source::playURLDone (); // for now
 }
 
 //-----------------------------------------------------------------------------

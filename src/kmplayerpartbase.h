@@ -71,6 +71,7 @@ public slots:
     virtual void activate ();
     virtual void deactivate ();
     virtual void playCurrent ();
+    virtual void playURLDone ();
     void play ();
 private slots:
     void kioData (KIO::Job *, const QByteArray &);

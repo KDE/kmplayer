@@ -523,6 +523,11 @@ KDE_NO_EXPORT void KMPlayerVDRSource::backward () {
     queueCommand ("CHAN -\n", 1000);
 }
 
+KDE_NO_EXPORT void KMPlayerVDRSource::playURLDone () {
+    kdError () << "done with playing a station?" << endl;
+    emit endOfPlayItems ();
+}
+
 KDE_NO_EXPORT void KMPlayerVDRSource::keyUp () {
     queueCommand ("HITK UP\n", 1000);
 }

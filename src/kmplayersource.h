@@ -110,6 +110,7 @@ public slots:
      * May emit playURL if a video needs to play or endOfPlayItems when done
      */
     virtual void playCurrent ();
+    virtual void playURLDone ();
     virtual void jump (ElementPtr e);
 protected:
     ElementPtr m_document;
