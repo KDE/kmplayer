@@ -868,19 +868,6 @@ KDE_NO_EXPORT void PlayListView::dragEnterEvent (QDragEnterEvent* dee) {
 
 //-----------------------------------------------------------------------------
 
-namespace KMPlayer {
-
-class Console : public QTextEdit {
-public:
-    Console (QWidget * parent, View * view);
-protected:
-    void contextMenuEvent (QContextMenuEvent * e);
-private:
-    View * m_view;
-};
-
-} // namespace
-
 KDE_NO_CDTOR_EXPORT Console::Console (QWidget * parent, View * view) : QTextEdit (parent, "kde_kmplayer_console"), m_view (view) {
     setTextFormat (Qt::PlainText);
     setReadOnly (true);
@@ -981,8 +968,6 @@ KDE_NO_EXPORT void View::init () {
     m_dockarea->setMainDockWidget (m_dock_video);
     m_dock_playlist = m_dockarea->createDockWidget (QString ("PlayList"), KGlobal::iconLoader ()->loadIcon (QString ("player_playlist"), KIcon::Small));
     m_playlist = new PlayListView (m_dock_playlist, this);
-    m_playlist->horizontalScrollBar ()->setPalette (pal);
-    m_playlist->verticalScrollBar ()->setPalette (pal);
     m_playlist->setPaletteBackgroundColor (QColor (0, 0, 0));
     m_playlist->setPaletteForegroundColor (QColor (0xB2, 0xB2, 0xB2));
     m_dock_playlist->setWidget (m_playlist);
@@ -1000,8 +985,6 @@ KDE_NO_EXPORT void View::init () {
     m_multiedit->setPaper (QBrush (QColor (0, 0, 0)));
     m_multiedit->setColor (QColor (0xB2, 0xB2, 0xB2));
     m_widgettypes[WT_Console] = m_multiedit;
-    m_multiedit->horizontalScrollBar ()->setPalette (pal);
-    m_multiedit->verticalScrollBar ()->setPalette (pal);
     m_widgettypes[WT_Picture] = new KMPlayerPictureWidget (m_widgetstack, this);
 
     m_widgetstack->addWidget (m_viewer);

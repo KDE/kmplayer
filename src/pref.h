@@ -34,10 +34,12 @@ class QLineEdit;
 class QRadioButton;
 class QSlider;
 class QSpinBox;
+class QColor;
 class QButtonGroup;
 class KHistoryCombo;
 class KComboBox;
 class KURLRequester;
+class KColorButton;
 
 namespace KMPlayer {
     
@@ -56,7 +58,7 @@ class Source;
 class Settings;
 class PreferencesPage;
 class OutputDriver;
-
+class ColorSetting;
 
 class Preferences : public KDialogBase
 {
@@ -90,7 +92,7 @@ class PrefGeneralPageGeneral : public QFrame
 {
     Q_OBJECT
 public:
-    PrefGeneralPageGeneral(QWidget *parent = 0);
+    PrefGeneralPageGeneral(QWidget *parent, Settings *);
     ~PrefGeneralPageGeneral() {}
 
     QCheckBox *keepSizeRatio;
@@ -101,7 +103,13 @@ public:
     QCheckBox *adjustvolume;
 
     QSpinBox *seekTime;
-
+    QComboBox *colorscombo;
+    KColorButton *colorbutton;
+public slots:
+    void colorItemChanged (int);
+    void colorCanged (const QColor &);
+private:
+    ColorSetting * colors;
 };
 
 class PrefSourcePageURL : public QFrame

@@ -26,6 +26,7 @@
 #include <qwidget.h>
 #include <qpushbutton.h>
 #include <qguardedptr.h>
+#include <qtextedit.h>
 
 #include <kdockwidget.h>
 #include <kpopupmenu.h>
@@ -125,6 +126,15 @@ private:
     bool m_fullscreen : 1;
 };
 
+class Console : public QTextEdit {
+public:
+    Console (QWidget * parent, View * view);
+protected:
+    void contextMenuEvent (QContextMenuEvent * e);
+private:
+    View * m_view;
+};
+
 class KMPLAYER_EXPORT KMPlayerPopupMenu : public KPopupMenu {
     Q_OBJECT
 public:
@@ -158,7 +168,7 @@ public:
     void reset ();
     //void print(QPrinter *pPrinter);
 
-    //Console * consoleOutput () const { return m_multiedit; }
+    Console * console () const { return m_multiedit; }
     KDE_NO_EXPORT Viewer * viewer () const { return m_viewer; }
     KDE_NO_EXPORT ControlPanel * controlPanel () const {return m_control_panel;}
     KDE_NO_EXPORT PlayListView * playList () const { return m_playlist; }

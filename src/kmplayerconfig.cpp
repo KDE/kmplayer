@@ -77,6 +77,24 @@ KDE_NO_CDTOR_EXPORT Settings::Settings (PartBase * player, KConfig * config)
   : pagelist (0L), configdialog (0L), m_config (config), m_player (player) {
     audiodrivers = _ads;
     videodrivers = _vds;
+    colors [ColorSetting::playlist_background].title = i18n ("Playlist background color");
+    colors [ColorSetting::playlist_background].option = "PlaylistBackground";
+    colors [ColorSetting::playlist_background].color = QColor (0, 0, 0);
+    colors [ColorSetting::playlist_foreground].title = i18n ("Playlist foreground color");
+    colors [ColorSetting::playlist_foreground].option = "PlaylistForeground";
+    colors [ColorSetting::playlist_foreground].color = QColor(0xB2, 0xB2, 0xB2);
+    colors [ColorSetting::console_background].title = i18n ("Console background color");
+    colors [ColorSetting::console_background].option = "ConsoleBackground";
+    colors [ColorSetting::console_background].color = QColor (0, 0, 0);
+    colors [ColorSetting::console_foreground].title = i18n ("Console foreground color");
+    colors [ColorSetting::console_foreground].option = "ConsoleForeground";
+    colors [ColorSetting::console_foreground].color = QColor (0xB2, 0xB2, 0xB2);
+    colors [ColorSetting::video_background].title = i18n ("Video background color");
+    colors [ColorSetting::video_background].option = "VideoBackground";
+    colors [ColorSetting::video_background].color = QColor (0, 0, 0);
+    colors [ColorSetting::area_background].title = i18n ("Viewing area background color");
+    colors [ColorSetting::area_background].option = "ViewingAreaBackground";
+    colors [ColorSetting::area_background].color = QColor (0, 0, 0);
 }
 
 KDE_NO_CDTOR_EXPORT Settings::~Settings () {
@@ -154,6 +172,34 @@ static const char * strAutoPlayAfterRecording = "Auto Play After Recording";
 static const char * strAutoPlayAfterTime = "Auto Play After Recording Time";
 static const char * strRecordingCopy = "Recording Is Copy";
 
+KDE_NO_EXPORT void Settings::applyColorSetting (bool only_changed_ones) {
+    View *view = static_cast <View *> (m_player->view ());
+    if (!view) return;
+    for (int i = 0; i < int (ColorSetting::last_target); i++)
+        if (colors[i].color != colors[i].newcolor || !only_changed_ones) {
+            colors[i].color = colors[i].newcolor;
+            switch (ColorSetting::Target (i)) {
+                case ColorSetting::playlist_background:
+                   view->playList()->setPaletteBackgroundColor(colors[i].color);
+                   break;
+                case ColorSetting::playlist_foreground:
+                   view->playList()->setPaletteForegroundColor(colors[i].color);
+                   break;
+                case ColorSetting::console_background:
+                   view->console()->setPaper (QBrush (colors[i].color));
+                   break;
+                case ColorSetting::console_foreground:
+                   view->console()->setColor(colors[i].color);
+                   break;
+                case ColorSetting::video_background:
+                   view->viewer()->setPaletteBackgroundColor(colors[i].color);
+                   break;
+                case ColorSetting::area_background:
+                   view->fullScreenWidget()->setPaletteBackgroundColor(colors[i].color);
+                   break;
+            }
+        }
+}
 
 KDE_NO_EXPORT void Settings::readConfig () {
     View *view = static_cast <View *> (m_player->view ());
@@ -170,6 +216,8 @@ KDE_NO_EXPORT void Settings::readConfig () {
     QMap <QString, Source *>::const_iterator i = m_player->sources().begin ();
     for (; i != e; ++i)
         backends[i.data()->name ()] = m_config->readEntry (i.data()->name ());
+    for (int i = 0; i < int (ColorSetting::last_target); i++)
+        colors[i].newcolor = colors[i].color = m_config->readColorEntry (colors[i].option, &colors[i].color);
 
     m_config->setGroup (strMPlayerGroup);
     sizeratio = m_config->readBoolEntry (strKeepSizeRatio, true);
@@ -301,6 +349,8 @@ void Settings::show (const char * pagename) {
     configdialog->m_GeneralPageGeneral->showRecordButton->setChecked (showrecordbutton);
     configdialog->m_GeneralPageGeneral->showBroadcastButton->setChecked (showbroadcastbutton);
     configdialog->m_GeneralPageGeneral->seekTime->setValue(seektime);
+    for (int i = 0; i < int (ColorSetting::last_target); i++)
+        colors[i].newcolor = colors[i].color;
     configdialog->m_SourcePageURL->urllist->clear ();
     configdialog->m_SourcePageURL->urllist->insertStringList (urllist);
     configdialog->m_SourcePageURL->urllist->setCurrentText (m_player->source ()->url ().prettyURL ());
@@ -391,6 +441,8 @@ void Settings::writeConfig () {
     const QMap<QString,QString>::iterator b_end = backends.end ();
     for (QMap<QString,QString>::iterator i = backends.begin(); i != b_end; ++i)
         m_config->writeEntry (i.key (), i.data ());
+    for (int i = 0; i < int (ColorSetting::last_target); i++)
+        m_config->writeEntry (colors[i].option, colors[i].color);
     m_config->setGroup (strMPlayerGroup);
     m_config->writeEntry (strKeepSizeRatio, view->keepSizeRatio ());
     m_config->writeEntry (strLoop, loop);
@@ -531,6 +583,7 @@ KDE_NO_EXPORT void Settings::okPressed () {
     if (!showbroadcastbutton)
         view->controlPanel ()->broadcastButton ()->hide ();
     seektime = configdialog->m_GeneralPageGeneral->seekTime->value();
+    applyColorSetting (true);
 
     videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentItem();
     audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentItem();

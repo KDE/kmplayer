@@ -158,6 +158,7 @@ void PartBase::init (KActionCollection * action_collection) {
     KParts::Part::setWidget (m_view);
     m_view->init ();
     m_settings->readConfig ();
+    m_settings->applyColorSetting (false);
     ControlPanel * panel = m_view->controlPanel ();
     m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner,
                         panel->bookmarkMenu (), action_collection, true, true);

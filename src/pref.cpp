@@ -49,6 +49,7 @@
 #include <kiconloader.h>
 #include <kdeversion.h>
 #include <kcombobox.h>
+#include <kcolorbutton.h>
 #include <kurlrequester.h>
 
 #include "pref.h"
@@ -72,7 +73,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
-    m_GeneralPageGeneral = new PrefGeneralPageGeneral (tab);
+    m_GeneralPageGeneral = new PrefGeneralPageGeneral (tab, settings);
     tab->insertTab (m_GeneralPageGeneral, i18n("General"));
     m_GeneralPageOutput = new PrefGeneralPageOutput
         (tab, settings->audiodrivers, settings->videodrivers);
@@ -188,8 +189,8 @@ KDE_NO_EXPORT void Preferences::removePrefPage(PreferencesPage * page) {
 KDE_NO_CDTOR_EXPORT Preferences::~Preferences() {
 }
 
-KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *parent)
-: QFrame (parent, "GeneralPage")
+KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *parent, Settings * settings)
+: QFrame (parent, "GeneralPage"), colors (settings->colors)
 {
 	QVBoxLayout *layout = new QVBoxLayout(this, 5, 2);
 
@@ -213,6 +214,17 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
 	seekingWidgetLayout->addItem(new QSpacerItem(0,0,QSizePolicy::Minimum, QSizePolicy::Minimum));
 	seekTime = new QSpinBox(1, 600, 1, seekingWidget);
 	seekingWidgetLayout->addWidget(seekTime);
+        QGroupBox *colorbox = new QGroupBox(2,Qt::Vertical,i18n("Colors"),this);
+        colorscombo = new QComboBox (colorbox);
+        for (int i = 0; i < int (ColorSetting::last_target); i++)
+            colorscombo->insertItem (colors[i].title);
+        colorscombo->setCurrentItem (0);
+        connect (colorscombo, SIGNAL (activated (int)),
+                 this, SLOT (colorItemChanged(int)));
+        colorbutton = new KColorButton (colorbox);
+        colorbutton->setColor (colors[0].color);
+        connect (colorbutton, SIGNAL (changed (const QColor &)),
+                 this, SLOT (colorCanged (const QColor &)));
 	seekingWidgetLayout->addItem(new QSpacerItem(0,0,QSizePolicy::Minimum, QSizePolicy::Minimum));
 	layout->addWidget(keepSizeRatio);
 	layout->addWidget(loop);
@@ -223,7 +235,19 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
 	//layout->addWidget(autoHideSlider);
 	layout->addItem (new QSpacerItem (0, 5));
 	layout->addWidget(seekingWidget);
+	layout->addItem (new QSpacerItem (0, 5));
+	layout->addWidget (colorbox);
         layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+}
+
+KDE_NO_EXPORT void PrefGeneralPageGeneral::colorItemChanged (int c) {
+    if (c < int (ColorSetting::last_target))
+        colorbutton->setColor (colors[c].newcolor);
+}
+
+KDE_NO_EXPORT void PrefGeneralPageGeneral::colorCanged (const QColor & c) {
+    if (colorscombo->currentItem () < int (ColorSetting::last_target))
+        colors[colorscombo->currentItem ()].newcolor = c;
 }
 
 KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)

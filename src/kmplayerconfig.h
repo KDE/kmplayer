@@ -42,6 +42,20 @@ public:
     const QString description;
 };
 
+class ColorSetting {
+public:
+    QString title;
+    QString option;
+    QColor color;
+    QColor newcolor;
+    enum Target {
+        playlist_background = 0, playlist_foreground,
+        console_background, console_foreground,
+        video_background, area_background,
+        last_target
+    } target;
+};
+
 template <class T>
 void Deleter (T * t) {
     delete t;
@@ -67,6 +81,7 @@ public:
     void show (const char * pagename = 0L);
     void addPage (PreferencesPage *);
     void removePage (PreferencesPage *);
+    void applyColorSetting (bool only_changed_ones);
     Preferences *configDialog() const { return configdialog; }
 
     QStringList urllist;
@@ -133,6 +148,7 @@ public:
     int audiodriver;
     OutputDriver * audiodrivers;
     OutputDriver * videodrivers;
+    ColorSetting colors [ColorSetting::last_target];
     QString dvddevice;
     QString vcddevice;
     QMap <QString, QString> backends;
