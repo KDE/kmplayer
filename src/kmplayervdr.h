@@ -130,12 +130,14 @@ private:
     void queueCommand (const char * cmd, int repeat_ms);
     void sendCommand ();
     void deleteCommands ();
+    void jump (const QString & channel);
     KMPlayerApp * m_app;
     KMPlayerPrefSourcePageVDR * m_configpage;
     KAction * m_actions [act_last];
     KAction * m_fullscreen_actions [act_last];
     QSocket * m_socket;
     VDRCommand * commands;
+    QString m_request_jump;
     int channel_timer;
     int timeout_timer;
     int tcp_port;

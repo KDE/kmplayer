@@ -172,6 +172,8 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     setAspect (scale ? 16.0/9 : 1.33);
     if (m_player->settings ()->sizeratio)
         m_app->view ()->viewer ()->setAspect (aspect ());
+    if (!m_url.protocol ().compare ("kmplayer"))
+        m_request_jump = KURL::decode_string (m_url.path ()).mid (1);
     QTimer::singleShot (0, m_player, SLOT (play ()));
 }
 
@@ -187,6 +189,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
         disconnect (panel->button (KMPlayer::ControlPanel::button_blue), SIGNAL (clicked ()), this, SLOT (keyBlue ()));
     }
     processStopped ();
+    m_request_jump.truncate (0);
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::getCurrent () {
@@ -351,9 +354,15 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
                     p = q;
                 if (p > 0)
                     line.truncate (p);
-                m_document->appendChild ((new KMPlayer::GenericURL (m_document, line.mid (4)))->self ());
-                if (cmd_done)
+                QString channel_name = line.mid (4);
+                m_document->appendChild ((new KMPlayer::GenericURL (m_document, QString ("kmplayer://vdrsource/%1").arg(channel_name), channel_name))->self ());
+                if (cmd_done) {
                     m_player->updateTree (m_document, m_current);
+                    if (!m_request_jump.isEmpty ()) {
+                        jump (m_request_jump);
+                        m_request_jump.truncate (0);
+                    }
+                }
             } else if (!strcmp (commands->command, cmd_chan_query)) {
                 if (line.length () > 4) {
                     m_player->changeTitle (line.mid (4));
@@ -465,8 +474,12 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deleteCommands () {
 KDE_NO_EXPORT void KMPlayerVDRSource::jump (KMPlayer::ElementPtr e) {
     if (!e->isMrl ()) return;
     m_current = e;
+    jump (e->mrl ()->pretty_name);
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::jump (const QString & channel) {
     QCString c ("CHAN ");
-    QCString ch = e->mrl ()->src.local8Bit ();
+    QCString ch = channel.local8Bit ();
     int p = ch.find (' ');
     if (p > 0)
         c += ch.left (p);

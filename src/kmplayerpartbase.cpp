@@ -382,7 +382,7 @@ bool PartBase::openURL (const KURL & url) {
     kdDebug () << "PartBase::openURL " << url.url() << url.isValid () << endl;
     if (!m_view || url.isEmpty ()) return false;
     stop ();
-    Source * src = m_sources ["urlsource"];
+    Source * src = !url.protocol ().compare ("kmplayer") && m_sources.contains (url.host ()) ? m_sources [url.host ()] : m_sources ["urlsource"];
     src->setSubURL (KURL ());
     src->setURL (url);
     src->setIdentified (false);
