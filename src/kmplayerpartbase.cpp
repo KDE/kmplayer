@@ -762,7 +762,7 @@ void Source::playCurrent () {
         m_document->start ();
     else if (!m_current)
         emit endOfPlayItems ();
-    else if (m_current->state != Element::state_started)
+    else if (m_current->state != Element::state_started) // eg. state_deferred
         m_current->start ();
     else
         emit playURL (this, currentMrl ());
@@ -1242,6 +1242,7 @@ void URLSource::playCurrent () {
     } else {
         QString mimestr = mime ();
         bool maybe_playlist = isPlayListMime (mimestr);
+        m_current->setState (Element::state_deferred); // needs a restart
         kdDebug () << "URLSource::playCurrent " << mimestr << maybe_playlist << endl;
         if (url.isLocalFile ()) {
             QFile file (url.path ());

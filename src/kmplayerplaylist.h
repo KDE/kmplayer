@@ -146,7 +146,7 @@ class KMPLAYER_EXPORT Element {
     friend class DocumentBuilder;
 public:
     enum State {
-        state_init, state_started, state_finished
+        state_init, state_deferred, state_started, state_finished
     };
     virtual ~Element ();
     Document * document ();
