@@ -132,8 +132,6 @@ void KMPlayer::showConfigDialog () {
 void KMPlayer::init (KActionCollection * action_collection) {
     m_view->init ();
     m_settings->readConfig ();
-    setProcess (m_players ["mplayer"]);
-    setRecorder (m_recorders ["mencoder"]);
     m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner,
                         m_view->buttonBar ()->bookmarkMenu (), action_collection, true, true);
     KMPlayerControlPanel * panel = m_view->buttonBar ();
@@ -184,10 +182,13 @@ KMediaPlayer::View* KMPlayer::view () {
     return m_view;
 }
 
-void KMPlayer::setProcess (KMPlayerProcess * process) {
+void KMPlayer::setProcess (const char * name) {
+    KMPlayerProcess * process = m_players [name];
     if (m_process == process)
         return;
-    KMPlayerSource * source = m_sources ["urlsource"];
+    KMPlayerSource * source = process->source ();
+    if (!source)
+        source = m_sources ["urlsource"];
     if (m_process) {
         disconnect (m_process, SIGNAL (finished ()),
                     this, SLOT (processFinished ()));
@@ -205,16 +206,23 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
         source = m_process->source ();
     }
     m_process = process;
-    m_process->setSource (source); // will stop the process
+    m_process->setSource (source); // will stop the process if new source
     connect (m_process, SIGNAL (started ()), this, SLOT (processStarted ()));
     connect (m_process, SIGNAL (startedPlaying ()), this, SLOT (processStartedPlaying ()));
     connect (m_process, SIGNAL (finished ()), this, SLOT (processFinished ()));
     connect (m_process, SIGNAL (positioned(int)), this, SLOT (positioned(int)));
     connect (m_process, SIGNAL (loaded (int)), this, SLOT (loaded (int)));
     connect (m_process, SIGNAL(lengthFound(int)), this, SLOT(lengthFound(int)));
+    if (m_process->playing ()) {
+        m_view->buttonBar ()->setPlaying (true);
+        m_view->buttonBar ()->showPositionSlider (!!m_process->source ()->length());
+        m_view->buttonBar ()->enableSeekButtons (m_process->source()->isSeekable());
+    }
+    emit processChanged (name);
 }
 
-void KMPlayer::setRecorder (KMPlayerProcess * recorder) {
+void KMPlayer::setRecorder (const char * name) {
+    KMPlayerProcess * recorder = m_recorders [name];
     if (m_recorder == recorder)
         return;
     if (m_recorder) {
@@ -230,6 +238,7 @@ void KMPlayer::setRecorder (KMPlayerProcess * recorder) {
     m_recorder->setSource (m_process->source ());
 }
 
+
 extern const char * strUrlBackend;
 extern const char * strMPlayerGroup;
 
@@ -239,7 +248,7 @@ KDE_NO_EXPORT void KMPlayer::setXine (int id) {
     m_config->setGroup (strMPlayerGroup);
     m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
     m_config->sync ();
-    setProcess (m_players ["xine"]);
+    setProcess ("xine");
     QPopupMenu * menu = m_view->buttonBar ()->playerMenu ();
     for (unsigned i = 0; i < menu->count(); i++) {
         int menuid = menu->idAt (i);
@@ -255,7 +264,7 @@ KDE_NO_EXPORT void KMPlayer::setMPlayer (int id) {
     m_config->setGroup (strMPlayerGroup);
     m_config->writeEntry (strUrlBackend, m_settings->urlbackend);
     m_config->sync ();
-    setProcess (m_players ["mplayer"]);
+    setProcess ("mplayer");
     QPopupMenu * menu = m_view->buttonBar ()->playerMenu ();
     for (unsigned i = 0; i < menu->count(); i++) {
         int menuid = menu->idAt (i);
@@ -277,9 +286,9 @@ void KMPlayer::enablePlayerMenu (bool enable) {
         menu->setEnabled (true);
         if (m_settings->urlbackend == QString ("Xine")) {
             menu->setItemChecked (menu->idAt (1), true);
-            setProcess (m_players ["xine"]);
+            setProcess ("xine");
         } else {
-            setProcess (m_players ["mplayer"]);
+            setProcess ("mplayer");
             menu->setItemChecked (menu->idAt (0), true);
         }
         m_view->buttonBar ()->popupMenu ()->setItemVisible (KMPlayerControlPanel::menu_player, true);
@@ -306,14 +315,6 @@ void KMPlayer::setSource (KMPlayerSource * source) {
     source->init ();
     if (source) QTimer::singleShot (0, source, SLOT (activate ()));
     emit sourceChanged (source);
-}
-
-KDE_NO_EXPORT void KMPlayer::addURL (const QString & _url) {
-    QString url = KURL::fromPathOrURL (_url).url ();
-    kdDebug () << "mrl added: " << url << endl;
-    if (m_process->source ()->url ().url () != url && m_url != url)
-        m_process->source ()->insertURL (url);
-    emit urlAdded (url);
 }
 
 KDE_NO_EXPORT void KMPlayer::changeURL (const QString & url) {
@@ -436,7 +437,7 @@ void KMPlayer::lengthFound (int len) {
 
 void KMPlayer::processStartedPlaying () {
     if (!m_view) return;
-    m_view->videoStart ();
+    m_process->view ()->videoStart ();
     kdDebug () << "KMPlayer::processStartedPlaying " << endl;
     if (m_settings->sizeratio && m_view->viewer ())
         m_view->viewer ()->setAspect (m_process->source ()->aspect ());
@@ -489,8 +490,10 @@ void KMPlayer::stop () {
         m_view->buttonBar ()->stopButton ()->toggle ();
         m_view->setCursor (QCursor (Qt::WaitCursor));
     }
-    m_process->source ()->first ();
-    m_process->quit ();
+    if (m_process) {
+        m_process->source ()->first ();
+        m_process->quit ();
+    }
     if (m_view) {
         m_view->setCursor (QCursor (Qt::ArrowCursor));
         if (m_view->buttonBar ()->stopButton ()->isOn ())

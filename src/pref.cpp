@@ -398,7 +398,7 @@ KDE_NO_EXPORT void KMPlayerPrefMEncoderPage::formatClicked (int id) {
 
 KDE_NO_EXPORT void KMPlayerPrefMEncoderPage::record () {
     MEncoder *rec = static_cast<MEncoder*>(m_player->recorders () ["mencoder"]);
-    m_player->setRecorder (rec);
+    m_player->setRecorder ("mencoder");
     if (!rec->playing ()) {
         m_player->settings ()->mencoderarguments = arguments->text ();
 #if KDE_IS_VERSION(3,1,90)
@@ -426,7 +426,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefMPlayerDumpstreamPage::KMPlayerPrefMPlayerDumpst
 
 KDE_NO_EXPORT void KMPlayerPrefMPlayerDumpstreamPage::record () {
     MPlayerDumpstream  * rec = static_cast <MPlayerDumpstream *> (m_player->recorders () ["mplayerdumpstream"]);
-    m_player->setRecorder (rec);
+    m_player->setRecorder ("mplayerdumpstream");
     if (!rec->playing ()) {
         rec->setURL (KURL (m_player->settings ()->recordfile));
         rec->play ();
@@ -455,7 +455,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefFFMpegPage::KMPlayerPrefFFMpegPage (QWidget *par
 
 KDE_NO_EXPORT void KMPlayerPrefFFMpegPage::record () {
     FFMpeg  * rec = static_cast <FFMpeg *> (m_player->recorders () ["ffmpeg"]);
-    m_player->setRecorder (rec);
+    m_player->setRecorder ("ffmpeg");
     rec->setURL (KURL::fromPathOrURL (m_player->settings ()->recordfile));
     rec->setArguments (arguments->text ());
     rec->play ();

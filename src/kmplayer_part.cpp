@@ -19,13 +19,14 @@
 #ifdef KDE_USE_FINAL
 #undef Always
 #endif
+#include <list>
+#include <algorithm>
+
 #include <qcstring.h>
 #include <qpopupmenu.h>
 #include <qtimer.h>
 #include <qpushbutton.h>
 #include <qslider.h>
-#include <qmap.h>
-#include <qvaluelist.h>
 
 #include <klibloader.h>
 #include <kdebug.h>
@@ -43,12 +44,12 @@
 #include "kmplayerconfig.h"
 #include "kmplayerprocess.h"
 
-typedef QValueList <QGuardedPtr <KMPlayerPart> > KMPlayerPartList;
+typedef std::list <KMPlayerPart *> KMPlayerPartList;
 
 struct KMPlayerPartStatic {
     KDE_NO_CDTOR_EXPORT KMPlayerPartStatic () {}
     ~KMPlayerPartStatic ();
-    KMPlayerPartList kmplayer_parts;
+    KMPlayerPartList partlist;
 };
 
 static KMPlayerPartStatic * kmplayerpart_static = 0L;
@@ -57,6 +58,22 @@ KDE_NO_CDTOR_EXPORT KMPlayerPartStatic::~KMPlayerPartStatic () {
     kmplayerpart_static = 0L;
     // delete map content
 }
+
+struct GroupPredicate {
+    const KMPlayerPart * m_part;
+    const QString & m_group;
+    GroupPredicate (const KMPlayerPart * part, const QString & group)
+        : m_part (part), m_group (group) {}
+    bool operator () (const KMPlayerPart * part) const {
+        return (part != m_part &&
+                m_part->allowRedir (part->m_docbase) &&
+                (part->m_group == m_part->m_group ||
+                 part->m_group == QString::fromLatin1("_master") ||
+                 m_part->m_group == QString::fromLatin1("_master")) &&
+                (part->m_features & KMPlayerPart::Feat_Viewer) !=
+                 (m_part->m_features & KMPlayerPart::Feat_Viewer));
+    }
+};
 
 static KStaticDeleter <KMPlayerPartStatic> kmplayerpart_staticdeleter;
 
@@ -193,52 +210,69 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
         m_view->setControlPanelMode (KMPlayerView::CP_Hide);
     else
         m_view->setControlPanelMode (KMPlayerView::CP_AutoHide);
-    if (!m_group.isEmpty () && m_group != QString::fromLatin1("_unique") && m_features != Feat_Unknown) {
-        KMPlayerPartList::iterator i = kmplayerpart_static->kmplayer_parts.begin ();
-        for (; i != kmplayerpart_static->kmplayer_parts.end (); ++i)
-            if (*i && ((KMPlayerPart*)*i) != this &&
-                allowRedir ((*i)->m_docbase) &&
-                ((*i)->m_group == m_group ||
-                 (*i)->m_group == QString::fromLatin1("_master") ||
-                 m_group == QString::fromLatin1("_master")) &&
-                (m_features & Feat_Viewer) != ((*i)->m_features & Feat_Viewer)) {
-                // found viewer and control part, exchange players now
-                KMPlayerPart * vp = (m_features & Feat_Viewer) ? this : (*i).operator-> (); 
-                KMPlayerPart * cp = (m_features & Feat_Viewer) ? (*i).operator-> () : this;
-                cp->m_old_players = cp->m_players;
-                cp->m_old_recorders = cp->m_recorders;
-                cp->setProcess (vp->m_players [QString(cp->process()->name())]);
-                cp->setRecorder (vp->m_recorders [QString(cp->recorder()->name())]);
-                cp->m_players = vp->m_players;
-                cp->m_recorders = vp->m_recorders;
-                connect (vp, SIGNAL (destroyed (QObject *)),
-                         cp, SLOT (viewerPartDestroyed (QObject *)));
-        }
-        kmplayerpart_static->kmplayer_parts.push_back (this);
+    bool group_member = !m_group.isEmpty () && m_group != QString::fromLatin1("_unique") && m_features != Feat_Unknown;
+    if (!group_member || m_features & Feat_Viewer) {
+        // not part of a group or we're the viewer
+        setProcess ("mplayer");
+        setRecorder ("mencoder");
     }
+    if (group_member) {
+        KMPlayerPartList::iterator i =kmplayerpart_static->partlist.begin ();
+        KMPlayerPartList::iterator e =kmplayerpart_static->partlist.end ();
+        GroupPredicate pred (this, m_group);
+        for (i = std::find_if (i, e, pred);
+                i != e;
+                i = std::find_if (++i, e, pred)) {
+            // found viewer and control part, exchange players now
+            KMPlayerPart * vp = (m_features & Feat_Viewer) ? this : *i; 
+            KMPlayerPart * cp = (m_features & Feat_Viewer) ? *i : this;
+            cp->m_old_players = cp->m_players;
+            cp->m_old_recorders = cp->m_recorders;
+            cp->m_players = vp->m_players;
+            cp->m_recorders = vp->m_recorders;
+            cp->setProcess (vp->process()->name());
+            cp->setRecorder (vp->recorder()->name());
+            connect (vp, SIGNAL (destroyed (QObject *)),
+                    cp, SLOT (viewerPartDestroyed (QObject *)));
+            connect (vp, SIGNAL (processChanged (const char *)),
+                    cp, SLOT (viewerPartProcessChanged (const char *)));
+        }
+        kmplayerpart_static->partlist.push_back (this);
+    } else
+        m_group.truncate (0);
     if (m_view->isFullScreen () != show_fullscreen)
         m_view->fullScreen ();
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerPart::~KMPlayerPart () {
     kdDebug() << "KMPlayerPart::~KMPlayerPart" << endl;
-    if (!m_group.isEmpty ())
-        kmplayerpart_static->kmplayer_parts.remove (this);
+    if (!m_group.isEmpty ()) {
+        KMPlayerPartList::iterator i = std::find (kmplayerpart_static->partlist.begin (), kmplayerpart_static->partlist.end (), this);
+        if (i != kmplayerpart_static->partlist.end ())
+            kmplayerpart_static->partlist.erase (i);
+        else
+            kdError () << "KMPlayerPart::~KMPlayerPart group lost" << endl;
+    }
     delete m_config;
     m_config = 0L;
 }
 
-KDE_NO_EXPORT bool KMPlayerPart::allowRedir (const KURL & url) {
+KDE_NO_EXPORT bool KMPlayerPart::allowRedir (const KURL & url) const {
     return kapp->authorizeURLAction ("redirect", url, m_docbase);
 }
 
-KDE_NO_EXPORT void KMPlayerPart::viewerPartDestroyed (QObject * obj) {
+KDE_NO_EXPORT void KMPlayerPart::viewerPartDestroyed (QObject *) {
     kdDebug () << "KMPlayerPart::viewerPartDestroyed" << endl;
-    KMPlayerPart * part = static_cast <KMPlayerPart *> (obj);
-    setProcess (m_old_players [QString (part->process ()->name ())]);
-    setRecorder (m_old_recorders [QString (part->recorder ()->name ())]);
     m_players = m_old_players;
     m_recorders = m_old_recorders;
+    m_process = m_recorder = 0L;
+    setProcess ("mplayer");
+    setRecorder ("mencoder");
+}
+
+KDE_NO_EXPORT void KMPlayerPart::viewerPartProcessChanged (const char * pname) {
+    m_process = 0L;
+    setProcess (pname);
 }
 
 KDE_NO_EXPORT bool KMPlayerPart::openFile() {
@@ -247,15 +281,37 @@ KDE_NO_EXPORT bool KMPlayerPart::openFile() {
     return false;
 }
 
-KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & url) {
-    kdDebug () << "KMPlayerPart::openURL " << url.url() << endl;
-    if (url == m_docbase)
-        // if url is the container document, then it's an empty URL
+KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
+    kdDebug () << "KMPlayerPart::openURL " << _url.url() << endl;
+    KMPlayerPartList::iterator i =kmplayerpart_static->partlist.begin ();
+    KMPlayerPartList::iterator e =kmplayerpart_static->partlist.end ();
+    GroupPredicate pred (this, m_group);
+    KURL url;
+    if (_url != m_docbase) {
+        url = _url;
+    } else { // if url is the container document, then it's an empty URL
+        if (m_features & Feat_Viewer) // damn, look in the group
+            for (i = std::find_if (i, e, pred);
+                    i != e;
+                    i = std::find_if (++i, e, pred))
+                if (!(*i)->url ().isEmpty ()) {
+                    url = (*i)->url ();
+                    break;
+                }
+    }
+    if (url.isEmpty ())
         return true;
-    if (!m_group.isEmpty ()) {
-        // check for another KPart with the same group name already playing
-        if (m_process->playing () && m_process->source ()->url () == url)
-            return true;
+    if (!process ())
+        // no process set, we'll have to wait for a viewer to attach
+        return true;
+    if (!m_group.isEmpty () && !(m_features & Feat_Viewer)) {
+        // group member, not the image window
+        for (i = std::find_if (i, e, pred);
+                i != e;
+                i = std::find_if (++i, e, pred))
+            if ((*i)->url ().isEmpty ()) // image window created w/o url
+                return (*i)->openURL (_url);
+        return true;
     }
     KMPlayerHRefSource * hrefsource = static_cast <KMPlayerHRefSource *>(m_sources ["hrefsource"]);
     KMPlayerSource * urlsource = m_sources ["urlsource"];
@@ -283,7 +339,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & url) {
 
 KDE_NO_EXPORT bool KMPlayerPart::closeURL () {
     if (!m_group.isEmpty ()) {
-        kmplayerpart_static->kmplayer_parts.remove (this);
+        kmplayerpart_static->partlist.remove (this);
         m_group.truncate (0);
     }
     return KMPlayer::closeURL ();
@@ -722,7 +778,7 @@ KDE_NO_EXPORT void KMPlayerHRefSource::activate () {
         return;
     }
     init ();
-    m_player->setProcess (m_player->players () ["mplayer"]);
+    m_player->setProcess ("mplayer");
     if (m_player->process ()->grabPicture (m_url, 0))
         connect (m_player->process (), SIGNAL (grabReady (const QString &)),
                  this, SLOT (grabReady (const QString &)));

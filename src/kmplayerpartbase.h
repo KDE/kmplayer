@@ -98,8 +98,8 @@ public:
     /* Changes the process,
      * calls setSource if process was playing
      * */
-    void setProcess (KMPlayerProcess *);
-    void setRecorder (KMPlayerProcess *);
+    virtual void setProcess (const char *);
+    virtual void setRecorder (const char *);
 
     /* Changes the source,
      * calls init() and reschedules an activate() on the source
@@ -131,7 +131,6 @@ public slots:
     void setMPlayer (int id);
     void back ();
     void forward ();
-    void addURL (const QString & url);
 public:
     virtual bool isSeekable (void) const;
     virtual unsigned long position (void) const;
@@ -147,6 +146,7 @@ signals:
     void urlAdded (const QString & url);
     void urlChanged (const QString & url);
     void titleChanged (const QString & title);
+    void processChanged (const char *);
 protected:
     bool openFile();
     virtual void timerEvent (QTimerEvent *);

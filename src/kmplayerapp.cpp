@@ -88,6 +88,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     connect (m_broadcastconfig, SIGNAL (broadcastStopped()), this, SLOT (broadcastStopped()));
     initStatusBar();
     m_player->init (actionCollection ());
+    m_player->setProcess ("mplayer");
+    m_player->setRecorder ("mencoder");
     m_player->sources () ["dvdsource"] = new KMPlayerDVDSource(this, m_dvdmenu);
     m_player->sources () ["dvdnavsource"] = new KMPlayerDVDNavSource (this, m_dvdnavmenu);
     m_player->sources () ["vcdsource"] = new KMPlayerVCDSource(this, m_vcdmenu);
@@ -679,7 +681,7 @@ KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
 }
 
 KDE_NO_EXPORT void KMPlayerDVDSource::activate () {
-    m_player->setProcess (m_player->players () ["mplayer"]);
+    m_player->setProcess ("mplayer");
     m_start_play = m_auto_play;
     m_current_title = -1;
     buildArguments ();
@@ -823,7 +825,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerDVDNavSource::KMPlayerDVDNavSource (KMPlayerApp * ap
 KDE_NO_CDTOR_EXPORT KMPlayerDVDNavSource::~KMPlayerDVDNavSource () {}
 
 KDE_NO_EXPORT void KMPlayerDVDNavSource::activate () {
-    m_player->setProcess (m_player->players () ["xine"]);
+    m_player->setProcess ("xine");
     play ();
 }
 
@@ -1029,7 +1031,7 @@ KDE_NO_EXPORT bool KMPlayerPipeSource::isSeekable () {
 }
 
 KDE_NO_EXPORT void KMPlayerPipeSource::activate () {
-    m_player->setProcess (m_player->players () ["mplayer"]);
+    m_player->setProcess ("mplayer");
     m_recordcmd = m_options = QString ("-"); // or m_url?
     m_identified = true;
     QTimer::singleShot (0, m_player, SLOT (play ()));

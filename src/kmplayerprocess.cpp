@@ -137,8 +137,10 @@ bool KMPlayerProcess::quit () {
 }
 
 void KMPlayerProcess::setSource (KMPlayerSource * source) {
-    stop ();
-    m_source = source;
+    if (source != m_source) {
+        stop ();
+        m_source = source;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -513,8 +515,8 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
             }
         } else if (!source ()->identified () && m_refURLRegExp.search (out) > -1) {
             kdDebug () << "Reference mrl " << m_refURLRegExp.cap (1) << endl;
-            if (!m_tmpURL.isEmpty ())
-                m_player->addURL (m_tmpURL);
+            if (!m_tmpURL.isEmpty () && m_source->url ().url () != m_tmpURL)
+                m_source->insertURL (m_tmpURL);;
             m_tmpURL = KURL::fromPathOrURL (m_refURLRegExp.cap (1)).url ();
             if (m_source->url () == m_tmpURL || m_url == m_tmpURL)
                 m_tmpURL.truncate (0);
@@ -540,8 +542,8 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                     }
                 } else if (m_startRegExp.search (out) > -1) {
                     if (m_player->settings ()->mplayerpost090) {
-                        if (!m_tmpURL.isEmpty ()) {
-                            m_player->addURL (m_tmpURL);
+                        if (!m_tmpURL.isEmpty () && m_source->url ().url () != m_tmpURL) {
+                            m_source->insertURL (m_tmpURL);;
                             m_tmpURL.truncate (0);
                         }
                         // update currentUrl if this was a playlist
@@ -564,8 +566,8 @@ KDE_NO_EXPORT void MPlayer::processStopped (KProcess * p) {
             QString url;
             if (!m_source->identified ()) {
                 m_source->setIdentified ();
-                if (!m_tmpURL.isEmpty ()) {
-                    m_player->addURL (m_tmpURL);
+                if (!m_tmpURL.isEmpty () && m_source->url().url() != m_tmpURL) {
+                    m_source->insertURL (url);;
                     m_tmpURL.truncate (0);
                 }
                 url = m_source->first ();
@@ -757,8 +759,8 @@ KDE_NO_EXPORT bool MEncoder::play () {
 }
 
 KDE_NO_EXPORT bool MEncoder::stop () {
-    kdDebug () << "MEncoder::stop ()" << endl;
     if (!source () || !m_process || !m_process->isRunning ()) return true;
+    kdDebug () << "MEncoder::stop ()" << endl;
     if (m_use_slave)
         m_process->kill (SIGINT);
     return MPlayerBase::stop ();
@@ -815,8 +817,8 @@ KDE_NO_EXPORT bool MPlayerDumpstream::play () {
 }
 
 KDE_NO_EXPORT bool MPlayerDumpstream::stop () {
-    kdDebug () << "MPlayerDumpstream::stop ()" << endl;
     if (!source () || !m_process || !m_process->isRunning ()) return true;
+    kdDebug () << "MPlayerDumpstream::stop ()" << endl;
     if (m_use_slave)
         m_process->kill (SIGINT);
     return MPlayerBase::stop ();
@@ -837,7 +839,7 @@ void KMPlayerCallback::statusMessage (int code, QString msg) {
             m_process->player ()->changeTitle (msg);
             break;
         case stat_addurl:
-            m_process->player ()->addURL (msg);
+            m_process->source ()->insertURL (KURL::fromPathOrURL (msg).url ());
             break;
         default:
             m_process->setStatusMessage (msg);
@@ -1346,6 +1348,7 @@ KDE_NO_EXPORT bool Xine::seek (int pos, bool absolute) {
     if (!absolute)
         pos = m_source->position () + pos;
     m_source->setPosition (pos);
+    kdDebug () << kdBacktrace () << endl;
     if (m_request_seek < 0)
         m_backend->seek (pos, true);
     m_request_seek = pos;
@@ -1482,8 +1485,8 @@ KDE_NO_EXPORT bool FFMpeg::play () {
 }
 
 KDE_NO_EXPORT bool FFMpeg::stop () {
-    kdDebug () << "FFMpeg::stop" << endl;
     if (!playing ()) return true;
+    kdDebug () << "FFMpeg::stop" << endl;
     m_process->writeStdin ("q", 1);
     QTime t;
     t.start ();

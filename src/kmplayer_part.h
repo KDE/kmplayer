@@ -104,6 +104,7 @@ private:
 
 class KMPlayerPart : public KMPlayer {
     Q_OBJECT
+    friend struct GroupPredicate;
 public:
     enum Features {
         Feat_Unknown = 0,
@@ -121,7 +122,7 @@ public:
     KMPlayerLiveConnectExtension * liveconnectextension () const
         { return m_liveconnectextension; }
     KDE_NO_EXPORT bool hasFeature (int f) { return m_features & f; }
-    bool allowRedir (const KURL & url);
+    bool allowRedir (const KURL & url) const;
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool closeURL ();
@@ -132,6 +133,7 @@ protected slots:
     virtual void processFinished ();
     virtual void loaded (int percentage);
     void viewerPartDestroyed (QObject *);
+    void viewerPartProcessChanged (const char *);
 protected:
     virtual bool openFile(); // reimplement for KParts::ReadOnlyPart
 private:
