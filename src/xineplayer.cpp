@@ -58,8 +58,8 @@ typedef struct {
 class KXinePlayerPrivate {
 public:
     KXinePlayerPrivate()
-       : vo_driver ("auto"),
-         ao_driver ("auto"),
+       : vo_driver ((char *) "auto"),
+         ao_driver ((char *) "auto"),
          brightness (0), contrast (0), hue (0), saturation (0), volume (0) {
     }
     char * vo_driver;
@@ -78,6 +78,7 @@ static xine_video_port_t   *vo_port;
 static xine_audio_port_t   *ao_port;
 static xine_post_t         *post_plugin;
 static xine_event_queue_t  *event_queue;
+static xine_cfg_entry_t     audio_vis_cfg_entry;
 static x11_visual_t         vis;
 static char                *dvd_device;
 static char                *vcd_device;
@@ -88,6 +89,7 @@ static Window               wid;
 static bool                 window_created;
 static bool                 xine_verbose;
 static bool                 wants_config;
+static bool                 audio_vis;
 static int                  screen;
 static int                  completion_event;
 static int                  xpos, ypos, width, height;
@@ -96,7 +98,11 @@ static double               pixel_aspect;
 
 static int                  running = 0;
 static int                  firstframe = 0;
-
+static const int            event_finished = QEvent::User;
+static const int            event_position = QEvent::User + 1;
+static const int            event_progress = QEvent::User + 2;
+static const int            event_url = QEvent::User + 3;
+static const int            event_size = QEvent::User + 4;
 static QString mrl;
 static QString sub_mrl;
 
@@ -130,11 +136,7 @@ static void frame_output_cb(void * /*data*/, int /*video_width*/, int /*video_he
         double *dest_pixel_aspect, int *win_x, int *win_y) {
     if (running && firstframe) {
         fprintf(stderr, "first frame\n");
-        if (callback) {
-            xineapp->lock ();
-            xineapp->updatePosition ();
-            xineapp->unlock ();
-        }
+        QApplication::postEvent (xineapp, new QEvent ((QEvent::Type) event_position));
         firstframe = 0;
     }
 
@@ -157,7 +159,7 @@ static void xine_config_cb (void * /*user_data*/, xine_cfg_entry_t * entry) {
         xine_post_dispose (xine, post_plugin);
         post_plugin = 0L;
     }
-    if (strcmp (entry->enum_values[entry->num_value], "none")) {
+    if (audio_vis && strcmp (entry->enum_values[entry->num_value], "none")) {
         post_plugin = xine_post_init (xine, entry->enum_values[entry->num_value], 0, &ao_port, &vo_port);
         xine_post_wire (xine_get_audio_source (stream), xine_post_input (post_plugin, (char *) "audio in"));
     }
@@ -170,30 +172,15 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
     switch(event->type) { 
         case XINE_EVENT_UI_PLAYBACK_FINISHED:
             fprintf (stderr, "XINE_EVENT_UI_PLAYBACK_FINISHED\n");
-            xineapp->lock ();
-            xineapp->finished ();
-            xineapp->unlock ();
+            QApplication::postEvent (xineapp, new QEvent ((QEvent::Type) event_finished));
             break;
-
         case XINE_EVENT_PROGRESS:
-            {
-                xine_progress_data_t *pevent = (xine_progress_data_t *) event->data;
-                if (callback) {
-                    xineapp->lock ();
-                    callback->loadingProgress ((int) pevent->percent);
-                    xineapp->unlock ();
-                } else
-                    fprintf(stderr, "%s [%d%%]\n", pevent->description, pevent->percent);
-            }
+            QApplication::postEvent (xineapp, new XineProgressEvent (((xine_progress_data_t *) event->data)->percent));
             break;
         case XINE_EVENT_MRL_REFERENCE:
             fprintf(stderr, "XINE_EVENT_MRL_REFERENCE %s\n", 
             ((xine_mrl_reference_data_t*)event->data)->mrl);
-            if (callback) {
-                xineapp->lock ();
-                callback->setURL (QString (((xine_mrl_reference_data_t*)event->data)->mrl));
-                xineapp->unlock ();
-            }
+            QApplication::postEvent (xineapp, new XineURLEvent (QString (((xine_mrl_reference_data_t*)event->data)->mrl)));
             break;
         case XINE_EVENT_FRAME_FORMAT_CHANGE:
             fprintf (stderr, "XINE_EVENT_FRAME_FORMAT_CHANGE\n");
@@ -217,11 +204,8 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
                 movie_width = w;
                 movie_height = h;
                 movie_length = l;
-                if (callback) {
-                    xineapp->lock ();
-                    callback->movieParams (l/100, w, h, 1.0*w/h);
-                    xineapp->unlock ();
-                } else if (window_created) {
+                QApplication::postEvent (xineapp, new XineSizeEvent (l, w, h));
+                if (window_created) {
                     XLockDisplay (display);
                     XResizeWindow (display, wid, movie_width, movie_height);
                     XFlush (display);
@@ -259,7 +243,7 @@ void KMPlayerBackend::play () {
 }
 
 void KMPlayerBackend::stop () {
-    xineapp->stop ();
+    QTimer::singleShot (0, xineapp, SLOT (stop ()));
 }
 
 void KMPlayerBackend::pause () {
@@ -293,8 +277,10 @@ void KMPlayerBackend::volume (int v, bool) {
 void KMPlayerBackend::quit () {
     delete callback;
     callback = 0L;
-    xineapp->stop ();
-    QTimer::singleShot (10, qApp, SLOT (quit ()));
+    if (running)
+        stop ();
+    else
+        QTimer::singleShot (0, qApp, SLOT (quit ()));
 }
 
 bool updateConfigEntry (const QString & name, const QString & value) {
@@ -536,12 +522,11 @@ void KXinePlayer::play () {
         finished ();
         return;
     }
-    bool audio_vis = !xine_get_stream_info (stream, XINE_STREAM_INFO_HAS_VIDEO);
-    xine_cfg_entry_t cfg_entry;
-    audio_vis &= xine_config_lookup_entry (xine, "audio.visualization", &cfg_entry);
+    audio_vis = !xine_get_stream_info (stream, XINE_STREAM_INFO_HAS_VIDEO);
+    audio_vis &= xine_config_lookup_entry (xine, "audio.visualization", &audio_vis_cfg_entry);
     mutex.unlock ();
     if (audio_vis)
-        xine_config_cb (0L, &cfg_entry);
+        xine_config_cb (0L, &audio_vis_cfg_entry);
     if (callback)
         firstframe = 1;
 }
@@ -550,29 +535,15 @@ void KXinePlayer::stop () {
     if (!running) return;
     fprintf(stderr, "stop\n");
     mutex.lock ();
-    if (sub_stream) {
+    if (sub_stream)
         xine_stop (sub_stream);
-        xine_dispose (sub_stream);
-        sub_stream = 0L;
-    }
     xine_stop (stream);
-    running = 0;
-    firstframe = 0;
-    xine_event_dispose_queue (event_queue);
-    xine_dispose (stream);
-    stream = 0L;
     mutex.unlock ();
-    XLockDisplay (display);
-    fprintf (stderr, "painting\n");
-    unsigned int u, w, h;
-    int x, y;
-    Window root;
-    XGetGeometry (display, wid, &root, &x, &y, &w, &h, &u, &u);
-    XSetForeground (display, DefaultGC (display, screen),
-                    BlackPixel (display, screen));
-    XFillRectangle (display, wid, DefaultGC (display, screen), x, y, w, h);
-    XUnlockDisplay (display);
-    if (callback) callback->finished ();
+    QTimer::singleShot (10, this, SLOT (postFinished ()));
+}
+
+void KXinePlayer::postFinished () {
+    QApplication::postEvent (xineapp, new QEvent ((QEvent::Type) event_finished));
 }
 
 void KXinePlayer::pause () {
@@ -588,23 +559,12 @@ void KXinePlayer::finished () {
 }
 
 void KXinePlayer::updatePosition () {
-    if (!running) return;
+    if (!running || !callback) return;
     int pos;
     mutex.lock ();
     xine_get_pos_length (stream, 0, &pos, &movie_length);
-    if (firstframe) {
-        movie_width = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_WIDTH);
-        movie_height = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_HEIGHT);
-    }
     mutex.unlock ();
-    if (firstframe) {
-        fprintf(stderr, "movieParams %dx%d %d\n", movie_width, movie_height, movie_length/100);
-        if (movie_height > 0)
-            callback->movieParams (movie_length/100, movie_width, movie_height, 1.0*movie_width/movie_height);
-        callback->playing ();
-    } else {
-        callback->moviePosition (pos/100);
-    }
+    callback->moviePosition (pos/100);
     QTimer::singleShot (500, this, SLOT (updatePosition ()));
 }
 
@@ -663,6 +623,92 @@ void KXinePlayer::seek (int val) {
     }
 }
 
+bool KXinePlayer::event (QEvent * e) {
+    switch (e->type()) {
+        case event_finished: {
+            fprintf (stderr, "event_finished\n");
+            if (audio_vis) {
+                audio_vis_cfg_entry.num_value = 0;
+                xine_config_cb (0L, &audio_vis_cfg_entry);
+            }
+            mutex.lock ();
+            running = 0;
+            firstframe = 0;
+            if (sub_stream) {
+                xine_dispose (sub_stream);
+                sub_stream = 0L;
+            }
+            xine_event_dispose_queue (event_queue);
+            xine_dispose (stream);
+            stream = 0L;
+            mutex.unlock ();
+            XLockDisplay (display);
+            fprintf (stderr, "painting\n");
+            unsigned int u, w, h;
+            int x, y;
+            Window root;
+            XGetGeometry (display, wid, &root, &x, &y, &w, &h, &u, &u);
+            XSetForeground (display, DefaultGC (display, screen),
+                    BlackPixel (display, screen));
+            XFillRectangle (display, wid, DefaultGC (display, screen), x, y, w, h);
+            XUnlockDisplay (display);
+            if (callback)
+                callback->finished ();
+            else
+                QTimer::singleShot (0, this, SLOT (quit ()));
+            break;
+        }
+        case event_size: {
+            XineSizeEvent * se = static_cast <XineSizeEvent *> (e);                
+            if (callback)
+                callback->movieParams (se->length/100, se->width, se->height, 1.0*se->width/se->height);
+            break;
+        }
+        case event_position:
+            if (callback) {
+                int pos;
+                mutex.lock ();
+                xine_get_pos_length (stream, 0, &pos, &movie_length);
+                movie_width = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_WIDTH);
+                movie_height = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_HEIGHT);
+                mutex.unlock ();
+                fprintf(stderr, "movieParams %dx%d %d\n", movie_width, movie_height, movie_length/100);
+                if (movie_height > 0)
+                    callback->movieParams (movie_length/100, movie_width, movie_height, 1.0*movie_width/movie_height);
+                callback->playing ();
+                QTimer::singleShot (500, this, SLOT (updatePosition ()));
+            }
+            break;
+        case event_progress: {
+            XineProgressEvent * pe = static_cast <XineProgressEvent *> (e);                
+            if (callback)
+                callback->loadingProgress (pe->progress);
+            break;
+        }
+        case event_url: {
+            XineURLEvent * ue = static_cast <XineURLEvent *> (e);                
+            if (callback)
+                callback->setURL (ue->url);
+            break;
+        }
+        default:
+            return false;
+    }
+    return true;
+}
+
+XineSizeEvent::XineSizeEvent (int l, int w, int h)
+  : QEvent ((QEvent::Type) event_size), length (l), width (w), height (h) 
+{}
+
+XineURLEvent::XineURLEvent (const QString & u)
+  : QEvent ((QEvent::Type) event_url), url (u) 
+{}
+
+XineProgressEvent::XineProgressEvent (const int p)
+  : QEvent ((QEvent::Type) event_progress), progress (p) 
+{}
+
 //static bool translateCoordinates (int wx, int wy, int mx, int my) {
 //    movie_width
 class XEventThread : public QThread {
@@ -697,9 +743,9 @@ public:
 
                             case XK_q:
                             case XK_Q:
-                                qApp->lock ();
-                                qApp->quit();
-                                qApp->unlock ();
+                                xineapp->lock ();
+                                xineapp->stop ();
+                                xineapp->unlock ();
                                 break;
 
                             case XK_p: // previous
@@ -924,7 +970,6 @@ int main(int argc, char **argv) {
         XInternAtom (display, "XINE", false), 8, "quit_now"
     };
     XSendEvent (display, wid, FALSE, StructureNotifyMask, (XEvent *) & ev);
-    XFlush (display);
     XUnlockDisplay(display);
     eventThread.wait (500);
 

@@ -20,8 +20,26 @@
 #define _KXINEPLAYER_H_
 
 #include <qapplication.h>
+#include <qstring.h>
 
 class KXinePlayerPrivate;
+
+struct XineSizeEvent : public QEvent {
+    XineSizeEvent (int l, int w, int h);
+    int length;
+    int width;
+    int height;
+};
+
+struct XineURLEvent : public QEvent {
+    XineURLEvent (const QString & u);
+    QString url;
+};
+
+struct XineProgressEvent : public QEvent {
+    XineProgressEvent (int p);
+    int progress;
+};
 
 class KXinePlayer : public QApplication {
     Q_OBJECT
@@ -37,11 +55,13 @@ public:
     void brightness (int val);
     void volume (int val);
     void seek (int val);
+    bool event (QEvent * e);
 public slots:
     void play ();
     void stop ();
     void pause ();
     void updatePosition ();
+    void postFinished ();
 private:
     KXinePlayerPrivate *d;
 };
