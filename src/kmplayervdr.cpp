@@ -181,8 +181,6 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     connect (panel->button (KMPlayer::ControlPanel::button_yellow), SIGNAL (clicked ()), this, SLOT (keyYellow ()));
     connect (panel->button (KMPlayer::ControlPanel::button_blue), SIGNAL (clicked ()), this, SLOT (keyBlue ()));
     setAspect (scale ? 16.0/9 : 1.33);
-    if (m_player->settings ()->sizeratio)
-        m_app->view ()->viewer ()->setAspect (aspect ());
     if (!m_url.protocol ().compare ("kmplayer"))
         m_request_jump = KURL::decode_string (m_url.path ()).mid (1);
     QTimer::singleShot (0, m_player, SLOT (play ()));

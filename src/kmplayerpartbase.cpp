@@ -312,16 +312,14 @@ void PartBase::setSource (Source * _source) {
     if (m_source) {
         m_source->deactivate ();
         stop ();
-        if (m_view) {
-            if (m_view->viewer ())
-                m_view->viewer ()->setAspect (0.0);
+        if (m_view)
             m_view->reset ();
-        }
         disconnect (m_source, SIGNAL (currentURL (Source *)),
                  m_process, SLOT (play (Source *)));
         disconnect (m_source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
     }
-    m_view->controlPanel ()->setAutoControls (true);
+    if (m_view)
+        m_view->controlPanel ()->setAutoControls (true);
     QString p = m_settings->backends [_source->name()];
     if (p.isEmpty ()) {
         m_config->setGroup (strGeneralGroup);
@@ -356,6 +354,8 @@ void PartBase::setSource (Source * _source) {
     connect (m_source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
     updatePlayerMenu ();
     m_source->init ();
+    if (m_view && m_view->viewer ())
+        m_view->viewer ()->setAspect (0.0);
     if (m_source) QTimer::singleShot (0, m_source, SLOT (activate ()));
     emit sourceChanged (m_source);
 }
@@ -524,11 +524,11 @@ void PartBase::playListItemSelected (QListViewItem * item) {
 
 void PartBase::updateTree () {
     m_in_update_tree = true;
-    if (m_process && m_process->view ()) {
+    if (m_process && m_view) {
         if (m_process->player () != this)
             m_process->player ()->updateTree ();
         else if (m_source)
-            m_process->view ()->playList ()->updateTree
+            m_view->playList ()->updateTree
                 (m_source->document (), m_source->current ());
     }
     m_in_update_tree = false;
@@ -603,12 +603,11 @@ void PartBase::decreaseVolume () {
 }
 
 void PartBase::sizes (int & w, int & h) const {
-    if (m_noresize && m_view->viewer ()) {
+    w = m_source->width ();
+    h = m_source->height ();
+    if ((m_noresize || w <= 0 || h <= 0) && m_view->viewer ()) {
         w = m_view->viewer ()->width ();
         h = m_view->viewer ()->height ();
-    } else {
-        w = m_source->width ();
-        h = m_source->height ();
     }
 }
 
