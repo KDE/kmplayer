@@ -397,10 +397,10 @@ void KMPlayerView::init () {
     viewbox->addWidget (m_layer);
     QVBoxLayout * layerbox = new QVBoxLayout (m_layer, 0, 0);
     m_buttonbar = new QWidget (m_layer);
-    KMPlayerViewerHolder * w1 = new KMPlayerViewerHolder (m_layer, this);
-    m_viewer = new KMPlayerViewer (w1, this);
-    //w1->setEraseColor (QColor (0, 0, 0));
-    layerbox->addWidget (w1);
+    m_holder = new KMPlayerViewerHolder (m_layer, this);
+    m_viewer = new KMPlayerViewer (m_holder, this);
+    //m_holder->setEraseColor (QColor (0, 0, 0));
+    layerbox->addWidget (m_holder);
 #if KDE_IS_VERSION(3,1,90)
     setVideoWidget (m_layer);
 #endif
@@ -475,9 +475,7 @@ void KMPlayerView::init () {
     connect (m_configButton, SIGNAL (clicked ()), this, SLOT (showPopupMenu()));
 
     setAcceptDrops (true);
-    XSelectInput (qt_xdisplay (), m_viewer->winId (), 
-            ExposureMask | StructureNotifyMask | KeyPressMask);
-    printf ("KMPlayerView %u %u\n", m_viewer->winId(), kmplayerview_static);
+    kdDebug() << "KMPlayerView " << (unsigned long) (m_viewer->winId()) << endl;
 
 }
 
@@ -500,6 +498,7 @@ bool KMPlayerView::setPicture (const QString & path) {
         } else
             m_multiedit->hide ();
     }
+    m_viewer->setMouseTracking (m_viewer->hasMouseTracking ());
     m_viewer->repaint ();
     return m_image;
 }
@@ -566,6 +565,10 @@ void KMPlayerView::updateVolume (float v) {
     printf("updateVolume %.4f\n", v);
     m_slider->setValue (int (sqrt(v*10000.0/4)));
     m_inVolumeUpdate = false;
+}
+
+void  KMPlayerView::updateLayout () {
+    m_holder->resizeEvent (0l);
 }
 
 void KMPlayerView::timerEvent (QTimerEvent * e) {
@@ -680,7 +683,6 @@ KMPlayerViewer::KMPlayerViewer (QWidget *parent, KMPlayerView * view)
                            x11Depth (), InputOutput, (Visual*)x11Visual (),
                            CWBackPixel | CWBorderPixel | CWColormap, &xswa));*/
     setEraseColor (QColor (0, 0, 0));
-    setFocusPolicy (QWidget::NoFocus);
     setAcceptDrops (true);
 }
 
@@ -740,6 +742,7 @@ void KMPlayerViewer::setMouseTracking (bool enable) {
                ExposureMask |
                PropertyChangeMask |
                StructureNotifyMask | SubstructureRedirectMask |
+               (m_view->image () ? ButtonPressMask : 0) |
                (enable ? PointerMotionMask : 0)
               );
 }
@@ -773,6 +776,18 @@ void KMPlayerViewer::paintEvent (QPaintEvent * e) {
     QPainter paint (this);
     paint.setClipRect (e->rect ());
     paint.drawPixmap (0, 0, *m_view->image ());
+}
+
+void KMPlayerViewer::sendKeyEvent (int key) {
+    char buf[2] = { char (key), '\0' }; 
+    KeySym keysym = XStringToKeysym (buf);
+    XKeyEvent event = {
+        XKeyPress, 0, true,
+        qt_xdisplay (), winId (), qt_xrootwin(), winId (),
+        /*time*/ 0, 0, 0, 0, 0,
+        0, XKeysymToKeycode (qt_xdisplay (), keysym), true
+    };
+    XSendEvent (qt_xdisplay(), winId(), FALSE, KeyPressMask, (XEvent *) &event);
 }
 
 bool KMPlayerViewer::x11Event (XEvent * e) {

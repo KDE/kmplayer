@@ -59,6 +59,11 @@
 #include "kmplayerconfig.h"
 
 #define ID_STATUS_MSG 1
+const int DVDNav_start = 1;
+const int DVDNav_previous = 2;
+const int DVDNav_next = 3;
+const int DVDNav_root = 4;
+const int DVDNav_up = 5;
 
 static bool stopProcess (KProcess * process, const char * cmd = 0L) {
     if (!process || !process->isRunning ()) return true;
@@ -90,10 +95,12 @@ KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       config (kapp->config ()),
       m_player (new KMPlayer (this, config)),
       m_dvdmenu (new QPopupMenu (this)),
+      m_dvdnavmenu (new QPopupMenu (this)),
       m_vcdmenu (new QPopupMenu (this)),
       m_tvmenu (new QPopupMenu (this)),
       m_urlsource (new KMPlayerAppURLSource (this)),
       m_dvdsource (new KMPlayerDVDSource (this, m_dvdmenu)),
+      m_dvdnavsource (new KMPlayerDVDNavSource (this, m_dvdnavmenu)),
       m_vcdsource (new KMPlayerVCDSource (this, m_vcdmenu)),
       m_pipesource (new KMPlayerPipeSource (this)),
       m_tvsource (new KMPlayerTVSource (this, m_tvmenu)),
@@ -166,12 +173,14 @@ void KMPlayerApp::initStatusBar()
 
 void KMPlayerApp::initView ()
 {
-    view = static_cast <KMPlayerView*> (m_player->view());
-    setCentralWidget (view);
+    m_view = static_cast <KMPlayerView*> (m_player->view());
+    setCentralWidget (m_view);
     m_sourcemenu = menuBar ()->findItem (menuBar ()->idAt (0));
     m_sourcemenu->setText (i18n ("S&ource"));
     m_sourcemenu->popup ()->insertItem (i18n ("&DVD"), m_dvdmenu, -1, 4);
-    m_dvdmenu->insertItem (i18n ("&Open DVD"), this, SLOT(openDVD ()), 0,-1, 1);
+    m_dvdnavmenu->insertItem (i18n ("&Start"), this, SLOT (dvdNav ()));
+    m_dvdmenu->insertItem (i18n ("&DVD Navigator"), m_dvdnavmenu, -1, 1);
+    m_dvdmenu->insertItem (i18n ("&Open DVD"), this, SLOT(openDVD ()), 0,-1, 2);
     m_sourcemenu->popup ()->insertItem (i18n ("V&CD"), m_vcdmenu, -1, 5);
     m_sourcemenu->popup ()->insertItem (i18n ("&TV"), m_tvmenu, -1, 6);
     m_vcdmenu->insertItem (i18n ("&Open VCD"), this, SLOT(openVCD ()), 0,-1, 1);
@@ -180,15 +189,15 @@ void KMPlayerApp::initView ()
              this, SLOT (configChanged ()));
     connect (m_player->browserextension (), SIGNAL (loadingProgress (int)),
              this, SLOT (loadingProgress (int)));
-    view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom50,
+    m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom50,
             this, SLOT (zoom50 ()));
-    view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom100,
+    m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom100,
             this, SLOT (zoom100 ()));
-    view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom150,
+    m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom150,
             this, SLOT (zoom150 ()));
-    view->popupMenu ()->connectItem (KMPlayerView::menu_fullscreen,
+    m_view->popupMenu ()->connectItem (KMPlayerView::menu_fullscreen,
             this, SLOT (fullScreen ()));
-    connect (view->broadcastButton (), SIGNAL (clicked ()),
+    connect (m_view->broadcastButton (), SIGNAL (clicked ()),
             this, SLOT (broadcastClicked ()));
     /*QPopupMenu * viewmenu = new QPopupMenu;
     viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()),
@@ -203,6 +212,13 @@ void KMPlayerApp::loadingProgress (int percentage) {
         slotStatusMsg(i18n("Ready"));
     else
         slotStatusMsg (QString::number (percentage) + "%");
+}
+
+void KMPlayerApp::dvdNav () {
+    setCaption (i18n ("DVD"), false);
+    slotStatusMsg(i18n("DVD Navigation ..."));
+    m_player->setSource (m_dvdnavsource);
+    slotStatusMsg(i18n("Ready"));
 }
 
 void KMPlayerApp::openDVD () {
@@ -256,13 +272,13 @@ void KMPlayerApp::resizePlayer (int percentage) {
             source->setWidth (w);
         } else
             source->setAspect (1.0 * w/h);
-        view->viewer()->setAspect (view->keepSizeRatio() ? source->aspect() : 0.0);
+        m_view->viewer()->setAspect (m_view->keepSizeRatio() ? source->aspect() : 0.0);
         if (m_player->settings ()->showbuttons &&
             !m_player->settings ()->autohidebuttons)
-            h += 2 + view->buttonBar()->frameSize ().height ();
+            h += 2 + m_view->buttonBar()->frameSize ().height ();
         if (source->hasLength () && 
             m_player->settings ()->showposslider)
-            h += 2 + view->positionSlider ()->height ();
+            h += 2 + m_view->positionSlider ()->height ();
         w = int (1.0 * w * percentage/100.0);
         h = int (1.0 * h * percentage/100.0);
         kdDebug () << "resizePlayer (" << w << "," << h << ")" << endl;
@@ -305,12 +321,12 @@ void KMPlayerApp::broadcastClicked () {
     if (!stopProcess (m_ffserver_process))
         KMessageBox::error (this, i18n ("Failed to end ffserver process."), i18n ("Error"));
     m_endserver = true;
-    if (!view->broadcastButton ()->isOn ()) {
+    if (!m_view->broadcastButton ()->isOn ()) {
         setCursor (QCursor (Qt::ArrowCursor));
         return;
     }
     if (m_player->process ()->source ()->ffmpegCommand ().isEmpty ()) {
-        view->broadcastButton ()->toggle ();
+        m_view->broadcastButton ()->toggle ();
         setCursor (QCursor (Qt::ArrowCursor));
         return;
     }
@@ -411,11 +427,11 @@ void KMPlayerApp::startFeed () {
             break;
         }
     } while (false);
-    if (!m_ffmpeg_process->isRunning () && view->broadcastButton ()->isOn ())
-        view->broadcastButton ()->toggle ();
+    if (!m_ffmpeg_process->isRunning () && m_view->broadcastButton ()->isOn ())
+        m_view->broadcastButton ()->toggle ();
     if (m_ffmpeg_process->isRunning ()) {
-        if (!view->broadcastButton ()->isOn ())
-            view->broadcastButton ()->toggle ();
+        if (!m_view->broadcastButton ()->isOn ())
+            m_view->broadcastButton ()->toggle ();
         QString ffurl;
         ffurl.sprintf ("http://localhost:%d/video.%s", conf->ffserverport, ffs.format.ascii ());
         openDocumentFile (KURL (ffurl));
@@ -435,11 +451,11 @@ void KMPlayerApp::processStopped (KProcess * process) {
         }
     } else {
         kdDebug () << "ffserver process stopped" << endl; 
-        if (view && view->broadcastButton ()->isOn ())
-            view->broadcastButton ()->toggle ();
+        if (m_view && m_view->broadcastButton ()->isOn ())
+            m_view->broadcastButton ()->toggle ();
     }
     if (!m_ffserver_process->isRunning () && m_player->process ()->source () != m_tvsource)
-        view->broadcastButton ()->hide ();
+        m_view->broadcastButton ()->hide ();
 }
 
 void KMPlayerApp::saveOptions()
@@ -619,15 +635,15 @@ void KMPlayerApp::slotStatusMsg(const QString &text) {
 
 void KMPlayerApp::fullScreen () {
     if (sender ()->metaObject ()->inherits ("KAction"))
-        view->fullScreen();
+        m_view->fullScreen();
         
 #if KDE_IS_VERSION(3,1,90)
     KToggleAction *fullScreenAction = static_cast<KToggleAction*>(action("fullscreen"));
     if (fullScreenAction)
-       fullScreenAction->setChecked(view->isFullScreen());
+       fullScreenAction->setChecked(m_view->isFullScreen());
 #endif
         
-    if (view->isFullScreen())
+    if (m_view->isFullScreen())
         hide ();
     else
         show ();
@@ -661,35 +677,35 @@ void KMPlayerApp::configChanged () {
 }
 
 void KMPlayerApp::keepSizeRatio () {
-    view->setKeepSizeRatio (!view->keepSizeRatio ());
-    if (m_player->process ()->source () && view->keepSizeRatio ())
-        view->viewer ()->setAspect (m_player->process ()->source ()->aspect ());
+    m_view->setKeepSizeRatio (!m_view->keepSizeRatio ());
+    if (m_player->process ()->source () && m_view->keepSizeRatio ())
+        m_view->viewer ()->setAspect (m_player->process ()->source ()->aspect ());
     else
-        view->viewer ()->setAspect (0.0);
-    viewKeepRatio->setChecked (view->keepSizeRatio ());
+        m_view->viewer ()->setAspect (0.0);
+    viewKeepRatio->setChecked (m_view->keepSizeRatio ());
 }
 
 void KMPlayerApp::showConsoleOutput () {
-    view->setShowConsoleOutput (!view->showConsoleOutput ());
-    viewShowConsoleOutput->setChecked (view->showConsoleOutput ());
-    if (view->showConsoleOutput ()) {
+    m_view->setShowConsoleOutput (!m_view->showConsoleOutput ());
+    viewShowConsoleOutput->setChecked (m_view->showConsoleOutput ());
+    if (m_view->showConsoleOutput ()) {
         if (!m_player->playing ())
-            view->consoleOutput ()->show ();
+            m_view->consoleOutput ()->show ();
     } else
-        view->consoleOutput ()->hide ();
+        m_view->consoleOutput ()->hide ();
 }
 
 //-----------------------------------------------------------------------------
 
 KMPlayerAppURLSource::KMPlayerAppURLSource (KMPlayerApp * a)
-    : KMPlayerURLSource (a->player ()), app (a) {
+    : KMPlayerURLSource (a->player ()), m_app (a) {
 }
 
 KMPlayerAppURLSource::~KMPlayerAppURLSource () {
 }
 
 void KMPlayerAppURLSource::activate () {
-    if (app->broadcasting ()) {
+    if (m_app->broadcasting ()) {
         init ();
         KMPlayerSettings * conf = m_player->settings ();
         FFServerSetting & ffs = conf->ffserversettings[conf->ffserversetting];
@@ -702,19 +718,19 @@ void KMPlayerAppURLSource::activate () {
         QTimer::singleShot (0, this, SLOT (finished ()));
     } else
         KMPlayerURLSource::activate ();
-    app->slotStatusMsg (i18n ("Ready."));
+    m_app->slotStatusMsg (i18n ("Ready."));
 }
 
 void KMPlayerAppURLSource::finished () {
-    app->resizePlayer (100);
-    app->recentFiles ()->addURL (url ());
+    m_app->resizePlayer (100);
+    m_app->recentFiles ()->addURL (url ());
     KMPlayerURLSource::finished ();
 }
 
 //-----------------------------------------------------------------------------
 
 KMPlayerMenuSource::KMPlayerMenuSource (KMPlayerApp * a, QPopupMenu * m)
-    : KMPlayerSource (a->player ()), m_menu (m), app (a) {
+    : KMPlayerSource (a->player ()), m_menu (m), m_app (a) {
 }
 
 KMPlayerMenuSource::~KMPlayerMenuSource () {
@@ -737,13 +753,12 @@ void KMPlayerMenuSource::menuItemClicked (QPopupMenu * menu, int id) {
 //-----------------------------------------------------------------------------
 
 KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopupMenu * m)
-    : KMPlayerMenuSource (a, m),
-      m_url ("dvd://") {
+    : KMPlayerMenuSource (a, m) {
     m_menu->insertTearOffHandle ();
-    m_dvdtitlemenu = new QPopupMenu (app);
-    m_dvdsubtitlemenu = new QPopupMenu (app);
-    m_dvdchaptermenu = new QPopupMenu (app);
-    m_dvdlanguagemenu = new QPopupMenu (app);
+    m_dvdtitlemenu = new QPopupMenu (m_app);
+    m_dvdsubtitlemenu = new QPopupMenu (m_app);
+    m_dvdchaptermenu = new QPopupMenu (m_app);
+    m_dvdlanguagemenu = new QPopupMenu (m_app);
     m_dvdtitlemenu->setCheckable (true);
     m_dvdsubtitlemenu->setCheckable (true);
     m_dvdchaptermenu->setCheckable (true);
@@ -752,6 +767,7 @@ KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopupMenu * m)
     m_menu->insertItem (i18n ("&Chapters"), m_dvdchaptermenu);
     m_menu->insertItem (i18n ("Audio &Language"), m_dvdlanguagemenu);
     m_menu->insertItem (i18n ("&SubTitles"), m_dvdsubtitlemenu);
+    m_url = KURL ("dvd://");
 }
 
 KMPlayerDVDSource::~KMPlayerDVDSource () {
@@ -795,11 +811,7 @@ bool KMPlayerDVDSource::processOutput (const QString & str) {
 }
 
 void KMPlayerDVDSource::activate () {
-    if (m_player->settings ()->urlbackend == QString ("Xine")) {
-        m_player->setProcess (m_player->xine ());
-        QTimer::singleShot (0, m_player, SLOT (play ()));
-        return;
-    }
+    m_player->stop ();
     m_player->setProcess (m_player->mplayer ());
     m_start_play = m_player->settings ()->playdvd;
     langRegExp.setPattern (m_player->settings ()->langpattern);
@@ -824,7 +836,7 @@ void KMPlayerDVDSource::identify () {
     if (m_player->mplayer ()->run (args.ascii()))
         connect (m_player, SIGNAL (finished()), this, SLOT(finished ()));
     else
-        app->slotStatusMsg (i18n ("Ready."));
+        m_app->slotStatusMsg (i18n ("Ready."));
     m_player->settings ()->loop = loop;
 }
 
@@ -846,13 +858,13 @@ void KMPlayerDVDSource::finished () {
         m_current_title = -1; // hmmm
     if (m_dvdchaptermenu->count ()) m_dvdchaptermenu->setItemChecked (0, true);
     if (m_dvdlanguagemenu->count()) m_dvdlanguagemenu->setItemChecked (m_dvdlanguagemenu->idAt (0), true);
-    app->resizePlayer (100);
+    m_app->resizePlayer (100);
     m_identified = true;
     if (m_start_play)
         QTimer::singleShot (0, this, SLOT (play ()));
     else
         buildArguments ();
-    app->slotStatusMsg (i18n ("Ready."));
+    m_app->slotStatusMsg (i18n ("Ready."));
 }
 
 void KMPlayerDVDSource::play () {
@@ -920,10 +932,69 @@ void KMPlayerDVDSource::chapterMenuClicked (int id) {
 
 //-----------------------------------------------------------------------------
 
+KMPlayerDVDNavSource::KMPlayerDVDNavSource (KMPlayerApp * app, QPopupMenu * m)
+    : KMPlayerMenuSource (app, m) {
+    m_menu->insertTearOffHandle (-1, 0);
+    m_url = KURL ("dvd://");
+}
+
+KMPlayerDVDNavSource::~KMPlayerDVDNavSource () {}
+
+void KMPlayerDVDNavSource::activate () {
+    m_player->stop ();
+    m_player->setProcess (m_player->xine ());
+    play ();
+}
+
+void KMPlayerDVDNavSource::deactivate () {
+}
+
+void KMPlayerDVDNavSource::play () {
+    if (!m_menu->findItem (DVDNav_previous)) {
+        m_menu->insertItem (i18n ("&Previous"), this, SLOT (navMenuClicked (int)), 0, DVDNav_previous);
+        m_menu->insertItem (i18n ("&Next"), this, SLOT (navMenuClicked (int)), 0, DVDNav_next);
+        m_menu->insertItem (i18n ("&Root"), this, SLOT (navMenuClicked (int)), 0, DVDNav_root);
+        m_menu->insertItem (i18n ("&Up"), this, SLOT (navMenuClicked (int)), 0, DVDNav_up);
+    }
+    QTimer::singleShot (0, m_player->process (), SLOT (play ()));
+    connect (m_player->process (), SIGNAL (startPlaying ()),
+             m_app, SLOT(zoom100 ()));
+    connect (m_player, SIGNAL (finished()), this, SLOT(finished ()));
+}
+
+void KMPlayerDVDNavSource::finished () {
+    disconnect (m_player, SIGNAL (finished()), this, SLOT(finished ()));
+    m_menu->removeItem (DVDNav_previous);
+    m_menu->removeItem (DVDNav_next);
+    m_menu->removeItem (DVDNav_root);
+    m_menu->removeItem (DVDNav_up);
+}
+
+void KMPlayerDVDNavSource::navMenuClicked (int id) {
+    switch (id) {
+        case DVDNav_start:
+            break;
+        case DVDNav_previous:
+            m_app->view ()->viewer ()->sendKeyEvent ('p');
+            break;
+        case DVDNav_next:
+            m_app->view ()->viewer ()->sendKeyEvent ('n');
+            break;
+        case DVDNav_root:
+            m_app->view ()->viewer ()->sendKeyEvent ('r');
+            break;
+        case DVDNav_up:
+            m_app->view ()->viewer ()->sendKeyEvent ('u');
+            break;
+    } 
+}
+
+//-----------------------------------------------------------------------------
+                        
 KMPlayerVCDSource::KMPlayerVCDSource (KMPlayerApp * a, QPopupMenu * m)
     : KMPlayerMenuSource (a, m) {
     m_menu->insertTearOffHandle ();
-    m_vcdtrackmenu = new QPopupMenu (app);
+    m_vcdtrackmenu = new QPopupMenu (m_app);
     m_vcdtrackmenu->setCheckable (true);
     m_menu->insertItem (i18n ("&Tracks"), m_vcdtrackmenu);
 }
@@ -969,7 +1040,7 @@ void KMPlayerVCDSource::identify () {
     if (m_player->mplayer ()->run (args.ascii()))
         connect (m_player, SIGNAL (finished()), this, SLOT(finished ()));
     else
-        app->slotStatusMsg (i18n ("Ready."));
+        m_app->slotStatusMsg (i18n ("Ready."));
     m_player->settings ()->loop = loop;
 }
 
@@ -986,13 +1057,13 @@ void KMPlayerVCDSource::finished () {
         m_vcdtrackmenu->setItemChecked (m_current_title, true);
     else
         m_current_title = -1; // hmmm
-    app->resizePlayer (100);
+    m_app->resizePlayer (100);
     m_identified = true;
     if (m_start_play)
         QTimer::singleShot (0, this, SLOT (play ()));
     else
         buildArguments ();
-    app->slotStatusMsg (i18n ("Ready."));
+    m_app->slotStatusMsg (i18n ("Ready."));
 }
 
 void KMPlayerVCDSource::play () {
@@ -1021,7 +1092,7 @@ void KMPlayerVCDSource::trackMenuClicked (int id) {
 //-----------------------------------------------------------------------------
 
 KMPlayerPipeSource::KMPlayerPipeSource (KMPlayerApp * a)
-    : KMPlayerSource (a->player ()), app (a) {
+    : KMPlayerSource (a->player ()), m_app (a) {
 }
 
 KMPlayerPipeSource::~KMPlayerPipeSource () {
@@ -1039,7 +1110,7 @@ void KMPlayerPipeSource::activate () {
     m_player->setProcess (m_player->mplayer ());
     init ();
     play ();
-    app->slotStatusMsg (i18n ("Ready."));
+    m_app->slotStatusMsg (i18n ("Ready."));
 }
 
 void KMPlayerPipeSource::play () {
@@ -1047,7 +1118,7 @@ void KMPlayerPipeSource::play () {
     QString args ("-");
     m_player->mplayer ()->run (args.ascii(), m_pipe.ascii());
     m_player->setMovieLength (10 * length ());
-    app->resizePlayer (100);
+    m_app->resizePlayer (100);
 }
 
 void KMPlayerPipeSource::deactivate () {
@@ -1100,13 +1171,13 @@ const QString KMPlayerTVSource::buildArguments () {
         return QString ("");
     m_identified = true;
     KMPlayerSettings * config = m_player->settings ();
-    app->setCaption (QString (i18n ("TV: ")) + m_tvsource->title, false);
+    m_app->setCaption (QString (i18n ("TV: ")) + m_tvsource->title, false);
     setWidth (m_tvsource->size.width ());
     setHeight (m_tvsource->size.height ());
     QString args;
     args.sprintf ("tv:// on:noaudio:driver=%s:%s:width=%d:height=%d", config->tvdriver.ascii (), m_tvsource->command.ascii (), width (), height ());
-    if (!app->broadcasting ())
-        app->resizePlayer (100);
+    if (!m_app->broadcasting ())
+        m_app->resizePlayer (100);
     m_recordCommand = args;
     m_ffmpegCommand = QString (" -vd ") + m_tvsource->videodevice;
     if (!m_tvsource->audiodevice.isEmpty ())
@@ -1139,7 +1210,7 @@ void KMPlayerTVSource::buildMenu () {
     int counter = 0;
     TVDevice * device;
     for (config->tvdevices.first(); (device = config->tvdevices.current ()); config->tvdevices.next ()) {
-        QPopupMenu * devmenu = new QPopupMenu (app);
+        QPopupMenu * devmenu = new QPopupMenu (m_app);
         TVInput * input;
         for (device->inputs.first (); (input = device->inputs.current ());device->inputs.next ()) {
             if (input->channels.count () <= 0) {
@@ -1156,7 +1227,7 @@ void KMPlayerTVSource::buildMenu () {
                 source->title = device->name + QString ("-") + input->name;
                 commands.insert (counter++, source);
             } else {
-                QPopupMenu * inputmenu = new QPopupMenu (app);
+                QPopupMenu * inputmenu = new QPopupMenu (m_app);
                 inputmenu->insertTearOffHandle ();
                 TVChannel * channel;
                 for (input->channels.first (); (channel = input->channels.current()); input->channels.next ()) {
@@ -1187,9 +1258,9 @@ void KMPlayerTVSource::menuClicked (int id) {
         if (m_player->process ()->source () != this)
             m_player->setSource (this);
         m_tvsource = it.data ();
-        if (app->broadcasting ()) {
+        if (m_app->broadcasting ()) {
             buildArguments ();
-            QTimer::singleShot (0, app, SLOT (startFeed ()));
+            QTimer::singleShot (0, m_app, SLOT (startFeed ()));
         } else if (!m_tvsource->noplayback)
             QTimer::singleShot (0, this, SLOT (play ()));
         else

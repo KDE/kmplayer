@@ -520,6 +520,7 @@ void KMPlayerCallbackProcess::setFinished () {
 
 void KMPlayerCallbackProcess::setPlaying () {
     KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
+    if (!v) return;
     QTimer::singleShot (0, v, SLOT (startsToPlay ())); // FIXME
     emit startPlaying (); // FIXME TOO :-)
 }
@@ -529,11 +530,18 @@ void KMPlayerCallbackProcess::setStarted () {
 }
 
 void KMPlayerCallbackProcess::setMovieParams (int len, int w, int h, float a) {
+    kdDebug () << "setMovieParams " << len << " " << w << "," << h << endl;
     m_source->setWidth (w);
     m_source->setHeight (h);
     m_source->setAspect (a);
     m_source->setLength (len);
     m_player->setMovieLength (len);
+    if (m_player->settings ()->sizeratio) {
+        KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
+        if (!v) return;
+        v->viewer ()->setAspect (a);
+        v->updateLayout ();
+    }
 }
 
 void KMPlayerCallbackProcess::setMoviePosition (int position) {

@@ -44,7 +44,7 @@ public slots:
     virtual void activate ();
     void finished ();
 private:
-    KMPlayerApp * app;
+    KMPlayerApp * m_app;
 };
 
 
@@ -56,7 +56,7 @@ public:
 protected:
     void menuItemClicked (QPopupMenu * menu, int id);
     QPopupMenu * m_menu;
-    KMPlayerApp * app;
+    KMPlayerApp * m_app;
 };
 
 
@@ -67,7 +67,6 @@ public:
     virtual ~KMPlayerDVDSource ();
     virtual bool processOutput (const QString & line);
     virtual QString filterOptions ();
-    virtual const KURL & url () const { return m_url; }
 public slots:
     virtual void activate ();
     virtual void deactivate ();
@@ -90,9 +89,23 @@ private:
     QPopupMenu * m_dvdchaptermenu;
     QPopupMenu * m_dvdlanguagemenu;
     QPopupMenu * m_dvdsubtitlemenu;
-    KURL m_url;
     int m_current_title;
     bool m_start_play;
+};
+
+
+class KMPlayerDVDNavSource : public KMPlayerMenuSource {
+    Q_OBJECT
+public:
+    KMPlayerDVDNavSource (KMPlayerApp * app, QPopupMenu * m);
+    virtual ~KMPlayerDVDNavSource ();
+public slots:
+    virtual void activate ();
+    virtual void deactivate ();
+    virtual void play ();
+
+    void finished ();
+    void navMenuClicked (int id);
 };
 
 
@@ -135,7 +148,7 @@ public slots:
     virtual void deactivate ();
     virtual void play ();
 private:
-    KMPlayerApp * app;
+    KMPlayerApp * m_app;
     QString m_pipe;
 };
 

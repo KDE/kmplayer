@@ -65,7 +65,7 @@ static Window               wid;
 static int                  screen;
 static int                  completion_event;
 static int                  xpos, ypos, width, height;
-static int                  movie_width, movie_height;
+static int                  movie_width, movie_height, movie_length;
 static double               pixel_aspect;
 
 static int                  running = 0;
@@ -133,6 +133,34 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
             break;
         case XINE_EVENT_FRAME_FORMAT_CHANGE:
             printf ("XINE_EVENT_FRAME_FORMAT_CHANGE\n");
+            break;
+        case XINE_EVENT_UI_SET_TITLE:
+            {
+                xine_ui_data_t * data = (xine_ui_data_t *) event->data;
+                printf ("Set title event %s\n", data->str);
+            }
+            break;
+        case XINE_EVENT_UI_CHANNELS_CHANGED:
+            {
+            printf ("Channel changed event\n");
+            mutex.lock ();
+            int w = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_WIDTH);
+            int h = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_HEIGHT);
+            int pos, l;
+            xine_get_pos_length (stream, 0, &pos, &l);
+            mutex.unlock ();
+            if (w > 0 && h > 0 &&
+                (l != movie_length || w != movie_width || h != movie_height)) {
+                movie_width = w;
+                movie_height = h;
+                movie_length = l;
+                xineapp->lock ();
+                callback->movieParams (l/100, w, h, 1.0*w/h);
+                xineapp->unlock ();
+            }
+            }
+            break;
+        case XINE_EVENT_INPUT_MOUSE_MOVE:
             break;
         default:
             printf ("event_listener %d\n", event->type);
@@ -367,18 +395,18 @@ void KXinePlayer::finished () {
 
 void KXinePlayer::updatePosition () {
     if (!running) return;
-    int pos, len;
+    int pos;
     mutex.lock ();
-    xine_get_pos_length (stream, 0, &pos, &len);
+    xine_get_pos_length (stream, 0, &pos, &movie_length);
     if (firstframe) {
         movie_width = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_WIDTH);
         movie_height = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_HEIGHT);
     }
     mutex.unlock ();
     if (firstframe) {
-        printf("movieParams %dx%d %d\n", movie_width, movie_height, len/100);
+        printf("movieParams %dx%d %d\n", movie_width, movie_height, movie_length/100);
         if (movie_height > 0)
-            callback->movieParams (len/100, movie_width, movie_height, 1.0*movie_width/movie_height);
+            callback->movieParams (movie_length/100, movie_width, movie_height, 1.0*movie_width/movie_height);
         callback->playing ();
     } else {
         callback->moviePosition (pos/100);
@@ -439,17 +467,16 @@ public:
         while (true) {
             XEvent   xevent;
             XNextEvent(display, &xevent);
-            if (xevent.type < LASTEvent)
-                printf ("event %d\n", xevent.type);
             switch(xevent.type) {
                 case ClientMessage:
                     if (xevent.xclient.format == 8 &&
-                            !strncmp(xevent.xclient.data.b, "quit_now", 8))
+                            !strncmp(xevent.xclient.data.b, "quit_now", 8)) {
                         printf("request quit\n");
                         return;
+                    }
+                    break;
                 case KeyPress:
                     {
-                        printf("keypressed\n");
                         XKeyEvent  kevent;
                         KeySym     ksym;
                         char       kbuf[256];
@@ -460,12 +487,61 @@ public:
                         XLockDisplay(display);
                         len = XLookupString(&kevent, kbuf, sizeof(kbuf), &ksym, NULL);
                         XUnlockDisplay(display);
+                        printf("keypressed 0x%x 0x%x\n", kevent.keycode, ksym);
 
                         switch (ksym) {
 
                             case XK_q:
                             case XK_Q:
                                 qApp->quit();
+                                break;
+
+                            case XK_p: // previous
+                                mutex.lock ();
+                                if (stream) {
+                                    xine_event_t xine_event =  { 
+                                        XINE_EVENT_INPUT_PREVIOUS,
+                                        stream, 0L, 0, { 0, 0 }
+                                    };
+                                    xine_event_send (stream, &xine_event);
+                                } 
+                                mutex.unlock ();
+                                break;
+
+                            case XK_n: // next
+                                mutex.lock ();
+                                if (stream) {
+                                    xine_event_t xine_event =  { 
+                                        XINE_EVENT_INPUT_NEXT,
+                                        stream, 0L, 0, { 0, 0 }
+                                    };
+                                    xine_event_send (stream, &xine_event);
+                                } 
+                                mutex.unlock ();
+                                break;
+
+                            case XK_u: // up menu
+                                mutex.lock ();
+                                if (stream) {
+                                    xine_event_t xine_event =  { 
+                                        XINE_EVENT_INPUT_MENU1,
+                                        stream, 0L, 0, { 0, 0 }
+                                    };
+                                    xine_event_send (stream, &xine_event);
+                                } 
+                                mutex.unlock ();
+                                break;
+
+                            case XK_r: // root menu
+                                mutex.lock ();
+                                if (stream) {
+                                    xine_event_t xine_event =  { 
+                                        XINE_EVENT_INPUT_MENU3,
+                                        stream, 0L, 0, { 0, 0 }
+                                    };
+                                    xine_event_send (stream, &xine_event);
+                                } 
+                                mutex.unlock ();
                                 break;
 
                             case XK_Up:
@@ -544,7 +620,8 @@ public:
                         data.button = 0;
                         xine_event_t xine_event =  { 
                                 XINE_EVENT_INPUT_MOUSE_MOVE,
-                                stream, &data, sizeof (xine_input_data_t), 0
+                                stream, &data, sizeof (xine_input_data_t),
+                                { 0 , 0 }
                         };
                         mutex.lock ();
                         xine_event_send (stream, &xine_event);
@@ -564,13 +641,17 @@ public:
                         data.button = 1;
                         xine_event_t xine_event =  { 
                                 XINE_EVENT_INPUT_MOUSE_BUTTON,
-                                stream, &data, sizeof (xine_input_data_t), 0
+                                stream, &data, sizeof (xine_input_data_t),
+                                { 0, 0 }
                         };
                         mutex.lock ();
                         xine_event_send (stream, &xine_event);
                         mutex.unlock ();
                     }
                     break;
+                default:
+                    if (xevent.type < LASTEvent)
+                        printf ("event %d\n", xevent.type);
             }
 
             if(xevent.type == completion_event && stream)

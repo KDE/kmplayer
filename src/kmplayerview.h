@@ -113,6 +113,7 @@ public slots:
     void setVolume (int);
     void updateVolume (float);
     void fullScreen ();
+    void updateLayout ();
 signals:
     void urlDropped (const KURL & url);
 protected:
@@ -121,7 +122,11 @@ protected:
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
 private:
+    // widget for player's output
     KMPlayerViewer * m_viewer;
+    // widget that layouts m_viewer for ratio setting
+    KMPlayerViewerHolder * m_holder;
+    // widget that contains m_holder, m_buttonbar and m_posSlider
     KMPlayerViewLayer * m_layer;
     QMultiLineEdit * m_multiedit;
     QPixmap * m_image;
@@ -167,6 +172,7 @@ public:
 
     void setAspect (float a);
     float aspect () { return m_aspect; }
+    void sendKeyEvent (int key);
 public slots:
     void setMouseTracking (bool enable);
 signals:
@@ -188,6 +194,7 @@ private:
 };
 
 class KMPlayerViewerHolder : public QWidget {
+    friend class KMPlayerView;
     Q_OBJECT
 public:
     KMPlayerViewerHolder (QWidget * parent, KMPlayerView * view);

@@ -34,6 +34,7 @@ class KMPlayer;
 class KProcess;
 class KMPlayerAppURLSource;
 class KMPlayerDVDSource;
+class KMPlayerDVDNavSource;
 class KMPlayerVCDSource;
 class KMPlayerPipeSource;
 class KMPlayerTVSource;
@@ -55,7 +56,7 @@ public:
     void resizePlayer (int percentage);
     KRecentFilesAction * recentFiles () const { return fileOpenRecent; }
     bool broadcasting () const;
-
+    KMPlayerView *view () const { return m_view; }
 protected:
     void saveOptions ();
     void readOptions ();
@@ -78,6 +79,7 @@ public slots:
     void slotStatusMsg (const QString &text);
     void startFeed ();
 private slots:
+    void dvdNav ();
     void openDVD ();
     void openVCD ();
     void openPipe ();
@@ -96,7 +98,7 @@ private slots:
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
     KConfig * config;
-    KMPlayerView * view;
+    KMPlayerView * m_view;
     KMPlayer * m_player;
 
     KAction * fileNewWindow;
@@ -111,10 +113,12 @@ private:
     KToggleAction * viewShowConsoleOutput;
     QMenuItem * m_sourcemenu;
     QPopupMenu * m_dvdmenu;
+    QPopupMenu * m_dvdnavmenu;
     QPopupMenu * m_vcdmenu;
     QPopupMenu * m_tvmenu;
     KMPlayerAppURLSource * m_urlsource;
     KMPlayerDVDSource * m_dvdsource;
+    KMPlayerDVDNavSource * m_dvdnavsource;
     KMPlayerVCDSource * m_vcdsource;
     KMPlayerPipeSource * m_pipesource;
     KMPlayerTVSource * m_tvsource;
