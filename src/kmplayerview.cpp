@@ -808,7 +808,7 @@ void KMPlayerViewer::setMouseTracking (bool enable) {
                FocusChangeMask |
                ExposureMask |
                PropertyChangeMask |
-               StructureNotifyMask | SubstructureRedirectMask |
+               StructureNotifyMask |
                (m_view->image () ? ButtonPressMask : 0) |
                (enable ? PointerMotionMask : 0)
               );
@@ -865,7 +865,7 @@ void KMPlayerViewer::sendKeyEvent (int key) {
 bool KMPlayerViewer::x11Event (XEvent * e) {
     switch (e->type) {
         case UnmapNotify:
-            if (e->xunmap.event == winId ()) {
+            if (e->xunmap.window == winId ()) {
                 emit aboutToPlay ();
                 hide();
             }

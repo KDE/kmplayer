@@ -39,19 +39,17 @@ public:
     KXinePlayerPrivate()
        : vo_driver ("auto"),
          ao_driver ("auto"),
-         brightness (0), contrast (0), hue (0), saturation (0), volume (0),
-         window_created (false) {
+         brightness (0), contrast (0), hue (0), saturation (0), volume (0) {
     }
     double res_h, res_v;
     char * vo_driver;
     char * ao_driver;
     int brightness, contrast, hue, saturation, volume;
-    bool window_created;
 };
 
-KXinePlayer * xineapp;
-KMPlayerCallback_stub * callback;
-QMutex mutex;
+static KXinePlayer * xineapp;
+static KMPlayerCallback_stub * callback;
+static QMutex mutex (true);
 
 static xine_t              *xine;
 static xine_stream_t       *stream;
@@ -59,11 +57,14 @@ static xine_stream_t       *sub_stream;
 static xine_video_port_t   *vo_port;
 static xine_audio_port_t   *ao_port;
 static xine_event_queue_t  *event_queue;
+static x11_visual_t         vis;
 static char                *dvd_device;
 static char                *vcd_device;
 
 static Display             *display;
 static Window               wid;
+static bool                 window_created;
+static bool                 xine_verbose;
 static int                  screen;
 static int                  completion_event;
 static int                  xpos, ypos, width, height;
@@ -81,9 +82,6 @@ extern "C" {
 static void dest_size_cb(void * /*data*/, int /*video_width*/, int /*video_height*/, double /*video_pixel_aspect*/,
         int *dest_width, int *dest_height, double *dest_pixel_aspect)  {
 
-    if(!running)
-        return;
-
     *dest_width        = width;
     *dest_height       = height;
     *dest_pixel_aspect = pixel_aspect;
@@ -95,9 +93,11 @@ static void frame_output_cb(void * /*data*/, int /*video_width*/, int /*video_he
         double *dest_pixel_aspect, int *win_x, int *win_y) {
     if (running && firstframe) {
         fprintf(stderr, "first frame\n");
-        xineapp->lock ();
-        xineapp->updatePosition ();
-        xineapp->unlock ();
+        if (callback) {
+            xineapp->lock ();
+            xineapp->updatePosition ();
+            xineapp->unlock ();
+        }
         firstframe = 0;
     }
 
@@ -167,7 +167,7 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
                     xineapp->lock ();
                     callback->movieParams (l/100, w, h, 1.0*w/h);
                     xineapp->unlock ();
-                } else {
+                } else if (window_created) {
                     XLockDisplay (display);
                     XResizeWindow (display, wid, movie_width, movie_height);
                     XFlush (display);
@@ -259,6 +259,8 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
             wid = atol (argv ()[++i]);
         } else if (!strcmp (argv ()[i], "-sub")) {
             sub_mrl = QString (argv ()[++i]);
+        } else if (!strcmp (argv ()[i], "-v")) {
+            xine_verbose = true;
         } else if (!strcmp (argv ()[i], "-cb")) {
             QString str = argv ()[++i];
             int pos = str.find ('/');
@@ -279,11 +281,11 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
     if (!wid) {
         wid = XCreateSimpleWindow(display, XDefaultRootWindow(display),
                 xpos, ypos, width, height, 1, 0, 0);
-        d->window_created = true;
+        window_created = true;
         QTimer::singleShot (10, this, SLOT (play ()));
     }
     XSelectInput (display, wid,
-                  (PointerMotionMask | ExposureMask | KeyPressMask | ButtonPressMask | StructureNotifyMask | SubstructureNotifyMask));
+                  (PointerMotionMask | ExposureMask | KeyPressMask | ButtonPressMask | StructureNotifyMask)); // | SubstructureNotifyMask));
 }
 
 void KXinePlayer::init () {
@@ -296,7 +298,7 @@ void KXinePlayer::init () {
         completion_event = XShmGetEventBase(display) + ShmCompletion;
     else
         completion_event = -1;
-    if (d->window_created) {
+    if (window_created) {
         fprintf (stderr, "map %lu\n", wid);
         XMapRaised(display, wid);
     }
@@ -304,7 +306,6 @@ void KXinePlayer::init () {
     d->res_v = 1.0 * DisplayHeight(display, screen) / DisplayHeightMM(display, screen);
     XSync(display, False);
     XUnlockDisplay(display);
-    x11_visual_t vis;
     vis.display           = display;
     vis.screen            = screen;
     vis.d                 = wid;
@@ -322,21 +323,20 @@ void KXinePlayer::init () {
 }
 
 KXinePlayer::~KXinePlayer () {
-    mutex.lock ();
-    xine_close_audio_driver (xine, ao_port);  
-    xine_close_video_driver (xine, vo_port);  
-    mutex.unlock ();
-
-    XLockDisplay (display);
-    if (d->window_created) {
+    if (xine) {
+        mutex.lock ();
+        xine_close_audio_driver (xine, ao_port);  
+        xine_close_video_driver (xine, vo_port);  
+        mutex.unlock ();
+    }
+    if (window_created) {
+        XLockDisplay (display);
         fprintf (stderr, "unmap %lu\n", wid);
         XUnmapWindow (display,  wid);
-    } else {
-    }
-    XSync (display, False);
-    XUnlockDisplay (display);
-    if (d->window_created)
         XDestroyWindow(display,  wid);
+        XSync (display, False);
+        XUnlockDisplay (display);
+    }
     xineapp = 0L;
 }
 
@@ -356,7 +356,6 @@ void KXinePlayer::play () {
     event_queue = xine_event_new_queue (stream);
     xine_event_create_listener_thread (event_queue, event_listener, NULL);
 
-    xine_gui_send_vo_data (stream, XINE_GUI_SEND_DRAWABLE_CHANGED, (void *)wid);
     xine_gui_send_vo_data(stream, XINE_GUI_SEND_VIDEOWIN_VISIBLE, (void *) 1);
 
     if (d->saturation)
@@ -633,33 +632,32 @@ public:
                     break;
 
                 case Expose:
-                    if(xevent.xexpose.count != 0 || !stream)
+                    if(xevent.xexpose.count != 0 || !stream || xevent.xexpose.window != wid)
                         break;
                     mutex.lock ();
-                    if (stream)
-                        xine_gui_send_vo_data(stream, XINE_GUI_SEND_EXPOSE_EVENT, &xevent);
+                    xine_gui_send_vo_data(stream, XINE_GUI_SEND_EXPOSE_EVENT, &xevent);
                     mutex.unlock ();
                     break;
 
                 case ConfigureNotify:
                     {
-                        XConfigureEvent *cev = (XConfigureEvent *) &xevent;
                         Window           tmp_win;
 
-                        width  = cev->width;
-                        height = cev->height;
-                        if((cev->x == 0) && (cev->y == 0)) {
+                        width  = xevent.xconfigure.width;
+                        height = xevent.xconfigure.height;
+                        if((xevent.xconfigure.x == 0) && (xevent.xconfigure.y == 0)) {
                             XLockDisplay(display);
-                            XTranslateCoordinates(display, cev->window,
-                                    DefaultRootWindow(cev->display),
+                            XTranslateCoordinates(display, xevent.xconfigure.window,
+                                    DefaultRootWindow(xevent.xconfigure.display),
                                     0, 0, &xpos, &ypos, &tmp_win);
                             XUnlockDisplay(display);
                         }
                         else {
-                            xpos = cev->x;
-                            ypos = cev->y;
+                            xpos = xevent.xconfigure.x;
+                            ypos = xevent.xconfigure.y;
                         }
                     }
+
                     break;
                 case MotionNotify:
                     if (stream) {
@@ -702,6 +700,18 @@ public:
                         mutex.unlock ();
                     }
                     break;
+                case NoExpose:
+                    fprintf (stderr, "NoExpose %lu\n", xevent.xnoexpose.drawable);
+                    break;
+                case CreateNotify:
+                    fprintf (stderr, "CreateNotify: %lu %lu %d,%d %dx%d\n",
+                            xevent.xcreatewindow.window, xevent.xcreatewindow.parent,
+                            xevent.xcreatewindow.x, xevent.xcreatewindow.y,
+                            xevent.xcreatewindow.width, xevent.xcreatewindow.height);
+                    break;
+                case DestroyNotify:
+                    fprintf (stderr, "DestroyNotify: %lu\n", xevent.xdestroywindow.window);
+                    break;
                 default:
                     if (xevent.type < LASTEvent)
                         fprintf (stderr, "event %d\n", xevent.type);
@@ -723,6 +733,12 @@ int main(int argc, char **argv) {
 
     xineapp = new KXinePlayer (argc, argv);
 
+    if (!callback && mrl.isEmpty ()) {
+        fprintf (stderr, "usage: %s [-vo (xv|xshm)] [-ao (arts|esd|..)] [-dvd-device <device>] [-vcd-device <device>] [-wid <X11 Window>] [-sub <subtitle url>] [-v] [-cb <DCOP callback name>] [<url>]\n", argv[0]);
+        delete xineapp;
+        return 1;
+    }
+
     DCOPClient dcopclient;
     dcopclient.registerAs ("kxineplayer");
     KMPlayerBackend player;
@@ -731,6 +747,8 @@ int main(int argc, char **argv) {
     eventThread.start ();
 
     xine = xine_new();
+    if (xine_verbose)
+        xine_engine_set_param (xine, XINE_ENGINE_PARAM_VERBOSITY, XINE_VERBOSITY_LOG);
     char configfile[2048];
     sprintf(configfile, "%s%s", xine_get_homedir(), "/.xine/config2");
     xine_config_load(xine, configfile);
