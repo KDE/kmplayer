@@ -69,7 +69,6 @@ KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     initView();
 
     readOptions();
-    setAutoSaveSettings();
 }
 
 KMPlayerApp::~KMPlayerApp () {
@@ -100,11 +99,8 @@ void KMPlayerApp::initActions()
     /*KAction *pauseact =*/ new KAction (i18n ("&Pause"), 0, 0, m_player, SLOT (pause ()), actionCollection (), "view_pause");
     /*KAction *stopact =*/ new KAction (i18n ("&Stop"), 0, 0, m_player, SLOT (stop ()), actionCollection (), "view_stop");
     /*KAction *artsctrl =*/ new KAction (i18n ("&Arts Control"), 0, 0, this, SLOT (startArtsControl ()), actionCollection (), "view_arts_control");
-#ifdef KDE_VERSION_MAJOR >= 3 && KDE_VERSION_MINOR > 1
-    createStandardStatusBarAction();
-#endif
-    setStandardToolBarMenuEnabled(true);
-
+    //viewToolBar = KStdAction::showToolbar(this, SLOT(slotViewToolBar()), actionCollection());
+    viewStatusBar = KStdAction::showStatusbar(this, SLOT(slotViewStatusBar()), actionCollection());
     viewMenuBar = KStdAction::showMenubar(this, SLOT(slotViewMenuBar()), actionCollection());
     fileNewWindow->setStatusText(i18n("Opens a new application window"));
     fileNew->setStatusText(i18n("Creates a new document"));
@@ -112,6 +108,8 @@ void KMPlayerApp::initActions()
     fileOpenRecent->setStatusText(i18n("Opens a recently used file"));
     fileClose->setStatusText(i18n("Closes the actual document"));
     fileQuit->setStatusText(i18n("Quits the application"));
+    //viewToolBar->setStatusText(i18n("Enables/disables the toolbar"));
+    viewStatusBar->setStatusText(i18n("Enables/disables the statusbar"));
     viewMenuBar->setStatusText(i18n("Enables/disables the menubar"));
     // use the absolute path to your kmplayerui.rc file for testing purpose in createGUI();
     createGUI();
@@ -597,6 +595,9 @@ KMPlayerDoc *KMPlayerApp::getDocument () const
 void KMPlayerApp::saveOptions()
 {
     config->setGroup ("General Options");
+    config->writeEntry ("Geometry", size());
+    //config->writeEntry ("Show Toolbar", viewToolBar->isChecked());
+    config->writeEntry ("Show Statusbar",viewStatusBar->isChecked());
     config->writeEntry ("Show Menubar",viewMenuBar->isChecked());
     if (!m_pipe.isEmpty ()) {
         config->setGroup ("Pipe Command");
@@ -611,12 +612,31 @@ void KMPlayerApp::saveOptions()
 void KMPlayerApp::readOptions() {
 
     config->setGroup("General Options");
+
+    QSize size=config->readSizeEntry("Geometry");
+    if (!size.isEmpty ())
+        resize(size);
+
+    // bar status settings
+    //bool bViewToolbar = config->readBoolEntry("Show Toolbar", false);
+    //viewToolBar->setChecked(bViewToolbar);
+    //slotViewToolBar();
+
+    bool bViewStatusbar = config->readBoolEntry("Show Statusbar", false);
+    viewStatusBar->setChecked(bViewStatusbar);
+    slotViewStatusBar();
+
     bool bViewMenubar = config->readBoolEntry("Show Menubar", true);
     viewMenuBar->setChecked(bViewMenubar);
     slotViewMenuBar();
 
     config->setGroup ("Pipe Command");
     m_pipe = config->readEntry ("Command1", "");
+
+    // bar position settings
+    /*KToolBar::BarPosition toolBarPos;
+    toolBarPos=(KToolBar::BarPosition) config->readNumEntry("ToolBarPos", KToolBar::Top);
+    toolBar("mainToolBar")->setBarPos(toolBarPos);*/
 
     m_player->configDialog ()->readConfig ();
     keepSizeRatio ();
@@ -766,6 +786,22 @@ void KMPlayerApp::slotFileQuit()
 
 void KMPlayerApp::slotPreferences () {
     m_player->showConfigDialog ();
+}
+
+void KMPlayerApp::slotViewToolBar() {
+    m_showToolbar = viewToolBar->isChecked();
+    if(m_showToolbar)
+        toolBar("mainToolBar")->show();
+    else
+        toolBar("mainToolBar")->hide();
+}
+
+void KMPlayerApp::slotViewStatusBar() {
+    m_showStatusbar = viewStatusBar->isChecked();
+    if(m_showStatusbar)
+        statusBar()->show();
+    else
+        statusBar()->hide();
 }
 
 void KMPlayerApp::slotViewMenuBar() {

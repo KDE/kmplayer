@@ -69,6 +69,8 @@ public slots:
     void slotFileClose ();
     void slotFileQuit ();
     void slotPreferences ();
+    void slotViewToolBar ();
+    void slotViewStatusBar ();
     void slotViewMenuBar ();
     void slotStatusMsg (const QString &text);
     void playDVD ();
@@ -111,6 +113,8 @@ private:
     KRecentFilesAction * fileOpenRecent;
     KAction * fileClose;
     KAction * fileQuit;
+    KToggleAction * viewToolBar;
+    KToggleAction * viewStatusBar;
     KToggleAction * viewMenuBar;
     KToggleAction * viewKeepRatio;
     KToggleAction * viewShowConsoleOutput;
