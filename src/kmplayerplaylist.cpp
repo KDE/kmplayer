@@ -66,11 +66,11 @@ Document * Element::document () {
     return static_cast<Document*>(static_cast<Element *>(m_doc));
 }
 
-KDE_NO_EXPORT Mrl * Element::mrl () {
+Mrl * Element::mrl () {
     return dynamic_cast<Mrl*>(this);
 }
 
-KDE_NO_EXPORT const Mrl * Element::mrl () const {
+const Mrl * Element::mrl () const {
     return dynamic_cast<const Mrl*>(this);
 }
 

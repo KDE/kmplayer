@@ -80,12 +80,12 @@ static const char * cmd_list_channels = "LSTC\n";
 
 class VDRCommand {
 public:
-    KDE_NO_CDTOR_EXPORT VDRCommand (const char * c, bool b=false)
-        : command (c), next (0L), waitForResponse (b) {}
+    KDE_NO_CDTOR_EXPORT VDRCommand (const char * c, bool b=false, VDRCommand * n=0L)
+        : command (c), waitForResponse (b), next (n) {}
     KDE_NO_CDTOR_EXPORT ~VDRCommand () {}
     const char * command;
-    VDRCommand * next;
     bool waitForResponse;
+    VDRCommand * next;
 };
 
 //-----------------------------------------------------------------------------
@@ -164,6 +164,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("yellow"), KIcon::Small, 0, true), i18n ("Yellow"), this, SLOT (keyYellow ()), 0, -1, 10);
     m_menu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("blue"), KIcon::Small, 0, true), i18n ("Blue"), this, SLOT (keyBlue ()), 0, -1, 11);
     m_socket->connectToHost ("localhost", tcp_port);
+    commands = new VDRCommand ("connect", true, commands);
     connect (m_socket, SIGNAL (connected ()), this, SLOT (connected ()));
     connect (m_socket, SIGNAL (readyRead ()), this, SLOT (readyRead ()));
     connect (m_socket, SIGNAL (bytesWritten (int)), this, SLOT (dataWritten (int)));
@@ -196,11 +197,13 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
         m_document->document ()->dispose ();
     m_document = 0L;
 }
+int count = 0;
 
 KDE_NO_EXPORT void KMPlayerVDRSource::connected () {
     if (!m_player->players () ["xvideo"]->playing ()) {
         QTimer::singleShot (0, m_player, SLOT (play ()));
-        //sendCommand (cmd_list_channels, true);
+        count = 0;
+        sendCommand (cmd_list_channels, true);
     } else if (commands) {
         m_socket->writeBlock (commands->command, strlen (commands->command));
         m_socket->flush ();
@@ -221,34 +224,90 @@ KDE_NO_EXPORT void KMPlayerVDRSource::dataWritten (int) {
     }
 }
 
+static struct ReadBuf {
+    ReadBuf () : buf (0L), length (0) {}
+    char * buf;
+    int length;
+    void operator += (const char * s) {
+        int l = strlen (s);
+        char * b = new char [length + l + 1];
+        if (length)
+            strcpy (b, buf);
+        strcpy (b + length, s);
+        length += l;
+        delete buf;
+        buf = b;
+    }
+    QCString mid (int p) {
+        return QCString (buf + p);
+    }
+    QCString left (int p) {
+        return QCString (buf, p);
+    }
+    QCString getReadLine ();
+} readbuf;
+
+QCString ReadBuf::getReadLine () {
+    QCString out;
+    if (!length)
+        return out;
+    int p = strcspn (buf, "\r\n");
+    if (p < length) {
+        int skip = strspn (buf + p, "\r\n");
+        out = left (p);
+        int nl = length - p - skip;
+        memmove (buf, buf + p + skip, nl + 1);
+        length = nl;
+    }
+    return out;
+}
+
 KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
-    unsigned long nr = m_socket->bytesAvailable();
+    long nr = m_socket->bytesAvailable();
     char * data = new char [nr + 1];
     m_socket->readBlock (data, nr);
     data [nr] = 0;
+    readbuf += data;
     kdDebug () << "readyRead " << nr << endl;
     if (commands && commands->waitForResponse) {
+        kdDebug () << "readyRead " << commands->command << endl;
+        bool cmd_done = false;
+        QCString line = readbuf.getReadLine ();
         if (!strcmp (commands->command, cmd_chan_query)) {
-            data [strcspn (data, "\r\n")] = 0;
-            m_player->changeTitle (QString (data));
-        } /*else if (!strcmp (commands->command, cmd_list_channels)&&m_document) {
-            char * d = data;
-            int count = 0;
-            do {
-                int p = strcspn (d, "\r\n");
-                d[p] = 0;
-                if (p != 0)
-                    m_document->appendChild ((new GenericURL (m_document, d))->self ());
-                kdDebug () << d << endl;
-                nr -= (p + 2);
-                d += (p + 2);
+            if (!line.isEmpty ()) {
+                m_player->changeTitle (line);
+                cmd_done = true;
+            }
+        } else if (!strcmp (commands->command, cmd_list_channels)&&m_document) {
+            while (!line.isEmpty () && count < 1000) {
+                kdDebug () << "LSTC: " << line << endl;
+                int p = line.find (';');
+                if (p > 0)
+                    line.truncate (p);
+                m_document->appendChild ((new GenericURL (m_document, line.mid (4)))->self ());
+                if (line.length () > 3 && line[3] == ' ') { // from svdrpsend.pl
+                    cmd_done = true;
+                    kdDebug () << " left to read " << readbuf.length << endl;
+                    m_player->updateTree (m_document, m_current);
+                    break;
+                }
                 count++;
-            } while (nr > 0 && count < 1000);
-            m_player->updateTree (m_document, m_current);
-        }*/
-        VDRCommand * c = commands->next;
-        delete commands;
-        commands = c;
+                line = readbuf.getReadLine ();
+            }
+        } else {
+            if (!line.isEmpty ())
+                cmd_done = true;
+        }
+
+        if (cmd_done) {
+            VDRCommand * c = commands->next;
+            delete commands;
+            commands = c;
+            if (commands) {
+                m_socket->writeBlock (commands->command, strlen (commands->command));
+                m_socket->flush ();
+            }
+        }
     } else {
         KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
         if (v)
@@ -273,8 +332,10 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sendCommand (const char * cmd, bool b) {
         if (m_socket->state () == QSocket::Connected) {
             m_socket->writeBlock (commands->command, strlen(commands->command));
             m_socket->flush ();
-        } else
+        } else {
             m_socket->connectToHost ("localhost", tcp_port);
+            commands = new VDRCommand ("connect", true, commands);
+        }
     } else {
         VDRCommand * c = commands;
         for (int i = 0; i < 10; ++i)
@@ -290,7 +351,18 @@ KDE_NO_EXPORT void KMPlayerVDRSource::timerEvent (QTimerEvent *) {
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::jump (ElementPtr e) {
+    if (!e->isMrl ()) return;
+    QCString c ("CHAN ");
+    QCString ch = e->mrl ()->src.local8Bit ();
+    int p = ch.find (' ');
+    if (p > 0)
+        c += ch.left (p);
+    else
+        c += ch; // hope for the best ..
+    c += "\n";
+    sendCommand (c);
 }
+
 KDE_NO_EXPORT void KMPlayerVDRSource::forward () {
     sendCommand ("CHAN +\n");
 }
