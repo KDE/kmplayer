@@ -1144,6 +1144,8 @@ void KMPlayerURLSource::play () {
         url = *m_urls.begin ();
     if (!url.isValid () || url.isEmpty ())
         return;
+    if (m_player->liveconnectextension ())
+        m_player->liveconnectextension ()->enableFinishEvent ();
     QString args;
     if (m_player->settings ()->urlbackend == QString ("Xine")) {
         buildArguments ();
@@ -1165,16 +1167,17 @@ void KMPlayerURLSource::play () {
     }
     args += buildArguments ();
     m_player->mplayer ()->run (args.latin1 ());
-    if (m_player->liveconnectextension ())
-        m_player->liveconnectextension ()->enableFinishEvent ();
 }
 
 void KMPlayerURLSource::activate () {
     init ();
     if (m_player->settings ()->urlbackend == QString ("Xine")) {
         buildArguments ();
-        if (!url ().isEmpty ())
+        if (!url ().isEmpty ()) {
             QTimer::singleShot (0, m_player, SLOT (play ()));
+            if (m_player->liveconnectextension ())
+                m_player->liveconnectextension ()->enableFinishEvent ();
+        }
         return;
     }
     bool loop = m_player->settings ()->loop;

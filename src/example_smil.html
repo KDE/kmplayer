@@ -1,0 +1,59 @@
+<html><head><title>crash.html</title></head>
+<script>
+var entriecount = 0;
+var currentid = -1;
+function writeMenu(node, doc) {
+    if (!node) return;
+    if (node.nodeName == "video") {
+        var src = node.getAttribute("src");
+        var title = node.getAttribute("title");
+        if (!title || title == "")
+            title = "no title";
+        doc.write("<tr><td id='" + entriecount + "'><a href=\"javascript:top.play(" + entriecount + ",'" + src + "')\">" + title + "</a></td></tr>");
+        entriecount++;
+    }
+    for (var i = 0; i < node.childNodes.length; i++)
+        writeMenu(node.childNodes.item(i), doc);
+}
+function loadXML(url) {
+    try {
+        var xmldoc = document.implementation.createDocument("", "", null);
+        xmldoc.async = false;
+        xmldoc.load(url);
+        var doc = menuframe.document;
+        doc.open();
+        doc.write("<html><style>\nbody {color:#a0a0a0;background-color:#323232;}\ntd {font-size:9pt;}\na {color:#fffff0;}\n</style><body bgcolor='#323232'><table>");
+        entriecount = 0;
+        writeMenu(xmldoc.firstChild, doc);
+        doc.write("</table></body></html>");
+        doc.close();
+        doc = playerframe.document;
+        doc.open();
+        doc.write("<html><body bgcolor='#161616'></body></html>");
+        doc.close();
+    } catch(ex) {
+        alert ("Error: " + ex);
+    }
+}
+function play(id, url) {
+    if (currentid > -1) {
+        var td = menuframe.document.getElementById(currentid);
+        td.style.backgroundColor = '#323232';
+    }
+    var td = menuframe.document.getElementById(id);
+    td.style.backgroundColor = '#646464';
+    currentid = id;
+    var doc = playerframe.document;
+    doc.open();
+    doc.write("<html><body bgcolor='#161616'><embed type='video/x-ms-wmv' src='" + url + "' width='100%' height='100%'><script>\nfunction onFinished(){top.finished(" + id + ");}\n<\/script></embed></body></html>");
+    doc.close();
+}
+function finished(id) {
+    var td = menuframe.document.getElementById(id);
+    td.style.backgroundColor = '#323232';
+}
+</script>
+<frameset cols="200,*" onLoad="loadXML('file:/your-smil.xml')">
+    <frame name="menuframe" src="about:blank">
+    <frame name="playerframe" src="about:blank">
+</html>
