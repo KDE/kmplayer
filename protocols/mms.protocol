@@ -2,6 +2,7 @@
 Class=:internet
 Description=Microsoft Media Server Protocol
 Description[es]=Protocol Media Server de Microsoft
+Description[et]=Microsoft Media Serveri protokoll
 Description[fr]=Protocole Microsoft Media Server
 Description[it]=Protocollo Microsoft Media Server
 Description[nl]=Microsoft Media Server-protocol
