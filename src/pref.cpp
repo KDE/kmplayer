@@ -69,7 +69,7 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent, FFServerSetting * ffs)
 	
 	hierarchy.clear();
 	hierarchy << i18n("Source") << i18n("DVD");
-	frame = addPage(hierarchy, i18n("DVD playing options"));
+	frame = addPage(hierarchy, i18n("DVD Playing Options"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	m_GeneralPageDVD = new KMPlayerPrefGeneralPageDVD(frame);
 	vlay->addWidget(m_GeneralPageDVD);
@@ -77,14 +77,14 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent, FFServerSetting * ffs)
 
 	hierarchy.clear();
 	hierarchy << i18n("Source") << i18n("VCD");
-	frame = addPage(hierarchy, i18n("VCD playing options"));
+	frame = addPage(hierarchy, i18n("VCD Playing Options"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	m_GeneralPageVCD = new KMPlayerPrefGeneralPageVCD(frame);
 	vlay->addWidget(m_GeneralPageVCD);
 
 	hierarchy.clear();
 	hierarchy << i18n ("Source") << i18n ("TV") << i18n ("General");
-	frame = addPage (hierarchy, i18n ("TV options"));
+	frame = addPage (hierarchy, i18n ("TV Options"));
 	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
 	m_SourcePageTV = new KMPlayerPrefSourcePageTV (frame, this);
 	vlay->addWidget (m_SourcePageTV);
@@ -98,7 +98,7 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent, FFServerSetting * ffs)
 
 	hierarchy.clear();
 	hierarchy << i18n ("Broadcasting") << i18n ("ACL");
-	frame = addPage (hierarchy, i18n ("Access lists"));
+	frame = addPage (hierarchy, i18n ("Access Lists"));
 	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
 	m_BroadcastACLPage = new KMPlayerPrefBroadcastACLPage (frame);
 	vlay->addWidget (m_BroadcastACLPage);
@@ -106,14 +106,14 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent, FFServerSetting * ffs)
 
 	hierarchy.clear();
 	hierarchy << i18n("General") << i18n("Output");
-	frame = addPage(hierarchy, i18n("Video and audio output options"));
+	frame = addPage(hierarchy, i18n("Video & Audio Output Options"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	m_GeneralPageOutput = new KMPlayerPrefGeneralPageOutput(frame);
 	vlay->addWidget(m_GeneralPageOutput);
 	
 	hierarchy.clear();
 	hierarchy << i18n("General") << i18n("Advanced");
-	frame = addPage(hierarchy, i18n("Advanced options"));
+	frame = addPage(hierarchy, i18n("Advanced Options"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	m_GeneralPageAdvanced = new KMPlayerPrefGeneralPageAdvanced(frame);
 	vlay->addWidget(m_GeneralPageAdvanced);
@@ -121,22 +121,22 @@ KMPlayerPreferences::KMPlayerPreferences(QWidget *parent, FFServerSetting * ffs)
 /*
 * not yet needed...
  */
- 
+
 	/*hierarchy.clear();
 	hierarchy << i18n("Output plugins") << i18n("General");
 	frame = addPage(hierarchy, i18n("Output plugin Options || NOT YET USED == FIXME!"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	m_OPPageGeneral = new KMPlayerPrefOPPageGeneral(frame);
 	vlay->addWidget(m_OPPageGeneral);*/
-	
-	
+
+
 	hierarchy.clear();
 	hierarchy << i18n("Output plugins") << i18n("Postprocessing");
-	frame = addPage(hierarchy, i18n("Postprocessing options"));
+	frame = addPage(hierarchy, i18n("Postprocessing Options"));
 	vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
 	m_OPPagePostproc = new KMPlayerPrefOPPagePostProc(frame);
 	vlay->addWidget(m_OPPagePostproc);
-	
+
 	connect(this, SIGNAL( defaultClicked() ), SLOT( confirmDefaults() ));
 	this->setTreeListAutoResize(true);
 }
@@ -172,7 +172,7 @@ KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
 
 	QWidget *seekingWidget = new QWidget(this);
 	QHBoxLayout *seekingWidgetLayout = new QHBoxLayout(seekingWidget);
-	seekingWidgetLayout->addWidget(new QLabel(i18n("Forward/backward seek time"),seekingWidget));
+	seekingWidgetLayout->addWidget(new QLabel(i18n("Forward/backward seek time:"),seekingWidget));
 	seekingWidgetLayout->addItem(new QSpacerItem(0,0,QSizePolicy::Minimum, QSizePolicy::Minimum));
 	seekTime = new QSpinBox(1, 600, 1, seekingWidget);
 	seekingWidgetLayout->addWidget(seekTime);
@@ -198,7 +198,7 @@ KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
     QHBoxLayout *buttonlayout = new QHBoxLayout ();
     QLabel *urlLabel = new QLabel (i18n ("URL:"), this, 0);
     url = new QLineEdit ("", this, 0);
-    QPushButton * browse = new QPushButton (i18n ("Browse ..."), this);
+    QPushButton * browse = new QPushButton (i18n ("Browse..."), this);
     connect (browse, SIGNAL (clicked ()), this, SLOT (slotBrowse ()));
     layout->addWidget (urlLabel);
     layout->addWidget (url);
@@ -223,7 +223,7 @@ KMPlayerPrefGeneralPageDVD::KMPlayerPrefGeneralPageDVD(QWidget *parent) : QFrame
     QToolTip::add(autoPlayDVD, i18n ("Start playing DVD right after opening DVD"));
     QLabel *dvdDevicePathLabel = new QLabel (i18n("DVD device:"), this, 0);
     dvdDevicePath = new QLineEdit ("/dev/dvd", this, 0);
-    QToolTip::add(dvdDevicePath, i18n ("Path to your DVD device, you must have read rights to this device")); 
+    QToolTip::add(dvdDevicePath, i18n ("Path to your DVD device, you must have read rights to this device"));
     layout->addWidget (autoPlayDVD);
     layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
     layout->addWidget (dvdDevicePathLabel);
@@ -341,8 +341,8 @@ KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerPre
     QToolTip::add (driver, i18n ("dummy, v4l or bsdbt848")); 
     QLabel *deviceLabel = new QLabel (i18n ("Device:"), this, 0);
     device = new QLineEdit ("", this, 0);
-    QToolTip::add (device, i18n("Path to your video device, eg. /dev/video0")); 
-    QPushButton * scan = new QPushButton (i18n ("Scan ..."), this);
+    QToolTip::add (device, i18n("Path to your video device, eg. /dev/video0"));
+    QPushButton * scan = new QPushButton (i18n ("Scan..."), this);
     connect (scan, SIGNAL (clicked ()), this, SLOT (slotScan ()));
     gridlayout->addWidget (driverLabel, 0, 0);
     gridlayout->addWidget (driver, 0, 1);
@@ -451,7 +451,7 @@ KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerS
     QToolTip::add (bindaddress, i18n ("If you have multible network devices, you can limit access"));
     gridlayout->addWidget (label, 0, 0);
     gridlayout->addWidget (bindaddress, 0, 1);
-    label = new QLabel (i18n ("Listen Port:"), this);
+    label = new QLabel (i18n ("Listen port:"), this);
     port = new QLineEdit ("", this);
     gridlayout->addWidget (label, 1, 0);
     gridlayout->addWidget (port, 1, 1);
@@ -490,7 +490,7 @@ KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerS
     QToolTip::add (format, i18n ("Only avi, mpeg and rm work for mplayer playback"));
     gridlayout->addWidget (label, 7, 0);
     gridlayout->addWidget (format, 7, 1);
-    movieparams = new QGroupBox (10, Qt::Horizontal, i18n("Optional settings"), this);
+    movieparams = new QGroupBox (10, Qt::Horizontal, i18n("Optional Settings"), this);
     movieparams->setColumns (2);
     QToolTip::add (movieparams, i18n ("Leave field empty for default with this format"));
     label = new QLabel (i18n ("Audio codec:"), movieparams);
@@ -518,7 +518,7 @@ KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerS
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     //QHBoxLayout *buttonlayout = new QHBoxLayout ();
     //buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
-    //QPushButton * addformat = new QPushButton (i18n ("Add movie format ..."), this);
+    //QPushButton * addformat = new QPushButton (i18n ("Add Movie Format..."), this);
     //buttonlayout->addWidget (addformat);
     //layout->addLayout (buttonlayout);
 }
@@ -849,7 +849,7 @@ KMPlayerPrefGeneralPageAdvanced::KMPlayerPrefGeneralPageAdvanced(QWidget *parent
 {
 	QVBoxLayout *layout = new QVBoxLayout (this);
 	layout->setSpacing(2);
-	QGroupBox *realGroupBox = new QGroupBox ( i18n("Pattern matching"), this, "realGroupBox");
+	QGroupBox *realGroupBox = new QGroupBox ( i18n("Pattern Matching"), this, "realGroupBox");
 
 	realGroupBox->setFlat( false );
 	realGroupBox->setInsideMargin( 7 );
@@ -857,27 +857,27 @@ KMPlayerPrefGeneralPageAdvanced::KMPlayerPrefGeneralPageAdvanced(QWidget *parent
 
 	QGridLayout *groupBoxLayout = new QGridLayout (realGroupBoxLayout,1,1);
 	
-	QLabel *langPattLabel = new QLabel (i18n("DVD Language pattern:"), realGroupBox, 0);
+	QLabel *langPattLabel = new QLabel (i18n("DVD language pattern:"), realGroupBox, 0);
 	dvdLangPattern = new QLineEdit (realGroupBox);
 	groupBoxLayout->addWidget(langPattLabel,0,0);
 	groupBoxLayout->addWidget(dvdLangPattern,0,2);
 
-	QLabel *titlePattLabel = new QLabel (i18n("DVD Titles pattern:"), realGroupBox, 0);
+	QLabel *titlePattLabel = new QLabel (i18n("DVD titles pattern:"), realGroupBox, 0);
 	dvdTitlePattern = new QLineEdit (realGroupBox);
 	groupBoxLayout->addWidget(titlePattLabel,1,0);
 	groupBoxLayout->addWidget(dvdTitlePattern,1,2);
 
-	QLabel *subPattLabel = new QLabel (i18n("DVD Subtitle pattern:"), realGroupBox, 0);
+	QLabel *subPattLabel = new QLabel (i18n("DVD subtitle pattern:"), realGroupBox, 0);
 	dvdSubPattern = new QLineEdit (realGroupBox);
 	groupBoxLayout->addWidget(subPattLabel,2,0);
 	groupBoxLayout->addWidget(dvdSubPattern,2,2);
 
-	QLabel *chapPattLabel = new QLabel (i18n("DVD Chapters pattern:"), realGroupBox, 0);
+	QLabel *chapPattLabel = new QLabel (i18n("DVD chapters pattern:"), realGroupBox, 0);
 	dvdChapPattern = new QLineEdit (realGroupBox);
 	groupBoxLayout->addWidget(chapPattLabel,3,0);
 	groupBoxLayout->addWidget(dvdChapPattern,3,2);
-	
-	QLabel *trackPattLabel = new QLabel (i18n("VCD Track pattern:"), realGroupBox, 0);
+
+	QLabel *trackPattLabel = new QLabel (i18n("VCD track pattern:"), realGroupBox, 0);
 	vcdTrackPattern = new QLineEdit (realGroupBox);
 	groupBoxLayout->addWidget(trackPattLabel,4,0);
 	groupBoxLayout->addWidget(vcdTrackPattern,4,2);
