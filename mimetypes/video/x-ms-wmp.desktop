@@ -1,0 +1,14 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=MimeType
+MimeType=video/x-ms-wmp
+Icon=video
+Patterns=*.wmp;*.WMP;
+Comment=Microsoft AVI Video
+Comment[el]=Βίντεο Microsoft AVI
+Comment[es]=Vídeo AVI Microsoft
+Comment[fr]=Vidéo AVI Microsoft
+Comment[nl]=Microsoft AVI-video
+Comment[pt]=Vídeo AVI Microsoft
+Comment[pt_BR]=Vídeo AVI Microsoft
+Comment[sv]=Microsoft AVI-video
