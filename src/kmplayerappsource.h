@@ -25,7 +25,6 @@
 
 #include <qptrlist.h>
 #include <qmap.h>
-#include <qregexp.h>
 #include <qframe.h>
 
 #include <kurl.h>
@@ -91,10 +90,6 @@ public slots:
 private:
     void buildArguments ();
     void play ();
-    QRegExp langRegExp;
-    QRegExp subtitleRegExp;
-    QRegExp titleRegExp;
-    QRegExp chapterRegExp;
     QPopupMenu * m_dvdtitlemenu;
     QPopupMenu * m_dvdchaptermenu;
     QPopupMenu * m_dvdlanguagemenu;
@@ -153,7 +148,6 @@ private slots:
     void trackMenuClicked (int id);
 private:
     void buildArguments ();
-    QRegExp trackRegExp;
     QPopupMenu * m_vcdtrackmenu;
     KMPlayerPrefSourcePageVCD * m_configpage;
     int m_current_title;

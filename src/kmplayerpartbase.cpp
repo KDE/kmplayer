@@ -685,7 +685,7 @@ bool KMPlayerURLSource::hasLength () {
 
 void KMPlayerURLSource::buildArguments () {
     m_recordcmd = QString ("");
-    int cache = m_player->settings ()->cachesize;
+    int cache = m_player->mplayer ()->configPage ()->cachesize;
     if (!m_url.isLocalFile () && cache > 0 && 
             m_url.protocol () != QString ("dvd") &&
             m_url.protocol () != QString ("vcd") &&

@@ -763,6 +763,11 @@ bool KMPlayerDVDSource::processOutput (const QString & str) {
     if (m_identified)
         return false;
     //kdDebug () << "scanning " << cstr << endl;
+    QRegExp * patterns = m_player->mplayer ()->configPage ()->m_patterns;
+    QRegExp & langRegExp = patterns[MPlayerPreferencesPage::pat_dvdlang];
+    QRegExp & subtitleRegExp = patterns[MPlayerPreferencesPage::pat_dvdsub];
+    QRegExp & titleRegExp = patterns[MPlayerPreferencesPage::pat_dvdtitle];
+    QRegExp & chapterRegExp = patterns[MPlayerPreferencesPage::pat_dvdchapter];
     if (subtitleRegExp.search (str) > -1) {
         m_dvdsubtitlemenu->insertItem (subtitleRegExp.cap (2), this,
                 SLOT (subtitleMenuClicked (int)), 0,
@@ -797,10 +802,6 @@ bool KMPlayerDVDSource::processOutput (const QString & str) {
 void KMPlayerDVDSource::activate () {
     m_player->setProcess (m_player->mplayer ());
     m_start_play = playdvd;
-    langRegExp.setPattern (m_player->settings ()->langpattern);
-    subtitleRegExp.setPattern (m_player->settings ()->subtitlespattern);
-    titleRegExp.setPattern (m_player->settings ()->titlespattern);
-    chapterRegExp.setPattern (m_player->settings ()->chapterspattern);
     m_current_title = -1;
     buildArguments ();
     if (m_start_play)
@@ -1030,6 +1031,8 @@ bool KMPlayerVCDSource::processOutput (const QString & str) {
     if (m_identified)
         return false;
     //kdDebug () << "scanning " << cstr << endl;
+    QRegExp * patterns = m_player->mplayer ()->configPage ()->m_patterns;
+    QRegExp & trackRegExp = patterns [MPlayerPreferencesPage::pat_vcdtrack];
     if (trackRegExp.search (str) > -1) {
         m_vcdtrackmenu->insertItem (trackRegExp.cap (1), this,
                                     SLOT (trackMenuClicked(int)), 0,
@@ -1045,7 +1048,6 @@ void KMPlayerVCDSource::activate () {
     init ();
     m_player->setProcess (m_player->mplayer ());
     m_start_play = playvcd;
-    trackRegExp.setPattern (m_player->settings ()->trackspattern);
     m_current_title = -1;
     buildArguments ();
     if (m_start_play)

@@ -101,6 +101,9 @@ private slots:
     void dataWritten (KProcess *);
 };
 
+class MPlayerPreferencesPage;
+class MPlayerPreferencesFrame;
+
 class MPlayer : public MPlayerBase {
     Q_OBJECT
 public:
@@ -120,6 +123,7 @@ public slots:
     virtual bool hue (int pos, bool absolute);
     virtual bool contrast (int pos, bool absolute);
     virtual bool brightness (int pos, bool absolute);
+    MPlayerPreferencesPage * configPage () const { return m_configpage; }
 protected slots:
     void processStopped (KProcess *);
 private slots:
@@ -128,14 +132,31 @@ private:
     QString m_process_output;
     QString m_grabfile;
     QWidget * m_widget;
-    QRegExp m_posRegExp;
-    QRegExp m_cacheRegExp;
-    QRegExp m_indexRegExp;
-    QRegExp m_refURLRegExp;
-    QRegExp m_refRegExp;
-    QRegExp m_startRegExp;
-    QRegExp m_sizeRegExp;
+    MPlayerPreferencesPage * m_configpage;
     QString m_tmpURL;
+};
+
+class MPlayerPreferencesPage : public KMPlayerPreferencesPage {
+public:
+    enum Pattern {
+        pat_size = 0, pat_cache, pat_pos, pat_index,
+        pat_refurl, pat_ref, pat_start,
+        pat_dvdlang, pat_dvdsub, pat_dvdtitle, pat_dvdchapter, pat_vcdtrack,
+        pat_last
+    };
+    MPlayerPreferencesPage (MPlayer *);
+    ~MPlayerPreferencesPage () {}
+    void write (KConfig *);
+    void read (KConfig *);
+    void sync (bool fromUI);
+    void prefLocation (QString & item, QString & icon, QString & tab);
+    QFrame * prefPage (QWidget * parent);
+    QRegExp m_patterns[pat_last];
+    int cachesize;
+    QString additionalarguments;
+private:
+    MPlayer * m_process;
+    MPlayerPreferencesFrame * m_configframe;
 };
 
 class Recorder {
@@ -175,7 +196,9 @@ public:
     virtual void setMovieParams (int length, int width, int height, float aspect);
     virtual void setMoviePosition (int position);
     virtual void setLoadingProgress (int percentage);
-    bool getConfigData (QByteArray &, bool getnew);
+    QByteArray & configData () { return m_configdata; }
+    bool haveConfig () { return m_have_config == config_yes; }
+    bool getConfigData ();
     void setChangedData (const QByteArray &);
 protected:
     KMPlayerCallback * m_callback;
@@ -183,7 +206,7 @@ protected:
     QByteArray m_configdata;
     QByteArray m_changeddata;
     KMPlayerXMLPreferencesPage * m_configpage;
-    enum { unknown, probe, yes, no } m_have_config;
+    enum { config_unknown, config_probe, config_yes, config_no } m_have_config;
     enum { send_no, send_try, send_new } m_send_config;
 };
 

@@ -77,8 +77,6 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, KMPlayerSettings * s
     m_GeneralPageOutput = new KMPlayerPrefGeneralPageOutput
         (tab, settings->audiodrivers, settings->videodrivers);
     tab->insertTab (m_GeneralPageOutput, i18n("Output"));
-    m_GeneralPageAdvanced = new KMPlayerPrefGeneralPageAdvanced (tab);
-    tab->insertTab (m_GeneralPageAdvanced, i18n("Advanced (MPlayer)"));
     entries.insert (i18n("General Options"), tab);
 
     frame = addPage (i18n ("Source"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("source"), KIcon::NoGroup, 32));
@@ -676,90 +674,6 @@ KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame
 	PostprocessingOptions->adjustSize();
 }
 
-KMPlayerPrefGeneralPageAdvanced::KMPlayerPrefGeneralPageAdvanced(QWidget *parent) : QFrame(parent)
-{
-    QVBoxLayout *layout = new QVBoxLayout (this, 0, 5);
-    QGroupBox *realGroupBox = new QGroupBox (i18n ("Pattern Matching"), this, "realGroupBox");
-
-    realGroupBox->setFlat (false);
-    realGroupBox->setInsideMargin (7);
-    QVBoxLayout *realGroupBoxLayout = new QVBoxLayout (realGroupBox->layout());
-
-    QGridLayout *groupBoxLayout = new QGridLayout (realGroupBoxLayout, 1, 1, 2);
-
-    QLabel *langPattLabel = new QLabel (i18n("DVD language pattern:"), realGroupBox, 0);
-    dvdLangPattern = new QLineEdit (realGroupBox);
-    groupBoxLayout->addWidget(langPattLabel,0,0);
-    groupBoxLayout->addWidget(dvdLangPattern,0,2);
-
-    QLabel *titlePattLabel = new QLabel (i18n("DVD titles pattern:"), realGroupBox, 0);
-    dvdTitlePattern = new QLineEdit (realGroupBox);
-    groupBoxLayout->addWidget(titlePattLabel,1,0);
-    groupBoxLayout->addWidget(dvdTitlePattern,1,2);
-
-    QLabel *subPattLabel = new QLabel (i18n("DVD subtitle pattern:"), realGroupBox, 0);
-    dvdSubPattern = new QLineEdit (realGroupBox);
-    groupBoxLayout->addWidget(subPattLabel,2,0);
-    groupBoxLayout->addWidget(dvdSubPattern,2,2);
-
-    QLabel *chapPattLabel = new QLabel (i18n("DVD chapters pattern:"), realGroupBox, 0);
-    dvdChapPattern = new QLineEdit (realGroupBox);
-    groupBoxLayout->addWidget(chapPattLabel,3,0);
-    groupBoxLayout->addWidget(dvdChapPattern,3,2);
-
-    QLabel *trackPattLabel = new QLabel (i18n("VCD track pattern:"), realGroupBox, 0);
-    vcdTrackPattern = new QLineEdit (realGroupBox);
-    groupBoxLayout->addWidget(trackPattLabel,4,0);
-    groupBoxLayout->addWidget(vcdTrackPattern,4,2);
-
-    QLabel *sizePattLabel = new QLabel (i18n("Size pattern:"), realGroupBox, 0);
-    sizePattern = new QLineEdit (realGroupBox);
-    groupBoxLayout->addWidget(sizePattLabel,5,0);
-    groupBoxLayout->addWidget(sizePattern,5,2);
-
-    QLabel *cachePattLabel = new QLabel (i18n("Cache pattern:"), realGroupBox, 0);
-    cachePattern = new QLineEdit (realGroupBox);
-    groupBoxLayout->addWidget(cachePattLabel,6,0);
-    groupBoxLayout->addWidget(cachePattern,6,2);
-
-    QLabel *indexPattLabel = new QLabel (i18n("Index pattern:"), realGroupBox, 0);
-    indexPattern = new QLineEdit (realGroupBox);
-    groupBoxLayout->addWidget(indexPattLabel,7,0);
-    groupBoxLayout->addWidget(indexPattern,7,2);
-
-    QLabel *label = new QLabel (i18n("Start pattern:"), realGroupBox, 0);
-    startPattern = new QLineEdit (realGroupBox);
-    groupBoxLayout->addWidget(label,8,0);
-    groupBoxLayout->addWidget(startPattern,8,2);
-
-    label = new QLabel (i18n ("Reference URL pattern:"), realGroupBox, 0);
-    referenceURLPattern = new QLineEdit (realGroupBox);
-    groupBoxLayout->addWidget (label, 9, 0);
-    groupBoxLayout->addWidget (referenceURLPattern, 9, 2);
-
-    label = new QLabel (i18n ("Reference pattern:"), realGroupBox, 0);
-    referencePattern = new QLineEdit (realGroupBox);
-    groupBoxLayout->addWidget (label, 10, 0);
-    groupBoxLayout->addWidget (referencePattern, 10, 2);
-
-    groupBoxLayout->addColSpacing(1, 11);
-    layout->addWidget(realGroupBox);
-
-
-    layout->addWidget(new QLabel (i18n("Additional command line arguments:"),this));
-    additionalArguments = new QLineEdit(this);
-    layout->addWidget(additionalArguments);
-
-
-    QHBoxLayout *addLayout2 = new QHBoxLayout (layout);
-    addLayout2->addWidget(new QLabel (i18n("Cache size:"),this));
-    cacheSize = new QSpinBox (0, 32767, 32, this);
-    addLayout2->addWidget(cacheSize);
-    addLayout2->addWidget(new QLabel (i18n("kB"),this));
-
-    layout->addItem(new QSpacerItem(1,1, QSizePolicy::Minimum, QSizePolicy::Expanding));
-}
-
 void KMPlayerPreferences::confirmDefaults() {
 	switch( QMessageBox::warning( this, "KMPlayer",
         i18n("You are about to have all your settings overwritten with defaults.\nPlease confirm.\n"),
@@ -782,17 +696,6 @@ void KMPlayerPreferences::setDefaults() {
 
 	m_GeneralPageOutput->videoDriver->setCurrentItem (0);
 	m_GeneralPageOutput->audioDriver->setCurrentItem(0);
-
-	m_GeneralPageAdvanced->dvdLangPattern->setText("\\[open].*audio.*language: ([A-Za-z]+).*aid.*[^0-9]([0-9]+)");
-	m_GeneralPageAdvanced->dvdTitlePattern->setText("There are ([0-9]+) titles");
-	m_GeneralPageAdvanced->dvdSubPattern->setText("\\[open].*subtitle.*[^0-9]([0-9]+).*language: ([A-Za-z]+)");
-	m_GeneralPageAdvanced->dvdChapPattern->setText("There are ([0-9]+) chapters");
-	m_GeneralPageAdvanced->vcdTrackPattern->setText("track ([0-9]+):");
-	m_GeneralPageAdvanced->sizePattern->setText("VO:.*[^0-9]([0-9]+)x([0-9]+)");
-	m_GeneralPageAdvanced->cachePattern->setText("Cache fill:[^0-9]*([0-9\\.]+)%");
-	m_GeneralPageAdvanced->startPattern->setText("Start[^ ]* play");
-	m_GeneralPageAdvanced->additionalArguments->setText("");
-	m_GeneralPageAdvanced->cacheSize->setValue(256);
 
 	m_OPPagePostproc->postProcessing->setChecked(false);
 	m_OPPagePostproc->disablePPauto->setChecked(true);

@@ -129,26 +129,12 @@ public:
     QString ffmpegarguments;
     QString recordfile;
     int seektime;
-    int cachesize;
     int videodriver;
     int audiodriver;
     OutputDriver * audiodrivers;
     OutputDriver * videodrivers;
     QString dvddevice;
     QString vcddevice;
-    QString additionalarguments;
-    QString sizepattern;
-    QString cachepattern;
-    QString positionpattern;
-    QString indexpattern;
-    QString startpattern;
-    QString langpattern;
-    QString titlespattern;
-    QString subtitlespattern;
-    QString chapterspattern;
-    QString trackspattern;
-    QString referenceurlpattern;
-    QString referencepattern;
     QString urlbackend;
     KMPlayerPreferencesPageList pagelist;
 signals:

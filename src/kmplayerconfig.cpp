@@ -81,7 +81,6 @@ KMPlayerSettings::~KMPlayerSettings () {
 
 const char * strMPlayerGroup = "MPlayer";
 static const char * strGeneralGroup = "General Options";
-static const char * strMPlayerPatternGroup = "MPlayer Output Matching";
 static const char * strKeepSizeRatio = "Keep Size Ratio";
 static const char * strContrast = "Contrast";
 static const char * strBrightness = "Brightness";
@@ -92,14 +91,6 @@ static const char * strSubURLList = "URL Sub Title List";
 //static const char * strUseArts = "Use aRts";
 static const char * strVoDriver = "Video Driver";
 static const char * strAoDriver = "Audio Driver";
-static const char * strAddArgs = "Additional Arguments";
-static const char * strSize = "Movie Size";
-static const char * strCache = "Cache Fill";
-static const char * strPosPattern = "Movie Position";
-static const char * strIndexPattern = "Index Pattern";
-static const char * strReferenceURLPattern = "Reference URL Pattern";
-static const char * strReferencePattern = "Reference Pattern";
-static const char * strStart = "Start Playing";
 static const char * strShowConsole = "Show Console Output";
 static const char * strLoop = "Loop";
 static const char * strFrameDrop = "Frame Drop";
@@ -112,16 +103,10 @@ static const char * strAutoHideButtons = "Auto Hide Control Buttons";
 static const char * strPostMPlayer090 = "Post MPlayer 0.90";
 //static const char * strAutoHideSlider = "Auto Hide Slider";
 static const char * strSeekTime = "Forward/Backward Seek Time";
-static const char * strCacheSize = "Cache Size for Streaming";
 static const char * strDVDDevice = "DVD Device";
 //static const char * strShowDVD = "Show DVD Menu";
-static const char * strLanguagePattern = "DVD Language";
-static const char * strSubtitlePattern = "DVD Sub Title";
-static const char * strTitlePattern = "DVD Titles";
-static const char * strChapterPattern = "DVD Chapters";
 //static const char * strShowVCD = "Show VCD Menu";
 static const char * strVCDDevice = "VCD Device";
-static const char * strTrackPattern = "VCD Tracks";
 static const char * strAlwaysBuildIndex = "Always build index";
 const char * strUrlBackend = "URL Backend";
 static const char * strAllowHref = "Allow HREF";
@@ -219,21 +204,6 @@ void KMPlayerSettings::readConfig () {
     allowhref = m_config->readBoolEntry(strAllowHref, false);
 
     view->setUseArts (audiodriver == ADRIVER_ARTS_INDEX);
-    additionalarguments = m_config->readEntry (strAddArgs);
-    cachesize = m_config->readNumEntry (strCacheSize, 0);
-    m_config->setGroup (strMPlayerPatternGroup);
-    sizepattern = m_config->readEntry (strSize, "VO:.*[^0-9]([0-9]+)x([0-9]+)");
-    cachepattern = m_config->readEntry (strCache, "Cache fill:[^0-9]*([0-9\\.]+)%");
-    positionpattern = m_config->readEntry (strPosPattern, "V:\\s*([0-9\\.]+)");
-    indexpattern = m_config->readEntry (strIndexPattern, "Generating Index: +([0-9]+)%");
-    referenceurlpattern = m_config->readEntry (strReferenceURLPattern, "Playing\\s+(.*[^\\.])\\.?\\s*$");
-    referencepattern = m_config->readEntry (strReferencePattern, "Reference Media file");
-    startpattern = m_config->readEntry (strStart, "Start[^ ]* play");
-    langpattern = m_config->readEntry (strLanguagePattern, "\\[open].*audio.*language: ([A-Za-z]+).*aid.*[^0-9]([0-9]+)");
-    subtitlespattern = m_config->readEntry (strSubtitlePattern, "\\[open].*subtitle.*[^0-9]([0-9]+).*language: ([A-Za-z]+)");
-    titlespattern = m_config->readEntry (strTitlePattern, "There are ([0-9]+) titles");
-    chapterspattern = m_config->readEntry (strChapterPattern, "There are ([0-9]+) chapters");
-    trackspattern = m_config->readEntry (strTrackPattern, "track ([0-9]+):");
 
     // recording
     m_config->setGroup (strRecordingGroup);
@@ -320,21 +290,6 @@ void KMPlayerSettings::show (const char * pagename) {
     configdialog->m_SourcePageURL->backend->setCurrentItem (configdialog->m_SourcePageURL->backend->findItem (urlbackend));
     configdialog->m_SourcePageURL->allowhref->setChecked (allowhref);
 
-    if (cachesize > 0)
-        configdialog->m_GeneralPageAdvanced->cacheSize->setValue(cachesize);
-    configdialog->m_GeneralPageAdvanced->additionalArguments->setText (additionalarguments);
-    configdialog->m_GeneralPageAdvanced->sizePattern->setText (sizepattern);
-    configdialog->m_GeneralPageAdvanced->cachePattern->setText (cachepattern);
-    configdialog->m_GeneralPageAdvanced->startPattern->setText (startpattern);
-    configdialog->m_GeneralPageAdvanced->indexPattern->setText (indexpattern);
-    configdialog->m_GeneralPageAdvanced->dvdLangPattern->setText (langpattern);
-    configdialog->m_GeneralPageAdvanced->dvdSubPattern->setText (subtitlespattern);
-    configdialog->m_GeneralPageAdvanced->dvdTitlePattern->setText (titlespattern);
-    configdialog->m_GeneralPageAdvanced->dvdChapPattern->setText (chapterspattern);
-    configdialog->m_GeneralPageAdvanced->vcdTrackPattern->setText (trackspattern);
-    configdialog->m_GeneralPageAdvanced->referenceURLPattern->setText (referenceurlpattern);
-    configdialog->m_GeneralPageAdvanced->referencePattern->setText (referencepattern);
-
     // postproc
     configdialog->m_OPPagePostproc->postProcessing->setChecked (postprocessing);
     configdialog->m_OPPagePostproc->disablePPauto->setChecked (disableppauto);
@@ -407,8 +362,6 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strAoDriver, audiodriver);
     m_config->writeEntry (strUrlBackend, urlbackend);
     m_config->writeEntry (strAllowHref, allowhref);
-    m_config->writeEntry (strAddArgs, additionalarguments);
-    m_config->writeEntry (strCacheSize, cachesize);
     m_config->writeEntry (strShowControlButtons, showbuttons);
     m_config->writeEntry (strShowPositionSlider, showposslider);
     m_config->writeEntry (strAlwaysBuildIndex, alwaysbuildindex);
@@ -420,18 +373,6 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strDVDDevice, dvddevice);
     m_config->writeEntry (strVCDDevice, vcddevice);
 
-    m_config->setGroup (strMPlayerPatternGroup);
-    m_config->writeEntry (strSize, sizepattern);
-    m_config->writeEntry (strCache, cachepattern);
-    m_config->writeEntry (strIndexPattern, indexpattern);
-    m_config->writeEntry (strStart, startpattern);
-    m_config->writeEntry (strLanguagePattern, langpattern);
-    m_config->writeEntry (strSubtitlePattern, subtitlespattern);
-    m_config->writeEntry (strTitlePattern, titlespattern);
-    m_config->writeEntry (strChapterPattern, chapterspattern);
-    m_config->writeEntry (strTrackPattern, trackspattern);
-    m_config->writeEntry (strReferenceURLPattern, referenceurlpattern);
-    m_config->writeEntry (strReferencePattern, referencepattern);
     //postprocessing stuff
     m_config->setGroup (strPPGroup);
     m_config->writeEntry (strPostProcessing, postprocessing);
@@ -565,20 +506,6 @@ void KMPlayerSettings::okPressed () {
     if (!showbroadcastbutton)
         view->broadcastButton ()->hide ();
     seektime = configdialog->m_GeneralPageGeneral->seekTime->value();
-
-    additionalarguments = configdialog->m_GeneralPageAdvanced->additionalArguments->text();
-    cachesize = configdialog->m_GeneralPageAdvanced->cacheSize->value();
-    sizepattern = configdialog->m_GeneralPageAdvanced->sizePattern->text ();
-    cachepattern = configdialog->m_GeneralPageAdvanced->cachePattern->text ();
-    startpattern = configdialog->m_GeneralPageAdvanced->startPattern->text ();
-    indexpattern = configdialog->m_GeneralPageAdvanced->indexPattern->text ();
-    langpattern = configdialog->m_GeneralPageAdvanced->dvdLangPattern->text ();
-    titlespattern = configdialog->m_GeneralPageAdvanced->dvdTitlePattern->text ();
-    subtitlespattern = configdialog->m_GeneralPageAdvanced->dvdSubPattern->text ();
-    chapterspattern = configdialog->m_GeneralPageAdvanced->dvdChapPattern->text ();
-    trackspattern = configdialog->m_GeneralPageAdvanced->vcdTrackPattern->text ();
-    referenceurlpattern= configdialog->m_GeneralPageAdvanced->referenceURLPattern->text ();
-    referencepattern= configdialog->m_GeneralPageAdvanced->referencePattern->text ();
 
     videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentItem();
     audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentItem();

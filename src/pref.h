@@ -34,7 +34,6 @@ class RecorderPage;                     // base recorder
 class KMPlayerPrefMEncoderPage;         // mencoder
 class KMPlayerPrefFFMpegPage;           // ffmpeg
 class KMPlayerPrefGeneralPageOutput;	// general, output
-class KMPlayerPrefGeneralPageAdvanced;	// general, advanced, pattern matches etc.
 class KMPlayerPrefOPPageGeneral;	// OP = outputplugins, general
 class KMPlayerPrefOPPagePostProc;	// outputplugins, postproc
 class KMPlayer;
@@ -72,7 +71,6 @@ public:
     KMPlayerPrefMEncoderPage            *m_MEncoderPage;
     KMPlayerPrefFFMpegPage              *m_FFMpegPage;
     KMPlayerPrefGeneralPageOutput 	*m_GeneralPageOutput;
-    KMPlayerPrefGeneralPageAdvanced	*m_GeneralPageAdvanced;
     KMPlayerPrefOPPageGeneral 		*m_OPPageGeneral;
     KMPlayerPrefOPPagePostProc		*m_OPPagePostproc;
     void setDefaults();
@@ -256,25 +254,5 @@ public:
     QCheckBox* FfmpegDeinterlacer;
 };
 
-class KMPlayerPrefGeneralPageAdvanced : public QFrame
-{
-    Q_OBJECT
-public:
-    KMPlayerPrefGeneralPageAdvanced(QWidget *parent = 0);
-    ~KMPlayerPrefGeneralPageAdvanced() {}
-    QLineEdit *dvdLangPattern;
-    QLineEdit *dvdTitlePattern;
-    QLineEdit *dvdSubPattern;
-    QLineEdit *dvdChapPattern;
-    QLineEdit *vcdTrackPattern;
-    QLineEdit *sizePattern;
-    QLineEdit *cachePattern;
-    QLineEdit *startPattern;
-    QLineEdit *indexPattern;
-    QLineEdit *referenceURLPattern;
-    QLineEdit *referencePattern;
-    QLineEdit *additionalArguments;
-    QSpinBox *cacheSize;
-};
 
 #endif // _KMPlayerPREF_H_

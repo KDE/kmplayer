@@ -19,10 +19,18 @@
  */
 
 #include <qstring.h>
-
 #include <qfile.h>
 #include <qfileinfo.h>
 #include <qtimer.h>
+#include <qlayout.h>
+#include <qtable.h>
+#include <qlineedit.h>
+#include <qslider.h>
+#include <qcombobox.h>
+#include <qcheckbox.h>
+#include <qspinbox.h>
+#include <qlabel.h>
+#include <qdom.h>
 
 #include <dcopobject.h>
 #include <dcopclient.h>
@@ -202,12 +210,16 @@ void MPlayerBase::processStopped (KProcess *) {
 //-----------------------------------------------------------------------------
 
 MPlayer::MPlayer (KMPlayer * player)
-    : MPlayerBase (player), m_widget (0L) {
+ : MPlayerBase (player),
+   m_widget (0L),
+   m_configpage (new MPlayerPreferencesPage (this)) {
+    m_player->settings ()->pagelist.push_back (m_configpage);
 }
 
 MPlayer::~MPlayer () {
     if (m_widget && !m_widget->parent ())
         delete m_widget;
+    delete m_configpage;
 }
 
 void MPlayer::init () {
@@ -317,15 +329,6 @@ bool MPlayer::run (const char * args, const char * pipe) {
     connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
             this, SLOT (processOutput (KProcess *, char *, int)));
     KMPlayerSettings *settings = m_player->settings ();
-    m_cacheRegExp.setPattern (settings->cachepattern);
-    m_indexRegExp.setPattern (settings->indexpattern);
-    m_posRegExp.setPattern (m_player->settings ()->positionpattern);
-    m_sizeRegExp.setPattern (m_player->settings ()->sizepattern);
-    m_startRegExp.setPattern (m_player->settings ()->startpattern);
-    if (!source ()->identified ()) {
-        m_refURLRegExp.setPattern (m_player->settings ()->referenceurlpattern);
-        m_refRegExp.setPattern (m_player->settings ()->referencepattern);
-    }
     m_use_slave = !(pipe && pipe[0]);
     if (!m_use_slave) {
         printf ("%s | ", pipe);
@@ -358,9 +361,9 @@ bool MPlayer::run (const char * args, const char * pipe) {
       printf (" -ao %s", settings->audiodriver.lower().latin1());
      *m_process << " -ao " << settings->audiodriver.lower().latin1();
      }*/
-    if (settings->additionalarguments.length () > 0) {
-        printf (" %s", settings->additionalarguments.ascii());
-        *m_process << " " << settings->additionalarguments;
+    if (m_configpage->additionalarguments.length () > 0) {
+        printf (" %s", m_configpage->additionalarguments.ascii());
+        *m_process << " " << m_configpage->additionalarguments;
     }
     // postproc thingies
 
@@ -420,6 +423,9 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
     KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
     if (!v || slen <= 0) return;
 
+    QRegExp * patterns = m_configpage->m_patterns;
+    QRegExp & m_refURLRegExp = patterns[MPlayerPreferencesPage::pat_refurl];
+    QRegExp & m_refRegExp = patterns[MPlayerPreferencesPage::pat_ref];
     do {
         int len = strcspn (str, "\r\n");
         QString out = m_process_output + QString::fromLocal8Bit (str, len);
@@ -442,6 +448,8 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
         slen--;
 
         if (process_stats) {
+            QRegExp & m_posRegExp = patterns[MPlayerPreferencesPage::pat_pos];
+            QRegExp & m_cacheRegExp = patterns[MPlayerPreferencesPage::pat_cache];
             if (m_source->hasLength () && m_posRegExp.search (out) > -1) {
                 int pos = int (10.0 * m_posRegExp.cap (1).toFloat ());
                 source ()->setPosition (pos);
@@ -463,6 +471,8 @@ void MPlayer::processOutput (KProcess *, char * str, int slen) {
             kdDebug () << "Reference File " << endl;
             m_tmpURL.truncate (0);
         } else {
+            QRegExp & m_startRegExp = patterns[MPlayerPreferencesPage::pat_start];
+            QRegExp & m_sizeRegExp = patterns[MPlayerPreferencesPage::pat_size];
             v->addText (out + '\n');
             if (!m_source->processOutput (out)) {
                 bool ok;
@@ -506,9 +516,123 @@ void MPlayer::processStopped (KProcess * p) {
 
 //-----------------------------------------------------------------------------
 
+extern const char * strMPlayerGroup;
+static const char * strMPlayerPatternGroup = "MPlayer Output Matching";
+static const char * strAddArgs = "Additional Arguments";
+static const char * strCacheSize = "Cache Size for Streaming";
+
+static struct MPlayerPattern {
+    QString caption;
+    const char * name;
+    const char * pattern;
+} _mplayer_patterns [] = {
+    { i18n ("Size pattern"), "Movie Size", "VO:.*[^0-9]([0-9]+)x([0-9]+)" },
+    { i18n ("Cache pattern"), "Cache Fill", "Cache fill:[^0-9]*([0-9\\.]+)%" },
+    { i18n ("Postion pattern"), "Movie Position", "V:\\s*([0-9\\.]+)" },
+    { i18n ("Index pattern"), "Index Pattern", "Generating Index: +([0-9]+)%" },
+    { i18n ("Reference URL pattern"), "Reference URL Pattern", "Playing\\s+(.*[^\\.])\\.?\\s*$" },
+    { i18n ("Reference pattern"), "Reference Pattern", "Reference Media file" },
+    { i18n ("Start pattern"), "Start Playing", "Start[^ ]* play" },
+    { i18n ("DVD language pattern"), "DVD Language", "\\[open].*audio.*language: ([A-Za-z]+).*aid.*[^0-9]([0-9]+)" },
+    { i18n ("DVD subtitle pattern"), "DVD Sub Title", "\\[open].*subtitle.*[^0-9]([0-9]+).*language: ([A-Za-z]+)" },
+    { i18n ("DVD titles pattern"), "DVD Titles", "There are ([0-9]+) titles" },
+    { i18n ("DVD chapters pattern"), "DVD Chapters", "There are ([0-9]+) chapters" },
+    { i18n ("VCD track pattern"), "VCD Tracks", "track ([0-9]+):" }
+};
+
+class MPlayerPreferencesFrame : public QFrame {
+public:
+    MPlayerPreferencesFrame (QWidget * parent);
+    QTable * table;
+    QLineEdit * additionalArguments;
+    QSpinBox * cacheSize;
+};
+
+MPlayerPreferencesFrame::MPlayerPreferencesFrame (QWidget * parent)
+ : QFrame (parent) {
+    QVBoxLayout * layout = new QVBoxLayout (this, 5);
+    layout->addWidget(new QLabel (i18n("Additional command line arguments:"),this));
+    additionalArguments = new QLineEdit(this);
+    layout->addWidget(additionalArguments);
+    QHBoxLayout * cacheLayout = new QHBoxLayout (layout);
+    cacheLayout->addWidget (new QLabel (i18n ("Cache size:"), this));
+    cacheSize = new QSpinBox (0, 32767, 32, this);
+    cacheLayout->addWidget (cacheSize);
+    cacheLayout->addWidget (new QLabel (i18n ("kB"), this));
+    QFrame * line = new QFrame (this);
+    line->setFrameShape (QFrame::HLine);
+    layout->addWidget (line);
+    QLabel * patternLabel = new QLabel (i18n ("Output Pattern Matching"), this);
+    layout->addWidget (patternLabel);
+    table = new QTable (int (MPlayerPreferencesPage::pat_last), 2, this);
+    table->verticalHeader ()->hide ();
+    table->setLeftMargin (0);
+    table->horizontalHeader ()->hide ();
+    table->setTopMargin (0);
+    table->setColumnReadOnly (0, true);
+    table->setColumnWidth (0, 250);
+    table->setColumnStretchable (1, true);
+    for (int i = 0; i < int (MPlayerPreferencesPage::pat_last); i++)
+        table->setText (i, 0, _mplayer_patterns[i].caption);
+    layout->addWidget (table);
+}
+
+MPlayerPreferencesPage::MPlayerPreferencesPage (MPlayer * p)
+ : m_process (p), m_configframe (0L) {
+}
+
+void MPlayerPreferencesPage::write (KConfig * config) {
+    config->setGroup (strMPlayerPatternGroup);
+    for (int i = 0; i < int (pat_last); i++)
+        config->writeEntry
+            (_mplayer_patterns[i].name, m_patterns[i].pattern ());
+    config->setGroup (strMPlayerGroup);
+    config->writeEntry (strAddArgs, additionalarguments);
+    config->writeEntry (strCacheSize, cachesize);
+}
+
+void MPlayerPreferencesPage::read (KConfig * config) {
+    config->setGroup (strMPlayerPatternGroup);
+    for (int i = 0; i < int (pat_last); i++)
+        m_patterns[i].setPattern (config->readEntry
+                (_mplayer_patterns[i].name, _mplayer_patterns[i].pattern));
+    config->setGroup (strMPlayerGroup);
+    additionalarguments = config->readEntry (strAddArgs);
+    cachesize = config->readNumEntry (strCacheSize, 0);
+}
+
+void MPlayerPreferencesPage::sync (bool fromUI) {
+    QTable * table = m_configframe->table;
+    if (fromUI) {
+        for (int i = 0; i < int (pat_last); i++)
+            m_patterns[i].setPattern (table->text (i, 1));
+        additionalarguments = m_configframe->additionalArguments->text();
+        cachesize = m_configframe->cacheSize->value();
+    } else {
+        for (int i = 0; i < int (pat_last); i++)
+            table->setText (i, 1, m_patterns[i].pattern ());
+        if (cachesize > 0)
+            m_configframe->cacheSize->setValue(cachesize);
+        m_configframe->additionalArguments->setText (additionalarguments);
+    }
+}
+
+void MPlayerPreferencesPage::prefLocation (QString & item, QString & icon, QString & tab) {
+    item = i18n ("General Options");
+    icon = QString ("kmplayer");
+    tab = i18n ("MPlayer");
+}
+
+QFrame * MPlayerPreferencesPage::prefPage (QWidget * parent) {
+    m_configframe = new MPlayerPreferencesFrame (parent);
+    return m_configframe;
+}
+
+//-----------------------------------------------------------------------------
+
 MEncoder::MEncoder (KMPlayer * player)
     : MPlayerBase (player) {
-}
+    }
 
 MEncoder::~MEncoder () {
 }
@@ -616,7 +740,7 @@ KMPlayerCallbackProcess::KMPlayerCallbackProcess (KMPlayer * player)
    m_callback (new KMPlayerCallback (this)),
    m_backend (0L),
    m_configpage (new KMPlayerXMLPreferencesPage (this)),
-   m_have_config (unknown),
+   m_have_config (config_unknown),
    m_send_config (send_no) {
 #ifdef HAVE_XINE
     m_player->settings ()->pagelist.push_back (m_configpage);
@@ -683,24 +807,18 @@ void KMPlayerCallbackProcess::setLoadingProgress (int percentage) {
     emit loading (percentage);
 }
 
-bool KMPlayerCallbackProcess::getConfigData (QByteArray & data, bool getnew) {
-    if (m_have_config == unknown) {
-        if (playing ())
-            return false; // it will come ..
-        if (getnew) {
-            m_have_config = probe;
-            play ();
-        }
-    } else if (m_have_config == yes) {
-        data = m_configdata;
-        return true;
+bool KMPlayerCallbackProcess::getConfigData () {
+    if (m_have_config == config_no)
+        return false;
+    if (m_have_config == config_unknown && !playing ()) {
+        m_have_config = config_probe;
+        play ();
     }
-    return false;
+    return true;
 }
 
 void KMPlayerCallbackProcess::setChangedData (const QByteArray & data) {
     m_changeddata = data;
-    m_changeddata.resize (data.find (0) - 1); // QDom doesn't like a terminating zero?
     m_send_config = playing () ? send_try : send_new;
     if (m_send_config == send_try)
         m_backend->setConfig (data);
@@ -708,13 +826,6 @@ void KMPlayerCallbackProcess::setChangedData (const QByteArray & data) {
         play ();
 }
 //-----------------------------------------------------------------------------
-#include <qlayout.h>
-#include <qtable.h>
-#include <qlineedit.h>
-#include <qslider.h>
-#include <qcombobox.h>
-#include <qcheckbox.h>
-#include <qdom.h>
 
 class KMPlayerXMLPreferencesFrame : public QFrame {
 public:
@@ -741,7 +852,8 @@ KMPlayerXMLPreferencesPage::KMPlayerXMLPreferencesPage (KMPlayerCallbackProcess 
 
 void KMPlayerXMLPreferencesFrame::showEvent (QShowEvent *) {
     QByteArray data;
-    m_process->getConfigData (data, true);
+    if (!m_process->haveConfig ())
+        m_process->getConfigData ();
 }
 
 void KMPlayerXMLPreferencesPage::write (KConfig *) {
@@ -773,8 +885,7 @@ void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
             return;
         }
         QDomDocument changeddom;
-        if (!changeddom.setContent (QCString ("<document></document>")))
-            kdDebug () << "changed doc error" << endl;
+        QDomElement changedroot = changeddom.createElement (QString ("document"));
         for (QDomNode node = dom.firstChild().firstChild(); !node.isNull (); node = node.nextSibling (), row++) {
             QDomNamedNodeMap attr = node.attributes ();
             QDomNode n = attr.namedItem (attname);
@@ -815,16 +926,21 @@ void KMPlayerXMLPreferencesPage::sync (bool fromUI) {
                     }
                 }
                 if (changed)
-                    changeddom.firstChild ().appendChild (node.cloneNode ());
+                    changedroot.appendChild (node.cloneNode ());
             }
         }
-        kdDebug () << changeddom.toCString () << endl;
-        if (changeddom.firstChild().childNodes().length() > 0)
-            m_process->setChangedData (changeddom.toCString ());
+        if (changedroot.childNodes().length() > 0) {
+            changeddom.appendChild (changedroot);
+            QCString str = changeddom.toCString ();
+            kdDebug () << str << endl;
+            QByteArray changeddata = str;
+            changeddata.resize (str.length ());
+            m_process->setChangedData (changeddata);
+        }
     } else {
-        QByteArray data;
-        if (!m_process->getConfigData (data, false))
+        if (!m_process->haveConfig ())
             return;
+        QByteArray & data = m_process->configData ();
         if (!data.size ())
             return;
         if (m_configframe->table->numCols () < 1) { // not yet created
@@ -924,11 +1040,11 @@ bool Xine::play () {
     QString cbname;
     cbname.sprintf ("%s/%s", QString (kapp->dcopClient ()->appId ()).ascii (),
                              QString (m_callback->objId ()).ascii ());
-    if (m_have_config == probe || m_send_config == send_new) {
+    if (m_have_config == config_probe || m_send_config == send_new) {
         initProcess ();
         printf ("kxineplayer -wid %lu", (unsigned long) widget ()->winId ());
         *m_process << "kxineplayer -wid " << QString::number (widget ()->winId ());
-        if (m_have_config == probe) {
+        if (m_have_config == config_probe) {
             printf (" -c");
             *m_process << " -c ";
         }
@@ -965,7 +1081,7 @@ bool Xine::play () {
     }
     printf (" -cb %s", cbname.ascii());
     *m_process << " -cb " << cbname;
-    if (m_have_config == unknown) {
+    if (m_have_config == config_unknown) {
         printf (" -c");
         *m_process << " -c";
     }
@@ -1006,8 +1122,8 @@ bool Xine::play () {
 
 bool Xine::stop () {
     kdDebug () << "Xine::stop ()" << endl;
-    if (m_have_config == probe)
-        m_have_config = unknown; // hmm
+    if (m_have_config == config_probe)
+        m_have_config = config_unknown; // hmm
     if (m_send_config == send_new)
         m_send_config = send_no; // oh well
     if (!m_process || !m_process->isRunning ()) return true;
@@ -1070,15 +1186,15 @@ void Xine::setStarted (QByteArray & data) {
     dcopname.sprintf ("kxineplayer-%u", m_process->pid ());
     kdDebug () << "up and running " << dcopname << endl;
     m_backend = new KMPlayerBackend_stub (dcopname.ascii (), "KMPlayerBackend");
-    if (m_have_config == probe || m_have_config == unknown) {
+    if (m_have_config == config_probe || m_have_config == config_unknown) {
         m_configdata = data;
-        if (m_have_config == probe) {
-            m_have_config = data.size () ? yes : no;
+        if (m_have_config == config_probe) {
+            m_have_config = data.size () ? config_yes : config_no;
             stop ();
             m_configpage->sync (false);
             return;
         }
-        m_have_config = data.size () ? yes : no;
+        m_have_config = data.size () ? config_yes : config_no;
     }
     if (m_send_config == send_new) {
         m_backend->setConfig (m_changeddata);
