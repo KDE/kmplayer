@@ -27,6 +27,7 @@
 #include <qguardedptr.h>
 
 #include <kurl.h>
+#include <qxembed.h>
 #include <kmediaplayer/view.h>
 
 class KMPlayerView;
@@ -34,6 +35,7 @@ class KMPlayerViewer;
 class KMPlayerViewerHolder;
 class KMPlayerControlPanel;
 class QMultiLineEdit;
+class QWidgetStack;
 class QPixmap;
 class QPushButton;
 class QPopupMenu;
@@ -79,6 +81,7 @@ public:
     QMultiLineEdit * consoleOutput () const { return m_multiedit; }
     KMPlayerViewer * viewer () const { return m_viewer; }
     KMPlayerControlPanel * buttonBar () const { return m_buttonbar; }
+    QWidgetStack * widgetStack () const { return m_widgetstack; }
     bool keepSizeRatio () const { return m_keepsizeratio; }
     void setKeepSizeRatio (bool b) { m_keepsizeratio = b; }
     bool useArts () const { return m_use_arts; }
@@ -112,11 +115,16 @@ private:
     void updateUseArts ();
     // widget for player's output
     QGuardedPtr<KMPlayerViewer> m_viewer;
-    // widget that layouts m_viewer for ratio setting
+    // console output
+    QMultiLineEdit * m_multiedit;
+    // click-to-play widget
+    QWidget * m_picturewidget;
+    // widget stack contains m_viewer, m_multiedit and m_picturewidget
+    QWidgetStack * m_widgetstack;
+    // widget that layouts m_widgetstack for ratio setting
     KMPlayerViewerHolder * m_holder;
     // widget that contains m_holder, m_buttonbar and m_posSlider
     KMPlayerViewLayer * m_layer;
-    QMultiLineEdit * m_multiedit;
     QString tmplog;
     QPixmap * m_image;
     KMPlayerControlPanel * m_buttonbar;
@@ -179,7 +187,7 @@ private:
     QPopupMenu * m_playerMenu;
 };
 
-class KMPlayerViewer : public QWidget {
+class KMPlayerViewer : public QXEmbed {
     Q_OBJECT
 public:
     KMPlayerViewer(QWidget *parent, KMPlayerView * view);
@@ -190,22 +198,16 @@ public:
     void setAspect (float a);
     float aspect () { return m_aspect; }
     void sendKeyEvent (int key);
-public slots:
-    void setMouseTracking (bool enable);
 signals:
     void aboutToPlay ();
     void clicked ();
     void aspectChanged ();
 protected:
-    void showEvent (QShowEvent *);
-    void hideEvent (QHideEvent *);
-    void resizeEvent (QResizeEvent *);
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
     bool x11Event (XEvent *);
     void mouseMoveEvent (QMouseEvent * e);
     void mousePressEvent (QMouseEvent * e);
-    void paintEvent (QPaintEvent * e);
 private:
     float m_aspect;
     KMPlayerView * m_view;

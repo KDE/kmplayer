@@ -70,8 +70,8 @@ void KMPlayerProcess::initProcess () {
     m_url.truncate (0);
 }
 
-QWidget * KMPlayerProcess::widget () {
-    return 0L;
+WId KMPlayerProcess::widget () {
+    return 0;
 }
 
 bool KMPlayerProcess::playing () const {
@@ -229,8 +229,8 @@ MPlayer::~MPlayer () {
 void MPlayer::init () {
 }
 
-QWidget * MPlayer::widget () {
-    return static_cast <KMPlayerView *> (m_player->view())->viewer();
+WId MPlayer::widget () {
+    return static_cast <KMPlayerView *> (m_player->view())->viewer()->embeddedWinId ();
 }
 
 bool MPlayer::play () {
@@ -338,8 +338,8 @@ bool MPlayer::run (const char * args, const char * pipe) {
         printf ("%s | ", pipe);
         *m_process << pipe << " | ";
     }
-    printf ("mplayer -wid %lu ", (unsigned long) widget ()->winId ());
-    *m_process << "mplayer -wid " << QString::number (widget ()->winId ());
+    printf ("mplayer -wid %lu ", (unsigned long) widget ());
+    *m_process << "mplayer -wid " << QString::number (widget ());
 
     if (m_use_slave) {
         printf ("-slave ");
@@ -1031,8 +1031,8 @@ Xine::Xine (KMPlayer * player)
 
 Xine::~Xine () {}
 
-QWidget * Xine::widget () {
-    return static_cast <KMPlayerView *> (m_player->view())->viewer();
+WId Xine::widget () {
+    return static_cast <KMPlayerView *> (m_player->view())->viewer()->embeddedWinId ();
 }
 
 void Xine::initProcess () {
@@ -1056,8 +1056,8 @@ bool Xine::play () {
                              QString (m_callback->objId ()).ascii ());
     if (m_have_config == config_probe || m_send_config == send_new) {
         initProcess ();
-        printf ("kxineplayer -wid %lu", (unsigned long) widget ()->winId ());
-        *m_process << "kxineplayer -wid " << QString::number (widget ()->winId ());
+        printf ("kxineplayer -wid %lu", (unsigned long) widget ());
+        *m_process << "kxineplayer -wid " << QString::number (widget ());
         if (m_have_config == config_probe) {
             printf (" -c");
             *m_process << " -c ";
@@ -1073,8 +1073,8 @@ bool Xine::play () {
         return false;
     KMPlayerSettings *settings = m_player->settings ();
     initProcess ();
-    printf ("kxineplayer -wid %lu", (unsigned long) widget ()->winId ());
-    *m_process << "kxineplayer -wid " << QString::number (widget ()->winId ());
+    printf ("kxineplayer -wid %lu", (unsigned long) widget ());
+    *m_process << "kxineplayer -wid " << QString::number (widget ());
 
     QString strVideoDriver = QString (settings->videodrivers[settings->videodriver].driver);
     if (strVideoDriver == QString ("x11"))

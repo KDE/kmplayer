@@ -48,7 +48,7 @@ public:
     bool playing () const;
     KMPlayerSource * source () const { return m_source; }
     KProcess * process () const { return m_process; }
-    virtual QWidget * widget ();
+    virtual WId widget ();
     void setSource (KMPlayerSource * source);
     virtual bool grabPicture (const KURL & url, int pos);
 signals:
@@ -110,7 +110,7 @@ public:
     MPlayer (KMPlayer * player);
     ~MPlayer ();
     virtual void init ();
-    virtual QWidget * widget ();
+    virtual WId widget ();
     virtual bool grabPicture (const KURL & url, int pos);
     bool run (const char * args, const char * pipe = 0L);
 public slots:
@@ -229,7 +229,7 @@ class Xine : public KMPlayerCallbackProcess {
 public:
     Xine (KMPlayer * player);
     ~Xine ();
-    QWidget * widget ();
+    WId widget ();
     void setFinished ();
     void initProcess ();
 public slots:

@@ -38,6 +38,7 @@
 #include <qdatastream.h>
 #include <qpixmap.h>
 #include <qpainter.h>
+#include <qwidgetstack.h>
 
 #include <X11/Xlib.h>
 #include <X11/Intrinsic.h>
@@ -70,25 +71,6 @@ static const int button_height = 15;
 #include <arts/kartsfloatwatch.h>
 #endif
 
-typedef int (*QX11EventFilter) (XEvent*);
-static QX11EventFilter oldFilter = 0;
-extern QX11EventFilter qt_set_x11_event_filter (QX11EventFilter filter);
-
-static int qxembed_x11_event_filter (XEvent* e) {
-    switch (e->type) {
-        case MapRequest: {
-            //printf("maprequest 0x%x 0x%x\n", e->xmap.event, e->xmap.window);
-            QWidget* w = QWidget::find (e->xmap.window);
-            if (w && w->metaObject ()->inherits ("KMPlayerViewer")) {
-                w->show ();
-                return true;
-            }
-        }
-    }
-    if (oldFilter && oldFilter != (QX11EventFilter) qt_set_x11_event_filter)
-        return oldFilter (e);
-    return false;
-}
 
 class KMPlayerViewStatic {
 public:
@@ -113,7 +95,6 @@ KMPlayerViewStatic::KMPlayerViewStatic ()
     : use_count(0) {
 #endif
     printf ("KMPlayerViewStatic::KMPlayerViewStatic\n");
-    oldFilter = qt_set_x11_event_filter (qxembed_x11_event_filter);
 }
 
 KMPlayerViewStatic::~KMPlayerViewStatic () {
@@ -121,7 +102,6 @@ KMPlayerViewStatic::~KMPlayerViewStatic () {
 #ifdef USE_ARTS
     delete dispatcher;
 #endif
-    qt_set_x11_event_filter (oldFilter);
     kmplayerview_static = 0L;
 }
 
@@ -332,7 +312,7 @@ void KMPlayerViewerHolder::resizeEvent (QResizeEvent *) {
         x = (width () - w) / 2;
         y = (height () - h) / 2;
     }
-    m_view->viewer ()->setGeometry (x, y, w, h);
+    m_view->widgetStack ()->setGeometry (x, y, w, h);
 }
 
 void KMPlayerViewerHolder::dropEvent (QDropEvent * de) {
@@ -470,15 +450,15 @@ void KMPlayerView::init () {
     m_buttonbar = new KMPlayerControlPanel (m_layer);
     m_buttonbar->setMaximumSize (2500, button_height + 8);
     m_holder = new KMPlayerViewerHolder (m_layer, this);
-    m_viewer = new KMPlayerViewer (m_holder, this);
+    m_widgetstack = new QWidgetStack (m_holder);
+    m_viewer = new KMPlayerViewer (m_widgetstack, this);
     layerbox->addWidget (m_holder);
     layerbox->addWidget (m_buttonbar);
 #if KDE_IS_VERSION(3,1,90)
     setVideoWidget (m_layer);
 #endif
 
-    QVBoxLayout * viewerbox = new QVBoxLayout (m_viewer, 0, 0);
-    m_multiedit = new QMultiLineEdit (m_viewer, "ConsoleOutput");
+    m_multiedit = new QMultiLineEdit (m_widgetstack, "ConsoleOutput");
     m_multiedit->setReadOnly (true);
     m_multiedit->setFamily ("courier");
     m_multiedit->setPaper (QBrush (QColor (0, 0, 0)));
@@ -486,8 +466,10 @@ void KMPlayerView::init () {
     QPalette pal (QColor (64, 64,64), QColor (32, 32, 32));
     m_multiedit->horizontalScrollBar ()->setPalette (pal);
     m_multiedit->verticalScrollBar ()->setPalette (pal);
-    viewerbox->addWidget (m_multiedit);
-    m_multiedit->hide ();
+    m_picturewidget = new QWidget (m_widgetstack);
+    m_widgetstack->addWidget (m_viewer);
+    m_widgetstack->addWidget (m_multiedit);
+    m_widgetstack->addWidget (m_picturewidget);
 
     setFocusPolicy (QWidget::ClickFocus);
 
@@ -518,11 +500,14 @@ bool KMPlayerView::setPicture (const QString & path) {
             delete m_image;
             m_image = 0L;
             kdDebug() << "KMPlayerView::setPicture failed " << path << endl;
-        } else
-            m_multiedit->hide ();
+        }
     }
-    m_viewer->setMouseTracking (m_viewer->hasMouseTracking ());
-    m_viewer->repaint ();
+    if (!m_image) {
+        m_widgetstack->raiseWidget (m_viewer);
+    } else {
+        m_picturewidget->setPaletteBackgroundPixmap (*m_image);
+        m_widgetstack->raiseWidget (m_picturewidget);
+    }
     return m_image;
 }
 
@@ -617,9 +602,10 @@ void KMPlayerView::timerEvent (QTimerEvent * e) {
         return;
     int vert_buttons_pos = m_layer->height ();
     int mouse_pos = m_layer->mapFromGlobal (QCursor::pos ()).y();
-    bool mouse_on_buttons = (m_layer->hasMouse () && 
+    bool mouse_on_buttons = (//m_layer->hasMouse () && 
                              mouse_pos >= vert_buttons_pos-(8+button_height) &&
                              mouse_pos <= vert_buttons_pos);
+    printf("timer event %d %d %d\n", vert_buttons_pos, mouse_pos, mouse_on_buttons);
     if (m_buttonbar)
         if (mouse_on_buttons && !m_buttonbar->isVisible ())
             m_buttonbar->show ();
@@ -649,7 +635,7 @@ void KMPlayerView::addText (const QString & str) {
 }*/
 
 void KMPlayerView::startsToPlay () {
-    m_multiedit->hide ();
+    m_widgetstack->raiseWidget (m_viewer);
     m_playing = true;
     if (m_buttonbar && m_auto_hide_buttons) {
         m_buttonbar->hide ();
@@ -683,12 +669,10 @@ void KMPlayerView::reset () {
     if (m_layer->isFullScreen())
         m_buttonbar->popupMenu ()->activateItemAt (m_buttonbar->popupMenu ()->indexOf (KMPlayerControlPanel::menu_fullscreen)); 
         //m_layer->fullScreen ();
-    m_multiedit->hide ();
-    if (m_show_console_output) {
-        m_multiedit->show ();
-        m_multiedit->resize (m_viewer->width (), m_viewer->height ());//Qt bug?
-    }
     m_viewer->show ();
+    if (m_show_console_output) {
+        m_widgetstack->raiseWidget (m_multiedit);
+    }
 }
 
 void KMPlayerView::fullScreen () {
@@ -733,7 +717,7 @@ void KMPlayerView::setForeignViewer (KMPlayerView * other) {
 //----------------------------------------------------------------------
 
 KMPlayerViewer::KMPlayerViewer (QWidget *parent, KMPlayerView * view)
-  : QWidget (parent), m_aspect (0.0),
+  : QXEmbed (parent), m_aspect (0.0),
     m_view (view) {
     /*XWindowAttributes xwa;
     XGetWindowAttributes (qt_xdisplay(), winId (), &xwa);
@@ -744,44 +728,24 @@ KMPlayerViewer::KMPlayerViewer (QWidget *parent, KMPlayerView * view)
     create (XCreateWindow (qt_xdisplay (), parent->winId (), 0, 0, 10, 10, 0, 
                            x11Depth (), InputOutput, (Visual*)x11Visual (),
                            CWBackPixel | CWBorderPixel | CWColormap, &xswa));*/
-    setBackgroundMode (Qt::FixedColor);
-    setEraseColor (QColor (0, 0, 0));
+    setBackgroundMode (Qt::NoBackground);
     setAcceptDrops (true);
+    setProtocol(QXEmbed::XPLAIN);
+    embed (XCreateSimpleWindow (qt_xdisplay(), winId (), 0, 0, width(), height(), 1, 0, 0));
+    XSelectInput (qt_xdisplay (), embeddedWinId (), 
+               //KeyPressMask | KeyReleaseMask |
+               //EnterWindowMask | LeaveWindowMask |
+               //FocusChangeMask |
+               ExposureMask |
+               StructureNotifyMask |
+               PointerMotionMask
+              );
+    kapp->installX11EventFilter (this);
 }
 
 KMPlayerViewer::~KMPlayerViewer () {
 }
     
-void KMPlayerViewer::showEvent (QShowEvent *) {
-    printf ("show\n");
-    QWidget * w = static_cast <QWidget *> (parent ());
-    QResizeEvent ev (w->size (), w->size ());
-    QApplication::sendEvent (w, &ev);
-    XConfigureEvent c = {
-        ConfigureNotify, 0UL, True,
-        qt_xdisplay (), winId (), parentWidget ()->winId (),
-        x (), y (), width (), height (),
-        0, None, False
-    };
-    XSendEvent(qt_xdisplay(), c.event, TRUE, StructureNotifyMask, (XEvent*) &c);
-    XFlush (qt_xdisplay ());
-}
-
-void KMPlayerViewer::resizeEvent (QResizeEvent *) {
-    XConfigureEvent c = {
-        ConfigureNotify, 0UL, True,
-        qt_xdisplay (), winId (), parentWidget ()->winId (),
-        x (), y (), width (), height (),
-        0, None, False
-    };
-    XSendEvent(qt_xdisplay(), c.event, TRUE, StructureNotifyMask, (XEvent*) &c);
-    XFlush (qt_xdisplay ());
-}
-
-void KMPlayerViewer::hideEvent (QHideEvent *) {
-    printf ("hide\n");
-}
-
 void KMPlayerViewer::mouseMoveEvent (QMouseEvent * e) {
     if (e->state () == Qt::NoButton)
         m_view->delayedShowButtons (e->y () > height () - (8+button_height));
@@ -789,24 +753,6 @@ void KMPlayerViewer::mouseMoveEvent (QMouseEvent * e) {
 
 void KMPlayerViewer::mousePressEvent (QMouseEvent *) {
     emit clicked ();
-}
-
-void KMPlayerViewer::setMouseTracking (bool enable) {
-    if (enable)
-        setWState (WState_MouseTracking);
-    else
-        clearWState (WState_MouseTracking);
-    XSelectInput (qt_xdisplay (), winId (), 
-               KeyPressMask | KeyReleaseMask |
-               ButtonMotionMask |
-               EnterWindowMask | LeaveWindowMask |
-               FocusChangeMask |
-               ExposureMask |
-               PropertyChangeMask |
-               StructureNotifyMask |
-               (m_view->image () ? ButtonPressMask : 0) |
-               (enable ? PointerMotionMask : 0)
-              );
 }
 
 void KMPlayerViewer::setAspect (float a) {
@@ -834,34 +780,25 @@ void KMPlayerViewer::dropEvent (QDropEvent * de) {
 void KMPlayerViewer::dragEnterEvent (QDragEnterEvent* dee) {
     m_view->dragEnterEvent (dee);
 }
-
-void KMPlayerViewer::paintEvent (QPaintEvent * e) {
-    if (!m_view->image ()) {
-        if (!m_view->playing ())
-            QWidget::paintEvent (e);
-        return;
-    }
-    QPainter paint (this);
-    paint.setClipRect (e->rect ());
-    paint.drawPixmap (0, 0, *m_view->image ());
-}
-
+/*
+*/
 void KMPlayerViewer::sendKeyEvent (int key) {
     char buf[2] = { char (key), '\0' }; 
     KeySym keysym = XStringToKeysym (buf);
     XKeyEvent event = {
         XKeyPress, 0, true,
-        qt_xdisplay (), winId (), qt_xrootwin(), winId (),
+        qt_xdisplay (), embeddedWinId (), qt_xrootwin(), embeddedWinId (),
         /*time*/ 0, 0, 0, 0, 0,
         0, XKeysymToKeycode (qt_xdisplay (), keysym), true
     };
-    XSendEvent (qt_xdisplay(), winId(), FALSE, KeyPressMask, (XEvent *) &event);
+    XSendEvent (qt_xdisplay(), embeddedWinId (), FALSE, KeyPressMask, (XEvent *) &event);
 }
 
 bool KMPlayerViewer::x11Event (XEvent * e) {
     switch (e->type) {
         case UnmapNotify:
-            if (e->xunmap.window == winId ()) {
+            printf ("UnmapNotify %d\n", e->xunmap.event);
+            if (e->xunmap.event == embeddedWinId ()) {
                 emit aboutToPlay ();
                 //hide();
             }
@@ -869,19 +806,25 @@ bool KMPlayerViewer::x11Event (XEvent * e) {
         case XKeyPress:
             printf ("key\n");
             break;
-        case ColormapNotify:
+        /*case ColormapNotify:
             printf ("colormap notify\n");
-            return true;
-        /*case MapNotify:
-            if (e->xmap.window == winId () && !isVisible ())
-                show();*/
+            return true;*/
+        case MotionNotify:
+            if (e->xmotion.window == embeddedWinId () && !e->xmotion.state)
+                m_view->delayedShowButtons (e->xmotion.y > height () - (8+button_height));
+                //printf ("motion notify\n");
+            break;
+        case MapNotify:
+            if (e->xunmap.event == embeddedWinId ())
+                show ();
+            break;
         /*case ConfigureNotify:
             break;
             //return true;*/
         default:
             break;
     }
-    return false;
+    return QXEmbed::x11Event(e);
 }
 
 #include "kmplayerview.moc"
