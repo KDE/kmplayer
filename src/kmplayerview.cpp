@@ -39,6 +39,8 @@
 #include <qpainter.h>
 #include <qwidgetstack.h>
 #include <qheader.h>
+#include <qcursor.h>
+#include <qclipboard.h>
 
 #include <kiconloader.h>
 
@@ -225,6 +227,7 @@ protected:
     void mouseMoveEvent (QMouseEvent *);
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
+    void contextMenuEvent (QContextMenuEvent * e);
 private:
     KMPlayerView * m_view;
 };
@@ -269,6 +272,10 @@ KDE_NO_EXPORT void KMPlayerViewerHolder::dropEvent (QDropEvent * de) {
 
 KDE_NO_EXPORT void KMPlayerViewerHolder::dragEnterEvent (QDragEnterEvent* dee) {
     m_view->dragEnterEvent (dee);
+}
+
+KDE_NO_EXPORT void KMPlayerViewerHolder::contextMenuEvent (QContextMenuEvent * e) {
+    m_view->buttonBar ()->popupMenu ()->exec (e->globalPos ());
 }
 
 //-----------------------------------------------------------------------------
@@ -490,6 +497,10 @@ KDE_NO_CDTOR_EXPORT KMPlayerPlayListView::KMPlayerPlayListView (QWidget * parent
     header()->hide ();
     setTreeStepSize (15);
     setRootIsDecorated (true);
+    m_itemmenu = new QPopupMenu (this);
+    m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("editcopy"), KIcon::Small, 0, true), i18n ("&Copy to Clipboard"), this, SLOT (copyToClipboard ()), 0, 0);
+    m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("bookmark_add"), KIcon::Small, 0, true), i18n ("&Add Bookmark"), this, SLOT (addBookMark ()), 0, 1);
+    connect (this, SIGNAL (contextMenuRequested (QListViewItem *, const QPoint &, int)), this, SLOT (contextMenuItem (QListViewItem *, const QPoint &, int)));
 }
 
 static void populateTree (ElementPtr e, ElementPtr focus, QListView * tree, QListViewItem *item) {
@@ -513,6 +524,47 @@ void KMPlayerPlayListView::updateTree (ElementPtr root, ElementPtr active) {
     populateTree (root, active, this, item);
     //if (root->hasChildNodes ())
 }
+
+KDE_NO_EXPORT void KMPlayerPlayListView::contextMenuItem (QListViewItem * vi, const QPoint & p, int) {
+    if (vi) {
+        KMPlayerListViewItem * item = static_cast <KMPlayerListViewItem *> (vi);
+        m_itemmenu->setItemEnabled (1, item->m_elm && (item->m_elm->isMrl () || item->m_elm->isDocument ()));
+        m_itemmenu->exec (p);
+    } else
+        m_view->buttonBar ()->popupMenu ()->exec (p);
+}
+
+void KMPlayerPlayListView::copyToClipboard () {
+    KMPlayerListViewItem * item = static_cast <KMPlayerListViewItem *> (currentItem ());
+    if (item->m_elm)
+        QApplication::clipboard()->setText (item->m_elm->isMrl () ? item->m_elm->mrl ()->src : item->m_elm->tagName ());
+}
+
+void KMPlayerPlayListView::addBookMark () {
+    KMPlayerListViewItem * item = static_cast <KMPlayerListViewItem *> (currentItem ());
+    if (item->m_elm) {
+        KURL url (item->m_elm->isMrl () ? item->m_elm->mrl ()->src : item->m_elm->tagName ());
+        emit addBookMark (url.prettyURL (), url.url ());
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+class KMPlayerConsole : public QMultiLineEdit {
+public:
+    KMPlayerConsole (QWidget * parent, KMPlayerView * view);
+protected:
+    void contextMenuEvent (QContextMenuEvent * e);
+private:
+    KMPlayerView * m_view;
+};
+
+KDE_NO_CDTOR_EXPORT KMPlayerConsole::KMPlayerConsole (QWidget * parent, KMPlayerView * view) : QMultiLineEdit (parent, "kde_kmplayer_console"), m_view (view) {}
+
+KDE_NO_EXPORT void KMPlayerConsole::contextMenuEvent (QContextMenuEvent * e) {
+    m_view->buttonBar ()->popupMenu ()->exec (e->globalPos ());
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT KMPlayerView::KMPlayerView (QWidget *parent, const char *name)
@@ -604,7 +656,7 @@ KDE_NO_EXPORT void KMPlayerView::init () {
     setVideoWidget (m_layer);
 #endif
 
-    m_multiedit = new QMultiLineEdit (m_widgetstack, "ConsoleOutput");
+    m_multiedit = new KMPlayerConsole (m_widgetstack, this);
     m_multiedit->setReadOnly (true);
     m_multiedit->setFamily ("courier");
     m_multiedit->setPaper (QBrush (QColor (0, 0, 0)));
@@ -1008,6 +1060,10 @@ KDE_NO_EXPORT void KMPlayerViewer::sendConfigureEvent () {
     };
     XSendEvent(qt_xdisplay(), c.event, TRUE, StructureNotifyMask, (XEvent*) &c);
     XFlush (qt_xdisplay ());
+}
+
+KDE_NO_EXPORT void KMPlayerViewer::contextMenuEvent (QContextMenuEvent * e) {
+    m_view->buttonBar ()->popupMenu ()->exec (e->globalPos ());
 }
 
 #include "kmplayerview.moc"

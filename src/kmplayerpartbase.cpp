@@ -141,6 +141,12 @@ KDE_NO_EXPORT void KMPlayer::showConsoleWindow () {
     m_process->view ()->showWidget (KMPlayerView::WT_Console);
 }
 
+KDE_NO_EXPORT void KMPlayer::addBookMark (const QString & t, const QString & url) {
+    KBookmarkGroup b = m_bookmark_manager->root ();
+    b.addBookmark (m_bookmark_manager, t, KURL (url));
+    m_bookmark_manager->emitChanged (b);
+}
+
 void KMPlayer::init (KActionCollection * action_collection) {
     m_view->init ();
     m_settings->readConfig ();
@@ -160,6 +166,7 @@ void KMPlayer::init (KActionCollection * action_collection) {
     connect (panel->brightnessSlider (), SIGNAL (valueChanged(int)), this, SLOT (brightnessValueChanged(int)));
     connect (panel->hueSlider (), SIGNAL (valueChanged(int)), this, SLOT (hueValueChanged(int)));
     connect (panel->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));
+    connect (m_view->playList (), SIGNAL (addBookMark (const QString &, const QString &)), this, SLOT (addBookMark (const QString &, const QString &)));
     panel->popupMenu()->connectItem (KMPlayerControlPanel::menu_fullscreen, this, SLOT (fullScreen ()));
 #ifdef HAVE_XINE
     QPopupMenu *menu = panel->playerMenu ();
@@ -1067,9 +1074,9 @@ KDE_NO_EXPORT void KMPlayerURLSource::read (QTextStream & textstream) {
             if (mrl.lower ().startsWith (QString ("asf ")))
                 mrl = mrl.mid (4).stripWhiteSpace ();
             if (!mrl.isEmpty () && !mrl.startsWith (QChar ('#'))) {
-                KURL url (mrl);
+                KURL url (current (), mrl);
                 if (url.isValid ())
-                    insertURL (url.url ());
+                    insertURL (KURL::decode_string (url.url ()));
             }
             line = textstream.readLine ();
         } while (!line.isNull ()); /* TODO && m_document.size () < 1024 / * support 1k entries * /);*/

@@ -134,6 +134,7 @@ public slots:
     void setMPlayer (int id);
     void back ();
     void forward ();
+    void addBookMark (const QString & title, const QString & url);
 public:
     virtual bool isSeekable (void) const;
     virtual unsigned long position (void) const;

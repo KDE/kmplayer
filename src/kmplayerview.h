@@ -65,8 +65,15 @@ public:
     KMPlayerPlayListView (QWidget * parent, KMPlayerView * view);
     KDE_NO_CDTOR_EXPORT ~KMPlayerPlayListView () {}
     void updateTree (ElementPtr root, ElementPtr active);
+signals:
+    void addBookMark (const QString & title, const QString & url);
+private slots:
+    void contextMenuItem (QListViewItem *, const QPoint &, int);
+    void copyToClipboard ();
+    void addBookMark ();
 private:
     KMPlayerView * m_view;
+    QPopupMenu * m_itemmenu;
 };
 
 class KMPlayerViewLayer : public QWidget {
@@ -283,6 +290,7 @@ protected:
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
     void mouseMoveEvent (QMouseEvent * e);
+    void contextMenuEvent (QContextMenuEvent * e);
 private:
     float m_aspect;
     KMPlayerView * m_view;

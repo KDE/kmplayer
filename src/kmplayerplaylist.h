@@ -71,6 +71,7 @@ public:
     void insertBefore (ElementPtr c, ElementPtr b);
     void removeChild (ElementPtr c);
     void replaceChild (ElementPtr _new, ElementPtr old);
+    KDE_NO_EXPORT bool isDocument () { return m_doc == m_self; }
     KDE_NO_EXPORT bool hasChildNodes () const { return (bool) m_first_child; }
     KDE_NO_EXPORT ElementPtr parentNode () { return m_parent; }
     KDE_NO_EXPORT ElementPtr firstChild () { return m_first_child; }
