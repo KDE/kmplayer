@@ -39,6 +39,7 @@ class KMPlayerProcess;
 class MPlayer;
 class KMPlayerBookmarkOwner;
 class MEncoder;
+class FFMpeg;
 class Xine;
 class KMPlayerSettings;
 class KInstance;
@@ -96,10 +97,13 @@ public:
     void setURL (const KURL & url) { m_urlsource->setURL (url); }
     void sizes (int & w, int & h) const;
     void setProcess (KMPlayerProcess *);
+    void setRecorder (KMPlayerProcess *);
     void setSource (KMPlayerSource * source);
     KMPlayerProcess * process () const { return m_process; }
+    KMPlayerProcess * recorder () const { return m_recorder; }
     MPlayer * mplayer () const { return m_mplayer; }
     MEncoder * mencoder () const { return m_mencoder; }
+    FFMpeg * ffmpeg () const { return m_ffmpeg; }
     Xine * xine () const { return m_xine; }
     KMPlayerURLSource * urlSource () const { return m_urlsource; }
     KConfig * config () const { return m_config; }
@@ -151,8 +155,10 @@ protected:
     QGuardedPtr <KMPlayerView> m_view;
     KMPlayerSettings * m_settings;
     KMPlayerProcess * m_process;
+    KMPlayerProcess * m_recorder;
     MPlayer * m_mplayer;
     MEncoder * m_mencoder;
+    FFMpeg * m_ffmpeg;
     Xine * m_xine;
     KMPlayerURLSource * m_urlsource;
     KMPlayerBookmarkManager * m_bookmark_manager;

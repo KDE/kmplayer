@@ -81,8 +81,10 @@ KMPlayer::KMPlayer (QWidget * wparent, const char *wname,
    m_view (new KMPlayerView (wparent)),
    m_settings (new KMPlayerSettings (this, config)),
    m_process (0L),
+   m_recorder (0L),
    m_mplayer (new MPlayer (this)),
    m_mencoder (new MEncoder (this)),
+   m_ffmpeg (new FFMpeg (this)),
    m_xine (new Xine (this)),
    m_urlsource (new KMPlayerURLSource (this)),
    m_bookmark_manager (new KMPlayerBookmarkManager),
@@ -124,8 +126,7 @@ void KMPlayer::init (KActionCollection * action_collection) {
     connect (m_view, SIGNAL (urlDropped (const KURL &)), this, SLOT (openURL (const KURL &)));
     m_view->popupMenu ()->connectItem (KMPlayerView::menu_config,
                                        m_settings, SLOT (show ()));
-    connect (m_mencoder, SIGNAL (started()), this, SLOT (recordingStarted()));
-    connect (m_mencoder, SIGNAL (finished()), this, SLOT (recordingFinished()));
+    setRecorder (m_mencoder);
     //connect (m_view->configButton (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
 }
 
@@ -150,18 +151,18 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
         return;
     KMPlayerSource * source = m_urlsource;
     if (m_process) {
-        m_process->stop ();
-        source = m_process->source ();
-        disconnect (m_process, SIGNAL (started ()),
-                    this, SLOT (processStarted ()));
         disconnect (m_process, SIGNAL (finished ()),
                     this, SLOT (processFinished ()));
+        disconnect (m_process, SIGNAL (started ()),
+                    this, SLOT (processStarted ()));
         disconnect (m_process, SIGNAL (positionChanged (int)),
                     this, SLOT (processPosition (int)));
         disconnect (m_process, SIGNAL (loading (int)),
                     this, SLOT (processLoading (int)));
         disconnect (m_process, SIGNAL (startPlaying ()),
                     this, SLOT (processPlaying ()));
+        m_process->stop ();
+        source = m_process->source ();
     }
     m_process = process;
     m_process->setSource (source);
@@ -173,6 +174,22 @@ void KMPlayer::setProcess (KMPlayerProcess * process) {
              this, SLOT (processLoading (int)));
     connect (m_process, SIGNAL (startPlaying ()),
              this, SLOT (processPlaying ()));
+}
+
+void KMPlayer::setRecorder (KMPlayerProcess * recorder) {
+    if (m_recorder == recorder)
+        return;
+    if (m_recorder) {
+        disconnect (m_recorder, SIGNAL (finished ()),
+                    this, SLOT (processFinished ()));
+        disconnect (recorder, SIGNAL (started()),
+                    this, SLOT (recordingStarted()));
+        m_recorder->stop ();
+    }
+    m_recorder = recorder;
+    connect (m_recorder, SIGNAL (started()), this, SLOT (recordingStarted()));
+    connect (m_recorder, SIGNAL (finished()), this, SLOT (recordingFinished()));
+    m_recorder->setSource (m_process->source ());
 }
 
 extern const char * strUrlBackend;
@@ -221,7 +238,7 @@ void KMPlayer::setSource (KMPlayerSource * source) {
         closeURL ();
     }
     m_process->setSource (source);
-    m_mencoder->setSource (source);
+    m_recorder->setSource (source);
     if (source->hasLength () && m_settings->showposslider)
         m_view->positionSlider()->show ();
     else
@@ -285,8 +302,12 @@ void KMPlayer::recordingFinished () {
     if (!m_view) return;
     if (m_view->recordButton ()->isOn ()) 
         m_view->recordButton ()->toggle ();
-    if (m_settings->autoplayafterrecording)
-        openURL (m_mencoder->recordURL ());
+    if (m_settings->replayoption == KMPlayerSettings::ReplayFinished ||
+        (m_settings->replayoption == KMPlayerSettings::ReplayAfter && !playing ())) {
+        Recorder * rec = dynamic_cast <Recorder*> (m_recorder);
+        if (rec)
+            openURL (rec->recordURL ());
+    }
 }
 
 void KMPlayer::processFinished () {
@@ -357,8 +378,8 @@ void KMPlayer::forward () {
 
 void KMPlayer::record () {
     if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
-    if (m_mencoder->playing ()) {
-        m_mencoder->stop ();
+    if (m_recorder->playing ()) {
+        m_recorder->stop ();
     } else {
         m_process->stop ();
         m_settings->show (KMPlayerPreferences::PageRecording);
@@ -653,6 +674,7 @@ void KMPlayerURLSource::setURL (const KURL & url) {
     m_identified = false;
     m_urls.clear ();
     m_urlother = KURL ();
+    buildArguments ();
 }
 
 bool KMPlayerURLSource::processOutput (const QString & str) {

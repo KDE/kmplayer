@@ -51,7 +51,6 @@ public:
     bool showcnfbutton : 1;
     bool showrecordbutton : 1;
     bool showbroadcastbutton : 1;
-    bool autoplayafterrecording : 1;
     bool showposslider : 1;
     bool autohidebuttons : 1;
     bool autohideslider : 1;
@@ -91,7 +90,16 @@ public:
     bool pp_med_int : 1;		// median interlacer
     bool pp_ffmpeg_int : 1;		// ffmpeg interlacer
 // end of postproc
+    // recording
     bool recordcopy : 1;
+    enum Recorder { MEncoder = 0, FFMpeg };
+    Recorder recorder;
+    enum ReplayOption { ReplayNo = 0, ReplayFinished, ReplayAfter };
+    ReplayOption replayoption;
+    int replaytime;
+    QString mencoderarguments;
+    QString ffmpegarguments;
+    QString recordfile;
 // TV stuff
     QString tvdriver;
     TVDeviceList tvdevices;
@@ -113,8 +121,6 @@ public:
     QString dvddevice;
     QString vcddevice;
     QString additionalarguments;
-    QString mencoderarguments;
-    QString recordfile;
     QString sizepattern;
     QString cachepattern;
     QString positionpattern;

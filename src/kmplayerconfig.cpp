@@ -193,9 +193,6 @@ static const char * strSaturation = "Saturation";
 static const char * strVoDriver = "Video Driver";
 static const char * strAoDriver = "Audio Driver";
 static const char * strAddArgs = "Additional Arguments";
-static const char * strMencoderArgs = "Mencoder Arguments";
-static const char * strRecordingFile = "Last Recording Ouput File";
-static const char * strRecordingCopy = "Recording Is Copy";
 static const char * strSize = "Movie Size";
 static const char * strCache = "Cache Fill";
 static const char * strPosPattern = "Movie Position";
@@ -210,7 +207,6 @@ static const char * strAddConfigButton = "Add Configure Button";
 static const char * strAddRecordButton = "Add Record Button";
 static const char * strAddBroadcastButton = "Add Broadcast Button";
 static const char * strAutoHideButtons = "Auto Hide Control Buttons";
-static const char * strAutoPlayAfterRecording = "Auto Play After Recording";
 static const char * strPostMPlayer090 = "Post MPlayer 0.90";
 //static const char * strAutoHideSlider = "Auto Hide Slider";
 static const char * strSeekTime = "Forward/Backward Seek Time";
@@ -272,6 +268,15 @@ static const char * strTVMaxSize = "Maximum Size";
 static const char * strTVNoPlayback = "No Playback";
 static const char * strTVNorm = "Norm";
 static const char * strTVDriver = "Driver";
+// recording
+static const char * strRecordingGroup = "Recording";
+static const char * strRecorder = "Recorder";
+static const char * strMencoderArgs = "Mencoder Arguments";
+static const char * strFFMpegArgs = "FFMpeg Arguments";
+static const char * strRecordingFile = "Last Recording Ouput File";
+static const char * strAutoPlayAfterRecording = "Auto Play After Recording";
+static const char * strAutoPlayAfterTime = "Auto Play After Recording Time";
+static const char * strRecordingCopy = "Recording Is Copy";
 // ffserver
 static const char * strBroadcast = "Broadcast";
 static const char * strBindAddress = "Bind Address";
@@ -302,7 +307,6 @@ void KMPlayerSettings::readConfig () {
     framedrop = m_config->readBoolEntry (strFrameDrop, true);
     showbuttons = m_config->readBoolEntry (strShowControlButtons, true);
     autohidebuttons = m_config->readBoolEntry (strAutoHideButtons, false);
-    autoplayafterrecording = m_config->readBoolEntry (strAutoPlayAfterRecording, true);
     mplayerpost090 = m_config->readBoolEntry (strPostMPlayer090, false);
     view->setAutoHideButtons (showbuttons && autohidebuttons);
     if (!showbuttons) {
@@ -337,9 +341,6 @@ void KMPlayerSettings::readConfig () {
 
     view->setUseArts (audiodriver == ADRIVER_ARTS_INDEX);
     additionalarguments = m_config->readEntry (strAddArgs);
-    recordfile = m_config->readPathEntry(strRecordingFile, QDir::homeDirPath () + "/record");
-    recordcopy = m_config->readBoolEntry(strRecordingCopy, true);
-    mencoderarguments = m_config->readEntry (strMencoderArgs, "-oac copy -ovc copy");
     cachesize = m_config->readNumEntry (strCacheSize, 0);
     m_config->setGroup (strMPlayerPatternGroup);
     sizepattern = m_config->readEntry (strSize, "VO:.*[^0-9]([0-9]+)x([0-9]+)");
@@ -353,6 +354,15 @@ void KMPlayerSettings::readConfig () {
     chapterspattern = m_config->readEntry (strChapterPattern, "There are ([0-9]+) chapters");
     trackspattern = m_config->readEntry (strTrackPattern, "track ([0-9]+):");
 
+    // recording
+    m_config->setGroup (strRecordingGroup);
+    mencoderarguments = m_config->readEntry (strMencoderArgs, "-oac copy -ovc copy");
+    ffmpegarguments = m_config->readEntry (strFFMpegArgs, "-f avi -acodec mp3 -vcodec mpeg4");
+    recordfile = m_config->readPathEntry(strRecordingFile, QDir::homeDirPath () + "/record.avi");
+    recorder = Recorder (m_config->readNumEntry (strRecorder, int (MEncoder)));
+    replayoption = ReplayOption (m_config->readNumEntry (strAutoPlayAfterRecording, ReplayFinished));
+    replaytime = m_config->readNumEntry (strAutoPlayAfterTime, 60);
+    recordcopy = m_config->readBoolEntry(strRecordingCopy, true);
 
     // postproc
     m_config->setGroup (strPPGroup);
@@ -537,11 +547,17 @@ void KMPlayerSettings::show (KMPlayerPreferences::Page page) {
     configdialog->m_OPPagePostproc->CubicIntDeinterlacer->setChecked (pp_cub_int);
     configdialog->m_OPPagePostproc->MedianDeinterlacer->setChecked (pp_med_int);
     configdialog->m_OPPagePostproc->FfmpegDeinterlacer->setChecked (pp_ffmpeg_int);
-
-    configdialog->m_RecordPage->arguments->setText (mencoderarguments);
+    // recording
     configdialog->m_RecordPage->url->lineEdit()->setText (recordfile);
-    configdialog->m_RecordPage->format->setButton (recordcopy ? 0 : 1);
-    configdialog->m_RecordPage->formatClicked (recordcopy ? 0 : 1);
+    configdialog->m_RecordPage->replay->setButton (int (replayoption));
+    configdialog->m_RecordPage->recorder->setButton (int (recorder));
+    configdialog->m_RecordPage->replayClicked (int (replayoption));
+    configdialog->m_RecordPage->replaytime->setText (QString::number (replaytime));
+    configdialog->m_MEncoderPage->arguments->setText (mencoderarguments);
+    configdialog->m_MEncoderPage->format->setButton (recordcopy ? 0 : 1);
+    configdialog->m_MEncoderPage->formatClicked (recordcopy ? 0 : 1);
+    configdialog->m_FFMpegPage->arguments->setText (ffmpegarguments);
+    // broadcast
     configdialog->m_BroadcastPage->bindaddress->setText (bindaddress);
     configdialog->m_BroadcastPage->port->setText (QString::number (ffserverport));
     configdialog->m_BroadcastPage->maxclients->setText (QString::number (maxclients));
@@ -597,10 +613,6 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strPlayVCD, playvcd);
 
     m_config->writeEntry (strVCDDevice, vcddevice);
-
-    m_config->writePathEntry (strRecordingFile, recordfile);
-    m_config->writeEntry (strRecordingCopy, recordcopy);
-    m_config->writeEntry (strMencoderArgs, mencoderarguments);
 
     m_config->setGroup (strMPlayerPatternGroup);
     m_config->writeEntry (strSize, sizepattern);
@@ -688,6 +700,16 @@ void KMPlayerSettings::writeConfig () {
     m_config->writeEntry (strTVDevices, devicelist, ';');
     m_config->writeEntry (strTVDriver, tvdriver);
     // end TV stuff
+    // recording
+    m_config->setGroup (strRecordingGroup);
+    m_config->writePathEntry (strRecordingFile, recordfile);
+    m_config->writeEntry (strAutoPlayAfterRecording, int (replayoption));
+    m_config->writeEntry (strAutoPlayAfterTime, replaytime);
+    m_config->writeEntry (strRecorder, int (recorder));
+    m_config->writeEntry (strRecordingCopy, recordcopy);
+    m_config->writeEntry (strMencoderArgs, mencoderarguments);
+    m_config->writeEntry (strFFMpegArgs, ffmpegarguments);
+    // broadcast
     m_config->setGroup (strBroadcast);
     m_config->writeEntry (strBindAddress, bindaddress);
     m_config->writeEntry (strFFServerPort, ffserverport);
@@ -802,9 +824,15 @@ void KMPlayerSettings::okPressed () {
     pp_cub_int = configdialog->m_OPPagePostproc->CubicIntDeinterlacer->isChecked();
     pp_med_int = configdialog->m_OPPagePostproc->MedianDeinterlacer->isChecked();
     pp_ffmpeg_int = configdialog->m_OPPagePostproc->FfmpegDeinterlacer->isChecked();
-    mencoderarguments = configdialog->m_RecordPage->arguments->text ();
+    // recording
+    replayoption = ReplayOption (configdialog->m_RecordPage->replay->selectedId ());
+    replaytime = configdialog->m_RecordPage->replaytime->text ().toInt ();
+    configdialog->m_RecordPage->replaytime->setText (QString::number (replaytime));
     recordfile = configdialog->m_RecordPage->url->lineEdit()->text ();
-    recordcopy = !configdialog->m_RecordPage->format->selectedId ();
+    mencoderarguments = configdialog->m_MEncoderPage->arguments->text ();
+    ffmpegarguments = configdialog->m_FFMpegPage->arguments->text ();
+    recordcopy = !configdialog->m_MEncoderPage->format->selectedId ();
+    // broadcast
     bindaddress = configdialog->m_BroadcastPage->bindaddress->text ();
     ffserverport = configdialog->m_BroadcastPage->port->text ().toInt ();
     maxclients = configdialog->m_BroadcastPage->maxclients->text ().toInt ();

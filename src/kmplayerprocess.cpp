@@ -812,14 +812,37 @@ void FFMpeg::init () {
 }
 
 bool FFMpeg::play () {
-    return true;
+    delete m_process;
+    m_process = new KProcess;
+    m_process->setUseShell (true);
+    connect (m_process, SIGNAL (processExited (KProcess *)),
+            this, SLOT (processStopped (KProcess *)));
+    QString outurl = QString (QFile::encodeName (m_recordurl.isLocalFile () ? m_recordurl.path () : m_recordurl.url ()));
+    if (m_recordurl.isLocalFile ())
+        QFile (outurl).remove ();
+    printf ("%s %s %s\n", m_source->ffmpegCommand ().ascii(), m_player->settings ()->ffmpegarguments.ascii(), KProcess::quote (outurl).ascii ());
+    *m_process << m_source->ffmpegCommand () <<  m_player->settings ()->ffmpegarguments << KProcess::quote (outurl);
+    m_process->start (KProcess::NotifyOnExit, KProcess::Stdin);
+    if (m_process->isRunning ())
+        QTimer::singleShot (0, this, SLOT (emitStarted ()));
+    return m_process->isRunning ();
 }
 
 bool FFMpeg::stop () {
-    return true;
+    kdDebug () << "FFMpeg::stop" << endl;
+    if (!playing ()) return true;
+    m_process->writeStdin ("q", 1);
+    QTime t;
+    t.start ();
+    do {
+        KProcessController::theKProcessController->waitForProcessExit (2);
+    } while (t.elapsed () < 2000 && m_process->isRunning ());
+    if (!playing ()) return true;
+    return KMPlayerProcess::stop ();
 }
 
 void FFMpeg::processStopped (KProcess *) {
+    QTimer::singleShot (0, this, SLOT (emitFinished ()));
 }
 
 #include "kmplayerprocess.moc"

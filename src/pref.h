@@ -51,6 +51,9 @@ class KMPlayerPrefGeneralPageDVD;	// general, dvd
 class KMPlayerPrefGeneralPageVCD;	// general, vcd
 class KMPlayerPrefSourcePageTV;         // source, TV
 class KMPlayerPrefRecordPage;           // recording
+class RecorderPage;                     // base recorder
+class KMPlayerPrefMEncoderPage;         // mencoder
+class KMPlayerPrefFFMpegPage;           // ffmpeg
 class KMPlayerPrefBroadcastPage;        // broadcast
 class KMPlayerPrefBroadcastACLPage;     // broadcast ACL
 class KMPlayerPrefGeneralPageOutput;	// general, output
@@ -61,6 +64,8 @@ class KMPlayer;
 class QTabWidget;
 class QTable;
 class QGroupBox;
+
+typedef std::list<RecorderPage*> RecorderList;
 
 class MPlayerAudioDriver {
 public:
@@ -175,7 +180,7 @@ class KMPlayerPreferences : public KDialogBase
 {
     Q_OBJECT
 public:
-    enum Page { NoPage = 0, PageRecording, PageTVSource };
+    enum Page { NoPage = 0, PageRecording, PageMEncoder, PageFFMpeg, PageTVSource, LastPage };
 
     KMPlayerPreferences(KMPlayer *, MPlayerAudioDriver * ad, FFServerSetting *ffs);
     ~KMPlayerPreferences();
@@ -186,6 +191,8 @@ public:
     KMPlayerPrefGeneralPageVCD 		*m_GeneralPageVCD;
     KMPlayerPrefSourcePageTV 		*m_SourcePageTV;
     KMPlayerPrefRecordPage 		*m_RecordPage;
+    KMPlayerPrefMEncoderPage            *m_MEncoderPage;
+    KMPlayerPrefFFMpegPage              *m_FFMpegPage;
     KMPlayerPrefBroadcastPage 		*m_BroadcastPage;
     KMPlayerPrefBroadcastACLPage 	*m_BroadcastACLPage;
     KMPlayerPrefGeneralPageOutput 	*m_GeneralPageOutput;
@@ -196,6 +203,7 @@ public:
     void setPage (Page page);
 
     QFrame ** pages;
+    RecorderList recorders;
 public slots:
     void confirmDefaults();
 };
@@ -312,23 +320,72 @@ class KMPlayerPrefRecordPage : public QFrame
 {
     Q_OBJECT
 public:
-    KMPlayerPrefRecordPage (QWidget *parent, KMPlayer *);
+    KMPlayerPrefRecordPage (QWidget *parent, KMPlayer *, RecorderList &);
     ~KMPlayerPrefRecordPage () {}
 
     KURLRequester * url;
+    QButtonGroup * recorder;
+    QButtonGroup * replay;
+    QLineEdit * replaytime;
     QLabel * source;
+public slots:
+    void replayClicked (int id);
+private slots:
+    void slotRecord ();
+    void sourceChanged (KMPlayerSource *);
+    void recordingStarted ();
+    void recordingFinished ();
+private:
+    KMPlayer * m_player;
+    RecorderList & m_recorders;
+    QPushButton * recordButton;
+};
+
+class RecorderPage : public QFrame
+{
+    Q_OBJECT
+public:
+    RecorderPage (QWidget *parent, KMPlayer *);
+    virtual ~RecorderPage () {};
+    virtual void record () = 0;
+    virtual QString name () = 0;
+    virtual bool sourceSupported (KMPlayerSource *) = 0;
+protected:
+    KMPlayer * m_player;
+};
+
+class KMPlayerPrefMEncoderPage : public RecorderPage 
+{
+    Q_OBJECT
+public:
+    KMPlayerPrefMEncoderPage (QWidget *parent, KMPlayer *);
+    ~KMPlayerPrefMEncoderPage () {}
+
+    void record ();
+    QString name ();
+    bool sourceSupported (KMPlayerSource *);
+
     QLineEdit * arguments;
     QButtonGroup * format;
 public slots:
     void formatClicked (int id);
-private slots:
-    void slotRecord ();
-    void recordingStarted ();
-    void recordingFinished ();
-    void sourceChanged (KMPlayerSource *);
 private:
-    KMPlayer * m_player;
-    QPushButton * recordButton;
+};
+
+class KMPlayerPrefFFMpegPage : public RecorderPage
+{
+    Q_OBJECT
+public:
+    KMPlayerPrefFFMpegPage (QWidget *parent, KMPlayer *);
+    ~KMPlayerPrefFFMpegPage () {}
+
+    void record ();
+    QString name ();
+    bool sourceSupported (KMPlayerSource *);
+
+    QLineEdit * arguments;
+    QButtonGroup * format;
+private:
 };
 
 class KMPlayerPrefBroadcastPage : public QFrame

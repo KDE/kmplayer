@@ -96,12 +96,29 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
 	m_SourcePageTV = new KMPlayerPrefSourcePageTV (frame, this);
 	vlay->addWidget (m_SourcePageTV);
 
-	hierarchy.clear();
-	hierarchy << i18n ("Recording");
-	frame = addPage (hierarchy, i18n ("Recording"));
-	vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
-	m_RecordPage = new KMPlayerPrefRecordPage (frame, player);
-	vlay->addWidget (m_RecordPage);
+    hierarchy.clear();
+    hierarchy << i18n ("Recording");
+    QFrame * recordframe = addPage (hierarchy, i18n ("Recording"));
+
+    hierarchy.clear();
+    hierarchy << i18n ("Recording") << i18n ("MEncoder");
+    frame = addPage (hierarchy, i18n ("MEncoder"));
+    vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
+    m_MEncoderPage = new KMPlayerPrefMEncoderPage (frame, player);
+    recorders.push_back (m_MEncoderPage);
+    vlay->addWidget (m_MEncoderPage);
+
+    hierarchy.clear();
+    hierarchy << i18n ("Recording") << i18n ("FFMpeg");
+    frame = addPage (hierarchy, i18n ("FFMpeg"));
+    vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
+    m_FFMpegPage = new KMPlayerPrefFFMpegPage (frame, player);
+    recorders.push_back (m_FFMpegPage);
+    vlay->addWidget (m_FFMpegPage);
+
+    vlay = new QVBoxLayout (recordframe, marginHint(), spacingHint());
+    m_RecordPage = new KMPlayerPrefRecordPage (recordframe, player, recorders);
+    vlay->addWidget (m_RecordPage);
 
 	hierarchy.clear();
 	hierarchy << i18n ("Broadcasting");
@@ -153,7 +170,7 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, MPlayerAudioDriver *
 
 	connect (this, SIGNAL (defaultClicked ()), SLOT (confirmDefaults ()));
 	this->setTreeListAutoResize(true);
-    pages = new QFrame *[3];
+    pages = new QFrame *[int (LastPage)];
     pages[PageRecording] = m_RecordPage;
     pages[PageTVSource] = m_SourcePageTV;
 }
@@ -164,7 +181,7 @@ void KMPlayerPreferences::setPage (Page page) {
 }
 
 KMPlayerPreferences::~KMPlayerPreferences() {
-    delete [] pages;
+    delete pages; // don't call destructors !!
 }
 
 KMPlayerPrefGeneralPageGeneral::KMPlayerPrefGeneralPageGeneral(QWidget *parent)
@@ -498,55 +515,51 @@ void KMPlayerPrefSourcePageTV::updateTVDevices () {
     m_devices->splice (m_devices->end (), addeddevices);
 }
 
-KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * player) : QFrame (parent), m_player (player) {
+KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * player, RecorderList & rl) : QFrame (parent), m_player (player), m_recorders (rl) {
     QVBoxLayout *layout = new QVBoxLayout (this, 0, 5);
-    source = new QLabel (i18n ("Current source ") + m_player->process ()->source ()->prettyName (), this);
     QHBoxLayout * urllayout = new QHBoxLayout ();
-    QLabel *urlLabel = new QLabel (i18n ("URL:"), this, 0);
-    url = new KURLRequester ("", this, 0);
+    QLabel *urlLabel = new QLabel (i18n ("Output File:"), this);
+    url = new KURLRequester ("", this);
     url->setShowLocalProtocol (true);
     urllayout->addWidget (urlLabel);
     urllayout->addWidget (url);
-    recordButton = new QPushButton (i18n ("Start Recording"), this);
+    recordButton = new QPushButton (i18n ("Start &Recording"), this);
     connect (recordButton, SIGNAL (clicked ()), this, SLOT (slotRecord ()));
-    QHBoxLayout *buttonlayout = new QHBoxLayout ();
+    QHBoxLayout *buttonlayout = new QHBoxLayout;
     buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
     buttonlayout->addWidget (recordButton);
-    QGroupBox * mencoderBox = new QGroupBox (i18n ("Mencoder Settings"), this);
-    QVBoxLayout * mencoderBoxLayout = new QVBoxLayout (mencoderBox);
-    mencoderBox->setFlat( false );
-    mencoderBox->setInsideMargin( 7 );
-    format = new QButtonGroup (3, Qt::Vertical, i18n ("Format"), mencoderBox);
-    new QRadioButton (i18n ("Same as Source"), format);
-    new QRadioButton (i18n ("Custom"), format);
-    QWidget * customopts = new QWidget (format);
-    QGridLayout *gridlayout = new QGridLayout (customopts, 1, 2, 2);
-    QLabel *argLabel = new QLabel (i18n("Mencoder arguments:"), customopts, 0);
-    arguments = new QLineEdit ("", customopts);
-    gridlayout->addWidget (argLabel, 0, 0);
-    gridlayout->addWidget (arguments, 0, 1);
-    mencoderBoxLayout->addWidget (format);
+    source = new QLabel (i18n ("Current Source: ") + m_player->process ()->source ()->prettyName (), this);
+    recorder = new QButtonGroup (m_recorders.size (), Qt::Vertical, i18n ("Recorder"), this);
+    RecorderList::iterator it = m_recorders.begin ();
+    for (; it != m_recorders.end (); ++it) {
+        QRadioButton * radio = new QRadioButton ((*it)->name (), recorder);
+        radio->setEnabled ((*it)->sourceSupported (m_player->process ()->source ()));
+    }
+    recorder->setButton(0); // for now
+    replay = new QButtonGroup (4, Qt::Vertical, i18n ("Auto Playback"), this);
+    new QRadioButton (i18n ("&No"), replay);
+    new QRadioButton (i18n ("&When recording finished"), replay);
+    new QRadioButton (i18n ("A&fter"), replay);
+    QWidget * customreplay = new QWidget (replay);
+    replaytime = new QLineEdit (customreplay);
+    QHBoxLayout *replaylayout = new QHBoxLayout (customreplay);
+    replaylayout->addWidget (new QLabel (i18n("Time (seconds):"), customreplay));
+    replaylayout->addWidget (replaytime);
+    replaylayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
     layout->addWidget (source);
+    layout->addItem (new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
     layout->addLayout (urllayout);
+    layout->addItem (new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    layout->addWidget (recorder);
+    layout->addItem (new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
+    layout->addWidget (replay);
+    layout->addItem (new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
     layout->addLayout (buttonlayout);
-    layout->addWidget (mencoderBox);
-    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    layout->addItem (new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     connect (m_player, SIGNAL (sourceChanged(KMPlayerSource*)), this, SLOT (sourceChanged(KMPlayerSource*)));
     connect (m_player->mencoder(), SIGNAL (started()), this, SLOT (recordingStarted()));
     connect (m_player->mencoder(), SIGNAL (finished()), this, SLOT (recordingFinished()));
-    connect (format, SIGNAL (clicked (int)), this, SLOT (formatClicked (int)));
-}
-
-void KMPlayerPrefRecordPage::slotRecord () {
-    if (!m_player->mencoder()->playing()) {
-        m_player->settings ()->mencoderarguments = arguments->text ();
-        m_player->settings ()->recordcopy = !format->selectedId ();
-        if (!url->lineEdit()->text().isEmpty()) {
-            m_player->mencoder ()->setURL (KURL (url->lineEdit ()->text ()));
-            m_player->mencoder ()->play ();
-        }
-    } else
-        m_player->mencoder ()->stop ();
+    connect (replay, SIGNAL (clicked (int)), this, SLOT (replayClicked (int)));
 }
 
 void KMPlayerPrefRecordPage::recordingStarted () {
@@ -560,11 +573,97 @@ void KMPlayerPrefRecordPage::recordingFinished () {
 }
 
 void KMPlayerPrefRecordPage::sourceChanged (KMPlayerSource * src) {
-    source->setText (i18n ("Current source ") + src->prettyName ());
+    source->setText (i18n ("Current Source: ") + src->prettyName ());
+    RecorderList::iterator it = m_recorders.begin ();
+    for (int id = 0; it != m_recorders.end (); ++it, ++id) {
+        QButton * radio = recorder->find (id);
+        radio->setEnabled ((*it)->sourceSupported (src));
+    }
 }
 
-void KMPlayerPrefRecordPage::formatClicked (int id) {
+void KMPlayerPrefRecordPage::replayClicked (int id) {
+    replaytime->setEnabled (id == KMPlayerSettings::ReplayAfter);
+}
+
+void KMPlayerPrefRecordPage::slotRecord () {
+    if (!url->lineEdit()->text().isEmpty()) {
+        m_player->stop ();
+        m_player->settings ()->recordfile = url->lineEdit()->text();
+        int id = recorder->selectedId ();
+        m_player->settings ()->recorder = KMPlayerSettings::Recorder (id);
+        RecorderList::iterator it = m_recorders.begin ();
+        for (; id > 0 && it != m_recorders.end (); ++it, --id)
+            ;
+        (*it)->record ();
+    }
+}
+
+RecorderPage::RecorderPage (QWidget *parent, KMPlayer * player)
+ : QFrame (parent), m_player (player) {}
+
+KMPlayerPrefMEncoderPage::KMPlayerPrefMEncoderPage (QWidget *parent, KMPlayer * player) : RecorderPage (parent, player) {
+    QVBoxLayout *layout = new QVBoxLayout (this, 0, 5);
+    format = new QButtonGroup (3, Qt::Vertical, i18n ("Format"), this);
+    new QRadioButton (i18n ("Same as Source"), format);
+    new QRadioButton (i18n ("Custom"), format);
+    QWidget * customopts = new QWidget (format);
+    QGridLayout *gridlayout = new QGridLayout (customopts, 1, 2, 2);
+    QLabel *argLabel = new QLabel (i18n("Mencoder arguments:"), customopts, 0);
+    arguments = new QLineEdit ("", customopts);
+    gridlayout->addWidget (argLabel, 0, 0);
+    gridlayout->addWidget (arguments, 0, 1);
+    layout->addWidget (format);
+    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    connect (format, SIGNAL (clicked (int)), this, SLOT (formatClicked (int)));
+}
+
+void KMPlayerPrefMEncoderPage::formatClicked (int id) {
     arguments->setEnabled (!!id);
+}
+
+void KMPlayerPrefMEncoderPage::record () {
+    m_player->setRecorder (m_player->mencoder ());
+    if (!m_player->mencoder()->playing ()) {
+        m_player->settings ()->mencoderarguments = arguments->text ();
+        m_player->settings ()->recordcopy = !format->selectedId ();
+        m_player->mencoder ()->setURL (KURL (m_player->settings ()->recordfile));
+        m_player->mencoder ()->play ();
+    } else
+        m_player->mencoder ()->stop ();
+}
+
+QString KMPlayerPrefMEncoderPage::name () {
+    return i18n ("&MEncoder");
+}
+
+bool KMPlayerPrefMEncoderPage::sourceSupported (KMPlayerSource *) {
+    return true;
+}
+
+KMPlayerPrefFFMpegPage::KMPlayerPrefFFMpegPage (QWidget *parent, KMPlayer * player) : RecorderPage (parent, player) {
+    QVBoxLayout *layout = new QVBoxLayout (this, 0, 5);
+    QGridLayout *gridlayout = new QGridLayout (1, 2, 2);
+    QLabel *argLabel = new QLabel (i18n("FFMpeg arguments:"), this);
+    arguments = new QLineEdit ("", this);
+    gridlayout->addWidget (argLabel, 0, 0);
+    gridlayout->addWidget (arguments, 0, 1);
+    layout->addLayout (gridlayout);
+    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+};
+
+void KMPlayerPrefFFMpegPage::record () {
+    kdDebug() << "KMPlayerPrefFFMpegPage::record" << endl;
+    m_player->setRecorder (m_player->ffmpeg ());
+    m_player->ffmpeg ()->setURL (KURL (m_player->settings ()->recordfile));
+    m_player->recorder ()->play ();
+}
+
+QString KMPlayerPrefFFMpegPage::name () {
+    return i18n ("&FFMpeg");
+}
+
+bool KMPlayerPrefFFMpegPage::sourceSupported (KMPlayerSource * source) {
+    return !source->ffmpegCommand ().isEmpty ();
 }
 
 KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerSetting * _ffs) : QFrame (parent), ffs (_ffs) {

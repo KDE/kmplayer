@@ -1244,11 +1244,11 @@ void KMPlayerTVSource::menuClicked (int id) {
         bool playing = prevsource && 
                        (prevsource->videodevice == m_tvsource->videodevice) &&
                        m_player->playing ();
+        buildArguments ();
         if (m_player->process ()->source () != this) {
             m_player->setSource (this);
             playing = false;
         }
-        buildArguments ();
         if (m_app->broadcasting ())
             QTimer::singleShot (0, m_app, SLOT (startFeed ()));
         else {

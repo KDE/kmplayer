@@ -364,7 +364,7 @@ void KMPlayerSlider::enterEvent (QEvent *) {
 
 static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char * const * p, int key = 0) {
     QPushButton * b = new QPushButton (QIconSet (QPixmap(p)), QString::null, w);
-    b->setMinimumSize (15, button_height);
+    b->setMinimumSize (15, button_height-1);
     b->setMaximumSize (750, button_height);
     b->setFocusPolicy (QWidget::NoFocus);
     b->setFlat (true);

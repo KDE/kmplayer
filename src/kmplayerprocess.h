@@ -126,19 +126,24 @@ private:
     QRegExp m_indexRegExp;
 };
 
-class MEncoder : public MPlayerBase {
+class Recorder {
+public:
+    const KURL & recordURL () const { return m_recordurl; }
+    void setURL (const KURL & url) { m_recordurl = url; }
+protected:
+    KURL m_recordurl;
+};
+
+class MEncoder : public MPlayerBase, public Recorder {
     Q_OBJECT
 public:
     MEncoder (KMPlayer * player);
     ~MEncoder ();
     virtual void init ();
     const KURL & recordURL () const { return m_recordurl; }
-    void setURL (const KURL & url) { m_recordurl = url; }
 public slots:
     virtual bool play ();
     virtual bool stop ();
-private:
-    KURL m_recordurl;
 };
 
 class KMPlayerCallbackProcess : public KMPlayerProcess {
@@ -188,7 +193,7 @@ private:
     KMPlayerBackend_stub * m_backend;
 };
 
-class FFMpeg : public KMPlayerProcess {
+class FFMpeg : public KMPlayerProcess, public Recorder {
     Q_OBJECT
 public:
     FFMpeg (KMPlayer * player);
