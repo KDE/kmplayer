@@ -33,6 +33,7 @@ class KMPlayerView;
 class KMPlayer;
 class KProcess;
 class KMPlayerAppURLSource;
+class KMPlayerSource;
 class KMPlayerDVDSource;
 class KMPlayerDVDNavSource;
 class KMPlayerVCDSource;
@@ -77,6 +78,7 @@ public slots:
     void slotViewStatusBar ();
     void slotViewMenuBar ();
     void slotStatusMsg (const QString &text);
+    void slotSourceChanged (KMPlayerSource *);
     void startFeed ();
 private slots:
     void dvdNav ();

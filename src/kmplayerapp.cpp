@@ -197,6 +197,8 @@ void KMPlayerApp::initView ()
              this, SLOT (configChanged ()));
     connect (m_player, SIGNAL (loading (int)),
              this, SLOT (loadingProgress (int)));
+    connect (m_player, SIGNAL (sourceChanged (KMPlayerSource *)), this,
+             SLOT (slotSourceChanged (KMPlayerSource *)));
     m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom50,
             this, SLOT (zoom50 ()));
     m_view->zoomMenu ()->connectItem (KMPlayerView::menu_zoom100,
@@ -222,21 +224,22 @@ void KMPlayerApp::loadingProgress (int percentage) {
         slotStatusMsg (QString::number (percentage) + "%");
 }
 
+void KMPlayerApp::slotSourceChanged (KMPlayerSource * source) {
+    setCaption (source->prettyName (), false);
+}
+
 void KMPlayerApp::dvdNav () {
-    setCaption (i18n ("DVD"), false);
     slotStatusMsg(i18n("DVD Navigation ..."));
     m_player->setSource (m_dvdnavsource);
     slotStatusMsg(i18n("Ready"));
 }
 
 void KMPlayerApp::openDVD () {
-    setCaption (i18n ("DVD"), false);
     slotStatusMsg(i18n("Opening DVD..."));
     m_player->setSource (m_dvdsource);
 }
 
 void KMPlayerApp::openVCD () {
-    setCaption (i18n ("VCD"), false);
     slotStatusMsg(i18n("Opening VCD..."));
     m_player->setSource (m_vcdsource);
 }
@@ -250,7 +253,6 @@ void KMPlayerApp::openPipe () {
         slotStatusMsg (i18n ("Ready."));
         return;
     }
-    setCaption (i18n ("Pipe - %1").arg (cmd), false);
     m_pipesource->setCommand (cmd);
     m_player->setSource (m_pipesource);
 }
@@ -260,7 +262,6 @@ void KMPlayerApp::openDocumentFile (const KURL& url)
     slotStatusMsg(i18n("Opening file..."));
     m_urlsource->setURL (url);
     m_player->setSource (m_urlsource);
-    setCaption (url.fileName (), false);
 }
 
 void KMPlayerApp::resizePlayer (int percentage) {
@@ -1111,7 +1112,7 @@ void KMPlayerPipeSource::deactivate () {
 }
 
 QString KMPlayerPipeSource::prettyName () {
-    return QString (i18n ("Pipe"));
+    return i18n ("Pipe - %1").arg (m_pipecmd);
 }
 
 //-----------------------------------------------------------------------------

@@ -61,7 +61,7 @@ void KMPlayerBookmarkOwner::openBookmarkURL (const QString & url) {
 }
 
 QString KMPlayerBookmarkOwner::currentTitle () const {
-    return m_player->process ()->source ()->url ().url ();
+    return m_player->process ()->source ()->url ().prettyURL ();
 }
 
 QString KMPlayerBookmarkOwner::currentURL () const {
@@ -737,7 +737,9 @@ void KMPlayerURLSource::deactivate () {
 }
 
 QString KMPlayerURLSource::prettyName () {
-    return QString (i18n ("URL"));
+    if (m_url.isEmpty ())
+        return QString (i18n ("URL"));
+    return QString (i18n ("URL - %1").arg (m_url.prettyURL ()));
 }
 
 #include "kmplayerpartbase.moc"
