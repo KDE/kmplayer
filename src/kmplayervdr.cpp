@@ -145,7 +145,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
     disconnect (m_socket, SIGNAL (bytesWritten (int)), this, SLOT (dataWritten (int)));
     disconnect (m_socket, SIGNAL (error (int)), this, SLOT (socketError (int)));
     if (m_socket->state () == QSocket::Connected)
-        m_socket->close ();
+        sendCommand ("QUIT\n");
     m_menu->removeItemAt (6);
     m_menu->removeItemAt (5);
     m_menu->removeItemAt (4);
@@ -179,6 +179,10 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
     unsigned long nr = m_socket->bytesAvailable();
     char * data = new char [nr + 1];
     m_socket->readBlock (data, nr);
+    data [nr] = 0;
+    KMPlayerView * v = static_cast <KMPlayerView *> (m_player->view ());
+    if (v)
+        v->addText (QString::fromLocal8Bit (str, nr));
     delete [] data;
 }
 
@@ -195,10 +199,11 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sendCommand (const char * cmd) {
         return;
     if (!commands) {
         commands = new VDRCommand (cmd);
-        m_socket->writeBlock (commands->command, strlen (commands->command));
-        m_socket->flush ();
-    } else if (m_socket->state () != QSocket::Connected) {
-        m_socket->connectToHost ("localhost", tcp_port);
+        if (m_socket->state () == QSocket::Connected) {
+            m_socket->writeBlock (commands->command, strlen(commands->command));
+            m_socket->flush ();
+        } else
+            m_socket->connectToHost ("localhost", tcp_port);
     } else {
         VDRCommand * c = commands;
         for (int i = 0; i < 10; ++i)
