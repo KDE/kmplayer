@@ -500,7 +500,7 @@ bool MPlayer::run (const char * args, const char * pipe) {
 
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
 
-    old_volume = view ()->controlPanel()->volumeBar()->value ();
+    old_volume = 100;
 
     if (m_process->isRunning ()) {
         setState (Buffering); // wait for start regexp for state Playing

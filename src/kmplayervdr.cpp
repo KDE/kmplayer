@@ -36,6 +36,7 @@
 #include <qmessagebox.h>
 #include <qpopupmenu.h>
 #include <qsocket.h>
+#include <qeventloop.h>
 
 #include <klocale.h>
 #include <kdebug.h>
@@ -130,6 +131,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerVDRSource::KMPlayerVDRSource (KMPlayerApp * app)
    commands (0L),
    channel_timer (0),
    timeout_timer (0),
+   finish_timer (0),
    tcp_port (0),
    m_stored_volume (0) {
     memset (m_actions, 0, sizeof (KAction *) * int (act_last));
@@ -141,6 +143,12 @@ KDE_NO_CDTOR_EXPORT KMPlayerVDRSource::KMPlayerVDRSource (KMPlayerApp * app)
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerVDRSource::~KMPlayerVDRSource () {
+    if (timeout_timer) {
+        finish_timer = startTimer (500);
+        kdDebug () << "VDR connection not yet closed" << endl;
+        QApplication::eventLoop ()->enterLoop ();
+        kdDebug () << "VDR connection:" << (m_socket->state () == QSocket::Connected) << endl;
+    }
 }
 
 KDE_NO_EXPORT bool KMPlayerVDRSource::hasLength () {
@@ -165,6 +173,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     panel->button (KMPlayer::ControlPanel::button_blue)->show ();
     panel->button (KMPlayer::ControlPanel::button_pause)->hide ();
     panel->button (KMPlayer::ControlPanel::button_record)->hide ();
+    connect (panel->volumeBar (), SIGNAL (volumeChanged (int)), this, SLOT (volumeChanged (int)));
     connect (panel->button (KMPlayer::ControlPanel::button_red), SIGNAL (clicked ()), this, SLOT (keyRed ()));
     connect (panel->button (KMPlayer::ControlPanel::button_green), SIGNAL (clicked ()), this, SLOT (keyGreen ()));
     connect (panel->button (KMPlayer::ControlPanel::button_yellow), SIGNAL (clicked ()), this, SLOT (keyYellow ()));
@@ -183,6 +192,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
     disconnect (m_player, SIGNAL (stopPlaying()), this, SLOT(processStopped()));
     if (m_player->view ()) {
         KMPlayer::ControlPanel * panel = m_app->view()->controlPanel ();
+        disconnect (panel->volumeBar (), SIGNAL (volumeChanged (int)), this, SLOT (volumeChanged (int)));
         disconnect (panel->button (KMPlayer::ControlPanel::button_red), SIGNAL (clicked ()), this, SLOT (keyRed ()));
         disconnect (panel->button (KMPlayer::ControlPanel::button_green), SIGNAL (clicked ()), this, SLOT (keyGreen ()));
         disconnect (panel->button (KMPlayer::ControlPanel::button_yellow), SIGNAL (clicked ()), this, SLOT (keyYellow ()));
@@ -257,6 +267,10 @@ KDE_NO_EXPORT void KMPlayerVDRSource::connected () {
 
 KDE_NO_EXPORT void KMPlayerVDRSource::disconnected () {
     kdDebug() << "disconnected " << commands << endl;
+    if (finish_timer) {
+        deleteCommands ();
+        return;
+    }
     setURL (KURL (QString ("vdr://localhost:%1").arg (tcp_port)));
     if (channel_timer && m_player->source () == this)
         m_player->process ()->quit ();
@@ -283,6 +297,10 @@ KDE_NO_EXPORT void KMPlayerVDRSource::toggleConnected () {
         m_socket->connectToHost ("127.0.0.1", tcp_port);
         commands = new VDRCommand ("connect", commands);
     }
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::volumeChanged (int val) {
+    queueCommand (QString ("VOLU %1\n").arg (255 * val / 100).ascii ());
 }
 
 static struct ReadBuf {
@@ -332,19 +350,18 @@ KDE_NO_EXPORT QCString ReadBuf::getReadLine () {
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
-    KMPlayer::View * v = static_cast <KMPlayer::View *> (m_player->view ());
+    KMPlayer::View * v = finish_timer ? 0L : static_cast <KMPlayer::View *> (m_player->view ());
     long nr = m_socket->bytesAvailable();
     char * data = new char [nr + 1];
     m_socket->readBlock (data, nr);
-    if (!v)
-        return;
     data [nr] = 0;
     readbuf += data;
     QCString line = readbuf.getReadLine ();
     if (commands) {
         bool cmd_done = false;
         while (!line.isEmpty ()) {
-            v->addText (QString (line), true);
+            if (v)
+                v->addText (QString (line), true);
             cmd_done = (line.length () > 3 && line[3] == ' '); // from svdrpsend.pl
             // kdDebug () << "readyRead " << cmd_done << " " << commands->command << endl;
             if (!strcmp (commands->command, cmd_list_channels) && m_document) {
@@ -364,20 +381,20 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
                     }
                 }
             } else if (!strcmp (commands->command, cmd_chan_query)) {
-                if (line.length () > 4) {
+                if (v && line.length () > 4) {
                     m_player->changeTitle (line.mid (4));
                     v->playList ()->selectItem (line.mid (4));
                 }
             } else if (cmd_done && !strcmp(commands->command,cmd_volume_query)){
                 int pos = line.findRev (QChar (' '));
                 if (pos > 0) {
-                    QString v = line.mid (pos + 1);
-                    if (!v.compare ("mute"))
+                    QString vol = line.mid (pos + 1);
+                    if (!vol.compare ("mute"))
                         m_stored_volume = 0;
                     else
-                        m_stored_volume = v.toInt ();
+                        m_stored_volume = vol.toInt ();
                     if (m_stored_volume == 0)
-                        queueCommand (QString ("VOLU %1\n").arg (250).ascii ());
+                        volumeChanged (m_app->view ()->controlPanel ()->volumeBar ()->value ());
                 }
             }
             line = readbuf.getReadLine ();
@@ -450,7 +467,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::customCmd () {
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::timerEvent (QTimerEvent * e) {
-    if (e->timerId () == timeout_timer) {
+    if (e->timerId () == timeout_timer || e->timerId () == finish_timer) {
         deleteCommands ();
     } else if (e->timerId () == channel_timer) {
         queueCommand (cmd_chan_query);
@@ -469,6 +486,10 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deleteCommands () {
         delete c;
     }
     readbuf.clear ();
+    if (finish_timer) {
+        killTimer (finish_timer);
+        QApplication::eventLoop ()->exitLoop ();
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::jump (KMPlayer::ElementPtr e) {

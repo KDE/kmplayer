@@ -579,6 +579,16 @@ void PartBase::adjustVolume (int incdec) {
     m_process->volume (incdec, false);
 }
 
+void PartBase::increaseVolume () {
+    if (m_view)
+        m_view->controlPanel ()->volumeBar ()->setValue (m_view->controlPanel ()->volumeBar ()->value () + 2);
+}
+
+void PartBase::decreaseVolume () {
+    if (m_view)
+        m_view->controlPanel ()->volumeBar ()->setValue (m_view->controlPanel ()->volumeBar ()->value () - 2);
+}
+
 void PartBase::sizes (int & w, int & h) const {
     if (m_noresize && m_view->viewer ()) {
         w = m_view->viewer ()->width ();

@@ -83,6 +83,7 @@ public slots:
     void backward ();
     void getCurrent ();
     void toggleConnected ();
+    void volumeChanged (int);
 private slots:
     void keyUp ();
     void keyDown ();
@@ -140,6 +141,7 @@ private:
     QString m_request_jump;
     int channel_timer;
     int timeout_timer;
+    int finish_timer;
     int tcp_port;
     int m_stored_volume;
     int scale;
