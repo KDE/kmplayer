@@ -460,7 +460,7 @@ void PartBase::processStateChange (Process::State old, Process::State state) {
         m_view->reset ();
         emit stopPlaying ();
     } else if (state == Process::Ready) {
-        if (old == Process::Playing)
+        if (old > Process::Ready)
             m_source->next ();
         m_source->getCurrent ();
     }

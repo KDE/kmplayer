@@ -495,7 +495,7 @@ bool MPlayer::run (const char * args, const char * pipe) {
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
 
     if (m_process->isRunning ()) {
-        setState (Ready); // wait for start regexp for state Playing
+        setState (Buffering); // wait for start regexp for state Playing
         return true;
     }
     return false;
@@ -987,7 +987,7 @@ void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
     hue (settings->hue, true);
     brightness (settings->brightness, true);
     contrast (settings->contrast, true);
-    setState (Ready);
+    setState (Buffering);
 }
 
 void CallbackProcess::setMovieParams (int len, int w, int h, float a) {
