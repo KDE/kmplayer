@@ -690,27 +690,22 @@ KDE_NO_EXPORT QString XVideo::menuName () const {
     return i18n ("X&Video");
 }
 
-KDE_NO_EXPORT void XVideo::runForConfig () {
-    if (!playing ()) {
-        initProcess ();
-        QString cmd  = QString ("kxvplayer -wid %3 -cb %4 -c").arg (view()->viewer()->embeddedWinId ()).arg (dcopName ());
-        printf ("%s\n", cmd.latin1 ());
-        *m_process << cmd;
-        m_process->start (KProcess::NotifyOnExit, KProcess::All);
-    }
-}
-
 KDE_NO_EXPORT bool XVideo::ready () {
     if (playing ()) {
         return true;
     }
     initProcess ();
-    int xv_port = m_source->xvPort ();
-    int xv_encoding = m_source->xvEncoding ();
-    int freq = m_source->frequency ();
-    QString cmd  = QString ("kxvplayer -port %1 -enc %2 -norm \"%3\" -wid %4 -cb %5 ").arg (xv_port).arg (xv_encoding).arg (m_source->videoNorm ()).arg (view()->viewer()->embeddedWinId ()).arg (dcopName ());
-    if (freq > 0)
-        cmd += QString ("-freq %1 ").arg (freq);
+    QString cmd  = QString ("kxvplayer -wid %3 -cb %4").arg (view()->viewer()->embeddedWinId ()).arg (dcopName ());
+    if (m_have_config == config_unknown || m_have_config == config_probe)
+        cmd += QString (" -c");
+    if (m_source) {
+        int xv_port = m_source->xvPort ();
+        int xv_encoding = m_source->xvEncoding ();
+        int freq = m_source->frequency ();
+        cmd += QString (" -port %1 -enc %2 -norm \"%3\"").arg (xv_port).arg (xv_encoding).arg (m_source->videoNorm ());
+        if (freq > 0)
+            cmd += QString (" -freq %1").arg (freq);
+    }
     printf ("%s\n", cmd.latin1 ());
     *m_process << cmd;
     m_process->start (KProcess::NotifyOnExit, KProcess::All);

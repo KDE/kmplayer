@@ -243,7 +243,6 @@ public slots:
 signals:
     void configReceived ();
 protected:
-    virtual void runForConfig ();
     Callback * m_callback;
     Backend_stub * m_backend;
     QByteArray m_configdata;
@@ -311,8 +310,6 @@ public slots:
     bool ready ();
     bool quit ();
     bool seek (int pos, bool absolute);
-protected:
-    virtual void runForConfig ();
 private slots:
     void processStopped (KProcess *);
     void processOutput (KProcess *, char *, int);

@@ -987,7 +987,7 @@ void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
     hue (settings->hue, true);
     brightness (settings->brightness, true);
     contrast (settings->contrast, true);
-    setState (Buffering);
+    setState (Ready);
 }
 
 void CallbackProcess::setMovieParams (int len, int w, int h, float a) {
@@ -1026,7 +1026,7 @@ bool CallbackProcess::getConfigData () {
         return false;
     if (m_have_config == config_unknown && !playing ()) {
         m_have_config = config_probe;
-        runForConfig ();
+        ready ();
     }
     return true;
 }
@@ -1037,7 +1037,7 @@ void CallbackProcess::setChangedData (const QByteArray & data) {
     if (m_send_config == send_try)
         m_backend->setConfig (data);
     else
-        runForConfig ();
+        ready ();
 }
 
 bool CallbackProcess::play (Source * source) {
@@ -1051,6 +1051,7 @@ bool CallbackProcess::play (Source * source) {
     if (!sub_url.isEmpty ())
         m_backend->setSubTitleURL (QString (QFile::encodeName (sub_url.isLocalFile () ? QFileInfo (getPath (sub_url)).absFilePath () : sub_url.url ())));
     m_backend->play ();
+    setState (Buffering);
     return true;
 }
 
@@ -1097,8 +1098,6 @@ QString CallbackProcess::dcopName () {
                              QString (m_callback->objId ()).ascii ());
     return cbname;
 }
-
-void CallbackProcess::runForConfig() {}
 
 //-----------------------------------------------------------------------------
 
@@ -1401,29 +1400,13 @@ bool Xine::ready () {
     }
     printf (" -cb %s", dcopName ().ascii());
     *m_process << " -cb " << dcopName ();
-    if (m_have_config == config_unknown) {
+    if (m_have_config == config_unknown || m_have_config == config_probe) {
         printf (" -c");
         *m_process << " -c";
     }
     printf ("\n");
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
     return m_process->isRunning ();
-}
-
-void Xine::runForConfig () {
-    initProcess ();
-    QString xine_config = KProcess::quote (QString (QFile::encodeName (locateLocal ("data", "kmplayer/") + QString ("xine_config"))));
-    printf ("kxineplayer -wid %lu", (unsigned long) widget ());
-    *m_process << "kxineplayer -wid " << QString::number (widget ());
-    if (m_have_config == config_probe) {
-        printf (" -c");
-        *m_process << " -c ";
-    }
-    printf (" -f %s", xine_config.ascii ());
-    *m_process << " -f " << xine_config;
-    printf (" -cb %s nomovie\n", dcopName ().ascii());
-    *m_process << " -cb " << dcopName () << " nomovie";
-    m_process->start (KProcess::NotifyOnExit, KProcess::All);
 }
 
 // TODO:input.v4l_video_device_path input.v4l_radio_device_path
@@ -1477,7 +1460,7 @@ KDE_NO_EXPORT void Xine::processStopped (KProcess *) {
     setState (NotRunning);
     if (m_send_config == send_try) {
         m_send_config = send_new; // we failed, retry ..
-        runForConfig ();
+        ready ();
     }
 }
 

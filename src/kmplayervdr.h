@@ -150,8 +150,6 @@ public:
 public slots:
     virtual bool ready ();
     virtual bool quit ();
-protected:
-    virtual void runForConfig ();
 private slots:
     void processStopped (KProcess *);
     void processOutput (KProcess *, char *, int);
