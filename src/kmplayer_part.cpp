@@ -323,7 +323,6 @@ KDE_NO_EXPORT void KMPlayerPart::viewerPartDestroyed (QObject *) {
 
 KDE_NO_EXPORT void KMPlayerPart::viewerPartProcessChanged (const char * pname) {
     setProcess (0L); // make sure to disconnect to signals
-    setRecorder (0L);
     setProcess (pname);
     updatePlayerMenu ();
 }

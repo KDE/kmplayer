@@ -257,9 +257,8 @@ void PartBase::setRecorder (const char * name) {
         m_recorder->quit ();
     }
     m_recorder = recorder;
-    if (!recorder)
-        return;
-    connect (recorder, SIGNAL (stateChange (Process::State,Process::State)),
+    if (recorder)
+        connect (recorder, SIGNAL (stateChange (Process::State,Process::State)),
              this, SLOT (recordingStateChange (Process::State,Process::State)));
 }
 
@@ -412,10 +411,17 @@ void PartBase::keepMovieAspect (bool b) {
         m_view->viewer ()->setAspect (b ? m_source->aspect () : 0.0);
 }
 
-KDE_NO_EXPORT void PartBase::recordingStateChange (Process::State, Process::State state) {
+static const char * statemap [] = {
+    "NotRunning", "Ready", "Buffering", "Playing"
+};
+
+KDE_NO_EXPORT void PartBase::recordingStateChange (Process::State old, Process::State state) {
     if (!m_view) return;
-    m_view->buttonBar ()->setRecording (state >= Process::Ready);
-    if (state >= Process::Ready) {
+    kdDebug () << "recordState " << statemap[old] << " -> " << statemap[state] << endl;
+    m_view->buttonBar ()->setRecording (state > Process::Ready);
+    if (state == Process::Ready && old > Process::Ready)
+        m_recorder->quit ();
+    else if (state >= Process::Ready) {
         if (m_settings->replayoption == Settings::ReplayAfter)
             m_record_timer = startTimer (1000 * m_settings->replaytime);
         emit startRecording ();
@@ -442,10 +448,6 @@ void PartBase::timerEvent (QTimerEvent * e) {
             openURL (rec->recordURL ());
     }
 }
-
-static const char * statemap [] = {
-    "NotRunning", "Ready", "Buffering", "Playing"
-};
 
 void PartBase::processStateChange (Process::State old, Process::State state) {
     if (!m_view) return;
@@ -525,7 +527,7 @@ void PartBase::record () {
     if (m_recorder->playing ()) {
         m_recorder->stop ();
     } else {
-        m_process->stop ();
+        m_process->quit ();
         m_settings->show  ("RecordPage");
         m_view->buttonBar ()->setRecording (false);
     }

@@ -345,7 +345,7 @@ KDE_NO_EXPORT void PrefRecordPage::replayClicked (int id) {
 
 KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
     if (!url->lineEdit()->text().isEmpty()) {
-        m_player->process ()->stop ();
+        m_player->process ()->quit ();
         m_player->settings ()->recordfile = url->lineEdit()->text();
         m_player->settings ()->replaytime = replaytime->text ().toInt ();
 #if KDE_IS_VERSION(3,1,90)
@@ -397,7 +397,7 @@ KDE_NO_EXPORT void PrefMEncoderPage::record () {
         m_player->settings ()->recordcopy = !format->id (format->selected ());
 #endif
         rec->setURL (KURL (m_player->settings ()->recordfile));
-        rec->play (m_player->source ());
+        rec->play (m_player->process ()->player ()->source ());
     } else
         rec->stop ();
 }
@@ -419,7 +419,7 @@ KDE_NO_EXPORT void PrefMPlayerDumpstreamPage::record () {
     m_player->setRecorder ("mplayerdumpstream");
     if (!rec->playing ()) {
         rec->setURL (KURL (m_player->settings ()->recordfile));
-        rec->play (m_player->source ());
+        rec->play (m_player->process ()->player ()->source ());
     } else
         rec->stop ();
 }
@@ -448,7 +448,7 @@ KDE_NO_EXPORT void PrefFFMpegPage::record () {
     m_player->setRecorder ("ffmpeg");
     rec->setURL (KURL::fromPathOrURL (m_player->settings ()->recordfile));
     rec->setArguments (arguments->text ());
-    rec->play (m_player->source ());
+    rec->play (m_player->process ()->player ()->source ());
 }
 
 KDE_NO_EXPORT QString PrefFFMpegPage::name () {
