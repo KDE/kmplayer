@@ -59,7 +59,7 @@
 
 
 KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, KMPlayerSettings * settings)
-: KDialogBase (IconList, i18n ("KMPlayer Preferences"),
+: KDialogBase (IconList, i18n ("Preferences"),
 		Help|Default|Ok|Apply|Cancel, Ok, player->view (), 0, false)
 {
     QFrame *frame;
@@ -102,7 +102,7 @@ KMPlayerPreferences::KMPlayerPreferences(KMPlayer * player, KMPlayerSettings * s
     tab->setCurrentPage (0);
     entries.insert (i18n("Recording"), tab);
 
-    frame = addPage (i18n ("Output plugins"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("image"), KIcon::NoGroup, 32));
+    frame = addPage (i18n ("Output Plugins"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("image"), KIcon::NoGroup, 32));
     vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
@@ -213,7 +213,7 @@ KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
     url = new KURLRequester (urllist, this);
     //url->setShowLocalProtocol (true);
     url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
-    QLabel *sub_urlLabel = new QLabel (i18n ("Sub Title:"), this, 0);
+    QLabel *sub_urlLabel = new QLabel (i18n ("Sub title:"), this, 0);
     sub_urllist = new KComboBox (true, this);
     sub_urllist->setMaxCount (20);
     sub_urllist->setDuplicatesEnabled (false); // not that it helps much :(
@@ -233,7 +233,7 @@ KMPlayerPrefSourcePageURL::KMPlayerPrefSourcePageURL (QWidget *parent)
     layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
 #ifdef HAVE_XINE
     QGridLayout * gridlayout = new QGridLayout (2, 2);
-    QLabel *backendLabel = new QLabel (i18n ("Use Movie Player:"), this, 0);
+    QLabel *backendLabel = new QLabel (i18n ("Use movie player:"), this, 0);
     //QToolTip::add (allowhref, i18n ("Explain this in a few lines"));
     gridlayout->addWidget (backendLabel, 0, 0);
     gridlayout->addWidget (backend, 1, 0);
@@ -259,7 +259,7 @@ void KMPlayerPrefSourcePageURL::slotTextChanged (const QString &) {
 KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * player, RecorderList & rl) : QFrame (parent, "RecordPage"), m_player (player), m_recorders (rl) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     QHBoxLayout * urllayout = new QHBoxLayout ();
-    QLabel *urlLabel = new QLabel (i18n ("Output File:"), this);
+    QLabel *urlLabel = new QLabel (i18n ("Output file:"), this);
     url = new KURLRequester ("", this);
     url->setShowLocalProtocol (true);
     urllayout->addWidget (urlLabel);
@@ -269,7 +269,7 @@ KMPlayerPrefRecordPage::KMPlayerPrefRecordPage (QWidget *parent, KMPlayer * play
     QHBoxLayout *buttonlayout = new QHBoxLayout;
     buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
     buttonlayout->addWidget (recordButton);
-    source = new QLabel (i18n ("Current Source: ") + m_player->process ()->source ()->prettyName (), this);
+    source = new QLabel (i18n ("Current source: ") + m_player->process ()->source ()->prettyName (), this);
     recorder = new QButtonGroup (m_recorders.size (), Qt::Vertical, i18n ("Recorder"), this);
     RecorderList::iterator it = m_recorders.begin ();
     for (; it != m_recorders.end (); ++it) {
@@ -351,7 +351,7 @@ RecorderPage::RecorderPage (QWidget *parent, KMPlayer * player)
 KMPlayerPrefMEncoderPage::KMPlayerPrefMEncoderPage (QWidget *parent, KMPlayer * player) : RecorderPage (parent, player) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     format = new QButtonGroup (3, Qt::Vertical, i18n ("Format"), this);
-    new QRadioButton (i18n ("Same as Source"), format);
+    new QRadioButton (i18n ("Same as source"), format);
     new QRadioButton (i18n ("Custom"), format);
     QWidget * customopts = new QWidget (format);
     QGridLayout *gridlayout = new QGridLayout (customopts, 1, 2, 2);
@@ -576,7 +576,8 @@ KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame
 	QHBoxLayout *customFiltersLayout5 = new QHBoxLayout (customFilters->layout());
 
 	TmpNoiseFilter = new QCheckBox( customFilters, "TmpNoiseFilter" );
-/*	TmpNoiseSlider = new QSlider( customFilters, "TmpNoiseSlider" );
+/*	Note: Change TmpNoiseFilter text back to "Label:" if this slider gets reactivated
+	TmpNoiseSlider = new QSlider( customFilters, "TmpNoiseSlider" );
 	TmpNoiseSlider->setEnabled( FALSE );
 	TmpNoiseSlider->setMinValue( 1 );
 	TmpNoiseSlider->setMaxValue( 3 );
@@ -662,7 +663,7 @@ KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame
 	HzDeblockCFiltering->setText( i18n( "Chrominance filtering" ) );
 	VtDeblockCFiltering->setText( i18n( "Chrominance filtering" ) );
 	DeringCFiltering->setText( i18n( "Chrominance filtering" ) );
-	TmpNoiseFilter->setText( i18n( "Temporal noise reducer:" ) );
+	TmpNoiseFilter->setText( i18n( "Temporal noise reducer" ) );
 	PostprocessingOptions->changeTab( customFiltersWidget, i18n( "Custom Preset" ) );
 	deinterlacingGroup->setTitle( QString::null );
 	LinBlendDeinterlacer->setText( i18n( "Linear blend deinterlacer" ) );
@@ -675,9 +676,10 @@ KMPlayerPrefOPPagePostProc::KMPlayerPrefOPPagePostProc(QWidget *parent) : QFrame
 }
 
 void KMPlayerPreferences::confirmDefaults() {
-	switch( QMessageBox::warning( this, "KMPlayer",
+	// TODO: Switch to KMessageBox
+	switch( QMessageBox::warning( this, i18n("Reset Settings?"),
         i18n("You are about to have all your settings overwritten with defaults.\nPlease confirm.\n"),
-        i18n("Ok"), i18n("Cancel"), QString::null, 0, 1 ) ){
+        i18n("&OK"), i18n("&Cancel"), QString::null, 0, 1 ) ){
     		case 0:	KMPlayerPreferences::setDefaults();
         		break;
     		case 1:	break;

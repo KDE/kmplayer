@@ -120,7 +120,7 @@ bool KMPlayerProcess::stop () {
         m_process->kill (SIGKILL);
         KProcessController::theKProcessController->waitForProcessExit (1);
         if (m_process->isRunning ()) {
-            KMessageBox::error (m_player->view (), i18n ("Failed to end Player process."), i18n ("KMPlayer: Error"));
+            KMessageBox::error (m_player->view (), i18n ("Failed to end player process."), i18n ("Error"));
         }
     } while (false);
     return !m_process->isRunning ();
@@ -1101,7 +1101,7 @@ bool Xine::play () {
     const KURL & sub_url = m_source->subUrl ();
     if (!sub_url.isEmpty ()) {
         QString surl = KProcess::quote (QString (QFile::encodeName
-                  (sub_url.isLocalFile () ? 
+                  (sub_url.isLocalFile () ?
                    QFileInfo (sub_url.path ()).absFilePath () :
                    sub_url.url ())));
         printf (" -sub %s ", surl.ascii ());
@@ -1264,7 +1264,7 @@ bool FFMpeg::play () {
     if (m_recordurl.isLocalFile ())
         QFile (outurl).remove ();
     QString cmd ("ffmpeg ");
-    if (!m_source->videoDevice ().isEmpty () || 
+    if (!m_source->videoDevice ().isEmpty () ||
         !m_source->audioDevice ().isEmpty ()) {
         if (!m_source->videoDevice ().isEmpty ())
             cmd += QString ("-vd ") + m_source->videoDevice ();

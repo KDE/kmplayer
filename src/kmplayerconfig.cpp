@@ -49,11 +49,11 @@
 #include "pref.h"
 
 static OutputDriver _ads[] = {
-    { "", i18n ("Default from MPlayer Config file") },
+    { "", i18n ("Default from MPlayer Config File") },
     { "oss", i18n ("Open Sound System") },
     { "sdl", i18n ("Simple DirectMedia Layer") },
     { "alsa9", i18n ("Advanced Linux Sound Architecture v0.9") },
-    { "arts", i18n ("Analog Real-time Synthesizer") },
+    { "arts", i18n ("Analog Real-Time Synthesizer") },
     { "esd", i18n ("Enlightened Sound Daemon") },
     { "alsa5", i18n ("Advanced Linux Sound Architecture v0.5") },
     { 0, QString::null }
@@ -454,7 +454,7 @@ void KMPlayerSettings::okPressed () {
                     configdialog->m_SourcePageURL->url->setURL (fi.absFilePath () + xine_directives);
             }
             if (urlchanged &&
-                    !configdialog->m_SourcePageURL->sub_url->url ().isEmpty () && 
+                    !configdialog->m_SourcePageURL->sub_url->url ().isEmpty () &&
                     (KURL::fromPathOrURL (configdialog->m_SourcePageURL->sub_url->url ()).isLocalFile () ||
                      KURL::isRelativeURL (configdialog->m_SourcePageURL->sub_url->url ()))) {
                 QFileInfo sfi (configdialog->m_SourcePageURL->sub_url->url ());

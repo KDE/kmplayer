@@ -190,7 +190,7 @@ KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent) : QFrame 
     gridlayout->addWidget (new QLabel (qedit, label, parent), row, 0);  \
     gridlayout->addWidget (qedit, row, 1);
 
-KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *parent, FFServerSettingList & ffs) : QFrame (parent, "BroadcastPage"), profiles (ffs) 
+KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *parent, FFServerSettingList & ffs) : QFrame (parent, "BroadcastPage"), profiles (ffs)
 {
     QHBoxLayout *layout = new QHBoxLayout (this, 5);
     QGridLayout *formatlayout = new QGridLayout (11, 2, 2);
@@ -219,14 +219,14 @@ KMPlayerPrefBroadcastFormatPage::KMPlayerPrefBroadcastFormatPage (QWidget *paren
     ADDPROPERTY (i18n ("Gop size:"), gopsize, formatlayout, 8, this);
     ADDPROPERTY (i18n ("Width (pixels):"), moviewidth, formatlayout, 9, this);
     ADDPROPERTY (i18n ("Height (pixels):"), movieheight, formatlayout, 10, this);
-    label = new QLabel (i18n ("Allow Access from:"), this);
+    label = new QLabel (i18n ("Allow access from:"), this);
     accesslist = new QTable (40, 1, this);
     accesslist->verticalHeader ()->hide ();
     accesslist->setLeftMargin (0);
     accesslist->setColumnWidth (0, 250);
     QToolTip::add (accesslist, i18n ("'Single IP' or 'start-IP end-IP' for IP ranges"));
     QHeader *header = accesslist->horizontalHeader ();
-    header->setLabel (0, i18n ("Host/IP or IP range"));
+    header->setLabel (0, i18n ("Host/IP or IP Range"));
     QFrame *profileframe = new QFrame (this);
     QGridLayout *profileslayout = new QGridLayout (profileframe, 5, 2, 2);
     profile = new QLineEdit ("", profileframe);
@@ -569,7 +569,7 @@ void KMPlayerBroadcastConfig::feedFinished () {
     m_configpage->feedled->setState (KLed::Off);
     m_ffmpeg_process->deleteLater ();
     m_ffmpeg_process = 0L;
-    kdDebug () << "ffmpeg process stopped " << m_endserver << endl; 
+    kdDebug () << "ffmpeg process stopped " << m_endserver << endl;
     if (m_endserver && !stopProcess (m_ffserver_process)) {
         disconnect (m_ffserver_process,
                 SIGNAL (receivedStderr (KProcess *, char *, int)),
@@ -580,7 +580,7 @@ void KMPlayerBroadcastConfig::feedFinished () {
 }
 
 void KMPlayerBroadcastConfig::processStopped (KProcess *) {
-    kdDebug () << "ffserver process stopped" << endl; 
+    kdDebug () << "ffserver process stopped" << endl;
     m_configpage->serverled->setState (KLed::Off);
     m_configpage->startbutton->setText (i18n ("Start"));
     m_configpage->startbutton->setEnabled
