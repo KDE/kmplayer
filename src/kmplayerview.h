@@ -146,6 +146,7 @@ private:
     bool m_use_arts : 1;
     bool m_inVolumeUpdate : 1;
     bool m_sreensaver_disabled : 1;
+    bool m_revert_fullscreen : 1;
 };
 
 class KMPlayerControlPanel : public QWidget {

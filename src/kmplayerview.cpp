@@ -670,6 +670,7 @@ void KMPlayerView::addText (const QString & str) {
 void KMPlayerView::startsToPlay () {
     m_widgetstack->raiseWidget (m_viewer);
     m_playing = true;
+    m_revert_fullscreen = !m_layer->isFullScreen();
     if (m_buttonbar && m_auto_hide_buttons) {
         m_buttonbar->hide ();
         m_holder->setMouseTracking (true);
@@ -697,7 +698,7 @@ void KMPlayerView::reset () {
         m_buttonbar->show ();
         m_holder->setMouseTracking (false);
     }
-    if (m_layer->isFullScreen())
+    if (m_revert_fullscreen && m_layer->isFullScreen())
         m_buttonbar->popupMenu ()->activateItemAt (m_buttonbar->popupMenu ()->indexOf (KMPlayerControlPanel::menu_fullscreen)); 
         //m_layer->fullScreen ();
     m_viewer->show ();

@@ -96,6 +96,12 @@ KParts::Part *KMPlayerFactory::createPartObject
 
 //-----------------------------------------------------------------------------
 
+static bool getBoolValue (const QString & value) {
+    return (value.lower() != QString::fromLatin1("false") &&
+            value.lower() != QString::fromLatin1("off") &&
+            value.lower() != QString::fromLatin1("0"));
+}
+
 KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
                     QObject * parent, const char *name, const QStringList &args)
  : KMPlayer (wparent, wname, parent, name, new KConfig ("kmplayerrc")),
@@ -105,6 +111,7 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
    m_features (Feat_Unknown),
    m_started_emited (false),
    m_havehref (false) {
+    bool show_fullscreen = false;
     m_ispart = true;
     kdDebug () << "MPlayer::KMPlayer ()" << endl;
     if (!kmplayerpart_static)
@@ -152,9 +159,12 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
                 m_docbase = KURL (value);
             } else if (name.lower()==QString::fromLatin1("src")) {
                 m_src_url = value;
-            } else if (name.lower()==QString::fromLatin1("autostart"))
+            } else if (name.lower()==QString::fromLatin1("autostart")) {
                 m_autoplay = !(value.lower() == QString::fromLatin1("false") ||
                                value.lower() == QString::fromLatin1("0"));
+            } else if (name.lower() == QString::fromLatin1 ("fullscreenmode")) {
+                show_fullscreen= getBoolValue (value);
+	    }
         }
     }
     init ();
@@ -166,8 +176,10 @@ KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
                                       this, SLOT (setMenuZoom (int)));
     KParts::Part::setWidget (m_view);
     setXMLFile("kmplayerpartui.rc");
-   if (!m_group.isEmpty ())
+    if (!m_group.isEmpty ())
         kmplayerpart_static->kmplayer_parts.push_back (this);
+    if (m_view->isFullScreen () != show_fullscreen)
+        m_view->fullScreen ();
 }
 
 KMPlayerPart::~KMPlayerPart () {
