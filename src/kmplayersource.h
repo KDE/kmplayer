@@ -47,8 +47,10 @@ public:
     int position () const { return m_position; }
     float aspect () const { return m_aspect > 0.01 ? m_aspect : (m_height > 0 ? (1.0*m_width)/m_height: 0.0); }
     const KURL & url () const { return m_url; }
-    const QString & options () const { return m_options; }
+    const QString & audioDevice () const { return m_audiodevice; }
+    const QString & videoDevice () const { return m_videodevice; }
     const QString & pipeCmd () const { return m_pipecmd; }
+    const QString & options () const { return m_options; }
     const QString & recordCmd () const { return m_recordcmd; }
     virtual QString filterOptions ();
 
@@ -60,7 +62,6 @@ public:
     /* setPosition (pos) set position in deci-seconds */
     void setPosition (int pos) { m_position = pos; }
     virtual void setIdentified (bool b = true);
-    virtual QString ffmpegCommand ();
     virtual QString prettyName ();
 public slots:
     virtual void activate () = 0;
@@ -68,11 +69,12 @@ public slots:
 protected:
     KMPlayer * m_player;
     QString m_recordcmd;
-    QString m_ffmpegCommand;
     bool m_identified;
     KURL m_url;
-    QString m_options;
+    QString m_audiodevice;
+    QString m_videodevice;
     QString m_pipecmd;
+    QString m_options;
 private:
     int m_width;
     int m_height;

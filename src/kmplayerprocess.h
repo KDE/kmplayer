@@ -199,11 +199,14 @@ public:
     FFMpeg (KMPlayer * player);
     ~FFMpeg ();
     virtual void init ();
+    void setArguments (const QString & args) { arguments = args; }
 public slots:
     virtual bool play ();
     virtual bool stop ();
 private slots:
     void processStopped (KProcess *);
+private:
+    QString arguments;
 };
 
 #endif //_KMPLAYERPROCESS_H_

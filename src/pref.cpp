@@ -655,6 +655,7 @@ void KMPlayerPrefFFMpegPage::record () {
     kdDebug() << "KMPlayerPrefFFMpegPage::record" << endl;
     m_player->setRecorder (m_player->ffmpeg ());
     m_player->ffmpeg ()->setURL (KURL (m_player->settings ()->recordfile));
+    m_player->ffmpeg ()->setArguments (arguments->text ());
     m_player->recorder ()->play ();
 }
 
@@ -663,7 +664,11 @@ QString KMPlayerPrefFFMpegPage::name () {
 }
 
 bool KMPlayerPrefFFMpegPage::sourceSupported (KMPlayerSource * source) {
-    return !source->ffmpegCommand ().isEmpty ();
+    QString protocol = source->url ().protocol ();
+    return !source->audioDevice ().isEmpty () ||
+           !source->videoDevice ().isEmpty () ||
+           !(protocol.startsWith (QString ("dvd")) ||
+             protocol.startsWith (QString ("vcd")));
 }
 
 KMPlayerPrefBroadcastPage::KMPlayerPrefBroadcastPage (QWidget *parent, FFServerSetting * _ffs) : QFrame (parent), ffs (_ffs) {

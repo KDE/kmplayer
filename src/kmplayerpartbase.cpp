@@ -606,12 +606,6 @@ QString KMPlayerSource::filterOptions () {
     return PPargs;
 }
 
-QString KMPlayerSource::ffmpegCommand () {
-    if (m_ffmpegCommand.isEmpty ())
-        return QString::null;
-    return QString ("ffmpeg ") + QString (" ") + m_ffmpegCommand;
-}
-
 bool KMPlayerSource::hasLength () {
     return true;
 }
@@ -709,11 +703,6 @@ bool KMPlayerURLSource::processOutput (const QString & str) {
 
 void KMPlayerURLSource::buildArguments () {
     m_recordcmd = QString ("");
-    if (m_url.isLocalFile ()) {
-        QString myurl (KProcess::quote (m_url.isLocalFile () ? m_url.path () : m_url.url ()));
-        m_ffmpegCommand = QString ("-i ") + myurl;
-    } else
-        m_ffmpegCommand.truncate (0);
 }
 
 void KMPlayerURLSource::activate () {

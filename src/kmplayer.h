@@ -39,6 +39,7 @@ class KMPlayerDVDNavSource;
 class KMPlayerVCDSource;
 class KMPlayerPipeSource;
 class KMPlayerTVSource;
+class FFMpeg;
 class QPopupMenu;
 class QMenuItem;
 
@@ -98,6 +99,7 @@ private slots:
     void processOutput (KProcess *, char *, int);
     void processStopped (KProcess * process);
     void playerStarted ();
+    void ffmpegFinished ();
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
     KConfig * config;
@@ -126,7 +128,7 @@ private:
     KMPlayerPipeSource * m_pipesource;
     KMPlayerTVSource * m_tvsource;
     QCString m_dcopName;
-    KProcess * m_ffmpeg_process;
+    FFMpeg * m_ffmpeg_process;
     KProcess * m_ffserver_process;
     QString m_ffserver_out;
     bool m_endserver : 1;

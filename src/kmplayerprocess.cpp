@@ -820,8 +820,24 @@ bool FFMpeg::play () {
     QString outurl = QString (QFile::encodeName (m_recordurl.isLocalFile () ? m_recordurl.path () : m_recordurl.url ()));
     if (m_recordurl.isLocalFile ())
         QFile (outurl).remove ();
-    printf ("%s %s %s\n", m_source->ffmpegCommand ().ascii(), m_player->settings ()->ffmpegarguments.ascii(), KProcess::quote (outurl).ascii ());
-    *m_process << m_source->ffmpegCommand () <<  m_player->settings ()->ffmpegarguments << KProcess::quote (outurl);
+    QString cmd ("ffmpeg ");
+    if (!m_source->videoDevice ().isEmpty () || 
+        !m_source->audioDevice ().isEmpty ()) {
+        if (!m_source->videoDevice ().isEmpty ())
+            cmd += QString ("-vd ") + m_source->videoDevice ();
+        else
+            cmd += QString ("-vn");
+        if (!m_source->audioDevice ().isEmpty ())
+            cmd += QString (" -ad ") + m_source->audioDevice ();
+        else
+            cmd += QString (" -an");
+    } else {
+        cmd += QString ("-i ") + KProcess::quote (m_recordurl.isLocalFile () ? m_recordurl.path () : m_recordurl.url ());
+    }
+    cmd += QChar (' ') + arguments;
+    cmd += QChar (' ') + KProcess::quote (outurl);
+    printf ("%s\n", cmd.ascii ());
+    *m_process << cmd;
     m_process->start (KProcess::NotifyOnExit, KProcess::Stdin);
     if (m_process->isRunning ())
         QTimer::singleShot (0, this, SLOT (emitStarted ()));
