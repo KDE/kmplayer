@@ -39,5 +39,7 @@ might try the patch for the x11 driver and see if that works for you (not needed
 You might need to change mimetype settings (Control Center | KDE Components | File Associations) to make sure KMPlayer (or 'Embedded MPlayer for KDE' in embedded tab) is set for all the formats you want to play with KMPlayer.
 Also make sure in the 'Embedding' tab 'Show file in embedded viewer' is set.
 
+If you run MPlayer from CVS, Set 'Post MPlayer 0.90=true' in .kde/share/config/kmplayer.rc under group [MPlayer]. It will change some of the mencoder arguments (for recording).
+
 Enjoy!
 

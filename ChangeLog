@@ -1,4 +1,16 @@
+Changes since version 0.7.95
+- Support for mplayer/mencoder from CVS. Set 'Post MPlayer 0.90=true' in 
+  .kde/share/config/kmplayer.rc under group [MPlayer] to use it.
+- Also enable DVD playing using kxineplayer (dvdnav, yeah!)
 Changes since version 0.7.4c
+- Added a simple Xine player backend (kxineplayer). Basically a finger practice
+  for the upcoming MPlayer-G2 lib, but now quite useful for rtsp/real playback.
+  Works only for URLs
+- Added the javascript bindings to mimic a realplay plugin (only some are
+  really doing something). You must set KMPlayer as default viewer for
+  audio/x-pn-realaudio to use it.
+- Support for 'Click to play' start images as found on
+  http://www.apple.com/switch/ads/
 - Broadcast, http streaming, for video devices (needs ffmpeg/ffserver)
   "Say hi to a friend", if you have a webcam.
 Changes since version 0.7.4b
