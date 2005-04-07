@@ -330,7 +330,8 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "layout"; }
     void activate ();
     void closed ();
-    RegionNodePtr rootLayout;
+    RegionNodePtr regionRootLayout;
+    ElementPtrW rootLayout;
 };
 
 /**

@@ -123,8 +123,8 @@ typedef Node<Element>::SharedType ElementPtr;
 typedef Node<Element>::WeakType ElementPtrW;
 typedef Node<Attribute>::SharedType AttributePtr;
 typedef Node<Attribute>::WeakType AttributePtrW;
-typedef SharedPtr<RegionNode> RegionNodePtr;
-typedef WeakPtr<RegionNode> RegionNodePtrW;
+typedef Node<RegionNode>::SharedType RegionNodePtr;
+typedef Node<RegionNode>::WeakType RegionNodePtrW;
 typedef SharedPtr<ElementRuntime> ElementRuntimePtr;
 
 /*
@@ -229,7 +229,7 @@ private:
 /**
  * Node for layout hierarchy as found in SMIL document
  */
-class RegionNode {
+class RegionNode : public Node <RegionNode> {
 public:
     RegionNode (ElementPtr e);
     KDE_NO_CDTOR_EXPORT ~RegionNode () {}
@@ -293,10 +293,6 @@ public:
      * Make this region and its sibling 0
      */
     void clearAll ();
-
-    RegionNodePtrW self;
-    RegionNodePtr nextSibling;
-    RegionNodePtr firstChild;
 };
 
 /**

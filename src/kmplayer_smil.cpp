@@ -58,7 +58,7 @@ static const unsigned int duration_last_option = (unsigned int) -8;
 //-----------------------------------------------------------------------------
 
 static RegionNodePtr findRegion (RegionNodePtr p, const QString & id) {
-    for (RegionNodePtr r = p->firstChild; r; r = r->nextSibling) {
+    for (RegionNodePtr r = p->firstChild (); r; r = r->nextSibling ()) {
         QString val = r->regionElement->getAttribute ("id");
         if ((val.isEmpty () && id.isEmpty ()) ||
                 r->regionElement->getAttribute ("id") == id) {
@@ -84,16 +84,15 @@ KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (ElementPtr e)
  : has_mouse (false), x (0), y (0), w (0), h (0),
    xscale (0.0), yscale (0.0),
    z_order (1), regionElement (e) {
-    self = RegionNodePtrW (this);
     ElementRuntimePtr rt = e->getRuntime ();
     if (rt)
-        rt->region_node = self;
+        rt->region_node = m_self;
 }
 
 KDE_NO_CDTOR_EXPORT void RegionNode::clearAll () {
     kdDebug () << "RegionNode::clearAll " << endl;
     attached_element = ElementPtr ();
-    for (RegionNodePtr r = firstChild; r; r = r->nextSibling)
+    for (RegionNodePtr r = firstChild (); r; r = r->nextSibling ())
         r->clearAll ();
     repaint ();
 }
@@ -120,13 +119,13 @@ void RegionNode::paint (QPainter & p, int _x, int _y, int _w, int _h) {
     do {
         int cur_index = 1 << 8 * sizeof (int) - 2;  // should be enough :-)
         int check_index = cur_index;
-        for (RegionNodePtr r = firstChild; r; r = r->nextSibling) {
+        for (RegionNodePtr r = firstChild (); r; r = r->nextSibling ()) {
             if (r->z_order > done_index && r->z_order < cur_index)
                 cur_index = r->z_order;
         }
         if (check_index == cur_index)
             break;
-        for (RegionNodePtr r = firstChild; r; r = r->nextSibling)
+        for (RegionNodePtr r = firstChild (); r; r = r->nextSibling ())
             if (r->z_order == cur_index) {
                 //kdDebug () << "Painting " << cur_index << endl;
                 r->paint (p, _x, _y, _w, _h);
@@ -146,7 +145,7 @@ KDE_NO_EXPORT void RegionNode::repaint () {
 
 KDE_NO_EXPORT void RegionNode::calculateChildBounds () {
     SMIL::Region * r = convertNode <SMIL::Region> (regionElement);
-    for (RegionNodePtr rn = firstChild; rn; rn = rn->nextSibling) {
+    for (RegionNodePtr rn = firstChild (); rn; rn = rn->nextSibling ()) {
         SMIL::Region * cr = convertNode <SMIL::Region> (rn->regionElement);
         cr->calculateBounds (r->w, r->h);
         rn->calculateChildBounds ();
@@ -160,7 +159,7 @@ KDE_NO_EXPORT bool RegionNode::pointerClicked (int _x, int _y) {
     if (!inside)
         return false;
     bool handled = false;
-    for (RegionNodePtr r = firstChild; r; r = r->nextSibling)
+    for (RegionNodePtr r = firstChild (); r; r = r->nextSibling ())
         handled |= r->pointerClicked (_x, _y);
     if (!handled) { // handle it ..
         if (attached_element) {
@@ -181,7 +180,7 @@ KDE_NO_EXPORT bool RegionNode::pointerMoved (int _x, int _y) {
     bool inside = _x > x && _x < x + w && _y > y && _y < y + h;
     bool handled = false;
     if (inside)
-        for (RegionNodePtr r = firstChild; r; r = r->nextSibling)
+        for (RegionNodePtr r = firstChild (); r; r = r->nextSibling ())
             handled |= r->pointerMoved (_x, _y);
     if (has_mouse && (!inside || handled)) { // OutOfBoundsEvent
         has_mouse = false;
@@ -251,7 +250,7 @@ void RegionNode::scaleRegion (float sx, float sy, int xoff, int yoff) {
         }
         //kdDebug () << "Region size " << x << "," << y << " " << w << "x" << h << endl;
     }
-    for (RegionNodePtr r = firstChild; r; r =r->nextSibling)
+    for (RegionNodePtr r = firstChild (); r; r =r->nextSibling ())
         r->scaleRegion (sx, sy, x, y);
 }
 
@@ -1183,7 +1182,7 @@ static void beginOrEndRegions (RegionNodePtr rn, bool b) {
                 rt->end ();
         }
     }
-    for (RegionNodePtr c = rn->firstChild; c; c = c->nextSibling)
+    for (RegionNodePtr c = rn->firstChild (); c; c = c->nextSibling ())
         beginOrEndRegions (c, b);
 }
 
@@ -1233,64 +1232,41 @@ KDE_NO_EXPORT void SMIL::Head::closed () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementPtr SMIL::Layout::childFromTag (const QString & tag) {
-    if (!strcmp (tag.latin1 (), "root-layout"))
-        return (new SMIL::RootLayout (m_doc))->self ();
-    else if (!strcmp (tag.latin1 (), "region"))
+    if (!strcmp (tag.latin1 (), "root-layout")) {
+        ElementPtr e = (new SMIL::RootLayout (m_doc))->self ();
+        rootLayout = e;
+        return e;
+    } else if (!strcmp (tag.latin1 (), "region"))
         return (new SMIL::Region (m_doc))->self ();
     return ElementPtr ();
 }
 
 static void buildRegionNodes (ElementPtr p, RegionNodePtr r) {
-    RegionNodePtr region;
-    RegionNodePtr last_region;
     for (ElementPtr e = p->firstChild (); e; e = e->nextSibling ())
         if (!strcmp (e->nodeName (), "region")) {
-            if (region) {
-                last_region->nextSibling = (new RegionNode (e))->self;
-                last_region = last_region->nextSibling;
-            } else {
-                region = last_region = (new RegionNode (e))->self;
-                r->firstChild = region;
-            }
-            buildRegionNodes (e, last_region);
+            r->appendChild ((new RegionNode (e))->self ());
+            buildRegionNodes (e, r->lastChild ());
         }
 }
 
 KDE_NO_EXPORT void SMIL::Layout::closed () {
-    RegionNodePtr root;
-    RegionBase * smilroot = 0L;
-    RegionNodePtr region;
-    RegionNodePtr last_region;
-    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
-        const char * name = e->nodeName ();
-        if (!strcmp (name, "root-layout")) {
-            root = (new RegionNode (e))->self;
-            if (region)
-                root->firstChild = region;
-            smilroot = convertNode <RegionBase> (e);
-        } else if (!strcmp (name, "region")) {
-            if (region) {
-                last_region->nextSibling = (new RegionNode (e))->self;
-                last_region = last_region->nextSibling;
-            } else {
-                region = last_region = (new RegionNode (e))->self;
-                if (root)
-                    root->firstChild = region;
-            }
-            buildRegionNodes (e, last_region);
-        }
-    }
-    if (!root) {
-        int w =0, h = 0;
+    RegionBase * smilroot = convertNode <SMIL::RootLayout> (rootLayout);
+    bool has_root (smilroot);
+    if (!has_root) { // just add one if non there
         smilroot = new SMIL::RootLayout (m_doc);
         appendChild (smilroot->self ());
-        if (!region) {
+        rootLayout = smilroot->self ();
+    }
+    regionRootLayout = (new RegionNode (rootLayout))->self ();
+    buildRegionNodes (m_self, regionRootLayout);
+    if (!has_root) {
+        int w =0, h = 0;
+        if (!regionRootLayout->hasChildNodes ()) {
             w = 100; h = 100; // have something to start with
             SMIL::Region * r = new SMIL::Region (m_doc);
             appendChild (r->self ());
-            region = (new RegionNode (r->self ()))->self;
         } else {
-            for (RegionNodePtr rn = region; rn; rn = rn->nextSibling) {
+            for (RegionNodePtr rn = regionRootLayout->firstChild (); rn; rn = rn->nextSibling ()) {
                 SMIL::Region *rb = convertNode<SMIL::Region>(rn->regionElement);
                 if (rb) {
                     ElementRuntimePtr rt = rb->getRuntime ();
@@ -1303,27 +1279,19 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
                 }
             }
         }
-        smilroot->setAttribute ("width", QString::number (w));
-        smilroot->setAttribute ("height", QString::number (h));
-        root = (new RegionNode (smilroot->self ()))->self;
-        root->firstChild = region;
-    } else if (!region) {
+        rootLayout->setAttribute ("width", QString::number (w));
+        rootLayout->setAttribute ("height", QString::number (h));
+    } else if (!regionRootLayout->hasChildNodes ()) {
         SMIL::Region * r = new SMIL::Region (m_doc);
         appendChild (r->self ());
-        region = (new RegionNode (r->self ()))->self;
-        root->firstChild = region;
-    }
-    if (!root || !region) {
-        kdError () << "Layout w/o a root-layout w/ regions" << endl;
-        return;
+        regionRootLayout->appendChild ((new RegionNode (r->self ()))->self ());
     }
     smilroot->updateLayout ();
     if (smilroot->w <= 0 || smilroot->h <= 0) {
         kdError () << "Root layout not having valid dimensions" << endl;
         return;
     }
-    rootLayout = root;
-    document ()->rootLayout = root;
+    document ()->rootLayout = regionRootLayout;
 }
 
 KDE_NO_EXPORT void SMIL::Layout::activate () {
