@@ -772,14 +772,14 @@ void Source::playCurrent () {
         m_player->process ()->view ()->videoStop (); // show buttonbar
     if (m_player->view () && m_document)
         m_player->process ()->view ()->viewArea ()->setRootLayout (m_document->document ()->rootLayout);
-    kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():"") <<  (m_document && m_document->state != Element::state_started) << (!m_current) << (m_current && m_current->state != Element::state_started) <<  endl;
-    if (m_document && m_document->state != Element::state_started) {
+    kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():"") <<  (m_document && m_document->state != Element::state_activated) << (!m_current) << (m_current && m_current->state != Element::state_activated) <<  endl;
+    if (m_document && m_document->state != Element::state_activated) {
         if (!m_current)
-            m_document->start ();
+            m_document->activate ();
         else { // ugly code duplicate w/ back_request
             for (ElementPtr p = m_current->parentNode(); p; p = p->parentNode())
-                p->setState (Element::state_started);
-            m_current->start ();
+                p->setState (Element::state_activated);
+            m_current->activate ();
         }
     } else if (!m_current)
         emit endOfPlayItems ();
@@ -813,16 +813,16 @@ void Source::playURLDone () {
         if (m_document->document ()->rootLayout) {
             playCurrent (); // don't mess with SMIL, just play the damn link
         } else {
-            m_document->reset (); // stop everything
+            m_document->reset (); // deactivate everything
             for (ElementPtr p = m_current->parentNode(); p; p = p->parentNode())
-                p->setState (Element::state_started);
-            m_current->start ();
+                p->setState (Element::state_activated);
+            m_current->activate ();
         }
         m_back_request = ElementPtr ();
     } else {
         Mrl * mrl = m_current ? m_current->mrl () : 0L;
         if (mrl)
-            mrl->realMrl ()->stop ();
+            mrl->realMrl ()->deactivate ();
     }
     m_player->process()->view ()->viewArea ()->repaint ();
 }
@@ -842,8 +842,15 @@ bool Source::requestPlayURL (ElementPtr mrl, RegionNodePtr /*region*/) {
 
 void Source::stateElementChanged (ElementPtr elm) {
     kdDebug() << "Source::stateElementChanged " << elm->nodeName () << " started:" << (int) elm->state << endl;
-    if (elm == m_document && !m_back_request && elm->state == Element::state_finished)
-        emit endOfPlayItems (); // played all items
+    if (elm->state == Element::state_deactivated) {
+        if (elm == m_document && !m_back_request)
+            emit endOfPlayItems (); // played all items
+        else if (m_current && m_current->isMrl () &&
+                 elm == m_current->mrl ()->realMrl () &&
+                 m_player->process ()->state () > Process::Ready)
+            //a SMIL movies stopped by SMIL events rather than movie just ending
+            m_player->process ()->stop ();
+    }
 }
 
 void Source::repaintRect (int x, int y, int w, int h) {
@@ -1375,7 +1382,7 @@ KDE_NO_EXPORT void URLSource::kioResult (KIO::Job *) {
 void URLSource::playCurrent () {
     terminateJob ();
     if (!m_current) {
-        // run m_document->start() first
+        // run m_document->activate() first
         Source::playCurrent ();
         return;
     }
@@ -1389,7 +1396,7 @@ void URLSource::playCurrent () {
     } else {
         QString mimestr = mime ();
         bool maybe_playlist = isPlayListMime (mimestr);
-        m_current->defer (); // may need a restart
+        m_current->defer (); // may need a reactivate
         kdDebug () << "URLSource::playCurrent " << mimestr << maybe_playlist << endl;
         if (url.isLocalFile ()) {
             QFile file (url.path ());

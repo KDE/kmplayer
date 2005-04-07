@@ -151,7 +151,7 @@ private:
 };
 
 /**
- * Runtime data for 'par' group, will start all children in started()
+ * Runtime data for 'par' group, will activate all children in started()
  */
 class ParRuntime : public TimedRuntime {
     Q_OBJECT
@@ -328,7 +328,7 @@ public:
     KDE_NO_CDTOR_EXPORT Layout (ElementPtr & d) : Element (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "layout"; }
-    void start ();
+    void activate ();
     void closed ();
     RegionNodePtr rootLayout;
 };
@@ -360,8 +360,8 @@ class TimedMrl : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT ~TimedMrl () {}
     ElementRuntimePtr getRuntime ();
-    void start ();
-    void stop ();
+    void activate ();
+    void deactivate ();
     void reset ();
     void childDone (ElementPtr child);
 protected:
@@ -377,8 +377,8 @@ class TimedElement : public Element {
 public:
     KDE_NO_CDTOR_EXPORT ~TimedElement () {}
     ElementRuntimePtr getRuntime ();
-    void start ();
-    void stop ();
+    void activate ();
+    void deactivate ();
     void reset ();
 protected:
     KDE_NO_CDTOR_EXPORT TimedElement (ElementPtr & d) : Element (d) {}
@@ -406,8 +406,8 @@ public:
     KDE_NO_CDTOR_EXPORT Par (ElementPtr & d) : GroupBase (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "par"; }
-    void start ();
-    void stop ();
+    void activate ();
+    void deactivate ();
     void reset ();
     void childDone (ElementPtr child);
     ElementRuntimePtr getNewRuntime ();
@@ -421,7 +421,7 @@ public:
     KDE_NO_CDTOR_EXPORT Seq (ElementPtr & d) : GroupBase (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "seq"; }
-    void start ();
+    void activate ();
 };
 
 /**
@@ -442,7 +442,7 @@ public:
     KDE_NO_CDTOR_EXPORT Excl (ElementPtr & d) : GroupBase (d) {}
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "excl"; }
-    void start ();
+    void activate ();
     void childDone (ElementPtr child);
     virtual ElementRuntimePtr getNewRuntime ();
 };
@@ -456,8 +456,8 @@ public:
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "switch"; }
     // Condition
-    void start ();
-    void stop ();
+    void activate ();
+    void deactivate ();
     void reset ();
     void childDone (ElementPtr child);
 };
@@ -471,7 +471,7 @@ public:
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
     void opened ();
-    void start ();
+    void activate ();
     QString m_type;
     unsigned int bitrate;
 };
@@ -480,8 +480,8 @@ class AVMediaType : public MediaType {
 public:
     AVMediaType (ElementPtr & d, const QString & t);
     ElementRuntimePtr getNewRuntime ();
-    void start ();
-    void stop ();
+    void activate ();
+    void deactivate ();
 };
 
 class ImageMediaType : public MediaType {
@@ -501,7 +501,7 @@ public:
     KDE_NO_CDTOR_EXPORT Set (ElementPtr & d) : TimedElement (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "set"; }
     virtual ElementRuntimePtr getNewRuntime ();
-    virtual void start ();
+    virtual void activate ();
     bool expose () { return false; }
 };
 
@@ -517,7 +517,7 @@ class Param : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Param (ElementPtr & d) : Element (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "param"; }
-    void start ();
+    void activate ();
     bool expose () { return false; }
 };
 

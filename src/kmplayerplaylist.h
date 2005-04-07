@@ -80,7 +80,7 @@ class KMPLAYER_EXPORT Element {
     friend class DocumentBuilder;
 public:
     enum State {
-        state_init, state_deferred, state_started, state_finished
+        state_init, state_deferred, state_activated, state_deactivated
     };
     virtual ~Element ();
     Document * document ();
@@ -107,32 +107,32 @@ public:
      */
     virtual bool expose ();
     /**
-     * Start element, sets state to state_started. Will call start() on
-     * firstChild or call stop().
+     * Activates element, sets state to state_activated. Will call activate() on
+     * firstChild or call deactivate().
      */
-    virtual void start ();
+    virtual void activate ();
     /**
-     * Defers a started, so possible playlists items can be added.
+     * Defers an activated, so possible playlists items can be added.
      */
     virtual void defer ();
     /**
-     * Puts a defered element in started again, may call start() again if 
+     * Puts a defered element in activated again, may call activate() again if 
      * child elements were added.
      */
     virtual void undefer ();
     /**
-     * Stops element, sets state to state_finished. Calls stop() on 
-     * started/defered children. Notifies parent with a childDone call.
+     * Stops element, sets state to state_deactivated. Calls deactivate() on 
+     * activated/defered children. Notifies parent with a childDone call.
      */
-    virtual void stop ();
+    virtual void deactivate ();
     /**
-     * Resets element, calls stop() if state is state_started and sets
+     * Resets element, calls deactivate() if state is state_activated and sets
      * state to state_init.
      */
     virtual void reset ();
     /**
-     * Notification from child that it's finished. Call start() on nexSibling
-     * or stop() if there is none.
+     * Notification from child that it's finished. Call activate() on nexSibling
+     * or deactivate() if there is none.
      */
     virtual void childDone (ElementPtr child);
     /**
@@ -277,11 +277,11 @@ public:
      */
     virtual void init ();
     /**
-     * Called when element is pulled in scope, from start()
+     * Called when element is pulled in scope, from Element::activate()
      */
     virtual void begin () {}
     /**
-     * Called when element gets out of scope, from reset()
+     * Called when element gets out of scope, from Element::reset()
      */
     virtual void end () {}
     /**
@@ -377,7 +377,7 @@ public:
     /*
      * Reimplement to callback with requestPlayURL if isMrl()
      */ 
-    virtual void start ();
+    virtual void activate ();
     QString src;
     QString pretty_name;
     QString mimetype;
@@ -400,7 +400,7 @@ public:
      */
     virtual bool requestPlayURL (ElementPtr mrl, RegionNodePtr region) = 0;
     /**
-     * Element has started or stopped notification
+     * Element has activated or deactivated notification
      */
     virtual void stateElementChanged (ElementPtr element) = 0;
     /**
@@ -485,8 +485,8 @@ public:
     ElementPtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "smil"; }
     bool isMrl ();
-    void start ();
-    void stop ();
+    void activate ();
+    void deactivate ();
     /**
      * Hack to mark the currently playing MediaType as finished
      * FIXME: think of a descent callback way for this

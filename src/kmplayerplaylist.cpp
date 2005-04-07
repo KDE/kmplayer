@@ -124,40 +124,40 @@ bool Element::expose () {
     return true;
 }
 
-void Element::start () {
-    kdDebug () << nodeName () << " Element::start" << endl;
-    setState (state_started);
+void Element::activate () {
+    kdDebug () << nodeName () << " Element::activate" << endl;
+    setState (state_activated);
     if (firstChild ())
-        firstChild ()->start (); // start only the first
+        firstChild ()->activate (); // activate only the first
     else
-        stop (); // nothing to start
+        deactivate (); // nothing to activate
 }
 
 void Element::defer () {
-    if (state == state_started) {
+    if (state == state_activated) {
         setState (state_deferred);
         defer_tree_version = document ()->m_tree_version;
     } else
-        kdWarning () << "Element::defer () call on not started element" << endl;
+        kdError () << "Element::defer () call on not activated element" << endl;
 }
 
 void Element::undefer () {
     if (state == state_deferred) {
-        setState (state_started);
+        setState (state_activated);
         if (defer_tree_version != document ()->m_tree_version)
-            start ();
+            activate ();
     } else
         kdWarning () <<"Element::undefer () call on not defered element"<< endl;
 }
 
-void Element::stop () {
-    kdDebug () << nodeName () << " Element::stop" << endl;
-    setState (state_finished);
+void Element::deactivate () {
+    kdDebug () << nodeName () << " Element::deactivate" << endl;
+    setState (state_deactivated);
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
-        if (e->state > state_init && e->state < state_finished)
-            e->stop ();
+        if (e->state > state_init && e->state < state_deactivated)
+            e->deactivate ();
         else
-            break; // not yet started
+            break; // not yet activated
     }
     if (m_parent)
         m_parent->childDone (m_self);
@@ -165,24 +165,24 @@ void Element::stop () {
 
 void Element::reset () {
     kdDebug () << nodeName () << " Element::reset" << endl;
-    if (state == state_started)
-        stop ();
+    if (state == state_activated)
+        deactivate ();
     setState (state_init);
     for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
         if (e->state != state_init)
             e->reset ();
         else
-            break; // rest not started yet
+            break; // rest not activated yet
     }
 }
 
 void Element::childDone (ElementPtr child) {
     kdDebug () << nodeName () << " Element::childDone" << endl;
-    if (state == state_started) {
+    if (state == state_activated) {
         if (child->nextSibling ())
-            child->nextSibling ()->start ();
+            child->nextSibling ()->activate ();
         else
-            stop (); // we're done
+            deactivate (); // we're done
     }
 }
 
@@ -437,17 +437,17 @@ ElementPtr Mrl::realMrl () {
     return m_self;
 }
 
-void Mrl::start () {
+void Mrl::activate () {
     if (!isMrl ()) {
-        Element::start ();
+        Element::activate ();
         return;
     }
-    kdDebug () << "Mrl::start" << endl;
-    setState (state_started);
+    kdDebug () << "Mrl::activate" << endl;
+    setState (state_activated);
     if (document ()->notify_listener && !src.isEmpty ())
         document ()->notify_listener->requestPlayURL (m_self, RegionNodePtr ());
     else
-        stop (); // nothing to start
+        deactivate (); // nothing to activate
 }
 
 //-----------------------------------------------------------------------------
