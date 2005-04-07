@@ -93,7 +93,7 @@ public:
 
     KDE_NO_EXPORT SharedType self () const { return m_self; }
 protected:
-    Node () : m_self (static_cast <T*> (this)) {}
+    Node ();
     WeakType m_parent;
     SharedType m_next;
     WeakType m_prev;
@@ -211,10 +211,11 @@ public:
      */
     virtual void closed ();
     KDE_NO_EXPORT bool isDocument () const { return m_doc == m_self; }
-    KDE_NO_EXPORT AttributePtr attributes () const;
+
     KDE_NO_EXPORT NodeList childNodes () const;
     void setAttribute (const QString & name, const QString & value);
     QString getAttribute (const QString & name);
+    KDE_NO_EXPORT AttributePtr attributes () const { return m_attributes; }
 protected:
     Element (ElementPtr & d);
     ElementPtr m_doc;
@@ -594,8 +595,9 @@ public:
 
 void readXML (ElementPtr root, QTextStream & in, const QString & firstline);
 
-template <class T> inline
-void Node<T>::appendChild (SharedType c) {
+template <class T> inline Node<T>::Node () : m_self (static_cast <T*> (this)) {}
+
+template <class T> inline void Node<T>::appendChild (SharedType c) {
     if (!m_first_child) {
         m_first_child = m_last_child = c;
     } else {
@@ -606,11 +608,9 @@ void Node<T>::appendChild (SharedType c) {
     c->m_parent = m_self;
 }
 
-inline KDE_NO_EXPORT AttributePtr Element::attributes () const {
-    return m_attributes;
+inline KDE_NO_EXPORT NodeList Element::childNodes () const {
+    return m_first_child;
 }
-
-inline KDE_NO_EXPORT NodeList Element::childNodes () const { return m_first_child; }
 
 }  // KMPlayer namespace
 
