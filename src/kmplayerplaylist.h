@@ -67,6 +67,62 @@ class ElementRuntimePrivate;
 class ImageDataPrivate;
 class NodeList;
 
+/*
+ * Node represents a DOM like node having parent/siblings/children
+ * The template argument must be a class derived from this one
+ */
+template <class T>
+class KMPLAYER_EXPORT Node {
+public:
+    typedef SharedPtr <T> SharedType;
+    typedef WeakPtr <T> WeakType;
+
+    virtual ~Node () {}
+
+    virtual const char * nodeName () const { return "#node"; }
+    virtual QString nodeValue () const { return QString (); }
+
+    virtual void appendChild (SharedType c);
+
+    KDE_NO_EXPORT bool hasChildNodes () const { return m_first_child != 0L; }
+    KDE_NO_EXPORT SharedType parentNode () const { return m_parent; }
+    KDE_NO_EXPORT SharedType firstChild () const { return m_first_child; }
+    KDE_NO_EXPORT SharedType lastChild () const { return m_last_child; }
+    KDE_NO_EXPORT SharedType nextSibling () const { return m_next; }
+    KDE_NO_EXPORT SharedType previousSibling () const { return m_prev; }
+
+    KDE_NO_EXPORT SharedType self () const { return m_self; }
+protected:
+    Node () : m_self (static_cast <T*> (this)) {}
+    WeakType m_parent;
+    SharedType m_next;
+    WeakType m_prev;
+    SharedType m_first_child;
+    WeakType m_last_child;
+    WeakType m_self;
+};
+
+/**
+ * Element's attributes
+ */
+class KMPLAYER_EXPORT Attribute : public Node <Attribute> {
+    friend class Element;
+public:
+    KDE_NO_CDTOR_EXPORT Attribute () {}
+    Attribute (const QString & n, const QString & v);
+    KDE_NO_CDTOR_EXPORT ~Attribute () {}
+    const char * nodeName () const;
+    QString nodeValue () const;
+protected:
+    QString name;
+    QString value;
+};
+
+// convenient types
+typedef Node<Element>::SharedType ElementPtr;
+typedef Node<Element>::WeakType ElementPtrW;
+typedef Node<Attribute>::SharedType AttributePtr;
+typedef Node<Attribute>::WeakType AttributePtrW;
 typedef SharedPtr<RegionNode> RegionNodePtr;
 typedef WeakPtr<RegionNode> RegionNodePtrW;
 typedef SharedPtr<ElementRuntime> ElementRuntimePtr;
@@ -74,7 +130,7 @@ typedef SharedPtr<ElementRuntime> ElementRuntimePtr;
 /*
  * Base class of all tree nodes. Provides a w3c's DOM like API
  */
-class KMPLAYER_EXPORT Element {
+class KMPLAYER_EXPORT Element : public Node <Element> {
     friend class DocumentBuilder;
 public:
     enum State {
@@ -93,7 +149,7 @@ public:
     QString innerText () const;
     QString innerXML () const;
     QString outerXML () const;
-    void setAttributes (const NodeList & attrs);
+    void setAttributes (AttributePtr attrs);
     virtual const char * nodeName () const;
     virtual QString nodeValue () const;
     /**
@@ -155,30 +211,14 @@ public:
      */
     virtual void closed ();
     KDE_NO_EXPORT bool isDocument () const { return m_doc == m_self; }
-    KDE_NO_EXPORT bool hasChildNodes () const { return m_first_child != 0L; }
-    KDE_NO_EXPORT ElementPtr parentNode () const { return m_parent; }
-    KDE_NO_EXPORT ElementPtr firstChild () const { return m_first_child; }
-    KDE_NO_EXPORT ElementPtr lastChild () const { return m_last_child; }
-    KDE_NO_EXPORT ElementPtr nextSibling () const { return m_next; }
-    KDE_NO_EXPORT ElementPtr previousSibling () const { return m_prev; }
-    KDE_NO_EXPORT NodeList attributes () const;
+    KDE_NO_EXPORT AttributePtr attributes () const;
     KDE_NO_EXPORT NodeList childNodes () const;
     void setAttribute (const QString & name, const QString & value);
     QString getAttribute (const QString & name);
-    /**
-     * If not assigned to a Shared pointer, this will result in self destruction
-     */
-    KDE_NO_EXPORT ElementPtr self () const { return m_self; }
 protected:
     Element (ElementPtr & d);
     ElementPtr m_doc;
-    ElementPtrW m_parent;
-    ElementPtr m_next;
-    ElementPtrW m_prev;
-    ElementPtr m_first_child;
-    ElementPtrW m_last_child;
-    ElementPtr m_first_attribute;
-    ElementPtrW m_self;
+    AttributePtr m_attributes;
 public:
     State state;
     void setState (State nstate);
@@ -334,22 +374,6 @@ inline KDE_NO_EXPORT T * convertNode (ElementPtr e) {
     return static_cast <T *> (e.ptr ());
 }
         
-/**
- * Element's attributes
- */
-class KMPLAYER_EXPORT Attribute : public Element {
-    friend class Element;
-public:
-    Attribute (ElementPtr & d, const QString & n, const QString & v);
-    KDE_NO_CDTOR_EXPORT ~Attribute () {}
-    const char * nodeName () const;
-    QString nodeValue () const;
-    bool expose ();
-protected:
-    QString name;
-    QString value;
-};
-
 /**
  * Element representing a playable link, like URL to a movie or playlist.
  */
@@ -574,7 +598,22 @@ public:
 
 void readXML (ElementPtr root, QTextStream & in, const QString & firstline);
 
-inline KDE_NO_EXPORT NodeList Element::attributes () const { return m_first_attribute; }
+template <class T> inline
+void Node<T>::appendChild (SharedType c) {
+    if (!m_first_child) {
+        m_first_child = m_last_child = c;
+    } else {
+        m_last_child->m_next = c;
+        c->m_prev = m_last_child;
+        m_last_child = c;
+    }
+    c->m_parent = m_self;
+}
+
+inline KDE_NO_EXPORT AttributePtr Element::attributes () const {
+    return m_attributes;
+}
+
 inline KDE_NO_EXPORT NodeList Element::childNodes () const { return m_first_child; }
 
 }  // KMPlayer namespace

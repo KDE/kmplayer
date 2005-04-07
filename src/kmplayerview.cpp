@@ -764,8 +764,9 @@ KDE_NO_EXPORT void KMPlayerPopupMenu::leaveEvent (QEvent *) {
 
 //-----------------------------------------------------------------------------
 
-
 KDE_NO_CDTOR_EXPORT ListViewItem::ListViewItem (QListViewItem *p, const ElementPtr & e, PlayListView * lv) : QListViewItem (p), m_elm (e), listview (lv) {}
+
+KDE_NO_CDTOR_EXPORT ListViewItem::ListViewItem (QListViewItem *p, const AttributePtr & a, PlayListView * lv) : QListViewItem (p), m_attr (a), listview (lv) {}
 
 KDE_NO_CDTOR_EXPORT ListViewItem::ListViewItem (PlayListView *v, const ElementPtr & e) : QListViewItem (v), m_elm (e), listview (v) {}
 
@@ -822,7 +823,7 @@ void PlayListView::populate (ElementPtr e, ElementPtr focus, QListViewItem * ite
             populate (c, focus, new ListViewItem (item, c, this), curitem);
     }
     if (m_show_all_nodes) {
-        ElementPtr a = e->attributes ().item (0);
+        AttributePtr a = e->attributes ()->firstChild ();
         if (a) {
             ListViewItem * as = new ListViewItem (item, e, this);
             as->setText (0, i18n ("[attributes]"));
@@ -865,8 +866,10 @@ void PlayListView::selectItem (const QString & txt) {
 KDE_NO_EXPORT void PlayListView::contextMenuItem (QListViewItem * vi, const QPoint & p, int) {
     if (vi) {
         ListViewItem * item = static_cast <ListViewItem *> (vi);
-        m_itemmenu->setItemEnabled (1, item->m_elm && (item->m_elm->isMrl () || item->m_elm->isDocument ()) && item->m_elm->mrl ()->bookmarkable);
-        m_itemmenu->exec (p);
+        if (item->m_elm) {
+            m_itemmenu->setItemEnabled (1, item->m_elm && (item->m_elm->isMrl () || item->m_elm->isDocument ()) && item->m_elm->mrl ()->bookmarkable);
+            m_itemmenu->exec (p);
+        }
     } else
         m_view->controlPanel ()->popupMenu ()->exec (p);
 }

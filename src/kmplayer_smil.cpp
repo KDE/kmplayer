@@ -283,7 +283,8 @@ QString ElementRuntime::param (const QString & name) {
 KDE_NO_EXPORT void ElementRuntime::init () {
     reset ();
     if (element) {
-        for (ElementPtr a= element->attributes().item(0); a; a=a->nextSibling())
+        AttributePtr a= element->attributes ()->firstChild ();
+        for (; a; a = a->nextSibling ())
             setParam (QString (a->nodeName ()), a->nodeValue ());
     }
 }
@@ -1376,7 +1377,8 @@ static int calcLength (const QString & strval, int full) {
 }
 
 /**
- * calculates dimensions of this regions with w and h as width and height
+ * calculates dimensions of this regions with _w and _h as width and height
+ * of parent Region (representing 100%)
  */
 KDE_NO_EXPORT void SMIL::Region::calculateBounds (int _w, int _h) {
     ElementRuntimePtr rt = getRuntime ();
@@ -1646,7 +1648,7 @@ KDE_NO_EXPORT ElementPtr SMIL::MediaType::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::opened () {
-    for (ElementPtr a = m_first_attribute; a; a = a->nextSibling ()) {
+    for (AttributePtr a = m_attributes->firstChild(); a; a = a->nextSibling()) {
         const char * cname = a->nodeName ();
         if (!strcmp (cname, "system-bitrate"))
             bitrate = a->nodeValue ().toInt ();

@@ -65,9 +65,11 @@ class PlayListView;
 class KMPLAYER_EXPORT ListViewItem : public QListViewItem {
 public:
     ListViewItem (QListViewItem *p, const ElementPtr & e, PlayListView * lv);
+    ListViewItem (QListViewItem *p, const AttributePtr & e, PlayListView * lv);
     ListViewItem (PlayListView *v, const ElementPtr & e);
     KDE_NO_CDTOR_EXPORT ~ListViewItem () {}
     ElementPtrW m_elm;
+    AttributePtrW m_attr;
     PlayListView * listview;
 };
 
