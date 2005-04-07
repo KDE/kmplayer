@@ -90,8 +90,6 @@ ElementPtr NodeList::item (int i) const {
 KDE_NO_CDTOR_EXPORT Element::Element (ElementPtr & d)
  : m_doc (d), m_self (this), state (state_init) {}
 
-KDE_NO_CDTOR_EXPORT Element::Element () : state (state_init) {}
-
 Element::~Element () {
     clear ();
 }
@@ -405,8 +403,6 @@ static bool hasMrlChildren (const ElementPtr & e) {
 
 Mrl::Mrl (ElementPtr & d) : Element (d), cached_ismrl_version (~0), width (0), height (0), aspect (0), parsed (false), bookmarkable (true) {}
 
-KDE_NO_CDTOR_EXPORT Mrl::Mrl () : cached_ismrl_version (~0), width (0), height (0), aspect (0), parsed (false), bookmarkable (true) {}
-
 Mrl::~Mrl () {}
 
 bool Mrl::isMrl () {
@@ -452,10 +448,13 @@ void Mrl::activate () {
 
 //-----------------------------------------------------------------------------
 
+namespace KMPlayer {
+    static ElementPtr dummy_element;
+}
+
 Document::Document (const QString & s, PlayListNotify * n)
- : notify_listener (n), m_tree_version (0) {
-    m_doc = this;
-    m_self = m_doc;
+ : Mrl (dummy_element), notify_listener (n), m_tree_version (0) {
+    m_doc = m_self; // just-in-time setting fragile m_self to m_doc
     src = s;
 }
 

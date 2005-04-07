@@ -67,8 +67,6 @@ class ElementRuntimePrivate;
 class ImageDataPrivate;
 class NodeList;
 
-typedef SharedPtr<Element> ElementPtr;
-typedef WeakPtr<Element> ElementPtrW;
 typedef SharedPtr<RegionNode> RegionNodePtr;
 typedef WeakPtr<RegionNode> RegionNodePtrW;
 typedef SharedPtr<ElementRuntime> ElementRuntimePtr;
@@ -173,11 +171,6 @@ public:
     KDE_NO_EXPORT ElementPtr self () const { return m_self; }
 protected:
     Element (ElementPtr & d);
-    /**
-     * Constructor that doesn't set the document and is for Document
-     * only due to a problem with m_self and m_doc
-     */
-    Element ();
     ElementPtr m_doc;
     ElementPtrW m_parent;
     ElementPtr m_next;
@@ -363,7 +356,6 @@ protected:
 class KMPLAYER_EXPORT Mrl : public Element {
 protected:
     Mrl (ElementPtr & d);
-    Mrl (); // for Document
     ElementPtr childFromTag (const QString & tag);
     unsigned int cached_ismrl_version;
     bool cached_ismrl;
