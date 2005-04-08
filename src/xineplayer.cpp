@@ -101,7 +101,7 @@ static int                  movie_width, movie_height, movie_length, movie_pos;
 static double               pixel_aspect;
 
 static int                  running = 0;
-static int                  firstframe = 0;
+static volatile int         firstframe = 0;
 static const int            event_finished = QEvent::User;
 static const int            event_progress = QEvent::User + 2;
 static const int            event_url = QEvent::User + 3;
@@ -139,6 +139,7 @@ static void frame_output_cb(void * /*data*/, int /*video_width*/, int /*video_he
         int *dest_width, int *dest_height, 
         double *dest_pixel_aspect, int *win_x, int *win_y) {
     if (running && firstframe) {
+        firstframe = 0;
         int pos;
         fprintf(stderr, "first frame\n");
         mutex.lock ();
@@ -147,7 +148,6 @@ static void frame_output_cb(void * /*data*/, int /*video_width*/, int /*video_he
         movie_height = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_HEIGHT);
         mutex.unlock ();
         QApplication::postEvent (xineapp, new XineSizeEvent (movie_length, movie_width, movie_height, true));
-        firstframe = 0;
     }
 
     *dest_x            = 0;
@@ -680,14 +680,16 @@ bool KXinePlayer::event (QEvent * e) {
                 xine_dispose (sub_stream);
                 sub_stream = 0L;
             }
-            xine_event_dispose_queue (event_queue);
-            xine_dispose (stream);
-            stream = 0L;
-            xine_close_audio_driver (xine, ao_port);  
-            xine_close_video_driver (xine, vo_port);  
+            if (stream) {
+                xine_event_dispose_queue (event_queue);
+                xine_dispose (stream);
+                stream = 0L;
+                xine_close_audio_driver (xine, ao_port);  
+                xine_close_video_driver (xine, vo_port);  
+                vo_port = 0L;
+                ao_port = 0L;
+            }
             mutex.unlock ();
-            vo_port = 0L;
-            ao_port = 0L;
             XLockDisplay (display);
             XClearWindow (display, wid);
             XUnlockDisplay (display);
