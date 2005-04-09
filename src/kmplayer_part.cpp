@@ -238,6 +238,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                 m_docbase = KURL (value);
             } else if (name == QString::fromLatin1("src")) {
                 m_src_url = value;
+            } else if (name == QString::fromLatin1("filename")) {
+                m_file_name = value;
             } else if (name == QString::fromLatin1 ("fullscreenmode")) {
                 show_fullscreen = getBoolValue (value);
             } else if (name == QString::fromLatin1 ("autostart")) {
@@ -347,7 +349,16 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
     GroupPredicate pred (this, m_group);
     KURL url;
     if (_url != m_docbase) {
-        url = _url;
+        if (!m_file_name.isEmpty () && m_file_name != _url.url ()) {
+            url = KURL (m_file_name);
+            int p = _url.port ();
+            if (p > 0)
+                url.setPort (p);
+            url.setPath (url.path (1) + _url.host () + _url.path ());
+            // see if we somehow have to merge these
+    kdDebug () << "KMPlayerPart::openURL compose " << m_file_name << " " << _url.url() << " ->" << url.url() << endl;
+        } else
+            url = _url;
     } else { // if url is the container document, then it's an empty URL
         if (m_features & Feat_Viewer) // damn, look in the group
             for (i = std::find_if (i, e, pred);
