@@ -9,7 +9,7 @@ name=RealPlayer
 [1]
 description=Windows Media Player Plug-in
 file=libkmplayerpart.so
-mime=audio/x-ms-wma:wma:Windows Media Audio;video/x-ms-asf:asx,asf:Media Files;video/x-ms-wmv:wmv:Windows Media Video
+mime=application/x-mplayer2:wmp:Windows Media Player;audio/x-ms-wma:wma:Windows Media Audio;video/x-ms-asf:asx,asf:Media Files;video/x-ms-wmv:wmv:Windows Media Video
 name=Windows Media Player
 
 [2]
