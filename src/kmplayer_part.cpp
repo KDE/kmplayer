@@ -217,7 +217,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                     panel->setAutoControls (false);
                     panel->button (KMPlayer::ControlPanel::button_pause)->show ();
                     m_features = Feat_Controls;
-                } else if (val_lower == QString::fromLatin1("statusbar")) {
+                } else if (val_lower == QString::fromLatin1("statusbar") ||
+                        val_lower == QString::fromLatin1("statusfield")) {
                     m_features = Feat_StatusBar;
                 } else if (val_lower == QString::fromLatin1("infopanel")) {
                     m_features = Feat_InfoPanel;
