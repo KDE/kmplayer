@@ -613,6 +613,7 @@ static const JSCommandEntry JSCommandList [] = {
     { "SetCopyright", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetCurrentPosition", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetDoubleSize", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetFileName", setsource, 0L, KParts::LiveConnectExtension::TypeBool },
     { "SetFullScreen", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetImageStatus", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetLoop", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
