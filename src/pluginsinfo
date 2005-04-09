@@ -3,7 +3,7 @@ number=3
 [0]
 description=RealPlayer LiveConnect-Enabled Plug-In G2
 file=libkmplayerpart.so
-mime=audio/x-pn-realaudio:rm:Real Audio Stream
+mime=audio/x-pn-realaudio:rm:Real Audio Stream;audio/x-pn-realaudio-plugin:rpm,rm,ram:RealPlayer Plug-in
 name=RealPlayer
 
 [1]
