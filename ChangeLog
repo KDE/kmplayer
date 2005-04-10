@@ -1,4 +1,9 @@
 Changes since version 0.9.0-pre2
+- Support javascript properties FileName and Volume
+- Merge/redesign base of RegionNode and Element to TreeNode<T>, add an
+  in-between Node class and lower TextNode and Attribute in the hierarchy.
+  Makes some leaner, speeds up region animate painting and will hopefully
+  make it easier one day to port it to a real DOM library.
 - Store current url in KDE's session config
 - Added a 'Clear History' action, that will clear recent files and URL source
   history
