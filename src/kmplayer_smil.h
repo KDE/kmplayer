@@ -68,7 +68,7 @@ public slots:
     void emitOutOfBoundsEvent () { emit outOfBoundsEvent (); }
     void emitInBoundsEvent () { emit inBoundsEvent (); }
 protected:
-    RegionSignalerRuntime (ElementPtr e);
+    RegionSignalerRuntime (NodePtr e);
 };
 
 /**
@@ -83,7 +83,7 @@ public:
     enum DurationTime { begin_time = 0, duration_time, end_time, durtime_last };
     enum Fill { fill_unknown, fill_freeze };
 
-    TimedRuntime (ElementPtr e);
+    TimedRuntime (NodePtr e);
     virtual ~TimedRuntime ();
     virtual void begin ();
     virtual void end ();
@@ -103,7 +103,7 @@ public:
     } durations [(const int) durtime_last];
 signals:
     void elementStopped ();
-    void elementAboutToStart (ElementPtr child);
+    void elementAboutToStart (NodePtr child);
 public slots:
     void emitElementStopped () { emit elementStopped (); }
 protected slots:
@@ -131,7 +131,7 @@ protected:
  */
 class RegionRuntime : public RegionSignalerRuntime {
 public:
-    RegionRuntime (ElementPtr e);
+    RegionRuntime (NodePtr e);
     KDE_NO_CDTOR_EXPORT ~RegionRuntime () {}
     virtual void begin ();
     virtual void end ();
@@ -156,7 +156,7 @@ private:
 class ParRuntime : public TimedRuntime {
     Q_OBJECT
 public:
-    ParRuntime (ElementPtr e);
+    ParRuntime (NodePtr e);
     virtual void started ();
     virtual void stopped ();
 };
@@ -167,11 +167,11 @@ public:
 class ExclRuntime : public TimedRuntime {
     Q_OBJECT
 public:
-    ExclRuntime (ElementPtr e);
+    ExclRuntime (NodePtr e);
     virtual void begin ();
     virtual void reset ();
 private slots:
-    void elementAboutToStart (ElementPtr child);
+    void elementAboutToStart (NodePtr child);
 };
 
 /**
@@ -180,7 +180,7 @@ private slots:
 class MediaTypeRuntime : public TimedRuntime {
     Q_OBJECT
 protected:
-    MediaTypeRuntime (ElementPtr e);
+    MediaTypeRuntime (NodePtr e);
     bool wget (const KURL & url);
     void killWGet ();
 public:
@@ -205,7 +205,7 @@ protected slots:
 class AudioVideoData : public MediaTypeRuntime {
     Q_OBJECT
 public:
-    AudioVideoData (ElementPtr e);
+    AudioVideoData (NodePtr e);
     virtual bool isAudioVideo ();
     virtual QString setParam (const QString & name, const QString & value);
     virtual void started ();
@@ -217,7 +217,7 @@ public:
 class ImageData : public MediaTypeRuntime {
     Q_OBJECT
 public:
-    ImageData (ElementPtr e);
+    ImageData (NodePtr e);
     ~ImageData ();
     void paint (QPainter & p);
     virtual QString setParam (const QString & name, const QString & value);
@@ -234,7 +234,7 @@ private slots:
 class TextData : public MediaTypeRuntime {
     Q_OBJECT
 public:
-    TextData (ElementPtr e);
+    TextData (NodePtr e);
     ~TextData ();
     void paint (QPainter & p);
     void end ();
@@ -255,8 +255,8 @@ public:
     KDE_NO_CDTOR_EXPORT ~AnimateGroupData () {}
     virtual QString setParam (const QString & name, const QString & value);
 protected:
-    KDE_NO_CDTOR_EXPORT AnimateGroupData (ElementPtr e) : TimedRuntime (e) {}
-    ElementPtrW target_element;
+    KDE_NO_CDTOR_EXPORT AnimateGroupData (NodePtr e) : TimedRuntime (e) {}
+    NodePtrW target_element;
     RegionNodePtrW target_region;
     QString changed_attribute;
     QString change_to;
@@ -269,7 +269,7 @@ protected:
 class SetData : public AnimateGroupData {
     Q_OBJECT
 public:
-    KDE_NO_CDTOR_EXPORT SetData (ElementPtr e) : AnimateGroupData (e) {}
+    KDE_NO_CDTOR_EXPORT SetData (NodePtr e) : AnimateGroupData (e) {}
     KDE_NO_CDTOR_EXPORT ~SetData () {}
 protected slots:
     virtual void started ();
@@ -282,7 +282,7 @@ protected slots:
 class AnimateData : public AnimateGroupData {
     Q_OBJECT
 public:
-    AnimateData (ElementPtr e);
+    AnimateData (NodePtr e);
     KDE_NO_CDTOR_EXPORT ~AnimateData () {}
     virtual QString setParam (const QString & name, const QString & value);
     virtual void reset ();
@@ -313,8 +313,8 @@ namespace SMIL {
  */
 class Head : public Element {
 public:
-    KDE_NO_CDTOR_EXPORT Head (ElementPtr & d) : Element (d) {}
-    ElementPtr childFromTag (const QString & tag);
+    KDE_NO_CDTOR_EXPORT Head (NodePtr & d) : Element (d) {}
+    NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "head"; }
     void closed ();
     bool expose ();
@@ -325,13 +325,13 @@ public:
  */
 class Layout : public Element {
 public:
-    KDE_NO_CDTOR_EXPORT Layout (ElementPtr & d) : Element (d) {}
-    ElementPtr childFromTag (const QString & tag);
+    KDE_NO_CDTOR_EXPORT Layout (NodePtr & d) : Element (d) {}
+    NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "layout"; }
     void activate ();
     void closed ();
     RegionNodePtr regionRootLayout;
-    ElementPtrW rootLayout;
+    NodePtrW rootLayout;
 };
 
 /**
@@ -339,9 +339,9 @@ public:
  */
 class Region : public RegionBase {
 public:
-    KDE_NO_CDTOR_EXPORT Region (ElementPtr & d) : RegionBase (d) {}
+    KDE_NO_CDTOR_EXPORT Region (NodePtr & d) : RegionBase (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "region"; }
-    ElementPtr childFromTag (const QString & tag);
+    NodePtr childFromTag (const QString & tag);
     void calculateBounds (int w, int h);
 };
 
@@ -350,7 +350,7 @@ public:
  */
 class RootLayout : public RegionBase {
 public:
-    KDE_NO_CDTOR_EXPORT RootLayout (ElementPtr & d) : RegionBase (d) {}
+    KDE_NO_CDTOR_EXPORT RootLayout (NodePtr & d) : RegionBase (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
 };
 
@@ -364,9 +364,9 @@ public:
     void activate ();
     void deactivate ();
     void reset ();
-    void childDone (ElementPtr child);
+    void childDone (NodePtr child);
 protected:
-    KDE_NO_CDTOR_EXPORT TimedMrl (ElementPtr & d) : Mrl (d) {}
+    KDE_NO_CDTOR_EXPORT TimedMrl (NodePtr & d) : Mrl (d) {}
     ElementRuntimePtr runtime;
     virtual ElementRuntimePtr getNewRuntime () = 0;
 };
@@ -382,7 +382,7 @@ public:
     void deactivate ();
     void reset ();
 protected:
-    KDE_NO_CDTOR_EXPORT TimedElement (ElementPtr & d) : Element (d) {}
+    KDE_NO_CDTOR_EXPORT TimedElement (NodePtr & d) : Element (d) {}
     ElementRuntimePtr runtime;
     virtual ElementRuntimePtr getNewRuntime () = 0;
 };
@@ -395,7 +395,7 @@ public:
     KDE_NO_CDTOR_EXPORT ~GroupBase () {}
     bool isMrl ();
 protected:
-    KDE_NO_CDTOR_EXPORT GroupBase (ElementPtr & d) : TimedMrl (d) {}
+    KDE_NO_CDTOR_EXPORT GroupBase (NodePtr & d) : TimedMrl (d) {}
     virtual ElementRuntimePtr getNewRuntime ();
 };
 
@@ -404,13 +404,13 @@ protected:
  */
 class Par : public GroupBase {
 public:
-    KDE_NO_CDTOR_EXPORT Par (ElementPtr & d) : GroupBase (d) {}
-    ElementPtr childFromTag (const QString & tag);
+    KDE_NO_CDTOR_EXPORT Par (NodePtr & d) : GroupBase (d) {}
+    NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "par"; }
     void activate ();
     void deactivate ();
     void reset ();
-    void childDone (ElementPtr child);
+    void childDone (NodePtr child);
     ElementRuntimePtr getNewRuntime ();
 };
 
@@ -419,8 +419,8 @@ public:
  */
 class Seq : public GroupBase {
 public:
-    KDE_NO_CDTOR_EXPORT Seq (ElementPtr & d) : GroupBase (d) {}
-    ElementPtr childFromTag (const QString & tag);
+    KDE_NO_CDTOR_EXPORT Seq (NodePtr & d) : GroupBase (d) {}
+    NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "seq"; }
     void activate ();
 };
@@ -431,7 +431,7 @@ public:
  */
 class Body : public Seq {
 public:
-    KDE_NO_CDTOR_EXPORT Body (ElementPtr & d) : Seq (d) {}
+    KDE_NO_CDTOR_EXPORT Body (NodePtr & d) : Seq (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "body"; }
 };
 
@@ -440,11 +440,11 @@ public:
  */
 class Excl : public GroupBase {
 public:
-    KDE_NO_CDTOR_EXPORT Excl (ElementPtr & d) : GroupBase (d) {}
-    ElementPtr childFromTag (const QString & tag);
+    KDE_NO_CDTOR_EXPORT Excl (NodePtr & d) : GroupBase (d) {}
+    NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "excl"; }
     void activate ();
-    void childDone (ElementPtr child);
+    void childDone (NodePtr child);
     virtual ElementRuntimePtr getNewRuntime ();
 };
 
@@ -453,14 +453,14 @@ public:
  */
 class Switch : public Element {
 public:
-    KDE_NO_CDTOR_EXPORT Switch (ElementPtr & d) : Element (d) {}
-    ElementPtr childFromTag (const QString & tag);
+    KDE_NO_CDTOR_EXPORT Switch (NodePtr & d) : Element (d) {}
+    NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "switch"; }
     // Condition
     void activate ();
     void deactivate ();
     void reset ();
-    void childDone (ElementPtr child);
+    void childDone (NodePtr child);
 };
 
 /**
@@ -468,8 +468,8 @@ public:
  */
 class MediaType : public TimedMrl {
 public:
-    MediaType (ElementPtr & d, const QString & t);
-    ElementPtr childFromTag (const QString & tag);
+    MediaType (NodePtr & d, const QString & t);
+    NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
     void opened ();
     void activate ();
@@ -479,7 +479,7 @@ public:
 
 class AVMediaType : public MediaType {
 public:
-    AVMediaType (ElementPtr & d, const QString & t);
+    AVMediaType (NodePtr & d, const QString & t);
     ElementRuntimePtr getNewRuntime ();
     void activate ();
     void deactivate ();
@@ -487,19 +487,19 @@ public:
 
 class ImageMediaType : public MediaType {
 public:
-    ImageMediaType (ElementPtr & d);
+    ImageMediaType (NodePtr & d);
     ElementRuntimePtr getNewRuntime ();
 };
 
 class TextMediaType : public MediaType {
 public:
-    TextMediaType (ElementPtr & d);
+    TextMediaType (NodePtr & d);
     ElementRuntimePtr getNewRuntime ();
 };
 
 class Set : public TimedElement {
 public:
-    KDE_NO_CDTOR_EXPORT Set (ElementPtr & d) : TimedElement (d) {}
+    KDE_NO_CDTOR_EXPORT Set (NodePtr & d) : TimedElement (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "set"; }
     virtual ElementRuntimePtr getNewRuntime ();
     virtual void activate ();
@@ -508,7 +508,7 @@ public:
 
 class Animate : public TimedElement {
 public:
-    KDE_NO_CDTOR_EXPORT Animate (ElementPtr & d) : TimedElement (d) {}
+    KDE_NO_CDTOR_EXPORT Animate (NodePtr & d) : TimedElement (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
     virtual ElementRuntimePtr getNewRuntime ();
     bool expose () { return false; }
@@ -516,7 +516,7 @@ public:
 
 class Param : public Element {
 public:
-    KDE_NO_CDTOR_EXPORT Param (ElementPtr & d) : Element (d) {}
+    KDE_NO_CDTOR_EXPORT Param (NodePtr & d) : Element (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "param"; }
     void activate ();
     bool expose () { return false; }

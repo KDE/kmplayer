@@ -992,7 +992,7 @@ KDE_NO_EXPORT void KMPlayerVCDSource::buildArguments () {
     m_recordcmd = m_options;
 }
 
-KDE_NO_EXPORT void KMPlayerVCDSource::jump (KMPlayer::ElementPtr e) {
+KDE_NO_EXPORT void KMPlayerVCDSource::jump (KMPlayer::NodePtr e) {
     if (m_current != e) {
         m_player->stop ();
         m_current = e;

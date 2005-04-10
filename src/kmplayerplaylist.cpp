@@ -32,7 +32,7 @@ using namespace KMPlayer;
 
 //-----------------------------------------------------------------------------
 
-static Element * fromXMLDocumentGroup (ElementPtr & d, const QString & tag) {
+static Node * fromXMLDocumentGroup (NodePtr & d, const QString & tag) {
     const char * const name = tag.latin1 ();
     if (!strcmp (name, "smil"))
         return new Smil (d);
@@ -70,14 +70,14 @@ QTextStream & operator << (QTextStream & out, const XMLStringlet & txt) {
 
 int NodeList::length () {
     int len = 0;
-    for (ElementPtr e = first_element; e; e = e->nextSibling ())
+    for (NodePtr e = first_element; e; e = e->nextSibling ())
         len++;
     return len;
 }
 
-ElementPtr NodeList::item (int i) const {
-    ElementPtr elm;
-    for (ElementPtr e = first_element; e; e = e->nextSibling (), i--)
+NodePtr NodeList::item (int i) const {
+    NodePtr elm;
+    for (NodePtr e = first_element; e; e = e->nextSibling (), i--)
         if (i == 0) {
             elm = e;
             break;
@@ -87,30 +87,30 @@ ElementPtr NodeList::item (int i) const {
     
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT Element::Element (ElementPtr & d)
- : m_doc (d), m_attributes (AttributePtr (new Attribute)), state (state_init) {}
+KDE_NO_CDTOR_EXPORT Node::Node (NodePtr & d)
+ : m_doc (d), state (state_init) {}
 
-Element::~Element () {
+Node::~Node () {
     clear ();
 }
 
-Document * Element::document () {
+Document * Node::document () {
     return convertNode <Document> (m_doc);
 }
 
-Mrl * Element::mrl () {
+Mrl * Node::mrl () {
     return dynamic_cast<Mrl*>(this);
 }
 
-const Mrl * Element::mrl () const {
+const Mrl * Node::mrl () const {
     return dynamic_cast<const Mrl*>(this);
 }
 
-KDE_NO_EXPORT const char * Element::nodeName () const {
+KDE_NO_EXPORT const char * Node::nodeName () const {
     return "element";
 }
 
-void Element::setState (State nstate) {
+void Node::setState (State nstate) {
     if (state != nstate) {
         state = nstate;
         if (document ()->notify_listener)
@@ -118,12 +118,12 @@ void Element::setState (State nstate) {
     }
 }
 
-bool Element::expose () {
+bool Node::expose () {
     return true;
 }
 
-void Element::activate () {
-    kdDebug () << nodeName () << " Element::activate" << endl;
+void Node::activate () {
+    kdDebug () << nodeName () << " Node::activate" << endl;
     setState (state_activated);
     if (firstChild ())
         firstChild ()->activate (); // activate only the first
@@ -131,27 +131,27 @@ void Element::activate () {
         deactivate (); // nothing to activate
 }
 
-void Element::defer () {
+void Node::defer () {
     if (state == state_activated) {
         setState (state_deferred);
         defer_tree_version = document ()->m_tree_version;
     } else
-        kdError () << "Element::defer () call on not activated element" << endl;
+        kdError () << "Node::defer () call on not activated element" << endl;
 }
 
-void Element::undefer () {
+void Node::undefer () {
     if (state == state_deferred) {
         setState (state_activated);
         if (defer_tree_version != document ()->m_tree_version)
             activate ();
     } else
-        kdWarning () <<"Element::undefer () call on not defered element"<< endl;
+        kdWarning () <<"Node::undefer () call on not defered element"<< endl;
 }
 
-void Element::deactivate () {
-    kdDebug () << nodeName () << " Element::deactivate" << endl;
+void Node::deactivate () {
+    kdDebug () << nodeName () << " Node::deactivate" << endl;
     setState (state_deactivated);
-    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
+    for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
         if (e->state > state_init && e->state < state_deactivated)
             e->deactivate ();
         else
@@ -161,12 +161,12 @@ void Element::deactivate () {
         m_parent->childDone (m_self);
 }
 
-void Element::reset () {
-    kdDebug () << nodeName () << " Element::reset" << endl;
+void Node::reset () {
+    kdDebug () << nodeName () << " Node::reset" << endl;
     if (state == state_activated)
         deactivate ();
     setState (state_init);
-    for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
+    for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
         if (e->state != state_init)
             e->reset ();
         else
@@ -174,8 +174,8 @@ void Element::reset () {
     }
 }
 
-void Element::childDone (ElementPtr child) {
-    kdDebug () << nodeName () << " Element::childDone" << endl;
+void Node::childDone (NodePtr child) {
+    kdDebug () << nodeName () << " Node::childDone" << endl;
     if (state == state_activated) {
         if (child->nextSibling ())
             child->nextSibling ()->activate ();
@@ -184,7 +184,7 @@ void Element::childDone (ElementPtr child) {
     }
 }
 
-void Element::clear () {
+void Node::clear () {
     if (m_doc)
         document()->m_tree_version++;
     while (m_first_child != m_last_child) {
@@ -196,15 +196,14 @@ void Element::clear () {
     if (m_first_child)
         m_first_child->m_parent = 0L;
     m_first_child = m_last_child = 0L;
-    m_attributes = AttributePtr (new Attribute); // remove attributes
 }
 
-void Element::appendChild (ElementPtr c) {
+void Node::appendChild (NodePtr c) {
     document()->m_tree_version++;
-    Node<Element>::appendChild (c);
+    TreeNode<Node>::appendChild (c);
 }
 
-KDE_NO_EXPORT void Element::insertBefore (ElementPtr c, ElementPtr b) {
+KDE_NO_EXPORT void Node::insertBefore (NodePtr c, NodePtr b) {
     document()->m_tree_version++;
     if (b->m_prev) {
         b->m_prev->m_next = c;
@@ -218,7 +217,7 @@ KDE_NO_EXPORT void Element::insertBefore (ElementPtr c, ElementPtr b) {
     c->m_parent = m_self;
 }
 
-void Element::removeChild (ElementPtr c) {
+void Node::removeChild (NodePtr c) {
     document()->m_tree_version++;
     if (c->m_prev) {
         c->m_prev->m_next = c->m_next;
@@ -233,7 +232,7 @@ void Element::removeChild (ElementPtr c) {
     c->m_parent = 0L;
 }
 
-KDE_NO_EXPORT void Element::replaceChild (ElementPtr _new, ElementPtr old) {
+KDE_NO_EXPORT void Node::replaceChild (NodePtr _new, NodePtr old) {
     document()->m_tree_version++;
     if (old->m_prev) {
         old->m_prev->m_next = _new;
@@ -255,11 +254,11 @@ KDE_NO_EXPORT void Element::replaceChild (ElementPtr _new, ElementPtr old) {
     old->m_parent = 0L;
 }
 
-ElementPtr Element::childFromTag (const QString &) {
-    return ElementPtr ();
+NodePtr Node::childFromTag (const QString &) {
+    return NodePtr ();
 }
 
-KDE_NO_EXPORT void Element::characterData (const QString & s) {
+KDE_NO_EXPORT void Node::characterData (const QString & s) {
     document()->m_tree_version++;
     if (!m_last_child || strcmp (m_last_child->nodeName (), "#text"))
         appendChild ((new TextNode (m_doc, s))->self ());
@@ -267,10 +266,10 @@ KDE_NO_EXPORT void Element::characterData (const QString & s) {
         convertNode <TextNode> (m_last_child)->appendText (s);
 }
 
-void Element::normalize () {
-    ElementPtr e = firstChild ();
+void Node::normalize () {
+    NodePtr e = firstChild ();
     while (e) {
-        ElementPtr tmp = e->nextSibling ();
+        NodePtr tmp = e->nextSibling ();
         if (!strcmp (e->nodeName (), "#text")) {
             if (e->nodeValue ().stripWhiteSpace ().isEmpty ())
                 removeChild (e);
@@ -280,8 +279,8 @@ void Element::normalize () {
     }
 }
 
-static void getInnerText (const ElementPtr p, QTextOStream & out) {
-    for (ElementPtr e = p->firstChild (); e; e = e->nextSibling ()) {
+static void getInnerText (const NodePtr p, QTextOStream & out) {
+    for (NodePtr e = p->firstChild (); e; e = e->nextSibling ()) {
         if (!strcmp (e->nodeName (), "#text"))
             out << e->nodeValue ();
         else
@@ -289,56 +288,62 @@ static void getInnerText (const ElementPtr p, QTextOStream & out) {
     }
 }
 
-QString Element::innerText () const {
+QString Node::innerText () const {
     QString buf;
     QTextOStream out (&buf);
     getInnerText (self (), out);
     return buf;
 }
 
-static void getOuterXML (const ElementPtr p, QTextOStream & out) {
-    if (!strcmp (p->nodeName (), "#text"))
+static void getOuterXML (const NodePtr p, QTextOStream & out) {
+    if (!p->isElementNode ()) // #text
         out << XMLStringlet (p->nodeValue ());
     else {
-        out << QChar ('<') << XMLStringlet (p->nodeName ());
-        for (AttributePtr a=p->attributes()->firstChild();a; a=a->nextSibling())
+        Element * e = convertNode <Element> (p);
+        out << QChar ('<') << XMLStringlet (e->nodeName ());
+        for (AttributePtr a=e->attributes()->firstChild();a; a=a->nextSibling())
             out << " " << XMLStringlet (a->nodeName ()) << "=\"" << XMLStringlet (a->nodeValue ()) << "\"";
-        if (p->hasChildNodes ()) {
+        if (e->hasChildNodes ()) {
             out << QChar ('>');
-            for (ElementPtr e = p->firstChild (); e; e = e->nextSibling ())
-                getOuterXML (e, out);
-            out << QString("</") << XMLStringlet (p->nodeName()) << QChar ('>');
+            for (NodePtr c = e->firstChild (); c; c = c->nextSibling ())
+                getOuterXML (c, out);
+            out << QString("</") << XMLStringlet (e->nodeName()) << QChar ('>');
         } else
             out << QString ("/>");
     }
 }
 
-QString Element::innerXML () const {
+QString Node::innerXML () const {
     QString buf;
     QTextOStream out (&buf);
-    for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
+    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         getOuterXML (e, out);
     return buf;
 }
 
-QString Element::outerXML () const {
+QString Node::outerXML () const {
     QString buf;
     QTextOStream out (&buf);
     getOuterXML (self (), out);
     return buf;
 }
 
-void Element::setAttributes (AttributePtr attrs) {
-    m_attributes = attrs;
-}
-
-bool Element::isMrl () {
+bool Node::isMrl () {
     return false;
 }
 
-void Element::opened () {}
+void Node::opened () {}
 
-void Element::closed () {}
+void Node::closed () {}
+
+QString Node::nodeValue () const {
+    return QString::null;
+}
+
+//-----------------------------------------------------------------------------
+
+Element::Element (NodePtr & d)
+    : Node (d), m_attributes (AttributePtr (new Attribute)) {}
 
 void Element::setAttribute (const QString & name, const QString & value) {
     const char * name_latin = name.latin1 ();
@@ -360,8 +365,13 @@ QString Element::getAttribute (const QString & name) {
     return value;
 }
 
-QString Element::nodeValue () const {
-    return QString::null;
+void Element::clear () {
+    m_attributes = AttributePtr (new Attribute); // remove attributes
+    Node::clear ();
+}
+
+void Element::setAttributes (AttributePtr attrs) {
+    m_attributes = attrs;
 }
 
 Attribute::Attribute (const QString & n, const QString & v)
@@ -377,14 +387,14 @@ const char * Attribute::nodeName () const {
 
 //-----------------------------------------------------------------------------
 
-static bool hasMrlChildren (const ElementPtr & e) {
-    for (ElementPtr c = e->firstChild (); c; c = c->nextSibling ())
+static bool hasMrlChildren (const NodePtr & e) {
+    for (NodePtr c = e->firstChild (); c; c = c->nextSibling ())
         if (c->isMrl () || hasMrlChildren (c))
             return true;
     return false;
 }
 
-Mrl::Mrl (ElementPtr & d) : Element (d), cached_ismrl_version (~0), width (0), height (0), aspect (0), parsed (false), bookmarkable (true) {}
+Mrl::Mrl (NodePtr & d) : Element (d), cached_ismrl_version (~0), width (0), height (0), aspect (0), parsed (false), bookmarkable (true) {}
 
 Mrl::~Mrl () {}
 
@@ -395,7 +405,7 @@ bool Mrl::isMrl () {
         if (!src.isEmpty()) {
             if (pretty_name.isEmpty ())
                 pretty_name = src;
-            for (ElementPtr e = parentNode (); e; e = e->parentNode ()) {
+            for (NodePtr e = parentNode (); e; e = e->parentNode ()) {
                 Mrl * mrl = e->mrl ();
                 if (mrl)
                     src = KURL (mrl->src, src).url ();
@@ -405,14 +415,14 @@ bool Mrl::isMrl () {
     return cached_ismrl;
 }
 
-ElementPtr Mrl::childFromTag (const QString & tag) {
-    Element * elm = fromXMLDocumentGroup (m_doc, tag);
+NodePtr Mrl::childFromTag (const QString & tag) {
+    Node * elm = fromXMLDocumentGroup (m_doc, tag);
     if (elm)
         return elm->self ();
-    return ElementPtr ();
+    return NodePtr ();
 }
 
-ElementPtr Mrl::realMrl () {
+NodePtr Mrl::realMrl () {
     return m_self;
 }
 
@@ -432,7 +442,7 @@ void Mrl::activate () {
 //-----------------------------------------------------------------------------
 
 namespace KMPlayer {
-    static ElementPtr dummy_element;
+    static NodePtr dummy_element;
 }
 
 Document::Document (const QString & s, PlayListNotify * n)
@@ -445,25 +455,28 @@ KDE_NO_CDTOR_EXPORT Document::~Document () {
     kdDebug () << "~Document\n";
 }
 
-static ElementPtr getElementByIdImpl (ElementPtr e, const QString & id) {
+static NodePtr getElementByIdImpl (NodePtr n, const QString & id) {
+    NodePtr elm;
+    if (!n->isElementNode ())
+        return elm;
+    Element * e = convertNode <Element> (n);
     if (e->getAttribute ("id") == id)
-        return e;
-    ElementPtr elm;
-    for (ElementPtr c = e->firstChild (); c; c = c->nextSibling ())
+        return n;
+    for (NodePtr c = e->firstChild (); c; c = c->nextSibling ())
         if ((elm = getElementByIdImpl (c, id)))
             break;
     return elm;
 }
 
-ElementPtr Document::getElementById (const QString & id) {
+NodePtr Document::getElementById (const QString & id) {
     return getElementByIdImpl (m_self, id);
 }
 
-KDE_NO_EXPORT ElementPtr Document::childFromTag (const QString & tag) {
-    Element * elm = fromXMLDocumentGroup (m_doc, tag);
+KDE_NO_EXPORT NodePtr Document::childFromTag (const QString & tag) {
+    Node * elm = fromXMLDocumentGroup (m_doc, tag);
     if (elm)
         return elm->self ();
-    return ElementPtr ();
+    return NodePtr ();
 }
 
 void Document::dispose () {
@@ -477,8 +490,8 @@ bool Document::isMrl () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT TextNode::TextNode (ElementPtr & d, const QString & s)
- : Element (d), text (s) {}
+KDE_NO_CDTOR_EXPORT TextNode::TextNode (NodePtr & d, const QString & s)
+ : Node (d), text (s) {}
 
 void TextNode::appendText (const QString & s) {
     text += s;
@@ -494,10 +507,10 @@ KDE_NO_EXPORT bool TextNode::expose () {
 
 //-----------------------------------------------------------------------------
 
-DarkNode::DarkNode (ElementPtr & d, const QString & n) : Element (d), name (n) {
+DarkNode::DarkNode (NodePtr & d, const QString & n) : Element (d), name (n) {
 }
 
-ElementPtr DarkNode::childFromTag (const QString & tag) {
+NodePtr DarkNode::childFromTag (const QString & tag) {
     return (new DarkNode (m_doc, tag))->self ();
 }
 
@@ -507,12 +520,12 @@ KDE_NO_EXPORT bool DarkNode::expose () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT Title::Title (ElementPtr & d)
+KDE_NO_CDTOR_EXPORT Title::Title (NodePtr & d)
     : DarkNode (d, QString ("title")) {}
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT ElementPtr ASX::Asx::childFromTag (const QString & tag) {
+KDE_NO_EXPORT NodePtr ASX::Asx::childFromTag (const QString & tag) {
     const char * name = tag.latin1 ();
     if (!strcasecmp (name, "entry"))
         return (new ASX::Entry (m_doc))->self ();
@@ -520,12 +533,12 @@ KDE_NO_EXPORT ElementPtr ASX::Asx::childFromTag (const QString & tag) {
         return (new ASX::EntryRef (m_doc))->self ();
     else if (!strcasecmp (name, "title"))
         return (new Title (m_doc))->self ();
-    return ElementPtr ();
+    return NodePtr ();
 }
 
 KDE_NO_EXPORT bool ASX::Asx::isMrl () {
     if (cached_ismrl_version != document ()->m_tree_version) {
-        for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
+        for (NodePtr e = firstChild (); e; e = e->nextSibling ())
             if (!strcmp (e->nodeName (), "title"))
                 pretty_name = e->innerText ();
     }
@@ -533,13 +546,13 @@ KDE_NO_EXPORT bool ASX::Asx::isMrl () {
 }
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT ElementPtr ASX::Entry::childFromTag (const QString & tag) {
+KDE_NO_EXPORT NodePtr ASX::Entry::childFromTag (const QString & tag) {
     const char * name = tag.latin1 ();
     if (!strcasecmp (name, "ref"))
         return (new ASX::Ref (m_doc))->self ();
     else if (!strcasecmp (name, "title"))
         return (new Title (m_doc))->self ();
-    return ElementPtr ();
+    return NodePtr ();
 }
 
 KDE_NO_EXPORT bool ASX::Entry::isMrl () {
@@ -547,7 +560,7 @@ KDE_NO_EXPORT bool ASX::Entry::isMrl () {
         QString pn;
         src.truncate (0);
         bool foundone = false;
-        for (ElementPtr e = firstChild (); e; e = e->nextSibling ()) {
+        for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
             if (e->isMrl () && !e->hasChildNodes ()) {
                 if (foundone) {
                     src.truncate (0);
@@ -567,8 +580,8 @@ KDE_NO_EXPORT bool ASX::Entry::isMrl () {
     return !src.isEmpty ();
 }
 
-KDE_NO_EXPORT ElementPtr ASX::Entry::realMrl () {
-    for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
+KDE_NO_EXPORT NodePtr ASX::Entry::realMrl () {
+    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         if (e->isMrl ())
             return e;
     return m_self;
@@ -601,13 +614,13 @@ KDE_NO_EXPORT void ASX::EntryRef::opened () {
 
 //-----------------------------------------------------------------------------
 
-GenericURL::GenericURL (ElementPtr & d, const QString & s, const QString & name)
+GenericURL::GenericURL (NodePtr & d, const QString & s, const QString & name)
  : Mrl (d) {
     src = s;
     pretty_name = name;
 }
 
-GenericMrl::GenericMrl (ElementPtr & d, const QString & s, const QString & name)
+GenericMrl::GenericMrl (NodePtr & d, const QString & s, const QString & name)
  : Mrl (d) {
     src = s;
     pretty_name = name;
@@ -627,7 +640,7 @@ namespace KMPlayer {
 
 class DocumentBuilder {
 public:
-    DocumentBuilder (ElementPtr d) : position (0), m_doc (d), equal_seen (false), in_dbl_quote (false), in_sngl_quote (false), have_error (false) {}
+    DocumentBuilder (NodePtr d) : position (0), m_doc (d), equal_seen (false), in_dbl_quote (false), in_sngl_quote (false), have_error (false) {}
     virtual ~DocumentBuilder () {};
     bool parse (QTextStream & d);
 protected:
@@ -659,7 +672,7 @@ private:
     TokenInfoPtr next_token, token, prev_token;
     // for element reading
     QString tagname;
-    ElementPtr m_doc;
+    NodePtr m_doc;
     AttributePtr m_attributes;
     QString attr_name, attr_value;
     QString cdata;
@@ -682,10 +695,10 @@ private:
 
 class KMPlayerDocumentBuilder : public DocumentBuilder {
     int m_ignore_depth;
-    ElementPtr m_elm;
-    ElementPtr m_root;
+    NodePtr m_node;
+    NodePtr m_root;
 public:
-    KMPlayerDocumentBuilder (ElementPtr d);
+    KMPlayerDocumentBuilder (NodePtr d);
     ~KMPlayerDocumentBuilder () {}
 protected:
     bool startTag (const QString & tag, AttributePtr attr);
@@ -693,7 +706,7 @@ protected:
     bool characterData (const QString & data);
 };
 
-void readXML (ElementPtr root, QTextStream & in, const QString & firstline) {
+void readXML (NodePtr root, QTextStream & in, const QString & firstline) {
     KMPlayerDocumentBuilder builder (root);
     if (!firstline.isEmpty ()) {
         QString str (firstline + QChar ('\n'));
@@ -921,7 +934,7 @@ bool DocumentBuilder::readAttributes () {
             have_error &= endTag (tagname);
         //kdDebug () << "readTag " << tagname << " closed:" << closed << " ok:" << have_error << endl;
     }
-    m_state = m_state->next; // pop Element or PI
+    m_state = m_state->next; // pop Node or PI
     return true;
 }
 
@@ -1084,26 +1097,27 @@ bool DocumentBuilder::parse (QTextStream & d) {
     return false; // need more data
 }
 
-KMPlayerDocumentBuilder::KMPlayerDocumentBuilder (ElementPtr d)
+KMPlayerDocumentBuilder::KMPlayerDocumentBuilder (NodePtr d)
  : DocumentBuilder (d->document ()->self ()), m_ignore_depth (0),
-   m_elm (d), m_root (d) {}
+   m_node (d), m_root (d) {}
 
 bool KMPlayerDocumentBuilder::startTag(const QString & tag, AttributePtr attr) {
     if (m_ignore_depth) {
         m_ignore_depth++;
         //kdDebug () << "Warning: ignored tag " << tag.latin1 () << " ignore depth = " << m_ignore_depth << endl;
     } else {
-        ElementPtr e = m_elm->childFromTag (tag);
-        if (!e) {
+        NodePtr n = m_node->childFromTag (tag);
+        if (!n) {
             kdDebug () << "Warning: unknown tag " << tag.latin1 () << endl;
-            ElementPtr doc = m_root->document ()->self ();
-            e = (new DarkNode (doc, tag))->self ();
+            NodePtr doc = m_root->document ()->self ();
+            n = (new DarkNode (doc, tag))->self ();
         }
         //kdDebug () << "Found tag " << tag.latin1 () << endl;
-        e->setAttributes (attr);
-        m_elm->appendChild (e);
-        e->opened ();
-        m_elm = e;
+        if (n->isElementNode ())
+            convertNode <Element> (n)->setAttributes (attr);
+        m_node->appendChild (n);
+        n->opened ();
+        m_node = n;
     }
     return true;
 }
@@ -1113,20 +1127,20 @@ bool KMPlayerDocumentBuilder::endTag (const QString & /*tag*/) {
         m_ignore_depth--;
         kdDebug () << "Warning: ignored end tag " << " ignore depth = " << m_ignore_depth <<  endl;
     } else {  // endtag
-        if (m_elm == m_root) {
-            kdDebug () << "m_elm == m_doc, stack underflow " << endl;
+        if (m_node == m_root) {
+            kdDebug () << "m_node == m_doc, stack underflow " << endl;
             return false;
         }
         //kdDebug () << "end tag " << tag.latin1 () << endl;
-        m_elm->closed ();
-        m_elm = m_elm->parentNode ();
+        m_node->closed ();
+        m_node = m_node->parentNode ();
     }
     return true;
 }
 
 bool KMPlayerDocumentBuilder::characterData (const QString & data) {
     if (!m_ignore_depth)
-        m_elm->characterData (data);
+        m_node->characterData (data);
     //kdDebug () << "characterData " << d.latin1() << endl;
     return true;
 }

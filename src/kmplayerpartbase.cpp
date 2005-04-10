@@ -716,17 +716,17 @@ void Source::setDimensions (int w, int h) {
 void Source::setLength (int len) {
     m_length = len;
 }
-
-static void printTree (ElementPtr root, QString off=QString()) {
+/*
+static void printTree (NodePtr root, QString off=QString()) {
     if (!root) {
         kdDebug() << off << "[null]" << endl;
         return;
     }
     kdDebug() << off << root->nodeName() << " " << (Element*)root << (root->isMrl() ? root->mrl ()->src : QString ("-")) << endl;
     off += QString ("  ");
-    for (ElementPtr e = root->firstChild(); e; e = e->nextSibling())
+    for (NodePtr e = root->firstChild(); e; e = e->nextSibling())
         printTree(e, off);
-}
+}*/
 
 void Source::setURL (const KURL & url) {
     m_url = url;
@@ -748,7 +748,7 @@ void Source::setURL (const KURL & url) {
 void Source::reset () {
     if (m_document) {
         kdDebug() << "Source::first" << endl;
-        m_current = ElementPtr ();
+        m_current = NodePtr ();
         m_document->reset ();
         m_player->updateTree ();
     }
@@ -777,7 +777,7 @@ void Source::playCurrent () {
         if (!m_current)
             m_document->activate ();
         else { // ugly code duplicate w/ back_request
-            for (ElementPtr p = m_current->parentNode(); p; p = p->parentNode())
+            for (NodePtr p = m_current->parentNode(); p; p = p->parentNode())
                 p->setState (Element::state_activated);
             m_current->activate ();
         }
@@ -791,18 +791,18 @@ void Source::playCurrent () {
     m_player->updateTree ();
 }
 
-static ElementPtr findDepthFirst (ElementPtr elm) {
+static NodePtr findDepthFirst (NodePtr elm) {
     if (!elm)
-        return ElementPtr ();
-    ElementPtr tmp = elm;
+        return NodePtr ();
+    NodePtr tmp = elm;
     for ( ; tmp; tmp = tmp->nextSibling ()) {
         if (tmp->isMrl ())
             return tmp;
-        ElementPtr tmp2 = findDepthFirst (tmp->firstChild ());
+        NodePtr tmp2 = findDepthFirst (tmp->firstChild ());
         if (tmp2)
             return tmp2;
     }
-    return ElementPtr ();
+    return NodePtr ();
 }
 
 void Source::playURLDone () {
@@ -814,11 +814,11 @@ void Source::playURLDone () {
             playCurrent (); // don't mess with SMIL, just play the damn link
         } else {
             m_document->reset (); // deactivate everything
-            for (ElementPtr p = m_current->parentNode(); p; p = p->parentNode())
+            for (NodePtr p = m_current->parentNode(); p; p = p->parentNode())
                 p->setState (Element::state_activated);
             m_current->activate ();
         }
-        m_back_request = ElementPtr ();
+        m_back_request = NodePtr ();
     } else {
         Mrl * mrl = m_current ? m_current->mrl () : 0L;
         if (mrl)
@@ -827,7 +827,7 @@ void Source::playURLDone () {
     m_player->process()->view ()->viewArea ()->repaint ();
 }
 
-bool Source::requestPlayURL (ElementPtr mrl, RegionNodePtr /*region*/) {
+bool Source::requestPlayURL (NodePtr mrl, RegionNodePtr /*region*/) {
     kdDebug() << "Source::requestPlayURL " << mrl->mrl ()->src << endl;
     if (m_player->process ()->state () > Process::Ready) {
         m_back_request = mrl; // still playing, schedule it
@@ -840,8 +840,8 @@ bool Source::requestPlayURL (ElementPtr mrl, RegionNodePtr /*region*/) {
     return m_player->process ()->playing ();
 }
 
-void Source::stateElementChanged (ElementPtr elm) {
-    kdDebug() << "Source::stateElementChanged " << elm->nodeName () << " started:" << (int) elm->state << endl;
+void Source::stateElementChanged (NodePtr elm) {
+    kdDebug() << "Source::stateElementChanged " << elm->nodeName () << " state:" << (int) elm->state << " cur isMrl:" << (m_current && m_current->isMrl ()) << " elm==realMrl:" << (m_current && elm == m_current->mrl ()->realMrl ()) << " p state:" << m_player->process ()->state () << endl;
     if (elm->state == Element::state_deactivated) {
         if (elm == m_document && !m_back_request)
             emit endOfPlayItems (); // played all items
@@ -864,7 +864,7 @@ void Source::avWidgetSizes (RegionNode * r, unsigned int * bg) {
 }
 
 void Source::insertURL (const QString & mrl) {
-    kdDebug() << "Source::insertURL " << (Element*)m_current << mrl << endl;
+    kdDebug() << "Source::insertURL " << m_current.ptr () << mrl << endl;
     KURL url (currentMrl (), mrl);
     if (!url.isValid ())
         kdError () << "try to append non-valid url" << endl;
@@ -872,10 +872,10 @@ void Source::insertURL (const QString & mrl) {
         kdError () << "try to append url to itself" << endl;
     else if (m_current) {
         int depth = 0;
-        for (ElementPtr e = m_current; e->parentNode (); e = e->parentNode ())
+        for (NodePtr e = m_current; e->parentNode (); e = e->parentNode ())
             ++depth;
         if (depth < 40) {
-            ElementPtr e = m_current;
+            NodePtr e = m_current;
             if (m_current->isMrl ())
                 e = m_current->mrl ()->realMrl ();
             e->appendChild ((new GenericURL (m_document, KURL::decode_string (url.url ()), KURL::decode_string (mrl)))->self ());
@@ -887,7 +887,7 @@ void Source::insertURL (const QString & mrl) {
 void Source::play () {
     m_player->updateTree ();
     QTimer::singleShot (0, m_player, SLOT (play ()));
-    printTree (m_document);
+    //printTree (m_document);
 }
 
 void Source::backward () {
@@ -903,7 +903,7 @@ void Source::backward () {
         while (m_back_request && m_back_request != m_document) {
             if (m_back_request->previousSibling ()) {
                 m_back_request = m_back_request->previousSibling ();
-                ElementPtr e = findDepthFirst (m_back_request); // lastDepth..
+                NodePtr e = findDepthFirst (m_back_request); // lastDepth..
                 if (e) {
                     m_back_request = e;
                     m_player->process ()->stop ();
@@ -924,7 +924,7 @@ void Source::forward () {
         m_player->process ()->seek (m_player->settings()->seektime * 10, false);
 }
 
-void Source::jump (ElementPtr e) {
+void Source::jump (NodePtr e) {
     if (e->isMrl ()) {
         if (m_player->playing ()) {
             m_back_request = e;
@@ -1268,7 +1268,7 @@ KDE_NO_EXPORT void URLSource::read (QTextStream & textstream) {
         line = textstream.readLine ();
     } while (!line.isNull () && line.stripWhiteSpace ().isEmpty ());
     if (!line.isNull ()) {
-        ElementPtr cur_elm = m_current;
+        NodePtr cur_elm = m_current;
         if (m_current->isMrl ())
             cur_elm = m_current->mrl ()->realMrl ();
         if (mime () == QString ("audio/x-scpls")) {
@@ -1389,7 +1389,7 @@ void URLSource::playCurrent () {
     KURL url (currentMrl ());
     int depth = 0;
     if (m_current)
-        for (ElementPtr e = m_current; e->parentNode (); e = e->parentNode ())
+        for (NodePtr e = m_current; e->parentNode (); e = e->parentNode ())
             ++depth;
     if (depth > 40 || url.isEmpty () || m_current->mrl ()->parsed) {
         Source::playCurrent ();

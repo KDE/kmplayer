@@ -64,11 +64,11 @@ class PlayListView;
  */
 class KMPLAYER_EXPORT ListViewItem : public QListViewItem {
 public:
-    ListViewItem (QListViewItem *p, const ElementPtr & e, PlayListView * lv);
+    ListViewItem (QListViewItem *p, const NodePtr & e, PlayListView * lv);
     ListViewItem (QListViewItem *p, const AttributePtr & e, PlayListView * lv);
-    ListViewItem (PlayListView *v, const ElementPtr & e);
+    ListViewItem (PlayListView *v, const NodePtr & e);
     KDE_NO_CDTOR_EXPORT ~ListViewItem () {}
-    ElementPtrW m_elm;
+    NodePtrW m_elm;
     AttributePtrW m_attr;
     PlayListView * listview;
 };
@@ -81,7 +81,7 @@ class KMPLAYER_EXPORT PlayListView : public KListView {
 public:
     PlayListView (QWidget * parent, View * view);
     ~PlayListView ();
-    void updateTree (ElementPtr root, ElementPtr active);
+    void updateTree (NodePtr root, NodePtr active);
     void selectItem (const QString & txt);
 signals:
     void addBookMark (const QString & title, const QString & url);
@@ -95,7 +95,7 @@ private slots:
     void addBookMark ();
     void toggleShowAllNodes ();
 private:
-    void populate (ElementPtr e, ElementPtr focus, QListViewItem * item, QListViewItem ** curitem);
+    void populate (NodePtr e, NodePtr focus, QListViewItem * item, QListViewItem ** curitem);
     View * m_view;
     QPopupMenu * m_itemmenu;
     QPixmap folder_pix;

@@ -73,8 +73,8 @@ public:
     KDE_NO_EXPORT const QString & pipeCmd () const { return m_pipecmd; }
     KDE_NO_EXPORT const QString & options () const { return m_options; }
     KDE_NO_EXPORT const QString & recordCmd () const { return m_recordcmd; }
-    KDE_NO_EXPORT ElementPtr current () const { return m_current; }
-    KDE_NO_EXPORT ElementPtr document () const { return m_document; }
+    KDE_NO_EXPORT NodePtr current () const { return m_current; }
+    KDE_NO_EXPORT NodePtr document () const { return m_document; }
     virtual QString filterOptions ();
 
     void setURL (const KURL & url);
@@ -120,19 +120,19 @@ public slots:
      * publicly allow to emit playURL(const QString &)
      */
     void emitPlayURL (const QString & url);
-    virtual void jump (ElementPtr e);
+    virtual void jump (NodePtr e);
 protected:
     /**
      * PlayListNotify implementation
      */
-    bool requestPlayURL (ElementPtr mrl, RegionNodePtr region);
-    void stateElementChanged (ElementPtr element);
+    bool requestPlayURL (NodePtr mrl, RegionNodePtr region);
+    void stateElementChanged (NodePtr element);
     void repaintRect (int x, int y, int w, int h);
     void avWidgetSizes (RegionNode * region, unsigned int * bg_color);
 
-    ElementPtr m_document;
-    ElementPtr m_current;
-    ElementPtrW m_back_request;
+    NodePtr m_document;
+    NodePtrW m_current;
+    NodePtrW m_back_request;
     QString m_name;
     PartBase * m_player;
     QString m_recordcmd;

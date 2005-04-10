@@ -59,7 +59,7 @@ class QPainter;
 namespace KMPlayer {
 
 class Document;
-class Element;
+class Node;
 class Mrl;
 class RegionNode;
 class ElementRuntime;
@@ -68,16 +68,16 @@ class ImageDataPrivate;
 class NodeList;
 
 /*
- * Node represents a DOM like node having parent/siblings/children
+ * TreeNode represents a DOM like node having parent/siblings/children
  * The template argument must be a class derived from this one
  */
 template <class T>
-class KMPLAYER_EXPORT Node {
+class KMPLAYER_EXPORT TreeNode {
 public:
     typedef SharedPtr <T> SharedType;
     typedef WeakPtr <T> WeakType;
 
-    virtual ~Node () {}
+    virtual ~TreeNode () {}
 
     virtual const char * nodeName () const { return "#node"; }
     virtual QString nodeValue () const { return QString (); }
@@ -93,7 +93,7 @@ public:
 
     KDE_NO_EXPORT SharedType self () const { return m_self; }
 protected:
-    Node ();
+    TreeNode ();
     WeakType m_parent;
     SharedType m_next;
     WeakType m_prev;
@@ -105,7 +105,7 @@ protected:
 /**
  * Element's attributes
  */
-class KMPLAYER_EXPORT Attribute : public Node <Attribute> {
+class KMPLAYER_EXPORT Attribute : public TreeNode <Attribute> {
     friend class Element;
 public:
     KDE_NO_CDTOR_EXPORT Attribute () {}
@@ -119,24 +119,24 @@ protected:
 };
 
 // convenient types
-typedef Node<Element>::SharedType ElementPtr;
-typedef Node<Element>::WeakType ElementPtrW;
-typedef Node<Attribute>::SharedType AttributePtr;
-typedef Node<Attribute>::WeakType AttributePtrW;
-typedef Node<RegionNode>::SharedType RegionNodePtr;
-typedef Node<RegionNode>::WeakType RegionNodePtrW;
+typedef TreeNode<Node>::SharedType NodePtr;
+typedef TreeNode<Node>::WeakType NodePtrW;
+typedef TreeNode<Attribute>::SharedType AttributePtr;
+typedef TreeNode<Attribute>::WeakType AttributePtrW;
+typedef TreeNode<RegionNode>::SharedType RegionNodePtr;
+typedef TreeNode<RegionNode>::WeakType RegionNodePtrW;
 typedef SharedPtr<ElementRuntime> ElementRuntimePtr;
 
 /*
  * Base class of all tree nodes. Provides a w3c's DOM like API
  */
-class KMPLAYER_EXPORT Element : public Node <Element> {
+class KMPLAYER_EXPORT Node : public TreeNode <Node> {
     friend class DocumentBuilder;
 public:
     enum State {
         state_init, state_deferred, state_activated, state_deactivated
     };
-    virtual ~Element ();
+    virtual ~Node ();
     Document * document ();
     /**
      * Return a dynamic cast to a Mrl pointer
@@ -144,18 +144,18 @@ public:
      */
     Mrl * mrl ();
     const Mrl * mrl () const;
-    virtual ElementPtr childFromTag (const QString & tag);
+    virtual NodePtr childFromTag (const QString & tag);
     void characterData (const QString & s);
     QString innerText () const;
     QString innerXML () const;
     QString outerXML () const;
-    void setAttributes (AttributePtr attrs);
     virtual const char * nodeName () const;
     virtual QString nodeValue () const;
     /**
      * If this is a derived Mrl object and has a SRC attribute
      */
     virtual bool isMrl ();
+    virtual bool isElementNode () { return false; }
     /**
      * If this node should be visible to the user
      */
@@ -188,16 +188,16 @@ public:
      * Notification from child that it's finished. Call activate() on nexSibling
      * or deactivate() if there is none.
      */
-    virtual void childDone (ElementPtr child);
+    virtual void childDone (NodePtr child);
     /**
      * Creates a new ElementRuntime object
      */
     virtual ElementRuntimePtr getRuntime ();
-    void clear ();
-    void appendChild (ElementPtr c);
-    void insertBefore (ElementPtr c, ElementPtr b);
-    void removeChild (ElementPtr c);
-    void replaceChild (ElementPtr _new, ElementPtr old);
+    virtual void clear ();
+    void appendChild (NodePtr c);
+    void insertBefore (NodePtr c, NodePtr b);
+    void removeChild (NodePtr c);
+    void replaceChild (NodePtr _new, NodePtr old);
     /*
      * Get rid of whitespace only text nodes
      */
@@ -213,13 +213,9 @@ public:
     KDE_NO_EXPORT bool isDocument () const { return m_doc == m_self; }
 
     KDE_NO_EXPORT NodeList childNodes () const;
-    void setAttribute (const QString & name, const QString & value);
-    QString getAttribute (const QString & name);
-    KDE_NO_EXPORT AttributePtr attributes () const { return m_attributes; }
 protected:
-    Element (ElementPtr & d);
-    ElementPtr m_doc;
-    AttributePtr m_attributes;
+    Node (NodePtr & d);
+    NodePtr m_doc;
 public:
     State state;
     void setState (State nstate);
@@ -227,12 +223,30 @@ private:
     unsigned int defer_tree_version;
 };
 
+/*
+ * Element node, having attributes
+ */
+class KMPLAYER_EXPORT Element : public Node {
+    //friend class DocumentBuilder;
+public:
+    ~Element () {}
+    void setAttributes (AttributePtr attrs);
+    void setAttribute (const QString & name, const QString & value);
+    QString getAttribute (const QString & name);
+    KDE_NO_EXPORT AttributePtr attributes () const { return m_attributes; }
+    virtual void clear ();
+    virtual bool isElementNode () { return true; }
+protected:
+    Element (NodePtr & d);
+    AttributePtr m_attributes;
+};
+
 /**
  * Node for layout hierarchy as found in SMIL document
  */
-class RegionNode : public Node <RegionNode> {
+class RegionNode : public TreeNode <RegionNode> {
 public:
-    RegionNode (ElementPtr e);
+    RegionNode (NodePtr e);
     KDE_NO_CDTOR_EXPORT ~RegionNode () {}
     /**
      * paints background if background-color attr. is set and afterwards passes
@@ -285,11 +299,11 @@ public:
     /**
      * Corresponding DOM node (SMIL::Region or SMIL::RootLayout)
      */
-    ElementPtrW regionElement;
+    NodePtrW regionElement;
     /**
      * Attached Element for this region (only one max. ATM)
      */
-    ElementPtrW attached_element;
+    NodePtrW attached_element;
     /**
      * Make this region and its sibling 0
      */
@@ -307,11 +321,11 @@ public:
      */
     virtual void init ();
     /**
-     * Called when element is pulled in scope, from Element::activate()
+     * Called when element is pulled in scope, from Node::activate()
      */
     virtual void begin () {}
     /**
-     * Called when element gets out of scope, from Element::reset()
+     * Called when element gets out of scope, from Node::reset()
      */
     virtual void end () {}
     /**
@@ -332,8 +346,8 @@ public:
      */
     RegionNodePtrW region_node;
 protected:
-    ElementRuntime (ElementPtr e);
-    ElementPtrW element;
+    ElementRuntime (NodePtr e);
+    NodePtrW element;
 private:
     ElementRuntimePrivate * d;
 };
@@ -343,7 +357,7 @@ private:
  */
 class RegionBase : public Element {
 protected:
-    KDE_NO_CDTOR_EXPORT RegionBase (ElementPtr & d) : Element (d) {}
+    KDE_NO_CDTOR_EXPORT RegionBase (NodePtr & d) : Element (d) {}
     ElementRuntimePtr runtime;
 public:
     virtual ElementRuntimePtr getRuntime ();
@@ -358,16 +372,16 @@ public:
  * Element wrapper to give it list functionality
  */
 class KMPLAYER_EXPORT NodeList {
-    ElementPtrW first_element;
+    NodePtrW first_element;
 public:
-    NodeList (ElementPtr e) : first_element (e) {}
+    NodeList (NodePtr e) : first_element (e) {}
     ~NodeList () {}
     int length ();
-    ElementPtr item (int i) const;
+    NodePtr item (int i) const;
 };
 
 template <class T>
-inline KDE_NO_EXPORT T * convertNode (ElementPtr e) {
+inline KDE_NO_EXPORT T * convertNode (NodePtr e) {
     return static_cast <T *> (e.ptr ());
 }
         
@@ -376,8 +390,8 @@ inline KDE_NO_EXPORT T * convertNode (ElementPtr e) {
  */
 class KMPLAYER_EXPORT Mrl : public Element {
 protected:
-    Mrl (ElementPtr & d);
-    ElementPtr childFromTag (const QString & tag);
+    Mrl (NodePtr & d);
+    NodePtr childFromTag (const QString & tag);
     unsigned int cached_ismrl_version;
     bool cached_ismrl;
 public:
@@ -386,7 +400,7 @@ public:
     /*
      * If this Mrl hides a child Mrl, return that one or else this one 
      */ 
-    virtual ElementPtr realMrl ();
+    virtual NodePtr realMrl ();
     /*
      * Reimplement to callback with requestPlayURL if isMrl()
      */ 
@@ -411,11 +425,11 @@ public:
      * Ask for playing a video/audio mrl inside region
      * If returning false, the element will be set to finished
      */
-    virtual bool requestPlayURL (ElementPtr mrl, RegionNodePtr region) = 0;
+    virtual bool requestPlayURL (NodePtr mrl, RegionNodePtr region) = 0;
     /**
      * Element has activated or deactivated notification
      */
-    virtual void stateElementChanged (ElementPtr element) = 0;
+    virtual void stateElementChanged (NodePtr element) = 0;
     /**
      * Some rectangle needs repainting
      */
@@ -433,12 +447,12 @@ class KMPLAYER_EXPORT Document : public Mrl {
 public:
     Document (const QString &, PlayListNotify * notify = 0L);
     ~Document ();
-    ElementPtr getElementById (const QString & id);
+    NodePtr getElementById (const QString & id);
     /** All nodes have shared pointers to Document,
      * so explicitly dispose it (calls clean and set m_doc to 0L)
      * */
     void dispose ();
-    ElementPtr childFromTag (const QString & tag);
+    NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "document"; }
     /**
      * Will return false if this document has child nodes
@@ -452,9 +466,9 @@ public:
 /**
  * Represents XML text, like "some text" in '<foo>some text</foo>'
  */
-class KMPLAYER_EXPORT TextNode : public Element {
+class KMPLAYER_EXPORT TextNode : public Node {
 public:
-    TextNode (ElementPtr & d, const QString & s);
+    TextNode (NodePtr & d, const QString & s);
     KDE_NO_CDTOR_EXPORT ~TextNode () {}
     void appendText (const QString & s);
     const char * nodeName () const { return "#text"; }
@@ -469,10 +483,10 @@ protected:
  */
 class DarkNode : public Element {
 public:
-    DarkNode (ElementPtr & d, const QString & n);
+    DarkNode (NodePtr & d, const QString & n);
     KDE_NO_CDTOR_EXPORT ~DarkNode () {}
     const char * nodeName () const { return name.ascii (); }
-    ElementPtr childFromTag (const QString & tag);
+    NodePtr childFromTag (const QString & tag);
     virtual bool expose ();
 protected:
     QString name;
@@ -483,7 +497,7 @@ protected:
  */
 class Title : public DarkNode {
 public:
-    Title (ElementPtr & d);
+    Title (NodePtr & d);
     KDE_NO_CDTOR_EXPORT ~Title () {}
 };
 
@@ -494,8 +508,8 @@ public:
  */
 class Smil : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Smil (ElementPtr & d) : Mrl (d) {}
-    ElementPtr childFromTag (const QString & tag);
+    KDE_NO_CDTOR_EXPORT Smil (NodePtr & d) : Mrl (d) {}
+    NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "smil"; }
     bool isMrl ();
     void activate ();
@@ -504,8 +518,8 @@ public:
      * Hack to mark the currently playing MediaType as finished
      * FIXME: think of a descent callback way for this
      */
-    ElementPtr realMrl ();
-    ElementPtr current_av_media_type;
+    NodePtr realMrl ();
+    NodePtr current_av_media_type;
 };
 
 //-----------------------------------------------------------------------------
@@ -517,8 +531,8 @@ namespace ASX {
  */
 class Asx : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Asx (ElementPtr & d) : Mrl (d) {}
-    ElementPtr childFromTag (const QString & tag);
+    KDE_NO_CDTOR_EXPORT Asx (NodePtr & d) : Mrl (d) {}
+    NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "ASX"; }
     /**
      * True if no mrl children
@@ -531,8 +545,8 @@ public:
  */
 class Entry : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Entry (ElementPtr & d) : Mrl (d) {}
-    ElementPtr childFromTag (const QString & tag);
+    KDE_NO_CDTOR_EXPORT Entry (NodePtr & d) : Mrl (d) {}
+    NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "Entry"; }
     /**
      * True if has a Ref child
@@ -541,7 +555,7 @@ public:
     /**
      * Returns Ref child if isMrl() return true
      */
-    virtual ElementPtr realMrl ();
+    virtual NodePtr realMrl ();
 };
 
 /**
@@ -549,8 +563,8 @@ public:
  */
 class Ref : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Ref (ElementPtr & d) : Mrl (d) {}
-    //ElementPtr childFromTag (const QString & tag);
+    KDE_NO_CDTOR_EXPORT Ref (NodePtr & d) : Mrl (d) {}
+    //NodePtr childFromTag (const QString & tag);
     void opened ();
     KDE_NO_EXPORT const char * nodeName () const { return "Ref"; }
 };
@@ -560,8 +574,8 @@ public:
  */
 class EntryRef : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT EntryRef (ElementPtr & d) : Mrl (d) {}
-    //ElementPtr childFromTag (const QString & tag);
+    KDE_NO_CDTOR_EXPORT EntryRef (NodePtr & d) : Mrl (d) {}
+    //NodePtr childFromTag (const QString & tag);
     void opened ();
     KDE_NO_EXPORT const char * nodeName () const { return "EntryRef"; }
 };
@@ -575,7 +589,7 @@ public:
  */
 class KMPLAYER_EXPORT GenericURL : public Mrl { 
 public:
-    GenericURL(ElementPtr &d, const QString &s, const QString &n=QString::null);
+    GenericURL(NodePtr &d, const QString &s, const QString &n=QString::null);
     KDE_NO_EXPORT const char * nodeName () const { return "GenericURL"; }
 };
 
@@ -584,8 +598,8 @@ public:
  */
 class KMPLAYER_EXPORT GenericMrl : public Mrl { 
 public:
-    KDE_NO_CDTOR_EXPORT GenericMrl (ElementPtr & d) : Mrl (d) {}
-    GenericMrl(ElementPtr &d, const QString &s, const QString &n=QString::null);
+    KDE_NO_CDTOR_EXPORT GenericMrl (NodePtr & d) : Mrl (d) {}
+    GenericMrl(NodePtr &d, const QString &s, const QString &n=QString::null);
     KDE_NO_EXPORT const char * nodeName () const { return "GenericMrl"; }
     /**
      * Will return false if this document has child nodes
@@ -593,11 +607,12 @@ public:
     bool isMrl ();
 };
 
-void readXML (ElementPtr root, QTextStream & in, const QString & firstline);
+void readXML (NodePtr root, QTextStream & in, const QString & firstline);
 
-template <class T> inline Node<T>::Node () : m_self (static_cast <T*> (this)) {}
+template <class T> inline TreeNode<T>::TreeNode ()
+    : m_self (static_cast <T*> (this)) {}
 
-template <class T> inline void Node<T>::appendChild (SharedType c) {
+template <class T> inline void TreeNode<T>::appendChild (SharedType c) {
     if (!m_first_child) {
         m_first_child = m_last_child = c;
     } else {
@@ -608,7 +623,7 @@ template <class T> inline void Node<T>::appendChild (SharedType c) {
     c->m_parent = m_self;
 }
 
-inline KDE_NO_EXPORT NodeList Element::childNodes () const {
+inline KDE_NO_EXPORT NodeList Node::childNodes () const {
     return m_first_child;
 }
 

@@ -1014,8 +1014,8 @@ void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
 }
 
 void CallbackProcess::setMovieParams (int len, int w, int h, float a) {
-    if (!m_source) return;
     kdDebug () << "setMovieParams " << len << " " << w << "," << h << " " << a << endl;
+    if (!m_source) return;
     in_gui_update = true;
     m_source->setDimensions (w, h);
     m_source->setAspect (a);
@@ -1077,7 +1077,10 @@ bool CallbackProcess::play (Source * source, const QString & mrl) {
 }
 
 bool CallbackProcess::stop () {
-    if (!m_process || !m_process->isRunning ()) return true;
+    kdDebug () << "CallbackProcess::stop ()" << endl;
+    if (!m_process || !m_process->isRunning () || m_state < Buffering)
+        return true;
+    kdDebug () << "CallbackProcess::stop ()" << m_backend << endl;
     if (m_backend)
         m_backend->stop ();
     return true;
@@ -1210,33 +1213,33 @@ namespace KMPlayer {
      * Element for ConfigDocument
      */
     struct SomeNode : public ConfigNode {
-        KDE_NO_CDTOR_EXPORT SomeNode (ElementPtr & d, const QString t)
+        KDE_NO_CDTOR_EXPORT SomeNode (NodePtr & d, const QString t)
             : ConfigNode (d), tag (t) {}
         KDE_NO_CDTOR_EXPORT ~SomeNode () {}
-        ElementPtr childFromTag (const QString & t);
+        NodePtr childFromTag (const QString & t);
         const char * nodeName () const { return tag.ascii (); }
         QString tag;
     };
 } // namespace
 
-KDE_NO_CDTOR_EXPORT ConfigNode::ConfigNode (ElementPtr & d)
+KDE_NO_CDTOR_EXPORT ConfigNode::ConfigNode (NodePtr & d)
     : Element (d), w (0L) {}
 
-ElementPtr ConfigDocument::childFromTag (const QString & tag) {
+NodePtr ConfigDocument::childFromTag (const QString & tag) {
     if (tag.lower () == QString ("document"))
         return (new ConfigNode (m_doc))->self ();
-    return ElementPtr ();
+    return NodePtr ();
 }
 
-ElementPtr ConfigNode::childFromTag (const QString &) {
+NodePtr ConfigNode::childFromTag (const QString &) {
     return (new TypeNode (m_doc))->self ();
 }
 
-ElementPtr TypeNode::childFromTag (const QString & tag) {
+NodePtr TypeNode::childFromTag (const QString & tag) {
     return (new SomeNode (m_doc, tag))->self ();
 }
 
-ElementPtr SomeNode::childFromTag (const QString & t) {
+NodePtr SomeNode::childFromTag (const QString & t) {
     return (new SomeNode (m_doc, t))->self ();
 }
 
@@ -1253,9 +1256,9 @@ QWidget * TypeNode::createWidget (QWidget * parent) {
         w = checkbox;
     } else if (!strcmp (ctype, "enum")) {
         QComboBox * combo = new QComboBox (parent);
-        for (ElementPtr e = firstChild (); e; e = e->nextSibling ())
-            if (!strcmp (e->nodeName (), "item"))
-                combo->insertItem (e->getAttribute (QString ("VALUE")));
+        for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+            if (e->isElementNode () && !strcmp (e->nodeName (), "item"))
+                combo->insertItem (convertNode <Element> (e)->getAttribute (QString ("VALUE")));
         combo->setCurrentItem (value.toInt ());
         w = combo;
     } else if (!strcmp (ctype, "tree")) {
@@ -1335,10 +1338,10 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
     QTable * table = m_configframe->table;
     int row = 0;
     if (fromUI) {
-        ElementPtr configdoc = m_process->configDocument ();
+        NodePtr configdoc = m_process->configDocument ();
         if (!configdoc || m_configframe->table->numCols () < 1) //not yet created
             return;
-        ElementPtr elm = configdoc->firstChild (); // document
+        NodePtr elm = configdoc->firstChild (); // document
         if (!elm || !elm->hasChildNodes ()) {
             kdDebug () << "No valid data" << endl;
             return;
@@ -1346,7 +1349,7 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
         QString str;
         QTextStream ts (&str, IO_WriteOnly);
         ts << "<document>";
-        for (ElementPtr e = elm->firstChild (); e; e = e->nextSibling ())
+        for (NodePtr e = elm->firstChild (); e; e = e->nextSibling ())
             convertNode <TypeNode> (e)->changedXML (ts);
         if (str.length () > 10) {
             ts << "</document>";
@@ -1358,13 +1361,13 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
     } else {
         if (!m_process->haveConfig ())
             return;
-        ElementPtr configdoc = m_process->configDocument ();
+        NodePtr configdoc = m_process->configDocument ();
         if (!configdoc)
             return;
         if (m_configframe->table->numCols () < 1) { // not yet created
             QString err;
             int first_column_width = 50;
-            ElementPtr elm = configdoc->firstChild (); // document
+            NodePtr elm = configdoc->firstChild (); // document
             if (!elm || !elm->hasChildNodes ()) {
                 kdDebug () << "No valid data" << endl;
                 return;

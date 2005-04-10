@@ -764,11 +764,11 @@ KDE_NO_EXPORT void KMPlayerPopupMenu::leaveEvent (QEvent *) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT ListViewItem::ListViewItem (QListViewItem *p, const ElementPtr & e, PlayListView * lv) : QListViewItem (p), m_elm (e), listview (lv) {}
+KDE_NO_CDTOR_EXPORT ListViewItem::ListViewItem (QListViewItem *p, const NodePtr & e, PlayListView * lv) : QListViewItem (p), m_elm (e), listview (lv) {}
 
 KDE_NO_CDTOR_EXPORT ListViewItem::ListViewItem (QListViewItem *p, const AttributePtr & a, PlayListView * lv) : QListViewItem (p), m_attr (a), listview (lv) {}
 
-KDE_NO_CDTOR_EXPORT ListViewItem::ListViewItem (PlayListView *v, const ElementPtr & e) : QListViewItem (v), m_elm (e), listview (v) {}
+KDE_NO_CDTOR_EXPORT ListViewItem::ListViewItem (PlayListView *v, const NodePtr & e) : QListViewItem (v), m_elm (e), listview (v) {}
 
 KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view)
  : KListView (parent, "kde_kmplayer_playlist"),
@@ -801,7 +801,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view)
 KDE_NO_CDTOR_EXPORT PlayListView::~PlayListView () {
 }
 
-void PlayListView::populate (ElementPtr e, ElementPtr focus, QListViewItem * item, QListViewItem ** curitem) {
+void PlayListView::populate (NodePtr e, NodePtr focus, QListViewItem * item, QListViewItem ** curitem) {
     Mrl * mrl = e->mrl ();
     QString text (e->nodeName());
     if (mrl && !m_show_all_nodes) {
@@ -817,13 +817,13 @@ void PlayListView::populate (ElementPtr e, ElementPtr focus, QListViewItem * ite
     item->setPixmap (0, pix);
     if (focus == e)
         *curitem = item;
-    for (ElementPtr c = e->lastChild (); c; c = c->previousSibling ()) {
+    for (NodePtr c = e->lastChild (); c; c = c->previousSibling ()) {
         m_have_dark_nodes |= !c->expose ();
         if (m_show_all_nodes || c->expose ())
             populate (c, focus, new ListViewItem (item, c, this), curitem);
     }
-    if (m_show_all_nodes) {
-        AttributePtr a = e->attributes ()->firstChild ();
+    if (m_show_all_nodes && e->isElementNode ()) {
+        AttributePtr a = convertNode<Element> (e)->attributes ()->firstChild ();
         if (a) {
             ListViewItem * as = new ListViewItem (item, e, this);
             as->setText (0, i18n ("[attributes]"));
@@ -837,7 +837,7 @@ void PlayListView::populate (ElementPtr e, ElementPtr focus, QListViewItem * ite
     }
 }
 
-void PlayListView::updateTree (ElementPtr root, ElementPtr active) {
+void PlayListView::updateTree (NodePtr root, NodePtr active) {
     m_ignore_expanded = true;
     m_have_dark_nodes = false;
     clear ();
@@ -906,8 +906,8 @@ void PlayListView::toggleShowAllNodes () {
     m_itemmenu->setItemChecked (2, m_show_all_nodes);
     ListViewItem * first_item = static_cast <ListViewItem *> (firstChild ());
     if (first_item) {
-        ElementPtr root = first_item->m_elm;
-        ElementPtr cur;
+        NodePtr root = first_item->m_elm;
+        NodePtr cur;
         ListViewItem * cur_item = static_cast <ListViewItem *> (currentItem ());
         if (cur_item)
             cur = cur_item->m_elm;

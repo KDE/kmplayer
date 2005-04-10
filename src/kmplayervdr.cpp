@@ -497,7 +497,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deleteCommands () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::jump (KMPlayer::ElementPtr e) {
+KDE_NO_EXPORT void KMPlayerVDRSource::jump (KMPlayer::NodePtr e) {
     if (!e->isMrl ()) return;
     m_current = e;
     jump (e->mrl ()->pretty_name);
@@ -650,24 +650,30 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
         m_configpage->tcp_port->setText (QString::number (tcp_port));
         m_configpage->scale->setButton (scale);
         QListViewItem * vitem = m_configpage->xv_port->firstChild ();
-        ElementPtr configdoc = xvideo->configDocument ();
+        NodePtr configdoc = xvideo->configDocument ();
         if (configdoc && configdoc->firstChild ()) {
             for (QListViewItem *i=vitem->firstChild(); i; i=vitem->firstChild())
                 delete i;
-            ElementPtr elm = configdoc->firstChild ();
-            for (elm = elm->firstChild (); elm; elm = elm->nextSibling ()) {
+            NodePtr node = configdoc->firstChild ();
+            for (node = node->firstChild (); node; node = node->nextSibling()) {
+                if (!node->isElementNode ())
+                    continue; // some text sneaked in ?
+                Element * elm = convertNode <Element> (node);
                 if (elm->getAttribute (QString ("TYPE")) != QString ("tree"))
                     continue;
-                for (ElementPtr e=elm->firstChild (); e; e=e->nextSibling ()) {
-                    if (strcmp (e->nodeName (), "Port"))
+                for (NodePtr n = elm->firstChild (); n; n = n->nextSibling ()) {
+                    if (!n->isElementNode () || strcmp (n->nodeName (), "Port"))
                         continue;
+                    Element * e = convertNode <Element> (n);
                     QString portatt = e->getAttribute (QString ("VALUE"));
                     int port;
                     QListViewItem *pi = new QListViewItem (vitem, i18n ("Port ") + portatt);
                     port = portatt.toInt ();
-                    for (ElementPtr i=e->firstChild(); i; i=i->nextSibling()) {
-                        if (strcmp (i->nodeName (), "Input"))
+                    for (NodePtr in=e->firstChild(); in; in=in->nextSibling()) {
+                        if (!in->isElementNode () ||
+                                strcmp (in->nodeName (), "Input"))
                             continue;
+                        Element * i = convertNode <Element> (in);
                         QString inp = i->getAttribute (QString ("NAME"));
                         int enc = i->getAttribute (QString ("VALUE")).toInt ();
                         QListViewItem * ii = new XVTreeItem(pi, inp, port, enc);

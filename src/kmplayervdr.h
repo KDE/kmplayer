@@ -85,7 +85,7 @@ public:
 public slots:
     void activate ();
     void deactivate ();
-    void jump (KMPlayer::ElementPtr e);
+    void jump (KMPlayer::NodePtr e);
     void forward ();
     void backward ();
     void playCurrent ();

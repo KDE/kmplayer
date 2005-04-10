@@ -261,7 +261,7 @@ public:
     bool getConfigData ();
     void setChangedData (const QByteArray &);
     QString dcopName ();
-    ElementPtr configDocument () { return configdoc; }
+    NodePtr configDocument () { return configdoc; }
     void initProcess ();
 public slots:
     bool play (Source *, const QString &);
@@ -286,7 +286,7 @@ protected:
     QByteArray m_configdata;
     QByteArray m_changeddata;
     XMLPreferencesPage * m_configpage;
-    ElementPtr configdoc;
+    NodePtr configdoc;
     bool in_gui_update;
     enum { config_unknown, config_probe, config_yes, config_no } m_have_config;
     enum { send_no, send_try, send_new } m_send_config;
@@ -298,16 +298,16 @@ protected:
 struct KMPLAYER_EXPORT ConfigDocument : public Document {
     ConfigDocument ();
     ~ConfigDocument ();
-    ElementPtr childFromTag (const QString & tag);
+    NodePtr childFromTag (const QString & tag);
 };
 
 /*
  * Element for ConfigDocument
  */
 struct KMPLAYER_EXPORT ConfigNode : public Element {
-    ConfigNode (ElementPtr & d);
+    ConfigNode (NodePtr & d);
     KDE_NO_CDTOR_EXPORT ~ConfigNode () {}
-    ElementPtr childFromTag (const QString & tag);
+    NodePtr childFromTag (const QString & tag);
     QWidget * w;
 };
 
@@ -315,9 +315,9 @@ struct KMPLAYER_EXPORT ConfigNode : public Element {
  * Element for ConfigDocument, defining type of config item
  */
 struct KMPLAYER_EXPORT TypeNode : public ConfigNode {
-    KDE_NO_CDTOR_EXPORT TypeNode (ElementPtr & d) : ConfigNode (d) {}
+    KDE_NO_CDTOR_EXPORT TypeNode (NodePtr & d) : ConfigNode (d) {}
     KDE_NO_CDTOR_EXPORT ~TypeNode () {}
-    ElementPtr childFromTag (const QString & tag);
+    NodePtr childFromTag (const QString & tag);
     void changedXML (QTextStream & out);
     QWidget * createWidget (QWidget * parent);
     const char * nodeName () const { return "typenode"; }
