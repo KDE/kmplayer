@@ -525,7 +525,8 @@ enum JSCommand {
     canpause, canplay, canstop, canseek, 
     isfullscreen, isloop, isaspect,
     length, width, height, playstate, position, source, setsource, protocol,
-    gotourl, nextentry, jsc_pause, play, preventry, stop, volume
+    gotourl, nextentry, jsc_pause, play, preventry, stop, volume, setvolume,
+    prop_source, prop_volume
 };
 
 struct JSCommandEntry {
@@ -547,6 +548,7 @@ static const JSCommandEntry JSCommandList [] = {
     { "DoPlay", play, 0L, KParts::LiveConnectExtension::TypeBool },
     { "DoPrevEntry", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
     { "DoStop", stop, 0L, KParts::LiveConnectExtension::TypeBool },
+    { "FileName", prop_source, 0L, KParts::LiveConnectExtension::TypeString },
     { "GetAuthor", notsupported, "noname", KParts::LiveConnectExtension::TypeString },
     { "GetAutoGoToURL", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "GetBackgroundColor", notsupported, "#ffffff", KParts::LiveConnectExtension::TypeString },
@@ -606,7 +608,7 @@ static const JSCommandEntry JSCommandList [] = {
     { "GetStereoState", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "GetTitle", notsupported, "title", KParts::LiveConnectExtension::TypeString },
     { "GetVersionInfo", notsupported, "version", KParts::LiveConnectExtension::TypeString },
-    { "GetVolume", notsupported, "100", KParts::LiveConnectExtension::TypeNumber },
+    { "GetVolume", volume, "100", KParts::LiveConnectExtension::TypeNumber },
     { "GetWantErrors", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
     { "GetWantKeyboardEvents", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
     { "GetWantMouseEvents", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
@@ -641,12 +643,12 @@ static const JSCommandEntry JSCommandList [] = {
     { "SetShuffle", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetSource", setsource, 0L, KParts::LiveConnectExtension::TypeBool },
     { "SetTitle", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
-    { "SetVolume", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "SetVolume", setvolume, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetWantErrors", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetWantKeyboardEvents", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetWantMouseEvents", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "Stop", stop, 0L, KParts::LiveConnectExtension::TypeBool },
-    { "Volume", volume, 0L, KParts::LiveConnectExtension::TypeBool },
+    { "Volume", prop_volume, "100", KParts::LiveConnectExtension::TypeNumber },
     { "pause", jsc_pause, 0L, KParts::LiveConnectExtension::TypeBool },
     { "play", play, 0L, KParts::LiveConnectExtension::TypeBool },
     { "stop", stop, 0L, KParts::LiveConnectExtension::TypeBool },
@@ -697,21 +699,50 @@ KDE_NO_EXPORT void KMPlayerLiveConnectExtension::finished () {
 
 KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
   (const unsigned long id, const QString & name,
-   KParts::LiveConnectExtension::Type & type, unsigned long & rid, QString &) {
+   KParts::LiveConnectExtension::Type & type,
+   unsigned long & rid, QString & rval) {
     const char * str = name.ascii ();
     kdDebug () << "get: " << str << endl;
-    lastJSCommandEntry = getJSCommandEntry (str);
-    if (lastJSCommandEntry) {
-        type = KParts::LiveConnectExtension::TypeFunction;
-        rid = id;
-        return true;
+    const JSCommandEntry * entry = getJSCommandEntry (str);
+    if (!entry)
+        return false;
+    rid = id;
+    type = entry->rettype;
+    switch (entry->command) {
+        case prop_source:
+            type = KParts::LiveConnectExtension::TypeString;
+            rval = player->url ().url ();
+            break;
+        case prop_volume:
+            if (player->view ())
+                rval = QString::number (player->process()->view()->controlPanel()->volumeBar()->value());
+            break;
+        default:
+            lastJSCommandEntry = entry;
+            type = KParts::LiveConnectExtension::TypeFunction;
     }
-    return false;
+    return true;
 }
 
 KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::put
-  (const unsigned long, const QString &, const QString &) {
-    return false;
+  (const unsigned long, const QString & name, const QString & val) {
+    kdDebug () << "put: " << name << "=" << val << endl;
+    const JSCommandEntry * entry = getJSCommandEntry (name.ascii ());
+    switch (entry->command) {
+        case prop_source: {
+            KURL url (val);
+            if (player->allowRedir (url))
+                player->openURL (url);
+            break;
+        }
+        case prop_volume:
+            if (player->view ())
+                player->process()->view()->controlPanel()->volumeBar()->setValue(val.toInt ());
+            break;
+        default:
+            return false;
+    }
+    return true;
 }
 
 KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
@@ -725,6 +756,8 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
     if (!entry)
         return false;
     kdDebug () << "entry " << entry->name << endl;
+    for (int i = 0; i < args.size (); ++i)
+        kdDebug () << "      " << args[i] << endl;
     KMPlayer::View * view = static_cast <KMPlayer::View*> (player->view ());
     if (!view)
         return false;
@@ -748,7 +781,12 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
             rval = player->source ()->isSeekable () ? "true" : "false";
             break;
         case play:
-            player->play ();
+            if (args.size ()) {
+                KURL url (args.first ());
+                if (player->allowRedir (url))
+                    player->openURL (url);
+            } else
+                player->play ();
             rval = "true";
             break;
         case stop:
@@ -757,12 +795,6 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
             break;
         case jsc_pause:
             player->pause ();
-            rval = "true";
-            break;
-        case volume:
-            if (!args.size ())
-                return false;
-            player->adjustVolume (args.first ().toInt ());
             rval = "true";
             break;
         case isloop:
@@ -789,8 +821,8 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
         case position:
             rval.setNum (player->position ());
             break;
-        case source:
-            rval = player->url ().url ();
+        case protocol:
+            rval = player->url ().protocol ();
             break;
         case setsource:
             rval ="false";
@@ -800,8 +832,18 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
                     rval = "true";
             }
             break;
-        case protocol:
-            rval = player->url ().protocol ();
+        case setvolume:
+            if (!args.size ())
+                return false;
+            player->process()->view()->controlPanel()->volumeBar()->setValue(args.first ().toInt ());
+            rval = "true";
+            break;
+        case source:
+            rval = player->url ().url ();
+            break;
+        case volume:
+            if (player->view ())
+                rval = QString::number (player->process()->view()->controlPanel()->volumeBar()->value());
             break;
         default:
             return false;
