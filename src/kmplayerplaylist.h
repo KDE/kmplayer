@@ -68,42 +68,69 @@ class ImageDataPrivate;
 class NodeList;
 
 /*
- * TreeNode represents a DOM like node having parent/siblings/children
- * The template argument must be a class derived from this one
+ * Base class for objects stored in SharedPtr/WeakPtr objects. Object keeps
+ * its own copy of the shared SharedData<T> as a weak refence.
+ * \sa self()
  */
 template <class T>
-class KMPLAYER_EXPORT TreeNode {
+class KMPLAYER_EXPORT Item {
 public:
     typedef SharedPtr <T> SharedType;
     typedef WeakPtr <T> WeakType;
 
+    virtual ~Item () {}
+
+    SharedType self () const { return m_self; }
+protected:
+    Item ();
+    WeakType m_self;
+};
+
+/*
+ * Base class for double linked lists of SharedPtr/WeakPtr objects.
+ * The linkage is a shared nextSibling and a weak previousSibling.
+ */
+template <class T>
+class KMPLAYER_EXPORT ListNode : public Item <T> {
+public:
+    virtual ~ListNode () {}
+
+    typename Item<T>::SharedType nextSibling () const { return m_next; }
+    typename Item<T>::SharedType previousSibling () const { return m_prev; }
+protected:
+    ListNode () {}
+    typename Item<T>::SharedType m_next;
+    typename Item<T>::WeakType m_prev;
+};
+
+/*
+ * TreeNode represents a DOM like node having parent/siblings/children.
+ * The linkage is a shared firstChild and weak parentNode.
+ */
+template <class T>
+class KMPLAYER_EXPORT TreeNode : public ListNode <T> {
+public:
     virtual ~TreeNode () {}
 
     virtual const char * nodeName () const { return "#node"; }
     virtual QString nodeValue () const { return QString (); }
 
-    virtual void appendChild (SharedType c);
+    virtual void appendChild (typename KMPlayer::Item<T>::SharedType c);
 
-    KDE_NO_EXPORT bool hasChildNodes () const { return m_first_child != 0L; }
-    KDE_NO_EXPORT SharedType parentNode () const { return m_parent; }
-    KDE_NO_EXPORT SharedType firstChild () const { return m_first_child; }
-    KDE_NO_EXPORT SharedType lastChild () const { return m_last_child; }
-    KDE_NO_EXPORT SharedType nextSibling () const { return m_next; }
-    KDE_NO_EXPORT SharedType previousSibling () const { return m_prev; }
+    bool hasChildNodes () const { return m_first_child != 0L; }
+    typename Item<T>::SharedType parentNode () const { return m_parent; }
+    typename Item<T>::SharedType firstChild () const { return m_first_child; }
+    typename Item<T>::SharedType lastChild () const { return m_last_child; }
 
-    KDE_NO_EXPORT SharedType self () const { return m_self; }
 protected:
-    TreeNode ();
-    WeakType m_parent;
-    SharedType m_next;
-    WeakType m_prev;
-    SharedType m_first_child;
-    WeakType m_last_child;
-    WeakType m_self;
+    TreeNode () {}
+    typename Item<T>::WeakType m_parent;
+    typename Item<T>::SharedType m_first_child;
+    typename Item<T>::WeakType m_last_child;
 };
 
 /**
- * Element's attributes
+ * Attribute of an Element
  */
 class KMPLAYER_EXPORT Attribute : public TreeNode <Attribute> {
     friend class Element;
@@ -119,12 +146,12 @@ protected:
 };
 
 // convenient types
-typedef TreeNode<Node>::SharedType NodePtr;
-typedef TreeNode<Node>::WeakType NodePtrW;
-typedef TreeNode<Attribute>::SharedType AttributePtr;
-typedef TreeNode<Attribute>::WeakType AttributePtrW;
-typedef TreeNode<RegionNode>::SharedType RegionNodePtr;
-typedef TreeNode<RegionNode>::WeakType RegionNodePtrW;
+typedef Item<Node>::SharedType NodePtr;
+typedef Item<Node>::WeakType NodePtrW;
+typedef Item<Attribute>::SharedType AttributePtr;
+typedef Item<Attribute>::WeakType AttributePtrW;
+typedef Item<RegionNode>::SharedType RegionNodePtr;
+typedef Item<RegionNode>::WeakType RegionNodePtrW;
 typedef SharedPtr<ElementRuntime> ElementRuntimePtr;
 
 /*
@@ -609,10 +636,10 @@ public:
 
 void readXML (NodePtr root, QTextStream & in, const QString & firstline);
 
-template <class T> inline TreeNode<T>::TreeNode ()
-    : m_self (static_cast <T*> (this)) {}
+template <class T> inline Item<T>::Item () : m_self (static_cast <T*> (this)) {}
 
-template <class T> inline void TreeNode<T>::appendChild (SharedType c) {
+template <class T>
+inline void TreeNode<T>::appendChild (typename Item<T>::SharedType c) {
     if (!m_first_child) {
         m_first_child = m_last_child = c;
     } else {
@@ -620,7 +647,7 @@ template <class T> inline void TreeNode<T>::appendChild (SharedType c) {
         c->m_prev = m_last_child;
         m_last_child = c;
     }
-    c->m_parent = m_self;
+    c->m_parent = Item<T>::m_self;
 }
 
 inline KDE_NO_EXPORT NodeList Node::childNodes () const {
