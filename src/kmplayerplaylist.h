@@ -67,9 +67,9 @@ class ElementRuntimePrivate;
 class ImageDataPrivate;
 
 /*
- * Base class for objects that will be uses as SharedPtr/WeakPtr pointers.
+ * Base class for objects that will be used as SharedPtr/WeakPtr pointers.
  * Item<T> keeps its own copy of the shared SharedData<T> as a weak refence.
- * \sa self()
+ * \sa: self()
  */
 template <class T>
 class KMPLAYER_EXPORT Item {
@@ -89,7 +89,7 @@ protected:
 };
 
 /*
- * A double list from ListNode<T> or TreeNode<T> nodes
+ * A double linked list of ListNode<T> or TreeNode<T> nodes
  */
 template <class T>
 class KMPLAYER_EXPORT List {
@@ -97,6 +97,7 @@ public:
     List () {}
     List (typename Item<T>::SharedType f, typename Item<T>::SharedType l) 
         : m_first (f), m_last (l) {}
+
     typename Item<T>::SharedType first () const { return m_first; }
     typename Item<T>::SharedType last () const { return m_last; }
     void append (typename KMPlayer::Item<T>::SharedType c);
@@ -126,7 +127,7 @@ protected:
 };
 
 /*
- * Base class for double lined tree nodes having parent/siblings/children.
+ * Base class for double linked tree nodes having parent/siblings/children.
  * The linkage is a shared firstChild and weak parentNode.
  */
 template <class T>
@@ -149,7 +150,7 @@ protected:
 };
 
 /**
- * Attribute of an Element
+ * Attribute having a name/value pair for use with Elements
  */
 class KMPLAYER_EXPORT Attribute : public ListNode <Attribute> {
     friend class Element;
@@ -174,7 +175,7 @@ typedef Item<RegionNode>::WeakType RegionNodePtrW;
 typedef SharedPtr<ElementRuntime> ElementRuntimePtr;
 
 /*
- * Base class of all tree nodes. Provides a w3c's DOM like API
+ * Base class for XML nodes. Provides a w3c's DOM like API
  */
 class KMPLAYER_EXPORT Node : public TreeNode <Node> {
     friend class DocumentBuilder;
@@ -270,7 +271,7 @@ private:
 };
 
 /*
- * Element node, having attributes
+ * Element node, XML node that can have attributes
  */
 class KMPLAYER_EXPORT Element : public Node {
     //friend class DocumentBuilder;
