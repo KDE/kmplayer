@@ -71,6 +71,33 @@ protected:
     RegionSignalerRuntime (NodePtr e);
 };
 
+/*
+ * Interpretation of sizes
+ */
+class SizeType {
+public:
+    SizeType ();
+    void reset ();
+    SizeType & operator = (const QString & s);
+    int size (int relative_to = 100);
+private:
+    int m_size;
+    bool percentage;
+};
+
+/**
+ * Base for RegionRuntime and MediaRuntime, having sizes
+ */
+class SizedRuntime {
+public:
+    void resetSizes ();
+    void calcSizes (int w, int h, int & xoff, int & yoff, int & w1, int & h1);
+    SizeType left, top, width, height, right, bottom;
+protected:
+    SizedRuntime ();
+    bool setSizeParam (const QString & name, const QString & value);
+};
+
 /**
  * Live representation of a SMIL element having timings
  */
@@ -129,7 +156,7 @@ protected:
 /**
  * Runtime data for a region
  */
-class RegionRuntime : public RegionSignalerRuntime {
+class RegionRuntime : public RegionSignalerRuntime, public SizedRuntime {
 public:
     RegionRuntime (NodePtr e);
     KDE_NO_CDTOR_EXPORT ~RegionRuntime () {}
@@ -139,12 +166,6 @@ public:
     void paint (QPainter & p);
     virtual QString setParam (const QString & name, const QString & value);
     unsigned int background_color;
-    QString left;
-    QString top;
-    QString width;
-    QString height;
-    QString right;
-    QString bottom;
     bool have_bg_color;
 private:
     bool active;
@@ -177,7 +198,7 @@ private slots:
 /**
  * Some common runtime data for all mediatype classes
  */
-class MediaTypeRuntime : public TimedRuntime {
+class MediaTypeRuntime : public TimedRuntime, public SizedRuntime {
     Q_OBJECT
 protected:
     MediaTypeRuntime (NodePtr e);

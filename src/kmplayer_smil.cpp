@@ -245,8 +245,12 @@ void RegionNode::scaleRegion (float sx, float sy, int xoff, int yoff) {
             if (n && !strcmp (nn, "video") || !strcmp (nn, "audio")) {
                 ElementRuntimePtr rt = smilregion->getRuntime ();
                 RegionRuntime *rr = static_cast <RegionRuntime*> (rt.ptr());
-                if (rr)
-                    n->avWidgetSizes (this, rr->have_bg_color ? &rr->background_color : 0L);
+                MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (attached_element->getRuntime ().ptr ());
+                if (rr && mtr) {
+                    int w1, h1;
+                    mtr->calcSizes (w, h, xoff, yoff, w1, h1);
+                    n->avWidgetSizes (x+xoff, y+yoff, w1, h1, rr->have_bg_color ? &rr->background_color : 0L);
+                }
             }
         }
         //kdDebug () << "Region size " << x << "," << y << " " << w << "x" << h << endl;
@@ -592,6 +596,80 @@ KDE_NO_EXPORT void TimedRuntime::stopped () {
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_CDTOR_EXPORT SizeType::SizeType () {
+    reset ();
+}
+
+void SizeType::reset () {
+    m_size = 0;
+    percentage = 0;
+}
+
+SizeType & SizeType::operator = (const QString & s) {
+    percentage = false;
+    QString strval (s);
+    int p = strval.find (QChar ('%'));
+    if (p > -1) {
+        percentage = true;
+        strval.truncate (p);
+    }
+    bool ok;
+    m_size = int (strval.toDouble (&ok));
+    if (!ok)
+        m_size = 0;
+    return *this;
+}
+
+int SizeType::size (int relative_to) {
+    if (percentage)
+        return m_size * relative_to / 100;
+    return m_size;
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT SizedRuntime::SizedRuntime() {}
+
+KDE_NO_EXPORT void SizedRuntime::resetSizes () {
+    left.reset ();
+    top.reset ();
+    width.reset ();
+    height.reset ();
+    right.reset ();
+    bottom.reset ();
+}
+
+KDE_NO_EXPORT void SizedRuntime::calcSizes (int w, int h, int & xoff, int & yoff, int & w1, int & h1) {
+    xoff = left.size (w);
+    yoff = top.size (h);
+    w1 = width.size (w);
+    h1 = height.size (h);
+    int roff = right.size (w);
+    int boff = bottom.size (h);
+    w1 = w1 > 0 ? w1 : w - xoff - roff;
+    h1 = h1 > 0 ? h1 : h - yoff - boff;
+}
+
+KDE_NO_EXPORT bool SizedRuntime::setSizeParam (const QString & name, const QString & val) {
+    if (name == QString::fromLatin1 ("left")) {
+        left = val;
+    } else if (name == QString::fromLatin1 ("top")) {
+        top = val;
+    } else if (name == QString::fromLatin1 ("width")) {
+        width = val;
+    } else if (name == QString::fromLatin1 ("height")) {
+        height = val;
+    } else if (name == QString::fromLatin1 ("right")) {
+        right = val;
+    } else if (name == QString::fromLatin1 ("bottom")) {
+        bottom = val;
+    } else
+        return false;
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+
 KDE_NO_CDTOR_EXPORT RegionRuntime::RegionRuntime (NodePtr e)
  : RegionSignalerRuntime (e) {
     init ();
@@ -601,12 +679,7 @@ KDE_NO_EXPORT void RegionRuntime::reset () {
     // Keep region_node, so no ElementRuntime::reset (); or set it back again
     have_bg_color = false;
     active = false;
-    left.truncate (0);
-    top.truncate (0);
-    width.truncate (0);
-    height.truncate (0);
-    right.truncate (0);
-    bottom.truncate (0);
+    resetSizes ();
 }
 
 KDE_NO_EXPORT void RegionRuntime::paint (QPainter & p) {
@@ -620,7 +693,6 @@ KDE_NO_EXPORT
 QString RegionRuntime::setParam (const QString & name, const QString & val) {
     kdDebug () << "RegionRuntime::setParam " << name << "=" << val << endl;
     RegionNode * rn = region_node.ptr ();
-    bool needs_bounds_calc = false;
     QRect rect;
     if (rn)
         rect = QRect (rn->x, rn->y, rn->w, rn->h);
@@ -631,37 +703,20 @@ QString RegionRuntime::setParam (const QString & name, const QString & val) {
     } else if (name == QString::fromLatin1 ("z-index")) {
         if (region_node)
             region_node->z_order = val.toInt ();
-    } else if (name == QString::fromLatin1 ("left")) {
-        left = val;
-        needs_bounds_calc = true;
-    } else if (name == QString::fromLatin1 ("top")) {
-        top = val;
-        needs_bounds_calc = true;
-    } else if (name == QString::fromLatin1 ("width")) {
-        width = val;
-        needs_bounds_calc = true;
-    } else if (name == QString::fromLatin1 ("height")) {
-        height = val;
-        needs_bounds_calc = true;
-    } else if (name == QString::fromLatin1 ("right")) {
-        right = val;
-        needs_bounds_calc = true;
-    } else if (name == QString::fromLatin1 ("bottom")) {
-        bottom = val;
-        needs_bounds_calc = true;
-    }
-    if (active && rn && needs_bounds_calc && element) {
-        if (rn->parentNode ())
-            rn->parentNode ()->calculateChildBounds ();
-        else {
-            RegionNodePtr rootrn = element->document ()->rootLayout;
-            if (rootrn && rootrn->regionElement)
-                convertNode<RegionBase>(rootrn->regionElement)->updateLayout ();
+    } else if (setSizeParam (name, val)) {
+        if (active && rn && element) {
+            if (rn->parentNode ())
+                rn->parentNode ()->calculateChildBounds ();
+            else {
+                RegionNodePtr rootrn = element->document ()->rootLayout;
+                if (rootrn && rootrn->regionElement)
+                    convertNode<RegionBase>(rootrn->regionElement)->updateLayout ();
+            }
+            QRect nr = rect.unite (QRect (rn->x, rn->y, rn->w, rn->h));
+            PlayListNotify * n = element->document()->notify_listener;
+            if (n)
+                n->repaintRect (nr.x(), nr.y(), nr.width (), nr.height ());
         }
-        QRect nr = rect.unite (QRect (rn->x, rn->y, rn->w, rn->h));
-        PlayListNotify * n = element->document()->notify_listener;
-        if (n)
-            n->repaintRect (nr.x(), nr.y(), nr.width (), nr.height ());
     }
     return ElementRuntime::setParam (name, val);
 }
@@ -1053,8 +1108,15 @@ QString MediaTypeRuntime::setParam (const QString & name, const QString & val) {
             fit = fit_scroll;
         else if (val == QString::fromLatin1 ("slice"))
             fit = fit_slice;
-    } else
+    } else if (!setSizeParam (name, val)) {
         return TimedRuntime::setParam (name, val);
+    }
+    RegionNode * rn = region_node.ptr ();
+    if (state () == timings_began && rn && element) {
+        PlayListNotify * n = element->document()->notify_listener;
+        if (n)
+            n->repaintRect (rn->x, rn->y, rn->w, rn->h);
+    }
     return ElementRuntime::setParam (name, val);
 }
 
@@ -1098,7 +1160,7 @@ KDE_NO_EXPORT void AudioVideoData::started () {
         kdDebug () << "AudioVideoData::started " << source_url << endl;
         PlayListNotify * n = element->document ()->notify_listener;
         if (n && !source_url.isEmpty ()) {
-            n->requestPlayURL (element, region_node);
+            n->requestPlayURL (element);
             element->setState (Element::state_activated);
         }
     }
@@ -1112,7 +1174,7 @@ QString AudioVideoData::setParam (const QString & name, const QString & val) {
         if (timingstate == timings_started && element) {
             PlayListNotify * n = element->document ()->notify_listener;
             if (n && !source_url.isEmpty ()) {
-                n->requestPlayURL (element, region_node);
+                n->requestPlayURL (element);
                 element->setState (Element::state_activated);
             }
         }
@@ -1322,8 +1384,8 @@ KDE_NO_EXPORT void RegionBase::updateLayout () {
     ElementRuntimePtr rt = getRuntime ();
     if (rt) {
         RegionRuntime * rr = static_cast <RegionRuntime *> (rt.ptr ());
-        w = rr->width.toInt ();
-        h = rr->height.toInt ();
+        w = rr->width.size ();
+        h = rr->height.size ();
         kdDebug () << "RegionBase::updateLayout " << w << "," << h << endl;
         if (rr->region_node)
             rr->region_node->calculateChildBounds ();
@@ -1338,15 +1400,6 @@ KDE_NO_EXPORT NodePtr SMIL::Region::childFromTag (const QString & tag) {
     return NodePtr ();
 }
 
-static int calcLength (const QString & strval, int full) {
-    if (strval.isEmpty ())
-        return 0;
-    int p = strval.find (QChar ('%'));
-    if (p > -1)
-        return int (strval.left (p).toDouble () * full / 100);
-    return int (strval.toDouble ());
-}
-
 /**
  * calculates dimensions of this regions with _w and _h as width and height
  * of parent Region (representing 100%)
@@ -1355,14 +1408,7 @@ KDE_NO_EXPORT void SMIL::Region::calculateBounds (int _w, int _h) {
     ElementRuntimePtr rt = getRuntime ();
     if (rt) {
         RegionRuntime * rr = static_cast <RegionRuntime *> (rt.ptr ());
-        x = calcLength (rr->left, _w);
-        y = calcLength (rr->top, _h);
-        int w1 = calcLength (rr->width, _w);
-        int h1 = calcLength (rr->height, _h);
-        int r = calcLength (rr->right, _w);
-        int b = calcLength (rr->bottom, _h);
-        w = w1 > 0 ? w1 : _w - x - (r > 0 ? r : 0);
-        h = h1 > 0 ? h1 : _h - y - (b > 0 ? b : 0);
+        rr->calcSizes (_w, _h, x, y, w, h);
         //kdDebug () << "Region::calculateBounds " << x << "," << y << " " << w << "x" << h << endl;
     }
 }
@@ -1782,7 +1828,8 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
     if (d->image && region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
         RegionNode * r = region_node.ptr ();
-        int w = r->w, h = r->h;
+        int xoff, yoff, w = r->w, h = r->h;
+        calcSizes (w, h, xoff, yoff, w, h);
         if (fit == fit_hidden) {
             w = int (d->image->width () * r->xscale);
             h = int (d->image->height () * r->yscale);
@@ -1807,7 +1854,7 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
         } //else if (fit == fit_fill) { // scale in region
         // else fit_scroll
         if (w == d->image->width () && h == d->image->height ())
-            p.drawPixmap (QRect (r->x, r->y, w, h), *d->image);
+            p.drawPixmap (QRect (r->x+xoff, r->y+yoff, w, h), *d->image);
         else {
             if (!d->cache_image || w != d->cache_image->width () || h != d->cache_image->height ()) {
                 delete d->cache_image;
@@ -1815,7 +1862,7 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
                 img = *d->image;
                 d->cache_image = new QPixmap (img.scale (w, h));
             }
-            p.drawPixmap (QRect (r->x, r->y, w, h), *d->cache_image);
+            p.drawPixmap (QRect (r->x+xoff, r->y+yoff, w, h), *d->cache_image);
         }
     }
 }
@@ -1933,26 +1980,27 @@ QString TextData::setParam (const QString & name, const QString & val) {
 KDE_NO_EXPORT void TextData::paint (QPainter & p) {
     if (region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
-        int x = region_node->x;
-        int y = region_node->y;
+        int xoff, yoff, w = region_node->w, h = region_node->h;
+        calcSizes (w, h, xoff, yoff, w, h);
+        int x = region_node->x + xoff;
+        int y = region_node->y + yoff;
         if (!d->transparent)
-            p.fillRect (x, y, region_node->w, region_node->h,
-                    QColor (QRgb (d->background_color)));
+            p.fillRect (x, y, w, h, QColor (QRgb (d->background_color)));
         d->font.setPointSize (int (region_node->xscale * d->font_size));
         QFontMetrics metrics (d->font);
         QPainter::TextDirection direction = QApplication::reverseLayout () ?
             QPainter::RTL : QPainter::LTR;
         if (direction == QPainter::RTL)
-            x += region_node->w;
-        int yoff = metrics.lineSpacing ();
+            x += w;
+        yoff = metrics.lineSpacing ();
         p.setFont (d->font);
         p.setPen (QRgb (d->foreground_color));
         QTextStream text (d->data, IO_ReadOnly);
         if (d->codec)
             text.setCodec (d->codec);
         QString line = text.readLine (); // FIXME word wrap
-        while (!line.isNull () && yoff < region_node->h) {
-            p.drawText (x, y+yoff, line, region_node->w, direction);
+        while (!line.isNull () && yoff < h) {
+            p.drawText (x, y+yoff, line, w, direction);
             line = text.readLine ();
             yoff += metrics.lineSpacing ();
         }

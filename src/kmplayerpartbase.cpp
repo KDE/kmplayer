@@ -829,7 +829,7 @@ void Source::playURLDone () {
     m_player->process()->view ()->viewArea ()->repaint ();
 }
 
-bool Source::requestPlayURL (NodePtr mrl, RegionNodePtr /*region*/) {
+bool Source::requestPlayURL (NodePtr mrl) {
     kdDebug() << "Source::requestPlayURL " << mrl->mrl ()->src << endl;
     if (m_player->process ()->state () > Process::Ready) {
         m_back_request = mrl; // still playing, schedule it
@@ -860,9 +860,9 @@ void Source::repaintRect (int x, int y, int w, int h) {
         m_player->process()->view ()->viewArea ()->sheduleRepaint (x, y, w, h);
 }
 
-void Source::avWidgetSizes (RegionNode * r, unsigned int * bg) {
+void Source::avWidgetSizes (int x, int y, int w, int h, unsigned int * bg) {
     if (m_player->view ())
-        m_player->process()->view ()->viewArea ()->setAudioVideoGeometry (r->x, r->y, r->w, r->h, bg);
+        m_player->process()->view ()->viewArea ()->setAudioVideoGeometry (x, y, w, h, bg);
 }
 
 void Source::insertURL (const QString & mrl) {

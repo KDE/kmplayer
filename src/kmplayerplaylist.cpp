@@ -416,7 +416,7 @@ void Mrl::activate () {
     kdDebug () << "Mrl::activate" << endl;
     setState (state_activated);
     if (document ()->notify_listener && !src.isEmpty ())
-        document ()->notify_listener->requestPlayURL (m_self, RegionNodePtr ());
+        document ()->notify_listener->requestPlayURL (m_self);
     else
         deactivate (); // nothing to activate
 }

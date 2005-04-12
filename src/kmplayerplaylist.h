@@ -460,7 +460,7 @@ public:
      * Ask for playing a video/audio mrl inside region
      * If returning false, the element will be set to finished
      */
-    virtual bool requestPlayURL (NodePtr mrl, RegionNodePtr region) = 0;
+    virtual bool requestPlayURL (NodePtr mrl) = 0;
     /**
      * Element has activated or deactivated notification
      */
@@ -472,7 +472,7 @@ public:
     /**
      * Sets the video widget postion and background color if bg not NULL
      */
-    virtual void avWidgetSizes (RegionNode * region, unsigned int * bg) = 0;
+    virtual void avWidgetSizes (int x, int y, int w, int h, unsigned int *bg)=0;
 };
 
 /**

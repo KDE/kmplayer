@@ -6,7 +6,7 @@
       <region id="region1" left="5%" top="10%" right="50%" bottom="40%" z-index="2"/>
       <region id="region2" left="35%" top="40%" right="40%" bottom="5%" z-index="3" background-color="red"/>
       <region id="region3" z-index="1"/>
-      <region id="region4" left="65%" top="10%" right="10%" bottom="70%" z-index="2"/>
+      <region id="region4" left="65%" top="10%" right="10%" bottom="70%" z-index="2" background-color="purple"/>
       <region id="region5" left="65%" top="35%" right="10%" bottom="50%" z-index="2" background-color="red"/>
     </layout>
   </head>
@@ -18,7 +18,7 @@
         <param name="backgroundColor" value="blue"/>
       </text> 
       <set targetElement="region1" attributeName="z-index" to="4" begin="text1.inBoundsEvent" end="text1.outOfBoundsEvent"/>
-      <text id="text2" src="data:,click%20me" region="region4" dur="10">
+      <text id="text2" src="data:,click%20me" left="5" right="5" region="region4" dur="10" bottom="15">
         <param name="fontColor" value="red"/>
         <param name="fontSize" value="+1"/>
         <param name="backgroundColor" value="orange"/>

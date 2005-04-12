@@ -4,7 +4,7 @@
     <layout>
       <root-layout width="320" height="240" background-color="green"/>
       <region id="region1" left="5%" top="10%" right="30%" bottom="50%" z-index="2"/>
-      <region id="region2" left="180" top="140" width="48" height="48" z-index="3" background-color="red"/>
+      <region id="region2" left="180" top="140" width="64" height="64" z-index="3" background-color="red"/>
       <region id="region3" z-index="1"/>
     </layout>
   </head>
@@ -16,7 +16,7 @@
         <param name="backgroundColor" value="blue"/>
         <animate targetElement="text1" attributeName="fontPtSize" calcMode="discrete" values="10;12;14;16;18;20;22;24;26;28;300" begin="5" dur="6"/>
       </text> 
-      <img id="image1" src="../icons/hi48-app-kmplayer.png" region="region2">
+      <img id="image1" src="../icons/hi48-app-kmplayer.png" region="region2" left="8" top="8">
         <animate targetElement="region2" attributeName="background-color" values="red;white;blue" repeatCount="10" calcMode="discrete" dur="1.5"/>
       </img>
       <animate targetElement="region2" attributeName="left" from="180" to="50" begin="5" dur="10"/>

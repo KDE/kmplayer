@@ -125,10 +125,10 @@ protected:
     /**
      * PlayListNotify implementation
      */
-    bool requestPlayURL (NodePtr mrl, RegionNodePtr region);
+    bool requestPlayURL (NodePtr mrl);
     void stateElementChanged (NodePtr element);
     void repaintRect (int x, int y, int w, int h);
-    void avWidgetSizes (RegionNode * region, unsigned int * bg_color);
+    void avWidgetSizes (int x, int y, int w, int h, unsigned int * bg_color);
 
     NodePtr m_document;
     NodePtrW m_current;
