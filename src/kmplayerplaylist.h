@@ -89,7 +89,7 @@ protected:
 };
 
 /*
- * A double linked list of ListNode<T> or TreeNode<T> nodes
+ * A double linked list of ListNode<T> nodes
  */
 template <class T>
 class KMPLAYER_EXPORT List {
@@ -100,7 +100,7 @@ public:
 
     typename Item<T>::SharedType first () const { return m_first; }
     typename Item<T>::SharedType last () const { return m_last; }
-    void append (typename KMPlayer::Item<T>::SharedType c);
+    void append (typename Item<T>::SharedType c);
     unsigned int length () const;
     typename Item<T>::SharedType item (int i) const;
 protected:
@@ -135,7 +135,7 @@ class KMPLAYER_EXPORT TreeNode : public ListNode <T> {
 public:
     virtual ~TreeNode () {}
 
-    virtual void appendChild (typename KMPlayer::Item<T>::SharedType c);
+    virtual void appendChild (typename Item<T>::SharedType c);
 
     bool hasChildNodes () const { return m_first_child != 0L; }
     typename Item<T>::SharedType parentNode () const { return m_parent; }

@@ -30,6 +30,9 @@ extern int shared_data_count;
 #include <iostream>
 #endif
 
+/**
+ *  Shared data for SharedPtr and WeakPtr objects.
+ **/
 template <class T>
 struct SharedData {
     SharedData (T * t, bool w) : use_count (w?0:1), weak_count (1), ptr (t) {
@@ -93,6 +96,13 @@ template <class T> inline void SharedData<T>::dispose () {
 
 template <class T> struct WeakPtr;
 
+/**
+ * Shared class based on boost shared
+ * This makes it possible to share pointers w/o having to worry about
+ * memory leaks. A pointer gets deleted as soon as the last Shared pointer
+ * gets destroyed. As such, never use (or be extremely carefull) not to
+ * use pointers or references to shared objects
+ **/
 template <class T>
 struct SharedPtr {
     SharedPtr () : data (0L) {};
@@ -139,10 +149,15 @@ template <class T> inline SharedPtr<T> & SharedPtr<T>::operator = (T * t) {
     return *this;
 }
 
+/**
+ * Weak version of SharedPtr. This will also have access to the SharedData
+ * pointer, only these object wont prevent destruction of the shared
+ * pointer, hence weak references
+ */
 template <class T>
 struct WeakPtr {
     WeakPtr () : data (0L) {};
-    WeakPtr (T * t) : data (t ? new SharedData<T> (t, true) : 0) {};
+    explicit WeakPtr (T * t) : data (t ? new SharedData<T> (t, true) : 0) {};
     WeakPtr (const WeakPtr<T> & s) : data (s.data) { if (data) data->addWeakRef (); }
     WeakPtr (const SharedPtr<T> & s) : data (s.data) { if (data) data->addWeakRef (); }
     ~WeakPtr () { if (data) data->releaseWeak (); }
