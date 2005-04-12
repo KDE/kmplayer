@@ -65,11 +65,10 @@ class RegionNode;
 class ElementRuntime;
 class ElementRuntimePrivate;
 class ImageDataPrivate;
-class NodeList;
 
 /*
- * Base class for objects stored in SharedPtr/WeakPtr objects. Object keeps
- * its own copy of the shared SharedData<T> as a weak refence.
+ * Base class for objects that will be uses as SharedPtr/WeakPtr pointers.
+ * Item<T> keeps its own copy of the shared SharedData<T> as a weak refence.
  * \sa self()
  */
 template <class T>
@@ -80,6 +79,9 @@ public:
 
     virtual ~Item () {}
 
+    virtual const char * nodeName () const { return "#item"; }
+    virtual QString nodeValue () const { return QString (); }
+
     SharedType self () const { return m_self; }
 protected:
     Item ();
@@ -87,11 +89,31 @@ protected:
 };
 
 /*
- * Base class for double linked lists of SharedPtr/WeakPtr objects.
+ * A double list from ListNode<T> or TreeNode<T> nodes
+ */
+template <class T>
+class KMPLAYER_EXPORT List {
+public:
+    List () {}
+    List (typename Item<T>::SharedType f, typename Item<T>::SharedType l) 
+        : m_first (f), m_last (l) {}
+    typename Item<T>::SharedType first () const { return m_first; }
+    typename Item<T>::SharedType last () const { return m_last; }
+    void append (typename KMPlayer::Item<T>::SharedType c);
+    unsigned int length () const;
+    typename Item<T>::SharedType item (int i) const;
+protected:
+    typename Item<T>::SharedType m_first;
+    typename Item<T>::WeakType m_last;
+};
+
+/*
+ * Base class for double linked list nodes of SharedPtr/WeakPtr objects.
  * The linkage is a shared nextSibling and a weak previousSibling.
  */
 template <class T>
 class KMPLAYER_EXPORT ListNode : public Item <T> {
+    friend class List<T>;
 public:
     virtual ~ListNode () {}
 
@@ -104,16 +126,13 @@ protected:
 };
 
 /*
- * TreeNode represents a DOM like node having parent/siblings/children.
+ * Base class for double lined tree nodes having parent/siblings/children.
  * The linkage is a shared firstChild and weak parentNode.
  */
 template <class T>
 class KMPLAYER_EXPORT TreeNode : public ListNode <T> {
 public:
     virtual ~TreeNode () {}
-
-    virtual const char * nodeName () const { return "#node"; }
-    virtual QString nodeValue () const { return QString (); }
 
     virtual void appendChild (typename KMPlayer::Item<T>::SharedType c);
 
@@ -132,7 +151,7 @@ protected:
 /**
  * Attribute of an Element
  */
-class KMPLAYER_EXPORT Attribute : public TreeNode <Attribute> {
+class KMPLAYER_EXPORT Attribute : public ListNode <Attribute> {
     friend class Element;
 public:
     KDE_NO_CDTOR_EXPORT Attribute () {}
@@ -239,7 +258,7 @@ public:
     virtual void closed ();
     KDE_NO_EXPORT bool isDocument () const { return m_doc == m_self; }
 
-    KDE_NO_EXPORT NodeList childNodes () const;
+    KDE_NO_EXPORT List <Node> childNodes () const;
 protected:
     Node (NodePtr & d);
     NodePtr m_doc;
@@ -257,15 +276,15 @@ class KMPLAYER_EXPORT Element : public Node {
     //friend class DocumentBuilder;
 public:
     ~Element () {}
-    void setAttributes (AttributePtr attrs);
+    void setAttributes (List <Attribute> attrs);
     void setAttribute (const QString & name, const QString & value);
     QString getAttribute (const QString & name);
-    KDE_NO_EXPORT AttributePtr attributes () const { return m_attributes; }
+    KDE_NO_EXPORT List<Attribute> attributes () const { return m_attributes; }
     virtual void clear ();
     virtual bool isElementNode () { return true; }
 protected:
     Element (NodePtr & d);
-    AttributePtr m_attributes;
+    List<Attribute> m_attributes;
 };
 
 /**
@@ -393,18 +412,6 @@ public:
      */
     void updateLayout ();
     int x, y, w, h;
-};
-
-/**
- * Element wrapper to give it list functionality
- */
-class KMPLAYER_EXPORT NodeList {
-    NodePtrW first_element;
-public:
-    NodeList (NodePtr e) : first_element (e) {}
-    ~NodeList () {}
-    int length ();
-    NodePtr item (int i) const;
 };
 
 template <class T>
@@ -638,6 +645,31 @@ void readXML (NodePtr root, QTextStream & in, const QString & firstline);
 
 template <class T> inline Item<T>::Item () : m_self (static_cast <T*> (this)) {}
 
+template <class T> inline void List<T>::append(typename Item<T>::SharedType c) {
+    if (!m_first) {
+        m_first = m_last = c;
+    } else {
+        m_last->m_next = c;
+        c->m_prev = m_last;
+        m_last = c;
+    }
+}
+
+template <class T> inline unsigned int List<T>::length () const {
+    unsigned int count = 0;
+    for (typename Item<T>::SharedType t = m_first; t; t->nextSibling ())
+        count++;
+    return count;
+}
+
+template <class T>
+inline typename Item<T>::SharedType List<T>::item (int i) const {
+    for (typename Item<T>::SharedType t = m_first; t; t = t->nextSibling(), --i)
+        if (i == 0)
+            return t;
+    return Item<T>::SharedType ();
+}
+
 template <class T>
 inline void TreeNode<T>::appendChild (typename Item<T>::SharedType c) {
     if (!m_first_child) {
@@ -650,8 +682,8 @@ inline void TreeNode<T>::appendChild (typename Item<T>::SharedType c) {
     c->m_parent = Item<T>::m_self;
 }
 
-inline KDE_NO_EXPORT NodeList Node::childNodes () const {
-    return m_first_child;
+inline KDE_NO_EXPORT List <Node> Node::childNodes () const {
+    return List <Node> (m_first_child, m_last_child);
 }
 
 }  // KMPlayer namespace

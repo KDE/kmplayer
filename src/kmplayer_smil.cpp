@@ -283,7 +283,7 @@ QString ElementRuntime::param (const QString & name) {
 KDE_NO_EXPORT void ElementRuntime::init () {
     reset ();
     if (element && element->isElementNode ()) {
-        for (AttributePtr a= convertNode <Element> (element)->attributes ()->firstChild (); a; a = a->nextSibling ())
+        for (AttributePtr a= convertNode <Element> (element)->attributes ().first (); a; a = a->nextSibling ())
             setParam (QString (a->nodeName ()), a->nodeValue ());
     }
 }
@@ -1619,7 +1619,7 @@ KDE_NO_EXPORT NodePtr SMIL::MediaType::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::opened () {
-    for (AttributePtr a = m_attributes->firstChild(); a; a = a->nextSibling()) {
+    for (AttributePtr a = m_attributes.first (); a; a = a->nextSibling ()) {
         const char * cname = a->nodeName ();
         if (!strcmp (cname, "system-bitrate"))
             bitrate = a->nodeValue ().toInt ();
