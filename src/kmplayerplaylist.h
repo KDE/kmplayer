@@ -658,7 +658,7 @@ template <class T> inline void List<T>::append(typename Item<T>::SharedType c) {
 
 template <class T> inline unsigned int List<T>::length () const {
     unsigned int count = 0;
-    for (typename Item<T>::SharedType t = m_first; t; t->nextSibling ())
+    for (typename Item<T>::SharedType t = m_first; t; t = t->nextSibling ())
         count++;
     return count;
 }
