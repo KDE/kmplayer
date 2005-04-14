@@ -127,6 +127,16 @@ protected:
 };
 
 /*
+ * ListNode for weak Item<T> storage
+ */
+template <class T>
+class CollectionItem : public ListNode <CollectionItem <T> > {
+public:
+    CollectionItem (typename Item<T>::WeakType d) : data (d) {}
+    typename Item<T>::WeakType data;
+};
+
+/*
  * Base class for double linked tree nodes having parent/siblings/children.
  * The linkage is a shared firstChild and weak parentNode.
  */
@@ -172,6 +182,9 @@ typedef Item<Attribute>::SharedType AttributePtr;
 typedef Item<Attribute>::WeakType AttributePtrW;
 typedef Item<RegionNode>::SharedType RegionNodePtr;
 typedef Item<RegionNode>::WeakType RegionNodePtrW;
+typedef CollectionItem<Node> NodeCollectionItem;
+typedef NodeCollectionItem::SharedType NodeCollectionItemPtr;
+typedef NodeCollectionItem::WeakType NodeCollectionItemPtrW;
 typedef SharedPtr<ElementRuntime> ElementRuntimePtr;
 
 /*
@@ -270,6 +283,7 @@ private:
     unsigned int defer_tree_version;
 };
 
+
 /*
  * Element node, XML node that can have attributes
  */
@@ -348,9 +362,9 @@ public:
      */
     NodePtrW regionElement;
     /**
-     * Attached Element for this region (only one max. ATM)
+     * Attached Elements for this region
      */
-    NodePtrW attached_element;
+    List <NodeCollectionItem> attached_elements;
     /**
      * Make this region and its sibling 0
      */

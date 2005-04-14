@@ -92,7 +92,7 @@ KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (NodePtr e)
 
 KDE_NO_CDTOR_EXPORT void RegionNode::clearAll () {
     kdDebug () << "RegionNode::clearAll " << endl;
-    attached_element = NodePtr ();
+    attached_elements = List <NodeCollectionItem> ();
     for (RegionNodePtr r = firstChild (); r; r = r->nextSibling ())
         r->clearAll ();
     repaint ();
@@ -110,11 +110,12 @@ void RegionNode::paint (QPainter & p, int _x, int _y, int _w, int _h) {
             rt->paint (p);
     }
 
-    if (attached_element) {
-        ElementRuntimePtr rt = attached_element->getRuntime ();
-        if (rt)
-            rt->paint (p);
-    }
+    for (NodeCollectionItemPtr c = attached_elements.first(); c; c = c->nextSibling ())
+        if (c->data) {
+            ElementRuntimePtr rt = c->data->getRuntime ();
+            if (rt)
+                rt->paint (p);
+        }
     // now paint children, accounting for z-order
     int done_index = -1;
     do {
@@ -163,11 +164,12 @@ KDE_NO_EXPORT bool RegionNode::pointerClicked (int _x, int _y) {
     for (RegionNodePtr r = firstChild (); r; r = r->nextSibling ())
         handled |= r->pointerClicked (_x, _y);
     if (!handled) { // handle it ..
-        if (attached_element) {
-            ElementRuntimePtr rt = attached_element->getRuntime ();
-            if (rt)
-                static_cast <TimedRuntime *> (rt.ptr ())->emitActivateEvent ();
-        }
+        for (NodeCollectionItemPtr c =attached_elements.first(); c; c=c->nextSibling ())
+            if (c->data) { // FIXME: check if really on Element?
+                ElementRuntimePtr rt = c->data->getRuntime ();
+                if (rt)
+                    static_cast<TimedRuntime *>(rt.ptr())->emitActivateEvent();
+            }
         if (regionElement) {
             ElementRuntimePtr rt = regionElement->getRuntime ();
             if (rt)
@@ -185,11 +187,12 @@ KDE_NO_EXPORT bool RegionNode::pointerMoved (int _x, int _y) {
             handled |= r->pointerMoved (_x, _y);
     if (has_mouse && (!inside || handled)) { // OutOfBoundsEvent
         has_mouse = false;
-        if (attached_element) {
-            ElementRuntimePtr rt = attached_element->getRuntime ();
-            if (rt)
-                static_cast <TimedRuntime *> (rt.ptr())->emitOutOfBoundsEvent();
-        }
+        for (NodeCollectionItemPtr c =attached_elements.first(); c; c=c->nextSibling ())
+            if (c->data) { // FIXME: check if really on Element?
+                ElementRuntimePtr rt = c->data->getRuntime ();
+                if (rt)
+                   static_cast<TimedRuntime*>(rt.ptr())->emitOutOfBoundsEvent();
+            }
         if (regionElement) {
             ElementRuntimePtr rt = regionElement->getRuntime ();
             if (rt)
@@ -197,11 +200,12 @@ KDE_NO_EXPORT bool RegionNode::pointerMoved (int _x, int _y) {
         }
     } else if (inside && !handled && !has_mouse) { // InBoundsEvent
         has_mouse = true;
-        if (attached_element) {
-            ElementRuntimePtr rt = attached_element->getRuntime ();
-            if (rt)
-                static_cast <TimedRuntime *> (rt.ptr ())->emitInBoundsEvent ();
-        }
+        for (NodeCollectionItemPtr c =attached_elements.first(); c; c=c->nextSibling ())
+            if (c->data) { // FIXME: check if really on Element?
+                ElementRuntimePtr rt = c->data->getRuntime ();
+                if (rt)
+                    static_cast<TimedRuntime *>(rt.ptr ())->emitInBoundsEvent();
+            }
         if (regionElement) {
             ElementRuntimePtr rt = regionElement->getRuntime ();
             if (rt)
@@ -238,14 +242,16 @@ void RegionNode::scaleRegion (float sx, float sy, int xoff, int yoff) {
         h = int (sy * smilregion->h);
         xscale = sx;
         yscale = sy;
-        if (attached_element) {
+        for (NodeCollectionItemPtr c =attached_elements.first(); c; c=c->nextSibling ()) {
+            if (!c->data)
+                continue;
             // hack to get the one and only audio/video widget sizes
-            const char * nn = attached_element->nodeName ();
-            PlayListNotify * n = attached_element->document ()->notify_listener;
+            const char * nn = c->data->nodeName ();
+            PlayListNotify * n = c->data->document ()->notify_listener;
             if (n && !strcmp (nn, "video") || !strcmp (nn, "audio")) {
                 ElementRuntimePtr rt = smilregion->getRuntime ();
                 RegionRuntime *rr = static_cast <RegionRuntime*> (rt.ptr());
-                MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (attached_element->getRuntime ().ptr ());
+                MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (c->data->getRuntime ().ptr ());
                 if (rr && mtr) {
                     int w1, h1;
                     mtr->calcSizes (w, h, xoff, yoff, w1, h1);
@@ -1128,7 +1134,7 @@ KDE_NO_EXPORT void MediaTypeRuntime::started () {
         region_node = findRegion (element->document()->rootLayout,
                                   param (QString::fromLatin1 ("region")));
         if (region_node)
-            region_node->attached_element = element;
+            region_node->attached_elements.append ((new NodeCollectionItem (element))->self ());
     }
     if (region_node)
         region_node->repaint ();

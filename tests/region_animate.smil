@@ -16,9 +16,12 @@
         <param name="backgroundColor" value="blue"/>
         <animate targetElement="text1" attributeName="fontPtSize" calcMode="discrete" values="10;12;14;16;18;20;22;24;26;28;300" begin="5" dur="6"/>
       </text> 
-      <img id="image1" src="../icons/hi48-app-kmplayer.png" region="region2" left="8" top="8">
+      <img id="image1" src="../icons/hi48-app-kmplayer.png" region="region2" left="8">
         <animate targetElement="region2" attributeName="background-color" values="red;white;blue" repeatCount="10" calcMode="discrete" dur="1.5"/>
       </img>
+      <text src="data:,Move%20a%20region" region="region2" fill="freeze" top="48">
+        <param name="fontPtSize" value="6"/>
+      </text> 
       <animate targetElement="region2" attributeName="left" from="180" to="50" begin="5" dur="10"/>
     </par>
     <par>
