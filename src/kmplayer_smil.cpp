@@ -255,6 +255,8 @@ void RegionNode::scaleRegion (float sx, float sy, int xoff, int yoff) {
                 if (rr && mtr) {
                     int w1, h1;
                     mtr->calcSizes (w, h, xoff, yoff, w1, h1);
+                    xoff = int (xoff * xscale);
+                    yoff = int (yoff * yscale);
                     n->avWidgetSizes (x+xoff, y+yoff, w1, h1, rr->have_bg_color ? &rr->background_color : 0L);
                 }
             }
@@ -1836,6 +1838,8 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
         RegionNode * r = region_node.ptr ();
         int xoff, yoff, w = r->w, h = r->h;
         calcSizes (w, h, xoff, yoff, w, h);
+        xoff = int (xoff * r->xscale);
+        yoff = int (yoff * r->yscale);
         if (fit == fit_hidden) {
             w = int (d->image->width () * r->xscale);
             h = int (d->image->height () * r->yscale);
@@ -1986,13 +1990,14 @@ QString TextData::setParam (const QString & name, const QString & val) {
 KDE_NO_EXPORT void TextData::paint (QPainter & p) {
     if (region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
-        int xoff, yoff, w = region_node->w, h = region_node->h;
+        RegionNode * r = region_node.ptr ();
+        int xoff, yoff, w = r->w, h = r->h;
         calcSizes (w, h, xoff, yoff, w, h);
-        int x = region_node->x + xoff;
-        int y = region_node->y + yoff;
+        int x = r->x + int (xoff * r->xscale);
+        int y = r->y + int (yoff * r->yscale);
         if (!d->transparent)
             p.fillRect (x, y, w, h, QColor (QRgb (d->background_color)));
-        d->font.setPointSize (int (region_node->xscale * d->font_size));
+        d->font.setPointSize (int (r->xscale * d->font_size));
         QFontMetrics metrics (d->font);
         QPainter::TextDirection direction = QApplication::reverseLayout () ?
             QPainter::RTL : QPainter::LTR;
