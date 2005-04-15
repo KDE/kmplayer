@@ -45,7 +45,7 @@ typedef WeakPtr<ElementRuntime> ElementRuntimePtrW;
 /**
  * Base for RegionRuntime and TimedRuntime, having events from regions
  */
-class RegionSignalerRuntime : public QObject, public ElementRuntime {
+class MouseSignaler : public QObject {
     Q_OBJECT
 signals:
     /**
@@ -68,7 +68,7 @@ public slots:
     void emitOutOfBoundsEvent () { emit outOfBoundsEvent (); }
     void emitInBoundsEvent () { emit inBoundsEvent (); }
 protected:
-    RegionSignalerRuntime (NodePtr e);
+    MouseSignaler ();
 };
 
 /*
@@ -101,7 +101,7 @@ protected:
 /**
  * Live representation of a SMIL element having timings
  */
-class TimedRuntime : public RegionSignalerRuntime {
+class TimedRuntime : public MouseSignaler, public ElementRuntime {
     Q_OBJECT
 public:
     enum TimingState {
@@ -156,7 +156,7 @@ protected:
 /**
  * Runtime data for a region
  */
-class RegionRuntime : public RegionSignalerRuntime, public SizedRuntime {
+class RegionRuntime : public MouseSignaler, public ElementRuntime, public SizedRuntime {
 public:
     RegionRuntime (NodePtr e);
     KDE_NO_CDTOR_EXPORT ~RegionRuntime () {}

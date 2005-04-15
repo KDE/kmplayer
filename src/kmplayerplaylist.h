@@ -86,13 +86,15 @@ public:
 protected:
     Item ();
     WeakType m_self;
+private:
+    Item (const Item <T> &); // forbidden copy constructor
 };
 
 /*
- * A double linked list of ListNode<T> nodes
+ * A shareable double linked list of ListNode<T> nodes
  */
 template <class T>
-class KMPLAYER_EXPORT List {
+class KMPLAYER_EXPORT List : public Item <List <T> > {
 public:
     List () {}
     List (typename Item<T>::SharedType f, typename Item<T>::SharedType l) 
@@ -101,6 +103,7 @@ public:
     typename Item<T>::SharedType first () const { return m_first; }
     typename Item<T>::SharedType last () const { return m_last; }
     void append (typename Item<T>::SharedType c);
+    void remove (typename Item<T>::SharedType c);
     unsigned int length () const;
     typename Item<T>::SharedType item (int i) const;
 protected:
@@ -182,9 +185,17 @@ typedef Item<Attribute>::SharedType AttributePtr;
 typedef Item<Attribute>::WeakType AttributePtrW;
 typedef Item<RegionNode>::SharedType RegionNodePtr;
 typedef Item<RegionNode>::WeakType RegionNodePtrW;
+typedef List<Node> NodeList;
+typedef Item<NodeList>::SharedType NodeListPtr;
+typedef Item<NodeList>::WeakType NodeListPtrW;
+typedef List<Attribute> AttributeList;
+typedef Item<AttributeList>::SharedType AttributeListPtr;
 typedef CollectionItem<Node> NodeCollectionItem;
 typedef NodeCollectionItem::SharedType NodeCollectionItemPtr;
 typedef NodeCollectionItem::WeakType NodeCollectionItemPtrW;
+typedef List<NodeCollectionItem> NodeCollectionItemList;
+typedef Item<NodeCollectionItemList>::SharedType NodeCollectionItemListPtr;
+typedef Item<NodeCollectionItemList>::WeakType NodeCollectionItemListPtrW;
 typedef SharedPtr<ElementRuntime> ElementRuntimePtr;
 
 /*
@@ -272,7 +283,7 @@ public:
     virtual void closed ();
     KDE_NO_EXPORT bool isDocument () const { return m_doc == m_self; }
 
-    KDE_NO_EXPORT List <Node> childNodes () const;
+    KDE_NO_EXPORT NodeListPtr childNodes () const;
 protected:
     Node (NodePtr & d);
     NodePtr m_doc;
@@ -291,15 +302,15 @@ class KMPLAYER_EXPORT Element : public Node {
     //friend class DocumentBuilder;
 public:
     ~Element () {}
-    void setAttributes (List <Attribute> attrs);
+    void setAttributes (AttributeListPtr attrs);
     void setAttribute (const QString & name, const QString & value);
     QString getAttribute (const QString & name);
-    KDE_NO_EXPORT List<Attribute> attributes () const { return m_attributes; }
+    KDE_NO_EXPORT AttributeListPtr attributes () const { return m_attributes; }
     virtual void clear ();
     virtual bool isElementNode () { return true; }
 protected:
     Element (NodePtr & d);
-    List<Attribute> m_attributes;
+    AttributeListPtr m_attributes;
 };
 
 /**
@@ -364,7 +375,7 @@ public:
     /**
      * Attached Elements for this region
      */
-    List <NodeCollectionItem> attached_elements;
+    NodeCollectionItemListPtr attached_elements;
     /**
      * Make this region and its sibling 0
      */
@@ -670,6 +681,19 @@ template <class T> inline void List<T>::append(typename Item<T>::SharedType c) {
     }
 }
 
+template <class T> inline void List<T>::remove(typename Item<T>::SharedType c) {
+    if (c->m_prev) {
+        c->m_prev->m_next = c->m_next;
+    } else
+        m_first = c->m_next;
+    if (c->m_next) {
+        c->m_next->m_prev = c->m_prev;
+        c->m_next = 0L;
+    } else
+        m_last = c->m_prev;
+    c->m_prev = 0L;
+}
+
 template <class T> inline unsigned int List<T>::length () const {
     unsigned int count = 0;
     for (typename Item<T>::SharedType t = m_first; t; t = t->nextSibling ())
@@ -697,8 +721,8 @@ inline void TreeNode<T>::appendChild (typename Item<T>::SharedType c) {
     c->m_parent = Item<T>::m_self;
 }
 
-inline KDE_NO_EXPORT List <Node> Node::childNodes () const {
-    return List <Node> (m_first_child, m_last_child);
+inline KDE_NO_EXPORT NodeListPtr Node::childNodes () const {
+    return (new NodeList (m_first_child, m_last_child))->self ();
 }
 
 }  // KMPlayer namespace

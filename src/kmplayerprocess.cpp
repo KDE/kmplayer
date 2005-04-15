@@ -1374,7 +1374,7 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
             }
             // set up the table fields
             table->setNumCols (2);
-            table->setNumRows (elm->childNodes ().length ());
+            table->setNumRows (elm->childNodes ()->length ());
             table->verticalHeader ()->hide ();
             table->setLeftMargin (0);
             table->horizontalHeader ()->hide ();

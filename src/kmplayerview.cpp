@@ -823,7 +823,7 @@ void PlayListView::populate (NodePtr e, NodePtr focus, QListViewItem * item, QLi
             populate (c, focus, new ListViewItem (item, c, this), curitem);
     }
     if (m_show_all_nodes && e->isElementNode ()) {
-        AttributePtr a = convertNode<Element> (e)->attributes ().first ();
+        AttributePtr a = convertNode<Element> (e)->attributes ()->first ();
         if (a) {
             ListViewItem * as = new ListViewItem (item, e, this);
             as->setText (0, i18n ("[attributes]"));
