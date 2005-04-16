@@ -336,7 +336,7 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
 KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
 #define PAINT_BUFFER_HEIGHT 128
     QWidget::paintEvent (pe);
-    if (rootLayout && rootLayout->regionElement) {
+    if (rootLayout && rootLayout->region_element) {
         if (!m_paint_buffer) {
             m_paint_buffer = new QPixmap (width (), PAINT_BUFFER_HEIGHT);
             m_painter = new QPainter ();

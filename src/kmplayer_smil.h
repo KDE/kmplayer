@@ -40,12 +40,12 @@ namespace KMPlayer {
 class MediaTypeRuntimePrivate;
 class ImageDataPrivate;
 class TextDataPrivate;
-typedef ListNode<ElementRuntimePtrW> RuntimeListItem;
-typedef RuntimeListItem::SharedType RuntimeListItemPtr;
-typedef RuntimeListItem::WeakType RuntimeListItemPtrW;
-typedef List<RuntimeListItem> RuntimeList;
-typedef Item<RuntimeList>::SharedType RuntimeListPtr;
-typedef Item<RuntimeList>::WeakType RuntimeListPtrW;
+typedef ListNode<ElementRuntimePtrW> RuntimeRefItem;
+typedef RuntimeRefItem::SharedType RuntimeRefItemPtr;
+typedef RuntimeRefItem::WeakType RuntimeRefItemPtrW;
+typedef List<RuntimeRefItem> RuntimeRefList;
+typedef Item<RuntimeRefList>::SharedType RuntimeRefListPtr;
+typedef Item<RuntimeRefList>::WeakType RuntimeRefListPtrW;
 
 /*
  * A generic event type
@@ -69,7 +69,7 @@ public:
 
 /*
  * Base for objects emiting events. Listeners should add them selves to
- * the RuntimeList returned by listeners(event_id)
+ * the RuntimeRefList returned by listeners(event_id)
  */
 class Signaler {
 public:
@@ -78,7 +78,7 @@ public:
      * This list should be used to add and remove ElementRuntime objects
      * derived from Listener.
      */
-    virtual RuntimeListPtr listeners (unsigned int event_id) = 0;
+    virtual RuntimeRefListPtr listeners (unsigned int event_id) = 0;
     void propagateEvent (EventPtr event);
 protected:
     KDE_NO_CDTOR_EXPORT Signaler () {};
@@ -103,10 +103,10 @@ protected:
 class MouseSignaler : public Signaler {
 protected:
     MouseSignaler ();
-    RuntimeListPtr listeners (unsigned int event_id);
-    RuntimeListPtr m_ActionListeners;      // mouse clicked
-    RuntimeListPtr m_OutOfBoundsListeners; // mouse left
-    RuntimeListPtr m_InBoundsListeners;    // mouse entered
+    RuntimeRefListPtr listeners (unsigned int event_id);
+    RuntimeRefListPtr m_ActionListeners;      // mouse clicked
+    RuntimeRefListPtr m_OutOfBoundsListeners; // mouse left
+    RuntimeRefListPtr m_InBoundsListeners;    // mouse entered
 };
 
 /*
@@ -158,7 +158,7 @@ public:
     virtual void paint (QPainter &) {}
     void propagateStop (bool forced);
     void propagateStart ();
-    virtual RuntimeListPtr listeners (unsigned int event_id);
+    virtual RuntimeRefListPtr listeners (unsigned int event_id);
     /**
      * Duration items, begin/dur/end, length information or connected element
      */
@@ -167,8 +167,8 @@ public:
         void clearConnection ();
         void setupConnection (Signaler * s, ElementRuntimePtr rt, unsigned int event_id);
         unsigned int durval;
-        RuntimeListPtrW listeners;
-        RuntimeListItemPtrW listen_item;
+        RuntimeRefListPtrW listeners;
+        RuntimeRefItemPtrW listen_item;
     } durations [(const int) durtime_last];
 protected slots:
     void timerEvent (QTimerEvent *);
@@ -179,8 +179,8 @@ private:
     void setDurationItem (DurationTime item, const QString & val);
 protected:
     virtual bool handleEvent (EventPtr event);
-    RuntimeListPtr m_StartedListeners;      // Element about to be started
-    RuntimeListPtr m_StoppedListeners;      // Element stopped
+    RuntimeRefListPtr m_StartedListeners;      // Element about to be started
+    RuntimeRefListPtr m_StoppedListeners;      // Element stopped
     TimingState timingstate;
     Fill fill;
     int start_timer;
@@ -229,8 +229,8 @@ protected:
     virtual bool handleEvent (EventPtr event);
 private:
     struct StartedEventInfo {
-        RuntimeListPtrW listeners;
-        RuntimeListItemPtrW listen_item;
+        RuntimeRefListPtrW listeners;
+        RuntimeRefItemPtrW listen_item;
     };
     typedef SharedPtr <StartedEventInfo> StartedEventInfoPtr;
     typedef ListNode <StartedEventInfoPtr> StartedEventItem;

@@ -64,10 +64,10 @@ static const unsigned int duration_last_option = (unsigned int) -8;
 
 static RegionNodePtr findRegion (RegionNodePtr p, const QString & id) {
     for (RegionNodePtr r = p->firstChild (); r; r = r->nextSibling ()) {
-        if (r->regionElement->isElementNode ()) {
-            QString a = convertNode <Element> (r->regionElement)->getAttribute ("id");
+        if (r->region_element->isElementNode ()) {
+            QString a = convertNode <Element> (r->region_element)->getAttribute ("id");
             if ((a.isEmpty () && id.isEmpty ()) || a == id) {
-                kdDebug () << "MediaType region found " << id << endl;
+                //kdDebug () << "MediaType region found " << id << endl;
                 return r;
             }
         }
@@ -89,8 +89,8 @@ ElementRuntimePtr Node::getRuntime () {
 KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (NodePtr e)
  : has_mouse (false), x (0), y (0), w (0), h (0),
    xscale (0.0), yscale (0.0),
-   z_order (1), regionElement (e),
-   attached_elements ((new NodeItemList)->self ()) {
+   z_order (1), region_element (e),
+   element_users ((new NodeRefList)->self ()) {
     ElementRuntimePtr rt = e->getRuntime ();
     if (rt)
         rt->region_node = m_self;
@@ -98,7 +98,7 @@ KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (NodePtr e)
 
 KDE_NO_CDTOR_EXPORT void RegionNode::clearAll () {
     kdDebug () << "RegionNode::clearAll " << endl;
-    attached_elements = (new NodeItemList)->self ();
+    element_users = (new NodeRefList)->self ();
     for (RegionNodePtr r = firstChild (); r; r = r->nextSibling ())
         r->clearAll ();
     repaint ();
@@ -110,13 +110,13 @@ void RegionNode::paint (QPainter & p, int _x, int _y, int _w, int _h) {
         return;
     p.setClipRect (x, y, w, h, QPainter::CoordPainter);
 
-    if (regionElement) {
-        ElementRuntimePtr rt = regionElement->getRuntime ();
+    if (region_element) {
+        ElementRuntimePtr rt = region_element->getRuntime ();
         if (rt)
             rt->paint (p);
     }
 
-    for (NodeListItemPtr c = attached_elements->first(); c; c =c->nextSibling())
+    for (NodeRefItemPtr c = element_users->first(); c; c =c->nextSibling())
         if (c->data) {
             ElementRuntimePtr rt = c->data->getRuntime ();
             if (rt)
@@ -144,17 +144,17 @@ void RegionNode::paint (QPainter & p, int _x, int _y, int _w, int _h) {
 }
 
 KDE_NO_EXPORT void RegionNode::repaint () {
-    if (regionElement) {
-        PlayListNotify * n = regionElement->document()->notify_listener;
+    if (region_element) {
+        PlayListNotify * n = region_element->document()->notify_listener;
         if (n)
             n->repaintRect (x, y, w, h);
     }
 };
 
 KDE_NO_EXPORT void RegionNode::calculateChildBounds () {
-    SMIL::Region * r = convertNode <SMIL::Region> (regionElement);
+    SMIL::Region * r = convertNode <SMIL::Region> (region_element);
     for (RegionNodePtr rn = firstChild (); rn; rn = rn->nextSibling ()) {
-        SMIL::Region * cr = convertNode <SMIL::Region> (rn->regionElement);
+        SMIL::Region * cr = convertNode <SMIL::Region> (rn->region_element);
         cr->calculateBounds (r->w, r->h);
         rn->calculateChildBounds ();
         if (xscale > 0.001)
@@ -163,14 +163,14 @@ KDE_NO_EXPORT void RegionNode::calculateChildBounds () {
 }
 
 KDE_NO_EXPORT void RegionNode::dispatchMouseEvent (unsigned int event_id) {
-    for (NodeListItemPtr c =attached_elements->first(); c; c=c->nextSibling ())
+    for (NodeRefItemPtr c = element_users->first (); c; c = c->nextSibling ())
         if (c->data) { // FIXME: check if really on Element?
             MouseSignaler * rt = dynamic_cast <MouseSignaler *> (c->data->getRuntime ().ptr ());
             if (rt)
                 rt->propagateEvent ((new Event (event_id))->self ());
         }
-    if (regionElement) {
-        MouseSignaler * rt = dynamic_cast <MouseSignaler *> (regionElement->getRuntime ().ptr ());
+    if (region_element) {
+        MouseSignaler * rt = dynamic_cast <MouseSignaler *> (region_element->getRuntime ().ptr ());
         if (rt)
             rt->propagateEvent ((new Event (event_id))->self ());
     }
@@ -205,7 +205,7 @@ KDE_NO_EXPORT bool RegionNode::pointerMoved (int _x, int _y) {
 }
 
 KDE_NO_EXPORT void RegionNode::setSize (int _x, int _y, int _w, int _h, bool keepaspect) {
-    RegionBase * region = convertNode <RegionBase> (regionElement);
+    RegionBase * region = convertNode <RegionBase> (region_element);
     if (region && region->w > 0 && region->h > 0) {
         xscale = 1.0 + 1.0 * (_w - region->w) / region->w;
         yscale = 1.0 + 1.0 * (_h - region->h) / region->h;
@@ -223,7 +223,7 @@ KDE_NO_EXPORT void RegionNode::setSize (int _x, int _y, int _w, int _h, bool kee
 
 KDE_NO_EXPORT
 void RegionNode::scaleRegion (float sx, float sy, int xoff, int yoff) {
-    RegionBase * smilregion = convertNode <RegionBase> (regionElement);
+    RegionBase * smilregion = convertNode <RegionBase> (region_element);
     if (smilregion) {  // note WeakPtr can be null
         x = xoff + int (sx * smilregion->x);
         y = yoff + int (sy * smilregion->y);
@@ -231,7 +231,7 @@ void RegionNode::scaleRegion (float sx, float sy, int xoff, int yoff) {
         h = int (sy * smilregion->h);
         xscale = sx;
         yscale = sy;
-        for (NodeListItemPtr c =attached_elements->first(); c; c=c->nextSibling ()) {
+        for (NodeRefItemPtr c =element_users->first(); c; c=c->nextSibling()) {
             if (!c->data)
                 continue;
             // hack to get the one and only audio/video widget sizes
@@ -300,9 +300,9 @@ KDE_NO_CDTOR_EXPORT StartedEvent::StartedEvent (NodePtr n)
  : Event (event_to_be_started), node (n) {}
 
 KDE_NO_EXPORT void Signaler::propagateEvent (EventPtr event) {
-    RuntimeListPtr nl = listeners (event->id ());
+    RuntimeRefListPtr nl = listeners (event->id ());
     if (nl)
-        for (RuntimeListItemPtr c = nl->first(); c; c = c->nextSibling ())
+        for (RuntimeRefItemPtr c = nl->first(); c; c = c->nextSibling ())
             if (c->data) {
                 Listener * l = dynamic_cast <Listener *> (c->data.ptr ());
                 if (l)
@@ -315,11 +315,11 @@ KDE_NO_EXPORT void Signaler::propagateEvent (EventPtr event) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT MouseSignaler::MouseSignaler ()
- : m_ActionListeners ((new RuntimeList)->self ()),
-   m_OutOfBoundsListeners ((new RuntimeList)->self ()),
-   m_InBoundsListeners ((new RuntimeList)->self ()) {}
+ : m_ActionListeners ((new RuntimeRefList)->self ()),
+   m_OutOfBoundsListeners ((new RuntimeRefList)->self ()),
+   m_InBoundsListeners ((new RuntimeRefList)->self ()) {}
 
-RuntimeListPtr MouseSignaler::listeners(unsigned int eid) {
+RuntimeRefListPtr MouseSignaler::listeners(unsigned int eid) {
     switch (eid) {
         case event_activated:
             return m_ActionListeners;
@@ -328,7 +328,7 @@ RuntimeListPtr MouseSignaler::listeners(unsigned int eid) {
         case event_outbounds:
             return m_OutOfBoundsListeners;
     }
-    return RuntimeListPtr ();
+    return RuntimeRefListPtr ();
 }
 
 //-----------------------------------------------------------------------------
@@ -336,8 +336,8 @@ RuntimeListPtr MouseSignaler::listeners(unsigned int eid) {
 KDE_NO_CDTOR_EXPORT
 TimedRuntime::TimedRuntime (NodePtr e)
  : ElementRuntime (e),
-   m_StartedListeners ((new RuntimeList)->self ()),
-   m_StoppedListeners ((new RuntimeList)->self ()) {
+   m_StartedListeners ((new RuntimeRefList)->self ()),
+   m_StoppedListeners ((new RuntimeRefList)->self ()) {
     reset ();
 }
 
@@ -429,7 +429,7 @@ KDE_NO_EXPORT void TimedRuntime::DurationItem::setupConnection (Signaler * s, El
     clearConnection ();
     listeners = s->listeners (event_id);
     if (listeners) {
-        RuntimeListItemPtr rci = (new RuntimeListItem (rt))->self ();
+        RuntimeRefItemPtr rci = (new RuntimeRefItem (rt))->self ();
         listeners->append (rci);
         listen_item = rci;
     } else
@@ -463,7 +463,7 @@ KDE_NO_EXPORT void TimedRuntime::end () {
  */
 KDE_NO_EXPORT
 QString TimedRuntime::setParam (const QString & name, const QString & val) {
-    kdDebug () << "TimedRuntime::setParam " << name << "=" << val << endl;
+    //kdDebug () << "TimedRuntime::setParam " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("begin")) {
         setDurationItem (begin_time, val);
         if ((timingstate == timings_began && !start_timer) ||
@@ -529,13 +529,13 @@ KDE_NO_EXPORT bool TimedRuntime::handleEvent (EventPtr event) {
     return true;
 }
 
-KDE_NO_EXPORT RuntimeListPtr TimedRuntime::listeners (unsigned int id) {
+KDE_NO_EXPORT RuntimeRefListPtr TimedRuntime::listeners (unsigned int id) {
     if (id == event_stopped)
         return m_StoppedListeners;
     else if (id == event_to_be_started)
         return m_StartedListeners;
     kdWarning () << "unknown event requested" << endl;
-    return RuntimeListPtr ();
+    return RuntimeRefListPtr ();
 }
 
 KDE_NO_EXPORT void TimedRuntime::propagateStop (bool forced) {
@@ -695,7 +695,7 @@ KDE_NO_EXPORT void RegionRuntime::paint (QPainter & p) {
 
 KDE_NO_EXPORT
 QString RegionRuntime::setParam (const QString & name, const QString & val) {
-    kdDebug () << "RegionRuntime::setParam " << name << "=" << val << endl;
+    //kdDebug () << "RegionRuntime::setParam " << name << "=" << val << endl;
     RegionNode * rn = region_node.ptr ();
     QRect rect;
     if (rn)
@@ -713,8 +713,8 @@ QString RegionRuntime::setParam (const QString & name, const QString & val) {
                 rn->parentNode ()->calculateChildBounds ();
             else {
                 RegionNodePtr rootrn = element->document ()->rootLayout;
-                if (rootrn && rootrn->regionElement)
-                    convertNode<RegionBase>(rootrn->regionElement)->updateLayout ();
+                if (rootrn && rootrn->region_element)
+                    convertNode<RegionBase>(rootrn->region_element)->updateLayout ();
             }
             QRect nr = rect.unite (QRect (rn->x, rn->y, rn->w, rn->h));
             PlayListNotify * n = element->document()->notify_listener;
@@ -766,9 +766,9 @@ KDE_NO_EXPORT void ExclRuntime::begin () {
         for (NodePtr e = element->firstChild (); e; e = e->nextSibling ()) {
             TimedRuntime *tr=dynamic_cast<TimedRuntime*>(e->getRuntime().ptr());
             if (tr) {
-                RuntimeListPtr ls = tr->listeners (event_to_be_started);
+                RuntimeRefListPtr ls = tr->listeners (event_to_be_started);
                 if (ls) {
-                    RuntimeListItem * rli = new RuntimeListItem (m_self);
+                    RuntimeRefItem * rli = new RuntimeRefItem (m_self);
                     ls->append (rli->self ());
                     StartedEventInfo * info = new StartedEventInfo;
                     info->listeners = ls;
@@ -810,7 +810,7 @@ KDE_NO_EXPORT bool ExclRuntime::handleEvent (EventPtr event) {
 //-----------------------------------------------------------------------------
 
 QString AnimateGroupData::setParam (const QString & name, const QString & val) {
-    kdDebug () << "AnimateGroupData::setParam " << name << "=" << val << endl;
+    //kdDebug () << "AnimateGroupData::setParam " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("targetElement")) {
         if (element)
             target_element = element->document ()->getElementById (val);
@@ -890,7 +890,7 @@ KDE_NO_EXPORT void AnimateData::reset () {
 }
 
 QString AnimateData::setParam (const QString & name, const QString & val) {
-    kdDebug () << "AnimateData::setParam " << name << "=" << val << endl;
+    //kdDebug () << "AnimateData::setParam " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("change_by")) {
         change_by = val.toInt ();
     } else if (name == QString::fromLatin1 ("from")) {
@@ -1144,7 +1144,7 @@ KDE_NO_EXPORT void MediaTypeRuntime::started () {
         region_node = findRegion (element->document()->rootLayout,
                                   param (QString::fromLatin1 ("region")));
         if (region_node)
-            region_node->attached_elements->append ((new NodeListItem (element))->self ());
+            region_node->element_users->append ((new NodeRefItem (element))->self ());
     }
     if (region_node)
         region_node->repaint ();
@@ -1184,7 +1184,7 @@ KDE_NO_EXPORT void AudioVideoData::started () {
 
 KDE_NO_EXPORT
 QString AudioVideoData::setParam (const QString & name, const QString & val) {
-    kdDebug () << "AudioVideoData::setParam " << name << "=" << val << endl;
+    //kdDebug () << "AudioVideoData::setParam " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("src")) {
         QString old_val = MediaTypeRuntime::setParam (name, val);
         if (timingstate == timings_started && element) {
@@ -1253,8 +1253,8 @@ KDE_NO_EXPORT NodePtr Smil::childFromTag (const QString & tag) {
 }
 
 static void beginOrEndRegions (RegionNodePtr rn, bool b) {
-    if (rn->regionElement) {
-        ElementRuntimePtr rt = rn->regionElement->getRuntime ();
+    if (rn->region_element) {
+        ElementRuntimePtr rt = rn->region_element->getRuntime ();
         if (rt) {
             if (b) {
                 static_cast <RegionRuntime *> (rt.ptr ())->init ();
@@ -1348,7 +1348,7 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
             appendChild (r->self ());
         } else {
             for (RegionNodePtr rn = regionRootLayout->firstChild (); rn; rn = rn->nextSibling ()) {
-                SMIL::Region *rb = convertNode<SMIL::Region>(rn->regionElement);
+                SMIL::Region *rb =convertNode<SMIL::Region>(rn->region_element);
                 if (rb) {
                     ElementRuntimePtr rt = rb->getRuntime ();
                     static_cast <RegionRuntime *> (rt.ptr ())->init ();
@@ -1379,9 +1379,9 @@ KDE_NO_EXPORT void SMIL::Layout::activate () {
     kdDebug () << "SMIL::Layout::activate" << endl;
     setState (state_activated);
     RegionNodePtr rn = document ()->rootLayout;
-    if (rn && rn->regionElement) {
+    if (rn && rn->region_element) {
         beginOrEndRegions (rn, true);
-        convertNode <RegionBase> (rn->regionElement)->updateLayout ();
+        convertNode <RegionBase> (rn->region_element)->updateLayout ();
         document ()->rootLayout->repaint ();
     }
     deactivate (); // that's fast :-)
@@ -1816,7 +1816,7 @@ KDE_NO_CDTOR_EXPORT ImageData::~ImageData () {
 
 KDE_NO_EXPORT
 QString ImageData::setParam (const QString & name, const QString & val) {
-    kdDebug () << "ImageData::param " << name << "=" << val << endl;
+    //kdDebug () << "ImageData::param " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("src")) {
         killWGet ();
         QString old_val = MediaTypeRuntime::setParam (name, val);
@@ -1963,7 +1963,7 @@ KDE_NO_EXPORT void TextData::end () {
 
 KDE_NO_EXPORT
 QString TextData::setParam (const QString & name, const QString & val) {
-    kdDebug () << "TextData::setParam " << name << "=" << val << endl;
+    //kdDebug () << "TextData::setParam " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("src")) {
         d->data.resize (0);
         killWGet ();

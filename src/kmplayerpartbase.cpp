@@ -1135,7 +1135,7 @@ void URLSource::dimensions (int & w, int & h) {
         h = m_player->process ()->view ()->viewer ()->height ();
     } else if (m_document && m_document->document ()->rootLayout) {
         RegionNodePtr rl = m_document->document ()->rootLayout;
-        RegionBase *root = convertNode <RegionBase> (rl->regionElement);
+        RegionBase *root = convertNode <RegionBase> (rl->region_element);
         if (root) {
             w = root->w;
             h = root->h;
@@ -1323,9 +1323,9 @@ KDE_NO_EXPORT void URLSource::read (QTextStream & textstream) {
             readXML (cur_elm, textstream, line);
             cur_elm->normalize ();
             if (m_document) { // SMIL documents might have set its sizes
-                RegionNodePtr rl = m_document->document ()->rootLayout;
-                if (rl) {
-                    RegionBase *root=convertNode<RegionBase>(rl->regionElement);
+                RegionNodePtr r = m_document->document ()->rootLayout;
+                if (r) {
+                    RegionBase *root=convertNode<RegionBase>(r->region_element);
                     Source::setDimensions (root->w, root->h);
                 }
             }

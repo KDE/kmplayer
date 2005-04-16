@@ -192,12 +192,13 @@ typedef Item<NodeList>::SharedType NodeListPtr;
 typedef Item<NodeList>::WeakType NodeListPtrW;
 typedef List<Attribute> AttributeList;
 typedef Item<AttributeList>::SharedType AttributeListPtr;
-typedef ListNode<NodePtrW> NodeListItem;
-typedef NodeListItem::SharedType NodeListItemPtr;
-typedef NodeListItem::WeakType NodeListItemPtrW;
-typedef List<NodeListItem> NodeItemList;
-typedef Item<NodeItemList>::SharedType NodeItemListPtr;
-typedef Item<NodeItemList>::WeakType NodeItemListPtrW;
+typedef ListNode<NodePtrW> NodeRefItem;      // list only references Nodes
+//typedef ListNode<NodePtr> NodeStoreItem;   // list stores Nodes
+typedef NodeRefItem::SharedType NodeRefItemPtr;
+typedef NodeRefItem::WeakType NodeRefItemPtrW;
+typedef List<NodeRefItem> NodeRefList;
+typedef Item<NodeRefList>::SharedType NodeRefListPtr;
+typedef Item<NodeRefList>::WeakType NodeRefListPtrW;
 typedef Item<ElementRuntime>::SharedType ElementRuntimePtr;
 typedef Item<ElementRuntime>::WeakType ElementRuntimePtrW;
 
@@ -374,11 +375,11 @@ public:
     /**
      * Corresponding DOM node (SMIL::Region or SMIL::RootLayout)
      */
-    NodePtrW regionElement;
+    NodePtrW region_element;
     /**
-     * Attached Elements for this region
+     * MediaType Elements using this region
      */
-    NodeItemListPtr attached_elements;
+    NodeRefListPtr element_users;
     /**
      * Make this region and its sibling 0
      */
