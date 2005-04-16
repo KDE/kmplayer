@@ -40,7 +40,7 @@ namespace KMPlayer {
 class MediaTypeRuntimePrivate;
 class ImageDataPrivate;
 class TextDataPrivate;
-typedef ListNode<ElementRuntime, ElementRuntimePtrW> RuntimeListItem;
+typedef ListNode<ElementRuntimePtrW> RuntimeListItem;
 typedef RuntimeListItem::SharedType RuntimeListItemPtr;
 typedef RuntimeListItem::WeakType RuntimeListItemPtrW;
 typedef List<RuntimeListItem> RuntimeList;

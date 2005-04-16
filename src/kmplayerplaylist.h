@@ -132,11 +132,11 @@ protected:
 /*
  * ListNode for class U storage
  */
-template <class T, class U>
-class ListNode : public ListNodeBase <ListNode <T, U> > {
+template <class T>
+class ListNode : public ListNodeBase <ListNode <T> > {
 public:
-    ListNode (U d) : data (d) {}
-    U data;
+    ListNode (T d) : data (d) {}
+    T data;
 };
 
 /*
@@ -190,7 +190,7 @@ typedef Item<NodeList>::SharedType NodeListPtr;
 typedef Item<NodeList>::WeakType NodeListPtrW;
 typedef List<Attribute> AttributeList;
 typedef Item<AttributeList>::SharedType AttributeListPtr;
-typedef ListNode<Node,NodePtrW> NodeListItem;
+typedef ListNode<NodePtrW> NodeListItem;
 typedef NodeListItem::SharedType NodeListItemPtr;
 typedef NodeListItem::WeakType NodeListItemPtrW;
 typedef List<NodeListItem> NodeItemList;
