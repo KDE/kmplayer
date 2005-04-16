@@ -40,35 +40,72 @@ namespace KMPlayer {
 class MediaTypeRuntimePrivate;
 class ImageDataPrivate;
 class TextDataPrivate;
-typedef WeakPtr<ElementRuntime> ElementRuntimePtrW;
+typedef ListNode<ElementRuntime, ElementRuntimePtrW> RuntimeListItem;
+typedef RuntimeListItem::SharedType RuntimeListItemPtr;
+typedef RuntimeListItem::WeakType RuntimeListItemPtrW;
+typedef List<RuntimeListItem> RuntimeList;
+typedef Item<RuntimeList>::SharedType RuntimeListPtr;
+typedef Item<RuntimeList>::WeakType RuntimeListPtrW;
+
+/*
+ * A generic event type
+ */
+class Event : public Item <Event> {
+public:
+    KDE_NO_CDTOR_EXPORT Event (unsigned int event_id) : m_event_id (event_id) {}
+    KDE_NO_CDTOR_EXPORT virtual ~Event () {}
+    KDE_NO_EXPORT unsigned int id () const { return m_event_id; }
+protected:
+    unsigned int m_event_id;
+};
+
+typedef Item<Event>::SharedType EventPtr;
+
+class StartedEvent : public Event {
+public:
+    StartedEvent (NodePtr n);
+    NodePtrW node;
+};
+
+/*
+ * Base for objects emiting events. Listeners should add them self to
+ * the CollectionItemList return by listeners(event_id)
+ */
+class Signaler {
+public:
+    /*
+     * Returns a listener list for event_id, or an empty one if not supported.
+     * This list should be used to add and remove Listener objects.
+     */
+    virtual RuntimeListPtr listeners (unsigned int event_id) = 0;
+    void propagateEvent (EventPtr event);
+protected:
+    KDE_NO_CDTOR_EXPORT Signaler () {};
+    KDE_NO_CDTOR_EXPORT virtual ~Signaler () {};
+};
+
+/*
+ * Base for objects listening to events. Events are passed via the
+ * handleEvent() method.
+ */
+class Listener {
+    friend class Signaler;
+protected:
+    KDE_NO_CDTOR_EXPORT Listener () {};
+    KDE_NO_CDTOR_EXPORT virtual ~Listener () {};
+    virtual bool handleEvent (EventPtr event) = 0;
+};
 
 /**
- * Base for RegionRuntime and TimedRuntime, having events from regions
+ * Base for RegionRuntime and TimedRuntime, having mouse events from regions
  */
-class MouseSignaler : public QObject {
-    Q_OBJECT
-signals:
-    /**
-     * mouse has clicked the region_node
-     */
-    void activateEvent ();
-    /**
-     * mouse has left the region_node
-     */
-    void outOfBoundsEvent ();
-    /**
-     * mouse has entered the region_node
-     */
-    void inBoundsEvent ();
-    /**
-     * element has stopped, usefull for 'endsync="elm_id"
-     */
-public slots:
-    void emitActivateEvent () { emit activateEvent (); }
-    void emitOutOfBoundsEvent () { emit outOfBoundsEvent (); }
-    void emitInBoundsEvent () { emit inBoundsEvent (); }
+class MouseSignaler : public Signaler {
 protected:
     MouseSignaler ();
+    RuntimeListPtr listeners (unsigned int event_id);
+    RuntimeListPtr m_ActionListeners;      // mouse clicked
+    RuntimeListPtr m_OutOfBoundsListeners; // mouse left
+    RuntimeListPtr m_InBoundsListeners;    // mouse entered
 };
 
 /*
@@ -101,7 +138,7 @@ protected:
 /**
  * Live representation of a SMIL element having timings
  */
-class TimedRuntime : public MouseSignaler, public ElementRuntime {
+class TimedRuntime : public QObject, public ElementRuntime, public Signaler, public Listener {
     Q_OBJECT
 public:
     enum TimingState {
@@ -125,27 +162,25 @@ public:
      */
     struct DurationItem {
         DurationItem () : durval (0) {}
+        void clearConnection ();
+        void setupConnection (Signaler * s, ElementRuntimePtr rt, unsigned int event_id);
         unsigned int durval;
-        ElementRuntimePtrW connection;
+        RuntimeListPtrW listeners;
+        RuntimeListItemPtrW listen_item;
     } durations [(const int) durtime_last];
 signals:
-    void elementStopped ();
     void elementAboutToStart (NodePtr child);
-public slots:
-    void emitElementStopped () { emit elementStopped (); }
 protected slots:
     void timerEvent (QTimerEvent *);
-    void elementActivateEvent ();
-    void elementOutOfBoundsEvent ();
-    void elementInBoundsEvent ();
-    void elementHasStopped ();
     virtual void started ();
     virtual void stopped ();
 private:
     void processEvent (unsigned int event);
     void setDurationItem (DurationTime item, const QString & val);
-    void breakConnection (DurationTime item);
 protected:
+    virtual bool handleEvent (EventPtr event);
+    virtual RuntimeListPtr listeners (unsigned int event_id);
+    RuntimeListPtr m_StoppedListeners;      // Element stopped
     TimingState timingstate;
     Fill fill;
     int start_timer;
@@ -198,7 +233,7 @@ private slots:
 /**
  * Some common runtime data for all mediatype classes
  */
-class MediaTypeRuntime : public TimedRuntime, public SizedRuntime {
+class MediaTypeRuntime : public TimedRuntime, public MouseSignaler, public SizedRuntime {
     Q_OBJECT
 protected:
     MediaTypeRuntime (NodePtr e);

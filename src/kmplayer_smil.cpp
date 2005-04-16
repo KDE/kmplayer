@@ -47,6 +47,11 @@ static const unsigned int duration_element_inbounds = (unsigned int) -4;
 static const unsigned int duration_element_outbounds = (unsigned int) -5;
 static const unsigned int duration_element_stopped = (unsigned int) -6;
 static const unsigned int duration_data_download = (unsigned int) -7;
+static const unsigned int event_activated = duration_element_activated;
+static const unsigned int event_inbounds = duration_element_inbounds;
+static const unsigned int event_outbounds = duration_element_outbounds;
+static const unsigned int event_stopped = duration_element_stopped;
+static const unsigned int event_to_be_started = (unsigned int) -8;
 static const unsigned int duration_last_option = (unsigned int) -8;
 
 /* Intrinsic duration 
@@ -85,7 +90,7 @@ KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (NodePtr e)
  : has_mouse (false), x (0), y (0), w (0), h (0),
    xscale (0.0), yscale (0.0),
    z_order (1), regionElement (e),
-   attached_elements ((new NodeCollectionItemList)->self ()) {
+   attached_elements ((new NodeItemList)->self ()) {
     ElementRuntimePtr rt = e->getRuntime ();
     if (rt)
         rt->region_node = m_self;
@@ -93,7 +98,7 @@ KDE_NO_CDTOR_EXPORT RegionNode::RegionNode (NodePtr e)
 
 KDE_NO_CDTOR_EXPORT void RegionNode::clearAll () {
     kdDebug () << "RegionNode::clearAll " << endl;
-    attached_elements = (new NodeCollectionItemList)->self ();
+    attached_elements = (new NodeItemList)->self ();
     for (RegionNodePtr r = firstChild (); r; r = r->nextSibling ())
         r->clearAll ();
     repaint ();
@@ -111,7 +116,7 @@ void RegionNode::paint (QPainter & p, int _x, int _y, int _w, int _h) {
             rt->paint (p);
     }
 
-    for (NodeCollectionItemPtr c = attached_elements->first(); c; c = c->nextSibling ())
+    for (NodeListItemPtr c = attached_elements->first(); c; c =c->nextSibling())
         if (c->data) {
             ElementRuntimePtr rt = c->data->getRuntime ();
             if (rt)
@@ -157,6 +162,20 @@ KDE_NO_EXPORT void RegionNode::calculateChildBounds () {
     }
 }
 
+KDE_NO_EXPORT void RegionNode::dispatchMouseEvent (unsigned int event_id) {
+    for (NodeListItemPtr c =attached_elements->first(); c; c=c->nextSibling ())
+        if (c->data) { // FIXME: check if really on Element?
+            MouseSignaler * rt = dynamic_cast <MouseSignaler *> (c->data->getRuntime ().ptr ());
+            if (rt)
+                rt->propagateEvent ((new Event (event_id))->self ());
+        }
+    if (regionElement) {
+        MouseSignaler * rt = dynamic_cast <MouseSignaler *> (regionElement->getRuntime ().ptr ());
+        if (rt)
+            rt->propagateEvent ((new Event (event_id))->self ());
+    }
+}
+
 KDE_NO_EXPORT bool RegionNode::pointerClicked (int _x, int _y) {
     bool inside = _x > x && _x < x + w && _y > y && _y < y + h;
     if (!inside)
@@ -164,19 +183,8 @@ KDE_NO_EXPORT bool RegionNode::pointerClicked (int _x, int _y) {
     bool handled = false;
     for (RegionNodePtr r = firstChild (); r; r = r->nextSibling ())
         handled |= r->pointerClicked (_x, _y);
-    if (!handled) { // handle it ..
-        for (NodeCollectionItemPtr c =attached_elements->first(); c; c=c->nextSibling ())
-            if (c->data) { // FIXME: check if really on Element?
-                ElementRuntimePtr rt = c->data->getRuntime ();
-                if (rt)
-                    static_cast<TimedRuntime *>(rt.ptr())->emitActivateEvent();
-            }
-        if (regionElement) {
-            ElementRuntimePtr rt = regionElement->getRuntime ();
-            if (rt)
-                static_cast <RegionRuntime *> (rt.ptr ())->emitActivateEvent ();
-        }
-    }
+    if (!handled) // handle it ..
+        dispatchMouseEvent (event_activated);
     return inside;
 }
 
@@ -188,30 +196,10 @@ KDE_NO_EXPORT bool RegionNode::pointerMoved (int _x, int _y) {
             handled |= r->pointerMoved (_x, _y);
     if (has_mouse && (!inside || handled)) { // OutOfBoundsEvent
         has_mouse = false;
-        for (NodeCollectionItemPtr c =attached_elements->first(); c; c=c->nextSibling ())
-            if (c->data) { // FIXME: check if really on Element?
-                ElementRuntimePtr rt = c->data->getRuntime ();
-                if (rt)
-                   static_cast<TimedRuntime*>(rt.ptr())->emitOutOfBoundsEvent();
-            }
-        if (regionElement) {
-            ElementRuntimePtr rt = regionElement->getRuntime ();
-            if (rt)
-                static_cast <RegionRuntime *>(rt.ptr())->emitOutOfBoundsEvent();
-        }
+        dispatchMouseEvent (event_outbounds);
     } else if (inside && !handled && !has_mouse) { // InBoundsEvent
         has_mouse = true;
-        for (NodeCollectionItemPtr c =attached_elements->first(); c; c=c->nextSibling ())
-            if (c->data) { // FIXME: check if really on Element?
-                ElementRuntimePtr rt = c->data->getRuntime ();
-                if (rt)
-                    static_cast<TimedRuntime *>(rt.ptr ())->emitInBoundsEvent();
-            }
-        if (regionElement) {
-            ElementRuntimePtr rt = regionElement->getRuntime ();
-            if (rt)
-                static_cast <RegionRuntime *> (rt.ptr ())->emitInBoundsEvent ();
-        }
+        dispatchMouseEvent (event_inbounds);
     }
     return inside;
 }
@@ -243,7 +231,7 @@ void RegionNode::scaleRegion (float sx, float sy, int xoff, int yoff) {
         h = int (sy * smilregion->h);
         xscale = sx;
         yscale = sy;
-        for (NodeCollectionItemPtr c =attached_elements->first(); c; c=c->nextSibling ()) {
+        for (NodeListItemPtr c =attached_elements->first(); c; c=c->nextSibling ()) {
             if (!c->data)
                 continue;
             // hack to get the one and only audio/video widget sizes
@@ -308,13 +296,47 @@ KDE_NO_EXPORT void ElementRuntime::reset () {
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_CDTOR_EXPORT StartedEvent::StartedEvent (NodePtr n)
+ : Event (event_to_be_started), node (n) {}
+
+KDE_NO_EXPORT void Signaler::propagateEvent (EventPtr event) {
+    RuntimeListPtr nl = listeners (event->id ());
+    if (nl)
+        for (RuntimeListItemPtr c = nl->first(); c; c = c->nextSibling ())
+            if (c->data) {
+                Listener * l = dynamic_cast <Listener *> (c->data.ptr ());
+                if (l)
+                    l->handleEvent (event);
+                else
+                    kdWarning () << "Non listener in listeners list" << endl;
+            }
+}
+
+//-----------------------------------------------------------------------------
+
 KDE_NO_CDTOR_EXPORT MouseSignaler::MouseSignaler ()
-    : QObject (0L) {}
+ : m_ActionListeners ((new RuntimeList)->self ()),
+   m_OutOfBoundsListeners ((new RuntimeList)->self ()),
+   m_InBoundsListeners ((new RuntimeList)->self ()) {}
+
+RuntimeListPtr MouseSignaler::listeners(unsigned int eid) {
+    switch (eid) {
+        case event_activated:
+            return m_ActionListeners;
+        case event_inbounds:
+            return m_InBoundsListeners;
+        case event_outbounds:
+            return m_OutOfBoundsListeners;
+    }
+    return RuntimeListPtr ();
+}
 
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT
-TimedRuntime::TimedRuntime (NodePtr e) : ElementRuntime (e) {
+TimedRuntime::TimedRuntime (NodePtr e)
+ : ElementRuntime (e),
+   m_StoppedListeners ((new RuntimeList)->self ()) {
     reset ();
 }
 
@@ -327,7 +349,7 @@ KDE_NO_EXPORT void TimedRuntime::reset () {
     timingstate = timings_reset;
     fill = fill_unknown;
     for (int i = 0; i < (int) durtime_last; i++)
-        breakConnection ((DurationTime) i);
+        durations [i].clearConnection ();
     durations [begin_time].durval = 0;
     durations [duration_time].durval = durations [end_time].durval = duration_media; //intrinsic time duration
     ElementRuntime::reset ();
@@ -338,7 +360,7 @@ void TimedRuntime::setDurationItem (DurationTime item, const QString & val) {
     unsigned int dur = 0; // also 0 for 'media' duration, so it will not update then
     QRegExp reg ("^\\s*([0-9\\.]+)\\s*([a-z]*)");
     QString vl = val.lower ();
-    kdDebug () << "getSeconds " << val << endl;
+    kdDebug () << "getSeconds " << val << (element ? element->nodeName() : "-") << endl;
     if (reg.search (vl) > -1) {
         bool ok;
         double t = reg.cap (1).toDouble (&ok);
@@ -362,23 +384,16 @@ void TimedRuntime::setDurationItem (DurationTime item, const QString & val) {
             if (e) {
                 kdDebug () << "getElementById " << vl.left (pos) << " " << e->nodeName () << endl;
                 ElementRuntimePtr rt = e->getRuntime ();
-                MouseSignaler * rs = dynamic_cast <MouseSignaler*> (rt.ptr ());
+                MouseSignaler * rs = dynamic_cast<MouseSignaler*>(rt.ptr());
                 if (rs) {
                     if (vl.find ("activateevent") > -1) {
                         dur = duration_element_activated;
-                        connect (rs, SIGNAL (activateEvent ()),
-                                 this, SLOT (elementActivateEvent ()));
                     } else if (vl.find ("inboundsevent") > -1) {
                         dur = duration_element_inbounds;
-                        connect (rs, SIGNAL (inBoundsEvent ()),
-                                 this, SLOT (elementInBoundsEvent ()));
                     } else if (vl.find ("outofboundsevent") > -1) {
                         dur = duration_element_outbounds;
-                        connect (rs, SIGNAL (outOfBoundsEvent ()),
-                                 this, SLOT (elementOutOfBoundsEvent ()));
                     }
-                    breakConnection (item);
-                    durations [(int) item].connection = rt;
+                    durations [(int) item].setupConnection (rs, m_self, dur);
                 } else
                     kdWarning () << "not a RegionSignaler" << endl;
             }
@@ -409,35 +424,24 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
         propagateStart ();
 }
 
-KDE_NO_EXPORT void TimedRuntime::breakConnection (DurationTime item) {
-    MouseSignaler * rs = dynamic_cast <MouseSignaler*> (durations [(int) item].connection.ptr ());
-    if (rs && durations [(int) item].connection) {
-        switch (durations [(int) item].durval) {
-            case duration_element_stopped:
-                if (dynamic_cast <TimedRuntime *> (rs))
-                    disconnect (static_cast <TimedRuntime *> (rs),
-                                SIGNAL (elementStopped ()),
-                                this, SLOT (elementHasStopped ()));
-                break;
-            case duration_element_activated:
-                disconnect (rs, SIGNAL (activateEvent ()),
-                            this, SLOT (elementActivateEvent ()));
-                break;
-            case duration_element_inbounds:
-                disconnect (rs, SIGNAL (inBoundsEvent ()),
-                            this, SLOT (elementInBoundsEvent ()));
-                break;
-            case duration_element_outbounds:
-                disconnect (rs, SIGNAL (outOfBoundsEvent ()),
-                            this, SLOT (elementOutOfBoundsEvent ()));
-                break;
-            default:
-                kdWarning () << "Unknown connection, disconnecting all" << endl;
-                disconnect (rs, 0, this, 0);
-        }
-        durations [(int) item].connection = ElementRuntimePtr ();
-        durations [(int) item].durval = 0;
-    }
+KDE_NO_EXPORT void TimedRuntime::DurationItem::setupConnection (Signaler * s, ElementRuntimePtr rt, unsigned int event_id) {
+    clearConnection ();
+    listeners = s->listeners (event_id);
+    if (listeners) {
+        RuntimeListItemPtr rci = (new RuntimeListItem (rt))->self ();
+        listeners->append (rci);
+        listen_item = rci;
+    } else
+        kdWarning () << "no listeners found" << endl;
+    durval = event_id;
+}
+
+KDE_NO_EXPORT void TimedRuntime::DurationItem::clearConnection () {
+    if (listen_item && listeners)
+        listeners->remove (listen_item);
+    listen_item = 0L;
+    listeners = 0L;
+    durval = 0;
 }
 
 /**
@@ -484,13 +488,8 @@ QString TimedRuntime::setParam (const QString & name, const QString & val) {
             if (e) {
                 ElementRuntimePtr rt = e->getRuntime ();
                 TimedRuntime * tr = dynamic_cast <TimedRuntime *> (rt.ptr ());
-                if (tr) {
-                    breakConnection (end_time);
-                    connect (tr, SIGNAL (elementStopped ()),
-                             this, SLOT (elementHasStopped ()));
-                    durations [end_time].durval = duration_element_stopped;
-                    durations [end_time].connection = rt;
-                }
+                if (tr)
+                    durations [(int) end_time].setupConnection (tr, m_self, event_stopped);
             }
         }
     } else if (name == QString::fromLatin1 ("fill")) {
@@ -515,25 +514,6 @@ KDE_NO_EXPORT void TimedRuntime::timerEvent (QTimerEvent * e) {
         propagateStop (true);
 }
 
-KDE_NO_EXPORT void TimedRuntime::elementActivateEvent () {
-    processEvent (duration_element_activated);
-}
-
-KDE_NO_EXPORT void TimedRuntime::elementInBoundsEvent () {
-    processEvent (duration_element_inbounds);
-}
-
-KDE_NO_EXPORT void TimedRuntime::elementOutOfBoundsEvent () {
-    processEvent (duration_element_outbounds);
-}
-
-/**
- * slot for elementStopped() signal
- */
-KDE_NO_EXPORT void TimedRuntime::elementHasStopped () {
-    processEvent (duration_element_stopped);
-}
-
 KDE_NO_EXPORT void TimedRuntime::processEvent (unsigned int event) {
     kdDebug () << "TimedRuntime::processEvent " << event << " " << (element ? element->nodeName() : "-") << endl; 
     if (timingstate != timings_started && durations [begin_time].durval == event) {
@@ -541,6 +521,18 @@ KDE_NO_EXPORT void TimedRuntime::processEvent (unsigned int event) {
             propagateStart ();
     } else if (timingstate == timings_started && durations [end_time].durval == event)
         propagateStop (true);
+}
+
+KDE_NO_EXPORT bool TimedRuntime::handleEvent (EventPtr event) {
+    processEvent (event->id ());
+    return true;
+}
+
+KDE_NO_EXPORT RuntimeListPtr TimedRuntime::listeners (unsigned int id) {
+    if (id == event_stopped)
+        return m_StoppedListeners;
+    kdWarning () << "unknown event requested" << endl;
+    return RuntimeListPtr ();
 }
 
 KDE_NO_EXPORT void TimedRuntime::propagateStop (bool forced) {
@@ -599,7 +591,7 @@ KDE_NO_EXPORT void TimedRuntime::stopped () {
             propagateStart ();
     } else if (element->state == Element::state_activated) {
         element->deactivate ();
-        emit elementStopped ();
+        propagateEvent ((new Event (event_stopped))->self ());
     }
 }
 
@@ -1137,7 +1129,7 @@ KDE_NO_EXPORT void MediaTypeRuntime::started () {
         region_node = findRegion (element->document()->rootLayout,
                                   param (QString::fromLatin1 ("region")));
         if (region_node)
-            region_node->attached_elements->append ((new NodeCollectionItem (element))->self ());
+            region_node->attached_elements->append ((new NodeListItem (element))->self ());
     }
     if (region_node)
         region_node->repaint ();
@@ -1500,7 +1492,7 @@ KDE_NO_EXPORT bool SMIL::GroupBase::isMrl () {
 }
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::GroupBase::getNewRuntime () {
-    return ElementRuntimePtr (new TimedRuntime (m_self));
+    return (new TimedRuntime (m_self))->self ();
 }
 
 //-----------------------------------------------------------------------------
@@ -1559,7 +1551,7 @@ KDE_NO_EXPORT void SMIL::Par::childDone (NodePtr) {
 }
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::Par::getNewRuntime () {
-    return ElementRuntimePtr (new ParRuntime (m_self));
+    return (new ParRuntime (m_self))->self ();
 }
 //-----------------------------------------------------------------------------
 
@@ -1615,7 +1607,7 @@ KDE_NO_EXPORT void SMIL::Excl::childDone (NodePtr /*child*/) {
 }
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::Excl::getNewRuntime () {
-    return ElementRuntimePtr (new ExclRuntime (m_self));
+    return (new ExclRuntime (m_self))->self ();
 }
 
 //-----------------------------------------------------------------------------
@@ -1724,12 +1716,12 @@ KDE_NO_EXPORT void SMIL::AVMediaType::deactivate () {
     TimedMrl::deactivate ();
     TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
     if (tr && tr->state () == TimedRuntime::timings_started)
-        tr->emitElementStopped (); // called from backends
+        tr->propagateEvent ((new Event (event_stopped))->self ()); // called from backends
     // TODO stop backend player
 }
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::AVMediaType::getNewRuntime () {
-    return ElementRuntimePtr (new AudioVideoData (m_self));
+    return (new AudioVideoData (m_self))->self ();
 }
 
 //-----------------------------------------------------------------------------
@@ -1740,7 +1732,7 @@ SMIL::ImageMediaType::ImageMediaType (NodePtr & d)
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::ImageMediaType::getNewRuntime () {
     isMrl (); // hack to get relative paths right
-    return ElementRuntimePtr (new ImageData (m_self));
+    return (new ImageData (m_self))->self ();
 }
 
 //-----------------------------------------------------------------------------
@@ -1751,13 +1743,13 @@ SMIL::TextMediaType::TextMediaType (NodePtr & d)
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::TextMediaType::getNewRuntime () {
     isMrl (); // hack to get relative paths right
-    return ElementRuntimePtr (new TextData (m_self));
+    return (new TextData (m_self))->self ();
 }
 
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::Set::getNewRuntime () {
-    return ElementRuntimePtr (new SetData (m_self));
+    return (new SetData (m_self))->self ();
 }
 
 KDE_NO_EXPORT void SMIL::Set::activate () {
@@ -1768,7 +1760,7 @@ KDE_NO_EXPORT void SMIL::Set::activate () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::Animate::getNewRuntime () {
-    return ElementRuntimePtr (new AnimateData (m_self));
+    return (new AnimateData (m_self))->self ();
 }
 
 //-----------------------------------------------------------------------------

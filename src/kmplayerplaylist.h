@@ -91,7 +91,7 @@ private:
 };
 
 /*
- * A shareable double linked list of ListNode<T> nodes
+ * A shareable double linked list of ListNodeBase<T> nodes
  */
 template <class T>
 class KMPLAYER_EXPORT List : public Item <List <T> > {
@@ -116,27 +116,27 @@ protected:
  * The linkage is a shared nextSibling and a weak previousSibling.
  */
 template <class T>
-class KMPLAYER_EXPORT ListNode : public Item <T> {
+class KMPLAYER_EXPORT ListNodeBase : public Item <T> {
     friend class List<T>;
 public:
-    virtual ~ListNode () {}
+    virtual ~ListNodeBase () {}
 
     typename Item<T>::SharedType nextSibling () const { return m_next; }
     typename Item<T>::SharedType previousSibling () const { return m_prev; }
 protected:
-    ListNode () {}
+    ListNodeBase () {}
     typename Item<T>::SharedType m_next;
     typename Item<T>::WeakType m_prev;
 };
 
 /*
- * ListNode for weak Item<T> storage
+ * ListNode for class U storage
  */
-template <class T>
-class CollectionItem : public ListNode <CollectionItem <T> > {
+template <class T, class U>
+class ListNode : public ListNodeBase <ListNode <T, U> > {
 public:
-    CollectionItem (typename Item<T>::WeakType d) : data (d) {}
-    typename Item<T>::WeakType data;
+    ListNode (U d) : data (d) {}
+    U data;
 };
 
 /*
@@ -144,7 +144,7 @@ public:
  * The linkage is a shared firstChild and weak parentNode.
  */
 template <class T>
-class KMPLAYER_EXPORT TreeNode : public ListNode <T> {
+class KMPLAYER_EXPORT TreeNode : public ListNodeBase <T> {
 public:
     virtual ~TreeNode () {}
 
@@ -165,7 +165,7 @@ protected:
 /**
  * Attribute having a name/value pair for use with Elements
  */
-class KMPLAYER_EXPORT Attribute : public ListNode <Attribute> {
+class KMPLAYER_EXPORT Attribute : public ListNodeBase <Attribute> {
     friend class Element;
 public:
     KDE_NO_CDTOR_EXPORT Attribute () {}
@@ -190,13 +190,14 @@ typedef Item<NodeList>::SharedType NodeListPtr;
 typedef Item<NodeList>::WeakType NodeListPtrW;
 typedef List<Attribute> AttributeList;
 typedef Item<AttributeList>::SharedType AttributeListPtr;
-typedef CollectionItem<Node> NodeCollectionItem;
-typedef NodeCollectionItem::SharedType NodeCollectionItemPtr;
-typedef NodeCollectionItem::WeakType NodeCollectionItemPtrW;
-typedef List<NodeCollectionItem> NodeCollectionItemList;
-typedef Item<NodeCollectionItemList>::SharedType NodeCollectionItemListPtr;
-typedef Item<NodeCollectionItemList>::WeakType NodeCollectionItemListPtrW;
-typedef SharedPtr<ElementRuntime> ElementRuntimePtr;
+typedef ListNode<Node,NodePtrW> NodeListItem;
+typedef NodeListItem::SharedType NodeListItemPtr;
+typedef NodeListItem::WeakType NodeListItemPtrW;
+typedef List<NodeListItem> NodeItemList;
+typedef Item<NodeItemList>::SharedType NodeItemListPtr;
+typedef Item<NodeItemList>::WeakType NodeItemListPtrW;
+typedef Item<ElementRuntime>::SharedType ElementRuntimePtr;
+typedef Item<ElementRuntime>::WeakType ElementRuntimePtrW;
 
 /*
  * Base class for XML nodes. Provides a w3c's DOM like API
@@ -375,17 +376,19 @@ public:
     /**
      * Attached Elements for this region
      */
-    NodeCollectionItemListPtr attached_elements;
+    NodeItemListPtr attached_elements;
     /**
      * Make this region and its sibling 0
      */
     void clearAll ();
+private:
+    void dispatchMouseEvent (unsigned int event_id);
 };
 
 /**
  * Base class representing live time of elements
  */
-class ElementRuntime {
+class ElementRuntime : public Item <ElementRuntime> {
 public:
     virtual ~ElementRuntime ();
     /**
