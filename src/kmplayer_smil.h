@@ -60,6 +60,9 @@ protected:
     unsigned int m_event_id;
 };
 
+/*
+ * Storage of the listeners list from Signaler and node with Listener
+ */
 class Connection {
     friend class Signaler;
 public:
@@ -74,9 +77,13 @@ private:
 typedef Item<Event>::SharedType EventPtr;
 typedef SharedPtr <Connection> ConnectionPtr;
 
-class StartedEvent : public Event {
+/*
+ * Event signaled before the actual starting takes place. Use by ExclRuntime
+ * to stop possible other children
+ */
+class ToBeStartedEvent : public Event {
 public:
-    StartedEvent (NodePtr n);
+    ToBeStartedEvent (NodePtr n);
     NodePtrW node;
 };
 
@@ -177,8 +184,6 @@ public:
      */
     struct DurationItem {
         DurationItem () : durval (0) {}
-        void clearConnection ();
-        void setupConnection (Signaler * s, ElementRuntimePtr rt, unsigned int event_id);
         unsigned int durval;
         ConnectionPtr connection;
     } durations [(const int) durtime_last];

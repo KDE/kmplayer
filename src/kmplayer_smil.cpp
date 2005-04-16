@@ -311,7 +311,7 @@ KDE_NO_CDTOR_EXPORT void Connection::disconnect () {
     listeners = 0L;
 }
 
-KDE_NO_CDTOR_EXPORT StartedEvent::StartedEvent (NodePtr n)
+KDE_NO_CDTOR_EXPORT ToBeStartedEvent::ToBeStartedEvent (NodePtr n)
  : Event (event_to_be_started), node (n) {}
 
 KDE_NO_EXPORT void Signaler::propagateEvent (EventPtr event) {
@@ -369,10 +369,12 @@ KDE_NO_EXPORT void TimedRuntime::reset () {
     repeat_count = 0;
     timingstate = timings_reset;
     fill = fill_unknown;
-    for (int i = 0; i < (int) durtime_last; i++)
-        durations [i].clearConnection ();
+    for (int i = 0; i < (int) durtime_last; i++) {
+        if (durations [i].connection)
+            durations [i].connection->disconnect ();
+        durations [i].durval = duration_media;  //intrinsic time duration
+    }
     durations [begin_time].durval = 0;
-    durations [duration_time].durval = durations [end_time].durval = duration_media; //intrinsic time duration
     ElementRuntime::reset ();
 }
 
@@ -414,7 +416,7 @@ void TimedRuntime::setDurationItem (DurationTime item, const QString & val) {
                     } else if (vl.find ("outofboundsevent") > -1) {
                         dur = duration_element_outbounds;
                     }
-                    durations [(int) item].setupConnection (rs, m_self, dur);
+                    durations [(int) item].connection=rs->connectTo(m_self,dur);
                 } else
                     kdWarning () << "not a RegionSignaler" << endl;
             }
@@ -443,17 +445,6 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
             start_timer = startTimer (100 * durations [begin_time].durval);
     } else
         propagateStart ();
-}
-
-KDE_NO_EXPORT void TimedRuntime::DurationItem::setupConnection (Signaler * s, ElementRuntimePtr rt, unsigned int event_id) {
-    connection = s->connectTo (rt, event_id);
-    durval = event_id;
-}
-
-KDE_NO_EXPORT void TimedRuntime::DurationItem::clearConnection () {
-    if (connection)
-        connection->disconnect ();
-    durval = 0;
 }
 
 /**
@@ -500,8 +491,10 @@ QString TimedRuntime::setParam (const QString & name, const QString & val) {
             if (e) {
                 ElementRuntimePtr rt = e->getRuntime ();
                 TimedRuntime * tr = dynamic_cast <TimedRuntime *> (rt.ptr ());
-                if (tr)
-                    durations [(int) end_time].setupConnection (tr, m_self, event_stopped);
+                if (tr) {
+                    durations [(int) end_time].connection = tr->connectTo (m_self, event_stopped);
+                    durations [(int) end_time].durval = event_stopped;
+                }
             }
         }
     } else if (name == QString::fromLatin1 ("fill")) {
@@ -569,7 +562,7 @@ KDE_NO_EXPORT void TimedRuntime::propagateStop (bool forced) {
 }
 
 KDE_NO_EXPORT void TimedRuntime::propagateStart () {
-    propagateEvent ((new StartedEvent (element))->self ());
+    propagateEvent ((new ToBeStartedEvent (element))->self ());
     timingstate = timings_started;
     QTimer::singleShot (0, this, SLOT (started ()));
 }
@@ -791,7 +784,7 @@ KDE_NO_EXPORT void ExclRuntime::reset () {
 
 KDE_NO_EXPORT bool ExclRuntime::handleEvent (EventPtr event) {
     if (event->id () == event_to_be_started) {
-        StartedEvent * se = static_cast <StartedEvent *> (event.ptr ());
+        ToBeStartedEvent * se = static_cast <ToBeStartedEvent *> (event.ptr ());
         kdDebug () << "ExclRuntime::handleEvent " << se->node->nodeName()<<endl;
         if (element) // stop all other child elements
             for (NodePtr e = element->firstChild (); e; e = e->nextSibling ()) {
