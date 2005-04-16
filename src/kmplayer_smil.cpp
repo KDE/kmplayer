@@ -296,6 +296,21 @@ KDE_NO_EXPORT void ElementRuntime::reset () {
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_CDTOR_EXPORT Connection::Connection (RuntimeRefListPtr ls, ElementRuntimePtr rt) : listeners (ls) {
+    if (listeners) {
+        RuntimeRefItemPtr rci = (new RuntimeRefItem (rt))->self ();
+        listeners->append (rci);
+        listen_item = rci;
+    }
+}
+
+KDE_NO_CDTOR_EXPORT void Connection::disconnect () {
+    if (listen_item && listeners)
+        listeners->remove (listen_item);
+    listen_item = 0L;
+    listeners = 0L;
+}
+
 KDE_NO_CDTOR_EXPORT StartedEvent::StartedEvent (NodePtr n)
  : Event (event_to_be_started), node (n) {}
 
@@ -310,6 +325,11 @@ KDE_NO_EXPORT void Signaler::propagateEvent (EventPtr event) {
                 else
                     kdWarning () << "Non listener in listeners list" << endl;
             }
+}
+
+KDE_NO_EXPORT
+ConnectionPtr Signaler::connectTo (ElementRuntimePtr rt, unsigned int evt_id) {
+    return ConnectionPtr (new Connection (listeners (evt_id), rt));
 }
 
 //-----------------------------------------------------------------------------
@@ -426,22 +446,13 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
 }
 
 KDE_NO_EXPORT void TimedRuntime::DurationItem::setupConnection (Signaler * s, ElementRuntimePtr rt, unsigned int event_id) {
-    clearConnection ();
-    listeners = s->listeners (event_id);
-    if (listeners) {
-        RuntimeRefItemPtr rci = (new RuntimeRefItem (rt))->self ();
-        listeners->append (rci);
-        listen_item = rci;
-    } else
-        kdWarning () << "no listeners found" << endl;
+    connection = s->connectTo (rt, event_id);
     durval = event_id;
 }
 
 KDE_NO_EXPORT void TimedRuntime::DurationItem::clearConnection () {
-    if (listen_item && listeners)
-        listeners->remove (listen_item);
-    listen_item = 0L;
-    listeners = 0L;
+    if (connection)
+        connection->disconnect ();
     durval = 0;
 }
 
@@ -766,27 +777,15 @@ KDE_NO_EXPORT void ExclRuntime::begin () {
         for (NodePtr e = element->firstChild (); e; e = e->nextSibling ()) {
             TimedRuntime *tr=dynamic_cast<TimedRuntime*>(e->getRuntime().ptr());
             if (tr) {
-                RuntimeRefListPtr ls = tr->listeners (event_to_be_started);
-                if (ls) {
-                    RuntimeRefItem * rli = new RuntimeRefItem (m_self);
-                    ls->append (rli->self ());
-                    StartedEventInfo * info = new StartedEventInfo;
-                    info->listeners = ls;
-                    info->listen_item = rli->self ();
-                    started_event_list.append ((new StartedEventItem (StartedEventInfoPtr (info)))->self ());
-                }
+                ConnectionPtr c = tr->connectTo (m_self, event_to_be_started);
+                started_event_list.append((new ConnectionStoreItem(c))->self());
             }
         }
     TimedRuntime::begin ();
 }
 
 KDE_NO_EXPORT void ExclRuntime::reset () {
-    for (StartedEventItemPtr r = started_event_list.first (); r; r = r->nextSibling ())
-        if (r->data && r->data->listen_item && r->data->listeners)
-            r->data->listeners->remove (r->data->listen_item);
-        else
-            kdWarning () << "invalid started connection" << endl;
-    started_event_list.clear ();
+    started_event_list.clear (); // auto disconnect on destruction of data items
     TimedRuntime::reset ();
 }
 
