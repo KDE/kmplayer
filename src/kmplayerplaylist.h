@@ -99,11 +99,13 @@ public:
     List () {}
     List (typename Item<T>::SharedType f, typename Item<T>::SharedType l) 
         : m_first (f), m_last (l) {}
+    ~List () { clear (); }
 
     typename Item<T>::SharedType first () const { return m_first; }
     typename Item<T>::SharedType last () const { return m_last; }
     void append (typename Item<T>::SharedType c);
     void remove (typename Item<T>::SharedType c);
+    void clear ();
     unsigned int length () const;
     typename Item<T>::SharedType item (int i) const;
 protected:
@@ -702,6 +704,11 @@ template <class T> inline unsigned int List<T>::length () const {
     for (typename Item<T>::SharedType t = m_first; t; t = t->nextSibling ())
         count++;
     return count;
+}
+
+template <class T> inline void List<T>::clear () {
+    m_first = 0L;
+    Q_ASSERT (m_last.ptr () == 0L);
 }
 
 template <class T>

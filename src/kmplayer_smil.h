@@ -68,14 +68,15 @@ public:
 };
 
 /*
- * Base for objects emiting events. Listeners should add them self to
- * the CollectionItemList return by listeners(event_id)
+ * Base for objects emiting events. Listeners should add them selves to
+ * the RuntimeList returned by listeners(event_id)
  */
 class Signaler {
 public:
     /*
-     * Returns a listener list for event_id, or an empty one if not supported.
-     * This list should be used to add and remove Listener objects.
+     * Returns a listener list for event_id, or a null ptr if not supported.
+     * This list should be used to add and remove ElementRuntime objects
+     * derived from Listener.
      */
     virtual RuntimeListPtr listeners (unsigned int event_id) = 0;
     void propagateEvent (EventPtr event);
@@ -97,7 +98,7 @@ protected:
 };
 
 /**
- * Base for RegionRuntime and TimedRuntime, having mouse events from regions
+ * Base for RegionRuntime and MediaTypeRuntime, having mouse events from regions
  */
 class MouseSignaler : public Signaler {
 protected:
@@ -157,6 +158,7 @@ public:
     virtual void paint (QPainter &) {}
     void propagateStop (bool forced);
     void propagateStart ();
+    virtual RuntimeListPtr listeners (unsigned int event_id);
     /**
      * Duration items, begin/dur/end, length information or connected element
      */
@@ -168,8 +170,6 @@ public:
         RuntimeListPtrW listeners;
         RuntimeListItemPtrW listen_item;
     } durations [(const int) durtime_last];
-signals:
-    void elementAboutToStart (NodePtr child);
 protected slots:
     void timerEvent (QTimerEvent *);
     virtual void started ();
@@ -179,7 +179,7 @@ private:
     void setDurationItem (DurationTime item, const QString & val);
 protected:
     virtual bool handleEvent (EventPtr event);
-    virtual RuntimeListPtr listeners (unsigned int event_id);
+    RuntimeListPtr m_StartedListeners;      // Element about to be started
     RuntimeListPtr m_StoppedListeners;      // Element stopped
     TimingState timingstate;
     Fill fill;
@@ -221,13 +221,21 @@ public:
  * Runtime data for 'excl' group, taking care of only one child can run
  */
 class ExclRuntime : public TimedRuntime {
-    Q_OBJECT
 public:
     ExclRuntime (NodePtr e);
     virtual void begin ();
     virtual void reset ();
-private slots:
-    void elementAboutToStart (NodePtr child);
+protected:
+    virtual bool handleEvent (EventPtr event);
+private:
+    struct StartedEventInfo {
+        RuntimeListPtrW listeners;
+        RuntimeListItemPtrW listen_item;
+    };
+    typedef SharedPtr <StartedEventInfo> StartedEventInfoPtr;
+    typedef ListNode <StartedEventInfoPtr> StartedEventItem;
+    typedef StartedEventItem::SharedType StartedEventItemPtr;
+    List <StartedEventItem> started_event_list;
 };
 
 /**

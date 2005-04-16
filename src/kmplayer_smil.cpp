@@ -336,6 +336,7 @@ RuntimeListPtr MouseSignaler::listeners(unsigned int eid) {
 KDE_NO_CDTOR_EXPORT
 TimedRuntime::TimedRuntime (NodePtr e)
  : ElementRuntime (e),
+   m_StartedListeners ((new RuntimeList)->self ()),
    m_StoppedListeners ((new RuntimeList)->self ()) {
     reset ();
 }
@@ -531,6 +532,8 @@ KDE_NO_EXPORT bool TimedRuntime::handleEvent (EventPtr event) {
 KDE_NO_EXPORT RuntimeListPtr TimedRuntime::listeners (unsigned int id) {
     if (id == event_stopped)
         return m_StoppedListeners;
+    else if (id == event_to_be_started)
+        return m_StartedListeners;
     kdWarning () << "unknown event requested" << endl;
     return RuntimeListPtr ();
 }
@@ -555,7 +558,7 @@ KDE_NO_EXPORT void TimedRuntime::propagateStop (bool forced) {
 }
 
 KDE_NO_EXPORT void TimedRuntime::propagateStart () {
-    emit elementAboutToStart (element);
+    propagateEvent ((new StartedEvent (element))->self ());
     timingstate = timings_started;
     QTimer::singleShot (0, this, SLOT (started ()));
 }
@@ -759,37 +762,49 @@ KDE_NO_CDTOR_EXPORT ExclRuntime::ExclRuntime (NodePtr e) : TimedRuntime (e) {
 }
 
 KDE_NO_EXPORT void ExclRuntime::begin () {
-    if (element) // setup connections with elementAboutToStart
+    if (element) // setup connections with eveent_to_be_started
         for (NodePtr e = element->firstChild (); e; e = e->nextSibling ()) {
             TimedRuntime *tr=dynamic_cast<TimedRuntime*>(e->getRuntime().ptr());
-            if (tr)
-                connect (tr, SIGNAL (elementAboutToStart (NodePtr)),
-                         this, SLOT (elementAboutToStart (NodePtr)));
+            if (tr) {
+                RuntimeListPtr ls = tr->listeners (event_to_be_started);
+                if (ls) {
+                    RuntimeListItem * rli = new RuntimeListItem (m_self);
+                    ls->append (rli->self ());
+                    StartedEventInfo * info = new StartedEventInfo;
+                    info->listeners = ls;
+                    info->listen_item = rli->self ();
+                    started_event_list.append ((new StartedEventItem (StartedEventInfoPtr (info)))->self ());
+                }
+            }
         }
     TimedRuntime::begin ();
 }
 
 KDE_NO_EXPORT void ExclRuntime::reset () {
-    if (element) // break connections with elementAboutToStart
-        for (NodePtr e = element->firstChild (); e; e = e->nextSibling ()) {
-            TimedRuntime *tr=dynamic_cast<TimedRuntime*>(e->getRuntime().ptr());
-            if (tr)
-                disconnect (tr, SIGNAL (elementAboutToStart (NodePtr)),
-                            this, SLOT (elementAboutToStart (NodePtr)));
-        }
+    for (StartedEventItemPtr r = started_event_list.first (); r; r = r->nextSibling ())
+        if (r->data && r->data->listen_item && r->data->listeners)
+            r->data->listeners->remove (r->data->listen_item);
+        else
+            kdWarning () << "invalid started connection" << endl;
+    started_event_list.clear ();
     TimedRuntime::reset ();
 }
 
-KDE_NO_EXPORT void ExclRuntime::elementAboutToStart (NodePtr child) {
-    kdDebug () << "ExclRuntime::elementAboutToStart " <<child->nodeName()<<endl;
-    if (element) // break connections with elementAboutToStart
-        for (NodePtr e = element->firstChild (); e; e = e->nextSibling ()) {
-            if (e == child)
-                continue;
-            TimedRuntime *tr=dynamic_cast<TimedRuntime*>(e->getRuntime().ptr());
-            if (tr && tr->state()>timings_reset && tr->state()<timings_stopped)
-                tr->propagateStop (true);
-        }
+KDE_NO_EXPORT bool ExclRuntime::handleEvent (EventPtr event) {
+    if (event->id () == event_to_be_started) {
+        StartedEvent * se = static_cast <StartedEvent *> (event.ptr ());
+        kdDebug () << "ExclRuntime::handleEvent " << se->node->nodeName()<<endl;
+        if (element) // stop all other child elements
+            for (NodePtr e = element->firstChild (); e; e = e->nextSibling ()) {
+                if (e == se->node)
+                    continue;
+                TimedRuntime *tr=dynamic_cast<TimedRuntime*>(e->getRuntime().ptr());
+                if (tr && tr->state()>timings_reset && tr->state()<timings_stopped)
+                    tr->propagateStop (true);
+            }
+        return true;
+    } else
+        return TimedRuntime::handleEvent (event);
 }
 
 //-----------------------------------------------------------------------------
