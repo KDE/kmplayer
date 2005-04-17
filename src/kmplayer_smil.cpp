@@ -702,15 +702,18 @@ QString RegionRuntime::setParam (const QString & name, const QString & val) {
     //kdDebug () << "RegionRuntime::setParam " << name << "=" << val << endl;
     RegionNode * rn = region_node.ptr ();
     QRect rect;
+    bool need_repaint = false;
     if (rn)
         rect = QRect (rn->x, rn->y, rn->w, rn->h);
     if (name == QString::fromLatin1 ("background-color") ||
             name == QString::fromLatin1 ("background-color")) {
         background_color = QColor (val).rgb ();
         have_bg_color = true;
+        need_repaint = true;
     } else if (name == QString::fromLatin1 ("z-index")) {
         if (region_node)
             region_node->z_order = val.toInt ();
+        need_repaint = true;
     } else if (setSizeParam (name, val)) {
         if (active && rn && element) {
             if (rn->parentNode ())
@@ -720,16 +723,21 @@ QString RegionRuntime::setParam (const QString & name, const QString & val) {
                 if (rootrn && rootrn->region_element)
                     convertNode<RegionBase>(rootrn->region_element)->updateLayout ();
             }
-            PlayListNotify * n = element->document()->notify_listener;
             QRect nr (rn->x, rn->y, rn->w, rn->h);
-            if (rect.width () == nr.width () && rect.height () == nr.height ())
-                n->moveRect (rect.x(), rect.y(), rect.width (), rect.height (), nr.x(), nr.y());
-            else {
-                QRect r = rect.unite (nr);
-                if (n)
-                    n->repaintRect (r.x(), r.y(), r.width (), r.height ());
+            if (rect.width () == nr.width () && rect.height () == nr.height()) {
+                PlayListNotify * n = element->document()->notify_listener;
+                if (n && (rect.x () != nr.x () || rect.y () != nr.y ()))
+                    n->moveRect (rect.x(), rect.y(), rect.width (), rect.height (), nr.x(), nr.y());
+            } else {
+                rect = rect.unite (nr);
+                need_repaint = true;
             }
         }
+    }
+    if (need_repaint && active && rn && element) {
+        PlayListNotify * n = element->document()->notify_listener;
+        if (n)
+            n->repaintRect (rect.x(), rect.y(), rect.width (), rect.height ());
     }
     return ElementRuntime::setParam (name, val);
 }
@@ -1010,8 +1018,8 @@ KDE_NO_EXPORT void AnimateData::timerEvent (QTimerEvent * e) {
                  rt->setParam (changed_attribute, change_values[change_values.size () - steps -1]);
             }
             RegionNodePtr target_region = rt->region_node;
-            if (target_region)
-                target_region->repaint ();
+            //if (target_region)
+            //    target_region->repaint ();
         } else {
             killTimer (anim_timer);
             anim_timer = 0;
@@ -1125,11 +1133,8 @@ QString MediaTypeRuntime::setParam (const QString & name, const QString & val) {
         return TimedRuntime::setParam (name, val);
     }
     RegionNode * rn = region_node.ptr ();
-    if (state () == timings_began && rn && element) {
-        PlayListNotify * n = element->document()->notify_listener;
-        if (n)
-            n->repaintRect (rn->x, rn->y, rn->w, rn->h);
-    }
+    if (state () == timings_began && rn && element)
+        rn->repaint ();
     return ElementRuntime::setParam (name, val);
 }
 
@@ -1988,8 +1993,13 @@ QString TextData::setParam (const QString & name, const QString & val) {
     } else if (name == QString ("fontSize")) {
         d->font_size += val.toInt ();
     // TODO: expandTabs fontBackgroundColor fontSize fontStyle fontWeight hAlig vAlign wordWrap
-    }
-    return MediaTypeRuntime::setParam (name, val);
+    } else
+        return MediaTypeRuntime::setParam (name, val);
+    RegionNode * rn = region_node.ptr ();
+    if (rn && (timingstate == timings_started ||
+                (timingstate == timings_stopped && fill == fill_freeze)))
+        rn->repaint ();
+    return ElementRuntime::setParam (name, val);
 }
 
 KDE_NO_EXPORT void TextData::paint (QPainter & p) {
