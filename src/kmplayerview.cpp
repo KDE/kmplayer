@@ -412,9 +412,17 @@ void ViewArea::setAudioVideoGeometry (int x, int y, int w, int h, unsigned int *
             }
     }
     m_av_geometry = QRect (x, y, w, h);
-    m_view->widgetStack ()->setGeometry (x, y, w, h);
-    if (bg_color)
-        m_view->viewer ()->setBackgroundColor (QColor (QRgb (*bg_color)));
+    if (m_av_geometry != m_view->widgetStack ()->geometry ()) {
+        m_view->widgetStack ()->setGeometry (x, y, w, h);
+        sheduleRepaint (0, 0, width (), height ());
+    }
+    if (bg_color) {
+        ;
+        if (QColor (QRgb (*bg_color)) != (m_view->viewer ()->paletteBackgroundColor ())) {
+        m_view->viewer()->setPaletteBackgroundColor (QColor (QRgb (*bg_color)));
+        sheduleRepaint (x, y, w, h);
+        }
+    }
 }
 
 KDE_NO_EXPORT void ViewArea::setRootLayout (RegionNodePtr rl) {
