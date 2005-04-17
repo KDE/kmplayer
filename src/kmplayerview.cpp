@@ -416,13 +416,11 @@ void ViewArea::setAudioVideoGeometry (int x, int y, int w, int h, unsigned int *
         m_view->widgetStack ()->setGeometry (x, y, w, h);
         sheduleRepaint (0, 0, width (), height ());
     }
-    if (bg_color) {
-        ;
+    if (bg_color)
         if (QColor (QRgb (*bg_color)) != (m_view->viewer ()->paletteBackgroundColor ())) {
-        m_view->viewer()->setPaletteBackgroundColor (QColor (QRgb (*bg_color)));
-        sheduleRepaint (x, y, w, h);
+            m_view->viewer()->setPaletteBackgroundColor (QColor (QRgb (*bg_color)));
+            sheduleRepaint (x, y, w, h);
         }
-    }
 }
 
 KDE_NO_EXPORT void ViewArea::setRootLayout (RegionNodePtr rl) {
@@ -463,6 +461,27 @@ KDE_NO_EXPORT void ViewArea::sheduleRepaint (int x, int y, int w, int h) {
     else {
         m_repaint_rect = QRect (x, y, w, h);
         m_repaint_timer = startTimer (40); // 25 per sec should do
+    }
+}
+
+KDE_NO_EXPORT
+void ViewArea::moveRect (int x, int y, int w, int h, int x1, int y1) {
+    QRect r (x, y, w, h);
+    if ((m_repaint_timer && m_repaint_rect.intersects (r)) ||
+            m_view->viewer()->frameGeometry ().intersects (r)) {
+            m_repaint_rect = m_repaint_rect.unite(QRect(x1, y1, w, h).unite(r));
+    } else {
+        bitBlt (this, x1, y1, this, x, y, w, h);
+        if (x1 > x) {
+            repaint (x, y, x1 - x, h, false);
+        } else if (x > x1) {
+            repaint (x1 + w, y, x - x1, h, false);
+        }
+        if (y1 > y) {
+            repaint (x, y, w, y1 - y, false);
+        } else if (y > y1) {
+            repaint (x, y1 + h, w, y - y1, false);
+        }
     }
 }
 

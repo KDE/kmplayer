@@ -123,6 +123,7 @@ public:
     void setAudioVideoGeometry (int x, int y, int w, int y, unsigned int * bg);
     void mouseMoved ();
     void sheduleRepaint (int x, int y, int w, int y);
+    void moveRect (int x, int y, int w, int h, int x1, int y1);
 public slots:
     void fullScreen ();
     void accelActivated ();

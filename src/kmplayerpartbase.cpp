@@ -862,25 +862,8 @@ void Source::repaintRect (int x, int y, int w, int h) {
 }
 
 void Source::moveRect (int x, int y, int w, int h, int x1, int y1) {
-    if (m_player->view ()) {
-        /*if (m_player->view ()->viewer ()->frameGeometry ().intersects (QRect (x, y, w, h))) {
-            QRect un = QRect (x, y, w, h).unite (QRect (x1, y1, w, h));
-            repaintRect (un.x (), un.y (), un.width (), un,height ());
-        } else {*/
-            QWidget * p = m_player->process()->view ()->viewArea ();
-            bitBlt (p, x1, y1, p, x, y, w, h);
-            if (x1 > x) {
-                p->repaint (x, y, x1 - x, h, false);
-            } else if (x > x1) {
-                p->repaint (x1 + w, y, x - x1, h, false);
-            }
-            if (y1 > y) {
-                p->repaint (x, y, w, y1 - y, false);
-            } else if (y > y1) {
-                p->repaint (x, y1 + h, w, y - y1, false);
-            }
-        //}
-    }
+    if (m_player->view ())
+        m_player->process()->view()->viewArea()->moveRect (x, y, w, h, x1, y1);
 }
 
 void Source::avWidgetSizes (int x, int y, int w, int h, unsigned int * bg) {
