@@ -335,7 +335,6 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
 
 KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
 #define PAINT_BUFFER_HEIGHT 128
-    QWidget::paintEvent (pe);
     if (rootLayout && rootLayout->region_element) {
         if (!m_paint_buffer) {
             m_paint_buffer = new QPixmap (width (), PAINT_BUFFER_HEIGHT);
@@ -347,8 +346,8 @@ KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
         int ey = pe->rect ().y ();
         int ew = pe->rect ().width ();
         int eh = pe->rect ().height ();
-        QPainter p;
-        p.begin (this);
+        //QPainter p;
+        //p.begin (this);
         while (py < eh) {
             int ph = eh-py < PAINT_BUFFER_HEIGHT ? eh-py : PAINT_BUFFER_HEIGHT;
             m_painter->begin (m_paint_buffer);
@@ -356,11 +355,13 @@ KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
             m_painter->fillRect (ex, ey+py, ew, ph, QBrush (paletteBackgroundColor ()));
             rootLayout->paint (*m_painter, ex, ey+py, ew, ph);
             m_painter->end();
-            p.drawPixmap (ex, ey+py, *m_paint_buffer, 0, 0, ew, ph);
+            //p.drawPixmap (ex, ey+py, *m_paint_buffer, 0, 0, ew, ph);
+            bitBlt (this, ex, ey+py, m_paint_buffer, 0, 0, ew, ph);
             py += PAINT_BUFFER_HEIGHT;
         }
-        p.end ();
-    }
+        //p.end ();
+    } else
+        QWidget::paintEvent (pe);
 }
 
 KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {

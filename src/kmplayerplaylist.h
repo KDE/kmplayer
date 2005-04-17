@@ -501,6 +501,10 @@ public:
      */
     virtual void repaintRect (int x, int y, int w, int h) = 0;
     /**
+     * move a rectangle
+     */
+    virtual void moveRect (int x, int y, int w, int h, int x1, int y1) = 0;
+    /**
      * Sets the video widget postion and background color if bg not NULL
      */
     virtual void avWidgetSizes (int x, int y, int w, int h, unsigned int *bg)=0;

@@ -720,10 +720,15 @@ QString RegionRuntime::setParam (const QString & name, const QString & val) {
                 if (rootrn && rootrn->region_element)
                     convertNode<RegionBase>(rootrn->region_element)->updateLayout ();
             }
-            QRect nr = rect.unite (QRect (rn->x, rn->y, rn->w, rn->h));
             PlayListNotify * n = element->document()->notify_listener;
-            if (n)
-                n->repaintRect (nr.x(), nr.y(), nr.width (), nr.height ());
+            QRect nr (rn->x, rn->y, rn->w, rn->h);
+            if (rect.width () == nr.width () && rect.height () == nr.height ())
+                n->moveRect (rect.x(), rect.y(), rect.width (), rect.height (), nr.x(), nr.y());
+            else {
+                QRect r = rect.unite (nr);
+                if (n)
+                    n->repaintRect (r.x(), r.y(), r.width (), r.height ());
+            }
         }
     }
     return ElementRuntime::setParam (name, val);
@@ -946,9 +951,9 @@ KDE_NO_EXPORT void AnimateData::started () {
                 kdWarning () << "animate couldn't determine end value" << endl;
                 break;
             }
-            steps = durations [duration_time].durval; // 10 per sec
+            steps = 10 * durations [duration_time].durval / 4; // 25 per sec
             if (steps > 0) {
-                anim_timer = startTimer (100); // 100 ms for now FIXME
+                anim_timer = startTimer (40); // 25 ms for now FIXME
                 change_delta = (change_to_val - change_from_val) / steps;
                 kdDebug () << "AnimateData::started " << target_element->nodeName () << "." << changed_attribute << " " << change_from_val << "->" << change_to_val << " in " << steps << " using:" << change_delta << " inc" << endl;
                 success = true;
@@ -970,8 +975,8 @@ KDE_NO_EXPORT void AnimateData::started () {
             old_value = rt->setParam (changed_attribute, change_values.first());
             success = true;
         }
-        if (target_region)
-            target_region->repaint ();
+        //if (target_region)
+        //    target_region->repaint ();
     } while (false);
     if (success)
         AnimateGroupData::started ();
