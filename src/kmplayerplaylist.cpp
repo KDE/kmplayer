@@ -66,7 +66,43 @@ QTextStream & operator << (QTextStream & out, const XMLStringlet & txt) {
     }
     return out;
 }
-    
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT Connection::Connection (NodeRefListPtr ls, NodePtr node)
+ : listeners (ls) {
+    if (listeners) {
+        NodeRefItemPtr nci = (new NodeRefItem (node))->self ();
+        listeners->append (nci);
+        listen_item = nci;
+    }
+}
+
+KDE_NO_EXPORT void Connection::disconnect () {
+    if (listen_item && listeners)
+        listeners->remove (listen_item);
+    listen_item = 0L;
+    listeners = 0L;
+}
+
+KDE_NO_EXPORT void Signaler::propagateEvent (EventPtr event) {
+    NodeRefListPtr nl = listeners (event->id ());
+    if (nl)
+        for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ())
+            if (c->data) {
+                Listener * l = dynamic_cast <Listener *> (c->data.ptr ());
+                if (l)
+                    l->handleEvent (event);
+                else
+                    kdWarning () << "Non listener in listeners list" << endl;
+            }
+}
+
+KDE_NO_EXPORT
+ConnectionPtr Signaler::connectTo (NodePtr node, unsigned int evt_id) {
+    return ConnectionPtr (new Connection (listeners (evt_id), node));
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT Node::Node (NodePtr & d)

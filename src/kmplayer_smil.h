@@ -41,44 +41,9 @@ class MediaTypeRuntimePrivate;
 class ImageDataPrivate;
 class TextDataPrivate;
 class Signaler;
-typedef ListNode<ElementRuntimePtrW> RuntimeRefItem;
-typedef RuntimeRefItem::SharedType RuntimeRefItemPtr;
-typedef RuntimeRefItem::WeakType RuntimeRefItemPtrW;
-typedef List<RuntimeRefItem> RuntimeRefList;
-typedef Item<RuntimeRefList>::SharedType RuntimeRefListPtr;
-typedef Item<RuntimeRefList>::WeakType RuntimeRefListPtrW;
 
 /*
- * A generic event type
- */
-class Event : public Item <Event> {
-public:
-    KDE_NO_CDTOR_EXPORT Event (unsigned int event_id) : m_event_id (event_id) {}
-    KDE_NO_CDTOR_EXPORT virtual ~Event () {}
-    KDE_NO_EXPORT unsigned int id () const { return m_event_id; }
-protected:
-    unsigned int m_event_id;
-};
-
-/*
- * Storage of the listeners list from Signaler and node with Listener
- */
-class Connection {
-    friend class Signaler;
-public:
-    KDE_NO_CDTOR_EXPORT ~Connection () { disconnect (); }
-    void disconnect ();
-private:
-    Connection (RuntimeRefListPtr ls, ElementRuntimePtr rt);
-    RuntimeRefListPtrW listeners;
-    RuntimeRefItemPtrW listen_item;
-};
-
-typedef Item<Event>::SharedType EventPtr;
-typedef SharedPtr <Connection> ConnectionPtr;
-
-/*
- * Event signaled before the actual starting takes place. Use by ExclRuntime
+ * Event signaled before the actual starting takes place. Use by SMIL::Excl
  * to stop possible other children
  */
 class ToBeStartedEvent : public Event {
@@ -87,47 +52,16 @@ public:
     NodePtrW node;
 };
 
-/*
- * Base for objects emiting events. Listeners should add them selves to
- * the RuntimeRefList returned by listeners(event_id)
- */
-class Signaler {
-public:
-    KDE_NO_CDTOR_EXPORT virtual ~Signaler () {};
-    ConnectionPtr connectTo (ElementRuntimePtr rt, unsigned int event_id);
-    void propagateEvent (EventPtr event);
-protected:
-    KDE_NO_CDTOR_EXPORT Signaler () {};
-    /*
-     * Returns a listener list for event_id, or a null ptr if not supported.
-     * This list should be used to add and remove ElementRuntime objects
-     * derived from Listener.
-     */
-    virtual RuntimeRefListPtr listeners (unsigned int event_id) = 0;
-};
-
-/*
- * Base for objects listening to events. Events are passed via the
- * handleEvent() method.
- */
-class Listener {
-    friend class Signaler;
-protected:
-    KDE_NO_CDTOR_EXPORT Listener () {};
-    KDE_NO_CDTOR_EXPORT virtual ~Listener () {};
-    virtual bool handleEvent (EventPtr event) = 0;
-};
-
 /**
- * Base for RegionRuntime and MediaTypeRuntime, having mouse events from regions
+ * Base for RegionElement and MediaTypeElement, having mouse events from regions
  */
 class MouseSignaler : public Signaler {
 protected:
     MouseSignaler ();
-    RuntimeRefListPtr listeners (unsigned int event_id);
-    RuntimeRefListPtr m_ActionListeners;      // mouse clicked
-    RuntimeRefListPtr m_OutOfBoundsListeners; // mouse left
-    RuntimeRefListPtr m_InBoundsListeners;    // mouse entered
+    NodeRefListPtr listeners (unsigned int event_id);
+    NodeRefListPtr m_ActionListeners;      // mouse clicked
+    NodeRefListPtr m_OutOfBoundsListeners; // mouse left
+    NodeRefListPtr m_InBoundsListeners;    // mouse entered
 };
 
 /*
@@ -160,7 +94,7 @@ protected:
 /**
  * Live representation of a SMIL element having timings
  */
-class TimedRuntime : public QObject, public ElementRuntime, public Signaler, public Listener {
+class TimedRuntime : public QObject, public ElementRuntime {
     Q_OBJECT
 public:
     enum TimingState {
@@ -179,6 +113,7 @@ public:
     virtual void paint (QPainter &) {}
     void propagateStop (bool forced);
     void propagateStart ();
+    void processEvent (unsigned int event);
     /**
      * Duration items, begin/dur/end, length information or connected element
      */
@@ -192,13 +127,8 @@ protected slots:
     virtual void started ();
     virtual void stopped ();
 private:
-    void processEvent (unsigned int event);
     void setDurationItem (DurationTime item, const QString & val);
 protected:
-    virtual bool handleEvent (EventPtr event);
-    virtual RuntimeRefListPtr listeners (unsigned int event_id);
-    RuntimeRefListPtr m_StartedListeners;      // Element about to be started
-    RuntimeRefListPtr m_StoppedListeners;      // Element stopped
     TimingState timingstate;
     Fill fill;
     int start_timer;
@@ -209,7 +139,7 @@ protected:
 /**
  * Runtime data for a region
  */
-class RegionRuntime : public MouseSignaler, public ElementRuntime, public SizedRuntime {
+class RegionRuntime : public ElementRuntime, public SizedRuntime {
 public:
     RegionRuntime (NodePtr e);
     KDE_NO_CDTOR_EXPORT ~RegionRuntime () {}
@@ -236,24 +166,9 @@ public:
 };
 
 /**
- * Runtime data for 'excl' group, taking care of only one child can run
- */
-class ExclRuntime : public TimedRuntime {
-public:
-    ExclRuntime (NodePtr e);
-    virtual void begin ();
-    virtual void reset ();
-protected:
-    virtual bool handleEvent (EventPtr event);
-private:
-    typedef ListNode <ConnectionPtr> ConnectionStoreItem;
-    List <ConnectionStoreItem> started_event_list;
-};
-
-/**
  * Some common runtime data for all mediatype classes
  */
-class MediaTypeRuntime : public TimedRuntime, public MouseSignaler, public SizedRuntime {
+class MediaTypeRuntime : public TimedRuntime, public SizedRuntime {
     Q_OBJECT
 protected:
     MediaTypeRuntime (NodePtr e);
@@ -413,7 +328,7 @@ public:
 /**
  * Represents a rectangle on the viewing area
  */
-class Region : public RegionBase {
+class Region : public RegionBase, public MouseSignaler {
 public:
     KDE_NO_CDTOR_EXPORT Region (NodePtr & d) : RegionBase (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "region"; }
@@ -424,7 +339,7 @@ public:
 /**
  * Represents the root area for the other regions
  */
-class RootLayout : public RegionBase {
+class RootLayout : public RegionBase, public MouseSignaler {
 public:
     KDE_NO_CDTOR_EXPORT RootLayout (NodePtr & d) : RegionBase (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
@@ -433,7 +348,7 @@ public:
 /**
  * Abstract base for all SMIL media elements having begin/dur/end/.. attributes
  */
-class TimedMrl : public Mrl {
+class TimedMrl : public Mrl, public Signaler, public Listener {
 public:
     KDE_NO_CDTOR_EXPORT ~TimedMrl () {}
     ElementRuntimePtr getRuntime ();
@@ -442,25 +357,14 @@ public:
     void reset ();
     void childDone (NodePtr child);
 protected:
-    KDE_NO_CDTOR_EXPORT TimedMrl (NodePtr & d) : Mrl (d) {}
-    ElementRuntimePtr runtime;
+    TimedMrl (NodePtr & d);
+    virtual bool handleEvent (EventPtr event);
+    virtual NodeRefListPtr listeners (unsigned int event_id);
     virtual ElementRuntimePtr getNewRuntime () = 0;
-};
 
-/**
- * Abstract base for all SMIL element having begin/dur/end/.. attributes
- */
-class TimedElement : public Element {
-public:
-    KDE_NO_CDTOR_EXPORT ~TimedElement () {}
-    ElementRuntimePtr getRuntime ();
-    void activate ();
-    void deactivate ();
-    void reset ();
-protected:
-    KDE_NO_CDTOR_EXPORT TimedElement (NodePtr & d) : Element (d) {}
+    NodeRefListPtr m_StartedListeners;      // Element about to be started
+    NodeRefListPtr m_StoppedListeners;      // Element stopped
     ElementRuntimePtr runtime;
-    virtual ElementRuntimePtr getNewRuntime () = 0;
 };
 
 /**
@@ -520,8 +424,14 @@ public:
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "excl"; }
     void activate ();
+    void deactivate ();
     void childDone (NodePtr child);
+protected:
     virtual ElementRuntimePtr getNewRuntime ();
+    virtual bool handleEvent (EventPtr event);
+private:
+    typedef ListNode <ConnectionPtr> ConnectionStoreItem;
+    List <ConnectionStoreItem> started_event_list;
 };
 
 /*
@@ -542,7 +452,7 @@ public:
 /**
  * Abstract base for the MediaType classes (video/audio/text/img/..)
  */
-class MediaType : public TimedMrl {
+class MediaType : public TimedMrl, public MouseSignaler {
 public:
     MediaType (NodePtr & d, const QString & t);
     NodePtr childFromTag (const QString & tag);
@@ -573,21 +483,23 @@ public:
     ElementRuntimePtr getNewRuntime ();
 };
 
-class Set : public TimedElement {
+class Set : public TimedMrl {
 public:
-    KDE_NO_CDTOR_EXPORT Set (NodePtr & d) : TimedElement (d) {}
+    KDE_NO_CDTOR_EXPORT Set (NodePtr & d) : TimedMrl (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "set"; }
     virtual ElementRuntimePtr getNewRuntime ();
     virtual void activate ();
     bool expose () { return false; }
+    bool isMrl () { return false; }
 };
 
-class Animate : public TimedElement {
+class Animate : public TimedMrl {
 public:
-    KDE_NO_CDTOR_EXPORT Animate (NodePtr & d) : TimedElement (d) {}
+    KDE_NO_CDTOR_EXPORT Animate (NodePtr & d) : TimedMrl (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
     virtual ElementRuntimePtr getNewRuntime ();
     bool expose () { return false; }
+    bool isMrl () { return false; }
 };
 
 class Param : public Element {

@@ -180,11 +180,24 @@ protected:
     QString value;
 };
 
+/*
+ * A generic event type
+ */
+class KMPLAYER_EXPORT Event : public Item <Event> {
+public:
+    KDE_NO_CDTOR_EXPORT Event (unsigned int event_id) : m_event_id (event_id) {}
+    KDE_NO_CDTOR_EXPORT virtual ~Event () {}
+    KDE_NO_EXPORT unsigned int id () const { return m_event_id; }
+protected:
+    unsigned int m_event_id;
+};
+
 // convenient types
 typedef Item<Node>::SharedType NodePtr;
 typedef Item<Node>::WeakType NodePtrW;
 typedef Item<Attribute>::SharedType AttributePtr;
 typedef Item<Attribute>::WeakType AttributePtrW;
+typedef Item<Event>::SharedType EventPtr;
 typedef Item<RegionNode>::SharedType RegionNodePtr;
 typedef Item<RegionNode>::WeakType RegionNodePtrW;
 typedef List<Node> NodeList;
@@ -201,6 +214,57 @@ typedef Item<NodeRefList>::SharedType NodeRefListPtr;
 typedef Item<NodeRefList>::WeakType NodeRefListPtrW;
 typedef Item<ElementRuntime>::SharedType ElementRuntimePtr;
 typedef Item<ElementRuntime>::WeakType ElementRuntimePtrW;
+
+/*
+ * Weak ref of the listeners list from Signaler and the node with Listener
+ */
+class KMPLAYER_EXPORT Connection {
+    friend class Signaler;
+public:
+    KDE_NO_CDTOR_EXPORT ~Connection () { disconnect (); }
+    void disconnect ();
+private:
+    Connection (NodeRefListPtr ls, NodePtr node);
+    NodeRefListPtrW listeners;
+    NodeRefItemPtrW listen_item;
+};
+
+typedef SharedPtr <Connection> ConnectionPtr;
+
+/*
+ * Base for objects emiting events. Listeners should add them selves using
+ * the connectTo(rt, event_id)
+ */
+class Signaler {
+public:
+    KDE_NO_CDTOR_EXPORT virtual ~Signaler () {};
+    /**
+     * Add ElementRuntime objects, derived from Listener, to the
+     * RuntimeRefList listeners list.
+     * Return a NULL ptr if event_id is not supported.
+     * \sa: Connection::disconnect()
+     */
+    ConnectionPtr connectTo (NodePtr node, unsigned int event_id);
+    void propagateEvent (EventPtr event);
+protected:
+    KDE_NO_CDTOR_EXPORT Signaler () {};
+    /*
+     * Returns a listener list for event_id, or a null ptr if not supported.
+     */
+    virtual NodeRefListPtr listeners (unsigned int event_id) = 0;
+};
+
+/*
+ * Base for objects listening to events. Events are passed via the
+ * handleEvent() method.
+ */
+class Listener {
+    friend class Signaler;
+protected:
+    KDE_NO_CDTOR_EXPORT Listener () {};
+    KDE_NO_CDTOR_EXPORT virtual ~Listener () {};
+    virtual bool handleEvent (EventPtr event) = 0;
+};
 
 /*
  * Base class for XML nodes. Provides a w3c's DOM like API

@@ -165,14 +165,14 @@ KDE_NO_EXPORT void RegionNode::calculateChildBounds () {
 KDE_NO_EXPORT void RegionNode::dispatchMouseEvent (unsigned int event_id) {
     for (NodeRefItemPtr c = element_users->first (); c; c = c->nextSibling ())
         if (c->data) { // FIXME: check if really on Element?
-            MouseSignaler * rt = dynamic_cast <MouseSignaler *> (c->data->getRuntime ().ptr ());
-            if (rt)
-                rt->propagateEvent ((new Event (event_id))->self ());
+            MouseSignaler * ms = dynamic_cast <MouseSignaler *> (c->data.ptr());
+            if (ms)
+                ms->propagateEvent ((new Event (event_id))->self ());
         }
     if (region_element) {
-        MouseSignaler * rt = dynamic_cast <MouseSignaler *> (region_element->getRuntime ().ptr ());
-        if (rt)
-            rt->propagateEvent ((new Event (event_id))->self ());
+        MouseSignaler *ms = dynamic_cast<MouseSignaler*>(region_element.ptr());
+        if (ms)
+            ms->propagateEvent ((new Event (event_id))->self ());
     }
 }
 
@@ -296,50 +296,17 @@ KDE_NO_EXPORT void ElementRuntime::reset () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT Connection::Connection (RuntimeRefListPtr ls, ElementRuntimePtr rt) : listeners (ls) {
-    if (listeners) {
-        RuntimeRefItemPtr rci = (new RuntimeRefItem (rt))->self ();
-        listeners->append (rci);
-        listen_item = rci;
-    }
-}
-
-KDE_NO_CDTOR_EXPORT void Connection::disconnect () {
-    if (listen_item && listeners)
-        listeners->remove (listen_item);
-    listen_item = 0L;
-    listeners = 0L;
-}
-
 KDE_NO_CDTOR_EXPORT ToBeStartedEvent::ToBeStartedEvent (NodePtr n)
  : Event (event_to_be_started), node (n) {}
-
-KDE_NO_EXPORT void Signaler::propagateEvent (EventPtr event) {
-    RuntimeRefListPtr nl = listeners (event->id ());
-    if (nl)
-        for (RuntimeRefItemPtr c = nl->first(); c; c = c->nextSibling ())
-            if (c->data) {
-                Listener * l = dynamic_cast <Listener *> (c->data.ptr ());
-                if (l)
-                    l->handleEvent (event);
-                else
-                    kdWarning () << "Non listener in listeners list" << endl;
-            }
-}
-
-KDE_NO_EXPORT
-ConnectionPtr Signaler::connectTo (ElementRuntimePtr rt, unsigned int evt_id) {
-    return ConnectionPtr (new Connection (listeners (evt_id), rt));
-}
 
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT MouseSignaler::MouseSignaler ()
- : m_ActionListeners ((new RuntimeRefList)->self ()),
-   m_OutOfBoundsListeners ((new RuntimeRefList)->self ()),
-   m_InBoundsListeners ((new RuntimeRefList)->self ()) {}
+ : m_ActionListeners ((new NodeRefList)->self ()),
+   m_OutOfBoundsListeners ((new NodeRefList)->self ()),
+   m_InBoundsListeners ((new NodeRefList)->self ()) {}
 
-RuntimeRefListPtr MouseSignaler::listeners(unsigned int eid) {
+NodeRefListPtr MouseSignaler::listeners(unsigned int eid) {
     switch (eid) {
         case event_activated:
             return m_ActionListeners;
@@ -348,16 +315,14 @@ RuntimeRefListPtr MouseSignaler::listeners(unsigned int eid) {
         case event_outbounds:
             return m_OutOfBoundsListeners;
     }
-    return RuntimeRefListPtr ();
+    return NodeRefListPtr ();
 }
 
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT
 TimedRuntime::TimedRuntime (NodePtr e)
- : ElementRuntime (e),
-   m_StartedListeners ((new RuntimeRefList)->self ()),
-   m_StoppedListeners ((new RuntimeRefList)->self ()) {
+ : ElementRuntime (e) {
     reset ();
 }
 
@@ -404,22 +369,19 @@ void TimedRuntime::setDurationItem (DurationTime item, const QString & val) {
         int pos = vl.find (QChar ('.'));
         if (pos > 0) {
             NodePtr e = element->document()->getElementById (vl.left(pos));
-            if (e) {
-                kdDebug () << "getElementById " << vl.left (pos) << " " << e->nodeName () << endl;
-                ElementRuntimePtr rt = e->getRuntime ();
-                MouseSignaler * rs = dynamic_cast<MouseSignaler*>(rt.ptr());
-                if (rs) {
-                    if (vl.find ("activateevent") > -1) {
-                        dur = duration_element_activated;
-                    } else if (vl.find ("inboundsevent") > -1) {
-                        dur = duration_element_inbounds;
-                    } else if (vl.find ("outofboundsevent") > -1) {
-                        dur = duration_element_outbounds;
-                    }
-                    durations [(int) item].connection=rs->connectTo(m_self,dur);
-                } else
-                    kdWarning () << "not a RegionSignaler" << endl;
-            }
+            kdDebug () << "getElementById " << vl.left (pos) << " " << (e ? e->nodeName () : "-") << endl;
+            MouseSignaler * ms = dynamic_cast <MouseSignaler *> (e.ptr ());
+            if (ms) {
+                if (vl.find ("activateevent") > -1) {
+                    dur = duration_element_activated;
+                } else if (vl.find ("inboundsevent") > -1) {
+                    dur = duration_element_inbounds;
+                } else if (vl.find ("outofboundsevent") > -1) {
+                    dur = duration_element_outbounds;
+                }
+                durations [(int) item].connection = ms->connectTo (element,dur);
+            } else
+                kdWarning () << "not a RegionSignaler" << endl;
         }
     }
     durations [(int) item].durval = dur;
@@ -489,10 +451,9 @@ QString TimedRuntime::setParam (const QString & name, const QString & val) {
                 durations [end_time].durval == duration_media) {
             NodePtr e = element->document ()->getElementById (val);
             if (e) {
-                ElementRuntimePtr rt = e->getRuntime ();
-                TimedRuntime * tr = dynamic_cast <TimedRuntime *> (rt.ptr ());
-                if (tr) {
-                    durations [(int) end_time].connection = tr->connectTo (m_self, event_stopped);
+                SMIL::TimedMrl * tm = dynamic_cast <SMIL::TimedMrl *> (e.ptr());
+                if (tm) {
+                    durations [(int) end_time].connection = tm->connectTo (element, event_stopped);
                     durations [(int) end_time].durval = event_stopped;
                 }
             }
@@ -528,21 +489,9 @@ KDE_NO_EXPORT void TimedRuntime::processEvent (unsigned int event) {
         propagateStop (true);
 }
 
-KDE_NO_EXPORT bool TimedRuntime::handleEvent (EventPtr event) {
-    processEvent (event->id ());
-    return true;
-}
-
-KDE_NO_EXPORT RuntimeRefListPtr TimedRuntime::listeners (unsigned int id) {
-    if (id == event_stopped)
-        return m_StoppedListeners;
-    else if (id == event_to_be_started)
-        return m_StartedListeners;
-    kdWarning () << "unknown event requested" << endl;
-    return RuntimeRefListPtr ();
-}
-
 KDE_NO_EXPORT void TimedRuntime::propagateStop (bool forced) {
+    if (state() == timings_reset || state() == timings_stopped)
+        return; // nothing to stop
     if (!forced && element) {
         if (durations [end_time].durval > duration_last_option &&
                 durations [end_time].durval != duration_media)
@@ -562,7 +511,9 @@ KDE_NO_EXPORT void TimedRuntime::propagateStop (bool forced) {
 }
 
 KDE_NO_EXPORT void TimedRuntime::propagateStart () {
-    propagateEvent ((new ToBeStartedEvent (element))->self ());
+    SMIL::TimedMrl * tm = convertNode <SMIL::TimedMrl> (element);
+    if (tm)
+        tm->propagateEvent ((new ToBeStartedEvent (element))->self ());
     timingstate = timings_started;
     QTimer::singleShot (0, this, SLOT (started ()));
 }
@@ -598,7 +549,6 @@ KDE_NO_EXPORT void TimedRuntime::stopped () {
             propagateStart ();
     } else if (element->state == Element::state_activated) {
         element->deactivate ();
-        propagateEvent ((new Event (event_stopped))->self ());
     }
 }
 
@@ -771,45 +721,6 @@ KDE_NO_EXPORT void ParRuntime::stopped () {
             // children are out of scope now, reset their ElementRuntime
             e->reset (); // will call deactivate() if necessary
     TimedRuntime::stopped ();
-}
-
-//-----------------------------------------------------------------------------
-
-KDE_NO_CDTOR_EXPORT ExclRuntime::ExclRuntime (NodePtr e) : TimedRuntime (e) {
-}
-
-KDE_NO_EXPORT void ExclRuntime::begin () {
-    if (element) // setup connections with eveent_to_be_started
-        for (NodePtr e = element->firstChild (); e; e = e->nextSibling ()) {
-            TimedRuntime *tr=dynamic_cast<TimedRuntime*>(e->getRuntime().ptr());
-            if (tr) {
-                ConnectionPtr c = tr->connectTo (m_self, event_to_be_started);
-                started_event_list.append((new ConnectionStoreItem(c))->self());
-            }
-        }
-    TimedRuntime::begin ();
-}
-
-KDE_NO_EXPORT void ExclRuntime::reset () {
-    started_event_list.clear (); // auto disconnect on destruction of data items
-    TimedRuntime::reset ();
-}
-
-KDE_NO_EXPORT bool ExclRuntime::handleEvent (EventPtr event) {
-    if (event->id () == event_to_be_started) {
-        ToBeStartedEvent * se = static_cast <ToBeStartedEvent *> (event.ptr ());
-        kdDebug () << "ExclRuntime::handleEvent " << se->node->nodeName()<<endl;
-        if (element) // stop all other child elements
-            for (NodePtr e = element->firstChild (); e; e = e->nextSibling ()) {
-                if (e == se->node)
-                    continue;
-                TimedRuntime *tr=dynamic_cast<TimedRuntime*>(e->getRuntime().ptr());
-                if (tr && tr->state()>timings_reset && tr->state()<timings_stopped)
-                    tr->propagateStop (true);
-            }
-        return true;
-    } else
-        return TimedRuntime::handleEvent (event);
 }
 
 //-----------------------------------------------------------------------------
@@ -1433,6 +1344,11 @@ KDE_NO_EXPORT void SMIL::Region::calculateBounds (int _w, int _h) {
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_CDTOR_EXPORT SMIL::TimedMrl::TimedMrl (NodePtr & d)
+ : Mrl (d),
+   m_StartedListeners ((new NodeRefList)->self ()),
+   m_StoppedListeners ((new NodeRefList)->self ()) {}
+
 KDE_NO_EXPORT void SMIL::TimedMrl::activate () {
     kdDebug () << "SMIL::TimedMrl(" << nodeName() << ")::activate" << endl;
     setState (state_activated);
@@ -1445,6 +1361,7 @@ KDE_NO_EXPORT void SMIL::TimedMrl::activate () {
 
 KDE_NO_EXPORT void SMIL::TimedMrl::deactivate () {
     Mrl::deactivate ();
+    propagateEvent ((new Event (event_stopped))->self ());
 }
 
 KDE_NO_EXPORT void SMIL::TimedMrl::reset () {
@@ -1479,27 +1396,20 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::TimedMrl::getRuntime () {
     return runtime;
 }
 
-//-----------------------------------------------------------------------------
-
-KDE_NO_EXPORT ElementRuntimePtr SMIL::TimedElement::getRuntime () {
-    if (!runtime)
-        runtime = getNewRuntime ();
-    return runtime;
+KDE_NO_EXPORT NodeRefListPtr SMIL::TimedMrl::listeners (unsigned int id) {
+    if (id == event_stopped)
+        return m_StoppedListeners;
+    else if (id == event_to_be_started)
+        return m_StartedListeners;
+    kdWarning () << "unknown event requested" << endl;
+    return NodeRefListPtr ();
 }
 
-KDE_NO_EXPORT void SMIL::TimedElement::activate () {
-    setState (state_activated);
-    ElementRuntimePtr rt = getRuntime ();
-    rt->init ();
-    rt->begin ();
-}
-
-KDE_NO_EXPORT void SMIL::TimedElement::deactivate () {
-    Element::deactivate ();
-}
-
-KDE_NO_EXPORT void SMIL::TimedElement::reset () {
-    getRuntime ()->end ();
+KDE_NO_EXPORT bool SMIL::TimedMrl::handleEvent (EventPtr event) {
+    TimedRuntime * te = static_cast <TimedRuntime *> (getRuntime ().ptr ());
+    if (te)
+        te->processEvent (event->id ());
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -1608,7 +1518,14 @@ KDE_NO_EXPORT void SMIL::Excl::activate () {
     if (tr && firstChild ()) { // init children
         for (NodePtr e = firstChild (); e; e = e->nextSibling ())
             e->activate ();
-        tr->begin (); // sets up aboutToStart connection with children
+        for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
+            SMIL::TimedMrl * tm = dynamic_cast <SMIL::TimedMrl *> (e.ptr ());
+            if (tm) { // sets up aboutToStart connection with TimedMrl children
+                ConnectionPtr c = tm->connectTo (m_self, event_to_be_started);
+                started_event_list.append((new ConnectionStoreItem(c))->self());
+            }
+        }
+        tr->begin ();
     } else { // no children, deactivate if runtime started and no duration set
         if (tr && tr->state () == TimedRuntime::timings_started) {
             if (tr->durations[(int)TimedRuntime::duration_time].durval == duration_media)
@@ -1619,12 +1536,32 @@ KDE_NO_EXPORT void SMIL::Excl::activate () {
     }
 }
 
+KDE_NO_EXPORT void SMIL::Excl::deactivate () {
+    started_event_list.clear (); // auto disconnect on destruction of data items
+    GroupBase::deactivate ();
+}
+
 KDE_NO_EXPORT void SMIL::Excl::childDone (NodePtr /*child*/) {
     // do nothing
 }
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::Excl::getNewRuntime () {
-    return (new ExclRuntime (m_self))->self ();
+    return (new TimedRuntime (m_self))->self ();
+}
+
+KDE_NO_EXPORT bool SMIL::Excl::handleEvent (EventPtr event) {
+    if (event->id () == event_to_be_started) {
+        ToBeStartedEvent * se = static_cast <ToBeStartedEvent *> (event.ptr ());
+        kdDebug () << "Excl::handleEvent " << se->node->nodeName()<<endl;
+        for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
+            if (e == se->node) // stop all _other_ child elements
+                continue;
+            TimedRuntime *tr=dynamic_cast<TimedRuntime*>(e->getRuntime().ptr());
+            tr->propagateStop (true);
+        }
+        return true;
+    } else
+        return TimedMrl::handleEvent (event);
 }
 
 //-----------------------------------------------------------------------------
@@ -1731,9 +1668,6 @@ KDE_NO_EXPORT void SMIL::AVMediaType::activate () {
 
 KDE_NO_EXPORT void SMIL::AVMediaType::deactivate () {
     TimedMrl::deactivate ();
-    TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
-    if (tr && tr->state () == TimedRuntime::timings_started)
-        tr->propagateEvent ((new Event (event_stopped))->self ()); // called from backends
     // TODO stop backend player
 }
 
@@ -1770,7 +1704,7 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::Set::getNewRuntime () {
 }
 
 KDE_NO_EXPORT void SMIL::Set::activate () {
-    TimedElement::activate ();
+    TimedMrl::activate ();
     deactivate (); // no livetime of itself
 }
 
