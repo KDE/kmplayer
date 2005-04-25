@@ -89,13 +89,8 @@ KDE_NO_EXPORT void Signaler::propagateEvent (EventPtr event) {
     NodeRefListPtr nl = listeners (event->id ());
     if (nl)
         for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ())
-            if (c->data) {
-                Listener * l = dynamic_cast <Listener *> (c->data.ptr ());
-                if (l)
-                    l->handleEvent (event);
-                else
-                    kdWarning () << "Non listener in listeners list" << endl;
-            }
+            if (c->data)
+                c->data->handleEvent (event);
 }
 
 KDE_NO_EXPORT
@@ -353,6 +348,8 @@ bool Node::isMrl () {
 void Node::opened () {}
 
 void Node::closed () {}
+
+bool Node::handleEvent (EventPtr /*event*/) { return false; }
 
 QString Node::nodeValue () const {
     return QString::null;

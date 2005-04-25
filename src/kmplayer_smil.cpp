@@ -122,6 +122,7 @@ void RegionNode::paint (QPainter & p, int _x, int _y, int _w, int _h) {
             if (rt)
                 rt->paint (p);
         }
+    p.setClipping (false);
     // now paint children, accounting for z-order
     int done_index = -1;
     do {
@@ -140,7 +141,6 @@ void RegionNode::paint (QPainter & p, int _x, int _y, int _w, int _h) {
             }
         done_index = cur_index;
     } while (true);
-    p.setClipping (false);
 }
 
 KDE_NO_EXPORT void RegionNode::repaint () {
@@ -1412,14 +1412,14 @@ KDE_NO_EXPORT bool SMIL::TimedMrl::handleEvent (EventPtr event) {
     return true;
 }
 
+KDE_NO_EXPORT ElementRuntimePtr SMIL::TimedMrl::getNewRuntime () {
+    return (new TimedRuntime (m_self))->self ();
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT bool SMIL::GroupBase::isMrl () {
     return false;
-}
-
-KDE_NO_EXPORT ElementRuntimePtr SMIL::GroupBase::getNewRuntime () {
-    return (new TimedRuntime (m_self))->self ();
 }
 
 //-----------------------------------------------------------------------------
@@ -1543,10 +1543,6 @@ KDE_NO_EXPORT void SMIL::Excl::deactivate () {
 
 KDE_NO_EXPORT void SMIL::Excl::childDone (NodePtr /*child*/) {
     // do nothing
-}
-
-KDE_NO_EXPORT ElementRuntimePtr SMIL::Excl::getNewRuntime () {
-    return (new TimedRuntime (m_self))->self ();
 }
 
 KDE_NO_EXPORT bool SMIL::Excl::handleEvent (EventPtr event) {
@@ -1858,29 +1854,34 @@ KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
 }
 
 //-----------------------------------------------------------------------------
+#include <qtextedit.h>
 
 namespace KMPlayer {
     class TextDataPrivate {
     public:
-        TextDataPrivate () {
+        TextDataPrivate () : edit (0L) {
+            widget = new QWidget;
             reset ();
+            edit->setReadOnly (true);
+            edit->setHScrollBarMode (QScrollView::AlwaysOff);
+            edit->setVScrollBarMode (QScrollView::AlwaysOff);
         }
         void reset () {
-            background_color  = 0xFFFFFF;
-            foreground_color = 0;
             codec = 0L;
             font = QApplication::font ();
             font_size = font.pointSize ();
             transparent = false;
+            delete edit;
+            edit = new QTextEdit (widget);
         }
         QByteArray data;
-        unsigned int background_color;
-        unsigned int foreground_color;
         int olddur;
         QTextCodec * codec;
         QFont font;
         int font_size;
         bool transparent;
+        QWidget * widget;
+        QTextEdit * edit;
     };
 }
 
@@ -1889,6 +1890,7 @@ KDE_NO_CDTOR_EXPORT TextData::TextData (NodePtr e)
 }
 
 KDE_NO_CDTOR_EXPORT TextData::~TextData () {
+    delete d->widget;
     delete d;
 }
 
@@ -1915,9 +1917,9 @@ QString TextData::setParam (const QString & name, const QString & val) {
         }
         return old_val;
     } else if (name == QString::fromLatin1 ("backgroundColor")) {
-        d->background_color = QColor (val).rgb ();
+        d->edit->setPaper (QBrush (QColor (val)));
     } else if (name == QString ("fontColor")) {
-        d->foreground_color = QColor (val).rgb ();
+        d->edit->setPaletteForegroundColor (QColor (val));
     } else if (name == QString ("charset")) {
         d->codec = QTextCodec::codecForName (val.ascii ());
     } else if (name == QString ("fontFace")) {
@@ -1944,26 +1946,21 @@ KDE_NO_EXPORT void TextData::paint (QPainter & p) {
         calcSizes (w, h, xoff, yoff, w, h);
         int x = r->x + int (xoff * r->xscale);
         int y = r->y + int (yoff * r->yscale);
-        if (!d->transparent)
-            p.fillRect (x, y, w, h, QColor (QRgb (d->background_color)));
-        d->font.setPointSize (int (r->xscale * d->font_size));
-        QFontMetrics metrics (d->font);
-        QPainter::TextDirection direction = QApplication::reverseLayout () ?
-            QPainter::RTL : QPainter::LTR;
-        if (direction == QPainter::RTL)
-            x += w;
-        yoff = metrics.lineSpacing ();
-        p.setFont (d->font);
-        p.setPen (QRgb (d->foreground_color));
-        QTextStream text (d->data, IO_ReadOnly);
-        if (d->codec)
-            text.setCodec (d->codec);
-        QString line = text.readLine (); // FIXME word wrap
-        while (!line.isNull () && yoff < h) {
-            p.drawText (x, y+yoff, line, w, direction);
-            line = text.readLine ();
-            yoff += metrics.lineSpacing ();
+        d->widget->setGeometry (0, 0, w, h);
+        d->edit->setGeometry (0, 0, w, h);
+        if (d->edit->length () == 0) {
+            QTextStream text (d->data, IO_ReadOnly);
+            if (d->codec)
+                text.setCodec (d->codec);
+            d->edit->setText (text.read ());
         }
+        d->font.setPointSize (int (r->xscale * d->font_size));
+        d->edit->setFont (d->font);
+        QRect rect = p.clipRegion (QPainter::CoordPainter).boundingRect ();
+        rect = rect.intersect (QRect (x, y, w, h));
+        QPixmap pix = QPixmap::grabWidget (d->edit, rect.x () - x, rect.y () - y, rect.width (), rect.height ());
+        //kdDebug () << "text paint " << x << "," << y << " " << w << "x" << h << " clip: " << rect.x () << "," << rect.y () << endl;
+        p.drawPixmap (rect.x (), rect.y (), pix);
     }
 }
 

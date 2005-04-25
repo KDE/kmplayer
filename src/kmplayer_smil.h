@@ -346,9 +346,9 @@ public:
 };
 
 /**
- * Abstract base for all SMIL media elements having begin/dur/end/.. attributes
+ * Base for all SMIL media elements having begin/dur/end/.. attributes
  */
-class TimedMrl : public Mrl, public Signaler, public Listener {
+class TimedMrl : public Mrl, public Signaler {
 public:
     KDE_NO_CDTOR_EXPORT ~TimedMrl () {}
     ElementRuntimePtr getRuntime ();
@@ -360,7 +360,7 @@ protected:
     TimedMrl (NodePtr & d);
     virtual bool handleEvent (EventPtr event);
     virtual NodeRefListPtr listeners (unsigned int event_id);
-    virtual ElementRuntimePtr getNewRuntime () = 0;
+    virtual ElementRuntimePtr getNewRuntime ();
 
     NodeRefListPtr m_StartedListeners;      // Element about to be started
     NodeRefListPtr m_StoppedListeners;      // Element stopped
@@ -376,7 +376,6 @@ public:
     bool isMrl ();
 protected:
     KDE_NO_CDTOR_EXPORT GroupBase (NodePtr & d) : TimedMrl (d) {}
-    virtual ElementRuntimePtr getNewRuntime ();
 };
 
 /**
@@ -427,7 +426,6 @@ public:
     void deactivate ();
     void childDone (NodePtr child);
 protected:
-    virtual ElementRuntimePtr getNewRuntime ();
     virtual bool handleEvent (EventPtr event);
 private:
     typedef ListNode <ConnectionPtr> ConnectionStoreItem;

@@ -216,7 +216,7 @@ typedef Item<ElementRuntime>::SharedType ElementRuntimePtr;
 typedef Item<ElementRuntime>::WeakType ElementRuntimePtrW;
 
 /*
- * Weak ref of the listeners list from Signaler and the node with Listener
+ * Weak ref of the listeners list from Signaler and the listener node
  */
 class KMPLAYER_EXPORT Connection {
     friend class Signaler;
@@ -232,15 +232,14 @@ private:
 typedef SharedPtr <Connection> ConnectionPtr;
 
 /*
- * Base for objects emiting events. Listeners should add them selves using
- * the connectTo(rt, event_id)
+ * Base for objects emiting events. Listener nodes should add them selves
+ * using the connectTo(rt, event_id)
  */
 class Signaler {
 public:
     KDE_NO_CDTOR_EXPORT virtual ~Signaler () {};
     /**
-     * Add ElementRuntime objects, derived from Listener, to the
-     * RuntimeRefList listeners list.
+     * Add Node objects, derived from Listener, to the listeners list.
      * Return a NULL ptr if event_id is not supported.
      * \sa: Connection::disconnect()
      */
@@ -255,22 +254,11 @@ protected:
 };
 
 /*
- * Base for objects listening to events. Events are passed via the
- * handleEvent() method.
- */
-class Listener {
-    friend class Signaler;
-protected:
-    KDE_NO_CDTOR_EXPORT Listener () {};
-    KDE_NO_CDTOR_EXPORT virtual ~Listener () {};
-    virtual bool handleEvent (EventPtr event) = 0;
-};
-
-/*
  * Base class for XML nodes. Provides a w3c's DOM like API
  */
 class KMPLAYER_EXPORT Node : public TreeNode <Node> {
-    friend class DocumentBuilder;
+    friend class KMPlayerDocumentBuilder;
+    friend class Signaler;
 public:
     enum State {
         state_init, state_deferred, state_activated, state_deactivated
@@ -341,6 +329,11 @@ public:
      * Get rid of whitespace only text nodes
      */
     void normalize ();
+    KDE_NO_EXPORT bool isDocument () const { return m_doc == m_self; }
+
+    KDE_NO_EXPORT NodeListPtr childNodes () const;
+protected:
+    Node (NodePtr & d);
     /*
      * Open tag is found by parser, attributes are set
      */
@@ -349,11 +342,10 @@ public:
      * Close tag is found by parser, children are appended
      */
     virtual void closed ();
-    KDE_NO_EXPORT bool isDocument () const { return m_doc == m_self; }
-
-    KDE_NO_EXPORT NodeListPtr childNodes () const;
-protected:
-    Node (NodePtr & d);
+    /*
+     * Event send to this node, return true if handled
+     */
+    virtual bool handleEvent (EventPtr event);
     NodePtr m_doc;
 public:
     State state;
