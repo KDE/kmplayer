@@ -14,11 +14,11 @@
   <body>
     <par end="text2.activateEvent">
       <img src="../icons/hi128-app-kmplayer.png" region="reg_img" fit="fill" fill="freeze"/>
-      <text src="data:,This%20is%20inline%20text." region="reg_text1" begin="5" dur="5">
+      <text src="some_text.html" region="reg_text1" begin="3" dur="5">
         <param name="charset" value="iso-8859-1"/>
         <param name="fontFace" value="System"/>
         <param name="fontColor" value="yellow"/>
-        <param name="fontSize" value="-2"/>
+        <param name="fontSize" value="+1"/>
         <param name="backgroundColor" value="blue"/>
       </text>
       <video src="file:///home/koos/doc/example.avi" id="video1" region="reg_vid" begin="3"/>

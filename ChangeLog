@@ -1,10 +1,6 @@
 Changes since version 0.9.0-pre2
 - Support javascript properties FileName and Volume
-- Merge/redesign base of RegionNode and Element to TreeNode<T>, add an
-  in-between Node class and a ListNode<T> with a List<T>. Lower TextNode and
-  Attribute in the hierarchy.
-  Makes some leaner, speeds up region animate painting and will hopefully
-  make it easier one day to port it to a real DOM library.
+- Internal redesign of DOM classes
 - Store current url in KDE's session config
 - Added a 'Clear History' action, that will clear recent files and URL source
   history
@@ -14,7 +10,8 @@ Changes since version 0.9.0-pre2
 - More work on SMIL support. Implemented animate's 'values' attribute and
   'calcMode="discrete"'. Added 'fit' attribute for mediatypes (only used
   for images now, and value 'scroll' is not implemented). Group
-  'excl' is now supported. Updated applications in tests/ directory
+  'excl' is now supported. Text elements are rendered by QTextEdit, so it
+  supports html now too. Updated applications in tests/ directory
 Changes since version 0.9.0-pre1
 - Include tests directory
 Changes since version 0.8.4b

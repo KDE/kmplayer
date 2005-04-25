@@ -1862,9 +1862,6 @@ namespace KMPlayer {
         TextDataPrivate () : edit (0L) {
             widget = new QWidget;
             reset ();
-            edit->setReadOnly (true);
-            edit->setHScrollBarMode (QScrollView::AlwaysOff);
-            edit->setVScrollBarMode (QScrollView::AlwaysOff);
         }
         void reset () {
             codec = 0L;
@@ -1873,6 +1870,11 @@ namespace KMPlayer {
             transparent = false;
             delete edit;
             edit = new QTextEdit (widget);
+            edit->setReadOnly (true);
+            edit->setHScrollBarMode (QScrollView::AlwaysOff);
+            edit->setVScrollBarMode (QScrollView::AlwaysOff);
+            edit->setFrameShape (QFrame::NoFrame);
+            edit->setFrameShadow (QFrame::Plain);
         }
         QByteArray data;
         int olddur;
