@@ -149,7 +149,7 @@ KDE_NO_EXPORT void RegionNode::repaint () {
         if (n)
             n->repaintRect (x, y, w, h);
     }
-};
+}
 
 KDE_NO_EXPORT void RegionNode::calculateChildBounds () {
     SMIL::Region * r = convertNode <SMIL::Region> (region_element);
