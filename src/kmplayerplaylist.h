@@ -79,9 +79,6 @@ public:
 
     virtual ~Item () {}
 
-    virtual const char * nodeName () const { return "#item"; }
-    virtual QString nodeValue () const { return QString (); }
-
     SharedType self () const { return m_self; }
 protected:
     Item ();
@@ -123,6 +120,9 @@ class KMPLAYER_EXPORT ListNodeBase : public Item <T> {
 public:
     virtual ~ListNodeBase () {}
 
+    virtual const char * nodeName () const { return "#nodebase"; }
+    virtual QString nodeValue () const { return QString (); }
+
     typename Item<T>::SharedType nextSibling () const { return m_next; }
     typename Item<T>::SharedType previousSibling () const { return m_prev; }
 protected:
@@ -132,7 +132,7 @@ protected:
 };
 
 /*
- * ListNode for class U storage
+ * ListNode for class T storage
  */
 template <class T>
 class ListNode : public ListNodeBase <ListNode <T> > {
@@ -354,6 +354,25 @@ private:
     unsigned int defer_tree_version;
 };
 
+template <>
+inline SharedPtr<KMPlayer::Node> & SharedPtr<KMPlayer::Node>::operator = (KMPlayer::Node * t) {
+    ASSERT (!t);
+    if ((!data && t) || (data && data->ptr != t)) {
+        if (data) data->release ();
+        data = t ? new SharedData<KMPlayer::Node> (t, false) : 0L;
+    }
+    return *this;
+}
+
+template <>
+inline WeakPtr<KMPlayer::Node> & WeakPtr<KMPlayer::Node>::operator = (KMPlayer::Node * t) {
+    ASSERT (!t);
+    if ((!data && t) || (data && data->ptr != t)) {
+        if (data) data->releaseWeak ();
+        data = t ? new SharedData<KMPlayer::Node> (t, true) : 0L;
+    }
+    return *this;
+}
 
 /*
  * Element node, XML node that can have attributes
