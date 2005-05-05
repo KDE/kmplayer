@@ -356,20 +356,22 @@ private:
 
 template <>
 inline SharedPtr<KMPlayer::Node> & SharedPtr<KMPlayer::Node>::operator = (KMPlayer::Node * t) {
-    ASSERT (!t);
-    if ((!data && t) || (data && data->ptr != t)) {
+    if (t) {
+        *this = t->self ();
+    } else if (!data || data->ptr != t) {
         if (data) data->release ();
-        data = t ? new SharedData<KMPlayer::Node> (t, false) : 0L;
+        data = 0L;
     }
     return *this;
 }
 
 template <>
 inline WeakPtr<KMPlayer::Node> & WeakPtr<KMPlayer::Node>::operator = (KMPlayer::Node * t) {
-    ASSERT (!t);
-    if ((!data && t) || (data && data->ptr != t)) {
+    if (t) {
+        *this = t->self ();
+    } else if (!data || data->ptr != t) {
         if (data) data->releaseWeak ();
-        data = t ? new SharedData<KMPlayer::Node> (t, true) : 0L;
+        data = 0L;
     }
     return *this;
 }
