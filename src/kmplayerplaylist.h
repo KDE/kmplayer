@@ -259,6 +259,7 @@ protected:
 class KMPLAYER_EXPORT Node : public TreeNode <Node> {
     friend class KMPlayerDocumentBuilder;
     friend class Signaler;
+    //friend class SharedPtr<KMPlayer::Node>;
 public:
     enum State {
         state_init, state_deferred, state_activated, state_deactivated
@@ -354,12 +355,20 @@ private:
     unsigned int defer_tree_version;
 };
 
+/*
+ // doesn't compile with g++-3.4.3
+template <> SharedPtr<KMPlayer::Node>::SharedPtr (KMPlayer::Node * t)
+ : data (t ? t->m_self.data : 0L) {
+    if (data)
+        data->addRef ();
+}*/
+
 template <>
 inline SharedPtr<KMPlayer::Node> & SharedPtr<KMPlayer::Node>::operator = (KMPlayer::Node * t) {
     if (t) {
         *this = t->self ();
-    } else if (!data || data->ptr != t) {
-        if (data) data->release ();
+    } else if (data) {
+        data->release ();
         data = 0L;
     }
     return *this;
@@ -369,8 +378,8 @@ template <>
 inline WeakPtr<KMPlayer::Node> & WeakPtr<KMPlayer::Node>::operator = (KMPlayer::Node * t) {
     if (t) {
         *this = t->self ();
-    } else if (!data || data->ptr != t) {
-        if (data) data->releaseWeak ();
+    } else if (data) {
+        data->releaseWeak ();
         data = 0L;
     }
     return *this;

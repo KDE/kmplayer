@@ -217,6 +217,9 @@ protected slots:
     virtual void started ();
 private slots:
     virtual void slotResult (KIO::Job*);
+    void movieUpdated (const QRect &);
+    void movieStatus (int);
+    void movieResize (const QSize &);
 };
 
 /**

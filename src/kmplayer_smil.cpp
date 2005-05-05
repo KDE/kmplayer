@@ -21,6 +21,7 @@
 #include <qcolor.h>
 #include <qpainter.h>
 #include <qpixmap.h>
+#include <qmovie.h>
 #include <qimage.h>
 #include <qtextcodec.h>
 #include <qfont.h>
@@ -1727,13 +1728,15 @@ KDE_NO_EXPORT void SMIL::Param::activate () {
 namespace KMPlayer {
     class ImageDataPrivate {
         public:
-            ImageDataPrivate () : image (0L), cache_image (0) {}
+            ImageDataPrivate () : image (0L), cache_image (0), img_movie (0L) {}
             ~ImageDataPrivate () {
                 delete image;
                 delete cache_image;
             }
             QPixmap * image;
             QPixmap * cache_image; // scaled cache
+            QMovie * img_movie;
+            QString url;
             int olddur;
     };
 }
@@ -1752,17 +1755,24 @@ QString ImageData::setParam (const QString & name, const QString & val) {
     if (name == QString::fromLatin1 ("src")) {
         killWGet ();
         QString old_val = MediaTypeRuntime::setParam (name, val);
-        if (!val.isEmpty ()) {
+        if (!val.isEmpty () && d->url != val) {
             KURL url (source_url);
+            d->url = val;
             if (url.isLocalFile ()) {
-                QPixmap *pix = new QPixmap (url.path ());
-                if (pix->isNull ())
-                    delete pix;
+                //QPixmap *pix = new QPixmap (url.path ());
+                QMovie *mov = new QMovie (url.path ());
+                if (mov->isNull ())
+                    delete mov;
                 else {
                     delete d->image;
-                    d->image = pix;
+                    d->image = 0L; //pix;
                     delete d->cache_image;
                     d->cache_image = 0;
+                    delete d->img_movie;
+                    d->img_movie = mov;
+                    mov->connectUpdate(this, SLOT(movieUpdated(const QRect&)));
+                    mov->connectStatus (this, SLOT (movieStatus (int)));
+                    mov->connectResize(this, SLOT (movieResize(const QSize&)));
                 }
             } else
                 wget (url);
@@ -1773,19 +1783,21 @@ QString ImageData::setParam (const QString & name, const QString & val) {
 }
 
 KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
-    if (d->image && region_node && (timingstate == timings_started ||
+    if ((d->image || d->img_movie) &&
+            region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
         RegionNode * r = region_node.ptr ();
+        const QPixmap &img = (d->image ? *d->image:d->img_movie->framePixmap());
         int xoff, yoff, w = r->w, h = r->h;
         calcSizes (w, h, xoff, yoff, w, h);
         xoff = int (xoff * r->xscale);
         yoff = int (yoff * r->yscale);
         if (fit == fit_hidden) {
-            w = int (d->image->width () * r->xscale);
-            h = int (d->image->height () * r->yscale);
+            w = int (img.width () * r->xscale);
+            h = int (img.height () * r->yscale);
         } else if (fit == fit_meet) { // scale in region, keeping aspects
-            if (h > 0 && d->image->height () > 0) {
-                int a = 100 * d->image->width () / d->image->height ();
+            if (h > 0 && img.height () > 0) {
+                int a = 100 * img.width () / img.height ();
                 int w1 = a * h / 100;
                 if (w1 > w)
                     h = 100 * w / a;
@@ -1793,8 +1805,8 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
                     w = w1;
             }
         } else if (fit == fit_slice) { // scale in region, keeping aspects
-            if (h > 0 && d->image->height () > 0) {
-                int a = 100 * d->image->width () / d->image->height ();
+            if (h > 0 && img.height () > 0) {
+                int a = 100 * img.width () / img.height ();
                 int w1 = a * h / 100;
                 if (w1 > w)
                     w = w1;
@@ -1803,14 +1815,14 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
             }
         } //else if (fit == fit_fill) { // scale in region
         // else fit_scroll
-        if (w == d->image->width () && h == d->image->height ())
-            p.drawPixmap (QRect (r->x+xoff, r->y+yoff, w, h), *d->image);
+        if (w == img.width () && h == img.height ())
+            p.drawPixmap (QRect (r->x+xoff, r->y+yoff, w, h), img);
         else {
             if (!d->cache_image || w != d->cache_image->width () || h != d->cache_image->height ()) {
                 delete d->cache_image;
-                QImage img;
-                img = *d->image;
-                d->cache_image = new QPixmap (img.scale (w, h));
+                QImage img2;
+                img2 = img;
+                d->cache_image = new QPixmap (img2.scale (w, h));
             }
             p.drawPixmap (QRect (r->x+xoff, r->y+yoff, w, h), *d->cache_image);
         }
@@ -1840,6 +1852,11 @@ KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
             d->image = pix;
             delete d->cache_image;
             d->cache_image = 0;
+            delete d->img_movie;
+            d->img_movie = new QMovie (mt_d->data);
+            d->img_movie->connectUpdate(this, SLOT(movieUpdated(const QRect&)));
+            d->img_movie->connectStatus (this, SLOT (movieStatus (int)));
+            d->img_movie->connectResize(this, SLOT (movieResize(const QSize&)));
             if (region_node && (timingstate == timings_started ||
                  (timingstate == timings_stopped && fill == fill_freeze)))
                 region_node->repaint ();
@@ -1850,6 +1867,32 @@ KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
             durations [duration_time].durval == duration_data_download) {
         durations [duration_time].durval = d->olddur;
         propagateStart ();
+    }
+}
+
+KDE_NO_EXPORT void ImageData::movieUpdated (const QRect &) {
+    if (region_node && (timingstate == timings_started ||
+                (timingstate == timings_stopped && fill == fill_freeze))) {
+        delete d->cache_image;
+        d->cache_image = 0;
+        region_node->repaint ();
+        //kdDebug () << "movieUpdated" << endl;
+    }
+}
+
+KDE_NO_EXPORT void ImageData::movieStatus (int s) {
+    if (region_node && (timingstate == timings_started ||
+                (timingstate == timings_stopped && fill == fill_freeze))) {
+        //kdDebug () << "movieStatus " << s << endl;
+    }
+}
+
+KDE_NO_EXPORT void ImageData::movieResize (const QSize & s) {
+    if (!(d->cache_image && d->cache_image->width () == s.width () && d->cache_image->height () == s.height ()) &&
+            region_node && (timingstate == timings_started ||
+                (timingstate == timings_stopped && fill == fill_freeze))) {
+        region_node->repaint ();
+        //kdDebug () << "movieResize" << endl;
     }
 }
 
@@ -1908,7 +1951,7 @@ QString TextData::setParam (const QString & name, const QString & val) {
         d->data.resize (0);
         killWGet ();
         QString old_val = MediaTypeRuntime::setParam (name, val);
-        if (!val.isEmpty ()) {
+        if (!val.isEmpty () && old_val != val) {
             KURL url (source_url);
             if (url.isLocalFile ()) {
                 QFile file (url.path ());

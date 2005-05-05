@@ -106,7 +106,7 @@ template <class T> struct WeakPtr;
 template <class T>
 struct SharedPtr {
     SharedPtr () : data (0L) {};
-    explicit SharedPtr (T *t) : data (t ? new SharedData<T> (t, false) : 0L) {};
+    explicit SharedPtr (T *t) : data (t ? new SharedData<T> (t, false) : 0L) {}
     SharedPtr (const SharedPtr<T> & s) : data (s.data) { if (data) data->addRef (); }
     SharedPtr (const WeakPtr <T> &);
     ~SharedPtr () { if (data) data->release (); }
@@ -157,7 +157,7 @@ template <class T> inline SharedPtr<T> & SharedPtr<T>::operator = (T * t) {
 template <class T>
 struct WeakPtr {
     WeakPtr () : data (0L) {};
-    explicit WeakPtr (T * t) : data (t ? new SharedData<T> (t, true) : 0) {};
+    explicit WeakPtr (T * t) : data (t ? new SharedData<T> (t, true) : 0) {}
     WeakPtr (const WeakPtr<T> & s) : data (s.data) { if (data) data->addWeakRef (); }
     WeakPtr (const SharedPtr<T> & s) : data (s.data) { if (data) data->addWeakRef (); }
     ~WeakPtr () { if (data) data->releaseWeak (); }
