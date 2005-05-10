@@ -300,7 +300,7 @@ protected:
 /*
  * The volume bar from the controlpanel
  */
-class VolumeBar : public QWidget {
+class KMPLAYER_EXPORT VolumeBar : public QWidget {
     Q_OBJECT
 public:
     VolumeBar (QWidget * parent, View * view);
