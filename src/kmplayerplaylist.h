@@ -61,7 +61,6 @@ namespace KMPlayer {
 class Document;
 class Node;
 class Mrl;
-class RegionNode;
 class ElementRuntime;
 class ElementRuntimePrivate;
 class ImageDataPrivate;
@@ -192,14 +191,44 @@ protected:
     unsigned int m_event_id;
 };
 
+/**
+ * Event signaling that attached region should be repainted
+ */
+class PaintEvent : public Event {
+public:
+    PaintEvent (QPainter & p, int x, int y, int w, int h);
+    QPainter & painter;
+    int x, y, w, h;
+};
+
+/**
+ * Event signaling that attached region is resized
+ */
+class SizeEvent : public Event {
+public:
+    SizeEvent (int x, int y, int w, int h, bool kr);
+    int x, y, w, h;
+    bool keep_ratio;
+};
+
+/**
+ * Event signaling a pointer event
+ */
+class PointerEvent : public Event {
+public:
+    PointerEvent (unsigned int event_id, int x, int y);
+    int x, y;
+};
+
+extern const unsigned int event_pointer_clicked;
+extern const unsigned int event_pointer_moved;
+
 // convenient types
 typedef Item<Node>::SharedType NodePtr;
 typedef Item<Node>::WeakType NodePtrW;
 typedef Item<Attribute>::SharedType AttributePtr;
 typedef Item<Attribute>::WeakType AttributePtrW;
 typedef Item<Event>::SharedType EventPtr;
-typedef Item<RegionNode>::SharedType RegionNodePtr;
-typedef Item<RegionNode>::WeakType RegionNodePtrW;
 typedef List<Node> NodeList;
 typedef Item<NodeList>::SharedType NodeListPtr;
 typedef Item<NodeList>::WeakType NodeListPtrW;
@@ -216,10 +245,10 @@ typedef Item<ElementRuntime>::SharedType ElementRuntimePtr;
 typedef Item<ElementRuntime>::WeakType ElementRuntimePtrW;
 
 /*
- * Weak ref of the listeners list from Signaler and the listener node
+ * Weak ref of the listeners list from signaler and the listener node
  */
 class KMPLAYER_EXPORT Connection {
-    friend class Signaler;
+    friend class Node;
 public:
     KDE_NO_CDTOR_EXPORT ~Connection () { disconnect (); }
     void disconnect ();
@@ -232,33 +261,10 @@ private:
 typedef SharedPtr <Connection> ConnectionPtr;
 
 /*
- * Base for objects emiting events. Listener nodes should add them selves
- * using the connectTo(rt, event_id)
- */
-class Signaler {
-public:
-    KDE_NO_CDTOR_EXPORT virtual ~Signaler () {};
-    /**
-     * Add Node objects, derived from Listener, to the listeners list.
-     * Return a NULL ptr if event_id is not supported.
-     * \sa: Connection::disconnect()
-     */
-    ConnectionPtr connectTo (NodePtr node, unsigned int event_id);
-    void propagateEvent (EventPtr event);
-protected:
-    KDE_NO_CDTOR_EXPORT Signaler () {};
-    /*
-     * Returns a listener list for event_id, or a null ptr if not supported.
-     */
-    virtual NodeRefListPtr listeners (unsigned int event_id) = 0;
-};
-
-/*
  * Base class for XML nodes. Provides a w3c's DOM like API
  */
 class KMPLAYER_EXPORT Node : public TreeNode <Node> {
     friend class KMPlayerDocumentBuilder;
-    friend class Signaler;
     //friend class SharedPtr<KMPlayer::Node>;
 public:
     enum State {
@@ -287,7 +293,27 @@ public:
     /**
      * If this node should be visible to the user
      */
-    virtual bool expose ();
+    virtual bool expose () const;
+    /**
+     * If this node purpose is for storing runtime data only,
+     * ie. node doesn't exist in the original document
+     */
+    bool auxiliaryNode () const { return auxiliary_node; }
+    void setAuxiliaryNode (bool b) { auxiliary_node = b; }
+    /**
+     * Add node as listener for a certain event_id.
+     * Return a NULL ptr if event_id is not supported.
+     * \sa: Connection::disconnect()
+     */
+    ConnectionPtr connectTo (NodePtr node, unsigned int event_id);
+    /*
+     * Event send to this node, return true if handled
+     */
+    virtual bool handleEvent (EventPtr event);
+    /*
+     * Dispatch Event to all listeners of event->id()
+     */
+    void propagateEvent (EventPtr event);
     /**
      * Activates element, sets state to state_activated. Will call activate() on
      * firstChild or call deactivate().
@@ -344,15 +370,16 @@ protected:
      */
     virtual void closed ();
     /*
-     * Event send to this node, return true if handled
+     * Returns a listener list for event_id, or a null ptr if not supported.
      */
-    virtual bool handleEvent (EventPtr event);
+    virtual NodeRefListPtr listeners (unsigned int event_id);
     NodePtr m_doc;
 public:
     State state;
     void setState (State nstate);
 private:
     unsigned int defer_tree_version;
+    bool auxiliary_node;
 };
 
 /*
@@ -404,74 +431,17 @@ protected:
 };
 
 /**
- * Node for layout hierarchy as found in SMIL document
+ * Node that references another node
  */
-class RegionNode : public TreeNode <RegionNode> {
+class RefNode : public Node {
 public:
-    RegionNode (NodePtr e);
-    KDE_NO_CDTOR_EXPORT ~RegionNode () {}
-    /**
-     * paints background if background-color attr. is set and afterwards passes
-     * the painter of attached_element's runtime
-     */
-    void paint (QPainter & p, int x, int y, int h, int w);
-    /**
-     * repaints region, calls update(x,y,w,h) on view
-     */
-    void repaint ();
-    /**
-     * calculate bounds given the outer coordinates (absolute)
-     */
-    void setSize (int x, int y, int w, int h, bool keep_aspect);
-    /**
-     * calculate bounds given scale factors and offset (absolute) and
-     * x,y,w,h element's values
-     */
-    void scaleRegion (float sx, float sy, int xoff, int yoff);
-    /**
-     * calculate the relative x,y,w,h on the child region elements
-     * given this element's w and h value
-     * and child's left/top/right/width/height/bottom attributes
-     */
-    void calculateChildBounds ();
-    /**
-     * user clicked w/ the mouse on this region, returns true if handled
-     */
-    bool pointerClicked (int x, int y);
-    /**
-     * user moved the mouse over this region
-     */
-    bool pointerMoved (int x, int y);
-    /**
-     * boolean for check if pointerEntered/pointerLeft should be called by View
-     */
-    bool has_mouse;
-    /**
-     * (Scaled) Dimensions set by setSize
-     */
-    int x, y, w, h;
-    /**
-     * Scale factors
-     */
-    float xscale, yscale;
-    /**
-     * z-order of this region
-     */
-    int z_order;
-    /**
-     * Corresponding DOM node (SMIL::Region or SMIL::RootLayout)
-     */
-    NodePtrW region_element;
-    /**
-     * MediaType Elements using this region
-     */
-    NodeRefListPtr element_users;
-    /**
-     * Make this region and its sibling 0
-     */
-    void clearAll ();
-private:
-    void dispatchMouseEvent (unsigned int event_id);
+    RefNode (NodePtr & d, NodePtr ref);
+    virtual const char * nodeName () const { return tag_name.ascii (); }
+    NodePtr refNode () const { return ref_node; }
+    void setRefNode (const NodePtr ref);
+protected:
+    NodePtrW ref_node;
+    QString tag_name;
 };
 
 /**
@@ -508,28 +478,12 @@ public:
     /**
      * If this element is attached to a region, region_node points to it
      */
-    RegionNodePtrW region_node;
+    NodePtrW region_node;
 protected:
     ElementRuntime (NodePtr e);
     NodePtrW element;
 private:
     ElementRuntimePrivate * d;
-};
-
-/**
- * Base class for Region and RootLayout
- */
-class RegionBase : public Element {
-protected:
-    KDE_NO_CDTOR_EXPORT RegionBase (NodePtr & d) : Element (d) {}
-    ElementRuntimePtr runtime;
-public:
-    virtual ElementRuntimePtr getRuntime ();
-    /**
-     * recursively calculates dimensions of this and child regions
-     */
-    void updateLayout ();
-    int x, y, w, h;
 };
 
 template <class T>
@@ -614,7 +568,7 @@ public:
      * Will return false if this document has child nodes
      */
     bool isMrl ();
-    RegionNodePtrW rootLayout;
+    NodePtrW rootLayout;
     PlayListNotify * notify_listener;
     unsigned int m_tree_version;
 };
@@ -629,13 +583,13 @@ public:
     void appendText (const QString & s);
     const char * nodeName () const { return "#text"; }
     QString nodeValue () const;
-    bool expose ();
+    bool expose () const;
 protected:
     QString text;
 };
 
 /**
- * Unrecognized tag by parent element
+ * Unrecognized tag by parent element or just some auxiliary node
  */
 class DarkNode : public Element {
 public:
@@ -643,7 +597,7 @@ public:
     KDE_NO_CDTOR_EXPORT ~DarkNode () {}
     const char * nodeName () const { return name.ascii (); }
     NodePtr childFromTag (const QString & tag);
-    virtual bool expose ();
+    virtual bool expose () const;
 protected:
     QString name;
 };
@@ -659,8 +613,10 @@ public:
 
 //-----------------------------------------------------------------------------
 
+namespace SMIL {
+
 /**
- * '<smil'> tag
+ * '<smil>' tag
  */
 class Smil : public Mrl {
 public:
@@ -677,6 +633,49 @@ public:
     NodePtr realMrl ();
     NodePtr current_av_media_type;
 };
+
+/**
+ * Base class for SMIL::Region, SMIL::RootLayout and SMIL::Layout
+ */
+class RegionBase : public Element {
+public:
+    virtual ElementRuntimePtr getRuntime ();
+    virtual bool handleEvent (EventPtr event);
+    /**
+     * repaints region, calls scheduleRepaint(x,y,w,h) on view
+     */
+    void repaint ();
+    /**
+     * calculate actual values given scale factors and offset (absolute) and
+     * x,y,w,h  values
+     */
+    void scaleRegion (float sx, float sy, int xoff, int yoff);
+    /**
+     * calculate the relative x,y,w,h on the child region elements
+     * given this element's w and h value
+     * and child's left/top/right/width/height/bottom attributes
+     */
+    void calculateChildBounds ();
+
+    int x, y, w, h;     // unscaled values
+    int x1, y1, w1, h1; // actual values
+    /**
+     * Scale factors
+     */
+    float xscale, yscale;
+    /**
+     * z-order of this region
+     */
+    int z_order;
+protected:
+    RegionBase (NodePtr & d);
+    ElementRuntimePtr runtime;
+    virtual NodeRefListPtr listeners (unsigned int event_id);
+    NodeRefListPtr m_SizeListeners;        // region resized
+    NodeRefListPtr m_PaintListeners;       // region need repainting
+};
+
+} // namespace SMIL
 
 //-----------------------------------------------------------------------------
 
@@ -798,8 +797,7 @@ template <class T> inline unsigned int List<T>::length () const {
 }
 
 template <class T> inline void List<T>::clear () {
-    m_first = 0L;
-    Q_ASSERT (m_last.ptr () == 0L);
+    m_first = m_last = 0L;
 }
 
 template <class T>

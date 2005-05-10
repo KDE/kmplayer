@@ -40,7 +40,6 @@ namespace KMPlayer {
 class MediaTypeRuntimePrivate;
 class ImageDataPrivate;
 class TextDataPrivate;
-class Signaler;
 
 /*
  * Event signaled before the actual starting takes place. Use by SMIL::Excl
@@ -50,18 +49,6 @@ class ToBeStartedEvent : public Event {
 public:
     ToBeStartedEvent (NodePtr n);
     NodePtrW node;
-};
-
-/**
- * Base for RegionElement and MediaTypeElement, having mouse events from regions
- */
-class MouseSignaler : public Signaler {
-protected:
-    MouseSignaler ();
-    NodeRefListPtr listeners (unsigned int event_id);
-    NodeRefListPtr m_ActionListeners;      // mouse clicked
-    NodeRefListPtr m_OutOfBoundsListeners; // mouse left
-    NodeRefListPtr m_InBoundsListeners;    // mouse entered
 };
 
 /*
@@ -185,6 +172,11 @@ protected:
     MediaTypeRuntimePrivate * mt_d;
     QString source_url;
     Fit fit;
+    ConnectionPtr paint_connection;
+    ConnectionPtr sized_connection;
+    ConnectionPtr activated_connection;
+    ConnectionPtr outbounds_connection;
+    ConnectionPtr inbounds_connection;
 protected slots:
     virtual void slotResult (KIO::Job*);
     void slotData (KIO::Job*, const QByteArray& qb);
@@ -200,6 +192,8 @@ public:
     virtual bool isAudioVideo ();
     virtual QString setParam (const QString & name, const QString & value);
     virtual void started ();
+    virtual void stopped ();
+    ConnectionPtr sized_connection;
 };
 
 /**
@@ -251,7 +245,7 @@ public:
 protected:
     KDE_NO_CDTOR_EXPORT AnimateGroupData (NodePtr e) : TimedRuntime (e) {}
     NodePtrW target_element;
-    RegionNodePtrW target_region;
+    NodePtrW target_region;
     QString changed_attribute;
     QString change_to;
     QString old_value;
@@ -311,38 +305,53 @@ public:
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "head"; }
     void closed ();
-    bool expose ();
+    bool expose () const;
 };
 
 /**
  * Defines region layout, should reside below 'head' element
  */
-class Layout : public Element {
+class Layout : public RegionBase {
 public:
-    KDE_NO_CDTOR_EXPORT Layout (NodePtr & d) : Element (d) {}
+    KDE_NO_CDTOR_EXPORT Layout (NodePtr & d) : RegionBase (d) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "layout"; }
     void activate ();
     void closed ();
-    RegionNodePtr regionRootLayout;
+    virtual bool handleEvent (EventPtr event);
+    /**
+     * recursively calculates dimensions of this and child regions
+     */
+    void updateLayout ();
+
     NodePtrW rootLayout;
 };
 
 /**
  * Represents a rectangle on the viewing area
  */
-class Region : public RegionBase, public MouseSignaler {
+class Region : public RegionBase {
 public:
-    KDE_NO_CDTOR_EXPORT Region (NodePtr & d) : RegionBase (d) {}
+    Region (NodePtr & d);
     KDE_NO_EXPORT const char * nodeName () const { return "region"; }
     NodePtr childFromTag (const QString & tag);
     void calculateBounds (int w, int h);
+    virtual bool handleEvent (EventPtr event);
+    virtual NodeRefListPtr listeners (unsigned int event_id);
+private:
+    NodeRefListPtr m_ActionListeners;      // mouse clicked
+    NodeRefListPtr m_OutOfBoundsListeners; // mouse left
+    NodeRefListPtr m_InBoundsListeners;    // mouse entered
+    /**
+     * boolean for check if pointerEntered/pointerLeft should be called by View
+     */
+    bool has_mouse;
 };
 
 /**
  * Represents the root area for the other regions
  */
-class RootLayout : public RegionBase, public MouseSignaler {
+class RootLayout : public RegionBase {
 public:
     KDE_NO_CDTOR_EXPORT RootLayout (NodePtr & d) : RegionBase (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
@@ -351,7 +360,7 @@ public:
 /**
  * Base for all SMIL media elements having begin/dur/end/.. attributes
  */
-class TimedMrl : public Mrl, public Signaler {
+class TimedMrl : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT ~TimedMrl () {}
     ElementRuntimePtr getRuntime ();
@@ -359,9 +368,9 @@ public:
     void deactivate ();
     void reset ();
     void childDone (NodePtr child);
+    virtual bool handleEvent (EventPtr event);
 protected:
     TimedMrl (NodePtr & d);
-    virtual bool handleEvent (EventPtr event);
     virtual NodeRefListPtr listeners (unsigned int event_id);
     virtual ElementRuntimePtr getNewRuntime ();
 
@@ -428,7 +437,6 @@ public:
     void activate ();
     void deactivate ();
     void childDone (NodePtr child);
-protected:
     virtual bool handleEvent (EventPtr event);
 private:
     typedef ListNode <ConnectionPtr> ConnectionStoreItem;
@@ -453,15 +461,21 @@ public:
 /**
  * Abstract base for the MediaType classes (video/audio/text/img/..)
  */
-class MediaType : public TimedMrl, public MouseSignaler {
+class MediaType : public TimedMrl {
 public:
     MediaType (NodePtr & d, const QString & t);
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
     void opened ();
     void activate ();
+    virtual bool handleEvent (EventPtr event);
     QString m_type;
     unsigned int bitrate;
+protected:
+    NodeRefListPtr listeners (unsigned int event_id);
+    NodeRefListPtr m_ActionListeners;      // mouse clicked
+    NodeRefListPtr m_OutOfBoundsListeners; // mouse left
+    NodeRefListPtr m_InBoundsListeners;    // mouse entered
 };
 
 class AVMediaType : public MediaType {
@@ -470,6 +484,7 @@ public:
     ElementRuntimePtr getNewRuntime ();
     void activate ();
     void deactivate ();
+    virtual bool handleEvent (EventPtr event);
 };
 
 class ImageMediaType : public MediaType {
@@ -490,7 +505,7 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "set"; }
     virtual ElementRuntimePtr getNewRuntime ();
     virtual void activate ();
-    bool expose () { return false; }
+    bool expose () const { return false; }
     bool isMrl () { return false; }
 };
 
@@ -499,7 +514,7 @@ public:
     KDE_NO_CDTOR_EXPORT Animate (NodePtr & d) : TimedMrl (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
     virtual ElementRuntimePtr getNewRuntime ();
-    bool expose () { return false; }
+    bool expose () const { return false; }
     bool isMrl () { return false; }
 };
 
@@ -508,7 +523,7 @@ public:
     KDE_NO_CDTOR_EXPORT Param (NodePtr & d) : Element (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "param"; }
     void activate ();
-    bool expose () { return false; }
+    bool expose () const { return false; }
 };
 
 } // SMIL namespace

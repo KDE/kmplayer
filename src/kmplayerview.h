@@ -99,6 +99,7 @@ private:
     View * m_view;
     QPopupMenu * m_itemmenu;
     QPixmap folder_pix;
+    QPixmap auxiliary_pix;
     QPixmap video_pix;
     QPixmap unknown_pix;
     QPixmap menu_pix;
@@ -119,10 +120,10 @@ public:
     ~ViewArea ();
     bool isFullScreen () const { return m_fullscreen; }
     KActionCollection * actionCollection () const { return m_collection; }
-    void setRootLayout (RegionNodePtr rl);
+    void setRootLayout (NodePtr rl);
     void setAudioVideoGeometry (int x, int y, int w, int y, unsigned int * bg);
     void mouseMoved ();
-    void sheduleRepaint (int x, int y, int w, int y);
+    void scheduleRepaint (int x, int y, int w, int y);
     void moveRect (int x, int y, int w, int h, int x1, int y1);
 public slots:
     void fullScreen ();
@@ -143,7 +144,7 @@ private:
     QPainter * m_painter;
     QPixmap * m_paint_buffer;
     KActionCollection * m_collection;
-    RegionNodePtr rootLayout;
+    NodePtrW rootLayout;
     QRect m_av_geometry;
     QRect m_repaint_rect;
     int m_mouse_invisible_timer;

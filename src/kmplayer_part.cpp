@@ -756,7 +756,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
     if (!entry)
         return false;
     kdDebug () << "entry " << entry->name << endl;
-    for (int i = 0; i < args.size (); ++i)
+    for (unsigned int i = 0; i < args.size (); ++i)
         kdDebug () << "      " << args[i] << endl;
     KMPlayer::View * view = static_cast <KMPlayer::View*> (player->view ());
     if (!view)

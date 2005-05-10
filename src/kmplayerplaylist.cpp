@@ -35,7 +35,7 @@ using namespace KMPlayer;
 static Node * fromXMLDocumentGroup (NodePtr & d, const QString & tag) {
     const char * const name = tag.latin1 ();
     if (!strcmp (name, "smil"))
-        return new Smil (d);
+        return new SMIL::Smil (d);
     else if (!strcasecmp (name, "asx"))
         return new ASX::Asx (d);
     return 0L;
@@ -85,23 +85,10 @@ KDE_NO_EXPORT void Connection::disconnect () {
     listeners = 0L;
 }
 
-KDE_NO_EXPORT void Signaler::propagateEvent (EventPtr event) {
-    NodeRefListPtr nl = listeners (event->id ());
-    if (nl)
-        for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ())
-            if (c->data)
-                c->data->handleEvent (event);
-}
-
-KDE_NO_EXPORT
-ConnectionPtr Signaler::connectTo (NodePtr node, unsigned int evt_id) {
-    return ConnectionPtr (new Connection (listeners (evt_id), node));
-}
-
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT Node::Node (NodePtr & d)
- : m_doc (d), state (state_init) {}
+ : m_doc (d), state (state_init), auxiliary_node (false) {}
 
 Node::~Node () {
     clear ();
@@ -131,7 +118,7 @@ void Node::setState (State nstate) {
     }
 }
 
-bool Node::expose () {
+bool Node::expose () const {
     return true;
 }
 
@@ -349,10 +336,43 @@ void Node::opened () {}
 
 void Node::closed () {}
 
+NodeRefListPtr Node::listeners (unsigned int /*event_id*/) {
+    return NodeRefListPtr ();
+}
+
 bool Node::handleEvent (EventPtr /*event*/) { return false; }
+
+KDE_NO_EXPORT void Node::propagateEvent (EventPtr event) {
+    NodeRefListPtr nl = listeners (event->id ());
+    if (nl)
+        for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ())
+            if (c->data)
+                c->data->handleEvent (event);
+}
+
+KDE_NO_EXPORT
+ConnectionPtr Node::connectTo (NodePtr node, unsigned int evt_id) {
+    NodeRefListPtr nl = listeners (evt_id);
+    if (nl)
+        return ConnectionPtr (new Connection (listeners (evt_id), node));
+    return ConnectionPtr ();
+}
 
 QString Node::nodeValue () const {
     return QString::null;
+}
+
+//-----------------------------------------------------------------------------
+
+RefNode::RefNode (NodePtr & d, NodePtr ref)
+ : Node (d) {
+    setRefNode (ref);
+}
+
+void RefNode::setRefNode (const NodePtr ref) {
+    ref_node = ref;
+    if (ref_node)
+        tag_name = QString ("&%1").arg (ref_node->nodeName ());
 }
 
 //-----------------------------------------------------------------------------
@@ -388,6 +408,8 @@ void Element::clear () {
 void Element::setAttributes (AttributeListPtr attrs) {
     m_attributes = attrs;
 }
+
+//-----------------------------------------------------------------------------
 
 Attribute::Attribute (const QString & n, const QString & v)
   : name (n), value (v) {}
@@ -516,7 +538,7 @@ QString TextNode::nodeValue () const {
     return text;
 }
 
-KDE_NO_EXPORT bool TextNode::expose () {
+KDE_NO_EXPORT bool TextNode::expose () const {
     return false;
 }
 
@@ -529,7 +551,7 @@ NodePtr DarkNode::childFromTag (const QString & tag) {
     return (new DarkNode (m_doc, tag))->self ();
 }
 
-KDE_NO_EXPORT bool DarkNode::expose () {
+KDE_NO_EXPORT bool DarkNode::expose () const {
     return false;
 }
 

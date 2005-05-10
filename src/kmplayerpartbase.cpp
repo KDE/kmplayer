@@ -363,7 +363,7 @@ void PartBase::setSource (Source * _source) {
     if (m_view && m_view->viewer ()) {
         m_view->viewer ()->setAspect (0.0);
         m_view->viewArea ()->setRootLayout (m_source->document () ?
-           m_source->document ()->document()->rootLayout : RegionNodePtrW (0L));
+           m_source->document ()->document()->rootLayout : NodePtrW (0L));
     }
     if (m_source) QTimer::singleShot (0, m_source, SLOT (activate ()));
     emit sourceChanged (m_source);
@@ -477,6 +477,7 @@ void PartBase::processStateChange (KMPlayer::Process::State old, KMPlayer::Proce
             src->setLength (src->position ());
         src->setPosition (0);
         m_view->reset ();
+        m_bPosSliderPressed = false;
         emit stopPlaying ();
     } else if (state == Process::Ready && m_process->player () == this) {
         if (old > Process::Ready)
@@ -858,7 +859,7 @@ void Source::stateElementChanged (NodePtr elm) {
 void Source::repaintRect (int x, int y, int w, int h) {
     //kdDebug () << "repaint " << x << "," << y << " " << w << "x" << h << endl;
     if (m_player->view ())
-        m_player->process()->view ()->viewArea ()->sheduleRepaint (x, y, w, h);
+        m_player->process()->view ()->viewArea ()->scheduleRepaint (x, y, w, h);
 }
 
 void Source::moveRect (int x, int y, int w, int h, int x1, int y1) {
@@ -1140,16 +1141,14 @@ void URLSource::dimensions (int & w, int & h) {
         w = m_player->process ()->view ()->viewer ()->width ();
         h = m_player->process ()->view ()->viewer ()->height ();
     } else if (m_document && m_document->document ()->rootLayout) {
-        RegionNodePtr rl = m_document->document ()->rootLayout;
-        RegionBase *root = convertNode <RegionBase> (rl->region_element);
+        NodePtr rl = m_document->document ()->rootLayout;
+        SMIL::RegionBase *root = convertNode <SMIL::RegionBase> (rl);
         if (root) {
             w = root->w;
             h = root->h;
             if (w && h)
                 return;
         }
-        w = rl->w;
-        h = rl->h;
     } else
         Source::dimensions (w, h);
     
@@ -1329,9 +1328,9 @@ KDE_NO_EXPORT void URLSource::read (QTextStream & textstream) {
             readXML (cur_elm, textstream, line);
             cur_elm->normalize ();
             if (m_document) { // SMIL documents might have set its sizes
-                RegionNodePtr r = m_document->document ()->rootLayout;
+                NodePtr r = m_document->document ()->rootLayout;
                 if (r) {
-                    RegionBase *root=convertNode<RegionBase>(r->region_element);
+                    SMIL::RegionBase * root= convertNode <SMIL::RegionBase> (r);
                     Source::setDimensions (root->w, root->h);
                 }
             }

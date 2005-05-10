@@ -315,9 +315,8 @@ KDE_NO_EXPORT void ViewArea::accelActivated () {
 }
 
 KDE_NO_EXPORT void ViewArea::mousePressEvent (QMouseEvent * e) {
-    if (rootLayout)
-        if (rootLayout->pointerClicked (e->x (), e->y ()))
-            e->accept ();
+    if (rootLayout && rootLayout->handleEvent((new PointerEvent(event_pointer_clicked,e->x(), e->y()))->self()))
+        e->accept ();
 }
 
 KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
@@ -327,15 +326,14 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
         m_view->delayedShowButtons (e->y() > vert_buttons_pos-cp_height &&
                                     e->y() < vert_buttons_pos);
     }
-    if (rootLayout)
-        if (rootLayout->pointerMoved (e->x (), e->y ()))
-            e->accept ();
+    if (rootLayout && rootLayout->handleEvent((new PointerEvent(event_pointer_moved,e->x(), e->y()))->self()))
+        e->accept ();
     mouseMoved (); // for m_mouse_invisible_timer
 }
 
 KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
 #define PAINT_BUFFER_HEIGHT 128
-    if (rootLayout && rootLayout->region_element) {
+    if (rootLayout) {
         if (!m_paint_buffer) {
             m_paint_buffer = new QPixmap (width (), PAINT_BUFFER_HEIGHT);
             m_painter = new QPainter ();
@@ -353,7 +351,7 @@ KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
             m_painter->begin (m_paint_buffer);
             m_painter->translate(-ex, -ey-py);
             m_painter->fillRect (ex, ey+py, ew, ph, QBrush (paletteBackgroundColor ()));
-            rootLayout->paint (*m_painter, ex, ey+py, ew, ph);
+            rootLayout->handleEvent ((new PaintEvent (*m_painter, ex, ey+py, ew, ph))->self ());
             m_painter->end();
             //p.drawPixmap (ex, ey+py, *m_paint_buffer, 0, 0, ew, ph);
             bitBlt (this, ex, ey+py, m_paint_buffer, 0, 0, ew, ph);
@@ -378,7 +376,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     bool av_geometry_changed = false;
     if (rootLayout && wws > 0 && hws > 0) {
         m_av_geometry = QRect (0, 0, 0, 0);
-        rootLayout->setSize (x, y, wws, hws, m_view->keepSizeRatio ());
+        rootLayout->handleEvent ((new SizeEvent (x, y, wws, hws, m_view->keepSizeRatio ()))->self ());
         av_geometry_changed = (m_av_geometry != QRect (0, 0, 0, 0));
         x = m_av_geometry.x ();
         y = m_av_geometry.y ();
@@ -414,16 +412,16 @@ void ViewArea::setAudioVideoGeometry (int x, int y, int w, int h, unsigned int *
     m_av_geometry = QRect (x, y, w, h);
     if (m_av_geometry != m_view->widgetStack ()->geometry ()) {
         m_view->widgetStack ()->setGeometry (x, y, w, h);
-        sheduleRepaint (0, 0, width (), height ());
+        scheduleRepaint (0, 0, width (), height ());
     }
     if (bg_color)
         if (QColor (QRgb (*bg_color)) != (m_view->viewer ()->paletteBackgroundColor ())) {
             m_view->viewer()->setPaletteBackgroundColor (QColor (QRgb (*bg_color)));
-            sheduleRepaint (x, y, w, h);
+            scheduleRepaint (x, y, w, h);
         }
 }
 
-KDE_NO_EXPORT void ViewArea::setRootLayout (RegionNodePtr rl) {
+KDE_NO_EXPORT void ViewArea::setRootLayout (NodePtr rl) {
     if (rootLayout != rl) {
         rootLayout = rl;
         resizeEvent (0L);
@@ -455,7 +453,7 @@ KDE_NO_EXPORT void ViewArea::mouseMoved () {
     }
 }
 
-KDE_NO_EXPORT void ViewArea::sheduleRepaint (int x, int y, int w, int h) {
+KDE_NO_EXPORT void ViewArea::scheduleRepaint (int x, int y, int w, int h) {
     if (m_repaint_timer)
         m_repaint_rect = m_repaint_rect.unite (QRect (x, y, w, h));
     else {
@@ -811,6 +809,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view)
     setAcceptDrops (true);
     m_itemmenu = new QPopupMenu (this);
     folder_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder"), KIcon::Small);
+    auxiliary_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder_grey"), KIcon::Small);
     video_pix = KGlobal::iconLoader ()->loadIcon (QString ("video"), KIcon::Small);
     unknown_pix = KGlobal::iconLoader ()->loadIcon (QString ("unknown"), KIcon::Small);
     menu_pix = KGlobal::iconLoader ()->loadIcon (QString ("showmenu"), KIcon::Small);
@@ -840,7 +839,7 @@ void PlayListView::populate (NodePtr e, NodePtr focus, QListViewItem * item, QLi
             text = mrl->pretty_name;
     } else if (!strcmp (e->nodeName (), "#text"))
         text = e->nodeValue ();
-    QPixmap & pix = e->isMrl() ? video_pix : (e->hasChildNodes ()) ? folder_pix : unknown_pix;
+    QPixmap & pix = e->isMrl() ? video_pix : (e->hasChildNodes ()) ? (e->auxiliaryNode () ? auxiliary_pix : folder_pix) : unknown_pix;
     item->setText(0, text);
     item->setPixmap (0, pix);
     if (focus == e)
