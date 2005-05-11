@@ -40,6 +40,7 @@
 #include <X11/Xatom.h>
 #include <gst/gst.h>
 #include <gst/xoverlay/xoverlay.h>
+#include <gst/colorbalance/colorbalance.h>
 
 static char                 configfile[2048];
 
@@ -62,7 +63,8 @@ static const int            event_size = QEvent::User + 2;
 static QString              mrl;
 static const char          *ao_driver;
 static const char          *vo_driver;
-GstElement * gst_elm_play, * videosink, * audiosink;
+static GstElement * gst_elm_play, * videosink, * audiosink;
+static GstColorBalance * color_balance;
 static QString elmentry ("entry");
 static QString elmitem ("item");
 static QString attname ("NAME");
@@ -140,7 +142,7 @@ cb_capsset (GstPad *pad,
 
 
 static void
-cb_state (GstElement *play,
+cb_state (GstElement * /*play*/,
           GstElementState old_state,
           GstElementState new_state,
           gpointer    /*data*/)
@@ -156,10 +158,12 @@ cb_state (GstElement *play,
 
         mutex.lock ();
         GstFormat fmt = GST_FORMAT_TIME;
-        gst_element_query (gst_elm_play, GST_QUERY_TOTAL, &fmt, &len_val);
+        bool ok=gst_element_query(gst_elm_play, GST_QUERY_TOTAL, &fmt,&len_val);
         movie_length = len_val / (GST_MSECOND * 100);
         g_object_get (G_OBJECT (gst_elm_play), "stream-info", &list, NULL);
         mutex.unlock ();
+        if (!ok)
+            return;
         bool is_video = false;
         for ( ; list != NULL; list = list->next) {
             GObject *info = (GObject *) list->data;
@@ -221,23 +225,24 @@ void Backend::pause () {
     gstapp->pause ();
 }
 
-void Backend::seek (int, bool /*absolute*/) {
+void Backend::seek (int v, bool /*absolute*/) {
+    gstapp->seek (v);
 }
 
 void Backend::hue (int h, bool) {
-    gstapp->hue (10 * h);
+    gstapp->hue (h);
 }
 
 void Backend::saturation (int s, bool) {
-    gstapp->saturation (10 * s);
+    gstapp->saturation (s);
 }
 
 void Backend::contrast (int c, bool) {
-    gstapp->contrast (10 * c);
+    gstapp->contrast (c);
 }
 
 void Backend::brightness (int b, bool) {
-    gstapp->brightness (10 * b);
+    gstapp->brightness (b);
 }
 
 void Backend::volume (int v, bool) {
@@ -375,6 +380,10 @@ void KGStreamerPlayer::play () {
     gst_element_set_state (gst_elm_play, GST_STATE_READY);
     gst_x_overlay_set_xwindow_id (GST_X_OVERLAY (videosink), wid);
     gst_x_overlay_expose (GST_X_OVERLAY (videosink));
+    gst_element_set_state (videosink, GST_STATE_READY);
+    if (GST_IS_COLOR_BALANCE (videosink))
+        color_balance = GST_COLOR_BALANCE (videosink);
+
     if (GST_STATE (gst_elm_play) > GST_STATE_READY)
         gst_element_set_state (gst_elm_play, GST_STATE_READY);
 
@@ -415,16 +424,44 @@ void KGStreamerPlayer::finished () {
     QTimer::singleShot (10, this, SLOT (stop ()));
 }
 
-void KGStreamerPlayer::saturation (int val) {
+static void adjustColorSetting (const char * channel, int val) {
+    mutex.lock ();
+    if (color_balance) {
+        for (const GList *item =gst_color_balance_list_channels (color_balance);
+                item != NULL; item = item->next) {
+            GstColorBalanceChannel *chan = (GstColorBalanceChannel*) item->data;
+
+            if (!strstr (chan->label, channel))
+                gst_color_balance_set_value (color_balance, chan,
+                        ((val + 100) * (chan->max_value - chan->min_value)/200 + chan->min_value));
+        }
+    }
+    mutex.unlock ();
 }
 
-void KGStreamerPlayer::hue (int val) {
+void KGStreamerPlayer::saturation (int s) {
+    //adjustColorSetting ("SATURATION", s);
 }
 
-void KGStreamerPlayer::contrast (int val) {
+void KGStreamerPlayer::hue (int h) {
+    //adjustColorSetting ("HUE", h);
 }
 
-void KGStreamerPlayer::brightness (int val) {
+void KGStreamerPlayer::contrast (int c) {
+    //adjustColorSetting ("CONTRAST", c);
+}
+
+void KGStreamerPlayer::brightness (int b) {
+    adjustColorSetting ("BRIGHTNESS", b);
+}
+
+void KGStreamerPlayer::seek (int val /*offset_in_deciseconds*/) {
+    //mutex.lock ();
+    //if (gst_elm_play)
+    //    gst_element_seek (gst_elm_play, (GstSeekType)
+    //            (GST_SEEK_FLAG_FLUSH | GST_FORMAT_TIME | GST_SEEK_METHOD_SET),
+    //            gint64(100000000)*val /*offset_in_nanoseconds*/);
+    //mutex.unlock ();
 }
 
 void KGStreamerPlayer::volume (int val) {
@@ -437,8 +474,8 @@ void KGStreamerPlayer::updatePosition () {
         mutex.lock ();
         GstFormat fmt = GST_FORMAT_TIME;
         gint64 val = 0; // usec
-        gst_element_query (gst_elm_play, GST_QUERY_POSITION, &fmt, &val);
-        callback->moviePosition (int (val / (GST_MSECOND * 100)));
+        if (gst_element_query (gst_elm_play, GST_QUERY_POSITION, &fmt, &val))
+            callback->moviePosition (int (val / (GST_MSECOND * 100)));
         mutex.unlock ();
         QTimer::singleShot (500, this, SLOT (updatePosition ()));
     }
@@ -462,6 +499,7 @@ bool KGStreamerPlayer::event (QEvent * e) {
                 gst_elm_play = 0L;
                 audiosink = 0L;
                 videosink = 0L;
+                color_balance = 0L;
             }
             if (callback)
                 callback->finished ();
