@@ -173,7 +173,7 @@ protected:
     QString source_url;
     Fit fit;
     ConnectionPtr paint_connection;
-    ConnectionPtr sized_connection;
+    //(will be shielded by AudioVideoData's) ConnectionPtr sized_connection;
     ConnectionPtr activated_connection;
     ConnectionPtr outbounds_connection;
     ConnectionPtr inbounds_connection;

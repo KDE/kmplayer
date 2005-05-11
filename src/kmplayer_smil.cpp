@@ -196,14 +196,17 @@ void TimedRuntime::setDurationItem (DurationTime item, const QString & val) {
         if (pos > 0) {
             NodePtr e = element->document()->getElementById (vl.left(pos));
             kdDebug () << "getElementById " << vl.left (pos) << " " << (e ? e->nodeName () : "-") << endl;
-            if (vl.find ("activateevent") > -1) {
-                dur = duration_element_activated;
-            } else if (vl.find ("inboundsevent") > -1) {
-                dur = duration_element_inbounds;
-            } else if (vl.find ("outofboundsevent") > -1) {
-                dur = duration_element_outbounds;
-            }
-            durations [(int) item].connection = e->connectTo (element,dur);
+            if (e) {
+                if (vl.find ("activateevent") > -1) {
+                    dur = duration_element_activated;
+                } else if (vl.find ("inboundsevent") > -1) {
+                    dur = duration_element_inbounds;
+                } else if (vl.find ("outofboundsevent") > -1) {
+                    dur = duration_element_outbounds;
+                }
+                durations [(int) item].connection = e->connectTo (element,dur);
+            } else
+                kdWarning () << "Element not found " << vl.left(pos) << endl;
         }
     }
     durations [(int) item].durval = dur;
@@ -830,7 +833,6 @@ KDE_NO_EXPORT void MediaTypeRuntime::slotData (KIO::Job*, const QByteArray& qb) 
 KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::end () {
     mt_d->reset ();
     paint_connection = 0L;
-    sized_connection = 0L;
     activated_connection = 0L;
     outbounds_connection = 0L;
     inbounds_connection = 0L;
@@ -878,7 +880,6 @@ KDE_NO_EXPORT void MediaTypeRuntime::started () {
         SMIL::Region * r = dynamic_cast <SMIL::Region *> (region_node.ptr ());
         if (r) {
             paint_connection = r->connectTo (element, event_paint);
-            sized_connection = r->connectTo (element, event_sized);
             activated_connection = r->connectTo (element, event_activated);
             outbounds_connection = r->connectTo (element, event_outbounds);
             inbounds_connection = r->connectTo (element, event_inbounds);
@@ -894,6 +895,7 @@ KDE_NO_EXPORT void MediaTypeRuntime::started () {
 KDE_NO_EXPORT void MediaTypeRuntime::stopped () {
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
+    activated_connection = outbounds_connection = inbounds_connection = 0L;
     TimedRuntime::stopped ();
 }
 
@@ -922,8 +924,7 @@ KDE_NO_EXPORT void AudioVideoData::started () {
 
 KDE_NO_EXPORT void AudioVideoData::stopped () {
     kdDebug () << "AudioVideoData::stopped " << endl;
-    if (sized_connection)
-        sized_connection = 0L;
+    sized_connection = 0L;
     MediaTypeRuntime::stopped ();
 }
 
@@ -1659,13 +1660,13 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
                 rt->paint (static_cast <PaintEvent *> (event.ptr ())->painter);
             return true;
         }
+        case event_sized:
+            return true; // ignored for now
         case event_activated:
         case event_outbounds:
         case event_inbounds:
             propagateEvent (event);
-            return true;
-        case event_sized:
-            return true; // ignored for now
+            // fall through // return true;
         default:
             return TimedMrl::handleEvent (event);
     }

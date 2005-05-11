@@ -317,7 +317,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::~KMPlayerPart () {
 }
 
 KDE_NO_EXPORT bool KMPlayerPart::allowRedir (const KURL & url) const {
-    return kapp->authorizeURLAction ("redirect", url, m_docbase);
+    return kapp->authorizeURLAction ("redirect", m_docbase, url);
 }
 
 KDE_NO_EXPORT void KMPlayerPart::viewerPartDestroyed (QObject *) {
@@ -347,18 +347,22 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
     KMPlayerPartList::iterator i =kmplayerpart_static->partlist.begin ();
     KMPlayerPartList::iterator e =kmplayerpart_static->partlist.end ();
     GroupPredicate pred (this, m_group);
-    KURL url;
+    KURL url (_url);
     if (_url != m_docbase) {
-        if (!m_file_name.isEmpty () && m_file_name != _url.url ()) {
-            url = KURL (m_file_name);
-            int p = _url.port ();
-            if (p > 0)
-                url.setPort (p);
-            url.setPath (url.path (1) + _url.host () + _url.path ());
-            // see if we somehow have to merge these
-    kdDebug () << "KMPlayerPart::openURL compose " << m_file_name << " " << _url.url() << " ->" << url.url() << endl;
-        } else
-            url = _url;
+        if (!m_file_name.isEmpty () && _url.url ().find (m_file_name) < 0) {
+            KURL u (m_file_name);
+            if (!u.protocol ().isEmpty () || _url.protocol ().isEmpty ()) {
+                // see if we somehow have to merge these
+                int p = _url.port ();
+                if (p > 0)
+                    u.setPort (p);
+                u.setPath (u.path (1) + _url.host () + _url.path ());
+                if (allowRedir (u)) {
+                    url = u;
+                    kdDebug () << "KMPlayerPart::openURL compose " << m_file_name << " " << _url.url() << " ->" << u.url() << endl;
+                }
+            }
+        }
     } else { // if url is the container document, then it's an empty URL
         if (m_features & Feat_Viewer) // damn, look in the group
             for (i = std::find_if (i, e, pred);
