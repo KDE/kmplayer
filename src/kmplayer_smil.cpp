@@ -895,7 +895,6 @@ KDE_NO_EXPORT void MediaTypeRuntime::started () {
 KDE_NO_EXPORT void MediaTypeRuntime::stopped () {
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
-    activated_connection = outbounds_connection = inbounds_connection = 0L;
     TimedRuntime::stopped ();
 }
 
@@ -1977,7 +1976,6 @@ namespace KMPlayer {
     class TextDataPrivate {
     public:
         TextDataPrivate () : edit (0L) {
-            widget = new QWidget;
             reset ();
         }
         void reset () {
@@ -1986,7 +1984,7 @@ namespace KMPlayer {
             font_size = font.pointSize ();
             transparent = false;
             delete edit;
-            edit = new QTextEdit (widget);
+            edit = new QTextEdit;
             edit->setReadOnly (true);
             edit->setHScrollBarMode (QScrollView::AlwaysOff);
             edit->setVScrollBarMode (QScrollView::AlwaysOff);
@@ -1999,7 +1997,6 @@ namespace KMPlayer {
         QFont font;
         int font_size;
         bool transparent;
-        QWidget * widget;
         QTextEdit * edit;
     };
 }
@@ -2009,7 +2006,7 @@ KDE_NO_CDTOR_EXPORT TextData::TextData (NodePtr e)
 }
 
 KDE_NO_CDTOR_EXPORT TextData::~TextData () {
-    delete d->widget;
+    delete d->edit;
     delete d;
 }
 
@@ -2064,7 +2061,6 @@ KDE_NO_EXPORT void TextData::paint (QPainter & p) {
         calcSizes (w, h, xoff, yoff, w, h);
         int x = rb->x1 + int (xoff * rb->xscale);
         int y = rb->y1 + int (yoff * rb->yscale);
-        d->widget->setGeometry (0, 0, w, h);
         d->edit->setGeometry (0, 0, w, h);
         if (d->edit->length () == 0) {
             QTextStream text (d->data, IO_ReadOnly);
