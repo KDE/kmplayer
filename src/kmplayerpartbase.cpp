@@ -391,11 +391,21 @@ unsigned long PartBase::length () const {
 
 bool PartBase::openURL (const KURL & url) {
     kdDebug () << "PartBase::openURL " << url.url() << url.isValid () << endl;
-    if (!m_view || url.isEmpty ()) return false;
-    stop ();
-    Source * src = !url.protocol ().compare ("kmplayer") && m_sources.contains (url.host ()) ? m_sources [url.host ()] : m_sources ["urlsource"];
-    src->setSubURL (KURL ());
-    src->setURL (url);
+    if (!m_view) return false;
+    Source * src = 0L;
+    if (url.isEmpty ()) {
+        src = m_sources ["urlsource"];
+        NodePtr d = src->document ();
+        if (!d || !d->hasChildNodes ())
+            return false;
+        stop ();
+        src->reset ();
+    } else {
+        stop ();
+        src = !url.protocol ().compare ("kmplayer") && m_sources.contains (url.host ()) ? m_sources [url.host ()] : m_sources ["urlsource"];
+        src->setSubURL (KURL ());
+        src->setURL (url);
+    }
     src->setIdentified (false);
     setSource (src);
     return true;
@@ -1203,7 +1213,7 @@ KDE_NO_EXPORT bool URLSource::hasLength () {
 }
 
 KDE_NO_EXPORT void URLSource::activate () {
-    if (url ().isEmpty ())
+    if (url ().isEmpty () && (!m_document || !m_document->hasChildNodes ()))
         return;
     if (m_auto_play)
         play ();

@@ -57,6 +57,7 @@ public:
     KMPlayerApp (QWidget* parent=0, const char* name=0);
     ~KMPlayerApp ();
     void openDocumentFile (const KURL& url=KURL());
+    void addURL (const KURL& url);
     KMPlayer::PartBase * player () const { return m_player; }
     void resizePlayer (int percentage);
     KDE_NO_EXPORT KRecentFilesAction * recentFiles () const { return fileOpenRecent; }

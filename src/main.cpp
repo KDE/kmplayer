@@ -62,13 +62,18 @@ extern "C" {
 
             KCmdLineArgs *args = KCmdLineArgs::parsedArgs();
 
-            if (args->count ()) {
-                KURL url = args->url(args->count() - 1);
-                if (url.url ().find ("://") < 0)
-                    url = KURL (QFileInfo (url.url ()).absFilePath ());
-                if(url.isValid ())
-                    kmplayer->openDocumentFile (args->url (0));
-            }
+            KURL url;
+            if (args->count () == 1)
+                url = args->url (0);
+            else
+                for (int i = 0; i < args->count (); i++) {
+                    KURL url = args->url (i);
+                    if (url.url ().find ("://") < 0)
+                        url = KURL (QFileInfo (url.url ()).absFilePath ());
+                    if (url.isValid ())
+                        kmplayer->addURL (url);
+                }
+            kmplayer->openDocumentFile (url);
             args->clear ();
         }
         app.dcopClient()->registerAs("kmplayer");

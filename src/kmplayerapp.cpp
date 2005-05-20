@@ -299,6 +299,12 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
     slotStatusMsg (i18n ("Ready."));
 }
 
+KDE_NO_EXPORT void KMPlayerApp::addURL (const KURL& url) {
+    KMPlayer::NodePtr d = m_player->sources () ["urlsource"]->document ();
+    if (d)
+        d->appendChild ((new KMPlayer::GenericURL (d, url.url ()))->self ());
+}
+
 KDE_NO_EXPORT void KMPlayerApp::saveProperties (KConfig * config) {
     config->writeEntry ("URL", m_player->source ()->url ().url ());
     config->writeEntry ("Visible", isVisible ());

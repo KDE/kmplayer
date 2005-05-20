@@ -347,8 +347,9 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
     KMPlayerPartList::iterator i =kmplayerpart_static->partlist.begin ();
     KMPlayerPartList::iterator e =kmplayerpart_static->partlist.end ();
     GroupPredicate pred (this, m_group);
-    KURL url (_url);
+    KURL url;
     if (_url != m_docbase) {
+        url = _url;
         if (!m_file_name.isEmpty () && _url.url ().find (m_file_name) < 0) {
             KURL u (m_file_name);
             if (!u.protocol ().isEmpty () || _url.protocol ().isEmpty ()) {
