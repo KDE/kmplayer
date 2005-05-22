@@ -835,6 +835,8 @@ void PlayListView::populate (NodePtr e, NodePtr focus, QListViewItem * item, QLi
         if (mrl->pretty_name.isEmpty ()) {
             if (!mrl->src.isEmpty())
                 text = KURL(mrl->src).prettyURL();
+            else if (e->isDocument ())
+                text = e->hasChildNodes () ? i18n ("unnamed") : i18n ("empty");
         } else
             text = mrl->pretty_name;
     } else if (!strcmp (e->nodeName (), "#text"))
