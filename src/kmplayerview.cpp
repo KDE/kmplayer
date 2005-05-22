@@ -259,6 +259,19 @@ static const char * blue_xpm[] = {
 
 //-----------------------------------------------------------------------------
 
+static bool isDragValid (QDropEvent * de) {
+    if (KURLDrag::canDecode (de))
+        return true;
+    if (QTextDrag::canDecode (de)) {
+        QString text;
+        if (KURL (QTextDrag::decode (de, text)).isValid ())
+            return true;
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+
 KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
  : QWidget (parent),
    m_parent (parent),
@@ -807,6 +820,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view)
     setRootIsDecorated (true);
     setSorting (-1);
     setAcceptDrops (true);
+    setDropVisualizer (true);
     m_itemmenu = new QPopupMenu (this);
     folder_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder"), KIcon::Small);
     auxiliary_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder_grey"), KIcon::Small);
@@ -818,7 +832,10 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view)
     m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("bookmark_add"), KIcon::Small, 0, true), i18n ("&Add Bookmark"), this, SLOT (addBookMark ()), 0, 1);
     m_itemmenu->insertItem (i18n ("&Show all"), this, SLOT (toggleShowAllNodes ()), 0, 2);
     connect (this, SIGNAL (contextMenuRequested (QListViewItem *, const QPoint &, int)), this, SLOT (contextMenuItem (QListViewItem *, const QPoint &, int)));
-    connect (this, SIGNAL (expanded (QListViewItem *)), this, SLOT (itemExpanded (QListViewItem *)));
+    connect (this, SIGNAL (expanded (QListViewItem *)),
+             this, SLOT (itemExpanded (QListViewItem *)));
+    connect (this, SIGNAL (dropped (QDropEvent *, QListViewItem *)),
+             this, SLOT (itemDropped (QDropEvent *, QListViewItem *)));
     QFont fnt = font ();
     fnt.setPointSize (fnt.pointSize () - 1);
     fnt.setWeight (QFont::DemiBold);
@@ -944,12 +961,12 @@ void PlayListView::toggleShowAllNodes () {
     }
 }
 
-KDE_NO_EXPORT void PlayListView::dropEvent (QDropEvent * de) {
-    m_view->dropEvent (de);
+KDE_NO_EXPORT bool PlayListView::acceptDrag (QDropEvent * de) const {
+    return isDragValid (de);
 }
 
-KDE_NO_EXPORT void PlayListView::dragEnterEvent (QDragEnterEvent* dee) {
-    m_view->dragEnterEvent (dee);
+KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * e, QListViewItem *) {
+    m_view->dropEvent (e);
 }
 
 //-----------------------------------------------------------------------------
@@ -990,20 +1007,17 @@ KDE_NO_CDTOR_EXPORT View::View (QWidget *parent, const char *name)
 }
 
 KDE_NO_EXPORT void View::dropEvent (QDropEvent * de) {
-    KURL url;
+    KURL::List sl;
     if (KURLDrag::canDecode (de)) {
-        KURL::List sl;
         KURLDrag::decode (de, sl);
-        if (sl.count () > 0)
-            url = sl.first();
     } else if (QTextDrag::canDecode (de)) {
         QString text;
         QTextDrag::decode (de, text);
-        url = KURL (text);
+        sl.push_back (KURL (text));
     }
-    if (url.isValid ()) {
+    if (sl.size () > 0) {
         m_widgetstack->visibleWidget ()->setFocus ();
-        emit urlDropped (url);
+        emit urlDropped (sl);
         de->accept ();
     }
 }
@@ -1030,13 +1044,8 @@ KDE_NO_EXPORT void View::popupMenuMouseLeft () {
 }
 
 KDE_NO_EXPORT void View::dragEnterEvent (QDragEnterEvent* dee) {
-    if (KURLDrag::canDecode (dee)) {
+    if (isDragValid (dee))
         dee->accept ();
-    } else if (QTextDrag::canDecode (dee)) {
-        QString text;
-        if (KURL (QTextDrag::decode (dee, text)).isValid ())
-            dee->accept ();
-    }
 }
 
 KDE_NO_EXPORT void View::init () {

@@ -186,7 +186,7 @@ void PartBase::init (KActionCollection * action_collection) {
     connect (m_view->playList (), SIGNAL (addBookMark (const QString &, const QString &)), this, SLOT (addBookMark (const QString &, const QString &)));
     connect (m_view->playList (), SIGNAL (executed (QListViewItem *)), this, SLOT (playListItemSelected (QListViewItem *)));
     panel->popupMenu()->connectItem (ControlPanel::menu_fullscreen, this, SLOT (fullScreen ()));
-    connect (m_view, SIGNAL (urlDropped (const KURL &)), this, SLOT (openURL (const KURL &)));
+    connect (m_view, SIGNAL (urlDropped (const KURL::List &)), this, SLOT (openURL (const KURL::List &)));
     panel->popupMenu ()->connectItem (ControlPanel::menu_config,
                                        this, SLOT (showConfigDialog ()));
     panel->viewMenu ()->connectItem (ControlPanel::menu_video,
@@ -399,6 +399,18 @@ bool PartBase::openURL (const KURL & url) {
     src->setIdentified (false);
     setSource (src);
     return true;
+}
+
+bool PartBase::openURL (const KURL::List & urls) {
+    if (urls.size () == 1) {
+        openURL (urls[0]);
+    } else {
+        openURL (KURL ());
+        NodePtr d = m_source->document ();
+        if (d)
+            for (int i = 0; i < urls.size (); i++)
+                d->appendChild ((new GenericURL (d, urls [i].url ()))->self ());
+    }
 }
 
 bool PartBase::closeURL () {

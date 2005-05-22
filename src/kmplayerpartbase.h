@@ -141,6 +141,7 @@ public:
     void updateTree ();
 public slots:
     virtual bool openURL (const KURL & url);
+    virtual bool openURL (const KURL::List & urls);
     virtual bool closeURL ();
     virtual void pause (void);
     virtual void play (void);

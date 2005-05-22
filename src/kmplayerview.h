@@ -86,14 +86,14 @@ public:
 signals:
     void addBookMark (const QString & title, const QString & url);
 protected:
-    void dragEnterEvent (QDragEnterEvent *);
-    void dropEvent (QDropEvent *);
+    bool acceptDrag (QDropEvent* event) const;
 private slots:
     void contextMenuItem (QListViewItem *, const QPoint &, int);
     void itemExpanded (QListViewItem *);
     void copyToClipboard ();
     void addBookMark ();
     void toggleShowAllNodes ();
+    void itemDropped (QDropEvent * e, QListViewItem * after);
 private:
     void populate (NodePtr e, NodePtr focus, QListViewItem * item, QListViewItem ** curitem);
     View * m_view;
@@ -232,7 +232,7 @@ public slots:
     void updateLayout ();
     void showPlaylist ();
 signals:
-    void urlDropped (const KURL & url);
+    void urlDropped (const KURL::List & urls);
     void pictureClicked ();
     void fullScreenChanged ();
 protected:
