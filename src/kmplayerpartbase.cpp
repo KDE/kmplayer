@@ -132,7 +132,7 @@ PartBase::PartBase (QWidget * wparent, const char *wname,
 
 void PartBase::showConfigDialog () {
     if (m_process->player () == this)
-        m_settings->show ("GeneralPage");
+        m_settings->show ("URLPage");
     else
         m_process->player ()->showConfigDialog ();
 }
@@ -392,20 +392,10 @@ unsigned long PartBase::length () const {
 bool PartBase::openURL (const KURL & url) {
     kdDebug () << "PartBase::openURL " << url.url() << url.isValid () << endl;
     if (!m_view) return false;
-    Source * src = 0L;
-    if (url.isEmpty ()) {
-        src = m_sources ["urlsource"];
-        NodePtr d = src->document ();
-        if (!d || !d->hasChildNodes ())
-            return false;
-        stop ();
-        src->reset ();
-    } else {
-        stop ();
-        src = !url.protocol ().compare ("kmplayer") && m_sources.contains (url.host ()) ? m_sources [url.host ()] : m_sources ["urlsource"];
-        src->setSubURL (KURL ());
-        src->setURL (url);
-    }
+    stop ();
+    Source * src = (url.isEmpty () ? m_sources ["urlsource"] : (!url.protocol ().compare ("kmplayer") && m_sources.contains (url.host ()) ? m_sources [url.host ()] : m_sources ["urlsource"]));
+    src->setSubURL (KURL ());
+    src->setURL (url);
     src->setIdentified (false);
     setSource (src);
     return true;

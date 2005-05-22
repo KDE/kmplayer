@@ -474,9 +474,15 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileNewWindow()
     slotStatusMsg(i18n("Ready."));
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotFileOpen()
-{
-    m_player->settings ()->show ("URLPage");
+KDE_NO_EXPORT void KMPlayerApp::slotFileOpen () {
+    KURL::List urls = KFileDialog::getOpenURLs (QString::null, i18n ("*|All Files"), this, i18n ("Open File"));
+    if (urls.size () == 1) {
+        openDocumentFile (urls [0]);
+    } else if (urls.size () > 1) {
+        m_player->openURL (KURL ());
+        for (int i = 0; i < urls.size (); i++)
+            addURL (urls [i]);
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotFileOpenRecent(const KURL& url)
