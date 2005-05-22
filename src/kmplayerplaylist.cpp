@@ -204,17 +204,21 @@ void Node::appendChild (NodePtr c) {
 }
 
 KDE_NO_EXPORT void Node::insertBefore (NodePtr c, NodePtr b) {
-    document()->m_tree_version++;
-    if (b->m_prev) {
-        b->m_prev->m_next = c;
-        c->m_prev = b->m_prev;
+    if (!b) {
+        appendChild (c);
     } else {
-        c->m_prev = 0L;
-        m_first_child = c;
+        document()->m_tree_version++;
+        if (b->m_prev) {
+            b->m_prev->m_next = c;
+            c->m_prev = b->m_prev;
+        } else {
+            c->m_prev = 0L;
+            m_first_child = c;
+        }
+        b->m_prev = c;
+        c->m_next = b;
+        c->m_parent = m_self;
     }
-    b->m_prev = c;
-    c->m_next = b;
-    c->m_parent = m_self;
 }
 
 void Node::removeChild (NodePtr c) {

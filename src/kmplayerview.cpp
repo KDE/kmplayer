@@ -965,8 +965,36 @@ KDE_NO_EXPORT bool PlayListView::acceptDrag (QDropEvent * de) const {
     return isDragValid (de);
 }
 
-KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * e, QListViewItem *) {
-    m_view->dropEvent (e);
+KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, QListViewItem *after) {
+    if (after) {
+        NodePtr n = static_cast <ListViewItem *> (after)->m_elm;
+        bool valid = n && (!n->isDocument () || n->hasChildNodes ());
+        KURL::List sl;
+        if (KURLDrag::canDecode (de)) {
+            KURLDrag::decode (de, sl);
+        } else if (QTextDrag::canDecode (de)) {
+            QString text;
+            QTextDrag::decode (de, text);
+            sl.push_back (KURL (text));
+        }
+        if (valid && sl.size () > 0) {
+            bool as_child = n->isDocument () || n->hasChildNodes ();
+            NodePtr d = n->document ()->self ();
+            ListViewItem * citem = static_cast <ListViewItem*> (currentItem ());
+            for (int i = sl.size (); i > 0; i--) {
+                Node * ni = new KMPlayer::GenericURL (d, sl[i-1].url ());
+                if (as_child)
+                    n->insertBefore (ni->self (), n->firstChild ());
+                else
+                    n->parentNode()->insertBefore(ni->self(), n->nextSibling());
+            }
+            ListViewItem * ritem = static_cast<ListViewItem*>(firstChild());
+            if (ritem)
+                updateTree (ritem->m_elm, citem ? citem->m_elm : NodePtrW ());
+            return;
+        }
+    }
+    m_view->dropEvent (de);
 }
 
 //-----------------------------------------------------------------------------
