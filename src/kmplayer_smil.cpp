@@ -1230,30 +1230,22 @@ bool SMIL::RegionBase::handleEvent (EventPtr event) {
     switch (event->id ()) {
         case event_paint: {// event passed from Region/Layout::handleEvent
             // paint children, accounting for z-order FIXME optimize
-            int done_index = -1;
-            do {
-                int cur_index = 1 << 8 * sizeof (int) - 2;//should be enough :-)
-                NodeRefList cur_items;
-                for (NodePtr n = firstChild (); n; n = n->nextSibling ()) {
-                    Region * r = dynamic_cast <Region *> (n.ptr ());
-                    if (r && r->z_order > done_index && r->z_order < cur_index){
-                        cur_items.clear ();
-                        cur_index = r->z_order;
+            NodeRefList sorted;
+            for (NodePtr n = firstChild (); n; n = n->nextSibling ()) {
+                Region * r = dynamic_cast <Region *> (n.ptr ());
+                if (!r)
+                    continue;
+                NodeRefItemPtr rn = sorted.first ();
+                for (; rn; rn = rn->nextSibling ())
+                    if (r->z_order < static_cast <Region *> (rn->data.ptr ())->z_order) {
+                        sorted.insertBefore((new NodeRefItem (n))->self (), rn);
+                        break;
                     }
-                    if (r && r->z_order == cur_index)
-                        cur_items.append ((new NodeRefItem (n))->self ());
-                }
-                NodeRefItemPtr ci = cur_items.first ();
-                if (!ci)
-                    break;
-                for (; ci; ci = ci->nextSibling ()) {
-                    Region * r = static_cast <Region *> (ci->data.ptr ());
-                    if (r && r->z_order == cur_index)
-                        //kdDebug () << "Painting " << cur_index << endl;
-                        r->handleEvent (event);
-                }
-                done_index = cur_index;
-            } while (true);
+                if (!rn)
+                    sorted.append ((new NodeRefItem (n))->self ());
+            }
+            for (NodeRefItemPtr r = sorted.first (); r; r = r->nextSibling ())
+                static_cast <Region *> (r->data.ptr ())->handleEvent (event);
             break;
         }
        default:

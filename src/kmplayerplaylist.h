@@ -100,6 +100,7 @@ public:
     typename Item<T>::SharedType first () const { return m_first; }
     typename Item<T>::SharedType last () const { return m_last; }
     void append (typename Item<T>::SharedType c);
+    void insertBefore(typename Item<T>::SharedType c, typename Item<T>::SharedType b);
     void remove (typename Item<T>::SharedType c);
     void clear ();
     unsigned int length () const;
@@ -773,6 +774,22 @@ template <class T> inline void List<T>::append(typename Item<T>::SharedType c) {
         m_last->m_next = c;
         c->m_prev = m_last;
         m_last = c;
+    }
+}
+
+template <class T> inline void List<T>::insertBefore(typename Item<T>::SharedType c, typename Item<T>::SharedType b) {
+    if (!b) {
+        append (c);
+    } else {
+        if (b->m_prev) {
+            b->m_prev->m_next = c;
+            c->m_prev = b->m_prev;
+        } else {
+            c->m_prev = 0L;
+            m_first = c;
+        }
+        b->m_prev = c;
+        c->m_next = b;
     }
 }
 
