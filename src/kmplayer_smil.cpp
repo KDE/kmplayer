@@ -1233,16 +1233,21 @@ bool SMIL::RegionBase::handleEvent (EventPtr event) {
             int done_index = -1;
             do {
                 int cur_index = 1 << 8 * sizeof (int) - 2;//should be enough :-)
-                int check_index = cur_index;
+                NodeRefList cur_items;
                 for (NodePtr n = firstChild (); n; n = n->nextSibling ()) {
                     Region * r = dynamic_cast <Region *> (n.ptr ());
-                    if (r && r->z_order > done_index && r->z_order < cur_index)
+                    if (r && r->z_order > done_index && r->z_order < cur_index){
+                        cur_items.clear ();
                         cur_index = r->z_order;
+                    }
+                    if (r && r->z_order == cur_index)
+                        cur_items.append ((new NodeRefItem (n))->self ());
                 }
-                if (check_index == cur_index)
+                NodeRefItemPtr ci = cur_items.first ();
+                if (!ci)
                     break;
-                for (NodePtr n = firstChild (); n; n = n->nextSibling ()) {
-                    Region * r = dynamic_cast <Region *> (n.ptr ());
+                for (; ci; ci = ci->nextSibling ()) {
+                    Region * r = static_cast <Region *> (ci->data.ptr ());
                     if (r && r->z_order == cur_index)
                         //kdDebug () << "Painting " << cur_index << endl;
                         r->handleEvent (event);

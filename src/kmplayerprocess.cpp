@@ -1231,9 +1231,12 @@ NodePtr ConfigDocument::childFromTag (const QString & tag) {
     return NodePtr ();
 }
 
-NodePtr ConfigNode::childFromTag (const QString &) {
-    return (new TypeNode (m_doc))->self ();
+NodePtr ConfigNode::childFromTag (const QString & t) {
+    return (new TypeNode (m_doc, t))->self ();
 }
+
+KDE_NO_CDTOR_EXPORT TypeNode::TypeNode (NodePtr & d, const QString & t)
+ : ConfigNode (d), tag (t) {}
 
 NodePtr TypeNode::childFromTag (const QString & tag) {
     return (new SomeNode (m_doc, tag))->self ();

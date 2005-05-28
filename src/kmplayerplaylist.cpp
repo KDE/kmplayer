@@ -1163,14 +1163,30 @@ bool KMPlayerDocumentBuilder::startTag(const QString &tag, AttributeListPtr attr
     return true;
 }
 
-bool KMPlayerDocumentBuilder::endTag (const QString & /*tag*/) {
+bool KMPlayerDocumentBuilder::endTag (const QString & tag) {
     if (m_ignore_depth) { // endtag to ignore
         m_ignore_depth--;
         kdDebug () << "Warning: ignored end tag " << " ignore depth = " << m_ignore_depth <<  endl;
     } else {  // endtag
-        if (m_node == m_root) {
-            kdDebug () << "m_node == m_doc, stack underflow " << endl;
-            return false;
+        NodePtr n = m_node;
+        while (n) {
+            if (n == m_root) {
+                if (n == m_node) {
+                    kdError () << "m_node == m_doc, stack underflow " << endl;
+                    return false;
+                }
+                kdWarning () << "endtag: no match " << tag.local8Bit () << endl;
+                break;
+            }
+            if (!strcasecmp (n->nodeName (), tag.local8Bit ())) {
+                while (n != m_node) {
+                    kdWarning() << m_node->nodeName () << " not closed" << endl;
+                    m_node->closed ();
+                    m_node = m_node->parentNode ();
+                }
+                break;
+            }
+            n = n ->parentNode ();
         }
         //kdDebug () << "end tag " << tag.latin1 () << endl;
         m_node->closed ();

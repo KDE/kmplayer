@@ -315,12 +315,13 @@ struct KMPLAYER_EXPORT ConfigNode : public Element {
  * Element for ConfigDocument, defining type of config item
  */
 struct KMPLAYER_EXPORT TypeNode : public ConfigNode {
-    KDE_NO_CDTOR_EXPORT TypeNode (NodePtr & d) : ConfigNode (d) {}
+    TypeNode (NodePtr & d, const QString & t);
     KDE_NO_CDTOR_EXPORT ~TypeNode () {}
     NodePtr childFromTag (const QString & tag);
     void changedXML (QTextStream & out);
     QWidget * createWidget (QWidget * parent);
-    const char * nodeName () const { return "typenode"; }
+    const char * nodeName () const { return tag.ascii (); }
+    QString tag;
 };
 
 /*
