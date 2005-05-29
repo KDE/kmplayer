@@ -172,11 +172,6 @@ protected:
     MediaTypeRuntimePrivate * mt_d;
     QString source_url;
     Fit fit;
-    ConnectionPtr paint_connection;
-    //(will be shielded by AudioVideoData's) ConnectionPtr sized_connection;
-    ConnectionPtr activated_connection;
-    ConnectionPtr outbounds_connection;
-    ConnectionPtr inbounds_connection;
 protected slots:
     virtual void slotResult (KIO::Job*);
     void slotData (KIO::Job*, const QByteArray& qb);
@@ -339,10 +334,12 @@ public:
     void calculateBounds (int w, int h);
     virtual bool handleEvent (EventPtr event);
     virtual NodeRefListPtr listeners (unsigned int event_id);
+    void addRegionUser (NodePtr mt);
 private:
     NodeRefListPtr m_ActionListeners;      // mouse clicked
     NodeRefListPtr m_OutOfBoundsListeners; // mouse left
     NodeRefListPtr m_InBoundsListeners;    // mouse entered
+    NodeRefList users;
     /**
      * boolean for check if pointerEntered/pointerLeft should be called by View
      */

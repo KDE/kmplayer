@@ -832,10 +832,6 @@ KDE_NO_EXPORT void MediaTypeRuntime::slotData (KIO::Job*, const QByteArray& qb) 
  */
 KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::end () {
     mt_d->reset ();
-    paint_connection = 0L;
-    activated_connection = 0L;
-    outbounds_connection = 0L;
-    inbounds_connection = 0L;
     TimedRuntime::end ();
 }
 
@@ -879,10 +875,7 @@ KDE_NO_EXPORT void MediaTypeRuntime::started () {
         region_node = findRegion (element->document ()->rootLayout, param (QString::fromLatin1 ("region")));
         SMIL::Region * r = dynamic_cast <SMIL::Region *> (region_node.ptr ());
         if (r) {
-            paint_connection = r->connectTo (element, event_paint);
-            activated_connection = r->connectTo (element, event_activated);
-            outbounds_connection = r->connectTo (element, event_outbounds);
-            inbounds_connection = r->connectTo (element, event_inbounds);
+            r->addRegionUser (element);
             r->repaint ();
         }
     }
@@ -1300,7 +1293,9 @@ bool SMIL::Region::handleEvent (EventPtr event) {
             ElementRuntimePtr rt = getRuntime ();
             if (rt)
                 rt->paint (p->painter);
-            propagateEvent (event); // for MediaType listeners
+            for (NodeRefItemPtr n = users.first (); n; n = n->nextSibling ())
+                if (n->data)
+                    n->data->handleEvent (event); // for MediaType listeners
             p->painter.setClipping (false);
             return RegionBase::handleEvent (event);
         }
@@ -1312,8 +1307,13 @@ bool SMIL::Region::handleEvent (EventPtr event) {
             bool handled = false;
             for (NodePtr r = firstChild (); r; r = r->nextSibling ())
                 handled |= r->handleEvent (event);
-            if (!handled) // handle it ..
-                propagateEvent ((new Event (event_activated))->self ());
+            if (!handled) { // handle it ..
+                EventPtr evt = (new Event (event_activated))->self ();
+                propagateEvent (evt);
+                for (NodeRefItemPtr n = users.first (); n; n = n->nextSibling())
+                    if (n->data)
+                        n->data->propagateEvent (evt); //for MediaType listeners
+            }
             return inside;
         }
         case event_pointer_moved: {
@@ -1323,12 +1323,19 @@ bool SMIL::Region::handleEvent (EventPtr event) {
             if (inside)
                 for (NodePtr r = firstChild (); r; r = r->nextSibling ())
                     handled |= r->handleEvent (event);
+            EventPtr evt;
             if (has_mouse && (!inside || handled)) { // OutOfBoundsEvent
                 has_mouse = false;
-                propagateEvent ((new Event (event_outbounds))->self ());
+                evt = (new Event (event_outbounds))->self ();
             } else if (inside && !handled && !has_mouse) { // InBoundsEvent
                 has_mouse = true;
-                propagateEvent ((new Event (event_inbounds))->self ());
+                evt = (new Event (event_inbounds))->self ();
+            }
+            if (evt) {
+                propagateEvent (evt);
+                for (NodeRefItemPtr n = users.first (); n; n = n->nextSibling())
+                    if (n->data)
+                        n->data->propagateEvent (evt); //for MediaType listeners
             }
             return inside;
         }
@@ -1347,6 +1354,13 @@ NodeRefListPtr SMIL::Region::listeners (unsigned int eid) {
             return m_OutOfBoundsListeners;
     }
     return RegionBase::listeners (eid);
+}
+
+KDE_NO_EXPORT void SMIL::Region::addRegionUser (NodePtr mt) {
+    for (NodeRefItemPtr n = users.first (); n; n = n->nextSibling ())
+        if (n->data == mt)
+            return;
+    users.append ((new NodeRefItem (mt))->self ());
 }
 
 //-----------------------------------------------------------------------------
