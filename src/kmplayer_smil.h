@@ -209,6 +209,7 @@ public:
     ImageDataPrivate * d;
 protected slots:
     virtual void started ();
+    virtual void stopped ();
 private slots:
     virtual void slotResult (KIO::Job*);
     void movieUpdated (const QRect &);

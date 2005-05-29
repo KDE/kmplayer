@@ -1808,6 +1808,7 @@ namespace KMPlayer {
             QMovie * img_movie;
             QString url;
             int olddur;
+            bool have_frame;
     };
 }
 
@@ -1840,6 +1841,7 @@ QString ImageData::setParam (const QString & name, const QString & val) {
                     d->cache_image = 0;
                     delete d->img_movie;
                     d->img_movie = mov;
+                    d->have_frame = false;
                     mov->connectUpdate(this, SLOT(movieUpdated(const QRect&)));
                     mov->connectStatus (this, SLOT (movieStatus (int)));
                     mov->connectResize(this, SLOT (movieResize(const QSize&)));
@@ -1909,8 +1911,19 @@ KDE_NO_EXPORT void ImageData::started () {
         return;
     }
     if (durations [duration_time].durval == duration_media)
-        durations [duration_time].durval = 0; // intrinsic duration of 0
+        durations [duration_time].durval = 0; // intrinsic duration of 0 FIXME gif movies
+    if (d->img_movie) {
+        d->img_movie->restart ();
+        if (d->img_movie->paused ())
+            d->img_movie->unpause ();
+    }
     MediaTypeRuntime::started ();
+}
+
+KDE_NO_EXPORT void ImageData::stopped () {
+    if (d->img_movie && d->have_frame)
+        d->img_movie->pause ();
+    MediaTypeRuntime::stopped ();
 }
 
 KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
@@ -1924,6 +1937,7 @@ KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
             d->cache_image = 0;
             delete d->img_movie;
             d->img_movie = new QMovie (mt_d->data);
+            d->have_frame = false;
             d->img_movie->connectUpdate(this, SLOT(movieUpdated(const QRect&)));
             d->img_movie->connectStatus (this, SLOT (movieStatus (int)));
             d->img_movie->connectResize(this, SLOT (movieResize(const QSize&)));
@@ -1941,6 +1955,7 @@ KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
 }
 
 KDE_NO_EXPORT void ImageData::movieUpdated (const QRect &) {
+    d->have_frame = true;
     if (region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
         delete d->cache_image;
@@ -1948,12 +1963,15 @@ KDE_NO_EXPORT void ImageData::movieUpdated (const QRect &) {
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
         //kdDebug () << "movieUpdated" << endl;
     }
+    if (timingstate != timings_started && d->img_movie)
+        d->img_movie->pause ();
 }
 
-KDE_NO_EXPORT void ImageData::movieStatus (int /*s*/) {
+KDE_NO_EXPORT void ImageData::movieStatus (int s) {
     if (region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
-        //kdDebug () << "movieStatus " << s << endl;
+        if (s == QMovie::EndOfMovie)
+            propagateStop (false);
     }
 }
 
