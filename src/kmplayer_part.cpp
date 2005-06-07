@@ -352,7 +352,8 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
         url = _url;
         if (!m_file_name.isEmpty () && _url.url ().find (m_file_name) < 0) {
             KURL u (m_file_name);
-            if (!u.protocol ().isEmpty () || _url.protocol ().isEmpty ()) {
+            if ((u.protocol () == QString ("mms")) ||
+                    _url.protocol ().isEmpty ()) {
                 // see if we somehow have to merge these
                 int p = _url.port ();
                 if (p > 0)
