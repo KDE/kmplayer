@@ -84,6 +84,8 @@ public:
     ~PlayListView ();
     void updateTree (NodePtr root, NodePtr active);
     void selectItem (const QString & txt);
+    void setActiveForegroundColor (const QColor & c) { m_active_color = c; }
+    const QColor & activeColor () const { return m_active_color; }
 signals:
     void addBookMark (const QString & title, const QString & url);
 protected:
@@ -105,6 +107,7 @@ private:
     QPixmap unknown_pix;
     QPixmap menu_pix;
     QPixmap config_pix;
+    QColor m_active_color;
     bool m_show_all_nodes;
     bool m_have_dark_nodes;
     bool m_ignore_expanded;

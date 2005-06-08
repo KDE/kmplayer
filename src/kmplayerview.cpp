@@ -812,8 +812,8 @@ KDE_NO_CDTOR_EXPORT ListViewItem::ListViewItem (PlayListView *v, const NodePtr &
 KDE_NO_CDTOR_EXPORT void ListViewItem::paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align) {
     QColorGroup mycg (cg);
     if (m_elm && m_elm->state == Node::state_activated) {
-        mycg.setColor (QColorGroup::Foreground, QColor (255, 0, 0));
-        mycg.setColor (QColorGroup::Text, QColor (255, 0, 0));
+        mycg.setColor (QColorGroup::Foreground, listview->activeColor ());
+        mycg.setColor (QColorGroup::Text, listview->activeColor ());
     }
     QListViewItem::paintCell (p, mycg, column, width, align);
 }
@@ -823,6 +823,7 @@ KDE_NO_CDTOR_EXPORT void ListViewItem::paintCell (QPainter * p, const QColorGrou
 KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view)
  : KListView (parent, "kde_kmplayer_playlist"),
    m_view (view),
+   m_active_color (255, 255, 255),
    m_show_all_nodes (false),
    m_ignore_expanded (false) {
     addColumn (QString::null);

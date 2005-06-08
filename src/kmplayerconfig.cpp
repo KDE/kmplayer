@@ -84,6 +84,9 @@ KDE_NO_CDTOR_EXPORT Settings::Settings (PartBase * player, KConfig * config)
     colors [ColorSetting::playlist_foreground].option = "PlaylistForeground";
     colors [ColorSetting::playlist_foreground].color = QColor(0xB2, 0xB2, 0xB2);
     colors [ColorSetting::console_background].title = i18n ("Console background color");
+    colors [ColorSetting::playlist_active].title = i18n ("Playlist active item color");
+    colors [ColorSetting::playlist_active].option = "PlaylistActive";
+    colors [ColorSetting::playlist_active].color = QColor (0xFF, 0xFF, 0xFF);
     colors [ColorSetting::console_background].option = "ConsoleBackground";
     colors [ColorSetting::console_background].color = QColor (0, 0, 0);
     colors [ColorSetting::console_foreground].title = i18n ("Console foreground color");
@@ -185,6 +188,9 @@ KDE_NO_EXPORT void Settings::applyColorSetting (bool only_changed_ones) {
                    break;
                 case ColorSetting::playlist_foreground:
                    view->playList()->setPaletteForegroundColor(colors[i].color);
+                   break;
+                case ColorSetting::playlist_active:
+                   view->playList()->setActiveForegroundColor (colors[i].color);
                    break;
                 case ColorSetting::console_background:
                    view->console()->setPaper (QBrush (colors[i].color));

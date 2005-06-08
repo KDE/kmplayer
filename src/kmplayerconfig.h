@@ -49,7 +49,7 @@ public:
     QColor color;
     QColor newcolor;
     enum Target {
-        playlist_background = 0, playlist_foreground,
+        playlist_background = 0, playlist_foreground, playlist_active,
         console_background, console_foreground,
         video_background, area_background,
         last_target
