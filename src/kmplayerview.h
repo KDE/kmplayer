@@ -68,6 +68,7 @@ public:
     ListViewItem (QListViewItem *p, const AttributePtr & e, PlayListView * lv);
     ListViewItem (PlayListView *v, const NodePtr & e);
     KDE_NO_CDTOR_EXPORT ~ListViewItem () {}
+    void paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align);
     NodePtrW m_elm;
     AttributePtrW m_attr;
     PlayListView * listview;

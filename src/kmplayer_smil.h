@@ -133,7 +133,6 @@ public:
     virtual void begin ();
     virtual void end ();
     virtual void reset ();
-    void paint (QPainter & p);
     virtual QString setParam (const QString & name, const QString & value);
     unsigned int background_color;
     bool have_bg_color;
@@ -168,6 +167,7 @@ public:
     virtual void started ();
     virtual void stopped ();
     virtual QString setParam (const QString & name, const QString & value);
+    virtual void paint (QPainter &) {}
 protected:
     MediaTypeRuntimePrivate * mt_d;
     QString source_url;
@@ -503,7 +503,6 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "set"; }
     virtual ElementRuntimePtr getNewRuntime ();
     virtual void activate ();
-    bool expose () const { return false; }
     bool isMrl () { return false; }
 };
 
@@ -512,7 +511,6 @@ public:
     KDE_NO_CDTOR_EXPORT Animate (NodePtr & d) : TimedMrl (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
     virtual ElementRuntimePtr getNewRuntime ();
-    bool expose () const { return false; }
     bool isMrl () { return false; }
 };
 

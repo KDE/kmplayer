@@ -467,7 +467,6 @@ public:
      * Reset all data, called from end() and init()
      */
     virtual void reset ();
-    virtual void paint (QPainter &) {}
     /**
      * change behaviour of this runtime, returns old value
      */

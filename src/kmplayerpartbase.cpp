@@ -866,6 +866,7 @@ void Source::stateElementChanged (NodePtr elm) {
             //a SMIL movies stopped by SMIL events rather than movie just ending
             m_player->process ()->stop ();
     }
+    m_player->updateTree ();
 }
 
 void Source::repaintRect (int x, int y, int w, int h) {

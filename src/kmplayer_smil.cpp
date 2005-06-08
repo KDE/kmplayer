@@ -463,13 +463,6 @@ KDE_NO_EXPORT void RegionRuntime::reset () {
     resetSizes ();
 }
 
-KDE_NO_EXPORT void RegionRuntime::paint (QPainter & p) {
-    if (have_bg_color && region_node) {
-        SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (region_node);
-        p.fillRect (rb->x1,rb->y1,rb->w1,rb->h1,QColor(QRgb(background_color)));
-    }
-}
-
 KDE_NO_EXPORT
 QString RegionRuntime::setParam (const QString & name, const QString & val) {
     //kdDebug () << "RegionRuntime::setParam " << name << "=" << val << endl;
@@ -1286,13 +1279,14 @@ KDE_NO_EXPORT void SMIL::Region::calculateBounds (int _w, int _h) {
 bool SMIL::Region::handleEvent (EventPtr event) {
     switch (event->id ()) {
         case event_paint: {
-            PaintEvent * p = static_cast <PaintEvent*>(event.ptr ());
+            PaintEvent * p = static_cast <PaintEvent *> (event.ptr ());
             if (x1+w1 <p->x || p->x+p->w < x1 || y1+h1 < p->y || p->y+p->h < y1)
                 return false;
             p->painter.setClipRect (x1, y1, w1, h1, QPainter::CoordPainter);
-            ElementRuntimePtr rt = getRuntime ();
-            if (rt)
-                rt->paint (p->painter);
+
+            RegionRuntime *rr = static_cast<RegionRuntime*>(getRuntime().ptr());
+            if (rr && rr->have_bg_color)
+                p->painter.fillRect (x1, y1, w1, h1, QColor (QRgb (rr->background_color)));
             for (NodeRefItemPtr n = users.first (); n; n = n->nextSibling ())
                 if (n->data)
                     n->data->handleEvent (event); // for MediaType listeners
@@ -1665,9 +1659,9 @@ KDE_NO_EXPORT void SMIL::MediaType::activate () {
 bool SMIL::MediaType::handleEvent (EventPtr event) {
     switch (event->id ()) {
         case event_paint: {
-            ElementRuntimePtr rt = getRuntime ();
-            if (rt)
-                rt->paint (static_cast <PaintEvent *> (event.ptr ())->painter);
+            MediaTypeRuntime * mr = static_cast <MediaTypeRuntime *> (getRuntime ().ptr ());
+            if (mr)
+                mr->paint (static_cast <PaintEvent *> (event.ptr ())->painter);
             return true;
         }
         case event_sized:
