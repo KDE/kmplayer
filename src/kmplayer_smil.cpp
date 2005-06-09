@@ -64,7 +64,7 @@ const unsigned int event_pointer_moved = (unsigned int) -11;
 /* Intrinsic duration 
  *  duration_time   |    end_time    |
  *  =======================================================================
- *  duration_media  | duration_media | wait for external stop (audio/video)
+ *  duration_media  | duration_media | wait for event
  *       0          | duration_media | only wait for child elements
  */
 //-----------------------------------------------------------------------------
@@ -163,9 +163,9 @@ KDE_NO_EXPORT void TimedRuntime::reset () {
     for (int i = 0; i < (int) durtime_last; i++) {
         if (durations [i].connection)
             durations [i].connection->disconnect ();
-        durations [i].durval = duration_media;  //intrinsic time duration
+        durations [i].durval = 0;
     }
-    durations [begin_time].durval = 0;
+    durations [end_time].durval = duration_media;
     ElementRuntime::reset ();
 }
 
@@ -269,6 +269,8 @@ QString TimedRuntime::setParam (const QString & name, const QString & val) {
             durations [end_time].durval > durations [begin_time].durval)
             durations [duration_time].durval =
                 durations [end_time].durval - durations [begin_time].durval;
+        else if (durations [end_time].durval > duration_last_option)
+            durations [duration_time].durval = duration_media; // event
     } else if (name == QString::fromLatin1 ("endsync")) {
         if (durations [duration_time].durval == duration_media &&
                 durations [end_time].durval == duration_media) {
@@ -350,6 +352,7 @@ KDE_NO_EXPORT void TimedRuntime::started () {
             dur_timer = startTimer (100 * durations [duration_time].durval);
             kdDebug () << "TimedRuntime::started set dur timer " << durations [duration_time].durval << endl;
         }
+        element->setState (Node::state_activated);
     } else if (!element ||
             (durations [end_time].durval == duration_media ||
              durations [end_time].durval < duration_last_option))
@@ -550,7 +553,15 @@ QString AnimateGroupData::setParam (const QString & name, const QString & val) {
         change_to = val;
     } else
         return TimedRuntime::setParam (name, val);
-    return ElementRuntime::setParam (name, val);
+    return TimedRuntime::setParam (name, val);
+}
+
+KDE_NO_EXPORT void AnimateGroupData::begin () {
+    if (durations [begin_time].durval > duration_last_option) {
+        if (element)
+            element->deactivate ();
+    } else
+        TimedRuntime::begin ();
 }
 
 //-----------------------------------------------------------------------------
@@ -582,11 +593,13 @@ KDE_NO_EXPORT void SetData::started () {
  */
 KDE_NO_EXPORT void SetData::stopped () {
     kdDebug () << "SetData::stopped " << durations [duration_time].durval << endl;
-    if (target_element) {
+    if (fill == fill_freeze)
+        ; // keep it 
+    else if (target_element) {
         ElementRuntimePtr rt = target_element->getRuntime ();
         if (rt) {
             QString ov = rt->setParam (changed_attribute, old_value);
-            kdDebug () << "SetData::stopped " << target_element->nodeName () << "." << changed_attribute << " " << ov << "->" << change_to << endl;
+            kdDebug () << "SetData::stopped " << target_element->nodeName () << "." << changed_attribute << " " << ov << "->" << old_value << endl;
             if (target_region)
                 convertNode <SMIL::RegionBase> (target_region)->repaint ();
         }
@@ -895,6 +908,9 @@ KDE_NO_EXPORT bool AudioVideoData::isAudioVideo () {
  * reimplement for request backend to play audio/video
  */
 KDE_NO_EXPORT void AudioVideoData::started () {
+    if (durations [duration_time].durval == 0 &&
+            durations [end_time].durval == duration_media)
+        durations [duration_time].durval = duration_media; // duration of clip
     MediaTypeRuntime::started ();
     if (region_node && element) {
         sized_connection = region_node->connectTo (element, event_sized);
@@ -1484,7 +1500,8 @@ KDE_NO_EXPORT void SMIL::Par::childDone (NodePtr) {
         }
         TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
         if (tr && tr->state () == TimedRuntime::timings_started) {
-            if (tr->durations[(int)TimedRuntime::duration_time].durval == duration_media)
+            unsigned dv =tr->durations[(int)TimedRuntime::duration_time].durval;
+            if (dv == 0 || dv == duration_media)
                 tr->propagateStop (false);
             return; // still running, wait for runtime to finish
         }
@@ -1778,11 +1795,6 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::Set::getNewRuntime () {
     return (new SetData (m_self))->self ();
 }
 
-KDE_NO_EXPORT void SMIL::Set::activate () {
-    TimedMrl::activate ();
-    deactivate (); // no livetime of itself
-}
-
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::Animate::getNewRuntime () {
@@ -1918,8 +1930,8 @@ KDE_NO_EXPORT void ImageData::started () {
         durations [duration_time].durval = duration_data_download;
         return;
     }
-    if (durations [duration_time].durval == duration_media)
-        durations [duration_time].durval = 0; // intrinsic duration of 0 FIXME gif movies
+    //if (durations [duration_time].durval == 0)
+    //    durations [duration_time].durval = duration_media; // intrinsic duration of 0 FIXME gif movies
     if (d->img_movie) {
         d->img_movie->restart ();
         if (d->img_movie->paused ())
@@ -2110,8 +2122,6 @@ KDE_NO_EXPORT void TextData::started () {
         durations [duration_time].durval = duration_data_download;
         return;
     }
-    if (durations [duration_time].durval == duration_media)
-        durations [duration_time].durval = 0; // intrinsic duration of 0
     MediaTypeRuntime::started ();
 }
 

@@ -1,3 +1,14 @@
+Changes since version 0.9.0-pre3
+- More work on SMIL. Show active SMIL element in playlist using the color
+  settings. Like mediatypes, if set/animate elements have a duration than it
+  should not deactivate itself immediately.
+- Undo 'First jump to URL source page when opening an URL' from 0.8.1. Now the
+  'Configure KMPlayer' option jumps to that page. File open, opens a file
+  dialog again (and can select multible files)
+- Allow opening multible files
+- Support for gif movies in SMIL's 'img' element
+- Regression fix plugin; when split over multible objects, the base url could
+  be opened instead of the SRC url.
 Changes since version 0.9.0-pre2
 - Support javascript properties FileName and Volume
 - Internal redesign of DOM classes

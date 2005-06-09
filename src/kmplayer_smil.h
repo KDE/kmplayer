@@ -238,6 +238,7 @@ class AnimateGroupData : public TimedRuntime {
 public:
     KDE_NO_CDTOR_EXPORT ~AnimateGroupData () {}
     virtual QString setParam (const QString & name, const QString & value);
+    virtual void begin ();
 protected:
     KDE_NO_CDTOR_EXPORT AnimateGroupData (NodePtr e) : TimedRuntime (e) {}
     NodePtrW target_element;
@@ -502,7 +503,6 @@ public:
     KDE_NO_CDTOR_EXPORT Set (NodePtr & d) : TimedMrl (d) {}
     KDE_NO_EXPORT const char * nodeName () const { return "set"; }
     virtual ElementRuntimePtr getNewRuntime ();
-    virtual void activate ();
     bool isMrl () { return false; }
 };
 

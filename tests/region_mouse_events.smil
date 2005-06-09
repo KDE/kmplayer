@@ -27,10 +27,10 @@
       </text> 
     </par>
     <par>
-      <set targetElement="region2" attributeName="z-index" to="6"/>
-      <set targetElement="region2" attributeName="right" to="20%"/>
-      <set targetElement="region3" attributeName="background-color" to="black"/>
-      <set targetElement="region3" attributeName="z-index" to="5"/>
+      <set targetElement="region2" attributeName="z-index" to="6" dur="2s"/>
+      <set targetElement="region2" attributeName="right" to="20%" fill="freeze"/>
+      <set targetElement="region3" attributeName="background-color" to="black" fill="freeze"/>
+      <set targetElement="region3" attributeName="z-index" to="5" fill="freeze"/>
       <text src="data:,that's all folks" region="region2" dur="2">
         <param name="fontColor" value="green"/>
         <param name="fontSize" value="+2"/>

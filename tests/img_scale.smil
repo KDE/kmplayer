@@ -14,22 +14,14 @@
       <img src="../icons/hi128-app-kmplayer.png" region="reg_img2" fit="hidden" fill="freeze"/>
       <img src="../icons/hi128-app-kmplayer.png" region="reg_img3" fit="meet" fill="freeze"/>
       <img src="../icons/hi128-app-kmplayer.png" region="reg_img4" fit="slice" fill="freeze"/>
-      <set targetElement="reg_img1" attributeName="width" to="75" begin="5s"/>
-      <set targetElement="reg_img2" attributeName="width" to="75" begin="5s"/>
-      <set targetElement="reg_img3" attributeName="width" to="75" begin="5s"/>
-      <set targetElement="reg_img4" attributeName="width" to="75" begin="5s"/>
-      <set targetElement="reg_img1" attributeName="height" to="75" begin="10s"/>
-      <set targetElement="reg_img2" attributeName="height" to="75" begin="10s"/>
-      <set targetElement="reg_img3" attributeName="height" to="75" begin="10s"/>
-      <set targetElement="reg_img4" attributeName="height" to="75" begin="10s"/>
-      <set targetElement="reg_img1" attributeName="width" to="150" begin="15s"/>
-      <set targetElement="reg_img2" attributeName="width" to="150" begin="15s"/>
-      <set targetElement="reg_img3" attributeName="width" to="150" begin="15s"/>
-      <set targetElement="reg_img4" attributeName="width" to="150" begin="15s"/>
-      <set targetElement="reg_img1" attributeName="height" to="210" begin="20s"/>
-      <set targetElement="reg_img2" attributeName="height" to="210" begin="20s"/>
-      <set targetElement="reg_img3" attributeName="height" to="210" begin="20s"/>
-      <set targetElement="reg_img4" attributeName="height" to="210" begin="20s"/>
+      <set targetElement="reg_img1" attributeName="width" to="75" begin="5s" dur="10s"/>
+      <set targetElement="reg_img2" attributeName="width" to="75" begin="5s" dur="10s"/>
+      <set targetElement="reg_img3" attributeName="width" to="75" begin="5s" dur="10s"/>
+      <set targetElement="reg_img4" attributeName="width" to="75" begin="5s" dur="10s"/>
+      <set targetElement="reg_img1" attributeName="height" to="75" begin="10s" dur="10s"/>
+      <set targetElement="reg_img2" attributeName="height" to="75" begin="10s" dur="10s"/>
+      <set targetElement="reg_img3" attributeName="height" to="75" begin="10s" dur="10s"/>
+      <set targetElement="reg_img4" attributeName="height" to="75" begin="10s" dur="10s"/>
     </par>
   </body>
 </smil>

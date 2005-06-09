@@ -810,12 +810,13 @@ KDE_NO_CDTOR_EXPORT ListViewItem::ListViewItem (QListViewItem *p, const Attribut
 KDE_NO_CDTOR_EXPORT ListViewItem::ListViewItem (PlayListView *v, const NodePtr & e) : QListViewItem (v), m_elm (e), listview (v) {}
 
 KDE_NO_CDTOR_EXPORT void ListViewItem::paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align) {
-    QColorGroup mycg (cg);
     if (m_elm && m_elm->state == Node::state_activated) {
+        QColorGroup mycg (cg);
         mycg.setColor (QColorGroup::Foreground, listview->activeColor ());
         mycg.setColor (QColorGroup::Text, listview->activeColor ());
-    }
-    QListViewItem::paintCell (p, mycg, column, width, align);
+        QListViewItem::paintCell (p, mycg, column, width, align);
+    } else
+        QListViewItem::paintCell (p, cg, column, width, align);
 }
 
 //-----------------------------------------------------------------------------

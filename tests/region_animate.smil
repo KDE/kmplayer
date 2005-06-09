@@ -25,10 +25,10 @@
       <animate targetElement="region2" attributeName="left" from="240" to="10" begin="5" dur="5"/>
     </par>
     <par>
-      <set targetElement="region2" attributeName="z-index" to="6"/>
-      <set targetElement="region2" attributeName="width" to="200"/>
-      <set targetElement="region3" attributeName="background-color" to="black"/>
-      <set targetElement="region3" attributeName="z-index" to="5"/>
+      <set targetElement="region2" attributeName="z-index" to="6" fill="freeze"/>
+      <set targetElement="region2" attributeName="width" to="200" fill="freeze"/>
+      <set targetElement="region3" attributeName="background-color" to="black" fill="freeze"/>
+      <set targetElement="region3" attributeName="z-index" to="5" fill="freeze"/>
       <text src="data:,that's%20all%20folks" region="region2" dur="2">
         <param name="fontColor" value="green"/>
         <param name="fontSize" value="+2"/>
