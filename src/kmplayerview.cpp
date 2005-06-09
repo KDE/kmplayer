@@ -810,7 +810,7 @@ KDE_NO_CDTOR_EXPORT ListViewItem::ListViewItem (QListViewItem *p, const Attribut
 KDE_NO_CDTOR_EXPORT ListViewItem::ListViewItem (PlayListView *v, const NodePtr & e) : QListViewItem (v), m_elm (e), listview (v) {}
 
 KDE_NO_CDTOR_EXPORT void ListViewItem::paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align) {
-    if (m_elm && m_elm->state == Node::state_activated) {
+    if (m_elm && m_elm->state == Node::state_began) {
         QColorGroup mycg (cg);
         mycg.setColor (QColorGroup::Foreground, listview->activeColor ());
         mycg.setColor (QColorGroup::Text, listview->activeColor ());
@@ -876,7 +876,7 @@ void PlayListView::populate (NodePtr e, NodePtr focus, QListViewItem * item, QLi
     item->setPixmap (0, pix);
     if (focus == e)
         *curitem = item;
-    if (e->state == Node::state_activated)
+    if (e->active ())
         ensureItemVisible (item);
     for (NodePtr c = e->lastChild (); c; c = c->previousSibling ()) {
         m_have_dark_nodes |= !c->expose ();

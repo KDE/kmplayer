@@ -269,7 +269,8 @@ class KMPLAYER_EXPORT Node : public TreeNode <Node> {
     //friend class SharedPtr<KMPlayer::Node>;
 public:
     enum State {
-        state_init, state_deferred, state_activated, state_deactivated
+        state_init, state_deferred,
+        state_activated, state_began, state_finished, state_deactivated
     };
     virtual ~Node ();
     Document * document ();
@@ -320,6 +321,8 @@ public:
      * firstChild or call deactivate().
      */
     virtual void activate ();
+    bool active () const
+        { return state > state_deferred && state < state_deactivated; }
     /**
      * Defers an activated, so possible playlists items can be added.
      */
@@ -490,7 +493,7 @@ template <class T>
 inline KDE_NO_EXPORT T * convertNode (NodePtr e) {
     return static_cast <T *> (e.ptr ());
 }
-        
+
 /**
  * Element representing a playable link, like URL to a movie or playlist.
  */

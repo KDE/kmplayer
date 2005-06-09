@@ -787,8 +787,8 @@ void Source::playCurrent () {
         m_player->process ()->view ()->videoStop (); // show buttonbar
     if (m_player->view () && m_document)
         m_player->process ()->view ()->viewArea ()->setRootLayout (m_document->document ()->rootLayout);
-    kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():"") <<  (m_document && m_document->state != Element::state_activated) << (!m_current) << (m_current && m_current->state != Element::state_activated) <<  endl;
-    if (m_document && m_document->state != Element::state_activated) {
+    kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():"") <<  (m_document && !m_document->active ()) << (!m_current) << (m_current && !m_current->active ()) <<  endl;
+    if (m_document && !m_document->active ()) {
         if (!m_current)
             m_document->activate ();
         else { // ugly code duplicate w/ back_request

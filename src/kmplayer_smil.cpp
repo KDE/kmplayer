@@ -322,7 +322,7 @@ KDE_NO_EXPORT void TimedRuntime::propagateStop (bool forced) {
             return; // wait for event
         // bail out if a child still running
         for (NodePtr c = element->firstChild (); c; c = c->nextSibling ())
-            if (c->state == Element::state_activated)
+            if (c->active ())
                 return; // a child still running
     }
     if (dur_timer) {
@@ -352,7 +352,7 @@ KDE_NO_EXPORT void TimedRuntime::started () {
             dur_timer = startTimer (100 * durations [duration_time].durval);
             kdDebug () << "TimedRuntime::started set dur timer " << durations [duration_time].durval << endl;
         }
-        element->setState (Node::state_activated);
+        element->setState (Node::state_began);
     } else if (!element ||
             (durations [end_time].durval == duration_media ||
              durations [end_time].durval < duration_last_option))
@@ -372,7 +372,7 @@ KDE_NO_EXPORT void TimedRuntime::stopped () {
             start_timer = startTimer (100 * durations [begin_time].durval);
         } else
             propagateStart ();
-    } else if (element->state == Element::state_activated) {
+    } else if (element->active ()) {
         element->deactivate ();
     }
 }
@@ -918,7 +918,7 @@ KDE_NO_EXPORT void AudioVideoData::started () {
         PlayListNotify * n = element->document ()->notify_listener;
         if (n && !source_url.isEmpty ()) {
             n->requestPlayURL (element);
-            element->setState (Element::state_activated);
+            element->setState (Element::state_began);
         }
     }
 }
@@ -938,7 +938,7 @@ QString AudioVideoData::setParam (const QString & name, const QString & val) {
             PlayListNotify * n = element->document ()->notify_listener;
             if (n && !source_url.isEmpty ()) {
                 n->requestPlayURL (element);
-                element->setState (Element::state_activated);
+                element->setState (Node::state_began);
             }
         }
         return old_val;
@@ -1614,7 +1614,7 @@ KDE_NO_EXPORT void SMIL::Switch::activate () {
 KDE_NO_EXPORT void SMIL::Switch::deactivate () {
     Element::deactivate ();
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-        if (e->state == state_activated) {
+        if (e->active ()) {
             e->deactivate ();
             break; // deactivate only the one running
         }

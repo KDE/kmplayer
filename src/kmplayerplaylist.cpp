@@ -132,7 +132,7 @@ void Node::activate () {
 }
 
 void Node::defer () {
-    if (state == state_activated) {
+    if (active ()) {
         setState (state_deferred);
         defer_tree_version = document ()->m_tree_version;
     } else
@@ -155,7 +155,7 @@ void Node::deactivate () {
         if (e->state > state_init && e->state < state_deactivated)
             e->deactivate ();
         else
-            break; // not yet activated
+            break; // remaining not yet activated
     }
     if (m_parent)
         m_parent->childDone (m_self);
@@ -163,7 +163,7 @@ void Node::deactivate () {
 
 void Node::reset () {
     kdDebug () << nodeName () << " Node::reset" << endl;
-    if (state == state_activated)
+    if (active ())
         deactivate ();
     setState (state_init);
     for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
@@ -176,7 +176,7 @@ void Node::reset () {
 
 void Node::childDone (NodePtr child) {
     kdDebug () << nodeName () << " Node::childDone" << endl;
-    if (state == state_activated) {
+    if (active ()) {
         if (child->nextSibling ())
             child->nextSibling ()->activate ();
         else
@@ -473,7 +473,7 @@ void Mrl::activate () {
         return;
     }
     kdDebug () << "Mrl::activate" << endl;
-    setState (state_activated);
+    setState (state_began);
     if (document ()->notify_listener && !src.isEmpty ())
         document ()->notify_listener->requestPlayURL (m_self);
     else
