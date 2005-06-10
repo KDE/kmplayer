@@ -29,8 +29,8 @@ Command1=cat ~/example.avi
 
 [MPlayer Output Matching]
 DVD Chapters=There are ([0-9]+) chapters
-DVD Language=\\[open\\].*audio.*language: ([A-Za-z]+).*aid.*[^0-9]([0-9]+)
-DVD Sub Title=\\[open\\].*subtitle.*[^0-9]([0-9]+).*language: ([A-Za-z]+)
+DVD Language=ID_AID_([0-9]+)_LANG=([A-Za-z]+)
+DVD Sub Title=ID_SID_([0-9]+)_LANG=([A-Za-z]+)
 DVD Titles=There are ([0-9]+) titles
 Movie Size=VO:.*[^0-9]([0-9]+)x([0-9]+)
 Cache Fill=Cache fill:[^0-9]*([0-9\\.]+)%

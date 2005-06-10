@@ -176,7 +176,7 @@ KDE_NO_EXPORT void KMPlayerApp::initMenu () {
     m_sourcemenu = menuBar ()->findItem (menuBar ()->idAt (0));
     m_sourcemenu->setText (i18n ("S&ource"));
     m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("dvd_mount"), KIcon::Small, 0, true), i18n ("&DVD"), m_dvdmenu, -1, 5);
-    m_dvdmenu->clear ();
+    //m_dvdmenu->clear ();
 #ifdef HAVE_XINE
     m_dvdnavmenu->clear ();
     m_dvdnavmenu->insertItem (i18n ("&Start"), this, SLOT (dvdNav ()));
@@ -703,17 +703,21 @@ KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
     QRegExp & titleRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdtitle];
     QRegExp & chapterRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdchapter];
     if (subtitleRegExp.search (str) > -1) {
-        m_dvdsubtitlemenu->insertItem (subtitleRegExp.cap (2), this,
-                SLOT (subtitleMenuClicked (int)), 0,
-                subtitleRegExp.cap (1).toInt ());
-        kdDebug () << "subtitle sid:" << subtitleRegExp.cap (1) <<
-            " lang:" << subtitleRegExp.cap (2) << endl;
+        bool ok;
+        int sub_id = subtitleRegExp.cap (1).toInt (&ok);
+        QString sub_title = ok ? subtitleRegExp.cap (2) : subtitleRegExp.cap(1);
+        if (!ok)
+            sub_id = subtitleRegExp.cap (2).toInt (&ok);
+        m_dvdsubtitlemenu->insertItem (sub_title, this, SLOT (subtitleMenuClicked (int)), 0, sub_id);
+        kdDebug () << "subtitle sid:" << sub_id << " lang:" << sub_title <<endl;
     } else if (langRegExp.search (str) > -1) {
-        m_dvdlanguagemenu->insertItem (langRegExp.cap (1), this,
-                SLOT (languageMenuClicked (int)), 0,
-                langRegExp.cap (2).toInt ());
-        kdDebug () << "lang aid:" << langRegExp.cap (2) <<
-            " lang:" << langRegExp.cap (1) << endl;
+        bool ok;
+        int lang_id = langRegExp.cap (1).toInt (&ok);
+        QString lang_title = ok ? langRegExp.cap (2) : langRegExp.cap (1);
+        if (!ok)
+            lang_id = langRegExp.cap (2).toInt (&ok);
+        m_dvdlanguagemenu->insertItem (lang_title, this, SLOT (languageMenuClicked (int)), 0, lang_id);
+        kdDebug () << "lang aid:" << lang_id << " lang:" << lang_title << endl;
     } else if (titleRegExp.search (str) > -1) {
         kdDebug () << "title " << titleRegExp.cap (1) << endl;
         unsigned ts = titleRegExp.cap (1).toInt ();
