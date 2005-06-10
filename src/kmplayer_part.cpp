@@ -29,6 +29,7 @@
 #include <qpushbutton.h>
 #include <qslider.h>
 
+class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollection.h does not forward declare KXMLGUIClient
 #include <klibloader.h>
 #include <kdebug.h>
 #include <kconfig.h>

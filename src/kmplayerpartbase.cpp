@@ -411,6 +411,7 @@ bool PartBase::openURL (const KURL::List & urls) {
             for (int i = 0; i < urls.size (); i++)
                 d->appendChild ((new GenericURL (d, urls [i].url ()))->self ());
     }
+    return true;
 }
 
 bool PartBase::closeURL () {

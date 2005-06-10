@@ -1,3 +1,9 @@
+kmplayer (0.8.99.2-1) unstable; urgency=low
+
+  *  0.9.0-pre4 fourth pre release for 0.9.0.
+
+ -- Koos Vriezen <koos.vriezen@xs4all.nl>  Fri, 10 Jun 2005 16:43:36 +0200
+
 kmplayer (0.8.99.1-1) unstable; urgency=low
 
   *  0.9.0-pre3 pre release for 0.9.0 (obviously I should have started

@@ -1,4 +1,6 @@
 Changes since version 0.9.0-pre3
+- Fix for DVD submenus for MPlayer and update regexp for audio/subtitle
+  languages
 - More work on SMIL. Show active SMIL element in playlist using the color
   settings. Like mediatypes, if set/animate elements have a duration than it
   should not deactivate itself immediately.
