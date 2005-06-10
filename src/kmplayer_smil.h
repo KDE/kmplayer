@@ -364,8 +364,10 @@ public:
     KDE_NO_CDTOR_EXPORT ~TimedMrl () {}
     ElementRuntimePtr getRuntime ();
     void activate ();
+    void finish ();
     void deactivate ();
     void reset ();
+    void childBegan (NodePtr child);
     void childDone (NodePtr child);
     virtual bool handleEvent (EventPtr event);
 protected:
@@ -398,6 +400,7 @@ public:
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "par"; }
     void activate ();
+    void finish ();
     void deactivate ();
     void reset ();
     void childDone (NodePtr child);

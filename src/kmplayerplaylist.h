@@ -263,6 +263,9 @@ typedef SharedPtr <Connection> ConnectionPtr;
 
 /*
  * Base class for XML nodes. Provides a w3c's DOM like API
+ * Livetime of an element is
+ |-->state_activated<-->state_began<-->state_finished<-->state_deactivated-->|
+  In scope            begin event    end event         Out scope
  */
 class KMPLAYER_EXPORT Node : public TreeNode <Node> {
     friend class KMPlayerDocumentBuilder;
@@ -321,8 +324,16 @@ public:
      * firstChild or call deactivate().
      */
     virtual void activate ();
+    /**
+     * if state is between state_activated and state_deactivated
+     */
     bool active () const
         { return state > state_deferred && state < state_deactivated; }
+    /**
+     * if state is between state_activated and state_finished
+     */
+    bool unfinished () const
+        { return state > state_deferred && state < state_finished; }
     /**
      * Defers an activated, so possible playlists items can be added.
      */
@@ -333,8 +344,18 @@ public:
      */
     virtual void undefer ();
     /**
+     * Sets state to state_begin when active
+     */
+    virtual void begin ();
+    /**
+     * Sets state to state_finish when >= state_activated.
+     * Notifies parent with a childDone call.
+     */
+    virtual void finish ();
+    /**
      * Stops element, sets state to state_deactivated. Calls deactivate() on 
-     * activated/defered children. Notifies parent with a childDone call.
+     * activated/defered children. May call childDone() when active() and not
+     * finished yet.
      */
     virtual void deactivate ();
     /**
@@ -343,7 +364,12 @@ public:
      */
     virtual void reset ();
     /**
-     * Notification from child that it's finished. Call activate() on nexSibling
+     * Notification from child that it has began.
+     */
+    virtual void childBegan (NodePtr child);
+    /**
+     * Notification from child that it's finished. Will call deactive() on
+     * child if it state is state_finished. Call activate() on nexSibling
      * or deactivate() if there is none.
      */
     virtual void childDone (NodePtr child);

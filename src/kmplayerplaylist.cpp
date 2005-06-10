@@ -131,6 +131,13 @@ void Node::activate () {
         deactivate (); // nothing to activate
 }
 
+void Node::begin () {
+    if (active ()) {
+        setState (state_began);
+    } else
+        kdError () << "Node::begin () call on not active element" << endl;
+}
+
 void Node::defer () {
     if (active ()) {
         setState (state_deferred);
@@ -148,8 +155,18 @@ void Node::undefer () {
         kdWarning () <<"Node::undefer () call on not defered element"<< endl;
 }
 
+void Node::finish () {
+    if (active ()) {
+        setState (state_finished);
+        if (m_parent)
+            m_parent->childDone (m_self);
+    } else
+        kdWarning () <<"Node::finish () call on not active element"<< endl;
+}
+
 void Node::deactivate () {
     kdDebug () << nodeName () << " Node::deactivate" << endl;
+    bool need_finish (unfinished ());
     setState (state_deactivated);
     for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
         if (e->state > state_init && e->state < state_deactivated)
@@ -157,7 +174,7 @@ void Node::deactivate () {
         else
             break; // remaining not yet activated
     }
-    if (m_parent)
+    if (need_finish && m_parent)
         m_parent->childDone (m_self);
 }
 
@@ -174,9 +191,14 @@ void Node::reset () {
     }
 }
 
+void Node::childBegan (NodePtr child) {
+}
+
 void Node::childDone (NodePtr child) {
     kdDebug () << nodeName () << " Node::childDone" << endl;
     if (active ()) {
+        if (child->state == state_finished)
+            child->deactivate ();
         if (child->nextSibling ())
             child->nextSibling ()->activate ();
         else
@@ -473,7 +495,7 @@ void Mrl::activate () {
         return;
     }
     kdDebug () << "Mrl::activate" << endl;
-    setState (state_began);
+    setState (state_activated);
     if (document ()->notify_listener && !src.isEmpty ())
         document ()->notify_listener->requestPlayURL (m_self);
     else

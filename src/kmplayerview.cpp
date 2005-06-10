@@ -899,6 +899,8 @@ void PlayListView::populate (NodePtr e, NodePtr focus, QListViewItem * item, QLi
 }
 
 void PlayListView::updateTree (NodePtr root, NodePtr active) {
+    // TODO, if root is same as rootitems->m_elm and treeversion is the same
+    // and show all nodes is unchanged then only update the cells
     m_ignore_expanded = true;
     m_have_dark_nodes = false;
     clear ();
