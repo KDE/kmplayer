@@ -96,6 +96,7 @@ public:
     ~PrefGeneralPageGeneral() {}
 
     QCheckBox *keepSizeRatio;
+    QButtonGroup *sizesChoice;
     QCheckBox *dockSysTray;
     QCheckBox *loop;
     QCheckBox *showRecordButton;

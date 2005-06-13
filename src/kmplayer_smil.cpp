@@ -1032,6 +1032,27 @@ KDE_NO_EXPORT void SMIL::Smil::deactivate () {
     Mrl::deactivate ();
 }
 
+KDE_NO_EXPORT void SMIL::Smil::closed () {
+    width = 320; // something to start with
+    height = 240;
+    if (!document ()->rootLayout) {
+        for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+            if (!strcmp (e->nodeName (), "head")) {
+                kdError () << "<head> tag found but no <root-layout>" << endl;
+                return;
+            }
+        SMIL::Head * head = new SMIL::Head (m_doc);
+        appendChild (head->self ());
+        head->setAuxiliaryNode (true);
+    }
+    SMIL::RegionBase * rb = static_cast <SMIL::RegionBase *> (document ()->rootLayout.ptr ());
+    if (rb) {
+        width = rb->w;
+        height = rb->h;
+    } else
+        kdError () << "<head> tag found but no <root-layout>" << endl;
+}
+
 KDE_NO_EXPORT NodePtr SMIL::Smil::realMrl () {
     return current_av_media_type;
 }

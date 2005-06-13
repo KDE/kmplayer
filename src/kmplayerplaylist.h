@@ -62,7 +62,6 @@ class Document;
 class Node;
 class Mrl;
 class ElementRuntime;
-class ElementRuntimePrivate;
 class ImageDataPrivate;
 
 /*
@@ -474,47 +473,6 @@ protected:
     QString tag_name;
 };
 
-/**
- * Base class representing live time of elements
- */
-class ElementRuntime : public Item <ElementRuntime> {
-public:
-    virtual ~ElementRuntime ();
-    /**
-     * calls reset() and pulls in the attached_element's attributes
-     */
-    virtual void init ();
-    /**
-     * Called when element is pulled in scope, from Node::activate()
-     */
-    virtual void begin () {}
-    /**
-     * Called when element gets out of scope, from Node::reset()
-     */
-    virtual void end () {}
-    /**
-     * Reset all data, called from end() and init()
-     */
-    virtual void reset ();
-    /**
-     * change behaviour of this runtime, returns old value
-     */
-    virtual QString setParam (const QString & name, const QString & value);
-    /**
-     * get the current value of param name that's set by setParam(name,value)
-     */
-    virtual QString param (const QString & name);
-    /**
-     * If this element is attached to a region, region_node points to it
-     */
-    NodePtrW region_node;
-protected:
-    ElementRuntime (NodePtr e);
-    NodePtrW element;
-private:
-    ElementRuntimePrivate * d;
-};
-
 template <class T>
 inline KDE_NO_EXPORT T * convertNode (NodePtr e) {
     return static_cast <T *> (e.ptr ());
@@ -655,53 +613,13 @@ public:
     bool isMrl ();
     void activate ();
     void deactivate ();
+    void closed ();
     /**
      * Hack to mark the currently playing MediaType as finished
      * FIXME: think of a descent callback way for this
      */
     NodePtr realMrl ();
     NodePtr current_av_media_type;
-};
-
-/**
- * Base class for SMIL::Region, SMIL::RootLayout and SMIL::Layout
- */
-class RegionBase : public Element {
-public:
-    virtual ElementRuntimePtr getRuntime ();
-    virtual bool handleEvent (EventPtr event);
-    /**
-     * repaints region, calls scheduleRepaint(x,y,w,h) on view
-     */
-    void repaint ();
-    /**
-     * calculate actual values given scale factors and offset (absolute) and
-     * x,y,w,h  values
-     */
-    void scaleRegion (float sx, float sy, int xoff, int yoff);
-    /**
-     * calculate the relative x,y,w,h on the child region elements
-     * given this element's w and h value
-     * and child's left/top/right/width/height/bottom attributes
-     */
-    void calculateChildBounds ();
-
-    int x, y, w, h;     // unscaled values
-    int x1, y1, w1, h1; // actual values
-    /**
-     * Scale factors
-     */
-    float xscale, yscale;
-    /**
-     * z-order of this region
-     */
-    int z_order;
-protected:
-    RegionBase (NodePtr & d);
-    ElementRuntimePtr runtime;
-    virtual NodeRefListPtr listeners (unsigned int event_id);
-    NodeRefListPtr m_SizeListeners;        // region resized
-    NodeRefListPtr m_PaintListeners;       // region need repainting
 };
 
 } // namespace SMIL

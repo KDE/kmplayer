@@ -1104,7 +1104,7 @@ KDE_NO_EXPORT void View::init () {
     m_view_area = new ViewArea (m_dock_video, this);
     m_dock_video->setWidget (m_view_area);
     m_dockarea->setMainDockWidget (m_dock_video);
-    m_dock_playlist = m_dockarea->createDockWidget (QString ("PlayList"), KGlobal::iconLoader ()->loadIcon (QString ("player_playlist"), KIcon::Small));
+    m_dock_playlist = m_dockarea->createDockWidget (i18n ("Play List"), KGlobal::iconLoader ()->loadIcon (QString ("player_playlist"), KIcon::Small));
     m_playlist = new PlayListView (m_dock_playlist, this);
     m_playlist->setPaletteBackgroundColor (QColor (0, 0, 0));
     m_playlist->setPaletteForegroundColor (QColor (0xB2, 0xB2, 0xB2));
@@ -1498,7 +1498,8 @@ KDE_NO_CDTOR_EXPORT Viewer::Viewer (QWidget *parent, View * view)
 #if KDE_IS_VERSION(3,1,1)
     setProtocol(QXEmbed::XPLAIN);
 #endif
-    embed (XCreateSimpleWindow (qt_xdisplay(), view->winId (), 0, 0, width(), height(), 1, 0, 0));
+    int scr = DefaultScreen (qt_xdisplay ());
+    embed (XCreateSimpleWindow (qt_xdisplay(), view->winId (), 0, 0, width(), height(), 1, BlackPixel (qt_xdisplay(), scr), BlackPixel (qt_xdisplay(), scr)));
     XClearWindow (qt_xdisplay(), embeddedWinId ());
 }
 

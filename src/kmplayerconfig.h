@@ -101,6 +101,7 @@ public:
     int saturation;
     bool usearts : 1;
     bool sizeratio : 1;
+    bool remembersize : 1;
     bool docksystray : 1;
     bool loop : 1;
     bool framedrop : 1;

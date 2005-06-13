@@ -711,9 +711,10 @@ Source::~Source () {
 }
 
 void Source::init () {
-    m_width = 0;
-    m_height = 0;
-    m_aspect = 0.0;
+    setDimensions (320, 240);
+    //m_width = 320;
+    //m_height = 0;
+    //m_aspect = 0.0;
     setLength (0);
     m_position = 0;
     m_identified = false;
@@ -1154,15 +1155,13 @@ void URLSource::dimensions (int & w, int & h) {
     if (!m_player->mayResize () && m_player->view ()) {
         w = m_player->process ()->view ()->viewer ()->width ();
         h = m_player->process ()->view ()->viewer ()->height ();
-    } else if (m_document && m_document->document ()->rootLayout) {
-        NodePtr rl = m_document->document ()->rootLayout;
-        SMIL::RegionBase *root = convertNode <SMIL::RegionBase> (rl);
-        if (root) {
-            w = root->w;
-            h = root->h;
-            if (w && h)
-                return;
-        }
+    } else if (m_document && m_document->firstChild () &&
+            !strcmp (m_document->firstChild ()->nodeName (), "smil")) {
+        Mrl * mrl = m_document->firstChild ()->mrl ();
+        w = mrl->width;
+        h = mrl->height;
+        if (w && h)
+            return;
     } else
         Source::dimensions (w, h);
     
@@ -1190,6 +1189,7 @@ void URLSource::setDimensions (int w, int h) {
     if (m_document && m_document->document ()->rootLayout) {
         Mrl * mrl = m_current ? m_current->mrl () : 0L;
         if (mrl && m_player->view ()) {
+            mrl = mrl->realMrl ()->mrl ();
             mrl->width = w;
             mrl->height = h;
             if (h > 0) {
@@ -1341,12 +1341,11 @@ KDE_NO_EXPORT void URLSource::read (QTextStream & textstream) {
         } else if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
             readXML (cur_elm, textstream, line);
             cur_elm->normalize ();
-            if (m_document) { // SMIL documents might have set its sizes
-                NodePtr r = m_document->document ()->rootLayout;
-                if (r) {
-                    SMIL::RegionBase * root= convertNode <SMIL::RegionBase> (r);
-                    Source::setDimensions (root->w, root->h);
-                }
+            if (m_document && m_document->firstChild () &&
+                    !strcmp (m_document->firstChild ()->nodeName (), "smil")) {
+                // SMIL documents have set its size of root-layout
+                Mrl * mrl = m_document->firstChild ()->mrl ();
+                Source::setDimensions (mrl->width, mrl->height);
             }
         } else if (line.lower () != QString ("[reference]")) do {
             QString mrl = line.stripWhiteSpace ();

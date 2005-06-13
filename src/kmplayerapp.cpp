@@ -412,10 +412,12 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
 KDE_NO_EXPORT void KMPlayerApp::readOptions() {
 
     config->setGroup("General Options");
-
-    QSize size=config->readSizeEntry("Geometry");
-    if (!size.isEmpty ())
-        resize(size);
+    if (m_player->settings ()->remembersize) {
+        QSize size=config->readSizeEntry("Geometry");
+        if (!size.isEmpty ())
+            resize(size);
+    } else
+        resize (QSize (320, 240));
 
     // bar position settings
     KToolBar::BarPosition toolBarPos;
