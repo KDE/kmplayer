@@ -29,6 +29,30 @@ if test "$want_koffice_plugin" = "yes" -a "$have_koffice" = "yes"; then
         AC_SUBST(LIB_KOFFICE)
 fi
 
+AC_MSG_CHECKING(if expat XML parsing is wanted)
+AC_ARG_ENABLE(expat,
+[  --enable-expat use expat libs],
+[if test "$enableval" = yes; then
+        AC_MSG_RESULT(yes)
+        want_expat="yes"
+else
+        AC_MSG_RESULT(no)
+fi], [AC_MSG_RESULT(no); want_expat="no"])
+
+KDE_CHECK_HEADER(expat.h,
+  have_expat=yes,
+  have_expat=no)
+
+AC_MSG_CHECKING([if kmplayer can use expat its XML parser])
+AC_MSG_RESULT($have_expat)
+
+AM_CONDITIONAL(include_expat_support, test "$want_expat" = "yes" -a "$have_expat" = "yes")
+if test x$have_expat = xyes -a x$want_expat = xyes; then
+    AC_DEFINE(HAVE_EXPAT, 1, [If libexpat is installed])
+    LIB_EXPAT="-lexpat"
+    AC_SUBST(LIB_EXPAT)
+fi
+
 KDE_CHECK_HEADER(xine.h,
    have_xine=yes,
    have_xine=no)

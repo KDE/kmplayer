@@ -267,7 +267,7 @@ typedef SharedPtr <Connection> ConnectionPtr;
   In scope            begin event    end event         Out scope
  */
 class KMPLAYER_EXPORT Node : public TreeNode <Node> {
-    friend class KMPlayerDocumentBuilder;
+    friend class DocumentBuilder;
     //friend class SharedPtr<KMPlayer::Node>;
 public:
     enum State {
@@ -445,7 +445,6 @@ inline WeakPtr<KMPlayer::Node> & WeakPtr<KMPlayer::Node>::operator = (KMPlayer::
  * Element node, XML node that can have attributes
  */
 class KMPLAYER_EXPORT Element : public Node {
-    //friend class DocumentBuilder;
 public:
     ~Element () {}
     void setAttributes (AttributeListPtr attrs);

@@ -21,7 +21,9 @@
 #include <qcolor.h>
 #include <kdebug.h>
 #include <kurl.h>
-
+#ifdef HAVE_EXPAT
+#include <expat.h>
+#endif
 #include "kmplayerplaylist.h"
 
 #ifdef SHAREDPTR_DEBUG
@@ -702,16 +704,150 @@ bool GenericMrl::isMrl () {
 namespace KMPlayer {
 
 class DocumentBuilder {
+    int m_ignore_depth;
+    NodePtr m_node;
+    NodePtr m_root;
 public:
-    DocumentBuilder (NodePtr d) : position (0), m_doc (d), m_attributes ((new AttributeList)->self ()), equal_seen (false), in_dbl_quote (false), in_sngl_quote (false), have_error (false) {}
-    virtual ~DocumentBuilder () {};
+    DocumentBuilder (NodePtr d);
+    ~DocumentBuilder () {}
+    bool startTag (const QString & tag, AttributeListPtr attr);
+    bool endTag (const QString & tag);
+    bool characterData (const QString & data);
+};
+
+} // namespace KMPlayer
+
+DocumentBuilder::DocumentBuilder (NodePtr d)
+ : m_ignore_depth (0), m_node (d), m_root (d) {}
+
+bool DocumentBuilder::startTag(const QString &tag, AttributeListPtr attr) {
+    if (m_ignore_depth) {
+        m_ignore_depth++;
+        //kdDebug () << "Warning: ignored tag " << tag.latin1 () << " ignore depth = " << m_ignore_depth << endl;
+    } else {
+        NodePtr n = m_node->childFromTag (tag);
+        if (!n) {
+            kdDebug () << "Warning: unknown tag " << tag.latin1 () << endl;
+            NodePtr doc = m_root->document ()->self ();
+            n = (new DarkNode (doc, tag))->self ();
+        }
+        //kdDebug () << "Found tag " << tag.latin1 () << endl;
+        if (n->isElementNode ())
+            convertNode <Element> (n)->setAttributes (attr);
+        m_node->appendChild (n);
+        n->opened ();
+        m_node = n;
+    }
+    return true;
+}
+
+bool DocumentBuilder::endTag (const QString & tag) {
+    if (m_ignore_depth) { // endtag to ignore
+        m_ignore_depth--;
+        kdDebug () << "Warning: ignored end tag " << " ignore depth = " << m_ignore_depth <<  endl;
+    } else {  // endtag
+        NodePtr n = m_node;
+        while (n) {
+            if (n == m_root) {
+                if (n == m_node) {
+                    kdError () << "m_node == m_doc, stack underflow " << endl;
+                    return false;
+                }
+                kdWarning () << "endtag: no match " << tag.local8Bit () << endl;
+                break;
+            }
+            if (!strcasecmp (n->nodeName (), tag.local8Bit ())) {
+                while (n != m_node) {
+                    kdWarning() << m_node->nodeName () << " not closed" << endl;
+                    m_node->closed ();
+                    m_node = m_node->parentNode ();
+                }
+                break;
+            }
+            n = n ->parentNode ();
+        }
+        //kdDebug () << "end tag " << tag.latin1 () << endl;
+        m_node->closed ();
+        m_node = m_node->parentNode ();
+    }
+    return true;
+}
+
+bool DocumentBuilder::characterData (const QString & data) {
+    if (!m_ignore_depth)
+        m_node->characterData (data);
+    //kdDebug () << "characterData " << d.latin1() << endl;
+    return true;
+}
+
+#ifdef HAVE_EXPAT
+
+static void startTag (void *data, const char * tag, const char **attr) {
+    DocumentBuilder * builder = static_cast <DocumentBuilder *> (data);
+    AttributeListPtr attributes = (new AttributeList)->self ();
+    if (attr && attr [0]) {
+        for (int i = 0; attr[i]; i += 2)
+            attributes->append ((new Attribute (QString (attr [i]), QString (attr [i+1])))->self ());
+    }
+    builder->startTag (QString (tag), attributes);
+}
+
+static void endTag (void *data, const char * tag) {
+    DocumentBuilder * builder = static_cast <DocumentBuilder *> (data);
+    builder->endTag (QString (tag));
+}
+
+static void characterData (void *data, const char *s, int len) {
+    DocumentBuilder * builder = static_cast <DocumentBuilder *> (data);
+    char * buf = new char [len + 1];
+    strncpy (buf, s, len);
+    buf[len] = 0;
+    builder->characterData (QString (buf));
+    delete [] buf;
+}
+
+namespace KMPlayer {
+
+void readXML (NodePtr root, QTextStream & in, const QString & firstline) {
+    bool ok = true;
+    DocumentBuilder builder (root);
+    XML_Parser parser = XML_ParserCreate (0L);
+    XML_SetUserData (parser, &builder);
+    XML_SetElementHandler (parser, startTag, endTag);
+    XML_SetCharacterDataHandler (parser, characterData);
+    if (!firstline.isEmpty ()) {
+        QString str (firstline + QChar ('\n'));
+        QCString buf = str.utf8 ();
+        ok = XML_Parse(parser, buf, strlen (buf), false) != XML_STATUS_ERROR;
+        if (!ok)
+            kdDebug () << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser) << endl;
+    }
+    if (ok) {
+        QCString buf = in.read ().utf8 ();
+        ok = XML_Parse(parser, buf, strlen (buf), true) != XML_STATUS_ERROR;
+        if (!ok)
+            kdDebug () << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser) << endl;
+    }
+    XML_ParserFree(parser);
+    root->normalize ();
+    //return ok;
+}
+
+}
+
+//-----------------------------------------------------------------------------
+#else
+
+namespace KMPlayer {
+
+class SimpleSAXParser {
+public:
+    SimpleSAXParser (DocumentBuilder & b) : builder (b), position (0), m_attributes ((new AttributeList)->self ()), equal_seen (false), in_dbl_quote (false), in_sngl_quote (false), have_error (false) {}
+    virtual ~SimpleSAXParser () {};
     bool parse (QTextStream & d);
-protected:
-    virtual bool startTag (const QString & tag, AttributeListPtr attr) = 0;
-    virtual bool endTag (const QString & tag) = 0;
-    virtual bool characterData (const QString & data) = 0;
 private:
     QTextStream * data;
+    DocumentBuilder & builder;
     int position;
     QChar next_char;
     enum Token { tok_empty, tok_text, tok_white_space, tok_angle_open, tok_equal, tok_double_quote, tok_single_quote, tok_angle_close, tok_slash, tok_exclamation, tok_amp, tok_hash, tok_semi_colon, tok_question_mark };
@@ -735,7 +871,6 @@ private:
     TokenInfoPtr next_token, token, prev_token;
     // for element reading
     QString tagname;
-    NodePtr m_doc;
     AttributeListPtr m_attributes;
     QString attr_name, attr_value;
     QString cdata;
@@ -756,34 +891,22 @@ private:
     void push_attribute ();
 };
 
-class KMPlayerDocumentBuilder : public DocumentBuilder {
-    int m_ignore_depth;
-    NodePtr m_node;
-    NodePtr m_root;
-public:
-    KMPlayerDocumentBuilder (NodePtr d);
-    ~KMPlayerDocumentBuilder () {}
-protected:
-    bool startTag (const QString & tag, AttributeListPtr attr);
-    bool endTag (const QString & tag);
-    bool characterData (const QString & data);
-};
-
 void readXML (NodePtr root, QTextStream & in, const QString & firstline) {
-    KMPlayerDocumentBuilder builder (root);
+    DocumentBuilder builder (root);
+    SimpleSAXParser parser (builder);
     if (!firstline.isEmpty ()) {
         QString str (firstline + QChar ('\n'));
         QTextStream fl_in (&str, IO_ReadOnly);
-        builder.parse (fl_in);
+        parser.parse (fl_in);
     }
-    builder.parse (in);
+    parser.parse (in);
     //doc->normalize ();
     //kdDebug () << root->outerXML ();
 }
 
 } // namespace
 
-void DocumentBuilder::push () {
+void SimpleSAXParser::push () {
     if (next_token->string.length ()) {
         prev_token = token;
         token = next_token;
@@ -794,7 +917,7 @@ void DocumentBuilder::push () {
     }
 }
 
-void DocumentBuilder::push_attribute () {
+void SimpleSAXParser::push_attribute () {
     //kdDebug () << "attribute " << attr_name.latin1 () << "=" << attr_value.latin1 () << endl;
     m_attributes->append ((new Attribute (attr_name, attr_value))->self());
     attr_name.truncate (0);
@@ -802,7 +925,7 @@ void DocumentBuilder::push_attribute () {
     equal_seen = in_sngl_quote = in_dbl_quote = false;
 }
 
-bool DocumentBuilder::nextToken () {
+bool SimpleSAXParser::nextToken () {
     if (token && token->next) {
         token = token->next;
         //kdDebug () << "nextToken: token->next found\n";
@@ -920,7 +1043,7 @@ bool DocumentBuilder::nextToken () {
     return true;
 }
 
-bool DocumentBuilder::readAttributes () {
+bool SimpleSAXParser::readAttributes () {
     bool closed = false;
     while (true) {
         if (!nextToken ()) return false;
@@ -992,16 +1115,16 @@ bool DocumentBuilder::readAttributes () {
                   kdDebug () << "encodeing " << i.data().latin1() << endl;*/
         }
     } else {
-        have_error = startTag (tagname, m_attributes);
+        have_error = builder.startTag (tagname, m_attributes);
         if (closed)
-            have_error &= endTag (tagname);
+            have_error &= builder.endTag (tagname);
         //kdDebug () << "readTag " << tagname << " closed:" << closed << " ok:" << have_error << endl;
     }
     m_state = m_state->next; // pop Node or PI
     return true;
 }
 
-bool DocumentBuilder::readPI () {
+bool SimpleSAXParser::readPI () {
     // TODO: <?xml .. encoding="ENC" .. ?>
     if (!nextToken ()) return false;
     if (token->token == tok_text && !token->string.compare ("xml")) {
@@ -1017,7 +1140,7 @@ bool DocumentBuilder::readPI () {
     return false;
 }
 
-bool DocumentBuilder::readDTD () {
+bool SimpleSAXParser::readDTD () {
     //TODO: <!ENTITY ..>
     if (!nextToken ()) return false;
     if (token->token == tok_text && token->string.startsWith (QString ("--"))) {
@@ -1038,14 +1161,14 @@ bool DocumentBuilder::readDTD () {
     return false;
 }
 
-bool DocumentBuilder::readCDATA () {
+bool SimpleSAXParser::readCDATA () {
     while (!data->atEnd ()) {
         *data >> next_char;
         if (next_char == QChar ('>') && cdata.endsWith (QString ("]]"))) {
             cdata.truncate (cdata.length () - 2);
             m_state = m_state->next;
             if (m_state->state == InContent)
-                have_error = characterData (cdata);
+                have_error = builder.characterData (cdata);
             else if (m_state->state == InAttributes) {
                 if (equal_seen)
                     attr_value += cdata;
@@ -1059,7 +1182,7 @@ bool DocumentBuilder::readCDATA () {
     return false;
 }
 
-bool DocumentBuilder::readComment () {
+bool SimpleSAXParser::readComment () {
     while (nextToken ()) {
         if (token->token == tok_angle_close && prev_token)
             if (prev_token->string.endsWith (QString ("--"))) {
@@ -1070,7 +1193,7 @@ bool DocumentBuilder::readComment () {
     return false;
 }
 
-bool DocumentBuilder::readEndTag () {
+bool SimpleSAXParser::readEndTag () {
     if (!nextToken ()) return false;
     if (token->token == tok_white_space)
         if (!nextToken ()) return false;
@@ -1080,13 +1203,13 @@ bool DocumentBuilder::readEndTag () {
         if (!nextToken ()) return false;
     if (token->token != tok_angle_close)
         return false;
-    have_error = endTag (tagname);
+    have_error = builder.endTag (tagname);
     m_state = m_state->next;
     return true;
 }
 
 // TODO: <!ENTITY ..> &#1234;
-bool DocumentBuilder::readTag () {
+bool SimpleSAXParser::readTag () {
     if (!nextToken ()) return false;
     if (token->token == tok_exclamation) {
         m_state = new StateInfo (InDTDTag, m_state->next);
@@ -1111,7 +1234,7 @@ bool DocumentBuilder::readTag () {
     return readAttributes ();
 }
 
-bool DocumentBuilder::parse (QTextStream & d) {
+bool SimpleSAXParser::parse (QTextStream & d) {
     data = &d;
     if (!next_token) {
         next_token = TokenInfoPtr (new TokenInfo);
@@ -1151,7 +1274,7 @@ bool DocumentBuilder::parse (QTextStream & d) {
                         m_state = new StateInfo (InTag, m_state);
                         ok = readTag ();
                     } else
-                        have_error = characterData (token->string);
+                        have_error = builder.characterData (token->string);
                 }
         }
         if (!m_state)
@@ -1160,66 +1283,4 @@ bool DocumentBuilder::parse (QTextStream & d) {
     return false; // need more data
 }
 
-KMPlayerDocumentBuilder::KMPlayerDocumentBuilder (NodePtr d)
- : DocumentBuilder (d->document ()->self ()), m_ignore_depth (0),
-   m_node (d), m_root (d) {}
-
-bool KMPlayerDocumentBuilder::startTag(const QString &tag, AttributeListPtr attr) {
-    if (m_ignore_depth) {
-        m_ignore_depth++;
-        //kdDebug () << "Warning: ignored tag " << tag.latin1 () << " ignore depth = " << m_ignore_depth << endl;
-    } else {
-        NodePtr n = m_node->childFromTag (tag);
-        if (!n) {
-            kdDebug () << "Warning: unknown tag " << tag.latin1 () << endl;
-            NodePtr doc = m_root->document ()->self ();
-            n = (new DarkNode (doc, tag))->self ();
-        }
-        //kdDebug () << "Found tag " << tag.latin1 () << endl;
-        if (n->isElementNode ())
-            convertNode <Element> (n)->setAttributes (attr);
-        m_node->appendChild (n);
-        n->opened ();
-        m_node = n;
-    }
-    return true;
-}
-
-bool KMPlayerDocumentBuilder::endTag (const QString & tag) {
-    if (m_ignore_depth) { // endtag to ignore
-        m_ignore_depth--;
-        kdDebug () << "Warning: ignored end tag " << " ignore depth = " << m_ignore_depth <<  endl;
-    } else {  // endtag
-        NodePtr n = m_node;
-        while (n) {
-            if (n == m_root) {
-                if (n == m_node) {
-                    kdError () << "m_node == m_doc, stack underflow " << endl;
-                    return false;
-                }
-                kdWarning () << "endtag: no match " << tag.local8Bit () << endl;
-                break;
-            }
-            if (!strcasecmp (n->nodeName (), tag.local8Bit ())) {
-                while (n != m_node) {
-                    kdWarning() << m_node->nodeName () << " not closed" << endl;
-                    m_node->closed ();
-                    m_node = m_node->parentNode ();
-                }
-                break;
-            }
-            n = n ->parentNode ();
-        }
-        //kdDebug () << "end tag " << tag.latin1 () << endl;
-        m_node->closed ();
-        m_node = m_node->parentNode ();
-    }
-    return true;
-}
-
-bool KMPlayerDocumentBuilder::characterData (const QString & data) {
-    if (!m_ignore_depth)
-        m_node->characterData (data);
-    //kdDebug () << "characterData " << d.latin1() << endl;
-    return true;
-}
+#endif
