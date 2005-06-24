@@ -137,7 +137,6 @@ public:
 
     // these are called from Process
     void changeURL (const QString & url);
-    void changeTitle (const QString & title);
     void updateTree ();
 public slots:
     virtual bool openURL (const KURL & url);
@@ -178,7 +177,6 @@ signals:
     void loading (int percentage);
     void urlAdded (const QString & url);
     void urlChanged (const QString & url);
-    void titleChanged (const QString & title);
     void processChanged (const char *);
 protected:
     bool openFile();

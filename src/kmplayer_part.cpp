@@ -722,7 +722,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
             break;
         case prop_volume:
             if (player->view ())
-                rval = QString::number (player->process()->view()->controlPanel()->volumeBar()->value());
+                rval = QString::number (player->process()->viewer ()->view()->controlPanel()->volumeBar()->value());
             break;
         default:
             lastJSCommandEntry = entry;
@@ -744,7 +744,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::put
         }
         case prop_volume:
             if (player->view ())
-                player->process()->view()->controlPanel()->volumeBar()->setValue(val.toInt ());
+                player->process()->viewer ()->view()->controlPanel()->volumeBar()->setValue(val.toInt ());
             break;
         default:
             return false;
@@ -842,7 +842,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
         case setvolume:
             if (!args.size ())
                 return false;
-            player->process()->view()->controlPanel()->volumeBar()->setValue(args.first ().toInt ());
+            player->process()->viewer ()->view()->controlPanel()->volumeBar()->setValue(args.first ().toInt ());
             rval = "true";
             break;
         case source:
@@ -850,7 +850,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
             break;
         case volume:
             if (player->view ())
-                rval = QString::number (player->process()->view()->controlPanel()->volumeBar()->value());
+                rval = QString::number (player->process()->viewer ()->view()->controlPanel()->volumeBar()->value());
             break;
         default:
             return false;

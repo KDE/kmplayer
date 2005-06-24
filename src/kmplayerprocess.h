@@ -22,6 +22,7 @@
 #define _KMPLAYERPROCESS_H_
 
 #include <qobject.h>
+#include <qguardedptr.h>
 #include <qstring.h>
 #include <qcstring.h>
 #include <qstringlist.h>
@@ -37,8 +38,8 @@ class KProcess;
 
 namespace KMPlayer {
     
-class PartBase;
-class View;
+class Settings;
+class Viewer;
 class Source;
 class Callback;
 class Backend_stub;
@@ -52,17 +53,16 @@ public:
     enum State {
         NotRunning = 0, Ready, Buffering, Playing
     };
-    Process (PartBase * player, const char * n);
+    Process (QObject * parent, Settings * settings, const char * n);
     virtual ~Process ();
     virtual void init ();
-    virtual void initProcess ();
+    virtual void initProcess (Viewer *);
     virtual QString menuName () const;
     bool playing () const;
     KDE_NO_EXPORT KProcess * process () const { return m_process; }
-    KDE_NO_EXPORT PartBase * player () const { return m_player; }
     KDE_NO_EXPORT Source * source () const { return m_source; }
     virtual WId widget ();
-    View * view ();
+    Viewer * viewer () const { return m_viewer; }
     void setSource (Source * src) { m_source = src; }
     virtual bool grabPicture (const KURL & url, int pos);
     bool supports (const char * source) const;
@@ -75,7 +75,7 @@ signals:
     void positioned (int pos);
     void lengthFound (int len);
 public slots:
-    virtual bool ready ();
+    virtual bool ready (Viewer *);
     virtual bool play (Source *, NodePtr mrl);
     virtual bool stop ();
     virtual bool quit ();
@@ -91,8 +91,9 @@ public slots:
     virtual bool brightness (int pos, bool absolute);
 protected:
     void setState (State newstate);
-    PartBase * m_player;
+    QGuardedPtr <Viewer> m_viewer;
     Source * m_source;
+    Settings * m_settings;
     NodePtrW m_mrl;
     State m_state;
     State m_old_state;
@@ -111,9 +112,9 @@ protected slots:
 class MPlayerBase : public Process {
     Q_OBJECT
 public:
-    MPlayerBase (PartBase * player, const char * n);
+    MPlayerBase (QObject * parent, Settings * settings, const char * n);
     ~MPlayerBase ();
-    void initProcess ();
+    void initProcess (Viewer *);
 public slots:
     virtual bool stop ();
     virtual bool quit ();
@@ -136,7 +137,7 @@ class MPlayerPreferencesFrame;
 class KDE_EXPORT MPlayer : public MPlayerBase {
     Q_OBJECT
 public:
-    MPlayer (PartBase * player);
+    MPlayer (QObject * parent, Settings * settings);
     ~MPlayer ();
     virtual void init ();
     virtual QString menuName () const;
@@ -211,7 +212,7 @@ protected:
 class MEncoder : public MPlayerBase, public Recorder {
     Q_OBJECT
 public:
-    MEncoder (PartBase * player);
+    MEncoder (QObject * parent, Settings * settings);
     ~MEncoder ();
     virtual void init ();
     KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
@@ -226,7 +227,7 @@ public slots:
 class MPlayerDumpstream : public MPlayerBase, public Recorder {
     Q_OBJECT
 public:
-    MPlayerDumpstream (PartBase * player);
+    MPlayerDumpstream (QObject * parent, Settings * settings);
     ~MPlayerDumpstream ();
     virtual void init ();
     KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
@@ -245,7 +246,7 @@ class KMPLAYER_EXPORT CallbackProcess : public Process {
     Q_OBJECT
     friend class Callback;
 public:
-    CallbackProcess (PartBase * player, const char * n, const QString & menu);
+    CallbackProcess (QObject * parent, Settings * settings, const char * n, const QString & menu);
     ~CallbackProcess ();
     virtual void setStatusMessage (const QString & msg);
     virtual void setErrorMessage (int code, const QString & msg);
@@ -263,7 +264,7 @@ public:
     void setChangedData (const QByteArray &);
     QString dcopName ();
     NodePtr configDocument () { return configdoc; }
-    void initProcess ();
+    void initProcess (Viewer *);
 public slots:
     bool play (Source *, NodePtr mrl);
     bool stop ();
@@ -348,10 +349,10 @@ private:
 class Xine : public CallbackProcess {
     Q_OBJECT
 public:
-    Xine (PartBase * player);
+    Xine (QObject * parent, Settings * settings);
     ~Xine ();
 public slots:
-    bool ready ();
+    bool ready (Viewer *);
 };
 
 /*
@@ -360,10 +361,10 @@ public slots:
 class GStreamer : public CallbackProcess {
     Q_OBJECT
 public:
-    GStreamer (PartBase * player);
+    GStreamer (QObject * parent, Settings * settings);
     ~GStreamer ();
 public slots:
-    virtual bool ready ();
+    virtual bool ready (Viewer *);
 };
 
 /*
@@ -372,7 +373,7 @@ public slots:
 class KMPLAYER_EXPORT FFMpeg : public Process, public Recorder {
     Q_OBJECT
 public:
-    FFMpeg (PartBase * player);
+    FFMpeg (QObject * parent, Settings * settings);
     ~FFMpeg ();
     virtual void init ();
     void setArguments (const QString & args) { arguments = args; }

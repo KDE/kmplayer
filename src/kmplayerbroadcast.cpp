@@ -553,7 +553,7 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::startFeed () {
     if (m_ffmpeg_process)
         m_ffmpeg_process->stop ();
     delete m_ffmpeg_process;
-    m_ffmpeg_process = new KMPlayer::FFMpeg (m_player);
+    m_ffmpeg_process = new KMPlayer::FFMpeg (m_player, m_player->settings ());
     connect (m_ffmpeg_process, SIGNAL (stateChange (KMPlayer::Process::State, KMPlayer::Process::State)), this, SLOT (stateChange (KMPlayer::Process::State, KMPlayer::Process::State)));
     ffurl.sprintf ("http://localhost:%d/kmplayer.ffm", m_ffserverconfig->ffserverport);
     m_ffmpeg_process->setURL (KURL(ffurl));

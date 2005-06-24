@@ -92,7 +92,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     connect (m_broadcastconfig, SIGNAL (broadcastStopped()), this, SLOT (broadcastStopped()));
     initStatusBar();
     m_player->init (actionCollection ());
-    m_player->players () ["xvideo"] = new XVideo (m_player);
+    m_player->players () ["xvideo"] = new XVideo(m_player,m_player->settings());
     m_player->setProcess ("mplayer");
     m_player->setRecorder ("mencoder");
     m_player->sources () ["dvdsource"] = new ::KMPlayerDVDSource(this, m_dvdmenu);
@@ -206,8 +206,6 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
              this, SLOT (loadingProgress (int)));
     connect (m_player, SIGNAL (sourceChanged (KMPlayer::Source *)), this,
              SLOT (slotSourceChanged (KMPlayer::Source *)));
-    connect (m_player, SIGNAL (titleChanged (const QString &)), this,
-             SLOT (setCaption (const QString &)));
     m_view->controlPanel ()->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom50,
             this, SLOT (zoom50 ()));
     m_view->controlPanel ()->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom100,
@@ -243,6 +241,8 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
 
 KDE_NO_EXPORT void KMPlayerApp::slotSourceChanged (KMPlayer::Source * source) {
     setCaption (source->prettyName (), false);
+    connect (source, SIGNAL (titleChanged (const QString &)), this,
+             SLOT (setCaption (const QString &)));
 }
 
 KDE_NO_EXPORT void KMPlayerApp::dvdNav () {

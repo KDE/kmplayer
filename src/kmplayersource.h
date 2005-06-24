@@ -91,6 +91,7 @@ public:
     KDE_NO_EXPORT void setPosition (int pos) { m_position = pos; }
     virtual void setIdentified (bool b = true);
     KDE_NO_EXPORT void setAutoPlay (bool b) { m_auto_play = b; }
+    void setTitle (const QString & title);
 
     virtual QString prettyName ();
 signals:
@@ -104,6 +105,7 @@ signals:
      */
     void endOfPlayItems ();
     void dimensionsChanged ();
+    void titleChanged (const QString & title);
 public slots:
     virtual void activate () = 0;
     virtual void deactivate () = 0;

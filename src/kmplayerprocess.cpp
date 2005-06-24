@@ -46,7 +46,7 @@
 #include <kapplication.h>
 #include <kstandarddirs.h>
 
-#include "kmplayerpartbase.h"
+#include "kmplayerview.h"
 #include "kmplayerprocess.h"
 #include "kmplayersource.h"
 #include "kmplayerconfig.h"
@@ -72,8 +72,8 @@ static QString getPath (const KURL & url) {
     return p;
 }
 
-Process::Process (PartBase * player, const char * n)
-    : QObject (player, n), m_player (player), m_source (0L),
+Process::Process (QObject * parent, Settings * settings, const char * n)
+    : QObject (parent, n), m_viewer (0L), m_source (0L), m_settings (settings),
       m_state (NotRunning), m_process (0L),
       m_supported_sources (default_supported) {}
 
@@ -89,7 +89,8 @@ QString Process::menuName () const {
     return QString (className ());
 }
 
-void Process::initProcess () {
+void Process::initProcess (Viewer * viewer) {
+    m_viewer = viewer;
     delete m_process;
     m_process = new KProcess;
     m_process->setUseShell (true);
@@ -99,10 +100,6 @@ void Process::initProcess () {
 
 WId Process::widget () {
     return 0;
-}
-
-View * Process::view () {
-    return static_cast <View *> (m_player->view ());
 }
 
 bool Process::playing () const {
@@ -164,7 +161,7 @@ bool Process::stop () {
         m_process->kill (SIGKILL);
         KProcessController::theKProcessController->waitForProcessExit (1);
         if (m_process->isRunning ()) {
-            KMessageBox::error (view (), i18n ("Failed to end player process."), i18n ("Error"));
+            KMessageBox::error (viewer (), i18n ("Failed to end player process."), i18n ("Error"));
         }
     } while (false);
     return !playing ();
@@ -192,7 +189,8 @@ KDE_NO_EXPORT bool Process::play (Source * src, NodePtr mrl) {
     return false;
 }
 
-bool Process::ready () {
+bool Process::ready (Viewer * viewer) {
+    m_viewer = viewer;
     setState (Ready);
     return true;
 }
@@ -206,16 +204,16 @@ static bool proxyForURL (const KURL& url, QString& proxy) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT MPlayerBase::MPlayerBase (PartBase * player, const char * n)
-    : Process (player, n), m_use_slave (true) {
+KDE_NO_CDTOR_EXPORT MPlayerBase::MPlayerBase (QObject * parent, Settings * settings, const char * n)
+    : Process (parent, settings, n), m_use_slave (true) {
     m_process = new KProcess;
 }
 
 KDE_NO_CDTOR_EXPORT MPlayerBase::~MPlayerBase () {
 }
 
-KDE_NO_EXPORT void MPlayerBase::initProcess () {
-    Process::initProcess ();
+KDE_NO_EXPORT void MPlayerBase::initProcess (Viewer * viewer) {
+    Process::initProcess (viewer);
     commands.clear ();
     const KURL & url (m_source->url ());
     if (!url.isEmpty ()) {
@@ -294,12 +292,12 @@ static const char * mplayer_supports [] = {
     "dvdsource", "hrefsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", 0L
 };
 
-KDE_NO_CDTOR_EXPORT MPlayer::MPlayer (PartBase * player)
- : MPlayerBase (player, "mplayer"),
+KDE_NO_CDTOR_EXPORT MPlayer::MPlayer (QObject * parent, Settings * settings)
+ : MPlayerBase (parent, settings, "mplayer"),
    m_widget (0L),
    m_configpage (new MPlayerPreferencesPage (this)) {
        m_supported_sources = mplayer_supports;
-    m_player->settings ()->addPage (m_configpage);
+    m_settings->addPage (m_configpage);
 }
 
 KDE_NO_CDTOR_EXPORT MPlayer::~MPlayer () {
@@ -316,15 +314,15 @@ QString MPlayer::menuName () const {
 }
 
 KDE_NO_EXPORT WId MPlayer::widget () {
-    return view()->viewer()->embeddedWinId ();
+    return viewer()->embeddedWinId ();
 }
 
 KDE_NO_EXPORT bool MPlayer::play (Source * source, NodePtr node) {
     if (playing ())
         return sendCommand (QString ("gui_play"));
     stop ();
+    initProcess (m_viewer);
     Process::play (source, node);
-    initProcess ();
     source->setPosition (0);
     m_request_seek = -1;
     QString args = source->options () + ' ';
@@ -350,12 +348,12 @@ KDE_NO_EXPORT bool MPlayer::play (Source * source, NodePtr node) {
             args += KProcess::quote (QString (QFile::encodeName (m_url)));
     }
     m_tmpURL.truncate (0);
-    if (!source->identified () && !m_player->settings ()->mplayerpost090) {
+    if (!source->identified () && !m_settings->mplayerpost090) {
         args += QString (" -quiet -nocache -identify -frames 0 ");
     } else {
-        if (m_player->settings ()->loop)
+        if (m_settings->loop)
             args += QString (" -loop 0");
-        if (m_player->settings ()->mplayerpost090)
+        if (m_settings->mplayerpost090)
             args += QString (" -identify");
         if (!source->subUrl ().isEmpty ()) {
             args += QString (" -sub ");
@@ -446,7 +444,6 @@ bool MPlayer::run (const char * args, const char * pipe) {
             this, SLOT (processOutput (KProcess *, char *, int)));
     connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
             this, SLOT (processOutput (KProcess *, char *, int)));
-    Settings *settings = m_player->settings ();
     m_use_slave = !(pipe && pipe[0]);
     if (!m_use_slave) {
         fprintf (stderr, "%s | ", pipe);
@@ -460,17 +457,17 @@ bool MPlayer::run (const char * args, const char * pipe) {
         *m_process << "-slave ";
     }
 
-    QString strVideoDriver = QString (settings->videodrivers[settings->videodriver].driver);
+    QString strVideoDriver = QString (m_settings->videodrivers[m_settings->videodriver].driver);
     if (!strVideoDriver.isEmpty ()) {
         fprintf (stderr, " -vo %s", strVideoDriver.lower().ascii());
         *m_process << " -vo " << strVideoDriver.lower();
     }
-    QString strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].driver);
+    QString strAudioDriver = QString (m_settings->audiodrivers[m_settings->audiodriver].driver);
     if (!strAudioDriver.isEmpty ()) {
         fprintf (stderr, " -ao %s", strAudioDriver.lower().ascii());
         *m_process << " -ao " << strAudioDriver.lower();
     }
-    if (settings->framedrop) {
+    if (m_settings->framedrop) {
         fprintf (stderr, " -framedrop");
         *m_process << " -framedrop";
     }
@@ -484,17 +481,17 @@ bool MPlayer::run (const char * args, const char * pipe) {
     fprintf (stderr, " %s", m_source->filterOptions ().ascii ());
     *m_process << " " << m_source->filterOptions ();
 
-    fprintf (stderr, " -contrast %d", settings->contrast);
-    *m_process << " -contrast " << QString::number (settings->contrast);
+    fprintf (stderr, " -contrast %d", m_settings->contrast);
+    *m_process << " -contrast " << QString::number (m_settings->contrast);
 
-    fprintf (stderr, " -brightness %d", settings->brightness);
-    *m_process << " -brightness " << QString::number(settings->brightness);
+    fprintf (stderr, " -brightness %d", m_settings->brightness);
+    *m_process << " -brightness " << QString::number(m_settings->brightness);
 
-    fprintf (stderr, " -hue %d", settings->hue);
-    *m_process << " -hue " << QString::number (settings->hue);
+    fprintf (stderr, " -hue %d", m_settings->hue);
+    *m_process << " -hue " << QString::number (m_settings->hue);
 
-    fprintf (stderr, " -saturation %d", settings->saturation);
-    *m_process << " -saturation " << QString::number(settings->saturation);
+    fprintf (stderr, " -saturation %d", m_settings->saturation);
+    *m_process << " -saturation " << QString::number(m_settings->saturation);
 
     fprintf (stderr, " %s\n", args);
     *m_process << " " << args;
@@ -507,7 +504,7 @@ bool MPlayer::run (const char * args, const char * pipe) {
 
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
 
-    old_volume = view ()->controlPanel ()->volumeBar ()->value ();
+    old_volume = viewer ()->view ()->controlPanel ()->volumeBar ()->value ();
 
     if (m_process->isRunning ()) {
         setState (Buffering); // wait for start regexp for state Playing
@@ -518,7 +515,7 @@ bool MPlayer::run (const char * args, const char * pipe) {
 
 KDE_NO_EXPORT bool MPlayer::grabPicture (const KURL & url, int pos) {
     stop ();
-    initProcess ();
+    initProcess (m_viewer);
     QString outdir = locateLocal ("data", "kmplayer/");
     m_grabfile = outdir + QString ("00000001.jpg");
     unlink (m_grabfile.ascii ());
@@ -536,8 +533,8 @@ KDE_NO_EXPORT bool MPlayer::grabPicture (const KURL & url, int pos) {
 }
 
 KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
-    View * v = view ();
-    if (!v || slen <= 0) return;
+    if (!m_viewer || slen <= 0) return;
+    View * v = m_viewer->view ();
 
     bool ok;
     QRegExp * patterns = m_configpage->m_patterns;
@@ -606,7 +603,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                     if (ok && movie_width > 0 && movie_height > 0)
                         m_source->setDimensions (movie_width, movie_height);
                 } else if (m_startRegExp.search (out) > -1) {
-                    if (m_player->settings ()->mplayerpost090) {
+                    if (m_settings->mplayerpost090) {
                         if (!m_tmpURL.isEmpty () && m_url != m_tmpURL) {
                             m_source->insertURL (m_tmpURL);;
                             m_tmpURL.truncate (0);
@@ -767,8 +764,8 @@ static const char * mencoder_supports [] = {
     "dvdsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", 0L
 };
 
-KDE_NO_CDTOR_EXPORT MEncoder::MEncoder (PartBase * player)
- : MPlayerBase (player, "mencoder") {
+KDE_NO_CDTOR_EXPORT MEncoder::MEncoder (QObject * parent, Settings * settings)
+ : MPlayerBase (parent, settings, "mencoder") {
     m_supported_sources = mencoder_supports;
 }
 
@@ -781,22 +778,22 @@ KDE_NO_EXPORT void MEncoder::init () {
 bool MEncoder::play (Source * source, NodePtr node) {
     bool success = false;
     stop ();
+    initProcess (m_viewer);
     Process::play (source, node);
     KURL url (m_url);
-    initProcess ();
     source->setPosition (0);
     QString args;
     m_use_slave = m_source->pipeCmd ().isEmpty ();
     if (!m_use_slave)
         args = m_source->pipeCmd () + QString (" | ");
-    QString margs = m_player->settings()->mencoderarguments;
-    if (m_player->settings()->recordcopy)
+    QString margs = m_settings->mencoderarguments;
+    if (m_settings->recordcopy)
         margs = QString ("-oac copy -ovc copy");
     args += QString ("mencoder ") + margs + ' ' + m_source->recordCmd ();
-    if (m_player->source () == source) // ugly
-        m_player->stop ();
+    // FIXME if (m_player->source () == source) // ugly
+    //    m_player->stop ();
     QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
-    bool post090 = m_player->settings ()->mplayerpost090;
+    bool post090 = m_settings->mplayerpost090;
     if (!myurl.isEmpty ()) {
         if (!post090 && myurl.startsWith (QString ("tv://")))
             ; // skip it
@@ -832,8 +829,8 @@ static const char * mplayerdump_supports [] = {
 };
 
 KDE_NO_CDTOR_EXPORT
-MPlayerDumpstream::MPlayerDumpstream (PartBase * player)
-    : MPlayerBase (player, "mplayerdumpstream") {
+MPlayerDumpstream::MPlayerDumpstream (QObject * parent, Settings * settings)
+    : MPlayerBase (parent, settings, "mplayerdumpstream") {
     m_supported_sources = mplayerdump_supports;
     }
 
@@ -846,19 +843,19 @@ KDE_NO_EXPORT void MPlayerDumpstream::init () {
 bool MPlayerDumpstream::play (Source * source, NodePtr node) {
     bool success = false;
     stop ();
+    initProcess (m_viewer);
     Process::play (source, node);
     KURL url (m_url);
-    initProcess ();
     source->setPosition (0);
     QString args;
     m_use_slave = m_source->pipeCmd ().isEmpty ();
     if (!m_use_slave)
         args = m_source->pipeCmd () + QString (" | ");
     args += QString ("mplayer ") + m_source->recordCmd ();
-    if (m_player->source () == source) // ugly
-        m_player->stop ();
+    // FIXME if (m_player->source () == source) // ugly
+    //    m_player->stop ();
     QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
-    bool post090 = m_player->settings ()->mplayerpost090;
+    bool post090 = m_settings->mplayerpost090;
     if (!myurl.isEmpty ()) {
         if (!post090 && myurl.startsWith (QString ("tv://")))
             ; // skip it
@@ -900,7 +897,7 @@ void Callback::statusMessage (int code, QString msg) {
     if (!m_process->m_source) return;
     switch ((StatusCode) code) {
         case stat_newtitle:
-            m_process->player ()->changeTitle (msg);
+            m_process->source ()->setTitle (msg);
             break;
         case stat_addurl:
             m_process->m_source->insertURL (KURL::fromPathOrURL (msg).url ());
@@ -940,8 +937,8 @@ void Callback::loadingProgress (int percentage) {
 
 //-----------------------------------------------------------------------------
 
-CallbackProcess::CallbackProcess (PartBase * player, const char * n, const QString & menuname)
- : Process (player, n),
+CallbackProcess::CallbackProcess (QObject * parent, Settings * settings, const char * n, const QString & menuname)
+ : Process (parent, settings, n),
    m_callback (new Callback (this)),
    m_backend (0L),
    m_menuname (menuname),
@@ -1008,11 +1005,10 @@ void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
             return;
         }
     }
-    Settings * settings = m_player->settings ();
-    saturation (settings->saturation, true);
-    hue (settings->hue, true);
-    brightness (settings->brightness, true);
-    contrast (settings->contrast, true);
+    saturation (m_settings->saturation, true);
+    hue (m_settings->hue, true);
+    brightness (m_settings->brightness, true);
+    contrast (m_settings->contrast, true);
     setState (Ready);
 }
 
@@ -1047,7 +1043,7 @@ bool CallbackProcess::getConfigData () {
         return false;
     if (m_have_config == config_unknown && !playing ()) {
         m_have_config = config_probe;
-        ready ();
+        ready (m_viewer);
     }
     return true;
 }
@@ -1058,7 +1054,7 @@ void CallbackProcess::setChangedData (const QByteArray & data) {
     if (m_send_config == send_try)
         m_backend->setConfig (data);
     else
-        ready ();
+        ready (m_viewer);
 }
 
 bool CallbackProcess::play (Source * source, NodePtr node) {
@@ -1098,8 +1094,8 @@ bool CallbackProcess::quit () {
     if (playing ()) {
         if (m_backend)
             m_backend->quit ();
-        else if (view ())
-            view ()->viewer ()->sendKeyEvent ('q');
+        else if (m_viewer)
+            m_viewer->sendKeyEvent ('q');
 #if KDE_IS_VERSION(3, 1, 90)
         m_process->wait(1);
 #else
@@ -1172,8 +1168,8 @@ QString CallbackProcess::dcopName () {
     return cbname;
 }
 
-void CallbackProcess::initProcess () {
-    Process::initProcess ();
+void CallbackProcess::initProcess (Viewer * viewer) {
+    Process::initProcess (viewer);
     connect (m_process, SIGNAL (processExited (KProcess *)),
             this, SLOT (processStopped (KProcess *)));
     connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
@@ -1183,9 +1179,8 @@ void CallbackProcess::initProcess () {
 }
 
 KDE_NO_EXPORT void CallbackProcess::processOutput (KProcess *, char * str, int slen) {
-    View * v = view ();
-    if (v && slen > 0)
-        v->addText (QString::fromLocal8Bit (str, slen));
+    if (m_viewer && slen > 0)
+        m_viewer->view ()->addText (QString::fromLocal8Bit (str, slen));
 }
 
 KDE_NO_EXPORT void CallbackProcess::processStopped (KProcess *) {
@@ -1194,12 +1189,12 @@ KDE_NO_EXPORT void CallbackProcess::processStopped (KProcess *) {
     setState (NotRunning);
     if (m_send_config == send_try) {
         m_send_config = send_new; // we failed, retry ..
-        ready ();
+        ready (m_viewer);
     }
 }
 
 WId CallbackProcess::widget () {
-    return view()->viewer()->embeddedWinId ();
+    return m_viewer ? m_viewer->embeddedWinId () : 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -1422,21 +1417,20 @@ static const char * xine_supported [] = {
     "dvdnavsource", "pipesource", "urlsource", "vcdsource", 0L
 };
 
-KDE_NO_CDTOR_EXPORT Xine::Xine (PartBase * player)
-    : CallbackProcess (player, "xine", i18n ("&Xine")) {
+KDE_NO_CDTOR_EXPORT Xine::Xine (QObject * parent, Settings * settings)
+    : CallbackProcess (parent, settings, "xine", i18n ("&Xine")) {
 #ifdef HAVE_XINE
     m_supported_sources = xine_supported;
-    m_player->settings ()->addPage (m_configpage);
+    m_settings->addPage (m_configpage);
 #endif
 }
 
 KDE_NO_CDTOR_EXPORT Xine::~Xine () {}
 
-bool Xine::ready () {
-    initProcess ();
+bool Xine::ready (Viewer * viewer) {
+    initProcess (viewer);
     QString xine_config = KProcess::quote (QString (QFile::encodeName (locateLocal ("data", "kmplayer/") + QString ("xine_config"))));
     m_request_seek = -1;
-    Settings *settings = m_player->settings ();
     if (m_source && !m_source->pipeCmd ().isEmpty ()) {
         fprintf (stderr, "%s | ", m_source->pipeCmd ().ascii ());
         *m_process << m_source->pipeCmd ().ascii () << " | ";
@@ -1446,12 +1440,12 @@ bool Xine::ready () {
     fprintf (stderr, " -f %s", xine_config.ascii ());
     *m_process << " -f " << xine_config;
 
-    QString strVideoDriver = QString (settings->videodrivers[settings->videodriver].driver);
+    QString strVideoDriver = QString (m_settings->videodrivers[m_settings->videodriver].driver);
     if (!strVideoDriver.isEmpty ()) {
         fprintf (stderr, " -vo %s", strVideoDriver.lower().ascii());
         *m_process << " -vo " << strVideoDriver.lower();
     }
-    QString strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].driver);
+    QString strAudioDriver = QString (m_settings->audiodrivers[m_settings->audiodriver].driver);
     if (!strAudioDriver.isEmpty ()) {
         if (strAudioDriver.startsWith (QString ("alsa")))
             strAudioDriver = QString ("alsa");
@@ -1466,13 +1460,13 @@ bool Xine::ready () {
     }
     if (m_source)
         if (m_source->url ().url ().startsWith (QString ("dvd://")) &&
-                !settings->dvddevice.isEmpty ()) {
-            fprintf (stderr, " -dvd-device %s", settings->dvddevice.ascii ());
-            *m_process << " -dvd-device " << settings->dvddevice;
+                !m_settings->dvddevice.isEmpty ()) {
+            fprintf (stderr, " -dvd-device %s", m_settings->dvddevice.ascii ());
+            *m_process << " -dvd-device " << m_settings->dvddevice;
         } else if (m_source->url ().url ().startsWith (QString ("vcd://")) &&
-                !settings->vcddevice.isEmpty ()) {
-            fprintf (stderr, " -vcd-device %s", settings->vcddevice.ascii ());
-            *m_process << " -vcd-device " << settings->vcddevice;
+                !m_settings->vcddevice.isEmpty ()) {
+            fprintf (stderr, " -vcd-device %s", m_settings->vcddevice.ascii ());
+            *m_process << " -vcd-device " << m_settings->vcddevice;
         }
     fprintf (stderr, "\n");
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
@@ -1488,8 +1482,8 @@ static const char * gst_supported [] = {
     "urlsource", 0L
 };
 
-KDE_NO_CDTOR_EXPORT GStreamer::GStreamer (PartBase * player)
-    : CallbackProcess (player, "gst", i18n ("&GStreamer")) {
+KDE_NO_CDTOR_EXPORT GStreamer::GStreamer (QObject * parent, Settings * settings)
+    : CallbackProcess (parent, settings, "gst", i18n ("&GStreamer")) {
 #ifdef HAVE_GSTREAMER
     m_supported_sources = gst_supported;
 #endif
@@ -1497,19 +1491,18 @@ KDE_NO_CDTOR_EXPORT GStreamer::GStreamer (PartBase * player)
 
 KDE_NO_CDTOR_EXPORT GStreamer::~GStreamer () {}
 
-KDE_NO_EXPORT bool GStreamer::ready () {
-    initProcess ();
+KDE_NO_EXPORT bool GStreamer::ready (Viewer * viewer) {
+    initProcess (viewer);
     m_request_seek = -1;
-    Settings *settings = m_player->settings ();
     fprintf (stderr, "kgstplayer -wid %lu", (unsigned long) widget ());
     *m_process << "kgstplayer -wid " << QString::number (widget ());
 
-    QString strVideoDriver = QString (settings->videodrivers[settings->videodriver].driver);
+    QString strVideoDriver = QString (m_settings->videodrivers[m_settings->videodriver].driver);
     if (!strVideoDriver.isEmpty ()) {
         fprintf (stderr, " -vo %s", strVideoDriver.lower().ascii());
         *m_process << " -vo " << strVideoDriver.lower();
     }
-    QString strAudioDriver = QString (settings->audiodrivers[settings->audiodriver].driver);
+    QString strAudioDriver = QString (m_settings->audiodrivers[m_settings->audiodriver].driver);
     if (!strAudioDriver.isEmpty ()) {
         if (strAudioDriver.startsWith (QString ("alsa")))
             strAudioDriver = QString ("alsa");
@@ -1528,8 +1521,8 @@ static const char * ffmpeg_supports [] = {
     "tvsource", "urlsource", 0L
 };
 
-FFMpeg::FFMpeg (PartBase * player)
- : Process (player, "ffmpeg") {
+FFMpeg::FFMpeg (QObject * parent, Settings * settings)
+ : Process (parent, settings, "ffmpeg") {
     m_supported_sources = ffmpeg_supports;
 }
 
@@ -1540,9 +1533,9 @@ KDE_NO_EXPORT void FFMpeg::init () {
 }
 
 bool FFMpeg::play (Source * source, NodePtr node) {
+    initProcess (m_viewer);
     Process::play (source, node);
     KURL url (m_url);
-    initProcess ();
     connect (m_process, SIGNAL (processExited (KProcess *)),
             this, SLOT (processStopped (KProcess *)));
     QString outurl = QString (QFile::encodeName (m_recordurl.isLocalFile () ? getPath (m_recordurl) : m_recordurl.url ()));
@@ -1580,8 +1573,8 @@ bool FFMpeg::play (Source * source, NodePtr node) {
     cmd += QChar (' ') + KProcess::quote (QString (QFile::encodeName (outurl)));
     fprintf (stderr, "%s\n", (const char *) cmd.local8Bit ());
     *m_process << cmd;
-    if (m_player->source () == source) // ugly
-        m_player->stop ();
+    // FIXME if (m_player->source () == source) // ugly
+    //    m_player->stop ();
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
     if (m_process->isRunning ())
         setState (Playing);

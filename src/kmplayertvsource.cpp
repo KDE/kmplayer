@@ -606,7 +606,7 @@ KDE_NO_EXPORT void TVDeviceScannerSource::play () {
     QString args;
     args.sprintf ("tv:// -tv driver=%s:device=%s -identify -frames 0", m_driver.ascii (), m_tvdevice->src.ascii ());
     m_player->stop ();
-    m_player->process ()->initProcess ();
+    m_player->process ()->initProcess (0L);
     if (static_cast <KMPlayer::MPlayer *> (m_player->players () ["mplayer"])->run (args.ascii()))
         connect (m_player, SIGNAL (stopPlaying ()), this, SLOT (finished ()));
     else

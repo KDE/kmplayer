@@ -110,12 +110,12 @@ PartBase::PartBase (QWidget * wparent, const char *wname,
    m_noresize (false),
    m_in_update_tree (false)
 {
-    m_players ["mplayer"] = new MPlayer (this);
-    m_players ["xine"] = new Xine (this);
-    m_players ["gst"] = new GStreamer (this);
-    m_recorders ["mencoder"] = new MEncoder (this);
-    m_recorders ["mplayerdumpstream"] = new MPlayerDumpstream (this);
-    m_recorders ["ffmpeg"] = new FFMpeg (this);
+    m_players ["mplayer"] = new MPlayer (this, m_settings);
+    m_players ["xine"] = new Xine (this, m_settings);
+    m_players ["gst"] = new GStreamer (this, m_settings);
+    m_recorders ["mencoder"] = new MEncoder (this, m_settings);
+    m_recorders ["mplayerdumpstream"] = new MPlayerDumpstream(this, m_settings);
+    m_recorders ["ffmpeg"] = new FFMpeg (this, m_settings);
     m_sources ["urlsource"] = new URLSource (this);
 
     QString bmfile = locate ("data", "kmplayer/bookmarks.xml");
@@ -131,22 +131,22 @@ PartBase::PartBase (QWidget * wparent, const char *wname,
 }
 
 void PartBase::showConfigDialog () {
-    if (m_process->player () == this)
+    if (m_process->parent () == this)
         m_settings->show ("URLPage");
     else
-        m_process->player ()->showConfigDialog ();
+        static_cast <PartBase *> (m_process->parent ())->showConfigDialog ();
 }
 
 KDE_NO_EXPORT void PartBase::showVideoWindow () {
-    m_process->view ()->showWidget (View::WT_Video);
+    m_process->viewer ()->view ()->showWidget (View::WT_Video);
 }
 
 KDE_NO_EXPORT void PartBase::showPlayListWindow () {
-    m_process->view ()->showPlaylist ();
+    m_process->viewer ()->view ()->showPlaylist ();
 }
 
 KDE_NO_EXPORT void PartBase::showConsoleWindow () {
-    m_process->view ()->showWidget (View::WT_Console);
+    m_process->viewer ()->view ()->showWidget (View::WT_Console);
 }
 
 KDE_NO_EXPORT void PartBase::addBookMark (const QString & t, const QString & url) {
@@ -239,7 +239,7 @@ void PartBase::setProcess (const char * name) {
     connect (m_process, SIGNAL (positioned(int)), this, SLOT (positioned(int)));
     connect (m_process, SIGNAL (loaded (int)), this, SLOT (loaded (int)));
     connect (m_process, SIGNAL(lengthFound(int)), this, SLOT(lengthFound(int)));
-    if (m_process->player () == this)
+    if (m_process->parent () == this)
         connect (m_source, SIGNAL (playURL (Source *, NodePtr)),
                  m_process, SLOT (play (Source *, NodePtr)));
     if (m_process->playing ()) {
@@ -266,27 +266,31 @@ void PartBase::setRecorder (const char * name) {
 extern const char * strGeneralGroup;
 
 KDE_NO_EXPORT void PartBase::slotPlayerMenu (int id) {
-    bool playing = m_process->playing ();
-    const char * srcname = m_process->player ()->source ()->name ();
-    QPopupMenu * menu = m_view->controlPanel ()->playerMenu ();
-    ProcessMap::const_iterator pi = m_players.begin(), e = m_players.end();
-    unsigned i = 0;
-    for (; pi != e && i < menu->count(); ++pi) {
-        Process * proc = pi.data ();
-        if (!proc->supports (srcname))
-            continue;
-        int menuid = menu->idAt (i);
-        menu->setItemChecked (menuid, menuid == id);
-        if (menuid == id) {
-            m_process->player()->settings()->backends [srcname] = proc->name ();
-            if (playing && strcmp (m_process->name (), proc->name ()))
-                m_process->quit ();
-            m_process->player ()->setProcess (proc->name ());
+    if (m_process->parent () != this)
+        static_cast <PartBase *> (m_process->parent ())->slotPlayerMenu (id);
+    else {
+        bool playing = m_process->playing ();
+        const char * srcname = m_source->name ();
+        QPopupMenu * menu = m_view->controlPanel ()->playerMenu ();
+        ProcessMap::const_iterator pi = m_players.begin(), e = m_players.end();
+        unsigned i = 0;
+        for (; pi != e && i < menu->count(); ++pi) {
+            Process * proc = pi.data ();
+            if (!proc->supports (srcname))
+                continue;
+            int menuid = menu->idAt (i);
+            menu->setItemChecked (menuid, menuid == id);
+            if (menuid == id) {
+                m_settings->backends [srcname] = proc->name ();
+                if (playing && strcmp (m_process->name (), proc->name ()))
+                    m_process->quit ();
+                setProcess (proc->name ());
+            }
+            ++i;
         }
-        ++i;
+        if (playing)
+            setSource (m_source); // re-activate
     }
-    if (playing)
-        m_process->player ()->setSource (m_process->player ()->source ()); // re-activate
 }
 
 void PartBase::updatePlayerMenu () {
@@ -294,7 +298,7 @@ void PartBase::updatePlayerMenu () {
         return;
     QPopupMenu * menu = m_view->controlPanel ()->playerMenu ();
     menu->clear ();
-    Source * src = m_process->player() == this ? m_source : m_process->source();
+    Source * src = m_process->parent() == this ? m_source : m_process->source();
     if (!src)
         return;
     const ProcessMap::const_iterator e = m_players.end();
@@ -373,10 +377,6 @@ KDE_NO_EXPORT void PartBase::changeURL (const QString & url) {
     emit urlChanged (url);
 }
 
-void PartBase::changeTitle (const QString & title) {
-    emit titleChanged (title);
-}
-
 bool PartBase::isSeekable (void) const {
     return m_source ? m_source->isSeekable () : false;
 }
@@ -416,10 +416,10 @@ bool PartBase::openURL (const KURL::List & urls) {
 
 bool PartBase::closeURL () {
     stop ();
-    if (!m_view) return false;
-    if (m_view->viewer ())
+    if (m_view) {
         m_view->viewer ()->setAspect (0.0);
-    m_view->reset ();
+        m_view->reset ();
+    }
     return true;
 }
 
@@ -475,9 +475,9 @@ void PartBase::processStateChange (KMPlayer::Process::State old, KMPlayer::Proce
     if (!m_view) return;
     m_view->controlPanel ()->setPlaying (state > Process::Ready);
     kdDebug () << "processState " << statemap[old] << " -> " << statemap[state] << endl;
-    Source * src = m_process->player() == this ? m_source : m_process->source();
+    Source * src = m_process->parent() == this ? m_source : m_process->source();
     if (state == Process::Playing) {
-        m_process->view ()->videoStart ();
+        m_process->viewer ()->view ()->videoStart ();
         //m_view->viewer ()->setAspect (m_source->aspect ());
         m_view->controlPanel ()->showPositionSlider (!!src->length ());
         m_view->controlPanel ()->enableSeekButtons (src->isSeekable ());
@@ -492,7 +492,7 @@ void PartBase::processStateChange (KMPlayer::Process::State old, KMPlayer::Proce
         m_view->reset ();
         m_bPosSliderPressed = false;
         emit stopPlaying ();
-    } else if (state == Process::Ready && m_process->player () == this) {
+    } else if (state == Process::Ready && m_process->parent () == this) {
         if (old > Process::Ready)
             src->playURLDone ();
         else
@@ -526,12 +526,12 @@ void PartBase::pause () {
 }
 
 void PartBase::back () {
-    Source * src = m_process->player() == this ? m_source : m_process->source();
+    Source * src = m_process->parent() == this ? m_source : m_process->source();
     src->backward ();
 }
 
 void PartBase::forward () {
-    Source * src = m_process->player() == this ? m_source : m_process->source();
+    Source * src = m_process->parent() == this ? m_source : m_process->source();
     src->forward ();
 }
 
@@ -548,8 +548,8 @@ void PartBase::playListItemSelected (QListViewItem * item) {
 void PartBase::updateTree () {
     m_in_update_tree = true;
     if (m_process && m_view) {
-        if (m_process->player () != this)
-            m_process->player ()->updateTree ();
+        if (m_process->parent () != this)
+            static_cast <PartBase *> (m_process->parent ())->updateTree ();
         else if (m_source)
             m_view->playList ()->updateTree
                 (m_source->document (), m_source->current ());
@@ -558,7 +558,7 @@ void PartBase::updateTree () {
 }
 
 void PartBase::record () {
-    if (m_process->player () == this) { 
+    if (m_process->parent () == this) { 
         if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
         if (m_recorder->playing ()) {
             m_recorder->stop ();
@@ -568,14 +568,14 @@ void PartBase::record () {
         }
         if (m_view) m_view->setCursor (QCursor (Qt::ArrowCursor));
     } else
-        m_process->player ()->record ();
+        static_cast <PartBase *> (m_process->parent ())->record ();
 }
 
 void PartBase::play () {
-    if (!m_process) return;
-    Source * src = m_process->player() == this ? m_source : m_process->source();
+    if (!m_process || !m_view) return;
+    Source * src = m_process->parent() == this ? m_source : m_process->source();
     if (m_process->state () == Process::NotRunning) {
-        m_process->ready ();
+        m_process->ready (m_view->viewer ());
     } else if (m_process->state () == Process::Ready) {
         src->playCurrent ();
     } else
@@ -595,7 +595,7 @@ void PartBase::stop () {
     }
     if (m_process) {
         m_process->quit ();
-        Source * src = m_process->player()==this ? m_source:m_process->source();
+        Source * src = m_process->parent()==this ? m_source:m_process->source();
         if (src)
             src->reset ();
     }
@@ -682,11 +682,11 @@ KDE_NO_EXPORT void PartBase::positionValueChanged (int pos) {
 }
 
 KDE_NO_EXPORT void PartBase::fullScreen () {
-    m_process->view ()->fullScreen ();
+    m_process->viewer ()->view ()->fullScreen ();
 }
 
 KDE_NO_EXPORT void PartBase::toggleFullScreen () {
-    m_process->view ()->fullScreen ();
+    m_process->viewer ()->view ()->fullScreen ();
 }
 
 KAboutData* PartBase::createAboutData () {
@@ -762,6 +762,10 @@ void Source::setURL (const KURL & url) {
     m_current = m_document;
 }
 
+void Source::setTitle (const QString & title) {
+    emit titleChanged (title);
+}
+
 void Source::reset () {
     if (m_document) {
         kdDebug() << "Source::first" << endl;
@@ -780,11 +784,12 @@ QString Source::currentMrl () {
 void Source::playCurrent () {
     QString url = currentMrl ();
     m_player->changeURL (url);
-    if (m_player->process () && m_player->process ()->view ())
-        m_player->process ()->view ()->videoStop (); // show buttonbar
-    if (m_player->view () && m_document)
-        m_player->process ()->view ()->viewArea ()->setRootLayout (m_document->document ()->rootLayout);
-    kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():"") <<  (m_document && !m_document->active ()) << (!m_current) << (m_current && !m_current->active ()) <<  endl;
+    if (m_player->process () && m_player->process ()->viewer ()) {
+        m_player->process ()->viewer ()->view ()->videoStop (); //show buttonbar
+        if (m_document)
+            m_player->process ()->viewer ()->view ()->viewArea ()->setRootLayout (m_document->document ()->rootLayout);
+        kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():"") <<  (m_document && !m_document->active ()) << (!m_current) << (m_current && !m_current->active ()) <<  endl;
+    }
     if (m_document && !m_document->active ()) {
         if (!m_current)
             m_document->activate ();
@@ -836,7 +841,8 @@ void Source::playURLDone () {
         if (mrl)
             mrl->realMrl ()->deactivate ();
     }
-    m_player->process()->view ()->viewArea ()->repaint ();
+    if (m_player->process()->viewer ())
+        m_player->process()->viewer ()->view ()->viewArea ()->repaint ();
 }
 
 bool Source::requestPlayURL (NodePtr mrl) {
@@ -869,17 +875,17 @@ void Source::stateElementChanged (NodePtr elm) {
 void Source::repaintRect (int x, int y, int w, int h) {
     //kdDebug () << "repaint " << x << "," << y << " " << w << "x" << h << endl;
     if (m_player->view ())
-        m_player->process()->view ()->viewArea ()->scheduleRepaint (x, y, w, h);
+        m_player->process()->viewer ()->view ()->viewArea ()->scheduleRepaint (x, y, w, h);
 }
 
 void Source::moveRect (int x, int y, int w, int h, int x1, int y1) {
     if (m_player->view ())
-        m_player->process()->view()->viewArea()->moveRect (x, y, w, h, x1, y1);
+        m_player->process()->viewer ()->view()->viewArea()->moveRect (x, y, w, h, x1, y1);
 }
 
 void Source::avWidgetSizes (int x, int y, int w, int h, unsigned int * bg) {
     if (m_player->view ())
-        m_player->process()->view ()->viewArea ()->setAudioVideoGeometry (x, y, w, h, bg);
+        m_player->process()->viewer ()->view ()->viewArea ()->setAudioVideoGeometry (x, y, w, h, bg);
 }
 
 void Source::insertURL (const QString & mrl) {
@@ -1148,8 +1154,8 @@ float URLSource::aspect () {
 
 void URLSource::dimensions (int & w, int & h) {
     if (!m_player->mayResize () && m_player->view ()) {
-        w = m_player->process ()->view ()->viewer ()->width ();
-        h = m_player->process ()->view ()->viewer ()->height ();
+        w = m_player->process ()->viewer ()->view ()->viewer ()->width ();
+        h = m_player->process ()->viewer ()->view ()->viewer ()->height ();
     } else if (m_document && m_document->firstChild () &&
             !strcmp (m_document->firstChild ()->nodeName (), "smil")) {
         Mrl * mrl = m_document->firstChild ()->mrl ();
@@ -1190,8 +1196,8 @@ void URLSource::setDimensions (int w, int h) {
             if (h > 0) {
                 float a = 1.0 * w / h;
                 mrl->aspect = a;
-                m_player->process ()->view ()->viewer ()->setAspect (a);
-                m_player->process ()->view ()->updateLayout ();
+                m_player->process ()->viewer ()->setAspect (a);
+                m_player->process ()->viewer ()->view ()->updateLayout ();
             }
         }
     } else
@@ -1222,7 +1228,7 @@ KDE_NO_EXPORT void URLSource::terminateJob () {
     if (m_job) {
         m_job->kill (); // silent, no kioResult signal
         if (m_player->view ())
-            m_player->process ()->view ()->controlPanel ()->setPlaying (m_player->playing ());
+            m_player->process ()->viewer ()->view ()->controlPanel ()->setPlaying (m_player->playing ());
     }
     m_job = 0L;
 }
@@ -1391,7 +1397,7 @@ KDE_NO_EXPORT void URLSource::kioResult (KIO::Job *) {
         m_current->mrl ()->parsed = true;
         playCurrent ();
     }
-    m_player->process ()->view ()->controlPanel ()->setPlaying (false);
+    m_player->process ()->viewer ()->view ()->controlPanel ()->setPlaying (false);
 }
 
 void URLSource::playCurrent () {
@@ -1455,7 +1461,7 @@ void URLSource::playCurrent () {
                     this, SLOT (kioMimetype (KIO::Job *, const QString &)));
             connect (m_job, SIGNAL (result (KIO::Job *)),
                     this, SLOT (kioResult (KIO::Job *)));
-            m_player->process ()->view ()->controlPanel ()->setPlaying (true);
+            m_player->process ()->viewer ()->view ()->controlPanel ()->setPlaying (true);
         } else {
             m_current->mrl ()->parsed = true;
             playCurrent ();

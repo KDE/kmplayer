@@ -158,10 +158,10 @@ private:
 class XVideo : public KMPlayer::CallbackProcess {
     Q_OBJECT
 public:
-    XVideo (KMPlayer::PartBase * player);
+    XVideo (QObject * parent, KMPlayer::Settings * settings);
     ~XVideo ();
 public slots:
-    virtual bool ready ();
+    virtual bool ready (KMPlayer::Viewer *);
 };
 
 #endif // KMPLAYER_VDR_SOURCE_H

@@ -385,7 +385,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
                 toconsole = false;
             } else if (!strcmp (commands->command, cmd_chan_query)) {
                 if (v && line.length () > 4) {
-                    m_player->changeTitle (line.mid (4));
+                    setTitle (line.mid (4));
                     v->playList ()->selectItem (line.mid (4));
                 }
             } else if (cmd_done && !strcmp(commands->command,cmd_volume_query)){
@@ -712,20 +712,20 @@ static const char * xv_supported [] = {
     "tvsource", "vdrsource", 0L
 };
 
-KDE_NO_CDTOR_EXPORT XVideo::XVideo (KMPlayer::PartBase * player)
- : KMPlayer::CallbackProcess (player, "xvideo", i18n ("X&Video")) {
+KDE_NO_CDTOR_EXPORT XVideo::XVideo (QObject * parent, Settings * settings)
+ : KMPlayer::CallbackProcess (parent, settings, "xvideo", i18n ("X&Video")) {
     m_supported_sources = xv_supported;
     //m_player->settings ()->addPage (m_configpage);
 }
 
 KDE_NO_CDTOR_EXPORT XVideo::~XVideo () {}
 
-KDE_NO_EXPORT bool XVideo::ready () {
+KDE_NO_EXPORT bool XVideo::ready (KMPlayer::Viewer * v) {
     if (playing ()) {
         return true;
     }
-    initProcess ();
-    QString cmd  = QString ("kxvplayer -wid %3 -cb %4").arg (view()->viewer()->embeddedWinId ()).arg (dcopName ());
+    initProcess (v);
+    QString cmd  = QString ("kxvplayer -wid %3 -cb %4").arg (viewer ()->embeddedWinId ()).arg (dcopName ());
     if (m_have_config == config_unknown || m_have_config == config_probe)
         cmd += QString (" -c");
     if (m_source) {
