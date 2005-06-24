@@ -98,7 +98,7 @@ signals:
      * Signal for that this source wants to play an url.
      * (in respond to 'playCurrent()' call)
      */
-    void playURL (Source *, const QString & url);
+    void playURL (Source *, NodePtr mrl);
     /**
      * Signal for notifying this source is at the end of play items
      */
@@ -116,10 +116,6 @@ public slots:
      */
     virtual void playCurrent ();
     virtual void playURLDone ();
-    /**
-     * publicly allow to emit playURL(const QString &)
-     */
-    void emitPlayURL (const QString & url);
     virtual void jump (NodePtr e);
 protected:
     /**

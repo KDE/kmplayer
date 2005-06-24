@@ -207,7 +207,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::playCurrent () {
-    emit playURL (this, currentMrl ()); // FIXME HACK
+    emit playURL (this, current ()); // FIXME HACK
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::processStopped () {

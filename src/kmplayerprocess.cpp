@@ -164,7 +164,7 @@ bool Process::stop () {
         m_process->kill (SIGKILL);
         KProcessController::theKProcessController->waitForProcessExit (1);
         if (m_process->isRunning ()) {
-            KMessageBox::error (m_player->view (), i18n ("Failed to end player process."), i18n ("Error"));
+            KMessageBox::error (view (), i18n ("Failed to end player process."), i18n ("Error"));
         }
     } while (false);
     return !playing ();
@@ -184,7 +184,11 @@ void Process::setState (State newstate) {
     }
 }
 
-KDE_NO_EXPORT bool Process::play (Source *, const QString &) {
+KDE_NO_EXPORT bool Process::play (Source * src, NodePtr mrl) {
+    m_source = src;
+    m_mrl = mrl;
+    Mrl * m = mrl ? mrl->mrl () : 0L;
+    m_url = m ? m->src : QString ();
     return false;
 }
 
@@ -315,17 +319,16 @@ KDE_NO_EXPORT WId MPlayer::widget () {
     return view()->viewer()->embeddedWinId ();
 }
 
-KDE_NO_EXPORT bool MPlayer::play (Source * source, const QString & mrl) {
+KDE_NO_EXPORT bool MPlayer::play (Source * source, NodePtr node) {
     if (playing ())
         return sendCommand (QString ("gui_play"));
     stop ();
-    m_source = source;
-    KURL url (mrl);
+    Process::play (source, node);
     initProcess ();
     source->setPosition (0);
     m_request_seek = -1;
     QString args = source->options () + ' ';
-    m_url = url.url ();
+    KURL url (m_url);
     if (!url.isEmpty ()) {
         if (source->url ().isLocalFile ())
             m_process->setWorkingDirectory 
@@ -775,10 +778,11 @@ KDE_NO_CDTOR_EXPORT MEncoder::~MEncoder () {
 KDE_NO_EXPORT void MEncoder::init () {
 }
 
-bool MEncoder::play (Source * source, const QString & mrl) {
-    m_source = source;
+bool MEncoder::play (Source * source, NodePtr node) {
     bool success = false;
     stop ();
+    Process::play (source, node);
+    KURL url (m_url);
     initProcess ();
     source->setPosition (0);
     QString args;
@@ -789,7 +793,6 @@ bool MEncoder::play (Source * source, const QString & mrl) {
     if (m_player->settings()->recordcopy)
         margs = QString ("-oac copy -ovc copy");
     args += QString ("mencoder ") + margs + ' ' + m_source->recordCmd ();
-    KURL url (mrl);
     if (m_player->source () == source) // ugly
         m_player->stop ();
     QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
@@ -840,10 +843,11 @@ KDE_NO_CDTOR_EXPORT MPlayerDumpstream::~MPlayerDumpstream () {
 KDE_NO_EXPORT void MPlayerDumpstream::init () {
 }
 
-bool MPlayerDumpstream::play (Source * source, const QString & mrl) {
-    m_source = source;
+bool MPlayerDumpstream::play (Source * source, NodePtr node) {
     bool success = false;
     stop ();
+    Process::play (source, node);
+    KURL url (m_url);
     initProcess ();
     source->setPosition (0);
     QString args;
@@ -851,7 +855,6 @@ bool MPlayerDumpstream::play (Source * source, const QString & mrl) {
     if (!m_use_slave)
         args = m_source->pipeCmd () + QString (" | ");
     args += QString ("mplayer ") + m_source->recordCmd ();
-    KURL url (mrl);
     if (m_player->source () == source) // ugly
         m_player->stop ();
     QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
@@ -1058,12 +1061,12 @@ void CallbackProcess::setChangedData (const QByteArray & data) {
         ready ();
 }
 
-bool CallbackProcess::play (Source * source, const QString & mrl) {
-    kdDebug () << "CallbackProcess::play " << mrl << endl;
+bool CallbackProcess::play (Source * source, NodePtr node) {
     if (!m_backend)
         return false;
-    m_source = source;
-    KURL url (mrl);
+    Process::play (source, node);
+    kdDebug () << "CallbackProcess::play " << m_url << endl;
+    KURL url (m_url);
     QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
     m_backend->setURL (QFile::encodeName (myurl));
     const KURL & sub_url = m_source->subUrl ();
@@ -1538,8 +1541,9 @@ KDE_NO_CDTOR_EXPORT FFMpeg::~FFMpeg () {
 KDE_NO_EXPORT void FFMpeg::init () {
 }
 
-bool FFMpeg::play (Source * source, const QString & mrl) {
-    m_source = source;
+bool FFMpeg::play (Source * source, NodePtr node) {
+    Process::play (source, node);
+    KURL url (m_url);
     initProcess ();
     connect (m_process, SIGNAL (processExited (KProcess *)),
             this, SLOT (processStopped (KProcess *)));
@@ -1572,7 +1576,6 @@ bool FFMpeg::play (Source * source, const QString & mrl) {
             process.start (KProcess::Block);
         }
     } else {
-        KURL url (mrl);
         cmd += QString ("-i ") + KProcess::quote (QString (QFile::encodeName (url.isLocalFile () ? getPath (url) : url.url ())));
     }
     cmd += QChar (' ') + arguments;

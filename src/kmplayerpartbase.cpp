@@ -227,8 +227,8 @@ void PartBase::setProcess (const char * name) {
                     this, SLOT (loaded (int)));
         disconnect (m_process, SIGNAL (lengthFound (int)),
                     this, SLOT (lengthFound (int)));
-        disconnect (m_source, SIGNAL (playURL (Source *, const QString &)),
-                    m_process, SLOT (play (Source *, const QString &)));
+        disconnect (m_source, SIGNAL (playURL (Source *, NodePtr)),
+                    m_process, SLOT (play (Source *, NodePtr)));
         m_process->quit ();
         disconnect(m_process,SIGNAL(stateChange(KMPlayer::Process::State,KMPlayer::Process::State)), this, SLOT(processStateChange(KMPlayer::Process::State,KMPlayer::Process::State)));
     }
@@ -240,8 +240,8 @@ void PartBase::setProcess (const char * name) {
     connect (m_process, SIGNAL (loaded (int)), this, SLOT (loaded (int)));
     connect (m_process, SIGNAL(lengthFound(int)), this, SLOT(lengthFound(int)));
     if (m_process->player () == this)
-        connect (m_source, SIGNAL (playURL (Source *, const QString &)),
-                 m_process, SLOT (play (Source *, const QString &)));
+        connect (m_source, SIGNAL (playURL (Source *, NodePtr)),
+                 m_process, SLOT (play (Source *, NodePtr)));
     if (m_process->playing ()) {
         m_view->controlPanel ()->setPlaying (true);
         m_view->controlPanel ()->showPositionSlider (!!m_source->length ());
@@ -314,8 +314,8 @@ void PartBase::setSource (Source * _source) {
         stop ();
         if (m_view)
             m_view->reset ();
-        disconnect (m_source, SIGNAL (playURL (Source *, const QString &)),
-                 m_process, SLOT (play (Source *, const QString &)));
+        disconnect (m_source, SIGNAL (playURL (Source *, NodePtr)),
+                 m_process, SLOT (play (Source *, NodePtr)));
         disconnect (m_source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
         disconnect (m_source, SIGNAL (dimensionsChanged ()),
                     this, SLOT (sourceHasChangedDimensions ()));
@@ -347,14 +347,14 @@ void PartBase::setSource (Source * _source) {
     }
     if (p != m_process->name ()) {
         setProcess (p.ascii ());
-        disconnect (m_source, SIGNAL (playURL (Source *, const QString &)),
-                    m_process, SLOT (play (Source *, const QString &)));
+        disconnect (m_source, SIGNAL (playURL (Source *, NodePtr)),
+                    m_process, SLOT (play (Source *, NodePtr)));
     }
     m_settings->backends [_source->name()] = m_process->name ();
     m_source = _source;
     m_process->setSource (m_source);
-    connect (m_source, SIGNAL (playURL (Source *, const QString &)),
-            m_process, SLOT (play (Source *, const QString &)));
+    connect (m_source, SIGNAL (playURL (Source *, NodePtr)),
+            m_process, SLOT (play (Source *, NodePtr)));
     connect (m_source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
     connect (m_source, SIGNAL (dimensionsChanged ()),
              this, SLOT (sourceHasChangedDimensions ()));
@@ -579,7 +579,7 @@ void PartBase::play () {
     } else if (m_process->state () == Process::Ready) {
         src->playCurrent ();
     } else
-        m_process->play (src, src->currentMrl ());
+        m_process->play (src, src->current ());
 }
 
 bool PartBase::playing () const {
@@ -777,11 +777,6 @@ QString Source::currentMrl () {
     return mrl ? mrl->src : QString ();
 }
 
-void Source::emitPlayURL (const QString & url) {
-    kdDebug () << "Source::emitPlayURL" << endl;
-    emit playURL (this, url);
-}
-
 void Source::playCurrent () {
     QString url = currentMrl ();
     m_player->changeURL (url);
@@ -803,7 +798,7 @@ void Source::playCurrent () {
     else {
         if (m_current->state == Element::state_deferred)
             m_current->undefer ();
-        emit playURL (this, currentMrl ());
+        emit playURL (this, m_current);
     }
     m_player->updateTree ();
 }
@@ -1407,11 +1402,15 @@ void URLSource::playCurrent () {
         return;
     }
     KURL url (currentMrl ());
+    if (url.isEmpty () || m_current->mrl ()->parsed) {
+        Source::playCurrent ();
+        return;
+    }
     int depth = 0;
     if (m_current)
         for (NodePtr e = m_current; e->parentNode (); e = e->parentNode ())
             ++depth;
-    if (depth > 40 || url.isEmpty () || m_current->mrl ()->parsed) {
+    if (depth > 40) {
         Source::playCurrent ();
     } else {
         QString mimestr = mime ();
