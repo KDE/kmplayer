@@ -731,7 +731,7 @@ bool DocumentBuilder::startTag(const QString &tag, AttributeListPtr attr) {
             NodePtr doc = m_root->document ()->self ();
             n = (new DarkNode (doc, tag))->self ();
         }
-        //kdDebug () << "Found tag " << tag.latin1 () << endl;
+        //kdDebug () << "Found tag " << tag << endl;
         if (n->isElementNode ())
             convertNode <Element> (n)->setAttributes (attr);
         m_node->appendChild (n);
@@ -763,10 +763,11 @@ bool DocumentBuilder::endTag (const QString & tag) {
                     m_node = m_node->parentNode ();
                 }
                 break;
-            }
+            } else
+                 kdWarning () << "tag " << tag << " not " << n->nodeName () << endl;
             n = n ->parentNode ();
         }
-        //kdDebug () << "end tag " << tag.latin1 () << endl;
+        //kdDebug () << "end tag " << tag << endl;
         m_node->closed ();
         m_node = m_node->parentNode ();
     }
@@ -787,14 +788,14 @@ static void startTag (void *data, const char * tag, const char **attr) {
     AttributeListPtr attributes = (new AttributeList)->self ();
     if (attr && attr [0]) {
         for (int i = 0; attr[i]; i += 2)
-            attributes->append ((new Attribute (QString (attr [i]), QString (attr [i+1])))->self ());
+            attributes->append ((new Attribute (QString::fromUtf8 (attr [i]), QString::fromUtf8 (attr [i+1])))->self ());
     }
-    builder->startTag (QString (tag), attributes);
+    builder->startTag (QString::fromUtf8 (tag), attributes);
 }
 
 static void endTag (void *data, const char * tag) {
     DocumentBuilder * builder = static_cast <DocumentBuilder *> (data);
-    builder->endTag (QString (tag));
+    builder->endTag (QString::fromUtf8 (tag));
 }
 
 static void characterData (void *data, const char *s, int len) {
@@ -802,7 +803,7 @@ static void characterData (void *data, const char *s, int len) {
     char * buf = new char [len + 1];
     strncpy (buf, s, len);
     buf[len] = 0;
-    builder->characterData (QString (buf));
+    builder->characterData (QString::fromUtf8 (buf));
     delete [] buf;
 }
 
@@ -820,23 +821,23 @@ void readXML (NodePtr root, QTextStream & in, const QString & firstline) {
         QCString buf = str.utf8 ();
         ok = XML_Parse(parser, buf, strlen (buf), false) != XML_STATUS_ERROR;
         if (!ok)
-            kdDebug () << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser) << endl;
+            kdWarning () << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser) << endl;
     }
     if (ok) {
         QCString buf = in.read ().utf8 ();
         ok = XML_Parse(parser, buf, strlen (buf), true) != XML_STATUS_ERROR;
         if (!ok)
-            kdDebug () << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser) << endl;
+            kdWarning () << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser) << endl;
     }
     XML_ParserFree(parser);
     root->normalize ();
     //return ok;
 }
 
-}
+} // namespace KMPlayer
 
 //-----------------------------------------------------------------------------
-#else
+#else // HAVE_EXPAT
 
 namespace KMPlayer {
 
@@ -1283,4 +1284,4 @@ bool SimpleSAXParser::parse (QTextStream & d) {
     return false; // need more data
 }
 
-#endif
+#endif // HAVE_EXPAT

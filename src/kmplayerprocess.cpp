@@ -1216,21 +1216,19 @@ namespace KMPlayer {
      * Element for ConfigDocument
      */
     struct SomeNode : public ConfigNode {
-        KDE_NO_CDTOR_EXPORT SomeNode (NodePtr & d, const QString t)
-            : ConfigNode (d), tag (t) {}
+        KDE_NO_CDTOR_EXPORT SomeNode (NodePtr & d, const QString & t)
+            : ConfigNode (d, t) {}
         KDE_NO_CDTOR_EXPORT ~SomeNode () {}
         NodePtr childFromTag (const QString & t);
-        const char * nodeName () const { return tag.ascii (); }
-        QString tag;
     };
 } // namespace
 
-KDE_NO_CDTOR_EXPORT ConfigNode::ConfigNode (NodePtr & d)
-    : Element (d), w (0L) {}
+KDE_NO_CDTOR_EXPORT ConfigNode::ConfigNode (NodePtr & d, const QString & t)
+    : DarkNode (d, t), w (0L) {}
 
 NodePtr ConfigDocument::childFromTag (const QString & tag) {
     if (tag.lower () == QString ("document"))
-        return (new ConfigNode (m_doc))->self ();
+        return (new ConfigNode (m_doc, tag))->self ();
     return NodePtr ();
 }
 
@@ -1239,7 +1237,7 @@ NodePtr ConfigNode::childFromTag (const QString & t) {
 }
 
 KDE_NO_CDTOR_EXPORT TypeNode::TypeNode (NodePtr & d, const QString & t)
- : ConfigNode (d), tag (t) {}
+ : ConfigNode (d, t), tag (t) {}
 
 NodePtr TypeNode::childFromTag (const QString & tag) {
     return (new SomeNode (m_doc, tag))->self ();

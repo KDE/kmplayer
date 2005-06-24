@@ -305,8 +305,8 @@ struct KMPLAYER_EXPORT ConfigDocument : public Document {
 /*
  * Element for ConfigDocument
  */
-struct KMPLAYER_EXPORT ConfigNode : public Element {
-    ConfigNode (NodePtr & d);
+struct KMPLAYER_EXPORT ConfigNode : public DarkNode {
+    ConfigNode (NodePtr & d, const QString & tag);
     KDE_NO_CDTOR_EXPORT ~ConfigNode () {}
     NodePtr childFromTag (const QString & tag);
     QWidget * w;
