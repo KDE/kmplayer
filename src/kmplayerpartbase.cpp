@@ -539,10 +539,17 @@ void PartBase::playListItemSelected (QListViewItem * item) {
     if (m_in_update_tree) return;
     ListViewItem * vi = static_cast <ListViewItem *> (item);
     if (vi->m_elm) {
-        if (vi->m_elm->expose ())
+        if (vi->m_elm->expose () && vi->m_elm->isMrl ())
             m_source->jump (vi->m_elm);
+    } else if (vi->m_attr) {
+        if (!strcasecmp (vi->m_attr->nodeName (), "src") ||
+                !strcasecmp (vi->m_attr->nodeName (), "value")) {
+            KURL url (vi->m_attr->nodeValue ());
+            if (url.isValid ())
+                openURL (url);
+        }
     } else
-        updateTree ();
+        updateTree (); // items already deleted
 }
 
 void PartBase::updateTree () {
@@ -711,10 +718,10 @@ Source::~Source () {
 }
 
 void Source::init () {
-    setDimensions (320, 240);
-    //m_width = 320;
-    //m_height = 0;
-    //m_aspect = 0.0;
+    //setDimensions (320, 240);
+    m_width = 0;
+    m_height = 0;
+    m_aspect = 0.0;
     setLength (0);
     m_position = 0;
     m_identified = false;

@@ -95,7 +95,7 @@ public:
     QLineEdit * sizewidth;
     QLineEdit * sizeheight;
     QCheckBox * noplayback;
-    KMPlayer::NodePtr device_doc;
+    KMPlayer::NodePtrW device_doc;
     void updateTVDevice ();
 signals:
     void deleted (KMPlayerPrefSourcePageTVDevice *);

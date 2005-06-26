@@ -912,6 +912,8 @@ void PlayListView::updateTree (NodePtr root, NodePtr active) {
         ensureItemVisible (curitem);
     }
     m_itemmenu->setItemEnabled (2, m_have_dark_nodes);
+    if (!m_have_dark_nodes && m_show_all_nodes)
+        toggleShowAllNodes (); // redo, because the user can't change it anymore
     m_ignore_expanded = false;
 }
 

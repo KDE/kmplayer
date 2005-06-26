@@ -323,6 +323,10 @@ KDE_NO_EXPORT void KMPlayerApp::resizePlayer (int percentage) {
         return;
     int w, h;
     source->dimensions (w, h);
+    if (w == 0 && h == 0) {
+        w = 320;
+        h = 240;
+    }
     kdDebug () << "KMPlayerApp::resizePlayer (" << w << "," << h << ")" << endl;
     if (w > 0 && h > 0) {
         if (m_view->controlPanel ()->isVisible ())
