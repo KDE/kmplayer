@@ -544,9 +544,20 @@ void PartBase::playListItemSelected (QListViewItem * item) {
     } else if (vi->m_attr) {
         if (!strcasecmp (vi->m_attr->nodeName (), "src") ||
                 !strcasecmp (vi->m_attr->nodeName (), "value")) {
-            KURL url (vi->m_attr->nodeValue ());
-            if (url.isValid ())
-                openURL (url);
+            QString src (vi->m_attr->nodeValue ());
+            if (!src.isEmpty ()) {
+                ListViewItem * pi = static_cast <ListViewItem*>(item->parent());
+                if (pi) {
+                    for (NodePtr e = pi->m_elm; e; e = e->parentNode ()) {
+                        Mrl * mrl = e->mrl ();
+                        if (mrl)
+                            src = KURL (mrl->src, src).url ();
+                    }
+                    KURL url (src);
+                    if (url.isValid ())
+                        openURL (url);
+                }
+            }
         }
     } else
         updateTree (); // items already deleted
