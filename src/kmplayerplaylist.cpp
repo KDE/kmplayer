@@ -224,6 +224,7 @@ void Node::clear () {
 
 void Node::appendChild (NodePtr c) {
     document()->m_tree_version++;
+    ASSERT (!c->parentNode ());
     TreeNode<Node>::appendChild (c);
 }
 
@@ -231,6 +232,7 @@ KDE_NO_EXPORT void Node::insertBefore (NodePtr c, NodePtr b) {
     if (!b) {
         appendChild (c);
     } else {
+        ASSERT (!c->parentNode ());
         document()->m_tree_version++;
         if (b->m_prev) {
             b->m_prev->m_next = c;

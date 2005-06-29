@@ -62,7 +62,6 @@ class Document;
 class Node;
 class Mrl;
 class ElementRuntime;
-class ImageDataPrivate;
 
 /*
  * Base class for objects that will be used as SharedPtr/WeakPtr pointers.
@@ -262,13 +261,22 @@ typedef SharedPtr <Connection> ConnectionPtr;
 
 /*
  * Base class for XML nodes. Provides a w3c's DOM like API
+ *
+ * Most severe traps with using SharedPtr/WeakPtr for tree nodes:
+ * - pointer ends up in two independant shared object (hopefully with explicit
+ *   constructor for T* and template specialization for assignment of T* should
+ *   be enough ..)
+ * - Node added two times (added ASSERT in appendChild/insertBefore)
+ * - Node is destroyed before being stored in a shared_ptr with kmplayer usage
+ *   of each object having a WeakPtr to itself (eg. be extremely careful with
+ *   using m_self in the constructor, no SharedPtr storage yet)
+ *
  * Livetime of an element is
  |-->state_activated<-->state_began<-->state_finished<-->state_deactivated-->|
   In scope            begin event    end event         Out scope
  */
 class KMPLAYER_EXPORT Node : public TreeNode <Node> {
     friend class DocumentBuilder;
-    //friend class SharedPtr<KMPlayer::Node>;
 public:
     enum State {
         state_init, state_deferred,
