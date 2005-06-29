@@ -568,7 +568,6 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                 int pos = int (10.0 * m_posRegExp.cap (1).toFloat ());
                 m_source->setPosition (pos);
                 m_request_seek = -1;
-                emit positioned (pos);
             } else if (m_cacheRegExp.search (out) > -1) {
                 emit loaded (int (m_cacheRegExp.cap(1).toDouble()));
             }
@@ -578,7 +577,6 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                 int l = out.mid (pos + 1).toInt (&ok);
                 if (ok && l >= 0) {
                     m_source->setLength (10 * l);
-                    emit lengthFound (10 * l);
                 }
             }
         } else if (!m_source->identified() && m_refURLRegExp.search(out) > -1) {
@@ -1019,7 +1017,6 @@ void CallbackProcess::setMovieParams (int len, int w, int h, float a) {
     m_source->setDimensions (w, h);
     m_source->setAspect (a);
     m_source->setLength (len);
-    emit lengthFound (len);
     in_gui_update = false;
 }
 
@@ -1028,7 +1025,6 @@ void CallbackProcess::setMoviePosition (int position) {
     in_gui_update = true;
     m_source->setPosition (position);
     m_request_seek = -1;
-    emit positioned (position);
     in_gui_update = false;
 }
 
@@ -1043,7 +1039,7 @@ bool CallbackProcess::getConfigData () {
         return false;
     if (m_have_config == config_unknown && !playing ()) {
         m_have_config = config_probe;
-        ready (m_viewer);
+        ready (m_viewer ? viewer () : m_settings->defaultView ()->viewer ());
     }
     return true;
 }
@@ -1054,7 +1050,7 @@ void CallbackProcess::setChangedData (const QByteArray & data) {
     if (m_send_config == send_try)
         m_backend->setConfig (data);
     else
-        ready (m_viewer);
+        ready (m_viewer ? viewer () : m_settings->defaultView ()->viewer ());
 }
 
 bool CallbackProcess::play (Source * source, NodePtr node) {

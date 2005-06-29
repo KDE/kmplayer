@@ -35,6 +35,7 @@ namespace KMPlayer {
     
 class PartBase;
 class Preferences;
+class View;
 
 class OutputDriver {
 public:
@@ -91,6 +92,7 @@ public:
     void removePage (PreferencesPage *);
     void applyColorSetting (bool only_changed_ones);
     Preferences *configDialog() const { return configdialog; }
+    View * Settings::defaultView ();
 
     QStringList urllist;
     QStringList sub_urllist;

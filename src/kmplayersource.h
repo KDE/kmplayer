@@ -88,7 +88,7 @@ public:
     /* setLength (len) set length in deci-seconds */
     void setLength (int len);
     /* setPosition (pos) set position in deci-seconds */
-    KDE_NO_EXPORT void setPosition (int pos) { m_position = pos; }
+    void setPosition (int pos);
     virtual void setIdentified (bool b = true);
     KDE_NO_EXPORT void setAutoPlay (bool b) { m_auto_play = b; }
     void setTitle (const QString & title);
@@ -96,16 +96,19 @@ public:
     virtual QString prettyName ();
 signals:
     /**
-     * Signal for that this source wants to play an url.
-     * (in respond to 'playCurrent()' call)
-     */
-    void playURL (Source *, NodePtr mrl);
-    /**
      * Signal for notifying this source is at the end of play items
      */
     void endOfPlayItems ();
     void dimensionsChanged ();
     void titleChanged (const QString & title);
+    /**
+     * Movie position changed
+     */
+    void positioned (int pos);
+    /**
+     * Length of movie determined
+     */
+    void lengthFound (int len);
 public slots:
     virtual void activate () = 0;
     virtual void deactivate () = 0;
@@ -114,7 +117,8 @@ public slots:
     virtual void play ();
     /**
      * Continuing playing where current is now
-     * May emit playURL if a video needs to play or endOfPlayItems when done
+     * May call play process if a video needs to play or 
+     * emit endOfPlayItems when done
      */
     virtual void playCurrent ();
     virtual void playURLDone ();

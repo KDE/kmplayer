@@ -221,14 +221,8 @@ void PartBase::setProcess (const char * name) {
     if (!m_source)
         m_source = m_sources ["urlsource"];
     if (m_process) {
-        disconnect (m_process, SIGNAL (positioned (int)),
-                    this, SLOT (positioned (int)));
         disconnect (m_process, SIGNAL (loaded (int)),
                     this, SLOT (loaded (int)));
-        disconnect (m_process, SIGNAL (lengthFound (int)),
-                    this, SLOT (lengthFound (int)));
-        disconnect (m_source, SIGNAL (playURL (Source *, NodePtr)),
-                    m_process, SLOT (play (Source *, NodePtr)));
         m_process->quit ();
         disconnect(m_process,SIGNAL(stateChange(KMPlayer::Process::State,KMPlayer::Process::State)), this, SLOT(processStateChange(KMPlayer::Process::State,KMPlayer::Process::State)));
     }
@@ -236,12 +230,7 @@ void PartBase::setProcess (const char * name) {
     if (!process)
         return;
     connect (m_process, SIGNAL (stateChange (KMPlayer::Process::State, KMPlayer::Process::State)), this, SLOT (processStateChange (KMPlayer::Process::State, KMPlayer::Process::State)));
-    connect (m_process, SIGNAL (positioned(int)), this, SLOT (positioned(int)));
     connect (m_process, SIGNAL (loaded (int)), this, SLOT (loaded (int)));
-    connect (m_process, SIGNAL(lengthFound(int)), this, SLOT(lengthFound(int)));
-    if (m_process->parent () == this)
-        connect (m_source, SIGNAL (playURL (Source *, NodePtr)),
-                 m_process, SLOT (play (Source *, NodePtr)));
     if (m_process->playing ()) {
         m_view->controlPanel ()->setPlaying (true);
         m_view->controlPanel ()->showPositionSlider (!!m_source->length ());
@@ -318,11 +307,13 @@ void PartBase::setSource (Source * _source) {
         stop ();
         if (m_view)
             m_view->reset ();
-        disconnect (m_source, SIGNAL (playURL (Source *, NodePtr)),
-                 m_process, SLOT (play (Source *, NodePtr)));
         disconnect (m_source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
         disconnect (m_source, SIGNAL (dimensionsChanged ()),
                     this, SLOT (sourceHasChangedDimensions ()));
+        disconnect (m_source, SIGNAL (positioned (int)),
+                    this, SLOT (positioned (int)));
+        disconnect (m_source, SIGNAL (lengthFound (int)),
+                    this, SLOT (lengthFound (int)));
     }
     if (m_view) {
         m_view->controlPanel ()->setAutoControls (true);
@@ -349,19 +340,16 @@ void PartBase::setSource (Source * _source) {
         } else
             p = QString (m_process->name ());
     }
-    if (p != m_process->name ()) {
+    if (p != m_process->name ())
         setProcess (p.ascii ());
-        disconnect (m_source, SIGNAL (playURL (Source *, NodePtr)),
-                    m_process, SLOT (play (Source *, NodePtr)));
-    }
     m_settings->backends [_source->name()] = m_process->name ();
     m_source = _source;
     m_process->setSource (m_source);
-    connect (m_source, SIGNAL (playURL (Source *, NodePtr)),
-            m_process, SLOT (play (Source *, NodePtr)));
     connect (m_source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
     connect (m_source, SIGNAL (dimensionsChanged ()),
              this, SLOT (sourceHasChangedDimensions ()));
+    connect (m_source, SIGNAL (positioned(int)), this, SLOT (positioned (int)));
+    connect (m_source, SIGNAL (lengthFound(int)), this, SLOT(lengthFound(int)));
     updatePlayerMenu ();
     m_source->init ();
     if (m_view && m_view->viewer ()) {
@@ -700,7 +688,8 @@ KDE_NO_EXPORT void PartBase::positionValueChanged (int pos) {
 }
 
 KDE_NO_EXPORT void PartBase::fullScreen () {
-    m_process->viewer ()->view ()->fullScreen ();
+    if (m_process && m_process->viewer ())
+        m_process->viewer ()->view ()->fullScreen ();
 }
 
 KDE_NO_EXPORT void PartBase::toggleFullScreen () {
@@ -750,7 +739,14 @@ void Source::setDimensions (int w, int h) {
 
 void Source::setLength (int len) {
     m_length = len;
+    emit lengthFound (len);
 }
+
+KDE_NO_EXPORT void Source::setPosition (int pos) {
+    m_position = pos;
+    emit positioned (pos);
+}
+
 /*
 static void printTree (NodePtr root, QString off=QString()) {
     if (!root) {
@@ -821,7 +817,8 @@ void Source::playCurrent () {
     else {
         if (m_current->state == Element::state_deferred)
             m_current->undefer ();
-        emit playURL (this, m_current);
+        if (m_player->process ())
+            m_player->process ()->play (this, m_current);
     }
     m_player->updateTree ();
 }

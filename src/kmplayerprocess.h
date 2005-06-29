@@ -72,8 +72,6 @@ signals:
     void stateChange (KMPlayer::Process::State oldstate, KMPlayer::Process::State newstate);
     void grabReady (const QString & path);
     void loaded (int percentage);
-    void positioned (int pos);
-    void lengthFound (int len);
 public slots:
     virtual bool ready (Viewer *);
     virtual bool play (Source *, NodePtr mrl);

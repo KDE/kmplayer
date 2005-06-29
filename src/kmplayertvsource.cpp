@@ -236,8 +236,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QPopupM
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerTVSource::~KMPlayerTVSource () {
-    deleteddevices = 0L;
-    addeddevices = 0L;
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::activate () {

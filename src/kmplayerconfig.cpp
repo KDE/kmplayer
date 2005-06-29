@@ -209,8 +209,12 @@ KDE_NO_EXPORT void Settings::applyColorSetting (bool only_changed_ones) {
         }
 }
 
+View * Settings::defaultView () {
+    return static_cast <View *> (m_player->view ());
+}
+
 KDE_NO_EXPORT void Settings::readConfig () {
-    View *view = static_cast <View *> (m_player->view ());
+    View *view = defaultView ();
 
     m_config->setGroup (strGeneralGroup);
     urllist = m_config->readListEntry (strURLList, ';');
