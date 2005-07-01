@@ -61,15 +61,12 @@
 
 <chapter id="introduction">
 <title>Introduction</title>
-
-
 <para>
 &kmplayer; is a simple frontend to <application>MPlayer</application>, <application>Xine</application> and <application>FFMpeg</application>. You
 can use it for watching all the movie file formats that
 <application>MPlayer</application>/<application>Xine</application> supports as well as watching
 <acronym>DVD</acronym>s, <acronym>VCD</acronym> or <acronym>TV</acronym>/<acronym>camera</acronym>.
 </para>
-
 <para>The documentation for &kappname; was not finished when &kde; was
 installed on this computer.</para> <para>If you need help, please
 check <ulink url="http://www.kde.org">The KDE Website</ulink> for
@@ -77,6 +74,33 @@ updates, or by submitting your question to <ulink url="mail
 to:kde-user@kde.org">The &kde; User Mailing list</ulink>.</para>
 <para><emphasis>The &kde; Team</emphasis></para>
 
+</chapter>
+<chapter id="sources">
+<title>The playable sources</title>
+<para>
+    &kmplayer; can play from various sources. These sources are listed in the Source menu.
+</para>
+<section>
+    <title>VDR</title>
+<para>
+To configure your VDR settings in kmplayer, see the Configure panel->Source->VDR->XVideo port panel. There should be ports detected, from which you should select one. You have to figure out what encoding you should use (eg. for western europe, that is PAL) and likely the correct one has a name with <quote>dvb</quote> in it.
+</para>
+<para>
+ For instance, I have a TV card, a DVB-S card and a webcam pluged into my system. With these, my settings are that there are three Ports. The first one has a long list of NTSC(-JP)/PAL(-M)/SECAM entries all saying something about television/composite/svideo (my TV card). The second one has NTSC-dvb/PAL-dvb/SECAM-dvb (my DVB-S card). And finally the third has only ntsc/pal (probably my webcam). I should therefore configure (just select it) the second port and second entry (PAL-dvb). 
+</para>
+<para>
+ Because VDR support from kmplayer can only use XVideo, of course XVideo should work (and I believe for video devices, this way of viewing only works on linux). Also this only works on your first display (:0.0). So make sure <quote>videoforlinux</quote> extension works with the X server. For the XFree86 server, therefor in its configuration (<filename>/etc/X11/XF86Config</filename>) it should have
+<programlisting>
+Section "Module" 
+     .... 
+     Load    "v4l" 
+EndSection
+</programlisting>
+</para>
+<para>
+ Unfortunately, when ever you update your video driver, you have to reconfigure this setting. 
+</para>
+</section>
 </chapter>
 <chapter id="questionsanswersandtips">
     <title>Questions, Answers, and Tips</title>
