@@ -74,7 +74,7 @@ static QString getPath (const KURL & url) {
 
 Process::Process (QObject * parent, Settings * settings, const char * n)
     : QObject (parent, n), m_viewer (0L), m_source (0L), m_settings (settings),
-      m_state (NotRunning), m_process (0L),
+      m_state (NotRunning), m_old_state (NotRunning), m_process (0L),
       m_supported_sources (default_supported) {}
 
 Process::~Process () {
@@ -174,11 +174,15 @@ bool Process::quit () {
 }
 
 void Process::setState (State newstate) {
-    if (m_state != newstate) {
+    if (m_source && m_state != newstate) {
         m_old_state = m_state;
         m_state = newstate;
-        QTimer::singleShot (0, this, SLOT (emitStateChange ()));
+        QTimer::singleShot (0, this, SLOT (rescheduledStateChanged ()));
     }
+}
+
+KDE_NO_EXPORT void Process::rescheduledStateChanged () {
+    m_source->stateChange (this, m_old_state, m_state);
 }
 
 KDE_NO_EXPORT bool Process::play (Source * src, NodePtr mrl) {
@@ -569,7 +573,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                 m_source->setPosition (pos);
                 m_request_seek = -1;
             } else if (m_cacheRegExp.search (out) > -1) {
-                emit loaded (int (m_cacheRegExp.cap(1).toDouble()));
+                m_source->setLoading (int (m_cacheRegExp.cap(1).toDouble()));
             }
         } else if (!m_source->identified () && out.startsWith ("ID_LENGTH")) {
             int pos = out.find ('=');
@@ -1030,7 +1034,7 @@ void CallbackProcess::setMoviePosition (int position) {
 
 void CallbackProcess::setLoadingProgress (int percentage) {
     in_gui_update = true;
-    emit loaded (percentage);
+    m_source->setLoading (percentage);
     in_gui_update = false;
 }
 

@@ -68,10 +68,7 @@ public:
     bool supports (const char * source) const;
     State state () const { return m_state; }
 signals:
-    // backend process state changed
-    void stateChange (KMPlayer::Process::State oldstate, KMPlayer::Process::State newstate);
     void grabReady (const QString & path);
-    void loaded (int percentage);
 public slots:
     virtual bool ready (Viewer *);
     virtual bool play (Source *, NodePtr mrl);
@@ -87,6 +84,8 @@ public slots:
     virtual bool hue (int pos, bool absolute);
     virtual bool contrast (int pos, bool absolute);
     virtual bool brightness (int pos, bool absolute);
+protected slots:
+    void rescheduledStateChanged ();
 protected:
     void setState (State newstate);
     QGuardedPtr <Viewer> m_viewer;
@@ -99,9 +98,6 @@ protected:
     QString m_url;
     int m_request_seek;
     const char ** m_supported_sources;
-protected slots:
-    // QTimer::singleShot slots for the signals
-    void emitStateChange () { emit stateChange (m_old_state, m_state); }
 };
 
 /*

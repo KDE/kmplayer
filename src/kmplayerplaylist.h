@@ -263,11 +263,11 @@ typedef SharedPtr <Connection> ConnectionPtr;
  * Base class for XML nodes. Provides a w3c's DOM like API
  *
  * Most severe traps with using SharedPtr/WeakPtr for tree nodes:
- * - pointer ends up in two independant shared object (hopefully with explicit
+ * - pointer ends up in two independant shared objects (hopefully with explicit
  *   constructor for T* and template specialization for assignment of T* should
- *   be enough ..)
+ *   be enough of defences ..)
  * - Node added two times (added ASSERT in appendChild/insertBefore)
- * - Node is destroyed before being stored in a shared_ptr with kmplayer usage
+ * - Node is destroyed before being stored in a SharedPtr with kmplayer usage
  *   of each object having a WeakPtr to itself (eg. be extremely careful with
  *   using m_self in the constructor, no SharedPtr storage yet)
  *

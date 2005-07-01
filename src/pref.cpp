@@ -320,7 +320,7 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent, PartBase * 
     for (RecorderPage * p = m_recorders; p; p = p->next)
         new QRadioButton (p->name (), recorder);
     if (m_player->source ())
-        sourceChanged (m_player->source ());
+        sourceChanged (0L, m_player->source ());
     recorder->setButton(0); // for now
     replay = new QButtonGroup (4, Qt::Vertical, i18n ("Auto Playback"), this);
     new QRadioButton (i18n ("&No"), replay);
@@ -342,9 +342,7 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent, PartBase * 
     layout->addItem (new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
     layout->addLayout (buttonlayout);
     layout->addItem (new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    connect (m_player, SIGNAL (sourceChanged(KMPlayer::Source*)), this, SLOT (sourceChanged(KMPlayer::Source*)));
-    connect(m_player, SIGNAL(startRecording()), this, SLOT(recordingStarted()));
-    connect(m_player, SIGNAL(stopRecording()),this,SLOT (recordingFinished()));
+    connect (m_player, SIGNAL (sourceChanged(KMPlayer::Source*,KMPlayer::Source*)), this, SLOT (sourceChanged(KMPlayer::Source*,KMPlayer::Source*)));
     connect (replay, SIGNAL (clicked (int)), this, SLOT (replayClicked (int)));
 }
 
@@ -359,17 +357,25 @@ KDE_NO_EXPORT void PrefRecordPage::recordingFinished () {
     url->setEnabled (true);
 }
 
-KDE_NO_EXPORT void PrefRecordPage::sourceChanged (Source * src) {
+KDE_NO_EXPORT void PrefRecordPage::sourceChanged (Source * olds, Source * nws) {
     int id = 0;
     int nr_recs = 0;
-    for (RecorderPage * p = m_recorders; p; p = p->next, ++id) {
-        QButton * radio = recorder->find (id);
-        bool b = m_player->recorders () [p->recorderName ()]->supports (m_player->source ()->name ());
-        radio->setEnabled (b);
-        if (b) nr_recs++;
+    if (olds) {
+        disconnect(nws,SIGNAL(startRecording()),this, SLOT(recordingStarted()));
+        disconnect(nws,SIGNAL(stopRecording()),this, SLOT(recordingFinished()));
+    }
+    if (nws) {
+        for (RecorderPage * p = m_recorders; p; p = p->next, ++id) {
+            QButton * radio = recorder->find (id);
+            bool b = m_player->recorders () [p->recorderName ()]->supports (nws->name ());
+            radio->setEnabled (b);
+            if (b) nr_recs++;
+        }
+        source->setText (i18n ("Current Source: ") + nws->prettyName ());
+        connect (nws, SIGNAL(startRecording()), this, SLOT(recordingStarted()));
+        connect (nws, SIGNAL(stopRecording()), this, SLOT(recordingFinished()));
     }
     recordButton->setEnabled (nr_recs > 0);
-    source->setText (i18n ("Current Source: ") + src->prettyName ());
 }
 
 KDE_NO_EXPORT void PrefRecordPage::replayClicked (int id) {

@@ -200,12 +200,9 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
     new KAction (i18n ("Decrease Volume"), editVolumeDec->shortcut (), m_player, SLOT(decreaseVolume ()), m_view->viewArea ()->actionCollection (), "edit_volume_down");
     connect (m_player->settings (), SIGNAL (configChanged ()),
              this, SLOT (configChanged ()));
-    connect (m_player, SIGNAL (startPlaying ()),
-             this, SLOT (playerStarted ()));
     connect (m_player, SIGNAL (loading (int)),
              this, SLOT (loadingProgress (int)));
-    connect (m_player, SIGNAL (sourceChanged (KMPlayer::Source *)), this,
-             SLOT (slotSourceChanged (KMPlayer::Source *)));
+    connect (m_player, SIGNAL (sourceChanged (KMPlayer::Source *, KMPlayer::Source *)), this, SLOT (slotSourceChanged(KMPlayer::Source *, KMPlayer::Source *)));
     m_view->controlPanel ()->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom50,
             this, SLOT (zoom50 ()));
     m_view->controlPanel ()->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom100,
@@ -239,10 +236,20 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
         recentFiles ()->addURL (source->url ());
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotSourceChanged (KMPlayer::Source * source) {
-    setCaption (source->prettyName (), false);
-    connect (source, SIGNAL (titleChanged (const QString &)), this,
-             SLOT (setCaption (const QString &)));
+KDE_NO_EXPORT void KMPlayerApp::slotSourceChanged (KMPlayer::Source *olds, KMPlayer::Source * news) {
+    if (olds) {
+        disconnect (olds, SIGNAL (titleChanged (const QString &)), this,
+                    SLOT (setCaption (const QString &)));
+        disconnect (olds, SIGNAL (startPlaying ()),
+                    this, SLOT (playerStarted ()));
+    }
+    if (news) {
+        setCaption (news->prettyName (), false);
+        connect (news, SIGNAL (titleChanged (const QString &)),
+                 this, SLOT (setCaption (const QString &)));
+        connect (news, SIGNAL (startPlaying ()),
+                 this, SLOT (playerStarted ()));
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerApp::dvdNav () {
@@ -904,11 +911,11 @@ KDE_NO_EXPORT void KMPlayerDVDNavSource::play () {
         m_menu->insertItem (i18n ("&Up"), this, SLOT (navMenuClicked (int)), 0, DVDNav_up);
     }
     QTimer::singleShot (0, m_player, SLOT (play ()));
-    connect (m_player, SIGNAL (stopPlaying ()), this, SLOT(finished ()));
+    connect (this, SIGNAL (stopPlaying ()), this, SLOT(finished ()));
 }
 
 KDE_NO_EXPORT void KMPlayerDVDNavSource::finished () {
-    disconnect (m_player, SIGNAL (stopPlaying ()), this, SLOT(finished ()));
+    disconnect (this, SIGNAL (stopPlaying ()), this, SLOT(finished ()));
     m_menu->removeItem (DVDNav_previous);
     m_menu->removeItem (DVDNav_next);
     m_menu->removeItem (DVDNav_root);

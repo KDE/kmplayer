@@ -90,7 +90,7 @@ public slots:
     void slotViewStatusBar ();
     void slotViewMenuBar ();
     void slotStatusMsg (const QString &text);
-    void slotSourceChanged (KMPlayer::Source *);
+    void slotSourceChanged (KMPlayer::Source *, KMPlayer::Source *);
 private slots:
     void dvdNav ();
     void openDVD ();

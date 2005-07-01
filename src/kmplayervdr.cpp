@@ -169,8 +169,8 @@ KDE_NO_EXPORT QString KMPlayerVDRSource::prettyName () {
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
-    connect (m_player, SIGNAL (startPlaying ()), this, SLOT (processStarted()));
-    connect (m_player, SIGNAL (stopPlaying ()), this, SLOT (processStopped ()));
+    connect (this, SIGNAL (startPlaying ()), this, SLOT (processStarted()));
+    connect (this, SIGNAL (stopPlaying ()), this, SLOT (processStopped ()));
     KMPlayer::ControlPanel * panel = m_app->view()->controlPanel ();
     panel->button (KMPlayer::ControlPanel::button_red)->show ();
     panel->button (KMPlayer::ControlPanel::button_green)->show ();
@@ -193,8 +193,8 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
 KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
     disconnect (m_socket, SIGNAL (error (int)), this, SLOT (socketError (int)));
     if (m_player->view ()) {
-        disconnect (m_player, SIGNAL(startPlaying()), this, SLOT(processStarted()));
-        disconnect (m_player, SIGNAL (stopPlaying()), this, SLOT(processStopped()));
+        disconnect (this, SIGNAL(startPlaying()), this, SLOT(processStarted()));
+        disconnect (this, SIGNAL (stopPlaying()), this, SLOT(processStopped()));
         KMPlayer::ControlPanel * panel = m_app->view()->controlPanel ();
         disconnect (panel->volumeBar (), SIGNAL (volumeChanged (int)), this, SLOT (volumeChanged (int)));
         disconnect (panel->button (KMPlayer::ControlPanel::button_red), SIGNAL (clicked ()), this, SLOT (keyRed ()));

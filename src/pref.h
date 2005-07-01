@@ -151,7 +151,7 @@ public slots:
     void replayClicked (int id);
 private slots:
     void slotRecord ();
-    void sourceChanged (KMPlayer::Source *);
+    void sourceChanged (KMPlayer::Source *, KMPlayer::Source *);
     void recordingStarted ();
     void recordingFinished ();
 private:

@@ -168,11 +168,7 @@ public:
 k_dcop:
     void toggleFullScreen ();
 signals:
-    void startPlaying ();
-    void stopPlaying ();
-    void startRecording ();
-    void stopRecording ();
-    void sourceChanged (KMPlayer::Source *);
+    void sourceChanged (KMPlayer::Source * old, KMPlayer::Source * nw);
     void sourceDimensionChanged ();
     void loading (int percentage);
     void urlAdded (const QString & url);
@@ -190,13 +186,15 @@ protected slots:
     void hueValueChanged (int val);
     void saturationValueChanged (int val);
     void sourceHasChangedDimensions ();
-    virtual void processStateChange (KMPlayer::Process::State, KMPlayer::Process::State);
-    void recordingStateChange (KMPlayer::Process::State, KMPlayer::Process::State);
     void positioned (int pos);
     void lengthFound (int len);
     virtual void loaded (int percentage);
     void fullScreen ();
     void playListItemSelected (QListViewItem *);
+    virtual void playingStarted ();
+    virtual void playingStopped ();
+    void recordingStarted ();
+    void recordingStopped ();
 protected:
     KConfig * m_config;
     QGuardedPtr <View> m_view;

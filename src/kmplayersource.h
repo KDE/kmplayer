@@ -26,6 +26,7 @@
 #include <kurl.h>
 
 #include "kmplayerplaylist.h"
+#include "kmplayerprocess.h"
 
 class KConfig;
 class QWidget;
@@ -90,17 +91,25 @@ public:
     /* setPosition (pos) set position in deci-seconds */
     void setPosition (int pos);
     virtual void setIdentified (bool b = true);
+    // backend process state changed
+    void stateChange (Process *, Process::State olds, Process::State nwstate);
     KDE_NO_EXPORT void setAutoPlay (bool b) { m_auto_play = b; }
     void setTitle (const QString & title);
+    void setLoading (int percentage) { emit loaded (percentage); }
 
     virtual QString prettyName ();
 signals:
+    void startPlaying ();
+    void stopPlaying ();
+    void startRecording ();
+    void stopRecording ();
     /**
      * Signal for notifying this source is at the end of play items
      */
     void endOfPlayItems ();
     void dimensionsChanged ();
     void titleChanged (const QString & title);
+    void loaded (int percentage);
     /**
      * Movie position changed
      */

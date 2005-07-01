@@ -592,7 +592,7 @@ KDE_NO_EXPORT void TVDeviceScannerSource::activate () {
 }
 
 KDE_NO_EXPORT void TVDeviceScannerSource::deactivate () {
-    disconnect (m_player, SIGNAL (stopPlaying ()), this, SLOT (finished ()));
+    disconnect (this, SIGNAL (stopPlaying ()), this, SLOT (finished ()));
     if (m_tvdevice) {
         delete m_tvdevice;
         m_tvdevice = 0L;
@@ -608,7 +608,7 @@ KDE_NO_EXPORT void TVDeviceScannerSource::play () {
     m_player->stop ();
     m_player->process ()->initProcess (0L);
     if (static_cast <KMPlayer::MPlayer *> (m_player->players () ["mplayer"])->run (args.ascii()))
-        connect (m_player, SIGNAL (stopPlaying ()), this, SLOT (finished ()));
+        connect (this, SIGNAL (stopPlaying ()), this, SLOT (finished ()));
     else
         deactivate ();
 }

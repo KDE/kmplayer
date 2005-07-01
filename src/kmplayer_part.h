@@ -47,10 +47,10 @@ public slots:
     virtual void init ();
     virtual void activate ();
     virtual void deactivate ();
+    void finished ();
 private slots:
     void grabReady (const QString & path);
     void play ();
-    void finished ();
 private:
     QString m_grabfile;
     bool m_finished;
@@ -99,7 +99,6 @@ signals:
                     const KParts::LiveConnectExtension::ArgList &);
 public slots:
     void setSize (int w, int h);
-private slots:
     void started ();
     void finished ();
 private:
@@ -139,7 +138,8 @@ public slots:
     virtual bool closeURL ();
     void setMenuZoom (int id);
 protected slots:
-    virtual void processStateChange (KMPlayer::Process::State, KMPlayer::Process::State state);
+    virtual void playingStarted ();
+    virtual void playingStopped ();
     virtual void loaded (int percentage);
     void viewerPartDestroyed (QObject *);
     void viewerPartProcessChanged (const char *);

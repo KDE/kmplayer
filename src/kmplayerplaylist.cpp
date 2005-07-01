@@ -498,7 +498,7 @@ void Mrl::activate () {
         Element::activate ();
         return;
     }
-    kdDebug () << "Mrl::activate" << endl;
+    kdDebug () << nodeName () << " Mrl::activate" << endl;
     setState (state_activated);
     if (document ()->notify_listener && !src.isEmpty ())
         document ()->notify_listener->requestPlayURL (m_self);
