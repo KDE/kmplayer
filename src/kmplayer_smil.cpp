@@ -913,8 +913,9 @@ KDE_NO_EXPORT void AudioVideoData::started () {
             durations [end_time].durval == duration_media)
         durations [duration_time].durval = duration_media; // duration of clip
     MediaTypeRuntime::started ();
-    if (region_node && element) {
-        sized_connection = region_node->connectTo (element, event_sized);
+    if (element) {
+        if (region_node)
+            sized_connection = region_node->connectTo (element, event_sized);
         kdDebug () << "AudioVideoData::started " << source_url << endl;
         PlayListNotify * n = element->document ()->notify_listener;
         if (n && !source_url.isEmpty ()) {
@@ -1100,32 +1101,32 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
     bool has_root (smilroot);
     if (!has_root) { // just add one if none there
         smilroot = new SMIL::RootLayout (m_doc);
-        appendChild (smilroot->self ());
+        NodePtr sr = smilroot->self (); // protect against destruction
         smilroot->setAuxiliaryNode (true);
         rootLayout = smilroot->self ();
-    }
-    if (!has_root) {
-        int w =0, h = 0;
-        if (!hasChildNodes ()) {
-            w = 100; h = 100; // have something to start with
-            SMIL::Region * r = new SMIL::Region (m_doc);
-            appendChild (r->self ());
-        } else {
-            for (NodePtr n = firstChild (); n; n = n->nextSibling ()) {
-                if (!strcmp (n->nodeName (), "region")) {
-                    SMIL::Region * rb =convertNode <SMIL::Region> (n);
-                    ElementRuntimePtr rt = rb->getRuntime ();
-                    static_cast <RegionRuntime *> (rt.ptr ())->init ();
-                    rb->calculateBounds (0, 0);
-                    if (rb->x + rb->w > w)
-                        w = rb->x + rb->w;
-                    if (rb->y + rb->h > h)
-                        h = rb->y + rb->h;
-                }
+        int w_root =0, h_root = 0, reg_count = 0;
+        for (NodePtr n = firstChild (); n; n = n->nextSibling ()) {
+            if (!strcmp (n->nodeName (), "region")) {
+                SMIL::Region * rb =convertNode <SMIL::Region> (n);
+                ElementRuntimePtr rt = rb->getRuntime ();
+                static_cast <RegionRuntime *> (rt.ptr ())->init ();
+                rb->calculateBounds (0, 0);
+                if (rb->x + rb->w > w_root)
+                    w_root = rb->x + rb->w;
+                if (rb->y + rb->h > h_root)
+                    h_root = rb->y + rb->h;
+                reg_count++;
             }
         }
-        smilroot->setAttribute ("width", QString::number (w));
-        smilroot->setAttribute ("height", QString::number (h));
+        if (!reg_count) {
+            w_root = 100; h_root = 100; // have something to start with
+            SMIL::Region * r = new SMIL::Region (m_doc);
+            appendChild (r->self ());
+            r->setAuxiliaryNode (true);
+        }
+        smilroot->setAttribute ("width", QString::number (w_root));
+        smilroot->setAttribute ("height", QString::number (h_root));
+        insertBefore (sr, firstChild ());
     } else if (childNodes ()->length () < 2) { // only a root-layout
         SMIL::Region * r = new SMIL::Region (m_doc);
         appendChild (r->self ());
