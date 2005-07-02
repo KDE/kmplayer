@@ -30,6 +30,7 @@
 
 class KMPlayerPrefSourcePageTV;         // source, TV
 class TVDeviceScannerSource;
+class KMPlayerTVSource;
 class KMPlayerApp;
 class QTabWidget;
 class QTable;
@@ -48,10 +49,10 @@ class KURLRequester;
 class TVChannel : public KMPlayer::GenericMrl {
 public:
     TVChannel (KMPlayer::NodePtr & d, const QString & n, int f);
+    TVChannel (KMPlayer::NodePtr & d);
     KDE_NO_CDTOR_EXPORT ~TVChannel () {}
-    KDE_NO_EXPORT const char * nodeName () const { return "tvchannel"; }
-    QString name;
-    int frequency;
+    KDE_NO_EXPORT const char * nodeName () const { return "channel"; }
+    void closed ();
 };
 
 /*
@@ -60,12 +61,11 @@ public:
 class TVInput : public KMPlayer::GenericMrl {
 public:
     TVInput (KMPlayer::NodePtr & d, const QString & n, int id);
+    TVInput (KMPlayer::NodePtr & d);
     KDE_NO_CDTOR_EXPORT ~TVInput () {}
-    KDE_NO_EXPORT const char * nodeName () const { return "tvinput"; }
-    QString name;
-    int id;
-    bool hastuner;
-    QString norm;
+    KDE_NO_EXPORT const char * nodeName () const { return "input"; }
+    KMPlayer::NodePtr childFromTag (const QString &);
+    void closed ();
 };
 
 /*
@@ -73,18 +73,25 @@ public:
  */
 class TVDevice : public KMPlayer::GenericMrl {
 public:
-    TVDevice (KMPlayer::NodePtr & d, const QString & d, const QSize & size);
+    TVDevice (KMPlayer::NodePtr & d, const QString & d);
+    TVDevice (KMPlayer::NodePtr & d);
     KDE_NO_CDTOR_EXPORT ~TVDevice () {}
-    KDE_NO_EXPORT const char * nodeName () const { return "tvdevice"; }
-    QString audiodevice;
-    QSize minsize;
-    QSize maxsize;
-    QSize size;
-    bool noplayback;
+    KDE_NO_EXPORT const char * nodeName () const { return "device"; }
+    KMPlayer::NodePtr childFromTag (const QString &);
+    void closed ();
+    bool expose () const { return !zombie; }
+    bool zombie;
 };
 
-class KMPlayerPrefSourcePageTVDevice : public QFrame
-{
+class TVDocument : public KMPlayer::Document {
+    KMPlayerTVSource * m_source;
+public:
+    TVDocument (KMPlayerTVSource *);
+    KMPlayer::NodePtr childFromTag (const QString &);
+    KDE_NO_EXPORT const char * nodeName () const { return "tvdevices"; }
+};
+
+class KMPlayerPrefSourcePageTVDevice : public QFrame {
     Q_OBJECT
 public:
     KMPlayerPrefSourcePageTVDevice (QWidget *parent, KMPlayer::NodePtr dev);
@@ -99,6 +106,8 @@ public:
     void updateTVDevice ();
 signals:
     void deleted (KMPlayerPrefSourcePageTVDevice *);
+protected:
+    void showEvent (QShowEvent *);
 private slots:
     void slotDelete ();
 private:
@@ -124,7 +133,7 @@ public:
 class TVDeviceScannerSource : public KMPlayer::Source {
     Q_OBJECT
 public:
-    TVDeviceScannerSource (KMPlayer::NodePtr d, KMPlayer::PartBase * player);
+    TVDeviceScannerSource (KMPlayerTVSource * src);
     KDE_NO_CDTOR_EXPORT ~TVDeviceScannerSource () {};
     virtual void init ();
     virtual bool processOutput (const QString & line);
@@ -136,13 +145,13 @@ public slots:
     virtual void activate ();
     virtual void deactivate ();
     virtual void play ();
-    void finished ();
+    virtual void playURLDone ();
 signals:
     void scanFinished (TVDevice * tvdevice);
 private:
-    KMPlayer::NodePtr m_doc;
+    KMPlayerTVSource * m_tvsource;
     TVDevice * m_tvdevice;
-    KMPlayer::Source * m_source;
+    KMPlayer::Source * m_old_source;
     QString m_driver;
     QRegExp m_nameRegExp;
     QRegExp m_sizesRegExp;
@@ -178,9 +187,7 @@ private slots:
     void slotDeviceDeleted (KMPlayerPrefSourcePageTVDevice *);
 private:
     void addTVDevicePage (TVDevice * dev, bool show=false);
-    KMPlayer::NodePtr m_cur_tvdevice;
-    KMPlayer::NodePtr deleteddevices;
-    KMPlayer::NodePtr addeddevices;
+    KMPlayer::NodePtrW m_cur_tvdevice;
     QPopupMenu * m_channelmenu;
     QString tvdriver;
     KMPlayerPrefSourcePageTV * m_configpage;

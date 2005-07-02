@@ -294,8 +294,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                     cp, SLOT (viewerPartDestroyed (QObject *)));
             connect (vp, SIGNAL (processChanged (const char *)),
                     cp, SLOT (viewerPartProcessChanged (const char *)));
-            connect (vp, SIGNAL (sourceChanged (KMPlayer::Source *)),
-                    cp, SLOT (viewerPartSourceChanged (KMPlayer::Source *)));
+            connect (vp, SIGNAL (sourceChanged (KMPlayer::Source *, KMPlayer::Source *)), cp, SLOT (viewerPartSourceChanged (KMPlayer::Source *, KMPlayer::Source *)));
         }
         kmplayerpart_static->partlist.push_back (this);
     } else
@@ -337,7 +336,7 @@ KDE_NO_EXPORT void KMPlayerPart::viewerPartProcessChanged (const char * pname) {
     updatePlayerMenu ();
 }
 
-KDE_NO_EXPORT void KMPlayerPart::viewerPartSourceChanged (Source *) {
+KDE_NO_EXPORT void KMPlayerPart::viewerPartSourceChanged (Source *, Source *) {
     updatePlayerMenu ();
 }
 

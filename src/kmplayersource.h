@@ -62,6 +62,7 @@ public:
     virtual float aspect () { return m_aspect; }
     KDE_NO_EXPORT const KURL & url () const { return m_url; }
     KDE_NO_EXPORT const KURL & subUrl () const { return m_sub_url; }
+    PartBase * player () { return m_player; }
     void reset ();
     QString currentMrl ();
     QString mime () const;

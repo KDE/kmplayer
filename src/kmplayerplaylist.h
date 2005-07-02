@@ -716,6 +716,7 @@ public:
     bool isMrl ();
 };
 
+KMPLAYER_EXPORT
 void readXML (NodePtr root, QTextStream & in, const QString & firstline);
 
 template <class T> inline Item<T>::Item () : m_self (static_cast <T*> (this)) {}

@@ -178,7 +178,7 @@ private slots:
     void startServer ();
     void startFeed ();
     void stateChange (KMPlayer::Process::State, KMPlayer::Process::State);
-    void sourceChanged (KMPlayer::Source *);
+    void sourceChanged (KMPlayer::Source *, KMPlayer::Source *);
 private:
     KMPlayer::PartBase * m_player;
     KMPlayerFFServerConfig * m_ffserverconfig;

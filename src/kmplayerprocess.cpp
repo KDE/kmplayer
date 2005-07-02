@@ -199,6 +199,10 @@ bool Process::ready (Viewer * viewer) {
     return true;
 }
 
+Viewer * Process::viewer () const {
+    return (m_viewer ? (Viewer*)m_viewer : m_settings->defaultView()->viewer());
+}
+
 //-----------------------------------------------------------------------------
 
 static bool proxyForURL (const KURL& url, QString& proxy) {
@@ -318,7 +322,7 @@ QString MPlayer::menuName () const {
 }
 
 KDE_NO_EXPORT WId MPlayer::widget () {
-    return viewer()->embeddedWinId ();
+    return viewer ()->embeddedWinId ();
 }
 
 KDE_NO_EXPORT bool MPlayer::play (Source * source, NodePtr node) {
@@ -1043,7 +1047,7 @@ bool CallbackProcess::getConfigData () {
         return false;
     if (m_have_config == config_unknown && !playing ()) {
         m_have_config = config_probe;
-        ready (m_viewer ? viewer () : m_settings->defaultView ()->viewer ());
+        ready (viewer ());
     }
     return true;
 }
@@ -1054,7 +1058,7 @@ void CallbackProcess::setChangedData (const QByteArray & data) {
     if (m_send_config == send_try)
         m_backend->setConfig (data);
     else
-        ready (m_viewer ? viewer () : m_settings->defaultView ()->viewer ());
+        ready (viewer ());
 }
 
 bool CallbackProcess::play (Source * source, NodePtr node) {

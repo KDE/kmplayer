@@ -460,8 +460,7 @@ QFrame * KMPlayerBroadcastConfig::prefPage (QWidget * parent) {
     if (!m_configpage) {
         m_configpage = new KMPlayerPrefBroadcastFormatPage (parent, ffserversettingprofiles);
         connect (m_configpage->startbutton, SIGNAL (clicked ()), this, SLOT (startServer ()));
-        connect (m_player, SIGNAL (sourceChanged (KMPlayer::Source *)),
-                 this, SLOT (sourceChanged (KMPlayer::Source *)));
+        connect (m_player, SIGNAL (sourceChanged (KMPlayer::Source *, KMPlayer::Source *)), this, SLOT (sourceChanged (KMPlayer::Source *,KMPlayer::Source *)));
         m_configpage->startbutton->setEnabled
             (!m_player->source ()->videoDevice ().isEmpty ());
     }
@@ -603,7 +602,7 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::processStopped (KProcess *) {
     emit broadcastStopped ();
 }
 
-KDE_NO_EXPORT void KMPlayerBroadcastConfig::sourceChanged (KMPlayer::Source * source) {
+KDE_NO_EXPORT void KMPlayerBroadcastConfig::sourceChanged (KMPlayer::Source *, KMPlayer::Source * source) {
     if (m_configpage)
         m_configpage->startbutton->setEnabled (broadcasting () || (source && !source->videoDevice ().isEmpty ()));
 }

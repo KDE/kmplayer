@@ -62,7 +62,7 @@ public:
     KDE_NO_EXPORT KProcess * process () const { return m_process; }
     KDE_NO_EXPORT Source * source () const { return m_source; }
     virtual WId widget ();
-    Viewer * viewer () const { return m_viewer; }
+    Viewer * viewer () const;
     void setSource (Source * src) { m_source = src; }
     virtual bool grabPicture (const KURL & url, int pos);
     bool supports (const char * source) const;

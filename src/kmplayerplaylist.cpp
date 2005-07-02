@@ -518,8 +518,8 @@ Document::Document (const QString & s, PlayListNotify * n)
     src = s;
 }
 
-KDE_NO_CDTOR_EXPORT Document::~Document () {
-    kdDebug () << "~Document\n";
+Document::~Document () {
+    kdDebug () << "~Document" << endl;
 }
 
 static NodePtr getElementByIdImpl (NodePtr n, const QString & id) {
@@ -811,6 +811,7 @@ static void characterData (void *data, const char *s, int len) {
 
 namespace KMPlayer {
 
+KMPLAYER_EXPORT
 void readXML (NodePtr root, QTextStream & in, const QString & firstline) {
     bool ok = true;
     DocumentBuilder builder (root);
@@ -894,6 +895,7 @@ private:
     void push_attribute ();
 };
 
+KMPLAYER_EXPORT
 void readXML (NodePtr root, QTextStream & in, const QString & firstline) {
     DocumentBuilder builder (root);
     SimpleSAXParser parser (builder);
