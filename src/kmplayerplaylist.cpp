@@ -325,21 +325,22 @@ QString Node::innerText () const {
     return buf;
 }
 
-static void getOuterXML (const NodePtr p, QTextOStream & out) {
+static void getOuterXML (const NodePtr p, QTextOStream & out, int depth) {
     if (!p->isElementNode ()) // #text
-        out << XMLStringlet (p->nodeValue ());
+        out << XMLStringlet (p->nodeValue ()) << QChar ('\n');
     else {
         Element * e = convertNode <Element> (p);
-        out << QChar ('<') << XMLStringlet (e->nodeName ());
+        QString indent (QString ().fill (QChar (' '), depth));
+        out << indent << QChar ('<') << XMLStringlet (e->nodeName ());
         for (AttributePtr a = e->attributes()->first(); a; a = a->nextSibling())
             out << " " << XMLStringlet (a->nodeName ()) << "=\"" << XMLStringlet (a->nodeValue ()) << "\"";
         if (e->hasChildNodes ()) {
-            out << QChar ('>');
+            out << QChar ('>') << QChar ('\n');
             for (NodePtr c = e->firstChild (); c; c = c->nextSibling ())
-                getOuterXML (c, out);
-            out << QString("</") << XMLStringlet (e->nodeName()) << QChar ('>');
+                getOuterXML (c, out, depth + 1);
+            out << indent << QString("</") << XMLStringlet (e->nodeName()) << QChar ('>') << QChar ('\n');
         } else
-            out << QString ("/>");
+            out << QString ("/>") << QChar ('\n');
     }
 }
 
@@ -347,14 +348,14 @@ QString Node::innerXML () const {
     QString buf;
     QTextOStream out (&buf);
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-        getOuterXML (e, out);
+        getOuterXML (e, out, 0);
     return buf;
 }
 
 QString Node::outerXML () const {
     QString buf;
     QTextOStream out (&buf);
-    getOuterXML (self (), out);
+    getOuterXML (self (), out, 0);
     return buf;
 }
 
