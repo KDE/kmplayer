@@ -385,6 +385,7 @@ public:
      */
     virtual ElementRuntimePtr getRuntime ();
     virtual void clear ();
+    void clearChildren ();
     void appendChild (NodePtr c);
     void insertBefore (NodePtr c, NodePtr b);
     void removeChild (NodePtr c);
@@ -396,6 +397,7 @@ public:
     KDE_NO_EXPORT bool isDocument () const { return m_doc == m_self; }
 
     KDE_NO_EXPORT NodeListPtr childNodes () const;
+    void setState (State nstate);
 protected:
     Node (NodePtr & d);
     /*
@@ -411,12 +413,14 @@ protected:
      */
     virtual NodeRefListPtr listeners (unsigned int event_id);
     NodePtr m_doc;
-public:
-    State state;
-    void setState (State nstate);
 private:
     unsigned int defer_tree_version;
+public:
+    State state;
+    short id;
+private:
     bool auxiliary_node;
+protected:
 };
 
 /*

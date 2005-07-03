@@ -90,7 +90,7 @@ KDE_NO_EXPORT void Connection::disconnect () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT Node::Node (NodePtr & d)
- : m_doc (d), state (state_init), auxiliary_node (false) {}
+ : m_doc (d), state (state_init), id (0), auxiliary_node (false) {}
 
 Node::~Node () {
     clear ();
@@ -209,6 +209,10 @@ void Node::childDone (NodePtr child) {
 }
 
 void Node::clear () {
+    clearChildren ();
+}
+
+void Node::clearChildren () {
     if (m_doc)
         document()->m_tree_version++;
     while (m_first_child != m_last_child) {
