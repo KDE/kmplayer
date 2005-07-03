@@ -106,8 +106,6 @@ public:
     void updateTVDevice ();
 signals:
     void deleted (KMPlayerPrefSourcePageTVDevice *);
-protected:
-    void showEvent (QShowEvent *);
 private slots:
     void slotDelete ();
 private:
@@ -118,12 +116,15 @@ class KMPlayerPrefSourcePageTV : public QFrame
 {
     Q_OBJECT
 public:
-    KMPlayerPrefSourcePageTV (QWidget *parent);
+    KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerTVSource *);
     KDE_NO_CDTOR_EXPORT ~KMPlayerPrefSourcePageTV () {}
     QLineEdit * driver;
     KURLRequester * device;
     QPushButton * scan;
     QTabWidget * tab;
+protected:
+    void showEvent (QShowEvent *);
+    KMPlayerTVSource * m_tvsource;
 };
 
 
@@ -176,10 +177,12 @@ public:
     virtual void sync (bool);
     virtual void prefLocation (QString & item, QString & icon, QString & tab);
     virtual QFrame * prefPage (QWidget * parent);
+    void readXML ();
 public slots:
     virtual void activate ();
     virtual void deactivate ();
     virtual void playCurrent ();
+    void menuAboutToShow ();
     void menuClicked (int id);
 private slots:
     void slotScan ();
@@ -194,6 +197,7 @@ private:
     TVDeviceScannerSource * scanner;
     typedef std::list <KMPlayerPrefSourcePageTVDevice *> TVDevicePageList;
     TVDevicePageList m_devicepages;
+    bool config_read; // whether tv.xml is read
 };
 
 #endif //_KMPLAYER_TV_SOURCE_H_
