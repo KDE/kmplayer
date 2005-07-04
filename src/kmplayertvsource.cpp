@@ -231,10 +231,11 @@ KDE_NO_EXPORT void TVChannel::closed () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT TVInput::TVInput (KMPlayer::NodePtr & d, const QString & n, int id) : KMPlayer::GenericMrl (d, QString ("tv://"), n) {
+TVInput::TVInput (KMPlayer::NodePtr & d, const QString & n, int id)
+ : KMPlayer::GenericMrl (d, QString ("tv://"), n) {
     setAttribute ("name", n);
     setAttribute ("id", QString::number (id));
-    id = ID_TVINPUT;
+    this->id = ID_TVINPUT;
 }
 
 KDE_NO_CDTOR_EXPORT TVInput::TVInput (KMPlayer::NodePtr & d) : KMPlayer::GenericMrl (d, QString ("tv://")) {
@@ -446,20 +447,73 @@ KDE_NO_EXPORT void KMPlayerTVSource::write (KConfig * m_config) {
 KDE_NO_EXPORT void KMPlayerTVSource::readXML () {
     if (config_read) return;
     kdDebug () << "KMPlayerTVSource::readXML" << endl;
-    KMPlayer::NodePtr doc = (new TVDocument (this))->self ();
     QString tvxml = locateLocal ("data", "kmplayer/tv.xml");
     QFile file (tvxml);
     if (file.exists ()) {
+        KMPlayer::NodePtr doc = (new TVDocument (this))->self ();
         file.open (IO_ReadOnly);
         QTextStream inxml (&file);
         KMPlayer::readXML (doc, inxml, QString::null);
+        doc->normalize ();
+        if (doc->hasChildNodes ()) {
+            m_document = doc->firstChild ();
+            doc->removeChild (doc->firstChild ());
+        }
+        doc->document ()->dispose ();
+    } else { // try old KConfig entries
+        KConfig * kcfg = m_player->settings ()->kconfig ();
+        kcfg->setGroup (strTV);
+        QStrList devlist;
+        int deviceentries = kcfg->readListEntry ("Devices", devlist, ';');
+        for (int i = 0; i < deviceentries; i++) {
+            kcfg->setGroup (devlist.at (i));
+            TVDevice * device = new TVDevice (m_document, devlist.at (i));
+            m_document->appendChild (device->self ());
+            QSize size = kcfg->readSizeEntry ("Size");
+            device->setAttribute ("width", QString::number (size.width ()));
+            device->setAttribute ("height", QString::number (size.height ()));
+            QString name = kcfg->readEntry ("Name", "/dev/video");
+            device->pretty_name = name;
+            device->setAttribute ("name", name);
+            device->setAttribute ("audio", kcfg->readEntry("Audio Device", ""));
+            size = kcfg->readSizeEntry ("Minimum Size");
+            device->setAttribute ("minwidth", QString::number (size.width ()));
+            device->setAttribute ("minheight", QString::number (size.height()));
+            size = kcfg->readSizeEntry ("Maximum Size");
+            device->setAttribute ("maxwidth", QString::number (size.width ()));
+            device->setAttribute ("maxheight", QString::number (size.height()));
+            device->setAttribute ("playback", kcfg->readBoolEntry ("No Playback", false) ? "0" : "1");
+            QStrList inputlist;
+            int inputentries = kcfg->readListEntry ("Inputs", inputlist,';');
+            kdDebug() << device->src << " has " << inputentries << " inputs" << endl;
+            for (int j = 0; j < inputentries; j++) {
+                QString inputstr = inputlist.at (j);
+                int pos = inputstr.find (':');
+                if (pos < 0) {
+                    kdError () << "Wrong input: " << inputstr << endl;
+                    continue;
+                }
+                TVInput * input = new TVInput (m_document, inputstr.mid (pos + 1), inputstr.left (pos).toInt ());
+                device->appendChild (input->self ());
+                QStrList freqlist;
+                int freqentries = kcfg->readListEntry(input->getAttribute ("name"), freqlist,';');
+                if (freqentries > 0) {
+                    input->setAttribute ("tuner", "1");
+                    input->setAttribute("norm",kcfg->readEntry ("Norm", "PAL"));
+                }
+                for (int k = 0; k < freqentries; k++) {
+                    QString freqstr = freqlist.at (k);
+                    int pos = freqstr.find (':');
+                    if (pos < 0) {
+                        kdWarning () << "Wrong frequency or none defined: " << freqstr << endl;
+                        continue;
+                    }
+                    input->appendChild ((new TVChannel (m_document, freqstr.left (pos), freqstr.mid (pos+1).toInt ()))->self ());
+                    kdDebug() << freqstr.left (pos) << " at " << freqstr.mid (pos+1).toInt() << endl;
+                }
+            }
+        }
     }
-    doc->normalize ();
-    if (doc->hasChildNodes ()) {
-        m_document = doc->firstChild ();
-        doc->removeChild (doc->firstChild ());
-    }
-    doc->document ()->dispose ();
     config_read = true;
     buildMenu ();
     sync (false);

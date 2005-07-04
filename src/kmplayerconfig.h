@@ -93,6 +93,7 @@ public:
     void applyColorSetting (bool only_changed_ones);
     Preferences *configDialog() const { return configdialog; }
     View * Settings::defaultView ();
+    KConfig * kconfig () { return m_config; }
 
     QStringList urllist;
     QStringList sub_urllist;
