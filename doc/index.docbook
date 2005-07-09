@@ -81,6 +81,32 @@ to:kde-user@kde.org">The &kde; User Mailing list</ulink>.</para>
     &kmplayer; can play from various sources. These sources are listed in the Source menu.
 </para>
 <section>
+    <title>TV</title>
+    <para>
+        KMPlayer can play from TV cards using <quote>MPlayer</quote> or <quote>XVideo</quote>. Before you can watch TV, you have to configure which device to use and the TV channel. You can use the scanner from the configure dialog for this or edit the config file manually.
+</para>
+<para>
+    The config file for TV settings is a XML file, located <filename>~/.kde/share/apps/kmplayer/tv.xml</filename>. The XML format is like this example:
+    <programlisting>
+&lt;tvdevices&gt;
+    &lt;device path="/dev/video0" width="320" height="240" name="BT878 video (Hauppauge (bt878))" audio="" minwidth="48" minheight="32" maxwidth="924" maxheight="576" playback="0" xvport="240"&gt;
+        &lt;input name="Television" id="0" tuner="1" norm="PAL" xvenc="0"&gt;
+            &lt;channel name="Ned1" frequency="21600"/&gt;
+            &lt;channel name="VCR" frequency="59490"/&gt;
+        &lt;/input&gt;
+        &lt;input name="Composite1" id="1" xvenc="7"/&gt;
+        &lt;input name="S-Video" id="2" xvenc="14"/&gt;
+        &lt;input name="Composite3" id="3"/&gt;
+    &lt;/device&gt;
+    &lt;device path="/dev/video1" width="640" height="480" name="Philips 740 webcam" audio="" minwidth="160" minheight="120" maxwidth="640" maxheight="480" playback="1"&gt;
+        &lt;input name="Webcam" id="0"/&gt;
+    &lt;/device&gt;
+&lt;/tvdevices&gt;
+</programlisting>
+Note that currently the <quote>xvport</quote> and <quote>xvenc</quote> attributes can only be set manually editing this file. The values of these two attributes can be retrieved by running <quote>kxvplayer</quote> in a terminal application like <quote>konsole</quote>. See the VDR section for more information about using <quote>XVideo</quote>.
+</para>
+</section>
+<section>
     <title>VDR</title>
 <para>
 To configure your VDR settings in kmplayer, see the Configure panel->Source->VDR->XVideo port panel. There should be ports detected, from which you should select one. You have to figure out what encoding you should use (eg. for western europe, that is PAL) and likely the correct one has a name with <quote>dvb</quote> in it.
