@@ -379,6 +379,12 @@ KDE_NO_EXPORT void KMPlayerTVSource::playCurrent () {
     m_audiodevice = tvdevice->getAttribute ("audio");
     m_videodevice = tvdevice->src;
     m_videonorm = input->getAttribute ("norm");
+    QString xvport = tvdevice->getAttribute ("xvport");
+    if (!xvport.isEmpty ())
+        m_xvport = xvport.toInt ();
+    QString xvenc = input->getAttribute ("xvenc");
+    if (!xvenc.isEmpty ())
+        m_xvencoding = xvenc.toInt ();
     QString command;
     command.sprintf ("device=%s:input=%s", tvdevice->src.ascii (), input->getAttribute ("id").ascii ());
     if (channel) {

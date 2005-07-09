@@ -1,3 +1,13 @@
+Changes since version 0.9.0-pre4
+- TV settings are now stored in ~/.kde/share/apps/kmplayer/tv.xml. There is an
+  automatic conversion. Should make manual changes more easy, see handbook for
+  the format. Now also XVideo port and encoding can be configured, although
+  manually only.
+- More work on SMIL. Allow playing mediatype elements w/o having a region
+  assigned, fixes audio only streams (eg. with the <audio> tag).
+- Optional use the expat SAX parser (instead of kmplayer's own one) when
+  configured with --enable-expat. Note, the expat parser is more strict and
+  therefor can misread some ASX files.
 Changes since version 0.9.0-pre3
 - Fix for DVD submenus for MPlayer and update regexp for audio/subtitle
   languages
