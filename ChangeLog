@@ -1,4 +1,5 @@
 Changes since version 0.9.0-pre4
+- Added help sections in handbook.
 - TV settings are now stored in ~/.kde/share/apps/kmplayer/tv.xml. There is an
   automatic conversion. Should make manual changes more easy, see handbook for
   the format. Now also XVideo port and encoding can be configured, although
