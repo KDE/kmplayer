@@ -5,7 +5,7 @@ Changes since version 0.9.0-pre4
   manually only.
 - More work on SMIL. Allow playing mediatype elements w/o having a region
   assigned, fixes audio only streams (eg. with the <audio> tag).
-- Optional use the expat SAX parser (instead of kmplayer's own one) when
+- Optionally use the expat SAX parser (instead of kmplayer's own one) when
   configured with --enable-expat. Note, the expat parser is more strict and
   therefor can misread some ASX files.
 Changes since version 0.9.0-pre3
