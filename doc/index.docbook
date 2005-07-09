@@ -147,7 +147,10 @@ EndSection
           <para>Xine starts up slow, why does it have to benchmark my CPU all the time?</para>
         </question>
         <answer>
-            <para>The <application>Xine</application> frontend for &kmplayer;, <application>kxineplayer</application>, uses <filename>~/.xine/config2</filename> for its configuration. Settings for <application>Xine</application> are found in the configuration dialog <quote>General Options</quote>|<quote>Xine</quote>. (If you change an option here and save it, <filename>~/.xine/config2</filename> will contain some explainations too). The CPU benchmarking is caused by the option <computeroutput>misc.memcpy_method</computeroutput> set to <computeroutput>probe</computeroutput>. To see which memcpy version works the fastest for you, enable <quote>Show Console Output</quote> from the <quote>View</quote> menu and look at the results from this benchmarking when you play something with Xine. Configure <computeroutput>misc.memcpy_method</computeroutput> with the method with the lowest time.</para>
+            <para>
+                Note the answer below is outdated. <application>kxineplayer</application> saves it automatically to last value, so only the first time xine will do the CPU test.
+            </para>
+            <para>The <application>Xine</application> frontend for &kmplayer;, <application>kxineplayer</application>, uses <filename>~/.kde/share/apps/kmplayer/xine_config</filename> for its configuration. Settings for <application>Xine</application> are found in the configuration dialog <quote>General Options</quote>|<quote>Xine</quote>. (If you change an option here and save it, <filename>~/.kde/share/apps/kmplayer/xine_config</filename> will contain some explainations too). The CPU benchmarking is caused by the option <computeroutput>misc.memcpy_method</computeroutput> set to <computeroutput>probe</computeroutput>. To see which memcpy version works the fastest for you, enable <quote>Show Console Output</quote> from the <quote>View</quote> menu and look at the results from this benchmarking when you play something with Xine. Configure <computeroutput>misc.memcpy_method</computeroutput> with the method with the lowest time.</para>
         </answer>
       </qandaentry>
       <qandaentry>
