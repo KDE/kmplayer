@@ -274,12 +274,13 @@ void PartBase::updatePlayerMenu (ControlPanel * panel) {
     if (!m_source)
         return;
     const ProcessMap::const_iterator e = m_players.end();
+    int id = 0; // if multible parts, id's should be the same for all menu's
     for (ProcessMap::const_iterator i = m_players.begin(); i != e; ++i) {
         Process * p = i.data ();
         if (p->supports (m_source->name ())) {
-            int id = menu->insertItem (p->menuName (), this, SLOT (slotPlayerMenu (int)));
+            menu->insertItem (p->menuName (), this, SLOT (slotPlayerMenu (int)), 0, id++);
             if (i.data() == m_process)
-                menu->setItemChecked (id, true);
+                menu->setItemChecked (id-1, true);
         }
     }
 }
