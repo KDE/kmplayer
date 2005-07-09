@@ -83,7 +83,7 @@ to:kde-user@kde.org">The &kde; User Mailing list</ulink>.</para>
 <section>
     <title>TV</title>
     <para>
-        KMPlayer can play from TV cards using <quote>MPlayer</quote> or <quote>XVideo</quote>. Before you can watch TV, you have to configure which device to use and the TV channel. You can use the scanner from the configure dialog for this or edit the config file manually.
+        KMPlayer can play from TV cards using <quote>MPlayer</quote> or <quote>XVideo</quote>. Before you can watch TV, you have to configure which device to use and the TV channels. You can use the scanner from the configure dialog for this or edit the config file manually.
 </para>
 <para>
     The config file for TV settings is a XML file, located <filename>~/.kde/share/apps/kmplayer/tv.xml</filename>. The XML format is like this example:
@@ -103,7 +103,16 @@ to:kde-user@kde.org">The &kde; User Mailing list</ulink>.</para>
     &lt;/device&gt;
 &lt;/tvdevices&gt;
 </programlisting>
-Note that currently the <quote>xvport</quote> and <quote>xvenc</quote> attributes can only be set manually editing this file. The values of these two attributes can be retrieved by running <quote>kxvplayer</quote> in a terminal application like <quote>konsole</quote>. See the VDR section for more information about using <quote>XVideo</quote>.
+Note that currently the <quote>xvport</quote> and <quote>xvenc</quote> attributes can only be set manually editing this file. The values of these two attributes can be retrieved by running <quote>kxvplayer</quote> in a terminal application like <quote>konsole</quote>. For every port, <quote>kxvplayer</quote> will output lines like below and the numbers can be set for the attributes mentioned.
+<programlisting>
+    xvport 240
+    ....
+    encoding: 0 PAL-television
+    encoding: 1 NTSC-television
+    encoding: 2 SECAM-television
+    ....   
+</programlisting>
+See the VDR section for more information about using <quote>XVideo</quote>.
 </para>
 </section>
 <section>
