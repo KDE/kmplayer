@@ -725,7 +725,7 @@ void ControlPanel::enableRecordButtons (bool enable) {
         m_buttons[button_record]->hide ();
 }
 
-KDE_NO_EXPORT void ControlPanel::setPlaying (bool play) {
+void ControlPanel::setPlaying (bool play) {
     if (play != m_buttons[button_play]->isOn ())
         m_buttons[button_play]->toggle ();
     m_posSlider->setEnabled (false);
@@ -1163,6 +1163,8 @@ KDE_NO_CDTOR_EXPORT View::~View () {
 }
 
 void View::showPlaylist () {
+    if (m_controlpanel_mode == CP_Only)
+        return;
     bool horz = true;
     QStyle & style = m_playlist->style ();
     int h = style.pixelMetric (QStyle::PM_ScrollBarExtent, m_playlist);

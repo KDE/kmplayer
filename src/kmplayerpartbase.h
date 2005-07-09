@@ -125,6 +125,8 @@ public:
      * calls init() and reschedules an activate() on the source
      * */
     void setSource (Source * source);
+    void connectPanel (ControlPanel * panel);
+    void connectSource (Source * old_source, Source * source);
     Process * process () const { return m_process; }
     Process * recorder () const { return m_recorder; }
     Source * source () const { return m_source; }
@@ -133,7 +135,7 @@ public:
     QMap <QString, Source *> & sources () { return m_sources; }
     KConfig * config () const { return m_config; }
     bool mayResize () const { return !m_noresize; }
-    void updatePlayerMenu ();
+    void updatePlayerMenu (ControlPanel *);
 
     // these are called from Process
     void changeURL (const QString & url);

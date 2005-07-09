@@ -152,8 +152,6 @@ private:
     KURL m_docbase;
     QString m_src_url;
     QString m_file_name;
-    QMap <QString, KMPlayer::Process *> m_old_players;
-    QMap <QString, KMPlayer::Process *> m_old_recorders;
     int m_features;
     bool m_started_emited : 1;
     //bool m_noresize : 1;
