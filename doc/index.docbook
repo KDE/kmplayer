@@ -117,7 +117,7 @@ Note that <quote>input</quote> elements having channels, should have the <quote>
     encoding: 2 SECAM-television
     ....   
 </programlisting>
-Also with and heigt attributes are ignored by the <acronym>XVideo</acronym> player. This player gets the sizes from the X server. One of the nice things of <acronym>XVideo</acronym> is that scaling is done in hardware, by the video card, so fullscreen support without CPU usage and without resolution change of you monitor. Also no annoying flicker when another window overlaps this video window.
+Also width and height attributes are ignored by the <acronym>XVideo</acronym> player. This player gets the sizes from the X server. One of the nice things of <acronym>XVideo</acronym> is that scaling is done in hardware, by the video card, so fullscreen support without CPU usage and without resolution change of you monitor. Also no annoying flicker when another window overlaps this video window.
 </para>
 <para>
 See the VDR section for more information about using <acronym>XVideo</acronym>.
