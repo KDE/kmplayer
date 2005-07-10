@@ -23,6 +23,7 @@
 #include <list>
 
 #include <qframe.h>
+#include <qstring.h>
 
 #include "kmplayerappsource.h"
 #include "kmplayerconfig.h"
@@ -43,27 +44,34 @@ class KConfig;
 class KURLRequester;
 
 
+class TVNode : public KMPlayer::GenericMrl {
+public:
+    TVNode (KMPlayer::NodePtr &d, const QString &s, const char * t, short id, const QString &n=QString::null);
+    KDE_NO_EXPORT const char * nodeName () const { return tag; }
+    virtual void setNodeName (const QString &);
+protected:
+    const char * tag;
+};
+
 /*
  * Element for channels
  */
-class TVChannel : public KMPlayer::GenericMrl {
+class TVChannel : public TVNode {
 public:
     TVChannel (KMPlayer::NodePtr & d, const QString & n, int f);
     TVChannel (KMPlayer::NodePtr & d);
     KDE_NO_CDTOR_EXPORT ~TVChannel () {}
-    KDE_NO_EXPORT const char * nodeName () const { return "channel"; }
     void closed ();
 };
 
 /*
  * Element for inputs
  */
-class TVInput : public KMPlayer::GenericMrl {
+class TVInput : public TVNode {
 public:
     TVInput (KMPlayer::NodePtr & d, const QString & n, int id);
     TVInput (KMPlayer::NodePtr & d);
     KDE_NO_CDTOR_EXPORT ~TVInput () {}
-    KDE_NO_EXPORT const char * nodeName () const { return "input"; }
     KMPlayer::NodePtr childFromTag (const QString &);
     void closed ();
 };
@@ -71,12 +79,11 @@ public:
 /*
  * Element for TV devices
  */
-class TVDevice : public KMPlayer::GenericMrl {
+class TVDevice : public TVNode {
 public:
     TVDevice (KMPlayer::NodePtr & d, const QString & d);
     TVDevice (KMPlayer::NodePtr & d);
     KDE_NO_CDTOR_EXPORT ~TVDevice () {}
-    KDE_NO_EXPORT const char * nodeName () const { return "device"; }
     KMPlayer::NodePtr childFromTag (const QString &);
     void closed ();
     bool expose () const { return !zombie; }

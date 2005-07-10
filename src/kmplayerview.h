@@ -90,6 +90,9 @@ signals:
     void addBookMark (const QString & title, const QString & url);
 protected:
     bool acceptDrag (QDropEvent* event) const;
+public slots:
+    void editCurrent ();
+    void rename (QListViewItem * item, int c);
 private slots:
     void contextMenuItem (QListViewItem *, const QPoint &, int);
     void itemExpanded (QListViewItem *);
@@ -97,6 +100,7 @@ private slots:
     void addBookMark ();
     void toggleShowAllNodes ();
     void itemDropped (QDropEvent * e, QListViewItem * after);
+    void itemIsRenamed (QListViewItem * item);
 private:
     void populate (NodePtr e, NodePtr focus, QListViewItem * item, QListViewItem ** curitem);
     View * m_view;

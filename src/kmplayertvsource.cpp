@@ -215,14 +215,24 @@ KDE_NO_EXPORT void KMPlayerPrefSourcePageTV::showEvent (QShowEvent *) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT TVChannel::TVChannel (KMPlayer::NodePtr & d, const QString & n, int freq) : KMPlayer::GenericMrl (d, QString ("tv://"), n) {
-    setAttribute ("name", n);
-    setAttribute ("frequency", QString::number (freq));
-    id = ID_TVCHANNEL;
+KDE_NO_CDTOR_EXPORT TVNode::TVNode (KMPlayer::NodePtr &d, const QString & s, const char * t, short id, const QString & n) : KMPlayer::GenericMrl (d, s, n), tag (t) {
+    this->id = id;
+    editable = true;
 }
 
-KDE_NO_CDTOR_EXPORT TVChannel::TVChannel (KMPlayer::NodePtr & d) : KMPlayer::GenericMrl (d, QString ("tv://")) {
-    id = ID_TVCHANNEL;
+KDE_NO_EXPORT void TVNode::setNodeName (const QString & nn) {
+    pretty_name = nn;
+    setAttribute ("name", nn);
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT TVChannel::TVChannel (KMPlayer::NodePtr & d, const QString & n, int freq) : TVNode (d, QString ("tv://"), "channel", ID_TVCHANNEL, n) {
+    setAttribute ("name", n);
+    setAttribute ("frequency", QString::number (freq));
+}
+
+KDE_NO_CDTOR_EXPORT TVChannel::TVChannel (KMPlayer::NodePtr & d) : TVNode (d, QString ("tv://"), "channel", ID_TVCHANNEL) {
 }
 
 KDE_NO_EXPORT void TVChannel::closed () {
@@ -232,18 +242,16 @@ KDE_NO_EXPORT void TVChannel::closed () {
 //-----------------------------------------------------------------------------
 
 TVInput::TVInput (KMPlayer::NodePtr & d, const QString & n, int id)
- : KMPlayer::GenericMrl (d, QString ("tv://"), n) {
+ : TVNode (d, QString ("tv://"), "input", ID_TVINPUT, n) {
     setAttribute ("name", n);
     setAttribute ("id", QString::number (id));
-    this->id = ID_TVINPUT;
 }
 
-KDE_NO_CDTOR_EXPORT TVInput::TVInput (KMPlayer::NodePtr & d) : KMPlayer::GenericMrl (d, QString ("tv://")) {
-    id = ID_TVINPUT;
+KDE_NO_CDTOR_EXPORT TVInput::TVInput (KMPlayer::NodePtr & d) : TVNode (d, QString ("tv://"), "input", ID_TVINPUT) {
 }
 
 KDE_NO_EXPORT KMPlayer::NodePtr TVInput::childFromTag (const QString & tag) {
-    kdDebug () << nodeName () << " childFromTag " << tag << endl;
+    // kdDebug () << nodeName () << " childFromTag " << tag << endl;
     if (tag == QString::fromLatin1 ("channel")) {
         return (new TVChannel (m_doc))->self ();
     } else
@@ -256,18 +264,16 @@ KDE_NO_EXPORT void TVInput::closed () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT TVDevice::TVDevice (KMPlayer::NodePtr & doc, const QString & d) : KMPlayer::GenericMrl (doc, d), zombie (false) {
+KDE_NO_CDTOR_EXPORT TVDevice::TVDevice (KMPlayer::NodePtr & doc, const QString & d) : TVNode (doc, d, "device", ID_TVDEVICE), zombie (false) {
     setAttribute ("path", d);
-    id = ID_TVDEVICE;
 }
 
 KDE_NO_CDTOR_EXPORT TVDevice::TVDevice (KMPlayer::NodePtr & doc)
-    : KMPlayer::GenericMrl (doc, i18n ("tv device")), zombie (false) {
-    id = ID_TVDEVICE;
+    : TVNode (doc, i18n ("tv device"), "device", ID_TVDEVICE), zombie (false) {
 }
 
 KDE_NO_EXPORT KMPlayer::NodePtr TVDevice::childFromTag (const QString & tag) {
-    kdDebug () << nodeName () << " childFromTag " << tag << endl;
+    // kdDebug () << nodeName () << " childFromTag " << tag << endl;
     if (tag == QString::fromLatin1 ("input"))
         return (new TVInput (m_doc))->self ();
     else
@@ -288,7 +294,7 @@ TVDocument::TVDocument (KMPlayerTVSource * source)
 }
 
 KDE_NO_EXPORT KMPlayer::NodePtr TVDocument::childFromTag (const QString & tag) {
-    kdDebug () << nodeName () << " childFromTag " << tag << endl;
+    // kdDebug () << nodeName () << " childFromTag " << tag << endl;
     if (tag == QString::fromLatin1 ("device"))
         return (new TVDevice (m_doc))->self ();
     else if (tag == QString::fromLatin1 ("tvdevices"))

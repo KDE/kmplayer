@@ -834,6 +834,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view)
     setSorting (-1);
     setAcceptDrops (true);
     setDropVisualizer (true);
+    setItemsRenameable (true);
     m_itemmenu = new QPopupMenu (this);
     folder_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder"), KIcon::Small);
     auxiliary_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder_grey"), KIcon::Small);
@@ -849,6 +850,8 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view)
              this, SLOT (itemExpanded (QListViewItem *)));
     connect (this, SIGNAL (dropped (QDropEvent *, QListViewItem *)),
              this, SLOT (itemDropped (QDropEvent *, QListViewItem *)));
+    connect (this, SIGNAL (itemRenamed (QListViewItem *)),
+             this, SLOT (itemIsRenamed (QListViewItem *)));
     QFont fnt = font ();
     fnt.setPointSize (fnt.pointSize () - 1);
     fnt.setWeight (QFont::DemiBold);
@@ -883,16 +886,19 @@ void PlayListView::populate (NodePtr e, NodePtr focus, QListViewItem * item, QLi
         if (m_show_all_nodes || c->expose ())
             populate (c, focus, new ListViewItem (item, c, this), curitem);
     }
-    if (m_show_all_nodes && e->isElementNode ()) {
+    if (e->isElementNode ()) {
         AttributePtr a = convertNode<Element> (e)->attributes ()->first ();
         if (a) {
-            ListViewItem * as = new ListViewItem (item, e, this);
-            as->setText (0, i18n ("[attributes]"));
-            as->setPixmap (0, menu_pix);
-            for (; a; a = a->nextSibling ()) {
-                ListViewItem * ai = new ListViewItem (as, a, this);
-                ai->setText (0, QString ("%1=%2").arg (a->nodeName ()).arg (a->nodeValue ()));
-                ai->setPixmap (0, config_pix);
+            m_have_dark_nodes = true;
+            if (m_show_all_nodes) {
+                ListViewItem * as = new ListViewItem (item, e, this);
+                as->setText (0, i18n ("[attributes]"));
+                as->setPixmap (0, menu_pix);
+                for (; a; a = a->nextSibling ()) {
+                    ListViewItem * ai = new ListViewItem (as, a, this);
+                    ai->setText (0, QString ("%1=%2").arg (a->nodeName ()).arg (a->nodeValue ()));
+                    ai->setPixmap (0, config_pix);
+                }
             }
         }
     }
@@ -1014,6 +1020,42 @@ KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, QListViewItem *af
         }
     }
     m_view->dropEvent (de);
+}
+
+KDE_NO_EXPORT void PlayListView::itemIsRenamed (QListViewItem * qitem) {
+    ListViewItem * item = static_cast <ListViewItem *> (qitem);
+    if (item->m_elm) {
+        if (!item->m_elm->isEditable ()) {
+            item->setText (0, QString (item->m_elm->nodeName()));
+        } else
+            item->m_elm->setNodeName (item->text (0));
+    } else if (item->m_attr) {
+        QString txt = item->text (0);
+        int pos = txt.find (QChar ('='));
+        if (pos > -1) {
+            item->m_attr->setNodeName (txt.left (pos));
+            item->m_attr->setNodeValue (txt.mid (pos + 1));
+        } else {
+            item->m_attr->setNodeName (txt);
+            item->m_attr->setNodeValue (QString (""));
+        }
+    }
+}
+
+KDE_NO_EXPORT void PlayListView::rename (QListViewItem * qitem, int c) {
+    ListViewItem * item = static_cast <ListViewItem *> (qitem);
+    if (m_show_all_nodes && item && item->m_attr) {
+        ListViewItem * pi = static_cast <ListViewItem *> (qitem->parent ());
+        if (pi && pi->m_elm && pi->m_elm->isEditable ())
+            KListView::rename (item, c);
+    } else if (item && item->m_elm && item->m_elm->isEditable ())
+        KListView::rename (item, c);
+}
+
+KDE_NO_EXPORT void PlayListView::editCurrent () {
+    QListViewItem * qitem = selectedItem ();
+    if (qitem)
+        rename (qitem, 0);
 }
 
 //-----------------------------------------------------------------------------

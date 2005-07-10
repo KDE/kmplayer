@@ -90,7 +90,8 @@ KDE_NO_EXPORT void Connection::disconnect () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT Node::Node (NodePtr & d)
- : m_doc (d), state (state_init), id (0), auxiliary_node (false) {}
+ : m_doc (d), state (state_init), id (0),
+   auxiliary_node (false), editable (false) {}
 
 Node::~Node () {
     clear ();
@@ -419,7 +420,7 @@ void Element::setAttribute (const QString & name, const QString & value) {
     const char * name_latin = name.latin1 ();
     for (AttributePtr a = m_attributes->first (); a; a = a->nextSibling ())
         if (!strcmp (name_latin, a->nodeName ())) {
-            static_cast <Attribute *> (a.ptr ())->value = value;
+            static_cast <Attribute *> (a.ptr ())->setNodeValue (value);
             return;
         }
     m_attributes->append ((new Attribute (name, value))->self ());
@@ -455,6 +456,14 @@ QString Attribute::nodeValue () const {
 
 const char * Attribute::nodeName () const {
     return name.ascii ();
+}
+
+void Attribute::setNodeName (const QString & n) {
+    name = n;
+}
+
+void Attribute::setNodeValue (const QString & v) {
+    value = v;
 }
 
 //-----------------------------------------------------------------------------

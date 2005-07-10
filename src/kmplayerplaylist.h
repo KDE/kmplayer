@@ -120,6 +120,8 @@ public:
 
     virtual const char * nodeName () const { return "#nodebase"; }
     virtual QString nodeValue () const { return QString (); }
+    virtual void setNodeName (const QString &) {}
+    virtual void setNodeValue (const QString &) {}
 
     typename Item<T>::SharedType nextSibling () const { return m_next; }
     typename Item<T>::SharedType previousSibling () const { return m_prev; }
@@ -166,13 +168,14 @@ protected:
  * Attribute having a name/value pair for use with Elements
  */
 class KMPLAYER_EXPORT Attribute : public ListNodeBase <Attribute> {
-    friend class Element;
 public:
     KDE_NO_CDTOR_EXPORT Attribute () {}
     Attribute (const QString & n, const QString & v);
     KDE_NO_CDTOR_EXPORT ~Attribute () {}
-    const char * nodeName () const;
-    QString nodeValue () const;
+    virtual const char * nodeName () const;
+    virtual QString nodeValue () const;
+    virtual void setNodeName (const QString &);
+    virtual void setNodeValue (const QString &);
 protected:
     QString name;
     QString value;
@@ -307,6 +310,10 @@ public:
      */
     virtual bool expose () const;
     /**
+     * If this node should be visible to the user
+     */
+    bool isEditable () const { return editable; }
+    /**
      * If this node purpose is for storing runtime data only,
      * ie. node doesn't exist in the original document
      */
@@ -421,6 +428,7 @@ public:
 private:
     bool auxiliary_node;
 protected:
+    bool editable;
 };
 
 /*

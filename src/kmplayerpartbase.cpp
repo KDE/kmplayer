@@ -162,6 +162,7 @@ void PartBase::init (KActionCollection * action_collection) {
     connect (m_view, SIGNAL (urlDropped (const KURL::List &)), this, SLOT (openURL (const KURL::List &)));
     connect (m_view->playList (), SIGNAL (addBookMark (const QString &, const QString &)), this, SLOT (addBookMark (const QString &, const QString &)));
     connect (m_view->playList (), SIGNAL (executed (QListViewItem *)), this, SLOT (playListItemSelected (QListViewItem *)));
+    new KAction (i18n ("Edit playlist item"), 0, 0, m_view->playList (), SLOT (editCurrent ()), action_collection, "edit_playlist_item");
 }
 
 void PartBase::connectPanel (ControlPanel * panel) {
@@ -544,7 +545,7 @@ void PartBase::playListItemSelected (QListViewItem * item) {
 
 void PartBase::updateTree () {
     m_in_update_tree = true;
-    if (m_process && m_view && m_source)
+    if (m_view && m_source)
         m_view->playList ()->updateTree (m_source->document (), m_source->current ());
     m_in_update_tree = false;
 }

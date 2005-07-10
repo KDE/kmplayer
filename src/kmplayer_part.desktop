@@ -48,7 +48,7 @@ Comment[ta]=வீடியோ சொருகி(விரைவுநேரம
 Comment[tr]=Video oynatıcı eklentisi (QuickTime, XMovie, Windows Media ve RealPlayer ile uyumlu)
 X-KDE-Library=libkmplayerpart
 # Keep in sync with the audio types in kmplayer.desktop
-MimeType=audio/x-mp3;audio/m3u;audio/mpegurl;audio/x-m3u;audio/x-ms-wma;audio/x-pn-realaudio;audio/x-scpls;audio/x-vorbis;application/x-kmplayer;application/x-mplayer2;application/x-ogg;audio/x-mp2;video/mpeg;audio/x-mpegurl;audio/x-wav;audio/x-mod;video/x-avi;video/x-ms-asf;video/x-ms-wmp;video/x-ms-wmv;video/x-msvideo;video/quicktime;video/x-flic;uri/mms;uri/pnm;
+MimeType=audio/x-mp3;audio/m3u;audio/mpegurl;audio/x-m3u;audio/x-ms-wma;audio/x-pn-realaudio;audio/x-scpls;audio/x-vorbis;application/x-kmplayer;application/x-mplayer2;application/x-ogg;audio/x-mp2;video/mpeg;audio/x-mpegurl;audio/x-wav;audio/x-mod;video/mediaplayer;video/x-avi;video/x-ms-asf;video/x-ms-wmp;video/x-ms-wmv;video/x-msvideo;video/quicktime;video/x-flic;uri/mms;uri/pnm;
 Type=Service
 Icon=kmplayer
 ServiceTypes=KParts/ReadOnlyPart,Browser/View,KMediaPlayer/Player
