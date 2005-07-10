@@ -983,6 +983,8 @@ KDE_NO_EXPORT bool KMPlayerVCDSource::processOutput (const QString & str) {
     QRegExp * patterns = static_cast<KMPlayer::MPlayer *> (m_player->players () ["mplayer"])->configPage ()->m_patterns;
     QRegExp & trackRegExp = patterns [KMPlayer::MPlayerPreferencesPage::pat_vcdtrack];
     if (trackRegExp.search (str) > -1) {
+        if (m_document->state != KMPlayer::Element::state_deferred)
+            m_document->defer ();
         m_document->appendChild ((new KMPlayer::GenericMrl (m_document, QString ("vcd://") + trackRegExp.cap (1), i18n ("Track ") + trackRegExp.cap (1)))->self ());
         kdDebug () << "track " << trackRegExp.cap (1) << endl;
         return true;
@@ -1009,6 +1011,8 @@ KDE_NO_EXPORT void KMPlayerVCDSource::setIdentified (bool b) {
         m_current = m_document;
     m_player->updateTree ();
     buildArguments ();
+    if (m_current->state == KMPlayer::Element::state_deferred)
+        m_current->undefer ();
     m_app->slotStatusMsg (i18n ("Ready."));
 }
 
@@ -1020,18 +1024,6 @@ KDE_NO_EXPORT void KMPlayerVCDSource::buildArguments () {
     if (m_player->settings ()->vcddevice.length () > 0)
         m_options+=QString(" -cdrom-device ") + m_player->settings()->vcddevice;
     m_recordcmd = m_options;
-}
-
-KDE_NO_EXPORT void KMPlayerVCDSource::jump (KMPlayer::NodePtr e) {
-    if (m_current != e) {
-        m_player->stop ();
-        m_current = e;
-        m_identified = false;
-        setURL (KURL ("vcd://"));
-        buildArguments ();
-        if (m_start_play)
-            QTimer::singleShot (0, m_player, SLOT (play ()));
-    }
 }
 
 KDE_NO_EXPORT QString KMPlayerVCDSource::prettyName () {

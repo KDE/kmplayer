@@ -156,7 +156,6 @@ public:
 public slots:
     virtual void activate ();
     virtual void deactivate ();
-    virtual void jump (KMPlayer::NodePtr e);
 private:
     void buildArguments ();
     KMPlayerPrefSourcePageVCD * m_configpage;
