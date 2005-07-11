@@ -124,7 +124,7 @@ binary-common:
 	dh_installman
 	dh_link
 	dh_strip
-	dh_compress 
+	dh_compress -Xindex.docbook
 	dh_fixperms
 #	dh_perl
 #	dh_python
