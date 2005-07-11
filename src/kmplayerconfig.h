@@ -92,7 +92,7 @@ public:
     void removePage (PreferencesPage *);
     void applyColorSetting (bool only_changed_ones);
     Preferences *configDialog() const { return configdialog; }
-    View * Settings::defaultView ();
+    View * defaultView ();
     KConfig * kconfig () { return m_config; }
 
     QStringList urllist;
