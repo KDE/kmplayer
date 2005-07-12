@@ -18,6 +18,7 @@ Description[sr]=Microsoft-ов протокол сервера медија
 Description[sr@Latn]=Microsoft-ov protokol servera medija
 Description[sv]=Microsoft mediaserver-protokoll
 Description[ta]=மைக்ரோசாப்ட் ஊடக சேவக நெறிமுறை
+Description[tr]=Microsoft Medya Sunucu Protokolü
 exec=kmplayer "%u"
 protocol=mms
 input=none
