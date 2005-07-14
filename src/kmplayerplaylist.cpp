@@ -960,10 +960,10 @@ bool SimpleSAXParser::nextToken () {
             next_token->token = tok_white_space;
         } else if (!next_char.isLetterOrNumber ()) {
             if (next_char == QChar ('#')) {
-                if (next_token->token == tok_empty) { // check last item on stack &
+                //if (next_token->token == tok_empty) { // check last item on stack &
                     push ();
                     next_token->token = tok_hash;
-                }
+                //}
             } else if (next_char == QChar ('/')) {
                 push ();
                 next_token->token = tok_slash;
