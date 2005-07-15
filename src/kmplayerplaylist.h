@@ -638,7 +638,7 @@ public:
      * FIXME: think of a descent callback way for this
      */
     NodePtr realMrl ();
-    NodePtr current_av_media_type;
+    NodePtrW current_av_media_type;
 };
 
 } // namespace SMIL
