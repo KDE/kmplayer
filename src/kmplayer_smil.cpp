@@ -545,10 +545,12 @@ KDE_NO_EXPORT void ParRuntime::stopped () {
 
 QString AnimateGroupData::setParam (const QString & name, const QString & val) {
     //kdDebug () << "AnimateGroupData::setParam " << name << "=" << val << endl;
-    if (name == QString::fromLatin1 ("targetElement")) {
+    if (name == QString::fromLatin1 ("target") ||
+            name == QString::fromLatin1 ("targetElement")) {
         if (element)
             target_element = element->document ()->getElementById (val);
-    } else if (name == QString::fromLatin1 ("attributeName")) {
+    } else if (name == QString::fromLatin1 ("attribute") ||
+            name == QString::fromLatin1 ("attributeName")) {
         changed_attribute = val;
     } else if (name == QString::fromLatin1 ("to")) {
         change_to = val;
@@ -1055,7 +1057,7 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
 }
 
 KDE_NO_EXPORT NodePtr SMIL::Smil::realMrl () {
-    return current_av_media_type;
+    return current_av_media_type ? current_av_media_type : self ();
 }
 
 KDE_NO_EXPORT bool SMIL::Smil::isMrl () {
