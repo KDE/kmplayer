@@ -1057,7 +1057,7 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
 }
 
 KDE_NO_EXPORT NodePtr SMIL::Smil::realMrl () {
-    return current_av_media_type ? current_av_media_type : self ();
+    return current_av_media_type ? current_av_media_type : m_self;
 }
 
 KDE_NO_EXPORT bool SMIL::Smil::isMrl () {
