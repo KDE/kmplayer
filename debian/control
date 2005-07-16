@@ -37,3 +37,9 @@ Architecture: any
 Section: sound
 Depends: kmplayer-lib (= ${Source-Version})
 Description: All internationalized (i18n) files for KMPlayer.
+
+Package: kmplayer-doc
+Architecture: any
+Section: sound
+Depends: kmplayer-app (= ${Source-Version})
+Description: Handbook for KMPlayer.

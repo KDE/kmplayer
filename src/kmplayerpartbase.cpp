@@ -744,7 +744,7 @@ static void printTree (NodePtr root, QString off=QString()) {
 void Source::setURL (const KURL & url) {
     m_url = url;
     m_back_request = 0L;
-    if (m_document && !m_document->hasChildNodes () &&
+if (m_document && !m_document->hasChildNodes () &&
                 (m_document->mrl()->src.isEmpty () || m_document->mrl()->src == url.url ()))
         // special case, mime is set first by plugin FIXME v
         m_document->mrl()->src = url.url ();
@@ -784,8 +784,8 @@ void Source::playCurrent () {
         m_player->process ()->viewer ()->view ()->videoStop (); //show buttonbar
         if (m_document)
             m_player->process ()->viewer ()->view ()->viewArea ()->setRootLayout (m_document->document ()->rootLayout);
-        kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():"") <<  (m_document && !m_document->active ()) << (!m_current) << (m_current && !m_current->active ()) <<  endl;
     }
+    // kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():" doc act:") <<  (m_document && !m_document->active ()) << " cur:" << (!m_current)  << " cur act:" << (m_current && !m_current->active ()) <<  endl;
     if (m_document && !m_document->active ()) {
         if (!m_current)
             m_document->activate ();
@@ -1246,8 +1246,6 @@ KDE_NO_EXPORT bool URLSource::hasLength () {
 }
 
 KDE_NO_EXPORT void URLSource::activate () {
-    if (url ().isEmpty () && (!m_document || !m_document->hasChildNodes ()))
-        return;
     if (m_auto_play)
         play ();
 }
@@ -1371,11 +1369,11 @@ KDE_NO_EXPORT void URLSource::read (QTextStream & textstream) {
         } else if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
             readXML (cur_elm, textstream, line);
             cur_elm->normalize ();
-            if (m_document && m_document->firstChild () &&
-                    !strcmp (m_document->firstChild ()->nodeName (), "smil")) {
+            if (m_document && m_document->firstChild ()) {
                 // SMIL documents have set its size of root-layout
                 Mrl * mrl = m_document->firstChild ()->mrl ();
-                Source::setDimensions (mrl->width, mrl->height);
+                if (mrl)
+                    Source::setDimensions (mrl->width, mrl->height);
             }
         } else if (line.lower () != QString ("[reference]")) do {
             QString mrl = line.stripWhiteSpace ();
@@ -1499,6 +1497,32 @@ void URLSource::playCurrent () {
 }
 
 KDE_NO_EXPORT void URLSource::play () {
+    if (m_url.isEmpty ()) {
+        if (m_document)
+            m_document->document ()->dispose ();
+        m_document = (new Document (QString (""), this))->self ();
+        QString smil = QString::fromLatin1 ("<smil><head><layout>"
+      "<root-layout width='320' height='240' background-color='black'/>"
+      "<region id='image1' left='31.25%' top='25%' width='37.5%' height='50%'/>"
+    "</layout></head><body>"
+    "<img src='%1' region='image1' dur='3s' fit='fill'/>"
+    "<par>"
+      "<animate target='image1' attribute='width' from='37.5%' to='0%' dur='1' fill='freeze'/>"
+      "<animate target='image1' attribute='left' from='31.25%' to='50%' dur='1' fill='freeze'/>"
+      "<animate target='image1' attribute='height' from='50%' to='0%' dur='1' fill='freeze'/>"
+      "<animate target='image1' attribute='top' from='25%' to='50%' dur='1' fill='freeze'/>"
+      "<set id='set1' target='image1' attribute='background-color' to='white' dur='1'/>"
+    "</par>"
+  "</body></smil>").arg (locate ("data", "kmplayer/noise.gif"));
+        QTextStream ts (smil.utf8 (), IO_ReadOnly);
+        readXML (m_document, ts, QString::null);
+        m_document->normalize ();
+        if (m_document && m_document->firstChild ()) {
+            Mrl * mrl = m_document->firstChild ()->mrl ();
+            if (mrl)
+                Source::setDimensions (mrl->width, mrl->height);
+        }
+    }
     Source::play ();
 }
 

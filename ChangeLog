@@ -1,3 +1,7 @@
+Changes since version 0.9.0-rc1
+- start with a simple smil document, having a gif movie, if started with no url
+- support rss urls, list chanel/item/enclosure tags and play url arguments of
+  enclosure elements
 Changes since version 0.9.0-pre4
 - In place renaming of TV channel/input names in playlist
 - Added help sections for TV and VDR in handbook.
