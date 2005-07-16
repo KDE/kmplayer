@@ -30,10 +30,6 @@ NodePtr RSS::Rss::childFromTag (const QString & tag) {
     return NodePtr ();
 }
 
-bool RSS::Rss::isMrl() {
-    return hasChildNodes ();
-}
-
 KDE_NO_CDTOR_EXPORT RSS::Title::Title (NodePtr & d) : Element (d) {
     id = node_rss_title;
 }
