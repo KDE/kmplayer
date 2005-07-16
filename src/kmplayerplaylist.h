@@ -705,6 +705,26 @@ public:
 
 //-----------------------------------------------------------------------------
 
+namespace RSS {
+
+/**
+ * '<RSS>' tag
+ */
+class Rss : public Mrl {
+public:
+    KDE_NO_CDTOR_EXPORT Rss (NodePtr & d) : Mrl (d) {}
+    NodePtr childFromTag (const QString & tag);
+    KDE_NO_EXPORT const char * nodeName () const { return "rss"; }
+    /**
+     * True if no mrl children
+     */
+    bool isMrl ();
+};
+    
+} // RSS namespace
+
+//-----------------------------------------------------------------------------
+
 /**
  * just some url, can get a SMIL or ASX childtree
  */

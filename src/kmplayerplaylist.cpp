@@ -40,6 +40,8 @@ static Node * fromXMLDocumentGroup (NodePtr & d, const QString & tag) {
         return new SMIL::Smil (d);
     else if (!strcasecmp (name, "asx"))
         return new ASX::Asx (d);
+    else if (!strcasecmp (name, "rss"))
+        return new RSS::Rss (d);
     return 0L;
 }
 

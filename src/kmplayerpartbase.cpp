@@ -1309,6 +1309,7 @@ static bool isPlayListMime (const QString & mime) {
             !strncasecmp (mimestr ,"application/smil", 16) ||
             !strncasecmp (mimestr ,"application/xml", 15) ||
             !strncmp (mimestr ,"text/", 5) ||
+            !strcmp (mimestr ,"application/rss+xml") ||
             !strcmp (mimestr ,"application/x-mplayer2"));
 }
 
