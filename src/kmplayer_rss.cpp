@@ -22,6 +22,8 @@
 
 using namespace KMPlayer;
 
+static short node_rss_title = 200;
+
 NodePtr RSS::Rss::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "channel"))
         return (new RSS::Channel (m_doc))->self ();
@@ -32,24 +34,43 @@ bool RSS::Rss::isMrl() {
     return hasChildNodes ();
 }
 
+KDE_NO_CDTOR_EXPORT RSS::Title::Title (NodePtr & d) : Element (d) {
+    id = node_rss_title;
+}
+
 NodePtr RSS::Channel::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "item"))
         return (new RSS::Item (m_doc))->self ();
+    else if (!strcmp (tag.latin1 (), "title"))
+        return (new RSS::Title (m_doc))->self ();
     return NodePtr ();
+}
+
+void RSS::Channel::closed () {
+    for (NodePtr c = firstChild (); c; c = c->nextSibling ()) {
+        if (c->id == node_rss_title) {
+            QString str = c->innerText ();
+            pretty_name = str.left (str.find (QChar ('\n')));
+        }
+    }
 }
 
 NodePtr RSS::Item::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "enclosure"))
         return (new RSS::Enclosure (m_doc))->self ();
+    else if (!strcmp (tag.latin1 (), "title"))
+        return (new RSS::Title (m_doc))->self ();
     return NodePtr ();
 }
 
 void RSS::Item::closed () {
     for (NodePtr c = firstChild (); c; c = c->nextSibling ()) {
+        if (c->id == node_rss_title) {
+            QString str = c->innerText ();
+            pretty_name = str.left (str.find (QChar ('\n')));
+        }
         if (c->isMrl ())
             src = c->mrl ()->src;
-        if (!src.isEmpty ())
-            break;
     }
 }
 

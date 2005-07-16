@@ -39,11 +39,20 @@ namespace KMPlayer {
 
 namespace RSS {
 
-class Channel : public Element {
+class Channel : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Channel (NodePtr & d) : Element (d) {}
+    KDE_NO_CDTOR_EXPORT Channel (NodePtr & d) : Mrl (d) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "channel"; }
+    bool isMrl () { return false; }
+    void closed ();
+};
+
+class Title : public Element {
+public:
+    Title (NodePtr & d);
+    KDE_NO_EXPORT const char * nodeName () const { return "title"; }
+    bool expose () const { return false; }
 };
 
 class Item : public Mrl {
