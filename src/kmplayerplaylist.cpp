@@ -1175,6 +1175,7 @@ bool SimpleSAXParser::readDTD () {
             token->next = 0;
         } else {
             cdata = next_token->string;
+            next_token->string.truncate (0);
             next_token->token = tok_empty;
         }
         return readCDATA ();
