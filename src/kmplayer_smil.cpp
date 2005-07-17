@@ -932,7 +932,11 @@ KDE_NO_EXPORT void AudioVideoData::started () {
         kdDebug () << "AudioVideoData::started " << source_url << endl;
         PlayListNotify * n = element->document ()->notify_listener;
         if (n && !source_url.isEmpty ()) {
-            n->requestPlayURL (element);
+            for (NodePtr e = element; e; e = e->parentNode ())
+                if (e->id == SMIL::id_node_smil) {
+                    n->requestPlayURL (e); // keep <smil> current
+                    break;
+                }
             element->setState (Element::state_began);
         }
     }
@@ -952,7 +956,11 @@ QString AudioVideoData::setParam (const QString & name, const QString & val) {
         if (timingstate == timings_started && element) {
             PlayListNotify * n = element->document ()->notify_listener;
             if (n && !source_url.isEmpty ()) {
-                n->requestPlayURL (element);
+                for (NodePtr e = element; e; e = e->parentNode ())
+                    if (e->id == SMIL::id_node_smil) {
+                        n->requestPlayURL (e); // keep <smil> current
+                        break;
+                    }
                 element->setState (Node::state_began);
             }
         }
@@ -1033,8 +1041,10 @@ KDE_NO_EXPORT void SMIL::Smil::activate () {
     kdDebug () << "Smil::activate" << endl;
     current_av_media_type = NodePtr ();
     PlayListNotify * n = document()->notify_listener;
-    if (n)
+    if (n) {
         n->setEventDispatcher (layout_node);
+        n->setCurrent (m_self);
+    }
     Element::activate ();
 }
 

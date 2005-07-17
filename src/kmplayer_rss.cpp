@@ -71,18 +71,20 @@ void RSS::Item::closed () {
 }
 
 void RSS::Item::activate () {
-    edit = new QTextEdit;
-    edit->setGeometry (0, 0, w, h/2);
-    edit->setReadOnly (true);
-    edit->setHScrollBarMode (QScrollView::AlwaysOff);
-    edit->setVScrollBarMode (QScrollView::AlwaysOff);
-    edit->setFrameShape (QFrame::NoFrame);
-    edit->setFrameShadow (QFrame::Plain);
-    x = y = 0;
-    w = h = 50;
-    PlayListNotify * n = document()->notify_listener;
-    if (n)
-        n->setEventDispatcher (m_self);
+    if (!src.isEmpty ()) {
+        edit = new QTextEdit;
+        edit->setGeometry (0, 0, w, h/2);
+        edit->setReadOnly (true);
+        edit->setHScrollBarMode (QScrollView::AlwaysOff);
+        edit->setVScrollBarMode (QScrollView::AlwaysOff);
+        edit->setFrameShape (QFrame::NoFrame);
+        edit->setFrameShadow (QFrame::Plain);
+        x = y = 0;
+        w = h = 50;
+        PlayListNotify * n = document()->notify_listener;
+        if (n)
+            n->setEventDispatcher (m_self);
+    }
     Mrl::activate ();
 }
 

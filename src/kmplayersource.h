@@ -138,6 +138,7 @@ protected:
      * PlayListNotify implementation
      */
     bool requestPlayURL (NodePtr mrl);
+    bool setCurrent (NodePtr mrl);
     void stateElementChanged (NodePtr element);
     void setEventDispatcher (NodePtr element);
     void repaintRect (int x, int y, int w, int h);

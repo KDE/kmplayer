@@ -513,12 +513,26 @@ void PartBase::forward () {
     m_source->forward ();
 }
 
+static NodePtr depthFirstFindMrl (NodePtr e) {
+    if (e->expose ()) {
+        if (e->isMrl ())
+            return e;
+        for (NodePtr c = e->firstChild (); c; c = c->nextSibling ()) {
+            NodePtr m = depthFirstFindMrl (c);
+            if (m)
+                return m;
+        }
+    }
+    return NodePtr ();
+}
+
 void PartBase::playListItemSelected (QListViewItem * item) {
     if (m_in_update_tree) return;
     ListViewItem * vi = static_cast <ListViewItem *> (item);
     if (vi->m_elm) {
-        if (vi->m_elm->expose () && vi->m_elm->isMrl ())
-            m_source->jump (vi->m_elm);
+        NodePtr mrl = depthFirstFindMrl (vi->m_elm);
+        if (mrl)
+            m_source->jump (mrl);
     } else if (vi->m_attr) {
         if (!strcasecmp (vi->m_attr->nodeName (), "src") ||
                 !strcasecmp (vi->m_attr->nodeName (), "value")) {
@@ -570,7 +584,7 @@ void PartBase::play () {
 }
 
 bool PartBase::playing () const {
-    return m_process && m_process->playing ();
+    return m_process && m_process->state () > Process::Ready;
 }
 
 void PartBase::stop () {
@@ -580,11 +594,10 @@ void PartBase::stop () {
             b->toggle ();
         m_view->setCursor (QCursor (Qt::WaitCursor));
     }
-    if (m_process) {
+    if (m_process)
         m_process->quit ();
-        if (m_source)
-            m_source->reset ();
-    }
+    if (m_source)
+        m_source->reset ();
     if (m_view) {
         m_view->setCursor (QCursor (Qt::ArrowCursor));
         if (b->isOn ())
@@ -788,13 +801,12 @@ void Source::playCurrent () {
                 p->setState (Element::state_activated);
             m_current->activate ();
         }
-    } else if (!m_current)
+    } else if (!m_current) {
         emit endOfPlayItems ();
-    else {
-        if (m_current->state == Element::state_deferred)
-            m_current->undefer ();
-        if (m_player->process ())
-            m_player->process ()->play (this, m_current);
+    } else if (m_current->state == Element::state_deferred) {
+        m_current->undefer ();
+    } else if (m_player->process ()) {
+        m_player->process ()->play (this, m_current->mrl ()->realMrl ());
     }
     //kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():" doc act:") <<  (m_document && !m_document->active ()) << " cur:" << (!m_current)  << " cur act:" << (m_current && !m_current->active ()) <<  endl;
     m_player->updateTree ();
@@ -821,7 +833,8 @@ void Source::playURLDone () {
         m_current = m_back_request;
         if (m_current->id > SMIL::id_node_first &&
                 m_current->id < SMIL::id_node_last) {
-            playCurrent (); // don't mess with SMIL, just play the damn link
+            //playCurrent (); // don't mess with SMIL, just play the damn link
+            QTimer::singleShot (0, this, SLOT (playCurrent ()));
         } else {
             m_document->reset (); // deactivate everything
             for (NodePtr p = m_current->parentNode(); p; p = p->parentNode())
@@ -830,7 +843,7 @@ void Source::playURLDone () {
         }
         m_back_request = 0L;
     } else {
-        Mrl * mrl = m_current ? m_current->mrl () : 0L;
+        Mrl * mrl = m_current ? m_current->mrl ()->realMrl ()->mrl () : 0L;
         if (mrl)
             mrl->deactivate ();
     }
@@ -846,9 +859,13 @@ bool Source::requestPlayURL (NodePtr mrl) {
     } else {
         m_current = mrl;
         m_player->updateTree ();
-        playCurrent ();
+        QTimer::singleShot (0, this, SLOT (playCurrent ()));
     }
     return m_player->process ()->playing ();
+}
+
+bool Source::setCurrent (NodePtr mrl) {
+    m_current = mrl;
 }
 
 void Source::stateElementChanged (NodePtr elm) {
@@ -929,7 +946,13 @@ void Source::backward () {
                 NodePtr e = findDepthFirst (m_back_request); // lastDepth..
                 if (e) {
                     m_back_request = e;
-                    m_player->process ()->stop ();
+                    if (m_player->playing ())
+                        m_player->process ()->stop ();
+                    else if (m_current) {
+                        m_document->reset ();
+                        m_current = e;
+                        QTimer::singleShot (0, this, SLOT (playCurrent ()));
+                    }
                     return;
                 }
             } else
@@ -942,7 +965,10 @@ void Source::backward () {
 
 void Source::forward () {
     if (m_document->hasChildNodes ()) {
-        m_player->process ()->stop ();
+        if (m_player->playing ())
+            m_player->process ()->stop ();
+        else if (m_current)
+            m_current->reset ();
     } else
         m_player->process ()->seek (m_player->settings()->seektime * 10, false);
 }
@@ -953,8 +979,10 @@ void Source::jump (NodePtr e) {
             m_back_request = e;
             m_player->process ()->stop ();
         } else {
+            if (m_current)
+                m_document->reset ();
             m_current = e;
-            QTimer::singleShot (0, m_player, SLOT (play ()));
+            QTimer::singleShot (0, this, SLOT (playCurrent ()));
         }
     } else
         m_player->updateTree ();
@@ -1132,7 +1160,7 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
             if (olds > Process::Ready)
                 playURLDone ();
             else
-                playCurrent ();
+                QTimer::singleShot (0, this, SLOT (playCurrent ()));
         }
     }
 }
@@ -1256,6 +1284,7 @@ KDE_NO_EXPORT void URLSource::terminateJob () {
 
 KDE_NO_EXPORT void URLSource::deactivate () {
     terminateJob ();
+    setEventDispatcher (NodePtr ());
 }
 
 KDE_NO_EXPORT QString URLSource::prettyName () {
@@ -1417,7 +1446,7 @@ KDE_NO_EXPORT void URLSource::kioResult (KIO::Job *) {
         read (textstream);
     if (m_current) {
         m_current->mrl ()->parsed = true;
-        playCurrent ();
+        QTimer::singleShot (0, this, SLOT (playCurrent ()));
     }
     m_player->process ()->viewer ()->view ()->controlPanel ()->setPlaying (false);
 }
@@ -1465,7 +1494,7 @@ void URLSource::playCurrent () {
                 read (textstream);
             }
             m_current->mrl ()->parsed = true;
-            playCurrent ();
+            QTimer::singleShot (0, this, SLOT (playCurrent ()));
         } else if ((maybe_playlist &&
                     url.protocol ().compare (QString ("mms")) &&
                     url.protocol ().compare (QString ("rtsp")) &&
@@ -1486,7 +1515,7 @@ void URLSource::playCurrent () {
             m_player->process ()->viewer ()->view ()->controlPanel ()->setPlaying (true);
         } else {
             m_current->mrl ()->parsed = true;
-            playCurrent ();
+            QTimer::singleShot (0, this, SLOT (playCurrent ()));
         }
     }
 }

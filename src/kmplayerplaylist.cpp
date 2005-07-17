@@ -146,7 +146,6 @@ void Node::begin () {
 void Node::defer () {
     if (active ()) {
         setState (state_deferred);
-        defer_tree_version = document ()->m_tree_version;
     } else
         kdError () << "Node::defer () call on not activated element" << endl;
 }
@@ -154,8 +153,7 @@ void Node::defer () {
 void Node::undefer () {
     if (state == state_deferred) {
         setState (state_activated);
-        if (defer_tree_version != document ()->m_tree_version)
-            activate ();
+        activate ();
     } else
         kdWarning () <<"Node::undefer () call on not defered element"<< endl;
 }
@@ -184,7 +182,7 @@ void Node::deactivate () {
 }
 
 void Node::reset () {
-    kdDebug () << nodeName () << " Node::reset" << endl;
+    //kdDebug () << nodeName () << " Node::reset" << endl;
     if (active ())
         deactivate ();
     setState (state_init);

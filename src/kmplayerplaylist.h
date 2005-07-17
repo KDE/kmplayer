@@ -355,8 +355,7 @@ public:
      */
     virtual void defer ();
     /**
-     * Puts a defered element in activated again, may call activate() again if 
-     * child elements were added.
+     * Puts a defered element in activated again, calls activate() again 
      */
     virtual void undefer ();
     /**
@@ -422,8 +421,6 @@ protected:
      */
     virtual NodeRefListPtr listeners (unsigned int event_id);
     NodePtr m_doc;
-private:
-    unsigned int defer_tree_version;
 public:
     State state;
     short id;
@@ -536,10 +533,14 @@ class KMPLAYER_EXPORT PlayListNotify {
 public:
     virtual ~PlayListNotify () {}
     /**
-     * Ask for playing a video/audio mrl inside region
+     * Ask for setting this node current and playing a video/audio mrl
      * If returning false, the element will be set to finished
      */
     virtual bool requestPlayURL (NodePtr mrl) = 0;
+    /**
+     * Ask for setting this node current and playing a video/audio mrl
+     */
+    virtual bool setCurrent (NodePtr mrl) = 0;
     /**
      * Element has activated or deactivated notification
      */
