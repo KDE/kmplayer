@@ -1170,7 +1170,13 @@ bool SimpleSAXParser::readDTD () {
     //kdDebug () << "readDTD: " << token->string.latin1 () << endl;
     if (token->token == tok_text && token->string.startsWith (QString ("[CDATA["))) {
         m_state = new StateInfo (InCDATA, m_state->next); // note: pop DTD
-        cdata.truncate (0);
+        if (token->next) {
+            cdata = token->next->string;
+            token->next = 0;
+        } else {
+            cdata = next_token->string;
+            next_token->token = tok_empty;
+        }
         return readCDATA ();
     }
     while (nextToken ())
