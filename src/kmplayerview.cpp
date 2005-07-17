@@ -1630,7 +1630,7 @@ KDE_NO_EXPORT void Viewer::resetBackgroundColor () {
 
 KDE_NO_EXPORT void Viewer::setCurrentBackgroundColor (const QColor & c) {
     setPaletteBackgroundColor (c);
-    XSetWindowBackground (qt_xdisplay (), embeddedWinId (), m_bgcolor);
+    XSetWindowBackground (qt_xdisplay (), embeddedWinId (), c.rgb ());
     XFlush (qt_xdisplay ());
 }
 
