@@ -429,7 +429,7 @@ void ViewArea::setAudioVideoGeometry (int x, int y, int w, int h, unsigned int *
     }
     if (bg_color)
         if (QColor (QRgb (*bg_color)) != (m_view->viewer ()->paletteBackgroundColor ())) {
-            m_view->viewer()->setBackgroundColor (QColor (QRgb (*bg_color)));
+            m_view->viewer()->setCurrentBackgroundColor (QColor (QRgb (*bg_color)));
             scheduleRepaint (x, y, w, h);
         }
 }
@@ -442,6 +442,7 @@ KDE_NO_EXPORT void ViewArea::setEventListener (NodePtr el) {
             killTimer (m_repaint_timer);
             m_repaint_timer = 0;
         }
+        m_view->viewer()->resetBackgroundColor ();
         repaint ();
     }
 }
@@ -1619,10 +1620,18 @@ KDE_NO_EXPORT void Viewer::contextMenuEvent (QContextMenuEvent * e) {
 KDE_NO_EXPORT void Viewer::setBackgroundColor (const QColor & c) {
     if (m_bgcolor != c.rgb ()) {
         m_bgcolor = c.rgb ();
-        setPaletteBackgroundColor (c);
-        XSetWindowBackground (qt_xdisplay (), embeddedWinId (), m_bgcolor);
-        XFlush (qt_xdisplay ());
+        setCurrentBackgroundColor (c);
     }
+}
+
+KDE_NO_EXPORT void Viewer::resetBackgroundColor () {
+    setCurrentBackgroundColor (m_bgcolor);
+}
+
+KDE_NO_EXPORT void Viewer::setCurrentBackgroundColor (const QColor & c) {
+    setPaletteBackgroundColor (c);
+    XSetWindowBackground (qt_xdisplay (), embeddedWinId (), m_bgcolor);
+    XFlush (qt_xdisplay ());
 }
 
 #include "kmplayerview.moc"

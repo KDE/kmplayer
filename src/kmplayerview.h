@@ -405,6 +405,8 @@ public:
     float aspect () { return m_aspect; }
     void sendKeyEvent (int key);
     void setBackgroundColor (const QColor & c);
+    void resetBackgroundColor ();
+    void setCurrentBackgroundColor (const QColor & c);
     KDE_NO_EXPORT View * view () const { return m_view; }
 public slots:
     void sendConfigureEvent ();

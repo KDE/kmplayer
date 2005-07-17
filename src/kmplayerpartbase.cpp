@@ -1460,7 +1460,7 @@ void URLSource::playCurrent () {
                     maybe_playlist = isPlayListMime (mime ()); // get new mime
                 }
             }
-            if (maybe_playlist && file.size () < 50000 && file.open (IO_ReadOnly)) {
+            if (maybe_playlist && file.size () < 200000 && file.open (IO_ReadOnly)) {
                 QTextStream textstream (&file);
                 read (textstream);
             }
