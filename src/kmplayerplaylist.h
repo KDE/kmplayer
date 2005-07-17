@@ -224,6 +224,8 @@ public:
 
 extern const unsigned int event_pointer_clicked;
 extern const unsigned int event_pointer_moved;
+extern const unsigned int event_paint;
+extern const unsigned int event_sized;
 
 // convenient types
 typedef Item<Node>::SharedType NodePtr;
@@ -406,7 +408,7 @@ public:
     KDE_NO_EXPORT NodeListPtr childNodes () const;
     void setState (State nstate);
 protected:
-    Node (NodePtr & d);
+    Node (NodePtr & d, short _id=0);
     /*
      * Open tag is found by parser, attributes are set
      */
@@ -474,7 +476,7 @@ public:
     virtual void clear ();
     virtual bool isElementNode () { return true; }
 protected:
-    Element (NodePtr & d);
+    Element (NodePtr & d, short id=0);
     AttributeListPtr m_attributes;
 };
 
@@ -502,7 +504,7 @@ inline KDE_NO_EXPORT T * convertNode (NodePtr e) {
  */
 class KMPLAYER_EXPORT Mrl : public Element {
 protected:
-    Mrl (NodePtr & d);
+    Mrl (NodePtr & d, short id=0);
     NodePtr childFromTag (const QString & tag);
     unsigned int cached_ismrl_version;
     bool cached_ismrl;
@@ -542,6 +544,10 @@ public:
      * Element has activated or deactivated notification
      */
     virtual void stateElementChanged (NodePtr element) = 0;
+    /**
+     * Set element to which to send GUI events
+     */
+    virtual void setEventDispatcher (NodePtr element) = 0;
     /**
      * Some rectangle needs repainting
      */
@@ -599,7 +605,7 @@ protected:
  */
 class DarkNode : public Element {
 public:
-    DarkNode (NodePtr & d, const QString & n);
+    DarkNode (NodePtr & d, const QString & n, short id=0);
     KDE_NO_CDTOR_EXPORT ~DarkNode () {}
     const char * nodeName () const { return name.ascii (); }
     NodePtr childFromTag (const QString & tag);
@@ -621,12 +627,16 @@ public:
 
 namespace SMIL {
 
+const short id_node_smil = 100;
+const short id_node_first = id_node_smil;
+const short id_node_last = 200; // reserve 100 ids
+
 /**
  * '<smil>' tag
  */
 class Smil : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Smil (NodePtr & d) : Mrl (d) {}
+    KDE_NO_CDTOR_EXPORT Smil (NodePtr & d) : Mrl (d, id_node_smil) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "smil"; }
     bool isMrl ();
@@ -639,6 +649,7 @@ public:
      */
     NodePtr realMrl ();
     NodePtrW current_av_media_type;
+    NodePtrW layout_node;
 };
 
 } // namespace SMIL
@@ -707,12 +718,14 @@ public:
 
 namespace RSS {
 
+const short id_node_rss = 200;
+
 /**
  * '<RSS>' tag
  */
 class Rss : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Rss (NodePtr & d) : Mrl (d) {}
+    KDE_NO_CDTOR_EXPORT Rss (NodePtr & d) : Mrl (d, id_node_rss) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "rss"; }
 };

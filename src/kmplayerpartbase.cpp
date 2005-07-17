@@ -363,8 +363,6 @@ void PartBase::setSource (Source * _source) {
     if (m_view && m_view->viewer ()) {
         updatePlayerMenu (m_view->controlPanel ());
         m_view->viewer ()->setAspect (0.0);
-        m_view->viewArea ()->setRootLayout (m_source->document () ?
-           m_source->document ()->document()->rootLayout : NodePtrW (0L));
     }
     if (m_source) QTimer::singleShot (0, m_source, SLOT (activate ()));
     emit sourceChanged (old_source, m_source);
@@ -780,12 +778,8 @@ QString Source::currentMrl () {
 void Source::playCurrent () {
     QString url = currentMrl ();
     m_player->changeURL (url);
-    if (m_player->process () && m_player->process ()->viewer ()) {
-        m_player->process ()->viewer ()->view ()->videoStop (); //show buttonbar
-        if (m_document)
-            m_player->process ()->viewer ()->view ()->viewArea ()->setRootLayout (m_document->document ()->rootLayout);
-    }
-    // kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():" doc act:") <<  (m_document && !m_document->active ()) << " cur:" << (!m_current)  << " cur act:" << (m_current && !m_current->active ()) <<  endl;
+    if (m_player->view ())
+        static_cast <View *> (m_player->view ())->videoStop (); //show buttonbar
     if (m_document && !m_document->active ()) {
         if (!m_current)
             m_document->activate ();
@@ -802,6 +796,7 @@ void Source::playCurrent () {
         if (m_player->process ())
             m_player->process ()->play (this, m_current);
     }
+    //kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():" doc act:") <<  (m_document && !m_document->active ()) << " cur:" << (!m_current)  << " cur act:" << (m_current && !m_current->active ()) <<  endl;
     m_player->updateTree ();
 }
 
@@ -824,7 +819,8 @@ void Source::playURLDone () {
     // notify a finish event
     if (m_back_request && m_back_request->isMrl ()) {
         m_current = m_back_request;
-        if (m_document->document ()->rootLayout) {
+        if (m_current->id > SMIL::id_node_first &&
+                m_current->id < SMIL::id_node_last) {
             playCurrent (); // don't mess with SMIL, just play the damn link
         } else {
             m_document->reset (); // deactivate everything
@@ -856,7 +852,7 @@ bool Source::requestPlayURL (NodePtr mrl) {
 }
 
 void Source::stateElementChanged (NodePtr elm) {
-    kdDebug() << "Source::stateElementChanged " << elm->nodeName () << " state:" << (int) elm->state << " cur isMrl:" << (m_current && m_current->isMrl ()) << " elm==realMrl:" << (m_current && elm == m_current->mrl ()->realMrl ()) << " p state:" << m_player->process ()->state () << endl;
+    //kdDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isMrl:" << (m_current && m_current->isMrl ()) << " elm==realMrl:" << (m_current && elm == m_current->mrl ()->realMrl ()) << " p state:" << m_player->process ()->state () << endl;
     if (elm->state == Element::state_deactivated) {
         if (elm == m_document && !m_back_request)
             emit endOfPlayItems (); // played all items
@@ -867,6 +863,11 @@ void Source::stateElementChanged (NodePtr elm) {
             m_player->process ()->stop ();
     }
     m_player->updateTree ();
+}
+
+void Source::setEventDispatcher (NodePtr e) {
+    if (m_player->view ())
+        static_cast <View*> (m_player->view())->viewArea()->setEventListener(e);
 }
 
 void Source::repaintRect (int x, int y, int w, int h) {
@@ -1157,27 +1158,24 @@ KDE_NO_EXPORT void URLSource::init () {
 }
 
 int URLSource::width () {
-    if (m_document && m_document->document ()->rootLayout) {
-        Mrl * mrl = m_current ? m_current->mrl () : 0L;
-        return mrl ? mrl->width : 0;
-    } else
-        return Source::width ();
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    if (mrl && mrl->id > SMIL::id_node_first && mrl->id < SMIL::id_node_last)
+        return mrl->width;
+    return Source::width ();
 }
 
 int URLSource::height () {
-    if (m_document && m_document->document ()->rootLayout) {
-        Mrl * mrl = m_current ? m_current->mrl () : 0L;
-        return mrl ? mrl->height : 0;
-    } else
-        return Source::height ();
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    if (mrl && mrl->id > SMIL::id_node_first && mrl->id < SMIL::id_node_last)
+        return mrl->height;
+    return Source::height ();
 }
 
 float URLSource::aspect () {
-    if (m_document && m_document->document ()->rootLayout) {
-        Mrl * mrl = m_current ? m_current->mrl () : 0L;
-        return mrl ? mrl->aspect : 0.0;
-    } else
-        return Source::aspect ();
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    if (mrl && mrl->id > SMIL::id_node_first && mrl->id < SMIL::id_node_last)
+        return mrl->aspect;
+    return Source::aspect ();
 }
 
 void URLSource::dimensions (int & w, int & h) {
@@ -1197,27 +1195,25 @@ void URLSource::dimensions (int & w, int & h) {
 }
 
 void URLSource::setWidth (int w) {
-    if (m_document && m_document->document ()->rootLayout) {
-        Mrl * mrl = m_current ? m_current->mrl () : 0L;
-        if (mrl)
-            mrl->width = w;
-    } else
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    if (mrl && mrl->id > SMIL::id_node_first && mrl->id < SMIL::id_node_last)
+        mrl->width = w;
+    else
         Source::setWidth (w);
 }
 
 void URLSource::setHeight (int w) {
-    if (m_document && m_document->document ()->rootLayout) {
-        Mrl * mrl = m_current ? m_current->mrl () : 0L;
-        if (mrl)
-            mrl->height = w;
-    } else
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    if (mrl && mrl->id > SMIL::id_node_first && mrl->id < SMIL::id_node_last)
+        mrl->height = w;
+    else
         Source::setHeight (w);
 }
 
 void URLSource::setDimensions (int w, int h) {
-    if (m_document && m_document->document ()->rootLayout) {
-        Mrl * mrl = m_current ? m_current->mrl () : 0L;
-        if (mrl && m_player->view ()) {
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    if (mrl && mrl->id > SMIL::id_node_first && mrl->id < SMIL::id_node_last) {
+        if (m_player->view ()) {
             mrl = mrl->realMrl ()->mrl ();
             mrl->width = w;
             mrl->height = h;
@@ -1233,11 +1229,10 @@ void URLSource::setDimensions (int w, int h) {
 }
 
 void URLSource::setAspect (float w) {
-    if (m_document && m_document->document ()->rootLayout) {
-        Mrl * mrl = m_current ? m_current->mrl () : 0L;
-        if (mrl)
-            mrl->aspect = w;
-    } else
+    Mrl * mrl = m_current ? m_current->mrl () : 0L;
+    if (mrl && mrl->id > SMIL::id_node_first && mrl->id < SMIL::id_node_last)
+        mrl->aspect = w;
+    else
         Source::setAspect (w);
 }
 
@@ -1505,7 +1500,7 @@ KDE_NO_EXPORT void URLSource::play () {
       "<root-layout width='320' height='240' background-color='black'/>"
       "<region id='image1' left='31.25%' top='25%' width='37.5%' height='50%'/>"
     "</layout></head><body>"
-    "<img src='%1' region='image1' dur='3s' fit='fill'/>"
+    "<img src='%1' region='image1' dur='1.5s' fit='fill'/>"
     "<par>"
       "<animate target='image1' attribute='width' from='37.5%' to='0%' dur='1' fill='freeze'/>"
       "<animate target='image1' attribute='left' from='31.25%' to='50%' dur='1' fill='freeze'/>"

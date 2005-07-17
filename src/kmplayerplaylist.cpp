@@ -91,8 +91,8 @@ KDE_NO_EXPORT void Connection::disconnect () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT Node::Node (NodePtr & d)
- : m_doc (d), state (state_init), id (0),
+KDE_NO_CDTOR_EXPORT Node::Node (NodePtr & d, short _id)
+ : m_doc (d), state (state_init), id (_id),
    auxiliary_node (false), editable (false) {}
 
 Node::~Node () {
@@ -415,8 +415,8 @@ void RefNode::setRefNode (const NodePtr ref) {
 
 //-----------------------------------------------------------------------------
 
-Element::Element (NodePtr & d)
-    : Node (d), m_attributes ((new AttributeList)->self ()) {}
+Element::Element (NodePtr & d, short id)
+    : Node (d, id), m_attributes ((new AttributeList)->self ()) {}
 
 void Element::setAttribute (const QString & name, const QString & value) {
     const char * name_latin = name.latin1 ();
@@ -477,7 +477,7 @@ static bool hasMrlChildren (const NodePtr & e) {
     return false;
 }
 
-Mrl::Mrl (NodePtr & d) : Element (d), cached_ismrl_version (~0), width (0), height (0), aspect (0), parsed (false), bookmarkable (true) {}
+Mrl::Mrl (NodePtr & d, short id) : Element (d, id), cached_ismrl_version (~0), width (0), height (0), aspect (0), parsed (false), bookmarkable (true) {}
 
 Mrl::~Mrl () {}
 
@@ -590,7 +590,8 @@ KDE_NO_EXPORT bool TextNode::expose () const {
 
 //-----------------------------------------------------------------------------
 
-DarkNode::DarkNode (NodePtr & d, const QString & n) : Element (d), name (n) {
+DarkNode::DarkNode (NodePtr & d, const QString & n, short id)
+ : Element (d, id), name (n) {
 }
 
 NodePtr DarkNode::childFromTag (const QString & tag) {

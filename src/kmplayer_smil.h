@@ -334,13 +334,29 @@ private:
 
 namespace SMIL {
 
+const short id_node_head = 101;
+const short id_node_body = 102;
+const short id_node_layout = 103;
+const short id_node_root_layout = 104;
+const short id_node_region = 105;
+const short id_node_par = 106;
+const short id_node_seq = 107;
+const short id_node_switch = 108;
+const short id_node_excl = 109;
+const short id_node_img = 110;
+const short id_node_audio_video = 111;
+const short id_node_text = 112;
+const short id_node_param = 113;
+const short id_node_set = 114;
+const short id_node_animate = 115;
+
 /**
  * Represents optional 'head' tag of SMIL document as in
  * &lt;smil&gt;&lt;head/&gt;&lt;body/&gt;&lt;/smil&gt;
  */
 class Head : public Element {
 public:
-    KDE_NO_CDTOR_EXPORT Head (NodePtr & d) : Element (d) {}
+    KDE_NO_CDTOR_EXPORT Head (NodePtr & d) : Element (d, id_node_head) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "head"; }
     void closed ();
@@ -381,7 +397,7 @@ public:
      */
     int z_order;
 protected:
-    RegionBase (NodePtr & d);
+    RegionBase (NodePtr & d, short id);
     ElementRuntimePtr runtime;
     virtual NodeRefListPtr listeners (unsigned int event_id);
     NodeRefListPtr m_SizeListeners;        // region resized
@@ -393,7 +409,7 @@ protected:
  */
 class Layout : public RegionBase {
 public:
-    KDE_NO_CDTOR_EXPORT Layout (NodePtr & d) : RegionBase (d) {}
+    KDE_NO_CDTOR_EXPORT Layout (NodePtr & d) : RegionBase (d, id_node_layout) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "layout"; }
     void activate ();
@@ -435,7 +451,8 @@ private:
  */
 class RootLayout : public RegionBase {
 public:
-    KDE_NO_CDTOR_EXPORT RootLayout (NodePtr & d) : RegionBase (d) {}
+    KDE_NO_CDTOR_EXPORT RootLayout (NodePtr & d)
+        : RegionBase (d, id_node_root_layout) {}
     KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
 };
 
@@ -454,7 +471,7 @@ public:
     void childDone (NodePtr child);
     virtual bool handleEvent (EventPtr event);
 protected:
-    TimedMrl (NodePtr & d);
+    TimedMrl (NodePtr & d, short id);
     virtual NodeRefListPtr listeners (unsigned int event_id);
     virtual ElementRuntimePtr getNewRuntime ();
 
@@ -471,7 +488,7 @@ public:
     KDE_NO_CDTOR_EXPORT ~GroupBase () {}
     bool isMrl ();
 protected:
-    KDE_NO_CDTOR_EXPORT GroupBase (NodePtr & d) : TimedMrl (d) {}
+    KDE_NO_CDTOR_EXPORT GroupBase (NodePtr & d, short id) : TimedMrl (d, id) {}
 };
 
 /**
@@ -479,7 +496,7 @@ protected:
  */
 class Par : public GroupBase {
 public:
-    KDE_NO_CDTOR_EXPORT Par (NodePtr & d) : GroupBase (d) {}
+    KDE_NO_CDTOR_EXPORT Par (NodePtr & d) : GroupBase (d, id_node_par) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "par"; }
     void activate ();
@@ -495,10 +512,12 @@ public:
  */
 class Seq : public GroupBase {
 public:
-    KDE_NO_CDTOR_EXPORT Seq (NodePtr & d) : GroupBase (d) {}
+    KDE_NO_CDTOR_EXPORT Seq (NodePtr & d) : GroupBase(d, id_node_seq) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "seq"; }
     void activate ();
+protected:
+    KDE_NO_CDTOR_EXPORT Seq (NodePtr & d, short id) : GroupBase(d, id) {}
 };
 
 /**
@@ -507,7 +526,7 @@ public:
  */
 class Body : public Seq {
 public:
-    KDE_NO_CDTOR_EXPORT Body (NodePtr & d) : Seq (d) {}
+    KDE_NO_CDTOR_EXPORT Body (NodePtr & d) : Seq (d, id_node_body) {}
     KDE_NO_EXPORT const char * nodeName () const { return "body"; }
 };
 
@@ -516,7 +535,7 @@ public:
  */
 class Excl : public GroupBase {
 public:
-    KDE_NO_CDTOR_EXPORT Excl (NodePtr & d) : GroupBase (d) {}
+    KDE_NO_CDTOR_EXPORT Excl (NodePtr & d) : GroupBase (d, id_node_excl) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "excl"; }
     void activate ();
@@ -533,7 +552,7 @@ private:
  */
 class Switch : public Element {
 public:
-    KDE_NO_CDTOR_EXPORT Switch (NodePtr & d) : Element (d) {}
+    KDE_NO_CDTOR_EXPORT Switch (NodePtr &d) : Element(d, id_node_switch) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "switch"; }
     // Condition
@@ -548,7 +567,7 @@ public:
  */
 class MediaType : public TimedMrl {
 public:
-    MediaType (NodePtr & d, const QString & t);
+    MediaType (NodePtr & d, const QString & t, short id);
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
     void opened ();
@@ -586,7 +605,7 @@ public:
 
 class Set : public TimedMrl {
 public:
-    KDE_NO_CDTOR_EXPORT Set (NodePtr & d) : TimedMrl (d) {}
+    KDE_NO_CDTOR_EXPORT Set (NodePtr & d) : TimedMrl (d, id_node_set) {}
     KDE_NO_EXPORT const char * nodeName () const { return "set"; }
     virtual ElementRuntimePtr getNewRuntime ();
     bool isMrl () { return false; }
@@ -594,7 +613,7 @@ public:
 
 class Animate : public TimedMrl {
 public:
-    KDE_NO_CDTOR_EXPORT Animate (NodePtr & d) : TimedMrl (d) {}
+    KDE_NO_CDTOR_EXPORT Animate (NodePtr & d) : TimedMrl (d, id_node_animate) {}
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
     virtual ElementRuntimePtr getNewRuntime ();
     bool isMrl () { return false; }
@@ -602,7 +621,7 @@ public:
 
 class Param : public Element {
 public:
-    KDE_NO_CDTOR_EXPORT Param (NodePtr & d) : Element (d) {}
+    KDE_NO_CDTOR_EXPORT Param (NodePtr & d) : Element (d, id_node_param) {}
     KDE_NO_EXPORT const char * nodeName () const { return "param"; }
     void activate ();
     bool expose () const { return false; }

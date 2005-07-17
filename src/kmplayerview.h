@@ -128,7 +128,7 @@ public:
     ~ViewArea ();
     bool isFullScreen () const { return m_fullscreen; }
     KActionCollection * actionCollection () const { return m_collection; }
-    void setRootLayout (NodePtr rl);
+    void setEventListener (NodePtr rl);
     void setAudioVideoGeometry (int x, int y, int w, int y, unsigned int * bg);
     void mouseMoved ();
     void scheduleRepaint (int x, int y, int w, int y);
@@ -152,7 +152,7 @@ private:
     QPainter * m_painter;
     QPixmap * m_paint_buffer;
     KActionCollection * m_collection;
-    NodePtrW rootLayout;
+    NodePtrW eventListener;
     QRect m_av_geometry;
     QRect m_repaint_rect;
     int m_mouse_invisible_timer;

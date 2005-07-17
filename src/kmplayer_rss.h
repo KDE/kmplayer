@@ -28,6 +28,7 @@
 #include "kmplayerplaylist.h"
 
 class QTextStream;
+class QTextEdit;
 class QPixmap;
 class QPainter;
 
@@ -39,34 +40,38 @@ namespace KMPlayer {
 
 namespace RSS {
 
+const short id_node_channel = 201;
+const short id_node_item = 202;
+const short id_node_title = 203;
+const short id_node_description = 204;
+const short id_node_enclosure = 205;
+
 class Channel : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Channel (NodePtr & d) : Mrl (d) {}
+    KDE_NO_CDTOR_EXPORT Channel (NodePtr & d) : Mrl (d, id_node_channel) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "channel"; }
     bool isMrl () { return false; }
     void closed ();
 };
 
-class Title : public Element {
-public:
-    Title (NodePtr & d);
-    KDE_NO_EXPORT const char * nodeName () const { return "title"; }
-    bool expose () const { return false; }
-};
-
 class Item : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Item (NodePtr & d) : Mrl (d) {}
+    KDE_NO_CDTOR_EXPORT Item (NodePtr & d) : Mrl (d, id_node_item), edit (0L) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "item"; }
     bool isMrl () { return !src.isEmpty (); }
     void closed ();
+    void activate ();
+    void deactivate ();
+    bool handleEvent (EventPtr event);
+    int x, y, w, h;
+    QTextEdit * edit;
 };
 
 class Enclosure : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Enclosure (NodePtr & d) : Mrl (d) {}
+    KDE_NO_CDTOR_EXPORT Enclosure(NodePtr &d) : Mrl(d, id_node_enclosure) {}
     KDE_NO_EXPORT const char * nodeName () const { return "enclosure"; }
     void closed ();
     bool expose () const { return false; }

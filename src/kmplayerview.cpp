@@ -328,7 +328,7 @@ KDE_NO_EXPORT void ViewArea::accelActivated () {
 }
 
 KDE_NO_EXPORT void ViewArea::mousePressEvent (QMouseEvent * e) {
-    if (rootLayout && rootLayout->handleEvent((new PointerEvent(event_pointer_clicked,e->x(), e->y()))->self()))
+    if (eventListener && eventListener->handleEvent((new PointerEvent(event_pointer_clicked,e->x(), e->y()))->self()))
         e->accept ();
 }
 
@@ -339,14 +339,14 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
         m_view->delayedShowButtons (e->y() > vert_buttons_pos-cp_height &&
                                     e->y() < vert_buttons_pos);
     }
-    if (rootLayout && rootLayout->handleEvent((new PointerEvent(event_pointer_moved,e->x(), e->y()))->self()))
+    if (eventListener && eventListener->handleEvent((new PointerEvent(event_pointer_moved,e->x(), e->y()))->self()))
         e->accept ();
     mouseMoved (); // for m_mouse_invisible_timer
 }
 
 KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
 #define PAINT_BUFFER_HEIGHT 128
-    if (rootLayout) {
+    if (eventListener) {
         if (!m_paint_buffer) {
             m_paint_buffer = new QPixmap (width (), PAINT_BUFFER_HEIGHT);
             m_painter = new QPainter ();
@@ -364,7 +364,7 @@ KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
             m_painter->begin (m_paint_buffer);
             m_painter->translate(-ex, -ey-py);
             m_painter->fillRect (ex, ey+py, ew, ph, QBrush (paletteBackgroundColor ()));
-            rootLayout->handleEvent ((new PaintEvent (*m_painter, ex, ey+py, ew, ph))->self ());
+            eventListener->handleEvent ((new PaintEvent (*m_painter, ex, ey+py, ew, ph))->self ());
             m_painter->end();
             //p.drawPixmap (ex, ey+py, *m_paint_buffer, 0, 0, ew, ph);
             bitBlt (this, ex, ey+py, m_paint_buffer, 0, 0, ew, ph);
@@ -387,9 +387,9 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
 
     // now scale the regions and check if video region is already sized
     bool av_geometry_changed = false;
-    if (rootLayout && wws > 0 && hws > 0) {
+    if (eventListener && wws > 0 && hws > 0) {
         m_av_geometry = QRect (0, 0, 0, 0);
-        rootLayout->handleEvent ((new SizeEvent (x, y, wws, hws, m_view->keepSizeRatio ()))->self ());
+        eventListener->handleEvent ((new SizeEvent (x, y, wws, hws, m_view->keepSizeRatio ()))->self ());
         av_geometry_changed = (m_av_geometry != QRect (0, 0, 0, 0));
         x = m_av_geometry.x ();
         y = m_av_geometry.y ();
@@ -429,15 +429,20 @@ void ViewArea::setAudioVideoGeometry (int x, int y, int w, int h, unsigned int *
     }
     if (bg_color)
         if (QColor (QRgb (*bg_color)) != (m_view->viewer ()->paletteBackgroundColor ())) {
-            m_view->viewer()->setPaletteBackgroundColor (QColor (QRgb (*bg_color)));
+            m_view->viewer()->setBackgroundColor (QColor (QRgb (*bg_color)));
             scheduleRepaint (x, y, w, h);
         }
 }
 
-KDE_NO_EXPORT void ViewArea::setRootLayout (NodePtr rl) {
-    if (rootLayout != rl) {
-        rootLayout = rl;
+KDE_NO_EXPORT void ViewArea::setEventListener (NodePtr el) {
+    if (eventListener != el) {
+        eventListener = el;
         resizeEvent (0L);
+        if (m_repaint_timer) {
+            killTimer (m_repaint_timer);
+            m_repaint_timer = 0;
+        }
+        repaint ();
     }
 }
 
@@ -1614,6 +1619,7 @@ KDE_NO_EXPORT void Viewer::contextMenuEvent (QContextMenuEvent * e) {
 KDE_NO_EXPORT void Viewer::setBackgroundColor (const QColor & c) {
     if (m_bgcolor != c.rgb ()) {
         m_bgcolor = c.rgb ();
+        setPaletteBackgroundColor (c);
         XSetWindowBackground (qt_xdisplay (), embeddedWinId (), m_bgcolor);
         XFlush (qt_xdisplay ());
     }
