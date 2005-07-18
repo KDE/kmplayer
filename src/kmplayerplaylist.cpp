@@ -189,8 +189,8 @@ void Node::reset () {
     for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
         if (e->state != state_init)
             e->reset ();
-        else
-            break; // rest not activated yet
+        // else
+        //    break; // rest not activated yet
     }
 }
 
