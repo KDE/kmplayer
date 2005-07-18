@@ -163,9 +163,9 @@ private:
 /*
  * The console GUI
  */
-class Console : public QTextEdit {
+class TextEdit : public QTextEdit {
 public:
-    Console (QWidget * parent, View * view);
+    TextEdit (QWidget * parent, View * view);
 protected:
     void contextMenuEvent (QContextMenuEvent * e);
 private:
@@ -211,10 +211,11 @@ public:
     void reset ();
     //void print(QPrinter *pPrinter);
 
-    Console * console () const { return m_multiedit; }
+    TextEdit * console () const { return m_multiedit; }
     KDE_NO_EXPORT Viewer * viewer () const { return m_viewer; }
     KDE_NO_EXPORT ControlPanel * controlPanel () const {return m_control_panel;}
     KDE_NO_EXPORT PlayListView * playList () const { return m_playlist; }
+    KDE_NO_EXPORT TextEdit * infoPanel () const { return m_infopanel; }
     KDE_NO_EXPORT QWidgetStack * widgetStack () const { return m_widgetstack; }
     KDE_NO_EXPORT KDockArea * docArea () const { return m_dockarea; }
     KDE_NO_EXPORT ViewArea * viewArea () const { return m_view_area; }
@@ -228,6 +229,7 @@ public:
     bool setPicture (const QString & path);
     KDE_NO_EXPORT QPixmap * image () const { return m_image; }
     KDE_NO_EXPORT bool videoStarted () const { return m_playing; }
+    void setInfoMessage (const QString & msg);
 public slots:
     /* raise video widget, might (auto) hides panel */
     void videoStart ();
@@ -258,18 +260,21 @@ private:
     // widget for player's output
     Viewer * m_viewer;
     // console output
-    Console * m_multiedit;
+    TextEdit * m_multiedit;
     // widget stack contains m_viewer, m_multiedit and m_picturewidget
     QWidgetStack * m_widgetstack;
     // widget that layouts m_widgetstack for ratio setting and m_control_panel
     ViewArea * m_view_area;
     // playlist widget
     PlayListView * m_playlist;
+    // infopanel widget
+    TextEdit * m_infopanel;
     // all widget types
     QWidget * m_widgettypes [WT_Last];
     KDockArea * m_dockarea;
     KDockWidget * m_dock_video;
     KDockWidget * m_dock_playlist;
+    KDockWidget * m_dock_infopanel;
     QString tmplog;
     QPixmap * m_image;
     ControlPanel * m_control_panel;

@@ -186,9 +186,12 @@ KDE_NO_EXPORT void Settings::applyColorSetting (bool only_changed_ones) {
             switch (ColorSetting::Target (i)) {
                 case ColorSetting::playlist_background:
                    view->playList()->setPaletteBackgroundColor(colors[i].color);
+                   view->infoPanel ()->setPaper (QBrush (colors[i].color));
                    break;
                 case ColorSetting::playlist_foreground:
                    view->playList()->setPaletteForegroundColor(colors[i].color);
+                   view->infoPanel()->setPaletteForegroundColor(colors[i].color);
+                   view->infoPanel ()->setColor (colors[i].color);
                    break;
                 case ColorSetting::playlist_active:
                    view->playList()->setActiveForegroundColor (colors[i].color);

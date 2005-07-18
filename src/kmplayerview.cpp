@@ -1066,14 +1066,13 @@ KDE_NO_EXPORT void PlayListView::editCurrent () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT Console::Console (QWidget * parent, View * view) : QTextEdit (parent, "kde_kmplayer_console"), m_view (view) {
-    setTextFormat (Qt::PlainText);
+KDE_NO_CDTOR_EXPORT TextEdit::TextEdit (QWidget * parent, View * view) : QTextEdit (parent, "kde_kmplayer_console"), m_view (view) {
     setReadOnly (true);
-    QFont fnt = KGlobalSettings::fixedFont ();
-    setFont (fnt);
+    setPaper (QBrush (QColor (0, 0, 0)));
+    setColor (QColor (0xB2, 0xB2, 0xB2));
 }
 
-KDE_NO_EXPORT void Console::contextMenuEvent (QContextMenuEvent * e) {
+KDE_NO_EXPORT void TextEdit::contextMenuEvent (QContextMenuEvent * e) {
     m_view->controlPanel ()->popupMenu ()->exec (e->globalPos ());
 }
 
@@ -1169,11 +1168,21 @@ KDE_NO_EXPORT void View::init () {
     setVideoWidget (m_view_area);
 #endif
 
-    m_multiedit = new Console (m_widgetstack, this);
-    m_multiedit->setPaper (QBrush (QColor (0, 0, 0)));
-    m_multiedit->setColor (QColor (0xB2, 0xB2, 0xB2));
+    m_multiedit = new TextEdit (m_widgetstack, this);
+    m_multiedit->setTextFormat (Qt::PlainText);
+    QFont fnt = KGlobalSettings::fixedFont ();
+    m_multiedit->setFont (fnt);
     m_widgettypes[WT_Console] = m_multiedit;
+
     m_widgettypes[WT_Picture] = new KMPlayerPictureWidget (m_widgetstack, this);
+
+    m_dock_infopanel = m_dockarea->createDockWidget ("infopanel", KGlobal::iconLoader ()->loadIcon (QString ("info"), KIcon::Small));
+    m_infopanel = new TextEdit (m_dock_infopanel, this);
+    fnt = m_infopanel->font ();
+    fnt.setPointSize (fnt.pointSize () - 1);
+    fnt.setWeight (QFont::DemiBold);
+    m_infopanel->setFont (fnt);
+    m_dock_infopanel->setWidget (m_infopanel);
 
     m_widgetstack->addWidget (m_viewer);
     m_widgetstack->addWidget (m_multiedit);
@@ -1208,6 +1217,16 @@ KDE_NO_CDTOR_EXPORT View::~View () {
     delete m_image;
     if (m_view_area->parent () != this)
         delete m_view_area;
+}
+
+void View::setInfoMessage (const QString & msg) {
+    if (msg.isEmpty ()) {
+       m_infopanel->clear ();
+       m_dock_infopanel->undock ();
+    } else {
+       m_dock_infopanel->manualDock (m_dock_video, KDockWidget::DockBottom, 30);
+       m_infopanel->setText (msg);
+    }
 }
 
 void View::showPlaylist () {

@@ -550,6 +550,10 @@ public:
      */
     virtual void setEventDispatcher (NodePtr element) = 0;
     /**
+     * Request to show msg for informing the user
+     */
+    virtual void setInfoMessage (const QString & msg) = 0;
+    /**
      * Some rectangle needs repainting
      */
     virtual void repaintRect (int x, int y, int w, int h) = 0;

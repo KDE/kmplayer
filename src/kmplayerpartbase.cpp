@@ -887,10 +887,15 @@ void Source::setEventDispatcher (NodePtr e) {
         static_cast <View*> (m_player->view())->viewArea()->setEventListener(e);
 }
 
+void Source::setInfoMessage (const QString & msg) {
+    if (m_player->view ())
+        static_cast <View*> (m_player->view())->setInfoMessage (msg);
+}
+
 void Source::repaintRect (int x, int y, int w, int h) {
     //kdDebug () << "repaint " << x << "," << y << " " << w << "x" << h << endl;
     if (m_player->view ())
-        m_player->process()->viewer ()->view ()->viewArea ()->scheduleRepaint (x, y, w, h);
+        static_cast <View*> (m_player->view())->viewArea ()->scheduleRepaint (x, y, w, h);
 }
 
 void Source::moveRect (int x, int y, int w, int h, int x1, int y1) {

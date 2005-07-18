@@ -27,8 +27,6 @@
 
 #include "kmplayerplaylist.h"
 
-class QTextStream;
-class QTextEdit;
 class QPixmap;
 class QPainter;
 
@@ -57,16 +55,13 @@ public:
 
 class Item : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Item (NodePtr & d) : Mrl (d, id_node_item), edit (0L) {}
+    KDE_NO_CDTOR_EXPORT Item (NodePtr & d) : Mrl (d, id_node_item) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "item"; }
     bool isMrl () { return !src.isEmpty (); }
     void closed ();
     void activate ();
     void deactivate ();
-    bool handleEvent (EventPtr event);
-    int x, y, w, h;
-    QTextEdit * edit;
 };
 
 class Enclosure : public Mrl {

@@ -17,10 +17,6 @@
  **/
 
 #include <config.h>
-#include <qtextedit.h>
-#include <qapplication.h>
-#include <qpainter.h>
-#include <qpixmap.h>
 #include <kdebug.h>
 #include "kmplayer_rss.h"
 
@@ -71,56 +67,20 @@ void RSS::Item::closed () {
 }
 
 void RSS::Item::activate () {
-    if (!src.isEmpty ()) {
-        edit = new QTextEdit;
-        edit->setGeometry (0, 0, w, h/2);
-        edit->setReadOnly (true);
-        edit->setHScrollBarMode (QScrollView::AlwaysOff);
-        edit->setVScrollBarMode (QScrollView::AlwaysOff);
-        edit->setFrameShape (QFrame::NoFrame);
-        edit->setFrameShadow (QFrame::Plain);
-        x = y = 0;
-        w = h = 50;
-        PlayListNotify * n = document()->notify_listener;
-        if (n)
-            n->setEventDispatcher (m_self);
+    PlayListNotify * n = document()->notify_listener;
+    if (n) {
+        for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+            if (c->id == id_node_description)
+                n->setInfoMessage (c->innerText ());
     }
     Mrl::activate ();
 }
 
 void RSS::Item::deactivate () {
-    delete edit;
-    edit = 0L;
     PlayListNotify * n = document()->notify_listener;
     if (n)
-        n->setEventDispatcher (NodePtr ());
+        n->setInfoMessage (QString::null);
     Mrl::deactivate ();
-}
-
-bool RSS::Item::handleEvent (EventPtr event) {
-    if (event->id () == event_sized) {
-        SizeEvent * e = static_cast <SizeEvent *> (event.ptr ());
-        x = e->x;
-        y = e->y;
-        w = e->w;
-        h = e->h;
-        //kdDebug () << "item size " << x << "," << y << " " << w << "x" << h << endl;
-        PlayListNotify * n = document()->notify_listener;
-        unsigned int bgcolor = QApplication::palette ().color (QPalette::Normal, QColorGroup::Base).rgb ();
-        if (n)
-            n->avWidgetSizes (0, h/2, w, h/2, &bgcolor); // just in case, reserve some for video
-    } else if (event->id () == event_paint) {
-        QPainter & p = static_cast <PaintEvent*> (event.ptr())->painter;
-        for (NodePtr c = firstChild (); c; c = c->nextSibling ())
-            if (c->id == id_node_description)
-                edit->setText (c->innerText ());
-        edit->adjustSize ();
-        QPixmap pix = QPixmap::grabWidget (edit, 0, 0, w, h/2);
-        //kdDebug () << "item paint " << x << "," << y << " " << w << "x" << h << endl;
-        p.drawPixmap (0, 0, pix);
-    } else
-        return Mrl::handleEvent (event);
-    return true;
 }
 
 void RSS::Enclosure::closed () {

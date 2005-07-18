@@ -141,6 +141,7 @@ protected:
     bool setCurrent (NodePtr mrl);
     void stateElementChanged (NodePtr element);
     void setEventDispatcher (NodePtr element);
+    void setInfoMessage (const QString & msg);
     void repaintRect (int x, int y, int w, int h);
     void moveRect (int x, int y, int w, int h, int x1, int y1);
     void avWidgetSizes (int x, int y, int w, int h, unsigned int * bg_color);
