@@ -329,6 +329,7 @@ KDE_NO_EXPORT bool MPlayer::play (Source * source, NodePtr node) {
     if (playing ())
         return sendCommand (QString ("gui_play"));
     stop ();
+    m_source = source;
     initProcess (m_viewer);
     Process::play (source, node);
     source->setPosition (0);
@@ -784,6 +785,7 @@ KDE_NO_EXPORT void MEncoder::init () {
 bool MEncoder::play (Source * source, NodePtr node) {
     bool success = false;
     stop ();
+    m_source = source;
     initProcess (m_viewer);
     Process::play (source, node);
     KURL url (m_url);
@@ -849,6 +851,7 @@ KDE_NO_EXPORT void MPlayerDumpstream::init () {
 bool MPlayerDumpstream::play (Source * source, NodePtr node) {
     bool success = false;
     stop ();
+    m_source = source;
     initProcess (m_viewer);
     Process::play (source, node);
     KURL url (m_url);
