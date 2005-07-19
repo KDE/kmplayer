@@ -45,6 +45,7 @@
 #include <kprocess.h>
 #include <kstandarddirs.h>
 #include <kmimetype.h>
+#include <kiconloader.h>
 #include <kio/job.h>
 #include <kio/jobclasses.h>
 
@@ -1525,14 +1526,27 @@ void URLSource::playCurrent () {
     }
 }
 
+struct IntroDocument : public Document {
+    Source * m_source;
+    IntroDocument (Source * s) : Document (QString (""), s), m_source (s) {}
+    void deactivate () {
+        if (m_source->player ()->view ())
+            static_cast <View *> (m_source->player ()->view ())->docArea ()->readDockConfig (m_source->player ()->config (), QString ("Window Layout"));
+        Document::deactivate ();
+    }
+};
+
 KDE_NO_EXPORT void URLSource::play () {
     if (m_url.isEmpty ()) {
         if (m_document)
             m_document->document ()->dispose ();
-        m_document = (new Document (QString (""), this))->self ();
+        m_document = (new IntroDocument (this))->self ();
         QString smil = QString::fromLatin1 ("<smil><head><layout>"
       "<root-layout width='320' height='240' background-color='black'/>"
-      "<region id='image1' left='31.25%' top='25%' width='37.5%' height='50%'/>"
+      "<region id='image1' left='31.25%' top='25%' width='37.5%' height='50%' z-order='1'/>"
+      "<region id='reg1' z-order='2'>"
+      "<region id='image2' left='30%' top='20%' width='40%' height='60%'/>"
+      "</region>"
     "</layout></head><body>"
     "<img src='%1' region='image1' dur='1.5s' fit='fill'/>"
     "<par>"
@@ -1540,9 +1554,13 @@ KDE_NO_EXPORT void URLSource::play () {
       "<animate target='image1' attribute='left' from='31.25%' to='50%' dur='1' fill='freeze'/>"
       "<animate target='image1' attribute='height' from='50%' to='0%' dur='1' fill='freeze'/>"
       "<animate target='image1' attribute='top' from='25%' to='50%' dur='1' fill='freeze'/>"
-      "<set id='set1' target='image1' attribute='background-color' to='white' dur='1'/>"
+      "<set target='image1' attribute='background-color' to='white' dur='1'/>"
     "</par>"
-  "</body></smil>").arg (locate ("data", "kmplayer/noise.gif"));
+    "<par>"
+      "<set target='reg1' attribute='background-color' to='white' dur='1'/>"
+    "<img src='%2' region='image2' dur='1s' fit='fill'/>"
+    "</par>"
+  "</body></smil>").arg (locate ("data", "kmplayer/noise.gif")).arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -128));
         QTextStream ts (smil.utf8 (), IO_ReadOnly);
         readXML (m_document, ts, QString::null);
         m_document->normalize ();

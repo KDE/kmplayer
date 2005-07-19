@@ -321,6 +321,8 @@ KDE_NO_EXPORT void TimedRuntime::propagateStop (bool forced) {
         if (durations [end_time].durval > duration_last_option &&
                 durations [end_time].durval != duration_media)
             return; // wait for event
+        if (dur_timer)
+            return; // timerEvent will call us with forced=true
         // bail out if a child still running
         for (NodePtr c = element->firstChild (); c; c = c->nextSibling ())
             if (c->unfinished ())

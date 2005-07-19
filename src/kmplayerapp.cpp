@@ -193,7 +193,7 @@ KDE_NO_EXPORT void KMPlayerApp::initMenu () {
 
 KDE_NO_EXPORT void KMPlayerApp::initView () {
     m_view = static_cast <KMPlayer::View*> (m_player->view());
-    m_view->docArea ()->readDockConfig (config, QString ("Window Layout"));
+    //m_view->docArea ()->readDockConfig (config, QString ("Window Layout"));
     m_player->connectPanel (m_view->controlPanel ());
     setCentralWidget (m_view);
     initMenu ();
