@@ -37,6 +37,7 @@
 
 // include files for KDE
 #include <kdeversion.h>
+#include <kstandarddirs.h>
 #include <kiconloader.h>
 #include <kmessagebox.h>
 #include <kfiledialog.h>
@@ -86,7 +87,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       m_vcdmenu (new QPopupMenu (this)),
       m_tvmenu (new QPopupMenu (this)),
       m_ffserverconfig (new KMPlayerFFServerConfig),
-      m_broadcastconfig (new KMPlayerBroadcastConfig (m_player, m_ffserverconfig))
+      m_broadcastconfig (new KMPlayerBroadcastConfig (m_player, m_ffserverconfig)),
+      m_first_time (true)
 {
     connect (m_broadcastconfig, SIGNAL (broadcastStarted()), this, SLOT (broadcastStarted()));
     connect (m_broadcastconfig, SIGNAL (broadcastStopped()), this, SLOT (broadcastStopped()));
@@ -290,8 +292,88 @@ KDE_NO_EXPORT void KMPlayerApp::openVDR () {
         m_player->setSource (m_player->sources () ["vdrsource"]);
 }
 
+struct IntroSource : public KMPlayer::Source {
+    KMPlayer::PartBase * m_part;
+    IntroSource (KMPlayer::PartBase *p)
+        : KMPlayer::Source ("Intro", p, "introsource"), m_part (p) {}
+    KDE_NO_EXPORT bool hasLength () { return false; }
+    KDE_NO_EXPORT bool isSeekable () { return false; }
+    KDE_NO_EXPORT QString prettyName () { return QString ("Intro"); }
+    void activate ();
+    void deactivate ();
+    void playURLDone ();
+    void stateElementChanged (KMPlayer::NodePtr node);
+};
+
+KDE_NO_EXPORT void IntroSource::activate () {
+    m_document = (new KMPlayer::Document (QString (""), this))->self ();
+    QString smil = QString::fromLatin1 ("<smil><head><layout>"
+        "<root-layout width='320' height='240' background-color='black'/>"
+        "<region id='image1' left='31.25%' top='25%' width='37.5%' height='50%' z-order='1'/>"
+        "<region id='reg1' z-order='2'>"
+        "<region id='image2' left='30%' top='20%' width='40%' height='60%'/>"
+        "</region>"
+        "</layout></head><body>"
+        "<img src='%1' region='image1' dur='1s' fit='fill'/>"
+        "<par>"
+        "<animate target='image1' attribute='width' from='37.5%' to='0%' dur='1' fill='freeze'/>"
+        "<animate target='image1' attribute='left' from='31.25%' to='50%' dur='1' fill='freeze'/>"
+        "<animate target='image1' attribute='height' from='50%' to='0%' dur='1' fill='freeze'/>"
+        "<animate target='image1' attribute='top' from='25%' to='50%' dur='1' fill='freeze'/>"
+        "<set target='image1' attribute='background-color' to='white' dur='1'/>"
+        "</par>"
+        "<par>"
+        "<animate target='reg1' attribute='background-color' calcMode='discrete' values='#000000;#282828;#646464;#A0A0A0;#B0B0B0;#D0D0D0;#E0E0E0;#F0F0F0;#FFFFFF;#FFFFFF;#FFFFFF;#FFFFFF' dur='1'/>"
+        "<img src='%2' region='image2' dur='1s' fit='fill'/>"
+        "</par>"
+        "</body></smil>").arg (locate ("data", "kmplayer/noise.gif")).arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -128));
+    QTextStream ts (smil.utf8 (), IO_ReadOnly);
+    KMPlayer::readXML (m_document, ts, QString::null);
+    m_document->normalize ();
+    m_current = m_document; //mrl->self ();
+    if (m_document && m_document->firstChild ()) {
+        KMPlayer::Mrl * mrl = m_document->firstChild ()->mrl ();
+        if (mrl) {
+            Source::setDimensions (mrl->width, mrl->height);
+            m_part->updateTree ();
+            m_current->activate ();
+            emit startPlaying ();
+        }
+    }
+}
+
+KDE_NO_EXPORT void IntroSource::stateElementChanged (KMPlayer::NodePtr node) {
+    if (node->state == KMPlayer::Node::state_deactivated && node == m_document){
+        m_document->reset ();
+        if (m_part->view ())
+            static_cast <KMPlayer::View *> (m_part->view ())->docArea ()->readDockConfig (m_part->config (), QString ("Window Layout"));
+        emit stopPlaying ();
+        emit dimensionsChanged ();
+        m_part->openURL (KURL ());
+    }
+}
+
+KDE_NO_EXPORT void IntroSource::deactivate () {
+    QTimer::singleShot (0, this, SLOT (playURLDone()));
+}
+
+KDE_NO_EXPORT void IntroSource::playURLDone () {
+    if (m_document)
+        m_document->document ()->dispose ();
+    m_document = 0L;
+}
+
 KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
 {
+    if (m_first_time) {
+        if (url.isEmpty ()) {
+            m_player->setSource (new IntroSource (m_player));
+            return;
+        } else
+            if (m_player->view ())
+                static_cast <KMPlayer::View *> (m_player->view ())->docArea ()->readDockConfig (m_player->config (), QString ("Window Layout"));
+        m_first_time = false;
+    }
     slotStatusMsg(i18n("Opening file..."));
     m_player->openURL (url);
     if (m_broadcastconfig->broadcasting () && url.url() == m_broadcastconfig->serverURL ()) {

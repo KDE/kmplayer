@@ -138,9 +138,10 @@ private:
     KMPlayerFFServerConfig * m_ffserverconfig;
     KMPlayerBroadcastConfig * m_broadcastconfig;
     QCString m_dcopName;
-    bool m_showToolbar : 1;
-    bool m_showStatusbar : 1;
-    bool m_showMenubar : 1;
+    bool m_showToolbar;
+    bool m_showStatusbar;
+    bool m_showMenubar;
+    bool m_first_time;
 };
 
 #endif // KMPLAYER_H

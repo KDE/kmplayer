@@ -1352,7 +1352,7 @@ KDE_NO_EXPORT void View::setVolume (int vol) {
         kdWarning() << "Failed to update volume" << endl;
 }
 
-KDE_NO_EXPORT void  View::updateLayout () {
+KDE_NO_EXPORT void View::updateLayout () {
     if (m_controlpanel_mode == CP_Only)
         m_control_panel->setMaximumSize (2500, height ());
     m_view_area->resizeEvent (0L);

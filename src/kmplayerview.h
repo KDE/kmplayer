@@ -219,7 +219,6 @@ public:
     KDE_NO_EXPORT QWidgetStack * widgetStack () const { return m_widgetstack; }
     KDE_NO_EXPORT KDockArea * docArea () const { return m_dockarea; }
     KDE_NO_EXPORT ViewArea * viewArea () const { return m_view_area; }
-    KDE_NO_EXPORT KDockWidget * dockPlayList () const { return m_dock_playlist;}
     KDE_NO_EXPORT bool keepSizeRatio () const { return m_keepsizeratio; }
     void setKeepSizeRatio (bool b);
     void showWidget (WidgetType w);

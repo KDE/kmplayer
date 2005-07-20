@@ -45,7 +45,6 @@
 #include <kprocess.h>
 #include <kstandarddirs.h>
 #include <kmimetype.h>
-#include <kiconloader.h>
 #include <kio/job.h>
 #include <kio/jobclasses.h>
 
@@ -345,16 +344,14 @@ void PartBase::setSource (Source * _source) {
                     p = QString (i.data ()->name ());
                     break;
                 }
-            if (i == e) {
-                kdError() << "Source has no player" << endl;
-                return;
-            }
         } else
             p = QString (m_process->name ());
     }
-    if (!m_process || p != m_process->name ())
-        setProcess (p.ascii ());
-    m_settings->backends [_source->name()] = m_process->name ();
+    if (!p.isEmpty ()) {
+        if (!m_process || p != m_process->name ())
+            setProcess (p.ascii ());
+        m_settings->backends [_source->name()] = m_process->name ();
+    }
     m_source = _source;
     connectSource (old_source, m_source);
     m_process->setSource (m_source);
@@ -1275,6 +1272,10 @@ KDE_NO_EXPORT bool URLSource::hasLength () {
 }
 
 KDE_NO_EXPORT void URLSource::activate () {
+    if (url ().isEmpty () && (!m_document || !m_document->hasChildNodes ())) {
+        m_player->updateTree ();
+        return;
+    }
     if (m_auto_play)
         play ();
 }
@@ -1526,50 +1527,7 @@ void URLSource::playCurrent () {
     }
 }
 
-struct IntroDocument : public Document {
-    Source * m_source;
-    IntroDocument (Source * s) : Document (QString (""), s), m_source (s) {}
-    void deactivate () {
-        if (m_source->player ()->view ())
-            static_cast <View *> (m_source->player ()->view ())->docArea ()->readDockConfig (m_source->player ()->config (), QString ("Window Layout"));
-        Document::deactivate ();
-    }
-};
-
 KDE_NO_EXPORT void URLSource::play () {
-    if (m_url.isEmpty ()) {
-        if (m_document)
-            m_document->document ()->dispose ();
-        m_document = (new IntroDocument (this))->self ();
-        QString smil = QString::fromLatin1 ("<smil><head><layout>"
-      "<root-layout width='320' height='240' background-color='black'/>"
-      "<region id='image1' left='31.25%' top='25%' width='37.5%' height='50%' z-order='1'/>"
-      "<region id='reg1' z-order='2'>"
-      "<region id='image2' left='30%' top='20%' width='40%' height='60%'/>"
-      "</region>"
-    "</layout></head><body>"
-    "<img src='%1' region='image1' dur='1.5s' fit='fill'/>"
-    "<par>"
-      "<animate target='image1' attribute='width' from='37.5%' to='0%' dur='1' fill='freeze'/>"
-      "<animate target='image1' attribute='left' from='31.25%' to='50%' dur='1' fill='freeze'/>"
-      "<animate target='image1' attribute='height' from='50%' to='0%' dur='1' fill='freeze'/>"
-      "<animate target='image1' attribute='top' from='25%' to='50%' dur='1' fill='freeze'/>"
-      "<set target='image1' attribute='background-color' to='white' dur='1'/>"
-    "</par>"
-    "<par>"
-      "<set target='reg1' attribute='background-color' to='white' dur='1'/>"
-    "<img src='%2' region='image2' dur='1s' fit='fill'/>"
-    "</par>"
-  "</body></smil>").arg (locate ("data", "kmplayer/noise.gif")).arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -128));
-        QTextStream ts (smil.utf8 (), IO_ReadOnly);
-        readXML (m_document, ts, QString::null);
-        m_document->normalize ();
-        if (m_document && m_document->firstChild ()) {
-            Mrl * mrl = m_document->firstChild ()->mrl ();
-            if (mrl)
-                Source::setDimensions (mrl->width, mrl->height);
-        }
-    }
     Source::play ();
 }
 
