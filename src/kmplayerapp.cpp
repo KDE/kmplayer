@@ -345,10 +345,11 @@ KDE_NO_EXPORT void IntroSource::activate () {
 KDE_NO_EXPORT void IntroSource::stateElementChanged (KMPlayer::NodePtr node) {
     if (node->state == KMPlayer::Node::state_deactivated && node == m_document){
         m_document->reset ();
-        if (m_part->view ())
+        if (m_part->view ()) {
             static_cast <KMPlayer::View *> (m_part->view ())->docArea ()->readDockConfig (m_part->config (), QString ("Window Layout"));
+            m_part->view ()->layout ()->activate ();
+        }
         emit stopPlaying ();
-        emit dimensionsChanged ();
         m_part->openURL (KURL ());
     }
 }
@@ -370,8 +371,10 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
             m_player->setSource (new IntroSource (m_player));
             return;
         } else
-            if (m_player->view ())
+            if (m_player->view ()) {
                 static_cast <KMPlayer::View *> (m_player->view ())->docArea ()->readDockConfig (m_player->config (), QString ("Window Layout"));
+                m_player->view ()->layout ()->activate ();
+            }
         m_first_time = false;
     }
     slotStatusMsg(i18n("Opening file..."));

@@ -1274,6 +1274,7 @@ KDE_NO_EXPORT bool URLSource::hasLength () {
 KDE_NO_EXPORT void URLSource::activate () {
     if (url ().isEmpty () && (!m_document || !m_document->hasChildNodes ())) {
         m_player->updateTree ();
+        setDimensions (320, 240);
         return;
     }
     if (m_auto_play)
