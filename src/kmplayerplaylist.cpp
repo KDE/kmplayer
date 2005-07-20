@@ -128,7 +128,7 @@ bool Node::expose () const {
 }
 
 void Node::activate () {
-    kdDebug () << nodeName () << " Node::activate" << endl;
+    //kdDebug () << nodeName () << " Node::activate" << endl;
     setState (state_activated);
     if (firstChild ())
         firstChild ()->activate (); // activate only the first
@@ -168,7 +168,7 @@ void Node::finish () {
 }
 
 void Node::deactivate () {
-    kdDebug () << nodeName () << " Node::deactivate" << endl;
+    //kdDebug () << nodeName () << " Node::deactivate" << endl;
     bool need_finish (unfinished ());
     setState (state_deactivated);
     for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
@@ -198,7 +198,7 @@ void Node::childBegan (NodePtr child) {
 }
 
 void Node::childDone (NodePtr child) {
-    kdDebug () << nodeName () << " Node::childDone" << endl;
+    //kdDebug () << nodeName () << " Node::childDone" << endl;
     if (active ()) {
         if (child->state == state_finished)
             child->deactivate ();
