@@ -40,6 +40,7 @@
 #include <qspinbox.h>
 #include <qmessagebox.h>
 #include <qmap.h>
+#include <qtimer.h>
 
 #include <klocale.h>
 #include <kdebug.h>
@@ -355,6 +356,7 @@ KDE_NO_EXPORT void PrefRecordPage::recordingStarted () {
 KDE_NO_EXPORT void PrefRecordPage::recordingFinished () {
     recordButton->setText (i18n ("Start Recording"));
     url->setEnabled (true);
+    QTimer::singleShot (0, m_player, SLOT(recordingStopped())); // removed from PartBase::setSource because PartBase::recordingStopped calls openURL and that will call PartBase::setSource and Qt doesn't like disconnecting/connecting a signal that is current
 }
 
 KDE_NO_EXPORT void PrefRecordPage::sourceChanged (Source * olds, Source * nws) {
@@ -409,7 +411,11 @@ KDE_NO_EXPORT void RecorderPage::record () {
     m_player->setRecorder (recorderName ());
     if (!proc->playing ()) {
         dynamic_cast <Recorder *> (proc)->setURL (KURL (m_player->settings ()->recordfile));
-        proc->play (m_player->source (), m_player->source ()->current ());
+        NodePtr n = m_player->source ()->current ();
+        if (!n)
+            n = m_player->source ()->document ();
+        m_player->stop ();
+        proc->play (m_player->source (), n);
     } else
         proc->stop ();
 }

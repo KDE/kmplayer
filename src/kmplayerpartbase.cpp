@@ -323,8 +323,6 @@ void PartBase::setSource (Source * _source) {
             m_view->reset ();
         disconnect (m_source, SIGNAL (startRecording ()),
                     this, SLOT (recordingStarted ()));
-        disconnect (m_source, SIGNAL (stopRecording ()),
-                    this, SLOT (recordingStopped ()));
     }
     if (m_view) {
         m_view->controlPanel ()->setAutoControls (true);
@@ -356,7 +354,6 @@ void PartBase::setSource (Source * _source) {
     connectSource (old_source, m_source);
     m_process->setSource (m_source);
     connect (m_source, SIGNAL(startRecording()), this,SLOT(recordingStarted()));
-    connect (m_source, SIGNAL(stopRecording()), this, SLOT(recordingStopped()));
     m_source->init ();
     if (m_view && m_view->viewer ()) {
         updatePlayerMenu (m_view->controlPanel ());
@@ -753,8 +750,8 @@ static void printTree (NodePtr root, QString off=QString()) {
 void Source::setURL (const KURL & url) {
     m_url = url;
     m_back_request = 0L;
-if (m_document && !m_document->hasChildNodes () &&
-                (m_document->mrl()->src.isEmpty () || m_document->mrl()->src == url.url ()))
+    if (m_document && !m_document->hasChildNodes () &&
+            (m_document->mrl()->src.isEmpty () || m_document->mrl()->src == url.url ()))
         // special case, mime is set first by plugin FIXME v
         m_document->mrl()->src = url.url ();
     else {
