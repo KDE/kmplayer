@@ -110,6 +110,7 @@ const char * strGeneralGroup = "General Options";
 static const char * strKeepSizeRatio = "Keep Size Ratio";
 static const char * strRememberSize = "Remember Size";
 static const char * strDockSysTray = "Dock in System Tray";
+static const char * strNoIntro = "No Intro";
 static const char * strVolume = "Volume";
 static const char * strContrast = "Contrast";
 static const char * strBrightness = "Brightness";
@@ -220,6 +221,7 @@ KDE_NO_EXPORT void Settings::readConfig () {
     View *view = defaultView ();
 
     m_config->setGroup (strGeneralGroup);
+    no_intro = m_config->readBoolEntry (strNoIntro, false);
     urllist = m_config->readListEntry (strURLList, ';');
     sub_urllist = m_config->readListEntry (strSubURLList, ';');
     volume = m_config->readNumEntry (strVolume, 80);

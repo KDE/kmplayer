@@ -367,7 +367,7 @@ KDE_NO_EXPORT void IntroSource::playURLDone () {
 KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
 {
     if (m_first_time) {
-        if (url.isEmpty ()) {
+        if (!m_player->settings ()->no_intro && url.isEmpty ()) {
             m_player->setSource (new IntroSource (m_player));
             return;
         } else
