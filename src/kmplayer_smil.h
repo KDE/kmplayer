@@ -61,9 +61,11 @@ public:
     void reset ();
     SizeType & operator = (const QString & s);
     int size (int relative_to = 100);
+    bool isSet () const { return isset; }
 private:
     int m_size;
     bool percentage;
+    bool isset;
 };
 
 /**

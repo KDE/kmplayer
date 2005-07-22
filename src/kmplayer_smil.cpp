@@ -389,6 +389,7 @@ KDE_NO_CDTOR_EXPORT SizeType::SizeType () {
 void SizeType::reset () {
     m_size = 0;
     percentage = 0;
+    isset = false;
 }
 
 SizeType & SizeType::operator = (const QString & s) {
@@ -400,9 +401,11 @@ SizeType & SizeType::operator = (const QString & s) {
         strval.truncate (p);
     }
     bool ok;
-    m_size = int (strval.toDouble (&ok));
-    if (!ok)
-        m_size = 0;
+    int size = int (strval.toDouble (&ok));
+    if (ok) {
+        m_size = size;
+        isset = true;
+    }
     return *this;
 }
 
@@ -428,12 +431,22 @@ KDE_NO_EXPORT void SizedRuntime::resetSizes () {
 KDE_NO_EXPORT void SizedRuntime::calcSizes (int w, int h, int & xoff, int & yoff, int & w1, int & h1) {
     xoff = left.size (w);
     yoff = top.size (h);
-    w1 = width.size (w);
-    h1 = height.size (h);
-    int roff = right.size (w);
-    int boff = bottom.size (h);
-    w1 = w1 > 0 ? w1 : w - xoff - roff;
-    h1 = h1 > 0 ? h1 : h - yoff - boff;
+    if (width.isSet ())
+        w1 = width.size (w);
+    else if (right.isSet ())
+        w1 = w - xoff - right.size (w);
+    else
+        w1 = w - xoff;
+    if (w1 < 0)
+        w1 = 0;
+    if (height.isSet ())
+        h1 = height.size (h);
+    else if (bottom.isSet ())
+        h1 = h - yoff - bottom.size (h);
+    else
+        h1 = h - yoff;
+    if (h1 < 0)
+        h1 = 0;
 }
 
 KDE_NO_EXPORT bool SizedRuntime::setSizeParam (const QString & name, const QString & val) {
@@ -471,7 +484,7 @@ KDE_NO_EXPORT void RegionRuntime::reset () {
 
 KDE_NO_EXPORT
 QString RegionRuntime::setParam (const QString & name, const QString & val) {
-    //kdDebug () << "RegionRuntime::setParam " << name << "=" << val << endl;
+    //kdDebug () << "RegionRuntime::setParam " << convertNode <Element> (element)->getAttribute ("id") << " " << name << "=" << val << endl;
     SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (region_node);
     QRect rect;
     bool need_repaint = false;
@@ -1225,9 +1238,10 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
                         yscale = xscale;
                         e->y = (e->h - int ((yscale - 1.0) * h + h)) / 2;
                     }
-                scaleRegion (xscale, yscale, e->x, e->y);
-                handled = true;
-            }
+            } else
+                xscale = yscale = 0;
+            scaleRegion (xscale, yscale, e->x, e->y);
+            handled = true;
             break;
         }
         case event_pointer_clicked:
@@ -1269,7 +1283,7 @@ KDE_NO_EXPORT void SMIL::RegionBase::calculateChildBounds () {
             cr->calculateBounds (w, h);
             cr->calculateChildBounds ();
         }
-    if (xscale > 0.001)
+    //if (xscale > 0.001)
         scaleRegion (xscale, yscale, x1, y1);
 }
 
@@ -1282,7 +1296,7 @@ void SMIL::RegionBase::scaleRegion (float sx, float sy, int xoff, int yoff) {
     xscale = sx;
     yscale = sy;
     propagateEvent ((new SizeEvent (x1, y1, w1, h1, false))->self ());
-    //kdDebug () << "scaleRegion " << x1 << "," << y1 << " " << w1 << "x" << h1 << endl;
+    //kdDebug () << "scaleRegion sx:" << sx << " sy:" << sy << " " << x1 << "," << y1 << " " << w1 << "x" << h1 << endl;
     for (NodePtr r = firstChild (); r; r =r->nextSibling ())
         if (r->id == id_node_region) {
             Region * rb = static_cast <Region *> (r.ptr ());
@@ -1362,7 +1376,7 @@ bool SMIL::Region::handleEvent (EventPtr event) {
                 return false;
             p->painter.setClipRect (x1, y1, w1, h1, QPainter::CoordPainter);
 
-        //kdDebug () << "Region::calculateBounds " << x << "," << y << " " << w << "x" << h << endl;
+        //kdDebug () << "Region::calculateBounds " << getAttribute ("id") << " (" << x << "," << y << " " << w << "x" << h << ") -> (" << x1 << "," << y1 << " " << w1 << "x" << h1 << ")" << endl;
             RegionRuntime *rr = static_cast<RegionRuntime*>(getRuntime().ptr());
             if (rr && rr->have_bg_color)
                 p->painter.fillRect (x1, y1, w1, h1, QColor (QRgb (rr->background_color)));
