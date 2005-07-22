@@ -1,7 +1,14 @@
 Changes since version 0.9.0-rc1
-- start with a simple smil document, having a gif movie, if started with no url
-- support rss urls, list chanel/item/enclosure tags and play url arguments of
-  enclosure elements
+- Fix the broken recording from rc1 and possible some pre's too
+- start and end with a simple smil document if started with no url.
+  Can be turned off in rc file with option "No Intro=1" in section 
+  "[General Options]".
+- support Podcast rss urls, list chanel/item/enclosure tags and play url
+  arguments of enclosure elements and display inner text from description
+  in info window
+- Added an info panel that is now implemented as a dockable view, this should
+  become the infopanel for Real plugin's CONTROLS attribute possibility. Put
+  messages from Xine backend in this window.
 Changes since version 0.9.0-pre4
 - In place renaming of TV channel/input names in playlist
 - Added help sections for TV and VDR in handbook.

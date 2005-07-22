@@ -584,6 +584,7 @@ KDE_NO_EXPORT void ExitSource::activate () {
             m_part->updateTree ();
             m_current->activate ();
             emit startPlaying ();
+            return;
         }
     }
     qApp->quit ();
