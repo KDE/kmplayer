@@ -1222,11 +1222,12 @@ KDE_NO_CDTOR_EXPORT View::~View () {
 
 void View::setInfoMessage (const QString & msg) {
     if (msg.isEmpty ()) {
-       m_infopanel->clear ();
        m_dock_infopanel->undock ();
+       m_infopanel->clear ();
     } else if (!m_no_info) {
-       m_dock_infopanel->manualDock (m_dock_video, KDockWidget::DockBottom, 30);
-       m_infopanel->setText (msg);
+        if (m_dock_infopanel->mayBeShow ())
+          m_dock_infopanel->manualDock(m_dock_video,KDockWidget::DockBottom,30);
+        m_infopanel->setText (msg);
     }
 }
 
