@@ -197,6 +197,7 @@ private slots:
     void slotDeviceDeleted (KMPlayerPrefSourcePageTVDevice *);
 private:
     void addTVDevicePage (TVDevice * dev, bool show=false);
+    void buildArguments ();
     KMPlayer::NodePtrW m_cur_tvdevice;
     QPopupMenu * m_channelmenu;
     QString tvdriver;

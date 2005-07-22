@@ -336,9 +336,12 @@ KDE_NO_EXPORT void KMPlayerTVSource::activate () {
             }
     } else
         KMPlayer::Source::reset ();
-    playCurrent (); // initialize some values for others to see device/frequency
-    if (m_current)
-        jump (m_current);
+    buildArguments ();
+    if (m_cur_tvdevice) {
+        QString playback = static_cast <KMPlayer::Element *> (m_cur_tvdevice.ptr ())->getAttribute (QString::fromLatin1 ("playback"));
+        if (playback.isEmpty () || playback.toInt ())
+            QTimer::singleShot (0, m_player, SLOT (play ()));
+    }
 }
 /* TODO: playback by
  * ffmpeg -vd /dev/video0 -r 25 -s 768x576 -f rawvideo - |mplayer -nocache -ao arts -rawvideo on:w=768:h=576:fps=25 -quiet -
@@ -361,7 +364,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::menuAboutToShow () {
     readXML ();
 }
 
-KDE_NO_EXPORT void KMPlayerTVSource::playCurrent () {
+KDE_NO_EXPORT void KMPlayerTVSource::buildArguments () {
     QString old_dev;
     TVChannel * channel = 0L;
     TVInput * input = 0L;
@@ -408,6 +411,10 @@ KDE_NO_EXPORT void KMPlayerTVSource::playCurrent () {
         m_recordcmd.sprintf ("-tv %s:driver=%s:%s:width=%d:height=%d", m_audiodevice.isEmpty () ? "noaudio" : (QString ("forceaudio:adevice=") + m_audiodevice).ascii(), tvdriver.ascii (), command.ascii (), width (), height ());
     else
         m_recordcmd.sprintf ("-tv on:%s:driver=%s:%s:width=%d:height=%d", m_audiodevice.isEmpty () ? "noaudio" : (QString ("forceaudio:adevice=") + m_audiodevice).ascii(), tvdriver.ascii (), command.ascii (), width (), height ());
+}
+
+KDE_NO_EXPORT void KMPlayerTVSource::playCurrent () {
+    buildArguments ();
     if (m_app->broadcasting ())
         QTimer::singleShot (0, m_app->broadcastConfig (), SLOT (startFeed ()));
     else
