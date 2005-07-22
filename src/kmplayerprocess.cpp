@@ -200,7 +200,8 @@ bool Process::ready (Viewer * viewer) {
 }
 
 Viewer * Process::viewer () const {
-    return (m_viewer ? (Viewer*)m_viewer : m_settings->defaultView()->viewer());
+    return (m_viewer ? (Viewer*)m_viewer :
+        (m_settings->defaultView() ? m_settings->defaultView()->viewer() : 0L));
 }
 
 //-----------------------------------------------------------------------------
@@ -906,7 +907,9 @@ void Callback::statusMessage (int code, QString msg) {
     if (!m_process->m_source) return;
     switch ((StatusCode) code) {
         case stat_newtitle:
-            m_process->source ()->setTitle (msg);
+            //m_process->source ()->setTitle (msg);
+            if (m_process->viewer ())
+                m_process->viewer ()->view ()->setInfoMessage (msg);
             break;
         case stat_addurl:
             m_process->m_source->insertURL (KURL::fromPathOrURL (msg).url ());
@@ -1191,6 +1194,8 @@ KDE_NO_EXPORT void CallbackProcess::processOutput (KProcess *, char * str, int s
 }
 
 KDE_NO_EXPORT void CallbackProcess::processStopped (KProcess *) {
+    if (viewer ())
+        viewer ()->view ()->setInfoMessage (QString::null);
     delete m_backend;
     m_backend = 0L;
     setState (NotRunning);

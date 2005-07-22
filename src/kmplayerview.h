@@ -230,6 +230,7 @@ public:
     KDE_NO_EXPORT QPixmap * image () const { return m_image; }
     KDE_NO_EXPORT bool videoStarted () const { return m_playing; }
     void setInfoMessage (const QString & msg);
+    void setNoInfoMessages (bool b) { m_no_info = b; }
 public slots:
     /* raise video widget, might (auto) hides panel */
     void videoStart ();
@@ -286,14 +287,15 @@ private:
     int controlbar_timer;
     int popup_timer;
     int popdown_timer;
-    bool m_keepsizeratio : 1;
-    bool m_playing : 1;
-    bool m_mixer_init : 1;
-    bool m_inVolumeUpdate : 1;
-    bool m_sreensaver_disabled : 1;
-    bool m_tmplog_needs_eol : 1;
-    bool m_revert_fullscreen : 1;
-    bool m_popup_clicked : 1;
+    bool m_keepsizeratio;
+    bool m_playing;
+    bool m_mixer_init;
+    bool m_inVolumeUpdate;
+    bool m_sreensaver_disabled;
+    bool m_tmplog_needs_eol;
+    bool m_revert_fullscreen;
+    bool m_popup_clicked;
+    bool m_no_info;
 };
 
 /*

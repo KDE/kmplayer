@@ -551,12 +551,12 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
 
 struct ExitSource : public KMPlayer::Source {
     KMPlayer::PartBase * m_part;
-    ExitSource (KMPlayer::PartBase *p)
+    KDE_NO_CDTOR_EXPORT ExitSource (KMPlayer::PartBase *p)
         : KMPlayer::Source ("Exit", p, "exitsource"), m_part (p) {}
     KDE_NO_EXPORT bool hasLength () { return false; }
     KDE_NO_EXPORT bool isSeekable () { return false; }
     void activate ();
-    void deactivate () {}
+    KDE_NO_EXPORT void deactivate () {}
     void stateElementChanged (KMPlayer::NodePtr node);
 };
 
@@ -576,15 +576,14 @@ KDE_NO_EXPORT void ExitSource::activate () {
     QTextStream ts (smil.utf8 (), IO_ReadOnly);
     KMPlayer::readXML (m_document, ts, QString::null);
     m_document->normalize ();
-    m_current = m_document; //mrl->self ();
+    m_current = m_document;
     if (m_document && m_document->firstChild ()) {
         KMPlayer::Mrl * mrl = m_document->firstChild ()->mrl ();
         if (mrl) {
-            Source::setDimensions (mrl->width, mrl->height);
+            setDimensions (mrl->width, mrl->height);
             m_part->updateTree ();
             m_current->activate ();
             emit startPlaying ();
-            return;
         }
     }
     qApp->quit ();

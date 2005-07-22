@@ -1095,7 +1095,8 @@ KDE_NO_CDTOR_EXPORT View::View (QWidget *parent, const char *name)
     m_inVolumeUpdate (false),
     m_tmplog_needs_eol (false),
     m_revert_fullscreen (false),
-    m_popup_clicked (false)
+    m_popup_clicked (false),
+    m_no_info (false)
 {
     setEraseColor (QColor (0, 0, 255));
 }
@@ -1223,7 +1224,7 @@ void View::setInfoMessage (const QString & msg) {
     if (msg.isEmpty ()) {
        m_infopanel->clear ();
        m_dock_infopanel->undock ();
-    } else {
+    } else if (!m_no_info) {
        m_dock_infopanel->manualDock (m_dock_video, KDockWidget::DockBottom, 30);
        m_infopanel->setText (msg);
     }
