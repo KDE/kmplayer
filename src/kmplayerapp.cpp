@@ -549,6 +549,54 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     configChanged ();
 }
 
+struct ExitSource : public KMPlayer::Source {
+    KMPlayer::PartBase * m_part;
+    ExitSource (KMPlayer::PartBase *p)
+        : KMPlayer::Source ("Exit", p, "exitsource"), m_part (p) {}
+    KDE_NO_EXPORT bool hasLength () { return false; }
+    KDE_NO_EXPORT bool isSeekable () { return false; }
+    void activate ();
+    void deactivate () {}
+    void stateElementChanged (KMPlayer::NodePtr node);
+};
+
+KDE_NO_EXPORT void ExitSource::activate () {
+    m_document = (new KMPlayer::Document (QString (""), this))->self ();
+    QString smil = QString::fromLatin1 ("<smil><head><layout>"
+        "<root-layout width='320' height='240' background-color='black'/>"
+        "<region id='reg1' top='10%' height='80%' z-order='2'>"
+        "<region id='image' left='128' top='72' width='64' height='64'/>"
+        "</region>"
+        "</layout></head><body>"
+        "<par>"
+        "<animate target='reg1' attribute='background-color' calcMode='discrete' values='#FFFFFF;#FEFEFE;#FBFBFB;#F7F7F7;#F2F2F2;#EBEBEB;#E3E3E3;#D9D9D9;#CECECE;#C1C1C1;#B4B4B4;#A5A5A5;#959595;#858585;#737373;#616161;#4E4E4E;#3B3B3B;#272727;#141414' dur='1'/>"
+        "<img src='%2' region='image' dur='1s' fit='hidden'/>"
+        "</par>"
+        "</body></smil>").arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
+    QTextStream ts (smil.utf8 (), IO_ReadOnly);
+    KMPlayer::readXML (m_document, ts, QString::null);
+    m_document->normalize ();
+    m_current = m_document; //mrl->self ();
+    if (m_document && m_document->firstChild ()) {
+        KMPlayer::Mrl * mrl = m_document->firstChild ()->mrl ();
+        if (mrl) {
+            Source::setDimensions (mrl->width, mrl->height);
+            m_part->updateTree ();
+            m_current->activate ();
+            emit startPlaying ();
+            return;
+        }
+    }
+    qApp->quit ();
+}
+
+KDE_NO_EXPORT void ExitSource::stateElementChanged (KMPlayer::NodePtr node) {
+    if (node->state == KMPlayer::Node::state_deactivated &&
+            node == m_document &&
+            m_part->view ())
+       m_part->view ()->topLevelWidget ()->close ();
+}
+
 KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
     // KMPlayerVDRSource has to wait for pending commands like mute and quit
     m_player->stop ();
@@ -559,7 +607,12 @@ KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
         QByteArray data, replydata;
         kapp->dcopClient ()->call (m_dcopName, "MainApplication-Interface", "quit()", data, replytype, replydata);
     }
-    return true;
+    if (!m_first_time || m_player->settings ()->no_intro)
+        return true;
+    disconnect(m_player, SIGNAL(sourceDimensionChanged()),this,SLOT(zoom100()));
+    m_first_time = false;
+    m_player->setSource (new ExitSource (m_player));
+    return false;
 }
 
 KDE_NO_EXPORT bool KMPlayerApp::queryExit()
