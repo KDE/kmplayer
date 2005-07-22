@@ -303,6 +303,7 @@ struct IntroSource : public KMPlayer::Source {
     void deactivate ();
     void playURLDone ();
     void stateElementChanged (KMPlayer::NodePtr node);
+    bool deactivated;
 };
 
 KDE_NO_EXPORT void IntroSource::activate () {
@@ -310,8 +311,8 @@ KDE_NO_EXPORT void IntroSource::activate () {
     QString smil = QString::fromLatin1 ("<smil><head><layout>"
         "<root-layout width='320' height='240' background-color='black'/>"
         "<region id='image1' left='31.25%' top='25%' width='37.5%' height='50%' z-order='1'/>"
-        "<region id='reg1' z-order='2'>"
-        "<region id='image2' left='30%' top='20%' width='40%' height='60%'/>"
+        "<region id='reg1' top='10%' height='80%' z-order='2'>"
+        "<region id='image2' left='128' top='72' width='64' height='64'/>"
         "</region>"
         "</layout></head><body>"
         "<img src='%1' region='image1' dur='1s' fit='fill'/>"
@@ -323,10 +324,11 @@ KDE_NO_EXPORT void IntroSource::activate () {
         "<set target='image1' attribute='background-color' to='white' dur='1'/>"
         "</par>"
         "<par>"
-        "<animate target='reg1' attribute='background-color' calcMode='discrete' values='#000000;#282828;#646464;#A0A0A0;#B0B0B0;#D0D0D0;#E0E0E0;#F0F0F0;#FFFFFF;#FFFFFF;#FFFFFF;#FFFFFF' dur='1'/>"
-        "<img src='%2' region='image2' dur='1s' fit='fill'/>"
+        //"<animate target='reg1' attribute='background-color' calcMode='discrete' values='#000000;#282828;#646464;#A0A0A0;#B0B0B0;#D0D0D0;#E0E0E0;#F0F0F0;#FFFFFF;#FFFFFF;#FFFFFF;#FFFFFF' dur='1'/>"
+        "<animate target='reg1' attribute='background-color' calcMode='discrete' values='#000000;#141414;#272727;#3B3B3B;#4E4E4E;#616161;#737373;#858585;#959595;#A5A5A5;#B4B4B4;#C1C1C1;#CECECE;#D9D9D9;#E3E3E3;#EBEBEB;#F2F2F2;#F7F7F7;#FBFBFB;#FEFEFE' dur='1'/>"
+        "<img src='%2' region='image2' dur='1s' fit='hidden'/>"
         "</par>"
-        "</body></smil>").arg (locate ("data", "kmplayer/noise.gif")).arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -128));
+        "</body></smil>").arg (locate ("data", "kmplayer/noise.gif")).arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
     QTextStream ts (smil.utf8 (), IO_ReadOnly);
     KMPlayer::readXML (m_document, ts, QString::null);
     m_document->normalize ();
@@ -340,6 +342,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
             emit startPlaying ();
         }
     }
+    deactivated = false;
 }
 
 KDE_NO_EXPORT void IntroSource::stateElementChanged (KMPlayer::NodePtr node) {
@@ -350,11 +353,13 @@ KDE_NO_EXPORT void IntroSource::stateElementChanged (KMPlayer::NodePtr node) {
             m_part->view ()->layout ()->activate ();
         }
         emit stopPlaying ();
-        m_part->openURL (KURL ());
+        if (!deactivated) // replace introsource with urlsource
+            m_part->openURL (KURL ());
     }
 }
 
 KDE_NO_EXPORT void IntroSource::deactivate () {
+    deactivated = true;
     QTimer::singleShot (0, this, SLOT (playURLDone()));
 }
 
