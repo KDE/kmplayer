@@ -91,13 +91,23 @@ public:
      */
     virtual void reset ();
     /**
-     * change behaviour of this runtime, returns old value
+     * Change behaviour of this runtime, returns old value. If id is not NULL,
+     * the value is treated as a modification on an existing value
      */
-    virtual QString setParam (const QString & name, const QString & value);
+    QString setParam (const QString & name, const QString & value, int * id=0L);
     /**
      * get the current value of param name that's set by setParam(name,value)
      */
-    virtual QString param (const QString & name);
+    QString param (const QString & name);
+    /**
+     * reset param with id as modification
+     */
+    void resetParam (const QString & name, int id);
+    /**
+     * called from setParam for specialized interpretation of params
+     */
+    virtual void parseParam (const QString &, const QString &) {}
+
     /**
      * If this element is attached to a region, region_node points to it
      */
@@ -139,7 +149,7 @@ public:
     virtual void begin ();
     virtual void end ();
     virtual void reset ();
-    virtual QString setParam (const QString & name, const QString & value);
+    virtual void parseParam (const QString & name, const QString & value);
     TimingState state () const { return timingstate; }
     virtual void paint (QPainter &) {}
     void propagateStop (bool forced);
@@ -177,7 +187,7 @@ public:
     virtual void begin ();
     virtual void end ();
     virtual void reset ();
-    virtual QString setParam (const QString & name, const QString & value);
+    virtual void parseParam (const QString & name, const QString & value);
     unsigned int background_color;
     bool have_bg_color;
 private:
@@ -210,7 +220,7 @@ public:
     virtual void end ();
     virtual void started ();
     virtual void stopped ();
-    virtual QString setParam (const QString & name, const QString & value);
+    virtual void parseParam (const QString & name, const QString & value);
     virtual void paint (QPainter &) {}
 protected:
     MediaTypeRuntimePrivate * mt_d;
@@ -229,7 +239,7 @@ class AudioVideoData : public MediaTypeRuntime {
 public:
     AudioVideoData (NodePtr e);
     virtual bool isAudioVideo ();
-    virtual QString setParam (const QString & name, const QString & value);
+    virtual void parseParam (const QString & name, const QString & value);
     virtual void started ();
     virtual void stopped ();
     ConnectionPtr sized_connection;
@@ -244,7 +254,7 @@ public:
     ImageData (NodePtr e);
     ~ImageData ();
     void paint (QPainter & p);
-    virtual QString setParam (const QString & name, const QString & value);
+    virtual void parseParam (const QString & name, const QString & value);
     ImageDataPrivate * d;
 protected slots:
     virtual void started ();
@@ -266,7 +276,7 @@ public:
     ~TextData ();
     void paint (QPainter & p);
     void end ();
-    virtual QString setParam (const QString & name, const QString & value);
+    virtual void parseParam (const QString & name, const QString & value);
     TextDataPrivate * d;
 protected slots:
     virtual void started ();
@@ -281,15 +291,19 @@ class AnimateGroupData : public TimedRuntime {
     Q_OBJECT
 public:
     KDE_NO_CDTOR_EXPORT ~AnimateGroupData () {}
-    virtual QString setParam (const QString & name, const QString & value);
+    virtual void parseParam (const QString & name, const QString & value);
     virtual void begin ();
+    virtual void reset ();
 protected:
-    KDE_NO_CDTOR_EXPORT AnimateGroupData (NodePtr e) : TimedRuntime (e) {}
+    void restoreModification ();
+    AnimateGroupData (NodePtr e);
     NodePtrW target_element;
     NodePtrW target_region;
     QString changed_attribute;
     QString change_to;
-    QString old_value;
+    int modification_id;
+protected slots:
+    virtual void stopped ();
 };
 
 /**
@@ -302,7 +316,6 @@ public:
     KDE_NO_CDTOR_EXPORT ~SetData () {}
 protected slots:
     virtual void started ();
-    virtual void stopped ();
 };
 
 /**
@@ -313,7 +326,7 @@ class AnimateData : public AnimateGroupData {
 public:
     AnimateData (NodePtr e);
     KDE_NO_CDTOR_EXPORT ~AnimateData () {}
-    virtual QString setParam (const QString & name, const QString & value);
+    virtual void parseParam (const QString & name, const QString & value);
     virtual void reset ();
 protected slots:
     virtual void started ();

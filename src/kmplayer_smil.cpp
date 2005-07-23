@@ -94,10 +94,40 @@ ElementRuntimePtr Node::getRuntime () {
 //-----------------------------------------------------------------------------
 
 namespace KMPlayer {
+    struct ParamValue {
+        virtual ~ParamValue () {}
+        virtual QString value () = 0L;
+        virtual void setValue (const QString &) = 0;
+    };
+    struct SimpleParam : public ParamValue {
+        QString val;
+        SimpleParam (const QString & v) : val (v) {}
+        QString value () { return val; }
+        void setValue (const QString & v) { val = v; }
+    };
+    struct ModifiedParam : public ParamValue {
+        QStringList modifications;
+        ModifiedParam (const QString & v) { modifications.push_back (v); }
+        QString value () { return modifications.back (); }
+        void setValue (const QString & v) { modifications [0] = v; }
+    };
     class ElementRuntimePrivate {
     public:
-        QMap <QString, QString> params;
+        ~ElementRuntimePrivate ();
+        QMap <QString, ParamValue *> params;
+        void clear ();
     };
+}
+
+KDE_NO_CDTOR_EXPORT ElementRuntimePrivate::~ElementRuntimePrivate () {
+    clear ();
+}
+
+KDE_NO_EXPORT void ElementRuntimePrivate::clear () {
+    const QMap <QString, ParamValue *>::iterator e = params.end ();
+    for (QMap <QString, ParamValue*>::iterator i = params.begin (); i != e; ++i)
+        delete i.data ();
+    params.clear ();
 }
 
 ElementRuntime::ElementRuntime (NodePtr e)
@@ -107,14 +137,64 @@ ElementRuntime::~ElementRuntime () {
     delete d;
 }
 
-QString ElementRuntime::setParam (const QString & name, const QString & value) {
-    QString old_val = d->params [name];
-    d->params.insert (name, value);
+QString ElementRuntime::setParam (const QString & name, const QString & value, int * id) {
+    ParamValue * pv = d->params [name];
+    QString old_val;
+    if (pv) {
+        old_val = pv->value ();
+        if (id) {
+            ModifiedParam * mp = dynamic_cast <ModifiedParam *> (pv);
+            if (!mp) {
+                mp = new ModifiedParam (pv->value ());
+                delete pv;
+                d->params.insert (name, mp);
+                *id = 1;
+                mp->modifications.push_back (value);
+            } else if (*id >= 0 && *id < mp->modifications.size ()) {
+                mp->modifications [*id] = value;
+            } else {
+                *id = mp->modifications.size ();
+                mp->modifications.push_back (value);
+            }
+        } else
+            pv->setValue (value);
+    } else {
+        if (id) {
+            d->params.insert (name, new ModifiedParam (value));
+            *id = 0;
+        } else
+            d->params.insert (name, new SimpleParam (value));
+    }
+    parseParam (name, value);
     return old_val;
 }
 
 QString ElementRuntime::param (const QString & name) {
-    return d->params [name];
+    ParamValue * pv = d->params [name];
+    if (pv)
+        return pv->value ();
+    return QString::null;
+}
+
+void ElementRuntime::resetParam (const QString & name, int id) {
+    ParamValue * pv = d->params [name];
+    ModifiedParam * mp = dynamic_cast <ModifiedParam *> (pv);
+    if (mp) {
+        if (int (mp->modifications.size ()) > id && id > -1) {
+            mp->modifications [id] = QString::null;
+            while (mp->modifications.size () > 0 &&
+                    mp->modifications.back () == QString::null)
+                mp->modifications.pop_back ();
+        }
+        if (mp->modifications.size () == 0) {
+            delete pv;
+            d->params.remove (name);
+        } else
+            parseParam (name, mp->value ());
+    } else if (pv)
+        kdError () << "resetting " << name << " cast error" << endl;
+    else
+        kdError () << "resetting " << name << " that doesn't exists" << endl;
 }
 
 KDE_NO_EXPORT void ElementRuntime::init () {
@@ -127,7 +207,7 @@ KDE_NO_EXPORT void ElementRuntime::init () {
 
 KDE_NO_EXPORT void ElementRuntime::reset () {
     region_node = 0L;
-    d->params.clear ();
+    d->clear ();
 }
 
 //-----------------------------------------------------------------------------
@@ -249,8 +329,8 @@ KDE_NO_EXPORT void TimedRuntime::end () {
  * change behaviour of this runtime, returns old value
  */
 KDE_NO_EXPORT
-QString TimedRuntime::setParam (const QString & name, const QString & val) {
-    //kdDebug () << "TimedRuntime::setParam " << name << "=" << val << endl;
+void TimedRuntime::parseParam (const QString & name, const QString & val) {
+    //kdDebug () << "TimedRuntime::parseParam " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("begin")) {
         setDurationItem (begin_time, val);
         if ((timingstate == timings_began && !start_timer) ||
@@ -293,7 +373,7 @@ QString TimedRuntime::setParam (const QString & name, const QString & val) {
     } else if (name == QString::fromLatin1 ("repeatCount")) {
         repeat_count = val.toInt ();
     }
-    return ElementRuntime::setParam (name, val);
+    ElementRuntime::parseParam (name, val);
 }
 
 KDE_NO_EXPORT void TimedRuntime::timerEvent (QTimerEvent * e) {
@@ -483,8 +563,8 @@ KDE_NO_EXPORT void RegionRuntime::reset () {
 }
 
 KDE_NO_EXPORT
-QString RegionRuntime::setParam (const QString & name, const QString & val) {
-    //kdDebug () << "RegionRuntime::setParam " << convertNode <Element> (element)->getAttribute ("id") << " " << name << "=" << val << endl;
+void RegionRuntime::parseParam (const QString & name, const QString & val) {
+    //kdDebug () << "RegionRuntime::parseParam " << convertNode <Element> (element)->getAttribute ("id") << " " << name << "=" << val << endl;
     SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (region_node);
     QRect rect;
     bool need_repaint = false;
@@ -527,7 +607,7 @@ QString RegionRuntime::setParam (const QString & name, const QString & val) {
         if (n)
             n->repaintRect (rect.x(), rect.y(), rect.width (), rect.height ());
     }
-    return ElementRuntime::setParam (name, val);
+    ElementRuntime::parseParam (name, val);
 }
 
 KDE_NO_EXPORT void RegionRuntime::begin () {
@@ -563,8 +643,11 @@ KDE_NO_EXPORT void ParRuntime::stopped () {
 
 //-----------------------------------------------------------------------------
 
-QString AnimateGroupData::setParam (const QString & name, const QString & val) {
-    //kdDebug () << "AnimateGroupData::setParam " << name << "=" << val << endl;
+KDE_NO_CDTOR_EXPORT AnimateGroupData::AnimateGroupData (NodePtr e)
+ : TimedRuntime (e), modification_id (-1) {}
+
+void AnimateGroupData::parseParam (const QString & name, const QString & val) {
+    //kdDebug () << "AnimateGroupData::parseParam " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("target") ||
             name == QString::fromLatin1 ("targetElement")) {
         if (element)
@@ -574,9 +657,8 @@ QString AnimateGroupData::setParam (const QString & name, const QString & val) {
         changed_attribute = val;
     } else if (name == QString::fromLatin1 ("to")) {
         change_to = val;
-    } else
-        return TimedRuntime::setParam (name, val);
-    return TimedRuntime::setParam (name, val);
+    }
+    TimedRuntime::parseParam (name, val);
 }
 
 KDE_NO_EXPORT void AnimateGroupData::begin () {
@@ -587,6 +669,35 @@ KDE_NO_EXPORT void AnimateGroupData::begin () {
         TimedRuntime::begin ();
 }
 
+/**
+ * animation finished
+ */
+KDE_NO_EXPORT void AnimateGroupData::stopped () {
+    //kdDebug () << "SetData::stopped " << durations [duration_time].durval << endl;
+    if (fill == fill_freeze)
+        ; // keep it 
+    else
+        restoreModification ();
+    TimedRuntime::stopped ();
+}
+
+KDE_NO_EXPORT void AnimateGroupData::reset () {
+    restoreModification ();
+}
+
+KDE_NO_EXPORT void AnimateGroupData::restoreModification () {
+    if (modification_id > -1 && target_element) {
+        ElementRuntimePtr rt = target_element->getRuntime ();
+        if (rt) {
+    kdDebug () << "AnimateGroupData::restoreModificatio " <<modification_id << endl;
+            rt->resetParam (changed_attribute, modification_id);
+            if (target_region)
+                convertNode <SMIL::RegionBase> (target_region)->repaint ();
+        }
+    }
+    modification_id = -1;
+}
+
 //-----------------------------------------------------------------------------
 
 /**
@@ -594,12 +705,13 @@ KDE_NO_EXPORT void AnimateGroupData::begin () {
  */
 KDE_NO_EXPORT void SetData::started () {
     //kdDebug () << "SetData::started " << durations [duration_time].durval << endl;
+    restoreModification ();
     if (element) {
         if (target_element) {
             ElementRuntimePtr rt = target_element->getRuntime ();
             if (rt) {
                 target_region = rt->region_node;
-                old_value = rt->setParam (changed_attribute, change_to);
+                rt->setParam (changed_attribute, change_to, &modification_id);
                 //kdDebug () << "SetData::started " << target_element->nodeName () << "." << changed_attribute << " " << old_value << "->" << change_to << endl;
                 if (target_region)
                     convertNode <SMIL::RegionBase> (target_region)->repaint ();
@@ -609,26 +721,6 @@ KDE_NO_EXPORT void SetData::started () {
     } else
         kdWarning () << "set element disappeared" << endl;
     AnimateGroupData::started ();
-}
-
-/**
- * animation finished
- */
-KDE_NO_EXPORT void SetData::stopped () {
-    //kdDebug () << "SetData::stopped " << durations [duration_time].durval << endl;
-    if (fill == fill_freeze)
-        ; // keep it 
-    else if (target_element) {
-        ElementRuntimePtr rt = target_element->getRuntime ();
-        if (rt) {
-            QString ov = rt->setParam (changed_attribute, old_value);
-            //kdDebug () << "SetData::stopped " << target_element->nodeName () << "." << changed_attribute << " " << ov << "->" << old_value << endl;
-            if (target_region)
-                convertNode <SMIL::RegionBase> (target_region)->repaint ();
-        }
-    } else
-        kdWarning () << "target element not found" << endl;
-    AnimateGroupData::stopped ();
 }
 
 //-----------------------------------------------------------------------------
@@ -655,8 +747,8 @@ KDE_NO_EXPORT void AnimateData::reset () {
     change_from_unit.truncate (0);
 }
 
-QString AnimateData::setParam (const QString & name, const QString & val) {
-    //kdDebug () << "AnimateData::setParam " << name << "=" << val << endl;
+void AnimateData::parseParam (const QString & name, const QString & val) {
+    //kdDebug () << "AnimateData::parseParam " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("change_by")) {
         change_by = val.toInt ();
     } else if (name == QString::fromLatin1 ("from")) {
@@ -671,8 +763,8 @@ QString AnimateData::setParam (const QString & name, const QString & val) {
         else if (val == QString::fromLatin1 ("paced"))
             calcMode = calc_paced;
     } else
-        return AnimateGroupData::setParam (name, val);
-    return ElementRuntime::setParam (name, val);
+        return AnimateGroupData::parseParam (name, val);
+    ElementRuntime::parseParam (name, val);
 }
 
 /**
@@ -680,6 +772,7 @@ QString AnimateData::setParam (const QString & name, const QString & val) {
  */
 KDE_NO_EXPORT void AnimateData::started () {
     //kdDebug () << "AnimateData::started " << durations [duration_time].durval << endl;
+    restoreModification ();
     bool success = false;
     do {
         if (!element) {
@@ -703,7 +796,7 @@ KDE_NO_EXPORT void AnimateData::started () {
                     change_from = rt->param (changed_attribute); // take current
             }
             if (!change_from.isEmpty ()) {
-                old_value = rt->setParam (changed_attribute, change_from);
+                rt->setParam (changed_attribute, change_from, &modification_id);
                 if (reg.search (change_from) > -1) {
                     change_from_val = reg.cap (1).toDouble ();
                     change_from_unit = reg.cap (2);
@@ -741,7 +834,7 @@ KDE_NO_EXPORT void AnimateData::started () {
             }
             //kdDebug () << "AnimateData::started " << target_element->nodeName () << "." << changed_attribute << " " << change_values.first () << "->" << change_values.last () << " in " << steps << " interval:" << interval << endl;
             anim_timer = startTimer (interval);
-            old_value = rt->setParam (changed_attribute, change_values.first());
+            rt->setParam (changed_attribute, change_values.first (), &modification_id);
             success = true;
         }
         //if (target_region)
@@ -757,7 +850,7 @@ KDE_NO_EXPORT void AnimateData::started () {
  * undo if necessary
  */
 KDE_NO_EXPORT void AnimateData::stopped () {
-    //kdDebug () << "AnimateData::stopped " << element->state << endl;
+    kdDebug () << "AnimateData::stopped " << element->state << endl;
     if (anim_timer) { // make sure timers are stopped
         killTimer (anim_timer);
         anim_timer = 0;
@@ -774,9 +867,9 @@ KDE_NO_EXPORT void AnimateData::timerEvent (QTimerEvent * e) {
             ElementRuntimePtr rt = target_element->getRuntime ();
             if (calcMode == calc_linear) {
                 change_from_val += change_delta;
-                rt->setParam (changed_attribute, QString ("%1%2").arg (change_from_val).arg(change_from_unit));
+                rt->setParam (changed_attribute, QString ("%1%2").arg (change_from_val).arg(change_from_unit), &modification_id);
             } else if (calcMode == calc_discrete) {
-                 rt->setParam (changed_attribute, change_values[change_values.size () - steps -1]);
+                 rt->setParam (changed_attribute, change_values[change_values.size () - steps -1], &modification_id);
             }
         } else {
             killTimer (anim_timer);
@@ -868,7 +961,7 @@ KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::end () {
  * re-implement for regions and src attributes
  */
 KDE_NO_EXPORT
-QString MediaTypeRuntime::setParam (const QString & name, const QString & val) {
+void MediaTypeRuntime::parseParam (const QString & name, const QString & val) {
     if (name == QString::fromLatin1 ("src")) {
         source_url = val;
         if (element) {
@@ -888,12 +981,13 @@ QString MediaTypeRuntime::setParam (const QString & name, const QString & val) {
         else if (val == QString::fromLatin1 ("slice"))
             fit = fit_slice;
     } else if (!setSizeParam (name, val)) {
-        return TimedRuntime::setParam (name, val);
+        TimedRuntime::parseParam (name, val);
+        return;
     }
     SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (region_node);
     if (state () == timings_began && rb && element)
         rb->repaint ();
-    return ElementRuntime::setParam (name, val);
+    ElementRuntime::parseParam (name, val);
 }
 
 /**
@@ -964,10 +1058,10 @@ KDE_NO_EXPORT void AudioVideoData::stopped () {
 }
 
 KDE_NO_EXPORT
-QString AudioVideoData::setParam (const QString & name, const QString & val) {
-    //kdDebug () << "AudioVideoData::setParam " << name << "=" << val << endl;
+void AudioVideoData::parseParam (const QString & name, const QString & val) {
+    //kdDebug () << "AudioVideoData::parseParam " << name << "=" << val << endl;
+    MediaTypeRuntime::parseParam (name, val);
     if (name == QString::fromLatin1 ("src")) {
-        QString old_val = MediaTypeRuntime::setParam (name, val);
         if (timingstate == timings_started && element) {
             PlayListNotify * n = element->document ()->notify_listener;
             if (n && !source_url.isEmpty ()) {
@@ -979,9 +1073,7 @@ QString AudioVideoData::setParam (const QString & name, const QString & val) {
                 element->setState (Node::state_began);
             }
         }
-        return old_val;
     }
-    return MediaTypeRuntime::setParam (name, val);
 }
 //-----------------------------------------------------------------------------
 
@@ -1940,11 +2032,11 @@ KDE_NO_CDTOR_EXPORT ImageData::~ImageData () {
 }
 
 KDE_NO_EXPORT
-QString ImageData::setParam (const QString & name, const QString & val) {
+void ImageData::parseParam (const QString & name, const QString & val) {
     //kdDebug () << "ImageData::param " << name << "=" << val << endl;
+    MediaTypeRuntime::parseParam (name, val);
     if (name == QString::fromLatin1 ("src")) {
         killWGet ();
-        QString old_val = MediaTypeRuntime::setParam (name, val);
         if (!val.isEmpty () && d->url != val) {
             KURL url (source_url);
             d->url = val;
@@ -1968,13 +2060,12 @@ QString ImageData::setParam (const QString & name, const QString & val) {
             } else
                 wget (url);
         }
-        return old_val;
     }
-    return MediaTypeRuntime::setParam (name, val);
 }
 
 KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
-    if ((d->image || d->img_movie) &&
+    if (((d->image && !d->image->isNull ()) ||
+                (d->img_movie && !d->img_movie->isNull ())) &&
             region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
         SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (region_node);
@@ -2150,13 +2241,15 @@ KDE_NO_EXPORT void TextData::end () {
 }
 
 KDE_NO_EXPORT
-QString TextData::setParam (const QString & name, const QString & val) {
-    //kdDebug () << "TextData::setParam " << name << "=" << val << endl;
+void TextData::parseParam (const QString & name, const QString & val) {
+    //kdDebug () << "TextData::parseParam " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("src")) {
+        if (source_url == val)
+            return;
+        MediaTypeRuntime::parseParam (name, val);
         d->data.resize (0);
         killWGet ();
-        QString old_val = MediaTypeRuntime::setParam (name, val);
-        if (!val.isEmpty () && old_val != val) {
+        if (!val.isEmpty ()) {
             KURL url (source_url);
             if (url.isLocalFile ()) {
                 QFile file (url.path ());
@@ -2165,8 +2258,10 @@ QString TextData::setParam (const QString & name, const QString & val) {
             } else
                 wget (url);
         }
-        return old_val;
-    } else if (name == QString::fromLatin1 ("backgroundColor")) {
+        return;
+    }
+    MediaTypeRuntime::parseParam (name, val);
+    if (name == QString::fromLatin1 ("backgroundColor")) {
         d->edit->setPaper (QBrush (QColor (val)));
     } else if (name == QString ("fontColor")) {
         d->edit->setPaletteForegroundColor (QColor (val));
@@ -2180,11 +2275,10 @@ QString TextData::setParam (const QString & name, const QString & val) {
         d->font_size += val.toInt ();
     // TODO: expandTabs fontBackgroundColor fontSize fontStyle fontWeight hAlig vAlign wordWrap
     } else
-        return MediaTypeRuntime::setParam (name, val);
+        return;
     if (region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze)))
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
-    return ElementRuntime::setParam (name, val);
 }
 
 KDE_NO_EXPORT void TextData::paint (QPainter & p) {
