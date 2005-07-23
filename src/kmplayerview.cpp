@@ -504,14 +504,16 @@ void ViewArea::moveRect (int x, int y, int w, int h, int x1, int y1) {
 
 KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
     if (e->timerId () == m_mouse_invisible_timer) {
+        killTimer (m_mouse_invisible_timer);
         m_mouse_invisible_timer = 0;
         if (m_fullscreen)
             setCursor (BlankCursor);
     } else if (e->timerId () == m_repaint_timer) {
+        killTimer (m_repaint_timer);
         m_repaint_timer = 0;
         repaint (m_repaint_rect, false);
-    }
-    killTimer (e->timerId ());
+    } else
+        killTimer (e->timerId ());
 }
 
 

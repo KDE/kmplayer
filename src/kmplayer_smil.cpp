@@ -95,21 +95,12 @@ ElementRuntimePtr Node::getRuntime () {
 
 namespace KMPlayer {
     struct ParamValue {
-        virtual ~ParamValue () {}
-        virtual QString value () = 0L;
-        virtual void setValue (const QString &) = 0;
-    };
-    struct SimpleParam : public ParamValue {
         QString val;
-        SimpleParam (const QString & v) : val (v) {}
-        QString value () { return val; }
+        QStringList  * modifications;
+        ParamValue (const QString & v) : val (v), modifications (0L) {}
+        ~ParamValue () { delete modifications; }
+        QString value () { return modifications ? modifications->back() : val; }
         void setValue (const QString & v) { val = v; }
-    };
-    struct ModifiedParam : public ParamValue {
-        QStringList modifications;
-        ModifiedParam (const QString & v) { modifications.push_back (v); }
-        QString value () { return modifications.back (); }
-        void setValue (const QString & v) { modifications [0] = v; }
     };
     class ElementRuntimePrivate {
     public:
@@ -140,31 +131,23 @@ ElementRuntime::~ElementRuntime () {
 QString ElementRuntime::setParam (const QString & name, const QString & value, int * id) {
     ParamValue * pv = d->params [name];
     QString old_val;
-    if (pv) {
+    if (pv)
         old_val = pv->value ();
-        if (id) {
-            ModifiedParam * mp = dynamic_cast <ModifiedParam *> (pv);
-            if (!mp) {
-                mp = new ModifiedParam (pv->value ());
-                delete pv;
-                d->params.insert (name, mp);
-                *id = 1;
-                mp->modifications.push_back (value);
-            } else if (*id >= 0 && *id < mp->modifications.size ()) {
-                mp->modifications [*id] = value;
-            } else {
-                *id = mp->modifications.size ();
-                mp->modifications.push_back (value);
-            }
-        } else
-            pv->setValue (value);
-    } else {
-        if (id) {
-            d->params.insert (name, new ModifiedParam (value));
-            *id = 0;
-        } else
-            d->params.insert (name, new SimpleParam (value));
+    else {
+        pv = new ParamValue (id ? QString::null : value);
+        d->params.insert (name, pv);
     }
+    if (id) {
+        if (!pv->modifications)
+            pv->modifications = new QStringList;
+        if (*id >= 0 && *id < pv->modifications->size ()) {
+            (*pv->modifications) [*id] = value;
+        } else {
+            *id = pv->modifications->size ();
+            pv->modifications->push_back (value);
+        }
+    } else
+        pv->setValue (value);
     parseParam (name, value);
     return old_val;
 }
@@ -178,22 +161,24 @@ QString ElementRuntime::param (const QString & name) {
 
 void ElementRuntime::resetParam (const QString & name, int id) {
     ParamValue * pv = d->params [name];
-    ModifiedParam * mp = dynamic_cast <ModifiedParam *> (pv);
-    if (mp) {
-        if (int (mp->modifications.size ()) > id && id > -1) {
-            mp->modifications [id] = QString::null;
-            while (mp->modifications.size () > 0 &&
-                    mp->modifications.back () == QString::null)
-                mp->modifications.pop_back ();
+    if (pv && pv->modifications) {
+        if (int (pv->modifications->size ()) > id && id > -1) {
+            (*pv->modifications) [id] = QString::null;
+            while (pv->modifications->size () > 0 &&
+                    pv->modifications->back () == QString::null)
+                pv->modifications->pop_back ();
         }
-        if (mp->modifications.size () == 0) {
-            delete pv;
-            d->params.remove (name);
-        } else
-            parseParam (name, mp->value ());
-    } else if (pv)
-        kdError () << "resetting " << name << " cast error" << endl;
-    else
+        if (pv->modifications->size () == 0) {
+            delete pv->modifications;
+            pv->modifications = 0L;
+            if (pv->value () == QString::null) {
+                delete pv;
+                d->params.remove (name);
+                return;
+            }
+        }
+        parseParam (name, pv->value ());
+    } else
         kdError () << "resetting " << name << " that doesn't exists" << endl;
 }
 
@@ -689,7 +674,7 @@ KDE_NO_EXPORT void AnimateGroupData::restoreModification () {
     if (modification_id > -1 && target_element) {
         ElementRuntimePtr rt = target_element->getRuntime ();
         if (rt) {
-    kdDebug () << "AnimateGroupData::restoreModificatio " <<modification_id << endl;
+            //kdDebug () << "AnimateGroupData::restoreModificatio " <<modification_id << endl;
             rt->resetParam (changed_attribute, modification_id);
             if (target_region)
                 convertNode <SMIL::RegionBase> (target_region)->repaint ();
