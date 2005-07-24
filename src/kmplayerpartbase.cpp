@@ -770,7 +770,7 @@ void Source::setTitle (const QString & title) {
 
 void Source::reset () {
     if (m_document) {
-        kdDebug() << "Source::first" << endl;
+        //kdDebug() << "Source::first" << endl;
         m_current = NodePtr ();
         m_document->reset ();
         m_player->updateTree ();
@@ -822,7 +822,7 @@ static NodePtr findDepthFirst (NodePtr elm) {
 }
 
 void Source::playURLDone () {
-    kdDebug() << "Source::playURLDone" << endl;
+    //kdDebug() << "Source::playURLDone" << endl;
     // notify a finish event
     if (m_back_request && m_back_request->isMrl ()) {
         m_current = m_back_request;
@@ -842,12 +842,12 @@ void Source::playURLDone () {
         if (mrl)
             mrl->deactivate ();
     }
-    if (m_player->process()->viewer ())
-        m_player->process()->viewer ()->view ()->viewArea ()->repaint ();
+    if (m_player->view ())
+        static_cast <View *> (m_player->view ())->viewArea ()->repaint ();
 }
 
 bool Source::requestPlayURL (NodePtr mrl) {
-    kdDebug() << "Source::requestPlayURL " << mrl->mrl ()->src << endl;
+    //kdDebug() << "Source::requestPlayURL " << mrl->mrl ()->src << endl;
     if (m_player->process ()->state () > Process::Ready) {
         m_back_request = mrl; // still playing, schedule it
         m_player->process ()->stop ();
@@ -890,17 +890,17 @@ void Source::setInfoMessage (const QString & msg) {
 void Source::repaintRect (int x, int y, int w, int h) {
     //kdDebug () << "repaint " << x << "," << y << " " << w << "x" << h << endl;
     if (m_player->view ())
-        static_cast <View*> (m_player->view())->viewArea ()->scheduleRepaint (x, y, w, h);
+     static_cast<View*>(m_player->view())->viewArea()->scheduleRepaint(x,y,w,h);
 }
 
 void Source::moveRect (int x, int y, int w, int h, int x1, int y1) {
     if (m_player->view ())
-        m_player->process()->viewer ()->view()->viewArea()->moveRect (x, y, w, h, x1, y1);
+      static_cast<View*>(m_player->view())->viewArea()->moveRect(x,y,w,h,x1,y1);
 }
 
 void Source::avWidgetSizes (int x, int y, int w, int h, unsigned int * bg) {
     if (m_player->view ())
-        m_player->process()->viewer ()->view ()->viewArea ()->setAudioVideoGeometry (x, y, w, h, bg);
+      static_cast<View*>(m_player->view())->viewArea ()->setAudioVideoGeometry (x, y, w, h, bg);
 }
 
 void Source::insertURL (const QString & mrl) {
@@ -1130,7 +1130,7 @@ bool Source::isSeekable () {
 }
 
 void Source::setIdentified (bool b) {
-    kdDebug () << "Source::setIdentified " << m_identified << b <<endl;
+    //kdDebug () << "Source::setIdentified " << m_identified << b <<endl;
     m_identified = b;
 }
 
@@ -1174,11 +1174,11 @@ QString Source::prettyName () {
 KDE_NO_CDTOR_EXPORT URLSource::URLSource (PartBase * player, const KURL & url)
     : Source (i18n ("URL"), player, "urlsource"), m_job (0L) {
     setURL (url);
-    kdDebug () << "URLSource::URLSource" << endl;
+    //kdDebug () << "URLSource::URLSource" << endl;
 }
 
 KDE_NO_CDTOR_EXPORT URLSource::~URLSource () {
-    kdDebug () << "URLSource::~URLSource" << endl;
+    //kdDebug () << "URLSource::~URLSource" << endl;
 }
 
 KDE_NO_EXPORT void URLSource::init () {
@@ -1208,8 +1208,8 @@ float URLSource::aspect () {
 
 void URLSource::dimensions (int & w, int & h) {
     if (!m_player->mayResize () && m_player->view ()) {
-        w = m_player->process ()->viewer ()->view ()->viewer ()->width ();
-        h = m_player->process ()->viewer ()->view ()->viewer ()->height ();
+        w = static_cast <View *> (m_player->view ())->viewer ()->width ();
+        h = static_cast <View *> (m_player->view ())->viewer ()->height ();
     } else if (m_document && m_document->firstChild () &&
             !strcmp (m_document->firstChild ()->nodeName (), "smil")) {
         Mrl * mrl = m_document->firstChild ()->mrl ();
@@ -1248,8 +1248,8 @@ void URLSource::setDimensions (int w, int h) {
             if (h > 0) {
                 float a = 1.0 * w / h;
                 mrl->aspect = a;
-                m_player->process ()->viewer ()->setAspect (a);
-                m_player->process ()->viewer ()->view ()->updateLayout ();
+                static_cast <View *> (m_player->view())->viewer()->setAspect(a);
+                static_cast <View *> (m_player->view ())->updateLayout ();
             }
         }
     } else
@@ -1282,7 +1282,7 @@ KDE_NO_EXPORT void URLSource::terminateJob () {
     if (m_job) {
         m_job->kill (); // silent, no kioResult signal
         if (m_player->view ())
-            m_player->process ()->viewer ()->view ()->controlPanel ()->setPlaying (m_player->playing ());
+            static_cast <View *> (m_player->view ())->controlPanel ()->setPlaying (m_player->playing ());
     }
     m_job = 0L;
 }
@@ -1424,13 +1424,14 @@ KDE_NO_EXPORT void URLSource::kioData (KIO::Job *, const QByteArray & d) {
         int accuraty = 0;
         KMimeType::Ptr mime = KMimeType::findByContent (d, &accuraty);
         if (mime) {
-            if (!mime->name ().startsWith (QString ("text/")))
+            if (!mime->name ().startsWith (QString ("text/")) ||
+                    mime->name () == QString::fromLatin1 ("text/html"))
                 newsize = 0;
             kdDebug () << "URLSource::kioData: " << mime->name () << accuraty << endl;
         }
     }
-    kdDebug () << "URLSource::kioData: " << newsize << endl;
-    if (newsize <= 0 || newsize > 50000) {
+    //kdDebug () << "URLSource::kioData: " << newsize << endl;
+    if (newsize <= 0 || newsize > 200000) {
         m_data.resize (0);
         m_job->kill (false);
     } else  {
@@ -1454,7 +1455,7 @@ KDE_NO_EXPORT void URLSource::kioResult (KIO::Job *) {
         m_current->mrl ()->parsed = true;
         QTimer::singleShot (0, this, SLOT (playCurrent ()));
     }
-    m_player->process ()->viewer ()->view ()->controlPanel ()->setPlaying (false);
+    static_cast <View *> (m_player->view())->controlPanel()->setPlaying (false);
 }
 
 void URLSource::playCurrent () {
@@ -1479,7 +1480,7 @@ void URLSource::playCurrent () {
         QString mimestr = mime ();
         bool maybe_playlist = isPlayListMime (mimestr);
         m_current->defer (); // may need a reactivate
-        kdDebug () << "URLSource::playCurrent " << mimestr << maybe_playlist << endl;
+        //kdDebug () << "URLSource::playCurrent " << mimestr << maybe_playlist << endl;
         if (url.isLocalFile ()) {
             QFile file (url.path ());
             if (!file.exists ()) {
@@ -1518,7 +1519,7 @@ void URLSource::playCurrent () {
                     this, SLOT (kioMimetype (KIO::Job *, const QString &)));
             connect (m_job, SIGNAL (result (KIO::Job *)),
                     this, SLOT (kioResult (KIO::Job *)));
-            m_player->process ()->viewer ()->view ()->controlPanel ()->setPlaying (true);
+            static_cast <View *> (m_player->view ())->controlPanel ()->setPlaying (true);
         } else {
             m_current->mrl ()->parsed = true;
             QTimer::singleShot (0, this, SLOT (playCurrent ()));
@@ -1531,7 +1532,7 @@ KDE_NO_EXPORT void URLSource::play () {
 }
 
 KDE_NO_EXPORT void URLSource::playURLDone () {
-    kdDebug () << "URLSource::playURLDone" << endl;
+    //kdDebug () << "URLSource::playURLDone" << endl;
     Source::playURLDone (); // for now
 }
 

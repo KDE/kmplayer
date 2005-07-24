@@ -1,3 +1,16 @@
+kmplayer (0.9.0-1) unstable; urgency=low
+
+  *  0.9.0 release
+
+ -- Koos Vriezen <koos.vriezen@xs4all.nl>  Sun, 24 Jul 2005 14:50:33 +0200
+
+kmplayer (0.8.99.3-2) unstable; urgency=low
+
+  *  Use admin dir from KDE 3.3 branch instead of 3.4
+  *  Applied handbook location patch from David Saxton
+
+ -- Koos Vriezen <koos.vriezen@xs4all.nl>  Sun, 10 Jul 2005 22:02:26 +0200
+
 kmplayer (0.8.99.3-1) unstable; urgency=low
 
   *  0.9.0-rc1 first release candidate for 0.9.0.

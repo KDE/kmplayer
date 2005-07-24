@@ -140,7 +140,7 @@ QString ElementRuntime::setParam (const QString & name, const QString & value, i
     if (id) {
         if (!pv->modifications)
             pv->modifications = new QStringList;
-        if (*id >= 0 && *id < pv->modifications->size ()) {
+        if (*id >= 0 && *id < int (pv->modifications->size ())) {
             (*pv->modifications) [*id] = value;
         } else {
             *id = pv->modifications->size ();
@@ -747,8 +747,10 @@ void AnimateData::parseParam (const QString & name, const QString & val) {
             calcMode = calc_linear;
         else if (val == QString::fromLatin1 ("paced"))
             calcMode = calc_paced;
-    } else
-        return AnimateGroupData::parseParam (name, val);
+    } else {
+        AnimateGroupData::parseParam (name, val);
+        return;
+    }
     ElementRuntime::parseParam (name, val);
 }
 
@@ -835,7 +837,7 @@ KDE_NO_EXPORT void AnimateData::started () {
  * undo if necessary
  */
 KDE_NO_EXPORT void AnimateData::stopped () {
-    kdDebug () << "AnimateData::stopped " << element->state << endl;
+    // kdDebug () << "AnimateData::stopped " << element->state << endl;
     if (anim_timer) { // make sure timers are stopped
         killTimer (anim_timer);
         anim_timer = 0;
@@ -1979,14 +1981,14 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::Animate::getNewRuntime () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT void SMIL::Param::activate () {
-    Element::activate ();
+    setState (state_activated);
     QString name = getAttribute ("name");
     if (!name.isEmpty () && parentNode ()) {
         ElementRuntimePtr rt = parentNode ()->getRuntime ();
         if (rt)
             rt->setParam (name, getAttribute ("value"));
     }
-    finish (); // no livetime of itself
+    Element::activate (); //finish (); // no livetime of itself, will deactivate
 }
 
 //-----------------------------------------------------------------------------

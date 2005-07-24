@@ -157,7 +157,7 @@ private:
     QRect m_repaint_rect;
     int m_mouse_invisible_timer;
     int m_repaint_timer;
-    bool m_fullscreen : 1;
+    bool m_fullscreen;
 };
 
 /*
