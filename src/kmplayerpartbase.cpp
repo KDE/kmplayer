@@ -1424,8 +1424,7 @@ KDE_NO_EXPORT void URLSource::kioData (KIO::Job *, const QByteArray & d) {
         int accuraty = 0;
         KMimeType::Ptr mime = KMimeType::findByContent (d, &accuraty);
         if (mime) {
-            if (!mime->name ().startsWith (QString ("text/")) ||
-                    mime->name () == QString::fromLatin1 ("text/html"))
+            if (!mime->name ().startsWith (QString ("text/")))
                 newsize = 0;
             kdDebug () << "URLSource::kioData: " << mime->name () << accuraty << endl;
         }
