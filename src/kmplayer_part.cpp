@@ -558,6 +558,7 @@ static const JSCommandEntry JSCommandList [] = {
     { "DoNextEntry", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
     { "DoPause", jsc_pause, "true", KParts::LiveConnectExtension::TypeBool },
     { "DoPlay", play, 0L, KParts::LiveConnectExtension::TypeBool },
+    { "DoPlayPause", play, 0L, KParts::LiveConnectExtension::TypeBool },
     { "DoPrevEntry", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
     { "DoStop", stop, 0L, KParts::LiveConnectExtension::TypeBool },
     { "FileName", prop_source, 0L, KParts::LiveConnectExtension::TypeString },
