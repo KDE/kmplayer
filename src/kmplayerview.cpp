@@ -1341,7 +1341,7 @@ void View::toggleVideoConsoleWindow () {
         m_control_panel->popupMenu ()->changeItem (ControlPanel::menu_video, KGlobal::iconLoader ()->loadIconSet (QString ("konsole"), KIcon::Small, 0, true), i18n ("Con&sole"));
     } else
         m_control_panel->popupMenu ()->changeItem (ControlPanel::menu_video, KGlobal::iconLoader ()->loadIconSet (QString ("video"), KIcon::Small, 0, true), i18n ("V&ideo"));
-    m_widgetstack->raiseWidget (m_widgettypes [wt]);
+    showWidget (wt);
     emit windowVideoConsoleToggled (int (wt));
 }
 
