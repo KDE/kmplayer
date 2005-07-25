@@ -111,6 +111,7 @@ private slots:
     void playerStarted ();
     void slotConfigureKeys();
     void slotClearHistory ();
+    void windowVideoConsoleToggled (int wt);
 
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
@@ -126,6 +127,7 @@ private:
     KAction * fileQuit;
     KAction * editVolumeInc;
     KAction * editVolumeDec;
+    KAction * toggleView;
     KToggleAction * viewToolBar;
     KToggleAction * viewStatusBar;
     KToggleAction * viewMenuBar;

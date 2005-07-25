@@ -152,9 +152,7 @@ public slots:
     void adjustVolume (int incdec);
     bool playing () const;
     void showConfigDialog ();
-    void showVideoWindow ();
     void showPlayListWindow ();
-    void showConsoleWindow ();
     void slotPlayerMenu (int);
     void back ();
     void forward ();

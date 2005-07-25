@@ -134,16 +134,8 @@ void PartBase::showConfigDialog () {
     m_settings->show ("URLPage");
 }
 
-KDE_NO_EXPORT void PartBase::showVideoWindow () {
-    m_view->showWidget (View::WT_Video);
-}
-
 KDE_NO_EXPORT void PartBase::showPlayListWindow () {
     m_view->showPlaylist ();
-}
-
-KDE_NO_EXPORT void PartBase::showConsoleWindow () {
-    m_view->showWidget (View::WT_Console);
 }
 
 KDE_NO_EXPORT void PartBase::addBookMark (const QString & t, const QString & url) {
@@ -171,6 +163,7 @@ void PartBase::connectPanel (ControlPanel * panel) {
     panel->hueSlider ()->setValue (m_settings->hue);
     panel->saturationSlider ()->setValue (m_settings->saturation);
     panel->volumeBar ()->setValue (m_settings->volume);
+    connect (panel->button (ControlPanel::button_playlist), SIGNAL (clicked ()), this, SLOT (showPlayListWindow ()));
     connect (panel->button (ControlPanel::button_back), SIGNAL (clicked ()), this, SLOT (back ()));
     connect (panel->button (ControlPanel::button_play), SIGNAL (clicked ()), this, SLOT (play ()));
     connect (panel->button (ControlPanel::button_forward), SIGNAL (clicked ()), this, SLOT (forward ()));
@@ -188,12 +181,8 @@ void PartBase::connectPanel (ControlPanel * panel) {
     panel->popupMenu()->connectItem (ControlPanel::menu_fullscreen, this, SLOT (fullScreen ()));
     panel->popupMenu ()->connectItem (ControlPanel::menu_config,
                                        this, SLOT (showConfigDialog ()));
-    panel->viewMenu ()->connectItem (ControlPanel::menu_video,
-                                       this, SLOT (showVideoWindow ()));
-    panel->viewMenu ()->connectItem (ControlPanel::menu_playlist,
-                                       this, SLOT (showPlayListWindow ()));
-    panel->viewMenu ()->connectItem (ControlPanel::menu_console,
-                                       this, SLOT (showConsoleWindow ()));
+    panel->popupMenu ()->connectItem (ControlPanel::menu_video,
+                                      m_view, SLOT(toggleVideoConsoleWindow()));
     //connect (panel (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
 }
 

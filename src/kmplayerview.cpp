@@ -170,6 +170,20 @@ static const char * config_xpm[] = {
     "    ...    ",
     "     .     "};
 
+static const char * playlist_xpm[] = {
+    "8 9 2 1",
+    "       c None",
+    xpm_fg_color,
+    "        ",
+    "        ",
+    "........",
+    "........",
+    "        ",
+    "        ",
+    "........",
+    "........",
+    "        "};
+
 static const char * record_xpm[] = {
     "7 7 3 1",
     "       c None",
@@ -610,6 +624,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     strncpy (xpm_fg_color, QString().sprintf(".      c #%02x%02x%02x", c.red(), c.green(),c.blue()).ascii(), 31);
     xpm_fg_color[31] = 0;
     m_buttons[button_config] = new KMPlayerControlButton (this, m_buttonbox, config_xpm);
+    m_buttons[button_playlist] = ctrlButton (this, m_buttonbox, playlist_xpm);
     m_buttons[button_back] = ctrlButton (this, m_buttonbox, back_xpm);
     m_buttons[button_play] = ctrlButton (this, m_buttonbox, play_xpm, Qt::Key_R);
     m_buttons[button_forward] = ctrlButton (this, m_buttonbox, forward_xpm);
@@ -636,11 +651,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     m_popupMenu->insertItem (i18n ("&Play with"), m_playerMenu, menu_player);
     m_bookmarkMenu = new KMPlayerPopupMenu (this);
     m_popupMenu->insertItem (i18n("&Bookmarks"), m_bookmarkMenu, menu_bookmark);
-    m_viewMenu = new KMPlayerPopupMenu (this);
-    m_viewMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("video"), KIcon::Small, 0, true), i18n ("V&ideo"), menu_video);
-    m_viewMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("player_playlist"), KIcon::Small, 0, true), i18n ("Pla&y List"), menu_playlist);
-    m_viewMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("konsole"), KIcon::Small, 0, true), i18n ("Con&sole"), menu_console);
-    m_popupMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("window"), KIcon::Small, 0, false), i18n ("&View"), m_viewMenu, menu_view);
+    m_popupMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("konsole"), KIcon::Small, 0, true), i18n ("Con&sole"), menu_video);
     m_zoomMenu = new KMPlayerPopupMenu (this);
     m_zoomMenu->insertItem (i18n ("50%"), menu_zoom50);
     m_zoomMenu->insertItem (i18n ("100%"), menu_zoom100);
@@ -1200,7 +1211,6 @@ KDE_NO_EXPORT void View::init () {
     connect (m_control_panel->popupMenu(), SIGNAL (mouseLeft ()), this, SLOT (popupMenuMouseLeft ()));
     connect (m_control_panel->playerMenu(), SIGNAL (mouseLeft ()), this, SLOT (popupMenuMouseLeft ()));
     connect (m_control_panel->zoomMenu(), SIGNAL (mouseLeft ()), this, SLOT (popupMenuMouseLeft ()));
-    connect (m_control_panel->viewMenu(), SIGNAL (mouseLeft ()), this, SLOT (popupMenuMouseLeft ()));
     connect (m_control_panel->colorMenu(), SIGNAL (mouseLeft ()), this, SLOT (popupMenuMouseLeft ()));
     setAcceptDrops (true);
     m_view_area->resizeEvent (0L);
@@ -1238,22 +1248,25 @@ void View::setInfoMessage (const QString & msg) {
 void View::showPlaylist () {
     if (m_controlpanel_mode == CP_Only)
         return;
-    bool horz = true;
-    QStyle & style = m_playlist->style ();
-    int h = style.pixelMetric (QStyle::PM_ScrollBarExtent, m_playlist);
-    h += style.pixelMetric (QStyle::PM_DockWindowFrameWidth, m_playlist);
-    h += style.pixelMetric (QStyle::PM_DockWindowHandleExtent, m_playlist);
-    for (QListViewItem * i = m_playlist->firstChild (); i; i = i->itemBelow()) {
-        h += i->height ();
-        if (h > int (0.5 * height ())) {
-            horz = false;
-            break;
+    if (m_dock_playlist->mayBeShow ()) {
+        bool horz = true;
+        QStyle & style = m_playlist->style ();
+        int h = style.pixelMetric (QStyle::PM_ScrollBarExtent, m_playlist);
+        h += style.pixelMetric (QStyle::PM_DockWindowFrameWidth, m_playlist);
+        h += style.pixelMetric (QStyle::PM_DockWindowHandleExtent, m_playlist);
+        for (QListViewItem *i = m_playlist->firstChild(); i; i=i->itemBelow()) {
+            h += i->height ();
+            if (h > int (0.5 * height ())) {
+                horz = false;
+                break;
+            }
         }
-    }
-    int perc = 30;
-    if (horz && 100 * h / height () < perc)
-        perc = 100 * h / height ();
-    m_dock_playlist->manualDock (m_dock_video, horz ? KDockWidget::DockTop : KDockWidget::DockLeft, perc);
+        int perc = 30;
+        if (horz && 100 * h / height () < perc)
+            perc = 100 * h / height ();
+        m_dock_playlist->manualDock (m_dock_video, horz ? KDockWidget::DockTop : KDockWidget::DockLeft, perc);
+    } else
+        m_dock_playlist->undock ();
 }
 
 bool View::setPicture (const QString & path) {
@@ -1319,6 +1332,17 @@ void View::showWidget (WidgetType wt) {
     if (m_widgetstack->visibleWidget () == m_widgettypes[WT_Console])
         addText (QString (""), false);
     updateLayout ();
+}
+
+void View::toggleVideoConsoleWindow () {
+    WidgetType wt = WT_Console;
+    if (m_widgetstack->visibleWidget () == m_widgettypes[WT_Console]) {
+        wt = WT_Video;
+        m_control_panel->popupMenu ()->changeItem (ControlPanel::menu_video, KGlobal::iconLoader ()->loadIconSet (QString ("konsole"), KIcon::Small, 0, true), i18n ("Con&sole"));
+    } else
+        m_control_panel->popupMenu ()->changeItem (ControlPanel::menu_video, KGlobal::iconLoader ()->loadIconSet (QString ("video"), KIcon::Small, 0, true), i18n ("V&ideo"));
+    m_widgetstack->raiseWidget (m_widgettypes [wt]);
+    emit windowVideoConsoleToggled (int (wt));
 }
 
 void View::setControlPanelMode (ControlPanelMode m) {
@@ -1394,7 +1418,7 @@ KDE_NO_EXPORT void View::timerEvent (QTimerEvent * e) {
             showPopupMenu ();
     } else if (e->timerId () == popdown_timer) {
         popdown_timer = 0;
-        if (m_control_panel->popupMenu ()->isVisible () && !m_control_panel->popupMenu ()->hasMouse () && !m_control_panel->playerMenu ()->hasMouse () && !m_control_panel->viewMenu ()->hasMouse () && !m_control_panel->zoomMenu ()->hasMouse () && !m_control_panel->colorMenu ()->hasMouse () && !m_control_panel->bookmarkMenu ()->hasMouse ())
+        if (m_control_panel->popupMenu ()->isVisible () && !m_control_panel->popupMenu ()->hasMouse () && !m_control_panel->playerMenu ()->hasMouse () && !m_control_panel->zoomMenu ()->hasMouse () && !m_control_panel->colorMenu ()->hasMouse () && !m_control_panel->bookmarkMenu ()->hasMouse ())
             if (!(m_control_panel->bookmarkMenu ()->isVisible () && static_cast <QWidget *> (m_control_panel->bookmarkMenu ()) != QWidget::keyboardGrabber ()))
                 // not if user entered the bookmark sub menu or if I forgot one
                 m_control_panel->popupMenu ()->hide ();

@@ -242,10 +242,12 @@ public slots:
     void fullScreen ();
     void updateLayout ();
     void showPlaylist ();
+    void toggleVideoConsoleWindow ();
 signals:
     void urlDropped (const KURL::List & urls);
     void pictureClicked ();
     void fullScreenChanged ();
+    void windowVideoConsoleToggled (int wt);
 protected:
     void leaveEvent (QEvent *);
     void timerEvent (QTimerEvent *);
@@ -342,10 +344,11 @@ public:
     enum MenuID {
         menu_config = 0, menu_player, menu_fullscreen, menu_volume, 
         menu_bookmark, menu_zoom, menu_zoom50, menu_zoom100, menu_zoom150,
-        menu_view, menu_video, menu_playlist, menu_console
+        menu_view, menu_video
     };
     enum Button {
-        button_config = 0, button_back, button_play, button_forward,
+        button_config = 0, button_playlist,
+        button_back, button_play, button_forward,
         button_stop, button_pause, button_record, button_broadcast,
         button_red, button_green, button_yellow, button_blue,
         button_last
@@ -374,7 +377,6 @@ public:
     KDE_NO_EXPORT KPopupMenu * bookmarkMenu () const { return m_bookmarkMenu; }
     KDE_NO_EXPORT QPopupMenu * zoomMenu () const { return m_zoomMenu; }
     KDE_NO_EXPORT QPopupMenu * playerMenu () const { return m_playerMenu; }
-    KDE_NO_EXPORT QPopupMenu * viewMenu () const { return m_viewMenu; }
     KDE_NO_EXPORT QPopupMenu * colorMenu () const { return m_colorMenu; }
 private:
     enum { progress_loading, progress_playing } m_progress_mode;
@@ -390,7 +392,6 @@ private:
     VolumeBar * m_volume;
     KMPlayerPopupMenu * m_popupMenu;
     KMPlayerPopupMenu * m_bookmarkMenu;
-    KMPlayerPopupMenu * m_viewMenu;
     KMPlayerPopupMenu * m_zoomMenu;
     KMPlayerPopupMenu * m_playerMenu;
     KMPlayerPopupMenu * m_colorMenu;

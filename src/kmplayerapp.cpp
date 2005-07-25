@@ -128,9 +128,9 @@ KDE_NO_EXPORT void KMPlayerApp::initActions()
     new KAction (i18n ("&Connect"), QString ("connect_established"), KShortcut (), this, SLOT (openVDR ()), actionCollection (), "vdr_connect");
     editVolumeInc = new KAction (i18n ("Increase Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT (increaseVolume ()), actionCollection (), "edit_volume_up");
     editVolumeDec = new KAction (i18n ("Decrease Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT(decreaseVolume ()), actionCollection (), "edit_volume_down");
-    new KAction (i18n ("V&ideo"), QString ("video"), KShortcut (), m_player, SLOT (showVideoWindow ()), actionCollection (), "view_video");
+    toggleView = new KAction (i18n ("C&onsole"), QString ("konsole"), KShortcut (), m_player->view(), SLOT (toggleVideoConsoleWindow ()), actionCollection (), "view_video");
+    //new KAction (i18n ("V&ideo"), QString ("video"), KShortcut (), m_view, SLOT (toggleVideoConsoleWindow ()), actionCollection (), "view_video");
     new KAction (i18n ("Pla&y List"), QString ("player_playlist"), KShortcut (), m_player, SLOT (showPlayListWindow ()), actionCollection (), "view_playlist");
-    new KAction (i18n ("C&onsole"), QString ("konsole"), KShortcut (), m_player, SLOT (showConsoleWindow ()), actionCollection (), "view_console");
     /*KAction *preference =*/ KStdAction::preferences (m_player, SLOT (showConfigDialog ()), actionCollection(), "configure");
     new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), actionCollection (), "view_zoom_50");
     new KAction (i18n ("100%"), 0, 0, this, SLOT (zoom100 ()), actionCollection (), "view_zoom_100");
@@ -205,6 +205,8 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
              this, SLOT (configChanged ()));
     connect (m_player, SIGNAL (loading (int)),
              this, SLOT (loadingProgress (int)));
+    connect (m_view, SIGNAL (windowVideoConsoleToggled (int)),
+             this, SLOT (windowVideoConsoleToggled (int)));
     connect (m_player, SIGNAL (sourceChanged (KMPlayer::Source *, KMPlayer::Source *)), this, SLOT (slotSourceChanged(KMPlayer::Source *, KMPlayer::Source *)));
     m_view->controlPanel ()->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom50,
             this, SLOT (zoom50 ()));
@@ -231,6 +233,16 @@ KDE_NO_EXPORT void KMPlayerApp::loadingProgress (int percentage) {
         slotStatusMsg(i18n("Ready"));
     else
         slotStatusMsg (QString::number (percentage) + "%");
+}
+
+KDE_NO_EXPORT void KMPlayerApp::windowVideoConsoleToggled (int wt) {
+    if (wt == int (KMPlayer::View::WT_Video)) {
+        toggleView->setText (i18n ("C&onsole"));
+        toggleView->setIcon (QString ("konsole"));
+    } else {
+        toggleView->setText (i18n ("V&ideo"));
+        toggleView->setIcon (QString ("video"));
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
