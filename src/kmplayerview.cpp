@@ -1249,22 +1249,26 @@ void View::showPlaylist () {
     if (m_controlpanel_mode == CP_Only)
         return;
     if (m_dock_playlist->mayBeShow ()) {
-        bool horz = true;
-        QStyle & style = m_playlist->style ();
-        int h = style.pixelMetric (QStyle::PM_ScrollBarExtent, m_playlist);
-        h += style.pixelMetric (QStyle::PM_DockWindowFrameWidth, m_playlist);
-        h += style.pixelMetric (QStyle::PM_DockWindowHandleExtent, m_playlist);
-        for (QListViewItem *i = m_playlist->firstChild(); i; i=i->itemBelow()) {
-            h += i->height ();
-            if (h > int (0.5 * height ())) {
-                horz = false;
-                break;
+        if (m_dock_playlist->isDockBackPossible ())
+            m_dock_playlist->dockBack ();
+        else {
+            bool horz = true;
+            QStyle & style = m_playlist->style ();
+            int h = style.pixelMetric (QStyle::PM_ScrollBarExtent, m_playlist);
+            h += style.pixelMetric(QStyle::PM_DockWindowFrameWidth, m_playlist);
+            h +=style.pixelMetric(QStyle::PM_DockWindowHandleExtent,m_playlist);
+            for (QListViewItem *i=m_playlist->firstChild();i;i=i->itemBelow()) {
+                h += i->height ();
+                if (h > int (0.5 * height ())) {
+                    horz = false;
+                    break;
+                }
             }
+            int perc = 30;
+            if (horz && 100 * h / height () < perc)
+                perc = 100 * h / height ();
+            m_dock_playlist->manualDock (m_dock_video, horz ? KDockWidget::DockTop : KDockWidget::DockLeft, perc);
         }
-        int perc = 30;
-        if (horz && 100 * h / height () < perc)
-            perc = 100 * h / height ();
-        m_dock_playlist->manualDock (m_dock_video, horz ? KDockWidget::DockTop : KDockWidget::DockLeft, perc);
     } else
         m_dock_playlist->undock ();
 }
