@@ -662,7 +662,10 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileOpenRecent(const KURL& url)
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotClearHistory () {
-    fileOpenRecent->clearURLList ();
+    //fileOpenRecent->clearURLList ();
+    int mi = fileOpenRecent->maxItems ();
+    fileOpenRecent->setMaxItems (0);
+    fileOpenRecent->setMaxItems (mi);
     m_player->settings ()->urllist.clear ();
     m_player->settings ()->sub_urllist.clear ();
 }
