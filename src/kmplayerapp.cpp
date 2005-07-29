@@ -386,6 +386,7 @@ KDE_NO_EXPORT void IntroSource::playURLDone () {
 KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
 {
     if (!m_played_intro) {
+        m_played_intro = true;
         if (!m_player->settings ()->no_intro && url.isEmpty ()) {
             m_player->setSource (new IntroSource (m_player));
             return;
@@ -394,7 +395,6 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
                 static_cast <KMPlayer::View *> (m_player->view ())->docArea ()->readDockConfig (m_player->config (), QString ("Window Layout"));
                 m_player->view ()->layout ()->activate ();
             }
-        m_played_intro = true;
     }
     slotStatusMsg(i18n("Opening file..."));
     m_player->openURL (url);
@@ -564,6 +564,8 @@ KDE_NO_EXPORT void KMPlayerApp::minimalMode () {
     if (m_minimal_mode) {
         m_view->setNoInfoMessages (false);
         readOptions ();
+        m_view->docArea ()->readDockConfig (config, QString ("Window Layout"));
+        m_view->layout ()->activate ();
     } else {
         saveOptions ();
         menuBar()->hide();
@@ -572,7 +574,7 @@ KDE_NO_EXPORT void KMPlayerApp::minimalMode () {
         m_view->setViewOnly ();
         m_view->setNoInfoMessages (true);
     }
-    zoom100 ();
+    QTimer::singleShot (0, this, SLOT (zoom100 ()));
     m_minimal_mode = !m_minimal_mode;
 }
 
@@ -638,7 +640,8 @@ KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
         return true;
     disconnect(m_player, SIGNAL(sourceDimensionChanged()),this,SLOT(zoom100()));
     m_played_exit = true;
-    minimalMode ();
+    if (!m_minimal_mode)
+        minimalMode ();
     m_player->setSource (new ExitSource (m_player));
     return false;
 }
