@@ -565,6 +565,7 @@ KDE_NO_EXPORT void KMPlayerApp::minimalMode () {
         m_view->setNoInfoMessages (false);
         readOptions ();
         m_view->docArea ()->readDockConfig (config, QString ("Window Layout"));
+        m_view->setControlPanelMode (KMPlayer::View::CP_Show);
         m_view->layout ()->activate ();
     } else {
         saveOptions ();
@@ -572,6 +573,7 @@ KDE_NO_EXPORT void KMPlayerApp::minimalMode () {
         toolBar("mainToolBar")->hide();
         statusBar()->hide();
         m_view->setViewOnly ();
+        m_view->setControlPanelMode (KMPlayer::View::CP_AutoHide);
         m_view->setNoInfoMessages (true);
     }
     QTimer::singleShot (0, this, SLOT (zoom100 ()));
