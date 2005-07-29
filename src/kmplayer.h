@@ -109,6 +109,7 @@ private slots:
     void broadcastStarted ();
     void broadcastStopped ();
     void playerStarted ();
+    void minimalMode ();
     void slotConfigureKeys();
     void slotClearHistory ();
     void windowVideoConsoleToggled (int wt);
@@ -143,7 +144,9 @@ private:
     bool m_showToolbar;
     bool m_showStatusbar;
     bool m_showMenubar;
-    bool m_first_time;
+    bool m_played_intro;
+    bool m_played_exit;
+    bool m_minimal_mode;
 };
 
 #endif // KMPLAYER_H

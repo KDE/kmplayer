@@ -135,7 +135,7 @@ void PartBase::showConfigDialog () {
 }
 
 KDE_NO_EXPORT void PartBase::showPlayListWindow () {
-    m_view->showPlaylist ();
+    m_view->toggleShowPlaylist ();
 }
 
 KDE_NO_EXPORT void PartBase::addBookMark (const QString & t, const QString & url) {
@@ -1324,8 +1324,7 @@ static bool isPlayListMime (const QString & mime) {
             !strcmp (mimestr ,"audio/x-m3u") ||
             !strncasecmp (mimestr ,"application/smil", 16) ||
             !strncasecmp (mimestr ,"application/xml", 15) ||
-            (!strncmp (mimestr ,"text/", 5) &&
-             strcmp (mimestr ,"text/html")) ||
+            !strncmp (mimestr ,"text/", 5) ||
             !strcmp (mimestr ,"application/rss+xml") ||
             !strcmp (mimestr ,"application/x-mplayer2"));
 }

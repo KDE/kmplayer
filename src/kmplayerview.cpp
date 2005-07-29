@@ -1245,7 +1245,7 @@ void View::setInfoMessage (const QString & msg) {
     }
 }
 
-void View::showPlaylist () {
+void View::toggleShowPlaylist () {
     if (m_controlpanel_mode == CP_Only)
         return;
     if (m_dock_playlist->mayBeShow ()) {
@@ -1271,6 +1271,13 @@ void View::showPlaylist () {
         }
     } else
         m_dock_playlist->undock ();
+}
+
+void View::setViewOnly () {
+    if (m_dock_playlist->mayBeHide ())
+        m_dock_playlist->undock ();
+    if (m_dock_infopanel->mayBeHide ())
+       m_dock_infopanel->undock ();
 }
 
 bool View::setPicture (const QString & path) {

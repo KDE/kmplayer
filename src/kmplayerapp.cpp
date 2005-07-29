@@ -88,7 +88,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       m_tvmenu (new QPopupMenu (this)),
       m_ffserverconfig (new KMPlayerFFServerConfig),
       m_broadcastconfig (new KMPlayerBroadcastConfig (m_player, m_ffserverconfig)),
-      m_first_time (true)
+      m_played_intro (false),
+      m_played_exit (false),
+      m_minimal_mode (false)
 {
     connect (m_broadcastconfig, SIGNAL (broadcastStarted()), this, SLOT (broadcastStarted()));
     connect (m_broadcastconfig, SIGNAL (broadcastStopped()), this, SLOT (broadcastStopped()));
@@ -131,6 +133,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions()
     toggleView = new KAction (i18n ("C&onsole"), QString ("konsole"), KShortcut (), m_player->view(), SLOT (toggleVideoConsoleWindow ()), actionCollection (), "view_video");
     //new KAction (i18n ("V&ideo"), QString ("video"), KShortcut (), m_view, SLOT (toggleVideoConsoleWindow ()), actionCollection (), "view_video");
     new KAction (i18n ("Pla&y List"), QString ("player_playlist"), KShortcut (), m_player, SLOT (showPlayListWindow ()), actionCollection (), "view_playlist");
+    new KAction (i18n ("Minimal mode"), QString ("empty"), KShortcut (), this, SLOT (minimalMode ()), actionCollection (), "view_minimal");
     /*KAction *preference =*/ KStdAction::preferences (m_player, SLOT (showConfigDialog ()), actionCollection(), "configure");
     new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), actionCollection (), "view_zoom_50");
     new KAction (i18n ("100%"), 0, 0, this, SLOT (zoom100 ()), actionCollection (), "view_zoom_100");
@@ -382,7 +385,7 @@ KDE_NO_EXPORT void IntroSource::playURLDone () {
 
 KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
 {
-    if (m_first_time) {
+    if (!m_played_intro) {
         if (!m_player->settings ()->no_intro && url.isEmpty ()) {
             m_player->setSource (new IntroSource (m_player));
             return;
@@ -391,7 +394,7 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
                 static_cast <KMPlayer::View *> (m_player->view ())->docArea ()->readDockConfig (m_player->config (), QString ("Window Layout"));
                 m_player->view ()->layout ()->activate ();
             }
-        m_first_time = false;
+        m_played_intro = true;
     }
     slotStatusMsg(i18n("Opening file..."));
     m_player->openURL (url);
@@ -515,9 +518,6 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
         config->writeEntry ("Command1", m_player->sources () ["pipesource"]->pipeCmd ());
     }
     fileOpenRecent->saveEntries (config,"Recent Files");
-    disconnect (m_player->settings (), SIGNAL (configChanged ()),
-                this, SLOT (configChanged ()));
-    m_player->settings ()->writeConfig ();
     m_view->docArea ()->writeDockConfig (config, QString ("Window Layout"));
 }
 
@@ -558,6 +558,22 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     fileOpenRecent->loadEntries(config,"Recent Files");
 
     configChanged ();
+}
+
+KDE_NO_EXPORT void KMPlayerApp::minimalMode () {
+    if (m_minimal_mode) {
+        m_view->setNoInfoMessages (false);
+        readOptions ();
+    } else {
+        saveOptions ();
+        menuBar()->hide();
+        toolBar("mainToolBar")->hide();
+        statusBar()->hide();
+        m_view->setViewOnly ();
+        m_view->setNoInfoMessages (true);
+    }
+    zoom100 ();
+    m_minimal_mode = !m_minimal_mode;
 }
 
 struct ExitSource : public KMPlayer::Source {
@@ -618,17 +634,22 @@ KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
         QByteArray data, replydata;
         kapp->dcopClient ()->call (m_dcopName, "MainApplication-Interface", "quit()", data, replytype, replydata);
     }
-    if (!m_first_time || m_player->settings ()->no_intro)
+    if (m_played_exit || m_player->settings ()->no_intro)
         return true;
     disconnect(m_player, SIGNAL(sourceDimensionChanged()),this,SLOT(zoom100()));
-    m_first_time = false;
+    m_played_exit = true;
+    minimalMode ();
     m_player->setSource (new ExitSource (m_player));
     return false;
 }
 
 KDE_NO_EXPORT bool KMPlayerApp::queryExit()
 {
-    saveOptions();
+    if (!m_minimal_mode)
+        saveOptions();
+    disconnect (m_player->settings (), SIGNAL (configChanged ()),
+                this, SLOT (configChanged ()));
+    m_player->settings ()->writeConfig ();
     return true;
 }
 

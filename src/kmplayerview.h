@@ -231,6 +231,7 @@ public:
     KDE_NO_EXPORT bool videoStarted () const { return m_playing; }
     void setInfoMessage (const QString & msg);
     void setNoInfoMessages (bool b) { m_no_info = b; }
+    void setViewOnly ();
 public slots:
     /* raise video widget, might (auto) hides panel */
     void videoStart ();
@@ -241,7 +242,7 @@ public slots:
     void updateVolume ();
     void fullScreen ();
     void updateLayout ();
-    void showPlaylist ();
+    void toggleShowPlaylist ();
     void toggleVideoConsoleWindow ();
 signals:
     void urlDropped (const KURL::List & urls);
