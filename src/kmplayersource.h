@@ -131,7 +131,6 @@ public slots:
      * emit endOfPlayItems when done
      */
     virtual void playCurrent ();
-    virtual void playURLDone ();
     virtual void jump (NodePtr e);
 protected:
     /**

@@ -185,10 +185,10 @@ KDE_NO_EXPORT void Process::rescheduledStateChanged () {
     m_source->stateChange (this, m_old_state, m_state);
 }
 
-KDE_NO_EXPORT bool Process::play (Source * src, NodePtr mrl) {
+KDE_NO_EXPORT bool Process::play (Source * src, NodePtr _mrl) {
     m_source = src;
-    m_mrl = mrl;
-    Mrl * m = mrl ? mrl->mrl () : 0L;
+    m_mrl = _mrl;
+    Mrl * m = _mrl ? _mrl->mrl () : 0L;
     m_url = m ? m->src : QString ();
     return false;
 }

@@ -693,6 +693,10 @@ public:
      * Returns Ref child if isMrl() return true
      */
     virtual NodePtr realMrl ();
+    /**
+     * Override for activating Ref child
+     */
+    void activate ();
 };
 
 /**
@@ -704,6 +708,7 @@ public:
     //NodePtr childFromTag (const QString & tag);
     void opened ();
     KDE_NO_EXPORT const char * nodeName () const { return "Ref"; }
+    bool expose () const { return false; }
 };
 
 /**

@@ -810,31 +810,6 @@ static NodePtr findDepthFirst (NodePtr elm) {
     return NodePtr ();
 }
 
-void Source::playURLDone () {
-    //kdDebug() << "Source::playURLDone" << endl;
-    // notify a finish event
-    if (m_back_request && m_back_request->isMrl ()) {
-        m_current = m_back_request;
-        if (m_current->id > SMIL::id_node_first &&
-                m_current->id < SMIL::id_node_last) {
-            //playCurrent (); // don't mess with SMIL, just play the damn link
-            QTimer::singleShot (0, this, SLOT (playCurrent ()));
-        } else {
-            m_document->reset (); // deactivate everything
-            for (NodePtr p = m_current->parentNode(); p; p = p->parentNode())
-                p->setState (Element::state_activated);
-            m_current->activate ();
-        }
-        m_back_request = 0L;
-    } else {
-        Mrl * mrl = m_current ? m_current->mrl () : 0L;
-        if (mrl)
-            mrl->deactivate ();
-    }
-    if (m_player->view ())
-        static_cast <View *> (m_player->view ())->viewArea ()->repaint ();
-}
-
 bool Source::requestPlayURL (NodePtr mrl) {
     //kdDebug() << "Source::requestPlayURL " << mrl->mrl ()->src << endl;
     if (m_player->process ()->state () > Process::Ready) {
@@ -1146,9 +1121,27 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
             setPosition (0);
             emit stopPlaying ();
         } else if (news == Process::Ready) {
-            if (olds > Process::Ready)
-                playURLDone ();
-            else
+            if (olds > Process::Ready) {
+                if (p->mrl ()->active ()) // if cause is eof
+                    p->mrl ()->finish (); // set node to finished
+                if (m_back_request && m_back_request->isMrl ()) { // jump in pl
+                    m_current = m_back_request;
+                    if (m_current->id > SMIL::id_node_first &&
+                            m_current->id < SMIL::id_node_last) {
+                        // don't mess with SMIL, just play the damn link
+                        playCurrent ();
+                    } else {
+                        // sanitize pl having all parents of current activated
+                        m_document->reset (); // deactivate everything
+                        for (NodePtr p = m_current->parentNode(); p; p = p->parentNode())
+                            p->setState (Element::state_activated);
+                        m_current->activate (); // calls requestPlayUrl
+                    }
+                    m_back_request = 0L;
+                }
+                if (m_player->view ())
+                    static_cast<View*>(m_player->view())->viewArea()->repaint();
+            } else
                 QTimer::singleShot (0, this, SLOT (playCurrent ()));
         }
     }
@@ -1516,11 +1509,6 @@ void URLSource::playCurrent () {
 
 KDE_NO_EXPORT void URLSource::play () {
     Source::play ();
-}
-
-KDE_NO_EXPORT void URLSource::playURLDone () {
-    //kdDebug () << "URLSource::playURLDone" << endl;
-    Source::playURLDone (); // for now
 }
 
 //-----------------------------------------------------------------------------

@@ -194,7 +194,7 @@ void Node::reset () {
     }
 }
 
-void Node::childBegan (NodePtr child) {
+void Node::childBegan (NodePtr /*child*/) {
 }
 
 void Node::childDone (NodePtr child) {
@@ -667,6 +667,13 @@ KDE_NO_EXPORT NodePtr ASX::Entry::realMrl () {
         if (e->isMrl ())
             return e;
     return m_self;
+}
+
+KDE_NO_EXPORT void ASX::Entry::activate () {
+    NodePtr mrl = realMrl ();
+    if (mrl != self ())
+        mrl->setState (state_activated);
+    Mrl::activate ();
 }
 
 //-----------------------------------------------------------------------------

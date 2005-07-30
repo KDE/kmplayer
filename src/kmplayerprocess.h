@@ -67,6 +67,7 @@ public:
     virtual bool grabPicture (const KURL & url, int pos);
     bool supports (const char * source) const;
     State state () const { return m_state; }
+    NodePtr mrl () const { return m_mrl; }
 signals:
     void grabReady (const QString & path);
 public slots:
