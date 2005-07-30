@@ -91,7 +91,6 @@ public slots:
     void playCurrent ();
     void toggleConnected ();
     void volumeChanged (int);
-    void playURLDone ();
 private slots:
     void keyUp ();
     void keyDown ();

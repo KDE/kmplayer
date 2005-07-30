@@ -716,16 +716,19 @@ KDE_NO_EXPORT void TVDeviceScannerSource::play () {
         deactivate ();
 }
 
-KDE_NO_EXPORT void TVDeviceScannerSource::playURLDone () {
-    TVDevice * dev = 0L;
-    kdDebug () << "TVDeviceScannerSource::playURLDone " << m_tvdevice->hasChildNodes () << endl;
-    if (!m_tvdevice->hasChildNodes ())
-        m_tvsource->document ()->removeChild (m_tvdevice->self ());
-    else
-        dev = m_tvdevice;
-    m_tvdevice = 0L;
-    m_player->setSource (m_old_source);
-    emit scanFinished (dev);
+KDE_NO_EXPORT void TVDeviceScannerSource::stateChange (KMPlayer::Process * p, KMPlayer::Process::State os, KMPlayer::Process::State ns) {
+    if (ns == KMPlayer::Process::Ready && os > KMPlayer::Process::Ready) {
+        TVDevice * dev = 0L;
+        kdDebug () << "scanning done " << m_tvdevice->hasChildNodes () << endl;
+        if (!m_tvdevice->hasChildNodes ())
+            m_tvsource->document ()->removeChild (m_tvdevice->self ());
+        else
+            dev = m_tvdevice;
+        m_tvdevice = 0L;
+        m_player->setSource (m_old_source);
+        emit scanFinished (dev);
+    }
+    KMPlayer::Source::stateChange (p, os, ns);
 }
 
 #include "kmplayertvsource.moc"

@@ -93,7 +93,7 @@ public:
     void setPosition (int pos);
     virtual void setIdentified (bool b = true);
     // backend process state changed
-    void stateChange (Process *, Process::State olds, Process::State nwstate);
+    virtual void stateChange (Process *, Process::State os, Process::State ns);
     KDE_NO_EXPORT void setAutoPlay (bool b) { m_auto_play = b; }
     void setTitle (const QString & title);
     void setLoading (int percentage) { emit loaded (percentage); }
