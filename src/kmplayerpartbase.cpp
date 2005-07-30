@@ -827,7 +827,7 @@ void Source::playURLDone () {
         }
         m_back_request = 0L;
     } else {
-        Mrl * mrl = m_current ? m_current->mrl ()->realMrl ()->mrl () : 0L;
+        Mrl * mrl = m_current ? m_current->mrl () : 0L;
         if (mrl)
             mrl->deactivate ();
     }
