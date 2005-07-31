@@ -851,7 +851,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view)
     addColumn (QString::null);
     header()->hide ();
     setTreeStepSize (15);
-    setRootIsDecorated (true);
+    //setRootIsDecorated (true);
     setSorting (-1);
     setAcceptDrops (true);
     setDropVisualizer (true);
@@ -863,6 +863,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view)
     unknown_pix = KGlobal::iconLoader ()->loadIcon (QString ("unknown"), KIcon::Small);
     menu_pix = KGlobal::iconLoader ()->loadIcon (QString ("showmenu"), KIcon::Small);
     config_pix = KGlobal::iconLoader ()->loadIcon (QString ("configure"), KIcon::Small);
+    url_pix = KGlobal::iconLoader ()->loadIcon (QString ("www"), KIcon::Small);
     m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("editcopy"), KIcon::Small, 0, true), i18n ("&Copy to Clipboard"), this, SLOT (copyToClipboard ()), 0, 0);
     m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("bookmark_add"), KIcon::Small, 0, true), i18n ("&Add Bookmark"), this, SLOT (addBookMark ()), 0, 1);
     m_itemmenu->insertItem (i18n ("&Show all"), this, SLOT (toggleShowAllNodes ()), 0, 2);
@@ -895,9 +896,7 @@ void PlayListView::populate (NodePtr e, NodePtr focus, QListViewItem * item, QLi
             text = mrl->pretty_name;
     } else if (!strcmp (e->nodeName (), "#text"))
         text = e->nodeValue ();
-    QPixmap & pix = e->isMrl() ? video_pix : (e->hasChildNodes ()) ? (e->auxiliaryNode () ? auxiliary_pix : folder_pix) : unknown_pix;
     item->setText(0, text);
-    item->setPixmap (0, pix);
     if (focus == e)
         *curitem = item;
     if (e->active ())
@@ -923,6 +922,8 @@ void PlayListView::populate (NodePtr e, NodePtr focus, QListViewItem * item, QLi
             }
         }
     }
+    QPixmap & pix = e->isMrl() ? video_pix : (item->firstChild ()) ? (e->auxiliaryNode () ? auxiliary_pix : folder_pix) : unknown_pix;
+    item->setPixmap (0, pix);
 }
 
 void PlayListView::updateTree (NodePtr root, NodePtr active) {
@@ -933,7 +934,11 @@ void PlayListView::updateTree (NodePtr root, NodePtr active) {
     clear ();
     if (!root) return;
     QListViewItem * curitem = 0L;
-    populate (root, active, new ListViewItem (this, root), &curitem);
+    ListViewItem * rootitem = new ListViewItem (this, root);
+    populate (root, active, rootitem, &curitem);
+    if (rootitem->firstChild () && !rootitem->isOpen ())
+        setOpen (rootitem, true);
+    rootitem->setPixmap (0, url_pix);
     if (curitem) {
         setSelected (curitem, true);
         ensureItemVisible (curitem);

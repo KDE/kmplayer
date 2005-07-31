@@ -838,7 +838,11 @@ void Source::stateElementChanged (NodePtr elm) {
             //a SMIL movies stopped by SMIL events rather than movie just ending
             m_player->process ()->stop ();
     }
-    m_player->updateTree ();
+    if (elm->expose () && (elm->state == Element::state_activated ||
+                           elm->state == Element::state_deactivated))
+        m_player->updateTree ();
+    else if (m_player->view ()) // only updates the state_began changes (if any)
+        static_cast <View*> (m_player->view())->playList ()->triggerUpdate ();
 }
 
 void Source::setEventDispatcher (NodePtr e) {

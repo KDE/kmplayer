@@ -111,6 +111,7 @@ private:
     QPixmap unknown_pix;
     QPixmap menu_pix;
     QPixmap config_pix;
+    QPixmap url_pix;
     QColor m_active_color;
     bool m_show_all_nodes;
     bool m_have_dark_nodes;
