@@ -316,9 +316,9 @@ struct IntroSource : public KMPlayer::Source {
     KDE_NO_EXPORT QString prettyName () { return QString ("Intro"); }
     void activate ();
     void deactivate ();
-    void playURLDone ();
     void stateElementChanged (KMPlayer::NodePtr node);
     bool deactivated;
+    bool finished;
 };
 
 KDE_NO_EXPORT void IntroSource::activate () {
@@ -356,12 +356,13 @@ KDE_NO_EXPORT void IntroSource::activate () {
             emit startPlaying ();
         }
     }
-    deactivated = false;
+    deactivated = finished = false;
 }
 
 KDE_NO_EXPORT void IntroSource::stateElementChanged (KMPlayer::NodePtr node) {
     if (node->state == KMPlayer::Node::state_deactivated && node == m_document){
         m_document->reset ();
+        finished = true;
         if (m_part->view ()) {
             static_cast <KMPlayer::View *> (m_part->view ())->docArea ()->readDockConfig (m_part->config (), QString ("Window Layout"));
             m_part->view ()->layout ()->activate ();
@@ -374,13 +375,8 @@ KDE_NO_EXPORT void IntroSource::stateElementChanged (KMPlayer::NodePtr node) {
 
 KDE_NO_EXPORT void IntroSource::deactivate () {
     deactivated = true;
-    QTimer::singleShot (0, this, SLOT (playURLDone()));
-}
-
-KDE_NO_EXPORT void IntroSource::playURLDone () {
-    if (m_document)
-        m_document->document ()->dispose ();
-    m_document = 0L;
+    if (!finished) // user opens a source while introducing
+        m_document->reset ();
 }
 
 KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
@@ -560,8 +556,12 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     configChanged ();
 }
 
+#include <netwm.h>
 KDE_NO_EXPORT void KMPlayerApp::minimalMode () {
+    unsigned long props = NET::WMWindowType;
+    NETWinInfo winfo (qt_xdisplay (), winId (), qt_xrootwin (), props);
     if (m_minimal_mode) {
+        winfo.setWindowType (NET::Normal);
         m_view->setNoInfoMessages (false);
         readOptions ();
         m_view->docArea ()->readDockConfig (config, QString ("Window Layout"));
@@ -575,7 +575,13 @@ KDE_NO_EXPORT void KMPlayerApp::minimalMode () {
         m_view->setViewOnly ();
         m_view->setControlPanelMode (KMPlayer::View::CP_AutoHide);
         m_view->setNoInfoMessages (true);
+#if KDE_IS_VERSION(3, 1, 90)
+        winfo.setWindowType (NET::Utility);
+#else
+        winfo.setWindowType (NET::Menu);
+#endif
     }
+    hide(); show();
     QTimer::singleShot (0, this, SLOT (zoom100 ()));
     m_minimal_mode = !m_minimal_mode;
 }
