@@ -193,54 +193,66 @@ KDE_NO_CDTOR_EXPORT Preferences::~Preferences() {
 KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *parent, Settings * settings)
 : QFrame (parent, "GeneralPage"), colors (settings->colors)
 {
-	QVBoxLayout *layout = new QVBoxLayout(this, 5, 2);
+    QVBoxLayout *layout = new QVBoxLayout(this, 5, 2);
 
-        QGroupBox *windowbox =new QGroupBox(3,Qt::Vertical,i18n("Window"),this);
-	keepSizeRatio = new QCheckBox (i18n("Keep size ratio"), windowbox, 0);
-	QWhatsThis::add(keepSizeRatio, i18n("When checked, movie will keep its aspect ratio\nwhen window is resized"));
-	dockSysTray = new QCheckBox (i18n("Dock in system tray"), windowbox, 0);
-	QWhatsThis::add (dockSysTray, i18n ("When checked, an icon of KMPlayer will be added to the system tray.\nWhen clicked it will hide KMPlayer's main window and removing KMPlayer's taskbar button."));
-        sizesChoice = new QButtonGroup (2, Qt::Vertical, windowbox);
-        new QRadioButton (i18n("Remember window size on exit"), sizesChoice);
-        new QRadioButton (i18n("Always start with fixed size"), sizesChoice);
-        QGroupBox *playbox =new QGroupBox(3, Qt::Vertical,i18n("Playing"),this);
-	loop = new QCheckBox (i18n("Loop"), playbox);
-	QWhatsThis::add(loop, i18n("Makes current movie loop"));
-	framedrop = new QCheckBox (i18n ("Allow framedrops"), playbox);
-	QWhatsThis::add (framedrop, i18n ("Allow dropping frames for better audio and video synchronization"));
-	adjustvolume = new QCheckBox(i18n("Auto set volume on start"), playbox);
-	QWhatsThis::add (adjustvolume, i18n ("When a new source is selected, the volume will be set according the volume control"));
-        QGroupBox *buttonbox =new QGroupBox(3, Qt::Vertical,i18n("Control Panel"),this);
-	showRecordButton = new QCheckBox(i18n("Show record button"), buttonbox);
-	QWhatsThis::add (showRecordButton, i18n ("Add a record button to the control buttons"));
-	showBroadcastButton = new QCheckBox (i18n ("Show broadcast button"), buttonbox);
-	QWhatsThis::add (showBroadcastButton, i18n ("Add a broadcast button to the control buttons"));
-	//autoHideSlider = new QCheckBox (i18n("Auto hide position slider"), this, 0);
+    QGroupBox *windowbox =new QGroupBox(3,Qt::Vertical,i18n("Window"),this);
+    keepSizeRatio = new QCheckBox (i18n("Keep size ratio"), windowbox, 0);
+    QWhatsThis::add(keepSizeRatio, i18n("When checked, movie will keep its aspect ratio\nwhen window is resized"));
+    dockSysTray = new QCheckBox (i18n("Dock in system tray"), windowbox, 0);
+    QWhatsThis::add (dockSysTray, i18n ("When checked, an icon of KMPlayer will be added to the system tray.\nWhen clicked it will hide KMPlayer's main window and removing KMPlayer's taskbar button."));
+    sizesChoice = new QButtonGroup (2, Qt::Vertical, windowbox);
+    new QRadioButton (i18n("Remember window size on exit"), sizesChoice);
+    new QRadioButton (i18n("Always start with fixed size"), sizesChoice);
+    QGroupBox *playbox =new QGroupBox(3, Qt::Vertical,i18n("Playing"),this);
+    loop = new QCheckBox (i18n("Loop"), playbox);
+    QWhatsThis::add(loop, i18n("Makes current movie loop"));
+    framedrop = new QCheckBox (i18n ("Allow framedrops"), playbox);
+    QWhatsThis::add (framedrop, i18n ("Allow dropping frames for better audio and video synchronization"));
+    adjustvolume = new QCheckBox(i18n("Auto set volume on start"), playbox);
+    QWhatsThis::add (adjustvolume, i18n ("When a new source is selected, the volume will be set according the volume control"));
 
-	QWidget *seekingWidget = new QWidget (buttonbox);
-	QHBoxLayout *seekingWidgetLayout = new QHBoxLayout (seekingWidget);
-	seekingWidgetLayout->addWidget(new QLabel(i18n("Forward/backward seek time:"),seekingWidget));
-	seekingWidgetLayout->addItem(new QSpacerItem(0,0,QSizePolicy::Minimum, QSizePolicy::Minimum));
-	seekTime = new QSpinBox(1, 600, 1, seekingWidget);
-	seekingWidgetLayout->addWidget(seekTime);
-        QGroupBox *colorbox=new QGroupBox(2,Qt::Horizontal,i18n("Colors"),this);
-        colorscombo = new QComboBox (colorbox);
-        for (int i = 0; i < int (ColorSetting::last_target); i++)
-            colorscombo->insertItem (colors[i].title);
-        colorscombo->setCurrentItem (0);
-        connect (colorscombo, SIGNAL (activated (int)),
-                 this, SLOT (colorItemChanged(int)));
-        colorbutton = new KColorButton (colorbox);
-        colorbutton->setColor (colors[0].color);
-        connect (colorbutton, SIGNAL (changed (const QColor &)),
-                 this, SLOT (colorCanged (const QColor &)));
-	seekingWidgetLayout->addItem(new QSpacerItem(0,0,QSizePolicy::Minimum, QSizePolicy::Minimum));
-	layout->addWidget (windowbox);
-	layout->addWidget (playbox);
-	layout->addWidget (buttonbox);
-	//layout->addWidget(autoHideSlider);
-	layout->addWidget (colorbox);
-        layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    QGroupBox * gbox =new QGroupBox (1, Qt::Vertical, i18n("Control Panel"), this);
+    QWidget * bbox =new QWidget (gbox);
+    //QGroupBox * bbox = gbox;
+    QGridLayout * gridlayout = new QGridLayout (bbox, 3, 2);
+    showConfigButton = new QCheckBox(i18n("Show config button"), bbox);
+    QWhatsThis::add (showConfigButton, i18n ("Add a button that will popup a config menu"));
+    showPlaylistButton = new QCheckBox(i18n("Show playlist button"), bbox);
+    QWhatsThis::add (showPlaylistButton, i18n ("Add a playlist button to the control buttons"));
+    showRecordButton = new QCheckBox(i18n("Show record button"), bbox);
+    QWhatsThis::add (showRecordButton, i18n ("Add a record button to the control buttons"));
+    showBroadcastButton = new QCheckBox (i18n ("Show broadcast button"), bbox);
+    QWhatsThis::add (showBroadcastButton, i18n ("Add a broadcast button to the control buttons"));
+    gridlayout->addWidget (showConfigButton, 0, 0);
+    gridlayout->addWidget (showPlaylistButton, 0, 1);
+    gridlayout->addWidget (showRecordButton, 1, 0);
+    gridlayout->addWidget (showBroadcastButton, 1, 1);
+    //QWidget *seekingWidget = new QWidget (bbox);
+    QHBoxLayout *seekLayout = new QHBoxLayout (bbox);
+    seekLayout->addWidget(new QLabel(i18n("Forward/backward seek time:"),bbox));
+    seekLayout->addItem(new QSpacerItem(0,0,QSizePolicy::Minimum, QSizePolicy::Minimum));
+    seekTime = new QSpinBox(1, 600, 1, bbox);
+    seekLayout->addWidget(seekTime);
+    seekLayout->addItem(new QSpacerItem(0,0,QSizePolicy::Minimum, QSizePolicy::Minimum));
+    gridlayout->addMultiCellLayout (seekLayout, 2, 2, 0, 1);
+
+    QGroupBox *colorbox=new QGroupBox(2,Qt::Horizontal,i18n("Colors"),this);
+    colorscombo = new QComboBox (colorbox);
+    for (int i = 0; i < int (ColorSetting::last_target); i++)
+        colorscombo->insertItem (colors[i].title);
+    colorscombo->setCurrentItem (0);
+    connect (colorscombo, SIGNAL (activated (int)),
+            this, SLOT (colorItemChanged(int)));
+    colorbutton = new KColorButton (colorbox);
+    colorbutton->setColor (colors[0].color);
+    connect (colorbutton, SIGNAL (changed (const QColor &)),
+            this, SLOT (colorCanged (const QColor &)));
+    layout->addWidget (windowbox);
+    layout->addWidget (playbox);
+    layout->addWidget (gbox);
+    //layout->addWidget(autoHideSlider);
+    layout->addWidget (colorbox);
+    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
 KDE_NO_EXPORT void PrefGeneralPageGeneral::colorItemChanged (int c) {

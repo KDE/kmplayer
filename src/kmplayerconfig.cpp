@@ -46,7 +46,6 @@
 #include "kmplayerconfig.h"
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
-#include "kmplayerview.h"
 #include "pref.h"
 
 using namespace KMPlayer;
@@ -125,6 +124,7 @@ static const char * strLoop = "Loop";
 static const char * strFrameDrop = "Frame Drop";
 static const char * strAdjustVolume = "Auto Adjust Volume";
 static const char * strAddConfigButton = "Add Configure Button";
+static const char * strAddPlaylistButton = "Add Playlist Button";
 static const char * strAddRecordButton = "Add Record Button";
 static const char * strAddBroadcastButton = "Add Broadcast Button";
 static const char * strPostMPlayer090 = "Post MPlayer 0.90";
@@ -218,8 +218,6 @@ View * Settings::defaultView () {
 }
 
 KDE_NO_EXPORT void Settings::readConfig () {
-    View *view = defaultView ();
-
     m_config->setGroup (strGeneralGroup);
     no_intro = m_config->readBoolEntry (strNoIntro, false);
     urllist = m_config->readListEntry (strURLList, ';');
@@ -238,7 +236,6 @@ KDE_NO_EXPORT void Settings::readConfig () {
 
     m_config->setGroup (strMPlayerGroup);
     sizeratio = m_config->readBoolEntry (strKeepSizeRatio, true);
-    view->setKeepSizeRatio (sizeratio);
     remembersize = m_config->readBoolEntry (strRememberSize, true);
     docksystray = m_config->readBoolEntry (strDockSysTray, true);
     loop = m_config->readBoolEntry (strLoop, false);
@@ -246,16 +243,9 @@ KDE_NO_EXPORT void Settings::readConfig () {
     autoadjustvolume = m_config->readBoolEntry (strAdjustVolume, true);
     mplayerpost090 = m_config->readBoolEntry (strPostMPlayer090, true);
     showcnfbutton = m_config->readBoolEntry (strAddConfigButton, true);
-    if (showcnfbutton)
-        view->controlPanel()->button (ControlPanel::button_config)->show();
-    else
-        view->controlPanel()->button (ControlPanel::button_config)->hide();
     showrecordbutton = m_config->readBoolEntry (strAddRecordButton, true);
     showbroadcastbutton = m_config->readBoolEntry (strAddBroadcastButton, true);
-    if (showrecordbutton)
-        view->controlPanel()->button (ControlPanel::button_record)->show();
-    else
-        view->controlPanel()->button (ControlPanel::button_record)->hide();
+    showplaylistbutton = m_config->readBoolEntry (strAddPlaylistButton, true);
     seektime = m_config->readNumEntry (strSeekTime, 10);
     dvddevice = m_config->readEntry (strDVDDevice, "/dev/dvd");
     vcddevice = m_config->readEntry (strVCDDevice, "/dev/cdrom");
@@ -308,6 +298,7 @@ KDE_NO_EXPORT void Settings::readConfig () {
 
     for (PreferencesPage * p = pagelist; p; p = p->next)
         p->read (m_config);
+    emit configChanged ();
 }
 
 KDE_NO_EXPORT bool Settings::createDialog () {
@@ -366,7 +357,8 @@ void Settings::show (const char * pagename) {
     configdialog->m_GeneralPageGeneral->framedrop->setChecked (framedrop);
     configdialog->m_GeneralPageGeneral->adjustvolume->setChecked (autoadjustvolume);
     //configdialog->m_GeneralPageGeneral->autoHideSlider->setChecked (autohideslider);
-    //configdialog->addConfigButton->setChecked (showcnfbutton);	//not
+    configdialog->m_GeneralPageGeneral->showConfigButton->setChecked (showcnfbutton);
+    configdialog->m_GeneralPageGeneral->showPlaylistButton->setChecked (showplaylistbutton);
     configdialog->m_GeneralPageGeneral->showRecordButton->setChecked (showrecordbutton);
     configdialog->m_GeneralPageGeneral->showBroadcastButton->setChecked (showbroadcastbutton);
     configdialog->m_GeneralPageGeneral->seekTime->setValue(seektime);
@@ -449,8 +441,6 @@ void Settings::show (const char * pagename) {
 }
 
 void Settings::writeConfig () {
-    View *view = static_cast <View *> (m_player->view ());
-
     m_config->setGroup (strGeneralGroup);
     m_config->writeEntry (strURLList, urllist, ';');
     m_config->writeEntry (strSubURLList, sub_urllist, ';');
@@ -465,7 +455,7 @@ void Settings::writeConfig () {
     for (int i = 0; i < int (ColorSetting::last_target); i++)
         m_config->writeEntry (colors[i].option, colors[i].color);
     m_config->setGroup (strMPlayerGroup);
-    m_config->writeEntry (strKeepSizeRatio, view->keepSizeRatio ());
+    m_config->writeEntry (strKeepSizeRatio, sizeratio);
     m_config->writeEntry (strRememberSize, remembersize);
     m_config->writeEntry (strDockSysTray, docksystray);
     m_config->writeEntry (strLoop, loop);
@@ -476,6 +466,7 @@ void Settings::writeConfig () {
     m_config->writeEntry (strAoDriver, audiodriver);
     m_config->writeEntry (strAllowHref, allowhref);
     m_config->writeEntry (strAddConfigButton, showcnfbutton);
+    m_config->writeEntry (strAddPlaylistButton, showplaylistbutton);
     m_config->writeEntry (strAddRecordButton, showrecordbutton);
     m_config->writeEntry (strAddBroadcastButton, showbroadcastbutton);
 
@@ -532,9 +523,6 @@ void Settings::writeConfig () {
 }
 
 KDE_NO_EXPORT void Settings::okPressed () {
-    View *view = static_cast <View *> (m_player->view ());
-    if (!view)
-        return;
     bool urlchanged = configdialog->m_SourcePageURL->changed;
     bool playerchanged = false;
     if (urlchanged) {
@@ -590,25 +578,16 @@ KDE_NO_EXPORT void Settings::okPressed () {
         if (!configdialog->m_SourcePageURL->sub_urllist->text (i).isEmpty ())
             sub_urllist.push_back (configdialog->m_SourcePageURL->sub_urllist->text (i));
     sizeratio = configdialog->m_GeneralPageGeneral->keepSizeRatio->isChecked ();
-    m_player->keepMovieAspect (sizeratio);
     remembersize=!configdialog->m_GeneralPageGeneral->sizesChoice->selectedId();
     docksystray = configdialog->m_GeneralPageGeneral->dockSysTray->isChecked ();
     loop = configdialog->m_GeneralPageGeneral->loop->isChecked ();
     framedrop = configdialog->m_GeneralPageGeneral->framedrop->isChecked ();
     autoadjustvolume = configdialog->m_GeneralPageGeneral->adjustvolume->isChecked ();
-    //showcnfbutton = configdialog->m_GeneralPageGeneral->addConfigButton->isChecked ();
-    showcnfbutton = true;
-    if (showcnfbutton)
-	view->controlPanel()->button (ControlPanel::button_config)->show();
-    else
-	view->controlPanel()->button (ControlPanel::button_config)->hide();
+    showcnfbutton = configdialog->m_GeneralPageGeneral->showConfigButton->isChecked ();
+    showplaylistbutton = configdialog->m_GeneralPageGeneral->showPlaylistButton->isChecked ();
     showrecordbutton = configdialog->m_GeneralPageGeneral->showRecordButton->isChecked ();
-    view->controlPanel()->enableRecordButtons (showrecordbutton);
     showbroadcastbutton = configdialog->m_GeneralPageGeneral->showBroadcastButton->isChecked ();
-    if (!showbroadcastbutton)
-        view->controlPanel ()->broadcastButton ()->hide ();
     seektime = configdialog->m_GeneralPageGeneral->seekTime->value();
-    applyColorSetting (true);
 
     videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentItem();
     audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentItem();

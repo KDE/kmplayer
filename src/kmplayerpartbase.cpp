@@ -147,6 +147,7 @@ KDE_NO_EXPORT void PartBase::addBookMark (const QString & t, const QString & url
 void PartBase::init (KActionCollection * action_collection) {
     KParts::Part::setWidget (m_view);
     m_view->init ();
+    connect(m_settings, SIGNAL(configChanged()), this, SLOT(settingsChanged()));
     m_settings->readConfig ();
     m_settings->applyColorSetting (false);
     m_bPosSliderPressed = false;
@@ -196,6 +197,24 @@ PartBase::~PartBase () {
     delete m_bookmark_menu;
     delete m_bookmark_manager;
     delete m_bookmark_owner;
+}
+
+void PartBase::settingsChanged () {
+    if (!m_view)
+        return;
+    if (m_settings->showcnfbutton)
+        m_view->controlPanel()->button (ControlPanel::button_config)->show();
+    else
+        m_view->controlPanel()->button (ControlPanel::button_config)->hide();
+    m_view->controlPanel()->enableRecordButtons (m_settings->showrecordbutton);
+    if (m_settings->showplaylistbutton)
+        m_view->controlPanel()->button (ControlPanel::button_playlist)->show();
+    else
+        m_view->controlPanel()->button (ControlPanel::button_playlist)->hide();
+    if (!m_settings->showbroadcastbutton)
+        m_view->controlPanel ()->broadcastButton ()->hide ();
+    keepMovieAspect (m_settings->sizeratio);
+    m_settings->applyColorSetting (true);
 }
 
 KMediaPlayer::View* PartBase::view () {
@@ -316,6 +335,10 @@ void PartBase::setSource (Source * _source) {
     if (m_view) {
         m_view->controlPanel ()->setAutoControls (true);
         m_view->controlPanel ()->enableRecordButtons (m_settings->showrecordbutton);
+        if (!m_settings->showcnfbutton)
+            m_view->controlPanel()->button(ControlPanel::button_config)->hide();
+        if (!m_settings->showplaylistbutton)
+          m_view->controlPanel()->button(ControlPanel::button_playlist)->hide();
     }
     QString p = m_settings->backends [_source->name()];
     if (p.isEmpty ()) {
@@ -407,9 +430,11 @@ bool PartBase::openFile () {
 }
 
 void PartBase::keepMovieAspect (bool b) {
-    if (!m_view || !m_source) return;
-    m_view->setKeepSizeRatio (b);
-    m_view->viewer ()->setAspect (b ? m_source->aspect () : 0.0);
+    if (m_view) {
+        m_view->setKeepSizeRatio (b);
+        if (m_source)
+            m_view->viewer ()->setAspect (b ? m_source->aspect () : 0.0);
+    }
 }
 
 static const char * statemap [] = {

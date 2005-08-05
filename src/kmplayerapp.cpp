@@ -547,9 +547,6 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     config->setGroup ("Pipe Command");
     static_cast <KMPlayerPipeSource *> (m_player->sources () ["pipesource"])->setCommand (config->readEntry ("Command1", ""));
 
-    keepSizeRatio ();
-    keepSizeRatio (); // Lazy, I know :)
-
     // initialize the recent file list
     fileOpenRecent->loadEntries(config,"Recent Files");
 

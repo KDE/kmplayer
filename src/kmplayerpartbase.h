@@ -194,6 +194,7 @@ protected slots:
     virtual void playingStopped ();
     void recordingStarted ();
     void recordingStopped ();
+    void settingsChanged ();
 protected:
     KConfig * m_config;
     QGuardedPtr <View> m_view;

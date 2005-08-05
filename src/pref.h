@@ -99,6 +99,8 @@ public:
     QButtonGroup *sizesChoice;
     QCheckBox *dockSysTray;
     QCheckBox *loop;
+    QCheckBox *showConfigButton;
+    QCheckBox *showPlaylistButton;
     QCheckBox *showRecordButton;
     QCheckBox *showBroadcastButton;
     QCheckBox *framedrop;
