@@ -109,13 +109,14 @@ private slots:
     void broadcastStarted ();
     void broadcastStopped ();
     void playerStarted ();
-    void minimalMode ();
+    void slotMinimalMode ();
     void slotConfigureKeys();
     void slotClearHistory ();
     void windowVideoConsoleToggled (int wt);
 
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
+    void minimalMode (bool deco=true);
     KConfig * config;
     KSystemTray * m_systray;
     KMPlayer::View * m_view;

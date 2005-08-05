@@ -133,10 +133,10 @@ KDE_NO_EXPORT void KMPlayerApp::initActions()
     toggleView = new KAction (i18n ("C&onsole"), QString ("konsole"), KShortcut (), m_player->view(), SLOT (toggleVideoConsoleWindow ()), actionCollection (), "view_video");
     //new KAction (i18n ("V&ideo"), QString ("video"), KShortcut (), m_view, SLOT (toggleVideoConsoleWindow ()), actionCollection (), "view_video");
     new KAction (i18n ("Pla&y List"), QString ("player_playlist"), KShortcut (), m_player, SLOT (showPlayListWindow ()), actionCollection (), "view_playlist");
-    new KAction (i18n ("Minimal mode"), QString ("empty"), KShortcut (), this, SLOT (minimalMode ()), actionCollection (), "view_minimal");
+    new KAction (i18n ("Minimal mode"), QString ("empty"), KShortcut (), this, SLOT (slotMinimalMode ()), actionCollection (), "view_minimal");
     /*KAction *preference =*/ KStdAction::preferences (m_player, SLOT (showConfigDialog ()), actionCollection(), "configure");
     new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), actionCollection (), "view_zoom_50");
-    new KAction (i18n ("100%"), 0, 0, this, SLOT (zoom100 ()), actionCollection (), "view_zoom_100");
+    new KAction (i18n ("100%"), QString ("viewmagfit"), KShortcut (), this, SLOT (zoom100 ()), actionCollection (), "view_zoom_100");
     new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), actionCollection (), "view_zoom_150");
     viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), actionCollection (), "view_keep_ratio");
 #if KDE_IS_VERSION(3,1,90)
@@ -554,7 +554,7 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
 }
 
 #include <netwm.h>
-KDE_NO_EXPORT void KMPlayerApp::minimalMode () {
+KDE_NO_EXPORT void KMPlayerApp::minimalMode (bool deco) {
     unsigned long props = NET::WMWindowType;
     NETWinInfo winfo (qt_xdisplay (), winId (), qt_xrootwin (), props);
     if (m_minimal_mode) {
@@ -572,15 +572,21 @@ KDE_NO_EXPORT void KMPlayerApp::minimalMode () {
         m_view->setViewOnly ();
         m_view->setControlPanelMode (KMPlayer::View::CP_AutoHide);
         m_view->setNoInfoMessages (true);
+        if (deco)
 #if KDE_IS_VERSION(3, 1, 90)
-        winfo.setWindowType (NET::Utility);
+            winfo.setWindowType (NET::Utility);
 #else
-        winfo.setWindowType (NET::Menu);
+            winfo.setWindowType (NET::Menu);
 #endif
     }
-    hide(); show();
+    if (deco)
+        hide(); show();
     QTimer::singleShot (0, this, SLOT (zoom100 ()));
     m_minimal_mode = !m_minimal_mode;
+}
+
+KDE_NO_EXPORT void KMPlayerApp::slotMinimalMode () {
+    minimalMode (true);
 }
 
 struct ExitSource : public KMPlayer::Source {
@@ -646,7 +652,7 @@ KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
     disconnect(m_player, SIGNAL(sourceDimensionChanged()),this,SLOT(zoom100()));
     m_played_exit = true;
     if (!m_minimal_mode)
-        minimalMode ();
+        minimalMode (false);
     m_player->setSource (new ExitSource (m_player));
     return false;
 }
