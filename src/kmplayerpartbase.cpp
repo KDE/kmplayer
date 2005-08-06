@@ -814,6 +814,8 @@ void Source::playCurrent () {
         emit endOfPlayItems ();
     } else if (m_current->state == Element::state_deferred) {
         m_current->undefer ();
+    } else if (m_player->process ()->state () == Process::NotRunning) {
+        m_player->process ()->ready (static_cast <View *> (m_player->view ())->viewer ());
     } else if (m_player->process ()) {
         m_player->process ()->play (this, m_current->mrl ()->realMrl ());
     }

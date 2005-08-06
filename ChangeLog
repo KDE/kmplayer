@@ -1,3 +1,20 @@
+Changes since version 0.9.0b
+- Added minimal mode option that hides playlist, status- and menubar and
+  autohides the controlpanel
+- Moved playlist option from popupmenu to controlpanel and a configure option
+  whether to show this button
+Changes since version 0.9.0a
+- Removed decoration (+ and - for tree) from root item in playlist, saving
+  16px horizontal. Also set icon for this item to an url.
+- Removed extra text/html mimetype check for playlist detection. Seems some
+  sites use this mimetype for ASX too.
+- Fixed random navigating in ASX playlists.
+- Don't show a folder icon when playlist item has no childeren and isn't a
+  multi-media link either.
+- Make playlist menu/toolbar item a toggle for show and hide.
+- Combine console/video toolbar buttons and menu items as one toggle and get
+  rid of 'View' submenu in popup menu. Fill gap on toolbar with zoom100%
+- Clear history didn't clear 'Recent files' permanently.
 Changes since version 0.9.0
 - Fixed last minute change that broke almost all Podcast RSS support
 Changes since version 0.9.0-rc1
