@@ -324,7 +324,7 @@ struct IntroSource : public KMPlayer::Source {
 
 KDE_NO_EXPORT void IntroSource::activate () {
     m_document = (new KMPlayer::Document (QString (""), this))->self ();
-    QString introfile = locate ("data", "kmplayer/intro");
+    QString introfile = locate ("data", "kmplayer/intro.xml");
     QFile file (introfile);
     if (file.exists () && file.open (IO_ReadOnly)) {
         QTextStream ts (&file);
@@ -610,7 +610,7 @@ struct ExitSource : public KMPlayer::Source {
 
 KDE_NO_EXPORT void ExitSource::activate () {
     m_document = (new KMPlayer::Document (QString (""), this))->self ();
-    QString exitfile = locate ("data", "kmplayer/exit");
+    QString exitfile = locate ("data", "kmplayer/exit.xml");
     QFile file (exitfile);
     if (file.exists () && file.open (IO_ReadOnly)) {
         QTextStream ts (&file);
