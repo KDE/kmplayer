@@ -1019,11 +1019,11 @@ bool SimpleSAXParser::nextToken () {
                         token->string = QChar (169);
                     else
                         token->string = QChar ('?');// TODO lookup more ..
+                    token->token = tok_text;
                     if (tmp) { // cut out the & xxx ; tokens
                         tmp->next = token;
                         token = tmp;
                     }
-                    token->token = tok_text;
                     //kdDebug () << "entity found "<<prev_token->string << endl;
                 } else if (token->token == tok_hash &&
                         nextToken () && token->token == tok_text && 
