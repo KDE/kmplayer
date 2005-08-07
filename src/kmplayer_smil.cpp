@@ -1171,7 +1171,7 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
         }
     if (!head) {
         SMIL::Head * h = new SMIL::Head (m_doc);
-        appendChild (h->self ());
+        insertBefore (h->self (), firstChild ());
         h->setAuxiliaryNode (true);
         h->closed ();
         head = h->self ();
