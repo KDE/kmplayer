@@ -75,6 +75,37 @@ to:kde-user@kde.org">The &kde; User Mailing list</ulink>.</para>
 <para><emphasis>The &kde; Team</emphasis></para>
 
 </chapter>
+<chapter id="settings">
+<title>Settings</title>
+<section>
+    <title>Intro/exit animation</title>
+    <para>
+        Disabling the starting/ending animation can be configured by editing <filename>~/.kde/share/config/kmplayerrc</filename> and modify
+        <programlisting>
+[General Options]
+  No Intro=0
+    </programlisting>
+    the above option to '1'. Just add this option if it's not there yet.
+</para>
+<para>
+    It's also possible to set an alternative animation. KMPlayer will look at resp. <filename>~/.kde/share/apps/kmplayer/intro.xml</filename> and <filename>~/.kde/share/apps/kmplayer/exit.xml</filename>. The format has to be a supported <acronym>XML</acronym> file.
+</para>
+<para>
+    The intro animation doesn't have to be a short one, because it will automatically end when another source is opened. Of course for the exit animation this would be a bit annoying, however the user can always end the application twice.
+</para>
+<para>
+    A simple example of an intro, showing your favorite photo can be
+    <programlisting>
+&lt;smil&gt;
+  &lt;body&gt;
+    &lt;img dur="indefinite" src="file:///home/koos/mum.gif" fit="meet"/&gt;
+  &lt;/body&gt;
+&lt;/smil&gt;
+    </programlisting>
+    In KMPlayer's source package, in the <filename>tests/</filename> are some examples of <acronym>SMIL</acronym> that KMPlayer supports.
+</para>
+</section>
+</chapter>
 <chapter id="sources">
 <title>The playable sources</title>
 <para>
