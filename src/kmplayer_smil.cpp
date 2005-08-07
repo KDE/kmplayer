@@ -69,20 +69,21 @@ const unsigned int event_pointer_moved = (unsigned int) -11;
  */
 //-----------------------------------------------------------------------------
 
-static NodePtr findRegion (NodePtr p, const QString & id) {
-    for (NodePtr r = p->firstChild (); r; r = r->nextSibling ()) {
-        if (r->isElementNode ()) {
-            QString a = convertNode <Element> (r)->getAttribute ("id");
+static SMIL::Region * findRegion (NodePtr p, const QString & id) {
+    for (NodePtr c = p->firstChild (); c; c = c->nextSibling ()) {
+        if (c->id == SMIL::id_node_region) {
+            SMIL::Region * r = convertNode <SMIL::Region> (c);
+            QString a = r->getAttribute ("id");
             if ((a.isEmpty () && id.isEmpty ()) || a == id) {
                 //kdDebug () << "MediaType region found " << id << endl;
                 return r;
             }
         }
-        NodePtr r1 = findRegion (r, id);
-        if (r1)
-            return r1;
+        SMIL::Region * r = findRegion (c, id);
+        if (r)
+            return r;
     }
-    return NodePtr ();
+    return 0L;
 }
 
 //-----------------------------------------------------------------------------
@@ -386,6 +387,8 @@ KDE_NO_EXPORT void TimedRuntime::propagateStop (bool forced) {
         if (durations [end_time].durval > duration_last_option &&
                 durations [end_time].durval != duration_media)
             return; // wait for event
+        if (durations [duration_time].durval == duration_infinite)
+            return; // this may take a while :-)
         if (dur_timer)
             return; // timerEvent will call us with forced=true
         // bail out if a child still running
@@ -988,12 +991,13 @@ KDE_NO_EXPORT void MediaTypeRuntime::started () {
             break;
         }
     if (e) {
-        region_node = findRegion (e, param (QString::fromLatin1 ("region")));
-        SMIL::Region * r = dynamic_cast <SMIL::Region *> (region_node.ptr ());
+        SMIL::Region * r = findRegion (e, param(QString::fromLatin1("region")));
         if (r) {
+            region_node = r->self ();
             r->addRegionUser (element);
             r->repaint ();
-        }
+        } else
+            kdWarning () << "MediaTypeRuntime::started no region found" << endl;
     }
     TimedRuntime::started ();
 }
@@ -1169,6 +1173,7 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
         SMIL::Head * h = new SMIL::Head (m_doc);
         appendChild (h->self ());
         h->setAuxiliaryNode (true);
+        h->closed ();
         head = h->self ();
     }
     for (NodePtr e = head->firstChild (); e; e = e->nextSibling ())
@@ -1252,7 +1257,7 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
             }
         }
         if (!reg_count) {
-            w_root = 100; h_root = 100; // have something to start with
+            w_root = 320; h_root = 240; // have something to start with
             SMIL::Region * r = new SMIL::Region (m_doc);
             appendChild (r->self ());
             r->setAuxiliaryNode (true);
