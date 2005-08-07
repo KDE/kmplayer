@@ -1245,7 +1245,7 @@ void View::setInfoMessage (const QString & msg) {
        m_infopanel->clear ();
     } else if (!m_no_info) {
         if (m_dock_infopanel->mayBeShow ())
-          m_dock_infopanel->manualDock(m_dock_video,KDockWidget::DockBottom,30);
+          m_dock_infopanel->manualDock(m_dock_video,KDockWidget::DockBottom,65);
         m_infopanel->setText (msg);
     }
 }
