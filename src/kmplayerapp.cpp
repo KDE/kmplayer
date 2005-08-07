@@ -33,6 +33,7 @@
 #include <qlayout.h>
 #include <qwhatsthis.h>
 #include <qtimer.h>
+#include <qfile.h>
 #include <qmetaobject.h>
 
 // include files for KDE
@@ -250,7 +251,7 @@ KDE_NO_EXPORT void KMPlayerApp::windowVideoConsoleToggled (int wt) {
 
 KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
     KMPlayer::Source * source = m_player->source ();
-    if (source->inherits ("KMPlayer::URLSource"))
+    if (!strcmp (source->name (), "urlsource"))
         recentFiles ()->addURL (source->url ());
 }
 
@@ -323,28 +324,35 @@ struct IntroSource : public KMPlayer::Source {
 
 KDE_NO_EXPORT void IntroSource::activate () {
     m_document = (new KMPlayer::Document (QString (""), this))->self ();
-    QString smil = QString::fromLatin1 ("<smil><head><layout>"
-        "<root-layout width='320' height='240' background-color='black'/>"
-        "<region id='image1' left='31.25%' top='25%' width='37.5%' height='50%' z-order='1'/>"
-        "<region id='reg1' top='10%' height='80%' z-order='2'>"
-        "<region id='image2' left='128' top='72' width='64' height='64'/>"
-        "</region>"
-        "</layout></head><body>"
-        "<img src='%1' region='image1' dur='0.5s' fit='fill'/>"
-        "<par>"
-        "<animate target='image1' attribute='width' from='37.5%' to='1%' dur='0.5' fill='freeze'/>"
-        "<animate target='image1' attribute='left' from='31.25%' to='50%' dur='0.5' fill='freeze'/>"
-        "<animate target='image1' attribute='height' from='50%' to='1%' dur='0.5' fill='freeze'/>"
-        "<animate target='image1' attribute='top' from='25%' to='50%' dur='0.5' fill='freeze'/>"
-        "<set target='image1' attribute='background-color' to='white' dur='0.5'/>"
-        "</par>"
-        "<par>"
-        "<animate target='reg1' attribute='background-color' calcMode='discrete' values='#000000;#141414;#272727;#3B3B3B;#4E4E4E;#616161;#737373;#858585;#959595;#A5A5A5;#B4B4B4;#C1C1C1;#CECECE;#D9D9D9;#E3E3E3;#EBEBEB;#F2F2F2;#F7F7F7;#FBFBFB;#FEFEFE' dur='1'/>"
-        "<img src='%2' region='image2' dur='1s' fit='hidden'/>"
-        "</par>"
-        "</body></smil>").arg (locate ("data", "kmplayer/noise.gif")).arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
-    QTextStream ts (smil.utf8 (), IO_ReadOnly);
-    KMPlayer::readXML (m_document, ts, QString::null);
+    QString introfile = locate ("data", "kmplayer/intro");
+    QFile file (introfile);
+    if (file.exists () && file.open (IO_ReadOnly)) {
+        QTextStream ts (&file);
+        KMPlayer::readXML (m_document, ts, QString::null);
+    } else {
+        QString smil = QString::fromLatin1 ("<smil><head><layout>"
+          "<root-layout width='320' height='240' background-color='black'/>"
+          "<region id='image1' left='31.25%' top='25%' width='37.5%' height='50%' z-order='1'/>"
+          "<region id='reg1' top='10%' height='80%' z-order='2'>"
+          "<region id='image2' left='128' top='72' width='64' height='64'/>"
+          "</region>"
+          "</layout></head><body>"
+          "<img src='%1' region='image1' dur='0.5s' fit='fill'/>"
+          "<par>"
+          "<animate target='image1' attribute='width' from='37.5%' to='1%' dur='0.5' fill='freeze'/>"
+          "<animate target='image1' attribute='left' from='31.25%' to='50%' dur='0.5' fill='freeze'/>"
+          "<animate target='image1' attribute='height' from='50%' to='1%' dur='0.5' fill='freeze'/>"
+          "<animate target='image1' attribute='top' from='25%' to='50%' dur='0.5' fill='freeze'/>"
+          "<set target='image1' attribute='background-color' to='white' dur='0.5'/>"
+          "</par>"
+          "<par>"
+          "<animate target='reg1' attribute='background-color' calcMode='discrete' values='#000000;#141414;#272727;#3B3B3B;#4E4E4E;#616161;#737373;#858585;#959595;#A5A5A5;#B4B4B4;#C1C1C1;#CECECE;#D9D9D9;#E3E3E3;#EBEBEB;#F2F2F2;#F7F7F7;#FBFBFB;#FEFEFE' dur='1'/>"
+          "<img src='%2' region='image2' dur='1s' fit='hidden'/>"
+          "</par>"
+          "</body></smil>").arg (locate ("data", "kmplayer/noise.gif")).arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
+        QTextStream ts (smil.utf8 (), IO_ReadOnly);
+        KMPlayer::readXML (m_document, ts, QString::null);
+    }
     m_document->normalize ();
     m_current = m_document; //mrl->self ();
     if (m_document && m_document->firstChild ()) {
@@ -602,19 +610,26 @@ struct ExitSource : public KMPlayer::Source {
 
 KDE_NO_EXPORT void ExitSource::activate () {
     m_document = (new KMPlayer::Document (QString (""), this))->self ();
-    QString smil = QString::fromLatin1 ("<smil><head><layout>"
-        "<root-layout width='320' height='240' background-color='black'/>"
-        "<region id='reg1' top='10%' height='80%' z-order='2'>"
-        "<region id='image' left='128' top='72' width='64' height='64'/>"
-        "</region>"
-        "</layout></head><body>"
-        "<par>"
-        "<animate target='reg1' attribute='background-color' calcMode='discrete' values='#FFFFFF;#FEFEFE;#FBFBFB;#F7F7F7;#F2F2F2;#EBEBEB;#E3E3E3;#D9D9D9;#CECECE;#C1C1C1;#B4B4B4;#A5A5A5;#959595;#858585;#737373;#616161;#4E4E4E;#3B3B3B;#272727;#141414' dur='1'/>"
-        "<img src='%2' region='image' dur='1s' fit='hidden'/>"
-        "</par>"
-        "</body></smil>").arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
-    QTextStream ts (smil.utf8 (), IO_ReadOnly);
-    KMPlayer::readXML (m_document, ts, QString::null);
+    QString exitfile = locate ("data", "kmplayer/exit");
+    QFile file (exitfile);
+    if (file.exists () && file.open (IO_ReadOnly)) {
+        QTextStream ts (&file);
+        KMPlayer::readXML (m_document, ts, QString::null);
+    } else {
+        QString smil = QString::fromLatin1 ("<smil><head><layout>"
+          "<root-layout width='320' height='240' background-color='black'/>"
+          "<region id='reg1' top='10%' height='80%' z-order='2'>"
+          "<region id='image' left='128' top='72' width='64' height='64'/>"
+          "</region>"
+          "</layout></head><body>"
+          "<par>"
+          "<animate target='reg1' attribute='background-color' calcMode='discrete' values='#FFFFFF;#FEFEFE;#FBFBFB;#F7F7F7;#F2F2F2;#EBEBEB;#E3E3E3;#D9D9D9;#CECECE;#C1C1C1;#B4B4B4;#A5A5A5;#959595;#858585;#737373;#616161;#4E4E4E;#3B3B3B;#272727;#141414' dur='1'/>"
+          "<img src='%2' region='image' dur='1s' fit='hidden'/>"
+          "</par>"
+          "</body></smil>").arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
+        QTextStream ts (smil.utf8 (), IO_ReadOnly);
+        KMPlayer::readXML (m_document, ts, QString::null);
+    }
     m_document->normalize ();
     m_current = m_document;
     if (m_document && m_document->firstChild ()) {
