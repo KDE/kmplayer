@@ -539,11 +539,14 @@ void PartBase::playListItemSelected (QListViewItem * item) {
     if (m_in_update_tree) return;
     ListViewItem * vi = static_cast <ListViewItem *> (item);
     if (vi->m_elm) {
+        m_view->setInfoMessage (vi->m_elm->innerText ());
         NodePtr mrl = depthFirstFindMrl (vi->m_elm);
         if (mrl)
             m_source->jump (mrl);
     } else if (vi->m_attr) {
         if (!strcasecmp (vi->m_attr->nodeName (), "src") ||
+                !strcasecmp (vi->m_attr->nodeName (), "href") ||
+                !strcasecmp (vi->m_attr->nodeName (), "data") ||
                 !strcasecmp (vi->m_attr->nodeName (), "value")) {
             QString src (vi->m_attr->nodeValue ());
             if (!src.isEmpty ()) {
