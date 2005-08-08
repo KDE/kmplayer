@@ -137,6 +137,7 @@ public:
 public slots:
     void fullScreen ();
     void accelActivated ();
+    void scale (int);
 protected:
     void resizeEvent (QResizeEvent *);
     void showEvent (QShowEvent *);
@@ -158,6 +159,9 @@ private:
     QRect m_repaint_rect;
     int m_mouse_invisible_timer;
     int m_repaint_timer;
+    int m_fullscreen_scale;
+    int scale_lbl_id;
+    int scale_slider_id;
     bool m_fullscreen;
 };
 
@@ -283,7 +287,6 @@ private:
     QString tmplog;
     QPixmap * m_image;
     ControlPanel * m_control_panel;
-    QLabel * m_mixer_label;
     QSlider * m_volume_slider;
     const char * m_mixer_object;
     ControlPanelMode m_controlpanel_mode;

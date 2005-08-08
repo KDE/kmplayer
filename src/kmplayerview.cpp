@@ -295,6 +295,9 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
    m_collection (new KActionCollection (this)),
    m_mouse_invisible_timer (0),
    m_repaint_timer (0),
+   m_fullscreen_scale (100),
+   scale_lbl_id (-1),
+   scale_slider_id (-1),
    m_fullscreen (false) {
     setEraseColor (QColor (0, 0, 0));
     setAcceptDrops (true);
@@ -316,11 +319,22 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
         static_cast <KDockWidget *> (m_parent)->setWidget (this);
         for (unsigned i = 0; i < m_collection->count (); ++i)
             m_collection->action (i)->setEnabled (false);
+        if (scale_lbl_id != -1) {
+            m_view->controlPanel ()->popupMenu ()->removeItem (scale_lbl_id);
+            m_view->controlPanel ()->popupMenu ()->removeItem (scale_slider_id);
+            scale_lbl_id = scale_slider_id = -1;
+        }
     } else {
         reparent (0L, 0, qApp->desktop()->screenGeometry(this).topLeft(), true);
         showFullScreen ();
         for (unsigned i = 0; i < m_collection->count (); ++i)
             m_collection->action (i)->setEnabled (true);
+        QPopupMenu * menu = m_view->controlPanel ()->popupMenu ();
+        QLabel * lbl = new QLabel (i18n ("Scale:"), menu);
+        scale_lbl_id = menu->insertItem (lbl, -1, 4);
+        QSlider * slider = new QSlider (50, 150, 10, m_fullscreen_scale, Qt::Horizontal, menu);
+        connect (slider, SIGNAL (valueChanged (int)), this, SLOT (scale (int)));
+        scale_slider_id = menu->insertItem (slider, -1, 5);
 
     }
     m_fullscreen = !m_fullscreen;
@@ -389,6 +403,11 @@ KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
         QWidget::paintEvent (pe);
 }
 
+KDE_NO_EXPORT void ViewArea::scale (int val) {
+    m_fullscreen_scale = val;
+    resizeEvent (0L);
+}
+
 KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     if (!m_view->controlPanel ()) return;
     int x =0, y = 0;
@@ -416,6 +435,12 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     // finally resize controlpanel and video widget
     if (m_view->controlPanel ()->isVisible ())
         m_view->controlPanel ()->setGeometry (0, h-hcp, w, hcp);
+    if (m_fullscreen && wws == w && hws == h) {
+        wws = wws * m_fullscreen_scale / 100;
+        hws = hws * m_fullscreen_scale / 100;
+        x += (w - wws) / 2;
+        y += (h - hws) / 2;
+    }
     if (!av_geometry_changed)
         setAudioVideoGeometry (x, y, wws, hws, 0L);
 }
@@ -1323,8 +1348,8 @@ KDE_NO_EXPORT void View::updateVolume () {
         QDataStream replystream (replydata, IO_ReadOnly);
         replystream >> volume;
         if (!m_mixer_init) {
-            m_mixer_label = new QLabel (i18n ("Volume:"), m_control_panel->popupMenu ());
-            m_control_panel->popupMenu ()->insertItem (m_mixer_label, -1, 4);
+            QLabel * mixer_label = new QLabel (i18n ("Volume:"), m_control_panel->popupMenu ());
+            m_control_panel->popupMenu ()->insertItem (mixer_label, -1, 4);
             m_volume_slider = new QSlider (0, 100, 10, volume, Qt::Horizontal, m_control_panel->popupMenu ());
             connect(m_volume_slider, SIGNAL(valueChanged(int)), this,SLOT(setVolume(int)));
             m_control_panel->popupMenu ()->insertItem (m_volume_slider, ControlPanel::menu_volume, 5);
@@ -1578,7 +1603,7 @@ KDE_NO_EXPORT bool View::x11Event (XEvent * e) {
             return true;*/
         case MotionNotify:
             if (m_playing && e->xmotion.window == m_viewer->embeddedWinId ())
-                delayedShowButtons (e->xmotion.y > m_viewer->height () -
+                delayedShowButtons (e->xmotion.y > m_view_area->height () -
                                     m_control_panel->maximumSize ().height ());
             m_view_area->mouseMoved ();
             break;
