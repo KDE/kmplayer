@@ -349,8 +349,8 @@ KDE_NO_EXPORT bool MPlayer::play (Source * source, NodePtr node) {
                 args += QString (" -idx ");
         } else {
             int cache = m_configpage->cachesize;
-            if (cache > 3 && url.protocol () != QString ("dvd") &&
-                    url.protocol () != QString ("vcd") &&
+            if (cache > 3 && url.url ().startsWith (QString ("dvd")) &&
+                    url.url ().startsWith (QString ("vcd")) &&
                     !url.url ().startsWith (QString ("tv://")))
                 args += QString ("-cache %1 ").arg (cache); 
         }
