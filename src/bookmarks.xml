@@ -22,8 +22,71 @@
    </bookmark>
   </folder>
  </folder>
- <folder folded="yes" icon="bookmark_folder" >
+ <folder folded="no" icon="bookmark_folder" >
   <title>Europe</title>
+  <folder folded="no" icon="bookmark_folder" >
+   <title>belgium</title>
+   <folder folded="no" >
+    <title>flanders</title>
+    <bookmark icon="www" href="http://mp3.streampower.be/radio1-high.mp3" >
+     <title>Radio 1</title>
+    </bookmark>
+    <bookmark icon="www" href="http://mp3.streampower.be/sporza-high.mp3" >
+     <title>Sporza</title>
+    </bookmark>
+    <bookmark icon="www" href="http://mp3.streampower.be/ra2ant-high.mp3" >
+     <title>Radio 2 Antwerpen</title>
+    </bookmark>
+    <bookmark icon="www" href="http://mp3.streampower.be/ra2vlb-high.mp3" >
+     <title>Radio 2 Vlaams-Brabant</title>
+    </bookmark>
+    <bookmark icon="www" href="http://mp3.streampower.be/ra2lim-high.mp3" >
+     <title>Radio 2 Limburg</title>
+    </bookmark>
+    <bookmark icon="www" href="http://mp3.streampower.be/ra2ovl-high.mp3" >
+     <title>Radio 2 Oost-Vlaanderen</title>
+    </bookmark>
+    <bookmark icon="www" href="http://mp3.streampower.be/ra2wvl-high.mp3" >
+     <title>Radio 2 West-Vlaanderen</title>
+    </bookmark>
+    <bookmark icon="www" href="http://mp3.streampower.be/klara-high.mp3" >
+     <title>Klara</title>
+    </bookmark>
+    <bookmark icon="www" href="http://mp3.streampower.be/klaracontinuo-high.mp3" >
+     <title>Klara Continuo</title>
+    </bookmark>
+    <bookmark icon="www" href="http://mp3.streampower.be/stubru-high.mp3" >
+     <title>Studio Brussel</title>
+    </bookmark>
+    <bookmark icon="www" href="http://mp3.streampower.be/donna-high.mp3" >
+     <title>Donna</title>
+    </bookmark>
+    <bookmark icon="www" href="http://mp3.streampower.be/donnahitbits-high.mp3" >
+     <title>Donna Hitbits</title>
+    </bookmark>
+    <bookmark icon="www" href="http://mp3.streampower.be/rvi-high.mp3" >
+     <title>RVI</title>
+    </bookmark>
+    <bookmark icon="www" href="http://stream.urgent.fm/high.ogg" >
+     <title>Urgent.fm</title>
+    </bookmark>
+    <bookmark icon="www" href="http://www.beoneradio.be/modules/desktop/streaming/pls.aspx?mid=84" >
+     <title>Be One</title>
+    </bookmark>
+    <bookmark icon="www" href="http://mediaserver02.cybernet.be/contactnl" >
+     <title>Radio Contact</title>
+    </bookmark>
+    <bookmark icon="www" href="http://wm.streampower.be/qmusic_ahi" >
+     <title>Q-Music</title>
+    </bookmark>
+    <bookmark icon="www" href="http://www.topradio.be/new/website/topradioHigh.asx" >
+     <title>Topradio</title>
+    </bookmark>
+    <bookmark icon="www" href="http://www.4fm.be/streams/high.asx" >
+     <title>4fm</title>
+    </bookmark>
+   </folder>
+  </folder>
   <folder folded="yes" icon="bookmark_folder" >
    <title>czech republic</title>
    <folder folded="yes" icon="bookmark_folder" >
@@ -241,66 +304,6 @@
    </bookmark>
    <bookmark icon="sound" href="http://wms.dr.dk/e02ch12m?wmcontentbitrate=300000/.wma" >
     <title>DR Sport</title>
-   </bookmark>
-  </folder>
-  <folder folded="no" >
-   <title>flanders</title>
-   <bookmark icon="www" href="http://mp3.streampower.be/radio1-high.mp3" >
-    <title>Radio 1</title>
-   </bookmark>
-   <bookmark icon="www" href="http://mp3.streampower.be/sporza-high.mp3" >
-    <title>Sporza</title>
-   </bookmark>
-   <bookmark icon="www" href="http://mp3.streampower.be/ra2ant-high.mp3" >
-    <title>Radio 2 Antwerpen</title>
-   </bookmark>
-   <bookmark icon="www" href="http://mp3.streampower.be/ra2vlb-high.mp3" >
-    <title>Radio 2 Vlaams-Brabant</title>
-   </bookmark>
-   <bookmark icon="www" href="http://mp3.streampower.be/ra2lim-high.mp3" >
-    <title>Radio 2 Limburg</title>
-   </bookmark>
-   <bookmark icon="www" href="http://mp3.streampower.be/ra2ovl-high.mp3" >
-    <title>Radio 2 Oost-Vlaanderen</title>
-   </bookmark>
-   <bookmark icon="www" href="http://mp3.streampower.be/ra2wvl-high.mp3" >
-    <title>Radio 2 West-Vlaanderen</title>
-   </bookmark>
-   <bookmark icon="www" href="http://mp3.streampower.be/klara-high.mp3" >
-    <title>Klara</title>
-   </bookmark>
-   <bookmark icon="www" href="http://mp3.streampower.be/klaracontinuo-high.mp3" >
-    <title>Klara Continuo</title>
-   </bookmark>
-   <bookmark icon="www" href="http://mp3.streampower.be/stubru-high.mp3" >
-    <title>Studio Brussel</title>
-   </bookmark>
-   <bookmark icon="www" href="http://mp3.streampower.be/donna-high.mp3" >
-    <title>Donna</title>
-   </bookmark>
-   <bookmark icon="www" href="http://mp3.streampower.be/donnahitbits-high.mp3">
-    <title>Donna Hitbits</title>
-   </bookmark>
-   <bookmark icon="www" href="http://mp3.streampower.be/rvi-high.mp3" >
-    <title>RVI</title>
-   </bookmark>
-   <bookmark icon="www" href="http://stream.urgent.fm/high.ogg" >
-    <title>Urgent.fm</title>
-   </bookmark>
-   <bookmark icon="www" href="http://www.beoneradio.be/modules/desktop/streaming/pls.aspx?mid=84" >
-    <title>Be One</title>
-   </bookmark>
-   <bookmark icon="www" href="http://mediaserver02.cybernet.be/contactnl" >
-    <title>Radio Contact</title>
-   </bookmark>
-   <bookmark icon="www" href="http://wm.streampower.be/qmusic_ahi" >
-    <title>Q-Music</title>
-   </bookmark>
-   <bookmark icon="www" href="http://www.topradio.be/new/website/topradioHigh.asx" >
-    <title>Topradio</title>
-   </bookmark>
-   <bookmark icon="www" href="http://www.4fm.be/streams/high.asx" >
-    <title>4fm</title>
    </bookmark>
   </folder>
   <folder folded="yes" >
