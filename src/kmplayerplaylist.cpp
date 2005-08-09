@@ -163,6 +163,8 @@ void Node::finish () {
         setState (state_finished);
         if (m_parent)
             m_parent->childDone (m_self);
+        else
+            deactivate ();
     } else
         kdWarning () <<"Node::finish () call on not active element"<< endl;
 }

@@ -311,10 +311,10 @@ KDE_NO_EXPORT void KMPlayerApp::openVDR () {
 struct IntroSource : public KMPlayer::Source {
     KMPlayer::PartBase * m_part;
     IntroSource (KMPlayer::PartBase *p)
-        : KMPlayer::Source ("Intro", p, "introsource"), m_part (p) {}
+        : KMPlayer::Source (i18n ("Intro"), p, "introsource"), m_part (p) {}
     KDE_NO_EXPORT bool hasLength () { return false; }
     KDE_NO_EXPORT bool isSeekable () { return false; }
-    KDE_NO_EXPORT QString prettyName () { return QString ("Intro"); }
+    KDE_NO_EXPORT QString prettyName () { return i18n ("Intro"); }
     void activate ();
     void deactivate ();
     void stateElementChanged (KMPlayer::NodePtr node);
@@ -600,7 +600,8 @@ KDE_NO_EXPORT void KMPlayerApp::slotMinimalMode () {
 struct ExitSource : public KMPlayer::Source {
     KMPlayer::PartBase * m_part;
     KDE_NO_CDTOR_EXPORT ExitSource (KMPlayer::PartBase *p)
-        : KMPlayer::Source ("Exit", p, "exitsource"), m_part (p) {}
+        : KMPlayer::Source (i18n ("Exit"), p, "exitsource"), m_part (p) {}
+    KDE_NO_EXPORT QString prettyName () { return i18n ("Exit"); }
     KDE_NO_EXPORT bool hasLength () { return false; }
     KDE_NO_EXPORT bool isSeekable () { return false; }
     void activate ();
