@@ -1005,6 +1005,7 @@ bool SimpleSAXParser::nextToken () {
                 push ();
                 append_char = false;
                 TokenInfoPtr tmp = token;
+                TokenInfoPtr prev_tmp = prev_token;
                 if (nextToken () && token->token == tok_text &&
                         nextToken () && token->token == tok_semi_colon) {
                     if (prev_token->string == QString ("amp"))
@@ -1025,6 +1026,7 @@ bool SimpleSAXParser::nextToken () {
                     if (tmp) { // cut out the & xxx ; tokens
                         tmp->next = token;
                         token = tmp;
+                        prev_token = prev_tmp;
                     }
                     //kdDebug () << "entity found "<<prev_token->string << endl;
                 } else if (token->token == tok_hash &&
@@ -1039,8 +1041,10 @@ bool SimpleSAXParser::nextToken () {
                     if (tmp) { // cut out the '& # xxx ;' tokens
                         tmp->next = token;
                         token = tmp;
+                        prev_token = prev_tmp;
                     }
                 } else {
+                    prev_token = prev_tmp;
                     token = tmp; // restore and insert the lost & token
                     tmp = TokenInfoPtr (new TokenInfo);
                     tmp->token = tok_amp;
