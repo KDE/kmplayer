@@ -2033,17 +2033,22 @@ void ImageData::parseParam (const QString & name, const QString & val) {
             KURL url (source_url);
             d->url = val;
             if (url.isLocalFile ()) {
-                //QPixmap *pix = new QPixmap (url.path ());
-                QMovie *mov = new QMovie (url.path ());
-                if (mov->isNull ())
-                    delete mov;
-                else {
+                QPixmap *pix = new QPixmap (url.path ());
+                if (pix->isNull ()) {
+                    delete pix;
                     delete d->image;
-                    d->image = 0L; //pix;
+                    d->image = 0L;
+                } else {
+                    d->image = pix;
+                    delete d->img_movie;
+                    QMovie * mov = new QMovie (url.path ());
+                    if (mov->isNull ()) {
+                        delete mov;
+                        d->img_movie = 0L;
+                    } else
+                        d->img_movie = mov;
                     delete d->cache_image;
                     d->cache_image = 0;
-                    delete d->img_movie;
-                    d->img_movie = mov;
                     d->have_frame = false;
                     mov->connectUpdate(this, SLOT(movieUpdated(const QRect&)));
                     mov->connectStatus (this, SLOT (movieStatus (int)));
