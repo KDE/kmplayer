@@ -870,7 +870,7 @@ namespace KMPlayer {
 
 class SimpleSAXParser {
 public:
-    SimpleSAXParser (DocumentBuilder & b) : builder (b), position (0), m_attributes ((new AttributeList)->self ()), equal_seen (false), in_dbl_quote (false), in_sngl_quote (false), have_error (false) {}
+    SimpleSAXParser (DocumentBuilder & b) : builder (b), position (0), m_attributes ((new AttributeList)->self ()), equal_seen (false), in_dbl_quote (false), in_sngl_quote (false), have_error (false), no_entitity_look_ahead (false), have_next_char (false) {}
     virtual ~SimpleSAXParser () {};
     bool parse (QTextStream & d);
 private:
@@ -906,6 +906,8 @@ private:
     bool in_dbl_quote;
     bool in_sngl_quote;
     bool have_error;
+    bool no_entitity_look_ahead;
+    bool have_next_char;
 
     bool readTag ();
     bool readEndTag ();
@@ -956,13 +958,17 @@ void SimpleSAXParser::push_attribute () {
 
 bool SimpleSAXParser::nextToken () {
     if (token && token->next) {
+        prev_token = token;
         token = token->next;
         //kdDebug () << "nextToken: token->next found\n";
         return true;
     }
     TokenInfoPtr cur_token = token;
     while (!data->atEnd () && cur_token == token) {
-        *data >> next_char;
+        if (have_next_char)
+            have_next_char = false;
+        else
+            *data >> next_char;
         bool append_char = true;
         if (next_char.isSpace ()) {
             if (next_token->token != tok_white_space)
@@ -1003,7 +1009,12 @@ bool SimpleSAXParser::nextToken () {
                 next_token->token = tok_single_quote;
             } else if (next_char == QChar ('&')) {
                 push ();
+                if (no_entitity_look_ahead) {
+                    have_next_char = true;
+                    break;
+                }
                 append_char = false;
+                no_entitity_look_ahead = true;
                 TokenInfoPtr tmp = token;
                 TokenInfoPtr prev_tmp = prev_token;
                 if (nextToken () && token->token == tok_text &&
@@ -1026,7 +1037,6 @@ bool SimpleSAXParser::nextToken () {
                     if (tmp) { // cut out the & xxx ; tokens
                         tmp->next = token;
                         token = tmp;
-                        prev_token = prev_tmp;
                     }
                     //kdDebug () << "entity found "<<prev_token->string << endl;
                 } else if (token->token == tok_hash &&
@@ -1041,10 +1051,8 @@ bool SimpleSAXParser::nextToken () {
                     if (tmp) { // cut out the '& # xxx ;' tokens
                         tmp->next = token;
                         token = tmp;
-                        prev_token = prev_tmp;
                     }
                 } else {
-                    prev_token = prev_tmp;
                     token = tmp; // restore and insert the lost & token
                     tmp = TokenInfoPtr (new TokenInfo);
                     tmp->token = tok_amp;
@@ -1055,6 +1063,15 @@ bool SimpleSAXParser::nextToken () {
                     else
                         token = tmp; // hmm
                 }
+                no_entitity_look_ahead = false;
+                if (token && token->next && cur_token == token) {
+                    // if nothing has been push()'ed and we found an entity,
+                    // then don't fill next_token afterwards
+                    prev_token = token;
+                    token = token->next;
+                    break;
+                } else
+                    prev_token = prev_tmp;
             } else if (next_token->token != tok_text) {
                 push ();
                 next_token->token = tok_text;
