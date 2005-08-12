@@ -957,14 +957,8 @@ void SimpleSAXParser::push_attribute () {
 }
 
 bool SimpleSAXParser::nextToken () {
-    if (token && token->next) {
-        prev_token = token;
-        token = token->next;
-        //kdDebug () << "nextToken: token->next found\n";
-        return true;
-    }
     TokenInfoPtr cur_token = token;
-    while (!data->atEnd () && cur_token == token) {
+    while (!data->atEnd () && cur_token == token && !(token && token->next)) {
         if (have_next_char)
             have_next_char = false;
         else
@@ -1064,14 +1058,7 @@ bool SimpleSAXParser::nextToken () {
                         token = tmp; // hmm
                 }
                 no_entitity_look_ahead = false;
-                if (token && token->next && cur_token == token) {
-                    // if nothing has been push()'ed and we found an entity,
-                    // then don't fill next_token afterwards
-                    prev_token = token;
-                    token = token->next;
-                    break;
-                } else
-                    prev_token = prev_tmp;
+                prev_token = prev_tmp;
             } else if (next_token->token != tok_text) {
                 push ();
                 next_token->token = tok_text;
@@ -1084,11 +1071,14 @@ bool SimpleSAXParser::nextToken () {
             next_token->string += next_char;
     }
     if (token == cur_token) {
-        if (next_token->string.length ()) {
+        if (token && token->next) {
+            prev_token = token;
+            token = token->next;
+        } else if (next_token->string.length ()) {
             push (); // last token
-            return true;
-        }
-        return false;
+        } else
+            return false;
+        return true;
     }
     return true;
 }
