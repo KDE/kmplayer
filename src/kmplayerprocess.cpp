@@ -298,7 +298,7 @@ KDE_NO_EXPORT void MPlayerBase::processStopped (KProcess *) {
 //-----------------------------------------------------------------------------
 
 static const char * mplayer_supports [] = {
-    "dvdsource", "hrefsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", 0L
+    "dvdsource", "exitsource", "hrefsource", "introsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", 0L
 };
 
 KDE_NO_CDTOR_EXPORT MPlayer::MPlayer (QObject * parent, Settings * settings)
@@ -1426,7 +1426,7 @@ KDE_NO_EXPORT QFrame * XMLPreferencesPage::prefPage (QWidget * parent) {
 //-----------------------------------------------------------------------------
 
 static const char * xine_supported [] = {
-    "dvdnavsource", "pipesource", "urlsource", "vcdsource", 0L
+    "dvdnavsource", "exitsource", "introsource", "pipesource", "urlsource", "vcdsource", 0L
 };
 
 KDE_NO_CDTOR_EXPORT Xine::Xine (QObject * parent, Settings * settings)
@@ -1491,7 +1491,7 @@ bool Xine::ready (Viewer * viewer) {
 //-----------------------------------------------------------------------------
 
 static const char * gst_supported [] = {
-    "urlsource", 0L
+    "exitsource", "introsource", "urlsource", 0L
 };
 
 KDE_NO_CDTOR_EXPORT GStreamer::GStreamer (QObject * parent, Settings * settings)
