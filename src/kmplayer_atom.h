@@ -76,8 +76,9 @@ class Content : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Content (NodePtr &d) : Mrl(d, id_node_content) {}
     KDE_NO_EXPORT const char * nodeName () const { return "content"; }
+    bool isMrl ();
     void closed ();
-    bool expose () const { return false; }
+    //bool expose () const { return isMrl (); }
 };
 
 } //namespace ATOM

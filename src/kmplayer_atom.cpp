@@ -33,6 +33,8 @@ NodePtr ATOM::Feed::childFromTag (const QString & tag) {
 NodePtr ATOM::Entry::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "link"))
         return (new ATOM::Link (m_doc))->self ();
+    else if (!strcmp (tag.latin1 (), "content"))
+        return (new ATOM::Content (m_doc))->self ();
     else if (!strcmp (tag.latin1 (), "title"))
         return (new DarkNode (m_doc, tag, id_node_title))->self ();
     else if (!strcmp (tag.latin1 (), "summary"))
@@ -67,5 +69,26 @@ void ATOM::Link::closed () {
 }
 
 void ATOM::Content::closed () {
-    //QString type = getAttribute (QString::fromLatin1 ("type"));
+    for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ()) {
+        if (!strcasecmp (a->nodeName (), "src"))
+            src = a->nodeValue ();
+        else if (!strcasecmp (a->nodeName (), "type")) {
+            QString v = a->nodeValue ().lower ();
+            if (v == QString::fromLatin1 ("text"))
+                mimetype = QString::fromLatin1 ("text/plain");
+            else if (v == QString::fromLatin1 ("html"))
+                mimetype = QString::fromLatin1 ("text/html");
+            else if (v == QString::fromLatin1 ("xhtml"))
+                mimetype = QString::fromLatin1 ("application/xhtml+xml");
+            else
+                mimetype = v;
+        }
+    }
 }
+
+bool ATOM::Content::isMrl () {
+    if (!hasChildNodes () && !src.isEmpty ())
+        return true;
+    return Mrl::isMrl ();
+}
+
