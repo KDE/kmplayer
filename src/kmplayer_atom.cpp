@@ -89,6 +89,6 @@ void ATOM::Content::closed () {
 bool ATOM::Content::isMrl () {
     if (!hasChildNodes () && !src.isEmpty ())
         return true;
-    return Mrl::isMrl ();
+    return false;
 }
 
