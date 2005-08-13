@@ -522,6 +522,7 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
         config->writeEntry ("Command1", m_player->sources () ["pipesource"]->pipeCmd ());
     }
     fileOpenRecent->saveEntries (config,"Recent Files");
+    m_view->setInfoMessage (QString::null);
     m_view->docArea ()->writeDockConfig (config, QString ("Window Layout"));
 }
 

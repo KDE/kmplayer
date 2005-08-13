@@ -18,8 +18,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef _KMPLAYER_RSS_H_
-#define _KMPLAYER_RSS_H_
+#ifndef _KMPLAYER_ATOM_H_
+#define _KMPLAYER_ATOM_H_
 
 #include <qobject.h>
 #include <qstring.h>
@@ -36,56 +36,53 @@ namespace KIO {
 
 namespace KMPlayer {
 
-namespace RSS {
+namespace ATOM {
 
-const short id_node_rss = 200;
-const short id_node_channel = 201;
-const short id_node_item = 202;
-const short id_node_title = 203;
-const short id_node_description = 204;
-const short id_node_enclosure = 205;
+const short id_node_feed = 300;
+const short id_node_entry = 301;
+const short id_node_link = 302;
+const short id_node_title = 303;
+const short id_node_summary = 304;
+const short id_node_content = 305;
 
 /**
- * '<RSS>' tag
+ * '<feed>' tag
  */
-class Rss : public Mrl {
+class Feed : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Rss (NodePtr & d) : Mrl (d, id_node_rss) {}
+    KDE_NO_CDTOR_EXPORT Feed (NodePtr & d) : Mrl (d, id_node_feed) {}
     NodePtr childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return "rss"; }
+    KDE_NO_EXPORT const char * nodeName () const { return "feed"; }
 };
-    
-class Channel : public Mrl {
+
+class Entry : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Channel (NodePtr & d) : Mrl (d, id_node_channel) {}
+    KDE_NO_CDTOR_EXPORT Entry (NodePtr & d) : Mrl (d, id_node_entry) {}
     NodePtr childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return "channel"; }
+    KDE_NO_EXPORT const char * nodeName () const { return "entry"; }
     bool isMrl () { return false; }
     void closed ();
 };
 
-class Item : public Mrl {
+class Link : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Item (NodePtr & d) : Mrl (d, id_node_item) {}
-    NodePtr childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return "item"; }
+    KDE_NO_CDTOR_EXPORT Link (NodePtr & d) : Mrl (d, id_node_link) {}
+    KDE_NO_EXPORT const char * nodeName () const { return "link"; }
     bool isMrl () { return !src.isEmpty (); }
     void closed ();
-    void activate ();
-    void deactivate ();
 };
 
-class Enclosure : public Mrl {
+class Content : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Enclosure(NodePtr &d) : Mrl(d, id_node_enclosure) {}
-    KDE_NO_EXPORT const char * nodeName () const { return "enclosure"; }
+    KDE_NO_CDTOR_EXPORT Content (NodePtr &d) : Mrl(d, id_node_content) {}
+    KDE_NO_EXPORT const char * nodeName () const { return "content"; }
     void closed ();
     bool expose () const { return false; }
 };
 
-} //namespace RSS
+} //namespace ATOM
 
 
 } // namespace KMPlayer
 
-#endif //_KMPLAYER_RSS_H_
+#endif //_KMPLAYER_ATOM_H_

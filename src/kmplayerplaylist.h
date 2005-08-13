@@ -661,91 +661,8 @@ public:
 
 //-----------------------------------------------------------------------------
 
-namespace ASX {
-
 /**
- * '<ASX>' tag
- */
-class Asx : public Mrl {
-public:
-    KDE_NO_CDTOR_EXPORT Asx (NodePtr & d) : Mrl (d) {}
-    NodePtr childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return "ASX"; }
-    /**
-     * True if no mrl children
-     */
-    bool isMrl ();
-};
-
-/**
- * Entry tag as found in ASX for playlist item
- */
-class Entry : public Mrl {
-public:
-    KDE_NO_CDTOR_EXPORT Entry (NodePtr & d) : Mrl (d) {}
-    NodePtr childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return "Entry"; }
-    /**
-     * True if has a Ref child
-     */
-    bool isMrl ();
-    /**
-     * Returns Ref child if isMrl() return true
-     */
-    virtual NodePtr realMrl ();
-    /**
-     * Override for activating Ref child
-     */
-    void activate ();
-};
-
-/**
- * Ref tag as found in ASX for URL item in playlist item
- */
-class Ref : public Mrl {
-public:
-    KDE_NO_CDTOR_EXPORT Ref (NodePtr & d) : Mrl (d) {}
-    //NodePtr childFromTag (const QString & tag);
-    void opened ();
-    KDE_NO_EXPORT const char * nodeName () const { return "Ref"; }
-    bool expose () const { return false; }
-};
-
-/**
- * EntryRef tag as found in ASX for shortcut of Entry plus Ref playlist item
- */
-class EntryRef : public Mrl {
-public:
-    KDE_NO_CDTOR_EXPORT EntryRef (NodePtr & d) : Mrl (d) {}
-    //NodePtr childFromTag (const QString & tag);
-    void opened ();
-    KDE_NO_EXPORT const char * nodeName () const { return "EntryRef"; }
-};
-
-} // ASX namespace
-
-//-----------------------------------------------------------------------------
-
-namespace RSS {
-
-const short id_node_rss = 200;
-
-/**
- * '<RSS>' tag
- */
-class Rss : public Mrl {
-public:
-    KDE_NO_CDTOR_EXPORT Rss (NodePtr & d) : Mrl (d, id_node_rss) {}
-    NodePtr childFromTag (const QString & tag);
-    KDE_NO_EXPORT const char * nodeName () const { return "rss"; }
-};
-    
-} // RSS namespace
-
-//-----------------------------------------------------------------------------
-
-/**
- * just some url, can get a SMIL or ASX childtree
+ * just some url, can get a SMIL, RSS, or ASX childtree
  */
 class KMPLAYER_EXPORT GenericURL : public Mrl { 
 public:
@@ -769,6 +686,7 @@ public:
 
 KMPLAYER_EXPORT
 void readXML (NodePtr root, QTextStream & in, const QString & firstline);
+KMPLAYER_EXPORT Node * fromXMLDocumentTag (NodePtr & d, const QString & tag);
 
 template <class T> inline Item<T>::Item () : m_self (static_cast <T*> (this)) {}
 
