@@ -53,6 +53,7 @@ public:
     KDE_NO_CDTOR_EXPORT Rss (NodePtr & d) : Mrl (d, id_node_rss) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "rss"; }
+    bool expose () const { return false; }
 };
     
 class Channel : public Mrl {

@@ -909,6 +909,15 @@ KDE_NO_CDTOR_EXPORT PlayListView::~PlayListView () {
 }
 
 void PlayListView::populate (NodePtr e, NodePtr focus, QListViewItem * item, QListViewItem ** curitem) {
+    m_have_dark_nodes |= !e->expose ();
+    if (!m_show_all_nodes && !e->expose ()) {
+        QListViewItem * up = item->parent ();
+        if (up)
+            for (NodePtr c = e->lastChild (); c; c = c->previousSibling ())
+                populate (c, focus, new ListViewItem (up, c, this), curitem);
+        delete item;
+        return;
+    }
     Mrl * mrl = e->mrl ();
     QString text (e->nodeName());
     if (mrl && !m_show_all_nodes) {
@@ -926,11 +935,8 @@ void PlayListView::populate (NodePtr e, NodePtr focus, QListViewItem * item, QLi
         *curitem = item;
     if (e->active ())
         ensureItemVisible (item);
-    for (NodePtr c = e->lastChild (); c; c = c->previousSibling ()) {
-        m_have_dark_nodes |= !c->expose ();
-        if (m_show_all_nodes || c->expose ())
-            populate (c, focus, new ListViewItem (item, c, this), curitem);
-    }
+    for (NodePtr c = e->lastChild (); c; c = c->previousSibling ())
+        populate (c, focus, new ListViewItem (item, c, this), curitem);
     if (e->isElementNode ()) {
         AttributePtr a = convertNode<Element> (e)->attributes ()->first ();
         if (a) {

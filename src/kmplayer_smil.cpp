@@ -1176,11 +1176,14 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
         h->closed ();
         head = h->self ();
     }
-    for (NodePtr e = head->firstChild (); e; e = e->nextSibling ())
+    for (NodePtr e = head->firstChild (); e; e = e->nextSibling ()) {
         if (e->id == id_node_layout) {
             layout_node = e;
-            break;
+        } else if (e->id == id_node_title) {
+            QString str = e->innerText ();
+            pretty_name = str.left (str.find (QChar ('\n')));
         }
+    }
     if (!layout_node) {
         kdError () << "no <root-layout>" << endl;
         return;
@@ -1205,6 +1208,8 @@ KDE_NO_EXPORT bool SMIL::Smil::isMrl () {
 KDE_NO_EXPORT NodePtr SMIL::Head::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "layout"))
         return (new SMIL::Layout (m_doc))->self ();
+    else if (!strcmp (tag.latin1 (), "title"))
+        return (new DarkNode (m_doc, tag, id_node_title))->self ();
     return NodePtr ();
 }
 

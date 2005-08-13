@@ -364,6 +364,7 @@ const short id_node_text = 112;
 const short id_node_param = 113;
 const short id_node_set = 114;
 const short id_node_animate = 115;
+const short id_node_title = 116;
 
 /**
  * Represents optional 'head' tag of SMIL document as in
@@ -384,6 +385,7 @@ public:
 class RegionBase : public Element {
 public:
     virtual ElementRuntimePtr getRuntime ();
+    bool expose () const { return false; }
     virtual bool handleEvent (EventPtr event);
     /**
      * repaints region, calls scheduleRepaint(x,y,w,h) on view
@@ -543,6 +545,7 @@ class Body : public Seq {
 public:
     KDE_NO_CDTOR_EXPORT Body (NodePtr & d) : Seq (d, id_node_body) {}
     KDE_NO_EXPORT const char * nodeName () const { return "body"; }
+    bool expose () const { return false; }
 };
 
 /**

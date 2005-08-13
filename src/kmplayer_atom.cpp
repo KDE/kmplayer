@@ -27,7 +27,18 @@ NodePtr ATOM::Feed::childFromTag (const QString & tag) {
         return (new ATOM::Entry (m_doc))->self ();
     else if (!strcmp (tag.latin1 (), "link"))
         return (new ATOM::Link (m_doc))->self ();
+    else if (!strcmp (tag.latin1 (), "title"))
+        return (new DarkNode (m_doc, tag, id_node_title))->self ();
     return NodePtr ();
+}
+
+void ATOM::Feed::closed () {
+    for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+        if (c->id == id_node_title) {
+            QString str = c->innerText ();
+            pretty_name = str.left (str.find (QChar ('\n')));
+            break;
+        }
 }
 
 NodePtr ATOM::Entry::childFromTag (const QString & tag) {
@@ -43,12 +54,12 @@ NodePtr ATOM::Entry::childFromTag (const QString & tag) {
 }
 
 void ATOM::Entry::closed () {
-    for (NodePtr c = firstChild (); c; c = c->nextSibling ()) {
+    for (NodePtr c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_title) {
             QString str = c->innerText ();
             pretty_name = str.left (str.find (QChar ('\n')));
+            break;
         }
-    }
 }
 
 void ATOM::Link::closed () {

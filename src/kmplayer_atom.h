@@ -53,6 +53,8 @@ public:
     KDE_NO_CDTOR_EXPORT Feed (NodePtr & d) : Mrl (d, id_node_feed) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "feed"; }
+    void closed ();
+    bool expose () const { return !pretty_name.isEmpty (); }
 };
 
 class Entry : public Mrl {
