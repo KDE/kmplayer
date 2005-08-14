@@ -45,6 +45,11 @@ void RSS::Channel::closed () {
     }
 }
 
+bool RSS::Channel::expose () const {
+    return !pretty_name.isEmpty () || //return false if no title and only one
+        previousSibling () || nextSibling ();
+}
+
 NodePtr RSS::Item::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "enclosure"))
         return (new RSS::Enclosure (m_doc))->self ();

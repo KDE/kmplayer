@@ -63,6 +63,7 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "channel"; }
     bool isMrl () { return false; }
     void closed ();
+    bool expose () const;
 };
 
 class Item : public Mrl {

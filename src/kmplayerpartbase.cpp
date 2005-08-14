@@ -551,6 +551,7 @@ void PartBase::playListItemSelected (QListViewItem * item) {
         if (!strcasecmp (vi->m_attr->nodeName (), "src") ||
                 !strcasecmp (vi->m_attr->nodeName (), "href") ||
                 !strcasecmp (vi->m_attr->nodeName (), "data") ||
+                !strcasecmp (vi->m_attr->nodeName (), "url") ||
                 !strcasecmp (vi->m_attr->nodeName (), "value")) {
             QString src (vi->m_attr->nodeValue ());
             if (!src.isEmpty ()) {
