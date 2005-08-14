@@ -2050,14 +2050,15 @@ void ImageData::parseParam (const QString & name, const QString & val) {
                     if (mov->isNull ()) {
                         delete mov;
                         d->img_movie = 0L;
-                    } else
-                        d->img_movie = mov;
+                    } else {
+                      mov->connectUpdate(this,SLOT(movieUpdated(const QRect&)));
+                      mov->connectStatus (this, SLOT (movieStatus (int)));
+                      mov->connectResize(this, SLOT(movieResize(const QSize&)));
+                      d->img_movie = mov;
+                    }
                     delete d->cache_image;
                     d->cache_image = 0;
                     d->have_frame = false;
-                    mov->connectUpdate(this, SLOT(movieUpdated(const QRect&)));
-                    mov->connectStatus (this, SLOT (movieStatus (int)));
-                    mov->connectResize(this, SLOT (movieResize(const QSize&)));
                 }
             } else
                 wget (url);
@@ -2172,6 +2173,8 @@ KDE_NO_EXPORT void ImageData::movieUpdated (const QRect &) {
                 (timingstate == timings_stopped && fill == fill_freeze))) {
         delete d->cache_image;
         d->cache_image = 0;
+        delete d->image;
+        d->image = 0;
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
         //kdDebug () << "movieUpdated" << endl;
     }
