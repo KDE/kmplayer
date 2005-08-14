@@ -45,6 +45,8 @@
 #include <kprocess.h>
 #include <kstandarddirs.h>
 #include <kmimetype.h>
+#include <kprotocolinfo.h>
+#include <kapplication.h>
 #include <kio/job.h>
 #include <kio/jobclasses.h>
 
@@ -327,8 +329,10 @@ void PartBase::setSource (Source * _source) {
     if (m_source) {
         m_source->deactivate ();
         stop ();
-        if (m_view)
+        if (m_view) {
             m_view->reset ();
+            m_view->setInfoMessage (QString::null);
+        }
         disconnect (m_source, SIGNAL (startRecording ()),
                     this, SLOT (recordingStarted ()));
     }
@@ -841,6 +845,23 @@ static NodePtr findDepthFirst (NodePtr elm) {
 }
 
 bool Source::requestPlayURL (NodePtr mrl) {
+    if (m_document != mrl->mrl ()->realMrl ()) {
+        KURL base = m_document->mrl ()->src;
+        KURL dest = mrl->mrl ()->realMrl ()->mrl ()->src;
+        // check if some remote playlist tries to open something local, but
+        // do ignore unknown protocols because there are so many and we only
+        // want to cache local ones.
+        if (
+#if 0
+            !KProtocolInfo::protocolClass (dest.protocol ()).isEmpty () &&
+#else
+            dest.isLocalFile () &&
+#endif
+                !kapp->authorizeURLAction ("redirect", base, dest)) {
+            kdWarning () << "requestPlayURL from document " << base << " to play " << dest << " is not allowed" << endl;
+            return false;
+        }
+    }
     //kdDebug() << "Source::requestPlayURL " << mrl->mrl ()->src << endl;
     if (m_player->process ()->state () > Process::Ready) {
         m_back_request = mrl; // still playing, schedule it
@@ -1339,21 +1360,24 @@ KDE_NO_EXPORT QString URLSource::prettyName () {
 static bool isPlayListMime (const QString & mime) {
     const char * mimestr = mime.ascii ();
     return mimestr && (!strcmp (mimestr, "audio/mpegurl") ||
-            !strcmp (mimestr ,"audio/x-mpegurl") ||
-            !strcmp (mimestr ,"video/x-ms-wmp") ||
-            !strcmp (mimestr ,"video/x-ms-asf") ||
-            !strcmp (mimestr ,"video/x-ms-wmv") ||
-            !strcmp (mimestr ,"video/x-ms-wvx") ||
-            !strcmp (mimestr ,"audio/x-scpls") ||
-            !strcmp (mimestr ,"audio/x-pn-realaudio") ||
-            !strcmp (mimestr ,"audio/vnd.rn-realaudio") ||
-            !strcmp (mimestr ,"audio/m3u") ||
-            !strcmp (mimestr ,"audio/x-m3u") ||
-            !strncasecmp (mimestr ,"application/smil", 16) ||
-            !strncasecmp (mimestr ,"application/xml", 15) ||
-            !strncmp (mimestr ,"text/", 5) ||
-            !strcmp (mimestr ,"application/rss+xml") ||
-            !strcmp (mimestr ,"application/x-mplayer2"));
+            !strcmp (mimestr, "audio/x-mpegurl") ||
+            !strcmp (mimestr, "video/x-ms-wmp") ||
+            !strcmp (mimestr, "video/x-ms-asf") ||
+            !strcmp (mimestr, "video/x-ms-wmv") ||
+            !strcmp (mimestr, "video/x-ms-wvx") ||
+            !strcmp (mimestr, "audio/x-scpls") ||
+            !strcmp (mimestr, "audio/x-pn-realaudio") ||
+            !strcmp (mimestr, "audio/vnd.rn-realaudio") ||
+            !strcmp (mimestr, "audio/m3u") ||
+            !strcmp (mimestr, "audio/x-m3u") ||
+            !strncmp (mimestr, "text/", 5) ||
+            (!strncmp (mimestr, "application/", 12) &&
+             strstr (mimestr + 12,"+xml")) ||
+            !strncasecmp (mimestr, "application/smil", 16) ||
+            !strncasecmp (mimestr, "application/xml", 15) ||
+            //!strcmp (mimestr, "application/rss+xml") ||
+            //!strcmp (mimestr, "application/atom+xml") ||
+            !strcmp (mimestr, "application/x-mplayer2"));
 }
 
 KDE_NO_EXPORT void URLSource::read (QTextStream & textstream) {

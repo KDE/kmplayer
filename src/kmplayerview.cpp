@@ -899,10 +899,6 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view)
              this, SLOT (itemDropped (QDropEvent *, QListViewItem *)));
     connect (this, SIGNAL (itemRenamed (QListViewItem *)),
              this, SLOT (itemIsRenamed (QListViewItem *)));
-    QFont fnt = font ();
-    fnt.setPointSize (fnt.pointSize () - 1);
-    fnt.setWeight (QFont::DemiBold);
-    setFont (fnt);
 }
 
 KDE_NO_CDTOR_EXPORT PlayListView::~PlayListView () {
@@ -1230,10 +1226,6 @@ KDE_NO_EXPORT void View::init () {
 
     m_dock_infopanel = m_dockarea->createDockWidget ("infopanel", KGlobal::iconLoader ()->loadIcon (QString ("info"), KIcon::Small));
     m_infopanel = new TextEdit (m_dock_infopanel, this);
-    fnt = m_infopanel->font ();
-    fnt.setPointSize (fnt.pointSize () - 1);
-    fnt.setWeight (QFont::DemiBold);
-    m_infopanel->setFont (fnt);
     m_dock_infopanel->setWidget (m_infopanel);
 
     m_widgetstack->addWidget (m_viewer);
