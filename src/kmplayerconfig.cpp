@@ -41,6 +41,7 @@
 #include <klocale.h>
 #include <kcombobox.h>
 #include <kmessagebox.h>
+#include <kglobalsettings.h>
 
 #include "kmplayersource.h"
 #include "kmplayerconfig.h"
@@ -76,27 +77,39 @@ KDE_NO_CDTOR_EXPORT Settings::Settings (PartBase * player, KConfig * config)
   : pagelist (0L), configdialog (0L), m_config (config), m_player (player) {
     audiodrivers = _ads;
     videodrivers = _vds;
-    colors [ColorSetting::playlist_background].title = i18n ("Playlist background color");
+    colors [ColorSetting::playlist_background].title = i18n ("Playlist background");
     colors [ColorSetting::playlist_background].option = "PlaylistBackground";
     colors [ColorSetting::playlist_background].color = QColor (0, 0, 0);
-    colors [ColorSetting::playlist_foreground].title = i18n ("Playlist foreground color");
+    colors [ColorSetting::playlist_foreground].title = i18n ("Playlist foreground");
     colors [ColorSetting::playlist_foreground].option = "PlaylistForeground";
     colors [ColorSetting::playlist_foreground].color = QColor(0xB2, 0xB2, 0xB2);
-    colors [ColorSetting::console_background].title = i18n ("Console background color");
-    colors [ColorSetting::playlist_active].title = i18n ("Playlist active item color");
+    colors [ColorSetting::console_background].title =i18n("Console background");
+    colors [ColorSetting::playlist_active].title = i18n("Playlist active item");
     colors [ColorSetting::playlist_active].option = "PlaylistActive";
     colors [ColorSetting::playlist_active].color = QColor (0xFF, 0xFF, 0xFF);
     colors [ColorSetting::console_background].option = "ConsoleBackground";
     colors [ColorSetting::console_background].color = QColor (0, 0, 0);
-    colors [ColorSetting::console_foreground].title = i18n ("Console foreground color");
+    colors [ColorSetting::console_foreground].title = i18n ("Console foreground");
     colors [ColorSetting::console_foreground].option = "ConsoleForeground";
     colors [ColorSetting::console_foreground].color = QColor (0xB2, 0xB2, 0xB2);
-    colors [ColorSetting::video_background].title = i18n ("Video background color");
+    colors [ColorSetting::video_background].title = i18n ("Video background");
     colors [ColorSetting::video_background].option = "VideoBackground";
     colors [ColorSetting::video_background].color = QColor (0, 0, 0);
-    colors [ColorSetting::area_background].title = i18n ("Viewing area background color");
+    colors [ColorSetting::area_background].title = i18n ("Viewing area background");
     colors [ColorSetting::area_background].option = "ViewingAreaBackground";
     colors [ColorSetting::area_background].color = QColor (0, 0, 0);
+    colors [ColorSetting::infowindow_background].title = i18n ("Info window background");
+    colors [ColorSetting::infowindow_background].option ="InfoWindowBackground";
+    colors [ColorSetting::infowindow_background].color = QColor (0, 0, 0);
+    colors [ColorSetting::infowindow_foreground].title = i18n ("Info window foreground");
+    colors [ColorSetting::infowindow_foreground].option ="InfoWindowForeground";
+    colors [ColorSetting::infowindow_foreground].color=QColor(0xB2, 0xB2, 0xB2);
+    fonts [FontSetting::playlist].title = i18n ("Playlist");
+    fonts [FontSetting::playlist].option = "PlaylistFont";
+    fonts [FontSetting::playlist].font = KGlobalSettings::generalFont();
+    fonts [FontSetting::infowindow].title = i18n ("Info window");
+    fonts [FontSetting::infowindow].option = "InfoWindowFont";
+    fonts [FontSetting::infowindow].font = KGlobalSettings::generalFont();
 }
 
 KDE_NO_CDTOR_EXPORT Settings::~Settings () {
@@ -187,12 +200,9 @@ KDE_NO_EXPORT void Settings::applyColorSetting (bool only_changed_ones) {
             switch (ColorSetting::Target (i)) {
                 case ColorSetting::playlist_background:
                    view->playList()->setPaletteBackgroundColor(colors[i].color);
-                   view->infoPanel ()->setPaper (QBrush (colors[i].color));
                    break;
                 case ColorSetting::playlist_foreground:
                    view->playList()->setPaletteForegroundColor(colors[i].color);
-                   view->infoPanel()->setPaletteForegroundColor(colors[i].color);
-                   view->infoPanel ()->setColor (colors[i].color);
                    break;
                 case ColorSetting::playlist_active:
                    view->playList()->setActiveForegroundColor (colors[i].color);
@@ -209,6 +219,29 @@ KDE_NO_EXPORT void Settings::applyColorSetting (bool only_changed_ones) {
                 case ColorSetting::area_background:
                    view->viewArea()->setPaletteBackgroundColor(colors[i].color);
                    break;
+                case ColorSetting::infowindow_background:
+                   view->infoPanel ()->setPaper (QBrush (colors[i].color));
+                   break;
+                case ColorSetting::infowindow_foreground:
+                  view->infoPanel()->setPaletteForegroundColor(colors[i].color);
+                  view->infoPanel ()->setColor (colors[i].color);
+                  break;
+                default:
+                    ;
+            }
+        }
+    for (int i = 0; i < int (FontSetting::last_target); i++)
+        if (fonts[i].font != fonts[i].newfont || !only_changed_ones) {
+            fonts[i].font = fonts[i].newfont;
+            switch (FontSetting::Target (i)) {
+                case FontSetting::playlist:
+                   view->playList ()->setFont (fonts[i].font);
+                   break;
+                case FontSetting::infowindow:
+                   view->infoPanel ()->setFont (fonts[i].font);
+                   break;
+                default:
+                    ;
             }
         }
 }
@@ -233,6 +266,8 @@ KDE_NO_EXPORT void Settings::readConfig () {
         backends[i.data()->name ()] = m_config->readEntry (i.data()->name ());
     for (int i = 0; i < int (ColorSetting::last_target); i++)
         colors[i].newcolor = colors[i].color = m_config->readColorEntry (colors[i].option, &colors[i].color);
+    for (int i = 0; i < int (FontSetting::last_target); i++)
+        fonts[i].newfont = fonts[i].font = m_config->readFontEntry (fonts[i].option, &fonts[i].font);
 
     m_config->setGroup (strMPlayerGroup);
     sizeratio = m_config->readBoolEntry (strKeepSizeRatio, true);
@@ -364,6 +399,8 @@ void Settings::show (const char * pagename) {
     configdialog->m_GeneralPageGeneral->seekTime->setValue(seektime);
     for (int i = 0; i < int (ColorSetting::last_target); i++)
         colors[i].newcolor = colors[i].color;
+    for (int i = 0; i < int (FontSetting::last_target); i++)
+        fonts[i].newfont = fonts[i].font;
     configdialog->m_SourcePageURL->urllist->clear ();
     configdialog->m_SourcePageURL->urllist->insertStringList (urllist);
     configdialog->m_SourcePageURL->urllist->setCurrentText (m_player->source ()->url ().prettyURL ());
@@ -454,6 +491,8 @@ void Settings::writeConfig () {
         m_config->writeEntry (i.key (), i.data ());
     for (int i = 0; i < int (ColorSetting::last_target); i++)
         m_config->writeEntry (colors[i].option, colors[i].color);
+    for (int i = 0; i < int (FontSetting::last_target); i++)
+        m_config->writeEntry (fonts[i].option, fonts[i].font);
     m_config->setGroup (strMPlayerGroup);
     m_config->writeEntry (strKeepSizeRatio, sizeratio);
     m_config->writeEntry (strRememberSize, remembersize);

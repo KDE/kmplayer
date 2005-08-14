@@ -53,7 +53,19 @@ public:
         playlist_background = 0, playlist_foreground, playlist_active,
         console_background, console_foreground,
         video_background, area_background,
+        infowindow_background, infowindow_foreground,
         last_target
+    } target;
+};
+
+class FontSetting {
+public:
+    QString title;
+    QString option; // for ini file
+    QFont font;
+    QFont newfont;
+    enum Target {
+        playlist, infowindow, last_target
     } target;
 };
 
@@ -164,6 +176,7 @@ public:
     OutputDriver * audiodrivers;
     OutputDriver * videodrivers;
     ColorSetting colors [ColorSetting::last_target];
+    FontSetting fonts [FontSetting::last_target];
     QString dvddevice;
     QString vcddevice;
     QMap <QString, QString> backends;

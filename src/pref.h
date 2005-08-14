@@ -59,6 +59,7 @@ class Settings;
 class PreferencesPage;
 class OutputDriver;
 class ColorSetting;
+class FontSetting;
 
 class Preferences : public KDialogBase
 {
@@ -109,11 +110,16 @@ public:
     QSpinBox *seekTime;
     QComboBox *colorscombo;
     KColorButton *colorbutton;
+    QComboBox *fontscombo;
+    QPushButton *fontbutton;
 public slots:
     void colorItemChanged (int);
     void colorCanged (const QColor &);
+    void fontItemChanged (int);
+    void fontClicked ();
 private:
     ColorSetting * colors;
+    FontSetting * fonts;
 };
 
 class PrefSourcePageURL : public QFrame

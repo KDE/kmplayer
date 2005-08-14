@@ -41,6 +41,7 @@
 #include <qmessagebox.h>
 #include <qmap.h>
 #include <qtimer.h>
+#include <qfont.h>
 
 #include <klocale.h>
 #include <kdebug.h>
@@ -52,6 +53,7 @@
 #include <kcombobox.h>
 #include <kcolorbutton.h>
 #include <kurlrequester.h>
+#include <kfontdialog.h>
 
 #include "pref.h"
 #include "kmplayerpartbase.h"
@@ -191,7 +193,8 @@ KDE_NO_CDTOR_EXPORT Preferences::~Preferences() {
 }
 
 KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *parent, Settings * settings)
-: QFrame (parent, "GeneralPage"), colors (settings->colors)
+: QFrame (parent, "GeneralPage"),
+  colors (settings->colors), fonts (settings->fonts)
 {
     QVBoxLayout *layout = new QVBoxLayout(this, 5, 2);
 
@@ -247,11 +250,25 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
     colorbutton->setColor (colors[0].color);
     connect (colorbutton, SIGNAL (changed (const QColor &)),
             this, SLOT (colorCanged (const QColor &)));
+
+    QGroupBox *fontbox = new QGroupBox (2,Qt::Horizontal, i18n ("Fonts"), this);
+    fontscombo = new QComboBox (fontbox);
+    for (int i = 0; i < int (FontSetting::last_target); i++)
+        fontscombo->insertItem (fonts[i].title);
+    fontscombo->setCurrentItem (0);
+    connect (fontscombo, SIGNAL (activated (int)),
+            this, SLOT (fontItemChanged(int)));
+    fontbutton = new QPushButton (i18n ("AaBbCc"), fontbox);
+    fontbutton->setFlat (true);
+    fontbutton->setFont (fonts[0].font);
+    connect (fontbutton, SIGNAL (clicked ()), this, SLOT (fontClicked ()));
+
     layout->addWidget (windowbox);
     layout->addWidget (playbox);
     layout->addWidget (gbox);
     //layout->addWidget(autoHideSlider);
     layout->addWidget (colorbox);
+    layout->addWidget (fontbox);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
@@ -263,6 +280,22 @@ KDE_NO_EXPORT void PrefGeneralPageGeneral::colorItemChanged (int c) {
 KDE_NO_EXPORT void PrefGeneralPageGeneral::colorCanged (const QColor & c) {
     if (colorscombo->currentItem () < int (ColorSetting::last_target))
         colors[colorscombo->currentItem ()].newcolor = c;
+}
+
+KDE_NO_EXPORT void PrefGeneralPageGeneral::fontItemChanged (int f) {
+    if (f < int (FontSetting::last_target))
+        fontbutton->setFont (fonts[f].newfont);
+}
+
+KDE_NO_EXPORT void PrefGeneralPageGeneral::fontClicked () {
+    if (fontscombo->currentItem () < int (FontSetting::last_target)) {
+        QFont myfont = fonts [fontscombo->currentItem ()].newfont;
+        int res = KFontDialog::getFont (myfont, false, this);
+        if (res == KFontDialog::Accepted) {
+            fonts [fontscombo->currentItem ()].newfont = myfont;
+            fontbutton->setFont (myfont);
+        }
+    }
 }
 
 KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
