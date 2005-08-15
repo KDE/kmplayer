@@ -78,6 +78,7 @@ public:
     virtual void setAspect (float a);
     virtual bool hasLength ();
     virtual QString prettyName ();
+    virtual bool requestPlayURL (NodePtr mrl);
 public slots:
     virtual void init ();
     virtual void activate ();

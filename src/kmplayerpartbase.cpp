@@ -846,23 +846,6 @@ static NodePtr findDepthFirst (NodePtr elm) {
 }
 
 bool Source::requestPlayURL (NodePtr mrl) {
-    if (m_document != mrl->mrl ()->realMrl ()) {
-        KURL base = m_document->mrl ()->src;
-        KURL dest = mrl->mrl ()->realMrl ()->mrl ()->src;
-        // check if some remote playlist tries to open something local, but
-        // do ignore unknown protocols because there are so many and we only
-        // want to cache local ones.
-        if (
-#if 0
-            !KProtocolInfo::protocolClass (dest.protocol ()).isEmpty () &&
-#else
-            dest.isLocalFile () &&
-#endif
-                !kapp->authorizeURLAction ("redirect", base, dest)) {
-            kdWarning () << "requestPlayURL from document " << base << " to play " << dest << " is not allowed" << endl;
-            return false;
-        }
-    }
     //kdDebug() << "Source::requestPlayURL " << mrl->mrl ()->src << endl;
     if (m_player->process ()->state () > Process::Ready) {
         m_back_request = mrl; // still playing, schedule it
@@ -872,11 +855,12 @@ bool Source::requestPlayURL (NodePtr mrl) {
         m_player->updateTree ();
         QTimer::singleShot (0, this, SLOT (playCurrent ()));
     }
-    return m_player->process ()->playing ();
+    return true;
 }
 
 bool Source::setCurrent (NodePtr mrl) {
     m_current = mrl;
+    return true;
 }
 
 void Source::stateElementChanged (NodePtr elm) {
@@ -1309,7 +1293,6 @@ KDE_NO_EXPORT bool URLSource::hasLength () {
 KDE_NO_EXPORT void URLSource::activate () {
     if (url ().isEmpty () && (!m_document || !m_document->hasChildNodes ())) {
         m_player->updateTree ();
-        setDimensions (320, 240);
         return;
     }
     if (m_auto_play)
@@ -1568,6 +1551,27 @@ void URLSource::playCurrent () {
 
 KDE_NO_EXPORT void URLSource::play () {
     Source::play ();
+}
+
+bool URLSource::requestPlayURL (NodePtr mrl) {
+    if (m_document != mrl->mrl ()->realMrl ()) {
+        KURL base = m_document->mrl ()->src;
+        KURL dest = mrl->mrl ()->realMrl ()->mrl ()->src;
+        // check if some remote playlist tries to open something local, but
+        // do ignore unknown protocols because there are so many and we only
+        // want to cache local ones.
+        if (
+#if 0
+            !KProtocolInfo::protocolClass (dest.protocol ()).isEmpty () &&
+#else
+            dest.isLocalFile () &&
+#endif
+                !kapp->authorizeURLAction ("redirect", base, dest)) {
+            kdWarning () << "requestPlayURL from document " << base << " to play " << dest << " is not allowed" << endl;
+            return false;
+        }
+    }
+    return Source::requestPlayURL (mrl);
 }
 
 //-----------------------------------------------------------------------------

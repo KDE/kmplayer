@@ -68,6 +68,7 @@ public:
     KDE_NO_EXPORT KMPlayerBroadcastConfig * broadcastConfig () const { return m_broadcastconfig; }
     /* After createGUI() some menu's have to readded again */
     void initMenu ();
+    void restoreFromConfig ();
 protected:
     void saveOptions ();
     void readOptions ();

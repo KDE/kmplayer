@@ -309,9 +309,9 @@ KDE_NO_EXPORT void KMPlayerApp::openVDR () {
 }
 
 struct IntroSource : public KMPlayer::Source {
-    KMPlayer::PartBase * m_part;
-    IntroSource (KMPlayer::PartBase *p)
-        : KMPlayer::Source (i18n ("Intro"), p, "introsource"), m_part (p) {}
+    KMPlayerApp * m_app;
+    IntroSource (KMPlayer::PartBase *p, KMPlayerApp * a)
+        : KMPlayer::Source (i18n ("Intro"), p, "introsource"), m_app (a) {}
     KDE_NO_EXPORT bool hasLength () { return false; }
     KDE_NO_EXPORT bool isSeekable () { return false; }
     KDE_NO_EXPORT QString prettyName () { return i18n ("Intro"); }
@@ -359,7 +359,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
         KMPlayer::Mrl * mrl = m_document->firstChild ()->mrl ();
         if (mrl) {
             Source::setDimensions (mrl->width, mrl->height);
-            m_part->updateTree ();
+            m_player->updateTree ();
             m_current->activate ();
             emit startPlaying ();
         }
@@ -371,13 +371,11 @@ KDE_NO_EXPORT void IntroSource::stateElementChanged (KMPlayer::NodePtr node) {
     if (node->state == KMPlayer::Node::state_deactivated && node == m_document){
         m_document->reset ();
         finished = true;
-        if (m_part->view ()) {
-            static_cast <KMPlayer::View *> (m_part->view ())->docArea ()->readDockConfig (m_part->config (), QString ("Window Layout"));
-            m_part->view ()->layout ()->activate ();
-        }
+        if (m_player->view ())
+            m_app->restoreFromConfig ();
         emit stopPlaying ();
         if (!deactivated) // replace introsource with urlsource
-            m_part->openURL (KURL ());
+            m_player->openURL (KURL ());
     }
 }
 
@@ -387,18 +385,28 @@ KDE_NO_EXPORT void IntroSource::deactivate () {
         m_document->reset ();
 }
 
+KDE_NO_EXPORT void KMPlayerApp::restoreFromConfig () {
+    if (m_player->view ()) {
+        m_view->docArea ()->readDockConfig (m_player->config (), QString ("Window Layout"));
+        //if (m_player->settings ()->remembersize) {
+        config->setGroup ("General Options");
+        QSize size = config->readSizeEntry ("Geometry");
+        if (!size.isEmpty ())
+            resize (size);
+        //}
+        m_view->layout ()->activate ();
+    }
+}
+
 KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
 {
     if (!m_played_intro) {
         m_played_intro = true;
         if (!m_player->settings ()->no_intro && url.isEmpty ()) {
-            m_player->setSource (new IntroSource (m_player));
+            m_player->setSource (new IntroSource (m_player, this));
             return;
         } else
-            if (m_player->view ()) {
-                static_cast <KMPlayer::View *> (m_player->view ())->docArea ()->readDockConfig (m_player->config (), QString ("Window Layout"));
-                m_player->view ()->layout ()->activate ();
-            }
+            restoreFromConfig ();
     }
     slotStatusMsg(i18n("Opening file..."));
     m_player->openURL (url);
@@ -512,7 +520,8 @@ KDE_NO_EXPORT bool KMPlayerApp::broadcasting () const {
 KDE_NO_EXPORT void KMPlayerApp::saveOptions()
 {
     config->setGroup ("General Options");
-    config->writeEntry ("Geometry", size());
+    if (m_player->settings ()->remembersize)
+        config->writeEntry ("Geometry", size());
     config->writeEntry ("Show Toolbar", viewToolBar->isChecked());
     config->writeEntry ("ToolBarPos", (int) toolBar("mainToolBar")->barPos());
     config->writeEntry ("Show Statusbar",viewStatusBar->isChecked());
@@ -530,12 +539,6 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
 KDE_NO_EXPORT void KMPlayerApp::readOptions() {
 
     config->setGroup("General Options");
-    if (m_player->settings ()->remembersize) {
-        QSize size=config->readSizeEntry("Geometry");
-        if (!size.isEmpty ())
-            resize(size);
-    } else
-        resize (QSize (320, 240));
 
     // bar position settings
     KToolBar::BarPosition toolBarPos;
@@ -570,9 +573,8 @@ KDE_NO_EXPORT void KMPlayerApp::minimalMode (bool deco) {
         winfo.setWindowType (NET::Normal);
         m_view->setNoInfoMessages (false);
         readOptions ();
-        m_view->docArea ()->readDockConfig (config, QString ("Window Layout"));
         m_view->setControlPanelMode (KMPlayer::View::CP_Show);
-        m_view->layout ()->activate ();
+        restoreFromConfig ();
     } else {
         saveOptions ();
         menuBar()->hide();
@@ -599,9 +601,8 @@ KDE_NO_EXPORT void KMPlayerApp::slotMinimalMode () {
 }
 
 struct ExitSource : public KMPlayer::Source {
-    KMPlayer::PartBase * m_part;
     KDE_NO_CDTOR_EXPORT ExitSource (KMPlayer::PartBase *p)
-        : KMPlayer::Source (i18n ("Exit"), p, "exitsource"), m_part (p) {}
+        : KMPlayer::Source (i18n ("Exit"), p, "exitsource") {}
     KDE_NO_EXPORT QString prettyName () { return i18n ("Exit"); }
     KDE_NO_EXPORT bool hasLength () { return false; }
     KDE_NO_EXPORT bool isSeekable () { return false; }
@@ -638,7 +639,7 @@ KDE_NO_EXPORT void ExitSource::activate () {
         KMPlayer::Mrl * mrl = m_document->firstChild ()->mrl ();
         if (mrl) {
             setDimensions (mrl->width, mrl->height);
-            m_part->updateTree ();
+            m_player->updateTree ();
             m_current->activate ();
             emit startPlaying ();
             return;
@@ -650,8 +651,8 @@ KDE_NO_EXPORT void ExitSource::activate () {
 KDE_NO_EXPORT void ExitSource::stateElementChanged (KMPlayer::NodePtr node) {
     if (node->state == KMPlayer::Node::state_deactivated &&
             node == m_document &&
-            m_part->view ())
-       m_part->view ()->topLevelWidget ()->close ();
+            m_player->view ())
+       m_player->view ()->topLevelWidget ()->close ();
 }
 
 KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
