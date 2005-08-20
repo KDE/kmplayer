@@ -1170,6 +1170,8 @@ KDE_NO_EXPORT void View::dropEvent (QDropEvent * de) {
         sl.push_back (KURL (text));
     }
     if (sl.size () > 0) {
+        for (int i = 0; i < sl.size (); i++)
+            sl [i] = KURL::decode_string (sl [i].url ());
         m_widgetstack->visibleWidget ()->setFocus ();
         emit urlDropped (sl);
         de->accept ();
