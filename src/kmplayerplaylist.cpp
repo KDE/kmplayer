@@ -28,6 +28,7 @@
 #include "kmplayer_asx.h"
 #include "kmplayer_atom.h"
 #include "kmplayer_rss.h"
+#include "kmplayer_smil.h"
 
 #ifdef SHAREDPTR_DEBUG
 int shared_data_count;

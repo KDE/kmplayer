@@ -1203,6 +1203,11 @@ KDE_NO_EXPORT bool SMIL::Smil::isMrl () {
     return true;
 }
 
+KDE_NO_EXPORT bool SMIL::Smil::expose () const {
+    return !pretty_name.isEmpty () || //return false if no title and only one
+        previousSibling () || nextSibling ();
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT NodePtr SMIL::Head::childFromTag (const QString & tag) {
@@ -1631,6 +1636,11 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::TimedMrl::getNewRuntime () {
 
 KDE_NO_EXPORT bool SMIL::GroupBase::isMrl () {
     return false;
+}
+
+KDE_NO_EXPORT bool SMIL::GroupBase::expose () const {
+    return !pretty_name.isEmpty () || //return false if no title and only one
+        previousSibling () || nextSibling ();
 }
 
 //-----------------------------------------------------------------------------

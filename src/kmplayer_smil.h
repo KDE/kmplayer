@@ -349,6 +349,7 @@ private:
 
 namespace SMIL {
 
+const short id_node_smil = 100;
 const short id_node_head = 101;
 const short id_node_body = 102;
 const short id_node_layout = 103;
@@ -365,6 +366,30 @@ const short id_node_param = 113;
 const short id_node_set = 114;
 const short id_node_animate = 115;
 const short id_node_title = 116;
+const short id_node_first = id_node_smil;
+const short id_node_last = 200; // reserve 100 ids
+
+/**
+ * '<smil>' tag
+ */
+class Smil : public Mrl {
+public:
+    KDE_NO_CDTOR_EXPORT Smil (NodePtr & d) : Mrl (d, id_node_smil) {}
+    NodePtr childFromTag (const QString & tag);
+    KDE_NO_EXPORT const char * nodeName () const { return "smil"; }
+    bool isMrl ();
+    void activate ();
+    void deactivate ();
+    void closed ();
+    bool expose () const;
+    /**
+     * Hack to mark the currently playing MediaType as finished
+     * FIXME: think of a descent callback way for this
+     */
+    NodePtr realMrl ();
+    NodePtrW current_av_media_type;
+    NodePtrW layout_node;
+};
 
 /**
  * Represents optional 'head' tag of SMIL document as in
@@ -508,6 +533,7 @@ class GroupBase : public TimedMrl {
 public:
     KDE_NO_CDTOR_EXPORT ~GroupBase () {}
     bool isMrl ();
+    bool expose () const;
 protected:
     KDE_NO_CDTOR_EXPORT GroupBase (NodePtr & d, short id) : TimedMrl (d, id) {}
 };
@@ -572,9 +598,9 @@ private:
 /*
  * An automatic selection between child elements based on a condition
  */
-class Switch : public Element {
+class Switch : public GroupBase {
 public:
-    KDE_NO_CDTOR_EXPORT Switch (NodePtr &d) : Element(d, id_node_switch) {}
+    KDE_NO_CDTOR_EXPORT Switch (NodePtr &d) : GroupBase (d, id_node_switch) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "switch"; }
     // Condition

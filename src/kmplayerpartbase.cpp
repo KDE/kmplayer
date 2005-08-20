@@ -54,6 +54,7 @@
 #include "kmplayerview.h"
 #include "kmplayerconfig.h"
 #include "kmplayerprocess.h"
+#include "kmplayer_smil.h"
 
 namespace KMPlayer {
     
