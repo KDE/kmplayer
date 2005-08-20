@@ -557,7 +557,7 @@ void RegionRuntime::parseParam (const QString & name, const QString & val) {
     QRect rect;
     bool need_repaint = false;
     if (rb)
-        rect = QRect (rb->x1, rb->y1, rb->w1, rb->h1);
+        rect = QRect (rb->x1(), rb->y1(), rb->w1(), rb->h1());
     if (name == QString::fromLatin1 ("background-color") ||
             name == QString::fromLatin1 ("background-color")) {
         background_color = QColor (val).rgb ();
@@ -579,7 +579,7 @@ void RegionRuntime::parseParam (const QString & name, const QString & val) {
                         break;
                     }
             }
-            QRect nr (rb->x1, rb->y1, rb->w1, rb->h1);
+            QRect nr (rb->x1(), rb->y1(), rb->w1(), rb->h1());
             if (rect.width () == nr.width () && rect.height () == nr.height()) {
                 PlayListNotify * n = element->document()->notify_listener;
                 if (n && (rect.x () != nr.x () || rect.y () != nr.y ()))
@@ -1311,7 +1311,7 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
                 PaintEvent * p = static_cast <PaintEvent*>(event.ptr ());
                 RegionRuntime * rr = static_cast <RegionRuntime *> (rootLayout->getRuntime ().ptr ());
                 if (rr && rr->have_bg_color)
-                    p->painter.fillRect (x1, y1, w1, h1, QColor (QRgb (rr->background_color)));
+                    p->painter.fillRect (x1(), y1(), w1(), h1(), QColor (QRgb (rr->background_color)));
             }
             return RegionBase::handleEvent (event);
         case event_sized: {
@@ -1329,7 +1329,9 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
                     }
             } else
                 xscale = yscale = 0;
-            scaleRegion (xscale, yscale, e->x, e->y);
+            xoff = e->x;
+            yoff = e->y;
+            scaleRegion (xscale, yscale, xoff, yoff);
             handled = true;
             break;
         }
@@ -1347,7 +1349,7 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
- : Element (d, id), x (0), y (0), w (0), h (0), x1 (0), y1 (0), w1 (0), h1 (0),
+ : Element (d, id), x (0), y (0), w (0), h (0), xoff (0), yoff (0),
    xscale (0.0), yscale (0.0),
    z_order (1),
    m_SizeListeners ((new NodeRefList)->self ()),
@@ -1362,7 +1364,7 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::RegionBase::getRuntime () {
 KDE_NO_EXPORT void SMIL::RegionBase::repaint () {
     PlayListNotify * n = document()->notify_listener;
     if (n)
-        n->repaintRect (x1, y1, w1, h1);
+        n->repaintRect (x1 (), y1 (), w1 (), h1 ());
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::calculateChildBounds () {
@@ -1373,23 +1375,21 @@ KDE_NO_EXPORT void SMIL::RegionBase::calculateChildBounds () {
             cr->calculateChildBounds ();
         }
     //if (xscale > 0.001)
-        scaleRegion (xscale, yscale, x1, y1);
+        scaleRegion (xscale, yscale, x1 (), y1 ());
 }
 
 KDE_NO_EXPORT
-void SMIL::RegionBase::scaleRegion (float sx, float sy, int xoff, int yoff) {
-    x1 = xoff + int (sx * x);
-    y1 = yoff + int (sy * y);
-    w1 = int (sx * w);
-    h1 = int (sy * h);
+void SMIL::RegionBase::scaleRegion (float sx, float sy, int tx, int ty) {
     xscale = sx;
     yscale = sy;
-    propagateEvent ((new SizeEvent (x1, y1, w1, h1, false))->self ());
+    xoff = tx;
+    yoff = ty;
+    propagateEvent ((new SizeEvent (x1(), y1(), w1(), h1(), false))->self ());
     //kdDebug () << "scaleRegion sx:" << sx << " sy:" << sy << " " << x1 << "," << y1 << " " << w1 << "x" << h1 << endl;
     for (NodePtr r = firstChild (); r; r =r->nextSibling ())
         if (r->id == id_node_region) {
             Region * rb = static_cast <Region *> (r.ptr ());
-            rb->scaleRegion (sx, sy, x1, y1);
+            rb->scaleRegion (sx, sy, x1(), y1());
         }
 }
 
@@ -1461,14 +1461,15 @@ bool SMIL::Region::handleEvent (EventPtr event) {
     switch (event->id ()) {
         case event_paint: {
             PaintEvent * p = static_cast <PaintEvent *> (event.ptr ());
-            if (x1+w1 <p->x || p->x+p->w < x1 || y1+h1 < p->y || p->y+p->h < y1)
+            if (x1 () + w1 () < p->x || p->x + p->w < x1 () ||
+                    y1 () + h1 () < p->y || p->y + p->h < y1 ())
                 return false;
-            p->painter.setClipRect (x1, y1, w1, h1, QPainter::CoordPainter);
+            p->painter.setClipRect(x1(), y1(),w1(),h1(),QPainter::CoordPainter);
 
         //kdDebug () << "Region::calculateBounds " << getAttribute ("id") << " (" << x << "," << y << " " << w << "x" << h << ") -> (" << x1 << "," << y1 << " " << w1 << "x" << h1 << ")" << endl;
             RegionRuntime *rr = static_cast<RegionRuntime*>(getRuntime().ptr());
             if (rr && rr->have_bg_color)
-                p->painter.fillRect (x1, y1, w1, h1, QColor (QRgb (rr->background_color)));
+                p->painter.fillRect (x1(), y1(), w1(), h1(), QColor (QRgb (rr->background_color)));
             for (NodeRefItemPtr n = users.first (); n; n = n->nextSibling ())
                 if (n->data)
                     n->data->handleEvent (event); // for MediaType listeners
@@ -1477,7 +1478,7 @@ bool SMIL::Region::handleEvent (EventPtr event) {
         }
         case event_pointer_clicked: {
             PointerEvent * e = static_cast <PointerEvent *> (event.ptr ());
-            bool inside = e->x > x1 && e->x < x1+w1 && e->y > y1 && e->y< y1+h1;
+            bool inside = e->x > x1() && e->x < x1()+w1() && e->y > y1() && e->y< y1()+h1();
             if (!inside)
                 return false;
             bool handled = false;
@@ -1494,7 +1495,7 @@ bool SMIL::Region::handleEvent (EventPtr event) {
         }
         case event_pointer_moved: {
             PointerEvent * e = static_cast <PointerEvent *> (event.ptr ());
-            bool inside = e->x > x1 && e->x < x1+w1 && e->y > y1 && e->y< y1+h1;
+            bool inside = e->x > x1() && e->x < x1()+w1() && e->y > y1() && e->y< y1()+h1();
             bool handled = false;
             if (inside)
                 for (NodePtr r = firstChild (); r; r = r->nextSibling ())
@@ -1937,10 +1938,10 @@ bool SMIL::AVMediaType::handleEvent (EventPtr event) {
         MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (getRuntime ().ptr ());
         if (n && mtr && mtr->region_node) {
             RegionBase * rb = convertNode <RegionBase> (mtr->region_node);
-            int xoff, yoff, w = rb->w1, h = rb->h1;
+            int xoff, yoff, w = rb->w1(), h = rb->h1();
             mtr->calcSizes (w, h, xoff, yoff, w, h);
-            int x = rb->x1 + int (xoff * rb->xscale);
-            int y = rb->y1 + int (yoff * rb->yscale);
+            int x = rb->x1() + int (xoff * rb->xscale);
+            int y = rb->y1() + int (yoff * rb->yscale);
             unsigned int * bg_color = 0L;
             if (mtr->region_node) {
                 RegionRuntime * rr = static_cast <RegionRuntime *>(mtr->region_node->getRuntime ().ptr ());
@@ -2073,7 +2074,7 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
                 (timingstate == timings_stopped && fill == fill_freeze))) {
         SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (region_node);
         const QPixmap &img = (d->image ? *d->image:d->img_movie->framePixmap());
-        int xoff, yoff, w = rb->w1, h = rb->h1;
+        int xoff, yoff, w = rb->w1(), h = rb->h1();
         calcSizes (w, h, xoff, yoff, w, h);
         xoff = int (xoff * rb->xscale);
         yoff = int (yoff * rb->yscale);
@@ -2101,7 +2102,7 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
         } //else if (fit == fit_fill) { // scale in region
         // else fit_scroll
         if (w == img.width () && h == img.height ())
-            p.drawPixmap (QRect (rb->x1+xoff, rb->y1+yoff, w, h), img);
+            p.drawPixmap (QRect (rb->x1()+xoff, rb->y1()+yoff, w, h), img);
         else {
             if (!d->cache_image || w != d->cache_image->width () || h != d->cache_image->height ()) {
                 delete d->cache_image;
@@ -2109,7 +2110,7 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
                 img2 = img;
                 d->cache_image = new QPixmap (img2.scale (w, h));
             }
-            p.drawPixmap (QRect (rb->x1+xoff, rb->y1+yoff, w, h), *d->cache_image);
+            p.drawPixmap (QRect (rb->x1()+xoff, rb->y1()+yoff, w, h), *d->cache_image);
         }
     }
 }
@@ -2290,10 +2291,10 @@ KDE_NO_EXPORT void TextData::paint (QPainter & p) {
     if (region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
         SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (region_node);
-        int xoff, yoff, w = rb->w1, h = rb->h1;
+        int xoff, yoff, w = rb->w1(), h = rb->h1();
         calcSizes (w, h, xoff, yoff, w, h);
-        int x = rb->x1 + int (xoff * rb->xscale);
-        int y = rb->y1 + int (yoff * rb->yscale);
+        int x = rb->x1() + int (xoff * rb->xscale);
+        int y = rb->y1() + int (yoff * rb->yscale);
         d->edit->setGeometry (0, 0, w, h);
         if (d->edit->length () == 0) {
             QTextStream text (d->data, IO_ReadOnly);

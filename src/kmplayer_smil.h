@@ -404,11 +404,15 @@ public:
     void calculateChildBounds ();
 
     int x, y, w, h;     // unscaled values
-    int x1, y1, w1, h1; // actual values
     /**
-     * Scale factors
+     * Scale factors and offset
      */
+    int xoff, yoff;
     float xscale, yscale;
+    int x1 () const { return xoff + int (xscale * x); }
+    int y1 () const { return yoff + int (yscale * y); }
+    int w1 () const { return int (xscale * w); }
+    int h1 () const { return int (yscale * h); }
     /**
      * z-order of this region
      */
