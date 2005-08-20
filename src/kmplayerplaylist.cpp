@@ -397,7 +397,7 @@ KDE_NO_EXPORT
 ConnectionPtr Node::connectTo (NodePtr node, unsigned int evt_id) {
     NodeRefListPtr nl = listeners (evt_id);
     if (nl)
-        return ConnectionPtr (new Connection (listeners (evt_id), node));
+        return ConnectionPtr (new Connection (nl, node));
     return ConnectionPtr ();
 }
 
