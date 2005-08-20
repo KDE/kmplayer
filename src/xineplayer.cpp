@@ -1005,12 +1005,13 @@ int main(int argc, char **argv) {
     if (config_changed)
         xine_config_save (xine, configfile);
 
-    if (callback) {
         QByteArray buf;
         if (wants_config)
             getConfigEntries (buf);
+    if (callback)
         callback->started (dcopclient.appId (), buf);
-    }
+    else
+        printf ("%s\n", QString (buf).ascii ());
     xineapp->exec ();
 
     XLockDisplay(display);
