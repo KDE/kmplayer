@@ -27,6 +27,7 @@
 #include <qpushbutton.h>
 #include <qguardedptr.h>
 #include <qtextedit.h>
+#include <qtextbrowser.h>
 
 #include <kdockwidget.h>
 #include <kpopupmenu.h>
@@ -39,6 +40,7 @@
 
 class QWidgetStack;
 class QPixmap;
+class QPaintDevice;
 class QPainter;
 class QPopupMenu;
 class QBoxLayout;
@@ -58,6 +60,7 @@ class ControlPanel;
 class VolumeBar;
 class Console;
 class PlayListView;
+class ViewAreaPrivate;
 
 /*
  * An item in the playlist
@@ -122,7 +125,6 @@ private:
  * The area in which the video widget and controlpanel are laid out
  */
 class ViewArea : public QWidget {
-    friend class View;
     Q_OBJECT
 public:
     ViewArea (QWidget * parent, View * view);
@@ -134,12 +136,12 @@ public:
     void mouseMoved ();
     void scheduleRepaint (int x, int y, int w, int y);
     void moveRect (int x, int y, int w, int h, int x1, int y1);
+    void resizeEvent (QResizeEvent *);
 public slots:
     void fullScreen ();
     void accelActivated ();
     void scale (int);
 protected:
-    void resizeEvent (QResizeEvent *);
     void showEvent (QShowEvent *);
     void mouseMoveEvent (QMouseEvent *);
     void mousePressEvent (QMouseEvent *);
@@ -149,10 +151,12 @@ protected:
     void paintEvent (QPaintEvent *);
     void timerEvent (QTimerEvent * e);
 private:
+    void syncVisual (QRect rect);
+    ViewAreaPrivate * d;
     QWidget * m_parent;
     View * m_view;
     QPainter * m_painter;
-    QPixmap * m_paint_buffer;
+    QPaintDevice * m_paint_buffer;
     KActionCollection * m_collection;
     NodePtrW eventListener;
     QRect m_av_geometry;
@@ -171,6 +175,18 @@ private:
 class TextEdit : public QTextEdit {
 public:
     TextEdit (QWidget * parent, View * view);
+protected:
+    void contextMenuEvent (QContextMenuEvent * e);
+private:
+    View * m_view;
+};
+
+/*
+ * The infowindow GUI
+ */
+class InfoWindow : public QTextBrowser {
+public:
+    InfoWindow (QWidget * parent, View * view);
 protected:
     void contextMenuEvent (QContextMenuEvent * e);
 private:
@@ -220,7 +236,7 @@ public:
     KDE_NO_EXPORT Viewer * viewer () const { return m_viewer; }
     KDE_NO_EXPORT ControlPanel * controlPanel () const {return m_control_panel;}
     KDE_NO_EXPORT PlayListView * playList () const { return m_playlist; }
-    KDE_NO_EXPORT TextEdit * infoPanel () const { return m_infopanel; }
+    KDE_NO_EXPORT InfoWindow * infoPanel () const { return m_infopanel; }
     KDE_NO_EXPORT QWidgetStack * widgetStack () const { return m_widgetstack; }
     KDE_NO_EXPORT KDockArea * docArea () const { return m_dockarea; }
     KDE_NO_EXPORT ViewArea * viewArea () const { return m_view_area; }
@@ -277,7 +293,7 @@ private:
     // playlist widget
     PlayListView * m_playlist;
     // infopanel widget
-    TextEdit * m_infopanel;
+    InfoWindow * m_infopanel;
     // all widget types
     QWidget * m_widgettypes [WT_Last];
     KDockArea * m_dockarea;

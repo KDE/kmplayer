@@ -53,7 +53,6 @@
 #include <X11/keysym.h>
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
-
 static const int XKeyPress = KeyPress;
 #undef KeyPress
 #undef Always
@@ -287,7 +286,7 @@ static bool isDragValid (QDropEvent * de) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
- : QWidget (parent),
+ : QWidget (parent, "kde_kmplayer_viewarea", WResizeNoErase | WRepaintNoErase),
    m_parent (parent),
    m_view (view),
    m_painter (0L),
@@ -304,7 +303,6 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
     new KAction (i18n ("Escape"), KShortcut (Qt::Key_Escape), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_escape");
     new KAction (i18n ("Fullscreen"), KShortcut (Qt::Key_F), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_toggle");
     setMouseTracking (true);
-    setWFlags (getWFlags () | WRepaintNoErase);
 }
 
 KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {
@@ -372,34 +370,39 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
     mouseMoved (); // for m_mouse_invisible_timer
 }
 
-KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
+KDE_NO_EXPORT void ViewArea::syncVisual (QRect rect) {
+    if (!eventListener) {
+        repaint (rect, false);
+        return;
+    }
 #define PAINT_BUFFER_HEIGHT 128
-    if (eventListener) {
-        if (!m_paint_buffer) {
-            m_paint_buffer = new QPixmap (width (), PAINT_BUFFER_HEIGHT);
-            m_painter = new QPainter ();
-        } else if (m_paint_buffer->width () < width ())
-            m_paint_buffer->resize (width (), PAINT_BUFFER_HEIGHT);
-        int py=0;
-        int ex = pe->rect ().x ();
-        int ey = pe->rect ().y ();
-        int ew = pe->rect ().width ();
-        int eh = pe->rect ().height ();
-        //QPainter p;
-        //p.begin (this);
-        while (py < eh) {
-            int ph = eh-py < PAINT_BUFFER_HEIGHT ? eh-py : PAINT_BUFFER_HEIGHT;
-            m_painter->begin (m_paint_buffer);
-            m_painter->translate(-ex, -ey-py);
-            m_painter->fillRect (ex, ey+py, ew, ph, QBrush (paletteBackgroundColor ()));
-            eventListener->handleEvent ((new PaintEvent (*m_painter, ex, ey+py, ew, ph))->self ());
-            m_painter->end();
-            //p.drawPixmap (ex, ey+py, *m_paint_buffer, 0, 0, ew, ph);
-            bitBlt (this, ex, ey+py, m_paint_buffer, 0, 0, ew, ph);
-            py += PAINT_BUFFER_HEIGHT;
-        }
-        //p.end ();
-    } else
+    if (!m_paint_buffer) {
+        m_paint_buffer = new QPixmap (width (), PAINT_BUFFER_HEIGHT);
+        m_painter = new QPainter ();
+    } else if (((QPixmap *)m_paint_buffer)->width () < width ())
+        ((QPixmap *)m_paint_buffer)->resize (width (), PAINT_BUFFER_HEIGHT);
+    int py=0;
+    int ex = rect.x ();
+    int ey = rect.y ();
+    int ew = rect.width ();
+    int eh = rect.height ();
+    while (py < eh) {
+        int ph = eh-py < PAINT_BUFFER_HEIGHT ? eh-py : PAINT_BUFFER_HEIGHT;
+        m_painter->begin (m_paint_buffer);
+        m_painter->translate(-ex, -ey-py);
+        m_painter->fillRect (ex, ey+py, ew, ph, QBrush (paletteBackgroundColor ()));
+        eventListener->handleEvent ((new PaintEvent (*m_painter, ex, ey+py, ew, ph))->self ());
+        m_painter->end();
+        bitBlt (this, ex, ey+py, m_paint_buffer, 0, 0, ew, ph);
+        py += PAINT_BUFFER_HEIGHT;
+    }
+    XFlush (qt_xdisplay ());
+}
+
+KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
+    if (eventListener)
+        scheduleRepaint (pe->rect ().x (), pe->rect ().y (), pe->rect ().width (), pe->rect ().height ());
+    else
         QWidget::paintEvent (pe);
 }
 
@@ -516,29 +519,25 @@ KDE_NO_EXPORT void ViewArea::scheduleRepaint (int x, int y, int w, int h) {
         m_repaint_rect = m_repaint_rect.unite (QRect (x, y, w, h));
     else {
         m_repaint_rect = QRect (x, y, w, h);
-        m_repaint_timer = startTimer (40); // 25 per sec should do
+        m_repaint_timer = startTimer (20); // 50 per sec should do
     }
 }
 
 KDE_NO_EXPORT
 void ViewArea::moveRect (int x, int y, int w, int h, int x1, int y1) {
-    QRect r (x, y, w, h);
-    if ((m_repaint_timer && m_repaint_rect.intersects (r)) ||
-            m_view->viewer()->frameGeometry ().intersects (r)) {
-            m_repaint_rect = m_repaint_rect.unite(QRect(x1, y1, w, h).unite(r));
+    if (x1 > x) {
+        w += x1 - x;
     } else {
-        bitBlt (this, x1, y1, this, x, y, w, h);
-        if (x1 > x) {
-            repaint (x, y, x1 - x, h, false);
-        } else if (x > x1) {
-            repaint (x1 + w, y, x - x1, h, false);
-        }
-        if (y1 > y) {
-            repaint (x, y, w, y1 - y, false);
-        } else if (y > y1) {
-            repaint (x, y1 + h, w, y - y1, false);
-        }
+        w += x - x1;
+        x = x1;
     }
+    if (y1 > y) {
+        h += y1 - y;
+    } else {
+        h += y - y1;
+        y = y1;
+    }
+    scheduleRepaint (x, y, w, h);
 }
 
 KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
@@ -550,7 +549,8 @@ KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
     } else if (e->timerId () == m_repaint_timer) {
         killTimer (m_repaint_timer);
         m_repaint_timer = 0;
-        repaint (m_repaint_rect, false);
+        //repaint (m_repaint_rect, false);
+        syncVisual (m_repaint_rect);
     } else {
         kdError () << "unknown timer " << e->timerId () << " " << m_repaint_timer << endl;
         killTimer (e->timerId ());
@@ -1125,6 +1125,18 @@ KDE_NO_EXPORT void TextEdit::contextMenuEvent (QContextMenuEvent * e) {
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_CDTOR_EXPORT InfoWindow::InfoWindow (QWidget * parent, View * view) : QTextBrowser (parent, "kde_kmplayer_console"), m_view (view) {
+    setReadOnly (true);
+    setPaper (QBrush (QColor (0, 0, 0)));
+    setColor (QColor (0xB2, 0xB2, 0xB2));
+}
+
+KDE_NO_EXPORT void InfoWindow::contextMenuEvent (QContextMenuEvent * e) {
+    m_view->controlPanel ()->popupMenu ()->exec (e->globalPos ());
+}
+
+//-----------------------------------------------------------------------------
+
 KDE_NO_CDTOR_EXPORT View::View (QWidget *parent, const char *name)
   : KMediaPlayer::View (parent, name),
     m_image (0L),
@@ -1225,7 +1237,7 @@ KDE_NO_EXPORT void View::init () {
     m_widgettypes[WT_Picture] = new KMPlayerPictureWidget (m_widgetstack, this);
 
     m_dock_infopanel = m_dockarea->createDockWidget ("infopanel", KGlobal::iconLoader ()->loadIcon (QString ("info"), KIcon::Small));
-    m_infopanel = new TextEdit (m_dock_infopanel, this);
+    m_infopanel = new InfoWindow (m_dock_infopanel, this);
     m_dock_infopanel->setWidget (m_infopanel);
 
     m_widgetstack->addWidget (m_viewer);
