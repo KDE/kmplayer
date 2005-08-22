@@ -22,7 +22,6 @@
 #include <qapplication.h>
 #include <qstring.h>
 
-class KXinePlayerPrivate;
 
 struct XineSizeEvent : public QEvent {
     XineSizeEvent (int l, int w, int h, bool ff=false);
@@ -68,8 +67,6 @@ public slots:
     void pause ();
     void updatePosition ();
     void postFinished ();
-private:
-    KXinePlayerPrivate *d;
 };
 
 #endif //_KXINEPLAYER_H_

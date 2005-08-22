@@ -58,17 +58,6 @@ typedef struct {
     uint32_t  status;
 } MWMHints;
 
-class KXinePlayerPrivate {
-public:
-    KXinePlayerPrivate()
-       : vo_driver ((char *) "auto"),
-         ao_driver ((char *) "auto"),
-         brightness (0), contrast (0), hue (0), saturation (0), volume (0) {
-    }
-    char * vo_driver;
-    char * ao_driver;
-    int brightness, contrast, hue, saturation, volume;
-};
 
 static KXinePlayer * xineapp;
 static KMPlayer::Callback_stub * callback;
@@ -85,6 +74,8 @@ static xine_cfg_entry_t     audio_vis_cfg_entry;
 static x11_visual_t         vis;
 static char                *dvd_device;
 static char                *vcd_device;
+static char                *vo_driver = "auto";
+static char                *ao_driver = "auto";
 static char                 configfile[2048];
 
 static Display             *display;
@@ -98,6 +89,11 @@ static int                  screen;
 static int                  completion_event;
 static int                  xpos, ypos, width, height;
 static int                  movie_width, movie_height, movie_length, movie_pos;
+static int                  movie_brightness = 32767;
+static int                  movie_contrast = 32767;
+static int                  movie_hue = 32767;
+static int                  movie_saturation = 32767;
+static int                  movie_volume = 32767;
 static double               pixel_aspect;
 
 static int                  running = 0;
@@ -340,15 +336,14 @@ void Backend::setConfig (QByteArray data) {
 
 KXinePlayer::KXinePlayer (int _argc, char ** _argv)
   : QApplication (_argc, _argv, false) {
-    d = new KXinePlayerPrivate;
     window_created = true;
     for(int i = 1; i < argc (); i++) {
         if (!strcmp (argv ()[i], "-vo")) {
-            d->vo_driver = argv ()[++i];
-            if (!strcmp (d->vo_driver, "x11"))
-                d->vo_driver = (char *) "xshm";
+            vo_driver = argv ()[++i];
+            if (!strcmp (vo_driver, "x11"))
+                vo_driver = (char *) "xshm";
         } else if (!strcmp (argv ()[i], "-ao")) {
-            d->ao_driver = argv ()[++i];
+            ao_driver = argv ()[++i];
         } else if (!strcmp (argv ()[i], "-dvd-device")) {
             dvd_device = argv ()[++i];
         } else if (!strcmp (argv ()[i], "-vcd-device")) {
@@ -454,7 +449,6 @@ KXinePlayer::~KXinePlayer () {
         XSync (display, False);
         XUnlockDisplay (display);
     }
-	delete d;
     xineapp = 0L;
 }
 
@@ -493,6 +487,8 @@ void getConfigEntries (QByteArray & buf) {
                 case XINE_CONFIG_TYPE_BOOL:
                     elm.setAttribute (atttype, valbool);
                     break;
+                default:
+                    fprintf (stderr, "unhandled config type: %d\n", entry.type);
             }
         }
         if (entry.help)
@@ -519,22 +515,12 @@ void KXinePlayer::play () {
     movie_width = 0;
     movie_height = 0;
 
-    vo_port = xine_open_video_driver(xine, d->vo_driver, XINE_VISUAL_TYPE_X11, (void *) &vis);
-    ao_port = xine_open_audio_driver (xine, d->ao_driver, NULL);
     stream = xine_stream_new (xine, ao_port, vo_port);
     event_queue = xine_event_new_queue (stream);
     xine_event_create_listener_thread (event_queue, event_listener, NULL);
 
     xine_gui_send_vo_data(stream, XINE_GUI_SEND_VIDEOWIN_VISIBLE, (void *) 1);
 
-    if (d->saturation)
-        xine_set_param( stream, XINE_PARAM_VO_SATURATION, d->saturation);
-    if (d->brightness)
-        xine_set_param (stream, XINE_PARAM_VO_BRIGHTNESS, d->brightness);
-    if (d->contrast)
-        xine_set_param (stream, XINE_PARAM_VO_CONTRAST, d->contrast);
-    if (d->hue)
-        xine_set_param (stream, XINE_PARAM_VO_HUE, d->hue);
     running = 1;
     if (!xine_open (stream, (const char *) mrl.local8Bit ())) {
         fprintf(stderr, "Unable to open mrl '%s'\n", (const char *) mrl.local8Bit ());
@@ -542,6 +528,11 @@ void KXinePlayer::play () {
         finished ();
         return;
     }
+    xine_set_param (stream, XINE_PARAM_VO_SATURATION, movie_saturation);
+    xine_set_param (stream, XINE_PARAM_VO_BRIGHTNESS, movie_brightness);
+    xine_set_param (stream, XINE_PARAM_VO_CONTRAST, movie_contrast);
+    xine_set_param (stream, XINE_PARAM_VO_HUE, movie_hue);
+
     if (!sub_mrl.isEmpty ()) {
         fprintf(stderr, "Using subtitles from '%s'\n", (const char *) sub_mrl.local8Bit ());
         sub_stream = xine_stream_new (xine, NULL, vo_port);
@@ -553,7 +544,7 @@ void KXinePlayer::play () {
             xine_dispose (sub_stream);
             sub_stream = 0L;
         }
-    }
+    } 
     if (!xine_play (stream, 0, 0)) {
         fprintf(stderr, "Unable to play mrl '%s'\n", (const char *) mrl.local8Bit ());
         mutex.unlock ();
@@ -610,7 +601,7 @@ void KXinePlayer::updatePosition () {
 }
 
 void KXinePlayer::saturation (int val) {
-    d->saturation = val;
+    movie_saturation = val;
     if (running) {
         mutex.lock ();
         xine_set_param (stream, XINE_PARAM_VO_SATURATION, val);
@@ -619,7 +610,7 @@ void KXinePlayer::saturation (int val) {
 }
 
 void KXinePlayer::hue (int val) {
-    d->saturation = val;
+    movie_hue = val;
     if (running) {
         mutex.lock ();
         xine_set_param (stream, XINE_PARAM_VO_HUE, val);
@@ -628,7 +619,7 @@ void KXinePlayer::hue (int val) {
 }
 
 void KXinePlayer::contrast (int val) {
-    d->saturation = val;
+    movie_contrast = val;
     if (running) {
         mutex.lock ();
         xine_set_param (stream, XINE_PARAM_VO_CONTRAST, val);
@@ -637,7 +628,7 @@ void KXinePlayer::contrast (int val) {
 }
 
 void KXinePlayer::brightness (int val) {
-    d->saturation = val;
+    movie_brightness = val;
     if (running) {
         mutex.lock ();
         xine_set_param (stream, XINE_PARAM_VO_BRIGHTNESS, val);
@@ -646,7 +637,7 @@ void KXinePlayer::brightness (int val) {
 }
 
 void KXinePlayer::volume (int val) {
-    d->saturation = val;
+    movie_volume = val;
     if (running) {
         mutex.lock ();
         xine_set_param( stream, XINE_PARAM_AUDIO_VOLUME, val);
@@ -684,15 +675,11 @@ bool KXinePlayer::event (QEvent * e) {
                 xine_event_dispose_queue (event_queue);
                 xine_dispose (stream);
                 stream = 0L;
-                xine_close_audio_driver (xine, ao_port);  
-                xine_close_video_driver (xine, vo_port);  
-                vo_port = 0L;
-                ao_port = 0L;
             }
             mutex.unlock ();
-            XLockDisplay (display);
-            XClearWindow (display, wid);
-            XUnlockDisplay (display);
+            //XLockDisplay (display);
+            //XClearWindow (display, wid);
+            //XUnlockDisplay (display);
             if (callback)
                 callback->finished ();
             else
@@ -1005,15 +992,44 @@ int main(int argc, char **argv) {
     if (config_changed)
         xine_config_save (xine, configfile);
 
-        QByteArray buf;
-        if (wants_config)
-            getConfigEntries (buf);
+    vo_port = xine_open_video_driver(xine, vo_driver, XINE_VISUAL_TYPE_X11, (void *) &vis);
+    ao_port = xine_open_audio_driver (xine, ao_driver, NULL);
+    stream = xine_stream_new (xine, ao_port, vo_port);
+
+    QByteArray buf;
+    if (wants_config) {
+        /* TODO? Opening the output drivers in front, will add more config
+                 settings. Unfortunately, that also adds a second in startup..
+        const char *const * aops = xine_list_audio_output_plugins (xine);
+        for (const char *const* aop = aops; *aop; aop++) {
+            xine_audio_port_t * ap = xine_open_audio_driver (xine, *aop, 0L);
+            xine_close_audio_driver (xine, ap);
+            fprintf (stderr, "audio output: %s\n", *aop);
+        }
+        const char *const * vops = xine_list_video_output_plugins (xine);
+        for (const char *const* vop = vops; *vop; vop++) {
+            xine_video_port_t * vp = xine_open_video_driver (xine, *vop, XINE_VISUAL_TYPE_NONE, 0L);
+            xine_close_video_driver (xine, vp);
+            fprintf (stderr, "vidio output: %s\n", *vop);
+        }*/
+        getConfigEntries (buf);
+    }
     if (callback)
         callback->started (dcopclient.appId (), buf);
     else
-        printf ("%s\n", QString (buf).ascii ());
+        ;//printf ("%s\n", QString (buf).ascii ());
     xineapp->exec ();
 
+    if (sub_stream)
+        xine_dispose (sub_stream);
+    if (stream) {
+        xine_event_dispose_queue (event_queue);
+        xine_dispose (stream);
+    }
+    if (ao_port)
+        xine_close_audio_driver (xine, ao_port);  
+    if (vo_port)
+        xine_close_video_driver (xine, vo_port);  
     XLockDisplay(display);
     XClientMessageEvent ev = {
         ClientMessage, 0, true, display, wid, 
