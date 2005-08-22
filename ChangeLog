@@ -1,8 +1,30 @@
-Changes since version 0.9.0b
+Changes since version 0.9.0c
+- Font settings for playlist and infowindow added.
+- Color settings for infowindow added.
+- Added some docu about intro/exit movies and kmplayer:// urls in handbook.
 - Added minimal mode option that hides playlist, status- and menubar and
-  autohides the controlpanel
+  autohides the controlpanel.
 - Moved playlist option from popupmenu to controlpanel and a configure option
   whether to show this button
+Changes since version 0.9.0b
+- Fix 1+ movies become black&white with Xine backend playing the playlist
+- Fix the 'Remember window size on exit' setting and make the 'Always start
+  with fixed size' setting use the last remembered size.
+- Fix XML parser if two or more entities follow each other and block a
+  possible stack overflow
+- Check for local file access on playlist items too
+- Hide more XML nodes in playlist if they don't have a title
+- Fix displaying jpeg pictures in SMIL's <img> elements
+- Make sure to reset view after playing
+- Add js binding to DoPlayPause for real plugin
+- Try to restore playlist to previous position
+- Fix creating default region in SMIL (if no <layout> is found)
+- Show inner text in infowindow if clicked on an element that isn't a mrl
+- Support for Atom type podcast playlists, plays <link rel="enclosure" src=../>
+- Add a scale slider to popup menu when in fullscreen. This is particular
+  useful if watching a 4:3 movie on a widescreen display.
+- Allow for custom intro/exit movies when exists {intro,exit}.xml in either
+  $KDEDIR/share/apps/kmplayer/ or an user's .kde/share/apps/kmplayer/
 Changes since version 0.9.0a
 - Removed decoration (+ and - for tree) from root item in playlist, saving
   16px horizontal. Also set icon for this item to an url.
