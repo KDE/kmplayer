@@ -525,19 +525,21 @@ KDE_NO_EXPORT void ViewArea::scheduleRepaint (int x, int y, int w, int h) {
 
 KDE_NO_EXPORT
 void ViewArea::moveRect (int x, int y, int w, int h, int x1, int y1) {
-    if (x1 > x) {
-        w += x1 - x;
+    QRect r (x, y, w, h);
+    if ((m_repaint_timer && m_repaint_rect.intersects (r)) ||
+            m_view->viewer()->frameGeometry ().intersects (r)) {
+            m_repaint_rect = m_repaint_rect.unite(QRect(x1, y1, w, h).unite(r));
     } else {
-        w += x - x1;
-        x = x1;
+        bitBlt (this, x1, y1, this, x, y, w, h);
+        if (x1 > x)
+            scheduleRepaint (x, y, x1 - x, h);
+        else if (x > x1)
+            scheduleRepaint (x1 + w, y, x - x1, h);
+        if (y1 > y)
+            scheduleRepaint (x, y, w, y1 - y);
+        else if (y > y1)
+            scheduleRepaint (x, y1 + h, w, y - y1);
     }
-    if (y1 > y) {
-        h += y1 - y;
-    } else {
-        h += y - y1;
-        y = y1;
-    }
-    scheduleRepaint (x, y, w, h);
 }
 
 KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
