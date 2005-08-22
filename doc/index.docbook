@@ -111,7 +111,7 @@ to:kde-user@kde.org">The &kde; User Mailing list</ulink>.</para>
 <para>
     &kmplayer; can play from various sources. These sources are listed in the Source menu.
 </para>
-<section>
+<section id="tvsource">
     <title>TV</title>
     <para>
         &kmplayer; can play from TV cards using <application>MPlayer</application> or <acronym>XVideo</acronym> (using <application>kxvplayer</application>). Before you can watch TV, you have to configure which device to use and the TV channels. You can use the scanner from the configure dialog for this or edit the config file manually.
@@ -154,7 +154,7 @@ Also width and height attributes are ignored by the <acronym>XVideo</acronym> pl
 See the VDR section for more information about using <acronym>XVideo</acronym>.
 </para>
 </section>
-<section>
+<section id="vdrsource">
     <title>VDR</title>
 <para>
 To configure your VDR settings in kmplayer, see the Configure panel->Source->VDR->XVideo port panel. There should be ports detected, from which you should select one. You have to figure out what encoding you should use (eg. for western europe, that is PAL) and likely the correct one has a name with <quote>dvb</quote> in it.
@@ -173,6 +173,29 @@ EndSection
 </para>
 <para>
  Unfortunately, when ever you update your video driver, you have to reconfigure this setting. 
+</para>
+</section>
+<section id="kmplayer_url">
+    <title>Commandline</title>
+<para>
+    Internally for the sources, KMPlayer uses distinct names. At the time of
+    this writing these are "dvdnavsource", "dvdsource", "exitsource",
+    "hrefsource", "introsource", "pipesource", "tvscanner", "tvsource",
+    "urlsource", "vcdsource" and "vdrsource". When activated, they mostly
+    starts playing the list of playable items.
+</para>
+<para>
+    You can activate a particular source with a <filename>kmplayer://</filename> type <acronym>URL</acronym>. Just set the host part as the source name and optional path part as extra arguments, so for a channel for the "vdrsource" this could look like <filename>kmplayer://vdrsource/22 MTV 2</filename>. Eg. this script starts kmplayer using "dvdnavsource" and using <acronym>DCOP</acronym> to play fullscreen.
+    <programlisting>
+/bin/bash
+kmplayer kmplayer://dvdnavsource/ &amp;
+PID=$!
+sleep 2
+dcop kmplayer-$PID KMediaPlayer toggleFullScreen
+    </programlisting>
+    For some sources this will not do much because they are not meant to be
+    for normal playing. For "pipesource" this is disabled because that
+    would be a bad security hole of course.
 </para>
 </section>
 </chapter>
