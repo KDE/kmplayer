@@ -150,7 +150,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     Source * urlsource = m_sources ["urlsource"];
     KMPlayer::ControlPanel * panel = m_view->controlPanel ();
     QStringList::const_iterator it = args.begin ();
-    for ( ; it != args.end (); ++it) {
+    QStringList::const_iterator end( args.begin () );
+    for ( ; it != end; ++it) {
         int equalPos = (*it).find("=");
         if (equalPos > 0) {
             QString name = (*it).left (equalPos).lower ();
@@ -279,7 +280,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                 i != e;
                 i = std::find_if (++i, e, pred)) {
             // found viewer and control part, exchange players now
-            KMPlayerPart * vp = (m_features & Feat_Viewer) ? this : *i; 
+            KMPlayerPart * vp = (m_features & Feat_Viewer) ? this : *i;
             KMPlayerPart * cp = (m_features & Feat_Viewer) ? *i : this;
             setProcess ("mplayer");
             vp->connectPanel (static_cast <KMPlayer::View *> (cp->view ())->controlPanel ());
@@ -418,7 +419,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
 
 KDE_NO_EXPORT void KMPlayerPart::waitForImageWindowTimeOut () {
     if (!process ()) {
-        // still no ImageWindow attached, eg. audio only 
+        // still no ImageWindow attached, eg. audio only
         const KMPlayerPartList::iterator e =kmplayerpart_static->partlist.end();
         KMPlayerPartList::iterator i = std::find_if (kmplayerpart_static->partlist.begin (), e, GroupPredicate (this, m_group));
         if (i == e || *i == this) {
@@ -449,7 +450,7 @@ KDE_NO_EXPORT void KMPlayerPart::loaded (int percentage) {
     PartBase::loaded (percentage);
     if (percentage < 100) {
         m_browserextension->setLoadingProgress (percentage);
-        m_browserextension->infoMessage 
+        m_browserextension->infoMessage
             (QString::number (percentage) + i18n ("% Cache fill"));
     }
 }
@@ -534,7 +535,7 @@ KDE_NO_EXPORT void KMPlayerBrowserExtension::restoreState (QDataStream & stream)
 
 enum JSCommand {
     notsupported,
-    canpause, canplay, canstop, canseek, 
+    canpause, canplay, canstop, canseek,
     isfullscreen, isloop, isaspect,
     length, width, height, playstate, position, source, setsource, protocol,
     gotourl, nextentry, jsc_pause, play, preventry, stop, volume, setvolume,
@@ -571,8 +572,8 @@ static const JSCommandEntry JSCommandList [] = {
     { "GetBufferingTimeRemaining", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
     { "GetCanSeek", canseek, 0L, KParts::LiveConnectExtension::TypeBool },
     { "GetCenter", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
-    { "GetClipHeight", height, 0L, KParts::LiveConnectExtension::TypeNumber }, 
-    { "GetClipWidth", width, 0L, KParts::LiveConnectExtension::TypeNumber }, 
+    { "GetClipHeight", height, 0L, KParts::LiveConnectExtension::TypeNumber },
+    { "GetClipWidth", width, 0L, KParts::LiveConnectExtension::TypeNumber },
     { "GetConnectionBandwidth", notsupported, "64", KParts::LiveConnectExtension::TypeNumber },
     { "GetConsole", notsupported, "unknown", KParts::LiveConnectExtension::TypeString },
     { "GetConsoleEvents", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
@@ -585,7 +586,7 @@ static const JSCommandEntry JSCommandList [] = {
     { "GetEntryAuthor", notsupported, "noname", KParts::LiveConnectExtension::TypeString },
     { "GetEntryCopyright", notsupported, "(c)", KParts::LiveConnectExtension::TypeString },
     { "GetEntryTitle", notsupported, "title", KParts::LiveConnectExtension::TypeString },
-    { "GetFullScreen", isfullscreen, 0L, KParts::LiveConnectExtension::TypeBool }, 
+    { "GetFullScreen", isfullscreen, 0L, KParts::LiveConnectExtension::TypeBool },
     { "GetImageStatus", notsupported, "false", KParts::LiveConnectExtension::TypeBool },
     { "GetLastErrorMoreInfoURL", notsupported, "no error", KParts::LiveConnectExtension::TypeString },
     { "GetLastErrorRMACode", notsupported, "0", KParts::LiveConnectExtension::TypeNumber },
@@ -907,7 +908,7 @@ KDE_NO_EXPORT bool KMPlayerHRefSource::processOutput (const QString & /*str*/) {
     return true;
 }
 
-KDE_NO_EXPORT void KMPlayerHRefSource::setURL (const KURL & url) { 
+KDE_NO_EXPORT void KMPlayerHRefSource::setURL (const KURL & url) {
     m_url = url;
     m_identified = false;
     m_finished = false;

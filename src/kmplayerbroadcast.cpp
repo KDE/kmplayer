@@ -102,7 +102,8 @@ KDE_NO_EXPORT FFServerSetting & FFServerSetting::operator = (const QStringList &
     width = *it++;
     height = *it++;
     acl.clear ();
-    for (; it != sl.end (); ++it)
+    QStringList::const_iterator end( sl.end() );
+    for (; it != end; ++it)
         acl.push_back (*it);
     return *this;
 }
@@ -145,7 +146,8 @@ KDE_NO_EXPORT const QStringList FFServerSetting::list () {
     sl.push_back (width);
     sl.push_back (height);
     QStringList::const_iterator it = acl.begin ();
-    for (; it != acl.end (); ++it)
+    QStringList::const_iterator end( acl.end () );
+    for (; it != end; ++it)
         sl.push_back (*it);
     return sl;
 }
@@ -300,7 +302,8 @@ KDE_NO_EXPORT void KMPlayerPrefBroadcastFormatPage::setSettings (const FFServerS
     accesslist->setNumRows (0);
     accesslist->setNumRows (50);
     QStringList::const_iterator it = fs.acl.begin ();
-    for (int i = 0; it != fs.acl.end (); ++i, ++it)
+    QStringList::const_iterator end( fs.acl.end () );
+    for (int i = 0; it != end; ++i, ++it)
         accesslist->setItem (i, 0, new QTableItem (accesslist, QTableItem::Always, *it));
 }
 
@@ -431,7 +434,8 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::read (KConfig * config) {
     ffserversettings = config->readListEntry (strFFServerCustomSetting, ';');
     QStringList profiles = config->readListEntry (strFFServerProfiles, ';');
     QStringList::iterator pr_it = profiles.begin ();
-    for (; pr_it != profiles.end (); ++pr_it) {
+    QStringList::iterator pr_end( profiles.end () );
+    for (; pr_it != pr_end; ++pr_it) {
         QStringList sl = config->readListEntry (QString ("Profile_") + *pr_it, ';');
         if (sl.size () > 10) {
             FFServerSetting * ffs = new FFServerSetting (sl);
@@ -496,7 +500,8 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::startServer () {
     m_configpage->getSettings (ffs);
     QString acl;
     QStringList::iterator it = ffs.acl.begin ();
-    for (; it != ffs.acl.end (); ++it)
+    QStringList::iterator end(  ffs.acl.end () );
+    for (; it != end; ++it)
         acl += QString ("ACL allow ") + *it + QString ("\n");
     unlink (m_ffserverconfig->feedfile.ascii ());
     QFile qfile (conffile);

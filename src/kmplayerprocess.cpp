@@ -339,7 +339,7 @@ KDE_NO_EXPORT bool MPlayer::play (Source * source, NodePtr node) {
     KURL url (m_url);
     if (!url.isEmpty ()) {
         if (source->url ().isLocalFile ())
-            m_process->setWorkingDirectory 
+            m_process->setWorkingDirectory
                 (QFileInfo (source->url ().path ()).dirPath (true));
         if (url.isLocalFile ()) {
             m_url = getPath (url);
@@ -352,7 +352,7 @@ KDE_NO_EXPORT bool MPlayer::play (Source * source, NodePtr node) {
             if (cache > 3 && !url.url ().startsWith (QString ("dvd")) &&
                     !url.url ().startsWith (QString ("vcd")) &&
                     !url.url ().startsWith (QString ("tv://")))
-                args += QString ("-cache %1 ").arg (cache); 
+                args += QString ("-cache %1 ").arg (cache);
         }
         if (url.protocol () != QString ("stdin"))
             args += KProcess::quote (QString (QFile::encodeName (m_url)));
@@ -394,7 +394,8 @@ KDE_NO_EXPORT bool MPlayer::seek (int pos, bool absolute) {
         return false;
     if (m_request_seek >= 0 && commands.size () > 1) {
         QStringList::iterator i = commands.begin ();
-        for (++i; i != commands.end (); ++i)
+        QStringList::iterator end ( commands.end () );
+        for (++i; i != end; ++i)
             if ((*i).startsWith (QString ("seek"))) {
                 i = commands.erase (i);
                 m_request_seek = -1;
@@ -508,7 +509,8 @@ bool MPlayer::run (const char * args, const char * pipe) {
 
     QValueList<QCString>::const_iterator it;
     QString sMPArgs;
-    for ( it = m_process->args().begin(); it != m_process->args().end(); ++it ){
+    QValueList<QCString>::const_iterator end( m_process->args().end() );
+    for ( it = m_process->args().begin(); it != end; ++it ){
         sMPArgs += (*it);
     }
 
@@ -671,7 +673,7 @@ static struct MPlayerPattern {
 };
 
 namespace KMPlayer {
-    
+
 class MPlayerPreferencesFrame : public QFrame {
 public:
     MPlayerPreferencesFrame (QWidget * parent);

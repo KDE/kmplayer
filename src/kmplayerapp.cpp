@@ -125,7 +125,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions()
     new KAction (i18n ("Clear &History"), 0, 0, this, SLOT (slotClearHistory ()), actionCollection (), "clear_history");
     fileClose = KStdAction::close(this, SLOT(slotFileClose()), actionCollection());
     fileQuit = KStdAction::quit(this, SLOT(slotFileQuit()), actionCollection());
-    
+
     new KAction (i18n ("&Open Pipe..."), QString ("pipe"), KShortcut (), this, SLOT(openPipe ()), actionCollection (), "source_pipe");
     //KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0,true)
     new KAction (i18n ("&Connect"), QString ("connect_established"), KShortcut (), this, SLOT (openVDR ()), actionCollection (), "vdr_connect");
@@ -815,7 +815,8 @@ KDE_NO_EXPORT void KMPlayerApp::startArtsControl () {
     QCString fApp, fObj;
     QByteArray data, replydata;
     QCStringList apps = kapp->dcopClient ()->registeredApplications();
-    for( QCStringList::ConstIterator it = apps.begin(); it != apps.end(); ++it)
+    QCStringList::ConstIterator end( apps.end() );
+    for( QCStringList::ConstIterator it = apps.begin(); it != end; ++it)
         if (!strncmp ((*it).data (), "artscontrol", 11)) {
             kapp->dcopClient ()->findObject
                 (*it, "artscontrol-mainwindow#1", "raise()", data, fApp, fObj);
