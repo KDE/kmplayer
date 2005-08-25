@@ -117,41 +117,41 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::~KMPlayerApp () {
 }
 
 
-KDE_NO_EXPORT void KMPlayerApp::initActions()
-{
-    fileNewWindow = new KAction(i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), actionCollection(),"new_window");
-    fileOpen = KStdAction::open(this, SLOT(slotFileOpen()), actionCollection(), "open");
-    fileOpenRecent = KStdAction::openRecent(this, SLOT(slotFileOpenRecent(const KURL&)), actionCollection(), "open_recent");
-    new KAction (i18n ("Clear &History"), 0, 0, this, SLOT (slotClearHistory ()), actionCollection (), "clear_history");
-    fileClose = KStdAction::close(this, SLOT(slotFileClose()), actionCollection());
-    fileQuit = KStdAction::quit(this, SLOT(slotFileQuit()), actionCollection());
-
-    new KAction (i18n ("&Open Pipe..."), QString ("pipe"), KShortcut (), this, SLOT(openPipe ()), actionCollection (), "source_pipe");
+KDE_NO_EXPORT void KMPlayerApp::initActions () {
+    KActionCollection * ac = actionCollection ();
+    fileNewWindow = new KAction(i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), ac, "new_window");
+    fileOpen = KStdAction::open(this, SLOT(slotFileOpen()), ac, "open");
+    fileOpenRecent = KStdAction::openRecent(this, SLOT(slotFileOpenRecent(const KURL&)), ac, "open_recent");
+    KStdAction::saveAs (this, SLOT (slotSaveAs ()), ac, "save_as");
+    new KAction (i18n ("Clear &History"), 0, 0, this, SLOT (slotClearHistory ()), ac, "clear_history");
+    fileClose = KStdAction::close (this, SLOT (slotFileClose ()), ac);
+    fileQuit = KStdAction::quit (this, SLOT (slotFileQuit ()), ac);
+    new KAction (i18n ("&Open Pipe..."), QString ("pipe"), KShortcut (), this, SLOT(openPipe ()), ac, "source_pipe");
     //KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0,true)
-    new KAction (i18n ("&Connect"), QString ("connect_established"), KShortcut (), this, SLOT (openVDR ()), actionCollection (), "vdr_connect");
-    editVolumeInc = new KAction (i18n ("Increase Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT (increaseVolume ()), actionCollection (), "edit_volume_up");
-    editVolumeDec = new KAction (i18n ("Decrease Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT(decreaseVolume ()), actionCollection (), "edit_volume_down");
-    toggleView = new KAction (i18n ("C&onsole"), QString ("konsole"), KShortcut (), m_player->view(), SLOT (toggleVideoConsoleWindow ()), actionCollection (), "view_video");
-    //new KAction (i18n ("V&ideo"), QString ("video"), KShortcut (), m_view, SLOT (toggleVideoConsoleWindow ()), actionCollection (), "view_video");
-    new KAction (i18n ("Pla&y List"), QString ("player_playlist"), KShortcut (), m_player, SLOT (showPlayListWindow ()), actionCollection (), "view_playlist");
-    new KAction (i18n ("Minimal mode"), QString ("empty"), KShortcut (), this, SLOT (slotMinimalMode ()), actionCollection (), "view_minimal");
-    /*KAction *preference =*/ KStdAction::preferences (m_player, SLOT (showConfigDialog ()), actionCollection(), "configure");
-    new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), actionCollection (), "view_zoom_50");
-    new KAction (i18n ("100%"), QString ("viewmagfit"), KShortcut (), this, SLOT (zoom100 ()), actionCollection (), "view_zoom_100");
-    new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), actionCollection (), "view_zoom_150");
-    viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), actionCollection (), "view_keep_ratio");
+    new KAction (i18n ("&Connect"), QString ("connect_established"), KShortcut (), this, SLOT (openVDR ()), ac, "vdr_connect");
+    editVolumeInc = new KAction (i18n ("Increase Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT (increaseVolume ()), ac, "edit_volume_up");
+    editVolumeDec = new KAction (i18n ("Decrease Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT(decreaseVolume ()), ac, "edit_volume_down");
+    toggleView = new KAction (i18n ("C&onsole"), QString ("konsole"), KShortcut (), m_player->view(), SLOT (toggleVideoConsoleWindow ()), ac, "view_video");
+    //new KAction (i18n ("V&ideo"), QString ("video"), KShortcut (), m_view, SLOT (toggleVideoConsoleWindow ()), ac, "view_video");
+    new KAction (i18n ("Pla&y List"), QString ("player_playlist"), KShortcut (), m_player, SLOT (showPlayListWindow ()), ac, "view_playlist");
+    new KAction (i18n ("Minimal mode"), QString ("empty"), KShortcut (), this, SLOT (slotMinimalMode ()), ac, "view_minimal");
+    /*KAction *preference =*/ KStdAction::preferences (m_player, SLOT (showConfigDialog ()), ac, "configure");
+    new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), ac, "view_zoom_50");
+    new KAction (i18n ("100%"), QString ("viewmagfit"), KShortcut (), this, SLOT (zoom100 ()), ac, "view_zoom_100");
+    new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), ac, "view_zoom_150");
+    viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), ac, "view_keep_ratio");
 #if KDE_IS_VERSION(3,1,90)
-    /*KAction *fullscreenact =*/ KStdAction::fullScreen( this, SLOT(fullScreen ()), actionCollection (), 0 );
+    /*KAction *fullscreenact =*/ KStdAction::fullScreen( this, SLOT(fullScreen ()), ac, 0 );
 #else
-    /*KAction *fullscreenact =*/ new KAction (i18n("&Full Screen"), 0, 0, this, SLOT(fullScreen ()), actionCollection (), "fullscreen");
+    /*KAction *fullscreenact =*/ new KAction (i18n("&Full Screen"), 0, 0, this, SLOT(fullScreen ()), ac, "fullscreen");
 #endif
-    /*KAction *playact =*/ new KAction (i18n ("P&lay"), QString ("player_play"), KShortcut (), m_player, SLOT (play ()), actionCollection (), "play");
-    /*KAction *pauseact =*/ new KAction (i18n ("&Pause"), QString ("player_pause"), KShortcut (), m_player, SLOT (pause ()), actionCollection (), "pause");
-    /*KAction *stopact =*/ new KAction (i18n ("&Stop"), QString ("player_stop"), KShortcut (), m_player, SLOT (stop ()), actionCollection (), "stop");
-    /*KAction *artsctrl =*/ new KAction (i18n ("&Arts Control"), QString ("player_volume"), KShortcut (), this, SLOT (startArtsControl ()), actionCollection (), "view_arts_control");
-    viewToolBar = KStdAction::showToolbar(this, SLOT(slotViewToolBar()), actionCollection());
-    viewStatusBar = KStdAction::showStatusbar(this, SLOT(slotViewStatusBar()), actionCollection());
-    viewMenuBar = KStdAction::showMenubar(this, SLOT(slotViewMenuBar()), actionCollection());
+    /*KAction *playact =*/ new KAction (i18n ("P&lay"), QString ("player_play"), KShortcut (), m_player, SLOT (play ()), ac, "play");
+    /*KAction *pauseact =*/ new KAction (i18n ("&Pause"), QString ("player_pause"), KShortcut (), m_player, SLOT (pause ()), ac, "pause");
+    /*KAction *stopact =*/ new KAction (i18n ("&Stop"), QString ("player_stop"), KShortcut (), m_player, SLOT (stop ()), ac, "stop");
+    /*KAction *artsctrl =*/ new KAction (i18n ("&Arts Control"), QString ("player_volume"), KShortcut (), this, SLOT (startArtsControl ()), ac, "view_arts_control");
+    viewToolBar = KStdAction::showToolbar(this, SLOT(slotViewToolBar()), ac);
+    viewStatusBar =KStdAction::showStatusbar(this,SLOT(slotViewStatusBar()),ac);
+    viewMenuBar = KStdAction::showMenubar(this, SLOT(slotViewMenuBar()), ac);
     fileNewWindow->setStatusText(i18n("Opens a new application window"));
     fileOpen->setStatusText(i18n("Opens an existing file"));
     fileOpenRecent->setStatusText(i18n("Opens a recently used file"));
@@ -160,7 +160,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions()
     //viewToolBar->setStatusText(i18n("Enables/disables the toolbar"));
     viewStatusBar->setStatusText(i18n("Enables/disables the statusbar"));
     viewMenuBar->setStatusText(i18n("Enables/disables the menubar"));
-    KStdAction::keyBindings( this, SLOT( slotConfigureKeys() ), actionCollection() );
+    KStdAction::keyBindings( this, SLOT( slotConfigureKeys() ), ac);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotConfigureKeys()
@@ -224,6 +224,8 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
             this, SLOT (zoom100 ()));
     connect (m_view, SIGNAL (fullScreenChanged ()),
             this, SLOT (fullScreen ()));
+    connect (m_view->infoPanel (), SIGNAL (linkClicked (const QString &)),
+            this, SLOT (infoWindowLinkClicked (const QString &)));
     /*QPopupMenu * viewmenu = new QPopupMenu;
     viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()),
                           QKeySequence ("CTRL + Key_F"));
@@ -714,6 +716,25 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileOpenRecent(const KURL& url)
 
 }
 
+KDE_NO_EXPORT void KMPlayerApp::slotSaveAs () {
+    QString url = KFileDialog::getSaveFileName (QString::null, QString::null, this, i18n ("Save File"));
+    if (!url.isEmpty ()) {
+        QFile file (url);
+        if (!file.open (IO_WriteOnly)) {
+            KMessageBox::error (this, i18n ("Error opening file %1.\n%2.").arg (url).arg (file.errorString ()), i18n("Error"));
+            return;
+        }
+        if (m_player->source ()) {
+            KMPlayer::NodePtr doc = m_player->source ()->document ();
+            if (doc) {
+                QTextStream ts (&file);
+                ts << doc->innerXML ();
+            }
+        }
+        file.close ();
+    }
+}
+
 KDE_NO_EXPORT void KMPlayerApp::slotClearHistory () {
     //fileOpenRecent->clearURLList ();
     int mi = fileOpenRecent->maxItems ();
@@ -850,6 +871,11 @@ KDE_NO_EXPORT void KMPlayerApp::keepSizeRatio () {
     m_view->setKeepSizeRatio (!m_view->keepSizeRatio ());
     m_player->settings ()->sizeratio = m_view->keepSizeRatio ();
     viewKeepRatio->setChecked (m_view->keepSizeRatio ());
+}
+
+KDE_NO_EXPORT void KMPlayerApp::infoWindowLinkClicked (const QString & link) {
+    kdDebug () << "infoWindowLinkClicked " << link << endl << m_view->infoPanel ()->text () << endl;
+    m_view->infoPanel ()->backward ();
 }
 
 //-----------------------------------------------------------------------------

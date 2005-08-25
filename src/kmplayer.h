@@ -84,6 +84,7 @@ public slots:
     void slotFileNewWindow ();
     void slotFileOpen ();
     void slotFileOpenRecent (const KURL& url);
+    void slotSaveAs ();
     void slotFileClose ();
     void slotFileQuit ();
     void slotPreferences ();
@@ -114,6 +115,7 @@ private slots:
     void slotConfigureKeys();
     void slotClearHistory ();
     void windowVideoConsoleToggled (int wt);
+    void infoWindowLinkClicked (const QString & link);
 
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
