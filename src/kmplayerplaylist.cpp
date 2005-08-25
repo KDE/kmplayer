@@ -313,9 +313,12 @@ void Node::normalize () {
     NodePtr e = firstChild ();
     while (e) {
         NodePtr tmp = e->nextSibling ();
-        if (!strcmp (e->nodeName (), "#text")) {
-            if (e->nodeValue ().stripWhiteSpace ().isEmpty ())
+        if (!e->isElementNode () && !strcmp (e->nodeName (), "#text")) {
+            QString val = e->nodeValue ().simplifyWhiteSpace ();
+            if (val.isEmpty ())
                 removeChild (e);
+            else
+                e->setNodeValue (val);
         } else
             e->normalize ();
         e = tmp;

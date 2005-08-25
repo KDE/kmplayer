@@ -35,8 +35,7 @@ NodePtr ATOM::Feed::childFromTag (const QString & tag) {
 void ATOM::Feed::closed () {
     for (NodePtr c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_title) {
-            QString str = c->innerText ();
-            pretty_name = str.left (str.find (QChar ('\n')));
+            pretty_name = c->innerText ().simplifyWhiteSpace ();
             break;
         }
 }
@@ -56,8 +55,7 @@ NodePtr ATOM::Entry::childFromTag (const QString & tag) {
 void ATOM::Entry::closed () {
     for (NodePtr c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_title) {
-            QString str = c->innerText ();
-            pretty_name = str.left (str.find (QChar ('\n')));
+            pretty_name = c->innerText ().simplifyWhiteSpace ();
             break;
         }
 }

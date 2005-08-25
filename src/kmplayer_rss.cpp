@@ -37,12 +37,11 @@ NodePtr RSS::Channel::childFromTag (const QString & tag) {
 }
 
 void RSS::Channel::closed () {
-    for (NodePtr c = firstChild (); c; c = c->nextSibling ()) {
+    for (NodePtr c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_title) {
-            QString str = c->innerText ();
-            pretty_name = str.left (str.find (QChar ('\n')));
+            pretty_name = c->innerText ().simplifyWhiteSpace ();
+            break;
         }
-    }
 }
 
 bool RSS::Channel::expose () const {
@@ -62,10 +61,8 @@ NodePtr RSS::Item::childFromTag (const QString & tag) {
 
 void RSS::Item::closed () {
     for (NodePtr c = firstChild (); c; c = c->nextSibling ()) {
-        if (c->id == id_node_title) {
-            QString str = c->innerText ();
-            pretty_name = str.left (str.find (QChar ('\n')));
-        }
+        if (c->id == id_node_title)
+            pretty_name = c->innerText ().simplifyWhiteSpace ();
         if (c->isMrl ())
             src = c->mrl ()->src;
     }

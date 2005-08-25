@@ -38,8 +38,10 @@ KDE_NO_EXPORT NodePtr ASX::Asx::childFromTag (const QString & tag) {
 KDE_NO_EXPORT bool ASX::Asx::isMrl () {
     if (cached_ismrl_version != document ()->m_tree_version) {
         for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-            if (!strcmp (e->nodeName (), "title"))
-                pretty_name = e->innerText ();
+            if (!strcmp (e->nodeName (), "title")) {
+                pretty_name = e->innerText ().simplifyWhiteSpace ();
+                break;
+            }
     }
     return Mrl::isMrl ();
 }
@@ -71,7 +73,7 @@ KDE_NO_EXPORT bool ASX::Entry::isMrl () {
                 }
                 foundone = true;
             } else if (!strcmp (e->nodeName (), "title"))
-                pretty_name = e->innerText ();
+                pretty_name = e->innerText (); // already normalized (hopefully)
         }
         if (pretty_name.isEmpty ())
             pretty_name = pn;
