@@ -212,10 +212,6 @@ protected:
  */
 class KMPLAYER_EXPORT View : public KMediaPlayer::View {
     Q_OBJECT
-    friend class Viewer;
-    friend class ViewArea;
-    friend class PlayListView;
-    friend class KMPlayerPictureWidget;
 public:
     enum ControlPanelMode {
         CP_Hide, CP_AutoHide, CP_Show, CP_Only /* no video widget */
@@ -253,6 +249,9 @@ public:
     void setInfoMessage (const QString & msg);
     void setNoInfoMessages (bool b) { m_no_info = b; }
     void setViewOnly ();
+    void dragEnterEvent (QDragEnterEvent *);
+    void dropEvent (QDropEvent *);
+    KDE_NO_EXPORT void emitPictureClicked () { emit pictureClicked (); }
 public slots:
     /* raise video widget, might (auto) hides panel */
     void videoStart ();
@@ -273,15 +272,12 @@ signals:
 protected:
     void leaveEvent (QEvent *);
     void timerEvent (QTimerEvent *);
-    void dragEnterEvent (QDragEnterEvent *);
-    void dropEvent (QDropEvent *);
     bool x11Event (XEvent *);
 private slots:
     void ctrlButtonMouseEntered ();
     void ctrlButtonClicked ();
     void popupMenuMouseLeft ();
 private:
-    KDE_NO_EXPORT void emitPictureClicked () { emit pictureClicked (); }
     // widget for player's output
     Viewer * m_viewer;
     // console output

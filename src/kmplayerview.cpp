@@ -1667,7 +1667,7 @@ KDE_NO_EXPORT void Viewer::mouseMoveEvent (QMouseEvent * e) {
         int cp_height = m_view->controlPanel ()->maximumSize ().height ();
         m_view->delayedShowButtons (e->y () > height () - cp_height);
     }
-    m_view->m_view_area->mouseMoved ();
+    m_view->viewArea ()->mouseMoved ();
 }
 
 void Viewer::setAspect (float a) {
