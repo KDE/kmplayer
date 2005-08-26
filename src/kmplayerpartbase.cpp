@@ -416,7 +416,7 @@ bool PartBase::openURL (const KURL::List & urls) {
         NodePtr d = m_source->document ();
         if (d)
             for (int i = 0; i < urls.size (); i++)
-                d->appendChild ((new GenericURL (d, urls [i].url ()))->self ());
+                d->appendChild ((new GenericURL (d, KURL::decode_string (urls [i].url ())))->self ());
     }
     return true;
 }

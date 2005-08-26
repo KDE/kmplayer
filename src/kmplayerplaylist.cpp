@@ -49,6 +49,9 @@ namespace KMPlayer {
             return new RSS::Rss (d);
         else if (!strcasecmp (name, "feed"))
             return new ATOM::Feed (d);
+        else if (!strcasecmp (name, "mrl") ||
+                !strcasecmp (name, "document"))
+            return new GenericURL (d, QString::null);
         return 0L;
     }
 
@@ -621,7 +624,14 @@ KDE_NO_CDTOR_EXPORT Title::Title (NodePtr & d)
 GenericURL::GenericURL (NodePtr & d, const QString & s, const QString & name)
  : Mrl (d) {
     src = s;
+    if (!src.isEmpty ())
+        setAttribute (QString ("src"), src);
     pretty_name = name;
+}
+
+KDE_NO_EXPORT void GenericURL::closed () {
+    if (src.isEmpty ())
+        src = getAttribute (QString ("src"));
 }
 
 GenericMrl::GenericMrl (NodePtr & d, const QString & s, const QString & name)

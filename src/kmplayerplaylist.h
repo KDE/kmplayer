@@ -636,7 +636,8 @@ public:
 class KMPLAYER_EXPORT GenericURL : public Mrl { 
 public:
     GenericURL(NodePtr &d, const QString &s, const QString &n=QString::null);
-    KDE_NO_EXPORT const char * nodeName () const { return "GenericURL"; }
+    KDE_NO_EXPORT const char * nodeName () const { return "mrl"; }
+    void closed ();
 };
 
 /**
