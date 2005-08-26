@@ -717,7 +717,8 @@ KDE_NO_EXPORT void TVDeviceScannerSource::play () {
 }
 
 KDE_NO_EXPORT void TVDeviceScannerSource::stateChange (KMPlayer::Process * p, KMPlayer::Process::State os, KMPlayer::Process::State ns) {
-    if (ns == KMPlayer::Process::Ready && os > KMPlayer::Process::Ready) {
+    if (m_tvdevice &&  // can be deactivated
+            ns == KMPlayer::Process::Ready && os > KMPlayer::Process::Ready) {
         TVDevice * dev = 0L;
         kdDebug () << "scanning done " << m_tvdevice->hasChildNodes () << endl;
         if (!m_tvdevice->hasChildNodes ())
