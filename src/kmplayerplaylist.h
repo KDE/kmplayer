@@ -636,7 +636,7 @@ public:
 class KMPLAYER_EXPORT GenericURL : public Mrl { 
 public:
     GenericURL(NodePtr &d, const QString &s, const QString &n=QString::null);
-    KDE_NO_EXPORT const char * nodeName () const { return "mrl"; }
+    KDE_NO_EXPORT const char * nodeName () const { return "url"; }
     void closed ();
 };
 
@@ -647,7 +647,8 @@ class KMPLAYER_EXPORT GenericMrl : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT GenericMrl (NodePtr & d) : Mrl (d) {}
     GenericMrl(NodePtr &d, const QString &s, const QString &n=QString::null);
-    KDE_NO_EXPORT const char * nodeName () const { return "GenericMrl"; }
+    KDE_NO_EXPORT const char * nodeName () const { return "mrl"; }
+    void closed ();
     /**
      * Will return false if this document has child nodes
      */
