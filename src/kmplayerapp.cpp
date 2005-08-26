@@ -325,6 +325,7 @@ struct IntroSource : public KMPlayer::Source {
 };
 
 KDE_NO_EXPORT void IntroSource::activate () {
+    m_app->disconnect(m_player, SIGNAL(sourceDimensionChanged()),m_app,SLOT(zoom100()));
     m_document = (new KMPlayer::Document (QString (""), this))->self ();
     QString introfile = locate ("data", "kmplayer/intro.xml");
     QFile file (introfile);
@@ -383,6 +384,7 @@ KDE_NO_EXPORT void IntroSource::stateElementChanged (KMPlayer::NodePtr node) {
 
 KDE_NO_EXPORT void IntroSource::deactivate () {
     deactivated = true;
+    m_app->connect(m_player, SIGNAL(sourceDimensionChanged()),m_app,SLOT(zoom100()));
     if (!finished) // user opens a source while introducing
         m_document->reset ();
 }
@@ -390,12 +392,6 @@ KDE_NO_EXPORT void IntroSource::deactivate () {
 KDE_NO_EXPORT void KMPlayerApp::restoreFromConfig () {
     if (m_player->view ()) {
         m_view->docArea ()->readDockConfig (m_player->config (), QString ("Window Layout"));
-        //if (m_player->settings ()->remembersize) {
-        config->setGroup ("General Options");
-        QSize size = config->readSizeEntry ("Geometry");
-        if (!size.isEmpty ())
-            resize (size);
-        //}
         m_view->layout ()->activate ();
     }
 }
@@ -558,9 +554,12 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     viewMenuBar->setChecked (config->readBoolEntry("Show Menubar", true));
     slotViewMenuBar();
 
+    QSize size = config->readSizeEntry ("Geometry");
+    if (!size.isEmpty ())
+        resize (size);
+
     config->setGroup ("Pipe Command");
     static_cast <KMPlayerPipeSource *> (m_player->sources () ["pipesource"])->setCommand (config->readEntry ("Command1", ""));
-
     // initialize the recent file list
     fileOpenRecent->loadEntries(config,"Recent Files");
 
@@ -592,9 +591,11 @@ KDE_NO_EXPORT void KMPlayerApp::minimalMode (bool deco) {
             winfo.setWindowType (NET::Menu);
 #endif
     }
-    if (deco)
-        hide(); show();
-    QTimer::singleShot (0, this, SLOT (zoom100 ()));
+    if (deco) {
+        hide ();
+        QTimer::singleShot (0, this, SLOT (zoom100 ()));
+        show ();
+    }
     m_minimal_mode = !m_minimal_mode;
 }
 
@@ -703,7 +704,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileOpen () {
         openDocumentFile (urls [0]);
     } else if (urls.size () > 1) {
         m_player->openURL (KURL ());
-        for (int i = 0; i < urls.size (); i++)
+        for (unsigned int i = 0; i < urls.size (); i++)
             addURL (urls [i]);
     }
 }
