@@ -1,16 +1,27 @@
 <smil>
   <head>
     <layout>
-      <region id="img1" left="0" top="5%" width="48" height="48" background-color="blue" z-index="2" />
-      <region id="img2" left="50" top="5%" width="48" height="48" background-color="blue" z-index="2" />
-      <region id="img3" left="100" top="5%" width="48" height="48" background-color="blue" z-index="2" />
-      <region id="img4" left="150" top="5%" width="48" height="48" background-color="blue" z-index="2" />
-      <region id="img5" left="200" top="5%" width="48" height="48" background-color="blue" z-index="2" />
-      <region id="img6" left="250" top="5%" width="48" height="48" background-color="blue" z-index="2" />
-      <region id="img7" left="300" top="5%" width="48" height="48" background-color="blue" z-index="2" />
-      <region id="img8" left="350" top="5%" width="48" height="48" background-color="blue" z-index="2" />
-      <region id="img9" left="400" top="5%" width="48" height="48" background-color="blue" z-index="2" />
+      <region id="img1" left="0" top="5" width="48" height="48" background-color="blue" z-index="2" />
+      <region id="img2" left="50" top="5" width="48" height="48" background-color="blue" z-index="2" />
+      <region id="img3" left="100" top="5" width="48" height="48" background-color="blue" z-index="2" />
+      <region id="img4" left="150" top="5" width="48" height="48" background-color="blue" z-index="2" />
+      <region id="img5" left="200" top="5" width="48" height="48" background-color="blue" z-index="2" />
+      <region id="img6" left="250" top="5" width="48" height="48" background-color="blue" z-index="2" />
+      <region id="img7" left="300" top="5" width="48" height="48" background-color="blue" z-index="2" />
+      <region id="img8" left="350" top="5" width="48" height="48" background-color="blue" z-index="2" />
+      <region id="img9" left="400" top="5" width="48" height="48" background-color="blue" z-index="2" />
+      <region id="img10" left="0" top="55" width="48" height="48" background-color="blue" z-index="2" />
+      <region id="img11" left="50" top="55" width="48" height="48" background-color="blue" z-index="2" />
+      <region id="img12" left="100" top="55" width="48" height="48" background-color="blue" z-index="2" />
+      <region id="img13" left="150" top="55" width="48" height="48" background-color="blue" z-index="2" />
+      <region id="img14" left="200" top="55" width="48" height="48" background-color="blue" z-index="2" />
+      <region id="img15" left="250" top="55" width="48" height="48" background-color="blue" z-index="2" />
+      <region id="img16" left="300" top="55" width="48" height="48" background-color="blue" z-index="2" />
+      <region id="img17" left="350" top="55" width="48" height="48" background-color="blue" z-index="2" />
+      <region id="img18" left="400" top="55" width="48" height="48" background-color="blue" z-index="2" />
       <region id="region_end" z-index="1"/>
+      <regPoint id="north_north_west" top="20" left="40"/>
+      <regPoint id="north_west" top="20" left="20" regAlign="midLeft"/>
       <root-layout background-color="white" width="450" height="240"/>
     </layout>
   </head>
@@ -25,6 +36,9 @@
       <img src="../icons/hi48-app-kmplayer.png" region="img7" regPoint="center" regAlign="topRight" fill="freeze"/>
       <img src="../icons/hi48-app-kmplayer.png" region="img8" regPoint="center" regAlign="midRight" fill="freeze"/>
       <img src="../icons/hi48-app-kmplayer.png" region="img9" regPoint="center" regAlign="bottomRight" fill="freeze"/>
+      <img src="../icons/hi48-app-kmplayer.png" region="img10" regPoint="north_north_west" regAlign="topLeft" fill="freeze"/>
+      <img src="../icons/hi48-app-kmplayer.png" region="img11" regPoint="north_west" fill="freeze"/>
+      <img src="../icons/hi48-app-kmplayer.png" region="img12" regPoint="north_west" regAlign="topLeft" fill="freeze"/>
     </par>
     <par>
       <set target="region_end" attributeName="background-color" to="black" fill="freeze"/>

@@ -128,7 +128,7 @@ public:
     KDE_NO_CDTOR_EXPORT ~CalculatedSizer () {}
 
     void resetSizes ();
-    void calcSizes (int w, int h, int & xoff, int & yoff, int & w1, int & h1);
+    void calcSizes (Node *, int w, int h, int & xoff, int & yoff, int & w1, int & h1);
     SizeType left, top, width, height, right, bottom;
     QString reg_point, reg_align;
     bool setSizeParam (const QString & name, const QString & value);
@@ -527,7 +527,8 @@ public:
     KDE_NO_CDTOR_EXPORT RegPoint (NodePtr & d) : Element (d, id_node_regpoint){}
     KDE_NO_CDTOR_EXPORT ~RegPoint () {}
     KDE_NO_EXPORT const char * nodeName () const { return "regPoint"; }
-    ElementRuntimePtr getNewRuntime ();
+    KDE_NO_EXPORT bool expose () const { return false; }
+    ElementRuntimePtr getRuntime ();
     ElementRuntimePtr runtime;
 };
 

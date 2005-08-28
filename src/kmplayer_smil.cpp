@@ -528,11 +528,35 @@ static bool regPoints (const QString & str, int & x, int & y) {
     return true;
 }
 
-KDE_NO_EXPORT void CalculatedSizer::calcSizes (int w, int h, int & xoff, int & yoff, int & w1, int & h1) {
+KDE_NO_EXPORT void CalculatedSizer::calcSizes (Node * node, int w, int h, int & xoff, int & yoff, int & w1, int & h1) {
     while (!reg_point.isEmpty ()) {
         int rpx, rpy, rax, ray;
         if (!regPoints (reg_point, rpx, rpy)) {
-            break; // TODO: find it in layout and update reg_align
+            while (node && node->id != SMIL::id_node_smil)
+                node = node->parentNode ().ptr ();
+            if (!node)
+                break;
+            node = static_cast <SMIL::Smil *> (node)->layout_node.ptr ();
+            if (!node)
+                break;
+            NodePtr c = node->firstChild ();
+            for (; c; c = c->nextSibling ()) {
+                if (!c->isElementNode ())
+                    continue;
+                if (c->id == SMIL::id_node_regpoint && convertNode <Element> (c)->getAttribute ("id") == reg_point) {
+                    RegPointRuntime *rprt = static_cast <RegPointRuntime*> (c->getRuntime ().ptr ());
+                    if (rprt) {
+                        int i1, i2; // dummies
+                        rprt->sizes.calcSizes (0L, 100, 100, rpx, rpy, i1, i2);
+                        QString ra = convertNode <Element> (c)->getAttribute ("regAlign");
+                        if (!ra.isEmpty () && reg_align.isEmpty ())
+                            reg_align = ra;
+                        break;
+                    }
+                }
+            }
+            if (!c)
+                break; // not found
         }
         if (!regPoints (reg_align, rax, ray))
             rax = ray = 0; // default back to topLeft
@@ -1544,7 +1568,7 @@ KDE_NO_EXPORT void SMIL::Region::calculateBounds (int _w, int _h) {
     ElementRuntimePtr rt = getRuntime ();
     if (rt) {
         RegionRuntime * rr = static_cast <RegionRuntime *> (rt.ptr ());
-        rr->sizes.calcSizes (_w, _h, x, y, w, h);
+        rr->sizes.calcSizes (this, _w, _h, x, y, w, h);
         //kdDebug () << "Region::calculateBounds " << x << "," << y << " " << w << "x" << h << endl;
     }
 }
@@ -1630,6 +1654,14 @@ KDE_NO_EXPORT void SMIL::Region::addRegionUser (NodePtr mt) {
         if (n->data == mt)
             return;
     users.append ((new NodeRefItem (mt))->self ());
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_EXPORT ElementRuntimePtr SMIL::RegPoint::getRuntime () {
+    if (!runtime)
+        runtime = (new RegPointRuntime (self ()))->self ();
+    return runtime;
 }
 
 //-----------------------------------------------------------------------------
@@ -2036,7 +2068,7 @@ bool SMIL::AVMediaType::handleEvent (EventPtr event) {
         if (n && mtr && mtr->region_node) {
             RegionBase * rb = convertNode <RegionBase> (mtr->region_node);
             int x, y, w, h;
-            mtr->sizes.calcSizes (rb->w, rb->h, x, y, w, h);
+            mtr->sizes.calcSizes (this, rb->w, rb->h, x, y, w, h);
             Matrix matrix (x, y, 1.0, 1.0);
             matrix.transform (rb->transform);
             int xoff = 0, yoff = 0;
@@ -2174,7 +2206,7 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
         SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (region_node);
         const QPixmap &img = (d->image ? *d->image:d->img_movie->framePixmap());
         int x, y, w, h;
-        sizes.calcSizes (rb->w, rb->h, x, y, w, h);
+        sizes.calcSizes (element.ptr (), rb->w, rb->h, x, y, w, h);
         Matrix matrix (x, y, 1.0, 1.0);
         matrix.transform (rb->transform);
         int xoff = 0, yoff = 0;
@@ -2393,7 +2425,7 @@ KDE_NO_EXPORT void TextData::paint (QPainter & p) {
                 (timingstate == timings_stopped && fill == fill_freeze))) {
         SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (region_node);
         int x, y, w, h;
-        sizes.calcSizes (rb->w, rb->h, x, y, w, h);
+        sizes.calcSizes (element.ptr (), rb->w, rb->h, x, y, w, h);
         Matrix matrix (x, y, 1.0, 1.0);
         matrix.transform (rb->transform);
         int xoff = 0, yoff = 0;
