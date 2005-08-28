@@ -239,7 +239,7 @@ void KXVideoPlayer::init () {
                             freq_found = true;
                         Atom atom = XInternAtom (display, attributes[i].name, false);
                         fprintf (stderr, "%s[%d] (%d .. %d)", attributes[i].name, ( int ) atom, attributes[i].min_value, attributes[i].max_value);
-                        if (attributes[i].flags & XvGettable && XvGetPortAttribute (display, port, atom, &cur_val) == Success)
+                        if ((attributes[i].flags & XvGettable) && XvGetPortAttribute (display, port, atom, &cur_val) == Success)
                             fprintf (stderr, " current: %d", cur_val);
                         fprintf (stderr, "\n");
                     }

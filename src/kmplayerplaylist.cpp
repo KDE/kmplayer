@@ -102,6 +102,48 @@ KDE_NO_EXPORT void Connection::disconnect () {
 
 //-----------------------------------------------------------------------------
 
+Matrix::Matrix () : a (1.0), b (0.0), c (0.0), d (1.0), tx (0), ty (0) {}
+
+Matrix::Matrix (const Matrix & m)
+ : a (m.a), b (m.b), c (m.c), d (m.d), tx (m.tx), ty (m.ty) {}
+    
+Matrix::Matrix (int xoff, int yoff, float xscale, float yscale)
+ : a (xscale), b (0.0), c (0.0), d (yscale), tx (xoff), ty (yoff) {}
+
+void Matrix::getXY (int & x, int & y) const {
+    x = int (x * a) + tx;
+    y = int (y * d) + ty;
+}
+
+void Matrix::getXYWH (int & x, int & y, int & w, int & h) const {
+    getXY (x, y);
+    getXY (w, h);
+    w -= x;
+    h -= y;
+}
+
+void Matrix::transform (const Matrix & matrix) {
+    // TODO: rotate
+    a *= matrix.a;
+    d *= matrix.d;
+    tx = int (tx * matrix.a) + matrix.tx;
+    ty = int (ty * matrix.d) + matrix.ty;
+}
+
+void Matrix::scale (float sx, float sy) {
+    a *= sx;
+    d *= sy;
+    tx = int (tx * sx);
+    ty = int (ty * sy);
+}
+
+void Matrix::translate (int x, int y) {
+    tx += x;
+    ty += y;
+}
+
+//-----------------------------------------------------------------------------
+
 KDE_NO_CDTOR_EXPORT Node::Node (NodePtr & d, short _id)
  : m_doc (d), state (state_init), id (_id),
    auxiliary_node (false), editable (false) {}
@@ -661,6 +703,11 @@ void GenericMrl::closed () {
         src = getAttribute (QString ("src"));
     if (pretty_name.isEmpty ())
         pretty_name = getAttribute (QString ("name"));
+}
+
+bool GenericMrl::expose () const {
+    return !pretty_name.isEmpty () || //return false if no title and only one
+        previousSibling () || nextSibling ();
 }
 
 //-----------------------------------------------------------------------------

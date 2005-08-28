@@ -222,6 +222,23 @@ public:
     int x, y;
 };
 
+/**                                   a  b  0
+ * Matrix for coordinate transforms   c  d  0
+ *                                    tx ty 1     */
+class Matrix {
+    float a, b, c, d;
+    int tx, ty; 
+public:
+    Matrix ();
+    Matrix (const Matrix & matrix);
+    Matrix (int xoff, int yoff, float xscale, float yscale);
+    void getXY (int & x, int & y) const;
+    void getXYWH (int & x, int & y, int & w, int & h) const;
+    void transform (const Matrix & matrix);
+    void scale (float sx, float sy);
+    void translate (int x, int y);
+};
+
 extern const unsigned int event_pointer_clicked;
 extern const unsigned int event_pointer_moved;
 extern const unsigned int event_paint;
@@ -649,6 +666,7 @@ public:
     GenericMrl(NodePtr &d, const QString &s, const QString &n=QString::null);
     KDE_NO_EXPORT const char * nodeName () const { return "mrl"; }
     void closed ();
+    bool expose () const;
     /**
      * Will return false if this document has child nodes
      */

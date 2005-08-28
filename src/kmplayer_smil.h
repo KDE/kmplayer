@@ -120,15 +120,17 @@ private:
 };
 
 /**
- * Base for RegionRuntime and MediaRuntime, having sizes
+ * For RegPoint, RegionRuntime and MediaRuntime, having sizes
  */
-class SizedRuntime {
+class CalculatedSizer {
 public:
+    KDE_NO_CDTOR_EXPORT CalculatedSizer () {}
+    KDE_NO_CDTOR_EXPORT ~CalculatedSizer () {}
+
     void resetSizes ();
     void calcSizes (int w, int h, int & xoff, int & yoff, int & w1, int & h1);
     SizeType left, top, width, height, right, bottom;
-protected:
-    SizedRuntime ();
+    QString reg_point, reg_align;
     bool setSizeParam (const QString & name, const QString & value);
 };
 
@@ -180,7 +182,7 @@ protected:
 /**
  * Runtime data for a region
  */
-class RegionRuntime : public ElementRuntime, public SizedRuntime {
+class RegionRuntime : public ElementRuntime {
 public:
     RegionRuntime (NodePtr e);
     KDE_NO_CDTOR_EXPORT ~RegionRuntime () {}
@@ -188,10 +190,22 @@ public:
     virtual void end ();
     virtual void reset ();
     virtual void parseParam (const QString & name, const QString & value);
+    CalculatedSizer sizes;
     unsigned int background_color;
     bool have_bg_color;
 private:
     bool active;
+};
+
+/**
+ * Runtime data for a regPoint
+ */
+class RegPointRuntime : public ElementRuntime {
+public:
+    RegPointRuntime (NodePtr e);
+    KDE_NO_CDTOR_EXPORT ~RegPointRuntime () {}
+    virtual void parseParam (const QString & name, const QString & value);
+    CalculatedSizer sizes;
 };
 
 /**
@@ -208,7 +222,7 @@ public:
 /**
  * Some common runtime data for all mediatype classes
  */
-class MediaTypeRuntime : public TimedRuntime, public SizedRuntime {
+class MediaTypeRuntime : public TimedRuntime {
     Q_OBJECT
 protected:
     MediaTypeRuntime (NodePtr e);
@@ -222,6 +236,7 @@ public:
     virtual void stopped ();
     virtual void parseParam (const QString & name, const QString & value);
     virtual void paint (QPainter &) {}
+    CalculatedSizer sizes;
 protected:
     MediaTypeRuntimePrivate * mt_d;
     QString source_url;
@@ -355,17 +370,18 @@ const short id_node_body = 102;
 const short id_node_layout = 103;
 const short id_node_root_layout = 104;
 const short id_node_region = 105;
-const short id_node_par = 106;
-const short id_node_seq = 107;
-const short id_node_switch = 108;
-const short id_node_excl = 109;
-const short id_node_img = 110;
-const short id_node_audio_video = 111;
-const short id_node_text = 112;
-const short id_node_param = 113;
-const short id_node_set = 114;
-const short id_node_animate = 115;
-const short id_node_title = 116;
+const short id_node_regpoint = 106;
+const short id_node_par = 110;
+const short id_node_seq = 111;
+const short id_node_switch = 112;
+const short id_node_excl = 113;
+const short id_node_img = 120;
+const short id_node_audio_video = 121;
+const short id_node_text = 122;
+const short id_node_param = 130;
+const short id_node_set = 132;
+const short id_node_animate = 133;
+const short id_node_title = 134;
 const short id_node_first = id_node_smil;
 const short id_node_last = 200; // reserve 100 ids
 
@@ -434,10 +450,11 @@ public:
      */
     int xoff, yoff;
     float xscale, yscale;
-    int x1 () const { return xoff + int (xscale * x); }
-    int y1 () const { return yoff + int (yscale * y); }
-    int w1 () const { return int (xscale * w); }
-    int h1 () const { return int (yscale * h); }
+    Matrix transform;
+    int x1 () const; // { return xoff + int (xscale * x); }
+    int y1 () const; // { return yoff + int (yscale * y); }
+    int w1 () const; // { return int (xscale * w); }
+    int h1 () const; // { return int (yscale * h); }
     /**
      * z-order of this region
      */
@@ -500,6 +517,18 @@ public:
     KDE_NO_CDTOR_EXPORT RootLayout (NodePtr & d)
         : RegionBase (d, id_node_root_layout) {}
     KDE_NO_EXPORT const char * nodeName () const { return "root-layout"; }
+};
+
+/**
+ * Represents a regPoint element for alignment inside regions
+ */
+class RegPoint : public Element {
+public:
+    KDE_NO_CDTOR_EXPORT RegPoint (NodePtr & d) : Element (d, id_node_regpoint){}
+    KDE_NO_CDTOR_EXPORT ~RegPoint () {}
+    KDE_NO_EXPORT const char * nodeName () const { return "regPoint"; }
+    ElementRuntimePtr getNewRuntime ();
+    ElementRuntimePtr runtime;
 };
 
 /**

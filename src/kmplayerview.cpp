@@ -519,7 +519,7 @@ KDE_NO_EXPORT void ViewArea::scheduleRepaint (int x, int y, int w, int h) {
         m_repaint_rect = m_repaint_rect.unite (QRect (x, y, w, h));
     else {
         m_repaint_rect = QRect (x, y, w, h);
-        m_repaint_timer = startTimer (20); // 50 per sec should do
+        m_repaint_timer = startTimer (10); // 100 per sec should do
     }
 }
 
