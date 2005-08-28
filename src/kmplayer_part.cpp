@@ -468,7 +468,7 @@ KDE_NO_EXPORT void KMPlayerPart::playingStarted () {
     else
         return; // ugh
     kdDebug () << "KMPlayerPart::processStartedPlaying " << endl;
-    if (m_settings->sizeratio && !m_noresize)
+    if (m_settings->sizeratio && !m_noresize && m_source->width() > 0 && m_source->height() > 0)
         m_liveconnectextension->setSize (m_source->width(), m_source->height());
     m_browserextension->setLoadingProgress (100);
     emit completed ();
