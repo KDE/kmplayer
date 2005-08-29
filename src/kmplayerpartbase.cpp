@@ -1346,10 +1346,12 @@ static bool isPlayListMime (const QString & mime) {
     const char * mimestr = mime.ascii ();
     return mimestr && (!strcmp (mimestr, "audio/mpegurl") ||
             !strcmp (mimestr, "audio/x-mpegurl") ||
-            !strcmp (mimestr, "video/x-ms-wmp") ||
-            !strcmp (mimestr, "video/x-ms-asf") ||
-            !strcmp (mimestr, "video/x-ms-wmv") ||
-            !strcmp (mimestr, "video/x-ms-wvx") ||
+            !strncmp (mimestr, "video/x-ms", 10) ||
+            //!strcmp (mimestr, "video/x-ms-wmp") ||
+            //!strcmp (mimestr, "video/x-ms-asf") ||
+            //!strcmp (mimestr, "video/x-ms-wmv") ||
+            //!strcmp (mimestr, "video/x-ms-wvx") ||
+            //!strcmp (mimestr, "video/x-msvideo") ||
             !strcmp (mimestr, "audio/x-scpls") ||
             !strcmp (mimestr, "audio/x-pn-realaudio") ||
             !strcmp (mimestr, "audio/vnd.rn-realaudio") ||
