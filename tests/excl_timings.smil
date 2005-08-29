@@ -6,8 +6,9 @@
       <region id="reg_but2" left="5" top="65" width="80" height="40" background-color="red"/>
       <region id="reg_but3" left="5" top="115" width="80" height="40" background-color="red"/>
       <region id="reg_but4" left="5" top="175" width="80" height="40" background-color="red"/>
-      <region id="reg_img1" left="95" top="15" width="210" height="210" background-color="blue"/>
-      <region id="reg_img2" left="100" top="20" width="64" height="64" background-color="orange"/>
+      <region left="95" top="15" width="210" height="210" background-color="blue">
+        <region id="reg_img" left="5" top="5" width="64" height="64" background-color="orange"/>
+      </region>
     </layout>
   </head>
   <body>
@@ -35,13 +36,13 @@
         <param name="fontSize" value="+1"/>
         <param name="backgroundColor" value="red"/>
       </text>
-      <img src="../icons/hi64-app-kmplayer.png" region="reg_img2" fill="freeze" fit="meet"/>
+      <img src="../icons/hi64-app-kmplayer.png" region="reg_img" fill="freeze" fit="meet"/>
       <excl dur="indefinite">
-        <animate targetElement="reg_img2" attributeName="left" from="100" to="235" begin="but1.activateEvent" dur="3" fill="freeze"/>
-        <animate targetElement="reg_img2" attributeName="top" from="20" to="155" begin="reg_but2.activateEvent" dur="3" fill="freeze"/>
+        <animate targetElement="reg_img" attributeName="left" from="5" to="140" begin="but1.activateEvent" dur="2" fill="freeze"/>
+        <animate targetElement="reg_img" attributeName="top" from="5" to="140" begin="reg_but2.activateEvent" dur="2" fill="freeze"/>
         <par begin="reg_but3.activateEvent">
-          <animate targetElement="reg_img2" attributeName="left" from="100" to="235" dur="3" fill="freeze"/>
-          <animate targetElement="reg_img2" attributeName="top" from="20" to="155" dur="3" fill="freeze"/>
+          <animate targetElement="reg_img" attributeName="left" from="5" to="140" dur="2" fill="freeze"/>
+          <animate targetElement="reg_img" attributeName="top" from="5" to="140" dur="2" fill="freeze"/>
         </par>
       </excl>
     </par>
