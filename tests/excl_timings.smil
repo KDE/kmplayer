@@ -35,7 +35,7 @@
         <param name="fontSize" value="+1"/>
         <param name="backgroundColor" value="red"/>
       </text>
-      <img src="../icons/hi64-app-kmplayer.png" region="reg_img2" fill="freeze"/>
+      <img src="../icons/hi64-app-kmplayer.png" region="reg_img2" fill="freeze" fit="meet"/>
       <excl dur="indefinite">
         <animate targetElement="reg_img2" attributeName="left" from="100" to="235" begin="but1.activateEvent" dur="3" fill="freeze"/>
         <animate targetElement="reg_img2" attributeName="top" from="20" to="155" begin="reg_but2.activateEvent" dur="3" fill="freeze"/>
