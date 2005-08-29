@@ -433,28 +433,17 @@ public:
      */
     void repaint ();
     /**
-     * calculate actual values given scale factors and offset (absolute) and
-     * x,y,w,h  values
-     */
-    void scaleRegion (float sx, float sy, int xoff, int yoff);
-    /**
      * calculate the relative x,y,w,h on the child region elements
      * given this element's w and h value
      * and child's left/top/right/width/height/bottom attributes
      */
     void calculateChildBounds ();
 
-    int x, y, w, h;     // unscaled values
     /**
-     * Scale factors and offset
+     * Creates a new transform matrix
      */
-    int xoff, yoff;
-    float xscale, yscale;
-    Matrix transform;
-    int x1 () const; // { return xoff + int (xscale * x); }
-    int y1 () const; // { return yoff + int (yscale * y); }
-    int w1 () const; // { return int (xscale * w); }
-    int h1 () const; // { return int (yscale * h); }
+    Matrix transform ();
+    int x, y, w, h;     // unscaled values
     /**
      * z-order of this region
      */
@@ -463,6 +452,7 @@ protected:
     RegionBase (NodePtr & d, short id);
     ElementRuntimePtr runtime;
     virtual NodeRefListPtr listeners (unsigned int event_id);
+    Matrix m_transform;
     NodeRefListPtr m_SizeListeners;        // region resized
     NodeRefListPtr m_PaintListeners;       // region need repainting
 };

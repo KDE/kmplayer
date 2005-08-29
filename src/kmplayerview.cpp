@@ -532,13 +532,13 @@ void ViewArea::moveRect (int x, int y, int w, int h, int x1, int y1) {
     } else {
         bitBlt (this, x1, y1, this, x, y, w, h);
         if (x1 > x)
-            scheduleRepaint (x, y, x1 - x, h);
+            syncVisual (QRect (x, y, x1 - x, h));
         else if (x > x1)
-            scheduleRepaint (x1 + w, y, x - x1, h);
+            syncVisual (QRect (x1 + w, y, x - x1, h));
         if (y1 > y)
-            scheduleRepaint (x, y, w, y1 - y);
+            syncVisual (QRect (x, y, w, y1 - y));
         else if (y > y1)
-            scheduleRepaint (x, y1 + h, w, y - y1);
+            syncVisual (QRect (x, y1 + h, w, y - y1));
     }
 }
 
