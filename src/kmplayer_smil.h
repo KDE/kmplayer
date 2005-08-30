@@ -443,6 +443,10 @@ public:
      * Creates a new transform matrix
      */
     Matrix transform ();
+    /**
+     * Returns transform matrix of this region only
+     */
+    Matrix getTransform () const { return m_transform; }
     int x, y, w, h;     // unscaled values
     /**
      * z-order of this region
@@ -453,7 +457,6 @@ protected:
     ElementRuntimePtr runtime;
     virtual NodeRefListPtr listeners (unsigned int event_id);
     Matrix m_transform;
-    NodeRefListPtr m_SizeListeners;        // region resized
     NodeRefListPtr m_PaintListeners;       // region need repainting
 };
 
@@ -462,7 +465,7 @@ protected:
  */
 class Layout : public RegionBase {
 public:
-    KDE_NO_CDTOR_EXPORT Layout (NodePtr & d) : RegionBase (d, id_node_layout) {}
+    Layout (NodePtr & d);
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "layout"; }
     void activate ();
@@ -474,6 +477,9 @@ public:
     void updateLayout ();
 
     NodePtrW rootLayout;
+protected:
+    virtual NodeRefListPtr listeners (unsigned int event_id);
+    NodeRefListPtr m_SizeListeners;        // region resized
 };
 
 /**
@@ -653,9 +659,10 @@ protected:
 class AVMediaType : public MediaType {
 public:
     AVMediaType (NodePtr & d, const QString & t);
-    ElementRuntimePtr getNewRuntime ();
-    void activate ();
-    void deactivate ();
+    void positionVideoWidget ();
+    virtual ElementRuntimePtr getNewRuntime ();
+    virtual void activate ();
+    virtual void deactivate ();
     virtual bool handleEvent (EventPtr event);
 };
 

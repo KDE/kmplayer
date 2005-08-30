@@ -1126,6 +1126,7 @@ KDE_NO_EXPORT void AudioVideoData::started () {
         //kdDebug () << "AudioVideoData::started " << source_url << endl;
         PlayListNotify * n = element->document ()->notify_listener;
         if (n && !source_url.isEmpty ()) {
+            convertNode <SMIL::AVMediaType> (element)->positionVideoWidget ();
             for (NodePtr e = element; e; e = e->parentNode ())
                 if (e->id == SMIL::id_node_smil) {
                     n->requestPlayURL (e); // keep <smil> current
@@ -1326,6 +1327,10 @@ KDE_NO_EXPORT void SMIL::Head::closed () {
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_CDTOR_EXPORT SMIL::Layout::Layout (NodePtr & d)
+ : RegionBase (d, id_node_layout),
+   m_SizeListeners ((new NodeRefList)->self ()) {}
+
 KDE_NO_EXPORT NodePtr SMIL::Layout::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "root-layout")) {
         NodePtr e = (new SMIL::RootLayout (m_doc))->self ();
@@ -1449,12 +1454,17 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
     return handled;
 }
 
+NodeRefListPtr SMIL::Layout::listeners (unsigned int eid) {
+    if (eid == event_sized)
+        return m_SizeListeners;
+    return Element::listeners (eid);
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
  : Element (d, id), x (0), y (0), w (0), h (0),
    z_order (1),
-   m_SizeListeners ((new NodeRefList)->self ()),
    m_PaintListeners ((new NodeRefList)->self ()) {}
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::RegionBase::getRuntime () {
@@ -1483,9 +1493,10 @@ KDE_NO_EXPORT void SMIL::RegionBase::calculateChildBounds () {
 
 KDE_NO_EXPORT Matrix SMIL::RegionBase::transform () {
     Matrix m (m_transform);
-    NodePtr p = parentNode ();
-    if (p && p->id == SMIL::id_node_region || p->id == SMIL::id_node_layout)
-        m.transform (convertNode <SMIL::RegionBase> (p)->transform ());
+    for (NodePtr p = parentNode ();
+            p && (p->id ==SMIL::id_node_region || p->id ==SMIL::id_node_layout);
+            p = p->parentNode ())
+        m.transform (convertNode <SMIL::RegionBase> (p)->getTransform ());
     return m;
 }
 
@@ -1518,14 +1529,10 @@ bool SMIL::RegionBase::handleEvent (EventPtr event) {
 }
 
 NodeRefListPtr SMIL::RegionBase::listeners (unsigned int eid) {
-    if (eid == event_sized)
-        return m_SizeListeners;
-    else if (eid == event_paint)
+    if (eid == event_paint)
         return m_PaintListeners;
     return Element::listeners (eid);
 }
-
-//-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT SMIL::Region::Region (NodePtr & d)
  : RegionBase (d, id_node_region),
@@ -2011,6 +2018,28 @@ KDE_NO_CDTOR_EXPORT
 SMIL::AVMediaType::AVMediaType (NodePtr & d, const QString & t)
  : SMIL::MediaType (d, t, id_node_audio_video) {}
 
+KDE_NO_EXPORT void SMIL::AVMediaType::positionVideoWidget () {
+    //kdDebug () << "AVMediaType::sized " << endl;
+    PlayListNotify * n = document()->notify_listener;
+    MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (getRuntime ().ptr ());
+    if (n && mtr && mtr->region_node) {
+        RegionBase * rb = convertNode <RegionBase> (mtr->region_node);
+        int x, y, w, h;
+        mtr->sizes.calcSizes (this, rb->w, rb->h, x, y, w, h);
+        Matrix matrix (x, y, 1.0, 1.0);
+        matrix.transform (rb->transform ());
+        int xoff = 0, yoff = 0;
+        matrix.getXYWH (xoff, yoff, w, h);
+        unsigned int * bg_color = 0L;
+        if (mtr->region_node) {
+            RegionRuntime * rr = static_cast <RegionRuntime *>(mtr->region_node->getRuntime ().ptr ());
+            if (rr && rr->have_bg_color)
+                bg_color = &rr->background_color;
+        }
+        n->avWidgetSizes (xoff, yoff, w, h, bg_color);
+    }
+}
+
 KDE_NO_EXPORT void SMIL::AVMediaType::activate () {
     if (!isMrl ()) { // turned out this URL points to a playlist file
         Element::activate ();
@@ -2045,25 +2074,8 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::AVMediaType::getNewRuntime () {
 
 bool SMIL::AVMediaType::handleEvent (EventPtr event) {
     if (event->id () == event_sized) {
-        //kdDebug () << "AVMediaType::sized " << endl;
-        PlayListNotify * n = document()->notify_listener;
-        MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (getRuntime ().ptr ());
-        if (n && mtr && mtr->region_node) {
-            RegionBase * rb = convertNode <RegionBase> (mtr->region_node);
-            int x, y, w, h;
-            mtr->sizes.calcSizes (this, rb->w, rb->h, x, y, w, h);
-            Matrix matrix (x, y, 1.0, 1.0);
-            matrix.transform (rb->transform ());
-            int xoff = 0, yoff = 0;
-            matrix.getXYWH (xoff, yoff, w, h);
-            unsigned int * bg_color = 0L;
-            if (mtr->region_node) {
-                RegionRuntime * rr = static_cast <RegionRuntime *>(mtr->region_node->getRuntime ().ptr ());
-                if (rr && rr->have_bg_color)
-                    bg_color = &rr->background_color;
-            }
-            n->avWidgetSizes (xoff, yoff, w, h, bg_color);
-        }
+        // when started, connected to Layout's size event
+        positionVideoWidget ();
     } else
         return SMIL::MediaType::handleEvent (event);
     return true;

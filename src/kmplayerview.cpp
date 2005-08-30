@@ -465,9 +465,11 @@ void ViewArea::setAudioVideoGeometry (int x, int y, int w, int h, unsigned int *
             }
     }
     m_av_geometry = QRect (x, y, w, h);
-    if (m_av_geometry != m_view->widgetStack ()->geometry ()) {
+    QRect rect = m_view->widgetStack ()->geometry ();
+    if (m_av_geometry != rect) {
         m_view->widgetStack ()->setGeometry (x, y, w, h);
-        scheduleRepaint (0, 0, width (), height ());
+        rect.unite (m_av_geometry);
+        scheduleRepaint (rect.x (), rect.y (), rect.width (), rect.height ());
     }
     if (bg_color)
         if (QColor (QRgb (*bg_color)) != (m_view->viewer ()->paletteBackgroundColor ())) {
