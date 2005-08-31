@@ -647,16 +647,9 @@ void RegionRuntime::parseParam (const QString & name, const QString & val) {
         need_repaint = true;
     } else if (sizes.setSizeParam (name, val)) {
         if (active && rb && element) {
-            SMIL::RegionBase * pr = dynamic_cast<SMIL::RegionBase*>(rb->parentNode().ptr());
-            if (pr)
-                pr->updateDimensions ();
-            else {
-                for (NodePtr e = element; e; e = e->parentNode ())
-                    if (e->id == SMIL::id_node_layout) {
-                        convertNode<SMIL::Layout> (e)->updateDimensions ();
-                        break;
-                    }
-            }
+            NodePtr p = rb->parentNode ();
+            if (p &&(p->id==SMIL::id_node_region ||p->id==SMIL::id_node_layout))
+                convertNode <SMIL::RegionBase> (p)->updateDimensions ();
             Matrix m = rb->transform ();
             int rx = 0, ry = 0, rw = rb->w, rh = rb->h;
             m.getXYWH (rx, ry, rw, rh);

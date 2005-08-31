@@ -909,23 +909,24 @@ void Source::avWidgetSizes (int x, int y, int w, int h, unsigned int * bg) {
 }
 
 void Source::insertURL (const QString & mrl) {
-    kdDebug() << "Source::insertURL " << m_current.ptr () << mrl << endl;
-    KURL url (currentMrl (), mrl);
+    if (!m_current || !m_current->mrl ()) // this should always be false
+        return;
+    NodePtr realmrl = m_current->mrl ()->realMrl ();
+    QString cur_url = realmrl->mrl ()->src;
+    KURL url (cur_url, mrl);
+    kdDebug() << "Source::insertURL " << KURL (cur_url) << " " << url << endl;
     if (!url.isValid ())
         kdError () << "try to append non-valid url" << endl;
-    else if (KURL (currentMrl ()) == url)
+    else if (KURL (cur_url) == url)
         kdError () << "try to append url to itself" << endl;
-    else if (m_current) {
-        int depth = 0;
+    else {
+        int depth = 0; // cache this?
         for (NodePtr e = m_current; e->parentNode (); e = e->parentNode ())
             ++depth;
         if (depth < 40) {
-            NodePtr e = m_current;
-            if (m_current->isMrl ())
-                e = m_current->mrl ()->realMrl ();
-            e->appendChild ((new GenericURL (m_document, KURL::decode_string (url.url ()), KURL::decode_string (mrl)))->self ());
+            realmrl->appendChild ((new GenericURL (m_document, KURL::decode_string (url.url ()), KURL::decode_string (mrl)))->self ());
         } else
-            kdError () << "insertURL exceeds limit" << endl;
+            kdError () << "insertURL exceeds depth limit" << endl;
     }
 }
 
