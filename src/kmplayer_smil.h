@@ -257,7 +257,8 @@ public:
     virtual void parseParam (const QString & name, const QString & value);
     virtual void started ();
     virtual void stopped ();
-    ConnectionPtr sized_connection;
+    ConnectionPtr sized_connection_layout; // for resizing of view
+    ConnectionPtr sized_connection_region; // for position changes set/animate
 };
 
 /**
@@ -437,7 +438,7 @@ public:
      * given this element's w and h value
      * and child's left/top/right/width/height/bottom attributes
      */
-    void calculateChildBounds ();
+    virtual void updateDimensions ();
 
     /**
      * Creates a new transform matrix
@@ -457,6 +458,7 @@ protected:
     ElementRuntimePtr runtime;
     virtual NodeRefListPtr listeners (unsigned int event_id);
     Matrix m_transform;
+    NodeRefListPtr m_SizeListeners;        // region resized
     NodeRefListPtr m_PaintListeners;       // region need repainting
 };
 
@@ -474,12 +476,9 @@ public:
     /**
      * recursively calculates dimensions of this and child regions
      */
-    void updateLayout ();
+    virtual void updateDimensions ();
 
     NodePtrW rootLayout;
-protected:
-    virtual NodeRefListPtr listeners (unsigned int event_id);
-    NodeRefListPtr m_SizeListeners;        // region resized
 };
 
 /**

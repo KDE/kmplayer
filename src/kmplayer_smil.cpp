@@ -649,11 +649,11 @@ void RegionRuntime::parseParam (const QString & name, const QString & val) {
         if (active && rb && element) {
             SMIL::RegionBase * pr = dynamic_cast<SMIL::RegionBase*>(rb->parentNode().ptr());
             if (pr)
-                pr->calculateChildBounds ();
+                pr->updateDimensions ();
             else {
                 for (NodePtr e = element; e; e = e->parentNode ())
                     if (e->id == SMIL::id_node_layout) {
-                        convertNode<SMIL::Layout> (e)->updateLayout ();
+                        convertNode<SMIL::Layout> (e)->updateDimensions ();
                         break;
                     }
             }
@@ -1117,10 +1117,11 @@ KDE_NO_EXPORT void AudioVideoData::started () {
             durations [end_time].durval == duration_media)
         durations [duration_time].durval = duration_media; // duration of clip
     MediaTypeRuntime::started ();
-    if (element) {
+    if (element && region_node) {
+        sized_connection_region = region_node->connectTo (element, event_sized);
         for (NodePtr r = region_node; r; r = r->parentNode ())
             if (r->id == SMIL::id_node_layout) {
-                sized_connection = r->connectTo (element, event_sized);
+                sized_connection_layout = r->connectTo (element, event_sized);
                 break;
             }
         //kdDebug () << "AudioVideoData::started " << source_url << endl;
@@ -1139,7 +1140,8 @@ KDE_NO_EXPORT void AudioVideoData::started () {
 
 KDE_NO_EXPORT void AudioVideoData::stopped () {
     //kdDebug () << "AudioVideoData::stopped " << endl;
-    sized_connection = 0L;
+    sized_connection_region = 0L;
+    sized_connection_layout = 0L;
     MediaTypeRuntime::stopped ();
 }
 
@@ -1328,8 +1330,7 @@ KDE_NO_EXPORT void SMIL::Head::closed () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT SMIL::Layout::Layout (NodePtr & d)
- : RegionBase (d, id_node_layout),
-   m_SizeListeners ((new NodeRefList)->self ()) {}
+ : RegionBase (d, id_node_layout) {}
 
 KDE_NO_EXPORT NodePtr SMIL::Layout::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "root-layout")) {
@@ -1379,7 +1380,7 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
         appendChild (r->self ());
         r->setAuxiliaryNode (true);
     }
-    updateLayout ();
+    updateDimensions ();
     if (w <= 0 || h <= 0) {
         kdError () << "Root layout not having valid dimensions" << endl;
         return;
@@ -1390,20 +1391,20 @@ KDE_NO_EXPORT void SMIL::Layout::activate () {
     //kdDebug () << "SMIL::Layout::activate" << endl;
     setState (state_activated);
     beginOrEndLayout (this, true);
-    updateLayout ();
+    updateDimensions ();
     repaint ();
     finish (); // that's fast :-)
 }
 
-KDE_NO_EXPORT void SMIL::Layout::updateLayout () {
+KDE_NO_EXPORT void SMIL::Layout::updateDimensions () {
     x = y = 0;
     ElementRuntimePtr rt = rootLayout->getRuntime ();
     if (rt) {
         RegionRuntime * rr = static_cast <RegionRuntime *> (rt.ptr ());
         w = rr->sizes.width.size ();
         h = rr->sizes.height.size ();
-        //kdDebug () << "RegionBase::updateLayout " << w << "," << h << endl;
-        calculateChildBounds ();
+        //kdDebug () << "Layout::updateDimensions " << w << "," << h <<endl;
+        SMIL::RegionBase::updateDimensions ();
     }
 }
 
@@ -1454,17 +1455,12 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
     return handled;
 }
 
-NodeRefListPtr SMIL::Layout::listeners (unsigned int eid) {
-    if (eid == event_sized)
-        return m_SizeListeners;
-    return Element::listeners (eid);
-}
-
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
  : Element (d, id), x (0), y (0), w (0), h (0),
    z_order (1),
+   m_SizeListeners ((new NodeRefList)->self ()),
    m_PaintListeners ((new NodeRefList)->self ()) {}
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::RegionBase::getRuntime () {
@@ -1482,12 +1478,12 @@ KDE_NO_EXPORT void SMIL::RegionBase::repaint () {
         n->repaintRect (rx, ry, rw, rh);
 }
 
-KDE_NO_EXPORT void SMIL::RegionBase::calculateChildBounds () {
+KDE_NO_EXPORT void SMIL::RegionBase::updateDimensions () {
     for (NodePtr r = firstChild (); r; r = r->nextSibling ())
         if (r->id == id_node_region) {
             SMIL::Region * cr = static_cast <SMIL::Region *> (r.ptr ());
             cr->calculateBounds (w, h);
-            cr->calculateChildBounds ();
+            cr->updateDimensions ();
         }
 }
 
@@ -1531,6 +1527,8 @@ bool SMIL::RegionBase::handleEvent (EventPtr event) {
 NodeRefListPtr SMIL::RegionBase::listeners (unsigned int eid) {
     if (eid == event_paint)
         return m_PaintListeners;
+    else if (eid == event_sized)
+        return m_SizeListeners;
     return Element::listeners (eid);
 }
 
@@ -1555,8 +1553,12 @@ KDE_NO_EXPORT void SMIL::Region::calculateBounds (int pw, int ph) {
     ElementRuntimePtr rt = getRuntime ();
     if (rt) {
         RegionRuntime * rr = static_cast <RegionRuntime *> (rt.ptr ());
+        int x1 (x), y1 (y), w1 (w), h1 (h);
         rr->sizes.calcSizes (this, pw, ph, x, y, w, h);
-        m_transform = Matrix (x, y, 1.0, 1.0);
+        if (x1 != x || y1 != y || w1 != w || h1 != h) {
+            m_transform = Matrix (x, y, 1.0, 1.0);
+            propagateEvent ((new SizeEvent (x, y, w, h, true))->self ());
+        }
         //kdDebug () << "Region::calculateBounds " << x << "," << y << " " << w << "x" << h << endl;
     }
 }
@@ -2074,7 +2076,7 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::AVMediaType::getNewRuntime () {
 
 bool SMIL::AVMediaType::handleEvent (EventPtr event) {
     if (event->id () == event_sized) {
-        // when started, connected to Layout's size event
+        // when started, connected to Layout's and own region size event
         positionVideoWidget ();
     } else
         return SMIL::MediaType::handleEvent (event);
