@@ -594,7 +594,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
         } else if (!m_source->identified() && m_refURLRegExp.search(out) > -1) {
             kdDebug () << "Reference mrl " << m_refURLRegExp.cap (1) << endl;
             if (!m_tmpURL.isEmpty () && m_url != m_tmpURL)
-                m_source->insertURL (m_tmpURL);;
+                m_source->insertURL (m_mrl, m_tmpURL);;
             m_tmpURL = KURL::fromPathOrURL (m_refURLRegExp.cap (1)).url ();
             if (m_source->url () == m_tmpURL || m_url == m_tmpURL)
                 m_tmpURL.truncate (0);
@@ -615,7 +615,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                 } else if (m_startRegExp.search (out) > -1) {
                     if (m_settings->mplayerpost090) {
                         if (!m_tmpURL.isEmpty () && m_url != m_tmpURL) {
-                            m_source->insertURL (m_tmpURL);;
+                            m_source->insertURL (m_mrl, m_tmpURL);;
                             m_tmpURL.truncate (0);
                         }
                         m_source->setIdentified ();
@@ -636,7 +636,7 @@ KDE_NO_EXPORT void MPlayer::processStopped (KProcess * p) {
         if (!m_source->identified ()) {
             m_source->setIdentified ();
             if (!m_tmpURL.isEmpty () && m_url != m_tmpURL) {
-                m_source->insertURL (m_tmpURL);;
+                m_source->insertURL (m_mrl, m_tmpURL);;
                 m_tmpURL.truncate (0);
             }
         }
@@ -914,7 +914,7 @@ void Callback::statusMessage (int code, QString msg) {
                 m_process->viewer ()->view ()->setInfoMessage (msg);
             break;
         case stat_addurl:
-            m_process->m_source->insertURL (KURL::fromPathOrURL (msg).url ());
+            m_process->m_source->insertURL (m_process->m_mrl, KURL::fromPathOrURL (msg).url ());
             break;
         default:
             m_process->setStatusMessage (msg);

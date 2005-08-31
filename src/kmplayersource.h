@@ -80,7 +80,7 @@ public:
     virtual QString filterOptions ();
 
     void setURL (const KURL & url);
-    void insertURL (const QString & url);
+    void insertURL (NodePtr mrl, const QString & url);
     KDE_NO_EXPORT void setSubURL (const KURL & url) { m_sub_url = url; }
     void setMime (const QString & m);
     virtual void setWidth (int w) { m_width = w; }

@@ -908,11 +908,10 @@ void Source::avWidgetSizes (int x, int y, int w, int h, unsigned int * bg) {
       static_cast<View*>(m_player->view())->viewArea ()->setAudioVideoGeometry (x, y, w, h, bg);
 }
 
-void Source::insertURL (const QString & mrl) {
-    if (!m_current || !m_current->mrl ()) // this should always be false
+void Source::insertURL (NodePtr node, const QString & mrl) {
+    if (!node || !node->mrl ()) // this should always be false
         return;
-    NodePtr realmrl = m_current->mrl ()->realMrl ();
-    QString cur_url = realmrl->mrl ()->src;
+    QString cur_url = node->mrl ()->src;
     KURL url (cur_url, mrl);
     kdDebug() << "Source::insertURL " << KURL (cur_url) << " " << url << endl;
     if (!url.isValid ())
@@ -921,10 +920,10 @@ void Source::insertURL (const QString & mrl) {
         kdError () << "try to append url to itself" << endl;
     else {
         int depth = 0; // cache this?
-        for (NodePtr e = m_current; e->parentNode (); e = e->parentNode ())
+        for (NodePtr e = node; e->parentNode (); e = e->parentNode ())
             ++depth;
         if (depth < 40) {
-            realmrl->appendChild ((new GenericURL (m_document, KURL::decode_string (url.url ()), KURL::decode_string (mrl)))->self ());
+            node->appendChild ((new GenericURL (m_document, KURL::decode_string (url.url ()), KURL::decode_string (mrl)))->self ());
         } else
             kdError () << "insertURL exceeds depth limit" << endl;
     }
