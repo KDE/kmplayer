@@ -588,7 +588,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
             if (pos > 0) {
                 int l = out.mid (pos + 1).toInt (&ok);
                 if (ok && l >= 0) {
-                    m_source->setLength (10 * l);
+                    m_source->setLength (m_mrl, 10 * l);
                 }
             }
         } else if (!m_source->identified() && m_refURLRegExp.search(out) > -1) {
@@ -601,6 +601,22 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
         } else if (!m_source->identified () && m_refRegExp.search (out) > -1) {
             kdDebug () << "Reference File " << endl;
             m_tmpURL.truncate (0);
+        } else if (out.startsWith ("ID_VIDEO_WIDTH")) {
+            int pos = out.find ('=');
+            if (pos > 0) {
+                int w = out.mid (pos + 1).toInt ();
+                m_source->setDimensions (m_mrl, w, m_source->height ());
+            }
+        } else if (out.startsWith ("ID_VIDEO_HEIGHT")) {
+            int pos = out.find ('=');
+            if (pos > 0) {
+                int h = out.mid (pos + 1).toInt ();
+                m_source->setDimensions (m_mrl, m_source->width (), h);
+            }
+        } else if (out.startsWith ("ID_VIDEO_ASPECT")) {
+            int pos = out.find ('=');
+            if (pos > 0)
+                m_source->setAspect (m_mrl, out.mid (pos + 1).replace (',', '.').toFloat ());
         } else {
             QRegExp & m_startRegExp = patterns[MPlayerPreferencesPage::pat_start];
             QRegExp & m_sizeRegExp = patterns[MPlayerPreferencesPage::pat_size];
@@ -611,7 +627,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                     movie_width = m_sizeRegExp.cap (1).toInt (&ok);
                     int movie_height = ok ? m_sizeRegExp.cap (2).toInt (&ok) : 0;
                     if (ok && movie_width > 0 && movie_height > 0)
-                        m_source->setDimensions (movie_width, movie_height);
+                        m_source->setDimensions(m_mrl,movie_width,movie_height);
                 } else if (m_startRegExp.search (out) > -1) {
                     if (m_settings->mplayerpost090) {
                         if (!m_tmpURL.isEmpty () && m_url != m_tmpURL) {
@@ -1030,9 +1046,9 @@ void CallbackProcess::setMovieParams (int len, int w, int h, float a) {
     kdDebug () << "setMovieParams " << len << " " << w << "," << h << " " << a << endl;
     if (!m_source) return;
     in_gui_update = true;
-    m_source->setDimensions (w, h);
-    m_source->setAspect (a);
-    m_source->setLength (len);
+    m_source->setDimensions (m_mrl, w, h);
+    m_source->setAspect (m_mrl, a);
+    m_source->setLength (m_mrl, len);
     in_gui_update = false;
 }
 

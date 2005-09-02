@@ -361,7 +361,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
     if (m_document && m_document->firstChild ()) {
         KMPlayer::Mrl * mrl = m_document->firstChild ()->mrl ();
         if (mrl) {
-            Source::setDimensions (mrl->width, mrl->height);
+            Source::setDimensions (m_document->firstChild (), mrl->width, mrl->height);
             m_player->updateTree ();
             m_current->activate ();
             emit startPlaying ();
@@ -629,8 +629,8 @@ KDE_NO_EXPORT void ExitSource::activate () {
           "</region>"
           "</layout></head><body>"
           "<par>"
-          "<animate target='reg1' attribute='background-color' calcMode='discrete' values='#FFFFFF;#FEFEFE;#FBFBFB;#F7F7F7;#F2F2F2;#EBEBEB;#E3E3E3;#D9D9D9;#CECECE;#C1C1C1;#B4B4B4;#A5A5A5;#959595;#858585;#737373;#616161;#4E4E4E;#3B3B3B;#272727;#141414' dur='1'/>"
-          "<img src='%2' region='image' dur='1s' fit='hidden'/>"
+          "<animate target='reg1' attribute='background-color' calcMode='discrete' values='#FFFFFF;#FEFEFE;#FBFBFB;#F7F7F7;#F2F2F2;#EBEBEB;#E3E3E3;#D9D9D9;#CECECE;#C1C1C1;#B4B4B4;#A5A5A5;#959595;#858585;#737373;#616161;#4E4E4E;#3B3B3B;#272727;#141414' dur='0.5'/>"
+          "<img src='%2' region='image' dur='0.5s' fit='hidden'/>"
           "</par>"
           "</body></smil>").arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
         QTextStream ts (smil.utf8 (), IO_ReadOnly);
@@ -641,7 +641,7 @@ KDE_NO_EXPORT void ExitSource::activate () {
     if (m_document && m_document->firstChild ()) {
         KMPlayer::Mrl * mrl = m_document->firstChild ()->mrl ();
         if (mrl) {
-            setDimensions (mrl->width, mrl->height);
+            setDimensions (m_document->firstChild (), mrl->width, mrl->height);
             m_player->updateTree ();
             m_current->activate ();
             emit startPlaying ();

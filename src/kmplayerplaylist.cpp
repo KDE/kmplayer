@@ -533,7 +533,7 @@ static bool hasMrlChildren (const NodePtr & e) {
     return false;
 }
 
-Mrl::Mrl (NodePtr & d, short id) : Element (d, id), cached_ismrl_version (~0), width (0), height (0), aspect (0), parsed (false), bookmarkable (true) {}
+Mrl::Mrl (NodePtr & d, short id) : Element (d, id), cached_ismrl_version (~0), width (0), height (0), aspect (0), view_mode (Single), parsed (false), bookmarkable (true) {}
 
 Mrl::~Mrl () {}
 

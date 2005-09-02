@@ -52,14 +52,14 @@ public:
     virtual bool hasLength ();
     virtual bool isSeekable ();
 
-    virtual int width () { return m_width; }
-    virtual int height () { return m_height; }
+    KDE_NO_EXPORT int width () const { return m_width; }
+    KDE_NO_EXPORT int height () const { return m_height; }
     virtual void dimensions (int & w, int & h) { w = m_width; h = m_height; }
     /* length () returns length in deci-seconds */
     KDE_NO_EXPORT int length () const { return m_length; }
     /* position () returns position in deci-seconds */
     KDE_NO_EXPORT int position () const { return m_position; }
-    virtual float aspect () { return m_aspect; }
+    KDE_NO_EXPORT float aspect () const { return m_aspect; }
     KDE_NO_EXPORT const KURL & url () const { return m_url; }
     KDE_NO_EXPORT const KURL & subUrl () const { return m_sub_url; }
     PartBase * player () { return m_player; }
@@ -83,12 +83,12 @@ public:
     void insertURL (NodePtr mrl, const QString & url);
     KDE_NO_EXPORT void setSubURL (const KURL & url) { m_sub_url = url; }
     void setMime (const QString & m);
-    virtual void setWidth (int w) { m_width = w; }
-    virtual void setHeight (int h) { m_height = h; }
-    virtual void setDimensions (int w, int h);
-    virtual void setAspect (float a) { m_aspect = a; }
+    KDE_NO_EXPORT void setWidth (int w) { m_width = w; }
+    KDE_NO_EXPORT void setHeight (int h) { m_height = h; }
+    virtual void setDimensions (NodePtr, int w, int h);
+    virtual void setAspect (NodePtr, float a);
     /* setLength (len) set length in deci-seconds */
-    void setLength (int len);
+    void setLength (NodePtr, int len);
     /* setPosition (pos) set position in deci-seconds */
     void setPosition (int pos);
     virtual void setIdentified (bool b = true);

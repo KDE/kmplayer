@@ -68,14 +68,7 @@ public:
     URLSource (PartBase * player, const KURL & url = KURL ());
     virtual ~URLSource ();
 
-    virtual int width ();
-    virtual int height ();
-    virtual float aspect ();
     virtual void dimensions (int & w, int & h);
-    virtual void setWidth (int w);
-    virtual void setHeight (int h);
-    virtual void setDimensions (int w, int h);
-    virtual void setAspect (float a);
     virtual bool hasLength ();
     virtual QString prettyName ();
     virtual bool requestPlayURL (NodePtr mrl);

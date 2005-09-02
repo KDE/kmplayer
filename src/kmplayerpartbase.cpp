@@ -415,7 +415,7 @@ bool PartBase::openURL (const KURL::List & urls) {
         openURL (KURL ());
         NodePtr d = m_source->document ();
         if (d)
-            for (int i = 0; i < urls.size (); i++)
+            for (unsigned int i = 0; i < urls.size (); i++)
                 d->appendChild ((new GenericURL (d, KURL::decode_string (urls [i].url ())))->self ());
     }
     return true;
@@ -733,22 +733,44 @@ void Source::init () {
     m_width = 0;
     m_height = 0;
     m_aspect = 0.0;
-    setLength (0);
+    setLength (m_document, 0);
     m_position = 0;
     m_identified = false;
     m_recordcmd.truncate (0);
 }
 
-void Source::setDimensions (int w, int h) {
-    if (m_width != w || m_height != h) {
+void Source::setDimensions (NodePtr node, int w, int h) {
+    Mrl * mrl = node ? node->mrl () : 0L;
+    if (mrl && mrl->view_mode == Mrl::Window) {
+        mrl->width = w;
+        mrl->height = h;
+        float a = h > 0 ? 1.0 * w / h : 0.0;
+        mrl->aspect = a;
+        if (m_player->view ()) {
+            static_cast <View *> (m_player->view())->viewer()->setAspect(a);
+            static_cast <View *> (m_player->view ())->updateLayout ();
+        }
+    } else if (m_width != w || m_height != h) {
+        bool ev = (w > 0 && h > 0) ||
+            (h == 0 && m_height > 0) ||
+            (w == 0 && m_width > 0);
         m_width = w;
         m_height = h;
-        setAspect (h > 0 ? 1.0 * w / h : 0.0);
-        emit dimensionsChanged ();
+        setAspect (node, h > 0 ? 1.0 * w / h : 0.0);
+        if (ev)
+            emit dimensionsChanged ();
     }
 }
 
-void Source::setLength (int len) {
+void Source::setAspect (NodePtr node, float a) {
+    Mrl * mrl = node ? node->mrl () : 0L;
+    if (mrl)
+        mrl->aspect = a;
+    if (!mrl || mrl->view_mode == Mrl::Single)
+        m_aspect = a;
+}
+
+void Source::setLength (NodePtr, int len) {
     m_length = len;
     emit lengthFound (len);
 }
@@ -1013,32 +1035,8 @@ void Source::setMime (const QString & m) {
     }
 }
 
-bool Source::processOutput (const QString & str) {
-    if (str.startsWith ("ID_VIDEO_WIDTH")) {
-        int pos = str.find ('=');
-        if (pos > 0) {
-            int w = str.mid (pos + 1).toInt ();
-            if (height () > 0)
-                setDimensions (w, height ());
-            else
-                setWidth (w);
-        }
-    } else if (str.startsWith ("ID_VIDEO_HEIGHT")) {
-        int pos = str.find ('=');
-        if (pos > 0) {
-            int h = str.mid (pos + 1).toInt ();
-            if (width () > 0)
-                setDimensions (width (), h);
-            else
-                setHeight (h);
-        }
-    } else if (str.startsWith ("ID_VIDEO_ASPECT")) {
-        int pos = str.find ('=');
-        if (pos > 0)
-            setAspect (str.mid (pos + 1).replace (',', '.').toFloat ());
-    } else
-        return false;
-    return true;
+bool Source::processOutput (const QString &) {
+    return false;
 }
 
 QString Source::filterOptions () {
@@ -1158,7 +1156,7 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
             emit startPlaying ();
         } else if (news == Process::NotRunning) {
             if (hasLength () && position () > length ())
-                setLength (position ());
+                setLength (m_document, position ());
             setPosition (0);
             emit stopPlaying ();
         } else if (news == Process::Ready) {
@@ -1208,83 +1206,13 @@ KDE_NO_EXPORT void URLSource::init () {
     Source::init ();
 }
 
-int URLSource::width () {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    if (mrl && mrl->id > SMIL::id_node_first && mrl->id < SMIL::id_node_last)
-        return mrl->width;
-    return Source::width ();
-}
-
-int URLSource::height () {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    if (mrl && mrl->id > SMIL::id_node_first && mrl->id < SMIL::id_node_last)
-        return mrl->height;
-    return Source::height ();
-}
-
-float URLSource::aspect () {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    if (mrl && mrl->id > SMIL::id_node_first && mrl->id < SMIL::id_node_last)
-        return mrl->aspect;
-    return Source::aspect ();
-}
-
 void URLSource::dimensions (int & w, int & h) {
     if (!m_player->mayResize () && m_player->view ()) {
         w = static_cast <View *> (m_player->view ())->viewer ()->width ();
         h = static_cast <View *> (m_player->view ())->viewer ()->height ();
-    } else if (m_document && m_document->firstChild () &&
-            !strcmp (m_document->firstChild ()->nodeName (), "smil")) {
-        Mrl * mrl = m_document->firstChild ()->mrl ();
-        w = mrl->width;
-        h = mrl->height;
-        if (w && h)
-            return;
     } else
         Source::dimensions (w, h);
     
-}
-
-void URLSource::setWidth (int w) {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    if (mrl && mrl->id > SMIL::id_node_first && mrl->id < SMIL::id_node_last)
-        mrl->width = w;
-    else
-        Source::setWidth (w);
-}
-
-void URLSource::setHeight (int w) {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    if (mrl && mrl->id > SMIL::id_node_first && mrl->id < SMIL::id_node_last)
-        mrl->height = w;
-    else
-        Source::setHeight (w);
-}
-
-void URLSource::setDimensions (int w, int h) {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    if (mrl && mrl->id > SMIL::id_node_first && mrl->id < SMIL::id_node_last) {
-        if (m_player->view ()) {
-            mrl = mrl->realMrl ()->mrl ();
-            mrl->width = w;
-            mrl->height = h;
-            if (h > 0) {
-                float a = 1.0 * w / h;
-                mrl->aspect = a;
-                static_cast <View *> (m_player->view())->viewer()->setAspect(a);
-                static_cast <View *> (m_player->view ())->updateLayout ();
-            }
-        }
-    } else
-        Source::setDimensions (w, h);
-}
-
-void URLSource::setAspect (float w) {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    if (mrl && mrl->id > SMIL::id_node_first && mrl->id < SMIL::id_node_last)
-        mrl->aspect = w;
-    else
-        Source::setAspect (w);
 }
 
 KDE_NO_EXPORT bool URLSource::hasLength () {
@@ -1429,7 +1357,7 @@ KDE_NO_EXPORT void URLSource::read (QTextStream & textstream) {
                 // SMIL documents have set its size of root-layout
                 Mrl * mrl = m_document->firstChild ()->mrl ();
                 if (mrl)
-                    Source::setDimensions (mrl->width, mrl->height);
+                    Source::setDimensions (m_document->firstChild (), mrl->width, mrl->height);
             }
         } else if (line.lower () != QString ("[reference]")) do {
             QString mrl = line.stripWhiteSpace ();

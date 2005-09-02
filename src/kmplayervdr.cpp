@@ -183,7 +183,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     connect (panel->button (KMPlayer::ControlPanel::button_green), SIGNAL (clicked ()), this, SLOT (keyGreen ()));
     connect (panel->button (KMPlayer::ControlPanel::button_yellow), SIGNAL (clicked ()), this, SLOT (keyYellow ()));
     connect (panel->button (KMPlayer::ControlPanel::button_blue), SIGNAL (clicked ()), this, SLOT (keyBlue ()));
-    setAspect (scale ? 16.0/9 : 1.33);
+    setAspect (m_document, scale ? 16.0/9 : 1.33);
     if (!m_url.protocol ().compare ("kmplayer"))
         m_request_jump = KURL::decode_string (m_url.path ()).mid (1);
     setURL (KURL (QString ("vdr://localhost:%1").arg (tcp_port)));
@@ -636,7 +636,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
     if (fromUI) {
         tcp_port = m_configpage->tcp_port->text ().toInt ();
         scale = m_configpage->scale->id (m_configpage->scale->selected ());
-        setAspect (scale ? 16.0/9 : 1.25);
+        setAspect (m_document, scale ? 16.0/9 : 1.25);
         XVTreeItem * vitem = dynamic_cast <XVTreeItem *> (m_configpage->xv_port->selectedItem ());
         if (vitem) {
             m_xvport = vitem->port;

@@ -1940,7 +1940,9 @@ KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, sh
  : TimedMrl (d, id), m_type (t), bitrate (0),
    m_ActionListeners ((new NodeRefList)->self ()),
    m_OutOfBoundsListeners ((new NodeRefList)->self ()),
-   m_InBoundsListeners ((new NodeRefList)->self ()) {}
+   m_InBoundsListeners ((new NodeRefList)->self ()) {
+    view_mode = Mrl::Window;
+}
 
 KDE_NO_EXPORT NodePtr SMIL::MediaType::childFromTag (const QString & tag) {
     Element * elm = fromContentControlGroup (m_doc, tag);
