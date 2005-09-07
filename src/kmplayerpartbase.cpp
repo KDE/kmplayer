@@ -874,7 +874,8 @@ bool Source::requestPlayURL (NodePtr mrl) {
         m_back_request = mrl; // still playing, schedule it
         m_player->process ()->stop ();
     } else {
-        m_current = mrl;
+        if (mrl->mrl ()->view_mode == Mrl::Single)
+            m_current = mrl;
         m_player->updateTree ();
         QTimer::singleShot (0, this, SLOT (playCurrent ()));
     }

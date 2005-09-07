@@ -1121,11 +1121,7 @@ KDE_NO_EXPORT void AudioVideoData::started () {
         PlayListNotify * n = element->document ()->notify_listener;
         if (n && !source_url.isEmpty ()) {
             convertNode <SMIL::AVMediaType> (element)->positionVideoWidget ();
-            for (NodePtr e = element; e; e = e->parentNode ())
-                if (e->id == SMIL::id_node_smil) {
-                    n->requestPlayURL (e); // keep <smil> current
-                    break;
-                }
+            n->requestPlayURL (element);
             element->setState (Element::state_began);
         }
     }
@@ -1146,11 +1142,7 @@ void AudioVideoData::parseParam (const QString & name, const QString & val) {
         if (timingstate == timings_started && element) {
             PlayListNotify * n = element->document ()->notify_listener;
             if (n && !source_url.isEmpty ()) {
-                for (NodePtr e = element; e; e = e->parentNode ())
-                    if (e->id == SMIL::id_node_smil) {
-                        n->requestPlayURL (e); // keep <smil> current
-                        break;
-                    }
+                n->requestPlayURL (element);
                 element->setState (Node::state_began);
             }
         }
@@ -1697,6 +1689,8 @@ KDE_NO_EXPORT void SMIL::TimedMrl::childBegan (NodePtr) {
 KDE_NO_EXPORT void SMIL::TimedMrl::childDone (NodePtr c) {
     if (c->state == state_finished)
         c->deactivate ();
+    if (!active ())
+        return; // forced reset
     if (c->nextSibling ())
         c->nextSibling ()->activate ();
     else { // check if Runtime still running
