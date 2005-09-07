@@ -337,7 +337,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
           "<root-layout width='320' height='240' background-color='black'/>"
           "<region id='image1' left='31.25%' top='25%' width='37.5%' height='50%' z-order='1'/>"
           "<region id='reg1' top='10%' height='80%' z-order='2'>"
-          "<region id='image2' left='128' top='72' width='64' height='64'/>"
+          "<region id='image2' left='128' top='72' width='64' bottom='56'/>"
           "</region>"
           "</layout></head><body>"
           "<img src='%1' region='image1' dur='0.5s' fit='fill'/>"
@@ -350,7 +350,8 @@ KDE_NO_EXPORT void IntroSource::activate () {
           "</par>"
           "<par>"
           "<animate target='reg1' attribute='background-color' calcMode='discrete' values='#000000;#141414;#272727;#3B3B3B;#4E4E4E;#616161;#737373;#858585;#959595;#A5A5A5;#B4B4B4;#C1C1C1;#CECECE;#D9D9D9;#E3E3E3;#EBEBEB;#F2F2F2;#F7F7F7;#FBFBFB;#FEFEFE' dur='0.6'/>"
-          "<img src='%2' region='image2' dur='0.6s' fit='hidden'/>"
+          "<animate target='image2' attribute='top' from='136' to='72' dur='0.4' fill='freeze'/>"
+          "<img src='%2' region='image2' dur='0.6' fit='hidden'/>"
           "</par>"
           "</body></smil>").arg (locate ("data", "kmplayer/noise.gif")).arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
         QTextStream ts (smil.utf8 (), IO_ReadOnly);
@@ -625,12 +626,13 @@ KDE_NO_EXPORT void ExitSource::activate () {
         QString smil = QString::fromLatin1 ("<smil><head><layout>"
           "<root-layout width='320' height='240' background-color='black'/>"
           "<region id='reg1' top='10%' height='80%' z-order='2'>"
-          "<region id='image' left='128' top='72' width='64' height='64'/>"
+          "<region id='image' left='128' top='72' width='64' bottom='56'/>"
           "</region>"
           "</layout></head><body>"
           "<par>"
           "<animate target='reg1' attribute='background-color' calcMode='discrete' values='#FFFFFF;#FEFEFE;#FBFBFB;#F7F7F7;#F2F2F2;#EBEBEB;#E3E3E3;#D9D9D9;#CECECE;#C1C1C1;#B4B4B4;#A5A5A5;#959595;#858585;#737373;#616161;#4E4E4E;#3B3B3B;#272727;#141414' dur='0.6'/>"
-          "<img src='%2' region='image' dur='0.5s' fit='hidden'/>"
+          "<animate target='image' attribute='top' from='72' to='136' dur='0.4'  begin='0.2'/>"
+          "<img src='%2' region='image' dur='0.6' fit='hidden'/>"
           "</par>"
           "</body></smil>").arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
         QTextStream ts (smil.utf8 (), IO_ReadOnly);
