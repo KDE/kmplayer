@@ -1241,8 +1241,8 @@ KDE_NO_EXPORT void SMIL::Smil::deactivate () {
 }
 
 KDE_NO_EXPORT void SMIL::Smil::closed () {
-    width = 320; // something to start with
-    height = 240;
+    width = 0;
+    height = 0;
     NodePtr head;
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         if (e->id == id_node_head) {
@@ -1269,7 +1269,7 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
         return;
     }
     SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (layout_node);
-    if (rb) {
+    if (rb && !rb->auxiliaryNode ()) {
         width = rb->w;
         height = rb->h;
     }
@@ -1411,7 +1411,19 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
         case event_sized: {
             SizeEvent * e = static_cast <SizeEvent *> (event.ptr ());
             float xscale = 1.0, yscale = 1.0;
-            if (w > 0 && h > 0) {
+            if (auxiliaryNode () && rootLayout) {
+                w = e->w;
+                h = e->h;
+                Element * rl = convertNode <Element> (rootLayout);
+                rl->setAttribute (QString::fromLatin1 ("width"), QString::number (e->w));
+                rl->setAttribute (QString::fromLatin1 ("height"), QString::number (e->h));
+                if (runtime) {
+                    ElementRuntimePtr rt = rootLayout->getRuntime ();
+                    rt->setParam (QString::fromLatin1 ("width"), QString::number (e->w));
+                    rt->setParam (QString::fromLatin1 ("height"), QString::number (e->h));
+                    updateDimensions ();
+                }
+            } else if (w > 0 && h > 0) {
                 xscale += 1.0 * (e->w - w) / w;
                 yscale += 1.0 * (e->h - h) / h;
                 if (e->keep_ratio)
@@ -1544,7 +1556,7 @@ KDE_NO_EXPORT void SMIL::Region::calculateBounds (int pw, int ph) {
             m_transform = Matrix (x, y, 1.0, 1.0);
             propagateEvent ((new SizeEvent (x, y, w, h, true))->self ());
         }
-        //kdDebug () << "Region::calculateBounds " << x << "," << y << " " << w << "x" << h << endl;
+        //kdDebug () << "Region::calculateBounds parent:" << pw << "x" << ph << " this:" << x << "," << y << " " << w << "x" << h << endl;
     }
 }
 
