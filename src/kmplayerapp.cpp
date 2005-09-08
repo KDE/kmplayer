@@ -337,7 +337,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
           "<root-layout width='320' height='240' background-color='black'/>"
           "<region id='image1' left='31.25%' top='25%' width='37.5%' height='50%' z-order='1'/>"
           "<region id='reg1' top='10%' height='80%' z-order='2'>"
-          "<region id='image2' left='128' top='72' width='64' bottom='56'/>"
+          "<region id='image2' left='128' top='136' width='64' bottom='56'/>"
           "</region>"
           "</layout></head><body>"
           "<img src='%1' region='image1' dur='0.5s' fit='fill'/>"
@@ -350,7 +350,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
           "</par>"
           "<par>"
           "<animate target='reg1' attribute='background-color' calcMode='discrete' values='#000000;#000000;#020202;#060606;#0B0B0B;#111111;#191919;#222222;#2D2D2D;#393939;#464646;#555555;#656565;#777777;#8A8A8A;#9E9E9E;#B4B4B4;#CCCCCC;#E4E4E4;#FFFFFF' dur='0.6'/>"
-          "<animate target='image2' attribute='top' from='136' to='72' dur='0.4' fill='freeze'/>"
+          "<animate target='image2' attribute='top' from='136' to='72' dur='0.4'  begin='0.1' fill='freeze'/>"
           "<img src='%2' region='image2' dur='0.6' fit='hidden'/>"
           "</par>"
           "</body></smil>").arg (locate ("data", "kmplayer/noise.gif")).arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
@@ -631,7 +631,7 @@ KDE_NO_EXPORT void ExitSource::activate () {
           "</layout></head><body>"
           "<par>"
           "<animate target='reg1' attribute='background-color' calcMode='discrete' values='#FFFFFF;#E4E4E4;#CCCCCC;#B4B4B4;#9E9E9E;#8A8A8A;#777777;#656565;#555555;#464646;#393939;#2D2D2D;#222222;#191919;#111111;#0B0B0B;#060606;#020202;#000000;#000000' dur='0.6'/>"
-          "<animate target='image' attribute='top' from='72' to='136' dur='0.4'  begin='0.2'/>"
+          "<animate target='image' attribute='top' from='72' to='136' dur='0.4' fill='freeze'/>"
           "<img src='%2' region='image' dur='0.6' fit='hidden'/>"
           "</par>"
           "</body></smil>").arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
