@@ -183,6 +183,20 @@ static const char * playlist_xpm[] = {
     "........",
     "        "};
 
+static const char * fullscreen_xpm[] = {
+    "7 9 2 1",
+    "       c None",
+    xpm_fg_color,
+    "       ",
+    ".......",
+    ".......",
+    ".     .",
+    ".     .",
+    ".     .",
+    ".     .",
+    ".......",
+    "       "};
+
 static const char * record_xpm[] = {
     "7 7 3 1",
     "       c None",
@@ -322,6 +336,7 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
             m_view->controlPanel ()->popupMenu ()->removeItem (scale_slider_id);
             scale_lbl_id = scale_slider_id = -1;
         }
+        m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (playlist_xpm)));
     } else {
         reparent (0L, 0, qApp->desktop()->screenGeometry(this).topLeft(), true);
         showFullScreen ();
@@ -333,7 +348,7 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
         QSlider * slider = new QSlider (50, 150, 10, m_fullscreen_scale, Qt::Horizontal, menu);
         connect (slider, SIGNAL (valueChanged (int)), this, SLOT (scale (int)));
         scale_slider_id = menu->insertItem (slider, -1, 5);
-
+        m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (fullscreen_xpm)));
     }
     m_fullscreen = !m_fullscreen;
     m_view->controlPanel()->popupMenu ()->setItemChecked (ControlPanel::menu_fullscreen, m_fullscreen);
@@ -1174,7 +1189,7 @@ KDE_NO_EXPORT void View::dropEvent (QDropEvent * de) {
         sl.push_back (KURL (text));
     }
     if (sl.size () > 0) {
-        for (int i = 0; i < sl.size (); i++)
+        for (unsigned i = 0; i < sl.size (); i++)
             sl [i] = KURL::decode_string (sl [i].url ());
         m_widgetstack->visibleWidget ()->setFocus ();
         emit urlDropped (sl);

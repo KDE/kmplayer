@@ -138,7 +138,12 @@ void PartBase::showConfigDialog () {
 }
 
 KDE_NO_EXPORT void PartBase::showPlayListWindow () {
-    m_view->toggleShowPlaylist ();
+    // note, this is also the slot of application's view_playlist action, but
+    // anyhow, actions don't work for the fullscreen out-of-the-box, so ...
+    if (m_view->viewArea ()->isFullScreen ())
+        fullScreen ();
+    else
+        m_view->toggleShowPlaylist ();
 }
 
 KDE_NO_EXPORT void PartBase::addBookMark (const QString & t, const QString & url) {
