@@ -1,9 +1,15 @@
 Changes since version 0.9.1-pre1
+- Give playlist button of controlpanel has no use when in fullscreen, so reuse
+  if for a out-of-fullscreen button
+- Fixed bug in plugin, 0.9.1-pre1 only, that messed up all attributes passed
+  to KMPlayer from KHTML and likely breaking lots of webpages having
+  audio/video and also omitting KMPlayer's checks for local access.
 - Shorten intro/exit animations and also animate the icon rise and fall
 - SMIL's regPoint/regAlign support
 - Don't resize kpart if 'intrinsic' size is 0x0
 - Don't resize for intro/exit animations
 - XML export, or regenerate in case of XML playlist, of loaded playlist.
+- Fix possible crash when changing source from the TV source to another one.
 Changes since version 0.9.0c
 - Font settings for playlist and infowindow added.
 - Color settings for infowindow added.
