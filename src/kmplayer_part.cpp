@@ -135,7 +135,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
    m_features (Feat_Unknown),
    m_started_emited (false),
    m_havehref (false) {
-    kdDebug () << "MPlayer(" << this << ")::KMPlayer ()" << endl;
+    kdDebug () << "KMPlayerPart(" << this << ")::KMPlayerPart ()" << endl;
     bool show_fullscreen = false;
     if (!kmplayerpart_static)
         kmplayerpart_static = kmplayerpart_staticdeleter.setObject (new KMPlayerPartStatic ());
@@ -150,7 +150,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     Source * urlsource = m_sources ["urlsource"];
     KMPlayer::ControlPanel * panel = m_view->controlPanel ();
     QStringList::const_iterator it = args.begin ();
-    QStringList::const_iterator end( args.begin () );
+    QStringList::const_iterator end = args.end ();
     for ( ; it != end; ++it) {
         int equalPos = (*it).find("=");
         if (equalPos > 0) {
