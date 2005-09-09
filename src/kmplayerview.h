@@ -124,19 +124,21 @@ private:
 /*
  * The area in which the video widget and controlpanel are laid out
  */
-class ViewArea : public QWidget {
+class KMPLAYER_EXPORT ViewArea : public QWidget {
     Q_OBJECT
 public:
     ViewArea (QWidget * parent, View * view);
     ~ViewArea ();
-    bool isFullScreen () const { return m_fullscreen; }
-    KActionCollection * actionCollection () const { return m_collection; }
+    KDE_NO_EXPORT bool isFullScreen () const { return m_fullscreen; }
+    KDE_NO_EXPORT bool isMinimalMode () const { return m_minimal; }
+    KDE_NO_EXPORT KActionCollection * actionCollection () const { return m_collection; }
     void setEventListener (NodePtr rl);
     void setAudioVideoGeometry (int x, int y, int w, int y, unsigned int * bg);
     void mouseMoved ();
     void scheduleRepaint (int x, int y, int w, int y);
     void moveRect (int x, int y, int w, int h, int x1, int y1);
     void resizeEvent (QResizeEvent *);
+    void minimalMode ();
 public slots:
     void fullScreen ();
     void accelActivated ();
@@ -167,6 +169,7 @@ private:
     int scale_lbl_id;
     int scale_slider_id;
     bool m_fullscreen;
+    bool m_minimal;
 };
 
 /*

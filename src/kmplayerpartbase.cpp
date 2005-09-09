@@ -142,6 +142,8 @@ KDE_NO_EXPORT void PartBase::showPlayListWindow () {
     // anyhow, actions don't work for the fullscreen out-of-the-box, so ...
     if (m_view->viewArea ()->isFullScreen ())
         fullScreen ();
+    else if (m_view->viewArea ()->isMinimalMode ())
+        ; //done by app: m_view->viewArea ()->minimalMode ();
     else
         m_view->toggleShowPlaylist ();
 }

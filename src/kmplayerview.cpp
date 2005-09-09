@@ -183,7 +183,7 @@ static const char * playlist_xpm[] = {
     "........",
     "        "};
 
-static const char * fullscreen_xpm[] = {
+static const char * normal_window_xpm[] = {
     "7 9 2 1",
     "       c None",
     xpm_fg_color,
@@ -311,7 +311,8 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
    m_fullscreen_scale (100),
    scale_lbl_id (-1),
    scale_slider_id (-1),
-   m_fullscreen (false) {
+   m_fullscreen (false),
+   m_minimal (false) {
     setEraseColor (QColor (0, 0, 0));
     setAcceptDrops (true);
     new KAction (i18n ("Escape"), KShortcut (Qt::Key_Escape), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_escape");
@@ -348,7 +349,7 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
         QSlider * slider = new QSlider (50, 150, 10, m_fullscreen_scale, Qt::Horizontal, menu);
         connect (slider, SIGNAL (valueChanged (int)), this, SLOT (scale (int)));
         scale_slider_id = menu->insertItem (slider, -1, 5);
-        m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (fullscreen_xpm)));
+        m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (normal_window_xpm)));
     }
     m_fullscreen = !m_fullscreen;
     m_view->controlPanel()->popupMenu ()->setItemChecked (ControlPanel::menu_fullscreen, m_fullscreen);
@@ -361,6 +362,20 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
             m_mouse_invisible_timer = 0;
         }
         unsetCursor();
+    }
+}
+
+void ViewArea::minimalMode () {
+    m_minimal = !m_minimal;
+    if (m_minimal) {
+        m_view->setViewOnly ();
+        m_view->setControlPanelMode (KMPlayer::View::CP_AutoHide);
+        m_view->setNoInfoMessages (true);
+        m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (normal_window_xpm)));
+    } else {
+        m_view->setControlPanelMode (KMPlayer::View::CP_Show);
+        m_view->setNoInfoMessages (false);
+        m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (playlist_xpm)));
     }
 }
 

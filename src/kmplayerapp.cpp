@@ -350,7 +350,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
           "</par>"
           "<par>"
           "<animate target='reg1' attribute='background-color' calcMode='discrete' values='#000000;#000000;#020202;#060606;#0B0B0B;#111111;#191919;#222222;#2D2D2D;#393939;#464646;#555555;#656565;#777777;#8A8A8A;#9E9E9E;#B4B4B4;#CCCCCC;#E4E4E4;#FFFFFF' dur='0.6'/>"
-          "<animate target='image2' attribute='top' from='136' to='72' dur='0.4'  begin='0.1' fill='freeze'/>"
+          "<animate target='image2' attribute='top' from='136' to='72' dur='0.4' fill='freeze'/>"
           "<img src='%2' region='image2' dur='0.6' fit='hidden'/>"
           "</par>"
           "</body></smil>").arg (locate ("data", "kmplayer/noise.gif")).arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
@@ -568,31 +568,31 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
 }
 
 #include <netwm.h>
-KDE_NO_EXPORT void KMPlayerApp::minimalMode (bool deco) {
+KDE_NO_EXPORT void KMPlayerApp::minimalMode (bool by_user) {
     unsigned long props = NET::WMWindowType;
     NETWinInfo winfo (qt_xdisplay (), winId (), qt_xrootwin (), props);
+    m_view->viewArea ()->minimalMode ();
     if (m_minimal_mode) {
         winfo.setWindowType (NET::Normal);
-        m_view->setNoInfoMessages (false);
         readOptions ();
-        m_view->setControlPanelMode (KMPlayer::View::CP_Show);
+        if (by_user)
+            disconnect (m_view->controlPanel ()->button (KMPlayer::ControlPanel::button_playlist), SIGNAL (clicked ()), this, SLOT (slotMinimalMode ()));
         restoreFromConfig ();
     } else {
         saveOptions ();
         menuBar()->hide();
         toolBar("mainToolBar")->hide();
         statusBar()->hide();
-        m_view->setViewOnly ();
-        m_view->setControlPanelMode (KMPlayer::View::CP_AutoHide);
-        m_view->setNoInfoMessages (true);
-        if (deco)
+        if (by_user)
+            connect (m_view->controlPanel ()->button (KMPlayer::ControlPanel::button_playlist), SIGNAL (clicked ()), this, SLOT (slotMinimalMode ()));
+        if (by_user)
 #if KDE_IS_VERSION(3, 1, 90)
             winfo.setWindowType (NET::Utility);
 #else
             winfo.setWindowType (NET::Menu);
 #endif
     }
-    if (deco) {
+    if (by_user) {
         hide ();
         QTimer::singleShot (0, this, SLOT (zoom100 ()));
         show ();
