@@ -568,6 +568,12 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
 }
 
 #include <netwm.h>
+#undef Always
+#undef Never
+#undef Status
+#undef Unsorted
+#undef Bool
+
 KDE_NO_EXPORT void KMPlayerApp::minimalMode (bool by_user) {
     unsigned long props = NET::WMWindowType;
     NETWinInfo winfo (qt_xdisplay (), winId (), qt_xrootwin (), props);
