@@ -571,7 +571,6 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
 KDE_NO_EXPORT void KMPlayerApp::minimalMode (bool by_user) {
     unsigned long props = NET::WMWindowType;
     NETWinInfo winfo (qt_xdisplay (), winId (), qt_xrootwin (), props);
-    m_view->viewArea ()->minimalMode ();
     if (m_minimal_mode) {
         winfo.setWindowType (NET::Normal);
         readOptions ();
@@ -592,6 +591,7 @@ KDE_NO_EXPORT void KMPlayerApp::minimalMode (bool by_user) {
             winfo.setWindowType (NET::Menu);
 #endif
     }
+    m_view->viewArea ()->minimalMode ();
     if (by_user) {
         hide ();
         QTimer::singleShot (0, this, SLOT (zoom100 ()));
