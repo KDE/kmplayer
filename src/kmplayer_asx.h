@@ -84,7 +84,7 @@ public:
     //NodePtr childFromTag (const QString & tag);
     void opened ();
     KDE_NO_EXPORT const char * nodeName () const { return "Ref"; }
-    bool expose () const { return false; }
+    bool expose () const;
 };
 
 /**

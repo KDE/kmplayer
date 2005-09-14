@@ -90,10 +90,14 @@ KDE_NO_EXPORT NodePtr ASX::Entry::realMrl () {
 }
 
 KDE_NO_EXPORT void ASX::Entry::activate () {
-    NodePtr mrl = realMrl ();
-    if (mrl != self ())
-        mrl->setState (state_activated);
-    Mrl::activate ();
+    if (!isMrl ()) { // eg. multible child Ref's
+        Element::activate ();
+    } else {
+        NodePtr mrl = realMrl ();
+        if (mrl != self ())
+            mrl->setState (state_activated);
+        Mrl::activate ();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -107,6 +111,10 @@ KDE_NO_EXPORT void ASX::Ref::opened () {
 
     }
     kdDebug () << "Ref attr found src: " << src << endl;
+}
+
+KDE_NO_EXPORT bool ASX::Ref::expose () const {
+    return parentNode () && !parentNode ()->isMrl (); // eg. having Ref sisters
 }
 
 //-----------------------------------------------------------------------------
