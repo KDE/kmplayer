@@ -1,3 +1,8 @@
+Changes since version 0.9.1-pre2
+- Remember window location so window->fullscreen->window is at same place again
+- Option to not resize on opening new source added
+- Fix ASX Entry's having more than one Ref child nodes, current wasn't set
+  right in playlist (did play though)
 Changes since version 0.9.1-pre1
 - Playlist button of controlpanel has no use when in fullscreen or minimal
   mode, so reuse if for a back-to-normal-window button
