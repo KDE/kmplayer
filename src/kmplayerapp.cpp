@@ -847,8 +847,10 @@ KDE_NO_EXPORT void KMPlayerApp::fullScreen () {
 
     if (m_view->isFullScreen())
         hide ();
-    else
+    else {
         show ();
+        setGeometry (m_view->viewArea ()->topWindowRect ());
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerApp::startArtsControl () {

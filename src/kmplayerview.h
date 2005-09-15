@@ -132,6 +132,7 @@ public:
     KDE_NO_EXPORT bool isFullScreen () const { return m_fullscreen; }
     KDE_NO_EXPORT bool isMinimalMode () const { return m_minimal; }
     KDE_NO_EXPORT KActionCollection * actionCollection () const { return m_collection; }
+    KDE_NO_EXPORT QRect topWindowRect () const { return m_topwindow_rect; }
     void setEventListener (NodePtr rl);
     void setAudioVideoGeometry (int x, int y, int w, int y, unsigned int * bg);
     void mouseMoved ();
@@ -163,6 +164,7 @@ private:
     NodePtrW eventListener;
     QRect m_av_geometry;
     QRect m_repaint_rect;
+    QRect m_topwindow_rect;
     int m_mouse_invisible_timer;
     int m_repaint_timer;
     int m_fullscreen_scale;

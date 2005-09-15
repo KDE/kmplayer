@@ -339,6 +339,7 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
         }
         m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (playlist_xpm)));
     } else {
+        m_topwindow_rect = topLevelWidget ()->geometry ();
         reparent (0L, 0, qApp->desktop()->screenGeometry(this).topLeft(), true);
         showFullScreen ();
         for (unsigned i = 0; i < m_collection->count (); ++i)
