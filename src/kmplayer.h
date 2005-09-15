@@ -151,6 +151,7 @@ private:
     bool m_played_intro;
     bool m_played_exit;
     bool m_minimal_mode;
+    bool m_auto_resize;
 };
 
 #endif // KMPLAYER_H

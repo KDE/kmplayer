@@ -121,6 +121,7 @@ KDE_EXPORT const char * strMPlayerGroup = "MPlayer";
 const char * strGeneralGroup = "General Options";
 static const char * strKeepSizeRatio = "Keep Size Ratio";
 static const char * strRememberSize = "Remember Size";
+static const char * strAutoResize = "Auto Resize";
 static const char * strDockSysTray = "Dock in System Tray";
 static const char * strNoIntro = "No Intro";
 static const char * strVolume = "Volume";
@@ -272,6 +273,7 @@ KDE_NO_EXPORT void Settings::readConfig () {
     m_config->setGroup (strMPlayerGroup);
     sizeratio = m_config->readBoolEntry (strKeepSizeRatio, true);
     remembersize = m_config->readBoolEntry (strRememberSize, true);
+    autoresize = m_config->readBoolEntry (strAutoResize, true);
     docksystray = m_config->readBoolEntry (strDockSysTray, true);
     loop = m_config->readBoolEntry (strLoop, false);
     framedrop = m_config->readBoolEntry (strFrameDrop, true);
@@ -386,6 +388,7 @@ void Settings::removePage (PreferencesPage * page) {
 void Settings::show (const char * pagename) {
     bool created = createDialog ();
     configdialog->m_GeneralPageGeneral->keepSizeRatio->setChecked (sizeratio);
+    configdialog->m_GeneralPageGeneral->autoResize->setChecked (autoresize);
     configdialog->m_GeneralPageGeneral->sizesChoice->setButton (remembersize ? 0 : 1);
     configdialog->m_GeneralPageGeneral->dockSysTray->setChecked (docksystray);
     configdialog->m_GeneralPageGeneral->loop->setChecked (loop);
@@ -495,6 +498,7 @@ void Settings::writeConfig () {
         m_config->writeEntry (fonts[i].option, fonts[i].font);
     m_config->setGroup (strMPlayerGroup);
     m_config->writeEntry (strKeepSizeRatio, sizeratio);
+    m_config->writeEntry (strAutoResize, autoresize);
     m_config->writeEntry (strRememberSize, remembersize);
     m_config->writeEntry (strDockSysTray, docksystray);
     m_config->writeEntry (strLoop, loop);
@@ -617,6 +621,7 @@ KDE_NO_EXPORT void Settings::okPressed () {
         if (!configdialog->m_SourcePageURL->sub_urllist->text (i).isEmpty ())
             sub_urllist.push_back (configdialog->m_SourcePageURL->sub_urllist->text (i));
     sizeratio = configdialog->m_GeneralPageGeneral->keepSizeRatio->isChecked ();
+    autoresize = configdialog->m_GeneralPageGeneral->autoResize->isChecked ();
     remembersize=!configdialog->m_GeneralPageGeneral->sizesChoice->selectedId();
     docksystray = configdialog->m_GeneralPageGeneral->dockSysTray->isChecked ();
     loop = configdialog->m_GeneralPageGeneral->loop->isChecked ();

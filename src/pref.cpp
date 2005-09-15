@@ -198,14 +198,26 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
 {
     QVBoxLayout *layout = new QVBoxLayout(this, 5, 2);
 
-    QGroupBox *windowbox =new QGroupBox(3,Qt::Vertical,i18n("Window"),this);
-    keepSizeRatio = new QCheckBox (i18n("Keep size ratio"), windowbox, 0);
+    QGroupBox *windowbox = new QGroupBox(1, Qt::Vertical, i18n("Window"), this);
+    QWidget * wbox = new QWidget (windowbox);
+    QWidget * bbox = new QWidget (wbox);
+    QGridLayout * gridlayout = new QGridLayout (bbox, 2, 2);
+    keepSizeRatio = new QCheckBox (i18n ("Keep size ratio"), bbox, 0);
     QWhatsThis::add(keepSizeRatio, i18n("When checked, movie will keep its aspect ratio\nwhen window is resized"));
-    dockSysTray = new QCheckBox (i18n("Dock in system tray"), windowbox, 0);
+    dockSysTray = new QCheckBox (i18n ("Dock in system tray"), bbox, 0);
     QWhatsThis::add (dockSysTray, i18n ("When checked, an icon of KMPlayer will be added to the system tray.\nWhen clicked it will hide KMPlayer's main window and removing KMPlayer's taskbar button."));
-    sizesChoice = new QButtonGroup (2, Qt::Vertical, windowbox);
+    autoResize = new QCheckBox (i18n ("Auto resize to video sizes"), bbox);
+    QWhatsThis::add (autoResize, i18n("When checked, KMPlayer will resize to movie sizes\nwhen video starts"));
+    gridlayout->addWidget (keepSizeRatio, 0, 0);
+    gridlayout->addWidget (dockSysTray, 1, 0);
+    gridlayout->addWidget (autoResize, 0, 1);
+    sizesChoice = new QButtonGroup (2, Qt::Vertical, wbox);
     new QRadioButton (i18n("Remember window size on exit"), sizesChoice);
     new QRadioButton (i18n("Always start with fixed size"), sizesChoice);
+    QVBoxLayout * vbox = new QVBoxLayout (wbox, 2, 2);
+    vbox->addWidget (bbox);
+    vbox->addWidget (sizesChoice);
+
     QGroupBox *playbox =new QGroupBox(3, Qt::Vertical,i18n("Playing"),this);
     loop = new QCheckBox (i18n("Loop"), playbox);
     QWhatsThis::add(loop, i18n("Makes current movie loop"));
@@ -215,9 +227,9 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
     QWhatsThis::add (adjustvolume, i18n ("When a new source is selected, the volume will be set according the volume control"));
 
     QGroupBox * gbox =new QGroupBox (1, Qt::Vertical, i18n("Control Panel"), this);
-    QWidget * bbox =new QWidget (gbox);
+    bbox =new QWidget (gbox);
     //QGroupBox * bbox = gbox;
-    QGridLayout * gridlayout = new QGridLayout (bbox, 3, 2);
+    gridlayout = new QGridLayout (bbox, 3, 2);
     showConfigButton = new QCheckBox(i18n("Show config button"), bbox);
     QWhatsThis::add (showConfigButton, i18n ("Add a button that will popup a config menu"));
     showPlaylistButton = new QCheckBox(i18n("Show playlist button"), bbox);

@@ -220,8 +220,10 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
             this, SLOT (zoom150 ()));
     connect (m_view->controlPanel()->broadcastButton (), SIGNAL (clicked ()),
             this, SLOT (broadcastClicked ()));
-    connect (m_player, SIGNAL (sourceDimensionChanged ()),
-            this, SLOT (zoom100 ()));
+    m_auto_resize = m_player->settings ()->autoresize;
+    if (m_auto_resize)
+        connect (m_player, SIGNAL (sourceDimensionChanged ()),
+                 this, SLOT (zoom100 ()));
     connect (m_view, SIGNAL (fullScreenChanged ()),
             this, SLOT (fullScreen ()));
     connect (m_view->infoPanel (), SIGNAL (linkClicked (const QString &)),
@@ -325,7 +327,8 @@ struct IntroSource : public KMPlayer::Source {
 };
 
 KDE_NO_EXPORT void IntroSource::activate () {
-    m_app->disconnect(m_player, SIGNAL(sourceDimensionChanged()),m_app,SLOT(zoom100()));
+    if (m_player->settings ()->autoresize)
+        m_app->disconnect(m_player, SIGNAL(sourceDimensionChanged()),m_app,SLOT(zoom100()));
     m_document = (new KMPlayer::Document (QString (""), this))->self ();
     QString introfile = locate ("data", "kmplayer/intro.xml");
     QFile file (introfile);
@@ -385,7 +388,8 @@ KDE_NO_EXPORT void IntroSource::stateElementChanged (KMPlayer::NodePtr node) {
 
 KDE_NO_EXPORT void IntroSource::deactivate () {
     deactivated = true;
-    m_app->connect(m_player, SIGNAL(sourceDimensionChanged()),m_app,SLOT(zoom100()));
+    if (m_player->settings ()->autoresize)
+        m_app->connect(m_player, SIGNAL(sourceDimensionChanged()),m_app,SLOT(zoom100()));
     if (!finished) // user opens a source while introducing
         m_document->reset ();
 }
@@ -678,7 +682,8 @@ KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
     }
     if (m_played_exit || m_player->settings ()->no_intro)
         return true;
-    disconnect(m_player, SIGNAL(sourceDimensionChanged()),this,SLOT(zoom100()));
+    if (m_auto_resize)
+        disconnect(m_player, SIGNAL(sourceDimensionChanged()),this,SLOT(zoom100()));
     m_played_exit = true;
     if (!m_minimal_mode)
         minimalMode (false);
@@ -878,6 +883,11 @@ KDE_NO_EXPORT void KMPlayerApp::configChanged () {
         delete m_systray;
         m_systray = 0L;
     }
+    if (m_player->settings ()->autoresize && !m_auto_resize)
+        connect(m_player,SIGNAL(sourceDimensionChanged()),this,SLOT(zoom100()));
+    else if (!m_player->settings ()->autoresize && m_auto_resize)
+        disconnect(m_player, SIGNAL(sourceDimensionChanged()),this,SLOT(zoom100()));
+    m_auto_resize = m_player->settings ()->autoresize;
     static_cast <KMPlayerTVSource *> (m_player->sources () ["tvsource"])->buildMenu ();
 }
 
