@@ -931,6 +931,8 @@ void Callback::statusMessage (int code, QString msg) {
             break;
         case stat_addurl:
             m_process->m_source->insertURL (m_process->m_mrl, KURL::fromPathOrURL (msg).url ());
+            if (m_process->m_mrl && m_process->m_mrl->active ())
+                m_process->m_mrl->defer (); // Xine detected this is a playlist
             break;
         default:
             m_process->setStatusMessage (msg);
