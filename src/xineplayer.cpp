@@ -433,14 +433,6 @@ void KXinePlayer::init () {
 }
 
 KXinePlayer::~KXinePlayer () {
-    if (xine) {
-        mutex.lock ();
-        if (ao_port)
-            xine_close_audio_driver (xine, ao_port);  
-        if (vo_port)
-            xine_close_video_driver (xine, vo_port);  
-        mutex.unlock ();
-    }
     if (window_created) {
         XLockDisplay (display);
         fprintf (stderr, "unmap %lu\n", wid);
