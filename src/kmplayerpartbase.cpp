@@ -195,6 +195,8 @@ void PartBase::connectPanel (ControlPanel * panel) {
                                        this, SLOT (showConfigDialog ()));
     panel->popupMenu ()->connectItem (ControlPanel::menu_video,
                                       m_view, SLOT(toggleVideoConsoleWindow()));
+    panel->popupMenu ()->connectItem (ControlPanel::menu_playlist,
+                                      this, SLOT (showPlayListWindow ()));
     //connect (panel (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
 }
 

@@ -714,6 +714,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     m_bookmarkMenu = new KMPlayerPopupMenu (this);
     m_popupMenu->insertItem (i18n("&Bookmarks"), m_bookmarkMenu, menu_bookmark);
     m_popupMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("konsole"), KIcon::Small, 0, true), i18n ("Con&sole"), menu_video);
+    m_popupMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("player_playlist"), KIcon::Small, 0, true), i18n ("Play&list"), menu_playlist);
     m_zoomMenu = new KMPlayerPopupMenu (this);
     m_zoomMenu->insertItem (i18n ("50%"), menu_zoom50);
     m_zoomMenu->insertItem (i18n ("100%"), menu_zoom100);

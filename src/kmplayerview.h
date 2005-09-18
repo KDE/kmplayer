@@ -366,7 +366,7 @@ public:
     enum MenuID {
         menu_config = 0, menu_player, menu_fullscreen, menu_volume, 
         menu_bookmark, menu_zoom, menu_zoom50, menu_zoom100, menu_zoom150,
-        menu_view, menu_video
+        menu_view, menu_video, menu_playlist
     };
     enum Button {
         button_config = 0, button_playlist,
