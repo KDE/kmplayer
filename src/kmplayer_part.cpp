@@ -66,19 +66,17 @@ KDE_NO_CDTOR_EXPORT KMPlayerPartStatic::~KMPlayerPartStatic () {
 struct GroupPredicate {
     const KMPlayerPart * m_part;
     const QString & m_group;
-    bool m_get_first;
+    bool m_get_any;
     GroupPredicate(const KMPlayerPart *part, const QString &group, bool b=false)
-        : m_part (part), m_group (group), m_get_first (b) {}
+        : m_part (part), m_group (group), m_get_any (b) {}
     bool operator () (const KMPlayerPart * part) const {
-        return ((m_get_first || part != m_part) &&
-                m_part->allowRedir (part->m_docbase) &&
-                (part->m_group == m_part->m_group ||
-                 part->m_group == QString::fromLatin1("_master") ||
-                 m_part->m_group == QString::fromLatin1("_master")) &&
-                (!m_get_first || !part->url ().isEmpty ()) &&
-                (m_get_first ||
-                 part->m_features & KMPlayerPart::Feat_Viewer) !=
-                 (m_part->m_features & KMPlayerPart::Feat_Viewer));
+        return ((m_get_any && part != m_part) ||
+                (m_part->allowRedir (part->m_docbase) &&
+                 (part->m_group == m_group ||
+                  part->m_group == QString::fromLatin1("_master") ||
+                  m_group == QString::fromLatin1("_master")) &&
+                 (part->m_features & KMPlayerPart::Feat_Viewer) !=
+                 (m_part->m_features & KMPlayerPart::Feat_Viewer)));
     }
 };
 
@@ -175,58 +173,58 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                 //http://service.real.com/help/library/guides/production8/realpgd.htm?src=noref,rnhmpg_080301,rnhmtn,nosrc
                 QString val_lower (value.lower ());
                 if (val_lower == QString::fromLatin1("imagewindow")) {
-                    m_features = Feat_Viewer;
+                    m_features |= Feat_Viewer;
                 } else if (val_lower == QString::fromLatin1("all")) {
                     m_features = Feat_All;
                 } else if (val_lower == QString::fromLatin1("tacctrl")) {
-                    m_features = Feat_Label;
+                    m_features |= Feat_Label;
                 } else if (val_lower == QString::fromLatin1("controlpanel")) {
-                    m_features = Feat_Controls;
+                    m_features |= Feat_Controls;
                 } else if (val_lower == QString::fromLatin1("infovolumepanel")){
-                    m_features = Feat_Controls; // TODO
+                    m_features |= Feat_Controls; // TODO
                 } else if (val_lower == QString::fromLatin1("positionfield") ||
                         val_lower == QString::fromLatin1("positionslider")) {
-                    panel->setAutoControls (false);
+                    setAutoControls (false);
                     panel->positionSlider ()->show ();
-                    m_features = Feat_Controls;
+                    m_features |= Feat_Controls;
                 } else if ( val_lower == QString::fromLatin1("homectrl")) {
-                    panel->setAutoControls (false);
+                    setAutoControls (false);
                     panel->button (KMPlayer::ControlPanel::button_config)->show();
                 } else if (val_lower == QString::fromLatin1("mutectrl") ||
                         val_lower == QString::fromLatin1("mutevolume")) {
-                    panel->setAutoControls (false);
+                    setAutoControls (false);
                     panel->volumeBar()->setMinimumSize (QSize (20, panel->volumeBar()->minimumSize ().height ()));
                     panel->volumeBar()->show ();
-                    m_features = Feat_Controls;
+                    m_features |= Feat_Controls;
                 } else if (val_lower == QString::fromLatin1("rwctrl")) {
-                    panel->setAutoControls (false);
+                    setAutoControls (false);
                     panel->button (KMPlayer::ControlPanel::button_back)->show (); // rewind ?
-                    m_features = Feat_Controls;
+                    m_features |= Feat_Controls;
                 } else if ( val_lower == QString::fromLatin1("ffctrl")) {
-                    panel->setAutoControls (false);
+                    setAutoControls (false);
                     panel->button(KMPlayer::ControlPanel::button_forward)->show();
                     m_features = Feat_Controls;
                 } else if ( val_lower == QString::fromLatin1("stopbutton")) {
-                    panel->setAutoControls (false);
+                    setAutoControls (false);
                     panel->button (KMPlayer::ControlPanel::button_stop)->show ();
-                    m_features = Feat_Controls;
+                    m_features |= Feat_Controls;
                 } else if (val_lower == QString::fromLatin1("playbutton") ||
                         val_lower == QString::fromLatin1("playonlybutton")) {
-                    panel->setAutoControls (false);
+                    setAutoControls (false);
                     panel->button (KMPlayer::ControlPanel::button_play)->show ();
-                    m_features = Feat_Controls;
+                    m_features |= Feat_Controls;
                 } else if (val_lower == QString::fromLatin1("pausebutton")) {
-                    panel->setAutoControls (false);
+                    setAutoControls (false);
                     panel->button (KMPlayer::ControlPanel::button_pause)->show ();
-                    m_features = Feat_Controls;
+                    m_features |= Feat_Controls;
                 } else if (val_lower == QString::fromLatin1("statusbar") ||
                         val_lower == QString::fromLatin1("statusfield")) {
-                    m_features = Feat_StatusBar;
+                    m_features |= Feat_StatusBar;
                 } else if (val_lower == QString::fromLatin1("infopanel")) {
-                    m_features = Feat_InfoPanel;
+                    m_features |= Feat_InfoPanel;
                 } else if (val_lower == QString::fromLatin1("volumeslider")) {
-                    m_features = Feat_VolumeSlider;
-                    panel->setAutoControls (false);
+                    m_features |= Feat_VolumeSlider;
+                    setAutoControls (false);
                     panel->volumeBar()->show ();
                     panel->volumeBar()->setMinimumSize (QSize (20, panel->volumeBar()->minimumSize ().height ()));
                 }
@@ -293,28 +291,33 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
             connect (vp, SIGNAL (processChanged (const char *)),
                     cp, SLOT (viewerPartProcessChanged (const char *)));
         }
-        kmplayerpart_static->partlist.push_back (this);
     } else
         m_group.truncate (0);
+    kmplayerpart_static->partlist.push_back (this);
     if (m_view->isFullScreen () != show_fullscreen)
         m_view->fullScreen ();
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerPart::~KMPlayerPart () {
     kdDebug() << "KMPlayerPart::~KMPlayerPart" << endl;
-    if (!m_group.isEmpty ()) {
+    //if (!m_group.isEmpty ()) {
         KMPlayerPartList::iterator i = std::find (kmplayerpart_static->partlist.begin (), kmplayerpart_static->partlist.end (), this);
         if (i != kmplayerpart_static->partlist.end ())
             kmplayerpart_static->partlist.erase (i);
         else
             kdError () << "KMPlayerPart::~KMPlayerPart group lost" << endl;
-    }
+    //}
     delete m_config;
     m_config = 0L;
 }
 
 KDE_NO_EXPORT bool KMPlayerPart::allowRedir (const KURL & url) const {
     return kapp->authorizeURLAction ("redirect", m_docbase, url);
+}
+
+KDE_NO_EXPORT void KMPlayerPart::setAutoControls (bool b) {
+    m_auto_controls = b;
+    m_view->controlPanel ()->setAutoControls (b);
 }
 
 KDE_NO_EXPORT void KMPlayerPart::viewerPartDestroyed (QObject *) {
@@ -383,9 +386,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
     }
     if (!m_havehref)
         setURL (url);
-    if (url.isEmpty ())
-        return true;
-    if (!process ()) {
+    if (url.isEmpty () || !process ()) {
         // no process set, we'll have to wait for a viewer to attach or timeout
         QTimer::singleShot (50, this, SLOT (waitForImageWindowTimeOut ()));
         return true;
@@ -422,9 +423,16 @@ KDE_NO_EXPORT void KMPlayerPart::waitForImageWindowTimeOut () {
         // still no ImageWindow attached, eg. audio only
         const KMPlayerPartList::iterator e =kmplayerpart_static->partlist.end();
         KMPlayerPartList::iterator i = std::find_if (kmplayerpart_static->partlist.begin (), e, GroupPredicate (this, m_group));
-        if (i == e || *i == this) {
-            PartBase::openURL (url ());
-        } else {
+        bool noattach = (i == e || *i == this);
+        if (noattach) {
+            if (!url ().isEmpty ())
+                PartBase::openURL (url ());
+            else { // see if we can attach to something out there ..
+                i = std::find_if (kmplayerpart_static->partlist.begin (), e, GroupPredicate (this, m_group, true));
+                noattach = (i == e);
+            }
+        }
+        if (!noattach) {
             (*i)->connectPanel (m_view->controlPanel ());
             (*i)->updatePlayerMenu (m_view->controlPanel ());
             connectSource (m_source, (*i)->source ());
@@ -887,11 +895,11 @@ KDE_NO_EXPORT void KMPlayerLiveConnectExtension::setSize (int w, int h) {
 
 KDE_NO_CDTOR_EXPORT KMPlayerHRefSource::KMPlayerHRefSource (PartBase * player)
     : Source (i18n ("HREF"), player, "hrefsource") {
-    kdDebug () << "KMPlayerHRefSource::KMPlayerHRefSource" << endl;
+    //kdDebug () << "KMPlayerHRefSource::KMPlayerHRefSource" << endl;
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerHRefSource::~KMPlayerHRefSource () {
-    kdDebug () << "KMPlayerHRefSource::~KMPlayerHRefSource" << endl;
+    //kdDebug () << "KMPlayerHRefSource::~KMPlayerHRefSource" << endl;
 }
 
 KDE_NO_EXPORT void KMPlayerHRefSource::init () {

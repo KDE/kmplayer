@@ -111,6 +111,7 @@ PartBase::PartBase (QWidget * wparent, const char *wname,
    m_bookmark_menu (0L),
    m_record_timer (0),
    m_noresize (false),
+   m_auto_controls (true),
    m_in_update_tree (false)
 {
     m_players ["mplayer"] = new MPlayer (this, m_settings);
@@ -345,7 +346,8 @@ void PartBase::setSource (Source * _source) {
                     this, SLOT (recordingStarted ()));
     }
     if (m_view) {
-        m_view->controlPanel ()->setAutoControls (true);
+        if (m_auto_controls)
+            m_view->controlPanel ()->setAutoControls (m_auto_controls);
         m_view->controlPanel ()->enableRecordButtons (m_settings->showrecordbutton);
         if (!m_settings->showcnfbutton)
             m_view->controlPanel()->button(ControlPanel::button_config)->hide();

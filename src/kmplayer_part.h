@@ -146,6 +146,7 @@ protected slots:
     void viewerPartSourceChanged (KMPlayer::Source *, KMPlayer::Source *);
     void waitForImageWindowTimeOut ();
 private:
+    void setAutoControls (bool);
     KMPlayerBrowserExtension * m_browserextension;
     KMPlayerLiveConnectExtension * m_liveconnectextension;
     QString m_group;

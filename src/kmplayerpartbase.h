@@ -204,6 +204,7 @@ protected:
     KBookmarkMenu * m_bookmark_menu;
     int m_record_timer;
     bool m_noresize : 1;
+    bool m_auto_controls : 1;
     bool m_use_slave : 1;
     bool m_bPosSliderPressed : 1;
     bool m_in_update_tree : 1;
