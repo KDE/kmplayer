@@ -604,6 +604,11 @@ void PartBase::record () {
 
 void PartBase::play () {
     if (!m_process || !m_view) return;
+    QPushButton * pb = ::qt_cast <QPushButton *> (sender ());
+    if (pb && !pb->isOn ()) {
+        stop ();
+        return;
+    }
     if (m_process->state () == Process::NotRunning) {
         m_process->ready (m_view->viewer ());
     } else if (m_process->state () == Process::Ready) {
