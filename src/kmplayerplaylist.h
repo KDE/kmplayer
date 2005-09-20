@@ -299,6 +299,8 @@ typedef SharedPtr <Connection> ConnectionPtr;
  */
 class KMPLAYER_EXPORT Node : public TreeNode <Node> {
     friend class DocumentBuilder;
+    friend class SharedPtr<KMPlayer::Node>;
+    friend class WeakPtr<KMPlayer::Node>;
 public:
     enum State {
         state_init, state_deferred,
@@ -447,18 +449,23 @@ protected:
     bool editable;
 };
 
-/*
- // doesn't compile with g++-3.4.3
-template <> SharedPtr<KMPlayer::Node>::SharedPtr (KMPlayer::Node * t)
+/**
+ * Because of the m_self member of Item<T>, it's not allowed to assign a
+ * Node* directly to SharedPtr<Node>. Node* will then reside in two
+ * independant SharedData<Node> objects.
+ * So specialize constructor and assignment operators to fetch the 
+ * SharedData<Node> from the Node* instead of creating a new one
+ */
+template <> inline SharedPtr<KMPlayer::Node>::SharedPtr (KMPlayer::Node * t)
  : data (t ? t->m_self.data : 0L) {
     if (data)
         data->addRef ();
-}*/
+}
 
 template <>
 inline SharedPtr<KMPlayer::Node> & SharedPtr<KMPlayer::Node>::operator = (KMPlayer::Node * t) {
     if (t) {
-        *this = t->self ();
+        operator = (t->m_self);
     } else if (data) {
         data->release ();
         data = 0L;
@@ -469,7 +476,7 @@ inline SharedPtr<KMPlayer::Node> & SharedPtr<KMPlayer::Node>::operator = (KMPlay
 template <>
 inline WeakPtr<KMPlayer::Node> & WeakPtr<KMPlayer::Node>::operator = (KMPlayer::Node * t) {
     if (t) {
-        *this = t->self ();
+        operator = (t->m_self);
     } else if (data) {
         data->releaseWeak ();
         data = 0L;
