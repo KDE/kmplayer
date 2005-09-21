@@ -473,6 +473,12 @@ inline SharedPtr<KMPlayer::Node> & SharedPtr<KMPlayer::Node>::operator = (KMPlay
     return *this;
 }
 
+template <> inline WeakPtr<KMPlayer::Node>::WeakPtr (KMPlayer::Node * t)
+ : data (t ? t->m_self.data : 0L) {
+    if (data)
+        data->addRef ();
+}
+
 template <>
 inline WeakPtr<KMPlayer::Node> & WeakPtr<KMPlayer::Node>::operator = (KMPlayer::Node * t) {
     if (t) {
@@ -685,7 +691,8 @@ KMPLAYER_EXPORT
 void readXML (NodePtr root, QTextStream & in, const QString & firstline);
 KMPLAYER_EXPORT Node * fromXMLDocumentTag (NodePtr & d, const QString & tag);
 
-template <class T> inline Item<T>::Item () : m_self (static_cast <T*> (this)) {}
+template <class T>
+inline Item<T>::Item () : m_self (static_cast <T*> (this), true) {}
 
 template <class T> inline void List<T>::append(typename Item<T>::SharedType c) {
     if (!m_first) {
