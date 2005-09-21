@@ -133,6 +133,9 @@ public:
         { return m_liveconnectextension; }
     KDE_NO_EXPORT bool hasFeature (int f) { return m_features & f; }
     bool allowRedir (const KURL & url) const;
+    void connectToPart (KMPlayerPart *);
+    KMPlayerPart * master () const { return m_master; }
+    void setMaster (KMPlayerPart * m) { m_master = m; }
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool closeURL ();
@@ -147,6 +150,7 @@ protected slots:
     void waitForImageWindowTimeOut ();
 private:
     void setAutoControls (bool);
+    KMPlayerPart * m_master;
     KMPlayerBrowserExtension * m_browserextension;
     KMPlayerLiveConnectExtension * m_liveconnectextension;
     QString m_group;

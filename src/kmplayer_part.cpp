@@ -70,7 +70,8 @@ struct GroupPredicate {
     GroupPredicate(const KMPlayerPart *part, const QString &group, bool b=false)
         : m_part (part), m_group (group), m_get_any (b) {}
     bool operator () (const KMPlayerPart * part) const {
-        return ((m_get_any && part != m_part) ||
+        return ((m_get_any && part != m_part &&
+                    !part->master () && !part->url ().isEmpty ()) ||
                 (m_part->allowRedir (part->m_docbase) &&
                  (part->m_group == m_group ||
                   part->m_group == QString::fromLatin1("_master") ||
@@ -128,6 +129,7 @@ static bool getBoolValue (const QString & value) {
 KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
                     QObject * parent, const char *name, const QStringList &args)
  : PartBase (wparent, wname, parent, name, new KSimpleConfig ("kmplayerrc")),
+   m_master (0L),
    m_browserextension (new KMPlayerBrowserExtension (this)),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
    m_features (Feat_Unknown),
@@ -281,15 +283,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
             KMPlayerPart * vp = (m_features & Feat_Viewer) ? this : *i;
             KMPlayerPart * cp = (m_features & Feat_Viewer) ? *i : this;
             setProcess ("mplayer");
-            vp->connectPanel (static_cast <KMPlayer::View *> (cp->view ())->controlPanel ());
-            vp->updatePlayerMenu (static_cast <KMPlayer::View *> (cp->view ())->controlPanel ());
-            cp->connectSource (cp->source (), vp->source ());
-            if (vp != this)
-                connect (vp, SIGNAL (sourceChanged (KMPlayer::Source *, KMPlayer::Source *)), cp, SLOT (viewerPartSourceChanged (KMPlayer::Source *, KMPlayer::Source *)));
-            connect (vp, SIGNAL (destroyed (QObject *)),
-                    cp, SLOT (viewerPartDestroyed (QObject *)));
-            connect (vp, SIGNAL (processChanged (const char *)),
-                    cp, SLOT (viewerPartProcessChanged (const char *)));
+            cp->connectToPart (vp);
         }
     } else
         m_group.truncate (0);
@@ -320,7 +314,9 @@ KDE_NO_EXPORT void KMPlayerPart::setAutoControls (bool b) {
     m_view->controlPanel ()->setAutoControls (b);
 }
 
-KDE_NO_EXPORT void KMPlayerPart::viewerPartDestroyed (QObject *) {
+KDE_NO_EXPORT void KMPlayerPart::viewerPartDestroyed (QObject * o) {
+    if (o == m_master)
+        m_master = 0L;
     kdDebug () << "KMPlayerPart(" << this << ")::viewerPartDestroyed" << endl;
     const KMPlayerPartList::iterator e =kmplayerpart_static->partlist.end();
     KMPlayerPartList::iterator i = std::find_if (kmplayerpart_static->partlist.begin (), e, GroupPredicate (this, m_group));
@@ -386,9 +382,10 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
     }
     if (!m_havehref)
         setURL (url);
-    if (url.isEmpty () || !process ()) {
-        // no process set, we'll have to wait for a viewer to attach or timeout
-        QTimer::singleShot (50, this, SLOT (waitForImageWindowTimeOut ()));
+    if (url.isEmpty ()) {
+        if (!m_master)
+            // no master set, wait for a viewer to attach or timeout
+            QTimer::singleShot (50, this, SLOT (waitForImageWindowTimeOut ()));
         return true;
     }
     if (!m_group.isEmpty () && !(m_features & Feat_Viewer)) {
@@ -419,7 +416,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
 }
 
 KDE_NO_EXPORT void KMPlayerPart::waitForImageWindowTimeOut () {
-    if (!process ()) {
+    if (!m_master) {
         // still no ImageWindow attached, eg. audio only
         const KMPlayerPartList::iterator e =kmplayerpart_static->partlist.end();
         KMPlayerPartList::iterator i = std::find_if (kmplayerpart_static->partlist.begin (), e, GroupPredicate (this, m_group));
@@ -432,17 +429,8 @@ KDE_NO_EXPORT void KMPlayerPart::waitForImageWindowTimeOut () {
                 noattach = (i == e);
             }
         }
-        if (!noattach) {
-            (*i)->connectPanel (m_view->controlPanel ());
-            (*i)->updatePlayerMenu (m_view->controlPanel ());
-            connectSource (m_source, (*i)->source ());
-            connect (*i, SIGNAL (destroyed (QObject *)),
-                    this, SLOT (viewerPartDestroyed (QObject *)));
-            connect (*i, SIGNAL (processChanged (const char *)),
-                    this, SLOT (viewerPartProcessChanged (const char *)));
-            connect (*i, SIGNAL (sourceChanged (KMPlayer::Source *)),
-                    this, SLOT (viewerPartSourceChanged (KMPlayer::Source *)));
-        }
+        if (!noattach)
+            connectToPart (*i);
     }
 }
 
@@ -452,6 +440,19 @@ KDE_NO_EXPORT bool KMPlayerPart::closeURL () {
         m_group.truncate (0);
     }
     return PartBase::closeURL ();
+}
+
+KDE_NO_EXPORT void KMPlayerPart::connectToPart (KMPlayerPart * m) {
+    m_master = m;
+    m->connectPanel (m_view->controlPanel ());
+    m->updatePlayerMenu (m_view->controlPanel ());
+    connectSource (m_source, m->source ());
+    connect (m, SIGNAL (destroyed (QObject *)),
+            this, SLOT (viewerPartDestroyed (QObject *)));
+    connect (m, SIGNAL (processChanged (const char *)),
+            this, SLOT (viewerPartProcessChanged (const char *)));
+    connect (m, SIGNAL (sourceChanged (KMPlayer::Source *, KMPlayer::Source *)),
+            this, SLOT (viewerPartSourceChanged (KMPlayer::Source *, KMPlayer::Source *)));
 }
 
 KDE_NO_EXPORT void KMPlayerPart::loaded (int percentage) {
