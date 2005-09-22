@@ -258,8 +258,8 @@ KDE_NO_EXPORT void Settings::readConfig () {
     no_intro = m_config->readBoolEntry (strNoIntro, false);
     urllist = m_config->readListEntry (strURLList, ';');
     sub_urllist = m_config->readListEntry (strSubURLList, ';');
-    prefbitrate = m_config->readNumEntry (strPrefBitRate, 128);
-    maxbitrate = m_config->readNumEntry (strMaxBitRate, 300);
+    prefbitrate = m_config->readNumEntry (strPrefBitRate, 512);
+    maxbitrate = m_config->readNumEntry (strMaxBitRate, 1024);
     volume = m_config->readNumEntry (strVolume, 80);
     contrast = m_config->readNumEntry (strContrast, 0);
     brightness = m_config->readNumEntry (strBrightness, 0);

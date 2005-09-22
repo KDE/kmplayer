@@ -348,9 +348,9 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     gridlayout->addWidget (backendLabel, 0, 0);
     gridlayout->addWidget (backend, 1, 0);
     gridlayout->addMultiCell (new QSpacerItem (0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum), 0, 1, 1, 1);
-    QGroupBox *cbox = new QGroupBox(1, Qt::Vertical, i18n("Connection"), this);
+    QGroupBox *cbox = new QGroupBox(1, Qt::Vertical, i18n("Network bandwidth"), this);
     QWidget * wbox = new QWidget (cbox);
-    QGridLayout * bitratelayout = new QGridLayout (wbox, 2, 3);
+    QGridLayout * bitratelayout = new QGridLayout (wbox, 2, 3, 5);
     prefBitRate = new QLineEdit (wbox);
     QWhatsThis::add (prefBitRate, i18n("Sometimes it's possible to choose between various streams given a particular bitrate.\nThis option sets how much bandwidth you would like to spend for video"));
     maxBitRate = new QLineEdit (wbox);
