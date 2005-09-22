@@ -1,4 +1,9 @@
 Changes since version 0.9.1-pre2
+- Network bandwidth setting added, this is used in SMIL's <switch> element
+  when <video> or <audio> elements have a system-bitrate attribute
+- Unpushing the playbutton now actually stops playing
+- Fix kxineplayer crashing on exit due to double deletion
+- Keep playlist entry in popupmenu, controlpanel button might be gone
 - Remember window location so window->fullscreen->window is at same place again
 - Option to not resize on opening new source added
 - Fix ASX Entry's having more than one Ref child nodes, current wasn't set
