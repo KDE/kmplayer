@@ -321,6 +321,7 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     urllist->setMaxCount (20);
     urllist->setDuplicatesEnabled (false); // not that it helps much :(
     url = new KURLRequester (urllist, this);
+    QWhatsThis::add (url, i18n ("Location of the playable item"));
     //url->setShowLocalProtocol (true);
     url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
     QLabel *sub_urlLabel = new QLabel (i18n ("Sub title:"), this, 0);
@@ -328,9 +329,11 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     sub_urllist->setMaxCount (20);
     sub_urllist->setDuplicatesEnabled (false); // not that it helps much :(
     sub_url = new KURLRequester (sub_urllist, this);
+    QWhatsThis::add (sub_url, i18n ("Optional location of a file containing the subtitles of the URL above"));
     sub_url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
     backend = new QListBox (this);
     allowhref = new QCheckBox (i18n ("Enable 'Click to Play' support"), this);
+    QWhatsThis::add (allowhref, i18n ("Support for WEB pages having a start image"));
     layout->addWidget (allowhref);
     urllayout->addWidget (urlLabel);
     urllayout->addWidget (url);
@@ -345,7 +348,21 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     gridlayout->addWidget (backendLabel, 0, 0);
     gridlayout->addWidget (backend, 1, 0);
     gridlayout->addMultiCell (new QSpacerItem (0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum), 0, 1, 1, 1);
+    QGroupBox *cbox = new QGroupBox(1, Qt::Vertical, i18n("Connection"), this);
+    QWidget * wbox = new QWidget (cbox);
+    QGridLayout * bitratelayout = new QGridLayout (wbox, 2, 3);
+    prefBitRate = new QLineEdit (wbox);
+    QWhatsThis::add (prefBitRate, i18n("Sometimes it's possible to choose between various streams given a particular bitrate.\nThis option sets how much bandwidth you would like to spend for video"));
+    maxBitRate = new QLineEdit (wbox);
+    QWhatsThis::add (maxBitRate, i18n("Sometimes it's possible to choose between various streams given a particular bitrate.\nThis option sets how much bandwidth you can spend for video"));
+    bitratelayout->addWidget(new QLabel(i18n("Prefered bitrate:"), wbox), 0, 0);
+    bitratelayout->addWidget (prefBitRate, 0, 1);
+    bitratelayout->addWidget (new QLabel (i18n ("kB/s"), wbox), 0, 2);
+    bitratelayout->addWidget (new QLabel(i18n("Maximum bitrate:"), wbox), 1, 0);
+    bitratelayout->addWidget (maxBitRate, 1, 1);
+    bitratelayout->addWidget (new QLabel (i18n ("kB/s"), wbox), 1, 2);
     layout->addLayout (gridlayout);
+    layout->addWidget (cbox);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     connect (urllist, SIGNAL(textChanged (const QString &)),
              this, SLOT (slotTextChanged (const QString &)));

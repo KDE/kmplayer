@@ -596,6 +596,10 @@ public:
      * Sets the video widget postion and background color if bg not NULL
      */
     virtual void avWidgetSizes (int x, int y, int w, int h, unsigned int *bg)=0;
+    /**
+     * Ask for connection bitrates settings
+     */
+    virtual void bitRates (int & prefered, int & maximal) = 0;
 };
 
 /**

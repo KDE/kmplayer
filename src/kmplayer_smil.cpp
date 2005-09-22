@@ -1912,10 +1912,34 @@ KDE_NO_EXPORT NodePtr SMIL::Switch::childFromTag (const QString & tag) {
 KDE_NO_EXPORT void SMIL::Switch::activate () {
     //kdDebug () << "SMIL::Switch::activate" << endl;
     setState (state_activated);
-    if (firstChild ())
-        firstChild ()->activate (); // activate only the first for now FIXME: condition
-    else
-        finish ();
+    PlayListNotify * n = document()->notify_listener;
+    int pref = 0, max = 0x7fffffff, currate = 0;
+    if (n)
+        n->bitRates (pref, max);
+    if (firstChild ()) {
+        NodePtr candidate, fallback;
+        for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
+            if (e->id == id_node_audio_video) {
+                SMIL::MediaType * mt = convertNode <SMIL::MediaType> (e);
+                if (!candidate) {
+                    candidate = e;
+                    currate = mt->bitrate;
+                } else if (mt->bitrate <= max) {
+                    int delta1 = pref > currate ? pref-currate : currate-pref;
+                    int delta2 = pref > mt->bitrate ? pref-mt->bitrate : mt->bitrate-pref;
+                    if (delta2 < delta1) {
+                        candidate = e;
+                        currate = mt->bitrate;
+                    }
+                }
+            } else if (!fallback && e->isMrl ())
+                fallback = e;
+        }
+        if (!candidate)
+            candidate = (fallback ? fallback : firstChild ());
+        candidate->activate ();
+    } else
+        finish (); // Uhm, no children then also no mrl ..
 }
 
 KDE_NO_EXPORT void SMIL::Switch::deactivate () {
@@ -1935,9 +1959,23 @@ KDE_NO_EXPORT void SMIL::Switch::reset () {
     }
 }
 
-KDE_NO_EXPORT void SMIL::Switch::childDone (NodePtr) {
+KDE_NO_EXPORT void SMIL::Switch::childDone (NodePtr child) {
+    if (child->state == state_finished)
+        child->deactivate ();
     //kdDebug () << "SMIL::Switch::childDone" << endl;
     finish (); // only one child can run
+}
+
+KDE_NO_EXPORT bool SMIL::Switch::isMrl () {
+    if (cached_ismrl_version != document()->m_tree_version) {
+        cached_ismrl = false;
+        for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+            if (e->isMrl ()) {
+                cached_ismrl = true;
+                break;
+            }
+    }
+    return cached_ismrl;
 }
 
 //-----------------------------------------------------------------------------

@@ -114,6 +114,8 @@ public:
     int brightness;
     int hue;
     int saturation;
+    int prefbitrate;
+    int maxbitrate;
     bool usearts : 1;
     bool no_intro : 1;
     bool sizeratio : 1;

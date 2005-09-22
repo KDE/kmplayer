@@ -947,6 +947,11 @@ void Source::avWidgetSizes (int x, int y, int w, int h, unsigned int * bg) {
       static_cast<View*>(m_player->view())->viewArea ()->setAudioVideoGeometry (x, y, w, h, bg);
 }
 
+void Source::bitRates (int & prefered, int & maximal) {
+    prefered = 1024 * m_player->settings ()->prefbitrate;
+    maximal= 1024 * m_player->settings ()->maxbitrate;
+}
+
 void Source::insertURL (NodePtr node, const QString & mrl) {
     if (!node || !node->mrl ()) // this should always be false
         return;

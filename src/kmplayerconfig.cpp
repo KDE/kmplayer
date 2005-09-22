@@ -131,6 +131,8 @@ static const char * strHue = "Hue";
 static const char * strSaturation = "Saturation";
 static const char * strURLList = "URL List";
 static const char * strSubURLList = "URL Sub Title List";
+static const char * strPrefBitRate = "Prefered Bitrate";
+static const char * strMaxBitRate = "Maximum Bitrate";
 //static const char * strUseArts = "Use aRts";
 static const char * strVoDriver = "Video Driver";
 static const char * strAoDriver = "Audio Driver";
@@ -256,6 +258,8 @@ KDE_NO_EXPORT void Settings::readConfig () {
     no_intro = m_config->readBoolEntry (strNoIntro, false);
     urllist = m_config->readListEntry (strURLList, ';');
     sub_urllist = m_config->readListEntry (strSubURLList, ';');
+    prefbitrate = m_config->readNumEntry (strPrefBitRate, 128);
+    maxbitrate = m_config->readNumEntry (strMaxBitRate, 300);
     volume = m_config->readNumEntry (strVolume, 80);
     contrast = m_config->readNumEntry (strContrast, 0);
     brightness = m_config->readNumEntry (strBrightness, 0);
@@ -411,6 +415,8 @@ void Settings::show (const char * pagename) {
     configdialog->m_SourcePageURL->sub_urllist->insertStringList (sub_urllist);
     configdialog->m_SourcePageURL->sub_urllist->setCurrentText (m_player->source ()->subUrl ().prettyURL ());
     configdialog->m_SourcePageURL->changed = false;
+    configdialog->m_SourcePageURL->prefBitRate->setText (QString::number (prefbitrate));
+    configdialog->m_SourcePageURL->maxBitRate->setText (QString::number (maxbitrate));
 
     configdialog->m_GeneralPageOutput->videoDriver->setCurrentItem (videodriver);
     configdialog->m_GeneralPageOutput->audioDriver->setCurrentItem (audiodriver);
@@ -484,6 +490,8 @@ void Settings::writeConfig () {
     m_config->setGroup (strGeneralGroup);
     m_config->writeEntry (strURLList, urllist, ';');
     m_config->writeEntry (strSubURLList, sub_urllist, ';');
+    m_config->writeEntry (strPrefBitRate, prefbitrate);
+    m_config->writeEntry (strMaxBitRate, maxbitrate);
     m_config->writeEntry (strVolume, volume);
     m_config->writeEntry (strContrast, contrast);
     m_config->writeEntry (strBrightness, brightness);
@@ -620,6 +628,8 @@ KDE_NO_EXPORT void Settings::okPressed () {
     for (int i = 0; i < configdialog->m_SourcePageURL->sub_urllist->count () && i < 20; ++i)
         if (!configdialog->m_SourcePageURL->sub_urllist->text (i).isEmpty ())
             sub_urllist.push_back (configdialog->m_SourcePageURL->sub_urllist->text (i));
+    prefbitrate = configdialog->m_SourcePageURL->prefBitRate->text ().toInt ();
+    maxbitrate = configdialog->m_SourcePageURL->maxBitRate->text ().toInt ();
     sizeratio = configdialog->m_GeneralPageGeneral->keepSizeRatio->isChecked ();
     autoresize = configdialog->m_GeneralPageGeneral->autoResize->isChecked ();
     remembersize=!configdialog->m_GeneralPageGeneral->sizesChoice->selectedId();

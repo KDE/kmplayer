@@ -137,6 +137,8 @@ public:
     KComboBox * sub_urllist;
     QListBox * backend;
     QCheckBox * allowhref;
+    QLineEdit * prefBitRate;
+    QLineEdit * maxBitRate;
     bool changed;
 private slots:
     void slotBrowse ();

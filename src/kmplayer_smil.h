@@ -628,6 +628,7 @@ public:
     KDE_NO_CDTOR_EXPORT Switch (NodePtr &d) : GroupBase (d, id_node_switch) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "switch"; }
+    bool isMrl ();
     // Condition
     void activate ();
     void deactivate ();
