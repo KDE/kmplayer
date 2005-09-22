@@ -634,6 +634,8 @@ public:
     void deactivate ();
     void reset ();
     void childDone (NodePtr child);
+    NodePtr realMrl ();
+    NodePtrW chosenOne;
 };
 
 /**

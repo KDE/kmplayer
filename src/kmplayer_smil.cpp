@@ -1917,29 +1917,39 @@ KDE_NO_EXPORT void SMIL::Switch::activate () {
     if (n)
         n->bitRates (pref, max);
     if (firstChild ()) {
-        NodePtr candidate, fallback;
+        NodePtr fallback;
         for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
             if (e->id == id_node_audio_video) {
                 SMIL::MediaType * mt = convertNode <SMIL::MediaType> (e);
-                if (!candidate) {
-                    candidate = e;
+                if (!chosenOne) {
+                    chosenOne = e;
                     currate = mt->bitrate;
                 } else if (mt->bitrate <= max) {
                     int delta1 = pref > currate ? pref-currate : currate-pref;
                     int delta2 = pref > mt->bitrate ? pref-mt->bitrate : mt->bitrate-pref;
                     if (delta2 < delta1) {
-                        candidate = e;
+                        chosenOne = e;
                         currate = mt->bitrate;
                     }
                 }
             } else if (!fallback && e->isMrl ())
                 fallback = e;
         }
-        if (!candidate)
-            candidate = (fallback ? fallback : firstChild ());
-        candidate->activate ();
+        if (!chosenOne)
+            chosenOne = (fallback ? fallback : firstChild ());
+        Mrl * mrl = chosenOne->mrl ();
+        if (mrl) {
+            src = mrl->src;
+            pretty_name = mrl->pretty_name;
+        }
+        chosenOne->setState (state_activated);
+        Mrl::activate ();
     } else
         finish (); // Uhm, no children then also no mrl ..
+}
+
+KDE_NO_EXPORT NodePtr SMIL::Switch::realMrl () {
+    return chosenOne ? chosenOne : m_self;
 }
 
 KDE_NO_EXPORT void SMIL::Switch::deactivate () {
