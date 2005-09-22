@@ -357,10 +357,10 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     QWhatsThis::add (maxBitRate, i18n("Sometimes it's possible to choose between various streams given a particular bitrate.\nThis option sets how much bandwidth you can spend for video"));
     bitratelayout->addWidget(new QLabel(i18n("Prefered bitrate:"), wbox), 0, 0);
     bitratelayout->addWidget (prefBitRate, 0, 1);
-    bitratelayout->addWidget (new QLabel (i18n ("kB/s"), wbox), 0, 2);
+    bitratelayout->addWidget (new QLabel (i18n ("kbit/s"), wbox), 0, 2);
     bitratelayout->addWidget (new QLabel(i18n("Maximum bitrate:"), wbox), 1, 0);
     bitratelayout->addWidget (maxBitRate, 1, 1);
-    bitratelayout->addWidget (new QLabel (i18n ("kB/s"), wbox), 1, 2);
+    bitratelayout->addWidget (new QLabel (i18n ("kbit/s"), wbox), 1, 2);
     layout->addLayout (gridlayout);
     layout->addWidget (cbox);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
