@@ -332,12 +332,10 @@ KDE_NO_EXPORT void KMPlayerPart::viewerPartProcessChanged (const char *) {
 }
 
 KDE_NO_EXPORT void KMPlayerPart::viewerPartSourceChanged(Source *o, Source *s) {
-    const KMPlayerPartList::iterator e =kmplayerpart_static->partlist.end();
-    KMPlayerPartList::iterator i = std::find_if (kmplayerpart_static->partlist.begin (), e, GroupPredicate (this, m_group));
-    kdDebug () << "KMPlayerPart::source changed " << (i != e && *i != this) << endl;
-    if (i != e && *i != this) {
+    kdDebug () << "KMPlayerPart::source changed " << m_master << endl;
+    if (m_master && m_view) {
         connectSource (o, s);
-        (*i)->updatePlayerMenu (m_view->controlPanel ());
+        m_master->updatePlayerMenu (m_view->controlPanel ());
     }
 }
 
@@ -383,7 +381,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
     if (!m_havehref)
         setURL (url);
     if (url.isEmpty ()) {
-        if (!m_master)
+        if (!m_master && !(m_features & Feat_Viewer))
             // no master set, wait for a viewer to attach or timeout
             QTimer::singleShot (50, this, SLOT (waitForImageWindowTimeOut ()));
         return true;
