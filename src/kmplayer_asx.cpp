@@ -18,6 +18,7 @@
 
 #include <config.h>
 #include <kdebug.h>
+#include <kurl.h>
 
 #include "kmplayer_asx.h"
 
@@ -31,19 +32,27 @@ KDE_NO_EXPORT NodePtr ASX::Asx::childFromTag (const QString & tag) {
     else if (!strcasecmp (name, "entryref"))
         return (new ASX::EntryRef (m_doc))->self ();
     else if (!strcasecmp (name, "title"))
-        return (new Title (m_doc))->self ();
+        return (new DarkNode (m_doc, name, id_node_title))->self ();
+    else if (!strcasecmp (name, "base"))
+        return (new DarkNode (m_doc, name, id_node_base))->self ();
     return NodePtr ();
 }
 
 KDE_NO_EXPORT bool ASX::Asx::isMrl () {
     if (cached_ismrl_version != document ()->m_tree_version) {
         for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-            if (!strcmp (e->nodeName (), "title")) {
+            if (e->id == id_node_title)
                 pretty_name = e->innerText ().simplifyWhiteSpace ();
-                break;
-            }
     }
     return Mrl::isMrl ();
+}
+
+KDE_NO_EXPORT void ASX::Asx::closed () {
+    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+        if (e->id == id_node_base) {
+            src = convertNode <Element> (e)->getAttribute ("href");
+            break;
+        }
 }
 
 //-----------------------------------------------------------------------------
@@ -53,15 +62,21 @@ KDE_NO_EXPORT NodePtr ASX::Entry::childFromTag (const QString & tag) {
     if (!strcasecmp (name, "ref"))
         return (new ASX::Ref (m_doc))->self ();
     else if (!strcasecmp (name, "title"))
-        return (new Title (m_doc))->self ();
+        return (new DarkNode (m_doc, name, id_node_title))->self ();
+    else if (!strcasecmp (name, "base")) {
+        NodePtr bn = (new DarkNode (m_doc, name, id_node_base))->self ();
+        base = bn;
+        return bn;
+    }
     return NodePtr ();
 }
 
 KDE_NO_EXPORT bool ASX::Entry::isMrl () {
     if (cached_ismrl_version != document ()->m_tree_version) {
         QString pn;
-        src.truncate (0);
         bool foundone = false;
+        if (base)
+            src = convertNode <Element> (base)->getAttribute ("href");
         for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
             if (e->isMrl () && !e->hasChildNodes ()) {
                 if (foundone) {
@@ -72,7 +87,7 @@ KDE_NO_EXPORT bool ASX::Entry::isMrl () {
                     pn = e->mrl ()->pretty_name;
                 }
                 foundone = true;
-            } else if (!strcmp (e->nodeName (), "title"))
+            } else if (e->id == id_node_title)
                 pretty_name = e->innerText (); // already normalized (hopefully)
         }
         if (pretty_name.isEmpty ())
@@ -100,6 +115,11 @@ KDE_NO_EXPORT void ASX::Entry::activate () {
     }
 }
 
+KDE_NO_EXPORT void ASX::Entry::closed () {
+    if (base)
+        src = convertNode <Element> (base)->getAttribute ("href");
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT void ASX::Ref::opened () {
@@ -110,7 +130,7 @@ KDE_NO_EXPORT void ASX::Ref::opened () {
             kdError () << "Warning: unhandled Ref attr: " << a->nodeName () << "=" << a->nodeValue () << endl;
 
     }
-    kdDebug () << "Ref attr found src: " << src << endl;
+    //kdDebug () << "Ref attr found src: " << src << endl;
 }
 
 KDE_NO_EXPORT bool ASX::Ref::expose () const {
@@ -126,6 +146,6 @@ KDE_NO_EXPORT void ASX::EntryRef::opened () {
         else
             kdError () << "unhandled EntryRef attr: " << a->nodeName () << "=" << a->nodeValue () << endl;
     }
-    kdDebug () << "EntryRef attr found src: " << src << endl;
+    //kdDebug () << "EntryRef attr found src: " << src << endl;
 }
 

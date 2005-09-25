@@ -487,7 +487,7 @@ void Element::setAttribute (const QString & name, const QString & value) {
 QString Element::getAttribute (const QString & name) {
     QString value;
     for (AttributePtr a = m_attributes->first (); a; a = a->nextSibling ())
-        if (!name.compare (a->nodeName ())) {
+        if (!strcasecmp (name.ascii (), a->nodeName ())) {
             value = a->nodeValue ();
             break;
         }
@@ -657,11 +657,6 @@ NodePtr DarkNode::childFromTag (const QString & tag) {
 KDE_NO_EXPORT bool DarkNode::expose () const {
     return false;
 }
-
-//-----------------------------------------------------------------------------
-
-KDE_NO_CDTOR_EXPORT Title::Title (NodePtr & d)
-    : DarkNode (d, QString ("title")) {}
 
 //-----------------------------------------------------------------------------
 

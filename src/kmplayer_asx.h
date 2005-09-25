@@ -38,14 +38,22 @@ namespace KMPlayer {
 
 namespace ASX {
 
+const short id_node_asx = 400;
+const short id_node_entry = 401;
+const short id_node_ref = 402;
+const short id_node_entryref = 403;
+const short id_node_title = 404;
+const short id_node_base = 405;
+
 /**
  * '<ASX>' tag
  */
 class Asx : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Asx (NodePtr & d) : Mrl (d) {}
+    KDE_NO_CDTOR_EXPORT Asx (NodePtr & d) : Mrl (d, id_node_asx) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "ASX"; }
+    void closed ();
     bool expose () const { return !pretty_name.isEmpty (); }
     /**
      * True if no mrl children
@@ -58,7 +66,7 @@ public:
  */
 class Entry : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Entry (NodePtr & d) : Mrl (d) {}
+    KDE_NO_CDTOR_EXPORT Entry (NodePtr & d) : Mrl (d, id_node_entry) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "Entry"; }
     /**
@@ -73,6 +81,8 @@ public:
      * Override for activating Ref child
      */
     void activate ();
+    void closed ();
+    NodePtrW base;
 };
 
 /**
@@ -80,7 +90,7 @@ public:
  */
 class Ref : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Ref (NodePtr & d) : Mrl (d) {}
+    KDE_NO_CDTOR_EXPORT Ref (NodePtr & d) : Mrl (d, id_node_ref) {}
     //NodePtr childFromTag (const QString & tag);
     void opened ();
     KDE_NO_EXPORT const char * nodeName () const { return "Ref"; }
@@ -92,7 +102,7 @@ public:
  */
 class EntryRef : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT EntryRef (NodePtr & d) : Mrl (d) {}
+    KDE_NO_CDTOR_EXPORT EntryRef (NodePtr & d) : Mrl (d, id_node_entryref) {}
     //NodePtr childFromTag (const QString & tag);
     void opened ();
     KDE_NO_EXPORT const char * nodeName () const { return "EntryRef"; }

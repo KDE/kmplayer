@@ -654,15 +654,6 @@ protected:
     QString name;
 };
 
-/**
- * Title element as found in ASX
- */
-class Title : public DarkNode {
-public:
-    Title (NodePtr & d);
-    KDE_NO_CDTOR_EXPORT ~Title () {}
-};
-
 //-----------------------------------------------------------------------------
 
 /**
