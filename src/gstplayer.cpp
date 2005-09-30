@@ -389,7 +389,7 @@ void KGStreamerPlayer::play () {
 
     if (mrl.startsWith (QChar ('/')))
         mrl = QString ("file://") + mrl;
-    uri = g_strdup (mrl.ascii ());
+    uri = g_strdup (mrl.local8Bit ());
     g_object_set (gst_elm_play, "uri", uri, NULL);
     gst_element_set_state (gst_elm_play, GST_STATE_PLAYING);
     mutex.unlock ();

@@ -1094,7 +1094,7 @@ bool CallbackProcess::play (Source * source, NodePtr node) {
     kdDebug () << "CallbackProcess::play " << m_url << endl;
     KURL url (m_url);
     QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
-    m_backend->setURL (QFile::encodeName (myurl));
+    m_backend->setURL (myurl);
     const KURL & sub_url = m_source->subUrl ();
     if (!sub_url.isEmpty ())
         m_backend->setSubTitleURL (QString (QFile::encodeName (sub_url.isLocalFile () ? QFileInfo (getPath (sub_url)).absFilePath () : sub_url.url ())));
