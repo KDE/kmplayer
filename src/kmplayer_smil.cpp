@@ -1942,8 +1942,9 @@ KDE_NO_EXPORT void SMIL::Switch::activate () {
             src = mrl->src;
             pretty_name = mrl->pretty_name;
         }
-        chosenOne->setState (state_activated);
-        Mrl::activate ();
+        // we must active chosenOne, it must set video position by itself
+        setState (state_activated);
+        chosenOne->activate ();
     } else
         finish (); // Uhm, no children then also no mrl ..
 }
