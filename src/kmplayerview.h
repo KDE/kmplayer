@@ -85,7 +85,6 @@ class KMPLAYER_EXPORT PlayListView : public KListView {
 public:
     PlayListView (QWidget * parent, View * view);
     ~PlayListView ();
-    void updateTree (NodePtr root, NodePtr active);
     void selectItem (const QString & txt);
     void setActiveForegroundColor (const QColor & c) { m_active_color = c; }
     const QColor & activeColor () const { return m_active_color; }
@@ -96,6 +95,7 @@ protected:
 public slots:
     void editCurrent ();
     void rename (QListViewItem * item, int c);
+    void updateTree (NodePtr root, NodePtr active);
 private slots:
     void contextMenuItem (QListViewItem *, const QPoint &, int);
     void itemExpanded (QListViewItem *);
@@ -254,6 +254,8 @@ public:
     void setInfoMessage (const QString & msg);
     void setNoInfoMessages (bool b) { m_no_info = b; }
     void setViewOnly ();
+    void setInfoPanelOnly ();
+    void setPlaylistOnly ();
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
     KDE_NO_EXPORT void emitPictureClicked () { emit pictureClicked (); }

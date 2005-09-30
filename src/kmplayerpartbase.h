@@ -119,6 +119,7 @@ public:
      * */
     void setSource (Source * source);
     void connectPanel (ControlPanel * panel);
+    void connectPlaylist (PlayListView * playlist);
     void connectSource (Source * old_source, Source * source);
     Process * process () const { return m_process; }
     Process * recorder () const { return m_recorder; }
@@ -132,7 +133,7 @@ public:
 
     // these are called from Process
     void changeURL (const QString & url);
-    void updateTree ();
+    void updateTree (bool full=true);
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool openURL (const KURL::List & urls);
@@ -167,6 +168,8 @@ signals:
     void urlAdded (const QString & url);
     void urlChanged (const QString & url);
     void processChanged (const char *);
+    void treeChanged (NodePtr root, NodePtr);
+    void treeUpdated ();
 protected:
     bool openFile();
     virtual void timerEvent (QTimerEvent *);

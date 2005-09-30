@@ -164,8 +164,7 @@ void PartBase::init (KActionCollection * action_collection) {
     m_bPosSliderPressed = false;
     m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner, m_view->controlPanel ()->bookmarkMenu (), action_collection, true, true);
     connect (m_view, SIGNAL (urlDropped (const KURL::List &)), this, SLOT (openURL (const KURL::List &)));
-    connect (m_view->playList (), SIGNAL (addBookMark (const QString &, const QString &)), this, SLOT (addBookMark (const QString &, const QString &)));
-    connect (m_view->playList (), SIGNAL (executed (QListViewItem *)), this, SLOT (playListItemSelected (QListViewItem *)));
+    connectPlaylist (m_view->playList ());
     new KAction (i18n ("Edit playlist item"), 0, 0, m_view->playList (), SLOT (editCurrent ()), action_collection, "edit_playlist_item");
 }
 
@@ -198,6 +197,17 @@ void PartBase::connectPanel (ControlPanel * panel) {
     panel->popupMenu ()->connectItem (ControlPanel::menu_playlist,
                                       this, SLOT (showPlayListWindow ()));
     //connect (panel (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
+}
+
+void PartBase::connectPlaylist (PlayListView * playlist) {
+    connect (playlist, SIGNAL (addBookMark (const QString &, const QString &)),
+             this, SLOT (addBookMark (const QString &, const QString &)));
+    connect (playlist, SIGNAL (executed (QListViewItem *)),
+             this, SLOT (playListItemSelected (QListViewItem *)));
+    connect (this, SIGNAL (treeChanged (NodePtr, NodePtr)),
+             playlist, SLOT (updateTree (NodePtr, NodePtr)));
+    connect (this, SIGNAL (treeUpdated ()),
+             playlist, SLOT (triggerUpdate ()));
 }
 
 PartBase::~PartBase () {
@@ -584,10 +594,13 @@ void PartBase::playListItemSelected (QListViewItem * item) {
         updateTree (); // items already deleted
 }
 
-void PartBase::updateTree () {
+void PartBase::updateTree (bool full) {
     m_in_update_tree = true;
-    if (m_view && m_source)
-        m_view->playList ()->updateTree (m_source->document (), m_source->current ());
+    if (full) {
+        if (m_source)
+            emit treeChanged (m_source->document (), m_source->current ());
+    } else
+        emit treeUpdated ();
     m_in_update_tree = false;
 }
 
@@ -917,8 +930,8 @@ void Source::stateElementChanged (NodePtr elm) {
     if (elm->expose () && (elm->state == Element::state_activated ||
                            elm->state == Element::state_deactivated))
         m_player->updateTree ();
-    else if (m_player->view ()) // only updates the state_began changes (if any)
-        static_cast <View*> (m_player->view())->playList ()->triggerUpdate ();
+    else
+        m_player->updateTree (false); // only updates the state_began changes (if any)
 }
 
 void Source::setEventDispatcher (NodePtr e) {

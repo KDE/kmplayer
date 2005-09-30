@@ -1360,6 +1360,24 @@ void View::setViewOnly () {
        m_dock_infopanel->undock ();
 }
 
+void View::setInfoPanelOnly () {
+    if (m_dock_playlist->mayBeHide ())
+        m_dock_playlist->undock ();
+    m_dock_video->setEnableDocking (KDockWidget::DockCenter);
+    m_dock_video->undock ();
+    m_dock_infopanel->setEnableDocking (KDockWidget::DockNone);
+    m_dockarea->setMainDockWidget (m_dock_infopanel);
+}
+
+void View::setPlaylistOnly () {
+    if (m_dock_infopanel->mayBeHide ())
+       m_dock_infopanel->undock ();
+    m_dock_video->setEnableDocking (KDockWidget::DockCenter);
+    m_dock_video->undock ();
+    m_dock_playlist->setEnableDocking (KDockWidget::DockNone);
+    m_dockarea->setMainDockWidget (m_dock_playlist);
+}
+
 bool View::setPicture (const QString & path) {
     delete m_image;
     if (path.isEmpty ())

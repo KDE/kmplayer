@@ -1,4 +1,6 @@
 Changes since version 0.9.1-pre2
+- Support for CONTROLS="Playlist" for plugin
+- Support for <base HREF='...'/> tags for ASX
 - Network bandwidth setting added, this is used in SMIL's <switch> element
   when <video> or <audio> elements have a system-bitrate attribute
 - Unpushing the playbutton now actually stops playing

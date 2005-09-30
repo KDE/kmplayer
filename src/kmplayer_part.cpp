@@ -224,6 +224,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                     m_features |= Feat_StatusBar;
                 } else if (val_lower == QString::fromLatin1("infopanel")) {
                     m_features |= Feat_InfoPanel;
+                } else if (val_lower == QString::fromLatin1("playlist")) {
+                    m_features |= Feat_PlayList;
                 } else if (val_lower == QString::fromLatin1("volumeslider")) {
                     m_features |= Feat_VolumeSlider;
                     setAutoControls (false);
@@ -261,6 +263,10 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     m_view->setNoInfoMessages (m_features != Feat_InfoPanel);
     if (m_features & (Feat_Controls | Feat_VolumeSlider))
         m_view->setControlPanelMode (m_features & Feat_Viewer ? KMPlayer::View::CP_Show : KMPlayer::View::CP_Only);
+    else if (m_features == Feat_InfoPanel)
+        m_view->setInfoPanelOnly ();
+    else if (m_features == Feat_PlayList)
+        m_view->setPlaylistOnly ();
     else if (m_features != Feat_Unknown)
         m_view->setControlPanelMode (KMPlayer::View::CP_Hide);
     else
@@ -444,6 +450,8 @@ KDE_NO_EXPORT void KMPlayerPart::connectToPart (KMPlayerPart * m) {
     m_master = m;
     m->connectPanel (m_view->controlPanel ());
     m->updatePlayerMenu (m_view->controlPanel ());
+    if (m_features & Feat_PlayList)
+        m->connectPlaylist (m_view->playList ());
     connectSource (m_source, m->source ());
     connect (m, SIGNAL (destroyed (QObject *)),
             this, SLOT (viewerPartDestroyed (QObject *)));
