@@ -120,6 +120,7 @@ public:
     void setSource (Source * source);
     void connectPanel (ControlPanel * panel);
     void connectPlaylist (PlayListView * playlist);
+    void connectInfoPanel (InfoWindow * infopanel);
     void connectSource (Source * old_source, Source * source);
     Process * process () const { return m_process; }
     Process * recorder () const { return m_recorder; }
@@ -130,6 +131,7 @@ public:
     KConfig * config () const { return m_config; }
     bool mayResize () const { return !m_noresize; }
     void updatePlayerMenu (ControlPanel *);
+    void updateInfo (const QString & msg);
 
     // these are called from Process
     void changeURL (const QString & url);
@@ -170,6 +172,7 @@ signals:
     void processChanged (const char *);
     void treeChanged (NodePtr root, NodePtr);
     void treeUpdated ();
+    void infoUpdated (const QString & msg);
 protected:
     bool openFile();
     virtual void timerEvent (QTimerEvent *);

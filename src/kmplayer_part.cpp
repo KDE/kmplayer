@@ -452,6 +452,8 @@ KDE_NO_EXPORT void KMPlayerPart::connectToPart (KMPlayerPart * m) {
     m->updatePlayerMenu (m_view->controlPanel ());
     if (m_features & Feat_PlayList)
         m->connectPlaylist (m_view->playList ());
+    if (m_features & Feat_InfoPanel)
+        m->connectInfoPanel (m_view->infoPanel ());
     connectSource (m_source, m->source ());
     connect (m, SIGNAL (destroyed (QObject *)),
             this, SLOT (viewerPartDestroyed (QObject *)));

@@ -226,8 +226,6 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
                  this, SLOT (zoom100 ()));
     connect (m_view, SIGNAL (fullScreenChanged ()),
             this, SLOT (fullScreen ()));
-    connect (m_view->infoPanel (), SIGNAL (linkClicked (const QString &)),
-            this, SLOT (infoWindowLinkClicked (const QString &)));
     /*QPopupMenu * viewmenu = new QPopupMenu;
     viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()),
                           QKeySequence ("CTRL + Key_F"));
@@ -897,11 +895,6 @@ KDE_NO_EXPORT void KMPlayerApp::keepSizeRatio () {
     m_view->setKeepSizeRatio (!m_view->keepSizeRatio ());
     m_player->settings ()->sizeratio = m_view->keepSizeRatio ();
     viewKeepRatio->setChecked (m_view->keepSizeRatio ());
-}
-
-KDE_NO_EXPORT void KMPlayerApp::infoWindowLinkClicked (const QString & link) {
-    kdDebug () << "infoWindowLinkClicked " << link << endl << m_view->infoPanel ()->text () << endl;
-    m_view->infoPanel ()->backward ();
 }
 
 //-----------------------------------------------------------------------------

@@ -927,7 +927,7 @@ void Callback::statusMessage (int code, QString msg) {
         case stat_newtitle:
             //m_process->source ()->setTitle (msg);
             if (m_process->viewer ())
-                m_process->viewer ()->view ()->setInfoMessage (msg);
+                ((PlayListNotify *) m_process->source ())->setInfoMessage (msg);
             break;
         case stat_addurl:
             m_process->m_source->insertURL (m_process->m_mrl, KURL::fromPathOrURL (msg).url ());
@@ -1214,8 +1214,8 @@ KDE_NO_EXPORT void CallbackProcess::processOutput (KProcess *, char * str, int s
 }
 
 KDE_NO_EXPORT void CallbackProcess::processStopped (KProcess *) {
-    if (viewer ())
-        viewer ()->view ()->setInfoMessage (QString::null);
+    if (m_source)
+        ((PlayListNotify *) m_source)->setInfoMessage (QString::null);
     delete m_backend;
     m_backend = 0L;
     setState (NotRunning);

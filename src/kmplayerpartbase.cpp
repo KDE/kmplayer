@@ -165,6 +165,7 @@ void PartBase::init (KActionCollection * action_collection) {
     m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner, m_view->controlPanel ()->bookmarkMenu (), action_collection, true, true);
     connect (m_view, SIGNAL (urlDropped (const KURL::List &)), this, SLOT (openURL (const KURL::List &)));
     connectPlaylist (m_view->playList ());
+    connectInfoPanel (m_view->infoPanel ());
     new KAction (i18n ("Edit playlist item"), 0, 0, m_view->playList (), SLOT (editCurrent ()), action_collection, "edit_playlist_item");
 }
 
@@ -208,6 +209,11 @@ void PartBase::connectPlaylist (PlayListView * playlist) {
              playlist, SLOT (updateTree (NodePtr, NodePtr)));
     connect (this, SIGNAL (treeUpdated ()),
              playlist, SLOT (triggerUpdate ()));
+}
+
+void PartBase::connectInfoPanel (InfoWindow * infopanel) {
+    connect (this, SIGNAL (infoUpdated (const QString &)),
+             infopanel->view (), SLOT (setInfoMessage (const QString &)));
 }
 
 PartBase::~PartBase () {
@@ -352,7 +358,7 @@ void PartBase::setSource (Source * _source) {
         stop ();
         if (m_view) {
             m_view->reset ();
-            m_view->setInfoMessage (QString::null);
+            emit infoUpdated (QString::null);
         }
         disconnect (m_source, SIGNAL (startRecording ()),
                     this, SLOT (recordingStarted ()));
@@ -565,7 +571,7 @@ void PartBase::playListItemSelected (QListViewItem * item) {
     if (m_in_update_tree) return;
     ListViewItem * vi = static_cast <ListViewItem *> (item);
     if (vi->m_elm) {
-        m_view->setInfoMessage (vi->m_elm->innerText ());
+        emit infoUpdated (vi->m_elm->innerText ());
         NodePtr mrl = depthFirstFindMrl (vi->m_elm);
         if (mrl)
             m_source->jump (mrl);
@@ -602,6 +608,10 @@ void PartBase::updateTree (bool full) {
     } else
         emit treeUpdated ();
     m_in_update_tree = false;
+}
+
+void PartBase::updateInfo (const QString & msg) {
+    emit infoUpdated (msg);
 }
 
 void PartBase::record () {
@@ -940,8 +950,7 @@ void Source::setEventDispatcher (NodePtr e) {
 }
 
 void Source::setInfoMessage (const QString & msg) {
-    if (m_player->view ())
-        static_cast <View*> (m_player->view())->setInfoMessage (msg);
+    m_player->updateInfo (msg);
 }
 
 void Source::repaintRect (int x, int y, int w, int h) {

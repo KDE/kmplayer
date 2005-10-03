@@ -27,7 +27,6 @@
 #include <qpushbutton.h>
 #include <qguardedptr.h>
 #include <qtextedit.h>
-#include <qtextbrowser.h>
 
 #include <kdockwidget.h>
 #include <kpopupmenu.h>
@@ -189,9 +188,10 @@ private:
 /*
  * The infowindow GUI
  */
-class InfoWindow : public QTextBrowser {
+class InfoWindow : public QTextEdit {
 public:
     InfoWindow (QWidget * parent, View * view);
+    KDE_NO_EXPORT View * view () const { return m_view; }
 protected:
     void contextMenuEvent (QContextMenuEvent * e);
 private:
@@ -251,7 +251,6 @@ public:
     bool setPicture (const QString & path);
     KDE_NO_EXPORT QPixmap * image () const { return m_image; }
     KDE_NO_EXPORT bool videoStarted () const { return m_playing; }
-    void setInfoMessage (const QString & msg);
     void setNoInfoMessages (bool b) { m_no_info = b; }
     void setViewOnly ();
     void setInfoPanelOnly ();
@@ -271,6 +270,7 @@ public slots:
     void updateLayout ();
     void toggleShowPlaylist ();
     void toggleVideoConsoleWindow ();
+    void setInfoMessage (const QString & msg);
 signals:
     void urlDropped (const KURL::List & urls);
     void pictureClicked ();

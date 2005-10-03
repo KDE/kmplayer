@@ -1163,10 +1163,9 @@ KDE_NO_EXPORT void TextEdit::contextMenuEvent (QContextMenuEvent * e) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT InfoWindow::InfoWindow (QWidget * parent, View * view) : QTextBrowser (parent, "kde_kmplayer_console"), m_view (view) {
+KDE_NO_CDTOR_EXPORT InfoWindow::InfoWindow (QWidget * parent, View * view) : QTextEdit (parent, "kde_kmplayer_console"), m_view (view) {
     setReadOnly (true);
-    setPaper (QBrush (QColor (0, 0, 0)));
-    setColor (QColor (0xB2, 0xB2, 0xB2));
+    setLinkUnderline (false);
 }
 
 KDE_NO_EXPORT void InfoWindow::contextMenuEvent (QContextMenuEvent * e) {
@@ -1315,10 +1314,12 @@ KDE_NO_CDTOR_EXPORT View::~View () {
 }
 
 void View::setInfoMessage (const QString & msg) {
+    bool ismain = m_dockarea->getMainDockWidget () == m_dock_infopanel;
     if (msg.isEmpty ()) {
-       m_dock_infopanel->undock ();
+        if (!ismain)
+            m_dock_infopanel->undock ();
        m_infopanel->clear ();
-    } else if (!m_no_info) {
+    } else if (ismain || !m_no_info) {
         if (m_dock_infopanel->mayBeShow ())
           m_dock_infopanel->manualDock(m_dock_video,KDockWidget::DockBottom,65);
         m_infopanel->setText (msg);

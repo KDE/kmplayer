@@ -115,7 +115,6 @@ private slots:
     void slotConfigureKeys();
     void slotClearHistory ();
     void windowVideoConsoleToggled (int wt);
-    void infoWindowLinkClicked (const QString & link);
 
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
