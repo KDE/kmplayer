@@ -395,7 +395,9 @@ KDE_NO_EXPORT void IntroSource::deactivate () {
 
 KDE_NO_EXPORT void KMPlayerApp::restoreFromConfig () {
     if (m_player->view ()) {
+        m_view->docArea ()->hide ();
         m_view->docArea ()->readDockConfig (m_player->config (), QString ("Window Layout"));
+        m_view->docArea ()->show ();
         m_view->layout ()->activate ();
     }
 }
