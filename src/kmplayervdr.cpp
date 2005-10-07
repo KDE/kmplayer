@@ -59,6 +59,7 @@
 #include "kmplayer_backend_stub.h"
 #include "kmplayer_callback.h"
 #include "kmplayerpartbase.h"
+#include "kmplayercontrolpanel.h"
 #include "kmplayerconfig.h"
 #include "kmplayervdr.h"
 #include "kmplayer.h"

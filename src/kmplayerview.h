@@ -24,12 +24,10 @@
 #endif 
 
 #include <qwidget.h>
-#include <qpushbutton.h>
 #include <qguardedptr.h>
 #include <qtextedit.h>
 
 #include <kdockwidget.h>
-#include <kpopupmenu.h>
 #include <klistview.h>
 #include <kurl.h>
 #include <qxembed.h>
@@ -42,11 +40,9 @@ class QPixmap;
 class QPaintDevice;
 class QPainter;
 class QPopupMenu;
-class QBoxLayout;
 class QSlider;
 class QLabel;
 class QAccel;
-class KPopupMenu;
 class KActionCollection;
 class KAction;
 class KShortcut;
@@ -199,20 +195,6 @@ private:
 };
 
 /*
- * The pop down menu from the controlpanel
- */
-class KMPLAYER_EXPORT KMPlayerPopupMenu : public KPopupMenu {
-    Q_OBJECT
-public:
-    KMPlayerPopupMenu (QWidget *);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerPopupMenu () {}
-signals:
-    void mouseLeft ();
-protected:
-    void leaveEvent (QEvent *);
-};
-
-/*
  * The view containing ViewArea and playlist
  */
 class KMPLAYER_EXPORT View : public KMediaPlayer::View {
@@ -263,7 +245,6 @@ public slots:
     void videoStart ();
     /* shows panel */
     void videoStop ();
-    void showPopupMenu ();
     void setVolume (int);
     void updateVolume ();
     void fullScreen ();
@@ -280,10 +261,6 @@ protected:
     void leaveEvent (QEvent *);
     void timerEvent (QTimerEvent *);
     bool x11Event (XEvent *);
-private slots:
-    void ctrlButtonMouseEntered ();
-    void ctrlButtonClicked ();
-    void popupMenuMouseLeft ();
 private:
     // widget for player's output
     Viewer * m_viewer;
@@ -311,8 +288,6 @@ private:
     ControlPanelMode m_controlpanel_mode;
     ControlPanelMode m_old_controlpanel_mode;
     int controlbar_timer;
-    int popup_timer;
-    int popdown_timer;
     bool m_keepsizeratio;
     bool m_playing;
     bool m_mixer_init;
@@ -320,106 +295,7 @@ private:
     bool m_sreensaver_disabled;
     bool m_tmplog_needs_eol;
     bool m_revert_fullscreen;
-    bool m_popup_clicked;
     bool m_no_info;
-};
-
-/*
- * A button from the controlpanel
- */
-class KMPlayerControlButton : public QPushButton {
-    Q_OBJECT
-public:
-    KMPlayerControlButton (QWidget *, QBoxLayout *, const char **, int = 0);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerControlButton () {}
-signals:
-    void mouseEntered ();
-protected:
-    void enterEvent (QEvent *);
-};
-
-/*
- * The volume bar from the controlpanel
- */
-class KMPLAYER_EXPORT VolumeBar : public QWidget {
-    Q_OBJECT
-public:
-    VolumeBar (QWidget * parent, View * view);
-    ~VolumeBar ();
-    KDE_NO_EXPORT int value () const { return m_value; }
-    void setValue (int v);
-signals:
-    void volumeChanged (int); // 0 - 100
-protected:
-    void wheelEvent (QWheelEvent * e);
-    void paintEvent (QPaintEvent *);
-    void mousePressEvent (QMouseEvent * e);
-    void mouseMoveEvent (QMouseEvent * e);
-private:
-    View * m_view;
-    int m_value;
-};
-
-/*
- * The controlpanel GUI
- */
-class KMPLAYER_EXPORT ControlPanel : public QWidget {
-public:
-    enum MenuID {
-        menu_config = 0, menu_player, menu_fullscreen, menu_volume, 
-        menu_bookmark, menu_zoom, menu_zoom50, menu_zoom100, menu_zoom150,
-        menu_view, menu_video, menu_playlist
-    };
-    enum Button {
-        button_config = 0, button_playlist,
-        button_back, button_play, button_forward,
-        button_stop, button_pause, button_record, button_broadcast,
-        button_red, button_green, button_yellow, button_blue,
-        button_last
-    };
-    ControlPanel (QWidget * parent, View * view);
-    KDE_NO_CDTOR_EXPORT ~ControlPanel () {}
-    void showPositionSlider (bool show);
-    void enableSeekButtons (bool enable);
-    void enableRecordButtons (bool enable);
-    void setPlaying (bool play);
-    void setRecording (bool record);
-    void setPlayingProgress (int pos);
-    void setLoadingProgress (int pos);
-    void setPlayingLength (int len);
-    void setAutoControls (bool b);
-    KDE_NO_EXPORT bool autoControls () const { return m_auto_controls; }
-    KDE_NO_EXPORT QSlider * positionSlider () const { return m_posSlider; }
-    KDE_NO_EXPORT QSlider * contrastSlider () const { return m_contrastSlider; }
-    KDE_NO_EXPORT QSlider * brightnessSlider () const { return m_brightnessSlider; }
-    KDE_NO_EXPORT QSlider * hueSlider () const { return m_hueSlider; }
-    KDE_NO_EXPORT QSlider * saturationSlider () const { return m_saturationSlider; }
-    QPushButton * button (Button b) const { return m_buttons [(int) b]; }
-    KDE_NO_EXPORT QPushButton * broadcastButton () const { return m_buttons[button_broadcast]; }
-    KDE_NO_EXPORT VolumeBar * volumeBar () const { return m_volume; }
-    KDE_NO_EXPORT KMPlayerPopupMenu * popupMenu () const { return m_popupMenu; }
-    KDE_NO_EXPORT KPopupMenu * bookmarkMenu () const { return m_bookmarkMenu; }
-    KDE_NO_EXPORT QPopupMenu * zoomMenu () const { return m_zoomMenu; }
-    KDE_NO_EXPORT QPopupMenu * playerMenu () const { return m_playerMenu; }
-    KDE_NO_EXPORT QPopupMenu * colorMenu () const { return m_colorMenu; }
-private:
-    enum { progress_loading, progress_playing } m_progress_mode;
-    int m_progress_length;
-    View * m_view;
-    QBoxLayout * m_buttonbox;
-    QSlider * m_posSlider;
-    QSlider * m_contrastSlider;
-    QSlider * m_brightnessSlider;
-    QSlider * m_hueSlider;
-    QSlider * m_saturationSlider;
-    QPushButton * m_buttons [button_last];
-    VolumeBar * m_volume;
-    KMPlayerPopupMenu * m_popupMenu;
-    KMPlayerPopupMenu * m_bookmarkMenu;
-    KMPlayerPopupMenu * m_zoomMenu;
-    KMPlayerPopupMenu * m_playerMenu;
-    KMPlayerPopupMenu * m_colorMenu;
-    bool m_auto_controls; // depending on source caps
 };
 
 /*

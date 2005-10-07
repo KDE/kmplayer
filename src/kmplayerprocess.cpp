@@ -47,6 +47,7 @@
 #include <kstandarddirs.h>
 
 #include "kmplayerview.h"
+#include "kmplayercontrolpanel.h"
 #include "kmplayerprocess.h"
 #include "kmplayersource.h"
 #include "kmplayerconfig.h"

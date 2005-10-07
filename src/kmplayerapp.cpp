@@ -60,6 +60,7 @@
 // application specific includes
 #include "kmplayer.h"
 #include "kmplayerview.h"
+#include "kmplayercontrolpanel.h"
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
 #include "kmplayerappsource.h"

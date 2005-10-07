@@ -50,6 +50,7 @@
 #include "kmplayerconfig.h"
 #include "kmplayertvsource.h"
 #include "kmplayer.h"
+#include "kmplayercontrolpanel.h"
 #include "kmplayerbroadcast.h"
 
 static const char * strTV = "TV";

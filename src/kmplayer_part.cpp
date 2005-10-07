@@ -43,6 +43,7 @@ class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollect
 
 #include "kmplayer_part.h"
 #include "kmplayerview.h"
+#include "kmplayercontrolpanel.h"
 #include "kmplayerconfig.h"
 #include "kmplayerprocess.h"
 
