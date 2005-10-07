@@ -162,6 +162,12 @@ void Backend::frequency (int f) {
     xvapp->frequency (f);
 }
 
+void Backend::setAudioLang (int, QString) {
+}
+
+void Backend::setSubtitle (int, QString) {
+}
+
 void Backend::quit () {
     delete callback;
     callback = 0L;
@@ -331,7 +337,7 @@ void KXVideoPlayer::play () {
     if (!xv_success)
         return;
     if (callback && movie_width > 0 && movie_height > 0)
-        callback->movieParams (0, movie_width, movie_height, 1.0*movie_width/movie_height);
+        callback->movieParams (0, movie_width, movie_height, 1.0*movie_width/movie_height, QStringList (), QStringList ());
     XLockDisplay (display);
     if (!running && XvGrabPort (display, xvport, CurrentTime) == Success) {
         gc = XCreateGC (display, wid, 0, NULL);

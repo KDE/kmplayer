@@ -20,6 +20,7 @@
 #define _KMPLAYER_CALLBACK_H_
 
 #include <dcopobject.h>
+#include <qstringlist.h>
 
 namespace KMPlayer {
 
@@ -36,7 +37,7 @@ k_dcop:
     ASYNC finished ();
     ASYNC playing ();
     ASYNC started (QCString dcopname, QByteArray data);
-    ASYNC movieParams (int length, int width, int height, float aspect);
+    ASYNC movieParams (int length, int width, int height, float aspect, QStringList alang, QStringList slang);
     ASYNC moviePosition (int position);
     ASYNC loadingProgress (int percentage);
 private:

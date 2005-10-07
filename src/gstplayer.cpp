@@ -252,6 +252,12 @@ void Backend::volume (int v, bool) {
 void Backend::frequency (int) {
 }
 
+void Backend::setAudioLang (int, QString) {
+}
+
+void Backend::setSubtitle (int, QString) {
+}
+
 void Backend::quit () {
     delete callback;
     callback = 0L;
@@ -513,7 +519,7 @@ bool KGStreamerPlayer::event (QEvent * e) {
             fprintf (stderr, "movie parms: %d %d %d\n", se->length, se->width, se->height);
             if (callback) {
                 if (se->length < 0) se->length = 0;
-                callback->movieParams (se->length, se->width, se->height, se->height ? 1.0*se->width/se->height : 1.0);
+                callback->movieParams (se->length, se->width, se->height, se->height ? 1.0*se->width/se->height : 1.0, QStringList (), QStringList ());
             }
             if (window_created && movie_width > 0 && movie_height > 0) {
                 XLockDisplay (display);

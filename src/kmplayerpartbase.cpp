@@ -191,6 +191,11 @@ void PartBase::connectPanel (ControlPanel * panel) {
     connect (panel->brightnessSlider (), SIGNAL (valueChanged(int)), this, SLOT (brightnessValueChanged(int)));
     connect (panel->hueSlider (), SIGNAL (valueChanged(int)), this, SLOT (hueValueChanged(int)));
     connect (panel->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));
+    connect (this, SIGNAL (languagesUpdated(const QStringList &, const QStringList &)), panel, SLOT (setLanguages (const QStringList &, const QStringList &)));
+    connect (panel->audioMenu (), SIGNAL (activated (int)), this, SLOT (audioSelected (int)));
+    connect (panel->subtitleMenu (), SIGNAL (activated (int)), this, SLOT (subtitleSelected (int)));
+    connect (this, SIGNAL (audioIsSelected (int)), panel, SLOT (selectAudioLanguage (int)));
+    connect (this, SIGNAL (subtitleIsSelected (int)), panel, SLOT (selectSubtitle (int)));
     panel->popupMenu()->connectItem (ControlPanel::menu_fullscreen, this, SLOT (fullScreen ()));
     panel->popupMenu ()->connectItem (ControlPanel::menu_config,
                                        this, SLOT (showConfigDialog ()));
@@ -363,6 +368,10 @@ void PartBase::setSource (Source * _source) {
         }
         disconnect (m_source, SIGNAL (startRecording ()),
                     this, SLOT (recordingStarted ()));
+        disconnect (this, SIGNAL (audioIsSelected (int)),
+                    m_source, SLOT (setAudioLang (int)));
+        disconnect (this, SIGNAL (subtitleIsSelected (int)),
+                    m_source, SLOT (setSubtitle (int)));
     }
     if (m_view) {
         if (m_auto_controls)
@@ -399,6 +408,10 @@ void PartBase::setSource (Source * _source) {
     connectSource (old_source, m_source);
     m_process->setSource (m_source);
     connect (m_source, SIGNAL(startRecording()), this,SLOT(recordingStarted()));
+    connect (this, SIGNAL (audioIsSelected (int)),
+             m_source, SLOT (setAudioLang (int)));
+    connect (this, SIGNAL (subtitleIsSelected (int)),
+             m_source, SLOT (setSubtitle (int)));
     m_source->init ();
     if (m_view && m_view->viewer ()) {
         updatePlayerMenu (m_view->controlPanel ());
@@ -615,6 +628,18 @@ void PartBase::updateInfo (const QString & msg) {
     emit infoUpdated (msg);
 }
 
+void PartBase::setLanguages (const QStringList & al, const QStringList & sl) {
+    emit languagesUpdated (al, sl);
+}
+
+KDE_NO_EXPORT void PartBase::audioSelected (int id) {
+    emit audioIsSelected (id);
+}
+
+KDE_NO_EXPORT void PartBase::subtitleSelected (int id) {
+    emit subtitleIsSelected (id);
+}
+
 void PartBase::record () {
     if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
     if (m_recorder->playing ()) {
@@ -779,6 +804,10 @@ void Source::init () {
     m_recordcmd.truncate (0);
 }
 
+KDE_NO_EXPORT void Source::setLanguages (const QStringList & alang, const QStringList & slang) {
+    m_player->setLanguages (alang, slang);
+}
+
 void Source::setDimensions (NodePtr node, int w, int h) {
     Mrl * mrl = node ? node->mrl () : 0L;
     if (mrl && mrl->view_mode == Mrl::Window) {
@@ -851,6 +880,18 @@ void Source::setURL (const KURL & url) {
 
 void Source::setTitle (const QString & title) {
     emit titleChanged (title);
+}
+
+KDE_NO_EXPORT void Source::setAudioLang (int id) {
+    View * v = static_cast <View *> (m_player->view());
+    if (v && m_player->process ())
+        m_player->process ()->setAudioLang (id, v->controlPanel ()->audioMenu ()->text (id));
+}
+
+KDE_NO_EXPORT void Source::setSubtitle (int id) {
+    View * v = static_cast <View *> (m_player->view());
+    if (v && m_player->process ())
+        m_player->process ()->setSubtitle (id, v->controlPanel ()->subtitleMenu ()->text (id));
 }
 
 void Source::reset () {

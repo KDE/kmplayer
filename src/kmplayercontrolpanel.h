@@ -41,11 +41,11 @@ class View;
 /*
  * A button from the controlpanel
  */
-class KMPlayerControlButton : public QPushButton {
+class KMPlayerMenuButton : public QPushButton {
     Q_OBJECT
 public:
-    KMPlayerControlButton (QWidget *, QBoxLayout *, const char **, int = 0);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerControlButton () {}
+    KMPlayerMenuButton (QWidget *, QBoxLayout *, const char **, int = 0);
+    KDE_NO_CDTOR_EXPORT ~KMPlayerMenuButton () {}
 signals:
     void mouseEntered ();
 protected:
@@ -132,25 +132,25 @@ public:
     KDE_NO_EXPORT QPopupMenu * zoomMenu () const { return m_zoomMenu; }
     KDE_NO_EXPORT QPopupMenu * playerMenu () const { return m_playerMenu; }
     KDE_NO_EXPORT QPopupMenu * colorMenu () const { return m_colorMenu; }
-    KDE_NO_EXPORT QPopupMenu * languageMenu () const { return m_languageMenu; }
+    KDE_NO_EXPORT QPopupMenu * audioMenu () const { return m_audioMenu; }
+    KDE_NO_EXPORT QPopupMenu * subtitleMenu () const { return m_subtitleMenu; }
 public slots:
-    void setSubtitles (const QStringList &);
-    void setAudioLanguages (const QStringList &);
+    void setLanguages (const QStringList & al, const QStringList & sl);
     void selectSubtitle (int id);
-    void selectAudioLanguages (int id);
+    void selectAudioLanguage (int id);
 protected:
     void timerEvent (QTimerEvent * e);
 private slots:
-    void ctrlButtonMouseEntered ();
-    void ctrlButtonClicked ();
-    void popupMenuMouseLeft ();
+    void buttonMouseEntered ();
+    void buttonClicked ();
+    void menuMouseLeft ();
 private:
     void showPopupMenu ();
     enum { progress_loading, progress_playing } m_progress_mode;
     int m_progress_length;
     int m_popup_timer;
     int m_popdown_timer;
-    int m_language_timer;
+    int m_button_monitored;
     View * m_view;
     QBoxLayout * m_buttonbox;
     QSlider * m_posSlider;
@@ -166,6 +166,8 @@ private:
     KMPlayerPopupMenu * m_playerMenu;
     KMPlayerPopupMenu * m_colorMenu;
     KMPlayerPopupMenu * m_languageMenu;
+    KMPlayerPopupMenu * m_audioMenu;
+    KMPlayerPopupMenu * m_subtitleMenu;
     bool m_auto_controls; // depending on source caps
     bool m_popup_clicked;
 };

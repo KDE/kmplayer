@@ -58,6 +58,8 @@ public:
     virtual void init ();
     virtual void initProcess (Viewer *);
     virtual QString menuName () const;
+    virtual void setAudioLang (int, const QString &);
+    virtual void setSubtitle (int, const QString &);
     bool playing () const;
     KDE_NO_EXPORT KProcess * process () const { return m_process; }
     KDE_NO_EXPORT Source * source () const { return m_source; }
@@ -138,6 +140,8 @@ public:
     virtual QString menuName () const;
     virtual WId widget ();
     virtual bool grabPicture (const KURL & url, int pos);
+    virtual void setAudioLang (int, const QString &);
+    virtual void setSubtitle (int, const QString &);
     bool run (const char * args, const char * pipe = 0L);
 public slots:
     virtual bool play (Source *, NodePtr mrl);
@@ -160,6 +164,8 @@ private:
     QWidget * m_widget;
     MPlayerPreferencesPage * m_configpage;
     QString m_tmpURL;
+    QStringList alanglist, slanglist;
+    int aid, sid;
     int old_volume;
 };
 
@@ -248,9 +254,11 @@ public:
     virtual void setFinished ();
     virtual void setPlaying ();
     virtual void setStarted (QCString dcopname, QByteArray & data);
-    virtual void setMovieParams (int length, int width, int height, float aspect);
+    virtual void setMovieParams (int length, int width, int height, float aspect, const QStringList & alang, const QStringList & slang);
     virtual void setMoviePosition (int position);
     virtual void setLoadingProgress (int percentage);
+    virtual void setAudioLang (int, const QString &);
+    virtual void setSubtitle (int, const QString &);
     virtual QString menuName () const;
     virtual WId widget ();
     KDE_NO_EXPORT QByteArray & configData () { return m_configdata; }

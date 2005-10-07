@@ -23,6 +23,7 @@
 #include <qguardedptr.h>
 #include <qvaluelist.h>
 #include <qcstring.h>
+#include <qstringlist.h>
 #include <qmap.h>
 
 #include <dcopobject.h>
@@ -136,6 +137,7 @@ public:
     // these are called from Process
     void changeURL (const QString & url);
     void updateTree (bool full=true);
+    void setLanguages (const QStringList & alang, const QStringList & slang);
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool openURL (const KURL::List & urls);
@@ -173,6 +175,9 @@ signals:
     void treeChanged (NodePtr root, NodePtr);
     void treeUpdated ();
     void infoUpdated (const QString & msg);
+    void languagesUpdated(const QStringList & alang, const QStringList & slang);
+    void audioIsSelected (int id);
+    void subtitleIsSelected (int id);
 protected:
     bool openFile();
     virtual void timerEvent (QTimerEvent *);
@@ -195,6 +200,8 @@ protected slots:
     void recordingStarted ();
     void recordingStopped ();
     void settingsChanged ();
+    void audioSelected (int);
+    void subtitleSelected (int);
 protected:
     KConfig * m_config;
     QGuardedPtr <View> m_view;

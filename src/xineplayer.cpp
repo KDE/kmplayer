@@ -105,6 +105,7 @@ static const int            event_size = QEvent::User + 4;
 static const int            event_title = QEvent::User + 5;
 static QString mrl;
 static QString sub_mrl;
+static QString alang, slang;
 
 static QString elmentry ("entry");
 static QString elmitem ("item");
@@ -136,14 +137,15 @@ static void frame_output_cb(void * /*data*/, int /*video_width*/, int /*video_he
         double *dest_pixel_aspect, int *win_x, int *win_y) {
     if (running && firstframe) {
         firstframe = 0;
-        int pos;
+       /* int pos;
         fprintf(stderr, "first frame\n");
         mutex.lock ();
         xine_get_pos_length (stream, 0, &pos, &movie_length);
         movie_width = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_WIDTH);
         movie_height = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_HEIGHT);
         mutex.unlock ();
-        QApplication::postEvent (xineapp, new XineSizeEvent (movie_length, movie_width, movie_height, true));
+        QApplication::postEvent (xineapp, new XineMovieParamEvent (movie_length, movie_width, movie_height, true));
+        */
     }
 
     *dest_x            = 0;
@@ -203,15 +205,42 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
             mutex.lock ();
             int w = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_WIDTH);
             int h = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_HEIGHT);
-            int pos, l;
+            int pos, l, nr;
             xine_get_pos_length (stream, 0, &pos, &l);
+            char * langstr = new char [66];
+            QStringList alanglist, slanglist;
+
+            nr =xine_get_stream_info(stream,XINE_STREAM_INFO_MAX_AUDIO_CHANNEL);
+            // if nrch > 25) nrch = 25
+            for (int i = 0; i < nr; ++i) {
+                xine_get_audio_lang (stream, i, langstr);
+                QString ls = QString::fromLocal8Bit (langstr).stripWhiteSpace();
+                if (ls.isEmpty ())
+                    continue;
+                if (!slang.isEmpty () && alang == ls)
+                    xine_set_param(stream, XINE_PARAM_AUDIO_CHANNEL_LOGICAL, i);
+                alanglist.push_back (ls);
+                fprintf (stderr, "alang %s\n", langstr);
+            }
+            nr = xine_get_stream_info(stream, XINE_STREAM_INFO_MAX_SPU_CHANNEL);
+            // if nrch > 25) nrch = 25
+            for (int i = 0; i < nr; ++i) {
+                xine_get_spu_lang (stream, i, langstr);
+                QString ls = QString::fromLocal8Bit (langstr).stripWhiteSpace();
+                if (ls.isEmpty ())
+                    continue;
+                if (!slang.isEmpty () && slang == ls)
+                    xine_set_param (stream, XINE_PARAM_SPU_CHANNEL, i);
+                slanglist.push_back (ls);
+                fprintf (stderr, "slang %s\n", langstr);
+            }
+            delete langstr;
             mutex.unlock ();
-            if (w > 0 && h > 0 &&
-                (l != movie_length || w != movie_width || h != movie_height)) {
+            if (w > 0 && h > 0) {
                 movie_width = w;
                 movie_height = h;
                 movie_length = l;
-                QApplication::postEvent (xineapp, new XineSizeEvent (l, w, h));
+                QApplication::postEvent (xineapp, new XineMovieParamEvent (l, w, h, alanglist, slanglist));
                 if (window_created) {
                     XLockDisplay (display);
                     XResizeWindow (display, wid, movie_width, movie_height);
@@ -286,6 +315,14 @@ void Backend::volume (int v, bool) {
 void Backend::frequency (int) {
 }
 
+void Backend::setAudioLang (int id, QString al) {
+    xineapp->setAudioLang (id, al);
+}
+
+void Backend::setSubtitle (int id, QString sl) {
+    xineapp->setSubtitle (id, sl);
+}
+
 void Backend::quit () {
     delete callback;
     callback = 0L;
@@ -358,6 +395,8 @@ KXinePlayer::KXinePlayer (int _argc, char ** _argv)
             ;
         } else if (!strcmp (argv ()[i], "-sub")) {
             sub_mrl = QString (argv ()[++i]);
+        } else if (!strcmp (argv ()[i], "-lang")) {
+            slang = alang = QString (argv ()[++i]);
         } else if (!strcmp (argv ()[i], "-v")) {
             xine_verbose = true;
         } else if (!strcmp (argv ()[i], "-vv")) {
@@ -579,6 +618,22 @@ void KXinePlayer::finished () {
     QTimer::singleShot (10, this, SLOT (stop ()));
 }
 
+void KXinePlayer::setAudioLang (int id, const QString & al) {
+    alang = al;
+    mutex.lock ();
+    if (xine_get_status (stream) == XINE_STATUS_PLAY)
+        xine_set_param(stream, XINE_PARAM_AUDIO_CHANNEL_LOGICAL, id);
+    mutex.unlock ();
+}
+
+void KXinePlayer::setSubtitle (int id, const QString & sl) {
+    slang = sl;
+    mutex.lock ();
+    if (xine_get_status (stream) == XINE_STATUS_PLAY)
+        xine_set_param (stream, XINE_PARAM_SPU_CHANNEL, id);
+    mutex.unlock ();
+}
+
 void KXinePlayer::updatePosition () {
     if (!running || !callback) return;
     int pos;
@@ -679,10 +734,10 @@ bool KXinePlayer::event (QEvent * e) {
             break;
         }
         case event_size: {
-            XineSizeEvent * se = static_cast <XineSizeEvent *> (e);                
             if (callback) {
+                XineMovieParamEvent * se = static_cast <XineMovieParamEvent *> (e);
                 if (se->length < 0) se->length = 0;
-                callback->movieParams (se->length/100, se->width, se->height, se->height ? 1.0*se->width/se->height : 1.0);
+                callback->movieParams (se->length/100, se->width, se->height, se->height ? 1.0*se->width/se->height : 1.0, se->alang, se->slang);
                 if (se->first_frame) {
                     callback->playing ();
                     QTimer::singleShot (500, this, SLOT (updatePosition ()));
@@ -714,9 +769,9 @@ bool KXinePlayer::event (QEvent * e) {
     return true;
 }
 
-XineSizeEvent::XineSizeEvent (int l, int w, int h, bool ff)
+XineMovieParamEvent::XineMovieParamEvent(int l, int w, int h, const QStringList & a, const QStringList & s, bool ff)
   : QEvent ((QEvent::Type) event_size),
-    length (l), width (w), height (h), first_frame (ff) 
+    length (l), width (w), height (h), alang (a), slang (s) , first_frame (ff)
 {}
 
 XineURLEvent::XineURLEvent (const QString & u)
@@ -956,7 +1011,7 @@ int main(int argc, char **argv) {
     bool config_changed = !QFile (configfile).exists ();
 
     if (!callback && mrl.isEmpty ()) {
-        fprintf (stderr, "usage: %s [-vo (xv|xshm)] [-ao (arts|esd|..)] [-f <xine config file>] [-dvd-device <device>] [-vcd-device <device>] [-wid <X11 Window>|-window-id <X11 Window>|-root] [-sub <subtitle url>] [(-v|-vv)] [-cb <DCOP callback name> [-c]] [<url>]\n", argv[0]);
+        fprintf (stderr, "usage: %s [-vo (xv|xshm)] [-ao (arts|esd|..)] [-f <xine config file>] [-dvd-device <device>] [-vcd-device <device>] [-wid <X11 Window>|-window-id <X11 Window>|-root] [-sub <subtitle url>] [-lang <lang>] [(-v|-vv)] [-cb <DCOP callback name> [-c]] [<url>]\n", argv[0]);
         delete xineapp;
         return 1;
     }

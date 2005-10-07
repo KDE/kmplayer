@@ -21,13 +21,16 @@
 
 #include <qapplication.h>
 #include <qstring.h>
+#include <qstringlist.h>
 
 
-struct XineSizeEvent : public QEvent {
-    XineSizeEvent (int l, int w, int h, bool ff=false);
+struct XineMovieParamEvent : public QEvent {
+    XineMovieParamEvent (int l, int w, int h, const QStringList & al, const QStringList & sl, bool ff=false);
     int length;
     int width;
     int height;
+    QStringList alang;
+    QStringList slang;
     bool first_frame;
 };
 
@@ -61,6 +64,8 @@ public:
     void volume (int val);
     void seek (int val);
     bool event (QEvent * e);
+    void setAudioLang (int, const QString &);
+    void setSubtitle (int, const QString &);
 public slots:
     void play ();
     void stop ();

@@ -107,6 +107,10 @@ bool Process::playing () const {
     return m_process && m_process->isRunning ();
 }
 
+void Process::setAudioLang (int, const QString &) {}
+
+void Process::setSubtitle (int, const QString &) {}
+
 bool Process::pause () {
     return false;
 }
@@ -305,7 +309,8 @@ static const char * mplayer_supports [] = {
 KDE_NO_CDTOR_EXPORT MPlayer::MPlayer (QObject * parent, Settings * settings)
  : MPlayerBase (parent, settings, "mplayer"),
    m_widget (0L),
-   m_configpage (new MPlayerPreferencesPage (this)) {
+   m_configpage (new MPlayerPreferencesPage (this)),
+   aid (0), sid (0) {
        m_supported_sources = mplayer_supports;
     m_settings->addPage (m_configpage);
 }
@@ -333,6 +338,8 @@ KDE_NO_EXPORT bool MPlayer::play (Source * source, NodePtr node) {
     stop ();
     m_source = source;
     initProcess (m_viewer);
+    alanglist.clear ();
+    slanglist.clear ();
     Process::play (source, node);
     source->setPosition (0);
     m_request_seek = -1;
@@ -618,6 +625,14 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
             int pos = out.find ('=');
             if (pos > 0)
                 m_source->setAspect (m_mrl, out.mid (pos + 1).replace (',', '.').toFloat ());
+        } else if (out.startsWith ("ID_AID_")) {
+            int pos = out.find ('=');
+            if (pos > 0)
+                alanglist.push_back (out.mid (pos + 1));
+        } else if (out.startsWith ("ID_SID_")) {
+            int pos = out.find ('=');
+            if (pos > 0)
+                slanglist.push_back (out.mid (pos + 1));
         } else {
             QRegExp & m_startRegExp = patterns[MPlayerPreferencesPage::pat_start];
             QRegExp & m_sizeRegExp = patterns[MPlayerPreferencesPage::pat_size];
@@ -637,6 +652,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                         }
                         m_source->setIdentified ();
                     }
+                    m_source->setLanguages (alanglist, slanglist);
                     setState (Playing);
                 }
             }
@@ -659,6 +675,14 @@ KDE_NO_EXPORT void MPlayer::processStopped (KProcess * p) {
         }
         MPlayerBase::processStopped (p);
     }
+}
+
+void MPlayer::setAudioLang (int id, const QString &) {
+    aid = id;
+}
+
+void MPlayer::setSubtitle (int id, const QString &) {
+    sid = id;
 }
 
 //-----------------------------------------------------------------------------
@@ -956,8 +980,8 @@ void Callback::started (QCString dcopname, QByteArray data) {
     m_process->setStarted (dcopname, data);
 }
 
-void Callback::movieParams (int length, int w, int h, float aspect) {
-    m_process->setMovieParams (length, w, h, aspect);
+void Callback::movieParams (int length, int w, int h, float aspect, QStringList alang, QStringList slang) {
+    m_process->setMovieParams (length, w, h, aspect, alang, slang);
 }
 
 void Callback::moviePosition (int position) {
@@ -1045,13 +1069,14 @@ void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
     setState (Ready);
 }
 
-void CallbackProcess::setMovieParams (int len, int w, int h, float a) {
+void CallbackProcess::setMovieParams (int len, int w, int h, float a, const QStringList & alang, const QStringList & slang) {
     kdDebug () << "setMovieParams " << len << " " << w << "," << h << " " << a << endl;
     if (!m_source) return;
     in_gui_update = true;
     m_source->setDimensions (m_mrl, w, h);
     m_source->setAspect (m_mrl, a);
     m_source->setLength (m_mrl, len);
+    m_source->setLanguages (alang, slang);
     in_gui_update = false;
 }
 
@@ -1144,6 +1169,16 @@ bool CallbackProcess::pause () {
     if (!playing () || !m_backend) return false;
     m_backend->pause ();
     return true;
+}
+
+void CallbackProcess::setAudioLang (int id, const QString & al) {
+    if (!m_backend) return;
+    m_backend->setAudioLang (id, al);
+}
+
+void CallbackProcess::setSubtitle (int id, const QString & sl) {
+    if (!m_backend) return;
+    m_backend->setSubtitle (id, sl);
 }
 
 bool CallbackProcess::seek (int pos, bool absolute) {

@@ -82,6 +82,7 @@ public:
     void setURL (const KURL & url);
     void insertURL (NodePtr mrl, const QString & url);
     KDE_NO_EXPORT void setSubURL (const KURL & url) { m_sub_url = url; }
+    void setLanguages (const QStringList & alang, const QStringList & slang);
     void setMime (const QString & m);
     KDE_NO_EXPORT void setWidth (int w) { m_width = w; }
     KDE_NO_EXPORT void setHeight (int h) { m_height = h; }
@@ -132,6 +133,8 @@ public slots:
      */
     virtual void playCurrent ();
     virtual void jump (NodePtr e);
+    void setAudioLang (int);
+    void setSubtitle (int);
 protected:
     /**
      * PlayListNotify implementation
