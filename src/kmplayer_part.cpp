@@ -554,9 +554,10 @@ KDE_NO_EXPORT void KMPlayerBrowserExtension::restoreState (QDataStream & stream)
 enum JSCommand {
     notsupported,
     canpause, canplay, canstop, canseek,
-    isfullscreen, isloop, isaspect,
+    isfullscreen, isloop, isaspect, showcontrolpanel,
     length, width, height, playstate, position, source, setsource, protocol,
-    gotourl, nextentry, jsc_pause, play, preventry, stop, volume, setvolume,
+    gotourl, nextentry, jsc_pause, play, preventry, start, stop,
+    volume, setvolume,
     prop_source, prop_volume
 };
 
@@ -679,6 +680,8 @@ static const JSCommandEntry JSCommandList [] = {
     { "SetWantErrors", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetWantKeyboardEvents", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
     { "SetWantMouseEvents", notsupported, "true", KParts::LiveConnectExtension::TypeBool },
+    { "ShowControls", showcontrolpanel, "true", KParts::LiveConnectExtension::TypeBool },
+    { "Start", start, 0L, KParts::LiveConnectExtension::TypeBool },
     { "Stop", stop, 0L, KParts::LiveConnectExtension::TypeBool },
     { "Volume", prop_volume, "100", KParts::LiveConnectExtension::TypeNumber },
     { "pause", jsc_pause, 0L, KParts::LiveConnectExtension::TypeBool },
@@ -733,7 +736,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
    KParts::LiveConnectExtension::Type & type,
    unsigned long & rid, QString & rval) {
     const char * str = name.ascii ();
-    kdDebug () << "get: " << str << endl;
+    kdDebug () << "[01;35mget[00m " << str << endl;
     const JSCommandEntry * entry = getJSCommandEntry (str);
     if (!entry)
         return false;
@@ -757,7 +760,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
 
 KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::put
   (const unsigned long, const QString & name, const QString & val) {
-    kdDebug () << "put: " << name << "=" << val << endl;
+    kdDebug () << "[01;35mput[00m " << name << "=" << val << endl;
     const JSCommandEntry * entry = getJSCommandEntry (name.ascii ());
     switch (entry->command) {
         case prop_source: {
@@ -786,7 +789,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
         entry = getJSCommandEntry (str);
     if (!entry)
         return false;
-    kdDebug () << "entry " << entry->name << endl;
+    kdDebug () << "[01;35mentry[00m " << entry->name << endl;
     for (unsigned int i = 0; i < args.size (); ++i)
         kdDebug () << "      " << args[i] << endl;
     KMPlayer::View * view = static_cast <KMPlayer::View*> (player->view ());
@@ -820,9 +823,21 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
                 player->play ();
             rval = "true";
             break;
+        case start:
+            player->play ();
+            rval = "true";
+            break;
         case stop:
             player->stop ();
             rval = "true";
+            break;
+        case showcontrolpanel:
+            if (args.size () &&
+                    (args.first () == QString::fromLatin1 ("0") ||
+                     args.first () == QString::fromLatin1 ("false")))
+                static_cast <KMPlayer::View*> (player->view ())->setControlPanelMode (KMPlayer::View::CP_Hide);
+            else
+                static_cast <KMPlayer::View*> (player->view ())->setControlPanelMode (KMPlayer::View::CP_Show);
             break;
         case jsc_pause:
             player->pause ();
