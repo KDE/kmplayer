@@ -107,6 +107,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     m_player->sources () ["pipesource"] = new KMPlayerPipeSource (this);
     m_player->sources () ["tvsource"] = new KMPlayerTVSource (this, m_tvmenu);
     m_player->sources () ["vdrsource"] = new KMPlayerVDRSource (this);
+    m_view = static_cast <KMPlayer::View*> (m_player->view());
     initActions();
     initView();
 
@@ -140,6 +141,8 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), ac, "view_zoom_50");
     new KAction (i18n ("100%"), QString ("viewmagfit"), KShortcut (), this, SLOT (zoom100 ()), ac, "view_zoom_100");
     new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), ac, "view_zoom_150");
+    new KAction (i18n ("Show Popup Menu"), KShortcut (), m_view->controlPanel (), SLOT (showPopupMenu ()), ac, "view_show_popup_menu");
+    new KAction (i18n ("Show Language Menu"), KShortcut (Qt::Key_L), m_view->controlPanel (), SLOT (showLanguageMenu ()), ac, "view_show_lang_menu");
     viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), ac, "view_keep_ratio");
 #if KDE_IS_VERSION(3,1,90)
     /*KAction *fullscreenact =*/ KStdAction::fullScreen( this, SLOT(fullScreen ()), ac, 0 );
@@ -199,7 +202,6 @@ KDE_NO_EXPORT void KMPlayerApp::initMenu () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::initView () {
-    m_view = static_cast <KMPlayer::View*> (m_player->view());
     //m_view->docArea ()->readDockConfig (config, QString ("Window Layout"));
     m_player->connectPanel (m_view->controlPanel ());
     setCentralWidget (m_view);
@@ -971,7 +973,8 @@ KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
     QRegExp & subtitleRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdsub];
     QRegExp & titleRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdtitle];
     QRegExp & chapterRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdchapter];
-    if (subtitleRegExp.search (str) > -1) {
+    bool post090 = m_player->settings ()->mplayerpost090;
+    if (!post090 && subtitleRegExp.search (str) > -1) {
         bool ok;
         int sub_id = subtitleRegExp.cap (1).toInt (&ok);
         QString sub_title = ok ? subtitleRegExp.cap (2) : subtitleRegExp.cap(1);
@@ -979,7 +982,7 @@ KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
             sub_id = subtitleRegExp.cap (2).toInt (&ok);
         m_dvdsubtitlemenu->insertItem (sub_title, sub_id);
         kdDebug () << "subtitle sid:" << sub_id << " lang:" << sub_title <<endl;
-    } else if (langRegExp.search (str) > -1) {
+    } else if (!post090 && langRegExp.search (str) > -1) {
         bool ok;
         int lang_id = langRegExp.cap (1).toInt (&ok);
         QString lang_title = ok ? langRegExp.cap (2) : langRegExp.cap (1);
@@ -1011,12 +1014,14 @@ KDE_NO_EXPORT void KMPlayerDVDSource::activate () {
     buildArguments ();
     m_menu->insertItem (i18n ("&Titles"), m_dvdtitlemenu);
     m_menu->insertItem (i18n ("&Chapters"), m_dvdchaptermenu);
-    m_menu->insertItem (i18n ("Audio &Language"), m_dvdlanguagemenu);
-    m_menu->insertItem (i18n ("&SubTitles"), m_dvdsubtitlemenu);
-    connect (m_dvdsubtitlemenu, SIGNAL (activated (int)),
-             this, SLOT (subtitleMenuClicked (int)));
-    connect (m_dvdlanguagemenu, SIGNAL (activated (int)),
-             this, SLOT (languageMenuClicked (int)));
+    if (!m_player->settings ()->mplayerpost090) {
+        m_menu->insertItem (i18n ("Audio &Language"), m_dvdlanguagemenu);
+        m_menu->insertItem (i18n ("&SubTitles"), m_dvdsubtitlemenu);
+        connect (m_dvdsubtitlemenu, SIGNAL (activated (int)),
+                 this, SLOT (subtitleMenuClicked (int)));
+        connect (m_dvdlanguagemenu, SIGNAL (activated (int)),
+                 this, SLOT (languageMenuClicked (int)));
+    }
     connect (m_dvdtitlemenu, SIGNAL (activated (int)),
              this, SLOT (titleMenuClicked (int)));
     connect (m_dvdchaptermenu, SIGNAL (activated (int)),
@@ -1050,12 +1055,14 @@ KDE_NO_EXPORT void KMPlayerDVDSource::deactivate () {
         m_dvdlanguagemenu->clear ();
         m_menu->removeItemAt (m_menu->count () - 1);
         m_menu->removeItemAt (m_menu->count () - 1);
-        m_menu->removeItemAt (m_menu->count () - 1);
-        m_menu->removeItemAt (m_menu->count () - 1);
-        disconnect (m_dvdsubtitlemenu, SIGNAL (activated (int)),
-                    this, SLOT (subtitleMenuClicked (int)));
-        disconnect (m_dvdlanguagemenu, SIGNAL (activated (int)),
-                    this, SLOT (languageMenuClicked (int)));
+        if (!m_player->settings ()->mplayerpost090) {
+            m_menu->removeItemAt (m_menu->count () - 1);
+            m_menu->removeItemAt (m_menu->count () - 1);
+            disconnect (m_dvdsubtitlemenu, SIGNAL (activated (int)),
+                        this, SLOT (subtitleMenuClicked (int)));
+            disconnect (m_dvdlanguagemenu, SIGNAL (activated (int)),
+                        this, SLOT (languageMenuClicked (int)));
+        }
         disconnect (m_dvdtitlemenu, SIGNAL (activated (int)),
                     this, SLOT (titleMenuClicked (int)));
         disconnect (m_dvdchaptermenu, SIGNAL (activated (int)),

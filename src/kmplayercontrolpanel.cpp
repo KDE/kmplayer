@@ -445,7 +445,7 @@ KDE_NO_EXPORT void ControlPanel::timerEvent (QTimerEvent * e) {
                 showPopupMenu ();
         } else if (m_buttons [button_language]->hasMouse() && 
                     !m_languageMenu->isVisible ()) {
-            m_languageMenu->exec (m_buttons [button_language]->mapToGlobal (QPoint (0, maximumSize ().height ())));
+            showLanguageMenu ();
         }
     } else if (e->timerId () == m_popdown_timer) {
         m_popdown_timer = 0;
@@ -491,6 +491,10 @@ void ControlPanel::setAutoControls (bool b) {
 KDE_NO_EXPORT void ControlPanel::showPopupMenu () {
     m_view->updateVolume ();
     m_popupMenu->exec (m_buttons [button_config]->mapToGlobal (QPoint (0, maximumSize ().height ())));
+}
+
+KDE_NO_EXPORT void ControlPanel::showLanguageMenu () {
+    m_languageMenu->exec (m_buttons [button_language]->mapToGlobal (QPoint (0, maximumSize ().height ())));
 }
 
 void ControlPanel::showPositionSlider (bool show) {
@@ -590,7 +594,7 @@ KDE_NO_EXPORT void ControlPanel::buttonClicked () {
     }
     m_popup_clicked = true;
     if (sender () == m_buttons [button_language])
-        m_languageMenu->exec (m_buttons [button_language]->mapToGlobal (QPoint (0, maximumSize ().height ())));
+        showLanguageMenu ();
     else
         showPopupMenu ();
 }

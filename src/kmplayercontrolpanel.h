@@ -138,6 +138,8 @@ public slots:
     void setLanguages (const QStringList & al, const QStringList & sl);
     void selectSubtitle (int id);
     void selectAudioLanguage (int id);
+    void showPopupMenu ();
+    void showLanguageMenu ();
 protected:
     void timerEvent (QTimerEvent * e);
 private slots:
@@ -145,7 +147,6 @@ private slots:
     void buttonClicked ();
     void menuMouseLeft ();
 private:
-    void showPopupMenu ();
     enum { progress_loading, progress_playing } m_progress_mode;
     int m_progress_length;
     int m_popup_timer;
