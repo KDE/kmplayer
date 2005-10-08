@@ -346,8 +346,8 @@ KDE_NO_EXPORT bool MPlayer::play (Source * source, NodePtr node) {
     } else
         m_needs_restarted = false;
     Process::play (source, node);
-    alanglist.clear ();
-    slanglist.clear ();
+    alanglist = 0L;
+    slanglist = 0L;
     m_request_seek = -1;
     QString args = source->options () + ' ';
     KURL url (m_url);
@@ -642,13 +642,37 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
             if (pos > 0)
                 m_source->setAspect (m_mrl, out.mid (pos + 1).replace (',', '.').toFloat ());
         } else if (out.startsWith ("ID_AID_")) {
-            int pos = out.find ('=');
-            if (pos > 0)
-                alanglist.push_back (out.mid (pos + 1));
+            int pos = out.find ('_', 7);
+            if (pos > 0) {
+                int id = out.mid (7, pos - 7).toInt ();
+                pos = out.find ('=', pos);
+                if (pos > 0) {
+                    if (!alanglist_end) {
+                        alanglist = new LangInfo (id, out.mid (pos + 1));
+                        alanglist_end = alanglist;
+                    } else {
+                        alanglist_end->next = new LangInfo (id, out.mid(pos+1));
+                        alanglist_end = alanglist_end->next;
+                    }
+                    kdDebug () << "lang " << id << " " << alanglist_end->name <<endl;
+                }
+            }
         } else if (out.startsWith ("ID_SID_")) {
-            int pos = out.find ('=');
-            if (pos > 0)
-                slanglist.push_back (out.mid (pos + 1));
+            int pos = out.find ('_', 7);
+            if (pos > 0) {
+                int id = out.mid (7, pos - 7).toInt ();
+                pos = out.find ('=', pos);
+                if (pos > 0) {
+                    if (!slanglist_end) {
+                        slanglist = new LangInfo (id, out.mid (pos + 1));
+                        slanglist_end = slanglist;
+                    } else {
+                        slanglist_end->next = new LangInfo (id, out.mid(pos+1));
+                        slanglist_end = slanglist_end->next;
+                    }
+                    kdDebug () << "sid " << id << " " << slanglist_end->name <<endl;
+                }
+            }
         } else {
             QRegExp & m_startRegExp = patterns[MPlayerPreferencesPage::pat_start];
             QRegExp & m_sizeRegExp = patterns[MPlayerPreferencesPage::pat_size];
@@ -668,7 +692,12 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                         }
                         m_source->setIdentified ();
                     }
-                    m_source->setLanguages (alanglist, slanglist);
+                    QStringList alst, slst;
+                    for (SharedPtr <LangInfo> li = alanglist; li; li = li->next)
+                        alst.push_back (li->name);
+                    for (SharedPtr <LangInfo> li = slanglist; li; li = li->next)
+                        slst.push_back (li->name);
+                    m_source->setLanguages (alst, slst);
                     setState (Playing);
                 }
             }
@@ -700,13 +729,21 @@ KDE_NO_EXPORT void MPlayer::processStopped (KProcess * p) {
 }
 
 void MPlayer::setAudioLang (int id, const QString &) {
-    aid = id;
+    SharedPtr <LangInfo> li = alanglist;
+    for (; id > 0 && li; li = li->next)
+        id--;
+    if (li)
+        aid = li->id;
     m_needs_restarted = true;
     sendCommand (QString ("quit"));
 }
 
 void MPlayer::setSubtitle (int id, const QString &) {
-    sid = id;
+    SharedPtr <LangInfo> li = slanglist;
+    for (; id > 0 && li; li = li->next)
+        id--;
+    if (li)
+        sid = li->id;
     m_needs_restarted = true;
     sendCommand (QString ("quit"));
 }

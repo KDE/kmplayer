@@ -164,7 +164,14 @@ private:
     QWidget * m_widget;
     MPlayerPreferencesPage * m_configpage;
     QString m_tmpURL;
-    QStringList alanglist, slanglist;
+    struct LangInfo {
+        LangInfo (int i, const QString & n) : id (i), name (n) {}
+        int id; QString name; SharedPtr <LangInfo> next;
+    };
+    SharedPtr <LangInfo> alanglist;
+    WeakPtr <LangInfo> alanglist_end;
+    SharedPtr <LangInfo> slanglist;
+    WeakPtr <LangInfo> slanglist_end;
     int aid, sid;
     int old_volume;
     bool m_needs_restarted;

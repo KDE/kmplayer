@@ -1013,6 +1013,7 @@ KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
 KDE_NO_EXPORT void KMPlayerDVDSource::activate () {
     m_start_play = m_auto_play;
     m_current_title = -1;
+    setURL (KURL ("dvd://"));
     buildArguments ();
     if (m_start_play)
         QTimer::singleShot (0, m_player, SLOT (play ()));
@@ -1046,9 +1047,11 @@ KDE_NO_EXPORT void KMPlayerDVDSource::deactivate () {
 
 KDE_NO_EXPORT void KMPlayerDVDSource::buildArguments () {
     QString url ("dvd://");
-    if (m_current_title >= 0)
+    if (m_current_title >= 0 && m_document) {
         url += m_dvdtitlemenu->findItem (m_current_title)->text ();
-    setURL (KURL (url));
+        m_document->mrl ()->src = url;
+    } else
+        setURL (KURL (url));
     m_options = QString (m_identified ? "" : "-v ");
     if (m_identified) {
         for (unsigned i = 0; i < m_dvdsubtitlemenu->count (); i++)
