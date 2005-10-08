@@ -340,8 +340,8 @@ KDE_NO_EXPORT bool MPlayer::play (Source * source, NodePtr node) {
         stop ();
     m_source = source;
     initProcess (m_viewer);
+    source->setPosition (0);
     if (!m_needs_restarted) {
-        source->setPosition (0);
         aid = sid = -1;
     } else
         m_needs_restarted = false;
@@ -691,10 +691,9 @@ KDE_NO_EXPORT void MPlayer::processStopped (KProcess * p) {
         }
         if (m_source && m_needs_restarted) {
             commands.clear ();
+            int pos = m_source->position ();
             play (m_source, m_mrl);
-            QString cmd;
-            cmd.sprintf ("seek %d 2", m_source->position () / 10);
-            sendCommand (cmd);
+            seek (pos, true);
         } else
             MPlayerBase::processStopped (p);
     }
