@@ -167,6 +167,7 @@ private:
     QStringList alanglist, slanglist;
     int aid, sid;
     int old_volume;
+    bool m_needs_restarted;
 };
 
 /*

@@ -228,7 +228,6 @@ KDE_NO_CDTOR_EXPORT MPlayerBase::~MPlayerBase () {
 
 KDE_NO_EXPORT void MPlayerBase::initProcess (Viewer * viewer) {
     Process::initProcess (viewer);
-    commands.clear ();
     const KURL & url (m_source->url ());
     if (!url.isEmpty ()) {
         QString proxy_url;
@@ -272,6 +271,7 @@ KDE_NO_EXPORT bool MPlayerBase::stop () {
     if (m_process->isRunning ())
         Process::stop ();
     processStopped (0L);
+    commands.clear ();
     return true;
 }
 
@@ -310,7 +310,8 @@ KDE_NO_CDTOR_EXPORT MPlayer::MPlayer (QObject * parent, Settings * settings)
  : MPlayerBase (parent, settings, "mplayer"),
    m_widget (0L),
    m_configpage (new MPlayerPreferencesPage (this)),
-   aid (0), sid (0) {
+   aid (-1), sid (-1),
+   m_needs_restarted (false) {
        m_supported_sources = mplayer_supports;
     m_settings->addPage (m_configpage);
 }
@@ -335,13 +336,18 @@ KDE_NO_EXPORT WId MPlayer::widget () {
 KDE_NO_EXPORT bool MPlayer::play (Source * source, NodePtr node) {
     if (playing ())
         return sendCommand (QString ("gui_play"));
-    stop ();
+    if (!m_needs_restarted)
+        stop ();
     m_source = source;
     initProcess (m_viewer);
+    if (!m_needs_restarted) {
+        source->setPosition (0);
+        aid = sid = -1;
+    } else
+        m_needs_restarted = false;
+    Process::play (source, node);
     alanglist.clear ();
     slanglist.clear ();
-    Process::play (source, node);
-    source->setPosition (0);
     m_request_seek = -1;
     QString args = source->options () + ' ';
     KURL url (m_url);
@@ -512,6 +518,16 @@ bool MPlayer::run (const char * args, const char * pipe) {
     fprintf (stderr, " -saturation %d", m_settings->saturation);
     *m_process << " -saturation " << QString::number(m_settings->saturation);
 
+    if (aid > -1) {
+        fprintf (stderr, " -aid %d", aid);
+        *m_process << " -aid " << QString::number (aid);
+    }
+
+    if (sid > -1) {
+        fprintf (stderr, " -sid %d", sid);
+        *m_process << " -sid " << QString::number (sid);
+    }
+
     fprintf (stderr, " %s\n", args);
     *m_process << " " << args;
 
@@ -673,16 +689,27 @@ KDE_NO_EXPORT void MPlayer::processStopped (KProcess * p) {
                 m_tmpURL.truncate (0);
             }
         }
-        MPlayerBase::processStopped (p);
+        if (m_source && m_needs_restarted) {
+            commands.clear ();
+            play (m_source, m_mrl);
+            QString cmd;
+            cmd.sprintf ("seek %d 2", m_source->position () / 10);
+            sendCommand (cmd);
+        } else
+            MPlayerBase::processStopped (p);
     }
 }
 
 void MPlayer::setAudioLang (int id, const QString &) {
     aid = id;
+    m_needs_restarted = true;
+    sendCommand (QString ("quit"));
 }
 
 void MPlayer::setSubtitle (int id, const QString &) {
     sid = id;
+    m_needs_restarted = true;
+    sendCommand (QString ("quit"));
 }
 
 //-----------------------------------------------------------------------------
