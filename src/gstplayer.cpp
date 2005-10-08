@@ -61,6 +61,7 @@ static const int            event_finished = QEvent::User;
 static const int            event_playing = QEvent::User + 1;
 static const int            event_size = QEvent::User + 2;
 static QString              mrl;
+static QString              sub_mrl;
 static const char          *ao_driver;
 static const char          *vo_driver;
 static GstElement * gst_elm_play, * videosink, * audiosink;
@@ -210,7 +211,8 @@ void Backend::setURL (QString url) {
     mrl = url;
 }
 
-void Backend::setSubTitleURL (QString) {
+void Backend::setSubTitleURL (QString url) {
+    sub_mrl = url;
 }
 
 void Backend::play () {
@@ -351,7 +353,7 @@ void KGStreamerPlayer::play () {
     fprintf (stderr, "play %s\n", mrl.ascii ());
     if (mrl.isEmpty ())
         return;
-    gchar *uri;
+    gchar *uri, *sub_uri = 0L;
     movie_length = movie_width = movie_height = 0;
     mutex.lock ();
     gst_elm_play = gst_element_factory_make ("playbin", "player");
@@ -397,6 +399,13 @@ void KGStreamerPlayer::play () {
         mrl = QString ("file://") + mrl;
     uri = g_strdup (mrl.local8Bit ());
     g_object_set (gst_elm_play, "uri", uri, NULL);
+    if (!sub_mrl.isEmpty ()) {
+        if (sub_mrl.startsWith (QChar ('/')))
+            sub_mrl = QString ("file://") + sub_mrl;
+        sub_uri = g_strdup (sub_mrl.local8Bit ());
+        g_object_set (gst_elm_play, "suburi", sub_uri, NULL);
+        g_free (sub_uri);
+    }
     gst_element_set_state (gst_elm_play, GST_STATE_PLAYING);
     mutex.unlock ();
 
