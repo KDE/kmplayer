@@ -50,6 +50,7 @@ class RecorderPage;                     // base recorder
 class PrefMEncoderPage;         // mencoder
 class PrefMPlayerDumpstreamPage; // mplayer -dumpstream
 class PrefFFMpegPage;           // ffmpeg
+class PrefGeneralPageLooks; 	// general, looks
 class PrefGeneralPageOutput;	// general, output
 class PrefOPPageGeneral;	// OP = outputplugins, general
 class PrefOPPagePostProc;	// outputplugins, postproc
@@ -75,6 +76,7 @@ public:
     PrefMEncoderPage            *m_MEncoderPage;
     PrefMPlayerDumpstreamPage   *m_MPlayerDumpstreamPage;
     PrefFFMpegPage              *m_FFMpegPage;
+    PrefGeneralPageLooks 	*m_GeneralPageLooks;
     PrefGeneralPageOutput 	*m_GeneralPageOutput;
     PrefOPPageGeneral 		*m_OPPageGeneral;
     PrefOPPagePostProc		*m_OPPagePostproc;
@@ -109,6 +111,13 @@ public:
     QCheckBox *adjustvolume;
 
     QSpinBox *seekTime;
+};
+
+class PrefGeneralPageLooks : public QFrame {
+    Q_OBJECT
+public:
+    PrefGeneralPageLooks (QWidget *parent, Settings *);
+    ~PrefGeneralPageLooks () {}
     QComboBox *colorscombo;
     KColorButton *colorbutton;
     QComboBox *fontscombo;

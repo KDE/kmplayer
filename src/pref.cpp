@@ -78,6 +78,8 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     vlay->addWidget (tab);
     m_GeneralPageGeneral = new PrefGeneralPageGeneral (tab, settings);
     tab->insertTab (m_GeneralPageGeneral, i18n("General"));
+    m_GeneralPageLooks = new PrefGeneralPageLooks (tab, settings);
+    tab->insertTab (m_GeneralPageLooks, i18n("Looks"));
     m_GeneralPageOutput = new PrefGeneralPageOutput
         (tab, settings->audiodrivers, settings->videodrivers);
     tab->insertTab (m_GeneralPageOutput, i18n("Output"));
@@ -192,9 +194,8 @@ KDE_NO_EXPORT void Preferences::removePrefPage(PreferencesPage * page) {
 KDE_NO_CDTOR_EXPORT Preferences::~Preferences() {
 }
 
-KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *parent, Settings * settings)
-: QFrame (parent, "GeneralPage"),
-  colors (settings->colors), fonts (settings->fonts)
+KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *parent, Settings *)
+: QFrame (parent, "GeneralPage")
 {
     QVBoxLayout *layout = new QVBoxLayout(this, 5, 2);
 
@@ -251,7 +252,20 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
     seekLayout->addItem(new QSpacerItem(0,0,QSizePolicy::Minimum, QSizePolicy::Minimum));
     gridlayout->addMultiCellLayout (seekLayout, 2, 2, 0, 1);
 
-    QGroupBox *colorbox=new QGroupBox(2,Qt::Horizontal,i18n("Colors"),this);
+    layout->addWidget (windowbox);
+    layout->addWidget (playbox);
+    layout->addWidget (gbox);
+    //layout->addWidget(autoHideSlider);
+    layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+}
+
+KDE_NO_CDTOR_EXPORT PrefGeneralPageLooks::PrefGeneralPageLooks (QWidget *parent, Settings * settings)
+ : QFrame (parent, "LooksPage"),
+   colors (settings->colors),
+   fonts (settings->fonts) {
+    QVBoxLayout *layout = new QVBoxLayout(this, 5, 2);
+
+    QGroupBox *colorbox= new QGroupBox(2, Qt::Horizontal, i18n("Colors"), this);
     colorscombo = new QComboBox (colorbox);
     for (int i = 0; i < int (ColorSetting::last_target); i++)
         colorscombo->insertItem (colors[i].title);
@@ -275,31 +289,27 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
     fontbutton->setFont (fonts[0].font);
     connect (fontbutton, SIGNAL (clicked ()), this, SLOT (fontClicked ()));
 
-    layout->addWidget (windowbox);
-    layout->addWidget (playbox);
-    layout->addWidget (gbox);
-    //layout->addWidget(autoHideSlider);
     layout->addWidget (colorbox);
     layout->addWidget (fontbox);
     layout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
-KDE_NO_EXPORT void PrefGeneralPageGeneral::colorItemChanged (int c) {
+KDE_NO_EXPORT void PrefGeneralPageLooks::colorItemChanged (int c) {
     if (c < int (ColorSetting::last_target))
         colorbutton->setColor (colors[c].newcolor);
 }
 
-KDE_NO_EXPORT void PrefGeneralPageGeneral::colorCanged (const QColor & c) {
+KDE_NO_EXPORT void PrefGeneralPageLooks::colorCanged (const QColor & c) {
     if (colorscombo->currentItem () < int (ColorSetting::last_target))
         colors[colorscombo->currentItem ()].newcolor = c;
 }
 
-KDE_NO_EXPORT void PrefGeneralPageGeneral::fontItemChanged (int f) {
+KDE_NO_EXPORT void PrefGeneralPageLooks::fontItemChanged (int f) {
     if (f < int (FontSetting::last_target))
         fontbutton->setFont (fonts[f].newfont);
 }
 
-KDE_NO_EXPORT void PrefGeneralPageGeneral::fontClicked () {
+KDE_NO_EXPORT void PrefGeneralPageLooks::fontClicked () {
     if (fontscombo->currentItem () < int (FontSetting::last_target)) {
         QFont myfont = fonts [fontscombo->currentItem ()].newfont;
         int res = KFontDialog::getFont (myfont, false, this);
