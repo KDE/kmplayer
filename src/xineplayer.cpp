@@ -106,6 +106,7 @@ static const int            event_title = QEvent::User + 5;
 static QString mrl;
 static QString sub_mrl;
 static QString alang, slang;
+static QStringList alanglist, slanglist;
 
 static QString elmentry ("entry");
 static QString elmitem ("item");
@@ -137,15 +138,15 @@ static void frame_output_cb(void * /*data*/, int /*video_width*/, int /*video_he
         double *dest_pixel_aspect, int *win_x, int *win_y) {
     if (running && firstframe) {
         firstframe = 0;
-       /* int pos;
+        int pos;
         fprintf(stderr, "first frame\n");
         mutex.lock ();
         xine_get_pos_length (stream, 0, &pos, &movie_length);
         movie_width = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_WIDTH);
         movie_height = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_HEIGHT);
         mutex.unlock ();
-        QApplication::postEvent (xineapp, new XineMovieParamEvent (movie_length, movie_width, movie_height, true));
-        */
+        QApplication::postEvent (xineapp, new XineMovieParamEvent (movie_length, movie_width, movie_height, alanglist, slanglist, true));
+        
     }
 
     *dest_x            = 0;
@@ -201,19 +202,21 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
             }
             break;
         case XINE_EVENT_UI_CHANNELS_CHANGED: {
-            fprintf (stderr, "Channel changed event\n");
+            fprintf (stderr, "Channel changed event %d\n", firstframe);
             mutex.lock ();
             int w = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_WIDTH);
             int h = xine_get_stream_info(stream, XINE_STREAM_INFO_VIDEO_HEIGHT);
             int pos, l, nr;
             xine_get_pos_length (stream, 0, &pos, &l);
             char * langstr = new char [66];
-            QStringList alanglist, slanglist;
+            alanglist.clear ();
+            slanglist.clear ();
 
             nr =xine_get_stream_info(stream,XINE_STREAM_INFO_MAX_AUDIO_CHANNEL);
             // if nrch > 25) nrch = 25
             for (int i = 0; i < nr; ++i) {
-                xine_get_audio_lang (stream, i, langstr);
+                if (!xine_get_audio_lang (stream, i, langstr))
+                    continue;
                 QString ls = QString::fromLocal8Bit (langstr).stripWhiteSpace();
                 if (ls.isEmpty ())
                     continue;
@@ -225,7 +228,8 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
             nr = xine_get_stream_info(stream, XINE_STREAM_INFO_MAX_SPU_CHANNEL);
             // if nrch > 25) nrch = 25
             for (int i = 0; i < nr; ++i) {
-                xine_get_spu_lang (stream, i, langstr);
+                if (!xine_get_spu_lang (stream, i, langstr))
+                    continue;
                 QString ls = QString::fromLocal8Bit (langstr).stripWhiteSpace();
                 if (ls.isEmpty ())
                     continue;
