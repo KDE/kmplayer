@@ -606,9 +606,11 @@ KDE_NO_EXPORT void KMPlayerApp::minimalMode (bool by_user) {
     }
     m_view->viewArea ()->minimalMode ();
     if (by_user) {
+        QRect rect = m_view->viewArea ()->topWindowRect ();
         hide ();
         QTimer::singleShot (0, this, SLOT (zoom100 ()));
         show ();
+        move (rect.x (), rect.y ());
     }
     m_minimal_mode = !m_minimal_mode;
 }

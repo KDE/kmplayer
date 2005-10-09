@@ -129,6 +129,8 @@ KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {
 }
 
 KDE_NO_EXPORT void ViewArea::fullScreen () {
+    killTimers ();
+    m_mouse_invisible_timer = m_repaint_timer = 0;
     if (m_fullscreen) {
         showNormal ();
         reparent (m_parent, 0, QPoint (0, 0), true);
@@ -171,6 +173,8 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
 
 void ViewArea::minimalMode () {
     m_minimal = !m_minimal;
+    killTimers ();
+    m_mouse_invisible_timer = m_repaint_timer = 0;
     if (m_minimal) {
         m_view->setViewOnly ();
         m_view->setControlPanelMode (KMPlayer::View::CP_AutoHide);
@@ -181,6 +185,7 @@ void ViewArea::minimalMode () {
         m_view->setNoInfoMessages (false);
         m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (playlist_xpm)));
     }
+    m_topwindow_rect = topLevelWidget ()->geometry ();
 }
 
 KDE_NO_EXPORT void ViewArea::accelActivated () {
@@ -959,6 +964,7 @@ void View::toggleVideoConsoleWindow () {
 
 void View::setControlPanelMode (ControlPanelMode m) {
     killTimer (controlbar_timer);
+    controlbar_timer = 0L;
     m_old_controlpanel_mode = m_controlpanel_mode = m;
     if (m_playing && isFullScreen())
         m_controlpanel_mode = CP_AutoHide;

@@ -236,17 +236,17 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
             }
             delete langstr;
             mutex.unlock ();
-            if (w > 0 && h > 0) {
-                movie_width = w;
-                movie_height = h;
-                movie_length = l;
-                QApplication::postEvent (xineapp, new XineMovieParamEvent (l, w, h, alanglist, slanglist));
-                if (window_created) {
-                    XLockDisplay (display);
-                    XResizeWindow (display, wid, movie_width, movie_height);
-                    XFlush (display);
-                    XUnlockDisplay (display);
-                }
+            movie_width = w;
+            movie_height = h;
+            movie_length = l;
+            QApplication::postEvent (xineapp, new XineMovieParamEvent (l, w, h, alanglist, slanglist, firstframe));
+            if (running && firstframe)
+                firstframe = 0;
+            if (window_created && w > 0 && h > 0) {
+                XLockDisplay (display);
+                XResizeWindow (display, wid, movie_width, movie_height);
+                XFlush (display);
+                XUnlockDisplay (display);
             }
             break;
         }
