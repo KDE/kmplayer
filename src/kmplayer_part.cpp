@@ -250,6 +250,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
             } else if (name == QString::fromLatin1 ("autostart")) {
                 urlsource->setAutoPlay (getBoolValue (value));
 	    }
+            if (!name.startsWith (QString::fromLatin1 ("__khtml__")))
+                convertNode <KMPlayer::Element> (urlsource->document ())->setAttribute (name, value);
         }
     }
     //KParts::Part::setWidget (m_view);
@@ -464,8 +466,8 @@ KDE_NO_EXPORT void KMPlayerPart::connectToPart (KMPlayerPart * m) {
             this, SLOT (viewerPartSourceChanged (KMPlayer::Source *, KMPlayer::Source *)));
 }
 
-KDE_NO_EXPORT void KMPlayerPart::loaded (int percentage) {
-    PartBase::loaded (percentage);
+KDE_NO_EXPORT void KMPlayerPart::setLoaded (int percentage) {
+    PartBase::setLoaded (percentage);
     if (percentage < 100) {
         m_browserextension->setLoadingProgress (percentage);
         m_browserextension->infoMessage

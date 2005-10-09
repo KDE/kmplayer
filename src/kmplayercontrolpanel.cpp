@@ -556,8 +556,11 @@ KDE_NO_EXPORT void ControlPanel::setRecording (bool record) {
         m_buttons[button_record]->toggle ();
 }
 
-KDE_NO_EXPORT void ControlPanel::setPlayingProgress (int pos) {
+KDE_NO_EXPORT void ControlPanel::setPlayingProgress (int pos, int len) {
     m_posSlider->setEnabled (false);
+    m_progress_length = len;
+    if (len > 0 && !m_posSlider->isVisible ())
+        showPositionSlider (true);
     if (m_progress_mode != progress_playing) {
         m_posSlider->setMaxValue (m_progress_length);
         m_progress_mode = progress_playing;
@@ -577,14 +580,6 @@ KDE_NO_EXPORT void ControlPanel::setLoadingProgress (int pos) {
         m_progress_mode = progress_loading;
     }
     m_posSlider->setValue (pos);
-}
-
-KDE_NO_EXPORT void ControlPanel::setPlayingLength (int len) {
-    m_posSlider->setEnabled (false);
-    m_progress_length = len;
-    m_posSlider->setMaxValue (m_progress_length);
-    m_progress_mode = progress_playing;
-    m_posSlider->setEnabled (true);
 }
 
 KDE_NO_EXPORT void ControlPanel::buttonClicked () {

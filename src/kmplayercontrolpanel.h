@@ -114,9 +114,6 @@ public:
     void enableRecordButtons (bool enable);
     void setPlaying (bool play);
     void setRecording (bool record);
-    void setPlayingProgress (int pos);
-    void setLoadingProgress (int pos);
-    void setPlayingLength (int len);
     void setAutoControls (bool b);
     KDE_NO_EXPORT bool autoControls () const { return m_auto_controls; }
     KDE_NO_EXPORT QSlider * positionSlider () const { return m_posSlider; }
@@ -140,6 +137,8 @@ public slots:
     void selectAudioLanguage (int id);
     void showPopupMenu ();
     void showLanguageMenu ();
+    void setPlayingProgress (int position, int length);
+    void setLoadingProgress (int pos);
 protected:
     void timerEvent (QTimerEvent * e);
 private slots:

@@ -97,7 +97,7 @@ public:
     virtual void stateChange (Process *, Process::State os, Process::State ns);
     KDE_NO_EXPORT void setAutoPlay (bool b) { m_auto_play = b; }
     void setTitle (const QString & title);
-    void setLoading (int percentage) { emit loaded (percentage); }
+    void setLoading (int percentage);
 
     virtual QString prettyName ();
 signals:
@@ -111,15 +111,6 @@ signals:
     void endOfPlayItems ();
     void dimensionsChanged ();
     void titleChanged (const QString & title);
-    void loaded (int percentage);
-    /**
-     * Movie position changed
-     */
-    void positioned (int pos);
-    /**
-     * Length of movie determined
-     */
-    void lengthFound (int len);
 public slots:
     virtual void activate () = 0;
     virtual void deactivate () = 0;

@@ -158,6 +158,8 @@ public slots:
     void volumeChanged (int);
     void increaseVolume ();
     void decreaseVolume ();
+    void setPosition (int position, int length);
+    virtual void setLoaded (int percentage);
 public:
     virtual bool isSeekable (void) const;
     virtual unsigned long position (void) const;
@@ -178,6 +180,7 @@ signals:
     void languagesUpdated(const QStringList & alang, const QStringList & slang);
     void audioIsSelected (int id);
     void subtitleIsSelected (int id);
+    void positioned (int pos, int length);
 protected:
     bool openFile();
     virtual void timerEvent (QTimerEvent *);
@@ -190,9 +193,6 @@ protected slots:
     void hueValueChanged (int val);
     void saturationValueChanged (int val);
     void sourceHasChangedDimensions ();
-    void positioned (int pos);
-    void lengthFound (int len);
-    virtual void loaded (int percentage);
     void fullScreen ();
     void playListItemSelected (QListViewItem *);
     virtual void playingStarted ();

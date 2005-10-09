@@ -136,6 +136,7 @@ public:
     void connectToPart (KMPlayerPart *);
     KMPlayerPart * master () const { return m_master; }
     void setMaster (KMPlayerPart * m) { m_master = m; }
+    virtual void setLoaded (int percentage);
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool closeURL ();
@@ -143,7 +144,6 @@ public slots:
 protected slots:
     virtual void playingStarted ();
     virtual void playingStopped ();
-    virtual void loaded (int percentage);
     void viewerPartDestroyed (QObject *);
     void viewerPartProcessChanged (const char *);
     void viewerPartSourceChanged (KMPlayer::Source *, KMPlayer::Source *);

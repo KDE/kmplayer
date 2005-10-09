@@ -187,6 +187,8 @@ void PartBase::connectPanel (ControlPanel * panel) {
     connect (panel->positionSlider (), SIGNAL (valueChanged (int)), this, SLOT (positionValueChanged (int)));
     connect (panel->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
     connect (panel->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
+    connect (this, SIGNAL (positioned (int, int)), panel, SLOT (setPlayingProgress (int, int)));
+    connect (this, SIGNAL (loading(int)), panel, SLOT(setLoadingProgress(int)));
     connect (panel->contrastSlider (), SIGNAL (valueChanged(int)), this, SLOT (contrastValueChanged(int)));
     connect (panel->brightnessSlider (), SIGNAL (valueChanged(int)), this, SLOT (brightnessValueChanged(int)));
     connect (panel->hueSlider (), SIGNAL (valueChanged(int)), this, SLOT (hueValueChanged(int)));
@@ -334,26 +336,17 @@ void PartBase::connectSource (Source * old_source, Source * source) {
         disconnect (old_source, SIGNAL(endOfPlayItems ()), this, SLOT(stop ()));
         disconnect (old_source, SIGNAL (dimensionsChanged ()),
                     this, SLOT (sourceHasChangedDimensions ()));
-        disconnect (old_source, SIGNAL (positioned (int)),
-                    this, SLOT (positioned (int)));
-        disconnect (old_source, SIGNAL (lengthFound (int)),
-                    this, SLOT (lengthFound (int)));
         disconnect (old_source, SIGNAL (startPlaying ()),
                     this, SLOT (playingStarted ()));
         disconnect (old_source, SIGNAL (stopPlaying ()),
                     this, SLOT (playingStopped ()));
-        disconnect (old_source, SIGNAL (loaded (int)),
-                    this, SLOT (loaded (int)));
     }
     if (source) {
         connect (source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
         connect (source, SIGNAL (dimensionsChanged ()),
                 this, SLOT (sourceHasChangedDimensions ()));
-        connect (source, SIGNAL (positioned(int)), this, SLOT(positioned(int)));
-        connect (source, SIGNAL (lengthFound(int)),this,SLOT(lengthFound(int)));
         connect (source, SIGNAL (startPlaying()), this, SLOT(playingStarted()));
         connect (source, SIGNAL (stopPlaying ()), this, SLOT(playingStopped()));
-        connect (source, SIGNAL (loaded (int)), this, SLOT (loaded (int)));
     }
 }
 
@@ -535,20 +528,13 @@ void PartBase::playingStopped () {
     m_bPosSliderPressed = false;
 }
 
-KDE_NO_EXPORT void PartBase::positioned (int pos) {
+KDE_NO_EXPORT void PartBase::setPosition (int position, int length) {
     if (m_view && !m_bPosSliderPressed)
-        m_view->controlPanel ()->setPlayingProgress (pos);
+        emit positioned (position, length);
 }
 
-void PartBase::loaded (int percentage) {
-    if (m_view && !m_bPosSliderPressed)
-        m_view->controlPanel ()->setLoadingProgress (percentage);
+void PartBase::setLoaded (int percentage) {
     emit loading (percentage);
-}
-
-void PartBase::lengthFound (int len) {
-    if (!m_view) return;
-    m_view->controlPanel ()->setPlayingLength (len);
 }
 
 unsigned long PartBase::position () const {
@@ -841,12 +827,16 @@ void Source::setAspect (NodePtr node, float a) {
 
 void Source::setLength (NodePtr, int len) {
     m_length = len;
-    emit lengthFound (len);
+    m_player->setPosition (m_position, m_length);
 }
 
 KDE_NO_EXPORT void Source::setPosition (int pos) {
     m_position = pos;
-    emit positioned (pos);
+    m_player->setPosition (pos, m_length);
+}
+
+KDE_NO_EXPORT void Source::setLoading (int percentage) {
+    m_player->setLoaded (percentage);
 }
 
 /*
@@ -865,7 +855,8 @@ void Source::setURL (const KURL & url) {
     m_url = url;
     m_back_request = 0L;
     if (m_document && !m_document->hasChildNodes () &&
-            (m_document->mrl()->src.isEmpty () || m_document->mrl()->src == url.url ()))
+            (m_document->mrl()->src.isEmpty () ||
+             m_document->mrl()->src == url.url ()))
         // special case, mime is set first by plugin FIXME v
         m_document->mrl()->src = url.url ();
     else {
