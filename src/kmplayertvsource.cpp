@@ -167,9 +167,9 @@ KDE_NO_EXPORT void KMPlayerPrefSourcePageTVDevice::updateTVDevice () {
             QTable * table = static_cast <QTable *> (widget->child ("PageTVChannels", "QTable"));
             if (table) {
                 input->clearChildren ();
-                KMPlayer::NodePtr doc = device->document ()->self ();
+                KMPlayer::NodePtr doc = device->document ();
                 for (int j = 0; j<table->numRows() && table->item (j, 1); ++j) {
-                    input->appendChild ((new TVChannel (doc, table->item (j, 0)->text (), table->item (j, 1)->text ().toInt ()))->self());
+                    input->appendChild (new TVChannel (doc, table->item (j, 0)->text (), table->item (j, 1)->text ().toInt ()));
                 }
             }
             QComboBox * norms = static_cast <QComboBox *> (widget->child ("PageTVNorm", "QComboBox"));
@@ -254,9 +254,9 @@ KDE_NO_CDTOR_EXPORT TVInput::TVInput (KMPlayer::NodePtr & d) : TVNode (d, QStrin
 KDE_NO_EXPORT KMPlayer::NodePtr TVInput::childFromTag (const QString & tag) {
     // kdDebug () << nodeName () << " childFromTag " << tag << endl;
     if (tag == QString::fromLatin1 ("channel")) {
-        return (new TVChannel (m_doc))->self ();
+        return new TVChannel (m_doc);
     } else
-        return KMPlayer::NodePtr ();
+        return 0L;
 }
 
 KDE_NO_EXPORT void TVInput::closed () {
@@ -276,9 +276,8 @@ KDE_NO_CDTOR_EXPORT TVDevice::TVDevice (KMPlayer::NodePtr & doc)
 KDE_NO_EXPORT KMPlayer::NodePtr TVDevice::childFromTag (const QString & tag) {
     // kdDebug () << nodeName () << " childFromTag " << tag << endl;
     if (tag == QString::fromLatin1 ("input"))
-        return (new TVInput (m_doc))->self ();
-    else
-        return KMPlayer::NodePtr ();
+        return new TVInput (m_doc);
+    return 0L;
 }
 
 KDE_NO_EXPORT void TVDevice::closed () {
@@ -297,11 +296,10 @@ TVDocument::TVDocument (KMPlayerTVSource * source)
 KDE_NO_EXPORT KMPlayer::NodePtr TVDocument::childFromTag (const QString & tag) {
     // kdDebug () << nodeName () << " childFromTag " << tag << endl;
     if (tag == QString::fromLatin1 ("device"))
-        return (new TVDevice (m_doc))->self ();
+        return new TVDevice (m_doc);
     else if (tag == QString::fromLatin1 ("tvdevices"))
-        return (new TVDocument (m_source))->self ();
-    else
-        return KMPlayer::NodePtr ();
+        return new TVDocument (m_source);
+    return 0L;
 }
 
 //-----------------------------------------------------------------------------
@@ -310,7 +308,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QPopupM
     : KMPlayerMenuSource (i18n ("TV"), a, m, "tvsource"), m_configpage (0L), scanner (0L), config_read (false) {
     m_menu->insertTearOffHandle ();
     connect (m_menu, SIGNAL (aboutToShow ()), this, SLOT (menuAboutToShow ()));
-    m_document = (new TVDocument (this))->self ();
+    m_document = new TVDocument (this);
     m_player->settings ()->addPage (this);
 }
 
@@ -470,7 +468,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::readXML () {
     QString tvxml = locateLocal ("data", "kmplayer/tv.xml");
     QFile file (tvxml);
     if (file.exists ()) {
-        KMPlayer::NodePtr doc = (new TVDocument (this))->self ();
+        KMPlayer::NodePtr doc = new TVDocument (this);
         file.open (IO_ReadOnly);
         QTextStream inxml (&file);
         KMPlayer::readXML (doc, inxml, QString::null);
@@ -488,7 +486,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::readXML () {
         for (int i = 0; i < deviceentries; i++) {
             kcfg->setGroup (devlist.at (i));
             TVDevice * device = new TVDevice (m_document, devlist.at (i));
-            m_document->appendChild (device->self ());
+            m_document->appendChild (device);
             QSize size = kcfg->readSizeEntry ("Size");
             device->setAttribute ("width", QString::number (size.width ()));
             device->setAttribute ("height", QString::number (size.height ()));
@@ -514,7 +512,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::readXML () {
                     continue;
                 }
                 TVInput * input = new TVInput (m_document, inputstr.mid (pos + 1), inputstr.left (pos).toInt ());
-                device->appendChild (input->self ());
+                device->appendChild (input);
                 QStrList freqlist;
                 int freqentries = kcfg->readListEntry(input->getAttribute ("name"), freqlist,';');
                 if (freqentries > 0) {
@@ -528,7 +526,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::readXML () {
                         kdWarning () << "Wrong frequency or none defined: " << freqstr << endl;
                         continue;
                     }
-                    input->appendChild ((new TVChannel (m_document, freqstr.left (pos), freqstr.mid (pos+1).toInt ()))->self ());
+                    input->appendChild (new TVChannel (m_document, freqstr.left (pos), freqstr.mid (pos+1).toInt ()));
                     kdDebug() << freqstr.left (pos) << " at " << freqstr.mid (pos+1).toInt() << endl;
                 }
             }
@@ -610,7 +608,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::slotScanFinished (TVDevice * tvdevice) {
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::addTVDevicePage(TVDevice *dev, bool show) {
-    KMPlayerPrefSourcePageTVDevice * devpage = new KMPlayerPrefSourcePageTVDevice (m_configpage->tab, dev->self ());
+    KMPlayerPrefSourcePageTVDevice * devpage = new KMPlayerPrefSourcePageTVDevice (m_configpage->tab, dev);
     m_configpage->tab->insertTab (devpage, dev->pretty_name);
     connect (devpage, SIGNAL (deleted (KMPlayerPrefSourcePageTVDevice *)),
              this, SLOT (slotDeviceDeleted (KMPlayerPrefSourcePageTVDevice *)));
@@ -653,7 +651,7 @@ KDE_NO_EXPORT bool TVDeviceScannerSource::processOutput (const QString & line) {
                                        m_inputRegExp.cap (1).toInt ());
         if (m_inputRegExp.cap (3).toInt () == 1)
             input->setAttribute ("tuner", "1");
-        m_tvdevice->appendChild (input->self ());
+        m_tvdevice->appendChild (input);
         kdDebug() << "Input " << input->mrl ()->pretty_name << endl;
     } else
         return false;
@@ -678,7 +676,7 @@ KDE_NO_EXPORT bool TVDeviceScannerSource::scan (const QString & dev, const QStri
     setURL (KURL ("tv://"));
     KMPlayer::NodePtr doc = m_tvsource->document ();
     m_tvdevice = new TVDevice (doc, dev);
-    m_tvsource->document ()->appendChild (m_tvdevice->self ());
+    m_tvsource->document ()->appendChild (m_tvdevice);
     m_tvdevice->zombie = true; // not for real yet
     m_driver = dri;
     m_old_source = m_tvsource->player ()->source ();
@@ -698,7 +696,7 @@ KDE_NO_EXPORT void TVDeviceScannerSource::deactivate () {
     kdDebug () << "TVDeviceScannerSource::deactivate" << endl;
     if (m_tvdevice) {
         if (m_tvdevice->parentNode ())
-            m_tvdevice->parentNode ()->removeChild (m_tvdevice->self ());
+            m_tvdevice->parentNode ()->removeChild (m_tvdevice);
         m_tvdevice = 0L;
         emit scanFinished (m_tvdevice);
     }
@@ -723,7 +721,7 @@ KDE_NO_EXPORT void TVDeviceScannerSource::stateChange (KMPlayer::Process * p, KM
         TVDevice * dev = 0L;
         kdDebug () << "scanning done " << m_tvdevice->hasChildNodes () << endl;
         if (!m_tvdevice->hasChildNodes ())
-            m_tvsource->document ()->removeChild (m_tvdevice->self ());
+            m_tvsource->document ()->removeChild (m_tvdevice);
         else
             dev = m_tvdevice;
         m_tvdevice = 0L;

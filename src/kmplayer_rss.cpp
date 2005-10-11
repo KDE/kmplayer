@@ -24,16 +24,16 @@ using namespace KMPlayer;
 
 NodePtr RSS::Rss::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "channel"))
-        return (new RSS::Channel (m_doc))->self ();
-    return NodePtr ();
+        return new RSS::Channel (m_doc);
+    return 0L;
 }
 
 NodePtr RSS::Channel::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "item"))
-        return (new RSS::Item (m_doc))->self ();
+        return new RSS::Item (m_doc);
     else if (!strcmp (tag.latin1 (), "title"))
-        return (new DarkNode (m_doc, tag, id_node_title))->self ();
-    return NodePtr ();
+        return new DarkNode (m_doc, tag, id_node_title);
+    return 0L;
 }
 
 void RSS::Channel::closed () {
@@ -51,12 +51,12 @@ bool RSS::Channel::expose () const {
 
 NodePtr RSS::Item::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "enclosure"))
-        return (new RSS::Enclosure (m_doc))->self ();
+        return new RSS::Enclosure (m_doc);
     else if (!strcmp (tag.latin1 (), "title"))
-        return (new DarkNode (m_doc, tag, id_node_title))->self ();
+        return new DarkNode (m_doc, tag, id_node_title);
     else if (!strcmp (tag.latin1 (), "description"))
-        return (new DarkNode (m_doc, tag, id_node_description))->self ();
-    return NodePtr ();
+        return new DarkNode (m_doc, tag, id_node_description);
+    return 0L;
 }
 
 void RSS::Item::closed () {

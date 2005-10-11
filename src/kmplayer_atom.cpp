@@ -24,12 +24,12 @@ using namespace KMPlayer;
 
 NodePtr ATOM::Feed::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "entry"))
-        return (new ATOM::Entry (m_doc))->self ();
+        return new ATOM::Entry (m_doc);
     else if (!strcmp (tag.latin1 (), "link"))
-        return (new ATOM::Link (m_doc))->self ();
+        return new ATOM::Link (m_doc);
     else if (!strcmp (tag.latin1 (), "title"))
-        return (new DarkNode (m_doc, tag, id_node_title))->self ();
-    return NodePtr ();
+        return new DarkNode (m_doc, tag, id_node_title);
+    return 0L;
 }
 
 void ATOM::Feed::closed () {
@@ -42,14 +42,14 @@ void ATOM::Feed::closed () {
 
 NodePtr ATOM::Entry::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "link"))
-        return (new ATOM::Link (m_doc))->self ();
+        return new ATOM::Link (m_doc);
     else if (!strcmp (tag.latin1 (), "content"))
-        return (new ATOM::Content (m_doc))->self ();
+        return new ATOM::Content (m_doc);
     else if (!strcmp (tag.latin1 (), "title"))
-        return (new DarkNode (m_doc, tag, id_node_title))->self ();
+        return new DarkNode (m_doc, tag, id_node_title);
     else if (!strcmp (tag.latin1 (), "summary"))
-        return (new DarkNode (m_doc, tag, id_node_summary))->self ();
-    return NodePtr ();
+        return new DarkNode (m_doc, tag, id_node_summary);
+    return 0L;
 }
 
 void ATOM::Entry::closed () {

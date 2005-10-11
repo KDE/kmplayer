@@ -288,6 +288,8 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
     }
     //kdDebug () << "TimedRuntime::begin " << element->nodeName() << endl; 
     if (start_timer || dur_timer) {
+    killTimers ();
+    reset ();
         end ();
         init ();
     }
@@ -408,7 +410,7 @@ KDE_NO_EXPORT void TimedRuntime::propagateStop (bool forced) {
 KDE_NO_EXPORT void TimedRuntime::propagateStart () {
     SMIL::TimedMrl * tm = convertNode <SMIL::TimedMrl> (element);
     if (tm)
-        tm->propagateEvent ((new ToBeStartedEvent (element))->self ());
+        tm->propagateEvent (new ToBeStartedEvent (element));
     timingstate = timings_started;
     QTimer::singleShot (0, this, SLOT (started ()));
 }
@@ -1077,7 +1079,7 @@ KDE_NO_EXPORT void MediaTypeRuntime::started () {
     if (e) {
         SMIL::Region * r = findRegion (e, param(QString::fromLatin1("region")));
         if (r) {
-            region_node = r->self ();
+            region_node = r;
             r->addRegionUser (element);
             r->repaint ();
         } else
@@ -1196,9 +1198,9 @@ static Element * fromContentControlGroup (NodePtr & d, const QString & tag) {
 
 KDE_NO_EXPORT NodePtr SMIL::Smil::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "body"))
-        return (new SMIL::Body (m_doc))->self ();
+        return new SMIL::Body (m_doc);
     else if (!strcmp (tag.latin1 (), "head"))
-        return (new SMIL::Head (m_doc))->self ();
+        return new SMIL::Head (m_doc);
     return NodePtr ();
 }
 
@@ -1221,7 +1223,7 @@ KDE_NO_EXPORT void SMIL::Smil::activate () {
     PlayListNotify * n = document()->notify_listener;
     if (n) {
         n->setEventDispatcher (layout_node);
-        n->setCurrent (m_self);
+        n->setCurrent (this);
     }
     Element::activate ();
 }
@@ -1251,10 +1253,10 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
         }
     if (!head) {
         SMIL::Head * h = new SMIL::Head (m_doc);
-        insertBefore (h->self (), firstChild ());
+        insertBefore (h, firstChild ());
         h->setAuxiliaryNode (true);
         h->closed ();
-        head = h->self ();
+        head = h;
     }
     for (NodePtr e = head->firstChild (); e; e = e->nextSibling ()) {
         if (e->id == id_node_layout) {
@@ -1276,7 +1278,7 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
 }
 
 KDE_NO_EXPORT NodePtr SMIL::Smil::realMrl () {
-    return current_av_media_type ? current_av_media_type : m_self;
+    return current_av_media_type ? current_av_media_type : this;
 }
 
 KDE_NO_EXPORT bool SMIL::Smil::isMrl () {
@@ -1292,9 +1294,9 @@ KDE_NO_EXPORT bool SMIL::Smil::expose () const {
 
 KDE_NO_EXPORT NodePtr SMIL::Head::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "layout"))
-        return (new SMIL::Layout (m_doc))->self ();
+        return new SMIL::Layout (m_doc);
     else if (!strcmp (tag.latin1 (), "title"))
-        return (new DarkNode (m_doc, tag, id_node_title))->self ();
+        return new DarkNode (m_doc, tag, id_node_title);
     return NodePtr ();
 }
 
@@ -1307,7 +1309,7 @@ KDE_NO_EXPORT void SMIL::Head::closed () {
         if (e->id == id_node_layout)
             return;
     SMIL::Layout * layout = new SMIL::Layout (m_doc);
-    appendChild (layout->self ());
+    appendChild (layout);
     layout->setAuxiliaryNode (true);
     layout->closed (); // add root-layout and a region
 }
@@ -1319,13 +1321,13 @@ KDE_NO_CDTOR_EXPORT SMIL::Layout::Layout (NodePtr & d)
 
 KDE_NO_EXPORT NodePtr SMIL::Layout::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "root-layout")) {
-        NodePtr e = (new SMIL::RootLayout (m_doc))->self ();
+        NodePtr e = new SMIL::RootLayout (m_doc);
         rootLayout = e;
         return e;
     } else if (!strcmp (tag.latin1 (), "region"))
-        return (new SMIL::Region (m_doc))->self ();
+        return new SMIL::Region (m_doc);
     else if (!strcmp (tag.latin1 (), "regPoint"))
-        return (new SMIL::RegPoint (m_doc))->self ();
+        return new SMIL::RegPoint (m_doc);
     return NodePtr ();
 }
 
@@ -1334,9 +1336,9 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
     bool has_root (smilroot);
     if (!has_root) { // just add one if none there
         smilroot = new SMIL::RootLayout (m_doc);
-        NodePtr sr = smilroot->self (); // protect against destruction
+        NodePtr sr = smilroot; // protect against destruction
         smilroot->setAuxiliaryNode (true);
-        rootLayout = smilroot->self ();
+        rootLayout = smilroot;
         int w_root =0, h_root = 0, reg_count = 0;
         for (NodePtr n = firstChild (); n; n = n->nextSibling ()) {
             if (n->id == id_node_region) {
@@ -1354,7 +1356,7 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
         if (!reg_count) {
             w_root = 320; h_root = 240; // have something to start with
             SMIL::Region * r = new SMIL::Region (m_doc);
-            appendChild (r->self ());
+            appendChild (r);
             r->setAuxiliaryNode (true);
         }
         smilroot->setAttribute ("width", QString::number (w_root));
@@ -1362,7 +1364,7 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
         insertBefore (sr, firstChild ());
     } else if (childNodes ()->length () < 2) { // only a root-layout
         SMIL::Region * r = new SMIL::Region (m_doc);
-        appendChild (r->self ());
+        appendChild (r);
         r->setAuxiliaryNode (true);
     }
     updateDimensions ();
@@ -1457,12 +1459,12 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
  : Element (d, id), x (0), y (0), w (0), h (0),
    z_order (1),
-   m_SizeListeners ((new NodeRefList)->self ()),
-   m_PaintListeners ((new NodeRefList)->self ()) {}
+   m_SizeListeners (new NodeRefList),
+   m_PaintListeners (new NodeRefList) {}
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::RegionBase::getRuntime () {
     if (!runtime)
-        runtime = ElementRuntimePtr (new RegionRuntime (m_self));
+        runtime = ElementRuntimePtr (new RegionRuntime (this));
     return runtime;
 }
 
@@ -1505,11 +1507,11 @@ bool SMIL::RegionBase::handleEvent (EventPtr event) {
                 NodeRefItemPtr rn = sorted.first ();
                 for (; rn; rn = rn->nextSibling ())
                     if (r->z_order < static_cast <Region *> (rn->data.ptr ())->z_order) {
-                        sorted.insertBefore((new NodeRefItem (n))->self (), rn);
+                        sorted.insertBefore (new NodeRefItem (n), rn);
                         break;
                     }
                 if (!rn)
-                    sorted.append ((new NodeRefItem (n))->self ());
+                    sorted.append (new NodeRefItem (n));
             }
             for (NodeRefItemPtr r = sorted.first (); r; r = r->nextSibling ())
                 static_cast <Region *> (r->data.ptr ())->handleEvent (event);
@@ -1531,14 +1533,14 @@ NodeRefListPtr SMIL::RegionBase::listeners (unsigned int eid) {
 
 KDE_NO_CDTOR_EXPORT SMIL::Region::Region (NodePtr & d)
  : RegionBase (d, id_node_region),
-   m_ActionListeners ((new NodeRefList)->self ()),
-   m_OutOfBoundsListeners ((new NodeRefList)->self ()),
-   m_InBoundsListeners ((new NodeRefList)->self ()),
+   m_ActionListeners (new NodeRefList),
+   m_OutOfBoundsListeners (new NodeRefList),
+   m_InBoundsListeners (new NodeRefList),
    has_mouse (false) {}
 
 KDE_NO_EXPORT NodePtr SMIL::Region::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "region"))
-        return (new SMIL::Region (m_doc))->self ();
+        return new SMIL::Region (m_doc);
     return NodePtr ();
 }
 
@@ -1554,7 +1556,7 @@ KDE_NO_EXPORT void SMIL::Region::calculateBounds (int pw, int ph) {
         rr->sizes.calcSizes (this, pw, ph, x, y, w, h);
         if (x1 != x || y1 != y || w1 != w || h1 != h) {
             m_transform = Matrix (x, y, 1.0, 1.0);
-            propagateEvent ((new SizeEvent (x, y, w, h, true))->self ());
+            propagateEvent (new SizeEvent (x, y, w, h, true));
         }
         //kdDebug () << "Region::calculateBounds parent:" << pw << "x" << ph << " this:" << x << "," << y << " " << w << "x" << h << endl;
     }
@@ -1590,7 +1592,7 @@ bool SMIL::Region::handleEvent (EventPtr event) {
             for (NodePtr r = firstChild (); r; r = r->nextSibling ())
                 handled |= r->handleEvent (event);
             if (!handled) { // handle it ..
-                EventPtr evt = (new Event (event_activated))->self ();
+                EventPtr evt = new Event (event_activated);
                 propagateEvent (evt);
                 for (NodeRefItemPtr n = users.first (); n; n = n->nextSibling())
                     if (n->data)
@@ -1608,10 +1610,10 @@ bool SMIL::Region::handleEvent (EventPtr event) {
             EventPtr evt;
             if (has_mouse && (!inside || handled)) { // OutOfBoundsEvent
                 has_mouse = false;
-                evt = (new Event (event_outbounds))->self ();
+                evt = new Event (event_outbounds);
             } else if (inside && !handled && !has_mouse) { // InBoundsEvent
                 has_mouse = true;
-                evt = (new Event (event_inbounds))->self ();
+                evt = new Event (event_inbounds);
             }
             if (evt) {
                 propagateEvent (evt);
@@ -1642,14 +1644,14 @@ KDE_NO_EXPORT void SMIL::Region::addRegionUser (NodePtr mt) {
     for (NodeRefItemPtr n = users.first (); n; n = n->nextSibling ())
         if (n->data == mt)
             return;
-    users.append ((new NodeRefItem (mt))->self ());
+    users.append (new NodeRefItem (mt));
 }
 
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::RegPoint::getRuntime () {
     if (!runtime)
-        runtime = (new RegPointRuntime (self ()))->self ();
+        runtime = new RegPointRuntime (this);
     return runtime;
 }
 
@@ -1657,8 +1659,8 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::RegPoint::getRuntime () {
 
 KDE_NO_CDTOR_EXPORT SMIL::TimedMrl::TimedMrl (NodePtr & d, short id)
  : Mrl (d, id),
-   m_StartedListeners ((new NodeRefList)->self ()),
-   m_StoppedListeners ((new NodeRefList)->self ()) {}
+   m_StartedListeners (new NodeRefList),
+   m_StoppedListeners (new NodeRefList) {}
 
 KDE_NO_EXPORT void SMIL::TimedMrl::activate () {
     //kdDebug () << "SMIL::TimedMrl(" << nodeName() << ")::activate" << endl;
@@ -1678,7 +1680,7 @@ KDE_NO_EXPORT void SMIL::TimedMrl::deactivate () {
 
 KDE_NO_EXPORT void SMIL::TimedMrl::finish () {
     Mrl::finish ();
-    propagateEvent ((new Event (event_stopped))->self ());
+    propagateEvent (new Event (event_stopped));
 }
 
 KDE_NO_EXPORT void SMIL::TimedMrl::reset () {
@@ -1739,7 +1741,7 @@ KDE_NO_EXPORT bool SMIL::TimedMrl::handleEvent (EventPtr event) {
 }
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::TimedMrl::getNewRuntime () {
-    return (new TimedRuntime (m_self))->self ();
+    return new TimedRuntime (this);
 }
 
 //-----------------------------------------------------------------------------
@@ -1765,7 +1767,7 @@ KDE_NO_EXPORT NodePtr SMIL::Par::childFromTag (const QString & tag) {
     if (!elm) elm = fromContentControlGroup (m_doc, tag);
     if (!elm) elm = fromAnimateGroup (m_doc, tag);
     if (elm)
-        return elm->self ();
+        return elm;
     return NodePtr ();
 }
 
@@ -1817,7 +1819,7 @@ KDE_NO_EXPORT void SMIL::Par::childDone (NodePtr) {
 }
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::Par::getNewRuntime () {
-    return (new ParRuntime (m_self))->self ();
+    return new ParRuntime (this);
 }
 //-----------------------------------------------------------------------------
 
@@ -1827,8 +1829,8 @@ KDE_NO_EXPORT NodePtr SMIL::Seq::childFromTag (const QString & tag) {
     if (!elm) elm = fromContentControlGroup (m_doc, tag);
     if (!elm) elm = fromAnimateGroup (m_doc, tag);
     if (elm)
-        return elm->self ();
-    return NodePtr ();
+        return elm;
+    return 0L;
 }
 
 KDE_NO_EXPORT void SMIL::Seq::activate () {
@@ -1844,8 +1846,8 @@ KDE_NO_EXPORT NodePtr SMIL::Excl::childFromTag (const QString & tag) {
     if (!elm) elm = fromContentControlGroup (m_doc, tag);
     if (!elm) elm = fromAnimateGroup (m_doc, tag);
     if (elm)
-        return elm->self ();
-    return NodePtr ();
+        return elm;
+    return 0L;
 }
 
 KDE_NO_EXPORT void SMIL::Excl::activate () {
@@ -1860,8 +1862,8 @@ KDE_NO_EXPORT void SMIL::Excl::activate () {
         for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
             SMIL::TimedMrl * tm = dynamic_cast <SMIL::TimedMrl *> (e.ptr ());
             if (tm) { // sets up aboutToStart connection with TimedMrl children
-                ConnectionPtr c = tm->connectTo (m_self, event_to_be_started);
-                started_event_list.append((new ConnectionStoreItem(c))->self());
+                ConnectionPtr c = tm->connectTo (this, event_to_be_started);
+                started_event_list.append (new ConnectionStoreItem (c));
             }
         }
         tr->begin ();
@@ -1905,8 +1907,8 @@ KDE_NO_EXPORT NodePtr SMIL::Switch::childFromTag (const QString & tag) {
     Element * elm = fromContentControlGroup (m_doc, tag);
     if (!elm) elm = fromMediaContentGroup (m_doc, tag);
     if (elm)
-        return elm->self ();
-    return NodePtr ();
+        return elm;
+    return 0L;
 }
 
 KDE_NO_EXPORT void SMIL::Switch::activate () {
@@ -1950,7 +1952,7 @@ KDE_NO_EXPORT void SMIL::Switch::activate () {
 }
 
 KDE_NO_EXPORT NodePtr SMIL::Switch::realMrl () {
-    return chosenOne ? chosenOne : m_self;
+    return chosenOne ? chosenOne : this;
 }
 
 KDE_NO_EXPORT void SMIL::Switch::deactivate () {
@@ -1993,9 +1995,9 @@ KDE_NO_EXPORT bool SMIL::Switch::isMrl () {
 
 KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, short id)
  : TimedMrl (d, id), m_type (t), bitrate (0),
-   m_ActionListeners ((new NodeRefList)->self ()),
-   m_OutOfBoundsListeners ((new NodeRefList)->self ()),
-   m_InBoundsListeners ((new NodeRefList)->self ()) {
+   m_ActionListeners (new NodeRefList),
+   m_OutOfBoundsListeners (new NodeRefList),
+   m_InBoundsListeners (new NodeRefList) {
     view_mode = Mrl::Window;
 }
 
@@ -2004,8 +2006,8 @@ KDE_NO_EXPORT NodePtr SMIL::MediaType::childFromTag (const QString & tag) {
     if (!elm) elm = fromParamGroup (m_doc, tag);
     if (!elm) elm = fromAnimateGroup (m_doc, tag);
     if (elm)
-        return elm->self ();
-    return NodePtr ();
+        return elm;
+    return 0L;
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::opened () {
@@ -2102,7 +2104,7 @@ KDE_NO_EXPORT void SMIL::AVMediaType::activate () {
     while (p && p->id != id_node_smil)
         p = p->parentNode ();
     if (p) { // this works only because we can only play one at a time FIXME
-        convertNode <Smil> (p)->current_av_media_type = m_self;
+        convertNode <Smil> (p)->current_av_media_type = this;
         MediaType::activate ();
     } else {
         kdError () << nodeName () << " playing and current is not Smil" << endl;
@@ -2121,7 +2123,7 @@ KDE_NO_EXPORT void SMIL::AVMediaType::deactivate () {
 }
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::AVMediaType::getNewRuntime () {
-    return (new AudioVideoData (m_self))->self ();
+    return new AudioVideoData (this);
 }
 
 bool SMIL::AVMediaType::handleEvent (EventPtr event) {
@@ -2141,7 +2143,7 @@ SMIL::ImageMediaType::ImageMediaType (NodePtr & d)
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::ImageMediaType::getNewRuntime () {
     isMrl (); // hack to get relative paths right
-    return (new ImageData (m_self))->self ();
+    return new ImageData (this);
 }
 
 //-----------------------------------------------------------------------------
@@ -2152,19 +2154,19 @@ SMIL::TextMediaType::TextMediaType (NodePtr & d)
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::TextMediaType::getNewRuntime () {
     isMrl (); // hack to get relative paths right
-    return (new TextData (m_self))->self ();
+    return new TextData (this);
 }
 
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::Set::getNewRuntime () {
-    return (new SetData (m_self))->self ();
+    return new SetData (this);
 }
 
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::Animate::getNewRuntime () {
-    return (new AnimateData (m_self))->self ();
+    return new AnimateData (this);
 }
 
 //-----------------------------------------------------------------------------

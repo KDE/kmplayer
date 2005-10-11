@@ -45,6 +45,15 @@
 #include <qclipboard.h>
 
 #include <kiconloader.h>
+#include <kstaticdeleter.h>
+#include <kdebug.h>
+#include <klocale.h>
+#include <kapplication.h>
+#include <kactioncollection.h>
+#include <kshortcut.h>
+#include <kurldrag.h>
+#include <dcopclient.h>
+#include <kglobalsettings.h>
 
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
@@ -66,19 +75,6 @@ static const int button_height_with_slider = 15;
 static const int button_height_only_buttons = 11;
 extern const char * normal_window_xpm[];
 extern const char * playlist_xpm[];
-
-// application specific includes
-//#include "kmplayer.h"
-
-#include <kstaticdeleter.h>
-#include <kdebug.h>
-#include <klocale.h>
-#include <kapplication.h>
-#include <kactioncollection.h>
-#include <kshortcut.h>
-#include <kurldrag.h>
-#include <dcopclient.h>
-#include <kglobalsettings.h>
 
 
 /* mouse invisible: define the time (in 1/1000 seconds) before mouse goes invisible */
@@ -193,7 +189,7 @@ KDE_NO_EXPORT void ViewArea::accelActivated () {
 }
 
 KDE_NO_EXPORT void ViewArea::mousePressEvent (QMouseEvent * e) {
-    if (eventListener && eventListener->handleEvent((new PointerEvent(event_pointer_clicked,e->x(), e->y()))->self()))
+    if (eventListener && eventListener->handleEvent(new PointerEvent(event_pointer_clicked,e->x(), e->y())))
         e->accept ();
 }
 
@@ -204,7 +200,7 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
         m_view->delayedShowButtons (e->y() > vert_buttons_pos-cp_height &&
                                     e->y() < vert_buttons_pos);
     }
-    if (eventListener && eventListener->handleEvent((new PointerEvent(event_pointer_moved,e->x(), e->y()))->self()))
+    if (eventListener && eventListener->handleEvent(new PointerEvent(event_pointer_moved,e->x(), e->y())))
         e->accept ();
     mouseMoved (); // for m_mouse_invisible_timer
 }
@@ -230,7 +226,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual (QRect rect) {
         m_painter->begin (m_paint_buffer);
         m_painter->translate(-ex, -ey-py);
         m_painter->fillRect (ex, ey+py, ew, ph, QBrush (paletteBackgroundColor ()));
-        eventListener->handleEvent ((new PaintEvent (*m_painter, ex, ey+py, ew, ph))->self ());
+        eventListener->handleEvent(new PaintEvent(*m_painter, ex, ey+py,ew,ph));
         m_painter->end();
         bitBlt (this, ex, ey+py, m_paint_buffer, 0, 0, ew, ph);
         py += PAINT_BUFFER_HEIGHT;
@@ -264,7 +260,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     bool av_geometry_changed = false;
     if (eventListener && wws > 0 && hws > 0) {
         m_av_geometry = QRect (0, 0, 0, 0);
-        eventListener->handleEvent ((new SizeEvent (x, y, wws, hws, m_view->keepSizeRatio ()))->self ());
+        eventListener->handleEvent (new SizeEvent (x, y, wws, hws, m_view->keepSizeRatio ()));
         av_geometry_changed = (m_av_geometry != QRect (0, 0, 0, 0));
         x = m_av_geometry.x ();
         y = m_av_geometry.y ();
@@ -632,14 +628,14 @@ KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, QListViewItem *af
         }
         if (valid && sl.size () > 0) {
             bool as_child = n->isDocument () || n->hasChildNodes ();
-            NodePtr d = n->document ()->self ();
+            NodePtr d = n->document ();
             ListViewItem * citem = static_cast <ListViewItem*> (currentItem ());
             for (int i = sl.size (); i > 0; i--) {
                 Node * ni = new KMPlayer::GenericURL (d, sl[i-1].url ());
                 if (as_child)
-                    n->insertBefore (ni->self (), n->firstChild ());
+                    n->insertBefore (ni, n->firstChild ());
                 else
-                    n->parentNode()->insertBefore(ni->self(), n->nextSibling());
+                    n->parentNode ()->insertBefore (ni, n->nextSibling ());
             }
             ListViewItem * ritem = static_cast<ListViewItem*>(firstChild());
             if (ritem)

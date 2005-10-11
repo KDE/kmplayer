@@ -1111,7 +1111,7 @@ void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
         bool was_probe = m_have_config == config_probe;
         m_have_config = data.size () ? config_yes : config_no;
         if (m_have_config == config_yes) {
-            configdoc = (new ConfigDocument ())->self();
+            configdoc = new ConfigDocument ();
             QTextStream ts (data, IO_ReadOnly);
             readXML (configdoc, ts, QString::null);
             configdoc->normalize ();
@@ -1354,23 +1354,23 @@ KDE_NO_CDTOR_EXPORT ConfigNode::ConfigNode (NodePtr & d, const QString & t)
 
 NodePtr ConfigDocument::childFromTag (const QString & tag) {
     if (tag.lower () == QString ("document"))
-        return (new ConfigNode (m_doc, tag))->self ();
-    return NodePtr ();
+        return new ConfigNode (m_doc, tag);
+    return 0L;
 }
 
 NodePtr ConfigNode::childFromTag (const QString & t) {
-    return (new TypeNode (m_doc, t))->self ();
+    return new TypeNode (m_doc, t);
 }
 
 KDE_NO_CDTOR_EXPORT TypeNode::TypeNode (NodePtr & d, const QString & t)
  : ConfigNode (d, t), tag (t) {}
 
 NodePtr TypeNode::childFromTag (const QString & tag) {
-    return (new SomeNode (m_doc, tag))->self ();
+    return new SomeNode (m_doc, tag);
 }
 
 NodePtr SomeNode::childFromTag (const QString & t) {
-    return (new SomeNode (m_doc, t))->self ();
+    return new SomeNode (m_doc, t);
 }
 
 QWidget * TypeNode::createWidget (QWidget * parent) {

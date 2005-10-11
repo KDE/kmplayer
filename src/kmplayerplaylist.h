@@ -92,6 +92,8 @@ private:
  * two independant SharedData<Item<T>> objects.
  * So specialize constructor and assignment operators to fetch the 
  * SharedData<Item<T>> from the Item<T>* instead of creating a new one
+ *
+ * Catch1: This will not work in (cond ? WeakPtr<Item<T>> : Item<T>) constructs
  */
 #define ITEM_AS_POINTER(CLASS)                                         \
  template <> inline SharedPtr<CLASS>::SharedPtr (CLASS * t)            \
@@ -114,7 +116,7 @@ private:
  template <> inline WeakPtr<CLASS>::WeakPtr (CLASS * t)                \
  : data (t ? t->m_self.data : 0L) {                                    \
     if (data)                                                          \
-        data->addRef ();                                               \
+        data->addWeakRef ();                                           \
  }                                                                     \
                                                                        \
  template <>                                                           \

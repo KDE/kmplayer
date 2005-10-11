@@ -450,7 +450,7 @@ bool PartBase::openURL (const KURL::List & urls) {
         NodePtr d = m_source->document ();
         if (d)
             for (unsigned int i = 0; i < urls.size (); i++)
-                d->appendChild ((new GenericURL (d, KURL::decode_string (urls [i].url ())))->self ());
+                d->appendChild (new GenericURL (d, KURL::decode_string (urls [i].url ())));
     }
     return true;
 }
@@ -862,7 +862,7 @@ void Source::setURL (const KURL & url) {
     else {
         if (m_document)
             m_document->document ()->dispose ();
-        m_document = (new Document (url.url (), this))->self ();
+        m_document = new Document (url.url (), this);
     }
     if (m_player->process () && m_player->source () == this)
         m_player->updateTree ();
@@ -1022,7 +1022,7 @@ void Source::insertURL (NodePtr node, const QString & mrl) {
         for (NodePtr e = node; e->parentNode (); e = e->parentNode ())
             ++depth;
         if (depth < 40) {
-            node->appendChild ((new GenericURL (m_document, KURL::decode_string (url.url ()), KURL::decode_string (mrl)))->self ());
+            node->appendChild (new GenericURL (m_document, KURL::decode_string (url.url ()), KURL::decode_string (mrl)));
         } else
             kdError () << "insertURL exceeds depth limit" << endl;
     }
@@ -1107,7 +1107,7 @@ void Source::setMime (const QString & m) {
     else {
         if (m_document)
             m_document->document ()->dispose ();
-        m_document = (new Document (QString (), this))->self ();
+        m_document = new Document (QString (), this);
         m_document->mrl ()->mimetype = mimestr;
     }
 }
@@ -1428,7 +1428,7 @@ KDE_NO_EXPORT void URLSource::read (QTextStream & textstream) {
             } while (!line.isNull ());
             for (int i = 0; i < nr; i++)
                 if (!entries[i].url.isEmpty ())
-                    cur_elm->appendChild ((new GenericURL (m_document, KURL::decode_string (entries[i].url), entries[i].title))->self ());
+                    cur_elm->appendChild (new GenericURL (m_document, KURL::decode_string (entries[i].url), entries[i].title));
             delete [] entries;
         } else if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
             readXML (cur_elm, textstream, line);
@@ -1444,7 +1444,7 @@ KDE_NO_EXPORT void URLSource::read (QTextStream & textstream) {
             if (mrl.lower ().startsWith (QString ("asf ")))
                 mrl = mrl.mid (4).stripWhiteSpace ();
             if (!mrl.isEmpty () && !mrl.startsWith (QChar ('#')))
-                cur_elm->appendChild((new GenericURL(m_document, mrl))->self());
+                cur_elm->appendChild (new GenericURL (m_document, mrl));
             line = textstream.readLine ();
         } while (!line.isNull ()); /* TODO && m_document.size () < 1024 / * support 1k entries * /);*/
     }

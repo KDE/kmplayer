@@ -28,14 +28,14 @@ using namespace KMPlayer;
 KDE_NO_EXPORT NodePtr ASX::Asx::childFromTag (const QString & tag) {
     const char * name = tag.latin1 ();
     if (!strcasecmp (name, "entry"))
-        return (new ASX::Entry (m_doc))->self ();
+        return new ASX::Entry (m_doc);
     else if (!strcasecmp (name, "entryref"))
-        return (new ASX::EntryRef (m_doc))->self ();
+        return new ASX::EntryRef (m_doc);
     else if (!strcasecmp (name, "title"))
-        return (new DarkNode (m_doc, name, id_node_title))->self ();
+        return new DarkNode (m_doc, name, id_node_title);
     else if (!strcasecmp (name, "base"))
-        return (new DarkNode (m_doc, name, id_node_base))->self ();
-    return NodePtr ();
+        return new DarkNode (m_doc, name, id_node_base);
+    return 0L;
 }
 
 KDE_NO_EXPORT bool ASX::Asx::isMrl () {
@@ -60,15 +60,15 @@ KDE_NO_EXPORT void ASX::Asx::closed () {
 KDE_NO_EXPORT NodePtr ASX::Entry::childFromTag (const QString & tag) {
     const char * name = tag.latin1 ();
     if (!strcasecmp (name, "ref"))
-        return (new ASX::Ref (m_doc))->self ();
+        return new ASX::Ref (m_doc);
     else if (!strcasecmp (name, "title"))
-        return (new DarkNode (m_doc, name, id_node_title))->self ();
+        return new DarkNode (m_doc, name, id_node_title);
     else if (!strcasecmp (name, "base")) {
-        NodePtr bn = (new DarkNode (m_doc, name, id_node_base))->self ();
+        NodePtr bn = new DarkNode (m_doc, name, id_node_base);
         base = bn;
         return bn;
     }
-    return NodePtr ();
+    return 0L;
 }
 
 KDE_NO_EXPORT bool ASX::Entry::isMrl () {
@@ -101,7 +101,7 @@ KDE_NO_EXPORT NodePtr ASX::Entry::realMrl () {
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         if (e->isMrl ())
             return e;
-    return m_self;
+    return this;
 }
 
 KDE_NO_EXPORT void ASX::Entry::activate () {
@@ -109,7 +109,7 @@ KDE_NO_EXPORT void ASX::Entry::activate () {
         Element::activate ();
     } else {
         NodePtr mrl = realMrl ();
-        if (mrl != self ())
+        if (mrl != m_self)
             mrl->setState (state_activated);
         Mrl::activate ();
     }

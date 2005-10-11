@@ -87,7 +87,7 @@ QTextStream & operator << (QTextStream & out, const XMLStringlet & txt) {
 KDE_NO_CDTOR_EXPORT Connection::Connection (NodeRefListPtr ls, NodePtr node)
  : listeners (ls) {
     if (listeners) {
-        NodeRefItemPtr nci = (new NodeRefItem (node))->self ();
+        NodeRefItemPtr nci = new NodeRefItem (node);
         listeners->append (nci);
         listen_item = nci;
     }
@@ -172,7 +172,7 @@ void Node::setState (State nstate) {
     if (state != nstate) {
         state = nstate;
         if (document ()->notify_listener)
-            document ()->notify_listener->stateElementChanged (self ());
+            document ()->notify_listener->stateElementChanged (this);
     }
 }
 
@@ -215,7 +215,7 @@ void Node::finish () {
     if (active ()) {
         setState (state_finished);
         if (m_parent)
-            m_parent->childDone (m_self);
+            m_parent->childDone (this);
         else
             deactivate ();
     } else
@@ -233,7 +233,7 @@ void Node::deactivate () {
             break; // remaining not yet activated
     }
     if (need_finish && m_parent)
-        m_parent->childDone (m_self);
+        m_parent->childDone (this);
 }
 
 void Node::reset () {
@@ -303,7 +303,7 @@ KDE_NO_EXPORT void Node::insertBefore (NodePtr c, NodePtr b) {
         }
         b->m_prev = c;
         c->m_next = b;
-        c->m_parent = m_self;
+        c->m_parent = this;
     }
 }
 
@@ -340,7 +340,7 @@ KDE_NO_EXPORT void Node::replaceChild (NodePtr _new, NodePtr old) {
         _new->m_next = 0L;
         m_last_child = _new;
     }
-    _new->m_parent = m_self;
+    _new->m_parent = this;
     old->m_parent = 0L;
 }
 
@@ -351,7 +351,7 @@ NodePtr Node::childFromTag (const QString &) {
 KDE_NO_EXPORT void Node::characterData (const QString & s) {
     document()->m_tree_version++;
     if (!m_last_child || strcmp (m_last_child->nodeName (), "#text"))
-        appendChild ((new TextNode (m_doc, s))->self ());
+        appendChild (new TextNode (m_doc, s));
     else
         convertNode <TextNode> (m_last_child)->appendText (s);
 }
@@ -384,7 +384,7 @@ static void getInnerText (const NodePtr p, QTextOStream & out) {
 QString Node::innerText () const {
     QString buf;
     QTextOStream out (&buf);
-    getInnerText (self (), out);
+    getInnerText (m_self, out);
     return buf;
 }
 
@@ -418,7 +418,7 @@ QString Node::innerXML () const {
 QString Node::outerXML () const {
     QString buf;
     QTextOStream out (&buf);
-    getOuterXML (self (), out, 0);
+    getOuterXML (m_self, out, 0);
     return buf;
 }
 
@@ -472,7 +472,7 @@ void RefNode::setRefNode (const NodePtr ref) {
 //-----------------------------------------------------------------------------
 
 Element::Element (NodePtr & d, short id)
-    : Node (d, id), m_attributes ((new AttributeList)->self ()) {}
+    : Node (d, id), m_attributes (new AttributeList) {}
 
 void Element::setAttribute (const QString & name, const QString & value) {
     const char * name_latin = name.latin1 ();
@@ -481,7 +481,7 @@ void Element::setAttribute (const QString & name, const QString & value) {
             static_cast <Attribute *> (a.ptr ())->setNodeValue (value);
             return;
         }
-    m_attributes->append ((new Attribute (name, value))->self ());
+    m_attributes->append (new Attribute (name, value));
 }
 
 QString Element::getAttribute (const QString & name) {
@@ -495,7 +495,7 @@ QString Element::getAttribute (const QString & name) {
 }
 
 void Element::clear () {
-    m_attributes = (new AttributeList)->self (); // remove attributes
+    m_attributes = new AttributeList; // remove attributes
     Node::clear ();
 }
 
@@ -539,7 +539,7 @@ Mrl::~Mrl () {}
 
 bool Mrl::isMrl () {
     if (cached_ismrl_version != document()->m_tree_version) {
-        cached_ismrl = !hasMrlChildren (m_self);
+        cached_ismrl = !hasMrlChildren (this);
         cached_ismrl_version = document()->m_tree_version;
         if (!src.isEmpty()) {
             if (pretty_name.isEmpty ())
@@ -557,12 +557,12 @@ bool Mrl::isMrl () {
 NodePtr Mrl::childFromTag (const QString & tag) {
     Node * elm = fromXMLDocumentTag (m_doc, tag);
     if (elm)
-        return elm->self ();
+        return elm;
     return NodePtr ();
 }
 
 NodePtr Mrl::realMrl () {
-    return m_self;
+    return this;
 }
 
 void Mrl::activate () {
@@ -573,7 +573,7 @@ void Mrl::activate () {
     kdDebug () << nodeName () << " Mrl::activate" << endl;
     setState (state_activated);
     if (document ()->notify_listener && !src.isEmpty ())
-        document ()->notify_listener->requestPlayURL (m_self);
+        document ()->notify_listener->requestPlayURL (this);
     else
         deactivate (); // nothing to activate
 }
@@ -608,14 +608,14 @@ static NodePtr getElementByIdImpl (NodePtr n, const QString & id) {
 }
 
 NodePtr Document::getElementById (const QString & id) {
-    return getElementByIdImpl (m_self, id);
+    return getElementByIdImpl (this, id);
 }
 
 KDE_NO_EXPORT NodePtr Document::childFromTag (const QString & tag) {
     Node * elm = fromXMLDocumentTag (m_doc, tag);
     if (elm)
-        return elm->self ();
-    return NodePtr ();
+        return elm;
+    return 0L;
 }
 
 void Document::dispose () {
@@ -651,7 +651,7 @@ DarkNode::DarkNode (NodePtr & d, const QString & n, short id)
 }
 
 NodePtr DarkNode::childFromTag (const QString & tag) {
-    return (new DarkNode (m_doc, tag))->self ();
+    return new DarkNode (m_doc, tag);
 }
 
 KDE_NO_EXPORT bool DarkNode::expose () const {
@@ -687,7 +687,7 @@ GenericMrl::GenericMrl (NodePtr & d, const QString & s, const QString & name)
 
 bool GenericMrl::isMrl () {
     if (cached_ismrl_version != document()->m_tree_version) {
-        cached_ismrl = !hasMrlChildren (m_self);
+        cached_ismrl = !hasMrlChildren (this);
         cached_ismrl_version = document()->m_tree_version;
     }
     return cached_ismrl;
@@ -734,8 +734,8 @@ bool DocumentBuilder::startTag(const QString &tag, AttributeListPtr attr) {
         NodePtr n = m_node->childFromTag (tag);
         if (!n) {
             kdDebug () << "Warning: unknown tag " << tag.latin1 () << endl;
-            NodePtr doc = m_root->document ()->self ();
-            n = (new DarkNode (doc, tag))->self ();
+            NodePtr doc = m_root->document ();
+            n = new DarkNode (doc, tag);
         }
         //kdDebug () << "Found tag " << tag << endl;
         if (n->isElementNode ())
@@ -791,10 +791,10 @@ bool DocumentBuilder::characterData (const QString & data) {
 
 static void startTag (void *data, const char * tag, const char **attr) {
     DocumentBuilder * builder = static_cast <DocumentBuilder *> (data);
-    AttributeListPtr attributes = (new AttributeList)->self ();
+    AttributeListPtr attributes = new AttributeList;
     if (attr && attr [0]) {
         for (int i = 0; attr[i]; i += 2)
-            attributes->append ((new Attribute (QString::fromUtf8 (attr [i]), QString::fromUtf8 (attr [i+1])))->self ());
+            attributes->append (new Attribute (QString::fromUtf8 (attr [i]), QString::fromUtf8 (attr [i+1])));
     }
     builder->startTag (QString::fromUtf8 (tag), attributes);
 }
@@ -850,7 +850,7 @@ namespace KMPlayer {
 
 class SimpleSAXParser {
 public:
-    SimpleSAXParser (DocumentBuilder & b) : builder (b), position (0), m_attributes ((new AttributeList)->self ()), equal_seen (false), in_dbl_quote (false), in_sngl_quote (false), have_error (false), no_entitity_look_ahead (false), have_next_char (false) {}
+    SimpleSAXParser (DocumentBuilder & b) : builder (b), position (0), m_attributes (new AttributeList), equal_seen (false), in_dbl_quote (false), in_sngl_quote (false), have_error (false), no_entitity_look_ahead (false), have_next_char (false) {}
     virtual ~SimpleSAXParser () {};
     bool parse (QTextStream & d);
 private:
@@ -930,7 +930,7 @@ void SimpleSAXParser::push () {
 
 void SimpleSAXParser::push_attribute () {
     //kdDebug () << "attribute " << attr_name.latin1 () << "=" << attr_value.latin1 () << endl;
-    m_attributes->append ((new Attribute (attr_name, attr_value))->self());
+    m_attributes->append (new Attribute (attr_name, attr_value));
     attr_name.truncate (0);
     attr_value.truncate (0);
     equal_seen = in_sngl_quote = in_dbl_quote = false;
@@ -1296,7 +1296,7 @@ bool SimpleSAXParser::parse (QTextStream & d) {
                     if (token->token == tok_angle_open) {
                         attr_name.truncate (0);
                         attr_value.truncate (0);
-                        m_attributes = (new AttributeList)->self ();
+                        m_attributes = new AttributeList;
                         equal_seen = in_sngl_quote = in_dbl_quote = false;
                         m_state = new StateInfo (InTag, m_state);
                         ok = readTag ();

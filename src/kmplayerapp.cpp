@@ -330,7 +330,7 @@ struct IntroSource : public KMPlayer::Source {
 KDE_NO_EXPORT void IntroSource::activate () {
     if (m_player->settings ()->autoresize)
         m_app->disconnect(m_player, SIGNAL(sourceDimensionChanged()),m_app,SLOT(zoom100()));
-    m_document = (new KMPlayer::Document (QString (""), this))->self ();
+    m_document = new KMPlayer::Document (QString (""), this);
     QString introfile = locate ("data", "kmplayer/intro.xml");
     QFile file (introfile);
     if (file.exists () && file.open (IO_ReadOnly)) {
@@ -432,7 +432,7 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
 KDE_NO_EXPORT void KMPlayerApp::addURL (const KURL& url) {
     KMPlayer::NodePtr d = m_player->sources () ["urlsource"]->document ();
     if (d)
-        d->appendChild ((new KMPlayer::GenericURL (d, url.url ()))->self ());
+        d->appendChild (new KMPlayer::GenericURL (d, url.url ()));
 }
 
 KDE_NO_EXPORT void KMPlayerApp::saveProperties (KConfig * config) {
@@ -631,7 +631,7 @@ struct ExitSource : public KMPlayer::Source {
 };
 
 KDE_NO_EXPORT void ExitSource::activate () {
-    m_document = (new KMPlayer::Document (QString (""), this))->self ();
+    m_document = new KMPlayer::Document (QString (""), this);
     QString exitfile = locate ("data", "kmplayer/exit.xml");
     QFile file (exitfile);
     if (file.exists () && file.open (IO_ReadOnly)) {
@@ -1278,7 +1278,7 @@ KDE_NO_EXPORT bool KMPlayerVCDSource::processOutput (const QString & str) {
     if (trackRegExp.search (str) > -1) {
         if (m_document->state != KMPlayer::Element::state_deferred)
             m_document->defer ();
-        m_document->appendChild ((new KMPlayer::GenericMrl (m_document, QString ("vcd://") + trackRegExp.cap (1), i18n ("Track ") + trackRegExp.cap (1)))->self ());
+        m_document->appendChild (new KMPlayer::GenericMrl (m_document, QString ("vcd://") + trackRegExp.cap (1), i18n ("Track ") + trackRegExp.cap (1)));
         kdDebug () << "track " << trackRegExp.cap (1) << endl;
         return true;
     }
@@ -1379,7 +1379,7 @@ KDE_NO_EXPORT void KMPlayerPipeSource::activate () {
     setURL (KURL ("stdin://"));
     KMPlayer::GenericMrl * gen = new KMPlayer::GenericMrl (m_document, QString ("stdin://"), m_pipecmd);
     gen->bookmarkable = false;
-    m_document->appendChild (gen->self ());
+    m_document->appendChild (gen);
     m_recordcmd = m_options = QString ("-"); // or m_url?
     m_identified = true;
     reset ();
