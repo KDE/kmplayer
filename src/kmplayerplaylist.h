@@ -70,6 +70,8 @@ class ElementRuntime;
  */
 template <class T>
 class KMPLAYER_EXPORT Item {
+    friend class SharedPtr<T>;
+    friend class WeakPtr<T>;
 public:
     typedef SharedPtr <T> SharedType;
     typedef WeakPtr <T> WeakType;
@@ -83,6 +85,48 @@ protected:
 private:
     Item (const Item <T> &); // forbidden copy constructor
 };
+
+/**
+ * Because of the m_self member of Item<T>, it's not allowed to assign a
+ * Item<T>* directly to SharedPtr<Item<T>>. Item<T>* will then reside in
+ * two independant SharedData<Item<T>> objects.
+ * So specialize constructor and assignment operators to fetch the 
+ * SharedData<Item<T>> from the Item<T>* instead of creating a new one
+ */
+#define ITEM_AS_POINTER(CLASS)                                         \
+ template <> inline SharedPtr<CLASS>::SharedPtr (CLASS * t)            \
+ : data (t ? t->m_self.data : 0L) {                                    \
+    if (data)                                                          \
+        data->addRef ();                                               \
+ }                                                                     \
+                                                                       \
+ template <>                                                           \
+ inline SharedPtr<CLASS> & SharedPtr<CLASS>::operator = (CLASS * t) {  \
+    if (t) {                                                           \
+        operator = (t->m_self);                                        \
+    } else if (data) {                                                 \
+        data->release ();                                              \
+        data = 0L;                                                     \
+    }                                                                  \
+    return *this;                                                      \
+ }                                                                     \
+                                                                       \
+ template <> inline WeakPtr<CLASS>::WeakPtr (CLASS * t)                \
+ : data (t ? t->m_self.data : 0L) {                                    \
+    if (data)                                                          \
+        data->addRef ();                                               \
+ }                                                                     \
+                                                                       \
+ template <>                                                           \
+ inline WeakPtr<CLASS> & WeakPtr<CLASS>::operator = (CLASS * t) {      \
+    if (t) {                                                           \
+        operator = (t->m_self);                                        \
+    } else if (data) {                                                 \
+        data->releaseWeak ();                                          \
+        data = 0L;                                                     \
+    }                                                                  \
+    return *this;                                                      \
+ }
 
 /*
  * A shareable double linked list of ListNodeBase<T> nodes
@@ -181,6 +225,8 @@ protected:
     QString value;
 };
 
+ITEM_AS_POINTER(KMPlayer::Attribute)
+
 /*
  * A generic event type
  */
@@ -192,6 +238,8 @@ public:
 protected:
     unsigned int m_event_id;
 };
+
+ITEM_AS_POINTER(KMPlayer::Event)
 
 /**
  * Event signaling that attached region should be repainted
@@ -250,18 +298,22 @@ typedef Item<Node>::WeakType NodePtrW;
 typedef Item<Attribute>::SharedType AttributePtr;
 typedef Item<Attribute>::WeakType AttributePtrW;
 typedef Item<Event>::SharedType EventPtr;
-typedef List<Node> NodeList;
+typedef List<Node> NodeList;                 // eg. for Node's children
 typedef Item<NodeList>::SharedType NodeListPtr;
 typedef Item<NodeList>::WeakType NodeListPtrW;
-typedef List<Attribute> AttributeList;
+ITEM_AS_POINTER(KMPlayer::NodeList)
+typedef List<Attribute> AttributeList;       // eg. for Element's attributes
 typedef Item<AttributeList>::SharedType AttributeListPtr;
-typedef ListNode<NodePtrW> NodeRefItem;      // list only references Nodes
+ITEM_AS_POINTER(KMPlayer::AttributeList)
+typedef ListNode<NodePtrW> NodeRefItem;      // Node for ref Nodes
+ITEM_AS_POINTER(KMPlayer::NodeRefItem)
 //typedef ListNode<NodePtr> NodeStoreItem;   // list stores Nodes
 typedef NodeRefItem::SharedType NodeRefItemPtr;
 typedef NodeRefItem::WeakType NodeRefItemPtrW;
-typedef List<NodeRefItem> NodeRefList;
+typedef List<NodeRefItem> NodeRefList;       // ref nodes, eg. event listeners
 typedef Item<NodeRefList>::SharedType NodeRefListPtr;
 typedef Item<NodeRefList>::WeakType NodeRefListPtrW;
+ITEM_AS_POINTER(KMPlayer::NodeRefList)
 typedef Item<ElementRuntime>::SharedType ElementRuntimePtr;
 typedef Item<ElementRuntime>::WeakType ElementRuntimePtrW;
 
@@ -299,8 +351,6 @@ typedef SharedPtr <Connection> ConnectionPtr;
  */
 class KMPLAYER_EXPORT Node : public TreeNode <Node> {
     friend class DocumentBuilder;
-    friend class SharedPtr<KMPlayer::Node>;
-    friend class WeakPtr<KMPlayer::Node>;
 public:
     enum State {
         state_init, state_deferred,
@@ -449,46 +499,7 @@ protected:
     bool editable;
 };
 
-/**
- * Because of the m_self member of Item<T>, it's not allowed to assign a
- * Node* directly to SharedPtr<Node>. Node* will then reside in two
- * independant SharedData<Node> objects.
- * So specialize constructor and assignment operators to fetch the 
- * SharedData<Node> from the Node* instead of creating a new one
- */
-template <> inline SharedPtr<KMPlayer::Node>::SharedPtr (KMPlayer::Node * t)
- : data (t ? t->m_self.data : 0L) {
-    if (data)
-        data->addRef ();
-}
-
-template <>
-inline SharedPtr<KMPlayer::Node> & SharedPtr<KMPlayer::Node>::operator = (KMPlayer::Node * t) {
-    if (t) {
-        operator = (t->m_self);
-    } else if (data) {
-        data->release ();
-        data = 0L;
-    }
-    return *this;
-}
-
-template <> inline WeakPtr<KMPlayer::Node>::WeakPtr (KMPlayer::Node * t)
- : data (t ? t->m_self.data : 0L) {
-    if (data)
-        data->addRef ();
-}
-
-template <>
-inline WeakPtr<KMPlayer::Node> & WeakPtr<KMPlayer::Node>::operator = (KMPlayer::Node * t) {
-    if (t) {
-        operator = (t->m_self);
-    } else if (data) {
-        data->releaseWeak ();
-        data = 0L;
-    }
-    return *this;
-}
+ITEM_AS_POINTER(KMPlayer::Node)
 
 /*
  * Element node, XML node that can have attributes
@@ -760,7 +771,7 @@ inline void TreeNode<T>::appendChild (typename Item<T>::SharedType c) {
 }
 
 inline KDE_NO_EXPORT NodeListPtr Node::childNodes () const {
-    return (new NodeList (m_first_child, m_last_child))->self ();
+    return new NodeList (m_first_child, m_last_child);
 }
 
 }  // KMPlayer namespace

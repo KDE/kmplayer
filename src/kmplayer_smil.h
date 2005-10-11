@@ -119,6 +119,8 @@ private:
     ElementRuntimePrivate * d;
 };
 
+ITEM_AS_POINTER(KMPlayer::ElementRuntime)
+
 /**
  * For RegPoint, RegionRuntime and MediaRuntime, having sizes
  */
