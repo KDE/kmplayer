@@ -1,3 +1,19 @@
+Changes since version 0.9.1-pre3
+- Show backend's status in application's statusbar and show the play time
+  left as well.
+- Add OBJECT's attributes coming from khtml to the document of urlsource, that
+  might be helpful for web developers (using the 'Show all' feature of playlist)
+- Add KAction for showing the control or language popup menu
+- Put colors and font settings on a separate tab, reducing total config
+  dialog dimensions
+- Fix restoring playlist causing flashing on screen after intro animation
+- Also remember window location for window->minimal mode->window
+- Integrate MPlayer's languague/subtitles menus for DVD with new languague
+  popup menu and seek to current position when changing languague/subtitles
+  with MPlayer
+- Support for audio/subtitles within a stream. A language button will be added
+  when detected which has submenus for the languages. GStreamer only subtitles
+  with an external url ATM.
 Changes since version 0.9.1-pre2
 - Support for CONTROLS="Playlist" for plugin
 - Support for <base HREF='...'/> tags for ASX
