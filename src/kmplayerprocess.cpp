@@ -179,10 +179,11 @@ bool Process::quit () {
 }
 
 void Process::setState (State newstate) {
-    if (m_source && m_state != newstate) {
+    if (m_state != newstate) {
         m_old_state = m_state;
         m_state = newstate;
-        QTimer::singleShot (0, this, SLOT (rescheduledStateChanged ()));
+        if (m_source)
+            QTimer::singleShot (0, this, SLOT (rescheduledStateChanged ()));
     }
 }
 

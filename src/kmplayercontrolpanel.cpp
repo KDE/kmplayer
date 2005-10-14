@@ -456,14 +456,20 @@ KDE_NO_EXPORT void ControlPanel::timerEvent (QTimerEvent * e) {
                 !m_colorMenu->hasMouse () &&
                 !m_bookmarkMenu->hasMouse ()) {
             if (!(m_bookmarkMenu->isVisible () && 
-                        static_cast <QWidget *> (m_bookmarkMenu) != QWidget::keyboardGrabber ()))
+                        static_cast <QWidget *> (m_bookmarkMenu) != QWidget::keyboardGrabber ())) {
                 // not if user entered the bookmark sub menu or if I forgot one
                 m_popupMenu->hide ();
+                if (m_buttons [button_config]->isOn ())
+                    m_buttons [button_config]->toggle ();
+            }
         } else if (m_languageMenu->isVisible () &&
                 !m_languageMenu->hasMouse () &&
                 !m_audioMenu->hasMouse () &&
-                !m_subtitleMenu->hasMouse ())
+                !m_subtitleMenu->hasMouse ()) {
             m_languageMenu->hide ();
+            if (m_buttons [button_language]->isOn ())
+                m_buttons [button_language]->toggle ();
+        }
     }
     killTimer (e->timerId ());
 }

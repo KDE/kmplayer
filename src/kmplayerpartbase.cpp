@@ -269,6 +269,7 @@ void PartBase::setProcess (const char * name) {
     m_process = process;
     if (!process)
         return;
+    m_process->setSource (m_source);
     if (m_process->playing ()) {
         m_view->controlPanel ()->setPlaying (true);
         m_view->controlPanel ()->showPositionSlider (!!m_source->length ());

@@ -213,8 +213,8 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
     new KAction (i18n ("Decrease Volume"), editVolumeDec->shortcut (), m_player, SLOT(decreaseVolume ()), m_view->viewArea ()->actionCollection (), "edit_volume_down");
     connect (m_player->settings (), SIGNAL (configChanged ()),
              this, SLOT (configChanged ()));
-    //connect (m_player, SIGNAL (loading (int)),
-    //         this, SLOT (loadingProgress (int)));
+    connect (m_player, SIGNAL (loading (int)),
+             this, SLOT (loadingProgress (int)));
     connect (m_player, SIGNAL (positioned (int, int)),
              this, SLOT (positioned (int, int)));
     connect (m_player, SIGNAL (statusUpdated (const QString &)),
@@ -244,11 +244,9 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
     setAcceptDrops (true);
 }
 
-KDE_NO_EXPORT void KMPlayerApp::loadingProgress (int percentage) {
-    if (percentage >= 100)
-        slotStatusMsg(i18n("Ready"));
-    else
-        slotStatusMsg (QString::number (percentage) + "%");
+KDE_NO_EXPORT void KMPlayerApp::loadingProgress (int perc) {
+    if (perc < 100)
+        statusBar ()->changeItem (QString ("%1%").arg (perc), id_status_timer);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::positioned (int pos, int length) {
