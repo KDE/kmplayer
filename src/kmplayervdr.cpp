@@ -46,6 +46,7 @@
 #include <klineedit.h>
 #include <kurlrequester.h>
 #include <kcombobox.h>
+#include <kstatusbar.h>
 #include <kprocess.h>
 #include <kconfig.h>
 #include <kaction.h>
@@ -170,6 +171,7 @@ KDE_NO_EXPORT QString KMPlayerVDRSource::prettyName () {
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
+    last_channel = 0;
     connect (this, SIGNAL (startPlaying ()), this, SLOT (processStarted()));
     connect (this, SIGNAL (stopPlaying ()), this, SLOT (processStopped ()));
     KMPlayer::ControlPanel * panel = m_app->view()->controlPanel ();
@@ -387,8 +389,15 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
                 toconsole = false;
             } else if (!strcmp (commands->command, cmd_chan_query)) {
                 if (v && line.length () > 4) {
-                    setTitle (line.mid (4));
-                    v->playList ()->selectItem (line.mid (4));
+                    QString ch = line.mid (4);
+                    setTitle (ch);
+                    v->playList ()->selectItem (ch);
+                    int c = strtol(ch.ascii(), 0L, 10);
+                    if (c != last_channel) {
+                        last_channel = c;
+                        m_app->statusBar ()->changeItem (QString::number (c),
+                                                         id_status_timer);
+                    }
                 }
             } else if (cmd_done && !strcmp(commands->command,cmd_volume_query)){
                 int pos = line.findRev (QChar (' '));

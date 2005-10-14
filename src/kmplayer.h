@@ -29,6 +29,9 @@
 #include <kaction.h>
 #include <kurl.h>
 
+static const int id_status_msg = 1;
+static const int id_status_timer = 2;
+
 class QPopupMenu;
 class QMenuItem;
 class KProcess;

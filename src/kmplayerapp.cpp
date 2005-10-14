@@ -69,9 +69,6 @@
 #include "kmplayervdr.h"
 #include "kmplayerconfig.h"
 
-static const int id_status_msg = 1;
-static const int id_status_timer = 2;
-
 static const int DVDNav_start = 1;
 static const int DVDNav_previous = 2;
 static const int DVDNav_next = 3;

@@ -152,6 +152,7 @@ private:
     int tcp_port;
     int m_stored_volume;
     int scale;
+    int last_channel;
 };
 
 class XVideo : public KMPlayer::CallbackProcess {

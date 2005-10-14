@@ -71,8 +71,6 @@ static const int XKeyPress = KeyPress;
 #undef Unsorted
 #undef Bool
 
-static const int button_height_with_slider = 15;
-static const int button_height_only_buttons = 11;
 extern const char * normal_window_xpm[];
 extern const char * playlist_xpm[];
 
