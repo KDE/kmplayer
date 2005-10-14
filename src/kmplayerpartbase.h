@@ -133,6 +133,7 @@ public:
     bool mayResize () const { return !m_noresize; }
     void updatePlayerMenu (ControlPanel *);
     void updateInfo (const QString & msg);
+    void updateStatus (const QString & msg);
 
     // these are called from Process
     void changeURL (const QString & url);
@@ -177,6 +178,7 @@ signals:
     void treeChanged (NodePtr root, NodePtr);
     void treeUpdated ();
     void infoUpdated (const QString & msg);
+    void statusUpdated (const QString & msg);
     void languagesUpdated(const QStringList & alang, const QStringList & slang);
     void audioIsSelected (int id);
     void subtitleIsSelected (int id);

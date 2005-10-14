@@ -69,13 +69,14 @@
 #include "kmplayervdr.h"
 #include "kmplayerconfig.h"
 
-#define ID_STATUS_MSG 1
+static const int id_status_msg = 1;
+static const int id_status_timer = 2;
 
-const int DVDNav_start = 1;
-const int DVDNav_previous = 2;
-const int DVDNav_next = 3;
-const int DVDNav_root = 4;
-const int DVDNav_up = 5;
+static const int DVDNav_start = 1;
+static const int DVDNav_previous = 2;
+static const int DVDNav_next = 3;
+static const int DVDNav_root = 4;
+static const int DVDNav_up = 5;
 
 extern const char * strMPlayerGroup;
 
@@ -90,6 +91,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       m_tvmenu (new QPopupMenu (this)),
       m_ffserverconfig (new KMPlayerFFServerConfig),
       m_broadcastconfig (new KMPlayerBroadcastConfig (m_player, m_ffserverconfig)),
+      last_time_left (0),
       m_played_intro (false),
       m_played_exit (false),
       m_minimal_mode (false)
@@ -173,9 +175,10 @@ KDE_NO_EXPORT void KMPlayerApp::slotConfigureKeys()
 }
 
 
-KDE_NO_EXPORT void KMPlayerApp::initStatusBar()
-{
-    statusBar()->insertItem(i18n("Ready."), ID_STATUS_MSG);
+KDE_NO_EXPORT void KMPlayerApp::initStatusBar () {
+    KStatusBar *sb = statusBar ();
+    sb->insertItem (i18n ("Ready."), id_status_msg);
+    sb->insertItem (QString ("--:--"), id_status_timer, 0, true);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::initMenu () {
@@ -210,8 +213,12 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
     new KAction (i18n ("Decrease Volume"), editVolumeDec->shortcut (), m_player, SLOT(decreaseVolume ()), m_view->viewArea ()->actionCollection (), "edit_volume_down");
     connect (m_player->settings (), SIGNAL (configChanged ()),
              this, SLOT (configChanged ()));
-    connect (m_player, SIGNAL (loading (int)),
-             this, SLOT (loadingProgress (int)));
+    //connect (m_player, SIGNAL (loading (int)),
+    //         this, SLOT (loadingProgress (int)));
+    connect (m_player, SIGNAL (positioned (int, int)),
+             this, SLOT (positioned (int, int)));
+    connect (m_player, SIGNAL (statusUpdated (const QString &)),
+             this, SLOT (slotStatusMsg (const QString &)));
     connect (m_view, SIGNAL (windowVideoConsoleToggled (int)),
              this, SLOT (windowVideoConsoleToggled (int)));
     connect (m_player, SIGNAL (sourceChanged (KMPlayer::Source *, KMPlayer::Source *)), this, SLOT (slotSourceChanged(KMPlayer::Source *, KMPlayer::Source *)));
@@ -242,6 +249,24 @@ KDE_NO_EXPORT void KMPlayerApp::loadingProgress (int percentage) {
         slotStatusMsg(i18n("Ready"));
     else
         slotStatusMsg (QString::number (percentage) + "%");
+}
+
+KDE_NO_EXPORT void KMPlayerApp::positioned (int pos, int length) {
+    int left = (length - pos) / 10;
+    if (left != last_time_left) {
+        last_time_left = left;
+        QString text ("--:--");
+        if (left > 0) {
+            int h = left / 3600;
+            int m = (left % 3600) / 60;
+            int s = left % 60;
+            if (h > 0)
+                text.sprintf ("%d:%02d:%02d", h, m, s);
+            else
+                text.sprintf ("%02d:%02d", m, s);
+        }
+        statusBar ()->changeItem (text, id_status_timer);
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerApp::windowVideoConsoleToggled (int wt) {
@@ -836,9 +861,10 @@ KDE_NO_EXPORT void KMPlayerApp::slotViewMenuBar() {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotStatusMsg(const QString &text) {
-    statusBar()->clear();
-    statusBar()->changeItem(text, ID_STATUS_MSG);
+KDE_NO_EXPORT void KMPlayerApp::slotStatusMsg (const QString &text) {
+    KStatusBar * sb = statusBar ();
+    sb->clear ();
+    sb->changeItem (text, id_status_msg);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::fullScreen () {

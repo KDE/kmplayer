@@ -104,6 +104,7 @@ private slots:
     void keepSizeRatio ();
     void startArtsControl();
     void loadingProgress (int percentage);
+    void positioned (int pos, int length);
     void zoom50 ();
     void zoom100 ();
     void zoom150 ();
@@ -144,6 +145,7 @@ private:
     KMPlayerFFServerConfig * m_ffserverconfig;
     KMPlayerBroadcastConfig * m_broadcastconfig;
     QCString m_dcopName;
+    int last_time_left;
     bool m_showToolbar;
     bool m_showStatusbar;
     bool m_showMenubar;

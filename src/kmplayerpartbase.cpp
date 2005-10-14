@@ -476,10 +476,6 @@ void PartBase::keepMovieAspect (bool b) {
     }
 }
 
-static const char * statemap [] = {
-    "NotRunning", "Ready", "Buffering", "Playing"
-};
-
 void PartBase::recordingStarted () {
     if (m_settings->replayoption == Settings::ReplayAfter)
         m_record_timer = startTimer (1000 * m_settings->replaytime);
@@ -612,6 +608,10 @@ void PartBase::updateTree (bool full) {
 
 void PartBase::updateInfo (const QString & msg) {
     emit infoUpdated (msg);
+}
+
+void PartBase::updateStatus (const QString & msg) {
+    emit statusUpdated (msg);
 }
 
 void PartBase::setLanguages (const QStringList & al, const QStringList & sl) {
@@ -1214,10 +1214,15 @@ void Source::setIdentified (bool b) {
     m_identified = b;
 }
 
+static const QString statemap [] = {
+    i18n ("Not Running"), i18n ("Ready"), i18n ("Buffering"), i18n ("Playing")
+};
+
 void Source::stateChange(Process *p, Process::State olds, Process::State news) {
     if (!p || !p->viewer ()) return;
     if (dynamic_cast <Recorder *> (p)) {
         kdDebug () << "recordState " << statemap[olds] << " -> " << statemap[news] << endl;
+        m_player->updateStatus (i18n ("Recorder %1 %2").arg (p->name ()).arg (statemap[news]));
         p->viewer ()->view ()->controlPanel ()->setRecording (news > Process::Ready);
         if (news == Process::Ready && olds > Process::Ready)
             p->quit ();
@@ -1228,6 +1233,7 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
     } else {
         p->viewer()->view()->controlPanel()->setPlaying(news > Process::Ready);
         kdDebug () << "processState " << statemap[olds] << " -> " << statemap[news] << endl;
+        m_player->updateStatus (i18n ("Player %1 %2").arg (p->name ()).arg (statemap[news]));
         if (news == Process::Playing) {
             p->viewer ()->view ()->videoStart ();
             emit startPlaying ();
