@@ -40,6 +40,7 @@ class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollect
 #include <kinstance.h>
 #include <kparts/factory.h>
 #include <kstaticdeleter.h>
+#include <kstatusbar.h>
 
 #include "kmplayer_part.h"
 #include "kmplayerview.h"
@@ -468,6 +469,12 @@ KDE_NO_EXPORT void KMPlayerPart::connectToPart (KMPlayerPart * m) {
             this, SLOT (viewerPartProcessChanged (const char *)));
     connect (m, SIGNAL (sourceChanged (KMPlayer::Source *, KMPlayer::Source *)),
             this, SLOT (viewerPartSourceChanged (KMPlayer::Source *, KMPlayer::Source *)));
+    if (m_features & Feat_StatusBar) {
+        last_time_left = 0;
+        connect (m, SIGNAL (positioned (int, int)),
+                 this, SLOT (statusPosition (int, int)));
+        m_view->statusBar ()->insertItem (QString ("--:--"), 1, 0, true);
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerPart::setLoaded (int percentage) {
@@ -530,6 +537,24 @@ KDE_NO_EXPORT void KMPlayerPart::setMenuZoom (int id) {
     if (m_view->viewer ())
         m_liveconnectextension->setSize (int (scale * m_view->viewer ()->width ()),
                                          int (scale * m_view->viewer ()->height()));
+}
+
+KDE_NO_EXPORT void KMPlayerPart::statusPosition (int pos, int length) {
+    int left = (length - pos) / 10;
+    if (left != last_time_left) {
+        last_time_left = left;
+        QString text ("--:--");
+        if (left > 0) {
+            int h = left / 3600;
+            int m = (left % 3600) / 60;
+            int s = left % 60;
+            if (h > 0)
+                text.sprintf ("%d:%02d:%02d", h, m, s);
+            else
+                text.sprintf ("%02d:%02d", m, s);
+        }
+        m_view->statusBar ()->changeItem (text, 1);
+    }
 }
 
 //---------------------------------------------------------------------

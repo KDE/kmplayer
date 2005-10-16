@@ -27,7 +27,6 @@
 #include <qmetaobject.h>
 #include <qlayout.h>
 #include <qpixmap.h>
-#include <qlineedit.h>
 #include <qtextedit.h>
 #include <qtooltip.h>
 #include <qapplication.h>
@@ -47,6 +46,7 @@
 
 #include <kiconloader.h>
 #include <kstaticdeleter.h>
+#include <kstatusbar.h>
 #include <kdebug.h>
 #include <klocale.h>
 #include <kapplication.h>
@@ -775,9 +775,10 @@ KDE_NO_EXPORT void View::init () {
     m_control_panel = new ControlPanel (m_view_area, this);
     m_control_panel->setMaximumSize (2500, controlPanel ()->maximumSize ().height ());
     m_status_bar = new StatusBar (this);
-    m_status_bar->setReadOnly (true);
+    m_status_bar->insertItem (QString (""), 0);
+    QSize sbsize = m_status_bar->sizeHint ();
     m_status_bar->hide ();
-    m_status_bar->setMaximumSize (2500, m_status_bar->fontMetrics ().height ());
+    m_status_bar->setMaximumSize (2500, sbsize.height ());
     m_viewer = new Viewer (m_widgetstack, this);
     m_widgettypes [WT_Video] = m_viewer;
 #if KDE_IS_VERSION(3,1,90)
@@ -839,7 +840,7 @@ void View::setInfoMessage (const QString & msg) {
 
 void View::setStatusMessage (const QString & msg) {
     if (m_statusbar_mode != SB_Hide)
-        m_status_bar->setText (msg);
+        m_status_bar->changeItem (msg, 0);
 }
 
 void View::toggleShowPlaylist () {

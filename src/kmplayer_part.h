@@ -148,6 +148,7 @@ protected slots:
     void viewerPartProcessChanged (const char *);
     void viewerPartSourceChanged (KMPlayer::Source *, KMPlayer::Source *);
     void waitForImageWindowTimeOut ();
+    void statusPosition (int pos, int length);
 private:
     void setAutoControls (bool);
     KMPlayerPart * m_master;
@@ -158,6 +159,7 @@ private:
     QString m_src_url;
     QString m_file_name;
     int m_features;
+    int last_time_left;
     bool m_started_emited : 1;
     //bool m_noresize : 1;
     bool m_havehref : 1;

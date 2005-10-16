@@ -46,6 +46,7 @@ class QAccel;
 class KActionCollection;
 class KAction;
 class KShortcut;
+class KStatusBar;
 
 namespace KMPlayer {
 
@@ -57,7 +58,7 @@ class Console;
 class PlayListView;
 class ViewAreaPrivate;
 
-typedef QLineEdit StatusBar;
+typedef KStatusBar StatusBar;
 
 /*
  * An item in the playlist
