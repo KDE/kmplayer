@@ -285,6 +285,12 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
         setProcess ("mplayer");
         setRecorder ("mencoder");
         connectPanel (m_view->controlPanel ());
+        if (m_features & Feat_StatusBar) {
+            last_time_left = 0;
+            connect (this, SIGNAL (positioned (int, int)),
+                     this, SLOT (statusPosition (int, int)));
+            m_view->statusBar ()->insertItem (QString ("--:--"), 1, 0, true);
+        }
     }
     if (group_member) {
         KMPlayerPartList::iterator i =kmplayerpart_static->partlist.begin ();
