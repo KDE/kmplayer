@@ -27,6 +27,7 @@
 #include <qmetaobject.h>
 #include <qlayout.h>
 #include <qpixmap.h>
+#include <qlineedit.h>
 #include <qtextedit.h>
 #include <qtooltip.h>
 #include <qapplication.h>
@@ -250,9 +251,10 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     int w = width ();
     int h = height ();
     int hcp = m_view->controlPanel ()->isVisible () ? (m_view->controlPanelMode () == View::CP_Only ? h : m_view->controlPanel()->maximumSize ().height ()) : 0;
+    int hsb = m_view->statusBar ()->isVisible () ? (m_view->statusBarMode () == View::SB_Only ? h : m_view->statusBar()->maximumSize ().height ()) : 0;
     int wws = w;
     // move controlpanel over video when autohiding and playing
-    int hws = h - (m_view->controlPanelMode () == View::CP_AutoHide && m_view->widgetStack ()->visibleWidget () == m_view->viewer () ? 0 : hcp);
+    int hws = h - (m_view->controlPanelMode () == View::CP_AutoHide && m_view->widgetStack ()->visibleWidget () == m_view->viewer () ? 0 : hcp) - hsb;
 
     // now scale the regions and check if video region is already sized
     bool av_geometry_changed = false;
@@ -270,7 +272,9 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
 
     // finally resize controlpanel and video widget
     if (m_view->controlPanel ()->isVisible ())
-        m_view->controlPanel ()->setGeometry (0, h-hcp, w, hcp);
+        m_view->controlPanel ()->setGeometry (0, h-hcp-hsb, w, hcp);
+    if (m_view->statusBar ()->isVisible ())
+        m_view->statusBar ()->setGeometry (0, h-hsb, w, hsb);
     if (m_fullscreen && wws == w && hws == h) {
         wws = wws * m_fullscreen_scale / 100;
         hws = hws * m_fullscreen_scale / 100;
@@ -709,10 +713,12 @@ KDE_NO_CDTOR_EXPORT View::View (QWidget *parent, const char *name)
   : KMediaPlayer::View (parent, name),
     m_image (0L),
     m_control_panel (0L),
+    m_status_bar (0L),
     m_volume_slider (0L),
     m_mixer_object ("kicker"),
     m_controlpanel_mode (CP_Show),
     m_old_controlpanel_mode (CP_Show),
+    m_statusbar_mode (SB_Hide),
     controlbar_timer (0),
     m_keepsizeratio (false),
     m_playing (false),
@@ -768,6 +774,10 @@ KDE_NO_EXPORT void View::init () {
     m_widgetstack = new QWidgetStack (m_view_area);
     m_control_panel = new ControlPanel (m_view_area, this);
     m_control_panel->setMaximumSize (2500, controlPanel ()->maximumSize ().height ());
+    m_status_bar = new StatusBar (this);
+    m_status_bar->setReadOnly (true);
+    m_status_bar->hide ();
+    m_status_bar->setMaximumSize (2500, m_status_bar->fontMetrics ().height ());
     m_viewer = new Viewer (m_widgetstack, this);
     m_widgettypes [WT_Video] = m_viewer;
 #if KDE_IS_VERSION(3,1,90)
@@ -825,6 +835,11 @@ void View::setInfoMessage (const QString & msg) {
           m_dock_infopanel->manualDock(m_dock_video,KDockWidget::DockBottom,65);
         m_infopanel->setText (msg);
     }
+}
+
+void View::setStatusMessage (const QString & msg) {
+    if (m_statusbar_mode != SB_Hide)
+        m_status_bar->setText (msg);
 }
 
 void View::toggleShowPlaylist () {
@@ -973,6 +988,15 @@ void View::setControlPanelMode (ControlPanelMode m) {
         } else
             m_control_panel->hide ();
     //m_view_area->setMouseTracking (m_controlpanel_mode == CP_AutoHide && m_playing);
+    m_view_area->resizeEvent (0L);
+}
+
+void View::setStatusBarMode (StatusBarMode m) {
+    m_statusbar_mode = m;
+    if (m == SB_Hide)
+        m_status_bar->hide ();
+    else
+        m_status_bar->show ();
     m_view_area->resizeEvent (0L);
 }
 

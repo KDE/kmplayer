@@ -223,11 +223,13 @@ KDE_NO_EXPORT void Settings::applyColorSetting (bool only_changed_ones) {
                    view->viewArea()->setPaletteBackgroundColor(colors[i].color);
                    break;
                 case ColorSetting::infowindow_background:
-                   view->infoPanel ()->setPaper (QBrush (colors[i].color));
-                   break;
+                  view->infoPanel ()->setPaper (QBrush (colors[i].color));
+                  view->statusBar()->setPaletteBackgroundColor(colors[i].color);
+                  break;
                 case ColorSetting::infowindow_foreground:
                   view->infoPanel()->setPaletteForegroundColor(colors[i].color);
                   view->infoPanel ()->setColor (colors[i].color);
+                  view->statusBar()->setPaletteForegroundColor(colors[i].color);
                   break;
                 default:
                     ;
@@ -242,6 +244,10 @@ KDE_NO_EXPORT void Settings::applyColorSetting (bool only_changed_ones) {
                    break;
                 case FontSetting::infowindow:
                    view->infoPanel ()->setFont (fonts[i].font);
+                   view->statusBar ()->setFont (fonts[i].font);
+                   view->statusBar ()->setMaximumSize (2500, view->statusBar ()->fontMetrics ().height () + 4);
+                   if (only_changed_ones) // user configure changes
+                       view->updateLayout ();
                    break;
                 default:
                     ;

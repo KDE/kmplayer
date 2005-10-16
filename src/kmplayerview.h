@@ -57,6 +57,8 @@ class Console;
 class PlayListView;
 class ViewAreaPrivate;
 
+typedef QLineEdit StatusBar;
+
 /*
  * An item in the playlist
  */
@@ -203,6 +205,9 @@ public:
     enum ControlPanelMode {
         CP_Hide, CP_AutoHide, CP_Show, CP_Only /* no video widget */
     };
+    enum StatusBarMode {
+        SB_Hide, SB_Show, SB_Only /* no video widget */
+    };
     enum WidgetType {
         WT_Video, WT_Console, WT_Picture, WT_Last
     };
@@ -218,6 +223,7 @@ public:
     TextEdit * console () const { return m_multiedit; }
     KDE_NO_EXPORT Viewer * viewer () const { return m_viewer; }
     KDE_NO_EXPORT ControlPanel * controlPanel () const {return m_control_panel;}
+    KDE_NO_EXPORT StatusBar * statusBar () const {return m_status_bar;}
     KDE_NO_EXPORT PlayListView * playList () const { return m_playlist; }
     KDE_NO_EXPORT InfoWindow * infoPanel () const { return m_infopanel; }
     KDE_NO_EXPORT QWidgetStack * widgetStack () const { return m_widgetstack; }
@@ -227,7 +233,9 @@ public:
     void setKeepSizeRatio (bool b);
     void showWidget (WidgetType w);
     void setControlPanelMode (ControlPanelMode m);
+    void setStatusBarMode (StatusBarMode m);
     KDE_NO_EXPORT ControlPanelMode controlPanelMode () const { return m_controlpanel_mode; }
+    KDE_NO_EXPORT StatusBarMode statusBarMode () const { return m_statusbar_mode; }
     void delayedShowButtons (bool show);
     bool isFullScreen () const;
     bool setPicture (const QString & path);
@@ -252,6 +260,7 @@ public slots:
     void toggleShowPlaylist ();
     void toggleVideoConsoleWindow ();
     void setInfoMessage (const QString & msg);
+    void setStatusMessage (const QString & msg);
 signals:
     void urlDropped (const KURL::List & urls);
     void pictureClicked ();
@@ -283,10 +292,12 @@ private:
     QString tmplog;
     QPixmap * m_image;
     ControlPanel * m_control_panel;
+    StatusBar * m_status_bar;
     QSlider * m_volume_slider;
     const char * m_mixer_object;
     ControlPanelMode m_controlpanel_mode;
     ControlPanelMode m_old_controlpanel_mode;
+    StatusBarMode m_statusbar_mode;
     int controlbar_timer;
     bool m_keepsizeratio;
     bool m_playing;

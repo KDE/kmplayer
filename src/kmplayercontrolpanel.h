@@ -131,6 +131,7 @@ public:
     KDE_NO_EXPORT QPopupMenu * colorMenu () const { return m_colorMenu; }
     KDE_NO_EXPORT QPopupMenu * audioMenu () const { return m_audioMenu; }
     KDE_NO_EXPORT QPopupMenu * subtitleMenu () const { return m_subtitleMenu; }
+    KDE_NO_EXPORT View * view () const { return m_view; }
 public slots:
     void setLanguages (const QStringList & al, const QStringList & sl);
     void selectSubtitle (int id);

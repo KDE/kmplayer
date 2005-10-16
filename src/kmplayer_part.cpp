@@ -264,16 +264,20 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                                       this, SLOT (setMenuZoom (int)));
 
     m_view->setNoInfoMessages (m_features != Feat_InfoPanel);
-    if (m_features & (Feat_Controls | Feat_VolumeSlider))
-        m_view->setControlPanelMode (m_features & Feat_Viewer ? KMPlayer::View::CP_Show : KMPlayer::View::CP_Only);
-    else if (m_features == Feat_InfoPanel)
+    if (m_features == Feat_InfoPanel)
         m_view->setInfoPanelOnly ();
     else if (m_features == Feat_PlayList)
         m_view->setPlaylistOnly ();
-    else if (m_features != Feat_Unknown)
-        m_view->setControlPanelMode (KMPlayer::View::CP_Hide);
-    else
-        m_view->setControlPanelMode (KMPlayer::View::CP_AutoHide);
+    else {
+        if (m_features & Feat_StatusBar)
+            m_view->setStatusBarMode (KMPlayer::View::SB_Show);
+        if (m_features & (Feat_Controls | Feat_VolumeSlider))
+            m_view->setControlPanelMode (m_features & Feat_Viewer ? KMPlayer::View::CP_Show : KMPlayer::View::CP_Only);
+        else if (m_features != Feat_Unknown)
+            m_view->setControlPanelMode (KMPlayer::View::CP_Hide);
+        else
+            m_view->setControlPanelMode (KMPlayer::View::CP_AutoHide);
+    }
     bool group_member = !m_group.isEmpty () && m_group != QString::fromLatin1("_unique") && m_features != Feat_Unknown;
     if (!group_member || m_features & Feat_Viewer) {
         // not part of a group or we're the viewer
