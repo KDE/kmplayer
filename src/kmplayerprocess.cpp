@@ -557,7 +557,11 @@ KDE_NO_EXPORT bool MPlayer::grabPicture (const KURL & url, int pos) {
     m_grabfile = outdir + QString ("00000001.jpg");
     unlink (m_grabfile.ascii ());
     QString myurl (url.isLocalFile () ? getPath (url) : url.url ());
-    QString args ("mplayer -vo jpeg -jpeg outdir=");
+    QString args ("mplayer ");
+    if (m_settings->mplayerpost090)
+        args += "-vo jpeg:outdir=";
+    else
+        args += "-vo jpeg -jpeg outdir=";
     args += KProcess::quote (outdir);
     args += QString (" -frames 1 -nosound -quiet ");
     if (pos > 0)
