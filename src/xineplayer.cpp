@@ -985,7 +985,8 @@ int main(int argc, char **argv) {
             dvd_device = argv [i];
         } else if (!strcmp (argv [i], "-vcd-device") && ++i < argc) {
             vcd_device = argv [i];
-        } else if (!strcmp (argv [i], "-wid") || !strcmp (argv [i], "-window-id") && ++i < argc) {
+        } else if ((!strcmp (argv [i], "-wid") ||
+                    !strcmp (argv [i], "-window-id")) && ++i < argc) {
             wid = atol (argv [i]);
             window_created = false;
         } else if (!strcmp (argv [i], "-root")) {
