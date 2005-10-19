@@ -22,6 +22,7 @@
 
 #include <qapplication.h>
 #include <qstring.h>
+#include <qsessionmanager.h>
 
 struct GstSizeEvent : public QEvent {
     GstSizeEvent (int l, int w, int h);
@@ -51,6 +52,8 @@ public slots:
     void pause ();
     void updatePosition ();
     //void postFinished ();
+protected:
+    void saveState (QSessionManager & sm);
 };
 
 #endif //_K_GST_PLAYER_H_

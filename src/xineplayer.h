@@ -22,7 +22,7 @@
 #include <qapplication.h>
 #include <qstring.h>
 #include <qstringlist.h>
-
+#include <qsessionmanager.h>
 
 struct XineMovieParamEvent : public QEvent {
     XineMovieParamEvent (int l, int w, int h, const QStringList & al, const QStringList & sl, bool ff=false);
@@ -72,6 +72,8 @@ public slots:
     void pause ();
     void updatePosition ();
     void postFinished ();
+protected:
+    void saveState (QSessionManager & sm);
 };
 
 #endif //_KXINEPLAYER_H_

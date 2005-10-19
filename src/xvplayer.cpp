@@ -463,6 +463,11 @@ void KXVideoPlayer::frequency (int val) {
     }
 }
 
+void KXVideoPlayer::saveState (QSessionManager & sm) {
+    if (callback)
+        sm.setRestartHint (QSessionManager::RestartNever);
+}
+
 class XEventThread : public QThread {
 protected:
     void run () {

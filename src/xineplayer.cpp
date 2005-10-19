@@ -377,66 +377,20 @@ void Backend::setConfig (QByteArray data) {
 
 KXinePlayer::KXinePlayer (int _argc, char ** _argv)
   : QApplication (_argc, _argv, false) {
-    window_created = true;
-    for(int i = 1; i < argc (); i++) {
-        if (!strcmp (argv ()[i], "-vo")) {
-            vo_driver = argv ()[++i];
-            if (!strcmp (vo_driver, "x11"))
-                vo_driver = (char *) "xshm";
-        } else if (!strcmp (argv ()[i], "-ao")) {
-            ao_driver = argv ()[++i];
-        } else if (!strcmp (argv ()[i], "-dvd-device")) {
-            dvd_device = argv ()[++i];
-        } else if (!strcmp (argv ()[i], "-vcd-device")) {
-            vcd_device = argv ()[++i];
-        } else if (!strcmp (argv ()[i], "-wid") || !strcmp (argv ()[i], "-window-id")) {
-            wid = atol (argv ()[++i]);
-            window_created = false;
-        } else if (!strcmp (argv ()[i], "-root")) {
-            wid =  XDefaultRootWindow (display);
-            window_created = false;
-        } else if (!strcmp (argv ()[i], "-window")) {
-            ;
-        } else if (!strcmp (argv ()[i], "-sub")) {
-            sub_mrl = QString (argv ()[++i]);
-        } else if (!strcmp (argv ()[i], "-lang")) {
-            slang = alang = QString (argv ()[++i]);
-        } else if (!strcmp (argv ()[i], "-v")) {
-            xine_verbose = true;
-        } else if (!strcmp (argv ()[i], "-vv")) {
-            xine_verbose = xine_vverbose = true;
-        } else if (!strcmp (argv ()[i], "-c")) {
-            wants_config = true;
-        } else if (!strcmp (argv ()[i], "-f") && i < argc () - 1) {
-            strncpy (configfile, argv ()[++i], sizeof (configfile));
-            configfile[sizeof (configfile) - 1] = 0;
-        } else if (!strcmp (argv ()[i], "-cb")) {
-            QString str = argv ()[++i];
-            int pos = str.find ('/');
-            if (pos > -1) {
-                fprintf (stderr, "callback is %s %s\n", str.left (pos).ascii (), str.mid (pos + 1).ascii ());
-                callback = new KMPlayer::Callback_stub 
-                    (str.left (pos).ascii (), str.mid (pos + 1).ascii ());
-            }
-        } else 
-            mrl = QString::fromLocal8Bit (argv ()[i]);
-    }
+}
+
+void KXinePlayer::init () {
     xpos    = 0;
     ypos    = 0;
     width   = 320;
     height  = 200;
 
+    XLockDisplay(display);
     if (window_created)
         wid = XCreateSimpleWindow(display, XDefaultRootWindow(display),
                 xpos, ypos, width, height, 1, 0, 0);
-    if (!callback)
-        QTimer::singleShot (10, this, SLOT (play ()));
     XSelectInput (display, wid,
                   (PointerMotionMask | ExposureMask | KeyPressMask | ButtonPressMask | StructureNotifyMask)); // | SubstructureNotifyMask));
-}
-
-void KXinePlayer::init () {
-    XLockDisplay(display);
     XWindowAttributes attr;
     XGetWindowAttributes(display, wid, &attr);
     width = attr.width;
@@ -473,6 +427,8 @@ void KXinePlayer::init () {
         options[i+1] = pp[i];
     options[i+1] = 0L;
     xine_config_register_enum (xine, "audio.visualization", 0, (char ** ) options, 0L, 0L, 0, xine_config_cb, 0L);
+    if (!callback)
+        QTimer::singleShot (10, this, SLOT (play ()));
 }
 
 KXinePlayer::~KXinePlayer () {
@@ -773,6 +729,11 @@ bool KXinePlayer::event (QEvent * e) {
     return true;
 }
 
+void KXinePlayer::saveState (QSessionManager & sm) {
+    if (callback)
+        sm.setRestartHint (QSessionManager::RestartNever);
+}
+
 XineMovieParamEvent::XineMovieParamEvent(int l, int w, int h, const QStringList & a, const QStringList & s, bool ff)
   : QEvent ((QEvent::Type) event_size),
     length (l), width (w), height (h), alang (a), slang (s) , first_frame (ff)
@@ -1012,6 +973,55 @@ int main(int argc, char **argv) {
 
     snprintf(configfile, sizeof (configfile), "%s%s", xine_get_homedir(), "/.xine/config2");
     xineapp = new KXinePlayer (argc, argv);
+    window_created = true;
+    for (int i = 1; i < argc; i++) {
+        if (!strcmp (argv [i], "-vo") && ++i < argc) {
+            vo_driver = argv [i];
+            if (!strcmp (vo_driver, "x11"))
+                vo_driver = (char *) "xshm";
+        } else if (!strcmp (argv [i], "-ao") && ++i < argc) {
+            ao_driver = argv [i];
+        } else if (!strcmp (argv [i], "-dvd-device") && ++i < argc) {
+            dvd_device = argv [i];
+        } else if (!strcmp (argv [i], "-vcd-device") && ++i < argc) {
+            vcd_device = argv [i];
+        } else if (!strcmp (argv [i], "-wid") || !strcmp (argv [i], "-window-id") && ++i < argc) {
+            wid = atol (argv [i]);
+            window_created = false;
+        } else if (!strcmp (argv [i], "-root")) {
+            wid =  XDefaultRootWindow (display);
+            window_created = false;
+        } else if (!strcmp (argv [i], "-window")) {
+            ;
+        } else if (!strcmp (argv [i], "-sub") && ++i < argc) {
+            sub_mrl = QString (argv [i]);
+        } else if (!strcmp (argv [i], "-lang") && ++i < argc) {
+            slang = alang = QString (argv [i]);
+        } else if (!strcmp (argv [i], "-v")) {
+            xine_verbose = true;
+        } else if (!strcmp (argv [i], "-vv")) {
+            xine_verbose = xine_vverbose = true;
+        } else if (!strcmp (argv [i], "-c")) {
+            wants_config = true;
+        } else if (!strcmp (argv [i], "-f") && ++i < argc) {
+            strncpy (configfile, argv [i], sizeof (configfile));
+            configfile[sizeof (configfile) - 1] = 0;
+        } else if (!strcmp (argv [i], "-cb") && ++i < argc) {
+            QString str = argv [i];
+            int pos = str.find ('/');
+            if (pos > -1) {
+                fprintf (stderr, "callback is %s %s\n", str.left (pos).ascii (), str.mid (pos + 1).ascii ());
+                callback = new KMPlayer::Callback_stub 
+                    (str.left (pos).ascii (), str.mid (pos + 1).ascii ());
+            }
+        } else {
+            if (mrl.startsWith ("-session")) {
+                delete xineapp;
+                return 1;
+            }
+            mrl = QString::fromLocal8Bit (argv [i]);
+        }
+    }
     bool config_changed = !QFile (configfile).exists ();
 
     if (!callback && mrl.isEmpty ()) {
@@ -1020,12 +1030,12 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    XEventThread * eventThread = new XEventThread;
+    eventThread->start ();
+
     DCOPClient dcopclient;
     dcopclient.registerAs ("kxineplayer");
     Backend player;
-
-    XEventThread * eventThread = new XEventThread;
-    eventThread->start ();
 
     xine = xine_new();
     if (xine_verbose)

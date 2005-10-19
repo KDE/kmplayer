@@ -22,6 +22,7 @@
 
 #include <qapplication.h>
 #include <qstring.h>
+#include <qsessionmanager.h>
 
 class KXVideoPlayer : public QApplication {
     Q_OBJECT
@@ -45,6 +46,8 @@ public slots:
     //void pause ();
     //void updatePosition ();
     //void postFinished ();
+protected:
+    void saveState (QSessionManager & sm);
 };
 
 #endif //_K_XV_PLAYER_H_

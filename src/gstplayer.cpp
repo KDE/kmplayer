@@ -550,6 +550,11 @@ bool KGStreamerPlayer::event (QEvent * e) {
     return true;
 }
  
+void KGStreamerPlayer::saveState (QSessionManager & sm) {
+    if (callback)
+        sm.setRestartHint (QSessionManager::RestartNever);
+}
+
 class XEventThread : public QThread {
 protected:
     void run () {
