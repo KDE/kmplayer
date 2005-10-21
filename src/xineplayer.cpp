@@ -569,8 +569,12 @@ void KXinePlayer::postFinished () {
 void KXinePlayer::pause () {
     if (!running) return;
     mutex.lock ();
-    if (xine_get_status (stream) == XINE_STATUS_PLAY)
-        xine_set_param( stream, XINE_PARAM_SPEED, XINE_SPEED_PAUSE);
+    if (xine_get_status (stream) == XINE_STATUS_PLAY) {
+        if (xine_get_param (stream, XINE_PARAM_SPEED) == XINE_SPEED_PAUSE)
+            xine_set_param (stream, XINE_PARAM_SPEED, XINE_SPEED_NORMAL);
+        else
+            xine_set_param (stream, XINE_PARAM_SPEED, XINE_SPEED_PAUSE);
+    }
     mutex.unlock ();
 }
 
