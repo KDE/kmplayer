@@ -572,10 +572,10 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     toolBar("mainToolBar")->setBarPos(toolBarPos);
 
     // bar status settings
-    viewToolBar->setChecked (config->readBoolEntry("Show Toolbar", false));
+    viewToolBar->setChecked (config->readBoolEntry("Show Toolbar", true));
     slotViewToolBar();
 
-    bool bViewStatusbar = config->readBoolEntry("Show Statusbar", false);
+    bool bViewStatusbar = config->readBoolEntry("Show Statusbar", true);
     viewStatusBar->setChecked(bViewStatusbar);
     slotViewStatusBar();
 

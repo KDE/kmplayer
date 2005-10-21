@@ -1,5 +1,5 @@
 [General Options]
-Show Statusbar=false
+Show Statusbar=true
 Show Toolbar=true
 
 [KFileDialog Settings]
