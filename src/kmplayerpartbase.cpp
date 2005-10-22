@@ -21,6 +21,9 @@
 #endif
 
 #include <config.h>
+
+#include <math.h>
+
 #include <qapplication.h>
 #include <qcstring.h>
 #include <qcursor.h>
@@ -338,7 +341,7 @@ void PartBase::connectSource (Source * old_source, Source * source) {
     if (old_source) {
         disconnect (old_source, SIGNAL(endOfPlayItems ()), this, SLOT(stop ()));
         disconnect (old_source, SIGNAL (dimensionsChanged ()),
-                    this, SLOT (sourceHasChangedDimensions ()));
+                    this, SLOT (sourceHasChangedAspects ()));
         disconnect (old_source, SIGNAL (startPlaying ()),
                     this, SLOT (playingStarted ()));
         disconnect (old_source, SIGNAL (stopPlaying ()),
@@ -347,7 +350,7 @@ void PartBase::connectSource (Source * old_source, Source * source) {
     if (source) {
         connect (source, SIGNAL (endOfPlayItems ()), this, SLOT (stop ()));
         connect (source, SIGNAL (dimensionsChanged ()),
-                this, SLOT (sourceHasChangedDimensions ()));
+                this, SLOT (sourceHasChangedAspects ()));
         connect (source, SIGNAL (startPlaying()), this, SLOT(playingStarted()));
         connect (source, SIGNAL (stopPlaying ()), this, SLOT(playingStopped()));
     }
@@ -738,8 +741,9 @@ KDE_NO_EXPORT void PartBase::saturationValueChanged (int val) {
     m_process->saturation (val, true);
 }
 
-KDE_NO_EXPORT void PartBase::sourceHasChangedDimensions () {
+KDE_NO_EXPORT void PartBase::sourceHasChangedAspects () {
     if (m_view && m_source) {
+      //kdDebug () << "sourceHasChangedAspects " << m_source->aspect () << endl;
         m_view->viewer ()->setAspect (m_source->aspect ());
         m_view->updateLayout ();
     }
@@ -814,18 +818,29 @@ void Source::setDimensions (NodePtr node, int w, int h) {
             (w == 0 && m_width > 0);
         m_width = w;
         m_height = h;
-        setAspect (node, h > 0 ? 1.0 * w / h : 0.0);
+        if (m_aspect < 0.001)
+            setAspect (node, h > 0 ? 1.0 * w / h : 0.0);
+        //kdDebug () << "setDimensions " << w << "x" << h << " a:" << m_aspect << endl;
         if (ev)
             emit dimensionsChanged ();
     }
 }
 
 void Source::setAspect (NodePtr node, float a) {
+    //kdDebug () << "setAspect " << a << endl;
     Mrl * mrl = node ? node->mrl () : 0L;
-    if (mrl)
+    bool changed = false;
+    if (mrl) {
+        if (mrl->view_mode == Mrl::Window)
+            changed |= (fabs (mrl->aspect - a) > 0.001);
         mrl->aspect = a;
-    if (!mrl || mrl->view_mode == Mrl::Single)
+    }
+    if (!mrl || mrl->view_mode == Mrl::Single) {
+        changed |= (fabs (m_aspect - a) > 0.001);
         m_aspect = a;
+    }
+    if (changed)
+        emit dimensionsChanged ();
 }
 
 void Source::setLength (NodePtr, int len) {

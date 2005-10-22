@@ -194,7 +194,7 @@ protected slots:
     void brightnessValueChanged (int val);
     void hueValueChanged (int val);
     void saturationValueChanged (int val);
-    void sourceHasChangedDimensions ();
+    void sourceHasChangedAspects ();
     void fullScreen ();
     void playListItemSelected (QListViewItem *);
     virtual void playingStarted ();
