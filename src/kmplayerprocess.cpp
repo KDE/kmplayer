@@ -95,6 +95,7 @@ void Process::initProcess (Viewer * viewer) {
     delete m_process;
     m_process = new KProcess;
     m_process->setUseShell (true);
+    m_process->setEnvironment (QString::fromLatin1 ("SESSION_MANAGER"), QString::fromLatin1 (""));
     if (m_source) m_source->setPosition (0);
     m_url.truncate (0);
 }
