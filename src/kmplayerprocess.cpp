@@ -488,6 +488,11 @@ bool MPlayer::run (const char * args, const char * pipe) {
     if (!strVideoDriver.isEmpty ()) {
         fprintf (stderr, " -vo %s", strVideoDriver.lower().ascii());
         *m_process << " -vo " << strVideoDriver.lower();
+        if (viewer ()->view ()->keepSizeRatio () &&
+                strVideoDriver.lower() == QString::fromLatin1 ("x11")) {
+            fprintf (stderr, " -zoom");
+            *m_process << " -zoom";
+        }
     }
     QString strAudioDriver = QString (m_settings->audiodrivers[m_settings->audiodriver].driver);
     if (!strAudioDriver.isEmpty ()) {
@@ -645,8 +650,17 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
             }
         } else if (out.startsWith ("ID_VIDEO_ASPECT")) {
             int pos = out.find ('=');
-            if (pos > 0)
-                m_source->setAspect (m_mrl, out.mid (pos + 1).replace (',', '.').toFloat ());
+            if (pos > 0) {
+                bool ok;
+                QString val = out.mid (pos + 1);
+                float a = val.toFloat (&ok);
+                if (!ok) {
+                    val.replace (',', '.');
+                    a = val.toFloat (&ok);
+                }
+                if (ok && a > 0.001)
+                    m_source->setAspect (m_mrl, a);
+            }
         } else if (out.startsWith ("ID_AID_")) {
             int pos = out.find ('_', 7);
             if (pos > 0) {
