@@ -381,11 +381,13 @@ const short id_node_excl = 113;
 const short id_node_img = 120;
 const short id_node_audio_video = 121;
 const short id_node_text = 122;
-const short id_node_param = 130;
 const short id_node_set = 132;
 const short id_node_animate = 133;
-const short id_node_title = 134;
+const short id_node_title = 140;
+const short id_node_param = 141;
 const short id_node_first = id_node_smil;
+const short id_node_first_timed_mrl = id_node_par;
+const short id_node_last_timed_mrl = id_node_animate;
 const short id_node_last = 200; // reserve 100 ids
 
 /**
@@ -561,6 +563,7 @@ public:
     KDE_NO_CDTOR_EXPORT ~GroupBase () {}
     bool isMrl ();
     bool expose () const;
+    void finish ();
 protected:
     KDE_NO_CDTOR_EXPORT GroupBase (NodePtr & d, short id) : TimedMrl (d, id) {}
 };
