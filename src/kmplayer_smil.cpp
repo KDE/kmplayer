@@ -288,8 +288,8 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
     }
     //kdDebug () << "TimedRuntime::begin " << element->nodeName() << endl; 
     if (start_timer || dur_timer) {
-    killTimers ();
-    reset ();
+        killTimers ();
+        reset ();
         end ();
         init ();
     }
@@ -737,14 +737,6 @@ void AnimateGroupData::parseParam (const QString & name, const QString & val) {
         change_to = val;
     }
     TimedRuntime::parseParam (name, val);
-}
-
-KDE_NO_EXPORT void AnimateGroupData::begin () {
-    if (durations [begin_time].durval > duration_last_option) {
-        if (element) // don't prevent parent to finish
-            element->setState (Node::state_finished);
-    } else
-        TimedRuntime::begin ();
 }
 
 /**

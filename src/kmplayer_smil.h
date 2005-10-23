@@ -310,7 +310,6 @@ class AnimateGroupData : public TimedRuntime {
 public:
     KDE_NO_CDTOR_EXPORT ~AnimateGroupData () {}
     virtual void parseParam (const QString & name, const QString & value);
-    virtual void begin ();
     virtual void reset ();
 protected:
     void restoreModification ();

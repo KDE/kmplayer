@@ -363,7 +363,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
           "<region id='reg1' top='10%' height='80%' z-order='2'>"
           "<region id='image2' left='128' top='136' width='64' bottom='56'/>"
           "</region>"
-          "</layout></head><body>"
+          "</layout></head><body><excl><seq>"
           "<img src='%1' region='image1' dur='0.5s' fit='fill'/>"
           "<par>"
           "<animate target='image1' attribute='width' from='37.5%' to='1%' dur='0.5' fill='freeze'/>"
@@ -376,8 +376,8 @@ KDE_NO_EXPORT void IntroSource::activate () {
           "<animate target='reg1' attribute='background-color' calcMode='discrete' values='#000000;#000000;#020202;#060606;#0B0B0B;#111111;#191919;#222222;#2D2D2D;#393939;#464646;#555555;#656565;#777777;#8A8A8A;#9E9E9E;#B4B4B4;#CCCCCC;#E4E4E4;#FFFFFF' dur='0.6'/>"
           "<animate target='image2' attribute='top' from='136' to='72' dur='0.4' fill='freeze'/>"
           "<img src='%2' region='image2' dur='0.6' fit='hidden'/>"
-          "</par>"
-          "</body></smil>").arg (locate ("data", "kmplayer/noise.gif")).arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
+          "</par></seq><seq begin='image1.activateEvent'/>"
+          "</excl></body></smil>").arg (locate ("data", "kmplayer/noise.gif")).arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
         QTextStream ts (smil.utf8 (), IO_ReadOnly);
         KMPlayer::readXML (m_document, ts, QString::null);
     }
