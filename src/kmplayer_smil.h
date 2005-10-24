@@ -389,6 +389,10 @@ const short id_node_first_timed_mrl = id_node_par;
 const short id_node_last_timed_mrl = id_node_animate;
 const short id_node_last = 200; // reserve 100 ids
 
+inline bool isTimedMrl (const NodePtr & n) {
+    return n->id >= id_node_first_timed_mrl && n->id <= id_node_last_timed_mrl;
+}
+
 /**
  * '<smil>' tag
  */

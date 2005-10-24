@@ -186,7 +186,7 @@ void Node::activate () {
     if (firstChild ())
         firstChild ()->activate (); // activate only the first
     else
-        deactivate (); // nothing to activate
+        finish (); // a quicky :-)
 }
 
 void Node::begin () {
@@ -217,7 +217,7 @@ void Node::finish () {
         if (m_parent)
             m_parent->childDone (this);
         else
-            deactivate ();
+            deactivate (); // document deactivates itself on finish
     } else
         kdWarning () <<"Node::finish () call on not active element"<< endl;
 }
@@ -254,13 +254,13 @@ void Node::childBegan (NodePtr /*child*/) {
 
 void Node::childDone (NodePtr child) {
     //kdDebug () << nodeName () << " Node::childDone" << endl;
-    if (active ()) {
+    if (unfinished ()) {
         if (child->state == state_finished)
             child->deactivate ();
         if (child->nextSibling ())
             child->nextSibling ()->activate ();
         else
-            deactivate (); // we're done
+            finish (); // we're done
     }
 }
 

@@ -346,12 +346,10 @@ void TimedRuntime::parseParam (const QString & name, const QString & val) {
                     durations [duration_time].durval == 0) &&
                 durations [end_time].durval == duration_media) {
             NodePtr e = element->document ()->getElementById (val);
-            if (e) {
-                SMIL::TimedMrl * tm = dynamic_cast <SMIL::TimedMrl *> (e.ptr());
-                if (tm) {
-                    durations [(int) end_time].connection = tm->connectTo (element, event_stopped);
-                    durations [(int) end_time].durval = event_stopped;
-                }
+            if (e && SMIL::isTimedMrl (e)) {
+                SMIL::TimedMrl * tm = static_cast <SMIL::TimedMrl *> (e.ptr ());
+                durations [(int) end_time].connection = tm->connectTo (element, event_stopped);
+                durations [(int) end_time].durval = event_stopped;
             }
         }
     } else if (name == QString::fromLatin1 ("fill")) {
@@ -400,6 +398,10 @@ KDE_NO_EXPORT void TimedRuntime::propagateStop (bool forced) {
             if (c->unfinished ())
                 return; // a child still running
     }
+    if (start_timer) {
+        killTimer (start_timer);
+        start_timer = 0;
+    }
     if (dur_timer) {
         killTimer (dur_timer);
         dur_timer = 0;
@@ -441,16 +443,17 @@ KDE_NO_EXPORT void TimedRuntime::started () {
  * duration_timer timer expired or no duration set after started
  */
 KDE_NO_EXPORT void TimedRuntime::stopped () {
-    if (!element)
+    if (!element) {
         end ();
-    else if (0 < repeat_count--) {
-        if (durations [begin_time].durval > 0 &&
-                durations [begin_time].durval < duration_last_option) {
-            start_timer = startTimer (100 * durations [begin_time].durval);
-        } else
-            propagateStart ();
     } else if (element->active ()) {
-        element->finish ();
+        if (0 < repeat_count--) {
+            if (durations [begin_time].durval > 0 &&
+                    durations [begin_time].durval < duration_last_option)
+                start_timer = startTimer (100 * durations [begin_time].durval);
+            else
+                propagateStart ();
+        } else
+            element->finish ();
     }
 }
 
@@ -1669,6 +1672,7 @@ KDE_NO_EXPORT void SMIL::TimedMrl::activate () {
 }
 
 KDE_NO_EXPORT void SMIL::TimedMrl::deactivate () {
+    //kdDebug () << "SMIL::TimedMrl(" << nodeName() << ")::deactivate" << endl;
     if (unfinished ())
         finish ();
     Mrl::deactivate ();
@@ -1835,9 +1839,9 @@ KDE_NO_EXPORT NodePtr SMIL::Seq::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT void SMIL::Seq::activate () {
     GroupBase::activate ();
-    if (firstChild ())
+    if (firstChild ()) {
         firstChild ()->activate ();
-    else {
+    } else {
         TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
         tr->propagateStop (false); // account for possible durations
     }
@@ -1857,27 +1861,22 @@ KDE_NO_EXPORT NodePtr SMIL::Excl::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT void SMIL::Excl::activate () {
     //kdDebug () << "SMIL::Excl::activate" << endl;
-    setState (state_activated);
-    TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
-    if (tr)
-        tr->init ();
-    if (tr && firstChild ()) { // init children
+    TimedMrl::activate ();
+    if (firstChild ()) { // init children
         for (NodePtr e = firstChild (); e; e = e->nextSibling ())
             e->activate ();
         for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-            if (e->id >= id_node_first_timed_mrl &&
-                                        e->id <= id_node_last_timed_mrl) {
+            if (SMIL::isTimedMrl (e)) {
                 SMIL::TimedMrl * tm = static_cast <SMIL::TimedMrl *> (e.ptr ());
                 if (tm) { // make aboutToStart connection with TimedMrl children
                     ConnectionPtr c = tm->connectTo (this, event_to_be_started);
                     started_event_list.append (new ConnectionStoreItem (c));
                 }
             }
-        tr->begin ();
     } else { // no children, deactivate if runtime started and no duration set
+        TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
         if (tr && tr->state () == TimedRuntime::timings_started) {
-            if (tr->durations[(int)TimedRuntime::duration_time].durval == duration_media)
-                tr->propagateStop (false);
+            tr->propagateStop (false);
             return; // still running, wait for runtime to finish
         }
         finish (); // no children to run
@@ -1892,7 +1891,7 @@ KDE_NO_EXPORT void SMIL::Excl::deactivate () {
 KDE_NO_EXPORT void SMIL::Excl::childDone (NodePtr child) {
     // first check if somenode has taken over
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-        if (e->id >=id_node_first_timed_mrl && e->id <=id_node_last_timed_mrl) {
+        if (SMIL::isTimedMrl (e)) {
             TimedRuntime *tr =static_cast<TimedRuntime*>(e->getRuntime().ptr());
             if (tr && tr->state () == TimedRuntime::timings_started)
                 return;
