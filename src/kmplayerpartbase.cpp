@@ -921,6 +921,7 @@ QString Source::currentMrl () {
 void Source::playCurrent () {
     QString url = currentMrl ();
     m_player->changeURL (url);
+    setAspect (0L, 0.0);
     if (m_player->view ())
         static_cast <View *> (m_player->view ())->videoStop (); //show buttonbar
     if (m_document && !m_document->active ()) {
