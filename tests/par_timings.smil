@@ -19,7 +19,9 @@
     </par>
     <par dur="7s">
       <text src="data:,par%20dur%3D7s%0D%0Atext%20dur%3Dindefinite" region="region1" dur="indefinite"/>
-      <text src="data:,dur%3D5" region="region2" dur="5"/>
+      <par begin="1">
+        <text src="data:,nested%20par%20begin%3D1%0D%0Atext%20dur%3D5" region="region2" dur="5"/>
+      </par>
     </par>
     <par end="7s">
       <text src="data:,par%20end%3D7s%0D%0Atext%20dur%3Dindefinite" region="region1" dur="indefinite"/>
