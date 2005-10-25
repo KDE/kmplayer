@@ -211,17 +211,6 @@ public:
 };
 
 /**
- * Runtime data for 'par' group, will activate all children in started()
- */
-class ParRuntime : public TimedRuntime {
-    Q_OBJECT
-public:
-    ParRuntime (NodePtr e);
-    virtual void started ();
-    virtual void stopped ();
-};
-
-/**
  * Some common runtime data for all mediatype classes
  */
 class MediaTypeRuntime : public TimedRuntime {
@@ -542,12 +531,14 @@ public:
     KDE_NO_CDTOR_EXPORT ~TimedMrl () {}
     ElementRuntimePtr getRuntime ();
     void activate ();
+    void begin ();
     void finish ();
     void deactivate ();
     void reset ();
     void childBegan (NodePtr child);
     void childDone (NodePtr child);
     virtual bool handleEvent (EventPtr event);
+    TimedRuntime * timedRuntime ();
 protected:
     TimedMrl (NodePtr & d, short id);
     virtual NodeRefListPtr listeners (unsigned int event_id);
@@ -557,6 +548,12 @@ protected:
     NodeRefListPtr m_StoppedListeners;      // Element stopped
     ElementRuntimePtr runtime;
 };
+
+KDE_NO_EXPORT inline TimedRuntime * TimedMrl::timedRuntime () {
+    if (!runtime)
+        runtime = getNewRuntime ();
+    return static_cast <TimedRuntime *> (runtime.ptr ());
+}
 
 /**
  * Abstract base for the group elements (par/seq/excl/..)
@@ -579,12 +576,9 @@ public:
     KDE_NO_CDTOR_EXPORT Par (NodePtr & d) : GroupBase (d, id_node_par) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "par"; }
-    void activate ();
-    void finish ();
-    void deactivate ();
+    void begin ();
     void reset ();
     void childDone (NodePtr child);
-    ElementRuntimePtr getNewRuntime ();
 };
 
 /**
@@ -595,7 +589,7 @@ public:
     KDE_NO_CDTOR_EXPORT Seq (NodePtr & d) : GroupBase(d, id_node_seq) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "seq"; }
-    void activate ();
+    void begin ();
 protected:
     KDE_NO_CDTOR_EXPORT Seq (NodePtr & d, short id) : GroupBase(d, id) {}
 };
@@ -619,7 +613,7 @@ public:
     KDE_NO_CDTOR_EXPORT Excl (NodePtr & d) : GroupBase (d, id_node_excl) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "excl"; }
-    void activate ();
+    void begin ();
     void deactivate ();
     void childDone (NodePtr child);
     virtual bool handleEvent (EventPtr event);

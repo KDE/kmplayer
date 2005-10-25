@@ -406,11 +406,12 @@ KDE_NO_EXPORT void TimedRuntime::propagateStop (bool forced) {
         killTimer (dur_timer);
         dur_timer = 0;
     }
-    if (timingstate == timings_started)
+    bool was_started (timingstate == timings_started);
+    timingstate = timings_stopped;
+    if (was_started)
         QTimer::singleShot (0, this, SLOT (stopped ()));
     else if (element->unfinished ())
         element->finish ();
-    timingstate = timings_stopped;
 }
 
 KDE_NO_EXPORT void TimedRuntime::propagateStart () {
@@ -426,17 +427,11 @@ KDE_NO_EXPORT void TimedRuntime::propagateStart () {
  */
 KDE_NO_EXPORT void TimedRuntime::started () {
     //kdDebug () << "TimedRuntime::started " << (element ? element->nodeName() : "-") << endl; 
-    if (durations [duration_time].durval > 0) {
-        if (durations [duration_time].durval < duration_last_option) {
-            dur_timer = startTimer (100 * durations [duration_time].durval);
-     //       kdDebug () << "TimedRuntime::started set dur timer " << durations [duration_time].durval << endl;
-        }
-        element->begin ();
-    } else if (!element ||
-            (durations [end_time].durval == duration_media ||
-             durations [end_time].durval < duration_last_option))
-        // no duration set and no special end, so mark us finished
-        propagateStop (false);
+    if (durations [duration_time].durval > 0 &&
+            durations [duration_time].durval < duration_last_option)
+        dur_timer = startTimer (100 * durations [duration_time].durval);
+     // kdDebug () << "TimedRuntime::started set dur timer " << durations [duration_time].durval << endl;
+    element->begin ();
 }
 
 /**
@@ -703,27 +698,6 @@ void RegPointRuntime::parseParam (const QString & name, const QString & val) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT ParRuntime::ParRuntime (NodePtr e) : TimedRuntime (e) {}
-
-KDE_NO_EXPORT void ParRuntime::started () {
-    if (element && element->firstChild ()) // activate all children
-        for (NodePtr e = element->firstChild (); e; e = e->nextSibling ())
-            e->activate ();
-    else if (durations[(int)TimedRuntime::duration_time].durval==duration_media)
-        durations[(int)TimedRuntime::duration_time].durval = 0;
-    TimedRuntime::started ();
-}
-
-KDE_NO_EXPORT void ParRuntime::stopped () {
-    if (element) // reset all children
-        for (NodePtr e = element->firstChild (); e; e = e->nextSibling ())
-            // children are out of scope now, reset their ElementRuntime
-            e->reset (); // will call deactivate() if necessary
-    TimedRuntime::stopped ();
-}
-
-//-----------------------------------------------------------------------------
-
 KDE_NO_CDTOR_EXPORT AnimateGroupData::AnimateGroupData (NodePtr e)
  : TimedRuntime (e), modification_id (-1) {}
 
@@ -746,10 +720,8 @@ void AnimateGroupData::parseParam (const QString & name, const QString & val) {
  * animation finished
  */
 KDE_NO_EXPORT void AnimateGroupData::stopped () {
-    //kdDebug () << "SetData::stopped " << durations [duration_time].durval << endl;
-    if (fill == fill_freeze)
-        ; // keep it 
-    else
+    //kdDebug () << "AnimateGroupData::stopped " << durations [duration_time].durval << endl;
+    if (fill != fill_freeze)
         restoreModification ();
     TimedRuntime::stopped ();
 }
@@ -1664,11 +1636,18 @@ KDE_NO_CDTOR_EXPORT SMIL::TimedMrl::TimedMrl (NodePtr & d, short id)
 KDE_NO_EXPORT void SMIL::TimedMrl::activate () {
     //kdDebug () << "SMIL::TimedMrl(" << nodeName() << ")::activate" << endl;
     setState (state_activated);
-    ElementRuntimePtr rt = getRuntime ();
+    TimedRuntime * rt = timedRuntime ();
     if (rt) {
         rt->init ();
         rt->begin ();
     }
+}
+
+KDE_NO_EXPORT void SMIL::TimedMrl::begin () {
+    Mrl::begin ();
+    TimedRuntime * rt = timedRuntime ();
+    if (rt)
+        rt->propagateStop (false); //see whether this node has a livetime or not
 }
 
 KDE_NO_EXPORT void SMIL::TimedMrl::deactivate () {
@@ -1680,6 +1659,9 @@ KDE_NO_EXPORT void SMIL::TimedMrl::deactivate () {
 
 KDE_NO_EXPORT void SMIL::TimedMrl::finish () {
     Mrl::finish ();
+    TimedRuntime * tr = timedRuntime ();
+    if (tr)
+        tr->propagateStop (true); // in case not yet stopped
     propagateEvent (new Event (event_stopped));
 }
 
@@ -1708,7 +1690,7 @@ KDE_NO_EXPORT void SMIL::TimedMrl::childDone (NodePtr c) {
     if (c->nextSibling ())
         c->nextSibling ()->activate ();
     else { // check if Runtime still running
-        TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
+        TimedRuntime * tr = timedRuntime ();
         if (tr && tr->state () < TimedRuntime::timings_stopped) {
             if (tr->state () == TimedRuntime::timings_started)
                 tr->propagateStop (false);
@@ -1734,9 +1716,9 @@ KDE_NO_EXPORT NodeRefListPtr SMIL::TimedMrl::listeners (unsigned int id) {
 }
 
 KDE_NO_EXPORT bool SMIL::TimedMrl::handleEvent (EventPtr event) {
-    TimedRuntime * te = static_cast <TimedRuntime *> (getRuntime ().ptr ());
-    if (te)
-        te->processEvent (event->id ());
+    TimedRuntime * rt = timedRuntime ();
+    if (rt)
+        rt->processEvent (event->id ());
     return true;
 }
 
@@ -1778,25 +1760,11 @@ KDE_NO_EXPORT NodePtr SMIL::Par::childFromTag (const QString & tag) {
     return NodePtr ();
 }
 
-KDE_NO_EXPORT void SMIL::Par::activate () {
-    //kdDebug () << "SMIL::Par::activate" << endl;
-    GroupBase::activate (); // calls init() and begin() on runtime
-}
-
-KDE_NO_EXPORT void SMIL::Par::deactivate () {
-    if (unfinished ())
-        finish ();
-    GroupBase::deactivate ();
-}
-
-KDE_NO_EXPORT void SMIL::Par::finish () {
-    setState (state_finished); // prevent recursion via childDone
-    TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
-    if (tr && tr->state () == TimedRuntime::timings_started) {
-        tr->propagateStop (true);
-        return; // wait for runtime to call deactivate()
-    }
-    GroupBase::finish ();
+KDE_NO_EXPORT void SMIL::Par::begin () {
+    //kdDebug () << "SMIL::Par::begin" << endl;
+    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+        e->activate ();
+    GroupBase::begin ();
 }
 
 KDE_NO_EXPORT void SMIL::Par::reset () {
@@ -1811,7 +1779,7 @@ KDE_NO_EXPORT void SMIL::Par::childDone (NodePtr) {
             if (e->unfinished ())
                 return; // not all finished
         }
-        TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
+        TimedRuntime * tr = timedRuntime ();
         if (tr && tr->state () == TimedRuntime::timings_started) {
             unsigned dv =tr->durations[(int)TimedRuntime::duration_time].durval;
             if (dv == 0 || dv == duration_media)
@@ -1822,9 +1790,6 @@ KDE_NO_EXPORT void SMIL::Par::childDone (NodePtr) {
     }
 }
 
-KDE_NO_EXPORT ElementRuntimePtr SMIL::Par::getNewRuntime () {
-    return new ParRuntime (this);
-}
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT NodePtr SMIL::Seq::childFromTag (const QString & tag) {
@@ -1837,14 +1802,11 @@ KDE_NO_EXPORT NodePtr SMIL::Seq::childFromTag (const QString & tag) {
     return 0L;
 }
 
-KDE_NO_EXPORT void SMIL::Seq::activate () {
-    GroupBase::activate ();
-    if (firstChild ()) {
+KDE_NO_EXPORT void SMIL::Seq::begin () {
+    //kdDebug () << "SMIL::Seq::begin" << endl;
+    if (firstChild ())
         firstChild ()->activate ();
-    } else {
-        TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
-        tr->propagateStop (false); // account for possible durations
-    }
+    GroupBase::begin ();
 }
 
 //-----------------------------------------------------------------------------
@@ -1859,28 +1821,19 @@ KDE_NO_EXPORT NodePtr SMIL::Excl::childFromTag (const QString & tag) {
     return 0L;
 }
 
-KDE_NO_EXPORT void SMIL::Excl::activate () {
-    //kdDebug () << "SMIL::Excl::activate" << endl;
-    TimedMrl::activate ();
-    if (firstChild ()) { // init children
-        for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-            e->activate ();
-        for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-            if (SMIL::isTimedMrl (e)) {
-                SMIL::TimedMrl * tm = static_cast <SMIL::TimedMrl *> (e.ptr ());
-                if (tm) { // make aboutToStart connection with TimedMrl children
-                    ConnectionPtr c = tm->connectTo (this, event_to_be_started);
-                    started_event_list.append (new ConnectionStoreItem (c));
-                }
+KDE_NO_EXPORT void SMIL::Excl::begin () {
+    //kdDebug () << "SMIL::Excl::begin" << endl;
+    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+        e->activate ();
+    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+        if (SMIL::isTimedMrl (e)) {
+            SMIL::TimedMrl * tm = static_cast <SMIL::TimedMrl *> (e.ptr ());
+            if (tm) { // make aboutToStart connection with TimedMrl children
+                ConnectionPtr c = tm->connectTo (this, event_to_be_started);
+                started_event_list.append (new ConnectionStoreItem (c));
             }
-    } else { // no children, deactivate if runtime started and no duration set
-        TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
-        if (tr && tr->state () == TimedRuntime::timings_started) {
-            tr->propagateStop (false);
-            return; // still running, wait for runtime to finish
         }
-        finish (); // no children to run
-    }
+    GroupBase::begin ();
 }
 
 KDE_NO_EXPORT void SMIL::Excl::deactivate () {
@@ -1888,16 +1841,16 @@ KDE_NO_EXPORT void SMIL::Excl::deactivate () {
     GroupBase::deactivate ();
 }
 
-KDE_NO_EXPORT void SMIL::Excl::childDone (NodePtr child) {
+KDE_NO_EXPORT void SMIL::Excl::childDone (NodePtr /*child*/) {
     // first check if somenode has taken over
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         if (SMIL::isTimedMrl (e)) {
-            TimedRuntime *tr =static_cast<TimedRuntime*>(e->getRuntime().ptr());
+            TimedRuntime *tr = convertNode <SMIL::TimedMrl> (e)->timedRuntime();
             if (tr && tr->state () == TimedRuntime::timings_started)
                 return;
         }
     // now finish unless 'dur="indefinite/some event/.."'
-    TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
+    TimedRuntime * tr = timedRuntime ();
     if (tr && tr->state () == TimedRuntime::timings_started)
         tr->propagateStop (false); // still running, wait for runtime to finish
     else
@@ -1911,9 +1864,9 @@ KDE_NO_EXPORT bool SMIL::Excl::handleEvent (EventPtr event) {
         for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
             if (e == se->node) // stop all _other_ child elements
                 continue;
-            if (e->id <id_node_first_timed_mrl || e->id >id_node_last_timed_mrl)
+            if (!SMIL::isTimedMrl (e))
                 continue; // definitely a stowaway
-            TimedRuntime *tr =static_cast<TimedRuntime*>(e->getRuntime().ptr());
+            TimedRuntime *tr = convertNode <SMIL::TimedMrl> (e)->timedRuntime();
             if (tr)
                 tr->propagateStop (true);
         }
@@ -1947,9 +1900,9 @@ KDE_NO_EXPORT void SMIL::Switch::activate () {
                 if (!chosenOne) {
                     chosenOne = e;
                     currate = mt->bitrate;
-                } else if (mt->bitrate <= max) {
+                } else if (int (mt->bitrate) <= max) {
                     int delta1 = pref > currate ? pref-currate : currate-pref;
-                    int delta2 = pref > mt->bitrate ? pref-mt->bitrate : mt->bitrate-pref;
+                    int delta2 = pref > int (mt->bitrate) ? pref-mt->bitrate : mt->bitrate-pref;
                     if (delta2 < delta1) {
                         chosenOne = e;
                         currate = mt->bitrate;
@@ -1968,8 +1921,7 @@ KDE_NO_EXPORT void SMIL::Switch::activate () {
         // we must active chosenOne, it must set video position by itself
         setState (state_activated);
         chosenOne->activate ();
-    } else
-        finish (); // Uhm, no children then also no mrl ..
+    }
 }
 
 KDE_NO_EXPORT NodePtr SMIL::Switch::realMrl () {
@@ -2045,19 +1997,19 @@ KDE_NO_EXPORT void SMIL::MediaType::opened () {
 
 KDE_NO_EXPORT void SMIL::MediaType::activate () {
     setState (state_activated);
-    ElementRuntimePtr rt = getRuntime ();
-    if (rt) {
-        rt->init (); // sets all attributes
+    TimedRuntime * tr = timedRuntime ();
+    if (tr) {
+        tr->init (); // sets all attributes
         if (firstChild ())
             firstChild ()->activate ();
-        rt->begin ();
+        tr->begin ();
     }
 }
 
 bool SMIL::MediaType::handleEvent (EventPtr event) {
     switch (event->id ()) {
         case event_paint: {
-            MediaTypeRuntime * mr = static_cast <MediaTypeRuntime *> (getRuntime ().ptr ());
+            MediaTypeRuntime *mr=static_cast<MediaTypeRuntime*>(timedRuntime());
             if (mr)
                 mr->paint (static_cast <PaintEvent *> (event.ptr ())->painter);
             return true;
@@ -2096,7 +2048,7 @@ SMIL::AVMediaType::AVMediaType (NodePtr & d, const QString & t)
 KDE_NO_EXPORT void SMIL::AVMediaType::positionVideoWidget () {
     //kdDebug () << "AVMediaType::sized " << endl;
     PlayListNotify * n = document()->notify_listener;
-    MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (getRuntime ().ptr ());
+    MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (timedRuntime ());
     if (n && mtr && mtr->region_node) {
         RegionBase * rb = convertNode <RegionBase> (mtr->region_node);
         int x, y, w, h;
@@ -2134,7 +2086,7 @@ KDE_NO_EXPORT void SMIL::AVMediaType::activate () {
 }
 
 KDE_NO_EXPORT void SMIL::AVMediaType::deactivate () {
-    TimedRuntime * tr = static_cast <TimedRuntime *> (getRuntime ().ptr ());
+    TimedRuntime * tr = timedRuntime ();
     if (tr && tr->state () == TimedRuntime::timings_started) {
         tr->propagateStop (false);
         return; // movie has stopped, wait for runtime
