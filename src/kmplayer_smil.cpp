@@ -1105,9 +1105,15 @@ KDE_NO_EXPORT void AudioVideoData::started () {
 
 KDE_NO_EXPORT void AudioVideoData::stopped () {
     //kdDebug () << "AudioVideoData::stopped " << endl;
+    avStopped ();
+    MediaTypeRuntime::stopped ();
+}
+
+KDE_NO_EXPORT void AudioVideoData::avStopped () {
     sized_connection_region = 0L;
     sized_connection_layout = 0L;
-    MediaTypeRuntime::stopped ();
+    if (durations [duration_time].durval == duration_media)
+        durations [duration_time].durval = 0; // reset to make this finish
 }
 
 KDE_NO_EXPORT
@@ -2088,14 +2094,9 @@ KDE_NO_EXPORT void SMIL::AVMediaType::activate () {
     }
 }
 
-KDE_NO_EXPORT void SMIL::AVMediaType::deactivate () {
-    TimedRuntime * tr = timedRuntime ();
-    if (tr && tr->state () == TimedRuntime::timings_started) {
-        tr->propagateStop (false);
-        return; // movie has stopped, wait for runtime
-    }
-    TimedMrl::deactivate ();
-    // TODO stop backend player
+KDE_NO_EXPORT void SMIL::AVMediaType::finish () {
+    static_cast <AudioVideoData *> (timedRuntime ())->avStopped ();
+    TimedMrl::finish ();
 }
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::AVMediaType::getNewRuntime () {

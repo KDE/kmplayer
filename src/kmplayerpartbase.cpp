@@ -980,14 +980,18 @@ bool Source::setCurrent (NodePtr mrl) {
 
 void Source::stateElementChanged (NodePtr elm) {
     //kdDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isMrl:" << (m_current && m_current->isMrl ()) << " elm==realMrl:" << (m_current && elm == m_current->mrl ()->realMrl ()) << " p state:" << m_player->process ()->state () << endl;
-    if (elm->state == Element::state_deactivated) {
-        if (elm == m_document && !m_back_request)
-            emit endOfPlayItems (); // played all items
-        else if (m_current && m_current->isMrl () &&
-                 elm == m_current->mrl ()->realMrl () &&
-                 m_player->process ()->state () > Process::Ready)
+    if (elm->state == Element::state_deactivated &&
+            elm == m_document && !m_back_request) {
+        emit endOfPlayItems (); // played all items
+    } else if ((elm->state == Element::state_deactivated ||
+              elm->state == Element::state_finished) &&
+             m_current && m_current->isMrl () &&
+             elm == m_current->mrl ()->realMrl ()) {
+        if (m_player->process ()->state () > Process::Ready)
             //a SMIL movies stopped by SMIL events rather than movie just ending
             m_player->process ()->stop ();
+        if (m_player->view ()) // move away the video widget
+            QTimer::singleShot (0, m_player->view (), SLOT (updateLayout ()));
     }
     if (elm->expose () && (elm->state == Element::state_activated ||
                            elm->state == Element::state_deactivated))

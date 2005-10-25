@@ -248,6 +248,7 @@ public:
     virtual void parseParam (const QString & name, const QString & value);
     virtual void started ();
     virtual void stopped ();
+    void avStopped ();
     ConnectionPtr sized_connection_layout; // for resizing of view
     ConnectionPtr sized_connection_region; // for position changes set/animate
 };
@@ -666,7 +667,7 @@ public:
     void positionVideoWidget ();
     virtual ElementRuntimePtr getNewRuntime ();
     virtual void activate ();
-    virtual void deactivate ();
+    virtual void finish ();
     virtual bool handleEvent (EventPtr event);
 };
 
