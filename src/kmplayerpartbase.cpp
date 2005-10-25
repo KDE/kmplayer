@@ -1565,7 +1565,9 @@ void URLSource::playCurrent () {
                     url.protocol ().compare (QString ("rtsp")) &&
                     url.protocol ().compare (QString ("rtp"))) ||
                 (mimestr.isEmpty () &&
-                 url.protocol ().startsWith (QString ("http")))) {
+                 (url.protocol ().startsWith (QString ("http")) || 
+                  url.protocol () == QString::fromLatin1 ("media") ||
+                  url.protocol () == QString::fromLatin1 ("remote")))) {
             m_data.truncate (0);
             m_job = KIO::get (url, false, false);
             m_job->addMetaData ("PropagateHttpHeader", "true");
