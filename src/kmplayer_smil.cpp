@@ -386,6 +386,9 @@ KDE_NO_EXPORT void TimedRuntime::propagateStop (bool forced) {
     if (state() == timings_reset || state() == timings_stopped)
         return; // nothing to stop
     if (!forced && element) {
+        if (durations [duration_time].durval == duration_media &&
+                durations [end_time].durval == duration_media)
+            return; // wait for external eof
         if (durations [end_time].durval > duration_last_option &&
                 durations [end_time].durval != duration_media)
             return; // wait for event
