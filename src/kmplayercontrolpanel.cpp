@@ -375,7 +375,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     m_posSlider = new QSlider (Qt::Horizontal, this);
     m_posSlider->setEnabled (false);
     m_buttonbox->addWidget (m_posSlider);
-    showPositionSlider (true);
+    setupPositionSlider (true);
     m_volume = new VolumeBar (this, m_view);
     m_buttonbox->addWidget (m_volume);
     m_popupMenu = new KMPlayerPopupMenu (this);
@@ -504,8 +504,14 @@ KDE_NO_EXPORT void ControlPanel::showLanguageMenu () {
 }
 
 void ControlPanel::showPositionSlider (bool show) {
-    if (!m_auto_controls || show == m_posSlider->isVisible ())
+    if (!m_auto_controls || show == m_posSlider->isShown ())
         return;
+    setupPositionSlider (show);
+    if (isVisible ())
+        m_view->updateLayout ();
+}
+
+KDE_NO_EXPORT void ControlPanel::setupPositionSlider (bool show) {
     int h = show ? button_height_with_slider : button_height_only_buttons;
     m_posSlider->setEnabled (false);
     m_posSlider->setValue (0);
@@ -525,8 +531,6 @@ void ControlPanel::showPositionSlider (bool show) {
         m_buttons[i]->setMaximumSize (750, h);
     }
     setMaximumSize (2500, h + (show ? 8 : 2 ));
-    if (isVisible ())
-        m_view->updateLayout ();
 }
 
 void ControlPanel::enableSeekButtons (bool enable) {

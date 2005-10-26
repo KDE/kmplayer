@@ -142,6 +142,7 @@ public slots:
     void setLoadingProgress (int pos);
 protected:
     void timerEvent (QTimerEvent * e);
+    void setupPositionSlider (bool show);
 private slots:
     void buttonMouseEntered ();
     void buttonClicked ();

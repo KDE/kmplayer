@@ -812,7 +812,7 @@ void Source::setDimensions (NodePtr node, int w, int h) {
             static_cast <View *> (m_player->view())->viewer()->setAspect(a);
             static_cast <View *> (m_player->view ())->updateLayout ();
         }
-    } else if (m_width != w || m_height != h) {
+    } else if (m_aspect < 0.001 || m_width != w || m_height != h) {
         bool ev = (w > 0 && h > 0) ||
             (h == 0 && m_height > 0) ||
             (w == 0 && m_width > 0);
