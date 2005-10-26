@@ -137,6 +137,7 @@ public:
     KMPlayerPart * master () const { return m_master; }
     void setMaster (KMPlayerPart * m) { m_master = m; }
     virtual void setLoaded (int percentage);
+    bool openNewURL (const KURL & url); // for JS interface
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool closeURL ();

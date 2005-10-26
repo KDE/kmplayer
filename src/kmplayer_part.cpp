@@ -367,7 +367,9 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
     KMPlayerPartList::iterator e =kmplayerpart_static->partlist.end ();
     GroupPredicate pred (this, m_group);
     KURL url;
-    if (_url != m_docbase) {
+    if (!m_file_name.isEmpty () && (_url.isEmpty () || _url == m_docbase))
+        url = KURL (m_file_name); // fix misdetected SRC attr
+    else if (_url != m_docbase) {
         url = _url;
         if (!m_file_name.isEmpty () && _url.url ().find (m_file_name) < 0) {
             KURL u (m_file_name);
@@ -431,6 +433,13 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
         m_havehref = false;
     }
     return true;
+}
+
+KDE_NO_EXPORT bool KMPlayerPart::openNewURL (const KURL & url) {
+    m_file_name.truncate (0);
+    m_havehref = false;
+    m_sources ["urlsource"]->setAutoPlay (true);
+    return openURL (url);
 }
 
 KDE_NO_EXPORT void KMPlayerPart::waitForImageWindowTimeOut () {
@@ -805,7 +814,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::put
         case prop_source: {
             KURL url (val);
             if (player->allowRedir (url))
-                player->openURL (url);
+                player->openNewURL (url);
             break;
         }
         case prop_volume:
@@ -857,7 +866,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
             if (args.size ()) {
                 KURL url (args.first ());
                 if (player->allowRedir (url))
-                    player->openURL (url);
+                    player->openNewURL (url);
             } else
                 player->play ();
             rval = "true";
@@ -913,7 +922,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
             rval ="false";
             if (args.size ()) {
                 KURL url (args.first ());
-                if (player->allowRedir (url) && player->openURL (url))
+                if (player->allowRedir (url) && player->openNewURL (url))
                     rval = "true";
             }
             break;
