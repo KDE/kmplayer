@@ -596,6 +596,15 @@ KDE_NO_EXPORT void KMPlayerBrowserExtension::restoreState (QDataStream & stream)
     static_cast <PartBase *> (parent ())->openURL (KURL(url));
 }
 //---------------------------------------------------------------------
+/*
+ * add
+ * .error.errorCount
+ * .error.item(count)
+ *   .errorDescription
+ *   .errorCode
+ * .controls.stop()
+ * .controls.play()
+ */
 
 enum JSCommand {
     notsupported,
@@ -604,7 +613,7 @@ enum JSCommand {
     length, width, height, playstate, position, source, setsource, protocol,
     gotourl, nextentry, jsc_pause, play, preventry, start, stop,
     volume, setvolume,
-    prop_source, prop_volume
+    prop_error, prop_source, prop_volume
 };
 
 struct JSCommandEntry {
@@ -730,8 +739,10 @@ static const JSCommandEntry JSCommandList [] = {
     { "Start", start, 0L, KParts::LiveConnectExtension::TypeBool },
     { "Stop", stop, 0L, KParts::LiveConnectExtension::TypeBool },
     { "Volume", prop_volume, "100", KParts::LiveConnectExtension::TypeNumber },
+    { "errorCode", prop_error, "0",KParts::LiveConnectExtension::TypeNumber },
     { "pause", jsc_pause, 0L, KParts::LiveConnectExtension::TypeBool },
     { "play", play, 0L, KParts::LiveConnectExtension::TypeBool },
+    { "put", prop_source, 0L, KParts::LiveConnectExtension::TypeString },
     { "stop", stop, 0L, KParts::LiveConnectExtension::TypeBool },
     { "volume", volume, 0L, KParts::LiveConnectExtension::TypeBool },
 };
@@ -796,6 +807,10 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
         case prop_volume:
             if (player->view ())
                 rval = QString::number (player->process()->viewer ()->view()->controlPanel()->volumeBar()->value());
+            break;
+        case prop_error:
+            type = KParts::LiveConnectExtension::TypeNumber;
+            rval = QString::number (0);
             break;
         default:
             lastJSCommandEntry = entry;

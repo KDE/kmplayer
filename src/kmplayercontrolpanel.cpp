@@ -504,7 +504,8 @@ KDE_NO_EXPORT void ControlPanel::showLanguageMenu () {
 }
 
 void ControlPanel::showPositionSlider (bool show) {
-    if (!m_auto_controls) return;
+    if (!m_auto_controls || show == m_posSlider->isVisible ())
+        return;
     int h = show ? button_height_with_slider : button_height_only_buttons;
     m_posSlider->setEnabled (false);
     m_posSlider->setValue (0);
@@ -524,7 +525,8 @@ void ControlPanel::showPositionSlider (bool show) {
         m_buttons[i]->setMaximumSize (750, h);
     }
     setMaximumSize (2500, h + (show ? 8 : 2 ));
-    m_view->updateLayout ();
+    if (isVisible ())
+        m_view->updateLayout ();
 }
 
 void ControlPanel::enableSeekButtons (bool enable) {
