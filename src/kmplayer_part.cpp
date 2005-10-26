@@ -729,12 +729,12 @@ static const JSCommandEntry JSCommandList [] = {
 
 static const JSCommandEntry * getJSCommandEntry (const char * name, int start = 0, int end = sizeof (JSCommandList)/sizeof (JSCommandEntry)) {
     if (end - start < 2) {
-        if (start != end && !strcmp (JSCommandList[start].name, name))
+        if (start != end && !strcasecmp (JSCommandList[start].name, name))
             return &JSCommandList[start];
         return 0L;
     }
     int mid = (start + end) / 2;
-    int cmp = strcmp (JSCommandList[mid].name, name);
+    int cmp = strcasecmp (JSCommandList[mid].name, name);
     if (cmp < 0)
         return getJSCommandEntry (name, mid + 1, end);
     if (cmp > 0)
@@ -799,6 +799,8 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::put
   (const unsigned long, const QString & name, const QString & val) {
     kdDebug () << "[01;35mput[00m " << name << "=" << val << endl;
     const JSCommandEntry * entry = getJSCommandEntry (name.ascii ());
+    if (!entry)
+        return false;
     switch (entry->command) {
         case prop_source: {
             KURL url (val);
