@@ -1488,9 +1488,10 @@ KDE_NO_EXPORT void URLSource::kioData (KIO::Job *, const QByteArray & d) {
     if (!size) { // first data
         int accuraty = 0;
         KMimeType::Ptr mime = KMimeType::findByContent (d, &accuraty);
-        if (mime) {
-            if (!mime->name ().startsWith (QString ("text/")))
-                newsize = 0;
+        if (!mime ||
+                !mime->name ().startsWith (QString ("text/")) ||
+                (newsize > 4 && !strncmp (d.data (), "RIFF", 4))) {
+            newsize = 0;
             kdDebug () << "URLSource::kioData: " << mime->name () << accuraty << endl;
         }
     }
@@ -1560,7 +1561,20 @@ void URLSource::playCurrent () {
                     maybe_playlist = isPlayListMime (mime ()); // get new mime
                 }
             }
-            if (maybe_playlist && file.size () < 200000 && file.open (IO_ReadOnly)) {
+            if (maybe_playlist && file.size () < 2000000 && file.open (IO_ReadOnly)) {
+                char databuf [512];
+                if (file.readBlock (databuf, 512) > 3) {
+                    int accuraty = 0;
+                    KMimeType::Ptr mime = KMimeType::findByContent (QCString (databuf), &accuraty);
+                    if ((mime && !mime->name().startsWith (QString("text/"))) ||
+                            !strncmp (databuf, "RIFF", 4)) {
+                            m_current->mrl ()->parsed = true;
+                        Source::playCurrent ();
+                        return;
+                    }
+                    kdDebug () << "mime: " << (mime ? mime->name (): QString("null")) << endl;
+                }
+                file.reset ();
                 QTextStream textstream (&file);
                 read (textstream);
             }
