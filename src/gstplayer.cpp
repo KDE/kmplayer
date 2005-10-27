@@ -455,15 +455,15 @@ static void adjustColorSetting (const char * channel, int val) {
 }
 
 void KGStreamerPlayer::saturation (int s) {
-    //adjustColorSetting ("SATURATION", s);
+    adjustColorSetting ("SATURATION", s);
 }
 
 void KGStreamerPlayer::hue (int h) {
-    //adjustColorSetting ("HUE", h);
+    adjustColorSetting ("HUE", h);
 }
 
 void KGStreamerPlayer::contrast (int c) {
-    //adjustColorSetting ("CONTRAST", c);
+    adjustColorSetting ("CONTRAST", c);
 }
 
 void KGStreamerPlayer::brightness (int b) {
