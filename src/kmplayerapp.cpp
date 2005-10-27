@@ -106,6 +106,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     m_player->sources () ["pipesource"] = new KMPlayerPipeSource (this);
     m_player->sources () ["tvsource"] = new KMPlayerTVSource (this, m_tvmenu);
     m_player->sources () ["vdrsource"] = new KMPlayerVDRSource (this);
+    m_player->setSource (m_player->sources () ["urlsource"]);
     m_view = static_cast <KMPlayer::View*> (m_player->view());
     initActions();
     initView();
@@ -428,7 +429,13 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
 {
     if (!m_played_intro) {
         m_played_intro = true;
-        if (!m_player->settings ()->no_intro && url.isEmpty ()) {
+        if (url.isEmpty () && m_player->source () &&
+                m_player->source ()->document () &&
+                m_player->source ()->document ()->hasChildNodes ()) {
+            restoreFromConfig ();
+            m_player->play ();
+            return;
+        } else if (!m_player->settings ()->no_intro && url.isEmpty ()) {
             m_player->setSource (new IntroSource (m_player, this));
             return;
         } else
@@ -450,7 +457,10 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
 }
 
 KDE_NO_EXPORT void KMPlayerApp::addURL (const KURL& url) {
-    KMPlayer::NodePtr d = m_player->sources () ["urlsource"]->document ();
+    KMPlayer::Source * src = m_player->sources () ["urlsource"];
+    if (m_player->source () != src)
+        m_player->setSource (src);
+    KMPlayer::NodePtr d = src->document ();
     if (d)
         d->appendChild (new KMPlayer::GenericURL (d, url.url ()));
 }

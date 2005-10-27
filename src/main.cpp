@@ -65,7 +65,6 @@ extern "C" {
             KURL url;
             if (args->count () == 1)
                 url = args->url (0);
-            kmplayer->openDocumentFile (url);
             if (args->count () > 1)
                 for (int i = 0; i < args->count (); i++) {
                     KURL url = args->url (i);
@@ -74,6 +73,7 @@ extern "C" {
                     if (url.isValid ())
                         kmplayer->addURL (url);
                 }
+            kmplayer->openDocumentFile (url);
             args->clear ();
         }
         app.dcopClient()->registerAs("kmplayer");
