@@ -481,11 +481,12 @@ void PlayListView::populate (NodePtr e, NodePtr focus, QListViewItem * item, QLi
     m_have_dark_nodes |= !e->expose ();
     if (!m_show_all_nodes && !e->expose ()) {
         QListViewItem * up = item->parent ();
-        if (up)
+        if (up) {
+            delete item;
             for (NodePtr c = e->lastChild (); c; c = c->previousSibling ())
                 populate (c, focus, new ListViewItem (up, c, this), curitem);
-        delete item;
-        return;
+            return;
+        }
     }
     Mrl * mrl = e->mrl ();
     QString text (e->nodeName());
@@ -665,6 +666,9 @@ KDE_NO_EXPORT void PlayListView::itemIsRenamed (QListViewItem * qitem) {
             item->m_attr->setNodeName (txt);
             item->m_attr->setNodeValue (QString (""));
         }
+        ListViewItem * pi = static_cast <ListViewItem *> (item->parent ());
+        if (pi && pi->m_elm)
+            pi->m_elm->document ()->m_tree_version++;
     }
 }
 
@@ -833,7 +837,7 @@ void View::setInfoMessage (const QString & msg) {
        m_infopanel->clear ();
     } else if (ismain || !m_no_info) {
         if (m_dock_infopanel->mayBeShow ())
-          m_dock_infopanel->manualDock(m_dock_video,KDockWidget::DockBottom,85);
+          m_dock_infopanel->manualDock(m_dock_video,KDockWidget::DockBottom,80);
         m_infopanel->setText (msg);
     }
 }
@@ -1237,10 +1241,6 @@ KDE_NO_EXPORT void Viewer::mouseMoveEvent (QMouseEvent * e) {
 }
 
 void Viewer::setAspect (float a) {
-    float da = m_aspect - a;
-    if (da < 0) da *= -1;
-    if (da < 0.0001)
-        return;
     m_aspect = a;
 }
 

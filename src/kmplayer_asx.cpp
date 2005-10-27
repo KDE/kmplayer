@@ -39,20 +39,17 @@ KDE_NO_EXPORT NodePtr ASX::Asx::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT bool ASX::Asx::isMrl () {
-    if (cached_ismrl_version != document ()->m_tree_version) {
-        for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+    if (cached_ismrl_version != document ()->m_tree_version)
+        for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
             if (e->id == id_node_title)
                 pretty_name = e->innerText ().simplifyWhiteSpace ();
-    }
+            else if (e->id == id_node_base)
+                src = convertNode <Element> (e)->getAttribute ("href");
+        }
     return Mrl::isMrl ();
 }
 
 KDE_NO_EXPORT void ASX::Asx::closed () {
-    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-        if (e->id == id_node_base) {
-            src = convertNode <Element> (e)->getAttribute ("href");
-            break;
-        }
 }
 
 //-----------------------------------------------------------------------------

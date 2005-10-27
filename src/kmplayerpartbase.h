@@ -197,6 +197,7 @@ protected slots:
     void sourceHasChangedAspects ();
     void fullScreen ();
     void playListItemSelected (QListViewItem *);
+    void playListItemExecuted (QListViewItem *);
     virtual void playingStarted ();
     virtual void playingStopped ();
     void recordingStarted ();

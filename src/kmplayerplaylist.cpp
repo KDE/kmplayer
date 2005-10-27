@@ -146,7 +146,7 @@ void Matrix::translate (int x, int y) {
 
 KDE_NO_CDTOR_EXPORT Node::Node (NodePtr & d, short _id)
  : m_doc (d), state (state_init), id (_id),
-   auxiliary_node (false), editable (false) {}
+   auxiliary_node (false), editable (true) {}
 
 Node::~Node () {
     clear ();
@@ -572,9 +572,10 @@ void Mrl::activate () {
     }
     kdDebug () << nodeName () << " Mrl::activate" << endl;
     setState (state_activated);
-    if (document ()->notify_listener && !src.isEmpty ())
-        document ()->notify_listener->requestPlayURL (this);
-    else
+    if (document ()->notify_listener && !src.isEmpty ()) {
+        if (document ()->notify_listener->requestPlayURL (this))
+            setState (state_began);
+    } else
         deactivate (); // nothing to activate
 }
 
@@ -588,6 +589,7 @@ Document::Document (const QString & s, PlayListNotify * n)
  : Mrl (dummy_element), notify_listener (n), m_tree_version (0) {
     m_doc = m_self; // just-in-time setting fragile m_self to m_doc
     src = s;
+    editable = false;
 }
 
 Document::~Document () {

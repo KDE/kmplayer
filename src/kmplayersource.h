@@ -98,6 +98,7 @@ public:
     KDE_NO_EXPORT void setAutoPlay (bool b) { m_auto_play = b; }
     void setTitle (const QString & title);
     void setLoading (int percentage);
+    bool setCurrent (NodePtr mrl);
 
     virtual QString prettyName ();
 signals:
@@ -131,7 +132,6 @@ protected:
      * PlayListNotify implementation
      */
     bool requestPlayURL (NodePtr mrl);
-    bool setCurrent (NodePtr mrl);
     void stateElementChanged (NodePtr element);
     void setEventDispatcher (NodePtr element);
     void setInfoMessage (const QString & msg);

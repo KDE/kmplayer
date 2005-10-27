@@ -217,6 +217,8 @@ void PartBase::connectPlaylist (PlayListView * playlist) {
     connect (playlist, SIGNAL (addBookMark (const QString &, const QString &)),
              this, SLOT (addBookMark (const QString &, const QString &)));
     connect (playlist, SIGNAL (executed (QListViewItem *)),
+             this, SLOT (playListItemExecuted (QListViewItem *)));
+    connect (playlist, SIGNAL (selectionChanged (QListViewItem *)),
              this, SLOT (playListItemSelected (QListViewItem *)));
     connect (this, SIGNAL (treeChanged (NodePtr, NodePtr)),
              playlist, SLOT (updateTree (NodePtr, NodePtr)));
@@ -572,8 +574,16 @@ static NodePtr depthFirstFindMrl (NodePtr e) {
 void PartBase::playListItemSelected (QListViewItem * item) {
     if (m_in_update_tree) return;
     ListViewItem * vi = static_cast <ListViewItem *> (item);
-    if (vi->m_elm) {
+    if (vi->m_elm)
         emit infoUpdated (vi->m_elm->innerText ());
+    else if (!vi->m_attr)
+        updateTree (); // items already deleted
+}
+
+void PartBase::playListItemExecuted (QListViewItem * item) {
+    if (m_in_update_tree) return;
+    ListViewItem * vi = static_cast <ListViewItem *> (item);
+    if (vi->m_elm) {
         NodePtr mrl = depthFirstFindMrl (vi->m_elm);
         if (mrl)
             m_source->jump (mrl);
@@ -651,6 +661,12 @@ void PartBase::play () {
         return;
     }
     if (m_process->state () == Process::NotRunning) {
+        ListViewItem * lvi = static_cast <ListViewItem *> (m_view->playList ()->currentItem ());
+        if (lvi)
+            for (NodePtr n = lvi->m_elm; n; n = n->parentNode ()) {
+                if (n->isMrl ())
+                    m_source->setCurrent (n);
+            }
         m_process->ready (m_view->viewer ());
     } else if (m_process->state () == Process::Ready) {
         m_source->playCurrent ();
