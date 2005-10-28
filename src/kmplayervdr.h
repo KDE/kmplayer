@@ -146,6 +146,7 @@ private:
     QSocket * m_socket;
     VDRCommand * commands;
     QString m_request_jump;
+    KMPlayer::NodePtrW m_last_channel;
     int channel_timer;
     int timeout_timer;
     int finish_timer;
