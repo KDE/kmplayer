@@ -51,8 +51,10 @@
 #include <klocale.h>
 #include <kapplication.h>
 #include <kactioncollection.h>
+#include <kstdaction.h>
 #include <kshortcut.h>
 #include <kurldrag.h>
+#include <kfinddialog.h>
 #include <dcopclient.h>
 #include <kglobalsettings.h>
 
@@ -440,9 +442,10 @@ KDE_NO_CDTOR_EXPORT void ListViewItem::paintCell (QPainter * p, const QColorGrou
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view)
+KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, KActionCollection * action_collection)
  : KListView (parent, "kde_kmplayer_playlist"),
    m_view (view),
+   m_find_dialog (0L),
    m_active_color (255, 255, 255),
    m_show_all_nodes (false),
    m_ignore_expanded (false) {
@@ -465,6 +468,12 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view)
     m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("editcopy"), KIcon::Small, 0, true), i18n ("&Copy to Clipboard"), this, SLOT (copyToClipboard ()), 0, 0);
     m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("bookmark_add"), KIcon::Small, 0, true), i18n ("&Add Bookmark"), this, SLOT (addBookMark ()), 0, 1);
     m_itemmenu->insertItem (i18n ("&Show all"), this, SLOT (toggleShowAllNodes ()), 0, 2);
+    m_itemmenu->insertSeparator ();
+    KAction * find = KStdAction::find (this, SLOT (slotFind ()), action_collection, "find");
+    m_find_next = KStdAction::findNext (this, SLOT (slotFindNext ()), action_collection, "find_next");
+    m_find_next->setEnabled (false);
+    find->plug (m_itemmenu);
+    m_find_next->plug (m_itemmenu);
     connect (this, SIGNAL (contextMenuRequested (QListViewItem *, const QPoint &, int)), this, SLOT (contextMenuItem (QListViewItem *, const QPoint &, int)));
     connect (this, SIGNAL (expanded (QListViewItem *)),
              this, SLOT (itemExpanded (QListViewItem *)));
@@ -533,6 +542,11 @@ void PlayListView::updateTree (NodePtr root, NodePtr active) {
     m_ignore_expanded = true;
     m_have_dark_nodes = false;
     clear ();
+    if (m_current_find_elm && m_current_find_elm->document () != root) {
+        m_current_find_elm = 0L;
+        m_current_find_attr = 0L;
+        m_find_next->setEnabled (false);
+    }
     if (!root) return;
     QListViewItem * curitem = 0L;
     ListViewItem * rootitem = new ListViewItem (this, root);
@@ -611,6 +625,11 @@ void PlayListView::toggleShowAllNodes () {
             cur = cur_item->m_elm;
         updateTree (root, cur);
     }
+    if (m_current_find_elm && !m_show_all_nodes) {
+        if (!m_current_find_elm->expose ())
+            m_current_find_elm = 0L;
+        m_current_find_attr = 0L;
+    }
 }
 
 KDE_NO_EXPORT bool PlayListView::acceptDrag (QDropEvent * de) const {
@@ -688,6 +707,160 @@ KDE_NO_EXPORT void PlayListView::editCurrent () {
         rename (qitem, 0);
 }
 
+KDE_NO_EXPORT void PlayListView::slotFind () {
+    m_current_find_elm = 0L;
+    if (!m_find_dialog) {
+        m_find_dialog = new KFindDialog (false, this, "kde_kmplayer_find", KFindDialog::CaseSensitive);
+        m_find_dialog->setHasSelection (false);
+        connect(m_find_dialog, SIGNAL(okClicked ()), this, SLOT(slotFindOk ()));
+    } else
+        m_find_dialog->setPattern (QString::null);
+    m_find_dialog->show ();
+}
+
+KDE_NO_EXPORT bool PlayListView::findNodeInTree (NodePtr n, QListViewItem *& item) {
+    //kdDebug () << "item:" << item->text (0) << " n:" << (n ? n->nodeName () : "null" )  <<endl;
+    if (!n)
+        return true;
+    if (!findNodeInTree (n->parentNode (), item)) // get right item
+        return false; // hmpf
+    if (static_cast <ListViewItem *> (item)->m_elm == n)  // top node
+        return true;
+    for (QListViewItem * ci = item->firstChild(); ci; ci = ci->nextSibling ()) {
+        //kdDebug () << "ci:" << ci->text (0) << " n:" << n->nodeName () <<endl;
+        if (static_cast <ListViewItem *> (ci)->m_elm == n) {
+            item = ci;
+            return true;
+        }
+    }
+    return !m_show_all_nodes;
+    
+}
+
+KDE_NO_EXPORT void PlayListView::slotFindOk () {
+    if (!m_find_dialog)
+        return;
+    m_find_dialog->hide ();
+    long opt = m_find_dialog->options ();
+    if (opt & KFindDialog::FromCursor && currentItem ()) {
+        ListViewItem * lvi = static_cast <ListViewItem *> (currentItem ());
+        if (lvi && lvi->m_elm)
+             m_current_find_elm = lvi->m_elm;
+        else if (lvi && lvi->m_attr) {
+            ListViewItem*pi=static_cast<ListViewItem*>(currentItem()->parent());
+            if (pi) {
+                m_current_find_attr = lvi->m_attr;
+                m_current_find_elm = pi->m_elm;
+            }
+        }
+    } else if (!(opt & KFindDialog::FindIncremental))
+        m_current_find_elm = 0L;
+    if (!m_current_find_elm) {
+        ListViewItem * lvi = static_cast <ListViewItem *> (firstChild ());
+        if (lvi)
+            m_current_find_elm = lvi->m_elm;
+    }
+    if (m_current_find_elm)
+        slotFindNext ();
+}
+
+/* A bit tricky, but between the find's ListViewItems might be gone, so
+ * try to match on the generated tree following the source's document tree
+ */
+KDE_NO_EXPORT void PlayListView::slotFindNext () {
+    if (!m_find_dialog)
+        return;
+    QString str = m_find_dialog->pattern();
+    if (!m_current_find_elm || str.isEmpty ())
+        return;
+    long opt = m_find_dialog->options ();
+    QRegExp regexp;
+    if (opt & KFindDialog::RegularExpression)
+        regexp = str;
+    bool cs = (opt & KFindDialog::CaseSensitive);
+    bool found = false;
+    NodePtr node, n = m_current_find_elm;
+    while (!found && n) {
+        if (m_show_all_nodes || n->expose ()) {
+            bool elm = n->isElementNode ();
+            QString val = n->nodeValue ();
+            if (elm && !m_show_all_nodes) {
+                Mrl * mrl = n->mrl ();
+                if (mrl) {
+                    if (mrl->pretty_name.isEmpty ()) {
+                        if (!mrl->src.isEmpty())
+                            val = KURL(mrl->src).prettyURL();
+                    } else
+                        val = mrl->pretty_name;
+                }
+            } else if (!elm)
+                val = n->nodeValue ();
+            if (((opt & KFindDialog::RegularExpression) &&
+                    val.find (regexp, 0) > -1) ||
+                    (!(opt & KFindDialog::RegularExpression) &&
+                     val.find (str, 0, cs) > -1)) {
+                node = n;
+                m_current_find_attr = 0L;
+                found = true;
+            } else if (elm && m_show_all_nodes) {
+                for (AttributePtr a = convertNode <Element> (n)->attributes ()->first (); a; a = a->nextSibling ())
+                    if (((opt & KFindDialog::RegularExpression) &&
+                                (QString::fromLatin1 (a->nodeName ()).find (regexp, 0) || a->nodeValue ().find (regexp, 0) > -1)) ||
+                                (!(opt & KFindDialog::RegularExpression) &&
+                                 (QString::fromLatin1 (a->nodeName ()).find (str, 0, cs) > -1 || a->nodeValue ().find (str, 0, cs) > -1))) {
+                        node = n;
+                        m_current_find_attr = a;
+                        found = true;
+                        break;
+                    }
+            }
+        }
+        if (n) { //set pointer to next
+            if (opt & KFindDialog::FindBackwards) {
+                if (n->lastChild ()) {
+                    n = n->lastChild ();
+                } else if (n->previousSibling ()) {
+                    n = n->previousSibling ();
+                } else {
+                    for (n = n->parentNode (); n; n = n->parentNode ())
+                        if (n->previousSibling ()) {
+                            n = n->previousSibling ();
+                            break;
+                        }
+                }
+            } else {
+                if (n->firstChild ()) {
+                    n = n->firstChild ();
+                } else if (n->nextSibling ()) {
+                    n = n->nextSibling ();
+                } else {
+                    for (n = n->parentNode (); n; n = n->parentNode ())
+                        if (n->nextSibling ()) {
+                            n = n->nextSibling ();
+                            break;
+                        }
+                }
+            }
+        }
+    }
+    m_current_find_elm = n;
+    kdDebug () << " search for " << str << "=" << (node ? node->nodeName () : "not found") << " next:" << (n ? n->nodeName () : " not found") << endl;
+    QListViewItem * fc = firstChild ();
+    if (found) {
+        if (!findNodeInTree (node, fc)) {
+            m_current_find_elm = 0L;
+            kdDebug () << "node not found in tree" << endl;
+        } else if (fc) {
+            setSelected (fc, true);
+            if (m_current_find_attr && fc->firstChild () && fc->firstChild ()->firstChild ())
+                ensureItemVisible (fc->firstChild ()->firstChild ());
+            ensureItemVisible (fc);
+        } else
+            kdDebug () << "node not found" << endl;
+    }
+    m_find_next->setEnabled (!!m_current_find_elm);
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT TextEdit::TextEdit (QWidget * parent, View * view) : QTextEdit (parent, "kde_kmplayer_console"), m_view (view) {
@@ -758,7 +931,7 @@ KDE_NO_EXPORT void View::dragEnterEvent (QDragEnterEvent* dee) {
         dee->accept ();
 }
 
-KDE_NO_EXPORT void View::init () {
+KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
     //setBackgroundMode(Qt::NoBackground);
     QPalette pal (QColor (64, 64,64), QColor (32, 32, 32));
     QVBoxLayout * viewbox = new QVBoxLayout (this, 0, 0);
@@ -770,7 +943,7 @@ KDE_NO_EXPORT void View::init () {
     m_dock_video->setWidget (m_view_area);
     m_dockarea->setMainDockWidget (m_dock_video);
     m_dock_playlist = m_dockarea->createDockWidget (i18n ("Play List"), KGlobal::iconLoader ()->loadIcon (QString ("player_playlist"), KIcon::Small));
-    m_playlist = new PlayListView (m_dock_playlist, this);
+    m_playlist = new PlayListView (m_dock_playlist, this, action_collection);
     m_playlist->setPaletteBackgroundColor (QColor (0, 0, 0));
     m_playlist->setPaletteForegroundColor (QColor (0xB2, 0xB2, 0xB2));
     m_dock_playlist->setWidget (m_playlist);

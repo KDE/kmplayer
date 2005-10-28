@@ -372,7 +372,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     m_buttons[button_stop]->setToggleButton (true);
     m_buttons[button_record]->setToggleButton (true);
     m_buttons[button_broadcast]->setToggleButton (true);
-    m_posSlider = new QSlider (Qt::Horizontal, this);
+    m_posSlider = new QSlider (0, 100, 1, 0, Qt::Horizontal, this);
     m_posSlider->setEnabled (false);
     m_buttonbox->addWidget (m_posSlider);
     setupPositionSlider (true);

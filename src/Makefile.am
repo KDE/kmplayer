@@ -6,7 +6,7 @@ lib_LTLIBRARIES= libkmplayercommon.la
 
 libkmplayercommon_la_SOURCES = kmplayerview.cpp kmplayercontrolpanel.cpp kmplayerconfig.cpp pref.cpp kmplayerprocess.cpp kmplayer_callback.skel kmplayer_backend.stub kmplayerpartbase.cpp kmplayerplaylist.cpp kmplayer_asx.cpp kmplayer_smil.cpp kmplayer_rss.cpp kmplayer_atom.cpp kmplayerpartbase.skel
 libkmplayercommon_la_LDFLAGS = -avoid-version $(all_libraries)
-libkmplayercommon_la_LIBADD = -lkmediaplayer $(LIB_KPARTS) $(LIB_EXPAT) -lm
+libkmplayercommon_la_LIBADD = -lkmediaplayer $(LIB_KPARTS) $(LIB_KUTILS) $(LIB_EXPAT) -lm
 
 if include_koffice_support
 kofficeplugin_lib= libkmplayerkofficepart.la

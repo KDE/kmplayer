@@ -116,6 +116,7 @@ PartBase::PartBase (QWidget * wparent, const char *wname,
    m_record_timer (0),
    m_noresize (false),
    m_auto_controls (true),
+   m_bPosSliderPressed (false),
    m_in_update_tree (false)
 {
     m_players ["mplayer"] = new MPlayer (this, m_settings);
@@ -161,11 +162,10 @@ KDE_NO_EXPORT void PartBase::addBookMark (const QString & t, const QString & url
 
 void PartBase::init (KActionCollection * action_collection) {
     KParts::Part::setWidget (m_view);
-    m_view->init ();
+    m_view->init (action_collection);
     connect(m_settings, SIGNAL(configChanged()), this, SLOT(settingsChanged()));
     m_settings->readConfig ();
     m_settings->applyColorSetting (false);
-    m_bPosSliderPressed = false;
     m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner, m_view->controlPanel ()->bookmarkMenu (), action_collection, true, true);
     connect (m_view, SIGNAL (urlDropped (const KURL::List &)), this, SLOT (openURL (const KURL::List &)));
     connectPlaylist (m_view->playList ());

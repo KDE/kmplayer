@@ -1215,7 +1215,6 @@ bool CallbackProcess::play (Source * source, NodePtr node) {
 }
 
 bool CallbackProcess::stop () {
-    kdDebug () << "CallbackProcess::stop ()" << endl;
     if (!m_process || !m_process->isRunning () || m_state < Buffering)
         return true;
     kdDebug () << "CallbackProcess::stop ()" << m_backend << endl;
@@ -1225,12 +1224,12 @@ bool CallbackProcess::stop () {
 }
 
 bool CallbackProcess::quit () {
-    kdDebug () << "CallbackProcess::quit ()" << endl;
     if (m_have_config == config_probe)
         m_have_config = config_unknown; // hmm
     if (m_send_config == send_new)
         m_send_config = send_no; // oh well
     if (playing ()) {
+        kdDebug () << "CallbackProcess::quit ()" << endl;
         if (m_backend)
             m_backend->quit ();
         else if (m_viewer)

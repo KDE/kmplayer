@@ -47,6 +47,7 @@ class KActionCollection;
 class KAction;
 class KShortcut;
 class KStatusBar;
+class KFindDialog;
 
 namespace KMPlayer {
 
@@ -81,7 +82,7 @@ public:
 class KMPLAYER_EXPORT PlayListView : public KListView {
     Q_OBJECT
 public:
-    PlayListView (QWidget * parent, View * view);
+    PlayListView (QWidget * parent, View * view, KActionCollection * ac);
     ~PlayListView ();
     void selectItem (const QString & txt);
     void setActiveForegroundColor (const QColor & c) { m_active_color = c; }
@@ -102,10 +103,16 @@ private slots:
     void toggleShowAllNodes ();
     void itemDropped (QDropEvent * e, QListViewItem * after);
     void itemIsRenamed (QListViewItem * item);
+    void slotFind ();
+    void slotFindOk ();
+    void slotFindNext ();
 private:
     void populate (NodePtr e, NodePtr focus, QListViewItem * item, QListViewItem ** curitem);
+    bool findNodeInTree (NodePtr n, QListViewItem *& item);
     View * m_view;
     QPopupMenu * m_itemmenu;
+    KAction * m_find_next;
+    KFindDialog * m_find_dialog;
     QPixmap folder_pix;
     QPixmap auxiliary_pix;
     QPixmap video_pix;
@@ -114,6 +121,8 @@ private:
     QPixmap config_pix;
     QPixmap url_pix;
     QColor m_active_color;
+    NodePtrW m_current_find_elm;
+    AttributePtrW m_current_find_attr;
     bool m_show_all_nodes;
     bool m_have_dark_nodes;
     bool m_ignore_expanded;
@@ -217,7 +226,7 @@ public:
     ~View();
 
     void addText (const QString &, bool eol=false);
-    void init ();
+    void init (KActionCollection * ac);
     void reset ();
     //void print(QPrinter *pPrinter);
 
