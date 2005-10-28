@@ -442,7 +442,7 @@ KDE_NO_CDTOR_EXPORT void ListViewItem::paintCell (QPainter * p, const QColorGrou
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, KActionCollection * action_collection)
+KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, KActionCollection * ac)
  : KListView (parent, "kde_kmplayer_playlist"),
    m_view (view),
    m_find_dialog (0L),
@@ -469,8 +469,8 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
     m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("bookmark_add"), KIcon::Small, 0, true), i18n ("&Add Bookmark"), this, SLOT (addBookMark ()), 0, 1);
     m_itemmenu->insertItem (i18n ("&Show all"), this, SLOT (toggleShowAllNodes ()), 0, 2);
     m_itemmenu->insertSeparator ();
-    KAction * find = KStdAction::find (this, SLOT (slotFind ()), action_collection, "find");
-    m_find_next = KStdAction::findNext (this, SLOT (slotFindNext ()), action_collection, "find_next");
+    KAction * find = KStdAction::find (this, SLOT (slotFind ()), ac, "find");
+    m_find_next = KStdAction::findNext (this, SLOT(slotFindNext()), ac, "next");
     m_find_next->setEnabled (false);
     find->plug (m_itemmenu);
     m_find_next->plug (m_itemmenu);
