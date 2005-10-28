@@ -1579,9 +1579,10 @@ void URLSource::playCurrent () {
             }
             if (maybe_playlist && file.size () < 2000000 && file.open (IO_ReadOnly)) {
                 char databuf [512];
-                if (file.readBlock (databuf, 512) > 3) {
+                int nr_bytes = file.readBlock (databuf, 512);
+                if (nr_bytes > 3) {
                     int accuraty = 0;
-                    KMimeType::Ptr mime = KMimeType::findByContent (QCString (databuf), &accuraty);
+                    KMimeType::Ptr mime = KMimeType::findByContent (QCString (databuf, nr_bytes), &accuraty);
                     if ((mime && !mime->name().startsWith (QString("text/"))) ||
                             !strncmp (databuf, "RIFF", 4)) {
                             m_current->mrl ()->parsed = true;

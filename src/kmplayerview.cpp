@@ -783,7 +783,7 @@ KDE_NO_EXPORT void PlayListView::slotFindNext () {
     while (!found && n) {
         if (m_show_all_nodes || n->expose ()) {
             bool elm = n->isElementNode ();
-            QString val = n->nodeValue ();
+            QString val = n->nodeName ();
             if (elm && !m_show_all_nodes) {
                 Mrl * mrl = n->mrl ();
                 if (mrl) {
