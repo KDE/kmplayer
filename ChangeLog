@@ -1,3 +1,18 @@
+Changes since version 0.9.1-rc1
+- Added Find/FindNext in playlist's context menu
+- Intro-movie's background will finish when clicked on its background
+- Fix possible crash w/ plugin if javascript did a 'put' on an unknown property
+- Support reading playlist files from media:// or remote:// protocols, movie
+  files that resolve to these, still doesn't work though
+- Support SMIL's 'begin' attribute on group tags (seq/par/excl) as well
+- Fix not honouring MPlayer's aspects detection in case it's not width:height
+- Fix MPlayer with the X11Shm video driver not scaling correctly when
+  'keep aspects' is set
+- Fix Xine not resuming on 'pause' when pressing the 'pause' button again
+- Fix to not let the session manager restore a backend application as well
+- Support for CONTROLS="StatusBar" for plugin, having the same statusbar
+  as application. See tests/controls.html, after installing KMPlayer-plugin,
+  with konqueror (also used on many sites when choosing for real format)
 Changes since version 0.9.1-pre3
 - Show backend's status in application's statusbar and show the play time
   left as well.
