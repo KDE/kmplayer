@@ -577,7 +577,9 @@ KDE_NO_EXPORT void ControlPanel::setPlayingProgress (int pos, int len) {
         m_posSlider->setMaxValue (m_progress_length);
         m_progress_mode = progress_playing;
     }
-    if (m_progress_length <= 0 && pos > 7 * m_posSlider->maxValue ()/8)
+    if (pos < len && len > 0 && len != m_posSlider->maxValue ())
+        m_posSlider->setMaxValue (m_progress_length);
+    else if (m_progress_length <= 0 && pos > 7 * m_posSlider->maxValue ()/8)
         m_posSlider->setMaxValue (m_posSlider->maxValue() * 2);
     else if (m_posSlider->maxValue() < pos)
         m_posSlider->setMaxValue (int (1.4 * m_posSlider->maxValue()));

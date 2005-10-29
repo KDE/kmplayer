@@ -400,8 +400,10 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
                         m_last_channel = lvi->m_elm;
                         if (m_last_channel)
                             m_last_channel->setState (KMPlayer::Node::state_began);
-                        if (jump_selection)
+                        if (jump_selection) {
                             v->playList ()->setSelected (lvi, true);
+                            v->playList ()->ensureItemVisible (lvi);
+                        }
                         v->playList ()->triggerUpdate ();
                     }
                     //v->playList ()->selectItem (ch);
