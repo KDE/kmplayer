@@ -73,7 +73,6 @@ static const int XKeyPress = KeyPress;
 #undef Status
 #undef Unsorted
 #undef Bool
-#undef FocusOut
 
 extern const char * normal_window_xpm[];
 extern const char * playlist_xpm[];
@@ -542,8 +541,10 @@ void PlayListView::updateTree (NodePtr root, NodePtr active) {
     // and show all nodes is unchanged then only update the cells
     m_ignore_expanded = true;
     m_have_dark_nodes = false;
-    QFocusEvent fo (QEvent::FocusOut);
-    focusOutEvent (&fo);
+    QWidget * w = focusWidget ();
+    if (w && w != this)
+        w->clearFocus ();
+    //setSelected (firstChild (), true);
     clear ();
     if (m_current_find_elm && m_current_find_elm->document () != root) {
         m_current_find_elm = 0L;
