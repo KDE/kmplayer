@@ -610,6 +610,8 @@ void PartBase::playListItemExecuted (QListViewItem * item) {
         }
     } else
         updateTree (); // items already deleted
+    if (m_view)
+        m_view->viewArea ()->setFocus ();
 }
 
 void PartBase::updateTree (bool full) {
