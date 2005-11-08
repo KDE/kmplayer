@@ -30,6 +30,8 @@ extern int shared_data_count;
 #include <iostream>
 #endif
 
+namespace KMPlayer {
+
 /**
  *  Shared data for SharedPtr and WeakPtr objects.
  **/
@@ -233,6 +235,8 @@ inline  bool SharedPtr<T>::operator == (const WeakPtr<T> & w) const {
 template <class T>
 inline  bool SharedPtr<T>::operator != (const WeakPtr<T> & w) const {
     return data != w.data;
+}
+
 }
 
 #endif
