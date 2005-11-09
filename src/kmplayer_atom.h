@@ -21,18 +21,9 @@
 #ifndef _KMPLAYER_ATOM_H_
 #define _KMPLAYER_ATOM_H_
 
-#include <qobject.h>
-#include <qstring.h>
 #include <qstringlist.h>
 
 #include "kmplayerplaylist.h"
-
-class QPixmap;
-class QPainter;
-
-namespace KIO {
-    class Job;
-}
 
 namespace KMPlayer {
 

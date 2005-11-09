@@ -18,7 +18,6 @@
 
 #include <config.h>
 #include <qtextstream.h>
-#include <qcolor.h>
 #include <kdebug.h>
 #include <kurl.h>
 #ifdef HAVE_EXPAT

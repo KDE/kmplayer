@@ -18,7 +18,6 @@
 
 #include <config.h>
 #include <kdebug.h>
-#include <kurl.h>
 
 #include "kmplayer_asx.h"
 
