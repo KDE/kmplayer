@@ -1481,7 +1481,7 @@ KDE_NO_EXPORT void URLSource::read (QTextStream & textstream) {
             delete [] entries;
         } else if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
             readXML (cur_elm, textstream, line);
-            cur_elm->normalize ();
+            //cur_elm->normalize ();
             if (m_document && m_document->firstChild ()) {
                 // SMIL documents have set its size of root-layout
                 Mrl * mrl = m_document->firstChild ()->mrl ();

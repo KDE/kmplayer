@@ -382,7 +382,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
         QTextStream ts (smil.utf8 (), IO_ReadOnly);
         KMPlayer::readXML (m_document, ts, QString::null);
     }
-    m_document->normalize ();
+    //m_document->normalize ();
     m_current = m_document; //mrl->self ();
     if (m_document && m_document->firstChild ()) {
         KMPlayer::Mrl * mrl = m_document->firstChild ()->mrl ();
@@ -684,7 +684,7 @@ KDE_NO_EXPORT void ExitSource::activate () {
         QTextStream ts (smil.utf8 (), IO_ReadOnly);
         KMPlayer::readXML (m_document, ts, QString::null);
     }
-    m_document->normalize ();
+    //m_document->normalize ();
     m_current = m_document;
     if (m_document && m_document->firstChild ()) {
         KMPlayer::Mrl * mrl = m_document->firstChild ()->mrl ();

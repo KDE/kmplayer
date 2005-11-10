@@ -545,7 +545,7 @@ bool Mrl::isMrl () {
                 pretty_name = src;
             for (NodePtr e = parentNode (); e; e = e->parentNode ()) {
                 Mrl * mrl = e->mrl ();
-                if (mrl)
+                if (mrl && !mrl->src.isEmpty ())
                     src = KURL (mrl->src, src).url ();
             }
         }
@@ -1269,6 +1269,8 @@ bool SimpleSAXParser::parse (QTextStream & d) {
         m_state = new StateInfo (InContent, m_state);
     }
     bool ok = true;
+    bool in_character_data = false;
+    bool last_is_white_space = false;
     while (ok) {
         switch (m_state->state) {
             case InTag:
@@ -1301,8 +1303,17 @@ bool SimpleSAXParser::parse (QTextStream & d) {
                         equal_seen = in_sngl_quote = in_dbl_quote = false;
                         m_state = new StateInfo (InTag, m_state);
                         ok = readTag ();
-                    } else
+                        in_character_data = last_is_white_space = false;
+                    } else if (token->token == tok_white_space) {
+                        last_is_white_space = in_character_data;
+                    } else {
+                        if (last_is_white_space) {
+                            token->string = QChar (' ') + token->string;
+                            last_is_white_space = false;
+                        }
                         have_error = builder.characterData (token->string);
+                        in_character_data = true;
+                    }
                 }
         }
         if (!m_state)
