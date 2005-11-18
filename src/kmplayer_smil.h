@@ -168,12 +168,12 @@ public:
         ConnectionPtr connection;
     } durations [(const int) durtime_last];
 protected slots:
-    void timerEvent (QTimerEvent *);
     virtual void started ();
     virtual void stopped ();
 private:
     void setDurationItem (DurationTime item, const QString & val);
 protected:
+    void timerEvent (QTimerEvent *);
     TimingState timingstate;
     Fill fill;
     int start_timer;
@@ -338,6 +338,7 @@ public:
 protected slots:
     virtual void started ();
     virtual void stopped ();
+protected:
     void timerEvent (QTimerEvent *);
 private:
     int anim_timer;

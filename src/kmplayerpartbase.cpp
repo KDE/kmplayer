@@ -800,7 +800,7 @@ Source::Source (const QString & name, PartBase * player, const char * n)
 Source::~Source () {
     if (m_document)
         m_document->document ()->dispose ();
-    m_document = NodePtr ();
+    m_document = 0L;
     Q_ASSERT (m_current.ptr () == 0L);
 }
 

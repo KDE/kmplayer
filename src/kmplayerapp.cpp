@@ -412,7 +412,7 @@ KDE_NO_EXPORT void IntroSource::deactivate () {
     deactivated = true;
     if (m_player->settings ()->autoresize)
         m_app->connect(m_player, SIGNAL(sourceDimensionChanged()),m_app,SLOT(zoom100()));
-    if (!finished) // user opens a source while introducing
+    if (!finished && m_document) // user opens a source while introducing
         m_document->reset ();
 }
 

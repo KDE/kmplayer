@@ -766,6 +766,8 @@ bool DocumentBuilder::endTag (const QString & tag) {
             if (!strcasecmp (n->nodeName (), tag.local8Bit ())) {
                 while (n != m_node) {
                     kdWarning() << m_node->nodeName () << " not closed" << endl;
+                    if (m_root == m_node->parentNode ())
+                        break;
                     m_node->closed ();
                     m_node = m_node->parentNode ();
                 }
