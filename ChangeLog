@@ -1,3 +1,13 @@
+Changes since version 0.9.1
+- Fix parser closing root's parent object when reading a XML file in an
+  existing playlist (ie. a playlist item points to a broken XML playlist file)
+- Fix small change of crashing by the intro movie when choosing another
+  source very fast (eg. when having, and using, a shortcut for VDR directly)
+- Remove hardcode Esc shortcut to escape fullscreen mode, it clashes with
+  canceling playlist editing
+- Workaround bug in KListView when clearing the playlist while it's editing
+  an item, by clearing Focus on any child widget. Also move focus back to
+  ViewArea when an item is executed
 Changes since version 0.9.1-rc1
 - Added Find/FindNext in playlist's context menu
 - Intro-movie's background will finish when clicked on its background
