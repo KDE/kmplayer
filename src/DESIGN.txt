@@ -1,7 +1,7 @@
 The core of kmplayer is in kmplayerpartbase.x. PartBase keeps
 the list of Source objects (dvd/vcd/url/..) and Process objects
 (mplayer/xine/gst/xv), controls the View or respond to its signals. Both
-application as kpart (for plugin) has one PartBase. However, in case of
+application as kpart (for plugin) have one PartBase. However, in case of
 plugin for khtml, it's possible one PartBase controls multible View
 objects (see tests/controls.html).
 
@@ -16,13 +16,22 @@ Classes in kmplayerplaylist.x are actually base for the XML playlist
 formats (smil/asx/rss/..).
 
 There is always one Source object active. A Source object sets up the
-interface to the user, as far possible, handling playlists and launching
+interface to the user as far possible, handling playlists and launching
 backends. This is not fully worked out yet, eg. URLSource should be able
-to launch multible backends for smil.
+to launch multible backends for smil. Which probably means that PartBase
+should have a list of Process factories and Source objects a list of 
+running Process objects.
 
-Backends are instances of Process and should become more simple, just 
-passing data from/to external processes. A Recorder object is also a
-Process.
+Backends are instances of Process and should be simple, just passing
+data from/to external processes. A Recorder object is also a Process.
+Though for mplayer, there is quite some code for output parsing.
+
+The XML classes and parser provide a quick way for storing any XML file
+in the playlist. Tree nodes build the tree themselves and recognized
+multimedia elements more or less play the playlist themselves too.
+The parser is build to recover from all kinds of typos. This is because
+ASX is quite often full of XML errors that made other parsers give up,
+eg. I've seen something like "<Title>Laurel & Hardy< / title>".
 
 KMPlayerPart and KMPlayerApp are classes that use the above for plugin
 and application.
