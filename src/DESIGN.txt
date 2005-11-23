@@ -1,0 +1,31 @@
+The core of kmplayer is in kmplayerpartbase.x. PartBase keeps
+the list of Source objects (dvd/vcd/url/..) and Process objects
+(mplayer/xine/gst/xv), controls the View or respond to its signals. Both
+application as kpart (for plugin) has one PartBase. However, in case of
+plugin for khtml, it's possible one PartBase controls multible View
+objects (see tests/controls.html).
+
+The View is the parent of ViewArea, PlayList and InfoWindow. ViewArea is
+the parent of Viewer (the output for the backend players) and
+ControlPanel.
+In case of smil animations, the Viewer widget can be hidden or made
+smaller so ViewArea background is where the rendering is done.
+What should be done is moving the code for PlayList to
+kmplayerplaylistview.x from kmplayerview.x.
+Classes in kmplayerplaylist.x are actually base for the XML playlist
+formats (smil/asx/rss/..).
+
+There is always one Source object active. A Source object sets up the
+interface to the user, as far possible, handling playlists and launching
+backends. This is not fully worked out yet, eg. URLSource should be able
+to launch multible backends for smil.
+
+Backends are instances of Process and should become more simple, just 
+passing data from/to external processes. A Recorder object is also a
+Process.
+
+KMPlayerPart and KMPlayerApp are classes that use the above for plugin
+and application.
+
+Finally there is also a Settings class for general usage and for
+launching the configure dialog.

@@ -644,7 +644,7 @@ void RegionRuntime::parseParam (const QString & name, const QString & val) {
         rect = QRect (rx, ry, rw, rh);
     }
     if (name == QString::fromLatin1 ("background-color") ||
-            name == QString::fromLatin1 ("background-color")) {
+            name == QString::fromLatin1 ("backgroundColor")) {
         background_color = QColor (val).rgb ();
         have_bg_color = true;
         need_repaint = true;
