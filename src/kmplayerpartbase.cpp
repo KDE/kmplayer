@@ -1497,7 +1497,6 @@ KDE_NO_EXPORT void URLSource::read (QTextStream & textstream) {
             line = textstream.readLine ();
         } while (!line.isNull ()); /* TODO && m_document.size () < 1024 / * support 1k entries * /);*/
     }
-;
 }
 
 KDE_NO_EXPORT void URLSource::kioData (KIO::Job *, const QByteArray & d) {

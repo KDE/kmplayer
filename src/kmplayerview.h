@@ -160,6 +160,7 @@ protected:
     void contextMenuEvent (QContextMenuEvent * e);
     void paintEvent (QPaintEvent *);
     void timerEvent (QTimerEvent * e);
+    void closeEvent (QCloseEvent * e);
 private:
     void syncVisual (QRect rect);
     ViewAreaPrivate * d;

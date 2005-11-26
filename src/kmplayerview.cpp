@@ -401,6 +401,17 @@ KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
     }
 }
 
+KDE_NO_EXPORT void ViewArea::closeEvent (QCloseEvent * e) {
+    //kdDebug () << "closeEvent" << endl;
+    if (m_fullscreen) {
+        fullScreen ();
+        if (!m_parent->topLevelWidget ()->isVisible ())
+            m_parent->topLevelWidget ()->show ();
+        e->ignore ();
+    } else
+        QWidget::closeEvent (e);
+}
+
 //-----------------------------------------------------------------------------
 
 namespace KMPlayer {
@@ -461,7 +472,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
     auxiliary_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder_grey"), KIcon::Small);
     video_pix = KGlobal::iconLoader ()->loadIcon (QString ("video"), KIcon::Small);
     unknown_pix = KGlobal::iconLoader ()->loadIcon (QString ("unknown"), KIcon::Small);
-    menu_pix = KGlobal::iconLoader ()->loadIcon (QString ("showmenu"), KIcon::Small);
+    menu_pix = KGlobal::iconLoader ()->loadIcon (QString ("player_playlist"), KIcon::Small);
     config_pix = KGlobal::iconLoader ()->loadIcon (QString ("configure"), KIcon::Small);
     url_pix = KGlobal::iconLoader ()->loadIcon (QString ("www"), KIcon::Small);
     m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("editcopy"), KIcon::Small, 0, true), i18n ("&Copy to Clipboard"), this, SLOT (copyToClipboard ()), 0, 0);
