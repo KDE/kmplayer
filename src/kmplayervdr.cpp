@@ -727,6 +727,14 @@ KDE_NO_EXPORT QFrame * KMPlayerVDRSource::prefPage (QWidget * parent) {
         m_configpage = new KMPlayerPrefSourcePageVDR (parent, m_player);
     return m_configpage;
 }
+
+KDE_NO_EXPORT bool KMPlayerVDRSource::requestPlayURL (KMPlayer::NodePtr) {
+    return true;
+}
+
+KDE_NO_EXPORT void KMPlayerVDRSource::stateElementChanged (KMPlayer::NodePtr) {
+}
+
 //-----------------------------------------------------------------------------
 
 static const char * xv_supported [] = {
