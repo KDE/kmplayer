@@ -1,7 +1,10 @@
 Changes since version 0.9.1
+- Fix that switching channels w/ VDR sometimes stopped the backend
+- Fix saving playlist looses cdata sections (if any) and don't normalize them
+- Fix application window stays hidden when fullscreen window closed with ALT_F4
 - Fix parser closing root's parent object when reading a XML file in an
   existing playlist (ie. a playlist item points to a broken XML playlist file)
-- Fix small change of crashing by the intro movie when choosing another
+- Fix small chance of crashing by the intro movie when choosing another
   source very fast (eg. when having, and using, a shortcut for VDR directly)
 - Remove hardcode Esc shortcut to escape fullscreen mode, it clashes with
   canceling playlist editing
