@@ -517,7 +517,7 @@ void PlayListView::populate (NodePtr e, NodePtr focus, QListViewItem * item, QLi
                 text = e->hasChildNodes () ? i18n ("unnamed") : i18n ("empty");
         } else
             text = mrl->pretty_name;
-    } else if (!strcmp (e->nodeName (), "#text"))
+    } else if (e->id == id_node_text)
         text = e->nodeValue ();
     item->setText(0, text);
     if (focus == e)

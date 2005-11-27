@@ -349,7 +349,7 @@ NodePtr Node::childFromTag (const QString &) {
 
 KDE_NO_EXPORT void Node::characterData (const QString & s) {
     document()->m_tree_version++;
-    if (!m_last_child || strcmp (m_last_child->nodeName (), "#text"))
+    if (!m_last_child || m_last_child->id != id_node_text)
         appendChild (new TextNode (m_doc, s));
     else
         convertNode <TextNode> (m_last_child)->appendText (s);
@@ -359,7 +359,7 @@ void Node::normalize () {
     NodePtr e = firstChild ();
     while (e) {
         NodePtr tmp = e->nextSibling ();
-        if (!e->isElementNode () && !strcmp (e->nodeName (), "#text")) {
+        if (!e->isElementNode () && e->id == id_node_text) {
             QString val = e->nodeValue ().simplifyWhiteSpace ();
             if (val.isEmpty ())
                 removeChild (e);
@@ -373,7 +373,7 @@ void Node::normalize () {
 
 static void getInnerText (const NodePtr p, QTextOStream & out) {
     for (NodePtr e = p->firstChild (); e; e = e->nextSibling ()) {
-        if (!strcmp (e->nodeName (), "#text"))
+        if (e->id == id_node_text)
             out << e->nodeValue ();
         else
             getInnerText (e, out);
@@ -388,9 +388,12 @@ QString Node::innerText () const {
 }
 
 static void getOuterXML (const NodePtr p, QTextOStream & out, int depth) {
-    if (!p->isElementNode ()) // #text
-        out << XMLStringlet (p->nodeValue ()) << QChar ('\n');
-    else {
+    if (!p->isElementNode ()) { // #text or #cdata
+        if (p->id == id_node_cdata)
+            out << "<![CDATA[" << p->nodeValue () << "]]>" << QChar ('\n');
+        else
+            out << XMLStringlet (p->nodeValue ()) << QChar ('\n');
+    } else {
         Element * e = convertNode <Element> (p);
         QString indent (QString ().fill (QChar (' '), depth));
         out << indent << QChar ('<') << XMLStringlet (e->nodeName ());
@@ -585,7 +588,9 @@ namespace KMPlayer {
 }
 
 Document::Document (const QString & s, PlayListNotify * n)
- : Mrl (dummy_element), notify_listener (n), m_tree_version (0) {
+ : Mrl (dummy_element, id_node_document),
+   notify_listener (n),
+   m_tree_version (0) {
     m_doc = m_self; // just-in-time setting fragile m_self to m_doc
     src = s;
     editable = false;
@@ -630,8 +635,8 @@ bool Document::isMrl () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT TextNode::TextNode (NodePtr & d, const QString & s)
- : Node (d), text (s) {}
+KDE_NO_CDTOR_EXPORT TextNode::TextNode (NodePtr & d, const QString & s, short i)
+ : Node (d, i), text (s) {}
 
 void TextNode::appendText (const QString & s) {
     text += s;
@@ -644,6 +649,11 @@ QString TextNode::nodeValue () const {
 KDE_NO_EXPORT bool TextNode::expose () const {
     return false;
 }
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT CData::CData (NodePtr & d, const QString & s)
+ : TextNode (d, s, id_node_cdata) {}
 
 //-----------------------------------------------------------------------------
 
@@ -720,6 +730,7 @@ public:
     bool startTag (const QString & tag, AttributeListPtr attr);
     bool endTag (const QString & tag);
     bool characterData (const QString & data);
+    bool cdataData (const QString & data);
 };
 
 } // namespace KMPlayer
@@ -787,6 +798,15 @@ bool DocumentBuilder::characterData (const QString & data) {
     if (!m_ignore_depth)
         m_node->characterData (data);
     //kdDebug () << "characterData " << d.latin1() << endl;
+    return true;
+}
+
+bool DocumentBuilder::cdataData (const QString & data) {
+    if (!m_ignore_depth) {
+        NodePtr d = m_node->document ();
+        m_node->appendChild (new CData (d, data));
+    }
+    //kdDebug () << "cdataData " << d.latin1() << endl;
     return true;
 }
 
@@ -1173,11 +1193,12 @@ bool SimpleSAXParser::readDTD () {
     //kdDebug () << "readDTD: " << token->string.latin1 () << endl;
     if (token->token == tok_text && token->string.startsWith (QString ("[CDATA["))) {
         m_state = new StateInfo (InCDATA, m_state->next); // note: pop DTD
+        cdata = token->string.mid (7);
         if (token->next) {
-            cdata = token->next->string;
+            cdata += token->next->string;
             token->next = 0;
         } else {
-            cdata = next_token->string;
+            cdata += next_token->string;
             next_token->string.truncate (0);
             next_token->token = tok_empty;
         }
@@ -1198,7 +1219,7 @@ bool SimpleSAXParser::readCDATA () {
             cdata.truncate (cdata.length () - 2);
             m_state = m_state->next;
             if (m_state->state == InContent)
-                have_error = builder.characterData (cdata);
+                have_error = builder.cdataData (cdata);
             else if (m_state->state == InAttributes) {
                 if (equal_seen)
                     attr_value += cdata;
@@ -1272,7 +1293,7 @@ bool SimpleSAXParser::parse (QTextStream & d) {
     }
     bool ok = true;
     bool in_character_data = false;
-    bool last_is_white_space = false;
+    QString white_space;
     while (ok) {
         switch (m_state->state) {
             case InTag:
@@ -1305,13 +1326,19 @@ bool SimpleSAXParser::parse (QTextStream & d) {
                         equal_seen = in_sngl_quote = in_dbl_quote = false;
                         m_state = new StateInfo (InTag, m_state);
                         ok = readTag ();
-                        in_character_data = last_is_white_space = false;
+                        in_character_data = false;
+                        white_space.truncate (0);
                     } else if (token->token == tok_white_space) {
-                        last_is_white_space = in_character_data;
+                        white_space += token->string;
                     } else {
-                        if (last_is_white_space) {
-                            token->string = QChar (' ') + token->string;
-                            last_is_white_space = false;
+                        if (!white_space.isEmpty ()) {
+                            if (!in_character_data) {
+                                int pos = white_space.findRev (QChar ('\n'));
+                                if (pos > -1)
+                                    white_space = white_space.mid (pos + 1);
+                            }
+                            have_error = builder.characterData (white_space);
+                            white_space.truncate (0);
                         }
                         have_error = builder.characterData (token->string);
                         in_character_data = true;

@@ -501,6 +501,10 @@ protected:
 
 ITEM_AS_POINTER(KMPlayer::Node)
 
+const short id_node_document = 1;
+const short id_node_text = 5;
+const short id_node_cdata = 6;
+
 /*
  * Element node, XML node that can have attributes
  */
@@ -641,7 +645,7 @@ public:
  */
 class KMPLAYER_EXPORT TextNode : public Node {
 public:
-    TextNode (NodePtr & d, const QString & s);
+    TextNode (NodePtr & d, const QString & s, short _id = id_node_text);
     KDE_NO_CDTOR_EXPORT ~TextNode () {}
     void appendText (const QString & s);
     const char * nodeName () const { return "#text"; }
@@ -649,6 +653,16 @@ public:
     bool expose () const;
 protected:
     QString text;
+};
+
+/**
+ * Represents cdata sections, like "some text" in '<![CDATA[some text]]>'
+ */
+class KMPLAYER_EXPORT CData : public TextNode {
+public:
+    CData (NodePtr & d, const QString & s);
+    KDE_NO_CDTOR_EXPORT ~CData () {}
+    const char * nodeName () const { return "#cdata"; }
 };
 
 /**
