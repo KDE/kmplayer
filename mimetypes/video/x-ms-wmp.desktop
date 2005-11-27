@@ -6,6 +6,7 @@ Icon=video
 Patterns=*.wmp;*.WMP;
 Comment=Microsoft AVI Video
 Comment[ar]=ميكروسوفت AVIفيديو
+Comment[bg]=Microsoft AVI видео
 Comment[br]=Video Microsoft AVI
 Comment[ca]=Vídeo AVI de Microsoft
 Comment[cs]=Microsoft AVI video
