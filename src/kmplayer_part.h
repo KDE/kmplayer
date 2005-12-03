@@ -70,6 +70,7 @@ public:
 
     void saveState (QDataStream & stream);
     void restoreState (QDataStream & stream);
+    void requestOpenURL (const KURL & url, const QString & target, const QString & service);
 };
 
 /*

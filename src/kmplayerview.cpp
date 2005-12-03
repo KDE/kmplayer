@@ -1104,6 +1104,7 @@ bool View::setPicture (const QString & path) {
     } else {
         m_widgettypes[WT_Picture]->setPaletteBackgroundPixmap (*m_image);
         m_widgetstack->raiseWidget (m_widgettypes[WT_Picture]);
+        setControlPanelMode (CP_AutoHide);
     }
     return m_image;
 }
@@ -1173,7 +1174,7 @@ void View::setControlPanelMode (ControlPanelMode m) {
         if (m_controlpanel_mode == CP_Show || m_controlpanel_mode == CP_Only)
             m_control_panel->show ();
         else if (m_controlpanel_mode == CP_AutoHide) { 
-            if (m_playing)
+            if (m_playing || m_widgetstack->visibleWidget () == m_widgettypes[WT_Picture])
                 delayedShowButtons (false);
             else
                 m_control_panel->show ();
@@ -1227,7 +1228,7 @@ void View::setKeepSizeRatio (bool b) {
 KDE_NO_EXPORT void View::timerEvent (QTimerEvent * e) {
     if (e->timerId () == controlbar_timer) {
         controlbar_timer = 0;
-        if (!m_playing)
+        if (!m_playing && m_widgetstack->visibleWidget () != m_widgettypes[WT_Picture])
             return;
         int vert_buttons_pos = m_view_area->height ();
         int mouse_pos = m_view_area->mapFromGlobal (QCursor::pos ()).y();

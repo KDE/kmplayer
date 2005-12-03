@@ -595,6 +595,14 @@ KDE_NO_EXPORT void KMPlayerBrowserExtension::restoreState (QDataStream & stream)
     stream >> url;
     static_cast <PartBase *> (parent ())->openURL (KURL(url));
 }
+
+KDE_NO_EXPORT void KMPlayerBrowserExtension::requestOpenURL (const KURL & url, const QString & target, const QString & service) {
+    KParts::URLArgs args;
+    args.frameName = target;
+    args.serviceType = service;
+    emit openURLRequest (url, args);
+}
+
 //---------------------------------------------------------------------
 /*
  * add
@@ -1014,7 +1022,12 @@ KDE_NO_EXPORT void KMPlayerHRefSource::setURL (const KURL & url) {
 
 KDE_NO_EXPORT void KMPlayerHRefSource::play () {
     kdDebug () << "KMPlayerHRefSource::play " << m_url.url() << endl;
-    m_player->setSource (m_player->sources () ["urlsource"]);
+    Source * src = m_player->sources () ["urlsource"];
+    QString target = src->document ()->document ()->getAttribute ("target");
+    if (!target.isEmpty ()) {
+        static_cast <KMPlayerPart *> (m_player)->browserextension ()->requestOpenURL (src->url (), target, src->mime ());
+    } else
+        m_player->setSource (m_player->sources () ["urlsource"]);
 }
 
 KDE_NO_EXPORT void KMPlayerHRefSource::activate () {
