@@ -153,6 +153,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     KMPlayer::ControlPanel * panel = m_view->controlPanel ();
     QStringList::const_iterator it = args.begin ();
     QStringList::const_iterator end = args.end ();
+    int turned_off_features = 0;
     for ( ; it != end; ++it) {
         int equalPos = (*it).find("=");
         if (equalPos > 0) {
@@ -237,12 +238,31 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
             } else if (name == QString::fromLatin1("uimode")) {
                 QString val_lower (value.lower ());
                 if (val_lower == QString::fromLatin1("full"))
-                    m_features |= Feat_All;
+                    m_features |= (Feat_All & ~Feat_PlayList);
                 // TODO: invisible, none, mini
             } else if (name == QString::fromLatin1("nolabels")) {
-                m_features &= ~Feat_Label;
+                turned_off_features |= Feat_Label;
             } else if (name == QString::fromLatin1("nocontrols")) {
-                m_features &= ~Feat_Controls;
+                turned_off_features |= Feat_Controls;
+            } else if (name == QString::fromLatin1("showdisplay")) {
+                bool on = value.toInt () || !value.lower ().compare ("true");
+                if (on)
+                    m_features |= Feat_Viewer;
+                else
+                    turned_off_features |= Feat_Viewer;
+            } else if (name == QString::fromLatin1("showcontrols")) {
+                bool on = value.toInt () || !value.lower ().compare ("true");
+                if (on)
+                    m_features |= Feat_Controls;
+                else
+                    turned_off_features |= Feat_Controls;
+            } else if (name == QString::fromLatin1("showstatusbar")) {
+                bool on = value.toInt () || !value.lower ().compare ("true");
+                if (on)
+                    m_features |= Feat_StatusBar;
+                else
+                    turned_off_features |= Feat_StatusBar;
+            // else showcaptioning/showgotobar/showpositioncontrols/showtracker
             } else if (name == QString::fromLatin1("console")) {
                 m_group = value.isEmpty() ? QString::fromLatin1("_anonymous") : value;
             } else if (name == QString::fromLatin1("__khtml__pluginbaseurl")) {
@@ -256,9 +276,16 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
             } else if (name == QString::fromLatin1 ("autostart")) {
                 urlsource->setAutoPlay (getBoolValue (value));
 	    }
+            // volume/clicktoplay/transparentatstart/animationatstart
+            // autorewind/displaysize/border
             if (!name.startsWith (QString::fromLatin1 ("__khtml__")))
                 convertNode <KMPlayer::Element> (urlsource->document ())->setAttribute (name, value);
         }
+    }
+    if (turned_off_features) {
+        if (m_features == Feat_Unknown)
+            m_features = (Feat_All & ~Feat_PlayList);
+        m_features &= ~turned_off_features;
     }
     //KParts::Part::setWidget (m_view);
     setXMLFile("kmplayerpartui.rc");
