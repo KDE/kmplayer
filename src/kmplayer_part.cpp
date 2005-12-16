@@ -234,6 +234,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                     panel->volumeBar()->show ();
                     panel->volumeBar()->setMinimumSize (QSize (20, panel->volumeBar()->minimumSize ().height ()));
                 }
+            } else if (name == QString::fromLatin1("uimode")) {
+                QString val_lower (value.lower ());
+                if (val_lower == QString::fromLatin1("full"))
+                    m_features |= Feat_All;
+                // TODO: invisible, none, mini
             } else if (name == QString::fromLatin1("nolabels")) {
                 m_features &= ~Feat_Label;
             } else if (name == QString::fromLatin1("nocontrols")) {
