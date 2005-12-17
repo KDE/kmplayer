@@ -46,6 +46,7 @@ MimeType=audio/x-mp3;audio/m3u;audio/mpegurl;audio/x-m3u;audio/x-pn-realaudio;au
 InitialPreference=7
 Categories=Qt;KDE;AudioVideo;
 GenericName=Media Player
+GenericName[bg]=Медия плеър
 GenericName[br]=Soner liesvedia
 GenericName[ca]=Reproductor multimèdia
 GenericName[cs]=Přehrávač médií
