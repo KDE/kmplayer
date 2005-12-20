@@ -394,6 +394,9 @@
     <bookmark icon="video" href="http://www.bloomberg.com/streams/video/LiveDE_nb.ram" >
      <title>Bloomberg TV Germany</title>
     </bookmark>
+    <bookmark icon="video" href="http://broadcast.giga.de" >
+     <title>GIGA TV</title>
+    </bookmark>
    </folder>
    <bookmark icon="sound" href="mms://213.200.75.252/antenne1$livestream.wma" >
     <title>hit radio antenne 1</title>
