@@ -132,6 +132,7 @@ protected:
      * PlayListNotify implementation
      */
     bool requestPlayURL (NodePtr mrl);
+    bool resolveURL (NodePtr mrl);
     void stateElementChanged (NodePtr element);
     void setEventDispatcher (NodePtr element);
     void setInfoMessage (const QString & msg);

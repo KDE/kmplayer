@@ -72,7 +72,6 @@ public:
     virtual void dimensions (int & w, int & h);
     virtual bool hasLength ();
     virtual QString prettyName ();
-    virtual bool requestPlayURL (NodePtr mrl);
 public slots:
     virtual void init ();
     virtual void activate ();
@@ -83,10 +82,14 @@ private slots:
     void kioData (KIO::Job *, const QByteArray &);
     void kioMimetype (KIO::Job *, const QString &);
     void kioResult (KIO::Job *);
+protected:
+    virtual bool requestPlayURL (NodePtr mrl);
+    virtual bool resolveURL (NodePtr mrl);
 private:
-    void read (QTextStream &);
+    void read (NodePtr mrl, QTextStream &);
     void terminateJob ();
     KIO::Job * m_job;
+    NodePtrW m_resolving_mrl;
     QByteArray m_data;
 };
 

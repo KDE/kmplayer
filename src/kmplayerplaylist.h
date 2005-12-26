@@ -568,7 +568,7 @@ public:
     int height;
     float aspect;
     enum { Single = 0, Window } view_mode;
-    bool parsed;
+    bool resolved;
     bool bookmarkable;
 };
 
@@ -583,6 +583,10 @@ public:
      * If returning false, the element will be set to finished
      */
     virtual bool requestPlayURL (NodePtr mrl) = 0;
+    /**
+     * Called by an unresolved Mrl, check if this node points to a playlist
+     */
+    virtual bool resolveURL (NodePtr mrl) = 0;
     /**
      * Ask for setting this node current and playing a video/audio mrl
      */
