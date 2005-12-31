@@ -23,12 +23,14 @@
 #ifndef _KMPLAYER_PLAYLIST_H_
 #define _KMPLAYER_PLAYLIST_H_
 
+#include <config.h>
+#include <sys/time.h>
+
 #include <qstring.h>
 #ifndef ASSERT
 #define ASSERT Q_ASSERT
 #endif
 
-#include <config.h>
 #include <kdemacros.h>
 
 #undef KDE_NO_CDTOR_EXPORT
@@ -619,6 +621,39 @@ public:
      * Ask for connection bitrates settings
      */
     virtual void bitRates (int & prefered, int & maximal) = 0;
+    /**
+     * Sets next call to Document::timer() or -1 to cancel a previous call
+     */
+    virtual void setTimeout (int ms) = 0;
+};
+
+/**
+ * To have a somewhat synchronized time base, node having timers should use
+ * this. Idea is that if a node still waiting for network data, it can hold
+ * this time line.
+ */
+class TimerInfo : public ListNodeBase <TimerInfo> {
+public:
+    TimerInfo (NodePtr n, unsigned id, struct timeval & now, int ms);
+    KDE_NO_CDTOR_EXPORT ~TimerInfo () {}
+    NodePtrW node;
+    unsigned event_id;
+    struct timeval timeout;
+    int milli_sec;
+};
+
+ITEM_AS_POINTER(KMPlayer::TimerInfo)
+typedef Item <TimerInfo>::SharedType TimerInfoPtr;
+typedef Item <TimerInfo>::WeakType TimerInfoPtrW;
+
+/**
+ * Event signaling a timer event
+ */
+class TimerEvent : public Event {
+public:
+    TimerEvent (TimerInfoPtr tinfo);
+    TimerInfoPtrW timer_info;
+    bool interval; // set to 'true' in 'Node::handleEvent()' to make it repeat
 };
 
 /**
@@ -639,9 +674,32 @@ public:
      * Will return false if this document has child nodes
      */
     bool isMrl ();
+    /**
+     * Ask for TimerEvent for Node n in ms milli-seconds.
+     * Returns weak ref to TimerInfo ptr, which is an item in the timers list
+     */
+    TimerInfoPtrW setTimeout (NodePtr n, int ms, unsigned id=0);
+    void cancelTimer (TimerInfoPtr ti);
+    /**
+     * Will increment a postponed counter, while > 0, no TimerEvent's happen
+     */
+    void postpone ();
+    void proceed ();
+    /**
+     * Called by PlayListNotify, creates TimerEvent on first item in timers. 
+     * Returns true if to repeat this same timeout FIXME.
+     */
+    bool timer ();
+
     NodePtrW rootLayout;
+    List <TimerInfo> timers; //FIXME: make as connections
+    struct timeval postponed_time;
     PlayListNotify * notify_listener;
     unsigned int m_tree_version;
+private:
+    int postponed;
+    int cur_timeout;
+    bool intimer;
 };
 
 /**

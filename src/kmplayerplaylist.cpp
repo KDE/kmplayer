@@ -17,6 +17,8 @@
  **/
 
 #include <config.h>
+#include <time.h>
+
 #include <qtextstream.h>
 #include <kdebug.h>
 #include <kurl.h>
@@ -98,6 +100,11 @@ KDE_NO_EXPORT void Connection::disconnect () {
     listen_item = 0L;
     listeners = 0L;
 }
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT TimerInfo::TimerInfo (NodePtr n, unsigned id, struct timeval & tv, int ms)
+ : node (n), event_id (id), timeout (tv), milli_sec (ms) {}
 
 //-----------------------------------------------------------------------------
 
@@ -596,7 +603,7 @@ namespace KMPlayer {
 Document::Document (const QString & s, PlayListNotify * n)
  : Mrl (dummy_element, id_node_document),
    notify_listener (n),
-   m_tree_version (0) {
+   m_tree_version (0), postponed (0), cur_timeout (-1), intimer (false) {
     m_doc = m_self; // just-in-time setting fragile m_self to m_doc
     src = s;
     editable = false;
@@ -637,6 +644,138 @@ void Document::dispose () {
 
 bool Document::isMrl () {
     return Mrl::isMrl ();
+}
+
+static inline int diffTime (struct timeval & tv1, struct timeval & tv2) {
+    //kdDebug () << "diffTime sec:" << ((tv1.tv_sec - tv2.tv_sec) * 1000) << " usec:" << ((tv1.tv_usec - tv2.tv_usec) /1000) << endl;
+    return (tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) /1000;
+}
+
+static inline void addTime (struct timeval & tv, int ms) {
+    tv.tv_sec += (tv.tv_usec + ms*1000) / 1000000;
+    tv.tv_usec = (tv.tv_usec + ms*1000) % 1000000;
+}
+
+TimerInfoPtrW Document::setTimeout (NodePtr n, int ms, unsigned id) {
+    if (!notify_listener)
+        return 0L;
+    TimerInfoPtr ti = timers.first ();
+    int pos = 0;
+    struct timeval tv;
+    gettimeofday (&tv, 0L);
+    addTime (tv, ms);
+    for (; ti && diffTime (ti->timeout, tv) <= 0; ti = ti->nextSibling ()) {
+        pos++;
+        //kdDebug () << "setTimeout tv:" << tv.tv_sec << "." << tv.tv_usec << " "  << ti->timeout.tv_sec << "." << ti->timeout.tv_usec << endl;
+    }
+    TimerInfo * tinfo = new TimerInfo (n, id, tv, ms);
+    timers.insertBefore (tinfo, ti);
+    //kdDebug () << "setTimeout " << ms << " at:" << pos << " tv:" << tv.tv_sec << "." << tv.tv_usec << endl;
+    if (!postponed && pos == 0 && !intimer) { // timer() does that too
+        cur_timeout = ms;
+        notify_listener->setTimeout (ms);
+    }
+    return tinfo;
+}
+
+void Document::cancelTimer (TimerInfoPtr tinfo) {
+    if (!postponed && !intimer && tinfo == timers.first ()) {
+        //kdDebug () << "cancel first" << endl;
+        TimerInfoPtr second = tinfo->nextSibling ();
+        if (second) {
+            struct timeval now;
+            gettimeofday (&now, 0L);
+            int diff = diffTime (now, tinfo->timeout);
+            cur_timeout = diff > 0 ? 0 : -diff;
+        } else
+            cur_timeout = -1;
+        notify_listener->setTimeout (cur_timeout);
+    }
+    timers.remove (tinfo);
+}
+
+bool Document::timer () {
+    TimerInfoPtrW tinfo = timers.first (); // keep use_count on 1
+    if (postponed || !tinfo || !tinfo->node) {
+        kdError () << "spurious timer event" << endl;
+        return false;
+    }
+    struct timeval now = { 0, 0 }; // unset
+    TimerEvent * te = new TimerEvent (tinfo);
+    EventPtr e (te);
+    intimer = true;
+    //kdDebug () << "timer " << cur_timeout << endl;
+    tinfo->node->handleEvent (e);
+    if (tinfo) { // may be removed from timers and become 0
+        if (te->interval) {
+            TimerInfoPtr tinfo2 (tinfo); // prevent destruction
+            timers.remove (tinfo);
+            gettimeofday (&now, 0L);
+            tinfo2->timeout = now;
+            addTime (tinfo2->timeout, tinfo2->milli_sec);
+            TimerInfoPtr ti = timers.first ();
+            int pos = 0;
+            for (; ti && diffTime (tinfo2->timeout, ti->timeout) >= 0; ti = ti->nextSibling ()) {
+                pos++;
+                //kdDebug () << "timer diff:" <<diffTime (tinfo2->timeout, ti->timeout) << endl;
+            }
+            //kdDebug () << "re-setTimeout " << tinfo2->milli_sec<< " at:" << pos << " diff:" << diffTime(tinfo->timeout, now) << endl;
+            timers.insertBefore (tinfo2, ti);
+        } else
+            timers.remove (tinfo);
+    }
+    if (notify_listener) {// set new timeout to prevent interval timer events
+        tinfo = timers.first ();
+        if (!postponed && tinfo) {
+            if (!now.tv_sec)
+                gettimeofday (&now, 0L); // system call ..
+            int diff = diffTime (now, tinfo->timeout);
+            int new_timeout = diff > 0 ? 0 : -diff;
+            if (new_timeout != cur_timeout) {
+                //kdDebug () << "timer set new timeout now:" << now.tv_sec << "." << now.tv_usec << " "  << tinfo->timeout.tv_sec << "." << tinfo->timeout.tv_usec << " diff:" << diffTime(now, tinfo->timeout) << endl;
+                cur_timeout = new_timeout;
+                notify_listener->setTimeout (cur_timeout);
+            }
+            // else keep the timer, no new setTimeout
+        } else {
+            cur_timeout = -1;
+            notify_listener->setTimeout (-1); // kill timer
+        }
+            //kdDebug () << "timer set new timeout now:" << now.tv_sec << "." << now.tv_usec << " "  << tinfo->timeout.tv_sec << "." << tinfo->timeout.tv_usec << " diff:" << diffTime(tinfo->timeout, now) << endl;
+    }
+    intimer = false;
+    return false;
+}
+
+void Document::postpone () {
+    if (!postponed++)
+        gettimeofday (&postponed_time, 0L);
+    kdDebug () << "postpone " << postponed << endl;
+    if (!intimer && notify_listener) {
+        cur_timeout = -1;
+        notify_listener->setTimeout (-1);
+    }
+}
+
+void Document::proceed () {
+    kdDebug () << "proceed " << postponed-1 << endl;
+    if (--postponed < 0) {
+        kdError () << "spurious proceed" << endl;
+        postponed = 0;
+    } else if (!postponed && timers.first () && notify_listener) {
+        struct timeval now;
+        gettimeofday (&now, 0L);
+        int diff = diffTime (now, postponed_time);
+        if (diff > 0) {
+            for (TimerInfoPtr t = timers.first (); t; t = t->nextSibling ())
+                addTime (t->timeout, diff);
+        }
+        if (!intimer) { // eg. postpone() + proceed() in same timer()
+            diff = diffTime (timers.first ()->timeout, now);
+            cur_timeout = diff < 0 ? 0 : diff;
+            notify_listener->setTimeout (cur_timeout);
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------

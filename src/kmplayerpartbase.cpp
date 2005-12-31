@@ -793,7 +793,7 @@ KAboutData* PartBase::createAboutData () {
 Source::Source (const QString & name, PartBase * player, const char * n)
  : QObject (player, n),
    m_name (name), m_player (player), m_auto_play (true),
-   m_frequency (0), m_xvport (0), m_xvencoding (-1) {
+   m_frequency (0), m_xvport (0), m_xvencoding (-1), m_doc_timer (0) {
     init ();
 }
 
@@ -995,6 +995,20 @@ bool Source::requestPlayURL (NodePtr mrl) {
 
 bool Source::resolveURL (NodePtr) {
     return true;
+}
+
+void Source::setTimeout (int ms) {
+    //kdDebug () << "Source::setTimeout " << ms << endl;
+    if (m_doc_timer)
+        killTimer (m_doc_timer);
+    m_doc_timer = ms > -1 ? startTimer (ms) : 0;
+}
+
+void Source::timerEvent (QTimerEvent * e) {
+    if (e->timerId () == m_doc_timer && m_document)
+        m_document->document ()->timer (); // will call setTimeout()
+    else
+        killTimer (e->timerId ());
 }
 
 bool Source::setCurrent (NodePtr mrl) {

@@ -59,6 +59,13 @@ const unsigned int event_paint = (unsigned int) -9;
 const unsigned int event_sized = (unsigned int) -10;
 const unsigned int event_pointer_clicked = event_activated;
 const unsigned int event_pointer_moved = (unsigned int) -11;
+static const unsigned int event_timer = (unsigned int) -12;
+
+static const unsigned int started_timer_id = (unsigned int) 1;
+static const unsigned int stopped_timer_id = (unsigned int) 2;
+static const unsigned int start_timer_id = (unsigned int) 3;
+static const unsigned int dur_timer_id = (unsigned int) 4;
+static const unsigned int anim_timer_id = (unsigned int) 5;
 }
 
 /* Intrinsic duration 
@@ -211,6 +218,9 @@ KDE_NO_CDTOR_EXPORT SizeEvent::SizeEvent(int _x, int _y, int _w, int _h, bool b)
 PointerEvent::PointerEvent (unsigned int event_id, int _x, int _y)
  : Event (event_id), x (_x), y (_y) {}
 
+TimerEvent::TimerEvent (TimerInfoPtr tinfo)
+ : Event (event_timer), timer_info (tinfo), interval (false) {}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT TimedRuntime::TimedRuntime (NodePtr e)
@@ -221,8 +231,19 @@ KDE_NO_CDTOR_EXPORT TimedRuntime::TimedRuntime (NodePtr e)
 KDE_NO_CDTOR_EXPORT TimedRuntime::~TimedRuntime () {}
 
 KDE_NO_EXPORT void TimedRuntime::reset () {
-    start_timer = 0;
-    dur_timer = 0;
+    if (element) {
+        if (start_timer) {
+            element->document ()->cancelTimer (start_timer);
+            ASSERT (!start_timer);
+        }
+        if (dur_timer) {
+            element->document ()->cancelTimer (dur_timer);
+            ASSERT (!dur_timer);
+        }
+    } else {
+        start_timer = 0L;
+        dur_timer = 0L;
+    }
     repeat_count = 0;
     timingstate = timings_reset;
     fill = fill_unknown;
@@ -288,16 +309,14 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
     }
     //kdDebug () << "TimedRuntime::begin " << element->nodeName() << endl; 
     if (start_timer || dur_timer) {
-        killTimers ();
         reset ();
-        end ();
         init ();
     }
     timingstate = timings_began;
 
     if (durations [begin_time].durval > 0) {
         if (durations [begin_time].durval < duration_last_option)
-            start_timer = startTimer (100 * durations [begin_time].durval);
+            start_timer = element->document ()->setTimeout (element, 100 * durations [begin_time].durval, start_timer_id);
         else
             propagateStop (false);
     } else
@@ -327,7 +346,7 @@ void TimedRuntime::parseParam (const QString & name, const QString & val) {
                 timingstate == timings_stopped) {
             if (durations [begin_time].durval > 0) { // create a timer for start
                 if (durations [begin_time].durval < duration_last_option)
-                    start_timer = startTimer(100*durations[begin_time].durval);
+                    start_timer = element->document ()->setTimeout (element, 100 * durations [begin_time].durval, start_timer_id);
             } else                                // start now
                 propagateStart ();
         }
@@ -364,16 +383,6 @@ void TimedRuntime::parseParam (const QString & name, const QString & val) {
     ElementRuntime::parseParam (name, val);
 }
 
-KDE_NO_EXPORT void TimedRuntime::timerEvent (QTimerEvent * e) {
-    //kdDebug () << "TimedRuntime::timerEvent " << (element ? element->nodeName() : "-") << endl; 
-    if (e->timerId () == start_timer) {
-        killTimer (start_timer);
-        start_timer = 0;
-        propagateStart ();
-    } else if (e->timerId () == dur_timer)
-        propagateStop (true);
-}
-
 KDE_NO_EXPORT void TimedRuntime::processEvent (unsigned int event) {
     //kdDebug () << "TimedRuntime::processEvent " << (((unsigned int)-1) - event) << " " << (element ? element->nodeName() : "-") << endl; 
     if (timingstate != timings_started && durations [begin_time].durval == event) {
@@ -401,28 +410,38 @@ KDE_NO_EXPORT void TimedRuntime::propagateStop (bool forced) {
             if (c->unfinished ())
                 return; // a child still running
     }
-    if (start_timer) {
-        killTimer (start_timer);
-        start_timer = 0;
-    }
-    if (dur_timer) {
-        killTimer (dur_timer);
-        dur_timer = 0;
-    }
     bool was_started (timingstate == timings_started);
     timingstate = timings_stopped;
-    if (was_started)
-        QTimer::singleShot (0, this, SLOT (stopped ()));
-    else if (element->unfinished ())
-        element->finish ();
+    if (element) {
+        if (start_timer) {
+            element->document ()->cancelTimer (start_timer);
+            ASSERT (!start_timer);
+        }
+        if (dur_timer) {
+            element->document ()->cancelTimer (dur_timer);
+            ASSERT (!dur_timer);
+        }
+        if (was_started)
+            element->document ()->setTimeout (element, 0, stopped_timer_id);
+        else if (element->unfinished ())
+            element->finish ();
+    } else {
+        start_timer = 0L;
+        dur_timer = 0L;
+    }
 }
 
 KDE_NO_EXPORT void TimedRuntime::propagateStart () {
     SMIL::TimedMrl * tm = convertNode <SMIL::TimedMrl> (element);
-    if (tm)
+    if (tm) {
         tm->propagateEvent (new ToBeStartedEvent (element));
+        if (start_timer)
+            tm->document ()->cancelTimer (start_timer);
+        ASSERT (!start_timer);
+    }
+    start_timer = 0L;
     timingstate = timings_started;
-    QTimer::singleShot (0, this, SLOT (started ()));
+    element->document ()->setTimeout (element, 0, started_timer_id);
 }
 
 /**
@@ -432,7 +451,7 @@ KDE_NO_EXPORT void TimedRuntime::started () {
     //kdDebug () << "TimedRuntime::started " << (element ? element->nodeName() : "-") << endl; 
     if (durations [duration_time].durval > 0 &&
             durations [duration_time].durval < duration_last_option)
-        dur_timer = startTimer (100 * durations [duration_time].durval);
+        dur_timer = element->document ()->setTimeout (element, 100 * durations [duration_time].durval, dur_timer_id);
      // kdDebug () << "TimedRuntime::started set dur timer " << durations [duration_time].durval << endl;
     element->begin ();
 }
@@ -447,7 +466,7 @@ KDE_NO_EXPORT void TimedRuntime::stopped () {
         if (0 < repeat_count--) {
             if (durations [begin_time].durval > 0 &&
                     durations [begin_time].durval < duration_last_option)
-                start_timer = startTimer (100 * durations [begin_time].durval);
+                start_timer = element->document ()->setTimeout (element, 100 * durations [begin_time].durval, start_timer_id);
             else
                 propagateStart ();
         } else
@@ -774,16 +793,18 @@ KDE_NO_EXPORT void SetData::started () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT AnimateData::AnimateData (NodePtr e)
- : AnimateGroupData (e), anim_timer (0) {
+ : AnimateGroupData (e) {
     reset ();
 }
 
 KDE_NO_EXPORT void AnimateData::reset () {
     AnimateGroupData::reset ();
-    if (anim_timer) {
-        killTimer (anim_timer);
+    if (element) {
+        if (anim_timer)
+            element->document ()->cancelTimer (anim_timer);
+        ASSERT (!anim_timer);
+    } else
         anim_timer = 0;
-    }
     accumulate = acc_none;
     additive = add_replace;
     change_by = 0;
@@ -865,7 +886,7 @@ KDE_NO_EXPORT void AnimateData::started () {
             }
             steps = 10 * durations [duration_time].durval / 2; // 50 per sec
             if (steps > 0) {
-                anim_timer = startTimer (20); // 50 /s for now FIXME
+                anim_timer = element->document ()->setTimeout (element, 20, anim_timer_id); // 50 /s for now FIXME
                 change_delta = (change_to_val - change_from_val) / steps;
                 //kdDebug () << "AnimateData::started " << target_element->nodeName () << "." << changed_attribute << " " << change_from_val << "->" << change_to_val << " in " << steps << " using:" << change_delta << " inc" << endl;
                 success = true;
@@ -883,7 +904,7 @@ KDE_NO_EXPORT void AnimateData::started () {
                  break;
             }
             //kdDebug () << "AnimateData::started " << target_element->nodeName () << "." << changed_attribute << " " << change_values.first () << "->" << change_values.last () << " in " << steps << " interval:" << interval << endl;
-            anim_timer = startTimer (interval);
+            anim_timer = element->document ()->setTimeout (element, interval, anim_timer_id); // 50 /s for now FIXME
             rt->setParam (changed_attribute, change_values.first (), &modification_id);
             success = true;
         }
@@ -901,33 +922,37 @@ KDE_NO_EXPORT void AnimateData::started () {
  */
 KDE_NO_EXPORT void AnimateData::stopped () {
     // kdDebug () << "AnimateData::stopped " << element->state << endl;
-    if (anim_timer) { // make sure timers are stopped
-        killTimer (anim_timer);
+    if (element) {
+        if (anim_timer) // make sure timers are stopped
+            element->document ()->cancelTimer (anim_timer);
+        ASSERT (!anim_timer);
+    } else
         anim_timer = 0;
-    }
     AnimateGroupData::stopped ();
 }
 
 /**
  * for animations
  */
-KDE_NO_EXPORT void AnimateData::timerEvent (QTimerEvent * e) {
-    if (e->timerId () == anim_timer) {
-        if (steps-- > 0 && target_element && target_element->getRuntime ()) {
-            ElementRuntimePtr rt = target_element->getRuntime ();
-            if (calcMode == calc_linear) {
-                change_from_val += change_delta;
-                rt->setParam (changed_attribute, QString ("%1%2").arg (change_from_val).arg(change_from_unit), &modification_id);
-            } else if (calcMode == calc_discrete) {
-                 rt->setParam (changed_attribute, change_values[change_values.size () - steps -1], &modification_id);
-            }
-        } else {
-            killTimer (anim_timer);
-            anim_timer = 0;
-            propagateStop (true); // not sure, actually
+KDE_NO_EXPORT void AnimateData::timerTick () {
+    if (!anim_timer) {
+        kdError () << "spurious anim timer tick" << endl;
+        return;
+    }
+    if (steps-- > 0 && target_element && target_element->getRuntime ()) {
+        ElementRuntimePtr rt = target_element->getRuntime ();
+        if (calcMode == calc_linear) {
+            change_from_val += change_delta;
+            rt->setParam (changed_attribute, QString ("%1%2").arg (change_from_val).arg(change_from_unit), &modification_id);
+        } else if (calcMode == calc_discrete) {
+            rt->setParam (changed_attribute, change_values[change_values.size () - steps -1], &modification_id);
         }
-    } else
-        AnimateGroupData::timerEvent (e);
+    } else {
+        if (element)
+            element->document ()->cancelTimer (anim_timer);
+        ASSERT (!anim_timer);
+        propagateStop (true); // not sure, actually
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1726,8 +1751,29 @@ KDE_NO_EXPORT NodeRefListPtr SMIL::TimedMrl::listeners (unsigned int id) {
 
 KDE_NO_EXPORT bool SMIL::TimedMrl::handleEvent (EventPtr event) {
     TimedRuntime * rt = timedRuntime ();
-    if (rt)
-        rt->processEvent (event->id ());
+    if (rt) {
+        int id = event->id ();
+        switch (id) {
+            case event_timer: {
+                TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
+                if (te && te->timer_info) {
+                    if (te->timer_info->event_id == started_timer_id)
+                        rt->started ();
+                    else if (te->timer_info->event_id == stopped_timer_id)
+                        rt->stopped ();
+                    else if (te->timer_info->event_id == start_timer_id)
+                        rt->propagateStart ();
+                    else if (te->timer_info->event_id == dur_timer_id)
+                        rt->propagateStop (true);
+                    else
+                        kdWarning () << "unhandled timer event" << endl;
+                }
+                break;
+            }
+            default:
+                rt->processEvent (id);
+        }
+    }
     return true;
 }
 
@@ -2146,6 +2192,19 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::Animate::getNewRuntime () {
     return new AnimateData (this);
 }
 
+KDE_NO_EXPORT bool SMIL::Animate::handleEvent (EventPtr event) {
+    if (event->id () == event_timer) {
+        TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
+        if (te && te->timer_info && te->timer_info->event_id == anim_timer_id) {
+            static_cast <AnimateData *> (timedRuntime ())->timerTick ();
+            if (te->timer_info)
+                te->interval = true;
+            return true;
+        }
+    }
+    return TimedMrl::handleEvent (event);
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT void SMIL::Param::activate () {
@@ -2283,6 +2342,7 @@ KDE_NO_EXPORT void ImageData::started () {
     if (mt_d->job) {
         d->olddur = durations [duration_time].durval;
         durations [duration_time].durval = duration_data_download;
+        element->document ()->postpone ();
         return;
     }
     //if (durations [duration_time].durval == 0)
@@ -2325,6 +2385,7 @@ KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
     if (timingstate == timings_started &&
             durations [duration_time].durval == duration_data_download) {
         durations [duration_time].durval = d->olddur;
+        element->document ()->proceed ();
         propagateStart ();
     }
 }
@@ -2483,6 +2544,7 @@ KDE_NO_EXPORT void TextData::started () {
     if (mt_d->job) {
         d->olddur = durations [duration_time].durval;
         durations [duration_time].durval = duration_data_download;
+        element->document ()->postpone ();
         return;
     }
     MediaTypeRuntime::started ();
@@ -2501,6 +2563,7 @@ KDE_NO_EXPORT void TextData::slotResult (KIO::Job * job) {
     if (timingstate == timings_started &&
             durations [duration_time].durval == duration_data_download) {
         durations [duration_time].durval = d->olddur;
+        element->document ()->proceed ();
         propagateStart ();
     }
 }

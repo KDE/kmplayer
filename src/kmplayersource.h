@@ -128,6 +128,7 @@ public slots:
     void setAudioLang (int);
     void setSubtitle (int);
 protected:
+    void timerEvent (QTimerEvent *);
     /**
      * PlayListNotify implementation
      */
@@ -140,6 +141,7 @@ protected:
     void moveRect (int x, int y, int w, int h, int x1, int y1);
     void avWidgetSizes (int x, int y, int w, int h, unsigned int * bg_color);
     void bitRates (int & prefered, int & maximal);
+    void setTimeout (int ms);
 
     NodePtr m_document;
     NodePtrW m_current;
@@ -165,6 +167,7 @@ private:
     float m_aspect;
     int m_length;
     int m_position;
+    int m_doc_timer;
 };
 
 } // namespace

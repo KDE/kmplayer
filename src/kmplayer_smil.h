@@ -167,17 +167,15 @@ public:
         unsigned int durval;
         ConnectionPtr connection;
     } durations [(const int) durtime_last];
-protected slots:
     virtual void started ();
     virtual void stopped ();
 private:
     void setDurationItem (DurationTime item, const QString & val);
 protected:
-    void timerEvent (QTimerEvent *);
     TimingState timingstate;
     Fill fill;
-    int start_timer;
-    int dur_timer;
+    TimerInfoPtrW start_timer;
+    TimerInfoPtrW dur_timer;
     int repeat_count;
 };
 
@@ -329,19 +327,16 @@ protected slots:
  * Stores runtime data of animate element
  */
 class AnimateData : public AnimateGroupData {
-    Q_OBJECT
 public:
     AnimateData (NodePtr e);
     KDE_NO_CDTOR_EXPORT ~AnimateData () {}
     virtual void parseParam (const QString & name, const QString & value);
     virtual void reset ();
-protected slots:
     virtual void started ();
     virtual void stopped ();
-protected:
-    void timerEvent (QTimerEvent *);
+    void timerTick();
 private:
-    int anim_timer;
+    TimerInfoPtrW anim_timer;
     enum { acc_none, acc_sum } accumulate;
     enum { add_replace, add_sum } additive;
     int change_by;
@@ -698,6 +693,7 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
     virtual ElementRuntimePtr getNewRuntime ();
     bool isMrl () { return false; }
+    bool handleEvent (KMPlayer::EventPtr event);
 };
 
 class Param : public Element {
