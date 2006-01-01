@@ -1560,7 +1560,12 @@ KDE_NO_EXPORT void URLSource::kioResult (KIO::Job *) {
 
 void URLSource::playCurrent () {
     terminateJob ();
-    Source::playCurrent ();
+    if (!m_current || !m_current->mrl ()->realMrl ()->mrl ()->src.isEmpty ())
+        //FIXME: re-think this double use of playCurrent:
+        //Source::playCurrent->
+        //  process::ready->Node::activate->Source::requestPlayURL->
+        //  Source::playCurrent
+        Source::playCurrent ();
 }
 
 KDE_NO_EXPORT void URLSource::play () {

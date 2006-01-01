@@ -660,8 +660,10 @@ protected:
 class AVMediaType : public MediaType {
 public:
     AVMediaType (NodePtr & d, const QString & t);
+    NodePtr childFromTag (const QString & tag);
     void positionVideoWidget ();
     virtual ElementRuntimePtr getNewRuntime ();
+    virtual void undefer ();
     virtual void activate ();
     virtual void finish ();
     virtual bool handleEvent (EventPtr event);

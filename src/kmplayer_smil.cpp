@@ -1119,11 +1119,14 @@ KDE_NO_EXPORT void AudioVideoData::started () {
                 break;
             }
         //kdDebug () << "AudioVideoData::started " << source_url << endl;
-        PlayListNotify * n = element->document ()->notify_listener;
-        if (n && !source_url.isEmpty ()) {
+        if (!source_url.isEmpty ()) {
             convertNode <SMIL::AVMediaType> (element)->positionVideoWidget ();
-            n->requestPlayURL (element);
-            element->setState (Element::state_began);
+            if (element->state != Element::state_deferred) {
+                PlayListNotify * n = element->document ()->notify_listener;
+                if (n)
+                    n->requestPlayURL (element);
+                element->setState (Element::state_began);
+            }
         }
     }
 }
@@ -1146,15 +1149,26 @@ void AudioVideoData::parseParam (const QString & name, const QString & val) {
     //kdDebug () << "AudioVideoData::parseParam " << name << "=" << val << endl;
     MediaTypeRuntime::parseParam (name, val);
     if (name == QString::fromLatin1 ("src")) {
-        if (timingstate == timings_started && element) {
-            PlayListNotify * n = element->document ()->notify_listener;
-            if (n && !source_url.isEmpty ()) {
-                n->requestPlayURL (element);
-                element->setState (Node::state_began);
+        Mrl * mrl = element ? element->mrl () : 0L;
+        if (mrl) {
+            if (!mrl->resolved || mrl->src != source_url)
+                mrl->resolved = mrl->document ()->notify_listener->resolveURL (element);
+            if (timingstate == timings_started) {
+                if (!mrl->resolved) {
+                    element->setState (Node::state_deferred);
+                    element->document ()->postpone ();
+                } else {
+                    PlayListNotify * n = element->document ()->notify_listener;
+                    if (n && !source_url.isEmpty ()) {
+                        n->requestPlayURL (element);
+                        element->setState (Node::state_began);
+                    }
+                }
             }
         }
     }
 }
+
 //-----------------------------------------------------------------------------
 
 static Element * fromScheduleGroup (NodePtr & d, const QString & tag) {
@@ -2138,6 +2152,18 @@ KDE_NO_EXPORT void SMIL::AVMediaType::activate () {
         kdError () << nodeName () << " playing and current is not Smil" << endl;
         finish ();
     }
+}
+
+KDE_NO_EXPORT NodePtr SMIL::AVMediaType::childFromTag (const QString & tag) {
+    return fromXMLDocumentTag (m_doc, tag);
+}
+
+KDE_NO_EXPORT void SMIL::AVMediaType::undefer () {
+    PlayListNotify * n = document ()->notify_listener;
+    if (n)
+        n->requestPlayURL (this);
+    setState (Element::state_began);
+    document ()->proceed ();
 }
 
 KDE_NO_EXPORT void SMIL::AVMediaType::finish () {
