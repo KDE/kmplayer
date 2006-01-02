@@ -330,7 +330,6 @@ KDE_NO_EXPORT void TimedRuntime::end () {
     //kdDebug () << "TimedRuntime::end " << (element ? element->nodeName() : "-") << endl; 
     if (region_node)
         region_node = 0L;
-    killTimers ();
     reset ();
 }
 
@@ -438,8 +437,8 @@ KDE_NO_EXPORT void TimedRuntime::propagateStart () {
         if (start_timer)
             tm->document ()->cancelTimer (start_timer);
         ASSERT (!start_timer);
-    }
-    start_timer = 0L;
+    } else
+        start_timer = 0L;
     timingstate = timings_started;
     element->document ()->setTimeout (element, 0, started_timer_id);
 }
@@ -979,7 +978,8 @@ namespace KMPlayer {
 }
 
 KDE_NO_CDTOR_EXPORT MediaTypeRuntime::MediaTypeRuntime (NodePtr e)
- : TimedRuntime (e), mt_d (new MediaTypeRuntimePrivate), fit (fit_hidden) {}
+ : TimedRuntime (e), mt_d (new MediaTypeRuntimePrivate),
+   fit (fit_hidden), needs_proceed (false) {}
 
 KDE_NO_CDTOR_EXPORT MediaTypeRuntime::~MediaTypeRuntime () {
     killWGet ();
@@ -1029,6 +1029,7 @@ KDE_NO_EXPORT void MediaTypeRuntime::slotData (KIO::Job*, const QByteArray& qb) 
  */
 KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::end () {
     mt_d->reset ();
+    checkedProceed ();
     TimedRuntime::end ();
 }
 
@@ -1094,6 +1095,22 @@ KDE_NO_EXPORT void MediaTypeRuntime::stopped () {
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
     TimedRuntime::stopped ();
+}
+
+KDE_NO_EXPORT void MediaTypeRuntime::checkedPostpone () {
+    if (!needs_proceed) {
+        if (element)
+            element->document ()->postpone ();
+        needs_proceed = true;
+    }
+}
+
+KDE_NO_EXPORT void MediaTypeRuntime::checkedProceed () {
+    if (needs_proceed) {
+        if (element)
+            element->document ()->proceed ();
+        needs_proceed = false;
+    }
 }
 
 KDE_NO_CDTOR_EXPORT AudioVideoData::AudioVideoData (NodePtr e)
@@ -2258,7 +2275,6 @@ namespace KMPlayer {
             QPixmap * cache_image; // scaled cache
             QMovie * img_movie;
             QString url;
-            int olddur;
             bool have_frame;
     };
 }
@@ -2366,9 +2382,7 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
  */
 KDE_NO_EXPORT void ImageData::started () {
     if (mt_d->job) {
-        d->olddur = durations [duration_time].durval;
-        durations [duration_time].durval = duration_data_download;
-        element->document ()->postpone ();
+        checkedPostpone ();
         return;
     }
     //if (durations [duration_time].durval == 0)
@@ -2408,12 +2422,9 @@ KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
         } else
             delete pix;
     }
-    if (timingstate == timings_started &&
-            durations [duration_time].durval == duration_data_download) {
-        durations [duration_time].durval = d->olddur;
-        element->document ()->proceed ();
+    checkedProceed ();
+    if (timingstate == timings_started)
         propagateStart ();
-    }
 }
 
 KDE_NO_EXPORT void ImageData::movieUpdated (const QRect &) {
@@ -2471,7 +2482,6 @@ namespace KMPlayer {
             edit->setFrameShadow (QFrame::Plain);
         }
         QByteArray data;
-        int olddur;
         QTextCodec * codec;
         QFont font;
         int font_size;
@@ -2568,9 +2578,7 @@ KDE_NO_EXPORT void TextData::paint (QPainter & p) {
  */
 KDE_NO_EXPORT void TextData::started () {
     if (mt_d->job) {
-        d->olddur = durations [duration_time].durval;
-        durations [duration_time].durval = duration_data_download;
-        element->document ()->postpone ();
+        checkedPostpone ();
         return;
     }
     MediaTypeRuntime::started ();
@@ -2586,12 +2594,9 @@ KDE_NO_EXPORT void TextData::slotResult (KIO::Job * job) {
                     (timingstate == timings_stopped && fill == fill_freeze)))
             convertNode <SMIL::RegionBase> (region_node)->repaint ();
     }
-    if (timingstate == timings_started &&
-            durations [duration_time].durval == duration_data_download) {
-        durations [duration_time].durval = d->olddur;
-        element->document ()->proceed ();
+    checkedProceed ();
+    if (timingstate == timings_started)
         propagateStart ();
-    }
 }
 
 #include "kmplayer_smil.moc"

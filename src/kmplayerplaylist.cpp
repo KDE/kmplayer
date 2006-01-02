@@ -646,6 +646,16 @@ bool Document::isMrl () {
     return Mrl::isMrl ();
 }
 
+void Document::reset () {
+    Mrl::reset ();
+    if (timers.first ()) {
+        if (!postponed && notify_listener)
+            notify_listener->setTimeout (-1);
+        timers.clear ();
+    }
+    postponed = 0;
+}
+
 static inline int diffTime (struct timeval & tv1, struct timeval & tv2) {
     //kdDebug () << "diffTime sec:" << ((tv1.tv_sec - tv2.tv_sec) * 1000) << " usec:" << ((tv1.tv_usec - tv2.tv_usec) /1000) << endl;
     return (tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) /1000;

@@ -213,10 +213,6 @@ public:
  */
 class MediaTypeRuntime : public TimedRuntime {
     Q_OBJECT
-protected:
-    MediaTypeRuntime (NodePtr e);
-    bool wget (const KURL & url);
-    void killWGet ();
 public:
     enum Fit { fit_fill, fit_hidden, fit_meet, fit_slice, fit_scroll };
     ~MediaTypeRuntime ();
@@ -227,12 +223,19 @@ public:
     virtual void paint (QPainter &) {}
     CalculatedSizer sizes;
 protected:
-    MediaTypeRuntimePrivate * mt_d;
-    QString source_url;
-    Fit fit;
+    MediaTypeRuntime (NodePtr e);
+    bool wget (const KURL & url);
+    void killWGet ();
+    void checkedPostpone ();
+    void checkedProceed ();
 protected slots:
     virtual void slotResult (KIO::Job*);
     void slotData (KIO::Job*, const QByteArray& qb);
+protected:
+    MediaTypeRuntimePrivate * mt_d;
+    QString source_url;
+    Fit fit;
+    bool needs_proceed;
 };
 
 /**

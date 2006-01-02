@@ -668,12 +668,13 @@ public:
      * so explicitly dispose it (calls clean and set m_doc to 0L)
      * */
     void dispose ();
-    NodePtr childFromTag (const QString & tag);
+    virtual NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "document"; }
     /**
      * Will return false if this document has child nodes
      */
-    bool isMrl ();
+    virtual bool isMrl ();
+    virtual void reset ();
     /**
      * Ask for TimerEvent for Node n in ms milli-seconds.
      * Returns weak ref to TimerInfo ptr, which is an item in the timers list
