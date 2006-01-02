@@ -546,8 +546,13 @@ unsigned long PartBase::position () const {
 }
 
 void PartBase::pause () {
-    if (m_process)
-        m_process->pause ();
+    NodePtr doc = m_source ? m_source->document () : 0L;
+    if (doc) {
+        if (doc->state == Node::state_deferred)
+            doc->undefer ();
+        else
+            doc->defer ();
+    }
 }
 
 void PartBase::back () {
@@ -1030,6 +1035,11 @@ void Source::stateElementChanged (NodePtr elm) {
             m_player->process ()->stop ();
         if (m_player->view ()) // move away the video widget
             QTimer::singleShot (0, m_player->view (), SLOT (updateLayout ()));
+    } else if ((elm->state == Element::state_deferred ||
+                elm->state == Element::state_activated) &&
+            elm == m_document &&
+            m_player->process ()->playing ()) {
+        m_player->process ()->pause ();
     }
     if (elm->expose () && (elm->state == Element::state_activated ||
                            elm->state == Element::state_deactivated))

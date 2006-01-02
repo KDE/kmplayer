@@ -646,6 +646,21 @@ bool Document::isMrl () {
     return Mrl::isMrl ();
 }
 
+void Document::defer () {
+    if (!firstChild () || firstChild ()->state > state_init)
+        postpone ();
+    Mrl::defer ();
+}
+
+void Document::undefer () {
+    if (!postponed || state != state_deferred) {
+        Mrl::undefer ();
+    } else {
+        proceed ();
+        setState (state_activated);
+    }
+}
+
 void Document::reset () {
     Mrl::reset ();
     if (timers.first ()) {

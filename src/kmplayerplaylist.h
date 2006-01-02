@@ -674,6 +674,8 @@ public:
      * Will return false if this document has child nodes
      */
     virtual bool isMrl ();
+    virtual void defer ();
+    virtual void undefer ();
     virtual void reset ();
     /**
      * Ask for TimerEvent for Node n in ms milli-seconds.
