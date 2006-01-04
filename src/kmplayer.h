@@ -111,6 +111,8 @@ private slots:
     void zoom50 ();
     void zoom100 ();
     void zoom150 ();
+    void editMode ();
+    void syncEditMode ();
     void broadcastClicked ();
     void broadcastStarted ();
     void broadcastStopped ();
@@ -136,6 +138,8 @@ private:
     KAction * editVolumeInc;
     KAction * editVolumeDec;
     KAction * toggleView;
+    KAction * viewSyncEditMode;
+    KToggleAction * viewEditMode;
     KToggleAction * viewToolBar;
     KToggleAction * viewStatusBar;
     KToggleAction * viewMenuBar;

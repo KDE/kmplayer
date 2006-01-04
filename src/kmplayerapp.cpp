@@ -141,6 +141,9 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), ac, "view_zoom_50");
     new KAction (i18n ("100%"), QString ("viewmagfit"), KShortcut (), this, SLOT (zoom100 ()), ac, "view_zoom_100");
     new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), ac, "view_zoom_150");
+    viewEditMode = new KToggleAction (i18n ("&Edit mode"), 0, 0, this, SLOT (editMode ()), ac, "edit_mode");
+    viewSyncEditMode = new KAction (i18n ("Sync &with playlist"), QString ("reload"), KShortcut (), this, SLOT (syncEditMode ()), ac, "sync_edit_mode");
+    viewSyncEditMode->setEnabled (false);
     new KAction (i18n ("Show Popup Menu"), KShortcut (), m_view->controlPanel (), SLOT (showPopupMenu ()), ac, "view_show_popup_menu");
     new KAction (i18n ("Show Language Menu"), KShortcut (Qt::Key_L), m_view->controlPanel (), SLOT (showLanguageMenu ()), ac, "view_show_lang_menu");
     viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), ac, "view_keep_ratio");
@@ -516,6 +519,25 @@ KDE_NO_EXPORT void KMPlayerApp::zoom100 () {
 
 KDE_NO_EXPORT void KMPlayerApp::zoom150 () {
     resizePlayer (150);
+}
+
+KDE_NO_EXPORT void KMPlayerApp::editMode () {
+    m_view->docArea ()->hide ();
+    m_view->setEditMode (!m_view->editMode ());
+    m_view->docArea ()->show ();
+    viewEditMode->setChecked (m_view->editMode ());
+    viewSyncEditMode->setEnabled (m_view->editMode ());
+}
+
+KDE_NO_EXPORT void KMPlayerApp::syncEditMode () {
+    KMPlayer::ListViewItem * si = static_cast <KMPlayer::ListViewItem *> (m_view->playList ()->selectedItem ());
+    if (si && si->m_elm) {
+        si->m_elm->clearChildren ();
+        QString txt = m_view->infoPanel ()->text ();
+        QTextStream ts (txt, IO_ReadOnly);
+        KMPlayer::readXML (si->m_elm, ts, QString ());
+        m_view->playList ()->updateTree (si->m_elm->document (), si->m_elm);
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerApp::showBroadcastConfig () {

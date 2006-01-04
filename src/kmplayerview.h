@@ -85,6 +85,7 @@ public:
     PlayListView (QWidget * parent, View * view, KActionCollection * ac);
     ~PlayListView ();
     void selectItem (const QString & txt);
+    void showAllNodes (bool show=true);
     void setActiveForegroundColor (const QColor & c) { m_active_color = c; }
     const QColor & activeColor () const { return m_active_color; }
 signals:
@@ -249,6 +250,7 @@ public:
     KDE_NO_EXPORT StatusBarMode statusBarMode () const { return m_statusbar_mode; }
     void delayedShowButtons (bool show);
     bool isFullScreen () const;
+    KDE_NO_EXPORT bool editMode () const { return m_edit_mode; }
     bool setPicture (const QString & path);
     KDE_NO_EXPORT QPixmap * image () const { return m_image; }
     KDE_NO_EXPORT bool videoStarted () const { return m_playing; }
@@ -256,6 +258,7 @@ public:
     void setViewOnly ();
     void setInfoPanelOnly ();
     void setPlaylistOnly ();
+    void setEditMode (bool enable=true);
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
     KDE_NO_EXPORT void emitPictureClicked () { emit pictureClicked (); }
@@ -318,6 +321,7 @@ private:
     bool m_tmplog_needs_eol;
     bool m_revert_fullscreen;
     bool m_no_info;
+    bool m_edit_mode;
 };
 
 /*

@@ -170,7 +170,7 @@ void PartBase::init (KActionCollection * action_collection) {
     connect (m_view, SIGNAL (urlDropped (const KURL::List &)), this, SLOT (openURL (const KURL::List &)));
     connectPlaylist (m_view->playList ());
     connectInfoPanel (m_view->infoPanel ());
-    new KAction (i18n ("Edit playlist item"), 0, 0, m_view->playList (), SLOT (editCurrent ()), action_collection, "edit_playlist_item");
+    new KAction (i18n ("Edit playlist &item"), 0, 0, m_view->playList (), SLOT (editCurrent ()), action_collection, "edit_playlist_item");
 }
 
 void PartBase::connectPanel (ControlPanel * panel) {
@@ -580,13 +580,15 @@ void PartBase::playListItemSelected (QListViewItem * item) {
     if (m_in_update_tree) return;
     ListViewItem * vi = static_cast <ListViewItem *> (item);
     if (vi->m_elm)
-        emit infoUpdated (vi->m_elm->innerText ());
+        emit infoUpdated (m_view->editMode () ?
+                vi->m_elm->innerXML () : vi->m_elm->innerText ());
     else if (!vi->m_attr)
         updateTree (); // items already deleted
 }
 
 void PartBase::playListItemExecuted (QListViewItem * item) {
     if (m_in_update_tree) return;
+    if (m_view->editMode ()) return;
     ListViewItem * vi = static_cast <ListViewItem *> (item);
     if (vi->m_elm) {
         NodePtr mrl = depthFirstFindMrl (vi->m_elm);

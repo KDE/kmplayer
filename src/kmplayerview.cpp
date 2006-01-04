@@ -646,6 +646,11 @@ void PlayListView::toggleShowAllNodes () {
     }
 }
 
+KDE_NO_EXPORT void PlayListView::showAllNodes (bool show) {
+    if (show != m_show_all_nodes)
+        toggleShowAllNodes ();
+}
+
 KDE_NO_EXPORT bool PlayListView::acceptDrag (QDropEvent * de) const {
     return isDragValid (de);
 }
@@ -917,7 +922,8 @@ KDE_NO_CDTOR_EXPORT View::View (QWidget *parent, const char *name)
     m_inVolumeUpdate (false),
     m_tmplog_needs_eol (false),
     m_revert_fullscreen (false),
-    m_no_info (false)
+    m_no_info (false),
+    m_edit_mode (false)
 {
     setEraseColor (QColor (0, 0, 255));
 }
@@ -1019,11 +1025,11 @@ KDE_NO_CDTOR_EXPORT View::~View () {
 void View::setInfoMessage (const QString & msg) {
     bool ismain = m_dockarea->getMainDockWidget () == m_dock_infopanel;
     if (msg.isEmpty ()) {
-        if (!ismain)
+        if (!ismain && !m_edit_mode)
             m_dock_infopanel->undock ();
        m_infopanel->clear ();
     } else if (ismain || !m_no_info) {
-        if (m_dock_infopanel->mayBeShow ())
+        if (!m_edit_mode && m_dock_infopanel->mayBeShow ())
           m_dock_infopanel->manualDock(m_dock_video,KDockWidget::DockBottom,80);
         m_infopanel->setText (msg);
     }
@@ -1085,6 +1091,14 @@ void View::setPlaylistOnly () {
     m_dock_video->undock ();
     m_dock_playlist->setEnableDocking (KDockWidget::DockNone);
     m_dockarea->setMainDockWidget (m_dock_playlist);
+}
+
+void View::setEditMode (bool enable) {
+    m_edit_mode = enable;
+    m_infopanel->setReadOnly (!m_edit_mode);
+    if (m_edit_mode && m_dock_infopanel->mayBeShow ())
+        m_dock_infopanel->manualDock(m_dock_video,KDockWidget::DockBottom,50);
+    m_playlist->showAllNodes (m_edit_mode);
 }
 
 bool View::setPicture (const QString & path) {

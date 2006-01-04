@@ -1,5 +1,5 @@
 <!DOCTYPE kpartgui>
-<kpartgui name="kmplayer" version="20">
+<kpartgui name="kmplayer" version="22">
 <MenuBar>
   <Menu name="file"><text>&amp;File</text>
     <Action name="open"/>
@@ -43,6 +43,9 @@
     <Separator />
     <Action name="find"/>
     <Action name="next"/>
+    <Separator />
+    <Action name="edit_mode"/>
+    <Action name="sync_edit_mode"/>
     <Action name="edit_playlist_item"/>
     <Separator />
     <Action name="view_arts_control"/>
@@ -76,6 +79,7 @@
   <Separator/>
   <Action name="view_video"/>
   <Action name="view_playlist"/>
+  <Action name="sync_edit_mode"/>
   <Separator/>
   <Action name="configure"/>
   <Separator/>
