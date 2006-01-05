@@ -1,3 +1,11 @@
+Changes since version 0.9.1a
+- Option added to disable color setting on movie start
+- Simple playlist edit mode, edit (sub)tree in raw XML
+- SMIL animations can be paused now
+- Support for uimode/nolabels/nocontrols/showdisplay/showcontrols/showstatusbar
+  attributes for WMP's embedded object emulation
+- Autohide controlpanel w/ 'Click to play' and support for TARGET attribute
+  for QT embedded object emulation
 Changes since version 0.9.1
 - Fix that switching channels w/ VDR sometimes stopped the backend
 - Fix saving playlist looses cdata sections (if any) and don't normalize them
