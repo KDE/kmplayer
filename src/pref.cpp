@@ -219,13 +219,15 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
     vbox->addWidget (bbox);
     vbox->addWidget (sizesChoice);
 
-    QGroupBox *playbox =new QGroupBox(3, Qt::Vertical,i18n("Playing"),this);
+    QGroupBox *playbox =new QGroupBox(4, Qt::Vertical,i18n("Playing"),this);
     loop = new QCheckBox (i18n("Loop"), playbox);
     QWhatsThis::add(loop, i18n("Makes current movie loop"));
     framedrop = new QCheckBox (i18n ("Allow framedrops"), playbox);
     QWhatsThis::add (framedrop, i18n ("Allow dropping frames for better audio and video synchronization"));
     adjustvolume = new QCheckBox(i18n("Auto set volume on start"), playbox);
     QWhatsThis::add (adjustvolume, i18n ("When a new source is selected, the volume will be set according the volume control"));
+    adjustcolors = new QCheckBox(i18n("Auto set colors on start"), playbox);
+    QWhatsThis::add (adjustcolors, i18n ("When a movie start, the colors will be set according the sliders for colors"));
 
     QGroupBox * gbox =new QGroupBox (1, Qt::Vertical, i18n("Control Panel"), this);
     bbox =new QWidget (gbox);

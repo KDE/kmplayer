@@ -513,18 +513,19 @@ bool MPlayer::run (const char * args, const char * pipe) {
     fprintf (stderr, " %s", m_source->filterOptions ().ascii ());
     *m_process << " " << m_source->filterOptions ();
 
-    fprintf (stderr, " -contrast %d", m_settings->contrast);
-    *m_process << " -contrast " << QString::number (m_settings->contrast);
+    if (m_settings->autoadjustcolors) {
+        fprintf (stderr, " -contrast %d", m_settings->contrast);
+        *m_process << " -contrast " << QString::number (m_settings->contrast);
 
-    fprintf (stderr, " -brightness %d", m_settings->brightness);
-    *m_process << " -brightness " << QString::number(m_settings->brightness);
+        fprintf (stderr, " -brightness %d", m_settings->brightness);
+        *m_process << " -brightness " <<QString::number(m_settings->brightness);
 
-    fprintf (stderr, " -hue %d", m_settings->hue);
-    *m_process << " -hue " << QString::number (m_settings->hue);
+        fprintf (stderr, " -hue %d", m_settings->hue);
+        *m_process << " -hue " << QString::number (m_settings->hue);
 
-    fprintf (stderr, " -saturation %d", m_settings->saturation);
-    *m_process << " -saturation " << QString::number(m_settings->saturation);
-
+        fprintf (stderr, " -saturation %d", m_settings->saturation);
+        *m_process << " -saturation " <<QString::number(m_settings->saturation);
+    }
     if (aid > -1) {
         fprintf (stderr, " -aid %d", aid);
         *m_process << " -aid " << QString::number (aid);
@@ -1145,10 +1146,12 @@ void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
             return;
         }
     }
-    saturation (m_settings->saturation, true);
-    hue (m_settings->hue, true);
-    brightness (m_settings->brightness, true);
-    contrast (m_settings->contrast, true);
+    if (m_settings->autoadjustcolors) {
+        saturation (m_settings->saturation, true);
+        hue (m_settings->hue, true);
+        brightness (m_settings->brightness, true);
+        contrast (m_settings->contrast, true);
+    }
     setState (Ready);
 }
 

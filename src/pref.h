@@ -109,6 +109,7 @@ public:
     QCheckBox *showBroadcastButton;
     QCheckBox *framedrop;
     QCheckBox *adjustvolume;
+    QCheckBox *adjustcolors;
 
     QSpinBox *seekTime;
 };

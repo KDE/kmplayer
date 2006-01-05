@@ -125,6 +125,7 @@ public:
     bool loop : 1;
     bool framedrop : 1;
     bool autoadjustvolume : 1;
+    bool autoadjustcolors : 1;
     bool showcnfbutton : 1;
     bool showplaylistbutton : 1;
     bool showrecordbutton : 1;
