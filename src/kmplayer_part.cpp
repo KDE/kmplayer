@@ -1113,7 +1113,7 @@ KDE_NO_EXPORT void KMPlayerHRefSource::deactivate () {
 }
 
 KDE_NO_EXPORT QString KMPlayerHRefSource::prettyName () {
-    return QString (i18n ("WEB"));
+    return i18n ("WEB");
 }
 
 #include "kmplayer_part.moc"

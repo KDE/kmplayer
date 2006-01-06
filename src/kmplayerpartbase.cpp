@@ -1346,7 +1346,7 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
 }
 
 QString Source::prettyName () {
-    return QString (i18n ("Unknown"));
+    return i18n ("Unknown");
 }
 
 //-----------------------------------------------------------------------------
@@ -1403,7 +1403,7 @@ KDE_NO_EXPORT void URLSource::deactivate () {
 
 KDE_NO_EXPORT QString URLSource::prettyName () {
     if (m_url.isEmpty ())
-        return QString (i18n ("URL"));
+        return i18n ("URL");
     if (m_url.url ().length () > 50) {
         QString newurl = m_url.protocol () + QString ("://");
         if (m_url.hasHost ())
@@ -1424,9 +1424,9 @@ KDE_NO_EXPORT QString URLSource::prettyName () {
         if (modified)
             dir += QString (".../");
         newurl += dir + file;
-        return QString (i18n ("URL - %1").arg (newurl));
+        return i18n ("URL - %1").arg (newurl);
     }
-    return QString (i18n ("URL - %1").arg (m_url.prettyURL ()));
+    return i18n ("URL - %1").arg (m_url.prettyURL ());
 }
 
 static bool isPlayListMime (const QString & mime) {

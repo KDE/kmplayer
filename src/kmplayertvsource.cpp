@@ -403,7 +403,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::buildArguments () {
         m_frequency = 0;
     if (!m_videonorm.isEmpty ())
         command += QString (":norm=%1").arg (m_videonorm);
-    m_app->setCaption (QString (i18n ("TV: ")) + (channel ? channel->mrl ()->pretty_name : input->mrl ()->pretty_name), false);
+    m_app->setCaption (i18n ("TV: ") + (channel ? channel->mrl ()->pretty_name : input->mrl ()->pretty_name), false);
     setDimensions (m_cur_tvdevice, tvdevice->getAttribute ("width").toInt (), tvdevice->getAttribute ("height").toInt ());
     m_options.sprintf ("-tv noaudio:driver=%s:%s:width=%d:height=%d -slave -nocache -quiet", tvdriver.ascii (), command.ascii (), width (), height ());
     if (m_player->settings ()->mplayerpost090)

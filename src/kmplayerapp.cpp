@@ -1197,7 +1197,7 @@ KDE_NO_EXPORT void KMPlayerDVDSource::chapterMenuClicked (int id) {
 }
 
 KDE_NO_EXPORT QString KMPlayerDVDSource::prettyName () {
-    return QString (i18n ("DVD"));
+    return i18n ("DVD");
 }
 
 static const char * strPlayDVD = "Immediately Play DVD";
@@ -1290,7 +1290,7 @@ KDE_NO_EXPORT void KMPlayerDVDNavSource::navMenuClicked (int id) {
 }
 
 KDE_NO_EXPORT QString KMPlayerDVDNavSource::prettyName () {
-    return QString (i18n ("DVD"));
+    return i18n ("DVD");
 }
 
 //-----------------------------------------------------------------------------
@@ -1374,7 +1374,7 @@ KDE_NO_EXPORT void KMPlayerVCDSource::buildArguments () {
 }
 
 KDE_NO_EXPORT QString KMPlayerVCDSource::prettyName () {
-    return QString (i18n ("VCD"));
+    return i18n ("VCD");
 }
 
 static const char * strPlayVCD = "Immediately Play VCD";
