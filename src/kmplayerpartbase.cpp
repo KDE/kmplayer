@@ -1292,7 +1292,7 @@ static const QString statemap [] = {
 };
 
 void Source::stateChange(Process *p, Process::State olds, Process::State news) {
-    if (!p || !p->viewer ()) return;
+    if (!p || !p->viewer () || !p->mrl ()) return;
     if (dynamic_cast <Recorder *> (p)) {
         kdDebug () << "recordState " << statemap[olds] << " -> " << statemap[news] << endl;
         m_player->updateStatus (i18n ("Recorder %1 %2").arg (p->name ()).arg (statemap[news]));
