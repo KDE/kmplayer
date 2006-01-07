@@ -253,13 +253,13 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
             } else if (name == QString::fromLatin1("showcontrols")) {
                 bool on = value.toInt () || !value.lower ().compare ("true");
                 if (on)
-                    m_features |= Feat_Controls;
+                    m_features |= (Feat_Viewer | Feat_Controls);
                 else
                     turned_off_features |= Feat_Controls;
             } else if (name == QString::fromLatin1("showstatusbar")) {
                 bool on = value.toInt () || !value.lower ().compare ("true");
                 if (on)
-                    m_features |= Feat_StatusBar;
+                    m_features |= (Feat_Viewer | Feat_StatusBar);
                 else
                     turned_off_features |= Feat_StatusBar;
             // else showcaptioning/showgotobar/showpositioncontrols/showtracker
