@@ -176,11 +176,12 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                 urlsource->setMime (value);
             } else if (name == QString::fromLatin1("controls")) {
                 //http://service.real.com/help/library/guides/production8/realpgd.htm?src=noref,rnhmpg_080301,rnhmtn,nosrc
+                //http://service.real.com/help/library/guides/production8/htmfiles/control.htm
                 QString val_lower (value.lower ());
                 if (val_lower == QString::fromLatin1("imagewindow")) {
                     m_features |= Feat_Viewer;
                 } else if (val_lower == QString::fromLatin1("all")) {
-                    m_features = Feat_All;
+                    m_features = (Feat_Controls | Feat_StatusBar);
                 } else if (val_lower == QString::fromLatin1("tacctrl")) {
                     m_features |= Feat_Label;
                 } else if (val_lower == QString::fromLatin1("controlpanel")) {
