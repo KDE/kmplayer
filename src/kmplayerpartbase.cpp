@@ -1292,7 +1292,7 @@ static const QString statemap [] = {
 };
 
 void Source::stateChange(Process *p, Process::State olds, Process::State news) {
-    if (!p || !p->viewer () || !p->mrl ()) return;
+    if (!p || !p->viewer ()) return;
     if (dynamic_cast <Recorder *> (p)) {
         kdDebug () << "recordState " << statemap[olds] << " -> " << statemap[news] << endl;
         m_player->updateStatus (i18n ("Recorder %1 %2").arg (p->name ()).arg (statemap[news]));
@@ -1317,11 +1317,13 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
             emit stopPlaying ();
         } else if (news == Process::Ready) {
             if (olds > Process::Ready) {
-                if (p->mrl ()->active ()) // if cause is eof
-                    p->mrl ()->finish (); // set node to finished
-                else if (!m_back_request &&
-                        p->mrl ()->state == Element::state_deferred)
-                    p->mrl ()->undefer ();
+                if (p->mrl ()) { // p->mrl is weak, check it
+                    if (p->mrl ()->active ()) // if cause is eof
+                        p->mrl ()->finish (); // set node to finished
+                    else if (!m_back_request &&
+                            p->mrl ()->state == Element::state_deferred)
+                        p->mrl ()->undefer ();
+                }
                 if (m_back_request && m_back_request->isMrl ()) { // jump in pl
                     m_current = m_back_request;
                     if (m_current->id > SMIL::id_node_first &&
