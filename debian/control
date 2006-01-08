@@ -14,7 +14,7 @@ Description: KMPlayer metapackage
 Package: kmplayer-lib
 Architecture: any
 Section: sound
-Depends: kdelibs4 (>= 4:3.1.0-1) | kdelibs4c2a (>= 4:3.4.0-1), libxine1 | libxine1c2, libgstreamer0.8-0, libgstreamer-plugins0.8-0
+Depends: ${shlibs:Depends}
 Description: KMPlayer shared library
 
 Package: kmplayer-app
