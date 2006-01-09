@@ -720,36 +720,39 @@ void Document::cancelTimer (TimerInfoPtr tinfo) {
 }
 
 bool Document::timer () {
+    struct timeval now = { 0, 0 }; // unset
     TimerInfoPtrW tinfo = timers.first (); // keep use_count on 1
     if (postponed || !tinfo || !tinfo->node) {
         kdError () << "spurious timer event" << endl;
-        if (notify_listener)
-            notify_listener->setTimeout (-1); // kill timer
-        return false;
-    }
-    struct timeval now = { 0, 0 }; // unset
-    TimerEvent * te = new TimerEvent (tinfo);
-    EventPtr e (te);
-    intimer = true;
-    //kdDebug () << "timer " << cur_timeout << endl;
-    tinfo->node->handleEvent (e);
-    if (tinfo) { // may be removed from timers and become 0
-        if (te->interval) {
-            TimerInfoPtr tinfo2 (tinfo); // prevent destruction
-            timers.remove (tinfo);
-            gettimeofday (&now, 0L);
-            tinfo2->timeout = now;
-            addTime (tinfo2->timeout, tinfo2->milli_sec);
-            TimerInfoPtr ti = timers.first ();
-            int pos = 0;
-            for (; ti && diffTime (tinfo2->timeout, ti->timeout) >= 0; ti = ti->nextSibling ()) {
-                pos++;
-                //kdDebug () << "timer diff:" <<diffTime (tinfo2->timeout, ti->timeout) << endl;
-            }
-            //kdDebug () << "re-setTimeout " << tinfo2->milli_sec<< " at:" << pos << " diff:" << diffTime(tinfo->timeout, now) << endl;
-            timers.insertBefore (tinfo2, ti);
-        } else
-            timers.remove (tinfo);
+        if (!postponed) { // some part of document has gone
+            for (; tinfo && !tinfo->node; tinfo = timers.first ())
+                timers.remove (tinfo);
+        }
+    } else {
+        TimerEvent * te = new TimerEvent (tinfo);
+        EventPtr e (te);
+        intimer = true;
+        //kdDebug () << "timer " << cur_timeout << endl;
+        tinfo->node->handleEvent (e);
+        if (tinfo) { // may be removed from timers and become 0
+            if (te->interval) {
+                TimerInfoPtr tinfo2 (tinfo); // prevent destruction
+                timers.remove (tinfo);
+                gettimeofday (&now, 0L);
+                tinfo2->timeout = now;
+                addTime (tinfo2->timeout, tinfo2->milli_sec);
+                TimerInfoPtr ti = timers.first ();
+                int pos = 0;
+                for (; ti && diffTime (tinfo2->timeout, ti->timeout) >= 0; ti = ti->nextSibling ()) {
+                    pos++;
+                    //kdDebug () << "timer diff:" <<diffTime (tinfo2->timeout, ti->timeout) << endl;
+                }
+                //kdDebug () << "re-setTimeout " << tinfo2->milli_sec<< " at:" << pos << " diff:" << diffTime(tinfo->timeout, now) << endl;
+                timers.insertBefore (tinfo2, ti);
+            } else
+                timers.remove (tinfo);
+        }
+        intimer = false;
     }
     if (notify_listener) {// set new timeout to prevent interval timer events
         tinfo = timers.first ();
@@ -770,7 +773,6 @@ bool Document::timer () {
         }
             //kdDebug () << "timer set new timeout now:" << now.tv_sec << "." << now.tv_usec << " "  << tinfo->timeout.tv_sec << "." << tinfo->timeout.tv_usec << " diff:" << diffTime(tinfo->timeout, now) << endl;
     }
-    intimer = false;
     return false;
 }
 
