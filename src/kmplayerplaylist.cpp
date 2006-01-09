@@ -723,6 +723,8 @@ bool Document::timer () {
     TimerInfoPtrW tinfo = timers.first (); // keep use_count on 1
     if (postponed || !tinfo || !tinfo->node) {
         kdError () << "spurious timer event" << endl;
+        if (notify_listener)
+            notify_listener->setTimeout (-1); // kill timer
         return false;
     }
     struct timeval now = { 0, 0 }; // unset
