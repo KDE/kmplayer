@@ -65,7 +65,6 @@ public:
     PartBase * player () { return m_player; }
     void reset ();
     QString currentMrl ();
-    QString mime () const;
     KDE_NO_EXPORT const QString & audioDevice () const { return m_audiodevice; }
     KDE_NO_EXPORT const QString & videoDevice () const { return m_videodevice; }
     KDE_NO_EXPORT const QString & videoNorm () const { return m_videonorm; }
@@ -76,14 +75,13 @@ public:
     KDE_NO_EXPORT const QString & options () const { return m_options; }
     KDE_NO_EXPORT const QString & recordCmd () const { return m_recordcmd; }
     KDE_NO_EXPORT NodePtr current () const { return m_current; }
-    KDE_NO_EXPORT NodePtr document () const { return m_document; }
+    virtual NodePtr document ();
     virtual QString filterOptions ();
 
     void setURL (const KURL & url);
     void insertURL (NodePtr mrl, const QString & url);
     KDE_NO_EXPORT void setSubURL (const KURL & url) { m_sub_url = url; }
     void setLanguages (const QStringList & alang, const QStringList & slang);
-    void setMime (const QString & m);
     KDE_NO_EXPORT void setWidth (int w) { m_width = w; }
     KDE_NO_EXPORT void setHeight (int h) { m_height = h; }
     virtual void setDimensions (NodePtr, int w, int h);

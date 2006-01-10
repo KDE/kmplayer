@@ -173,7 +173,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
             } else if (name == QString::fromLatin1("height")) {
                 m_noresize = true;
             } else if (name == QString::fromLatin1("type")) {
-                urlsource->setMime (value);
+                urlsource->document ()->mrl ()->mimetype = value;
             } else if (name == QString::fromLatin1("controls")) {
                 //http://service.real.com/help/library/guides/production8/realpgd.htm?src=noref,rnhmpg_080301,rnhmtn,nosrc
                 //http://service.real.com/help/library/guides/production8/htmfiles/control.htm
@@ -454,7 +454,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
     if (!m_view || !url.isValid ()) return false;
     KParts::URLArgs args = m_browserextension->urlArgs();
     if (!args.serviceType.isEmpty ())
-        urlsource->setMime (args.serviceType);
+        urlsource->document ()->mrl ()->mimetype = args.serviceType;
     if (m_havehref && m_settings->allowhref) {
         hrefsource->setURL (url);
         setSource (hrefsource);
@@ -1058,7 +1058,8 @@ KDE_NO_EXPORT void KMPlayerHRefSource::play () {
     Source * src = m_player->sources () ["urlsource"];
     QString target = src->document ()->document ()->getAttribute ("target");
     if (!target.isEmpty ()) {
-        static_cast <KMPlayerPart *> (m_player)->browserextension ()->requestOpenURL (src->url (), target, src->mime ());
+        KMPlayer::Mrl * mrl = src->document ()->mrl ();
+        static_cast <KMPlayerPart *> (m_player)->browserextension ()->requestOpenURL (mrl->src, target, mrl->mimetype);
     } else
         m_player->setSource (m_player->sources () ["urlsource"]);
 }

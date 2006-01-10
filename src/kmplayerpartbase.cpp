@@ -1165,24 +1165,10 @@ void Source::jump (NodePtr e) {
         m_player->updateTree ();
 }
 
-QString Source::mime () const {
-    return m_current ? m_current->mrl ()->mimetype : (m_document ? m_document->mrl ()->mimetype : QString ());
-}
-
-void Source::setMime (const QString & m) {
-    QString mimestr (m);
-    int plugin_pos = mimestr.find ("-plugin");
-    if (plugin_pos > 0)
-        mimestr.truncate (plugin_pos);
-    kdDebug () << "setMime " << mimestr << endl;
-    if (m_current)
-        m_current->mrl ()->mimetype = mimestr;
-    else {
-        if (m_document)
-            m_document->document ()->dispose ();
+NodePtr Source::document () {
+    if (!m_document)
         m_document = new Document (QString (), this);
-        m_document->mrl ()->mimetype = mimestr;
-    }
+    return m_document;
 }
 
 bool Source::processOutput (const QString &) {
@@ -1432,7 +1418,11 @@ KDE_NO_EXPORT QString URLSource::prettyName () {
 }
 
 static bool isPlayListMime (const QString & mime) {
-    const char * mimestr = mime.ascii ();
+    QString m (mime);
+    int plugin_pos = m.find ("-plugin");
+    if (plugin_pos > 0)
+        m.truncate (plugin_pos);
+    const char * mimestr = m.ascii ();
     return mimestr && (!strcmp (mimestr, "audio/mpegurl") ||
             !strcmp (mimestr, "audio/x-mpegurl") ||
             !strncmp (mimestr, "video/x-ms", 10) ||
@@ -1465,7 +1455,7 @@ KDE_NO_EXPORT void URLSource::read (NodePtr root, QTextStream & textstream) {
         NodePtr cur_elm = root;
         if (cur_elm->isMrl ())
             cur_elm = cur_elm->mrl ()->realMrl ();
-        if (mime () == QString ("audio/x-scpls")) {
+        if (cur_elm->mrl ()->mimetype == QString ("audio/x-scpls")) {
             bool groupfound = false;
             int nr = -1;
             struct Entry {
@@ -1555,16 +1545,17 @@ KDE_NO_EXPORT void URLSource::kioData (KIO::Job *, const QByteArray & d) {
 }
 
 KDE_NO_EXPORT void URLSource::kioMimetype (KIO::Job * job, const QString & mimestr) {
-    setMime (mimestr);
-    if (job && !isPlayListMime (mime ())) // Note: -plugin might be stripped
+    if (job && (!m_resolving_mrl || !isPlayListMime (mimestr)))
         job->kill (false);
+    if (m_resolving_mrl)
+        m_resolving_mrl->mrl ()->mimetype = mimestr;
 }
 
 KDE_NO_EXPORT void URLSource::kioResult (KIO::Job *) {
     m_job = 0L; // KIO::Job::kill deletes itself
     QTextStream textstream (m_data, IO_ReadOnly);
     if (m_resolving_mrl) {
-        if (isPlayListMime (mime ()))
+        if (isPlayListMime (m_resolving_mrl->mrl ()->mimetype))
             read (m_resolving_mrl, textstream);
         m_resolving_mrl->mrl ()->resolved = true;
         m_resolving_mrl->undefer ();
@@ -1629,8 +1620,8 @@ KDE_NO_EXPORT bool URLSource::resolveURL (NodePtr m) {
         if (mimestr.isEmpty ()) {
             KMimeType::Ptr mimeptr = KMimeType::findByURL (url);
             if (mimeptr) {
-                setMime (mimeptr->name ());
-                maybe_playlist = isPlayListMime (mime ()); // get new mime
+                mrl->mimetype = mimeptr->name ();
+                maybe_playlist = isPlayListMime (mrl->mimetype); // get new mime
             }
         }
         if (maybe_playlist && file.size () < 2000000 && file.open (IO_ReadOnly)) {
