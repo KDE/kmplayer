@@ -1038,9 +1038,8 @@ void Source::stateElementChanged (NodePtr elm) {
         if (m_player->view ()) // move away the video widget
             QTimer::singleShot (0, m_player->view (), SLOT (updateLayout ()));
     } else if ((elm->state == Element::state_deferred ||
-                elm->state == Element::state_activated) &&
-            elm == m_document &&
-            m_player->process ()->playing ()) {
+                elm->state == Element::state_began) &&
+            elm == m_player->process ()->mrl ()) {
         m_player->process ()->pause ();
     }
     if (elm->expose () && (elm->state == Element::state_activated ||

@@ -293,6 +293,7 @@ extern const unsigned int event_pointer_clicked;
 extern const unsigned int event_pointer_moved;
 extern const unsigned int event_paint;
 extern const unsigned int event_sized;
+extern const unsigned int event_postponed;
 
 // convenient types
 typedef Item<Node>::SharedType NodePtr;
@@ -657,6 +658,15 @@ public:
 };
 
 /**
+ * Event signaling postponed or proceeded
+ */
+class PostponedEvent : public Event {
+public:
+    PostponedEvent (bool postponed);
+    bool is_postponed; // postponed or proceeded
+};
+
+/**
  * The root of the DOM tree
  */
 class KMPLAYER_EXPORT Document : public Mrl {
@@ -693,6 +703,10 @@ public:
      * Returns true if to repeat this same timeout FIXME.
      */
     bool timer ();
+    /**
+     * Document has list of postponed listeners, eg. for running (gif)movies
+     */
+    virtual NodeRefListPtr listeners (unsigned int event_id);
 
     NodePtrW rootLayout;
     List <TimerInfo> timers; //FIXME: make as connections
@@ -700,6 +714,7 @@ public:
     PlayListNotify * notify_listener;
     unsigned int m_tree_version;
 private:
+    NodeRefListPtr m_PostponedListeners;
     int postponed;
     int cur_timeout;
     bool intimer;

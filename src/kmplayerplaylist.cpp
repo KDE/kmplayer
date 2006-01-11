@@ -603,7 +603,9 @@ namespace KMPlayer {
 Document::Document (const QString & s, PlayListNotify * n)
  : Mrl (dummy_element, id_node_document),
    notify_listener (n),
-   m_tree_version (0), postponed (0), cur_timeout (-1), intimer (false) {
+   m_tree_version (0),
+   m_PostponedListeners (new NodeRefList),
+   postponed (0), cur_timeout (-1), intimer (false) {
     m_doc = m_self; // just-in-time setting fragile m_self to m_doc
     src = s;
     editable = false;
@@ -784,6 +786,8 @@ void Document::postpone () {
         cur_timeout = -1;
         notify_listener->setTimeout (-1);
     }
+    if (postponed == 1)
+        propagateEvent (new PostponedEvent (true));
 }
 
 void Document::proceed () {
@@ -791,20 +795,29 @@ void Document::proceed () {
     if (--postponed < 0) {
         kdError () << "spurious proceed" << endl;
         postponed = 0;
-    } else if (!postponed && timers.first () && notify_listener) {
-        struct timeval now;
-        gettimeofday (&now, 0L);
-        int diff = diffTime (now, postponed_time);
-        if (diff > 0) {
-            for (TimerInfoPtr t = timers.first (); t; t = t->nextSibling ())
-                addTime (t->timeout, diff);
+    } else if (!postponed) {
+        if (timers.first () && notify_listener) {
+            struct timeval now;
+            gettimeofday (&now, 0L);
+            int diff = diffTime (now, postponed_time);
+            if (diff > 0) {
+                for (TimerInfoPtr t = timers.first (); t; t = t->nextSibling ())
+                    addTime (t->timeout, diff);
+            }
+            if (!intimer) { // eg. postpone() + proceed() in same timer()
+                diff = diffTime (timers.first ()->timeout, now);
+                cur_timeout = diff < 0 ? 0 : diff;
+                notify_listener->setTimeout (cur_timeout);
+            }
         }
-        if (!intimer) { // eg. postpone() + proceed() in same timer()
-            diff = diffTime (timers.first ()->timeout, now);
-            cur_timeout = diff < 0 ? 0 : diff;
-            notify_listener->setTimeout (cur_timeout);
-        }
+        propagateEvent (new PostponedEvent (false));
     }
+}
+
+NodeRefListPtr Document::listeners (unsigned int id) {
+    if (id == event_postponed)
+        return m_PostponedListeners;
+    return Mrl::listeners (id);
 }
 
 //-----------------------------------------------------------------------------

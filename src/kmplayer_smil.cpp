@@ -60,6 +60,7 @@ const unsigned int event_sized = (unsigned int) -10;
 const unsigned int event_pointer_clicked = event_activated;
 const unsigned int event_pointer_moved = (unsigned int) -11;
 static const unsigned int event_timer = (unsigned int) -12;
+const unsigned int event_postponed = (unsigned int) -13;
 
 static const unsigned int started_timer_id = (unsigned int) 1;
 static const unsigned int stopped_timer_id = (unsigned int) 2;
@@ -220,6 +221,9 @@ PointerEvent::PointerEvent (unsigned int event_id, int _x, int _y)
 
 TimerEvent::TimerEvent (TimerInfoPtr tinfo)
  : Event (event_timer), timer_info (tinfo), interval (false) {}
+
+PostponedEvent::PostponedEvent (bool postponed)
+ : Event (event_postponed), is_postponed (postponed) {}
 
 //-----------------------------------------------------------------------------
 
@@ -1113,6 +1117,9 @@ KDE_NO_EXPORT void MediaTypeRuntime::checkedProceed () {
     }
 }
 
+KDE_NO_EXPORT void MediaTypeRuntime::postpone (bool) {
+}
+
 KDE_NO_CDTOR_EXPORT AudioVideoData::AudioVideoData (NodePtr e)
     : MediaTypeRuntime (e) {}
 
@@ -1142,6 +1149,7 @@ KDE_NO_EXPORT void AudioVideoData::started () {
                 PlayListNotify * n = element->document ()->notify_listener;
                 if (n)
                     n->requestPlayURL (element);
+                document_postponed = element->document()->connectTo (element, event_postponed);
                 element->setState (Element::state_began);
             }
         }
@@ -1152,6 +1160,7 @@ KDE_NO_EXPORT void AudioVideoData::stopped () {
     //kdDebug () << "AudioVideoData::stopped " << endl;
     avStopped ();
     MediaTypeRuntime::stopped ();
+    document_postponed = 0L;
 }
 
 KDE_NO_EXPORT void AudioVideoData::avStopped () {
@@ -1179,11 +1188,20 @@ void AudioVideoData::parseParam (const QString & name, const QString & val) {
                     if (n && !source_url.isEmpty ()) {
                         n->requestPlayURL (element);
                         element->setState (Node::state_began);
+                        document_postponed = element->document()->connectTo (element, event_postponed);
                     }
                 }
             }
         }
     }
+}
+
+KDE_NO_EXPORT void AudioVideoData::postpone (bool b) {
+    kdDebug () << "AudioVideoData::postpone " << b << endl;
+    if (element->unfinished () && b)
+        element->setState (Node::state_deferred);
+    else if (element->state == Node::state_deferred && !b)
+        element->setState (Node::state_began);
 }
 
 //-----------------------------------------------------------------------------
@@ -2102,6 +2120,13 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
         }
         case event_sized:
             return true; // ignored for now
+        case event_postponed: {
+            MediaTypeRuntime *mr=static_cast<MediaTypeRuntime*>(timedRuntime());
+            PostponedEvent * pe = static_cast <PostponedEvent *> (event.ptr ());
+            if (mr) 
+                mr->postpone (pe->is_postponed);
+            return true;
+        }
         case event_activated:
         case event_outbounds:
         case event_inbounds:
@@ -2309,11 +2334,12 @@ void ImageData::parseParam (const QString & name, const QString & val) {
                     if (mov->isNull ()) {
                         delete mov;
                         d->img_movie = 0L;
-                    } else {
+                    } else if (element) {
                       mov->connectUpdate(this,SLOT(movieUpdated(const QRect&)));
                       mov->connectStatus (this, SLOT (movieStatus (int)));
                       mov->connectResize(this, SLOT(movieResize(const QSize&)));
                       d->img_movie = mov;
+                      document_postponed = element->document()->connectTo (element, event_postponed);
                     }
                     delete d->cache_image;
                     d->cache_image = 0;
@@ -2456,6 +2482,16 @@ KDE_NO_EXPORT void ImageData::movieResize (const QSize & s) {
                 (timingstate == timings_stopped && fill == fill_freeze))) {
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
         //kdDebug () << "movieResize" << endl;
+    }
+}
+
+KDE_NO_EXPORT void ImageData::postpone (bool b) {
+    kdDebug () << "ImageData::postpone " << b << endl;
+    if (d->img_movie) {
+        if (!d->img_movie->paused () && b)
+            d->img_movie->pause ();
+        else if (d->img_movie->paused () && !b)
+            d->img_movie->unpause ();
     }
 }
 

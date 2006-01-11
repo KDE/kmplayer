@@ -221,6 +221,7 @@ public:
     virtual void stopped ();
     virtual void parseParam (const QString & name, const QString & value);
     virtual void paint (QPainter &) {}
+    virtual void postpone (bool b);
     CalculatedSizer sizes;
 protected:
     MediaTypeRuntime (NodePtr e);
@@ -233,6 +234,7 @@ protected slots:
     void slotData (KIO::Job*, const QByteArray& qb);
 protected:
     MediaTypeRuntimePrivate * mt_d;
+    ConnectionPtr document_postponed;      // pauze audio/video accordantly
     QString source_url;
     Fit fit;
     bool needs_proceed;
@@ -249,6 +251,7 @@ public:
     virtual void parseParam (const QString & name, const QString & value);
     virtual void started ();
     virtual void stopped ();
+    virtual void postpone (bool b);
     void avStopped ();
     ConnectionPtr sized_connection_layout; // for resizing of view
     ConnectionPtr sized_connection_region; // for position changes set/animate
@@ -264,6 +267,7 @@ public:
     ~ImageData ();
     void paint (QPainter & p);
     virtual void parseParam (const QString & name, const QString & value);
+    virtual void postpone (bool b);
     ImageDataPrivate * d;
 protected slots:
     virtual void started ();
