@@ -441,8 +441,10 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
         } else if (!m_player->settings ()->no_intro && url.isEmpty ()) {
             m_player->setSource (new IntroSource (m_player, this));
             return;
-        } else
+        } else {
+            m_played_exit = true; // no intro, so no exit as well
             restoreFromConfig ();
+        }
     }
     slotStatusMsg(i18n("Opening file..."));
     m_player->openURL (url);
