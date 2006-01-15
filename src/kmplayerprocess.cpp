@@ -45,6 +45,7 @@
 #include <klocale.h>
 #include <kapplication.h>
 #include <kstandarddirs.h>
+#include <kio/netaccess.h>
 
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
@@ -71,6 +72,25 @@ static QString getPath (const KURL & url) {
         return QString (QChar ('/') + p);
     }
     return p;
+}
+
+static KURL deMediafyUrl (const KURL url) {
+#if KDE_IS_VERSION(3,4,91)
+    return KIO::NetAccess::mostLocalURL (url, 0L);
+#else
+#if KDE_IS_VERSION(3,3,91)
+    if (!url.isLocalFile ()) {
+        KIO::UDSEntry e;
+        if (KIO::NetAccess::stat (url, e, 0)) {
+            for (KIO::UDSEntry::iterator it = e.begin (); it != e.end(); ++it) {
+                if ((*it).m_uds == KIO::UDS_LOCAL_PATH)
+                    return KURL::fromPathOrURL ((*it).m_str);
+            }
+        }
+    }
+#endif
+    return url;
+#endif
 }
 
 Process::Process (QObject * parent, Settings * settings, const char * n)
@@ -354,6 +374,7 @@ KDE_NO_EXPORT bool MPlayer::play (Source * source, NodePtr node) {
     QString args = source->options () + ' ';
     KURL url (m_url);
     if (!url.isEmpty ()) {
+        url = deMediafyUrl (url);
         if (source->url ().isLocalFile ())
             m_process->setWorkingDirectory
                 (QFileInfo (source->url ().path ()).dirPath (true));
@@ -385,7 +406,8 @@ KDE_NO_EXPORT bool MPlayer::play (Source * source, NodePtr node) {
             args += QString (" -sub ");
             const KURL & sub_url (source->subUrl ());
             if (!sub_url.isEmpty ()) {
-                QString myurl (sub_url.isLocalFile () ? getPath (sub_url) : sub_url.url ());
+                KURL surl = deMediafyUrl (sub_url);
+                QString myurl (surl.isLocalFile() ? getPath(surl) : surl.url());
                 args += KProcess::quote (QString (QFile::encodeName (myurl)));
             }
         }
@@ -557,12 +579,13 @@ bool MPlayer::run (const char * args, const char * pipe) {
     return false;
 }
 
-KDE_NO_EXPORT bool MPlayer::grabPicture (const KURL & url, int pos) {
+KDE_NO_EXPORT bool MPlayer::grabPicture (const KURL & _url, int pos) {
     stop ();
     initProcess (m_viewer);
     QString outdir = locateLocal ("data", "kmplayer/");
     m_grabfile = outdir + QString ("00000001.jpg");
     unlink (m_grabfile.ascii ());
+    KURL url = deMediafyUrl (_url);
     QString myurl (url.isLocalFile () ? getPath (url) : url.url ());
     QString args ("mplayer ");
     if (m_settings->mplayerpost090)
@@ -917,6 +940,7 @@ bool MEncoder::play (Source * source, NodePtr node) {
     initProcess (m_viewer);
     Process::play (source, node);
     KURL url (m_url);
+    url = deMediafyUrl (url);
     source->setPosition (0);
     QString args;
     m_use_slave = m_source->pipeCmd ().isEmpty ();
@@ -983,6 +1007,7 @@ bool MPlayerDumpstream::play (Source * source, NodePtr node) {
     initProcess (m_viewer);
     Process::play (source, node);
     KURL url (m_url);
+    url = deMediafyUrl (url);
     source->setPosition (0);
     QString args;
     m_use_slave = m_source->pipeCmd ().isEmpty ();
@@ -1205,6 +1230,7 @@ bool CallbackProcess::play (Source * source, NodePtr node) {
     Process::play (source, node);
     kdDebug () << "CallbackProcess::play " << m_url << endl;
     KURL url (m_url);
+    url = deMediafyUrl (url);
     QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
     m_backend->setURL (myurl);
     const KURL & sub_url = m_source->subUrl ();
@@ -1689,6 +1715,7 @@ bool FFMpeg::play (Source * source, NodePtr node) {
     initProcess (m_viewer);
     Process::play (source, node);
     KURL url (m_url);
+    url = deMediafyUrl (url);
     connect (m_process, SIGNAL (processExited (KProcess *)),
             this, SLOT (processStopped (KProcess *)));
     QString outurl = QString (QFile::encodeName (m_recordurl.isLocalFile () ? getPath (m_recordurl) : m_recordurl.url ()));
