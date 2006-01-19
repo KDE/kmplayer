@@ -478,8 +478,6 @@ public:
 
     KDE_NO_EXPORT NodeListPtr childNodes () const;
     void setState (State nstate);
-protected:
-    Node (NodePtr & d, short _id=0);
     /*
      * Open tag is found by parser, attributes are set
      */
@@ -488,6 +486,8 @@ protected:
      * Close tag is found by parser, children are appended
      */
     virtual void closed ();
+protected:
+    Node (NodePtr & d, short _id=0);
     /*
      * Returns a listener list for event_id, or a null ptr if not supported.
      */

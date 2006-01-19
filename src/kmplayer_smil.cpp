@@ -1623,9 +1623,10 @@ bool SMIL::Region::handleEvent (EventPtr event) {
     switch (event->id ()) {
         case event_paint: {
             PaintEvent * p = static_cast <PaintEvent *> (event.ptr ());
-            if (rx + rw < p->x || p->x + p->w < rx ||
-                    ry + rh < p->y || p->y + p->h < ry)
+            QRect r = QRect (rx, ry, rw, rh).intersect (QRect (p->x, p->y, p->w, p->h));
+            if (!r.isValid ())
                 return false;
+            rx = r.x (); ry = r.y (); rw = r.width (); rh = r.height ();
             p->painter.setClipRect (rx, ry, rw, rh, QPainter::CoordPainter);
         //kdDebug () << "Region::calculateBounds " << getAttribute ("id") << " (" << x << "," << y << " " << w << "x" << h << ") -> (" << x1 << "," << y1 << " " << w1 << "x" << h1 << ")" << endl;
             RegionRuntime *rr = static_cast<RegionRuntime*>(getRuntime().ptr());

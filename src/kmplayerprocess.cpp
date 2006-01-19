@@ -74,7 +74,7 @@ static QString getPath (const KURL & url) {
     return p;
 }
 
-static KURL deMediafyUrl (const KURL url) {
+static KURL deMediafyUrl (const KURL & url) {
 #if KDE_IS_VERSION(3,4,91)
     return KIO::NetAccess::mostLocalURL (url, 0L);
 #else

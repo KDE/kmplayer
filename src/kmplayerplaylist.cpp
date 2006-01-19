@@ -1121,6 +1121,8 @@ void readXML (NodePtr root, QTextStream & in, const QString & firstline) {
         parser.parse (fl_in);
     }
     parser.parse (in);
+    for (NodePtr e = root; e; e = e->parentNode ())
+        e->closed ();
     //doc->normalize ();
     //kdDebug () << root->outerXML ();
 }
