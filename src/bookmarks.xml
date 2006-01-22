@@ -118,122 +118,119 @@
    </folder>
    <folder folded="yes" icon="bookmark_folder" >
     <title>cesky rozhlas</title>
-    <bookmark icon="sound" href="http://live.atlas.cz/cro1/cro1-96.asx" >
+    <bookmark icon="sound" href="mms://netshow4.live.cz/cro1-96" >
      <title>cro1 radiozurnal</title>
     </bookmark>
-    <bookmark icon="sound" href="http://live.atlas.cz/cro2/cro2-96.asx" >
+    <bookmark icon="sound" href="mms://netshow4.live.cz/cro2-96" >
      <title>cro2 praha</title>
     </bookmark>
     <bookmark icon="sound" href="http://amp1.cesnet.cz:8000/cro3.ogg" >
      <title>cro3 vltava</title>
     </bookmark>
-    <bookmark icon="sound" href="http://live.atlas.cz/crocb/crocb-48.asx" >
+    <bookmark icon="sound" href="mms://netshow3.live.cz/crocb48" >
      <title>cro ceske budejovice</title>
     </bookmark>
-    <bookmark icon="sound" href="http://live.atlas.cz/crohk/crohk-48.asx" >
+    <bookmark icon="sound" href="mms://netshow3.live.cz/crohk48" >
      <title>cro hradec kralove</title>
     </bookmark>
-    <bookmark icon="sound" href="http://live.atlas.cz/crool/crool-48.asx" >
+    <bookmark icon="sound" href="mms://netshow3.live.cz/crool48" >
      <title>cro olomouc</title>
     </bookmark>
-    <bookmark icon="sound" href="http://live.atlas.cz/croov/croov-48.asx" >
+    <bookmark icon="sound" href="mms://netshow3.live.cz/croov48" >
      <title>cro ostrava</title>
     </bookmark>
-    <bookmark icon="sound" href="http://live.atlas.cz/croplzen/croplzen64.asx" >
+    <bookmark icon="sound" href="mms://netshow3.live.cz/croplzen64" >
      <title>cro plzen</title>
     </bookmark>
-    <bookmark icon="sound" href="http://live.atlas.cz/croregion/croregion-48.asx" >
+    <bookmark icon="sound" href="mms://netshow3.live.cz/croregion48" >
      <title>cro stredni cechy</title>
     </bookmark>
    </folder>
    <bookmark icon="sound" href="http://amp.cesnet.cz:8000/akropolis.ogg" >
     <title>radio akropolis</title>
    </bookmark>
-   <bookmark icon="sound" href="http://live.atlas.cz/krokodyl/krokodyl32.asx" >
+   <bookmark icon="sound" href="mms://netshow3.live.cz/krokodyl32" >
     <title>krokodyl</title>
    </bookmark>
-   <bookmark icon="sound" href="http://live.atlas.cz/joeradio/joeradioi64.asx" >
+   <bookmark icon="sound" href="mms://netshow3.live.cz/joeradioi64" >
     <title>joe</title>
    </bookmark>
-   <bookmark icon="sound" href="http://live.atlas.cz/regina/croregina-48.asx" >
+   <bookmark icon="sound" href="mms://netshow3.live.cz/croregina-32" >
     <title>regina</title>
    </bookmark>
-   <bookmark icon="sound" href="http://live.atlas.cz/kisshady/kisshady32.asx" >
+   <bookmark icon="sound" href="mms://netshow3.live.cz/kisshady32" >
     <title>kiss hady</title>
    </bookmark>
-   <bookmark icon="sound" href="http://live.atlas.cz/proglas/proglas32.asx" >
+   <bookmark icon="sound" href="mms://netshow3.live.cz/proglas32" >
     <title>proglas</title>
    </bookmark>
-   <bookmark icon="sound" href="http://live.atlas.cz/countryradio/countryradio32.asx" >
+   <bookmark icon="sound" href="mms://netshow4.live.cz/country128" >
     <title>country radio</title>
    </bookmark>
-   <bookmark icon="sound" href="http://live.atlas.cz/kiss/kissproton20.asx" >
+   <bookmark icon="sound" href="mms://netshow3.live.cz/kissproton32" >
     <title>proton</title>
    </bookmark>
    <bookmark icon="sound" href="mms://netshow3.atlas.cz/beat32" >
     <title>radio beat</title>
    </bookmark>
-   <bookmark icon="sound" href="http://www.abradio.cz/www/expres128.asx" >
+   <bookmark icon="sound" href="mms://82.208.28.37/expres128" >
     <title>expresradio</title>
    </bookmark>
-   <bookmark icon="sound" href="http://live.atlas.cz/kiss/radiokiss32.asx" >
+   <bookmark icon="sound" href="mms://netshow3.live.cz/kiss64" >
     <title>kiss 98 fm</title>
    </bookmark>
-   <bookmark icon="sound" href="http://live.atlas.cz/radio1/radio1-64.asx" >
+   <bookmark icon="sound" href="mms://netshow3.live.cz/radio164" >
     <title>radio1</title>
    </bookmark>
-   <bookmark icon="sound" href="http://live.atlas.cz/kiss/kisspublikum48.asx" >
+   <bookmark icon="sound" href="mms://netshow3.live.cz/kisspublikum48" >
     <title>kiss publikum</title>
    </bookmark>
-   <bookmark icon="sound" href="http://stream.inext.cz/rapollo" >
+   <bookmark icon="sound" href="mms://netshow3.live.cz/apollo64" >
     <title>radio apollo</title>
    </bookmark>
-   <bookmark icon="sound" href="http://live.atlas.cz/evropa2/evropa2-32.asx" >
+   <bookmark icon="sound" href="mms://netshow3.live.cz/evropa2-32" >
     <title>evropa 2</title>
    </bookmark>
-   <bookmark icon="sound" href="http://gott.pueblo.cz:8000" >
+   <bookmark icon="sound" href="mms://netshow3.live.cz/crystal64" >
     <title>radio crystal</title>
    </bookmark>
    <bookmark icon="sound" href="mms://195.113.135.100/northmusic" >
     <title>northmusic</title>
    </bookmark>
-   <bookmark icon="sound" href="mms://live.radiosumava.cz/sumava/index.asx" >
+   <bookmark icon="sound" href="mms://82.208.28.37/sumava64" >
     <title>radio sumava</title>
    </bookmark>
-   <bookmark icon="sound" href="http://www.abradio.cz/www/karolina.asx" >
+   <bookmark icon="sound" href="mms://82.208.28.37/karolina64" >
     <title>radio karolina</title>
    </bookmark>
-   <bookmark icon="sound" href="http://www.internetradio.cz/fajn.asx" >
-    <title>fajn radio</title>
+   <bookmark icon="sound" href="mms://netshow3.live.cz/hity64" >
+    <title>fajn radio hity</title>
    </bookmark>
-   <bookmark icon="sound" href="http://www.internetradio.cz/kissfm.asx" >
+   <bookmark icon="sound" href="mms://netshow3.live.cz/kisspublikum48" >
     <title>kiss fm</title>
    </bookmark>
-   <bookmark icon="sound" href="http://www.internetradio.cz/kissmorava.asx" >
+   <bookmark icon="sound" href="mms://netshow3.live.cz/kissmorava48" >
     <title>kiss morava</title>
    </bookmark>
-   <bookmark icon="sound" href="http://www.internetradio.cz/cernahora.asx" >
+   <bookmark icon="sound" href="mms://82.208.28.37/cernahora128" >
     <title>cerna hora</title>
    </bookmark>
-   <bookmark icon="sound" href="http://www.abradio.cz/www/fmplus.asx" >
+   <bookmark icon="sound" href="mms://82.208.28.37/fmplus64" >
     <title>radio fm plus</title>
    </bookmark>
-   <bookmark icon="sound" href="http://www.internetradio.cz/helax.asx" >
+   <bookmark icon="sound" href="mms://82.208.28.37/helax128" >
     <title>helax</title>
    </bookmark>
-   <bookmark icon="sound" href="http://www.internetradio.cz/hity.asx" >
-    <title>radio hity</title>
-   </bookmark>
-   <bookmark icon="sound" href="http://www.internetradio.cz/impuls.asx" >
+   <bookmark icon="sound" href="mms://82.208.28.37/impuls128" >
     <title>radio impuls</title>
    </bookmark>
-   <bookmark icon="sound" href="http://www.internetradio.cz/info.asx" >
+   <bookmark icon="sound" href="mms://netshow4.live.cz/inforadio128" >
     <title>radio info</title>
    </bookmark>
-   <bookmark icon="sound" href="http://www.internetradio.cz/life.asx" >
-    <title>radio life</title>
+   <bookmark icon="sound" href="mms://netshow3.live.cz/life64" >
+    <title>radio life fajn</title>
    </bookmark>
-   <bookmark icon="sound" href="http://www.internetradio.cz/relax.asx" >
+   <bookmark icon="sound" href="mms://82.208.28.37/relax64" >
     <title>radio relax</title>
    </bookmark>
   </folder>
@@ -518,7 +515,7 @@
    <bookmark icon="sound" href="http://ra.slovakradio.sk:8000/RockFM_Live_32_kb" >
     <title>RockFM</title>
    </bookmark>
-   <bookmark icon="sound" href="http://www.internetradio.cz/zet.asx" >
+   <bookmark icon="sound" href="http://stream.radiozet.sk:8000/radiozet96kbit" >
     <title>zet</title>
    </bookmark>
    <bookmark icon="sound" href="http://ra.slovakradio.sk:8000/SlovakRadio_Live_32_kb" >
