@@ -918,12 +918,23 @@ public:
     bool endTag (const QString & tag);
     bool characterData (const QString & data);
     bool cdataData (const QString & data);
+#ifdef HAVE_EXPAT
+    void cdataStart ();
+    void cdataEnd ();
+private:
+    bool in_cdata;
+    QString cdata;
+#endif
 };
 
 } // namespace KMPlayer
 
 DocumentBuilder::DocumentBuilder (NodePtr d)
- : m_ignore_depth (0), m_node (d), m_root (d) {}
+ : m_ignore_depth (0), m_node (d), m_root (d)
+#ifdef HAVE_EXPAT
+    , in_cdata (false)
+#endif
+{}
 
 bool DocumentBuilder::startTag(const QString &tag, AttributeListPtr attr) {
     if (m_ignore_depth) {
@@ -982,8 +993,14 @@ bool DocumentBuilder::endTag (const QString & tag) {
 }
 
 bool DocumentBuilder::characterData (const QString & data) {
-    if (!m_ignore_depth)
-        m_node->characterData (data);
+    if (!m_ignore_depth) {
+#ifdef HAVE_EXPAT
+        if (in_cdata)
+            cdata += data;
+        else
+#endif
+            m_node->characterData (data);
+    }
     //kdDebug () << "characterData " << d.latin1() << endl;
     return true;
 }
@@ -998,6 +1015,17 @@ bool DocumentBuilder::cdataData (const QString & data) {
 }
 
 #ifdef HAVE_EXPAT
+
+void DocumentBuilder::cdataStart () {
+    cdata.truncate (0);
+    in_cdata = true;
+}
+
+void DocumentBuilder::cdataEnd () {
+    cdataData (cdata);
+    cdata.truncate (0);
+    in_cdata = false;
+}
 
 static void startTag (void *data, const char * tag, const char **attr) {
     DocumentBuilder * builder = static_cast <DocumentBuilder *> (data);
@@ -1023,6 +1051,16 @@ static void characterData (void *data, const char *s, int len) {
     delete [] buf;
 }
 
+static void cdataStart (void *data) {
+    DocumentBuilder * builder = static_cast <DocumentBuilder *> (data);
+    builder->cdataStart ();
+}
+
+static void cdataEnd (void *data) {
+    DocumentBuilder * builder = static_cast <DocumentBuilder *> (data);
+    builder->cdataEnd ();
+}
+
 namespace KMPlayer {
 
 KMPLAYER_EXPORT
@@ -1033,6 +1071,7 @@ void readXML (NodePtr root, QTextStream & in, const QString & firstline) {
     XML_SetUserData (parser, &builder);
     XML_SetElementHandler (parser, startTag, endTag);
     XML_SetCharacterDataHandler (parser, characterData);
+    XML_SetCdataSectionHandler (parser, cdataStart, cdataEnd);
     if (!firstline.isEmpty ()) {
         QString str (firstline + QChar ('\n'));
         QCString buf = str.utf8 ();
