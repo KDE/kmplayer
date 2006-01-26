@@ -139,8 +139,7 @@ public:
 /**
  * Live representation of a SMIL element having timings
  */
-class TimedRuntime : public QObject, public ElementRuntime {
-    Q_OBJECT
+class TimedRuntime : public ElementRuntime {
 public:
     enum TimingState {
         timings_reset = 0, timings_began, timings_started, timings_stopped
@@ -211,7 +210,7 @@ public:
 /**
  * Some common runtime data for all mediatype classes
  */
-class MediaTypeRuntime : public TimedRuntime {
+class MediaTypeRuntime : public QObject, public TimedRuntime {
     Q_OBJECT
 public:
     enum Fit { fit_fill, fit_hidden, fit_meet, fit_slice, fit_scroll };
@@ -269,7 +268,7 @@ public:
     virtual void parseParam (const QString & name, const QString & value);
     virtual void postpone (bool b);
     ImageDataPrivate * d;
-protected slots:
+protected:
     virtual void started ();
     virtual void stopped ();
 private slots:
@@ -291,7 +290,7 @@ public:
     void end ();
     virtual void parseParam (const QString & name, const QString & value);
     TextDataPrivate * d;
-protected slots:
+protected:
     virtual void started ();
 private slots:
     virtual void slotResult (KIO::Job*);
@@ -301,7 +300,6 @@ private slots:
  * Stores runtime data of elements from animate group set/animate/..
  */
 class AnimateGroupData : public TimedRuntime {
-    Q_OBJECT
 public:
     KDE_NO_CDTOR_EXPORT ~AnimateGroupData () {}
     virtual void parseParam (const QString & name, const QString & value);
@@ -314,7 +312,7 @@ protected:
     QString changed_attribute;
     QString change_to;
     int modification_id;
-protected slots:
+protected:
     virtual void stopped ();
 };
 
@@ -322,11 +320,10 @@ protected slots:
  * Stores runtime data of set element
  */
 class SetData : public AnimateGroupData {
-    Q_OBJECT
 public:
     KDE_NO_CDTOR_EXPORT SetData (NodePtr e) : AnimateGroupData (e) {}
     KDE_NO_CDTOR_EXPORT ~SetData () {}
-protected slots:
+protected:
     virtual void started ();
 };
 
