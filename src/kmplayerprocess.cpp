@@ -75,22 +75,22 @@ static QString getPath (const KURL & url) {
 }
 
 static KURL deMediafyUrl (const KURL & url) {
-#if KDE_IS_VERSION(3,4,91)
-    return KIO::NetAccess::mostLocalURL (url, 0L);
-#else
-#if KDE_IS_VERSION(3,3,91)
-    if (!url.isLocalFile ()) {
-        KIO::UDSEntry e;
-        if (KIO::NetAccess::stat (url, e, 0)) {
-            for (KIO::UDSEntry::iterator it = e.begin (); it != e.end(); ++it) {
-                if ((*it).m_uds == KIO::UDS_LOCAL_PATH)
-                    return KURL::fromPathOrURL ((*it).m_str);
-            }
-        }
-    }
-#endif
+//#if KDE_IS_VERSION(3,4,91)
+//    return KIO::NetAccess::mostLocalURL (url, 0L);
+//#else
+//#if KDE_IS_VERSION(3,3,91)
+//    if (!url.isLocalFile ()) {
+//        KIO::UDSEntry e;
+//        if (KIO::NetAccess::stat (url, e, 0)) {
+//            for (KIO::UDSEntry::iterator it = e.begin (); it != e.end(); ++it) {
+//                if ((*it).m_uds == KIO::UDS_LOCAL_PATH)
+//                    return KURL::fromPathOrURL ((*it).m_str);
+//            }
+//        }
+//    }
+//#endif
     return url;
-#endif
+//#endif
 }
 
 Process::Process (QObject * parent, Settings * settings, const char * n)
