@@ -1339,7 +1339,7 @@ QString Source::prettyName () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT URLSource::URLSource (PartBase * player, const KURL & url)
-    : Source (i18n ("URL"), player, "urlsource"), m_job (0L) {
+    : Source (i18n ("URL"), player, "urlsource") {
     setURL (url);
     //kdDebug () << "URLSource::URLSource" << endl;
 }
@@ -1374,17 +1374,10 @@ KDE_NO_EXPORT void URLSource::activate () {
         play ();
 }
 
-KDE_NO_EXPORT void URLSource::terminateJob () {
-    if (m_job) {
-        m_job->kill (); // silent, no kioResult signal
-        if (m_player->view ())
-            static_cast <View *> (m_player->view ())->controlPanel ()->setPlaying (m_player->playing ());
-    }
-    m_job = 0L;
-}
-
 KDE_NO_EXPORT void URLSource::deactivate () {
-    terminateJob ();
+    for (SharedPtr<ResolveInfo> rinfo =m_resolve_info; rinfo; rinfo=rinfo->next)
+        rinfo->job->kill ();
+    m_resolve_info = 0L;
     setEventDispatcher (NodePtr ());
 }
 
@@ -1520,8 +1513,15 @@ KDE_NO_EXPORT void URLSource::read (NodePtr root, QTextStream & textstream) {
     }
 }
 
-KDE_NO_EXPORT void URLSource::kioData (KIO::Job *, const QByteArray & d) {
-    int size = m_data.size ();
+KDE_NO_EXPORT void URLSource::kioData (KIO::Job * job, const QByteArray & d) {
+    SharedPtr <ResolveInfo> rinfo = m_resolve_info;
+    while (rinfo && rinfo->job != job)
+        rinfo = rinfo->next;
+    if (!rinfo) {
+        kdWarning () << "Spurious kioData" << endl;
+        return;
+    }
+    int size = rinfo->data.size ();
     int newsize = size + d.size ();
     if (!size) { // first data
         int accuraty = 0;
@@ -1535,35 +1535,53 @@ KDE_NO_EXPORT void URLSource::kioData (KIO::Job *, const QByteArray & d) {
     }
     //kdDebug () << "URLSource::kioData: " << newsize << endl;
     if (newsize <= 0 || newsize > 200000) {
-        m_data.resize (0);
-        m_job->kill (false);
+        rinfo->data.resize (0);
+        rinfo->job->kill (false);
     } else  {
-        m_data.resize (newsize);
-        memcpy (m_data.data () + size, d.data (), newsize - size);
+        rinfo->data.resize (newsize);
+        memcpy (rinfo->data.data () + size, d.data (), newsize - size);
     }
 }
 
 KDE_NO_EXPORT void URLSource::kioMimetype (KIO::Job * job, const QString & mimestr) {
-    if (job && (!m_resolving_mrl || !isPlayListMime (mimestr)))
+    SharedPtr <ResolveInfo> rinfo = m_resolve_info;
+    while (rinfo && rinfo->job != job)
+        rinfo = rinfo->next;
+    if (!rinfo) {
+        kdWarning () << "Spurious kioData" << endl;
+        return;
+    }
+    if (!rinfo->resolving_mrl || !isPlayListMime (mimestr))
         job->kill (false);
-    if (m_resolving_mrl)
-        m_resolving_mrl->mrl ()->mimetype = mimestr;
+    if (rinfo->resolving_mrl)
+        rinfo->resolving_mrl->mrl ()->mimetype = mimestr;
 }
 
-KDE_NO_EXPORT void URLSource::kioResult (KIO::Job *) {
-    m_job = 0L; // KIO::Job::kill deletes itself
-    QTextStream textstream (m_data, IO_ReadOnly);
-    if (m_resolving_mrl) {
-        if (isPlayListMime (m_resolving_mrl->mrl ()->mimetype))
-            read (m_resolving_mrl, textstream);
-        m_resolving_mrl->mrl ()->resolved = true;
-        m_resolving_mrl->undefer ();
+KDE_NO_EXPORT void URLSource::kioResult (KIO::Job * job) {
+    SharedPtr <ResolveInfo> previnfo, rinfo = m_resolve_info;
+    while (rinfo && rinfo->job != job) {
+        previnfo = rinfo;
+        rinfo = rinfo->next;
+    }
+    if (!rinfo) {
+        kdWarning () << "Spurious kioData" << endl;
+        return;
+    }
+    if (previnfo)
+        previnfo->next = rinfo->next;
+    else
+        m_resolve_info = rinfo->next;
+    QTextStream textstream (rinfo->data, IO_ReadOnly);
+    if (rinfo->resolving_mrl) {
+        if (isPlayListMime (rinfo->resolving_mrl->mrl ()->mimetype))
+            read (rinfo->resolving_mrl, textstream);
+        rinfo->resolving_mrl->mrl ()->resolved = true;
+        rinfo->resolving_mrl->undefer ();
     }
     static_cast <View *> (m_player->view())->controlPanel()->setPlaying (false);
 }
 
 void URLSource::playCurrent () {
-    terminateJob ();
     if (!m_current || !m_current->mrl ()->realMrl ()->mrl ()->src.isEmpty ())
         //FIXME: re-think this double use of playCurrent:
         //Source::playCurrent->
@@ -1647,17 +1665,16 @@ KDE_NO_EXPORT bool URLSource::resolveURL (NodePtr m) {
              (url.protocol ().startsWith (QString ("http")) || 
               url.protocol () == QString::fromLatin1 ("media") ||
               url.protocol () == QString::fromLatin1 ("remote")))) {
-        m_data.truncate (0);
-        m_resolving_mrl = m;
-        m_job = KIO::get (url, false, false);
-        m_job->addMetaData ("PropagateHttpHeader", "true");
-        connect (m_job, SIGNAL (data (KIO::Job *, const QByteArray &)),
+        KIO::Job * job = KIO::get (url, false, false);
+        job->addMetaData ("PropagateHttpHeader", "true");
+        m_resolve_info = new ResolveInfo (m, job, m_resolve_info);
+        connect (m_resolve_info->job, SIGNAL(data(KIO::Job*,const QByteArray&)),
                 this, SLOT (kioData (KIO::Job *, const QByteArray &)));
         //connect( m_job, SIGNAL(connected(KIO::Job*)),
         //         this, SLOT(slotConnected(KIO::Job*)));
-        connect (m_job, SIGNAL (mimetype (KIO::Job *, const QString &)),
+        connect(m_resolve_info->job, SIGNAL(mimetype(KIO::Job*,const QString&)),
                 this, SLOT (kioMimetype (KIO::Job *, const QString &)));
-        connect (m_job, SIGNAL (result (KIO::Job *)),
+        connect (m_resolve_info->job, SIGNAL (result (KIO::Job *)),
                 this, SLOT (kioResult (KIO::Job *)));
         static_cast <View *> (m_player->view ())->controlPanel ()->setPlaying (true);
         return false; // wait for result ..

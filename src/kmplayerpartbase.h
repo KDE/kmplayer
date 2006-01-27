@@ -87,10 +87,15 @@ protected:
     virtual bool resolveURL (NodePtr mrl);
 private:
     void read (NodePtr mrl, QTextStream &);
-    void terminateJob ();
-    KIO::Job * m_job;
-    NodePtrW m_resolving_mrl;
-    QByteArray m_data;
+    struct ResolveInfo {
+        ResolveInfo (NodePtr mrl, KIO::Job * j, SharedPtr <ResolveInfo> & n)
+            : resolving_mrl (mrl), job (j), next (n) {}
+        NodePtrW resolving_mrl;
+        KIO::Job * job;
+        QByteArray data;
+        SharedPtr <ResolveInfo> next;
+    };
+    SharedPtr <ResolveInfo> m_resolve_info;
 };
 
 /*

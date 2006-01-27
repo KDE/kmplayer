@@ -596,8 +596,18 @@ KDE_NO_EXPORT void CalculatedSizer::calcSizes (Node * node, int w, int h, int & 
         // kdDebug () << "calc rp:" << reg_point << " ra:" << reg_align << " xoff:" << xoff << " yoff:" << yoff << " w1:" << w1 << " h1:" << h1 << endl;
         return; // success getting sizes based on regPoint
     }
-    xoff = left.size (w);
-    yoff = top.size (h);
+    if (left.isSet ())
+        xoff = left.size (w);
+    else if (width.isSet ())
+        xoff = (w - width.size (w)) / 2;
+    else
+        xoff = 0;
+    if (top.isSet ())
+        yoff = top.size (h);
+    else if (height.isSet ())
+        yoff = (h - height.size (h)) / 2;
+    else
+        yoff = 0;
     if (width.isSet ())
         w1 = width.size (w);
     else if (right.isSet ())
