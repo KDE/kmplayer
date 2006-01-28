@@ -45,7 +45,7 @@
 #include <klocale.h>
 #include <kapplication.h>
 #include <kstandarddirs.h>
-#include <kio/netaccess.h>
+#include <kio/job.h>
 
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
@@ -74,28 +74,9 @@ static QString getPath (const KURL & url) {
     return p;
 }
 
-static KURL deMediafyUrl (const KURL & url) {
-//#if KDE_IS_VERSION(3,4,91)
-//    return KIO::NetAccess::mostLocalURL (url, 0L);
-//#else
-//#if KDE_IS_VERSION(3,3,91)
-//    if (!url.isLocalFile ()) {
-//        KIO::UDSEntry e;
-//        if (KIO::NetAccess::stat (url, e, 0)) {
-//            for (KIO::UDSEntry::iterator it = e.begin (); it != e.end(); ++it) {
-//                if ((*it).m_uds == KIO::UDS_LOCAL_PATH)
-//                    return KURL::fromPathOrURL ((*it).m_str);
-//            }
-//        }
-//    }
-//#endif
-    return url;
-//#endif
-}
-
 Process::Process (QObject * parent, Settings * settings, const char * n)
     : QObject (parent, n), m_viewer (0L), m_source (0L), m_settings (settings),
-      m_state (NotRunning), m_old_state (NotRunning), m_process (0L),
+      m_state (NotRunning), m_old_state (NotRunning), m_process (0L), m_job(0L),
       m_supported_sources (default_supported) {}
 
 Process::~Process () {
@@ -117,7 +98,6 @@ void Process::initProcess (Viewer * viewer) {
     m_process->setUseShell (true);
     m_process->setEnvironment (QString::fromLatin1 ("SESSION_MANAGER"), QString::fromLatin1 (""));
     if (m_source) m_source->setPosition (0);
-    m_url.truncate (0);
 }
 
 WId Process::widget () {
@@ -212,12 +192,41 @@ KDE_NO_EXPORT void Process::rescheduledStateChanged () {
     m_source->stateChange (this, m_old_state, m_state);
 }
 
-KDE_NO_EXPORT bool Process::play (Source * src, NodePtr _mrl) {
+bool Process::play (Source * src, NodePtr _mrl) {
     m_source = src;
     m_mrl = _mrl;
     Mrl * m = _mrl ? _mrl->mrl () : 0L;
-    m_url = m ? m->src : QString ();
+    QString url = m ? m->src : QString ();
+    bool changed = m_url != url;
+    m_url = url;
+#if KDE_IS_VERSION(3,3,91)
+    if (!changed || KURL (m_url).isLocalFile ())
+        return deMediafiedPlay ();
+    m_url = url;
+    m_job = KIO::stat (m_url, false);
+    connect(m_job, SIGNAL (result(KIO::Job *)), this, SLOT(result(KIO::Job *)));
+    return true;
+#else
+    return deMediafiedPlay ();
+#endif
+}
+
+bool Process::deMediafiedPlay () {
     return false;
+}
+
+void Process::result (KIO::Job * job) {
+#if KDE_IS_VERSION(3,3,91)
+    KIO::UDSEntry entry = static_cast <KIO::StatJob *> (job)->statResult ();
+    KIO::UDSEntry::iterator e = entry.end ();
+    for (KIO::UDSEntry::iterator it = entry.begin (); it != e; ++it)
+        if ((*it).m_uds == KIO::UDS_LOCAL_PATH) {
+            m_url = KURL::fromPathOrURL ((*it).m_str).url ();
+            break;
+        }
+    m_job = 0L;
+    deMediafiedPlay ();
+#endif
 }
 
 bool Process::ready (Viewer * viewer) {
@@ -355,29 +364,26 @@ KDE_NO_EXPORT WId MPlayer::widget () {
     return viewer ()->embeddedWinId ();
 }
 
-KDE_NO_EXPORT bool MPlayer::play (Source * source, NodePtr node) {
+KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
     if (playing ())
         return sendCommand (QString ("gui_play"));
     if (!m_needs_restarted)
         stop ();
-    m_source = source;
     initProcess (m_viewer);
-    source->setPosition (0);
+    m_source->setPosition (0);
     if (!m_needs_restarted) {
         aid = sid = -1;
     } else
         m_needs_restarted = false;
-    Process::play (source, node);
     alanglist = 0L;
     slanglist = 0L;
     m_request_seek = -1;
-    QString args = source->options () + ' ';
+    QString args = m_source->options () + ' ';
     KURL url (m_url);
     if (!url.isEmpty ()) {
-        url = deMediafyUrl (url);
-        if (source->url ().isLocalFile ())
+        if (m_source->url ().isLocalFile ())
             m_process->setWorkingDirectory
-                (QFileInfo (source->url ().path ()).dirPath (true));
+                (QFileInfo (m_source->url ().path ()).dirPath (true));
         if (url.isLocalFile ()) {
             m_url = getPath (url);
             if (m_configpage->alwaysbuildindex &&
@@ -395,24 +401,23 @@ KDE_NO_EXPORT bool MPlayer::play (Source * source, NodePtr node) {
             args += KProcess::quote (QString (QFile::encodeName (m_url)));
     }
     m_tmpURL.truncate (0);
-    if (!source->identified () && !m_settings->mplayerpost090) {
+    if (!m_source->identified () && !m_settings->mplayerpost090) {
         args += QString (" -quiet -nocache -identify -frames 0 ");
     } else {
         if (m_settings->loop)
             args += QString (" -loop 0");
         if (m_settings->mplayerpost090)
             args += QString (" -identify");
-        if (!source->subUrl ().isEmpty ()) {
+        if (!m_source->subUrl ().isEmpty ()) {
             args += QString (" -sub ");
-            const KURL & sub_url (source->subUrl ());
+            const KURL & sub_url (m_source->subUrl ());
             if (!sub_url.isEmpty ()) {
-                KURL surl = deMediafyUrl (sub_url);
-                QString myurl (surl.isLocalFile() ? getPath(surl) : surl.url());
+                QString myurl (sub_url.isLocalFile () ? getPath (sub_url) : sub_url.url ());
                 args += KProcess::quote (QString (QFile::encodeName (myurl)));
             }
         }
     }
-    return run (args.ascii (), source->pipeCmd ().ascii ());
+    return run (args.ascii (), m_source->pipeCmd ().ascii ());
 }
 
 KDE_NO_EXPORT bool MPlayer::stop () {
@@ -579,13 +584,12 @@ bool MPlayer::run (const char * args, const char * pipe) {
     return false;
 }
 
-KDE_NO_EXPORT bool MPlayer::grabPicture (const KURL & _url, int pos) {
+KDE_NO_EXPORT bool MPlayer::grabPicture (const KURL & url, int pos) {
     stop ();
     initProcess (m_viewer);
     QString outdir = locateLocal ("data", "kmplayer/");
     m_grabfile = outdir + QString ("00000001.jpg");
     unlink (m_grabfile.ascii ());
-    KURL url = deMediafyUrl (_url);
     QString myurl (url.isLocalFile () ? getPath (url) : url.url ());
     QString args ("mplayer ");
     if (m_settings->mplayerpost090)
@@ -933,15 +937,12 @@ KDE_NO_CDTOR_EXPORT MEncoder::~MEncoder () {
 KDE_NO_EXPORT void MEncoder::init () {
 }
 
-bool MEncoder::play (Source * source, NodePtr node) {
+bool MEncoder::deMediafiedPlay () {
     bool success = false;
     stop ();
-    m_source = source;
     initProcess (m_viewer);
-    Process::play (source, node);
     KURL url (m_url);
-    url = deMediafyUrl (url);
-    source->setPosition (0);
+    m_source->setPosition (0);
     QString args;
     m_use_slave = m_source->pipeCmd ().isEmpty ();
     if (!m_use_slave)
@@ -1000,15 +1001,12 @@ KDE_NO_CDTOR_EXPORT MPlayerDumpstream::~MPlayerDumpstream () {
 KDE_NO_EXPORT void MPlayerDumpstream::init () {
 }
 
-bool MPlayerDumpstream::play (Source * source, NodePtr node) {
+bool MPlayerDumpstream::deMediafiedPlay () {
     bool success = false;
     stop ();
-    m_source = source;
     initProcess (m_viewer);
-    Process::play (source, node);
     KURL url (m_url);
-    url = deMediafyUrl (url);
-    source->setPosition (0);
+    m_source->setPosition (0);
     QString args;
     m_use_slave = m_source->pipeCmd ().isEmpty ();
     if (!m_use_slave)
@@ -1224,20 +1222,18 @@ void CallbackProcess::setChangedData (const QByteArray & data) {
         ready (viewer ());
 }
 
-bool CallbackProcess::play (Source * source, NodePtr node) {
+bool CallbackProcess::deMediafiedPlay () {
     if (!m_backend)
         return false;
-    Process::play (source, node);
     kdDebug () << "CallbackProcess::play " << m_url << endl;
     KURL url (m_url);
-    url = deMediafyUrl (url);
     QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
     m_backend->setURL (myurl);
     const KURL & sub_url = m_source->subUrl ();
     if (!sub_url.isEmpty ())
         m_backend->setSubTitleURL (QString (QFile::encodeName (sub_url.isLocalFile () ? QFileInfo (getPath (sub_url)).absFilePath () : sub_url.url ())));
-    if (source->frequency () > 0)
-        m_backend->frequency (source->frequency ());
+    if (m_source->frequency () > 0)
+        m_backend->frequency (m_source->frequency ());
     m_backend->play ();
     setState (Buffering);
     return true;
@@ -1711,11 +1707,9 @@ KDE_NO_CDTOR_EXPORT FFMpeg::~FFMpeg () {
 KDE_NO_EXPORT void FFMpeg::init () {
 }
 
-bool FFMpeg::play (Source * source, NodePtr node) {
+bool FFMpeg::deMediafiedPlay () {
     initProcess (m_viewer);
-    Process::play (source, node);
     KURL url (m_url);
-    url = deMediafyUrl (url);
     connect (m_process, SIGNAL (processExited (KProcess *)),
             this, SLOT (processStopped (KProcess *)));
     QString outurl = QString (QFile::encodeName (m_recordurl.isLocalFile () ? getPath (m_recordurl) : m_recordurl.url ()));

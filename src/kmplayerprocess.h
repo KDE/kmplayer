@@ -36,6 +36,10 @@
 class QWidget;
 class KProcess;
 
+namespace KIO {
+    class Job;
+}
+
 namespace KMPlayer {
     
 class Settings;
@@ -74,7 +78,7 @@ signals:
     void grabReady (const QString & path);
 public slots:
     virtual bool ready (Viewer *);
-    virtual bool play (Source *, NodePtr mrl);
+    bool play (Source *, NodePtr mrl);
     virtual bool stop ();
     virtual bool quit ();
     virtual bool pause ();
@@ -89,8 +93,10 @@ public slots:
     virtual bool brightness (int pos, bool absolute);
 protected slots:
     void rescheduledStateChanged ();
+    void result (KIO::Job *);
 protected:
     void setState (State newstate);
+    virtual bool deMediafiedPlay ();
     QGuardedPtr <Viewer> m_viewer;
     Source * m_source;
     Settings * m_settings;
@@ -98,6 +104,7 @@ protected:
     State m_state;
     State m_old_state;
     KProcess * m_process;
+    KIO::Job * m_job;
     QString m_url;
     int m_request_seek;
     const char ** m_supported_sources;
@@ -144,7 +151,7 @@ public:
     virtual void setSubtitle (int, const QString &);
     bool run (const char * args, const char * pipe = 0L);
 public slots:
-    virtual bool play (Source *, NodePtr mrl);
+    virtual bool deMediafiedPlay ();
     virtual bool stop ();
     virtual bool pause ();
     virtual bool seek (int pos, bool absolute);
@@ -225,8 +232,8 @@ public:
     ~MEncoder ();
     virtual void init ();
     KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
+    virtual bool deMediafiedPlay ();
 public slots:
-    virtual bool play (Source *, NodePtr mrl);
     virtual bool stop ();
 };
 
@@ -240,8 +247,8 @@ public:
     ~MPlayerDumpstream ();
     virtual void init ();
     KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
+    virtual bool deMediafiedPlay ();
 public slots:
-    virtual bool play (Source *, NodePtr mrl);
     virtual bool stop ();
 };
 
@@ -276,8 +283,8 @@ public:
     QString dcopName ();
     NodePtr configDocument () { return configdoc; }
     void initProcess (Viewer *);
+    virtual bool deMediafiedPlay ();
 public slots:
-    bool play (Source *, NodePtr mrl);
     bool stop ();
     bool quit ();
     bool pause ();
@@ -388,8 +395,8 @@ public:
     ~FFMpeg ();
     virtual void init ();
     void setArguments (const QString & args) { arguments = args; }
+    virtual bool deMediafiedPlay ();
 public slots:
-    virtual bool play (Source *, NodePtr mrl);
     virtual bool stop ();
 private slots:
     void processStopped (KProcess *);
