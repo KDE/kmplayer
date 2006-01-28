@@ -229,6 +229,13 @@ void Process::result (KIO::Job * job) {
 #endif
 }
 
+KDE_NO_EXPORT void Process::terminateJob () {
+    if (m_job) {
+        m_job->kill ();
+        m_job = 0L;
+    }
+}
+
 bool Process::ready (Viewer * viewer) {
     m_viewer = viewer;
     setState (Ready);
@@ -284,6 +291,7 @@ KDE_NO_EXPORT bool MPlayerBase::sendCommand (const QString & cmd) {
 }
 
 KDE_NO_EXPORT bool MPlayerBase::stop () {
+    terminateJob ();
     if (!m_source || !m_process || !m_process->isRunning ()) return true;
     if (!m_use_slave) {
         void (*oldhandler)(int) = signal(SIGTERM, SIG_IGN);
@@ -421,6 +429,7 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
 }
 
 KDE_NO_EXPORT bool MPlayer::stop () {
+    terminateJob ();
     if (!m_source || !m_process || !m_process->isRunning ()) return true;
     if (m_use_slave)
         sendCommand (QString ("quit"));
@@ -976,6 +985,7 @@ bool MEncoder::deMediafiedPlay () {
 }
 
 KDE_NO_EXPORT bool MEncoder::stop () {
+    terminateJob ();
     if (!m_source || !m_process || !m_process->isRunning ()) return true;
     kdDebug () << "MEncoder::stop ()" << endl;
     if (m_use_slave)
@@ -1037,6 +1047,7 @@ bool MPlayerDumpstream::deMediafiedPlay () {
 }
 
 KDE_NO_EXPORT bool MPlayerDumpstream::stop () {
+    terminateJob ();
     if (!m_source || !m_process || !m_process->isRunning ()) return true;
     kdDebug () << "MPlayerDumpstream::stop ()" << endl;
     if (m_use_slave)
@@ -1240,6 +1251,7 @@ bool CallbackProcess::deMediafiedPlay () {
 }
 
 bool CallbackProcess::stop () {
+    terminateJob ();
     if (!m_process || !m_process->isRunning () || m_state < Buffering)
         return true;
     kdDebug () << "CallbackProcess::stop ()" << m_backend << endl;
@@ -1756,6 +1768,7 @@ bool FFMpeg::deMediafiedPlay () {
 }
 
 KDE_NO_EXPORT bool FFMpeg::stop () {
+    terminateJob ();
     if (!playing ()) return true;
     kdDebug () << "FFMpeg::stop" << endl;
     m_process->writeStdin ("q", 1);

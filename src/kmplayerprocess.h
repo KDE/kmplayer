@@ -97,6 +97,7 @@ protected slots:
 protected:
     void setState (State newstate);
     virtual bool deMediafiedPlay ();
+    void terminateJob ();
     QGuardedPtr <Viewer> m_viewer;
     Source * m_source;
     Settings * m_settings;
