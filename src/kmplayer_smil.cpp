@@ -980,6 +980,7 @@ KDE_NO_EXPORT void RemoteObject::killWGet () {
     if (m_job) {
         m_job->kill (); // quiet, no result signal
         m_job = 0L;
+        clear (); // assume data is invalid
     }
 }
 
@@ -987,18 +988,29 @@ KDE_NO_EXPORT void RemoteObject::killWGet () {
  * Gets contents from url and puts it in m_data
  */
 KDE_NO_EXPORT bool RemoteObject::wget (const KURL & url) {
-    killWGet ();
-    m_mime.truncate (0);
-    m_data.resize (0);
-    //kdDebug () << "MediaTypeRuntime::wget " << url.url () << endl;
-    m_job = KIO::get (url, false, false);
-    connect (m_job, SIGNAL (data (KIO::Job *, const QByteArray &)),
-             this, SLOT (slotData (KIO::Job *, const QByteArray &)));
-    connect (m_job, SIGNAL (result (KIO::Job *)),
-             this, SLOT (slotResult (KIO::Job *)));
-    connect (m_job, SIGNAL (mimetype (KIO::Job *, const QString &)),
-             this, SLOT (slotMimetype (KIO::Job *, const QString &)));
-    return true;
+    if (url == m_url)
+        return !m_job;
+    clear ();
+    m_url = url;
+    if (url.isLocalFile ()) {
+        QFile file (url.path ());
+        if (file.exists () && file.open (IO_ReadOnly)) {
+            m_data = file.readAll ();
+            file.close ();
+        }
+        remoteReady ();
+        return true;
+    } else {
+        //kdDebug () << "MediaTypeRuntime::wget " << url.url () << endl;
+        m_job = KIO::get (url, false, false);
+        connect (m_job, SIGNAL (data (KIO::Job *, const QByteArray &)),
+                this, SLOT (slotData (KIO::Job *, const QByteArray &)));
+        connect (m_job, SIGNAL (result (KIO::Job *)),
+                this, SLOT (slotResult (KIO::Job *)));
+        connect (m_job, SIGNAL (mimetype (KIO::Job *, const QString &)),
+                this, SLOT (slotMimetype (KIO::Job *, const QString &)));
+        return false;
+    }
 }
 
 KDE_NO_EXPORT void RemoteObject::slotResult (KIO::Job * job) {
@@ -1020,8 +1032,19 @@ KDE_NO_EXPORT void RemoteObject::slotMimetype (KIO::Job *, const QString & m) {
     m_mime = m;
 }
 
+KDE_NO_EXPORT QString RemoteObject::mimetype () {
+    if (m_data.size () > 0 && m_mime.isEmpty ()) {
+        int accuraty;
+        KMimeType::Ptr mime = KMimeType::findByContent (m_data, &accuraty);
+        if (mime)
+            m_mime = mime->name ();
+    }
+    return m_mime;
+}
+
 KDE_NO_EXPORT void RemoteObject::clear () {
     killWGet ();
+    m_url = KURL ();
     m_mime.truncate (0);
     m_data.resize (0);
 }
@@ -2245,6 +2268,12 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::ImageMediaType::getNewRuntime () {
     return new ImageData (this);
 }
 
+KDE_NO_EXPORT NodePtr SMIL::ImageMediaType::childFromTag (const QString & tag) {
+    if (!strcmp (tag.latin1 (), "imfl"))
+        return new RP::Imfl (m_doc);
+    return SMIL::MediaType::childFromTag (tag);
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT
@@ -2330,15 +2359,7 @@ void ImageData::parseParam (const QString & name, const QString & val) {
             KURL url (source_url);
             d->url = val;
             element->clearChildren ();
-            if (url.isLocalFile ()) {
-                QFile file (url.path ());
-                if (file.exists () && file.open (IO_ReadOnly)) {
-                    m_data = file.readAll ();
-                    file.close ();
-                }
-                remoteReady ();
-            } else
-                wget (url);
+            wget (url);
         }
     }
 }
@@ -2421,18 +2442,13 @@ KDE_NO_EXPORT void ImageData::stopped () {
 
 KDE_NO_EXPORT void ImageData::remoteReady () {
     if (m_data.size () && element) {
-        if (m_mime.isEmpty ()) {
-            int accuraty;
-            KMimeType::Ptr mime = KMimeType::findByContent (m_data, &accuraty);
-            if (mime)
-                m_mime = mime->name ();
-        }
-        kdDebug () << "ImageData::remoteReady " << m_mime << " " << m_data.size () << endl;
-        if (m_mime.startsWith (QString::fromLatin1 ("text/"))) {
+        QString mime = mimetype ();
+        kdDebug () << "ImageData::remoteReady " << mime << " " << m_data.size () << endl;
+        if (mime.startsWith (QString::fromLatin1 ("text/"))) {
             QTextStream ts (m_data, IO_ReadOnly);
             readXML (element, ts, QString::null);
         }
-        if (!element->firstChild ()) {
+        if (!element->firstChild () || element->firstChild ()->id != RP::id_node_imfl) {
             QPixmap *pix = new QPixmap (m_data);
             if (!pix->isNull ()) {
                 d->image = pix;
@@ -2635,6 +2651,100 @@ KDE_NO_EXPORT void TextData::remoteReady () {
     checkedProceed ();
     if (timingstate == timings_started)
         propagateStart ();
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_EXPORT NodePtr RP::Imfl::childFromTag (const QString & tag) {
+    if (!strcmp (tag.latin1 (), "head"))
+        return new DarkNode (m_doc, "head", RP::id_node_head);
+    else if (!strcmp (tag.latin1 (), "image"))
+        return new RP::Image (m_doc);
+    else if (!strcmp (tag.latin1 (), "fill"))
+        return new RP::Fill (m_doc);
+    else if (!strcmp (tag.latin1 (), "crossfade"))
+        return new RP::Crossfade (m_doc);
+    return 0L;
+}
+
+KDE_NO_CDTOR_EXPORT RP::Image::Image (NodePtr & doc)
+ : Mrl (doc, id_node_image), d (new ImageDataPrivate) {}
+
+KDE_NO_CDTOR_EXPORT RP::Image::~Image () {
+    delete d;
+}
+
+KDE_NO_EXPORT void RP::Image::closed () {
+    src = getAttribute ("name");
+}
+
+KDE_NO_EXPORT void RP::Image::activate () {
+    setState (state_activated);
+    isMrl (); // update src attribute
+    wget (src);
+}
+
+KDE_NO_EXPORT void RP::Image::remoteReady () {
+    if (!m_data.isEmpty ()) {
+        QPixmap *pix = new QPixmap (m_data);
+        if (!pix->isNull ()) {
+            d->image = pix;
+        } else
+            delete pix;
+    }
+}
+
+KDE_NO_CDTOR_EXPORT RP::TimingsBase::TimingsBase (NodePtr & d, const short i)
+ : Element (d, i), start (0), duration (0), start_timer (0) {}
+
+KDE_NO_EXPORT void RP::TimingsBase::activate () {
+    setState (state_activated);
+    for (Attribute * a= attributes ()->first ().ptr (); a; a = a->nextSibling ().ptr ()) {
+        if (!strcasecmp (a->nodeName (), "start"))
+            start = int (a->nodeValue ().toDouble () * 10.0); //merge with begin of SMIL
+        else if (!strcasecmp (a->nodeName (), "duration"))
+            duration = int (a->nodeValue ().toDouble () * 10.0);//merge with dur of SMIL
+        else if (!strcasecmp (a->nodeName (), "target")) {
+            for (NodePtr n = parentNode()->firstChild(); n; n= n->nextSibling())
+                if (convertNode <Element> (n)->getAttribute ("handle") == a->nodeValue ())
+                    target = n;
+        }
+    }
+    start_timer = document ()->setTimeout (this, start *100);
+}
+
+KDE_NO_EXPORT void RP::TimingsBase::deactivate () {
+    setState (state_deactivated);
+    if (start_timer) {
+        document ()->cancelTimer (start_timer);
+        start_timer = 0;
+    }
+}
+
+KDE_NO_EXPORT bool RP::TimingsBase::handleEvent (EventPtr event) {
+    if (event->id () == event_timer) {
+        //TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
+        started ();
+        return true;
+    }
+    return false;
+}
+
+KDE_NO_EXPORT void RP::TimingsBase::started () {}
+
+KDE_NO_EXPORT void RP::Crossfade::activate () {
+    TimingsBase::activate ();
+    setState (state_activated);
+    QString name = getAttribute ("name");
+}
+
+KDE_NO_EXPORT void RP::Crossfade::started () {
+}
+
+KDE_NO_EXPORT void RP::Fill::activate () {
+}
+
+KDE_NO_EXPORT void RP::Fill::started () {
 }
 
 #include "kmplayer_smil.moc"

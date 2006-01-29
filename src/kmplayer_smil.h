@@ -215,12 +215,14 @@ public:
     bool wget (const KURL & url);
     void killWGet ();
     void clear ();
+    QString mimetype ();
 private slots:
     void slotResult (KIO::Job*);
     void slotData (KIO::Job*, const QByteArray& qb);
     void slotMimetype (KIO::Job * job, const QString & mimestr);
 protected:
     KDE_NO_EXPORT virtual void remoteReady () {}
+    KURL m_url;
     KIO::Job * m_job;
     QByteArray m_data;
     QString m_mime;
@@ -686,6 +688,7 @@ class ImageMediaType : public MediaType {
 public:
     ImageMediaType (NodePtr & d);
     ElementRuntimePtr getNewRuntime ();
+    NodePtr childFromTag (const QString & tag);
 };
 
 class TextMediaType : public MediaType {
@@ -720,6 +723,78 @@ public:
 };
 
 } // SMIL namespace
+
+
+/**
+ * RealPix support classes
+ */
+namespace RP {
+
+const short id_node_imfl = 150;
+const short id_node_head = 151;
+const short id_node_image = 152;
+const short id_node_crossfade = 153;
+const short id_node_fill = 154;
+
+class Imfl : public Element {
+public:
+    KDE_NO_CDTOR_EXPORT Imfl (NodePtr & d) : Element (d, id_node_imfl) {}
+    KDE_NO_CDTOR_EXPORT ~Imfl () {}
+    KDE_NO_EXPORT const char * nodeName () const { return "imfl"; }
+    NodePtr childFromTag (const QString & tag);
+    bool expose () const { return false; }
+};
+
+class TimingsBase  : public Element {
+public:
+    TimingsBase (NodePtr & d, const short id);
+    KDE_NO_CDTOR_EXPORT ~TimingsBase () {}
+    void activate ();
+    void deactivate ();
+    virtual void started ();
+    virtual bool handleEvent (EventPtr event);
+protected:
+    NodePtrW target;
+    int start, duration;
+    TimerInfoPtrW start_timer;
+};
+
+class Crossfade : public TimingsBase {
+public:
+    KDE_NO_CDTOR_EXPORT Crossfade (NodePtr & d)
+        : TimingsBase (d, id_node_crossfade) {}
+    KDE_NO_CDTOR_EXPORT ~Crossfade () {}
+    KDE_NO_EXPORT const char * nodeName () const { return "crossfade"; }
+    void activate ();
+    bool expose () const { return false; }
+    virtual void started ();
+};
+
+class Fill : public TimingsBase {
+public:
+    KDE_NO_CDTOR_EXPORT Fill (NodePtr & d) : TimingsBase (d, id_node_fill) {}
+    KDE_NO_CDTOR_EXPORT ~Fill () {}
+    KDE_NO_EXPORT const char * nodeName () const { return "fill"; }
+    void activate ();
+    bool expose () const { return false; }
+    virtual void started ();
+};
+
+class Image : public RemoteObject, public Mrl {
+    Q_OBJECT
+public:
+    Image (NodePtr & d);
+    ~Image ();
+    KDE_NO_EXPORT const char * nodeName () const { return "image"; }
+    void activate ();
+    void closed ();
+    //bool expose () const { return false; }
+protected:
+    virtual void remoteReady ();
+    ImageDataPrivate * d;
+};
+
+} // RP namespace
 
 }  // KMPlayer namespace
 
