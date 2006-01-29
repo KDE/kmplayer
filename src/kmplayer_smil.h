@@ -38,7 +38,7 @@ namespace KIO {
 namespace KMPlayer {
 
 class ElementRuntimePrivate;
-class MediaTypeRuntimePrivate;
+class RemoteObjectData;
 class ImageDataPrivate;
 class TextDataPrivate;
 
@@ -207,11 +207,29 @@ public:
     CalculatedSizer sizes;
 };
 
+class RemoteObject : public QObject {
+    Q_OBJECT
+public:
+    RemoteObject ();
+    KDE_NO_CDTOR_EXPORT ~RemoteObject () {}
+    bool wget (const KURL & url);
+    void killWGet ();
+    void clear ();
+private slots:
+    void slotResult (KIO::Job*);
+    void slotData (KIO::Job*, const QByteArray& qb);
+    void slotMimetype (KIO::Job * job, const QString & mimestr);
+protected:
+    KDE_NO_EXPORT virtual void remoteReady () {}
+    KIO::Job * m_job;
+    QByteArray m_data;
+    QString m_mime;
+};
+
 /**
  * Some common runtime data for all mediatype classes
  */
-class MediaTypeRuntime : public QObject, public TimedRuntime {
-    Q_OBJECT
+class MediaTypeRuntime : public RemoteObject, public TimedRuntime {
 public:
     enum Fit { fit_fill, fit_hidden, fit_meet, fit_slice, fit_scroll };
     ~MediaTypeRuntime ();
@@ -224,15 +242,8 @@ public:
     CalculatedSizer sizes;
 protected:
     MediaTypeRuntime (NodePtr e);
-    bool wget (const KURL & url);
-    void killWGet ();
     void checkedPostpone ();
     void checkedProceed ();
-protected slots:
-    virtual void slotResult (KIO::Job*);
-    void slotData (KIO::Job*, const QByteArray& qb);
-protected:
-    MediaTypeRuntimePrivate * mt_d;
     ConnectionPtr document_postponed;      // pauze audio/video accordantly
     QString source_url;
     Fit fit;
@@ -271,8 +282,8 @@ public:
 protected:
     virtual void started ();
     virtual void stopped ();
+    virtual void remoteReady ();
 private slots:
-    virtual void slotResult (KIO::Job*);
     void movieUpdated (const QRect &);
     void movieStatus (int);
     void movieResize (const QSize &);
@@ -282,7 +293,6 @@ private slots:
  * Data needed for text
  */
 class TextData : public MediaTypeRuntime {
-    Q_OBJECT
 public:
     TextData (NodePtr e);
     ~TextData ();
@@ -292,8 +302,7 @@ public:
     TextDataPrivate * d;
 protected:
     virtual void started ();
-private slots:
-    virtual void slotResult (KIO::Job*);
+    virtual void remoteReady ();
 };
 
 /**

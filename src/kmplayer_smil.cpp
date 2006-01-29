@@ -34,6 +34,7 @@
 
 #include <kdebug.h>
 #include <kurl.h>
+#include <kmimetype.h>
 #include <kio/job.h>
 #include <kio/jobclasses.h>
 
@@ -970,79 +971,75 @@ KDE_NO_EXPORT void AnimateData::timerTick () {
 
 //-----------------------------------------------------------------------------
 
-namespace KMPlayer {
-    class MediaTypeRuntimePrivate {
-    public:
-        KDE_NO_CDTOR_EXPORT MediaTypeRuntimePrivate ()
-         : job (0L) {
-            reset ();
-        }
-        KDE_NO_CDTOR_EXPORT ~MediaTypeRuntimePrivate () {
-            delete job;
-        }
-        void reset () {
-            if (job) {
-                job->kill (); // quiet, no result signal
-                job = 0L; // KIO::Job::kill deletes itself
-            }
-        }
-        KIO::Job * job;
-        QByteArray data;
-    };
-}
-
-KDE_NO_CDTOR_EXPORT MediaTypeRuntime::MediaTypeRuntime (NodePtr e)
- : TimedRuntime (e), mt_d (new MediaTypeRuntimePrivate),
-   fit (fit_hidden), needs_proceed (false) {}
-
-KDE_NO_CDTOR_EXPORT MediaTypeRuntime::~MediaTypeRuntime () {
-    killWGet ();
-    delete mt_d;
-}
+KDE_NO_CDTOR_EXPORT RemoteObject::RemoteObject () : m_job (0L) {}
 
 /**
  * abort previous wget job
  */
-KDE_NO_EXPORT void MediaTypeRuntime::killWGet () {
-    if (mt_d->job) {
-        mt_d->job->kill (); // quiet, no result signal
-        mt_d->job = 0L;
+KDE_NO_EXPORT void RemoteObject::killWGet () {
+    if (m_job) {
+        m_job->kill (); // quiet, no result signal
+        m_job = 0L;
     }
 }
 
 /**
- * Gets contents from url and puts it in mt_d->data
+ * Gets contents from url and puts it in m_data
  */
-KDE_NO_EXPORT bool MediaTypeRuntime::wget (const KURL & url) {
+KDE_NO_EXPORT bool RemoteObject::wget (const KURL & url) {
     killWGet ();
+    m_mime.truncate (0);
+    m_data.resize (0);
     //kdDebug () << "MediaTypeRuntime::wget " << url.url () << endl;
-    mt_d->job = KIO::get (url, false, false);
-    connect (mt_d->job, SIGNAL (data (KIO::Job *, const QByteArray &)),
+    m_job = KIO::get (url, false, false);
+    connect (m_job, SIGNAL (data (KIO::Job *, const QByteArray &)),
              this, SLOT (slotData (KIO::Job *, const QByteArray &)));
-    connect (mt_d->job, SIGNAL (result (KIO::Job *)),
+    connect (m_job, SIGNAL (result (KIO::Job *)),
              this, SLOT (slotResult (KIO::Job *)));
+    connect (m_job, SIGNAL (mimetype (KIO::Job *, const QString &)),
+             this, SLOT (slotMimetype (KIO::Job *, const QString &)));
     return true;
 }
 
-KDE_NO_EXPORT void MediaTypeRuntime::slotResult (KIO::Job * job) {
+KDE_NO_EXPORT void RemoteObject::slotResult (KIO::Job * job) {
     if (job->error ())
-        mt_d->data.resize (0);
-    mt_d->job = 0L; // signal KIO::Job::result deletes itself
+        m_data.resize (0);
+    m_job = 0L; // signal KIO::Job::result deletes itself
+    remoteReady ();
 }
 
-KDE_NO_EXPORT void MediaTypeRuntime::slotData (KIO::Job*, const QByteArray& qb) {
+KDE_NO_EXPORT void RemoteObject::slotData (KIO::Job*, const QByteArray& qb) {
     if (qb.size ()) {
-        int old_size = mt_d->data.size ();
-        mt_d->data.resize (old_size + qb.size ());
-        memcpy (mt_d->data.data () + old_size, qb.data (), qb.size ());
+        int old_size = m_data.size ();
+        m_data.resize (old_size + qb.size ());
+        memcpy (m_data.data () + old_size, qb.data (), qb.size ());
     }
+}
+
+KDE_NO_EXPORT void RemoteObject::slotMimetype (KIO::Job *, const QString & m) {
+    m_mime = m;
+}
+
+KDE_NO_EXPORT void RemoteObject::clear () {
+    killWGet ();
+    m_mime.truncate (0);
+    m_data.resize (0);
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT MediaTypeRuntime::MediaTypeRuntime (NodePtr e)
+ : TimedRuntime (e), fit (fit_hidden), needs_proceed (false) {}
+
+KDE_NO_CDTOR_EXPORT MediaTypeRuntime::~MediaTypeRuntime () {
+    killWGet ();
 }
 
 /**
  * re-implement for pending KIO::Job operations
  */
 KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::end () {
-    mt_d->reset ();
+    clear ();
     checkedProceed ();
     TimedRuntime::end ();
 }
@@ -2332,30 +2329,14 @@ void ImageData::parseParam (const QString & name, const QString & val) {
         if (!val.isEmpty () && d->url != val) {
             KURL url (source_url);
             d->url = val;
+            element->clearChildren ();
             if (url.isLocalFile ()) {
-                QPixmap *pix = new QPixmap (url.path ());
-                if (pix->isNull ()) {
-                    delete pix;
-                    delete d->image;
-                    d->image = 0L;
-                } else {
-                    d->image = pix;
-                    delete d->img_movie;
-                    QMovie * mov = new QMovie (url.path ());
-                    if (mov->isNull ()) {
-                        delete mov;
-                        d->img_movie = 0L;
-                    } else if (element) {
-                      mov->connectUpdate(this,SLOT(movieUpdated(const QRect&)));
-                      mov->connectStatus (this, SLOT (movieStatus (int)));
-                      mov->connectResize(this, SLOT(movieResize(const QSize&)));
-                      d->img_movie = mov;
-                      document_postponed = element->document()->connectTo (element, event_postponed);
-                    }
-                    delete d->cache_image;
-                    d->cache_image = 0;
-                    d->have_frame = false;
+                QFile file (url.path ());
+                if (file.exists () && file.open (IO_ReadOnly)) {
+                    m_data = file.readAll ();
+                    file.close ();
                 }
+                remoteReady ();
             } else
                 wget (url);
         }
@@ -2418,7 +2399,7 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
  * start_timer timer expired, repaint if we have an image
  */
 KDE_NO_EXPORT void ImageData::started () {
-    if (mt_d->job) {
+    if (m_job) {
         checkedPostpone ();
         return;
     }
@@ -2438,26 +2419,37 @@ KDE_NO_EXPORT void ImageData::stopped () {
     MediaTypeRuntime::stopped ();
 }
 
-KDE_NO_EXPORT void ImageData::slotResult (KIO::Job * job) {
-    //kdDebug () << "ImageData::slotResult" << endl;
-    MediaTypeRuntime::slotResult (job);
-    if (mt_d->data.size () && element) {
-        QPixmap *pix = new QPixmap (mt_d->data);
-        if (!pix->isNull ()) {
-            d->image = pix;
-            delete d->cache_image;
-            d->cache_image = 0;
-            delete d->img_movie;
-            d->img_movie = new QMovie (mt_d->data);
-            d->have_frame = false;
-            d->img_movie->connectUpdate(this, SLOT(movieUpdated(const QRect&)));
-            d->img_movie->connectStatus (this, SLOT (movieStatus (int)));
-            d->img_movie->connectResize(this, SLOT (movieResize(const QSize&)));
-            if (region_node && (timingstate == timings_started ||
-                 (timingstate == timings_stopped && fill == fill_freeze)))
-                convertNode <SMIL::RegionBase> (region_node)->repaint ();
-        } else
-            delete pix;
+KDE_NO_EXPORT void ImageData::remoteReady () {
+    if (m_data.size () && element) {
+        if (m_mime.isEmpty ()) {
+            int accuraty;
+            KMimeType::Ptr mime = KMimeType::findByContent (m_data, &accuraty);
+            if (mime)
+                m_mime = mime->name ();
+        }
+        kdDebug () << "ImageData::remoteReady " << m_mime << " " << m_data.size () << endl;
+        if (m_mime.startsWith (QString::fromLatin1 ("text/"))) {
+            QTextStream ts (m_data, IO_ReadOnly);
+            readXML (element, ts, QString::null);
+        }
+        if (!element->firstChild ()) {
+            QPixmap *pix = new QPixmap (m_data);
+            if (!pix->isNull ()) {
+                d->image = pix;
+                delete d->cache_image;
+                d->cache_image = 0;
+                delete d->img_movie;
+                d->img_movie = new QMovie (m_data);
+                d->have_frame = false;
+                d->img_movie->connectUpdate(this, SLOT(movieUpdated(const QRect&)));
+                d->img_movie->connectStatus (this, SLOT (movieStatus (int)));
+                d->img_movie->connectResize(this, SLOT (movieResize(const QSize&)));
+                if (region_node && (timingstate == timings_started ||
+                            (timingstate == timings_stopped && fill == fill_freeze)))
+                    convertNode <SMIL::RegionBase> (region_node)->repaint ();
+            } else
+                delete pix;
+        } // else check children
     }
     checkedProceed ();
     if (timingstate == timings_started)
@@ -2624,17 +2616,16 @@ KDE_NO_EXPORT void TextData::paint (QPainter & p) {
  * start_timer timer expired, repaint if we have text
  */
 KDE_NO_EXPORT void TextData::started () {
-    if (mt_d->job) {
+    if (m_job) {
         checkedPostpone ();
         return;
     }
     MediaTypeRuntime::started ();
 }
 
-KDE_NO_EXPORT void TextData::slotResult (KIO::Job * job) {
-    MediaTypeRuntime::slotResult (job);
-    if (mt_d->data.size () && element) {
-        d->data = mt_d->data;
+KDE_NO_EXPORT void TextData::remoteReady () {
+    if (m_data.size () && element) {
+        d->data = m_data;
         if (d->data.size () > 0 && !d->data [d->data.size () - 1])
             d->data.resize (d->data.size () - 1); // strip zero terminate char
         if (region_node && (timingstate == timings_started ||
