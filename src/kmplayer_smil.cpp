@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2005 by Koos Vriezen <koos ! vriezen ? xs4all ! nl>
+ * Copyright (C) 2005-2006 by Koos Vriezen <koos ! vriezen ? xs4all ! nl>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
@@ -39,6 +39,7 @@
 #include <kio/jobclasses.h>
 
 #include "kmplayer_smil.h"
+#include "kmplayer_rp.h"
 
 using namespace KMPlayer;
 
@@ -60,7 +61,7 @@ const unsigned int event_paint = (unsigned int) -9;
 const unsigned int event_sized = (unsigned int) -10;
 const unsigned int event_pointer_clicked = event_activated;
 const unsigned int event_pointer_moved = (unsigned int) -11;
-static const unsigned int event_timer = (unsigned int) -12;
+const unsigned int event_timer = (unsigned int) -12;
 const unsigned int event_postponed = (unsigned int) -13;
 
 static const unsigned int started_timer_id = (unsigned int) 1;
@@ -2283,7 +2284,7 @@ SMIL::ImageMediaType::ImageMediaType (NodePtr & d)
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::ImageMediaType::getNewRuntime () {
     isMrl (); // hack to get relative paths right
-    return new ImageData (this);
+    return new ImageRuntime (this);
 }
 
 KDE_NO_EXPORT NodePtr SMIL::ImageMediaType::childFromTag (const QString & tag) {
@@ -2343,33 +2344,25 @@ KDE_NO_EXPORT void SMIL::Param::activate () {
 
 //-----------------------------------------------------------------------------
 
-namespace KMPlayer {
-    class ImageDataPrivate {
-        public:
-            ImageDataPrivate () : image (0L), cache_image (0), img_movie (0L) {}
-            ~ImageDataPrivate () {
-                delete image;
-                delete cache_image;
-            }
-            QPixmap * image;
-            QPixmap * cache_image; // scaled cache
-            QMovie * img_movie;
-            QString url;
-            bool have_frame;
-    };
-}
-
-KDE_NO_CDTOR_EXPORT ImageData::ImageData (NodePtr e)
- : MediaTypeRuntime (e), d (new ImageDataPrivate) {
-}
+KDE_NO_CDTOR_EXPORT ImageData::ImageData ()
+    : image (0L), cache_image (0), img_movie (0L) {}
 
 KDE_NO_CDTOR_EXPORT ImageData::~ImageData () {
+    delete image;
+    delete cache_image;
+}
+
+KDE_NO_CDTOR_EXPORT ImageRuntime::ImageRuntime (NodePtr e)
+ : MediaTypeRuntime (e), d (new ImageData) {
+}
+
+KDE_NO_CDTOR_EXPORT ImageRuntime::~ImageRuntime () {
     delete d;
 }
 
 KDE_NO_EXPORT
-void ImageData::parseParam (const QString & name, const QString & val) {
-    //kdDebug () << "ImageData::param " << name << "=" << val << endl;
+void ImageRuntime::parseParam (const QString & name, const QString & val) {
+    //kdDebug () << "ImageRuntime::param " << name << "=" << val << endl;
     MediaTypeRuntime::parseParam (name, val);
     if (name == QString::fromLatin1 ("src")) {
         killWGet ();
@@ -2382,7 +2375,7 @@ void ImageData::parseParam (const QString & name, const QString & val) {
     }
 }
 
-KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
+KDE_NO_EXPORT void ImageRuntime::paint (QPainter & p) {
     if (((d->image && !d->image->isNull ()) ||
                 (d->img_movie && !d->img_movie->isNull ())) &&
             region_node && (timingstate == timings_started ||
@@ -2437,7 +2430,7 @@ KDE_NO_EXPORT void ImageData::paint (QPainter & p) {
 /**
  * start_timer timer expired, repaint if we have an image
  */
-KDE_NO_EXPORT void ImageData::started () {
+KDE_NO_EXPORT void ImageRuntime::started () {
     if (m_job) {
         checkedPostpone ();
         return;
@@ -2452,16 +2445,16 @@ KDE_NO_EXPORT void ImageData::started () {
     MediaTypeRuntime::started ();
 }
 
-KDE_NO_EXPORT void ImageData::stopped () {
+KDE_NO_EXPORT void ImageRuntime::stopped () {
     if (d->img_movie && d->have_frame)
         d->img_movie->pause ();
     MediaTypeRuntime::stopped ();
 }
 
-KDE_NO_EXPORT void ImageData::remoteReady () {
+KDE_NO_EXPORT void ImageRuntime::remoteReady () {
     if (m_data.size () && element) {
         QString mime = mimetype ();
-        kdDebug () << "ImageData::remoteReady " << mime << " " << m_data.size () << endl;
+        kdDebug () << "ImageRuntime::remoteReady " << mime << " " << m_data.size () << endl;
         if (mime.startsWith (QString::fromLatin1 ("text/"))) {
             QTextStream ts (m_data, IO_ReadOnly);
             readXML (element, ts, QString::null);
@@ -2490,7 +2483,7 @@ KDE_NO_EXPORT void ImageData::remoteReady () {
         propagateStart ();
 }
 
-KDE_NO_EXPORT void ImageData::movieUpdated (const QRect &) {
+KDE_NO_EXPORT void ImageRuntime::movieUpdated (const QRect &) {
     d->have_frame = true;
     if (region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
@@ -2504,7 +2497,7 @@ KDE_NO_EXPORT void ImageData::movieUpdated (const QRect &) {
         d->img_movie->pause ();
 }
 
-KDE_NO_EXPORT void ImageData::movieStatus (int s) {
+KDE_NO_EXPORT void ImageRuntime::movieStatus (int s) {
     if (region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
         if (s == QMovie::EndOfMovie)
@@ -2512,7 +2505,7 @@ KDE_NO_EXPORT void ImageData::movieStatus (int s) {
     }
 }
 
-KDE_NO_EXPORT void ImageData::movieResize (const QSize & s) {
+KDE_NO_EXPORT void ImageRuntime::movieResize (const QSize & s) {
     if (!(d->cache_image && d->cache_image->width () == s.width () && d->cache_image->height () == s.height ()) &&
             region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
@@ -2521,8 +2514,8 @@ KDE_NO_EXPORT void ImageData::movieResize (const QSize & s) {
     }
 }
 
-KDE_NO_EXPORT void ImageData::postpone (bool b) {
-    kdDebug () << "ImageData::postpone " << b << endl;
+KDE_NO_EXPORT void ImageRuntime::postpone (bool b) {
+    kdDebug () << "ImageRuntime::postpone " << b << endl;
     if (d->img_movie) {
         if (!d->img_movie->paused () && b)
             d->img_movie->pause ();
@@ -2671,137 +2664,5 @@ KDE_NO_EXPORT void TextData::remoteReady () {
 }
 
 //-----------------------------------------------------------------------------
-
-KDE_NO_EXPORT void RP::Imfl::activate () {
-    setState (state_activated);
-    for (Node * n = firstChild ().ptr (); n; n = n->nextSibling ().ptr ())
-        if (n->id == RP::id_node_image)
-            n->activate ();
-}
-
-KDE_NO_EXPORT void RP::Imfl::begin () {
-    setState (state_began);
-    for (Node * n = firstChild ().ptr (); n; n = n->nextSibling ().ptr ())
-        if (n->id == RP::id_node_crossfade || n->id == RP::id_node_fill)
-            n->activate ();
-}
-
-KDE_NO_EXPORT void RP::Imfl::deactivate () {
-    setState (state_deactivated);
-    for (Node * n = firstChild ().ptr (); n; n = n->nextSibling ().ptr ())
-        if (n->id == RP::id_node_crossfade || n->id == RP::id_node_fill)
-            n->deactivate ();
-}
-
-KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
-    if (event->id () == event_sized) {
-        SizeEvent * e = static_cast <SizeEvent *> (event.ptr ());
-        x = e->x ();
-        y = e->y ();
-        w = e->w ();
-        h = e->h ();
-        kdDebug () << "RP::Imfl sized: " << x << "," << y << " " << w << "x" << h << endl;
-    } else if (event->id () == event_paint) {
-        PaintEvent * p = static_cast <PaintEvent *> (event.ptr ());
-        kdDebug () << "RP::Imfl paint: " << x << "," << y << " " << w << "x" << h << endl;
-        p->painter.fillRect (x, y, w, h, QColor ("green"));
-    }
-    return true;
-}
-
-KDE_NO_EXPORT NodePtr RP::Imfl::childFromTag (const QString & tag) {
-    if (!strcmp (tag.latin1 (), "head"))
-        return new DarkNode (m_doc, "head", RP::id_node_head);
-    else if (!strcmp (tag.latin1 (), "image"))
-        return new RP::Image (m_doc);
-    else if (!strcmp (tag.latin1 (), "fill"))
-        return new RP::Fill (m_doc);
-    else if (!strcmp (tag.latin1 (), "crossfade"))
-        return new RP::Crossfade (m_doc);
-    return 0L;
-}
-
-KDE_NO_CDTOR_EXPORT RP::Image::Image (NodePtr & doc)
- : Mrl (doc, id_node_image), d (new ImageDataPrivate) {}
-
-KDE_NO_CDTOR_EXPORT RP::Image::~Image () {
-    delete d;
-}
-
-KDE_NO_EXPORT void RP::Image::closed () {
-    src = getAttribute ("name");
-}
-
-KDE_NO_EXPORT void RP::Image::activate () {
-    setState (state_activated);
-    isMrl (); // update src attribute
-    wget (src);
-}
-
-KDE_NO_EXPORT void RP::Image::remoteReady () {
-    if (!m_data.isEmpty ()) {
-        QPixmap *pix = new QPixmap (m_data);
-        if (!pix->isNull ()) {
-            d->image = pix;
-        } else
-            delete pix;
-    }
-}
-
-KDE_NO_CDTOR_EXPORT RP::TimingsBase::TimingsBase (NodePtr & d, const short i)
- : Element (d, i), start (0), duration (0), start_timer (0) {}
-
-KDE_NO_EXPORT void RP::TimingsBase::activate () {
-    setState (state_activated);
-    for (Attribute * a= attributes ()->first ().ptr (); a; a = a->nextSibling ().ptr ()) {
-        if (!strcasecmp (a->nodeName (), "start"))
-            start = int (a->nodeValue ().toDouble () * 10.0); //merge with begin of SMIL
-        else if (!strcasecmp (a->nodeName (), "duration"))
-            duration = int (a->nodeValue ().toDouble () * 10.0);//merge with dur of SMIL
-        else if (!strcasecmp (a->nodeName (), "target")) {
-            for (NodePtr n = parentNode()->firstChild(); n; n= n->nextSibling())
-                if (convertNode <Element> (n)->getAttribute ("handle") == a->nodeValue ())
-                    target = n;
-        }
-    }
-    start_timer = document ()->setTimeout (this, start *100);
-}
-
-KDE_NO_EXPORT void RP::TimingsBase::deactivate () {
-    setState (state_deactivated);
-    if (start_timer) {
-        document ()->cancelTimer (start_timer);
-        start_timer = 0;
-    }
-}
-
-KDE_NO_EXPORT bool RP::TimingsBase::handleEvent (EventPtr event) {
-    if (event->id () == event_timer) {
-        //TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
-        begin ();
-        return true;
-    }
-    return false;
-}
-
-KDE_NO_EXPORT void RP::TimingsBase::begin () {
-    setState (state_began);
-}
-
-KDE_NO_EXPORT void RP::Crossfade::activate () {
-    TimingsBase::activate ();
-}
-
-KDE_NO_EXPORT void RP::Crossfade::begin () {
-    TimingsBase::begin ();
-}
-
-KDE_NO_EXPORT void RP::Fill::activate () {
-    TimingsBase::activate ();
-}
-
-KDE_NO_EXPORT void RP::Fill::begin () {
-    TimingsBase::begin ();
-}
 
 #include "kmplayer_smil.moc"

@@ -320,6 +320,7 @@ extern const unsigned int event_pointer_moved;
 extern const unsigned int event_paint;
 extern const unsigned int event_sized;
 extern const unsigned int event_postponed;
+extern const unsigned int event_timer;
 
 // convenient types
 typedef Item<Node>::SharedType NodePtr;
