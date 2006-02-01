@@ -229,6 +229,36 @@ protected:
 
 ITEM_AS_POINTER(KMPlayer::Attribute)
 
+/**                                   a  b  0
+ * Matrix for coordinate transforms   c  d  0
+ *                                    tx ty 1     */
+class Matrix {
+    friend class SizeEvent;
+    float a, b, c, d;
+    int tx, ty; 
+public:
+    Matrix ();
+    Matrix (const Matrix & matrix);
+    Matrix (int xoff, int yoff, float xscale, float yscale);
+    void getXY (int & x, int & y) const;
+    void getXYWH (int & x, int & y, int & w, int & h) const;
+    void transform (const Matrix & matrix);
+    void scale (float sx, float sy);
+    void translate (int x, int y);
+    // void rotate (float phi); // add this when needed
+};
+
+/**
+ * Object should scale according the passed Fit value in SizedEvent
+ */
+enum Fit {
+    fit_fill,      // fill complete area, no aspect preservation
+    fit_hidden,    // keep aspect and don't scale, cut off what doesn't fit
+    fit_meet,      // keep aspect and scale so that the smallest size just fits
+    fit_slice,     // keep aspect and scale so that the largest size just fits
+    fit_scroll     // keep aspect and don't scale, add scollbars if needed
+};
+
 /*
  * A generic event type
  */
@@ -258,10 +288,23 @@ public:
  */
 class SizeEvent : public Event {
 public:
-    SizeEvent (int x, int y, int w, int h, bool kr);
-    int x, y, w, h;
-    bool keep_ratio;
+    SizeEvent (int x, int y, int w, int h, Fit f, const Matrix & m=Matrix ());
+    int x () const;
+    int y () const;
+    int w () const;
+    int h () const;
+    int _x, _y, _w, _h;
+    Fit fit;
+    Matrix matrix;
 };
+
+// Note, add rotations when needed
+KDE_NO_EXPORT
+inline int SizeEvent::x () const { return int (_x * matrix.a) + matrix.tx; }
+KDE_NO_EXPORT
+inline int SizeEvent::y () const { return int (_y * matrix.d) + matrix.ty; }
+KDE_NO_EXPORT inline int SizeEvent::w () const { return int (_w * matrix.a); }
+KDE_NO_EXPORT inline int SizeEvent::h () const { return int (_h * matrix.d); }
 
 /**
  * Event signaling a pointer event
@@ -270,23 +313,6 @@ class PointerEvent : public Event {
 public:
     PointerEvent (unsigned int event_id, int x, int y);
     int x, y;
-};
-
-/**                                   a  b  0
- * Matrix for coordinate transforms   c  d  0
- *                                    tx ty 1     */
-class Matrix {
-    float a, b, c, d;
-    int tx, ty; 
-public:
-    Matrix ();
-    Matrix (const Matrix & matrix);
-    Matrix (int xoff, int yoff, float xscale, float yscale);
-    void getXY (int & x, int & y) const;
-    void getXYWH (int & x, int & y, int & w, int & h) const;
-    void transform (const Matrix & matrix);
-    void scale (float sx, float sy);
-    void translate (int x, int y);
 };
 
 extern const unsigned int event_pointer_clicked;

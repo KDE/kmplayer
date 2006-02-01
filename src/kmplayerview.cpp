@@ -260,7 +260,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     bool av_geometry_changed = false;
     if (eventListener && wws > 0 && hws > 0) {
         m_av_geometry = QRect (0, 0, 0, 0);
-        eventListener->handleEvent (new SizeEvent (x, y, wws, hws, m_view->keepSizeRatio ()));
+        eventListener->handleEvent (new SizeEvent (x, y, wws, hws, m_view->keepSizeRatio () ? fit_meet : fit_fill));
         av_geometry_changed = (m_av_geometry != QRect (0, 0, 0, 0));
         x = m_av_geometry.x ();
         y = m_av_geometry.y ();

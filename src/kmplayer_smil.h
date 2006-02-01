@@ -233,7 +233,6 @@ protected:
  */
 class MediaTypeRuntime : public RemoteObject, public TimedRuntime {
 public:
-    enum Fit { fit_fill, fit_hidden, fit_meet, fit_slice, fit_scroll };
     ~MediaTypeRuntime ();
     virtual void end ();
     virtual void started ();
@@ -247,6 +246,11 @@ protected:
     void checkedPostpone ();
     void checkedProceed ();
     ConnectionPtr document_postponed;      // pauze audio/video accordantly
+    ConnectionPtr region_sized;            // attached region is sized
+    ConnectionPtr region_paint;            // attached region needs painting
+    ConnectionPtr region_mouse_enter;      // attached region has mouse entered
+    ConnectionPtr region_mouse_leave;      // attached region has mouse left
+    ConnectionPtr region_mouse_click;      // attached region is clicked
     QString source_url;
     Fit fit;
     bool needs_proceed;
@@ -265,8 +269,6 @@ public:
     virtual void stopped ();
     virtual void postpone (bool b);
     void avStopped ();
-    ConnectionPtr sized_connection_layout; // for resizing of view
-    ConnectionPtr sized_connection_region; // for position changes set/animate
 };
 
 /**
@@ -452,10 +454,6 @@ public:
      * Creates a new transform matrix
      */
     Matrix transform ();
-    /**
-     * Returns transform matrix of this region only
-     */
-    Matrix getTransform () const { return m_transform; }
     int x, y, w, h;     // unscaled values
     /**
      * z-order of this region
@@ -465,7 +463,7 @@ protected:
     RegionBase (NodePtr & d, short id);
     ElementRuntimePtr runtime;
     virtual NodeRefListPtr listeners (unsigned int event_id);
-    Matrix m_transform;
+    Matrix m_region_transform;
     NodeRefListPtr m_SizeListeners;        // region resized
     NodeRefListPtr m_PaintListeners;       // region need repainting
 };
@@ -497,7 +495,7 @@ public:
     Region (NodePtr & d);
     KDE_NO_EXPORT const char * nodeName () const { return "region"; }
     NodePtr childFromTag (const QString & tag);
-    void calculateBounds (int w, int h);
+    void calculateBounds (int w, int h, const Matrix & parent_transform);
     virtual bool handleEvent (EventPtr event);
     virtual NodeRefListPtr listeners (unsigned int event_id);
     void addRegionUser (NodePtr mt);
@@ -505,7 +503,6 @@ private:
     NodeRefListPtr m_ActionListeners;      // mouse clicked
     NodeRefListPtr m_OutOfBoundsListeners; // mouse left
     NodeRefListPtr m_InBoundsListeners;    // mouse entered
-    NodeRefList users;
     /**
      * boolean for check if pointerEntered/pointerLeft should be called by View
      */
@@ -740,18 +737,24 @@ class Imfl : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Imfl (NodePtr & d) : Element (d, id_node_imfl) {}
     KDE_NO_CDTOR_EXPORT ~Imfl () {}
-    KDE_NO_EXPORT const char * nodeName () const { return "imfl"; }
-    NodePtr childFromTag (const QString & tag);
-    bool expose () const { return false; }
+    KDE_NO_EXPORT virtual const char * nodeName () const { return "imfl"; }
+    virtual NodePtr childFromTag (const QString & tag);
+    virtual void activate ();   // start loading the images
+    virtual void begin ();      // start timings
+    virtual void deactivate (); // end the timings
+    virtual bool expose () const { return false; }
+    virtual bool handleEvent (EventPtr event);
+    int x, y, w, h;
 };
 
 class TimingsBase  : public Element {
 public:
     TimingsBase (NodePtr & d, const short id);
     KDE_NO_CDTOR_EXPORT ~TimingsBase () {}
-    void activate ();
-    void deactivate ();
-    virtual void started ();
+    virtual void activate ();    // start the 'start_timer'
+    virtual void begin ();       // start_timer has expired
+    //virtual void finish ();       // ?duration_timer has expired?
+    virtual void deactivate ();  // disabled
     virtual bool handleEvent (EventPtr event);
 protected:
     NodePtrW target;
@@ -764,20 +767,20 @@ public:
     KDE_NO_CDTOR_EXPORT Crossfade (NodePtr & d)
         : TimingsBase (d, id_node_crossfade) {}
     KDE_NO_CDTOR_EXPORT ~Crossfade () {}
-    KDE_NO_EXPORT const char * nodeName () const { return "crossfade"; }
-    void activate ();
-    bool expose () const { return false; }
-    virtual void started ();
+    KDE_NO_EXPORT virtual const char * nodeName () const { return "crossfade"; }
+    virtual void activate ();
+    virtual void begin ();
+    virtual bool expose () const { return false; }
 };
 
 class Fill : public TimingsBase {
 public:
     KDE_NO_CDTOR_EXPORT Fill (NodePtr & d) : TimingsBase (d, id_node_fill) {}
     KDE_NO_CDTOR_EXPORT ~Fill () {}
-    KDE_NO_EXPORT const char * nodeName () const { return "fill"; }
-    void activate ();
-    bool expose () const { return false; }
-    virtual void started ();
+    KDE_NO_EXPORT virtual const char * nodeName () const { return "fill"; }
+    virtual void activate ();
+    virtual void begin ();
+    virtual bool expose () const { return false; }
 };
 
 class Image : public RemoteObject, public Mrl {
@@ -785,9 +788,9 @@ class Image : public RemoteObject, public Mrl {
 public:
     Image (NodePtr & d);
     ~Image ();
-    KDE_NO_EXPORT const char * nodeName () const { return "image"; }
-    void activate ();
-    void closed ();
+    KDE_NO_EXPORT virtual const char * nodeName () const { return "image"; }
+    virtual void activate ();
+    virtual void closed ();
     //bool expose () const { return false; }
 protected:
     virtual void remoteReady ();

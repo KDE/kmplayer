@@ -123,9 +123,8 @@ void Matrix::getXY (int & x, int & y) const {
 
 void Matrix::getXYWH (int & x, int & y, int & w, int & h) const {
     getXY (x, y);
-    getXY (w, h);
-    w -= x;
-    h -= y;
+    w = int (w * a);
+    h = int (h * d);
 }
 
 void Matrix::transform (const Matrix & matrix) {
