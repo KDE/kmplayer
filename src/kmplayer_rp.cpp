@@ -32,25 +32,37 @@
 using namespace KMPlayer;
 
 
-KDE_NO_EXPORT void RP::Imfl::activate () {
-    setState (state_activated);
+KDE_NO_EXPORT void RP::Imfl::defer () {
+    setState (state_deferred);
     for (Node * n = firstChild ().ptr (); n; n = n->nextSibling ().ptr ())
-        if (n->id == RP::id_node_image)
+        if (n->id == RP::id_node_image && !n->active ())
             n->activate ();
 }
 
-KDE_NO_EXPORT void RP::Imfl::begin () {
-    setState (state_began);
+KDE_NO_EXPORT void RP::Imfl::activate () {
+    setState (state_activated);
     for (Node * n = firstChild ().ptr (); n; n = n->nextSibling ().ptr ())
-        if (n->id == RP::id_node_crossfade || n->id == RP::id_node_fill)
-            n->activate ();
+        switch (n->id) {
+            case RP::id_node_crossfade:
+            case RP::id_node_fadein:
+            case RP::id_node_fadeout:
+            case RP::id_node_fill:
+            case RP::id_node_wipe:
+                n->activate ();
+        }
 }
 
 KDE_NO_EXPORT void RP::Imfl::deactivate () {
     setState (state_deactivated);
     for (Node * n = firstChild ().ptr (); n; n = n->nextSibling ().ptr ())
-        if (n->id == RP::id_node_crossfade || n->id == RP::id_node_fill)
-            n->deactivate ();
+        switch (n->id) {
+            case RP::id_node_crossfade:
+            case RP::id_node_fadein:
+            case RP::id_node_fadeout:
+            case RP::id_node_fill:
+            case RP::id_node_wipe:
+                n->deactivate ();
+        }
 }
 
 KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
@@ -70,14 +82,21 @@ KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
 }
 
 KDE_NO_EXPORT NodePtr RP::Imfl::childFromTag (const QString & tag) {
-    if (!strcmp (tag.latin1 (), "head"))
+    const char * ctag = tag.latin1 ();
+    if (!strcmp (ctag, "head"))
         return new DarkNode (m_doc, "head", RP::id_node_head);
-    else if (!strcmp (tag.latin1 (), "image"))
+    else if (!strcmp (ctag, "image"))
         return new RP::Image (m_doc);
-    else if (!strcmp (tag.latin1 (), "fill"))
+    else if (!strcmp (ctag, "fill"))
         return new RP::Fill (m_doc);
-    else if (!strcmp (tag.latin1 (), "crossfade"))
+    else if (!strcmp (ctag, "wipe"))
+        return new RP::Wipe (m_doc);
+    else if (!strcmp (ctag, "crossfade"))
         return new RP::Crossfade (m_doc);
+    else if (!strcmp (ctag, "fadein"))
+        return new RP::Fadein (m_doc);
+    else if (!strcmp (ctag, "fadeout"))
+        return new RP::Fadeout (m_doc);
     return 0L;
 }
 
@@ -160,7 +179,31 @@ KDE_NO_EXPORT void RP::Fill::activate () {
     TimingsBase::activate ();
 }
 
+KDE_NO_EXPORT void RP::Fadein::activate () {
+    TimingsBase::activate ();
+}
+
+KDE_NO_EXPORT void RP::Fadein::begin () {
+    TimingsBase::begin ();
+}
+
+KDE_NO_EXPORT void RP::Fadeout::activate () {
+    TimingsBase::activate ();
+}
+
+KDE_NO_EXPORT void RP::Fadeout::begin () {
+    TimingsBase::begin ();
+}
+
 KDE_NO_EXPORT void RP::Fill::begin () {
+    TimingsBase::begin ();
+}
+
+KDE_NO_EXPORT void RP::Wipe::activate () {
+    TimingsBase::activate ();
+}
+
+KDE_NO_EXPORT void RP::Wipe::begin () {
     TimingsBase::begin ();
 }
 

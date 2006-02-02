@@ -43,6 +43,9 @@ const short id_node_head = 151;
 const short id_node_image = 152;
 const short id_node_crossfade = 153;
 const short id_node_fill = 154;
+const short id_node_wipe = 155;
+const short id_node_fadein = 156;
+const short id_node_fadeout = 157;
 
 class Imfl : public Element {
 public:
@@ -50,8 +53,8 @@ public:
     KDE_NO_CDTOR_EXPORT ~Imfl () {}
     KDE_NO_EXPORT virtual const char * nodeName () const { return "imfl"; }
     virtual NodePtr childFromTag (const QString & tag);
-    virtual void activate ();   // start loading the images
-    virtual void begin ();      // start timings
+    virtual void defer ();      // start loading the images if not yet done
+    virtual void activate ();      // start timings
     virtual void deactivate (); // end the timings
     virtual bool expose () const { return false; }
     virtual bool handleEvent (EventPtr event);
@@ -67,6 +70,7 @@ public:
     //virtual void finish ();       // ?duration_timer has expired?
     virtual void deactivate ();  // disabled
     virtual bool handleEvent (EventPtr event);
+    virtual bool expose () const { return false; }
 protected:
     NodePtrW target;
     int start, duration;
@@ -81,7 +85,24 @@ public:
     KDE_NO_EXPORT virtual const char * nodeName () const { return "crossfade"; }
     virtual void activate ();
     virtual void begin ();
-    virtual bool expose () const { return false; }
+};
+
+class Fadein : public TimingsBase {
+public:
+    KDE_NO_CDTOR_EXPORT Fadein (NodePtr & d) : TimingsBase(d, id_node_fadein) {}
+    KDE_NO_CDTOR_EXPORT ~Fadein () {}
+    KDE_NO_EXPORT virtual const char * nodeName () const { return "fadein"; }
+    virtual void activate ();
+    virtual void begin ();
+};
+
+class Fadeout : public TimingsBase {
+public:
+    KDE_NO_CDTOR_EXPORT Fadeout(NodePtr &d) : TimingsBase(d, id_node_fadeout) {}
+    KDE_NO_CDTOR_EXPORT ~Fadeout () {}
+    KDE_NO_EXPORT virtual const char * nodeName () const { return "fadeout"; }
+    virtual void activate ();
+    virtual void begin ();
 };
 
 class Fill : public TimingsBase {
@@ -91,7 +112,15 @@ public:
     KDE_NO_EXPORT virtual const char * nodeName () const { return "fill"; }
     virtual void activate ();
     virtual void begin ();
-    virtual bool expose () const { return false; }
+};
+
+class Wipe : public TimingsBase {
+public:
+    KDE_NO_CDTOR_EXPORT Wipe (NodePtr & d) : TimingsBase (d, id_node_wipe) {}
+    KDE_NO_CDTOR_EXPORT ~Wipe () {}
+    KDE_NO_EXPORT virtual const char * nodeName () const { return "wipe"; }
+    virtual void activate ();
+    virtual void begin ();
 };
 
 class Image : public RemoteObject, public Mrl {

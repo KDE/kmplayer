@@ -1130,7 +1130,7 @@ KDE_NO_EXPORT void MediaTypeRuntime::started () {
                 if (n->id == SMIL::id_node_smil ||   // support nested documents
                         n->id == RP::id_node_imfl) { // by giving a dimension
                     n->handleEvent (new SizeEvent (0, 0, r->w, r->h, fit, r->transform ()));
-                    n->begin ();
+                    n->activate ();
                 }
             r->repaint ();
         } else
@@ -1146,6 +1146,15 @@ KDE_NO_EXPORT void MediaTypeRuntime::stopped () {
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
     TimedRuntime::stopped ();
+    Node * n = element.ptr ();
+    if (n) {
+        for (n = n->firstChild ().ptr (); n; n = n->nextSibling ().ptr ())
+            switch (n->id && n->unfinished ()) {   // finish child documents
+                case SMIL::id_node_smil:
+                case RP::id_node_imfl:
+                    n->finish ();
+            }
+    }
 }
 
 KDE_NO_EXPORT void MediaTypeRuntime::checkedPostpone () {
@@ -2261,7 +2270,7 @@ KDE_NO_EXPORT void SMIL::AVMediaType::undefer () {
 
 KDE_NO_EXPORT void SMIL::AVMediaType::finish () {
     static_cast <AudioVideoData *> (timedRuntime ())->avStopped ();
-    TimedMrl::finish ();
+    MediaType::finish ();
 }
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::AVMediaType::getNewRuntime () {
@@ -2476,7 +2485,9 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady () {
                     convertNode <SMIL::RegionBase> (region_node)->repaint ();
             } else
                 delete pix;
-        } // else check children
+        } else { //check children
+            element->firstChild ()->defer ();
+        }
     }
     checkedProceed ();
     if (timingstate == timings_started)
