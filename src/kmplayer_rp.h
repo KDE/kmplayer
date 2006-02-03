@@ -23,6 +23,7 @@
 
 #include <qobject.h>
 #include <qstring.h>
+#include <qimage.h>
 
 #include "kmplayerplaylist.h"
 #include "kmplayer_smil.h"
@@ -30,6 +31,7 @@
 namespace KIO {
     class Job;
 }
+class QImage;
 
 namespace KMPlayer {
 
@@ -47,22 +49,27 @@ const short id_node_wipe = 155;
 const short id_node_fadein = 156;
 const short id_node_fadeout = 157;
 
-class Imfl : public Element {
+class Imfl : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Imfl (NodePtr & d) : Element (d, id_node_imfl) {}
+    Imfl (NodePtr & d);
     KDE_NO_CDTOR_EXPORT ~Imfl () {}
     KDE_NO_EXPORT virtual const char * nodeName () const { return "imfl"; }
     virtual NodePtr childFromTag (const QString & tag);
     virtual void defer ();      // start loading the images if not yet done
-    virtual void activate ();      // start timings
-    virtual void deactivate (); // end the timings
-    virtual bool expose () const { return false; }
+    virtual void activate ();   // start timings, handle paint events
+    virtual void finish ();     // end the timings
+    virtual void deactivate (); // stop handling paint events
+    virtual void childDone (NodePtr child); // for if no duration_timer set
+    KDE_NO_EXPORT virtual bool expose () const { return false; }
+    KDE_NO_EXPORT virtual bool isMrl () const { return true; }
     virtual bool handleEvent (EventPtr event);
+    void repaint (); // called whenever something changes on image
     int x, y, w, h; // target area
     Fit fit;        // how to layout images
     int width, height;     // cached attributes of head
     unsigned int duration; // cached attributes of head
     TimerInfoPtrW duration_timer;
+    QImage image;
 };
 
 class TimingsBase  : public Element {
@@ -71,14 +78,14 @@ public:
     KDE_NO_CDTOR_EXPORT ~TimingsBase () {}
     virtual void activate ();    // start the 'start_timer'
     virtual void begin ();       // start_timer has expired
-    //virtual void finish ();       // ?duration_timer has expired?
+    virtual void finish ();      // ?duration_timer has expired?
     virtual void deactivate ();  // disabled
     virtual bool handleEvent (EventPtr event);
-    virtual bool expose () const { return false; }
+    KDE_NO_EXPORT virtual bool expose () const { return false; }
 protected:
     NodePtrW target;
     unsigned int start, duration;
-    TimerInfoPtrW start_timer;
+    TimerInfoPtrW start_timer, duration_timer;
 };
 
 class Crossfade : public TimingsBase {
