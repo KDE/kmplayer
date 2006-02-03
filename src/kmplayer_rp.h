@@ -58,7 +58,11 @@ public:
     virtual void deactivate (); // end the timings
     virtual bool expose () const { return false; }
     virtual bool handleEvent (EventPtr event);
-    int x, y, w, h;
+    int x, y, w, h; // target area
+    Fit fit;        // how to layout images
+    int width, height;     // cached attributes of head
+    unsigned int duration; // cached attributes of head
+    TimerInfoPtrW duration_timer;
 };
 
 class TimingsBase  : public Element {
@@ -73,7 +77,7 @@ public:
     virtual bool expose () const { return false; }
 protected:
     NodePtrW target;
-    int start, duration;
+    unsigned int start, duration;
     TimerInfoPtrW start_timer;
 };
 

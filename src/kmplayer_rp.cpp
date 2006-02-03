@@ -41,19 +41,37 @@ KDE_NO_EXPORT void RP::Imfl::defer () {
 
 KDE_NO_EXPORT void RP::Imfl::activate () {
     setState (state_activated);
-    for (Node * n = firstChild ().ptr (); n; n = n->nextSibling ().ptr ())
+    for (NodePtr n = firstChild (); n; n = n->nextSibling ())
         switch (n->id) {
             case RP::id_node_crossfade:
             case RP::id_node_fadein:
             case RP::id_node_fadeout:
             case RP::id_node_fill:
             case RP::id_node_wipe:
-                n->activate ();
+                n->activate (); // set their start timers
+                break;
+            case RP::id_node_head:
+                for (AttributePtr a= convertNode <Element> (n)->attributes ()->first (); a; a = a->nextSibling ()) {
+                    if (!strcmp (a->nodeName (), "width")) {
+                        width = a->nodeValue ().toInt ();
+                    } else if (!strcmp (a->nodeName (), "height")) {
+                        height = a->nodeValue ().toInt ();
+                    } else if (!strcmp (a->nodeName (), "duration")) {
+                        parseTime (a->nodeValue ().lower (), duration);
+                    }
+                }
+                break;
         }
+    if (duration > 0)
+        duration_timer = document ()->setTimeout (this, duration * 100);
 }
 
 KDE_NO_EXPORT void RP::Imfl::deactivate () {
     setState (state_deactivated);
+    if (duration_timer) {
+        document ()->cancelTimer (duration_timer);
+        duration_timer = 0;
+    }
     for (Node * n = firstChild ().ptr (); n; n = n->nextSibling ().ptr ())
         switch (n->id) {
             case RP::id_node_crossfade:
@@ -72,11 +90,19 @@ KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
         y = e->y ();
         w = e->w ();
         h = e->h ();
+        fit = e->fit;
         kdDebug () << "RP::Imfl sized: " << x << "," << y << " " << w << "x" << h << endl;
     } else if (event->id () == event_paint) {
         PaintEvent * p = static_cast <PaintEvent *> (event.ptr ());
         kdDebug () << "RP::Imfl paint: " << x << "," << y << " " << w << "x" << h << endl;
         p->painter.fillRect (x, y, w, h, QColor ("green"));
+    } else if (event->id () == event_timer) {
+        TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
+        if (te->timer_info == duration_timer) {
+            duration_timer = 0;
+            if (unfinished ())
+                finish ();
+        }
     }
     return true;
 }
@@ -134,9 +160,9 @@ KDE_NO_EXPORT void RP::TimingsBase::activate () {
     setState (state_activated);
     for (Attribute * a= attributes ()->first ().ptr (); a; a = a->nextSibling ().ptr ()) {
         if (!strcasecmp (a->nodeName (), "start"))
-            start = int (a->nodeValue ().toDouble () * 10.0); //merge with begin of SMIL
+            parseTime (a->nodeValue ().lower (), start);
         else if (!strcasecmp (a->nodeName (), "duration"))
-            duration = int (a->nodeValue ().toDouble () * 10.0);//merge with dur of SMIL
+            parseTime (a->nodeValue ().lower (), duration);
         else if (!strcasecmp (a->nodeName (), "target")) {
             for (NodePtr n = parentNode()->firstChild(); n; n= n->nextSibling())
                 if (convertNode <Element> (n)->getAttribute ("handle") == a->nodeValue ())
@@ -158,6 +184,7 @@ KDE_NO_EXPORT bool RP::TimingsBase::handleEvent (EventPtr event) {
     if (event->id () == event_timer) {
         //TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
         begin ();
+        start_timer = 0;
         return true;
     }
     return false;

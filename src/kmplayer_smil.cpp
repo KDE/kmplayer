@@ -79,6 +79,31 @@ static const unsigned int anim_timer_id = (unsigned int) 5;
  */
 //-----------------------------------------------------------------------------
 
+KDE_NO_EXPORT
+bool KMPlayer::parseTime (const QString & vl, unsigned int & dur) {
+    static QRegExp reg ("^\\s*([0-9\\.]+)\\s*([a-z]*)");
+    //kdDebug () << "getSeconds " << val << (element ? element->nodeName() : "-") << endl;
+    if (reg.search (vl) > -1) {
+        bool ok;
+        double t = reg.cap (1).toDouble (&ok);
+        if (ok && t > 0.000) {
+            //kdDebug() << "reg.cap (1) " << t << (ok && t > 0.000) << endl;
+            QString u = reg.cap (2);
+            if (u.startsWith ("m"))
+                dur = (unsigned int) (10 * t * 60);
+            else if (u.startsWith ("h"))
+                dur = (unsigned int) (10 * t * 60 * 60);
+            dur = (unsigned int) (10 * t);
+        }
+    } else if (vl.find ("indefinite") > -1)
+        dur = duration_infinite;
+    else if (vl.find ("media") > -1)
+        dur = duration_media;
+    else
+        return false;
+    return true;
+}
+
 static SMIL::Region * findRegion (NodePtr p, const QString & id) {
     for (NodePtr c = p->firstChild (); c; c = c->nextSibling ()) {
         if (c->id == SMIL::id_node_region) {
@@ -266,25 +291,8 @@ KDE_NO_EXPORT void TimedRuntime::reset () {
 KDE_NO_EXPORT
 void TimedRuntime::setDurationItem (DurationTime item, const QString & val) {
     unsigned int dur = 0; // also 0 for 'media' duration, so it will not update then
-    QRegExp reg ("^\\s*([0-9\\.]+)\\s*([a-z]*)");
     QString vl = val.lower ();
-    //kdDebug () << "getSeconds " << val << (element ? element->nodeName() : "-") << endl;
-    if (reg.search (vl) > -1) {
-        bool ok;
-        double t = reg.cap (1).toDouble (&ok);
-        if (ok && t > 0.000) {
-            //kdDebug() << "reg.cap (1) " << t << (ok && t > 0.000) << endl;
-            QString u = reg.cap (2);
-            if (u.startsWith ("m"))
-                dur = (unsigned int) (10 * t * 60);
-            else if (u.startsWith ("h"))
-                dur = (unsigned int) (10 * t * 60 * 60);
-            dur = (unsigned int) (10 * t);
-        }
-    } else if (vl.find ("indefinite") > -1)
-        dur = duration_infinite;
-    else if (vl.find ("media") > -1)
-        dur = duration_media;
+    parseTime (vl, dur);
     if (!dur && element) {
         int pos = vl.find (QChar ('.'));
         if (pos > 0) {
@@ -1143,18 +1151,15 @@ KDE_NO_EXPORT void MediaTypeRuntime::started () {
  * will request a repaint of attached region
  */
 KDE_NO_EXPORT void MediaTypeRuntime::stopped () {
+    TimedRuntime::stopped ();
+    Node * e = element.ptr ();
+    if (e) {
+        for (NodePtr n = e->firstChild (); n; n = n->nextSibling ())
+            if (n->unfinished ())   // finish child documents
+                n->finish ();
+    }
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
-    TimedRuntime::stopped ();
-    Node * n = element.ptr ();
-    if (n) {
-        for (n = n->firstChild ().ptr (); n; n = n->nextSibling ().ptr ())
-            switch (n->id && n->unfinished ()) {   // finish child documents
-                case SMIL::id_node_smil:
-                case RP::id_node_imfl:
-                    n->finish ();
-            }
-    }
 }
 
 KDE_NO_EXPORT void MediaTypeRuntime::checkedPostpone () {

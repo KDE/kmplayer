@@ -28,6 +28,7 @@
 #include "kmplayerplaylist.h"
 #include "kmplayer_asx.h"
 #include "kmplayer_atom.h"
+#include "kmplayer_rp.h"
 #include "kmplayer_rss.h"
 #include "kmplayer_smil.h"
 
@@ -46,6 +47,8 @@ namespace KMPlayer {
             return new SMIL::Smil (d);
         else if (!strcasecmp (name, "asx"))
             return new ASX::Asx (d);
+        else if (!strcasecmp (name, "imfl"))
+            return new RP::Imfl (d);
         else if (!strcasecmp (name, "rss"))
             return new RSS::Rss (d);
         else if (!strcasecmp (name, "feed"))

@@ -375,6 +375,11 @@ private:
     QString change_from_unit;
 };
 
+/**
+ * Translates string to deci-seconds or 'special' high number
+ */
+bool parseTime (const QString & val, unsigned int & dur /*, const QString & dateformat*/);
+
 //-----------------------------------------------------------------------------
 
 namespace SMIL {
