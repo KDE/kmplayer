@@ -23,7 +23,6 @@
 
 #include <qobject.h>
 #include <qstring.h>
-#include <qimage.h>
 
 #include "kmplayerplaylist.h"
 #include "kmplayer_smil.h"
@@ -31,7 +30,7 @@
 namespace KIO {
     class Job;
 }
-class QImage;
+class QPixmap;
 
 namespace KMPlayer {
 
@@ -52,7 +51,7 @@ const short id_node_fadeout = 157;
 class Imfl : public Mrl {
 public:
     Imfl (NodePtr & d);
-    KDE_NO_CDTOR_EXPORT ~Imfl () {}
+    ~Imfl ();
     KDE_NO_EXPORT virtual const char * nodeName () const { return "imfl"; }
     virtual NodePtr childFromTag (const QString & tag);
     virtual void defer ();      // start loading the images if not yet done
@@ -69,7 +68,7 @@ public:
     int width, height;     // cached attributes of head
     unsigned int duration; // cached attributes of head
     TimerInfoPtrW duration_timer;
-    QImage image;
+    QPixmap * image;
 };
 
 class TimingsBase  : public Element {
@@ -85,6 +84,7 @@ public:
 protected:
     NodePtrW target;
     unsigned int start, duration;
+    int x, y, w, h;
     TimerInfoPtrW start_timer, duration_timer;
 };
 
@@ -141,11 +141,14 @@ public:
     ~Image ();
     KDE_NO_EXPORT virtual const char * nodeName () const { return "image"; }
     virtual void activate ();
+    virtual void deactivate ();
     virtual void closed ();
+    bool isReady (); // is downloading ready
+    NodePtrW ready_waiter; // crossfade/wipe that needed image while downloading
+    QPixmap * image;
     //bool expose () const { return false; }
 protected:
     virtual void remoteReady ();
-    ImageData * d;
 };
 
 } // RP namespace

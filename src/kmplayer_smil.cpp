@@ -2227,17 +2227,19 @@ KDE_NO_EXPORT void SMIL::AVMediaType::positionVideoWidget () {
     MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (timedRuntime ());
     if (n && mtr && mtr->region_node) {
         RegionBase * rb = convertNode <RegionBase> (mtr->region_node);
-        int x, y, w, h;
-        mtr->sizes.calcSizes (this, rb->w, rb->h, x, y, w, h);
-        Matrix matrix (x, y, 1.0, 1.0);
-        matrix.transform (rb->transform ());
+        int x = 0, y = 0, w = 0, h = 0;
         int xoff = 0, yoff = 0;
-        matrix.getXYWH (xoff, yoff, w, h);
         unsigned int * bg_color = 0L;
-        if (mtr->region_node) {
-            RegionRuntime * rr = static_cast <RegionRuntime *>(mtr->region_node->getRuntime ().ptr ());
-            if (rr && rr->have_bg_color)
-                bg_color = &rr->background_color;
+        if (!strcmp (nodeName (), "video")) {
+            mtr->sizes.calcSizes (this, rb->w, rb->h, x, y, w, h);
+            Matrix matrix (x, y, 1.0, 1.0);
+            matrix.transform (rb->transform ());
+            matrix.getXYWH (xoff, yoff, w, h);
+            if (mtr->region_node) {
+                RegionRuntime * rr = static_cast <RegionRuntime *>(mtr->region_node->getRuntime ().ptr ());
+                if (rr && rr->have_bg_color)
+                    bg_color = &rr->background_color;
+            }
         }
         n->avWidgetSizes (xoff, yoff, w, h, bg_color);
     }
