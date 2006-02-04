@@ -20,7 +20,7 @@
 #include <qcolor.h>
 #include <qpainter.h>
 #include <qpixmap.h>
-#include <qmovie.h>
+#include <qimage.h>
 #include <qtimer.h>
 
 #include <kdebug.h>
@@ -83,7 +83,7 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
     if (height <= 0 || height > 32000)
         height = h;
     if (width > 0 && height > 0) {
-        image = new QPixmap (w, h);
+        image = new QPixmap (width, height);
         image->fill ();
     }
     if (duration > 0)
@@ -127,6 +127,8 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
     for (NodePtr n = firstChild (); n; n = n->nextSibling ())
         if (n->active ())
             n->deactivate ();
+    delete image;
+    image = 0L;
 }
 
 KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
@@ -137,13 +139,25 @@ KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
         w = e->w ();
         h = e->h ();
         fit = e->fit;
+        matrix = e->matrix;
         kdDebug () << "RP::Imfl sized: " << x << "," << y << " " << w << "x" << h << endl;
     } else if (event->id () == event_paint) {
         if (active () && image) {
             PaintEvent * p = static_cast <PaintEvent *> (event.ptr ());
             kdDebug () << "RP::Imfl paint: " << x << "," << y << " " << w << "x" << h << endl;
-            //p->painter.fillRect (x, y, w, h, QColor ("green"));
-            p->painter.drawPixmap (x, y, *image);
+            if (w == width && h == height) {
+                p->painter.drawPixmap (x, y, *image);
+            } else {
+                int x1=0, y1=0, w1=width, h1=height;
+                if (fit == fit_fill) {
+                    w1 = w;
+                    h1 = h;
+                } else
+                    matrix.getXYWH (x1, y1, w1, h1);
+                QImage img;
+                img = *image;
+                p->painter.drawImage (x, y, img.scale (w1, h1));
+            }
         }
     } else if (event->id () == event_timer) {
         TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
@@ -206,7 +220,6 @@ KDE_NO_EXPORT void RP::Image::deactivate () {
     setState (state_deactivated);
     if (ready_waiter) {
         document ()->proceed ();
-        ready_waiter->begin ();
         ready_waiter = 0L;
     }
 }
@@ -234,8 +247,7 @@ KDE_NO_EXPORT bool RP::Image::isReady () {
 }
 
 KDE_NO_CDTOR_EXPORT RP::TimingsBase::TimingsBase (NodePtr & d, const short i)
- : Element (d, i), start (0), duration (0), start_timer (0),
-   x (0), y (0), w (0), h (0) {}
+ : Element (d, i), start (0), duration (0), x (0), y (0), w (0), h (0) {}
 
 KDE_NO_EXPORT void RP::TimingsBase::activate () {
     setState (state_activated);
@@ -347,10 +359,10 @@ KDE_NO_EXPORT void RP::Fadein::begin () {
     kdDebug () << "RP::Fadein::begin img ready:" << img->isReady () << endl;
         if (img->isReady ()) {
             if (img->image) {
-                QPainter * painter = new QPainter ();
-                painter->begin (imfl->image);
-                painter->drawPixmap (x, y, *img->image);
-                painter->end ();
+                QPainter painter;
+                painter.begin (imfl->image);
+                painter.drawPixmap (x, y, *img->image);
+                painter.end ();
                 imfl->repaint ();
             }
         } else {
@@ -371,7 +383,14 @@ KDE_NO_EXPORT void RP::Fadeout::begin () {
     if (p->id == RP::id_node_imfl) {
         RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
         if (imfl->image) {
-            imfl->image->fill (QColor (getAttribute ("color")).rgb ());
+            if (!w || !h) {
+                imfl->image->fill (QColor (getAttribute ("color")).rgb ());
+            } else {
+                QPainter painter;
+                painter.begin (imfl->image);
+                painter.fillRect (x, y, w, h, QBrush (QColor (getAttribute ("color"))));
+                painter.end ();
+            }
             imfl->repaint ();
         }
     }
@@ -387,7 +406,14 @@ KDE_NO_EXPORT void RP::Fill::begin () {
     if (p->id == RP::id_node_imfl) {
         RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
         if (imfl->image) {
-            imfl->image->fill (QColor (getAttribute ("color")).rgb ());
+            if (!w || !h) {
+                imfl->image->fill (QColor (getAttribute ("color")).rgb ());
+            } else {
+                QPainter painter;
+                painter.begin (imfl->image);
+                painter.fillRect (x, y, w, h, QBrush (QColor (getAttribute ("color"))));
+                painter.end ();
+            }
             imfl->repaint ();
         }
     }

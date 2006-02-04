@@ -65,6 +65,7 @@ public:
     void repaint (); // called whenever something changes on image
     int x, y, w, h; // target area
     Fit fit;        // how to layout images
+    Matrix matrix;  // for the scale factor of outer document
     int width, height;     // cached attributes of head
     unsigned int duration; // cached attributes of head
     TimerInfoPtrW duration_timer;
