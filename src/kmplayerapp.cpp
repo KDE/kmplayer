@@ -297,6 +297,8 @@ KDE_NO_EXPORT void KMPlayerApp::slotSourceChanged (KMPlayer::Source *olds, KMPla
                  this, SLOT (setCaption (const QString &)));
         connect (news, SIGNAL (startPlaying ()),
                  this, SLOT (playerStarted ()));
+        viewSyncEditMode->setEnabled (m_view->editMode () ||
+                !strcmp (m_player->source ()->name (), "urlsource"));
     }
 }
 
@@ -528,18 +530,22 @@ KDE_NO_EXPORT void KMPlayerApp::editMode () {
     m_view->setEditMode (!m_view->editMode ());
     m_view->docArea ()->show ();
     viewEditMode->setChecked (m_view->editMode ());
-    viewSyncEditMode->setEnabled (m_view->editMode ());
+    viewSyncEditMode->setEnabled (m_view->editMode () ||
+            !strcmp (m_player->source ()->name (), "urlsource"));
 }
 
 KDE_NO_EXPORT void KMPlayerApp::syncEditMode () {
-    KMPlayer::ListViewItem * si = static_cast <KMPlayer::ListViewItem *> (m_view->playList ()->selectedItem ());
-    if (si && si->m_elm) {
-        si->m_elm->clearChildren ();
-        QString txt = m_view->infoPanel ()->text ();
-        QTextStream ts (txt, IO_ReadOnly);
-        KMPlayer::readXML (si->m_elm, ts, QString ());
-        m_view->playList ()->updateTree (si->m_elm->document (), si->m_elm);
-    }
+    if (m_view->editMode ()) {
+        KMPlayer::ListViewItem * si = static_cast <KMPlayer::ListViewItem *> (m_view->playList ()->selectedItem ());
+        if (si && si->m_elm) {
+            si->m_elm->clearChildren ();
+            QString txt = m_view->infoPanel ()->text ();
+            QTextStream ts (txt, IO_ReadOnly);
+            KMPlayer::readXML (si->m_elm, ts, QString ());
+            m_view->playList ()->updateTree (si->m_elm->document (), si->m_elm);
+        }
+    } else
+        m_player->openURL (m_player->source ()->url ());
 }
 
 KDE_NO_EXPORT void KMPlayerApp::showBroadcastConfig () {
