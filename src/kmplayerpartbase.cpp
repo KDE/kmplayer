@@ -114,6 +114,7 @@ PartBase::PartBase (QWidget * wparent, const char *wname,
    m_source (0L),
    m_bookmark_menu (0L),
    m_record_timer (0),
+   m_update_tree_timer (0),
    m_noresize (false),
    m_auto_controls (true),
    m_bPosSliderPressed (false),
@@ -501,14 +502,25 @@ void PartBase::recordingStopped () {
 }
 
 void PartBase::timerEvent (QTimerEvent * e) {
-    kdDebug () << "record timer event" << (m_recorder->playing () && !playing ()) << endl;
-    killTimer (e->timerId ());
-    m_record_timer = 0;
-    if (m_recorder->playing () && !playing ()) {
-        Recorder * rec = dynamic_cast <Recorder*> (m_recorder);
-        if (rec)
-            openURL (rec->recordURL ());
+    if (e->timerId () == m_record_timer) {
+        kdDebug () << "record timer event" << (m_recorder->playing () && !playing ()) << endl;
+        m_record_timer = 0;
+        if (m_recorder->playing () && !playing ()) {
+            Recorder * rec = dynamic_cast <Recorder*> (m_recorder);
+            if (rec)
+                openURL (rec->recordURL ());
+        }
+    } else if (e->timerId () == m_update_tree_timer) {
+        m_update_tree_timer = 0;
+        m_in_update_tree = true;
+        if (m_update_tree_full) {
+            if (m_source)
+                emit treeChanged (m_source->document (), m_source->current ());
+        } else
+            emit treeUpdated ();
+        m_in_update_tree = false;
     }
+    killTimer (e->timerId ());
 }
 
 void PartBase::playingStarted () {
@@ -622,13 +634,11 @@ void PartBase::playListItemExecuted (QListViewItem * item) {
 }
 
 void PartBase::updateTree (bool full) {
-    m_in_update_tree = true;
-    if (full) {
-        if (m_source)
-            emit treeChanged (m_source->document (), m_source->current ());
+    if (!m_update_tree_timer) {
+        m_update_tree_timer = startTimer (40);
+        m_update_tree_full = full;
     } else
-        emit treeUpdated ();
-    m_in_update_tree = false;
+        m_update_tree_full |= full;
 }
 
 void PartBase::updateInfo (const QString & msg) {
@@ -668,6 +678,10 @@ void PartBase::play () {
     if (pb && !pb->isOn ()) {
         stop ();
         return;
+    }
+    if (m_update_tree_timer) {
+        killTimer (m_update_tree_timer);
+        m_update_tree_timer = 0;
     }
     if (m_process->state () == Process::NotRunning) {
         ListViewItem * lvi = static_cast <ListViewItem *> (m_view->playList ()->currentItem ());

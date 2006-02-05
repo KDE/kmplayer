@@ -495,25 +495,20 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
 KDE_NO_CDTOR_EXPORT PlayListView::~PlayListView () {
 }
 
-void PlayListView::populate (NodePtr e, NodePtr focus, QListViewItem * item, QListViewItem ** curitem) {
+void PlayListView::populate (NodePtr e, NodePtr focus, QListViewItem * pitem, QListViewItem ** curitem) {
     m_have_dark_nodes |= !e->expose ();
     if (!m_show_all_nodes && !e->expose ()) {
-        QListViewItem * up = item->parent ();
-        if (up) {
-            delete item;
-            for (NodePtr c = e->lastChild (); c; c = c->previousSibling ())
-                populate (c, focus, new ListViewItem (up, c, this), curitem);
-            return;
-        }
+        for (NodePtr c = e->lastChild (); c; c = c->previousSibling ())
+            populate (c, focus, pitem, curitem);
+        return;
     }
+    QListViewItem * item = new ListViewItem (pitem, e, this);
     Mrl * mrl = e->mrl ();
     QString text (e->nodeName());
     if (mrl && !m_show_all_nodes) {
         if (mrl->pretty_name.isEmpty ()) {
             if (!mrl->src.isEmpty())
                 text = KURL(mrl->src).prettyURL();
-            else if (e->isDocument ())
-                text = e->hasChildNodes () ? i18n ("unnamed") : i18n ("empty");
         } else
             text = mrl->pretty_name;
     } else if (e->id == id_node_text)
@@ -524,7 +519,7 @@ void PlayListView::populate (NodePtr e, NodePtr focus, QListViewItem * item, QLi
     if (e->active ())
         ensureItemVisible (item);
     for (NodePtr c = e->lastChild (); c; c = c->previousSibling ())
-        populate (c, focus, new ListViewItem (item, c, this), curitem);
+        populate (c, focus, item, curitem);
     if (e->isElementNode ()) {
         AttributePtr a = convertNode<Element> (e)->attributes ()->first ();
         if (a) {
@@ -563,7 +558,21 @@ void PlayListView::updateTree (NodePtr root, NodePtr active) {
     if (!root) return;
     QListViewItem * curitem = 0L;
     ListViewItem * rootitem = new ListViewItem (this, root);
-    populate (root, active, rootitem, &curitem);
+    QString text = QString::fromLatin1 (root->nodeName());
+    Mrl * root_mrl = root->mrl ();
+    if (!m_show_all_nodes && root_mrl) {
+        if (root_mrl->pretty_name.isEmpty ()) {
+            if (!root_mrl->src.isEmpty())
+                text = KURL(root_mrl->src).prettyURL();
+            else
+                text = root_mrl->hasChildNodes () ?
+                    i18n ("unnamed") : i18n ("empty");
+        } else
+            text = root_mrl->pretty_name;
+    }
+    rootitem->setText(0, text);
+    for (NodePtr c = root->lastChild (); c; c = c->previousSibling ())
+        populate (c, active, rootitem, &curitem);
     if (rootitem->firstChild () && !rootitem->isOpen ())
         setOpen (rootitem, true);
     rootitem->setPixmap (0, url_pix);

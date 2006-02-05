@@ -140,11 +140,11 @@ KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
         h = e->h ();
         fit = e->fit;
         matrix = e->matrix;
-        kdDebug () << "RP::Imfl sized: " << x << "," << y << " " << w << "x" << h << endl;
+        //kdDebug () << "RP::Imfl sized: " << x << "," << y << " " << w << "x" << h << endl;
     } else if (event->id () == event_paint) {
         if (active () && image) {
             PaintEvent * p = static_cast <PaintEvent *> (event.ptr ());
-            kdDebug () << "RP::Imfl paint: " << x << "," << y << " " << w << "x" << h << endl;
+            //kdDebug () << "RP::Imfl paint: " << x << "," << y << " " << w << "x" << h << endl;
             if (w == width && h == height) {
                 p->painter.drawPixmap (x, y, *image);
             } else {
@@ -306,6 +306,9 @@ KDE_NO_EXPORT void RP::TimingsBase::finish () {
     if (start_timer) {
         document ()->cancelTimer (start_timer);
         start_timer = 0;
+    } else if (duration_timer) {
+        document ()->cancelTimer (duration_timer);
+        duration_timer = 0;
     }
     Element::finish ();
 }
