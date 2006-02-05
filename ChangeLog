@@ -1,3 +1,13 @@
+Changes since version 0.9.2-pre1
+- Fix for audio only plugin group for real
+- Added RealPix support for SMIL animations
+- Fix media:// url's
+- Crash fix for SMIL when resolving multible url's simultaneously
+- Don't play exit animation if started with an url
+- Fix for plugin w/ floating statusbar,wrong parent was set
+- Real plugin fix for 'controls=All', shouldn't show video widget
+- WMP plugin fix for not showing video widget when 'controls' is 
+  specified
 Changes since version 0.9.1a
 - Option added to disable color setting on movie start
 - Simple playlist edit mode, edit (sub)tree in raw XML
