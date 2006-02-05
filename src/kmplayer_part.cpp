@@ -448,7 +448,8 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
                 i = std::find_if (++i, e, pred))
             if ((*i)->url ().isEmpty ()) // image window created w/o url
                 return (*i)->openURL (_url);
-        kdError () << "Not the ImageWindow and no ImageWindow found" << endl;
+        QTimer::singleShot (50, this, SLOT (waitForImageWindowTimeOut ()));
+        //kdError () << "Not the ImageWindow and no ImageWindow found" << endl;
         return true;
     }
     if (!m_view || !url.isValid ()) return false;
@@ -479,12 +480,16 @@ KDE_NO_EXPORT void KMPlayerPart::waitForImageWindowTimeOut () {
     if (!m_master) {
         // still no ImageWindow attached, eg. audio only
         const KMPlayerPartList::iterator e =kmplayerpart_static->partlist.end();
-        KMPlayerPartList::iterator i = std::find_if (kmplayerpart_static->partlist.begin (), e, GroupPredicate (this, m_group));
+        GroupPredicate pred (this, m_group);
+        KMPlayerPartList::iterator i = std::find_if (kmplayerpart_static->partlist.begin (), e, pred);
         bool noattach = (i == e || *i == this);
         if (noattach) {
-            if (!url ().isEmpty ())
+            if (!url ().isEmpty ()) {
+                m_features |= KMPlayerPart::Feat_Viewer; //hack, become the view
+                for (i = std::find_if (kmplayerpart_static->partlist.begin (), e, pred); i != e; i = std::find_if (++i, e, pred))
+                    (*i)->connectToPart (this);
                 PartBase::openURL (url ());
-            else { // see if we can attach to something out there ..
+            } else { // see if we can attach to something out there ..
                 i = std::find_if (kmplayerpart_static->partlist.begin (), e, GroupPredicate (this, m_group, true));
                 noattach = (i == e);
             }
