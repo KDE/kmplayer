@@ -1134,11 +1134,12 @@ KDE_NO_EXPORT void MediaTypeRuntime::started () {
             region_mouse_enter = r->connectTo (element, event_inbounds);
             region_mouse_leave = r->connectTo (element, event_outbounds);
             region_mouse_click = r->connectTo (element, event_activated);
-            for (Node *n=element->firstChild().ptr();n;n=n->nextSibling().ptr())
-                if (n->id == SMIL::id_node_smil ||   // support nested documents
-                        n->id == RP::id_node_imfl) { // by giving a dimension
-                    n->handleEvent (new SizeEvent (0, 0, r->w, r->h, fit, r->transform ()));
-                    n->activate ();
+            for (NodePtr n = element->firstChild (); n; n = n->nextSibling ())
+                switch (n->id) {
+                    case SMIL::id_node_smil:   // support nested documents
+                    case RP::id_node_imfl:     // by giving a dimension
+                        n->handleEvent (new SizeEvent (0, 0, r->w, r->h, fit, r->transform ()));
+                        n->activate ();
                 }
             r->repaint ();
         } else

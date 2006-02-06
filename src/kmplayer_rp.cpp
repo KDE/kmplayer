@@ -262,8 +262,8 @@ KDE_NO_EXPORT void RP::TimingsBase::activate () {
                     target = n;
         } else if (!strcasecmp (a->nodeName (), "dstx")) {
             x = a->nodeValue ().toInt ();
-        } else if (!strcasecmp (a->nodeName (), "dsth")) {
-            h = a->nodeValue ().toInt ();
+        } else if (!strcasecmp (a->nodeName (), "dsty")) {
+            y = a->nodeValue ().toInt ();
         } else if (!strcasecmp (a->nodeName (), "dstw")) {
             w = a->nodeValue ().toInt ();
         } else if (!strcasecmp (a->nodeName (), "dsth")) {

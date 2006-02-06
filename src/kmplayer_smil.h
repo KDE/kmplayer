@@ -259,7 +259,6 @@ protected:
  * Data needed for audio/video clips
  */
 class AudioVideoData : public MediaTypeRuntime {
-    Q_OBJECT
 public:
     AudioVideoData (NodePtr e);
     virtual bool isAudioVideo ();
@@ -723,7 +722,7 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
     virtual ElementRuntimePtr getNewRuntime ();
     bool isMrl () { return false; }
-    bool handleEvent (KMPlayer::EventPtr event);
+    bool handleEvent (EventPtr event);
 };
 
 class Param : public Element {
