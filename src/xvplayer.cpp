@@ -471,9 +471,9 @@ void KXVideoPlayer::saveState (QSessionManager & sm) {
 class XEventThread : public QThread {
 protected:
     void run () {
-        Time prev_click_time;
-        int prev_click_x;
-        int prev_click_y;
+        Time prev_click_time = 0;
+        int prev_click_x = 0;
+        int prev_click_y = 0;
         while (true) {
             XEvent   xevent;
             XNextEvent(display, &xevent);
