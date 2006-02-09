@@ -471,6 +471,9 @@ void KXVideoPlayer::saveState (QSessionManager & sm) {
 class XEventThread : public QThread {
 protected:
     void run () {
+        Time prev_click_time;
+        int prev_click_x;
+        int prev_click_y;
         while (true) {
             XEvent   xevent;
             XNextEvent(display, &xevent);
@@ -514,6 +517,22 @@ protected:
                 case XvVideoNotify:
                     fprintf (stderr, "xvevent %lu\n", ((XvEvent*)&xevent)->xvvideo.reason);
                     break;
+                case ButtonPress: {
+                    XButtonEvent *bev = (XButtonEvent *) &xevent;
+                    int dx = prev_click_x - bev->x;
+                    int dy = prev_click_y - bev->y;
+                    if (bev->time - prev_click_time < 400 &&
+                            (dx * dx + dy * dy) < 25) {
+                        xvapp->lock ();
+                        if (callback)
+                            callback->toggleFullScreen ();
+                        xvapp->unlock ();
+                    }
+                    prev_click_time = bev->time;
+                    prev_click_x = bev->x;
+                    prev_click_y = bev->y;
+                    break;
+                }
                 default:
                     if (xevent.type < LASTEvent)
                         ;//fprintf (stderr, "event %d\n", xevent.type);

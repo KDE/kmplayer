@@ -40,6 +40,7 @@ k_dcop:
     ASYNC movieParams (int length, int width, int height, float aspect, QStringList alang, QStringList slang);
     ASYNC moviePosition (int position);
     ASYNC loadingProgress (int percentage);
+    ASYNC toggleFullScreen ();
 private:
     CallbackProcess * m_process;
 };

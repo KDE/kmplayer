@@ -1110,6 +1110,12 @@ void Callback::loadingProgress (int percentage) {
     m_process->setLoadingProgress (percentage);
 }
 
+void Callback::toggleFullScreen () {
+    Viewer * v = m_process->viewer ();
+    if (v)
+        v->view ()->fullScreen ();
+}
+
 //-----------------------------------------------------------------------------
 
 CallbackProcess::CallbackProcess (QObject * parent, Settings * settings, const char * n, const QString & menuname)

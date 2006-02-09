@@ -762,6 +762,9 @@ XineProgressEvent::XineProgressEvent (const int p)
 class XEventThread : public QThread {
 protected:
     void run () {
+        Time prev_click_time;
+        int prev_click_x;
+        int prev_click_y;
         while (true) {
             XEvent   xevent;
             XNextEvent(display, &xevent);
@@ -923,7 +926,20 @@ protected:
                         mutex.unlock ();
                     }
                     break;
-                case ButtonPress:
+                case ButtonPress: {
+                    XButtonEvent *bev = (XButtonEvent *) &xevent;
+                    int dx = prev_click_x - bev->x;
+                    int dy = prev_click_y - bev->y;
+                    if (bev->time - prev_click_time < 400 &&
+                            (dx * dx + dy * dy) < 25) {
+                        xineapp->lock ();
+                        if (callback)
+                            callback->toggleFullScreen ();
+                        xineapp->unlock ();
+                    }
+                    prev_click_time = bev->time;
+                    prev_click_x = bev->x;
+                    prev_click_y = bev->y;
                     if (stream) {
                         fprintf(stderr, "ButtonPress\n");
                         XButtonEvent *bev = (XButtonEvent *) &xevent;
@@ -944,6 +960,7 @@ protected:
                         mutex.unlock ();
                     }
                     break;
+                }
                 case NoExpose:
                     //fprintf (stderr, "NoExpose %lu\n", xevent.xnoexpose.drawable);
                     break;
