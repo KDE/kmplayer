@@ -93,7 +93,8 @@ bool KMPlayer::parseTime (const QString & vl, unsigned int & dur) {
                 dur = (unsigned int) (10 * t * 60);
             else if (u.startsWith ("h"))
                 dur = (unsigned int) (10 * t * 60 * 60);
-            dur = (unsigned int) (10 * t);
+            else
+                dur = (unsigned int) (10 * t);
         }
     } else if (vl.find ("indefinite") > -1)
         dur = duration_infinite;
@@ -998,8 +999,11 @@ KDE_NO_EXPORT void RemoteObject::killWGet () {
  * Gets contents from url and puts it in m_data
  */
 KDE_NO_EXPORT bool RemoteObject::wget (const KURL & url) {
-    if (url == m_url)
+    if (url == m_url) {
+        if (!m_job)
+            remoteReady ();
         return !m_job;
+    }
     clear ();
     m_url = url;
     if (url.isLocalFile ()) {
@@ -1631,7 +1635,7 @@ bool SMIL::RegionBase::handleEvent (EventPtr event) {
             SizeEvent * e = static_cast <SizeEvent *> (event.ptr ());
             m_region_transform = e->matrix;
             propagateEvent (event);
-            for (Node * n = firstChild().ptr(); n; n = n->nextSibling().ptr())
+            for (NodePtr n = firstChild (); n; n = n->nextSibling ())
                 if (n->id == id_node_region)
                     n->handleEvent (event);
             break;
@@ -2197,10 +2201,12 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
         default:
             ret = TimedMrl::handleEvent (event);
     }
-    for (Node * n = firstChild ().ptr (); n; n = n->nextSibling ().ptr ())
-        if (n->id == id_node_smil ||        // support nested documents
-                n->id == RP::id_node_imfl)
-            n->handleEvent (event);
+    for (NodePtr n = firstChild (); n; n = n->nextSibling ())
+        switch (n->id) {
+            case id_node_smil:        // support nested documents
+            case RP::id_node_imfl:
+                n->handleEvent (event);
+        }
     return ret;
 }
 

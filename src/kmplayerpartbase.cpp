@@ -635,7 +635,7 @@ void PartBase::playListItemExecuted (QListViewItem * item) {
 
 void PartBase::updateTree (bool full) {
     if (!m_update_tree_timer) {
-        m_update_tree_timer = startTimer (40);
+        m_update_tree_timer = startTimer (100);
         m_update_tree_full = full;
     } else
         m_update_tree_full |= full;
