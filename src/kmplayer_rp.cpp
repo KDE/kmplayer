@@ -35,10 +35,12 @@ KDE_NO_CDTOR_EXPORT RP::Imfl::Imfl (NodePtr & d)
   : Mrl (d, id_node_imfl),
     x (0), y (0), w (0), h (0),
     fit (fit_hidden),
-    width (0), height (0), duration (0), image (0L) {}
+    width (0), height (0), duration (0),
+    image (0L), cached_image (0L) {}
 
 KDE_NO_CDTOR_EXPORT RP::Imfl::~Imfl () {
     delete image;
+    delete cached_image;
 }
 
 KDE_NO_EXPORT void RP::Imfl::defer () {
@@ -129,6 +131,12 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
             n->deactivate ();
     delete image;
     image = 0L;
+    invalidateCachedImage ();
+}
+
+KDE_NO_EXPORT void RP::Imfl::invalidateCachedImage () {
+    delete cached_image;
+    cached_image = 0L;
 }
 
 KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
@@ -154,9 +162,15 @@ KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
                     h1 = h;
                 } else
                     matrix.getXYWH (x1, y1, w1, h1);
-                QImage img;
-                img = *image;
-                p->painter.drawImage (x, y, img.scale (w1, h1));
+                if (!cached_image ||
+                        cached_image->width () != w1 ||
+                        cached_image->height () != h1) {
+                    delete cached_image;
+                    QImage img;
+                    img = *image;
+                    cached_image = new QPixmap (img.scale (w1, h1));
+                }
+                p->painter.drawPixmap (x, y, *cached_image);
             }
         }
     } else if (event->id () == event_timer) {
@@ -335,6 +349,7 @@ KDE_NO_EXPORT void RP::Crossfade::begin () {
                 painter->begin (imfl->image);
                 painter->drawPixmap (x, y, *img->image);
                 painter->end ();
+                imfl->invalidateCachedImage ();
                 imfl->repaint ();
             }
         } else {
@@ -366,6 +381,7 @@ KDE_NO_EXPORT void RP::Fadein::begin () {
                 painter.begin (imfl->image);
                 painter.drawPixmap (x, y, *img->image);
                 painter.end ();
+                imfl->invalidateCachedImage ();
                 imfl->repaint ();
             }
         } else {
@@ -394,6 +410,7 @@ KDE_NO_EXPORT void RP::Fadeout::begin () {
                 painter.fillRect (x, y, w, h, QBrush (QColor (getAttribute ("color"))));
                 painter.end ();
             }
+            imfl->invalidateCachedImage ();
             imfl->repaint ();
         }
     }
@@ -417,6 +434,7 @@ KDE_NO_EXPORT void RP::Fill::begin () {
                 painter.fillRect (x, y, w, h, QBrush (QColor (getAttribute ("color"))));
                 painter.end ();
             }
+            imfl->invalidateCachedImage ();
             imfl->repaint ();
         }
     }
@@ -444,6 +462,7 @@ KDE_NO_EXPORT void RP::Wipe::begin () {
                 painter->begin (imfl->image);
                 painter->drawPixmap (x, y, *img->image);
                 painter->end ();
+                imfl->invalidateCachedImage ();
                 imfl->repaint ();
             }
         } else {

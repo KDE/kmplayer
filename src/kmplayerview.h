@@ -156,6 +156,7 @@ protected:
     void showEvent (QShowEvent *);
     void mouseMoveEvent (QMouseEvent *);
     void mousePressEvent (QMouseEvent *);
+    void mouseDoubleClickEvent (QMouseEvent *);
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
     void contextMenuEvent (QContextMenuEvent * e);

@@ -193,6 +193,10 @@ KDE_NO_EXPORT void ViewArea::mousePressEvent (QMouseEvent * e) {
         e->accept ();
 }
 
+KDE_NO_EXPORT void ViewArea::mouseDoubleClickEvent (QMouseEvent *) {
+    m_view->fullScreen (); // screensaver stuff
+}
+
 KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
     if (e->state () == Qt::NoButton) {
         int vert_buttons_pos = height ();

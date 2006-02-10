@@ -63,6 +63,7 @@ public:
     KDE_NO_EXPORT virtual bool isMrl () const { return true; }
     virtual bool handleEvent (EventPtr event);
     void repaint (); // called whenever something changes on image
+    void invalidateCachedImage ();
     int x, y, w, h; // target area
     Fit fit;        // how to layout images
     Matrix matrix;  // for the scale factor of outer document
@@ -70,6 +71,8 @@ public:
     unsigned int duration; // cached attributes of head
     TimerInfoPtrW duration_timer;
     QPixmap * image;
+private:
+    QPixmap * cached_image;
 };
 
 class TimingsBase  : public Element {
