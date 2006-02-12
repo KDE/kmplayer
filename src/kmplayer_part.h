@@ -32,7 +32,7 @@ class JSCommandEntry;
 /*
  * Wrapper source for URLSource that has a HREF attribute
  */
-class KMPlayerHRefSource : public KMPlayer::Source {
+class KMPLAYER_NO_EXPORT KMPlayerHRefSource : public KMPlayer::Source {
     Q_OBJECT
 public:
     KMPlayerHRefSource (KMPlayer::PartBase * player);
@@ -60,7 +60,7 @@ private:
 /*
  * Part notifications to hosting application
  */
-class KMPlayerBrowserExtension : public KParts::BrowserExtension {
+class KMPLAYER_NO_EXPORT KMPlayerBrowserExtension : public KParts::BrowserExtension {
     Q_OBJECT
 public:
     KMPlayerBrowserExtension(KMPlayerPart *parent);
@@ -76,7 +76,7 @@ public:
 /*
  * Part javascript support
  */
-class KMPlayerLiveConnectExtension : public KParts::LiveConnectExtension {
+class KMPLAYER_NO_EXPORT KMPlayerLiveConnectExtension : public KParts::LiveConnectExtension {
     Q_OBJECT
 public:
     KMPlayerLiveConnectExtension (KMPlayerPart * parent);
@@ -113,7 +113,7 @@ private:
 /*
  * Part that gets created when used a KPart
  */
-class KMPlayerPart : public KMPlayer::PartBase {
+class KMPLAYER_NO_EXPORT KMPlayerPart : public KMPlayer::PartBase {
     Q_OBJECT
     friend struct GroupPredicate;
 public:

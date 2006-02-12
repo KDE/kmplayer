@@ -43,7 +43,7 @@ class TVChannel;
 /*
  * Base class for sources having a sub menu in the application
  */
-class KMPlayerMenuSource : public KMPlayer::Source {
+class KMPLAYER_NO_EXPORT KMPlayerMenuSource : public KMPlayer::Source {
     Q_OBJECT
 public:
     KMPlayerMenuSource (const QString & n, KMPlayerApp * app, QPopupMenu * m, const char * src);
@@ -57,7 +57,7 @@ protected:
 /*
  * Preference page for DVD
  */
-class KMPlayerPrefSourcePageDVD : public QFrame {
+class KMPLAYER_NO_EXPORT KMPlayerPrefSourcePageDVD : public QFrame {
     Q_OBJECT
 public:
     KMPlayerPrefSourcePageDVD (QWidget * parent);
@@ -70,7 +70,7 @@ public:
 /*
  * Source from DVD
  */
-class KMPlayerDVDSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
+class KMPLAYER_NO_EXPORT KMPlayerDVDSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
     KMPlayerDVDSource (KMPlayerApp * app, QPopupMenu * m);
@@ -108,7 +108,7 @@ private:
 /*
  * Source from DVDNav
  */
-class KMPlayerDVDNavSource : public KMPlayerMenuSource {
+class KMPLAYER_NO_EXPORT KMPlayerDVDNavSource : public KMPlayerMenuSource {
     Q_OBJECT
 public:
     KMPlayerDVDNavSource (KMPlayerApp * app, QPopupMenu * m);
@@ -127,7 +127,7 @@ public slots:
 /*
  * Preference page for VCD
  */
-class KMPlayerPrefSourcePageVCD : public QFrame {
+class KMPLAYER_NO_EXPORT KMPlayerPrefSourcePageVCD : public QFrame {
     Q_OBJECT
 public:
     KMPlayerPrefSourcePageVCD (QWidget * parent);
@@ -140,7 +140,7 @@ public:
 /*
  * Source from VCD
  */
-class KMPlayerVCDSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
+class KMPLAYER_NO_EXPORT KMPlayerVCDSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
     KMPlayerVCDSource (KMPlayerApp * app, QPopupMenu * m);
@@ -166,7 +166,7 @@ private:
 /*
  * Source from stdin (for the backends, not kmplayer)
  */
-class KMPlayerPipeSource : public KMPlayer::Source {
+class KMPLAYER_NO_EXPORT KMPlayerPipeSource : public KMPlayer::Source {
     Q_OBJECT
 public:
     KMPlayerPipeSource (KMPlayerApp * app);

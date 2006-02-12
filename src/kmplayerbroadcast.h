@@ -43,7 +43,7 @@ namespace KMPlayer {
     class FFMpeg;
 }
 
-class FFServerSetting {
+class KMPLAYER_NO_EXPORT FFServerSetting {
 public:
     KDE_NO_CDTOR_EXPORT FFServerSetting () {}
     FFServerSetting (int i, const QString & n, const QString & f, const QString & ac, int abr, int asr, const QString & vc, int vbr, int q, int fr, int gs, int w, int h);
@@ -72,7 +72,7 @@ public:
 typedef std::vector <FFServerSetting *> FFServerSettingList;
 
 
-class KMPlayerPrefBroadcastPage : public QFrame {
+class KMPLAYER_NO_EXPORT KMPlayerPrefBroadcastPage : public QFrame {
     Q_OBJECT
 public:
     KMPlayerPrefBroadcastPage (QWidget * parent);
@@ -86,7 +86,7 @@ public:
     QLineEdit * feedfilesize;
 };
 
-class KMPlayerPrefBroadcastFormatPage : public QFrame {
+class KMPLAYER_NO_EXPORT KMPlayerPrefBroadcastFormatPage : public QFrame {
     Q_OBJECT
 public:
     KMPlayerPrefBroadcastFormatPage (QWidget * parent, FFServerSettingList &);
@@ -129,7 +129,7 @@ private:
 /*
  * Preference page for ffmpeg commandline arguments
  */
-class KMPlayerFFServerConfig : public KMPlayer::PreferencesPage {
+class KMPLAYER_NO_EXPORT KMPlayerFFServerConfig : public KMPlayer::PreferencesPage {
 public:
     KMPlayerFFServerConfig ();
     KDE_NO_CDTOR_EXPORT ~KMPlayerFFServerConfig () {}
@@ -151,7 +151,7 @@ private:
 /*
  * Preference page for ffserver
  */
-class KMPlayerBroadcastConfig : public QObject, public KMPlayer::PreferencesPage {
+class KMPLAYER_NO_EXPORT KMPlayerBroadcastConfig : public QObject, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
     KMPlayerBroadcastConfig (KMPlayer::PartBase * player, KMPlayerFFServerConfig * fsc);

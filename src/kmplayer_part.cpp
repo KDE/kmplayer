@@ -52,7 +52,7 @@ using namespace KMPlayer;
 
 typedef std::list <KMPlayerPart *> KMPlayerPartList;
 
-struct KMPlayerPartStatic {
+struct KMPLAYER_NO_EXPORT KMPlayerPartStatic {
     KDE_NO_CDTOR_EXPORT KMPlayerPartStatic () {}
     ~KMPlayerPartStatic ();
     KMPlayerPartList partlist;
@@ -65,7 +65,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPartStatic::~KMPlayerPartStatic () {
     // delete map content
 }
 
-struct GroupPredicate {
+struct KMPLAYER_NO_EXPORT GroupPredicate {
     const KMPlayerPart * m_part;
     const QString & m_group;
     bool m_get_any;
@@ -662,7 +662,7 @@ enum JSCommand {
     prop_error, prop_source, prop_volume
 };
 
-struct JSCommandEntry {
+struct KMPLAYER_NO_EXPORT JSCommandEntry {
     const char * name;
     JSCommand command;
     const char * defaultvalue;

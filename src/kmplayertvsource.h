@@ -44,7 +44,7 @@ class KConfig;
 class KURLRequester;
 
 
-class TVNode : public KMPlayer::GenericMrl {
+class KMPLAYER_NO_EXPORT TVNode : public KMPlayer::GenericMrl {
 public:
     TVNode (KMPlayer::NodePtr &d, const QString &s, const char * t, short id, const QString &n=QString::null);
     KDE_NO_EXPORT const char * nodeName () const { return tag; }
@@ -56,7 +56,7 @@ protected:
 /*
  * Element for channels
  */
-class TVChannel : public TVNode {
+class KMPLAYER_NO_EXPORT TVChannel : public TVNode {
 public:
     TVChannel (KMPlayer::NodePtr & d, const QString & n, int f);
     TVChannel (KMPlayer::NodePtr & d);
@@ -67,7 +67,7 @@ public:
 /*
  * Element for inputs
  */
-class TVInput : public TVNode {
+class KMPLAYER_NO_EXPORT TVInput : public TVNode {
 public:
     TVInput (KMPlayer::NodePtr & d, const QString & n, int id);
     TVInput (KMPlayer::NodePtr & d);
@@ -79,7 +79,7 @@ public:
 /*
  * Element for TV devices
  */
-class TVDevice : public TVNode {
+class KMPLAYER_NO_EXPORT TVDevice : public TVNode {
 public:
     TVDevice (KMPlayer::NodePtr & d, const QString & d);
     TVDevice (KMPlayer::NodePtr & d);
@@ -90,7 +90,7 @@ public:
     bool zombie;
 };
 
-class TVDocument : public KMPlayer::Document {
+class KMPLAYER_NO_EXPORT TVDocument : public KMPlayer::Document {
     KMPlayerTVSource * m_source;
 public:
     TVDocument (KMPlayerTVSource *);
@@ -98,7 +98,7 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "tvdevices"; }
 };
 
-class KMPlayerPrefSourcePageTVDevice : public QFrame {
+class KMPLAYER_NO_EXPORT KMPlayerPrefSourcePageTVDevice : public QFrame {
     Q_OBJECT
 public:
     KMPlayerPrefSourcePageTVDevice (QWidget *parent, KMPlayer::NodePtr dev);
@@ -119,7 +119,7 @@ private:
     QTabWidget * inputsTab;
 };
 
-class KMPlayerPrefSourcePageTV : public QFrame
+class KMPLAYER_NO_EXPORT KMPlayerPrefSourcePageTV : public QFrame
 {
     Q_OBJECT
 public:
@@ -138,7 +138,7 @@ protected:
 /*
  * Source form scanning TV devices
  */
-class TVDeviceScannerSource : public KMPlayer::Source {
+class KMPLAYER_NO_EXPORT TVDeviceScannerSource : public KMPlayer::Source {
     Q_OBJECT
 public:
     TVDeviceScannerSource (KMPlayerTVSource * src);
@@ -169,7 +169,7 @@ private:
 /*
  * Source form TV devices, also implementing preference page for it
  */
-class KMPlayerTVSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
+class KMPLAYER_NO_EXPORT KMPlayerTVSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
     KMPlayerTVSource (KMPlayerApp * app, QPopupMenu * m);

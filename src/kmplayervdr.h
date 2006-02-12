@@ -49,7 +49,7 @@ class KListView;
 /*
  * Preference page for VDR
  */
-class KMPlayerPrefSourcePageVDR : public QFrame {
+class KMPLAYER_NO_EXPORT KMPlayerPrefSourcePageVDR : public QFrame {
     Q_OBJECT
 public:
     KMPlayerPrefSourcePageVDR (QWidget * parent, KMPlayer::PartBase * player);
@@ -68,7 +68,7 @@ private:
 /*
  * Source from VDR (XVideo actually) and socket connection
  */
-class KMPlayerVDRSource : public KMPlayer::Source, public KMPlayer::PreferencesPage {
+class KMPLAYER_NO_EXPORT KMPlayerVDRSource : public KMPlayer::Source, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
     KMPlayerVDRSource (KMPlayerApp * app);

@@ -43,7 +43,7 @@
   #endif
   #define KDE_NO_CDTOR_EXPORT __attribute__ ((visibility("hidden")))
   #define KDE_NO_EXPORT __attribute__ ((visibility("hidden")))
-  #define KMPLAYER_EXPORT KDE_EXPORT
+  #define KMPLAYER_EXPORT __attribute__ ((visibility("default")))
 #elif __GNUC__ - 0 > 3 || (__GNUC__ - 0 == 3 && __GNUC_MINOR__ - 0 > 2)
   #define KDE_NO_CDTOR_EXPORT
   #define KDE_NO_EXPORT __attribute__ ((visibility("hidden")))

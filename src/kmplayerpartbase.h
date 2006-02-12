@@ -19,6 +19,8 @@
 #ifndef KMPLAYERPARTBASE_H
 #define KMPLAYERPARTBASE_H
 
+#include "kmplayer_def.h"
+
 #include <qobject.h>
 #include <qguardedptr.h>
 #include <qvaluelist.h>
@@ -32,7 +34,6 @@
 
 #include "kmplayerview.h"
 #include "kmplayersource.h"
-#include "kmplayerprocess.h"
 
 
 class KAboutData;
