@@ -145,7 +145,7 @@ public:
 
     // these are called from Process
     void changeURL (const QString & url);
-    void updateTree (bool full=true);
+    void updateTree (bool full=true, bool force=false);
     void setLanguages (const QStringList & alang, const QStringList & slang);
 public slots:
     virtual bool openURL (const KURL & url);

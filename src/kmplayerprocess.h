@@ -188,7 +188,7 @@ private:
 /*
  * MPlayer preferences page
  */
-class MPlayerPreferencesPage : public PreferencesPage {
+class KMPLAYER_NO_EXPORT MPlayerPreferencesPage : public PreferencesPage {
 public:
     enum Pattern {
         pat_size = 0, pat_cache, pat_pos, pat_index,

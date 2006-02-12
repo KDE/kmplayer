@@ -95,7 +95,8 @@ bool KMPlayer::parseTime (const QString & vl, unsigned int & dur) {
                 dur = (unsigned int) (10 * t * 60 * 60);
             else
                 dur = (unsigned int) (10 * t);
-        }
+        } else
+            dur = 0;
     } else if (vl.find ("indefinite") > -1)
         dur = duration_infinite;
     else if (vl.find ("media") > -1)

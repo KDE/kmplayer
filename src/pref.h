@@ -21,6 +21,8 @@
 #ifndef _KMPlayerPREF_H_
 #define _KMPlayerPREF_H_
 
+#include "kmplayer_def.h"
+
 #include <kdialogbase.h>
 #include <qframe.h>
 #include <qmap.h>
@@ -62,7 +64,7 @@ class OutputDriver;
 class ColorSetting;
 class FontSetting;
 
-class Preferences : public KDialogBase
+class KMPLAYER_NO_EXPORT Preferences : public KDialogBase
 {
     Q_OBJECT
 public:
@@ -91,7 +93,7 @@ public slots:
     void confirmDefaults();
 };
 
-class PrefGeneralPageGeneral : public QFrame
+class KMPLAYER_NO_EXPORT PrefGeneralPageGeneral : public QFrame
 {
     Q_OBJECT
 public:
@@ -114,7 +116,7 @@ public:
     QSpinBox *seekTime;
 };
 
-class PrefGeneralPageLooks : public QFrame {
+class KMPLAYER_NO_EXPORT PrefGeneralPageLooks : public QFrame {
     Q_OBJECT
 public:
     PrefGeneralPageLooks (QWidget *parent, Settings *);
@@ -133,7 +135,7 @@ private:
     FontSetting * fonts;
 };
 
-class PrefSourcePageURL : public QFrame
+class KMPLAYER_NO_EXPORT PrefSourcePageURL : public QFrame
 {
     Q_OBJECT
 public:
@@ -156,7 +158,7 @@ private slots:
 };
 
 
-class PrefRecordPage : public QFrame
+class KMPLAYER_NO_EXPORT PrefRecordPage : public QFrame
 {
     Q_OBJECT
 public:
@@ -181,7 +183,7 @@ private:
     QPushButton * recordButton;
 };
 
-class RecorderPage : public QFrame
+class KMPLAYER_NO_EXPORT RecorderPage : public QFrame
 {
     Q_OBJECT
 public:
@@ -195,7 +197,7 @@ protected:
     PartBase * m_player;
 };
 
-class PrefMEncoderPage : public RecorderPage 
+class KMPLAYER_NO_EXPORT PrefMEncoderPage : public RecorderPage 
 {
     Q_OBJECT
 public:
@@ -213,7 +215,7 @@ public slots:
 private:
 };
 
-class PrefMPlayerDumpstreamPage : public RecorderPage 
+class KMPLAYER_NO_EXPORT PrefMPlayerDumpstreamPage : public RecorderPage 
 {
     Q_OBJECT
 public:
@@ -228,7 +230,7 @@ public:
 private:
 };
 
-class PrefFFMpegPage : public RecorderPage
+class KMPLAYER_NO_EXPORT PrefFFMpegPage : public RecorderPage
 {
     Q_OBJECT
 public:
@@ -245,7 +247,7 @@ private:
 };
 
 
-class PrefGeneralPageOutput : public QFrame
+class KMPLAYER_NO_EXPORT PrefGeneralPageOutput : public QFrame
 {
     Q_OBJECT
 public:
@@ -256,7 +258,7 @@ public:
     QListBox *audioDriver;
 };
 
-class PrefOPPageGeneral : public QFrame
+class KMPLAYER_NO_EXPORT PrefOPPageGeneral : public QFrame
 {
     Q_OBJECT
 public:
@@ -264,7 +266,7 @@ public:
     ~PrefOPPageGeneral() {}
 };
 
-class PrefOPPagePostProc : public QFrame
+class KMPLAYER_NO_EXPORT PrefOPPagePostProc : public QFrame
 {
     Q_OBJECT
 public:

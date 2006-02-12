@@ -27,31 +27,8 @@
 #include <sys/time.h>
 
 #include <qstring.h>
-#ifndef ASSERT
-#define ASSERT Q_ASSERT
-#endif
 
-#include <kdemacros.h>
-
-#undef KDE_NO_CDTOR_EXPORT
-#undef KDE_NO_EXPORT
-#ifndef KDE_EXPORT
-  #define KDE_EXPORT
-#endif
-#if __GNUC__ - 0 > 3 || (__GNUC__ - 0 == 3 && __GNUC_MINOR__ - 0 > 3)
-  #define KDE_NO_CDTOR_EXPORT __attribute__ ((visibility("hidden")))
-  #define KDE_NO_EXPORT __attribute__ ((visibility("hidden")))
-  #define KMPLAYER_EXPORT KDE_EXPORT
-#elif __GNUC__ - 0 > 3 || (__GNUC__ - 0 == 3 && __GNUC_MINOR__ - 0 > 2)
-  #define KDE_NO_CDTOR_EXPORT
-  #define KDE_NO_EXPORT __attribute__ ((visibility("hidden")))
-  #define KMPLAYER_EXPORT
-#else
-  #define KDE_NO_CDTOR_EXPORT
-  #define KDE_NO_EXPORT
-  #define KMPLAYER_EXPORT
-#endif
-
+#include "kmplayer_def.h"
 #include "kmplayershared.h"
 
 class QTextStream;

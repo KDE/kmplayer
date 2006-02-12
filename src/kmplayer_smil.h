@@ -54,7 +54,7 @@ public:
 /*
  * Interpretation of sizes
  */
-class SizeType {
+class KMPLAYER_NO_EXPORT SizeType {
 public:
     SizeType ();
     void reset ();
@@ -123,7 +123,7 @@ ITEM_AS_POINTER(KMPlayer::ElementRuntime)
 /**
  * For RegPoint, RegionRuntime and MediaRuntime, having sizes
  */
-class CalculatedSizer {
+class KMPLAYER_NO_EXPORT CalculatedSizer {
 public:
     KDE_NO_CDTOR_EXPORT CalculatedSizer () {}
     KDE_NO_CDTOR_EXPORT ~CalculatedSizer () {}
@@ -138,7 +138,7 @@ public:
 /**
  * Live representation of a SMIL element having timings
  */
-class TimedRuntime : public ElementRuntime {
+class KMPLAYER_NO_EXPORT TimedRuntime : public ElementRuntime {
 public:
     enum TimingState {
         timings_reset = 0, timings_began, timings_started, timings_stopped
@@ -180,7 +180,7 @@ protected:
 /**
  * Runtime data for a region
  */
-class RegionRuntime : public ElementRuntime {
+class KMPLAYER_NO_EXPORT RegionRuntime : public ElementRuntime {
 public:
     RegionRuntime (NodePtr e);
     KDE_NO_CDTOR_EXPORT ~RegionRuntime () {}
@@ -198,7 +198,7 @@ private:
 /**
  * Runtime data for a regPoint
  */
-class RegPointRuntime : public ElementRuntime {
+class KMPLAYER_NO_EXPORT RegPointRuntime : public ElementRuntime {
 public:
     RegPointRuntime (NodePtr e);
     KDE_NO_CDTOR_EXPORT ~RegPointRuntime () {}
@@ -206,7 +206,7 @@ public:
     CalculatedSizer sizes;
 };
 
-class RemoteObject : public QObject {
+class KMPLAYER_NO_EXPORT RemoteObject : public QObject {
     Q_OBJECT
 public:
     RemoteObject ();
@@ -230,7 +230,7 @@ protected:
 /**
  * Some common runtime data for all mediatype classes
  */
-class MediaTypeRuntime : public RemoteObject, public TimedRuntime {
+class KMPLAYER_NO_EXPORT MediaTypeRuntime : public RemoteObject, public TimedRuntime {
 public:
     ~MediaTypeRuntime ();
     virtual void end ();
@@ -258,7 +258,7 @@ protected:
 /**
  * Data needed for audio/video clips
  */
-class AudioVideoData : public MediaTypeRuntime {
+class KMPLAYER_NO_EXPORT AudioVideoData : public MediaTypeRuntime {
 public:
     AudioVideoData (NodePtr e);
     virtual bool isAudioVideo ();
@@ -272,7 +272,7 @@ public:
 /**
  * Data needed for an image
  */
-class ImageData {
+class KMPLAYER_NO_EXPORT ImageData {
 public:
     ImageData ();
     ~ImageData ();
@@ -283,7 +283,7 @@ public:
     bool have_frame;
 };
 
-class ImageRuntime : public MediaTypeRuntime {
+class KMPLAYER_NO_EXPORT ImageRuntime : public MediaTypeRuntime {
     Q_OBJECT
 public:
     ImageRuntime (NodePtr e);
@@ -305,7 +305,7 @@ private slots:
 /**
  * Data needed for text
  */
-class TextData : public MediaTypeRuntime {
+class KMPLAYER_NO_EXPORT TextData : public MediaTypeRuntime {
 public:
     TextData (NodePtr e);
     ~TextData ();
@@ -321,7 +321,7 @@ protected:
 /**
  * Stores runtime data of elements from animate group set/animate/..
  */
-class AnimateGroupData : public TimedRuntime {
+class KMPLAYER_NO_EXPORT AnimateGroupData : public TimedRuntime {
 public:
     KDE_NO_CDTOR_EXPORT ~AnimateGroupData () {}
     virtual void parseParam (const QString & name, const QString & value);
@@ -341,7 +341,7 @@ protected:
 /**
  * Stores runtime data of set element
  */
-class SetData : public AnimateGroupData {
+class KMPLAYER_NO_EXPORT SetData : public AnimateGroupData {
 public:
     KDE_NO_CDTOR_EXPORT SetData (NodePtr e) : AnimateGroupData (e) {}
     KDE_NO_CDTOR_EXPORT ~SetData () {}
@@ -352,7 +352,7 @@ protected:
 /**
  * Stores runtime data of animate element
  */
-class AnimateData : public AnimateGroupData {
+class KMPLAYER_NO_EXPORT AnimateData : public AnimateGroupData {
 public:
     AnimateData (NodePtr e);
     KDE_NO_CDTOR_EXPORT ~AnimateData () {}
@@ -436,7 +436,7 @@ public:
  * Represents optional 'head' tag of SMIL document as in
  * &lt;smil&gt;&lt;head/&gt;&lt;body/&gt;&lt;/smil&gt;
  */
-class Head : public Element {
+class KMPLAYER_NO_EXPORT Head : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Head (NodePtr & d) : Element (d, id_node_head) {}
     NodePtr childFromTag (const QString & tag);
@@ -448,7 +448,7 @@ public:
 /**
  * Base class for SMIL::Region, SMIL::RootLayout and SMIL::Layout
  */
-class RegionBase : public Element {
+class KMPLAYER_NO_EXPORT RegionBase : public Element {
 public:
     virtual ElementRuntimePtr getRuntime ();
     bool expose () const { return false; }
@@ -485,7 +485,7 @@ protected:
 /**
  * Defines region layout, should reside below 'head' element
  */
-class Layout : public RegionBase {
+class KMPLAYER_NO_EXPORT Layout : public RegionBase {
 public:
     Layout (NodePtr & d);
     NodePtr childFromTag (const QString & tag);
@@ -504,7 +504,7 @@ public:
 /**
  * Represents a rectangle on the viewing area
  */
-class Region : public RegionBase {
+class KMPLAYER_NO_EXPORT Region : public RegionBase {
 public:
     Region (NodePtr & d);
     KDE_NO_EXPORT const char * nodeName () const { return "region"; }
@@ -526,7 +526,7 @@ private:
 /**
  * Represents the root area for the other regions
  */
-class RootLayout : public RegionBase {
+class KMPLAYER_NO_EXPORT RootLayout : public RegionBase {
 public:
     KDE_NO_CDTOR_EXPORT RootLayout (NodePtr & d)
         : RegionBase (d, id_node_root_layout) {}
@@ -536,7 +536,7 @@ public:
 /**
  * Represents a regPoint element for alignment inside regions
  */
-class RegPoint : public Element {
+class KMPLAYER_NO_EXPORT RegPoint : public Element {
 public:
     KDE_NO_CDTOR_EXPORT RegPoint (NodePtr & d) : Element (d, id_node_regpoint){}
     KDE_NO_CDTOR_EXPORT ~RegPoint () {}
@@ -549,7 +549,7 @@ public:
 /**
  * Base for all SMIL media elements having begin/dur/end/.. attributes
  */
-class TimedMrl : public Mrl {
+class KMPLAYER_NO_EXPORT TimedMrl : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT ~TimedMrl () {}
     ElementRuntimePtr getRuntime ();
@@ -581,7 +581,7 @@ KDE_NO_EXPORT inline TimedRuntime * TimedMrl::timedRuntime () {
 /**
  * Abstract base for the group elements (par/seq/excl/..)
  */
-class GroupBase : public TimedMrl {
+class KMPLAYER_NO_EXPORT GroupBase : public TimedMrl {
 public:
     KDE_NO_CDTOR_EXPORT ~GroupBase () {}
     bool isMrl ();
@@ -594,7 +594,7 @@ protected:
 /**
  * A Par represents parallel processing of all its children
  */
-class Par : public GroupBase {
+class KMPLAYER_NO_EXPORT Par : public GroupBase {
 public:
     KDE_NO_CDTOR_EXPORT Par (NodePtr & d) : GroupBase (d, id_node_par) {}
     NodePtr childFromTag (const QString & tag);
@@ -607,7 +607,7 @@ public:
 /**
  * A Seq represents sequential processing of all its children
  */
-class Seq : public GroupBase {
+class KMPLAYER_NO_EXPORT Seq : public GroupBase {
 public:
     KDE_NO_CDTOR_EXPORT Seq (NodePtr & d) : GroupBase(d, id_node_seq) {}
     NodePtr childFromTag (const QString & tag);
@@ -621,7 +621,7 @@ protected:
  * Represents the 'body' tag of SMIL document as in
  * &lt;smil&gt;&lt;head/&gt;&lt;body/&gt;&lt;/smil&gt;
  */
-class Body : public Seq {
+class KMPLAYER_NO_EXPORT Body : public Seq {
 public:
     KDE_NO_CDTOR_EXPORT Body (NodePtr & d) : Seq (d, id_node_body) {}
     KDE_NO_EXPORT const char * nodeName () const { return "body"; }
@@ -631,7 +631,7 @@ public:
 /**
  * An Excl represents exclusive processing of one of its children
  */
-class Excl : public GroupBase {
+class KMPLAYER_NO_EXPORT Excl : public GroupBase {
 public:
     KDE_NO_CDTOR_EXPORT Excl (NodePtr & d) : GroupBase (d, id_node_excl) {}
     NodePtr childFromTag (const QString & tag);
@@ -648,7 +648,7 @@ private:
 /*
  * An automatic selection between child elements based on a condition
  */
-class Switch : public GroupBase {
+class KMPLAYER_NO_EXPORT Switch : public GroupBase {
 public:
     KDE_NO_CDTOR_EXPORT Switch (NodePtr &d) : GroupBase (d, id_node_switch) {}
     NodePtr childFromTag (const QString & tag);
@@ -666,7 +666,7 @@ public:
 /**
  * Abstract base for the MediaType classes (video/audio/text/img/..)
  */
-class MediaType : public TimedMrl {
+class KMPLAYER_NO_EXPORT MediaType : public TimedMrl {
 public:
     MediaType (NodePtr & d, const QString & t, short id);
     NodePtr childFromTag (const QString & tag);
@@ -683,7 +683,7 @@ protected:
     NodeRefListPtr m_InBoundsListeners;    // mouse entered
 };
 
-class AVMediaType : public MediaType {
+class KMPLAYER_NO_EXPORT AVMediaType : public MediaType {
 public:
     AVMediaType (NodePtr & d, const QString & t);
     NodePtr childFromTag (const QString & tag);
@@ -695,20 +695,20 @@ public:
     virtual bool handleEvent (EventPtr event);
 };
 
-class ImageMediaType : public MediaType {
+class KMPLAYER_NO_EXPORT ImageMediaType : public MediaType {
 public:
     ImageMediaType (NodePtr & d);
     ElementRuntimePtr getNewRuntime ();
     NodePtr childFromTag (const QString & tag);
 };
 
-class TextMediaType : public MediaType {
+class KMPLAYER_NO_EXPORT TextMediaType : public MediaType {
 public:
     TextMediaType (NodePtr & d);
     ElementRuntimePtr getNewRuntime ();
 };
 
-class Set : public TimedMrl {
+class KMPLAYER_NO_EXPORT Set : public TimedMrl {
 public:
     KDE_NO_CDTOR_EXPORT Set (NodePtr & d) : TimedMrl (d, id_node_set) {}
     KDE_NO_EXPORT const char * nodeName () const { return "set"; }
@@ -716,7 +716,7 @@ public:
     bool isMrl () { return false; }
 };
 
-class Animate : public TimedMrl {
+class KMPLAYER_NO_EXPORT Animate : public TimedMrl {
 public:
     KDE_NO_CDTOR_EXPORT Animate (NodePtr & d) : TimedMrl (d, id_node_animate) {}
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
@@ -725,7 +725,7 @@ public:
     bool handleEvent (EventPtr event);
 };
 
-class Param : public Element {
+class KMPLAYER_NO_EXPORT Param : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Param (NodePtr & d) : Element (d, id_node_param) {}
     KDE_NO_EXPORT const char * nodeName () const { return "param"; }

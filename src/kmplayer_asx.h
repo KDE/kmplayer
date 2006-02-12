@@ -55,7 +55,7 @@ public:
 /**
  * Entry tag as found in ASX for playlist item
  */
-class Entry : public Mrl {
+class KMPLAYER_NO_EXPORT Entry : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Entry (NodePtr & d) : Mrl (d, id_node_entry) {}
     NodePtr childFromTag (const QString & tag);
@@ -79,7 +79,7 @@ public:
 /**
  * Ref tag as found in ASX for URL item in playlist item
  */
-class Ref : public Mrl {
+class KMPLAYER_NO_EXPORT Ref : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Ref (NodePtr & d) : Mrl (d, id_node_ref) {}
     //NodePtr childFromTag (const QString & tag);
@@ -91,7 +91,7 @@ public:
 /**
  * EntryRef tag as found in ASX for shortcut of Entry plus Ref playlist item
  */
-class EntryRef : public Mrl {
+class KMPLAYER_NO_EXPORT EntryRef : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT EntryRef (NodePtr & d) : Mrl (d, id_node_entryref) {}
     //NodePtr childFromTag (const QString & tag);

@@ -75,7 +75,7 @@ private:
     QPixmap * cached_image;
 };
 
-class TimingsBase  : public Element {
+class KMPLAYER_NO_EXPORT TimingsBase  : public Element {
 public:
     TimingsBase (NodePtr & d, const short id);
     KDE_NO_CDTOR_EXPORT ~TimingsBase () {}
@@ -92,7 +92,7 @@ protected:
     TimerInfoPtrW start_timer, duration_timer;
 };
 
-class Crossfade : public TimingsBase {
+class KMPLAYER_NO_EXPORT Crossfade : public TimingsBase {
 public:
     KDE_NO_CDTOR_EXPORT Crossfade (NodePtr & d)
         : TimingsBase (d, id_node_crossfade) {}
@@ -102,7 +102,7 @@ public:
     virtual void begin ();
 };
 
-class Fadein : public TimingsBase {
+class KMPLAYER_NO_EXPORT Fadein : public TimingsBase {
 public:
     KDE_NO_CDTOR_EXPORT Fadein (NodePtr & d) : TimingsBase(d, id_node_fadein) {}
     KDE_NO_CDTOR_EXPORT ~Fadein () {}
@@ -111,7 +111,7 @@ public:
     virtual void begin ();
 };
 
-class Fadeout : public TimingsBase {
+class KMPLAYER_NO_EXPORT Fadeout : public TimingsBase {
 public:
     KDE_NO_CDTOR_EXPORT Fadeout(NodePtr &d) : TimingsBase(d, id_node_fadeout) {}
     KDE_NO_CDTOR_EXPORT ~Fadeout () {}
@@ -120,7 +120,7 @@ public:
     virtual void begin ();
 };
 
-class Fill : public TimingsBase {
+class KMPLAYER_NO_EXPORT Fill : public TimingsBase {
 public:
     KDE_NO_CDTOR_EXPORT Fill (NodePtr & d) : TimingsBase (d, id_node_fill) {}
     KDE_NO_CDTOR_EXPORT ~Fill () {}
@@ -129,7 +129,7 @@ public:
     virtual void begin ();
 };
 
-class Wipe : public TimingsBase {
+class KMPLAYER_NO_EXPORT Wipe : public TimingsBase {
 public:
     KDE_NO_CDTOR_EXPORT Wipe (NodePtr & d) : TimingsBase (d, id_node_wipe) {}
     KDE_NO_CDTOR_EXPORT ~Wipe () {}
@@ -138,7 +138,7 @@ public:
     virtual void begin ();
 };
 
-class Image : public RemoteObject, public Mrl {
+class KMPLAYER_NO_EXPORT Image : public RemoteObject, public Mrl {
     Q_OBJECT
 public:
     Image (NodePtr & d);

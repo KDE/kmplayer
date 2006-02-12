@@ -420,6 +420,7 @@ void PartBase::setSource (Source * _source) {
         m_view->viewer ()->setAspect (0.0);
     }
     if (m_source) QTimer::singleShot (0, m_source, SLOT (activate ()));
+    updateTree (true, true);
     emit sourceChanged (old_source, m_source);
 }
 
@@ -512,13 +513,7 @@ void PartBase::timerEvent (QTimerEvent * e) {
         }
     } else if (e->timerId () == m_update_tree_timer) {
         m_update_tree_timer = 0;
-        m_in_update_tree = true;
-        if (m_update_tree_full) {
-            if (m_source)
-                emit treeChanged (m_source->document (), m_source->current ());
-        } else
-            emit treeUpdated ();
-        m_in_update_tree = false;
+        updateTree (m_update_tree_full, true);
     }
     killTimer (e->timerId ());
 }
@@ -633,8 +628,20 @@ void PartBase::playListItemExecuted (QListViewItem * item) {
         m_view->viewArea ()->setFocus ();
 }
 
-void PartBase::updateTree (bool full) {
-    if (!m_update_tree_timer) {
+void PartBase::updateTree (bool full, bool force) {
+    if (force) {
+        m_in_update_tree = true;
+        if (m_update_tree_full) {
+            if (m_source)
+                emit treeChanged (m_source->document (), m_source->current ());
+        } else
+            emit treeUpdated ();
+        m_in_update_tree = false;
+        if (m_update_tree_timer) {
+            killTimer (m_update_tree_timer);
+            m_update_tree_timer = 0;
+        }
+    } else if (!m_update_tree_timer) {
         m_update_tree_timer = startTimer (100);
         m_update_tree_full = full;
     } else

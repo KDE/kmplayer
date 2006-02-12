@@ -47,7 +47,7 @@ public:
     bool expose () const { return false; }
 };
     
-class Channel : public Mrl {
+class KMPLAYER_NO_EXPORT Channel : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Channel (NodePtr & d) : Mrl (d, id_node_channel) {}
     NodePtr childFromTag (const QString & tag);
@@ -57,7 +57,7 @@ public:
     bool expose () const;
 };
 
-class Item : public Mrl {
+class KMPLAYER_NO_EXPORT Item : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Item (NodePtr & d) : Mrl (d, id_node_item) {}
     NodePtr childFromTag (const QString & tag);
@@ -68,7 +68,7 @@ public:
     void deactivate ();
 };
 
-class Enclosure : public Mrl {
+class KMPLAYER_NO_EXPORT Enclosure : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Enclosure(NodePtr &d) : Mrl(d, id_node_enclosure) {}
     KDE_NO_EXPORT const char * nodeName () const { return "enclosure"; }

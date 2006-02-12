@@ -575,11 +575,11 @@ void PlayListView::updateTree (NodePtr root, NodePtr active) {
             text = root_mrl->pretty_name;
     }
     rootitem->setText(0, text);
+    rootitem->setPixmap (0, url_pix);
     for (NodePtr c = root->lastChild (); c; c = c->previousSibling ())
         populate (c, active, rootitem, &curitem);
     if (rootitem->firstChild () && !rootitem->isOpen ())
         setOpen (rootitem, true);
-    rootitem->setPixmap (0, url_pix);
     if (curitem) {
         setSelected (curitem, true);
         ensureItemVisible (curitem);

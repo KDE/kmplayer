@@ -835,7 +835,7 @@ static struct MPlayerPattern {
 
 namespace KMPlayer {
 
-class MPlayerPreferencesFrame : public QFrame {
+class KMPLAYER_NO_EXPORT MPlayerPreferencesFrame : public QFrame {
 public:
     MPlayerPreferencesFrame (QWidget * parent);
     QTable * table;
@@ -1486,7 +1486,7 @@ void TypeNode::changedXML (QTextStream & out) {
 
 namespace KMPlayer {
 
-class XMLPreferencesFrame : public QFrame {
+class KMPLAYER_NO_EXPORT XMLPreferencesFrame : public QFrame {
 public:
     XMLPreferencesFrame (QWidget * parent, CallbackProcess *);
     KDE_NO_CDTOR_EXPORT ~XMLPreferencesFrame () {}

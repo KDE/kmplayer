@@ -48,7 +48,7 @@ public:
     bool expose () const { return !pretty_name.isEmpty (); }
 };
 
-class Entry : public Mrl {
+class KMPLAYER_NO_EXPORT Entry : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Entry (NodePtr & d) : Mrl (d, id_node_entry) {}
     NodePtr childFromTag (const QString & tag);
@@ -57,7 +57,7 @@ public:
     void closed ();
 };
 
-class Link : public Mrl {
+class KMPLAYER_NO_EXPORT Link : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Link (NodePtr & d) : Mrl (d, id_node_link) {}
     KDE_NO_EXPORT const char * nodeName () const { return "link"; }
@@ -65,7 +65,7 @@ public:
     void closed ();
 };
 
-class Content : public Mrl {
+class KMPLAYER_NO_EXPORT Content : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Content (NodePtr &d) : Mrl(d, id_node_content) {}
     KDE_NO_EXPORT const char * nodeName () const { return "content"; }
