@@ -1034,6 +1034,14 @@ KDE_NO_CDTOR_EXPORT View::~View () {
         delete m_view_area;
 }
 
+KDE_NO_EXPORT void View::setEraseColor (const QColor & color) {
+    KMediaPlayer::View::setEraseColor (color);
+    if (statusBar ()) {
+        statusBar ()->setEraseColor (color);
+        controlPanel ()->setEraseColor (color);
+    }
+}
+
 void View::setInfoMessage (const QString & msg) {
     bool ismain = m_dockarea->getMainDockWidget () == m_dock_infopanel;
     if (msg.isEmpty ()) {

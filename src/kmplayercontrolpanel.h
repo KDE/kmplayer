@@ -41,7 +41,7 @@ class View;
 /*
  * A button from the controlpanel
  */
-class KMPlayerMenuButton : public QPushButton {
+class KMPLAYER_NO_EXPORT KMPlayerMenuButton : public QPushButton {
     Q_OBJECT
 public:
     KMPlayerMenuButton (QWidget *, QBoxLayout *, const char **, int = 0);
@@ -115,6 +115,7 @@ public:
     void setPlaying (bool play);
     void setRecording (bool record);
     void setAutoControls (bool b);
+    void setPalette (const QPalette &);
     KDE_NO_EXPORT bool autoControls () const { return m_auto_controls; }
     KDE_NO_EXPORT QSlider * positionSlider () const { return m_posSlider; }
     KDE_NO_EXPORT QSlider * contrastSlider () const { return m_contrastSlider; }

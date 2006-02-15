@@ -247,6 +247,7 @@ public:
     void showWidget (WidgetType w);
     void setControlPanelMode (ControlPanelMode m);
     void setStatusBarMode (StatusBarMode m);
+    void setEraseColor (const QColor &);
     KDE_NO_EXPORT ControlPanelMode controlPanelMode () const { return m_controlpanel_mode; }
     KDE_NO_EXPORT StatusBarMode statusBarMode () const { return m_statusbar_mode; }
     void delayedShowButtons (bool show);

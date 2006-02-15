@@ -357,10 +357,10 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     m_buttons[button_config] = new KMPlayerMenuButton (this, m_buttonbox, config_xpm);
     m_buttons[button_playlist] = ctrlButton (this, m_buttonbox, playlist_xpm);
     m_buttons[button_back] = ctrlButton (this, m_buttonbox, back_xpm);
-    m_buttons[button_play] = ctrlButton (this, m_buttonbox, play_xpm, Qt::Key_R);
+    m_buttons[button_play] = ctrlButton(this, m_buttonbox, play_xpm, Qt::Key_R);
     m_buttons[button_forward] = ctrlButton (this, m_buttonbox, forward_xpm);
-    m_buttons[button_stop] = ctrlButton (this, m_buttonbox, stop_xpm, Qt::Key_S);
-    m_buttons[button_pause] = ctrlButton (this, m_buttonbox, pause_xpm, Qt::Key_P);
+    m_buttons[button_stop] = ctrlButton(this, m_buttonbox, stop_xpm, Qt::Key_S);
+    m_buttons[button_pause]=ctrlButton(this, m_buttonbox, pause_xpm, Qt::Key_P);
     m_buttons[button_record] = ctrlButton (this, m_buttonbox, record_xpm);
     m_buttons[button_broadcast] = ctrlButton (this, m_buttonbox, broadcast_xpm);
     m_buttons[button_language] = new KMPlayerMenuButton (this, m_buttonbox, language_xpm);
@@ -390,7 +390,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     m_zoomMenu->insertItem (i18n ("100%"), menu_zoom100);
     m_zoomMenu->insertItem (i18n ("150%"), menu_zoom150);
     m_popupMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("viewmag"), KIcon::Small, 0, false), i18n ("&Zoom"), m_zoomMenu, menu_zoom);
-    m_popupMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("window_fullscreen"), KIcon::Small, 0, true), i18n ("&Full Screen"), menu_fullscreen);
+    m_popupMenu->insertItem (KGlobal::iconLoader()->loadIconSet (QString ("window_fullscreen"), KIcon::Small, 0, true), i18n ("&Full Screen"), menu_fullscreen);
     m_popupMenu->setAccel (QKeySequence (Qt::Key_F), menu_fullscreen);
     m_popupMenu->insertSeparator ();
     m_colorMenu = new KMPlayerPopupMenu (this);
@@ -434,6 +434,27 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     connect (m_languageMenu, SIGNAL(mouseLeft ()), this, SLOT(menuMouseLeft()));
     connect (m_subtitleMenu, SIGNAL(mouseLeft ()), this, SLOT(menuMouseLeft()));
     connect (m_audioMenu, SIGNAL (mouseLeft ()), this, SLOT (menuMouseLeft ()));
+}
+
+KDE_NO_EXPORT void ControlPanel::setPalette (const QPalette & pal) {
+    QWidget::setPalette (pal);
+    QColor c = paletteForegroundColor ();
+    strncpy (xpm_fg_color, QString().sprintf(".      c #%02x%02x%02x", c.red(), c.green(),c.blue()).ascii(), 31);
+    xpm_fg_color[31] = 0;
+    m_buttons[button_config]->setIconSet (QIconSet (QPixmap (config_xpm)));
+    m_buttons[button_playlist]->setIconSet (QIconSet (QPixmap (playlist_xpm)));
+    m_buttons[button_back]->setIconSet (QIconSet (QPixmap (back_xpm)));
+    m_buttons[button_play]->setIconSet (QIconSet (QPixmap (play_xpm)));
+    m_buttons[button_forward]->setIconSet (QIconSet (QPixmap (forward_xpm)));
+    m_buttons[button_stop]->setIconSet (QIconSet (QPixmap (stop_xpm)));
+    m_buttons[button_pause]->setIconSet (QIconSet (QPixmap (pause_xpm)));
+    m_buttons[button_record]->setIconSet (QIconSet (QPixmap (record_xpm)));
+    m_buttons[button_broadcast]->setIconSet (QIconSet (QPixmap (broadcast_xpm)));
+    m_buttons[button_language]->setIconSet (QIconSet (QPixmap (language_xpm)));
+    m_buttons[button_red]->setIconSet (QIconSet (QPixmap (red_xpm)));
+    m_buttons[button_green]->setIconSet (QIconSet (QPixmap (green_xpm)));
+    m_buttons[button_yellow]->setIconSet (QIconSet (QPixmap (yellow_xpm)));
+    m_buttons[button_blue]->setIconSet (QIconSet (QPixmap (blue_xpm)));
 }
 
 KDE_NO_EXPORT void ControlPanel::timerEvent (QTimerEvent * e) {
