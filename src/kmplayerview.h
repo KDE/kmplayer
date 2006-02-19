@@ -108,7 +108,7 @@ private slots:
     void slotFindOk ();
     void slotFindNext ();
 private:
-    void populate (NodePtr e, NodePtr focus, QListViewItem * item, QListViewItem ** curitem);
+    ListViewItem * populate (NodePtr e, NodePtr focus, ListViewItem * item, ListViewItem ** curitem);
     bool findNodeInTree (NodePtr n, QListViewItem *& item);
     View * m_view;
     QPopupMenu * m_itemmenu;
