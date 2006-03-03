@@ -31,6 +31,7 @@ namespace KIO {
     class Job;
 }
 class QPixmap;
+class QImage;
 
 namespace KMPlayer {
 
@@ -149,7 +150,7 @@ public:
     virtual void closed ();
     bool isReady (); // is downloading ready
     NodePtrW ready_waiter; // crossfade/wipe that needed image while downloading
-    QPixmap * image;
+    QImage * image;
     //bool expose () const { return false; }
 protected:
     virtual void remoteReady ();

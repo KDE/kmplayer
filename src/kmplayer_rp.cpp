@@ -242,11 +242,11 @@ KDE_NO_EXPORT void RP::Image::deactivate () {
 KDE_NO_EXPORT void RP::Image::remoteReady () {
     kdDebug () << "RP::Image::remoteReady" << endl;
     if (!m_data.isEmpty ()) {
-        QPixmap *pix = new QPixmap (m_data);
-        if (!pix->isNull ()) {
-            image = pix;
+        QImage * img = new QImage (m_data);
+        if (!img->isNull ()) {
+            image = img;
         } else
-            delete pix;
+            delete img;
     }
     if (ready_waiter) {
         document ()->proceed ();
@@ -345,10 +345,10 @@ KDE_NO_EXPORT void RP::Crossfade::begin () {
     kdDebug () << "RP::Crossfade::begin img ready:" << img->isReady () << endl;
         if (img->isReady ()) {
             if (img->image) {
-                QPainter * painter = new QPainter ();
-                painter->begin (imfl->image);
-                painter->drawPixmap (x, y, *img->image);
-                painter->end ();
+                QPainter painter;
+                painter.begin (imfl->image);
+                painter.drawImage (x, y, *img->image);
+                painter.end ();
                 imfl->invalidateCachedImage ();
                 imfl->repaint ();
             }
@@ -379,7 +379,7 @@ KDE_NO_EXPORT void RP::Fadein::begin () {
             if (img->image) {
                 QPainter painter;
                 painter.begin (imfl->image);
-                painter.drawPixmap (x, y, *img->image);
+                painter.drawImage (x, y, *img->image);
                 painter.end ();
                 imfl->invalidateCachedImage ();
                 imfl->repaint ();
@@ -458,10 +458,10 @@ KDE_NO_EXPORT void RP::Wipe::begin () {
     kdDebug () << "RP::Wipe::begin img ready:" << img->isReady () << endl;
         if (img->isReady ()) {
             if (img->image) {
-                QPainter * painter = new QPainter ();
-                painter->begin (imfl->image);
-                painter->drawPixmap (x, y, *img->image);
-                painter->end ();
+                QPainter painter;
+                painter.begin (imfl->image);
+                painter.drawImage (x, y, *img->image);
+                painter.end ();
                 imfl->invalidateCachedImage ();
                 imfl->repaint ();
             }
