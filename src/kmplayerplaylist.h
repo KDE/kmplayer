@@ -412,6 +412,12 @@ public:
      */
     void propagateEvent (EventPtr event);
     /**
+     * Adds node to call 'handleEvent()' for all events that gets
+     * delivered to this node, ignored by default
+     */
+    virtual void registerEventHandler (NodePtr handler);
+    virtual void deregisterEventHandler (NodePtr handler);
+    /**
      * Activates element, sets state to state_activated. Will call activate() on
      * firstChild or call deactivate().
      */
@@ -568,6 +574,14 @@ public:
      * Reimplement to callback with requestPlayURL if isMrl()
      */ 
     virtual void activate ();
+    /**
+     * By default support one event handler (eg. SMIL or RP child document)
+     */
+    virtual void registerEventHandler (NodePtr handler);
+    virtual void deregisterEventHandler (NodePtr handler);
+    virtual bool handleEvent (EventPtr event);
+
+    NodePtrW event_handler;
     QString src;
     QString pretty_name;
     QString mimetype;
@@ -711,6 +725,11 @@ public:
      * Document has list of postponed listeners, eg. for running (gif)movies
      */
     virtual NodeRefListPtr listeners (unsigned int event_id);
+    /**
+     * Reimplement, so it will call PlayListNotify::setEventDispatcher
+     */
+    virtual void registerEventHandler (NodePtr handler);
+    virtual void deregisterEventHandler (NodePtr handler);
 
     NodePtrW rootLayout;
     List <TimerInfo> timers; //FIXME: make as connections

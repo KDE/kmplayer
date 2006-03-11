@@ -1,0 +1,16 @@
+<smil>
+  <head>
+    <layout>
+      <root-layout width="320" height="260"/>
+      <region id="reg_smil" left="0" top="0" right="0" height="240"/>
+      <region id="reg_but" left="0" top="240" width="320" height="20" background-color="LightGray"/>
+    </layout>
+  </head>
+  <body>
+    <excl>
+      <text src="data:,Start" id="text1" region="reg_but" dur="indefinite" fill="freeze">
+      </text>
+      <video src="excl_timings.smil" id="video1" region="reg_smil" begin="reg_but.activateEvent"/>
+    </excl>
+  </body>
+</smil>

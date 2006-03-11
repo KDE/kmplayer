@@ -467,6 +467,10 @@ QString Node::nodeValue () const {
     return QString::null;
 }
 
+void Node::registerEventHandler (NodePtr) {}
+
+void Node::deregisterEventHandler (NodePtr) {}
+
 //-----------------------------------------------------------------------------
 
 RefNode::RefNode (NodePtr & d, NodePtr ref)
@@ -594,6 +598,37 @@ void Mrl::activate () {
             setState (state_began);
     } else
         deactivate (); // nothing to activate
+}
+
+static NodePtr findChainEventHandler (NodePtr node) {
+    Node * p = node->parentNode ().ptr ();
+    Mrl * mrl = p ? p->mrl () : 0L;
+    while (p && (!mrl || !mrl->event_handler)) {
+        p = p->parentNode ().ptr ();
+        mrl = p ? p->mrl () : 0L;
+    }
+    if (!mrl)
+        return node->document ();
+    else
+        return mrl->event_handler;
+}
+
+void Mrl::registerEventHandler (NodePtr handler) {
+    event_handler = handler;
+    findChainEventHandler (this)->registerEventHandler (this);
+}
+
+void Mrl::deregisterEventHandler (NodePtr handler) {
+    if (event_handler == handler) {
+        event_handler = 0L;
+        findChainEventHandler (this)->deregisterEventHandler (this);
+    }
+}
+
+bool Mrl::handleEvent (EventPtr event) {
+    if (event_handler)
+        return event_handler->handleEvent (event);
+    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -814,6 +849,18 @@ void Document::proceed () {
         }
         propagateEvent (new PostponedEvent (false));
     }
+}
+
+void Document::registerEventHandler (NodePtr handler) {
+    event_handler = handler;
+    if (notify_listener)
+        notify_listener->setEventDispatcher (this);
+}
+
+void Document::deregisterEventHandler (NodePtr handler) {
+    event_handler = 0L;
+    if (notify_listener)
+        notify_listener->setEventDispatcher (0L);
 }
 
 NodeRefListPtr Document::listeners (unsigned int id) {

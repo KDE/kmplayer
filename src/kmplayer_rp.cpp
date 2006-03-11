@@ -88,6 +88,8 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
         image = new QPixmap (width, height);
         image->fill ();
     }
+    if (parentNode ())
+        parentNode ()->registerEventHandler (this);
     if (duration > 0)
         duration_timer = document ()->setTimeout (this, duration * 100);
     else if (!timings_count)
@@ -132,6 +134,8 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
     delete image;
     image = 0L;
     invalidateCachedImage ();
+    if (parentNode ())
+        parentNode ()->deregisterEventHandler (this);
 }
 
 KDE_NO_EXPORT void RP::Imfl::invalidateCachedImage () {

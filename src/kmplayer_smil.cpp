@@ -1334,12 +1334,13 @@ static void beginOrEndLayout (Node * node, bool b) {
 KDE_NO_EXPORT void SMIL::Smil::activate () {
     //kdDebug () << "Smil::activate" << endl;
     current_av_media_type = NodePtr ();
+    event_handler = layout_node;
     PlayListNotify * n = document()->notify_listener;
-    if (n) {
-        n->setEventDispatcher (layout_node);
+    if (n)
         n->setCurrent (this);
-    }
     Element::activate ();
+    if (parentNode ())
+        parentNode ()->registerEventHandler (this);
 }
 
 KDE_NO_EXPORT void SMIL::Smil::deactivate () {
@@ -1350,10 +1351,10 @@ KDE_NO_EXPORT void SMIL::Smil::deactivate () {
             rb->repaint ();
         }
     }
-    PlayListNotify * n = document()->notify_listener;
-    if (n)
-        n->setEventDispatcher (NodePtr ());
+    event_handler = 0;
     Mrl::deactivate ();
+    if (parentNode ())
+        parentNode ()->deregisterEventHandler (this);
 }
 
 KDE_NO_EXPORT void SMIL::Smil::closed () {
@@ -2202,13 +2203,7 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
         default:
             ret = TimedMrl::handleEvent (event);
     }
-    for (NodePtr n = firstChild (); n; n = n->nextSibling ())
-        switch (n->id) {
-            case id_node_smil:        // support nested documents
-            case RP::id_node_imfl:
-                n->handleEvent (event);
-        }
-    return ret;
+    return Mrl::handleEvent (event);
 }
 
 KDE_NO_EXPORT NodeRefListPtr SMIL::MediaType::listeners (unsigned int id) {
@@ -2231,6 +2226,8 @@ SMIL::AVMediaType::AVMediaType (NodePtr & d, const QString & t)
 
 KDE_NO_EXPORT void SMIL::AVMediaType::positionVideoWidget () {
     //kdDebug () << "AVMediaType::sized " << endl;
+    if (hasChildNodes ())
+        return;
     PlayListNotify * n = document()->notify_listener;
     MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (timedRuntime ());
     if (n && mtr && mtr->region_node) {
