@@ -1559,8 +1559,7 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
             } else
                 break;
             Matrix m (ex, ey, xscale, yscale);
-            m.transform (e->matrix);
-            RegionBase::handleEvent (new SizeEvent (ex, ey, ew, eh, e->fit, m));
+            RegionBase::handleEvent (new SizeEvent (0, 0, ew, eh, e->fit, m));
             handled = true;
             break;
         }
@@ -1717,10 +1716,8 @@ bool SMIL::Region::handleEvent (EventPtr event) {
             bool handled = false;
             for (NodePtr r = firstChild (); r; r = r->nextSibling ())
                 handled |= r->handleEvent (event);
-            if (!handled) { // handle it ..
-                EventPtr evt = new Event (event_activated);
-                propagateEvent (evt);
-            }
+            if (!handled) // handle it ..
+                propagateEvent (event);
             return inside;
         }
         case event_pointer_moved: {
@@ -2173,6 +2170,20 @@ KDE_NO_EXPORT void SMIL::MediaType::activate () {
             firstChild ()->activate ();
         tr->begin ();
     }
+}
+
+void SMIL::MediaType::registerEventHandler (NodePtr n) {
+    kdDebug () << "MediaType::registerEventHandler " << n->nodeName () << " " << (void*)n.ptr () << endl;
+    event_handler = n;
+    TimedRuntime * tr = timedRuntime ();
+    RegionBase * r = tr ? convertNode <RegionBase>(tr->region_node) : 0L;
+    if (r)
+        n->handleEvent (new SizeEvent (0, 0, r->w, r->h, fit_meet, r->transform ()));
+}
+
+void SMIL::MediaType::deregisterEventHandler (NodePtr handler) {
+    if (event_handler == handler)
+        event_handler = 0L;
 }
 
 bool SMIL::MediaType::handleEvent (EventPtr event) {

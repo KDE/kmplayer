@@ -614,8 +614,10 @@ static NodePtr findChainEventHandler (NodePtr node) {
 }
 
 void Mrl::registerEventHandler (NodePtr handler) {
-    event_handler = handler;
-    findChainEventHandler (this)->registerEventHandler (this);
+    if (event_handler != handler) {// in case findChainEventHandler returns this
+        event_handler = handler;
+        findChainEventHandler (this)->registerEventHandler (this);
+    }
 }
 
 void Mrl::deregisterEventHandler (NodePtr handler) {
@@ -858,9 +860,11 @@ void Document::registerEventHandler (NodePtr handler) {
 }
 
 void Document::deregisterEventHandler (NodePtr handler) {
-    event_handler = 0L;
-    if (notify_listener)
-        notify_listener->setEventDispatcher (0L);
+    if (event_handler == handler) {
+        event_handler = 0L;
+        if (notify_listener)
+            notify_listener->setEventDispatcher (0L);
+    }
 }
 
 NodeRefListPtr Document::listeners (unsigned int id) {

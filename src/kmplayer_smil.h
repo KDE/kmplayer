@@ -673,6 +673,8 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
     void opened ();
     void activate ();
+    virtual void registerEventHandler (NodePtr handler);
+    virtual void deregisterEventHandler (NodePtr handler);
     virtual bool handleEvent (EventPtr event);
     QString m_type;
     unsigned int bitrate;
