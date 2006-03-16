@@ -246,11 +246,12 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
             } else if (name == QString::fromLatin1("nocontrols")) {
                 turned_off_features |= Feat_Controls;
             } else if (name == QString::fromLatin1("showdisplay")) {
+                // the author name, the clip name, and the copyright information
                 bool on = value.toInt () || !value.lower ().compare ("true");
                 if (on)
-                    m_features |= Feat_Viewer;
+                    m_features |= Feat_InfoPanel;
                 else
-                    turned_off_features |= Feat_Viewer;
+                    turned_off_features |= Feat_InfoPanel;
             } else if (name == QString::fromLatin1("showcontrols")) {
                 bool on = value.toInt () || !value.lower ().compare ("true");
                 if (on)
