@@ -1,17 +1,29 @@
+Changes since version 0.9.2-pre2
+- Update with 0.9.1c
+- SMIL files can be part of other SMIL files
+- y-coordinate fix for images in RealPix
 Changes since version 0.9.2-pre1
-- Fix for audio only plugin group for real
+- Update with 0.9.1b
 - Added RealPix support for SMIL animations
+Changes since version 0.9.1c
+- Option added to disable color setting on movie start
+- Simple playlist edit mode, edit (sub)tree in raw XML
+- SMIL animations can be paused now
+Changes since version 0.9.1b
+- WMP's showdisplay object argument interpretation fix, it's about clip info
+- Fix current playlist item not visual selected and plugin's playlist not
+  showing HTML object's arguments (regression in 0.9.1b compared to 0.9.1a)
+- Fix KHTML setting palette on controlpanel, buttons weren't updated
+- Double click on video widget for Xine/Gst/Xv or background toggles fullscreen
+Changes since version 0.9.1a
+- WMP plugin fix for not showing video widget when 'controls' is 
+  specified
+- Fix for audio only plugin group for real
 - Fix media:// url's
 - Crash fix for SMIL when resolving multible url's simultaneously
 - Don't play exit animation if started with an url
 - Fix for plugin w/ floating statusbar,wrong parent was set
 - Real plugin fix for 'controls=All', shouldn't show video widget
-- WMP plugin fix for not showing video widget when 'controls' is 
-  specified
-Changes since version 0.9.1a
-- Option added to disable color setting on movie start
-- Simple playlist edit mode, edit (sub)tree in raw XML
-- SMIL animations can be paused now
 - Support for uimode/nolabels/nocontrols/showdisplay/showcontrols/showstatusbar
   attributes for WMP's embedded object emulation
 - Autohide controlpanel w/ 'Click to play' and support for TARGET attribute

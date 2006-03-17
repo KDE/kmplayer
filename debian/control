@@ -2,7 +2,7 @@ Source: kmplayer
 Section: kde
 Priority: optional
 Maintainer: Koos Vriezen <koos.vriezen@xs4all.nl>
-Build-Depends: debhelper (>= 4.0.0), kdelibs4-dev, libxine-dev, xlibs-dev, libgstreamer0.8-dev, libgstreamer-plugins0.8-dev
+Build-Depends: debhelper (>= 4.0.0), kdelibs4-dev, libxine-dev, libgstreamer0.8-dev, libgstreamer-plugins0.8-dev
 Standards-Version: 3.6.0
 
 Package: kmplayer
