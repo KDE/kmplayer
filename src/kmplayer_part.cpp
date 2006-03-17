@@ -244,23 +244,20 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
             } else if (name == QString::fromLatin1("nolabels")) {
                 turned_off_features |= Feat_Label;
             } else if (name == QString::fromLatin1("nocontrols")) {
-                turned_off_features |= Feat_Controls;
+                turned_off_features |= (Feat_Controls | Feat_VolumeSlider);
             } else if (name == QString::fromLatin1("showdisplay")) {
                 // the author name, the clip name, and the copyright information
-                bool on = value.toInt () || !value.lower ().compare ("true");
-                if (on)
+                if (getBoolValue (value))
                     m_features |= Feat_InfoPanel;
                 else
                     turned_off_features |= Feat_InfoPanel;
             } else if (name == QString::fromLatin1("showcontrols")) {
-                bool on = value.toInt () || !value.lower ().compare ("true");
-                if (on)
+                if (getBoolValue (value))
                     m_features |= (Feat_Viewer | Feat_Controls);
                 else
-                    turned_off_features |= Feat_Controls;
+                    turned_off_features |= (Feat_Controls | Feat_VolumeSlider);
             } else if (name == QString::fromLatin1("showstatusbar")) {
-                bool on = value.toInt () || !value.lower ().compare ("true");
-                if (on)
+                if (getBoolValue (value))
                     m_features |= (Feat_Viewer | Feat_StatusBar);
                 else
                     turned_off_features |= Feat_StatusBar;
