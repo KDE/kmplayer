@@ -658,7 +658,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
         } else if (!m_source->identified () && out.startsWith ("ID_LENGTH")) {
             int pos = out.find ('=');
             if (pos > 0) {
-                int l = out.mid (pos + 1).toInt (&ok);
+                int l = (int) out.mid (pos + 1).toDouble (&ok);
                 if (ok && l >= 0) {
                     m_source->setLength (m_mrl, 10 * l);
                 }
