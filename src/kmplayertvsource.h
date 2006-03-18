@@ -20,29 +20,65 @@
 #ifndef _KMPLAYER_TV_SOURCE_H_
 #define _KMPLAYER_TV_SOURCE_H_
 
-#include <list>
-
-#include <qframe.h>
+#include <qguardedptr.h>
 #include <qstring.h>
+#include <qframe.h>
 
 #include "kmplayerappsource.h"
 #include "kmplayerconfig.h"
 
+const short id_node_tv_document = 40;
+const short id_node_tv_device = 41;
+const short id_node_tv_input = 42;
+const short id_node_tv_channel = 43;
 
 class KMPlayerPrefSourcePageTV;         // source, TV
 class TVDeviceScannerSource;
 class KMPlayerTVSource;
+class KURLRequester;
+class KHistoryCombo;
 class KMPlayerApp;
 class QTabWidget;
-class QTable;
 class QGroupBox;
 class QLineEdit;
 class QCheckBox;
-class KHistoryCombo;
 class KComboBox;
 class KConfig;
-class KURLRequester;
+class QTable;
 
+
+class KMPLAYER_NO_EXPORT TVDevicePage : public QFrame {
+    Q_OBJECT
+public:
+    TVDevicePage (QWidget *parent, KMPlayer::NodePtr dev);
+    KDE_NO_CDTOR_EXPORT ~TVDevicePage () {}
+
+    QLineEdit * name;
+    KURLRequester * audiodevice;
+    QLineEdit * sizewidth;
+    QLineEdit * sizeheight;
+    QCheckBox * noplayback;
+    QTabWidget * inputsTab;
+    KMPlayer::NodePtrW device_doc;
+signals:
+    void deleted (TVDevicePage *);
+private slots:
+    void slotDelete ();
+};
+
+class KMPLAYER_NO_EXPORT KMPlayerPrefSourcePageTV : public QFrame {
+    Q_OBJECT
+public:
+    KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerTVSource *);
+    KDE_NO_CDTOR_EXPORT ~KMPlayerPrefSourcePageTV () {}
+    QLineEdit * driver;
+    KURLRequester * device;
+    QPushButton * scan;
+    QTabWidget * notebook;
+protected:
+    void showEvent (QShowEvent *);
+    KMPlayerTVSource * m_tvsource;
+};
 
 class KMPLAYER_NO_EXPORT TVNode : public KMPlayer::GenericMrl {
 public:
@@ -83,11 +119,13 @@ class KMPLAYER_NO_EXPORT TVDevice : public TVNode {
 public:
     TVDevice (KMPlayer::NodePtr & d, const QString & d);
     TVDevice (KMPlayer::NodePtr & d);
-    KDE_NO_CDTOR_EXPORT ~TVDevice () {}
+    ~TVDevice ();
     KMPlayer::NodePtr childFromTag (const QString &);
     void closed ();
     bool expose () const { return !zombie; }
+    void updateDevicePage ();
     bool zombie;
+    QGuardedPtr <TVDevicePage> device_page;
 };
 
 class KMPLAYER_NO_EXPORT TVDocument : public KMPlayer::Document {
@@ -96,42 +134,6 @@ public:
     TVDocument (KMPlayerTVSource *);
     KMPlayer::NodePtr childFromTag (const QString &);
     KDE_NO_EXPORT const char * nodeName () const { return "tvdevices"; }
-};
-
-class KMPLAYER_NO_EXPORT KMPlayerPrefSourcePageTVDevice : public QFrame {
-    Q_OBJECT
-public:
-    KMPlayerPrefSourcePageTVDevice (QWidget *parent, KMPlayer::NodePtr dev);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerPrefSourcePageTVDevice () {}
-
-    QLineEdit * name;
-    KURLRequester * audiodevice;
-    QLineEdit * sizewidth;
-    QLineEdit * sizeheight;
-    QCheckBox * noplayback;
-    KMPlayer::NodePtrW device_doc;
-    void updateTVDevice ();
-signals:
-    void deleted (KMPlayerPrefSourcePageTVDevice *);
-private slots:
-    void slotDelete ();
-private:
-    QTabWidget * inputsTab;
-};
-
-class KMPLAYER_NO_EXPORT KMPlayerPrefSourcePageTV : public QFrame
-{
-    Q_OBJECT
-public:
-    KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerTVSource *);
-    KDE_NO_CDTOR_EXPORT ~KMPlayerPrefSourcePageTV () {}
-    QLineEdit * driver;
-    KURLRequester * device;
-    QPushButton * scan;
-    QTabWidget * tab;
-protected:
-    void showEvent (QShowEvent *);
-    KMPlayerTVSource * m_tvsource;
 };
 
 
@@ -194,7 +196,7 @@ public slots:
 private slots:
     void slotScan ();
     void slotScanFinished (TVDevice * device);
-    void slotDeviceDeleted (KMPlayerPrefSourcePageTVDevice *);
+    void slotDeviceDeleted (TVDevicePage *);
 private:
     void addTVDevicePage (TVDevice * dev, bool show=false);
     void buildArguments ();
@@ -203,8 +205,6 @@ private:
     QString tvdriver;
     KMPlayerPrefSourcePageTV * m_configpage;
     TVDeviceScannerSource * scanner;
-    typedef std::list <KMPlayerPrefSourcePageTVDevice *> TVDevicePageList;
-    TVDevicePageList m_devicepages;
     bool config_read; // whether tv.xml is read
 };
 
