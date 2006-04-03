@@ -39,8 +39,8 @@
 #include <X11/keysym.h>
 #include <X11/Xatom.h>
 #include <gst/gst.h>
-#include <gst/xoverlay/xoverlay.h>
-#include <gst/colorbalance/colorbalance.h>
+#include <gst/interfaces/xoverlay.h>
+#include <gst/interfaces/colorbalance.h>
 
 static char                 configfile[2048];
 
@@ -65,7 +65,12 @@ static QString              sub_mrl;
 static const char          *ao_driver;
 static const char          *vo_driver;
 static GstElement * gst_elm_play, * videosink, * audiosink;
-static GstColorBalance * color_balance;
+static GstBus              *gst_bus;
+static unsigned int /*GstMessageType*/       ignore_messages_mask;
+static GstXOverlay         *xoverlay;
+static GstColorBalance     *color_balance;
+static gulong               gst_bus_sync;
+static gulong               gst_bus_async;
 static QString elmentry ("entry");
 static QString elmitem ("item");
 static QString attname ("NAME");
@@ -98,30 +103,16 @@ cb_error (GstElement * play,
     QApplication::postEvent (gstapp, new QEvent ((QEvent::Type)event_finished));
 }
 
-static void
-cb_foundtag (GstElement * /*play*/,
-             GstElement * /*src*/,
-             const GstTagList * /*list*/,
-             gpointer     /*data*/)
-{
-    fprintf (stderr, "cb_foundtag\n");
-}
-
 // NULL -> READY -> PAUSED -> PLAYING
-static void
-cb_eos (GstElement *play,
-        gpointer   /*data*/)
-{
-    fprintf (stderr, "cb_eos\n");
-    gst_element_set_state (play, GST_STATE_READY);
-}
 
 static void
-cb_capsset (GstPad *pad,
+gstCapsSet (GstPad *pad,
             GParamSpec * /*pspec*/,
             gpointer /*data*/)
 {
-    const GstCaps *caps = GST_PAD_CAPS (pad);
+    GstCaps *caps = gst_pad_get_negotiated_caps (pad);
+    if (!caps)
+        return;
     const GstStructure * s = gst_caps_get_structure (caps, 0);
     if (s) {
         const GValue *par;
@@ -139,59 +130,221 @@ cb_capsset (GstPad *pad,
         }
         QApplication::postEvent (gstapp, new GstSizeEvent (movie_length, movie_width, movie_height));
     }
+    gst_caps_unref (caps);
 }
 
+static void gstStreamInfo (GObject *, GParamSpec *, gpointer /*data*/) {
+    GstPad *videopad = 0L;
+    GList *streaminfo = 0L;
 
-static void
-cb_state (GstElement * /*play*/,
-          GstElementState old_state,
-          GstElementState new_state,
-          gpointer    /*data*/)
-{
-    if (old_state >= GST_STATE_PLAYING && new_state <= GST_STATE_PAUSED) {
-        QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_finished));
-    } else if (old_state == GST_STATE_PAUSED && new_state >= GST_STATE_PLAYING) {
-        QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_playing));
+    fprintf (stderr, "gstStreamInfo\n");
+    g_object_get (gst_elm_play, "stream-info", &streaminfo, NULL);
+    streaminfo = g_list_copy (streaminfo);
+    g_list_foreach (streaminfo, (GFunc) g_object_ref, NULL);
+    for ( ; streaminfo != NULL; streaminfo = streaminfo->next) {
+        GObject *info = G_OBJECT (streaminfo->data);
+        gint type;
+        GParamSpec *pspec;
+        GEnumValue *val;
+
+        if (!info)
+            continue;
+        g_object_get (info, "type", &type, NULL);
+        pspec = g_object_class_find_property (G_OBJECT_GET_CLASS(info), "type");
+        val = g_enum_get_value (G_PARAM_SPEC_ENUM (pspec)->enum_class, type);
+
+        if (!g_strcasecmp (val->value_nick, "video"))
+            if (!videopad) {
+                g_object_get (info, "object", &videopad, NULL);
+                gstCapsSet (GST_PAD (videopad), 0L, 0L);
+                g_signal_connect (videopad, "notify::caps", G_CALLBACK (gstCapsSet), 0L);
+            }
     }
-    if (old_state <= GST_STATE_READY && new_state >= GST_STATE_PAUSED) {
-        const GList *list = NULL;
-        gint64 len_val = 0; // usec
 
-        mutex.lock ();
-        GstFormat fmt = GST_FORMAT_TIME;
-        bool ok=gst_element_query(gst_elm_play, GST_QUERY_TOTAL, &fmt,&len_val);
-        movie_length = len_val / (GST_MSECOND * 100);
-        g_object_get (G_OBJECT (gst_elm_play), "stream-info", &list, NULL);
-        mutex.unlock ();
-        if (!ok)
-            return;
-        bool is_video = false;
-        for ( ; list != NULL; list = list->next) {
-            GObject *info = (GObject *) list->data;
-            gint type;
-            GParamSpec *pspec;
-            GEnumValue *val;
-            GstPad *pad = NULL;
+    GstMessage * msg = gst_message_new_application (GST_OBJECT (gst_elm_play),
+            gst_structure_new ("notify-streaminfo", NULL));
+    gst_element_post_message (gst_elm_play, msg);
+    g_list_foreach (streaminfo, (GFunc) g_object_unref, NULL);
+    g_list_free (streaminfo);
+}
 
-            g_object_get (info, "type", &type, NULL);
-            pspec = g_object_class_find_property (G_OBJECT_GET_CLASS (info), "type");
-            val = g_enum_get_value (G_PARAM_SPEC_ENUM (pspec)->enum_class, type);
+static void gstSource (GObject *, GParamSpec *, gpointer /*data*/) {
+    fprintf (stderr, "gstSource\n");
+}
 
-            if (strstr (val->value_name, "VIDEO")) {
-                is_video = true;
-                g_object_get (info, "object", &pad, NULL);
-                pad = (GstPad *) GST_PAD_REALIZE (pad);
-                if (GST_PAD_CAPS (pad)) {
-                    cb_capsset (pad, NULL, NULL);
-                } else {
-                    g_signal_connect (pad, "notify::caps",
-                            G_CALLBACK (cb_capsset), NULL);
+static void gstBusMessage (GstBus *, GstMessage * message, gpointer) {
+    GstMessageType msg_type = GST_MESSAGE_TYPE (message);
+    /* somebody else is handling the message, probably in gstPolForStateChange*/
+    if (ignore_messages_mask & msg_type)
+        return;
+    switch (msg_type) {
+        case GST_MESSAGE_ERROR:
+            printf ("error msg\n");
+            if (gst_elm_play) {
+                gst_element_set_state (gst_elm_play, GST_STATE_NULL);
+                //gstPollForStateChange (gst_elm_play, GST_STATE_NULL);
+            }
+            break;
+        case GST_MESSAGE_WARNING:
+            printf ("warning msg\n");
+            break;
+        case GST_MESSAGE_TAG:
+            printf ("tag msg\n");
+            break;
+        case GST_MESSAGE_EOS:
+            printf ("eos msg\n");
+            QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_finished));
+            break;
+        case GST_MESSAGE_BUFFERING: {
+            gint percent = 0;
+            gst_structure_get_int (message->structure, "buffer-percent", &percent);
+            printf ("Buffering message (%u%%)\n", percent);
+        }
+        case GST_MESSAGE_APPLICATION:
+            printf ("app msg\n");
+            break;
+        case GST_MESSAGE_STATE_CHANGED: {
+            GstState old_state, new_state;
+            gchar *src_name = gst_object_get_name (message->src);
+            gst_message_parse_state_changed(message, &old_state, &new_state,0L);
+            printf ("%s changed state from %s to %s\n", src_name, gst_element_state_get_name (old_state), gst_element_state_get_name (new_state));
+            g_free (src_name);
+            if (old_state == GST_STATE_PAUSED &&
+                    new_state >= GST_STATE_PLAYING &&
+                    !strcmp (src_name, "player"))
+                QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_playing));
+            else if (old_state == GST_STATE_READY &&
+                    new_state == GST_STATE_PAUSED &&
+                    !strcmp (src_name, "player")) {
+                const GList *list = NULL;
+                gint64 len_val = 0; // usec
+
+                mutex.lock ();
+                GstFormat fmt = GST_FORMAT_TIME;
+                bool ok=gst_element_query_duration (gst_elm_play, &fmt, &len_val);
+                movie_length = len_val / (GST_MSECOND * 100);
+                g_object_get (G_OBJECT (gst_elm_play), "stream-info", &list, NULL);
+                mutex.unlock ();
+                if (!ok)
+                    return;
+                bool is_video = false;
+                for ( ; list != NULL; list = list->next) {
+                    GObject *info = (GObject *) list->data;
+                    gint type;
+                    GParamSpec *pspec;
+                    GEnumValue *val;
+
+                    g_object_get (info, "type", &type, NULL);
+                    pspec = g_object_class_find_property (G_OBJECT_GET_CLASS (info), "type");
+                    val = g_enum_get_value (G_PARAM_SPEC_ENUM (pspec)->enum_class, type);
+
+                    if (strstr (val->value_name, "VIDEO"))
+                        is_video = true;
                 }
+                if (!is_video)
+                    QApplication::postEvent (gstapp, new GstSizeEvent (movie_length, 0, 0));
             }
         }
-        if (!is_video)
-            QApplication::postEvent (gstapp, new GstSizeEvent (movie_length, 0, 0));
+        case GST_MESSAGE_CLOCK_PROVIDE:
+        case GST_MESSAGE_CLOCK_LOST:
+        case GST_MESSAGE_NEW_CLOCK:
+        case GST_MESSAGE_STATE_DIRTY:
+             break;
+        default:
+             printf ("Unhandled msg %s (0x%x)\n",
+                     gst_message_type_get_name (msg_type), msg_type);
+             break;
     }
+}
+
+static void gstMessageElement_cb (GstBus *bus, GstMessage *msg, gpointer /*data*/) {
+    if (gst_structure_has_name (msg->structure, "prepare-xwindow-id")) {
+        printf ("prepare-xwindow-id\n");
+        if (xoverlay)
+            gst_x_overlay_set_xwindow_id (xoverlay, wid);
+    }
+}
+
+static bool gstPollForStateChange (GstElement *element, GstState state, gint64 timeout=GST_SECOND/4) {
+    /*GstMessageType*/ unsigned int events, saved_events;
+    GstBus *bus = gst_element_get_bus (element);
+    GError **error = 0L;
+
+    events = GST_MESSAGE_STATE_CHANGED | GST_MESSAGE_ERROR | GST_MESSAGE_EOS;
+    saved_events = ignore_messages_mask;
+
+    if (element && element == gst_elm_play) {
+        /* we do want the main handler to process state changed messages for
+         * playbin as well, otherwise it won't hook up the timeout etc. */
+        ignore_messages_mask |= (events ^ GST_MESSAGE_STATE_CHANGED);
+    } else {
+        ignore_messages_mask |= events;
+    }
+
+    while (true) {
+        GstMessage *message;
+        GstElement *src;
+
+        message = gst_bus_poll (bus, (GstMessageType) events, timeout);
+        if (!message)
+            goto timed_out;
+
+        src = (GstElement*)GST_MESSAGE_SRC (message);
+
+        switch (GST_MESSAGE_TYPE (message)) {
+            case GST_MESSAGE_STATE_CHANGED: {
+                GstState olds, news, pending;
+                if (src == element) {
+                    gst_message_parse_state_changed (message, &olds, &news, &pending);
+                    if (news == state) {
+                        gst_message_unref (message);
+                        goto success;
+                    }
+                }
+                break;
+            }
+            case GST_MESSAGE_ERROR: {
+                gchar *debug = NULL;
+                GError *gsterror = NULL;
+                gst_message_parse_error (message, &gsterror, &debug);
+                fprintf (stderr, "Error: %s (%s)\n", gsterror->message, debug);
+                gst_message_unref (message);
+                g_error_free (gsterror);
+                g_free (debug);
+                goto error;
+            }
+            case GST_MESSAGE_EOS: {
+                gst_message_unref (message);
+                goto error;
+            }
+            default:
+                g_assert_not_reached ();
+                break;
+        }
+        gst_message_unref (message);
+    }
+    g_assert_not_reached ();
+
+success:
+    /* state change succeeded */
+    printf ("state change to %s succeeded\n", gst_element_state_get_name (state));
+    ignore_messages_mask = saved_events;
+    return TRUE;
+
+timed_out:
+    /* it's taking a long time to open -- just tell totem it was ok, this allows
+     * the user to stop the loading process with the normal stop button */
+    fprintf (stderr, "state change to %s timed out, returning success and handling errors asynchroneously", gst_element_state_get_name (state));
+    ignore_messages_mask = saved_events;
+    return TRUE;
+
+error:
+    fprintf (stderr, "error while waiting for state change to %s: %s",
+            gst_element_state_get_name (state),
+            (error && *error) ? (*error)->message : "unknown");
+    /* already set *error */
+    ignore_messages_mask = saved_events;
+    return FALSE;
 }
 
 GstSizeEvent::GstSizeEvent (int l, int w, int h)
@@ -345,9 +498,13 @@ void getConfigEntries (QByteArray & buf) {
 }
 
 void KGStreamerPlayer::play () {
+    GstElement *element;
+    bool success;
     if (gst_elm_play) {
-        if (GST_STATE (gst_elm_play) == GST_STATE_PAUSED)
+        if (GST_STATE (gst_elm_play) == GST_STATE_PAUSED) {
             gst_element_set_state (gst_elm_play, GST_STATE_PLAYING);
+            gstPollForStateChange (gst_elm_play, GST_STATE_PLAYING);
+        }
         return;
     }
     fprintf (stderr, "play %s\n", mrl.ascii ());
@@ -361,6 +518,13 @@ void KGStreamerPlayer::play () {
         fprintf (stderr, "couldn't create playbin\n");
         goto fail;
     }
+    ignore_messages_mask = 0;
+    gst_bus = gst_element_get_bus (gst_elm_play);
+
+    gst_bus_add_signal_watch (gst_bus);
+
+    gst_bus_async = g_signal_connect (gst_bus, "message",
+                G_CALLBACK (gstBusMessage), 0L);
     if (ao_driver && !strcmp (ao_driver, "alsa"))
         audiosink = gst_element_factory_make ("alsasink", "audiosink");
     else if (ao_driver && !strcmp (ao_driver, "arts"))
@@ -377,18 +541,38 @@ void KGStreamerPlayer::play () {
         videosink = gst_element_factory_make ("ximagesink", "videosink");
     if (!videosink)
         goto fail;
+    if (GST_IS_BIN (videosink))
+        element = gst_bin_get_by_interface (GST_BIN (videosink),
+                GST_TYPE_X_OVERLAY);
+    else
+        element = videosink;
+    if (GST_IS_X_OVERLAY (element)) {
+        xoverlay = GST_X_OVERLAY (element);
+        gst_x_overlay_set_xwindow_id (xoverlay, wid);
+    }
+    gst_element_set_bus (videosink, gst_bus);
+    gst_element_set_state (videosink, GST_STATE_READY);
+    success = gstPollForStateChange (videosink, GST_STATE_READY);
+    //if (!success) {
+        /* Drop this video sink */
+    //    gst_element_set_state (videosink, GST_STATE_NULL);
+    //    gst_object_unref (videosink);
+    if (audiosink) {
+        gst_element_set_bus (audiosink, gst_bus);
+        gst_element_set_state (audiosink, GST_STATE_READY);
+        success = gstPollForStateChange (audiosink, GST_STATE_READY);
+    }
     g_object_set (G_OBJECT (gst_elm_play),
             "video-sink",  videosink,
             "audio-sink",  audiosink,
             NULL);
-    g_signal_connect (gst_elm_play, "error", G_CALLBACK (cb_error), this);
-    g_signal_connect (gst_elm_play, "found-tag", G_CALLBACK (cb_foundtag), this);
-    g_signal_connect (gst_elm_play, "eos", G_CALLBACK (cb_eos), this);
-    g_signal_connect (gst_elm_play, "state-change", G_CALLBACK (cb_state), this);
-    gst_element_set_state (gst_elm_play, GST_STATE_READY);
-    gst_x_overlay_set_xwindow_id (GST_X_OVERLAY (videosink), wid);
-    gst_x_overlay_expose (GST_X_OVERLAY (videosink));
-    gst_element_set_state (videosink, GST_STATE_READY);
+    gst_bus_set_sync_handler (gst_bus, gst_bus_sync_signal_handler, 0L);
+    gst_bus_sync = g_signal_connect (gst_bus, "sync-message::element",
+            G_CALLBACK (gstMessageElement_cb), 0L);
+    g_signal_connect (gst_elm_play, "notify::source",
+            G_CALLBACK (gstSource), 0L);
+    g_signal_connect (gst_elm_play, "notify::stream-info",
+            G_CALLBACK (gstStreamInfo), 0L);
     if (GST_IS_COLOR_BALANCE (videosink))
         color_balance = GST_COLOR_BALANCE (videosink);
 
@@ -406,7 +590,11 @@ void KGStreamerPlayer::play () {
         g_object_set (gst_elm_play, "suburi", sub_uri, NULL);
         g_free (sub_uri);
     }
-    gst_element_set_state (gst_elm_play, GST_STATE_PLAYING);
+    gst_element_set_state (gst_elm_play, GST_STATE_PAUSED);
+    if (gstPollForStateChange (gst_elm_play, GST_STATE_PAUSED)) {
+        gst_element_set_state (gst_elm_play, GST_STATE_PLAYING);
+        gstPollForStateChange (gst_elm_play, GST_STATE_PLAYING);
+    }
     mutex.unlock ();
 
     g_free (uri);
@@ -417,19 +605,25 @@ fail:
 
 void KGStreamerPlayer::pause () {
     mutex.lock ();
-    if (GST_STATE (gst_elm_play) == GST_STATE_PLAYING)
-        gst_element_set_state (gst_elm_play, GST_STATE_PAUSED);
-    else
-        gst_element_set_state (gst_elm_play, GST_STATE_PLAYING);
+    GstState state = GST_STATE (gst_elm_play) == GST_STATE_PLAYING ?
+        GST_STATE_PAUSED : GST_STATE_PLAYING;
+    gst_element_set_state (gst_elm_play, state);
+    gstPollForStateChange (gst_elm_play, state);
     mutex.unlock ();
 }
 
 void KGStreamerPlayer::stop () {
     fprintf (stderr, "stop %s\n", mrl.ascii ());
     if (gst_elm_play) {
+        GstState current_state;
         mutex.lock ();
+        gst_element_get_state (gst_elm_play, &current_state, NULL, 0);
+        if (current_state > GST_STATE_READY) {
+            gst_element_set_state (gst_elm_play, GST_STATE_READY);
+            gstPollForStateChange (gst_elm_play, GST_STATE_READY, -1);
+        }
         gst_element_set_state (gst_elm_play, GST_STATE_NULL);
-
+        gst_element_get_state (gst_elm_play, NULL, NULL, -1);
         mutex.unlock ();
     } else
         QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_finished));
@@ -488,8 +682,16 @@ void KGStreamerPlayer::updatePosition () {
     if (gst_elm_play && callback) {
         mutex.lock ();
         GstFormat fmt = GST_FORMAT_TIME;
-        gint64 val = 0; // usec
-        if (gst_element_query (gst_elm_play, GST_QUERY_POSITION, &fmt, &val))
+        gint64 val = 0, len = -1; // usec
+        if (!movie_length && gst_element_query_duration (gst_elm_play, &fmt, &len))
+            if (len / (GST_MSECOND * 100) != movie_length) {
+                movie_length = len / (GST_MSECOND * 100);
+                if (movie_length > 0) {
+                    printf ("new length %d\n", movie_length);
+                    postEvent (gstapp, new GstSizeEvent (movie_length, movie_width, movie_height));
+                }
+            }
+        if (gst_element_query_position (gst_elm_play, &fmt, &val))
             callback->moviePosition (int (val / (GST_MSECOND * 100)));
         mutex.unlock ();
         QTimer::singleShot (500, this, SLOT (updatePosition ()));
@@ -502,6 +704,12 @@ bool KGStreamerPlayer::event (QEvent * e) {
             fprintf (stderr, "event_finished\n");
             if (gst_elm_play) {
                 mutex.lock ();
+                gst_bus_set_flushing (gst_bus, TRUE);
+                if (gst_bus_sync)
+                    g_signal_handler_disconnect (gst_bus, gst_bus_sync);
+                if (gst_bus_async)
+                    g_signal_handler_disconnect (gst_bus, gst_bus_async);
+                gst_object_unref (gst_bus);
                 gst_object_unref (GST_OBJECT (gst_elm_play));
                 if (audiosink)
                     gst_object_unref (GST_OBJECT (audiosink));
@@ -511,10 +719,12 @@ bool KGStreamerPlayer::event (QEvent * e) {
                     gst_object_unref (GST_OBJECT (videosink));
                 }
                 mutex.unlock ();
+                gst_bus = 0L;
                 gst_elm_play = 0L;
                 audiosink = 0L;
                 videosink = 0L;
                 color_balance = 0L;
+                gst_bus_sync = gst_bus_async = 0;
             }
             if (callback)
                 callback->finished ();
@@ -604,6 +814,10 @@ protected:
                     break;
 
                 case ConfigureNotify:
+                    mutex.lock ();
+                    if (xoverlay && GST_IS_X_OVERLAY (xoverlay))
+                        gst_x_overlay_expose (xoverlay);
+                    mutex.unlock ();
                     break;
                 case ButtonPress: {
                     XButtonEvent *bev = (XButtonEvent *) &xevent;

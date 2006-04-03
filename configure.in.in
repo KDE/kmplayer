@@ -99,16 +99,14 @@ if test "$build_gstreamer" != "no"; then
         dnl Now we're ready to ask for gstreamer libs and cflags
         dnl And we can also ask for the right version of gstreamer
 
-        GST_MAJORMINOR=0.8
-        GST_REQ=0.8.6
+        GST_MAJORMINOR=0.10
+        GST_REQ=0.10.0
 
         PKG_CHECK_MODULES(GST, gstreamer-$GST_MAJORMINOR >= $GST_REQ,
             have_gst=yes,have_gst=no)
 
-        PKG_CHECK_MODULES(GST_PLUGINS, gstreamer-plugins-$GST_MAJORMINOR >= $GST_REQ, \
+        PKG_CHECK_MODULES(GST_PLUGINS, gstreamer-plugins-base-$GST_MAJORMINOR >= $GST_REQ, \
             have_gst_plugins=yes,have_gst_plugins=no)
-        PKG_CHECK_MODULES(GST_INTERFACES, gstreamer-interfaces-$GST_MAJORMINOR >= $GST_REQ, \
-            have_gst_interfaces=yes,have_gst_interfaces=no)
         LIB_GST=""
         CFLAGS_GST=""
         LIB_GST_PLUGINS=""
@@ -126,13 +124,13 @@ if test "$build_gstreamer" != "no"; then
     fi
 fi
 AC_MSG_CHECKING([if kgstplayer can be compiled])
-if test "x$have_gst" = "xyes" && test "x$have_gst_plugins" = "xyes" && test "x$have_gst_interfaces" = "xyes"; then
+if test "x$have_gst" = "xyes" && test "x$have_gst_plugins" = "xyes"; then
     AC_MSG_RESULT(yes)
 else
     AC_MSG_RESULT(no)
 fi
 
-AM_CONDITIONAL(include_kgstplayer, [test "x$have_gst" = "xyes" && test "x$have_gst_plugins" = "xyes" && test "x$have_gst_interfaces" = "xyes"])
+AM_CONDITIONAL(include_kgstplayer, [test "x$have_gst" = "xyes" && test "x$have_gst_plugins" = "xyes"])
 
 KDE_CHECK_BINUTILS
 

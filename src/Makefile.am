@@ -50,7 +50,7 @@ kxvplayer_LDADD= libkmplayerbackend.la -lDCOP -lXv
 kxvplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH)
 kxvplayer_SOURCES= xvplayer.cpp
 
-kgstplayer_LDADD= libkmplayerbackend.la $(LIB_GST) $(LIB_GST_PLUGINS) -lDCOP
+kgstplayer_LDADD= libkmplayerbackend.la $(LIB_GST) $(LIB_GST_PLUGINS) -lgstinterfaces-0.10 -lDCOP
 kgstplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH)
 kgstplayer_SOURCES= gstplayer.cpp
 
