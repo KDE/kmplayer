@@ -64,6 +64,7 @@ static QString              mrl;
 static QString              sub_mrl;
 static const char          *ao_driver;
 static const char          *vo_driver;
+static const char          *playbin_name = "player";
 static GstElement * gst_elm_play, * videosink, * audiosink;
 static GstBus              *gst_bus;
 static unsigned int /*GstMessageType*/       ignore_messages_mask;
@@ -193,7 +194,9 @@ static void gstBusMessage (GstBus *, GstMessage * message, gpointer) {
             break;
         case GST_MESSAGE_EOS:
             printf ("eos msg\n");
-            QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_finished));
+            gstapp->lock ();
+            gstapp->stop ();
+            gstapp->unlock ();
             break;
         case GST_MESSAGE_BUFFERING: {
             gint percent = 0;
@@ -208,42 +211,16 @@ static void gstBusMessage (GstBus *, GstMessage * message, gpointer) {
             gchar *src_name = gst_object_get_name (message->src);
             gst_message_parse_state_changed(message, &old_state, &new_state,0L);
             printf ("%s changed state from %s to %s\n", src_name, gst_element_state_get_name (old_state), gst_element_state_get_name (new_state));
-            g_free (src_name);
             if (old_state == GST_STATE_PAUSED &&
                     new_state >= GST_STATE_PLAYING &&
-                    !strcmp (src_name, "player"))
+                    !strcmp (src_name, playbin_name))
                 QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_playing));
-            else if (old_state == GST_STATE_READY &&
-                    new_state == GST_STATE_PAUSED &&
-                    !strcmp (src_name, "player")) {
-                const GList *list = NULL;
-                gint64 len_val = 0; // usec
-
-                mutex.lock ();
-                GstFormat fmt = GST_FORMAT_TIME;
-                bool ok=gst_element_query_duration (gst_elm_play, &fmt, &len_val);
-                movie_length = len_val / (GST_MSECOND * 100);
-                g_object_get (G_OBJECT (gst_elm_play), "stream-info", &list, NULL);
-                mutex.unlock ();
-                if (!ok)
-                    return;
-                bool is_video = false;
-                for ( ; list != NULL; list = list->next) {
-                    GObject *info = (GObject *) list->data;
-                    gint type;
-                    GParamSpec *pspec;
-                    GEnumValue *val;
-
-                    g_object_get (info, "type", &type, NULL);
-                    pspec = g_object_class_find_property (G_OBJECT_GET_CLASS (info), "type");
-                    val = g_enum_get_value (G_PARAM_SPEC_ENUM (pspec)->enum_class, type);
-
-                    if (strstr (val->value_name, "VIDEO"))
-                        is_video = true;
-                }
-                if (!is_video)
-                    QApplication::postEvent (gstapp, new GstSizeEvent (movie_length, 0, 0));
-            }
+            else if (old_state >= GST_STATE_PAUSED &&
+                    new_state <= GST_STATE_READY &&
+                    !strcmp (src_name, playbin_name))
+                QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_finished));
+            g_free (src_name);
+            break;
         }
         case GST_MESSAGE_CLOCK_PROVIDE:
         case GST_MESSAGE_CLOCK_LOST:
@@ -513,7 +490,7 @@ void KGStreamerPlayer::play () {
     gchar *uri, *sub_uri = 0L;
     movie_length = movie_width = movie_height = 0;
     mutex.lock ();
-    gst_elm_play = gst_element_factory_make ("playbin", "player");
+    gst_elm_play = gst_element_factory_make ("playbin", playbin_name);
     if (!gst_elm_play) {
         fprintf (stderr, "couldn't create playbin\n");
         goto fail;
@@ -590,12 +567,12 @@ void KGStreamerPlayer::play () {
         g_object_set (gst_elm_play, "suburi", sub_uri, NULL);
         g_free (sub_uri);
     }
+    mutex.unlock ();
     gst_element_set_state (gst_elm_play, GST_STATE_PAUSED);
     if (gstPollForStateChange (gst_elm_play, GST_STATE_PAUSED)) {
         gst_element_set_state (gst_elm_play, GST_STATE_PLAYING);
         gstPollForStateChange (gst_elm_play, GST_STATE_PLAYING);
     }
-    mutex.unlock ();
 
     g_free (uri);
     return;
@@ -679,20 +656,23 @@ void KGStreamerPlayer::volume (int val) {
 }
 
 void KGStreamerPlayer::updatePosition () {
-    if (gst_elm_play && callback) {
+    if (gst_elm_play) {
+        gst_bus_poll (gst_bus, (GstMessageType) (GST_MESSAGE_STATE_CHANGED | GST_MESSAGE_ERROR | GST_MESSAGE_EOS), GST_SECOND/10);
         mutex.lock ();
-        GstFormat fmt = GST_FORMAT_TIME;
-        gint64 val = 0, len = -1; // usec
-        if (!movie_length && gst_element_query_duration (gst_elm_play, &fmt, &len))
-            if (len / (GST_MSECOND * 100) != movie_length) {
-                movie_length = len / (GST_MSECOND * 100);
-                if (movie_length > 0) {
-                    printf ("new length %d\n", movie_length);
-                    postEvent (gstapp, new GstSizeEvent (movie_length, movie_width, movie_height));
+        if (gst_elm_play && callback) {
+            GstFormat fmt = GST_FORMAT_TIME;
+            gint64 val = 0, len = -1; // usec
+            if (!movie_length && gst_element_query_duration (gst_elm_play, &fmt, &len))
+                if (len / (GST_MSECOND * 100) != movie_length) {
+                    movie_length = len / (GST_MSECOND * 100);
+                    if (movie_length > 0) {
+                        printf ("new length %d\n", movie_length);
+                        postEvent (gstapp, new GstSizeEvent (movie_length, movie_width, movie_height));
+                    }
                 }
-            }
-        if (gst_element_query_position (gst_elm_play, &fmt, &val))
-            callback->moviePosition (int (val / (GST_MSECOND * 100)));
+            if (gst_element_query_position (gst_elm_play, &fmt, &val))
+                callback->moviePosition (int (val / (GST_MSECOND * 100)));
+        }
         mutex.unlock ();
         QTimer::singleShot (500, this, SLOT (updatePosition ()));
     }
@@ -718,13 +698,13 @@ bool KGStreamerPlayer::event (QEvent * e) {
                         gst_x_overlay_set_xwindow_id (GST_X_OVERLAY (videosink), 0);
                     gst_object_unref (GST_OBJECT (videosink));
                 }
-                mutex.unlock ();
                 gst_bus = 0L;
                 gst_elm_play = 0L;
                 audiosink = 0L;
                 videosink = 0L;
                 color_balance = 0L;
                 gst_bus_sync = gst_bus_async = 0;
+                mutex.unlock ();
             }
             if (callback)
                 callback->finished ();
@@ -749,10 +729,9 @@ bool KGStreamerPlayer::event (QEvent * e) {
             // fall through
         }
         case event_playing:
-            if (callback) {
+            if (callback)
                 callback->playing ();
-                QTimer::singleShot (500, this, SLOT (updatePosition ()));
-            }
+            QTimer::singleShot (500, this, SLOT (updatePosition ()));
             break;
         default:
             return false;
