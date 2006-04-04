@@ -61,6 +61,7 @@ static const int            event_finished = QEvent::User;
 static const int            event_playing = QEvent::User + 1;
 static const int            event_size = QEvent::User + 2;
 static const int            event_eos = QEvent::User + 3;
+static const int            event_progress = QEvent::User + 4;
 static QString              mrl;
 static QString              sub_mrl;
 static const char          *ao_driver;
@@ -181,35 +182,37 @@ static void gstBusMessage (GstBus *, GstMessage * message, gpointer) {
         return;
     switch (msg_type) {
         case GST_MESSAGE_ERROR:
-            printf ("error msg\n");
+            fprintf (stderr, "error msg\n");
             if (gst_elm_play) {
                 gst_element_set_state (gst_elm_play, GST_STATE_NULL);
                 //gstPollForStateChange (gst_elm_play, GST_STATE_NULL);
             }
             break;
         case GST_MESSAGE_WARNING:
-            printf ("warning msg\n");
+            fprintf (stderr, "warning msg\n");
             break;
         case GST_MESSAGE_TAG:
-            printf ("tag msg\n");
+            fprintf (stderr, "tag msg\n");
             break;
         case GST_MESSAGE_EOS:
-            printf ("eos msg\n");
+            fprintf (stderr, "eos msg\n");
             QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_eos));
             break;
         case GST_MESSAGE_BUFFERING: {
             gint percent = 0;
             gst_structure_get_int (message->structure, "buffer-percent", &percent);
-            printf ("Buffering message (%u%%)\n", percent);
+            QApplication::postEvent (gstapp, new GstProgressEvent (percent));
+            //fprintf (stderr, "Buffering message (%u%%)\n", percent);
+            break;
         }
         case GST_MESSAGE_APPLICATION:
-            printf ("app msg\n");
+            fprintf (stderr, "app msg\n");
             break;
         case GST_MESSAGE_STATE_CHANGED: {
             GstState old_state, new_state;
             gchar *src_name = gst_object_get_name (message->src);
             gst_message_parse_state_changed(message, &old_state, &new_state,0L);
-            printf ("%s changed state from %s to %s\n", src_name, gst_element_state_get_name (old_state), gst_element_state_get_name (new_state));
+            fprintf (stderr, "%s changed state from %s to %s\n", src_name, gst_element_state_get_name (old_state), gst_element_state_get_name (new_state));
             if (old_state == GST_STATE_PAUSED &&
                     new_state >= GST_STATE_PLAYING &&
                     !strcmp (src_name, playbin_name))
@@ -227,7 +230,7 @@ static void gstBusMessage (GstBus *, GstMessage * message, gpointer) {
         case GST_MESSAGE_STATE_DIRTY:
              break;
         default:
-             printf ("Unhandled msg %s (0x%x)\n",
+             fprintf (stderr, "Unhandled msg %s (0x%x)\n",
                      gst_message_type_get_name (msg_type), msg_type);
              break;
     }
@@ -235,7 +238,7 @@ static void gstBusMessage (GstBus *, GstMessage * message, gpointer) {
 
 static void gstMessageElement_cb (GstBus *bus, GstMessage *msg, gpointer /*data*/) {
     if (gst_structure_has_name (msg->structure, "prepare-xwindow-id")) {
-        printf ("prepare-xwindow-id\n");
+        fprintf (stderr, "prepare-xwindow-id\n");
         if (xoverlay)
             gst_x_overlay_set_xwindow_id (xoverlay, wid);
     }
@@ -303,19 +306,19 @@ static bool gstPollForStateChange (GstElement *element, GstState state, gint64 t
 
 success:
     /* state change succeeded */
-    printf ("state change to %s succeeded\n", gst_element_state_get_name (state));
+    fprintf (stderr, "state change to %s succeeded\n", gst_element_state_get_name (state));
     ignore_messages_mask = saved_events;
     return TRUE;
 
 timed_out:
     /* it's taking a long time to open -- just tell totem it was ok, this allows
      * the user to stop the loading process with the normal stop button */
-    fprintf (stderr, "state change to %s timed out, returning success and handling errors asynchroneously", gst_element_state_get_name (state));
+    fprintf (stderr, "state change to %s timed out, returning success and handling errors asynchroneously\n", gst_element_state_get_name (state));
     ignore_messages_mask = saved_events;
     return TRUE;
 
 error:
-    fprintf (stderr, "error while waiting for state change to %s: %s",
+    fprintf (stderr, "error while waiting for state change to %s: %s\n",
             gst_element_state_get_name (state),
             (error && *error) ? (*error)->message : "unknown");
     /* already set *error */
@@ -323,10 +326,18 @@ error:
     return FALSE;
 }
 
+//-----------------------------------------------------------------------------
+
 GstSizeEvent::GstSizeEvent (int l, int w, int h)
   : QEvent ((QEvent::Type) event_size),
     length (l), width (w), height (h) 
 {}
+
+GstProgressEvent::GstProgressEvent (const int p)
+  : QEvent ((QEvent::Type) event_progress), progress (p) 
+{}
+
+//-----------------------------------------------------------------------------
 
 using namespace KMPlayer;
 
@@ -572,8 +583,8 @@ void KGStreamerPlayer::play () {
         gst_element_set_state (gst_elm_play, GST_STATE_PLAYING);
         gstPollForStateChange (gst_elm_play, GST_STATE_PLAYING);
     }
-
     g_free (uri);
+    QTimer::singleShot (500, this, SLOT (updatePosition ()));
     return;
 fail:
     QApplication::postEvent (gstapp, new QEvent ((QEvent::Type)event_finished));
@@ -665,7 +676,7 @@ void KGStreamerPlayer::updatePosition () {
                 if (len / (GST_MSECOND * 100) != movie_length) {
                     movie_length = len / (GST_MSECOND * 100);
                     if (movie_length > 0) {
-                        printf ("new length %d\n", movie_length);
+                        fprintf (stderr, "new length %d\n", movie_length);
                         postEvent (gstapp, new GstSizeEvent (movie_length, movie_width, movie_height));
                     }
                 }
@@ -730,7 +741,11 @@ bool KGStreamerPlayer::event (QEvent * e) {
         case event_playing:
             if (callback)
                 callback->playing ();
-            QTimer::singleShot (500, this, SLOT (updatePosition ()));
+            break;
+        case event_progress:
+            if (callback)
+                callback->loadingProgress
+                    (static_cast <GstProgressEvent *> (e)->progress);
             break;
         case event_eos:
             stop ();
@@ -907,6 +922,7 @@ int main(int argc, char **argv) {
     fprintf (stderr, "closing display\n");
     XCloseDisplay (display);
     fprintf (stderr, "done\n");
+    fflush (stderr);
     return 0;
 }
 

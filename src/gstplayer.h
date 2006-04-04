@@ -31,6 +31,11 @@ struct GstSizeEvent : public QEvent {
     int height;
 };
 
+struct GstProgressEvent : public QEvent {
+    GstProgressEvent (int p);
+    int progress;
+};
+
 class KGStreamerPlayer : public QApplication {
     Q_OBJECT
 public:
