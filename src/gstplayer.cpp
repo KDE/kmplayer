@@ -60,6 +60,7 @@ static int                  screen;
 static const int            event_finished = QEvent::User;
 static const int            event_playing = QEvent::User + 1;
 static const int            event_size = QEvent::User + 2;
+static const int            event_eos = QEvent::User + 3;
 static QString              mrl;
 static QString              sub_mrl;
 static const char          *ao_driver;
@@ -194,9 +195,7 @@ static void gstBusMessage (GstBus *, GstMessage * message, gpointer) {
             break;
         case GST_MESSAGE_EOS:
             printf ("eos msg\n");
-            gstapp->lock ();
-            gstapp->stop ();
-            gstapp->unlock ();
+            QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_eos));
             break;
         case GST_MESSAGE_BUFFERING: {
             gint percent = 0;
@@ -732,6 +731,9 @@ bool KGStreamerPlayer::event (QEvent * e) {
             if (callback)
                 callback->playing ();
             QTimer::singleShot (500, this, SLOT (updatePosition ()));
+            break;
+        case event_eos:
+            stop ();
             break;
         default:
             return false;
