@@ -52,6 +52,7 @@ static QMutex               mutex (true);
 static bool                 window_created = true;
 static bool                 wants_config;
 static bool                 verbose;
+static bool                 notified_playing;
 static int                  running;
 static int                  movie_width;
 static int                  movie_height;
@@ -62,6 +63,7 @@ static const int            event_playing = QEvent::User + 1;
 static const int            event_size = QEvent::User + 2;
 static const int            event_eos = QEvent::User + 3;
 static const int            event_progress = QEvent::User + 4;
+static const int            event_error = QEvent::User + 5;
 static QString              mrl;
 static QString              sub_mrl;
 static const char          *ao_driver;
@@ -183,6 +185,7 @@ static void gstBusMessage (GstBus *, GstMessage * message, gpointer) {
     switch (msg_type) {
         case GST_MESSAGE_ERROR:
             fprintf (stderr, "error msg\n");
+            QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_error));
             if (gst_elm_play) {
                 gst_element_set_state (gst_elm_play, GST_STATE_NULL);
                 //gstPollForStateChange (gst_elm_play, GST_STATE_NULL);
@@ -323,6 +326,7 @@ error:
             (error && *error) ? (*error)->message : "unknown");
     /* already set *error */
     ignore_messages_mask = saved_events;
+    QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_error));
     return FALSE;
 }
 
@@ -494,6 +498,7 @@ void KGStreamerPlayer::play () {
         }
         return;
     }
+    notified_playing = false;
     fprintf (stderr, "play %s\n", mrl.ascii ());
     if (mrl.isEmpty ())
         return;
@@ -612,7 +617,8 @@ void KGStreamerPlayer::stop () {
         gst_element_set_state (gst_elm_play, GST_STATE_NULL);
         gst_element_get_state (gst_elm_play, NULL, NULL, -1);
         mutex.unlock ();
-    } else
+    }
+    if (!gst_elm_play || (gst_elm_play && !notified_playing))
         QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_finished));
 }
 
@@ -739,6 +745,7 @@ bool KGStreamerPlayer::event (QEvent * e) {
             // fall through
         }
         case event_playing:
+            notified_playing = true;
             if (callback)
                 callback->playing ();
             break;
@@ -748,6 +755,7 @@ bool KGStreamerPlayer::event (QEvent * e) {
                     (static_cast <GstProgressEvent *> (e)->progress);
             break;
         case event_eos:
+        case event_error:
             stop ();
             break;
         default:
