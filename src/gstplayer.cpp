@@ -188,6 +188,10 @@ static void gstGetDuration () {
         }
 }
 
+static void gstTag (const GstTagList *list, const gchar *tag, gpointer) {
+    fprintf (stderr, "Tag: %s\n", tag);
+}
+
 static void gstBusMessage (GstBus *, GstMessage * message, gpointer) {
     GstMessageType msg_type = GST_MESSAGE_TYPE (message);
     /* somebody else is handling the message, probably in gstPolForStateChange*/
@@ -205,9 +209,14 @@ static void gstBusMessage (GstBus *, GstMessage * message, gpointer) {
         case GST_MESSAGE_WARNING:
             fprintf (stderr, "warning msg\n");
             break;
-        case GST_MESSAGE_TAG:
+        case GST_MESSAGE_TAG: {
+            GstTagList *tag_list;
             fprintf (stderr, "tag msg\n");
+            gst_message_parse_tag (message, &tag_list);
+            gst_tag_list_foreach (tag_list, gstTag, 0L);
+            gst_tag_list_free (tag_list);
             break;
+        }
         case GST_MESSAGE_EOS:
             fprintf (stderr, "eos msg\n");
             QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_eos));
@@ -224,19 +233,20 @@ static void gstBusMessage (GstBus *, GstMessage * message, gpointer) {
             break;
         case GST_MESSAGE_STATE_CHANGED: {
             GstState old_state, new_state;
-            gchar *src_name = gst_object_get_name (message->src);
+            //gchar *src_name = gst_object_get_name (message->src);
             gst_message_parse_state_changed(message, &old_state, &new_state,0L);
-            fprintf (stderr, "%s changed state from %s to %s\n", src_name, gst_element_state_get_name (old_state), gst_element_state_get_name (new_state));
-            if (old_state == GST_STATE_PAUSED &&
-                    new_state >= GST_STATE_PLAYING &&
-                    !strcmp (src_name, playbin_name)) {
-                gstGetDuration ();
-                QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_playing));
-            } else if (old_state >= GST_STATE_PAUSED &&
-                    new_state <= GST_STATE_READY &&
-                    !strcmp (src_name, playbin_name))
-                QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_finished));
-            g_free (src_name);
+            //fprintf (stderr, "%s changed state from %s to %s\n", src_name, gst_element_state_get_name (old_state), gst_element_state_get_name (new_state));
+            if (GST_IS_ELEMENT (message->src) &&
+                    GST_ELEMENT (message->src) == gst_elm_play) {
+                if (old_state == GST_STATE_PAUSED &&
+                        new_state >= GST_STATE_PLAYING) {
+                    gstGetDuration ();
+                    QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_playing));
+                } else if (old_state >= GST_STATE_PAUSED &&
+                        new_state <= GST_STATE_READY)
+                    QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_finished));
+            }
+            //g_free (src_name);
             break;
         }
         case GST_MESSAGE_DURATION:
@@ -262,7 +272,7 @@ static void gstMessageElement (GstBus *, GstMessage *msg, gpointer /*data*/) {
     }
 }
 
-static bool gstPollForStateChange (GstElement *element, GstState state, gint64 timeout=GST_SECOND/4) {
+static bool gstPollForStateChange (GstElement *element, GstState state, gint64 timeout=GST_SECOND/2) {
     /*GstMessageType*/ unsigned int events, saved_events;
     GstBus *bus = gst_element_get_bus (element);
     GError **error = 0L;
@@ -434,7 +444,7 @@ bool updateConfigEntry (const QString & name, const QString & value) {
 }
 
 void Backend::setConfig (QByteArray data) {
-    QString err;
+    /*QString err;
     int line, column;
     QDomDocument dom;
     if (dom.setContent (data, false, &err, &line, &column)) {
@@ -450,7 +460,7 @@ void Backend::setConfig (QByteArray data) {
             err = QString ("invalid data");
     }
     if (callback)
-        callback->errorMessage (0, err);
+        callback->errorMessage (0, err);*/
 }
 
 KGStreamerPlayer::KGStreamerPlayer (int _argc, char ** _argv)
@@ -467,19 +477,16 @@ void KGStreamerPlayer::init () {
     if (window_created)
         wid = XCreateSimpleWindow(display, XDefaultRootWindow(display),
                 xpos, ypos, width, height, 1, 0, 0);
-    if (!callback)
-        QTimer::singleShot (10, this, SLOT (play ()));
+    fprintf (stderr, "init wid %u created:%d\n", wid, window_created);
     XSelectInput (display, wid,
                   (PointerMotionMask | ExposureMask | KeyPressMask | ButtonPressMask | StructureNotifyMask)); // | SubstructureNotifyMask));
 
-    XUnlockDisplay(display);
     if (window_created) {
-        fprintf (stderr, "map %lu\n", wid);
-        XLockDisplay(display);
+        //fprintf (stderr, "map %lu\n", wid);
         XMapRaised(display, wid);
         XSync(display, False);
-        XUnlockDisplay(display);
     }
+    XUnlockDisplay(display);
 }
 
 KGStreamerPlayer::~KGStreamerPlayer () {
@@ -506,6 +513,7 @@ void getConfigEntries (QByteArray & buf) {
 void KGStreamerPlayer::play () {
     GstElement *element;
     bool success;
+    fprintf (stderr, "play %s\n", mrl.isEmpty() ? "<empty>" : mrl.ascii ());
     if (gst_elm_play) {
         if (GST_STATE (gst_elm_play) == GST_STATE_PAUSED) {
             gst_element_set_state (gst_elm_play, GST_STATE_PLAYING);
@@ -514,7 +522,6 @@ void KGStreamerPlayer::play () {
         return;
     }
     notified_playing = false;
-    fprintf (stderr, "play %s\n", mrl.ascii ());
     if (mrl.isEmpty ())
         return;
     gchar *uri, *sub_uri = 0L;
@@ -612,18 +619,20 @@ fail:
 
 void KGStreamerPlayer::pause () {
     mutex.lock ();
-    GstState state = GST_STATE (gst_elm_play) == GST_STATE_PLAYING ?
-        GST_STATE_PAUSED : GST_STATE_PLAYING;
-    gst_element_set_state (gst_elm_play, state);
-    gstPollForStateChange (gst_elm_play, state);
+    if (gst_elm_play) {
+        GstState state = GST_STATE (gst_elm_play) == GST_STATE_PLAYING ?
+            GST_STATE_PAUSED : GST_STATE_PLAYING;
+        gst_element_set_state (gst_elm_play, state);
+        gstPollForStateChange (gst_elm_play, state);
+    }
     mutex.unlock ();
 }
 
 void KGStreamerPlayer::stop () {
-    fprintf (stderr, "stop %s\n", mrl.ascii ());
+    fprintf (stderr, "stop %s\n", mrl.isEmpty () ? "<empty>" : mrl.ascii ());
+    mutex.lock ();
     if (gst_elm_play) {
         GstState current_state;
-        mutex.lock ();
         gst_element_get_state (gst_elm_play, &current_state, NULL, 0);
         if (current_state > GST_STATE_READY) {
             gst_element_set_state (gst_elm_play, GST_STATE_READY);
@@ -631,8 +640,8 @@ void KGStreamerPlayer::stop () {
         }
         gst_element_set_state (gst_elm_play, GST_STATE_NULL);
         gst_element_get_state (gst_elm_play, NULL, NULL, -1);
-        mutex.unlock ();
     }
+    mutex.unlock ();
     if (!gst_elm_play || (gst_elm_play && !notified_playing))
         QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_finished));
 }
@@ -642,6 +651,7 @@ void KGStreamerPlayer::finished () {
 }
 
 static void adjustColorSetting (const char * channel, int val) {
+    //fprintf (stderr, "adjustColorSetting %s\n", channel);
     mutex.lock ();
     if (color_balance) {
         for (const GList *item =gst_color_balance_list_channels (color_balance);
@@ -673,6 +683,7 @@ void KGStreamerPlayer::brightness (int b) {
 }
 
 void KGStreamerPlayer::seek (int val /*offset_in_deciseconds*/) {
+    //fprintf (stderr, "seek %d\n", val);
     mutex.lock ();
     if (gst_elm_play)
         gst_element_seek (gst_elm_play, 1.0, GST_FORMAT_TIME,
@@ -683,6 +694,7 @@ void KGStreamerPlayer::seek (int val /*offset_in_deciseconds*/) {
 }
 
 void KGStreamerPlayer::volume (int val) {
+    //fprintf (stderr, "position %d\n", val);
     if (gst_elm_play)
         g_object_set (G_OBJECT (gst_elm_play), "volume", 1.0*val/100, 0L);
 }
@@ -913,7 +925,7 @@ int main(int argc, char **argv) {
 
     DCOPClient dcopclient;
     dcopclient.registerAs ("kgstreamerplayer");
-    Backend player;
+    Backend * backend = new Backend;
 
     XEventThread * eventThread = new XEventThread;
     eventThread->start ();
@@ -925,7 +937,9 @@ int main(int argc, char **argv) {
         if (wants_config)
             getConfigEntries (buf);
         callback->started (dcopclient.appId (), buf);
-    }
+    } else
+        QTimer::singleShot (10, gstapp, SLOT (play ()));
+
     gstapp->exec ();
 
     XLockDisplay(display);
@@ -940,6 +954,7 @@ int main(int argc, char **argv) {
     delete eventThread;
 
     gstapp->stop ();
+    delete backend;
     delete gstapp;
 
     fprintf (stderr, "closing display\n");
