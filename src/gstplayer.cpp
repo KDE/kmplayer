@@ -69,7 +69,7 @@ static QString              sub_mrl;
 static const char          *ao_driver;
 static const char          *vo_driver;
 static const char          *playbin_name = "player";
-static GstElement * gst_elm_play, * videosink, * audiosink;
+static GstElement          *gst_elm_play;
 static GstBus              *gst_bus;
 static unsigned int /*GstMessageType*/       ignore_messages_mask;
 static GstXOverlay         *xoverlay;
@@ -512,6 +512,8 @@ void getConfigEntries (QByteArray & buf) {
 
 void KGStreamerPlayer::play () {
     GstElement *element;
+    GstElement *videosink = 0L;
+    GstElement *audiosink = 0L;
     bool success;
     fprintf (stderr, "play %s\n", mrl.isEmpty() ? "<empty>" : mrl.ascii ());
     if (gst_elm_play) {
@@ -614,6 +616,15 @@ void KGStreamerPlayer::play () {
     QTimer::singleShot (500, this, SLOT (updatePosition ()));
     return;
 fail:
+    if (videosink) {
+        gst_element_set_state (videosink, GST_STATE_NULL);
+        gst_object_unref (videosink);
+    }
+    if (audiosink) {
+        gst_element_set_state (audiosink, GST_STATE_NULL);
+        gst_object_unref (audiosink);
+    }
+    mutex.unlock ();
     QApplication::postEvent (gstapp, new QEvent ((QEvent::Type)event_finished));
 }
 
@@ -636,7 +647,9 @@ void KGStreamerPlayer::stop () {
         gst_element_get_state (gst_elm_play, &current_state, NULL, 0);
         if (current_state > GST_STATE_READY) {
             gst_element_set_state (gst_elm_play, GST_STATE_READY);
+            mutex.unlock ();
             gstPollForStateChange (gst_elm_play, GST_STATE_READY, -1);
+            mutex.lock ();
         }
         gst_element_set_state (gst_elm_play, GST_STATE_NULL);
         gst_element_get_state (gst_elm_play, NULL, NULL, -1);
@@ -724,8 +737,8 @@ bool KGStreamerPlayer::event (QEvent * e) {
     switch (e->type()) {
         case event_finished: {
             fprintf (stderr, "event_finished\n");
+            mutex.lock ();
             if (gst_elm_play) {
-                mutex.lock ();
                 gst_bus_set_flushing (gst_bus, TRUE);
                 if (gst_bus_sync)
                     g_signal_handler_disconnect (gst_bus, gst_bus_sync);
@@ -733,22 +746,13 @@ bool KGStreamerPlayer::event (QEvent * e) {
                     g_signal_handler_disconnect (gst_bus, gst_bus_async);
                 gst_object_unref (gst_bus);
                 gst_object_unref (GST_OBJECT (gst_elm_play));
-                if (audiosink)
-                    gst_object_unref (GST_OBJECT (audiosink));
-                if (videosink) {
-                    if (videosink && GST_IS_X_OVERLAY (videosink))
-                        gst_x_overlay_set_xwindow_id (GST_X_OVERLAY (videosink), 0);
-                    gst_object_unref (GST_OBJECT (videosink));
-                }
                 gst_bus = 0L;
                 gst_elm_play = 0L;
-                audiosink = 0L;
-                videosink = 0L;
                 color_balance = 0L;
                 gst_bus_sync = gst_bus_async = 0;
                 xoverlay = 0L;
-                mutex.unlock ();
             }
+            mutex.unlock ();
             if (callback)
                 callback->finished ();
             else
@@ -834,14 +838,19 @@ protected:
                     break;
                 }
                 case Expose:
-                    if(xevent.xexpose.count != 0 || xevent.xexpose.window != wid)
-                        break;
-                    mutex.lock ();
-                    if (videosink && GST_IS_X_OVERLAY (videosink)) {
-                        gst_x_overlay_set_xwindow_id (GST_X_OVERLAY (videosink), wid);
-                        gst_x_overlay_expose (GST_X_OVERLAY (videosink));
+                    if (!xevent.xexpose.count && xevent.xexpose.window == wid) {
+                        mutex.lock ();
+                        if (gst_elm_play) {
+                            GstElement *videosink;
+                            g_object_get (gst_elm_play, "video-sink", &videosink, NULL);
+                            if (videosink && GST_IS_X_OVERLAY (videosink)) {
+                                gst_x_overlay_set_xwindow_id (GST_X_OVERLAY (videosink), wid);
+                                gst_x_overlay_expose (GST_X_OVERLAY (videosink));
+                                gst_object_unref (videosink);
+                            }
+                        }
+                        mutex.unlock ();
                     }
-                    mutex.unlock ();
                     break;
 
                 case ConfigureNotify:
