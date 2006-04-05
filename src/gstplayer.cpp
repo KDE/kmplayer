@@ -69,6 +69,8 @@ static QString              sub_mrl;
 static const char          *ao_driver;
 static const char          *vo_driver;
 static const char          *playbin_name = "player";
+static char                *dvd_device;
+static char                *vcd_device;
 static GstElement          *gst_elm_play;
 static GstBus              *gst_bus;
 static unsigned int /*GstMessageType*/       ignore_messages_mask;
@@ -174,7 +176,20 @@ static void gstStreamInfo (GObject *, GParamSpec *, gpointer /*data*/) {
 }
 
 static void gstSource (GObject *, GParamSpec *, gpointer /*data*/) {
+    GObject *source = 0L;
     fprintf (stderr, "gstSource\n");
+    g_object_get (gst_elm_play, "source", &source, NULL);
+    if (!source)
+        return;
+    GObjectClass *klass = G_OBJECT_GET_CLASS (source);
+    if (mrl.startsWith ("dvd://") && dvd_device) {
+        if (g_object_class_find_property (klass, "device"))
+            g_object_set (source, "device", dvd_device, NULL);
+    } else if (mrl.startsWith ("vcd://") && vcd_device) {
+        if (g_object_class_find_property (klass, "device"))
+            g_object_set (source, "device", vcd_device, NULL);
+    }
+    g_object_unref (source);
 }
 
 static void gstGetDuration () {
@@ -188,7 +203,7 @@ static void gstGetDuration () {
         }
 }
 
-static void gstTag (const GstTagList *list, const gchar *tag, gpointer) {
+static void gstTag (const GstTagList *, const gchar *tag, gpointer) {
     fprintf (stderr, "Tag: %s\n", tag);
 }
 
@@ -443,7 +458,7 @@ bool updateConfigEntry (const QString & name, const QString & value) {
     return true;
 }
 
-void Backend::setConfig (QByteArray data) {
+void Backend::setConfig (QByteArray /*data*/) {
     /*QString err;
     int line, column;
     QDomDocument dom;
@@ -900,6 +915,10 @@ int main(int argc, char **argv) {
             ao_driver = argv [++i];
         } else if (!strcmp (argv [i], "-vo")) {
             vo_driver = argv [++i];
+        } else if (!strcmp (argv [i], "-dvd-device") && ++i < argc) {
+            dvd_device = argv [i];
+        } else if (!strcmp (argv [i], "-vcd-device") && ++i < argc) {
+            vcd_device = argv [i];
         } else if (!strcmp (argv [i], "-wid") || !strcmp (argv [i], "-window-id")) {
             wid = atol (argv [++i]);
             window_created = false;
@@ -924,7 +943,7 @@ int main(int argc, char **argv) {
                     (str.left (pos).ascii (), str.mid (pos + 1).ascii ());
             }
         } else if (!strncmp (argv [i], "-", 1)) {
-            fprintf (stderr, "usage: %s [-ao <audio driver>] [-f <config file>] [-v] [(-wid|-window-id) <window>] [(-root|-window)] [-cb <DCOP callback name> [-c]] [<url>]\n", argv[0]);
+            fprintf (stderr, "usage: %s [-vo (xv|xshm)] [-ao <audio driver>] [-f <config file>] [-dvd-device <device>] [-vcd-device <device>] [-v] [(-wid|-window-id) <window>] [(-root|-window)] [-cb <DCOP callback name> [-c]] [<url>]\n", argv[0]);
             delete gstapp;
             return 1;
         } else {

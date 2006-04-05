@@ -1672,7 +1672,7 @@ bool Xine::ready (Viewer * viewer) {
 //-----------------------------------------------------------------------------
 
 static const char * gst_supported [] = {
-    "exitsource", "introsource", "urlsource", 0L
+    "exitsource", "introsource", "urlsource", "vcdsource", 0L
 };
 
 KDE_NO_CDTOR_EXPORT GStreamer::GStreamer (QObject * parent, Settings * settings)
@@ -1702,8 +1702,19 @@ KDE_NO_EXPORT bool GStreamer::ready (Viewer * viewer) {
         fprintf (stderr, " -ao %s", strAudioDriver.lower().ascii());
         *m_process << " -ao " << strAudioDriver.lower();
     }
-    fprintf (stderr, " -cb %s\n", dcopName ().ascii());
+    fprintf (stderr, " -cb %s", dcopName ().ascii());
     *m_process << " -cb " << dcopName ();
+    if (m_source)
+        if (m_source->url ().url ().startsWith (QString ("dvd://")) &&
+                !m_settings->dvddevice.isEmpty ()) {
+            fprintf (stderr, " -dvd-device %s", m_settings->dvddevice.ascii ());
+            *m_process << " -dvd-device " << m_settings->dvddevice;
+        } else if (m_source->url ().url ().startsWith (QString ("vcd://")) &&
+                !m_settings->vcddevice.isEmpty ()) {
+            fprintf (stderr, " -vcd-device %s", m_settings->vcddevice.ascii ());
+            *m_process << " -vcd-device " << m_settings->vcddevice;
+        }
+    fprintf (stderr, "\n");
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
     return m_process->isRunning ();
 }
