@@ -72,10 +72,10 @@ static xine_post_t         *post_plugin;
 static xine_event_queue_t  *event_queue;
 static xine_cfg_entry_t     audio_vis_cfg_entry;
 static x11_visual_t         vis;
-static char                *dvd_device;
-static char                *vcd_device;
-static char                *vo_driver = "auto";
-static char                *ao_driver = "auto";
+static const char          *dvd_device;
+static const char          *vcd_device;
+static const char          *vo_driver = "auto";
+static const char          *ao_driver = "auto";
 static char                 configfile[2048];
 
 static Display             *display;

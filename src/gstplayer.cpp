@@ -69,8 +69,8 @@ static QString              sub_mrl;
 static const char          *ao_driver;
 static const char          *vo_driver;
 static const char          *playbin_name = "player";
-static char                *dvd_device;
-static char                *vcd_device;
+static const char          *dvd_device;
+static const char          *vcd_device;
 static GstElement          *gst_elm_play;
 static GstBus              *gst_bus;
 static unsigned int /*GstMessageType*/       ignore_messages_mask;
@@ -207,6 +207,8 @@ static void gstTag (const GstTagList *, const gchar *tag, gpointer) {
     fprintf (stderr, "Tag: %s\n", tag);
 }
 
+//static bool gstStructure (GQuark field_id, const GValue *value, gpointer user_data);
+
 static void gstBusMessage (GstBus *, GstMessage * message, gpointer) {
     GstMessageType msg_type = GST_MESSAGE_TYPE (message);
     /* somebody else is handling the message, probably in gstPolForStateChange*/
@@ -226,7 +228,7 @@ static void gstBusMessage (GstBus *, GstMessage * message, gpointer) {
             break;
         case GST_MESSAGE_TAG: {
             GstTagList *tag_list;
-            fprintf (stderr, "tag msg\n");
+            //fprintf (stderr, "tag msg\n");
             gst_message_parse_tag (message, &tag_list);
             gst_tag_list_foreach (tag_list, gstTag, 0L);
             gst_tag_list_free (tag_list);
@@ -243,9 +245,12 @@ static void gstBusMessage (GstBus *, GstMessage * message, gpointer) {
             //fprintf (stderr, "Buffering message (%u%%)\n", percent);
             break;
         }
-        case GST_MESSAGE_APPLICATION:
-            fprintf (stderr, "app msg\n");
+        case GST_MESSAGE_APPLICATION: {
+            const char * msg = gst_structure_get_name (message->structure);
+            fprintf (stderr, "app msg %s\n", msg ? msg : "<unknown>");
+            //gst_structure_foreach (message->structure, gstStructure, 0L);
             break;
+        }
         case GST_MESSAGE_STATE_CHANGED: {
             GstState old_state, new_state;
             //gchar *src_name = gst_object_get_name (message->src);
