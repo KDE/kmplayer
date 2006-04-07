@@ -121,11 +121,13 @@ PartBase::PartBase (QWidget * wparent, const char *wname,
    m_in_update_tree (false)
 {
     m_players ["mplayer"] = new MPlayer (this, m_settings);
-    m_players ["xine"] = new Xine (this, m_settings);
+    Xine * xine = new Xine (this, m_settings);
+    m_players ["xine"] = xine;
     m_players ["gst"] = new GStreamer (this, m_settings);
     m_recorders ["mencoder"] = new MEncoder (this, m_settings);
     m_recorders ["mplayerdumpstream"] = new MPlayerDumpstream(this, m_settings);
     m_recorders ["ffmpeg"] = new FFMpeg (this, m_settings);
+    m_recorders ["xine"] = xine;
     m_sources ["urlsource"] = new URLSource (this);
 
     QString bmfile = locate ("data", "kmplayer/bookmarks.xml");
@@ -494,12 +496,14 @@ void PartBase::recordingStarted () {
 void PartBase::recordingStopped () {
     killTimer (m_record_timer);
     m_record_timer = 0;
-    if (m_settings->replayoption == Settings::ReplayFinished ||
-            (m_settings->replayoption == Settings::ReplayAfter && !playing ())) {
-        Recorder * rec = dynamic_cast <Recorder*> (m_recorder);
-        if (rec)
+    Recorder * rec = dynamic_cast <Recorder*> (m_recorder);
+    if (rec) {
+        if (m_settings->replayoption == Settings::ReplayFinished ||
+             (m_settings->replayoption == Settings::ReplayAfter && !playing ()))
             openURL (rec->recordURL ());
+        rec->setURL (KURL ());
     }
+    setRecorder ("mencoder"); //FIXME see PartBase::record() checking playing()
 }
 
 void PartBase::timerEvent (QTimerEvent * e) {
@@ -508,8 +512,10 @@ void PartBase::timerEvent (QTimerEvent * e) {
         m_record_timer = 0;
         if (m_recorder->playing () && !playing ()) {
             Recorder * rec = dynamic_cast <Recorder*> (m_recorder);
-            if (rec)
+            if (rec) {
                 openURL (rec->recordURL ());
+                rec->setURL (KURL ());
+            }
         }
     } else if (e->timerId () == m_update_tree_timer) {
         m_update_tree_timer = 0;
@@ -1299,15 +1305,23 @@ static const QString statemap [] = {
 
 void Source::stateChange(Process *p, Process::State olds, Process::State news) {
     if (!p || !p->viewer ()) return;
-    if (dynamic_cast <Recorder *> (p)) {
+    Recorder *rec = dynamic_cast <Recorder *> (p);
+    if (rec && !rec->recordURL ().isEmpty ()) {
         kdDebug () << "recordState " << statemap[olds] << " -> " << statemap[news] << endl;
         m_player->updateStatus (i18n ("Recorder %1 %2").arg (p->name ()).arg (statemap[news]));
         p->viewer ()->view ()->controlPanel ()->setRecording (news > Process::Ready);
-        if (news == Process::Ready && olds > Process::Ready)
-            p->quit ();
-        else if (news >= Process::Ready)
+        if (news == Process::Ready) {
+            if (olds > Process::Ready) {
+                p->quit ();
+            } else {
+                NodePtr n = current ();
+                if (!n)
+                    n = document ();
+                p->play (this, n);
+            }
+        } else if (news > Process::Ready) {
             emit startRecording ();
-        else if (news == Process::NotRunning)
+        } else if (news == Process::NotRunning)
             emit stopRecording ();
     } else {
         p->viewer()->view()->controlPanel()->setPlaying(news > Process::Ready);

@@ -52,6 +52,7 @@ class RecorderPage;                     // base recorder
 class PrefMEncoderPage;         // mencoder
 class PrefMPlayerDumpstreamPage; // mplayer -dumpstream
 class PrefFFMpegPage;           // ffmpeg
+class PrefXinePage;             // xine url:record
 class PrefGeneralPageLooks; 	// general, looks
 class PrefGeneralPageOutput;	// general, output
 class PrefOPPageGeneral;	// OP = outputplugins, general
@@ -77,6 +78,9 @@ public:
     PrefRecordPage 		*m_RecordPage;
     PrefMEncoderPage            *m_MEncoderPage;
     PrefMPlayerDumpstreamPage   *m_MPlayerDumpstreamPage;
+#ifdef HAVE_XINE
+    PrefXinePage                *m_XinePage;
+#endif
     PrefFFMpegPage              *m_FFMpegPage;
     PrefGeneralPageLooks 	*m_GeneralPageLooks;
     PrefGeneralPageOutput 	*m_GeneralPageOutput;
@@ -162,7 +166,7 @@ class KMPLAYER_NO_EXPORT PrefRecordPage : public QFrame
 {
     Q_OBJECT
 public:
-    PrefRecordPage (QWidget *parent, PartBase *, RecorderPage *);
+    PrefRecordPage (QWidget *parent, PartBase *, RecorderPage *, int len);
     ~PrefRecordPage () {}
 
     KURLRequester * url;
@@ -172,8 +176,10 @@ public:
     QLabel * source;
 public slots:
     void replayClicked (int id);
+    void recorderClicked (int id);
 private slots:
     void slotRecord ();
+    void slotNotPlaying ();
     void sourceChanged (KMPlayer::Source *, KMPlayer::Source *);
     void recordingStarted ();
     void recordingFinished ();
@@ -181,6 +187,7 @@ private:
     PartBase * m_player;
     RecorderPage * m_recorders;
     QPushButton * recordButton;
+    int m_recorders_length;
 };
 
 class KMPLAYER_NO_EXPORT RecorderPage : public QFrame
@@ -215,20 +222,25 @@ public slots:
 private:
 };
 
-class KMPLAYER_NO_EXPORT PrefMPlayerDumpstreamPage : public RecorderPage 
-{
-    Q_OBJECT
+class KMPLAYER_NO_EXPORT PrefMPlayerDumpstreamPage : public RecorderPage {
 public:
     PrefMPlayerDumpstreamPage (QWidget *parent, PartBase *);
     ~PrefMPlayerDumpstreamPage () {}
 
     QString name ();
     const char * recorderName () { return "mplayerdumpstream"; }
-
-    QLineEdit * arguments;
-    QButtonGroup * format;
-private:
 };
+
+#ifdef HAVE_XINE
+class KMPLAYER_NO_EXPORT PrefXinePage : public RecorderPage {
+public:
+    PrefXinePage (QWidget *parent, PartBase *);
+    ~PrefXinePage () {}
+
+    QString name ();
+    const char * recorderName () { return "xine"; }
+};
+#endif
 
 class KMPLAYER_NO_EXPORT PrefFFMpegPage : public RecorderPage
 {

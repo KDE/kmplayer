@@ -98,6 +98,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
 
+    int recorders_count = 3;
     m_MEncoderPage = new PrefMEncoderPage (tab, player);
     tab->insertTab (m_MEncoderPage, i18n ("MEncoder"));
     recorders = m_MEncoderPage;
@@ -109,8 +110,13 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     m_MPlayerDumpstreamPage = new PrefMPlayerDumpstreamPage (tab, player);
     // tab->insertTab (m_MPlayerDumpstreamPage, i18n ("MPlayer -dumpstream"));
     m_FFMpegPage->next = m_MPlayerDumpstreamPage;
-
-    m_RecordPage = new PrefRecordPage (tab, player, recorders);
+#ifdef HAVE_XINE
+    recorders_count = 4;
+    m_XinePage = new PrefXinePage (tab, player);
+    // tab->insertTab (m_XinePage, i18n ("Xine"));
+    m_MPlayerDumpstreamPage->next = m_XinePage;
+#endif
+    m_RecordPage = new PrefRecordPage (tab, player, recorders, recorders_count);
     tab->insertTab (m_RecordPage, i18n ("General"), 0);
     tab->setCurrentPage (0);
     entries.insert (i18n("Recording"), tab);
@@ -389,7 +395,7 @@ KDE_NO_EXPORT void PrefSourcePageURL::slotTextChanged (const QString &) {
     changed = true;
 }
 
-KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent, PartBase * player, RecorderPage * rl) : QFrame (parent, "RecordPage"), m_player (player), m_recorders (rl) {
+KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent, PartBase * player, RecorderPage * rl, int rec_len) : QFrame (parent, "RecordPage"), m_player (player), m_recorders (rl), m_recorders_length (rec_len) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     QHBoxLayout * urllayout = new QHBoxLayout ();
     QLabel *urlLabel = new QLabel (i18n ("Output file:"), this);
@@ -403,7 +409,7 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent, PartBase * 
     buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
     buttonlayout->addWidget (recordButton);
     source = new QLabel (i18n ("Current source: ") + m_player->source ()->prettyName (), this);
-    recorder = new QButtonGroup (3 /*m_recorders.size ()*/, Qt::Vertical, i18n ("Recorder"), this);
+    recorder = new QButtonGroup (m_recorders_length, Qt::Vertical, i18n ("Recorder"), this);
     for (RecorderPage * p = m_recorders; p; p = p->next)
         new QRadioButton (p->name (), recorder);
     if (m_player->source ())
@@ -430,6 +436,9 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent, PartBase * 
     layout->addLayout (buttonlayout);
     layout->addItem (new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
     connect (m_player, SIGNAL (sourceChanged(KMPlayer::Source*,KMPlayer::Source*)), this, SLOT (sourceChanged(KMPlayer::Source*,KMPlayer::Source*)));
+#ifdef HAVE_XINE
+    connect (recorder, SIGNAL (clicked(int)), this, SLOT(recorderClicked(int)));
+#endif
     connect (replay, SIGNAL (clicked (int)), this, SLOT (replayClicked (int)));
 }
 
@@ -466,11 +475,30 @@ KDE_NO_EXPORT void PrefRecordPage::sourceChanged (Source * olds, Source * nws) {
     recordButton->setEnabled (nr_recs > 0);
 }
 
+KDE_NO_EXPORT void PrefRecordPage::recorderClicked (int id) {
+    bool b = recorder->find(id)->text().find (QString::fromLatin1("Xine")) > -1;
+    replay->setEnabled (!b);
+    if (b)
+        replay->setButton (Settings::ReplayNo);
+
+}
+
 KDE_NO_EXPORT void PrefRecordPage::replayClicked (int id) {
     replaytime->setEnabled (id == Settings::ReplayAfter);
 }
 
 KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
+    connect (m_player->source (), SIGNAL (stopPlaying ()),
+             this, SLOT (slotNotPlaying ()));
+    if (m_player->process ())
+        m_player->process ()->quit ();
+    else
+        slotNotPlaying ();
+}
+
+KDE_NO_EXPORT void PrefRecordPage::slotNotPlaying () {
+    disconnect (m_player->source (), SIGNAL (stopPlaying ()),
+                this, SLOT (slotNotPlaying ()));
     if (!url->lineEdit()->text().isEmpty()) {
         m_player->settings ()->recordfile = url->lineEdit()->text();
         m_player->settings ()->replaytime = replaytime->text ().toInt ();
@@ -484,8 +512,10 @@ KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
         m_player->settings ()->recorder = Settings::Recorder (id);
         m_player->settings ()->replayoption = Settings::ReplayOption (replayid);
         for (RecorderPage * p = m_recorders; p; p = p->next)
-            if (id-- == 0)
+            if (id-- == 0) {
                 p->record ();
+                break;
+            }
     }
 }
 
@@ -495,15 +525,17 @@ KDE_NO_CDTOR_EXPORT RecorderPage::RecorderPage (QWidget *parent, PartBase * play
 KDE_NO_EXPORT void RecorderPage::record () {
     Process * proc = m_player->recorders () [recorderName ()];
     m_player->setRecorder (recorderName ());
+    Recorder * rec = dynamic_cast <Recorder *> (proc);
     if (!proc->playing ()) {
-        dynamic_cast <Recorder *> (proc)->setURL (KURL (m_player->settings ()->recordfile));
-        NodePtr n = m_player->source ()->current ();
-        if (!n)
-            n = m_player->source ()->document ();
-        m_player->stop ();
-        proc->play (m_player->source (), n);
-    } else
+        if (m_player->process ())
+            m_player->process ()->quit ();
+        rec->setURL (KURL (m_player->settings ()->recordfile));
+        proc->setSource (m_player->source ());
+        proc->ready (0L);
+    } else {
+        rec->setURL (KURL ());
         proc->stop ();
+    }
 }
 
 KDE_NO_CDTOR_EXPORT PrefMEncoderPage::PrefMEncoderPage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
@@ -565,6 +597,14 @@ KDE_NO_EXPORT void PrefFFMpegPage::record () {
 
 KDE_NO_EXPORT QString PrefFFMpegPage::name () {
     return i18n ("&FFMpeg");
+}
+
+KDE_NO_CDTOR_EXPORT PrefXinePage::PrefXinePage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
+    hide();
+}
+
+KDE_NO_EXPORT QString PrefXinePage::name () {
+    return i18n ("&Xine");
 }
 
 KDE_NO_CDTOR_EXPORT PrefGeneralPageOutput::PrefGeneralPageOutput(QWidget *parent, OutputDriver * ad, OutputDriver * vd)

@@ -473,6 +473,7 @@ void Settings::show (const char * pagename) {
     configdialog->m_RecordPage->replay->setButton (int (replayoption));
     configdialog->m_RecordPage->recorder->setButton (int (recorder));
     configdialog->m_RecordPage->replayClicked (int (replayoption));
+    configdialog->m_RecordPage->recorderClicked (int (recorder));
     configdialog->m_RecordPage->replaytime->setText (QString::number (replaytime));
     configdialog->m_MEncoderPage->arguments->setText (mencoderarguments);
     configdialog->m_MEncoderPage->format->setButton (recordcopy ? 0 : 1);

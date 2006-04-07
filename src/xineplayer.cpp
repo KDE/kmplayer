@@ -17,10 +17,11 @@
    Boston, MA 02110-1301, USA.
 */
 
+#include <config.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <config.h>
+#include <libgen.h>
 #include <dcopclient.h>
 #include <qcstring.h>
 #include <qtimer.h>
@@ -105,6 +106,7 @@ static const int            event_size = QEvent::User + 4;
 static const int            event_title = QEvent::User + 5;
 static QString mrl;
 static QString sub_mrl;
+static QString rec_mrl;
 static QString alang, slang;
 static QStringList alanglist, slanglist;
 
@@ -513,7 +515,17 @@ void KXinePlayer::play () {
     xine_gui_send_vo_data(stream, XINE_GUI_SEND_VIDEOWIN_VISIBLE, (void *) 1);
 
     running = 1;
-    if (!xine_open (stream, (const char *) mrl.local8Bit ())) {
+    QString mrlsetup = mrl;
+    if (!rec_mrl.isEmpty ()) {
+        char * rm = strdup (rec_mrl.local8Bit ());
+        char *bn = basename (rm);
+        char *dn = dirname (rm);
+        if (bn)
+            updateConfigEntry (QString ("media.capture.save_dir"), QString::fromLocal8Bit (dn));
+        mrlsetup += QString ("#save:") + QString::fromLocal8Bit (bn);
+        free (rm);
+    }
+    if (!xine_open (stream, (const char *) mrlsetup.local8Bit ())) {
         fprintf(stderr, "Unable to open mrl '%s'\n", (const char *) mrl.local8Bit ());
         mutex.unlock ();
         finished ();
@@ -1036,6 +1048,8 @@ int main(int argc, char **argv) {
                 callback = new KMPlayer::Callback_stub 
                     (str.left (pos).ascii (), str.mid (pos + 1).ascii ());
             }
+        } else if (!strcmp (argv [i], "-rec") && i < argc - 1) {
+            rec_mrl = QString::fromLocal8Bit (argv [++i]);
         } else {
             if (mrl.startsWith ("-session")) {
                 delete xineapp;

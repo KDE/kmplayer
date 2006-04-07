@@ -66,7 +66,7 @@ static QString getPath (const KURL & url) {
         unsigned int i = 0;
         for (; i < p.length () && p[i] == QChar ('/'); ++i)
             ;
-        kdDebug () << "getPath " << p.mid (i-1) << endl;
+        //kdDebug () << "getPath " << p.mid (i-1) << endl;
         if (i > 0)
             return p.mid (i-1);
         return QString (QChar ('/') + p);
@@ -75,9 +75,9 @@ static QString getPath (const KURL & url) {
 }
 
 Process::Process (QObject * parent, Settings * settings, const char * n)
-    : QObject (parent, n), m_viewer (0L), m_source (0L), m_settings (settings),
+    : QObject (parent, n), m_source (0L), m_settings (settings),
       m_state (NotRunning), m_old_state (NotRunning), m_process (0L), m_job(0L),
-      m_supported_sources (default_supported) {}
+      m_supported_sources (default_supported), m_viewer (0L) {}
 
 Process::~Process () {
     stop ();
@@ -377,7 +377,7 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
         return sendCommand (QString ("gui_play"));
     if (!m_needs_restarted)
         stop ();
-    initProcess (m_viewer);
+    initProcess (viewer ());
     m_source->setPosition (0);
     if (!m_needs_restarted) {
         aid = sid = -1;
@@ -595,7 +595,7 @@ bool MPlayer::run (const char * args, const char * pipe) {
 
 KDE_NO_EXPORT bool MPlayer::grabPicture (const KURL & url, int pos) {
     stop ();
-    initProcess (m_viewer);
+    initProcess (viewer ());
     QString outdir = locateLocal ("data", "kmplayer/");
     m_grabfile = outdir + QString ("00000001.jpg");
     unlink (m_grabfile.ascii ());
@@ -617,8 +617,8 @@ KDE_NO_EXPORT bool MPlayer::grabPicture (const KURL & url, int pos) {
 }
 
 KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
-    if (!m_viewer || slen <= 0) return;
-    View * v = m_viewer->view ();
+    if (!viewer () || slen <= 0) return;
+    View * v = viewer ()->view ();
 
     bool ok;
     QRegExp * patterns = m_configpage->m_patterns;
@@ -949,7 +949,7 @@ KDE_NO_EXPORT void MEncoder::init () {
 bool MEncoder::deMediafiedPlay () {
     bool success = false;
     stop ();
-    initProcess (m_viewer);
+    initProcess (viewer ());
     KURL url (m_url);
     m_source->setPosition (0);
     QString args;
@@ -1014,7 +1014,7 @@ KDE_NO_EXPORT void MPlayerDumpstream::init () {
 bool MPlayerDumpstream::deMediafiedPlay () {
     bool success = false;
     stop ();
-    initProcess (m_viewer);
+    initProcess (viewer ());
     KURL url (m_url);
     m_source->setPosition (0);
     QString args;
@@ -1275,8 +1275,8 @@ bool CallbackProcess::quit () {
         kdDebug () << "CallbackProcess::quit ()" << endl;
         if (m_backend)
             m_backend->quit ();
-        else if (m_viewer)
-            m_viewer->sendKeyEvent ('q');
+        else if (viewer ())
+            viewer ()->sendKeyEvent ('q');
 #if KDE_IS_VERSION(3, 1, 90)
         m_process->wait(1);
 #else
@@ -1370,8 +1370,8 @@ void CallbackProcess::initProcess (Viewer * viewer) {
 }
 
 KDE_NO_EXPORT void CallbackProcess::processOutput (KProcess *, char * str, int slen) {
-    if (m_viewer && slen > 0)
-        m_viewer->view ()->addText (QString::fromLocal8Bit (str, slen));
+    if (viewer () && slen > 0)
+        viewer ()->view ()->addText (QString::fromLocal8Bit (str, slen));
 }
 
 KDE_NO_EXPORT void CallbackProcess::processStopped (KProcess *) {
@@ -1382,12 +1382,12 @@ KDE_NO_EXPORT void CallbackProcess::processStopped (KProcess *) {
     setState (NotRunning);
     if (m_send_config == send_try) {
         m_send_config = send_new; // we failed, retry ..
-        ready (m_viewer);
+        ready (viewer ());
     }
 }
 
 WId CallbackProcess::widget () {
-    return m_viewer ? m_viewer->embeddedWinId () : 0;
+    return viewer () ? viewer ()->embeddedWinId () : 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -1661,6 +1661,12 @@ bool Xine::ready (Viewer * viewer) {
             fprintf (stderr, " -vcd-device %s", m_settings->vcddevice.ascii ());
             *m_process << " -vcd-device " << m_settings->vcddevice;
         }
+    if (!m_recordurl.isEmpty ()) {
+        QString rf = KProcess::quote (
+                QString (QFile::encodeName (getPath (m_recordurl))));
+        fprintf (stderr, " -rec %s", rf.ascii ());
+        *m_process << " -rec " << rf;
+    }
     fprintf (stderr, "\n");
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
     return m_process->isRunning ();
@@ -1737,7 +1743,7 @@ KDE_NO_EXPORT void FFMpeg::init () {
 }
 
 bool FFMpeg::deMediafiedPlay () {
-    initProcess (m_viewer);
+    initProcess (viewer ());
     KURL url (m_url);
     connect (m_process, SIGNAL (processExited (KProcess *)),
             this, SLOT (processStopped (KProcess *)));

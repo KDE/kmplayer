@@ -98,7 +98,6 @@ protected:
     void setState (State newstate);
     virtual bool deMediafiedPlay ();
     void terminateJob ();
-    QGuardedPtr <Viewer> m_viewer;
     Source * m_source;
     Settings * m_settings;
     NodePtrW m_mrl;
@@ -109,6 +108,8 @@ protected:
     QString m_url;
     int m_request_seek;
     const char ** m_supported_sources;
+private:
+    QGuardedPtr <Viewer> m_viewer;
 };
 
 /*
@@ -232,7 +233,6 @@ public:
     MEncoder (QObject * parent, Settings * settings);
     ~MEncoder ();
     virtual void init ();
-    KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
     virtual bool deMediafiedPlay ();
 public slots:
     virtual bool stop ();
@@ -247,7 +247,6 @@ public:
     MPlayerDumpstream (QObject * parent, Settings * settings);
     ~MPlayerDumpstream ();
     virtual void init ();
-    KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
     virtual bool deMediafiedPlay ();
 public slots:
     virtual bool stop ();
@@ -365,7 +364,7 @@ private:
 /*
  * Xine backend process
  */
-class Xine : public CallbackProcess {
+class Xine : public CallbackProcess, public Recorder {
     Q_OBJECT
 public:
     Xine (QObject * parent, Settings * settings);
