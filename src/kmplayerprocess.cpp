@@ -1682,7 +1682,7 @@ static const char * gst_supported [] = {
 };
 
 KDE_NO_CDTOR_EXPORT GStreamer::GStreamer (QObject * parent, Settings * settings)
-    : CallbackProcess (parent, settings, "gst", i18n ("&GStreamer")) {
+    : CallbackProcess (parent, settings, "gstreamer", i18n ("&GStreamer")) {
 #ifdef HAVE_GSTREAMER
     m_supported_sources = gst_supported;
 #endif

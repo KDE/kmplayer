@@ -123,7 +123,7 @@ PartBase::PartBase (QWidget * wparent, const char *wname,
     m_players ["mplayer"] = new MPlayer (this, m_settings);
     Xine * xine = new Xine (this, m_settings);
     m_players ["xine"] = xine;
-    m_players ["gst"] = new GStreamer (this, m_settings);
+    m_players ["gstreamer"] = new GStreamer (this, m_settings);
     m_recorders ["mencoder"] = new MEncoder (this, m_settings);
     m_recorders ["mplayerdumpstream"] = new MPlayerDumpstream(this, m_settings);
     m_recorders ["ffmpeg"] = new FFMpeg (this, m_settings);
