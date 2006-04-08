@@ -564,6 +564,7 @@ KDE_NO_EXPORT void PrefMEncoderPage::record () {
 #else
     m_player->settings ()->recordcopy = !format->id (format->selected ());
 #endif
+    m_player->settings ()->mencoderarguments = arguments->text ();
     RecorderPage::record ();
 }
 
@@ -591,7 +592,7 @@ KDE_NO_CDTOR_EXPORT PrefFFMpegPage::PrefFFMpegPage (QWidget *parent, PartBase * 
 }
 
 KDE_NO_EXPORT void PrefFFMpegPage::record () {
-    static_cast <FFMpeg *> (m_player->recorders () ["ffmpeg"])->setArguments (arguments->text ());
+    m_player->settings ()->ffmpegarguments = arguments->text ();
     RecorderPage::record ();
 }
 

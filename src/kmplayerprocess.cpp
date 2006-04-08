@@ -1778,7 +1778,7 @@ bool FFMpeg::deMediafiedPlay () {
     } else {
         cmd += QString ("-i ") + KProcess::quote (QString (QFile::encodeName (url.isLocalFile () ? getPath (url) : url.url ())));
     }
-    cmd += QChar (' ') + arguments;
+    cmd += QChar (' ') + m_settings->ffmpegarguments;
     cmd += QChar (' ') + KProcess::quote (QString (QFile::encodeName (outurl)));
     fprintf (stderr, "%s\n", (const char *) cmd.local8Bit ());
     *m_process << cmd;

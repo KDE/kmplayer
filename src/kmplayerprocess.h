@@ -394,14 +394,11 @@ public:
     FFMpeg (QObject * parent, Settings * settings);
     ~FFMpeg ();
     virtual void init ();
-    void setArguments (const QString & args) { arguments = args; }
     virtual bool deMediafiedPlay ();
 public slots:
     virtual bool stop ();
 private slots:
     void processStopped (KProcess *);
-private:
-    QString arguments;
 };
 
 } // namespace
