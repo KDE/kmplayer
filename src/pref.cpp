@@ -600,6 +600,7 @@ KDE_NO_EXPORT QString PrefFFMpegPage::name () {
     return i18n ("&FFMpeg");
 }
 
+#ifdef HAVE_XINE
 KDE_NO_CDTOR_EXPORT PrefXinePage::PrefXinePage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
     hide();
 }
@@ -607,6 +608,7 @@ KDE_NO_CDTOR_EXPORT PrefXinePage::PrefXinePage (QWidget *parent, PartBase * play
 KDE_NO_EXPORT QString PrefXinePage::name () {
     return i18n ("&Xine");
 }
+#endif
 
 KDE_NO_CDTOR_EXPORT PrefGeneralPageOutput::PrefGeneralPageOutput(QWidget *parent, OutputDriver * ad, OutputDriver * vd)
  : QFrame (parent) {
