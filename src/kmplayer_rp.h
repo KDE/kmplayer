@@ -87,10 +87,14 @@ public:
     virtual bool handleEvent (EventPtr event);
     KDE_NO_EXPORT virtual bool expose () const { return false; }
 protected:
+    virtual void update (int percentage);
     NodePtrW target;
     unsigned int start, duration;
     int x, y, w, h;
-    TimerInfoPtrW start_timer, duration_timer;
+    int steps, curr_step;
+    TimerInfoPtrW start_timer;
+    TimerInfoPtrW duration_timer;
+    TimerInfoPtrW update_timer;
 };
 
 class KMPLAYER_NO_EXPORT Crossfade : public TimingsBase {
@@ -104,30 +108,36 @@ public:
 };
 
 class KMPLAYER_NO_EXPORT Fadein : public TimingsBase {
+    unsigned int from_color;
 public:
     KDE_NO_CDTOR_EXPORT Fadein (NodePtr & d) : TimingsBase(d, id_node_fadein) {}
     KDE_NO_CDTOR_EXPORT ~Fadein () {}
     KDE_NO_EXPORT virtual const char * nodeName () const { return "fadein"; }
     virtual void activate ();
     virtual void begin ();
+    virtual void update (int percentage);
 };
 
 class KMPLAYER_NO_EXPORT Fadeout : public TimingsBase {
+    unsigned int to_color;
 public:
     KDE_NO_CDTOR_EXPORT Fadeout(NodePtr &d) : TimingsBase(d, id_node_fadeout) {}
     KDE_NO_CDTOR_EXPORT ~Fadeout () {}
     KDE_NO_EXPORT virtual const char * nodeName () const { return "fadeout"; }
     virtual void activate ();
     virtual void begin ();
+    virtual void update (int percentage);
 };
 
 class KMPLAYER_NO_EXPORT Fill : public TimingsBase {
+    unsigned int color;
 public:
     KDE_NO_CDTOR_EXPORT Fill (NodePtr & d) : TimingsBase (d, id_node_fill) {}
     KDE_NO_CDTOR_EXPORT ~Fill () {}
     KDE_NO_EXPORT virtual const char * nodeName () const { return "fill"; }
     virtual void activate ();
     virtual void begin ();
+    unsigned int fillColor () const { return color; }
 };
 
 class KMPLAYER_NO_EXPORT Wipe : public TimingsBase {

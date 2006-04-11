@@ -249,6 +249,7 @@ KDE_NO_EXPORT void RP::Image::remoteReady () {
         QImage * img = new QImage (m_data);
         if (!img->isNull ()) {
             image = img;
+            image->setAlphaBuffer (true);
         } else
             delete img;
     }
@@ -300,12 +301,16 @@ KDE_NO_EXPORT void RP::TimingsBase::deactivate () {
 KDE_NO_EXPORT bool RP::TimingsBase::handleEvent (EventPtr event) {
     if (event->id () == event_timer) {
         TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
-        if (te->timer_info == start_timer) {
+        if (te->timer_info == update_timer && duration > 0) {
+            update (50 * ++curr_step / duration);
+            te->interval = true;
+        } else if (te->timer_info == start_timer) {
             start_timer = 0;
             duration_timer = document ()->setTimeout (this, duration * 100);
             begin ();
         } else if (te->timer_info == duration_timer) {
             duration_timer = 0;
+            update (100);
             finish ();
         } else
             return false;
@@ -318,6 +323,14 @@ KDE_NO_EXPORT void RP::TimingsBase::begin () {
     setState (state_began);
     if (target)
         target->begin ();
+    if (duration > 0) {
+        steps = duration * 10 / 5; // 20/s updates
+        update_timer = document ()->setTimeout (this, 50); // 50ms
+        curr_step = 0;
+    }
+}
+
+KDE_NO_EXPORT void RP::TimingsBase::update (int /*percentage*/) {
 }
 
 KDE_NO_EXPORT void RP::TimingsBase::finish () {
@@ -327,6 +340,10 @@ KDE_NO_EXPORT void RP::TimingsBase::finish () {
     } else if (duration_timer) {
         document ()->cancelTimer (duration_timer);
         duration_timer = 0;
+    }
+    if (update_timer) {
+        document ()->cancelTimer (update_timer);
+        update_timer = 0;
     }
     Element::finish ();
 }
@@ -364,6 +381,13 @@ KDE_NO_EXPORT void RP::Crossfade::begin () {
 }
 
 KDE_NO_EXPORT void RP::Fadein::activate () {
+    // pickup color from Fill that should be declared before this node
+    from_color = 0;
+    for (NodePtr n = previousSibling (); n; n = n->previousSibling ())
+        if (n->id == id_node_fill) {
+            from_color = convertNode <RP::Fill> (n)->fillColor ();
+            break;
+        }
     TimingsBase::activate ();
 }
 
@@ -383,7 +407,7 @@ KDE_NO_EXPORT void RP::Fadein::begin () {
             if (img->image) {
                 QPainter painter;
                 painter.begin (imfl->image);
-                painter.drawImage (x, y, *img->image);
+                painter.fillRect (x, y, img->image->width(), img->image->height(), QBrush (QColor (from_color)));
                 painter.end ();
                 imfl->invalidateCachedImage ();
                 imfl->repaint ();
@@ -395,7 +419,37 @@ KDE_NO_EXPORT void RP::Fadein::begin () {
     }
 }
 
+KDE_NO_EXPORT void RP::Fadein::update (int percentage) {
+    Node * p = parentNode ().ptr ();
+    if (p->id != RP::id_node_imfl) {
+        kdWarning () << "fadein begin: no imfl parent found" << endl;
+        return;
+    }
+    RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
+    if (imfl->image && target && target->id == id_node_image) {
+        RP::Image * img = static_cast <RP::Image *> (target.ptr ());
+        if (img->image) {
+            QPainter painter;
+            painter.begin (imfl->image);
+            painter.drawImage (x, y, *img->image);
+            //QImage alpha (img->image->width(), img->image->height(), img->image->depth ());
+            //alpha.setAlphaBuffer (true);
+            //alpha.fill (((0x00ff * (100 - percentage) / 100) << 24) | (0xffffff & from_color));
+            //painter.fillRect (x, y, img->image->width(), img->image->height(), QBrush (QColor (((0x00ff * (100 - percentage) / 100) << 24) | (0xffffff & from_color)), Qt::Dense7Pattern));
+            if (percentage < 90) {
+                int brush_pat = ((int) Qt::SolidPattern) + 10 * percentage / 125;
+                painter.fillRect (x, y, img->image->width(), img->image->height(), QBrush (QColor (from_color), (Qt::BrushStyle) brush_pat));
+            }
+            //painter.drawImage (x, y, alpha, Qt::OrderedAlphaDither);
+            painter.end ();
+            imfl->invalidateCachedImage ();
+            imfl->repaint ();
+        }
+    }
+}
+
 KDE_NO_EXPORT void RP::Fadeout::activate () {
+    to_color = QColor (getAttribute ("color")).rgb ();
     TimingsBase::activate ();
 }
 
@@ -405,14 +459,13 @@ KDE_NO_EXPORT void RP::Fadeout::begin () {
     Node * p = parentNode ().ptr ();
     if (p->id == RP::id_node_imfl) {
         RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
-        if (imfl->image) {
+        if (duration <= 0 && imfl->image) {
             if (!w || !h) {
-                imfl->image->fill (QColor (getAttribute ("color")).rgb ());
+                imfl->image->fill (QColor (to_color));
             } else {
                 QPainter painter;
                 painter.begin (imfl->image);
-                painter.fillRect (x, y, w, h, QBrush (QColor (getAttribute ("color"))));
-                painter.end ();
+                painter.fillRect (x, y, w, h, QBrush (QColor (to_color)));
             }
             imfl->invalidateCachedImage ();
             imfl->repaint ();
@@ -420,7 +473,30 @@ KDE_NO_EXPORT void RP::Fadeout::begin () {
     }
 }
 
+KDE_NO_EXPORT void RP::Fadeout::update (int percentage) {
+    Node * p = parentNode ().ptr ();
+    if (p->id == RP::id_node_imfl) {
+        RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
+        if (imfl->image) {
+            int brush_pat = ((int) Qt::Dense7Pattern) - 10 * percentage / 126;
+            int pw = w;
+            int ph = h;
+            if (!w || !h) {
+                pw = imfl->image->width ();
+                ph = imfl->image->height ();
+            }
+            QPainter painter;
+            painter.begin (imfl->image);
+            painter.fillRect (x, y, pw, ph, QBrush (QColor (to_color), (Qt::BrushStyle) brush_pat));
+            painter.end ();
+            imfl->invalidateCachedImage ();
+            imfl->repaint ();
+        }
+    }
+}
+
 KDE_NO_EXPORT void RP::Fill::activate () {
+    color = QColor (getAttribute ("color")).rgb ();
     TimingsBase::activate ();
 }
 
@@ -431,7 +507,7 @@ KDE_NO_EXPORT void RP::Fill::begin () {
         RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
         if (imfl->image) {
             if (!w || !h) {
-                imfl->image->fill (QColor (getAttribute ("color")).rgb ());
+                imfl->image->fill (color);
             } else {
                 QPainter painter;
                 painter.begin (imfl->image);
