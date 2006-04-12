@@ -219,7 +219,7 @@ KDE_NO_EXPORT void RP::Imfl::repaint () {
 }
 
 KDE_NO_CDTOR_EXPORT RP::Image::Image (NodePtr & doc)
- : Mrl (doc, id_node_image), image (0L) {}
+ : Mrl (doc, id_node_image), proceed_on_ready (false), image (0L) {}
 
 KDE_NO_CDTOR_EXPORT RP::Image::~Image () {
     delete image;
@@ -238,9 +238,9 @@ KDE_NO_EXPORT void RP::Image::activate () {
 
 KDE_NO_EXPORT void RP::Image::deactivate () {
     setState (state_deactivated);
-    if (ready_waiter) {
+    if (proceed_on_ready) {
+        proceed_on_ready = false;
         document ()->proceed ();
-        ready_waiter = 0L;
     }
 }
 
@@ -255,15 +255,18 @@ KDE_NO_EXPORT void RP::Image::remoteReady () {
         } else
             delete img;
     }
-    if (ready_waiter) {
+    if (proceed_on_ready) {
+        proceed_on_ready = false;
         document ()->proceed ();
-        ready_waiter->begin ();
-        ready_waiter = 0L;
     }
     kdDebug () << "RP::Image::remoteReady " << (void *) image << endl;
 }
 
-KDE_NO_EXPORT bool RP::Image::isReady () {
+KDE_NO_EXPORT bool RP::Image::isReady (bool postpone_if_not) {
+    if (m_job && !proceed_on_ready && postpone_if_not) {
+        proceed_on_ready = true;
+        document ()->postpone ();
+    }
     return !m_job;
 }
 
@@ -317,6 +320,11 @@ KDE_NO_EXPORT bool RP::TimingsBase::handleEvent (EventPtr event) {
         } else
             return false;
         return true;
+    } else if (event->id () == event_postponed) {
+        if (!static_cast <PostponedEvent *> (event.ptr ())->is_postponed) {
+            document_postponed = 0L; // disconnect
+            update (duration > 0 ? 0 : 100);
+        }
     }
     return false;
 }
@@ -328,7 +336,7 @@ KDE_NO_EXPORT void RP::TimingsBase::begin () {
     if (duration > 0) {
         steps = duration * 10 / 5; // 20/s updates
         update_timer = document ()->setTimeout (this, 50); // 50ms
-        curr_step = 0;
+        curr_step = 1;
     }
 }
 
@@ -347,6 +355,7 @@ KDE_NO_EXPORT void RP::TimingsBase::finish () {
         document ()->cancelTimer (update_timer);
         update_timer = 0;
     }
+    document_postponed = 0L; // disconnect
     Element::finish ();
 }
 
@@ -357,27 +366,33 @@ KDE_NO_EXPORT void RP::Crossfade::activate () {
 KDE_NO_EXPORT void RP::Crossfade::begin () {
     kdDebug () << "RP::Crossfade::begin" << endl;
     TimingsBase::begin ();
+    if (target && target->id == id_node_image) {
+        RP::Image * img = static_cast <RP::Image *> (target.ptr ());
+        if (!img->isReady (true))
+            document_postponed = document()->connectTo (this, event_postponed);
+        else
+            update (duration > 0 ? 0 : 100);
+    }
+}
+
+KDE_NO_EXPORT void RP::Crossfade::update (int percentage) {
+    if (percentage > 0 && percentage < 100)
+        return; // we do no crossfading yet, just paint the first and last time
     Node * p = parentNode ().ptr ();
     if (p->id != RP::id_node_imfl) {
-        kdWarning () << "crossfade begin: no imfl parent found" << endl;
+        kdWarning () << "crossfade update: no imfl parent found" << endl;
         return;
     }
     RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
     if (imfl->image && target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
-    kdDebug () << "RP::Crossfade::begin img ready:" << img->isReady () << endl;
-        if (img->isReady ()) {
-            if (img->image) {
-                QPainter painter;
-                painter.begin (imfl->image);
-                painter.drawImage (x, y, *img->image);
-                painter.end ();
-                imfl->invalidateCachedImage ();
-                imfl->repaint ();
-            }
-        } else {
-            document ()->postpone ();
-            img->ready_waiter = this;
+        if (img->image) {
+            QPainter painter;
+            painter.begin (imfl->image);
+            painter.drawImage (x, y, *img->image);
+            painter.end ();
+            imfl->invalidateCachedImage ();
+            imfl->repaint ();
         }
     }
 }
@@ -396,28 +411,12 @@ KDE_NO_EXPORT void RP::Fadein::activate () {
 KDE_NO_EXPORT void RP::Fadein::begin () {
     kdDebug () << "RP::Fadein::begin" << endl;
     TimingsBase::begin ();
-    Node * p = parentNode ().ptr ();
-    if (p->id != RP::id_node_imfl) {
-        kdWarning () << "fadein begin: no imfl parent found" << endl;
-        return;
-    }
-    RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
-    if (imfl->image && target && target->id == id_node_image) {
+    if (target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
-    kdDebug () << "RP::Fadein::begin img ready:" << img->isReady () << endl;
-        if (img->isReady ()) {
-            if (img->image) {
-                QPainter painter;
-                painter.begin (imfl->image);
-                painter.fillRect (x, y, img->image->width(), img->image->height(), QBrush (QColor (from_color)));
-                painter.end ();
-                imfl->invalidateCachedImage ();
-                imfl->repaint ();
-            }
-        } else {
-            document ()->postpone ();
-            img->ready_waiter = this;
-        }
+        if (!img->isReady (true))
+            document_postponed = document()->connectTo (this, event_postponed);
+        else
+            update (duration > 0 ? 0 : 100);
     }
 }
 
@@ -458,21 +457,6 @@ KDE_NO_EXPORT void RP::Fadeout::activate () {
 KDE_NO_EXPORT void RP::Fadeout::begin () {
     kdDebug () << "RP::Fadeout::begin" << endl;
     TimingsBase::begin ();
-    Node * p = parentNode ().ptr ();
-    if (p->id == RP::id_node_imfl) {
-        RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
-        if (duration <= 0 && imfl->image) {
-            if (!w || !h) {
-                imfl->image->fill (QColor (to_color));
-            } else {
-                QPainter painter;
-                painter.begin (imfl->image);
-                painter.fillRect (x, y, w, h, QBrush (QColor (to_color)));
-            }
-            imfl->invalidateCachedImage ();
-            imfl->repaint ();
-        }
-    }
 }
 
 KDE_NO_EXPORT void RP::Fadeout::update (int percentage) {
@@ -523,6 +507,7 @@ KDE_NO_EXPORT void RP::Fill::begin () {
 }
 
 KDE_NO_EXPORT void RP::Wipe::activate () {
+    //TODO implement 'type="push"'
     QString dir = getAttribute ("direction").lower ();
     direction = dir_right;
     if (dir == QString::fromLatin1 ("left"))
@@ -537,19 +522,12 @@ KDE_NO_EXPORT void RP::Wipe::activate () {
 KDE_NO_EXPORT void RP::Wipe::begin () {
     kdDebug () << "RP::Wipe::begin" << endl;
     TimingsBase::begin ();
-    Node * p = parentNode ().ptr ();
-    if (p->id != RP::id_node_imfl) {
-        kdWarning () << "wipe begin: no imfl parent found" << endl;
-        return;
-    }
-    RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
-    if (imfl->image && target && target->id == id_node_image) {
+    if (target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
-    kdDebug () << "RP::Wipe::begin img ready:" << img->isReady () << endl;
-        if (!img->isReady ()) {
-            document ()->postpone ();
-            img->ready_waiter = this;
-        }
+        if (!img->isReady (true))
+            document_postponed = document()->connectTo (this, event_postponed);
+        else
+            update (duration > 0 ? 0 : 100);
     }
 }
 

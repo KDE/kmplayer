@@ -95,6 +95,7 @@ protected:
     TimerInfoPtrW start_timer;
     TimerInfoPtrW duration_timer;
     TimerInfoPtrW update_timer;
+    ConnectionPtr document_postponed;
 };
 
 class KMPLAYER_NO_EXPORT Crossfade : public TimingsBase {
@@ -105,6 +106,7 @@ public:
     KDE_NO_EXPORT virtual const char * nodeName () const { return "crossfade"; }
     virtual void activate ();
     virtual void begin ();
+    virtual void update (int percentage);
 };
 
 class KMPLAYER_NO_EXPORT Fadein : public TimingsBase {
@@ -152,7 +154,7 @@ public:
 };
 
 class KMPLAYER_NO_EXPORT Image : public RemoteObject, public Mrl {
-    Q_OBJECT
+    bool proceed_on_ready;
 public:
     Image (NodePtr & d);
     ~Image ();
@@ -160,8 +162,7 @@ public:
     virtual void activate ();
     virtual void deactivate ();
     virtual void closed ();
-    bool isReady (); // is downloading ready
-    NodePtrW ready_waiter; // crossfade/wipe that needed image while downloading
+    bool isReady (bool postpone_if_not = false); // is downloading ready
     QImage * image;
     //bool expose () const { return false; }
 protected:
