@@ -609,8 +609,17 @@ static NodePtr findChainEventHandler (NodePtr node) {
     }
     if (!mrl)
         return node->document ();
-    else
-        return mrl->event_handler;
+    else {
+        while (mrl->event_handler && mrl->event_handler != node) {
+            Mrl * m = mrl->event_handler->mrl ();
+            if (!m) {
+                kdError () << "Wrong type event_handler set" << endl;
+                break;
+            }
+            mrl = m;
+        }
+        return mrl;
+    }
 }
 
 void Mrl::registerEventHandler (NodePtr handler) {

@@ -127,6 +127,8 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
     kdDebug () << "RP::Imfl::deactivate " << endl;
     if (unfinished ())
         finish ();
+    if (!active ())
+        return; // calling finish might call deactivate() as well
     setState (state_deactivated);
     for (NodePtr n = firstChild (); n; n = n->nextSibling ())
         if (n->active ())
