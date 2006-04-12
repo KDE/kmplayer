@@ -410,7 +410,8 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
                 int p = _url.port ();
                 if (p > 0)
                     u.setPort (p);
-                u.setPath (u.path (1) + _url.host () + _url.path ());
+                if (u.path ().isEmpty ())
+                    u.setPath (QChar ('/') + _url.host ());
                 if (allowRedir (u)) {
                     url = u;
                     kdDebug () << "KMPlayerPart::openURL compose " << m_file_name << " " << _url.url() << " ->" << u.url() << endl;
