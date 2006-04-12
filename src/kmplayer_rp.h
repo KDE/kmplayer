@@ -141,12 +141,14 @@ public:
 };
 
 class KMPLAYER_NO_EXPORT Wipe : public TimingsBase {
+    enum { dir_right, dir_left, dir_up, dir_down } direction;
 public:
     KDE_NO_CDTOR_EXPORT Wipe (NodePtr & d) : TimingsBase (d, id_node_wipe) {}
     KDE_NO_CDTOR_EXPORT ~Wipe () {}
     KDE_NO_EXPORT virtual const char * nodeName () const { return "wipe"; }
     virtual void activate ();
     virtual void begin ();
+    virtual void update (int percentage);
 };
 
 class KMPLAYER_NO_EXPORT Image : public RemoteObject, public Mrl {

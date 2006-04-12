@@ -513,7 +513,7 @@ KDE_NO_EXPORT void RP::Fill::begin () {
             } else {
                 QPainter painter;
                 painter.begin (imfl->image);
-                painter.fillRect (x, y, w, h, QBrush (QColor (getAttribute ("color"))));
+                painter.fillRect (x, y, w, h, QBrush (color));
                 painter.end ();
             }
             imfl->invalidateCachedImage ();
@@ -523,6 +523,14 @@ KDE_NO_EXPORT void RP::Fill::begin () {
 }
 
 KDE_NO_EXPORT void RP::Wipe::activate () {
+    QString dir = getAttribute ("direction").lower ();
+    direction = dir_right;
+    if (dir == QString::fromLatin1 ("left"))
+        direction = dir_left;
+    else if (dir == QString::fromLatin1 ("up"))
+        direction = dir_up;
+    else if (dir == QString::fromLatin1 ("down"))
+        direction = dir_down;
     TimingsBase::activate ();
 }
 
@@ -538,20 +546,51 @@ KDE_NO_EXPORT void RP::Wipe::begin () {
     if (imfl->image && target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
     kdDebug () << "RP::Wipe::begin img ready:" << img->isReady () << endl;
-        if (img->isReady ()) {
-            if (img->image) {
-                QPainter painter;
-                painter.begin (imfl->image);
-                painter.drawImage (x, y, *img->image);
-                painter.end ();
-                imfl->invalidateCachedImage ();
-                imfl->repaint ();
-            }
-        } else {
+        if (!img->isReady ()) {
             document ()->postpone ();
             img->ready_waiter = this;
         }
     }
 }
 
+KDE_NO_EXPORT void RP::Wipe::update (int percentage) {
+    Node * p = parentNode ().ptr ();
+    if (p->id != RP::id_node_imfl) {
+        kdWarning () << "wipe update: no imfl parent found" << endl;
+        return;
+    }
+    RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
+    if (imfl->image && target && target->id == id_node_image) {
+        RP::Image * img = static_cast <RP::Image *> (target.ptr ());
+        if (img->image) {
+            QPainter painter;
+            painter.begin (imfl->image);
+            int dx = x, dy = y;
+            int sx = 0, sy = 0;
+            int sw = img->image->width ();
+            int sh = img->image->height ();
+            if (direction == dir_right) {
+                int iw = sw * percentage / 100;
+                sx = sw - iw;
+                sw = iw;
+            } else if (direction == dir_left) {
+                int iw = sw * percentage / 100;
+                dx += sw - iw;
+                sw = iw;
+            } else if (direction == dir_down) {
+                int ih = sh * percentage / 100;
+                sy = sh - ih;
+                sh = ih;
+            } else if (direction == dir_up) {
+                int ih = sh * percentage / 100;
+                dy += sh - ih;
+                sh = ih;
+            }
+            painter.drawImage (dx, dy, *img->image, sx, sy, sw, sh);
+            painter.end ();
+            imfl->invalidateCachedImage ();
+            imfl->repaint ();
+        }
+    }
+}
 #include "kmplayer_rp.moc"
