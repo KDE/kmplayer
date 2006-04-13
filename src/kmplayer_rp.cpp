@@ -571,4 +571,3 @@ KDE_NO_EXPORT void RP::Wipe::update (int percentage) {
         }
     }
 }
-#include "kmplayer_rp.moc"
