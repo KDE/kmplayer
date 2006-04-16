@@ -973,9 +973,8 @@ QString Source::currentMrl () {
 void Source::playCurrent () {
     QString url = currentMrl ();
     m_player->changeURL (url);
-    setAspect (0L, 0.0);
     m_width = m_height = 0;
-    emit dimensionsChanged ();
+    m_aspect = 0.0;
     if (m_player->view ())
         static_cast <View *> (m_player->view ())->videoStop (); //show buttonbar
     if (m_document && !m_document->active ()) {
@@ -993,10 +992,18 @@ void Source::playCurrent () {
     } else if (m_player->process ()->state () == Process::NotRunning) {
         m_player->process ()->ready (static_cast <View *> (m_player->view ())->viewer ());
     } else if (m_player->process ()) {
-        m_player->process ()->play (this, m_current->mrl ()->realMrl ());
+        Mrl * mrl = m_current->mrl ();
+        if (mrl->view_mode == Mrl::Single) {
+            // don't reset the dimensions if we have any
+            m_width = mrl->width;
+            m_height = mrl->height;
+            m_aspect = mrl->aspect;
+        }
+        m_player->process ()->play (this, mrl->realMrl ());
     }
     //kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():" doc act:") <<  (m_document && !m_document->active ()) << " cur:" << (!m_current)  << " cur act:" << (m_current && !m_current->active ()) <<  endl;
     m_player->updateTree ();
+    emit dimensionsChanged ();
 }
 
 static NodePtr findDepthFirst (NodePtr elm) {
