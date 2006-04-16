@@ -178,9 +178,10 @@ KDE_NO_EXPORT const char * Node::nodeName () const {
 
 void Node::setState (State nstate) {
     if (state != nstate) {
+        State old = state;
         state = nstate;
         if (document ()->notify_listener)
-            document ()->notify_listener->stateElementChanged (this);
+            document()->notify_listener->stateElementChanged (this, old, state);
     }
 }
 

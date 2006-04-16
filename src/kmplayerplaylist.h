@@ -615,7 +615,7 @@ public:
     /**
      * Element has activated or deactivated notification
      */
-    virtual void stateElementChanged (NodePtr element) = 0;
+    virtual void stateElementChanged (Node * element, Node::State old_state, Node::State new_state) = 0;
     /**
      * Set element to which to send GUI events
      */

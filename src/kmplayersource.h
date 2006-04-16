@@ -132,7 +132,7 @@ protected:
      */
     bool requestPlayURL (NodePtr mrl);
     bool resolveURL (NodePtr mrl);
-    void stateElementChanged (NodePtr element);
+    void stateElementChanged (Node * element, Node::State os, Node::State ns);
     void setEventDispatcher (NodePtr element);
     void setInfoMessage (const QString & msg);
     void repaintRect (int x, int y, int w, int h);

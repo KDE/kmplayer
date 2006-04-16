@@ -733,7 +733,7 @@ KDE_NO_EXPORT bool KMPlayerVDRSource::requestPlayURL (KMPlayer::NodePtr) {
     return true;
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::stateElementChanged (KMPlayer::NodePtr) {
+KDE_NO_EXPORT void KMPlayerVDRSource::stateElementChanged (KMPlayer::Node *, KMPlayer::Node::State, KMPlayer::Node::State) {
 }
 
 //-----------------------------------------------------------------------------

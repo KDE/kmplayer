@@ -348,7 +348,7 @@ struct IntroSource : public KMPlayer::Source {
     KDE_NO_EXPORT QString prettyName () { return i18n ("Intro"); }
     void activate ();
     void deactivate ();
-    void stateElementChanged (KMPlayer::NodePtr node);
+    void stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::State os, KMPlayer::Node::State ns);
     bool deactivated;
     bool finished;
 };
@@ -401,8 +401,9 @@ KDE_NO_EXPORT void IntroSource::activate () {
     deactivated = finished = false;
 }
 
-KDE_NO_EXPORT void IntroSource::stateElementChanged (KMPlayer::NodePtr node) {
-    if (node->state == KMPlayer::Node::state_deactivated && node == m_document){
+KDE_NO_EXPORT void IntroSource::stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::State, KMPlayer::Node::State new_state) {
+    if (new_state == KMPlayer::Node::state_deactivated &&
+            m_document.ptr () == node) {
         m_document->reset ();
         finished = true;
         if (m_player->view ())
@@ -688,7 +689,7 @@ struct ExitSource : public KMPlayer::Source {
     KDE_NO_EXPORT bool isSeekable () { return false; }
     void activate ();
     KDE_NO_EXPORT void deactivate () {}
-    void stateElementChanged (KMPlayer::NodePtr node);
+    void stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::State os, KMPlayer::Node::State ns);
 };
 
 KDE_NO_EXPORT void ExitSource::activate () {
@@ -729,9 +730,9 @@ KDE_NO_EXPORT void ExitSource::activate () {
     qApp->quit ();
 }
 
-KDE_NO_EXPORT void ExitSource::stateElementChanged (KMPlayer::NodePtr node) {
-    if (node->state == KMPlayer::Node::state_deactivated &&
-            node == m_document &&
+KDE_NO_EXPORT void ExitSource::stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::State, KMPlayer::Node::State new_state) {
+    if (new_state == KMPlayer::Node::state_deactivated &&
+            m_document.ptr () == node &&
             m_player->view ())
        m_player->view ()->topLevelWidget ()->close ();
 }
