@@ -177,6 +177,7 @@ public:
     virtual unsigned long length (void) const;
 k_dcop:
     void toggleFullScreen ();
+    bool isPlaying ();
 signals:
     void sourceChanged (KMPlayer::Source * old, KMPlayer::Source * nw);
     void sourceDimensionChanged ();

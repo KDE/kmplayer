@@ -817,6 +817,10 @@ KDE_NO_EXPORT void PartBase::toggleFullScreen () {
     m_view->fullScreen ();
 }
 
+KDE_NO_EXPORT bool PartBase::isPlaying () {
+    return playing ();
+}
+
 KAboutData* PartBase::createAboutData () {
     KMessageBox::error(0L, "createAboutData", "KMPlayer");
     return 0;
@@ -1074,7 +1078,7 @@ void Source::stateElementChanged (Node * elm, Node::State old_state, Node::State
     } else if ((new_state == Node::state_deferred ||
                 (old_state == Node::state_deferred &&
                  new_state > Node::state_deferred)) &&
-            elm == m_player->process ()->mrl ().ptr ()) {
+            elm == m_document.ptr ()) {
         m_player->process ()->pause ();
     }
     if (elm->expose () && (new_state == Node::state_activated ||
