@@ -48,6 +48,7 @@ k_dcop:
     virtual ASYNC setConfig (QByteArray);
     virtual ASYNC setAudioLang (int, QString);
     virtual ASYNC setSubtitle (int, QString);
+    virtual bool isPlaying ();
 private:
     BackendPrivate * d;
 };

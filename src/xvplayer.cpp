@@ -202,6 +202,10 @@ void Backend::setConfig (QByteArray data) {
         callback->errorMessage (0, err);
 }
 
+bool Backend::isPlaying () {
+    return running;
+}
+
 KXVideoPlayer::KXVideoPlayer (int _argc, char ** _argv)
   : QApplication (_argc, _argv, false) {
 }

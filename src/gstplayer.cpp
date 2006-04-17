@@ -483,6 +483,13 @@ void Backend::setConfig (QByteArray /*data*/) {
         callback->errorMessage (0, err);*/
 }
 
+bool Backend::isPlaying () {
+    mutex.lock ();
+    bool b = gst_elm_play && (GST_STATE (gst_elm_play) == GST_STATE_PLAYING);
+    mutex.unlock ();
+    return b;
+}
+
 KGStreamerPlayer::KGStreamerPlayer (int _argc, char ** _argv)
   : QApplication (_argc, _argv, false) {
 }
