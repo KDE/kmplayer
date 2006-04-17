@@ -379,7 +379,8 @@ void Backend::setConfig (QByteArray data) {
 
 bool Backend::isPlaying () {
     mutex.lock ();
-    bool b = (xine_get_status (stream) == XINE_STATUS_PLAY) &&
+    bool b = running &&
+        (xine_get_status (stream) == XINE_STATUS_PLAY) &&
         (xine_get_param (stream, XINE_PARAM_SPEED) != XINE_SPEED_PAUSE);
     mutex.unlock ();
     return b;
