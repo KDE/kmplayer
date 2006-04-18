@@ -1064,12 +1064,12 @@ bool Source::setCurrent (NodePtr mrl) {
 void Source::stateElementChanged (Node * elm, Node::State old_state, Node::State new_state) {
     //kdDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isMrl:" << (m_current && m_current->isMrl ()) << " elm==realMrl:" << (m_current && elm == m_current->mrl ()->realMrl ()) << " p state:" << m_player->process ()->state () << endl;
     if (new_state == Node::state_deactivated &&
-            elm == m_document.ptr () && !m_back_request) {
+            elm == m_document && !m_back_request) {
         emit endOfPlayItems (); // played all items
     } else if ((new_state == Node::state_deactivated ||
               new_state == Node::state_finished) &&
              m_current && m_current->isMrl () &&
-             elm == m_current->mrl ()->realMrl ().ptr ()) {
+             elm == m_current->mrl ()->realMrl ()) {
         if (m_player->process ()->state () > Process::Ready)
             //a SMIL movies stopped by SMIL events rather than movie just ending
             m_player->process ()->stop ();
@@ -1078,7 +1078,7 @@ void Source::stateElementChanged (Node * elm, Node::State old_state, Node::State
     } else if ((new_state == Node::state_deferred ||
                 (old_state == Node::state_deferred &&
                  new_state > Node::state_deferred)) &&
-            elm == m_document.ptr ()) {
+            elm == m_document) {
         m_player->process ()->pause ();
     }
     if (elm->expose () && (new_state == Node::state_activated ||

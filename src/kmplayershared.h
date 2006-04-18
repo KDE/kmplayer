@@ -123,14 +123,25 @@ struct SharedPtr {
     // operator bool () const { return data && data->ptr; }
     bool operator == (const SharedPtr<T> & s) const { return data == s.data; }
     bool operator == (const WeakPtr<T> & w) const;
-    bool operator == (const T * t) const { return (!t && ! data) || (data && data->ptr == t); }
+    bool operator == (const T * t) const { return (!t && !data) || (data && data->ptr == t); }
+    bool operator == (T * t) const { return (!t && !data) || (data && data->ptr == t); }
     bool operator != (const SharedPtr<T> & s) const { return data != s.data; }
     bool operator != (const WeakPtr<T> & w) const;
     bool operator != (const T * t) const { return !operator == (t); }
     operator T * () { return data ? data->ptr : 0L; }
-    operator T * () const { return data ? data->ptr : 0L; }
+    operator const T * () const { return data ? data->ptr : 0L; }
     mutable SharedData<T> * data;
 };
+
+template <class T>
+bool operator == (T * t, SharedPtr <T> & s) {
+    return (!t && !s.data) || (s.data && s.data->ptr == t);
+}
+
+template <class T>
+bool operator == (const T * t, SharedPtr <T> & s) {
+    return (!t && !s.data) || (s.data && s.data->ptr == t);
+}
 
 template <class T>
 inline SharedPtr<T> & SharedPtr<T>::operator = (const SharedPtr<T> & s) {
@@ -176,12 +187,23 @@ struct WeakPtr {
     bool operator == (const WeakPtr<T> & w) const { return data == w.data; }
     bool operator == (const SharedPtr<T> & s) const { return data == s.data; }
     bool operator == (const T * t) const { return (!t && !data) || (data && data.ptr == t); }
+    bool operator == (T * t) const { return (!t && !data) || (data && data.ptr == t); }
     bool operator != (const WeakPtr<T> & w) const { return data != w.data; }
     bool operator != (const SharedPtr<T> & s) const { return data != s.data; }
     operator T * () { return data ? data->ptr : 0L; }
     operator const T * () const { return data ? data->ptr : 0L; }
     mutable SharedData<T> * data;
 };
+
+template <class T>
+bool operator == (T * t, WeakPtr <T> & s) {
+    return (!t && !s.data) || (s.data && s.data->ptr == t);
+}
+
+template <class T>
+bool operator == (const T * t, WeakPtr <T> & s) {
+    return (!t && !s.data) || (s.data && s.data->ptr == t);
+}
 
 template <class T>
 inline WeakPtr<T> & WeakPtr<T>::operator = (const WeakPtr<T> & w) {

@@ -403,7 +403,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
 
 KDE_NO_EXPORT void IntroSource::stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::State, KMPlayer::Node::State new_state) {
     if (new_state == KMPlayer::Node::state_deactivated &&
-            m_document.ptr () == node) {
+            m_document == node) {
         m_document->reset ();
         finished = true;
         if (m_player->view ())
@@ -732,7 +732,7 @@ KDE_NO_EXPORT void ExitSource::activate () {
 
 KDE_NO_EXPORT void ExitSource::stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::State, KMPlayer::Node::State new_state) {
     if (new_state == KMPlayer::Node::state_deactivated &&
-            m_document.ptr () == node &&
+            m_document == node &&
             m_player->view ())
        m_player->view ()->topLevelWidget ()->close ();
 }
