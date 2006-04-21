@@ -1,7 +1,16 @@
+Changes since version 0.9.2-rc1
+- Added a DCOP call 'isPlaying()' that returns true when backend is running
+  and a DCOP call 'isPlaying()' on the backends, other than MPlayer, that
+  returns true when not paused
+- Fix having to press 'pause' twice for unpause and pausing not working with
+  playlists (likely regression since 0.9.2-pre1)
+- Compile fix for when not using Xine (regression in 0.9.2-rc1)
+- Crash fix when restarting certain SMIL files, eg when having an RealPix img
 Changes since version 0.9.2-pre3
 - Recorder added using Xine's mrl setup (see xine-ui-ver/doc/README.en.15.MRLs)
 - Seeking support for gstreamer backend
 - Ported gstreamer backend from 0.8 to 0.10
+- Fix length parsing for MPlayer current CVS version (by Jonas Hurrelmann)
 Changes since version 0.9.2-pre2
 - Update with 0.9.1c
 - SMIL files can be part of other SMIL files
