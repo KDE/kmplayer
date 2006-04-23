@@ -1105,6 +1105,7 @@ void View::setPlaylistOnly () {
 void View::setEditMode (bool enable) {
     m_edit_mode = enable;
     m_infopanel->setReadOnly (!m_edit_mode);
+    m_infopanel->setTextFormat (enable ? Qt::PlainText : Qt::AutoText);
     if (m_edit_mode && m_dock_infopanel->mayBeShow ())
         m_dock_infopanel->manualDock(m_dock_video,KDockWidget::DockBottom,50);
     m_playlist->showAllNodes (m_edit_mode);
