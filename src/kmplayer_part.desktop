@@ -31,6 +31,7 @@ Name[sr@Latn]=Ugnježdeni MPlayer za KDE
 Name[sv]=Inbäddad Mplayer för KDE
 Name[ta]= KDEவிற்கு விதைத்த ஊடக வாசிப்பான்
 Name[tr]=KDE için gömülmüş MPlayer
+Name[uk]=Вбудований MPlayer для KDE
 Name[xx]=xxEmbedded MPlayer for KDExx
 Name[zh_CN]=KDE 嵌入的 MPlayer
 Comment=Video player plugin (QuickTime, XMovie, Windows Media and RealPlayer compatible)
@@ -59,6 +60,7 @@ Comment[sr@Latn]=Priključak za puštanje videa (kompatibilan sa: QuickTime, XMo
 Comment[sv]=Insticksprogram för videospelare (fungerar med Quicktime, Xmovie, Windows Media och Realplayer)
 Comment[ta]=வீடியோ சொருகி(விரைவுநேரம், Xபடம், Windows படம் மற்றும் RealPlayer compatible)
 Comment[tr]=Video oynatıcı eklentisi (QuickTime, XMovie, Windows Media ve RealPlayer ile uyumlu)
+Comment[uk]=Втулок відео-програвача (програє QuickTime, XMovie, Windows Media і RealPlayer)
 Comment[xx]=xxVideo player plugin (QuickTime, XMovie, Windows Media and RealPlayer compatible)xx
 X-KDE-Library=libkmplayerpart
 # Keep in sync with the audio types in kmplayer.desktop

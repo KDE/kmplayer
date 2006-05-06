@@ -26,6 +26,7 @@ Description[sr@Latn]=Microsoft-ov protokol servera medija
 Description[sv]=Microsoft mediaserver-protokoll
 Description[ta]=மைக்ரோசாப்ட் ஊடக சேவக நெறிமுறை
 Description[tr]=Microsoft Medya Sunucu Protokolü
+Description[uk]=Протокол сервера Microsoft Media
 Description[xx]=xxMicrosoft Media Server Protocolxx
 exec=kmplayer "%u"
 protocol=mms
