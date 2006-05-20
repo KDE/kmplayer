@@ -104,6 +104,7 @@ static const int            event_progress = QEvent::User + 2;
 static const int            event_url = QEvent::User + 3;
 static const int            event_size = QEvent::User + 4;
 static const int            event_title = QEvent::User + 5;
+static const int            event_video = QEvent::User + 6;
 static QString mrl;
 static QString sub_mrl;
 static QString rec_mrl;
@@ -563,8 +564,12 @@ void KXinePlayer::play () {
         finished ();
         return;
     }
-    audio_vis = !xine_get_stream_info (stream, XINE_STREAM_INFO_HAS_VIDEO);
-    audio_vis &= xine_config_lookup_entry (xine, "audio.visualization", &audio_vis_cfg_entry);
+    audio_vis = false;
+    if (xine_get_stream_info (stream, XINE_STREAM_INFO_HAS_VIDEO))
+        QApplication::postEvent(xineapp, new QEvent((QEvent::Type)event_video));
+    else
+        audio_vis = xine_config_lookup_entry
+            (xine, "audio.visualization", &audio_vis_cfg_entry);
     mutex.unlock ();
     if (audio_vis)
         xine_config_cb (0L, &audio_vis_cfg_entry);
@@ -748,6 +753,10 @@ bool KXinePlayer::event (QEvent * e) {
                 callback->statusMessage ((int) KMPlayer::Callback::stat_newtitle, ue->title);
             break;
         }
+        case event_video:
+            if (callback)
+                callback->statusMessage ((int) KMPlayer::Callback::stat_hasvideo, QString ());
+            break;
         default:
             return false;
     }

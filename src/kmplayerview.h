@@ -255,7 +255,6 @@ public:
     KDE_NO_EXPORT bool editMode () const { return m_edit_mode; }
     bool setPicture (const QString & path);
     KDE_NO_EXPORT QPixmap * image () const { return m_image; }
-    KDE_NO_EXPORT bool videoStarted () const { return m_playing; }
     void setNoInfoMessages (bool b) { m_no_info = b; }
     void setViewOnly ();
     void setInfoPanelOnly ();
@@ -264,11 +263,12 @@ public:
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
     KDE_NO_EXPORT void emitPictureClicked () { emit pictureClicked (); }
-public slots:
     /* raise video widget, might (auto) hides panel */
     void videoStart ();
+    void playingStart ();
     /* shows panel */
-    void videoStop ();
+    void playingStop ();
+public slots:
     void setVolume (int);
     void updateVolume ();
     void fullScreen ();

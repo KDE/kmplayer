@@ -980,7 +980,7 @@ void Source::playCurrent () {
     m_width = m_height = 0;
     m_aspect = 0.0;
     if (m_player->view ())
-        static_cast <View *> (m_player->view ())->videoStop (); //show buttonbar
+        static_cast <View *> (m_player->view ())->playingStop ();//show controls
     if (m_document && !m_document->active ()) {
         if (!m_current)
             m_document->activate ();
@@ -1340,7 +1340,7 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
         kdDebug () << "processState " << statemap[olds] << " -> " << statemap[news] << endl;
         m_player->updateStatus (i18n ("Player %1 %2").arg (p->name ()).arg (statemap[news]));
         if (news == Process::Playing) {
-            p->viewer ()->view ()->videoStart ();
+            p->viewer ()->view ()->playingStart ();
             emit startPlaying ();
         } else if (news == Process::NotRunning) {
             if (hasLength () && position () > length ())

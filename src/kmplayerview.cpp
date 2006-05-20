@@ -1308,7 +1308,23 @@ void View::addText (const QString & str, bool eol) {
 }*/
 
 KDE_NO_EXPORT void View::videoStart () {
-    if (m_playing) return; //FIXME: make symetric with videoStop
+    if (m_dockarea->getMainDockWidget () != m_dock_video) {
+        // restore from an info or playlist only setting
+        KDockWidget * dw = m_dockarea->getMainDockWidget ();
+        dw->setEnableDocking (KDockWidget::DockCenter);
+        dw->undock ();
+        m_dock_video->setEnableDocking (KDockWidget::DockNone);
+        m_dockarea->setMainDockWidget (m_dock_video);
+        m_view_area->resizeEvent (0L);
+    }
+    if (m_controlpanel_mode == CP_Only) {
+        m_control_panel->setMaximumSize(2500, controlPanel()->preferedHeight());
+        setControlPanelMode (CP_Show);
+    }
+}
+
+KDE_NO_EXPORT void View::playingStart () {
+    if (m_playing) return; //FIXME: make symetric with playingStop
     if (m_widgetstack->visibleWidget () == m_widgettypes[WT_Picture])
         m_widgetstack->raiseWidget (m_viewer);
     m_playing = true;
@@ -1316,7 +1332,7 @@ KDE_NO_EXPORT void View::videoStart () {
     setControlPanelMode (m_old_controlpanel_mode);
 }
 
-KDE_NO_EXPORT void View::videoStop () {
+KDE_NO_EXPORT void View::playingStop () {
     if (m_control_panel && m_controlpanel_mode == CP_AutoHide) {
         m_control_panel->show ();
         //m_view_area->setMouseTracking (false);
@@ -1335,7 +1351,7 @@ KDE_NO_EXPORT void View::reset () {
     if (m_revert_fullscreen && isFullScreen())
         m_control_panel->popupMenu ()->activateItemAt (m_control_panel->popupMenu ()->indexOf (ControlPanel::menu_fullscreen)); 
         //m_view_area->fullScreen ();
-    videoStop ();
+    playingStop ();
     m_viewer->show ();
 }
 

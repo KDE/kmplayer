@@ -340,8 +340,10 @@ void KXVideoPlayer::play () {
     fprintf (stderr, "play xv://%d:%d/%d\n", xvport, xv_encoding, xv_frequency);
     if (!xv_success)
         return;
-    if (callback && movie_width > 0 && movie_height > 0)
+    if (callback && movie_width > 0 && movie_height > 0) {
+        callback->statusMessage ((int) KMPlayer::Callback::stat_hasvideo, QString ());
         callback->movieParams (0, movie_width, movie_height, 1.0*movie_width/movie_height, QStringList (), QStringList ());
+    }
     XLockDisplay (display);
     if (!running && XvGrabPort (display, xvport, CurrentTime) == Success) {
         gc = XCreateGC (display, wid, 0, NULL);

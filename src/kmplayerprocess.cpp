@@ -1072,6 +1072,10 @@ void Callback::statusMessage (int code, QString msg) {
             if (m_process->viewer ())
                 ((PlayListNotify *) m_process->source ())->setInfoMessage (msg);
             break;
+        case stat_hasvideo:
+            if (m_process->viewer ())
+                m_process->viewer ()->view ()->videoStart ();
+            break;
         case stat_addurl:
             m_process->m_source->insertURL (m_process->m_mrl, KURL::fromPathOrURL (msg).url ());
             if (m_process->m_mrl && m_process->m_mrl->active ())

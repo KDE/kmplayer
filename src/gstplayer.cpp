@@ -64,6 +64,7 @@ static const int            event_size = QEvent::User + 2;
 static const int            event_eos = QEvent::User + 3;
 static const int            event_progress = QEvent::User + 4;
 static const int            event_error = QEvent::User + 5;
+static const int            event_video = QEvent::User + 6;
 static QString              mrl;
 static QString              sub_mrl;
 static const char          *ao_driver;
@@ -120,6 +121,7 @@ gstCapsSet (GstPad *pad,
     GstCaps *caps = gst_pad_get_negotiated_caps (pad);
     if (!caps)
         return;
+    QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_video));
     const GstStructure * s = gst_caps_get_structure (caps, 0);
     if (s) {
         const GValue *par;
@@ -815,6 +817,10 @@ bool KGStreamerPlayer::event (QEvent * e) {
         case event_eos:
         case event_error:
             stop ();
+            break;
+        case event_video:
+            if (callback)
+                callback->statusMessage ((int) KMPlayer::Callback::stat_hasvideo, QString ());
             break;
         default:
             return false;

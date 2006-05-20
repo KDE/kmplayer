@@ -116,6 +116,7 @@ public:
     void setRecording (bool record);
     void setAutoControls (bool b);
     void setPalette (const QPalette &);
+    int preferedHeight ();
     KDE_NO_EXPORT bool autoControls () const { return m_auto_controls; }
     KDE_NO_EXPORT QSlider * positionSlider () const { return m_posSlider; }
     KDE_NO_EXPORT QSlider * contrastSlider () const { return m_contrastSlider; }

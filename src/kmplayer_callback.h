@@ -29,7 +29,7 @@ class CallbackProcess;
 class Callback : public DCOPObject {
     K_DCOP
 public:
-    enum StatusCode { stat_addurl = 0, stat_newtitle };
+    enum StatusCode { stat_addurl = 0, stat_newtitle, stat_hasvideo };
     Callback (CallbackProcess *);
 k_dcop:
     ASYNC statusMessage (int code, QString msg);
