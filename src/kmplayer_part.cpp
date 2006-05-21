@@ -1012,16 +1012,11 @@ KDE_NO_EXPORT void KMPlayerLiveConnectExtension::setSize (int w, int h) {
     KMPlayer::View * view = static_cast <KMPlayer::View*> (player->view ());
     if (view->controlPanelMode () == KMPlayer::View::CP_Show)
         h += view->controlPanel()->height();
-    QCString jscode;
-    //jscode.sprintf("this.width=%d;this.height=%d;kmplayer", w, h);
+    QString jscode;
+    jscode.sprintf("try { eval(\"this.setAttribute('WIDTH',%d);this.setAttribute('HEIGHT',%d)\") } catch(e){}", w, h);
     KParts::LiveConnectExtension::ArgList args;
-    args.push_back (qMakePair (KParts::LiveConnectExtension::TypeString, QString("width")));
-    args.push_back (qMakePair (KParts::LiveConnectExtension::TypeNumber, QString::number (w)));
-    emit partEvent (0, "this.setAttribute", args);
-    args.clear();
-    args.push_back (qMakePair (KParts::LiveConnectExtension::TypeString, QString("height")));
-    args.push_back (qMakePair (KParts::LiveConnectExtension::TypeNumber, QString::number (h)));
-    emit partEvent (0, "this.setAttribute", args);
+    args.push_back (qMakePair (KParts::LiveConnectExtension::TypeString, jscode));
+    emit partEvent (0, "eval", args);
 }
 
 //-----------------------------------------------------------------------------
