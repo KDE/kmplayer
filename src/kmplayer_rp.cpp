@@ -53,6 +53,7 @@ KDE_NO_EXPORT void RP::Imfl::defer () {
 
 KDE_NO_EXPORT void RP::Imfl::activate () {
     kdDebug () << "RP::Imfl::activate " << endl;
+    resolved = true;
     setState (state_activated);
     int timings_count = 0;
     for (NodePtr n = firstChild (); n; n = n->nextSibling ())
@@ -307,7 +308,7 @@ KDE_NO_EXPORT bool RP::TimingsBase::handleEvent (EventPtr event) {
     if (event->id () == event_timer) {
         TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
         if (te->timer_info == update_timer && duration > 0) {
-            update (50 * ++curr_step / duration);
+            update (100 * ++curr_step / duration);
             te->interval = true;
         } else if (te->timer_info == start_timer) {
             start_timer = 0;
@@ -334,8 +335,8 @@ KDE_NO_EXPORT void RP::TimingsBase::begin () {
     if (target)
         target->begin ();
     if (duration > 0) {
-        steps = duration * 10 / 5; // 20/s updates
-        update_timer = document ()->setTimeout (this, 50); // 50ms
+        steps = duration; // 10/s updates
+        update_timer = document ()->setTimeout (this, 100); // 50ms
         curr_step = 1;
     }
 }
