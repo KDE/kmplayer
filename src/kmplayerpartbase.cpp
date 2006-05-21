@@ -1629,12 +1629,13 @@ KDE_NO_EXPORT void URLSource::kioResult (KIO::Job * job) {
 }
 
 void URLSource::playCurrent () {
-    if (!m_current || !m_current->mrl ()->realMrl ()->mrl ()->src.isEmpty ())
-        //FIXME: re-think this double use of playCurrent:
-        //Source::playCurrent->
-        //  process::ready->Node::activate->Source::requestPlayURL->
-        //  Source::playCurrent
-        Source::playCurrent ();
+    if (m_current && m_current->active () &&
+            (!m_current->isMrl () /* eg. has child mrl's*/ ||
+             !m_current->mrl ()->resolved)) {
+        // an async playCurrent() call (eg. backend is up & running), ignore
+        return;
+    }
+    Source::playCurrent ();
 }
 
 KDE_NO_EXPORT void URLSource::play () {

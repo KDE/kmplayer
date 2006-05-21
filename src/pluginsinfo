@@ -9,8 +9,8 @@ name=RealPlayer
 [1]
 description=Windows Media Player Plug-in
 file=libkmplayerpart.so
-mime=application/x-mplayer2:wmp:Windows Media Player;audio/x-ms-wma:wma:Windows Media Audio;video/x-ms-asf:asx,asf:Media Files;video/x-ms-wmv:wmv:Windows Media Video
-name=Windows Media Player
+mime=application/x-mplayer2:wmp:Windows Media Player;audio/x-ms-wma:wma:Windows Media Audio;video/x-ms-asf:asx,asf:Media Files;video/x-ms-asf-plugin:*:Media Files;video/x-ms-wmv:wmv:Windows Media Video;video/msvideo:avi,*:AVI;video/x-ms-wmp:wmp,*:Windows Media;video/x-ms-wvx:wvx,*:Windows Media;audio/x-ms-wax:wax,*:Windows Media;application/x-drm-v2:asx,*:Windows Media;audio/wav:wav,*:Microsoft wave file;audio/x-wav:wav,*:Microsoft wave file;video/x-ms-wm:wm,*:Media Files
+name=Windows Media Player Plugin
 
 [2]
 description=QuickTime Movie

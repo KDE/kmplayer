@@ -75,7 +75,7 @@ KDE_NO_EXPORT bool ASX::Entry::isMrl () {
             src = convertNode <Element> (base)->getAttribute ("href");
         for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
             if (e->isMrl () && !e->hasChildNodes ()) {
-                if (foundone) {
+                if (foundone) { //FIXME, losing base here
                     src.truncate (0);
                     pn.truncate (0);
                 } else {
@@ -89,8 +89,9 @@ KDE_NO_EXPORT bool ASX::Entry::isMrl () {
         if (pretty_name.isEmpty ())
             pretty_name = pn;
         cached_ismrl_version = document()->m_tree_version;
+        cached_ismrl = !src.isEmpty () && foundone;
     }
-    return !src.isEmpty ();
+    return cached_ismrl;
 }
 
 KDE_NO_EXPORT NodePtr ASX::Entry::realMrl () {
