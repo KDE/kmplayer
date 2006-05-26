@@ -761,7 +761,7 @@ void Document::cancelTimer (TimerInfoPtr tinfo) {
         if (second) {
             struct timeval now;
             gettimeofday (&now, 0L);
-            int diff = diffTime (now, tinfo->timeout);
+            int diff = diffTime (now, second->timeout);
             cur_timeout = diff > 0 ? 0 : -diff;
         } else
             cur_timeout = -1;

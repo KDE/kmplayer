@@ -246,10 +246,10 @@ KDE_NO_EXPORT void RP::Image::deactivate () {
 }
 
 
-KDE_NO_EXPORT void RP::Image::remoteReady () {
+KDE_NO_EXPORT void RP::Image::remoteReady (QByteArray & data) {
     kdDebug () << "RP::Image::remoteReady" << endl;
-    if (!m_data.isEmpty ()) {
-        QImage * img = new QImage (m_data);
+    if (!data.isEmpty ()) {
+        QImage * img = new QImage (data);
         if (!img->isNull ()) {
             image = img;
             image->setAlphaBuffer (true);
@@ -264,11 +264,11 @@ KDE_NO_EXPORT void RP::Image::remoteReady () {
 }
 
 KDE_NO_EXPORT bool RP::Image::isReady (bool postpone_if_not) {
-    if (m_job && !proceed_on_ready && postpone_if_not) {
+    if (downloading () && !proceed_on_ready && postpone_if_not) {
         proceed_on_ready = true;
         document ()->postpone ();
     }
-    return !m_job;
+    return !downloading ();
 }
 
 KDE_NO_CDTOR_EXPORT RP::TimingsBase::TimingsBase (NodePtr & d, const short i)

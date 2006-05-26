@@ -238,6 +238,25 @@ protected:
     bool m_update_tree_full : 1;
 };
 
+class RemoteObjectPrivate : public QObject {
+    Q_OBJECT
+public:
+    RemoteObjectPrivate (RemoteObject * r);
+    ~RemoteObjectPrivate ();
+    bool download (const QString &);
+    void clear ();
+    KIO::Job * job;
+    QString url;
+    QByteArray data;
+    QString mime;
+private slots:
+    void slotResult (KIO::Job*);
+    void slotData (KIO::Job*, const QByteArray& qb);
+    void slotMimetype (KIO::Job * job, const QString & mimestr);
+private:
+    RemoteObject * remote_object;
+};
+
 } // namespace
 
 #endif

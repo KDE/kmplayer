@@ -166,7 +166,7 @@ public:
     QImage * image;
     //bool expose () const { return false; }
 protected:
-    virtual void remoteReady ();
+    virtual void remoteReady (QByteArray & data);
 };
 
 } // RP namespace

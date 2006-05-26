@@ -38,7 +38,6 @@ namespace KIO {
 namespace KMPlayer {
 
 class ElementRuntimePrivate;
-class RemoteObjectData;
 class TextDataPrivate;
 
 /*
@@ -206,27 +205,6 @@ public:
     CalculatedSizer sizes;
 };
 
-class KMPLAYER_NO_EXPORT RemoteObject : public QObject {
-    Q_OBJECT
-public:
-    RemoteObject ();
-    KDE_NO_CDTOR_EXPORT ~RemoteObject () {}
-    bool wget (const KURL & url);
-    void killWGet ();
-    void clear ();
-    QString mimetype ();
-private slots:
-    void slotResult (KIO::Job*);
-    void slotData (KIO::Job*, const QByteArray& qb);
-    void slotMimetype (KIO::Job * job, const QString & mimestr);
-protected:
-    KDE_NO_EXPORT virtual void remoteReady () {}
-    KURL m_url;
-    KIO::Job * m_job;
-    QByteArray m_data;
-    QString m_mime;
-};
-
 /**
  * Some common runtime data for all mediatype classes
  */
@@ -283,7 +261,7 @@ public:
     bool have_frame;
 };
 
-class KMPLAYER_NO_EXPORT ImageRuntime : public MediaTypeRuntime {
+class KMPLAYER_NO_EXPORT ImageRuntime : public QObject,public MediaTypeRuntime {
     Q_OBJECT
 public:
     ImageRuntime (NodePtr e);
@@ -295,7 +273,7 @@ public:
 protected:
     virtual void started ();
     virtual void stopped ();
-    virtual void remoteReady ();
+    virtual void remoteReady (QByteArray &);
 private slots:
     void movieUpdated (const QRect &);
     void movieStatus (int);
@@ -315,7 +293,7 @@ public:
     TextDataPrivate * d;
 protected:
     virtual void started ();
-    virtual void remoteReady ();
+    virtual void remoteReady (QByteArray &);
 };
 
 /**

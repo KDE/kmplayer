@@ -41,6 +41,7 @@ class Document;
 class Node;
 class Mrl;
 class ElementRuntime;
+class RemoteObjectPrivate;
 
 /*
  * Base class for objects that will be used as SharedPtr/WeakPtr pointers.
@@ -644,6 +645,25 @@ public:
      * Sets next call to Document::timer() or -1 to cancel a previous call
      */
     virtual void setTimeout (int ms) = 0;
+};
+
+/**
+ * Base class for cached network data
+ */
+class KMPLAYER_NO_EXPORT RemoteObject {
+    friend class RemoteObjectPrivate;
+public:
+    RemoteObject ();
+    virtual ~RemoteObject ();
+    bool wget (const QString & url);
+    void killWGet ();
+    void clear ();
+    QString mimetype ();
+protected:
+    KDE_NO_EXPORT virtual void remoteReady (QByteArray &) {}
+    bool downloading ();
+private:
+    RemoteObjectPrivate *d;
 };
 
 /**

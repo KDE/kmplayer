@@ -50,6 +50,7 @@
 #include <kmimetype.h>
 #include <kprotocolinfo.h>
 #include <kapplication.h>
+#include <kstaticdeleter.h>
 #include <kio/job.h>
 #include <kio/jobclasses.h>
 
@@ -1728,6 +1729,130 @@ KDE_NO_EXPORT bool URLSource::resolveURL (NodePtr m) {
         return false; // wait for result ..
     }
     return true;
+}
+
+//-----------------------------------------------------------------------------
+
+namespace KMPlayer {
+    typedef QMap <QString, QByteArray> DataCache;
+    static KStaticDeleter <DataCache> dataCacheDeleter;
+    static DataCache * memory_cache;
+}
+
+RemoteObjectPrivate::RemoteObjectPrivate (RemoteObject * r)
+ : job (0L), remote_object (r) {
+    if (!memory_cache)
+        dataCacheDeleter.setObject (memory_cache, new DataCache);
+}
+
+RemoteObjectPrivate::~RemoteObjectPrivate () {
+}
+
+KDE_NO_EXPORT bool RemoteObjectPrivate::download (const QString & str) {
+    url = str;
+    KURL kurl (str);
+    if (kurl.isLocalFile ()) {
+        QFile file (kurl.path ());
+        if (file.exists () && file.open (IO_ReadOnly)) {
+            data = file.readAll ();
+            file.close ();
+        }
+        remote_object->remoteReady (data);
+        return true;
+    }
+    DataCache::const_iterator it = memory_cache->find (str);
+    if (it != memory_cache->end ()) {
+        data.duplicate (it.data ());
+        remote_object->remoteReady (data);
+        return true;
+    }
+    //kdDebug () << "RemoteObjectPrivate::download " << url.url () << endl;
+    job = KIO::get (kurl, false, false);
+    connect (job, SIGNAL (data (KIO::Job *, const QByteArray &)),
+            this, SLOT (slotData (KIO::Job *, const QByteArray &)));
+    connect (job, SIGNAL (result (KIO::Job *)),
+            this, SLOT (slotResult (KIO::Job *)));
+    connect (job, SIGNAL (mimetype (KIO::Job *, const QString &)),
+            this, SLOT (slotMimetype (KIO::Job *, const QString &)));
+    return false;
+}
+
+KDE_NO_EXPORT void RemoteObjectPrivate::clear () {
+    if (job) {
+        job->kill (); // quiet, no result signal
+        job = 0L;
+    }
+}
+
+KDE_NO_EXPORT void RemoteObjectPrivate::slotResult (KIO::Job * kjob) {
+    if (!kjob->error ()) {
+        QByteArray bytes;
+        bytes.duplicate (data);
+        memory_cache->insert (url, bytes);
+    } else
+        data.resize (0);
+    job = 0L; // signal KIO::Job::result deletes itself
+    remote_object->remoteReady (data);
+}
+
+KDE_NO_EXPORT void RemoteObjectPrivate::slotData (KIO::Job*, const QByteArray& qb) {
+    if (qb.size ()) {
+        int old_size = data.size ();
+        data.resize (old_size + qb.size ());
+        memcpy (data.data () + old_size, qb.data (), qb.size ());
+    }
+}
+
+KDE_NO_EXPORT void RemoteObjectPrivate::slotMimetype (KIO::Job *, const QString & m) {
+    mime = m;
+}
+
+KDE_NO_CDTOR_EXPORT RemoteObject::RemoteObject ()
+ : d (new RemoteObjectPrivate (this)) {}
+
+KDE_NO_CDTOR_EXPORT RemoteObject::~RemoteObject () {
+    delete d;
+}
+
+/**
+ * abort previous wget job
+ */
+KDE_NO_EXPORT void RemoteObject::killWGet () {
+    d->clear (); // assume data is invalid
+}
+
+/**
+ * Gets contents from url and puts it in m_data
+ */
+KDE_NO_EXPORT bool RemoteObject::wget (const QString & url) {
+    if (url == d->url) {
+        if (!d->job)
+            remoteReady (d->data);
+        return !d->job;
+    }
+    clear ();
+    return d->download (url);
+}
+
+KDE_NO_EXPORT QString RemoteObject::mimetype () {
+    if (d->data.size () > 0 && d->mime.isEmpty ()) {
+        int accuraty;
+        KMimeType::Ptr mime = KMimeType::findByContent (d->data, &accuraty);
+        if (mime)
+            d->mime = mime->name ();
+    }
+    return d->mime;
+}
+
+KDE_NO_EXPORT void RemoteObject::clear () {
+    killWGet ();
+    d->url.truncate (0);
+    d->mime.truncate (0);
+    d->data.resize (0);
+}
+
+KDE_NO_EXPORT bool RemoteObject::downloading () {
+    return !!d->job;
 }
 
 //-----------------------------------------------------------------------------
