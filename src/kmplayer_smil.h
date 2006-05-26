@@ -430,6 +430,8 @@ class KMPLAYER_NO_EXPORT RegionBase : public Element {
 public:
     virtual ElementRuntimePtr getRuntime ();
     bool expose () const { return false; }
+    void reset ();
+    void activate ();
     virtual bool handleEvent (EventPtr event);
     /**
      * repaints region, calls scheduleRepaint(x,y,w,h) on view

@@ -97,6 +97,7 @@ private:
         SharedPtr <ResolveInfo> next;
     };
     SharedPtr <ResolveInfo> m_resolve_info;
+    bool activated; // 'solve' an singleShot race w/ cmdline url's
 };
 
 /*

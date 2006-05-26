@@ -27,6 +27,7 @@
 #include <kurl.h>
 
 #include "kmplayer_rp.h"
+#include "kmplayer_smil.h"
 
 using namespace KMPlayer;
 

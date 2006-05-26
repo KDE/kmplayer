@@ -1387,7 +1387,7 @@ QString Source::prettyName () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT URLSource::URLSource (PartBase * player, const KURL & url)
-    : Source (i18n ("URL"), player, "urlsource") {
+    : Source (i18n ("URL"), player, "urlsource"), activated (false) {
     setURL (url);
     //kdDebug () << "URLSource::URLSource" << endl;
 }
@@ -1414,6 +1414,9 @@ KDE_NO_EXPORT bool URLSource::hasLength () {
 }
 
 KDE_NO_EXPORT void URLSource::activate () {
+    if (activated)
+        return;
+    activated = true;
     if (url ().isEmpty () && (!m_document || !m_document->hasChildNodes ())) {
         m_player->updateTree ();
         return;
@@ -1423,6 +1426,7 @@ KDE_NO_EXPORT void URLSource::activate () {
 }
 
 KDE_NO_EXPORT void URLSource::deactivate () {
+    activated = false;
     for (SharedPtr<ResolveInfo> rinfo =m_resolve_info; rinfo; rinfo=rinfo->next)
         rinfo->job->kill ();
     m_resolve_info = 0L;

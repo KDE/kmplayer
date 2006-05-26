@@ -25,7 +25,6 @@
 #include <qstring.h>
 
 #include "kmplayerplaylist.h"
-#include "kmplayer_smil.h"
 
 namespace KIO {
     class Job;

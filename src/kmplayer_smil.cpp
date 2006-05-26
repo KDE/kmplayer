@@ -780,7 +780,8 @@ KDE_NO_EXPORT void AnimateGroupData::reset () {
 }
 
 KDE_NO_EXPORT void AnimateGroupData::restoreModification () {
-    if (modification_id > -1 && target_element) {
+    if (modification_id > -1 && target_element &&
+            target_element->state > Node::state_init) {
         ElementRuntimePtr rt = target_element->getRuntime ();
         if (rt) {
             //kdDebug () << "AnimateGroupData::restoreModificatio " <<modification_id << endl;
@@ -1405,16 +1406,11 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
         appendChild (r);
         r->setAuxiliaryNode (true);
     }
-    updateDimensions ();
-    if (w <= 0 || h <= 0) {
-        kdError () << "Root layout not having valid dimensions" << endl;
-        return;
-    }
 }
 
 KDE_NO_EXPORT void SMIL::Layout::activate () {
     //kdDebug () << "SMIL::Layout::activate" << endl;
-    setState (state_activated);
+    RegionBase::activate ();
     beginOrEndLayout (this, true);
     updateDimensions ();
     repaint ();
@@ -1509,6 +1505,18 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::RegionBase::getRuntime () {
     if (!runtime)
         runtime = ElementRuntimePtr (new RegionRuntime (this));
     return runtime;
+}
+
+KDE_NO_EXPORT void SMIL::RegionBase::activate () {
+    setState (state_activated);
+    for (NodePtr r = firstChild (); r; r = r->nextSibling ())
+        if (r->id == id_node_region)
+            r->activate ();
+}
+
+KDE_NO_EXPORT void SMIL::RegionBase::reset () {
+    Element::reset ();
+    runtime = 0L;
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::repaint () {

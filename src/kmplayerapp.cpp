@@ -435,11 +435,11 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
 {
     if (!m_played_intro) {
         m_played_intro = true;
-        if (url.isEmpty () && m_player->source () &&
-                m_player->source ()->document () &&
-                m_player->source ()->document ()->hasChildNodes ()) {
+        KMPlayer::Source * src = m_player->sources () ["urlsource"];
+        if (url.isEmpty () && src->document () &&
+                src->document ()->hasChildNodes ()) {
             restoreFromConfig ();
-            m_player->play ();
+            m_player->setSource (src);
             return;
         } else if (!m_player->settings ()->no_intro && url.isEmpty ()) {
             m_player->setSource (new IntroSource (m_player, this));
@@ -466,8 +466,6 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
 
 KDE_NO_EXPORT void KMPlayerApp::addURL (const KURL& url) {
     KMPlayer::Source * src = m_player->sources () ["urlsource"];
-    if (m_player->source () != src)
-        m_player->setSource (src);
     KMPlayer::NodePtr d = src->document ();
     if (d)
         d->appendChild (new KMPlayer::GenericURL (d, url.url ()));
