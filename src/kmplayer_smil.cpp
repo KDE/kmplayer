@@ -1241,19 +1241,6 @@ KDE_NO_EXPORT NodePtr SMIL::Smil::childFromTag (const QString & tag) {
     return NodePtr ();
 }
 
-static void beginOrEndLayout (Node * node, bool b) {
-    ElementRuntime * rt = node ? node->getRuntime ().ptr () : 0L;
-    if (rt) { // note rb can be a Region/Layout/RootLayout object
-        if (b) {
-            rt->init ();
-            rt->begin ();
-        } else
-            rt->end ();
-        for (NodePtr c = node->firstChild (); c; c = c->nextSibling ())
-            beginOrEndLayout (c.ptr (), b);
-    }
-}
-
 KDE_NO_EXPORT void SMIL::Smil::activate () {
     //kdDebug () << "Smil::activate" << endl;
     current_av_media_type = NodePtr ();
@@ -1267,14 +1254,18 @@ KDE_NO_EXPORT void SMIL::Smil::activate () {
         parentNode ()->registerEventHandler (this);
 }
 
-KDE_NO_EXPORT void SMIL::Smil::deactivate () {
-    if (layout_node) {
-        SMIL::Layout * rb = convertNode <SMIL::Layout> (layout_node);
-        if (rb) {
-            beginOrEndLayout (rb, false);
-            rb->repaint ();
-        }
+// FIXME: this should be through the deactivate() calls
+static void endLayout (Node * node) {
+    ElementRuntime * rt = node ? node->getRuntime ().ptr () : 0L;
+    if (rt) { // note rb can be a Region/Layout/RootLayout object
+        rt->end ();
+        for (NodePtr c = node->firstChild (); c; c = c->nextSibling ())
+            endLayout (c.ptr ());
     }
+}
+
+KDE_NO_EXPORT void SMIL::Smil::deactivate () {
+    endLayout (layout_node.ptr ());
     event_handler = 0;
     Mrl::deactivate ();
     if (parentNode ())
@@ -1411,10 +1402,9 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
 KDE_NO_EXPORT void SMIL::Layout::activate () {
     //kdDebug () << "SMIL::Layout::activate" << endl;
     RegionBase::activate ();
-    beginOrEndLayout (this, true);
     updateDimensions ();
     repaint ();
-    finish (); // that's fast :-)
+    finish (); // proceed and allow 'head' to finish
 }
 
 KDE_NO_EXPORT void SMIL::Layout::updateDimensions () {
@@ -1509,8 +1499,11 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::RegionBase::getRuntime () {
 
 KDE_NO_EXPORT void SMIL::RegionBase::activate () {
     setState (state_activated);
+    ElementRuntimePtr rt = getRuntime ();
+    rt->init ();
+    rt->begin ();
     for (NodePtr r = firstChild (); r; r = r->nextSibling ())
-        if (r->id == id_node_region)
+        if (r->id == id_node_region || r->id == id_node_root_layout)
             r->activate ();
 }
 
