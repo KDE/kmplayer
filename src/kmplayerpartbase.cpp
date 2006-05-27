@@ -1738,9 +1738,43 @@ KDE_NO_EXPORT bool URLSource::resolveURL (NodePtr m) {
 //-----------------------------------------------------------------------------
 
 namespace KMPlayer {
-    typedef QMap <QString, QByteArray> DataCache;
     static KStaticDeleter <DataCache> dataCacheDeleter;
     static DataCache * memory_cache;
+}
+
+void DataCache::add (const QString & url, const QByteArray & data) {
+    QByteArray bytes;
+    bytes.duplicate (data);
+    cache_map.insert (url, bytes);
+    preserve_map.erase (url);
+    emit preserveRemoved (url);
+}
+
+bool DataCache::get (const QString & url, QByteArray & data) {
+    DataMap::const_iterator it = cache_map.find (url);
+    if (it != cache_map.end ()) {
+        data.duplicate (it.data ());
+        return true;
+    }
+    return false;
+}
+
+bool DataCache::preserve (const QString & url) {
+    PreserveMap::const_iterator it = preserve_map.find (url);
+    if (it == preserve_map.end ()) {
+        preserve_map.insert (url, true);
+        return true;
+    }
+    return false;
+}
+
+bool DataCache::unpreserve (const QString & url) {
+    const PreserveMap::iterator it = preserve_map.find (url);
+    if (it == preserve_map.end ())
+        return false;
+    preserve_map.erase (it);
+    emit preserveRemoved (url);
+    return true;
 }
 
 RemoteObjectPrivate::RemoteObjectPrivate (RemoteObject * r)
@@ -1764,20 +1798,25 @@ KDE_NO_EXPORT bool RemoteObjectPrivate::download (const QString & str) {
         remote_object->remoteReady (data);
         return true;
     }
-    DataCache::const_iterator it = memory_cache->find (str);
-    if (it != memory_cache->end ()) {
-        data.duplicate (it.data ());
+    if (memory_cache->get (str, data)) {
+        //kdDebug () << "download found in cache " << str << endl;
         remote_object->remoteReady (data);
         return true;
     }
-    //kdDebug () << "RemoteObjectPrivate::download " << url.url () << endl;
-    job = KIO::get (kurl, false, false);
-    connect (job, SIGNAL (data (KIO::Job *, const QByteArray &)),
-            this, SLOT (slotData (KIO::Job *, const QByteArray &)));
-    connect (job, SIGNAL (result (KIO::Job *)),
-            this, SLOT (slotResult (KIO::Job *)));
-    connect (job, SIGNAL (mimetype (KIO::Job *, const QString &)),
-            this, SLOT (slotMimetype (KIO::Job *, const QString &)));
+    if (memory_cache->preserve (str)) {
+        //kdDebug () << "downloading " << str << endl;
+        job = KIO::get (kurl, false, false);
+        connect (job, SIGNAL (data (KIO::Job *, const QByteArray &)),
+                this, SLOT (slotData (KIO::Job *, const QByteArray &)));
+        connect (job, SIGNAL (result (KIO::Job *)),
+                this, SLOT (slotResult (KIO::Job *)));
+        connect (job, SIGNAL (mimetype (KIO::Job *, const QString &)),
+                this, SLOT (slotMimetype (KIO::Job *, const QString &)));
+    } else {
+        //kdDebug () << "download preserved " << str << endl;
+        connect (memory_cache, SIGNAL (preserveRemoved (const QString &)),
+                 this, SLOT (cachePreserveRemoved (const QString &)));
+    }
     return false;
 }
 
@@ -1785,21 +1824,30 @@ KDE_NO_EXPORT void RemoteObjectPrivate::clear () {
     if (job) {
         job->kill (); // quiet, no result signal
         job = 0L;
+        memory_cache->unpreserve (url);
     }
 }
 
 KDE_NO_EXPORT void RemoteObjectPrivate::slotResult (KIO::Job * kjob) {
-    if (!kjob->error ()) {
-        QByteArray bytes;
-        bytes.duplicate (data);
-        memory_cache->insert (url, bytes);
-    } else
+    if (!kjob->error ())
+        memory_cache->add (url, data);
+    else
         data.resize (0);
     job = 0L; // signal KIO::Job::result deletes itself
     remote_object->remoteReady (data);
 }
 
-KDE_NO_EXPORT void RemoteObjectPrivate::slotData (KIO::Job*, const QByteArray& qb) {
+KDE_NO_EXPORT
+void RemoteObjectPrivate::cachePreserveRemoved (const QString & str) {
+    if (str == url) {
+        disconnect (memory_cache, SIGNAL (preserveRemoved (const QString &)),
+                    this, SLOT (cachePreserveRemoved (const QString &)));
+        download (str);
+    }
+}
+
+KDE_NO_EXPORT
+void RemoteObjectPrivate::slotData (KIO::Job*, const QByteArray& qb) {
     if (qb.size ()) {
         int old_size = data.size ();
         data.resize (old_size + qb.size ());
@@ -1807,7 +1855,8 @@ KDE_NO_EXPORT void RemoteObjectPrivate::slotData (KIO::Job*, const QByteArray& q
     }
 }
 
-KDE_NO_EXPORT void RemoteObjectPrivate::slotMimetype (KIO::Job *, const QString & m) {
+KDE_NO_EXPORT
+void RemoteObjectPrivate::slotMimetype (KIO::Job *, const QString & m) {
     mime = m;
 }
 
