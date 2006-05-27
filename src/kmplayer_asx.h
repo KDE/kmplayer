@@ -57,23 +57,19 @@ public:
  */
 class KMPLAYER_NO_EXPORT Entry : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT Entry (NodePtr & d) : Mrl (d, id_node_entry) {}
+    KDE_NO_CDTOR_EXPORT Entry (NodePtr & d)
+        : Mrl (d, id_node_entry), ref_child_count (0) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "Entry"; }
     /**
-     * True if has a Ref child
+     * False, but since we might have a 'base' child, we can have a rel. src
      */
     bool isMrl ();
-    /**
-     * Returns Ref child if isMrl() return true
-     */
-    virtual NodePtr realMrl ();
-    /**
-     * Override for activating Ref child
-     */
     void activate ();
     void closed ();
+    bool expose () const;
     NodePtrW base;
+    bool ref_child_count;
 };
 
 /**

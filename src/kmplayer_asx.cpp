@@ -59,57 +59,38 @@ KDE_NO_EXPORT NodePtr ASX::Entry::childFromTag (const QString & tag) {
         return new ASX::Ref (m_doc);
     else if (!strcasecmp (name, "title"))
         return new DarkNode (m_doc, name, id_node_title);
-    else if (!strcasecmp (name, "base")) {
-        NodePtr bn = new DarkNode (m_doc, name, id_node_base);
-        base = bn;
-        return bn;
-    }
+    else if (!strcasecmp (name, "base"))
+        return new DarkNode (m_doc, name, id_node_base);
     return 0L;
 }
 
 KDE_NO_EXPORT bool ASX::Entry::isMrl () {
     if (cached_ismrl_version != document ()->m_tree_version) {
-        QString pn;
-        bool foundone = false;
-        if (base)
-            src = convertNode <Element> (base)->getAttribute ("href");
+        ref_child_count = 0;
+        NodePtr ref;
         for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
-            if (e->isMrl () && !e->hasChildNodes ()) {
-                if (foundone) { //FIXME, losing base here
-                    src.truncate (0);
-                    pn.truncate (0);
-                } else {
-                    src = e->mrl ()->src;
-                    pn = e->mrl ()->pretty_name;
-                }
-                foundone = true;
-            } else if (e->id == id_node_title)
+            switch (e->id) {
+            case id_node_title:
                 pretty_name = e->innerText (); // already normalized (hopefully)
+                break;
+            case id_node_base:
+                src = convertNode <Element> (e)->getAttribute ("href");
+                break;
+            case id_node_ref:
+                ref = e;
+                ref_child_count++;
+            }
         }
-        if (pretty_name.isEmpty ())
-            pretty_name = pn;
+        if (ref_child_count == 1 && !pretty_name.isEmpty ())
+            convertNode <ASX::Ref> (ref)->pretty_name = pretty_name;
         cached_ismrl_version = document()->m_tree_version;
-        cached_ismrl = !src.isEmpty () && foundone;
     }
-    return cached_ismrl;
-}
-
-KDE_NO_EXPORT NodePtr ASX::Entry::realMrl () {
-    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-        if (e->isMrl ())
-            return e;
-    return this;
+    return false;
 }
 
 KDE_NO_EXPORT void ASX::Entry::activate () {
-    if (!isMrl ()) { // eg. multible child Ref's
-        Element::activate ();
-    } else {
-        NodePtr mrl = realMrl ();
-        if (mrl != m_self)
-            mrl->setState (state_activated);
-        Mrl::activate ();
-    }
+    resolved = true;
+    Mrl::activate ();
 }
 
 KDE_NO_EXPORT void ASX::Entry::closed () {
@@ -117,21 +98,19 @@ KDE_NO_EXPORT void ASX::Entry::closed () {
         src = convertNode <Element> (base)->getAttribute ("href");
 }
 
+KDE_NO_EXPORT bool ASX::Entry::expose () const {
+    return ref_child_count > 1 && !pretty_name.isEmpty ();
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT void ASX::Ref::opened () {
-    for (AttributePtr a = m_attributes->first (); a; a = a->nextSibling ()) {
-        if (!strcasecmp (a->nodeName (), "href"))
-            src = a->nodeValue ();
-        else
-            kdError () << "Warning: unhandled Ref attr: " << a->nodeName () << "=" << a->nodeValue () << endl;
-
-    }
+    src = getAttribute ("href");
     //kdDebug () << "Ref attr found src: " << src << endl;
 }
 
 KDE_NO_EXPORT bool ASX::Ref::expose () const {
-    return parentNode () && !parentNode ()->isMrl (); // eg. having Ref sisters
+    return !src.isEmpty ();
 }
 
 //-----------------------------------------------------------------------------
