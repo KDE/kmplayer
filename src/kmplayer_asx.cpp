@@ -18,6 +18,7 @@
 
 #include <config.h>
 #include <kdebug.h>
+#include <kurl.h>
 
 #include "kmplayer_asx.h"
 
@@ -34,6 +35,8 @@ KDE_NO_EXPORT NodePtr ASX::Asx::childFromTag (const QString & tag) {
         return new DarkNode (m_doc, name, id_node_title);
     else if (!strcasecmp (name, "base"))
         return new DarkNode (m_doc, name, id_node_base);
+    else if (!strcasecmp (name, "param"))
+        return new DarkNode (m_doc, name, id_node_param);
     return 0L;
 }
 
@@ -48,9 +51,6 @@ KDE_NO_EXPORT bool ASX::Asx::isMrl () {
     return Mrl::isMrl ();
 }
 
-KDE_NO_EXPORT void ASX::Asx::closed () {
-}
-
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT NodePtr ASX::Entry::childFromTag (const QString & tag) {
@@ -61,6 +61,12 @@ KDE_NO_EXPORT NodePtr ASX::Entry::childFromTag (const QString & tag) {
         return new DarkNode (m_doc, name, id_node_title);
     else if (!strcasecmp (name, "base"))
         return new DarkNode (m_doc, name, id_node_base);
+    else if (!strcasecmp (name, "param"))
+        return new DarkNode (m_doc, name, id_node_param);
+    else if (!strcasecmp (name, "starttime"))
+        return new DarkNode (m_doc, name, id_node_starttime);
+    else if (!strcasecmp (name, "duration"))
+        return new DarkNode (m_doc, name, id_node_duration);
     return 0L;
 }
 
@@ -90,12 +96,23 @@ KDE_NO_EXPORT bool ASX::Entry::isMrl () {
 
 KDE_NO_EXPORT void ASX::Entry::activate () {
     resolved = true;
+    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+        if (e->id == id_node_param) {
+            Element * elm = convertNode <Element> (e);
+            if (elm->getAttribute ("name").lower() == QString ("clipsummary")) {
+                PlayListNotify * n = document ()->notify_listener;
+                if (n)
+                    n->setInfoMessage (KURL::decode_string (elm->getAttribute ("value")));
+                break;
+            }
+        }
     Mrl::activate ();
 }
 
-KDE_NO_EXPORT void ASX::Entry::closed () {
-    if (base)
-        src = convertNode <Element> (base)->getAttribute ("href");
+KDE_NO_EXPORT void ASX::Entry::deactivate () {
+    PlayListNotify * n = document ()->notify_listener;
+    if (n)
+        n->setInfoMessage (QString ());
 }
 
 KDE_NO_EXPORT bool ASX::Entry::expose () const {
@@ -116,12 +133,7 @@ KDE_NO_EXPORT bool ASX::Ref::expose () const {
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT void ASX::EntryRef::opened () {
-    for (AttributePtr a = m_attributes->first (); a; a = a->nextSibling ()) {
-        if (!strcasecmp (a->nodeName (), "href"))
-            src = a->nodeValue ();
-        else
-            kdError () << "unhandled EntryRef attr: " << a->nodeName () << "=" << a->nodeValue () << endl;
-    }
+    src = getAttribute ("href");
     //kdDebug () << "EntryRef attr found src: " << src << endl;
 }
 

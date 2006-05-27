@@ -35,6 +35,9 @@ const short id_node_ref = 402;
 const short id_node_entryref = 403;
 const short id_node_title = 404;
 const short id_node_base = 405;
+const short id_node_param = 406;
+const short id_node_starttime = 407;
+const short id_node_duration = 408;
 
 /**
  * '<ASX>' tag
@@ -44,7 +47,6 @@ public:
     KDE_NO_CDTOR_EXPORT Asx (NodePtr & d) : Mrl (d, id_node_asx) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "ASX"; }
-    void closed ();
     bool expose () const { return !pretty_name.isEmpty (); }
     /**
      * True if no mrl children
@@ -66,9 +68,8 @@ public:
      */
     bool isMrl ();
     void activate ();
-    void closed ();
+    void deactivate ();
     bool expose () const;
-    NodePtrW base;
     bool ref_child_count;
 };
 
