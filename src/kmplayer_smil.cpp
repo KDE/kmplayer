@@ -2323,9 +2323,15 @@ void ImageRuntime::parseParam (const QString & name, const QString & val) {
     MediaTypeRuntime::parseParam (name, val);
     if (name == QString::fromLatin1 ("src")) {
         killWGet ();
-        if (!val.isEmpty () && d->url != val) {
+        if (element && !val.isEmpty () && d->url != val) {
+            if (!d->url.isEmpty ()) {
+                for (NodePtr c = element->firstChild(); c; c = c->nextSibling())
+                    if (c->id == RP::id_node_imfl) {
+                        element->removeChild (c);
+                        break;
+                    }
+            }
             d->url = val;
-            element->clearChildren ();
             wget (source_url);
         }
     }
