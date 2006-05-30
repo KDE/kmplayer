@@ -42,6 +42,7 @@
 #include <X11/extensions/XShm.h>
 #include <X11/extensions/Xvlib.h>
 
+
 static char                 configfile[2048];
 
 static Display             *display;
@@ -64,6 +65,10 @@ static int                  xv_frequency;
 static int                  screen;
 static int                  movie_width;
 static int                  movie_height;
+static int                  current_volume;
+static int                  tmp_volume;
+static const int            start_vol_timeout = 100;
+static const int            inc_vol_timeout = 20;
 Atom xv_enc_atom;
 Atom xv_hue_atom;
 Atom xv_saturation_atom;
@@ -207,7 +212,7 @@ bool Backend::isPlaying () {
 }
 
 KXVideoPlayer::KXVideoPlayer (int _argc, char ** _argv)
-  : QApplication (_argc, _argv, false) {
+  : QApplication (_argc, _argv, false), mute_timer (0) {
 }
 
 void KXVideoPlayer::init () {
@@ -355,11 +360,6 @@ void KXVideoPlayer::play () {
             XvSetPortAttribute (display, xvport, xv_autopaint_colorkey_atom, 1);
             reset_xv_autopaint_colorkey = true;
         }
-        if (XvGetPortAttribute (display, xvport, xv_mute_atom, &cur_val) == Success && cur_val == 1) {
-            fprintf (stderr, "XV_MUTE is 1\n");
-            XvSetPortAttribute (display, xvport, xv_mute_atom, 0);
-            reset_xv_mute = true;
-        }
         XvAttribute *attributes = XvQueryPortAttributes (display, xvport, &nr);
         if (attributes) {
             for (int i = 0; i < nr; i++) {
@@ -367,6 +367,8 @@ void KXVideoPlayer::play () {
                 Atom atom = XInternAtom (display, attributes[i].name, false);
                 if (atom == xv_volume_atom) {
                     limit = xv_limits + limit_volume;
+                    XvGetPortAttribute (display, xvport,
+                            xv_volume_atom, &current_volume);
                 } else if (atom == xv_hue_atom) {
                     limit = xv_limits + limit_hue;
                 } else if (atom == xv_saturation_atom) {
@@ -386,6 +388,17 @@ void KXVideoPlayer::play () {
             XvSetPortAttribute (display, xvport, xv_freq_atom, int (1.0*xv_frequency/6.25));
         if (xv_encoding >= 0)
             XvSetPortAttribute (display, xvport, xv_enc_atom, xv_encoding);
+        if (XvGetPortAttribute (display, xvport, xv_mute_atom, &cur_val) ==
+                Success && cur_val == 1) {
+            fprintf (stderr, "XV_MUTE is 1\n");
+            if (xv_limits[limit_volume].min != xv_limits[limit_volume].max) {
+                tmp_volume = xv_limits[limit_volume].min;
+                XvSetPortAttribute(display, xvport, xv_volume_atom, tmp_volume);
+                mute_timer = startTimer (start_vol_timeout);
+            }
+            XvSetPortAttribute (display, xvport, xv_mute_atom, 0);
+            reset_xv_mute = true;
+        }
         //XvGetVideo (..
         running = true;
         if (callback)
@@ -397,6 +410,10 @@ void KXVideoPlayer::play () {
 }
 
 void KXVideoPlayer::stop () {
+    if (mute_timer) {
+        killTimer (mute_timer);
+        mute_timer = 0;
+    }
     if (running) {
         running = false;
         XLockDisplay (display);
@@ -453,16 +470,33 @@ void KXVideoPlayer::brightness (int val) {
 }
 
 void KXVideoPlayer::volume (int val) {
+    if (mute_timer) {
+        killTimer (mute_timer);
+        mute_timer = 0;
+    }
     XLockDisplay(display);
     XvSetPortAttribute (display, xvport, xv_volume_atom, val);
     XFlush (display);
     XUnlockDisplay(display);
+    current_volume = val;
 }
 
 void KXVideoPlayer::frequency (int val) {
+    // this doesn't work, changing frequency kills audio for me
+    if (mute_timer) {
+        killTimer (mute_timer);
+        mute_timer = 0;
+    }
     xv_frequency = val;
     if (running && have_freq) {
         XLockDisplay(display);
+        if (xv_limits[limit_volume].min != xv_limits[limit_volume].max) {
+            tmp_volume = xv_limits[limit_volume].min;
+            XvSetPortAttribute (display, xvport, xv_volume_atom, tmp_volume);
+            mute_timer = startTimer (start_vol_timeout);
+            XFlush (display);
+            XvSetPortAttribute (display, xvport, xv_mute_atom, 0);
+        }
         XvSetPortAttribute (display, xvport, xv_freq_atom, int (1.0*val/6.25));
         XFlush (display);
         XUnlockDisplay(display);
@@ -472,6 +506,28 @@ void KXVideoPlayer::frequency (int val) {
 void KXVideoPlayer::saveState (QSessionManager & sm) {
     if (callback)
         sm.setRestartHint (QSessionManager::RestartNever);
+}
+
+void KXVideoPlayer::timerEvent (QTimerEvent * e) {
+    if (e->timerId () == mute_timer) {
+        int step = (current_volume - xv_limits[limit_volume].min) / 20;
+        if (step > 0 && tmp_volume == xv_limits[limit_volume].min) {
+            killTimer (mute_timer);
+            mute_timer = startTimer (inc_vol_timeout);
+        }
+        tmp_volume += step;
+        if (tmp_volume > current_volume || step <= 0)
+            tmp_volume = current_volume;
+        XLockDisplay(display);
+        XvSetPortAttribute (display, xvport, xv_volume_atom, tmp_volume);
+        XFlush (display);
+        XUnlockDisplay(display);
+        if (tmp_volume == current_volume) {
+            killTimer (mute_timer);
+            mute_timer = 0;
+        }
+    } else
+        killTimer (e->timerId ());
 }
 
 class XEventThread : public QThread {

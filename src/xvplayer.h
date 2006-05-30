@@ -48,6 +48,9 @@ public slots:
     //void postFinished ();
 protected:
     void saveState (QSessionManager & sm);
+    void timerEvent (QTimerEvent *);
+private:
+    int mute_timer;
 };
 
 #endif //_K_XV_PLAYER_H_
