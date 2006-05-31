@@ -578,14 +578,12 @@ void PartBase::forward () {
 }
 
 static NodePtr depthFirstFindMrl (NodePtr e) {
-    if (e->expose ()) {
-        if (e->isMrl ())
-            return e;
-        for (NodePtr c = e->firstChild (); c; c = c->nextSibling ()) {
-            NodePtr m = depthFirstFindMrl (c);
-            if (m)
-                return m;
-        }
+    if (e->isMrl ())
+        return e;
+    for (NodePtr c = e->firstChild (); c; c = c->nextSibling ()) {
+        NodePtr m = depthFirstFindMrl (c);
+        if (m)
+            return m;
     }
     return NodePtr ();
 }
@@ -701,8 +699,10 @@ void PartBase::play () {
         ListViewItem * lvi = static_cast <ListViewItem *> (m_view->playList ()->currentItem ());
         if (lvi)
             for (NodePtr n = lvi->m_elm; n; n = n->parentNode ()) {
-                if (n->isMrl ())
+                if (n->isMrl ()) {
                     m_source->setCurrent (n);
+                    break;
+                }
             }
         m_process->ready (m_view->viewer ());
     } else if (m_process->state () == Process::Ready) {
@@ -1350,12 +1350,14 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
             emit stopPlaying ();
         } else if (news == Process::Ready) {
             if (olds > Process::Ready) {
-                if (p->mrl ()) { // p->mrl is weak, check it
-                    if (p->mrl ()->active ()) // if cause is eof
-                        p->mrl ()->finish (); // set node to finished
+                NodePtr node = p->mrl (); // p->mrl is weak, needs check
+                Mrl * mrl = node ? node->mrl () : 0L;
+                if (mrl) {
+                    if (mrl->active ()) // if cause is eof
+                        mrl->finish (); // set node to finished
                     else if (!m_back_request &&
-                            p->mrl ()->state == Element::state_deferred)
-                        p->mrl ()->undefer ();
+                            mrl->state == Element::state_deferred)
+                        mrl->undefer ();
                 }
                 if (m_back_request && m_back_request->isMrl ()) { // jump in pl
                     m_current = m_back_request;
@@ -1372,7 +1374,7 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
                     }
                     m_back_request = 0L;
                 }
-                if (m_player->view ())
+                if (m_player->view() && (!mrl || mrl->view_mode != Mrl::Window))
                     static_cast<View*>(m_player->view())->viewArea()->repaint();
             } else
                 QTimer::singleShot (0, this, SLOT (playCurrent ()));
