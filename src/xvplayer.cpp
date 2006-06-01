@@ -470,15 +470,13 @@ void KXVideoPlayer::brightness (int val) {
 }
 
 void KXVideoPlayer::volume (int val) {
-    if (mute_timer) {
-        killTimer (mute_timer);
-        mute_timer = 0;
-    }
+    current_volume = val;
+    if (mute_timer)
+        return;
     XLockDisplay(display);
     XvSetPortAttribute (display, xvport, xv_volume_atom, val);
     XFlush (display);
     XUnlockDisplay(display);
-    current_volume = val;
 }
 
 void KXVideoPlayer::frequency (int val) {
@@ -516,16 +514,15 @@ void KXVideoPlayer::timerEvent (QTimerEvent * e) {
             mute_timer = startTimer (inc_vol_timeout);
         }
         tmp_volume += step;
-        if (tmp_volume > current_volume || step <= 0)
+        if (tmp_volume >= current_volume || step <= 0) {
             tmp_volume = current_volume;
+            killTimer (mute_timer);
+            mute_timer = 0;
+        }
         XLockDisplay(display);
         XvSetPortAttribute (display, xvport, xv_volume_atom, tmp_volume);
         XFlush (display);
         XUnlockDisplay(display);
-        if (tmp_volume == current_volume) {
-            killTimer (mute_timer);
-            mute_timer = 0;
-        }
     } else
         killTimer (e->timerId ());
 }
