@@ -1,5 +1,6 @@
 <smil>
   <head>
+    <meta name="title" content="excl group test"/>
     <layout>
       <root-layout width="320" height="240" background-color="yellow"/>
       <region id="reg_but1" left="5" top="15" width="80" height="40" background-color="red"/>
