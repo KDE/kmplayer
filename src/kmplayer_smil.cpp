@@ -2165,7 +2165,6 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
             break;
         }
         case event_sized:
-            positionVideoWidget ();
             break; // make it pass to all listeners
         case event_postponed: {
             MediaTypeRuntime *mr=static_cast<MediaTypeRuntime*>(timedRuntime());
@@ -2234,6 +2233,12 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::AVMediaType::getNewRuntime () {
     return new AudioVideoData (this);
 }
 
+KDE_NO_EXPORT bool SMIL::AVMediaType::handleEvent (EventPtr event) {
+    if (event->id ()== event_sized)
+        positionVideoWidget ();
+    return MediaType::handleEvent (event);
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT
@@ -2271,6 +2276,12 @@ SMIL::RefMediaType::RefMediaType (NodePtr & d)
 KDE_NO_EXPORT ElementRuntimePtr SMIL::RefMediaType::getNewRuntime () {
     isMrl (); // hack to get relative paths right
     return new AudioVideoData (this); // FIXME check mimetype first
+}
+
+KDE_NO_EXPORT bool SMIL::RefMediaType::handleEvent (EventPtr event) {
+    if (event->id ()== event_sized)
+        positionVideoWidget ();
+    return MediaType::handleEvent (event);
 }
 
 //-----------------------------------------------------------------------------

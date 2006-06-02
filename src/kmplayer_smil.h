@@ -676,6 +676,7 @@ public:
     virtual void undefer ();
     virtual void activate ();
     virtual void finish ();
+    virtual bool handleEvent (EventPtr event);
 };
 
 class KMPLAYER_NO_EXPORT ImageMediaType : public MediaType {
@@ -695,6 +696,7 @@ class KMPLAYER_NO_EXPORT RefMediaType : public MediaType {
 public:
     RefMediaType (NodePtr & d);
     ElementRuntimePtr getNewRuntime ();
+    virtual bool handleEvent (EventPtr event);
 };
 
 class KMPLAYER_NO_EXPORT Set : public TimedMrl {
