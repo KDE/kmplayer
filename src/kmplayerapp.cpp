@@ -56,6 +56,7 @@
 #include <klineedit.h>
 #include <kkeydialog.h>
 #include <ksystemtray.h>
+//#include <kedittoolbar.h>
 
 // application specific includes
 #include "kmplayer.h"
@@ -137,7 +138,6 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     //new KAction (i18n ("V&ideo"), QString ("video"), KShortcut (), m_view, SLOT (toggleVideoConsoleWindow ()), ac, "view_video");
     new KAction (i18n ("Pla&y List"), QString ("player_playlist"), KShortcut (), m_player, SLOT (showPlayListWindow ()), ac, "view_playlist");
     new KAction (i18n ("Minimal mode"), QString ("empty"), KShortcut (), this, SLOT (slotMinimalMode ()), ac, "view_minimal");
-    /*KAction *preference =*/ KStdAction::preferences (m_player, SLOT (showConfigDialog ()), ac, "configure");
     new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), ac, "view_zoom_50");
     new KAction (i18n ("100%"), QString ("viewmagfit"), KShortcut (), this, SLOT (zoom100 ()), ac, "view_zoom_100");
     new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), ac, "view_zoom_150");
@@ -159,6 +159,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     viewToolBar = KStdAction::showToolbar(this, SLOT(slotViewToolBar()), ac);
     viewStatusBar =KStdAction::showStatusbar(this,SLOT(slotViewStatusBar()),ac);
     viewMenuBar = KStdAction::showMenubar(this, SLOT(slotViewMenuBar()), ac);
+    KStdAction::preferences (m_player, SLOT (showConfigDialog ()), ac);
     fileNewWindow->setStatusText(i18n("Opens a new application window"));
     fileOpen->setStatusText(i18n("Opens an existing file"));
     fileOpenRecent->setStatusText(i18n("Opens a recently used file"));
@@ -168,13 +169,8 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     viewStatusBar->setStatusText(i18n("Enables/disables the statusbar"));
     viewMenuBar->setStatusText(i18n("Enables/disables the menubar"));
     KStdAction::keyBindings( this, SLOT( slotConfigureKeys() ), ac);
+    //KStdAction::configureToolbars (this, SLOT (slotConfigureToolbars ()), ac);
 }
-
-KDE_NO_EXPORT void KMPlayerApp::slotConfigureKeys()
-{
-  KKeyDialog::configure( actionCollection(), this );
-}
-
 
 KDE_NO_EXPORT void KMPlayerApp::initStatusBar () {
     KStatusBar *sb = statusBar ();
@@ -863,6 +859,16 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileQuit()
 
 KDE_NO_EXPORT void KMPlayerApp::slotPreferences () {
     m_player->showConfigDialog ();
+}
+
+KDE_NO_EXPORT void KMPlayerApp::slotConfigureKeys () {
+  KKeyDialog::configure( actionCollection(), this );
+}
+
+KDE_NO_EXPORT void KMPlayerApp::slotConfigureToolbars () {
+//    KEditToolbar dlg (actionCollection ());
+//    if (dlg.exec ())
+//        createGUI ();
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotViewToolBar() {

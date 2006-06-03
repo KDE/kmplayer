@@ -119,6 +119,7 @@ private slots:
     void playerStarted ();
     void slotMinimalMode ();
     void slotConfigureKeys();
+    void slotConfigureToolbars ();
     void slotClearHistory ();
     void windowVideoConsoleToggled (int wt);
 
