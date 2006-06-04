@@ -235,7 +235,7 @@ KDE_NO_EXPORT void RP::Image::activate () {
     kdDebug () << "RP::Image::activate" << endl;
     setState (state_activated);
     isMrl (); // update src attribute
-    wget (src);
+    wget (absolutePath ());
 }
 
 KDE_NO_EXPORT void RP::Image::deactivate () {

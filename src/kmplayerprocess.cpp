@@ -196,7 +196,7 @@ bool Process::play (Source * src, NodePtr _mrl) {
     m_source = src;
     m_mrl = _mrl;
     Mrl * m = _mrl ? _mrl->mrl () : 0L;
-    QString url = m ? m->src : QString ();
+    QString url = m ? m->absolutePath () : QString ();
     bool changed = m_url != url;
     m_url = url;
 #if KDE_IS_VERSION(3,3,91)

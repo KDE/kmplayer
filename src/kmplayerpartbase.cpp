@@ -619,7 +619,7 @@ void PartBase::playListItemExecuted (QListViewItem * item) {
                     for (NodePtr e = pi->m_elm; e; e = e->parentNode ()) {
                         Mrl * mrl = e->mrl ();
                         if (mrl)
-                            src = KURL (mrl->src, src).url ();
+                            src = KURL (mrl->absolutePath (), src).url ();
                     }
                     KURL url (src);
                     if (url.isValid ())
@@ -971,8 +971,8 @@ void Source::reset () {
 
 QString Source::currentMrl () {
     Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    kdDebug() << "Source::currentMrl " << (m_current ? m_current->nodeName():"") << " src:" << (mrl ? mrl->src  : QString ()) << endl;
-    return mrl ? mrl->src : QString ();
+    kdDebug() << "Source::currentMrl " << (m_current ? m_current->nodeName():"") << " src:" << (mrl ? mrl->absolutePath ()  : QString ()) << endl;
+    return mrl ? mrl->absolutePath () : QString ();
 }
 
 void Source::playCurrent () {
@@ -1122,7 +1122,7 @@ void Source::bitRates (int & prefered, int & maximal) {
 void Source::insertURL (NodePtr node, const QString & mrl) {
     if (!node || !node->mrl ()) // this should always be false
         return;
-    QString cur_url = node->mrl ()->src;
+    QString cur_url = node->mrl ()->absolutePath ();
     KURL url (cur_url, mrl);
     kdDebug() << "Source::insertURL " << KURL (cur_url) << " " << url << endl;
     if (!url.isValid ())
@@ -1652,7 +1652,7 @@ KDE_NO_EXPORT void URLSource::play () {
 bool URLSource::requestPlayURL (NodePtr mrl) {
     if (m_document != mrl->mrl ()->realMrl ()) {
         KURL base = m_document->mrl ()->src;
-        KURL dest = mrl->mrl ()->realMrl ()->mrl ()->src;
+        KURL dest = mrl->mrl ()->realMrl ()->mrl ()->absolutePath ();
         // check if some remote playlist tries to open something local, but
         // do ignore unknown protocols because there are so many and we only
         // want to cache local ones.
@@ -1679,10 +1679,10 @@ KDE_NO_EXPORT bool URLSource::resolveURL (NodePtr m) {
         ++depth;
     if (depth > 40)
         return true;
-    KURL url (mrl->src);
+    KURL url (mrl->absolutePath ());
     QString mimestr = mrl->mimetype;
     bool maybe_playlist = isPlayListMime (mimestr);
-    kdDebug () << "resolveURL " << mrl->src << " " << mimestr << endl;
+    kdDebug () << "resolveURL " << mrl->absolutePath () << " " << mimestr << endl;
     if (url.isLocalFile ()) {
         QFile file (url.path ());
         if (!file.exists ()) {

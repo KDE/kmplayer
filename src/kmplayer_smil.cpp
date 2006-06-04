@@ -989,6 +989,16 @@ KDE_NO_EXPORT void AnimateData::timerTick () {
 
 //-----------------------------------------------------------------------------
 
+static NodePtr findExternalTree (NodePtr mrl) {
+    /* If this mediatype pointed to a playlist, activate it */
+    for (NodePtr c = mrl->firstChild (); c; c = c->nextSibling ()) {
+        Mrl * m = c->mrl ();
+        if (m && m->opener == mrl)
+            return c;
+    }
+    return 0L;
+}
+
 KDE_NO_CDTOR_EXPORT MediaTypeRuntime::MediaTypeRuntime (NodePtr e)
  : TimedRuntime (e), fit (fit_hidden), needs_proceed (false) {}
 
@@ -1016,12 +1026,8 @@ KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::end () {
 KDE_NO_EXPORT
 void MediaTypeRuntime::parseParam (const QString & name, const QString & val) {
     if (name == QString::fromLatin1 ("src")) {
-        source_url = val;
-        if (element) {
-            QString url = convertNode <SMIL::MediaType> (element)->src;
-            if (!url.isEmpty ())
-                source_url = url;
-        }
+        if (element)
+            convertNode <SMIL::MediaType> (element)->src = val;
     } else if (name == QString::fromLatin1 ("fit")) {
         if (val == QString::fromLatin1 ("fill"))
             fit = fit_fill;
@@ -1072,6 +1078,10 @@ KDE_NO_EXPORT void MediaTypeRuntime::started () {
             r->repaint ();
         } else
             kdWarning () << "MediaTypeRuntime::started no region found" << endl;
+
+        SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
+        if (mt && mt->external_tree)
+            mt->external_tree->activate ();
     }
     TimedRuntime::started ();
 }
@@ -1125,22 +1135,24 @@ KDE_NO_EXPORT void AudioVideoData::started () {
             durations [end_time].durval == duration_media)
         durations [duration_time].durval = duration_media; // duration of clip
     MediaTypeRuntime::started ();
-    if (element && region_node) {
-        //kdDebug () << "AudioVideoData::started " << source_url << endl;
-        for (NodePtr p = element->parentNode (); p; p = p->parentNode ())
+    NodePtr element_protect = element; // note element is weak
+    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
+    if (mt && region_node && !mt->external_tree) {
+        //kdDebug () << "AudioVideoData::started " << mt->absolutePath()<< endl;
+        for (NodePtr p = mt->parentNode (); p; p = p->parentNode ())
             if (p->id == SMIL::id_node_smil) {
                 // this works only because we can only play one at a time FIXME
                 convertNode <SMIL::Smil> (p)->current_av_media_type = element;
                 break;
             }
-        if (!source_url.isEmpty ()) {
-            convertNode <SMIL::MediaType> (element)->positionVideoWidget ();
-            if (element->state != Element::state_deferred) {
-                PlayListNotify * n = element->document ()->notify_listener;
+        if (!mt->src.isEmpty ()) {
+            mt->positionVideoWidget ();
+            if (mt->state != Element::state_deferred) {
+                PlayListNotify * n = mt->document ()->notify_listener;
                 if (n)
                     n->requestPlayURL (element);
                 document_postponed = element->document()->connectTo (element, event_postponed);
-                element->setState (Element::state_began);
+                mt->setState (Element::state_began);
             }
         }
     }
@@ -1161,28 +1173,37 @@ KDE_NO_EXPORT void AudioVideoData::avStopped () {
 
 KDE_NO_EXPORT
 void AudioVideoData::parseParam (const QString & name, const QString & val) {
-    //kdDebug () << "AudioVideoData::parseParam " << name << "=" << val << endl;
-    MediaTypeRuntime::parseParam (name, val);
+    kdDebug () << "AudioVideoData::parseParam " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("src")) {
-        Mrl * mrl = element ? element->mrl () : 0L;
-        if (mrl) {
-            if (!mrl->resolved || mrl->src != source_url)
-                mrl->resolved = mrl->document ()->notify_listener->resolveURL (element);
+        NodePtr element_protect = element; // note element is weak
+        SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
+        if (mt) {
+            if (!mt->resolved || mt->src != val) {
+                kdDebug () << "AudioVideoData::parseParam remove " << (mt->external_tree ? mt->external_tree->nodeName() : "null") << endl;
+                if (mt->external_tree)
+                    mt->removeChild (mt->external_tree);
+                mt->src = val;
+                mt->resolved = mt->document ()->notify_listener->resolveURL (element);
+                if (mt->resolved) // update external_tree here 
+                    mt->external_tree = findExternalTree (element);
+            }
             if (timingstate == timings_started) {
-                if (!mrl->resolved) {
-                    element->setState (Node::state_deferred);
-                    element->document ()->postpone ();
-                } else {
-                    PlayListNotify * n = element->document ()->notify_listener;
-                    if (n && !source_url.isEmpty ()) {
+                if (!mt->resolved) {
+                    mt->setState (Node::state_deferred);
+                    mt->document ()->postpone ();
+                } else if (!mt->external_tree) {
+                    PlayListNotify * n = mt->document ()->notify_listener;
+                    if (n && !val.isEmpty ()) {
                         n->requestPlayURL (element);
-                        element->setState (Node::state_began);
+                        mt->setState (Node::state_began);
                         document_postponed = element->document()->connectTo (element, event_postponed);
                     }
-                }
+                } else
+                    mt->external_tree->activate ();
             }
         }
-    }
+    } else
+        MediaTypeRuntime::parseParam (name, val);
 }
 
 KDE_NO_EXPORT void AudioVideoData::postpone (bool b) {
@@ -2108,9 +2129,37 @@ KDE_NO_EXPORT void SMIL::MediaType::activate () {
     TimedRuntime * tr = timedRuntime ();
     if (tr) {
         tr->init (); // sets all attributes
-        if (firstChild ())
-            firstChild ()->activate ();
+        for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+            if (c != external_tree) {
+                // activate param/set/animate.. children
+                c->activate ();
+                break; // childDone will handle next siblings
+            }
         tr->begin ();
+    }
+}
+
+/**
+ * Re-implement from TimedMrl, because we may have children like
+ * param/set/animatie that should all be activate, but also other smil or imfl
+ * documents, that should only be activated if the runtime has started
+ */
+KDE_NO_EXPORT void SMIL::MediaType::childDone (NodePtr child) {
+    if (child->state == state_finished)
+        child->deactivate ();
+    if (active ()) {
+        for (NodePtr c = child->nextSibling(); c; c = c->nextSibling ())
+            if (c != external_tree) {
+                c->activate ();
+                return;
+            }
+        TimedRuntime * tr = timedRuntime ();
+        if (tr && tr->state () < TimedRuntime::timings_stopped) {
+            if (tr->state () == TimedRuntime::timings_started)
+                tr->propagateStop (false);
+            return; // still running, wait for runtime to finish
+        }
+        finish ();
     }
 }
 
@@ -2203,25 +2252,17 @@ KDE_NO_CDTOR_EXPORT
 SMIL::AVMediaType::AVMediaType (NodePtr & d, const QString & t)
  : SMIL::MediaType (d, t, id_node_audio_video) {}
 
-KDE_NO_EXPORT void SMIL::AVMediaType::activate () {
-    if (!isMrl ()) { // turned out this URL points to a playlist file
-        Element::activate ();
-        return;
-    }
-    MediaType::activate ();
-    //kdDebug () << "SMIL::AVMediaType::activate" << endl;
-}
-
 KDE_NO_EXPORT NodePtr SMIL::AVMediaType::childFromTag (const QString & tag) {
     return fromXMLDocumentTag (m_doc, tag);
 }
 
 KDE_NO_EXPORT void SMIL::AVMediaType::undefer () {
-    PlayListNotify * n = document ()->notify_listener;
-    if (n)
-        n->requestPlayURL (this);
-    setState (Element::state_began);
+    setState (state_activated);
+    external_tree = findExternalTree (this);
     document ()->proceed ();
+    TimedRuntime * tr = timedRuntime ();
+    if (tr && tr->state () == TimedRuntime::timings_started)
+        tr->propagateStart ();
 }
 
 KDE_NO_EXPORT void SMIL::AVMediaType::finish () {
@@ -2246,7 +2287,6 @@ SMIL::ImageMediaType::ImageMediaType (NodePtr & d)
     : SMIL::MediaType (d, "img", id_node_img) {}
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::ImageMediaType::getNewRuntime () {
-    isMrl (); // hack to get relative paths right
     return new ImageRuntime (this);
 }
 
@@ -2263,7 +2303,6 @@ SMIL::TextMediaType::TextMediaType (NodePtr & d)
     : SMIL::MediaType (d, "text", id_node_text) {}
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::TextMediaType::getNewRuntime () {
-    isMrl (); // hack to get relative paths right
     return new TextData (this);
 }
 
@@ -2274,7 +2313,6 @@ SMIL::RefMediaType::RefMediaType (NodePtr & d)
     : SMIL::MediaType (d, "ref", id_node_ref) {}
 
 KDE_NO_EXPORT ElementRuntimePtr SMIL::RefMediaType::getNewRuntime () {
-    isMrl (); // hack to get relative paths right
     return new AudioVideoData (this); // FIXME check mimetype first
 }
 
@@ -2343,21 +2381,19 @@ KDE_NO_CDTOR_EXPORT ImageRuntime::~ImageRuntime () {
 KDE_NO_EXPORT
 void ImageRuntime::parseParam (const QString & name, const QString & val) {
     //kdDebug () << "ImageRuntime::param " << name << "=" << val << endl;
-    MediaTypeRuntime::parseParam (name, val);
     if (name == QString::fromLatin1 ("src")) {
         killWGet ();
-        if (element && !val.isEmpty () && d->url != val) {
-            if (!d->url.isEmpty ()) {
-                for (NodePtr c = element->firstChild(); c; c = c->nextSibling())
-                    if (c->id == RP::id_node_imfl) {
-                        element->removeChild (c);
-                        break;
-                    }
-            }
-            d->url = val;
-            wget (source_url);
-        }
-    }
+        NodePtr element_protect = element;
+        SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
+        if (!mt)
+            return; // can not happen
+        if (mt->external_tree)
+            mt->removeChild (mt->external_tree);
+        mt->src = val;
+        if (!val.isEmpty ())
+            wget (mt->absolutePath ());
+    } else
+        MediaTypeRuntime::parseParam (name, val);
 }
 
 KDE_NO_EXPORT void ImageRuntime::paint (QPainter & p) {
@@ -2422,6 +2458,9 @@ KDE_NO_EXPORT void ImageRuntime::started () {
     }
     //if (durations [duration_time].durval == 0)
     //    durations [duration_time].durval = duration_media; // intrinsic duration of 0 FIXME gif movies
+    if (durations [duration_time].durval == 0 &&
+            durations [end_time].durval == duration_media) //no duration/end set
+        fill = fill_freeze;
     if (d->img_movie) {
         d->img_movie->restart ();
         if (d->img_movie->paused ())
@@ -2437,14 +2476,17 @@ KDE_NO_EXPORT void ImageRuntime::stopped () {
 }
 
 KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
-    if (data.size () && element) {
+    NodePtr element_protect = element; // note element is weak
+    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
+    if (data.size () && mt) {
         QString mime = mimetype ();
         kdDebug () << "ImageRuntime::remoteReady " << mime << " " << data.size () << endl;
         if (mime.startsWith (QString::fromLatin1 ("text/"))) {
             QTextStream ts (data, IO_ReadOnly);
             readXML (element, ts, QString::null);
+            mt->external_tree = findExternalTree (element);
         }
-        if (!element->firstChild () || element->firstChild ()->id != RP::id_node_imfl) {
+        if (!mt->external_tree) {
             QPixmap *pix = new QPixmap (data);
             if (!pix->isNull ()) {
                 d->image = pix;
@@ -2461,8 +2503,6 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
                     convertNode <SMIL::RegionBase> (region_node)->repaint ();
             } else
                 delete pix;
-        } else { //check children
-            element->firstChild ()->defer ();
         }
     }
     checkedProceed ();
@@ -2554,7 +2594,6 @@ KDE_NO_CDTOR_EXPORT TextData::~TextData () {
 
 KDE_NO_EXPORT void TextData::end () {
     d->reset ();
-    source_url.truncate (0);
     MediaTypeRuntime::end ();
 }
 
@@ -2562,13 +2601,14 @@ KDE_NO_EXPORT
 void TextData::parseParam (const QString & name, const QString & val) {
     //kdDebug () << "TextData::parseParam " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("src")) {
-        if (source_url == val)
-            return;
-        MediaTypeRuntime::parseParam (name, val);
-        d->data.resize (0);
         killWGet ();
+        SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
+        if (!mt)
+            return; // cannot happen
+        mt->src = val;
+        d->data.resize (0);
         if (!val.isEmpty ())
-            wget (source_url);
+            wget (mt->absolutePath ());
         return;
     }
     MediaTypeRuntime::parseParam (name, val);

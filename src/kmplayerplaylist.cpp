@@ -557,17 +557,24 @@ bool Mrl::isMrl () {
     if (cached_ismrl_version != document()->m_tree_version) {
         cached_ismrl = !hasMrlChildren (this);
         cached_ismrl_version = document()->m_tree_version;
-        if (!src.isEmpty()) {
-            if (pretty_name.isEmpty ())
-                pretty_name = src;
-            for (NodePtr e = parentNode (); e; e = e->parentNode ()) {
-                Mrl * mrl = e->mrl ();
-                if (mrl && !mrl->src.isEmpty ())
-                    src = KURL (mrl->src, src).url ();
+        if (!src.isEmpty() && pretty_name.isEmpty ())
+            pretty_name = src;
+    }
+    return cached_ismrl;
+}
+
+QString Mrl::absolutePath () {
+    QString path = src;
+    if (!path.isEmpty()) {
+        for (NodePtr e = parentNode (); e; e = e->parentNode ()) {
+            Mrl * mrl = e->mrl ();
+            if (mrl && !mrl->src.isEmpty () && mrl->src != src) {
+                path = KURL (mrl->absolutePath (), src).url ();
+                break;
             }
         }
     }
-    return cached_ismrl;
+    return path;
 }
 
 NodePtr Mrl::childFromTag (const QString & tag) {
@@ -972,10 +979,11 @@ namespace KMPlayer {
 
 class DocumentBuilder {
     int m_ignore_depth;
+    bool m_set_opener;
     NodePtr m_node;
     NodePtr m_root;
 public:
-    DocumentBuilder (NodePtr d);
+    DocumentBuilder (NodePtr d, bool set_opener);
     ~DocumentBuilder () {}
     bool startTag (const QString & tag, AttributeListPtr attr);
     bool endTag (const QString & tag);
@@ -992,8 +1000,8 @@ private:
 
 } // namespace KMPlayer
 
-DocumentBuilder::DocumentBuilder (NodePtr d)
- : m_ignore_depth (0), m_node (d), m_root (d)
+DocumentBuilder::DocumentBuilder (NodePtr d, bool set_opener)
+ : m_ignore_depth (0), m_set_opener (set_opener), m_node (d), m_root (d)
 #ifdef HAVE_EXPAT
     , in_cdata (false)
 #endif
@@ -1014,6 +1022,11 @@ bool DocumentBuilder::startTag(const QString &tag, AttributeListPtr attr) {
         if (n->isElementNode ())
             convertNode <Element> (n)->setAttributes (attr);
         m_node->appendChild (n);
+        if (m_set_opener && m_node == m_root) {
+            Mrl * mrl = n->mrl ();
+            if (mrl)
+                mrl->opener = m_root;
+        }
         n->opened ();
         m_node = n;
     }
@@ -1127,9 +1140,9 @@ static void cdataEnd (void *data) {
 namespace KMPlayer {
 
 KMPLAYER_EXPORT
-void readXML (NodePtr root, QTextStream & in, const QString & firstline) {
+void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool set_opener) {
     bool ok = true;
-    DocumentBuilder builder (root);
+    DocumentBuilder builder (root, set_opener);
     XML_Parser parser = XML_ParserCreate (0L);
     XML_SetUserData (parser, &builder);
     XML_SetElementHandler (parser, startTag, endTag);
@@ -1214,8 +1227,8 @@ private:
 };
 
 KMPLAYER_EXPORT
-void readXML (NodePtr root, QTextStream & in, const QString & firstline) {
-    DocumentBuilder builder (root);
+void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool set_opener) {
+    DocumentBuilder builder (root, set_opener);
     SimpleSAXParser parser (builder);
     if (!firstline.isEmpty ()) {
         QString str (firstline + QChar ('\n'));

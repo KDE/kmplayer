@@ -571,6 +571,7 @@ public:
      * If this Mrl hides a child Mrl, return that one or else this one 
      */ 
     virtual NodePtr realMrl ();
+    QString absolutePath ();
     /*
      * Reimplement to callback with requestPlayURL if isMrl()
      */ 
@@ -583,6 +584,11 @@ public:
     virtual bool handleEvent (EventPtr event);
 
     NodePtrW event_handler;
+    /**
+     * If this Mrl is top node of external document, opener has the
+     * location in SCR. Typically that's the parent of this node.
+     */
+    NodePtrW opener; //if this node is top node of external document,
     QString src;
     QString pretty_name;
     QString mimetype;
@@ -831,7 +837,7 @@ public:
 };
 
 KMPLAYER_EXPORT
-void readXML (NodePtr root, QTextStream & in, const QString & firstline);
+void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool set_opener=true);
 KMPLAYER_EXPORT Node * fromXMLDocumentTag (NodePtr & d, const QString & tag);
 
 template <class T>

@@ -228,7 +228,6 @@ protected:
     ConnectionPtr region_mouse_enter;      // attached region has mouse entered
     ConnectionPtr region_mouse_leave;      // attached region has mouse left
     ConnectionPtr region_mouse_click;      // attached region is clicked
-    QString source_url;
     Fit fit;
     bool needs_proceed;
 };
@@ -655,10 +654,12 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
     void opened ();
     void activate ();
+    void childDone (NodePtr child);
     virtual void registerEventHandler (NodePtr handler);
     virtual void deregisterEventHandler (NodePtr handler);
     virtual bool handleEvent (EventPtr event);
     void positionVideoWidget (); // for 'video' and 'ref' nodes
+    NodePtrW external_tree; // if src points to playlist, the resolved top node
     QString m_type;
     unsigned int bitrate;
 protected:
@@ -674,7 +675,6 @@ public:
     NodePtr childFromTag (const QString & tag);
     virtual ElementRuntimePtr getNewRuntime ();
     virtual void undefer ();
-    virtual void activate ();
     virtual void finish ();
     virtual bool handleEvent (EventPtr event);
 };

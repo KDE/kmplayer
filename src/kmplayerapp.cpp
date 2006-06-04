@@ -148,7 +148,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     new KAction (i18n ("Show Language Menu"), KShortcut (Qt::Key_L), m_view->controlPanel (), SLOT (showLanguageMenu ()), ac, "view_show_lang_menu");
     viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), ac, "view_keep_ratio");
 #if KDE_IS_VERSION(3,1,90)
-    /*KAction *fullscreenact =*/ KStdAction::fullScreen( this, SLOT(fullScreen ()), ac, 0 );
+    /*KAction *fullscreenact =*/ KStdAction::fullScreen (this, SLOT(fullScreen ()), ac, 0, "fullscreen");
 #else
     /*KAction *fullscreenact =*/ new KAction (i18n("&Full Screen"), 0, 0, this, SLOT(fullScreen ()), ac, "fullscreen");
 #endif
@@ -156,10 +156,10 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     /*KAction *pauseact =*/ new KAction (i18n ("&Pause"), QString ("player_pause"), KShortcut (), m_player, SLOT (pause ()), ac, "pause");
     /*KAction *stopact =*/ new KAction (i18n ("&Stop"), QString ("player_stop"), KShortcut (), m_player, SLOT (stop ()), ac, "stop");
     /*KAction *artsctrl =*/ new KAction (i18n ("&Arts Control"), QString ("player_volume"), KShortcut (), this, SLOT (startArtsControl ()), ac, "view_arts_control");
-    viewToolBar = KStdAction::showToolbar(this, SLOT(slotViewToolBar()), ac);
-    viewStatusBar =KStdAction::showStatusbar(this,SLOT(slotViewStatusBar()),ac);
-    viewMenuBar = KStdAction::showMenubar(this, SLOT(slotViewMenuBar()), ac);
-    KStdAction::preferences (m_player, SLOT (showConfigDialog ()), ac);
+    viewToolBar = KStdAction::showToolbar(this, SLOT(slotViewToolBar()), ac, "showtoolbar");
+    viewStatusBar =KStdAction::showStatusbar(this,SLOT(slotViewStatusBar()),ac, "showstatusbar");
+    viewMenuBar = KStdAction::showMenubar(this, SLOT(slotViewMenuBar()), ac, "showmenu");
+    KStdAction::preferences(m_player, SLOT(showConfigDialog()), ac,"configure");
     fileNewWindow->setStatusText(i18n("Opens a new application window"));
     fileOpen->setStatusText(i18n("Opens an existing file"));
     fileOpenRecent->setStatusText(i18n("Opens a recently used file"));
@@ -168,7 +168,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     //viewToolBar->setStatusText(i18n("Enables/disables the toolbar"));
     viewStatusBar->setStatusText(i18n("Enables/disables the statusbar"));
     viewMenuBar->setStatusText(i18n("Enables/disables the menubar"));
-    KStdAction::keyBindings( this, SLOT( slotConfigureKeys() ), ac);
+    KStdAction::keyBindings( this, SLOT(slotConfigureKeys()), ac, "configkeys");
     //KStdAction::configureToolbars (this, SLOT (slotConfigureToolbars ()), ac);
 }
 
@@ -536,7 +536,7 @@ KDE_NO_EXPORT void KMPlayerApp::syncEditMode () {
             si->m_elm->clearChildren ();
             QString txt = m_view->infoPanel ()->text ();
             QTextStream ts (txt, IO_ReadOnly);
-            KMPlayer::readXML (si->m_elm, ts, QString ());
+            KMPlayer::readXML (si->m_elm, ts, QString (), false);
             m_view->playList ()->updateTree (si->m_elm->document (), si->m_elm);
         }
     } else
