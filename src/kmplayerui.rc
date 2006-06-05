@@ -1,5 +1,5 @@
 <!DOCTYPE kpartgui>
-<kpartgui name="kmplayer" version="23">
+<kpartgui name="kmplayer" version="24">
 <MenuBar>
   <Menu name="file"><text>&amp;File</text>
     <Action name="open"/>
@@ -29,7 +29,7 @@
     <Action name="view_video"/>
     <Action name="view_playlist"/>
     <Action name="view_minimal"/>
-    <Action name="fullscreen"/>
+    <Action name="view_fullscreen"/>
     <Menu name="zoom"><text>&amp;Zoom</text>
       <Action name="view_zoom_50"/>
       <Action name="view_zoom_100"/>
@@ -66,7 +66,7 @@
   <Action name="play" icon="player_play"/>
   <Action name="pause" icon="player_pause"/>
   <Action name="stop" icon="player_stop"/>
-  <Action shortcut="F" name="fullscreen" />
+  <Action shortcut="F" name="view_fullscreen" />
   <Action shortcut="R" name="play" />
   <Action shortcut="P" name="pause" />
   <Action shortcut="S" name="stop" />
@@ -81,7 +81,7 @@
   <Action name="pause"/>
   <Action name="stop"/>
   <Separator/>
-  <Action name="fullscreen"/>
+  <Action name="view_fullscreen"/>
   <Action name="view_zoom_100"/>
   <Separator/>
   <Action name="view_video"/>

@@ -152,9 +152,9 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     new KAction (i18n ("Show Language Menu"), KShortcut (Qt::Key_L), m_view->controlPanel (), SLOT (showLanguageMenu ()), ac, "view_show_lang_menu");
     viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), ac, "view_keep_ratio");
 #if KDE_IS_VERSION(3,1,90)
-    /*KAction *fullscreenact =*/ KStdAction::fullScreen (this, SLOT(fullScreen ()), ac, 0, "fullscreen");
+    viewFullscreen = KStdAction::fullScreen (this, SLOT(fullScreen ()), ac, 0, "view_fullscreen");
 #else
-    /*KAction *fullscreenact =*/ new KAction (i18n("&Full Screen"), 0, 0, this, SLOT(fullScreen ()), ac, "fullscreen");
+    viewFullscreen = new KAction (i18n("&Full Screen"), 0, 0, this, SLOT(fullScreen ()), ac, "view_fullscreen");
 #endif
     /*KAction *playact =*/ new KAction (i18n ("P&lay"), QString ("player_play"), KShortcut (), m_player, SLOT (play ()), ac, "play");
     /*KAction *pauseact =*/ new KAction (i18n ("&Pause"), QString ("player_pause"), KShortcut (), m_player, SLOT (pause ()), ac, "pause");
@@ -915,11 +915,8 @@ KDE_NO_EXPORT void KMPlayerApp::fullScreen () {
     if (sender ()->metaObject ()->inherits ("KAction"))
         m_view->fullScreen();
 #if KDE_IS_VERSION(3,1,90)
-    KToggleAction *fullScreenAction = static_cast<KToggleAction*>(action("fullscreen"));
-    if (fullScreenAction)
-       fullScreenAction->setChecked(m_view->isFullScreen());
+    viewFullscreen->setChecked (m_view->isFullScreen ());
 #endif
-
     if (m_view->isFullScreen())
         hide ();
     else {

@@ -140,6 +140,11 @@ private:
     KAction * editVolumeDec;
     KAction * toggleView;
     KAction * viewSyncEditMode;
+#if KDE_IS_VERSION(3,1,90)
+    KToggleAction * viewFullscreen;
+#else
+    KAction * viewFullscreen;
+#endif
     KToggleAction * viewEditMode;
     KToggleAction * viewToolBar;
     KToggleAction * viewStatusBar;
