@@ -56,7 +56,7 @@
 #include <klineedit.h>
 #include <kkeydialog.h>
 #include <ksystemtray.h>
-//#include <kedittoolbar.h>
+#include <kedittoolbar.h>
 
 // application specific includes
 #include "kmplayer.h"
@@ -171,8 +171,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     viewStatusBar->setStatusText(i18n("Enables/disables the statusbar"));
     viewMenuBar->setStatusText(i18n("Enables/disables the menubar"));
     KStdAction::keyBindings( this, SLOT(slotConfigureKeys()), ac, "configkeys");
-    //KStdAction::configureToolbars (this, SLOT (configureToolbars ()), ac);
-    //KStdAction::configureToolbars (this, SLOT (slotConfigureToolbars ()), ac);
+    KStdAction::configureToolbars (this, SLOT (slotConfigureToolbars ()), ac, "configtoolbars");
 }
 
 KDE_NO_EXPORT void KMPlayerApp::initStatusBar () {
@@ -868,9 +867,9 @@ KDE_NO_EXPORT void KMPlayerApp::slotConfigureKeys () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotConfigureToolbars () {
-//    KEditToolbar dlg (actionCollection ());
-//    if (dlg.exec ())
-//        createGUI ();
+    KEditToolbar dlg (actionCollection ());
+    if (dlg.exec ())
+        createGUI ();
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotViewToolBar() {

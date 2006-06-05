@@ -57,6 +57,7 @@
     <Action name="showstatusbar"/>
     <Separator />
     <Action name="configkeys"/>
+    <Action name="configtoolbars"/>
     <Action name="configure"/>
   </Menu>
 </MenuBar>
@@ -72,7 +73,7 @@
   <Action shortcut="F2" name="edit_playlist_item"/>
   <Action shortcut="C" name="view_arts_control" />
 </ActionProperties>
-<Toolbar name="mainToolBar"><text></text>
+<ToolBar name="mainToolBar"><text></text>
   <Action name="new_window"/>
   <Action name="open"/>
   <Separator/>
@@ -94,5 +95,5 @@
   <Action name="vdr_key_back"/>
   <Action name="vdr_key_ok"/>
   <Action name="vdr_key_menu"/>
-</Toolbar>
+</ToolBar>
 </kpartgui>
