@@ -177,64 +177,69 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
             } else if (name == QString::fromLatin1("controls")) {
                 //http://service.real.com/help/library/guides/production8/realpgd.htm?src=noref,rnhmpg_080301,rnhmtn,nosrc
                 //http://service.real.com/help/library/guides/production8/htmfiles/control.htm
-                QString val_lower (value.lower ());
-                if (val_lower == QString::fromLatin1("imagewindow")) {
-                    m_features |= Feat_Viewer;
-                } else if (val_lower == QString::fromLatin1("all")) {
-                    m_features = (Feat_Controls | Feat_StatusBar);
-                } else if (val_lower == QString::fromLatin1("tacctrl")) {
-                    m_features |= Feat_Label;
-                } else if (val_lower == QString::fromLatin1("controlpanel")) {
-                    m_features |= Feat_Controls;
-                } else if (val_lower == QString::fromLatin1("infovolumepanel")){
-                    m_features |= Feat_Controls; // TODO
-                } else if (val_lower == QString::fromLatin1("positionfield") ||
-                        val_lower == QString::fromLatin1("positionslider")) {
-                    setAutoControls (false);
-                    panel->positionSlider ()->show ();
-                    m_features |= Feat_Controls;
-                } else if ( val_lower == QString::fromLatin1("homectrl")) {
-                    setAutoControls (false);
-                    panel->button (KMPlayer::ControlPanel::button_config)->show();
-                } else if (val_lower == QString::fromLatin1("mutectrl") ||
-                        val_lower == QString::fromLatin1("mutevolume")) {
-                    setAutoControls (false);
-                    panel->volumeBar()->setMinimumSize (QSize (20, panel->volumeBar()->minimumSize ().height ()));
-                    panel->volumeBar()->show ();
-                    m_features |= Feat_Controls;
-                } else if (val_lower == QString::fromLatin1("rwctrl")) {
-                    setAutoControls (false);
-                    panel->button (KMPlayer::ControlPanel::button_back)->show (); // rewind ?
-                    m_features |= Feat_Controls;
-                } else if ( val_lower == QString::fromLatin1("ffctrl")) {
-                    setAutoControls (false);
-                    panel->button(KMPlayer::ControlPanel::button_forward)->show();
-                    m_features = Feat_Controls;
-                } else if ( val_lower == QString::fromLatin1("stopbutton")) {
-                    setAutoControls (false);
-                    panel->button (KMPlayer::ControlPanel::button_stop)->show ();
-                    m_features |= Feat_Controls;
-                } else if (val_lower == QString::fromLatin1("playbutton") ||
-                        val_lower == QString::fromLatin1("playonlybutton")) {
-                    setAutoControls (false);
-                    panel->button (KMPlayer::ControlPanel::button_play)->show ();
-                    m_features |= Feat_Controls;
-                } else if (val_lower == QString::fromLatin1("pausebutton")) {
-                    setAutoControls (false);
-                    panel->button (KMPlayer::ControlPanel::button_pause)->show ();
-                    m_features |= Feat_Controls;
-                } else if (val_lower == QString::fromLatin1("statusbar") ||
-                        val_lower == QString::fromLatin1("statusfield")) {
-                    m_features |= Feat_StatusBar;
-                } else if (val_lower == QString::fromLatin1("infopanel")) {
-                    m_features |= Feat_InfoPanel;
-                } else if (val_lower == QString::fromLatin1("playlist")) {
-                    m_features |= Feat_PlayList;
-                } else if (val_lower == QString::fromLatin1("volumeslider")) {
-                    m_features |= Feat_VolumeSlider;
-                    setAutoControls (false);
-                    panel->volumeBar()->show ();
-                    panel->volumeBar()->setMinimumSize (QSize (20, panel->volumeBar()->minimumSize ().height ()));
+                QStringList sl = QStringList::split (QChar (','), value);
+                QStringList::const_iterator it = sl.begin ();
+                const QStringList::const_iterator e = sl.end ();
+                for (QStringList::const_iterator i = sl.begin (); i != e; ++i) {
+                    QString val_lower ((*i).lower ());
+                    if (val_lower == QString::fromLatin1("imagewindow")) {
+                        m_features |= Feat_Viewer;
+                    } else if (val_lower == QString::fromLatin1("all")) {
+                        m_features = (Feat_Controls | Feat_StatusBar);
+                    } else if (val_lower == QString::fromLatin1("tacctrl")) {
+                        m_features |= Feat_Label;
+                    } else if (val_lower == QString::fromLatin1("controlpanel")) {
+                        m_features |= Feat_Controls;
+                    } else if (val_lower == QString::fromLatin1("infovolumepanel")){
+                        m_features |= Feat_Controls; // TODO
+                    } else if (val_lower == QString::fromLatin1("positionfield") ||
+                            val_lower == QString::fromLatin1("positionslider")) {
+                        setAutoControls (false);
+                        panel->positionSlider ()->show ();
+                        m_features |= Feat_Controls;
+                    } else if ( val_lower == QString::fromLatin1("homectrl")) {
+                        setAutoControls (false);
+                        panel->button (KMPlayer::ControlPanel::button_config)->show();
+                    } else if (val_lower == QString::fromLatin1("mutectrl") ||
+                            val_lower == QString::fromLatin1("mutevolume")) {
+                        setAutoControls (false);
+                        panel->volumeBar()->setMinimumSize (QSize (20, panel->volumeBar()->minimumSize ().height ()));
+                        panel->volumeBar()->show ();
+                        m_features |= Feat_Controls;
+                    } else if (val_lower == QString::fromLatin1("rwctrl")) {
+                        setAutoControls (false);
+                        panel->button (KMPlayer::ControlPanel::button_back)->show (); // rewind ?
+                        m_features |= Feat_Controls;
+                    } else if ( val_lower == QString::fromLatin1("ffctrl")) {
+                        setAutoControls (false);
+                        panel->button(KMPlayer::ControlPanel::button_forward)->show();
+                        m_features = Feat_Controls;
+                    } else if ( val_lower ==QString::fromLatin1("stopbutton")) {
+                        setAutoControls (false);
+                        panel->button (KMPlayer::ControlPanel::button_stop)->show ();
+                        m_features |= Feat_Controls;
+                    } else if (val_lower == QString::fromLatin1("playbutton") ||
+                            val_lower ==QString::fromLatin1("playonlybutton")) {
+                        setAutoControls (false);
+                        panel->button (KMPlayer::ControlPanel::button_play)->show ();
+                        m_features |= Feat_Controls;
+                    } else if (val_lower ==QString::fromLatin1("pausebutton")) {
+                        setAutoControls (false);
+                        panel->button (KMPlayer::ControlPanel::button_pause)->show ();
+                        m_features |= Feat_Controls;
+                    } else if (val_lower == QString::fromLatin1("statusbar") ||
+                            val_lower == QString::fromLatin1("statusfield")) {
+                        m_features |= Feat_StatusBar;
+                    } else if (val_lower == QString::fromLatin1("infopanel")) {
+                        m_features |= Feat_InfoPanel;
+                    } else if (val_lower == QString::fromLatin1("playlist")) {
+                        m_features |= Feat_PlayList;
+                    } else if (val_lower==QString::fromLatin1("volumeslider")) {
+                        m_features |= Feat_VolumeSlider;
+                        setAutoControls (false);
+                        panel->volumeBar()->show ();
+                        panel->volumeBar()->setMinimumSize (QSize (20, panel->volumeBar()->minimumSize ().height ()));
+                    }
                 }
             } else if (name == QString::fromLatin1("uimode")) {
                 QString val_lower (value.lower ());
