@@ -29,6 +29,7 @@
     <Action name="view_video"/>
     <Action name="view_playlist"/>
     <Action name="view_minimal"/>
+    <Action name="fullscreen"/>
     <Menu name="zoom"><text>&amp;Zoom</text>
       <Action name="view_zoom_50"/>
       <Action name="view_zoom_100"/>
@@ -50,7 +51,6 @@
     <Action name="view_arts_control"/>
   </Menu>
   <Menu name="settings"><text>&amp;Settings</text>
-    <Action name="fullscreen"/>
     <Separator />
     <Action name="showmenu"/>
     <Action name="showtoolbar"/>

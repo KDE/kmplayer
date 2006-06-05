@@ -83,6 +83,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       config (kapp->config ()),
       m_systray (0L),
       m_player (new KMPlayer::PartBase (this, 0L, 0L, 0L, config)),
+      m_view (static_cast <KMPlayer::View*> (m_player->view())),
       m_dvdmenu (new QPopupMenu (this)),
       m_dvdnavmenu (new QPopupMenu (this)),
       m_vcdmenu (new QPopupMenu (this)),
@@ -94,6 +95,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       m_played_exit (false),
       m_minimal_mode (false)
 {
+    setCentralWidget (m_view);
     connect (m_broadcastconfig, SIGNAL (broadcastStarted()), this, SLOT (broadcastStarted()));
     connect (m_broadcastconfig, SIGNAL (broadcastStopped()), this, SLOT (broadcastStopped()));
     initStatusBar();
@@ -108,10 +110,10 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     m_player->sources () ["tvsource"] = new KMPlayerTVSource (this, m_tvmenu);
     m_player->sources () ["vdrsource"] = new KMPlayerVDRSource (this);
     m_player->setSource (m_player->sources () ["urlsource"]);
-    m_view = static_cast <KMPlayer::View*> (m_player->view());
     initActions();
     initView();
 
+    //setAutoSaveSettings();
     readOptions();
 }
 
@@ -169,6 +171,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     viewStatusBar->setStatusText(i18n("Enables/disables the statusbar"));
     viewMenuBar->setStatusText(i18n("Enables/disables the menubar"));
     KStdAction::keyBindings( this, SLOT(slotConfigureKeys()), ac, "configkeys");
+    //KStdAction::configureToolbars (this, SLOT (configureToolbars ()), ac);
     //KStdAction::configureToolbars (this, SLOT (slotConfigureToolbars ()), ac);
 }
 
@@ -204,7 +207,6 @@ KDE_NO_EXPORT void KMPlayerApp::initMenu () {
 KDE_NO_EXPORT void KMPlayerApp::initView () {
     //m_view->docArea ()->readDockConfig (config, QString ("Window Layout"));
     m_player->connectPanel (m_view->controlPanel ());
-    setCentralWidget (m_view);
     initMenu ();
     new KAction (i18n ("Increase Volume"), editVolumeInc->shortcut (), m_player, SLOT (increaseVolume ()), m_view->viewArea ()->actionCollection (), "edit_volume_up");
     new KAction (i18n ("Decrease Volume"), editVolumeDec->shortcut (), m_player, SLOT(decreaseVolume ()), m_view->viewArea ()->actionCollection (), "edit_volume_down");

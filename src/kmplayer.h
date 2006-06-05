@@ -128,8 +128,8 @@ private:
     void minimalMode (bool deco=true);
     KConfig * config;
     KSystemTray * m_systray;
-    KMPlayer::View * m_view;
     KMPlayer::PartBase * m_player;
+    KMPlayer::View * m_view;
 
     KAction * fileNewWindow;
     KAction * fileOpen;
