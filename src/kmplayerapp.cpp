@@ -131,6 +131,8 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     new KAction (i18n ("Clear &History"), 0, 0, this, SLOT (slotClearHistory ()), ac, "clear_history");
     fileClose = KStdAction::close (this, SLOT (slotFileClose ()), ac);
     fileQuit = KStdAction::quit (this, SLOT (slotFileQuit ()), ac);
+    new KAction (i18n ("&Open DVD"), QString ("dvd_mount"), KShortcut (), this, SLOT(openDVD ()), ac, "opendvd");
+    new KAction (i18n ("&Open VCD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openVCD ()), ac, "openvcd");
     new KAction (i18n ("&Open Pipe..."), QString ("pipe"), KShortcut (), this, SLOT(openPipe ()), ac, "source_pipe");
     //KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0,true)
     new KAction (i18n ("&Connect"), QString ("connect_established"), KShortcut (), this, SLOT (openVDR ()), ac, "vdr_connect");
@@ -188,7 +190,7 @@ KDE_NO_EXPORT void KMPlayerApp::initMenu () {
     m_sourcemenu = menuBar ()->findItem (menuBar ()->idAt (0));
     m_sourcemenu->setText (i18n ("S&ource"));
     m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("dvd_mount"), KIcon::Small, 0, true), i18n ("&DVD"), m_dvdmenu, -1, 5);
-    //m_dvdmenu->clear ();
+    m_dvdmenu->clear ();
 #ifdef HAVE_XINE
     m_dvdnavmenu->clear ();
     m_dvdnavmenu->insertItem (i18n ("&Start"), this, SLOT (dvdNav ()));
@@ -869,7 +871,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotConfigureKeys () {
 KDE_NO_EXPORT void KMPlayerApp::slotConfigureToolbars () {
     KEditToolbar dlg (actionCollection ());
     if (dlg.exec ())
-        createGUI ();
+        initMenu (); // also add custom popups //createGUI ();
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotViewToolBar() {
