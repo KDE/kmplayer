@@ -1906,7 +1906,7 @@ KDE_NO_EXPORT void RemoteObject::clear () {
     d->data.resize (0);
 }
 
-KDE_NO_EXPORT bool RemoteObject::downloading () {
+KDE_NO_EXPORT bool RemoteObject::downloading () const {
     return !!d->job;
 }
 

@@ -1173,13 +1173,13 @@ KDE_NO_EXPORT void AudioVideoData::avStopped () {
 
 KDE_NO_EXPORT
 void AudioVideoData::parseParam (const QString & name, const QString & val) {
-    kdDebug () << "AudioVideoData::parseParam " << name << "=" << val << endl;
+    //kdDebug () << "AudioVideoData::parseParam " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("src")) {
         NodePtr element_protect = element; // note element is weak
         SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
         if (mt) {
             if (!mt->resolved || mt->src != val) {
-                kdDebug () << "AudioVideoData::parseParam remove " << (mt->external_tree ? mt->external_tree->nodeName() : "null") << endl;
+                //kdDebug () << "AudioVideoData::parseParam remove " << (mt->external_tree ? mt->external_tree->nodeName() : "null") << endl;
                 if (mt->external_tree)
                     mt->removeChild (mt->external_tree);
                 mt->src = val;
@@ -1295,6 +1295,8 @@ static void endLayout (Node * node) {
 
 KDE_NO_EXPORT void SMIL::Smil::deactivate () {
     endLayout (layout_node.ptr ());
+    if (layout_node)
+        convertNode <SMIL::Layout> (layout_node)->repaint ();    
     event_handler = 0;
     Mrl::deactivate ();
     if (parentNode ())
@@ -2165,8 +2167,6 @@ KDE_NO_EXPORT void SMIL::MediaType::childDone (NodePtr child) {
 
 KDE_NO_EXPORT void SMIL::MediaType::positionVideoWidget () {
     //kdDebug () << "AVMediaType::sized " << endl;
-    if (hasChildNodes ())
-        return;
     PlayListNotify * n = document()->notify_listener;
     MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (timedRuntime ());
     if (n && mtr && mtr->region_node) {
@@ -2275,7 +2275,7 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::AVMediaType::getNewRuntime () {
 }
 
 KDE_NO_EXPORT bool SMIL::AVMediaType::handleEvent (EventPtr event) {
-    if (event->id ()== event_sized)
+    if (event->id ()== event_sized && !external_tree)
         positionVideoWidget ();
     return MediaType::handleEvent (event);
 }
@@ -2317,7 +2317,7 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::RefMediaType::getNewRuntime () {
 }
 
 KDE_NO_EXPORT bool SMIL::RefMediaType::handleEvent (EventPtr event) {
-    if (event->id ()== event_sized)
+    if (event->id () == event_sized && !external_tree)
         positionVideoWidget ();
     return MediaType::handleEvent (event);
 }

@@ -667,7 +667,7 @@ public:
     QString mimetype ();
 protected:
     KDE_NO_EXPORT virtual void remoteReady (QByteArray &) {}
-    bool downloading ();
+    bool downloading () const;
 private:
     RemoteObjectPrivate *d;
 };

@@ -70,7 +70,7 @@ public:
     void activate ();
     void deactivate ();
     bool expose () const;
-    bool ref_child_count;
+    int ref_child_count;
 };
 
 /**

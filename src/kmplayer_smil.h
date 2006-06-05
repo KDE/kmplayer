@@ -379,7 +379,7 @@ const short id_node_set = 132;
 const short id_node_animate = 133;
 const short id_node_title = 140;
 const short id_node_param = 141;
-const short id_node_meta = 141;
+const short id_node_meta = 142;
 const short id_node_first = id_node_smil;
 const short id_node_first_timed_mrl = id_node_par;
 const short id_node_last_timed_mrl = id_node_animate;
@@ -493,7 +493,6 @@ public:
     void calculateBounds (int w, int h, const Matrix & parent_transform);
     virtual bool handleEvent (EventPtr event);
     virtual NodeRefListPtr listeners (unsigned int event_id);
-    void addRegionUser (NodePtr mt);
 private:
     NodeRefListPtr m_ActionListeners;      // mouse clicked
     NodeRefListPtr m_OutOfBoundsListeners; // mouse left
