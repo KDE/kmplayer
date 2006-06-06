@@ -2262,7 +2262,7 @@ KDE_NO_EXPORT void SMIL::AVMediaType::undefer () {
     document ()->proceed ();
     TimedRuntime * tr = timedRuntime ();
     if (tr && tr->state () == TimedRuntime::timings_started)
-        tr->propagateStart ();
+        tr->started ();
 }
 
 KDE_NO_EXPORT void SMIL::AVMediaType::finish () {
@@ -2507,7 +2507,7 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
     }
     checkedProceed ();
     if (timingstate == timings_started)
-        propagateStart ();
+        started ();
 }
 
 KDE_NO_EXPORT void ImageRuntime::movieUpdated (const QRect &) {
@@ -2683,7 +2683,7 @@ KDE_NO_EXPORT void TextData::remoteReady (QByteArray & data) {
     }
     checkedProceed ();
     if (timingstate == timings_started)
-        propagateStart ();
+        started ();
 }
 
 //-----------------------------------------------------------------------------

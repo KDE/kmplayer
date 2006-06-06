@@ -1880,11 +1880,6 @@ KDE_NO_EXPORT void RemoteObject::killWGet () {
  * Gets contents from url and puts it in m_data
  */
 KDE_NO_EXPORT bool RemoteObject::wget (const QString & url) {
-    if (url == d->url) {
-        if (!d->job)
-            remoteReady (d->data);
-        return !d->job;
-    }
     clear ();
     return d->download (url);
 }
