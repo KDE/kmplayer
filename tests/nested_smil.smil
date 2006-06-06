@@ -14,8 +14,12 @@
         </text>
         <video src="excl_timings.smil" id="video1" region="nested_smil" begin="nested_but1.activateEvent"/>
       </excl>
-      <text src="data:,Source" id="text2" region="nested_but2" dur="indefinite" fill="freeze"/>
+      <text src="data:,Change%20Source" id="text2" region="nested_but2" dur="indefinite" fill="freeze">
+        <param name="backgroundColor" value="orange"/>
+        <param name="fontColor" value="black"/>
+      </text>
       <set target="video1" attribute="src" to="img_scale.smil" begin="nested_but2.activateEvent" dur="15"/>
+      <set target="text2" attribute="fontColor" to="gray" begin="nested_but2.activateEvent" dur="15"/>
     </par>
   </body>
 </smil>

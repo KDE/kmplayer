@@ -1,3 +1,13 @@
+Changes since version 0.9.2
+- Fix realvideo on tagesschau.de, support control lists as well
+- Toolbar can now be changed using KDE's default KEditToolbar dialog
+- Support 'ref' media tags and 'meta' head tags for Smil
+- TV source channel switching using Xv player now lowers volume for a short time
+- Fix passing playlist files at the commandline, were directly fed to backends
+- Fix ASX in case entries point to other playlist files, these weren't resolved
+- With plugin, undo infowindow or controlpanel only view if video output
+  is detected (basically undo (mis)detection which controls to show)
+- Fix set Edit mode window to plain text, it interpretered HTML tags
 Changes since version 0.9.2-rc1
 - Added a DCOP call 'isPlaying()' that returns true when backend is running
   and a DCOP call 'isPlaying()' on the backends, other than MPlayer, that
