@@ -898,7 +898,7 @@ inline typename Item<T>::SharedType List<T>::item (int i) const {
     for (typename Item<T>::SharedType t = m_first; t; t = t->nextSibling(), --i)
         if (i == 0)
             return t;
-    return Item<T>::SharedType ();
+    return typename Item<T>::SharedType ();
 }
 
 template <class T>
