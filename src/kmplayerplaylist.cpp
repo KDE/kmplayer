@@ -557,8 +557,6 @@ bool Mrl::isMrl () {
     if (cached_ismrl_version != document()->m_tree_version) {
         cached_ismrl = !hasMrlChildren (this);
         cached_ismrl_version = document()->m_tree_version;
-        if (!src.isEmpty() && pretty_name.isEmpty ())
-            pretty_name = src;
     }
     return cached_ismrl;
 }

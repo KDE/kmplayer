@@ -9,7 +9,8 @@
     </layout>
   </head>
   <body>
-    <par end="text1.inBoundsEvent">
+    <par id="par1" end="text1.inBoundsEvent">
+      <set target="par1" attribute="title" to="Mouse Inbound" fill="freeze"/>
       <text id="text1" src="data:,par%20end%3Dtext1.inBoundsEvent%0D%0Atext%20dur%3Dindefinite%0D%0Amove%20here%20to%20end%20'par'" region="region1" dur="indefinite"/>
       <text src="data:,dur%3D5s" region="region2" dur="5"/>
     </par>
@@ -31,6 +32,6 @@
       <text src="data:,par%20no%20dur%20set%0D%0Atext%20dur%3D7" region="region1" dur="7"/>
       <text src="data:,dur%3D5" region="region2" dur="5"/>
     </par>
-    <text src="data:,that's%20all%20folks" region="region3" dur="2s" backgroundColor="black" fontColor="white"/>
+    <text src="data:,that's%20all%20folks" title="Carrot time" region="region3" dur="2s" backgroundColor="black" fontColor="white"/>
   </body>
 </smil>

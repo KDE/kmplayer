@@ -206,16 +206,17 @@ void ElementRuntime::resetParam (const QString & name, int id) {
                     pv->modifications->back () == QString::null)
                 pv->modifications->pop_back ();
         }
+        QString val = pv->value ();
         if (pv->modifications->size () == 0) {
             delete pv->modifications;
             pv->modifications = 0L;
-            if (pv->value () == QString::null) {
+            val = pv->value ();
+            if (val == QString::null) {
                 delete pv;
                 d->params.remove (name);
-                return;
             }
         }
-        parseParam (name, pv->value ());
+        parseParam (name, val);
     } else
         kdError () << "resetting " << name << " that doesn't exists" << endl;
 }
@@ -395,6 +396,10 @@ void TimedRuntime::parseParam (const QString & name, const QString & val) {
         // else all other fill options ..
     } else if (name == QString::fromLatin1 ("repeatCount")) {
         repeat_count = val.toInt ();
+    } else if (name == QString::fromLatin1 ("title")) {
+        Mrl * mrl = static_cast <Mrl *> (element.ptr ());
+        if (mrl)
+            mrl->pretty_name = val;
     }
     ElementRuntime::parseParam (name, val);
 }
@@ -1763,6 +1768,8 @@ KDE_NO_EXPORT void SMIL::TimedMrl::deactivate () {
     //kdDebug () << "SMIL::TimedMrl(" << nodeName() << ")::deactivate" << endl;
     if (unfinished ())
         finish ();
+    if (runtime)
+        runtime->end ();
     Mrl::deactivate ();
 }
 
@@ -1777,9 +1784,11 @@ KDE_NO_EXPORT void SMIL::TimedMrl::finish () {
 KDE_NO_EXPORT void SMIL::TimedMrl::reset () {
     //kdDebug () << "SMIL::TimedMrl::reset " << endl;
     Mrl::reset ();
-    if (runtime)
-        runtime->end ();
     runtime = 0L;
+}
+
+KDE_NO_EXPORT bool SMIL::TimedMrl::expose () const {
+    return !pretty_name.isEmpty ();
 }
 
 KDE_NO_EXPORT void SMIL::TimedMrl::childBegan (NodePtr) {
@@ -1863,16 +1872,12 @@ KDE_NO_EXPORT bool SMIL::GroupBase::isMrl () {
     return false;
 }
 
-KDE_NO_EXPORT bool SMIL::GroupBase::expose () const {
-    return !pretty_name.isEmpty () || //return false if no title and only one
-        previousSibling () || nextSibling ();
-}
-
 KDE_NO_EXPORT void SMIL::GroupBase::finish () {
-    TimedMrl::finish ();
+    setState (state_finished); // avoid recurstion through childDone
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         if (e->active ())
             e->deactivate ();
+    TimedMrl::finish ();
 }
 
 //-----------------------------------------------------------------------------
@@ -2047,7 +2052,8 @@ KDE_NO_EXPORT void SMIL::Switch::activate () {
         Mrl * mrl = chosenOne->mrl ();
         if (mrl) {
             src = mrl->src;
-            pretty_name = mrl->pretty_name;
+            if (pretty_name.isEmpty ())
+                pretty_name = mrl->pretty_name;
         }
         // we must active chosenOne, it must set video position by itself
         setState (state_activated);
@@ -2139,6 +2145,11 @@ KDE_NO_EXPORT void SMIL::MediaType::activate () {
             }
         tr->begin ();
     }
+}
+
+KDE_NO_EXPORT bool SMIL::MediaType::expose () const {
+    return TimedMrl::expose () ||               // if title attribute
+        (!src.isEmpty () && !external_tree);    // or we're a playable leaf
 }
 
 /**

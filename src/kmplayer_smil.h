@@ -538,6 +538,7 @@ public:
     void finish ();
     void deactivate ();
     void reset ();
+    bool expose () const;
     void childBegan (NodePtr child);
     void childDone (NodePtr child);
     virtual bool handleEvent (EventPtr event);
@@ -565,7 +566,6 @@ class KMPLAYER_NO_EXPORT GroupBase : public TimedMrl {
 public:
     KDE_NO_CDTOR_EXPORT ~GroupBase () {}
     bool isMrl ();
-    bool expose () const;
     void finish ();
 protected:
     KDE_NO_CDTOR_EXPORT GroupBase (NodePtr & d, short id) : TimedMrl (d, id) {}
@@ -605,7 +605,6 @@ class KMPLAYER_NO_EXPORT Body : public Seq {
 public:
     KDE_NO_CDTOR_EXPORT Body (NodePtr & d) : Seq (d, id_node_body) {}
     KDE_NO_EXPORT const char * nodeName () const { return "body"; }
-    bool expose () const { return false; }
 };
 
 /**
@@ -653,6 +652,7 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
     void opened ();
     void activate ();
+    bool expose () const;
     void childDone (NodePtr child);
     virtual void registerEventHandler (NodePtr handler);
     virtual void deregisterEventHandler (NodePtr handler);
