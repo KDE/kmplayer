@@ -1786,6 +1786,7 @@ RemoteObjectPrivate::RemoteObjectPrivate (RemoteObject * r)
 }
 
 RemoteObjectPrivate::~RemoteObjectPrivate () {
+    clear ();
 }
 
 KDE_NO_EXPORT bool RemoteObjectPrivate::download (const QString & str) {
