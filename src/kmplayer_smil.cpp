@@ -137,7 +137,7 @@ namespace KMPlayer {
         QStringList  * modifications;
         ParamValue (const QString & v) : val (v), modifications (0L) {}
         ~ParamValue () { delete modifications; }
-        QString value () { return modifications ? modifications->back() : val; }
+        QString value () { return modifications && modifications->size () ? modifications->back () : val; }
         void setValue (const QString & v) { val = v; }
     };
     class ElementRuntimePrivate {
@@ -1746,6 +1746,11 @@ KDE_NO_CDTOR_EXPORT SMIL::TimedMrl::TimedMrl (NodePtr & d, short id)
  : Mrl (d, id),
    m_StartedListeners (new NodeRefList),
    m_StoppedListeners (new NodeRefList) {}
+
+KDE_NO_EXPORT void SMIL::TimedMrl::closed () {
+    pretty_name = getAttribute ("title");
+    Mrl::closed ();
+}
 
 KDE_NO_EXPORT void SMIL::TimedMrl::activate () {
     //kdDebug () << "SMIL::TimedMrl(" << nodeName() << ")::activate" << endl;

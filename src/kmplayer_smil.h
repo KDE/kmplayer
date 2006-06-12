@@ -533,6 +533,7 @@ class KMPLAYER_NO_EXPORT TimedMrl : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT ~TimedMrl () {}
     ElementRuntimePtr getRuntime ();
+    void closed ();
     void activate ();
     void begin ();
     void finish ();
