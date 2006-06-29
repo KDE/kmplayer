@@ -404,7 +404,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
     GroupPredicate pred (this, m_group);
     KURL url;
     if (!m_file_name.isEmpty () && (_url.isEmpty () || _url == m_docbase))
-        url = KURL (m_file_name); // fix misdetected SRC attr
+        url = KURL (m_docbase, m_file_name); // fix misdetected SRC attr
     else if (_url != m_docbase) {
         url = _url;
         if (!m_file_name.isEmpty () && _url.url ().find (m_file_name) < 0) {
