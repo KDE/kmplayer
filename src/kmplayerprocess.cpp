@@ -735,9 +735,9 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
             QRegExp & m_sizeRegExp = patterns[MPlayerPreferencesPage::pat_size];
             v->addText (out, true);
             if (!m_source->processOutput (out)) {
-                int movie_width = m_source->width ();
-                if (movie_width <= 0 && m_sizeRegExp.search (out) > -1) {
-                    movie_width = m_sizeRegExp.cap (1).toInt (&ok);
+                // int movie_width = m_source->width ();
+                if (/*movie_width <= 0 &&*/ m_sizeRegExp.search (out) > -1) {
+                    int movie_width = m_sizeRegExp.cap (1).toInt (&ok);
                     int movie_height = ok ? m_sizeRegExp.cap (2).toInt (&ok) : 0;
                     if (ok && movie_width > 0 && movie_height > 0)
                         m_source->setDimensions(m_mrl,movie_width,movie_height);
