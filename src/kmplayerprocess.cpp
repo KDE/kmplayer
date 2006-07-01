@@ -739,8 +739,10 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                 if (/*movie_width <= 0 &&*/ m_sizeRegExp.search (out) > -1) {
                     int movie_width = m_sizeRegExp.cap (1).toInt (&ok);
                     int movie_height = ok ? m_sizeRegExp.cap (2).toInt (&ok) : 0;
-                    if (ok && movie_width > 0 && movie_height > 0)
+                    if (ok && movie_width > 0 && movie_height > 0) {
                         m_source->setDimensions(m_mrl,movie_width,movie_height);
+                        m_source->setAspect (m_mrl, 1.0*movie_width/movie_height);
+                    }
                 } else if (m_startRegExp.search (out) > -1) {
                     if (m_settings->mplayerpost090) {
                         if (!m_tmpURL.isEmpty () && m_url != m_tmpURL) {
