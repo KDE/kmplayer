@@ -51,7 +51,7 @@ public:
     /**
      * True if no mrl children
      */
-    bool isMrl ();
+    bool isPlayable ();
 };
 
 /**
@@ -66,7 +66,7 @@ public:
     /**
      * False, but since we might have a 'base' child, we can have a rel. src
      */
-    bool isMrl ();
+    bool isPlayable ();
     void activate ();
     void deactivate ();
     bool expose () const;

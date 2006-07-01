@@ -40,7 +40,7 @@ KDE_NO_EXPORT NodePtr ASX::Asx::childFromTag (const QString & tag) {
     return 0L;
 }
 
-KDE_NO_EXPORT bool ASX::Asx::isMrl () {
+KDE_NO_EXPORT bool ASX::Asx::isPlayable () {
     if (cached_ismrl_version != document ()->m_tree_version)
         for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
             if (e->id == id_node_title)
@@ -48,7 +48,7 @@ KDE_NO_EXPORT bool ASX::Asx::isMrl () {
             else if (e->id == id_node_base)
                 src = convertNode <Element> (e)->getAttribute ("href");
         }
-    return Mrl::isMrl ();
+    return Mrl::isPlayable ();
 }
 
 //-----------------------------------------------------------------------------
@@ -70,7 +70,7 @@ KDE_NO_EXPORT NodePtr ASX::Entry::childFromTag (const QString & tag) {
     return 0L;
 }
 
-KDE_NO_EXPORT bool ASX::Entry::isMrl () {
+KDE_NO_EXPORT bool ASX::Entry::isPlayable () {
     if (cached_ismrl_version != document ()->m_tree_version) {
         ref_child_count = 0;
         NodePtr ref;

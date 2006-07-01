@@ -63,7 +63,7 @@ void RSS::Item::closed () {
     for (NodePtr c = firstChild (); c; c = c->nextSibling ()) {
         if (c->id == id_node_title)
             pretty_name = c->innerText ().simplifyWhiteSpace ();
-        if (c->isMrl ())
+        if (c->isPlayable ())
             src = c->mrl ()->src;
     }
 }

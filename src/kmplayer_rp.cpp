@@ -234,7 +234,7 @@ KDE_NO_EXPORT void RP::Image::closed () {
 KDE_NO_EXPORT void RP::Image::activate () {
     kdDebug () << "RP::Image::activate" << endl;
     setState (state_activated);
-    isMrl (); // update src attribute
+    isPlayable (); // update src attribute
     wget (absolutePath ());
 }
 

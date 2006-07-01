@@ -95,7 +95,7 @@ void ATOM::Content::closed () {
     }
 }
 
-bool ATOM::Content::isMrl () {
+bool ATOM::Content::isPlayable () {
     if (!hasChildNodes () && !src.isEmpty ())
         return true;
     return false;

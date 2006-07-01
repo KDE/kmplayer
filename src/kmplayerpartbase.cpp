@@ -578,7 +578,7 @@ void PartBase::forward () {
 }
 
 static NodePtr depthFirstFindMrl (NodePtr e) {
-    if (e->isMrl ())
+    if (e->isPlayable ())
         return e;
     for (NodePtr c = e->firstChild (); c; c = c->nextSibling ()) {
         NodePtr m = depthFirstFindMrl (c);
@@ -699,7 +699,7 @@ void PartBase::play () {
         ListViewItem * lvi = static_cast <ListViewItem *> (m_view->playList ()->currentItem ());
         if (lvi)
             for (NodePtr n = lvi->m_elm; n; n = n->parentNode ()) {
-                if (n->isMrl ()) {
+                if (n->isPlayable ()) {
                     m_source->setCurrent (n);
                     break;
                 }
@@ -920,7 +920,7 @@ static void printTree (NodePtr root, QString off=QString()) {
         kdDebug() << off << "[null]" << endl;
         return;
     }
-    kdDebug() << off << root->nodeName() << " " << (Element*)root << (root->isMrl() ? root->mrl ()->src : QString ("-")) << endl;
+    kdDebug() << off << root->nodeName() << " " << (Element*)root << (root->isPlayable() ? root->mrl ()->src : QString ("-")) << endl;
     off += QString ("  ");
     for (NodePtr e = root->firstChild(); e; e = e->nextSibling())
         printTree(e, off);
@@ -1016,7 +1016,7 @@ static NodePtr findDepthFirst (NodePtr elm) {
         return NodePtr ();
     NodePtr tmp = elm;
     for ( ; tmp; tmp = tmp->nextSibling ()) {
-        if (tmp->isMrl ())
+        if (tmp->isPlayable ())
             return tmp;
         NodePtr tmp2 = findDepthFirst (tmp->firstChild ());
         if (tmp2)
@@ -1063,13 +1063,13 @@ bool Source::setCurrent (NodePtr mrl) {
 }
 
 void Source::stateElementChanged (Node * elm, Node::State old_state, Node::State new_state) {
-    //kdDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isMrl:" << (m_current && m_current->isMrl ()) << " elm==realMrl:" << (m_current && elm == m_current->mrl ()->realMrl ()) << " p state:" << m_player->process ()->state () << endl;
+    //kdDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isPlayable:" << (m_current && m_current->isPlayable ()) << " elm==realMrl:" << (m_current && elm == m_current->mrl ()->realMrl ()) << " p state:" << m_player->process ()->state () << endl;
     if (new_state == Node::state_deactivated &&
             elm == m_document && !m_back_request) {
         emit endOfPlayItems (); // played all items
     } else if ((new_state == Node::state_deactivated ||
               new_state == Node::state_finished) &&
-             m_current && m_current->isMrl () &&
+             m_current && m_current->isPlayable () &&
              elm == m_current->mrl ()->realMrl ()) {
         if (m_player->process ()->state () > Process::Ready)
             //a SMIL movies stopped by SMIL events rather than movie just ending
@@ -1151,9 +1151,9 @@ void Source::backward () {
         m_back_request = m_current;
         if (!m_back_request || m_back_request == m_document) {
             m_back_request = m_document->lastChild ();
-            while (m_back_request->lastChild () && !m_back_request->isMrl ())
+            while (m_back_request->lastChild () && !m_back_request->isPlayable ())
                 m_back_request = m_back_request->lastChild ();
-            if (m_back_request->isMrl ())
+            if (m_back_request->isPlayable ())
                 return;
         }
         while (m_back_request && m_back_request != m_document) {
@@ -1190,7 +1190,7 @@ void Source::forward () {
 }
 
 void Source::jump (NodePtr e) {
-    if (e->isMrl ()) {
+    if (e->isPlayable ()) {
         if (m_player->playing ()) {
             m_back_request = e;
             m_player->process ()->stop ();
@@ -1359,7 +1359,7 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
                             mrl->state == Element::state_deferred)
                         mrl->undefer ();
                 }
-                if (m_back_request && m_back_request->isMrl ()) { // jump in pl
+                if (m_back_request && m_back_request->isPlayable ()) { // jump in pl
                     m_current = m_back_request;
                     if (m_current->id > SMIL::id_node_first &&
                             m_current->id < SMIL::id_node_last) {
@@ -1499,7 +1499,7 @@ KDE_NO_EXPORT void URLSource::read (NodePtr root, QTextStream & textstream) {
     } while (!line.isNull () && line.stripWhiteSpace ().isEmpty ());
     if (!line.isNull ()) {
         NodePtr cur_elm = root;
-        if (cur_elm->isMrl ())
+        if (cur_elm->isPlayable ())
             cur_elm = cur_elm->mrl ()->realMrl ();
         if (cur_elm->mrl ()->mimetype == QString ("audio/x-scpls")) {
             bool groupfound = false;
@@ -1637,7 +1637,7 @@ KDE_NO_EXPORT void URLSource::kioResult (KIO::Job * job) {
 
 void URLSource::playCurrent () {
     if (m_current && m_current->active () &&
-            (!m_current->isMrl () /* eg. has child mrl's*/ ||
+            (!m_current->isPlayable () /* eg. has child mrl's*/ ||
              !m_current->mrl ()->resolved)) {
         // an async playCurrent() call (eg. backend is up & running), ignore
         return;

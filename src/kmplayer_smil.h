@@ -397,7 +397,7 @@ public:
     KDE_NO_CDTOR_EXPORT Smil (NodePtr & d) : Mrl (d, id_node_smil) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "smil"; }
-    bool isMrl ();
+    bool isPlayable ();
     void activate ();
     void deactivate ();
     void closed ();
@@ -566,7 +566,7 @@ KDE_NO_EXPORT inline TimedRuntime * TimedMrl::timedRuntime () {
 class KMPLAYER_NO_EXPORT GroupBase : public TimedMrl {
 public:
     KDE_NO_CDTOR_EXPORT ~GroupBase () {}
-    bool isMrl ();
+    bool isPlayable ();
     void finish ();
 protected:
     KDE_NO_CDTOR_EXPORT GroupBase (NodePtr & d, short id) : TimedMrl (d, id) {}
@@ -633,7 +633,7 @@ public:
     KDE_NO_CDTOR_EXPORT Switch (NodePtr &d) : GroupBase (d, id_node_switch) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "switch"; }
-    bool isMrl ();
+    bool isPlayable ();
     // Condition
     void activate ();
     void deactivate ();
@@ -704,7 +704,7 @@ public:
     KDE_NO_CDTOR_EXPORT Set (NodePtr & d) : TimedMrl (d, id_node_set) {}
     KDE_NO_EXPORT const char * nodeName () const { return "set"; }
     virtual ElementRuntimePtr getNewRuntime ();
-    bool isMrl () { return false; }
+    bool isPlayable () { return false; }
 };
 
 class KMPLAYER_NO_EXPORT Animate : public TimedMrl {
@@ -712,7 +712,7 @@ public:
     KDE_NO_CDTOR_EXPORT Animate (NodePtr & d) : TimedMrl (d, id_node_animate) {}
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
     virtual ElementRuntimePtr getNewRuntime ();
-    bool isMrl () { return false; }
+    bool isPlayable () { return false; }
     bool handleEvent (EventPtr event);
 };
 

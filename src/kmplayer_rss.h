@@ -52,7 +52,7 @@ public:
     KDE_NO_CDTOR_EXPORT Channel (NodePtr & d) : Mrl (d, id_node_channel) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "channel"; }
-    bool isMrl () { return false; }
+    bool isPlayable () { return false; }
     void closed ();
     bool expose () const;
 };
@@ -62,7 +62,7 @@ public:
     KDE_NO_CDTOR_EXPORT Item (NodePtr & d) : Mrl (d, id_node_item) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "item"; }
-    bool isMrl () { return !src.isEmpty (); }
+    bool isPlayable () { return !src.isEmpty (); }
     void closed ();
     void activate ();
     void deactivate ();

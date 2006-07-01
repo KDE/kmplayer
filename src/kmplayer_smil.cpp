@@ -1354,7 +1354,7 @@ KDE_NO_EXPORT NodePtr SMIL::Smil::realMrl () {
     return current_av_media_type ? current_av_media_type : this;
 }
 
-KDE_NO_EXPORT bool SMIL::Smil::isMrl () {
+KDE_NO_EXPORT bool SMIL::Smil::isPlayable () {
     return true;
 }
 
@@ -1873,7 +1873,7 @@ KDE_NO_EXPORT ElementRuntimePtr SMIL::TimedMrl::getNewRuntime () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT bool SMIL::GroupBase::isMrl () {
+KDE_NO_EXPORT bool SMIL::GroupBase::isPlayable () {
     return false;
 }
 
@@ -2049,7 +2049,7 @@ KDE_NO_EXPORT void SMIL::Switch::activate () {
                         currate = mt->bitrate;
                     }
                 }
-            } else if (!fallback && e->isMrl ())
+            } else if (!fallback && e->isPlayable ())
                 fallback = e;
         }
         if (!chosenOne)
@@ -2094,11 +2094,11 @@ KDE_NO_EXPORT void SMIL::Switch::childDone (NodePtr child) {
     finish (); // only one child can run
 }
 
-KDE_NO_EXPORT bool SMIL::Switch::isMrl () {
+KDE_NO_EXPORT bool SMIL::Switch::isPlayable () {
     if (cached_ismrl_version != document()->m_tree_version) {
         cached_ismrl = false;
         for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-            if (e->isMrl ()) {
+            if (e->isPlayable ()) {
                 cached_ismrl = true;
                 break;
             }

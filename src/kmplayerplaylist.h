@@ -345,8 +345,8 @@ typedef SharedPtr <Connection> ConnectionPtr;
  * Base class for XML nodes. Provides a w3c's DOM like API
  *
  * Most severe traps with using SharedPtr/WeakPtr for tree nodes:
- * - pointer ends up in two independant shared objects (hopefully with explicit
- *   constructor for T* and template specialization for assignment of T* should
+ * - pointer ends up in two independant shared objects (hopefully with
+ *   template specialization for constructor for T* and assignment of T* should
  *   be enough of defences ..)
  * - Node added two times (added ASSERT in appendChild/insertBefore)
  * - Node is destroyed before being stored in a SharedPtr with kmplayer usage
@@ -366,12 +366,7 @@ public:
     };
     virtual ~Node ();
     Document * document ();
-    /**
-     * Return a dynamic cast to a Mrl pointer
-     * \sa isMrl()
-     */
-    Mrl * mrl ();
-    const Mrl * mrl () const;
+    virtual Mrl * mrl ();
     virtual NodePtr childFromTag (const QString & tag);
     void characterData (const QString & s);
     QString innerText () const;
@@ -382,7 +377,7 @@ public:
     /**
      * If this is a derived Mrl object and has a SRC attribute
      */
-    virtual bool isMrl ();
+    virtual bool isPlayable ();
     virtual bool isElementNode () { return false; }
     /**
      * If this node should be visible to the user
@@ -566,14 +561,15 @@ protected:
     bool cached_ismrl;
 public:
     ~Mrl ();
-    bool isMrl ();
+    bool isPlayable ();
     /*
      * If this Mrl hides a child Mrl, return that one or else this one 
      */ 
     virtual NodePtr realMrl ();
+    virtual Mrl * mrl ();
     QString absolutePath ();
     /*
-     * Reimplement to callback with requestPlayURL if isMrl()
+     * Reimplement to callback with requestPlayURL if isPlayable()
      */ 
     virtual void activate ();
     /**
@@ -727,7 +723,7 @@ public:
     /**
      * Will return false if this document has child nodes
      */
-    virtual bool isMrl ();
+    virtual bool isPlayable ();
     virtual void defer ();
     virtual void undefer ();
     virtual void reset ();
@@ -833,7 +829,7 @@ public:
     /**
      * Will return false if this document has child nodes
      */
-    bool isMrl ();
+    bool isPlayable ();
 };
 
 KMPLAYER_EXPORT

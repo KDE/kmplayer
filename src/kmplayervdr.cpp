@@ -525,7 +525,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deleteCommands () {
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::jump (KMPlayer::NodePtr e) {
-    if (!e->isMrl ()) return;
+    if (!e->isPlayable ()) return;
     m_current = e;
     jump (e->mrl ()->pretty_name);
 }

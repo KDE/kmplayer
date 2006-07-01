@@ -53,7 +53,7 @@ public:
     KDE_NO_CDTOR_EXPORT Entry (NodePtr & d) : Mrl (d, id_node_entry) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "entry"; }
-    bool isMrl () { return false; }
+    bool isPlayable () { return false; }
     void closed ();
 };
 
@@ -61,7 +61,7 @@ class KMPLAYER_NO_EXPORT Link : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Link (NodePtr & d) : Mrl (d, id_node_link) {}
     KDE_NO_EXPORT const char * nodeName () const { return "link"; }
-    bool isMrl () { return !src.isEmpty (); }
+    bool isPlayable () { return !src.isEmpty (); }
     void closed ();
 };
 
@@ -69,9 +69,9 @@ class KMPLAYER_NO_EXPORT Content : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Content (NodePtr &d) : Mrl(d, id_node_content) {}
     KDE_NO_EXPORT const char * nodeName () const { return "content"; }
-    bool isMrl ();
+    bool isPlayable ();
     void closed ();
-    //bool expose () const { return isMrl (); }
+    //bool expose () const { return isPlayable (); }
 };
 
 } //namespace ATOM

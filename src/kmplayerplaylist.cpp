@@ -165,11 +165,7 @@ Document * Node::document () {
 }
 
 Mrl * Node::mrl () {
-    return dynamic_cast<Mrl*>(this);
-}
-
-const Mrl * Node::mrl () const {
-    return dynamic_cast<const Mrl*>(this);
+    return 0L;
 }
 
 KDE_NO_EXPORT const char * Node::nodeName () const {
@@ -434,7 +430,7 @@ QString Node::outerXML () const {
     return buf;
 }
 
-bool Node::isMrl () {
+bool Node::isPlayable () {
     return false;
 }
 
@@ -544,7 +540,7 @@ void Attribute::setNodeValue (const QString & v) {
 
 static bool hasMrlChildren (const NodePtr & e) {
     for (NodePtr c = e->firstChild (); c; c = c->nextSibling ())
-        if (c->isMrl () || hasMrlChildren (c))
+        if (c->isPlayable () || hasMrlChildren (c))
             return true;
     return false;
 }
@@ -553,7 +549,7 @@ Mrl::Mrl (NodePtr & d, short id) : Element (d, id), cached_ismrl_version (~0), w
 
 Mrl::~Mrl () {}
 
-bool Mrl::isMrl () {
+bool Mrl::isPlayable () {
     if (cached_ismrl_version != document()->m_tree_version) {
         cached_ismrl = !hasMrlChildren (this);
         cached_ismrl_version = document()->m_tree_version;
@@ -586,6 +582,10 @@ NodePtr Mrl::realMrl () {
     return this;
 }
 
+Mrl * Mrl::mrl () {
+    return this;
+}
+
 void Mrl::activate () {
     if (!resolved && document ()->notify_listener)
         resolved = document ()->notify_listener->resolveURL (this);
@@ -593,7 +593,7 @@ void Mrl::activate () {
         setState (state_deferred);
         return;
     }
-    if (!isMrl ()) {
+    if (!isPlayable ()) {
         Element::activate ();
         return;
     }
@@ -698,8 +698,8 @@ void Document::dispose () {
     m_doc = 0L;
 }
 
-bool Document::isMrl () {
-    return Mrl::isMrl ();
+bool Document::isPlayable () {
+    return Mrl::isPlayable ();
 }
 
 void Document::defer () {
@@ -951,7 +951,7 @@ GenericMrl::GenericMrl (NodePtr & d, const QString & s, const QString & name)
         setAttribute (QString ("name"), name);
 }
 
-bool GenericMrl::isMrl () {
+bool GenericMrl::isPlayable () {
     if (cached_ismrl_version != document()->m_tree_version) {
         cached_ismrl = !hasMrlChildren (this);
         cached_ismrl_version = document()->m_tree_version;

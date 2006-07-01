@@ -543,7 +543,7 @@ KDE_NO_EXPORT ListViewItem * PlayListView::populate
             }
         }
     }
-    QPixmap & pix = e->isMrl() ? video_pix : (item->firstChild ()) ? (e->auxiliaryNode () ? auxiliary_pix : folder_pix) : unknown_pix;
+    QPixmap & pix = e->isPlayable() ? video_pix : (item->firstChild ()) ? (e->auxiliaryNode () ? auxiliary_pix : folder_pix) : unknown_pix;
     item->setPixmap (0, pix);
     return item;
 }
@@ -594,7 +594,7 @@ KDE_NO_EXPORT void PlayListView::contextMenuItem (QListViewItem * vi, const QPoi
     if (vi) {
         ListViewItem * item = static_cast <ListViewItem *> (vi);
         if (item->m_elm || item->m_attr) {
-            m_itemmenu->setItemEnabled (1, item->m_attr || (item->m_elm && (item->m_elm->isMrl () || item->m_elm->isDocument ()) && item->m_elm->mrl ()->bookmarkable));
+            m_itemmenu->setItemEnabled (1, item->m_attr || (item->m_elm && (item->m_elm->isPlayable () || item->m_elm->isDocument ()) && item->m_elm->mrl ()->bookmarkable));
             m_itemmenu->exec (p);
         }
     } else
