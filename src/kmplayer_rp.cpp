@@ -221,7 +221,7 @@ KDE_NO_EXPORT void RP::Imfl::repaint () {
 }
 
 KDE_NO_CDTOR_EXPORT RP::Image::Image (NodePtr & doc)
- : Mrl (doc, id_node_image), proceed_on_ready (false), image (0L) {}
+ : Mrl (doc, id_node_image), image (0L) {}
 
 KDE_NO_CDTOR_EXPORT RP::Image::~Image () {
     delete image;
@@ -240,10 +240,7 @@ KDE_NO_EXPORT void RP::Image::activate () {
 
 KDE_NO_EXPORT void RP::Image::deactivate () {
     setState (state_deactivated);
-    if (proceed_on_ready) {
-        proceed_on_ready = false;
-        document ()->proceed ();
-    }
+    postpone_lock = 0L;
 }
 
 
@@ -257,18 +254,13 @@ KDE_NO_EXPORT void RP::Image::remoteReady (QByteArray & data) {
         } else
             delete img;
     }
-    if (proceed_on_ready) {
-        proceed_on_ready = false;
-        document ()->proceed ();
-    }
+    postpone_lock = 0L;
     kdDebug () << "RP::Image::remoteReady " << (void *) image << endl;
 }
 
 KDE_NO_EXPORT bool RP::Image::isReady (bool postpone_if_not) {
-    if (downloading () && !proceed_on_ready && postpone_if_not) {
-        proceed_on_ready = true;
-        document ()->postpone ();
-    }
+    if (downloading () && postpone_if_not)
+        postpone_lock = document ()->postpone ();
     return !downloading ();
 }
 

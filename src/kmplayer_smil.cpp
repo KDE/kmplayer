@@ -1005,7 +1005,7 @@ static NodePtr findExternalTree (NodePtr mrl) {
 }
 
 KDE_NO_CDTOR_EXPORT MediaTypeRuntime::MediaTypeRuntime (NodePtr e)
- : TimedRuntime (e), fit (fit_hidden), needs_proceed (false) {}
+ : TimedRuntime (e), fit (fit_hidden) {}
 
 KDE_NO_CDTOR_EXPORT MediaTypeRuntime::~MediaTypeRuntime () {
     killWGet ();
@@ -1021,7 +1021,7 @@ KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::end () {
     region_mouse_leave = 0L;
     region_mouse_click = 0L;
     clear ();
-    checkedProceed ();
+    postpone_lock = 0L;
     TimedRuntime::end ();
 }
 
@@ -1106,22 +1106,6 @@ KDE_NO_EXPORT void MediaTypeRuntime::stopped () {
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
 }
 
-KDE_NO_EXPORT void MediaTypeRuntime::checkedPostpone () {
-    if (!needs_proceed) {
-        if (element)
-            element->document ()->postpone ();
-        needs_proceed = true;
-    }
-}
-
-KDE_NO_EXPORT void MediaTypeRuntime::checkedProceed () {
-    if (needs_proceed) {
-        if (element)
-            element->document ()->proceed ();
-        needs_proceed = false;
-    }
-}
-
 KDE_NO_EXPORT void MediaTypeRuntime::postpone (bool) {
 }
 
@@ -1194,8 +1178,7 @@ void AudioVideoData::parseParam (const QString & name, const QString & val) {
             }
             if (timingstate == timings_started) {
                 if (!mt->resolved) {
-                    mt->setState (Node::state_deferred);
-                    mt->document ()->postpone ();
+                    mt->defer ();
                 } else if (!mt->external_tree) {
                     PlayListNotify * n = mt->document ()->notify_listener;
                     if (n && !val.isEmpty ()) {
@@ -2272,13 +2255,21 @@ KDE_NO_EXPORT NodePtr SMIL::AVMediaType::childFromTag (const QString & tag) {
     return fromXMLDocumentTag (m_doc, tag);
 }
 
+KDE_NO_EXPORT void SMIL::AVMediaType::defer () {
+    setState (state_deferred);
+    MediaTypeRuntime * mr = static_cast <MediaTypeRuntime *> (timedRuntime ());
+    if (mr && mr->state () == TimedRuntime::timings_started)
+        mr->postpone_lock = document ()->postpone ();
+}
+
 KDE_NO_EXPORT void SMIL::AVMediaType::undefer () {
     setState (state_activated);
     external_tree = findExternalTree (this);
-    document ()->proceed ();
-    TimedRuntime * tr = timedRuntime ();
-    if (tr && tr->state () == TimedRuntime::timings_started)
-        tr->started ();
+    MediaTypeRuntime * mr = static_cast <MediaTypeRuntime *> (timedRuntime ());
+    if (mr && mr->state () == TimedRuntime::timings_started) {
+        mr->postpone_lock = 0L;
+        mr->started ();
+    }
 }
 
 KDE_NO_EXPORT void SMIL::AVMediaType::finish () {
@@ -2468,8 +2459,8 @@ KDE_NO_EXPORT void ImageRuntime::paint (QPainter & p) {
  * start_timer timer expired, repaint if we have an image
  */
 KDE_NO_EXPORT void ImageRuntime::started () {
-    if (downloading ()) {
-        checkedPostpone ();
+    if (element && downloading ()) {
+        postpone_lock = element->document ()->postpone ();
         return;
     }
     //if (durations [duration_time].durval == 0)
@@ -2521,7 +2512,7 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
                 delete pix;
         }
     }
-    checkedProceed ();
+    postpone_lock = 0L;
     if (timingstate == timings_started)
         started ();
 }
@@ -2680,8 +2671,8 @@ KDE_NO_EXPORT void TextData::paint (QPainter & p) {
  * start_timer timer expired, repaint if we have text
  */
 KDE_NO_EXPORT void TextData::started () {
-    if (downloading ()) {
-        checkedPostpone ();
+    if (element && downloading ()) {
+        postpone_lock = element->document ()->postpone ();
         return;
     }
     MediaTypeRuntime::started ();
@@ -2697,7 +2688,7 @@ KDE_NO_EXPORT void TextData::remoteReady (QByteArray & data) {
                     (timingstate == timings_stopped && fill == fill_freeze)))
             convertNode <SMIL::RegionBase> (region_node)->repaint ();
     }
-    checkedProceed ();
+    postpone_lock = 0L;
     if (timingstate == timings_started)
         started ();
 }

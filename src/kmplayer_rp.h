@@ -153,7 +153,7 @@ public:
 };
 
 class KMPLAYER_NO_EXPORT Image : public RemoteObject, public Mrl {
-    bool proceed_on_ready;
+    PostponePtr postpone_lock;
 public:
     Image (NodePtr & d);
     ~Image ();

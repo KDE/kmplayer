@@ -422,7 +422,7 @@ public:
      * if state is between state_activated and state_deactivated
      */
     bool active () const
-        { return state > state_deferred && state < state_deactivated; }
+        { return state >= state_deferred && state < state_deactivated; }
     /**
      * if state is between state_activated and state_finished
      */
@@ -673,7 +673,7 @@ private:
  * this. Idea is that if a node still waiting for network data, it can hold
  * this time line.
  */
-class TimerInfo : public ListNodeBase <TimerInfo> {
+class KMPLAYER_NO_EXPORT TimerInfo : public ListNodeBase <TimerInfo> {
 public:
     TimerInfo (NodePtr n, unsigned id, struct timeval & now, int ms);
     KDE_NO_CDTOR_EXPORT ~TimerInfo () {}
@@ -690,7 +690,7 @@ typedef Item <TimerInfo>::WeakType TimerInfoPtrW;
 /**
  * Event signaling a timer event
  */
-class TimerEvent : public Event {
+class KMPLAYER_NO_EXPORT TimerEvent : public Event {
 public:
     TimerEvent (TimerInfoPtr tinfo);
     TimerInfoPtrW timer_info;
@@ -700,16 +700,33 @@ public:
 /**
  * Event signaling postponed or proceeded
  */
-class PostponedEvent : public Event {
+class KMPLAYER_NO_EXPORT PostponedEvent : public Event {
 public:
     PostponedEvent (bool postponed);
     bool is_postponed; // postponed or proceeded
 };
 
 /**
+ * Postpone object representing a postponed document
+ * During its livetime, no TimerEvent's happen
+ */
+class KMPLAYER_NO_EXPORT Postpone {
+    friend class Document;
+    struct timeval postponed_time;
+    NodePtrW m_doc;
+    Postpone (NodePtr doc);
+public:
+    ~Postpone ();
+};
+
+typedef SharedPtr <Postpone> PostponePtr;
+typedef WeakPtr <Postpone> PostponePtrW;
+
+/**
  * The root of the DOM tree
  */
 class KMPLAYER_EXPORT Document : public Mrl {
+    friend class Postpone;
 public:
     Document (const QString &, PlayListNotify * notify = 0L);
     ~Document ();
@@ -733,10 +750,7 @@ public:
      */
     TimerInfoPtrW setTimeout (NodePtr n, int ms, unsigned id=0);
     void cancelTimer (TimerInfoPtr ti);
-    /**
-     * Will increment a postponed counter, while > 0, no TimerEvent's happen
-     */
-    void postpone ();
+    PostponePtr postpone ();
     void proceed ();
     /**
      * Called by PlayListNotify, creates TimerEvent on first item in timers. 
@@ -755,12 +769,13 @@ public:
 
     NodePtrW rootLayout;
     List <TimerInfo> timers; //FIXME: make as connections
-    struct timeval postponed_time;
     PlayListNotify * notify_listener;
     unsigned int m_tree_version;
 private:
+    void proceed (const struct timeval & postponed_time);
+    PostponePtrW postpone_ref;
+    PostponePtr postpone_lock;
     NodeRefListPtr m_PostponedListeners;
-    int postponed;
     int cur_timeout;
     bool intimer;
 };

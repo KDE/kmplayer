@@ -218,10 +218,9 @@ public:
     virtual void paint (QPainter &) {}
     virtual void postpone (bool b);
     CalculatedSizer sizes;
+    PostponePtr postpone_lock;
 protected:
     MediaTypeRuntime (NodePtr e);
-    void checkedPostpone ();
-    void checkedProceed ();
     ConnectionPtr document_postponed;      // pauze audio/video accordantly
     ConnectionPtr region_sized;            // attached region is sized
     ConnectionPtr region_paint;            // attached region needs painting
@@ -229,7 +228,6 @@ protected:
     ConnectionPtr region_mouse_leave;      // attached region has mouse left
     ConnectionPtr region_mouse_click;      // attached region is clicked
     Fit fit;
-    bool needs_proceed;
 };
 
 /**
@@ -674,6 +672,7 @@ public:
     AVMediaType (NodePtr & d, const QString & t);
     NodePtr childFromTag (const QString & tag);
     virtual ElementRuntimePtr getNewRuntime ();
+    virtual void defer ();
     virtual void undefer ();
     virtual void finish ();
     virtual bool handleEvent (EventPtr event);

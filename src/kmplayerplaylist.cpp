@@ -650,6 +650,17 @@ bool Mrl::handleEvent (EventPtr event) {
 
 //-----------------------------------------------------------------------------
 
+Postpone::Postpone (NodePtr doc) : m_doc (doc) {
+    gettimeofday (&postponed_time, 0L);
+}
+
+Postpone::~Postpone () {
+    if (m_doc)
+        m_doc->document ()->proceed (postponed_time);
+}
+
+//-----------------------------------------------------------------------------
+
 namespace KMPlayer {
     static NodePtr dummy_element;
 }
@@ -659,7 +670,7 @@ Document::Document (const QString & s, PlayListNotify * n)
    notify_listener (n),
    m_tree_version (0),
    m_PostponedListeners (new NodeRefList),
-   postponed (0), cur_timeout (-1), intimer (false) {
+   cur_timeout (-1), intimer (false) {
     m_doc = m_self; // just-in-time setting fragile m_self to m_doc
     src = s;
     editable = false;
@@ -704,30 +715,31 @@ bool Document::isPlayable () {
 
 void Document::defer () {
     if (!firstChild () || firstChild ()->state > state_init)
-        postpone ();
+        postpone_lock = postpone ();
     Mrl::defer ();
 }
 
 void Document::undefer () {
-    if (!postponed || state != state_deferred) {
+    if (!postpone_lock) {
         Mrl::undefer ();
     } else {
-        proceed ();
         setState (state_activated);
+        postpone_lock = 0L;
     }
 }
 
 void Document::reset () {
     Mrl::reset ();
     if (timers.first ()) {
-        if (!postponed && notify_listener)
+        if (notify_listener)
             notify_listener->setTimeout (-1);
         timers.clear ();
     }
-    postponed = 0;
+    postpone_lock = 0L;
 }
 
-static inline int diffTime (struct timeval & tv1, struct timeval & tv2) {
+static inline
+int diffTime (const struct timeval & tv1, const struct timeval & tv2) {
     //kdDebug () << "diffTime sec:" << ((tv1.tv_sec - tv2.tv_sec) * 1000) << " usec:" << ((tv1.tv_usec - tv2.tv_usec) /1000) << endl;
     return (tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) /1000;
 }
@@ -752,7 +764,7 @@ TimerInfoPtrW Document::setTimeout (NodePtr n, int ms, unsigned id) {
     TimerInfo * tinfo = new TimerInfo (n, id, tv, ms);
     timers.insertBefore (tinfo, ti);
     //kdDebug () << "setTimeout " << ms << " at:" << pos << " tv:" << tv.tv_sec << "." << tv.tv_usec << endl;
-    if (!postponed && pos == 0 && !intimer) { // timer() does that too
+    if (!postpone_ref && pos == 0 && !intimer) { // timer() does that too
         cur_timeout = ms;
         notify_listener->setTimeout (ms);
     }
@@ -760,7 +772,7 @@ TimerInfoPtrW Document::setTimeout (NodePtr n, int ms, unsigned id) {
 }
 
 void Document::cancelTimer (TimerInfoPtr tinfo) {
-    if (!postponed && !intimer && tinfo == timers.first ()) {
+    if (!postpone_ref && !intimer && tinfo == timers.first ()) {
         //kdDebug () << "cancel first" << endl;
         TimerInfoPtr second = tinfo->nextSibling ();
         if (second) {
@@ -778,9 +790,9 @@ void Document::cancelTimer (TimerInfoPtr tinfo) {
 bool Document::timer () {
     struct timeval now = { 0, 0 }; // unset
     TimerInfoPtrW tinfo = timers.first (); // keep use_count on 1
-    if (postponed || !tinfo || !tinfo->node) {
+    if (postpone_ref || !tinfo || !tinfo->node) {
         kdError () << "spurious timer event" << endl;
-        if (!postponed) { // some part of document has gone
+        if (!postpone_ref) { // some part of document has gone
             for (; tinfo && !tinfo->node; tinfo = timers.first ())
                 timers.remove (tinfo);
         }
@@ -812,7 +824,7 @@ bool Document::timer () {
     }
     if (notify_listener) {// set new timeout to prevent interval timer events
         tinfo = timers.first ();
-        if (!postponed && tinfo) {
+        if (!postpone_ref && tinfo) {
             if (!now.tv_sec)
                 gettimeofday (&now, 0L); // system call ..
             int diff = diffTime (now, tinfo->timeout);
@@ -832,40 +844,37 @@ bool Document::timer () {
     return false;
 }
 
-void Document::postpone () {
-    if (!postponed++)
-        gettimeofday (&postponed_time, 0L);
-    kdDebug () << "postpone " << postponed << endl;
+PostponePtr Document::postpone () {
+    if (postpone_ref)
+        return postpone_ref;
+    kdDebug () << "postpone" << endl;
     if (!intimer && notify_listener) {
         cur_timeout = -1;
         notify_listener->setTimeout (-1);
     }
-    if (postponed == 1)
-        propagateEvent (new PostponedEvent (true));
+    PostponePtr p = new Postpone (this);
+    postpone_ref = p;
+    propagateEvent (new PostponedEvent (true));
+    return p;
 }
 
-void Document::proceed () {
-    kdDebug () << "proceed " << postponed-1 << endl;
-    if (--postponed < 0) {
-        kdError () << "spurious proceed" << endl;
-        postponed = 0;
-    } else if (!postponed) {
-        if (timers.first () && notify_listener) {
-            struct timeval now;
-            gettimeofday (&now, 0L);
-            int diff = diffTime (now, postponed_time);
-            if (diff > 0) {
-                for (TimerInfoPtr t = timers.first (); t; t = t->nextSibling ())
-                    addTime (t->timeout, diff);
-            }
-            if (!intimer) { // eg. postpone() + proceed() in same timer()
-                diff = diffTime (timers.first ()->timeout, now);
-                cur_timeout = diff < 0 ? 0 : diff;
-                notify_listener->setTimeout (cur_timeout);
-            }
+void Document::proceed (const struct timeval & postponed_time) {
+    kdDebug () << "proceed" << endl;
+    if (timers.first () && notify_listener) {
+        struct timeval now;
+        gettimeofday (&now, 0L);
+        int diff = diffTime (now, postponed_time);
+        if (diff > 0) {
+            for (TimerInfoPtr t = timers.first (); t; t = t->nextSibling ())
+                addTime (t->timeout, diff);
         }
-        propagateEvent (new PostponedEvent (false));
+        if (!intimer) { // eg. postpone() + proceed() in same timer()
+            diff = diffTime (timers.first ()->timeout, now);
+            cur_timeout = diff < 0 ? 0 : diff;
+            notify_listener->setTimeout (cur_timeout);
+        }
     }
+    propagateEvent (new PostponedEvent (false));
 }
 
 void Document::registerEventHandler (NodePtr handler) {
