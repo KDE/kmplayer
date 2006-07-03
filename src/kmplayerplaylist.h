@@ -69,7 +69,7 @@ private:
 /**
  * Because of the m_self member of Item<T>, it's not allowed to assign a
  * Item<T>* directly to SharedPtr<Item<T>>. Item<T>* will then reside in
- * two independant SharedData<Item<T>> objects.
+ * two independent SharedData<Item<T>> objects.
  * So specialize constructor and assignment operators to fetch the 
  * SharedData<Item<T>> from the Item<T>* instead of creating a new one
  */
@@ -433,7 +433,7 @@ public:
      */
     virtual void defer ();
     /**
-     * Puts a defered element in activated again, calls activate() again 
+     * Puts a deferred element in activated again, calls activate() again 
      */
     virtual void undefer ();
     /**
@@ -447,7 +447,7 @@ public:
     virtual void finish ();
     /**
      * Stops element, sets state to state_deactivated. Calls deactivate() on 
-     * activated/defered children. May call childDone() when active() and not
+     * activated/deferred children. May call childDone() when active() and not
      * finished yet.
      */
     virtual void deactivate ();
@@ -461,7 +461,7 @@ public:
      */
     virtual void childBegan (NodePtr child);
     /**
-     * Notification from child that it's finished. Will call deactive() on
+     * Notification from child that it's finished. Will call deactivate() on
      * child if it state is state_finished. Call activate() on nexSibling
      * or deactivate() if there is none.
      */
@@ -642,7 +642,7 @@ public:
     /**
      * Ask for connection bitrates settings
      */
-    virtual void bitRates (int & prefered, int & maximal) = 0;
+    virtual void bitRates (int & preferred, int & maximal) = 0;
     /**
      * Sets next call to Document::timer() or -1 to cancel a previous call
      */

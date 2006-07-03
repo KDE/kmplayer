@@ -82,7 +82,7 @@ public slots:
     virtual bool stop ();
     virtual bool quit ();
     virtual bool pause ();
-    /* seek (pos, abs) seek positon in deci-seconds */
+    /* seek (pos, abs) seek position in deci-seconds */
     virtual bool seek (int pos, bool absolute);
     /* volume from 0 to 100 */
     virtual bool volume (int pos, bool absolute);

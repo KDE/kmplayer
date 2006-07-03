@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2002-2003 by Koos Vriezen <koos ! vriezen ? xs4all ! nl>
+ * Copyright (C) 2002-2003 by Koos Vriezen <koos.vriezen@gmail.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
@@ -332,7 +332,7 @@ void PartBase::updatePlayerMenu (ControlPanel * panel) {
     if (!m_source)
         return;
     const ProcessMap::const_iterator e = m_players.end();
-    int id = 0; // if multible parts, id's should be the same for all menu's
+    int id = 0; // if multiple parts, id's should be the same for all menu's
     for (ProcessMap::const_iterator i = m_players.begin(); i != e; ++i) {
         Process * p = i.data ();
         if (p->supports (m_source->name ())) {
@@ -1114,8 +1114,8 @@ void Source::avWidgetSizes (int x, int y, int w, int h, unsigned int * bg) {
       static_cast<View*>(m_player->view())->viewArea ()->setAudioVideoGeometry (x, y, w, h, bg);
 }
 
-void Source::bitRates (int & prefered, int & maximal) {
-    prefered = 1024 * m_player->settings ()->prefbitrate;
+void Source::bitRates (int & preferred, int & maximal) {
+    preferred = 1024 * m_player->settings ()->prefbitrate;
     maximal= 1024 * m_player->settings ()->maxbitrate;
 }
 
@@ -1234,7 +1234,7 @@ QString Source::filterOptions () {
                     PPargs += ":a";
                 else if (m_settings->pp_custom_hz_ch)
                     PPargs += ":c";
-                PPargs += "/";
+                PPargs += '/';
             }
             if (m_settings->pp_custom_vt) {
                 PPargs += "vb";
@@ -1245,7 +1245,7 @@ QString Source::filterOptions () {
                     PPargs += ":a";
                 else if (m_settings->pp_custom_vt_ch)
                     PPargs += ":c";
-                PPargs += "/";
+                PPargs += '/';
             }
             if (m_settings->pp_custom_dr) {
                 PPargs += "dr";
@@ -1256,13 +1256,13 @@ QString Source::filterOptions () {
                     PPargs += ":a";
                 else if (m_settings->pp_custom_dr_ch)
                     PPargs += ":c";
-                PPargs += "/";
+                PPargs += '/';
             }
             if (m_settings->pp_custom_al) {
                 PPargs += "al";
                 if (m_settings->pp_custom_al_f)
                     PPargs += ":f";
-                PPargs += "/";
+                PPargs += '/';
             }
             if (m_settings->pp_custom_tn) {
                 PPargs += "tn";
@@ -1270,27 +1270,27 @@ QString Source::filterOptions () {
                     PPargs += ":";
                     PPargs += m_settings->pp_custom_tn_s;
                     }*/ //disabled 'cos this is wrong
-                PPargs += "/";
+                PPargs += '/';
             }
             if (m_settings->pp_lin_blend_int) {
                 PPargs += "lb";
-                PPargs += "/";
+                PPargs += '/';
             }
             if (m_settings->pp_lin_int) {
                 PPargs += "li";
-                PPargs += "/";
+                PPargs += '/';
             }
             if (m_settings->pp_cub_int) {
                 PPargs += "ci";
-                PPargs += "/";
+                PPargs += '/';
             }
             if (m_settings->pp_med_int) {
                 PPargs += "md";
-                PPargs += "/";
+                PPargs += '/';
             }
             if (m_settings->pp_ffmpeg_int) {
                 PPargs += "fd";
-                PPargs += "/";
+                PPargs += '/';
             }
         }
         if (PPargs.endsWith("/"))

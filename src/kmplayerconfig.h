@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2002-2003 by Koos Vriezen <koos ! vriezen ? xs4all ! nl>
+ * Copyright (C) 2002-2003 by Koos Vriezen <koos.vriezen@gmail.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public

@@ -138,7 +138,7 @@ protected:
     void repaintRect (int x, int y, int w, int h);
     void moveRect (int x, int y, int w, int h, int x1, int y1);
     void avWidgetSizes (int x, int y, int w, int h, unsigned int * bg_color);
-    void bitRates (int & prefered, int & maximal);
+    void bitRates (int & preferred, int & maximal);
     void setTimeout (int ms);
 
     NodePtr m_document;

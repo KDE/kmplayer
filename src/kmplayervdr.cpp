@@ -538,7 +538,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::jump (const QString & channel) {
         c += ch.left (p);
     else
         c += ch; // hope for the best ..
-    c += "\n";
+    c += '\n';
     queueCommand (c);
 }
 

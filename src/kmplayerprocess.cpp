@@ -280,7 +280,7 @@ KDE_NO_EXPORT void MPlayerBase::initProcess (Viewer * viewer) {
 
 KDE_NO_EXPORT bool MPlayerBase::sendCommand (const QString & cmd) {
     if (playing () && m_use_slave) {
-        commands.push_front (cmd + "\n");
+        commands.push_front (cmd + '\n');
         fprintf (stderr, "eval %s", commands.last ().latin1 ());
         if (commands.size () < 2)
             m_process->writeStdin (QFile::encodeName(commands.last ()),

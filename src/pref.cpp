@@ -640,7 +640,7 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : QF
 {
     QVBoxLayout *tabLayout = new QVBoxLayout (this, 5);
     postProcessing = new QCheckBox (i18n ("Enable use of postprocessing filters"), this);
-    postProcessing->setEnabled( TRUE );
+    postProcessing->setEnabled( true );
     disablePPauto = new QCheckBox (i18n ("Disable use of postprocessing when watching TV/DVD"), this);
 
     tabLayout->addWidget( postProcessing );
@@ -661,7 +661,7 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : QF
     presetSelection->setInsideSpacing(KDialog::spacingHint());
 
     defaultPreset = new QRadioButton (i18n ("Default"), presetSelection);
-    defaultPreset->setChecked( TRUE );
+    defaultPreset->setChecked( true );
     presetSelection->insert (defaultPreset);
 
     customPreset = new QRadioButton (i18n ("Custom"), presetSelection);
@@ -684,7 +684,7 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : QF
     QGroupBox *customFilters = new QGroupBox(0, Qt::Vertical, customFiltersWidget, "customFilters" );
     customFilters->setSizePolicy(QSizePolicy((QSizePolicy::SizeType)1, (QSizePolicy::SizeType)2));
     customFilters->setFlat(false);
-    customFilters->setEnabled( FALSE );
+    customFilters->setEnabled( false );
     customFilters->setInsideSpacing(7);
 
     QLayout *customFiltersLayout = customFilters->layout();
@@ -762,7 +762,7 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : QF
     TmpNoiseFilter =new QCheckBox(i18n("Temporal noise reducer"),customFilters);
     /*	Note: Change TmpNoiseFilter text back to "Label:" if this slider gets reactivated
         TmpNoiseSlider = new QSlider( customFilters, "TmpNoiseSlider" );
-        TmpNoiseSlider->setEnabled( FALSE );
+        TmpNoiseSlider->setEnabled( false );
         TmpNoiseSlider->setMinValue( 1 );
         TmpNoiseSlider->setMaxValue( 3 );
         TmpNoiseSlider->setValue( 1 );

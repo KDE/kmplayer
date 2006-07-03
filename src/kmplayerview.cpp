@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2002-2003 by Koos Vriezen <koos ! vriezen ? xs4all ! nl>
+ * Copyright (C) 2002-2003 by Koos Vriezen <koos.vriezen@gmail.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
@@ -1496,7 +1496,7 @@ void Viewer::sendKeyEvent (int key) {
         /*time*/ 0, 0, 0, 0, 0,
         0, XKeysymToKeycode (qt_xdisplay (), keysym), true
     };
-    XSendEvent (qt_xdisplay(), embeddedWinId (), FALSE, KeyPressMask, (XEvent *) &event);
+    XSendEvent (qt_xdisplay(), embeddedWinId (), false, KeyPressMask, (XEvent *) &event);
     XFlush (qt_xdisplay ());
 }
 
@@ -1507,7 +1507,7 @@ KDE_NO_EXPORT void Viewer::sendConfigureEvent () {
         x (), y (), width (), height (),
         0, None, False
     };
-    XSendEvent(qt_xdisplay(), c.event, TRUE, StructureNotifyMask, (XEvent*) &c);
+    XSendEvent(qt_xdisplay(), c.event, true, StructureNotifyMask, (XEvent*) &c);
     XFlush (qt_xdisplay ());
 }
 

@@ -1150,7 +1150,7 @@ int main(int argc, char **argv) {
         ClientMessage, 0, true, display, wid, 
         XInternAtom (display, "XINE", false), 8, {b: "quit_now"}
     };
-    XSendEvent (display, wid, FALSE, StructureNotifyMask, (XEvent *) & ev);
+    XSendEvent (display, wid, false, StructureNotifyMask, (XEvent *) & ev);
     XFlush (display);
     XUnlockDisplay(display);
     eventThread->wait (500);

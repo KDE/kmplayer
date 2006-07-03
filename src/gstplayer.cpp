@@ -358,14 +358,14 @@ success:
     /* state change succeeded */
     fprintf (stderr, "state change to %s succeeded\n", gst_element_state_get_name (state));
     ignore_messages_mask = saved_events;
-    return TRUE;
+    return true;
 
 timed_out:
     /* it's taking a long time to open -- just tell totem it was ok, this allows
      * the user to stop the loading process with the normal stop button */
     fprintf (stderr, "state change to %s timed out, returning success and handling errors asynchroneously\n", gst_element_state_get_name (state));
     ignore_messages_mask = saved_events;
-    return TRUE;
+    return true;
 
 error:
     fprintf (stderr, "error while waiting for state change to %s: %s\n",
@@ -374,7 +374,7 @@ error:
     /* already set *error */
     ignore_messages_mask = saved_events;
     QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_error));
-    return FALSE;
+    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -768,7 +768,7 @@ bool KGStreamerPlayer::event (QEvent * e) {
             fprintf (stderr, "event_finished\n");
             mutex.lock ();
             if (gst_elm_play) {
-                gst_bus_set_flushing (gst_bus, TRUE);
+                gst_bus_set_flushing (gst_bus, true);
                 if (gst_bus_sync)
                     g_signal_handler_disconnect (gst_bus, gst_bus_sync);
                 if (gst_bus_async)
@@ -993,7 +993,7 @@ int main(int argc, char **argv) {
         ClientMessage, 0, true, display, wid, 
         XInternAtom (display, "XVIDEO", false), 8, {b: "quit_now"}
     };
-    XSendEvent (display, wid, FALSE, StructureNotifyMask, (XEvent *) & ev);
+    XSendEvent (display, wid, false, StructureNotifyMask, (XEvent *) & ev);
     XFlush (display);
     XUnlockDisplay(display);
     eventThread->wait (500);

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2005-2006 by Koos Vriezen <koos ! vriezen ? xs4all ! nl>
+ * Copyright (C) 2005-2006 by Koos Vriezen <koos.vriezen@gmail.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
@@ -203,7 +203,7 @@ void ElementRuntime::resetParam (const QString & name, int id) {
         if (int (pv->modifications->size ()) > id && id > -1) {
             (*pv->modifications) [id] = QString::null;
             while (pv->modifications->size () > 0 &&
-                    pv->modifications->back () == QString::null)
+                    pv->modifications->back ().isNull ())
                 pv->modifications->pop_back ();
         }
         QString val = pv->value ();
@@ -211,7 +211,7 @@ void ElementRuntime::resetParam (const QString & name, int id) {
             delete pv->modifications;
             pv->modifications = 0L;
             val = pv->value ();
-            if (val == QString::null) {
+            if (val.isNull ()) {
                 delete pv;
                 d->params.remove (name);
             }

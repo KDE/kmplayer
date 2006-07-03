@@ -684,7 +684,7 @@ int main(int argc, char **argv) {
         ClientMessage, 0, true, display, wid, 
         XInternAtom (display, "XVIDEO", false), 8, {"quit_now"}
     };
-    XSendEvent (display, wid, FALSE, StructureNotifyMask, (XEvent *) & ev);
+    XSendEvent (display, wid, false, StructureNotifyMask, (XEvent *) & ev);
     XFlush (display);
     XUnlockDisplay(display);
     eventThread->wait (500);
