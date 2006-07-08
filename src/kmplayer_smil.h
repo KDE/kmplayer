@@ -69,8 +69,9 @@ private:
 /**
  * Base class representing live time of elements
  */
-class ElementRuntime : public Item <ElementRuntime> {
+class ElementRuntime {
 public:
+    ElementRuntime (NodePtr e);
     virtual ~ElementRuntime ();
     /**
      * calls reset() and pulls in the attached_element's attributes
@@ -111,13 +112,10 @@ public:
      */
     NodePtrW region_node;
 protected:
-    ElementRuntime (NodePtr e);
     NodePtrW element;
 private:
     ElementRuntimePrivate * d;
 };
-
-ITEM_AS_POINTER(KMPlayer::ElementRuntime)
 
 /**
  * For RegPoint, RegionRuntime and MediaRuntime, having sizes
@@ -427,7 +425,8 @@ public:
  */
 class KMPLAYER_NO_EXPORT RegionBase : public Element {
 public:
-    virtual ElementRuntimePtr getRuntime ();
+    ~RegionBase ();
+    virtual ElementRuntime * getRuntime ();
     bool expose () const { return false; }
     void reset ();
     void activate ();
@@ -454,7 +453,7 @@ public:
     int z_order;
 protected:
     RegionBase (NodePtr & d, short id);
-    ElementRuntimePtr runtime;
+    RegionRuntime * runtime;
     virtual NodeRefListPtr listeners (unsigned int event_id);
     Matrix m_region_transform;
     NodeRefListPtr m_SizeListeners;        // region resized
@@ -516,12 +515,13 @@ public:
  */
 class KMPLAYER_NO_EXPORT RegPoint : public Element {
 public:
-    KDE_NO_CDTOR_EXPORT RegPoint (NodePtr & d) : Element (d, id_node_regpoint){}
-    KDE_NO_CDTOR_EXPORT ~RegPoint () {}
+    KDE_NO_CDTOR_EXPORT RegPoint (NodePtr & d)
+        : Element (d, id_node_regpoint), runtime (0L) {}
+    ~RegPoint ();
     KDE_NO_EXPORT const char * nodeName () const { return "regPoint"; }
     KDE_NO_EXPORT bool expose () const { return false; }
-    ElementRuntimePtr getRuntime ();
-    ElementRuntimePtr runtime;
+    ElementRuntime * getRuntime ();
+    ElementRuntime * runtime;
 };
 
 /**
@@ -529,8 +529,8 @@ public:
  */
 class KMPLAYER_NO_EXPORT TimedMrl : public Mrl {
 public:
-    KDE_NO_CDTOR_EXPORT ~TimedMrl () {}
-    ElementRuntimePtr getRuntime ();
+    ~TimedMrl ();
+    ElementRuntime * getRuntime ();
     void closed ();
     void activate ();
     void begin ();
@@ -545,17 +545,17 @@ public:
 protected:
     TimedMrl (NodePtr & d, short id);
     virtual NodeRefListPtr listeners (unsigned int event_id);
-    virtual ElementRuntimePtr getNewRuntime ();
+    virtual TimedRuntime * getNewRuntime ();
 
     NodeRefListPtr m_StartedListeners;      // Element about to be started
     NodeRefListPtr m_StoppedListeners;      // Element stopped
-    ElementRuntimePtr runtime;
+    TimedRuntime * runtime;
 };
 
 KDE_NO_EXPORT inline TimedRuntime * TimedMrl::timedRuntime () {
     if (!runtime)
         runtime = getNewRuntime ();
-    return static_cast <TimedRuntime *> (runtime.ptr ());
+    return runtime;
 }
 
 /**
@@ -671,7 +671,7 @@ class KMPLAYER_NO_EXPORT AVMediaType : public MediaType {
 public:
     AVMediaType (NodePtr & d, const QString & t);
     NodePtr childFromTag (const QString & tag);
-    virtual ElementRuntimePtr getNewRuntime ();
+    virtual TimedRuntime * getNewRuntime ();
     virtual void defer ();
     virtual void undefer ();
     virtual void finish ();
@@ -681,20 +681,20 @@ public:
 class KMPLAYER_NO_EXPORT ImageMediaType : public MediaType {
 public:
     ImageMediaType (NodePtr & d);
-    ElementRuntimePtr getNewRuntime ();
+    TimedRuntime * getNewRuntime ();
     NodePtr childFromTag (const QString & tag);
 };
 
 class KMPLAYER_NO_EXPORT TextMediaType : public MediaType {
 public:
     TextMediaType (NodePtr & d);
-    ElementRuntimePtr getNewRuntime ();
+    TimedRuntime * getNewRuntime ();
 };
 
 class KMPLAYER_NO_EXPORT RefMediaType : public MediaType {
 public:
     RefMediaType (NodePtr & d);
-    ElementRuntimePtr getNewRuntime ();
+    TimedRuntime * getNewRuntime ();
     virtual bool handleEvent (EventPtr event);
 };
 
@@ -702,7 +702,7 @@ class KMPLAYER_NO_EXPORT Set : public TimedMrl {
 public:
     KDE_NO_CDTOR_EXPORT Set (NodePtr & d) : TimedMrl (d, id_node_set) {}
     KDE_NO_EXPORT const char * nodeName () const { return "set"; }
-    virtual ElementRuntimePtr getNewRuntime ();
+    virtual TimedRuntime * getNewRuntime ();
     bool isPlayable () { return false; }
 };
 
@@ -710,7 +710,7 @@ class KMPLAYER_NO_EXPORT Animate : public TimedMrl {
 public:
     KDE_NO_CDTOR_EXPORT Animate (NodePtr & d) : TimedMrl (d, id_node_animate) {}
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
-    virtual ElementRuntimePtr getNewRuntime ();
+    virtual TimedRuntime * getNewRuntime ();
     bool isPlayable () { return false; }
     bool handleEvent (EventPtr event);
 };

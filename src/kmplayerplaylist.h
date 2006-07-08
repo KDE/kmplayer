@@ -322,8 +322,6 @@ typedef List<NodeRefItem> NodeRefList;       // ref nodes, eg. event listeners
 typedef Item<NodeRefList>::SharedType NodeRefListPtr;
 typedef Item<NodeRefList>::WeakType NodeRefListPtrW;
 ITEM_AS_POINTER(KMPlayer::NodeRefList)
-typedef Item<ElementRuntime>::SharedType ElementRuntimePtr;
-typedef Item<ElementRuntime>::WeakType ElementRuntimePtrW;
 
 /*
  * Weak ref of the listeners list from signaler and the listener node
@@ -467,9 +465,9 @@ public:
      */
     virtual void childDone (NodePtr child);
     /**
-     * Creates a new ElementRuntime object
+     * Get Elements runtime object, guaranteed to be not nil but is volatile
      */
-    virtual ElementRuntimePtr getRuntime ();
+    virtual ElementRuntime * getRuntime ();
     virtual void clear ();
     void clearChildren ();
     void appendChild (NodePtr c);
