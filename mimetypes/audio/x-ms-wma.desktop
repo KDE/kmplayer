@@ -5,6 +5,7 @@ MimeType=audio/x-ms-wma
 Icon=audio
 Patterns=*.AVI;*.wma;*.WMA;
 Comment=Microsoft Audio
+Comment[ar]= صوت (من) ميكروسوفت
 Comment[bg]=Microsoft аудио
 Comment[br]=Klevet Microsoft
 Comment[ca]=Àudio de Microsoft

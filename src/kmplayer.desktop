@@ -51,6 +51,7 @@ MimeType=application/ogg;application/smil;application/vnd.ms-asf;application/vnd
 InitialPreference=7
 Categories=Qt;KDE;AudioVideo;
 GenericName=Media Player
+GenericName[ar]= قارئى الوسائط Media Player
 GenericName[bg]=Медия плеър
 GenericName[br]=Soner liesvedia
 GenericName[ca]=Reproductor de medis
