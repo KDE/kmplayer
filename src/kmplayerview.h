@@ -28,7 +28,6 @@
 #include <qtextedit.h>
 
 #include <kdockwidget.h>
-#include <klistview.h>
 #include <kurl.h>
 #include <qxembed.h>
 #include <kmediaplayer/view.h>
@@ -58,76 +57,9 @@ class VolumeBar;
 class Console;
 class PlayListView;
 class ViewAreaPrivate;
+class PlayListView;
 
 typedef KStatusBar StatusBar;
-
-/*
- * An item in the playlist
- */
-class KMPLAYER_EXPORT ListViewItem : public QListViewItem {
-public:
-    ListViewItem (QListViewItem *p, const NodePtr & e, PlayListView * lv);
-    ListViewItem (QListViewItem *p, const AttributePtr & e, PlayListView * lv);
-    ListViewItem (PlayListView *v, const NodePtr & e);
-    KDE_NO_CDTOR_EXPORT ~ListViewItem () {}
-    void paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align);
-    NodePtrW m_elm;
-    AttributePtrW m_attr;
-    PlayListView * listview;
-};
-
-/*
- * The playlist GUI
- */
-class KMPLAYER_EXPORT PlayListView : public KListView {
-    Q_OBJECT
-public:
-    PlayListView (QWidget * parent, View * view, KActionCollection * ac);
-    ~PlayListView ();
-    void selectItem (const QString & txt);
-    void showAllNodes (bool show=true);
-    void setActiveForegroundColor (const QColor & c) { m_active_color = c; }
-    const QColor & activeColor () const { return m_active_color; }
-signals:
-    void addBookMark (const QString & title, const QString & url);
-protected:
-    bool acceptDrag (QDropEvent* event) const;
-public slots:
-    void editCurrent ();
-    void rename (QListViewItem * item, int c);
-    void updateTree (NodePtr root, NodePtr active);
-private slots:
-    void contextMenuItem (QListViewItem *, const QPoint &, int);
-    void itemExpanded (QListViewItem *);
-    void copyToClipboard ();
-    void addBookMark ();
-    void toggleShowAllNodes ();
-    void itemDropped (QDropEvent * e, QListViewItem * after);
-    void itemIsRenamed (QListViewItem * item);
-    void slotFind ();
-    void slotFindOk ();
-    void slotFindNext ();
-private:
-    ListViewItem * populate (NodePtr e, NodePtr focus, ListViewItem * item, ListViewItem ** curitem);
-    bool findNodeInTree (NodePtr n, QListViewItem *& item);
-    View * m_view;
-    QPopupMenu * m_itemmenu;
-    KAction * m_find_next;
-    KFindDialog * m_find_dialog;
-    QPixmap folder_pix;
-    QPixmap auxiliary_pix;
-    QPixmap video_pix;
-    QPixmap unknown_pix;
-    QPixmap menu_pix;
-    QPixmap config_pix;
-    QPixmap url_pix;
-    QColor m_active_color;
-    NodePtrW m_current_find_elm;
-    AttributePtrW m_current_find_attr;
-    bool m_show_all_nodes;
-    bool m_have_dark_nodes;
-    bool m_ignore_expanded;
-};
 
 /*
  * The area in which the video widget and controlpanel are laid out

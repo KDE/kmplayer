@@ -10,8 +10,6 @@ the parent of Viewer (the output for the backend players) and
 ControlPanel.
 In case of smil animations, the Viewer widget can be hidden or made
 smaller so ViewArea background is where the rendering is done.
-What should be done is moving the code for PlayList to
-kmplayerplaylistview.x from kmplayerview.x.
 Classes in kmplayerplaylist.x are actually base for the XML playlist
 formats (smil/asx/rss/..).
 
