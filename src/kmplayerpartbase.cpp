@@ -578,35 +578,25 @@ void PartBase::forward () {
     m_source->forward ();
 }
 
-static NodePtr depthFirstFindMrl (NodePtr e) {
-    if (e->isPlayable ())
-        return e;
-    for (NodePtr c = e->firstChild (); c; c = c->nextSibling ()) {
-        NodePtr m = depthFirstFindMrl (c);
-        if (m)
-            return m;
-    }
-    return NodePtr ();
-}
-
 void PartBase::playListItemSelected (QListViewItem * item) {
     if (m_in_update_tree) return;
-    ListViewItem * vi = static_cast <ListViewItem *> (item);
-    if (vi->m_elm)
+    PlayListItem * vi = static_cast <PlayListItem *> (item);
+    if (vi->m_elm) {
         emit infoUpdated (m_view->editMode () ?
                 vi->m_elm->innerXML () : vi->m_elm->innerText ());
-    else if (!vi->m_attr)
+    } else if (!vi->m_attr)
         updateTree (); // items already deleted
 }
 
 void PartBase::playListItemExecuted (QListViewItem * item) {
     if (m_in_update_tree) return;
     if (m_view->editMode ()) return;
-    ListViewItem * vi = static_cast <ListViewItem *> (item);
+    PlayListItem * vi = static_cast <PlayListItem *> (item);
     if (vi->m_elm) {
-        NodePtr mrl = depthFirstFindMrl (vi->m_elm);
-        if (mrl)
-            m_source->jump (mrl);
+        if (vi->m_elm->isPlayable ())
+            m_source->jump (vi->m_elm);
+        else if (vi->firstChild () && !vi->m_elm->isPlayable ())
+            vi->setOpen (!vi->isOpen ());
     } else if (vi->m_attr) {
         if (!strcasecmp (vi->m_attr->nodeName (), "src") ||
                 !strcasecmp (vi->m_attr->nodeName (), "href") ||
@@ -615,7 +605,7 @@ void PartBase::playListItemExecuted (QListViewItem * item) {
                 !strcasecmp (vi->m_attr->nodeName (), "value")) {
             QString src (vi->m_attr->nodeValue ());
             if (!src.isEmpty ()) {
-                ListViewItem * pi = static_cast <ListViewItem*>(item->parent());
+                PlayListItem * pi = static_cast <PlayListItem*>(item->parent());
                 if (pi) {
                     for (NodePtr e = pi->m_elm; e; e = e->parentNode ()) {
                         Mrl * mrl = e->mrl ();
@@ -697,7 +687,7 @@ void PartBase::play () {
         m_update_tree_timer = 0;
     }
     if (m_process->state () == Process::NotRunning) {
-        ListViewItem * lvi = static_cast <ListViewItem *> (m_view->playList ()->currentItem ());
+        PlayListItem * lvi = static_cast <PlayListItem *> (m_view->playList ()->currentItem ());
         if (lvi)
             for (NodePtr n = lvi->m_elm; n; n = n->parentNode ()) {
                 if (n->isPlayable ()) {

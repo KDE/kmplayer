@@ -201,7 +201,7 @@ KDE_NO_EXPORT void Settings::applyColorSetting (bool only_changed_ones) {
     View *view = static_cast <View *> (m_player->view ());
     if (!view) return;
     for (int i = 0; i < int (ColorSetting::last_target); i++)
-        if (colors[i].color != colors[i].newcolor || !only_changed_ones) {
+        if (!only_changed_ones || colors[i].color != colors[i].newcolor) {
             colors[i].color = colors[i].newcolor;
             switch (ColorSetting::Target (i)) {
                 case ColorSetting::playlist_background:
@@ -237,7 +237,7 @@ KDE_NO_EXPORT void Settings::applyColorSetting (bool only_changed_ones) {
             }
         }
     for (int i = 0; i < int (FontSetting::last_target); i++)
-        if (fonts[i].font != fonts[i].newfont || !only_changed_ones) {
+        if (!only_changed_ones || fonts[i].font != fonts[i].newfont) {
             fonts[i].font = fonts[i].newfont;
             switch (FontSetting::Target (i)) {
                 case FontSetting::playlist:
@@ -653,15 +653,17 @@ KDE_NO_EXPORT void Settings::okPressed () {
 
     videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentItem();
     audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentItem();
-    int backend = configdialog->m_SourcePageURL->backend->currentItem ();
-    const PartBase::ProcessMap::const_iterator e = m_player->players ().end();
-    for (PartBase::ProcessMap::const_iterator i = m_player->players ().begin(); backend >=0 && i != e; ++i) {
-        Process * proc = i.data ();
-        if (proc->supports ("urlsource") && backend-- == 0) {
-            backends["urlsource"] = proc->name ();
-            if (proc != m_player->process ()) {
-                m_player->setProcess (proc->name ());
-                playerchanged = true;
+    if (!strcmp (m_player->source()->name (), "urlsource")) {
+        int backend = configdialog->m_SourcePageURL->backend->currentItem ();
+        const PartBase::ProcessMap::const_iterator e = m_player->players ().end();
+        for (PartBase::ProcessMap::const_iterator i = m_player->players ().begin(); backend >=0 && i != e; ++i) {
+            Process * proc = i.data ();
+            if (proc->supports ("urlsource") && backend-- == 0) {
+                backends["urlsource"] = proc->name ();
+                if (proc != m_player->process ()) {
+                    m_player->setProcess (proc->name ());
+                    playerchanged = true;
+                }
             }
         }
     }

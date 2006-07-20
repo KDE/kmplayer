@@ -393,9 +393,9 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
                 if (v && line.length () > 4) {
                     QString ch = line.mid (4);
                     setTitle (ch);
-                    KMPlayer::ListViewItem * lvi = static_cast <KMPlayer::ListViewItem *> (v->playList ()->findItem (ch, 0));
+                    KMPlayer::PlayListItem * lvi = static_cast <KMPlayer::PlayListItem *> (v->playList ()->findItem (ch, 0));
                     if (lvi && lvi->m_elm != m_last_channel) {
-                        KMPlayer::ListViewItem * si = static_cast <KMPlayer::ListViewItem *> (v->playList ()->selectedItem ());
+                        KMPlayer::PlayListItem * si = static_cast <KMPlayer::PlayListItem *> (v->playList ()->selectedItem ());
                         bool jump_selection = (si && (si->m_elm == m_document || si->m_elm == m_last_channel));
                         if (m_last_channel)
                             m_last_channel->setState (KMPlayer::Node::state_finished);

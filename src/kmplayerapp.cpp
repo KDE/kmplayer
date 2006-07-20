@@ -535,7 +535,7 @@ KDE_NO_EXPORT void KMPlayerApp::editMode () {
 
 KDE_NO_EXPORT void KMPlayerApp::syncEditMode () {
     if (m_view->editMode ()) {
-        KMPlayer::ListViewItem * si = static_cast <KMPlayer::ListViewItem *> (m_view->playList ()->selectedItem ());
+        KMPlayer::PlayListItem * si = static_cast <KMPlayer::PlayListItem *> (m_view->playList ()->selectedItem ());
         if (si && si->m_elm) {
             si->m_elm->clearChildren ();
             QString txt = m_view->infoPanel ()->text ();

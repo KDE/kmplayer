@@ -28,6 +28,7 @@
 
 #include "kmplayerplaylist.h"
 
+class QFont;
 class QPixmap;
 class QPainter;
 class QPopupMenu;
@@ -43,27 +44,28 @@ bool isDragValid (QDropEvent * de);
 /*
  * An item in the playlist
  */
-class KMPLAYER_EXPORT RootListViewItem : public QListViewItem {
+class KMPLAYER_EXPORT PlayListItem : public QListViewItem {
 public:
-    RootListViewItem (PlayListView *v, const NodePtr & d);
-    KDE_NO_CDTOR_EXPORT ~RootListViewItem () {}
-    void paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align);
-    NodePtrW m_doc;
-    PlayListView * listview;
-    int id;
-};
-
-class KMPLAYER_EXPORT ListViewItem : public QListViewItem {
-public:
-    ListViewItem (QListViewItem *p, const NodePtr & e, PlayListView * lv);
-    ListViewItem (QListViewItem *p, const AttributePtr & e, PlayListView * lv);
-    ListViewItem (PlayListView *v, const NodePtr & d);
-    KDE_NO_CDTOR_EXPORT ~ListViewItem () {}
+    PlayListItem (QListViewItem *p, const NodePtr & e, PlayListView * lv);
+    PlayListItem (QListViewItem *p, const AttributePtr & e, PlayListView * lv);
+    KDE_NO_CDTOR_EXPORT ~PlayListItem () {}
     void paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align);
     void paintBranches(QPainter *p, const QColorGroup &cg, int w, int y, int h);
     NodePtrW m_elm;
     AttributePtrW m_attr;
     PlayListView * listview;
+protected:
+    PlayListItem (PlayListView *v, const NodePtr & e);
+};
+
+class KMPLAYER_EXPORT RootPlayListItem : public PlayListItem {
+public:
+    RootPlayListItem (PlayListView *v, const NodePtr & d);
+    KDE_NO_CDTOR_EXPORT ~RootPlayListItem () {}
+    void paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align);
+    NodePtrW m_doc;
+    PlayListView * listview;
+    int id;
 };
 
 /*
@@ -82,6 +84,7 @@ public:
     void setActiveForegroundColor (const QColor & c) { m_active_color = c; }
     const QColor & activeColor () const { return m_active_color; }
     int addTree (NodePtr root, int flags);
+    void setFont (const QFont &);
 signals:
     void addBookMark (const QString & title, const QString & url);
 protected:
@@ -102,7 +105,7 @@ private slots:
     void slotFindOk ();
     void slotFindNext ();
 private:
-    ListViewItem * populate (NodePtr e, NodePtr focus, ListViewItem * item, ListViewItem ** curitem);
+    PlayListItem * populate (NodePtr e, NodePtr focus, PlayListItem * item, PlayListItem ** curitem);
     bool findNodeInTree (NodePtr n, QListViewItem *& item);
     View * m_view;
     QPopupMenu * m_itemmenu;
