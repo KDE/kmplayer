@@ -122,6 +122,7 @@ public:
     ~TVDevice ();
     KMPlayer::NodePtr childFromTag (const QString &);
     void closed ();
+    void childDone (KMPlayer::NodePtr child);
     bool expose () const { return !zombie; }
     void updateDevicePage ();
     bool zombie;
@@ -134,6 +135,7 @@ public:
     TVDocument (KMPlayerTVSource *);
     KMPlayer::NodePtr childFromTag (const QString &);
     KDE_NO_EXPORT const char * nodeName () const { return "tvdevices"; }
+    void childDone (KMPlayer::NodePtr child);
 };
 
 
@@ -179,6 +181,7 @@ public:
     virtual QString filterOptions ();
     virtual bool hasLength ();
     virtual bool isSeekable ();
+    virtual KMPlayer::NodePtr root ();
     void buildMenu ();
     virtual QString prettyName ();
     virtual void write (KConfig *);
@@ -191,6 +194,7 @@ public slots:
     virtual void activate ();
     virtual void deactivate ();
     virtual void playCurrent ();
+    virtual void jump (KMPlayer::NodePtr e);
     void menuAboutToShow ();
     void menuClicked (int id);
 private slots:
@@ -201,10 +205,12 @@ private:
     void addTVDevicePage (TVDevice * dev, bool show=false);
     void buildArguments ();
     KMPlayer::NodePtrW m_cur_tvdevice;
+    KMPlayer::NodePtrW m_cur_tvinput;
     QPopupMenu * m_channelmenu;
     QString tvdriver;
     KMPlayerPrefSourcePageTV * m_configpage;
     TVDeviceScannerSource * scanner;
+    int tree_id;
     bool config_read; // whether tv.xml is read
 };
 

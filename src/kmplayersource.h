@@ -76,6 +76,7 @@ public:
     KDE_NO_EXPORT const QString & recordCmd () const { return m_recordcmd; }
     KDE_NO_EXPORT NodePtr current () const { return m_current; }
     virtual NodePtr document ();
+    virtual NodePtr root ();
     virtual QString filterOptions ();
 
     void setURL (const KURL & url);

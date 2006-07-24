@@ -581,9 +581,9 @@ void PartBase::forward () {
 void PartBase::playListItemSelected (QListViewItem * item) {
     if (m_in_update_tree) return;
     PlayListItem * vi = static_cast <PlayListItem *> (item);
-    if (vi->m_elm) {
+    if (vi->node) {
         emit infoUpdated (m_view->editMode () ?
-                vi->m_elm->innerXML () : vi->m_elm->innerText ());
+                vi->node->innerXML () : vi->node->innerText ());
     } else if (!vi->m_attr)
         updateTree (); // items already deleted
 }
@@ -592,10 +592,18 @@ void PartBase::playListItemExecuted (QListViewItem * item) {
     if (m_in_update_tree) return;
     if (m_view->editMode ()) return;
     PlayListItem * vi = static_cast <PlayListItem *> (item);
-    if (vi->m_elm) {
-        if (vi->m_elm->isPlayable ())
-            m_source->jump (vi->m_elm);
-        else if (vi->firstChild () && !vi->m_elm->isPlayable ())
+    if (vi->node) {
+        QListViewItem * pitem = item;
+        while (pitem->parent())
+            pitem = pitem->parent();
+        QString src = static_cast <RootPlayListItem*> (pitem)->source;
+        kdDebug() << "playListItemExecuted " << src << " " << vi->node->nodeName() << endl;
+        Source * source = src.isEmpty() ? m_source : m_sources[src.ascii()];
+        if (vi->node->isPlayable ())
+            source->jump (vi->node); //may become !isPlayable
+        if (!vi->node->isPlayable () &&
+                vi->firstChild () &&
+                !vi->node->isPlayable ())
             vi->setOpen (!vi->isOpen ());
     } else if (vi->m_attr) {
         if (!strcasecmp (vi->m_attr->nodeName (), "src") ||
@@ -607,7 +615,7 @@ void PartBase::playListItemExecuted (QListViewItem * item) {
             if (!src.isEmpty ()) {
                 PlayListItem * pi = static_cast <PlayListItem*>(item->parent());
                 if (pi) {
-                    for (NodePtr e = pi->m_elm; e; e = e->parentNode ()) {
+                    for (NodePtr e = pi->node; e; e = e->parentNode ()) {
                         Mrl * mrl = e->mrl ();
                         if (mrl)
                             src = KURL (mrl->absolutePath (), src).url ();
@@ -629,7 +637,7 @@ void PartBase::updateTree (bool full, bool force) {
         m_in_update_tree = true;
         if (m_update_tree_full) {
             if (m_source)
-                emit treeChanged (0, m_source->document(), m_source->current());
+                emit treeChanged (0, m_source->root (), m_source->current ());
         } else
             emit treeUpdated ();
         m_in_update_tree = false;
@@ -688,8 +696,17 @@ void PartBase::play () {
     }
     if (m_process->state () == Process::NotRunning) {
         PlayListItem * lvi = static_cast <PlayListItem *> (m_view->playList ()->currentItem ());
+        if (lvi) { // make sure it's in the first tree
+            QListViewItem * pitem = lvi;
+            while (pitem->parent())
+                pitem = pitem->parent();
+            if (pitem != m_view->playList ()->firstChild ())
+                lvi = 0L;
+        }
+        if (!lvi)
+            lvi = static_cast<PlayListItem*>(m_view->playList()->firstChild());
         if (lvi)
-            for (NodePtr n = lvi->m_elm; n; n = n->parentNode ()) {
+            for (NodePtr n = lvi->node; n; n = n->parentNode ()) {
                 if (n->isPlayable ()) {
                     m_source->setCurrent (n);
                     break;
@@ -932,6 +949,7 @@ void Source::setURL (const KURL & url) {
     }
     if (m_player->process () && m_player->source () == this)
         m_player->updateTree ();
+    kdDebug() << name() << " setURL " << url << endl;
     m_current = m_document;
 }
 
@@ -1199,6 +1217,10 @@ NodePtr Source::document () {
     if (!m_document)
         m_document = new Document (QString (), this);
     return m_document;
+}
+
+NodePtr Source::root () {
+    return document ();
 }
 
 bool Source::processOutput (const QString &) {

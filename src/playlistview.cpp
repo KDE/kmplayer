@@ -60,16 +60,16 @@ namespace KMPlayer {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT PlayListItem::PlayListItem (QListViewItem *p, const NodePtr & e, PlayListView * lv) : QListViewItem (p), m_elm (e), listview (lv) {}
+KDE_NO_CDTOR_EXPORT PlayListItem::PlayListItem (QListViewItem *p, const NodePtr & e, PlayListView * lv) : QListViewItem (p), node (e), listview (lv) {}
 
 KDE_NO_CDTOR_EXPORT PlayListItem::PlayListItem (QListViewItem *p, const AttributePtr & a, PlayListView * lv) : QListViewItem (p), m_attr (a), listview (lv) {}
 
 KDE_NO_CDTOR_EXPORT
 PlayListItem::PlayListItem (PlayListView *v, const NodePtr &e, QListViewItem *b)
-  : QListViewItem (v, b), m_elm (e), listview (v) {}
+  : QListViewItem (v, b), node (e), listview (v) {}
 
 KDE_NO_CDTOR_EXPORT void PlayListItem::paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align) {
-    if (m_elm && m_elm->state == Node::state_began) {
+    if (node && node->state == Node::state_began) {
         QColorGroup mycg (cg);
         mycg.setColor (QColorGroup::Foreground, listview->activeColor ());
         mycg.setColor (QColorGroup::Text, listview->activeColor ());
@@ -112,6 +112,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
    m_view (view),
    m_find_dialog (0L),
    m_active_color (255, 255, 255),
+   last_id (0),
    m_ignore_expanded (false) {
     addColumn (QString::null);
     header()->hide ();
@@ -147,6 +148,18 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
 }
 
 KDE_NO_CDTOR_EXPORT PlayListView::~PlayListView () {
+}
+
+int PlayListView::addTree (NodePtr root, const QString & source, const QString & icon, int flags) {
+    kdDebug () << "addTree " << source << " " << root->mrl()->src << endl;
+    RootPlayListItem * ritem = new RootPlayListItem (++last_id, this, root, lastChild());
+    ritem->source = source;
+    ritem->icon = icon;
+    ritem->setPixmap (0, !ritem->icon.isEmpty ()
+            ? KGlobal::iconLoader ()->loadIcon (ritem->icon, KIcon::Small)
+            : url_pix);
+    updateTree (ritem, 0L);
+    return last_id;
 }
 
 KDE_NO_EXPORT PlayListItem * PlayListView::populate
@@ -193,16 +206,16 @@ KDE_NO_EXPORT PlayListItem * PlayListView::populate
             }
         }
     }
-    QPixmap & pix = e->isPlayable() ? video_pix : (item->firstChild ()) ? (e->auxiliaryNode () ? auxiliary_pix : folder_pix) : unknown_pix;
-    item->setPixmap (0, pix);
+    if (item != root) {
+        QPixmap & pix = e->isPlayable() ? video_pix : (item->firstChild ()) ? (e->auxiliaryNode () ? auxiliary_pix : folder_pix) : unknown_pix;
+        item->setPixmap (0, pix);
+    }
     return item;
 }
 
 void PlayListView::updateTree (int id, NodePtr root, NodePtr active) {
-    // TODO, if root is same as rootitems->m_elm and treeversion is the same
+    // TODO, if root is same as rootitems->node and treeversion is the same
     // and show all nodes is unchanged then only update the cells
-    setUpdatesEnabled (false);
-    m_ignore_expanded = true;
     QWidget * w = focusWidget ();
     if (w && w != this)
         w->clearFocus ();
@@ -212,32 +225,42 @@ void PlayListView::updateTree (int id, NodePtr root, NodePtr active) {
     for (; ritem; ritem =static_cast<RootPlayListItem*>(ritem->nextSibling())) {
         if (ritem->id == id) 
             break;
-        before = ritem;
+        if (ritem->id < id)
+            before = ritem;
     }
-    bool show_all = ritem ? ritem->show_all_nodes : false;
-    delete ritem;
-    if (m_current_find_elm && m_current_find_elm->document () != root) {
-        m_current_find_elm = 0L;
-        m_current_find_attr = 0L;
-        m_find_next->setEnabled (false);
+    if (!root) {
+        delete ritem;
+        return;
     }
-    if (!root) return;
+    if (!ritem) {
+        ritem = new RootPlayListItem (id, this, root, before);
+        ritem->setPixmap (0, url_pix);
+    } else {
+        while (ritem->firstChild ())
+            delete ritem->firstChild ();
+        ritem->node = root;
+    }
+    m_find_next->setEnabled (!!m_current_find_elm);
+    updateTree (ritem, active);
+}
+
+void PlayListView::updateTree (RootPlayListItem * ritem, NodePtr active) {
+    bool set_open = ritem->id == 0 || (ritem ? ritem->isOpen () : false);
+    m_ignore_expanded = true;
+    setUpdatesEnabled (false);
     PlayListItem * curitem = 0L;
-    ritem = new RootPlayListItem (id, this, root, before);
-    ritem->show_all_nodes = show_all;
-    populate (root, active, ritem, 0L, &curitem);
-    ritem->setPixmap (0, url_pix);
-    if (ritem->firstChild () && !ritem->isOpen ())
+    populate (ritem->node, active, ritem, 0L, &curitem);
+    if (set_open && ritem->firstChild () && !ritem->isOpen ())
         setOpen (ritem, true);
     if (curitem) {
         setSelected (curitem, true);
         ensureItemVisible (curitem);
     }
-    if (!ritem->have_dark_nodes && show_all && !m_view->editMode ())
+    if (!ritem->have_dark_nodes && ritem->show_all_nodes && !m_view->editMode())
         toggleShowAllNodes (); // redo, because the user can't change it anymore
     m_ignore_expanded = false;
     setUpdatesEnabled (true);
-    update ();
+    triggerUpdate ();
 }
 
 void PlayListView::selectItem (const QString & txt) {
@@ -252,15 +275,15 @@ void PlayListView::selectItem (const QString & txt) {
 }
 
 KDE_NO_EXPORT void PlayListView::setFont (const QFont & fnt) {
-    setTreeStepSize (QFontMetrics (fnt).boundingRect ('z').width ());
+    setTreeStepSize (QFontMetrics (fnt).boundingRect ('m').width ());
     KListView::setFont (fnt);
 }
 
 KDE_NO_EXPORT void PlayListView::contextMenuItem (QListViewItem * vi, const QPoint & p, int) {
     if (vi) {
         PlayListItem * item = static_cast <PlayListItem *> (vi);
-        if (item->m_elm || item->m_attr) {
-            m_itemmenu->setItemEnabled (1, item->m_attr || (item->m_elm && (item->m_elm->isPlayable () || item->m_elm->isDocument ()) && item->m_elm->mrl ()->bookmarkable));
+        if (item->node || item->m_attr) {
+            m_itemmenu->setItemEnabled (1, item->m_attr || (item->node && (item->node->isPlayable () || item->node->isDocument ()) && item->node->mrl ()->bookmarkable));
             RootPlayListItem * ritem = getRootNode (vi);
             m_itemmenu->setItemChecked (2, ritem->show_all_nodes);
             m_itemmenu->setItemEnabled (2, ritem->have_dark_nodes);
@@ -274,15 +297,15 @@ void PlayListView::itemExpanded (QListViewItem * item) {
     if (!m_ignore_expanded && item->childCount () == 1) {
         PlayListItem * child_item = static_cast<PlayListItem*>(item->firstChild ());
         child_item->setOpen (getRootNode (item)->show_all_nodes ||
-                (child_item->m_elm && child_item->m_elm->expose ()));
+                (child_item->node && child_item->node->expose ()));
     }
 }
 
 void PlayListView::copyToClipboard () {
     PlayListItem * item = static_cast <PlayListItem *> (currentItem ());
     QString text = item->text (0);
-    if (item->m_elm) {
-        Mrl * mrl = item->m_elm->mrl ();
+    if (item->node) {
+        Mrl * mrl = item->node->mrl ();
         if (mrl)
             text = mrl->src;
     }
@@ -291,9 +314,9 @@ void PlayListView::copyToClipboard () {
 
 void PlayListView::addBookMark () {
     PlayListItem * item = static_cast <PlayListItem *> (currentItem ());
-    if (item->m_elm) {
-        Mrl * mrl = item->m_elm->mrl ();
-        KURL url (mrl ? mrl->src : QString (item->m_elm->nodeName ()));
+    if (item->node) {
+        Mrl * mrl = item->node->mrl ();
+        KURL url (mrl ? mrl->src : QString (item->node->nodeName ()));
         emit addBookMark (mrl->pretty_name.isEmpty () ? url.prettyURL () : mrl->pretty_name, url.url ());
     }
 }
@@ -303,9 +326,9 @@ void PlayListView::toggleShowAllNodes () {
     if (cur_item) {
         RootPlayListItem * ritem = getRootNode (cur_item);
         ritem->show_all_nodes = !ritem->show_all_nodes;
-        updateTree (ritem->id, ritem->m_elm, cur_item->m_elm);
+        updateTree (ritem->id, ritem->node, cur_item->node);
         if (m_current_find_elm &&
-                ritem->m_elm.ptr() == m_current_find_elm->document() &&
+                ritem->node->document() == m_current_find_elm->document() &&
                 !ritem->show_all_nodes) {
             if (!m_current_find_elm->expose ())
                 m_current_find_elm = 0L;
@@ -326,7 +349,7 @@ KDE_NO_EXPORT bool PlayListView::acceptDrag (QDropEvent * de) const {
 
 KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, QListViewItem *after) {
     if (after) {
-        NodePtr n = static_cast <PlayListItem *> (after)->m_elm;
+        NodePtr n = static_cast <PlayListItem *> (after)->node;
         bool valid = n && (!n->isDocument () || n->hasChildNodes ());
         KURL::List sl;
         if (KURLDrag::canDecode (de)) {
@@ -349,7 +372,7 @@ KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, QListViewItem *af
             }
             PlayListItem * ritem = static_cast<PlayListItem*>(firstChild());
             if (ritem)
-                updateTree (getRootNode (ritem)->id, ritem->m_elm, citem ? citem->m_elm : NodePtrW ());
+                updateTree (getRootNode (ritem)->id, ritem->node, citem ? citem->node : NodePtrW ());
             return;
         }
     }
@@ -358,11 +381,11 @@ KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, QListViewItem *af
 
 KDE_NO_EXPORT void PlayListView::itemIsRenamed (QListViewItem * qitem) {
     PlayListItem * item = static_cast <PlayListItem *> (qitem);
-    if (item->m_elm) {
-        if (!item->m_elm->isEditable ()) {
-            item->setText (0, QString (item->m_elm->nodeName()));
+    if (item->node) {
+        if (!item->node->isEditable ()) {
+            item->setText (0, QString (item->node->nodeName()));
         } else
-            item->m_elm->setNodeName (item->text (0));
+            item->node->setNodeName (item->text (0));
     } else if (item->m_attr) {
         QString txt = item->text (0);
         int pos = txt.find (QChar ('='));
@@ -374,8 +397,8 @@ KDE_NO_EXPORT void PlayListView::itemIsRenamed (QListViewItem * qitem) {
             item->m_attr->setNodeValue (QString (""));
         }
         PlayListItem * pi = static_cast <PlayListItem *> (item->parent ());
-        if (pi && pi->m_elm)
-            pi->m_elm->document ()->m_tree_version++;
+        if (pi && pi->node)
+            pi->node->document ()->m_tree_version++;
     }
 }
 
@@ -383,9 +406,9 @@ KDE_NO_EXPORT void PlayListView::rename (QListViewItem * qitem, int c) {
     PlayListItem * item = static_cast <PlayListItem *> (qitem);
     if (getRootNode (qitem)->show_all_nodes && item && item->m_attr) {
         PlayListItem * pi = static_cast <PlayListItem *> (qitem->parent ());
-        if (pi && pi->m_elm && pi->m_elm->isEditable ())
+        if (pi && pi->node && pi->node->isEditable ())
             KListView::rename (item, c);
-    } else if (item && item->m_elm && item->m_elm->isEditable ())
+    } else if (item && item->node && item->node->isEditable ())
         KListView::rename (item, c);
 }
 
@@ -412,11 +435,11 @@ KDE_NO_EXPORT bool PlayListView::findNodeInTree (NodePtr n, QListViewItem *& ite
         return true;
     if (!findNodeInTree (n->parentNode (), item)) // get right item
         return false; // hmpf
-    if (static_cast <PlayListItem *> (item)->m_elm == n)  // top node
+    if (static_cast <PlayListItem *> (item)->node == n)  // top node
         return true;
     for (QListViewItem * ci = item->firstChild(); ci; ci = ci->nextSibling ()) {
         //kdDebug () << "ci:" << ci->text (0) << " n:" << n->nodeName () <<endl;
-        if (static_cast <PlayListItem *> (ci)->m_elm == n) {
+        if (static_cast <PlayListItem *> (ci)->node == n) {
             item = ci;
             return true;
         }
@@ -432,13 +455,13 @@ KDE_NO_EXPORT void PlayListView::slotFindOk () {
     long opt = m_find_dialog->options ();
     if (opt & KFindDialog::FromCursor && currentItem ()) {
         PlayListItem * lvi = static_cast <PlayListItem *> (currentItem ());
-        if (lvi && lvi->m_elm)
-             m_current_find_elm = lvi->m_elm;
+        if (lvi && lvi->node)
+             m_current_find_elm = lvi->node;
         else if (lvi && lvi->m_attr) {
             PlayListItem*pi=static_cast<PlayListItem*>(currentItem()->parent());
             if (pi) {
                 m_current_find_attr = lvi->m_attr;
-                m_current_find_elm = pi->m_elm;
+                m_current_find_elm = pi->node;
             }
         }
     } else if (!(opt & KFindDialog::FindIncremental))
@@ -446,7 +469,7 @@ KDE_NO_EXPORT void PlayListView::slotFindOk () {
     if (!m_current_find_elm) {
         PlayListItem * lvi = static_cast <PlayListItem *> (firstChild ());
         if (lvi)
-            m_current_find_elm = lvi->m_elm;
+            m_current_find_elm = lvi->node;
     }
     if (m_current_find_elm)
         slotFindNext ();

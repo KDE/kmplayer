@@ -52,7 +52,7 @@ public:
     KDE_NO_CDTOR_EXPORT ~PlayListItem () {}
     void paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align);
     void paintBranches(QPainter *p, const QColorGroup &cg, int w, int y, int h);
-    NodePtrW m_elm;
+    NodePtrW node;
     AttributePtrW m_attr;
     PlayListView * listview;
 protected:
@@ -66,6 +66,8 @@ public:
     void paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align);
     NodePtrW m_doc;
     PlayListView * listview;
+    QString source;
+    QString icon;
     int id;
     bool show_all_nodes;
     bool have_dark_nodes;
@@ -86,7 +88,7 @@ public:
     void showAllNodes (bool show=true);
     void setActiveForegroundColor (const QColor & c) { m_active_color = c; }
     const QColor & activeColor () const { return m_active_color; }
-    int addTree (NodePtr root, int flags);
+    int addTree (NodePtr r, const QString & src, const QString & ico, int flgs);
     void setFont (const QFont &);
 signals:
     void addBookMark (const QString & title, const QString & url);
@@ -108,6 +110,7 @@ private slots:
     void slotFindOk ();
     void slotFindNext ();
 private:
+    void updateTree (RootPlayListItem * ritem, NodePtr active);
     PlayListItem * populate (NodePtr e, NodePtr focus, RootPlayListItem *root, PlayListItem * item, PlayListItem ** curitem);
     bool findNodeInTree (NodePtr n, QListViewItem *& item);
     View * m_view;
@@ -124,6 +127,7 @@ private:
     QColor m_active_color;
     NodePtrW m_current_find_elm;
     AttributePtrW m_current_find_attr;
+    int last_id;
     bool m_ignore_expanded;
 };
 
