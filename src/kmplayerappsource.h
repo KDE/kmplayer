@@ -99,6 +99,7 @@ private:
     QPopupMenu * m_dvdchaptermenu;
     QPopupMenu * m_dvdlanguagemenu;
     QPopupMenu * m_dvdsubtitlemenu;
+    KMPlayer::NodePtr disks;
     KMPlayerPrefSourcePageDVD * m_configpage;
     int m_current_title;
     bool m_start_play;

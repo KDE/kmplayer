@@ -1014,6 +1014,46 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageDVD::KMPlayerPrefSourcePageDVD (QWidge
 
 //-----------------------------------------------------------------------------
 
+static short id_node_disk_document = 30;
+static short id_node_disk_node = 31;
+
+class Disks : public KMPlayer::Document {
+public:
+    Disks (KMPlayerApp * a);
+    void childDone (KMPlayer::NodePtr);
+    KMPlayerApp * app;
+};
+
+class Disk : public KMPlayer::Mrl {
+public:
+    Disk (KMPlayer::NodePtr & doc, KMPlayerApp *a, const QString &url, const QString &pn);
+    void activate ();
+    KMPlayerApp * app;
+};
+
+KDE_NO_CDTOR_EXPORT Disks::Disks (KMPlayerApp * a)
+                : KMPlayer::Document ("disks://", 0L), app (a) {
+    id = id_node_disk_document;
+    pretty_name = i18n ("Disks");
+}
+
+KDE_NO_EXPORT void Disks::childDone (KMPlayer::NodePtr) {
+    finish ();
+}
+
+KDE_NO_CDTOR_EXPORT Disk::Disk (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url, const QString &pn) 
+  : KMPlayer::Mrl (doc, id_node_disk_node), app (a) {
+    src = url;
+    pretty_name = pn;
+}
+
+KDE_NO_EXPORT void Disk::activate () {
+    KMPlayer::Source * s = app->player ()->sources () [src.startsWith ("vcd") ? "vcdsource" : "dvdsource"];
+    app->player ()->setSource (s);
+}
+
+//-----------------------------------------------------------------------------
+
 KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopupMenu * m)
     : KMPlayerMenuSource (i18n ("DVD"), a, m, "dvdsource"), m_configpage (0L) {
     m_menu->insertTearOffHandle ();
@@ -1027,9 +1067,14 @@ KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopu
     m_dvdlanguagemenu->setCheckable (true);
     setURL (KURL ("dvd://"));
     m_player->settings ()->addPage (this);
+    disks = new Disks (a);
+    disks->appendChild (new Disk (disks, a, "vcd://", i18n ("VCD")));
+    disks->appendChild (new Disk (disks, a, "dvd://", i18n ("DVD")));
+    int tree_id = m_app->view ()->playList ()->addTree (disks, "dvdsource", "cdrom_mount", 0);
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::~KMPlayerDVDSource () {
+    disks->document ()->dispose ();
 }
 
 KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
