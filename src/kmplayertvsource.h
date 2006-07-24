@@ -123,7 +123,7 @@ public:
     KMPlayer::NodePtr childFromTag (const QString &);
     void closed ();
     void childDone (KMPlayer::NodePtr child);
-    bool expose () const { return !zombie; }
+    bool expose () const { return false; }
     void updateDevicePage ();
     bool zombie;
     QGuardedPtr <TVDevicePage> device_page;
