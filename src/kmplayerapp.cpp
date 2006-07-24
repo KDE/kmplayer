@@ -79,6 +79,63 @@ static const int DVDNav_up = 5;
 
 extern const char * strMPlayerGroup;
 
+static short id_node_recent_document = 25;
+static short id_node_recent_node = 26;
+
+class Recents : public KMPlayer::Document {
+public:
+    Recents (KMPlayerApp *a);
+    void childDone (KMPlayer::NodePtr);
+    KMPlayer::NodePtr childFromTag (const QString & tag);
+    KDE_NO_EXPORT const char * nodeName () const { return "playlist"; }
+    KMPlayerApp * app;
+    bool loaded;
+};
+
+class Recent : public KMPlayer::Mrl {
+public:
+    Recent (KMPlayer::NodePtr & doc, KMPlayerApp *a, const QString &url = QString());
+    void activate ();
+    void closed ();
+    KDE_NO_EXPORT const char * nodeName () const { return "item"; }
+    KMPlayerApp * app;
+};
+
+KDE_NO_CDTOR_EXPORT Recents::Recents (KMPlayerApp *a)
+                : KMPlayer::Document ("recents://", 0L), app(a),loaded (false) {
+    id = id_node_recent_document;
+    pretty_name = i18n ("Recent");
+}
+
+KDE_NO_EXPORT KMPlayer::NodePtr Recents::childFromTag (const QString & tag) {
+     kdDebug () << nodeName () << " childFromTag " << tag << endl;
+    if (tag == QString::fromLatin1 ("item"))
+        return new Recent (m_doc, app);
+    else if (tag == QString::fromLatin1 ("playlist"))
+        return new Recents (app);
+    return 0L;
+}
+
+KDE_NO_EXPORT void Recents::childDone (KMPlayer::NodePtr) {
+    finish ();
+}
+
+KDE_NO_CDTOR_EXPORT
+Recent::Recent (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url) 
+  : KMPlayer::Mrl (doc, id_node_recent_node), app (a) {
+    src = url;
+    setAttribute ("url", url);
+}
+
+KDE_NO_EXPORT void Recent::closed () {
+    if (src.isEmpty ())
+        src = getAttribute ("url");
+}
+
+KDE_NO_EXPORT void Recent::activate () {
+    app->openDocumentFile (KURL (src));
+}
+
 KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     : KMainWindow(0, name),
       config (kapp->config ()),
@@ -120,6 +177,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
 
 KDE_NO_CDTOR_EXPORT KMPlayerApp::~KMPlayerApp () {
     delete m_broadcastconfig;
+    if (recents)
+        recents->document ()->dispose ();
 }
 
 
@@ -280,8 +339,24 @@ KDE_NO_EXPORT void KMPlayerApp::windowVideoConsoleToggled (int wt) {
 
 KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
     KMPlayer::Source * source = m_player->source ();
-    if (!strcmp (source->name (), "urlsource"))
+    if (!strcmp (source->name (), "urlsource")) {
         recentFiles ()->addURL (source->url ());
+        recents->insertBefore (new Recent (recents, this, source->url ().url ()), recents->firstChild ());
+        int count = 0;
+        KMPlayer::NodePtr c = recents->firstChild ()->nextSibling ();
+        while (c) {
+            if (c->id == id_node_recent_node &&
+                    c->mrl ()->src == source->url ().url ()) {
+                KMPlayer::NodePtr tmp = c->nextSibling ();
+                recents->removeChild (c);
+                c = tmp;
+            } else
+                c = c->nextSibling ();
+        }
+        if (recents->childNodes ()->length () > 10)
+            recents->removeChild (recents->lastChild ());
+        m_view->playList ()->updateTree (recents_id, recents, 0);
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotSourceChanged (KMPlayer::Source *olds, KMPlayer::Source * news) {
@@ -596,9 +671,16 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
         config->setGroup ("Pipe Command");
         config->writeEntry ("Command1", m_player->sources () ["pipesource"]->pipeCmd ());
     }
-    fileOpenRecent->saveEntries (config,"Recent Files");
     m_view->setInfoMessage (QString::null);
     m_view->docArea ()->writeDockConfig (config, QString ("Window Layout"));
+    if (recents) {
+        fileOpenRecent->saveEntries (config,"Recent Files");
+        QString recentxml = locateLocal ("data", "kmplayer/recent.xml");
+        QFile file (recentxml);
+        file.open (IO_WriteOnly);
+        QCString utf = recents->outerXML ().utf8 ();
+        file.writeBlock (utf, utf.length ());
+    }
 }
 
 
@@ -629,8 +711,25 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     config->setGroup ("Pipe Command");
     static_cast <KMPlayerPipeSource *> (m_player->sources () ["pipesource"])->setCommand (config->readEntry ("Command1", ""));
     // initialize the recent file list
-    fileOpenRecent->loadEntries(config,"Recent Files");
-
+    if (!recents) {
+        fileOpenRecent->loadEntries(config,"Recent Files");
+        recents = new Recents (this);
+        QString recentxml = locateLocal ("data", "kmplayer/recent.xml");
+        QFile file (recentxml);
+        if (file.exists ()) {
+            file.open (IO_ReadOnly);
+            QTextStream inxml (&file);
+            KMPlayer::readXML (recents, inxml, QString::null);
+            recents->normalize ();
+            if (recents->firstChild () ) {
+                KMPlayer::NodePtr tmp = recents;
+                recents = tmp->firstChild ();
+                tmp->removeChild (recents);
+                tmp->document ()->dispose ();
+            }
+        }
+        recents_id = m_view->playList ()->addTree (recents, "urlsource", "player_playlist", 0);
+    }
     configChanged ();
 }
 
@@ -826,6 +925,8 @@ KDE_NO_EXPORT void KMPlayerApp::slotClearHistory () {
     fileOpenRecent->setMaxItems (mi);
     m_player->settings ()->urllist.clear ();
     m_player->settings ()->sub_urllist.clear ();
+    recents->clear ();
+    m_view->playList ()->updateTree (recents_id, recents, 0);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotFileClose()
@@ -1070,7 +1171,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopu
     disks = new Disks (a);
     disks->appendChild (new Disk (disks, a, "vcd://", i18n ("VCD")));
     disks->appendChild (new Disk (disks, a, "dvd://", i18n ("DVD")));
-    int tree_id = m_app->view ()->playList ()->addTree (disks, "dvdsource", "cdrom_mount", 0);
+    m_app->view ()->playList ()->addTree (disks, "dvdsource", "cdrom_mount", 0);
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::~KMPlayerDVDSource () {

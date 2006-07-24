@@ -121,6 +121,8 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
     setAcceptDrops (true);
     setDropVisualizer (true);
     setItemsRenameable (true);
+    setItemMargin (2);
+    //setMargins (
     m_itemmenu = new QPopupMenu (this);
     folder_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder"), KIcon::Small);
     auxiliary_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder_grey"), KIcon::Small);

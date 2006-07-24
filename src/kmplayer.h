@@ -28,6 +28,7 @@
 #include <kaccel.h>
 #include <kaction.h>
 #include <kurl.h>
+#include "kmplayerplaylist.h"
 
 static const int id_status_msg = 1;
 static const int id_status_timer = 2;
@@ -130,6 +131,7 @@ private:
     KSystemTray * m_systray;
     KMPlayer::PartBase * m_player;
     KMPlayer::View * m_view;
+    KMPlayer::NodePtr recents;
 
     KAction * fileNewWindow;
     KAction * fileOpen;
@@ -159,6 +161,7 @@ private:
     KMPlayerBroadcastConfig * m_broadcastconfig;
     QCString m_dcopName;
     int last_time_left;
+    int recents_id;
     bool m_showToolbar;
     bool m_showStatusbar;
     bool m_showMenubar;

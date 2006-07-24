@@ -293,7 +293,7 @@ void Node::appendChild (NodePtr c) {
     TreeNode<Node>::appendChild (c);
 }
 
-KDE_NO_EXPORT void Node::insertBefore (NodePtr c, NodePtr b) {
+void Node::insertBefore (NodePtr c, NodePtr b) {
     if (!b) {
         appendChild (c);
     } else {
