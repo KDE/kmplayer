@@ -168,7 +168,7 @@ Mrl * Node::mrl () {
     return 0L;
 }
 
-KDE_NO_EXPORT const char * Node::nodeName () const {
+const char * Node::nodeName () const {
     return "node";
 }
 
@@ -697,7 +697,7 @@ NodePtr Document::getElementById (const QString & id) {
     return getElementByIdImpl (this, id);
 }
 
-KDE_NO_EXPORT NodePtr Document::childFromTag (const QString & tag) {
+NodePtr Document::childFromTag (const QString & tag) {
     Node * elm = fromXMLDocumentTag (m_doc, tag);
     if (elm)
         return elm;
