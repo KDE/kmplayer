@@ -48,6 +48,7 @@ class KMPLAYER_EXPORT PlayListItem : public QListViewItem {
 public:
     PlayListItem (QListViewItem *p, const NodePtr & e, PlayListView * lv);
     PlayListItem (QListViewItem *p, const AttributePtr & e, PlayListView * lv);
+    PlayListItem (PlayListView *v, const NodePtr & d, QListViewItem * b);
     KDE_NO_CDTOR_EXPORT ~PlayListItem () {}
     void paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align);
     void paintBranches(QPainter *p, const QColorGroup &cg, int w, int y, int h);
@@ -60,12 +61,14 @@ protected:
 
 class KMPLAYER_EXPORT RootPlayListItem : public PlayListItem {
 public:
-    RootPlayListItem (PlayListView *v, const NodePtr & d);
+    RootPlayListItem (int id, PlayListView *v, const NodePtr & d, QListViewItem * b);
     KDE_NO_CDTOR_EXPORT ~RootPlayListItem () {}
     void paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align);
     NodePtrW m_doc;
     PlayListView * listview;
     int id;
+    bool show_all_nodes;
+    bool have_dark_nodes;
 };
 
 /*
@@ -92,7 +95,7 @@ protected:
 public slots:
     void editCurrent ();
     void rename (QListViewItem * item, int c);
-    void updateTree (NodePtr root, NodePtr active);
+    void updateTree (int id, NodePtr root, NodePtr active);
 private slots:
     void contextMenuItem (QListViewItem *, const QPoint &, int);
     void itemExpanded (QListViewItem *);
@@ -105,7 +108,7 @@ private slots:
     void slotFindOk ();
     void slotFindNext ();
 private:
-    PlayListItem * populate (NodePtr e, NodePtr focus, PlayListItem * item, PlayListItem ** curitem);
+    PlayListItem * populate (NodePtr e, NodePtr focus, RootPlayListItem *root, PlayListItem * item, PlayListItem ** curitem);
     bool findNodeInTree (NodePtr n, QListViewItem *& item);
     View * m_view;
     QPopupMenu * m_itemmenu;
@@ -121,8 +124,6 @@ private:
     QColor m_active_color;
     NodePtrW m_current_find_elm;
     AttributePtrW m_current_find_attr;
-    bool m_show_all_nodes;
-    bool m_have_dark_nodes;
     bool m_ignore_expanded;
 };
 

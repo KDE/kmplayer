@@ -541,7 +541,7 @@ KDE_NO_EXPORT void KMPlayerApp::syncEditMode () {
             QString txt = m_view->infoPanel ()->text ();
             QTextStream ts (txt, IO_ReadOnly);
             KMPlayer::readXML (si->m_elm, ts, QString (), false);
-            m_view->playList ()->updateTree (si->m_elm->document (), si->m_elm);
+            m_view->playList ()->updateTree (0, si->m_elm->document (), si->m_elm);
         }
     } else
         m_player->openURL (m_player->source ()->url ());

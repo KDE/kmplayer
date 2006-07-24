@@ -225,8 +225,8 @@ void PartBase::connectPlaylist (PlayListView * playlist) {
              this, SLOT (playListItemExecuted (QListViewItem *)));
     connect (playlist, SIGNAL (selectionChanged (QListViewItem *)),
              this, SLOT (playListItemSelected (QListViewItem *)));
-    connect (this, SIGNAL (treeChanged (NodePtr, NodePtr)),
-             playlist, SLOT (updateTree (NodePtr, NodePtr)));
+    connect (this, SIGNAL (treeChanged (int, NodePtr, NodePtr)),
+             playlist, SLOT (updateTree (int, NodePtr, NodePtr)));
     connect (this, SIGNAL (treeUpdated ()),
              playlist, SLOT (triggerUpdate ()));
 }
@@ -629,7 +629,7 @@ void PartBase::updateTree (bool full, bool force) {
         m_in_update_tree = true;
         if (m_update_tree_full) {
             if (m_source)
-                emit treeChanged (m_source->document (), m_source->current ());
+                emit treeChanged (0, m_source->document(), m_source->current());
         } else
             emit treeUpdated ();
         m_in_update_tree = false;

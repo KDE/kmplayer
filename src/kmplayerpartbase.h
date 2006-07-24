@@ -186,7 +186,7 @@ signals:
     void urlAdded (const QString & url);
     void urlChanged (const QString & url);
     void processChanged (const char *);
-    void treeChanged (NodePtr root, NodePtr);
+    void treeChanged (int id, NodePtr root, NodePtr);
     void treeUpdated ();
     void infoUpdated (const QString & msg);
     void statusUpdated (const QString & msg);
