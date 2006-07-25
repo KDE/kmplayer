@@ -112,7 +112,7 @@ KDE_NO_EXPORT KMPlayer::NodePtr Recents::childFromTag (const QString & tag) {
     if (tag == QString::fromLatin1 ("item"))
         return new Recent (m_doc, app);
     else if (tag == QString::fromLatin1 ("playlist"))
-        return new Recents (app);
+        return this;
     return 0L;
 }
 
@@ -721,12 +721,6 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
             QTextStream inxml (&file);
             KMPlayer::readXML (recents, inxml, QString::null);
             recents->normalize ();
-            if (recents->firstChild () ) {
-                KMPlayer::NodePtr tmp = recents;
-                recents = tmp->firstChild ();
-                tmp->removeChild (recents);
-                tmp->document ()->dispose ();
-            }
         }
         recents_id = m_view->playList ()->addTree (recents, "urlsource", "player_playlist", 0);
     }

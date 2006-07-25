@@ -306,7 +306,7 @@ KDE_NO_EXPORT KMPlayer::NodePtr TVDocument::childFromTag (const QString & tag) {
     if (tag == QString::fromLatin1 ("device"))
         return new TVDevice (m_doc);
     else if (tag == QString::fromLatin1 ("tvdevices"))
-        return new TVDocument (m_source);
+        return this;
     return 0L;
 }
 
@@ -506,16 +506,11 @@ KDE_NO_EXPORT void KMPlayerTVSource::readXML () {
     QString tvxml = locateLocal ("data", "kmplayer/tv.xml");
     QFile file (tvxml);
     if (file.exists ()) {
-        KMPlayer::NodePtr doc = new TVDocument (this);
+        m_document = new TVDocument (this);
         file.open (IO_ReadOnly);
         QTextStream inxml (&file);
-        KMPlayer::readXML (doc, inxml, QString::null);
-        doc->normalize ();
-        if (doc->hasChildNodes ()) {
-            m_document = doc->firstChild ();
-            doc->removeChild (doc->firstChild ());
-        }
-        doc->document ()->dispose ();
+        KMPlayer::readXML (m_document, inxml, QString::null);
+        m_document->normalize ();
     } else { // try old KConfig entries
         KConfig * kcfg = m_player->settings ()->kconfig ();
         kcfg->setGroup (strTV);

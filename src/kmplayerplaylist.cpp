@@ -987,6 +987,7 @@ namespace KMPlayer {
 class DocumentBuilder {
     int m_ignore_depth;
     bool m_set_opener;
+    bool m_root_is_first;
     NodePtr m_node;
     NodePtr m_root;
 public:
@@ -1008,9 +1009,10 @@ private:
 } // namespace KMPlayer
 
 DocumentBuilder::DocumentBuilder (NodePtr d, bool set_opener)
- : m_ignore_depth (0), m_set_opener (set_opener), m_node (d), m_root (d)
+ : m_ignore_depth (0), m_set_opener (set_opener), m_root_is_first (false)
+ , m_node (d), m_root (d)
 #ifdef HAVE_EXPAT
-    , in_cdata (false)
+ , in_cdata (false)
 #endif
 {}
 
@@ -1028,7 +1030,10 @@ bool DocumentBuilder::startTag(const QString &tag, AttributeListPtr attr) {
         //kdDebug () << "Found tag " << tag << endl;
         if (n->isElementNode ())
             convertNode <Element> (n)->setAttributes (attr);
-        m_node->appendChild (n);
+        if (m_node == n && m_node == m_root)
+            m_root_is_first = true;
+        else
+            m_node->appendChild (n);
         if (m_set_opener && m_node == m_root) {
             Mrl * mrl = n->mrl ();
             if (mrl)
@@ -1047,15 +1052,8 @@ bool DocumentBuilder::endTag (const QString & tag) {
     } else {  // endtag
         NodePtr n = m_node;
         while (n) {
-            if (n == m_root) {
-                if (n == m_node) {
-                    kdError () << "m_node == m_doc, stack underflow " << endl;
-                    return false;
-                }
-                kdWarning () << "endtag: no match " << tag.local8Bit () << endl;
-                break;
-            }
-            if (!strcasecmp (n->nodeName (), tag.local8Bit ())) {
+            if (!strcasecmp (n->nodeName (), tag.local8Bit ()) &&
+                    (m_root_is_first || n != m_root)) {
                 while (n != m_node) {
                     kdWarning() << m_node->nodeName () << " not closed" << endl;
                     if (m_root == m_node->parentNode ())
@@ -1063,6 +1061,14 @@ bool DocumentBuilder::endTag (const QString & tag) {
                     m_node->closed ();
                     m_node = m_node->parentNode ();
                 }
+                break;
+            }
+            if (n == m_root) {
+                if (n == m_node) {
+                    kdError () << "m_node == m_doc, stack underflow " << endl;
+                    return false;
+                }
+                kdWarning () << "endtag: no match " << tag.local8Bit () << endl;
                 break;
             } else
                  kdWarning () << "tag " << tag << " not " << n->nodeName () << endl;
