@@ -411,14 +411,17 @@ KDE_NO_EXPORT void KMPlayerApp::windowVideoConsoleToggled (int wt) {
 KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
     KMPlayer::Source * source = m_player->source ();
     if (!strcmp (source->name (), "urlsource")) {
-        recentFiles ()->addURL (source->url ());
-        recents->insertBefore (new Recent (recents, this, source->url ().url ()), recents->firstChild ());
+        KURL url = source->url ();
+        if (url.isEmpty () && m_player->process ()->mrl ())
+            url = KURL (m_player->process ()->mrl ()->mrl ()->src);
+        recentFiles ()->addURL (url);
+        recents->insertBefore (new Recent (recents, this, url.url ()), recents->firstChild ());
         KMPlayer::NodePtr c = recents->firstChild ()->nextSibling ();
         int count = 1;
         KMPlayer::NodePtr more;
         while (c) {
             if (c->id == id_node_recent_node &&
-                    c->mrl ()->src == source->url ().url ()) {
+                    c->mrl ()->src == url.url ()) {
                 KMPlayer::NodePtr tmp = c->nextSibling ();
                 recents->removeChild (c);
                 c = tmp;
@@ -445,7 +448,7 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
             count = 0;
             while (c) {
                 if (c->id == id_node_recent_node &&
-                         c->mrl ()->src == source->url ().url ()) {
+                         c->mrl ()->src == url.url ()) {
                     KMPlayer::NodePtr tmp = c->nextSibling ();
                     more->removeChild (c);
                     c = tmp;
@@ -813,7 +816,7 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     if (!recents) {
         fileOpenRecent->loadEntries(config,"Recent Files");
         recents = new Recents (this);
-        recents_id = m_view->playList ()->addTree (recents, "listssource", "player_playlist", 0);
+        recents_id = m_view->playList ()->addTree (recents, "listssource", "player_playlist", KMPlayer::PlayListView::AllowDrag);
     }
     configChanged ();
 }

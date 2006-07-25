@@ -85,9 +85,10 @@ KDE_NO_CDTOR_EXPORT void PlayListItem::paintBranches (QPainter * p, const QColor
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT
-RootPlayListItem::RootPlayListItem (int _id, PlayListView *v, const NodePtr & e, QListViewItem * before)
+RootPlayListItem::RootPlayListItem (int _id, PlayListView *v, const NodePtr & e, QListViewItem * before, int flgs)
   : PlayListItem (v, e, before),
     id (_id),
+    flags (flgs),
     show_all_nodes (false),
     have_dark_nodes (false) {}
 
@@ -154,7 +155,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::~PlayListView () {
 
 int PlayListView::addTree (NodePtr root, const QString & source, const QString & icon, int flags) {
     kdDebug () << "addTree " << source << " " << root->mrl()->src << endl;
-    RootPlayListItem * ritem = new RootPlayListItem (++last_id, this, root, lastChild());
+    RootPlayListItem * ritem = new RootPlayListItem (++last_id, this, root, lastChild(), flags);
     ritem->source = source;
     ritem->icon = icon;
     ritem->setPixmap (0, !ritem->icon.isEmpty ()
@@ -211,6 +212,8 @@ KDE_NO_EXPORT PlayListItem * PlayListView::populate
     if (item != root) {
         QPixmap & pix = e->isPlayable() ? video_pix : (item->firstChild ()) ? (e->auxiliaryNode () ? auxiliary_pix : folder_pix) : unknown_pix;
         item->setPixmap (0, pix);
+        if (root->flags & PlayListView::AllowDrag)
+            item->setDragEnabled (true);
     }
     return item;
 }
@@ -235,7 +238,7 @@ void PlayListView::updateTree (int id, NodePtr root, NodePtr active) {
         return;
     }
     if (!ritem) {
-        ritem = new RootPlayListItem (id, this, root, before);
+        ritem = new RootPlayListItem (id, this, root, before, AllowDrops);
         ritem->setPixmap (0, url_pix);
     } else {
         while (ritem->firstChild ())
@@ -274,6 +277,18 @@ void PlayListView::selectItem (const QString & txt) {
         setSelected (item, true);
         ensureItemVisible (item);
     }
+}
+
+KDE_NO_EXPORT QDragObject * PlayListView::dragObject () {
+    PlayListItem * item = static_cast <PlayListItem *> (selectedItem ());
+    if (item && item->node) {
+        KURL::List l;
+        l << KURL (item->node->mrl ()->src);
+        KURLDrag * drag = new KURLDrag (l, this);
+        drag->setPixmap (video_pix);
+        return drag;
+    }
+    return 0;
 }
 
 KDE_NO_EXPORT void PlayListView::setFont (const QFont & fnt) {
@@ -346,7 +361,12 @@ KDE_NO_EXPORT void PlayListView::showAllNodes (bool show) {
 }
 
 KDE_NO_EXPORT bool PlayListView::acceptDrag (QDropEvent * de) const {
-    return isDragValid (de);
+    QListViewItem * item = itemAt (de->pos ());
+    if (item && isDragValid (de)) {
+        RootPlayListItem * ritem = getRootNode (item);
+        return ritem->flags & AllowDrops;
+    }
+    return false;
 }
 
 KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, QListViewItem *after) {

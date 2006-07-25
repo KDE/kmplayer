@@ -61,7 +61,7 @@ protected:
 
 class KMPLAYER_EXPORT RootPlayListItem : public PlayListItem {
 public:
-    RootPlayListItem (int id, PlayListView *v, const NodePtr & d, QListViewItem * b);
+    RootPlayListItem (int id, PlayListView *v, const NodePtr & d, QListViewItem * b, int flags);
     KDE_NO_CDTOR_EXPORT ~RootPlayListItem () {}
     void paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align);
     NodePtrW m_doc;
@@ -69,6 +69,7 @@ public:
     QString source;
     QString icon;
     int id;
+    int flags;
     bool show_all_nodes;
     bool have_dark_nodes;
 };
@@ -80,7 +81,7 @@ class KMPLAYER_EXPORT PlayListView : public KListView {
     Q_OBJECT
 public:
     enum Flags {
-        AllowDrops = 0x01, InPlaceEdit = 0x02, TreeEdit = 0x04
+        AllowDrops = 0x01, AllowDrag = 0x02, InPlaceEdit = 0x04, TreeEdit = 0x08
     };
     PlayListView (QWidget * parent, View * view, KActionCollection * ac);
     ~PlayListView ();
@@ -94,6 +95,7 @@ signals:
     void addBookMark (const QString & title, const QString & url);
 protected:
     bool acceptDrag (QDropEvent* event) const;
+    QDragObject * dragObject ();
 public slots:
     void editCurrent ();
     void rename (QListViewItem * item, int c);
