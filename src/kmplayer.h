@@ -171,4 +171,12 @@ private:
     bool m_auto_resize;
 };
 
+class KMPLAYER_NO_EXPORT FileDocument : public KMPlayer::Document {
+public:
+    FileDocument (short id, const QString &, KMPlayer::PlayListNotify * notify = 0L);
+    KMPlayer::NodePtr childFromTag (const QString & tag);
+    void readFromFile (const QString & file);
+    void writeToFile (const QString & file);
+};
+
 #endif // KMPLAYER_H

@@ -26,6 +26,7 @@
 
 #include "kmplayerappsource.h"
 #include "kmplayerconfig.h"
+#include "kmplayer.h"
 
 const short id_node_tv_document = 40;
 const short id_node_tv_device = 41;
@@ -129,7 +130,7 @@ public:
     QGuardedPtr <TVDevicePage> device_page;
 };
 
-class KMPLAYER_NO_EXPORT TVDocument : public KMPlayer::Document {
+class KMPLAYER_NO_EXPORT TVDocument : public FileDocument {
     KMPlayerTVSource * m_source;
 public:
     TVDocument (KMPlayerTVSource *);
