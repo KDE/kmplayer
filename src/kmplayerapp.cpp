@@ -81,6 +81,7 @@ extern const char * strMPlayerGroup;
 
 static short id_node_recent_document = 25;
 static short id_node_recent_node = 26;
+static short id_node_group_node = 27;
 
 class KMPLAYER_NO_EXPORT ListsSource : public KMPlayer::Source {
 public:
@@ -107,6 +108,15 @@ public:
     void activate ();
     void closed ();
     KDE_NO_EXPORT const char * nodeName () const { return "item"; }
+    KMPlayerApp * app;
+};
+
+class KMPLAYER_NO_EXPORT Group : public KMPlayer::Mrl {
+public:
+    Group (KMPlayer::NodePtr &doc, KMPlayerApp *a, const QString &pn=QString());
+    KMPlayer::NodePtr childFromTag (const QString & tag);
+    void closed ();
+    KDE_NO_EXPORT const char * nodeName () const { return "group"; }
     KMPlayerApp * app;
 };
 
@@ -150,6 +160,8 @@ KDE_NO_EXPORT KMPlayer::NodePtr Recents::childFromTag (const QString & tag) {
     // kdDebug () << nodeName () << " childFromTag " << tag << endl;
     if (tag == QString::fromLatin1 ("item"))
         return new Recent (m_doc, app);
+    else if (tag == QString::fromLatin1 ("group"))
+        return new Group (m_doc, app);
     return FileDocument::childFromTag (tag);
 }
 
@@ -171,6 +183,27 @@ KDE_NO_EXPORT void Recent::closed () {
 
 KDE_NO_EXPORT void Recent::activate () {
     app->openDocumentFile (KURL (src));
+}
+
+KDE_NO_CDTOR_EXPORT
+Group::Group (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString & pn) 
+  : KMPlayer::Mrl (doc, id_node_group_node), app (a) {
+    pretty_name = pn;
+    if (!pn.isEmpty ())
+        setAttribute ("title", pn);
+}
+
+KDE_NO_EXPORT KMPlayer::NodePtr Group::childFromTag (const QString & tag) {
+    if (tag == QString::fromLatin1 ("item"))
+        return new Recent (m_doc, app);
+    else if (tag == QString::fromLatin1 ("group"))
+        return new Group (m_doc, app);
+    return 0L;
+}
+
+KDE_NO_EXPORT void Group::closed () {
+    if (pretty_name.isEmpty ())
+        pretty_name = getAttribute ("title");
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
@@ -380,19 +413,50 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
     if (!strcmp (source->name (), "urlsource")) {
         recentFiles ()->addURL (source->url ());
         recents->insertBefore (new Recent (recents, this, source->url ().url ()), recents->firstChild ());
-        int count = 0;
         KMPlayer::NodePtr c = recents->firstChild ()->nextSibling ();
+        int count = 1;
+        KMPlayer::NodePtr more;
         while (c) {
             if (c->id == id_node_recent_node &&
                     c->mrl ()->src == source->url ().url ()) {
                 KMPlayer::NodePtr tmp = c->nextSibling ();
                 recents->removeChild (c);
                 c = tmp;
-            } else
+            } else {
+                if (c->id == id_node_group_node)
+                    more = c;
                 c = c->nextSibling ();
+                count++;
+            }
         }
-        if (recents->childNodes ()->length () > 10)
-            recents->removeChild (recents->lastChild ());
+        if (!more && count > 10) {
+            more = new Group (recents, this, i18n ("More ..."));
+            recents->appendChild (more);
+        }
+        if (more) {
+            KMPlayer::NodePtr item;
+            if (count > 10) {
+                KMPlayer::NodePtr item = more->previousSibling ();
+                recents->removeChild (item);
+                more->insertBefore (item, more->firstChild ());
+            }
+            if (more->firstChild ())
+                c = more->firstChild ()->nextSibling ();
+            count = 0;
+            while (c) {
+                if (c->id == id_node_recent_node &&
+                         c->mrl ()->src == source->url ().url ()) {
+                    KMPlayer::NodePtr tmp = c->nextSibling ();
+                    more->removeChild (c);
+                    c = tmp;
+                } else {
+                    c = c->nextSibling ();
+                    count++;
+                }
+            }
+            if (count > 50)
+                more->removeChild (more->lastChild ());
+        }
         m_view->playList ()->updateTree (recents_id, recents, 0);
     }
 }
