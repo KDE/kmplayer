@@ -82,14 +82,15 @@ extern const char * strMPlayerGroup;
 static short id_node_recent_document = 25;
 static short id_node_recent_node = 26;
 static short id_node_group_node = 27;
+static short id_node_playlist_document = 28;
 
-class KMPLAYER_NO_EXPORT ListsSource : public KMPlayer::Source {
+class KMPLAYER_NO_EXPORT ListsSource : public KMPlayer::URLSource {
 public:
     KDE_NO_CDTOR_EXPORT ListsSource (KMPlayer::PartBase * p)
-        : KMPlayer::Source (QString ("lists"), p, "listssource") {}
-    KDE_NO_EXPORT void jump (KMPlayer::NodePtr e) { e->activate (); }
-    KDE_NO_EXPORT virtual void activate () {}
-    KDE_NO_EXPORT virtual void deactivate () {}
+        : KMPlayer::URLSource (p, "lists://") {}
+    void jump (KMPlayer::NodePtr e);
+    void activate ();
+    void setDocument (KMPlayer::NodePtr doc, KMPlayer::NodePtr cur);
 };
 
 class KMPLAYER_NO_EXPORT Recents : public FileDocument {
@@ -120,6 +121,57 @@ public:
     KMPlayerApp * app;
 };
 
+class KMPLAYER_NO_EXPORT Playlist : public FileDocument {
+public:
+    Playlist (KMPlayerApp *a, KMPlayer::PlayListNotify *n, bool plmod = false);
+    void childDone (KMPlayer::NodePtr);
+    void activate ();
+    KMPlayer::NodePtr childFromTag (const QString & tag);
+    KDE_NO_EXPORT const char * nodeName () const { return "playlist"; }
+    KMPlayerApp * app;
+    bool loaded;
+    bool playmode;
+};
+
+class KMPLAYER_NO_EXPORT PlaylistItem : public KMPlayer::Mrl {
+public:
+    PlaylistItem (KMPlayer::NodePtr & doc, KMPlayerApp *a, const QString &url = QString());
+    void activate ();
+    void closed ();
+    KDE_NO_EXPORT const char * nodeName () const { return "item"; }
+    KMPlayerApp * app;
+};
+
+class KMPLAYER_NO_EXPORT PlaylistGroup : public KMPlayer::Mrl {
+public:
+    PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, const QString &pn);
+    PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, bool plmode=false);
+    KMPlayer::NodePtr childFromTag (const QString & tag);
+    void closed ();
+    KDE_NO_EXPORT const char * nodeName () const { return "group"; }
+    KMPlayerApp * app;
+    bool playmode;
+};
+
+KDE_NO_EXPORT void ListsSource::jump (KMPlayer::NodePtr e) {
+    if (e->id >= id_node_recent_document && e->id <= id_node_playlist_document)
+        e->activate ();
+    else
+        KMPlayer::URLSource::jump (e);
+}
+
+KDE_NO_EXPORT void ListsSource::activate () {
+    playCurrent ();
+}
+
+KDE_NO_EXPORT void ListsSource::setDocument (KMPlayer::NodePtr doc, KMPlayer::NodePtr cur) {
+    if (m_document)
+        m_document->document()->dispose ();
+    m_document = doc;
+    m_current = cur;
+    kdDebug () << "setDocument: " << m_document->outerXML () << endl;
+}
+
 KDE_NO_CDTOR_EXPORT FileDocument::FileDocument (short i, const QString &s, KMPlayer::PlayListNotify * n)
  : KMPlayer::Document (s, n) {
     id = i;
@@ -133,6 +185,7 @@ KDE_NO_EXPORT KMPlayer::NodePtr FileDocument::childFromTag(const QString &tag) {
 
 void FileDocument::readFromFile (const QString & fn) {
     QFile file (fn);
+    kdDebug () << "readFromFile " << fn << endl;
     if (file.exists ()) {
         file.open (IO_ReadOnly);
         QTextStream inxml (&file);
@@ -142,10 +195,11 @@ void FileDocument::readFromFile (const QString & fn) {
 }
 
 void FileDocument::writeToFile (const QString & fn) {
-   QFile file (fn);
-   file.open (IO_WriteOnly);
-   QCString utf = outerXML ().utf8 ();
-   file.writeBlock (utf, utf.length ());
+    QFile file (fn);
+    kdDebug () << "writeToFile " << fn << endl;
+    file.open (IO_WriteOnly);
+    QCString utf = outerXML ().utf8 ();
+    file.writeBlock (utf, utf.length ());
 }
 
 KDE_NO_CDTOR_EXPORT Recents::Recents (KMPlayerApp *a)
@@ -206,6 +260,109 @@ KDE_NO_EXPORT void Group::closed () {
         pretty_name = getAttribute ("title");
 }
 
+KDE_NO_EXPORT void Playlist::activate () {
+    if (playmode)
+        KMPlayer::Document::activate ();
+    else if (!loaded) {
+        loaded = true;
+        readFromFile (locateLocal ("data", "kmplayer/playlist.xml"));
+        app->updatePlaylist ();
+    }
+}
+
+KDE_NO_CDTOR_EXPORT Playlist::Playlist (KMPlayerApp *a, KMPlayer::PlayListNotify *n, bool plmode)
+    : FileDocument (id_node_playlist_document, "Playlist://", n),
+      app(a),
+      loaded (false),
+      playmode (plmode) {
+    pretty_name = i18n ("Playlist");
+}
+
+KDE_NO_EXPORT KMPlayer::NodePtr Playlist::childFromTag (const QString & tag) {
+    // kdDebug () << nodeName () << " childFromTag " << tag << endl;
+    if (tag == QString::fromLatin1 ("item"))
+        return playmode
+            ? KMPlayer::NodePtr (new KMPlayer::GenericMrl (m_doc))
+            : KMPlayer::NodePtr (new PlaylistItem (m_doc, app));
+    else if (tag == QString::fromLatin1 ("group"))
+        return new PlaylistGroup (m_doc, app, playmode);
+    return FileDocument::childFromTag (tag);
+}
+
+KDE_NO_EXPORT void Playlist::childDone (KMPlayer::NodePtr) {
+    finish ();
+}
+
+KDE_NO_CDTOR_EXPORT
+PlaylistItem::PlaylistItem (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url) 
+  : KMPlayer::Mrl (doc, id_node_recent_node), app (a) {
+    src = url;
+    setAttribute ("url", url);
+}
+
+KDE_NO_EXPORT void PlaylistItem::closed () {
+    if (src.isEmpty ())
+        src = getAttribute ("url");
+}
+
+KDE_NO_EXPORT void PlaylistItem::activate () {
+    ListsSource * source = static_cast <ListsSource *> (app->player ()->sources () ["listssource"]);
+    KMPlayer::NodePtr pl = new Playlist (app, source, true);
+    QString data;
+    QString pn;
+    if (parentNode ()->id == id_node_group_node) {
+        data = parentNode ()->outerXML ();
+        pn = parentNode ()->mrl ()->pretty_name;
+    } else {
+        data = outerXML ();
+        pn = pretty_name.isEmpty () ? src : pretty_name;
+    }
+    pl->mrl ()->pretty_name = pn;
+    kdDebug () << "cloning to " << data << endl;
+    QTextStream inxml (data, IO_ReadOnly);
+    KMPlayer::readXML (pl, inxml, QString::null);
+    pl->normalize ();
+    KMPlayer::NodePtr cur = pl->firstChild ();
+    if (parentNode ()->id == id_node_group_node && cur) {
+        KMPlayer::NodePtr sister = parentNode ()->firstChild ();
+        cur = cur->firstChild ();
+        while (sister && cur && sister.ptr () != this) {
+            sister = sister->nextSibling ();
+            cur = cur->nextSibling ();
+        }
+    }
+    source->setDocument (pl, cur);
+    app->player ()->setSource (source);
+}
+
+KDE_NO_CDTOR_EXPORT
+PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString & pn) 
+  : KMPlayer::Mrl (doc, id_node_group_node), app (a), playmode (false) {
+    pretty_name = pn;
+    if (!pn.isEmpty ())
+        setAttribute ("title", pn);
+}
+
+KDE_NO_CDTOR_EXPORT
+PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr & doc, KMPlayerApp * a, bool lm)
+  : KMPlayer::Mrl (doc, id_node_group_node), app (a), playmode (lm) {
+}
+
+KDE_NO_EXPORT KMPlayer::NodePtr PlaylistGroup::childFromTag (const QString & tag) {
+    if (tag == QString::fromLatin1 ("item"))
+        return playmode
+            ? KMPlayer::NodePtr (new KMPlayer::GenericMrl (m_doc))
+            : KMPlayer::NodePtr (new PlaylistItem (m_doc, app));
+    else if (tag == QString::fromLatin1 ("group"))
+        return new PlaylistGroup (m_doc, app, playmode);
+    return 0L;
+}
+
+KDE_NO_EXPORT void PlaylistGroup::closed () {
+    if (pretty_name.isEmpty ())
+        pretty_name = getAttribute ("title");
+}
+
 KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     : KMainWindow(0, name),
       config (kapp->config ()),
@@ -231,7 +388,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     m_player->players () ["xvideo"] = new XVideo(m_player,m_player->settings());
     m_player->setProcess ("mplayer");
     m_player->setRecorder ("mencoder");
-    m_player->sources () ["listssource"] = new ListsSource (m_player);
+    ListsSource * lstsrc = new ListsSource (m_player);
+    m_player->sources () ["listssource"] = lstsrc;
     m_player->sources () ["dvdsource"] = new ::KMPlayerDVDSource(this, m_dvdmenu);
     m_player->sources () ["dvdnavsource"] = new KMPlayerDVDNavSource (this, m_dvdnavmenu);
     m_player->sources () ["vcdsource"] = new KMPlayerVCDSource(this, m_vcdmenu);
@@ -243,6 +401,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     initView();
 
     //setAutoSaveSettings();
+    playlist = new Playlist (this, lstsrc);
+    playlist_id = m_view->playList ()->addTree (playlist, "listssource", "player_playlist", KMPlayer::PlayListView::AllowDrag | KMPlayer::PlayListView::AllowDrops);
     readOptions();
 }
 
@@ -250,6 +410,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::~KMPlayerApp () {
     delete m_broadcastconfig;
     if (recents)
         recents->document ()->dispose ();
+    if (playlist)
+        playlist->document ()->dispose ();
 }
 
 
@@ -783,6 +945,9 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
         static_cast <Recents *> (recents.ptr ())->writeToFile
             (locateLocal ("data", "kmplayer/recent.xml"));
     }
+    Playlist * pl = static_cast <Playlist *> (playlist.ptr ());
+    if (pl && pl->loaded)
+        pl->writeToFile (locateLocal ("data", "kmplayer/playlist.xml"));
 }
 
 
@@ -816,7 +981,7 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     if (!recents) {
         fileOpenRecent->loadEntries(config,"Recent Files");
         recents = new Recents (this);
-        recents_id = m_view->playList ()->addTree (recents, "listssource", "player_playlist", KMPlayer::PlayListView::AllowDrag);
+        recents_id = m_view->playList ()->addTree (recents, "listssource", "history", KMPlayer::PlayListView::AllowDrag);
     }
     configChanged ();
 }
@@ -1015,6 +1180,10 @@ KDE_NO_EXPORT void KMPlayerApp::slotClearHistory () {
     m_player->settings ()->sub_urllist.clear ();
     recents->clear ();
     m_view->playList ()->updateTree (recents_id, recents, 0);
+}
+
+KDE_NO_EXPORT void KMPlayerApp::updatePlaylist () {
+    m_view->playList ()->updateTree (playlist_id, playlist, 0);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotFileClose()

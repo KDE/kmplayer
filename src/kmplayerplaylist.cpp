@@ -969,8 +969,11 @@ bool GenericMrl::isPlayable () {
 }
 
 void GenericMrl::closed () {
-    if (src.isEmpty ())
+    if (src.isEmpty ()) {
         src = getAttribute (QString ("src"));
+        if (src.isEmpty ())
+            src = getAttribute (QString ("url"));
+    }
     if (pretty_name.isEmpty ())
         pretty_name = getAttribute (QString ("name"));
 }

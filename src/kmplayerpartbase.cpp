@@ -1401,17 +1401,17 @@ QString Source::prettyName () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT URLSource::URLSource (PartBase * player, const KURL & url)
+URLSource::URLSource (PartBase * player, const KURL & url)
     : Source (i18n ("URL"), player, "urlsource"), activated (false) {
     setURL (url);
     //kdDebug () << "URLSource::URLSource" << endl;
 }
 
-KDE_NO_CDTOR_EXPORT URLSource::~URLSource () {
+URLSource::~URLSource () {
     //kdDebug () << "URLSource::~URLSource" << endl;
 }
 
-KDE_NO_EXPORT void URLSource::init () {
+void URLSource::init () {
     Source::init ();
 }
 
@@ -1424,7 +1424,7 @@ void URLSource::dimensions (int & w, int & h) {
     
 }
 
-KDE_NO_EXPORT bool URLSource::hasLength () {
+bool URLSource::hasLength () {
     return !!length ();
 }
 
@@ -1440,7 +1440,7 @@ KDE_NO_EXPORT void URLSource::activate () {
         play ();
 }
 
-KDE_NO_EXPORT void URLSource::deactivate () {
+void URLSource::deactivate () {
     activated = false;
     for (SharedPtr<ResolveInfo> rinfo =m_resolve_info; rinfo; rinfo=rinfo->next)
         rinfo->job->kill ();
@@ -1448,7 +1448,7 @@ KDE_NO_EXPORT void URLSource::deactivate () {
     setEventDispatcher (NodePtr ());
 }
 
-KDE_NO_EXPORT QString URLSource::prettyName () {
+QString URLSource::prettyName () {
     if (m_url.isEmpty ())
         return i18n ("URL");
     if (m_url.url ().length () > 50) {
@@ -1658,7 +1658,7 @@ void URLSource::playCurrent () {
     Source::playCurrent ();
 }
 
-KDE_NO_EXPORT void URLSource::play () {
+void URLSource::play () {
     Source::play ();
 }
 
@@ -1683,7 +1683,7 @@ bool URLSource::requestPlayURL (NodePtr mrl) {
     return Source::requestPlayURL (mrl);
 }
 
-KDE_NO_EXPORT bool URLSource::resolveURL (NodePtr m) {
+bool URLSource::resolveURL (NodePtr m) {
     Mrl * mrl = m->mrl ();
     if (!mrl || mrl->src.isEmpty ())
         return true;

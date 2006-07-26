@@ -73,6 +73,7 @@ public:
     /* After createGUI() some menu's have to readded again */
     void initMenu ();
     void restoreFromConfig ();
+    void updatePlaylist ();
 protected:
     void saveOptions ();
     void readOptions ();
@@ -132,6 +133,7 @@ private:
     KMPlayer::PartBase * m_player;
     KMPlayer::View * m_view;
     KMPlayer::NodePtr recents;
+    KMPlayer::NodePtr playlist;
 
     KAction * fileNewWindow;
     KAction * fileOpen;
@@ -162,6 +164,7 @@ private:
     QCString m_dcopName;
     int last_time_left;
     int recents_id;
+    int playlist_id;
     bool m_showToolbar;
     bool m_showStatusbar;
     bool m_showMenubar;
