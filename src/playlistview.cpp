@@ -94,10 +94,13 @@ RootPlayListItem::RootPlayListItem (int _id, PlayListView *v, const NodePtr & e,
 
 KDE_NO_CDTOR_EXPORT void RootPlayListItem::paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align) {
     QColorGroup mycg (cg);
-    //mycg.setColor (QColorGroup::Background, listview->activeColor());
-    //mycg.setColor (QColorGroup::Foreground, listview->paletteBackgroundColor());
-    //mycg.setColor (QColorGroup::Text, listview->paletteBackgroundColor());
+    mycg.setColor (QColorGroup::Base, listview->topLevelWidget()->paletteBackgroundColor());
+    mycg.setColor (QColorGroup::Highlight, mycg.base ());
+    mycg.setColor (QColorGroup::Text, listview->topLevelWidget()->paletteForegroundColor());
+    mycg.setColor (QColorGroup::HighlightedText, mycg.text ());
     QListViewItem::paintCell (p, mycg, column, width, align);
+    p->setPen (mycg.text ());
+    p->drawRect (0, 0, width -1, height () -1 );
 }
 
 //-----------------------------------------------------------------------------
@@ -112,7 +115,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
  : KListView (parent, "kde_kmplayer_playlist"),
    m_view (view),
    m_find_dialog (0L),
-   m_active_color (255, 255, 255),
+   m_active_color (30, 0, 255),
    last_id (0),
    m_ignore_expanded (false) {
     addColumn (QString::null);

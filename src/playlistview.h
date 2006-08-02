@@ -64,8 +64,6 @@ public:
     RootPlayListItem (int id, PlayListView *v, const NodePtr & d, QListViewItem * b, int flags);
     KDE_NO_CDTOR_EXPORT ~RootPlayListItem () {}
     void paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align);
-    NodePtrW m_doc;
-    PlayListView * listview;
     QString source;
     QString icon;
     int id;

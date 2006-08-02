@@ -856,9 +856,9 @@ void Source::init () {
     m_width = 0;
     m_height = 0;
     m_aspect = 0.0;
-    setLength (m_document, 0);
     m_position = 0;
     m_identified = false;
+    setLength (m_document, 0);
     m_recordcmd.truncate (0);
 }
 
