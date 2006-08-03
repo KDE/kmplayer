@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2002-2003 by Koos Vriezen <koos.vriezen@gmail.com>
+ * Copyright (C) 2006 by Koos Vriezen <koos.vriezen@gmail.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
@@ -23,6 +23,7 @@
 #include <qapplication.h>
 #include <qclipboard.h>
 #include <qpopupmenu.h>
+#include <qdrawutil.h>
 #include <qpainter.h>
 #include <qiconset.h>
 #include <qpixmap.h>
@@ -92,7 +93,6 @@ RootPlayListItem::RootPlayListItem (int _id, PlayListView *v, const NodePtr & e,
     show_all_nodes (false),
     have_dark_nodes (false) {}
 
-#include <qdrawutil.h>
 KDE_NO_CDTOR_EXPORT void RootPlayListItem::paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align) {
     QColorGroup mycg (cg);
     mycg.setColor (QColorGroup::Base, listview->topLevelWidget()->paletteBackgroundColor());
