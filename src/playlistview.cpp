@@ -92,6 +92,7 @@ RootPlayListItem::RootPlayListItem (int _id, PlayListView *v, const NodePtr & e,
     show_all_nodes (false),
     have_dark_nodes (false) {}
 
+#include <qdrawutil.h>
 KDE_NO_CDTOR_EXPORT void RootPlayListItem::paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align) {
     QColorGroup mycg (cg);
     mycg.setColor (QColorGroup::Base, listview->topLevelWidget()->paletteBackgroundColor());
@@ -99,8 +100,7 @@ KDE_NO_CDTOR_EXPORT void RootPlayListItem::paintCell (QPainter * p, const QColor
     mycg.setColor (QColorGroup::Text, listview->topLevelWidget()->paletteForegroundColor());
     mycg.setColor (QColorGroup::HighlightedText, mycg.text ());
     QListViewItem::paintCell (p, mycg, column, width, align);
-    p->setPen (mycg.text ());
-    p->drawRect (0, 0, width -1, height () -1 );
+    qDrawShadeRect (p, 0, 0, width -1, height () -1, mycg, !isOpen ());
 }
 
 //-----------------------------------------------------------------------------
