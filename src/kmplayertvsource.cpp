@@ -389,7 +389,10 @@ void KMPlayerTVSource::jump (KMPlayer::NodePtr e) {
         }
         if (m_player->source () != this)
             m_player->setSource (this);
-        else
+        else if (m_player->process ()->playing ()) {
+            m_back_request = m_current;
+            m_player->process ()->stop ();
+        } else
             playCurrent ();
     }
 }
