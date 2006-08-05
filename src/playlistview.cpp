@@ -227,12 +227,25 @@ void PlayListView::updateTree (int id, NodePtr root, NodePtr active) {
     QWidget * w = focusWidget ();
     if (w && w != this)
         w->clearFocus ();
+    bool set_open = false;
     //setSelected (firstChild (), true);
     RootPlayListItem * ritem = static_cast <RootPlayListItem *> (firstChild ());
     RootPlayListItem * before = 0L;
     for (; ritem; ritem =static_cast<RootPlayListItem*>(ritem->nextSibling())) {
         if (ritem->id == id) 
-            break;
+            break;  // found based on id
+        if (id == -1) { // wildcard id
+            for (NodePtr n = root; n; n = n->parentNode ())
+                if (n == ritem->node) {
+                    root = n;
+                    break;
+                }
+            if (root == ritem->node) {
+                id = ritem->id;
+                set_open = true;
+                break;  // found based on matching (ancestor) node
+            }
+        }
         if (ritem->id < id)
             before = ritem;
     }
@@ -250,6 +263,8 @@ void PlayListView::updateTree (int id, NodePtr root, NodePtr active) {
     }
     m_find_next->setEnabled (!!m_current_find_elm);
     updateTree (ritem, active);
+    if (set_open)
+        ritem->setOpen (set_open);
 }
 
 void PlayListView::updateTree (RootPlayListItem * ritem, NodePtr active) {

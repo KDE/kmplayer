@@ -599,11 +599,11 @@ void PartBase::playListItemExecuted (QListViewItem * item) {
         QString src = static_cast <RootPlayListItem*> (pitem)->source;
         kdDebug() << "playListItemExecuted " << src << " " << vi->node->nodeName() << endl;
         Source * source = src.isEmpty() ? m_source : m_sources[src.ascii()];
-        if (vi->node->isPlayable ())
-            source->jump (vi->node); //may become !isPlayable
-        if (!vi->node->isPlayable () &&
-                vi->firstChild () &&
-                !vi->node->isPlayable ())
+        if (vi->node->isPlayable ()) {
+            source->jump (vi->node); //may become !isPlayable by lazy loading
+            if (!vi->node->isPlayable ())
+                emit treeChanged (-1, vi->node, 0);
+        } else if (vi->firstChild ())
             vi->setOpen (!vi->isOpen ());
     } else if (vi->m_attr) {
         if (!strcasecmp (vi->m_attr->nodeName (), "src") ||

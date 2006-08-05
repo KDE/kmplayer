@@ -266,7 +266,6 @@ KDE_NO_EXPORT void Playlist::activate () {
     else if (!loaded) {
         loaded = true;
         readFromFile (locateLocal ("data", "kmplayer/playlist.xml"));
-        app->updatePlaylist ();
     }
 }
 
@@ -1180,10 +1179,6 @@ KDE_NO_EXPORT void KMPlayerApp::slotClearHistory () {
     m_player->settings ()->sub_urllist.clear ();
     recents->clear ();
     m_view->playList ()->updateTree (recents_id, recents, 0);
-}
-
-KDE_NO_EXPORT void KMPlayerApp::updatePlaylist () {
-    m_view->playList ()->updateTree (playlist_id, playlist, 0);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotFileClose()

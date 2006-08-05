@@ -73,7 +73,6 @@ public:
     /* After createGUI() some menu's have to readded again */
     void initMenu ();
     void restoreFromConfig ();
-    void updatePlaylist ();
 protected:
     void saveOptions ();
     void readOptions ();
