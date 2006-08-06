@@ -224,6 +224,18 @@ KDE_NO_EXPORT void TVInput::closed () {
     //pretty_name = getAttribute ("name");
 }
 
+KDE_NO_EXPORT void TVInput::setNodeName (const QString & name) {
+    Node * p = parentNode ().ptr ();
+    QString nm (name);
+    if (p && p->id == id_node_tv_device) {
+        int pos = name.find (QString (" - ") + p->mrl ()->pretty_name);
+        if (pos > -1)
+            nm.truncate (pos);
+    }
+    pretty_name = nm + QString (" - ") + pretty_name;
+    TVNode::setNodeName (nm);
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT TVDevice::TVDevice (KMPlayer::NodePtr & doc, const QString & d) : TVNode (doc, d, "device", id_node_tv_device), zombie (false) {
@@ -247,6 +259,19 @@ KDE_NO_EXPORT KMPlayer::NodePtr TVDevice::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void TVDevice::closed () {
+    updateNodeName ();
+}
+
+KDE_NO_EXPORT void TVDevice::childDone (KMPlayer::NodePtr) {
+    finish ();
+}
+
+KDE_NO_EXPORT void TVDevice::setNodeName (const QString & name) {
+    TVNode::setNodeName (name);
+    updateNodeName ();
+}
+
+KDE_NO_EXPORT void TVDevice::updateNodeName () {
     pretty_name = getAttribute ("name");
     src = getAttribute ("path");
     for (KMPlayer::NodePtr c = firstChild (); c; c = c->nextSibling ())
@@ -254,10 +279,6 @@ KDE_NO_EXPORT void TVDevice::closed () {
             TVInput * i = static_cast <TVInput *> (c.ptr ());
             i->pretty_name = i->getAttribute("name")+QString(" - ")+pretty_name;
         }
-}
-
-KDE_NO_EXPORT void TVDevice::childDone (KMPlayer::NodePtr) {
-    finish ();
 }
 
 KDE_NO_EXPORT void TVDevice::updateDevicePage () {

@@ -110,6 +110,7 @@ public:
     TVInput (KMPlayer::NodePtr & d);
     KDE_NO_CDTOR_EXPORT ~TVInput () {}
     KMPlayer::NodePtr childFromTag (const QString &);
+    void setNodeName (const QString &);
     void closed ();
 };
 
@@ -124,7 +125,9 @@ public:
     KMPlayer::NodePtr childFromTag (const QString &);
     void closed ();
     void childDone (KMPlayer::NodePtr child);
+    void setNodeName (const QString &);
     bool expose () const { return false; }
+    void updateNodeName ();
     void updateDevicePage ();
     bool zombie;
     QGuardedPtr <TVDevicePage> device_page;
