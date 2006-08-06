@@ -374,6 +374,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       m_tvmenu (new QPopupMenu (this)),
       m_ffserverconfig (new KMPlayerFFServerConfig),
       m_broadcastconfig (new KMPlayerBroadcastConfig (m_player, m_ffserverconfig)),
+      edit_tree_id (-1),
       last_time_left (0),
       m_played_intro (false),
       m_played_exit (false),
@@ -401,7 +402,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
 
     //setAutoSaveSettings();
     playlist = new Playlist (this, lstsrc);
-    playlist_id = m_view->playList ()->addTree (playlist, "listssource", "player_playlist", KMPlayer::PlayListView::AllowDrag | KMPlayer::PlayListView::AllowDrops);
+    playlist_id = m_view->playList ()->addTree (playlist, "listssource", "player_playlist", KMPlayer::PlayListView::AllowDrag | KMPlayer::PlayListView::AllowDrops | KMPlayer::PlayListView::TreeEdit);
     readOptions();
 }
 
@@ -528,6 +529,8 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
                  this, SLOT (zoom100 ()));
     connect (m_view, SIGNAL (fullScreenChanged ()),
             this, SLOT (fullScreen ()));
+    connect (m_view->playList (), SIGNAL (selectionChanged (QListViewItem *)),
+            this, SLOT (playListItemSelected (QListViewItem *)));
     /*QPopupMenu * viewmenu = new QPopupMenu;
     viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()),
                           QKeySequence ("CTRL + Key_F"));
@@ -867,22 +870,36 @@ KDE_NO_EXPORT void KMPlayerApp::zoom150 () {
 
 KDE_NO_EXPORT void KMPlayerApp::editMode () {
     m_view->docArea ()->hide ();
-    m_view->setEditMode (!m_view->editMode ());
+    bool editmode = !m_view->editMode ();
+    KMPlayer::PlayListItem * pi = m_view->playList ()->currentPlayListItem ();
+    if (!pi || !pi->node)
+        editmode = false;
     m_view->docArea ()->show ();
-    viewEditMode->setChecked (m_view->editMode ());
-    viewSyncEditMode->setEnabled (m_view->editMode () ||
-            !strcmp (m_player->source ()->name (), "urlsource"));
+    viewEditMode->setChecked (editmode);
+    KMPlayer::RootPlayListItem * ri = (edit_tree_id > 0 && !editmode)
+        ? m_view->playList ()->rootItem (edit_tree_id)
+        : m_view->playList ()->rootItem (pi);
+    if (editmode) {
+        edit_tree_id = ri->id;
+        m_view->setEditMode (ri, true);
+        m_view->setInfoMessage (pi->node->innerXML ());
+        viewSyncEditMode->setEnabled (true);
+    } else {
+        m_view->setEditMode (ri, false);
+        edit_tree_id = -1;
+        viewSyncEditMode->setEnabled (!strcmp (m_player->source ()->name (), "urlsource"));
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerApp::syncEditMode () {
-    if (m_view->editMode ()) {
+    if (edit_tree_id > -1) {
         KMPlayer::PlayListItem * si = static_cast <KMPlayer::PlayListItem *> (m_view->playList ()->selectedItem ());
         if (si && si->node) {
             si->node->clearChildren ();
             QString txt = m_view->infoPanel ()->text ();
             QTextStream ts (txt, IO_ReadOnly);
             KMPlayer::readXML (si->node, ts, QString (), false);
-            m_view->playList ()->updateTree (0, si->node->document(), si->node);
+            m_view->playList ()->updateTree (edit_tree_id, si->node->document(), si->node);
         }
     } else
         m_player->openURL (m_player->source ()->url ());
@@ -1277,6 +1294,16 @@ KDE_NO_EXPORT void KMPlayerApp::fullScreen () {
         show ();
         setGeometry (m_view->viewArea ()->topWindowRect ());
     }
+}
+
+KDE_NO_EXPORT void KMPlayerApp::playListItemSelected (QListViewItem * item) {
+    KMPlayer::PlayListItem * vi = static_cast <KMPlayer::PlayListItem *> (item);
+    if (edit_tree_id > -1) {
+        if (vi->playListView ()->rootItem (item)->id != edit_tree_id)
+            editMode ();
+        m_view->setInfoMessage (edit_tree_id > -1 ? vi->node->innerXML () : QString ());
+    }
+    viewEditMode->setEnabled (vi->playListView ()->rootItem (item)->flags & KMPlayer::PlayListView::TreeEdit);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::startArtsControl () {

@@ -340,7 +340,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QPopupM
     connect (m_menu, SIGNAL (aboutToShow ()), this, SLOT (menuAboutToShow ()));
     m_document = new TVDocument (this);
     m_player->settings ()->addPage (this);
-    tree_id = static_cast <KMPlayer::View*>(m_player->view ())->playList ()->addTree (m_document, "tvsource", "tv", 0);
+    tree_id = static_cast <KMPlayer::View*>(m_player->view ())->playList ()->addTree (m_document, "tvsource", "tv", KMPlayer::PlayListView::TreeEdit);
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerTVSource::~KMPlayerTVSource () {

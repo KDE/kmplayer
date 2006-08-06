@@ -645,13 +645,13 @@ void View::setPlaylistOnly () {
     m_dockarea->setMainDockWidget (m_dock_playlist);
 }
 
-void View::setEditMode (bool enable) {
+void View::setEditMode (RootPlayListItem *ri, bool enable) {
     m_edit_mode = enable;
     m_infopanel->setReadOnly (!m_edit_mode);
     m_infopanel->setTextFormat (enable ? Qt::PlainText : Qt::AutoText);
     if (m_edit_mode && m_dock_infopanel->mayBeShow ())
         m_dock_infopanel->manualDock(m_dock_video,KDockWidget::DockBottom,50);
-    m_playlist->showAllNodes (m_edit_mode);
+    m_playlist->showAllNodes (ri, m_edit_mode);
 }
 
 bool View::setPicture (const QString & path) {

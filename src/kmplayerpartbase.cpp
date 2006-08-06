@@ -582,8 +582,8 @@ void PartBase::playListItemSelected (QListViewItem * item) {
     if (m_in_update_tree) return;
     PlayListItem * vi = static_cast <PlayListItem *> (item);
     if (vi->node) {
-        emit infoUpdated (m_view->editMode () ?
-                vi->node->innerXML () : vi->node->innerText ());
+        if (!m_view->editMode ())
+            emit infoUpdated (vi->node->innerText ());
     } else if (!vi->m_attr)
         updateTree (); // items already deleted
 }
@@ -593,10 +593,7 @@ void PartBase::playListItemExecuted (QListViewItem * item) {
     if (m_view->editMode ()) return;
     PlayListItem * vi = static_cast <PlayListItem *> (item);
     if (vi->node) {
-        QListViewItem * pitem = item;
-        while (pitem->parent())
-            pitem = pitem->parent();
-        QString src = static_cast <RootPlayListItem*> (pitem)->source;
+        QString src = vi->playListView ()->rootItem (item)->source;
         kdDebug() << "playListItemExecuted " << src << " " << vi->node->nodeName() << endl;
         Source * source = src.isEmpty() ? m_source : m_sources[src.ascii()];
         if (vi->node->isPlayable ()) {
@@ -695,7 +692,7 @@ void PartBase::play () {
         m_update_tree_timer = 0;
     }
     if (m_process->state () == Process::NotRunning) {
-        PlayListItem * lvi = static_cast <PlayListItem *> (m_view->playList ()->currentItem ());
+        PlayListItem * lvi = m_view->playList ()->currentPlayListItem ();
         if (lvi) { // make sure it's in the first tree
             QListViewItem * pitem = lvi;
             while (pitem->parent())

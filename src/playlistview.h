@@ -52,6 +52,7 @@ public:
     KDE_NO_CDTOR_EXPORT ~PlayListItem () {}
     void paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align);
     void paintBranches(QPainter *p, const QColorGroup &cg, int w, int y, int h);
+    PlayListView * playListView () const;
     NodePtrW node;
     AttributePtrW m_attr;
     PlayListView * listview;
@@ -84,11 +85,14 @@ public:
     PlayListView (QWidget * parent, View * view, KActionCollection * ac);
     ~PlayListView ();
     void selectItem (const QString & txt);
-    void showAllNodes (bool show=true);
+    void showAllNodes (RootPlayListItem *, bool show=true);
     void setActiveForegroundColor (const QColor & c) { m_active_color = c; }
     const QColor & activeColor () const { return m_active_color; }
     int addTree (NodePtr r, const QString & src, const QString & ico, int flgs);
+    RootPlayListItem * rootItem (QListViewItem * item) const;
+    RootPlayListItem * rootItem (int id) const;
     void setFont (const QFont &);
+    PlayListItem * currentPlayListItem () const;
 signals:
     void addBookMark (const QString & title, const QString & url);
 protected:
@@ -130,6 +134,14 @@ private:
     int last_id;
     bool m_ignore_expanded;
 };
+
+KDE_NO_EXPORT inline PlayListView * PlayListItem::playListView () const {
+    return static_cast <PlayListView *> (listView ());
+}
+
+KDE_NO_EXPORT inline PlayListItem * PlayListView::currentPlayListItem () const {
+    return static_cast <PlayListItem *> (currentItem ());
+}
 
 } // namespace
 

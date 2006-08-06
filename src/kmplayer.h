@@ -35,6 +35,7 @@ static const int id_status_timer = 2;
 
 class QPopupMenu;
 class QMenuItem;
+class QListViewItem;
 class KProcess;
 class KMPlayerBroadcastConfig;
 class KMPlayerFFServerConfig;
@@ -123,6 +124,7 @@ private slots:
     void slotConfigureToolbars ();
     void slotClearHistory ();
     void windowVideoConsoleToggled (int wt);
+    void playListItemSelected (QListViewItem *);
 
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
@@ -161,6 +163,7 @@ private:
     KMPlayerFFServerConfig * m_ffserverconfig;
     KMPlayerBroadcastConfig * m_broadcastconfig;
     QCString m_dcopName;
+    int edit_tree_id;
     int last_time_left;
     int recents_id;
     int playlist_id;
