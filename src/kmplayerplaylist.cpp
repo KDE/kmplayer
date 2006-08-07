@@ -950,8 +950,8 @@ KDE_NO_EXPORT void GenericURL::closed () {
 
 //-----------------------------------------------------------------------------
 
-GenericMrl::GenericMrl (NodePtr & d, const QString & s, const QString & name)
- : Mrl (d) {
+GenericMrl::GenericMrl (NodePtr & d, const QString & s, const QString & name, const QString & tag)
+ : Mrl (d), node_name (tag) {
     src = s;
     if (!src.isEmpty ())
         setAttribute (QString ("src"), src);

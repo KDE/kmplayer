@@ -52,7 +52,7 @@ namespace KMPlayer {
             return true;
         if (QTextDrag::canDecode (de)) {
             QString text;
-            if (KURL (QTextDrag::decode (de, text)).isValid ())
+            if (QTextDrag::decode (de, text) && KURL (text).isValid ())
                 return true;
         }
         return false;
@@ -294,9 +294,10 @@ void PlayListView::selectItem (const QString & txt) {
 KDE_NO_EXPORT QDragObject * PlayListView::dragObject () {
     PlayListItem * item = static_cast <PlayListItem *> (selectedItem ());
     if (item && item->node) {
-        KURL::List l;
+        QTextDrag * drag = new QTextDrag (item->node->mrl ()->src, this);
+        /*KURL::List l;
         l << KURL (item->node->mrl ()->src);
-        KURLDrag * drag = new KURLDrag (l, this);
+        KURLDrag * drag = new KURLDrag (l, this);*/
         drag->setPixmap (video_pix);
         return drag;
     }
@@ -401,6 +402,9 @@ KDE_NO_EXPORT bool PlayListView::acceptDrag (QDropEvent * de) const {
 
 KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, QListViewItem *after) {
     if (after) {
+        RootPlayListItem * ritem = rootItem (after);
+        if (ritem->id > 0)
+            return;
         NodePtr n = static_cast <PlayListItem *> (after)->node;
         bool valid = n && (!n->isDocument () || n->hasChildNodes ());
         KURL::List sl;
@@ -414,7 +418,6 @@ KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, QListViewItem *af
         if (valid && sl.size () > 0) {
             bool as_child = n->isDocument () || n->hasChildNodes ();
             NodePtr d = n->document ();
-            PlayListItem * citem = currentPlayListItem ();
             for (int i = sl.size (); i > 0; i--) {
                 Node * ni = new KMPlayer::GenericURL (d, sl[i-1].url ());
                 if (as_child)
@@ -422,9 +425,8 @@ KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, QListViewItem *af
                 else
                     n->parentNode ()->insertBefore (ni, n->nextSibling ());
             }
-            PlayListItem * ritem = static_cast<PlayListItem*>(firstChild());
-            if (ritem)
-                updateTree (rootItem (ritem)->id, ritem->node, citem ? citem->node : NodePtrW ());
+            PlayListItem * citem = currentPlayListItem ();
+            updateTree (0, ritem->node, citem ? citem->node : 0L);
             return;
         }
     }

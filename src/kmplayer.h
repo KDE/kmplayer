@@ -125,6 +125,8 @@ private slots:
     void slotClearHistory ();
     void windowVideoConsoleToggled (int wt);
     void playListItemSelected (QListViewItem *);
+    void playListItemDropped (QDropEvent * e, QListViewItem * after);
+    void playListItemMoved ();
 
 private:
     void menuItemClicked (QPopupMenu * menu, int id);

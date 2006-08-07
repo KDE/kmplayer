@@ -835,14 +835,15 @@ public:
 class KMPLAYER_EXPORT GenericMrl : public Mrl { 
 public:
     KDE_NO_CDTOR_EXPORT GenericMrl (NodePtr & d) : Mrl (d) {}
-    GenericMrl(NodePtr &d, const QString &s, const QString &n=QString::null);
-    KDE_NO_EXPORT const char * nodeName () const { return "mrl"; }
+    GenericMrl(NodePtr &d, const QString &s, const QString & name=QString::null, const QString &tag=QString ("mrl"));
+    KDE_NO_EXPORT const char * nodeName () const { return node_name.ascii (); }
     void closed ();
     bool expose () const;
     /**
      * Will return false if this document has child nodes
      */
     bool isPlayable ();
+    QString node_name;
 };
 
 KMPLAYER_EXPORT

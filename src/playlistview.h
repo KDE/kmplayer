@@ -93,6 +93,7 @@ public:
     RootPlayListItem * rootItem (int id) const;
     void setFont (const QFont &);
     PlayListItem * currentPlayListItem () const;
+    PlayListItem * selectedPlayListItem () const;
 signals:
     void addBookMark (const QString & title, const QString & url);
 protected:
@@ -141,6 +142,10 @@ KDE_NO_EXPORT inline PlayListView * PlayListItem::playListView () const {
 
 KDE_NO_EXPORT inline PlayListItem * PlayListView::currentPlayListItem () const {
     return static_cast <PlayListItem *> (currentItem ());
+}
+
+KDE_NO_EXPORT inline PlayListItem * PlayListView::selectedPlayListItem() const {
+    return static_cast <PlayListItem *> (selectedItem ());
 }
 
 } // namespace

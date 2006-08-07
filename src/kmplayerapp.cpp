@@ -45,6 +45,7 @@
 #include <klineeditdlg.h>
 #include <kmenubar.h>
 #include <kstatusbar.h>
+#include <kurldrag.h>
 #include <klocale.h>
 #include <kconfig.h>
 #include <kstdaction.h>
@@ -281,7 +282,7 @@ KDE_NO_EXPORT KMPlayer::NodePtr Playlist::childFromTag (const QString & tag) {
     // kdDebug () << nodeName () << " childFromTag " << tag << endl;
     if (tag == QString::fromLatin1 ("item"))
         return playmode
-            ? KMPlayer::NodePtr (new KMPlayer::GenericMrl (m_doc))
+            ? KMPlayer::NodePtr (new KMPlayer::GenericMrl (m_doc, QString(), QString(), "item"))
             : KMPlayer::NodePtr (new PlaylistItem (m_doc, app));
     else if (tag == QString::fromLatin1 ("group"))
         return new PlaylistGroup (m_doc, app, playmode);
@@ -350,7 +351,7 @@ PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr & doc, KMPlayerApp * a, bool lm)
 KDE_NO_EXPORT KMPlayer::NodePtr PlaylistGroup::childFromTag (const QString & tag) {
     if (tag == QString::fromLatin1 ("item"))
         return playmode
-            ? KMPlayer::NodePtr (new KMPlayer::GenericMrl (m_doc))
+            ? KMPlayer::NodePtr (new KMPlayer::GenericMrl (m_doc, QString(), QString(), "item"))
             : KMPlayer::NodePtr (new PlaylistItem (m_doc, app));
     else if (tag == QString::fromLatin1 ("group"))
         return new PlaylistGroup (m_doc, app, playmode);
@@ -531,6 +532,10 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
             this, SLOT (fullScreen ()));
     connect (m_view->playList (), SIGNAL (selectionChanged (QListViewItem *)),
             this, SLOT (playListItemSelected (QListViewItem *)));
+    connect (m_view->playList(), SIGNAL (dropped (QDropEvent*, QListViewItem*)),
+            this, SLOT (playListItemDropped (QDropEvent *, QListViewItem *)));
+    connect (m_view->playList(), SIGNAL (moved ()),
+            this, SLOT (playListItemMoved ()));
     /*QPopupMenu * viewmenu = new QPopupMenu;
     viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()),
                           QKeySequence ("CTRL + Key_F"));
@@ -893,7 +898,7 @@ KDE_NO_EXPORT void KMPlayerApp::editMode () {
 
 KDE_NO_EXPORT void KMPlayerApp::syncEditMode () {
     if (edit_tree_id > -1) {
-        KMPlayer::PlayListItem * si = static_cast <KMPlayer::PlayListItem *> (m_view->playList ()->selectedItem ());
+        KMPlayer::PlayListItem *si = m_view->playList()->selectedPlayListItem();
         if (si && si->node) {
             si->node->clearChildren ();
             QString txt = m_view->infoPanel ()->text ();
@@ -1304,6 +1309,47 @@ KDE_NO_EXPORT void KMPlayerApp::playListItemSelected (QListViewItem * item) {
         m_view->setInfoMessage (edit_tree_id > -1 ? vi->node->innerXML () : QString ());
     }
     viewEditMode->setEnabled (vi->playListView ()->rootItem (item)->flags & KMPlayer::PlayListView::TreeEdit);
+}
+
+KDE_NO_EXPORT
+void KMPlayerApp::playListItemDropped (QDropEvent * de, QListViewItem * after) {
+    if (!after)
+        return;
+    KMPlayer::RootPlayListItem *ritem = m_view->playList()->rootItem(after);
+    if (ritem->id != playlist_id)
+        return;
+    KURL::List sl;
+    if (KURLDrag::canDecode (de)) {
+        KURLDrag::decode (de, sl);
+    } else if (QTextDrag::canDecode (de)) {
+        QString text;
+        QTextDrag::decode (de, text);
+        sl.push_back (KURL (text));
+    }
+    if (sl.size () > 0) {
+        KMPlayer::NodePtr n = static_cast<KMPlayer::PlayListItem*>(after)->node;
+        for (int i = sl.size (); i > 0; i--) {
+            KMPlayer::NodePtr pi=new PlaylistItem(playlist, this,sl[i-1].url());
+            if (n == playlist || n->hasChildNodes ())
+                n->insertBefore (pi, n->firstChild ());
+            else
+                n->parentNode ()->insertBefore (pi, n->nextSibling ());
+        }
+        m_view->playList()->updateTree (playlist_id, playlist, 0L);
+    }
+}
+
+KDE_NO_EXPORT void KMPlayerApp::playListItemMoved () {
+    KMPlayer::PlayListItem * si = m_view->playList ()->selectedPlayListItem ();
+    KMPlayer::RootPlayListItem * ri = m_view->playList ()->rootItem (si);
+    kdDebug() << "playListItemMoved " << (ri->id == playlist_id) << !! si->node << endl;
+    if (ri->id == playlist_id && si->node) {
+        KMPlayer::NodePtr p = si->node->parentNode ();
+        if (p) {
+            p->removeChild (si->node);
+            m_view->playList()->updateTree (playlist_id, playlist, 0L);
+        }
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerApp::startArtsControl () {

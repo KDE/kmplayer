@@ -84,10 +84,7 @@ protected:
 class KMPLAYER_NO_EXPORT TVNode : public KMPlayer::GenericMrl {
 public:
     TVNode (KMPlayer::NodePtr &d, const QString &s, const char * t, short id, const QString &n=QString::null);
-    KDE_NO_EXPORT const char * nodeName () const { return tag; }
     virtual void setNodeName (const QString &);
-protected:
-    const char * tag;
 };
 
 /*
