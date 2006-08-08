@@ -31,6 +31,7 @@ Description[ta]=மைக்ரோசாப்ட் ஊடக சேவக ந�
 Description[tr]=Microsoft Medya Sunucu Protokolü
 Description[uk]=Протокол сервера Microsoft Media
 Description[xx]=xxMicrosoft Media Server Protocolxx
+Description[zh_TW]=Microsoft Media Server 通訊協定
 exec=kmplayer "%u"
 protocol=mms
 input=none

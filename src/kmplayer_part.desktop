@@ -36,6 +36,7 @@ Name[tr]=KDE için gömülmüş MPlayer
 Name[uk]=Вбудований MPlayer для KDE
 Name[xx]=xxEmbedded MPlayer for KDExx
 Name[zh_CN]=KDE 嵌入的 MPlayer
+Name[zh_TW]=MPlayer 的 KDE 嵌入式介面
 Comment=Video player plugin (QuickTime, XMovie, Windows Media and RealPlayer compatible)
 Comment[ar]=قابس القارئ المرئي ( ملائم مع QuickTime, XMovie, Windows Media و RealPlayer)
 Comment[bg]=Приставка за видео плеър (QuickTime, XMovie, Windows Media и RealPlayer съвместима)
@@ -67,6 +68,7 @@ Comment[ta]=வீடியோ சொருகி(விரைவுநேரம
 Comment[tr]=Video oynatıcı eklentisi (QuickTime, XMovie, Windows Media ve RealPlayer ile uyumlu)
 Comment[uk]=Втулок відео-програвача (програє QuickTime, XMovie, Windows Media і RealPlayer)
 Comment[xx]=xxVideo player plugin (QuickTime, XMovie, Windows Media and RealPlayer compatible)xx
+Comment[zh_TW]=視像播放程式 (可播放 QuickTime, XMovie, Windows Media 和 RealPlayer)
 X-KDE-Library=libkmplayerpart
 # Keep in sync with the audio types in kmplayer.desktop
 MimeType=application/ogg;application/smil;application/vnd.ms-asf;application/vnd.rn-realmedia;application/x-kmplayer;application/x-mplayer2;application/x-ogg;audio/basic;audio/m3u;audio/mp4;audio/mpeg;audio/mpegurl;audio/vnd.rn-realaudio;audio/vorbis;audio/x-aiff;audio/x-flac;audio/x-m3u;audio/x-matroska;audio/x-mp2;audio/x-mp3;audio/x-mpegurl;audio/x-ms-wma;audio/x-musepack;audio/x-mod;audio/x-oggflac;audio/x-pn-realaudio;audio/x-scpls;audio/x-speex;audio/x-vorbis;audio/x-wav;video/avi;video/mediaplayer;video/mp4;video/mpeg;video/quicktime;video/vnd.rn-realvideo;video/x-avi;video/x-flic;video/x-matroska;video/x-ms-asf;video/x-msvideo;video/x-ms-wmp;video/x-ms-wmv;video/x-ogm;video/x-theora;uri/mms;uri/pnm;uri/rtspt;uri/rtspu;

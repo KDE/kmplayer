@@ -38,6 +38,7 @@ Comment[tr]=KMPlayer Belgesi
 Comment[uk]=Документ KMPlayer
 Comment[xx]=xxKMPlayer Documentxx
 Comment[zh_CN]=KMPlayer 文档
+Comment[zh_TW]=KMPlayer 文件
 Icon=kmplayer
 Type=MimeType
 X-KDE-AutoEmbed=true

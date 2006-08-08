@@ -36,6 +36,7 @@ Comment[tr]=MS Medya Biçimi
 Comment[uk]=Формат MS Media
 Comment[xx]=xxMS Media Formatxx
 Comment[zh_CN]=MS Media 格式
+Comment[zh_TW]=MS 媒體格式
 MimeType=application/x-mplayer2
 Icon=multimedia
 Patterns=*.asx;*.ASX;*.asf;*.ASF;
