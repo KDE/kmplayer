@@ -436,10 +436,11 @@ KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, QListViewItem *af
 KDE_NO_EXPORT void PlayListView::itemIsRenamed (QListViewItem * qitem) {
     PlayListItem * item = static_cast <PlayListItem *> (qitem);
     if (item->node) {
-        if (!item->node->isEditable ()) {
-            item->setText (0, QString (item->node->nodeName()));
-        } else
+        RootPlayListItem * ri = rootItem (qitem);
+        if (!ri->show_all_nodes && item->node->isEditable ())
             item->node->setNodeName (item->text (0));
+        else // restore damage ..
+            updateTree (ri, item->node);
     } else if (item->m_attr) {
         QString txt = item->text (0);
         int pos = txt.find (QChar ('='));

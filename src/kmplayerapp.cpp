@@ -139,6 +139,7 @@ public:
     PlaylistItem (KMPlayer::NodePtr & doc, KMPlayerApp *a, const QString &url = QString());
     void activate ();
     void closed ();
+    void setNodeName (const QString &);
     KDE_NO_EXPORT const char * nodeName () const { return "item"; }
     KMPlayerApp * app;
 };
@@ -149,6 +150,7 @@ public:
     PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, bool plmode=false);
     KMPlayer::NodePtr childFromTag (const QString & tag);
     void closed ();
+    void setNodeName (const QString &);
     KDE_NO_EXPORT const char * nodeName () const { return "group"; }
     KMPlayerApp * app;
     bool playmode;
@@ -335,6 +337,11 @@ KDE_NO_EXPORT void PlaylistItem::activate () {
     app->player ()->setSource (source);
 }
 
+KDE_NO_EXPORT void PlaylistItem::setNodeName (const QString & s) {
+    src = s;
+    setAttribute ("url", s);
+}
+
 KDE_NO_CDTOR_EXPORT
 PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString & pn) 
   : KMPlayer::Mrl (doc, id_node_group_node), app (a), playmode (false) {
@@ -361,6 +368,11 @@ KDE_NO_EXPORT KMPlayer::NodePtr PlaylistGroup::childFromTag (const QString & tag
 KDE_NO_EXPORT void PlaylistGroup::closed () {
     if (pretty_name.isEmpty ())
         pretty_name = getAttribute ("title");
+}
+
+KDE_NO_EXPORT void PlaylistGroup::setNodeName (const QString & t) {
+    pretty_name = t;
+    setAttribute ("title", t);
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
@@ -536,6 +548,9 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
             this, SLOT (playListItemDropped (QDropEvent *, QListViewItem *)));
     connect (m_view->playList(), SIGNAL (moved ()),
             this, SLOT (playListItemMoved ()));
+    m_dropmenu = new QPopupMenu (m_view->playList ());
+    m_dropmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("player_playlist"), KIcon::Small, 0, true), i18n ("&Add to list"), this, SLOT (menuDropInList ()));
+    m_dropmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("folder_grey"), KIcon::Small, 0, true), i18n ("&Add in new group"), this, SLOT (menuDropInGroup ()));
     /*QPopupMenu * viewmenu = new QPopupMenu;
     viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()),
                           QKeySequence ("CTRL + Key_F"));
@@ -1318,25 +1333,41 @@ void KMPlayerApp::playListItemDropped (QDropEvent * de, QListViewItem * after) {
     KMPlayer::RootPlayListItem *ritem = m_view->playList()->rootItem(after);
     if (ritem->id != playlist_id)
         return;
-    KURL::List sl;
+    m_drop_list.clear ();
     if (KURLDrag::canDecode (de)) {
-        KURLDrag::decode (de, sl);
+        KURLDrag::decode (de, m_drop_list);
     } else if (QTextDrag::canDecode (de)) {
         QString text;
         QTextDrag::decode (de, text);
-        sl.push_back (KURL (text));
+        m_drop_list.push_back (KURL (text));
     }
-    if (sl.size () > 0) {
-        KMPlayer::NodePtr n = static_cast<KMPlayer::PlayListItem*>(after)->node;
-        for (int i = sl.size (); i > 0; i--) {
-            KMPlayer::NodePtr pi=new PlaylistItem(playlist, this,sl[i-1].url());
-            if (n == playlist || n->hasChildNodes ())
-                n->insertBefore (pi, n->firstChild ());
-            else
-                n->parentNode ()->insertBefore (pi, n->nextSibling ());
-        }
-        m_view->playList()->updateTree (playlist_id, playlist, 0L);
+    m_drop_after = after;
+    if (m_drop_list.size () > 0)
+        m_dropmenu->exec (mapToGlobal (de->pos ()));
+}
+
+KDE_NO_EXPORT void KMPlayerApp::menuDropInList () {
+    KMPlayer::NodePtr n = static_cast<KMPlayer::PlayListItem*>(m_drop_after)->node;
+    for (int i = m_drop_list.size (); i > 0; i--) {
+        KMPlayer::NodePtr pi=new PlaylistItem(playlist, this,m_drop_list[i-1].url());
+        if (n == playlist)
+            n->insertBefore (pi, n->firstChild ());
+        else
+            n->parentNode ()->insertBefore (pi, n->nextSibling ());
     }
+    m_view->playList()->updateTree (playlist_id, playlist, 0L);
+}
+
+KDE_NO_EXPORT void KMPlayerApp::menuDropInGroup () {
+    KMPlayer::NodePtr n = static_cast<KMPlayer::PlayListItem*>(m_drop_after)->node;
+    KMPlayer::NodePtr g = new PlaylistGroup (playlist, this, i18n("New group"));
+    if (n == playlist)
+        n->insertBefore (g, n->firstChild ());
+    else
+        n->parentNode ()->insertBefore (g, n->nextSibling ());
+    for (int i = 0; i < m_drop_list.size (); ++i)
+        g->appendChild (new PlaylistItem (playlist,this,m_drop_list[i].url ()));
+    m_view->playList()->updateTree (playlist_id, playlist, 0L);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::playListItemMoved () {

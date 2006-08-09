@@ -127,6 +127,8 @@ private slots:
     void playListItemSelected (QListViewItem *);
     void playListItemDropped (QDropEvent * e, QListViewItem * after);
     void playListItemMoved ();
+    void menuDropInList ();
+    void menuDropInGroup ();
 
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
@@ -162,9 +164,12 @@ private:
     QPopupMenu * m_dvdnavmenu;
     QPopupMenu * m_vcdmenu;
     QPopupMenu * m_tvmenu;
+    QPopupMenu * m_dropmenu;
     KMPlayerFFServerConfig * m_ffserverconfig;
     KMPlayerBroadcastConfig * m_broadcastconfig;
     QCString m_dcopName;
+    KURL::List m_drop_list;
+    QListViewItem * m_drop_after;
     int edit_tree_id;
     int last_time_left;
     int recents_id;
