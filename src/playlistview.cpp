@@ -508,11 +508,13 @@ KDE_NO_EXPORT void PlayListView::slotFindOk () {
         return;
     m_find_dialog->hide ();
     long opt = m_find_dialog->options ();
+    current_find_tree_id = 0;
     if (opt & KFindDialog::FromCursor && currentItem ()) {
         PlayListItem * lvi = currentPlayListItem ();
-        if (lvi && lvi->node)
+        if (lvi && lvi->node) {
              m_current_find_elm = lvi->node;
-        else if (lvi && lvi->m_attr) {
+             current_find_tree_id = rootItem (lvi)->id;
+        } else if (lvi && lvi->m_attr) {
             PlayListItem*pi=static_cast<PlayListItem*>(currentItem()->parent());
             if (pi) {
                 m_current_find_attr = lvi->m_attr;
@@ -536,7 +538,7 @@ KDE_NO_EXPORT void PlayListView::slotFindOk () {
 KDE_NO_EXPORT void PlayListView::slotFindNext () {
     if (!m_find_dialog)
         return;
-/*    QString str = m_find_dialog->pattern();
+    QString str = m_find_dialog->pattern();
     if (!m_current_find_elm || str.isEmpty ())
         return;
     long opt = m_find_dialog->options ();
@@ -546,11 +548,12 @@ KDE_NO_EXPORT void PlayListView::slotFindNext () {
     bool cs = (opt & KFindDialog::CaseSensitive);
     bool found = false;
     NodePtr node, n = m_current_find_elm;
+    RootPlayListItem * ri = rootItem (current_find_tree_id);
     while (!found && n) {
-        if (m_show_all_nodes || n->expose ()) {
+        if (ri->show_all_nodes || n->expose ()) {
             bool elm = n->isElementNode ();
             QString val = n->nodeName ();
-            if (elm && !m_show_all_nodes) {
+            if (elm && !ri->show_all_nodes) {
                 Mrl * mrl = n->mrl ();
                 if (mrl) {
                     if (mrl->pretty_name.isEmpty ()) {
@@ -568,7 +571,7 @@ KDE_NO_EXPORT void PlayListView::slotFindNext () {
                 node = n;
                 m_current_find_attr = 0L;
                 found = true;
-            } else if (elm && m_show_all_nodes) {
+            } else if (elm && ri->show_all_nodes) {
                 for (AttributePtr a = convertNode <Element> (n)->attributes ()->first (); a; a = a->nextSibling ())
                     if (((opt & KFindDialog::RegularExpression) &&
                                 (QString::fromLatin1 (a->nodeName ()).find (regexp, 0) || a->nodeValue ().find (regexp, 0) > -1)) ||
@@ -593,6 +596,11 @@ KDE_NO_EXPORT void PlayListView::slotFindNext () {
                             n = n->previousSibling ();
                             break;
                         }
+                    while (!n && current_find_tree_id > 0) {
+                        ri = rootItem (--current_find_tree_id);
+                        if (ri)
+                            n = ri->node;
+                    }
                 }
             } else {
                 if (n->firstChild ()) {
@@ -605,13 +613,19 @@ KDE_NO_EXPORT void PlayListView::slotFindNext () {
                             n = n->nextSibling ();
                             break;
                         }
+                    while (!n) {
+                        ri = rootItem (++current_find_tree_id);
+                        if (!ri)
+                            break;
+                        n = ri->node;
+                    }
                 }
             }
         }
     }
     m_current_find_elm = n;
     kdDebug () << " search for " << str << "=" << (node ? node->nodeName () : "not found") << " next:" << (n ? n->nodeName () : " not found") << endl;
-    QListViewItem * fc = firstChild ();
+    QListViewItem * fc = ri;
     if (found) {
         if (!findNodeInTree (node, fc)) {
             m_current_find_elm = 0L;
@@ -624,7 +638,7 @@ KDE_NO_EXPORT void PlayListView::slotFindNext () {
         } else
             kdDebug () << "node not found" << endl;
     }
-    m_find_next->setEnabled (!!m_current_find_elm);*/
+    m_find_next->setEnabled (!!m_current_find_elm);
 }
 
 #include "playlistview.moc"

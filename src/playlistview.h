@@ -133,6 +133,7 @@ private:
     NodePtrW m_current_find_elm;
     AttributePtrW m_current_find_attr;
     int last_id;
+    int current_find_tree_id;
     bool m_ignore_expanded;
 };
 
