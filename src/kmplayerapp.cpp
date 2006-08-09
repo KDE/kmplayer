@@ -209,7 +209,7 @@ KDE_NO_CDTOR_EXPORT Recents::Recents (KMPlayerApp *a)
     : FileDocument (id_node_recent_document, "recents://"),
       app(a),
       loaded (false) {
-    pretty_name = i18n ("Recent");
+    pretty_name = i18n ("Most Recent");
     readFromFile (locateLocal ("data", "kmplayer/recent.xml"));
 }
 
@@ -277,7 +277,7 @@ KDE_NO_CDTOR_EXPORT Playlist::Playlist (KMPlayerApp *a, KMPlayer::PlayListNotify
       app(a),
       loaded (false),
       playmode (plmode) {
-    pretty_name = i18n ("Playlist");
+    pretty_name = i18n ("Persistent Playlists");
 }
 
 KDE_NO_EXPORT KMPlayer::NodePtr Playlist::childFromTag (const QString & tag) {
@@ -1491,7 +1491,7 @@ public:
 KDE_NO_CDTOR_EXPORT Disks::Disks (KMPlayerApp * a)
                 : KMPlayer::Document ("disks://", 0L), app (a) {
     id = id_node_disk_document;
-    pretty_name = i18n ("Disks");
+    pretty_name = i18n ("Optical Disks");
 }
 
 KDE_NO_EXPORT void Disks::childDone (KMPlayer::NodePtr) {
@@ -1525,8 +1525,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopu
     setURL (KURL ("dvd://"));
     m_player->settings ()->addPage (this);
     disks = new Disks (a);
-    disks->appendChild (new Disk (disks, a, "vcd://", i18n ("VCD")));
-    disks->appendChild (new Disk (disks, a, "dvd://", i18n ("DVD")));
+    disks->appendChild (new Disk (disks, a, "vcd://", i18n ("VCD - Video Compact Disk")));
+    disks->appendChild (new Disk (disks, a, "dvd://", i18n ("DVD - Digital Video Disk")));
     m_app->view()->playList()->addTree (disks, "listssource", "cdrom_mount", 0);
 }
 

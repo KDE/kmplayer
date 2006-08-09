@@ -178,7 +178,7 @@ KDE_NO_EXPORT PlayListItem * PlayListView::populate
             if (!mrl->src.isEmpty())
                 text = KURL(mrl->src).prettyURL();
             else if (e->isDocument ())
-                text = e->hasChildNodes () ? i18n ("unnamed") : i18n ("empty");
+                text = e->hasChildNodes () ? i18n ("unnamed") : i18n ("none");
         } else
             text = mrl->pretty_name;
     } else if (e->id == id_node_text)

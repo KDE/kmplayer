@@ -318,7 +318,7 @@ KDE_NO_EXPORT void TVDevice::updateDevicePage () {
 KDE_NO_CDTOR_EXPORT
 TVDocument::TVDocument (KMPlayerTVSource * source)
     : FileDocument (id_node_tv_document, "tv://", source), m_source (source) {
-    pretty_name = i18n ("TV");
+    pretty_name = i18n ("Television");
 }
 
 KDE_NO_EXPORT KMPlayer::NodePtr TVDocument::childFromTag (const QString & tag) {
