@@ -88,7 +88,7 @@ static short id_node_playlist_document = 28;
 class KMPLAYER_NO_EXPORT ListsSource : public KMPlayer::URLSource {
 public:
     KDE_NO_CDTOR_EXPORT ListsSource (KMPlayer::PartBase * p)
-        : KMPlayer::URLSource (p, "lists://") {}
+        : KMPlayer::URLSource (p, "") {}
     void jump (KMPlayer::NodePtr e);
     void activate ();
     void setDocument (KMPlayer::NodePtr doc, KMPlayer::NodePtr cur);
@@ -291,8 +291,11 @@ KDE_NO_EXPORT KMPlayer::NodePtr Playlist::childFromTag (const QString & tag) {
     return FileDocument::childFromTag (tag);
 }
 
-KDE_NO_EXPORT void Playlist::childDone (KMPlayer::NodePtr) {
-    finish ();
+KDE_NO_EXPORT void Playlist::childDone (KMPlayer::NodePtr c) {
+    if (!playmode)
+        finish ();
+    else
+        FileDocument::childDone (c);
 }
 
 KDE_NO_CDTOR_EXPORT
@@ -313,7 +316,7 @@ KDE_NO_EXPORT void PlaylistItem::activate () {
     QString data;
     QString pn;
     if (parentNode ()->id == id_node_group_node) {
-        data = parentNode ()->outerXML ();
+        data = parentNode ()->innerXML ();
         pn = parentNode ()->mrl ()->pretty_name;
     } else {
         data = outerXML ();
