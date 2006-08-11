@@ -129,6 +129,8 @@ private slots:
     void playListItemMoved ();
     void menuDropInList ();
     void menuDropInGroup ();
+    void menuCopyDrop ();
+    void menuDeleteDrop ();
 
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
@@ -139,6 +141,7 @@ private:
     KMPlayer::View * m_view;
     KMPlayer::NodePtr recents;
     KMPlayer::NodePtr playlist;
+    KMPlayer::NodePtrW drop_node;
 
     KAction * fileNewWindow;
     KAction * fileOpen;

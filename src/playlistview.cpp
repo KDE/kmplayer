@@ -111,6 +111,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
    m_find_dialog (0L),
    m_active_color (30, 0, 255),
    last_id (0),
+   last_drag_tree_id (0),
    m_ignore_expanded (false) {
     addColumn (QString::null);
     header()->hide ();
@@ -294,11 +295,14 @@ void PlayListView::selectItem (const QString & txt) {
 KDE_NO_EXPORT QDragObject * PlayListView::dragObject () {
     PlayListItem * item = static_cast <PlayListItem *> (selectedItem ());
     if (item && item->node) {
-        QTextDrag * drag = new QTextDrag (item->node->mrl ()->src, this);
-        /*KURL::List l;
-        l << KURL (item->node->mrl ()->src);
-        KURLDrag * drag = new KURLDrag (l, this);*/
-        drag->setPixmap (video_pix);
+        QString txt = item->node->isPlayable ()
+            ? item->node->mrl ()->src : item->node->outerXML ();
+        QTextDrag * drag = new QTextDrag (txt, this);
+        last_drag_tree_id = rootItem (item)->id;
+        m_last_drag = item->node;
+        drag->setPixmap (*item->pixmap (0));
+        if (!item->node->isPlayable ())
+            drag->setSubtype ("xml");
         return drag;
     }
     return 0;
@@ -393,7 +397,7 @@ KDE_NO_EXPORT void PlayListView::showAllNodes(RootPlayListItem *ri, bool show) {
 
 KDE_NO_EXPORT bool PlayListView::acceptDrag (QDropEvent * de) const {
     QListViewItem * item = itemAt (de->pos ());
-    if (item && isDragValid (de)) {
+    if (item && (de->source () == this || isDragValid (de))) {
         RootPlayListItem * ritem = rootItem (item);
         return ritem->flags & AllowDrops;
     }
@@ -401,6 +405,11 @@ KDE_NO_EXPORT bool PlayListView::acceptDrag (QDropEvent * de) const {
 }
 
 KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, QListViewItem *after) {
+    if (!after) { // could still be a descendent
+        after = itemAt (contentsToViewport (de->pos ()));
+        if (after)
+            after = after->parent ();
+    }
     if (after) {
         RootPlayListItem * ritem = rootItem (after);
         if (ritem->id > 0)
@@ -427,10 +436,9 @@ KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, QListViewItem *af
             }
             PlayListItem * citem = currentPlayListItem ();
             updateTree (0, ritem->node, citem ? citem->node : 0L);
-            return;
         }
-    }
-    m_view->dropEvent (de);
+    } else
+        m_view->dropEvent (de);
 }
 
 KDE_NO_EXPORT void PlayListView::itemIsRenamed (QListViewItem * qitem) {

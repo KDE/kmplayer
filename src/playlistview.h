@@ -94,6 +94,8 @@ public:
     void setFont (const QFont &);
     PlayListItem * currentPlayListItem () const;
     PlayListItem * selectedPlayListItem () const;
+    NodePtr lastDragNode () const { return m_last_drag; }
+    int lastDragTreeId () const { return last_drag_tree_id; }
 signals:
     void addBookMark (const QString & title, const QString & url);
 protected:
@@ -131,8 +133,10 @@ private:
     QPixmap url_pix;
     QColor m_active_color;
     NodePtrW m_current_find_elm;
+    NodePtrW m_last_drag;
     AttributePtrW m_current_find_attr;
     int last_id;
+    int last_drag_tree_id;
     int current_find_tree_id;
     bool m_ignore_expanded;
 };
