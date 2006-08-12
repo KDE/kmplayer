@@ -1171,7 +1171,7 @@ void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool se
         if (!ok)
             kdWarning () << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser) << endl;
     }
-    if (ok) {
+    if (ok && !in.atEnd ()) {
         QCString buf = in.read ().utf8 ();
         ok = XML_Parse(parser, buf, strlen (buf), true) != XML_STATUS_ERROR;
         if (!ok)
@@ -1251,7 +1251,8 @@ void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool se
         QTextStream fl_in (&str, IO_ReadOnly);
         parser.parse (fl_in);
     }
-    parser.parse (in);
+    if (!in.atEnd ())
+        parser.parse (in);
     for (NodePtr e = root; e; e = e->parentNode ())
         e->closed ();
     //doc->normalize ();

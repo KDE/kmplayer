@@ -518,9 +518,33 @@ void KXinePlayer::play () {
     movie_width = 0;
     movie_height = 0;
 
+    if (mrl.startsWith ("cdda://"))
+        mrl = QString ("cdda:/") + mrl.mid (7);
     stream = xine_stream_new (xine, ao_port, vo_port);
     event_queue = xine_event_new_queue (stream);
     xine_event_create_listener_thread (event_queue, event_listener, NULL);
+    if (mrl == "cdda:/") {
+        int nr;
+        char ** mrls = xine_get_autoplay_mrls (xine, "CD", &nr);
+        running = 1;
+        for (int i = 0; i < nr; i++) {
+            QString m (mrls[i]);
+            QString title;
+            if (xine_open (stream, mrls[i])) {
+                const char * t = xine_get_meta_info (stream, XINE_META_INFO_TITLE);
+                if (t && t[0])
+                    title = QString::fromUtf8 (t);
+                xine_close (stream);
+            }
+            if (callback)
+                callback->subMrl (m, title);
+            else
+                printf ("track %s\n", m.utf8 ().data ());
+        }
+        mutex.unlock ();
+        finished ();
+        return;
+    }
 
     xine_gui_send_vo_data(stream, XINE_GUI_SEND_VIDEOWIN_VISIBLE, (void *) 1);
 
@@ -744,7 +768,7 @@ bool KXinePlayer::event (QEvent * e) {
         case event_url: {
             XineURLEvent * ue = static_cast <XineURLEvent *> (e);                
             if (callback)
-                callback->statusMessage ((int) KMPlayer::Callback::stat_addurl, ue->url);
+                callback->subMrl (ue->url, QString ());
             break;
         }
         case event_title: {

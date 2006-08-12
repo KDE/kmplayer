@@ -88,7 +88,7 @@ static short id_node_playlist_document = 28;
 class KMPLAYER_NO_EXPORT ListsSource : public KMPlayer::URLSource {
 public:
     KDE_NO_CDTOR_EXPORT ListsSource (KMPlayer::PartBase * p)
-        : KMPlayer::URLSource (p, "") {}
+        : KMPlayer::URLSource (p, "lists://") {}
     void jump (KMPlayer::NodePtr e);
     void activate ();
     void setDocument (KMPlayer::NodePtr doc, KMPlayer::NodePtr cur);
@@ -601,6 +601,8 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
     KMPlayer::Source * source = m_player->source ();
     if (!strcmp (source->name (), "urlsource")) {
         KURL url = source->url ();
+        if (url.url ().startsWith ("lists") || url.url ().startsWith ("cdda"))
+            return;
         if (url.isEmpty () && m_player->process ()->mrl ())
             url = KURL (m_player->process ()->mrl ()->mrl ()->src);
         recentFiles ()->addURL (url);
@@ -1565,8 +1567,12 @@ KDE_NO_CDTOR_EXPORT Disk::Disk (KMPlayer::NodePtr & doc, KMPlayerApp * a, const 
 }
 
 KDE_NO_EXPORT void Disk::activate () {
-    KMPlayer::Source * s = app->player ()->sources () [src.startsWith ("vcd") ? "vcdsource" : "dvdsource"];
-    app->player ()->setSource (s);
+    if (src.startsWith ("cdda"))
+        app->openDocumentFile (KURL (src));
+    else {
+        KMPlayer::Source * s = app->player ()->sources () [src.startsWith ("vcd") ? "vcdsource" : "dvdsource"];
+        app->player ()->setSource (s);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1585,6 +1591,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QPopu
     setURL (KURL ("dvd://"));
     m_player->settings ()->addPage (this);
     disks = new Disks (a);
+    disks->appendChild (new Disk (disks, a, "cdda://", i18n ("CDROM - Audio Compact Disk")));
     disks->appendChild (new Disk (disks, a, "vcd://", i18n ("VCD - Video Compact Disk")));
     disks->appendChild (new Disk (disks, a, "dvd://", i18n ("DVD - Digital Video Disk")));
     m_app->view()->playList()->addTree (disks, "listssource", "cdrom_mount", 0);

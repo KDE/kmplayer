@@ -34,6 +34,7 @@ public:
 k_dcop:
     ASYNC statusMessage (int code, QString msg);
     ASYNC errorMessage (int code, QString msg);
+    ASYNC subMrl (QString mrl, QString title);
     ASYNC finished ();
     ASYNC playing ();
     ASYNC started (QCString dcopname, QByteArray data);

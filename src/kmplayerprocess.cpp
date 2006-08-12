@@ -404,6 +404,9 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
                     !url.url ().startsWith (QString ("vcd")) &&
                     !url.url ().startsWith (QString ("tv://")))
                 args += QString ("-cache %1 ").arg (cache);
+            if (m_url.startsWith (QString ("cdda:/")) && 
+                    !m_url.startsWith (QString ("cdda://")))
+                m_url = QString ("cdda://") + m_url.mid (6);
         }
         if (url.protocol () != QString ("stdin"))
             args += KProcess::quote (QString (QFile::encodeName (m_url)));
@@ -1078,14 +1081,16 @@ void Callback::statusMessage (int code, QString msg) {
             if (m_process->viewer ())
                 m_process->viewer ()->view ()->videoStart ();
             break;
-        case stat_addurl:
-            m_process->m_source->insertURL (m_process->m_mrl, KURL::fromPathOrURL (msg).url ());
-            if (m_process->m_mrl && m_process->m_mrl->active ())
-                m_process->m_mrl->defer (); // Xine detected this is a playlist
-            break;
         default:
             m_process->setStatusMessage (msg);
     };
+}
+
+void Callback::subMrl (QString mrl, QString title) {
+    if (!m_process->m_source) return;
+    m_process->m_source->insertURL (m_process->m_mrl, KURL::fromPathOrURL (mrl).url (), title);
+    if (m_process->m_mrl && m_process->m_mrl->active ())
+        m_process->m_mrl->defer (); // Xine detected this is a playlist
 }
 
 void Callback::errorMessage (int code, QString msg) {
@@ -1613,7 +1618,7 @@ KDE_NO_EXPORT QFrame * XMLPreferencesPage::prefPage (QWidget * parent) {
 //-----------------------------------------------------------------------------
 
 static const char * xine_supported [] = {
-    "dvdnavsource", "exitsource", "introsource", "pipesource", "urlsource", "vcdsource", 0L
+    "dvdnavsource", "dvdsource", "exitsource", "introsource", "pipesource", "urlsource", "vcdsource", 0L
 };
 
 KDE_NO_CDTOR_EXPORT Xine::Xine (QObject * parent, Settings * settings)

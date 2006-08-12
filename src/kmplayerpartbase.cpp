@@ -1126,7 +1126,7 @@ void Source::bitRates (int & preferred, int & maximal) {
     maximal= 1024 * m_player->settings ()->maxbitrate;
 }
 
-void Source::insertURL (NodePtr node, const QString & mrl) {
+void Source::insertURL (NodePtr node, const QString & mrl, const QString & title) {
     if (!node || !node->mrl ()) // this should always be false
         return;
     QString cur_url = node->mrl ()->absolutePath ();
@@ -1141,7 +1141,8 @@ void Source::insertURL (NodePtr node, const QString & mrl) {
         for (NodePtr e = node; e->parentNode (); e = e->parentNode ())
             ++depth;
         if (depth < 40) {
-            node->appendChild (new GenericURL (m_document, KURL::decode_string (url.url ()), KURL::decode_string (mrl)));
+            node->appendChild (new GenericURL (m_document, KURL::decode_string (url.url ()), title.isEmpty() ? KURL::decode_string (mrl) : title));
+            m_player->updateTree ();
         } else
             kdError () << "insertURL exceeds depth limit" << endl;
     }
@@ -1363,12 +1364,11 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
             if (olds > Process::Ready) {
                 NodePtr node = p->mrl (); // p->mrl is weak, needs check
                 Mrl * mrl = node ? node->mrl () : 0L;
-                if (mrl) {
-                    if (mrl->active ()) // if cause is eof
-                        mrl->finish (); // set node to finished
-                    else if (!m_back_request &&
-                            mrl->state == Element::state_deferred)
+                if (mrl && mrl->active ()) { // if cause is eof
+                    if (!m_back_request && mrl->state ==Element::state_deferred)
                         mrl->undefer ();
+                    else
+                        mrl->finish (); // set node to finished
                 }
                 if (m_back_request && m_back_request->isPlayable ()) { // jump in pl
                     m_current = m_back_request;
