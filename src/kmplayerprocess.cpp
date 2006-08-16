@@ -835,7 +835,8 @@ static struct MPlayerPattern {
     { i18n ("DVD subtitle pattern"), "DVD Sub Title", "\\[open].*subtitle.*[^0-9]([0-9]+).*language: ([A-Za-z]+)" },
     { i18n ("DVD titles pattern"), "DVD Titles", "There are ([0-9]+) titles" },
     { i18n ("DVD chapters pattern"), "DVD Chapters", "There are ([0-9]+) chapters" },
-    { i18n ("VCD track pattern"), "VCD Tracks", "track ([0-9]+):" }
+    { i18n ("VCD track pattern"), "VCD Tracks", "track ([0-9]+):" },
+    { i18n ("Audio CD tracks pattern"), "CDROM Tracks", "Audio CD[^0-9]+([0-9]+)[^0-9]tracks" }
 };
 
 namespace KMPlayer {

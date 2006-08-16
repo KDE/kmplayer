@@ -79,8 +79,8 @@ KDE_NO_CDTOR_EXPORT void PlayListItem::paintCell (QPainter * p, const QColorGrou
         QListViewItem::paintCell (p, cg, column, width, align);
 }
 
-KDE_NO_CDTOR_EXPORT void PlayListItem::paintBranches (QPainter * p, const QColorGroup &, int w, int y, int h) {
-    p->fillRect (0, y, w, h, listview->paletteBackgroundColor());
+KDE_NO_CDTOR_EXPORT void PlayListItem::paintBranches (QPainter * p, const QColorGroup &, int w, int, int h) {
+    p->fillRect (0, 0, w, h, listview->paletteBackgroundColor());
 }
 
 //-----------------------------------------------------------------------------
@@ -396,7 +396,7 @@ KDE_NO_EXPORT void PlayListView::showAllNodes(RootPlayListItem *ri, bool show) {
 }
 
 KDE_NO_EXPORT bool PlayListView::acceptDrag (QDropEvent * de) const {
-    QListViewItem * item = itemAt (de->pos ());
+    QListViewItem * item = itemAt (contentsToViewport (de->pos ()));
     if (item && (de->source () == this || isDragValid (de))) {
         RootPlayListItem * ritem = rootItem (item);
         return ritem->flags & AllowDrops;

@@ -194,7 +194,8 @@ public:
     enum Pattern {
         pat_size = 0, pat_cache, pat_pos, pat_index,
         pat_refurl, pat_ref, pat_start,
-        pat_dvdlang, pat_dvdsub, pat_dvdtitle, pat_dvdchapter, pat_vcdtrack,
+        pat_dvdlang, pat_dvdsub, pat_dvdtitle, pat_dvdchapter,
+        pat_vcdtrack, pat_cdromtracks,
         pat_last
     };
     MPlayerPreferencesPage (MPlayer *);
