@@ -387,6 +387,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
       m_dvdmenu (new QPopupMenu (this)),
       m_dvdnavmenu (new QPopupMenu (this)),
       m_vcdmenu (new QPopupMenu (this)),
+      m_audiocdmenu (new QPopupMenu (this)),
       m_tvmenu (new QPopupMenu (this)),
       m_ffserverconfig (new KMPlayerFFServerConfig),
       m_broadcastconfig (new KMPlayerBroadcastConfig (m_player, m_ffserverconfig)),
@@ -409,6 +410,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     m_player->sources () ["dvdsource"] = new ::KMPlayerDVDSource(this, m_dvdmenu);
     m_player->sources () ["dvdnavsource"] = new KMPlayerDVDNavSource (this, m_dvdnavmenu);
     m_player->sources () ["vcdsource"] = new KMPlayerVCDSource(this, m_vcdmenu);
+    m_player->sources () ["audiocdsource"] = new KMPlayerAudioCDSource (this, m_audiocdmenu);
     m_player->sources () ["pipesource"] = new KMPlayerPipeSource (this);
     m_player->sources () ["tvsource"] = new KMPlayerTVSource (this, m_tvmenu);
     m_player->sources () ["vdrsource"] = new KMPlayerVDRSource (this);
@@ -442,6 +444,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     fileQuit = KStdAction::quit (this, SLOT (slotFileQuit ()), ac);
     new KAction (i18n ("&Open DVD"), QString ("dvd_mount"), KShortcut (), this, SLOT(openDVD ()), ac, "opendvd");
     new KAction (i18n ("&Open VCD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openVCD ()), ac, "openvcd");
+    new KAction (i18n ("&Open Audio CD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openAudioCD ()), ac, "openaudiocd");
     new KAction (i18n ("&Open Pipe..."), QString ("pipe"), KShortcut (), this, SLOT(openPipe ()), ac, "source_pipe");
     //KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0,true)
     new KAction (i18n ("&Connect"), QString ("connect_established"), KShortcut (), this, SLOT (openVDR ()), ac, "vdr_connect");
@@ -510,8 +513,10 @@ KDE_NO_EXPORT void KMPlayerApp::initMenu () {
 #endif
     m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("cdrom_mount"), KIcon::Small, 0, true), i18n ("V&CD"), m_vcdmenu, -1, 6);
     m_vcdmenu->clear ();
-    m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0, true), i18n ("&TV"), m_tvmenu, -1, 7);
+    m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0, true), i18n ("&TV"), m_tvmenu, -1, 8);
     m_vcdmenu->insertItem (i18n ("&Open VCD"), this, SLOT(openVCD ()), 0,-1, 1);
+    m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("cdrom_mount"), KIcon::Small, 0, true), i18n ("&Audio CD"), m_audiocdmenu, -1, 7);
+    m_audiocdmenu->insertItem (i18n ("&Open Audio CD"), this, SLOT(openAudioCD ()), 0,-1, 1);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::initView () {
@@ -687,6 +692,11 @@ KDE_NO_EXPORT void KMPlayerApp::openDVD () {
 KDE_NO_EXPORT void KMPlayerApp::openVCD () {
     slotStatusMsg(i18n("Opening VCD..."));
     m_player->setSource (m_player->sources () ["vcdsource"]);
+}
+
+KDE_NO_EXPORT void KMPlayerApp::openAudioCD () {
+    slotStatusMsg(i18n("Opening Audio CD..."));
+    m_player->setSource (m_player->sources () ["audiocdsource"]);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::openPipe () {
@@ -1567,12 +1577,14 @@ KDE_NO_CDTOR_EXPORT Disk::Disk (KMPlayer::NodePtr & doc, KMPlayerApp * a, const 
 }
 
 KDE_NO_EXPORT void Disk::activate () {
+    const char * sn;
     if (src.startsWith ("cdda"))
-        app->openDocumentFile (KURL (src));
-    else {
-        KMPlayer::Source * s = app->player ()->sources () [src.startsWith ("vcd") ? "vcdsource" : "dvdsource"];
-        app->player ()->setSource (s);
-    }
+        sn = "audiocdsource";
+    else if (src.startsWith ("vcd"))
+        sn = "vcdsource";
+    else
+        sn = "dvdsource";
+    app->player ()->setSource (app->player ()->sources () [sn]);
 }
 
 //-----------------------------------------------------------------------------
@@ -1991,6 +2003,74 @@ KDE_NO_EXPORT void KMPlayerVCDSource::prefLocation (QString & item, QString & ic
 KDE_NO_EXPORT QFrame * KMPlayerVCDSource::prefPage (QWidget * parent) {
     m_configpage = new KMPlayerPrefSourcePageVCD (parent);
     return m_configpage;
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT KMPlayerAudioCDSource::KMPlayerAudioCDSource (KMPlayerApp * a, QPopupMenu * m)
+    : KMPlayerMenuSource (i18n ("Audio CD"), a, m, "audiocdsource") {
+    setURL (KURL ("cdda://"));
+}
+
+KDE_NO_CDTOR_EXPORT KMPlayerAudioCDSource::~KMPlayerAudioCDSource () {
+}
+
+KDE_NO_EXPORT bool KMPlayerAudioCDSource::processOutput (const QString & str) {
+    if (KMPlayer::Source::processOutput (str))
+        return true;
+    if (m_identified)
+        return false;
+    //kdDebug () << "scanning " << cstr << endl;
+    QRegExp * patterns = static_cast<KMPlayer::MPlayer *> (m_player->players () ["mplayer"])->configPage ()->m_patterns;
+    QRegExp & trackRegExp = patterns [KMPlayer::MPlayerPreferencesPage::pat_cdromtracks];
+    if (trackRegExp.search (str) > -1) {
+        if (m_document->state != KMPlayer::Element::state_deferred)
+            m_document->defer ();
+        int nt = trackRegExp.cap (1).toInt ();
+        kdDebug () << "tracks " << trackRegExp.cap (1) << endl;
+        for (int i = 0; i < nt; i++)
+            m_document->appendChild (new KMPlayer::GenericMrl (m_document, QString ("cdda://%1").arg (i), i18n ("Track %1").arg (i)));
+        return true;
+    }
+    return false;
+}
+
+KDE_NO_EXPORT void KMPlayerAudioCDSource::activate () {
+    m_player->stop ();
+    init ();
+    //m_start_play = m_auto_play;
+    setURL (KURL ("cdda://"));
+    buildArguments ();
+    //if (m_start_play)
+        QTimer::singleShot (0, m_player, SLOT (play ()));
+}
+
+KDE_NO_EXPORT void KMPlayerAudioCDSource::deactivate () {
+}
+
+KDE_NO_EXPORT void KMPlayerAudioCDSource::setIdentified (bool b) {
+    KMPlayer::Source::setIdentified (b);
+    if (!m_document->hasChildNodes ())
+        m_current = m_document;
+    m_player->updateTree ();
+    buildArguments ();
+    if (m_current->state == KMPlayer::Element::state_deferred)
+        m_current->undefer ();
+    m_app->slotStatusMsg (i18n ("Ready."));
+}
+
+KDE_NO_EXPORT void KMPlayerAudioCDSource::buildArguments () {
+    QString url ("cdda://");
+    if (m_current != m_document)
+        url += m_current->mrl ()->src;
+    m_options.truncate (0);
+    if (m_player->settings ()->vcddevice.length () > 0)
+        m_options+=QString(" -cdrom-device ") + m_player->settings()->vcddevice;
+    m_recordcmd = m_options;
+}
+
+KDE_NO_EXPORT QString KMPlayerAudioCDSource::prettyName () {
+    return i18n ("Audio CD");
 }
 
 //-----------------------------------------------------------------------------

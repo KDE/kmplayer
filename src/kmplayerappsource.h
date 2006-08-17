@@ -165,6 +165,25 @@ private:
 
 
 /*
+ * Source from AudoCD
+ */
+class KMPLAYER_NO_EXPORT KMPlayerAudioCDSource : public KMPlayerMenuSource {
+    Q_OBJECT
+public:
+    KMPlayerAudioCDSource (KMPlayerApp * app, QPopupMenu * m);
+    virtual ~KMPlayerAudioCDSource ();
+    virtual bool processOutput (const QString & line);
+    virtual void setIdentified (bool b = true);
+    virtual QString prettyName ();
+public slots:
+    virtual void activate ();
+    virtual void deactivate ();
+private:
+    void buildArguments ();
+};
+
+
+/*
  * Source from stdin (for the backends, not kmplayer)
  */
 class KMPLAYER_NO_EXPORT KMPlayerPipeSource : public KMPlayer::Source {

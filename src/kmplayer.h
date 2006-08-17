@@ -102,6 +102,7 @@ private slots:
     void dvdNav ();
     void openDVD ();
     void openVCD ();
+    void openAudioCD ();
     void openPipe ();
     void openVDR ();
     void fullScreen ();
@@ -166,6 +167,7 @@ private:
     QPopupMenu * m_dvdmenu;
     QPopupMenu * m_dvdnavmenu;
     QPopupMenu * m_vcdmenu;
+    QPopupMenu * m_audiocdmenu;
     QPopupMenu * m_tvmenu;
     QPopupMenu * m_dropmenu;
     KMPlayerFFServerConfig * m_ffserverconfig;

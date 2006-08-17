@@ -342,7 +342,7 @@ KDE_NO_EXPORT void MPlayerBase::processStopped (KProcess *) {
 //-----------------------------------------------------------------------------
 
 static const char * mplayer_supports [] = {
-    "dvdsource", "exitsource", "hrefsource", "introsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", 0L
+    "dvdsource", "exitsource", "hrefsource", "introsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", "audiocdsource", 0L
 };
 
 KDE_NO_CDTOR_EXPORT MPlayer::MPlayer (QObject * parent, Settings * settings)
@@ -938,7 +938,7 @@ KDE_NO_EXPORT QFrame * MPlayerPreferencesPage::prefPage (QWidget * parent) {
 //-----------------------------------------------------------------------------
 
 static const char * mencoder_supports [] = {
-    "dvdsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", 0L
+    "dvdsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", "audiocdsource", 0L
 };
 
 KDE_NO_CDTOR_EXPORT MEncoder::MEncoder (QObject * parent, Settings * settings)
@@ -1002,7 +1002,7 @@ KDE_NO_EXPORT bool MEncoder::stop () {
 //-----------------------------------------------------------------------------
 
 static const char * mplayerdump_supports [] = {
-    "dvdsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", 0L
+    "dvdsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", "audiocdsource", 0L
 };
 
 KDE_NO_CDTOR_EXPORT
@@ -1619,7 +1619,7 @@ KDE_NO_EXPORT QFrame * XMLPreferencesPage::prefPage (QWidget * parent) {
 //-----------------------------------------------------------------------------
 
 static const char * xine_supported [] = {
-    "dvdnavsource", "dvdsource", "exitsource", "introsource", "pipesource", "urlsource", "vcdsource", 0L
+    "dvdnavsource", "dvdsource", "exitsource", "introsource", "pipesource", "urlsource", "vcdsource", "audiocdsource", 0L
 };
 
 KDE_NO_CDTOR_EXPORT Xine::Xine (QObject * parent, Settings * settings)
@@ -1690,7 +1690,7 @@ bool Xine::ready (Viewer * viewer) {
 //-----------------------------------------------------------------------------
 
 static const char * gst_supported [] = {
-    "exitsource", "introsource", "urlsource", "vcdsource", 0L
+    "exitsource", "introsource", "urlsource", "vcdsource", "audiocdsource", 0L
 };
 
 KDE_NO_CDTOR_EXPORT GStreamer::GStreamer (QObject * parent, Settings * settings)
