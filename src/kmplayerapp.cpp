@@ -117,6 +117,7 @@ class KMPLAYER_NO_EXPORT Group : public KMPlayer::Mrl {
 public:
     Group (KMPlayer::NodePtr &doc, KMPlayerApp *a, const QString &pn=QString());
     KMPlayer::NodePtr childFromTag (const QString & tag);
+    void defer () {} // TODO lazy loading of largish sub trees
     void closed ();
     KDE_NO_EXPORT const char * nodeName () const { return "group"; }
     KMPlayerApp * app;
@@ -126,6 +127,7 @@ class KMPLAYER_NO_EXPORT Playlist : public FileDocument {
 public:
     Playlist (KMPlayerApp *a, KMPlayer::PlayListNotify *n, bool plmod = false);
     void childDone (KMPlayer::NodePtr);
+    void defer ();
     void activate ();
     KMPlayer::NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "playlist"; }
@@ -263,13 +265,20 @@ KDE_NO_EXPORT void Group::closed () {
         pretty_name = getAttribute ("title");
 }
 
-KDE_NO_EXPORT void Playlist::activate () {
+KDE_NO_EXPORT void Playlist::defer () {
     if (playmode)
-        KMPlayer::Document::activate ();
+        KMPlayer::Document::defer ();
     else if (!loaded) {
         loaded = true;
         readFromFile (locateLocal ("data", "kmplayer/playlist.xml"));
     }
+}
+
+KDE_NO_EXPORT void Playlist::activate () {
+    if (playmode)
+        KMPlayer::Document::activate ();
+    else if (!loaded)
+        defer ();
 }
 
 KDE_NO_CDTOR_EXPORT Playlist::Playlist (KMPlayerApp *a, KMPlayer::PlayListNotify *n, bool plmode)
@@ -1361,6 +1370,10 @@ void KMPlayerApp::playListItemDropped (QDropEvent * de, QListViewItem * after) {
     drop_node = 0L;
     m_drop_list.clear ();
     m_drop_after = after;
+    KMPlayer::NodePtr after_node = static_cast<KMPlayer::PlayListItem*> (after)->node;
+    if (after_node->id == id_node_playlist_document ||
+            after_node->id == id_node_group_node)
+        after_node->defer (); // make sure it has loaded
     if (de->source () == m_view->playList() &&
             m_view->playList()->lastDragTreeId () == playlist_id)
         drop_node = m_view->playList()->lastDragNode ();
