@@ -492,22 +492,20 @@ KDE_NO_EXPORT void PlayListView::slotFind () {
     m_find_dialog->show ();
 }
 
-KDE_NO_EXPORT bool PlayListView::findNodeInTree (NodePtr n, QListViewItem *& item) {
+static QListViewItem * findNodeInTree (NodePtr n, QListViewItem * item) {
     //kdDebug () << "item:" << item->text (0) << " n:" << (n ? n->nodeName () : "null" )  <<endl;
-    if (!n)
-        return true;
-    if (!findNodeInTree (n->parentNode (), item)) // get right item
-        return false; // hmpf
-    if (static_cast <PlayListItem *> (item)->node == n)  // top node
-        return true;
+    PlayListItem * pi = static_cast <PlayListItem *> (item);
+    if (!n || !pi->node)
+        return 0L;
+    if (n == pi->node)
+        return item;
     for (QListViewItem * ci = item->firstChild(); ci; ci = ci->nextSibling ()) {
         //kdDebug () << "ci:" << ci->text (0) << " n:" << n->nodeName () <<endl;
-        if (static_cast <PlayListItem *> (ci)->node == n) {
-            item = ci;
-            return true;
-        }
+        QListViewItem * vi = findNodeInTree (n, ci);
+        if (vi)
+            return vi;
     }
-    return false; //!m_show_all_nodes;
+    return 0L;
     
 }
 
@@ -633,18 +631,17 @@ KDE_NO_EXPORT void PlayListView::slotFindNext () {
     }
     m_current_find_elm = n;
     kdDebug () << " search for " << str << "=" << (node ? node->nodeName () : "not found") << " next:" << (n ? n->nodeName () : " not found") << endl;
-    QListViewItem * fc = ri;
     if (found) {
-        if (!findNodeInTree (node, fc)) {
+        QListViewItem * fc = findNodeInTree (node, ri);
+        if (!fc) {
             m_current_find_elm = 0L;
-            kdDebug () << "node not found in tree" << endl;
-        } else if (fc) {
+            kdDebug () << "node not found in tree tree:" << ri->id << endl;
+        } else {
             setSelected (fc, true);
             if (m_current_find_attr && fc->firstChild () && fc->firstChild ()->firstChild ())
                 ensureItemVisible (fc->firstChild ()->firstChild ());
             ensureItemVisible (fc);
-        } else
-            kdDebug () << "node not found" << endl;
+        }
     }
     m_find_next->setEnabled (!!m_current_find_elm);
 }

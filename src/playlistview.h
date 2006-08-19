@@ -119,7 +119,6 @@ private slots:
 private:
     void updateTree (RootPlayListItem * ritem, NodePtr active);
     PlayListItem * populate (NodePtr e, NodePtr focus, RootPlayListItem *root, PlayListItem * item, PlayListItem ** curitem);
-    bool findNodeInTree (NodePtr n, QListViewItem *& item);
     View * m_view;
     QPopupMenu * m_itemmenu;
     KAction * m_find_next;
