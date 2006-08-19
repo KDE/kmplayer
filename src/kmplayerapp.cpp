@@ -2033,16 +2033,16 @@ KDE_NO_EXPORT bool KMPlayerAudioCDSource::processOutput (const QString & str) {
         return true;
     if (m_identified)
         return false;
-    //kdDebug () << "scanning " << cstr << endl;
+    //kdDebug () << "scanning " << str << endl;
     QRegExp * patterns = static_cast<KMPlayer::MPlayer *> (m_player->players () ["mplayer"])->configPage ()->m_patterns;
     QRegExp & trackRegExp = patterns [KMPlayer::MPlayerPreferencesPage::pat_cdromtracks];
     if (trackRegExp.search (str) > -1) {
-        if (m_document->state != KMPlayer::Element::state_deferred)
-            m_document->defer ();
+        //if (m_document->state != KMPlayer::Element::state_deferred)
+        //    m_document->defer ();
         int nt = trackRegExp.cap (1).toInt ();
         kdDebug () << "tracks " << trackRegExp.cap (1) << endl;
         for (int i = 0; i < nt; i++)
-            m_document->appendChild (new KMPlayer::GenericMrl (m_document, QString ("cdda://%1").arg (i), i18n ("Track %1").arg (i)));
+            m_document->appendChild (new KMPlayer::GenericMrl (m_document, QString ("cdda://%1").arg (i), i18n ("Track %1").arg (i+1)));
         return true;
     }
     return false;
@@ -2076,7 +2076,7 @@ KDE_NO_EXPORT void KMPlayerAudioCDSource::buildArguments () {
     QString url ("cdda://");
     if (m_current != m_document)
         url += m_current->mrl ()->src;
-    m_options.truncate (0);
+    m_options = "-cdda speed=3";
     if (m_player->settings ()->vcddevice.length () > 0)
         m_options+=QString(" -cdrom-device ") + m_player->settings()->vcddevice;
     m_recordcmd = m_options;
