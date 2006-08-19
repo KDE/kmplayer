@@ -1,4 +1,9 @@
 Changes since version 0.9.2a
+- Support for audio cdrom
+- Fixes for 'Persistent Playlists' tree; drop position didn't account for
+  scrollbar position, painting fixes, popup menu position and dropping an item
+  in a not-yet-loaded tree created a temporary ghost tree
+Changes since version 0.9.2a
 - Painting of root items in playlist view as 'Window Background'
 - Add a 'Persistent Playlists' sub tree to playlist view, editing by D&D,
   in-place node editing or changing the XML directly using the 'Edit Mode'
@@ -8,6 +13,7 @@ Changes since version 0.9.2a
 - Add Television as persistent sub tree to playlist view
 - Add 'Optical Disks' with VCD/DVD as persistent sub tree to playlist view
 - Make playlist tree less deep and remove the branches paintings
+- Plugin fix for http://www.orbital.pt/ for Konqueror >= 3.5.4 users
 Changes since version 0.9.2
 - Fix realvideo on tagesschau.de, support control lists as well
 - Toolbar can now be changed using KDE's default KEditToolbar dialog
