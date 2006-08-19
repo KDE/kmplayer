@@ -339,7 +339,6 @@ KDE_NO_EXPORT void PlaylistItem::activate () {
     KMPlayer::NodePtr cur = pl->firstChild ();
     if (parentNode ()->id == id_node_group_node && cur) {
         KMPlayer::NodePtr sister = parentNode ()->firstChild ();
-        cur = cur->firstChild ();
         while (sister && cur && sister.ptr () != this) {
             sister = sister->nextSibling ();
             cur = cur->nextSibling ();
@@ -1391,7 +1390,7 @@ void KMPlayerApp::playListItemDropped (QDropEvent * de, QListViewItem * after) {
     m_dropmenu->setItemVisible (m_dropmenu->idAt (3), !!drop_node);
     m_dropmenu->setItemVisible (m_dropmenu->idAt (2), (drop_node && drop_node->isPlayable ()));
     if (drop_node || m_drop_list.size () > 0)
-        m_dropmenu->exec (mapToGlobal (de->pos ()));
+        m_dropmenu->exec (m_view->playList ()->mapToGlobal (de->pos ()));
 }
 
 KDE_NO_EXPORT void KMPlayerApp::menuDropInList () {

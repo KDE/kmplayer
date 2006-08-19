@@ -159,7 +159,7 @@ bool Process::stop () {
 }
 
 bool Process::quit () {
-    do {
+    while (playing ()) {
         if (m_source && !m_source->pipeCmd ().isEmpty ()) {
             void (*oldhandler)(int) = signal(SIGTERM, SIG_IGN);
             ::kill (-1 * ::getpid (), SIGTERM);
@@ -174,7 +174,8 @@ bool Process::quit () {
         if (m_process->isRunning ()) {
             KMessageBox::error (viewer (), i18n ("Failed to end player process."), i18n ("Error"));
         }
-    } while (false);
+        break;
+    }
     setState (NotRunning);
     return !playing ();
 }
