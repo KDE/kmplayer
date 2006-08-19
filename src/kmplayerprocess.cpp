@@ -153,7 +153,12 @@ bool Process::supports (const char * source) const {
 }
 
 bool Process::stop () {
-    if (!playing ()) return true;
+    if (!playing ())
+        return true;
+    return false;
+}
+
+bool Process::quit () {
     do {
         if (m_source && !m_source->pipeCmd ().isEmpty ()) {
             void (*oldhandler)(int) = signal(SIGTERM, SIG_IGN);
@@ -170,11 +175,6 @@ bool Process::stop () {
             KMessageBox::error (viewer (), i18n ("Failed to end player process."), i18n ("Error"));
         }
     } while (false);
-    return !playing ();
-}
-
-bool Process::quit () {
-    stop ();
     setState (NotRunning);
     return !playing ();
 }
@@ -292,36 +292,36 @@ KDE_NO_EXPORT bool MPlayerBase::sendCommand (const QString & cmd) {
 
 KDE_NO_EXPORT bool MPlayerBase::stop () {
     terminateJob ();
-    if (!m_source || !m_process || !m_process->isRunning ()) return true;
-    if (!m_use_slave) {
-        void (*oldhandler)(int) = signal(SIGTERM, SIG_IGN);
-        ::kill (-1 * ::getpid (), SIGTERM);
-        signal(SIGTERM, oldhandler);
-    }
-#if KDE_IS_VERSION(3, 1, 90)
-    m_process->wait(2);
-#else
-    QTime t;
-    t.start ();
-    do {
-        KProcessController::theKProcessController->waitForProcessExit (2);
-    } while (t.elapsed () < 2000 && m_process->isRunning ());
-#endif
-    if (m_process->isRunning ())
-        Process::stop ();
-    processStopped (0L);
-    commands.clear ();
+    if (!m_source || !m_process || !m_process->isRunning ())
+        return true;
     return true;
 }
 
 KDE_NO_EXPORT bool MPlayerBase::quit () {
     if (playing ()) {
+        stop ();
         disconnect (m_process, SIGNAL (processExited (KProcess *)),
                 this, SLOT (processStopped (KProcess *)));
-        stop ();
+        if (!m_use_slave) {
+            void (*oldhandler)(int) = signal(SIGTERM, SIG_IGN);
+            ::kill (-1 * ::getpid (), SIGTERM);
+            signal(SIGTERM, oldhandler);
+        }
+#if KDE_IS_VERSION(3, 1, 90)
+        m_process->wait(2);
+#else
+        QTime t;
+        t.start ();
+        do {
+            KProcessController::theKProcessController->waitForProcessExit (2);
+        } while (t.elapsed () < 2000 && m_process->isRunning ());
+#endif
+        if (m_process->isRunning ())
+            Process::quit ();
+        processStopped (0L);
+        commands.clear ();
     }
-    setState (NotRunning);
-    return !playing ();
+    return Process::quit ();
 }
 
 KDE_NO_EXPORT void MPlayerBase::dataWritten (KProcess *) {
@@ -376,7 +376,7 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
     if (playing ())
         return sendCommand (QString ("gui_play"));
     if (!m_needs_restarted)
-        stop ();
+        quit (); // rescheduling of setState will reset state just-in-time
     initProcess (viewer ());
     m_source->setPosition (0);
     if (!m_needs_restarted) {
@@ -836,7 +836,7 @@ static struct MPlayerPattern {
     { i18n ("DVD titles pattern"), "DVD Titles", "There are ([0-9]+) titles" },
     { i18n ("DVD chapters pattern"), "DVD Chapters", "There are ([0-9]+) chapters" },
     { i18n ("VCD track pattern"), "VCD Tracks", "track ([0-9]+):" },
-    { i18n ("Audio CD tracks pattern"), "CDROM Tracks", "Audio CD[^0-9]+([0-9]+)[^0-9]tracks" }
+    { i18n ("Audio CD tracks pattern"), "CDROM Tracks", "[Aa]udio CD[^0-9]+([0-9]+)[^0-9]tracks" }
 };
 
 namespace KMPlayer {
@@ -1807,13 +1807,18 @@ KDE_NO_EXPORT bool FFMpeg::stop () {
     if (!playing ()) return true;
     kdDebug () << "FFMpeg::stop" << endl;
     m_process->writeStdin ("q", 1);
+    return true;
+}
+
+KDE_NO_EXPORT bool FFMpeg::quit () {
+    stop ();
+    if (!playing ()) return true;
     QTime t;
     t.start ();
     do {
         KProcessController::theKProcessController->waitForProcessExit (2);
     } while (t.elapsed () < 2000 && m_process->isRunning ());
-    if (!playing ()) return true;
-    return Process::stop ();
+    return Process::quit ();
 }
 
 KDE_NO_EXPORT void FFMpeg::processStopped (KProcess *) {

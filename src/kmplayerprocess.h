@@ -398,6 +398,7 @@ public:
     virtual bool deMediafiedPlay ();
 public slots:
     virtual bool stop ();
+    virtual bool quit ();
 private slots:
     void processStopped (KProcess *);
 };

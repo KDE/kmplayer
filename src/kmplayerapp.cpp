@@ -2042,7 +2042,7 @@ KDE_NO_EXPORT bool KMPlayerAudioCDSource::processOutput (const QString & str) {
         int nt = trackRegExp.cap (1).toInt ();
         kdDebug () << "tracks " << trackRegExp.cap (1) << endl;
         for (int i = 0; i < nt; i++)
-            m_document->appendChild (new KMPlayer::GenericMrl (m_document, QString ("cdda://%1").arg (i), i18n ("Track %1").arg (i+1)));
+            m_document->appendChild (new KMPlayer::GenericMrl (m_document, QString ("cdda://%1").arg (i+1), i18n ("Track %1").arg (i+1)));
         return true;
     }
     return false;
@@ -2065,10 +2065,14 @@ KDE_NO_EXPORT void KMPlayerAudioCDSource::setIdentified (bool b) {
     KMPlayer::Source::setIdentified (b);
     if (!m_document->hasChildNodes ())
         m_current = m_document;
-    m_player->updateTree ();
     buildArguments ();
-    if (m_current->state == KMPlayer::Element::state_deferred)
-        m_current->undefer ();
+    if (m_current == m_document && m_document->hasChildNodes ()) {
+        m_back_request = m_document->firstChild ();
+        m_player->process ()->stop ();
+    }
+    m_player->updateTree ();
+    //if (m_current->state == KMPlayer::Element::state_deferred)
+    //    m_current->undefer ();
     m_app->slotStatusMsg (i18n ("Ready."));
 }
 
