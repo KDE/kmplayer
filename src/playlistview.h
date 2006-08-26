@@ -113,12 +113,22 @@ private slots:
     void toggleShowAllNodes ();
     void itemDropped (QDropEvent * e, QListViewItem * after);
     void itemIsRenamed (QListViewItem * item);
+    void updateTrees ();
     void slotFind ();
     void slotFindOk ();
     void slotFindNext ();
 private:
     void updateTree (RootPlayListItem * ritem, NodePtr active);
     PlayListItem * populate (NodePtr e, NodePtr focus, RootPlayListItem *root, PlayListItem * item, PlayListItem ** curitem);
+    struct KMPLAYER_NO_EXPORT TreeUpdate {
+        KDE_NO_CDTOR_EXPORT TreeUpdate (RootPlayListItem *ri, NodePtr n, bool o, SharedPtr <TreeUpdate> &nx) : root_item (ri), node (n), open (o), next (nx) {}
+        KDE_NO_CDTOR_EXPORT ~TreeUpdate () {}
+        RootPlayListItem * root_item;
+        NodePtrW node;
+        bool open;
+        SharedPtr <TreeUpdate> next;
+    };
+    SharedPtr <TreeUpdate> tree_update;
     View * m_view;
     QPopupMenu * m_itemmenu;
     KAction * m_find_next;

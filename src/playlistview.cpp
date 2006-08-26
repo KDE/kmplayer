@@ -29,6 +29,7 @@
 #include <qpixmap.h>
 #include <qheader.h>
 #include <qstyle.h>
+#include <qtimer.h>
 
 #include <kiconloader.h>
 #include <kfinddialog.h>
@@ -251,22 +252,29 @@ void PlayListView::updateTree (int id, NodePtr root, NodePtr active) {
     if (!ritem) {
         ritem =new RootPlayListItem(id, this, root, before,AllowDrops|TreeEdit);
         ritem->setPixmap (0, url_pix);
-    } else {
-        while (ritem->firstChild ())
-            delete ritem->firstChild ();
+    } else
         ritem->node = root;
-    }
     m_find_next->setEnabled (!!m_current_find_elm);
-    updateTree (ritem, active);
-    if (set_open)
-        ritem->setOpen (set_open);
+    bool need_timer = !tree_update;
+    tree_update = new TreeUpdate (ritem, active, set_open, tree_update);
+    if (need_timer)
+        QTimer::singleShot (0, this, SLOT (updateTrees ()));
 }
 
-void PlayListView::updateTree (RootPlayListItem * ritem, NodePtr active) {
+KDE_NO_EXPORT void PlayListView::updateTrees () {
+    for (; tree_update; tree_update = tree_update->next) {
+        updateTree (tree_update->root_item, tree_update->node);
+        if (tree_update->open) // FIXME for non-root nodes lazy loading
+            tree_update->root_item->setOpen (true);
+    }
+}
+
+KDE_NO_EXPORT void PlayListView::updateTree (RootPlayListItem * ritem, NodePtr active) {
     bool set_open = ritem->id == 0 || (ritem ? ritem->isOpen () : false);
     m_ignore_expanded = true;
-    setUpdatesEnabled (false);
     PlayListItem * curitem = 0L;
+    while (ritem->firstChild ())
+        delete ritem->firstChild ();
     populate (ritem->node, active, ritem, 0L, &curitem);
     if (set_open && ritem->firstChild () && !ritem->isOpen ())
         setOpen (ritem, true);
@@ -277,8 +285,6 @@ void PlayListView::updateTree (RootPlayListItem * ritem, NodePtr active) {
     if (!ritem->have_dark_nodes && ritem->show_all_nodes && !m_view->editMode())
         toggleShowAllNodes (); // redo, because the user can't change it anymore
     m_ignore_expanded = false;
-    setUpdatesEnabled (true);
-    triggerUpdate ();
 }
 
 void PlayListView::selectItem (const QString & txt) {
@@ -435,7 +441,10 @@ KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, QListViewItem *af
                     n->parentNode ()->insertBefore (ni, n->nextSibling ());
             }
             PlayListItem * citem = currentPlayListItem ();
-            updateTree (0, ritem->node, citem ? citem->node : 0L);
+            NodePtr cn;
+            if (citem)
+                cn = citem->node;
+            updateTree (ritem, cn);
         }
     } else
         m_view->dropEvent (de);
