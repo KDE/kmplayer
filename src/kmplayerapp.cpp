@@ -580,6 +580,8 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
 KDE_NO_EXPORT void KMPlayerApp::loadingProgress (int perc) {
     if (perc < 100)
         statusBar ()->changeItem (QString ("%1%").arg (perc), id_status_timer);
+    else
+        statusBar ()->changeItem (QString ("--:--"), id_status_timer);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::positioned (int pos, int length) {

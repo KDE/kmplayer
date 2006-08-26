@@ -736,6 +736,8 @@ void PartBase::stop () {
         m_view->setCursor (QCursor (Qt::ArrowCursor));
         if (b->isOn ())
             b->toggle ();
+        m_view->controlPanel ()->setPlaying (false);
+        setLoaded (100);
     }
 }
 
@@ -1192,7 +1194,7 @@ void Source::forward () {
         if (m_player->playing ())
             m_player->process ()->stop ();
         else if (m_current)
-            m_current->reset ();
+            m_current->finish ();
     } else
         m_player->process ()->seek (m_player->settings()->seektime * 10, false);
 }
@@ -1438,11 +1440,39 @@ KDE_NO_EXPORT void URLSource::activate () {
         play ();
 }
 
+KDE_NO_EXPORT void URLSource::stopResolving () {
+    if (m_resolve_info) {
+        for (SharedPtr <ResolveInfo> ri = m_resolve_info; ri; ri = ri->next)
+            ri->job->kill ();
+        m_resolve_info = 0L;
+        m_player->updateStatus (i18n ("Disonnected"));
+        m_player->setLoaded (100);
+    }
+}
+
+void URLSource::reset () {
+    Source::reset ();
+    stopResolving ();
+}
+
+void URLSource::forward () {
+    stopResolving ();
+    Source::forward ();
+}
+
+void URLSource::backward () {
+    stopResolving ();
+    Source::backward ();
+}
+
+void URLSource::jump (NodePtr e) {
+    stopResolving ();
+    Source::jump (e);
+}
+
 void URLSource::deactivate () {
     activated = false;
-    for (SharedPtr<ResolveInfo> rinfo =m_resolve_info; rinfo; rinfo=rinfo->next)
-        rinfo->job->kill ();
-    m_resolve_info = 0L;
+    reset ();
     setEventDispatcher (NodePtr ());
 }
 
@@ -1602,9 +1632,11 @@ KDE_NO_EXPORT void URLSource::kioData (KIO::Job * job, const QByteArray & d) {
     if (newsize <= 0 || newsize > 200000) {
         rinfo->data.resize (0);
         rinfo->job->kill (false);
+        m_player->setLoaded (100);
     } else  {
         rinfo->data.resize (newsize);
         memcpy (rinfo->data.data () + size, d.data (), newsize - size);
+        m_player->setLoaded (++rinfo->progress);
     }
 }
 
@@ -1743,6 +1775,8 @@ bool URLSource::resolveURL (NodePtr m) {
         connect (m_resolve_info->job, SIGNAL (result (KIO::Job *)),
                 this, SLOT (kioResult (KIO::Job *)));
         static_cast <View *> (m_player->view ())->controlPanel ()->setPlaying (true);
+        m_player->updateStatus (i18n ("Connecting"));
+        m_player->setLoaded (0);
         return false; // wait for result ..
     }
     return true;

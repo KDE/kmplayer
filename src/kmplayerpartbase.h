@@ -73,11 +73,15 @@ public:
     virtual void dimensions (int & w, int & h);
     virtual bool hasLength ();
     virtual QString prettyName ();
+    virtual void reset ();
 public slots:
     virtual void init ();
     virtual void activate ();
     virtual void deactivate ();
     virtual void playCurrent ();
+    virtual void forward ();
+    virtual void backward ();
+    virtual void jump (NodePtr e);
     void play ();
 private slots:
     void kioData (KIO::Job *, const QByteArray &);
@@ -88,12 +92,14 @@ protected:
     virtual bool resolveURL (NodePtr mrl);
 private:
     void read (NodePtr mrl, QTextStream &);
+    void stopResolving ();
     struct ResolveInfo {
         ResolveInfo (NodePtr mrl, KIO::Job * j, SharedPtr <ResolveInfo> & n)
-            : resolving_mrl (mrl), job (j), next (n) {}
+            : resolving_mrl (mrl), job (j), progress (0), next (n) {}
         NodePtrW resolving_mrl;
         KIO::Job * job;
         QByteArray data;
+        int progress;
         SharedPtr <ResolveInfo> next;
     };
     SharedPtr <ResolveInfo> m_resolve_info;

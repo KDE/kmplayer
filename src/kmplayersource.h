@@ -63,7 +63,7 @@ public:
     KDE_NO_EXPORT const KURL & url () const { return m_url; }
     KDE_NO_EXPORT const KURL & subUrl () const { return m_sub_url; }
     PartBase * player () { return m_player; }
-    void reset ();
+    virtual void reset ();
     QString currentMrl ();
     KDE_NO_EXPORT const QString & audioDevice () const { return m_audiodevice; }
     KDE_NO_EXPORT const QString & videoDevice () const { return m_videodevice; }
