@@ -502,7 +502,7 @@ void ControlPanel::setAutoControls (bool b) {
             m_buttons [i]->show ();
         for (int i = button_broadcast; i < (int) button_last; i++)
             m_buttons [i]->hide ();
-        showPositionSlider (true);
+        showPositionSlider (false);
         m_volume->show ();
         if (m_buttons [button_broadcast]->isOn ()) // still broadcasting
             m_buttons [button_broadcast]->show ();
@@ -584,7 +584,7 @@ void ControlPanel::setPlaying (bool play) {
     m_posSlider->setEnabled (false);
     m_posSlider->setValue (0);
     if (!play) {
-        showPositionSlider (true);
+        showPositionSlider (false);
         enableSeekButtons (true);
     }
 }
@@ -597,8 +597,7 @@ KDE_NO_EXPORT void ControlPanel::setRecording (bool record) {
 KDE_NO_EXPORT void ControlPanel::setPlayingProgress (int pos, int len) {
     m_posSlider->setEnabled (false);
     m_progress_length = len;
-    if (len > 0 && !m_posSlider->isVisible ())
-        showPositionSlider (true);
+    showPositionSlider (len > 0);
     if (m_progress_mode != progress_playing) {
         m_posSlider->setMaxValue (m_progress_length);
         m_progress_mode = progress_playing;
@@ -614,6 +613,8 @@ KDE_NO_EXPORT void ControlPanel::setPlayingProgress (int pos, int len) {
 }
 
 KDE_NO_EXPORT void ControlPanel::setLoadingProgress (int pos) {
+    if (pos > 0 && pos < 100 && !m_posSlider->isVisible ())
+        showPositionSlider (true);
     m_posSlider->setEnabled (false);
     if (m_progress_mode != progress_loading) {
         m_posSlider->setMaxValue (100);

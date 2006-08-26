@@ -602,7 +602,7 @@ void PartBase::playListItemExecuted (QListViewItem * item) {
             if (!vi->node->isPlayable ())
                 emit treeChanged (-1, vi->node, 0);
         } else if (vi->firstChild ())
-            vi->setOpen (!vi->isOpen ());
+            vi->listView ()->setOpen (vi, !vi->isOpen ());
     } else if (vi->m_attr) {
         if (!strcasecmp (vi->m_attr->nodeName (), "src") ||
                 !strcasecmp (vi->m_attr->nodeName (), "href") ||
@@ -856,6 +856,7 @@ void Source::init () {
     m_width = 0;
     m_height = 0;
     m_aspect = 0.0;
+    m_length = 0;
     m_position = 0;
     m_identified = false;
     setLength (m_document, 0);
@@ -976,6 +977,7 @@ void Source::reset () {
         m_document->reset ();
         m_player->updateTree ();
     }
+    init ();
 }
 
 QString Source::currentMrl () {
@@ -1071,13 +1073,11 @@ bool Source::setCurrent (NodePtr mrl) {
     return true;
 }
 
-void Source::stateElementChanged (Node * elm, Node::State old_state, Node::State new_state) {
+void Source::stateElementChanged (Node * elm, Node::State os, Node::State ns) {
     //kdDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isPlayable:" << (m_current && m_current->isPlayable ()) << " elm==realMrl:" << (m_current && elm == m_current->mrl ()->realMrl ()) << " p state:" << m_player->process ()->state () << endl;
-    if (new_state == Node::state_deactivated &&
-            elm == m_document && !m_back_request) {
+    if (ns == Node::state_deactivated && elm == m_document && !m_back_request) {
         emit endOfPlayItems (); // played all items
-    } else if ((new_state == Node::state_deactivated ||
-              new_state == Node::state_finished) &&
+    } else if ((ns == Node::state_deactivated || ns == Node::state_finished) &&
              m_current && m_current->isPlayable () &&
              elm == m_current->mrl ()->realMrl ()) {
         if (m_player->process ()->state () > Process::Ready)
@@ -1085,17 +1085,17 @@ void Source::stateElementChanged (Node * elm, Node::State old_state, Node::State
             m_player->process ()->stop ();
         if (m_player->view ()) // move away the video widget
             QTimer::singleShot (0, m_player->view (), SLOT (updateLayout ()));
-    } else if ((new_state == Node::state_deferred ||
-                (old_state == Node::state_deferred &&
-                 new_state > Node::state_deferred)) &&
+    } else if ((ns == Node::state_deferred ||
+                (os == Node::state_deferred && ns > Node::state_deferred)) &&
             elm == m_document) {
         m_player->process ()->pause ();
     }
-    if (elm->expose () && (new_state == Node::state_activated ||
-                           new_state == Node::state_deactivated))
-        m_player->updateTree ();
-    else
-        m_player->updateTree (false); // only updates the state_began changes (if any)
+    if (elm->expose ()) {
+        if (ns == Node::state_activated || ns == Node::state_deactivated)
+            m_player->updateTree ();
+        else if (ns == Node::state_began || os == Node::state_began)
+            m_player->updateTree (false);
+    }
 }
 
 void Source::setEventDispatcher (NodePtr e) {
@@ -1451,8 +1451,8 @@ KDE_NO_EXPORT void URLSource::stopResolving () {
 }
 
 void URLSource::reset () {
-    Source::reset ();
     stopResolving ();
+    Source::reset ();
 }
 
 void URLSource::forward () {

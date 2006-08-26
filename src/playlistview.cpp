@@ -265,7 +265,7 @@ KDE_NO_EXPORT void PlayListView::updateTrees () {
     for (; tree_update; tree_update = tree_update->next) {
         updateTree (tree_update->root_item, tree_update->node);
         if (tree_update->open) // FIXME for non-root nodes lazy loading
-            tree_update->root_item->setOpen (true);
+            setOpen (tree_update->root_item, true);
     }
 }
 

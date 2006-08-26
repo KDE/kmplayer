@@ -344,8 +344,14 @@ KDE_NO_EXPORT void PlaylistItem::activate () {
             cur = cur->nextSibling ();
         }
     }
+    bool reset_only = source == app->player ()->source ();
+    if (reset_only)
+        app->player ()->stop ();
     source->setDocument (pl, cur);
-    app->player ()->setSource (source);
+    if (reset_only)
+        source->activate ();
+    else
+        app->player ()->setSource (source);
 }
 
 KDE_NO_EXPORT void PlaylistItem::setNodeName (const QString & s) {
@@ -616,7 +622,7 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
     KMPlayer::Source * source = m_player->source ();
     if (!strcmp (source->name (), "urlsource")) {
         KURL url = source->url ();
-        if (url.url ().startsWith ("lists") || url.url ().startsWith ("cdda"))
+        if (url.url ().startsWith ("lists"))
             return;
         if (url.isEmpty () && m_player->process ()->mrl ())
             url = KURL (m_player->process ()->mrl ()->mrl ()->src);
