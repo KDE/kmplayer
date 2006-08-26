@@ -516,8 +516,11 @@ bool MPlayer::run (const char * args, const char * pipe) {
         fprintf (stderr, "%s | ", pipe);
         *m_process << pipe << " | ";
     }
-    fprintf (stderr, "mplayer -wid %lu ", (unsigned long) widget ());
-    *m_process << "mplayer -wid " << QString::number (widget ());
+    QString exe = m_configpage->mplayer_path;
+    if (exe.isEmpty ())
+        exe = "mplayer";
+    fprintf (stderr, "%s -wid %lu ", exe.ascii(), (unsigned long) widget ());
+    *m_process << exe << " -wid " << QString::number (widget ());
 
     if (m_use_slave) {
         fprintf (stderr, "-slave ");
@@ -815,10 +818,11 @@ void MPlayer::setSubtitle (int id, const QString &) {
 
 extern const char * strMPlayerGroup;
 static const char * strMPlayerPatternGroup = "MPlayer Output Matching";
+static const char * strMPlayerPath = "MPlayer Path";
 static const char * strAddArgs = "Additional Arguments";
 static const char * strCacheSize = "Cache Size for Streaming";
 static const char * strAlwaysBuildIndex = "Always build index";
-static const int non_patterns = 3;
+static const int non_patterns = 4;
 
 static struct MPlayerPattern {
     QString caption;
@@ -859,12 +863,13 @@ KDE_NO_CDTOR_EXPORT MPlayerPreferencesFrame::MPlayerPreferencesFrame (QWidget * 
     table->horizontalHeader ()->hide ();
     table->setTopMargin (0);
     table->setColumnReadOnly (0, true);
-    table->setText (0, 0, i18n ("Additional command line arguments:"));
-    table->setText (1, 0, QString("%1 (%2)").arg (i18n ("Cache size:")).arg (i18n ("kB"))); // FIXME for new translations
-    table->setCellWidget (1, 1, new QSpinBox (0, 32767, 32, table->viewport()));
-    table->setText (2, 0, i18n ("Build new index when possible"));
-    table->setCellWidget (2, 1, new QCheckBox (table->viewport()));
-    QWhatsThis::add (table->cellWidget (2, 1), i18n ("Allows seeking in indexed files (AVIs)"));
+    table->setText (0, 0, i18n ("MPlayer command:"));
+    table->setText (1, 0, i18n ("Additional command line arguments:"));
+    table->setText (2, 0, QString("%1 (%2)").arg (i18n ("Cache size:")).arg (i18n ("kB"))); // FIXME for new translations
+    table->setCellWidget (2, 1, new QSpinBox (0, 32767, 32, table->viewport()));
+    table->setText (3, 0, i18n ("Build new index when possible"));
+    table->setCellWidget (3, 1, new QCheckBox (table->viewport()));
+    QWhatsThis::add (table->cellWidget (3, 1), i18n ("Allows seeking in indexed files (AVIs)"));
     for (int i = 0; i < int (MPlayerPreferencesPage::pat_last); i++)
         table->setText (i+non_patterns, 0, _mplayer_patterns[i].caption);
     QFontMetrics metrics (table->font ());
@@ -889,6 +894,7 @@ KDE_NO_EXPORT void MPlayerPreferencesPage::write (KConfig * config) {
         config->writeEntry
             (_mplayer_patterns[i].name, m_patterns[i].pattern ());
     config->setGroup (strMPlayerGroup);
+    config->writeEntry (strMPlayerPath, mplayer_path);
     config->writeEntry (strAddArgs, additionalarguments);
     config->writeEntry (strCacheSize, cachesize);
     config->writeEntry (strAlwaysBuildIndex, alwaysbuildindex);
@@ -900,6 +906,7 @@ KDE_NO_EXPORT void MPlayerPreferencesPage::read (KConfig * config) {
         m_patterns[i].setPattern (config->readEntry
                 (_mplayer_patterns[i].name, _mplayer_patterns[i].pattern));
     config->setGroup (strMPlayerGroup);
+    mplayer_path = config->readEntry (strMPlayerPath, "mplayer");
     additionalarguments = config->readEntry (strAddArgs);
     cachesize = config->readNumEntry (strCacheSize, 384);
     alwaysbuildindex = config->readBoolEntry (strAlwaysBuildIndex, false);
@@ -907,16 +914,18 @@ KDE_NO_EXPORT void MPlayerPreferencesPage::read (KConfig * config) {
 
 KDE_NO_EXPORT void MPlayerPreferencesPage::sync (bool fromUI) {
     QTable * table = m_configframe->table;
-    QSpinBox * cacheSize = static_cast<QSpinBox *>(table->cellWidget (1, 1));
-    QCheckBox * buildIndex = static_cast<QCheckBox *>(table->cellWidget (2, 1));
+    QSpinBox * cacheSize = static_cast<QSpinBox *>(table->cellWidget (2, 1));
+    QCheckBox * buildIndex = static_cast<QCheckBox *>(table->cellWidget (3, 1));
     if (fromUI) {
-        additionalarguments = table->text (0, 1);
+        mplayer_path = table->text (0, 1);
+        additionalarguments = table->text (1, 1);
         for (int i = 0; i < int (pat_last); i++)
             m_patterns[i].setPattern (table->text (i+non_patterns, 1));
         cachesize = cacheSize->value();
         alwaysbuildindex = buildIndex->isChecked ();
     } else {
-        table->setText (0, 1, additionalarguments);
+        table->setText (0, 1, mplayer_path);
+        table->setText (1, 1, additionalarguments);
         for (int i = 0; i < int (pat_last); i++)
             table->setText (i+non_patterns, 1, m_patterns[i].pattern ());
         if (cachesize > 0)

@@ -207,6 +207,7 @@ public:
     QFrame * prefPage (QWidget * parent);
     QRegExp m_patterns[pat_last];
     int cachesize;
+    QString mplayer_path;
     QString additionalarguments;
     bool alwaysbuildindex;
 private:
