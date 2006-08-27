@@ -51,6 +51,7 @@ namespace KMPlayer {
     class KMPlayerPipeSource;
     class KMPlayerTVSource;
     class FFMpeg;
+    class PlayListItem;
 } // namespace
 
 
@@ -131,7 +132,8 @@ private slots:
     void menuDropInList ();
     void menuDropInGroup ();
     void menuCopyDrop ();
-    void menuDeleteDrop ();
+    void menuDeleteNode ();
+    void preparePlaylistMenu (int id, KMPlayer::PlayListItem *, QPopupMenu *);
 
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
@@ -142,7 +144,7 @@ private:
     KMPlayer::View * m_view;
     KMPlayer::NodePtr recents;
     KMPlayer::NodePtr playlist;
-    KMPlayer::NodePtrW drop_node;
+    KMPlayer::NodePtrW playlist_node;
 
     KAction * fileNewWindow;
     KAction * fileOpen;

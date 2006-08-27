@@ -98,6 +98,7 @@ public:
     int lastDragTreeId () const { return last_drag_tree_id; }
 signals:
     void addBookMark (const QString & title, const QString & url);
+    void prepareMenu (int id, KMPlayer::PlayListItem * item, QPopupMenu * menu);
 protected:
     bool acceptDrag (QDropEvent* event) const;
     QDragObject * dragObject ();
@@ -131,6 +132,7 @@ private:
     SharedPtr <TreeUpdate> tree_update;
     View * m_view;
     QPopupMenu * m_itemmenu;
+    KAction * m_find;
     KAction * m_find_next;
     KFindDialog * m_find_dialog;
     QPixmap folder_pix;

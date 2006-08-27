@@ -103,7 +103,6 @@ public:
     KMPlayer::NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "playlist"; }
     KMPlayerApp * app;
-    bool loaded;
 };
 
 class KMPLAYER_NO_EXPORT Recent : public KMPlayer::Mrl {
@@ -134,7 +133,6 @@ public:
     KMPlayer::NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "playlist"; }
     KMPlayerApp * app;
-    bool loaded;
     bool playmode;
 };
 
@@ -196,7 +194,7 @@ void FileDocument::readFromFile (const QString & fn) {
     if (file.exists ()) {
         file.open (IO_ReadOnly);
         QTextStream inxml (&file);
-        KMPlayer::readXML (this, inxml, QString::null);
+        KMPlayer::readXML (this, inxml, QString::null, false);
         normalize ();
     }
 }
@@ -211,19 +209,18 @@ void FileDocument::writeToFile (const QString & fn) {
 
 KDE_NO_CDTOR_EXPORT Recents::Recents (KMPlayerApp *a)
     : FileDocument (id_node_recent_document, "recents://"),
-      app(a),
-      loaded (false) {
+      app(a) {
     pretty_name = i18n ("Most Recent");
 }
 
 KDE_NO_EXPORT void Recents::activate () {
-    if (!loaded)
+    if (!resolved)
         defer ();
 }
 
 KDE_NO_EXPORT void Recents::defer () {
-    if (!loaded) {
-        loaded = true;
+    if (!resolved) {
+        resolved = true;
         readFromFile (locateLocal ("data", "kmplayer/recent.xml"));
     }
 }
@@ -281,8 +278,8 @@ KDE_NO_EXPORT void Group::closed () {
 KDE_NO_EXPORT void Playlist::defer () {
     if (playmode)
         KMPlayer::Document::defer ();
-    else if (!loaded) {
-        loaded = true;
+    else if (!resolved) {
+        resolved = true;
         readFromFile (locateLocal ("data", "kmplayer/playlist.xml"));
     }
 }
@@ -290,14 +287,13 @@ KDE_NO_EXPORT void Playlist::defer () {
 KDE_NO_EXPORT void Playlist::activate () {
     if (playmode)
         KMPlayer::Document::activate ();
-    else if (!loaded)
+    else if (!resolved)
         defer ();
 }
 
 KDE_NO_CDTOR_EXPORT Playlist::Playlist (KMPlayerApp *a, KMPlayer::PlayListNotify *n, bool plmode)
     : FileDocument (id_node_playlist_document, "Playlist://", n),
       app(a),
-      loaded (false),
       playmode (plmode) {
     pretty_name = i18n ("Persistent Playlists");
 }
@@ -347,7 +343,7 @@ KDE_NO_EXPORT void PlaylistItem::activate () {
     pl->mrl ()->pretty_name = pn;
     kdDebug () << "cloning to " << data << endl;
     QTextStream inxml (data, IO_ReadOnly);
-    KMPlayer::readXML (pl, inxml, QString::null);
+    KMPlayer::readXML (pl, inxml, QString::null, false);
     pl->normalize ();
     KMPlayer::NodePtr cur = pl->firstChild ();
     if (parentNode ()->id == id_node_group_node && cur) {
@@ -583,11 +579,13 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
             this, SLOT (playListItemDropped (QDropEvent *, QListViewItem *)));
     connect (m_view->playList(), SIGNAL (moved ()),
             this, SLOT (playListItemMoved ()));
+    connect (m_view->playList(), SIGNAL (prepareMenu (int, KMPlayer::PlayListItem *, QPopupMenu *)),
+            this, SLOT (preparePlaylistMenu (int, KMPlayer::PlayListItem *, QPopupMenu *)));
     m_dropmenu = new QPopupMenu (m_view->playList ());
     m_dropmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("player_playlist"), KIcon::Small, 0, true), i18n ("&Add to list"), this, SLOT (menuDropInList ()));
     m_dropmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("folder_grey"), KIcon::Small, 0, true), i18n ("Add in new &Group"), this, SLOT (menuDropInGroup ()));
     m_dropmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("editcopy"), KIcon::Small, 0, true), i18n ("&Copy here"), this, SLOT (menuCopyDrop ()));
-    m_dropmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("editdelete"), KIcon::Small, 0, true), i18n ("&Delete"), this, SLOT (menuDeleteDrop ()));
+    m_dropmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("editdelete"), KIcon::Small, 0, true), i18n ("&Delete"), this, SLOT (menuDeleteNode ()));
     /*QPopupMenu * viewmenu = new QPopupMenu;
     viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()),
                           QKeySequence ("CTRL + Key_F"));
@@ -772,7 +770,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
     QFile file (introfile);
     if (file.exists () && file.open (IO_ReadOnly)) {
         QTextStream ts (&file);
-        KMPlayer::readXML (m_document, ts, QString::null);
+        KMPlayer::readXML (m_document, ts, QString::null, false);
     } else {
         QString smil = QString::fromLatin1 ("<smil><head><layout>"
           "<root-layout width='320' height='240' background-color='black'/>"
@@ -796,7 +794,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
           "</par></seq><seq begin='reg1.activateEvent'/>"
           "</excl></body></smil>").arg (locate ("data", "kmplayer/noise.gif")).arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
         QTextStream ts (smil.utf8 (), IO_ReadOnly);
-        KMPlayer::readXML (m_document, ts, QString::null);
+        KMPlayer::readXML (m_document, ts, QString::null, false);
     }
     //m_document->normalize ();
     m_current = m_document; //mrl->self ();
@@ -1024,12 +1022,12 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
     m_view->setInfoMessage (QString::null);
     m_view->docArea ()->writeDockConfig (config, QString ("Window Layout"));
     Recents * rc = static_cast <Recents *> (recents.ptr ());
-    if (rc && rc->loaded) {
+    if (rc && rc->resolved) {
         fileOpenRecent->saveEntries (config,"Recent Files");
         rc->writeToFile (locateLocal ("data", "kmplayer/recent.xml"));
     }
     Playlist * pl = static_cast <Playlist *> (playlist.ptr ());
-    if (pl && pl->loaded)
+    if (pl && pl->resolved)
         pl->writeToFile (locateLocal ("data", "kmplayer/playlist.xml"));
 }
 
@@ -1131,7 +1129,7 @@ KDE_NO_EXPORT void ExitSource::activate () {
     QFile file (exitfile);
     if (file.exists () && file.open (IO_ReadOnly)) {
         QTextStream ts (&file);
-        KMPlayer::readXML (m_document, ts, QString::null);
+        KMPlayer::readXML (m_document, ts, QString::null, false);
     } else {
         QString smil = QString::fromLatin1 ("<smil><head><layout>"
           "<root-layout width='320' height='240' background-color='black'/>"
@@ -1146,7 +1144,7 @@ KDE_NO_EXPORT void ExitSource::activate () {
           "</par>"
           "</body></smil>").arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
         QTextStream ts (smil.utf8 (), IO_ReadOnly);
-        KMPlayer::readXML (m_document, ts, QString::null);
+        KMPlayer::readXML (m_document, ts, QString::null, false);
     }
     //m_document->normalize ();
     m_current = m_document;
@@ -1391,7 +1389,7 @@ void KMPlayerApp::playListItemDropped (QDropEvent * de, QListViewItem * after) {
     KMPlayer::RootPlayListItem *ritem = m_view->playList()->rootItem(after);
     if (ritem->id == 0)
         return;
-    drop_node = 0L;
+    playlist_node = 0L;
     m_drop_list.clear ();
     m_drop_after = after;
     KMPlayer::NodePtr after_node = static_cast<KMPlayer::PlayListItem*> (after)->node;
@@ -1400,8 +1398,8 @@ void KMPlayerApp::playListItemDropped (QDropEvent * de, QListViewItem * after) {
         after_node->defer (); // make sure it has loaded
     if (de->source () == m_view->playList() &&
             m_view->playList()->lastDragTreeId () == playlist_id)
-        drop_node = m_view->playList()->lastDragNode ();
-    if (!drop_node && ritem->id == playlist_id) {
+        playlist_node = m_view->playList()->lastDragNode ();
+    if (!playlist_node && ritem->id == playlist_id) {
         if (KURLDrag::canDecode (de)) {
             KURLDrag::decode (de, m_drop_list);
         } else if (QTextDrag::canDecode (de)) {
@@ -1411,20 +1409,20 @@ void KMPlayerApp::playListItemDropped (QDropEvent * de, QListViewItem * after) {
         }
     }
     m_dropmenu->changeItem (m_dropmenu->idAt (0),
-            !!drop_node ? i18n ("Move here") : i18n ("&Add to list"));
-    m_dropmenu->setItemVisible (m_dropmenu->idAt (3), !!drop_node);
-    m_dropmenu->setItemVisible (m_dropmenu->idAt (2), (drop_node && drop_node->isPlayable ()));
-    if (drop_node || m_drop_list.size () > 0)
+            !!playlist_node ? i18n ("Move here") : i18n ("&Add to list"));
+    m_dropmenu->setItemVisible (m_dropmenu->idAt (3), !!playlist_node);
+    m_dropmenu->setItemVisible (m_dropmenu->idAt (2), (playlist_node && playlist_node->isPlayable ()));
+    if (playlist_node || m_drop_list.size () > 0)
         m_dropmenu->exec (m_view->playList ()->mapToGlobal (de->pos ()));
 }
 
 KDE_NO_EXPORT void KMPlayerApp::menuDropInList () {
     KMPlayer::NodePtr n = static_cast<KMPlayer::PlayListItem*>(m_drop_after)->node;
     KMPlayer::NodePtr pi;
-    for (int i = m_drop_list.size (); n && (i > 0 || drop_node); i--) {
-        if (drop_node && drop_node->parentNode ()) {
-            pi = drop_node;
-            drop_node = 0L;
+    for (int i = m_drop_list.size (); n && (i > 0 || playlist_node); i--) {
+        if (playlist_node && playlist_node->parentNode ()) {
+            pi = playlist_node;
+            playlist_node = 0L;
             pi->parentNode ()->removeChild (pi);
         } else
             pi = new PlaylistItem (playlist, this, m_drop_list[i-1].url ());
@@ -1446,10 +1444,10 @@ KDE_NO_EXPORT void KMPlayerApp::menuDropInGroup () {
     else
         n->parentNode ()->insertBefore (g, n->nextSibling ());
     KMPlayer::NodePtr pi;
-    for (int i = 0; i < m_drop_list.size () || drop_node; ++i) {
-        if (drop_node && drop_node->parentNode ()) {
-            pi = drop_node;
-            drop_node = 0L;
+    for (int i = 0; i < m_drop_list.size () || playlist_node; ++i) {
+        if (playlist_node && playlist_node->parentNode ()) {
+            pi = playlist_node;
+            playlist_node = 0L;
             pi->parentNode ()->removeChild (pi);
         } else
             pi = new PlaylistItem (playlist,this,m_drop_list[i].url ());
@@ -1460,8 +1458,8 @@ KDE_NO_EXPORT void KMPlayerApp::menuDropInGroup () {
 
 KDE_NO_EXPORT void KMPlayerApp::menuCopyDrop () {
     KMPlayer::NodePtr n = static_cast<KMPlayer::PlayListItem*>(m_drop_after)->node;
-    if (n && drop_node) {
-        KMPlayer::NodePtr pi = new PlaylistItem (playlist, this, drop_node->mrl ()->src);
+    if (n && playlist_node) {
+        KMPlayer::NodePtr pi = new PlaylistItem (playlist, this, playlist_node->mrl ()->src);
         if (n == playlist || m_drop_after->isOpen ())
             n->insertBefore (pi, n->firstChild ());
         else
@@ -1470,11 +1468,11 @@ KDE_NO_EXPORT void KMPlayerApp::menuCopyDrop () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::menuDeleteDrop () {
+KDE_NO_EXPORT void KMPlayerApp::menuDeleteNode () {
     KMPlayer::NodePtr n;
-    if (drop_node && drop_node->parentNode ()) {
-        n = drop_node->previousSibling() ? drop_node->previousSibling() : drop_node->parentNode ();
-        drop_node->parentNode ()->removeChild (drop_node);
+    if (playlist_node && playlist_node->parentNode ()) {
+        n = playlist_node->previousSibling() ? playlist_node->previousSibling() : playlist_node->parentNode ();
+        playlist_node->parentNode ()->removeChild (playlist_node);
     }
     m_view->playList()->updateTree (playlist_id, playlist, n);
 }
@@ -1491,6 +1489,15 @@ KDE_NO_EXPORT void KMPlayerApp::playListItemMoved () {
         }
     }
 }
+
+KDE_NO_EXPORT void KMPlayerApp::preparePlaylistMenu (int id, KMPlayer::PlayListItem * item, QPopupMenu * pm) {
+    if (id == playlist_id && item->node) {
+        pm->insertSeparator ();
+        playlist_node = item->node;
+        pm->insertItem (i18n ("&Delete item"), this, SLOT (menuDeleteNode ()));
+    }
+}
+
 
 KDE_NO_EXPORT void KMPlayerApp::startArtsControl () {
     QCString fApp, fObj;

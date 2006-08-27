@@ -122,7 +122,6 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
     setDropVisualizer (true);
     setItemsRenameable (true);
     setItemMargin (2);
-    //setMargins (
     m_itemmenu = new QPopupMenu (this);
     folder_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder"), KIcon::Small);
     auxiliary_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder_grey"), KIcon::Small);
@@ -131,15 +130,9 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
     menu_pix = KGlobal::iconLoader ()->loadIcon (QString ("player_playlist"), KIcon::Small);
     config_pix = KGlobal::iconLoader ()->loadIcon (QString ("configure"), KIcon::Small);
     url_pix = KGlobal::iconLoader ()->loadIcon (QString ("www"), KIcon::Small);
-    m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("editcopy"), KIcon::Small, 0, true), i18n ("&Copy to Clipboard"), this, SLOT (copyToClipboard ()), 0, 0);
-    m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("bookmark_add"), KIcon::Small, 0, true), i18n ("&Add Bookmark"), this, SLOT (addBookMark ()), 0, 1);
-    m_itemmenu->insertItem (i18n ("&Show all"), this, SLOT (toggleShowAllNodes ()), 0, 2);
-    m_itemmenu->insertSeparator ();
-    KAction * find = KStdAction::find (this, SLOT (slotFind ()), ac, "find");
+    m_find = KStdAction::find (this, SLOT (slotFind ()), ac, "find");
     m_find_next = KStdAction::findNext (this, SLOT(slotFindNext()), ac, "next");
     m_find_next->setEnabled (false);
-    find->plug (m_itemmenu);
-    m_find_next->plug (m_itemmenu);
     connect (this, SIGNAL (contextMenuRequested (QListViewItem *, const QPoint &, int)), this, SLOT (contextMenuItem (QListViewItem *, const QPoint &, int)));
     connect (this, SIGNAL (expanded (QListViewItem *)),
              this, SLOT (itemExpanded (QListViewItem *)));
@@ -323,10 +316,33 @@ KDE_NO_EXPORT void PlayListView::contextMenuItem (QListViewItem * vi, const QPoi
     if (vi) {
         PlayListItem * item = static_cast <PlayListItem *> (vi);
         if (item->node || item->m_attr) {
-            m_itemmenu->setItemEnabled (1, item->m_attr || (item->node && (item->node->isPlayable () || item->node->isDocument ()) && item->node->mrl ()->bookmarkable));
             RootPlayListItem * ritem = rootItem (vi);
-            m_itemmenu->setItemChecked (2, ritem->show_all_nodes);
-            m_itemmenu->setItemEnabled (2, ritem->have_dark_nodes);
+            if (m_itemmenu->count () > 0) {
+                m_find->unplug (m_itemmenu);
+                m_find_next->unplug (m_itemmenu);
+                m_itemmenu->clear ();
+            }
+            m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet
+                    (QString ("editcopy"), KIcon::Small, 0, true),
+                    i18n ("&Copy to Clipboard"),
+                    this, SLOT (copyToClipboard ()), 0, 0);
+            if (item->m_attr ||
+                    (item->node && (item->node->isPlayable () ||
+                                    item->node->isDocument ()) &&
+                     item->node->mrl ()->bookmarkable))
+                m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet
+                        (QString ("bookmark_add"), KIcon::Small, 0, true),
+                        i18n ("&Add Bookmark"),
+                        this, SLOT (addBookMark ()), 0, 1);
+            if (ritem->have_dark_nodes) {
+                m_itemmenu->insertItem (i18n ("&Show all"),
+                        this, SLOT (toggleShowAllNodes ()), 0, 2);
+                m_itemmenu->setItemChecked (2, ritem->show_all_nodes);
+            }
+            m_itemmenu->insertSeparator ();
+            m_find->plug (m_itemmenu);
+            m_find_next->plug (m_itemmenu);
+            emit prepareMenu (ritem->id, item, m_itemmenu);
             m_itemmenu->exec (p);
         }
     } else
@@ -363,7 +379,7 @@ void PlayListView::copyToClipboard () {
     QString text = item->text (0);
     if (item->node) {
         Mrl * mrl = item->node->mrl ();
-        if (mrl)
+        if (mrl && !mrl->src.isEmpty ())
             text = mrl->src;
     }
     QApplication::clipboard()->setText (text);
