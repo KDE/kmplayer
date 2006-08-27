@@ -97,6 +97,8 @@ public:
 class KMPLAYER_NO_EXPORT Recents : public FileDocument {
 public:
     Recents (KMPlayerApp *a);
+    void defer ();
+    void activate ();
     void childDone (KMPlayer::NodePtr);
     KMPlayer::NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "playlist"; }
@@ -212,7 +214,18 @@ KDE_NO_CDTOR_EXPORT Recents::Recents (KMPlayerApp *a)
       app(a),
       loaded (false) {
     pretty_name = i18n ("Most Recent");
-    readFromFile (locateLocal ("data", "kmplayer/recent.xml"));
+}
+
+KDE_NO_EXPORT void Recents::activate () {
+    if (!loaded)
+        defer ();
+}
+
+KDE_NO_EXPORT void Recents::defer () {
+    if (!loaded) {
+        loaded = true;
+        readFromFile (locateLocal ("data", "kmplayer/recent.xml"));
+    }
 }
 
 KDE_NO_EXPORT KMPlayer::NodePtr Recents::childFromTag (const QString & tag) {
@@ -627,6 +640,7 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
         if (url.isEmpty () && m_player->process ()->mrl ())
             url = KURL (m_player->process ()->mrl ()->mrl ()->src);
         recentFiles ()->addURL (url);
+        recents->defer (); // make sure it's loaded
         recents->insertBefore (new Recent (recents, this, url.url ()), recents->firstChild ());
         KMPlayer::NodePtr c = recents->firstChild ()->nextSibling ();
         int count = 1;
@@ -1009,10 +1023,10 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
     }
     m_view->setInfoMessage (QString::null);
     m_view->docArea ()->writeDockConfig (config, QString ("Window Layout"));
-    if (recents) {
+    Recents * rc = static_cast <Recents *> (recents.ptr ());
+    if (rc && rc->loaded) {
         fileOpenRecent->saveEntries (config,"Recent Files");
-        static_cast <Recents *> (recents.ptr ())->writeToFile
-            (locateLocal ("data", "kmplayer/recent.xml"));
+        rc->writeToFile (locateLocal ("data", "kmplayer/recent.xml"));
     }
     Playlist * pl = static_cast <Playlist *> (playlist.ptr ());
     if (pl && pl->loaded)
@@ -1247,8 +1261,11 @@ KDE_NO_EXPORT void KMPlayerApp::slotClearHistory () {
     fileOpenRecent->setMaxItems (mi);
     m_player->settings ()->urllist.clear ();
     m_player->settings ()->sub_urllist.clear ();
-    recents->clear ();
-    m_view->playList ()->updateTree (recents_id, recents, 0);
+    if (recents) { // small window this check fails and thus ClearHistory fails
+        recents->defer (); // make sure it's loaded
+        recents->clear ();
+        m_view->playList ()->updateTree (recents_id, recents, 0);
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotFileClose()
