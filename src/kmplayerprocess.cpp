@@ -182,15 +182,17 @@ bool Process::quit () {
 
 void Process::setState (State newstate) {
     if (m_state != newstate) {
+        bool need_timer = m_old_state == m_state;
         m_old_state = m_state;
         m_state = newstate;
-        if (m_source)
+        if (need_timer && m_source)
             QTimer::singleShot (0, this, SLOT (rescheduledStateChanged ()));
     }
 }
 
 KDE_NO_EXPORT void Process::rescheduledStateChanged () {
     m_source->stateChange (this, m_old_state, m_state);
+    m_old_state = m_state;
 }
 
 bool Process::play (Source * src, NodePtr _mrl) {
@@ -376,7 +378,7 @@ KDE_NO_EXPORT WId MPlayer::widget () {
 KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
     if (playing ())
         return sendCommand (QString ("gui_play"));
-    if (!m_needs_restarted)
+    if (!m_needs_restarted && playing ())
         quit (); // rescheduling of setState will reset state just-in-time
     initProcess (viewer ());
     m_source->setPosition (0);
