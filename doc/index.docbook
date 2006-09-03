@@ -126,9 +126,43 @@ Of course you can add groups to groups to get a deeper hierarchy. When clicked
 on an item, its group and all its child groups will be copied to the current
 category and playings starts at the clicked item position.
 </para>
-</section>
-</section>
 <section>
+<title>Storage format</title>
+<para>
+The data is stored in
+<filename>~/.kde/share/apps/kmplayer/playlist.xml</filename>, and its format
+is like this example. See <link linkend="XML-editing">here</link> for 
+manipulating this data directly.
+<programlisting>
+&lt;playlist&gt;
+    &lt;group title="feeds"&gt;
+        &lt;item url="http://www.lugradio.org/episodes.rss"/&gt;
+        &lt;item url="http://science.nasa.gov/podcast.xml"/&gt;
+        &lt;item url="http://www.theworld.org/rss/tech.xml"/&gt;
+    &lt;/group&gt;
+    &lt;group title="iradio"&gt;
+        &lt;group title="sunny"&gt;
+            &lt;item mplayeropts="-cache 256" url="http://www.swissgroove.ch/listen.m3u"/&gt;
+            &lt;item url="http://www.boombasticradio.com/shoutcast/64.pls"/&gt;
+        &lt;/group&gt;
+        &lt;group title="rainy"&gt;
+            &lt;item url="http://www.radioparadise.com/musiclinks/rp_64.m3u"/&gt;
+            &lt;item url="http://www.woxy.com/stream/wma64.asx"/&gt;
+            &lt;item url="http://radionigel.com/winmedia.asx"/&gt;
+            &lt;item url="rtsp://livestreams.omroep.nl/live/vpro/vpro3voor12radioalt.rm"/&gt;
+        &lt;/group&gt;
+    &lt;/group&gt;
+&lt;/playlist&gt;
+</programlisting>
+Also note that for <application>MPlayer</application> custom options can be
+set using the <computeroutput>mplayeropts</computeroutput> argument. &kmplayer;
+searches for this option upwards in the tree, so you can set it for a whole
+group and override it for a child group or item.
+</para>
+</section>
+</section>
+</section>
+<section id="XML-editing">
 <title>Direct XML editing</title>
 <para>
 The current, <guilabel>Television</guilabel> and
@@ -147,6 +181,10 @@ After you have edited some <acronym>XML</acronym>, click on the
 <caution><para>
     All changes are lost when leaving edit mode without syncing with playlist.
 </para></caution>
+</para>
+<para>
+Because of the lazyness of &kmplayer;'s author(s), some features can only be
+enabled by editing the XML.
 </para>
 </section>
 </chapter>
@@ -258,8 +296,11 @@ Basically the same way as trouble shooting
         &kmplayer; can play from TV cards using <application>MPlayer</application> or <acronym>XVideo</acronym> (using <application>kxvplayer</application>). Before you can watch TV, you have to configure which device to use and the TV channels. You can use the scanner from the configure dialog for this or edit the config file manually.
 </para>
 <para>
-    The config file for TV settings is a <acronym>XML</acronym> file, located <filename>~/.kde/share/apps/kmplayer/tv.xml</filename>. The <acronym>XML</acronym> format is like this example:
-    <programlisting>
+The config file for TV settings is a <acronym>XML</acronym> file, located
+<filename>~/.kde/share/apps/kmplayer/tv.xml</filename>. See
+<link linkend="XML-editing">here</link> for manipulating this data directly.
+The <acronym>XML</acronym> format is like this example:
+<programlisting>
 &lt;tvdevices&gt;
     &lt;device path="/dev/video0" width="320" height="240" name="BT878 video (Hauppauge (bt878))" audio=""
               minwidth="48" minheight="32" maxwidth="924" maxheight="576" playback="0" xvport="240"&gt;
