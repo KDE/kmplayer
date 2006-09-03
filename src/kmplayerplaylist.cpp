@@ -936,7 +936,7 @@ KDE_NO_EXPORT bool DarkNode::expose () const {
 //-----------------------------------------------------------------------------
 
 GenericURL::GenericURL (NodePtr & d, const QString & s, const QString & name)
- : Mrl (d) {
+ : Mrl (d, id_node_playlist_item) {
     src = s;
     if (!src.isEmpty ())
         setAttribute (QString ("src"), src);
@@ -951,7 +951,7 @@ KDE_NO_EXPORT void GenericURL::closed () {
 //-----------------------------------------------------------------------------
 
 GenericMrl::GenericMrl (NodePtr & d, const QString & s, const QString & name, const QString & tag)
- : Mrl (d), node_name (tag) {
+ : Mrl (d, id_node_playlist_item), node_name (tag) {
     src = s;
     if (!src.isEmpty ())
         setAttribute (QString ("src"), src);

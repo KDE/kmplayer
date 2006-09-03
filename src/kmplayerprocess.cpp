@@ -580,6 +580,20 @@ bool MPlayer::run (const char * args, const char * pipe) {
         fprintf (stderr, " -sid %d", sid);
         *m_process << " -sid " << QString::number (sid);
     }
+    for (NodePtr n = m_mrl; n; n = n->parentNode ()) {
+        if (n->id != id_node_group_node && n->id != id_node_playlist_item)
+            break;
+        QString plops = convertNode <Element> (n)->getAttribute ("mplayeropts");
+        if (!plops.isNull ()) {
+            QStringList sl = QStringList::split (QChar (' '), plops);
+            for (int i = 0; i < sl.size (); ++i) {
+                QString plop = KProcess::quote (sl[i]);
+                fprintf (stderr, " %s", plop.ascii ());
+                *m_process << " " << plop;
+            }
+            break;
+        }
+    }
 
     fprintf (stderr, " %s\n", args);
     *m_process << " " << args;
@@ -590,7 +604,6 @@ bool MPlayer::run (const char * args, const char * pipe) {
     for ( it = m_process->args().begin(); it != end; ++it ){
         sMPArgs += (*it);
     }
-
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
 
     old_volume = viewer ()->view ()->controlPanel ()->volumeBar ()->value ();
