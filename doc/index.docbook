@@ -28,7 +28,7 @@
 
 <copyright>
 <year>2002</year>
-<year>2003</year>
+<year>2006</year>
 <holder>Koos Vriezen</holder>
 </copyright>
 <!-- Translators: put here the copyright notice of the translation -->
@@ -104,6 +104,72 @@ to:kde-user@kde.org">The &kde; User Mailing list</ulink>.</para>
     </programlisting>
     In KMPlayer's source package, in the <filename>tests/</filename> are some examples of <acronym>SMIL</acronym> that KMPlayer supports.
 </para>
+</section>
+</chapter>
+<chapter id="backends">
+<title>The backend players</title>
+<para>
+&kmplayer; uses external programs to do the actual playing.
+</para>
+<section id="mplayer">
+<title>MPlayer</title>
+<para>
+There is a configuration tab for MPlayer in &kmplayer;'s config dialog. Here
+you can set MPlayer's path and it cache size for network stream, among other
+things.
+</para>
+<section id="mplayer-debug">
+<title>Trouble shooting</title>
+<para>
+The best way to debug this backend is to start &kmplayer; from a console
+application like konsole. Then start a movie with kmplayer and see the exact
+commandline that is used to start mplayer in the console application.
+Now copy/paste that to another console, remove the '-wid 12344' options, and
+make it play. Probably it's just choosing the right -ao/-vo params. Also make
+sure mplayer doesn't start default with a GUI.
+</para>
+<para>
+Another debugging tool is the 'console' button in kmplayer's toolbar. Here you
+can see the output from mplayer.
+</para>
+</section>
+</section>
+<section id="xine">
+<title>Xine</title>
+<para>
+When configured &kmplayer; with Xine support, there will be configuration tab
+for Xine in &kmplayer;'s config dialog. Here you can set various options.
+These options are dynamic retrieved from the Xine library. Use context help to
+get information on what these options do (ie. click on the question mark
+button from the dialog title bar and then click on an option).
+</para>
+<para>
+The options are saved in
+<filename>.kde/share/apps/kmplayer/xine_config</filename> as a text document.
+</para>
+<section id="xine-debug">
+<title>Trouble shooting</title>
+<para>
+Basically the same way as trouble shooting
+<link linkend="mplayer-debug">MPlayer</link>, with the application name of
+<filename>kxineplayer</filename>.
+</para>
+</section>
+</section>
+<section id="gstreamer">
+<title>GStreamer</title>
+<para>
+There is no configuration tab for GStreamer in &kmplayer;'s config dialog. The
+common options for eg. <acronym>DVD</acronym> device are used when appropriate.
+</para>
+<section id="gstremaer-debug">
+<title>Trouble shooting</title>
+<para>
+Basically the same way as trouble shooting
+<link linkend="mplayer-debug">MPlayer</link>, with the application name of
+<filename>kgstplayer</filename>.
+</para>
+</section>
 </section>
 </chapter>
 <chapter id="sources">
