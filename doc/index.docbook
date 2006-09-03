@@ -19,7 +19,7 @@
 <firstname>Koos</firstname>
 <surname>Vriezen</surname>
 <affiliation>
-<address><email>koos dot vriezen at xs4all dot nl</email></address>
+<address><email>koos dot vriezen at gmail dot com</email></address>
 </affiliation>
 </author>
 </authorgroup>
@@ -44,7 +44,7 @@
 
 <abstract>
 <para>
-    &kmplayer; is an application is a &kde; frontend to <application>MPlayer</application>.
+    &kmplayer; is an application that is a &kde; frontend to <application>MPlayer</application>, <application>Xine</application> and <application>GStreamer</application>.
 </para>
 </abstract>
 
@@ -62,18 +62,93 @@
 <chapter id="introduction">
 <title>Introduction</title>
 <para>
-&kmplayer; is a simple frontend to <application>MPlayer</application>, <application>Xine</application> and <application>FFMpeg</application>. You
-can use it for watching all the movie file formats that
-<application>MPlayer</application>/<application>Xine</application> supports as well as watching
-<acronym>DVD</acronym>s, <acronym>VCD</acronym> or <acronym>TV</acronym>/<acronym>camera</acronym>.
+&kmplayer; is a simple frontend to <application>MPlayer</application>,
+<application>Xine</application>, <application>GStreamer</application> and
+<application>FFMpeg</application>. You can use it for watching all the movie
+file formats that <application>MPlayer</application>,
+<application>Xine</application> or <application>GStreamer</application>
+supports as well as watching from <acronym>DVD</acronym>,
+<acronym>VCD</acronym> or <acronym>TV</acronym> and <acronym>camera</acronym>.
 </para>
-<para>The documentation for &kappname; was not finished when &kde; was
-installed on this computer.</para> <para>If you need help, please
+<para>
+The documentation for &kappname; was not finished when &kde; was
+installed on this computer.</para> <para>If you need more help, please
 check <ulink url="http://www.kde.org">The KDE Website</ulink> for
-updates, or by submitting your question to <ulink url="mail
-to:kde-user@kde.org">The &kde; User Mailing list</ulink>.</para>
+updates, or by submitting your question to
+<ulink url="mailto:kde-user@kde.org">The &kde; User Mailing list</ulink>.
+</para>
 <para><emphasis>The &kde; Team</emphasis></para>
 
+</chapter>
+<chapter id="gui">
+<title>The user interface</title>
+<para>
+The application window is made of so called dockable windows. There is always
+the central view window. Optional there is the playlist window. And finally
+there is an info window, that just shows itself when some information is there
+to been shown.
+</para>
+<section id="playlistwindow">
+<title>Playlist window</title>
+<para>
+The playlist window has as of this writing five categories, current item(s),
+<guilabel>Optical Disks</guilabel>, <guilabel>Television</guilabel>,
+<guilabel>Persistent Playlists</guilabel> and <guilabel>Most Recent</guilabel>.
+When clicked on a category's text, it will show the contents below this line.
+Of course there has to be contents, eg. see
+<link linkend="tvsource"><acronym>TV</acronym> settings</link> for adding
+content for the <guilabel>Television</guilabel> category. The
+<guilabel>Most Recent</guilabel> category will fill itself when playing
+locale media files or network <acronym>Url</acronym>s. This category can
+hold 60 items of which the last 50 are under the <guilabel>More ..</guilabel>
+branch.
+</para>
+<section>
+<title>Persisent Playlists category</title>
+<para>
+It's possible to store your favorite links in the <guilabel>Bookmark</guilabel>
+menu, but those are single items. If you want to create a list of items that 
+play after each other, than you should use the
+<guilabel>Persistent Playlists</guilabel> category.
+</para>
+<para>
+The easiest way to add an item in this list is to drag it from
+<guilabel>Most Recent</guilabel> and drop it on
+<guilabel>Persistent Playlists</guilabel>. As you will see, when dropped, a
+pop-up menu appears where you can choose to add to this list or create a
+new group. Top level items behave like a bookmark item, but items in groups
+will play the whole group wherein they reside. Items in this category can
+easily be moved, copied, added to a new group or deleted just by dragging this
+item to another place in this category.
+</para>
+<para>
+Of course you can add groups to groups to get a deeper hierarchy. When clicked
+on an item, its group and all its child groups will be copied to the current
+category and playings starts at the clicked item position.
+</para>
+</section>
+</section>
+<section>
+<title>Direct XML editing</title>
+<para>
+The current, <guilabel>Television</guilabel> and
+<guilabel>Persistent Playlists</guilabel> categories can also be manipulated
+by editing their <acronym>XML</acronym> storage. Of course one can do that
+when &kmplayer; is not running and editing the various files in
+<filename>~/.kde/share/apps/kmplayer/</filename>, but also in the application
+itself. Simply click on a catergory label, then choose <guimenu>View</guimenu>
+and next <guimenu>Edit mode</guimenu>. You can also click on a child branch
+and will then see only the <acronym>XML</acronym> contents of the branch.
+</para>
+<para>
+After you have edited some <acronym>XML</acronym>, click on the
+<guilabel>Sync with playlist</guilabel> and either deselect the
+<guimenu>Edit mode</guimenu> item or click on another catergory.
+<caution><para>
+    All changes are lost when leaving edit mode without syncing with playlist.
+</para></caution>
+</para>
+</section>
 </chapter>
 <chapter id="settings">
 <title>Settings</title>
@@ -126,7 +201,7 @@ application like konsole. Then start a movie with kmplayer and see the exact
 commandline that is used to start mplayer in the console application.
 Now copy/paste that to another console, remove the '-wid 12344' options, and
 make it play. Probably it's just choosing the right -ao/-vo params. Also make
-sure mplayer doesn't start default with a GUI.
+sure mplayer doesn't start default with a <acronym>GUI</acronym>.
 </para>
 <para>
 Another debugging tool is the 'console' button in kmplayer's toolbar. Here you
@@ -214,7 +289,7 @@ Note that <quote>input</quote> elements having channels, should have the <quote>
     encoding: 2 SECAM-television
     ....   
 </programlisting>
-Also width and height attributes are ignored by the <acronym>XVideo</acronym> player. This player gets the sizes from the X server. One of the nice things of <acronym>XVideo</acronym> is that scaling is done in hardware, by the video card, so fullscreen support without CPU usage and without resolution change of you monitor. Also no annoying flicker when another window overlaps this video window.
+Also width and height attributes are ignored by the <acronym>XVideo</acronym> player. This player gets the sizes from the X server. One of the nice things of <acronym>XVideo</acronym> is that scaling is done in hardware, by the video card, so fullscreen support without CPU usage and without resolution change of your monitor. Also no annoying flicker when another window overlaps this video window.
 </para>
 <para>
 See the VDR section for more information about using <acronym>XVideo</acronym>.
