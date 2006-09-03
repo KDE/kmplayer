@@ -225,8 +225,10 @@ void PartBase::connectPlaylist (PlayListView * playlist) {
              this, SLOT (playListItemExecuted (QListViewItem *)));
     connect (playlist, SIGNAL (selectionChanged (QListViewItem *)),
              this, SLOT (playListItemSelected (QListViewItem *)));
-    connect (this, SIGNAL (treeChanged (int, NodePtr, NodePtr)),
-             playlist, SLOT (updateTree (int, NodePtr, NodePtr)));
+    connect (playlist, SIGNAL (clicked (QListViewItem *)),
+             this, SLOT (playListItemClicked (QListViewItem *)));
+    connect (this, SIGNAL (treeChanged (int, NodePtr, NodePtr, bool, bool)),
+             playlist, SLOT (updateTree (int, NodePtr, NodePtr, bool, bool)));
     connect (this, SIGNAL (treeUpdated ()),
              playlist, SLOT (triggerUpdate ()));
 }
@@ -578,7 +580,7 @@ void PartBase::forward () {
     m_source->forward ();
 }
 
-void PartBase::playListItemSelected (QListViewItem * item) {
+KDE_NO_EXPORT void PartBase::playListItemSelected (QListViewItem * item) {
     if (m_in_update_tree) return;
     PlayListItem * vi = static_cast <PlayListItem *> (item);
     if (vi->node) {
@@ -588,11 +590,31 @@ void PartBase::playListItemSelected (QListViewItem * item) {
         updateTree (); // items already deleted
 }
 
-void PartBase::playListItemExecuted (QListViewItem * item) {
+KDE_NO_EXPORT void PartBase::playListItemClicked (QListViewItem * item) {
+    if (!item)
+        return;
+    PlayListItem * vi = static_cast <PlayListItem *> (item);
+    RootPlayListItem * ri = vi->playListView ()->rootItem (item);
+    if (ri == item && vi->node) {
+        QString src = ri->source;
+        kdDebug() << "playListItemClicked " << src << " " << vi->node->nodeName() << endl;
+        Source * source = src.isEmpty() ? m_source : m_sources[src.ascii()];
+        if (vi->node->isPlayable ()) {
+            source->jump (vi->node); //may become !isPlayable by lazy loading
+            if (!vi->node->isPlayable ())
+                emit treeChanged (ri->id, vi->node, 0, false, true);
+        } else if (vi->firstChild ())
+            vi->listView ()->setOpen (vi, !vi->isOpen ());
+    }
+}
+
+KDE_NO_EXPORT void PartBase::playListItemExecuted (QListViewItem * item) {
     if (m_in_update_tree) return;
     if (m_view->editMode ()) return;
     PlayListItem * vi = static_cast <PlayListItem *> (item);
     RootPlayListItem * ri = vi->playListView ()->rootItem (item);
+    if (ri == item)
+        return; // both null or handled by playListItemClicked
     if (vi->node) {
         QString src = ri->source;
         kdDebug() << "playListItemExecuted " << src << " " << vi->node->nodeName() << endl;
@@ -600,7 +622,7 @@ void PartBase::playListItemExecuted (QListViewItem * item) {
         if (vi->node->isPlayable ()) {
             source->jump (vi->node); //may become !isPlayable by lazy loading
             if (!vi->node->isPlayable ())
-                emit treeChanged (-1, vi->node, 0);
+                emit treeChanged (ri->id, vi->node, 0, false, true);
         } else if (vi->firstChild ())
             vi->listView ()->setOpen (vi, !vi->isOpen ());
     } else if (vi->m_attr) {
@@ -625,7 +647,7 @@ void PartBase::playListItemExecuted (QListViewItem * item) {
             }
         }
     } else
-        emit treeChanged (ri->id, ri->node, 0L);
+        emit treeChanged (ri->id, ri->node, 0L, false, false);
     if (m_view)
         m_view->viewArea ()->setFocus ();
 }
@@ -635,7 +657,7 @@ void PartBase::updateTree (bool full, bool force) {
         m_in_update_tree = true;
         if (m_update_tree_full) {
             if (m_source)
-                emit treeChanged (0, m_source->root (), m_source->current ());
+                emit treeChanged (0, m_source->root (), m_source->current (), true, false);
         } else
             emit treeUpdated ();
         m_in_update_tree = false;

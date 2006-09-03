@@ -192,7 +192,7 @@ signals:
     void urlAdded (const QString & url);
     void urlChanged (const QString & url);
     void processChanged (const char *);
-    void treeChanged (int id, NodePtr root, NodePtr);
+    void treeChanged (int id, NodePtr root, NodePtr, bool select, bool open);
     void treeUpdated ();
     void infoUpdated (const QString & msg);
     void statusUpdated (const QString & msg);
@@ -214,6 +214,7 @@ protected slots:
     void sourceHasChangedAspects ();
     void fullScreen ();
     void playListItemSelected (QListViewItem *);
+    void playListItemClicked (QListViewItem *);
     void playListItemExecuted (QListViewItem *);
     virtual void playingStarted ();
     virtual void playingStopped ();

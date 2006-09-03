@@ -105,7 +105,7 @@ protected:
 public slots:
     void editCurrent ();
     void rename (QListViewItem * item, int c);
-    void updateTree (int id, NodePtr root, NodePtr active);
+    void updateTree (int id, NodePtr root, NodePtr active, bool sel, bool open);
 private slots:
     void contextMenuItem (QListViewItem *, const QPoint &, int);
     void itemExpanded (QListViewItem *);
@@ -119,13 +119,14 @@ private slots:
     void slotFindOk ();
     void slotFindNext ();
 private:
-    void updateTree (RootPlayListItem * ritem, NodePtr active);
+    void updateTree (RootPlayListItem * ritem, NodePtr active, bool select);
     PlayListItem * populate (NodePtr e, NodePtr focus, RootPlayListItem *root, PlayListItem * item, PlayListItem ** curitem);
     struct KMPLAYER_NO_EXPORT TreeUpdate {
-        KDE_NO_CDTOR_EXPORT TreeUpdate (RootPlayListItem *ri, NodePtr n, bool o, SharedPtr <TreeUpdate> &nx) : root_item (ri), node (n), open (o), next (nx) {}
+        KDE_NO_CDTOR_EXPORT TreeUpdate (RootPlayListItem *ri, NodePtr n, bool s, bool o, SharedPtr <TreeUpdate> &nx) : root_item (ri), node (n), select (s), open (o), next (nx) {}
         KDE_NO_CDTOR_EXPORT ~TreeUpdate () {}
         RootPlayListItem * root_item;
         NodePtrW node;
+        bool select;
         bool open;
         SharedPtr <TreeUpdate> next;
     };

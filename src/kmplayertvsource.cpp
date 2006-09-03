@@ -436,7 +436,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::buildArguments () {
         return;
     m_cur_tvinput = input;
     m_cur_tvdevice = input->parentNode ();
-    static_cast <KMPlayer::View*>(m_player->view ())->playList ()->updateTree (0, m_cur_tvinput, m_current);
+    static_cast <KMPlayer::View*>(m_player->view ())->playList ()->updateTree (0, m_cur_tvinput, m_current, true, false);
     if (m_cur_tvdevice->id != id_node_tv_device) {
         return;
     }
@@ -524,7 +524,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::readXML () {
     kdDebug () << "KMPlayerTVSource::readXML" << endl;
     static_cast <TVDocument *> (m_document.ptr ())->readFromFile
         (locateLocal ("data", "kmplayer/tv.xml"));
-    static_cast <KMPlayer::View*>(m_player->view ())->playList ()->updateTree (tree_id, m_document, 0);
+    static_cast <KMPlayer::View*>(m_player->view ())->playList ()->updateTree (tree_id, m_document, 0, false, false);
     buildMenu ();
     sync (false);
 }

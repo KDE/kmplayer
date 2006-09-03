@@ -153,7 +153,7 @@ int PlayListView::addTree (NodePtr root, const QString & source, const QString &
     ritem->setPixmap (0, !ritem->icon.isEmpty ()
             ? KGlobal::iconLoader ()->loadIcon (ritem->icon, KIcon::Small)
             : url_pix);
-    updateTree (ritem, 0L);
+    updateTree (ritem, 0L, false);
     return last_id;
 }
 
@@ -210,13 +210,13 @@ KDE_NO_EXPORT PlayListItem * PlayListView::populate
     return item;
 }
 
-void PlayListView::updateTree (int id, NodePtr root, NodePtr active) {
+void PlayListView::updateTree (int id, NodePtr root, NodePtr active,
+        bool select, bool open) {
     // TODO, if root is same as rootitems->node and treeversion is the same
     // and show all nodes is unchanged then only update the cells
     QWidget * w = focusWidget ();
     if (w && w != this)
         w->clearFocus ();
-    bool set_open = false;
     //setSelected (firstChild (), true);
     RootPlayListItem * ritem = static_cast <RootPlayListItem *> (firstChild ());
     RootPlayListItem * before = 0L;
@@ -231,7 +231,6 @@ void PlayListView::updateTree (int id, NodePtr root, NodePtr active) {
                 }
             if (root == ritem->node) {
                 id = ritem->id;
-                set_open = true;
                 break;  // found based on matching (ancestor) node
             }
         }
@@ -249,20 +248,20 @@ void PlayListView::updateTree (int id, NodePtr root, NodePtr active) {
         ritem->node = root;
     m_find_next->setEnabled (!!m_current_find_elm);
     bool need_timer = !tree_update;
-    tree_update = new TreeUpdate (ritem, active, set_open, tree_update);
+    tree_update = new TreeUpdate (ritem, active, select, open, tree_update);
     if (need_timer)
         QTimer::singleShot (0, this, SLOT (updateTrees ()));
 }
 
 KDE_NO_EXPORT void PlayListView::updateTrees () {
     for (; tree_update; tree_update = tree_update->next) {
-        updateTree (tree_update->root_item, tree_update->node);
+        updateTree (tree_update->root_item, tree_update->node, tree_update->select);
         if (tree_update->open) // FIXME for non-root nodes lazy loading
             setOpen (tree_update->root_item, true);
     }
 }
 
-KDE_NO_EXPORT void PlayListView::updateTree (RootPlayListItem * ritem, NodePtr active) {
+KDE_NO_EXPORT void PlayListView::updateTree (RootPlayListItem * ritem, NodePtr active, bool select) {
     bool set_open = ritem->id == 0 || (ritem ? ritem->isOpen () : false);
     m_ignore_expanded = true;
     PlayListItem * curitem = 0L;
@@ -271,7 +270,7 @@ KDE_NO_EXPORT void PlayListView::updateTree (RootPlayListItem * ritem, NodePtr a
     populate (ritem->node, active, ritem, 0L, &curitem);
     if (set_open && ritem->firstChild () && !ritem->isOpen ())
         setOpen (ritem, true);
-    if (curitem) {
+    if (curitem && select) {
         setSelected (curitem, true);
         ensureItemVisible (curitem);
     }
@@ -406,7 +405,7 @@ KDE_NO_EXPORT void PlayListView::showAllNodes(RootPlayListItem *ri, bool show) {
     if (ri && ri->show_all_nodes != show) {
         PlayListItem * cur_item = currentPlayListItem ();
         ri->show_all_nodes = show;
-        updateTree (ri->id, ri->node, cur_item->node);
+        updateTree (ri->id, ri->node, cur_item->node, true, false);
         if (m_current_find_elm &&
                 ri->node->document() == m_current_find_elm->document() &&
                 !ri->show_all_nodes) {
@@ -460,7 +459,7 @@ KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, QListViewItem *af
             NodePtr cn;
             if (citem)
                 cn = citem->node;
-            updateTree (ritem, cn);
+            updateTree (ritem, cn, true);
         }
     } else
         m_view->dropEvent (de);
@@ -473,7 +472,7 @@ KDE_NO_EXPORT void PlayListView::itemIsRenamed (QListViewItem * qitem) {
         if (!ri->show_all_nodes && item->node->isEditable ())
             item->node->setNodeName (item->text (0));
         else // restore damage ..
-            updateTree (ri, item->node);
+            updateTree (ri, item->node, true);
     } else if (item->m_attr) {
         QString txt = item->text (0);
         int pos = txt.find (QChar ('='));
