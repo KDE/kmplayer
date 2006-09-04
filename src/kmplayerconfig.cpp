@@ -54,21 +54,29 @@
 using namespace KMPlayer;
 
 static OutputDriver _ads[] = {
-    { "", i18n ("Use back-end defaults") },
+    { "alsa,oss,sdl,arts", i18n ("Auto") },
     { "oss", i18n ("Open Sound System") },
     { "sdl", i18n ("Simple DirectMedia Layer") },
     { "alsa", i18n ("Advanced Linux Sound Architecture") },
     { "arts", i18n ("Analog Real-Time Synthesizer") },
+    { "jack", i18n ("JACK Audio Connection Kit") },
+    { "openal", i18n ("OpenAL") },
     { "esd", i18n ("Enlightened Sound Daemon") },
     { "alsa5", i18n ("Advanced Linux Sound Architecture v0.5") },
     { "alsa9", i18n ("Advanced Linux Sound Architecture v0.9") },
+    { "", i18n ("Use back-end defaults") },
     { 0, QString::null }
 };
 
 static OutputDriver _vds [] = {
-    { "xv", i18n ("XVideo") },
+    { "xv,sdl,x11", i18n ("Auto") },
     { "x11", i18n ("X11Shm") },
     { "xvidix", i18n ("XVidix") },
+    { "xvmc,xv", i18n ("XvMC") },
+    { "sdl", i18n ("SDL") },
+    { "gl", i18n ("OpenGL") },
+    { "gl2", i18n ("OpenGL MT") },
+    { "xv", i18n ("XVideo") },
     { 0, QString::null }
 };
 
