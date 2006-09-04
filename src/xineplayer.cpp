@@ -75,8 +75,6 @@ static xine_cfg_entry_t     audio_vis_cfg_entry;
 static x11_visual_t         vis;
 static const char          *dvd_device;
 static const char          *vcd_device;
-static const char          *vo_driver = "auto";
-static const char          *ao_driver = "auto";
 static char                 configfile[2048];
 
 static Display             *display;
@@ -1049,11 +1047,11 @@ int main(int argc, char **argv) {
     snprintf(configfile, sizeof (configfile), "%s%s", xine_get_homedir(), "/.xine/config2");
     xineapp = new KXinePlayer (argc, argv);
     window_created = true;
+    QString vo_driver ("auto");
+    QString ao_driver ("auto");
     for (int i = 1; i < argc; i++) {
         if (!strcmp (argv [i], "-vo") && ++i < argc) {
             vo_driver = argv [i];
-            if (!strcmp (vo_driver, "x11"))
-                vo_driver = (char *) "xshm";
         } else if (!strcmp (argv [i], "-ao") && ++i < argc) {
             ao_driver = argv [i];
         } else if (!strcmp (argv [i], "-dvd-device") && ++i < argc) {
@@ -1131,8 +1129,29 @@ int main(int argc, char **argv) {
     if (config_changed)
         xine_config_save (xine, configfile);
 
-    vo_port = xine_open_video_driver(xine, vo_driver, XINE_VISUAL_TYPE_X11, (void *) &vis);
-    ao_port = xine_open_audio_driver (xine, ao_driver, NULL);
+    QStringList vos = QStringList::split (',', vo_driver);
+    for (int i = 0; i < vos.size (); i++) {
+        if (vos[i] == "x11")
+            vos[i] = "xshm";
+        else if (vos[i] == "gl")
+            vos[i] = "opengl";
+        fprintf (stderr, "trying video driver %s ..\n", vos[i].ascii ());
+        vo_port = xine_open_video_driver(xine, vos[i].ascii (),
+                XINE_VISUAL_TYPE_X11, (void *) &vis);
+        if (vo_port)
+            break;
+    }
+    if (!vo_port)
+        fprintf (stderr, "no video driver found\n");
+    QStringList aos = QStringList::split (',', ao_driver);
+    for (int i = 0; i < aos.size (); i++) {
+        fprintf (stderr, "trying audio driver %s ..\n", aos[i].ascii ());
+        ao_port = xine_open_audio_driver (xine, aos[i].ascii (), NULL);
+        if (ao_port)
+            break;
+    }
+    if (!ao_port)
+        fprintf (stderr, "audio driver initialisation failed\n");
     stream = xine_stream_new (xine, ao_port, vo_port);
 
     QByteArray buf;
