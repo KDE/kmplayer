@@ -383,7 +383,7 @@ void KXVideoPlayer::play () {
             XFree (attributes);
         }
         if (xv_frequency > 0)
-            XvSetPortAttribute (display, xvport, xv_freq_atom, int (1.0*xv_frequency/6.25));
+            XvSetPortAttribute (display, xvport, xv_freq_atom, int (1.0*xv_frequency/62.5));
         if (xv_encoding >= 0)
             XvSetPortAttribute (display, xvport, xv_enc_atom, xv_encoding);
         if (XvGetPortAttribute (display, xvport, xv_mute_atom, &cur_val) ==

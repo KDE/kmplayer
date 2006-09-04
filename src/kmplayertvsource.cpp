@@ -97,7 +97,7 @@ KDE_NO_CDTOR_EXPORT TVDevicePage::TVDevicePage (QWidget *parent, KMPlayer::NodeP
             QFontMetrics metrics (table->font ());
             QHeader *header = table->horizontalHeader();
             header->setLabel (0, i18n ("Channel"));
-            header->setLabel (1, i18n ("Frequency"));
+            header->setLabel (1, i18n ("Frequency (MHz)"));
             int index = 0;
             int first_column_width = QFontMetrics (header->font ()).boundingRect (header->label (0)).width () + 20;
             for (KMPlayer::NodePtr c=input->firstChild();c;c=c->nextSibling()) {
@@ -189,9 +189,9 @@ KDE_NO_EXPORT void TVNode::setNodeName (const QString & nn) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT TVChannel::TVChannel (KMPlayer::NodePtr & d, const QString & n, int freq) : TVNode (d, QString ("tv://"), "channel", id_node_tv_channel, n) {
+KDE_NO_CDTOR_EXPORT TVChannel::TVChannel (KMPlayer::NodePtr & d, const QString & n, double freq) : TVNode (d, QString ("tv://"), "channel", id_node_tv_channel, n) {
     setAttribute ("name", n);
-    setAttribute ("frequency", QString::number (freq));
+    setAttribute ("frequency", QString::number (freq, 'f', 2));
 }
 
 KDE_NO_CDTOR_EXPORT TVChannel::TVChannel (KMPlayer::NodePtr & d) : TVNode (d, QString ("tv://"), "channel", id_node_tv_channel) {
@@ -302,7 +302,7 @@ KDE_NO_EXPORT void TVDevice::updateDevicePage () {
             if (table) {
                 input->clearChildren ();
                 for (int j = 0; j<table->numRows() && table->item (j, 1); ++j) {
-                    input->appendChild (new TVChannel (m_doc, table->item (j, 0)->text (), table->item (j, 1)->text ().toInt ()));
+                    input->appendChild (new TVChannel (m_doc, table->item (j, 0)->text (), table->item (j, 1)->text ().toDouble ()));
                 }
             }
             QComboBox * norms = static_cast <QComboBox *> (widget->child ("PageTVNorm", "QComboBox"));
@@ -455,7 +455,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::buildArguments () {
     command.sprintf ("device=%s:input=%s", tvdevice->src.ascii (), input->getAttribute ("id").ascii ());
     if (channel) {
         QString freq = channel->getAttribute ("frequency");
-        m_frequency = freq.toInt ();
+        m_frequency = (int)(1000 * freq.toDouble ());
         command += QString (":freq=%1").arg (freq);
     } else
         m_frequency = 0;

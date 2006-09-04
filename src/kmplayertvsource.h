@@ -92,7 +92,7 @@ public:
  */
 class KMPLAYER_NO_EXPORT TVChannel : public TVNode {
 public:
-    TVChannel (KMPlayer::NodePtr & d, const QString & n, int f);
+    TVChannel (KMPlayer::NodePtr & d, const QString & n, double f);
     TVChannel (KMPlayer::NodePtr & d);
     KDE_NO_CDTOR_EXPORT ~TVChannel () {}
     void closed ();

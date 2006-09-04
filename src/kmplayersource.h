@@ -68,6 +68,7 @@ public:
     KDE_NO_EXPORT const QString & audioDevice () const { return m_audiodevice; }
     KDE_NO_EXPORT const QString & videoDevice () const { return m_videodevice; }
     KDE_NO_EXPORT const QString & videoNorm () const { return m_videonorm; }
+    /* frequency() if set, returns frequency in kHz */
     KDE_NO_EXPORT int frequency () const { return m_frequency; }
     KDE_NO_EXPORT int xvPort () const { return m_xvport; }
     KDE_NO_EXPORT int xvEncoding () const { return m_xvencoding; }
