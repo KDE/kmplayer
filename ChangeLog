@@ -1,4 +1,17 @@
-Changes since version 0.9.2a
+Changes since version 0.9.3-pre2
+- Patch from bero, add more output audio and video drivers
+- Frequencies for Xv TV watching should now be in MHz (like with MPlayer)
+- Add more help in the handbook about the backends and the playlist format
+- Support MPLAYEROPTS argument for group/item nodes to add extra settings
+- Add option to set path/application name for mplayer backend
+- Fix possible crash when updating the playlist tree from QListView click events
+- Add 'Delete item' for persistent playlists context menu
+- Delay loading of recent XML file to first item played or category opened
+- Defaults to not show progress slider instead of having a disabled slider,
+  this greatly improves channel switching with Xv and the bttv driver
+- Properly stop kmplayer when 'hanging' in the resolving state, also add
+  'Connecting' when starting resolving
+Changes since version 0.9.3-pre1
 - Support for audio cdrom
 - Fixes for 'Persistent Playlists' tree; drop position didn't account for
   scrollbar position, painting fixes, popup menu position and dropping an item
