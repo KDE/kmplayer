@@ -570,17 +570,17 @@ void KGStreamerPlayer::play () {
 
     gst_bus_async = g_signal_connect (gst_bus, "message",
                 G_CALLBACK (gstBusMessage), 0L);
-    if (ao_driver && !strcmp (ao_driver, "alsa"))
+    if (ao_driver && !strncmp (ao_driver, "alsa", 4))
         audiosink = gst_element_factory_make ("alsasink", "audiosink");
-    else if (ao_driver && !strcmp (ao_driver, "arts"))
+    else if (ao_driver && !strncmp (ao_driver, "arts", 4))
         audiosink = gst_element_factory_make ("artsdsink", "audiosink");
-    else if (ao_driver && !strcmp (ao_driver, "esd"))
+    else if (ao_driver && !strncmp (ao_driver, "esd", 3))
         audiosink = gst_element_factory_make ("esdsink", "audiosink");
     else
         audiosink = gst_element_factory_make ("osssink", "audiosink");
     if (!audiosink)
         goto fail;
-    if (vo_driver && !strcmp (vo_driver, "xv"))
+    if (vo_driver && !strncmp (vo_driver, "xv", 2))
         videosink = gst_element_factory_make ("xvimagesink", "videosink");
     else
         videosink = gst_element_factory_make ("ximagesink", "videosink");
