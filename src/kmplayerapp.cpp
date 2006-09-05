@@ -1414,7 +1414,7 @@ void KMPlayerApp::playListItemDropped (QDropEvent * de, QListViewItem * after) {
     m_dropmenu->setItemVisible (m_dropmenu->idAt (3), !!manip_node);
     m_dropmenu->setItemVisible (m_dropmenu->idAt (2), (manip_node && manip_node->isPlayable ()));
     if (manip_node || m_drop_list.size () > 0)
-        m_dropmenu->exec (m_view->playList ()->mapToGlobal (de->pos ()));
+        m_dropmenu->exec (m_view->playList ()->mapToGlobal (m_view->playList ()->contentsToViewport (de->pos ())));
 }
 
 KDE_NO_EXPORT void KMPlayerApp::menuDropInList () {

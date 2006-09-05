@@ -5,7 +5,7 @@ Changes since version 0.9.3-pre2
 - Support MPLAYEROPTS argument for group/item nodes to add extra settings
 - Add option to set path/application name for mplayer backend
 - Fix possible crash when updating the playlist tree from QListView click events
-- Add 'Delete item' for persistent playlists context menu
+- Add 'Delete item' and MoveUp/Down for persistent playlists context menu and TV
 - Delay loading of recent XML file to first item played or category opened
 - Defaults to not show progress slider instead of having a disabled slider,
   this greatly improves channel switching with Xv and the bttv driver
