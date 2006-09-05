@@ -1,4 +1,4 @@
-#AM_INIT_AUTOMAKE(kmplayer,0.9.3-pre2)
+#AM_INIT_AUTOMAKE(kmplayer,0.9.3-rc1)
 
 #KDE_ENABLE_HIDDEN_VISIBILITY
 
