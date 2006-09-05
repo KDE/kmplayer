@@ -133,7 +133,9 @@ private slots:
     void menuDropInGroup ();
     void menuCopyDrop ();
     void menuDeleteNode ();
-    void preparePlaylistMenu (int id, KMPlayer::PlayListItem *, QPopupMenu *);
+    void menuMoveUpNode ();
+    void menuMoveDownNode ();
+    void preparePlaylistMenu (KMPlayer::PlayListItem *, QPopupMenu *);
 
 private:
     void menuItemClicked (QPopupMenu * menu, int id);
@@ -144,7 +146,7 @@ private:
     KMPlayer::View * m_view;
     KMPlayer::NodePtr recents;
     KMPlayer::NodePtr playlist;
-    KMPlayer::NodePtrW playlist_node;
+    KMPlayer::NodePtrW manip_node;
 
     KAction * fileNewWindow;
     KAction * fileOpen;
@@ -178,6 +180,7 @@ private:
     KURL::List m_drop_list;
     QListViewItem * m_drop_after;
     int edit_tree_id;
+    int manip_tree_id;
     int last_time_left;
     int recents_id;
     int playlist_id;

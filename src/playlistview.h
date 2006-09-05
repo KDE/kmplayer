@@ -80,7 +80,9 @@ class KMPLAYER_EXPORT PlayListView : public KListView {
     Q_OBJECT
 public:
     enum Flags {
-        AllowDrops = 0x01, AllowDrag = 0x02, InPlaceEdit = 0x04, TreeEdit = 0x08
+        AllowDrops = 0x01, AllowDrag = 0x02,
+        InPlaceEdit = 0x04, TreeEdit = 0x08,
+        Moveable = 0x10, Deleteable = 0x20
     };
     PlayListView (QWidget * parent, View * view, KActionCollection * ac);
     ~PlayListView ();
@@ -98,7 +100,7 @@ public:
     int lastDragTreeId () const { return last_drag_tree_id; }
 signals:
     void addBookMark (const QString & title, const QString & url);
-    void prepareMenu (int id, KMPlayer::PlayListItem * item, QPopupMenu * menu);
+    void prepareMenu (KMPlayer::PlayListItem * item, QPopupMenu * menu);
 protected:
     bool acceptDrag (QDropEvent* event) const;
     QDragObject * dragObject ();

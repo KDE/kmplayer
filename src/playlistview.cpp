@@ -221,8 +221,11 @@ void PlayListView::updateTree (int id, NodePtr root, NodePtr active,
     RootPlayListItem * ritem = static_cast <RootPlayListItem *> (firstChild ());
     RootPlayListItem * before = 0L;
     for (; ritem; ritem =static_cast<RootPlayListItem*>(ritem->nextSibling())) {
-        if (ritem->id == id) 
+        if (ritem->id == id) {
+            if (!root)
+                root = ritem->node;
             break;  // found based on id
+        }
         if (id == -1) { // wildcard id
             for (NodePtr n = root; n; n = n->parentNode ())
                 if (n == ritem->node) {
@@ -341,7 +344,7 @@ KDE_NO_EXPORT void PlayListView::contextMenuItem (QListViewItem * vi, const QPoi
             m_itemmenu->insertSeparator ();
             m_find->plug (m_itemmenu);
             m_find_next->plug (m_itemmenu);
-            emit prepareMenu (ritem->id, item, m_itemmenu);
+            emit prepareMenu (item, m_itemmenu);
             m_itemmenu->exec (p);
         }
     } else
