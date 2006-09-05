@@ -119,7 +119,10 @@ pop-up menu appears where you can choose to add to this list or create a
 new group. Top level items behave like a bookmark item, but items in groups
 will play the whole group wherein they reside. Items in this category can
 easily be moved, copied, added to a new group or deleted just by dragging this
-item to another place in this category.
+item to another place in this category. Additionally there are
+<guimenu>Delete item</guimenu>, <guimenu>Move up</guimenu> and
+<guimenu>Move down</guimenu> items in the context menu (when clicking with
+the right mouse button on an item).
 </para>
 <para>
 Of course you can add groups to groups to get a deeper hierarchy. When clicked
@@ -179,7 +182,7 @@ After you have edited some <acronym>XML</acronym>, click on the
 <guilabel>Sync with playlist</guilabel> and either deselect the
 <guimenu>Edit mode</guimenu> item or click on another catergory.
 <caution><para>
-    All changes are lost when leaving edit mode without syncing with playlist.
+    All changes are lost when leaving edit mode or selecting another branch without syncing with playlist.
 </para></caution>
 </para>
 <para>
