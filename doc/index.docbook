@@ -308,8 +308,8 @@ The <acronym>XML</acronym> format is like this example:
     &lt;device path="/dev/video0" width="320" height="240" name="BT878 video (Hauppauge (bt878))" audio=""
               minwidth="48" minheight="32" maxwidth="924" maxheight="576" playback="0" xvport="240"&gt;
         &lt;input name="Television" id="0" tuner="1" norm="PAL" xvenc="0"&gt;
-            &lt;channel name="Ned1" frequency="21600"/&gt;
-            &lt;channel name="VCR" frequency="59490"/&gt;
+            &lt;channel name="Ned1" frequency="216"/&gt;
+            &lt;channel name="VCR" frequency="594.90"/&gt;
         &lt;/input&gt;
         &lt;input name="Composite1" id="1" xvenc="7"/&gt;
         &lt;input name="S-Video" id="2" xvenc="14"/&gt;
