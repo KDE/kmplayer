@@ -116,6 +116,7 @@ private slots:
     void toggleShowAllNodes ();
     void itemDropped (QDropEvent * e, QListViewItem * after);
     void itemIsRenamed (QListViewItem * item);
+    void itemIsSelected (QListViewItem * item);
     void updateTrees ();
     void slotFind ();
     void slotFindOk ();

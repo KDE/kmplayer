@@ -140,13 +140,15 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
              this, SLOT (itemDropped (QDropEvent *, QListViewItem *)));
     connect (this, SIGNAL (itemRenamed (QListViewItem *)),
              this, SLOT (itemIsRenamed (QListViewItem *)));
+    connect (this, SIGNAL (selectionChanged (QListViewItem *)),
+             this, SLOT (itemIsSelected (QListViewItem *)));
 }
 
 KDE_NO_CDTOR_EXPORT PlayListView::~PlayListView () {
 }
 
 int PlayListView::addTree (NodePtr root, const QString & source, const QString & icon, int flags) {
-    kdDebug () << "addTree " << source << " " << root->mrl()->src << endl;
+    //kdDebug () << "addTree " << source << " " << root->mrl()->src << endl;
     RootPlayListItem * ritem = new RootPlayListItem (++last_id, this, root, lastChild(), flags);
     ritem->source = source;
     ritem->icon = icon;
@@ -492,6 +494,11 @@ KDE_NO_EXPORT void PlayListView::itemIsRenamed (QListViewItem * qitem) {
     }
 }
 
+KDE_NO_EXPORT void PlayListView::itemIsSelected (QListViewItem * qitem) {
+    RootPlayListItem * ri = rootItem (qitem);
+    setItemsRenameable (ri && (ri->flags & TreeEdit) && ri != qitem);
+}
+
 KDE_NO_EXPORT void PlayListView::rename (QListViewItem * qitem, int c) {
     PlayListItem * item = static_cast <PlayListItem *> (qitem);
     if (rootItem (qitem)->show_all_nodes && item && item->m_attr) {
@@ -504,8 +511,11 @@ KDE_NO_EXPORT void PlayListView::rename (QListViewItem * qitem, int c) {
 
 KDE_NO_EXPORT void PlayListView::editCurrent () {
     QListViewItem * qitem = selectedItem ();
-    if (qitem)
-        rename (qitem, 0);
+    if (qitem) {
+        RootPlayListItem * ri = rootItem (qitem);
+        if (ri && (ri->flags & TreeEdit) && ri != qitem)
+            rename (qitem, 0);
+    }
 }
 
 KDE_NO_EXPORT void PlayListView::slotFind () {

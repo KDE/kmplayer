@@ -597,7 +597,7 @@ KDE_NO_EXPORT void PartBase::playListItemClicked (QListViewItem * item) {
     RootPlayListItem * ri = vi->playListView ()->rootItem (item);
     if (ri == item && vi->node) {
         QString src = ri->source;
-        kdDebug() << "playListItemClicked " << src << " " << vi->node->nodeName() << endl;
+        //kdDebug() << "playListItemClicked " << src << " " << vi->node->nodeName() << endl;
         Source * source = src.isEmpty() ? m_source : m_sources[src.ascii()];
         if (vi->node->isPlayable ()) {
             source->jump (vi->node); //may become !isPlayable by lazy loading
@@ -972,7 +972,7 @@ void Source::setURL (const KURL & url) {
     }
     if (m_player->process () && m_player->source () == this)
         m_player->updateTree ();
-    kdDebug() << name() << " setURL " << url << endl;
+    //kdDebug() << name() << " setURL " << url << endl;
     m_current = m_document;
 }
 

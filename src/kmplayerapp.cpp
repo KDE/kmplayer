@@ -343,7 +343,7 @@ KDE_NO_EXPORT void PlaylistItem::activate () {
         pn = pretty_name.isEmpty () ? src : pretty_name;
     }
     pl->mrl ()->pretty_name = pn;
-    kdDebug () << "cloning to " << data << endl;
+    //kdDebug () << "cloning to " << data << endl;
     QTextStream inxml (data, IO_ReadOnly);
     KMPlayer::readXML (pl, inxml, QString::null, false);
     pl->normalize ();
