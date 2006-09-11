@@ -93,6 +93,7 @@ public:
     void jump (KMPlayer::NodePtr e);
     void activate ();
     void setDocument (KMPlayer::NodePtr doc, KMPlayer::NodePtr cur);
+    QString prettyName () { return m_document->mrl ()->pretty_name; }
 };
 
 class KMPLAYER_NO_EXPORT Recents : public FileDocument {
@@ -359,9 +360,10 @@ KDE_NO_EXPORT void PlaylistItem::activate () {
     if (reset_only)
         app->player ()->stop ();
     source->setDocument (pl, cur);
-    if (reset_only)
+    if (reset_only) {
         source->activate ();
-    else
+        app->setCaption (pn);
+    } else
         app->player ()->setSource (source);
 }
 
