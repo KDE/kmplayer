@@ -191,8 +191,9 @@ void Process::setState (State newstate) {
 }
 
 KDE_NO_EXPORT void Process::rescheduledStateChanged () {
-    m_source->stateChange (this, m_old_state, m_state);
+    State old_state = m_old_state;
     m_old_state = m_state;
+    m_source->stateChange (this, old_state, m_state);
 }
 
 bool Process::play (Source * src, NodePtr _mrl) {
