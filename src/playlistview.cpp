@@ -173,7 +173,7 @@ KDE_NO_EXPORT PlayListItem * PlayListView::populate
     if (mrl && !root->show_all_nodes) {
         if (mrl->pretty_name.isEmpty ()) {
             if (!mrl->src.isEmpty())
-                text = KURL(mrl->src).prettyURL();
+                text = KURL(mrl->src).prettyURL (0, KURL::StripFileProtocol);
             else if (e->isDocument ())
                 text = e->hasChildNodes () ? i18n ("unnamed") : i18n ("none");
         } else
@@ -474,9 +474,11 @@ KDE_NO_EXPORT void PlayListView::itemIsRenamed (QListViewItem * qitem) {
     PlayListItem * item = static_cast <PlayListItem *> (qitem);
     if (item->node) {
         RootPlayListItem * ri = rootItem (qitem);
-        if (!ri->show_all_nodes && item->node->isEditable ())
+        if (!ri->show_all_nodes && item->node->isEditable ()) {
             item->node->setNodeName (item->text (0));
-        else // restore damage ..
+            if (item->node->mrl ()->pretty_name.isEmpty ())
+                item->setText (0, KURL (item->node->mrl ()->src).prettyURL (0, KURL::StripFileProtocol));
+        } else // restore damage ..
             updateTree (ri, item->node, true);
     } else if (item->m_attr) {
         QString txt = item->text (0);
@@ -505,8 +507,14 @@ KDE_NO_EXPORT void PlayListView::rename (QListViewItem * qitem, int c) {
         PlayListItem * pi = static_cast <PlayListItem *> (qitem->parent ());
         if (pi && pi->node && pi->node->isEditable ())
             KListView::rename (item, c);
-    } else if (item && item->node && item->node->isEditable ())
+    } else if (item && item->node && item->node->isEditable ()) {
+        if (!rootItem (qitem)->show_all_nodes &&
+                item->node->isPlayable () &&
+                item->node->mrl ()->pretty_name.isEmpty ())
+            // populate() has crippled src, restore for editing 
+            item->setText (0, item->node->mrl ()->src);
         KListView::rename (item, c);
+    }
 }
 
 KDE_NO_EXPORT void PlayListView::editCurrent () {
