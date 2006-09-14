@@ -468,9 +468,7 @@ KDE_NO_CDTOR_EXPORT View::View (QWidget *parent, const char *name)
     m_revert_fullscreen (false),
     m_no_info (false),
     m_edit_mode (false)
-{
-    setEraseColor (QColor (0, 0, 255));
-}
+{}
 
 KDE_NO_EXPORT void View::dropEvent (QDropEvent * de) {
     KURL::List sl;
@@ -501,6 +499,7 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
     QVBoxLayout * viewbox = new QVBoxLayout (this, 0, 0);
     m_dockarea = new KDockArea (this, "kde_kmplayer_dock_area");
     m_dock_video = new KDockWidget (m_dockarea->manager (), 0, KGlobal::iconLoader ()->loadIcon (QString ("kmplayer"), KIcon::Small), m_dockarea);
+    m_dock_video->setEraseColor (QColor (0, 0, 255));
     m_dock_video->setDockSite (KDockWidget::DockLeft | KDockWidget::DockBottom | KDockWidget::DockRight | KDockWidget::DockTop);
     m_dock_video->setEnableDocking(KDockWidget::DockNone);
     m_view_area = new ViewArea (m_dock_video, this);
