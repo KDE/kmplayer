@@ -31,6 +31,7 @@
 #include "kmplayer_rp.h"
 #include "kmplayer_rss.h"
 #include "kmplayer_smil.h"
+#include "kmplayer_xspf.h"
 
 #ifdef SHAREDPTR_DEBUG
 int shared_data_count;
@@ -53,6 +54,8 @@ namespace KMPlayer {
             return new RSS::Rss (d);
         else if (!strcasecmp (name, "feed"))
             return new ATOM::Feed (d);
+        else if (!strcasecmp (name, "playlist"))
+            return new XSPF::Playlist (d);
         else if (!strcasecmp (name, "url"))
             return new GenericURL (d, QString::null);
         else if (!strcasecmp (name, "mrl") ||

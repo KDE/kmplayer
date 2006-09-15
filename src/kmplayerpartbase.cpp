@@ -223,8 +223,6 @@ void PartBase::connectPlaylist (PlayListView * playlist) {
              this, SLOT (addBookMark (const QString &, const QString &)));
     connect (playlist, SIGNAL (executed (QListViewItem *)),
              this, SLOT (playListItemExecuted (QListViewItem *)));
-    connect (playlist, SIGNAL (selectionChanged (QListViewItem *)),
-             this, SLOT (playListItemSelected (QListViewItem *)));
     connect (playlist, SIGNAL (clicked (QListViewItem *)),
              this, SLOT (playListItemClicked (QListViewItem *)));
     connect (this, SIGNAL (treeChanged (int, NodePtr, NodePtr, bool, bool)),
@@ -580,16 +578,6 @@ void PartBase::forward () {
     m_source->forward ();
 }
 
-KDE_NO_EXPORT void PartBase::playListItemSelected (QListViewItem * item) {
-    if (m_in_update_tree) return;
-    PlayListItem * vi = static_cast <PlayListItem *> (item);
-    if (vi->node) {
-        if (!m_view->editMode ())
-            emit infoUpdated (vi->node->innerText ());
-    } else if (!vi->m_attr)
-        updateTree (); // items already deleted
-}
-
 KDE_NO_EXPORT void PartBase::playListItemClicked (QListViewItem * item) {
     if (!item)
         return;
@@ -605,7 +593,8 @@ KDE_NO_EXPORT void PartBase::playListItemClicked (QListViewItem * item) {
                 emit treeChanged (ri->id, vi->node, 0, false, true);
         } else if (vi->firstChild ())
             vi->listView ()->setOpen (vi, !vi->isOpen ());
-    }
+    } else if (!vi->node && !vi->m_attr)
+        updateTree (); // items already deleted
 }
 
 KDE_NO_EXPORT void PartBase::playListItemExecuted (QListViewItem * item) {
@@ -617,7 +606,7 @@ KDE_NO_EXPORT void PartBase::playListItemExecuted (QListViewItem * item) {
         return; // both null or handled by playListItemClicked
     if (vi->node) {
         QString src = ri->source;
-        kdDebug() << "playListItemExecuted " << src << " " << vi->node->nodeName() << endl;
+        //kdDebug() << "playListItemExecuted " << src << " " << vi->node->nodeName() << endl;
         Source * source = src.isEmpty() ? m_source : m_sources[src.ascii()];
         if (vi->node->isPlayable ()) {
             source->jump (vi->node); //may become !isPlayable by lazy loading
