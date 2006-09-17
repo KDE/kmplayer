@@ -678,7 +678,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
             } else if (m_cacheRegExp.search (out) > -1) {
                 m_source->setLoading (int (m_cacheRegExp.cap(1).toDouble()));
             }
-        } else if (!m_source->identified () && out.startsWith ("ID_LENGTH")) {
+        } else if (out.startsWith ("ID_LENGTH")) {
             int pos = out.find ('=');
             if (pos > 0) {
                 int l = (int) out.mid (pos + 1).toDouble (&ok);
@@ -686,14 +686,14 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                     m_source->setLength (m_mrl, 10 * l);
                 }
             }
-        } else if (!m_source->identified() && m_refURLRegExp.search(out) > -1) {
+        } else if (m_refURLRegExp.search(out) > -1) {
             kdDebug () << "Reference mrl " << m_refURLRegExp.cap (1) << endl;
             if (!m_tmpURL.isEmpty () && m_url != m_tmpURL)
                 m_source->insertURL (m_mrl, m_tmpURL);;
             m_tmpURL = KURL::fromPathOrURL (m_refURLRegExp.cap (1)).url ();
             if (m_source->url () == m_tmpURL || m_url == m_tmpURL)
                 m_tmpURL.truncate (0);
-        } else if (!m_source->identified () && m_refRegExp.search (out) > -1) {
+        } else if (m_refRegExp.search (out) > -1) {
             kdDebug () << "Reference File " << endl;
             m_tmpURL.truncate (0);
         } else if (out.startsWith ("ID_VIDEO_WIDTH")) {

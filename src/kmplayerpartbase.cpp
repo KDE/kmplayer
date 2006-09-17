@@ -419,6 +419,7 @@ void PartBase::setSource (Source * _source) {
     connect (this, SIGNAL (subtitleIsSelected (int)),
              m_source, SLOT (setSubtitle (int)));
     m_source->init ();
+    m_source->setIdentified (false);
     if (m_view && m_view->viewer ()) {
         updatePlayerMenu (m_view->controlPanel ());
         m_view->viewer ()->setAspect (0.0);
@@ -451,7 +452,6 @@ bool PartBase::openURL (const KURL & url) {
     Source * src = (url.isEmpty () ? m_sources ["urlsource"] : (!url.protocol ().compare ("kmplayer") && m_sources.contains (url.host ()) ? m_sources [url.host ()] : m_sources ["urlsource"]));
     src->setSubURL (KURL ());
     src->setURL (url);
-    src->setIdentified (false);
     setSource (src);
     return true;
 }
@@ -850,7 +850,7 @@ KAboutData* PartBase::createAboutData () {
 
 Source::Source (const QString & name, PartBase * player, const char * n)
  : QObject (player, n),
-   m_name (name), m_player (player), m_auto_play (true),
+   m_name (name), m_player (player), m_identified (false), m_auto_play (true),
    m_frequency (0), m_xvport (0), m_xvencoding (-1), m_doc_timer (0) {
     init ();
 }
@@ -869,7 +869,6 @@ void Source::init () {
     m_aspect = 0.0;
     m_length = 0;
     m_position = 0;
-    m_identified = false;
     setLength (m_document, 0);
     m_recordcmd.truncate (0);
 }

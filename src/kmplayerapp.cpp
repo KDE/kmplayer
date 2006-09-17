@@ -1995,8 +1995,7 @@ KDE_NO_EXPORT bool KMPlayerVCDSource::processOutput (const QString & str) {
     QRegExp * patterns = static_cast<KMPlayer::MPlayer *> (m_player->players () ["mplayer"])->configPage ()->m_patterns;
     QRegExp & trackRegExp = patterns [KMPlayer::MPlayerPreferencesPage::pat_vcdtrack];
     if (trackRegExp.search (str) > -1) {
-        if (m_document->state != KMPlayer::Element::state_deferred)
-            m_document->defer ();
+        m_document->state = KMPlayer::Element::state_deferred;
         m_document->appendChild (new KMPlayer::GenericMrl (m_document, QString ("vcd://") + trackRegExp.cap (1), i18n ("Track ") + trackRegExp.cap (1)));
         kdDebug () << "track " << trackRegExp.cap (1) << endl;
         return true;
