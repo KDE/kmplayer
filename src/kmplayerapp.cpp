@@ -2018,7 +2018,7 @@ KDE_NO_EXPORT void KMPlayerVCDSource::deactivate () {
 
 KDE_NO_EXPORT void KMPlayerVCDSource::setIdentified (bool b) {
     KMPlayer::Source::setIdentified (b);
-    if (!m_document->hasChildNodes ())
+    if (!m_current || !m_document->hasChildNodes ())
         m_current = m_document;
     m_player->updateTree ();
     buildArguments ();
@@ -2029,7 +2029,7 @@ KDE_NO_EXPORT void KMPlayerVCDSource::setIdentified (bool b) {
 
 KDE_NO_EXPORT void KMPlayerVCDSource::buildArguments () {
     QString url ("vcd://");
-    if (m_current != m_document)
+    if (m_current && m_current != m_document)
         url += m_current->mrl ()->src;
     m_options.truncate (0);
     if (m_player->settings ()->vcddevice.length () > 0)
@@ -2119,7 +2119,7 @@ KDE_NO_EXPORT void KMPlayerAudioCDSource::deactivate () {
 
 KDE_NO_EXPORT void KMPlayerAudioCDSource::setIdentified (bool b) {
     KMPlayer::Source::setIdentified (b);
-    if (!m_document->hasChildNodes ())
+    if (!m_current || !m_document->hasChildNodes ())
         m_current = m_document;
     buildArguments ();
     if (m_current == m_document && m_document->hasChildNodes ()) {
@@ -2134,7 +2134,7 @@ KDE_NO_EXPORT void KMPlayerAudioCDSource::setIdentified (bool b) {
 
 KDE_NO_EXPORT void KMPlayerAudioCDSource::buildArguments () {
     QString url ("cdda://");
-    if (m_current != m_document)
+    if (m_current && m_current != m_document)
         url += m_current->mrl ()->src;
     m_options = "-cdda speed=3";
     if (m_player->settings ()->vcddevice.length () > 0)
