@@ -381,7 +381,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::activate () {
 KDE_NO_EXPORT void KMPlayerTVSource::deactivate () {
     if (m_player->view () && !m_app->view ()->controlPanel()->broadcastButton ()->isOn ())
         m_app->view ()->controlPanel()->broadcastButton ()->hide ();
-    m_current = 0L;
+    reset ();
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::buildMenu () {

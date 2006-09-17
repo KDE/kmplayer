@@ -161,11 +161,7 @@ public:
 };
 
 KDE_NO_EXPORT void ListsSource::jump (KMPlayer::NodePtr e) {
-    if (e->id <= id_node_recent_node &&
-            e->id >= KMPlayer::id_node_group_node)
-        e->activate ();
-    else
-        KMPlayer::URLSource::jump (e);
+    e->activate ();
 }
 
 KDE_NO_EXPORT void ListsSource::activate () {

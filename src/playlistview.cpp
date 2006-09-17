@@ -272,6 +272,8 @@ KDE_NO_EXPORT void PlayListView::updateTree (RootPlayListItem * ritem, NodePtr a
     PlayListItem * curitem = 0L;
     while (ritem->firstChild ())
         delete ritem->firstChild ();
+    if (!ritem->node)
+        return;
     populate (ritem->node, active, ritem, 0L, &curitem);
     if (set_open && ritem->firstChild () && !ritem->isOpen ())
         setOpen (ritem, true);

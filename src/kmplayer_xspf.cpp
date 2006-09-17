@@ -128,7 +128,6 @@ KDE_NO_EXPORT void XSPF::Track::activate () {
             PlayListNotify * n = document ()->notify_listener;
             if (n)
                 n->setInfoMessage (e->innerText ().stripWhiteSpace ());
-            kdDebug() << e->innerText ().stripWhiteSpace () << endl;
             break;
         }
     Mrl::activate ();
