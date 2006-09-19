@@ -1,3 +1,12 @@
+Changes since version 0.9.3-rc1
+- Fix audio/video CD w/ MPlayer adding more and more nodes on restart
+- MPlayer movie length detection fix for URLs in lists
+- Fix playlistview accessing root node w/o checking (crash fix)
+- XML Shareable Playlist Format (aka spiff) support
+- Fixed editing in place tree of URL, they were modified by KURL::prettyURL()
+- Fixed missing 'NotRunning' state change notification in some cases
+- Window title for playlists fix, either group name or item URL
+- Catergory items should not be editable
 Changes since version 0.9.3-pre2
 - Patch from bero, add more output audio and video drivers
 - Frequencies for Xv TV watching should now be in MHz (like with MPlayer)
