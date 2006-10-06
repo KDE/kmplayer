@@ -1,45 +1,49 @@
 Source: kmplayer
 Section: kde
 Priority: optional
-Maintainer: Koos Vriezen <koos.vriezen@xs4all.nl>
-Build-Depends: debhelper (>= 4.0.0), kdelibs4-dev, libxine-dev, libgstreamer0.10-dev, libgstreamer-plugins-base0.10-dev
-Standards-Version: 3.6.0
+Maintainer: Koos Vriezen <koos.vriezen@gmail.com>
+Build-Depends: debhelper (>= 5.0.0), cdbs, kdelibs4-dev, libxine-dev, libgstreamer0.10-dev, libgstreamer-plugins-base0.10-dev
+Standards-Version: 3.6.2
 
 Package: kmplayer
-Architecture: all
-Section: sound
-Depends: kmplayer-lib (>= ${Source-Version}), kmplayer-app (>= ${Source-Version}), kmplayer-plugin (>= ${Source-Version})
-Description: KMPlayer metapackage
-
-Package: kmplayer-lib
 Architecture: any
-Section: sound
+Section: kde
+Depends: kmplayer-base (= ${Source-Version})
+Recommends: kmplayer-konq-plugins (= ${Source-Version})
+Suggests: kmplayer-doc (= ${Source-Version})
+Description: media player for KDE
+ A basic audio/video viewer application for KDE.
+ .
+ Homepage: http://kmplayer.kde.org
+
+Package: kmplayer-base
+Architecture: any
+Section: kde
 Depends: ${shlibs:Depends}
-Description: KMPlayer shared library
+Description: Base files for KMPlayer
+ Core files needed for KMPlayer.
+ .
+ Homepage: http://kmplayer.kde.org
 
-Package: kmplayer-app
+Package: kmplayer-konq-plugins
 Architecture: any
-Section: sound
-Depends: kmplayer-lib (= ${Source-Version})
-Description: KMPlayer stand-alone application
- Basic audio/video viewer application for KDE.
-
-Package: kmplayer-plugin
-Architecture: any
-Section: sound
-Depends: kmplayer-lib (= ${Source-Version})
-Description: KMPlayer plugin for khtml/konqueror
- This plugin enables audio/video playback inside konqueror, such as
+Section: kde
+Depends: kmplayer-base (= ${Source-Version}), konqueror
+Description: KMPlayer plugin for KHTML/Konqueror
+ This plugin enables audio/video playback inside Konqueror, such as
  movie trailers, web tv or radio.
-
-Package: kmplayer-i18n
-Architecture: any
-Section: sound
-Depends: kmplayer-lib (= ${Source-Version})
-Description: All internationalized (i18n) files for KMPlayer.
+ .
+ The KMPlayer KPart plugin for Konqueror mimics QuickTime, MS Media Player and
+ RealPlayer plugin browser plugins.
+ .
+ Homepage: http://kmplayer.kde.org
 
 Package: kmplayer-doc
-Architecture: any
-Section: sound
-Depends: kmplayer-app (= ${Source-Version})
-Description: Handbook for KMPlayer.
+Architecture: all
+Section: kde
+Depends: 
+Description: Handbook for KMPlayer
+ Documention for KMPlayer, a basic audio/video viewer application for KDE.
+ .
+ Homepage: http://kmplayer.kde.org
+

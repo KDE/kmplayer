@@ -128,6 +128,9 @@ static bool getBoolValue (const QString & value) {
             value.lower() != QString::fromLatin1("0"));
 }
 
+#define SET_FEAT_ON(f) { m_features |= f; turned_off_features &= ~f; }
+#define SET_FEAT_OFF(f) { m_features &= ~f; turned_off_features |= f; }
+
 KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
                     QObject * parent, const char *name, const QStringList &args)
  : PartBase (wparent, wname, parent, name, new KSimpleConfig ("kmplayerrc")),
@@ -183,20 +186,20 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                 for (QStringList::const_iterator i = sl.begin (); i != e; ++i) {
                     QString val_lower ((*i).lower ());
                     if (val_lower == QString::fromLatin1("imagewindow")) {
-                        m_features |= Feat_Viewer;
+                        SET_FEAT_ON (Feat_Viewer)
                     } else if (val_lower == QString::fromLatin1("all")) {
                         m_features = (Feat_Controls | Feat_StatusBar);
                     } else if (val_lower == QString::fromLatin1("tacctrl")) {
-                        m_features |= Feat_Label;
+                        SET_FEAT_ON (Feat_Label)
                     } else if (val_lower == QString::fromLatin1("controlpanel")) {
-                        m_features |= Feat_Controls;
+                        SET_FEAT_ON (Feat_Controls)
                     } else if (val_lower == QString::fromLatin1("infovolumepanel")){
-                        m_features |= Feat_Controls; // TODO
+                        SET_FEAT_ON (Feat_Controls) // TODO
                     } else if (val_lower == QString::fromLatin1("positionfield") ||
                             val_lower == QString::fromLatin1("positionslider")) {
                         setAutoControls (false);
                         panel->positionSlider ()->show ();
-                        m_features |= Feat_Controls;
+                        SET_FEAT_ON (Feat_Controls)
                     } else if ( val_lower == QString::fromLatin1("homectrl")) {
                         setAutoControls (false);
                         panel->button (KMPlayer::ControlPanel::button_config)->show();
@@ -205,11 +208,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                         setAutoControls (false);
                         panel->volumeBar()->setMinimumSize (QSize (20, panel->volumeBar()->minimumSize ().height ()));
                         panel->volumeBar()->show ();
-                        m_features |= Feat_Controls;
+                        SET_FEAT_ON (Feat_Controls)
                     } else if (val_lower == QString::fromLatin1("rwctrl")) {
                         setAutoControls (false);
                         panel->button (KMPlayer::ControlPanel::button_back)->show (); // rewind ?
-                        m_features |= Feat_Controls;
+                        SET_FEAT_ON (Feat_Controls)
                     } else if ( val_lower == QString::fromLatin1("ffctrl")) {
                         setAutoControls (false);
                         panel->button(KMPlayer::ControlPanel::button_forward)->show();
@@ -217,25 +220,25 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                     } else if ( val_lower ==QString::fromLatin1("stopbutton")) {
                         setAutoControls (false);
                         panel->button (KMPlayer::ControlPanel::button_stop)->show ();
-                        m_features |= Feat_Controls;
+                        SET_FEAT_ON (Feat_Controls)
                     } else if (val_lower == QString::fromLatin1("playbutton") ||
                             val_lower ==QString::fromLatin1("playonlybutton")) {
                         setAutoControls (false);
                         panel->button (KMPlayer::ControlPanel::button_play)->show ();
-                        m_features |= Feat_Controls;
+                        SET_FEAT_ON (Feat_Controls)
                     } else if (val_lower ==QString::fromLatin1("pausebutton")) {
                         setAutoControls (false);
                         panel->button (KMPlayer::ControlPanel::button_pause)->show ();
-                        m_features |= Feat_Controls;
+                        SET_FEAT_ON (Feat_Controls)
                     } else if (val_lower == QString::fromLatin1("statusbar") ||
                             val_lower == QString::fromLatin1("statusfield")) {
-                        m_features |= Feat_StatusBar;
+                        SET_FEAT_ON (Feat_StatusBar)
                     } else if (val_lower == QString::fromLatin1("infopanel")) {
-                        m_features |= Feat_InfoPanel;
+                        SET_FEAT_ON (Feat_InfoPanel)
                     } else if (val_lower == QString::fromLatin1("playlist")) {
-                        m_features |= Feat_PlayList;
+                        SET_FEAT_ON (Feat_PlayList)
                     } else if (val_lower==QString::fromLatin1("volumeslider")) {
-                        m_features |= Feat_VolumeSlider;
+                        SET_FEAT_ON (Feat_VolumeSlider)
                         setAutoControls (false);
                         panel->volumeBar()->show ();
                         panel->volumeBar()->setMinimumSize (QSize (20, panel->volumeBar()->minimumSize ().height ()));
@@ -244,28 +247,28 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
             } else if (name == QString::fromLatin1("uimode")) {
                 QString val_lower (value.lower ());
                 if (val_lower == QString::fromLatin1("full"))
-                    m_features |= (Feat_All & ~Feat_PlayList);
+                    SET_FEAT_ON (Feat_All & ~Feat_PlayList)
                 // TODO: invisible, none, mini
             } else if (name == QString::fromLatin1("nolabels")) {
-                turned_off_features |= Feat_Label;
+                SET_FEAT_OFF (Feat_Label)
             } else if (name == QString::fromLatin1("nocontrols")) {
-                turned_off_features |= (Feat_Controls | Feat_VolumeSlider);
+                SET_FEAT_OFF (Feat_Controls | Feat_VolumeSlider)
             } else if (name == QString::fromLatin1("showdisplay")) {
                 // the author name, the clip name, and the copyright information
                 if (getBoolValue (value))
-                    m_features |= Feat_InfoPanel;
+                    SET_FEAT_ON (Feat_InfoPanel)
                 else
-                    turned_off_features |= Feat_InfoPanel;
+                    SET_FEAT_OFF (Feat_InfoPanel)
             } else if (name == QString::fromLatin1("showcontrols")) {
                 if (getBoolValue (value))
-                    m_features |= (Feat_Viewer | Feat_Controls);
+                    SET_FEAT_ON (Feat_Viewer | Feat_Controls)
                 else
-                    turned_off_features |= (Feat_Controls | Feat_VolumeSlider);
+                    SET_FEAT_OFF (Feat_Controls | Feat_VolumeSlider)
             } else if (name == QString::fromLatin1("showstatusbar")) {
                 if (getBoolValue (value))
-                    m_features |= (Feat_Viewer | Feat_StatusBar);
+                    SET_FEAT_ON (Feat_Viewer | Feat_StatusBar)
                 else
-                    turned_off_features |= Feat_StatusBar;
+                    SET_FEAT_OFF (Feat_StatusBar)
             // else showcaptioning/showgotobar/showpositioncontrols/showtracker
             } else if (name == QString::fromLatin1("console")) {
                 m_group = value.isEmpty() ? QString::fromLatin1("_anonymous") : value;
@@ -347,6 +350,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     if (m_view->isFullScreen () != show_fullscreen)
         m_view->fullScreen ();
 }
+
+#undef SET_FEAT_ON
+#undef SET_FEAT_OFF
 
 KDE_NO_CDTOR_EXPORT KMPlayerPart::~KMPlayerPart () {
     kdDebug() << "KMPlayerPart::~KMPlayerPart" << endl;

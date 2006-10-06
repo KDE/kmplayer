@@ -1281,7 +1281,13 @@ bool CallbackProcess::deMediafiedPlay () {
     if (!m_backend)
         return false;
     kdDebug () << "CallbackProcess::play " << m_url << endl;
-    KURL url (m_url);
+    QString u = m_url;
+    if (u == "tv://" && !m_source->tuner ().isEmpty ()) {
+        u = "v4l:/" + m_source->tuner ();
+        if (m_source->frequency () > 0)
+            u += QChar ('/') + QString::number (m_source->frequency ());
+    }
+    KURL url (u);
     QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
     m_backend->setURL (myurl);
     const KURL & sub_url = m_source->subUrl ();
@@ -1645,7 +1651,8 @@ KDE_NO_EXPORT QFrame * XMLPreferencesPage::prefPage (QWidget * parent) {
 //-----------------------------------------------------------------------------
 
 static const char * xine_supported [] = {
-    "dvdnavsource", "dvdsource", "exitsource", "introsource", "pipesource", "urlsource", "vcdsource", "audiocdsource", 0L
+    "dvdnavsource", "dvdsource", "exitsource", "introsource", "pipesource",
+    "tvsource", "urlsource", "vcdsource", "audiocdsource", 0L
 };
 
 KDE_NO_CDTOR_EXPORT Xine::Xine (QObject * parent, Settings * settings)

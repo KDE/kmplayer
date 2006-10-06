@@ -445,6 +445,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::buildArguments () {
     m_audiodevice = tvdevice->getAttribute ("audio");
     m_videodevice = tvdevice->src;
     m_videonorm = input->getAttribute ("norm");
+    m_tuner = input->getAttribute ("name");
     QString xvport = tvdevice->getAttribute ("xvport");
     if (!xvport.isEmpty ())
         m_xvport = xvport.toInt ();
