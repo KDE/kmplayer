@@ -73,8 +73,6 @@ static xine_post_t         *post_plugin;
 static xine_event_queue_t  *event_queue;
 static xine_cfg_entry_t     audio_vis_cfg_entry;
 static x11_visual_t         vis;
-static const char          *dvd_device;
-static const char          *vcd_device;
 static char                 configfile[2048];
 
 static Display             *display;
@@ -1037,6 +1035,9 @@ protected:
 };
 
 int main(int argc, char **argv) {
+    const char *dvd_device = 0L;
+    const char *vcd_device = 0L;
+    const char *grab_device = 0L;
     if (!XInitThreads ()) {
         fprintf (stderr, "XInitThreads () failed\n");
         return 1;
@@ -1058,6 +1059,8 @@ int main(int argc, char **argv) {
             dvd_device = argv [i];
         } else if (!strcmp (argv [i], "-vcd-device") && ++i < argc) {
             vcd_device = argv [i];
+        } else if (!strcmp (argv [i], "-vd") && ++i < argc) {
+            grab_device = argv [i];
         } else if ((!strcmp (argv [i], "-wid") ||
                     !strcmp (argv [i], "-window-id")) && ++i < argc) {
             wid = atol (argv [i]);
@@ -1101,7 +1104,12 @@ int main(int argc, char **argv) {
     bool config_changed = !QFile (configfile).exists ();
 
     if (!callback && mrl.isEmpty ()) {
-        fprintf (stderr, "usage: %s [-vo (xv|xshm)] [-ao (arts|esd|..)] [-f <xine config file>] [-dvd-device <device>] [-vcd-device <device>] [-wid <X11 Window>|-window-id <X11 Window>|-root] [-sub <subtitle url>] [-lang <lang>] [(-v|-vv)] [-cb <DCOP callback name> [-c]] [<url>]\n", argv[0]);
+        fprintf (stderr, "usage: %s [-vo (xv|xshm)] [-ao (arts|esd|..)] "
+                "[-f <xine config file>] [-dvd-device <device>] "
+                "[-vcd-device <device>] [-vd <video device>] "
+                "[-wid <X11 Window>|-window-id <X11 Window>|-root] "
+                "[-sub <subtitle url>] [-lang <lang>] [(-v|-vv)] "
+                "[-cb <DCOP callback name> [-c]] [<url>]\n", argv[0]);
         delete xineapp;
         return 1;
     }
@@ -1125,6 +1133,8 @@ int main(int argc, char **argv) {
         config_changed |= updateConfigEntry (QString ("input.dvd_device"), QString (dvd_device));
     if (vcd_device)
         config_changed |= updateConfigEntry (QString ("input.vcd_device"), QString (vcd_device));
+    if (grab_device)
+        config_changed |= updateConfigEntry (QString ("media.video4linux.video_device"), QString (grab_device));
 
     if (config_changed)
         xine_config_save (xine, configfile);

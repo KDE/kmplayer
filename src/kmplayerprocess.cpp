@@ -1705,6 +1705,10 @@ bool Xine::ready (Viewer * viewer) {
                 !m_settings->vcddevice.isEmpty ()) {
             fprintf (stderr, " -vcd-device %s", m_settings->vcddevice.ascii ());
             *m_process << " -vcd-device " << m_settings->vcddevice;
+        } else if (m_source->url ().url ().startsWith (QString ("tv://")) &&
+                !m_source->videoDevice ().isEmpty ()) {
+            fprintf (stderr, " -vd %s", m_source->videoDevice ().ascii ());
+            *m_process << " -vd " << m_source->videoDevice ();
         }
     if (!m_recordurl.isEmpty ()) {
         QString rf = KProcess::quote (

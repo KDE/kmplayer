@@ -336,6 +336,7 @@ KDE_NO_EXPORT void TVDocument::childDone (KMPlayer::NodePtr) {
 
 KDE_NO_CDTOR_EXPORT KMPlayerTVSource::KMPlayerTVSource (KMPlayerApp * a, QPopupMenu * m)
     : KMPlayerMenuSource (i18n ("TV"), a, m, "tvsource"), m_configpage (0L), scanner (0L), config_read (false) {
+    m_url = "tv://";
     m_menu->insertTearOffHandle ();
     connect (m_menu, SIGNAL (aboutToShow ()), this, SLOT (menuAboutToShow ()));
     m_document = new TVDocument (this);
