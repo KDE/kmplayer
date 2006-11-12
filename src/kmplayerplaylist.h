@@ -343,7 +343,7 @@ typedef SharedPtr <Connection> ConnectionPtr;
  * Base class for XML nodes. Provides a w3c's DOM like API
  *
  * Most severe traps with using SharedPtr/WeakPtr for tree nodes:
- * - pointer ends up in two independant shared objects (hopefully with
+ * - pointer ends up in two independent shared objects (hopefully with
  *   template specialization for constructor for T* and assignment of T* should
  *   be enough of defences ..)
  * - Node added two times (added ASSERT in appendChild/insertBefore)
@@ -752,7 +752,6 @@ public:
     TimerInfoPtrW setTimeout (NodePtr n, int ms, unsigned id=0);
     void cancelTimer (TimerInfoPtr ti);
     PostponePtr postpone ();
-    void proceed ();
     /**
      * Called by PlayListNotify, creates TimerEvent on first item in timers. 
      * Returns true if to repeat this same timeout FIXME.
@@ -837,7 +836,7 @@ public:
  */
 class KMPLAYER_EXPORT GenericMrl : public Mrl { 
 public:
-    KDE_NO_CDTOR_EXPORT GenericMrl (NodePtr & d) : Mrl (d) {}
+    KDE_NO_CDTOR_EXPORT GenericMrl (NodePtr & d) : Mrl (d), node_name ("mrl") {}
     GenericMrl(NodePtr &d, const QString &s, const QString & name=QString::null, const QString &tag=QString ("mrl"));
     KDE_NO_EXPORT const char * nodeName () const { return node_name.ascii (); }
     void closed ();
