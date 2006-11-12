@@ -1323,8 +1323,8 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
     }
 }
 
-KDE_NO_EXPORT NodePtr SMIL::Smil::realMrl () {
-    return current_av_media_type ? current_av_media_type : this;
+KDE_NO_EXPORT Mrl * SMIL::Smil::linkNode () {
+    return current_av_media_type ? current_av_media_type->mrl () : this;
 }
 
 KDE_NO_EXPORT bool SMIL::Smil::isPlayable () {
@@ -2037,8 +2037,8 @@ KDE_NO_EXPORT void SMIL::Switch::activate () {
     }
 }
 
-KDE_NO_EXPORT NodePtr SMIL::Switch::realMrl () {
-    return chosenOne ? chosenOne : this;
+KDE_NO_EXPORT Mrl * SMIL::Switch::linkNode () {
+    return chosenOne ? chosenOne->mrl () : this;
 }
 
 KDE_NO_EXPORT void SMIL::Switch::deactivate () {

@@ -1,6 +1,6 @@
 /* This file is part of the KDE project
  *
- * Copyright (C) 2006 Koos Vriezen <koos.vriezen@xs4all.nl>
+ * Copyright (C) 2006 Koos Vriezen <koos.vriezen@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -58,9 +58,9 @@ public:
     void closed ();
 };
 
-class Tracklist : public Node {
+class Tracklist : public Element {
 public:
-    KDE_NO_CDTOR_EXPORT Tracklist (NodePtr & d) : Node (d, id_node_tracklist) {}
+    KDE_NO_CDTOR_EXPORT Tracklist (NodePtr & d) : Element (d, id_node_tracklist) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "tracklist"; }
     bool expose () const { return false; }
@@ -71,8 +71,19 @@ public:
     KDE_NO_CDTOR_EXPORT Track (NodePtr & d) : Mrl (d, id_node_track) {}
     void closed ();
     void activate ();
+    bool isPlayable ();
+    Mrl * linkNode ();
     KDE_NO_EXPORT const char * nodeName () const { return "track"; }
     NodePtr childFromTag (const QString & tag);
+    NodePtrW location;
+};
+
+class KMPLAYER_NO_EXPORT Location : public Mrl {
+public:
+    KDE_NO_CDTOR_EXPORT Location (NodePtr &d) : Mrl (d, id_node_location) {}
+    KDE_NO_EXPORT const char * nodeName () const { return "location"; }
+    void closed ();
+    bool expose () const { return false; }
 };
 
 } //namespace XSPF

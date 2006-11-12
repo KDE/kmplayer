@@ -464,7 +464,7 @@ ConnectionPtr Node::connectTo (NodePtr node, unsigned int evt_id) {
 }
 
 QString Node::nodeValue () const {
-    return QString::null;
+    return QString ();
 }
 
 void Node::registerEventHandler (NodePtr) {}
@@ -581,7 +581,7 @@ NodePtr Mrl::childFromTag (const QString & tag) {
     return NodePtr ();
 }
 
-NodePtr Mrl::realMrl () {
+Mrl * Mrl::linkNode () {
     return this;
 }
 
@@ -590,24 +590,37 @@ Mrl * Mrl::mrl () {
 }
 
 void Mrl::activate () {
+    resolved |= linkNode ()->resolved;
     if (!resolved && document ()->notify_listener)
         resolved = document ()->notify_listener->resolveURL (this);
     if (!resolved) {
         setState (state_deferred);
         return;
-    }
+    } else
+        linkNode ()->resolved = true;
     if (!isPlayable ()) {
         Element::activate ();
         return;
     }
     kdDebug () << nodeName () << " Mrl::activate" << endl;
     setState (state_activated);
-    if (document ()->notify_listener && !src.isEmpty ()) {
-        if (document ()->notify_listener->requestPlayURL (this))
-            setState (state_began);
-    } else
-        deactivate (); // nothing to activate
+    if (document ()->notify_listener) {
+        if (linkNode () != this) {
+            linkNode ()->activate ();
+        } else if (!src.isEmpty ()) {
+            if (document ()->notify_listener->requestPlayURL (this))
+                setState (state_began);
+        } else
+            deactivate (); // nothing to activate
+    }
 }
+
+//void Mrl::childDone (NodePtr child) {
+//    if (unfinished () && linkNode () != this)
+//        finish ();
+//    else
+//        Node::childDone (child);
+//}
 
 static NodePtr findChainEventHandler (NodePtr node) {
     Node * p = node->parentNode ().ptr ();
@@ -1058,7 +1071,7 @@ bool DocumentBuilder::endTag (const QString & tag) {
     } else {  // endtag
         NodePtr n = m_node;
         while (n) {
-            if (!strcasecmp (n->nodeName (), tag.local8Bit ()) &&
+            if (!strcasecmp (n->nodeName (), tag.local8Bit ().data ()) &&
                     (m_root_is_first || n != m_root)) {
                 while (n != m_node) {
                     kdWarning() << m_node->nodeName () << " not closed" << endl;
@@ -1346,7 +1359,7 @@ bool SimpleSAXParser::nextToken () {
                         token->string = QChar ('<');
                     else if (prev_token->string == QString ("gt"))
                         token->string = QChar ('>');
-                    else if (prev_token->string == QString ("quote"))
+                    else if (prev_token->string == QString ("quot"))
                         token->string = QChar ('"');
                     else if (prev_token->string == QString ("apos"))
                         token->string = QChar ('\'');

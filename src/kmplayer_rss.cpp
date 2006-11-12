@@ -61,11 +61,28 @@ NodePtr RSS::Item::childFromTag (const QString & tag) {
 
 void RSS::Item::closed () {
     for (NodePtr c = firstChild (); c; c = c->nextSibling ()) {
-        if (c->id == id_node_title)
-            pretty_name = c->innerText ().simplifyWhiteSpace ();
-        if (c->isPlayable ())
-            src = c->mrl ()->src;
+        switch (c->id) {
+            case id_node_title:
+                pretty_name = c->innerText ().simplifyWhiteSpace ();
+                break;
+            case id_node_enclosure:
+                enclosure = c;
+                src = c->mrl ()->src;
+                break;
+        }
     }
+}
+
+KDE_NO_EXPORT bool RSS::Item::isPlayable () {
+    if (enclosure)
+        return enclosure->isPlayable ();
+    return Mrl::isPlayable ();
+}
+
+KDE_NO_EXPORT Mrl * RSS::Item::linkNode () {
+    if (enclosure)
+        return enclosure->mrl ();
+    return Mrl::linkNode ();
 }
 
 void RSS::Item::activate () {

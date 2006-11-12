@@ -564,9 +564,9 @@ public:
     ~Mrl ();
     bool isPlayable ();
     /*
-     * If this Mrl hides a child Mrl, return that one or else this one 
+     * The original node (or this) having the URL, needed for playlist expansion
      */ 
-    virtual NodePtr realMrl ();
+    virtual Mrl * linkNode ();
     virtual Mrl * mrl ();
     QString absolutePath ();
     /*

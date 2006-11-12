@@ -402,7 +402,7 @@ public:
      * Hack to mark the currently playing MediaType as finished
      * FIXME: think of a descent callback way for this
      */
-    NodePtr realMrl ();
+    Mrl * linkNode ();
     NodePtrW current_av_media_type;
     NodePtrW layout_node;
 };
@@ -637,7 +637,7 @@ public:
     void deactivate ();
     void reset ();
     void childDone (NodePtr child);
-    NodePtr realMrl ();
+    Mrl * linkNode ();
     NodePtrW chosenOne;
 };
 

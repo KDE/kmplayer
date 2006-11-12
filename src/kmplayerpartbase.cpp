@@ -1025,7 +1025,7 @@ void Source::playCurrent () {
             m_height = mrl->height;
             m_aspect = mrl->aspect;
         }
-        m_player->process ()->play (this, mrl->realMrl ());
+        m_player->process ()->play (this, mrl->linkNode ());
     }
     //kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():" doc act:") <<  (m_document && !m_document->active ()) << " cur:" << (!m_current)  << " cur act:" << (m_current && !m_current->active ()) <<  endl;
     m_player->updateTree ();
@@ -1084,12 +1084,12 @@ bool Source::setCurrent (NodePtr mrl) {
 }
 
 void Source::stateElementChanged (Node * elm, Node::State os, Node::State ns) {
-    //kdDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isPlayable:" << (m_current && m_current->isPlayable ()) << " elm==realMrl:" << (m_current && elm == m_current->mrl ()->realMrl ()) << " p state:" << m_player->process ()->state () << endl;
+    //kdDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isPlayable:" << (m_current && m_current->isPlayable ()) << " elm==linkNode:" << (m_current && elm == m_current->mrl ()->linkNode ()) << " p state:" << m_player->process ()->state () << endl;
     if (ns == Node::state_deactivated && elm == m_document && !m_back_request) {
         emit endOfPlayItems (); // played all items
     } else if ((ns == Node::state_deactivated || ns == Node::state_finished) &&
              m_current && m_current->isPlayable () &&
-             elm == m_current->mrl ()->realMrl ()) {
+             elm == m_current->mrl ()->linkNode ()) {
         if (m_player->process ()->state () > Process::Ready)
             //a SMIL movies stopped by SMIL events rather than movie just ending
             m_player->process ()->stop ();
@@ -1551,7 +1551,7 @@ KDE_NO_EXPORT void URLSource::read (NodePtr root, QTextStream & textstream) {
     if (!line.isNull ()) {
         NodePtr cur_elm = root;
         if (cur_elm->isPlayable ())
-            cur_elm = cur_elm->mrl ()->realMrl ();
+            cur_elm = cur_elm->mrl ()->linkNode ();
         if (cur_elm->mrl ()->mimetype == QString ("audio/x-scpls")) {
             bool groupfound = false;
             int nr = -1;
@@ -1703,9 +1703,9 @@ void URLSource::play () {
 }
 
 bool URLSource::requestPlayURL (NodePtr mrl) {
-    if (m_document != mrl->mrl ()->realMrl ()) {
+    if (m_document.ptr () != mrl->mrl ()->linkNode ()) {
         KURL base = m_document->mrl ()->src;
-        KURL dest = mrl->mrl ()->realMrl ()->mrl ()->absolutePath ();
+        KURL dest = mrl->mrl ()->linkNode ()->absolutePath ();
         // check if some remote playlist tries to open something local, but
         // do ignore unknown protocols because there are so many and we only
         // want to cache local ones.
