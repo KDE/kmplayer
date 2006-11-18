@@ -382,7 +382,7 @@ void Node::normalize () {
 
 static void getInnerText (const NodePtr p, QTextOStream & out) {
     for (NodePtr e = p->firstChild (); e; e = e->nextSibling ()) {
-        if (e->id == id_node_text)
+        if (e->id == id_node_text || e->id == id_node_cdata)
             out << e->nodeValue ();
         else
             getInnerText (e, out);
@@ -607,6 +607,8 @@ void Mrl::activate () {
     if (document ()->notify_listener) {
         if (linkNode () != this) {
             linkNode ()->activate ();
+            if (linkNode ()->unfinished ())
+                setState (state_began);
         } else if (!src.isEmpty ()) {
             if (document ()->notify_listener->requestPlayURL (this))
                 setState (state_began);
