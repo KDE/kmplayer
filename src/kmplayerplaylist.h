@@ -29,6 +29,7 @@
 #include <qstring.h>
 
 #include "kmplayer_def.h"
+#include "kmplayertypes.h"
 #include "kmplayershared.h"
 
 class QTextStream;
@@ -207,25 +208,6 @@ protected:
 
 ITEM_AS_POINTER(KMPlayer::Attribute)
 
-/**                                   a  b  0
- * Matrix for coordinate transforms   c  d  0
- *                                    tx ty 1     */
-class Matrix {
-    friend class SizeEvent;
-    float a, b, c, d;
-    int tx, ty; 
-public:
-    Matrix ();
-    Matrix (const Matrix & matrix);
-    Matrix (int xoff, int yoff, float xscale, float yscale);
-    void getXY (int & x, int & y) const;
-    void getXYWH (int & x, int & y, int & w, int & h) const;
-    void transform (const Matrix & matrix);
-    void scale (float sx, float sy);
-    void translate (int x, int y);
-    // void rotate (float phi); // add this when needed
-};
-
 /**
  * Object should scale according the passed Fit value in SizedEvent
  */
@@ -266,23 +248,24 @@ public:
  */
 class SizeEvent : public Event {
 public:
-    SizeEvent (int x, int y, int w, int h, Fit f, const Matrix & m=Matrix ());
-    int x () const;
-    int y () const;
-    int w () const;
-    int h () const;
-    int _x, _y, _w, _h;
+    SizeEvent (Single x, Single y, Single w, Single h,
+            Fit f, const Matrix & m=Matrix ());
+    Single x () const;
+    Single y () const;
+    Single w () const;
+    Single h () const;
+    Single _x, _y, _w, _h;
     Fit fit;
     Matrix matrix;
 };
 
 // Note, add rotations when needed
-KDE_NO_EXPORT
-inline int SizeEvent::x () const { return int (_x * matrix.a) + matrix.tx; }
-KDE_NO_EXPORT
-inline int SizeEvent::y () const { return int (_y * matrix.d) + matrix.ty; }
-KDE_NO_EXPORT inline int SizeEvent::w () const { return int (_w * matrix.a); }
-KDE_NO_EXPORT inline int SizeEvent::h () const { return int (_h * matrix.d); }
+KDE_NO_EXPORT inline
+Single SizeEvent::x () const { return Single (_x * matrix.a) + matrix.tx; }
+KDE_NO_EXPORT inline
+Single SizeEvent::y () const { return Single (_y * matrix.d) + matrix.ty; }
+KDE_NO_EXPORT inline Single SizeEvent::w () const { return _w * matrix.a; }
+KDE_NO_EXPORT inline Single SizeEvent::h () const { return _h * matrix.d; }
 
 /**
  * Event signaling a pointer event

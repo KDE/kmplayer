@@ -245,8 +245,8 @@ KDE_NO_CDTOR_EXPORT
 PaintEvent::PaintEvent (QPainter & p, int _x, int _y, int _w, int _h)
  : Event (event_paint), painter (p), x (_x), y (_y), w (_w), h (_h) {}
 
-KDE_NO_CDTOR_EXPORT
-SizeEvent::SizeEvent(int a, int b, int c, int d, Fit f, const Matrix & m)
+KDE_NO_CDTOR_EXPORT SizeEvent::SizeEvent (Single a, Single b, Single c, Single d
+        , Fit f, const Matrix & m)
  : Event (event_sized), _x (a), _y (b), _w (c), _h (d), fit (f), matrix (m) {}
 
 PointerEvent::PointerEvent (unsigned int event_id, int _x, int _y)
@@ -510,26 +510,37 @@ void SizeType::reset () {
 }
 
 SizeType & SizeType::operator = (const QString & s) {
-    percentage = false;
     QString strval (s);
     int p = strval.find (QChar ('%'));
     if (p > -1) {
         percentage = true;
         strval.truncate (p);
-    }
-    bool ok;
-    int size = int (strval.toDouble (&ok));
-    if (ok) {
-        m_size = size;
-        isset = true;
-    }
+    } else
+        percentage = false;
+    m_size = strval.toDouble (&isset);
     return *this;
 }
 
-int SizeType::size (int relative_to) {
+Single SizeType::size (Single relative_to) {
     if (percentage)
         return m_size * relative_to / 100;
     return m_size;
+}
+
+SRect SRect::unite (const SRect & r) const {
+    Single a (_x < r._x ? _x : r._x);
+    Single b (_y < r._y ? _y : r._y);
+    return SRect (a, b, 
+            Single ((_x + _w < r._x + r._w ? r._x + r._w : _x + _w) - a),
+            Single ((_y + _h < r._y + r._h ? r._y + r._h : _y + _h) - b));
+}
+
+SRect SRect::intersect (const SRect & r) const {
+    Single a (_x < r._x ? r._x : _x);
+    Single b (_y < r._y ? r._y : _y);
+    return SRect (a, b,
+            Single ((_x + _w < r._x + r._w ? _x + _w : r._x + r._w) - a),
+            Single ((_y + _h < r._y + r._h ? _y + _h : r._y + r._h) - b));
 }
 
 //-----------------------------------------------------------------------------
@@ -545,7 +556,7 @@ KDE_NO_EXPORT void CalculatedSizer::resetSizes () {
     reg_align = QString::fromLatin1 ("topLeft");
 }
 
-static bool regPoints (const QString & str, int & x, int & y) {
+static bool regPoints (const QString & str, Single & x, Single & y) {
     QString lower = str.lower ();
     const char * rp = lower.ascii ();
     if (!rp)
@@ -577,9 +588,10 @@ static bool regPoints (const QString & str, int & x, int & y) {
     return true;
 }
 
-KDE_NO_EXPORT void CalculatedSizer::calcSizes (Node * node, int w, int h, int & xoff, int & yoff, int & w1, int & h1) {
+KDE_NO_EXPORT void CalculatedSizer::calcSizes (Node * node, Single w, Single h,
+        Single & xoff, Single & yoff, Single & w1, Single & h1) {
     while (!reg_point.isEmpty ()) {
-        int rpx, rpy, rax, ray;
+        Single rpx, rpy, rax, ray;
         if (!regPoints (reg_point, rpx, rpy)) {
             while (node && node->id != SMIL::id_node_smil)
                 node = node->parentNode ().ptr ();
@@ -593,7 +605,7 @@ KDE_NO_EXPORT void CalculatedSizer::calcSizes (Node * node, int w, int h, int & 
                 if (!c->isElementNode ())
                     continue;
                 if (c->id == SMIL::id_node_regpoint && convertNode <Element> (c)->getAttribute ("id") == reg_point) {
-                    int i1, i2; // dummies
+                    Single i1, i2; // dummies
                     static_cast <RegPointRuntime*> (c->getRuntime ())->sizes.calcSizes (0L, 100, 100, rpx, rpy, i1, i2);
                     QString ra = convertNode <Element> (c)->getAttribute ("regAlign");
                     if (!ra.isEmpty () && reg_align.isEmpty ())
@@ -643,7 +655,8 @@ KDE_NO_EXPORT void CalculatedSizer::calcSizes (Node * node, int w, int h, int & 
         h1 = 0;
 }
 
-KDE_NO_EXPORT bool CalculatedSizer::setSizeParam (const QString & name, const QString & val) {
+KDE_NO_EXPORT
+bool CalculatedSizer::setSizeParam (const QString & name, const QString & val) {
     if (name == QString::fromLatin1 ("left")) {
         left = val;
     } else if (name == QString::fromLatin1 ("top")) {
@@ -684,13 +697,13 @@ KDE_NO_EXPORT
 void RegionRuntime::parseParam (const QString & name, const QString & val) {
     //kdDebug () << "RegionRuntime::parseParam " << convertNode <Element> (element)->getAttribute ("id") << " " << name << "=" << val << endl;
     SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (region_node);
-    QRect rect;
+    SRect rect;
     bool need_repaint = false;
     if (rb) {
         Matrix m = rb->transform ();
-        int rx = 0, ry = 0, rw = rb->w, rh = rb->h;
+        Single rx = 0, ry = 0, rw = rb->w, rh = rb->h;
         m.getXYWH (rx, ry, rw, rh);
-        rect = QRect (rx, ry, rw, rh);
+        rect = SRect (rx, ry, rw, rh);
     }
     if (name == QString::fromLatin1 ("background-color") ||
             name == QString::fromLatin1 ("backgroundColor")) {
@@ -707,14 +720,14 @@ void RegionRuntime::parseParam (const QString & name, const QString & val) {
             if (p &&(p->id==SMIL::id_node_region ||p->id==SMIL::id_node_layout))
                 convertNode <SMIL::RegionBase> (p)->updateDimensions ();
             Matrix m = rb->transform ();
-            int rx = 0, ry = 0, rw = rb->w, rh = rb->h;
+            Single rx = 0, ry = 0, rw = rb->w, rh = rb->h;
             m.getXYWH (rx, ry, rw, rh);
             if (rect.width () == rw && rect.height () == rh) {
                 PlayListNotify * n = element->document()->notify_listener;
                 if (n && (rect.x () != rx || rect.y () != ry))
                     n->moveRect (rect.x(), rect.y(), rect.width (), rect.height (), rx, ry);
             } else {
-                rect = rect.unite (QRect (rx, ry, rw, rh));
+                rect = rect.unite (SRect (rx, ry, rw, rh));
                 need_repaint = true;
             }
         }
@@ -1393,9 +1406,9 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
                 SMIL::Region * rb =convertNode <SMIL::Region> (n);
                 static_cast <RegionRuntime *> (rb->getRuntime ())->init ();
                 rb->calculateBounds (0, 0, Matrix (0, 0, 1.0, 1.0));
-                if (rb->x + rb->w > w_root)
+                if (int (rb->x + rb->w) > w_root)
                     w_root = rb->x + rb->w;
-                if (rb->y + rb->h > h_root)
+                if (int (rb->y + rb->h) > h_root)
                     h_root = rb->y + rb->h;
                 reg_count++;
             }
@@ -1442,7 +1455,7 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
                 RegionRuntime * rr = static_cast <RegionRuntime *> (rootLayout->getRuntime ());
                 if (rr && rr->have_bg_color) {
                     Matrix m = transform ();
-                    int rx = 0, ry = 0, rw = w, rh = h;
+                    Single rx = 0, ry = 0, rw = w, rh = h;
                     m.getXYWH (rx, ry, rw, rh);
                     p->painter.fillRect (rx, ry, rw, rh, QColor (QRgb (rr->background_color)));
                 }
@@ -1450,7 +1463,7 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
             return RegionBase::handleEvent (event);
         case event_sized: {
             SizeEvent * e = static_cast <SizeEvent *> (event.ptr ());
-            int ex = e->x (), ey = e->y (), ew = e->w (), eh = e->h ();
+            Single ex = e->x (), ey = e->y (), ew = e->w (), eh = e->h ();
             float xscale = 1.0, yscale = 1.0;
             if (auxiliaryNode () && rootLayout) {
                 w = ew;
@@ -1469,12 +1482,12 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
                 if (e->fit == fit_meet)
                     if (xscale > yscale) {
                         xscale = yscale;
-                        int dw = ew - int ((xscale - 1.0) * w + w);
+                        Single dw = ew - (Single (w * (xscale - 1.0)) + w);
                         ex += dw / 2;
                         ew -= dw;
                     } else {
                         yscale = xscale;
-                        int dh = eh - int ((yscale - 1.0) * h + h);
+                        Single dh = eh - (Single (h * (yscale - 1.0)) + h);
                         ey += dh / 2;
                         eh -= dh;
                     }
@@ -1533,7 +1546,7 @@ KDE_NO_EXPORT void SMIL::RegionBase::reset () {
 KDE_NO_EXPORT void SMIL::RegionBase::repaint () {
     PlayListNotify * n = document()->notify_listener;
     Matrix m = transform ();
-    int rx = 0, ry = 0, rw = w, rh = h;
+    Single rx = 0, ry = 0, rw = w, rh = h;
     m.getXYWH (rx, ry, rw, rh);
     if (n)
         n->repaintRect (rx, ry, rw, rh);
@@ -1615,25 +1628,25 @@ KDE_NO_EXPORT NodePtr SMIL::Region::childFromTag (const QString & tag) {
  * of parent Region (representing 100%)
  */
 KDE_NO_EXPORT
-void SMIL::Region::calculateBounds (int pw, int ph, const Matrix & pm) {
-    int x1 (x), y1 (y), w1 (w), h1 (h);
+void SMIL::Region::calculateBounds (Single pw, Single ph, const Matrix & pm) {
+    Single x1 (x), y1 (y), w1 (w), h1 (h);
     static_cast <RegionRuntime *> (getRuntime ())->sizes.calcSizes (this, pw, ph, x, y, w, h);
     if (x1 != x || y1 != y || w1 != w || h1 != h) {
         m_region_transform = Matrix (x, y, 1.0, 1.0);
         m_region_transform.transform (pm);
-        propagateEvent(new SizeEvent(0,0,w,h,fit_meet, m_region_transform));
+        propagateEvent(new SizeEvent(0, 0, w, h, fit_meet, m_region_transform));
     }
     //kdDebug () << "Region::calculateBounds parent:" << pw << "x" << ph << " this:" << x << "," << y << " " << w << "x" << h << endl;
 }
 
 bool SMIL::Region::handleEvent (EventPtr event) {
     Matrix m = transform ();
-    int rx = 0, ry = 0, rw = w, rh = h;
+    Single rx = 0, ry = 0, rw = w, rh = h;
     m.getXYWH (rx, ry, rw, rh);
     switch (event->id ()) {
         case event_paint: {
             PaintEvent * p = static_cast <PaintEvent *> (event.ptr ());
-            QRect r = QRect (rx, ry, rw, rh).intersect (QRect (p->x, p->y, p->w, p->h));
+            SRect r = SRect (rx, ry, rw, rh).intersect (SRect (p->x, p->y, p->w, p->h));
             if (!r.isValid ())
                 return false;
             rx = r.x (); ry = r.y (); rw = r.width (); rh = r.height ();
@@ -2155,8 +2168,8 @@ KDE_NO_EXPORT void SMIL::MediaType::positionVideoWidget () {
     MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (timedRuntime ());
     if (n && mtr->region_node) {
         RegionBase * rb = convertNode <RegionBase> (mtr->region_node);
-        int x = 0, y = 0, w = 0, h = 0;
-        int xoff = 0, yoff = 0;
+        KMPlayer::Single x = 0, y = 0, w = 0, h = 0;
+        KMPlayer::Single xoff = 0, yoff = 0;
         unsigned int * bg_color = 0L;
         if (!strcmp (nodeName (), "video") || !strcmp (nodeName (), "ref")) {
             mtr->sizes.calcSizes (this, rb->w, rb->h, x, y, w, h);
@@ -2390,39 +2403,40 @@ KDE_NO_EXPORT void ImageRuntime::paint (QPainter & p) {
         if (rb->w <= 0 || rb->h <= 0)
             return;
         const QPixmap &img = (d->image ? *d->image:d->img_movie->framePixmap());
-        int x, y, w0, h0;
+        Single x, y, w0, h0;
         sizes.calcSizes (element.ptr (), rb->w, rb->h, x, y, w0, h0);
         Matrix matrix (x, y, 1.0, 1.0);
         matrix.transform (rb->transform ());
-        int xoff = 0, yoff = 0, w = w0, h = h0;
+        Single xoff = 0, yoff = 0, w = w0, h = h0;
         matrix.getXYWH (xoff, yoff, w, h);
         if (fit == fit_hidden) {
-            w = int (img.width () * 1.0 * w / w0);
-            h = int (img.height () * 1.0 * h / h0);
+            w = img.width () * 1.0 * w / w0;
+            h = img.height () * 1.0 * h / h0;
         } else if (fit == fit_meet) { // scale in region, keeping aspects
             if (h > 0 && img.height () > 0) {
-                int a = 100 * img.width () / img.height ();
-                int w1 = a * h / 100;
+                Single a = 100 * img.width () / img.height ();
+                Single w1 = a * h / 100;
                 if (w1 > w)
-                    h = 100 * w / a;
+                    h = Single (100) * w / a;
                 else
                     w = w1;
             }
         } else if (fit == fit_slice) { // scale in region, keeping aspects
             if (h > 0 && img.height () > 0) {
-                int a = 100 * img.width () / img.height ();
-                int w1 = a * h / 100;
+                Single a = 100 * img.width () / img.height ();
+                Single w1 = a * h / 100;
                 if (w1 > w)
                     w = w1;
                 else
-                    h = 100 * w / a;
+                    h = Single (100) * w / a;
             }
         } //else if (fit == fit_fill) { // scale in region
         // else fit_scroll
-        if (w == img.width () && h == img.height ())
+        if ((int) w == img.width () && (int) h == img.height ())
             p.drawPixmap (QRect (xoff, yoff, w, h), img);
         else {
-            if (!d->cache_image || w != d->cache_image->width () || h != d->cache_image->height ()) {
+            if (!d->cache_image || (int) w != d->cache_image->width () ||
+                    (int) h != d->cache_image->height ()) {
                 delete d->cache_image;
                 QImage img2;
                 img2 = img;
@@ -2621,11 +2635,11 @@ KDE_NO_EXPORT void TextData::paint (QPainter & p) {
     if (region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
         SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (region_node);
-        int x, y, w0, h0;
+        Single x, y, w0, h0;
         sizes.calcSizes (element.ptr (), rb->w, rb->h, x, y, w0, h0);
         Matrix matrix (x, y, 1.0, 1.0);
         matrix.transform (rb->transform ());
-        int xoff = 0, yoff = 0, w = w0, h = h0;
+        Single xoff = 0, yoff = 0, w = w0, h = h0;
         matrix.getXYWH (xoff, yoff, w, h);
         d->edit->setGeometry (0, 0, w, h);
         if (d->edit->length () == 0) {
@@ -2639,7 +2653,8 @@ KDE_NO_EXPORT void TextData::paint (QPainter & p) {
         d->edit->setFont (d->font);
         QRect rect = p.clipRegion (QPainter::CoordPainter).boundingRect ();
         rect = rect.intersect (QRect (xoff, yoff, w, h));
-        QPixmap pix = QPixmap::grabWidget (d->edit, rect.x () - xoff, rect.y () - yoff, rect.width (), rect.height ());
+        QPixmap pix = QPixmap::grabWidget (d->edit, rect.x () - (int) xoff,
+                rect.y () - (int) yoff, rect.width (), rect.height ());
         //kdDebug () << "text paint " << x << "," << y << " " << w << "x" << h << " clip: " << rect.x () << "," << rect.y () << endl;
         p.drawPixmap (rect.x (), rect.y (), pix);
     }

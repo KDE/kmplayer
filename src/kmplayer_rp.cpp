@@ -164,15 +164,15 @@ KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
             if (w == width && h == height) {
                 p->painter.drawPixmap (x, y, *image);
             } else {
-                int x1=0, y1=0, w1=width, h1=height;
+                KMPlayer::Single x1=0, y1=0, w1=width, h1=height;
                 if (fit == fit_fill) {
                     w1 = w;
                     h1 = h;
                 } else
                     matrix.getXYWH (x1, y1, w1, h1);
                 if (!cached_image ||
-                        cached_image->width () != w1 ||
-                        cached_image->height () != h1) {
+                        cached_image->width () != (int) w1 ||
+                        cached_image->height () != (int) h1) {
                     delete cached_image;
                     QImage img;
                     img = *image;
@@ -459,8 +459,8 @@ KDE_NO_EXPORT void RP::Fadeout::update (int percentage) {
         RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
         if (imfl->image) {
             int brush_pat = ((int) Qt::Dense7Pattern) - 10 * percentage / 126;
-            int pw = w;
-            int ph = h;
+            KMPlayer::Single pw = w;
+            KMPlayer::Single ph = h;
             if (!w || !h) {
                 pw = imfl->image->width ();
                 ph = imfl->image->height ();
@@ -537,24 +537,24 @@ KDE_NO_EXPORT void RP::Wipe::update (int percentage) {
         if (img->image) {
             QPainter painter;
             painter.begin (imfl->image);
-            int dx = x, dy = y;
-            int sx = 0, sy = 0;
-            int sw = img->image->width ();
-            int sh = img->image->height ();
+            KMPlayer::Single dx = x, dy = y;
+            KMPlayer::Single sx = 0, sy = 0;
+            KMPlayer::Single sw = img->image->width ();
+            KMPlayer::Single sh = img->image->height ();
             if (direction == dir_right) {
-                int iw = sw * percentage / 100;
+                KMPlayer::Single iw = sw * percentage / 100;
                 sx = sw - iw;
                 sw = iw;
             } else if (direction == dir_left) {
-                int iw = sw * percentage / 100;
+                KMPlayer::Single iw = sw * percentage / 100;
                 dx += sw - iw;
                 sw = iw;
             } else if (direction == dir_down) {
-                int ih = sh * percentage / 100;
+                KMPlayer::Single ih = sh * percentage / 100;
                 sy = sh - ih;
                 sh = ih;
             } else if (direction == dir_up) {
-                int ih = sh * percentage / 100;
+                KMPlayer::Single ih = sh * percentage / 100;
                 dy += sh - ih;
                 sh = ih;
             }

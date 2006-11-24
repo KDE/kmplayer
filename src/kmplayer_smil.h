@@ -58,10 +58,10 @@ public:
     SizeType ();
     void reset ();
     SizeType & operator = (const QString & s);
-    int size (int relative_to = 100);
+    Single size (Single relative_to = 100);
     bool isSet () const { return isset; }
 private:
-    int m_size;
+    Single m_size;
     bool percentage;
     bool isset;
 };
@@ -126,7 +126,8 @@ public:
     KDE_NO_CDTOR_EXPORT ~CalculatedSizer () {}
 
     void resetSizes ();
-    void calcSizes (Node *, int w, int h, int & xoff, int & yoff, int & w1, int & h1);
+    void calcSizes (Node *, Single w, Single h,
+            Single & xoff, Single & yoff, Single & w1, Single & h1);
     SizeType left, top, width, height, right, bottom;
     QString reg_point, reg_align;
     bool setSizeParam (const QString & name, const QString & value);
@@ -446,7 +447,7 @@ public:
      * Creates a new transform matrix
      */
     Matrix transform ();
-    int x, y, w, h;     // unscaled values
+    Single x, y, w, h;     // unscaled values
     /**
      * z-order of this region
      */
@@ -487,7 +488,7 @@ public:
     Region (NodePtr & d);
     KDE_NO_EXPORT const char * nodeName () const { return "region"; }
     NodePtr childFromTag (const QString & tag);
-    void calculateBounds (int w, int h, const Matrix & parent_transform);
+    void calculateBounds (Single w, Single h, const Matrix & parent_transform);
     virtual bool handleEvent (EventPtr event);
     virtual NodeRefListPtr listeners (unsigned int event_id);
 private:

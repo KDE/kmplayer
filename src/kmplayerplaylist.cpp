@@ -119,36 +119,36 @@ Matrix::Matrix () : a (1.0), b (0.0), c (0.0), d (1.0), tx (0), ty (0) {}
 Matrix::Matrix (const Matrix & m)
  : a (m.a), b (m.b), c (m.c), d (m.d), tx (m.tx), ty (m.ty) {}
     
-Matrix::Matrix (int xoff, int yoff, float xscale, float yscale)
+Matrix::Matrix (Single xoff, Single yoff, float xscale, float yscale)
  : a (xscale), b (0.0), c (0.0), d (yscale), tx (xoff), ty (yoff) {}
 
-void Matrix::getXY (int & x, int & y) const {
-    x = int (x * a) + tx;
-    y = int (y * d) + ty;
+void Matrix::getXY (Single & x, Single & y) const {
+    x = Single (x * a) + tx;
+    y = Single (y * d) + ty;
 }
 
-void Matrix::getXYWH (int & x, int & y, int & w, int & h) const {
+void Matrix::getXYWH (Single & x, Single & y, Single & w, Single & h) const {
     getXY (x, y);
-    w = int (w * a);
-    h = int (h * d);
+    w *= a;
+    h *= d;
 }
 
 void Matrix::transform (const Matrix & matrix) {
     // TODO: rotate
     a *= matrix.a;
     d *= matrix.d;
-    tx = int (tx * matrix.a) + matrix.tx;
-    ty = int (ty * matrix.d) + matrix.ty;
+    tx = Single (tx * matrix.a) + matrix.tx;
+    ty = Single (ty * matrix.d) + matrix.ty;
 }
 
 void Matrix::scale (float sx, float sy) {
     a *= sx;
     d *= sy;
-    tx = int (tx * sx);
-    ty = int (ty * sy);
+    tx *= sx;
+    ty *= sy;
 }
 
-void Matrix::translate (int x, int y) {
+void Matrix::translate (Single x, Single y) {
     tx += x;
     ty += y;
 }
