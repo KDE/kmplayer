@@ -19,6 +19,7 @@
 #ifndef _KMPLAYER_TYPES_H_
 #define _KMPLAYER_TYPES_H_
 
+#include <stdint.h>
 #include "kmplayer_def.h"
 
 namespace KMPlayer {
@@ -32,10 +33,9 @@ class KMPLAYER_NO_EXPORT Single {
     friend Single operator - (const Single s1, const Single s2);
     friend Single operator * (const Single s1, const Single s2);
     friend Single operator / (const Single s1, const Single s2);
-    friend Single operator * (const Single s, const int i);
     friend float operator * (const Single s, const float f);
     friend double operator * (const Single s, const double f);
-    friend Single operator * (const int i, const Single & s);
+    friend Single operator * (const int i, const Single s);
     friend float operator * (const float f, const Single s);
     friend double operator * (const double d, const Single s);
     friend Single operator / (const Single s, const int i);
@@ -67,7 +67,7 @@ public:
     Single & operator -= (const int i) { value -= (i << 8); return *this; }
     Single & operator *= (const Single & s);
     Single & operator *= (const float f) { value = int(value*f); return *this; }
-    operator int () const { return value >> 8; }
+    operator int () const { return (value >> 8) + (value & 0xff > 127 ? 1 : 0);}
 };
 
 /**                                   a  b  0
@@ -108,7 +108,7 @@ public:
 
 
 inline Single & Single::operator *= (const Single & s) {
-    value = (((long) value) * s.value) >> 8;
+    value = (((int64_t)value) * s.value) >> 8;
     return *this;
 }
 
@@ -126,22 +126,24 @@ inline Single operator - (const Single s1, const Single s2) {
 
 inline Single operator * (const Single s1, const Single s2) {
     Single s;
-    s.value = (((long) s1.value) * s2.value) >> 8;
+    s.value = (((int64_t)s1.value) * s2.value) >> 8;
     return s;
 }
 
 inline Single operator / (const Single s1, const Single s2) {
     Single s;
-    s.value = (((long) s1.value) << 8) / s2.value;
+    s.value = ((int64_t)s1.value << 8) / s2.value;
     return s;
 }
 
 inline Single operator * (const int i, const Single s) {
-    return s * Single( i );
+    Single s1;
+    s1.value = s.value * i;
+    return s1;
 }
 
 inline Single operator * (const Single s, const int i) {
-    return s * Single( i );
+    return i * s;
 }
 inline float operator * (const Single s, const float f) {
     return s.value * f / 256;
@@ -160,7 +162,9 @@ inline double operator * (const double d, const Single s) {
 }
 
 inline Single operator / (const Single s, const int i) {
-    return s / Single( i );
+    Single s1;
+    s1.value = s.value / i;
+    return s1;
 }
 
 inline double operator / (const Single s, const double d) {
