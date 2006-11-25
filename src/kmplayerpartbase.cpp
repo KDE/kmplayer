@@ -879,7 +879,7 @@ KDE_NO_EXPORT void Source::setLanguages (const QStringList & alang, const QStrin
 
 void Source::setDimensions (NodePtr node, int w, int h) {
     Mrl * mrl = node ? node->mrl () : 0L;
-    if (mrl && mrl->view_mode == Mrl::Window) {
+    if (mrl && mrl->view_mode == Mrl::WindowMode) {
         mrl->width = w;
         mrl->height = h;
         float a = h > 0 ? 1.0 * w / h : 0.0;
@@ -907,11 +907,11 @@ void Source::setAspect (NodePtr node, float a) {
     Mrl * mrl = node ? node->mrl () : 0L;
     bool changed = false;
     if (mrl) {
-        if (mrl->view_mode == Mrl::Window)
+        if (mrl->view_mode == Mrl::WindowMode)
             changed |= (fabs (mrl->aspect - a) > 0.001);
         mrl->aspect = a;
     }
-    if (!mrl || mrl->view_mode == Mrl::Single) {
+    if (!mrl || mrl->view_mode == Mrl::SingleMode) {
         changed |= (fabs (m_aspect - a) > 0.001);
         m_aspect = a;
     }
@@ -1019,7 +1019,7 @@ void Source::playCurrent () {
         m_player->process ()->ready (static_cast <View *> (m_player->view ())->viewer ());
     } else if (m_player->process ()) {
         Mrl * mrl = m_current->mrl ();
-        if (mrl->view_mode == Mrl::Single) {
+        if (mrl->view_mode == Mrl::SingleMode) {
             // don't reset the dimensions if we have any
             m_width = mrl->width;
             m_height = mrl->height;
@@ -1052,7 +1052,7 @@ bool Source::requestPlayURL (NodePtr mrl) {
         m_back_request = mrl; // still playing, schedule it
         m_player->process ()->stop ();
     } else {
-        if (mrl->mrl ()->view_mode == Mrl::Single)
+        if (mrl->mrl ()->view_mode == Mrl::SingleMode)
             m_current = mrl;
         m_player->updateTree ();
         QTimer::singleShot (0, this, SLOT (playCurrent ()));
@@ -1397,7 +1397,8 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
                     }
                     m_back_request = 0L;
                 }
-                if (m_player->view() && (!mrl || mrl->view_mode != Mrl::Window))
+                if (m_player->view() &&
+                        (!mrl || mrl->view_mode != Mrl::WindowMode))
                     static_cast<View*>(m_player->view())->viewArea()->repaint();
             } else
                 QTimer::singleShot (0, this, SLOT (playCurrent ()));

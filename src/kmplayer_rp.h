@@ -64,10 +64,10 @@ public:
     virtual bool handleEvent (EventPtr event);
     void repaint (); // called whenever something changes on image
     void invalidateCachedImage ();
-    KMPlayer::Single x, y, w, h; // target area
+    Single x, y, w, h; // target area
     Fit fit;        // how to layout images
     Matrix matrix;  // for the scale factor of outer document
-    KMPlayer::Single width, height;     // cached attributes of head
+    Single width, height;     // cached attributes of head
     unsigned int duration; // cached attributes of head
     TimerInfoPtrW duration_timer;
     QPixmap * image;

@@ -2102,7 +2102,7 @@ KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, sh
    m_ActionListeners (new NodeRefList),
    m_OutOfBoundsListeners (new NodeRefList),
    m_InBoundsListeners (new NodeRefList) {
-    view_mode = Mrl::Window;
+    view_mode = Mrl::WindowMode;
 }
 
 KDE_NO_EXPORT NodePtr SMIL::MediaType::childFromTag (const QString & tag) {
@@ -2173,8 +2173,8 @@ KDE_NO_EXPORT void SMIL::MediaType::positionVideoWidget () {
     MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (timedRuntime ());
     if (n && mtr->region_node) {
         RegionBase * rb = convertNode <RegionBase> (mtr->region_node);
-        KMPlayer::Single x = 0, y = 0, w = 0, h = 0;
-        KMPlayer::Single xoff = 0, yoff = 0;
+        Single x = 0, y = 0, w = 0, h = 0;
+        Single xoff = 0, yoff = 0;
         unsigned int * bg_color = 0L;
         if (!strcmp (nodeName (), "video") || !strcmp (nodeName (), "ref")) {
             mtr->sizes.calcSizes (this, rb->w, rb->h, x, y, w, h);
@@ -2433,7 +2433,7 @@ KDE_NO_EXPORT void ImageRuntime::paint (QPainter & p) {
                 if (w1 > w)
                     w = w1;
                 else
-                    h = Single (100) * w / a;
+                    h = 100 * w / a;
             }
         } //else if (fit == fit_fill) { // scale in region
         // else fit_scroll
