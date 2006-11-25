@@ -3,12 +3,17 @@
     <meta name="title" content="excl group test"/>
     <layout>
       <root-layout width="320" height="240" background-color="yellow"/>
-      <region id="reg_but1" left="5" top="15" width="80" height="40" background-color="red"/>
-      <region id="reg_but2" left="5" top="65" width="80" height="40" background-color="red"/>
-      <region id="reg_but3" left="5" top="115" width="80" height="40" background-color="red"/>
-      <region id="reg_but4" left="5" top="175" width="80" height="40" background-color="red"/>
+      <region id="reg_but1" left="5" top="15" width="80" height="30" background-color="red"/>
+      <region id="reg_but2" left="5" top="55" width="80" height="30" background-color="red"/>
+      <region id="reg_but3" left="5" top="95" width="80" height="30" background-color="red"/>
+      <region left="5" top="135" width="80" height="40">
+        <region id="reg_text" left="5" top="0" width="70" height="18""/>
+        <region id="reg_ext" left="5" top="22" width="30" height="18""/>
+        <region id="reg_int" left="45" top="22" width="30" height="18"/>
+      </region>
+      <region id="reg_but4" left="5" top="185" width="80" height="30" background-color="red"/>
       <region left="95" top="15" width="210" height="210" background-color="blue">
-        <region id="reg_img" left="5" top="5" width="64" height="64" background-color="orange"/>
+        <region id="reg_img" left="5" top="5" width="64" height="24" background-color="orange"/>
       </region>
     </layout>
   </head>
@@ -32,18 +37,43 @@
         <param name="backgroundColor" value="blue"/>
       </text>
       <set targetElement="but3" attributeName="backgroundColor" to="red" begin="but3.activateEvent" dur="0.1"/>
+      <text src="data:,Repeat" id="but_rep" region="reg_text" fill="freeze">
+        <param name="backgroundColor" value="cyan"/>
+      </text>
+      <text src="data:,Ext" id="but_ext" region="reg_ext" fill="freeze">
+        <param name="backgroundColor" value="green"/>
+        <param name="fontColor" value="white"/>
+      </text>
+      <text src="data:,Int" id="but_int" region="reg_int" fill="freeze">
+        <param name="backgroundColor" value="green"/>
+        <param name="fontColor" value="white"/>
+      </text>
+      <excl>
+        <set targetElement="but_ext" attributeName="backgroundColor" to="red"
+           begin="0" dur="indefinite"/>
+        <set targetElement="but_ext" attributeName="backgroundColor" to="red"
+           begin="but_ext.activateEvent" dur="indefinite"/>
+        <set targetElement="but_int" attributeName="backgroundColor" to="red"
+           begin="but_int.activateEvent" dur="indefinite"/>
+      </excl>
+      <excl>
+        <set targetElement="vid" attributeName="src" to="img_scale_rep.smil"
+           begin="but_ext.activateEvent" dur="indefinite"/>
+        <set targetElement="vid" attributeName="src" to="img_scale.smil"
+           begin="but_int.activateEvent" dur="indefinite"/>
+      </excl>
       <text src="data:,Stop" id="but4" region="reg_but4" fill="freeze">
         <param name="fontColor" value="green"/>
         <param name="fontSize" value="+1"/>
         <param name="backgroundColor" value="red"/>
       </text>
-      <img src="../icons/hi64-app-kmplayer.png" region="reg_img" fill="freeze" fit="meet"/>
+      <video src="img_scale_rep.smil" id="vid" region="reg_img" fill="freeze" fit="meet" repeatCount="indefinite"/>
       <excl dur="indefinite">
         <animate targetElement="reg_img" attributeName="left" from="5" to="140" begin="but1.activateEvent" dur="2" fill="freeze"/>
-        <animate targetElement="reg_img" attributeName="top" from="5" to="140" begin="reg_but2.activateEvent" dur="2" fill="freeze"/>
+        <animate targetElement="reg_img" attributeName="top" from="5" to="180" begin="reg_but2.activateEvent" dur="2" fill="freeze"/>
         <par begin="reg_but3.activateEvent">
           <animate targetElement="reg_img" attributeName="left" from="5" to="140" dur="2" fill="freeze"/>
-          <animate targetElement="reg_img" attributeName="top" from="5" to="140" dur="2" fill="freeze"/>
+          <animate targetElement="reg_img" attributeName="top" from="5" to="180" dur="2" fill="freeze"/>
         </par>
       </excl>
     </par>

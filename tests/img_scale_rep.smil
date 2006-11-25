@@ -2,18 +2,18 @@
   <head>
     <layout>
       <root-layout width="640" height="240" background-color="yellow"/>
-      <region id="reg_img1" left="5" top="15" width="150" height="210" background-color="red"/>
-      <region id="reg_img2" left="165" top="15" width="150" height="210" background-color="white"/>
-      <region id="reg_img3" left="325" top="15" width="150" height="210" background-color="blue"/>
-      <region id="reg_img4" left="485" top="15" width="150" height="210" background-color="orange"/>
+      <region id="reg_img1" left="5" top="15" width="150" height="210" background-color="green"/>
+      <region id="reg_img2" left="165" top="15" width="150" height="210" background-color="grey"/>
+      <region id="reg_img3" left="325" top="15" width="150" height="210" background-color="yellow"/>
+      <region id="reg_img4" left="485" top="15" width="150" height="210" background-color="purple"/>
     </layout>
   </head>
   <body>
-    <par dur="2.5">
-      <img src="../icons/hi128-app-kmplayer.png" region="reg_img1" fit="fill" fill="freeze"/>
-      <img src="../icons/hi128-app-kmplayer.png" region="reg_img2" fit="hidden" fill="freeze"/>
-      <img src="../icons/hi128-app-kmplayer.png" region="reg_img3" fit="meet" fill="freeze"/>
-      <img src="../icons/hi128-app-kmplayer.png" region="reg_img4" fit="slice" fill="freeze"/>
+    <par dur="2.5" repeatCount="indefinite">
+      <img src="../icons/hi64-app-kmplayer.png" region="reg_img1" fit="fill" fill="freeze"/>
+      <img src="../icons/hi64-app-kmplayer.png" region="reg_img2" fit="hidden" fill="freeze"/>
+      <img src="../icons/hi64-app-kmplayer.png" region="reg_img3" fit="meet" fill="freeze"/>
+      <img src="../icons/hi64-app-kmplayer.png" region="reg_img4" fit="slice" fill="freeze"/>
       <set targetElement="reg_img1" attributeName="width" to="75" begin="0.5s" dur="1s"/>
       <set targetElement="reg_img2" attributeName="width" to="75" begin="0.5s" dur="1s"/>
       <set targetElement="reg_img3" attributeName="width" to="75" begin="0.5s" dur="1s"/>

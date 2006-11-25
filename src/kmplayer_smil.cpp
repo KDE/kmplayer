@@ -397,7 +397,10 @@ void TimedRuntime::parseParam (const QString & name, const QString & val) {
             fill = fill_unknown;
         // else all other fill options ..
     } else if (name == QString::fromLatin1 ("repeatCount")) {
-        repeat_count = val.toInt ();
+        if (val.find ("indefinite") > -1)
+            repeat_count = duration_infinite;
+        else
+            repeat_count = val.toInt ();
     } else if (name == QString::fromLatin1 ("title")) {
         Mrl * mrl = static_cast <Mrl *> (element.ptr ());
         if (mrl)
@@ -486,14 +489,16 @@ KDE_NO_EXPORT void TimedRuntime::stopped () {
     if (!element) {
         end ();
     } else if (element->active ()) {
-        if (0 < repeat_count--) {
+        if (repeat_count == duration_infinite || 0 < repeat_count--) {
             if (durations [begin_time].durval > 0 &&
                     durations [begin_time].durval < duration_last_option)
                 start_timer = element->document ()->setTimeout (element, 100 * durations [begin_time].durval, start_timer_id);
             else
                 propagateStart ();
-        } else
+        } else {
+            repeat_count = 0;
             element->finish ();
+        }
     }
 }
 
@@ -1099,13 +1104,13 @@ KDE_NO_EXPORT void MediaTypeRuntime::started () {
  * will request a repaint of attached region
  */
 KDE_NO_EXPORT void MediaTypeRuntime::stopped () {
-    TimedRuntime::stopped ();
     Node * e = element.ptr ();
     if (e) {
         for (NodePtr n = e->firstChild (); n; n = n->nextSibling ())
             if (n->unfinished ())   // finish child documents
                 n->finish ();
     }
+    TimedRuntime::stopped ();
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
 }
@@ -2155,7 +2160,7 @@ KDE_NO_EXPORT void SMIL::MediaType::childDone (NodePtr child) {
         TimedRuntime * tr = timedRuntime ();
         if (tr->state () < TimedRuntime::timings_stopped) {
             if (tr->state () == TimedRuntime::timings_started)
-                tr->propagateStop (false);
+                tr->propagateStop (child == external_tree);
             return; // still running, wait for runtime to finish
         }
         finish ();
