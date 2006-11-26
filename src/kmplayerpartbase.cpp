@@ -1826,6 +1826,10 @@ bool DataCache::preserve (const QString & url) {
     return false;
 }
 
+bool DataCache::isPreserved (const QString & url) {
+    return preserve_map.find (url) != preserve_map.end ();
+}
+
 bool DataCache::unpreserve (const QString & url) {
     const PreserveMap::iterator it = preserve_map.find (url);
     if (it == preserve_map.end ())
@@ -1836,7 +1840,7 @@ bool DataCache::unpreserve (const QString & url) {
 }
 
 RemoteObjectPrivate::RemoteObjectPrivate (RemoteObject * r)
- : job (0L), remote_object (r) {
+ : job (0L), remote_object (r), preserve_wait (false) {
     if (!memory_cache)
         dataCacheDeleter.setObject (memory_cache, new DataCache);
 }
@@ -1875,6 +1879,7 @@ KDE_NO_EXPORT bool RemoteObjectPrivate::download (const QString & str) {
         //kdDebug () << "download preserved " << str << endl;
         connect (memory_cache, SIGNAL (preserveRemoved (const QString &)),
                  this, SLOT (cachePreserveRemoved (const QString &)));
+        preserve_wait = true;
     }
     return false;
 }
@@ -1884,6 +1889,10 @@ KDE_NO_EXPORT void RemoteObjectPrivate::clear () {
         job->kill (); // quiet, no result signal
         job = 0L;
         memory_cache->unpreserve (url);
+    } else if (preserve_wait) {
+        disconnect (memory_cache, SIGNAL (preserveRemoved (const QString &)),
+                    this, SLOT (cachePreserveRemoved (const QString &)));
+        preserve_wait = false;
     }
 }
 
@@ -1898,7 +1907,8 @@ KDE_NO_EXPORT void RemoteObjectPrivate::slotResult (KIO::Job * kjob) {
 
 KDE_NO_EXPORT
 void RemoteObjectPrivate::cachePreserveRemoved (const QString & str) {
-    if (str == url) {
+    if (str == url && !memory_cache->isPreserved (str)) {
+        preserve_wait = false;
         disconnect (memory_cache, SIGNAL (preserveRemoved (const QString &)),
                     this, SLOT (cachePreserveRemoved (const QString &)));
         download (str);

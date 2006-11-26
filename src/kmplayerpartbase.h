@@ -258,6 +258,7 @@ public:
     bool get (const QString &, QByteArray &);
     bool preserve (const QString &);
     bool unpreserve (const QString &);
+    bool isPreserved (const QString &);
 signals:
     void preserveRemoved (const QString &); // ready or canceled
 };
@@ -280,6 +281,7 @@ private slots:
     void cachePreserveRemoved (const QString &);
 private:
     RemoteObject * remote_object;
+    bool preserve_wait;
 };
 
 } // namespace
