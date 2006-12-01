@@ -1177,7 +1177,7 @@ KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
         QByteArray data, replydata;
         kapp->dcopClient ()->call (m_dcopName, "MainApplication-Interface", "quit()", data, replytype, replydata);
     }
-    if (m_played_exit || m_player->settings ()->no_intro | kapp->sessionSaving() )
+    if (m_played_exit || m_player->settings ()->no_intro || kapp->sessionSaving() )
         return true;
     if (m_auto_resize)
         disconnect(m_player, SIGNAL(sourceDimensionChanged()),this,SLOT(zoom100()));
