@@ -88,6 +88,56 @@ using namespace KMPlayer;
 
 //-------------------------------------------------------------------------
 
+namespace KMPlayer {
+
+class KMPLAYER_NO_EXPORT ViewSurface : public Surface {
+public:
+    ViewSurface (ViewArea * widget);
+    ViewSurface (ViewArea * widget, NodePtr owner, const SRect & rect);
+    ~ViewSurface ();
+
+    void clear () { m_first_child = 0L; }
+
+    SurfacePtr createSurface (NodePtr owner, const SRect & rect);
+    void resize (const SRect & rect);
+
+    ViewArea * view_widget;
+    QPixmap * cached_image;
+};
+
+} // namespace
+
+KDE_NO_CDTOR_EXPORT ViewSurface::ViewSurface (ViewArea * widget)
+  : Surface (SRect (0, 0, widget->width (), widget->height ())),
+    view_widget (widget),
+    cached_image (0L)
+{}
+
+KDE_NO_CDTOR_EXPORT
+ViewSurface::ViewSurface (ViewArea * widget, NodePtr owner, const SRect & rect)
+  : Surface (owner, rect), view_widget (widget), cached_image (0L) {}
+
+KDE_NO_CDTOR_EXPORT ViewSurface::~ViewSurface() {
+    delete cached_image;
+    kdDebug() << "~ViewSurface" << endl;
+}
+
+KDE_NO_EXPORT
+SurfacePtr ViewSurface::createSurface (NodePtr owner, const SRect & rect) {
+    SurfacePtr surface = new ViewSurface (view_widget, owner, rect);
+    appendChild (surface);
+    return surface;
+}
+
+KDE_NO_EXPORT void ViewSurface::resize (const SRect & nrect) {
+    /*if (rect == nrect)
+        ;//return;
+    SRect pr = rect.unite (nrect); // for repaint
+    rect = nrect;*/
+}
+
+//-------------------------------------------------------------------------
+
 KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
  : QWidget (parent, "kde_kmplayer_viewarea", WResizeNoErase | WRepaintNoErase),
    m_parent (parent),
@@ -95,6 +145,7 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
    m_painter (0L),
    m_paint_buffer (0L),
    m_collection (new KActionCollection (this)),
+   surface (new ViewSurface (this)),
    m_mouse_invisible_timer (0),
    m_repaint_timer (0),
    m_fullscreen_scale (100),
@@ -178,7 +229,7 @@ KDE_NO_EXPORT void ViewArea::accelActivated () {
 }
 
 KDE_NO_EXPORT void ViewArea::mousePressEvent (QMouseEvent * e) {
-    if (eventListener && eventListener->handleEvent(new PointerEvent(event_pointer_clicked,e->x(), e->y())))
+    if (surface->node && surface->node->handleEvent(new PointerEvent(event_pointer_clicked,e->x(), e->y())))
         e->accept ();
 }
 
@@ -193,14 +244,14 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
         m_view->delayedShowButtons (e->y() > vert_buttons_pos-cp_height &&
                                     e->y() < vert_buttons_pos);
     }
-    if (eventListener && eventListener->handleEvent(new PointerEvent(event_pointer_moved,e->x(), e->y())))
+    if (surface->node && surface->node->handleEvent(new PointerEvent(event_pointer_moved,e->x(), e->y())))
         e->accept ();
     mouseMoved (); // for m_mouse_invisible_timer
 }
 
-KDE_NO_EXPORT void ViewArea::syncVisual (QRect rect) {
-    if (!eventListener) {
-        repaint (rect, false);
+KDE_NO_EXPORT void ViewArea::syncVisual (const SRect & rect) {
+    if (!surface->node) {
+        repaint (QRect(rect.x(), rect.y(), rect.width(), rect.height()), false);
         return;
     }
 #define PAINT_BUFFER_HEIGHT 128
@@ -211,15 +262,19 @@ KDE_NO_EXPORT void ViewArea::syncVisual (QRect rect) {
         ((QPixmap *)m_paint_buffer)->resize (width (), PAINT_BUFFER_HEIGHT);
     int py=0;
     int ex = rect.x ();
+    if (ex > 0)
+        ex--;
     int ey = rect.y ();
-    int ew = rect.width ();
-    int eh = rect.height ();
+    if (ey > 0)
+        ey--;
+    int ew = rect.width () + 2;
+    int eh = rect.height () + 2;
     while (py < eh) {
         int ph = eh-py < PAINT_BUFFER_HEIGHT ? eh-py : PAINT_BUFFER_HEIGHT;
         m_painter->begin (m_paint_buffer);
         m_painter->translate(-ex, -ey-py);
         m_painter->fillRect (ex, ey+py, ew, ph, QBrush (paletteBackgroundColor ()));
-        eventListener->handleEvent(new PaintEvent(*m_painter, ex, ey+py,ew,ph));
+        surface->node->handleEvent(new PaintEvent(*m_painter, ex, ey+py,ew,ph));
         m_painter->end();
         bitBlt (this, ex, ey+py, m_paint_buffer, 0, 0, ew, ph);
         py += PAINT_BUFFER_HEIGHT;
@@ -228,7 +283,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual (QRect rect) {
 }
 
 KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
-    if (eventListener)
+    if (surface->node)
         scheduleRepaint (pe->rect ().x (), pe->rect ().y (), pe->rect ().width (), pe->rect ().height ());
     else
         QWidget::paintEvent (pe);
@@ -251,9 +306,10 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     int hws = h - (m_view->controlPanelMode () == View::CP_AutoHide && m_view->widgetStack ()->visibleWidget () == m_view->viewer () ? 0 : hcp) - hsb;
     // now scale the regions and check if video region is already sized
     bool av_geometry_changed = false;
-    if (eventListener && wws > 0 && hws > 0) {
+    surface->bounds = SRect (x, y, wws, hws);
+    if (surface->node && wws > 0 && hws > 0) {
         m_av_geometry = QRect (0, 0, 0, 0);
-        eventListener->handleEvent (new SizeEvent (x, y, wws, hws, m_view->keepSizeRatio () ? fit_meet : fit_fill));
+        surface->node->handleEvent (new SizeEvent (x, y, wws, hws, m_view->keepSizeRatio () ? fit_meet : fit_fill));
         av_geometry_changed = (m_av_geometry != QRect (0, 0, 0, 0));
         x = m_av_geometry.x ();
         y = m_av_geometry.y ();
@@ -308,17 +364,18 @@ void ViewArea::setAudioVideoGeometry (int x, int y, int w, int h, unsigned int *
         }
 }
 
-KDE_NO_EXPORT void ViewArea::setEventListener (NodePtr el) {
-    if (eventListener != el) {
-        eventListener = el;
-        resizeEvent (0L);
-        if (m_repaint_timer) {
-            killTimer (m_repaint_timer);
-            m_repaint_timer = 0;
-        }
-        m_view->viewer()->resetBackgroundColor ();
-        repaint ();
+KDE_NO_EXPORT SurfacePtr ViewArea::getSurface (NodePtr node) {
+    surface->node = node;
+    qApp->postEvent (this, new QResizeEvent (size (), QSize (0, 0)));
+    if (m_repaint_timer) {
+        killTimer (m_repaint_timer);
+        m_repaint_timer = 0;
     }
+    m_view->viewer()->resetBackgroundColor ();
+    if (node)
+        return surface;
+    static_cast <ViewSurface *> (surface.ptr ())->clear ();
+    return 0L;
 }
 
 KDE_NO_EXPORT void ViewArea::showEvent (QShowEvent *) {
@@ -346,33 +403,33 @@ KDE_NO_EXPORT void ViewArea::mouseMoved () {
     }
 }
 
-KDE_NO_EXPORT void ViewArea::scheduleRepaint (int x, int y, int w, int h) {
+KDE_NO_EXPORT void ViewArea::scheduleRepaint (Single x, Single y, Single w, Single h) {
     if (m_repaint_timer)
-        m_repaint_rect = m_repaint_rect.unite (QRect (x, y, w, h));
+        m_repaint_rect = m_repaint_rect.unite (SRect (x, y, w+1, h+1));
     else {
-        m_repaint_rect = QRect (x, y, w, h);
+        m_repaint_rect = SRect (x, y, w+1, h+1);
         m_repaint_timer = startTimer (10); // 100 per sec should do
     }
 }
 
 KDE_NO_EXPORT
-void ViewArea::moveRect (int x, int y, int w, int h, int x1, int y1) {
-    QRect r (x, y, w, h);
-    if (m_repaint_timer && m_repaint_rect.intersects (r)) {
-        m_repaint_rect = m_repaint_rect.unite (QRect (x1, y1, w, h).unite (r));
-    } else if (m_view->viewer()->frameGeometry ().intersects (r)) {
-        QRect r2 (QRect (x1, y1, w, h).unite (r));
+void ViewArea::moveRect (Single x, Single y, Single w, Single h, Single x1, Single y1) {
+    SRect r (x, y, w, h);
+    if (m_repaint_timer && m_repaint_rect.intersect (r).isValid ()) {
+        m_repaint_rect = m_repaint_rect.unite (SRect (x1, y1, w, h).unite (r));
+    } else if (m_view->viewer()->frameGeometry ().intersects (QRect(x,y,w,h))) {
+        SRect r2 (SRect (x1, y1, w, h).unite (r));
         scheduleRepaint (r.x (), r.y (), r.width (), r.height ());
     } else {
         bitBlt (this, x1, y1, this, x, y, w, h);
         if (x1 > x)
-            syncVisual (QRect (x, y, x1 - x, h));
+            syncVisual (SRect (x, y, x1 - x, h));
         else if (x > x1)
-            syncVisual (QRect (x1 + w, y, x - x1, h));
+            syncVisual (SRect (x1 + w, y, x - x1, h));
         if (y1 > y)
-            syncVisual (QRect (x, y, w, y1 - y));
+            syncVisual (SRect (x, y, w, y1 - y));
         else if (y > y1)
-            syncVisual (QRect (x, y1 + h, w, y - y1));
+            syncVisual (SRect (x, y1 + h, w, y - y1));
     }
 }
 
@@ -605,7 +662,7 @@ void View::toggleShowPlaylist () {
             h +=style.pixelMetric(QStyle::PM_DockWindowHandleExtent,m_playlist);
             for (QListViewItem *i=m_playlist->firstChild();i;i=i->itemBelow()) {
                 h += i->height ();
-                if (h > int (0.5 * height ())) {
+                if (h > int (0.25 * height ())) {
                     horz = false;
                     break;
                 }

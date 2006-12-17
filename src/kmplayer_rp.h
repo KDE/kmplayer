@@ -71,6 +71,7 @@ public:
     unsigned int duration; // cached attributes of head
     TimerInfoPtrW duration_timer;
     QPixmap * image;
+    SurfacePtr surface;
 private:
     QPixmap * cached_image;
 };

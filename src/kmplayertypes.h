@@ -33,6 +33,8 @@ class KMPLAYER_NO_EXPORT Single {
     friend Single operator - (const Single s1, const Single s2);
     friend Single operator * (const Single s1, const Single s2);
     friend Single operator / (const Single s1, const Single s2);
+    friend Single operator + (const Single s1, const int i);
+    friend Single operator - (const Single s1, const int i);
     friend float operator * (const Single s, const float f);
     friend double operator * (const Single s, const double f);
     friend Single operator * (const int i, const Single s);
@@ -52,6 +54,7 @@ class KMPLAYER_NO_EXPORT Single {
     friend bool operator < (const int i, const Single s);
     friend bool operator <= (const Single s1, const Single s2);
     friend bool operator <= (const Single s, const int i);
+    friend Single operator - (const Single s);
 public:
     Single () : value (0) {}
     Single (const int v) : value (v << 8) {}
@@ -67,6 +70,7 @@ public:
     Single & operator -= (const int i) { value -= (i << 8); return *this; }
     Single & operator *= (const Single & s);
     Single & operator *= (const float f) { value = int(value*f); return *this; }
+    Single & operator /= (const int i) { value /= i; return *this; }
     operator int () const { return (value >> 8) + (value & 0xff > 127 ? 1 : 0);}
 };
 
@@ -102,6 +106,8 @@ public:
     SRect unite (const SRect & r) const;
     SRect intersect (const SRect & r) const;
     bool isValid () const { return _w >= Single (0) && _h >= Single (0); }
+    bool operator == (const SRect & r) const;
+    bool operator != (const SRect & r) const;
 };
 
 //-----------------------------------------------------------------------------
@@ -134,6 +140,14 @@ inline Single operator / (const Single s1, const Single s2) {
     Single s;
     s.value = ((int64_t)s1.value << 8) / s2.value;
     return s;
+}
+
+inline Single operator + (const Single s, const int i) {
+    return s + Single (i);
+}
+
+inline Single operator - (const Single s, const int i) {
+    return s - Single (i);
 }
 
 inline Single operator * (const int i, const Single s) {
@@ -208,8 +222,19 @@ operator <= (const Single s1, const Single s2) { return s1.value <= s2.value; }
 inline bool
 operator <= (const Single s, const int i) { return s <= Single (i); }
 
+inline Single operator - (const Single s) {
+    Single s1;
+    s1.value = -s.value;
+    return s1;
+}
+
 //-----------------------------------------------------------------------------
 
+inline bool SRect::operator == (const SRect & r) const {
+    return _x == r._x && _y == r._y && _w == r._w && _h == r._h;
+}
+
+inline bool SRect::operator != (const SRect & r) const { return !(*this == r); }
 
 }  // KMPlayer namespace
 

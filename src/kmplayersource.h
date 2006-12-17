@@ -136,10 +136,10 @@ protected:
     bool requestPlayURL (NodePtr mrl);
     bool resolveURL (NodePtr mrl);
     void stateElementChanged (Node * element, Node::State os, Node::State ns);
-    void setEventDispatcher (NodePtr element);
+    SurfacePtr getSurface (NodePtr node);
     void setInfoMessage (const QString & msg);
-    void repaintRect (int x, int y, int w, int h);
-    void moveRect (int x, int y, int w, int h, int x1, int y1);
+    void repaintRect (Single x, Single y, Single w, Single h);
+    void moveRect(Single x, Single y, Single w, Single h, Single x1, Single y1);
     void avWidgetSizes (int x, int y, int w, int h, unsigned int * bg_color);
     void bitRates (int & preferred, int & maximal);
     void setTimeout (int ms);

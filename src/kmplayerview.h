@@ -74,11 +74,11 @@ public:
     KDE_NO_EXPORT bool isMinimalMode () const { return m_minimal; }
     KDE_NO_EXPORT KActionCollection * actionCollection () const { return m_collection; }
     KDE_NO_EXPORT QRect topWindowRect () const { return m_topwindow_rect; }
-    void setEventListener (NodePtr rl);
+    SurfacePtr getSurface (NodePtr node);
     void setAudioVideoGeometry (int x, int y, int w, int y, unsigned int * bg);
     void mouseMoved ();
-    void scheduleRepaint (int x, int y, int w, int y);
-    void moveRect (int x, int y, int w, int h, int x1, int y1);
+    void scheduleRepaint (Single x, Single y, Single w, Single y);
+    void moveRect(Single x, Single y, Single w, Single h, Single x1, Single y1);
     void resizeEvent (QResizeEvent *);
     void minimalMode ();
 public slots:
@@ -97,16 +97,16 @@ protected:
     void timerEvent (QTimerEvent * e);
     void closeEvent (QCloseEvent * e);
 private:
-    void syncVisual (QRect rect);
+    void syncVisual (const SRect & rect);
     ViewAreaPrivate * d;
     QWidget * m_parent;
     View * m_view;
     QPainter * m_painter;
     QPaintDevice * m_paint_buffer;
     KActionCollection * m_collection;
-    NodePtrW eventListener;
+    SurfacePtr surface;
     QRect m_av_geometry;
-    QRect m_repaint_rect;
+    SRect m_repaint_rect;
     QRect m_topwindow_rect;
     int m_mouse_invisible_timer;
     int m_repaint_timer;

@@ -36,7 +36,7 @@ KDE_NO_CDTOR_EXPORT RP::Imfl::Imfl (NodePtr & d)
   : Mrl (d, id_node_imfl),
     x (0), y (0), w (0), h (0),
     fit (fit_hidden),
-    width (0), height (0), duration (0),
+    duration (0),
     image (0L), cached_image (0L) {}
 
 KDE_NO_CDTOR_EXPORT RP::Imfl::~Imfl () {
@@ -56,6 +56,11 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
     kdDebug () << "RP::Imfl::activate " << endl;
     resolved = true;
     setState (state_activated);
+    surface = Mrl::getSurface (this);
+    if (!surface) {
+        finish ();
+        return;
+    }
     int timings_count = 0;
     for (NodePtr n = firstChild (); n; n = n->nextSibling ())
         switch (n->id) {
@@ -90,8 +95,6 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
         image = new QPixmap (width, height);
         image->fill ();
     }
-    if (parentNode ())
-        parentNode ()->registerEventHandler (this);
     if (duration > 0)
         duration_timer = document ()->setTimeout (this, duration * 100);
     else if (!timings_count)
@@ -138,8 +141,7 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
     delete image;
     image = 0L;
     invalidateCachedImage ();
-    if (parentNode ())
-        parentNode ()->deregisterEventHandler (this);
+    surface = Mrl::getSurface (0L);
 }
 
 KDE_NO_EXPORT void RP::Imfl::invalidateCachedImage () {
@@ -155,8 +157,13 @@ KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
         w = e->w ();
         h = e->h ();
         fit = e->fit;
-        matrix = e->matrix;
-        //kdDebug () << "RP::Imfl sized: " << x << "," << y << " " << w << "x" << h << endl;
+        if (surface) {
+            matrix = Matrix (0, 0,
+                    1.0 * surface->bounds.width () / width,
+                    1.0 * surface->bounds.height () / height);
+            surface->matrix = matrix;
+            matrix.transform (e->matrix);
+        }
     } else if (event->id () == event_paint) {
         if (active () && image) {
             PaintEvent * p = static_cast <PaintEvent *> (event.ptr ());
@@ -164,7 +171,7 @@ KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
             if (w == width && h == height) {
                 p->painter.drawPixmap (x, y, *image);
             } else {
-                Single x1=0, y1=0, w1=width, h1=height;
+                Single x1 = 0, y1 =0, w1 = width, h1 = height;
                 if (fit == fit_fill) {
                     w1 = w;
                     h1 = h;

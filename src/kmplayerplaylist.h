@@ -34,6 +34,7 @@
 
 class QTextStream;
 class QPixmap;
+class QImage;
 class QPainter;
 
 namespace KMPlayer {
@@ -41,6 +42,8 @@ namespace KMPlayer {
 class Document;
 class Node;
 class Mrl;
+class Surface;
+class SurfaceAction;
 class ElementRuntime;
 class RemoteObjectPrivate;
 
@@ -176,6 +179,7 @@ public:
     virtual ~TreeNode () {}
 
     virtual void appendChild (typename Item<T>::SharedType c);
+    virtual void removeChild (typename Item<T>::SharedType c);
 
     bool hasChildNodes () const { return m_first_child != 0L; }
     typename Item<T>::SharedType parentNode () const { return m_parent; }
@@ -238,9 +242,9 @@ ITEM_AS_POINTER(KMPlayer::Event)
  */
 class PaintEvent : public Event {
 public:
-    PaintEvent (QPainter & p, int x, int y, int w, int h);
+    PaintEvent (QPainter & p, Single x, Single y, Single w, Single h);
     QPainter & painter;
-    int x, y, w, h;
+    Single x, y, w, h;
 };
 
 /**
@@ -305,6 +309,10 @@ typedef List<NodeRefItem> NodeRefList;       // ref nodes, eg. event listeners
 typedef Item<NodeRefList>::SharedType NodeRefListPtr;
 typedef Item<NodeRefList>::WeakType NodeRefListPtrW;
 ITEM_AS_POINTER(KMPlayer::NodeRefList)
+typedef Item<Surface>::SharedType SurfacePtr;
+typedef Item<Surface>::WeakType SurfacePtrW;
+typedef Item<SurfaceAction>::SharedType SurfaceActionPtr;
+typedef Item<SurfaceAction>::WeakType SurfacePtrActionW;
 
 /*
  * Weak ref of the listeners list from signaler and the listener node
@@ -392,8 +400,7 @@ public:
      * Adds node to call 'handleEvent()' for all events that gets
      * delivered to this node, ignored by default
      */
-    virtual void registerEventHandler (NodePtr handler);
-    virtual void deregisterEventHandler (NodePtr handler);
+    virtual SurfacePtr getSurface (NodePtr node);
     /**
      * Activates element, sets state to state_activated. Will call activate() on
      * firstChild or call deactivate().
@@ -559,11 +566,9 @@ public:
     /**
      * By default support one event handler (eg. SMIL or RP child document)
      */
-    virtual void registerEventHandler (NodePtr handler);
-    virtual void deregisterEventHandler (NodePtr handler);
+    virtual SurfacePtr getSurface (NodePtr node);
     virtual bool handleEvent (EventPtr event);
 
-    NodePtrW event_handler;
     /**
      * If this Mrl is top node of external document, opener has the
      * location in SCR. Typically that's the parent of this node.
@@ -604,9 +609,9 @@ public:
      */
     virtual void stateElementChanged (Node * element, Node::State old_state, Node::State new_state) = 0;
     /**
-     * Set element to which to send GUI events
+     * Set element to which to send GUI events and return a surface for drawing
      */
-    virtual void setEventDispatcher (NodePtr element) = 0;
+    virtual SurfacePtr getSurface (NodePtr node) = 0;
     /**
      * Request to show msg for informing the user
      */
@@ -614,11 +619,11 @@ public:
     /**
      * Some rectangle needs repainting
      */
-    virtual void repaintRect (int x, int y, int w, int h) = 0;
+    virtual void repaintRect (Single x, Single y, Single w, Single h) = 0;
     /**
      * move a rectangle
      */
-    virtual void moveRect (int x, int y, int w, int h, int x1, int y1) = 0;
+    virtual void moveRect (Single x, Single y, Single w, Single h, Single x1, Single y1) = 0;
     /**
      * Sets the video widget postion and background color if bg not NULL
      */
@@ -651,6 +656,24 @@ protected:
 private:
     RemoteObjectPrivate *d;
 };
+
+class KMPLAYER_NO_EXPORT Surface : public TreeNode <Surface> {
+public:
+    Surface (NodePtr node, const SRect & rect);
+    ~Surface();
+
+    virtual SurfacePtr createSurface (NodePtr owner, const SRect & rect) = 0;
+    virtual void resize (const SRect & rect) = 0;
+
+    NodePtrW node;
+    SRect bounds;     // bounds in in parent coord. 
+    Matrix matrix;    // translation and internal scaling
+
+protected:
+    Surface (const SRect & rect);
+};
+
+ITEM_AS_POINTER(KMPlayer::Surface)
 
 /**
  * To have a somewhat synchronized time base, node having timers should use
@@ -745,10 +768,9 @@ public:
      */
     virtual NodeRefListPtr listeners (unsigned int event_id);
     /**
-     * Reimplement, so it will call PlayListNotify::setEventDispatcher
+     * Reimplement, so it will call PlayListNotify::getSurface()
      */
-    virtual void registerEventHandler (NodePtr handler);
-    virtual void deregisterEventHandler (NodePtr handler);
+    virtual SurfacePtr getSurface (NodePtr node);
 
     NodePtrW rootLayout;
     List <TimerInfo> timers; //FIXME: make as connections
@@ -906,6 +928,21 @@ inline void TreeNode<T>::appendChild (typename Item<T>::SharedType c) {
         m_last_child = c;
     }
     c->m_parent = Item<T>::m_self;
+}
+
+template <class T>
+inline void TreeNode<T>::removeChild (typename Item<T>::SharedType c) {
+    if (c->m_prev) {
+        c->m_prev->m_next = c->m_next;
+    } else
+        m_first_child = c->m_next;
+    if (c->m_next) {
+        c->m_next->m_prev = c->m_prev;
+        c->m_next = 0L;
+    } else
+        m_last_child = c->m_prev;
+    c->m_prev = 0L;
+    c->m_parent = 0L;
 }
 
 inline KDE_NO_EXPORT NodeListPtr Node::childNodes () const {

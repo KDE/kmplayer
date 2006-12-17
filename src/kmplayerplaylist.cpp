@@ -467,9 +467,9 @@ QString Node::nodeValue () const {
     return QString ();
 }
 
-void Node::registerEventHandler (NodePtr) {}
-
-void Node::deregisterEventHandler (NodePtr) {}
+SurfacePtr Node::getSurface (NodePtr) {
+    return 0L;
+}
 
 //-----------------------------------------------------------------------------
 
@@ -628,47 +628,23 @@ void Mrl::activate () {
 //        Node::childDone (child);
 //}
 
-static NodePtr findChainEventHandler (NodePtr node) {
-    Node * p = node->parentNode ().ptr ();
-    Mrl * mrl = p ? p->mrl () : 0L;
-    while (p && (!mrl || !mrl->event_handler)) {
-        p = p->parentNode ().ptr ();
-        mrl = p ? p->mrl () : 0L;
-    }
-    if (!mrl)
-        return node->document ();
-    else {
-        while (mrl->event_handler && mrl->event_handler != node) {
-            Mrl * m = mrl->event_handler->mrl ();
-            if (!m) {
-                kdError () << "Wrong type event_handler set" << endl;
-                break;
-            }
-            mrl = m;
-        }
-        return mrl;
-    }
+SurfacePtr Mrl::getSurface (NodePtr node) {
+    for (NodePtr p = parentNode (); p; p = p->parentNode ())
+        if (p->mrl ())
+            return p->getSurface (node);
+    return 0L;
 }
 
-void Mrl::registerEventHandler (NodePtr handler) {
-    if (event_handler != handler) {// in case findChainEventHandler returns this
-        event_handler = handler;
-        findChainEventHandler (this)->registerEventHandler (this);
-    }
-}
-
-void Mrl::deregisterEventHandler (NodePtr handler) {
-    if (event_handler == handler) {
-        event_handler = 0L;
-        findChainEventHandler (this)->deregisterEventHandler (this);
-    }
-}
-
-bool Mrl::handleEvent (EventPtr event) {
-    if (event_handler)
-        return event_handler->handleEvent (event);
+bool Mrl::handleEvent (EventPtr) {
     return false;
 }
+
+KDE_NO_CDTOR_EXPORT Surface::Surface (NodePtr n, const SRect & r)
+  : node (n), bounds (r) {}
+
+Surface::Surface (const SRect & r) : bounds (r) {}
+
+Surface::~Surface() {}
 
 //-----------------------------------------------------------------------------
 
@@ -899,18 +875,10 @@ void Document::proceed (const struct timeval & postponed_time) {
     propagateEvent (new PostponedEvent (false));
 }
 
-void Document::registerEventHandler (NodePtr handler) {
-    event_handler = handler;
+SurfacePtr Document::getSurface (NodePtr node) {
     if (notify_listener)
-        notify_listener->setEventDispatcher (this);
-}
-
-void Document::deregisterEventHandler (NodePtr handler) {
-    if (event_handler == handler) {
-        event_handler = 0L;
-        if (notify_listener)
-            notify_listener->setEventDispatcher (0L);
-    }
+        return notify_listener->getSurface (node);
+    return 0L;
 }
 
 NodeRefListPtr Document::listeners (unsigned int id) {

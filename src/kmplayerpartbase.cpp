@@ -1108,22 +1108,23 @@ void Source::stateElementChanged (Node * elm, Node::State os, Node::State ns) {
     }
 }
 
-void Source::setEventDispatcher (NodePtr e) {
+SurfacePtr Source::getSurface (NodePtr n) {
     if (m_player->view ())
-        static_cast <View*> (m_player->view())->viewArea()->setEventListener(e);
+        return static_cast <View*>(m_player->view())->viewArea()->getSurface(n);
+    return 0L;
 }
 
 void Source::setInfoMessage (const QString & msg) {
     m_player->updateInfo (msg);
 }
 
-void Source::repaintRect (int x, int y, int w, int h) {
+void Source::repaintRect (Single x, Single y, Single w, Single h) {
     //kdDebug () << "repaint " << x << "," << y << " " << w << "x" << h << endl;
     if (m_player->view ())
      static_cast<View*>(m_player->view())->viewArea()->scheduleRepaint(x,y,w,h);
 }
 
-void Source::moveRect (int x, int y, int w, int h, int x1, int y1) {
+void Source::moveRect (Single x, Single y, Single w, Single h, Single x1, Single y1) {
     if (m_player->view ())
       static_cast<View*>(m_player->view())->viewArea()->moveRect(x,y,w,h,x1,y1);
 }
@@ -1484,7 +1485,7 @@ void URLSource::jump (NodePtr e) {
 void URLSource::deactivate () {
     activated = false;
     reset ();
-    setEventDispatcher (NodePtr ());
+    getSurface (0L);
 }
 
 QString URLSource::prettyName () {
@@ -1610,6 +1611,8 @@ KDE_NO_EXPORT void URLSource::read (NodePtr root, QTextStream & textstream) {
             }
         } else if (line.lower () != QString ("[reference]")) do {
             QString mrl = line.stripWhiteSpace ();
+            if (line == QString ("--stop--"))
+                break;
             if (mrl.lower ().startsWith (QString ("asf ")))
                 mrl = mrl.mid (4).stripWhiteSpace ();
             if (!mrl.isEmpty () && !mrl.startsWith (QChar ('#')))

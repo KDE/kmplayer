@@ -441,8 +441,9 @@ public:
      * given this element's w and h value
      * and child's left/top/right/width/height/bottom attributes
      */
-    virtual void updateDimensions ();
+    virtual void updateDimensions (SurfacePtr parent_surface);
 
+    SurfacePtrW surface;
     /**
      * Creates a new transform matrix
      */
@@ -475,7 +476,7 @@ public:
     /**
      * recursively calculates dimensions of this and child regions
      */
-    virtual void updateDimensions ();
+    virtual void updateDimensions (SurfacePtr parent_surface);
 
     NodePtrW rootLayout;
 };
@@ -654,8 +655,7 @@ public:
     void activate ();
     bool expose () const;
     void childDone (NodePtr child);
-    virtual void registerEventHandler (NodePtr handler);
-    virtual void deregisterEventHandler (NodePtr handler);
+    virtual SurfacePtr getSurface (NodePtr node);
     virtual bool handleEvent (EventPtr event);
     void positionVideoWidget (); // for 'video' and 'ref' nodes
     NodePtrW external_tree; // if src points to playlist, the resolved top node
