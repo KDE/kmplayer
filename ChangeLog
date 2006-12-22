@@ -1,3 +1,16 @@
+Changes since version 0.9.3
+- Reading RAM playlists should stop on '--stop--' stop lines
+- Make playlist occuring on top less likely
+- Support for 'repeatCount="indefinite"' in SMIL
+- Fix uninitialized member in GenericMrl, eg. reopening saved playlist crashed
+- "quot" entity fix in XML parser
+- Also show content of cdata sections in infoview w/ RSS and XSPF
+- Fix konqueror wheel spinning when HTML object has an 'autostart=0' set
+- Fix possible hang in RemoteObject for SMIL or RealPix
+- Don't play exit animation when KDE terminates
+- Nested playlist fix for RSS and XSPF
+- Item 'Playlist', of panel's popup menu, didn't work in fullscreen/minimal view
+- Allow Xine as player for TV using v4l:/Tuner/frequency mrls
 Changes since version 0.9.3-rc1
 - Fix audio/video CD w/ MPlayer adding more and more nodes on restart
 - MPlayer movie length detection fix for URLs in lists
