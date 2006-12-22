@@ -471,9 +471,11 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
         setSource (hrefsource);
     } else {
         hrefsource->clear ();
-        PartBase::openURL (m_havehref ? m_sources ["urlsource"]->url () : url);
-        emit started (0L);
-        m_started_emited = true;
+        PartBase::openURL (m_havehref ? urlsource->url () : url);
+        if (urlsource->autoPlay ()) {
+            emit started (0L);
+            m_started_emited = true;
+        }
         m_havehref = false;
     }
     return true;
@@ -565,8 +567,10 @@ KDE_NO_EXPORT void KMPlayerPart::playingStarted () {
     if (m_settings->sizeratio && !m_noresize && m_source->width() > 0 && m_source->height() > 0)
         m_liveconnectextension->setSize (m_source->width(), m_source->height());
     m_browserextension->setLoadingProgress (100);
-    emit completed ();
-    m_started_emited = false;
+    if (m_started_emited) {
+        emit completed ();
+        m_started_emited = false;
+    }
     m_liveconnectextension->started ();
     m_browserextension->infoMessage (i18n("KMPlayer: Playing"));
 }

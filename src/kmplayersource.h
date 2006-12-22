@@ -97,6 +97,7 @@ public:
     // backend process state changed
     virtual void stateChange (Process *, Process::State os, Process::State ns);
     KDE_NO_EXPORT void setAutoPlay (bool b) { m_auto_play = b; }
+    KDE_NO_EXPORT bool autoPlay () const { return m_auto_play; }
     void setTitle (const QString & title);
     void setLoading (int percentage);
     bool setCurrent (NodePtr mrl);
