@@ -22,7 +22,9 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif 
-
+#ifdef HAVE_CAIRO
+# include <cairo.h>
+#endif
 #include <qwidget.h>
 #include <qguardedptr.h>
 #include <qtextedit.h>
@@ -101,8 +103,12 @@ private:
     ViewAreaPrivate * d;
     QWidget * m_parent;
     View * m_view;
+#ifdef HAVE_CAIRO
+    cairo_surface_t * cairo_surface;
+#else
     QPainter * m_painter;
     QPaintDevice * m_paint_buffer;
+#endif
     KActionCollection * m_collection;
     SurfacePtr surface;
     QRect m_av_geometry;

@@ -455,6 +455,10 @@ KDE_NO_EXPORT void Node::propagateEvent (EventPtr event) {
                 c->data->handleEvent (event);
 }
 
+void Node::accept (Visitor * v) {
+    v->visit (this);
+}
+
 KDE_NO_EXPORT
 ConnectionPtr Node::connectTo (NodePtr node, unsigned int evt_id) {
     NodeRefListPtr nl = listeners (evt_id);
@@ -640,7 +644,7 @@ bool Mrl::handleEvent (EventPtr) {
 }
 
 KDE_NO_CDTOR_EXPORT Surface::Surface (NodePtr n, const SRect & r)
-  : node (n), bounds (r) {}
+  : node (n), bounds (r), xscale (1.0), yscale (1.0) {}
 
 Surface::Surface (const SRect & r) : bounds (r) {}
 

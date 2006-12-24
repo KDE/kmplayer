@@ -21,6 +21,7 @@
 #ifndef _KMPLAYER_SMILL_H_
 #define _KMPLAYER_SMILL_H_
 
+#include <config.h>
 #include <qobject.h>
 #include <qstring.h>
 #include <qstringlist.h>
@@ -38,7 +39,7 @@ namespace KIO {
 namespace KMPlayer {
 
 class ElementRuntimePrivate;
-class TextDataPrivate;
+class TextRuntimePrivate;
 
 /*
  * Event signaled before the actual starting takes place. Use by SMIL::Excl
@@ -167,9 +168,10 @@ public:
     virtual void stopped ();
 private:
     void setDurationItem (DurationTime item, const QString & val);
-protected:
+public:
     TimingState timingstate;
     Fill fill;
+protected:
     TimerInfoPtrW start_timer;
     TimerInfoPtrW dur_timer;
     int repeat_count;
@@ -218,6 +220,7 @@ public:
     virtual void postpone (bool b);
     CalculatedSizer sizes;
     PostponePtr postpone_lock;
+    Fit fit;
 protected:
     MediaTypeRuntime (NodePtr e);
     ConnectionPtr document_postponed;      // pauze audio/video accordantly
@@ -226,7 +229,6 @@ protected:
     ConnectionPtr region_mouse_enter;      // attached region has mouse entered
     ConnectionPtr region_mouse_leave;      // attached region has mouse left
     ConnectionPtr region_mouse_click;      // attached region is clicked
-    Fit fit;
 };
 
 /**
@@ -243,20 +245,6 @@ public:
     void avStopped ();
 };
 
-/**
- * Data needed for an image
- */
-class KMPLAYER_NO_EXPORT ImageData {
-public:
-    ImageData ();
-    ~ImageData ();
-    QPixmap * image;
-    QPixmap * cache_image; // scaled cache
-    QMovie * img_movie;
-    QString url;
-    bool have_frame;
-};
-
 class KMPLAYER_NO_EXPORT ImageRuntime : public QObject,public MediaTypeRuntime {
     Q_OBJECT
 public:
@@ -265,7 +253,11 @@ public:
     void paint (QPainter & p);
     virtual void parseParam (const QString & name, const QString & value);
     virtual void postpone (bool b);
-    ImageData * d;
+    QPixmap * image;
+    QPixmap * cache_image; // scaled cache
+    QMovie * img_movie;
+    QString url;
+    bool have_frame;
 protected:
     virtual void started ();
     virtual void stopped ();
@@ -279,14 +271,19 @@ private slots:
 /**
  * Data needed for text
  */
-class KMPLAYER_NO_EXPORT TextData : public MediaTypeRuntime {
+class KMPLAYER_NO_EXPORT TextRuntime : public MediaTypeRuntime {
 public:
-    TextData (NodePtr e);
-    ~TextData ();
+    TextRuntime (NodePtr e);
+    ~TextRuntime ();
     void paint (QPainter & p);
-    void end ();
+    void reset ();
     virtual void parseParam (const QString & name, const QString & value);
-    TextDataPrivate * d;
+    int font_size;
+    unsigned int font_color;
+    unsigned int background_color;
+    bool transparent;
+    QString text;
+    TextRuntimePrivate * d;
 protected:
     virtual void started ();
     virtual void remoteReady (QByteArray &);
@@ -399,6 +396,7 @@ public:
     void deactivate ();
     void closed ();
     bool expose () const;
+    void accept (Visitor *);
     /**
      * Hack to mark the currently playing MediaType as finished
      * FIXME: think of a descent callback way for this
@@ -432,6 +430,7 @@ public:
     void reset ();
     void activate ();
     virtual bool handleEvent (EventPtr event);
+    virtual NodeRefListPtr listeners (unsigned int event_id);
     /**
      * repaints region, calls scheduleRepaint(x,y,w,h) on view
      */
@@ -456,7 +455,6 @@ public:
 protected:
     RegionBase (NodePtr & d, short id);
     RegionRuntime * runtime;
-    virtual NodeRefListPtr listeners (unsigned int event_id);
     Matrix m_region_transform;
     NodeRefListPtr m_SizeListeners;        // region resized
     NodeRefListPtr m_PaintListeners;       // region need repainting
@@ -473,6 +471,7 @@ public:
     void activate ();
     void closed ();
     virtual bool handleEvent (EventPtr event);
+    virtual void accept (Visitor *);
     /**
      * recursively calculates dimensions of this and child regions
      */
@@ -492,6 +491,7 @@ public:
     void calculateBounds (Single w, Single h, const Matrix & parent_transform);
     virtual bool handleEvent (EventPtr event);
     virtual NodeRefListPtr listeners (unsigned int event_id);
+    virtual void accept (Visitor *);
 private:
     NodeRefListPtr m_ActionListeners;      // mouse clicked
     NodeRefListPtr m_OutOfBoundsListeners; // mouse left
@@ -677,6 +677,7 @@ public:
     virtual void undefer ();
     virtual void finish ();
     virtual bool handleEvent (EventPtr event);
+    virtual void accept (Visitor *);
 };
 
 class KMPLAYER_NO_EXPORT ImageMediaType : public MediaType {
@@ -684,12 +685,14 @@ public:
     ImageMediaType (NodePtr & d);
     TimedRuntime * getNewRuntime ();
     NodePtr childFromTag (const QString & tag);
+    virtual void accept (Visitor *);
 };
 
 class KMPLAYER_NO_EXPORT TextMediaType : public MediaType {
 public:
     TextMediaType (NodePtr & d);
     TimedRuntime * getNewRuntime ();
+    virtual void accept (Visitor *);
 };
 
 class KMPLAYER_NO_EXPORT RefMediaType : public MediaType {
@@ -697,6 +700,7 @@ public:
     RefMediaType (NodePtr & d);
     TimedRuntime * getNewRuntime ();
     virtual bool handleEvent (EventPtr event);
+    virtual void accept (Visitor *);
 };
 
 class KMPLAYER_NO_EXPORT Set : public TimedMrl {

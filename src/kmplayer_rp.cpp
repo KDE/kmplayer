@@ -468,7 +468,7 @@ KDE_NO_EXPORT void RP::Fadeout::update (int percentage) {
             int brush_pat = ((int) Qt::Dense7Pattern) - 10 * percentage / 126;
             Single pw = w;
             Single ph = h;
-            if (!w || !h) {
+            if (!(int)w || !(int)h) {
                 pw = imfl->image->width ();
                 ph = imfl->image->height ();
             }
@@ -493,7 +493,7 @@ KDE_NO_EXPORT void RP::Fill::begin () {
     if (p->id == RP::id_node_imfl) {
         RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
         if (imfl->image) {
-            if (!w || !h) {
+            if (!(int)w || !(int)h) {
                 imfl->image->fill (color);
             } else {
                 QPainter painter;

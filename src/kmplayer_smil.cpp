@@ -727,14 +727,14 @@ void RegionRuntime::parseParam (const QString & name, const QString & val) {
             Matrix m = rb->transform ();
             Single rx = 0, ry = 0, rw = rb->w, rh = rb->h;
             m.getXYWH (rx, ry, rw, rh);
-            if (rect.width () == rw && rect.height () == rh) {
-                PlayListNotify * n = element->document()->notify_listener;
-                if (n && (rect.x () != rx || rect.y () != ry))
-                    n->moveRect (rect.x(), rect.y(), rect.width (), rect.height (), rx, ry);
-            } else {
+            //if (rect.width () == rw && rect.height () == rh) {
+            //    PlayListNotify * n = element->document()->notify_listener;
+            //    if (n && (rect.x () != rx || rect.y () != ry))
+            //        n->moveRect (rect.x(), rect.y(), rect.width (), rect.height (), rx, ry);
+            //} else {
                 rect = rect.unite (SRect (rx, ry, rw, rh));
                 need_repaint = true;
-            }
+            //}
         }
     }
     if (need_repaint && active && rb && element) {
@@ -931,9 +931,9 @@ KDE_NO_EXPORT void AnimateData::started () {
                 kdWarning () << "animate couldn't determine end value" << endl;
                 break;
             }
-            steps = 10 * durations [duration_time].durval / 2; // 50 per sec
+            steps = 10 * durations [duration_time].durval / 4; // 25 per sec
             if (steps > 0) {
-                anim_timer = element->document ()->setTimeout (element, 20, anim_timer_id); // 50 /s for now FIXME
+                anim_timer = element->document ()->setTimeout (element, 40, anim_timer_id); // 25 /s for now FIXME
                 change_delta = (change_to_val - change_from_val) / steps;
                 //kdDebug () << "AnimateData::started " << target_element->nodeName () << "." << changed_attribute << " " << change_from_val << "->" << change_to_val << " in " << steps << " using:" << change_delta << " inc" << endl;
                 success = true;
@@ -1352,6 +1352,11 @@ KDE_NO_EXPORT bool SMIL::Smil::expose () const {
         previousSibling () || nextSibling ();
 }
 
+KDE_NO_EXPORT void SMIL::Smil::accept (Visitor * v) {
+    if (active () && layout_node)
+        layout_node->accept( v );
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT NodePtr SMIL::Head::childFromTag (const QString & tag) {
@@ -1474,11 +1479,11 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
                 w = ew;
                 h = eh;
                 Element * rl = convertNode <Element> (rootLayout);
-                rl->setAttribute (QString::fromLatin1 ("width"), QString::number (ew));
-                rl->setAttribute (QString::fromLatin1 ("height"), QString::number (eh));
+                rl->setAttribute (QString::fromLatin1 ("width"), QString::number ((int)ew));
+                rl->setAttribute (QString::fromLatin1 ("height"), QString::number ((int)eh));
                 if (runtime) {
-                    rl->getRuntime ()->setParam (QString::fromLatin1 ("width"), QString::number (ew));
-                    rl->getRuntime ()->setParam (QString::fromLatin1 ("height"), QString::number (eh));
+                    rl->getRuntime ()->setParam (QString::fromLatin1 ("width"), QString::number ((int)ew));
+                    rl->getRuntime ()->setParam (QString::fromLatin1 ("height"), QString::number ((int)eh));
                     updateDimensions (surface);
                 }
             } else if (w > 0 && h > 0) {
@@ -1506,8 +1511,13 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
                     }
             } else
                 break;
-            if (surface)
+            if (surface) {
+                surface->xoffset = xoff;
+                surface->yoffset = yoff;
+                surface->xscale = pxscale;
+                surface->yscale = pyscale;
                 surface->matrix = Matrix (xoff, yoff, pxscale, pyscale);
+            }
             Matrix m (ex, ey, xscale, yscale);
             RegionBase::handleEvent (new SizeEvent (0, 0, ew, eh, e->fit, m));
             handled = true;
@@ -1522,6 +1532,10 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
             return RegionBase::handleEvent (event);
     }
     return handled;
+}
+
+KDE_NO_EXPORT void SMIL::Layout::accept (Visitor * v) {
+    v->visit (this);
 }
 
 //-----------------------------------------------------------------------------
@@ -1731,6 +1745,10 @@ NodeRefListPtr SMIL::Region::listeners (unsigned int eid) {
             return m_OutOfBoundsListeners;
     }
     return RegionBase::listeners (eid);
+}
+
+KDE_NO_EXPORT void SMIL::Region::accept (Visitor * v) {
+    v->visit (this);
 }
 
 //-----------------------------------------------------------------------------
@@ -2207,8 +2225,8 @@ KDE_NO_EXPORT void SMIL::MediaType::positionVideoWidget () {
 
 SurfacePtr SMIL::MediaType::getSurface (NodePtr node) {
     MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (timedRuntime ());
-    RegionBase * r = convertNode <RegionBase> (mtr->region_node);
-    if (r) {
+    RegionBase * r = mtr ? convertNode <RegionBase> (mtr->region_node) : 0L;
+    if (r && r->surface) {
         if (node) {
             r->surface->node = node;
             node->handleEvent (new SizeEvent (0, 0, r->w, r->h,
@@ -2305,6 +2323,10 @@ KDE_NO_EXPORT bool SMIL::AVMediaType::handleEvent (EventPtr event) {
     return MediaType::handleEvent (event);
 }
 
+KDE_NO_EXPORT void SMIL::AVMediaType::accept (Visitor * v) {
+    v->visit (this);
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT
@@ -2321,6 +2343,10 @@ KDE_NO_EXPORT NodePtr SMIL::ImageMediaType::childFromTag (const QString & tag) {
     return SMIL::MediaType::childFromTag (tag);
 }
 
+KDE_NO_EXPORT void SMIL::ImageMediaType::accept (Visitor * v) {
+    v->visit (this);
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT
@@ -2328,7 +2354,11 @@ SMIL::TextMediaType::TextMediaType (NodePtr & d)
     : SMIL::MediaType (d, "text", id_node_text) {}
 
 KDE_NO_EXPORT TimedRuntime * SMIL::TextMediaType::getNewRuntime () {
-    return new TextData (this);
+    return new TextRuntime (this);
+}
+
+KDE_NO_EXPORT void SMIL::TextMediaType::accept (Visitor * v) {
+    v->visit (this);
 }
 
 //-----------------------------------------------------------------------------
@@ -2345,6 +2375,10 @@ KDE_NO_EXPORT bool SMIL::RefMediaType::handleEvent (EventPtr event) {
     if (event->id () == event_sized && !external_tree)
         positionVideoWidget ();
     return MediaType::handleEvent (event);
+}
+
+KDE_NO_EXPORT void SMIL::RefMediaType::accept (Visitor * v) {
+    v->visit (this);
 }
 
 //-----------------------------------------------------------------------------
@@ -2385,20 +2419,14 @@ KDE_NO_EXPORT void SMIL::Param::activate () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT ImageData::ImageData ()
-    : image (0L), cache_image (0), img_movie (0L) {}
-
-KDE_NO_CDTOR_EXPORT ImageData::~ImageData () {
-    delete image;
-    delete cache_image;
-}
-
 KDE_NO_CDTOR_EXPORT ImageRuntime::ImageRuntime (NodePtr e)
- : MediaTypeRuntime (e), d (new ImageData) {
+ : MediaTypeRuntime (e), image (0L), cache_image (0),
+   img_movie (0L) {
 }
 
 KDE_NO_CDTOR_EXPORT ImageRuntime::~ImageRuntime () {
-    delete d;
+    delete image;
+    delete cache_image;
 }
 
 KDE_NO_EXPORT
@@ -2420,14 +2448,14 @@ void ImageRuntime::parseParam (const QString & name, const QString & val) {
 }
 
 KDE_NO_EXPORT void ImageRuntime::paint (QPainter & p) {
-    if (((d->image && !d->image->isNull ()) ||
-                (d->img_movie && !d->img_movie->isNull ())) &&
+    if (((image && !image->isNull ()) ||
+                (img_movie && !img_movie->isNull ())) &&
             region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
         SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (region_node);
         if (rb->w <= 0 || rb->h <= 0)
             return;
-        const QPixmap &img = (d->image ? *d->image:d->img_movie->framePixmap());
+        const QPixmap &img = (image ? *image:img_movie->framePixmap());
         Single x, y, w0, h0;
         sizes.calcSizes (element.ptr (), rb->w, rb->h, x, y, w0, h0);
         Matrix matrix (x, y, 1.0, 1.0);
@@ -2460,14 +2488,14 @@ KDE_NO_EXPORT void ImageRuntime::paint (QPainter & p) {
         if ((int) w == img.width () && (int) h == img.height ())
             p.drawPixmap (QRect (xoff, yoff, w, h), img);
         else {
-            if (!d->cache_image || (int) w != d->cache_image->width () ||
-                    (int) h != d->cache_image->height ()) {
-                delete d->cache_image;
+            if (!cache_image || (int) w != cache_image->width () ||
+                    (int) h != cache_image->height ()) {
+                delete cache_image;
                 QImage img2;
                 img2 = img;
-                d->cache_image = new QPixmap (img2.scale (w, h));
+                cache_image = new QPixmap (img2.scale (w, h));
             }
-            p.drawPixmap (QRect (xoff, yoff, w, h), *d->cache_image);
+            p.drawPixmap (QRect (xoff, yoff, w, h), *cache_image);
         }
     }
 }
@@ -2485,17 +2513,17 @@ KDE_NO_EXPORT void ImageRuntime::started () {
     if (durations [duration_time].durval == 0 &&
             durations [end_time].durval == duration_media) //no duration/end set
         fill = fill_freeze;
-    if (d->img_movie) {
-        d->img_movie->restart ();
-        if (d->img_movie->paused ())
-            d->img_movie->unpause ();
+    if (img_movie) {
+        img_movie->restart ();
+        if (img_movie->paused ())
+            img_movie->unpause ();
     }
     MediaTypeRuntime::started ();
 }
 
 KDE_NO_EXPORT void ImageRuntime::stopped () {
-    if (d->img_movie && d->have_frame)
-        d->img_movie->pause ();
+    if (img_movie && have_frame)
+        img_movie->pause ();
     MediaTypeRuntime::stopped ();
 }
 
@@ -2513,15 +2541,15 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
         if (!mt->external_tree) {
             QPixmap *pix = new QPixmap (data);
             if (!pix->isNull ()) {
-                d->image = pix;
-                delete d->cache_image;
-                d->cache_image = 0;
-                delete d->img_movie;
-                d->img_movie = new QMovie (data);
-                d->have_frame = false;
-                d->img_movie->connectUpdate(this, SLOT(movieUpdated(const QRect&)));
-                d->img_movie->connectStatus (this, SLOT (movieStatus (int)));
-                d->img_movie->connectResize(this, SLOT (movieResize(const QSize&)));
+                image = pix;
+                delete cache_image;
+                cache_image = 0;
+                delete img_movie;
+                img_movie = new QMovie (data);
+                have_frame = false;
+                img_movie->connectUpdate(this, SLOT(movieUpdated(const QRect&)));
+                img_movie->connectStatus (this, SLOT (movieStatus (int)));
+                img_movie->connectResize(this, SLOT (movieResize(const QSize&)));
                 if (region_node && (timingstate == timings_started ||
                             (timingstate == timings_stopped && fill == fill_freeze)))
                     convertNode <SMIL::RegionBase> (region_node)->repaint ();
@@ -2535,17 +2563,17 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
 }
 
 KDE_NO_EXPORT void ImageRuntime::movieUpdated (const QRect &) {
-    d->have_frame = true;
+    have_frame = true;
     if (region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
-        delete d->cache_image;
-        d->cache_image = 0;
-        delete d->image;
-        d->image = 0;
+        delete cache_image;
+        cache_image = 0;
+        delete image;
+        image = 0;
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
     }
-    if (timingstate != timings_started && d->img_movie)
-        d->img_movie->pause ();
+    if (timingstate != timings_started && img_movie)
+        img_movie->pause ();
 }
 
 KDE_NO_EXPORT void ImageRuntime::movieStatus (int s) {
@@ -2557,7 +2585,7 @@ KDE_NO_EXPORT void ImageRuntime::movieStatus (int s) {
 }
 
 KDE_NO_EXPORT void ImageRuntime::movieResize (const QSize & s) {
-    if (!(d->cache_image && d->cache_image->width () == s.width () && d->cache_image->height () == s.height ()) &&
+    if (!(cache_image && cache_image->width () == s.width () && cache_image->height () == s.height ()) &&
             region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
@@ -2567,11 +2595,11 @@ KDE_NO_EXPORT void ImageRuntime::movieResize (const QSize & s) {
 
 KDE_NO_EXPORT void ImageRuntime::postpone (bool b) {
     kdDebug () << "ImageRuntime::postpone " << b << endl;
-    if (d->img_movie) {
-        if (!d->img_movie->paused () && b)
-            d->img_movie->pause ();
-        else if (d->img_movie->paused () && !b)
-            d->img_movie->unpause ();
+    if (img_movie) {
+        if (!img_movie->paused () && b)
+            img_movie->pause ();
+        else if (img_movie->paused () && !b)
+            img_movie->unpause ();
     }
 }
 
@@ -2579,17 +2607,15 @@ KDE_NO_EXPORT void ImageRuntime::postpone (bool b) {
 #include <qtextedit.h>
 
 namespace KMPlayer {
-    class TextDataPrivate {
+    class TextRuntimePrivate {
     public:
-        TextDataPrivate () : edit (0L) {
+        TextRuntimePrivate () : edit (0L) {
             reset ();
         }
         void reset () {
             codec = 0L;
-            font = QApplication::font ();
-            font_size = font.pointSize ();
-            transparent = false;
             delete edit;
+            font = QApplication::font ();
             data.truncate (0);
             edit = new QTextEdit;
             edit->setReadOnly (true);
@@ -2601,29 +2627,32 @@ namespace KMPlayer {
         QByteArray data;
         QTextCodec * codec;
         QFont font;
-        int font_size;
-        bool transparent;
         QTextEdit * edit;
     };
 }
 
-KDE_NO_CDTOR_EXPORT TextData::TextData (NodePtr e)
- : MediaTypeRuntime (e), d (new TextDataPrivate) {
+KDE_NO_CDTOR_EXPORT TextRuntime::TextRuntime (NodePtr e)
+ : MediaTypeRuntime (e), d (new TextRuntimePrivate) {
+    reset ();
 }
 
-KDE_NO_CDTOR_EXPORT TextData::~TextData () {
+KDE_NO_CDTOR_EXPORT TextRuntime::~TextRuntime () {
     delete d->edit;
     delete d;
 }
 
-KDE_NO_EXPORT void TextData::end () {
+KDE_NO_EXPORT void TextRuntime::reset () {
     d->reset ();
-    MediaTypeRuntime::end ();
+    font_size = d->font.pointSize ();
+    font_color = 0;
+    background_color = 0xffffff;
+    transparent = false;
+    MediaTypeRuntime::reset ();
 }
 
 KDE_NO_EXPORT
-void TextData::parseParam (const QString & name, const QString & val) {
-    //kdDebug () << "TextData::parseParam " << name << "=" << val << endl;
+void TextRuntime::parseParam (const QString & name, const QString & val) {
+    //kdDebug () << "TextRuntime::parseParam " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("src")) {
         killWGet ();
         SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
@@ -2637,17 +2666,19 @@ void TextData::parseParam (const QString & name, const QString & val) {
     }
     MediaTypeRuntime::parseParam (name, val);
     if (name == QString::fromLatin1 ("backgroundColor")) {
-        d->edit->setPaper (QBrush (QColor (val)));
+        background_color = QColor (val).rgb ();
+        d->edit->setPaper (QBrush (QColor (background_color)));
     } else if (name == QString ("fontColor")) {
-        d->edit->setPaletteForegroundColor (QColor (val));
+        font_color = QColor (val).rgb ();
+        d->edit->setPaletteForegroundColor (QColor (font_color));
     } else if (name == QString ("charset")) {
         d->codec = QTextCodec::codecForName (val.ascii ());
     } else if (name == QString ("fontFace")) {
         ; //FIXME
     } else if (name == QString ("fontPtSize")) {
-        d->font_size = val.toInt ();
+        font_size = val.toInt ();
     } else if (name == QString ("fontSize")) {
-        d->font_size += val.toInt ();
+        font_size += val.toInt ();
     // TODO: expandTabs fontBackgroundColor fontSize fontStyle fontWeight hAlig vAlign wordWrap
     } else
         return;
@@ -2656,7 +2687,7 @@ void TextData::parseParam (const QString & name, const QString & val) {
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
 }
 
-KDE_NO_EXPORT void TextData::paint (QPainter & p) {
+KDE_NO_EXPORT void TextRuntime::paint (QPainter & p) {
     if (region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
         SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (region_node);
@@ -2667,14 +2698,10 @@ KDE_NO_EXPORT void TextData::paint (QPainter & p) {
         Single xoff = 0, yoff = 0, w = w0, h = h0;
         matrix.getXYWH (xoff, yoff, w, h);
         d->edit->setGeometry (0, 0, w, h);
-        if (d->edit->length () == 0) {
-            QTextStream text (d->data, IO_ReadOnly);
-            if (d->codec)
-                text.setCodec (d->codec);
-            d->edit->setText (text.read ());
-        }
+        if (d->edit->length () == 0)
+            d->edit->setText (text);
         if (w0 > 0)
-            d->font.setPointSize (int (1.0 * w * d->font_size / w0));
+            d->font.setPointSize (int (1.0 * w * font_size / w0));
         d->edit->setFont (d->font);
         QRect rect = p.clipRegion (QPainter::CoordPainter).boundingRect ();
         rect = rect.intersect (QRect (xoff, yoff, w, h));
@@ -2688,7 +2715,7 @@ KDE_NO_EXPORT void TextData::paint (QPainter & p) {
 /**
  * start_timer timer expired, repaint if we have text
  */
-KDE_NO_EXPORT void TextData::started () {
+KDE_NO_EXPORT void TextRuntime::started () {
     if (element && downloading ()) {
         postpone_lock = element->document ()->postpone ();
         return;
@@ -2696,12 +2723,16 @@ KDE_NO_EXPORT void TextData::started () {
     MediaTypeRuntime::started ();
 }
 
-KDE_NO_EXPORT void TextData::remoteReady (QByteArray & data) {
+KDE_NO_EXPORT void TextRuntime::remoteReady (QByteArray & data) {
     QString str (data);
     if (data.size () && element) {
         d->data = data;
         if (d->data.size () > 0 && !d->data [d->data.size () - 1])
             d->data.resize (d->data.size () - 1); // strip zero terminate char
+        QTextStream ts (d->data, IO_ReadOnly);
+        if (d->codec)
+            ts.setCodec (d->codec);
+        text  = ts.read ();
         if (region_node && (timingstate == timings_started ||
                     (timingstate == timings_stopped && fill == fill_freeze)))
             convertNode <SMIL::RegionBase> (region_node)->repaint ();

@@ -46,6 +46,7 @@ class Surface;
 class SurfaceAction;
 class ElementRuntime;
 class RemoteObjectPrivate;
+class Visitor;
 
 /*
  * Base class for objects that will be used as SharedPtr/WeakPtr pointers.
@@ -397,6 +398,14 @@ public:
      */
     void propagateEvent (EventPtr event);
     /**
+     * Alternative to event handling is the Visitor pattern
+     */
+    virtual void accept (Visitor *);
+    /*
+     * Returns a listener list for event_id, or a null ptr if not supported.
+     */
+    virtual NodeRefListPtr listeners (unsigned int event_id);
+    /**
      * Adds node to call 'handleEvent()' for all events that gets
      * delivered to this node, ignored by default
      */
@@ -482,10 +491,6 @@ public:
     virtual void closed ();
 protected:
     Node (NodePtr & d, short _id=0);
-    /*
-     * Returns a listener list for event_id, or a null ptr if not supported.
-     */
-    virtual NodeRefListPtr listeners (unsigned int event_id);
     NodePtr m_doc;
 public:
     State state;
@@ -668,6 +673,8 @@ public:
     NodePtrW node;
     SRect bounds;     // bounds in in parent coord. 
     Matrix matrix;    // translation and internal scaling
+    Single xoffset, yoffset;    // translation for aspects
+    float xscale, yscale;       // internal scaling
 
 protected:
     Surface (const SRect & rect);
@@ -822,6 +829,33 @@ public:
     virtual bool expose () const;
 protected:
     QString name;
+};
+
+namespace SMIL {
+    class RegionBase;
+    class Region;
+    class Layout;
+    class ImageMediaType;
+    class TextMediaType;
+    class RefMediaType;
+    class AVMediaType;
+}
+namespace RP {
+    class Imfl;
+}
+
+class KMPLAYER_NO_EXPORT Visitor {
+public:
+    KDE_NO_CDTOR_EXPORT Visitor () {}
+    KDE_NO_CDTOR_EXPORT virtual ~Visitor () {}
+    virtual void visit (Node *) {}
+    virtual void visit (SMIL::Region *) {}
+    virtual void visit (SMIL::Layout *) {}
+    virtual void visit (SMIL::ImageMediaType *) {}
+    virtual void visit (SMIL::TextMediaType *) {}
+    virtual void visit (SMIL::RefMediaType *) {}
+    virtual void visit (SMIL::AVMediaType *) {}
+    virtual void visit (RP::Imfl *) {}
 };
 
 //-----------------------------------------------------------------------------
