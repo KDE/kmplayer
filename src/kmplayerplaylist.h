@@ -842,6 +842,11 @@ namespace SMIL {
 }
 namespace RP {
     class Imfl;
+    class Crossfade;
+    class Fadein;
+    class Fadeout;
+    class Fill;
+    class Wipe;
 }
 
 class KMPLAYER_NO_EXPORT Visitor {
@@ -856,6 +861,11 @@ public:
     virtual void visit (SMIL::RefMediaType *) {}
     virtual void visit (SMIL::AVMediaType *) {}
     virtual void visit (RP::Imfl *) {}
+    virtual void visit (RP::Crossfade *) {}
+    virtual void visit (RP::Fadein *) {}
+    virtual void visit (RP::Fadeout *) {}
+    virtual void visit (RP::Fill *) {}
+    virtual void visit (RP::Wipe *) {}
 };
 
 //-----------------------------------------------------------------------------

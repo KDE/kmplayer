@@ -92,6 +92,8 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
     if (height <= 0 || height > 32000)
         height = h;
     if (width > 0 && height > 0) {
+        surface->xscale = 1.0 * surface->bounds.width () / width;
+        surface->yscale = 1.0 * surface->bounds.height () / height;
         image = new QPixmap (width, height);
         image->fill ();
     }
@@ -158,6 +160,15 @@ KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
         h = e->h ();
         fit = e->fit;
         if (surface) {
+            if (fit == fit_fill) {
+                surface->xscale = 1.0 * surface->bounds.width () / width;
+                surface->yscale = 1.0 * surface->bounds.height () / height;
+            } else { // keep aspect, center (and so add offset) ??
+                if (surface->xscale > surface->yscale)
+                    surface->xscale = surface->yscale;
+                else
+                    surface->yscale = surface->xscale;
+            }
             matrix = Matrix (0, 0,
                     1.0 * surface->bounds.width () / width,
                     1.0 * surface->bounds.height () / height);
@@ -198,6 +209,10 @@ KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
         }
     }
     return true;
+}
+
+KDE_NO_EXPORT void RP::Imfl::accept (Visitor * v) {
+    v->visit (this);
 }
 
 KDE_NO_EXPORT NodePtr RP::Imfl::childFromTag (const QString & tag) {
@@ -272,10 +287,11 @@ KDE_NO_EXPORT bool RP::Image::isReady (bool postpone_if_not) {
 }
 
 KDE_NO_CDTOR_EXPORT RP::TimingsBase::TimingsBase (NodePtr & d, const short i)
- : Element (d, i), start (0), duration (0), x (0), y (0), w (0), h (0) {}
+ : Element (d, i), x (0), y (0), w (0), h (0), start (0), duration (0) {}
 
 KDE_NO_EXPORT void RP::TimingsBase::activate () {
     setState (state_activated);
+    x = y = w = h = 0;
     for (Attribute * a= attributes ()->first ().ptr (); a; a = a->nextSibling ().ptr ()) {
         if (!strcasecmp (a->nodeName (), "start"))
             parseTime (a->nodeValue ().lower (), start);
@@ -331,6 +347,7 @@ KDE_NO_EXPORT bool RP::TimingsBase::handleEvent (EventPtr event) {
 }
 
 KDE_NO_EXPORT void RP::TimingsBase::begin () {
+    progress = 0;
     setState (state_began);
     if (target)
         target->begin ();
@@ -341,10 +358,17 @@ KDE_NO_EXPORT void RP::TimingsBase::begin () {
     }
 }
 
-KDE_NO_EXPORT void RP::TimingsBase::update (int /*percentage*/) {
+KDE_NO_EXPORT void RP::TimingsBase::update (int percentage) {
+#ifdef HAVE_CAIRO
+    progress = percentage;
+    Node * p = parentNode ().ptr ();
+    if (p->id == RP::id_node_imfl)
+        static_cast <RP::Imfl *> (p)->repaint ();
+#endif
 }
 
 KDE_NO_EXPORT void RP::TimingsBase::finish () {
+    progress = 100;
     if (start_timer) {
         document ()->cancelTimer (start_timer);
         start_timer = 0;
@@ -376,6 +400,7 @@ KDE_NO_EXPORT void RP::Crossfade::begin () {
     }
 }
 
+#ifndef HAVE_CAIRO
 KDE_NO_EXPORT void RP::Crossfade::update (int percentage) {
     if (percentage > 0 && percentage < 100)
         return; // we do no crossfading yet, just paint the first and last time
@@ -397,15 +422,22 @@ KDE_NO_EXPORT void RP::Crossfade::update (int percentage) {
         }
     }
 }
+#endif
+
+KDE_NO_EXPORT void RP::Crossfade::accept (Visitor * v) {
+    v->visit (this);
+}
 
 KDE_NO_EXPORT void RP::Fadein::activate () {
     // pickup color from Fill that should be declared before this node
     from_color = 0;
+#ifndef HAVE_CAIRO
     for (NodePtr n = previousSibling (); n; n = n->previousSibling ())
         if (n->id == id_node_fill) {
             from_color = convertNode <RP::Fill> (n)->fillColor ();
             break;
         }
+#endif
     TimingsBase::activate ();
 }
 
@@ -421,6 +453,7 @@ KDE_NO_EXPORT void RP::Fadein::begin () {
     }
 }
 
+#ifndef HAVE_CAIRO
 KDE_NO_EXPORT void RP::Fadein::update (int percentage) {
     Node * p = parentNode ().ptr ();
     if (p->id != RP::id_node_imfl) {
@@ -449,6 +482,11 @@ KDE_NO_EXPORT void RP::Fadein::update (int percentage) {
         }
     }
 }
+#endif
+
+KDE_NO_EXPORT void RP::Fadein::accept (Visitor * v) {
+    v->visit (this);
+}
 
 KDE_NO_EXPORT void RP::Fadeout::activate () {
     to_color = QColor (getAttribute ("color")).rgb ();
@@ -460,6 +498,7 @@ KDE_NO_EXPORT void RP::Fadeout::begin () {
     TimingsBase::begin ();
 }
 
+#ifndef HAVE_CAIRO
 KDE_NO_EXPORT void RP::Fadeout::update (int percentage) {
     Node * p = parentNode ().ptr ();
     if (p->id == RP::id_node_imfl) {
@@ -481,6 +520,11 @@ KDE_NO_EXPORT void RP::Fadeout::update (int percentage) {
         }
     }
 }
+#endif
+
+KDE_NO_EXPORT void RP::Fadeout::accept (Visitor * v) {
+    v->visit (this);
+}
 
 KDE_NO_EXPORT void RP::Fill::activate () {
     color = QColor (getAttribute ("color")).rgb ();
@@ -489,6 +533,9 @@ KDE_NO_EXPORT void RP::Fill::activate () {
 
 KDE_NO_EXPORT void RP::Fill::begin () {
     TimingsBase::begin ();
+#ifdef HAVE_CAIRO
+    update (0);
+#else
     Node * p = parentNode ().ptr ();
     if (p->id == RP::id_node_imfl) {
         RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
@@ -505,6 +552,11 @@ KDE_NO_EXPORT void RP::Fill::begin () {
             imfl->repaint ();
         }
     }
+#endif
+}
+
+KDE_NO_EXPORT void RP::Fill::accept (Visitor * v) {
+    v->visit (this);
 }
 
 KDE_NO_EXPORT void RP::Wipe::activate () {
@@ -532,6 +584,7 @@ KDE_NO_EXPORT void RP::Wipe::begin () {
     }
 }
 
+#ifndef HAVE_CAIRO
 KDE_NO_EXPORT void RP::Wipe::update (int percentage) {
     Node * p = parentNode ().ptr ();
     if (p->id != RP::id_node_imfl) {
@@ -571,4 +624,9 @@ KDE_NO_EXPORT void RP::Wipe::update (int percentage) {
             imfl->repaint ();
         }
     }
+}
+#endif
+
+KDE_NO_EXPORT void RP::Wipe::accept (Visitor * v) {
+    v->visit (this);
 }

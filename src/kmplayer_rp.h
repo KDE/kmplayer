@@ -62,6 +62,7 @@ public:
     KDE_NO_EXPORT virtual bool expose () const { return false; }
     KDE_NO_EXPORT virtual bool isPlayable () const { return true; }
     virtual bool handleEvent (EventPtr event);
+    virtual void accept (Visitor *);
     void repaint (); // called whenever something changes on image
     void invalidateCachedImage ();
     Single x, y, w, h; // target area
@@ -86,11 +87,16 @@ public:
     virtual void deactivate ();  // disabled
     virtual bool handleEvent (EventPtr event);
     KDE_NO_EXPORT virtual bool expose () const { return false; }
-protected:
-    virtual void update (int percentage);
-    NodePtrW target;
-    unsigned int start, duration;
+    int progress;
     Single x, y, w, h;
+    NodePtrW target;
+protected:
+#ifdef HAVE_CAIRO
+    void update (int percentage);
+#else
+    virtual void update (int percentage);
+#endif
+    unsigned int start, duration;
     int steps, curr_step;
     TimerInfoPtrW start_timer;
     TimerInfoPtrW duration_timer;
@@ -106,33 +112,41 @@ public:
     KDE_NO_EXPORT virtual const char * nodeName () const { return "crossfade"; }
     virtual void activate ();
     virtual void begin ();
+#ifndef HAVE_CAIRO
     virtual void update (int percentage);
+#endif
+    virtual void accept (Visitor *);
 };
 
 class KMPLAYER_NO_EXPORT Fadein : public TimingsBase {
-    unsigned int from_color;
 public:
     KDE_NO_CDTOR_EXPORT Fadein (NodePtr & d) : TimingsBase(d, id_node_fadein) {}
     KDE_NO_CDTOR_EXPORT ~Fadein () {}
     KDE_NO_EXPORT virtual const char * nodeName () const { return "fadein"; }
     virtual void activate ();
     virtual void begin ();
+#ifndef HAVE_CAIRO
     virtual void update (int percentage);
+#endif
+    virtual void accept (Visitor *);
+    unsigned int from_color;
 };
 
 class KMPLAYER_NO_EXPORT Fadeout : public TimingsBase {
-    unsigned int to_color;
 public:
     KDE_NO_CDTOR_EXPORT Fadeout(NodePtr &d) : TimingsBase(d, id_node_fadeout) {}
     KDE_NO_CDTOR_EXPORT ~Fadeout () {}
     KDE_NO_EXPORT virtual const char * nodeName () const { return "fadeout"; }
     virtual void activate ();
     virtual void begin ();
+#ifndef HAVE_CAIRO
     virtual void update (int percentage);
+#endif
+    virtual void accept (Visitor *);
+    unsigned int to_color;
 };
 
 class KMPLAYER_NO_EXPORT Fill : public TimingsBase {
-    unsigned int color;
 public:
     KDE_NO_CDTOR_EXPORT Fill (NodePtr & d) : TimingsBase (d, id_node_fill) {}
     KDE_NO_CDTOR_EXPORT ~Fill () {}
@@ -140,17 +154,22 @@ public:
     virtual void activate ();
     virtual void begin ();
     unsigned int fillColor () const { return color; }
+    virtual void accept (Visitor *);
+    unsigned int color;
 };
 
 class KMPLAYER_NO_EXPORT Wipe : public TimingsBase {
-    enum { dir_right, dir_left, dir_up, dir_down } direction;
 public:
     KDE_NO_CDTOR_EXPORT Wipe (NodePtr & d) : TimingsBase (d, id_node_wipe) {}
     KDE_NO_CDTOR_EXPORT ~Wipe () {}
     KDE_NO_EXPORT virtual const char * nodeName () const { return "wipe"; }
     virtual void activate ();
     virtual void begin ();
+#ifndef HAVE_CAIRO
     virtual void update (int percentage);
+#endif
+    virtual void accept (Visitor *);
+    enum { dir_right, dir_left, dir_up, dir_down } direction;
 };
 
 class KMPLAYER_NO_EXPORT Image : public RemoteObject, public Mrl {
