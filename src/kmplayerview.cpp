@@ -383,7 +383,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Imfl * imfl) {
                 case RP::id_node_fadeout:
                 case RP::id_node_fill:
                 case RP::id_node_wipe:
-                    if (n->state > Node::state_deferred &&
+                    if (n->state >= Node::state_began &&
                             n->state < Node::state_deactivated)
                         n->accept (this);
                     break;
@@ -393,16 +393,20 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Imfl * imfl) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fill * fi) {
-    kdDebug() << "Visit " << fi->nodeName() << endl;
+    //kdDebug() << "Visit " << fi->nodeName() << endl;
     cairo_set_source_rgb (cr,
             1.0 * ((fi->color >> 16) & 0xff) / 255,
             1.0 * ((fi->color >> 8) & 0xff) / 255,
             1.0 * ((fi->color) & 0xff) / 255);
-    cairo_paint (cr);
+    if ((int)fi->w && (int)fi->h) {
+        cairo_rectangle (cr, fi->x, fi->y, fi->w, fi->h);
+        cairo_fill (cr);
+    } else
+        cairo_paint (cr);
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
-    kdDebug() << "Visit " << fi->nodeName() << endl;
+    //kdDebug() << "Visit " << fi->nodeName() << endl;
     if (fi->target && fi->target->id == RP::id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (fi->target.ptr ());
         if (img->image) {
@@ -430,7 +434,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadeout * fo) {
-    kdDebug() << "Visit " << fo->nodeName() << endl;
+    //kdDebug() << "Visit " << fo->nodeName() << endl;
     if (fo->progress > 0) {
         cairo_set_source_rgb (cr,
                 1.0 * ((fo->to_color >> 16) & 0xff) / 255,
@@ -477,7 +481,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
-    kdDebug() << "Visit " << wipe->nodeName() << endl;
+    //kdDebug() << "Visit " << wipe->nodeName() << endl;
     if (wipe->target && wipe->target->id == RP::id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (wipe->target.ptr ());
         if (img->image) {
@@ -492,25 +496,25 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
             Single w = wipe->w, h = wipe->h;
             if (wipe->direction == RP::Wipe::dir_right) {
                 Single dx = w * 1.0 * wipe->progress / 100;
-                x += dx;
-                tx = x;
-                w -= dx;
+                tx = x -w + dx;
+                w = dx;
             } else if (wipe->direction == RP::Wipe::dir_left) {
                 Single dx = w * 1.0 * wipe->progress / 100;
-                tx -= dx;
-                w -= dx;
+                tx = x + w - dx;
+                x = tx;
+                w = dx;
             } else if (wipe->direction == RP::Wipe::dir_down) {
                 Single dy = h * 1.0 * wipe->progress / 100;
-                y += dy;
-                ty = y;
-                h -= dy;
+                ty = y - h + dy;
+                h = dy;
             } else if (wipe->direction == RP::Wipe::dir_up) {
                 Single dy = h * 1.0 * wipe->progress / 100;
-                ty -= dy;
-                h -= dy;
+                ty = y + h - dy;
+                y = ty;
+                h = dy;
             }
 
-            if ((int)wipe->w && (int)wipe->h) {
+            if ((int)w && (int)h) {
                 cairo_matrix_t matrix;
                 cairo_matrix_init_identity (&matrix);
                 cairo_matrix_scale (&matrix,
@@ -519,7 +523,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
                 cairo_matrix_translate (&matrix, -tx, -ty);
                 cairo_pattern_set_matrix (pat, &matrix);
                 cairo_set_source (cr, pat);
-                cairo_rectangle (cr, wipe->x, wipe->y, w, h);
+                cairo_rectangle (cr, x, y, w, h);
                 cairo_fill (cr);
                 cairo_pattern_destroy (pat);
                 cairo_surface_destroy (img_surface);
@@ -736,6 +740,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
         y = m_av_geometry.y ();
         wws = m_av_geometry.width ();
         hws = m_av_geometry.height ();
+        scheduleRepaint (0, 0, wws, hws);
             //m_view->viewer ()->setAspect (region->w / region->h);
     } else
         m_av_geometry = QRect (x, y, wws, hws);
