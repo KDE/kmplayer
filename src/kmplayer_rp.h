@@ -89,6 +89,7 @@ public:
     KDE_NO_EXPORT virtual bool expose () const { return false; }
     int progress;
     Single x, y, w, h;
+    Single srcx, srcy, srcw, srch;
     NodePtrW target;
 protected:
 #ifdef HAVE_CAIRO

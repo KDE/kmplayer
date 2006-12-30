@@ -416,17 +416,28 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
                         img->image->width()*4);
             cairo_pattern_t *pat =cairo_pattern_create_for_surface(img_surface);
             cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
-            if ((int)fi->w && (int)fi->h) {
+            Single sx = fi->srcx, sy = fi->srcy, sw = fi->srcw, sh = fi->srch;
+            if (!(int)sw)
+                sw = img->image->width();
+            if (!(int)sh)
+                sh = img->image->height();
+            cairo_save (cr);
+            if ((int)fi->w && (int)fi->h && (int)sw && (int)sh) {
                 cairo_matrix_t matrix;
                 cairo_matrix_init_identity (&matrix);
-                cairo_matrix_scale (&matrix,
-                        1.0 * img->image->width() / fi->w,
-                        1.0 * img->image->height() / fi->h);
-                cairo_matrix_translate (&matrix, -fi->x, -fi->y);
+                float scalex = 1.0 * sw / fi->w;
+                float scaley = 1.0 * sh / fi->h;
+                cairo_matrix_scale (&matrix, scalex, scaley);
+                cairo_matrix_translate (&matrix,
+                        1.0*sx/scalex - (double)fi->x,
+                        1.0*sy/scaley - (double)fi->y);
                 cairo_pattern_set_matrix (pat, &matrix);
+                cairo_rectangle (cr, fi->x, fi->y, fi->w, fi->h);
             }
             cairo_set_source (cr, pat);
+            cairo_clip (cr);
             cairo_paint_with_alpha (cr, 1.0 * fi->progress / 100);
+            cairo_restore (cr);
             cairo_pattern_destroy (pat);
             cairo_surface_destroy (img_surface);
         }
@@ -463,17 +474,28 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
                         img->image->width()*4);
             cairo_pattern_t *pat =cairo_pattern_create_for_surface(img_surface);
             cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
-            if ((int)cf->w && (int)cf->h) {
+            Single sx = cf->srcx, sy = cf->srcy, sw = cf->srcw, sh = cf->srch;
+            if (!(int)sw)
+                sw = img->image->width();
+            if (!(int)sh)
+                sh = img->image->height();
+            cairo_save (cr);
+            if ((int)cf->w && (int)cf->h && (int)sw && (int)sh) {
                 cairo_matrix_t matrix;
                 cairo_matrix_init_identity (&matrix);
-                cairo_matrix_scale (&matrix,
-                        1.0 * img->image->width() / cf->w,
-                        1.0 * img->image->height() / cf->h);
-                cairo_matrix_translate (&matrix, -cf->x, -cf->y);
+                float scalex = 1.0 * sw / cf->w;
+                float scaley = 1.0 * sh / cf->h;
+                cairo_matrix_scale (&matrix, scalex, scaley);
+                cairo_matrix_translate (&matrix,
+                        1.0*sx/scalex - (double)cf->x,
+                        1.0*sy/scaley - (double)cf->y);
                 cairo_pattern_set_matrix (pat, &matrix);
+                cairo_rectangle (cr, cf->x, cf->y, cf->w, cf->h);
             }
             cairo_set_source (cr, pat);
+            cairo_clip (cr);
             cairo_paint_with_alpha (cr, 1.0 * cf->progress / 100);
+            cairo_restore (cr);
             cairo_pattern_destroy (pat);
             cairo_surface_destroy (img_surface);
         }
@@ -494,6 +516,11 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
             Single x = wipe->x, y = wipe->y;
             Single tx = x, ty = y;
             Single w = wipe->w, h = wipe->h;
+            Single sx = wipe->srcx, sy = wipe->srcy, sw = wipe->srcw, sh = wipe->srch;
+            if (!(int)sw)
+                sw = img->image->width();
+            if (!(int)sh)
+                sh = img->image->height();
             if (wipe->direction == RP::Wipe::dir_right) {
                 Single dx = w * 1.0 * wipe->progress / 100;
                 tx = x -w + dx;
@@ -517,10 +544,12 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
             if ((int)w && (int)h) {
                 cairo_matrix_t matrix;
                 cairo_matrix_init_identity (&matrix);
-                cairo_matrix_scale (&matrix,
-                        1.0 * img->image->width() / wipe->w,
-                        1.0 * img->image->height() / wipe->h);
-                cairo_matrix_translate (&matrix, -tx, -ty);
+                float scalex = 1.0 * sw / wipe->w;
+                float scaley = 1.0 * sh / wipe->h;
+                cairo_matrix_scale (&matrix, scalex, scaley);
+                cairo_matrix_translate (&matrix,
+                        1.0*sx/scalex - (double)tx,
+                        1.0*sy/scaley - (double)ty);
                 cairo_pattern_set_matrix (pat, &matrix);
                 cairo_set_source (cr, pat);
                 cairo_rectangle (cr, x, y, w, h);

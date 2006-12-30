@@ -292,6 +292,7 @@ KDE_NO_CDTOR_EXPORT RP::TimingsBase::TimingsBase (NodePtr & d, const short i)
 KDE_NO_EXPORT void RP::TimingsBase::activate () {
     setState (state_activated);
     x = y = w = h = 0;
+    srcx = srcy = srcw = srch = 0;
     for (Attribute * a= attributes ()->first ().ptr (); a; a = a->nextSibling ().ptr ()) {
         if (!strcasecmp (a->nodeName (), "start"))
             parseTime (a->nodeValue ().lower (), start);
@@ -309,6 +310,14 @@ KDE_NO_EXPORT void RP::TimingsBase::activate () {
             w = a->nodeValue ().toInt ();
         } else if (!strcasecmp (a->nodeName (), "dsth")) {
             h = a->nodeValue ().toInt ();
+        } else if (!strcasecmp (a->nodeName (), "srcx")) {
+            srcx = a->nodeValue ().toInt ();
+        } else if (!strcasecmp (a->nodeName (), "srcy")) {
+            srcy = a->nodeValue ().toInt ();
+        } else if (!strcasecmp (a->nodeName (), "srcw")) {
+            srcw = a->nodeValue ().toInt ();
+        } else if (!strcasecmp (a->nodeName (), "srch")) {
+            srch = a->nodeValue ().toInt ();
         }
     }
     start_timer = document ()->setTimeout (this, start *100);
