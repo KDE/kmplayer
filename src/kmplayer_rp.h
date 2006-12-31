@@ -47,6 +47,8 @@ const short id_node_fill = 154;
 const short id_node_wipe = 155;
 const short id_node_fadein = 156;
 const short id_node_fadeout = 157;
+const short id_node_viewchange = 158;
+const short id_node_animate = 159;
 
 class Imfl : public Mrl {
 public:
@@ -171,6 +173,20 @@ public:
 #endif
     virtual void accept (Visitor *);
     enum { dir_right, dir_left, dir_up, dir_down } direction;
+};
+
+class KMPLAYER_NO_EXPORT ViewChange : public TimingsBase {
+public:
+    KDE_NO_CDTOR_EXPORT ViewChange (NodePtr & d)
+        : TimingsBase (d, id_node_viewchange) {}
+    KDE_NO_CDTOR_EXPORT ~ViewChange () {}
+    KDE_NO_EXPORT virtual const char * nodeName() const { return "viewchange"; }
+    virtual void activate ();
+    virtual void begin ();
+#ifndef HAVE_CAIRO
+    virtual void update (int percentage);
+#endif
+    virtual void accept (Visitor *);
 };
 
 class KMPLAYER_NO_EXPORT Image : public RemoteObject, public Mrl {

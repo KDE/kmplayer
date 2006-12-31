@@ -847,6 +847,8 @@ namespace RP {
     class Fadeout;
     class Fill;
     class Wipe;
+    class ViewChange;
+    class Animate;
 }
 
 class KMPLAYER_NO_EXPORT Visitor {
@@ -866,6 +868,8 @@ public:
     virtual void visit (RP::Fadeout *) {}
     virtual void visit (RP::Fill *) {}
     virtual void visit (RP::Wipe *) {}
+    virtual void visit (RP::ViewChange *) {}
+    virtual void visit (RP::Animate *) {}
 };
 
 //-----------------------------------------------------------------------------

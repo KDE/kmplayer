@@ -69,6 +69,7 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
             case RP::id_node_fadeout:
             case RP::id_node_fill:
             case RP::id_node_wipe:
+            case RP::id_node_viewchange:
                 n->activate (); // set their start timers
                 timings_count++;
                 break;
@@ -225,6 +226,8 @@ KDE_NO_EXPORT NodePtr RP::Imfl::childFromTag (const QString & tag) {
         return new RP::Fill (m_doc);
     else if (!strcmp (ctag, "wipe"))
         return new RP::Wipe (m_doc);
+    else if (!strcmp (ctag, "viewchange"))
+        return new RP::ViewChange (m_doc);
     else if (!strcmp (ctag, "crossfade"))
         return new RP::Crossfade (m_doc);
     else if (!strcmp (ctag, "fadein"))
@@ -541,7 +544,7 @@ KDE_NO_EXPORT void RP::Fill::activate () {
 }
 
 KDE_NO_EXPORT void RP::Fill::begin () {
-    TimingsBase::begin ();
+    setState (state_began);
 #ifdef HAVE_CAIRO
     update (0);
 #else
@@ -637,5 +640,24 @@ KDE_NO_EXPORT void RP::Wipe::update (int percentage) {
 #endif
 
 KDE_NO_EXPORT void RP::Wipe::accept (Visitor * v) {
+    v->visit (this);
+}
+
+KDE_NO_EXPORT void RP::ViewChange::activate () {
+    TimingsBase::activate ();
+}
+
+KDE_NO_EXPORT void RP::ViewChange::begin () {
+    kdDebug () << "RP::ViewChange::begin" << endl;
+    setState (state_began);
+    update (0);
+}
+
+#ifndef HAVE_CAIRO
+KDE_NO_EXPORT void RP::ViewChange::update (int percentage) {
+}
+#endif
+
+KDE_NO_EXPORT void RP::ViewChange::accept (Visitor * v) {
     v->visit (this);
 }

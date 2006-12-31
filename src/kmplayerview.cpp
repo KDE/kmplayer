@@ -152,6 +152,7 @@ class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
     const SRect clip;
     void paintRegionBackground (SMIL::RegionBase * reg);
     void traverseRegion (SMIL::RegionBase * reg);
+    cairo_pattern_t * fetchCurrentImage ();
 public:
     cairo_t * cr;
     CairoPaintVisitor (cairo_surface_t * cs, const SRect & rect);
@@ -170,6 +171,7 @@ public:
     void visit (RP::Fadeout *);
     void visit (RP::Crossfade *);
     void visit (RP::Wipe *);
+    void visit (RP::ViewChange *);
 };
 
 KDE_NO_CDTOR_EXPORT
@@ -178,6 +180,8 @@ CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, const SRect & rect)
     cr = cairo_create (cs);
     cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
     cairo_clip (cr);
+    cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+    cairo_set_tolerance (cr, 0.5 );
     cairo_push_group (cr);
     cairo_set_source_rgb (cr, 0, 0, 0);
     cairo_paint (cr);
@@ -376,18 +380,36 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Imfl * imfl) {
         cairo_clip (cr);
         cairo_translate (cr, xoff, yoff);
         cairo_scale (cr, imfl->surface->xscale, imfl->surface->yscale);
+        cairo_push_group (cr);
         for (NodePtr n = imfl->firstChild (); n; n = n->nextSibling ())
-            switch (n->id) {
-                case RP::id_node_crossfade:
-                case RP::id_node_fadein:
-                case RP::id_node_fadeout:
-                case RP::id_node_fill:
-                case RP::id_node_wipe:
-                    if (n->state >= Node::state_began &&
-                            n->state < Node::state_deactivated)
+            if (n->state >= Node::state_began &&
+                    n->state < Node::state_deactivated) {
+                RP::TimingsBase * tb = convertNode<RP::TimingsBase>(n);
+                switch (n->id) {
+                    case RP::id_node_viewchange:
+                        if (!(int)tb->srcw)
+                            tb->srcw = imfl->width;
+                        if (!(int)tb->srch)
+                            tb->srch = imfl->height;
+                        // fall through
+                    case RP::id_node_crossfade:
+                    case RP::id_node_fadein:
+                    case RP::id_node_fadeout:
+                    case RP::id_node_fill:
+                    case RP::id_node_wipe:
+                        if (!(int)tb->w)
+                            tb->w = imfl->width;
+                        if (!(int)tb->h)
+                            tb->h = imfl->height;
                         n->accept (this);
-                    break;
+                        break;
+                }
             }
+        cairo_pattern_t * pat = cairo_pop_group (cr);
+        cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
+        cairo_set_source (cr, pat);
+        cairo_paint (cr);
+        cairo_pattern_destroy (pat);
         cairo_restore (cr);
     }
 }
@@ -464,7 +486,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadeout * fo) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
-    kdDebug() << "Visit " << cf->nodeName() << endl;
+    //kdDebug() << "Visit " << cf->nodeName() << endl;
     if (cf->target && cf->target->id == RP::id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (cf->target.ptr ());
         if (img->image) {
@@ -561,6 +583,34 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
     }
 }
 
+KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::ViewChange * vc) {
+    //kdDebug() << "Visit " << vc->nodeName() << endl;
+    if (vc->unfinished () || vc->progress < 100) {
+        cairo_pattern_t * pat = cairo_pop_group (cr); // from imfl
+        cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
+        cairo_push_group (cr);
+        cairo_save (cr);
+        cairo_set_source (cr, pat);
+        cairo_paint (cr);
+        if ((int)vc->w && (int)vc->h && (int)vc->srcw && (int)vc->srch) {
+            cairo_matrix_t matrix;
+            cairo_matrix_init_identity (&matrix);
+            float scalex = 1.0 * vc->srcw / vc->w;
+            float scaley = 1.0 * vc->srch / vc->h;
+            cairo_matrix_scale (&matrix, scalex, scaley);
+            cairo_matrix_translate (&matrix,
+                    1.0*vc->srcx/scalex - (double)vc->x,
+                    1.0*vc->srcy/scaley - (double)vc->y);
+            cairo_pattern_set_matrix (pat, &matrix);
+            cairo_set_source (cr, pat);
+            cairo_rectangle (cr, vc->x, vc->y, vc->w, vc->h);
+            cairo_fill (cr);
+        }
+        cairo_pattern_destroy (pat);
+        cairo_restore (cr);
+    }
+}
+
 #endif
 
 //-------------------------------------------------------------------------
@@ -641,6 +691,17 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
     m_fullscreen = !m_fullscreen;
     m_view->controlPanel()->popupMenu ()->setItemChecked (ControlPanel::menu_fullscreen, m_fullscreen);
 
+#ifdef HAVE_CAIRO
+    cairo_surface_destroy (cairo_surface);
+    cairo_surface = cairo_xlib_surface_create_with_xrender_format (
+            qt_xdisplay (),
+            winId (),
+            DefaultScreenOfDisplay (qt_xdisplay ()),
+            XRenderFindVisualFormat (qt_xdisplay (),
+                DefaultVisual (qt_xdisplay (),
+                    DefaultScreen (qt_xdisplay ()))),
+            width (), height ());
+#endif
     if (m_fullscreen) {
         m_mouse_invisible_timer = startTimer(MOUSE_INVISIBLE_DELAY);
     } else {
@@ -728,6 +789,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const SRect & rect) {
 #else
     Visitor * v = new CairoPaintVisitor (cairo_surface, SRect (ex, ey, ew, eh));
     surface->node->accept (v);
+    //cairo_surface_flush (cairo_surface);
     delete v;
 #endif
     //XFlush (qt_xdisplay ());
