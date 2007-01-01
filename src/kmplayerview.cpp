@@ -360,6 +360,23 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
             cairo_rectangle (cr, x, y, w, h);
             cairo_fill (cr);
         }
+        /* QTextEdit * edit = new QTextEdit;
+        edit->setReadOnly (true);
+        edit->setHScrollBarMode (QScrollView::AlwaysOff);
+        edit->setVScrollBarMode (QScrollView::AlwaysOff);
+        edit->setFrameShape (QFrame::NoFrame);
+        edit->setFrameShadow (QFrame::Plain);
+        edit->setGeometry (0, 0, w, h);
+        if (edit->length () == 0)
+            edit->setText (text);
+        if (w0 > 0)
+            font.setPointSize (int (1.0 * w * font_size / w0));
+        edit->setFont (font);
+        QRect rect = p.clipRegion (QPainter::CoordPainter).boundingRect ();
+        rect = rect.intersect (QRect (xoff, yoff, w, h));
+        QPixmap pix = QPixmap::grabWidget (edit, rect.x () - (int) xoff,
+                rect.y () - (int) yoff, rect.width (), rect.height ());*/
+
         cairo_set_source_rgb (cr,
                 1.0 * ((td->font_color >> 16) & 0xff) / 255,
                 1.0 * ((td->font_color >> 8) & 0xff) / 255,
@@ -647,9 +664,6 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
                 DefaultVisual (qt_xdisplay (),
                     DefaultScreen (qt_xdisplay ()))),
             width(), height())),
-#else
-   m_painter (0L),
-   m_paint_buffer (0L),
 #endif
    m_collection (new KActionCollection (this)),
    surface (new ViewSurface (this)),
@@ -669,9 +683,6 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
 KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {
 #ifdef HAVE_CAIRO
     cairo_surface_destroy (cairo_surface);
-#else
-    delete m_painter;
-    delete m_paint_buffer;
 #endif
 }
 
@@ -784,25 +795,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const SRect & rect) {
         ey--;
     int ew = rect.width () + 2;
     int eh = rect.height () + 2;
-#ifndef HAVE_CAIRO
-# define PAINT_BUFFER_HEIGHT 128
-    if (!m_paint_buffer) {
-        m_paint_buffer = new QPixmap (width (), PAINT_BUFFER_HEIGHT);
-        m_painter = new QPainter ();
-    } else if (((QPixmap *)m_paint_buffer)->width () < width ())
-        ((QPixmap *)m_paint_buffer)->resize (width (), PAINT_BUFFER_HEIGHT);
-    int py=0;
-    while (py < eh) {
-        int ph = eh-py < PAINT_BUFFER_HEIGHT ? eh-py : PAINT_BUFFER_HEIGHT;
-        m_painter->begin (m_paint_buffer);
-        m_painter->translate(-ex, -ey-py);
-        m_painter->fillRect (ex, ey+py, ew, ph, QBrush (paletteBackgroundColor ()));
-        surface->node->handleEvent(new PaintEvent(*m_painter, ex, ey+py,ew,ph));
-        m_painter->end();
-        bitBlt (this, ex, ey+py, m_paint_buffer, 0, 0, ew, ph);
-        py += PAINT_BUFFER_HEIGHT;
-    }
-#else
+#ifdef HAVE_CAIRO
     Visitor * v = new CairoPaintVisitor (cairo_surface, SRect (ex, ey, ew, eh));
     surface->node->accept (v);
     //cairo_surface_flush (cairo_surface);

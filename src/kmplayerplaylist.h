@@ -35,7 +35,6 @@
 class QTextStream;
 class QPixmap;
 class QImage;
-class QPainter;
 
 namespace KMPlayer {
 
@@ -237,16 +236,6 @@ protected:
 };
 
 ITEM_AS_POINTER(KMPlayer::Event)
-
-/**
- * Event signaling that attached region should be repainted
- */
-class PaintEvent : public Event {
-public:
-    PaintEvent (QPainter & p, Single x, Single y, Single w, Single h);
-    QPainter & painter;
-    Single x, y, w, h;
-};
 
 /**
  * Event signaling that attached region is resized

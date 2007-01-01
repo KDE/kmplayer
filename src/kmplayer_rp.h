@@ -66,17 +66,13 @@ public:
     virtual bool handleEvent (EventPtr event);
     virtual void accept (Visitor *);
     void repaint (); // called whenever something changes on image
-    void invalidateCachedImage ();
     Single x, y, w, h; // target area
     Fit fit;        // how to layout images
     Matrix matrix;  // for the scale factor of outer document
     Single width, height;     // cached attributes of head
     unsigned int duration; // cached attributes of head
     TimerInfoPtrW duration_timer;
-    QPixmap * image;
     SurfacePtr surface;
-private:
-    QPixmap * cached_image;
 };
 
 class KMPLAYER_NO_EXPORT TimingsBase  : public Element {
@@ -94,11 +90,7 @@ public:
     Single srcx, srcy, srcw, srch;
     NodePtrW target;
 protected:
-#ifdef HAVE_CAIRO
     void update (int percentage);
-#else
-    virtual void update (int percentage);
-#endif
     unsigned int start, duration;
     int steps, curr_step;
     TimerInfoPtrW start_timer;
@@ -115,9 +107,6 @@ public:
     KDE_NO_EXPORT virtual const char * nodeName () const { return "crossfade"; }
     virtual void activate ();
     virtual void begin ();
-#ifndef HAVE_CAIRO
-    virtual void update (int percentage);
-#endif
     virtual void accept (Visitor *);
 };
 
@@ -128,9 +117,6 @@ public:
     KDE_NO_EXPORT virtual const char * nodeName () const { return "fadein"; }
     virtual void activate ();
     virtual void begin ();
-#ifndef HAVE_CAIRO
-    virtual void update (int percentage);
-#endif
     virtual void accept (Visitor *);
     unsigned int from_color;
 };
@@ -142,9 +128,6 @@ public:
     KDE_NO_EXPORT virtual const char * nodeName () const { return "fadeout"; }
     virtual void activate ();
     virtual void begin ();
-#ifndef HAVE_CAIRO
-    virtual void update (int percentage);
-#endif
     virtual void accept (Visitor *);
     unsigned int to_color;
 };
@@ -168,9 +151,6 @@ public:
     KDE_NO_EXPORT virtual const char * nodeName () const { return "wipe"; }
     virtual void activate ();
     virtual void begin ();
-#ifndef HAVE_CAIRO
-    virtual void update (int percentage);
-#endif
     virtual void accept (Visitor *);
     enum { dir_right, dir_left, dir_up, dir_down } direction;
 };
@@ -183,9 +163,6 @@ public:
     KDE_NO_EXPORT virtual const char * nodeName() const { return "viewchange"; }
     virtual void activate ();
     virtual void begin ();
-#ifndef HAVE_CAIRO
-    virtual void update (int percentage);
-#endif
     virtual void accept (Visitor *);
 };
 

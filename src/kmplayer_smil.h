@@ -240,11 +240,9 @@ class KMPLAYER_NO_EXPORT ImageRuntime : public QObject,public MediaTypeRuntime {
 public:
     ImageRuntime (NodePtr e);
     ~ImageRuntime ();
-    void paint (QPainter & p);
     virtual void parseParam (const QString & name, const QString & value);
     virtual void postpone (bool b);
     QPixmap * image;
-    QPixmap * cache_image; // scaled cache
     QMovie * img_movie;
     QString url;
     bool have_frame;
@@ -265,7 +263,6 @@ class KMPLAYER_NO_EXPORT TextRuntime : public MediaTypeRuntime {
 public:
     TextRuntime (NodePtr e);
     ~TextRuntime ();
-    void paint (QPainter & p);
     void reset ();
     virtual void parseParam (const QString & name, const QString & value);
     int font_size;

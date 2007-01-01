@@ -105,9 +105,6 @@ private:
     View * m_view;
 #ifdef HAVE_CAIRO
     cairo_surface_t * cairo_surface;
-#else
-    QPainter * m_painter;
-    QPaintDevice * m_paint_buffer;
 #endif
     KActionCollection * m_collection;
     SurfacePtr surface;

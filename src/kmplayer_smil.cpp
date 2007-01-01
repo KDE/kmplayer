@@ -19,14 +19,11 @@
 #include <config.h>
 #include <qtextstream.h>
 #include <qcolor.h>
-#include <qpainter.h>
 #include <qpixmap.h>
 #include <qmovie.h>
 #include <qimage.h>
 #include <qtextcodec.h>
 #include <qfont.h>
-#include <qfontmetrics.h>
-#include <qfile.h>
 #include <qapplication.h>
 #include <qregexp.h>
 #include <qtimer.h>
@@ -241,10 +238,6 @@ KDE_NO_EXPORT void ElementRuntime::reset () {
 
 KDE_NO_CDTOR_EXPORT ToBeStartedEvent::ToBeStartedEvent (NodePtr n)
  : Event (event_to_be_started), node (n) {}
-
-KDE_NO_CDTOR_EXPORT
-PaintEvent::PaintEvent(QPainter & p, Single _x, Single _y, Single _w, Single _h)
- : Event (event_paint), painter (p), x (_x), y (_y), w (_w), h (_h) {}
 
 KDE_NO_CDTOR_EXPORT SizeEvent::SizeEvent (Single a, Single b, Single c, Single d
         , Fit f, const Matrix & m)
@@ -1424,15 +1417,6 @@ KDE_NO_EXPORT void SMIL::Layout::updateDimensions (SurfacePtr) {
 KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
     bool handled = false;
     switch (event->id ()) {
-        case event_paint:
-            if (rootLayout && have_bg_color) {
-                PaintEvent * p = static_cast <PaintEvent*>(event.ptr ());
-                Matrix m = transform ();
-                Single rx = 0, ry = 0, rw = w, rh = h;
-                m.getXYWH (rx, ry, rw, rh);
-                p->painter.fillRect(rx,ry,rw,rh,QColor(QRgb(background_color)));
-            }
-            return RegionBase::handleEvent (event);
         case event_sized: {
             SizeEvent * e = static_cast <SizeEvent *> (event.ptr ());
             Single ex = e->x (), ey = e->y (), ew = e->w (), eh = e->h ();
@@ -1563,26 +1547,6 @@ KDE_NO_EXPORT Matrix SMIL::RegionBase::transform () {
 
 bool SMIL::RegionBase::handleEvent (EventPtr event) {
     switch (event->id ()) {
-        case event_paint: {// event passed from Region/Layout::handleEvent
-            // paint children, accounting for z-order FIXME optimize
-            NodeRefList sorted;
-            for (NodePtr n = firstChild (); n; n = n->nextSibling ()) {
-                if (n->id != id_node_region)
-                    continue;
-                Region * r = static_cast <Region *> (n.ptr ());
-                NodeRefItemPtr rn = sorted.first ();
-                for (; rn; rn = rn->nextSibling ())
-                    if (r->z_order < static_cast <Region *> (rn->data.ptr ())->z_order) {
-                        sorted.insertBefore (new NodeRefItem (n), rn);
-                        break;
-                    }
-                if (!rn)
-                    sorted.append (new NodeRefItem (n));
-            }
-            for (NodeRefItemPtr r = sorted.first (); r; r = r->nextSibling ())
-                static_cast <Region *> (r->data.ptr ())->handleEvent (event);
-            break;
-        }
         case event_sized: {
             SizeEvent * e = static_cast <SizeEvent *> (event.ptr ());
             m_region_transform = e->matrix;
@@ -1642,20 +1606,6 @@ bool SMIL::Region::handleEvent (EventPtr event) {
     Single rx = 0, ry = 0, rw = w, rh = h;
     m.getXYWH (rx, ry, rw, rh);
     switch (event->id ()) {
-        case event_paint: {
-            PaintEvent * p = static_cast <PaintEvent *> (event.ptr ());
-            SRect r = SRect (rx, ry, rw, rh).intersect (SRect (p->x, p->y, p->w, p->h));
-            if (!r.isValid ())
-                return false;
-            rx = r.x (); ry = r.y (); rw = r.width (); rh = r.height ();
-            p->painter.setClipRect (rx, ry, rw, rh, QPainter::CoordPainter);
-        //kdDebug () << "Region::calculateBounds " << getAttribute ("id") << " (" << x << "," << y << " " << w << "x" << h << ") -> (" << x1 << "," << y1 << " " << w1 << "x" << h1 << ")" << endl;
-            if (have_bg_color)
-                p->painter.fillRect(rx,ry,rw,rh,QColor(QRgb(background_color)));
-            propagateEvent (event);
-            p->painter.setClipping (false);
-            return RegionBase::handleEvent (event);
-        }
         case event_pointer_clicked: {
             PointerEvent * e = static_cast <PointerEvent *> (event.ptr ());
             bool inside = e->x > rx && e->x < rx+rw && e->y > ry && e->y< ry+rh;
@@ -2266,11 +2216,6 @@ SurfacePtr SMIL::MediaType::getSurface (NodePtr node) {
 bool SMIL::MediaType::handleEvent (EventPtr event) {
     bool ret = false;
     switch (event->id ()) {
-        case event_paint: {
-            static_cast<MediaTypeRuntime*>(timedRuntime())->paint (static_cast <PaintEvent *> (event.ptr ())->painter);
-            ret = true;
-            break;
-        }
         case event_sized:
             break; // make it pass to all listeners
         case event_postponed: {
@@ -2454,13 +2399,11 @@ KDE_NO_EXPORT void SMIL::Param::activate () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT ImageRuntime::ImageRuntime (NodePtr e)
- : MediaTypeRuntime (e), image (0L), cache_image (0),
-   img_movie (0L) {
+ : MediaTypeRuntime (e), image (0L), img_movie (0L) {
 }
 
 KDE_NO_CDTOR_EXPORT ImageRuntime::~ImageRuntime () {
     delete image;
-    delete cache_image;
 }
 
 KDE_NO_EXPORT
@@ -2479,60 +2422,6 @@ void ImageRuntime::parseParam (const QString & name, const QString & val) {
             wget (mt->absolutePath ());
     } else
         MediaTypeRuntime::parseParam (name, val);
-}
-
-KDE_NO_EXPORT void ImageRuntime::paint (QPainter & p) {
-    SMIL::MediaType * mt = convertNode <SMIL::ImageMediaType> (element); 
-    if (mt && ((image && !image->isNull ()) ||
-                (img_movie && !img_movie->isNull ())) &&
-            mt->region_node && (timingstate == timings_started ||
-                (timingstate == timings_stopped && fill == fill_freeze))) {
-        SMIL::RegionBase * rb = convertNode<SMIL::RegionBase> (mt->region_node);
-        if (rb->w <= 0 || rb->h <= 0)
-            return;
-        const QPixmap &img = (image ? *image:img_movie->framePixmap());
-        Single x, y, w0, h0;
-        sizes.calcSizes (element.ptr (), rb->w, rb->h, x, y, w0, h0);
-        Matrix matrix (x, y, 1.0, 1.0);
-        matrix.transform (rb->transform ());
-        Single xoff = 0, yoff = 0, w = w0, h = h0;
-        matrix.getXYWH (xoff, yoff, w, h);
-        if (fit == fit_hidden) {
-            w = img.width () * 1.0 * w / w0;
-            h = img.height () * 1.0 * h / h0;
-        } else if (fit == fit_meet) { // scale in region, keeping aspects
-            if (h > 0 && img.height () > 0) {
-                Single a = 100 * img.width () / img.height ();
-                Single w1 = a * h / 100;
-                if (w1 > w)
-                    h = Single (100) * w / a;
-                else
-                    w = w1;
-            }
-        } else if (fit == fit_slice) { // scale in region, keeping aspects
-            if (h > 0 && img.height () > 0) {
-                Single a = 100 * img.width () / img.height ();
-                Single w1 = a * h / 100;
-                if (w1 > w)
-                    w = w1;
-                else
-                    h = 100 * w / a;
-            }
-        } //else if (fit == fit_fill) { // scale in region
-        // else fit_scroll
-        if ((int) w == img.width () && (int) h == img.height ())
-            p.drawPixmap (QRect (xoff, yoff, w, h), img);
-        else {
-            if (!cache_image || (int) w != cache_image->width () ||
-                    (int) h != cache_image->height ()) {
-                delete cache_image;
-                QImage img2;
-                img2 = img;
-                cache_image = new QPixmap (img2.scale (w, h));
-            }
-            p.drawPixmap (QRect (xoff, yoff, w, h), *cache_image);
-        }
-    }
 }
 
 /**
@@ -2577,8 +2466,6 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
             QPixmap *pix = new QPixmap (data);
             if (!pix->isNull ()) {
                 image = pix;
-                delete cache_image;
-                cache_image = 0;
                 delete img_movie;
                 img_movie = new QMovie (data);
                 have_frame = false;
@@ -2602,8 +2489,6 @@ KDE_NO_EXPORT void ImageRuntime::movieUpdated (const QRect &) {
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
     if (mt && mt->region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
-        delete cache_image;
-        cache_image = 0;
         delete image;
         image = 0;
         convertNode <SMIL::RegionBase> (mt->region_node)->repaint ();
@@ -2620,11 +2505,9 @@ KDE_NO_EXPORT void ImageRuntime::movieStatus (int s) {
     }
 }
 
-KDE_NO_EXPORT void ImageRuntime::movieResize (const QSize & s) {
+KDE_NO_EXPORT void ImageRuntime::movieResize (const QSize &) {
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
-    if (!(cache_image && cache_image->width () == s.width () &&
-                cache_image->height () == s.height ()) &&
-            mt && mt->region_node && (timingstate == timings_started ||
+    if (mt && mt->region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
         convertNode <SMIL::RegionBase> (mt->region_node)->repaint ();
         //kdDebug () << "movieResize" << endl;
@@ -2642,30 +2525,21 @@ KDE_NO_EXPORT void ImageRuntime::postpone (bool b) {
 }
 
 //-----------------------------------------------------------------------------
-#include <qtextedit.h>
 
 namespace KMPlayer {
     class TextRuntimePrivate {
     public:
-        TextRuntimePrivate () : edit (0L) {
+        TextRuntimePrivate () {
             reset ();
         }
         void reset () {
             codec = 0L;
-            delete edit;
             font = QApplication::font ();
             data.truncate (0);
-            edit = new QTextEdit;
-            edit->setReadOnly (true);
-            edit->setHScrollBarMode (QScrollView::AlwaysOff);
-            edit->setVScrollBarMode (QScrollView::AlwaysOff);
-            edit->setFrameShape (QFrame::NoFrame);
-            edit->setFrameShadow (QFrame::Plain);
         }
         QByteArray data;
         QTextCodec * codec;
         QFont font;
-        QTextEdit * edit;
     };
 }
 
@@ -2675,7 +2549,6 @@ KDE_NO_CDTOR_EXPORT TextRuntime::TextRuntime (NodePtr e)
 }
 
 KDE_NO_CDTOR_EXPORT TextRuntime::~TextRuntime () {
-    delete d->edit;
     delete d;
 }
 
@@ -2705,10 +2578,8 @@ void TextRuntime::parseParam (const QString & name, const QString & val) {
     MediaTypeRuntime::parseParam (name, val);
     if (name == QString::fromLatin1 ("backgroundColor")) {
         background_color = QColor (val).rgb ();
-        d->edit->setPaper (QBrush (QColor (background_color)));
     } else if (name == QString ("fontColor")) {
         font_color = QColor (val).rgb ();
-        d->edit->setPaletteForegroundColor (QColor (font_color));
     } else if (name == QString ("charset")) {
         d->codec = QTextCodec::codecForName (val.ascii ());
     } else if (name == QString ("fontFace")) {
@@ -2723,32 +2594,6 @@ void TextRuntime::parseParam (const QString & name, const QString & val) {
     if (mt->region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze)))
         convertNode <SMIL::RegionBase> (mt->region_node)->repaint ();
-}
-
-KDE_NO_EXPORT void TextRuntime::paint (QPainter & p) {
-    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
-    if (mt && mt->region_node && (timingstate == timings_started ||
-                (timingstate == timings_stopped && fill == fill_freeze))) {
-        SMIL::RegionBase * rb = convertNode <SMIL::RegionBase>(mt->region_node);
-        Single x, y, w0, h0;
-        sizes.calcSizes (element.ptr (), rb->w, rb->h, x, y, w0, h0);
-        Matrix matrix (x, y, 1.0, 1.0);
-        matrix.transform (rb->transform ());
-        Single xoff = 0, yoff = 0, w = w0, h = h0;
-        matrix.getXYWH (xoff, yoff, w, h);
-        d->edit->setGeometry (0, 0, w, h);
-        if (d->edit->length () == 0)
-            d->edit->setText (text);
-        if (w0 > 0)
-            d->font.setPointSize (int (1.0 * w * font_size / w0));
-        d->edit->setFont (d->font);
-        QRect rect = p.clipRegion (QPainter::CoordPainter).boundingRect ();
-        rect = rect.intersect (QRect (xoff, yoff, w, h));
-        QPixmap pix = QPixmap::grabWidget (d->edit, rect.x () - (int) xoff,
-                rect.y () - (int) yoff, rect.width (), rect.height ());
-        //kdDebug () << "text paint " << x << "," << y << " " << w << "x" << h << " clip: " << rect.x () << "," << rect.y () << endl;
-        p.drawPixmap (rect.x (), rect.y (), pix);
-    }
 }
 
 /**

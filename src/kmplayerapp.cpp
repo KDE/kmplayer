@@ -747,6 +747,7 @@ KDE_NO_EXPORT void KMPlayerApp::openVDR () {
         m_player->setSource (m_player->sources () ["vdrsource"]);
 }
 
+#ifdef HAVE_CAIRO
 struct IntroSource : public KMPlayer::Source {
     KMPlayerApp * m_app;
     IntroSource (KMPlayer::PartBase *p, KMPlayerApp * a)
@@ -829,6 +830,7 @@ KDE_NO_EXPORT void IntroSource::deactivate () {
     if (!finished && m_document) // user opens a source while introducing
         m_document->reset ();
 }
+#endif
 
 KDE_NO_EXPORT void KMPlayerApp::restoreFromConfig () {
     if (m_player->view ()) {
@@ -849,9 +851,11 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
             restoreFromConfig ();
             m_player->setSource (src);
             return;
+#ifdef HAVE_CAIRO
         } else if (!m_player->settings ()->no_intro && url.isEmpty ()) {
             m_player->setSource (new IntroSource (m_player, this));
             return;
+#endif
         } else {
             m_played_exit = true; // no intro, so no exit as well
             restoreFromConfig ();
@@ -1111,6 +1115,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotMinimalMode () {
     minimalMode (true);
 }
 
+#ifdef HAVE_CAIRO
 struct ExitSource : public KMPlayer::Source {
     KDE_NO_CDTOR_EXPORT ExitSource (KMPlayer::PartBase *p)
         : KMPlayer::Source (i18n ("Exit"), p, "exitsource") {}
@@ -1166,6 +1171,7 @@ KDE_NO_EXPORT void ExitSource::stateElementChanged (KMPlayer::Node * node, KMPla
             m_player->view ())
        m_player->view ()->topLevelWidget ()->close ();
 }
+#endif
 
 KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
     // KMPlayerVDRSource has to wait for pending commands like mute and quit
@@ -1184,8 +1190,12 @@ KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
     m_played_exit = true;
     if (!m_minimal_mode)
         minimalMode (false);
+#ifdef HAVE_CAIRO
     m_player->setSource (new ExitSource (m_player));
     return false;
+#else
+    return true;
+#endif
 }
 
 KDE_NO_EXPORT bool KMPlayerApp::queryExit()
