@@ -129,6 +129,8 @@ public:
     void resetSizes ();
     void calcSizes (Node *, Single w, Single h,
             Single & xoff, Single & yoff, Single & w1, Single & h1);
+    bool applyRegPoints (Node *, Single w, Single h,
+            Single & xoff, Single & yoff, Single & w1, Single & h1);
     SizeType left, top, width, height, right, bottom;
     QString reg_point, reg_align;
     bool setSizeParam (const QString & name, const QString & value);

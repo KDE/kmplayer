@@ -331,7 +331,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
             } // else fit_hidden
             w = xs * qim.width();
             h = ys * qim.height();
-            ir->sizes.calcSizes (img, rect.width(), rect.height(), x, y, w, h);
+            ir->sizes.applyRegPoints (img, rect.width(), rect.height(),x,y,w,h);
             cairo_matrix_scale (&matrix, 1.0/xs, 1.0/ys);
             cairo_matrix_translate (&matrix, -x, -y);
             cairo_pattern_set_matrix (pat, &matrix);
@@ -351,7 +351,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     if (rb && rb->surface) {
         SRect rect = rb->surface->bounds;
         Single x, y, w = rect.width(), h = rect.height();
-        td->sizes.calcSizes (txt, rb->w, rb->h, x, y, w, h);
+        td->sizes.applyRegPoints (txt, rect.width(), rect.height(), x, y, w, h);
         if (!td->transparent) {
             cairo_set_source_rgb (cr,
                     1.0 * ((td->background_color >> 16) & 0xff) / 255,

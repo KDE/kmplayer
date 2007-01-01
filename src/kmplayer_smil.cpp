@@ -595,48 +595,53 @@ static bool regPoints (const QString & str, Single & x, Single & y) {
     return true;
 }
 
+KDE_NO_EXPORT
+bool CalculatedSizer::applyRegPoints (Node * node, Single w, Single h,
+        Single & xoff, Single & yoff, Single & w1, Single & h1) {
+    if (reg_point.isEmpty ())
+        return false;
+    Single rpx, rpy, rax, ray;
+    if (!regPoints (reg_point, rpx, rpy)) {
+        while (node && node->id != SMIL::id_node_smil)
+            node = node->parentNode ().ptr ();
+        if (!node)
+            return false;
+        node = static_cast <SMIL::Smil *> (node)->layout_node.ptr ();
+        if (!node)
+            return false;
+        NodePtr c = node->firstChild ();
+        for (; c; c = c->nextSibling ())
+            if (c->id == SMIL::id_node_regpoint &&
+                    convertNode<Element>(c)->getAttribute ("id") == reg_point) {
+                Single i1, i2; // dummies
+                static_cast <RegPointRuntime*> (c->getRuntime ())->sizes.calcSizes (0L, 100, 100, rpx, rpy, i1, i2);
+                QString ra = convertNode <Element> (c)->getAttribute ("regAlign");
+                if (!ra.isEmpty () && reg_align.isEmpty ())
+                    reg_align = ra;
+                break;
+            }
+        if (!c)
+            return false; // not found
+    }
+    if (!regPoints (reg_align, rax, ray))
+        rax = ray = 0; // default back to topLeft
+    if (!(int)w1 || !(int)h1) {
+        xoff = w * (rpx - rax) / 100;
+        yoff = h * (rpy - ray) / 100;
+        w1 = w - w * (rpx > rax ? (rpx - rax) : (rax - rpx)) / 100;
+        h1 = h - h * (rpy > ray ? (rpy - ray) : (ray - rpy)) / 100;
+    } else {
+        xoff = (w * rpx - w1 * rax) / 100;
+        yoff = (h * rpy - h1 * ray) / 100;
+    }
+    // kdDebug () << "calc rp:" << reg_point << " ra:" << reg_align <<  " w:" << (int)w << " h:" << (int)h << " xoff:" << (int)xoff << " yoff:" << (int)yoff << " w1:" << (int)w1 << " h1:" << (int)h1 << endl;
+    return true; // success getting sizes based on regPoint
+}
+
 KDE_NO_EXPORT void CalculatedSizer::calcSizes (Node * node, Single w, Single h,
         Single & xoff, Single & yoff, Single & w1, Single & h1) {
-    while (!reg_point.isEmpty ()) {
-        Single rpx, rpy, rax, ray;
-        if (!regPoints (reg_point, rpx, rpy)) {
-            while (node && node->id != SMIL::id_node_smil)
-                node = node->parentNode ().ptr ();
-            if (!node)
-                break;
-            node = static_cast <SMIL::Smil *> (node)->layout_node.ptr ();
-            if (!node)
-                break;
-            NodePtr c = node->firstChild ();
-            for (; c; c = c->nextSibling ()) {
-                if (!c->isElementNode ())
-                    continue;
-                if (c->id == SMIL::id_node_regpoint && convertNode <Element> (c)->getAttribute ("id") == reg_point) {
-                    Single i1, i2; // dummies
-                    static_cast <RegPointRuntime*> (c->getRuntime ())->sizes.calcSizes (0L, 100, 100, rpx, rpy, i1, i2);
-                    QString ra = convertNode <Element> (c)->getAttribute ("regAlign");
-                    if (!ra.isEmpty () && reg_align.isEmpty ())
-                        reg_align = ra;
-                    break;
-                }
-            }
-            if (!c)
-                break; // not found
-        }
-        if (!regPoints (reg_align, rax, ray))
-            rax = ray = 0; // default back to topLeft
-        if (!(int)w1 || !(int)h1) {
-            xoff = w * (rpx - rax) / 100;
-            yoff = h * (rpy - ray) / 100;
-            w1 = w - w * (rpx > rax ? (rpx - rax) : (rax - rpx)) / 100;
-            h1 = h - h * (rpy > ray ? (rpy - ray) : (ray - rpy)) / 100;
-        } else {
-            xoff = (w * rpx - w1 * rax) / 100;
-            yoff = (h * rpy - h1 * ray) / 100;
-        }
-        // kdDebug () << "calc rp:" << reg_point << " ra:" << reg_align <<  " w:" << (int)w << " h:" << (int)h << " xoff:" << (int)xoff << " yoff:" << (int)yoff << " w1:" << (int)w1 << " h1:" << (int)h1 << endl;
-        return; // success getting sizes based on regPoint
-    }
+    if (applyRegPoints (node, w, h, xoff, yoff, w1, h1))
+        return;
     if (left.isSet ())
         xoff = left.size (w);
     else if (width.isSet ())
