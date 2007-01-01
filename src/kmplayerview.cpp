@@ -204,12 +204,11 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (Node * n) {
 KDE_NO_EXPORT
 void CairoPaintVisitor::paintRegionBackground (SMIL::RegionBase * reg) {
     //kdDebug() << "Visit " << reg->nodeName() << endl;
-    RegionRuntime * rr = static_cast <RegionRuntime *> (reg->getRuntime ());
-    if (rr && rr->have_bg_color) {
+    if (reg->have_bg_color) {
         cairo_set_source_rgb (cr,
-                1.0 * ((rr->background_color >> 16) & 0xff) / 255,
-                1.0 * ((rr->background_color >> 8) & 0xff) / 255,
-                1.0 * ((rr->background_color) & 0xff) / 255);
+                1.0 * ((reg->background_color >> 16) & 0xff) / 255,
+                1.0 * ((reg->background_color >> 8) & 0xff) / 255,
+                1.0 * ((reg->background_color) & 0xff) / 255);
         cairo_paint (cr);
     }
 }

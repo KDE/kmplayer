@@ -187,8 +187,6 @@ public:
     virtual void reset ();
     virtual void parseParam (const QString & name, const QString & value);
     CalculatedSizer sizes;
-    unsigned int background_color;
-    bool have_bg_color;
 private:
     bool active;
 };
@@ -440,11 +438,11 @@ public:
      * Creates a new transform matrix
      */
     Matrix transform ();
+
     Single x, y, w, h;     // unscaled values
-    /**
-     * z-order of this region
-     */
     int z_order;
+    unsigned int background_color;
+    bool have_bg_color;
 protected:
     RegionBase (NodePtr & d, short id);
     RegionRuntime * runtime;
@@ -741,6 +739,8 @@ public:
     bool isPlayable () { return false; }
     bool handleEvent (EventPtr event);
 };
+
+// TODO animateMotion animateColor transitionFilter
 
 class KMPLAYER_NO_EXPORT Param : public Element {
 public:

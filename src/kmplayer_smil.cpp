@@ -701,7 +701,6 @@ KDE_NO_CDTOR_EXPORT RegionRuntime::RegionRuntime (NodePtr e)
 
 KDE_NO_EXPORT void RegionRuntime::reset () {
     // Keep region_node, so no ElementRuntime::reset (); or set it back again
-    have_bg_color = false;
     active = false;
     sizes.resetSizes ();
 }
@@ -720,8 +719,8 @@ void RegionRuntime::parseParam (const QString & name, const QString & val) {
     }
     if (name == QString::fromLatin1 ("background-color") ||
             name == QString::fromLatin1 ("backgroundColor")) {
-        background_color = QColor (val).rgb ();
-        have_bg_color = true;
+        rb->background_color = QColor (val).rgb ();
+        rb->have_bg_color = true;
         need_repaint = true;
     } else if (name == QString::fromLatin1 ("z-index")) {
         if (rb)
@@ -1426,15 +1425,12 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
     bool handled = false;
     switch (event->id ()) {
         case event_paint:
-            if (rootLayout) {
+            if (rootLayout && have_bg_color) {
                 PaintEvent * p = static_cast <PaintEvent*>(event.ptr ());
-                RegionRuntime * rr = static_cast <RegionRuntime *> (rootLayout->getRuntime ());
-                if (rr && rr->have_bg_color) {
-                    Matrix m = transform ();
-                    Single rx = 0, ry = 0, rw = w, rh = h;
-                    m.getXYWH (rx, ry, rw, rh);
-                    p->painter.fillRect (rx, ry, rw, rh, QColor (QRgb (rr->background_color)));
-                }
+                Matrix m = transform ();
+                Single rx = 0, ry = 0, rw = w, rh = h;
+                m.getXYWH (rx, ry, rw, rh);
+                p->painter.fillRect(rx,ry,rw,rh,QColor(QRgb(background_color)));
             }
             return RegionBase::handleEvent (event);
         case event_sized: {
@@ -1510,7 +1506,7 @@ KDE_NO_EXPORT void SMIL::Layout::accept (Visitor * v) {
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
  : Element (d, id), x (0), y (0), w (0), h (0),
-   z_order (1), runtime (0L),
+   z_order (1), background_color (0), have_bg_color (false), runtime (0L),
    m_SizeListeners (new NodeRefList),
    m_PaintListeners (new NodeRefList) {}
 
@@ -1536,6 +1532,7 @@ KDE_NO_EXPORT void SMIL::RegionBase::activate () {
 
 KDE_NO_EXPORT void SMIL::RegionBase::reset () {
     Element::reset ();
+    have_bg_color = false;
     delete runtime;
     runtime = 0L;
 }
@@ -1653,9 +1650,8 @@ bool SMIL::Region::handleEvent (EventPtr event) {
             rx = r.x (); ry = r.y (); rw = r.width (); rh = r.height ();
             p->painter.setClipRect (rx, ry, rw, rh, QPainter::CoordPainter);
         //kdDebug () << "Region::calculateBounds " << getAttribute ("id") << " (" << x << "," << y << " " << w << "x" << h << ") -> (" << x1 << "," << y1 << " " << w1 << "x" << h1 << ")" << endl;
-            RegionRuntime * rr = static_cast <RegionRuntime *> (getRuntime ());
-            if (rr && rr->have_bg_color)
-                p->painter.fillRect (rx, ry, rw, rh, QColor (QRgb (rr->background_color)));
+            if (have_bg_color)
+                p->painter.fillRect(rx,ry,rw,rh,QColor(QRgb(background_color)));
             propagateEvent (event);
             p->painter.setClipping (false);
             return RegionBase::handleEvent (event);
@@ -2246,11 +2242,8 @@ KDE_NO_EXPORT void SMIL::MediaType::positionVideoWidget () {
             Matrix matrix (x, y, 1.0, 1.0);
             matrix.transform (rb->transform ());
             matrix.getXYWH (xoff, yoff, w, h);
-            if (region_node) {
-                RegionRuntime * rr = static_cast <RegionRuntime *>(region_node->getRuntime ());
-                if (rr && rr->have_bg_color)
-                    bg_color = &rr->background_color;
-            }
+            if (rb->have_bg_color)
+                bg_color = &rb->background_color;
         }
         n->avWidgetSizes (xoff, yoff, w, h, bg_color);
     }
