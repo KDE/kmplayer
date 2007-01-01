@@ -234,7 +234,6 @@ KDE_NO_EXPORT void ElementRuntime::init () {
 }
 
 KDE_NO_EXPORT void ElementRuntime::reset () {
-    region_node = 0L;
     d->clear ();
 }
 
@@ -350,8 +349,6 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
  */
 KDE_NO_EXPORT void TimedRuntime::end () {
     //kdDebug () << "TimedRuntime::end " << (element ? element->nodeName() : "-") << endl; 
-    if (region_node)
-        region_node = 0L;
     reset ();
 }
 
@@ -699,7 +696,6 @@ bool CalculatedSizer::setSizeParam (const QString & name, const QString & val) {
 
 KDE_NO_CDTOR_EXPORT RegionRuntime::RegionRuntime (NodePtr e)
  : ElementRuntime (e) {
-    region_node = e;
     init ();
 }
 
@@ -713,7 +709,7 @@ KDE_NO_EXPORT void RegionRuntime::reset () {
 KDE_NO_EXPORT
 void RegionRuntime::parseParam (const QString & name, const QString & val) {
     //kdDebug () << "RegionRuntime::parseParam " << convertNode <Element> (element)->getAttribute ("id") << " " << name << "=" << val << endl;
-    SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (region_node);
+    SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (element);
     SRect rect;
     bool need_repaint = false;
     if (rb) {
@@ -818,8 +814,6 @@ KDE_NO_EXPORT void AnimateGroupData::restoreModification () {
             target_element->state > Node::state_init) {
         //kdDebug () << "AnimateGroupData::restoreModificatio " <<modification_id << endl;
         target_element->getRuntime ()->resetParam (changed_attribute, modification_id);
-        if (target_region)
-            convertNode <SMIL::RegionBase> (target_region)->repaint ();
     }
     modification_id = -1;
 }
@@ -835,11 +829,8 @@ KDE_NO_EXPORT void SetData::started () {
     if (element) {
         if (target_element) {
             ElementRuntime * rt = target_element->getRuntime ();
-            target_region = rt->region_node;
             rt->setParam (changed_attribute, change_to, &modification_id);
             //kdDebug () << "SetData::started " << target_element->nodeName () << "." << changed_attribute << " " << old_value << "->" << change_to << endl;
-            if (target_region)
-                convertNode <SMIL::RegionBase> (target_region)->repaint ();
         } else
             kdWarning () << "target element not found" << endl;
     } else
@@ -916,7 +907,6 @@ KDE_NO_EXPORT void AnimateData::started () {
             break;
         }
         ElementRuntime * rt = target_element->getRuntime ();
-        target_region = rt->region_node;
         if (calcMode == calc_linear) {
             QRegExp reg ("^\\s*([0-9\\.]+)(\\s*[%a-z]*)?");
             if (change_from.isEmpty ()) {
@@ -967,8 +957,6 @@ KDE_NO_EXPORT void AnimateData::started () {
             rt->setParam (changed_attribute, change_values.first (), &modification_id);
             success = true;
         }
-        //if (target_region)
-        //    target_region->repaint ();
     } while (false);
     if (success)
         AnimateGroupData::started ();
@@ -1036,11 +1024,6 @@ KDE_NO_CDTOR_EXPORT MediaTypeRuntime::~MediaTypeRuntime () {
  * re-implement for pending KIO::Job operations
  */
 KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::end () {
-    region_sized = 0L;
-    region_paint = 0L;
-    region_mouse_enter = 0L;
-    region_mouse_leave = 0L;
-    region_mouse_click = 0L;
     clear ();
     postpone_lock = 0L;
     TimedRuntime::end ();
@@ -1051,9 +1034,11 @@ KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::end () {
  */
 KDE_NO_EXPORT
 void MediaTypeRuntime::parseParam (const QString & name, const QString & val) {
+    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
+    if (!mt)
+        return;
     if (name == QString::fromLatin1 ("src")) {
-        if (element)
-            convertNode <SMIL::MediaType> (element)->src = val;
+        mt->src = val;
     } else if (name == QString::fromLatin1 ("fit")) {
         if (val == QString::fromLatin1 ("fill"))
             fit = fit_fill;
@@ -1069,47 +1054,13 @@ void MediaTypeRuntime::parseParam (const QString & name, const QString & val) {
         TimedRuntime::parseParam (name, val);
         return;
     }
-    SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (region_node);
-    if (state () == timings_began && rb && element)
+    SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (mt->region_node);
+    if ((state () == timings_began ||
+                (state () == TimedRuntime::timings_stopped &&
+                 fill == TimedRuntime::fill_freeze)) &&
+            rb && element)
         rb->repaint ();
     ElementRuntime::parseParam (name, val);
-}
-
-/**
- * find region node and request a repaint of attached region then
- */
-KDE_NO_EXPORT void MediaTypeRuntime::started () {
-    NodePtr e = element;
-    for (; e; e = e->parentNode ())
-        if (e->id == SMIL::id_node_smil) {
-            e = convertNode <SMIL::Smil> (e)->layout_node;
-            break;
-        }
-    if (e) {
-        SMIL::Region * r = findRegion (e, param(QString::fromLatin1("region")));
-        if (r) {
-            region_node = r;
-            region_sized = r->connectTo (element, event_sized);
-            region_paint = r->connectTo (element, event_paint);
-            region_mouse_enter = r->connectTo (element, event_inbounds);
-            region_mouse_leave = r->connectTo (element, event_outbounds);
-            region_mouse_click = r->connectTo (element, event_activated);
-            for (NodePtr n = element->firstChild (); n; n = n->nextSibling ())
-                switch (n->id) {
-                    case SMIL::id_node_smil:   // support nested documents
-                    case RP::id_node_imfl:     // by giving a dimension
-                        n->handleEvent (new SizeEvent (0, 0, r->w, r->h, fit, r->transform ()));
-                        n->activate ();
-                }
-            r->repaint ();
-        } else
-            kdWarning () << "MediaTypeRuntime::started no region found" << endl;
-
-        SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
-        if (mt && mt->external_tree)
-            mt->external_tree->activate ();
-    }
-    TimedRuntime::started ();
 }
 
 /**
@@ -1123,8 +1074,6 @@ KDE_NO_EXPORT void MediaTypeRuntime::stopped () {
                 n->finish ();
     }
     TimedRuntime::stopped ();
-    if (region_node)
-        convertNode <SMIL::RegionBase> (region_node)->repaint ();
 }
 
 KDE_NO_EXPORT void MediaTypeRuntime::postpone (bool) {
@@ -1147,7 +1096,7 @@ KDE_NO_EXPORT void AudioVideoData::started () {
     MediaTypeRuntime::started ();
     NodePtr element_protect = element; // note element is weak
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
-    if (mt && region_node && !mt->external_tree) {
+    if (mt && mt->region_node && !mt->external_tree) {
         //kdDebug () << "AudioVideoData::started " << mt->absolutePath()<< endl;
         for (NodePtr p = mt->parentNode (); p; p = p->parentNode ())
             if (p->id == SMIL::id_node_smil) {
@@ -1176,7 +1125,6 @@ KDE_NO_EXPORT void AudioVideoData::stopped () {
 }
 
 KDE_NO_EXPORT void AudioVideoData::avStopped () {
-    region_sized = 0L;
     if (durations [duration_time].durval == duration_media)
         durations [duration_time].durval = 0; // reset to make this finish
 }
@@ -1259,6 +1207,8 @@ static Element * fromMediaContentGroup (NodePtr & d, const QString & tag) {
         return new SMIL::TextMediaType (d);
     else if (!strcmp (taglatin, "ref"))
         return new SMIL::RefMediaType (d);
+    else if (!strcmp (taglatin, "brush"))
+        return new SMIL::Brush (d);
     // animation, textstream, ref, brush
     return 0L;
 }
@@ -1382,6 +1332,8 @@ KDE_NO_EXPORT NodePtr SMIL::Head::childFromTag (const QString & tag) {
         return new DarkNode (m_doc, tag, id_node_title);
     else if (!strcmp (tag.latin1 (), "meta"))
         return new DarkNode (m_doc, tag, id_node_meta);
+    else if (!strcmp (tag.latin1 (), "transition"))
+        return new SMIL::Transition (m_doc);
     return NodePtr ();
 }
 
@@ -1777,6 +1729,11 @@ KDE_NO_EXPORT ElementRuntime * SMIL::RegPoint::getRuntime () {
     if (!runtime)
         runtime = new RegPointRuntime (this);
     return runtime;
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT SMIL::Transition::~Transition () {
 }
 
 //-----------------------------------------------------------------------------
@@ -2196,6 +2153,56 @@ KDE_NO_EXPORT void SMIL::MediaType::activate () {
     timedRuntime ()->begin ();
 }
 
+KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
+    region_node = 0L;
+    region_sized = 0L;
+    region_paint = 0L;
+    region_mouse_enter = 0L;
+    region_mouse_leave = 0L;
+    region_mouse_click = 0L;
+    TimedMrl::deactivate ();
+}
+
+KDE_NO_EXPORT void SMIL::MediaType::begin () {
+    NodePtr e = parentNode ();
+    for (; e; e = e->parentNode ())
+        if (e->id == SMIL::id_node_smil) {
+            e = convertNode <SMIL::Smil> (e)->layout_node;
+            break;
+        }
+    if (e) {
+        MediaTypeRuntime *tr = static_cast<MediaTypeRuntime*>(timedRuntime ());
+        SMIL::Region * r = findRegion (e, tr->param(QString::fromLatin1("region")));
+        if (r) {
+            region_node = r;
+            region_sized = r->connectTo (this, event_sized);
+            region_paint = r->connectTo (this, event_paint);
+            region_mouse_enter = r->connectTo (this, event_inbounds);
+            region_mouse_leave = r->connectTo (this, event_outbounds);
+            region_mouse_click = r->connectTo (this, event_activated);
+            for (NodePtr n = firstChild (); n; n = n->nextSibling ())
+                switch (n->id) {
+                    case SMIL::id_node_smil:   // support nested documents
+                    case RP::id_node_imfl:     // by giving a dimension
+                        n->handleEvent (new SizeEvent (0, 0, r->w, r->h, tr->fit, r->transform ()));
+                        n->activate ();
+                }
+            r->repaint ();
+        } else
+            kdWarning () << "MediaType::begin no region found" << endl;
+
+        if (external_tree)
+            external_tree->activate ();
+    }
+    TimedMrl::begin ();
+}
+
+KDE_NO_EXPORT void SMIL::MediaType::finish () {
+    if (region_node)
+        convertNode <SMIL::RegionBase> (region_node)->repaint ();
+    TimedMrl::finish ();
+}
+
 KDE_NO_EXPORT bool SMIL::MediaType::expose () const {
     return TimedMrl::expose () ||               // if title attribute
         (!src.isEmpty () && !external_tree);    // or we're a playable leaf
@@ -2229,8 +2236,8 @@ KDE_NO_EXPORT void SMIL::MediaType::positionVideoWidget () {
     //kdDebug () << "AVMediaType::sized " << endl;
     PlayListNotify * n = document()->notify_listener;
     MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (timedRuntime ());
-    if (n && mtr->region_node) {
-        RegionBase * rb = convertNode <RegionBase> (mtr->region_node);
+    if (n && region_node) {
+        RegionBase * rb = convertNode <RegionBase> (region_node);
         Single x = 0, y = 0, w = 0, h = 0;
         Single xoff = 0, yoff = 0;
         unsigned int * bg_color = 0L;
@@ -2239,8 +2246,8 @@ KDE_NO_EXPORT void SMIL::MediaType::positionVideoWidget () {
             Matrix matrix (x, y, 1.0, 1.0);
             matrix.transform (rb->transform ());
             matrix.getXYWH (xoff, yoff, w, h);
-            if (mtr->region_node) {
-                RegionRuntime * rr = static_cast <RegionRuntime *>(mtr->region_node->getRuntime ());
+            if (region_node) {
+                RegionRuntime * rr = static_cast <RegionRuntime *>(region_node->getRuntime ());
                 if (rr && rr->have_bg_color)
                     bg_color = &rr->background_color;
             }
@@ -2250,8 +2257,7 @@ KDE_NO_EXPORT void SMIL::MediaType::positionVideoWidget () {
 }
 
 SurfacePtr SMIL::MediaType::getSurface (NodePtr node) {
-    MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (timedRuntime ());
-    RegionBase * r = mtr ? convertNode <RegionBase> (mtr->region_node) : 0L;
+    RegionBase * r = convertNode <RegionBase> (region_node);
     if (r && r->surface) {
         if (node) {
             r->surface->node = node;
@@ -2288,8 +2294,7 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
         default:
             ret = TimedMrl::handleEvent (event);
     }
-    MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (timedRuntime ());
-    RegionBase * r = convertNode <RegionBase> (mtr->region_node);
+    RegionBase * r = convertNode <RegionBase> (region_node);
     if (r && r->surface && r->surface->node && r != r->surface->node)
         return r->surface->node->handleEvent (event);
     return ret;
@@ -2336,6 +2341,7 @@ KDE_NO_EXPORT void SMIL::AVMediaType::undefer () {
 
 KDE_NO_EXPORT void SMIL::AVMediaType::finish () {
     static_cast <AudioVideoData *> (timedRuntime ())->avStopped ();
+    region_sized = 0L;
     MediaType::finish ();
 }
 
@@ -2409,6 +2415,15 @@ KDE_NO_EXPORT void SMIL::RefMediaType::accept (Visitor * v) {
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_CDTOR_EXPORT SMIL::Brush::Brush (NodePtr & d)
+    : SMIL::MediaType (d, "brush", id_node_brush) {}
+
+KDE_NO_EXPORT void SMIL::Brush::accept (Visitor * v) {
+    v->visit (this);
+}
+
+//-----------------------------------------------------------------------------
+
 KDE_NO_EXPORT TimedRuntime * SMIL::Set::getNewRuntime () {
     return new SetData (this);
 }
@@ -2474,11 +2489,12 @@ void ImageRuntime::parseParam (const QString & name, const QString & val) {
 }
 
 KDE_NO_EXPORT void ImageRuntime::paint (QPainter & p) {
-    if (((image && !image->isNull ()) ||
+    SMIL::MediaType * mt = convertNode <SMIL::ImageMediaType> (element); 
+    if (mt && ((image && !image->isNull ()) ||
                 (img_movie && !img_movie->isNull ())) &&
-            region_node && (timingstate == timings_started ||
+            mt->region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
-        SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (region_node);
+        SMIL::RegionBase * rb = convertNode<SMIL::RegionBase> (mt->region_node);
         if (rb->w <= 0 || rb->h <= 0)
             return;
         const QPixmap &img = (image ? *image:img_movie->framePixmap());
@@ -2576,9 +2592,9 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
                 img_movie->connectUpdate(this, SLOT(movieUpdated(const QRect&)));
                 img_movie->connectStatus (this, SLOT (movieStatus (int)));
                 img_movie->connectResize(this, SLOT (movieResize(const QSize&)));
-                if (region_node && (timingstate == timings_started ||
+                if (mt->region_node && (timingstate == timings_started ||
                             (timingstate == timings_stopped && fill == fill_freeze)))
-                    convertNode <SMIL::RegionBase> (region_node)->repaint ();
+                    convertNode <SMIL::RegionBase> (mt->region_node)->repaint();
             } else
                 delete pix;
         }
@@ -2590,31 +2606,34 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
 
 KDE_NO_EXPORT void ImageRuntime::movieUpdated (const QRect &) {
     have_frame = true;
-    if (region_node && (timingstate == timings_started ||
+    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
+    if (mt && mt->region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
         delete cache_image;
         cache_image = 0;
         delete image;
         image = 0;
-        convertNode <SMIL::RegionBase> (region_node)->repaint ();
+        convertNode <SMIL::RegionBase> (mt->region_node)->repaint ();
     }
     if (timingstate != timings_started && img_movie)
         img_movie->pause ();
 }
 
 KDE_NO_EXPORT void ImageRuntime::movieStatus (int s) {
-    if (region_node && (timingstate == timings_started ||
-                (timingstate == timings_stopped && fill == fill_freeze))) {
+    if (timingstate == timings_started ||
+                (timingstate == timings_stopped && fill == fill_freeze)) {
         if (s == QMovie::EndOfMovie)
             propagateStop (false);
     }
 }
 
 KDE_NO_EXPORT void ImageRuntime::movieResize (const QSize & s) {
-    if (!(cache_image && cache_image->width () == s.width () && cache_image->height () == s.height ()) &&
-            region_node && (timingstate == timings_started ||
+    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
+    if (!(cache_image && cache_image->width () == s.width () &&
+                cache_image->height () == s.height ()) &&
+            mt && mt->region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
-        convertNode <SMIL::RegionBase> (region_node)->repaint ();
+        convertNode <SMIL::RegionBase> (mt->region_node)->repaint ();
         //kdDebug () << "movieResize" << endl;
     }
 }
@@ -2679,11 +2698,11 @@ KDE_NO_EXPORT void TextRuntime::reset () {
 KDE_NO_EXPORT
 void TextRuntime::parseParam (const QString & name, const QString & val) {
     //kdDebug () << "TextRuntime::parseParam " << name << "=" << val << endl;
+    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
+    if (!mt)
+        return; // cannot happen
     if (name == QString::fromLatin1 ("src")) {
         killWGet ();
-        SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
-        if (!mt)
-            return; // cannot happen
         mt->src = val;
         d->data.resize (0);
         if (!val.isEmpty ())
@@ -2708,15 +2727,16 @@ void TextRuntime::parseParam (const QString & name, const QString & val) {
     // TODO: expandTabs fontBackgroundColor fontSize fontStyle fontWeight hAlig vAlign wordWrap
     } else
         return;
-    if (region_node && (timingstate == timings_started ||
+    if (mt->region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze)))
-        convertNode <SMIL::RegionBase> (region_node)->repaint ();
+        convertNode <SMIL::RegionBase> (mt->region_node)->repaint ();
 }
 
 KDE_NO_EXPORT void TextRuntime::paint (QPainter & p) {
-    if (region_node && (timingstate == timings_started ||
+    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
+    if (mt && mt->region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
-        SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (region_node);
+        SMIL::RegionBase * rb = convertNode <SMIL::RegionBase>(mt->region_node);
         Single x, y, w0, h0;
         sizes.calcSizes (element.ptr (), rb->w, rb->h, x, y, w0, h0);
         Matrix matrix (x, y, 1.0, 1.0);
@@ -2759,9 +2779,10 @@ KDE_NO_EXPORT void TextRuntime::remoteReady (QByteArray & data) {
         if (d->codec)
             ts.setCodec (d->codec);
         text  = ts.read ();
-        if (region_node && (timingstate == timings_started ||
+        SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
+        if (mt && mt->region_node && (timingstate == timings_started ||
                     (timingstate == timings_stopped && fill == fill_freeze)))
-            convertNode <SMIL::RegionBase> (region_node)->repaint ();
+            convertNode <SMIL::RegionBase> (mt->region_node)->repaint ();
     }
     postpone_lock = 0L;
     if (timingstate == timings_started)

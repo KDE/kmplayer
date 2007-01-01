@@ -163,6 +163,7 @@ public:
     void visit (SMIL::Region *);
     void visit (SMIL::ImageMediaType *);
     void visit (SMIL::TextMediaType *);
+    void visit (SMIL::Brush *);
     //void visit (SMIL::RefMediaType *) {}
     //void visit (SMIL::AVMediaType *) {}
     void visit (RP::Imfl *);
@@ -285,7 +286,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     //kdDebug() << "Visit " << img->nodeName() << endl;
     ImageRuntime * ir = static_cast <ImageRuntime *> (img->getRuntime ());
-    SMIL::RegionBase *rb =ir?convertNode<SMIL::RegionBase>(ir->region_node):0L;
+    SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (img->region_node);
     if (rb && rb->surface &&
             ((ir->image && !ir->image->isNull ()) ||
              (ir->img_movie && !ir->img_movie->isNull ())) &&
@@ -347,7 +348,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     TextRuntime * td = static_cast <TextRuntime *> (txt->getRuntime ());
     //kdDebug() << "Visit " << txt->nodeName() << " " << td->font_size << endl;
-    SMIL::RegionBase *rb =td?convertNode<SMIL::RegionBase>(td->region_node):0L;
+    SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (txt->region_node);
     if (rb && rb->surface) {
         SRect rect = rb->surface->bounds;
         Single x, y, w = rect.width(), h = rect.height();
@@ -369,6 +370,20 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         cairo_move_to (cr, x + margin, y + margin + td->font_size);
         cairo_show_text (cr, td->text.utf8 ().data ());
         //cairo_stroke (cr);
+    }
+}
+
+KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
+    //kdDebug() << "Visit " << brush->nodeName() << endl;
+    ElementRuntime * er = brush->getRuntime ();
+    SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (brush->region_node);
+    if (rb && rb->surface) {
+        unsigned int color = QColor (er->param ("color")).rgb ();
+        cairo_set_source_rgb (cr,
+                1.0 * ((color >> 16) & 0xff) / 255,
+                1.0 * ((color >> 8) & 0xff) / 255,
+                1.0 * ((color) & 0xff) / 255);
+        cairo_paint (cr);
     }
 }
 

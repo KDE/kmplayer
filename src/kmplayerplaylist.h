@@ -839,6 +839,7 @@ namespace SMIL {
     class TextMediaType;
     class RefMediaType;
     class AVMediaType;
+    class Brush;
 }
 namespace RP {
     class Imfl;
@@ -862,6 +863,7 @@ public:
     virtual void visit (SMIL::TextMediaType *) {}
     virtual void visit (SMIL::RefMediaType *) {}
     virtual void visit (SMIL::AVMediaType *) {}
+    virtual void visit (SMIL::Brush *) {}
     virtual void visit (RP::Imfl *) {}
     virtual void visit (RP::Crossfade *) {}
     virtual void visit (RP::Fadein *) {}

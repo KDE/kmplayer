@@ -108,10 +108,6 @@ public:
      */
     virtual void parseParam (const QString &, const QString &) {}
 
-    /**
-     * If this element is attached to a region, region_node points to it
-     */
-    NodePtrW region_node;
 protected:
     NodePtrW element;
 private:
@@ -215,7 +211,6 @@ class KMPLAYER_NO_EXPORT MediaTypeRuntime : public RemoteObject, public TimedRun
 public:
     ~MediaTypeRuntime ();
     virtual void end ();
-    virtual void started ();
     virtual void stopped ();
     virtual void parseParam (const QString & name, const QString & value);
     virtual void paint (QPainter &) {}
@@ -226,11 +221,6 @@ public:
 protected:
     MediaTypeRuntime (NodePtr e);
     ConnectionPtr document_postponed;      // pauze audio/video accordantly
-    ConnectionPtr region_sized;            // attached region is sized
-    ConnectionPtr region_paint;            // attached region needs painting
-    ConnectionPtr region_mouse_enter;      // attached region has mouse entered
-    ConnectionPtr region_mouse_leave;      // attached region has mouse left
-    ConnectionPtr region_mouse_click;      // attached region is clicked
 };
 
 /**
@@ -303,7 +293,6 @@ protected:
     void restoreModification ();
     AnimateGroupData (NodePtr e);
     NodePtrW target_element;
-    NodePtrW target_region;
     QString changed_attribute;
     QString change_to;
     int modification_id;
@@ -363,6 +352,7 @@ const short id_node_layout = 103;
 const short id_node_root_layout = 104;
 const short id_node_region = 105;
 const short id_node_regpoint = 106;
+const short id_node_transition = 107;
 const short id_node_par = 110;
 const short id_node_seq = 111;
 const short id_node_switch = 112;
@@ -371,6 +361,7 @@ const short id_node_img = 120;
 const short id_node_audio_video = 121;
 const short id_node_text = 122;
 const short id_node_ref = 123;
+const short id_node_brush = 124;
 const short id_node_set = 132;
 const short id_node_animate = 133;
 const short id_node_title = 140;
@@ -529,6 +520,18 @@ public:
 };
 
 /**
+ * Represents a transition element for starting media types
+ */
+class KMPLAYER_NO_EXPORT Transition : public Element {
+public:
+    KDE_NO_CDTOR_EXPORT Transition (NodePtr & d)
+        : Element (d, id_node_transition) {}
+    ~Transition ();
+    KDE_NO_EXPORT const char * nodeName () const { return "transition"; }
+    KDE_NO_EXPORT bool expose () const { return false; }
+};
+
+/**
  * Base for all SMIL media elements having begin/dur/end/.. attributes
  */
 class KMPLAYER_NO_EXPORT TimedMrl : public Mrl {
@@ -656,12 +659,17 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
     void opened ();
     void activate ();
+    void deactivate ();
+    void begin ();
+    void finish ();
     bool expose () const;
     void childDone (NodePtr child);
     virtual SurfacePtr getSurface (NodePtr node);
     virtual bool handleEvent (EventPtr event);
     void positionVideoWidget (); // for 'video' and 'ref' nodes
     NodePtrW external_tree; // if src points to playlist, the resolved top node
+    NodePtrW transition;
+    NodePtrW region_node;
     QString m_type;
     unsigned int bitrate;
 protected:
@@ -669,6 +677,11 @@ protected:
     NodeRefListPtr m_ActionListeners;      // mouse clicked
     NodeRefListPtr m_OutOfBoundsListeners; // mouse left
     NodeRefListPtr m_InBoundsListeners;    // mouse entered
+    ConnectionPtr region_sized;            // attached region is sized
+    ConnectionPtr region_paint;            // attached region needs painting
+    ConnectionPtr region_mouse_enter;      // attached region has mouse entered
+    ConnectionPtr region_mouse_leave;      // attached region has mouse left
+    ConnectionPtr region_mouse_click;      // attached region is clicked
 };
 
 class KMPLAYER_NO_EXPORT AVMediaType : public MediaType {
@@ -703,6 +716,12 @@ public:
     RefMediaType (NodePtr & d);
     TimedRuntime * getNewRuntime ();
     virtual bool handleEvent (EventPtr event);
+    virtual void accept (Visitor *);
+};
+
+class KMPLAYER_NO_EXPORT Brush : public MediaType {
+public:
+    Brush (NodePtr & d);
     virtual void accept (Visitor *);
 };
 
