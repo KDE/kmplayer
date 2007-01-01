@@ -299,7 +299,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
         else
             qim = ir->img_movie->framePixmap ();
         Single x, y, w = rect.width(), h = rect.height();
-        ir->sizes.calcSizes (img, rb->w, rb->h, x, y, w, h);
         if (qim.width() > 0 && qim.height() > 0 &&
                 (int)w > 0 && (int)h > 0) {
             //img_surface = cairo_xlib_surface_create (
@@ -311,7 +310,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
             cairo_pattern_t * pat = cairo_pattern_create_for_surface (img_surface);
             cairo_matrix_t matrix;
             cairo_matrix_init_identity (&matrix);
-            cairo_matrix_translate (&matrix, -x, -y);
             float xs = 1.0, ys = 1.0;
             if (ir->fit == fit_meet) {
                 float pasp = 1.0 * qim.width() / qim.height();
@@ -331,10 +329,14 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
                 else
                     xs = ys = 1.0 * w / qim.width();
             } // else fit_hidden
+            w = xs * qim.width();
+            h = ys * qim.height();
+            ir->sizes.calcSizes (img, rect.width(), rect.height(), x, y, w, h);
             cairo_matrix_scale (&matrix, 1.0/xs, 1.0/ys);
+            cairo_matrix_translate (&matrix, -x, -y);
             cairo_pattern_set_matrix (pat, &matrix);
             cairo_set_source (cr, pat);
-            cairo_rectangle (cr, 0, 0, w, h);
+            cairo_rectangle (cr, x, y, w, h);
             cairo_fill (cr);
             cairo_pattern_destroy (pat);
             cairo_surface_destroy (img_surface);

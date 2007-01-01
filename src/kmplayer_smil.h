@@ -568,6 +568,7 @@ public:
     KDE_NO_CDTOR_EXPORT ~GroupBase () {}
     bool isPlayable ();
     void finish ();
+    void deactivate ();
 protected:
     KDE_NO_CDTOR_EXPORT GroupBase (NodePtr & d, short id) : TimedMrl (d, id) {}
 };

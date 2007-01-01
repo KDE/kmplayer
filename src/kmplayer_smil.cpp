@@ -110,7 +110,9 @@ static SMIL::Region * findRegion (NodePtr p, const QString & id) {
     for (NodePtr c = p->firstChild (); c; c = c->nextSibling ()) {
         if (c->id == SMIL::id_node_region) {
             SMIL::Region * r = convertNode <SMIL::Region> (c);
-            QString a = r->getAttribute ("id");
+            QString a = r->getAttribute ("regionname");
+            if (a.isEmpty ())
+                a = r->getAttribute ("id");
             if ((a.isEmpty () && id.isEmpty ()) || a == id) {
                 //kdDebug () << "MediaType region found " << id << endl;
                 return r;
@@ -623,11 +625,16 @@ KDE_NO_EXPORT void CalculatedSizer::calcSizes (Node * node, Single w, Single h,
         }
         if (!regPoints (reg_align, rax, ray))
             rax = ray = 0; // default back to topLeft
-        xoff = w * (rpx - rax) / 100;
-        yoff = h * (rpy - ray) / 100;
-        w1 = w - w * (rpx > rax ? (rpx - rax) : (rax - rpx)) / 100;
-        h1 = h - h * (rpy > ray ? (rpy - ray) : (ray - rpy)) / 100;
-        // kdDebug () << "calc rp:" << reg_point << " ra:" << reg_align << " xoff:" << xoff << " yoff:" << yoff << " w1:" << w1 << " h1:" << h1 << endl;
+        if (!(int)w1 || !(int)h1) {
+            xoff = w * (rpx - rax) / 100;
+            yoff = h * (rpy - ray) / 100;
+            w1 = w - w * (rpx > rax ? (rpx - rax) : (rax - rpx)) / 100;
+            h1 = h - h * (rpy > ray ? (rpy - ray) : (ray - rpy)) / 100;
+        } else {
+            xoff = (w * rpx - w1 * rax) / 100;
+            yoff = (h * rpy - h1 * ray) / 100;
+        }
+        // kdDebug () << "calc rp:" << reg_point << " ra:" << reg_align <<  " w:" << (int)w << " h:" << (int)h << " xoff:" << (int)xoff << " yoff:" << (int)yoff << " w1:" << (int)w1 << " h1:" << (int)h1 << endl;
         return; // success getting sizes based on regPoint
     }
     if (left.isSet ())
@@ -1274,9 +1281,13 @@ KDE_NO_EXPORT void SMIL::Smil::activate () {
     PlayListNotify * n = document()->notify_listener;
     if (n)
         n->setCurrent (this);
-    if (layout_node)
-        convertNode <SMIL::Layout> (layout_node)->surface = Mrl::getSurface (layout_node);
-    Element::activate ();
+    SMIL::Layout * layout = convertNode <SMIL::Layout> (layout_node);
+    if (layout)
+        layout->surface = Mrl::getSurface (layout_node);
+    if (layout && layout->surface)
+        Element::activate ();
+    else
+        Element::deactivate(); // some unfortunate reset in parent doc
 }
 
 // FIXME: this should be through the deactivate() calls
@@ -1833,8 +1844,6 @@ KDE_NO_EXPORT void SMIL::TimedMrl::childBegan (NodePtr) {
  * a hand with calling propagateStop(true)
  */
 KDE_NO_EXPORT void SMIL::TimedMrl::childDone (NodePtr c) {
-    if (c->state == state_finished)
-        c->deactivate ();
     if (!active ())
         return; // forced reset
     if (c->nextSibling ())
@@ -1902,10 +1911,22 @@ KDE_NO_EXPORT bool SMIL::GroupBase::isPlayable () {
 
 KDE_NO_EXPORT void SMIL::GroupBase::finish () {
     setState (state_finished); // avoid recurstion through childDone
+    bool deactivate_children = timedRuntime()->fill!=TimedRuntime::fill_freeze;
+    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+        if (deactivate_children) {
+            if (e->active ())
+                e->deactivate ();
+        } else if (e->unfinished ())
+            e->finish ();
+    TimedMrl::finish ();
+}
+
+KDE_NO_EXPORT void SMIL::GroupBase::deactivate () {
+    setState (state_deactivated); // avoid recurstion through childDone
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         if (e->active ())
             e->deactivate ();
-    TimedMrl::finish ();
+    TimedMrl::deactivate ();
 }
 
 //-----------------------------------------------------------------------------
