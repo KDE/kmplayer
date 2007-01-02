@@ -66,9 +66,7 @@ public:
     virtual bool handleEvent (EventPtr event);
     virtual void accept (Visitor *);
     void repaint (); // called whenever something changes on image
-    Single x, y, w, h; // target area
     Fit fit;        // how to layout images
-    Matrix matrix;  // for the scale factor of outer document
     Single width, height;     // cached attributes of head
     unsigned int duration; // cached attributes of head
     TimerInfoPtrW duration_timer;

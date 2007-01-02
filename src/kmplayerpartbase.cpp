@@ -1118,22 +1118,6 @@ void Source::setInfoMessage (const QString & msg) {
     m_player->updateInfo (msg);
 }
 
-void Source::repaintRect (Single x, Single y, Single w, Single h) {
-    //kdDebug () << "repaint " << x << "," << y << " " << w << "x" << h << endl;
-    if (m_player->view ())
-     static_cast<View*>(m_player->view())->viewArea()->scheduleRepaint(x,y,w,h);
-}
-
-void Source::moveRect (Single x, Single y, Single w, Single h, Single x1, Single y1) {
-    if (m_player->view ())
-      static_cast<View*>(m_player->view())->viewArea()->moveRect(x,y,w,h,x1,y1);
-}
-
-void Source::avWidgetSizes (int x, int y, int w, int h, unsigned int * bg) {
-    if (m_player->view ())
-      static_cast<View*>(m_player->view())->viewArea ()->setAudioVideoGeometry (x, y, w, h, bg);
-}
-
 void Source::bitRates (int & preferred, int & maximal) {
     preferred = 1024 * m_player->settings ()->prefbitrate;
     maximal= 1024 * m_player->settings ()->maxbitrate;

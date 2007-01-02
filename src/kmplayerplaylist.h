@@ -242,24 +242,10 @@ ITEM_AS_POINTER(KMPlayer::Event)
  */
 class SizeEvent : public Event {
 public:
-    SizeEvent (Single x, Single y, Single w, Single h,
-            Fit f, const Matrix & m=Matrix ());
-    Single x () const;
-    Single y () const;
-    Single w () const;
-    Single h () const;
-    Single _x, _y, _w, _h;
+    SizeEvent (Single x, Single y, Single w, Single h, Fit f);
+    Single x, y, w, h;
     Fit fit;
-    Matrix matrix;
 };
-
-// Note, add rotations when needed
-KDE_NO_EXPORT inline
-Single SizeEvent::x () const { return Single (_x * matrix.a) + matrix.tx; }
-KDE_NO_EXPORT inline
-Single SizeEvent::y () const { return Single (_y * matrix.d) + matrix.ty; }
-KDE_NO_EXPORT inline Single SizeEvent::w () const { return _w * matrix.a; }
-KDE_NO_EXPORT inline Single SizeEvent::h () const { return _h * matrix.d; }
 
 /**
  * Event signaling a pointer event
@@ -611,18 +597,6 @@ public:
      */
     virtual void setInfoMessage (const QString & msg) = 0;
     /**
-     * Some rectangle needs repainting
-     */
-    virtual void repaintRect (Single x, Single y, Single w, Single h) = 0;
-    /**
-     * move a rectangle
-     */
-    virtual void moveRect (Single x, Single y, Single w, Single h, Single x1, Single y1) = 0;
-    /**
-     * Sets the video widget postion and background color if bg not NULL
-     */
-    virtual void avWidgetSizes (int x, int y, int w, int h, unsigned int *bg)=0;
-    /**
      * Ask for connection bitrates settings
      */
     virtual void bitRates (int & preferred, int & maximal) = 0;
@@ -657,14 +631,16 @@ public:
     ~Surface();
 
     virtual SurfacePtr createSurface (NodePtr owner, const SRect & rect) = 0;
+    virtual void toScreen (Single & x, Single & y, Single & w, Single & h) = 0;
     virtual void resize (const SRect & rect) = 0;
+    virtual void repaint (Single x, Single y, Single w, Single h) = 0;
+    virtual void video (Single x, Single y, Single w, Single h) = 0;
 
     NodePtrW node;
-    SRect bounds;     // bounds in in parent coord. 
-    Matrix matrix;    // translation and internal scaling
-    Single xoffset, yoffset;    // translation for aspects
-    float xscale, yscale;       // internal scaling
-
+    SRect bounds;                  // bounds in in parent coord. 
+    Single xoffset, yoffset;       // translation for aspects
+    float xscale, yscale;          // internal scaling
+    unsigned int background_color; // rgba background color
 protected:
     Surface (const SRect & rect);
 };

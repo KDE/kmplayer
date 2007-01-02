@@ -139,9 +139,6 @@ protected:
     void stateElementChanged (Node * element, Node::State os, Node::State ns);
     SurfacePtr getSurface (NodePtr node);
     void setInfoMessage (const QString & msg);
-    void repaintRect (Single x, Single y, Single w, Single h);
-    void moveRect(Single x, Single y, Single w, Single h, Single x1, Single y1);
-    void avWidgetSizes (int x, int y, int w, int h, unsigned int * bg_color);
     void bitRates (int & preferred, int & maximal);
     void setTimeout (int ms);
 

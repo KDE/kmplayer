@@ -644,7 +644,7 @@ bool Mrl::handleEvent (EventPtr) {
 }
 
 KDE_NO_CDTOR_EXPORT Surface::Surface (NodePtr n, const SRect & r)
-  : node (n), bounds (r), xscale (1.0), yscale (1.0) {}
+  : node (n), bounds (r), xscale (1.0), yscale (1.0), background_color (0) {}
 
 Surface::Surface (const SRect & r) : bounds (r) {}
 

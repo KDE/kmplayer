@@ -431,19 +431,13 @@ public:
     virtual void updateDimensions (SurfacePtr parent_surface);
 
     SurfacePtrW surface;
-    /**
-     * Creates a new transform matrix
-     */
-    Matrix transform ();
 
     Single x, y, w, h;     // unscaled values
     int z_order;
     unsigned int background_color;
-    bool have_bg_color;
 protected:
     RegionBase (NodePtr & d, short id);
     RegionRuntime * runtime;
-    Matrix m_region_transform;
     NodeRefListPtr m_SizeListeners;        // region resized
     NodeRefListPtr m_PaintListeners;       // region need repainting
 };
@@ -476,7 +470,7 @@ public:
     Region (NodePtr & d);
     KDE_NO_EXPORT const char * nodeName () const { return "region"; }
     NodePtr childFromTag (const QString & tag);
-    void calculateBounds (Single w, Single h, const Matrix & parent_transform);
+    void calculateBounds (Single w, Single h);
     virtual bool handleEvent (EventPtr event);
     virtual NodeRefListPtr listeners (unsigned int event_id);
     virtual void accept (Visitor *);

@@ -107,7 +107,10 @@ public:
     void clear () { m_first_child = 0L; }
 
     SurfacePtr createSurface (NodePtr owner, const SRect & rect);
+    void toScreen (Single & x, Single & y, Single & w, Single & h);
     void resize (const SRect & rect);
+    void repaint (Single x, Single y, Single w, Single h);
+    void video (Single x, Single y, Single w, Single h);
 
     ViewArea * view_widget;
     QPixmap * cached_image;
@@ -144,9 +147,40 @@ KDE_NO_EXPORT void ViewSurface::resize (const SRect & ) {
     rect = nrect;*/
 }
 
+KDE_NO_EXPORT
+void ViewSurface::toScreen (Single & x, Single & y, Single & w, Single & h) {
+    Matrix matrix (xoffset, yoffset, xscale, yscale);
+    matrix.translate (bounds.x (), bounds.y ());
+    for (SurfacePtr s = parentNode(); s; s = s->parentNode()) {
+        matrix.transform (Matrix (s->xoffset, s->yoffset, s->xscale, s->yscale));
+        matrix.translate (s->bounds.x (), s->bounds.y ());
+    }
+    matrix.getXYWH (x, y, w, h);
+}
+
+KDE_NO_EXPORT
+void ViewSurface::repaint (Single x, Single y, Single w, Single h) {
+    toScreen (x, y, w, h);
+    view_widget->scheduleRepaint (x, y, w, h);
+    //kdDebug() << "Surface::repaint x:" << (int)x << " y:" << (int)y << " w:" << (int)w << " h:" << (int)h << endl;
+}
+
+KDE_NO_EXPORT void ViewSurface::video (Single x, Single y, Single w, Single h) {
+    toScreen (x, y, w, h);
+    kdDebug() << "Surface::video:" << background_color << " " << (background_color & 0xff000000) << endl;
+    view_widget->setAudioVideoGeometry (x, y, w, h,
+            (background_color & 0xff000000 ? &background_color : 0));
+}
+
 //-------------------------------------------------------------------------
 
 #ifdef HAVE_CAIRO
+
+# define CAIRO_SET_SOURCE_RGB(cr,c)           \
+    cairo_set_source_rgb ((cr),               \
+            1.0 * (((c) >> 16) & 0xff) / 255, \
+            1.0 * (((c) >> 8) & 0xff) / 255,  \
+            1.0 * (((c)) & 0xff) / 255)
 
 class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
     const SRect clip;
@@ -204,11 +238,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (Node * n) {
 KDE_NO_EXPORT
 void CairoPaintVisitor::paintRegionBackground (SMIL::RegionBase * reg) {
     //kdDebug() << "Visit " << reg->nodeName() << endl;
-    if (reg->have_bg_color) {
-        cairo_set_source_rgb (cr,
-                1.0 * ((reg->background_color >> 16) & 0xff) / 255,
-                1.0 * ((reg->background_color >> 8) & 0xff) / 255,
-                1.0 * ((reg->background_color) & 0xff) / 255);
+    if (reg->surface && (reg->surface->background_color & 0xff000000)) {
+        CAIRO_SET_SOURCE_RGB (cr, reg->surface->background_color);
         cairo_paint (cr);
     }
 }
@@ -247,15 +278,18 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout * reg) {
     //kdDebug() << "Visit " << reg->nodeName() << endl;
     SMIL::RegionBase *rb = convertNode <SMIL::RegionBase> (reg->rootLayout);
     if (reg->surface && rb) {
-        rb->surface = reg->surface;
-        paintRegionBackground (rb);
-
         cairo_save (cr);
+
         SRect rect = reg->surface->bounds;
         Single xoff = reg->surface->xoffset;
         Single yoff = reg->surface->yoffset;
         cairo_rectangle (cr, xoff, yoff, rect.width() - 2 * xoff, rect.height() - 2 * yoff);
         cairo_clip (cr);
+
+        rb->surface = reg->surface;
+        rb->surface->background_color = rb->background_color;
+        paintRegionBackground (rb);
+
         cairo_translate (cr, reg->surface->xoffset, reg->surface->yoffset);
         cairo_scale (cr, reg->surface->xscale, reg->surface->yscale);
         traverseRegion (reg);
@@ -353,10 +387,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         Single x, y, w = rect.width(), h = rect.height();
         td->sizes.applyRegPoints (txt, rect.width(), rect.height(), x, y, w, h);
         if (!td->transparent) {
-            cairo_set_source_rgb (cr,
-                    1.0 * ((td->background_color >> 16) & 0xff) / 255,
-                    1.0 * ((td->background_color >> 8) & 0xff) / 255,
-                    1.0 * ((td->background_color) & 0xff) / 255);
+            CAIRO_SET_SOURCE_RGB (cr, td->background_color);
             cairo_rectangle (cr, x, y, w, h);
             cairo_fill (cr);
         }
@@ -377,10 +408,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         QPixmap pix = QPixmap::grabWidget (edit, rect.x () - (int) xoff,
                 rect.y () - (int) yoff, rect.width (), rect.height ());*/
 
-        cairo_set_source_rgb (cr,
-                1.0 * ((td->font_color >> 16) & 0xff) / 255,
-                1.0 * ((td->font_color >> 8) & 0xff) / 255,
-                1.0 * ((td->font_color) & 0xff) / 255);
+        CAIRO_SET_SOURCE_RGB (cr, td->font_color);
         cairo_set_font_size (cr, td->font_size);
         int margin = 1 + (td->font_size >> 2);
         cairo_move_to (cr, x + margin, y + margin + td->font_size);
@@ -395,10 +423,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
     SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (brush->region_node);
     if (rb && rb->surface) {
         unsigned int color = QColor (er->param ("color")).rgb ();
-        cairo_set_source_rgb (cr,
-                1.0 * ((color >> 16) & 0xff) / 255,
-                1.0 * ((color >> 8) & 0xff) / 255,
-                1.0 * ((color) & 0xff) / 255);
+        CAIRO_SET_SOURCE_RGB (cr, color);
         cairo_paint (cr);
     }
 }
@@ -449,10 +474,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Imfl * imfl) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fill * fi) {
     //kdDebug() << "Visit " << fi->nodeName() << endl;
-    cairo_set_source_rgb (cr,
-            1.0 * ((fi->color >> 16) & 0xff) / 255,
-            1.0 * ((fi->color >> 8) & 0xff) / 255,
-            1.0 * ((fi->color) & 0xff) / 255);
+    CAIRO_SET_SOURCE_RGB (cr, fi->color);
     if ((int)fi->w && (int)fi->h) {
         cairo_rectangle (cr, fi->x, fi->y, fi->w, fi->h);
         cairo_fill (cr);
@@ -502,10 +524,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadeout * fo) {
     //kdDebug() << "Visit " << fo->nodeName() << endl;
     if (fo->progress > 0) {
-        cairo_set_source_rgb (cr,
-                1.0 * ((fo->to_color >> 16) & 0xff) / 255,
-                1.0 * ((fo->to_color >> 8) & 0xff) / 255,
-                1.0 * ((fo->to_color) & 0xff) / 255);
+        CAIRO_SET_SOURCE_RGB (cr, fo->to_color);
         if (!(int)fo->w || !(int)fo->h) {
             cairo_paint_with_alpha (cr, 1.0 * fo->progress / 100);
         } else {

@@ -32,7 +32,6 @@ using namespace KMPlayer;
 
 KDE_NO_CDTOR_EXPORT RP::Imfl::Imfl (NodePtr & d)
   : Mrl (d, id_node_imfl),
-    x (0), y (0), w (0), h (0),
     fit (fit_hidden),
     duration (0) {}
 
@@ -84,9 +83,9 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
                 break;
         }
     if (width <= 0 || width > 32000)
-        width = w;
+        width = surface->bounds.width ();
     if (height <= 0 || height > 32000)
-        height = h;
+        height = surface->bounds.height ();
     if (width > 0 && height > 0) {
         surface->xscale = 1.0 * surface->bounds.width () / width;
         surface->yscale = 1.0 * surface->bounds.height () / height;
@@ -139,12 +138,7 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
 
 KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
     if (event->id () == event_sized) {
-        SizeEvent * e = static_cast <SizeEvent *> (event.ptr ());
-        x = e->x ();
-        y = e->y ();
-        w = e->w ();
-        h = e->h ();
-        fit = e->fit;
+        fit = static_cast <SizeEvent *> (event.ptr ())->fit;
         if (surface) {
             if (fit == fit_fill) {
                 surface->xscale = 1.0 * surface->bounds.width () / width;
@@ -155,11 +149,6 @@ KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
                 else
                     surface->yscale = surface->xscale;
             }
-            matrix = Matrix (0, 0,
-                    1.0 * surface->bounds.width () / width,
-                    1.0 * surface->bounds.height () / height);
-            surface->matrix = matrix;
-            matrix.transform (e->matrix);
         }
     } else if (event->id () == event_timer) {
         TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
@@ -199,11 +188,10 @@ KDE_NO_EXPORT NodePtr RP::Imfl::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void RP::Imfl::repaint () {
-    PlayListNotify * n = document()->notify_listener;
     if (!active ())
         kdWarning () << "Spurious Imfl repaint" << endl;
-    else if (n && w > 0 && h > 0)
-        n->repaintRect (x, y, w, h);
+    else if (surface && width > 0 && height > 0)
+        surface->repaint (0, 0, width, height);
 }
 
 KDE_NO_CDTOR_EXPORT RP::Image::Image (NodePtr & doc)
