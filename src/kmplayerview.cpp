@@ -667,22 +667,22 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::ViewChange * vc) {
 
 //-------------------------------------------------------------------------
 
+static int statusBarHeight (View * view) {
+    if (view->statusBar()->isVisible () && !view->viewArea()->isFullScreen ()) {
+        if (view->statusBarMode () == View::SB_Only)
+            return view->height ();
+        else 
+            return view->statusBar()->maximumSize ().height ();
+    }
+    return 0;
+}
+
 KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
  : QWidget (parent, "kde_kmplayer_viewarea", WResizeNoErase | WRepaintNoErase),
    m_parent (parent),
    m_view (view),
 #ifdef HAVE_CAIRO
-    /*cairo_surface = cairo_xlib_surface_create (qt_xdisplay (), winId (),
-            DefaultVisual (qt_xdisplay (), DefaultScreen (qt_xdisplay ())),
-            width (), height ());*/
-    cairo_surface (cairo_xlib_surface_create_with_xrender_format (
-            qt_xdisplay (),
-            winId (),
-            DefaultScreenOfDisplay (qt_xdisplay ()),
-            XRenderFindVisualFormat (qt_xdisplay (),
-                DefaultVisual (qt_xdisplay (),
-                    DefaultScreen (qt_xdisplay ()))),
-            width(), height())),
+    cairo_surface (0L),
 #endif
    m_collection (new KActionCollection (this)),
    surface (new ViewSurface (this)),
@@ -701,7 +701,8 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
 
 KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {
 #ifdef HAVE_CAIRO
-    cairo_surface_destroy (cairo_surface);
+    if (cairo_surface)
+        cairo_surface_destroy (cairo_surface);
 #endif
 }
 
@@ -738,15 +739,10 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
     m_view->controlPanel()->popupMenu ()->setItemChecked (ControlPanel::menu_fullscreen, m_fullscreen);
 
 #ifdef HAVE_CAIRO
-    cairo_surface_destroy (cairo_surface);
-    cairo_surface = cairo_xlib_surface_create_with_xrender_format (
-            qt_xdisplay (),
-            winId (),
-            DefaultScreenOfDisplay (qt_xdisplay ()),
-            XRenderFindVisualFormat (qt_xdisplay (),
-                DefaultVisual (qt_xdisplay (),
-                    DefaultScreen (qt_xdisplay ()))),
-            width (), height ());
+    if (cairo_surface) {
+        cairo_surface_destroy (cairo_surface);
+        cairo_surface = 0L;
+    }
 #endif
     if (m_fullscreen) {
         m_mouse_invisible_timer = startTimer(MOUSE_INVISIBLE_DELAY);
@@ -791,7 +787,7 @@ KDE_NO_EXPORT void ViewArea::mouseDoubleClickEvent (QMouseEvent *) {
 
 KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
     if (e->state () == Qt::NoButton) {
-        int vert_buttons_pos = height ();
+        int vert_buttons_pos = height () - statusBarHeight (m_view);
         int cp_height = m_view->controlPanel ()->maximumSize ().height ();
         m_view->delayedShowButtons (e->y() > vert_buttons_pos-cp_height &&
                                     e->y() < vert_buttons_pos);
@@ -806,6 +802,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const SRect & rect) {
         repaint (QRect(rect.x(), rect.y(), rect.width(), rect.height()), false);
         return;
     }
+#ifdef HAVE_CAIRO
     int ex = rect.x ();
     if (ex > 0)
         ex--;
@@ -814,8 +811,20 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const SRect & rect) {
         ey--;
     int ew = rect.width () + 2;
     int eh = rect.height () + 2;
-#ifdef HAVE_CAIRO
+    if (!cairo_surface)
+        cairo_surface = cairo_xlib_surface_create (qt_xdisplay (), winId (),
+                DefaultVisual (qt_xdisplay (), DefaultScreen (qt_xdisplay ())),
+                width (), height ());
+    /*cairo_surface (cairo_xlib_surface_create_with_xrender_format (
+            qt_xdisplay (),
+            winId (),
+            DefaultScreenOfDisplay (qt_xdisplay ()),
+            XRenderFindVisualFormat (qt_xdisplay (),
+                DefaultVisual (qt_xdisplay (),
+                    DefaultScreen (qt_xdisplay ()))),
+            width(), height()))*/
     Visitor * v = new CairoPaintVisitor (cairo_surface, SRect (ex, ey, ew, eh));
+    //Visitor * v = new CairoPaintVisitor (cairo_surface, rect);
     surface->node->accept (v);
     //cairo_surface_flush (cairo_surface);
     delete v;
@@ -824,9 +833,11 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const SRect & rect) {
 }
 
 KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
+#ifdef HAVE_CAIRO
     if (surface->node)
         scheduleRepaint (pe->rect ().x (), pe->rect ().y (), pe->rect ().width (), pe->rect ().height ());
     else
+#endif
         QWidget::paintEvent (pe);
 }
 
@@ -841,9 +852,10 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     int w = width ();
     int h = height ();
 #ifdef HAVE_CAIRO
-    cairo_xlib_surface_set_size (cairo_surface, width (), height ());
+    if (cairo_surface)
+        cairo_xlib_surface_set_size (cairo_surface, width (), height ());
 #endif
-    int hsb = m_view->statusBar ()->isVisible () && !isFullScreen () ? (m_view->statusBarMode () == View::SB_Only ? h : m_view->statusBar()->maximumSize ().height ()) : 0;
+    int hsb = statusBarHeight (m_view);
     int hcp = m_view->controlPanel ()->isVisible () ? (m_view->controlPanelMode () == View::CP_Only ? h-hsb: m_view->controlPanel()->maximumSize ().height ()) : 0;
     int wws = w;
     // move controlpanel over video when autohiding and playing
@@ -1316,8 +1328,12 @@ KDE_NO_EXPORT void View::updateVolume () {
 
 void View::showWidget (WidgetType wt) {
     m_widgetstack->raiseWidget (m_widgettypes [wt]);
-    if (m_widgetstack->visibleWidget () == m_widgettypes[WT_Console])
+    if (m_widgetstack->visibleWidget () == m_widgettypes[WT_Console]) {
         addText (QString (""), false);
+        if (m_controlpanel_mode == CP_AutoHide && m_playing)
+            m_control_panel->show();
+    } else
+        delayedShowButtons (false);
     updateLayout ();
 }
 
@@ -1338,18 +1354,23 @@ void View::setControlPanelMode (ControlPanelMode m) {
     m_old_controlpanel_mode = m_controlpanel_mode = m;
     if (m_playing && isFullScreen())
         m_controlpanel_mode = CP_AutoHide;
-    if (m_control_panel)
-        if (m_controlpanel_mode == CP_Show || m_controlpanel_mode == CP_Only)
+    if ((m_controlpanel_mode == CP_Show || m_controlpanel_mode == CP_Only) &&
+            !m_control_panel->isVisible ()) {
+        m_control_panel->show ();
+        m_view_area->resizeEvent (0L);
+    } else if (m_controlpanel_mode == CP_AutoHide) { 
+        if ((m_playing &&
+                m_widgetstack->visibleWidget () == m_widgettypes[WT_Video]) ||
+                m_widgetstack->visibleWidget () == m_widgettypes[WT_Picture])
+            delayedShowButtons (false);
+        else if (!m_control_panel->isVisible ()) {
             m_control_panel->show ();
-        else if (m_controlpanel_mode == CP_AutoHide) { 
-            if (m_playing || m_widgetstack->visibleWidget () == m_widgettypes[WT_Picture])
-                delayedShowButtons (false);
-            else
-                m_control_panel->show ();
-        } else
-            m_control_panel->hide ();
-    //m_view_area->setMouseTracking (m_controlpanel_mode == CP_AutoHide && m_playing);
-    m_view_area->resizeEvent (0L);
+            m_view_area->resizeEvent (0L);
+        }
+    } else if (m_controlpanel_mode == CP_Hide && m_control_panel->isVisible()) {
+        m_control_panel->hide ();
+        m_view_area->resizeEvent (0L);
+    }
 }
 
 void View::setStatusBarMode (StatusBarMode m) {
@@ -1362,12 +1383,18 @@ void View::setStatusBarMode (StatusBarMode m) {
 }
 
 KDE_NO_EXPORT void View::delayedShowButtons (bool show) {
-    if (m_controlpanel_mode != CP_AutoHide || controlbar_timer ||
-        (m_control_panel &&
-         (show && m_control_panel->isVisible ()) || 
-         (!show && !m_control_panel->isVisible ())))
-        return;
-    controlbar_timer = startTimer (500);
+    if ((show && m_control_panel->isVisible ()) || 
+            (!show && !m_control_panel->isVisible ())) {
+        if (controlbar_timer) {
+            killTimer (controlbar_timer);
+            controlbar_timer = 0;
+        }
+    } else if (m_controlpanel_mode == CP_AutoHide &&
+            (m_playing ||
+             m_widgetstack->visibleWidget () == m_widgettypes[WT_Picture]) &&
+            m_widgetstack->visibleWidget () != m_widgettypes[WT_Console] &&
+            !controlbar_timer)
+        controlbar_timer = startTimer (500);
 }
 
 KDE_NO_EXPORT void View::setVolume (int vol) {
@@ -1396,22 +1423,25 @@ void View::setKeepSizeRatio (bool b) {
 KDE_NO_EXPORT void View::timerEvent (QTimerEvent * e) {
     if (e->timerId () == controlbar_timer) {
         controlbar_timer = 0;
-        if (!m_playing && m_widgetstack->visibleWidget () != m_widgettypes[WT_Picture])
-            return;
-        int vert_buttons_pos = m_view_area->height ();
-        int mouse_pos = m_view_area->mapFromGlobal (QCursor::pos ()).y();
-        int cp_height = m_control_panel->maximumSize ().height ();
-        bool mouse_on_buttons = (//m_view_area->hasMouse () && 
-                mouse_pos >= vert_buttons_pos-cp_height &&
-                mouse_pos <= vert_buttons_pos);
-        if (m_control_panel)
-            if (mouse_on_buttons && !m_control_panel->isVisible ())
+        if (m_playing ||
+                m_widgetstack->visibleWidget () == m_widgettypes[WT_Picture]) {
+            int vert_buttons_pos = m_view_area->height()-statusBarHeight (this);
+            QPoint mouse_pos = m_view_area->mapFromGlobal (QCursor::pos ());
+            int cp_height = m_control_panel->maximumSize ().height ();
+            bool mouse_on_buttons = (//m_view_area->hasMouse () && 
+                    mouse_pos.y () >= vert_buttons_pos-cp_height &&
+                    mouse_pos.y ()<= vert_buttons_pos &&
+                    mouse_pos.x () > 0 && mouse_pos.x () < width());
+            if (mouse_on_buttons && !m_control_panel->isVisible ()) {
                 m_control_panel->show ();
-            else if (!mouse_on_buttons && m_control_panel->isVisible ())
+                m_view_area->resizeEvent (0L);
+            } else if (!mouse_on_buttons && m_control_panel->isVisible ()) {
                 m_control_panel->hide ();
+                m_view_area->resizeEvent (0L);
+            }
+        }
     }
     killTimer (e->timerId ());
-    m_view_area->resizeEvent (0L);
 }
 
 void View::addText (const QString & str, bool eol) {
@@ -1477,18 +1507,20 @@ KDE_NO_EXPORT void View::playingStart () {
 }
 
 KDE_NO_EXPORT void View::playingStop () {
-    if (m_control_panel && m_controlpanel_mode == CP_AutoHide) {
+    if (m_controlpanel_mode == CP_AutoHide &&
+            m_widgetstack->visibleWidget () != m_widgettypes[WT_Picture]) {
         m_control_panel->show ();
         //m_view_area->setMouseTracking (false);
     }
+    killTimer (controlbar_timer);
+    controlbar_timer = 0;
     m_playing = false;
     XClearWindow (qt_xdisplay(), m_viewer->embeddedWinId ());
     m_view_area->resizeEvent (0L);
 }
 
 KDE_NO_EXPORT void View::leaveEvent (QEvent *) {
-    if (m_controlpanel_mode == CP_AutoHide && m_playing)
-        delayedShowButtons (false);
+    delayedShowButtons (false);
 }
 
 KDE_NO_EXPORT void View::reset () {
@@ -1558,9 +1590,10 @@ KDE_NO_EXPORT bool View::x11Event (XEvent * e) {
             fprintf (stderr, "colormap notify\n");
             return true;*/
         case MotionNotify:
-            if (m_playing && e->xmotion.window == m_viewer->embeddedWinId ())
+            if (e->xmotion.window == m_viewer->embeddedWinId ())
                 delayedShowButtons (e->xmotion.y > m_view_area->height () -
-                                    m_control_panel->maximumSize ().height ());
+                        statusBarHeight (this) -
+                        m_control_panel->maximumSize ().height ());
             m_view_area->mouseMoved ();
             break;
         case MapNotify:
