@@ -186,7 +186,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
                 for (QStringList::const_iterator i = sl.begin (); i != e; ++i) {
                     QString val_lower ((*i).lower ());
                     if (val_lower == QString::fromLatin1("imagewindow")) {
-                        SET_FEAT_ON (Feat_Viewer)
+                        SET_FEAT_ON (Feat_ImageWindow | Feat_Viewer)
                     } else if (val_lower == QString::fromLatin1("all")) {
                         m_features = (Feat_Controls | Feat_StatusBar);
                     } else if (val_lower == QString::fromLatin1("tacctrl")) {
@@ -247,7 +247,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
             } else if (name == QString::fromLatin1("uimode")) {
                 QString val_lower (value.lower ());
                 if (val_lower == QString::fromLatin1("full"))
-                    SET_FEAT_ON (Feat_All & ~Feat_PlayList)
+                    SET_FEAT_ON (Feat_All & ~(Feat_PlayList | Feat_ImageWindow))
                 // TODO: invisible, none, mini
             } else if (name == QString::fromLatin1("nolabels")) {
                 SET_FEAT_OFF (Feat_Label)
@@ -291,7 +291,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     }
     if (turned_off_features) {
         if (m_features == Feat_Unknown)
-            m_features = (Feat_All & ~Feat_PlayList);
+            m_features = (Feat_All & ~(Feat_PlayList | Feat_ImageWindow));
         m_features &= ~turned_off_features;
     }
     //KParts::Part::setWidget (m_view);
@@ -313,7 +313,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
             m_view->setStatusBarMode (KMPlayer::View::SB_Show);
         if (m_features & (Feat_Controls | Feat_VolumeSlider))
             m_view->setControlPanelMode (m_features & Feat_Viewer ? KMPlayer::View::CP_Show : KMPlayer::View::CP_Only);
-        else if (m_features != Feat_Unknown)
+        else if (m_features & Feat_ImageWindow)
             m_view->setControlPanelMode (KMPlayer::View::CP_Hide);
         else
             m_view->setControlPanelMode (KMPlayer::View::CP_AutoHide);
