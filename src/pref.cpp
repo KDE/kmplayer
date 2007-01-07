@@ -489,16 +489,16 @@ KDE_NO_EXPORT void PrefRecordPage::replayClicked (int id) {
 
 KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
     connect (m_player->source (), SIGNAL (stopPlaying ()),
-             this, SLOT (slotNotPlaying ()));
-    if (m_player->process ())
+             this, SLOT (playingStopped ()));
+    if (m_player->process () && m_player->process ()->playing ())
         m_player->process ()->quit ();
     else
-        slotNotPlaying ();
+        playingStopped ();
 }
 
-KDE_NO_EXPORT void PrefRecordPage::slotNotPlaying () {
+KDE_NO_EXPORT void PrefRecordPage::playingStopped () {
     disconnect (m_player->source (), SIGNAL (stopPlaying ()),
-                this, SLOT (slotNotPlaying ()));
+                this, SLOT (playingStopped ()));
     if (!url->lineEdit()->text().isEmpty()) {
         m_player->settings ()->recordfile = url->lineEdit()->text();
         m_player->settings ()->replaytime = replaytime->text ().toInt ();
