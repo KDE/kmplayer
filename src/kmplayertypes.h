@@ -54,6 +54,10 @@ class KMPLAYER_NO_EXPORT Single {
     friend bool operator < (const int i, const Single s);
     friend bool operator <= (const Single s1, const Single s2);
     friend bool operator <= (const Single s, const int i);
+#ifdef _KDEBUG_H_
+    friend kdbgstream & operator << (kdbgstream &, Single s);
+    friend kndbgstream & operator << (kndbgstream &, Single s);
+#endif
     friend Single operator - (const Single s);
 public:
     Single () : value (0) {}
@@ -113,6 +117,16 @@ public:
 
 //-----------------------------------------------------------------------------
 
+#ifdef _KDEBUG_H_
+inline kdbgstream & operator << (kdbgstream & dbg, Single s) {
+    dbg << (int)s;
+    if (s.value & 0xff)
+        dbg << " " << (s.value & 0xff) << "/" << 256;
+    return dbg;
+}
+
+inline kndbgstream & operator << (kndbgstream & dbg, Single) { return dbg; }
+#endif
 
 inline Single & Single::operator *= (const Single & s) {
     value = (((int64_t)value) * s.value) >> 8;
