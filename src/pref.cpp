@@ -233,7 +233,7 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
     adjustvolume = new QCheckBox(i18n("Auto set volume on start"), playbox);
     QWhatsThis::add (adjustvolume, i18n ("When a new source is selected, the volume will be set according the volume control"));
     adjustcolors = new QCheckBox(i18n("Auto set colors on start"), playbox);
-    QWhatsThis::add (adjustcolors, i18n ("When a movie start, the colors will be set according the sliders for colors"));
+    QWhatsThis::add (adjustcolors, i18n ("When a movie starts, the colors will be set according the sliders for colors"));
 
     QGroupBox * gbox =new QGroupBox (1, Qt::Vertical, i18n("Control Panel"), this);
     bbox =new QWidget (gbox);
@@ -370,10 +370,10 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     QWidget * wbox = new QWidget (cbox);
     QGridLayout * bitratelayout = new QGridLayout (wbox, 2, 3, 5);
     prefBitRate = new QLineEdit (wbox);
-    QWhatsThis::add (prefBitRate, i18n("Sometimes it's possible to choose between various streams given a particular bitrate.\nThis option sets how much bandwidth you would like to spend for video"));
+    QWhatsThis::add (prefBitRate, i18n("Sometimes it is possible to choose between various streams given a particular bitrate.\nThis option sets how much bandwidth you would prefer to allocate to video."));
     maxBitRate = new QLineEdit (wbox);
-    QWhatsThis::add (maxBitRate, i18n("Sometimes it's possible to choose between various streams given a particular bitrate.\nThis option sets how much bandwidth you can spend for video"));
-    bitratelayout->addWidget(new QLabel(i18n("Prefered bitrate:"), wbox), 0, 0);
+    QWhatsThis::add (maxBitRate, i18n("Sometimes it is possible to choose between various streams given a particular bitrate.\nThis option sets the maximum bandwidth you have available for video."));
+    bitratelayout->addWidget(new QLabel(i18n("Preferred bitrate:"), wbox), 0, 0);
     bitratelayout->addWidget (prefBitRate, 0, 1);
     bitratelayout->addWidget (new QLabel (i18n ("kbit/s"), wbox), 0, 2);
     bitratelayout->addWidget (new QLabel(i18n("Maximum bitrate:"), wbox), 1, 0);
@@ -821,9 +821,9 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : QF
     QWhatsThis::add( fastPreset, i18n( "Enable mplayer's fast postprocessing filters" ) );
     PostprocessingOptions->changeTab( presetSelectionWidget, i18n( "General" ) );
     customFilters->setTitle( QString::null );
-    QWhatsThis::add( HzDeblockAQuality, i18n( "Filter is used if there's enough CPU" ) );
-    QWhatsThis::add( VtDeblockAQuality, i18n( "Filter is used if there's enough CPU" ) );
-    QWhatsThis::add( DeringAQuality, i18n( "Filter is used if there's enough CPU" ) );
+    QWhatsThis::add( HzDeblockAQuality, i18n( "Filter is used if there is enough CPU" ) );
+    QWhatsThis::add( VtDeblockAQuality, i18n( "Filter is used if there'is enough CPU" ) );
+    QWhatsThis::add( DeringAQuality, i18n( "Filter is used if there is enough CPU" ) );
     //QWhatsThis::add( TmpNoiseSlider, i18n( "Strength of the noise reducer" ) );
     QWhatsThis::add( AutolevelsFullrange, i18n( "Stretches luminance to full range (0..255)" ) );
     PostprocessingOptions->changeTab( customFiltersWidget, i18n( "Custom Preset" ) );

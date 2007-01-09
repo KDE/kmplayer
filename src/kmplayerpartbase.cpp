@@ -1441,7 +1441,7 @@ KDE_NO_EXPORT void URLSource::stopResolving () {
         for (SharedPtr <ResolveInfo> ri = m_resolve_info; ri; ri = ri->next)
             ri->job->kill ();
         m_resolve_info = 0L;
-        m_player->updateStatus (i18n ("Disonnected"));
+        m_player->updateStatus (i18n ("Disconnected"));
         m_player->setLoaded (100);
     }
 }

@@ -656,7 +656,7 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
             }
         }
         if (!more && count > 10) {
-            more = new Group (recents, this, i18n ("More ..."));
+            more = new Group (recents, this, i18n ("More..."));
             recents->appendChild (more);
         }
         if (more) {
@@ -706,7 +706,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotSourceChanged (KMPlayer::Source *olds, KMPla
 }
 
 KDE_NO_EXPORT void KMPlayerApp::dvdNav () {
-    slotStatusMsg(i18n("DVD Navigation ..."));
+    slotStatusMsg(i18n("DVD Navigation..."));
     m_player->setSource (m_player->sources () ["dvdnavsource"]);
     slotStatusMsg(i18n("Ready"));
 }
