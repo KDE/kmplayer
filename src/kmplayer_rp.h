@@ -25,12 +25,11 @@
 #include <qstring.h>
 
 #include "kmplayerplaylist.h"
+#include "kmplayer_smil.h"
 
 namespace KIO {
     class Job;
 }
-class QPixmap;
-class QImage;
 
 namespace KMPlayer {
 
@@ -71,6 +70,7 @@ public:
     unsigned int duration; // cached attributes of head
     TimerInfoPtrW duration_timer;
     SurfacePtr surface;
+    int needs_scene_img;
 };
 
 class KMPLAYER_NO_EXPORT TimingsBase  : public Element {
@@ -161,6 +161,7 @@ public:
     KDE_NO_EXPORT virtual const char * nodeName() const { return "viewchange"; }
     virtual void activate ();
     virtual void begin ();
+    virtual void finish ();
     virtual void accept (Visitor *);
 };
 
@@ -174,7 +175,11 @@ public:
     virtual void deactivate ();
     virtual void closed ();
     bool isReady (bool postpone_if_not = false); // is downloading ready
-    QImage * image;
+#ifdef HAVE_CAIRO
+    cairo_surface_t * img_surface;
+    int width, height;
+#endif
+    CachedImage cached_img;
     //bool expose () const { return false; }
 protected:
     virtual void remoteReady (QByteArray & data);

@@ -28,8 +28,12 @@
 
 #include "kmplayerplaylist.h"
 
+#ifdef HAVE_CAIRO
+# include <cairo.h>
+#endif
+
 class QTextStream;
-class QPixmap;
+class QImage;
 class QPainter;
 
 namespace KIO {
@@ -37,6 +41,27 @@ namespace KIO {
 }
 
 namespace KMPlayer {
+
+struct KMPLAYER_NO_EXPORT ImageData {
+    ImageData( const QString & img);
+    ~ImageData();
+    bool isEmpty ();
+#ifdef HAVE_CAIRO
+    cairo_surface_t * getCairoSurface (cairo_surface_t * similar);
+    cairo_surface_t * img_surface;
+    int width, height;
+#endif
+    QString url;
+    QImage * image;
+};
+
+typedef SharedPtr <ImageData> ImageDataPtr;
+typedef WeakPtr <ImageData> ImageDataPtrW;
+
+struct KMPLAYER_NO_EXPORT CachedImage {
+    void setUrl (const QString & url);
+    ImageDataPtr data;
+};
 
 class ElementRuntimePrivate;
 class TextRuntimePrivate;
@@ -242,8 +267,8 @@ public:
     ~ImageRuntime ();
     virtual void parseParam (const QString & name, const QString & value);
     virtual void postpone (bool b);
-    QPixmap * image;
     QMovie * img_movie;
+    CachedImage cached_img;
     QString url;
     bool have_frame;
 protected:
@@ -657,7 +682,8 @@ public:
     virtual bool handleEvent (EventPtr event);
     void positionVideoWidget (); // for 'video' and 'ref' nodes
     NodePtrW external_tree; // if src points to playlist, the resolved top node
-    NodePtrW transition;
+    NodePtrW trans_in;
+    NodePtrW trans_out;
     NodePtrW region_node;
     QString m_type;
     unsigned int bitrate;

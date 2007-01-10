@@ -58,11 +58,13 @@
 #include <kfinddialog.h>
 #include <dcopclient.h>
 #include <kglobalsettings.h>
+#include <kstaticdeleter.h>
 
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
 #include "kmplayersource.h"
 #include "playlistview.h"
+#include "kmplayer_smil.h"
 
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
@@ -72,9 +74,8 @@ static const int XKeyPress = KeyPress;
 #ifdef HAVE_CAIRO
 
 # include <cairo-xlib.h>
-# include <cairo-xlib-xrender.h>
+//# include <cairo-xlib-xrender.h>
 
-# include "kmplayer_smil.h"
 # include "kmplayer_rp.h"
 #endif
 #undef KeyPress
@@ -93,6 +94,86 @@ extern const char * playlist_xpm[];
 
 
 using namespace KMPlayer;
+
+//-------------------------------------------------------------------------
+
+namespace KMPlayer {
+    typedef QMap <QString, ImageDataPtrW> ImageDataMap;
+    static KStaticDeleter <ImageDataMap> imageCacheDeleter;
+    static ImageDataMap * image_data_map;
+}
+
+ImageData::ImageData( const QString & img) :
+#ifdef HAVE_CAIRO
+    img_surface (0L),
+#endif
+    url (img),
+    image (0L) {
+        if (img.isEmpty ())
+            kdDebug() << "New ImageData for " << this << endl;
+        else
+            kdDebug() << "New ImageData for " << img << endl;
+    }
+
+ImageData::~ImageData() {
+    if (url.isEmpty ())
+        kdDebug() << "Delete ImageData for " << this << endl;
+    else
+        kdDebug() << "Delete ImageData for " << url << endl;
+    if (!url.isEmpty ())
+        image_data_map->erase (url);
+#ifdef HAVE_CAIRO
+    if (img_surface)
+        cairo_surface_destroy (img_surface);
+#endif
+    delete image;
+}
+
+#ifdef HAVE_CAIRO
+cairo_surface_t * ImageData::getCairoSurface (cairo_surface_t * similar) {
+    if (img_surface)
+        return img_surface;
+    if (!image)
+        return 0L;
+    width = image->width ();
+    height = image->height ();
+    cairo_surface_t * sf = cairo_image_surface_create_for_data (
+            image->bits (), CAIRO_FORMAT_ARGB32,
+            width, height, width*4);
+    img_surface = cairo_surface_create_similar (
+            similar, CAIRO_CONTENT_COLOR_ALPHA, width, height);
+    cairo_t * c = cairo_create (img_surface);
+    cairo_pattern_t * cp = cairo_pattern_create_for_surface (sf);
+    cairo_pattern_set_extend (cp, CAIRO_EXTEND_NONE);
+    cairo_set_source (c, cp);
+    cairo_paint (c);
+    cairo_pattern_destroy (cp);
+    cairo_surface_destroy (sf);
+    cairo_destroy (c);
+    delete image;
+    image = 0;
+    return img_surface;
+}
+
+#endif
+
+bool ImageData::isEmpty () {
+    return !(image || img_surface);
+}
+
+void CachedImage::setUrl (const QString & url) {
+    if (url.isEmpty ()) {
+        data = ImageDataPtr (new ImageData (url));
+    } else {
+        ImageDataMap::iterator i = image_data_map->find (url);
+        if (i == image_data_map->end ()) {
+            data = ImageDataPtr (new ImageData (url));
+            i = image_data_map->insert (url, ImageDataPtrW (data));
+        } else {
+            data = i.data ();
+        }
+    }
+}
 
 //-------------------------------------------------------------------------
 
@@ -176,6 +257,102 @@ KDE_NO_EXPORT void ViewSurface::video (Single x, Single y, Single w, Single h) {
 
 #ifdef HAVE_CAIRO
 
+//# define USE_CAIRO_GLITZ
+
+static cairo_surface_t * cairoCreateX11Surface (Window id, int w, int h) {
+    return cairo_xlib_surface_create (qt_xdisplay (), (id),
+            DefaultVisual (qt_xdisplay (), DefaultScreen (qt_xdisplay ())),
+            (w), (h));
+    /*cairo_surface (cairo_xlib_surface_create_with_xrender_format (
+            qt_xdisplay (),
+            winId (),
+            DefaultScreenOfDisplay (qt_xdisplay ()),
+            XRenderFindVisualFormat (qt_xdisplay (),
+                DefaultVisual (qt_xdisplay (),
+                    DefaultScreen (qt_xdisplay ()))),
+            width(), height()))*/
+}
+# ifndef USE_CAIRO_GLITZ
+cairo_surface_t * (*cairoCreateSurface)(Window, int, int)=cairoCreateX11Surface;
+# else
+
+#  include <cairo-glitz.h>
+#  include <glitz.h>
+#  include <glitz-glx.h>
+
+glitz_drawable_t * glitz_drawable = 0L; // FIXME add in ViewArea
+
+static cairo_surface_t * cairoCreateSurface (Window id, int w, int h) {
+    glitz_drawable_format_t  formatDrawableTemplate;
+    formatDrawableTemplate.doublebuffer = 1;
+    unsigned long mask = GLITZ_FORMAT_DOUBLEBUFFER_MASK;
+    glitz_drawable_format_t* draw_fmt = NULL;
+    glitz_drawable_format_t* fmt = 0L;
+    XVisualInfo* pVisualInfo;
+    VisualID vis_id = XVisualIDFromVisual (DefaultVisual (qt_xdisplay (),
+                DefaultScreen (qt_xdisplay ())));
+    int i = 0;
+    do {
+        fmt = glitz_glx_find_window_format (
+                qt_xdisplay (),
+                DefaultScreen (qt_xdisplay ()),
+                mask,
+                &formatDrawableTemplate,
+                i++);
+        if (fmt) {
+            pVisualInfo = glitz_glx_get_visual_info_from_format (
+                    qt_xdisplay (), DefaultScreen (qt_xdisplay()), fmt);
+            kdDebug() << "depth = " << pVisualInfo->depth << " id:" << pVisualInfo->visualid << endl;
+            if (pVisualInfo->visualid == vis_id) {
+            //if (pVisualInfo->depth == 32) {
+                  //DefaultDepth(qt_xdisplay(), DefaultScreen(qt_xdisplay()))) {
+                draw_fmt = fmt;
+                break;
+            } else if (!draw_fmt)
+                draw_fmt = fmt;
+        }
+    } while (fmt);
+    if (!draw_fmt)
+        return cairoCreateX11Surface (id, w, h);
+
+    glitz_drawable_t * drawable = glitz_glx_create_drawable_for_window (
+            qt_xdisplay (), DefaultScreen (qt_xdisplay()), draw_fmt, id, w, h);
+    if (!drawable) {
+        kdWarning() << "failed to create glitz drawable on screen " << DefaultScreen (qt_xdisplay()) << endl;
+        return cairoCreateX11Surface (id, w, h);
+    }
+
+    glitz_format_t formatTemplate;
+    formatTemplate.color = draw_fmt->color;
+    formatTemplate.color.fourcc = GLITZ_FOURCC_RGB;
+
+    glitz_format_t* format = glitz_find_format (drawable,
+            GLITZ_FORMAT_RED_SIZE_MASK   |
+            GLITZ_FORMAT_GREEN_SIZE_MASK |
+            GLITZ_FORMAT_BLUE_SIZE_MASK  |
+            GLITZ_FORMAT_ALPHA_SIZE_MASK |
+            GLITZ_FORMAT_FOURCC_MASK,
+            &formatTemplate,
+            0);
+    //glitz_format_t* format = glitz_find_standard_format (
+    //        drawable, GLITZ_STANDARD_ARGB32);
+    glitz_surface_t * pGlitzSurface = glitz_surface_create (
+            drawable, format, w, h, 0, NULL);
+    if (draw_fmt->doublebuffer)
+        glitz_surface_attach (pGlitzSurface,
+                drawable,
+                GLITZ_DRAWABLE_BUFFER_BACK_COLOR);
+    else
+        glitz_surface_attach (pGlitzSurface,
+                drawable,
+                GLITZ_DRAWABLE_BUFFER_FRONT_COLOR);
+    cairo_surface_t* pCairoSurface = cairo_glitz_surface_create (pGlitzSurface);
+    glitz_surface_destroy (pGlitzSurface);
+    glitz_drawable = drawable;
+    return pCairoSurface;
+}
+# endif
+
 # define CAIRO_SET_SOURCE_RGB(cr,c)           \
     cairo_set_source_rgb ((cr),               \
             1.0 * (((c) >> 16) & 0xff) / 255, \
@@ -184,9 +361,9 @@ KDE_NO_EXPORT void ViewSurface::video (Single x, Single y, Single w, Single h) {
 
 class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
     const SRect clip;
+    cairo_surface_t * cairo_surface;
     void paintRegionBackground (SMIL::RegionBase * reg);
     void traverseRegion (SMIL::RegionBase * reg);
-    cairo_pattern_t * fetchCurrentImage ();
 public:
     cairo_t * cr;
     CairoPaintVisitor (cairo_surface_t * cs, const SRect & rect);
@@ -211,23 +388,31 @@ public:
 
 KDE_NO_CDTOR_EXPORT
 CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, const SRect & rect)
- : clip (rect) {
+ : clip (rect), cairo_surface (cs) {
     cr = cairo_create (cs);
     cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
     cairo_clip (cr);
     cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
     cairo_set_tolerance (cr, 0.5 );
+# ifndef USE_CAIRO_GLITZ
     cairo_push_group (cr);
+#endif
     cairo_set_source_rgb (cr, 0, 0, 0);
     cairo_paint (cr);
 }
 
 KDE_NO_CDTOR_EXPORT CairoPaintVisitor::~CairoPaintVisitor () {
+# ifndef USE_CAIRO_GLITZ
     cairo_pattern_t * pat = cairo_pop_group (cr);
     cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
     cairo_set_source (cr, pat);
     cairo_paint (cr);
     cairo_pattern_destroy (pat);
+# else
+    cairo_surface_flush (cairo_surface);
+    if (glitz_drawable)
+        glitz_drawable_swap_buffers (glitz_drawable);
+#endif
     cairo_destroy (cr);
 }
 
@@ -320,51 +505,43 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     //kdDebug() << "Visit " << img->nodeName() << endl;
     ImageRuntime * ir = static_cast <ImageRuntime *> (img->getRuntime ());
     SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (img->region_node);
-    if (rb && rb->surface &&
-            ((ir->image && !ir->image->isNull ()) ||
-             (ir->img_movie && !ir->img_movie->isNull ())) &&
+    ImageData * id = ir->cached_img.data.ptr ();
+    if (rb && rb->surface && id && !id->isEmpty () &&
             (ir->timingstate == TimedRuntime::timings_started ||
              (ir->timingstate == TimedRuntime::timings_stopped &&
               ir->fill == TimedRuntime::fill_freeze))) {
         SRect rect = rb->surface->bounds;
-        QImage qim;
-        if (ir->image)
-            qim = *ir->image;
-        else
-            qim = ir->img_movie->framePixmap ();
         Single x, y, w = rect.width(), h = rect.height();
-        if (qim.width() > 0 && qim.height() > 0 &&
+        cairo_pattern_t * pat = cairo_pattern_create_for_surface
+            (id->getCairoSurface (cairo_surface));
+        if (id && !id->isEmpty () && id->width > 0 && id->height > 0 &&
                 (int)w > 0 && (int)h > 0) {
             //img_surface = cairo_xlib_surface_create (
             //        qt_xdisplay (), px.handle(),
             //        (Visual*)px.x11Visual (), px.width(), px.height());
-            cairo_surface_t *img_surface = cairo_image_surface_create_for_data (
-                        qim.bits(), CAIRO_FORMAT_ARGB32,
-                        qim.width(), qim.height(), qim.width()*4);
-            cairo_pattern_t * pat = cairo_pattern_create_for_surface (img_surface);
             cairo_matrix_t matrix;
             cairo_matrix_init_identity (&matrix);
             float xs = 1.0, ys = 1.0;
             if (ir->fit == fit_meet) {
-                float pasp = 1.0 * qim.width() / qim.height();
+                float pasp = 1.0 * id->width / id->height;
                 float rasp = 1.0 * w / h;
                 if (pasp > rasp)
-                    xs = ys = 1.0 * w / qim.width();
+                    xs = ys = 1.0 * w / id->width;
                 else
-                    xs = ys = 1.0 * h / qim.height();
+                    xs = ys = 1.0 * h / id->height;
             } else if (ir->fit == fit_fill) {
-                xs = 1.0 * w / qim.width();
-                ys = 1.0 * h / qim.height();
+                xs = 1.0 * w / id->width;
+                ys = 1.0 * h / id->height;
             } else if (ir->fit == fit_slice) {
-                float pasp = 1.0 * qim.width() / qim.height();
+                float pasp = 1.0 * id->width / id->height;
                 float rasp = 1.0 * w / h;
                 if (pasp > rasp)
-                    xs = ys = 1.0 * h / qim.height();
+                    xs = ys = 1.0 * h / id->height;
                 else
-                    xs = ys = 1.0 * w / qim.width();
+                    xs = ys = 1.0 * w / id->width;
             } // else fit_hidden
-            w = xs * qim.width();
-            h = ys * qim.height();
+            w = xs * id->width;
+            h = ys * id->height;
             ir->sizes.applyRegPoints (img, rect.width(), rect.height(),x,y,w,h);
             cairo_matrix_scale (&matrix, 1.0/xs, 1.0/ys);
             cairo_matrix_translate (&matrix, -x, -y);
@@ -373,7 +550,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
             cairo_rectangle (cr, x, y, w, h);
             cairo_fill (cr);
             cairo_pattern_destroy (pat);
-            cairo_surface_destroy (img_surface);
+            //cairo_surface_destroy (img_surface);
         }
     }
 }
@@ -438,7 +615,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Imfl * imfl) {
         cairo_clip (cr);
         cairo_translate (cr, xoff, yoff);
         cairo_scale (cr, imfl->surface->xscale, imfl->surface->yscale);
-        cairo_push_group (cr);
+        if (imfl->needs_scene_img)
+            cairo_push_group (cr);
         for (NodePtr n = imfl->firstChild (); n; n = n->nextSibling ())
             if (n->state >= Node::state_began &&
                     n->state < Node::state_deactivated) {
@@ -463,11 +641,13 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Imfl * imfl) {
                         break;
                 }
             }
-        cairo_pattern_t * pat = cairo_pop_group (cr);
-        cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
-        cairo_set_source (cr, pat);
-        cairo_paint (cr);
-        cairo_pattern_destroy (pat);
+        if (imfl->needs_scene_img) {
+            cairo_pattern_t * pat = cairo_pop_group (cr);
+            cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
+            cairo_set_source (cr, pat);
+            cairo_paint (cr);
+            cairo_pattern_destroy (pat);
+        }
         cairo_restore (cr);
     }
 }
@@ -485,19 +665,16 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fill * fi) {
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
     //kdDebug() << "Visit " << fi->nodeName() << endl;
     if (fi->target && fi->target->id == RP::id_node_image) {
-        RP::Image * img = static_cast <RP::Image *> (fi->target.ptr ());
-        if (img->image) {
-            cairo_surface_t *img_surface = cairo_image_surface_create_for_data (
-                        img->image->bits(), CAIRO_FORMAT_ARGB32,
-                        img->image->width(), img->image->height(),
-                        img->image->width()*4);
-            cairo_pattern_t *pat =cairo_pattern_create_for_surface(img_surface);
+        ImageData *id=convertNode<RP::Image>(fi->target)->cached_img.data.ptr();
+        if (id && !id->isEmpty ()) {
+            cairo_pattern_t * pat = cairo_pattern_create_for_surface
+                (id->getCairoSurface (cairo_surface));
             cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
             Single sx = fi->srcx, sy = fi->srcy, sw = fi->srcw, sh = fi->srch;
             if (!(int)sw)
-                sw = img->image->width();
+                sw = id->width;
             if (!(int)sh)
-                sh = img->image->height();
+                sh = id->height;
             cairo_save (cr);
             if ((int)fi->w && (int)fi->h && (int)sw && (int)sh) {
                 cairo_matrix_t matrix;
@@ -516,7 +693,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
             cairo_paint_with_alpha (cr, 1.0 * fi->progress / 100);
             cairo_restore (cr);
             cairo_pattern_destroy (pat);
-            cairo_surface_destroy (img_surface);
         }
     }
 }
@@ -540,19 +716,16 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadeout * fo) {
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
     //kdDebug() << "Visit " << cf->nodeName() << endl;
     if (cf->target && cf->target->id == RP::id_node_image) {
-        RP::Image * img = static_cast <RP::Image *> (cf->target.ptr ());
-        if (img->image) {
-            cairo_surface_t *img_surface = cairo_image_surface_create_for_data (
-                        img->image->bits(), CAIRO_FORMAT_ARGB32,
-                        img->image->width(), img->image->height(),
-                        img->image->width()*4);
-            cairo_pattern_t *pat =cairo_pattern_create_for_surface(img_surface);
+        ImageData *id=convertNode<RP::Image>(cf->target)->cached_img.data.ptr();
+        if (id && !id->isEmpty ()) {
+            cairo_pattern_t * pat = cairo_pattern_create_for_surface
+                (id->getCairoSurface (cairo_surface));
             cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
             Single sx = cf->srcx, sy = cf->srcy, sw = cf->srcw, sh = cf->srch;
             if (!(int)sw)
-                sw = img->image->width();
+                sw = id->width;
             if (!(int)sh)
-                sh = img->image->height();
+                sh = id->height;
             cairo_save (cr);
             if ((int)cf->w && (int)cf->h && (int)sw && (int)sh) {
                 cairo_matrix_t matrix;
@@ -571,7 +744,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
             cairo_paint_with_alpha (cr, 1.0 * cf->progress / 100);
             cairo_restore (cr);
             cairo_pattern_destroy (pat);
-            cairo_surface_destroy (img_surface);
         }
     }
 }
@@ -579,22 +751,19 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
     //kdDebug() << "Visit " << wipe->nodeName() << endl;
     if (wipe->target && wipe->target->id == RP::id_node_image) {
-        RP::Image * img = static_cast <RP::Image *> (wipe->target.ptr ());
-        if (img->image) {
-            cairo_surface_t *img_surface = cairo_image_surface_create_for_data (
-                        img->image->bits(), CAIRO_FORMAT_ARGB32,
-                        img->image->width(), img->image->height(),
-                        img->image->width()*4);
-            cairo_pattern_t *pat =cairo_pattern_create_for_surface(img_surface);
+        ImageData *id=convertNode<RP::Image>(wipe->target)->cached_img.data.ptr();
+        if (id && !id->isEmpty ()) {
+            cairo_pattern_t * pat = cairo_pattern_create_for_surface
+                (id->getCairoSurface (cairo_surface));
             cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
             Single x = wipe->x, y = wipe->y;
             Single tx = x, ty = y;
             Single w = wipe->w, h = wipe->h;
             Single sx = wipe->srcx, sy = wipe->srcy, sw = wipe->srcw, sh = wipe->srch;
             if (!(int)sw)
-                sw = img->image->width();
+                sw = id->width;
             if (!(int)sh)
-                sh = img->image->height();
+                sh = id->height;
             if (wipe->direction == RP::Wipe::dir_right) {
                 Single dx = w * 1.0 * wipe->progress / 100;
                 tx = x -w + dx;
@@ -629,7 +798,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
                 cairo_rectangle (cr, x, y, w, h);
                 cairo_fill (cr);
                 cairo_pattern_destroy (pat);
-                cairo_surface_destroy (img_surface);
             }
         }
     }
@@ -697,6 +865,8 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
     setAcceptDrops (true);
     new KAction (i18n ("Fullscreen"), KShortcut (Qt::Key_F), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_toggle");
     setMouseTracking (true);
+    if (!image_data_map)
+        imageCacheDeleter.setObject (image_data_map, new ImageDataMap);
 }
 
 KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {
@@ -812,21 +982,10 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const SRect & rect) {
     int ew = rect.width () + 2;
     int eh = rect.height () + 2;
     if (!cairo_surface)
-        cairo_surface = cairo_xlib_surface_create (qt_xdisplay (), winId (),
-                DefaultVisual (qt_xdisplay (), DefaultScreen (qt_xdisplay ())),
-                width (), height ());
-    /*cairo_surface (cairo_xlib_surface_create_with_xrender_format (
-            qt_xdisplay (),
-            winId (),
-            DefaultScreenOfDisplay (qt_xdisplay ()),
-            XRenderFindVisualFormat (qt_xdisplay (),
-                DefaultVisual (qt_xdisplay (),
-                    DefaultScreen (qt_xdisplay ()))),
-            width(), height()))*/
+        cairo_surface = cairoCreateSurface (winId (), width (), height ());
     Visitor * v = new CairoPaintVisitor (cairo_surface, SRect (ex, ey, ew, eh));
     //Visitor * v = new CairoPaintVisitor (cairo_surface, rect);
     surface->node->accept (v);
-    //cairo_surface_flush (cairo_surface);
     delete v;
 #endif
     //XFlush (qt_xdisplay ());
@@ -854,6 +1013,10 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
 #ifdef HAVE_CAIRO
     if (cairo_surface)
         cairo_xlib_surface_set_size (cairo_surface, width (), height ());
+# ifdef USE_CAIRO_GLITZ
+    if (glitz_drawable)
+        glitz_drawable_update_size (glitz_drawable, width (), height ());
+# endif
 #endif
     int hsb = statusBarHeight (m_view);
     int hcp = m_view->controlPanel ()->isVisible () ? (m_view->controlPanelMode () == View::CP_Only ? h-hsb: m_view->controlPanel()->maximumSize ().height ()) : 0;

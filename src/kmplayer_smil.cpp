@@ -2368,11 +2368,10 @@ KDE_NO_EXPORT void SMIL::Param::activate () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT ImageRuntime::ImageRuntime (NodePtr e)
- : MediaTypeRuntime (e), image (0L), img_movie (0L) {
-}
+ : MediaTypeRuntime (e), img_movie (0L)
+{}
 
 KDE_NO_CDTOR_EXPORT ImageRuntime::~ImageRuntime () {
-    delete image;
 }
 
 KDE_NO_EXPORT
@@ -2387,8 +2386,11 @@ void ImageRuntime::parseParam (const QString & name, const QString & val) {
         if (mt->external_tree)
             mt->removeChild (mt->external_tree);
         mt->src = val;
-        if (!val.isEmpty ())
-            wget (mt->absolutePath ());
+        if (!val.isEmpty ()) {
+            cached_img.setUrl (mt->absolutePath ());
+            if (cached_img.data->isEmpty ())
+                wget (mt->absolutePath ());
+        }
     } else
         MediaTypeRuntime::parseParam (name, val);
 }
@@ -2425,16 +2427,16 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
     if (data.size () && mt) {
         QString mime = mimetype ();
-        kdDebug () << "ImageRuntime::remoteReady " << mime << " " << data.size () << endl;
+        kdDebug () << "ImageRuntime::remoteReady " << mime << " " << data.size () << " empty:" << cached_img.data->isEmpty () << endl;
         if (mime.startsWith (QString::fromLatin1 ("text/"))) {
             QTextStream ts (data, IO_ReadOnly);
             readXML (element, ts, QString::null);
             mt->external_tree = findExternalTree (element);
         }
-        if (!mt->external_tree) {
-            QPixmap *pix = new QPixmap (data);
+        if (!mt->external_tree && cached_img.data->isEmpty ()) {
+            QImage *pix = new QImage (data);
             if (!pix->isNull ()) {
-                image = pix;
+                cached_img.data->image = pix;
                 delete img_movie;
                 img_movie = new QMovie (data);
                 have_frame = false;
@@ -2458,8 +2460,10 @@ KDE_NO_EXPORT void ImageRuntime::movieUpdated (const QRect &) {
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
     if (mt && mt->region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze))) {
-        delete image;
-        image = 0;
+        cached_img.setUrl (QString ());
+        ASSERT (cached_img.data && cached_img.data->isEmpty ());
+        cached_img.data->image = new QImage;
+        *cached_img.data->image = (img_movie->framePixmap ());
         convertNode <SMIL::RegionBase> (mt->region_node)->repaint ();
     }
     if (timingstate != timings_started && img_movie)

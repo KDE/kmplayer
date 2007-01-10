@@ -33,7 +33,8 @@ using namespace KMPlayer;
 KDE_NO_CDTOR_EXPORT RP::Imfl::Imfl (NodePtr & d)
   : Mrl (d, id_node_imfl),
     fit (fit_hidden),
-    duration (0) {}
+    duration (0),
+    needs_scene_img (0) {}
 
 KDE_NO_CDTOR_EXPORT RP::Imfl::~Imfl () {
 }
@@ -195,10 +196,10 @@ KDE_NO_EXPORT void RP::Imfl::repaint () {
 }
 
 KDE_NO_CDTOR_EXPORT RP::Image::Image (NodePtr & doc)
- : Mrl (doc, id_node_image), image (0L) {}
+ : Mrl (doc, id_node_image)
+{}
 
 KDE_NO_CDTOR_EXPORT RP::Image::~Image () {
-    delete image;
 }
 
 KDE_NO_EXPORT void RP::Image::closed () {
@@ -209,7 +210,9 @@ KDE_NO_EXPORT void RP::Image::activate () {
     kdDebug () << "RP::Image::activate" << endl;
     setState (state_activated);
     isPlayable (); // update src attribute
-    wget (absolutePath ());
+    cached_img.setUrl (absolutePath ());
+    if (cached_img.data->isEmpty ())
+        wget (absolutePath ());
 }
 
 KDE_NO_EXPORT void RP::Image::deactivate () {
@@ -220,12 +223,11 @@ KDE_NO_EXPORT void RP::Image::deactivate () {
 
 KDE_NO_EXPORT void RP::Image::remoteReady (QByteArray & data) {
     kdDebug () << "RP::Image::remoteReady" << endl;
-    if (!data.isEmpty ()) {
+    if (!data.isEmpty () && cached_img.data->isEmpty ()) {
         QImage * img = new QImage (data);
-        if (!img->isNull ()) {
-            image = img;
-            image->setAlphaBuffer (true);
-        } else
+        if (!img->isNull ())
+            cached_img.data->image = img;
+        else
             delete img;
     }
     postpone_lock = 0L;
@@ -448,7 +450,17 @@ KDE_NO_EXPORT void RP::ViewChange::activate () {
 KDE_NO_EXPORT void RP::ViewChange::begin () {
     kdDebug () << "RP::ViewChange::begin" << endl;
     setState (state_began);
+    Node * p = parentNode ().ptr ();
+    if (p->id == RP::id_node_imfl)
+        static_cast <RP::Imfl *> (p)->needs_scene_img++;
     update (0);
+}
+
+KDE_NO_EXPORT void RP::ViewChange::finish () {
+    Node * p = parentNode ().ptr ();
+    if (p && p->id == RP::id_node_imfl)
+        static_cast <RP::Imfl *> (p)->needs_scene_img--;
+    TimingsBase::finish ();
 }
 
 KDE_NO_EXPORT void RP::ViewChange::accept (Visitor * v) {
