@@ -216,6 +216,7 @@ KDE_NO_EXPORT void RP::Image::activate () {
 }
 
 KDE_NO_EXPORT void RP::Image::deactivate () {
+    cached_img.setUrl (QString ());
     setState (state_deactivated);
     postpone_lock = 0L;
 }

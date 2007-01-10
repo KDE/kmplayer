@@ -158,7 +158,11 @@ cairo_surface_t * ImageData::getCairoSurface (cairo_surface_t * similar) {
 #endif
 
 bool ImageData::isEmpty () {
-    return !(image || img_surface);
+    return !(image
+#ifdef HAVE_CAIRO
+            || img_surface
+#endif
+    );
 }
 
 void CachedImage::setUrl (const QString & url) {

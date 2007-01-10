@@ -175,10 +175,6 @@ public:
     virtual void deactivate ();
     virtual void closed ();
     bool isReady (bool postpone_if_not = false); // is downloading ready
-#ifdef HAVE_CAIRO
-    cairo_surface_t * img_surface;
-    int width, height;
-#endif
     CachedImage cached_img;
     //bool expose () const { return false; }
 protected:
