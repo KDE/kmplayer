@@ -822,7 +822,7 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : QF
     PostprocessingOptions->changeTab( presetSelectionWidget, i18n( "General" ) );
     customFilters->setTitle( QString::null );
     QWhatsThis::add( HzDeblockAQuality, i18n( "Filter is used if there is enough CPU" ) );
-    QWhatsThis::add( VtDeblockAQuality, i18n( "Filter is used if there'is enough CPU" ) );
+    QWhatsThis::add( VtDeblockAQuality, i18n( "Filter is used if there is enough CPU" ) );
     QWhatsThis::add( DeringAQuality, i18n( "Filter is used if there is enough CPU" ) );
     //QWhatsThis::add( TmpNoiseSlider, i18n( "Strength of the noise reducer" ) );
     QWhatsThis::add( AutolevelsFullrange, i18n( "Stretches luminance to full range (0..255)" ) );
