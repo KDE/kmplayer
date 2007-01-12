@@ -33,8 +33,6 @@
 #include "kmplayershared.h"
 
 class QTextStream;
-class QPixmap;
-class QImage;
 
 namespace KMPlayer {
 
@@ -42,7 +40,6 @@ class Document;
 class Node;
 class Mrl;
 class Surface;
-class SurfaceAction;
 class ElementRuntime;
 class RemoteObjectPrivate;
 class Visitor;
@@ -287,8 +284,6 @@ typedef Item<NodeRefList>::WeakType NodeRefListPtrW;
 ITEM_AS_POINTER(KMPlayer::NodeRefList)
 typedef Item<Surface>::SharedType SurfacePtr;
 typedef Item<Surface>::WeakType SurfacePtrW;
-typedef Item<SurfaceAction>::SharedType SurfaceActionPtr;
-typedef Item<SurfaceAction>::WeakType SurfacePtrActionW;
 
 /*
  * Weak ref of the listeners list from signaler and the listener node

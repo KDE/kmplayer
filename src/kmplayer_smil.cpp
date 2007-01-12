@@ -1764,23 +1764,23 @@ KDE_NO_EXPORT bool SMIL::TimedMrl::handleEvent (EventPtr event) {
     int id = event->id ();
     switch (id) {
         case event_timer: {
-             TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
-             if (te && te->timer_info) {
-                 if (te->timer_info->event_id == started_timer_id)
-                     timedRuntime ()->started ();
-                 else if (te->timer_info->event_id == stopped_timer_id)
-                     timedRuntime ()->stopped ();
-                 else if (te->timer_info->event_id == start_timer_id)
-                     timedRuntime ()->propagateStart ();
-                 else if (te->timer_info->event_id == dur_timer_id)
-                     timedRuntime ()->propagateStop (true);
-                 else
-                     kdWarning () << "unhandled timer event" << endl;
-             }
-             break;
+            TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
+            if (te && te->timer_info) {
+                if (te->timer_info->event_id == started_timer_id)
+                    timedRuntime ()->started ();
+                else if (te->timer_info->event_id == stopped_timer_id)
+                    timedRuntime ()->stopped ();
+                else if (te->timer_info->event_id == start_timer_id)
+                    timedRuntime ()->propagateStart ();
+                else if (te->timer_info->event_id == dur_timer_id)
+                    timedRuntime ()->propagateStop (true);
+                else
+                    kdWarning () << "unhandled timer event" << endl;
+            }
+            break;
         }
         default:
-             timedRuntime ()->processEvent (id);
+            timedRuntime ()->processEvent (id);
     }
     return true;
 }
@@ -2257,7 +2257,7 @@ KDE_NO_EXPORT TimedRuntime * SMIL::AVMediaType::getNewRuntime () {
 }
 
 KDE_NO_EXPORT bool SMIL::AVMediaType::handleEvent (EventPtr event) {
-    if (event->id ()== event_sized && !external_tree)
+    if (event->id () == event_sized && !external_tree)
         positionVideoWidget ();
     return MediaType::handleEvent (event);
 }

@@ -109,7 +109,8 @@ KDE_NO_EXPORT void Connection::disconnect () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT TimerInfo::TimerInfo (NodePtr n, unsigned id, struct timeval & tv, int ms)
+KDE_NO_CDTOR_EXPORT
+TimerInfo::TimerInfo (NodePtr n, unsigned id, struct timeval & tv, int ms)
  : node (n), event_id (id), timeout (tv), milli_sec (ms) {}
 
 //-----------------------------------------------------------------------------
@@ -317,17 +318,7 @@ void Node::insertBefore (NodePtr c, NodePtr b) {
 
 void Node::removeChild (NodePtr c) {
     document()->m_tree_version++;
-    if (c->m_prev) {
-        c->m_prev->m_next = c->m_next;
-    } else
-        m_first_child = c->m_next;
-    if (c->m_next) {
-        c->m_next->m_prev = c->m_prev;
-        c->m_next = 0L;
-    } else
-        m_last_child = c->m_prev;
-    c->m_prev = 0L;
-    c->m_parent = 0L;
+    TreeNode <Node>::removeChild (c);
 }
 
 KDE_NO_EXPORT void Node::replaceChild (NodePtr _new, NodePtr old) {
@@ -624,13 +615,6 @@ void Mrl::activate () {
             deactivate (); // nothing to activate
     }
 }
-
-//void Mrl::childDone (NodePtr child) {
-//    if (unfinished () && linkNode () != this)
-//        finish ();
-//    else
-//        Node::childDone (child);
-//}
 
 SurfacePtr Mrl::getSurface (NodePtr node) {
     for (NodePtr p = parentNode (); p; p = p->parentNode ())

@@ -1,6 +1,6 @@
 /* This file is part of the KDE project
  *
- * Copyright (C) 2005-2006 Koos Vriezen <koos.vriezen@xs4all.nl>
+ * Copyright (C) 2005-2007 Koos Vriezen <koos.vriezen@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -175,7 +175,6 @@ public:
     virtual void reset ();
     virtual void parseParam (const QString & name, const QString & value);
     TimingState state () const { return timingstate; }
-    virtual void paint (QPainter &) {}
     void propagateStop (bool forced);
     void propagateStart ();
     void processEvent (unsigned int event);
@@ -236,7 +235,6 @@ public:
     virtual void end ();
     virtual void stopped ();
     virtual void parseParam (const QString & name, const QString & value);
-    virtual void paint (QPainter &) {}
     virtual void postpone (bool b);
     CalculatedSizer sizes;
     PostponePtr postpone_lock;
@@ -269,7 +267,6 @@ public:
     virtual void postpone (bool b);
     QMovie * img_movie;
     CachedImage cached_img;
-    QString url;
     bool have_frame;
 protected:
     virtual void started ();
