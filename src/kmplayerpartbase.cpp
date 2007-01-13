@@ -57,6 +57,7 @@
 #include "kmplayerpartbase.h"
 #include "kmplayerview.h"
 #include "playlistview.h"
+#include "viewarea.h"
 #include "kmplayercontrolpanel.h"
 #include "kmplayerconfig.h"
 #include "kmplayerprocess.h"

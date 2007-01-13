@@ -22,9 +22,6 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif 
-#ifdef HAVE_CAIRO
-# include <cairo.h>
-#endif
 #include <qwidget.h>
 #include <qguardedptr.h>
 #include <qtextedit.h>
@@ -35,6 +32,8 @@
 #include <kmediaplayer/view.h>
 
 #include "kmplayersource.h"
+
+#define MOUSE_INVISIBLE_DELAY 2000
 
 class QWidgetStack;
 class QPixmap;
@@ -53,72 +52,16 @@ class KFindDialog;
 namespace KMPlayer {
 
 class View;
+class ViewArea;
 class Viewer;
 class ControlPanel;
 class VolumeBar;
 class Console;
 class PlayListView;
-class ViewAreaPrivate;
 class PlayListView;
 class RootPlayListItem;
 
 typedef KStatusBar StatusBar;
-
-/*
- * The area in which the video widget and controlpanel are laid out
- */
-class KMPLAYER_EXPORT ViewArea : public QWidget {
-    Q_OBJECT
-public:
-    ViewArea (QWidget * parent, View * view);
-    ~ViewArea ();
-    KDE_NO_EXPORT bool isFullScreen () const { return m_fullscreen; }
-    KDE_NO_EXPORT bool isMinimalMode () const { return m_minimal; }
-    KDE_NO_EXPORT KActionCollection * actionCollection () const { return m_collection; }
-    KDE_NO_EXPORT QRect topWindowRect () const { return m_topwindow_rect; }
-    SurfacePtr getSurface (NodePtr node);
-    void setAudioVideoGeometry (int x, int y, int w, int y, unsigned int * bg);
-    void mouseMoved ();
-    void scheduleRepaint (Single x, Single y, Single w, Single y);
-    void moveRect(Single x, Single y, Single w, Single h, Single x1, Single y1);
-    void resizeEvent (QResizeEvent *);
-    void minimalMode ();
-public slots:
-    void fullScreen ();
-    void accelActivated ();
-    void scale (int);
-protected:
-    void showEvent (QShowEvent *);
-    void mouseMoveEvent (QMouseEvent *);
-    void mousePressEvent (QMouseEvent *);
-    void mouseDoubleClickEvent (QMouseEvent *);
-    void dragEnterEvent (QDragEnterEvent *);
-    void dropEvent (QDropEvent *);
-    void contextMenuEvent (QContextMenuEvent * e);
-    void paintEvent (QPaintEvent *);
-    void timerEvent (QTimerEvent * e);
-    void closeEvent (QCloseEvent * e);
-private:
-    void syncVisual (const SRect & rect);
-    ViewAreaPrivate * d;
-    QWidget * m_parent;
-    View * m_view;
-#ifdef HAVE_CAIRO
-    cairo_surface_t * cairo_surface;
-#endif
-    KActionCollection * m_collection;
-    SurfacePtr surface;
-    QRect m_av_geometry;
-    SRect m_repaint_rect;
-    QRect m_topwindow_rect;
-    int m_mouse_invisible_timer;
-    int m_repaint_timer;
-    int m_fullscreen_scale;
-    int scale_lbl_id;
-    int scale_slider_id;
-    bool m_fullscreen;
-    bool m_minimal;
-};
 
 /*
  * The console GUI
@@ -188,6 +131,7 @@ public:
     KDE_NO_EXPORT StatusBarMode statusBarMode () const { return m_statusbar_mode; }
     void delayedShowButtons (bool show);
     bool isFullScreen () const;
+    int statusBarHeight () const;
     KDE_NO_EXPORT bool editMode () const { return m_edit_mode; }
     bool setPicture (const QString & path);
     KDE_NO_EXPORT QPixmap * image () const { return m_image; }

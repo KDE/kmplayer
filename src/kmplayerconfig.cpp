@@ -49,6 +49,7 @@
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
 #include "playlistview.h"
+#include "viewarea.h"
 #include "pref.h"
 
 using namespace KMPlayer;

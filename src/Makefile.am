@@ -4,7 +4,7 @@ METASOURCES= AUTO
 
 lib_LTLIBRARIES= libkmplayercommon.la
 
-libkmplayercommon_la_SOURCES = kmplayerview.cpp playlistview.cpp kmplayercontrolpanel.cpp kmplayerconfig.cpp pref.cpp kmplayerprocess.cpp kmplayer_callback.skel kmplayer_backend.stub kmplayerpartbase.cpp kmplayerplaylist.cpp kmplayer_asx.cpp kmplayer_smil.cpp kmplayer_rp.cpp kmplayer_rss.cpp kmplayer_atom.cpp kmplayer_xspf.cpp kmplayerpartbase.skel
+libkmplayercommon_la_SOURCES = kmplayerview.cpp playlistview.cpp viewarea.cpp kmplayercontrolpanel.cpp kmplayerconfig.cpp pref.cpp kmplayerprocess.cpp kmplayer_callback.skel kmplayer_backend.stub kmplayerpartbase.cpp kmplayerplaylist.cpp kmplayer_asx.cpp kmplayer_smil.cpp kmplayer_rp.cpp kmplayer_rss.cpp kmplayer_atom.cpp kmplayer_xspf.cpp kmplayerpartbase.skel
 libkmplayercommon_la_LDFLAGS = -avoid-version $(all_libraries)
 libkmplayercommon_la_LIBADD = -lkmediaplayer $(LIB_KPARTS) $(LIB_KUTILS) $(LIB_EXPAT) -lm $(LIBCAIRO_LIBS)
 
