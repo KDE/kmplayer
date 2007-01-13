@@ -127,7 +127,7 @@ void CachedImage::setUrl (const QString & url) {
         ImageDataMap::iterator i = image_data_map->find (url);
         if (i == image_data_map->end ()) {
             data = ImageDataPtr (new ImageData (url));
-            i = image_data_map->insert (url, ImageDataPtrW (data));
+            image_data_map->insert (url, ImageDataPtrW (data));
         } else {
             data = i.data ();
         }
@@ -153,23 +153,20 @@ public:
     void video (Single x, Single y, Single w, Single h);
 
     ViewArea * view_widget;
-    QPixmap * cached_image;
 };
 
 } // namespace
 
 KDE_NO_CDTOR_EXPORT ViewSurface::ViewSurface (ViewArea * widget)
   : Surface (SRect (0, 0, widget->width (), widget->height ())),
-    view_widget (widget),
-    cached_image (0L)
+    view_widget (widget)
 {}
 
 KDE_NO_CDTOR_EXPORT
 ViewSurface::ViewSurface (ViewArea * widget, NodePtr owner, const SRect & rect)
-  : Surface (owner, rect), view_widget (widget), cached_image (0L) {}
+  : Surface (owner, rect), view_widget (widget) {}
 
 KDE_NO_CDTOR_EXPORT ViewSurface::~ViewSurface() {
-    delete cached_image;
     kdDebug() << "~ViewSurface" << endl;
 }
 
@@ -219,9 +216,9 @@ KDE_NO_EXPORT void ViewSurface::video (Single x, Single y, Single w, Single h) {
 //# define USE_CAIRO_GLITZ
 
 static cairo_surface_t * cairoCreateX11Surface (Window id, int w, int h) {
-    return cairo_xlib_surface_create (qt_xdisplay (), (id),
+    return cairo_xlib_surface_create (qt_xdisplay (), id,
             DefaultVisual (qt_xdisplay (), DefaultScreen (qt_xdisplay ())),
-            (w), (h));
+            w, h);
     /*cairo_surface (cairo_xlib_surface_create_with_xrender_format (
             qt_xdisplay (),
             winId (),
@@ -1074,9 +1071,9 @@ KDE_NO_EXPORT void ViewArea::mouseMoved () {
 
 KDE_NO_EXPORT void ViewArea::scheduleRepaint (Single x, Single y, Single w, Single h) {
     if (m_repaint_timer)
-        m_repaint_rect = m_repaint_rect.unite (SRect (x, y, w+1, h+1));
+        m_repaint_rect = m_repaint_rect.unite (SRect (x, y, w, h));
     else {
-        m_repaint_rect = SRect (x, y, w+1, h+1);
+        m_repaint_rect = SRect (x, y, w, h);
         m_repaint_timer = startTimer (10); // 100 per sec should do
     }
 }

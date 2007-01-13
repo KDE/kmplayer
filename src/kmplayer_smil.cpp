@@ -2387,9 +2387,10 @@ void ImageRuntime::parseParam (const QString & name, const QString & val) {
             mt->removeChild (mt->external_tree);
         mt->src = val;
         if (!val.isEmpty ()) {
-            cached_img.setUrl (mt->absolutePath ());
+            QString abs = mt->absolutePath ();
+            cached_img.setUrl (abs);
             if (cached_img.data->isEmpty ())
-                wget (mt->absolutePath ());
+                wget (abs);
         }
     } else
         MediaTypeRuntime::parseParam (name, val);

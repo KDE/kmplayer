@@ -75,7 +75,7 @@ public:
     Single & operator *= (const Single & s);
     Single & operator *= (const float f) { value = int(value*f); return *this; }
     Single & operator /= (const int i) { value /= i; return *this; }
-    operator int () const { return (value >> 8) + (value & 0xff > 127 ? 1 : 0);}
+    operator int () const { return value >> 8; }
     operator double () const { return 1.0 * value / 256; }
 };
 
