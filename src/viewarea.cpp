@@ -611,7 +611,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Imfl * imfl) {
         Single h = imfl->surface->bounds.height() - 2 * yoff;
         matrix.getXYWH (xoff, yoff, w, h);
         cairo_rectangle (cr, xoff, yoff, w, h);
-        cairo_clip (cr);
+        //cairo_clip (cr);
         cairo_translate (cr, xoff, yoff);
         cairo_scale (cr, w/imfl->width, h/imfl->height);
         if (imfl->needs_scene_img)
@@ -658,8 +658,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fill * fi) {
     if ((int)fi->w && (int)fi->h) {
         cairo_rectangle (cr, fi->x, fi->y, fi->w, fi->h);
         cairo_fill (cr);
-    } else
-        cairo_paint (cr);
+    }
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
@@ -700,9 +699,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadeout * fo) {
     //kdDebug() << "Visit " << fo->nodeName() << endl;
     if (fo->progress > 0) {
         CAIRO_SET_SOURCE_RGB (cr, fo->to_color);
-        if (!(int)fo->w || !(int)fo->h) {
-            cairo_paint_with_alpha (cr, 1.0 * fo->progress / 100);
-        } else {
+        if ((int)fo->w && (int)fo->h) {
             cairo_save (cr);
             cairo_rectangle (cr, fo->x, fo->y, fo->w, fo->h);
             cairo_clip (cr);
@@ -717,15 +714,15 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
     if (cf->target && cf->target->id == RP::id_node_image) {
         ImageData *id=convertNode<RP::Image>(cf->target)->cached_img.data.ptr();
         if (id && !id->isEmpty ()) {
-            cairo_pattern_t * pat = id->cairoImage (cairo_surface);
-            cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
             Single sx = cf->srcx, sy = cf->srcy, sw = cf->srcw, sh = cf->srch;
             if (!(int)sw)
                 sw = id->width();
             if (!(int)sh)
                 sh = id->height();
-            cairo_save (cr);
             if ((int)cf->w && (int)cf->h && (int)sw && (int)sh) {
+                cairo_pattern_t * pat = id->cairoImage (cairo_surface);
+                cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
+                cairo_save (cr);
                 cairo_matrix_t matrix;
                 cairo_matrix_init_identity (&matrix);
                 float scalex = 1.0 * sw / cf->w;
@@ -736,12 +733,12 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
                         1.0*sy/scaley - (double)cf->y);
                 cairo_pattern_set_matrix (pat, &matrix);
                 cairo_rectangle (cr, cf->x, cf->y, cf->w, cf->h);
+                cairo_set_source (cr, pat);
+                cairo_clip (cr);
+                cairo_paint_with_alpha (cr, 1.0 * cf->progress / 100);
+                cairo_restore (cr);
+                cairo_pattern_destroy (pat);
             }
-            cairo_set_source (cr, pat);
-            cairo_clip (cr);
-            cairo_paint_with_alpha (cr, 1.0 * cf->progress / 100);
-            cairo_restore (cr);
-            cairo_pattern_destroy (pat);
         }
     }
 }
