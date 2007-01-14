@@ -46,13 +46,17 @@ struct KMPLAYER_NO_EXPORT ImageData {
     ImageData( const QString & img);
     ~ImageData();
     bool isEmpty ();
+    Single width ();
+    Single height ();
 #ifdef HAVE_CAIRO
-    cairo_surface_t * getCairoSurface (cairo_surface_t * similar);
+    cairo_pattern_t * cairoImage (Single w, Single h, cairo_surface_t *cs);
+    cairo_pattern_t * cairoImage (cairo_surface_t *cs);
     cairo_surface_t * img_surface;
-    int width, height;
 #endif
-    QString url;
     QImage * image;
+private:
+    Single w, h;
+    QString url;
 };
 
 typedef SharedPtr <ImageData> ImageDataPtr;
