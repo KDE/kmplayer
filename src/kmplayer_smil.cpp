@@ -916,9 +916,9 @@ KDE_NO_EXPORT void AnimateData::started () {
                 kdWarning () << "animate couldn't determine end value" << endl;
                 break;
             }
-            steps = 10 * durations [duration_time].durval / 4; // 25 per sec
+            steps = 20 * durations [duration_time].durval / 5; // 40 per sec
             if (steps > 0) {
-                anim_timer = element->document ()->setTimeout (element, 40, anim_timer_id); // 25 /s for now FIXME
+                anim_timer = element->document ()->setTimeout (element, 25, anim_timer_id); // 25 ms for now FIXME
                 change_delta = (change_to_val - change_from_val) / steps;
                 //kdDebug () << "AnimateData::started " << target_element->nodeName () << "." << changed_attribute << " " << change_from_val << "->" << change_to_val << " in " << steps << " using:" << change_delta << " inc" << endl;
                 success = true;
