@@ -51,7 +51,7 @@ struct KMPLAYER_NO_EXPORT ImageData {
 #ifdef HAVE_CAIRO
     cairo_pattern_t * cairoImage (Single w, Single h, cairo_surface_t *cs);
     cairo_pattern_t * cairoImage (cairo_surface_t *cs);
-    cairo_surface_t * img_surface;
+    cairo_pattern_t * cairo_image;
 #endif
     QImage * image;
 private:

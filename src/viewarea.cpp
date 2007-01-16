@@ -60,7 +60,7 @@ namespace KMPlayer {
 
 ImageData::ImageData( const QString & img) :
 #ifdef HAVE_CAIRO
-    img_surface (0L),
+    cairo_image (0L),
 #endif
     image (0L),
     url (img) {
@@ -78,8 +78,8 @@ ImageData::~ImageData() {
     if (!url.isEmpty ())
         image_data_map->erase (url);
 #ifdef HAVE_CAIRO
-    if (img_surface)
-        cairo_surface_destroy (img_surface);
+    if (cairo_image)
+        cairo_pattern_destroy (cairo_image);
 #endif
     delete image;
 }
@@ -87,11 +87,11 @@ ImageData::~ImageData() {
 #ifdef HAVE_CAIRO
 cairo_pattern_t *
 ImageData::cairoImage (Single sw, Single sh, cairo_surface_t * similar) {
-    if (img_surface) {
+    if (cairo_image) {
         if (sw == w && sh == h)
-            return cairo_pattern_create_for_surface (img_surface);
-        cairo_surface_destroy (img_surface);
-        img_surface = 0L;
+            return cairo_image;
+        cairo_pattern_destroy (cairo_image);
+        cairo_image = 0L;
     }
     if (!image || sw <= 0 || sh <= 0)
         return 0L;
@@ -102,7 +102,8 @@ ImageData::cairoImage (Single sw, Single sh, cairo_surface_t * similar) {
     h = sh;
 
     cairo_surface_t * sf = cairo_image_surface_create_for_data (
-            image->bits (), CAIRO_FORMAT_ARGB32,
+            image->bits (),
+            image->hasAlphaBuffer () ? CAIRO_FORMAT_ARGB32 : CAIRO_FORMAT_RGB24,
             iw, ih, iw*4);
     cairo_pattern_t * cp = cairo_pattern_create_for_surface (sf);
     cairo_surface_destroy (sf);
@@ -111,7 +112,7 @@ ImageData::cairoImage (Single sw, Single sh, cairo_surface_t * similar) {
     cairo_matrix_init_scale (&mat, 1.0 * iw/w, 1.0 * ih/h);
     cairo_pattern_set_matrix (cp, &mat);
 
-    img_surface = cairo_surface_create_similar (similar,
+    cairo_surface_t * img_surface = cairo_surface_create_similar (similar,
             image->hasAlphaBuffer () ?
                 CAIRO_CONTENT_COLOR_ALPHA : CAIRO_CONTENT_COLOR, w, h);
     cairo_t * c = cairo_create (img_surface);
@@ -119,7 +120,9 @@ ImageData::cairoImage (Single sw, Single sh, cairo_surface_t * similar) {
     cairo_paint (c);
     cairo_pattern_destroy (cp);
     cairo_destroy (c);
-    return cairo_pattern_create_for_surface (img_surface);
+    cairo_image = cairo_pattern_create_for_surface (img_surface);
+    cairo_surface_destroy (img_surface);
+    return cairo_image;
 }
 
 cairo_pattern_t * ImageData::cairoImage (cairo_surface_t * similar) {
@@ -130,7 +133,7 @@ cairo_pattern_t * ImageData::cairoImage (cairo_surface_t * similar) {
 bool ImageData::isEmpty () {
     return !(image
 #ifdef HAVE_CAIRO
-            || img_surface
+            || cairo_image
 #endif
     );
 }
@@ -548,7 +551,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
                 cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
                         clip_rect.width (), clip_rect.height ());
                 cairo_fill (cr);
-                cairo_pattern_destroy (pat);
             }
         }
     }
@@ -698,7 +700,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
                     cairo_clip (cr);
                     cairo_paint_with_alpha (cr, 1.0 * fi->progress / 100);
                     cairo_restore (cr);
-                    cairo_pattern_destroy (pat);
                 }
             }
         }
@@ -748,7 +749,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
                     cairo_clip (cr);
                     cairo_paint_with_alpha (cr, 1.0 * cf->progress / 100);
                     cairo_restore (cr);
-                    cairo_pattern_destroy (pat);
                 }
             }
         }
@@ -804,7 +804,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
                     cairo_set_source (cr, pat);
                     cairo_rectangle (cr, x, y, w, h);
                     cairo_fill (cr);
-                    cairo_pattern_destroy (pat);
                 }
             }
         }
