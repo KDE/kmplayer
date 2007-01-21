@@ -481,8 +481,96 @@ void RefNode::setRefNode (const NodePtr ref) {
 
 //-----------------------------------------------------------------------------
 
+namespace KMPlayer {
+    struct KMPLAYER_NO_EXPORT ParamValue {
+        QString val;
+        QStringList  * modifications;
+        ParamValue (const QString & v) : val (v), modifications (0L) {}
+        ~ParamValue () { delete modifications; }
+        QString value ();
+        void setValue (const QString & v) { val = v; }
+    };
+    class KMPLAYER_NO_EXPORT ElementPrivate {
+    public:
+        ~ElementPrivate ();
+        QMap <QString, ParamValue *> params;
+        void clear ();
+    };
+}
+
+KDE_NO_EXPORT QString ParamValue::value () {
+    return modifications && modifications->size ()
+        ? modifications->back () : val;
+}
+
+KDE_NO_CDTOR_EXPORT ElementPrivate::~ElementPrivate () {
+    clear ();
+}
+
+KDE_NO_EXPORT void ElementPrivate::clear () {
+    const QMap <QString, ParamValue *>::iterator e = params.end ();
+    for (QMap <QString, ParamValue*>::iterator i = params.begin (); i != e; ++i)
+        delete i.data ();
+    params.clear ();
+}
+
 Element::Element (NodePtr & d, short id)
-    : Node (d, id), m_attributes (new AttributeList) {}
+    : Node (d, id), m_attributes (new AttributeList), d (new ElementPrivate) {}
+
+Element::~Element () {
+    delete d;
+}
+
+void Element::setParam (const QString & param, const QString & val, int * mid) {
+    ParamValue * pv = d->params [param];
+    if (!pv) {
+        pv = new ParamValue (mid ? QString::null : val);
+        d->params.insert (param, pv);
+    }
+    if (mid) {
+        if (!pv->modifications)
+            pv->modifications = new QStringList;
+        if (*mid >= 0 && *mid < int (pv->modifications->size ())) {
+            (*pv->modifications) [*mid] = val;
+        } else {
+            *mid = pv->modifications->size ();
+            pv->modifications->push_back (val);
+        }
+    } else
+        pv->setValue (val);
+    parseParam (param, val);
+}
+
+QString Element::param (const QString & name) {
+    ParamValue * pv = d->params [name];
+    if (pv)
+        return pv->value ();
+    return QString::null;
+}
+
+void Element::resetParam (const QString & param, int mid) {
+    ParamValue * pv = d->params [param];
+    if (pv && pv->modifications) {
+        if (int (pv->modifications->size ()) > mid && mid > -1) {
+            (*pv->modifications) [mid] = QString::null;
+            while (pv->modifications->size () > 0 &&
+                    pv->modifications->back ().isNull ())
+                pv->modifications->pop_back ();
+        }
+        QString val = pv->value ();
+        if (pv->modifications->size () == 0) {
+            delete pv->modifications;
+            pv->modifications = 0L;
+            val = pv->value ();
+            if (val.isNull ()) {
+                delete pv;
+                d->params.remove (param);
+            }
+        }
+        parseParam (param, val);
+    } else
+        kdError () << "resetting " << param << " that doesn't exists" << endl;
+}
 
 void Element::setAttribute (const QString & name, const QString & value) {
     const char * name_latin = name.latin1 ();
@@ -504,8 +592,14 @@ QString Element::getAttribute (const QString & name) {
     return value;
 }
 
+void Element::deactivate () {
+    d->clear();
+    Node::deactivate ();
+}
+
 void Element::clear () {
     m_attributes = new AttributeList; // remove attributes
+    d->clear();
     Node::clear ();
 }
 

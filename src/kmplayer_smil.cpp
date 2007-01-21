@@ -27,7 +27,6 @@
 #include <qapplication.h>
 #include <qregexp.h>
 #include <qtimer.h>
-#include <qmap.h>
 
 #include <kdebug.h>
 #include <kurl.h>
@@ -124,118 +123,6 @@ static SMIL::Region * findRegion (NodePtr p, const QString & id) {
 
 //-----------------------------------------------------------------------------
 
-ElementRuntime * Node::getRuntime () {
-    static ElementRuntime runtime (0L);
-    kdWarning () << nodeName () << " no runtime available" << endl;
-    return &runtime;
-}
-
-//-----------------------------------------------------------------------------
-
-namespace KMPlayer {
-    struct ParamValue {
-        QString val;
-        QStringList  * modifications;
-        ParamValue (const QString & v) : val (v), modifications (0L) {}
-        ~ParamValue () { delete modifications; }
-        QString value () { return modifications && modifications->size () ? modifications->back () : val; }
-        void setValue (const QString & v) { val = v; }
-    };
-    class ElementRuntimePrivate {
-    public:
-        ~ElementRuntimePrivate ();
-        QMap <QString, ParamValue *> params;
-        void clear ();
-    };
-}
-
-KDE_NO_CDTOR_EXPORT ElementRuntimePrivate::~ElementRuntimePrivate () {
-    clear ();
-}
-
-KDE_NO_EXPORT void ElementRuntimePrivate::clear () {
-    const QMap <QString, ParamValue *>::iterator e = params.end ();
-    for (QMap <QString, ParamValue*>::iterator i = params.begin (); i != e; ++i)
-        delete i.data ();
-    params.clear ();
-}
-
-ElementRuntime::ElementRuntime (NodePtr e)
-  : element (e), d (new ElementRuntimePrivate) {}
-
-ElementRuntime::~ElementRuntime () {
-    delete d;
-}
-
-QString ElementRuntime::setParam (const QString & name, const QString & value, int * id) {
-    ParamValue * pv = d->params [name];
-    QString old_val;
-    if (pv)
-        old_val = pv->value ();
-    else {
-        pv = new ParamValue (id ? QString::null : value);
-        d->params.insert (name, pv);
-    }
-    if (id) {
-        if (!pv->modifications)
-            pv->modifications = new QStringList;
-        if (*id >= 0 && *id < int (pv->modifications->size ())) {
-            (*pv->modifications) [*id] = value;
-        } else {
-            *id = pv->modifications->size ();
-            pv->modifications->push_back (value);
-        }
-    } else
-        pv->setValue (value);
-    parseParam (name, value);
-    return old_val;
-}
-
-QString ElementRuntime::param (const QString & name) {
-    ParamValue * pv = d->params [name];
-    if (pv)
-        return pv->value ();
-    return QString::null;
-}
-
-void ElementRuntime::resetParam (const QString & name, int id) {
-    ParamValue * pv = d->params [name];
-    if (pv && pv->modifications) {
-        if (int (pv->modifications->size ()) > id && id > -1) {
-            (*pv->modifications) [id] = QString::null;
-            while (pv->modifications->size () > 0 &&
-                    pv->modifications->back ().isNull ())
-                pv->modifications->pop_back ();
-        }
-        QString val = pv->value ();
-        if (pv->modifications->size () == 0) {
-            delete pv->modifications;
-            pv->modifications = 0L;
-            val = pv->value ();
-            if (val.isNull ()) {
-                delete pv;
-                d->params.remove (name);
-            }
-        }
-        parseParam (name, val);
-    } else
-        kdError () << "resetting " << name << " that doesn't exists" << endl;
-}
-
-KDE_NO_EXPORT void ElementRuntime::init () {
-    reset ();
-    if (element && element->isElementNode ()) {
-        for (AttributePtr a= convertNode <Element> (element)->attributes ()->first (); a; a = a->nextSibling ())
-            setParam (QString (a->nodeName ()), a->nodeValue ());
-    }
-}
-
-KDE_NO_EXPORT void ElementRuntime::reset () {
-    d->clear ();
-}
-
-//-----------------------------------------------------------------------------
-
 KDE_NO_CDTOR_EXPORT ToBeStartedEvent::ToBeStartedEvent (NodePtr n)
  : Event (event_to_be_started), node (n) {}
 
@@ -255,7 +142,7 @@ PostponedEvent::PostponedEvent (bool postponed)
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT TimedRuntime::TimedRuntime (NodePtr e)
- : ElementRuntime (e) {
+ : element (e) {
     reset ();
 }
 
@@ -284,7 +171,6 @@ KDE_NO_EXPORT void TimedRuntime::reset () {
         durations [i].durval = 0;
     }
     durations [end_time].durval = duration_media;
-    ElementRuntime::reset ();
 }
 
 KDE_NO_EXPORT
@@ -324,7 +210,7 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
     //kdDebug () << "TimedRuntime::begin " << element->nodeName() << endl; 
     if (start_timer || dur_timer) {
         reset ();
-        init ();
+        convertNode <SMIL::TimedMrl> (element)->init ();
     }
     timingstate = timings_began;
 
@@ -349,7 +235,7 @@ KDE_NO_EXPORT void TimedRuntime::end () {
  * change behaviour of this runtime, returns old value
  */
 KDE_NO_EXPORT
-void TimedRuntime::parseParam (const QString & name, const QString & val) {
+bool TimedRuntime::parseParam (const QString & name, const QString & val) {
     //kdDebug () << "TimedRuntime::parseParam " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("begin")) {
         setDurationItem (begin_time, val);
@@ -397,8 +283,11 @@ void TimedRuntime::parseParam (const QString & name, const QString & val) {
         Mrl * mrl = static_cast <Mrl *> (element.ptr ());
         if (mrl)
             mrl->pretty_name = val;
-    }
-    ElementRuntime::parseParam (name, val);
+    } else if (name == QString::fromLatin1 ("src")) {
+        ; // block Mrl src parsing for now
+    } else
+        return false;
+    return true;
 }
 
 KDE_NO_EXPORT void TimedRuntime::processEvent (unsigned int event) {
@@ -604,8 +493,9 @@ bool CalculatedSizer::applyRegPoints (Node * node, Single w, Single h,
             if (c->id == SMIL::id_node_regpoint &&
                     convertNode<Element>(c)->getAttribute ("id") == reg_point) {
                 Single i1, i2; // dummies
-                static_cast <RegPointRuntime*> (c->getRuntime ())->sizes.calcSizes (0L, 100, 100, rpx, rpy, i1, i2);
-                QString ra = convertNode <Element> (c)->getAttribute ("regAlign");
+                SMIL::RegPoint *rp_elm = static_cast<SMIL::RegPoint*>(c.ptr());
+                rp_elm->sizes.calcSizes (0L, 100, 100, rpx, rpy, i1, i2);
+                QString ra = rp_elm->getAttribute ("regAlign");
                 if (!ra.isEmpty () && reg_align.isEmpty ())
                     reg_align = ra;
                 break;
@@ -687,82 +577,10 @@ bool CalculatedSizer::setSizeParam (const QString & name, const QString & val) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT RegionRuntime::RegionRuntime (NodePtr e)
- : ElementRuntime (e) {
-    init ();
-}
-
-KDE_NO_EXPORT void RegionRuntime::reset () {
-    // Keep region_node, so no ElementRuntime::reset (); or set it back again
-    active = false;
-    sizes.resetSizes ();
-}
-
-KDE_NO_EXPORT
-void RegionRuntime::parseParam (const QString & name, const QString & val) {
-    //kdDebug () << "RegionRuntime::parseParam " << convertNode <Element> (element)->getAttribute ("id") << " " << name << "=" << val << endl;
-    SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (element);
-    SRect rect;
-    bool need_repaint = false;
-    if (rb)
-        rect = SRect (rb->x, rb->y, rb->w, rb->h);
-    if (name == QString::fromLatin1 ("background-color") ||
-            name == QString::fromLatin1 ("backgroundColor")) {
-        rb->background_color = 0xff000000 | QColor (val).rgb ();
-        if (rb->surface)
-            rb->surface->background_color = rb->background_color;
-        need_repaint = true;
-    } else if (name == QString::fromLatin1 ("z-index")) {
-        if (rb)
-            rb->z_order = val.toInt ();
-        need_repaint = true;
-    } else if (sizes.setSizeParam (name, val)) {
-        if (active && rb && rb->surface && element) {
-            NodePtr p = rb->parentNode ();
-            if (p &&(p->id==SMIL::id_node_region ||p->id==SMIL::id_node_layout))
-                convertNode <SMIL::RegionBase> (p)->updateDimensions (0L);
-            //if (rect.width () == rw && rect.height () == rh) {
-            //    PlayListNotify * n = element->document()->notify_listener;
-            //    if (n && (rect.x () != rx || rect.y () != ry))
-            //        n->moveRect (rect.x(), rect.y(), rect.width (), rect.height (), rx, ry);
-            //} else {
-                rect = rect.unite (SRect (rb->x, rb->y, rb->w, rb->h));
-                need_repaint = true;
-            //}
-        }
-    }
-    if (need_repaint && active && rb && element && rb->surface->parentNode ())
-        rb->surface->parentNode ()->repaint (rect.x(), rect.y(), rect.width(), rect.height());
-    ElementRuntime::parseParam (name, val);
-}
-
-KDE_NO_EXPORT void RegionRuntime::begin () {
-    active = true;
-    ElementRuntime::begin ();
-}
-
-KDE_NO_EXPORT void RegionRuntime::end () {
-    reset ();
-    ElementRuntime::end ();
-}
-
-//-----------------------------------------------------------------------------
-
-KDE_NO_CDTOR_EXPORT RegPointRuntime::RegPointRuntime (NodePtr e)
-    : ElementRuntime (e) {}
-
-KDE_NO_EXPORT
-void RegPointRuntime::parseParam (const QString & name, const QString & val) {
-    sizes.setSizeParam (name, val); // TODO: if dynamic, make sure to repaint
-    ElementRuntime::parseParam (name, val);
-}
-
-//-----------------------------------------------------------------------------
-
 KDE_NO_CDTOR_EXPORT AnimateGroupData::AnimateGroupData (NodePtr e)
  : TimedRuntime (e), modification_id (-1) {}
 
-void AnimateGroupData::parseParam (const QString & name, const QString & val) {
+bool AnimateGroupData::parseParam (const QString & name, const QString & val) {
     //kdDebug () << "AnimateGroupData::parseParam " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("target") ||
             name == QString::fromLatin1 ("targetElement")) {
@@ -773,8 +591,9 @@ void AnimateGroupData::parseParam (const QString & name, const QString & val) {
         changed_attribute = val;
     } else if (name == QString::fromLatin1 ("to")) {
         change_to = val;
-    }
-    TimedRuntime::parseParam (name, val);
+    } else
+        return TimedRuntime::parseParam (name, val);
+    return true;
 }
 
 /**
@@ -795,8 +614,9 @@ KDE_NO_EXPORT void AnimateGroupData::reset () {
 KDE_NO_EXPORT void AnimateGroupData::restoreModification () {
     if (modification_id > -1 && target_element &&
             target_element->state > Node::state_init) {
-        //kdDebug () << "AnimateGroupData::restoreModificatio " <<modification_id << endl;
-        target_element->getRuntime ()->resetParam (changed_attribute, modification_id);
+        //kdDebug () << "AnimateGroupData(" << this << ")::restoreModificatio " <<modification_id << endl;
+        convertNode <Element> (target_element)->resetParam (
+                changed_attribute, modification_id);
     }
     modification_id = -1;
 }
@@ -811,9 +631,9 @@ KDE_NO_EXPORT void SetData::started () {
     restoreModification ();
     if (element) {
         if (target_element) {
-            ElementRuntime * rt = target_element->getRuntime ();
-            rt->setParam (changed_attribute, change_to, &modification_id);
-            //kdDebug () << "SetData::started " << target_element->nodeName () << "." << changed_attribute << " " << old_value << "->" << change_to << endl;
+            convertNode <Element> (target_element)->setParam (
+                    changed_attribute, change_to, &modification_id);
+            //kdDebug () << "SetData(" << this << ")::started " << target_element->nodeName () << "." << changed_attribute << " ->" << change_to << " modid:" << modification_id << endl;
         } else
             kdWarning () << "target element not found" << endl;
     } else
@@ -847,7 +667,7 @@ KDE_NO_EXPORT void AnimateData::reset () {
     change_from_unit.truncate (0);
 }
 
-void AnimateData::parseParam (const QString & name, const QString & val) {
+bool AnimateData::parseParam (const QString & name, const QString & val) {
     //kdDebug () << "AnimateData::parseParam " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("change_by")) {
         change_by = val.toInt ();
@@ -862,11 +682,9 @@ void AnimateData::parseParam (const QString & name, const QString & val) {
             calcMode = calc_linear;
         else if (val == QString::fromLatin1 ("paced"))
             calcMode = calc_paced;
-    } else {
-        AnimateGroupData::parseParam (name, val);
-        return;
-    }
-    ElementRuntime::parseParam (name, val);
+    } else
+        return AnimateGroupData::parseParam (name, val);
+    return true;
 }
 
 /**
@@ -885,21 +703,22 @@ KDE_NO_EXPORT void AnimateData::started () {
             kdWarning () << "set element disappeared" << endl;
             break;
         }
-        if (!target_element) {
+        NodePtr protect = target_element;
+        Element * target = convertNode <Element> (target_element);
+        if (!target) {
             kdWarning () << "target element not found" << endl;
             break;
         }
-        ElementRuntime * rt = target_element->getRuntime ();
         if (calcMode == calc_linear) {
             QRegExp reg ("^\\s*([0-9\\.]+)(\\s*[%a-z]*)?");
             if (change_from.isEmpty ()) {
                 if (change_values.size () > 0) // check 'values' attribute
                      change_from = change_values.first ();
-                else
-                    change_from = rt->param (changed_attribute); // take current
+                else // take current
+                    change_from = target->param (changed_attribute);
             }
             if (!change_from.isEmpty ()) {
-                rt->setParam (changed_attribute, change_from, &modification_id);
+                target->setParam (changed_attribute, change_from, &modification_id);
                 if (reg.search (change_from) > -1) {
                     change_from_val = reg.cap (1).toDouble ();
                     change_from_unit = reg.cap (2);
@@ -937,7 +756,7 @@ KDE_NO_EXPORT void AnimateData::started () {
             }
             //kdDebug () << "AnimateData::started " << target_element->nodeName () << "." << changed_attribute << " " << change_values.first () << "->" << change_values.last () << " in " << steps << " interval:" << interval << endl;
             anim_timer = element->document ()->setTimeout (element, interval, anim_timer_id); // 50 /s for now FIXME
-            rt->setParam (changed_attribute, change_values.first (), &modification_id);
+            target->setParam (changed_attribute, change_values.first (), &modification_id);
             success = true;
         }
     } while (false);
@@ -969,12 +788,13 @@ KDE_NO_EXPORT void AnimateData::timerTick () {
         kdError () << "spurious anim timer tick" << endl;
         return;
     }
-    if (steps-- > 0 && target_element) {
+    Element * target = convertNode <Element> (target_element);
+    if (steps-- > 0 && target) {
         if (calcMode == calc_linear) {
             change_from_val += change_delta;
-            target_element->getRuntime ()->setParam (changed_attribute, QString ("%1%2").arg (change_from_val).arg(change_from_unit), &modification_id);
+            target->setParam (changed_attribute, QString ("%1%2").arg (change_from_val).arg(change_from_unit), &modification_id);
         } else if (calcMode == calc_discrete) {
-            target_element->getRuntime ()->setParam (changed_attribute, change_values[change_values.size () - steps -1], &modification_id);
+            target->setParam (changed_attribute, change_values[change_values.size () - steps -1], &modification_id);
         }
     } else {
         if (element)
@@ -1016,10 +836,10 @@ KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::end () {
  * re-implement for regions and src attributes
  */
 KDE_NO_EXPORT
-void MediaTypeRuntime::parseParam (const QString & name, const QString & val) {
+bool MediaTypeRuntime::parseParam (const QString & name, const QString & val) {
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
     if (!mt)
-        return;
+        return false;
     if (name == QString::fromLatin1 ("src")) {
         mt->src = val;
     } else if (name == QString::fromLatin1 ("fit")) {
@@ -1034,8 +854,7 @@ void MediaTypeRuntime::parseParam (const QString & name, const QString & val) {
         else if (val == QString::fromLatin1 ("slice"))
             fit = fit_slice;
     } else if (!sizes.setSizeParam (name, val)) {
-        TimedRuntime::parseParam (name, val);
-        return;
+        return TimedRuntime::parseParam (name, val);
     }
     SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (mt->region_node);
     if ((state () == timings_began ||
@@ -1043,7 +862,7 @@ void MediaTypeRuntime::parseParam (const QString & name, const QString & val) {
                  fill == TimedRuntime::fill_freeze)) &&
             rb && element)
         rb->repaint ();
-    ElementRuntime::parseParam (name, val);
+    return true;
 }
 
 /**
@@ -1113,7 +932,7 @@ KDE_NO_EXPORT void AudioVideoData::avStopped () {
 }
 
 KDE_NO_EXPORT
-void AudioVideoData::parseParam (const QString & name, const QString & val) {
+bool AudioVideoData::parseParam (const QString & name, const QString & val) {
     //kdDebug () << "AudioVideoData::parseParam " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("src")) {
         NodePtr element_protect = element; // note element is weak
@@ -1143,7 +962,8 @@ void AudioVideoData::parseParam (const QString & name, const QString & val) {
             }
         }
     } else
-        MediaTypeRuntime::parseParam (name, val);
+        return MediaTypeRuntime::parseParam (name, val);
+    return true;
 }
 
 KDE_NO_EXPORT void AudioVideoData::postpone (bool b) {
@@ -1228,17 +1048,7 @@ KDE_NO_EXPORT void SMIL::Smil::activate () {
         Element::deactivate(); // some unfortunate reset in parent doc
 }
 
-// FIXME: this should be through the deactivate() calls
-static void endLayout (Node * node) {
-    if (node) { // note rb can be a Region/Layout/RootLayout object
-        node->getRuntime ()->end ();
-        for (NodePtr c = node->firstChild (); c; c = c->nextSibling ())
-            endLayout (c.ptr ());
-    }
-}
-
 KDE_NO_EXPORT void SMIL::Smil::deactivate () {
-    endLayout (layout_node.ptr ());
     if (layout_node)
         convertNode <SMIL::Layout> (layout_node)->repaint ();    
     Mrl::deactivate ();
@@ -1288,6 +1098,19 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
     }
 }
 
+KDE_NO_EXPORT void SMIL::Smil::childDone (NodePtr child) {
+    if (unfinished ()) {
+        if (child->nextSibling ())
+            child->nextSibling ()->activate ();
+        else {
+            for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+                if (e->active ())
+                    e->deactivate ();
+            finish ();
+        }
+    }
+}
+
 KDE_NO_EXPORT Mrl * SMIL::Smil::linkNode () {
     return current_av_media_type ? current_av_media_type->mrl () : this;
 }
@@ -1307,6 +1130,15 @@ KDE_NO_EXPORT void SMIL::Smil::accept (Visitor * v) {
 }
 
 //-----------------------------------------------------------------------------
+
+static void headChildDone (NodePtr node, NodePtr child) {
+    if (node->unfinished ()) {
+        if (child->nextSibling ())
+            child->nextSibling ()->activate ();
+        else
+            node->finish (); // we're done
+    }
+}
 
 KDE_NO_EXPORT NodePtr SMIL::Head::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "layout"))
@@ -1332,6 +1164,10 @@ KDE_NO_EXPORT void SMIL::Head::closed () {
     appendChild (layout);
     layout->setAuxiliaryNode (true);
     layout->closed (); // add root-layout and a region
+}
+
+KDE_NO_EXPORT void SMIL::Head::childDone (NodePtr child) {
+    headChildDone (this, child);
 }
 
 //-----------------------------------------------------------------------------
@@ -1363,7 +1199,7 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
         for (NodePtr n = firstChild (); n; n = n->nextSibling ()) {
             if (n->id == id_node_region) {
                 SMIL::Region * rb =convertNode <SMIL::Region> (n);
-                static_cast <RegionRuntime *> (rb->getRuntime ())->init ();
+                rb->init ();
                 rb->calculateBounds (0, 0);
                 if (int (rb->x + rb->w) > w_root)
                     w_root = rb->x + rb->w;
@@ -1397,10 +1233,10 @@ KDE_NO_EXPORT void SMIL::Layout::activate () {
 }
 
 KDE_NO_EXPORT void SMIL::Layout::updateDimensions (SurfacePtr) {
+    RegionBase * rb = static_cast <RegionBase *> (rootLayout.ptr ());
     x = y = 0;
-    RegionRuntime *rr = static_cast<RegionRuntime*> (rootLayout->getRuntime ());
-    w = rr->sizes.width.size ();
-    h = rr->sizes.height.size ();
+    w = rb->sizes.width.size ();
+    h = rb->sizes.height.size ();
     //kdDebug () << "Layout::updateDimensions " << w << "," << h <<endl;
     SMIL::RegionBase::updateDimensions (surface);
 }
@@ -1420,11 +1256,9 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
                 Element * rl = convertNode <Element> (rootLayout);
                 rl->setAttribute (QString::fromLatin1 ("width"), QString::number ((int)ew));
                 rl->setAttribute (QString::fromLatin1 ("height"), QString::number ((int)eh));
-                if (runtime) {
-                    rl->getRuntime ()->setParam (QString::fromLatin1 ("width"), QString::number ((int)ew));
-                    rl->getRuntime ()->setParam (QString::fromLatin1 ("height"), QString::number ((int)eh));
+                rl->setParam (QString::fromLatin1 ("width"), QString::number ((int)ew));
+                rl->setParam (QString::fromLatin1 ("height"), QString::number ((int)eh));
                     updateDimensions (surface);
-                }
             } else if (w > 0 && h > 0) {
                 xscale += 1.0 * (ew - w) / w;
                 yscale += 1.0 * (eh - h) / h;
@@ -1479,37 +1313,36 @@ KDE_NO_EXPORT void SMIL::Layout::accept (Visitor * v) {
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
  : Element (d, id), x (0), y (0), w (0), h (0),
-   z_order (1), background_color (0), runtime (0L),
+   z_order (1), background_color (0),
    m_SizeListeners (new NodeRefList),
    m_PaintListeners (new NodeRefList) {}
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
-    delete runtime;
 }
 
-KDE_NO_EXPORT ElementRuntime * SMIL::RegionBase::getRuntime () {
-    if (!runtime)
-        runtime = new RegionRuntime (this);
-    return runtime;
+KDE_NO_EXPORT void SMIL::RegionBase::init () {
+    for (AttributePtr a= attributes ()->first (); a; a = a->nextSibling ())
+        setParam (QString (a->nodeName ()), a->nodeValue ());
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::activate () {
     setState (state_activated);
-    ElementRuntime * rt = getRuntime ();
-    rt->init ();
-    rt->begin ();
+    init ();
     for (NodePtr r = firstChild (); r; r = r->nextSibling ())
         if (r->id == id_node_region || r->id == id_node_root_layout)
             r->activate ();
 }
 
-KDE_NO_EXPORT void SMIL::RegionBase::reset () {
-    Element::reset ();
+KDE_NO_EXPORT void SMIL::RegionBase::childDone (NodePtr child) {
+    headChildDone (this, child);
+}
+
+KDE_NO_EXPORT void SMIL::RegionBase::deactivate () {
     background_color = 0;
     if (surface)
         surface->background_color = 0;
-    delete runtime;
-    runtime = 0L;
+    sizes.resetSizes ();
+    Element::deactivate ();
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::repaint () {
@@ -1545,6 +1378,41 @@ bool SMIL::RegionBase::handleEvent (EventPtr event) {
     return true;
 }
 
+KDE_NO_EXPORT
+void SMIL::RegionBase::parseParam (const QString & name, const QString & val) {
+    //kdDebug () << "RegionBase::parseParam " << getAttribute ("id") << " " << name << "=" << val << " active:" << active() << endl;
+    bool need_repaint = false;
+    SRect rect = SRect (x, y, w, h);
+    if (name == QString::fromLatin1 ("background-color") ||
+            name == QString::fromLatin1 ("backgroundColor")) {
+        background_color = 0xff000000 | QColor (val).rgb ();
+        if (surface)
+            surface->background_color = background_color;
+        need_repaint = true;
+    } else if (name == QString::fromLatin1 ("z-index")) {
+        z_order = val.toInt ();
+        need_repaint = true;
+    } else if (sizes.setSizeParam (name, val)) {
+        if (active () && surface) {
+            NodePtr p = parentNode ();
+            if (p &&(p->id==SMIL::id_node_region ||p->id==SMIL::id_node_layout))
+                convertNode <SMIL::RegionBase> (p)->updateDimensions (0L);
+            //if (rect.width () == rw && rect.height () == rh) {
+            //    PlayListNotify * n = element->document()->notify_listener;
+            //    if (n && (rect.x () != rx || rect.y () != ry))
+            //        n->moveRect (rect.x(), rect.y(), rect.width (), rect.height (), rx, ry);
+            //} else {
+                rect = rect.unite (SRect (x, y, w, h));
+                need_repaint = true;
+            //}
+        }
+    }
+    if (need_repaint && active () && surface && surface->parentNode ())
+        surface->parentNode ()->repaint (rect.x(), rect.y(),
+                rect.width(), rect.height());
+    Element::parseParam (name, val);
+}
+
 NodeRefListPtr SMIL::RegionBase::listeners (unsigned int eid) {
     if (eid == event_paint)
         return m_PaintListeners;
@@ -1573,7 +1441,7 @@ KDE_NO_EXPORT NodePtr SMIL::Region::childFromTag (const QString & tag) {
 KDE_NO_EXPORT
 void SMIL::Region::calculateBounds (Single pw, Single ph) {
     Single x1 (x), y1 (y), w1 (w), h1 (h);
-    static_cast <RegionRuntime *> (getRuntime ())->sizes.calcSizes (this, pw, ph, x, y, w, h);
+    sizes.calcSizes (this, pw, ph, x, y, w, h);
     if (x1 != x || y1 != y || w1 != w || h1 != h) {
         propagateEvent (new SizeEvent (0, 0, w, h, fit_meet));
     }
@@ -1645,14 +1513,10 @@ KDE_NO_EXPORT void SMIL::Region::accept (Visitor * v) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT SMIL::RegPoint::~RegPoint () {
-    delete runtime;
-}
-
-KDE_NO_EXPORT ElementRuntime * SMIL::RegPoint::getRuntime () {
-    if (!runtime)
-        runtime = new RegPointRuntime (this);
-    return runtime;
+KDE_NO_EXPORT
+void SMIL::RegPoint::parseParam (const QString & p, const QString & v) {
+    sizes.setSizeParam (p, v); // TODO: if dynamic, make sure to repaint
+    Element::parseParam (p, v);
 }
 
 //-----------------------------------------------------------------------------
@@ -1677,11 +1541,16 @@ KDE_NO_EXPORT void SMIL::TimedMrl::closed () {
     Mrl::closed ();
 }
 
+KDE_NO_EXPORT void SMIL::TimedMrl::init () {
+    for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ())
+        setParam (QString (a->nodeName ()), a->nodeValue ());
+}
+
 KDE_NO_EXPORT void SMIL::TimedMrl::activate () {
     //kdDebug () << "SMIL::TimedMrl(" << nodeName() << ")::activate" << endl;
     setState (state_activated);
+    init ();
     TimedRuntime * rt = timedRuntime ();
-    rt->init ();
     if (rt == runtime) // Runtime might already be dead
         rt->begin ();
     else
@@ -1745,12 +1614,6 @@ KDE_NO_EXPORT void SMIL::TimedMrl::childDone (NodePtr c) {
     }
 }
 
-KDE_NO_EXPORT ElementRuntime * SMIL::TimedMrl::getRuntime () {
-    if (!runtime)
-        runtime = getNewRuntime ();
-    return runtime;
-}
-
 KDE_NO_EXPORT NodeRefListPtr SMIL::TimedMrl::listeners (unsigned int id) {
     if (id == event_stopped)
         return m_StoppedListeners;
@@ -1787,6 +1650,12 @@ KDE_NO_EXPORT bool SMIL::TimedMrl::handleEvent (EventPtr event) {
 
 KDE_NO_EXPORT TimedRuntime * SMIL::TimedMrl::getNewRuntime () {
     return new TimedRuntime (this);
+}
+
+KDE_NO_EXPORT
+void SMIL::TimedMrl::parseParam (const QString & para, const QString & value) {
+    if (!timedRuntime ()->parseParam (para, value))
+        Mrl::parseParam (para, value);
 }
 
 //-----------------------------------------------------------------------------
@@ -2067,7 +1936,7 @@ KDE_NO_EXPORT void SMIL::MediaType::opened () {
 
 KDE_NO_EXPORT void SMIL::MediaType::activate () {
     setState (state_activated);
-    timedRuntime ()->init (); // sets all attributes
+    init (); // sets all attributes
     for (NodePtr c = firstChild (); c; c = c->nextSibling ())
         if (c != external_tree) {
             // activate param/set/animate.. children
@@ -2096,7 +1965,7 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
         }
     if (e) {
         MediaTypeRuntime *tr = static_cast<MediaTypeRuntime*>(timedRuntime ());
-        SMIL::Region * r = findRegion (e, tr->param(QString::fromLatin1("region")));
+        SMIL::Region * r = findRegion (e, param(QString::fromLatin1("region")));
         if (r) {
             region_node = r;
             region_sized = r->connectTo (this, event_sized);
@@ -2359,9 +2228,9 @@ KDE_NO_EXPORT bool SMIL::Animate::handleEvent (EventPtr event) {
 KDE_NO_EXPORT void SMIL::Param::activate () {
     setState (state_activated);
     QString name = getAttribute ("name");
-    if (!name.isEmpty () && parentNode ()) {
-        parentNode ()->getRuntime ()->setParam (name, getAttribute ("value"));
-    }
+    Node * parent = parentNode ().ptr ();
+    if (!name.isEmpty () && parent && parent->isElementNode ())
+        static_cast<Element*>(parent)->setParam (name, getAttribute ("value"));
     Element::activate (); //finish (); // no livetime of itself, will deactivate
 }
 
@@ -2375,14 +2244,14 @@ KDE_NO_CDTOR_EXPORT ImageRuntime::~ImageRuntime () {
 }
 
 KDE_NO_EXPORT
-void ImageRuntime::parseParam (const QString & name, const QString & val) {
+bool ImageRuntime::parseParam (const QString & name, const QString & val) {
     //kdDebug () << "ImageRuntime::param " << name << "=" << val << endl;
     if (name == QString::fromLatin1 ("src")) {
         killWGet ();
         NodePtr element_protect = element;
         SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
         if (!mt)
-            return; // can not happen
+            return false; // can not happen
         if (mt->external_tree)
             mt->removeChild (mt->external_tree);
         mt->src = val;
@@ -2393,7 +2262,8 @@ void ImageRuntime::parseParam (const QString & name, const QString & val) {
                 wget (abs);
         }
     } else
-        MediaTypeRuntime::parseParam (name, val);
+        return MediaTypeRuntime::parseParam (name, val);
+    return true;
 }
 
 /**
@@ -2536,20 +2406,20 @@ KDE_NO_EXPORT void TextRuntime::reset () {
 }
 
 KDE_NO_EXPORT
-void TextRuntime::parseParam (const QString & name, const QString & val) {
+bool TextRuntime::parseParam (const QString & name, const QString & val) {
     //kdDebug () << "TextRuntime::parseParam " << name << "=" << val << endl;
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
     if (!mt)
-        return; // cannot happen
+        return false; // cannot happen
     if (name == QString::fromLatin1 ("src")) {
         killWGet ();
         mt->src = val;
         d->data.resize (0);
         if (!val.isEmpty ())
             wget (mt->absolutePath ());
-        return;
+        return false;
     }
-    MediaTypeRuntime::parseParam (name, val);
+    bool ret = MediaTypeRuntime::parseParam (name, val);
     if (name == QString::fromLatin1 ("backgroundColor")) {
         background_color = QColor (val).rgb ();
     } else if (name == QString ("fontColor")) {
@@ -2564,10 +2434,11 @@ void TextRuntime::parseParam (const QString & name, const QString & val) {
         font_size += val.toInt ();
     // TODO: expandTabs fontBackgroundColor fontSize fontStyle fontWeight hAlig vAlign wordWrap
     } else
-        return;
+        return ret;
     if (mt->region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze)))
         convertNode <SMIL::RegionBase> (mt->region_node)->repaint ();
+    return ret;
 }
 
 /**

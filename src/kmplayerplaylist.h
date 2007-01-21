@@ -40,7 +40,7 @@ class Document;
 class Node;
 class Mrl;
 class Surface;
-class ElementRuntime;
+class ElementPrivate;
 class RemoteObjectPrivate;
 class Visitor;
 
@@ -433,10 +433,6 @@ public:
      * or deactivate() if there is none.
      */
     virtual void childDone (NodePtr child);
-    /**
-     * Get Elements runtime object, guaranteed to be not nil but is volatile
-     */
-    virtual ElementRuntime * getRuntime ();
     virtual void clear ();
     void clearChildren ();
     void appendChild (NodePtr c);
@@ -485,16 +481,31 @@ const short id_node_playlist_item = 27;
  */
 class KMPLAYER_EXPORT Element : public Node {
 public:
-    ~Element () {}
+    ~Element ();
     void setAttributes (AttributeListPtr attrs);
     void setAttribute (const QString & name, const QString & value);
     QString getAttribute (const QString & name);
     KDE_NO_EXPORT AttributeListPtr attributes () const { return m_attributes; }
+    virtual void deactivate ();
     virtual void clear ();
     virtual bool isElementNode () { return true; }
+    /**
+     * Params are like attributes, but meant to be set dynamically. Caller may
+     * pass a modification id, that it can use to restore the old value.
+     * Param will be auto removed on deactivate
+     */
+    void setParam (const QString & para, const QString & val, int * mod_id=0L);
+    QString param (const QString & para);
+    void resetParam (const QString & para, int mod_id);
+    /**
+     * Called from (re)setParam for specialized interpretation of params
+     **/
+    virtual void parseParam (const QString &, const QString &) {}
 protected:
     Element (NodePtr & d, short id=0);
     AttributeListPtr m_attributes;
+private:
+    ElementPrivate * d;
 };
 
 /**

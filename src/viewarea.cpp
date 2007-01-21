@@ -502,7 +502,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     //kdDebug() << "Visit " << img->nodeName() << endl;
-    ImageRuntime * ir = static_cast <ImageRuntime *> (img->getRuntime ());
+    ImageRuntime * ir = static_cast <ImageRuntime *> (img->timedRuntime ());
     SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (img->region_node);
     ImageData * id = ir->cached_img.data.ptr ();
     if (rb && rb->surface && id && !id->isEmpty () &&
@@ -557,7 +557,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
-    TextRuntime * td = static_cast <TextRuntime *> (txt->getRuntime ());
+    TextRuntime * td = static_cast <TextRuntime *> (txt->timedRuntime ());
     //kdDebug() << "Visit " << txt->nodeName() << " " << td->font_size << endl;
     SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (txt->region_node);
     if (rb && rb->surface) {
@@ -599,13 +599,12 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
     //kdDebug() << "Visit " << brush->nodeName() << endl;
-    ElementRuntime * er = brush->getRuntime ();
     SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (brush->region_node);
     if (rb && rb->surface) {
         SRect rect = rb->surface->bounds;
         Single x, y, w = rect.width(), h = rect.height();
         matrix.getXYWH (x, y, w, h);
-        unsigned int color = QColor (er->param ("color")).rgb ();
+        unsigned int color = QColor (brush->param ("color")).rgb ();
         CAIRO_SET_SOURCE_RGB (cr, color);
         cairo_rectangle (cr, x, y, w, h);
         cairo_fill (cr);

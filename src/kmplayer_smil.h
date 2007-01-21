@@ -67,7 +67,6 @@ struct KMPLAYER_NO_EXPORT CachedImage {
     ImageDataPtr data;
 };
 
-class ElementRuntimePrivate;
 class TextRuntimePrivate;
 
 /*
@@ -97,53 +96,6 @@ private:
 };
 
 /**
- * Base class representing live time of elements
- */
-class ElementRuntime {
-public:
-    ElementRuntime (NodePtr e);
-    virtual ~ElementRuntime ();
-    /**
-     * calls reset() and pulls in the attached_element's attributes
-     */
-    virtual void init ();
-    /**
-     * Called when element is pulled in scope, from Node::activate()
-     */
-    virtual void begin () {}
-    /**
-     * Called when element gets out of scope, from Node::reset()
-     */
-    virtual void end () {}
-    /**
-     * Reset all data, called from end() and init()
-     */
-    virtual void reset ();
-    /**
-     * Change behaviour of this runtime, returns old value. If id is not NULL,
-     * the value is treated as a modification on an existing value
-     */
-    QString setParam (const QString & name, const QString & value, int * id=0L);
-    /**
-     * get the current value of param name that's set by setParam(name,value)
-     */
-    QString param (const QString & name);
-    /**
-     * reset param with id as modification
-     */
-    void resetParam (const QString & name, int id);
-    /**
-     * called from setParam for specialized interpretation of params
-     */
-    virtual void parseParam (const QString &, const QString &) {}
-
-protected:
-    NodePtrW element;
-private:
-    ElementRuntimePrivate * d;
-};
-
-/**
  * For RegPoint, RegionRuntime and MediaRuntime, having sizes
  */
 class KMPLAYER_NO_EXPORT CalculatedSizer {
@@ -164,7 +116,7 @@ public:
 /**
  * Live representation of a SMIL element having timings
  */
-class KMPLAYER_NO_EXPORT TimedRuntime : public ElementRuntime {
+class KMPLAYER_NO_EXPORT TimedRuntime {
 public:
     enum TimingState {
         timings_reset = 0, timings_began, timings_started, timings_stopped
@@ -174,10 +126,19 @@ public:
 
     TimedRuntime (NodePtr e);
     virtual ~TimedRuntime ();
+    /**
+     * Called when element is pulled in scope, from Node::activate()
+     */
     virtual void begin ();
+    /**
+     * Called when element gets out of scope, from Node::reset()
+     */
     virtual void end ();
+    /**
+     * Reset all data, called from end() and init()
+     */
     virtual void reset ();
-    virtual void parseParam (const QString & name, const QString & value);
+    virtual bool parseParam (const QString & name, const QString & value);
     TimingState state () const { return timingstate; }
     void propagateStop (bool forced);
     void propagateStart ();
@@ -198,36 +159,10 @@ public:
     TimingState timingstate;
     Fill fill;
 protected:
+    NodePtrW element;
     TimerInfoPtrW start_timer;
     TimerInfoPtrW dur_timer;
     int repeat_count;
-};
-
-/**
- * Runtime data for a region
- */
-class KMPLAYER_NO_EXPORT RegionRuntime : public ElementRuntime {
-public:
-    RegionRuntime (NodePtr e);
-    KDE_NO_CDTOR_EXPORT ~RegionRuntime () {}
-    virtual void begin ();
-    virtual void end ();
-    virtual void reset ();
-    virtual void parseParam (const QString & name, const QString & value);
-    CalculatedSizer sizes;
-private:
-    bool active;
-};
-
-/**
- * Runtime data for a regPoint
- */
-class KMPLAYER_NO_EXPORT RegPointRuntime : public ElementRuntime {
-public:
-    RegPointRuntime (NodePtr e);
-    KDE_NO_CDTOR_EXPORT ~RegPointRuntime () {}
-    virtual void parseParam (const QString & name, const QString & value);
-    CalculatedSizer sizes;
 };
 
 /**
@@ -238,7 +173,7 @@ public:
     ~MediaTypeRuntime ();
     virtual void end ();
     virtual void stopped ();
-    virtual void parseParam (const QString & name, const QString & value);
+    virtual bool parseParam (const QString & name, const QString & value);
     virtual void postpone (bool b);
     CalculatedSizer sizes;
     PostponePtr postpone_lock;
@@ -255,7 +190,7 @@ class KMPLAYER_NO_EXPORT AudioVideoData : public MediaTypeRuntime {
 public:
     AudioVideoData (NodePtr e);
     virtual bool isAudioVideo ();
-    virtual void parseParam (const QString & name, const QString & value);
+    virtual bool parseParam (const QString & name, const QString & value);
     virtual void started ();
     virtual void stopped ();
     virtual void postpone (bool b);
@@ -267,7 +202,7 @@ class KMPLAYER_NO_EXPORT ImageRuntime : public QObject,public MediaTypeRuntime {
 public:
     ImageRuntime (NodePtr e);
     ~ImageRuntime ();
-    virtual void parseParam (const QString & name, const QString & value);
+    virtual bool parseParam (const QString & name, const QString & value);
     virtual void postpone (bool b);
     QMovie * img_movie;
     CachedImage cached_img;
@@ -290,7 +225,7 @@ public:
     TextRuntime (NodePtr e);
     ~TextRuntime ();
     void reset ();
-    virtual void parseParam (const QString & name, const QString & value);
+    virtual bool parseParam (const QString & name, const QString & value);
     int font_size;
     unsigned int font_color;
     unsigned int background_color;
@@ -308,7 +243,7 @@ protected:
 class KMPLAYER_NO_EXPORT AnimateGroupData : public TimedRuntime {
 public:
     KDE_NO_CDTOR_EXPORT ~AnimateGroupData () {}
-    virtual void parseParam (const QString & name, const QString & value);
+    virtual bool parseParam (const QString & name, const QString & value);
     virtual void reset ();
 protected:
     void restoreModification ();
@@ -339,7 +274,7 @@ class KMPLAYER_NO_EXPORT AnimateData : public AnimateGroupData {
 public:
     AnimateData (NodePtr e);
     KDE_NO_CDTOR_EXPORT ~AnimateData () {}
-    virtual void parseParam (const QString & name, const QString & value);
+    virtual bool parseParam (const QString & name, const QString & value);
     virtual void reset ();
     virtual void started ();
     virtual void stopped ();
@@ -409,6 +344,7 @@ public:
     void activate ();
     void deactivate ();
     void closed ();
+    void childDone (NodePtr child);
     bool expose () const;
     void accept (Visitor *);
     /**
@@ -430,6 +366,7 @@ public:
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "head"; }
     void closed ();
+    void childDone (NodePtr child);
     bool expose () const;
 };
 
@@ -439,12 +376,14 @@ public:
 class KMPLAYER_NO_EXPORT RegionBase : public Element {
 public:
     ~RegionBase ();
-    virtual ElementRuntime * getRuntime ();
     bool expose () const { return false; }
-    void reset ();
     void activate ();
+    void childDone (NodePtr child);
+    void deactivate ();
     virtual bool handleEvent (EventPtr event);
+    virtual void parseParam (const QString & name, const QString & value);
     virtual NodeRefListPtr listeners (unsigned int event_id);
+    void init ();
     /**
      * repaints region, calls scheduleRepaint(x,y,w,h) on view
      */
@@ -457,13 +396,13 @@ public:
     virtual void updateDimensions (SurfacePtr parent_surface);
 
     SurfacePtrW surface;
+    CalculatedSizer sizes;
 
     Single x, y, w, h;     // unscaled values
     int z_order;
     unsigned int background_color;
 protected:
     RegionBase (NodePtr & d, short id);
-    RegionRuntime * runtime;
     NodeRefListPtr m_SizeListeners;        // region resized
     NodeRefListPtr m_PaintListeners;       // region need repainting
 };
@@ -525,13 +464,12 @@ public:
  */
 class KMPLAYER_NO_EXPORT RegPoint : public Element {
 public:
-    KDE_NO_CDTOR_EXPORT RegPoint (NodePtr & d)
-        : Element (d, id_node_regpoint), runtime (0L) {}
-    ~RegPoint ();
+    KDE_NO_CDTOR_EXPORT RegPoint (NodePtr & d) : Element(d, id_node_regpoint) {}
+    KDE_NO_CDTOR_EXPORT ~RegPoint () {}
     KDE_NO_EXPORT const char * nodeName () const { return "regPoint"; }
     KDE_NO_EXPORT bool expose () const { return false; }
-    ElementRuntime * getRuntime ();
-    ElementRuntime * runtime;
+    void parseParam (const QString & name, const QString & value);
+    CalculatedSizer sizes;
 };
 
 /**
@@ -552,7 +490,6 @@ public:
 class KMPLAYER_NO_EXPORT TimedMrl : public Mrl {
 public:
     ~TimedMrl ();
-    ElementRuntime * getRuntime ();
     void closed ();
     void activate ();
     void begin ();
@@ -563,6 +500,8 @@ public:
     void childBegan (NodePtr child);
     void childDone (NodePtr child);
     virtual bool handleEvent (EventPtr event);
+    void init ();
+    virtual void parseParam (const QString &, const QString &);
     TimedRuntime * timedRuntime ();
 protected:
     TimedMrl (NodePtr & d, short id);
