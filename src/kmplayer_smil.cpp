@@ -1542,6 +1542,8 @@ KDE_NO_EXPORT void SMIL::TimedMrl::closed () {
 }
 
 KDE_NO_EXPORT void SMIL::TimedMrl::init () {
+    TimedRuntime * rt = timedRuntime ();
+    rt->reset ();
     for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ())
         setParam (QString (a->nodeName ()), a->nodeValue ());
 }
@@ -1550,7 +1552,6 @@ KDE_NO_EXPORT void SMIL::TimedMrl::activate () {
     //kdDebug () << "SMIL::TimedMrl(" << nodeName() << ")::activate" << endl;
     setState (state_activated);
     TimedRuntime * rt = timedRuntime ();
-    rt->reset ();
     init ();
     if (rt == runtime) // Runtime might already be dead
         rt->begin ();
