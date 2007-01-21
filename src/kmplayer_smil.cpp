@@ -1321,7 +1321,7 @@ KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::init () {
-    for (AttributePtr a= attributes ()->first (); a; a = a->nextSibling ())
+    for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ())
         setParam (QString (a->nodeName ()), a->nodeValue ());
 }
 
@@ -1549,8 +1549,9 @@ KDE_NO_EXPORT void SMIL::TimedMrl::init () {
 KDE_NO_EXPORT void SMIL::TimedMrl::activate () {
     //kdDebug () << "SMIL::TimedMrl(" << nodeName() << ")::activate" << endl;
     setState (state_activated);
-    init ();
     TimedRuntime * rt = timedRuntime ();
+    rt->reset ();
+    init ();
     if (rt == runtime) // Runtime might already be dead
         rt->begin ();
     else
@@ -2438,7 +2439,7 @@ bool TextRuntime::parseParam (const QString & name, const QString & val) {
     if (mt->region_node && (timingstate == timings_started ||
                 (timingstate == timings_stopped && fill == fill_freeze)))
         convertNode <SMIL::RegionBase> (mt->region_node)->repaint ();
-    return ret;
+    return true;
 }
 
 /**
