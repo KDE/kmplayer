@@ -497,7 +497,8 @@ KDE_NO_EXPORT void View::timerEvent (QTimerEvent * e) {
             bool mouse_on_buttons = (//m_view_area->hasMouse () && 
                     mouse_pos.y () >= vert_buttons_pos-cp_height &&
                     mouse_pos.y ()<= vert_buttons_pos &&
-                    mouse_pos.x () > 0 && mouse_pos.x () < width());
+                    mouse_pos.x () > 0 &&
+                    mouse_pos.x () < m_control_panel->width());
             if (mouse_on_buttons && !m_control_panel->isVisible ()) {
                 m_control_panel->show ();
                 m_view_area->resizeEvent (0L);
