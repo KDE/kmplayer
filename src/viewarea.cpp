@@ -361,8 +361,8 @@ public:
     void visit (SMIL::ImageMediaType *);
     void visit (SMIL::TextMediaType *);
     void visit (SMIL::Brush *);
-    //void visit (SMIL::RefMediaType *) {}
-    //void visit (SMIL::AVMediaType *) {}
+    KDE_NO_EXPORT void visit (SMIL::RefMediaType *) {}
+    KDE_NO_EXPORT void visit (SMIL::AVMediaType *) {}
     void visit (RP::Imfl *);
     void visit (RP::Fill *);
     void visit (RP::Fadein *);
@@ -841,6 +841,144 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::ViewChange * vc) {
 
 //-----------------------------------------------------------------------------
 
+namespace KMPlayer {
+
+class KMPLAYER_NO_EXPORT MouseVisitor : public Visitor {
+    Matrix matrix;
+    NodePtr node;
+    unsigned int event;
+    int x, y;
+    bool handled;
+public:
+    MouseVisitor (unsigned int evt, int x, int y);
+    KDE_NO_CDTOR_EXPORT ~MouseVisitor () {}
+    using Visitor::visit;
+    void visit (Node * n);
+    void visit (SMIL::Layout *);
+    void visit (SMIL::Region *);
+    void visit (SMIL::TimedMrl * n);
+    void visit (SMIL::MediaType * n);
+    void visit (SMIL::Anchor *);
+
+};
+
+} // namespace
+
+KDE_NO_CDTOR_EXPORT
+MouseVisitor::MouseVisitor (unsigned int evt, int a, int b)
+    : event (evt), x (a), y (b), handled (false) {
+}
+
+KDE_NO_EXPORT void MouseVisitor::visit (Node * n) {
+    kdDebug () << "Mouse event ignored for " << n->nodeName () << endl;
+}
+
+KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Layout * layout) {
+    Matrix m = matrix;
+    matrix = Matrix (layout->surface->xoffset, layout->surface->yoffset,
+            layout->surface->xscale, layout->surface->yscale);
+    matrix.transform (m);
+
+    NodePtr node_save = node;
+    node = layout;
+    for (NodePtr r = layout->firstChild (); r; r = r->nextSibling ()) {
+        if (r->id == SMIL::id_node_region)
+            r->accept (this);
+        if (!node->active ())
+            break;
+    }
+    node = node_save;
+
+    matrix = m;
+}
+
+KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Region * region) {
+    SRect rect = region->surface->bounds;
+    Single rx = rect.x (), ry = rect.y(), rw = rect.width(), rh = rect.height();
+    matrix.getXYWH (rx, ry, rw, rh);
+    bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
+    if (!inside && event == event_pointer_clicked)
+        return;
+    Matrix m = matrix;
+    matrix = Matrix (rect.x(), rect.y(), 1.0, 1.0);
+    matrix.transform (m);
+
+    handled = false;
+    if (inside)
+        for (NodePtr r = region->firstChild (); r; r = r->nextSibling ()) {
+            r->accept (this);
+            if (handled || !node->active ())
+                break;
+        }
+    int saved_event = event;
+    if (node->active ()) {
+        if (event == event_pointer_moved) {
+            handled = false;
+            if (region->has_mouse && (!inside || handled)) { // OutOfBoundsEvent
+                region->has_mouse = false;
+                event = event_outbounds;
+            } else if (inside && !handled && !region->has_mouse) { // InBoundsEvent
+                region->has_mouse = true;
+                event = event_inbounds;
+            } else
+                handled = true;
+        }
+        if (!handled) {
+            NodeRefListPtr nl = region->listeners (event);
+            if (nl) {
+                for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
+                    if (c->data)
+                        c->data->accept (this);
+                    if (!node->active ())
+                        break;
+                }
+            }
+        }
+    }
+
+    event = saved_event;
+    handled = true;
+    matrix = m;
+}
+
+KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Anchor * anchor) {
+    kdDebug() << "anchor to " << anchor->href << " clicked" << endl;
+    NodePtr n = anchor;
+    for (NodePtr p = anchor->parentNode (); p; p = p->parentNode ()) {
+        if (n->mrl () && n->mrl ()->opener == p) {
+            p->mrl ()->setParam (QString ("src"), anchor->href, 0L);
+            break;
+        }
+        n = p;
+    }
+}
+
+KDE_NO_EXPORT void MouseVisitor::visit (SMIL::TimedMrl * timedmrl) {
+    timedmrl->timedRuntime ()->processEvent (event);
+}
+
+KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType * mediatype) {
+    NodeRefListPtr nl = mediatype->listeners (event);
+    if (nl)
+        for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
+            if (c->data)
+                c->data->accept (this);
+            if (!node->active ())
+                return;
+        }
+    visit (static_cast <SMIL::TimedMrl *> (mediatype));
+
+    int save_event = event;
+    if (event == event_inbounds || event == event_outbounds)
+        event = event_pointer_moved;
+    SMIL::RegionBase *r = convertNode<SMIL::RegionBase>(mediatype->region_node);
+    if (r && r->surface && r->surface->node && r != r->surface->node)
+        return r->surface->node->accept (this);
+    event = save_event;
+}
+
+//-----------------------------------------------------------------------------
+
 KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
  : QWidget (parent, "kde_kmplayer_viewarea", WResizeNoErase | WRepaintNoErase),
    m_parent (parent),
@@ -943,8 +1081,11 @@ KDE_NO_EXPORT void ViewArea::accelActivated () {
 }
 
 KDE_NO_EXPORT void ViewArea::mousePressEvent (QMouseEvent * e) {
-    if (surface->node && surface->node->handleEvent(new PointerEvent(event_pointer_clicked,e->x(), e->y())))
-        e->accept ();
+    if (surface->node) {
+        MouseVisitor visitor (event_pointer_clicked, e->x(), e->y());
+        surface->node->accept (&visitor);
+    }
+    e->accept ();
 }
 
 KDE_NO_EXPORT void ViewArea::mouseDoubleClickEvent (QMouseEvent *) {
@@ -958,8 +1099,11 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
         m_view->delayedShowButtons (e->y() > vert_buttons_pos-cp_height &&
                                     e->y() < vert_buttons_pos);
     }
-    if (surface->node && surface->node->handleEvent(new PointerEvent(event_pointer_moved,e->x(), e->y())))
-        e->accept ();
+    if (surface->node) {
+        MouseVisitor visitor (event_pointer_moved, e->x(), e->y());
+        surface->node->accept (&visitor);
+    }
+    e->accept ();
     mouseMoved (); // for m_mouse_invisible_timer
 }
 
@@ -979,10 +1123,8 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const SRect & rect) {
     int eh = rect.height () + 2;
     if (!cairo_surface)
         cairo_surface = cairoCreateSurface (winId (), width (), height ());
-    Visitor * v = new CairoPaintVisitor (cairo_surface, SRect (ex, ey, ew, eh));
-    //Visitor * v = new CairoPaintVisitor (cairo_surface, rect);
-    surface->node->accept (v);
-    delete v;
+    CairoPaintVisitor visitor (cairo_surface, SRect (ex, ey, ew, eh));
+    surface->node->accept (&visitor);
 #endif
     //XFlush (qt_xdisplay ());
 }

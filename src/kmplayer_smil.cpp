@@ -49,8 +49,8 @@ static const unsigned int duration_element_stopped = (unsigned int) -6;
 static const unsigned int duration_data_download = (unsigned int) -7;
 static const unsigned int duration_last_option = (unsigned int) -8;
 static const unsigned int event_activated = duration_element_activated;
-static const unsigned int event_inbounds = duration_element_inbounds;
-static const unsigned int event_outbounds = duration_element_outbounds;
+const unsigned int event_inbounds = duration_element_inbounds;
+const unsigned int event_outbounds = duration_element_outbounds;
 static const unsigned int event_stopped = duration_element_stopped;
 static const unsigned int event_to_be_started = (unsigned int) -8;
 const unsigned int event_paint = (unsigned int) -9;
@@ -130,9 +130,6 @@ KDE_NO_CDTOR_EXPORT SizeEvent::SizeEvent (Single a, Single b, Single c, Single d
         , Fit f)
  : Event (event_sized), x (a), y (b), w (c), h (d), fit (f) {}
 
-PointerEvent::PointerEvent (unsigned int event_id, int _x, int _y)
- : Event (event_id), x (_x), y (_y) {}
-
 TimerEvent::TimerEvent (TimerInfoPtr tinfo)
  : Event (event_timer), timer_info (tinfo), interval (false) {}
 
@@ -208,10 +205,8 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
         return;
     }
     //kdDebug () << "TimedRuntime::begin " << element->nodeName() << endl; 
-    if (start_timer || dur_timer) {
-        reset ();
+    if (start_timer || dur_timer)
         convertNode <SMIL::TimedMrl> (element)->init ();
-    }
     timingstate = timings_began;
 
     if (durations [begin_time].durval > 0) {
@@ -283,8 +278,6 @@ bool TimedRuntime::parseParam (const QString & name, const QString & val) {
         Mrl * mrl = static_cast <Mrl *> (element.ptr ());
         if (mrl)
             mrl->pretty_name = val;
-    } else if (name == QString::fromLatin1 ("src")) {
-        ; // block Mrl src parsing for now
     } else
         return false;
     return true;
@@ -1012,7 +1005,9 @@ static Element * fromMediaContentGroup (NodePtr & d, const QString & tag) {
         return new SMIL::RefMediaType (d);
     else if (!strcmp (taglatin, "brush"))
         return new SMIL::Brush (d);
-    // animation, textstream, ref, brush
+    else if (!strcmp (taglatin, "a") || !strcmp (taglatin, "anchor"))
+        return new SMIL::Anchor (d);
+    // animation, textstream
     return 0L;
 }
 
@@ -1294,11 +1289,6 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
             handled = true;
             break;
         }
-        case event_pointer_clicked:
-        case event_pointer_moved:
-            for (NodePtr r = firstChild (); r; r = r->nextSibling ())
-                handled |= r->handleEvent (event);
-            break;
         default:
             return RegionBase::handleEvent (event);
     }
@@ -1318,11 +1308,6 @@ KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
    m_PaintListeners (new NodeRefList) {}
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
-}
-
-KDE_NO_EXPORT void SMIL::RegionBase::init () {
-    for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ())
-        setParam (QString (a->nodeName ()), a->nodeValue ());
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::activate () {
@@ -1423,10 +1408,10 @@ NodeRefListPtr SMIL::RegionBase::listeners (unsigned int eid) {
 
 KDE_NO_CDTOR_EXPORT SMIL::Region::Region (NodePtr & d)
  : RegionBase (d, id_node_region),
+   has_mouse (false),
    m_ActionListeners (new NodeRefList),
    m_OutOfBoundsListeners (new NodeRefList),
-   m_InBoundsListeners (new NodeRefList),
-   has_mouse (false) {}
+   m_InBoundsListeners (new NodeRefList) {}
 
 KDE_NO_EXPORT NodePtr SMIL::Region::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "region"))
@@ -1451,41 +1436,7 @@ void SMIL::Region::calculateBounds (Single pw, Single ph) {
 }
 
 bool SMIL::Region::handleEvent (EventPtr event) {
-    Single rx = 0, ry = 0, rw = w, rh = h;
-    if (surface)
-        surface->toScreen (rx, ry, rw, rh);
     switch (event->id ()) {
-        case event_pointer_clicked: {
-            PointerEvent * e = static_cast <PointerEvent *> (event.ptr ());
-            bool inside = e->x > rx && e->x < rx+rw && e->y > ry && e->y< ry+rh;
-            if (!inside)
-                return false;
-            bool handled = false;
-            for (NodePtr r = firstChild (); r; r = r->nextSibling ())
-                handled |= r->handleEvent (event);
-            if (!handled) // handle it ..
-                propagateEvent (event);
-            return inside;
-        }
-        case event_pointer_moved: {
-            PointerEvent * e = static_cast <PointerEvent *> (event.ptr ());
-            bool inside = e->x > rx && e->x < rx+rw && e->y > ry && e->y< ry+rh;
-            bool handled = false;
-            if (inside)
-                for (NodePtr r = firstChild (); r; r = r->nextSibling ())
-                    handled |= r->handleEvent (event);
-            EventPtr evt;
-            if (has_mouse && (!inside || handled)) { // OutOfBoundsEvent
-                has_mouse = false;
-                evt = new Event (event_outbounds);
-            } else if (inside && !handled && !has_mouse) { // InBoundsEvent
-                has_mouse = true;
-                evt = new Event (event_inbounds);
-            }
-            if (evt)
-                propagateEvent (evt);
-            return inside;
-        }
         case event_sized: {
             SizeEvent * e = static_cast <SizeEvent *> (event.ptr ());
             return RegionBase::handleEvent (new SizeEvent (0, 0, w, h, e->fit));
@@ -1542,10 +1493,8 @@ KDE_NO_EXPORT void SMIL::TimedMrl::closed () {
 }
 
 KDE_NO_EXPORT void SMIL::TimedMrl::init () {
-    TimedRuntime * rt = timedRuntime ();
-    rt->reset ();
-    for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ())
-        setParam (QString (a->nodeName ()), a->nodeValue ());
+    timedRuntime ()->reset ();
+    Mrl::init ();
 }
 
 KDE_NO_EXPORT void SMIL::TimedMrl::activate () {
@@ -1657,7 +1606,8 @@ KDE_NO_EXPORT TimedRuntime * SMIL::TimedMrl::getNewRuntime () {
 KDE_NO_EXPORT
 void SMIL::TimedMrl::parseParam (const QString & para, const QString & value) {
     if (!timedRuntime ()->parseParam (para, value))
-        Mrl::parseParam (para, value);
+        if (para != QString::fromLatin1 ("src")) //block Mrl src parsing for now
+            Mrl::parseParam (para, value);
 }
 
 //-----------------------------------------------------------------------------
@@ -1907,6 +1857,50 @@ KDE_NO_EXPORT bool SMIL::Switch::isPlayable () {
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_CDTOR_EXPORT SMIL::Anchor::Anchor (NodePtr & d)
+ : Element(d, id_node_anchor), show (show_replace) {}
+
+void SMIL::Anchor::activate () {
+    init ();
+    bool found = false;
+    for (NodePtr c = firstChild(); c && !found; c = c->nextSibling ())
+        switch (c->id) {
+            case id_node_img:
+            case id_node_text:
+            case id_node_audio_video:
+            case id_node_ref:
+                mediatype_activated = c->connectTo (this, event_activated);
+                found = true;
+        }
+    Element::activate ();
+}
+
+void SMIL::Anchor::deactivate () {
+    mediatype_activated = 0L;
+    Element::deactivate ();
+}
+
+KDE_NO_EXPORT void SMIL::Anchor::childDone (NodePtr child) {
+    if (unfinished ()) {
+        if (child->nextSibling ())
+            child->nextSibling ()->activate ();
+        else
+            finish ();
+    }
+}
+
+NodePtr SMIL::Anchor::childFromTag (const QString & tag) {
+    return fromMediaContentGroup (m_doc, tag);
+}
+
+void SMIL::Anchor::parseParam (const QString & name, const QString & value) {
+    if (name == QString ("href")) {
+        href = value;
+    }
+}
+
+//-----------------------------------------------------------------------------
+
 KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, short id)
  : TimedMrl (d, id), m_type (t), bitrate (0),
    m_ActionListeners (new NodeRefList),
@@ -2064,11 +2058,6 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
             ret = true;
             break;
         }
-        case event_activated:
-        case event_outbounds:
-        case event_inbounds:
-            propagateEvent (event);
-            // fall through // return true;
         default:
             ret = TimedMrl::handleEvent (event);
     }
@@ -2235,6 +2224,50 @@ KDE_NO_EXPORT void SMIL::Param::activate () {
         static_cast<Element*>(parent)->setParam (name, getAttribute ("value"));
     Element::activate (); //finish (); // no livetime of itself, will deactivate
 }
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::Region * n) {
+    visit (static_cast <SMIL::RegionBase *> (n));
+}
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::Layout * n) {
+    visit (static_cast <SMIL::RegionBase *> (n));
+}
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::TimedMrl * n) {
+    visit (static_cast <Element *> (n));
+}
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::MediaType * n) {
+    visit (static_cast <SMIL::TimedMrl *> (n));
+}
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::ImageMediaType * n) {
+    visit (static_cast <SMIL::MediaType *> (n));
+}
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::TextMediaType * n) {
+    visit (static_cast <SMIL::MediaType *> (n));
+}
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::RefMediaType * n) {
+    visit (static_cast <SMIL::MediaType *> (n));
+}
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::AVMediaType * n) {
+    visit (static_cast <SMIL::MediaType *> (n));
+}
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::Brush * n) {
+    visit (static_cast <SMIL::MediaType *> (n));
+}
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::Anchor * n) {
+    visit (static_cast <Element *> (n));
+}
+
+//void Visitor::visit (SMIL::Area * n) {}
 
 //-----------------------------------------------------------------------------
 

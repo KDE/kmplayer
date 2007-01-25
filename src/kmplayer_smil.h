@@ -323,6 +323,8 @@ const short id_node_animate = 133;
 const short id_node_title = 140;
 const short id_node_param = 141;
 const short id_node_meta = 142;
+const short id_node_anchor = 150;
+const short id_node_area = 151;
 const short id_node_first = id_node_smil;
 const short id_node_first_timed_mrl = id_node_par;
 const short id_node_last_timed_mrl = id_node_animate;
@@ -383,7 +385,6 @@ public:
     virtual bool handleEvent (EventPtr event);
     virtual void parseParam (const QString & name, const QString & value);
     virtual NodeRefListPtr listeners (unsigned int event_id);
-    void init ();
     /**
      * repaints region, calls scheduleRepaint(x,y,w,h) on view
      */
@@ -439,14 +440,14 @@ public:
     virtual bool handleEvent (EventPtr event);
     virtual NodeRefListPtr listeners (unsigned int event_id);
     virtual void accept (Visitor *);
-private:
-    NodeRefListPtr m_ActionListeners;      // mouse clicked
-    NodeRefListPtr m_OutOfBoundsListeners; // mouse left
-    NodeRefListPtr m_InBoundsListeners;    // mouse entered
     /**
      * boolean for check if pointerEntered/pointerLeft should be called by View
      */
     bool has_mouse;
+private:
+    NodeRefListPtr m_ActionListeners;      // mouse clicked
+    NodeRefListPtr m_OutOfBoundsListeners; // mouse left
+    NodeRefListPtr m_InBoundsListeners;    // mouse entered
 };
 
 /**
@@ -500,12 +501,13 @@ public:
     void childBegan (NodePtr child);
     void childDone (NodePtr child);
     virtual bool handleEvent (EventPtr event);
+    virtual NodeRefListPtr listeners (unsigned int event_id);
+    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
     void init ();
     virtual void parseParam (const QString &, const QString &);
     TimedRuntime * timedRuntime ();
 protected:
     TimedMrl (NodePtr & d, short id);
-    virtual NodeRefListPtr listeners (unsigned int event_id);
     virtual TimedRuntime * getNewRuntime ();
 
     NodeRefListPtr m_StartedListeners;      // Element about to be started
@@ -603,6 +605,23 @@ public:
     NodePtrW chosenOne;
 };
 
+class KMPLAYER_NO_EXPORT Anchor : public Element {
+public:
+    Anchor (NodePtr & d);
+    KDE_NO_CDTOR_EXPORT ~Anchor () {}
+    void activate ();
+    void deactivate ();
+    void childDone (NodePtr child);
+    KDE_NO_EXPORT const char * nodeName () const { return "a"; }
+    NodePtr childFromTag (const QString & tag);
+    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
+    KDE_NO_EXPORT bool expose () const { return false; }
+    void parseParam (const QString & name, const QString & value);
+    ConnectionPtr mediatype_activated;
+    QString href;
+    enum { show_new, show_replace } show;
+};
+
 /**
  * Abstract base for the MediaType classes (video/audio/text/img/..)
  */
@@ -620,6 +639,7 @@ public:
     void childDone (NodePtr child);
     virtual SurfacePtr getSurface (NodePtr node);
     virtual bool handleEvent (EventPtr event);
+    NodeRefListPtr listeners (unsigned int event_id);
     void positionVideoWidget (); // for 'video' and 'ref' nodes
     NodePtrW external_tree; // if src points to playlist, the resolved top node
     NodePtrW trans_in;
@@ -628,7 +648,6 @@ public:
     QString m_type;
     unsigned int bitrate;
 protected:
-    NodeRefListPtr listeners (unsigned int event_id);
     NodeRefListPtr m_ActionListeners;      // mouse clicked
     NodeRefListPtr m_OutOfBoundsListeners; // mouse left
     NodeRefListPtr m_InBoundsListeners;    // mouse entered

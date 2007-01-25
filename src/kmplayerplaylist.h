@@ -244,17 +244,10 @@ public:
     Fit fit;
 };
 
-/**
- * Event signaling a pointer event
- */
-class PointerEvent : public Event {
-public:
-    PointerEvent (unsigned int event_id, int x, int y);
-    int x, y;
-};
-
 extern const unsigned int event_pointer_clicked;
 extern const unsigned int event_pointer_moved;
+extern const unsigned int event_inbounds;
+extern const unsigned int event_outbounds;
 extern const unsigned int event_paint;
 extern const unsigned int event_sized;
 extern const unsigned int event_postponed;
@@ -486,6 +479,7 @@ public:
     void setAttribute (const QString & name, const QString & value);
     QString getAttribute (const QString & name);
     KDE_NO_EXPORT AttributeListPtr attributes () const { return m_attributes; }
+    virtual void init ();
     virtual void deactivate ();
     virtual void clear ();
     virtual bool isElementNode () { return true; }
@@ -534,6 +528,7 @@ class KMPLAYER_EXPORT Mrl : public Element {
 protected:
     Mrl (NodePtr & d, short id=0);
     NodePtr childFromTag (const QString & tag);
+    void parseParam (const QString &, const QString &);
     unsigned int cached_ismrl_version;
     bool cached_ismrl;
 public:
@@ -806,11 +801,15 @@ namespace SMIL {
     class RegionBase;
     class Region;
     class Layout;
+    class MediaType;
     class ImageMediaType;
     class TextMediaType;
     class RefMediaType;
     class AVMediaType;
     class Brush;
+    class TimedMrl;
+    class Anchor;
+    class Area;
 }
 namespace RP {
     class Imfl;
@@ -828,13 +827,17 @@ public:
     KDE_NO_CDTOR_EXPORT Visitor () {}
     KDE_NO_CDTOR_EXPORT virtual ~Visitor () {}
     virtual void visit (Node *) {}
-    virtual void visit (SMIL::Region *) {}
-    virtual void visit (SMIL::Layout *) {}
-    virtual void visit (SMIL::ImageMediaType *) {}
-    virtual void visit (SMIL::TextMediaType *) {}
-    virtual void visit (SMIL::RefMediaType *) {}
-    virtual void visit (SMIL::AVMediaType *) {}
-    virtual void visit (SMIL::Brush *) {}
+    virtual void visit (SMIL::Region *);
+    virtual void visit (SMIL::Layout *);
+    virtual void visit (SMIL::TimedMrl *);
+    virtual void visit (SMIL::MediaType *);
+    virtual void visit (SMIL::ImageMediaType *);
+    virtual void visit (SMIL::TextMediaType *);
+    virtual void visit (SMIL::RefMediaType *);
+    virtual void visit (SMIL::AVMediaType *);
+    virtual void visit (SMIL::Brush *);
+    virtual void visit (SMIL::Anchor *);
+    //virtual void visit (SMIL::Area *);
     virtual void visit (RP::Imfl *) {}
     virtual void visit (RP::Crossfade *) {}
     virtual void visit (RP::Fadein *) {}

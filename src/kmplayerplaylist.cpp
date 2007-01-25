@@ -592,6 +592,12 @@ QString Element::getAttribute (const QString & name) {
     return value;
 }
 
+void Element::init () {
+    d->clear();
+    for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ())
+        setParam (QString (a->nodeName ()), a->nodeValue ());
+}
+
 void Element::deactivate () {
     d->clear();
     Node::deactivate ();
@@ -719,6 +725,22 @@ SurfacePtr Mrl::getSurface (NodePtr node) {
 
 bool Mrl::handleEvent (EventPtr) {
     return false;
+}
+
+void Mrl::parseParam (const QString & para, const QString & val) {
+    if (para == QString ("src") && !src.startsWith ("#")) {
+        src = val;
+        if (active ()) {
+            setState (state_deferred);
+            for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+                if (c->mrl () && c->mrl ()->opener.ptr () == this) {
+                    removeChild (c);
+                    c->reset();
+                }
+            resolved = false;
+            activate ();
+        }
+    }
 }
 
 KDE_NO_CDTOR_EXPORT Surface::Surface (NodePtr n, const SRect & r)
