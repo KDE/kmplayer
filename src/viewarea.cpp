@@ -896,6 +896,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Region * region) {
     SRect rect = region->surface->bounds;
     Single rx = rect.x (), ry = rect.y(), rw = rect.width(), rh = rect.height();
     matrix.getXYWH (rx, ry, rw, rh);
+    handled = false;
     bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
     if (!inside && event == event_pointer_clicked)
         return;
@@ -903,27 +904,28 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Region * region) {
     matrix = Matrix (rect.x(), rect.y(), 1.0, 1.0);
     matrix.transform (m);
 
-    handled = false;
+    bool child_handled = false;
     if (inside)
         for (NodePtr r = region->firstChild (); r; r = r->nextSibling ()) {
             r->accept (this);
-            if (handled || !node->active ())
+            child_handled |= handled;
+            if (!node->active ())
                 break;
         }
     int saved_event = event;
     if (node->active ()) {
         if (event == event_pointer_moved) {
-            handled = false;
-            if (region->has_mouse && (!inside || handled)) { // OutOfBoundsEvent
+            if (region->has_mouse && (!inside || child_handled)) {
                 region->has_mouse = false;
                 event = event_outbounds;
-            } else if (inside && !handled && !region->has_mouse) { // InBoundsEvent
+                child_handled = false;
+            } else if (inside && !child_handled && !region->has_mouse) {
                 region->has_mouse = true;
                 event = event_inbounds;
-            } else
-                handled = true;
+                child_handled = false;
+            }
         }
-        if (!handled) {
+        if (!child_handled) {
             NodeRefListPtr nl = region->listeners (event);
             if (nl) {
                 for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
@@ -937,7 +939,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Region * region) {
     }
 
     event = saved_event;
-    handled = true;
+    handled = inside;
     matrix = m;
 }
 
@@ -946,7 +948,9 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Anchor * anchor) {
     NodePtr n = anchor;
     for (NodePtr p = anchor->parentNode (); p; p = p->parentNode ()) {
         if (n->mrl () && n->mrl ()->opener == p) {
+            p->setState (Node::state_deferred);
             p->mrl ()->setParam (QString ("src"), anchor->href, 0L);
+            p->activate ();
             break;
         }
         n = p;

@@ -729,17 +729,17 @@ bool Mrl::handleEvent (EventPtr) {
 
 void Mrl::parseParam (const QString & para, const QString & val) {
     if (para == QString ("src") && !src.startsWith ("#")) {
-        src = val;
-        if (active ()) {
-            setState (state_deferred);
-            for (NodePtr c = firstChild (); c; c = c->nextSibling ())
-                if (c->mrl () && c->mrl ()->opener.ptr () == this) {
-                    removeChild (c);
-                    c->reset();
-                }
-            resolved = false;
-            activate ();
-        }
+        QString abs = absolutePath ();
+        if (abs != src)
+            src = val;
+        else
+            src = KURL (abs, val).url ();
+        for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+            if (c->mrl () && c->mrl ()->opener.ptr () == this) {
+                removeChild (c);
+                c->reset();
+            }
+        resolved = false;
     }
 }
 

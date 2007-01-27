@@ -175,6 +175,8 @@ public:
     virtual void stopped ();
     virtual bool parseParam (const QString & name, const QString & value);
     virtual void postpone (bool b);
+    virtual void clipStart () {}
+    virtual void clipStop () {}
     CalculatedSizer sizes;
     PostponePtr postpone_lock;
     Fit fit;
@@ -194,7 +196,8 @@ public:
     virtual void started ();
     virtual void stopped ();
     virtual void postpone (bool b);
-    void avStopped ();
+    virtual void clipStart ();
+    virtual void clipStop ();
 };
 
 class KMPLAYER_NO_EXPORT ImageRuntime : public QObject,public MediaTypeRuntime {
@@ -206,7 +209,7 @@ public:
     virtual void postpone (bool b);
     QMovie * img_movie;
     CachedImage cached_img;
-    bool have_frame;
+    int frame_nr;
 protected:
     virtual void started ();
     virtual void stopped ();
