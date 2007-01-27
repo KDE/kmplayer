@@ -131,10 +131,6 @@ public:
      */
     virtual void begin ();
     /**
-     * Called when element gets out of scope, from Node::reset()
-     */
-    virtual void end ();
-    /**
      * Reset all data, called from end() and init()
      */
     virtual void reset ();
@@ -171,17 +167,17 @@ protected:
 class KMPLAYER_NO_EXPORT MediaTypeRuntime : public RemoteObject, public TimedRuntime {
 public:
     ~MediaTypeRuntime ();
-    virtual void end ();
+    virtual void reset ();
     virtual void stopped ();
     virtual bool parseParam (const QString & name, const QString & value);
     virtual void postpone (bool b);
-    virtual void clipStart () {}
-    virtual void clipStop () {}
+    virtual void clipStart ();
+    virtual void clipStop ();
     CalculatedSizer sizes;
     PostponePtr postpone_lock;
     Fit fit;
-protected:
     MediaTypeRuntime (NodePtr e);
+protected:
     ConnectionPtr document_postponed;      // pauze audio/video accordantly
 };
 
@@ -207,12 +203,13 @@ public:
     ~ImageRuntime ();
     virtual bool parseParam (const QString & name, const QString & value);
     virtual void postpone (bool b);
+    virtual void clipStart ();
+    virtual void clipStop ();
     QMovie * img_movie;
     CachedImage cached_img;
     int frame_nr;
 protected:
     virtual void started ();
-    virtual void stopped ();
     virtual void remoteReady (QByteArray &);
 private slots:
     void movieUpdated (const QRect &);
@@ -633,7 +630,6 @@ public:
     MediaType (NodePtr & d, const QString & t, short id);
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
-    void opened ();
     void activate ();
     void deactivate ();
     void begin ();
@@ -641,6 +637,7 @@ public:
     bool expose () const;
     void childDone (NodePtr child);
     virtual SurfacePtr getSurface (NodePtr node);
+    virtual void parseParam (const QString & name, const QString & value);
     virtual bool handleEvent (EventPtr event);
     NodeRefListPtr listeners (unsigned int event_id);
     void positionVideoWidget (); // for 'video' and 'ref' nodes
@@ -700,6 +697,7 @@ class KMPLAYER_NO_EXPORT Brush : public MediaType {
 public:
     Brush (NodePtr & d);
     virtual void accept (Visitor *);
+    virtual TimedRuntime * getNewRuntime ();
 };
 
 class KMPLAYER_NO_EXPORT Set : public TimedMrl {

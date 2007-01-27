@@ -560,7 +560,10 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     TextRuntime * td = static_cast <TextRuntime *> (txt->timedRuntime ());
     //kdDebug() << "Visit " << txt->nodeName() << " " << td->font_size << endl;
     SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (txt->region_node);
-    if (rb && rb->surface) {
+    if (rb && rb->surface &&
+            (td->timingstate == TimedRuntime::timings_started ||
+             (td->timingstate == TimedRuntime::timings_stopped &&
+              td->fill == TimedRuntime::fill_freeze))) {
         SRect rect = rb->surface->bounds;
         Single x, y, w = rect.width(), h = rect.height();
         td->sizes.applyRegPoints (txt, rect.width(), rect.height(), x, y, w, h);
@@ -590,8 +593,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         CAIRO_SET_SOURCE_RGB (cr, td->font_color);
         float scale = 1.0 * w / rect.width (); // TODO: make an image
         cairo_set_font_size (cr, scale * td->font_size);
-        int margin = (int) scale * (1 + (td->font_size >> 2));
-        cairo_move_to (cr, x + margin, y + margin + (int)scale * td->font_size);
+        Single margin = 1 + scale * (td->font_size >> 2);
+        cairo_move_to (cr, x+margin, y + margin + Single(scale*td->font_size));
         cairo_show_text (cr, td->text.utf8 ().data ());
         //cairo_stroke (cr);
     }
@@ -1152,6 +1155,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     int x =0, y = 0;
     int w = width ();
     int h = height ();
+    scheduleRepaint (0, 0, w, h);
 #ifdef HAVE_CAIRO
     if (cairo_surface)
         cairo_xlib_surface_set_size (cairo_surface, width (), height ());
@@ -1176,7 +1180,6 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
         y = m_av_geometry.y ();
         wws = m_av_geometry.width ();
         hws = m_av_geometry.height ();
-        scheduleRepaint (0, 0, wws, hws);
             //m_view->viewer ()->setAspect (region->w / region->h);
     } else
         m_av_geometry = QRect (x, y, wws, hws);
