@@ -550,7 +550,14 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
                 cairo_set_source (cr, pat);
                 cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
                         clip_rect.width (), clip_rect.height ());
-                cairo_fill (cr);
+                if (img->trans_steps > img->trans_step) { // only fadein for now
+                    cairo_save (cr);
+                    cairo_clip (cr);
+                    cairo_paint_with_alpha (
+                            cr, 1.0 * img->trans_step/img->trans_steps);
+                    cairo_restore (cr);
+                } else
+                    cairo_fill (cr);
             }
         }
     }

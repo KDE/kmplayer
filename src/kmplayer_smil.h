@@ -480,10 +480,16 @@ public:
 class KMPLAYER_NO_EXPORT Transition : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Transition (NodePtr & d)
-        : Element (d, id_node_transition) {}
+        : Element (d, id_node_transition), dur (10) {}
     ~Transition ();
+    void activate ();
     KDE_NO_EXPORT const char * nodeName () const { return "transition"; }
+    void parseParam (const QString & name, const QString & value);
     KDE_NO_EXPORT bool expose () const { return false; }
+    bool supported ();
+    QString type;
+    QString subtype;
+    unsigned int dur; // deci seconds
 };
 
 /**
@@ -665,6 +671,8 @@ public:
     NodePtrW region_node;
     QString m_type;
     unsigned int bitrate;
+    unsigned int trans_step;
+    unsigned int trans_steps;
 protected:
     NodeRefListPtr m_ActionListeners;      // mouse clicked
     NodeRefListPtr m_OutOfBoundsListeners; // mouse left
@@ -674,6 +682,7 @@ protected:
     ConnectionPtr region_mouse_enter;      // attached region has mouse entered
     ConnectionPtr region_mouse_leave;      // attached region has mouse left
     ConnectionPtr region_mouse_click;      // attached region is clicked
+    TimerInfoPtrW trans_timer;
 };
 
 class KMPLAYER_NO_EXPORT AVMediaType : public MediaType {
