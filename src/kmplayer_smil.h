@@ -683,7 +683,6 @@ public:
     virtual TimedRuntime * getNewRuntime ();
     virtual void defer ();
     virtual void undefer ();
-    virtual void finish ();
     virtual bool handleEvent (EventPtr event);
     virtual void accept (Visitor *);
 };

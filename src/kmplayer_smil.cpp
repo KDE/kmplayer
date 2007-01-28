@@ -994,7 +994,7 @@ static Element * fromParamGroup (NodePtr & d, const QString & tag) {
     const char * ctag = tag.ascii ();
     if (!strcmp (ctag, "param"))
         return new SMIL::Param (d);
-    else if (!strcmp (ctag, "area"))
+    else if (!strcmp (ctag, "area") || !strcmp (ctag, "anchor"))
         return new SMIL::Area (d);
     return 0L;
 }
@@ -1020,7 +1020,7 @@ static Element * fromMediaContentGroup (NodePtr & d, const QString & tag) {
         return new SMIL::RefMediaType (d);
     else if (!strcmp (taglatin, "brush"))
         return new SMIL::Brush (d);
-    else if (!strcmp (taglatin, "a") || !strcmp (taglatin, "anchor"))
+    else if (!strcmp (taglatin, "a"))
         return new SMIL::Anchor (d);
     // animation, textstream
     return 0L;
@@ -2008,9 +2008,11 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::finish () {
+    region_sized = 0L;
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
     TimedMrl::finish ();
+    static_cast <MediaTypeRuntime *> (timedRuntime ())->clipStop ();
 }
 
 KDE_NO_EXPORT bool SMIL::MediaType::expose () const {
@@ -2126,12 +2128,6 @@ KDE_NO_EXPORT void SMIL::AVMediaType::undefer () {
         mr->postpone_lock = 0L;
         mr->started ();
     }
-}
-
-KDE_NO_EXPORT void SMIL::AVMediaType::finish () {
-    region_sized = 0L;
-    MediaType::finish ();
-    static_cast <AudioVideoData *> (timedRuntime ())->clipStop ();
 }
 
 KDE_NO_EXPORT TimedRuntime * SMIL::AVMediaType::getNewRuntime () {

@@ -953,7 +953,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Anchor * anchor) {
     for (NodePtr p = anchor->parentNode (); p; p = p->parentNode ()) {
         if (n->mrl () && n->mrl ()->opener == p) {
             p->setState (Node::state_deferred);
-            p->mrl ()->setParam (QString ("src"), anchor->href, 0L);
+            p->mrl ()->setParam ("src", anchor->href, 0L);
             p->activate ();
             break;
         }
@@ -970,7 +970,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
         for (NodePtr p = area->parentNode (); p; p = p->parentNode ()) {
             if (n->mrl () && n->mrl ()->opener == p) {
                 p->setState (Node::state_deferred);
-                p->mrl ()->setParam (QString ("src"), area->href, 0L);
+                p->mrl ()->setParam ("src", area->href, 0L);
                 p->activate ();
                 break;
             }
