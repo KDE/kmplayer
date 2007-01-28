@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2005-2006 by Koos Vriezen <koos.vriezen@gmail.com>
+ * Copyright (C) 2005-2007 by Koos Vriezen <koos.vriezen@gmail.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
@@ -128,6 +128,13 @@ static SMIL::Region * findRegion (NodePtr p, const QString & id) {
     return 0L;
 }
 
+static NodePtr findLocalNodeById (NodePtr n, const QString & id) {
+    SMIL::Smil * s = findSmilNode (n);
+    if (s)
+        return s->document ()->getElementById (s, id, false);
+    return 0L;
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT ToBeStartedEvent::ToBeStartedEvent (NodePtr n)
@@ -184,7 +191,7 @@ void TimedRuntime::setDurationItem (DurationTime item, const QString & val) {
     if (!dur && element) {
         int pos = vl.find (QChar ('.'));
         if (pos > 0) {
-            NodePtr e = element->document()->getElementById (vl.left(pos));
+            NodePtr e = findLocalNodeById (element, vl.left(pos));
             //kdDebug () << "getElementById " << vl.left (pos) << " " << (e ? e->nodeName () : "-") << endl;
             if (e) {
                 if (vl.find ("activateevent") > -1) {
@@ -224,9 +231,6 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
         propagateStart ();
 }
 
-/**
- * change behaviour of this runtime, returns old value
- */
 KDE_NO_EXPORT
 bool TimedRuntime::parseParam (const QString & name, const QString & val) {
     //kdDebug () << "TimedRuntime::parseParam " << name << "=" << val << endl;
@@ -255,7 +259,7 @@ bool TimedRuntime::parseParam (const QString & name, const QString & val) {
         if ((durations [duration_time].durval == duration_media ||
                     durations [duration_time].durval == 0) &&
                 durations [end_time].durval == duration_media) {
-            NodePtr e = element->document ()->getElementById (val);
+            NodePtr e = findLocalNodeById (element, val);
             if (e && SMIL::isTimedMrl (e)) {
                 SMIL::TimedMrl * tm = static_cast <SMIL::TimedMrl *> (e.ptr ());
                 durations [(int) end_time].connection = tm->connectTo (element, event_stopped);
@@ -577,7 +581,7 @@ bool AnimateGroupData::parseParam (const QString & name, const QString & val) {
     const char * cname = name.ascii ();
     if (!strcmp (cname, "target") || !strcmp (cname, "targetElement")) {
         if (element)
-            target_element = element->document ()->getElementById (val);
+            target_element = findLocalNodeById (element, val);
     } else if (!strcmp(cname, "attribute") || !strcmp(cname, "attributeName")) {
         changed_attribute = val;
     } else if (!strcmp (cname, "to")) {
@@ -858,6 +862,7 @@ bool MediaTypeRuntime::parseParam (const QString & name, const QString & val) {
  */
 KDE_NO_EXPORT void MediaTypeRuntime::stopped () {
     clipStop ();
+    document_postponed = 0L;
     Node * e = element.ptr ();
     if (e) {
         for (NodePtr n = e->firstChild (); n; n = n->nextSibling ())
@@ -934,12 +939,6 @@ KDE_NO_EXPORT void AudioVideoData::clipStart () {
     MediaTypeRuntime::clipStart ();
 }
 
-KDE_NO_EXPORT void AudioVideoData::stopped () {
-    //kdDebug () << "AudioVideoData::stopped " << endl;
-    MediaTypeRuntime::stopped ();
-    document_postponed = 0L;
-}
-
 KDE_NO_EXPORT void AudioVideoData::clipStop () {
     if (durations [duration_time].durval == duration_media)
         durations [duration_time].durval = 0; // reset to make this finish
@@ -981,25 +980,30 @@ KDE_NO_EXPORT void AudioVideoData::postpone (bool b) {
 //-----------------------------------------------------------------------------
 
 static Element * fromScheduleGroup (NodePtr & d, const QString & tag) {
-    if (!strcmp (tag.latin1 (), "par"))
+    const char * ctag = tag.ascii ();
+    if (!strcmp (ctag, "par"))
         return new SMIL::Par (d);
-    else if (!strcmp (tag.latin1 (), "seq"))
+    else if (!strcmp (ctag, "seq"))
         return new SMIL::Seq (d);
-    else if (!strcmp (tag.latin1 (), "excl"))
+    else if (!strcmp (ctag, "excl"))
         return new SMIL::Excl (d);
     return 0L;
 }
 
 static Element * fromParamGroup (NodePtr & d, const QString & tag) {
-    if (!strcmp (tag.latin1 (), "param"))
+    const char * ctag = tag.ascii ();
+    if (!strcmp (ctag, "param"))
         return new SMIL::Param (d);
+    else if (!strcmp (ctag, "area"))
+        return new SMIL::Area (d);
     return 0L;
 }
 
 static Element * fromAnimateGroup (NodePtr & d, const QString & tag) {
-    if (!strcmp (tag.latin1 (), "set"))
+    const char * ctag = tag.ascii ();
+    if (!strcmp (ctag, "set"))
         return new SMIL::Set (d);
-    else if (!strcmp (tag.latin1 (), "animate"))
+    else if (!strcmp (ctag, "animate"))
         return new SMIL::Animate (d);
     return 0L;
 }
@@ -1031,9 +1035,10 @@ static Element * fromContentControlGroup (NodePtr & d, const QString & tag) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT NodePtr SMIL::Smil::childFromTag (const QString & tag) {
-    if (!strcmp (tag.latin1 (), "body"))
+    const char * ctag = tag.ascii ();
+    if (!strcmp (ctag, "body"))
         return new SMIL::Body (m_doc);
-    else if (!strcmp (tag.latin1 (), "head"))
+    else if (!strcmp (ctag, "head"))
         return new SMIL::Head (m_doc);
     return NodePtr ();
 }
@@ -1147,13 +1152,14 @@ static void headChildDone (NodePtr node, NodePtr child) {
 }
 
 KDE_NO_EXPORT NodePtr SMIL::Head::childFromTag (const QString & tag) {
-    if (!strcmp (tag.latin1 (), "layout"))
+    const char * ctag = tag.ascii ();
+    if (!strcmp (ctag, "layout"))
         return new SMIL::Layout (m_doc);
-    else if (!strcmp (tag.latin1 (), "title"))
+    else if (!strcmp (ctag, "title"))
         return new DarkNode (m_doc, tag, id_node_title);
-    else if (!strcmp (tag.latin1 (), "meta"))
+    else if (!strcmp (ctag, "meta"))
         return new DarkNode (m_doc, tag, id_node_meta);
-    else if (!strcmp (tag.latin1 (), "transition"))
+    else if (!strcmp (ctag, "transition"))
         return new SMIL::Transition (m_doc);
     return NodePtr ();
 }
@@ -1182,13 +1188,14 @@ KDE_NO_CDTOR_EXPORT SMIL::Layout::Layout (NodePtr & d)
  : RegionBase (d, id_node_layout) {}
 
 KDE_NO_EXPORT NodePtr SMIL::Layout::childFromTag (const QString & tag) {
-    if (!strcmp (tag.latin1 (), "root-layout")) {
+    const char * ctag = tag.ascii ();
+    if (!strcmp (ctag, "root-layout")) {
         NodePtr e = new SMIL::RootLayout (m_doc);
         rootLayout = e;
         return e;
-    } else if (!strcmp (tag.latin1 (), "region"))
+    } else if (!strcmp (ctag, "region"))
         return new SMIL::Region (m_doc);
-    else if (!strcmp (tag.latin1 (), "regPoint"))
+    else if (!strcmp (ctag, "regPoint"))
         return new SMIL::RegPoint (m_doc);
     return NodePtr ();
 }
@@ -1260,11 +1267,11 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
                 w = ew;
                 h = eh;
                 Element * rl = convertNode <Element> (rootLayout);
-                rl->setAttribute (QString::fromLatin1 ("width"), QString::number ((int)ew));
-                rl->setAttribute (QString::fromLatin1 ("height"), QString::number ((int)eh));
-                rl->setParam (QString::fromLatin1 ("width"), QString::number ((int)ew));
-                rl->setParam (QString::fromLatin1 ("height"), QString::number ((int)eh));
-                    updateDimensions (surface);
+                rl->setAttribute ("width", QString::number ((int)ew));
+                rl->setAttribute ("height", QString::number ((int)eh));
+                rl->setParam ("width", QString::number ((int)ew));
+                rl->setParam ("height", QString::number ((int)eh));
+                updateDimensions (surface);
             } else if (w > 0 && h > 0) {
                 xscale += 1.0 * (ew - w) / w;
                 yscale += 1.0 * (eh - h) / h;
@@ -1865,27 +1872,34 @@ KDE_NO_EXPORT bool SMIL::Switch::isPlayable () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT SMIL::Anchor::Anchor (NodePtr & d)
- : Element(d, id_node_anchor), show (show_replace) {}
+KDE_NO_CDTOR_EXPORT SMIL::LinkingBase::LinkingBase (NodePtr & d, short id)
+ : Element(d, id), show (show_replace) {}
 
-void SMIL::Anchor::activate () {
-    init ();
-    bool found = false;
-    for (NodePtr c = firstChild(); c && !found; c = c->nextSibling ())
-        switch (c->id) {
-            case id_node_img:
-            case id_node_text:
-            case id_node_audio_video:
-            case id_node_ref:
-                mediatype_activated = c->connectTo (this, event_activated);
-                found = true;
-        }
-    Element::activate ();
-}
-
-void SMIL::Anchor::deactivate () {
+KDE_NO_EXPORT void SMIL::LinkingBase::deactivate () {
     mediatype_activated = 0L;
     Element::deactivate ();
+}
+
+KDE_NO_EXPORT
+void SMIL::LinkingBase::parseParam (const QString & para, const QString & val) {
+    if (para == QString ("href")) {
+        href = val;
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT SMIL::Anchor::Anchor (NodePtr & d)
+ : LinkingBase (d, id_node_anchor) {}
+
+KDE_NO_EXPORT void SMIL::Anchor::activate () {
+    init ();
+    for (NodePtr c = firstChild(); c; c = c->nextSibling ())
+        if (c->id >=id_node_first_mediatype && c->id <=id_node_last_mediatype) {
+            mediatype_activated = c->connectTo (this, event_activated);
+            break;
+        }
+    Element::activate ();
 }
 
 KDE_NO_EXPORT void SMIL::Anchor::childDone (NodePtr child) {
@@ -1901,10 +1915,26 @@ NodePtr SMIL::Anchor::childFromTag (const QString & tag) {
     return fromMediaContentGroup (m_doc, tag);
 }
 
-void SMIL::Anchor::parseParam (const QString & name, const QString & value) {
-    if (name == QString ("href")) {
-        href = value;
-    }
+//-----------------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT SMIL::Area::Area (NodePtr & d)
+ : LinkingBase (d, id_node_area) {}
+
+KDE_NO_EXPORT void SMIL::Area::activate () {
+    init ();
+    if (parentNode () &&
+            parentNode ()->id >= id_node_first_mediatype &&
+            parentNode ()->id <= id_node_last_mediatype)
+        mediatype_activated = parentNode ()->connectTo (this, event_activated);
+    Element::activate ();
+}
+
+KDE_NO_EXPORT
+void SMIL::Area::parseParam (const QString & para, const QString & val) {
+    if (para == QString ("coords")) {
+        ; // TODO
+    } else
+        LinkingBase::parseParam (para, val);
 }
 
 //-----------------------------------------------------------------------------
@@ -2099,9 +2129,9 @@ KDE_NO_EXPORT void SMIL::AVMediaType::undefer () {
 }
 
 KDE_NO_EXPORT void SMIL::AVMediaType::finish () {
+    region_sized = 0L;
     MediaType::finish ();
     static_cast <AudioVideoData *> (timedRuntime ())->clipStop ();
-    region_sized = 0L;
 }
 
 KDE_NO_EXPORT TimedRuntime * SMIL::AVMediaType::getNewRuntime () {
@@ -2260,10 +2290,12 @@ KDE_NO_EXPORT void Visitor::visit (SMIL::Brush * n) {
 }
 
 KDE_NO_EXPORT void Visitor::visit (SMIL::Anchor * n) {
-    visit (static_cast <Element *> (n));
+    visit (static_cast <SMIL::LinkingBase *> (n));
 }
 
-//void Visitor::visit (SMIL::Area * n) {}
+KDE_NO_EXPORT void Visitor::visit (SMIL::Area * n) {
+    visit (static_cast <SMIL::LinkingBase *> (n));
+}
 
 //-----------------------------------------------------------------------------
 

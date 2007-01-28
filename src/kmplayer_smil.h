@@ -190,7 +190,6 @@ public:
     virtual bool isAudioVideo ();
     virtual bool parseParam (const QString & name, const QString & value);
     virtual void started ();
-    virtual void stopped ();
     virtual void postpone (bool b);
     virtual void clipStart ();
     virtual void clipStop ();
@@ -328,6 +327,8 @@ const short id_node_area = 151;
 const short id_node_first = id_node_smil;
 const short id_node_first_timed_mrl = id_node_par;
 const short id_node_last_timed_mrl = id_node_animate;
+const short id_node_first_mediatype = id_node_img;
+const short id_node_last_mediatype = id_node_brush;
 const short id_node_last = 200; // reserve 100 ids
 
 inline bool isTimedMrl (const NodePtr & n) {
@@ -605,21 +606,38 @@ public:
     NodePtrW chosenOne;
 };
 
-class KMPLAYER_NO_EXPORT Anchor : public Element {
+class KMPLAYER_NO_EXPORT LinkingBase : public Element {
 public:
-    Anchor (NodePtr & d);
-    KDE_NO_CDTOR_EXPORT ~Anchor () {}
-    void activate ();
+    KDE_NO_CDTOR_EXPORT ~LinkingBase () {}
     void deactivate ();
-    void childDone (NodePtr child);
-    KDE_NO_EXPORT const char * nodeName () const { return "a"; }
-    NodePtr childFromTag (const QString & tag);
-    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
     KDE_NO_EXPORT bool expose () const { return false; }
     void parseParam (const QString & name, const QString & value);
     ConnectionPtr mediatype_activated;
     QString href;
     enum { show_new, show_replace } show;
+protected:
+    LinkingBase (NodePtr & d, short id);
+};
+
+class KMPLAYER_NO_EXPORT Anchor : public LinkingBase {
+public:
+    Anchor (NodePtr & d);
+    KDE_NO_CDTOR_EXPORT ~Anchor () {}
+    void activate ();
+    void childDone (NodePtr child);
+    KDE_NO_EXPORT const char * nodeName () const { return "a"; }
+    NodePtr childFromTag (const QString & tag);
+    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
+};
+
+class KMPLAYER_NO_EXPORT Area : public LinkingBase {
+public:
+    Area (NodePtr & d);
+    KDE_NO_CDTOR_EXPORT ~Area () {}
+    void activate ();
+    KDE_NO_EXPORT const char * nodeName () const { return "area"; }
+    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
+    void parseParam (const QString & name, const QString & value);
 };
 
 /**

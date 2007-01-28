@@ -711,6 +711,7 @@ public:
     Document (const QString &, PlayListNotify * notify = 0L);
     ~Document ();
     NodePtr getElementById (const QString & id);
+    NodePtr getElementById (NodePtr start, const QString & id, bool inter_doc);
     /** All nodes have shared pointers to Document,
      * so explicitly dispose it (calls clean and set m_doc to 0L)
      * */
@@ -837,7 +838,7 @@ public:
     virtual void visit (SMIL::AVMediaType *);
     virtual void visit (SMIL::Brush *);
     virtual void visit (SMIL::Anchor *);
-    //virtual void visit (SMIL::Area *);
+    virtual void visit (SMIL::Area *);
     virtual void visit (RP::Imfl *) {}
     virtual void visit (RP::Crossfade *) {}
     virtual void visit (RP::Fadein *) {}

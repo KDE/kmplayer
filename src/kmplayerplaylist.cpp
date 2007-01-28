@@ -782,21 +782,28 @@ Document::~Document () {
     kdDebug () << "~Document" << endl;
 }
 
-static NodePtr getElementByIdImpl (NodePtr n, const QString & id) {
+static NodePtr getElementByIdImpl (NodePtr n, const QString & id, bool inter) {
     NodePtr elm;
     if (!n->isElementNode ())
         return elm;
     Element * e = convertNode <Element> (n);
     if (e->getAttribute ("id") == id)
         return n;
-    for (NodePtr c = e->firstChild (); c; c = c->nextSibling ())
-        if ((elm = getElementByIdImpl (c, id)))
+    for (NodePtr c = e->firstChild (); c; c = c->nextSibling ()) {
+        if (!inter && c->mrl () && c->mrl ()->opener == n)
+            continue;
+        if ((elm = getElementByIdImpl (c, id, inter)))
             break;
+    }
     return elm;
 }
 
 NodePtr Document::getElementById (const QString & id) {
-    return getElementByIdImpl (this, id);
+    return getElementByIdImpl (this, id, true);
+}
+
+NodePtr Document::getElementById (NodePtr n, const QString & id, bool inter) {
+    return getElementByIdImpl (n, id, inter);
 }
 
 NodePtr Document::childFromTag (const QString & tag) {

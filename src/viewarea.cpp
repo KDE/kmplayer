@@ -862,6 +862,7 @@ public:
     void visit (SMIL::TimedMrl * n);
     void visit (SMIL::MediaType * n);
     void visit (SMIL::Anchor *);
+    void visit (SMIL::Area *);
 
 };
 
@@ -958,6 +959,23 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Anchor * anchor) {
         }
         n = p;
     }
+}
+
+KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
+    kdDebug() << "area to " << area->href << " clicked" << endl;
+    NodePtr n = area;
+    if (area->href.startsWith ("#"))
+        kdError() << "In document jumps are not implemented" << endl;
+    else
+        for (NodePtr p = area->parentNode (); p; p = p->parentNode ()) {
+            if (n->mrl () && n->mrl ()->opener == p) {
+                p->setState (Node::state_deferred);
+                p->mrl ()->setParam (QString ("src"), area->href, 0L);
+                p->activate ();
+                break;
+            }
+            n = p;
+        }
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::TimedMrl * timedmrl) {
