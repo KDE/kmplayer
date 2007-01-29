@@ -240,6 +240,15 @@ KDE_NO_EXPORT void TimedRuntime::begin () {
         propagateStart ();
 }
 
+KDE_NO_EXPORT void TimedRuntime::beginAndStart () {
+    if (element) {
+        if (start_timer || dur_timer)
+            convertNode <SMIL::TimedMrl> (element)->init ();
+        timingstate = timings_began;
+        propagateStart ();
+    }
+}
+
 KDE_NO_EXPORT
 bool TimedRuntime::parseParam (const QString & name, const QString & val) {
     //kdDebug () << "TimedRuntime::parseParam " << name << "=" << val << endl;
@@ -1716,12 +1725,6 @@ KDE_NO_EXPORT void SMIL::GroupBase::deactivate () {
     TimedMrl::deactivate ();
 }
 
-KDE_NO_EXPORT void SMIL::GroupBase::defer () {
-    if (state == state_init)
-        init ();
-    state = state_deferred;
-}
-
 KDE_NO_EXPORT void SMIL::GroupBase::begin () {
     if (state == state_deferred && jump_node)
         undefer ();
@@ -1732,44 +1735,41 @@ KDE_NO_EXPORT void SMIL::GroupBase::undefer () {
     NodePtr jump = jump_node;
     jump_node = 0L;
     if (jump) { // find next level group to pass jump_node
-        NodePtr group;
-        NodePtr last_checked;
+        NodePtr child;
         for (NodePtr n = jump; n; n = n->parentNode ()) {
             if (n.ptr () == this || n->id == id_node_body)
                 break;
-            if (n->id >= id_node_first_group && n->id <= id_node_last_group)
-                group = n;
-            last_checked = n;
+            child = n;
         }
-        if (jump.ptr () == this || !last_checked) {
-            activate ();
-        } else {
-            if (group) {
-                group->defer ();
-                convertNode <GroupBase> (group)->jump_node = jump;
-                group->begin ();
-            } else
-                for (NodePtr c = firstChild (); c; c = c->nextSibling ()) {
-                    if (c == last_checked) {
+        if (child)
+            for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+                if (c == child) {
+                    if (c != jump && c->id >= id_node_first_group &&
+                            c->id <= id_node_last_group)
+                        convertNode <GroupBase> (c)->setJumpNode (jump);
+                    else
                         c->activate ();
-                        if (id != id_node_par)
-                            break;        // seq behaviour
-                    }
-                    if (id == id_node_par)
-                        c->activate ();   //initialize it
-                }
-        }
+                    if (id != id_node_par)
+                        break;        // seq behaviour
+                } else if (id == id_node_par)
+                    c->activate ();
     }
     state = state_activated;
 }
 
 KDE_NO_EXPORT void SMIL::GroupBase::setJumpNode (NodePtr n) {
     jump_node = n;
-    setState (state_deferred);
-    for (NodePtr c = firstChild (); c; c = c->nextSibling ())
-        if (c->active ())
-            c->reset ();
-    undefer ();
+    if (state > state_init) {
+        setState (state_deferred);
+        for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+            if (c->active ())
+                c->reset ();
+        undefer ();
+    } else {
+        state = state_deferred;
+        init ();
+        timedRuntime()->beginAndStart (); // undefer through begin()
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1790,8 +1790,11 @@ KDE_NO_EXPORT NodePtr SMIL::Par::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT void SMIL::Par::begin () {
     //kdDebug () << "SMIL::Par::begin" << endl;
-    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-        e->activate ();
+    if (state == state_deferred)
+        undefer ();
+    else
+        for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+            e->activate ();
     GroupBase::begin ();
 }
 

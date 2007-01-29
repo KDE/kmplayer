@@ -954,39 +954,33 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Region * region) {
     matrix = m;
 }
 
-KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Anchor * anchor) {
-    kdDebug() << "anchor to " << anchor->href << " clicked" << endl;
-    NodePtr n = anchor;
-    for (NodePtr p = anchor->parentNode (); p; p = p->parentNode ()) {
-        if (n->mrl () && n->mrl ()->opener == p) {
-            p->setState (Node::state_deferred);
-            p->mrl ()->setParam ("src", anchor->href, 0L);
-            p->activate ();
-            break;
-        }
-        n = p;
-    }
-}
-
-KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
-    kdDebug() << "area to " << area->href << " clicked" << endl;
-    NodePtr n = area;
-    if (area->href.startsWith ("#")) {
-        SMIL::Smil * s = SMIL::Smil::findSmilNode (area);
+static void followLink (SMIL::LinkingBase * link) {
+    kdDebug() << "link to " << link->href << " clicked" << endl;
+    NodePtr n = link;
+    if (link->href.startsWith ("#")) {
+        SMIL::Smil * s = SMIL::Smil::findSmilNode (link);
         if (s)
-            s->jump (area->href.mid (1));
+            s->jump (link->href.mid (1));
         else
             kdError() << "In document jumps smil not found" << endl;
     } else
-        for (NodePtr p = area->parentNode (); p; p = p->parentNode ()) {
+        for (NodePtr p = link->parentNode (); p; p = p->parentNode ()) {
             if (n->mrl () && n->mrl ()->opener == p) {
                 p->setState (Node::state_deferred);
-                p->mrl ()->setParam ("src", area->href, 0L);
+                p->mrl ()->setParam ("src", link->href, 0L);
                 p->activate ();
                 break;
             }
             n = p;
         }
+}
+
+KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Anchor * anchor) {
+    followLink (anchor);
+}
+
+KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
+    followLink (area);
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::TimedMrl * timedmrl) {

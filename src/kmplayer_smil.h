@@ -130,6 +130,7 @@ public:
      * Called when element is pulled in scope, from Node::activate()
      */
     virtual void begin ();
+    virtual void beginAndStart (); // skip start timer (if any)
     /**
      * Reset all data, called from end() and init()
      */
@@ -540,7 +541,6 @@ class KMPLAYER_NO_EXPORT GroupBase : public TimedMrl {
 public:
     KDE_NO_CDTOR_EXPORT ~GroupBase () {}
     bool isPlayable ();
-    void defer ();
     void undefer ();
     void begin ();
     void finish ();
