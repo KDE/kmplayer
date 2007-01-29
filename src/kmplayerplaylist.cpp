@@ -202,7 +202,7 @@ void Node::begin () {
     if (active ()) {
         setState (state_began);
     } else
-        kdError () << "Node::begin () call on not active element" << endl;
+        kdError () << nodeName() << " begin call on not active element" << endl;
 }
 
 void Node::defer () {

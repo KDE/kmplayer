@@ -302,16 +302,16 @@ namespace SMIL {
 
 const short id_node_smil = 100;
 const short id_node_head = 101;
-const short id_node_body = 102;
 const short id_node_layout = 103;
 const short id_node_root_layout = 104;
 const short id_node_region = 105;
 const short id_node_regpoint = 106;
 const short id_node_transition = 107;
-const short id_node_par = 110;
-const short id_node_seq = 111;
-const short id_node_switch = 112;
-const short id_node_excl = 113;
+const short id_node_body = 110;
+const short id_node_par = 111;
+const short id_node_seq = 112;
+const short id_node_switch = 113;
+const short id_node_excl = 114;
 const short id_node_img = 120;
 const short id_node_audio_video = 121;
 const short id_node_text = 122;
@@ -325,10 +325,12 @@ const short id_node_meta = 142;
 const short id_node_anchor = 150;
 const short id_node_area = 151;
 const short id_node_first = id_node_smil;
-const short id_node_first_timed_mrl = id_node_par;
+const short id_node_first_timed_mrl = id_node_body;
 const short id_node_last_timed_mrl = id_node_animate;
 const short id_node_first_mediatype = id_node_img;
 const short id_node_last_mediatype = id_node_brush;
+const short id_node_first_group = id_node_body;
+const short id_node_last_group = id_node_excl;
 const short id_node_last = 200; // reserve 100 ids
 
 inline bool isTimedMrl (const NodePtr & n) {
@@ -350,6 +352,8 @@ public:
     void childDone (NodePtr child);
     bool expose () const;
     void accept (Visitor *);
+    void jump (const QString & id);
+    static Smil * findSmilNode (Node * node);
     /**
      * Hack to mark the currently playing MediaType as finished
      * FIXME: think of a descent callback way for this
@@ -479,9 +483,8 @@ public:
  */
 class KMPLAYER_NO_EXPORT Transition : public Element {
 public:
-    KDE_NO_CDTOR_EXPORT Transition (NodePtr & d)
-        : Element (d, id_node_transition), dur (10) {}
-    ~Transition ();
+    Transition (NodePtr & d);
+    KDE_NO_CDTOR_EXPORT ~Transition () {}
     void activate ();
     KDE_NO_EXPORT const char * nodeName () const { return "transition"; }
     void parseParam (const QString & name, const QString & value);
@@ -489,7 +492,9 @@ public:
     bool supported ();
     QString type;
     QString subtype;
+    enum { dir_forward, dir_reverse } direction;
     unsigned int dur; // deci seconds
+    unsigned int fade_color;
 };
 
 /**
@@ -535,10 +540,15 @@ class KMPLAYER_NO_EXPORT GroupBase : public TimedMrl {
 public:
     KDE_NO_CDTOR_EXPORT ~GroupBase () {}
     bool isPlayable ();
+    void defer ();
+    void undefer ();
+    void begin ();
     void finish ();
     void deactivate ();
+    void setJumpNode (NodePtr);
 protected:
     KDE_NO_CDTOR_EXPORT GroupBase (NodePtr & d, short id) : TimedMrl (d, id) {}
+    NodePtrW jump_node;
 };
 
 /**
@@ -563,6 +573,7 @@ public:
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "seq"; }
     void begin ();
+    void childDone (NodePtr child);
 protected:
     KDE_NO_CDTOR_EXPORT Seq (NodePtr & d, short id) : GroupBase(d, id) {}
 };

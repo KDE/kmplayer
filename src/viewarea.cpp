@@ -971,9 +971,13 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Anchor * anchor) {
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
     kdDebug() << "area to " << area->href << " clicked" << endl;
     NodePtr n = area;
-    if (area->href.startsWith ("#"))
-        kdError() << "In document jumps are not implemented" << endl;
-    else
+    if (area->href.startsWith ("#")) {
+        SMIL::Smil * s = SMIL::Smil::findSmilNode (area);
+        if (s)
+            s->jump (area->href.mid (1));
+        else
+            kdError() << "In document jumps smil not found" << endl;
+    } else
         for (NodePtr p = area->parentNode (); p; p = p->parentNode ()) {
             if (n->mrl () && n->mrl ()->opener == p) {
                 p->setState (Node::state_deferred);
