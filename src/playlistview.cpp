@@ -209,9 +209,6 @@ KDE_NO_EXPORT PlayListItem * PlayListView::populate
         Node::PlayType pt = e->playType ();
         QPixmap * pix;
         switch (pt) {
-            case Node::play_type_none:
-                pix = &unknown_pix;
-                break;
             case Node::play_type_image:
                 pix = &img_pix;
                 break;

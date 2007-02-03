@@ -425,7 +425,7 @@ QString Node::outerXML () const {
 }
 
 Node::PlayType Node::playType () {
-    return play_type_unknown;
+    return play_type_none;
 }
 
 void Node::opened () {}
@@ -819,10 +819,6 @@ void Document::dispose () {
     m_doc = 0L;
 }
 
-Node::PlayType Document::playType () {
-    return Mrl::playType ();
-}
-
 void Document::defer () {
     if (!firstChild () || firstChild ()->state > state_init)
         postpone_lock = postpone ();
@@ -1060,15 +1056,6 @@ GenericMrl::GenericMrl (NodePtr & d, const QString & s, const QString & name, co
     pretty_name = name;
     if (!name.isEmpty ())
         setAttribute (QString ("name"), name);
-}
-
-Node::PlayType GenericMrl::playType () {
-    if (cached_ismrl_version != document()->m_tree_version) {
-        bool ismrl = !hasMrlChildren (this);
-        cached_play_type = ismrl ? play_type_unknown : play_type_none;
-        cached_ismrl_version = document()->m_tree_version;
-    }
-    return cached_play_type;
 }
 
 void GenericMrl::closed () {

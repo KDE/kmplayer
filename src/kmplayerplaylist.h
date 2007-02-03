@@ -723,10 +723,6 @@ public:
     void dispose ();
     virtual NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "document"; }
-    /**
-     * Will return false if this document has child nodes
-     */
-    virtual PlayType playType ();
     virtual void defer ();
     virtual void undefer ();
     virtual void reset ();
@@ -876,10 +872,6 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return node_name.ascii (); }
     void closed ();
     bool expose () const;
-    /**
-     * Will return false if this document has child nodes
-     */
-    PlayType playType ();
     QString node_name;
 };
 
