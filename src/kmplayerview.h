@@ -195,6 +195,7 @@ private:
     ControlPanelMode m_old_controlpanel_mode;
     StatusBarMode m_statusbar_mode;
     int controlbar_timer;
+    int infopanel_timer;
     bool m_keepsizeratio;
     bool m_playing;
     bool m_mixer_init;

@@ -1144,10 +1144,6 @@ KDE_NO_EXPORT Mrl * SMIL::Smil::linkNode () {
     return current_av_media_type ? current_av_media_type->mrl () : this;
 }
 
-KDE_NO_EXPORT bool SMIL::Smil::isPlayable () {
-    return true;
-}
-
 KDE_NO_EXPORT bool SMIL::Smil::expose () const {
     return !pretty_name.isEmpty () || //return false if no title and only one
         previousSibling () || nextSibling ();
@@ -1701,10 +1697,6 @@ void SMIL::TimedMrl::parseParam (const QString & para, const QString & value) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT bool SMIL::GroupBase::isPlayable () {
-    return false;
-}
-
 KDE_NO_EXPORT void SMIL::GroupBase::finish () {
     setState (state_finished); // avoid recurstion through childDone
     bool deactivate_children = timedRuntime()->fill!=TimedRuntime::fill_freeze;
@@ -1991,16 +1983,16 @@ KDE_NO_EXPORT void SMIL::Switch::childDone (NodePtr child) {
     finish (); // only one child can run
 }
 
-KDE_NO_EXPORT bool SMIL::Switch::isPlayable () {
+KDE_NO_EXPORT Node::PlayType SMIL::Switch::playType () {
     if (cached_ismrl_version != document()->m_tree_version) {
-        cached_ismrl = false;
+        cached_play_type = play_type_none;
         for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-            if (e->isPlayable ()) {
-                cached_ismrl = true;
+            if (e->playType () != play_type_none) {
+                cached_play_type = e->playType ();
                 break;
             }
     }
-    return cached_ismrl;
+    return cached_play_type;
 }
 
 //-----------------------------------------------------------------------------

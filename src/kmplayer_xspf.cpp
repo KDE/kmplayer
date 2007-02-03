@@ -134,10 +134,10 @@ KDE_NO_EXPORT void XSPF::Track::activate () {
     Mrl::activate ();
 }
 
-KDE_NO_EXPORT bool XSPF::Track::isPlayable () {
+KDE_NO_EXPORT Node::PlayType XSPF::Track::playType () {
     if (location)
-        return location->isPlayable ();
-    return Mrl::isPlayable ();
+        return location->playType ();
+    return Mrl::playType ();
 }
 
 KDE_NO_EXPORT Mrl * XSPF::Track::linkNode () {

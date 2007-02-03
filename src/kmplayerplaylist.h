@@ -317,6 +317,10 @@ public:
         state_init, state_deferred,
         state_activated, state_began, state_finished, state_deactivated
     };
+    enum PlayType {
+        play_type_none, play_type_unknown, play_type_info,
+        play_type_image, play_type_audio, play_type_video
+    };
     virtual ~Node ();
     Document * document ();
     virtual Mrl * mrl ();
@@ -330,7 +334,8 @@ public:
     /**
      * If this is a derived Mrl object and has a SRC attribute
      */
-    virtual bool isPlayable ();
+    virtual PlayType playType ();
+    bool isPlayable () { return playType () > play_type_none; }
     virtual bool isElementNode () { return false; }
     /**
      * If this node should be visible to the user
@@ -530,10 +535,10 @@ protected:
     NodePtr childFromTag (const QString & tag);
     void parseParam (const QString &, const QString &);
     unsigned int cached_ismrl_version;
-    bool cached_ismrl;
+    PlayType cached_play_type;
 public:
     ~Mrl ();
-    bool isPlayable ();
+    PlayType playType ();
     /*
      * The original node (or this) having the URL, needed for playlist expansion
      */ 
@@ -721,7 +726,7 @@ public:
     /**
      * Will return false if this document has child nodes
      */
-    virtual bool isPlayable ();
+    virtual PlayType playType ();
     virtual void defer ();
     virtual void undefer ();
     virtual void reset ();
@@ -874,7 +879,7 @@ public:
     /**
      * Will return false if this document has child nodes
      */
-    bool isPlayable ();
+    PlayType playType ();
     QString node_name;
 };
 

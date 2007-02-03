@@ -424,8 +424,8 @@ QString Node::outerXML () const {
     return buf;
 }
 
-bool Node::isPlayable () {
-    return false;
+Node::PlayType Node::playType () {
+    return play_type_unknown;
 }
 
 void Node::opened () {}
@@ -651,12 +651,13 @@ Mrl::Mrl (NodePtr & d, short id)
 
 Mrl::~Mrl () {}
 
-bool Mrl::isPlayable () {
+Node::PlayType Mrl::playType () {
     if (cached_ismrl_version != document()->m_tree_version) {
-        cached_ismrl = !hasMrlChildren (this);
+        bool ismrl = !hasMrlChildren (this);
+        cached_play_type = ismrl ? play_type_unknown : play_type_none;
         cached_ismrl_version = document()->m_tree_version;
     }
-    return cached_ismrl;
+    return cached_play_type;
 }
 
 QString Mrl::absolutePath () {
@@ -818,8 +819,8 @@ void Document::dispose () {
     m_doc = 0L;
 }
 
-bool Document::isPlayable () {
-    return Mrl::isPlayable ();
+Node::PlayType Document::playType () {
+    return Mrl::playType ();
 }
 
 void Document::defer () {
@@ -1061,12 +1062,13 @@ GenericMrl::GenericMrl (NodePtr & d, const QString & s, const QString & name, co
         setAttribute (QString ("name"), name);
 }
 
-bool GenericMrl::isPlayable () {
+Node::PlayType GenericMrl::playType () {
     if (cached_ismrl_version != document()->m_tree_version) {
-        cached_ismrl = !hasMrlChildren (this);
+        bool ismrl = !hasMrlChildren (this);
+        cached_play_type = ismrl ? play_type_unknown : play_type_none;
         cached_ismrl_version = document()->m_tree_version;
     }
-    return cached_ismrl;
+    return cached_play_type;
 }
 
 void GenericMrl::closed () {
@@ -1300,7 +1302,10 @@ private:
     DocumentBuilder & builder;
     int position;
     QChar next_char;
-    enum Token { tok_empty, tok_text, tok_white_space, tok_angle_open, tok_equal, tok_double_quote, tok_single_quote, tok_angle_close, tok_slash, tok_exclamation, tok_amp, tok_hash, tok_semi_colon, tok_question_mark };
+    enum Token { tok_empty, tok_text, tok_white_space, tok_angle_open,
+        tok_equal, tok_double_quote, tok_single_quote, tok_angle_close,
+        tok_slash, tok_exclamation, tok_amp, tok_hash, tok_semi_colon,
+        tok_question_mark, tok_cdata_start };
     enum State {
         InTag, InStartTag, InPITag, InDTDTag, InEndTag, InAttributes, InContent, InCDATA, InComment
     };
@@ -1494,6 +1499,11 @@ bool SimpleSAXParser::nextToken () {
         }
         if (append_char)
             next_token->string += next_char;
+        if (next_token->token == tok_text && 
+                next_char == QChar ('[' ) && next_token->string == "[CDATA[") {
+            next_token->token = tok_cdata_start;
+            break;
+        }
     }
     if (token == cur_token) {
         if (token && token->next) {
@@ -1613,14 +1623,13 @@ bool SimpleSAXParser::readDTD () {
         return readComment ();
     }
     //kdDebug () << "readDTD: " << token->string.latin1 () << endl;
-    if (token->token == tok_text && token->string.startsWith (QString ("[CDATA["))) {
+    if (token->token == tok_cdata_start) {
         m_state = new StateInfo (InCDATA, m_state->next); // note: pop DTD
-        cdata = token->string.mid (7);
         if (token->next) {
-            cdata += token->next->string;
+            cdata = token->next->string;
             token->next = 0;
         } else {
-            cdata += next_token->string;
+            cdata = next_token->string;
             next_token->string.truncate (0);
             next_token->token = tok_empty;
         }
@@ -1648,6 +1657,7 @@ bool SimpleSAXParser::readCDATA () {
                 else
                     attr_name += cdata;
             }
+            cdata.truncate (0);
             return true;
         }
         cdata += next_char;

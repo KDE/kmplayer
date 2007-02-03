@@ -61,7 +61,7 @@ public:
     virtual void deactivate (); // stop handling paint events
     virtual void childDone (NodePtr child); // for if no duration_timer set
     KDE_NO_EXPORT virtual bool expose () const { return false; }
-    KDE_NO_EXPORT virtual bool isPlayable () const { return true; }
+    KDE_NO_EXPORT virtual PlayType playType () const { return play_type_image; }
     virtual bool handleEvent (EventPtr event);
     virtual void accept (Visitor *);
     void repaint (); // called whenever something changes on image

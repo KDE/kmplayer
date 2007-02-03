@@ -60,6 +60,7 @@ NodePtr RSS::Item::childFromTag (const QString & tag) {
 }
 
 void RSS::Item::closed () {
+    cached_play_type = play_type_none;
     for (NodePtr c = firstChild (); c; c = c->nextSibling ()) {
         switch (c->id) {
             case id_node_title:
@@ -69,14 +70,13 @@ void RSS::Item::closed () {
                 enclosure = c;
                 src = c->mrl ()->src;
                 break;
+            case id_node_description:
+                cached_play_type = play_type_info;
+                break;
         }
     }
-}
-
-KDE_NO_EXPORT bool RSS::Item::isPlayable () {
-    if (enclosure)
-        return enclosure->isPlayable ();
-    return Mrl::isPlayable ();
+    if (enclosure && !enclosure->mrl ()->src.isEmpty ())
+        cached_play_type = play_type_audio;
 }
 
 KDE_NO_EXPORT Mrl * RSS::Item::linkNode () {
@@ -85,21 +85,43 @@ KDE_NO_EXPORT Mrl * RSS::Item::linkNode () {
     return Mrl::linkNode ();
 }
 
-void RSS::Item::activate () {
+KDE_NO_EXPORT void RSS::Item::activate () {
     PlayListNotify * n = document()->notify_listener;
     if (n) {
         for (NodePtr c = firstChild (); c; c = c->nextSibling ())
-            if (c->id == id_node_description)
-                n->setInfoMessage (c->innerText ());
+            if (c->id == id_node_description) {
+                QString s = c->innerText ();
+                n->setInfoMessage (s);
+                if (!enclosure && !s.isEmpty ()) {
+                    setState (state_activated);
+                    n->setCurrent (this);
+                    begin ();
+                    timer = document ()->setTimeout (this, 5000+s.length()*200);
+                    return;
+                }
+                break;
+            }
     }
     Mrl::activate ();
 }
 
-void RSS::Item::deactivate () {
+KDE_NO_EXPORT void RSS::Item::deactivate () {
+    if (timer) {
+        document ()->cancelTimer (timer);
+        timer = 0L;
+    }
     PlayListNotify * n = document()->notify_listener;
     if (n)
         n->setInfoMessage (QString::null);
     Mrl::deactivate ();
+}
+
+KDE_NO_EXPORT bool RSS::Item::handleEvent (EventPtr event) {
+    if (event->id () == event_timer) {
+        timer = 0L;
+        finish ();
+    }
+    return true;
 }
 
 void RSS::Enclosure::closed () {

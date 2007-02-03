@@ -346,7 +346,7 @@ public:
     KDE_NO_CDTOR_EXPORT Smil (NodePtr & d) : Mrl (d, id_node_smil) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "smil"; }
-    bool isPlayable ();
+    PlayType playType () { return play_type_video; }
     void activate ();
     void deactivate ();
     void closed ();
@@ -540,7 +540,7 @@ KDE_NO_EXPORT inline TimedRuntime * TimedMrl::timedRuntime () {
 class KMPLAYER_NO_EXPORT GroupBase : public TimedMrl {
 public:
     KDE_NO_CDTOR_EXPORT ~GroupBase () {}
-    bool isPlayable ();
+    PlayType playType () { return play_type_none; }
     void undefer ();
     void begin ();
     void finish ();
@@ -613,7 +613,7 @@ public:
     KDE_NO_CDTOR_EXPORT Switch (NodePtr &d) : GroupBase (d, id_node_switch) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "switch"; }
-    bool isPlayable ();
+    PlayType playType ();
     // Condition
     void activate ();
     void deactivate ();
@@ -712,6 +712,7 @@ public:
     ImageMediaType (NodePtr & d);
     TimedRuntime * getNewRuntime ();
     NodePtr childFromTag (const QString & tag);
+    PlayType playType () { return play_type_image; }
     virtual void accept (Visitor *);
 };
 
@@ -719,6 +720,7 @@ class KMPLAYER_NO_EXPORT TextMediaType : public MediaType {
 public:
     TextMediaType (NodePtr & d);
     TimedRuntime * getNewRuntime ();
+    PlayType playType () { return play_type_info; }
     virtual void accept (Visitor *);
 };
 
@@ -742,7 +744,7 @@ public:
     KDE_NO_CDTOR_EXPORT Set (NodePtr & d) : TimedMrl (d, id_node_set) {}
     KDE_NO_EXPORT const char * nodeName () const { return "set"; }
     virtual TimedRuntime * getNewRuntime ();
-    bool isPlayable () { return false; }
+    PlayType playType () { return play_type_none; }
 };
 
 class KMPLAYER_NO_EXPORT Animate : public TimedMrl {
@@ -750,7 +752,7 @@ public:
     KDE_NO_CDTOR_EXPORT Animate (NodePtr & d) : TimedMrl (d, id_node_animate) {}
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
     virtual TimedRuntime * getNewRuntime ();
-    bool isPlayable () { return false; }
+    PlayType playType () { return play_type_none; }
     bool handleEvent (EventPtr event);
 };
 

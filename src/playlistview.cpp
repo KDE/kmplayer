@@ -126,6 +126,8 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
     folder_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder"), KIcon::Small);
     auxiliary_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder_grey"), KIcon::Small);
     video_pix = KGlobal::iconLoader ()->loadIcon (QString ("video"), KIcon::Small);
+    info_pix = KGlobal::iconLoader ()->loadIcon (QString ("messagebox_info"), KIcon::Small);
+    img_pix = KGlobal::iconLoader ()->loadIcon (QString ("image"), KIcon::Small);
     unknown_pix = KGlobal::iconLoader ()->loadIcon (QString ("unknown"), KIcon::Small);
     menu_pix = KGlobal::iconLoader ()->loadIcon (QString ("player_playlist"), KIcon::Small);
     config_pix = KGlobal::iconLoader ()->loadIcon (QString ("configure"), KIcon::Small);
@@ -204,8 +206,28 @@ KDE_NO_EXPORT PlayListItem * PlayListView::populate
         }
     }
     if (item != root) {
-        QPixmap & pix = e->isPlayable() ? video_pix : (item->firstChild ()) ? (e->auxiliaryNode () ? auxiliary_pix : folder_pix) : unknown_pix;
-        item->setPixmap (0, pix);
+        Node::PlayType pt = e->playType ();
+        QPixmap * pix;
+        switch (pt) {
+            case Node::play_type_none:
+                pix = &unknown_pix;
+                break;
+            case Node::play_type_image:
+                pix = &img_pix;
+                break;
+            case Node::play_type_info:
+                pix = &info_pix;
+                break;
+            default:
+                if (pt > Node::play_type_none)
+                    pix = &video_pix;
+                else 
+                    pix = item->firstChild ()
+                        ? e->auxiliaryNode ()
+                          ? &auxiliary_pix : &folder_pix
+                          : &unknown_pix;
+        }
+        item->setPixmap (0, *pix);
         if (root->flags & PlayListView::AllowDrag)
             item->setDragEnabled (true);
     }

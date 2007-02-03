@@ -146,6 +146,8 @@ private:
     QPixmap menu_pix;
     QPixmap config_pix;
     QPixmap url_pix;
+    QPixmap info_pix;
+    QPixmap img_pix;
     QColor m_active_color;
     NodePtrW m_current_find_elm;
     NodePtrW m_last_drag;

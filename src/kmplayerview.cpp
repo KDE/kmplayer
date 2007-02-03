@@ -140,6 +140,7 @@ KDE_NO_CDTOR_EXPORT View::View (QWidget *parent, const char *name)
     m_old_controlpanel_mode (CP_Show),
     m_statusbar_mode (SB_Hide),
     controlbar_timer (0),
+    infopanel_timer (0),
     m_keepsizeratio (false),
     m_playing (false),
     m_mixer_init (false),
@@ -256,8 +257,8 @@ KDE_NO_EXPORT void View::setEraseColor (const QColor & color) {
 void View::setInfoMessage (const QString & msg) {
     bool ismain = m_dockarea->getMainDockWidget () == m_dock_infopanel;
     if (msg.isEmpty ()) {
-        if (!ismain && !m_edit_mode)
-            m_dock_infopanel->undock ();
+        if (!ismain && !m_edit_mode && !infopanel_timer)
+            infopanel_timer = startTimer (0);
        m_infopanel->clear ();
     } else if (ismain || !m_no_info) {
         if (!m_edit_mode && m_dock_infopanel->mayBeShow ())
@@ -507,6 +508,10 @@ KDE_NO_EXPORT void View::timerEvent (QTimerEvent * e) {
                 m_view_area->resizeEvent (0L);
             }
         }
+    } else if (e->timerId () == infopanel_timer) {
+        if (m_infopanel->text ().isEmpty ())
+            m_dock_infopanel->undock ();
+        infopanel_timer  = 0;
     }
     killTimer (e->timerId ());
 }

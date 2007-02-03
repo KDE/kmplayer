@@ -40,7 +40,7 @@ KDE_NO_EXPORT NodePtr ASX::Asx::childFromTag (const QString & tag) {
     return 0L;
 }
 
-KDE_NO_EXPORT bool ASX::Asx::isPlayable () {
+KDE_NO_EXPORT Node::PlayType ASX::Asx::playType () {
     if (cached_ismrl_version != document ()->m_tree_version)
         for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
             if (e->id == id_node_title)
@@ -48,7 +48,7 @@ KDE_NO_EXPORT bool ASX::Asx::isPlayable () {
             else if (e->id == id_node_base)
                 src = convertNode <Element> (e)->getAttribute ("href");
         }
-    return Mrl::isPlayable ();
+    return Mrl::playType ();
 }
 
 //-----------------------------------------------------------------------------
@@ -70,7 +70,7 @@ KDE_NO_EXPORT NodePtr ASX::Entry::childFromTag (const QString & tag) {
     return 0L;
 }
 
-KDE_NO_EXPORT bool ASX::Entry::isPlayable () {
+KDE_NO_EXPORT Node::PlayType ASX::Entry::playType () {
     if (cached_ismrl_version != document ()->m_tree_version) {
         ref_child_count = 0;
         NodePtr ref;
@@ -91,7 +91,7 @@ KDE_NO_EXPORT bool ASX::Entry::isPlayable () {
             convertNode <ASX::Ref> (ref)->pretty_name = pretty_name;
         cached_ismrl_version = document()->m_tree_version;
     }
-    return false;
+    return play_type_none;
 }
 
 KDE_NO_EXPORT void ASX::Entry::activate () {

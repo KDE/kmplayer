@@ -71,7 +71,7 @@ public:
     KDE_NO_CDTOR_EXPORT Track (NodePtr & d) : Mrl (d, id_node_track) {}
     void closed ();
     void activate ();
-    bool isPlayable ();
+    PlayType playType ();
     Mrl * linkNode ();
     KDE_NO_EXPORT const char * nodeName () const { return "track"; }
     NodePtr childFromTag (const QString & tag);

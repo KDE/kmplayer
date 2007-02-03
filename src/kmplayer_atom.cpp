@@ -60,6 +60,10 @@ void ATOM::Entry::closed () {
         }
 }
 
+Node::PlayType ATOM::Link::playType () {
+    return src.isEmpty () ? play_type_none : play_type_unknown;
+}
+
 void ATOM::Link::closed () {
     QString href;
     QString rel;
@@ -95,9 +99,9 @@ void ATOM::Content::closed () {
     }
 }
 
-bool ATOM::Content::isPlayable () {
+Node::PlayType ATOM::Content::playType () {
     if (!hasChildNodes () && !src.isEmpty ())
-        return true;
-    return false;
+        return play_type_unknown;
+    return play_type_none;
 }
 
