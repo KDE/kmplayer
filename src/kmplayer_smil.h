@@ -85,6 +85,7 @@ public:
 class KMPLAYER_NO_EXPORT SizeType {
 public:
     SizeType ();
+    SizeType (const QString & s);
     void reset ();
     SizeType & operator = (const QString & s);
     Single size (Single relative_to = 100);
@@ -122,7 +123,7 @@ public:
         timings_reset = 0, timings_began, timings_started, timings_stopped
     };
     enum DurationTime { begin_time = 0, duration_time, end_time, durtime_last };
-    enum Fill { fill_unknown, fill_freeze };
+    enum Fill { fill_unknown, fill_freeze, fill_hold };
 
     TimedRuntime (NodePtr e);
     virtual ~TimedRuntime ();
@@ -229,7 +230,8 @@ public:
     int font_size;
     unsigned int font_color;
     unsigned int background_color;
-    bool transparent;
+    int bg_opacity;
+    enum { align_left, align_center, align_right } halign;
     QString text;
     TextRuntimePrivate * d;
 protected:
@@ -280,6 +282,7 @@ public:
     virtual void stopped ();
     void timerTick();
 private:
+    void applyStep ();
     TimerInfoPtrW anim_timer;
     enum { acc_none, acc_sum } accumulate;
     enum { add_replace, add_sum } additive;
@@ -454,6 +457,7 @@ private:
     NodeRefListPtr m_ActionListeners;      // mouse clicked
     NodeRefListPtr m_OutOfBoundsListeners; // mouse left
     NodeRefListPtr m_InBoundsListeners;    // mouse entered
+    NodeRefListPtr m_AttachedMediaTypes;   // active attached mediatypes
 };
 
 /**
@@ -684,6 +688,7 @@ public:
     unsigned int bitrate;
     unsigned int trans_step;
     unsigned int trans_steps;
+    enum { sens_opaque, sens_transparent, sens_percentage } sensitivity;
 protected:
     NodeRefListPtr m_ActionListeners;      // mouse clicked
     NodeRefListPtr m_OutOfBoundsListeners; // mouse left
@@ -693,6 +698,7 @@ protected:
     ConnectionPtr region_mouse_enter;      // attached region has mouse entered
     ConnectionPtr region_mouse_leave;      // attached region has mouse left
     ConnectionPtr region_mouse_click;      // attached region is clicked
+    ConnectionPtr region_attach;           // attached to region
     TimerInfoPtrW trans_timer;
 };
 

@@ -252,6 +252,7 @@ extern const unsigned int event_paint;
 extern const unsigned int event_sized;
 extern const unsigned int event_postponed;
 extern const unsigned int event_timer;
+extern const unsigned int mediatype_attached;
 
 // convenient types
 typedef Item<Node>::SharedType NodePtr;

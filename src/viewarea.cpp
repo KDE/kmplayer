@@ -346,7 +346,7 @@ static cairo_surface_t * cairoCreateSurface (Window id, int w, int h) {
             1.0 * (((c)) & 0xff) / 255)
 
 class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
-    const SRect clip;
+    SRect clip;
     cairo_surface_t * cairo_surface;
     Matrix matrix;
     void traverseRegion (SMIL::RegionBase * reg);
@@ -450,14 +450,16 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout * reg) {
         Single w = rect.width() - 2 * xoff, h = rect.height() - 2 * yoff;
         matrix.getXYWH (xoff, yoff, w, h);
 
+        SRect clip_save = clip;
+        clip = clip.intersect (SRect (xoff, yoff, w, h));
+
         rb->surface = reg->surface;
         rb->surface->background_color = rb->background_color;
 
         if (reg->surface && (reg->surface->background_color & 0xff000000)) {
             CAIRO_SET_SOURCE_RGB (cr, reg->surface->background_color);
-            SRect clip_rect = clip.intersect (SRect (xoff, yoff, w, h));
-            cairo_rectangle (cr, clip_rect.x (), clip_rect.y(),
-                    clip_rect.width (), clip_rect.height ());
+            cairo_rectangle (cr, clip.x (), clip.y(),
+                    clip.width (), clip.height ());
             cairo_fill (cr);
         }
         //cairo_rectangle (cr, xoff, yoff, w, h);
@@ -469,6 +471,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout * reg) {
         traverseRegion (reg);
         //cairo_restore (cr);
         matrix = m;
+        clip = clip_save;
 
         rb->surface = 0L;
     }
@@ -484,12 +487,13 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
         return;
     matrix = Matrix (rect.x(), rect.y(), 1.0, 1.0);
     matrix.transform (m);
+    SRect clip_save = clip;
+    clip = clip.intersect (SRect (x, y, w, h));
     cairo_save (cr);
     if (reg->surface && (reg->surface->background_color & 0xff000000)) {
         CAIRO_SET_SOURCE_RGB (cr, reg->surface->background_color);
-        SRect clip_rect = clip.intersect (SRect (x, y, w, h));
-        cairo_rectangle (cr, clip_rect.x (), clip_rect.y(),
-                clip_rect.width (), clip_rect.height ());
+        cairo_rectangle (cr, clip.x (), clip.y(),
+                clip.width (), clip.height ());
         //cairo_rectangle (cr, x, y, w, h);
         cairo_fill (cr);
     }
@@ -498,6 +502,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
     traverseRegion (reg);
     cairo_restore (cr);
     matrix = m;
+    clip = clip_save;
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
@@ -539,7 +544,10 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
             h = ys * id->height();
             ir->sizes.applyRegPoints(img, rect.width(), rect.height(), x,y,w,h);
             matrix.getXYWH (x, y, w, h);
-            SRect clip_rect = reg_rect.intersect (SRect (x, y, w, h));
+            SRect clip_rect = clip.intersect (
+                    reg_rect.intersect (SRect (x, y, w, h)));
+            if (!clip_rect.isValid ())
+                return;
             cairo_pattern_t * pat = id->cairoImage (w, h, cairo_surface);
             if (pat) {
                 cairo_matrix_t mat;
@@ -575,7 +583,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         Single x, y, w = rect.width(), h = rect.height();
         td->sizes.applyRegPoints (txt, rect.width(), rect.height(), x, y, w, h);
         matrix.getXYWH (x, y, w, h);
-        if (!td->transparent) {
+        if (td->bg_opacity) { // TODO real alpha
             CAIRO_SET_SOURCE_RGB (cr, td->background_color);
             cairo_rectangle (cr, x, y, w, h);
             cairo_fill (cr);
@@ -600,9 +608,18 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         CAIRO_SET_SOURCE_RGB (cr, td->font_color);
         float scale = 1.0 * w / rect.width (); // TODO: make an image
         cairo_set_font_size (cr, scale * td->font_size);
-        Single margin = 1 + scale * (td->font_size >> 2);
-        cairo_move_to (cr, x+margin, y + margin + Single(scale*td->font_size));
-        cairo_show_text (cr, td->text.utf8 ().data ());
+        cairo_font_extents_t txt_fnt;
+        cairo_font_extents (cr, &txt_fnt);
+        QCString utf8 = td->text.utf8 ().data ();
+        cairo_text_extents_t txt_ext;
+        cairo_text_extents (cr, utf8, &txt_ext);
+        Single xoff = txt_fnt.max_x_advance / 4;
+        if (td->halign == TextRuntime::align_center)
+            xoff = (w - Single (txt_ext.width)) / 2;
+        else if (td->halign == TextRuntime::align_right)
+            xoff = w - Single (txt_ext.width);
+        cairo_move_to (cr, x+xoff, y + Single (txt_fnt.height));
+        cairo_show_text (cr, utf8);
         //cairo_stroke (cr);
     }
 }
@@ -859,6 +876,7 @@ class KMPLAYER_NO_EXPORT MouseVisitor : public Visitor {
     unsigned int event;
     int x, y;
     bool handled;
+    bool bubble_up;
 public:
     MouseVisitor (unsigned int evt, int x, int y);
     KDE_NO_CDTOR_EXPORT ~MouseVisitor () {}
@@ -877,7 +895,7 @@ public:
 
 KDE_NO_CDTOR_EXPORT
 MouseVisitor::MouseVisitor (unsigned int evt, int a, int b)
-    : event (evt), x (a), y (b), handled (false) {
+    : event (evt), x (a), y (b), handled (false), bubble_up (false) {
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (Node * n) {
@@ -909,11 +927,12 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Region * region) {
     matrix.getXYWH (rx, ry, rw, rh);
     handled = false;
     bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
-    if (!inside && event == event_pointer_clicked)
+    if (!inside && (event == event_pointer_clicked || !region->has_mouse))
         return;
     Matrix m = matrix;
     matrix = Matrix (rect.x(), rect.y(), 1.0, 1.0);
     matrix.transform (m);
+    bubble_up = false;
 
     bool child_handled = false;
     if (inside)
@@ -923,21 +942,25 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Region * region) {
             if (!node->active ())
                 break;
         }
+    child_handled &= !bubble_up;
+    bubble_up = false;
+
     int saved_event = event;
     if (node->active ()) {
+        bool propagate_listeners = !child_handled;
         if (event == event_pointer_moved) {
+            propagate_listeners = true; // always pass move events
             if (region->has_mouse && (!inside || child_handled)) {
                 region->has_mouse = false;
                 event = event_outbounds;
-                child_handled = false;
             } else if (inside && !child_handled && !region->has_mouse) {
                 region->has_mouse = true;
                 event = event_inbounds;
-                child_handled = false;
             }
-        }
-        if (!child_handled) {
-            NodeRefListPtr nl = region->listeners (event);
+        }// else // event_pointer_clicked
+        if (propagate_listeners) {
+            NodeRefListPtr nl = region->listeners (
+                    event == event_pointer_moved ? mediatype_attached : event);
             if (nl) {
                 for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
                     if (c->data)
@@ -948,7 +971,6 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Region * region) {
             }
         }
     }
-
     event = saved_event;
     handled = inside;
     matrix = m;
@@ -988,23 +1010,26 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::TimedMrl * timedmrl) {
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType * mediatype) {
-    NodeRefListPtr nl = mediatype->listeners (event);
-    if (nl)
-        for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
-            if (c->data)
-                c->data->accept (this);
-            if (!node->active ())
-                return;
-        }
-    visit (static_cast <SMIL::TimedMrl *> (mediatype));
-
-    int save_event = event;
-    if (event == event_inbounds || event == event_outbounds)
-        event = event_pointer_moved;
-    SMIL::RegionBase *r = convertNode<SMIL::RegionBase>(mediatype->region_node);
-    if (r && r->surface && r->surface->node && r != r->surface->node)
-        return r->surface->node->accept (this);
-    event = save_event;
+    if (mediatype->sensitivity == SMIL::MediaType::sens_transparent) {
+        bubble_up = true;
+        return;
+    }
+    if (event != event_pointer_moved) {
+        NodeRefListPtr nl = mediatype->listeners (event);
+        if (nl)
+            for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
+                if (c->data)
+                    c->data->accept (this);
+                if (!node->active ())
+                    return;
+            }
+        visit (static_cast <SMIL::TimedMrl *> (mediatype));
+    }
+    if (event != event_inbounds && event != event_outbounds) {
+      SMIL::RegionBase *r=convertNode<SMIL::RegionBase>(mediatype->region_node);
+      if (r && r->surface && r->surface->node && r != r->surface->node)
+          return r->surface->node->accept (this);
+    }
 }
 
 //-----------------------------------------------------------------------------

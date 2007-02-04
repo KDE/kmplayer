@@ -59,6 +59,7 @@ const unsigned int event_pointer_clicked = event_activated;
 const unsigned int event_pointer_moved = (unsigned int) -11;
 const unsigned int event_timer = (unsigned int) -12;
 const unsigned int event_postponed = (unsigned int) -13;
+const unsigned int mediatype_attached = (unsigned int) -14;
 
 static const unsigned int started_timer_id = (unsigned int) 1;
 static const unsigned int stopped_timer_id = (unsigned int) 2;
@@ -198,7 +199,7 @@ void TimedRuntime::setDurationItem (DurationTime item, const QString & val) {
     QString vl = val.lower ();
     parseTime (vl, dur);
     if (!dur && element) {
-        int pos = vl.find (QChar ('.'));
+        int pos = vl.findRev (QChar ('.'));
         if (pos > 0) {
             NodePtr e = findLocalNodeById (element, vl.left(pos));
             //kdDebug () << "getElementById " << vl.left (pos) << " " << (e ? e->nodeName () : "-") << endl;
@@ -287,6 +288,8 @@ bool TimedRuntime::parseParam (const QString & name, const QString & val) {
     } else if (!strcmp (cname, "fill")) {
         if (val == QString::fromLatin1 ("freeze"))
             fill = fill_freeze;
+        else if (val == QString::fromLatin1 ("hold"))
+            fill = fill_hold;
         else
             fill = fill_unknown;
         // else all other fill options ..
@@ -320,7 +323,9 @@ KDE_NO_EXPORT void TimedRuntime::propagateStop (bool forced) {
                 durations [end_time].durval == duration_media)
             return; // wait for external eof
         if (durations [end_time].durval > duration_last_option &&
-                durations [end_time].durval != duration_media)
+                durations [end_time].durval != duration_media &&
+                (state() == timings_started ||
+                 durations [begin_time].durval < duration_last_option))
             return; // wait for event
         if (durations [duration_time].durval == duration_infinite)
             return; // this may take a while :-)
@@ -401,6 +406,10 @@ KDE_NO_EXPORT void TimedRuntime::stopped () {
 
 KDE_NO_CDTOR_EXPORT SizeType::SizeType () {
     reset ();
+}
+
+KDE_NO_CDTOR_EXPORT SizeType::SizeType (const QString & s) {
+    *this = s;
 }
 
 void SizeType::reset () {
@@ -537,15 +546,21 @@ KDE_NO_EXPORT void CalculatedSizer::calcSizes (Node * node, Single w, Single h,
         return;
     if (left.isSet ())
         xoff = left.size (w);
-    else if (width.isSet ())
-        xoff = (w - width.size (w)) / 2;
-    else
+    else if (width.isSet ()) {
+        if (right.isSet ())
+            xoff = w - width.size (w) - right.size (w);
+        else
+            xoff = (w - width.size (w)) / 2;
+    } else
         xoff = 0;
     if (top.isSet ())
         yoff = top.size (h);
-    else if (height.isSet ())
-        yoff = (h - height.size (h)) / 2;
-    else
+    else if (height.isSet ()) {
+        if (bottom.isSet ())
+            yoff = h - height.size (h) - bottom.size (h);
+        else
+            yoff = (h - height.size (h)) / 2;
+    } else
         yoff = 0;
     if (width.isSet ())
         w1 = width.size (w);
@@ -640,12 +655,12 @@ KDE_NO_EXPORT void AnimateGroupData::restoreModification () {
  * start_timer timer expired, execute it
  */
 KDE_NO_EXPORT void SetData::started () {
-    //kdDebug () << "SetData::started " << durations [duration_time].durval << endl;
     restoreModification ();
     if (element) {
         if (target_element) {
             convertNode <Element> (target_element)->setParam (
-                    changed_attribute, change_to, &modification_id);
+                    changed_attribute, change_to,
+                    fill == fill_hold ? 0L : &modification_id);
             //kdDebug () << "SetData(" << this << ")::started " << target_element->nodeName () << "." << changed_attribute << " ->" << change_to << " modid:" << modification_id << endl;
         } else
             kdWarning () << "target element not found" << endl;
@@ -730,7 +745,8 @@ KDE_NO_EXPORT void AnimateData::started () {
                     change_from = target->param (changed_attribute);
             }
             if (!change_from.isEmpty ()) {
-                target->setParam (changed_attribute, change_from, &modification_id);
+                target->setParam (changed_attribute, change_from,
+                        fill == fill_hold ? 0L : &modification_id);
                 if (reg.search (change_from) > -1) {
                     change_from_val = reg.cap (1).toDouble ();
                     change_from_unit = reg.cap (2);
@@ -768,7 +784,8 @@ KDE_NO_EXPORT void AnimateData::started () {
             }
             //kdDebug () << "AnimateData::started " << target_element->nodeName () << "." << changed_attribute << " " << change_values.first () << "->" << change_values.last () << " in " << steps << " interval:" << interval << endl;
             anim_timer = element->document ()->setTimeout (element, interval, anim_timer_id); // 50 /s for now FIXME
-            target->setParam (changed_attribute, change_values.first (), &modification_id);
+            target->setParam (changed_attribute, change_values.first (),
+                    fill == fill_hold ? 0L : &modification_id);
             success = true;
         }
     } while (false);
@@ -782,14 +799,31 @@ KDE_NO_EXPORT void AnimateData::started () {
  * undo if necessary
  */
 KDE_NO_EXPORT void AnimateData::stopped () {
-    // kdDebug () << "AnimateData::stopped " << element->state << endl;
     if (element) {
         if (anim_timer) // make sure timers are stopped
             element->document ()->cancelTimer (anim_timer);
         ASSERT (!anim_timer);
+        if (steps > 0 && element->active ()) {
+            steps = 0;
+            if (calcMode == calc_linear)
+                change_from_val = change_to_val;
+            applyStep (); // we lost some steps ..
+        }
     } else
         anim_timer = 0;
     AnimateGroupData::stopped ();
+}
+
+KDE_NO_EXPORT void AnimateData::applyStep () {
+    Element * target = convertNode <Element> (target_element);
+    if (calcMode == calc_linear)
+        target->setParam (changed_attribute, QString ("%1%2").arg (
+                    change_from_val).arg(change_from_unit),
+                fill == fill_hold ? 0L :  &modification_id);
+    else if (calcMode == calc_discrete)
+        target->setParam (changed_attribute,
+                change_values[change_values.size () - steps -1],
+                fill == fill_hold ? 0L : &modification_id);
 }
 
 /**
@@ -800,14 +834,11 @@ KDE_NO_EXPORT void AnimateData::timerTick () {
         kdError () << "spurious anim timer tick" << endl;
         return;
     }
-    Element * target = convertNode <Element> (target_element);
-    if (steps-- > 0 && target) {
+    if (steps-- > 0) {
         if (calcMode == calc_linear) {
             change_from_val += change_delta;
-            target->setParam (changed_attribute, QString ("%1%2").arg (change_from_val).arg(change_from_unit), &modification_id);
-        } else if (calcMode == calc_discrete) {
-            target->setParam (changed_attribute, change_values[change_values.size () - steps -1], &modification_id);
         }
+        applyStep ();
     } else {
         if (element)
             element->document ()->cancelTimer (anim_timer);
@@ -1431,7 +1462,10 @@ void SMIL::RegionBase::parseParam (const QString & name, const QString & val) {
     SRect rect = SRect (x, y, w, h);
     const char * cn = name.ascii ();
     if (!strcmp (cn, "background-color") || !strcmp (cn, "backgroundColor")) {
-        background_color = 0xff000000 | QColor (val).rgb ();
+        if (val.isEmpty ())
+            background_color = 0;
+        else
+            background_color = 0xff000000 | QColor (val).rgb ();
         if (surface)
             surface->background_color = background_color;
         need_repaint = true;
@@ -1466,7 +1500,8 @@ KDE_NO_CDTOR_EXPORT SMIL::Region::Region (NodePtr & d)
    has_mouse (false),
    m_ActionListeners (new NodeRefList),
    m_OutOfBoundsListeners (new NodeRefList),
-   m_InBoundsListeners (new NodeRefList) {}
+   m_InBoundsListeners (new NodeRefList),
+   m_AttachedMediaTypes (new NodeRefList) {};
 
 KDE_NO_EXPORT NodePtr SMIL::Region::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "region"))
@@ -1509,6 +1544,8 @@ NodeRefListPtr SMIL::Region::listeners (unsigned int eid) {
             return m_InBoundsListeners;
         case event_outbounds:
             return m_OutOfBoundsListeners;
+        case mediatype_attached:
+            return m_AttachedMediaTypes;
     }
     return RegionBase::listeners (eid);
 }
@@ -2066,6 +2103,7 @@ void SMIL::Area::parseParam (const QString & para, const QString & val) {
 
 KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, short id)
  : TimedMrl (d, id), m_type (t), bitrate (0), trans_step (0), trans_steps (0),
+   sensitivity (sens_opaque),
    m_ActionListeners (new NodeRefList),
    m_OutOfBoundsListeners (new NodeRefList),
    m_InBoundsListeners (new NodeRefList) {
@@ -2088,7 +2126,15 @@ void SMIL::MediaType::parseParam (const QString & para, const QString & val) {
         bitrate = val.toInt ();
     else if (!strcmp (cname, "type"))
         mimetype = val;
-    else if (!strcmp (cname, "transIn")) {
+    else if (!strcmp (cname, "sensitivity")) {
+        sensitivity = sens_opaque;
+        if (val == "transparent")
+            sensitivity = sens_transparent;
+        //else if (val == "percentage") // TODO
+        //    sensitivity = sens_percentage;
+        else
+            sensitivity = sens_opaque;
+    } else if (!strcmp (cname, "transIn")) {
         trans_in = findTransition (this, val);
         if (!trans_in)
             kdWarning() << "Transition " << val << " not found in head" << endl;
@@ -2119,6 +2165,7 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
     region_mouse_enter = 0L;
     region_mouse_leave = 0L;
     region_mouse_click = 0L;
+    region_attach = 0L;
     trans_step = trans_steps = 0;
     if (trans_timer)
         document ()->cancelTimer (trans_timer);
@@ -2136,6 +2183,7 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
         region_mouse_enter = r->connectTo (this, event_inbounds);
         region_mouse_leave = r->connectTo (this, event_outbounds);
         region_mouse_click = r->connectTo (this, event_activated);
+        region_attach = r->connectTo (this, mediatype_attached);
         r->repaint ();
         tr->clipStart ();
         Transition * trans = convertNode <Transition> (trans_in);
@@ -2145,7 +2193,7 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
             trans_timer = document()->setTimeout(this, 100, trans_timer_id);
         }
     } else
-        kdWarning () << "MediaType::begin no region found" << endl;
+        kdWarning () << nodeName() << "::begin no region found" << endl;
     TimedMrl::begin ();
 }
 
@@ -2619,7 +2667,8 @@ KDE_NO_EXPORT void TextRuntime::reset () {
     font_size = d->font.pointSize ();
     font_color = 0;
     background_color = 0xffffff;
-    transparent = false;
+    bg_opacity = 100;
+    halign = align_left;
     MediaTypeRuntime::reset ();
 }
 
@@ -2650,6 +2699,16 @@ bool TextRuntime::parseParam (const QString & name, const QString & val) {
         font_size = val.toInt ();
     } else if (!strcmp (cname, "fontSize")) {
         font_size += val.toInt ();
+    } else if (strstr (cname, "backgroundOpacity")) {
+        bg_opacity = (int) SizeType (val).size (100);
+    } else if (!strcmp (cname, "hAlign")) {
+        const char * cval = val.ascii ();
+        if (!strcmp (cval, "center"))
+            halign = align_center;
+        else if (!strcmp (cval, "right"))
+            halign = align_right;
+        else
+            halign = align_left;
     // TODO: expandTabs fontBackgroundColor fontSize fontStyle fontWeight hAlig vAlign wordWrap
     } else
         return MediaTypeRuntime::parseParam (name, val);
