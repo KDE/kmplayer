@@ -175,7 +175,8 @@ KDE_NO_EXPORT void View::dragEnterEvent (QDragEnterEvent* dee) {
 }
 
 KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
-    //setBackgroundMode(Qt::NoBackground);
+    setBackgroundMode(Qt::NoBackground); // prevents flashing
+    //m_dockarea->setEraseColor (QColor (0, 0, 0));
     QPalette pal (QColor (64, 64,64), QColor (32, 32, 32));
     QVBoxLayout * viewbox = new QVBoxLayout (this, 0, 0);
     m_dockarea = new KDockArea (this, "kde_kmplayer_dock_area");
