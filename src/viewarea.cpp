@@ -65,16 +65,12 @@ ImageData::ImageData( const QString & img) :
     image (0L),
     url (img) {
         if (img.isEmpty ())
-            kdDebug() << "New ImageData for " << this << endl;
+            ;//kdDebug() << "New ImageData for " << this << endl;
         else
-            kdDebug() << "New ImageData for " << img << endl;
+            ;//kdDebug() << "New ImageData for " << img << endl;
     }
 
 ImageData::~ImageData() {
-    if (url.isEmpty ())
-        kdDebug() << "Delete ImageData for " << this << endl;
-    else
-        kdDebug() << "Delete ImageData for " << url << endl;
     if (!url.isEmpty ())
         image_data_map->erase (url);
 #ifdef HAVE_CAIRO
@@ -159,7 +155,8 @@ void CachedImage::setUrl (const QString & url) {
             data = ImageDataPtr (new ImageData (url));
             image_data_map->insert (url, ImageDataPtrW (data));
         } else {
-            data = i.data ();
+            ImageDataPtr safe = i.data ();
+            data = safe;
         }
     }
 }
@@ -409,7 +406,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (Node * n) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (SMIL::RegionBase * reg) {
     // next visit listeners
-    NodeRefListPtr nl = reg->listeners (event_paint);
+    NodeRefListPtr nl = reg->listeners (mediatype_attached);
     if (nl) {
         for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ())
             if (c->data)
@@ -543,6 +540,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
             w = xs * id->width();
             h = ys * id->height();
             ir->sizes.applyRegPoints(img, rect.width(), rect.height(), x,y,w,h);
+            img->cached_rect = SRect (x, y, w, h);
             matrix.getXYWH (x, y, w, h);
             SRect clip_rect = clip.intersect (
                     reg_rect.intersect (SRect (x, y, w, h)));
@@ -888,7 +886,7 @@ public:
     void visit (SMIL::MediaType * n);
     void visit (SMIL::Anchor *);
     void visit (SMIL::Area *);
-
+    QCursor cursor;
 };
 
 } // namespace
@@ -998,11 +996,39 @@ static void followLink (SMIL::LinkingBase * link) {
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Anchor * anchor) {
-    followLink (anchor);
+    if (event == event_pointer_moved)
+        cursor.setShape (Qt::PointingHandCursor);
+    else if (event == event_pointer_clicked)
+        followLink (anchor);
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
-    followLink (area);
+    NodePtr n = area->parentNode ();
+    if (n->id >= SMIL::id_node_first_mediatype &&
+            n->id < SMIL::id_node_last_mediatype) {
+        SMIL::MediaType * mt = convertNode <SMIL::MediaType> (n);
+        Single x1 = mt->cached_rect.x (), x2 = mt->cached_rect.y ();
+        Single w = mt->cached_rect.width (), h = mt->cached_rect.height ();
+        matrix.getXYWH (x1, x2, w, h);
+        if (area->nr_coords > 1) {
+            Single left = area->coords[0].size (mt->cached_rect.width ());
+            Single top = area->coords[1].size (mt->cached_rect.height ());
+            matrix.getXY (left, top);
+            if (x < left || x > left + w || y < top || y > top + h)
+                return;
+            if (area->nr_coords > 3) {
+                Single right = area->coords[2].size (mt->cached_rect.width ());
+                Single bottom = area->coords[3].size(mt->cached_rect.height ());
+                matrix.getXY (right, bottom);
+                if (x > right || y > bottom)
+                    return;
+            }
+        }
+        if (event == event_pointer_moved)
+            cursor.setShape (Qt::PointingHandCursor);
+        else if (event == event_pointer_clicked)
+            followLink (area);
+    }
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::TimedMrl * timedmrl) {
@@ -1014,17 +1040,17 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType * mediatype) {
         bubble_up = true;
         return;
     }
-    if (event != event_pointer_moved) {
-        NodeRefListPtr nl = mediatype->listeners (event);
-        if (nl)
-            for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
-                if (c->data)
-                    c->data->accept (this);
-                if (!node->active ())
-                    return;
-            }
+    NodeRefListPtr nl = mediatype->listeners (
+            event == event_pointer_moved ? mediatype_attached : event);
+    if (nl)
+        for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
+            if (c->data)
+                c->data->accept (this);
+            if (!node->active ())
+                return;
+        }
+    if (event != event_pointer_moved)
         visit (static_cast <SMIL::TimedMrl *> (mediatype));
-    }
     if (event != event_inbounds && event != event_outbounds) {
       SMIL::RegionBase *r=convertNode<SMIL::RegionBase>(mediatype->region_node);
       if (r && r->surface && r->surface->node && r != r->surface->node)
@@ -1157,6 +1183,7 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
     if (surface->node) {
         MouseVisitor visitor (event_pointer_moved, e->x(), e->y());
         surface->node->accept (&visitor);
+        setCursor (visitor.cursor);
     }
     e->accept ();
     mouseMoved (); // for m_mouse_invisible_timer

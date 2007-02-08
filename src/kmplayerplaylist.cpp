@@ -689,6 +689,10 @@ Mrl * Mrl::mrl () {
     return this;
 }
 
+void Mrl::endOfFile () {
+    finish ();
+}
+
 void Mrl::activate () {
     resolved |= linkNode ()->resolved;
     if (!resolved && document ()->notify_listener)

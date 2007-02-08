@@ -248,7 +248,6 @@ extern const unsigned int event_pointer_clicked;
 extern const unsigned int event_pointer_moved;
 extern const unsigned int event_inbounds;
 extern const unsigned int event_outbounds;
-extern const unsigned int event_paint;
 extern const unsigned int event_sized;
 extern const unsigned int event_postponed;
 extern const unsigned int event_timer;
@@ -545,6 +544,7 @@ public:
      */ 
     virtual Mrl * linkNode ();
     virtual Mrl * mrl ();
+    virtual void endOfFile ();
     QString absolutePath ();
     /*
      * Reimplement to callback with requestPlayURL if isPlayable()

@@ -53,7 +53,6 @@ const unsigned int event_inbounds = duration_element_inbounds;
 const unsigned int event_outbounds = duration_element_outbounds;
 static const unsigned int event_stopped = duration_element_stopped;
 static const unsigned int event_to_be_started = (unsigned int) -8;
-const unsigned int event_paint = (unsigned int) -9;
 const unsigned int event_sized = (unsigned int) -10;
 const unsigned int event_pointer_clicked = event_activated;
 const unsigned int event_pointer_moved = (unsigned int) -11;
@@ -293,7 +292,7 @@ bool TimedRuntime::parseParam (const QString & name, const QString & val) {
         else
             fill = fill_unknown;
         // else all other fill options ..
-    } else if (!strcmp (cname, "repeatCount")) {
+    } else if (!strncmp (cname, "repeat", 6)) {
         if (val.find ("indefinite") > -1)
             repeat_count = duration_infinite;
         else
@@ -816,11 +815,11 @@ KDE_NO_EXPORT void AnimateData::stopped () {
 
 KDE_NO_EXPORT void AnimateData::applyStep () {
     Element * target = convertNode <Element> (target_element);
-    if (calcMode == calc_linear)
+    if (target && calcMode == calc_linear)
         target->setParam (changed_attribute, QString ("%1%2").arg (
                     change_from_val).arg(change_from_unit),
                 fill == fill_hold ? 0L :  &modification_id);
-    else if (calcMode == calc_discrete)
+    else if (target && calcMode == calc_discrete)
         target->setParam (changed_attribute,
                 change_values[change_values.size () - steps -1],
                 fill == fill_hold ? 0L : &modification_id);
@@ -835,9 +834,8 @@ KDE_NO_EXPORT void AnimateData::timerTick () {
         return;
     }
     if (steps-- > 0) {
-        if (calcMode == calc_linear) {
+        if (calcMode == calc_linear)
             change_from_val += change_delta;
-        }
         applyStep ();
     } else {
         if (element)
@@ -970,7 +968,7 @@ KDE_NO_EXPORT void AudioVideoData::started () {
 static void setSmilLinkNode (NodePtr n, NodePtr link) {
     // this works only because we can only play one at a time FIXME
     SMIL::Smil * s = SMIL::Smil::findSmilNode (n.ptr ());
-    if (s)
+    if (s && (!s->current_av_media_type || s->current_av_media_type == n))
         s->current_av_media_type = link;
 }
 
@@ -1044,7 +1042,7 @@ static Element * fromParamGroup (NodePtr & d, const QString & tag) {
     if (!strcmp (ctag, "param"))
         return new SMIL::Param (d);
     else if (!strcmp (ctag, "area") || !strcmp (ctag, "anchor"))
-        return new SMIL::Area (d);
+        return new SMIL::Area (d, tag);
     return 0L;
 }
 
@@ -1396,8 +1394,7 @@ KDE_NO_EXPORT void SMIL::Layout::accept (Visitor * v) {
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
  : Element (d, id), x (0), y (0), w (0), h (0),
    z_order (1), background_color (0),
-   m_SizeListeners (new NodeRefList),
-   m_PaintListeners (new NodeRefList) {}
+   m_SizeListeners (new NodeRefList) {}
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
 }
@@ -1488,9 +1485,7 @@ void SMIL::RegionBase::parseParam (const QString & name, const QString & val) {
 }
 
 NodeRefListPtr SMIL::RegionBase::listeners (unsigned int eid) {
-    if (eid == event_paint)
-        return m_PaintListeners;
-    else if (eid == event_sized)
+    if (eid == event_sized)
         return m_SizeListeners;
     return Element::listeners (eid);
 }
@@ -1755,50 +1750,27 @@ KDE_NO_EXPORT void SMIL::GroupBase::deactivate () {
 }
 
 KDE_NO_EXPORT void SMIL::GroupBase::begin () {
-    if (state == state_deferred && jump_node)
-        undefer ();
     TimedMrl::begin ();
 }
 
-KDE_NO_EXPORT void SMIL::GroupBase::undefer () {
-    NodePtr jump = jump_node;
-    jump_node = 0L;
-    if (jump) { // find next level group to pass jump_node
-        NodePtr child;
-        for (NodePtr n = jump; n; n = n->parentNode ()) {
-            if (n.ptr () == this || n->id == id_node_body)
-                break;
-            child = n;
-        }
-        if (child)
-            for (NodePtr c = firstChild (); c; c = c->nextSibling ())
-                if (c == child) {
-                    if (c != jump && c->id >= id_node_first_group &&
-                            c->id <= id_node_last_group)
-                        convertNode <GroupBase> (c)->setJumpNode (jump);
-                    else
-                        c->activate ();
-                    if (id != id_node_par)
-                        break;        // seq behaviour
-                } else if (id == id_node_par)
-                    c->activate ();
-    }
-    state = state_activated;
-}
-
 KDE_NO_EXPORT void SMIL::GroupBase::setJumpNode (NodePtr n) {
-    jump_node = n;
+    NodePtr child = n;
     if (state > state_init) {
-        setState (state_deferred);
         for (NodePtr c = firstChild (); c; c = c->nextSibling ())
             if (c->active ())
                 c->reset ();
-        undefer ();
-    } else {
-        state = state_deferred;
-        init ();
-        timedRuntime()->beginAndStart (); // undefer through begin()
+        for (NodePtr c = n->parentNode (); c; c = c->parentNode ()) {
+            if (c.ptr () == this || c->id == id_node_body)
+                break;
+            if (c->id >= id_node_first_group && c->id <= id_node_last_group)
+                convertNode <GroupBase> (c)->jump_node = child;
+            child = c;
+        }
     }
+    jump_node = child;
+    state = state_activated;
+    init ();
+    timedRuntime()->beginAndStart (); // undefer through begin()
 }
 
 //-----------------------------------------------------------------------------
@@ -1818,12 +1790,9 @@ KDE_NO_EXPORT NodePtr SMIL::Par::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void SMIL::Par::begin () {
-    //kdDebug () << "SMIL::Par::begin" << endl;
-    if (state == state_deferred)
-        undefer ();
-    else
-        for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-            e->activate ();
+    jump_node = 0L; // TODO: adjust timings
+    for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+        e->activate ();
     GroupBase::begin ();
 }
 
@@ -1863,8 +1832,19 @@ KDE_NO_EXPORT NodePtr SMIL::Seq::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void SMIL::Seq::begin () {
-    //kdDebug () << "SMIL::Seq::begin" << endl;
-    if (state != state_deferred && firstChild ())
+    if (jump_node) {
+        for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+            if (c == jump_node) {
+                jump_node = 0L;
+                c->activate ();
+                break;
+            } else {
+                c->state = state_activated; // TODO: ..
+                if (c->isElementNode ())
+                    convertNode <Element> (c)->init ();
+                c->state = state_finished; // TODO: ..
+            }
+    } else if (firstChild ())
         firstChild ()->activate ();
     GroupBase::begin ();
 }
@@ -2039,6 +2019,7 @@ KDE_NO_CDTOR_EXPORT SMIL::LinkingBase::LinkingBase (NodePtr & d, short id)
 
 KDE_NO_EXPORT void SMIL::LinkingBase::deactivate () {
     mediatype_activated = 0L;
+    mediatype_attach = 0L;
     Element::deactivate ();
 }
 
@@ -2059,6 +2040,7 @@ KDE_NO_EXPORT void SMIL::Anchor::activate () {
     for (NodePtr c = firstChild(); c; c = c->nextSibling ())
         if (c->id >=id_node_first_mediatype && c->id <=id_node_last_mediatype) {
             mediatype_activated = c->connectTo (this, event_activated);
+            mediatype_attach = c->connectTo (this, mediatype_attached);
             break;
         }
     Element::activate ();
@@ -2079,22 +2061,33 @@ NodePtr SMIL::Anchor::childFromTag (const QString & tag) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT SMIL::Area::Area (NodePtr & d)
- : LinkingBase (d, id_node_area) {}
+KDE_NO_CDTOR_EXPORT SMIL::Area::Area (NodePtr & d, const QString & t)
+ : LinkingBase (d, id_node_area), coords (0L), nr_coords (0), tag (t) {}
+
+KDE_NO_CDTOR_EXPORT SMIL::Area::~Area () {
+    delete [] coords;
+}
 
 KDE_NO_EXPORT void SMIL::Area::activate () {
     init ();
     if (parentNode () &&
             parentNode ()->id >= id_node_first_mediatype &&
-            parentNode ()->id <= id_node_last_mediatype)
+            parentNode ()->id <= id_node_last_mediatype) {
         mediatype_activated = parentNode ()->connectTo (this, event_activated);
+        mediatype_attach = parentNode ()->connectTo (this, mediatype_attached);
+    }
     Element::activate ();
 }
 
 KDE_NO_EXPORT
 void SMIL::Area::parseParam (const QString & para, const QString & val) {
-    if (para == QString ("coords")) {
-        ; // TODO
+    if (para == "coords") {
+        delete [] coords;
+        QStringList clist = QStringList::split (QString (","), val);
+        nr_coords = clist.count ();
+        coords = new SizeType [nr_coords];
+        for (int i = 0; i < nr_coords; ++i)
+            coords[i] = clist[i];
     } else
         LinkingBase::parseParam (para, val);
 }
@@ -2106,7 +2099,8 @@ KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, sh
    sensitivity (sens_opaque),
    m_ActionListeners (new NodeRefList),
    m_OutOfBoundsListeners (new NodeRefList),
-   m_InBoundsListeners (new NodeRefList) {
+   m_InBoundsListeners (new NodeRefList),
+   m_MediaAttached (new NodeRefList) {
     view_mode = Mrl::WindowMode;
 }
 
@@ -2127,7 +2121,6 @@ void SMIL::MediaType::parseParam (const QString & para, const QString & val) {
     else if (!strcmp (cname, "type"))
         mimetype = val;
     else if (!strcmp (cname, "sensitivity")) {
-        sensitivity = sens_opaque;
         if (val == "transparent")
             sensitivity = sens_transparent;
         //else if (val == "percentage") // TODO
@@ -2179,7 +2172,6 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
     if (r) {
         region_node = r;
         region_sized = r->connectTo (this, event_sized);
-        region_paint = r->connectTo (this, event_paint);
         region_mouse_enter = r->connectTo (this, event_inbounds);
         region_mouse_leave = r->connectTo (this, event_outbounds);
         region_mouse_click = r->connectTo (this, event_activated);
@@ -2193,7 +2185,8 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
             trans_timer = document()->setTimeout(this, 100, trans_timer_id);
         }
     } else
-        kdWarning () << nodeName() << "::begin no region found" << endl;
+        kdWarning () << nodeName() << "::begin " << src << " region '" <<
+            param ("region") << "' not found" << endl;
     TimedMrl::begin ();
 }
 
@@ -2303,6 +2296,8 @@ KDE_NO_EXPORT NodeRefListPtr SMIL::MediaType::listeners (unsigned int id) {
             return m_InBoundsListeners;
         case event_outbounds:
             return m_OutOfBoundsListeners;
+        case mediatype_attached:
+            return m_MediaAttached;
     }
     return TimedMrl::listeners (id);
 }
@@ -2332,6 +2327,10 @@ KDE_NO_EXPORT void SMIL::AVMediaType::undefer () {
         mr->postpone_lock = 0L;
         mr->started ();
     }
+}
+
+KDE_NO_EXPORT void SMIL::AVMediaType::endOfFile () {
+    timedRuntime ()->propagateStop (true);
 }
 
 KDE_NO_EXPORT TimedRuntime * SMIL::AVMediaType::getNewRuntime () {

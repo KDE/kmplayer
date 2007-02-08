@@ -414,7 +414,6 @@ public:
 protected:
     RegionBase (NodePtr & d, short id);
     NodeRefListPtr m_SizeListeners;        // region resized
-    NodeRefListPtr m_PaintListeners;       // region need repainting
 };
 
 /**
@@ -545,7 +544,6 @@ class KMPLAYER_NO_EXPORT GroupBase : public TimedMrl {
 public:
     KDE_NO_CDTOR_EXPORT ~GroupBase () {}
     PlayType playType () { return play_type_none; }
-    void undefer ();
     void begin ();
     void finish ();
     void deactivate ();
@@ -634,6 +632,7 @@ public:
     KDE_NO_EXPORT bool expose () const { return false; }
     void parseParam (const QString & name, const QString & value);
     ConnectionPtr mediatype_activated;
+    ConnectionPtr mediatype_attach;
     QString href;
     enum { show_new, show_replace } show;
 protected:
@@ -653,12 +652,15 @@ public:
 
 class KMPLAYER_NO_EXPORT Area : public LinkingBase {
 public:
-    Area (NodePtr & d);
-    KDE_NO_CDTOR_EXPORT ~Area () {}
+    Area (NodePtr & d, const QString & tag);
+    ~Area ();
     void activate ();
-    KDE_NO_EXPORT const char * nodeName () const { return "area"; }
+    KDE_NO_EXPORT const char * nodeName () const { return tag.ascii (); }
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
     void parseParam (const QString & name, const QString & value);
+    SizeType * coords;
+    int nr_coords;
+    const QString tag;
 };
 
 /**
@@ -684,6 +686,7 @@ public:
     NodePtrW trans_in;
     NodePtrW trans_out;
     NodePtrW region_node;
+    SRect cached_rect; // rel. rect wrt. region, eg. fit and regpoints applied
     QString m_type;
     unsigned int bitrate;
     unsigned int trans_step;
@@ -693,6 +696,7 @@ protected:
     NodeRefListPtr m_ActionListeners;      // mouse clicked
     NodeRefListPtr m_OutOfBoundsListeners; // mouse left
     NodeRefListPtr m_InBoundsListeners;    // mouse entered
+    NodeRefListPtr m_MediaAttached;        // mouse entered
     ConnectionPtr region_sized;            // attached region is sized
     ConnectionPtr region_paint;            // attached region needs painting
     ConnectionPtr region_mouse_enter;      // attached region has mouse entered
@@ -709,6 +713,7 @@ public:
     virtual TimedRuntime * getNewRuntime ();
     virtual void defer ();
     virtual void undefer ();
+    virtual void endOfFile ();
     virtual bool handleEvent (EventPtr event);
     virtual void accept (Visitor *);
 };

@@ -1366,7 +1366,7 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
                     if (!m_back_request && mrl->state ==Element::state_deferred)
                         mrl->undefer ();
                     else
-                        mrl->finish (); // set node to finished
+                        mrl->endOfFile (); // set node to finished
                 }
                 if (m_back_request && m_back_request->isPlayable ()) { // jump in pl
                     m_current = m_back_request;
