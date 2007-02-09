@@ -594,8 +594,9 @@ protected:
                     break;
                 }
                 default:
-                    if (xevent.type < LASTEvent)
-                        ;//fprintf (stderr, "event %d\n", xevent.type);
+                    if (xevent.type < LASTEvent) {
+                        //fprintf (stderr, "event %d\n", xevent.type);
+                    }
             }
         }
     }
