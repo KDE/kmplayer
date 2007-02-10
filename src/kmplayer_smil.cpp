@@ -1631,8 +1631,8 @@ KDE_NO_EXPORT void SMIL::TimedMrl::deactivate () {
     //kdDebug () << "SMIL::TimedMrl(" << nodeName() << ")::deactivate" << endl;
     if (unfinished ())
         finish ();
-    if (runtime)
-        runtime->reset ();
+    delete runtime;
+    runtime = 0L;
     Mrl::deactivate ();
 }
 
@@ -2235,10 +2235,11 @@ KDE_NO_EXPORT void SMIL::MediaType::childDone (NodePtr child) {
 
 KDE_NO_EXPORT void SMIL::MediaType::positionVideoWidget () {
     MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (timedRuntime ());
-    if (unfinished () && region_node) {
-        RegionBase * rb = convertNode <RegionBase> (region_node);
+    RegionBase * rb = convertNode <RegionBase> (region_node);
+    if (unfinished () && rb) {
         Single x = 0, y = 0, w = 0, h = 0;
-        if (!strcmp (nodeName (), "video") || !strcmp (nodeName (), "ref"))
+        if (mtr->state () != TimedRuntime::timings_stopped &&
+                !strcmp (nodeName (), "video") || !strcmp (nodeName (), "ref"))
             mtr->sizes.calcSizes (this, rb->w, rb->h, x, y, w, h);
         if (rb->surface)
             rb->surface->video (x, y, w, h);
@@ -2562,27 +2563,45 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
     if (data.size () && mt) {
         QString mime = mimetype ();
-        kdDebug () << "ImageRuntime::remoteReady " << mime << " " << data.size () << " empty:" << cached_img.data->isEmpty () << endl;
+        kdDebug () << "ImageRuntime::remoteReady " << mime << " empty:" << cached_img.data->isEmpty () << " " << mt->src << endl;
         if (mime.startsWith (QString::fromLatin1 ("text/"))) {
             QTextStream ts (data, IO_ReadOnly);
             readXML (element, ts, QString::null);
             mt->external_tree = findExternalTree (element);
         }
         if (!mt->external_tree && cached_img.data->isEmpty ()) {
-            QImage *pix = new QImage (data);
-            if (!pix->isNull ()) {
-                cached_img.data->image = pix;
-                delete img_movie;
-                img_movie = new QMovie (data);
-                frame_nr = 0;
-                img_movie->connectUpdate(this, SLOT(movieUpdated(const QRect&)));
-                img_movie->connectStatus (this, SLOT (movieStatus (int)));
-                img_movie->connectResize(this, SLOT (movieResize(const QSize&)));
-                if (mt->region_node && (timingstate == timings_started ||
-                            (timingstate == timings_stopped && fill == fill_freeze)))
-                    convertNode <SMIL::RegionBase> (mt->region_node)->repaint();
-            } else
+            QImage *pix = 0L;
+            delete img_movie;
+            img_movie = 0L;
+            if (data.size () > 3 && // Grrr stack corruption if feeding QImage
+                  data[0] == '\xff' && data[1] == '\xd8' && data[2] == '\xff') {
+                QPixmap pm (data);
+                if (!pm.isNull ()) {
+                    pix = new QImage;
+                    *pix = pm;
+                }
+            } else {
+                pix = new QImage (data);
+                if (!pix->isNull ()) {
+                    img_movie = new QMovie (data);
+                    frame_nr = 0;
+                }
+            }
+            if (pix && pix->isNull ()) {
                 delete pix;
+                pix = 0L;
+            }
+            if (pix) {
+                cached_img.data->image = pix;
+                if (mt->region_node && (timingstate == timings_started ||
+                       (timingstate == timings_stopped && fill == fill_freeze)))
+                    convertNode <SMIL::RegionBase> (mt->region_node)->repaint();
+            }
+            if (img_movie) {
+                img_movie->connectUpdate(this,SLOT(movieUpdated(const QRect&)));
+                img_movie->connectStatus (this, SLOT (movieStatus (int)));
+                img_movie->connectResize(this,SLOT (movieResize(const QSize&)));
+            }
         }
     }
     postpone_lock = 0L;
