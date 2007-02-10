@@ -225,17 +225,8 @@ KDE_NO_EXPORT void RP::Image::deactivate () {
 KDE_NO_EXPORT void RP::Image::remoteReady (QByteArray & data) {
     kdDebug () << "RP::Image::remoteReady" << endl;
     if (!data.isEmpty () && cached_img.data->isEmpty ()) {
-        QImage * img = 0L;
-        if (data.size () > 3 && // Grrr stack corruption if feeding QImage
-                data[0] == '\xff' && data[1] == '\xd8' && data[2] == '\xff') {
-            QPixmap pm (data);
-            if (!pm.isNull ()) {
-                img = new QImage;
-                *img = pm;
-            }
-        } else
-            img = new QImage (data);
-        if (img && !img->isNull ())
+        QImage * img = new QImage (data);
+        if (!img->isNull ())
             cached_img.data->image = img;
         else
             delete img;

@@ -2570,38 +2570,21 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
             mt->external_tree = findExternalTree (element);
         }
         if (!mt->external_tree && cached_img.data->isEmpty ()) {
-            QImage *pix = 0L;
             delete img_movie;
             img_movie = 0L;
-            if (data.size () > 3 && // Grrr stack corruption if feeding QImage
-                  data[0] == '\xff' && data[1] == '\xd8' && data[2] == '\xff') {
-                QPixmap pm (data);
-                if (!pm.isNull ()) {
-                    pix = new QImage;
-                    *pix = pm;
-                }
-            } else {
-                pix = new QImage (data);
-                if (!pix->isNull ()) {
-                    img_movie = new QMovie (data);
-                    frame_nr = 0;
-                }
-            }
-            if (pix && pix->isNull ()) {
-                delete pix;
-                pix = 0L;
-            }
-            if (pix) {
+            QImage *pix = new QImage (data);
+            if (!pix->isNull ()) {
                 cached_img.data->image = pix;
                 if (mt->region_node && (timingstate == timings_started ||
                        (timingstate == timings_stopped && fill == fill_freeze)))
                     convertNode <SMIL::RegionBase> (mt->region_node)->repaint();
-            }
-            if (img_movie) {
+                img_movie = new QMovie (data);
                 img_movie->connectUpdate(this,SLOT(movieUpdated(const QRect&)));
                 img_movie->connectStatus (this, SLOT (movieStatus (int)));
                 img_movie->connectResize(this,SLOT (movieResize(const QSize&)));
-            }
+                frame_nr = 0;
+            } else
+                delete pix;
         }
     }
     postpone_lock = 0L;

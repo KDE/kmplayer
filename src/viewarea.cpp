@@ -97,10 +97,14 @@ ImageData::cairoImage (Single sw, Single sh, cairo_surface_t * similar) {
     w = sw;
     h = sh;
 
+    if (image->depth () < 24) {
+        QImage qi = image->convertDepth (32, 0);
+        *image = qi;
+    }
     cairo_surface_t * sf = cairo_image_surface_create_for_data (
             image->bits (),
             image->hasAlphaBuffer () ? CAIRO_FORMAT_ARGB32 : CAIRO_FORMAT_RGB24,
-            iw, ih, iw*4);
+            iw, ih, image->bytesPerLine ());
     cairo_pattern_t * cp = cairo_pattern_create_for_surface (sf);
     cairo_surface_destroy (sf);
     cairo_pattern_set_extend (cp, CAIRO_EXTEND_NONE);
