@@ -5,11 +5,11 @@
       <root-layout width="320" height="240" background-color="orange"/>
       <region id="reg1" left="5%" top="10%" right="60%" bottom="50%"
            background-color="blue">
-        <region id="reg1.1" left="10%" top="30%" right="10%" bottom="30%"/>
+        <region id="reg1_1" left="10%" top="30%" right="10%" bottom="30%"/>
       </region>
       <region id="reg2" left="60%" top="10%" right="5%" bottom="50%"
            background-color="blue">
-        <region id="reg2.1" left="5%" top="30%" right="10%" bottom="30%"/>
+        <region id="reg2_1" left="5%" top="30%" right="10%" bottom="30%"/>
       </region>
       <region id="reg1_txt" left="5%" top="55%" width="15%" bottom="35%"/>
       <region id="reg1_click" left="5%" top="65%" width="15%" bottom="25%"
@@ -18,12 +18,12 @@
            background-color="red"/>
       <region id="reg1_leave" left="5%" top="85%" width="15%" bottom="5%"
            background-color="red"/>
-      <region id="reg1.1_txt" left="25%" top="55%" width="15%" bottom="35%"/>
-      <region id="reg1.1_click" left="25%" top="65%" width="15%" bottom="25%"
+      <region id="reg1_1_txt" left="25%" top="55%" width="15%" bottom="35%"/>
+      <region id="reg1_1_click" left="25%" top="65%" width="15%" bottom="25%"
            background-color="red"/>
-      <region id="reg1.1_enter" left="25%" top="75%" width="15%" bottom="15%"
+      <region id="reg1_1_enter" left="25%" top="75%" width="15%" bottom="15%"
            background-color="red"/>
-      <region id="reg1.1_leave" left="25%" top="85%" width="15%" bottom="5%"
+      <region id="reg1_1_leave" left="25%" top="85%" width="15%" bottom="5%"
            background-color="red"/>
       <region id="reg2_txt" left="60%" top="55%" width="15%" bottom="35%"/>
       <region id="reg2_click" left="60%" top="65%" width="15%" bottom="25%"
@@ -32,21 +32,21 @@
            background-color="red"/>
       <region id="reg2_leave" left="60%" top="85%" width="15%" bottom="5%"
            background-color="red"/>
-      <region id="reg2.1_txt" left="80%" top="55%" width="15%" bottom="35%"/>
-      <region id="reg2.1_click" left="80%" top="65%" width="15%" bottom="25%"
+      <region id="reg2_1_txt" left="80%" top="55%" width="15%" bottom="35%"/>
+      <region id="reg2_1_click" left="80%" top="65%" width="15%" bottom="25%"
            background-color="red"/>
-      <region id="reg2.1_enter" left="80%" top="75%" width="15%" bottom="15%"
+      <region id="reg2_1_enter" left="80%" top="75%" width="15%" bottom="15%"
            background-color="red"/>
-      <region id="reg2.1_leave" left="80%" top="85%" width="15%" bottom="5%"
+      <region id="reg2_1_leave" left="80%" top="85%" width="15%" bottom="5%"
            background-color="red"/>
     </layout>
   </head>
   <body>
     <par dur="50">
-      <text id="text1" src="data:,Opaque%20child" region="reg1.1" fill="freeze">
+      <text id="text1" src="data:,Opaque%20child" region="reg1_1" fill="freeze">
         <param name="backgroundColor" value="yellow"/>
       </text>
-      <text id="text2" src="data:,Transparent%20child" region="reg2.1"
+      <text id="text2" src="data:,Transparent%20child" region="reg2_1"
            fill="freeze" sensitivity="transparent">
         <param name="backgroundColor" value="yellow"/>
       </text>
@@ -58,13 +58,13 @@
            fill="freeze" rn:backgroundOpacity="0%"/>
       <text id="text1_leave" src="data:,Leaved" region="reg1_leave"
            fill="freeze" rn:backgroundOpacity="0%"/>
-      <text src="data:,Inner" region="reg1.1_txt" fill="freeze"
+      <text src="data:,Inner" region="reg1_1_txt" fill="freeze"
            rn:backgroundOpacity="0%"/>
-      <text id="text1.1_click" src="data:,Clicked" region="reg1.1_click"
+      <text id="text1_1_click" src="data:,Clicked" region="reg1_1_click"
            fill="freeze" rn:backgroundOpacity="0%"/>
-      <text id="text1.1_enter" src="data:,Entered" region="reg1.1_enter"
+      <text id="text1_1_enter" src="data:,Entered" region="reg1_1_enter"
            fill="freeze" rn:backgroundOpacity="0%"/>
-      <text id="text1.1_leave" src="data:,Leaved" region="reg1.1_leave"
+      <text id="text1_1_leave" src="data:,Leaved" region="reg1_1_leave"
            fill="freeze" rn:backgroundOpacity="0%"/>
       <text src="data:,Outer" region="reg2_txt" fill="freeze"
            rn:backgroundOpacity="0%"/>
@@ -74,13 +74,13 @@
            fill="freeze" rn:backgroundOpacity="0%"/>
       <text id="text2_leave" src="data:,Leaved" region="reg2_leave"
            fill="freeze" rn:backgroundOpacity="0%"/>
-      <text src="data:,Inner" region="reg2.1_txt" fill="freeze"
+      <text src="data:,Inner" region="reg2_1_txt" fill="freeze"
            rn:backgroundOpacity="0%"/>
-      <text id="text2.1_click" src="data:,Clicked" region="reg2.1_click"
+      <text id="text2_1_click" src="data:,Clicked" region="reg2_1_click"
            fill="freeze" rn:backgroundOpacity="0%"/>
-      <text id="text2.1_enter" src="data:,Entered" region="reg2.1_enter"
+      <text id="text2_1_enter" src="data:,Entered" region="reg2_1_enter"
            fill="freeze" rn:backgroundOpacity="0%"/>
-      <text id="text2.1_leave" src="data:,Leaved" region="reg2.1_leave"
+      <text id="text2_1_leave" src="data:,Leaved" region="reg2_1_leave"
            fill="freeze" rn:backgroundOpacity="0%"/>
 
       <set target="reg1_click" attribute="background-color" to="green"
@@ -90,12 +90,12 @@
       <set target="reg1_leave" attribute="background-color" to="green"
            end="reg1.inBoundsEvent" begin="reg1.outOfBoundsEvent"/>
 
-      <set target="reg1.1_click" attribute="background-color" to="green"
-           begin="reg1.1.activateEvent" dur="1"/>
-      <set target="reg1.1_enter" attribute="background-color" to="green"
-           begin="reg1.1.inBoundsEvent" end="reg1.1.outOfBoundsEvent"/>
-      <set target="reg1.1_leave" attribute="background-color" to="green"
-           end="reg1.1.inBoundsEvent" begin="reg1.1.outOfBoundsEvent"/>
+      <set target="reg1_1_click" attribute="background-color" to="green"
+           begin="reg1_1.activateEvent" dur="1"/>
+      <set target="reg1_1_enter" attribute="background-color" to="green"
+           begin="reg1_1.inBoundsEvent" end="reg1_1.outOfBoundsEvent"/>
+      <set target="reg1_1_leave" attribute="background-color" to="green"
+           end="reg1_1.inBoundsEvent" begin="reg1_1.outOfBoundsEvent"/>
 
       <set target="reg2_click" attribute="background-color" to="green"
            begin="reg2.activateEvent" dur="1"/>
@@ -104,12 +104,12 @@
       <set target="reg2_leave" attribute="background-color" to="green"
            end="reg2.inBoundsEvent" begin="reg2.outOfBoundsEvent"/>
 
-      <set target="reg2.1_click" attribute="background-color" to="green"
-           begin="reg2.1.activateEvent" dur="1"/>
-      <set target="reg2.1_enter" attribute="background-color" to="green"
-           begin="reg2.1.inBoundsEvent" end="reg2.1.outOfBoundsEvent"/>
-      <set target="reg2.1_leave" attribute="background-color" to="green"
-           end="reg2.1.inBoundsEvent" begin="reg2.1.outOfBoundsEvent"/>
+      <set target="reg2_1_click" attribute="background-color" to="green"
+           begin="reg2_1.activateEvent" dur="1"/>
+      <set target="reg2_1_enter" attribute="background-color" to="green"
+           begin="reg2_1.inBoundsEvent" end="reg2_1.outOfBoundsEvent"/>
+      <set target="reg2_1_leave" attribute="background-color" to="green"
+           end="reg2_1.inBoundsEvent" begin="reg2_1.outOfBoundsEvent"/>
     </par>
   </body>
 </smil>
