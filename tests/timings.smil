@@ -1,0 +1,57 @@
+<smil>
+  <head>
+    <layout>
+      <root-layout width="320" height="240"/>
+      <region id="reg1" left="5%" right="5%" top="5%" height="10%"/>
+      <region id="reg2" left="5%" right="5%" top="25%" height="10%"/>
+      <region id="reg3" left="5%" right="5%" top="45%" height="10%"/>
+      <region left="5%" right="5%" bottom="5%" height="10%"
+              background-color="gray">
+        <region id="but_rec" left="10%" width="30%" />
+        <region id="but_dep" right="10%" width="30%" />
+      </region>
+    </layout>
+  </head>
+  <body>
+    <par>
+      <a href="#rec">
+        <text id="rec_txt" src="data:,Recommended" region="but_rec"
+              fill="freeze"/>
+      </a>
+      <a href="#dep">
+        <text id="dep_txt" src="data:,Deprecated" region="but_dep"
+              fill="freeze"/>
+      </a>
+      <seq>
+        <par id="rec">
+          <text id="rtext1" src="data:,id=rtext1%20begin=2%20dur=2"
+                region="reg1" begin="2" dur="2"/>
+          <text src="data:,begin=rtext1.begin+1%20dur=2" region="reg2"
+                begin="rtext1.begin +1" dur="2"/>
+          <text src="data:,begin=rtext1.end%20dur=2" region="reg3"
+                begin="rtext1.end" dur="2"/>
+          <set target="rec_txt" attribute="background-color" to="green"
+               fill="freeze"/>
+          <set target="reg1" attribute="background-color" to="pink"
+               fill="freeze"/>
+          <set target="reg2" attribute="background-color" to="pink"
+               fill="freeze"/>
+          <set target="reg3" attribute="background-color" to="pink"
+               fill="freeze"/>
+        </par>
+        <par id="dep">
+          <text id="dtext1" src="data:,id=dtext1%20begin=2%20dur=2"
+                region="reg1" begin="2" dur="2"/>
+          <text src="data:,id(dtext1)(1)" region="reg2"
+                begin="id(dtext1)(1)" dur="2"/>
+          <set target="dep_txt" attribute="background-color" to="green"
+               fill="freeze"/>
+          <set target="reg1" attribute="background-color" to="red"
+               fill="freeze"/>
+          <set target="reg2" attribute="background-color" to="red"
+               fill="freeze"/>
+        </par>
+      </seq>
+    </par>
+  </body>
+</smil>
