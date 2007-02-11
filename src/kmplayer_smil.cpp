@@ -221,7 +221,8 @@ KDE_NO_EXPORT void Runtime::reset () {
 KDE_NO_EXPORT
 void Runtime::setDurationItem (DurationTime item, const QString & val) {
     int dur = -1; // also 0 for 'media' duration, so it will not update then
-    QString vl = val.stripWhiteSpace ().lower ();
+    QString vs = val.stripWhiteSpace ();
+    QString vl = vs.lower ();
     const char * cval = vl.ascii ();
     int offset = 0;
     //kdDebug () << "setDuration1 " << vl << endl;
@@ -233,7 +234,7 @@ void Runtime::setDurationItem (DurationTime item, const QString & val) {
         } else if (!strncmp (cval, "id(", 3)) {
             p = strchr (cval + 3, ')');
             if (p) {
-                idref = vl.mid (3, p - cval - 3);
+                idref = vs.mid (3, p - cval - 3);
                 p++;
             }
             if (*p) {
@@ -264,9 +265,9 @@ void Runtime::setDurationItem (DurationTime item, const QString & val) {
                         idref += QChar (*q);
                 }
                 if (!*q)
-                    idref = p;
+                    idref = vs.mid (p - cval);
                 else
-                    idref = vl.mid (p - cval, q - p);
+                    idref = vs.mid (p - cval, q - p);
             }
             ++q;
             if (!idref.isEmpty ()) {
@@ -318,8 +319,7 @@ KDE_NO_EXPORT void Runtime::begin () {
         convertNode <SMIL::TimedMrl> (element)->init ();
     timingstate = timings_began;
 
-    if (beginTime ().durval != dur_timer ||
-            beginTime ().offset > 0) {
+    if (beginTime ().durval != dur_timer || beginTime ().offset > 0) {
         Connection * con = beginTime ().connection.ptr ();
         if (beginTime ().durval == dur_timer ||
                 (beginTime ().durval == dur_start &&
@@ -403,8 +403,7 @@ bool Runtime::parseParam (const QString & name, const QString & val) {
 KDE_NO_EXPORT void Runtime::processEvent (unsigned int event) {
     SMIL::TimedMrl * tm = convertNode <SMIL::TimedMrl> (element);
     if (tm) {
-        if (timingstate != timings_started &&
-                beginTime ().durval == event) {
+        if (timingstate != timings_started && beginTime ().durval == event) {
             if (element && beginTime ().offset > 0)
                 start_timer = element->document ()->setTimeout (element,
                         100 * beginTime ().offset, start_timer_id);
@@ -479,8 +478,7 @@ KDE_NO_EXPORT void Runtime::started () {
     NodePtr e = element; // element is weak
     SMIL::TimedMrl * tm = convertNode <SMIL::TimedMrl> (e);
     if (tm) {
-        if (durTime ().offset > 0 &&
-                durTime ().durval == dur_timer)
+        if (durTime ().offset > 0 && durTime ().durval == dur_timer)
             duration_timer = element->document ()->setTimeout
                 (element, 100 * durTime ().offset, dur_timer_id);
         // kdDebug () << "Runtime::started set dur timer " << durTime ().offset << endl;
