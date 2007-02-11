@@ -1496,7 +1496,7 @@ KDE_NO_CDTOR_EXPORT SMIL::Region::Region (NodePtr & d)
    m_ActionListeners (new NodeRefList),
    m_OutOfBoundsListeners (new NodeRefList),
    m_InBoundsListeners (new NodeRefList),
-   m_AttachedMediaTypes (new NodeRefList) {};
+   m_AttachedMediaTypes (new NodeRefList) {}
 
 KDE_NO_EXPORT NodePtr SMIL::Region::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "region"))
