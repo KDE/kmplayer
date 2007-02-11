@@ -64,13 +64,12 @@ static const unsigned int trans_timer_id = (unsigned int) 6;
 /* Intrinsic duration 
  *  duration_time   |    end_time    |
  *  =======================================================================
- *  dur_media  | dur_media | wait for event
- *       0          | dur_media | only wait for child elements
+ *    dur_media     |   dur_media    | wait for event
+ *        0         |   dur_media    | only wait for child elements
  */
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT
-bool KMPlayer::parseTime (const QString & vl, int & dur) {
+KDE_NO_EXPORT bool KMPlayer::parseTime (const QString & vl, int & dur) {
     const char * cval = vl.ascii ();
     if (!cval) {
         dur = 0;
@@ -354,7 +353,8 @@ bool Runtime::parseParam (const QString & name, const QString & val) {
                 timingstate == timings_stopped) {
             if (beginTime ().offset > 0) { // create a timer for start
                 if (beginTime ().durval == dur_timer)
-                    start_timer = element->document ()->setTimeout (element, 100 * beginTime ().offset, start_timer_id);
+                    start_timer = element->document ()->setTimeout
+                        (element, 100 * beginTime ().offset, start_timer_id);
             } else                                // start now
                 propagateStart ();
         }
@@ -364,18 +364,17 @@ bool Runtime::parseParam (const QString & name, const QString & val) {
         setDurationItem (end_time, val);
         if (endTime ().durval == dur_timer &&
             endTime ().offset > beginTime ().offset)
-            durTime ().offset =
-                endTime ().offset - beginTime ().offset;
+            durTime ().offset = endTime ().offset - beginTime ().offset;
         else if (endTime ().durval != dur_timer)
             durTime ().durval = dur_media; // event
     } else if (!strcmp (cname, "endsync")) {
-        if ((durTime ().durval == dur_media ||
-                    durTime ().durval == 0) &&
+        if ((durTime ().durval == dur_media || durTime ().durval == 0) &&
                 endTime ().durval == dur_media) {
             NodePtr e = findLocalNodeById (element, val);
             if (SMIL::isTimedMrl (e)) {
                 SMIL::TimedMrl * tm = static_cast <SMIL::TimedMrl *> (e.ptr ());
-                durations [(int) end_time].connection = tm->connectTo (element, event_stopped);
+                durations [(int) end_time].connection =
+                    tm->connectTo (element, event_stopped);
                 durations [(int) end_time].durval = (Duration) event_stopped;
             }
         }
@@ -424,13 +423,10 @@ KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
     if (state() == timings_reset || state() == timings_stopped)
         return; // nothing to stop
     if (!forced && element) {
-        if (durTime ().durval == dur_media &&
-                endTime ().durval == dur_media)
+        if (durTime ().durval == dur_media && endTime ().durval == dur_media)
             return; // wait for external eof
-        if (endTime ().durval != dur_timer &&
-                endTime ().durval != dur_media &&
-                (state() == timings_started ||
-                 beginTime ().durval == dur_timer))
+        if (endTime ().durval != dur_timer && endTime ().durval != dur_media &&
+                (state() == timings_started || beginTime().durval == dur_timer))
             return; // wait for event
         if (durTime ().durval == dur_infinite)
             return; // this may take a while :-)
@@ -504,7 +500,8 @@ KDE_NO_EXPORT void Runtime::stopped () {
         if (repeat_count == dur_infinite || 0 < repeat_count--) {
             if (beginTime ().offset > 0 &&
                     beginTime ().durval == dur_timer)
-                start_timer = element->document ()->setTimeout (element, 100 * beginTime ().offset, start_timer_id);
+                start_timer = element->document ()->setTimeout
+                    (element, 100 * beginTime ().offset, start_timer_id);
             else
                 propagateStart ();
         } else {
@@ -889,8 +886,7 @@ KDE_NO_EXPORT void AnimateData::started () {
                  break;
             }
             int interval = 100 * durTime ().offset / (1 + steps);
-            if (interval <= 0 ||
-                    durTime ().durval != dur_timer) {
+            if (interval <= 0 || durTime ().durval != dur_timer) {
                  kdWarning () << "animate needs a duration time" << endl;
                  break;
             }
@@ -995,7 +991,9 @@ bool MediaTypeRuntime::parseParam (const QString & name, const QString & val) {
         return false;
     if (name == QString::fromLatin1 ("fit")) {
         const char * cval = val.ascii ();
-        if (!strcmp (cval, "fill"))
+        if (!cval)
+            fit = fit_hidden;
+        else if (!strcmp (cval, "fill"))
             fit = fit_fill;
         else if (!strcmp (cval, "hidden"))
             fit = fit_hidden;
@@ -1005,6 +1003,8 @@ bool MediaTypeRuntime::parseParam (const QString & name, const QString & val) {
             fit = fit_scroll;
         else if (!strcmp (cval, "slice"))
             fit = fit_slice;
+        else
+            fit = fit_hidden;
     } else if (!sizes.setSizeParam (name, val)) {
         return Runtime::parseParam (name, val);
     }
@@ -1220,7 +1220,7 @@ KDE_NO_EXPORT void SMIL::Smil::activate () {
 
 KDE_NO_EXPORT void SMIL::Smil::deactivate () {
     if (layout_node)
-        convertNode <SMIL::Layout> (layout_node)->repaint ();    
+        convertNode <SMIL::Layout> (layout_node)->repaint ();
     Mrl::deactivate ();
     if (layout_node)
         convertNode <SMIL::Layout> (layout_node)->surface = Mrl::getSurface(0L);
@@ -1847,7 +1847,7 @@ void SMIL::TimedMrl::parseParam (const QString & para, const QString & value) {
 
 KDE_NO_EXPORT void SMIL::GroupBase::finish () {
     setState (state_finished); // avoid recurstion through childDone
-    bool deactivate_children = runtime()->fill!=Runtime::fill_freeze;
+    bool deactivate_children = runtime()->fill != Runtime::fill_freeze;
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         if (deactivate_children) {
             if (e->active ())
@@ -1926,10 +1926,8 @@ KDE_NO_EXPORT void SMIL::Par::childDone (NodePtr) {
         }
         Runtime * tr = runtime ();
         if (tr->state () == Runtime::timings_started) {
-            Runtime::Duration dv =
-                tr->durations [(int) Runtime::duration_time].durval;
-            if ((dv == Runtime::dur_timer && 
-                    !tr->durations [(int) Runtime::duration_time].offset)
+            Runtime::Duration dv = tr->durTime ().durval;
+            if ((dv == Runtime::dur_timer && !tr->durTime ().offset)
                     || dv == Runtime::dur_media)
                 tr->propagateStop (false);
             return; // still running, wait for runtime to finish
