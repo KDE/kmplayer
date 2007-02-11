@@ -117,16 +117,20 @@ public:
 /**
  * Live representation of a SMIL element having timings
  */
-class KMPLAYER_NO_EXPORT TimedRuntime {
+class KMPLAYER_NO_EXPORT Runtime {
 public:
     enum TimingState {
         timings_reset = 0, timings_began, timings_started, timings_stopped
     };
     enum DurationTime { begin_time = 0, duration_time, end_time, durtime_last };
     enum Fill { fill_unknown, fill_freeze, fill_hold };
-
-    TimedRuntime (NodePtr e);
-    virtual ~TimedRuntime ();
+    enum Duration {
+        dur_timer = 0, dur_infinite, dur_media,
+        dur_activated, dur_inbounds, dur_outbounds,
+        dur_end, dur_start, dur_last_dur
+    };
+    Runtime (NodePtr e);
+    virtual ~Runtime ();
     /**
      * Called when element is pulled in scope, from Node::activate()
      */
@@ -145,12 +149,16 @@ public:
      * Duration items, begin/dur/end, length information or connected element
      */
     struct DurationItem {
-        DurationItem () : durval (0) {}
-        unsigned int durval;
+        DurationItem () : durval (dur_timer), offset (0) {}
+        Duration durval;
+        int offset;
         ConnectionPtr connection;
     } durations [(const int) durtime_last];
     virtual void started ();
     virtual void stopped ();
+    KDE_NO_EXPORT DurationItem & beginTime () { return durations[begin_time]; }
+    KDE_NO_EXPORT DurationItem & durTime () { return durations[duration_time]; }
+    KDE_NO_EXPORT DurationItem & endTime () { return durations [end_time]; }
 private:
     void setDurationItem (DurationTime item, const QString & val);
 public:
@@ -159,14 +167,14 @@ public:
 protected:
     NodePtrW element;
     TimerInfoPtrW start_timer;
-    TimerInfoPtrW dur_timer;
+    TimerInfoPtrW duration_timer;
     int repeat_count;
 };
 
 /**
  * Some common runtime data for all mediatype classes
  */
-class KMPLAYER_NO_EXPORT MediaTypeRuntime : public RemoteObject, public TimedRuntime {
+class KMPLAYER_NO_EXPORT MediaTypeRuntime : public RemoteObject,public Runtime {
 public:
     ~MediaTypeRuntime ();
     virtual void reset ();
@@ -242,7 +250,7 @@ protected:
 /**
  * Stores runtime data of elements from animate group set/animate/..
  */
-class KMPLAYER_NO_EXPORT AnimateGroupData : public TimedRuntime {
+class KMPLAYER_NO_EXPORT AnimateGroupData : public Runtime {
 public:
     KDE_NO_CDTOR_EXPORT ~AnimateGroupData () {}
     virtual bool parseParam (const QString & name, const QString & value);
@@ -280,7 +288,7 @@ public:
     virtual void reset ();
     virtual void started ();
     virtual void stopped ();
-    void timerTick();
+    bool timerTick();
 private:
     void applyStep ();
     TimerInfoPtrW anim_timer;
@@ -298,7 +306,7 @@ private:
 /**
  * Translates string to deci-seconds or 'special' high number
  */
-bool parseTime (const QString & val, unsigned int & dur /*, const QString & dateformat*/);
+bool parseTime (const QString & val, int & dur /*,const QString & dateformat*/);
 
 //-----------------------------------------------------------------------------
 
@@ -338,7 +346,9 @@ const short id_node_last_group = id_node_excl;
 const short id_node_last = 200; // reserve 100 ids
 
 inline bool isTimedMrl (const NodePtr & n) {
-    return n->id >= id_node_first_timed_mrl && n->id <= id_node_last_timed_mrl;
+    return n &&
+        n->id >= id_node_first_timed_mrl &&
+        n->id <= id_node_last_timed_mrl;
 }
 
 /**
@@ -521,20 +531,21 @@ public:
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
     void init ();
     virtual void parseParam (const QString &, const QString &);
-    TimedRuntime * timedRuntime ();
+    Runtime * runtime ();
 protected:
     TimedMrl (NodePtr & d, short id);
-    virtual TimedRuntime * getNewRuntime ();
+    virtual Runtime * getNewRuntime ();
 
-    NodeRefListPtr m_StartedListeners;      // Element about to be started
+    NodeRefListPtr m_StartListeners;        // Element about to be started
+    NodeRefListPtr m_StartedListeners;      // Element is started
     NodeRefListPtr m_StoppedListeners;      // Element stopped
-    TimedRuntime * runtime;
+    Runtime * m_runtime;
 };
 
-KDE_NO_EXPORT inline TimedRuntime * TimedMrl::timedRuntime () {
-    if (!runtime)
-        runtime = getNewRuntime ();
-    return runtime;
+KDE_NO_EXPORT inline Runtime * TimedMrl::runtime () {
+    if (!m_runtime)
+        m_runtime = getNewRuntime ();
+    return m_runtime;
 }
 
 /**
@@ -710,7 +721,7 @@ class KMPLAYER_NO_EXPORT AVMediaType : public MediaType {
 public:
     AVMediaType (NodePtr & d, const QString & t);
     NodePtr childFromTag (const QString & tag);
-    virtual TimedRuntime * getNewRuntime ();
+    virtual Runtime * getNewRuntime ();
     virtual void defer ();
     virtual void undefer ();
     virtual void endOfFile ();
@@ -721,7 +732,7 @@ public:
 class KMPLAYER_NO_EXPORT ImageMediaType : public MediaType {
 public:
     ImageMediaType (NodePtr & d);
-    TimedRuntime * getNewRuntime ();
+    Runtime * getNewRuntime ();
     NodePtr childFromTag (const QString & tag);
     PlayType playType () { return play_type_image; }
     virtual void accept (Visitor *);
@@ -730,7 +741,7 @@ public:
 class KMPLAYER_NO_EXPORT TextMediaType : public MediaType {
 public:
     TextMediaType (NodePtr & d);
-    TimedRuntime * getNewRuntime ();
+    Runtime * getNewRuntime ();
     PlayType playType () { return play_type_info; }
     virtual void accept (Visitor *);
 };
@@ -738,7 +749,7 @@ public:
 class KMPLAYER_NO_EXPORT RefMediaType : public MediaType {
 public:
     RefMediaType (NodePtr & d);
-    TimedRuntime * getNewRuntime ();
+    Runtime * getNewRuntime ();
     virtual bool handleEvent (EventPtr event);
     virtual void accept (Visitor *);
 };
@@ -747,14 +758,14 @@ class KMPLAYER_NO_EXPORT Brush : public MediaType {
 public:
     Brush (NodePtr & d);
     virtual void accept (Visitor *);
-    virtual TimedRuntime * getNewRuntime ();
+    virtual Runtime * getNewRuntime ();
 };
 
 class KMPLAYER_NO_EXPORT Set : public TimedMrl {
 public:
     KDE_NO_CDTOR_EXPORT Set (NodePtr & d) : TimedMrl (d, id_node_set) {}
     KDE_NO_EXPORT const char * nodeName () const { return "set"; }
-    virtual TimedRuntime * getNewRuntime ();
+    virtual Runtime * getNewRuntime ();
     PlayType playType () { return play_type_none; }
 };
 
@@ -762,7 +773,7 @@ class KMPLAYER_NO_EXPORT Animate : public TimedMrl {
 public:
     KDE_NO_CDTOR_EXPORT Animate (NodePtr & d) : TimedMrl (d, id_node_animate) {}
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
-    virtual TimedRuntime * getNewRuntime ();
+    virtual Runtime * getNewRuntime ();
     PlayType playType () { return play_type_none; }
     bool handleEvent (EventPtr event);
 };

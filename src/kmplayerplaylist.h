@@ -286,8 +286,9 @@ class KMPLAYER_EXPORT Connection {
 public:
     KDE_NO_CDTOR_EXPORT ~Connection () { disconnect (); }
     void disconnect ();
+    NodePtrW connectee; // the one that will, when ever, trigger the event
 private:
-    Connection (NodeRefListPtr ls, NodePtr node);
+    Connection (NodeRefListPtr ls, NodePtr node, NodePtr invoker);
     NodeRefListPtrW listeners;
     NodeRefItemPtrW listen_item;
 };

@@ -91,8 +91,9 @@ QTextStream & operator << (QTextStream & out, const XMLStringlet & txt) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT Connection::Connection (NodeRefListPtr ls, NodePtr node)
- : listeners (ls) {
+KDE_NO_CDTOR_EXPORT
+Connection::Connection (NodeRefListPtr ls, NodePtr node, NodePtr inv)
+ : connectee (inv), listeners (ls) {
     if (listeners) {
         NodeRefItemPtr nci = new NodeRefItem (node);
         listeners->append (nci);
@@ -454,7 +455,7 @@ KDE_NO_EXPORT
 ConnectionPtr Node::connectTo (NodePtr node, unsigned int evt_id) {
     NodeRefListPtr nl = listeners (evt_id);
     if (nl)
-        return ConnectionPtr (new Connection (nl, node));
+        return ConnectionPtr (new Connection (nl, node, this));
     return ConnectionPtr ();
 }
 

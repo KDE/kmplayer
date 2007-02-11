@@ -508,13 +508,13 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     //kdDebug() << "Visit " << img->nodeName() << endl;
-    ImageRuntime * ir = static_cast <ImageRuntime *> (img->timedRuntime ());
+    ImageRuntime * ir = static_cast <ImageRuntime *> (img->runtime ());
     SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (img->region_node);
     ImageData * id = ir->cached_img.data.ptr ();
     if (rb && rb->surface && id && !id->isEmpty () &&
-            (ir->timingstate == TimedRuntime::timings_started ||
-             (ir->timingstate == TimedRuntime::timings_stopped &&
-              ir->fill == TimedRuntime::fill_freeze))) {
+            (ir->timingstate == Runtime::timings_started ||
+             (ir->timingstate == Runtime::timings_stopped &&
+              ir->fill == Runtime::fill_freeze))) {
         SRect rect = rb->surface->bounds;
         Single x, y, w = rect.width(), h = rect.height();
         if (id && !id->isEmpty () && id->width() > 0 && id->height() > 0 &&
@@ -574,13 +574,13 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
-    TextRuntime * td = static_cast <TextRuntime *> (txt->timedRuntime ());
+    TextRuntime * td = static_cast <TextRuntime *> (txt->runtime ());
     //kdDebug() << "Visit " << txt->nodeName() << " " << td->font_size << endl;
     SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (txt->region_node);
     if (rb && rb->surface &&
-            (td->timingstate == TimedRuntime::timings_started ||
-             (td->timingstate == TimedRuntime::timings_stopped &&
-              td->fill == TimedRuntime::fill_freeze))) {
+            (td->timingstate == Runtime::timings_started ||
+             (td->timingstate == Runtime::timings_stopped &&
+              td->fill == Runtime::fill_freeze))) {
         SRect rect = rb->surface->bounds;
         Single x, y, w = rect.width(), h = rect.height();
         td->sizes.applyRegPoints (txt, rect.width(), rect.height(), x, y, w, h);
@@ -1036,7 +1036,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::TimedMrl * timedmrl) {
-    timedmrl->timedRuntime ()->processEvent (event);
+    timedmrl->runtime ()->processEvent (event);
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType * mediatype) {

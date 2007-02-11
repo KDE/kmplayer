@@ -78,7 +78,9 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
                     } else if (!strcmp (a->nodeName (), "height")) {
                         height = a->nodeValue ().toInt ();
                     } else if (!strcmp (a->nodeName (), "duration")) {
-                        parseTime (a->nodeValue ().lower (), duration);
+                        int dur;
+                        parseTime (a->nodeValue ().lower (), dur);
+                        duration = dur;
                     }
                 }
                 break;
@@ -248,11 +250,15 @@ KDE_NO_EXPORT void RP::TimingsBase::activate () {
     x = y = w = h = 0;
     srcx = srcy = srcw = srch = 0;
     for (Attribute * a= attributes ()->first ().ptr (); a; a = a->nextSibling ().ptr ()) {
-        if (!strcasecmp (a->nodeName (), "start"))
-            parseTime (a->nodeValue ().lower (), start);
-        else if (!strcasecmp (a->nodeName (), "duration"))
-            parseTime (a->nodeValue ().lower (), duration);
-        else if (!strcasecmp (a->nodeName (), "target")) {
+        if (!strcasecmp (a->nodeName (), "start")) {
+            int dur;
+            parseTime (a->nodeValue ().lower (), dur);
+            start = dur;
+        } else if (!strcasecmp (a->nodeName (), "duration")) {
+            int dur;
+            parseTime (a->nodeValue ().lower (), dur);
+            duration = dur;
+        } else if (!strcasecmp (a->nodeName (), "target")) {
             for (NodePtr n = parentNode()->firstChild(); n; n= n->nextSibling())
                 if (convertNode <Element> (n)->getAttribute ("handle") == a->nodeValue ())
                     target = n;
