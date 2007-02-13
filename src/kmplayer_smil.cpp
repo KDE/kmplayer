@@ -320,12 +320,14 @@ KDE_NO_EXPORT void Runtime::begin () {
         convertNode <SMIL::TimedMrl> (element)->init ();
     timingstate = timings_began;
 
-    int offset = -1;
+    int offset = 0;
+    bool stop = true;
     if (beginTime ().durval == dur_start) { // check started/finished
         Connection * con = beginTime ().connection.ptr ();
         if (con && con->connectee) {
             if (con->connectee->state == Node::state_began) {
                 offset = beginTime ().offset;
+                stop = false;
                 kdWarning() << "start trigger on started element" << endl;
             } else if (con->connectee->state == Node::state_finished) {
                 int offset = beginTime ().offset;
@@ -334,17 +336,20 @@ KDE_NO_EXPORT void Runtime::begin () {
                     if (d && d->durval == dur_timer)
                         offset -= d->offset;
                 }
+                stop = false;
                 kdWarning() << "start trigger on finished element" << endl;
-            }
+            } // else wait for start event
         }
-    } else if (beginTime ().durval == dur_timer)
+    } else if (beginTime ().durval == dur_timer) {
         offset = beginTime ().offset;
-    else
+        stop = false;
+    }
+    if (stop)                          // wait for event
         propagateStop (false);
-    if (offset > 0)
+    else if (offset > 0)               // start timer
         start_timer = element->document ()->setTimeout (
                 element, 100 * offset, start_timer_id);
-    else
+    else                               // start now
         propagateStart ();
 }
 
