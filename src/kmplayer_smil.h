@@ -345,12 +345,6 @@ const short id_node_first_group = id_node_body;
 const short id_node_last_group = id_node_excl;
 const short id_node_last = 200; // reserve 100 ids
 
-inline bool isTimedMrl (const NodePtr & n) {
-    return n &&
-        n->id >= id_node_first_timed_mrl &&
-        n->id <= id_node_last_timed_mrl;
-}
-
 /**
  * '<smil>' tag
  */
@@ -532,6 +526,8 @@ public:
     void init ();
     virtual void parseParam (const QString &, const QString &);
     Runtime * runtime ();
+    static Runtime::DurationItem * getDuration (NodePtr n);
+    static bool isTimedMrl (const NodePtr & n);
 protected:
     TimedMrl (NodePtr & d, short id);
     virtual Runtime * getNewRuntime ();
@@ -546,6 +542,12 @@ KDE_NO_EXPORT inline Runtime * TimedMrl::runtime () {
     if (!m_runtime)
         m_runtime = getNewRuntime ();
     return m_runtime;
+}
+
+KDE_NO_EXPORT inline bool TimedMrl::isTimedMrl (const NodePtr & n) {
+    return n &&
+        n->id >= id_node_first_timed_mrl &&
+        n->id <= id_node_last_timed_mrl;
 }
 
 /**
@@ -573,6 +575,7 @@ public:
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "par"; }
     void begin ();
+    void finish ();
     void reset ();
     void childDone (NodePtr child);
 };
@@ -586,6 +589,7 @@ public:
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "seq"; }
     void begin ();
+    void finish ();
     void childDone (NodePtr child);
 protected:
     KDE_NO_CDTOR_EXPORT Seq (NodePtr & d, short id) : GroupBase(d, id) {}
