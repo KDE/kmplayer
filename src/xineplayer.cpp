@@ -84,6 +84,7 @@ static bool                 wants_config;
 static bool                 audio_vis;
 static int                  screen;
 static int                  completion_event;
+static int                  repeat_count;
 static int                  xpos, ypos, width, height;
 static int                  movie_width, movie_height, movie_length, movie_pos;
 static int                  movie_brightness = 32767;
@@ -180,7 +181,10 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
     switch(event->type) { 
         case XINE_EVENT_UI_PLAYBACK_FINISHED:
             fprintf (stderr, "XINE_EVENT_UI_PLAYBACK_FINISHED\n");
-            QApplication::postEvent (xineapp, new QEvent ((QEvent::Type) event_finished));
+            if (repeat_count-- > 0)
+                xine_play (stream, 0, 0);
+            else
+                QApplication::postEvent (xineapp, new QEvent ((QEvent::Type) event_finished));
             break;
         case XINE_EVENT_PROGRESS:
             QApplication::postEvent (xineapp, new XineProgressEvent (((xine_progress_data_t *) event->data)->percent));
@@ -279,8 +283,8 @@ void Backend::setSubTitleURL (QString url) {
     sub_mrl = url;
 }
 
-void Backend::play () {
-    xineapp->play ();
+void Backend::play (int repeat_count) {
+    xineapp->play (repeat_count);
 }
 
 void Backend::stop () {
@@ -500,9 +504,10 @@ void getConfigEntries (QByteArray & buf) {
     buf.resize (exp.length ()); // strip terminating \0
 }
 
-void KXinePlayer::play () {
+void KXinePlayer::play (int repeat) {
     fprintf (stderr, "play mrl: '%s'\n", (const char *) mrl.local8Bit ());
     mutex.lock ();
+    repeat_count = repeat;
     if (running) {
         if (xine_get_status (stream) == XINE_STATUS_PLAY &&
             xine_get_param (stream, XINE_PARAM_SPEED) == XINE_SPEED_PAUSE)
@@ -601,6 +606,7 @@ void KXinePlayer::stop () {
     if (!running) return;
     fprintf(stderr, "stop\n");
     mutex.lock ();
+    repeat_count = 0;
     if (sub_stream)
         xine_stop (sub_stream);
     xine_stop (stream);
@@ -1093,6 +1099,8 @@ int main(int argc, char **argv) {
             }
         } else if (!strcmp (argv [i], "-rec") && i < argc - 1) {
             rec_mrl = QString::fromLocal8Bit (argv [++i]);
+        } else if (!strcmp (argv [i], "-loop") && i < argc - 1) {
+            repeat_count = atol (argv [++i]);
         } else {
             if (mrl.startsWith ("-session")) {
                 delete xineapp;
@@ -1109,7 +1117,8 @@ int main(int argc, char **argv) {
                 "[-vcd-device <device>] [-vd <video device>] "
                 "[-wid <X11 Window>|-window-id <X11 Window>|-root] "
                 "[-sub <subtitle url>] [-lang <lang>] [(-v|-vv)] "
-                "[-cb <DCOP callback name> [-c]] [<url>]\n", argv[0]);
+                "[-cb <DCOP callback name> [-c]] "
+                "[-loop <repeat>] [<url>]\n", argv[0]);
         delete xineapp;
         return 1;
     }

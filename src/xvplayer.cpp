@@ -124,7 +124,7 @@ void Backend::setURL (QString) {
 void Backend::setSubTitleURL (QString) {
 }
 
-void Backend::play () {
+void Backend::play (int) {
     xvapp->play ();
 }
 

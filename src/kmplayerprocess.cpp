@@ -1297,7 +1297,7 @@ bool CallbackProcess::deMediafiedPlay () {
         m_backend->setSubTitleURL (QString (QFile::encodeName (sub_url.isLocalFile () ? QFileInfo (getPath (sub_url)).absFilePath () : sub_url.url ())));
     if (m_source->frequency () > 0)
         m_backend->frequency (m_source->frequency ());
-    m_backend->play ();
+    m_backend->play (m_mrl ? m_mrl->mrl ()->repeat : 0);
     setState (Buffering);
     return true;
 }

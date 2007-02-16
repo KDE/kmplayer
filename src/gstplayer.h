@@ -52,7 +52,7 @@ public:
     void seek (int val);
     bool event (QEvent * e);
 public slots:
-    void play ();
+    void play (int repeat_count);
     void stop ();
     void pause ();
     void updatePosition ();
