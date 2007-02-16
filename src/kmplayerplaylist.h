@@ -568,6 +568,7 @@ public:
     int width;
     int height;
     float aspect;
+    int repeat;
     enum { SingleMode = 0, WindowMode } view_mode;
     bool resolved;
     bool bookmarkable;

@@ -1106,6 +1106,8 @@ KDE_NO_EXPORT void AudioVideoData::clipStart () {
     if (n && mt->region_node && !mt->external_tree && !mt->src.isEmpty()) {
         setSmilLinkNode (element, element);
         mt->positionVideoWidget ();
+        mt->repeat = repeat_count;
+        repeat_count = 0;
         n->requestPlayURL (mt);
         document_postponed = mt->document()->connectTo(mt, event_postponed);
     }

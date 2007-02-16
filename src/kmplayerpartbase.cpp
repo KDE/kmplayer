@@ -1019,13 +1019,14 @@ void Source::playCurrent () {
     } else if (m_player->process ()->state () == Process::NotRunning) {
         m_player->process ()->ready (static_cast <View *> (m_player->view ())->viewer ());
     } else if (m_player->process ()) {
-        Mrl * mrl = m_current->mrl ();
+        Mrl * mrl = m_back_request ? m_back_request->mrl () : m_current->mrl ();
         if (mrl->view_mode == Mrl::SingleMode) {
             // don't reset the dimensions if we have any
             m_width = mrl->width;
             m_height = mrl->height;
             m_aspect = mrl->aspect;
         }
+        m_back_request = 0L;
         m_player->process ()->play (this, mrl->linkNode ());
     }
     //kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():" doc act:") <<  (m_document && !m_document->active ()) << " cur:" << (!m_current)  << " cur act:" << (m_current && !m_current->active ()) <<  endl;
@@ -1055,6 +1056,8 @@ bool Source::requestPlayURL (NodePtr mrl) {
     } else {
         if (mrl->mrl ()->view_mode == Mrl::SingleMode)
             m_current = mrl;
+        else
+            m_back_request = mrl;
         m_player->updateTree ();
         QTimer::singleShot (0, this, SLOT (playCurrent ()));
     }
@@ -1089,8 +1092,8 @@ void Source::stateElementChanged (Node * elm, Node::State os, Node::State ns) {
     if (ns == Node::state_deactivated && elm == m_document && !m_back_request) {
         emit endOfPlayItems (); // played all items
     } else if ((ns == Node::state_deactivated || ns == Node::state_finished) &&
-             m_current && m_current->isPlayable () &&
-             elm == m_current->mrl ()->linkNode ()) {
+             m_player->process ()->mrl() &&
+             elm == m_player->process ()->mrl ()->mrl ()->linkNode ()) {
         if (m_player->process ()->state () > Process::Ready)
             //a SMIL movies stopped by SMIL events rather than movie just ending
             m_player->process ()->stop ();
@@ -1369,8 +1372,9 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
                         mrl->endOfFile (); // set node to finished
                 }
                 if (m_back_request && m_back_request->isPlayable ()) { // jump in pl
-                    m_current = m_back_request;
-                    if (m_current->id > SMIL::id_node_first &&
+                    if (m_back_request->mrl ()->view_mode == Mrl::SingleMode)
+                        m_current = m_back_request;
+                    if (m_current->id >= SMIL::id_node_first &&
                             m_current->id < SMIL::id_node_last) {
                         // don't mess with SMIL, just play the damn link
                         playCurrent ();

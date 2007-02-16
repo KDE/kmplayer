@@ -419,7 +419,9 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
     if (!m_source->identified () && !m_settings->mplayerpost090) {
         args += QString (" -quiet -nocache -identify -frames 0 ");
     } else {
-        if (m_settings->loop)
+        if (m_mrl->mrl ()->repeat > 0)
+            args += QString(" -loop " +QString::number(m_mrl->mrl()->repeat+1));
+        else if (m_settings->loop)
             args += QString (" -loop 0");
         if (m_settings->mplayerpost090)
             args += QString (" -identify");
