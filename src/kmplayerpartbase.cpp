@@ -1051,6 +1051,8 @@ static NodePtr findDepthFirst (NodePtr elm) {
 bool Source::requestPlayURL (NodePtr mrl) {
     //kdDebug() << "Source::requestPlayURL " << mrl->mrl ()->src << endl;
     if (m_player->process ()->state () > Process::Ready) {
+        if (m_player->process ()->mrl () == mrl->mrl ()->linkNode ())
+            return true;
         m_back_request = mrl; // still playing, schedule it
         m_player->process ()->stop ();
     } else {
@@ -1354,6 +1356,8 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
         kdDebug () << "processState " << statemap[olds] << " -> " << statemap[news] << endl;
         m_player->updateStatus (i18n ("Player %1 %2").arg (p->name ()).arg (statemap[news]));
         if (news == Process::Playing) {
+            if (p->mrl ()->state == Element::state_deferred)
+                p->mrl ()->undefer ();
             p->viewer ()->view ()->playingStart ();
             emit startPlaying ();
         } else if (news == Process::NotRunning) {
@@ -1392,6 +1396,9 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
                     static_cast<View*>(m_player->view())->viewArea()->repaint();
             } else
                 QTimer::singleShot (0, this, SLOT (playCurrent ()));
+        } else if (news == Process::Buffering) {
+            if (p->mrl ()->mrl ()->view_mode != Mrl::SingleMode)
+                p->mrl ()->defer ();
         }
     }
 }

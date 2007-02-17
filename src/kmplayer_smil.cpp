@@ -221,7 +221,7 @@ KDE_NO_EXPORT void Runtime::reset () {
 
 KDE_NO_EXPORT
 void Runtime::setDurationItem (DurationTime item, const QString & val) {
-    int dur = -1; // also 0 for 'media' duration, so it will not update then
+    int dur = -2; // also 0 for 'media' duration, so it will not update then
     QString vs = val.stripWhiteSpace ();
     QString vl = vs.lower ();
     const char * cval = vl.ascii ();
@@ -248,7 +248,7 @@ void Runtime::setDurationItem (DurationTime item, const QString & val) {
         } else if (!strncmp (cval, "media", 5)) {
             dur = dur_media;
         }
-        if (dur == -1) {
+        if (dur == -2) {
             NodePtr target;
             const char * q = p;
             if (idref.isEmpty ()) {
@@ -327,15 +327,16 @@ KDE_NO_EXPORT void Runtime::begin () {
         if (con && con->connectee) {
             if (con->connectee->state == Node::state_began) {
                 offset = beginTime ().offset;
+                if (SMIL::TimedMrl::isTimedMrl (con->connectee))
+                    offset -= element->document ()->last_event_time -
+                       convertNode <SMIL::TimedMrl>(con->connectee)->begin_time;
                 stop = false;
                 kdWarning() << "start trigger on started element" << endl;
-            } else if (con->connectee->state == Node::state_finished) {
+            } else if (con->connectee->state >= Node::state_finished) {
                 int offset = beginTime ().offset;
-                if (offset > 0) {
-                    DurationItem *d=SMIL::TimedMrl::getDuration(con->connectee);
-                    if (d && d->durval == dur_timer)
-                        offset -= d->offset;
-                }
+                if (SMIL::TimedMrl::isTimedMrl (con->connectee))
+                    offset -= element->document ()->last_event_time -
+                       convertNode<SMIL::TimedMrl>(con->connectee)->finish_time;
                 stop = false;
                 kdWarning() << "start trigger on finished element" << endl;
             } // else wait for start event
@@ -1106,7 +1107,7 @@ KDE_NO_EXPORT void AudioVideoData::clipStart () {
     if (n && mt->region_node && !mt->external_tree && !mt->src.isEmpty()) {
         setSmilLinkNode (element, element);
         mt->positionVideoWidget ();
-        mt->repeat = repeat_count;
+        mt->repeat = repeat_count == dur_infinite ? 9998 : repeat_count;
         repeat_count = 0;
         n->requestPlayURL (mt);
         document_postponed = mt->document()->connectTo(mt, event_postponed);
@@ -1737,6 +1738,7 @@ KDE_NO_EXPORT void SMIL::TimedMrl::closed () {
 
 KDE_NO_EXPORT void SMIL::TimedMrl::init () {
     runtime ()->reset ();
+    begin_time = finish_time = 0;
     Mrl::init ();
 }
 
@@ -1752,6 +1754,7 @@ KDE_NO_EXPORT void SMIL::TimedMrl::activate () {
 }
 
 KDE_NO_EXPORT void SMIL::TimedMrl::begin () {
+    begin_time = document ()->last_event_time;
     Mrl::begin ();
     runtime ()->propagateStop (false); //see whether this node has a livetime or not
 }
@@ -1774,6 +1777,7 @@ KDE_NO_EXPORT void SMIL::TimedMrl::finish () {
              m_runtime->state () == Runtime::timings_began)) {
         runtime ()->propagateStop (true); // reschedule through Runtime::stopped
     } else {
+        finish_time = document ()->last_event_time;
         Mrl::finish ();
         propagateEvent (new Event (event_stopped));
     }
@@ -1894,10 +1898,6 @@ KDE_NO_EXPORT void SMIL::GroupBase::deactivate () {
         if (e->active ())
             e->deactivate ();
     TimedMrl::deactivate ();
-}
-
-KDE_NO_EXPORT void SMIL::GroupBase::begin () {
-    TimedMrl::begin ();
 }
 
 KDE_NO_EXPORT void SMIL::GroupBase::setJumpNode (NodePtr n) {
@@ -2029,9 +2029,11 @@ KDE_NO_EXPORT void SMIL::Seq::begin () {
 KDE_NO_EXPORT void SMIL::Seq::childDone (NodePtr child) {
     if (unfinished ()) {
         if (state != state_deferred) {
-            if (child->nextSibling ())
+            if (child->nextSibling ()) {
+                if (child->active ())
+                    child->deactivate ();
                 child->nextSibling ()->activate ();
-            else
+            } else
                 finish ();
         } else if (jump_node)
             finish ();
@@ -2134,6 +2136,7 @@ KDE_NO_EXPORT NodePtr SMIL::Switch::childFromTag (const QString & tag) {
 KDE_NO_EXPORT void SMIL::Switch::activate () {
     //kdDebug () << "SMIL::Switch::activate" << endl;
     setState (state_activated);
+    init ();
     PlayListNotify * n = document()->notify_listener;
     int pref = 0, max = 0x7fffffff, currate = 0;
     if (n)
@@ -2451,6 +2454,8 @@ KDE_NO_EXPORT void SMIL::MediaType::positionVideoWidget () {
 SurfacePtr SMIL::MediaType::getSurface (NodePtr node) {
     RegionBase * r = convertNode <RegionBase> (region_node);
     if (r && r->surface) {
+        while (r->surface->hasChildNodes ())
+            r->surface->removeChild (r->surface->lastChild ());
         if (node) {
             r->surface->node = node;
             node->handleEvent (new SizeEvent (0, 0, r->w, r->h, fit_meet));

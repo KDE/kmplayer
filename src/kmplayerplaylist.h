@@ -308,7 +308,7 @@ typedef SharedPtr <Connection> ConnectionPtr;
  *   using m_self in the constructor, no SharedPtr storage yet)
  *
  * Livetime of an element is
- |-->state_activated<-->state_began<-->state_finished<-->state_deactivated-->|
+ |-->state_activated<-->state_began<-->state_finished-->state_deactivated-->|
   In scope            begin event    end event         Out scope
  */
 class KMPLAYER_EXPORT Node : public TreeNode <Node> {
@@ -726,6 +726,7 @@ public:
     void dispose ();
     virtual NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "document"; }
+    virtual void activate ();
     virtual void defer ();
     virtual void undefer ();
     virtual void reset ();
@@ -733,6 +734,7 @@ public:
      * Ask for TimerEvent for Node n in ms milli-seconds.
      * Returns weak ref to TimerInfo ptr, which is an item in the timers list
      */
+    void timeOfDay (struct timeval &);
     TimerInfoPtrW setTimeout (NodePtr n, int ms, unsigned id=0);
     void cancelTimer (TimerInfoPtr ti);
     PostponePtr postpone ();
@@ -754,12 +756,14 @@ public:
     List <TimerInfo> timers; //FIXME: make as connections
     PlayListNotify * notify_listener;
     unsigned int m_tree_version;
+    unsigned int last_event_time;
 private:
     void proceed (const struct timeval & postponed_time);
     PostponePtrW postpone_ref;
     PostponePtr postpone_lock;
     NodeRefListPtr m_PostponedListeners;
     int cur_timeout;
+    struct timeval first_event_time;
     bool intimer;
 };
 

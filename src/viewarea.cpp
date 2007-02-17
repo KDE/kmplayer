@@ -1309,6 +1309,7 @@ void ViewArea::setAudioVideoGeometry (int x, int y, int w, int h, unsigned int *
 }
 
 KDE_NO_EXPORT SurfacePtr ViewArea::getSurface (NodePtr node) {
+    static_cast <ViewSurface *> (surface.ptr ())->clear ();
     surface->node = node;
     qApp->postEvent (this, new QResizeEvent (size (), QSize (0, 0)));
     if (m_repaint_timer) {
@@ -1318,7 +1319,6 @@ KDE_NO_EXPORT SurfacePtr ViewArea::getSurface (NodePtr node) {
     m_view->viewer()->resetBackgroundColor ();
     if (node)
         return surface;
-    static_cast <ViewSurface *> (surface.ptr ())->clear ();
     return 0L;
 }
 

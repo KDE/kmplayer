@@ -759,7 +759,8 @@ Surface::~Surface() {}
 //-----------------------------------------------------------------------------
 
 Postpone::Postpone (NodePtr doc) : m_doc (doc) {
-    gettimeofday (&postponed_time, 0L);
+    if (m_doc)
+        m_doc->document ()->timeOfDay (postponed_time);
 }
 
 Postpone::~Postpone () {
@@ -824,6 +825,12 @@ void Document::dispose () {
     m_doc = 0L;
 }
 
+void Document::activate () {
+    first_event_time.tv_sec = 0;
+    last_event_time = 0;
+    Mrl::activate ();
+}
+
 void Document::defer () {
     if (!firstChild () || firstChild ()->state > state_init)
         postpone_lock = postpone ();
@@ -860,13 +867,22 @@ static inline void addTime (struct timeval & tv, int ms) {
     tv.tv_usec = (tv.tv_usec + ms*1000) % 1000000;
 }
 
+void Document::timeOfDay (struct timeval & tv) {
+    gettimeofday (&tv, 0L);
+    if (!first_event_time.tv_sec) {
+        first_event_time = tv;
+        last_event_time = 0;
+    } else
+        last_event_time = diffTime (tv, first_event_time) / 100;
+}
+
 TimerInfoPtrW Document::setTimeout (NodePtr n, int ms, unsigned id) {
     if (!notify_listener)
         return 0L;
     TimerInfoPtr ti = timers.first ();
     int pos = 0;
     struct timeval tv;
-    gettimeofday (&tv, 0L);
+    timeOfDay (tv);
     addTime (tv, ms);
     for (; ti && diffTime (ti->timeout, tv) <= 0; ti = ti->nextSibling ()) {
         pos++;
@@ -888,7 +904,8 @@ void Document::cancelTimer (TimerInfoPtr tinfo) {
         TimerInfoPtr second = tinfo->nextSibling ();
         if (second) {
             struct timeval now;
-            gettimeofday (&now, 0L);
+            timeOfDay (now);
+            last_event_time = diffTime (now, first_event_time) / 100;
             int diff = diffTime (now, second->timeout);
             cur_timeout = diff > 0 ? 0 : -diff;
         } else
@@ -917,7 +934,8 @@ bool Document::timer () {
             if (te->interval) {
                 TimerInfoPtr tinfo2 (tinfo); // prevent destruction
                 timers.remove (tinfo);
-                gettimeofday (&now, 0L);
+                timeOfDay (now);
+                last_event_time = diffTime (now, first_event_time) / 100;
                 tinfo2->timeout = now;
                 addTime (tinfo2->timeout, tinfo2->milli_sec);
                 TimerInfoPtr ti = timers.first ();
@@ -937,7 +955,7 @@ bool Document::timer () {
         tinfo = timers.first ();
         if (!postpone_ref && tinfo) {
             if (!now.tv_sec)
-                gettimeofday (&now, 0L); // system call ..
+                timeOfDay (now);
             int diff = diffTime (now, tinfo->timeout);
             int new_timeout = diff > 0 ? 0 : -diff;
             if (new_timeout != cur_timeout) {
@@ -973,7 +991,7 @@ void Document::proceed (const struct timeval & postponed_time) {
     kdDebug () << "proceed" << endl;
     if (timers.first () && notify_listener) {
         struct timeval now;
-        gettimeofday (&now, 0L);
+        timeOfDay (now);
         int diff = diffTime (now, postponed_time);
         if (diff > 0) {
             for (TimerInfoPtr t = timers.first (); t; t = t->nextSibling ())

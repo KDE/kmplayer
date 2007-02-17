@@ -125,7 +125,7 @@ public:
     enum DurationTime { begin_time = 0, duration_time, end_time, durtime_last };
     enum Fill { fill_unknown, fill_freeze, fill_hold };
     enum Duration {
-        dur_timer = 0, dur_infinite, dur_media,
+        dur_infinite = -1, dur_timer = 0, dur_media,
         dur_activated, dur_inbounds, dur_outbounds,
         dur_end, dur_start, dur_last_dur
     };
@@ -528,6 +528,8 @@ public:
     Runtime * runtime ();
     static Runtime::DurationItem * getDuration (NodePtr n);
     static bool isTimedMrl (const NodePtr & n);
+    unsigned int begin_time;
+    unsigned int finish_time;
 protected:
     TimedMrl (NodePtr & d, short id);
     virtual Runtime * getNewRuntime ();
@@ -557,7 +559,6 @@ class KMPLAYER_NO_EXPORT GroupBase : public TimedMrl {
 public:
     KDE_NO_CDTOR_EXPORT ~GroupBase () {}
     PlayType playType () { return play_type_none; }
-    void begin ();
     void finish ();
     void deactivate ();
     void setJumpNode (NodePtr);
