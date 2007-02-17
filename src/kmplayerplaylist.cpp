@@ -905,7 +905,6 @@ void Document::cancelTimer (TimerInfoPtr tinfo) {
         if (second) {
             struct timeval now;
             timeOfDay (now);
-            last_event_time = diffTime (now, first_event_time) / 100;
             int diff = diffTime (now, second->timeout);
             cur_timeout = diff > 0 ? 0 : -diff;
         } else
@@ -935,7 +934,6 @@ bool Document::timer () {
                 TimerInfoPtr tinfo2 (tinfo); // prevent destruction
                 timers.remove (tinfo);
                 timeOfDay (now);
-                last_event_time = diffTime (now, first_event_time) / 100;
                 tinfo2->timeout = now;
                 addTime (tinfo2->timeout, tinfo2->milli_sec);
                 TimerInfoPtr ti = timers.first ();

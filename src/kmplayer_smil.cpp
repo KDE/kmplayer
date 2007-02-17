@@ -324,23 +324,26 @@ KDE_NO_EXPORT void Runtime::begin () {
     bool stop = true;
     if (beginTime ().durval == dur_start) { // check started/finished
         Connection * con = beginTime ().connection.ptr ();
-        if (con && con->connectee) {
-            if (con->connectee->state == Node::state_began) {
-                offset = beginTime ().offset;
-                if (SMIL::TimedMrl::isTimedMrl (con->connectee))
-                    offset -= element->document ()->last_event_time -
-                       convertNode <SMIL::TimedMrl>(con->connectee)->begin_time;
-                stop = false;
-                kdWarning() << "start trigger on started element" << endl;
-            } else if (con->connectee->state >= Node::state_finished) {
-                int offset = beginTime ().offset;
-                if (SMIL::TimedMrl::isTimedMrl (con->connectee))
-                    offset -= element->document ()->last_event_time -
-                       convertNode<SMIL::TimedMrl>(con->connectee)->finish_time;
-                stop = false;
-                kdWarning() << "start trigger on finished element" << endl;
-            } // else wait for start event
-        }
+        if (con && con->connectee &&
+                con->connectee->state >= Node::state_began) {
+            offset = beginTime ().offset;
+            if (SMIL::TimedMrl::isTimedMrl (con->connectee))
+                offset -= element->document ()->last_event_time -
+                    convertNode <SMIL::TimedMrl>(con->connectee)->begin_time;
+            stop = false;
+            kdWarning() << "start trigger on started element" << endl;
+        } // else wait for start event
+    } else if (beginTime ().durval == dur_end) { // check finished
+        Connection * con = beginTime ().connection.ptr ();
+        if (con && con->connectee &&
+                con->connectee->state >= Node::state_finished) {
+            int offset = beginTime ().offset;
+            if (SMIL::TimedMrl::isTimedMrl (con->connectee))
+                offset -= element->document ()->last_event_time -
+                    convertNode<SMIL::TimedMrl>(con->connectee)->finish_time;
+            stop = false;
+            kdWarning() << "start trigger on finished element" << endl;
+        } // else wait for end event
     } else if (beginTime ().durval == dur_timer) {
         offset = beginTime ().offset;
         stop = false;
