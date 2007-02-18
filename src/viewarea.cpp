@@ -668,6 +668,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
 
                 line->next = new Line (para.mid (ppos));
                 line = line->next;
+                last_line = line;
             }
             if (len < 0)
                 break;
