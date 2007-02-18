@@ -19,6 +19,8 @@
 
 #include <config.h>
 
+#include <stdlib.h>
+
 #include <qapplication.h>
 #include <qwidgetstack.h>
 #include <qslider.h>
@@ -575,7 +577,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     TextRuntime * td = static_cast <TextRuntime *> (txt->runtime ());
-    //kdDebug() << "Visit " << txt->nodeName() << " " << td->font_size << endl;
+    //kdDebug() << "Visit " << txt->nodeName() << " " << td->text << endl;
     SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (txt->region_node);
     if (rb && rb->surface &&
             (td->timingstate == Runtime::timings_started ||
@@ -585,11 +587,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         Single x, y, w = rect.width(), h = rect.height();
         td->sizes.applyRegPoints (txt, rect.width(), rect.height(), x, y, w, h);
         matrix.getXYWH (x, y, w, h);
-        if (td->bg_opacity) { // TODO real alpha
-            CAIRO_SET_SOURCE_RGB (cr, td->background_color);
-            cairo_rectangle (cr, x, y, w, h);
-            cairo_fill (cr);
-        }
         /* QTextEdit * edit = new QTextEdit;
         edit->setReadOnly (true);
         edit->setHScrollBarMode (QScrollView::AlwaysOff);
@@ -607,21 +604,92 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         QPixmap pix = QPixmap::grabWidget (edit, rect.x () - (int) xoff,
                 rect.y () - (int) yoff, rect.width (), rect.height ());*/
 
-        CAIRO_SET_SOURCE_RGB (cr, td->font_color);
         float scale = 1.0 * w / rect.width (); // TODO: make an image
         cairo_set_font_size (cr, scale * td->font_size);
         cairo_font_extents_t txt_fnt;
         cairo_font_extents (cr, &txt_fnt);
-        QCString utf8 = td->text.utf8 ().data ();
-        cairo_text_extents_t txt_ext;
-        cairo_text_extents (cr, utf8, &txt_ext);
-        Single xoff = txt_fnt.max_x_advance / 4;
-        if (td->halign == TextRuntime::align_center)
-            xoff = (w - Single (txt_ext.width)) / 2;
-        else if (td->halign == TextRuntime::align_right)
-            xoff = w - Single (txt_ext.width);
-        cairo_move_to (cr, x+xoff, y + Single (txt_fnt.height));
-        cairo_show_text (cr, utf8);
+        QString str = td->text;
+        struct Line {
+            Line (const QString & ln) : txt (ln), next(0) {}
+            QString txt;
+            cairo_text_extents_t txt_ext;
+            Single xoff;
+            Line * next;
+        } *lines = 0, *last_line = 0;
+        Single y1 = y;
+        Single max_width;
+        Single min_xoff = w;
+        while (!str.isEmpty () && y1 < y + h) {
+            int len = str.find (QChar ('\n'));
+            bool skip_cr = false;
+            if (len > 1 && str[len-1] == QChar ('\r')) {
+                --len;
+                skip_cr = true;
+            }
+            QString para = len > -1 ? str.left (len) : str;
+            Line * line = new Line (para);
+            if (!lines)
+                lines = line;
+            else
+                last_line->next = line;
+            last_line = line;
+            int ppos = 0;
+            while (true) {
+                cairo_text_extents (cr, line->txt.utf8 ().data (), &line->txt_ext);
+                float frag = line->txt_ext.width > 0.1
+                    ? w / line->txt_ext.width : 1.1;
+                if (frag < 1.0) {
+                    int br_pos = int (line->txt.length () * frag); //educated guess
+                    while (br_pos > 0) {
+                        line->txt.truncate (br_pos);
+                        br_pos = line->txt.findRev (QChar (' '));
+                        if (br_pos < 1)
+                            break;
+                        line->txt.truncate (br_pos);
+                        cairo_text_extents (cr, line->txt.utf8 ().data (), &line->txt_ext);
+                        if (line->txt_ext.width < (double)w)
+                            break;
+                    }
+                }
+                if (line->txt_ext.width > (double)max_width)
+                    max_width = line->txt_ext.width;
+
+                if (td->halign == TextRuntime::align_center)
+                    line->xoff = (w - Single (line->txt_ext.width)) / 2;
+                else if (td->halign == TextRuntime::align_right)
+                    line->xoff = w - Single (line->txt_ext.width);
+                if (line->xoff < min_xoff)
+                    min_xoff = line->xoff;
+
+                y1 += Single (txt_fnt.height);
+                ppos += line->txt.length () + 1;
+                if (ppos >= para.length () || y1 > y + h)
+                    break;
+
+                line->next = new Line (para.mid (ppos));
+                line = line->next;
+            }
+            if (len < 0)
+                break;
+            str = str.mid (len + (skip_cr ? 2 : 1));
+        }
+        if (td->bg_opacity) { // TODO real alpha
+            CAIRO_SET_SOURCE_RGB (cr, td->background_color);
+            cairo_rectangle(cr, x + min_xoff, y,
+                    (double)max_width + txt_fnt.max_x_advance / 2,
+                    y1 - y /*txt_fnt.height + txt_fnt.descent*/);
+            cairo_fill (cr);
+        }
+        CAIRO_SET_SOURCE_RGB (cr, td->font_color);
+        while (lines) {
+            Line * line = lines;
+            line->xoff += Single (txt_fnt.max_x_advance / 4);
+            cairo_move_to (cr, x+line->xoff, y + Single (txt_fnt.ascent));
+            cairo_show_text (cr, line->txt.utf8 ().data ());
+            y += Single (txt_fnt.height);
+            lines = lines->next;
+            delete line;
+        }
         //cairo_stroke (cr);
     }
 }

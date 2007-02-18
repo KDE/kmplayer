@@ -2941,6 +2941,10 @@ KDE_NO_EXPORT void TextRuntime::started () {
         postpone_lock = element->document ()->postpone ();
         return;
     }
+    if (durTime ().durval == dur_timer &&
+            durTime ().offset == 0 &&
+            endTime ().durval == dur_media) //no duration/end set
+        fill = fill_freeze;
     MediaTypeRuntime::started ();
 }
 
