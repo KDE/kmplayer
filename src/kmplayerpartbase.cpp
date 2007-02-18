@@ -1355,7 +1355,9 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
         p->viewer()->view()->controlPanel()->setPlaying(news > Process::Ready);
         kdDebug () << "processState " << statemap[olds] << " -> " << statemap[news] << endl;
         m_player->updateStatus (i18n ("Player %1 %2").arg (p->name ()).arg (statemap[news]));
-        if (news == Process::Playing) {
+        if (!p->mrl () && news > Process::Ready) {
+            p->stop (); // reschedule for Ready state
+        } else if (news == Process::Playing) {
             if (p->mrl ()->state == Element::state_deferred)
                 p->mrl ()->undefer ();
             p->viewer ()->view ()->playingStart ();
