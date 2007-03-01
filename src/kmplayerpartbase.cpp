@@ -1371,19 +1371,16 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
             if (olds > Process::Ready) {
                 NodePtr node = p->mrl (); // p->mrl is weak, needs check
                 Mrl * mrl = node ? node->mrl () : 0L;
-                if (mrl && mrl->active ()) { // if cause is eof
-                    if (!m_back_request && mrl->state ==Element::state_deferred)
-                        mrl->undefer ();
-                    else
-                        mrl->endOfFile (); // set node to finished
-                }
-                if (m_back_request && m_back_request->isPlayable ()) { // jump in pl
+                if (m_back_request && m_back_request->isPlayable ()) {
                     if (m_back_request->mrl ()->view_mode == Mrl::SingleMode)
+                        // jump in pl
                         m_current = m_back_request;
+                    else
+                        // overlapping SMIL audio/video
+                        mrl->endOfFile ();
                     if (m_current->id >= SMIL::id_node_first &&
                             m_current->id < SMIL::id_node_last) {
-                        // don't mess with SMIL, just play the damn link
-                        playCurrent ();
+                        playCurrent ();  // just play back_request
                     } else {
                         // sanitize pl having all parents of current activated
                         m_document->reset (); // deactivate everything
@@ -1392,7 +1389,8 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
                         m_current->activate (); // calls requestPlayUrl
                     }
                     m_back_request = 0L;
-                }
+                } else
+                    mrl->endOfFile (); // set node to finished
                 if (m_player->view() &&
                         (!mrl || mrl->view_mode != Mrl::WindowMode))
                     static_cast<View*>(m_player->view())->viewArea()->repaint();
@@ -1400,7 +1398,7 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
                 QTimer::singleShot (0, this, SLOT (playCurrent ()));
         } else if (news == Process::Buffering) {
             if (p->mrl ()->mrl ()->view_mode != Mrl::SingleMode)
-                p->mrl ()->defer ();
+                p->mrl ()->defer (); // paused the SMIL
         }
     }
 }

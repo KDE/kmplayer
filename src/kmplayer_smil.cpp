@@ -2541,7 +2541,9 @@ KDE_NO_EXPORT void SMIL::AVMediaType::undefer () {
 }
 
 KDE_NO_EXPORT void SMIL::AVMediaType::endOfFile () {
-    runtime ()->propagateStop (true);
+    MediaTypeRuntime * mr = static_cast <MediaTypeRuntime *> (runtime ());
+    mr->postpone_lock = 0L;
+    mr->propagateStop (true);
 }
 
 KDE_NO_EXPORT Runtime * SMIL::AVMediaType::getNewRuntime () {
