@@ -755,6 +755,15 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                     kdDebug () << "sid " << id << " " << slanglist_end->name <<endl;
                 }
             }
+        } else if (out.startsWith ("ICY Info")) {
+            int p = out.find ("StreamTitle=", 8);
+            if (p > -1) {
+                p += 12;
+                int e = out.find (';', p);
+                if (e > -1)
+                    e -= p;
+                ((PlayListNotify *)m_source)->setInfoMessage (out.mid (p, e));
+            }
         } else {
             QRegExp & m_startRegExp = patterns[MPlayerPreferencesPage::pat_start];
             QRegExp & m_sizeRegExp = patterns[MPlayerPreferencesPage::pat_size];
