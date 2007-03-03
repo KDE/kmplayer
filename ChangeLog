@@ -1,3 +1,15 @@
+Changes since version 0.9.3a
+- Support for MPlayer ICY stream info
+- Fix flashing/resizing infowindow between two items having info
+- Podcast item w/o an enclose but having a description now keep them self
+  active for a calculated time
+- Fix easy breaking reading CDATA sections
+- Changed intro animation, making it slightly shorter and using fade transition
+- Add support for SMIL linknodes a and area, brush and transiton (only fade)
+- RealPix's fades now realy fades in or out
+- Moved SMIL/RealPix painting to libcairo
+- Fix auto hiding controlpanel disappeared after switching to console view
+- Fix autohiding controlpanel when there is also a statusbar
 Changes since version 0.9.3
 - Reading RAM playlists should stop on '--stop--' stop lines
 - Make playlist occuring on top less likely
