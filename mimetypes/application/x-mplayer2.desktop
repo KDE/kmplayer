@@ -2,6 +2,7 @@
 Encoding=UTF-8
 Type=MimeType
 Comment=MS Media Format
+Comment[el]=Μορφή πολυμέσων MS
 MimeType=application/x-mplayer2
 Icon=multimedia
 Patterns=*.asx;*.ASX;*.asf;*.ASF;

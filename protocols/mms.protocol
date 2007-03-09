@@ -1,6 +1,7 @@
 [Protocol]
 Class=:internet
 Description=Microsoft Media Server Protocol
+Description[el]=Πρωτόκολλο εξυπηρετητή πολυμέσων της Microsoft
 exec=kmplayer "%u"
 protocol=mms
 input=none

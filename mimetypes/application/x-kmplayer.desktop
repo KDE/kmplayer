@@ -3,6 +3,7 @@
 Encoding=UTF-8
 MimeType=application/x-kmplayer
 Comment=KMPlayer Document
+Comment[el]=Έγγραφο KMPlayer
 Icon=kmplayer
 Type=MimeType
 X-KDE-AutoEmbed=true

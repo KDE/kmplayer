@@ -5,3 +5,4 @@ MimeType=audio/x-ms-wma
 Icon=audio
 Patterns=*.AVI;*.wma;*.WMA;
 Comment=Microsoft Audio
+Comment[el]=Ήχος Microsoft

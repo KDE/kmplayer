@@ -5,3 +5,4 @@ MimeType=video/x-ms-wmp
 Icon=video
 Patterns=*.wmp;*.WMP;
 Comment=Microsoft AVI Video
+Comment[el]=Βίντεο Microsoft AVI

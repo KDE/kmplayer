@@ -1,7 +1,9 @@
 [Desktop Entry]
 Encoding=UTF-8
 Name=Embedded MPlayer for KDE
+Name[el]=Ενσωμάτωση του MPlayer για το KDE
 Comment=Video player plugin (QuickTime, XMovie, Windows Media and RealPlayer compatible)
+Comment[el]=Πρόσθετο αναπαραγωγής βίντεο (συμβατό με QuickTime, XMovie, πολυμέσα Windows και RealPlayer)
 X-KDE-Library=libkmplayerpart
 # Keep in sync with the audio types in kmplayer.desktop
 MimeType=application/ogg;application/smil;application/vnd.ms-asf;application/vnd.rn-realmedia;application/x-kmplayer;application/x-mplayer2;application/x-ogg;application/xspf+xml;audio/basic;audio/m3u;audio/mp4;audio/mpeg;audio/mpegurl;audio/vnd.rn-realaudio;audio/vorbis;audio/x-aiff;audio/x-flac;audio/x-m3u;audio/x-matroska;audio/x-mp2;audio/x-mp3;audio/x-mpegurl;audio/x-ms-wma;audio/x-musepack;audio/x-mod;audio/x-oggflac;audio/x-pn-realaudio;audio/x-scpls;audio/x-speex;audio/x-vorbis;audio/x-wav;video/avi;video/mediaplayer;video/mp4;video/mpeg;video/quicktime;video/vnd.rn-realvideo;video/x-avi;video/x-flic;video/x-matroska;video/x-ms-asf;video/x-msvideo;video/x-ms-wmp;video/x-ms-wmv;video/x-ogm;video/x-theora;uri/mms;uri/pnm;uri/rtspt;uri/rtspu;
