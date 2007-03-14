@@ -365,7 +365,7 @@ void Node::normalize () {
             if (val.isEmpty ())
                 removeChild (e);
             else
-                e->setNodeValue (val);
+                convertNode <TextNode> (e)->setText (val);
         } else
             e->normalize ();
         e = tmp;
@@ -399,7 +399,7 @@ static void getOuterXML (const NodePtr p, QTextOStream & out, int depth) {
         QString indent (QString ().fill (QChar (' '), depth));
         out << indent << QChar ('<') << XMLStringlet (e->nodeName ());
         for (AttributePtr a = e->attributes()->first(); a; a = a->nextSibling())
-            out << " " << XMLStringlet (a->nodeName ()) << "=\"" << XMLStringlet (a->nodeValue ()) << "\"";
+            out << " " << XMLStringlet (a->name ()) << "=\"" << XMLStringlet (a->value ()) << "\"";
         if (e->hasChildNodes ()) {
             out << QChar ('>') << QChar ('\n');
             for (NodePtr c = e->firstChild (); c; c = c->nextSibling ())
@@ -574,10 +574,9 @@ void Element::resetParam (const QString & param, int mid) {
 }
 
 void Element::setAttribute (const QString & name, const QString & value) {
-    const char * name_latin = name.latin1 ();
     for (AttributePtr a = m_attributes->first (); a; a = a->nextSibling ())
-        if (!strcmp (name_latin, a->nodeName ())) {
-            static_cast <Attribute *> (a.ptr ())->setNodeValue (value);
+        if (name == a->name ()) {
+            static_cast <Attribute *> (a.ptr ())->setValue (value);
             return;
         }
     m_attributes->append (new Attribute (name, value));
@@ -586,8 +585,8 @@ void Element::setAttribute (const QString & name, const QString & value) {
 QString Element::getAttribute (const QString & name) {
     QString value;
     for (AttributePtr a = m_attributes->first (); a; a = a->nextSibling ())
-        if (!strcasecmp (name.ascii (), a->nodeName ())) {
-            value = a->nodeValue ();
+        if (name == a->name ()) {
+            value = a->value ();
             break;
         }
     return value;
@@ -596,7 +595,7 @@ QString Element::getAttribute (const QString & name) {
 void Element::init () {
     d->clear();
     for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ())
-        setParam (QString (a->nodeName ()), a->nodeValue ());
+        setParam (QString (a->name ()), a->value ());
 }
 
 void Element::deactivate () {
@@ -617,22 +616,14 @@ void Element::setAttributes (AttributeListPtr attrs) {
 //-----------------------------------------------------------------------------
 
 Attribute::Attribute (const QString & n, const QString & v)
-  : name (n), value (v) {}
+  : m_name (n), m_value (v) {}
 
-QString Attribute::nodeValue () const {
-    return value;
+void Attribute::setName (const QString & n) {
+    m_name = n;
 }
 
-const char * Attribute::nodeName () const {
-    return name.ascii ();
-}
-
-void Attribute::setNodeName (const QString & n) {
-    name = n;
-}
-
-void Attribute::setNodeValue (const QString & v) {
-    value = v;
+void Attribute::setValue (const QString & v) {
+    m_value = v;
 }
 
 //-----------------------------------------------------------------------------

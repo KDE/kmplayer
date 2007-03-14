@@ -73,13 +73,13 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
                     n->activate ();
             case RP::id_node_head:
                 for (AttributePtr a= convertNode <Element> (n)->attributes ()->first (); a; a = a->nextSibling ()) {
-                    if (!strcmp (a->nodeName (), "width")) {
-                        width = a->nodeValue ().toInt ();
-                    } else if (!strcmp (a->nodeName (), "height")) {
-                        height = a->nodeValue ().toInt ();
-                    } else if (!strcmp (a->nodeName (), "duration")) {
+                    if (a->name () == "width") {
+                        width = a->value ().toInt ();
+                    } else if (a->name () == "height") {
+                        height = a->value ().toInt ();
+                    } else if (a->name () == "duration") {
                         int dur;
-                        parseTime (a->nodeValue ().lower (), dur);
+                        parseTime (a->value ().lower (), dur);
                         duration = dur;
                     }
                 }
@@ -250,34 +250,34 @@ KDE_NO_EXPORT void RP::TimingsBase::activate () {
     x = y = w = h = 0;
     srcx = srcy = srcw = srch = 0;
     for (Attribute * a= attributes ()->first ().ptr (); a; a = a->nextSibling ().ptr ()) {
-        if (!strcasecmp (a->nodeName (), "start")) {
+        if (a->name () == "start") {
             int dur;
-            parseTime (a->nodeValue ().lower (), dur);
+            parseTime (a->value ().lower (), dur);
             start = dur;
-        } else if (!strcasecmp (a->nodeName (), "duration")) {
+        } else if (a->name () == "duration") {
             int dur;
-            parseTime (a->nodeValue ().lower (), dur);
+            parseTime (a->value ().lower (), dur);
             duration = dur;
-        } else if (!strcasecmp (a->nodeName (), "target")) {
+        } else if (a->name () == "target") {
             for (NodePtr n = parentNode()->firstChild(); n; n= n->nextSibling())
-                if (convertNode <Element> (n)->getAttribute ("handle") == a->nodeValue ())
+                if (convertNode <Element> (n)->getAttribute ("handle") == a->value ())
                     target = n;
-        } else if (!strcasecmp (a->nodeName (), "dstx")) {
-            x = a->nodeValue ().toInt ();
-        } else if (!strcasecmp (a->nodeName (), "dsty")) {
-            y = a->nodeValue ().toInt ();
-        } else if (!strcasecmp (a->nodeName (), "dstw")) {
-            w = a->nodeValue ().toInt ();
-        } else if (!strcasecmp (a->nodeName (), "dsth")) {
-            h = a->nodeValue ().toInt ();
-        } else if (!strcasecmp (a->nodeName (), "srcx")) {
-            srcx = a->nodeValue ().toInt ();
-        } else if (!strcasecmp (a->nodeName (), "srcy")) {
-            srcy = a->nodeValue ().toInt ();
-        } else if (!strcasecmp (a->nodeName (), "srcw")) {
-            srcw = a->nodeValue ().toInt ();
-        } else if (!strcasecmp (a->nodeName (), "srch")) {
-            srch = a->nodeValue ().toInt ();
+        } else if (a->name () == "dstx") {
+            x = a->value ().toInt ();
+        } else if (a->name () == "dsty") {
+            y = a->value ().toInt ();
+        } else if (a->name () == "dstw") {
+            w = a->value ().toInt ();
+        } else if (a->name () == "dsth") {
+            h = a->value ().toInt ();
+        } else if (a->name () == "srcx") {
+            srcx = a->value ().toInt ();
+        } else if (a->name () == "srcy") {
+            srcy = a->value ().toInt ();
+        } else if (a->name () == "srcw") {
+            srcw = a->value ().toInt ();
+        } else if (a->name () == "srch") {
+            srch = a->value ().toInt ();
         }
     }
     start_timer = document ()->setTimeout (this, start *100);

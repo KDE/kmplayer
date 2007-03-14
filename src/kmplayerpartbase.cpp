@@ -616,12 +616,12 @@ KDE_NO_EXPORT void PartBase::playListItemExecuted (QListViewItem * item) {
         } else if (vi->firstChild ())
             vi->listView ()->setOpen (vi, !vi->isOpen ());
     } else if (vi->m_attr) {
-        if (!strcasecmp (vi->m_attr->nodeName (), "src") ||
-                !strcasecmp (vi->m_attr->nodeName (), "href") ||
-                !strcasecmp (vi->m_attr->nodeName (), "data") ||
-                !strcasecmp (vi->m_attr->nodeName (), "url") ||
-                !strcasecmp (vi->m_attr->nodeName (), "value")) {
-            QString src (vi->m_attr->nodeValue ());
+        if (vi->m_attr->name () == "src" ||
+                vi->m_attr->name () == "href" ||
+                vi->m_attr->name () == "data" ||
+                vi->m_attr->name () == "url" ||
+                vi->m_attr->name () == "value") {
+            QString src (vi->m_attr->value ());
             if (!src.isEmpty ()) {
                 PlayListItem * pi = static_cast <PlayListItem*>(item->parent());
                 if (pi) {
@@ -1521,6 +1521,7 @@ static bool isPlayListMime (const QString & mime) {
     return mimestr && (!strcmp (mimestr, "audio/mpegurl") ||
             !strcmp (mimestr, "audio/x-mpegurl") ||
             !strncmp (mimestr, "video/x-ms", 10) ||
+            !strncmp (mimestr, "audio/x-ms", 10) ||
             //!strcmp (mimestr, "video/x-ms-wmp") ||
             //!strcmp (mimestr, "video/x-ms-asf") ||
             //!strcmp (mimestr, "video/x-ms-wmv") ||

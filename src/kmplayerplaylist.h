@@ -143,11 +143,6 @@ class KMPLAYER_EXPORT ListNodeBase : public Item <T> {
 public:
     virtual ~ListNodeBase () {}
 
-    virtual const char * nodeName () const { return "#nodebase"; }
-    virtual QString nodeValue () const { return QString (); }
-    virtual void setNodeName (const QString &) {}
-    virtual void setNodeValue (const QString &) {}
-
     typename Item<T>::SharedType nextSibling () const { return m_next; }
     typename Item<T>::SharedType previousSibling () const { return m_prev; }
 protected:
@@ -198,13 +193,13 @@ public:
     KDE_NO_CDTOR_EXPORT Attribute () {}
     Attribute (const QString & n, const QString & v);
     KDE_NO_CDTOR_EXPORT ~Attribute () {}
-    virtual const char * nodeName () const;
-    virtual QString nodeValue () const;
-    virtual void setNodeName (const QString &);
-    virtual void setNodeValue (const QString &);
+    QString name () const { return m_name; }
+    QString value () const { return m_value; }
+    void setName (const QString &);
+    void setValue (const QString &);
 protected:
-    QString name;
-    QString value;
+    QString m_name;
+    QString m_value;
 };
 
 ITEM_AS_POINTER(KMPlayer::Attribute)
@@ -332,6 +327,8 @@ public:
     QString outerXML () const;
     virtual const char * nodeName () const;
     virtual QString nodeValue () const;
+    virtual void setNodeName (const QString &) {}
+
     /**
      * If this is a derived Mrl object and has a SRC attribute
      */
@@ -775,6 +772,7 @@ public:
     TextNode (NodePtr & d, const QString & s, short _id = id_node_text);
     KDE_NO_CDTOR_EXPORT ~TextNode () {}
     void appendText (const QString & s);
+    void setText (const QString & txt) { text = txt; }
     const char * nodeName () const { return "#text"; }
     QString nodeValue () const;
     bool expose () const;

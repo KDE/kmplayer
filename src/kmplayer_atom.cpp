@@ -68,12 +68,12 @@ void ATOM::Link::closed () {
     QString href;
     QString rel;
     for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ()) {
-        if (!strcasecmp (a->nodeName (), "rel"))
-            rel = a->nodeValue ();
-        else if (!strcasecmp (a->nodeName (), "href"))
-            href = a->nodeValue ();
-        else if (!strcasecmp (a->nodeName (), "title"))
-            pretty_name = a->nodeValue ();
+        if (a->name () == "rel")
+            rel = a->value ();
+        else if (a->name () == "href")
+            href = a->value ();
+        else if (a->name () == "title")
+            pretty_name = a->value ();
     }
     if (!href.isEmpty () && rel == QString::fromLatin1 ("enclosure"))
         src = href;
@@ -83,10 +83,10 @@ void ATOM::Link::closed () {
 
 void ATOM::Content::closed () {
     for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ()) {
-        if (!strcasecmp (a->nodeName (), "src"))
-            src = a->nodeValue ();
-        else if (!strcasecmp (a->nodeName (), "type")) {
-            QString v = a->nodeValue ().lower ();
+        if (a->name () == "src")
+            src = a->value ();
+        else if (a->name () == "type") {
+            QString v = a->value ().lower ();
             if (v == QString::fromLatin1 ("text"))
                 mimetype = QString::fromLatin1 ("text/plain");
             else if (v == QString::fromLatin1 ("html"))
