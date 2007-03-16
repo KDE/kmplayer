@@ -24,6 +24,12 @@
 
 using namespace KMPlayer;
 
+static QString getAsxAttribute (Element * e, const QString & attr) {
+    for (AttributePtr a = e->attributes ()->first (); a; a = a->nextSibling ())
+        if (attr == a->name ().lower ())
+            return a->value ();
+    return QString ();
+}
 
 KDE_NO_EXPORT NodePtr ASX::Asx::childFromTag (const QString & tag) {
     const char * name = tag.latin1 ();
@@ -46,7 +52,7 @@ KDE_NO_EXPORT Node::PlayType ASX::Asx::playType () {
             if (e->id == id_node_title)
                 pretty_name = e->innerText ().simplifyWhiteSpace ();
             else if (e->id == id_node_base)
-                src = convertNode <Element> (e)->getAttribute ("href");
+                src = getAsxAttribute (convertNode <Element> (e), "href");
         }
     return Mrl::playType ();
 }
@@ -80,7 +86,7 @@ KDE_NO_EXPORT Node::PlayType ASX::Entry::playType () {
                 pretty_name = e->innerText (); // already normalized (hopefully)
                 break;
             case id_node_base:
-                src = convertNode <Element> (e)->getAttribute ("href");
+                src = getAsxAttribute (convertNode <Element> (e), "href");
                 break;
             case id_node_ref:
                 ref = e;
@@ -99,10 +105,12 @@ KDE_NO_EXPORT void ASX::Entry::activate () {
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         if (e->id == id_node_param) {
             Element * elm = convertNode <Element> (e);
-            if (elm->getAttribute ("name").lower() == QString ("clipsummary")) {
+                src = getAsxAttribute (convertNode <Element> (e), "href");
+            if (getAsxAttribute(elm,"name").lower() == QString("clipsummary")) {
                 PlayListNotify * n = document ()->notify_listener;
                 if (n)
-                    n->setInfoMessage (KURL::decode_string (elm->getAttribute ("value")));
+                    n->setInfoMessage (KURL::decode_string (
+                                getAsxAttribute (elm, "value")));
                 break;
             }
         }
@@ -122,7 +130,7 @@ KDE_NO_EXPORT bool ASX::Entry::expose () const {
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT void ASX::Ref::opened () {
-    src = getAttribute ("href");
+    src = getAsxAttribute (this, "href");
     //kdDebug () << "Ref attr found src: " << src << endl;
 }
 
@@ -133,7 +141,7 @@ KDE_NO_EXPORT bool ASX::Ref::expose () const {
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT void ASX::EntryRef::opened () {
-    src = getAttribute ("href");
+    src = getAsxAttribute (this, "href");
     //kdDebug () << "EntryRef attr found src: " << src << endl;
 }
 
