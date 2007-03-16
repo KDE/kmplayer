@@ -105,7 +105,6 @@ KDE_NO_EXPORT void ASX::Entry::activate () {
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         if (e->id == id_node_param) {
             Element * elm = convertNode <Element> (e);
-                src = getAsxAttribute (convertNode <Element> (e), "href");
             if (getAsxAttribute(elm,"name").lower() == QString("clipsummary")) {
                 PlayListNotify * n = document ()->notify_listener;
                 if (n)
