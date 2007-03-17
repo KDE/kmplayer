@@ -123,6 +123,7 @@ ImageData::cairoImage (Single sw, Single sh, cairo_surface_t * similar) {
     cairo_pattern_destroy (cp);
     cairo_destroy (c);
     cairo_image = cairo_pattern_create_for_surface (img_surface);
+    cairo_surface_flush (img_surface);
     cairo_surface_destroy (img_surface);
     return cairo_image;
 }
@@ -1060,7 +1061,7 @@ static void followLink (SMIL::LinkingBase * link) {
         for (NodePtr p = link->parentNode (); p; p = p->parentNode ()) {
             if (n->mrl () && n->mrl ()->opener == p) {
                 p->setState (Node::state_deferred);
-                p->mrl ()->setParam ("src", link->href, 0L);
+                p->mrl ()->setParam (StringPool::attr_src, link->href, 0L);
                 p->activate ();
                 break;
             }

@@ -616,11 +616,11 @@ KDE_NO_EXPORT void PartBase::playListItemExecuted (QListViewItem * item) {
         } else if (vi->firstChild ())
             vi->listView ()->setOpen (vi, !vi->isOpen ());
     } else if (vi->m_attr) {
-        if (vi->m_attr->name () == "src" ||
-                vi->m_attr->name () == "href" ||
-                vi->m_attr->name () == "data" ||
-                vi->m_attr->name () == "url" ||
-                vi->m_attr->name () == "value") {
+        if (vi->m_attr->name () == StringPool::attr_src ||
+                vi->m_attr->name () == StringPool::attr_href ||
+                vi->m_attr->name () == StringPool::attr_url ||
+                vi->m_attr->name () == StringPool::attr_value ||
+                vi->m_attr->name () == "data") {
             QString src (vi->m_attr->value ());
             if (!src.isEmpty ()) {
                 PlayListItem * pi = static_cast <PlayListItem*>(item->parent());

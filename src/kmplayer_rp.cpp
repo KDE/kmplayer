@@ -73,9 +73,9 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
                     n->activate ();
             case RP::id_node_head:
                 for (AttributePtr a= convertNode <Element> (n)->attributes ()->first (); a; a = a->nextSibling ()) {
-                    if (a->name () == "width") {
+                    if (a->name () == StringPool::attr_width) {
                         width = a->value ().toInt ();
-                    } else if (a->name () == "height") {
+                    } else if (a->name () == StringPool::attr_height) {
                         height = a->value ().toInt ();
                     } else if (a->name () == "duration") {
                         int dur;
@@ -205,7 +205,7 @@ KDE_NO_CDTOR_EXPORT RP::Image::~Image () {
 }
 
 KDE_NO_EXPORT void RP::Image::closed () {
-    src = getAttribute ("name");
+    src = getAttribute (StringPool::attr_name);
 }
 
 KDE_NO_EXPORT void RP::Image::activate () {
@@ -250,7 +250,12 @@ KDE_NO_EXPORT void RP::TimingsBase::activate () {
     x = y = w = h = 0;
     srcx = srcy = srcw = srch = 0;
     for (Attribute * a= attributes ()->first ().ptr (); a; a = a->nextSibling ().ptr ()) {
-        if (a->name () == "start") {
+        if (a->name () == StringPool::attr_target) {
+            for (NodePtr n = parentNode()->firstChild(); n; n= n->nextSibling())
+                if (convertNode <Element> (n)->
+                        getAttribute ("handle") == a->value ())
+                    target = n;
+        } else if (a->name () == "start") {
             int dur;
             parseTime (a->value ().lower (), dur);
             start = dur;
@@ -258,10 +263,6 @@ KDE_NO_EXPORT void RP::TimingsBase::activate () {
             int dur;
             parseTime (a->value ().lower (), dur);
             duration = dur;
-        } else if (a->name () == "target") {
-            for (NodePtr n = parentNode()->firstChild(); n; n= n->nextSibling())
-                if (convertNode <Element> (n)->getAttribute ("handle") == a->value ())
-                    target = n;
         } else if (a->name () == "dstx") {
             x = a->value ().toInt ();
         } else if (a->name () == "dsty") {

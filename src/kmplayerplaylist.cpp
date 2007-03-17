@@ -399,12 +399,14 @@ static void getOuterXML (const NodePtr p, QTextOStream & out, int depth) {
         QString indent (QString ().fill (QChar (' '), depth));
         out << indent << QChar ('<') << XMLStringlet (e->nodeName ());
         for (AttributePtr a = e->attributes()->first(); a; a = a->nextSibling())
-            out << " " << XMLStringlet (a->name ()) << "=\"" << XMLStringlet (a->value ()) << "\"";
+            out << " " << XMLStringlet (a->name ().toString ()) <<
+                "=\"" << XMLStringlet (a->value ()) << "\"";
         if (e->hasChildNodes ()) {
             out << QChar ('>') << QChar ('\n');
             for (NodePtr c = e->firstChild (); c; c = c->nextSibling ())
                 getOuterXML (c, out, depth + 1);
-            out << indent << QString("</") << XMLStringlet (e->nodeName()) << QChar ('>') << QChar ('\n');
+            out << indent << QString("</") << XMLStringlet (e->nodeName()) <<
+                QChar ('>') << QChar ('\n');
         } else
             out << QString ("/>") << QChar ('\n');
     }
@@ -491,10 +493,11 @@ namespace KMPlayer {
         QString value ();
         void setValue (const QString & v) { val = v; }
     };
+    typedef QMap <TrieString, ParamValue *> ParamMap;
     class KMPLAYER_NO_EXPORT ElementPrivate {
     public:
         ~ElementPrivate ();
-        QMap <QString, ParamValue *> params;
+        ParamMap params;
         void clear ();
     };
 }
@@ -509,8 +512,8 @@ KDE_NO_CDTOR_EXPORT ElementPrivate::~ElementPrivate () {
 }
 
 KDE_NO_EXPORT void ElementPrivate::clear () {
-    const QMap <QString, ParamValue *>::iterator e = params.end ();
-    for (QMap <QString, ParamValue*>::iterator i = params.begin (); i != e; ++i)
+    const ParamMap::iterator e = params.end ();
+    for (ParamMap::iterator i = params.begin (); i != e; ++i)
         delete i.data ();
     params.clear ();
 }
@@ -522,10 +525,10 @@ Element::~Element () {
     delete d;
 }
 
-void Element::setParam (const QString & param, const QString & val, int * mid) {
+void Element::setParam (const TrieString &param, const QString &val, int *mid) {
     ParamValue * pv = d->params [param];
     if (!pv) {
-        pv = new ParamValue (mid ? QString::null : val);
+        pv = new ParamValue (mid ? QString() : val);
         d->params.insert (param, pv);
     }
     if (mid) {
@@ -542,18 +545,18 @@ void Element::setParam (const QString & param, const QString & val, int * mid) {
     parseParam (param, val);
 }
 
-QString Element::param (const QString & name) {
+QString Element::param (const TrieString & name) {
     ParamValue * pv = d->params [name];
     if (pv)
         return pv->value ();
-    return QString::null;
+    return QString ();
 }
 
-void Element::resetParam (const QString & param, int mid) {
+void Element::resetParam (const TrieString & param, int mid) {
     ParamValue * pv = d->params [param];
     if (pv && pv->modifications) {
         if (int (pv->modifications->size ()) > mid && mid > -1) {
-            (*pv->modifications) [mid] = QString::null;
+            (*pv->modifications) [mid] = QString ();
             while (pv->modifications->size () > 0 &&
                     pv->modifications->back ().isNull ())
                 pv->modifications->pop_back ();
@@ -570,10 +573,10 @@ void Element::resetParam (const QString & param, int mid) {
         }
         parseParam (param, val);
     } else
-        kdError () << "resetting " << param << " that doesn't exists" << endl;
+        kdError () << "resetting " << param.toString() << " that doesn't exists" << endl;
 }
 
-void Element::setAttribute (const QString & name, const QString & value) {
+void Element::setAttribute (const TrieString & name, const QString & value) {
     for (AttributePtr a = m_attributes->first (); a; a = a->nextSibling ())
         if (name == a->name ()) {
             static_cast <Attribute *> (a.ptr ())->setValue (value);
@@ -582,20 +585,17 @@ void Element::setAttribute (const QString & name, const QString & value) {
     m_attributes->append (new Attribute (name, value));
 }
 
-QString Element::getAttribute (const QString & name) {
-    QString value;
+QString Element::getAttribute (const TrieString & name) {
     for (AttributePtr a = m_attributes->first (); a; a = a->nextSibling ())
-        if (name == a->name ()) {
-            value = a->value ();
-            break;
-        }
-    return value;
+        if (name == a->name ())
+            return a->value ();
+    return QString ();
 }
 
 void Element::init () {
     d->clear();
     for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ())
-        setParam (QString (a->name ()), a->value ());
+        setParam (a->name (), a->value ());
 }
 
 void Element::deactivate () {
@@ -615,10 +615,10 @@ void Element::setAttributes (AttributeListPtr attrs) {
 
 //-----------------------------------------------------------------------------
 
-Attribute::Attribute (const QString & n, const QString & v)
+Attribute::Attribute (const TrieString & n, const QString & v)
   : m_name (n), m_value (v) {}
 
-void Attribute::setName (const QString & n) {
+void Attribute::setName (const TrieString & n) {
     m_name = n;
 }
 
@@ -724,8 +724,8 @@ bool Mrl::handleEvent (EventPtr) {
     return false;
 }
 
-void Mrl::parseParam (const QString & para, const QString & val) {
-    if (para == QString ("src") && !src.startsWith ("#")) {
+void Mrl::parseParam (const TrieString & para, const QString & val) {
+    if (para == StringPool::attr_src && !src.startsWith ("#")) {
         QString abs = absolutePath ();
         if (abs != src)
             src = val;
@@ -785,7 +785,7 @@ static NodePtr getElementByIdImpl (NodePtr n, const QString & id, bool inter) {
     if (!n->isElementNode ())
         return elm;
     Element * e = convertNode <Element> (n);
-    if (e->getAttribute ("id") == id)
+    if (e->getAttribute (StringPool::attr_id) == id)
         return n;
     for (NodePtr c = e->firstChild (); c; c = c->nextSibling ()) {
         if (!inter && c->mrl () && c->mrl ()->opener == n)
@@ -1049,13 +1049,13 @@ GenericURL::GenericURL (NodePtr & d, const QString & s, const QString & name)
  : Mrl (d, id_node_playlist_item) {
     src = s;
     if (!src.isEmpty ())
-        setAttribute (QString ("src"), src);
+        setAttribute (StringPool::attr_src, src);
     pretty_name = name;
 }
 
 KDE_NO_EXPORT void GenericURL::closed () {
     if (src.isEmpty ())
-        src = getAttribute (QString ("src"));
+        src = getAttribute (StringPool::attr_src);
 }
 
 //-----------------------------------------------------------------------------
@@ -1064,20 +1064,20 @@ GenericMrl::GenericMrl (NodePtr & d, const QString & s, const QString & name, co
  : Mrl (d, id_node_playlist_item), node_name (tag) {
     src = s;
     if (!src.isEmpty ())
-        setAttribute (QString ("src"), src);
+        setAttribute (StringPool::attr_src, src);
     pretty_name = name;
     if (!name.isEmpty ())
-        setAttribute (QString ("name"), name);
+        setAttribute (StringPool::attr_name, name);
 }
 
 void GenericMrl::closed () {
     if (src.isEmpty ()) {
-        src = getAttribute (QString ("src"));
+        src = getAttribute (StringPool::attr_src);
         if (src.isEmpty ())
-            src = getAttribute (QString ("url"));
+            src = getAttribute (StringPool::attr_url);
     }
     if (pretty_name.isEmpty ())
-        pretty_name = getAttribute (QString ("name"));
+        pretty_name = getAttribute (StringPool::attr_name);
 }
 
 bool GenericMrl::expose () const {
@@ -1360,6 +1360,7 @@ void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool se
         parser.parse (in);
     for (NodePtr e = root; e; e = e->parentNode ())
         e->closed ();
+    dumpTrie();
     //doc->normalize ();
     //kdDebug () << root->outerXML ();
 }

@@ -68,12 +68,12 @@ void ATOM::Link::closed () {
     QString href;
     QString rel;
     for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ()) {
-        if (a->name () == "rel")
-            rel = a->value ();
-        else if (a->name () == "href")
+        if (a->name () == StringPool::attr_href)
             href = a->value ();
-        else if (a->name () == "title")
+        else if (a->name () == StringPool::attr_title)
             pretty_name = a->value ();
+        else if (a->name () == "rel")
+            rel = a->value ();
     }
     if (!href.isEmpty () && rel == QString::fromLatin1 ("enclosure"))
         src = href;
@@ -83,9 +83,9 @@ void ATOM::Link::closed () {
 
 void ATOM::Content::closed () {
     for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ()) {
-        if (a->name () == "src")
+        if (a->name () == StringPool::attr_src)
             src = a->value ();
-        else if (a->name () == "type") {
+        else if (a->name () == StringPool::attr_type) {
             QString v = a->value ().lower ();
             if (v == QString::fromLatin1 ("text"))
                 mimetype = QString::fromLatin1 ("text/plain");

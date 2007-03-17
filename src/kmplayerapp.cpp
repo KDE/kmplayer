@@ -242,12 +242,12 @@ KDE_NO_CDTOR_EXPORT
 Recent::Recent (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url) 
   : KMPlayer::Mrl (doc, id_node_recent_node), app (a) {
     src = url;
-    setAttribute ("url", url);
+    setAttribute (KMPlayer::StringPool::attr_url, url);
 }
 
 KDE_NO_EXPORT void Recent::closed () {
     if (src.isEmpty ())
-        src = getAttribute ("url");
+        src = getAttribute (KMPlayer::StringPool::attr_url);
 }
 
 KDE_NO_EXPORT void Recent::activate () {
@@ -259,7 +259,7 @@ Group::Group (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString & pn)
   : KMPlayer::Mrl (doc, KMPlayer::id_node_group_node), app (a) {
     pretty_name = pn;
     if (!pn.isEmpty ())
-        setAttribute ("title", pn);
+        setAttribute (KMPlayer::StringPool::attr_title, pn);
 }
 
 KDE_NO_EXPORT KMPlayer::NodePtr Group::childFromTag (const QString & tag) {
@@ -272,7 +272,7 @@ KDE_NO_EXPORT KMPlayer::NodePtr Group::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT void Group::closed () {
     if (pretty_name.isEmpty ())
-        pretty_name = getAttribute ("title");
+        pretty_name = getAttribute (KMPlayer::StringPool::attr_title);
 }
 
 KDE_NO_EXPORT void Playlist::defer () {
@@ -320,12 +320,12 @@ KDE_NO_CDTOR_EXPORT
 PlaylistItem::PlaylistItem (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url) 
   : KMPlayer::Mrl (doc, KMPlayer::id_node_playlist_item), app (a) {
     src = url;
-    setAttribute ("url", url);
+    setAttribute (KMPlayer::StringPool::attr_url, url);
 }
 
 KDE_NO_EXPORT void PlaylistItem::closed () {
     if (src.isEmpty ())
-        src = getAttribute ("url");
+        src = getAttribute (KMPlayer::StringPool::attr_url);
 }
 
 KDE_NO_EXPORT void PlaylistItem::activate () {
@@ -366,7 +366,7 @@ KDE_NO_EXPORT void PlaylistItem::activate () {
 
 KDE_NO_EXPORT void PlaylistItem::setNodeName (const QString & s) {
     src = s;
-    setAttribute ("url", s);
+    setAttribute (KMPlayer::StringPool::attr_url, s);
 }
 
 KDE_NO_CDTOR_EXPORT
@@ -374,7 +374,7 @@ PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QS
   : KMPlayer::Mrl (doc, KMPlayer::id_node_group_node), app (a), playmode (false) {
     pretty_name = pn;
     if (!pn.isEmpty ())
-        setAttribute ("title", pn);
+        setAttribute (KMPlayer::StringPool::attr_title, pn);
 }
 
 KDE_NO_CDTOR_EXPORT
@@ -394,12 +394,12 @@ KDE_NO_EXPORT KMPlayer::NodePtr PlaylistGroup::childFromTag (const QString & tag
 
 KDE_NO_EXPORT void PlaylistGroup::closed () {
     if (pretty_name.isEmpty ())
-        pretty_name = getAttribute ("title");
+        pretty_name = getAttribute (KMPlayer::StringPool::attr_title);
 }
 
 KDE_NO_EXPORT void PlaylistGroup::setNodeName (const QString & t) {
     pretty_name = t;
-    setAttribute ("title", t);
+    setAttribute (KMPlayer::StringPool::attr_title, t);
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)

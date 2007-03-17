@@ -191,14 +191,14 @@ protected:
 class KMPLAYER_EXPORT Attribute : public ListNodeBase <Attribute> {
 public:
     KDE_NO_CDTOR_EXPORT Attribute () {}
-    Attribute (const QString & n, const QString & v);
+    Attribute (const TrieString & n, const QString & v);
     KDE_NO_CDTOR_EXPORT ~Attribute () {}
-    QString name () const { return m_name; }
+    TrieString name () const { return m_name; }
     QString value () const { return m_value; }
-    void setName (const QString &);
+    void setName (const TrieString &);
     void setValue (const QString &);
 protected:
-    QString m_name;
+    TrieString m_name;
     QString m_value;
 };
 
@@ -479,8 +479,8 @@ class KMPLAYER_EXPORT Element : public Node {
 public:
     ~Element ();
     void setAttributes (AttributeListPtr attrs);
-    void setAttribute (const QString & name, const QString & value);
-    QString getAttribute (const QString & name);
+    void setAttribute (const TrieString & name, const QString & value);
+    QString getAttribute (const TrieString & name);
     KDE_NO_EXPORT AttributeListPtr attributes () const { return m_attributes; }
     virtual void init ();
     virtual void deactivate ();
@@ -491,13 +491,13 @@ public:
      * pass a modification id, that it can use to restore the old value.
      * Param will be auto removed on deactivate
      */
-    void setParam (const QString & para, const QString & val, int * mod_id=0L);
-    QString param (const QString & para);
-    void resetParam (const QString & para, int mod_id);
+    void setParam (const TrieString &para, const QString &val, int * mod_id=0L);
+    QString param (const TrieString & para);
+    void resetParam (const TrieString & para, int mod_id);
     /**
      * Called from (re)setParam for specialized interpretation of params
      **/
-    virtual void parseParam (const QString &, const QString &) {}
+    virtual void parseParam (const TrieString &, const QString &) {}
 protected:
     Element (NodePtr & d, short id=0);
     AttributeListPtr m_attributes;
@@ -531,7 +531,7 @@ class KMPLAYER_EXPORT Mrl : public Element {
 protected:
     Mrl (NodePtr & d, short id=0);
     NodePtr childFromTag (const QString & tag);
-    void parseParam (const QString &, const QString &);
+    void parseParam (const TrieString &, const QString &);
     unsigned int cached_ismrl_version;
     PlayType cached_play_type;
 public:

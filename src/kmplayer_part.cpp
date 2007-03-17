@@ -53,15 +53,20 @@ using namespace KMPlayer;
 typedef std::list <KMPlayerPart *> KMPlayerPartList;
 
 struct KMPLAYER_NO_EXPORT KMPlayerPartStatic {
-    KDE_NO_CDTOR_EXPORT KMPlayerPartStatic () {}
+    KMPlayerPartStatic ();
     ~KMPlayerPartStatic ();
     KMPlayerPartList partlist;
 };
 
 static KMPlayerPartStatic * kmplayerpart_static = 0L;
 
+KDE_NO_CDTOR_EXPORT KMPlayerPartStatic::KMPlayerPartStatic () {
+    StringPool::init ();
+}
+
 KDE_NO_CDTOR_EXPORT KMPlayerPartStatic::~KMPlayerPartStatic () {
     kmplayerpart_static = 0L;
+    StringPool::reset ();
     // delete map content
 }
 
@@ -1070,7 +1075,8 @@ KDE_NO_EXPORT void KMPlayerHRefSource::setURL (const KURL & url) {
 KDE_NO_EXPORT void KMPlayerHRefSource::play () {
     kdDebug () << "KMPlayerHRefSource::play " << m_url.url() << endl;
     Source * src = m_player->sources () ["urlsource"];
-    QString target = src->document ()->document ()->getAttribute ("target");
+    QString target = src->document ()->document ()->
+        getAttribute (StringPool::attr_target);
     if (!target.isEmpty ()) {
         KMPlayer::Mrl * mrl = src->document ()->mrl ();
         static_cast <KMPlayerPart *> (m_player)->browserextension ()->requestOpenURL (mrl->src, target, mrl->mimetype);

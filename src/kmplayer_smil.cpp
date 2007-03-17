@@ -129,12 +129,13 @@ KDE_NO_EXPORT bool KMPlayer::parseTime (const QString & vl, int & dur) {
 }
 
 static SMIL::Region * findRegion (NodePtr p, const QString & id) {
+    TrieString regionname_attr ("regionName");
     for (NodePtr c = p->firstChild (); c; c = c->nextSibling ()) {
         if (c->id == SMIL::id_node_region) {
             SMIL::Region * r = convertNode <SMIL::Region> (c);
-            QString a = r->getAttribute ("regionname");
+            QString a = r->getAttribute (regionname_attr);
             if (a.isEmpty ())
-                a = r->getAttribute ("id");
+                a = r->getAttribute (StringPool::attr_id);
             if ((a.isEmpty () && id.isEmpty ()) || a == id) {
                 //kdDebug () << "MediaType region found " << id << endl;
                 return r;
@@ -156,7 +157,8 @@ static SMIL::Transition * findTransition (NodePtr n, const QString & id) {
         if (head)
             for (Node * c = head->firstChild (); c; c = c->nextSibling().ptr ())
                 if (c->id == SMIL::id_node_transition &&
-                        id == static_cast <Element *> (c)->getAttribute ("id"))
+                        id == static_cast <Element *> (c)->
+                            getAttribute (StringPool::attr_id))
                     return static_cast <SMIL::Transition *> (c);
     }
     return 0L;
@@ -367,10 +369,9 @@ KDE_NO_EXPORT void Runtime::beginAndStart () {
 }
 
 KDE_NO_EXPORT
-bool Runtime::parseParam (const QString & name, const QString & val) {
+bool Runtime::parseParam (const TrieString & name, const QString & val) {
     //kdDebug () << "Runtime::parseParam " << name << "=" << val << endl;
-    const char * cname = name.ascii ();
-    if (!strcmp (cname, "begin")) {
+    if (name == StringPool::attr_begin) {
         setDurationItem (begin_time, val);
         if ((timingstate == timings_began && !start_timer) ||
                 timingstate == timings_stopped) {
@@ -381,16 +382,20 @@ bool Runtime::parseParam (const QString & name, const QString & val) {
             } else                                // start now
                 propagateStart ();
         }
-    } else if (!strcmp (cname, "dur")) {
+    } else if (name == StringPool::attr_dur) {
         setDurationItem (duration_time, val);
-    } else if (!strcmp (cname, "end")) {
+    } else if (name == StringPool::attr_end) {
         setDurationItem (end_time, val);
         if (endTime ().durval == dur_timer &&
             endTime ().offset > beginTime ().offset)
             durTime ().offset = endTime ().offset - beginTime ().offset;
         else if (endTime ().durval != dur_timer)
             durTime ().durval = dur_media; // event
-    } else if (!strcmp (cname, "endsync")) {
+    } else if (name == StringPool::attr_title) {
+        Mrl * mrl = static_cast <Mrl *> (element.ptr ());
+        if (mrl)
+            mrl->pretty_name = val;
+    } else if (name == "endsync") {
         if ((durTime ().durval == dur_media || durTime ().durval == 0) &&
                 endTime ().durval == dur_media) {
             NodePtr e = findLocalNodeById (element, val);
@@ -401,7 +406,7 @@ bool Runtime::parseParam (const QString & name, const QString & val) {
                 durations [(int) end_time].durval = (Duration) event_stopped;
             }
         }
-    } else if (!strcmp (cname, "fill")) {
+    } else if (name == "fill") {
         if (val == QString::fromLatin1 ("freeze"))
             fill = fill_freeze;
         else if (val == QString::fromLatin1 ("hold"))
@@ -409,15 +414,11 @@ bool Runtime::parseParam (const QString & name, const QString & val) {
         else
             fill = fill_unknown;
         // else all other fill options ..
-    } else if (!strncmp (cname, "repeat", 6)) {
+    } else if (name.startsWith ("repeat")) {
         if (val.find ("indefinite") > -1)
             repeat_count = dur_infinite;
         else
             repeat_count = val.toInt ();
-    } else if (!strcmp (cname, "title")) {
-        Mrl * mrl = static_cast <Mrl *> (element.ptr ());
-        if (mrl)
-            mrl->pretty_name = val;
     } else
         return false;
     return true;
@@ -643,7 +644,8 @@ bool CalculatedSizer::applyRegPoints (Node * node, Single w, Single h,
         NodePtr c = node->firstChild ();
         for (; c; c = c->nextSibling ())
             if (c->id == SMIL::id_node_regpoint &&
-                    convertNode<Element>(c)->getAttribute ("id") == reg_point) {
+                    convertNode<Element>(c)->getAttribute (StringPool::attr_id)
+                        == reg_point) {
                 Single i1, i2; // dummies
                 SMIL::RegPoint *rp_elm = static_cast<SMIL::RegPoint*>(c.ptr());
                 rp_elm->sizes.calcSizes (0L, 100, 100, rpx, rpy, i1, i2);
@@ -711,23 +713,22 @@ KDE_NO_EXPORT void CalculatedSizer::calcSizes (Node * node, Single w, Single h,
 }
 
 KDE_NO_EXPORT
-bool CalculatedSizer::setSizeParam (const QString & name, const QString & val) {
-    const char * cname = name.ascii ();
-    if (!strcmp (cname, "left")) {
+bool CalculatedSizer::setSizeParam(const TrieString &name, const QString &val) {
+    if (name == StringPool::attr_left) {
         left = val;
-    } else if (!strcmp (cname, "top")) {
+    } else if (name == StringPool::attr_top) {
         top = val;
-    } else if (!strcmp (cname, "width")) {
+    } else if (name == StringPool::attr_width) {
         width = val;
-    } else if (!strcmp (cname, "height")) {
+    } else if (name == StringPool::attr_height) {
         height = val;
-    } else if (!strcmp (cname, "right")) {
+    } else if (name == StringPool::attr_right) {
         right = val;
-    } else if (!strcmp (cname, "bottom")) {
+    } else if (name == StringPool::attr_bottom) {
         bottom = val;
-    } else if (!strcmp (cname, "regPoint")) {
+    } else if (name == "regPoint") {
         reg_point = val;
-    } else if (!strcmp (cname, "regAlign")) {
+    } else if (name == "regAlign") {
         reg_align = val;
     } else
         return false;
@@ -739,15 +740,14 @@ bool CalculatedSizer::setSizeParam (const QString & name, const QString & val) {
 KDE_NO_CDTOR_EXPORT AnimateGroupData::AnimateGroupData (NodePtr e)
  : Runtime (e), modification_id (-1) {}
 
-bool AnimateGroupData::parseParam (const QString & name, const QString & val) {
+bool AnimateGroupData::parseParam (const TrieString &name, const QString &val) {
   //kdDebug () << "AnimateGroupData::parseParam " << name << "=" << val << endl;
-    const char * cname = name.ascii ();
-    if (!strcmp (cname, "target") || !strcmp (cname, "targetElement")) {
+    if (name == StringPool::attr_target || name == "targetElement") {
         if (element)
             target_element = findLocalNodeById (element, val);
-    } else if (!strcmp(cname, "attribute") || !strcmp(cname, "attributeName")) {
+    } else if (name == "attribute" || name == "attributeName") {
         changed_attribute = val;
-    } else if (!strcmp (cname, "to")) {
+    } else if (name == "to") {
         change_to = val;
     } else
         return Runtime::parseParam (name, val);
@@ -823,16 +823,15 @@ KDE_NO_EXPORT void AnimateData::reset () {
     change_from_unit.truncate (0);
 }
 
-bool AnimateData::parseParam (const QString & name, const QString & val) {
+bool AnimateData::parseParam (const TrieString & name, const QString & val) {
     //kdDebug () << "AnimateData::parseParam " << name << "=" << val << endl;
-    const char * cname = name.ascii ();
-    if (!strcmp (cname, "change_by")) {
+    if (name == "change_by") {
         change_by = val.toInt ();
-    } else if (!strcmp (cname, "from")) {
+    } else if (name == "from") {
         change_from = val;
-    } else if (!strcmp (cname, "values")) {
+    } else if (name == "values") {
         change_values = QStringList::split (QString (";"), val);
-    } else if (name.lower () == QString::fromLatin1 ("calcmode")) {
+    } else if (name == "calcMode") {
         if (val == QString::fromLatin1 ("discrete"))
             calcMode = calc_discrete;
         else if (val == QString::fromLatin1 ("linear"))
@@ -1006,11 +1005,11 @@ KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::reset () {
  * re-implement for regions and src attributes
  */
 KDE_NO_EXPORT
-bool MediaTypeRuntime::parseParam (const QString & name, const QString & val) {
+bool MediaTypeRuntime::parseParam (const TrieString &name, const QString &val) {
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
     if (!mt)
         return false;
-    if (name == QString::fromLatin1 ("fit")) {
+    if (name == "fit") {
         const char * cval = val.ascii ();
         if (!cval)
             fit = fit_hidden;
@@ -1126,9 +1125,9 @@ KDE_NO_EXPORT void AudioVideoData::clipStop () {
 }
 
 KDE_NO_EXPORT
-bool AudioVideoData::parseParam (const QString & name, const QString & val) {
+bool AudioVideoData::parseParam(const TrieString &name, const QString &val) {
     //kdDebug () << "AudioVideoData::parseParam " << name << "=" << val << endl;
-    if (name == QString::fromLatin1 ("src")) {
+    if (name == StringPool::attr_src) {
         NodePtr element_protect = element; // note element is weak
         SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
         if (mt) {
@@ -1270,7 +1269,7 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
             pretty_name = str.left (str.find (QChar ('\n')));
         } else if (e->id == id_node_meta) {
             Element * elm = convertNode <Element> (e);
-            const QString name = elm->getAttribute ("name");
+            const QString name = elm->getAttribute (StringPool::attr_name);
             if (name == QString::fromLatin1 ("title"))
                 pretty_name = elm->getAttribute ("content");
             else if (name == QString::fromLatin1 ("base"))
@@ -1431,8 +1430,8 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
             appendChild (r);
             r->setAuxiliaryNode (true);
         }
-        smilroot->setAttribute ("width", QString::number (w_root));
-        smilroot->setAttribute ("height", QString::number (h_root));
+        smilroot->setAttribute(StringPool::attr_width, QString::number(w_root));
+        smilroot->setAttribute(StringPool::attr_height,QString::number(h_root));
         insertBefore (sr, firstChild ());
     } else if (childNodes ()->length () < 2) { // only a root-layout
         SMIL::Region * r = new SMIL::Region (m_doc);
@@ -1471,10 +1470,10 @@ KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
                 w = ew;
                 h = eh;
                 Element * rl = convertNode <Element> (rootLayout);
-                rl->setAttribute ("width", QString::number ((int)ew));
-                rl->setAttribute ("height", QString::number ((int)eh));
-                rl->setParam ("width", QString::number ((int)ew));
-                rl->setParam ("height", QString::number ((int)eh));
+                rl->setAttribute (StringPool::attr_width, QString::number ((int)ew));
+                rl->setAttribute (StringPool::attr_height, QString::number ((int)eh));
+                rl->setParam (StringPool::attr_width, QString::number((int)ew));
+                rl->setParam (StringPool::attr_height,QString::number((int)eh));
                 updateDimensions (surface);
             } else if (w > 0 && h > 0) {
                 xscale += 1.0 * (ew - w) / w;
@@ -1585,12 +1584,11 @@ bool SMIL::RegionBase::handleEvent (EventPtr event) {
 }
 
 KDE_NO_EXPORT
-void SMIL::RegionBase::parseParam (const QString & name, const QString & val) {
+void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val) {
     //kdDebug () << "RegionBase::parseParam " << getAttribute ("id") << " " << name << "=" << val << " active:" << active() << endl;
     bool need_repaint = false;
     SRect rect = SRect (x, y, w, h);
-    const char * cn = name.ascii ();
-    if (!strcmp (cn, "background-color") || !strcmp (cn, "backgroundColor")) {
+    if (name == "background-color" || name == "backgroundColor") {
         if (val.isEmpty ())
             background_color = 0;
         else
@@ -1598,7 +1596,7 @@ void SMIL::RegionBase::parseParam (const QString & name, const QString & val) {
         if (surface)
             surface->background_color = background_color;
         need_repaint = true;
-    } else if (!strcmp (cn, "z-index")) {
+    } else if (name == "z-index") {
         z_order = val.toInt ();
         need_repaint = true;
     } else if (sizes.setSizeParam (name, val)) {
@@ -1684,7 +1682,7 @@ KDE_NO_EXPORT void SMIL::Region::accept (Visitor * v) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT
-void SMIL::RegPoint::parseParam (const QString & p, const QString & v) {
+void SMIL::RegPoint::parseParam (const TrieString & p, const QString & v) {
     sizes.setSizeParam (p, v); // TODO: if dynamic, make sure to repaint
     Element::parseParam (p, v);
 }
@@ -1701,17 +1699,16 @@ KDE_NO_EXPORT void SMIL::Transition::activate () {
 }
 
 KDE_NO_EXPORT
-void SMIL::Transition::parseParam (const QString & para, const QString & val) {
-    const char * cpara = para.ascii ();
-    if (!strcmp (cpara, "type"))
+void SMIL::Transition::parseParam (const TrieString & para, const QString & val) {
+    if (para == StringPool::attr_type)
         type = val;
-    else if (!strcmp (cpara, "subtype"))
-        subtype = val;
-    else if (!strcmp (cpara, "dur"))
+    else if (para == StringPool::attr_dur)
         dur = int (10 * val.toDouble ());
-    else if (!strcmp (cpara, "fadeColor"))
+    else if (para == "subtype")
+        subtype = val;
+    else if (para == "fadeColor")
         fade_color = QColor (getAttribute (val)).rgb ();
-    else if (!strcmp (cpara, "direction"))
+    else if (para == "direction")
         direction = val == "reverse" ? dir_reverse : dir_forward;
     else
         Element::parseParam (para, val);
@@ -1735,7 +1732,7 @@ KDE_NO_CDTOR_EXPORT SMIL::TimedMrl::~TimedMrl () {
 }
 
 KDE_NO_EXPORT void SMIL::TimedMrl::closed () {
-    pretty_name = getAttribute ("title");
+    pretty_name = getAttribute (StringPool::attr_title);
     Mrl::closed ();
 }
 
@@ -1864,12 +1861,12 @@ KDE_NO_EXPORT Runtime * SMIL::TimedMrl::getNewRuntime () {
 }
 
 KDE_NO_EXPORT
-void SMIL::TimedMrl::parseParam (const QString & para, const QString & value) {
+void SMIL::TimedMrl::parseParam (const TrieString &para, const QString &value) {
     if (!runtime ()->parseParam (para, value)) {
-        if (para != QString::fromLatin1 ("src")) //block Mrl src parsing for now
-            Mrl::parseParam (para, value);
-        else
+        if (para == StringPool::attr_src) //block Mrl src parsing for now
             kdDebug() << "parseParam src on " << nodeName() << endl;
+        else
+            Mrl::parseParam (para, value);
     }
 }
 
@@ -2229,8 +2226,8 @@ KDE_NO_EXPORT void SMIL::LinkingBase::deactivate () {
 }
 
 KDE_NO_EXPORT
-void SMIL::LinkingBase::parseParam (const QString & para, const QString & val) {
-    if (para == QString ("href")) {
+void SMIL::LinkingBase::parseParam(const TrieString &para, const QString &val) {
+    if (para == StringPool::attr_href) {
         href = val;
     }
 }
@@ -2285,7 +2282,7 @@ KDE_NO_EXPORT void SMIL::Area::activate () {
 }
 
 KDE_NO_EXPORT
-void SMIL::Area::parseParam (const QString & para, const QString & val) {
+void SMIL::Area::parseParam (const TrieString & para, const QString & val) {
     if (para == "coords") {
         delete [] coords;
         QStringList clist = QStringList::split (QString (","), val);
@@ -2319,27 +2316,26 @@ KDE_NO_EXPORT NodePtr SMIL::MediaType::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT
-void SMIL::MediaType::parseParam (const QString & para, const QString & val) {
-    const char * cname = para.ascii ();
-    if (!strcmp (cname, "system-bitrate"))
+void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
+    if (para == "system-bitrate")
         bitrate = val.toInt ();
-    else if (!strcmp (cname, "type"))
+    else if (para == StringPool::attr_type)
         mimetype = val;
-    else if (!strcmp (cname, "sensitivity")) {
+    else if (para == "transIn") {
+        trans_in = findTransition (this, val);
+        if (!trans_in)
+            kdWarning() << "Transition " << val << " not found in head" << endl;
+    } else if (para == "transOut") {
+        trans_out = findTransition (this, val);
+        if (!trans_out)
+            kdWarning() << "Transition " << val << " not found in head" << endl;
+    } else if (para == "sensitivity") {
         if (val == "transparent")
             sensitivity = sens_transparent;
         //else if (val == "percentage") // TODO
         //    sensitivity = sens_percentage;
         else
             sensitivity = sens_opaque;
-    } else if (!strcmp (cname, "transIn")) {
-        trans_in = findTransition (this, val);
-        if (!trans_in)
-            kdWarning() << "Transition " << val << " not found in head" << endl;
-    } else if (!strcmp (cname, "transOut")) {
-        trans_out = findTransition (this, val);
-        if (!trans_out)
-            kdWarning() << "Transition " << val << " not found in head" << endl;
     } else
         TimedMrl::parseParam (para, val);
 }
@@ -2372,7 +2368,8 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
 
 KDE_NO_EXPORT void SMIL::MediaType::begin () {
     SMIL::Smil * s = Smil::findSmilNode (parentNode ().ptr ());
-    SMIL::Region * r = s ? findRegion (s->layout_node, param ("region")) : 0L;
+    SMIL::Region * r = s ?
+        findRegion (s->layout_node, param (StringPool::attr_region)) : 0L;
     MediaTypeRuntime *tr = static_cast<MediaTypeRuntime*>(runtime ());
     if (r) {
         region_node = r;
@@ -2391,7 +2388,7 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
         }
     } else
         kdWarning () << nodeName() << "::begin " << src << " region '" <<
-            param ("region") << "' not found" << endl;
+            param (StringPool::attr_region) << "' not found" << endl;
     TimedMrl::begin ();
 }
 
@@ -2656,10 +2653,11 @@ KDE_NO_EXPORT bool SMIL::Animate::handleEvent (EventPtr event) {
 
 KDE_NO_EXPORT void SMIL::Param::activate () {
     setState (state_activated);
-    QString name = getAttribute ("name");
+    QString name = getAttribute (StringPool::attr_name);
     Node * parent = parentNode ().ptr ();
     if (!name.isEmpty () && parent && parent->isElementNode ())
-        static_cast<Element*>(parent)->setParam (name, getAttribute ("value"));
+        static_cast<Element*>(parent)->setParam (name,
+                getAttribute (StringPool::attr_value));
     Element::activate (); //finish (); // no livetime of itself, will deactivate
 }
 
@@ -2719,9 +2717,9 @@ KDE_NO_CDTOR_EXPORT ImageRuntime::~ImageRuntime () {
 }
 
 KDE_NO_EXPORT
-bool ImageRuntime::parseParam (const QString & name, const QString & val) {
+bool ImageRuntime::parseParam (const TrieString & name, const QString & val) {
     //kdDebug () << "ImageRuntime::param " << name << "=" << val << endl;
-    if (name == QString::fromLatin1 ("src")) {
+    if (name == StringPool::attr_src) {
         killWGet ();
         NodePtr element_protect = element;
         SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
@@ -2887,13 +2885,12 @@ KDE_NO_EXPORT void TextRuntime::reset () {
 }
 
 KDE_NO_EXPORT
-bool TextRuntime::parseParam (const QString & name, const QString & val) {
+bool TextRuntime::parseParam (const TrieString & name, const QString & val) {
     //kdDebug () << "TextRuntime::parseParam " << name << "=" << val << endl;
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
     if (!mt)
         return false; // cannot happen
-    const char * cname = name.ascii ();
-    if (!strcmp (cname, "src")) {
+    if (name == StringPool::attr_src) {
         killWGet ();
         mt->src = val;
         d->data.resize (0);
@@ -2901,22 +2898,21 @@ bool TextRuntime::parseParam (const QString & name, const QString & val) {
             wget (mt->absolutePath ());
         return true;
     }
-    if (!strcmp (cname, "backgroundColor") ||
-            !strcmp (cname, "background-color")) {
+    if (name == "backgroundColor" || name == "background-color") {
         background_color = val.isEmpty () ? 0xffffff : QColor (val).rgb ();
-    } else if (!strcmp (cname, "fontColor")) {
+    } else if (name == "fontColor") {
         font_color = val.isEmpty () ? 0 : QColor (val).rgb ();
-    } else if (!strcmp (cname, "charset")) {
+    } else if (name == "charset") {
         d->codec = QTextCodec::codecForName (val.ascii ());
-    } else if (!strcmp (cname, "fontFace")) {
+    } else if (name == "fontFace") {
         ; //FIXME
-    } else if (!strcmp (cname, "fontPtSize")) {
+    } else if (name == "fontPtSize") {
         font_size = val.isEmpty () ? d->font.pointSize () : val.toInt ();
-    } else if (!strcmp (cname, "fontSize")) {
+    } else if (name == "fontSize") {
         font_size += val.isEmpty () ? d->font.pointSize () : val.toInt ();
-    } else if (strstr (cname, "backgroundOpacity")) {
+    } else if (name == "backgroundOpacity") {
         bg_opacity = (int) SizeType (val).size (100);
-    } else if (!strcmp (cname, "hAlign")) {
+    } else if (name == "hAlign") {
         const char * cval = val.ascii ();
         if (!cval)
             halign = align_left;

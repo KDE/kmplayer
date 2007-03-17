@@ -199,7 +199,8 @@ KDE_NO_EXPORT PlayListItem * PlayListView::populate
                 as->setPixmap (0, menu_pix);
                 for (; a; a = a->nextSibling ()) {
                     PlayListItem * ai = new PlayListItem (as, a, this);
-                    ai->setText (0, QString ("%1=%2").arg (a->name ()).arg (a->value ()));
+                    ai->setText (0, QString ("%1=%2").arg (
+                                a->name ().toString ()).arg (a->value ()));
                     ai->setPixmap (0, config_pix);
                 }
             }
@@ -644,16 +645,18 @@ KDE_NO_EXPORT void PlayListView::slotFindNext () {
                 m_current_find_attr = 0L;
                 found = true;
             } else if (elm && ri->show_all_nodes) {
-                for (AttributePtr a = convertNode <Element> (n)->attributes ()->first (); a; a = a->nextSibling ())
+                for (AttributePtr a = convertNode <Element> (n)->attributes ()->first (); a; a = a->nextSibling ()) {
+                    QString attr = a->name ().toString ();
                     if (((opt & KFindDialog::RegularExpression) &&
-                                (a->name ().find (regexp, 0) || a->value ().find (regexp, 0) > -1)) ||
+                                (attr.find (regexp, 0) || a->value ().find (regexp, 0) > -1)) ||
                                 (!(opt & KFindDialog::RegularExpression) &&
-                                 (a->name ().find (str, 0, cs) > -1 || a->value ().find (str, 0, cs) > -1))) {
+                                 (attr.find (str, 0, cs) > -1 || a->value ().find (str, 0, cs) > -1))) {
                         node = n;
                         m_current_find_attr = a;
                         found = true;
                         break;
                     }
+                }
             }
         }
         if (n) { //set pointer to next

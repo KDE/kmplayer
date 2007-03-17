@@ -135,6 +135,7 @@ class KMPLAYER_NO_EXPORT TVDocument : public FileDocument {
 public:
     TVDocument (KMPlayerTVSource *);
     KMPlayer::NodePtr childFromTag (const QString &);
+    void defer ();
     KDE_NO_EXPORT const char * nodeName () const { return "tvdevices"; }
     void childDone (KMPlayer::NodePtr child);
 };

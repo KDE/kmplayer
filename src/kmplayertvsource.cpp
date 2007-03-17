@@ -68,9 +68,9 @@ KDE_NO_CDTOR_EXPORT TVDevicePage::TVDevicePage (QWidget *parent, KMPlayer::NodeP
     QLabel * nameLabel = new QLabel (i18n ("Name:"), this, 0);
     name = new QLineEdit (device->pretty_name, this, 0);
     QLabel *sizewidthLabel = new QLabel (i18n ("Width:"), this, 0);
-    sizewidth = new QLineEdit (device->getAttribute ("width"), this, 0);
+    sizewidth = new QLineEdit (device->getAttribute (KMPlayer::StringPool::attr_width), this, 0);
     QLabel *sizeheightLabel = new QLabel (i18n ("Height:"), this, 0);
-    sizeheight = new QLineEdit (device->getAttribute ("height"), this, 0);
+    sizeheight = new QLineEdit (device->getAttribute (KMPlayer::StringPool::attr_height), this, 0);
     noplayback = new QCheckBox (i18n ("Do not immediately play"), this);
     noplayback->setChecked (!device->getAttribute ("playback").toInt ());
     QWhatsThis::add (noplayback, i18n ("Only start playing after clicking the play button"));
@@ -184,13 +184,13 @@ KDE_NO_CDTOR_EXPORT TVNode::TVNode (KMPlayer::NodePtr &d, const QString & s, con
 
 KDE_NO_EXPORT void TVNode::setNodeName (const QString & nn) {
     pretty_name = nn;
-    setAttribute ("name", nn);
+    setAttribute (KMPlayer::StringPool::attr_name, nn);
 }
 
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT TVChannel::TVChannel (KMPlayer::NodePtr & d, const QString & n, double freq) : TVNode (d, QString ("tv://"), "channel", id_node_tv_channel, n) {
-    setAttribute ("name", n);
+    setAttribute (KMPlayer::StringPool::attr_name, n);
     setAttribute ("frequency", QString::number (freq, 'f', 2));
 }
 
@@ -198,15 +198,15 @@ KDE_NO_CDTOR_EXPORT TVChannel::TVChannel (KMPlayer::NodePtr & d) : TVNode (d, QS
 }
 
 KDE_NO_EXPORT void TVChannel::closed () {
-    pretty_name = getAttribute ("name");
+    pretty_name = getAttribute (KMPlayer::StringPool::attr_name);
 }
 
 //-----------------------------------------------------------------------------
 
 TVInput::TVInput (KMPlayer::NodePtr & d, const QString & n, int id)
  : TVNode (d, QString ("tv://"), "input", id_node_tv_input, n) {
-    setAttribute ("name", n);
-    setAttribute ("id", QString::number (id));
+    setAttribute (KMPlayer::StringPool::attr_name, n);
+    setAttribute (KMPlayer::StringPool::attr_id, QString::number (id));
 }
 
 KDE_NO_CDTOR_EXPORT TVInput::TVInput (KMPlayer::NodePtr & d) : TVNode (d, QString ("tv://"), "input", id_node_tv_input) {
@@ -221,7 +221,7 @@ KDE_NO_EXPORT KMPlayer::NodePtr TVInput::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void TVInput::closed () {
-    //pretty_name = getAttribute ("name");
+    //pretty_name = getAttribute (KMPlayer::StringPool::attr_name);
 }
 
 KDE_NO_EXPORT void TVInput::setNodeName (const QString & name) {
@@ -272,12 +272,13 @@ KDE_NO_EXPORT void TVDevice::setNodeName (const QString & name) {
 }
 
 KDE_NO_EXPORT void TVDevice::updateNodeName () {
-    pretty_name = getAttribute ("name");
+    pretty_name = getAttribute (KMPlayer::StringPool::attr_name);
     src = getAttribute ("path");
     for (KMPlayer::NodePtr c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_tv_input) {
             TVInput * i = static_cast <TVInput *> (c.ptr ());
-            i->pretty_name = i->getAttribute("name")+QString(" - ")+pretty_name;
+            i->pretty_name = i->getAttribute (KMPlayer::StringPool::attr_name) +
+                QString (" - ") + pretty_name;
         }
 }
 
@@ -285,11 +286,11 @@ KDE_NO_EXPORT void TVDevice::updateDevicePage () {
     if (!device_page)
         return;
     pretty_name = device_page->name->text ();
-    setAttribute ("name", pretty_name);
+    setAttribute (KMPlayer::StringPool::attr_name, pretty_name);
     setAttribute ("audio", device_page->audiodevice->lineEdit()->text ());
     setAttribute ("playback", device_page->noplayback->isChecked() ? "0" : "1");
-    setAttribute ("width", device_page->sizewidth->text ());
-    setAttribute ("height", device_page->sizeheight->text ());
+    setAttribute (KMPlayer::StringPool::attr_width, device_page->sizewidth->text ());
+    setAttribute (KMPlayer::StringPool::attr_height, device_page->sizeheight->text ());
     int i = 0;
     for (KMPlayer::NodePtr ip = firstChild(); ip; ip=ip->nextSibling(),++i) {
         if (ip->id != id_node_tv_input)
@@ -330,6 +331,13 @@ KDE_NO_EXPORT KMPlayer::NodePtr TVDocument::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT void TVDocument::childDone (KMPlayer::NodePtr) {
     finish ();
+}
+
+KDE_NO_EXPORT void TVDocument::defer () {
+    if (!resolved) {
+        resolved = true;
+        readFromFile (locateLocal ("data", "kmplayer/tv.xml"));
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -446,7 +454,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::buildArguments () {
     m_audiodevice = tvdevice->getAttribute ("audio");
     m_videodevice = tvdevice->src;
     m_videonorm = input->getAttribute ("norm");
-    m_tuner = input->getAttribute ("name");
+    m_tuner = input->getAttribute (KMPlayer::StringPool::attr_name);
     QString xvport = tvdevice->getAttribute ("xvport");
     if (!xvport.isEmpty ())
         m_xvport = xvport.toInt ();
@@ -454,7 +462,9 @@ KDE_NO_EXPORT void KMPlayerTVSource::buildArguments () {
     if (!xvenc.isEmpty ())
         m_xvencoding = xvenc.toInt ();
     QString command;
-    command.sprintf ("device=%s:input=%s", tvdevice->src.ascii (), input->getAttribute ("id").ascii ());
+    command.sprintf ("device=%s:input=%s",
+            tvdevice->src.ascii (),
+            input->getAttribute (KMPlayer::StringPool::attr_id).ascii ());
     if (channel) {
         QString freq = channel->getAttribute ("frequency");
         m_frequency = (int)(1000 * freq.toDouble ());
@@ -464,7 +474,9 @@ KDE_NO_EXPORT void KMPlayerTVSource::buildArguments () {
     if (!m_videonorm.isEmpty ())
         command += QString (":norm=%1").arg (m_videonorm);
     m_app->setCaption (i18n ("TV: ") + (channel ? channel->mrl ()->pretty_name : input->mrl ()->pretty_name), false);
-    setDimensions (m_cur_tvdevice, tvdevice->getAttribute ("width").toInt (), tvdevice->getAttribute ("height").toInt ());
+    setDimensions (m_cur_tvdevice,
+            tvdevice->getAttribute (KMPlayer::StringPool::attr_width).toInt (),
+            tvdevice->getAttribute (KMPlayer::StringPool::attr_height).toInt ());
     m_options.sprintf ("-tv noaudio:driver=%s:%s:width=%d:height=%d -slave -nocache -quiet", tvdriver.ascii (), command.ascii (), width (), height ());
     if (m_player->settings ()->mplayerpost090)
         m_recordcmd.sprintf ("-tv %s:driver=%s:%s:width=%d:height=%d", m_audiodevice.isEmpty () ? "noaudio" : (QString ("forceaudio:adevice=") + m_audiodevice).ascii(), tvdriver.ascii (), command.ascii (), width (), height ());
@@ -524,8 +536,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::readXML () {
     if (config_read) return;
     config_read = true;
     kdDebug () << "KMPlayerTVSource::readXML" << endl;
-    static_cast <TVDocument *> (m_document.ptr ())->readFromFile
-        (locateLocal ("data", "kmplayer/tv.xml"));
+    m_document->defer ();
     static_cast <KMPlayer::View*>(m_player->view ())->playList ()->updateTree (tree_id, m_document, 0, false, false);
     buildMenu ();
     sync (false);
@@ -627,11 +638,13 @@ KDE_NO_EXPORT void TVDeviceScannerSource::init () {
 KDE_NO_EXPORT bool TVDeviceScannerSource::processOutput (const QString & line) {
     if (m_nameRegExp.search (line) > -1) {
         m_tvdevice->pretty_name = m_nameRegExp.cap (1);
-        m_tvdevice->setAttribute ("name", m_tvdevice->pretty_name);
+        m_tvdevice->setAttribute(KMPlayer::StringPool::attr_name,m_tvdevice->pretty_name);
         kdDebug() << "Name " << m_tvdevice->pretty_name << endl;
     } else if (m_sizesRegExp.search (line) > -1) {
-        m_tvdevice->setAttribute ("width", m_sizesRegExp.cap (1));
-        m_tvdevice->setAttribute ("height", m_sizesRegExp.cap (2));
+        m_tvdevice->setAttribute (KMPlayer::StringPool::attr_width,
+                m_sizesRegExp.cap(1));
+        m_tvdevice->setAttribute (KMPlayer::StringPool::attr_height,
+                m_sizesRegExp.cap(2));
         m_tvdevice->setAttribute ("minwidth", m_sizesRegExp.cap (1));
         m_tvdevice->setAttribute ("minheight", m_sizesRegExp.cap (2));
         m_tvdevice->setAttribute ("maxwidth", m_sizesRegExp.cap (3));

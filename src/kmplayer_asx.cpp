@@ -26,7 +26,7 @@ using namespace KMPlayer;
 
 static QString getAsxAttribute (Element * e, const QString & attr) {
     for (AttributePtr a = e->attributes ()->first (); a; a = a->nextSibling ())
-        if (attr == a->name ().lower ())
+        if (attr == a->name ().toString ().lower ())
             return a->value ();
     return QString ();
 }

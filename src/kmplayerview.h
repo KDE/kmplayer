@@ -139,6 +139,7 @@ public:
     void setViewOnly ();
     void setInfoPanelOnly ();
     void setPlaylistOnly ();
+    bool playlistVisible () const { return !m_dock_playlist->mayBeShow (); }
     void setEditMode (RootPlayListItem *, bool enable=true);
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);

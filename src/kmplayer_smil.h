@@ -111,7 +111,7 @@ public:
             Single & xoff, Single & yoff, Single & w1, Single & h1);
     SizeType left, top, width, height, right, bottom;
     QString reg_point, reg_align;
-    bool setSizeParam (const QString & name, const QString & value);
+    bool setSizeParam (const TrieString & name, const QString & value);
 };
 
 /**
@@ -140,7 +140,7 @@ public:
      * Reset all data, called from end() and init()
      */
     virtual void reset ();
-    virtual bool parseParam (const QString & name, const QString & value);
+    virtual bool parseParam (const TrieString & name, const QString & value);
     TimingState state () const { return timingstate; }
     void propagateStop (bool forced);
     void propagateStart ();
@@ -179,7 +179,7 @@ public:
     ~MediaTypeRuntime ();
     virtual void reset ();
     virtual void stopped ();
-    virtual bool parseParam (const QString & name, const QString & value);
+    virtual bool parseParam (const TrieString & name, const QString & value);
     virtual void postpone (bool b);
     virtual void clipStart ();
     virtual void clipStop ();
@@ -198,7 +198,7 @@ class KMPLAYER_NO_EXPORT AudioVideoData : public MediaTypeRuntime {
 public:
     AudioVideoData (NodePtr e);
     virtual bool isAudioVideo ();
-    virtual bool parseParam (const QString & name, const QString & value);
+    virtual bool parseParam (const TrieString & name, const QString & value);
     virtual void started ();
     virtual void postpone (bool b);
     virtual void clipStart ();
@@ -210,7 +210,7 @@ class KMPLAYER_NO_EXPORT ImageRuntime : public QObject,public MediaTypeRuntime {
 public:
     ImageRuntime (NodePtr e);
     ~ImageRuntime ();
-    virtual bool parseParam (const QString & name, const QString & value);
+    virtual bool parseParam (const TrieString & name, const QString & value);
     virtual void postpone (bool b);
     virtual void clipStart ();
     virtual void clipStop ();
@@ -234,7 +234,7 @@ public:
     TextRuntime (NodePtr e);
     ~TextRuntime ();
     void reset ();
-    virtual bool parseParam (const QString & name, const QString & value);
+    virtual bool parseParam (const TrieString & name, const QString & value);
     int font_size;
     unsigned int font_color;
     unsigned int background_color;
@@ -253,13 +253,13 @@ protected:
 class KMPLAYER_NO_EXPORT AnimateGroupData : public Runtime {
 public:
     KDE_NO_CDTOR_EXPORT ~AnimateGroupData () {}
-    virtual bool parseParam (const QString & name, const QString & value);
+    virtual bool parseParam (const TrieString & name, const QString & value);
     virtual void reset ();
 protected:
     void restoreModification ();
     AnimateGroupData (NodePtr e);
     NodePtrW target_element;
-    QString changed_attribute;
+    TrieString changed_attribute;
     QString change_to;
     int modification_id;
 protected:
@@ -284,7 +284,7 @@ class KMPLAYER_NO_EXPORT AnimateData : public AnimateGroupData {
 public:
     AnimateData (NodePtr e);
     KDE_NO_CDTOR_EXPORT ~AnimateData () {}
-    virtual bool parseParam (const QString & name, const QString & value);
+    virtual bool parseParam (const TrieString & name, const QString & value);
     virtual void reset ();
     virtual void started ();
     virtual void stopped ();
@@ -396,7 +396,7 @@ public:
     void childDone (NodePtr child);
     void deactivate ();
     virtual bool handleEvent (EventPtr event);
-    virtual void parseParam (const QString & name, const QString & value);
+    virtual void parseParam (const TrieString & name, const QString & value);
     virtual NodeRefListPtr listeners (unsigned int event_id);
     /**
      * repaints region, calls scheduleRepaint(x,y,w,h) on view
@@ -482,7 +482,7 @@ public:
     KDE_NO_CDTOR_EXPORT ~RegPoint () {}
     KDE_NO_EXPORT const char * nodeName () const { return "regPoint"; }
     KDE_NO_EXPORT bool expose () const { return false; }
-    void parseParam (const QString & name, const QString & value);
+    void parseParam (const TrieString & name, const QString & value);
     CalculatedSizer sizes;
 };
 
@@ -495,7 +495,7 @@ public:
     KDE_NO_CDTOR_EXPORT ~Transition () {}
     void activate ();
     KDE_NO_EXPORT const char * nodeName () const { return "transition"; }
-    void parseParam (const QString & name, const QString & value);
+    void parseParam (const TrieString & name, const QString & value);
     KDE_NO_EXPORT bool expose () const { return false; }
     bool supported ();
     QString type;
@@ -524,7 +524,7 @@ public:
     virtual NodeRefListPtr listeners (unsigned int event_id);
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
     void init ();
-    virtual void parseParam (const QString &, const QString &);
+    virtual void parseParam (const TrieString &, const QString &);
     Runtime * runtime ();
     static Runtime::DurationItem * getDuration (NodePtr n);
     static bool isTimedMrl (const NodePtr & n);
@@ -646,7 +646,7 @@ public:
     KDE_NO_CDTOR_EXPORT ~LinkingBase () {}
     void deactivate ();
     KDE_NO_EXPORT bool expose () const { return false; }
-    void parseParam (const QString & name, const QString & value);
+    void parseParam (const TrieString & name, const QString & value);
     ConnectionPtr mediatype_activated;
     ConnectionPtr mediatype_attach;
     QString href;
@@ -673,7 +673,7 @@ public:
     void activate ();
     KDE_NO_EXPORT const char * nodeName () const { return tag.ascii (); }
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
-    void parseParam (const QString & name, const QString & value);
+    void parseParam (const TrieString & name, const QString & value);
     SizeType * coords;
     int nr_coords;
     const QString tag;
@@ -694,7 +694,7 @@ public:
     bool expose () const;
     void childDone (NodePtr child);
     virtual SurfacePtr getSurface (NodePtr node);
-    virtual void parseParam (const QString & name, const QString & value);
+    virtual void parseParam (const TrieString & name, const QString & value);
     virtual bool handleEvent (EventPtr event);
     NodeRefListPtr listeners (unsigned int event_id);
     void positionVideoWidget (); // for 'video' and 'ref' nodes

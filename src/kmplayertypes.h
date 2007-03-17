@@ -21,6 +21,7 @@
 
 #include <stdint.h>
 #include "kmplayer_def.h"
+#include "triestring.h"
 
 namespace KMPlayer {
 
