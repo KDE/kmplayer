@@ -1491,10 +1491,12 @@ NodePtr SomeNode::childFromTag (const QString & t) {
 }
 
 QWidget * TypeNode::createWidget (QWidget * parent) {
-    const char * ctype = getAttribute (QString ("TYPE")).ascii ();
-    QString value = getAttribute (QString ("VALUE"));
+    const char * ctype = getAttribute (StringPool::attr_type).ascii ();
+    QString value = getAttribute (StringPool::attr_value);
     if (!strcmp (ctype, "range")) {
-        w = new QSlider (getAttribute (QString ("START")).toInt (), getAttribute (QString ("END")).toInt (), 1, value.toInt (), Qt::Horizontal, parent);
+        w = new QSlider (getAttribute (QString ("START")).toInt (),
+                getAttribute (StringPool::attr_end).toInt (),
+                1, value.toInt (), Qt::Horizontal, parent);
     } else if (!strcmp (ctype, "num") || !strcmp (ctype,  "string")) {
         w = new QLineEdit (value, parent);
     } else if (!strcmp (ctype, "bool")) {
@@ -1505,7 +1507,7 @@ QWidget * TypeNode::createWidget (QWidget * parent) {
         QComboBox * combo = new QComboBox (parent);
         for (NodePtr e = firstChild (); e; e = e->nextSibling ())
             if (e->isElementNode () && !strcmp (e->nodeName (), "item"))
-                combo->insertItem (convertNode <Element> (e)->getAttribute (QString ("VALUE")));
+                combo->insertItem (convertNode <Element> (e)->getAttribute (StringPool::attr_value));
         combo->setCurrentItem (value.toInt ());
         w = combo;
     } else if (!strcmp (ctype, "tree")) {
@@ -1516,8 +1518,8 @@ QWidget * TypeNode::createWidget (QWidget * parent) {
 
 void TypeNode::changedXML (QTextStream & out) {
     if (!w) return;
-    const char * ctype = getAttribute (QString ("TYPE")).ascii ();
-    QString value = getAttribute (QString ("VALUE"));
+    const char * ctype = getAttribute (StringPool::attr_type).ascii ();
+    QString value = getAttribute (StringPool::attr_value);
     QString newvalue;
     if (!strcmp (ctype, "range")) {
         newvalue = QString::number (static_cast <QSlider *> (w)->value ());
@@ -1532,7 +1534,7 @@ void TypeNode::changedXML (QTextStream & out) {
         kdDebug() << "Unknown type:" << ctype << endl;
     if (value != newvalue) {
         value = newvalue;
-        setAttribute (QString ("VALUE"), newvalue);
+        setAttribute (StringPool::attr_value, newvalue);
         out << outerXML ();
     }
 }
@@ -1630,7 +1632,7 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
             QFontMetrics metrics (table->font ());
             for (elm=elm->firstChild (); elm; elm=elm->nextSibling (), row++) {
                 TypeNode * tn = convertNode <TypeNode> (elm);
-                QString name = tn->getAttribute (QString ("NAME"));
+                QString name = tn->getAttribute (StringPool::attr_name);
                 m_configframe->table->setText (row, 0, name);
                 int strwid = metrics.boundingRect (name).width ();
                 if (strwid > first_column_width)

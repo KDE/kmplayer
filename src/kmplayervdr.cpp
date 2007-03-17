@@ -683,13 +683,15 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
                 if (!node->isElementNode ())
                     continue; // some text sneaked in ?
                 Element * elm = convertNode <Element> (node);
-                if (elm->getAttribute (QString ("TYPE")) != QString ("tree"))
+                if (elm->getAttribute (KMPlayer::StringPool::attr_type) !=
+                        QString ("tree"))
                     continue;
                 for (NodePtr n = elm->firstChild (); n; n = n->nextSibling ()) {
                     if (!n->isElementNode () || strcmp (n->nodeName (), "Port"))
                         continue;
                     Element * e = convertNode <Element> (n);
-                    QString portatt = e->getAttribute (QString ("VALUE"));
+                    QString portatt = e->getAttribute (
+                            KMPlayer::StringPool::attr_value);
                     int port;
                     QListViewItem *pi = new QListViewItem (vitem, i18n ("Port ") + portatt);
                     port = portatt.toInt ();
@@ -698,8 +700,10 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
                                 strcmp (in->nodeName (), "Input"))
                             continue;
                         Element * i = convertNode <Element> (in);
-                        QString inp = i->getAttribute (QString ("NAME"));
-                        int enc = i->getAttribute (QString ("VALUE")).toInt ();
+                        QString inp = i->getAttribute (
+                                KMPlayer::StringPool::attr_name);
+                        int enc = i->getAttribute (
+                                KMPlayer::StringPool::attr_value).toInt ();
                         QListViewItem * ii = new XVTreeItem(pi, inp, port, enc);
                         if (m_xvport == port && enc == m_xvencoding) {
                             ii->setSelected (true);
