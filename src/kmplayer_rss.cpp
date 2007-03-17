@@ -126,6 +126,6 @@ KDE_NO_EXPORT bool RSS::Item::handleEvent (EventPtr event) {
     return true;
 }
 
-void RSS::Enclosure::closed () {
+KDE_NO_EXPORT void RSS::Enclosure::closed () {
     src = getAttribute (StringPool::attr_url);
 }

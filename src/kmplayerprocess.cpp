@@ -1491,7 +1491,8 @@ NodePtr SomeNode::childFromTag (const QString & t) {
 }
 
 QWidget * TypeNode::createWidget (QWidget * parent) {
-    const char * ctype = getAttribute (StringPool::attr_type).ascii ();
+    QString type_attr = getAttribute (StringPool::attr_type);
+    const char * ctype = type_attr.ascii ();
     QString value = getAttribute (StringPool::attr_value);
     if (!strcmp (ctype, "range")) {
         w = new QSlider (getAttribute (QString ("START")).toInt (),
@@ -1518,7 +1519,8 @@ QWidget * TypeNode::createWidget (QWidget * parent) {
 
 void TypeNode::changedXML (QTextStream & out) {
     if (!w) return;
-    const char * ctype = getAttribute (StringPool::attr_type).ascii ();
+    QString type_attr = getAttribute (StringPool::attr_type);
+    const char * ctype = type_attr.ascii ();
     QString value = getAttribute (StringPool::attr_value);
     QString newvalue;
     if (!strcmp (ctype, "range")) {

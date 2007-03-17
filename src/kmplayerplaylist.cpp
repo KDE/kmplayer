@@ -579,7 +579,7 @@ void Element::resetParam (const TrieString & param, int mid) {
 void Element::setAttribute (const TrieString & name, const QString & value) {
     for (AttributePtr a = m_attributes->first (); a; a = a->nextSibling ())
         if (name == a->name ()) {
-            static_cast <Attribute *> (a.ptr ())->setValue (value);
+            a->setValue (value);
             return;
         }
     m_attributes->append (new Attribute (name, value));
