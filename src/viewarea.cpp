@@ -1457,7 +1457,7 @@ KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
         killTimer (m_repaint_timer);
         m_repaint_timer = 0;
         //repaint (m_repaint_rect, false);
-        syncVisual (m_repaint_rect.unite (SRect (0, 0, width (), height ())));
+        syncVisual (m_repaint_rect.intersect (SRect (0, 0, width (), height ())));
     } else {
         kdError () << "unknown timer " << e->timerId () << " " << m_repaint_timer << endl;
         killTimer (e->timerId ());
