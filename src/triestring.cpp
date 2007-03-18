@@ -17,18 +17,18 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 **/
 
-#include <config.h>
-#include <stdio.h>
-#include <stdlib.h>
-
 #ifdef TEST_TRIE
 # define KMPLAYER_NO_EXPORT
 # define KMPLAYER_EXPORT
 # define KDE_NO_EXPORT
 # define KDE_NO_CDTOR_EXPORT
 #else
+# include <config.h>
 # include "kmplayer_def.h"
 #endif
+#include <stdio.h>
+#include <stdlib.h>
+
 
 #include "triestring.h"
 
@@ -293,7 +293,7 @@ bool TrieString::startsWith (const char * str) const {
     if (!str)
         return true;
     int pos = 0;
-    return trieStringStarts (node, str, pos) == 1;
+    return trieStringStarts (node, str, pos) != 0;
 }
 
 void TrieString::clear () {
@@ -486,7 +486,9 @@ int main (int, char **) {
     printf("%s < %s %d\n", qs2.ascii(), "req", s2 < TrieString("req"));
     printf("%s < %s %d\n", qs2.ascii(), "regiinName", s2 < TrieString("regiinName"));
     printf("%s < %s %d\n", qs2.ascii(), "regionNeme", s2 < TrieString("regionNeme"));
+    printf("%s startsWith %s %d\n", s1.toString().ascii(), "region", s1.startsWith ("region"));
     printf("%s startsWith %s %d\n", qs2.ascii(), "region", s2.startsWith ("region"));
+    printf("%s startsWith %s %d\n", qs2.ascii(), "regi", s2.startsWith ("regi"));
     printf("%s startsWith %s %d\n", qs2.ascii(), "regian", s2.startsWith ("regian"));
     printf("%s startsWith %s %d\n", qs2.ascii(), "regio", s2.startsWith ("regio"));
     printf("%s startsWith %s %d\n", qs2.ascii(), "zegio", s2.startsWith ("zegio"));
