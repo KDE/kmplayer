@@ -193,7 +193,10 @@ KDE_NO_CDTOR_EXPORT Runtime::Runtime (NodePtr e)
  : timingstate (timings_reset), fill (fill_unknown),
    element (e), repeat_count (0) {}
 
-KDE_NO_CDTOR_EXPORT Runtime::~Runtime () {}
+KDE_NO_CDTOR_EXPORT Runtime::~Runtime () {
+    if (start_timer || duration_timer) // ugh
+        reset ();
+}
 
 KDE_NO_EXPORT void Runtime::reset () {
     if (element) {
@@ -746,7 +749,7 @@ bool AnimateGroupData::parseParam (const TrieString &name, const QString &val) {
         if (element)
             target_element = findLocalNodeById (element, val);
     } else if (name == "attribute" || name == "attributeName") {
-        changed_attribute = val;
+        changed_attribute = TrieString (val);
     } else if (name == "to") {
         change_to = val;
     } else
@@ -1851,7 +1854,8 @@ KDE_NO_EXPORT bool SMIL::TimedMrl::handleEvent (EventPtr event) {
             break;
         }
         default:
-            runtime ()->processEvent (id);
+            if (m_runtime)
+                m_runtime->processEvent (id);
     }
     return true;
 }
@@ -2538,6 +2542,8 @@ KDE_NO_EXPORT void SMIL::AVMediaType::undefer () {
 }
 
 KDE_NO_EXPORT void SMIL::AVMediaType::endOfFile () {
+    if (!active())
+        return; // backend eof after a reset
     MediaTypeRuntime * mr = static_cast <MediaTypeRuntime *> (runtime ());
     mr->postpone_lock = 0L;
     mr->propagateStop (true);
