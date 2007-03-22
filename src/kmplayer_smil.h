@@ -123,7 +123,6 @@ public:
         timings_reset = 0, timings_began, timings_started, timings_stopped
     };
     enum DurationTime { begin_time = 0, duration_time, end_time, durtime_last };
-    enum Fill { fill_unknown, fill_freeze, fill_hold };
     enum Duration {
         dur_infinite = -1, dur_timer = 0, dur_media,
         dur_activated, dur_inbounds, dur_outbounds,
@@ -163,7 +162,6 @@ private:
     void setDurationItem (DurationTime item, const QString & val);
 public:
     TimingState timingstate;
-    Fill fill;
 protected:
     NodePtrW element;
     TimerInfoPtrW start_timer;
@@ -510,6 +508,10 @@ public:
  */
 class KMPLAYER_NO_EXPORT TimedMrl : public Mrl {
 public:
+    enum Fill {
+        fill_default, fill_inherit, fill_remove, fill_freeze,
+        fill_hold, fill_transition, fill_auto
+    };
     ~TimedMrl ();
     void closed ();
     void activate ();
@@ -528,8 +530,13 @@ public:
     Runtime * runtime ();
     static Runtime::DurationItem * getDuration (NodePtr n);
     static bool isTimedMrl (const NodePtr & n);
+    static bool keepContent (NodePtr n);
+    static Fill getDefaultFill (NodePtr n);
     unsigned int begin_time;
     unsigned int finish_time;
+    Fill fill;
+    Fill fill_def;
+    Fill fill_active;
 protected:
     TimedMrl (NodePtr & d, short id);
     virtual Runtime * getNewRuntime ();
@@ -576,7 +583,6 @@ public:
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "par"; }
     void begin ();
-    void finish ();
     void reset ();
     void childDone (NodePtr child);
 };
@@ -590,7 +596,6 @@ public:
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "seq"; }
     void begin ();
-    void finish ();
     void childDone (NodePtr child);
 protected:
     KDE_NO_CDTOR_EXPORT Seq (NodePtr & d, short id) : GroupBase(d, id) {}

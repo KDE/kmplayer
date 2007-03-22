@@ -381,13 +381,14 @@ CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, const SRect & rect)
  : clip (rect), cairo_surface (cs) {
     cr = cairo_create (cs);
     cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
-    cairo_clip_preserve (cr);
+    cairo_clip (cr);
     cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
     cairo_set_tolerance (cr, 0.5 );
 # ifndef USE_CAIRO_GLITZ
     cairo_push_group (cr);
 #endif
     cairo_set_source_rgb (cr, 0, 0, 0);
+    cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
     cairo_fill (cr);
 }
 
@@ -510,14 +511,11 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
-    //kdDebug() << "Visit " << img->nodeName() << endl;
+    //kdDebug() << "Visit " << img->nodeName() << " " << img->src << endl;
     ImageRuntime * ir = static_cast <ImageRuntime *> (img->runtime ());
     SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (img->region_node);
     ImageData * id = ir->cached_img.data.ptr ();
-    if (rb && rb->surface && id && !id->isEmpty () &&
-            (ir->timingstate == Runtime::timings_started ||
-             (ir->timingstate == Runtime::timings_stopped &&
-              ir->fill == Runtime::fill_freeze))) {
+    if (rb && rb->surface && id && !id->isEmpty () && img->keepContent (img)) {
         SRect rect = rb->surface->bounds;
         Single x, y, w = rect.width(), h = rect.height();
         if (id && !id->isEmpty () && id->width() > 0 && id->height() > 0 &&
@@ -580,10 +578,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     TextRuntime * td = static_cast <TextRuntime *> (txt->runtime ());
     //kdDebug() << "Visit " << txt->nodeName() << " " << td->text << endl;
     SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (txt->region_node);
-    if (rb && rb->surface &&
-            (td->timingstate == Runtime::timings_started ||
-             (td->timingstate == Runtime::timings_stopped &&
-              td->fill == Runtime::fill_freeze))) {
+    if (rb && rb->surface && txt->keepContent (txt)) {
         SRect rect = rb->surface->bounds;
         Single x, y, w = rect.width(), h = rect.height();
         td->sizes.applyRegPoints (txt, rect.width(), rect.height(), x, y, w, h);
