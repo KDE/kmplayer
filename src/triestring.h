@@ -42,6 +42,7 @@ public:
     QString toString () const;
     bool isNull () const;
     void clear ();
+    bool startsWith (const TrieString & s) const;
     bool startsWith (const char * str) const;
     TrieString & operator = (const TrieString & s);
     TrieString & operator = (const char * utf8);
@@ -74,6 +75,7 @@ public:
     static TrieString attr_target;
     static TrieString attr_type;
     static TrieString attr_value;
+    static TrieString attr_fill;
 };
 
 inline bool TrieString::isNull () const {

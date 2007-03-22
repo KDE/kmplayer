@@ -287,6 +287,13 @@ TrieString::~TrieString () {
         node->unref ();
 }
 
+bool TrieString::startsWith (const TrieString & s) const {
+    for (TrieNode * n = node; n; n = n->parent)
+        if (n == s.node)
+            return true;
+    return s.node ? false : true;
+}
+
 bool TrieString::startsWith (const char * str) const {
     if (!node)
         return !str ? true : false;
@@ -387,6 +394,7 @@ TrieString StringPool::attr_region;
 TrieString StringPool::attr_target;
 TrieString StringPool::attr_type;
 TrieString StringPool::attr_value;
+TrieString StringPool::attr_fill;
 
 void StringPool::init() {
     attr_width = "width";
@@ -404,6 +412,7 @@ void StringPool::init() {
     attr_id = "id";
     attr_href = "href";
     attr_height = "height";
+    attr_fill = "fill";
     attr_end = "end";
     attr_dur = "dur";
     attr_bottom = "bottom";
@@ -430,6 +439,7 @@ void StringPool::reset() {
     attr_target.clear ();
     attr_type.clear ();
     attr_value.clear ();
+    attr_fill.clear ();
     if (root_trie->first_child) {
         qWarning ("Trie not empty");
         dumpTrie ();
@@ -494,6 +504,9 @@ int main (int, char **) {
     printf("%s startsWith %s %d\n", qs2.ascii(), "zegio", s2.startsWith ("zegio"));
     printf("%s startsWith %s %d\n", qs2.ascii(), "r", s2.startsWith ("r"));
     printf("%s startsWith %s %d\n", qs2.ascii(), "q", s2.startsWith ("q"));
+    TrieString fnt ("font");
+    printf("%s startsWith %s %d\n", s8.toString().ascii(), fnt.toString().ascii(), s8.startsWith(fnt));
+    printf("%s startsWith %s %d\n", s8.toString().ascii(), s14.toString().ascii(), s8.startsWith(s14));
     }
     dump (root_trie, 0);
     StringPool::reset();
