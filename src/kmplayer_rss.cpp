@@ -96,7 +96,6 @@ KDE_NO_EXPORT void RSS::Item::activate () {
                 n->setInfoMessage (s);
                 if (!enclosure && !s.isEmpty ()) {
                     setState (state_activated);
-                    n->setCurrent (this);
                     begin ();
                     timer = document ()->setTimeout (this, 5000+s.length()*200);
                     return;

@@ -682,7 +682,12 @@ Mrl * Mrl::mrl () {
 }
 
 void Mrl::endOfFile () {
-    finish ();
+    if (state == state_deferred &&
+            !isPlayable () && firstChild ()) { // if backend added child links
+        state = state_activated;
+        firstChild ()->activate ();
+    } else
+        finish ();
 }
 
 void Mrl::activate () {
@@ -1360,7 +1365,6 @@ void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool se
         parser.parse (in);
     for (NodePtr e = root; e; e = e->parentNode ())
         e->closed ();
-    dumpTrie();
     //doc->normalize ();
     //kdDebug () << root->outerXML ();
 }

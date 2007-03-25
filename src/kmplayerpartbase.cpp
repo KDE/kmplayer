@@ -1105,6 +1105,11 @@ void Source::stateElementChanged (Node * elm, Node::State os, Node::State ns) {
                 (os == Node::state_deferred && ns > Node::state_deferred)) &&
             elm == m_document) {
         m_player->process ()->pause ();
+    } else if (ns == Node::state_activated &&
+            (!m_current || !m_current->active() || !m_current->isPlayable ()) &&
+            elm->isPlayable () &&
+            elm->mrl ()->view_mode == Mrl::SingleMode) {
+        m_current = elm;
     }
     if (elm->expose ()) {
         if (ns == Node::state_activated || ns == Node::state_deactivated)
@@ -1675,6 +1680,8 @@ KDE_NO_EXPORT void URLSource::kioResult (KIO::Job * job) {
         kdWarning () << "Spurious kioData" << endl;
         return;
     }
+    m_player->updateStatus ("");
+    m_player->setLoaded (100);
     if (previnfo)
         previnfo->next = rinfo->next;
     else

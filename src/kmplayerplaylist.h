@@ -578,7 +578,7 @@ class KMPLAYER_EXPORT PlayListNotify {
 public:
     virtual ~PlayListNotify () {}
     /**
-     * Ask for setting this node current and playing a video/audio mrl
+     * Ask for playing a video/audio mrl by backend players
      * If returning false, the element will be set to finished
      */
     virtual bool requestPlayURL (NodePtr mrl) = 0;
@@ -586,10 +586,6 @@ public:
      * Called by an unresolved Mrl, check if this node points to a playlist
      */
     virtual bool resolveURL (NodePtr mrl) = 0;
-    /**
-     * Ask for setting this node current and playing a video/audio mrl
-     */
-    virtual bool setCurrent (NodePtr mrl) = 0;
     /**
      * Element has activated or deactivated notification
      */
@@ -718,7 +714,7 @@ public:
     NodePtr getElementById (const QString & id);
     NodePtr getElementById (NodePtr start, const QString & id, bool inter_doc);
     /** All nodes have shared pointers to Document,
-     * so explicitly dispose it (calls clean and set m_doc to 0L)
+     * so explicitly dispose it (calls clear and set m_doc to 0L)
      * */
     void dispose ();
     virtual NodePtr childFromTag (const QString & tag);
@@ -731,9 +727,9 @@ public:
      * Ask for TimerEvent for Node n in ms milli-seconds.
      * Returns weak ref to TimerInfo ptr, which is an item in the timers list
      */
-    void timeOfDay (struct timeval &);
     TimerInfoPtrW setTimeout (NodePtr n, int ms, unsigned id=0);
     void cancelTimer (TimerInfoPtr ti);
+    void timeOfDay (struct timeval &);
     PostponePtr postpone ();
     /**
      * Called by PlayListNotify, creates TimerEvent on first item in timers. 
@@ -749,7 +745,6 @@ public:
      */
     virtual SurfacePtr getSurface (NodePtr node);
 
-    NodePtrW rootLayout;
     List <TimerInfo> timers; //FIXME: make as connections
     PlayListNotify * notify_listener;
     unsigned int m_tree_version;

@@ -1215,9 +1215,6 @@ KDE_NO_EXPORT void SMIL::Smil::activate () {
     //kdDebug () << "Smil::activate" << endl;
     current_av_media_type = NodePtr ();
     resolved = true;
-    PlayListNotify * n = document()->notify_listener;
-    if (n)
-        n->setCurrent (this);
     SMIL::Layout * layout = convertNode <SMIL::Layout> (layout_node);
     if (layout)
         layout->surface = Mrl::getSurface (layout_node);
