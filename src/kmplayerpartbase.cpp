@@ -1394,8 +1394,10 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
                         m_current->activate (); // calls requestPlayUrl
                     }
                     m_back_request = 0L;
-                } else
+                } else if(mrl)
+		{
                     mrl->endOfFile (); // set node to finished
+		}
                 if (m_player->view() &&
                         (!mrl || mrl->view_mode != Mrl::WindowMode))
                     static_cast<View*>(m_player->view())->viewArea()->repaint();
