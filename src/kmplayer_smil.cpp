@@ -1896,6 +1896,8 @@ Runtime::DurationItem * SMIL::TimedMrl::getDuration (NodePtr n) {
 }
 
 KDE_NO_EXPORT bool SMIL::TimedMrl::keepContent (NodePtr n) {
+    if (n->state == state_began)
+        return true;
     if (isTimedMrl (n)) {
         TimedMrl * tm = convertNode <SMIL::TimedMrl> (n);
         NodePtr p = n->parentNode ();
@@ -1911,20 +1913,18 @@ KDE_NO_EXPORT bool SMIL::TimedMrl::keepContent (NodePtr n) {
                             (p->id == SMIL::id_node_par || p->lastChild() == n);
                     case fill_default:  // as freeze when no duration is set
                     case fill_auto:     // or when parent finished w/o duration
-                        return ((p->unfinished() &&
-                                    (p->id == SMIL::id_node_par ||
-                                     p->lastChild() == n)) ||
-                                (p->active () &&
-                                 p->id != SMIL::id_node_par &&
-                                 p->lastChild() == n)) &&
+                        return keepContent (p) &&
+                            (p->id == SMIL::id_node_par ||
+                             p->lastChild() == n) &&
                             tm->runtime ()->durTime ().durval == Runtime::dur_timer &&
                             !tm->runtime ()->durTime ().offset;
                     default:
                         break;
                 }
         }
+        return false;
     }
-    return false;
+    return true; // FIXME check for anchor ..
 }
 
 KDE_NO_EXPORT SMIL::TimedMrl::Fill SMIL::TimedMrl::getDefaultFill (NodePtr n) {
