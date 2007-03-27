@@ -301,6 +301,17 @@ private:
     QString change_from_unit;
 };
 
+class KMPLAYER_NO_EXPORT MouseListeners {
+public:
+    MouseListeners();
+
+    NodeRefListPtr listeners (unsigned int event_id);
+
+    NodeRefListPtr m_ActionListeners;      // mouse clicked
+    NodeRefListPtr m_OutOfBoundsListeners; // mouse left
+    NodeRefListPtr m_InBoundsListeners;    // mouse entered
+};
+
 /**
  * Translates string to deci-seconds or 'special' high number
  */
@@ -455,9 +466,7 @@ public:
      */
     bool has_mouse;
 private:
-    NodeRefListPtr m_ActionListeners;      // mouse clicked
-    NodeRefListPtr m_OutOfBoundsListeners; // mouse left
-    NodeRefListPtr m_InBoundsListeners;    // mouse entered
+    MouseListeners mouse_listeners;
     NodeRefListPtr m_AttachedMediaTypes;   // active attached mediatypes
 };
 
@@ -679,9 +688,11 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return tag.ascii (); }
     KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
     void parseParam (const TrieString & name, const QString & value);
+    NodeRefListPtr listeners (unsigned int event_id);
     SizeType * coords;
     int nr_coords;
     const QString tag;
+    MouseListeners mouse_listeners;
 };
 
 /**
@@ -714,9 +725,7 @@ public:
     unsigned int trans_steps;
     enum { sens_opaque, sens_transparent, sens_percentage } sensitivity;
 protected:
-    NodeRefListPtr m_ActionListeners;      // mouse clicked
-    NodeRefListPtr m_OutOfBoundsListeners; // mouse left
-    NodeRefListPtr m_InBoundsListeners;    // mouse entered
+    MouseListeners mouse_listeners;
     NodeRefListPtr m_MediaAttached;        // mouse entered
     ConnectionPtr region_sized;            // attached region is sized
     ConnectionPtr region_paint;            // attached region needs painting

@@ -1147,6 +1147,25 @@ KDE_NO_EXPORT void AudioVideoData::postpone (bool b) {
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_CDTOR_EXPORT MouseListeners::MouseListeners () :
+   m_ActionListeners (new NodeRefList),
+   m_OutOfBoundsListeners (new NodeRefList),
+   m_InBoundsListeners (new NodeRefList) {}
+
+NodeRefListPtr MouseListeners::listeners (unsigned int eid) {
+    switch (eid) {
+        case event_activated:
+            return m_ActionListeners;
+        case event_inbounds:
+            return m_InBoundsListeners;
+        case event_outbounds:
+            return m_OutOfBoundsListeners;
+    }
+    return 0L;
+}
+
+//-----------------------------------------------------------------------------
+
 static Element * fromScheduleGroup (NodePtr & d, const QString & tag) {
     const char * ctag = tag.ascii ();
     if (!strcmp (ctag, "par"))
@@ -1610,9 +1629,6 @@ NodeRefListPtr SMIL::RegionBase::listeners (unsigned int eid) {
 KDE_NO_CDTOR_EXPORT SMIL::Region::Region (NodePtr & d)
  : RegionBase (d, id_node_region),
    has_mouse (false),
-   m_ActionListeners (new NodeRefList),
-   m_OutOfBoundsListeners (new NodeRefList),
-   m_InBoundsListeners (new NodeRefList),
    m_AttachedMediaTypes (new NodeRefList) {}
 
 KDE_NO_EXPORT NodePtr SMIL::Region::childFromTag (const QString & tag) {
@@ -1649,13 +1665,10 @@ bool SMIL::Region::handleEvent (EventPtr event) {
 }
 
 NodeRefListPtr SMIL::Region::listeners (unsigned int eid) {
+    NodeRefListPtr l = mouse_listeners.listeners (eid);
+    if (l)
+        return l;
     switch (eid) {
-        case event_activated:
-            return m_ActionListeners;
-        case event_inbounds:
-            return m_InBoundsListeners;
-        case event_outbounds:
-            return m_OutOfBoundsListeners;
         case mediatype_attached:
             return m_AttachedMediaTypes;
     }
@@ -2307,14 +2320,18 @@ void SMIL::Area::parseParam (const TrieString & para, const QString & val) {
         LinkingBase::parseParam (para, val);
 }
 
+KDE_NO_EXPORT NodeRefListPtr SMIL::Area::listeners (unsigned int id) {
+    NodeRefListPtr l = mouse_listeners.listeners (id);
+    if (l)
+        return l;
+    return Element::listeners (id);
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, short id)
  : TimedMrl (d, id), m_type (t), bitrate (0), trans_step (0), trans_steps (0),
    sensitivity (sens_opaque),
-   m_ActionListeners (new NodeRefList),
-   m_OutOfBoundsListeners (new NodeRefList),
-   m_InBoundsListeners (new NodeRefList),
    m_MediaAttached (new NodeRefList) {
     view_mode = Mrl::WindowMode;
 }
@@ -2512,13 +2529,10 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
 }
 
 KDE_NO_EXPORT NodeRefListPtr SMIL::MediaType::listeners (unsigned int id) {
+    NodeRefListPtr l = mouse_listeners.listeners (id);
+    if (l)
+        return l;
     switch (id) {
-        case event_activated:
-            return m_ActionListeners;
-        case event_inbounds:
-            return m_InBoundsListeners;
-        case event_outbounds:
-            return m_OutOfBoundsListeners;
         case mediatype_attached:
             return m_MediaAttached;
     }

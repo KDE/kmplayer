@@ -1095,8 +1095,18 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
         }
         if (event == event_pointer_moved)
             cursor.setShape (Qt::PointingHandCursor);
-        else if (event == event_pointer_clicked)
-            followLink (area);
+        else if (event == event_pointer_clicked) {
+            NodeRefListPtr nl = area->listeners (event);
+            if (nl)
+                for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
+                    if (c->data)
+                        c->data->accept (this);
+                    if (!node->active ())
+                        return;
+                }
+            if (event == event_pointer_clicked && !area->href.isEmpty ())
+                followLink (area);
+        }
     }
 }
 
