@@ -542,9 +542,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
             matrix.getXYWH (x, y, w, h);
             SRect reg_rect (x, y, w, h);
             x = y = 0;
-            w = xs * id->width();
-            h = ys * id->height();
-            ir->sizes.applyRegPoints(img, rect.width(), rect.height(), x,y,w,h);
+            Single w1 = w = xs * id->width();
+            Single h1 = h = ys * id->height();
+            ir->sizes.calcSizes(img, rect.width(), rect.height(), x, y, w1, h1);
             img->cached_rect = SRect (x, y, w, h);
             matrix.getXYWH (x, y, w, h);
             SRect clip_rect = clip.intersect (
@@ -581,7 +581,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     if (rb && rb->surface && txt->keepContent (txt)) {
         SRect rect = rb->surface->bounds;
         Single x, y, w = rect.width(), h = rect.height();
-        td->sizes.applyRegPoints (txt, rect.width(), rect.height(), x, y, w, h);
+        td->sizes.calcSizes (txt, rect.width(), rect.height(), x, y, w, h);
         matrix.getXYWH (x, y, w, h);
         /* QTextEdit * edit = new QTextEdit;
         edit->setReadOnly (true);
@@ -1095,7 +1095,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
         }
         if (event == event_pointer_moved)
             cursor.setShape (Qt::PointingHandCursor);
-        else if (event == event_pointer_clicked) {
+        else {
             NodeRefListPtr nl = area->listeners (event);
             if (nl)
                 for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
