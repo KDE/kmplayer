@@ -1380,7 +1380,7 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
                     if (m_back_request->mrl ()->view_mode == Mrl::SingleMode)
                         // jump in pl
                         m_current = m_back_request;
-                    else
+                    else if (mrl)
                         // overlapping SMIL audio/video
                         mrl->endOfFile ();
                     if (m_current->id >= SMIL::id_node_first &&
