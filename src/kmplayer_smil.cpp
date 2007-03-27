@@ -1909,8 +1909,6 @@ Runtime::DurationItem * SMIL::TimedMrl::getDuration (NodePtr n) {
 }
 
 KDE_NO_EXPORT bool SMIL::TimedMrl::keepContent (NodePtr n) {
-    if (n->state == state_began)
-        return true;
     if (isTimedMrl (n)) {
         TimedMrl * tm = convertNode <SMIL::TimedMrl> (n);
         NodePtr p = n->parentNode ();
