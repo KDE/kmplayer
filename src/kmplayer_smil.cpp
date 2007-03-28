@@ -2811,7 +2811,7 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
             QImage *pix = new QImage (data);
             if (!pix->isNull ()) {
                 cached_img.data->image = pix;
-                if (SMIL::TimedMrl::keepContent (element))
+                if (mt->region_node && SMIL::TimedMrl::keepContent (element))
                     convertNode <SMIL::RegionBase> (mt->region_node)->repaint();
                 img_movie = new QMovie (data, data.size ());
                 img_movie->connectUpdate(this,SLOT(movieUpdated(const QRect&)));
