@@ -324,6 +324,7 @@ TrieString & TrieString::operator = (const char * utf8) {
     if (node)
         node->unref ();
     node = !utf8 ? 0L : trieInsert (utf8);
+    return *this;
 }
 
 QString TrieString::toString () const {

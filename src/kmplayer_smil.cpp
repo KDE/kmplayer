@@ -2472,7 +2472,7 @@ KDE_NO_EXPORT void SMIL::MediaType::positionVideoWidget () {
     Node * link = s ? s->current_av_media_type.ptr () : 0L;
     if (rb && (link == this || !link)) {
         Single x = 0, y = 0, w = 0, h = 0;
-        if (unfinished () && link &&
+        if ((state == state_deferred || unfinished ()) && link &&
                 mtr->state () != Runtime::timings_stopped &&
                 !strcmp (nodeName (), "video") || !strcmp (nodeName (), "ref"))
             mtr->sizes.calcSizes (this, rb->w, rb->h, x, y, w, h);
