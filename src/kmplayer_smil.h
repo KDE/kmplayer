@@ -181,6 +181,7 @@ public:
     virtual void postpone (bool b);
     virtual void clipStart ();
     virtual void clipStop ();
+    virtual SRect intrinsicBounds ();
     CalculatedSizer sizes;
     PostponePtr postpone_lock;
     Fit fit;
@@ -212,6 +213,7 @@ public:
     virtual void postpone (bool b);
     virtual void clipStart ();
     virtual void clipStop ();
+    virtual SRect intrinsicBounds ();
     QMovie * img_movie;
     CachedImage cached_img;
     int frame_nr;
@@ -411,6 +413,7 @@ public:
      * repaints region, calls scheduleRepaint(x,y,w,h) on view
      */
     void repaint ();
+    void repaint (const SRect & rect);
     /**
      * calculate the relative x,y,w,h on the child region elements
      * given this element's w and h value

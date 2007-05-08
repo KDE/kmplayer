@@ -513,63 +513,39 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     //kdDebug() << "Visit " << img->nodeName() << " " << img->src << endl;
     ImageRuntime * ir = static_cast <ImageRuntime *> (img->runtime ());
-    SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (img->region_node);
     ImageData * id = ir->cached_img.data.ptr ();
-    if (rb && rb->surface && id && !id->isEmpty () && img->keepContent (img)) {
-        SRect rect = rb->surface->bounds;
-        Single x, y, w = rect.width(), h = rect.height();
-        if (id && !id->isEmpty () && id->width() > 0 && id->height() > 0 &&
-                (int)w > 0 && (int)h > 0) {
-            float xs = 1.0, ys = 1.0;
-            if (ir->fit == fit_meet) {
-                float pasp = 1.0 * id->width() / id->height();
-                float rasp = 1.0 * w / h;
-                if (pasp > rasp)
-                    xs = ys = 1.0 * w / id->width();
-                else
-                    xs = ys = 1.0 * h / id->height();
-            } else if (ir->fit == fit_fill) {
-                xs = 1.0 * w / id->width();
-                ys = 1.0 * h / id->height();
-            } else if (ir->fit == fit_slice) {
-                float pasp = 1.0 * id->width() / id->height();
-                float rasp = 1.0 * w / h;
-                if (pasp > rasp)
-                    xs = ys = 1.0 * h / id->height();
-                else
-                    xs = ys = 1.0 * w / id->width();
-            } // else fit_hidden
-            matrix.getXYWH (x, y, w, h);
-            SRect reg_rect (x, y, w, h);
-            x = y = 0;
-            Single w1 = w = xs * id->width();
-            Single h1 = h = ys * id->height();
-            ir->sizes.calcSizes(img, rect.width(), rect.height(), x, y, w1, h1);
-            img->cached_rect = SRect (x, y, w, h);
-            matrix.getXYWH (x, y, w, h);
-            SRect clip_rect = clip.intersect (
-                    reg_rect.intersect (SRect (x, y, w, h)));
-            if (!clip_rect.isValid ())
-                return;
-            cairo_pattern_t * pat = id->cairoImage (w, h, cairo_surface);
-            if (pat) {
-                cairo_matrix_t mat;
-                cairo_matrix_init_identity (&mat);
-                cairo_matrix_translate (&mat, -x, -y);
-                cairo_pattern_set_matrix (pat, &mat);
-                cairo_pattern_set_filter (pat, CAIRO_FILTER_FAST);
-                cairo_set_source (cr, pat);
-                cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
-                        clip_rect.width (), clip_rect.height ());
-                if (img->trans_steps > img->trans_step) { // only fadein for now
-                    cairo_save (cr);
-                    cairo_clip (cr);
-                    cairo_paint_with_alpha (
-                            cr, 1.0 * img->trans_step/img->trans_steps);
-                    cairo_restore (cr);
-                } else
-                    cairo_fill (cr);
-            }
+    SRect rect = ir->intrinsicBounds ();
+    if (id && !id->isEmpty () &&
+            img->keepContent (img) &&
+            rect.width() > 0 &&
+            id->width() > 0 && id->height() > 0) {
+        img->cached_rect = rect;
+        Single x = rect.x ();
+        Single y = rect.y ();
+        Single w = rect.width();
+        Single h = rect.height();
+        matrix.getXYWH (x, y, w, h);
+        SRect clip_rect = clip.intersect (SRect (x, y, w, h));
+        if (!clip_rect.isValid ())
+            return;
+        cairo_pattern_t * pat = id->cairoImage (w, h, cairo_surface);
+        if (pat) {
+            cairo_matrix_t mat;
+            cairo_matrix_init_identity (&mat);
+            cairo_matrix_translate (&mat, -x, -y);
+            cairo_pattern_set_matrix (pat, &mat);
+            cairo_pattern_set_filter (pat, CAIRO_FILTER_FAST);
+            cairo_set_source (cr, pat);
+            cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
+                    clip_rect.width (), clip_rect.height ());
+            if (img->trans_steps > img->trans_step) { // only fadein for now
+                cairo_save (cr);
+                cairo_clip (cr);
+                cairo_paint_with_alpha (
+                        cr, 1.0 * img->trans_step/img->trans_steps);
+                cairo_restore (cr);
+            } else
+                cairo_fill (cr);
         }
     }
 }

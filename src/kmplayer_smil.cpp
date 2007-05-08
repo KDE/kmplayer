@@ -1061,6 +1061,16 @@ KDE_NO_EXPORT void MediaTypeRuntime::clipStop () {
         mt->external_tree->deactivate ();
 }
 
+KDE_NO_EXPORT SRect MediaTypeRuntime::intrinsicBounds () {
+    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
+    SMIL::RegionBase * rb = mt
+        ? convertNode <SMIL::RegionBase> (mt->region_node)
+        : 0L;
+    if (rb && rb->surface)
+        return rb->surface->bounds;
+    return SRect (0, 0, 0, 0);
+}
+
 KDE_NO_EXPORT void MediaTypeRuntime::postpone (bool) {
 }
 
@@ -1559,6 +1569,13 @@ KDE_NO_EXPORT void SMIL::RegionBase::deactivate () {
 KDE_NO_EXPORT void SMIL::RegionBase::repaint () {
     if (surface)
         surface->repaint (0, 0, w, h);
+}
+
+KDE_NO_EXPORT void SMIL::RegionBase::repaint (const SRect & rect) {
+    if (surface) {
+        SRect r = SRect (0, 0, w, h).intersect (rect);
+        surface->repaint (r.x (), r.y (), r.width (), r.height ());
+    }
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::updateDimensions (SurfacePtr psurface) {
@@ -2513,7 +2530,9 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
             if (r && te && te->timer_info &&
                     te->timer_info->event_id == trans_timer_id) {
                 te->interval = ++trans_step < trans_steps;
-                r->repaint ();
+                SRect re = static_cast<MediaTypeRuntime*>(runtime())->
+                    intrinsicBounds (); // TODO unite w/ cached_rect
+                r->repaint (re);
                 ret = true;
                 break;
             }
@@ -2794,6 +2813,44 @@ KDE_NO_EXPORT void ImageRuntime::clipStop () {
     MediaTypeRuntime::clipStop ();
 }
 
+KDE_NO_EXPORT SRect ImageRuntime::intrinsicBounds () {
+    SRect rect = MediaTypeRuntime::intrinsicBounds ();
+    ImageData * id = cached_img.data.ptr ();
+    if (id && !id->isEmpty () &&
+            (int)rect.width () > 0 && (int)rect.height () > 0 &&
+            id->width() > 0 && id->height() > 0) {
+        Single x, y, w = id->width(), h = id->height();
+        sizes.calcSizes(element.ptr(), rect.width(), rect.height(), x, y, w, h);
+        switch (fit) {
+            case fit_meet: {
+                float pasp = 1.0 * id->width() / id->height();
+                float rasp = 1.0 * w / h;
+                if (pasp > rasp)
+                    h = id->height() * w / id->width();
+                else
+                    w = id->width() * h / id->height();
+                break;
+            }
+            case fit_hidden:
+                w = id->width();
+                h = id->height();
+                break;
+            case fit_slice: {
+                float pasp = 1.0 * id->width() / id->height();
+                float rasp = 1.0 * w / h;
+                if (pasp > rasp)
+                    w = id->width() * h / id->height();
+                else
+                    h = id->height() * w / id->width();
+                break;
+            }
+            default: {} // fit_fill
+        }
+        return SRect (x, y, w, h);
+    }
+    return SRect (0, 0, 0, 0);
+}
+
 KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
     NodePtr element_protect = element; // note element is weak
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
@@ -2811,8 +2868,10 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
             QImage *pix = new QImage (data);
             if (!pix->isNull ()) {
                 cached_img.data->image = pix;
-                if (mt->region_node && SMIL::TimedMrl::keepContent (element))
-                    convertNode <SMIL::RegionBase> (mt->region_node)->repaint();
+                if (mt->region_node && SMIL::TimedMrl::keepContent (element)) {
+                    SRect r = intrinsicBounds (); // TODO unite w/ cached_rect
+                    convertNode <SMIL::RegionBase>(mt->region_node)->repaint(r);
+                }
                 img_movie = new QMovie (data, data.size ());
                 img_movie->connectUpdate(this,SLOT(movieUpdated(const QRect&)));
                 img_movie->connectStatus (this, SLOT (movieStatus (int)));
@@ -2835,7 +2894,8 @@ KDE_NO_EXPORT void ImageRuntime::movieUpdated (const QRect &) {
             ASSERT (cached_img.data && cached_img.data->isEmpty ());
             cached_img.data->image = new QImage;
             *cached_img.data->image = (img_movie->framePixmap ());
-            convertNode <SMIL::RegionBase> (mt->region_node)->repaint ();
+            SRect r = intrinsicBounds (); // TODO unite w/ cached_rect
+            convertNode <SMIL::RegionBase>(mt->region_node)->repaint(r);
         }
     }
     if (timingstate != timings_started && img_movie)
@@ -2854,7 +2914,8 @@ KDE_NO_EXPORT void ImageRuntime::movieStatus (int s) {
 KDE_NO_EXPORT void ImageRuntime::movieResize (const QSize &) {
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
     if (mt && mt->region_node && SMIL::TimedMrl::keepContent (element)) {
-        convertNode <SMIL::RegionBase> (mt->region_node)->repaint ();
+        SRect r = intrinsicBounds (); // TODO unite w/ cached_rect
+        convertNode <SMIL::RegionBase>(mt->region_node)->repaint(r);
         //kdDebug () << "movieResize" << endl;
     }
 }
