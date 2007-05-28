@@ -16,7 +16,7 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-// gcc -o knpviewer `pkg-config --libs --cflags gtk+-x11-2.0` `pkg-config --libs --cflags dbus-glib-1` `nspr-config --libs --cflags` knpviewer.c
+// gcc -o knpplayer `pkg-config --libs --cflags gtk+-x11-2.0` `pkg-config --libs --cflags dbus-glib-1` `nspr-config --libs --cflags` knpplayer.c
 
 // http://devedge-temp.mozilla.org/library/manuals/2002/plugin/1.0/
 // http://dbus.freedesktop.org/doc/dbus/libdbus-tutorial.html
@@ -57,27 +57,38 @@ static int stdin_read_watch;
 static NPPluginFuncs np_funcs;       // plugin functions
 static NPP npp;                      // single instance of the plugin
 static NPSavedData *saved_data;
-static NPStream np_stream;
+static GSList *stream_list;
 static char stream_buf[4096];
-static int stream_buf_pos;
-static int stream_pos;
-static char np_created;
+typedef struct _StreamInfo {
+    NPStream np_stream;
+    void *notify_data;
+    int stream_buf_pos;
+    int stream_pos;
+    char *url;
+    char *mimetype;
+    char *target;
+} StreamInfo;
 
 static NP_GetMIMEDescriptionUPP npGetMIMEDescription;
 static NP_InitializeUPP npInitialize;
 static NP_ShutdownUPP npShutdown;
+
+static StreamInfo *addStream (const char *url, const char *mime, const char *target, void *notify, int req);
+//static StreamInfo *requestStream();
 
 
 //----------------%<-----------------------------------------------------------
 
 static NPError nsGetURL (NPP instance, const char* url, const char* target) {
     g_printf ("nsGetURL %s %s\n", url, target);
+    addStream (url, 0L, target, 0L, 1);
     return NPERR_NO_ERROR;
 }
 
 static NPError nsPostURL (NPP instance, const char *url,
         const char *target, uint32 len, const char *buf, NPBool file) {
     g_printf ("nsPostURL %s %s\n", url, target);
+    addStream (url, 0L, target, 0L, 1);
     return NPERR_NO_ERROR;
 }
 
@@ -128,13 +139,15 @@ static void nsReloadPlugins (NPBool reloadPages) {
     g_printf ("NPN_ReloadPlugins\n");
 }
 
-static NPError nsGetURLNotify (NPP instance, const char* url, const char* target, void *notifyData) {
+static NPError nsGetURLNotify (NPP instance, const char* url, const char* target, void *notify) {
     g_printf ("NPN_GetURLNotify %s %s\n", url, target);
+    addStream (url, 0L, target, notify, 1);
     return NPERR_NO_ERROR;
 }
 
-static NPError nsPostURLNotify (NPP instance, const char* url, const char* target, uint32 len, const char* buf, NPBool file, void *notifyData) {
+static NPError nsPostURLNotify (NPP instance, const char* url, const char* target, uint32 len, const char* buf, NPBool file, void *notify) {
     g_printf ("NPN_PostURLNotify\n");
+    addStream (url, 0L, target, notify, 1);
     return NPERR_NO_ERROR;
 }
 
@@ -197,49 +210,81 @@ static void nsForceRedraw (NPP instance) {
 
 static void shutDownPlugin() {
     if (npShutdown) {
-        if (np_created) {
+        if (npp) {
             np_funcs.destroy (npp, &saved_data);
-            np_created = 0;
+            free (npp);
+            npp = 0L;
         }
         npShutdown();
         npShutdown = 0;
-        free (npp);
     }
 }
 
+static void removeStream (NPReason reason) {
+    StreamInfo *si= (StreamInfo *) g_slist_nth_data (stream_list, 0);
+    if (si) {
+        g_printf ("data received %d\n", si->stream_pos);
+        stream_list = g_slist_remove (stream_list, si);
+        np_funcs.destroystream (npp, &si->np_stream, NPRES_DONE);
+        if (si->notify_data)
+            np_funcs.urlnotify (npp, si->url, reason, si->notify_data);
+        g_free (si->url);
+        if (si->mimetype)
+            g_free (si->mimetype);
+        if (si->target)
+            g_free (si->target);
+        free (si);
+        // if ((stream_list))
+        //     request for new stream
+    }
+    if (stdin_read_watch)
+        gdk_input_remove (stdin_read_watch);
+    stdin_read_watch = 0;
+}
+
+static StreamInfo *addStream (const char *url, const char *mime, const char *target, void *notify, int req) {
+    g_printf ("new stream\n");
+    StreamInfo *si = (StreamInfo *) malloc (sizeof (StreamInfo));
+    memset (si, 0, sizeof (StreamInfo));
+    si->np_stream.url = g_strdup (url);
+    if (mime)
+        si->mimetype = g_strdup (mime);
+    if (target)
+        si->target = g_strdup (target);
+    si->notify_data = notify;
+    stream_list = g_slist_append (stream_list, si);
+    //if (req)
+    //    call kmplayer for new stream
+    return si;
+}
+
 static void readStdin (gpointer d, gint src, GdkInputCondition cond) {
+    StreamInfo *si = (StreamInfo*) g_slist_nth_data (stream_list, 0);
+    if (!si) {
+        removeStream (NPRES_NETWORK_ERR);
+        return;
+    }
     gsize count = read (src,
-            stream_buf + stream_buf_pos,
-            sizeof (stream_buf) - stream_buf_pos);
+            stream_buf + si->stream_buf_pos,
+            sizeof (stream_buf) - si->stream_buf_pos);
     if (count > 0) {
         int32 sz;
-        static int stream_created = 0;
-        if (!stream_created) { // make a new stream func
-            g_printf ("new stream\n");
-            uint16 stype = NP_NORMAL;
-            np_stream.url = url;
-            np_funcs.newstream (npp, mimetype, &np_stream, 0, &stype);
-            stream_created = 1;
-        }
-        stream_buf_pos += count;
-        sz = np_funcs.writeready (npp, &np_stream);
+        si->stream_buf_pos += count;
+        sz = np_funcs.writeready (npp, &si->np_stream);
         if (sz > 0) {
-            sz = np_funcs.write (npp, &np_stream, stream_pos,
-                    stream_buf_pos > sz ? sz : stream_buf_pos,
+            sz = np_funcs.write (npp, &si->np_stream, si->stream_pos,
+                    si->stream_buf_pos > sz ? sz : si->stream_buf_pos,
                     stream_buf);
-            if (sz == stream_buf_pos)
-                stream_buf_pos = 0;
+            if (sz == si->stream_buf_pos)
+                si->stream_buf_pos = 0;
             else if (sz > 0) {
-                stream_buf_pos -= sz;
-                memmove (stream_buf, stream_buf + sz, stream_buf_pos);
+                si->stream_buf_pos -= sz;
+                memmove (stream_buf, stream_buf + sz, si->stream_buf_pos);
             }
-            stream_pos += sz;
+            si->stream_pos += sz;
         }
-    } else {
-        g_printf ("data received %d\n", stream_pos);
-        gdk_input_remove (stdin_read_watch);
-        np_funcs.destroystream (npp, &np_stream, NPRES_DONE);
-    }
+    } else
+        removeStream (NPRES_DONE);
 }
 
 static int initPlugin (const char *plugin_lib) {
@@ -322,16 +367,6 @@ static int initPlugin (const char *plugin_lib) {
         npShutdown = 0;
         return -1;
     }
-    npp = (NPP_t*)malloc (sizeof (NPP_t));
-    //np_err = np_funcs.getvalue ((void*)npp, NPPVpluginNeedsXEmbed, (void*)&np_value);
-    /*if (np_err != NPERR_NO_ERROR || !np_value) {
-        g_printf ("NPP_GetValue NPPVpluginNeedsXEmbed failure %d\n", np_err);
-        shutDownPlugin();
-        return -1;
-    }*/
-    fcntl (0, F_SETFL, fcntl (0, F_GETFL) | O_NONBLOCK);
-    stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, NULL);
-
     return 0;
 }
 
@@ -339,12 +374,19 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     NPWindow window;
     NPSetWindowCallbackStruct ws_info;
     NPError np_err;
+
+    npp = (NPP_t*)malloc (sizeof (NPP_t));
+    /*np_err = np_funcs.getvalue ((void*)npp, NPPVpluginNeedsXEmbed, (void*)&np_value);
+    if (np_err != NPERR_NO_ERROR || !np_value) {
+        g_printf ("NPP_GetValue NPPVpluginNeedsXEmbed failure %d\n", np_err);
+        shutDownPlugin();
+        return -1;
+    }*/
     np_err = np_funcs.newp (mime, npp, NP_EMBED, argc, argn, argv, saved_data);
     if (np_err != NPERR_NO_ERROR) {
         g_printf ("NPP_GetValue NPP_New failure %d\n", np_err);
         return -1;
     }
-    np_created = 1;
 
     memset (&window, 0, sizeof (NPWindow));
     window.x = 0;
@@ -363,15 +405,25 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     return 0;
 }
 
-static int play() {
-    socket_id = gtk_socket_get_id (GTK_SOCKET (xembed));
-    if (!initPlugin (plugin)) {
+static gpointer newStream (const char *url, const char *mime) {
+    StreamInfo *si;
+    uint16 stype = NP_NORMAL;
+    if (!npp) {
         char *argn[] = { "WIDTH", "HEIGHT", "SRC", "debug" };
         char *argv[] = { "320", "240", url, "yes" };
-        return newPlugin (mimetype, 2, argn, argv);
+        if (initPlugin (plugin) || newPlugin (mimetype, 2, argn, argv))
+            return 0L;
     }
-    return -1;
+    si = addStream (url, mime, 0L, 0L, 0);
+    if (stdin_read_watch || !si) {
+        g_printerr ("startStream watch:%d list:%d\n", !!stdin_read_watch, !!si);
+        return 0L;
+    }
+    stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, NULL);
+    np_funcs.newstream (npp, si->mimetype, &si->np_stream, 0, &stype);
+    return si;
 }
+
 //----------------%<-----------------------------------------------------------
 
 static DBusHandlerResult dbusFilter (DBusConnection * connection,
@@ -382,7 +434,7 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
     const char *iface = "org.kde.kmplayer.backend";
     g_printf ("dbusFilter %s %s\n", sender, dbus_message_get_interface (message));
     if (dbus_message_is_method_call (message, iface, "play")) {
-        int ret = -1;
+        guint64 ret = 0;
         char *param = 0;
         if (dbus_message_iter_init (message, &args) && 
                 DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
@@ -392,12 +444,12 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
                    DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
                 dbus_message_iter_get_basic (&args, &param);
                 mimetype = g_strdup (param);
-                ret = play();
+                ret = (guint64) newStream (url, mimetype);
             }
         }
         reply = dbus_message_new_method_return (message);
         dbus_message_iter_init_append (reply, &args);
-        if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_INT32, &ret)) { 
+        if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_UINT64, &ret)) { 
             g_printerr ("Out Of Memory!\n");
             gtk_main_quit();
             return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -406,6 +458,7 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
         dbus_message_unref (reply);
         dbus_connection_flush (dbus_connection);
     } else if (dbus_message_is_method_call (message, iface, "quit")) {
+        shutDownPlugin();
         gtk_main_quit();
     }
     return DBUS_HANDLER_RESULT_HANDLED;
@@ -418,8 +471,9 @@ static void pluginAdded (GtkSocket *socket, gpointer d) {
 }
 
 static void windowCreatedEvent (GtkWidget *w, gpointer d) {
+    socket_id = gtk_socket_get_id (GTK_SOCKET (xembed));
     if (!callback_service)
-        play();
+        newStream (url, mimetype);
 }
 
 static gboolean windowCloseEvent (GtkWidget *w, GdkEvent *e, gpointer d) {
@@ -478,7 +532,7 @@ int main (int argc, char **argv) {
     if (callback_service) {
         DBusError dberr;
         DBusMessage *msg;
-        const char *serv = "type='signal',interface='org.kde.kmplayer.backend'";
+        const char *serv = "type='method_call',interface='org.kde.kmplayer.backend'";
 
         dbus_error_init (&dberr);
         dbus_connection = dbus_bus_get (DBUS_BUS_SESSION, &dberr);
@@ -507,6 +561,8 @@ int main (int argc, char **argv) {
         dbus_connection_add_filter (dbus_connection, dbusFilter, 0L, 0L);
         dbus_connection_flush (dbus_connection);
     }
+
+    fcntl (0, F_SETFL, fcntl (0, F_GETFL) | O_NONBLOCK);
 
     gtk_main();
 
