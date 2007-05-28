@@ -72,7 +72,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     QStringList hierarchy; // typo? :)
     QVBoxLayout *vlay;
 
-    frame = addPage(i18n("General Options"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("kmplayer"), KIcon::NoGroup, 32));
+    frame = addPage(i18n("General Options"), QString(), KGlobal::iconLoader()->loadIcon (QString ("kmplayer"), KIcon::NoGroup, 32));
     vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
@@ -85,7 +85,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     tab->insertTab (m_GeneralPageOutput, i18n("Output"));
     entries.insert (i18n("General Options"), tab);
 
-    frame = addPage (i18n ("Source"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("source"), KIcon::NoGroup, 32));
+    frame = addPage (i18n ("Source"), QString(), KGlobal::iconLoader()->loadIcon (QString ("source"), KIcon::NoGroup, 32));
     vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
@@ -93,7 +93,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     tab->insertTab (m_SourcePageURL, i18n ("URL"));
     entries.insert (i18n("Source"), tab);
 
-    frame = addPage (i18n ("Recording"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("video"), KIcon::NoGroup, 32));
+    frame = addPage (i18n ("Recording"), QString(), KGlobal::iconLoader()->loadIcon (QString ("video"), KIcon::NoGroup, 32));
     vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
@@ -121,7 +121,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     tab->setCurrentPage (0);
     entries.insert (i18n("Recording"), tab);
 
-    frame = addPage (i18n ("Output Plugins"), QString::null, KGlobal::iconLoader()->loadIcon (QString ("image"), KIcon::NoGroup, 32));
+    frame = addPage (i18n ("Output Plugins"), QString(), KGlobal::iconLoader()->loadIcon (QString ("image"), KIcon::NoGroup, 32));
     vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
@@ -161,7 +161,7 @@ KDE_NO_EXPORT void Preferences::addPrefPage (PreferencesPage * page) {
         return;
     QMap<QString, QTabWidget *>::iterator en_it = entries.find (item);
     if (en_it == entries.end ()) {
-        frame = addPage (item, QString::null, KGlobal::iconLoader()->loadIcon ((icon), KIcon::NoGroup, 32));
+        frame = addPage (item, QString(), KGlobal::iconLoader()->loadIcon ((icon), KIcon::NoGroup, 32));
         vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
         tab = new QTabWidget (frame);
         vlay->addWidget (tab);
@@ -820,14 +820,14 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : QF
     QWhatsThis::add( customPreset, i18n( "Enable custom postprocessing filters (See: Custom preset -tab)" ) );
     QWhatsThis::add( fastPreset, i18n( "Enable mplayer's fast postprocessing filters" ) );
     PostprocessingOptions->changeTab( presetSelectionWidget, i18n( "General" ) );
-    customFilters->setTitle( QString::null );
+    customFilters->setTitle (QString ());
     QWhatsThis::add( HzDeblockAQuality, i18n( "Filter is used if there is enough CPU" ) );
     QWhatsThis::add( VtDeblockAQuality, i18n( "Filter is used if there is enough CPU" ) );
     QWhatsThis::add( DeringAQuality, i18n( "Filter is used if there is enough CPU" ) );
     //QWhatsThis::add( TmpNoiseSlider, i18n( "Strength of the noise reducer" ) );
     QWhatsThis::add( AutolevelsFullrange, i18n( "Stretches luminance to full range (0..255)" ) );
     PostprocessingOptions->changeTab( customFiltersWidget, i18n( "Custom Preset" ) );
-    deinterlacingGroup->setTitle( QString::null );
+    deinterlacingGroup->setTitle (QString ());
     PostprocessingOptions->changeTab( deintSelectionWidget, i18n( "Deinterlacing" ) );
     PostprocessingOptions->adjustSize();
 }
@@ -836,7 +836,7 @@ KDE_NO_EXPORT void Preferences::confirmDefaults() {
 	// TODO: Switch to KMessageBox
 	switch( QMessageBox::warning( this, i18n("Reset Settings?"),
         i18n("You are about to have all your settings overwritten with defaults.\nPlease confirm.\n"),
-        i18n("&OK"), i18n("&Cancel"), QString::null, 0, 1 ) ){
+        i18n ("&OK"), i18n ("&Cancel"), QString (), 0, 1)) {
     		case 0:	Preferences::setDefaults();
         		break;
     		case 1:	break;

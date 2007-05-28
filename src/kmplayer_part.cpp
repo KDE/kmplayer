@@ -1129,7 +1129,7 @@ KDE_NO_EXPORT void KMPlayerHRefSource::deactivate () {
     kdDebug () << "KMPlayerHRefSource::deactivate()" << endl;
     KMPlayer::View * view = static_cast <KMPlayer::View*> (m_player->view ());
     if (!view) return;
-    view->setPicture (QString::null);
+    view->setPicture (QString ());
     if (view->viewer ())
         disconnect (view, SIGNAL (pictureClicked ()), this, SLOT (play ()));
 }

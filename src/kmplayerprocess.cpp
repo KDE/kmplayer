@@ -511,7 +511,7 @@ KDE_NO_EXPORT bool MPlayer::brightness (int val, bool /*absolute*/) {
 
 bool MPlayer::run (const char * args, const char * pipe) {
     //m_view->consoleOutput ()->clear ();
-    m_process_output = QString::null;
+    m_process_output = QString ();
     connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
             this, SLOT (processOutput (KProcess *, char *, int)));
     connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
@@ -652,7 +652,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
     do {
         int len = strcspn (str, "\r\n");
         QString out = m_process_output + QString::fromLocal8Bit (str, len);
-        m_process_output = QString::null;
+        m_process_output = QString ();
         str += len;
         slen -= len;
         if (slen <= 0) {
@@ -1223,7 +1223,7 @@ void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
         if (m_have_config == config_yes) {
             configdoc = new ConfigDocument ();
             QTextStream ts (data, IO_ReadOnly);
-            readXML (configdoc, ts, QString::null);
+            readXML (configdoc, ts, QString ());
             configdoc->normalize ();
             //kdDebug () << mydoc->innerText () << endl;
         }
@@ -1431,7 +1431,7 @@ KDE_NO_EXPORT void CallbackProcess::processOutput (KProcess *, char * str, int s
 
 KDE_NO_EXPORT void CallbackProcess::processStopped (KProcess *) {
     if (m_source)
-        ((PlayListNotify *) m_source)->setInfoMessage (QString::null);
+        ((PlayListNotify *) m_source)->setInfoMessage (QString ());
     delete m_backend;
     m_backend = 0L;
     setState (NotRunning);
@@ -1448,7 +1448,7 @@ WId CallbackProcess::widget () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT ConfigDocument::ConfigDocument ()
-    : Document (QString::null) {}
+    : Document (QString ()) {}
 
 KDE_NO_CDTOR_EXPORT ConfigDocument::~ConfigDocument () {
     kdDebug () << "~ConfigDocument" << endl;

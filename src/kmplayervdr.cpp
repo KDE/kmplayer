@@ -82,7 +82,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::KMPlayerPrefSourcePageVDR (QWidge
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
     QGridLayout *gridlayout = new QGridLayout (1, 2);
     xv_port = new KListView (this);
-    xv_port->addColumn (QString::null);
+    xv_port->addColumn (QString());
     xv_port->header()->hide ();
     xv_port->setTreeStepSize (15);
     //xv_port->setRootIsDecorated (true);
@@ -494,7 +494,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sendCommand () {
 
 KDE_NO_EXPORT void KMPlayerVDRSource::customCmd () {
 #if KDE_IS_VERSION(3, 1, 90)
-    QString cmd = KInputDialog::getText (i18n ("Custom VDR command"), i18n ("You can pass commands to VDR.\nEnter 'HELP' to see a list of available commands.\nYou can see VDR response in the console window.\n\nVDR Command:"), QString::null, 0, m_player->view ());
+    QString cmd = KInputDialog::getText (i18n ("Custom VDR command"), i18n ("You can pass commands to VDR.\nEnter 'HELP' to see a list of available commands.\nYou can see VDR response in the console window.\n\nVDR Command:"), QString(), 0, m_player->view ());
     if (!cmd.isEmpty ())
         queueCommand (QString (cmd + QChar ('\n')).local8Bit ());
 #endif

@@ -194,7 +194,7 @@ void FileDocument::readFromFile (const QString & fn) {
     if (file.exists ()) {
         file.open (IO_ReadOnly);
         QTextStream inxml (&file);
-        KMPlayer::readXML (this, inxml, QString::null, false);
+        KMPlayer::readXML (this, inxml, QString (), false);
         normalize ();
     }
 }
@@ -343,7 +343,7 @@ KDE_NO_EXPORT void PlaylistItem::activate () {
     pl->mrl ()->pretty_name = pn;
     //kdDebug () << "cloning to " << data << endl;
     QTextStream inxml (data, IO_ReadOnly);
-    KMPlayer::readXML (pl, inxml, QString::null, false);
+    KMPlayer::readXML (pl, inxml, QString (), false);
     pl->normalize ();
     KMPlayer::NodePtr cur = pl->firstChild ();
     if (parentNode ()->id == KMPlayer::id_node_group_node && cur) {
@@ -771,7 +771,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
     QFile file (introfile);
     if (file.exists () && file.open (IO_ReadOnly)) {
         QTextStream ts (&file);
-        KMPlayer::readXML (m_document, ts, QString::null, false);
+        KMPlayer::readXML (m_document, ts, QString (), false);
     } else {
         QString smil = QString::fromLatin1 (
           "<smil><head><layout>"
@@ -798,7 +798,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
           "</body></smil>"
           ).arg (locate ("data", "kmplayer/noise.gif")).arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
         QTextStream ts (smil.utf8 (), IO_ReadOnly);
-        KMPlayer::readXML (m_document, ts, QString::null, false);
+        KMPlayer::readXML (m_document, ts, QString (), false);
     }
     //m_document->normalize ();
     m_current = m_document; //mrl->self ();
@@ -1026,7 +1026,7 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
         config->setGroup ("Pipe Command");
         config->writeEntry ("Command1", m_player->sources () ["pipesource"]->pipeCmd ());
     }
-    m_view->setInfoMessage (QString::null);
+    m_view->setInfoMessage (QString ());
     m_view->docArea ()->writeDockConfig (config, QString ("Window Layout"));
     Recents * rc = static_cast <Recents *> (recents.ptr ());
     if (rc && rc->resolved) {
@@ -1137,7 +1137,7 @@ KDE_NO_EXPORT void ExitSource::activate () {
     QFile file (exitfile);
     if (file.exists () && file.open (IO_ReadOnly)) {
         QTextStream ts (&file);
-        KMPlayer::readXML (m_document, ts, QString::null, false);
+        KMPlayer::readXML (m_document, ts, QString (), false);
     } else {
         QString smil = QString::fromLatin1 ("<smil><head><layout>"
           "<root-layout width='320' height='240' background-color='black'/>"
@@ -1152,7 +1152,7 @@ KDE_NO_EXPORT void ExitSource::activate () {
           "</par>"
           "</body></smil>").arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
         QTextStream ts (smil.utf8 (), IO_ReadOnly);
-        KMPlayer::readXML (m_document, ts, QString::null, false);
+        KMPlayer::readXML (m_document, ts, QString (), false);
     }
     //m_document->normalize ();
     m_current = m_document;
@@ -1223,7 +1223,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileNewWindow()
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotFileOpen () {
-    KURL::List urls = KFileDialog::getOpenURLs (QString::null, i18n ("*|All Files"), this, i18n ("Open File"));
+    KURL::List urls = KFileDialog::getOpenURLs (QString (), i18n ("*|All Files"), this, i18n ("Open File"));
     if (urls.size () == 1) {
         openDocumentFile (urls [0]);
     } else if (urls.size () > 1) {
@@ -1242,7 +1242,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileOpenRecent(const KURL& url)
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotSaveAs () {
-    QString url = KFileDialog::getSaveFileName (QString::null, QString::null, this, i18n ("Save File"));
+    QString url = KFileDialog::getSaveFileName (QString (), QString (), this, i18n ("Save File"));
     if (!url.isEmpty ()) {
         QFile file (url);
         if (!file.open (IO_WriteOnly)) {

@@ -57,7 +57,7 @@ namespace KMPlayer {
         else if (!strcasecmp (name, "playlist"))
             return new XSPF::Playlist (d);
         else if (!strcasecmp (name, "url"))
-            return new GenericURL (d, QString::null);
+            return new GenericURL (d, QString ());
         else if (!strcasecmp (name, "mrl") ||
                 !strcasecmp (name, "document"))
             return new GenericMrl (d);

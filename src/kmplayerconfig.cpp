@@ -66,7 +66,7 @@ static OutputDriver _ads[] = {
     { "alsa5", i18n ("Advanced Linux Sound Architecture v0.5") },
     { "alsa9", i18n ("Advanced Linux Sound Architecture v0.9") },
     { "", i18n ("Use back-end defaults") },
-    { 0, QString::null }
+    { 0, QString () }
 };
 
 static OutputDriver _vds [] = {
@@ -78,7 +78,7 @@ static OutputDriver _vds [] = {
     { "gl", i18n ("OpenGL") },
     { "gl2", i18n ("OpenGL MT") },
     { "xv", i18n ("XVideo") },
-    { 0, QString::null }
+    { 0, QString () }
 };
 
 static const int ADRIVER_ARTS_INDEX = 4;
@@ -620,7 +620,7 @@ KDE_NO_EXPORT void Settings::okPressed () {
                 QFileInfo sfi (configdialog->m_SourcePageURL->sub_url->url ());
                 if (!sfi.exists ()) {
                     KMessageBox::error (m_player->view (), i18n ("Sub title file %1 does not exist.").arg (configdialog->m_SourcePageURL->sub_url->url ()), i18n ("Error"));
-                    configdialog->m_SourcePageURL->sub_url->setURL (QString::null);
+                    configdialog->m_SourcePageURL->sub_url->setURL (QString ());
                 } else
                     configdialog->m_SourcePageURL->sub_url->setURL (sfi.absFilePath ());
             }

@@ -857,7 +857,7 @@ public:
  */
 class KMPLAYER_EXPORT GenericURL : public Mrl { 
 public:
-    GenericURL(NodePtr &d, const QString &s, const QString &n=QString::null);
+    GenericURL(NodePtr &d, const QString &s, const QString &n=QString ());
     KDE_NO_EXPORT const char * nodeName () const { return "url"; }
     void closed ();
 };
@@ -868,7 +868,7 @@ public:
 class KMPLAYER_EXPORT GenericMrl : public Mrl { 
 public:
     KDE_NO_CDTOR_EXPORT GenericMrl (NodePtr & d) : Mrl (d), node_name ("mrl") {}
-    GenericMrl(NodePtr &d, const QString &s, const QString & name=QString::null, const QString &tag=QString ("mrl"));
+    GenericMrl(NodePtr &d, const QString &s, const QString & name=QString (), const QString &tag=QString ("mrl"));
     KDE_NO_EXPORT const char * nodeName () const { return node_name.ascii (); }
     void closed ();
     bool expose () const;

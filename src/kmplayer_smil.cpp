@@ -2859,7 +2859,7 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
         kdDebug () << "ImageRuntime::remoteReady " << mime << " empty:" << cached_img.data->isEmpty () << " " << mt->src << endl;
         if (mime.startsWith (QString::fromLatin1 ("text/"))) {
             QTextStream ts (data, IO_ReadOnly);
-            readXML (element, ts, QString::null);
+            readXML (element, ts, QString ());
             mt->external_tree = findExternalTree (element);
         }
         if (!mt->external_tree && cached_img.data->isEmpty ()) {

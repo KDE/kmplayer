@@ -371,7 +371,7 @@ void PartBase::setSource (Source * _source) {
         stop ();
         if (m_view) {
             m_view->reset ();
-            emit infoUpdated (QString::null);
+            emit infoUpdated (QString ());
         }
         disconnect (m_source, SIGNAL (startRecording ()),
                     this, SLOT (recordingStarted ()));

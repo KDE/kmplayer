@@ -256,7 +256,7 @@ static const char * blue_xpm[] = {
 //-----------------------------------------------------------------------------
 
 static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char ** p, int key = 0) {
-    QPushButton * b = new QPushButton (QIconSet (QPixmap(p)), QString::null, w);
+    QPushButton * b = new QPushButton (QIconSet (QPixmap(p)), QString (), w);
     b->setFocusPolicy (QWidget::NoFocus);
     b->setFlat (true);
     if (key)
@@ -267,7 +267,7 @@ static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char ** p, i
 
 KDE_NO_CDTOR_EXPORT
 KMPlayerMenuButton::KMPlayerMenuButton (QWidget * parent, QBoxLayout * l, const char ** p, int key)
- : QPushButton (QIconSet (QPixmap(p)), QString::null, parent, "kde_kmplayer_control_button") {
+ : QPushButton (QIconSet (QPixmap(p)), QString (), parent, "kde_kmplayer_control_button") {
    setFocusPolicy (QWidget::NoFocus);
    setFlat (true);
    if (key)

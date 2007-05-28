@@ -114,7 +114,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
    last_id (0),
    last_drag_tree_id (0),
    m_ignore_expanded (false) {
-    addColumn (QString::null);
+    addColumn (QString ());
     header()->hide ();
     //setRootIsDecorated (true);
     setSorting (-1);
@@ -555,7 +555,7 @@ KDE_NO_EXPORT void PlayListView::slotFind () {
         m_find_dialog->setHasSelection (false);
         connect(m_find_dialog, SIGNAL(okClicked ()), this, SLOT(slotFindOk ()));
     } else
-        m_find_dialog->setPattern (QString::null);
+        m_find_dialog->setPattern (QString ());
     m_find_dialog->show ();
 }
 
