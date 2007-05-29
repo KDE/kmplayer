@@ -1,4 +1,4 @@
-AM_CPPFLAGS= -I$(kde_includes)/kio $(CFLAGS_GST) $(all_includes) $(LIBCAIRO_CFLAGS)
+AM_CPPFLAGS= -I$(kde_includes)/kio $(CFLAGS_GST) $(all_includes) $(LIBCAIRO_CFLAGS) $(LIBNSPR_CFLAGS)
 
 METASOURCES= AUTO
 
@@ -35,8 +35,11 @@ endif
 if include_kgstplayer
 kgstplayer_app = kgstplayer
 endif
+if include_knpplayer
+knpplayer_app = knpplayer
+endif
 
-bin_PROGRAMS= $(kxineplayer_app) kxvplayer $(kgstplayer_app)
+bin_PROGRAMS= $(kxineplayer_app) kxvplayer $(kgstplayer_app) $(knpplayer_app)
 
 noinst_LTLIBRARIES = libkmplayerbackend.la
 libkmplayerbackend_la_SOURCES = kmplayer_backend.skel kmplayer_callback.stub
@@ -53,6 +56,9 @@ kxvplayer_SOURCES= xvplayer.cpp
 kgstplayer_LDADD= libkmplayerbackend.la $(LIB_GST) $(LIB_GST_PLUGINS) -lgstinterfaces-0.10 -lDCOP
 kgstplayer_LDFLAGS= $(all_libraries) $(KDE_RPATH)
 kgstplayer_SOURCES= gstplayer.cpp
+
+knpplayer_LDADD= $(LIBNSPR_LIBS)
+knpplayer_SOURCES= npplayer.c
 
 xdg_apps_DATA = kmplayer.desktop
 

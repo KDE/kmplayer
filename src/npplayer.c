@@ -16,10 +16,11 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-// gcc -o knpplayer `pkg-config --libs --cflags gtk+-x11-2.0` `pkg-config --libs --cflags dbus-glib-1` `nspr-config --libs --cflags` knpplayer.c
+/* gcc -o knpplayer `pkg-config --libs --cflags gtk+-x11-2.0` `pkg-config --libs --cflags dbus-glib-1` `nspr-config --libs --cflags` npplayer.c
 
-// http://devedge-temp.mozilla.org/library/manuals/2002/plugin/1.0/
-// http://dbus.freedesktop.org/doc/dbus/libdbus-tutorial.html
+http://devedge-temp.mozilla.org/library/manuals/2002/plugin/1.0/
+http://dbus.freedesktop.org/doc/dbus/libdbus-tutorial.html
+*/
 
 #include <unistd.h>
 #include <string.h>
@@ -54,8 +55,8 @@ static GtkWidget *xembed;
 static Window socket_id;
 static int stdin_read_watch;
 
-static NPPluginFuncs np_funcs;       // plugin functions
-static NPP npp;                      // single instance of the plugin
+static NPPluginFuncs np_funcs;       /* plugin functions              */
+static NPP npp;                      /* single instance of the plugin */
 static NPSavedData *saved_data;
 static GSList *stream_list;
 static char stream_buf[4096];
@@ -74,10 +75,10 @@ static NP_InitializeUPP npInitialize;
 static NP_ShutdownUPP npShutdown;
 
 static StreamInfo *addStream (const char *url, const char *mime, const char *target, void *notify, int req);
-//static StreamInfo *requestStream();
+/*static StreamInfo *requestStream();*/
 
 
-//----------------%<-----------------------------------------------------------
+/*----------------%<---------------------------------------------------------*/
 
 static NPError nsGetURL (NPP instance, const char* url, const char* target) {
     g_printf ("nsGetURL %s %s\n", url, target);
@@ -176,7 +177,7 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
             *(int*)value = 0;
             break;
         case NPNVToolkit:
-            *(int*)value = 2; // ??
+            *(int*)value = 2; /* ?? */
             break;
         case NPNVSupportsXEmbedBool:
             *(int*)value = 1;
@@ -189,7 +190,7 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
 }
 
 static NPError nsSetValue (NPP instance, NPPVariable variable, void *value) {
-    // NPPVpluginWindowBool
+    /* NPPVpluginWindowBool */
     g_printf ("NPN_SetValue\n");
     return NPERR_NO_ERROR;
 }
@@ -206,7 +207,7 @@ static void nsForceRedraw (NPP instance) {
     g_printf ("NPN_ForceRedraw\n");
 }
 
-//----------------%<-----------------------------------------------------------
+/*----------------%<---------------------------------------------------------*/
 
 static void shutDownPlugin() {
     if (npShutdown) {
@@ -234,8 +235,8 @@ static void removeStream (NPReason reason) {
         if (si->target)
             g_free (si->target);
         free (si);
-        // if ((stream_list))
-        //     request for new stream
+        /* if ((stream_list))
+        //     request for new stream */
     }
     if (stdin_read_watch)
         gdk_input_remove (stdin_read_watch);
@@ -253,8 +254,8 @@ static StreamInfo *addStream (const char *url, const char *mime, const char *tar
         si->target = g_strdup (target);
     si->notify_data = notify;
     stream_list = g_slist_append (stream_list, si);
-    //if (req)
-    //    call kmplayer for new stream
+    /*if (req)
+    //    call kmplayer for new stream */
     return si;
 }
 
@@ -328,8 +329,8 @@ static int initPlugin (const char *plugin_lib) {
     ns_funcs.memfree = nsMemFree;
     ns_funcs.memflush = nsMemFlush;
     ns_funcs.reloadplugins = nsReloadPlugins;
-    //ns_funcs.getJavaEnv;
-    //ns_funcs.getJavaPeer;
+    /*ns_funcs.getJavaEnv;
+    //ns_funcs.getJavaPeer;*/
     ns_funcs.geturlnotify = nsGetURLNotify;
     ns_funcs.posturlnotify = nsPostURLNotify;
     ns_funcs.getvalue = nsGetValue;
@@ -394,7 +395,7 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     window.width = 320;
     window.height = 240;
     window.window = (void*)socket_id;
-    ws_info.type = 1; //NP_SetWindow;
+    ws_info.type = 1; /*NP_SetWindow;*/
     ws_info.display = (void*)(long)gdk_x11_display_get_xdisplay (gtk_widget_get_display (xembed));
     ws_info.visual = (void*)(long)gdk_x11_visual_get_xvisual (gdk_visual_get_system());
     ws_info.colormap = gdk_x11_colormap_get_xcolormap (gdk_colormap_get_system());
@@ -424,7 +425,7 @@ static gpointer newStream (const char *url, const char *mime) {
     return si;
 }
 
-//----------------%<-----------------------------------------------------------
+/*----------------%<---------------------------------------------------------*/
 
 static DBusHandlerResult dbusFilter (DBusConnection * connection,
         DBusMessage *message, void * user_data) {
@@ -464,7 +465,7 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
     return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-//----------------%<-----------------------------------------------------------
+/*----------------%<---------------------------------------------------------*/
 
 static void pluginAdded (GtkSocket *socket, gpointer d) {
     g_printf ("pluginAdded\n");
@@ -505,7 +506,7 @@ int main (int argc, char **argv) {
         g_fprintf(stderr, "Usage: %s <-p plugin> <-m mimetype url|-cb service -wid id>\n", argv[0]);
         return 1;
     }
-    //when called from kmplayer if (!callback_service) {
+    /*when called from kmplayer if (!callback_service) {*/
         GtkWidget *window;
         GdkColormap *color_map;
         GdkColor bg_color;
@@ -528,7 +529,7 @@ int main (int argc, char **argv) {
         gtk_container_add (GTK_CONTAINER (window), xembed);
         gtk_widget_set_size_request (window, 320, 240);
         gtk_widget_show_all (window);
-    //} else {
+    /*} else {*/
     if (callback_service) {
         DBusError dberr;
         DBusMessage *msg;

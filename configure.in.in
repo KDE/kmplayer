@@ -3,6 +3,7 @@
 #KDE_ENABLE_HIDDEN_VISIBILITY
 
 AC_ARG_VAR(PKGCONFIGFOUND, [Path to pkg-config])
+AC_ARG_VAR(NSPRCONFIGFOUND, [Path to nspr-config])
 AC_CHECK_PROG(PKGCONFIGFOUND, pkg-config,[yes])
 
 AC_MSG_CHECKING(if koffice-plugin support is wanted)
@@ -131,6 +132,44 @@ else
 fi
 
 AM_CONDITIONAL(include_kgstplayer, [test "x$have_gst" = "xyes" && test "x$have_gst_plugins" = "xyes"])
+
+hasnspr=yes
+LIBNSPR_LIBS=""
+LIBNSPR_CFLAGS=""
+AC_ARG_ENABLE(nspr, [  --enable-npplayer    Enables building with npp support],
+[if test "x$enableval" == "xno"; then
+        hasnspr=no
+    fi])
+if test "$hasnspr" = "yes"; then
+    if test "$PKGCONFIGFOUND" = "yes" ; then
+        DBUS_REQ=1.0.0
+        PKG_CHECK_MODULES(DBUS, dbus-1 >= $DBUS_REQ,
+                          have_dbus=yes,have_dbus=no)
+        if test "x$have_dbus" = "xyes"; then
+            AC_DEFINE(HAVE_DBUS, 1, [have DBus])
+            PKG_CHECK_MODULES(NSPR, nspr >= 1.8.0,
+                              have_nspr=yes,have_nspr=no)
+            if test "x$have_nspr" = "xno"; then
+                AC_CHECK_PROG(NSPRCONFIGFOUND, nspr-config,[yes])
+                if test $NSPRCONFIGFOUND; then
+                    have_nspr=yes
+                    NSPR_CFG=nspr-config
+                fi
+            else
+                NSPR_CFG=pkg-config nspr
+            fi
+            if test "x$have_nspr" = "xyes"; then
+                AC_DEFINE(HAVE_NSPR, 1, [have Netscape Portable Runtime])
+                LIBNSPR_LIBS="`$PKG_CONFIG --libs gtk+-x11-2.0` `$PKG_CONFIG --libs dbus-glib-1` `$NSPR_CFG --libs`"
+                LIBNSPR_CFLAGS="`$PKG_CONFIG --cflags gtk+-x11-2.0` `$PKG_CONFIG --cflags dbus-glib-1` `$NSPR_CFG --cflags`"
+            fi
+        fi
+    fi
+fi
+AC_SUBST(LIBNSPR_LIBS)
+AC_SUBST(LIBNSPR_CFLAGS)
+
+AM_CONDITIONAL(include_knpplayer, test "$have_nspr" = "yes")
 
 hascairo=yes
 LIBCAIRO_LIBS=""
