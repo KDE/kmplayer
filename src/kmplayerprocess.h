@@ -424,17 +424,16 @@ public:
     virtual void initProcess (Viewer * viewer);
     virtual QString menuName () const;
     KDE_NO_EXPORT QString interface () const { return iface; }
+    KDE_NO_EXPORT QString objectPath () const { return path; }
 public slots:
     virtual bool stop ();
     virtual bool quit ();
 private slots:
     void processStopped (KProcess *);
 private:
-# ifdef HAVE_DBUS
-    DBusQt::Connection *connection;
-# endif
     QString service;
     QString iface;
+    QString path;
     QString filter;
 };
 #endif
