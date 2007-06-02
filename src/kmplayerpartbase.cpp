@@ -320,8 +320,7 @@ KDE_NO_EXPORT void PartBase::slotPlayerMenu (int id) {
         if (menuid == id) {
             if (proc->name () != QString ("npp"))
                 m_settings->backends [srcname] = proc->name ();
-            else
-                temp_backends [srcname] = proc->name ();
+            temp_backends [srcname] = proc->name ();
             if (playing && strcmp (m_process->name (), proc->name ()))
                 m_process->quit ();
             setProcess (proc->name ());
