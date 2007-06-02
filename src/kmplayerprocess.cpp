@@ -47,6 +47,10 @@
 #include <kstandarddirs.h>
 #include <kio/job.h>
 
+#ifdef HAVE_DBUS
+# include <dbus/connection.h>
+#endif
+
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
 #include "kmplayerprocess.h"
@@ -1876,5 +1880,129 @@ KDE_NO_EXPORT bool FFMpeg::quit () {
 KDE_NO_EXPORT void FFMpeg::processStopped (KProcess *) {
     setState (NotRunning);
 }
+
+//-----------------------------------------------------------------------------
+
+#ifdef HAVE_NSPR
+
+static DBusHandlerResult
+dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
+    DBusMessageIter args;
+    DBusMessage* reply;
+    const char *sender = dbus_message_get_sender (msg);
+    //const char *iface = "org.kde.kmplayer.backend";
+    NpPlayer *process = (NpPlayer *) data;
+    kdDebug () << "dbusFilter " << sender << " " << dbus_message_get_interface (msg) << endl;
+    if (dbus_message_has_interface (msg, process->interface ().ascii ()))
+        return DBUS_HANDLER_RESULT_HANDLED;
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
+
+static const char * npplayer_supports [] = {
+    "urlsource", 0L
+};
+
+KDE_NO_CDTOR_EXPORT
+NpPlayer::NpPlayer (QObject * parent, Settings * settings, const QString & srv)
+ : Process (parent, settings, "npp"), connection (0L), service (srv) {
+    m_supported_sources = npplayer_supports;
+}
+
+KDE_NO_CDTOR_EXPORT NpPlayer::~NpPlayer () {
+    if (connection) {
+        DBusError dberr;
+        dbus_error_init (&dberr);
+        DBusConnection *conn = dbus_bus_get (DBUS_BUS_SESSION, &dberr);
+        if (dbus_error_is_set (&dberr))
+            dbus_error_free (&dberr);
+        if (conn) {
+            dbus_bus_remove_match (conn, filter.ascii(), &dberr);
+            if (dbus_error_is_set (&dberr))
+                dbus_error_free (&dberr);
+            dbus_connection_remove_filter (conn, dbusFilter, this);
+            dbus_connection_flush (conn);
+            dbus_connection_unref (conn);
+        }
+    }
+}
+
+KDE_NO_EXPORT void NpPlayer::init () {
+}
+
+KDE_NO_EXPORT void NpPlayer::initProcess (Viewer * viewer) {
+    Process::initProcess (viewer);
+    if (!connection) {
+        connection = new DBusQt::Connection (DBUS_BUS_SESSION, this);
+        DBusError dberr;
+        iface = QString ("org.kde.kmplayer.callback");
+        filter = QString ("type='method_call',interface='org.kde.kmplayer.callback'");
+
+        dbus_error_init (&dberr);
+        DBusConnection *conn = dbus_bus_get (DBUS_BUS_SESSION, &dberr);
+        if (dbus_error_is_set (&dberr))
+            dbus_error_free (&dberr);
+        if (!conn) {
+            kdError () << "Failed to get dbus connection: " << dberr.message << endl;
+            delete connection;
+            connection = 0L;
+            return;
+        }
+        bool has_service = !service.isEmpty();
+        if (has_service) { // standalone kmplayer
+            dbus_bus_request_name (conn, service.ascii(),
+                DBUS_NAME_FLAG_DO_NOT_QUEUE, &dberr);
+            if (dbus_error_is_set (&dberr)) {
+                kdError () << "Failed to register name " << service << ": " << dberr.message;
+                dbus_error_free (&dberr);
+                has_service = false;
+            }
+        }
+        if (!has_service) // plugin, accept what-is [sic]
+            service = QString (dbus_bus_get_unique_name (conn));
+        kdDebug() << "using service " << service << " interface " << iface << endl;
+        dbus_bus_add_match (conn, filter.ascii(), &dberr);
+        if (dbus_error_is_set (&dberr)) {
+            kdError () << "Failed to set match " << filter << ": " <<  dberr.message << endl;
+            dbus_error_free (&dberr);
+        }
+        dbus_connection_add_filter (conn, dbusFilter, this, 0L);
+        dbus_connection_flush (conn);
+        dbus_connection_unref (conn);
+    }
+}
+
+bool NpPlayer::deMediafiedPlay () {
+    initProcess (viewer ());
+    return m_process->isRunning ();
+}
+
+KDE_NO_EXPORT bool NpPlayer::stop () {
+    terminateJob ();
+    if (!playing ()) return true;
+    kdDebug () << "NpPlayer::stop" << endl;
+    m_process->writeStdin ("q", 1);
+    return true;
+}
+
+KDE_NO_EXPORT bool NpPlayer::quit () {
+    stop ();
+    if (!playing ()) return true;
+    QTime t;
+    t.start ();
+    do {
+        KProcessController::theKProcessController->waitForProcessExit (2);
+    } while (t.elapsed () < 2000 && m_process->isRunning ());
+    return Process::quit ();
+}
+
+KDE_NO_EXPORT void NpPlayer::processStopped (KProcess *) {
+    setState (NotRunning);
+}
+
+QString NpPlayer::menuName () const {
+    return i18n ("&Ice Ape");
+}
+
+#endif
 
 #include "kmplayerprocess.moc"

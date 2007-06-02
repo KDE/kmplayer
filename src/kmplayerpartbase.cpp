@@ -169,6 +169,9 @@ KDE_NO_EXPORT void PartBase::addBookMark (const QString & t, const QString & url
 void PartBase::init (KActionCollection * action_collection) {
     KParts::Part::setWidget (m_view);
     m_view->init (action_collection);
+#ifdef HAVE_NSPR
+    m_players ["npp"] = new NpPlayer (this, m_settings, m_service);
+#endif
     connect(m_settings, SIGNAL(configChanged()), this, SLOT(settingsChanged()));
     m_settings->readConfig ();
     m_settings->applyColorSetting (false);

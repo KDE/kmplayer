@@ -40,6 +40,12 @@ namespace KIO {
     class Job;
 }
 
+#ifdef HAVE_DBUS
+namespace DBusQt {
+    class Connection;
+}
+#endif
+
 namespace KMPlayer {
     
 class Settings;
@@ -403,6 +409,35 @@ public slots:
 private slots:
     void processStopped (KProcess *);
 };
+
+#ifdef HAVE_NSPR
+/*
+ * npplayer backend
+ */
+class KMPLAYER_NO_EXPORT NpPlayer : public Process {
+    Q_OBJECT
+public:
+    NpPlayer (QObject * parent, Settings * settings, const QString & srv);
+    ~NpPlayer ();
+    virtual void init ();
+    virtual bool deMediafiedPlay ();
+    virtual void initProcess (Viewer * viewer);
+    virtual QString menuName () const;
+    KDE_NO_EXPORT QString interface () const { return iface; }
+public slots:
+    virtual bool stop ();
+    virtual bool quit ();
+private slots:
+    void processStopped (KProcess *);
+private:
+# ifdef HAVE_DBUS
+    DBusQt::Connection *connection;
+# endif
+    QString service;
+    QString iface;
+    QString filter;
+};
+#endif
 
 } // namespace
 

@@ -19,6 +19,8 @@
 #ifndef KMPLAYERPARTBASE_H
 #define KMPLAYERPARTBASE_H
 
+#include <config.h>
+
 #include "kmplayer_def.h"
 
 #include <qobject.h>
@@ -150,6 +152,10 @@ public:
     void updatePlayerMenu (ControlPanel *);
     void updateInfo (const QString & msg);
     void updateStatus (const QString & msg);
+#ifdef HAVE_DBUS
+    void setServiceName (const QString & srv) { m_service = srv; }
+    QString serviceName () const { return m_service; }
+#endif
 
     // these are called from Process
     void changeURL (const QString & url);
@@ -235,6 +241,9 @@ protected:
     BookmarkManager * m_bookmark_manager;
     BookmarkOwner * m_bookmark_owner;
     KBookmarkMenu * m_bookmark_menu;
+#ifdef HAVE_DBUS
+    QString m_service;
+#endif
     int m_record_timer;
     int m_update_tree_timer;
     bool m_noresize : 1;
