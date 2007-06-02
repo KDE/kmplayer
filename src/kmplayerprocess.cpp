@@ -1933,7 +1933,7 @@ NpPlayer::NpPlayer (QObject * parent, Settings * settings, const QString & srv)
 }
 
 KDE_NO_CDTOR_EXPORT NpPlayer::~NpPlayer () {
-    if (dbus_static->connection) {
+    if (!iface.isEmpty ()) {
         DBusError dberr;
         dbus_error_init (&dberr);
         DBusConnection *conn = dbus_bus_get (DBUS_BUS_SESSION, &dberr);
@@ -1957,41 +1957,43 @@ KDE_NO_EXPORT void NpPlayer::initProcess (Viewer * viewer) {
     Process::initProcess (viewer);
     if (!dbus_static)
         dbus_static = dbus_static_deleter.setObject (new DBusStatic ());
-    DBusError dberr;
-    iface = QString ("org.kde.kmplayer.callback");
-    static int count = 0;
-    path = QString ("/npplayer%1").arg (count++);
-    filter = QString ("type='method_call',interface='org.kde.kmplayer.callback',path='%1'").arg (path);
+    if (iface.isEmpty ()) {
+        DBusError dberr;
+        iface = QString ("org.kde.kmplayer.callback");
+        static int count = 0;
+        path = QString ("/npplayer%1").arg (count++);
+        filter = QString ("type='method_call',interface='org.kde.kmplayer.callback',path='%1'").arg (path);
 
-    dbus_error_init (&dberr);
-    DBusConnection *conn = dbus_bus_get (DBUS_BUS_SESSION, &dberr);
-    if (dbus_error_is_set (&dberr))
-        dbus_error_free (&dberr);
-    if (!conn) {
-        kdError () << "Failed to get dbus connection: " << dberr.message << endl;
-        return;
-    }
-    bool has_service = !service.isEmpty();
-    if (has_service) { // standalone kmplayer
-        dbus_bus_request_name (conn, service.ascii(),
-                DBUS_NAME_FLAG_DO_NOT_QUEUE, &dberr);
-        if (dbus_error_is_set (&dberr)) {
-            kdError () << "Failed to register name " << service << ": " << dberr.message;
+        dbus_error_init (&dberr);
+        DBusConnection *conn = dbus_bus_get (DBUS_BUS_SESSION, &dberr);
+        if (dbus_error_is_set (&dberr))
             dbus_error_free (&dberr);
-            has_service = false;
+        if (!conn) {
+            kdError () << "Failed to get dbus connection: " << dberr.message << endl;
+            return;
         }
+        bool has_service = !service.isEmpty();
+        if (has_service) { // standalone kmplayer
+            dbus_bus_request_name (conn, service.ascii(),
+                    DBUS_NAME_FLAG_DO_NOT_QUEUE, &dberr);
+            if (dbus_error_is_set (&dberr)) {
+                kdError () << "Failed to register name " << service << ": " << dberr.message;
+                dbus_error_free (&dberr);
+                has_service = false;
+            }
+        }
+        if (!has_service) // plugin, accept what-is [sic]
+            service = QString (dbus_bus_get_unique_name (conn));
+        kdDebug() << "using service " << service << " interface " << iface << endl;
+        dbus_bus_add_match (conn, filter.ascii(), &dberr);
+        if (dbus_error_is_set (&dberr)) {
+            kdError () << "Failed to set match " << filter << ": " <<  dberr.message << endl;
+            dbus_error_free (&dberr);
+        }
+        dbus_connection_add_filter (conn, dbusFilter, this, 0L);
+        dbus_connection_flush (conn);
+        dbus_connection_unref (conn);
     }
-    if (!has_service) // plugin, accept what-is [sic]
-        service = QString (dbus_bus_get_unique_name (conn));
-    kdDebug() << "using service " << service << " interface " << iface << endl;
-    dbus_bus_add_match (conn, filter.ascii(), &dberr);
-    if (dbus_error_is_set (&dberr)) {
-        kdError () << "Failed to set match " << filter << ": " <<  dberr.message << endl;
-        dbus_error_free (&dberr);
-    }
-    dbus_connection_add_filter (conn, dbusFilter, this, 0L);
-    dbus_connection_flush (conn);
-    dbus_connection_unref (conn);
 }
 
 bool NpPlayer::deMediafiedPlay () {
