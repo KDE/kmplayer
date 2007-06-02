@@ -76,6 +76,7 @@ public:
     virtual bool hasLength ();
     virtual QString prettyName ();
     virtual void reset ();
+    virtual void setURL (const KURL & url);
 public slots:
     virtual void init ();
     virtual void activate ();
@@ -231,6 +232,7 @@ protected slots:
 protected:
     KConfig * m_config;
     QGuardedPtr <View> m_view;
+    QMap <QString, QString> temp_backends;
     Settings * m_settings;
     Process * m_process;
     Process * m_recorder;

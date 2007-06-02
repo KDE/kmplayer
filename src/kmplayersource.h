@@ -77,11 +77,12 @@ public:
     KDE_NO_EXPORT const QString & recordCmd () const { return m_recordcmd; }
     KDE_NO_EXPORT const QString & tuner () const { return m_tuner; }
     KDE_NO_EXPORT NodePtr current () const { return m_current; }
+    KDE_NO_EXPORT const QString & plugin () const { return m_plugin; }
     virtual NodePtr document ();
     virtual NodePtr root ();
     virtual QString filterOptions ();
 
-    void setURL (const KURL & url);
+    virtual void setURL (const KURL & url);
     void insertURL (NodePtr mrl, const QString & url, const QString & title=QString());
     KDE_NO_EXPORT void setSubURL (const KURL & url) { m_sub_url = url; }
     void setLanguages (const QStringList & alang, const QStringList & slang);
@@ -161,6 +162,7 @@ protected:
     int m_xvencoding;
     QString m_pipecmd;
     QString m_options;
+    QString m_plugin;
 private:
     int m_width;
     int m_height;

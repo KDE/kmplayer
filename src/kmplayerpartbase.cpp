@@ -318,7 +318,10 @@ KDE_NO_EXPORT void PartBase::slotPlayerMenu (int id) {
         int menuid = menu->idAt (i);
         menu->setItemChecked (menuid, menuid == id);
         if (menuid == id) {
-            m_settings->backends [srcname] = proc->name ();
+            if (proc->name () != QString ("npp"))
+                m_settings->backends [srcname] = proc->name ();
+            else
+                temp_backends [srcname] = proc->name ();
             if (playing && strcmp (m_process->name (), proc->name ()))
                 m_process->quit ();
             setProcess (proc->name ());
@@ -392,12 +395,32 @@ void PartBase::setSource (Source * _source) {
         if (!m_settings->showplaylistbutton)
           m_view->controlPanel()->button(ControlPanel::button_playlist)->hide();
     }
-    QString p = m_settings->backends [_source->name()];
+    // determine backend, start with temp_backends
+    QString p = temp_backends [_source->name()];
+    bool remember_backend = p.isEmpty ();
+    if (p.isEmpty () && _source->document ()) {
+        // next try to find mimetype match from kmplayerrc
+        Mrl * mrl = _source->document ()->mrl ();
+        if (!mrl->mimetype.isEmpty ()) {
+            m_config->setGroup (mrl->mimetype);
+            p = m_config->readEntry ("player", "" );
+            remember_backend = !(!p.isEmpty () &&
+                    m_players.contains (p) &&
+                    m_players [p]->supports (_source->name ()));
+        }
+    }
+    if (p.isEmpty ())
+        // try source match from kmplayerrc
+        p = m_settings->backends [_source->name()];
     if (p.isEmpty ()) {
+        // try source match from kmplayerrc by re-reading
         m_config->setGroup (strGeneralGroup);
         p = m_config->readEntry (_source->name (), "");
     }
-    if (p.isEmpty () || !m_players.contains (p) || !m_players [p]->supports (_source->name ())) {
+    if (p.isEmpty () ||
+            !m_players.contains (p) ||
+            !m_players [p]->supports (_source->name ())) {
+        // finally find first supported player
         p.truncate (0);
         if (!m_process->supports (_source->name ())) {
             ProcessMap::const_iterator i, e = m_players.end();
@@ -412,7 +435,10 @@ void PartBase::setSource (Source * _source) {
     if (!p.isEmpty ()) {
         if (!m_process || p != m_process->name ())
             setProcess (p.ascii ());
-        m_settings->backends [_source->name()] = m_process->name ();
+        if (remember_backend)
+            m_settings->backends [_source->name()] = m_process->name ();
+        else
+            temp_backends.remove (_source->name());
     }
     m_source = _source;
     connectSource (old_source, m_source);
@@ -1734,6 +1760,20 @@ bool URLSource::requestPlayURL (NodePtr mrl) {
         }
     }
     return Source::requestPlayURL (mrl);
+}
+
+void URLSource::setURL (const KURL & url) {
+    Source::setURL (url);
+    Mrl *mrl = document ()->mrl ();
+    if (!url.isEmpty () && mrl->mimetype.isEmpty ()) {
+        KMimeType::Ptr mimeptr = KMimeType::findByURL (url);
+        if (mimeptr) {
+            mrl->mimetype = mimeptr->name ();
+            m_player->config ()->setGroup (mrl->mimetype);
+            m_plugin = m_player->config ()->readEntry ("plugin", "" );
+            kdDebug () << "URLSource::setURL " << mimeptr->name () << " " << m_plugin << endl;
+        }
+    }
 }
 
 bool URLSource::resolveURL (NodePtr m) {
