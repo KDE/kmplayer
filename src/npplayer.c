@@ -49,6 +49,7 @@ static gchar *url;
 static gchar *mimetype;
 
 static DBusConnection *dbus_connection;
+static char service_name[64];
 static gchar *callback_service;
 static GModule *library;
 static GtkWidget *xembed;
@@ -532,7 +533,6 @@ int main (int argc, char **argv) {
     /*} else {*/
     if (callback_service) {
         DBusError dberr;
-        DBusMessage *msg;
         const char *serv = "type='method_call',interface='org.kde.kmplayer.backend'";
 
         dbus_error_init (&dberr);
@@ -542,23 +542,22 @@ int main (int argc, char **argv) {
                     dberr.message);
             exit (1);
         }
+        g_sprintf (service_name, "org.kde.kmplayer.npplayer-%d", getpid ());
+        g_printf ("using service %s was '%s'\n", service_name, dbus_bus_get_unique_name (dbus_connection));
         dbus_connection_setup_with_g_main (dbus_connection, 0L);
-        dbus_bus_request_name (dbus_connection, "org.kde.kmplayer.npplayer", 
+        dbus_bus_request_name (dbus_connection, service_name, 
                 DBUS_NAME_FLAG_REPLACE_EXISTING, &dberr);
         if (dbus_error_is_set (&dberr)) {
             g_printerr ("Failed to register name: %s\n", dberr.message);
             dbus_connection_unref (dbus_connection);
             return -1;
         }
-        msg = dbus_message_new_method_call (
-                DBUS_SERVICE_DBUS,
-                DBUS_PATH_DBUS,
-                DBUS_INTERFACE_DBUS,
-                "AddMatch");
-        dbus_message_append_args(msg, DBUS_TYPE_STRING,&serv,DBUS_TYPE_INVALID);
-        dbus_message_set_no_reply (msg, TRUE);
-        dbus_connection_send (dbus_connection, msg, NULL);
-        dbus_message_unref (msg);
+        dbus_bus_add_match (dbus_connection, serv, &dberr);
+        if (dbus_error_is_set (&dberr)) {
+            g_printerr ("dbus_bus_add_match error: %s\n", dberr.message);
+            dbus_connection_unref (dbus_connection);
+            return -1;
+        }
         dbus_connection_add_filter (dbus_connection, dbusFilter, 0L, 0L);
         dbus_connection_flush (dbus_connection);
     }
