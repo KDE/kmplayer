@@ -68,6 +68,7 @@ typedef struct _StreamInfo {
     unsigned int stream_buf_pos;
     unsigned int stream_pos;
     unsigned int total;
+    unsigned int reason;
     char *url;
     char *mimetype;
     char *target;
@@ -78,8 +79,8 @@ static NP_InitializeUPP npInitialize;
 static NP_ShutdownUPP npShutdown;
 
 static StreamInfo *addStream (const char *url, const char *mime, const char *target, void *notify, int req);
-/*static StreamInfo *requestStream();*/
-
+static gboolean requestStream (void * si);
+static gboolean destroyStream (void * si);
 
 /*----------------%<---------------------------------------------------------*/
 
@@ -114,6 +115,7 @@ static int32 nsWrite (NPP instance, NPStream* stream, int32 len, void *buf) {
 
 static NPError nsDestroyStream (NPP instance, NPStream *stream, NPError reason) {
     g_printf ("nsDestroyStream\n");
+    g_timeout_add (0, destroyStream, stream_list);
     return NPERR_NO_ERROR;
 }
 
@@ -226,10 +228,15 @@ static void shutDownPlugin() {
 
 static void removeStream (NPReason reason) {
     StreamInfo *si= (StreamInfo *) g_slist_nth_data (stream_list, 0);
+
+    if (stdin_read_watch)
+        gdk_input_remove (stdin_read_watch);
+    stdin_read_watch = 0;
+
     if (si) {
         g_printf ("data received %d\n", si->stream_pos);
         stream_list = g_slist_remove (stream_list, si);
-        np_funcs.destroystream (npp, &si->np_stream, NPRES_DONE);
+        np_funcs.destroystream (npp, &si->np_stream, reason);
         if (si->notify_data)
             np_funcs.urlnotify (npp, si->url, reason, si->notify_data);
         g_free (si->url);
@@ -238,17 +245,18 @@ static void removeStream (NPReason reason) {
         if (si->target)
             g_free (si->target);
         free (si);
-        /* if ((stream_list))
-        //     request for new stream */
+        si = (StreamInfo*) g_slist_nth_data (stream_list, 0);
+        if (si && callback_service)
+            g_timeout_add (0, requestStream, si);
     }
-    if (stdin_read_watch)
-        gdk_input_remove (stdin_read_watch);
-    stdin_read_watch = 0;
 }
 
 static StreamInfo *addStream (const char *url, const char *mime, const char *target, void *notify, int req) {
+    StreamInfo *si = (StreamInfo*) g_slist_nth_data (stream_list, 0);
+    int req1 = !si ? 1 : 0;
+    si = (StreamInfo *) malloc (sizeof (StreamInfo));
+
     g_printf ("new stream\n");
-    StreamInfo *si = (StreamInfo *) malloc (sizeof (StreamInfo));
     memset (si, 0, sizeof (StreamInfo));
     si->url = g_strdup (url);
     si->np_stream.url = si->url;
@@ -258,20 +266,19 @@ static StreamInfo *addStream (const char *url, const char *mime, const char *tar
         si->target = g_strdup (target);
     si->notify_data = notify;
     stream_list = g_slist_append (stream_list, si);
-    /*if (req)
-    //    call kmplayer for new stream */
+
+    if (req1 && callback_service)
+        g_timeout_add (0, requestStream, si);
+
     return si;
 }
 
 static void readStdin (gpointer d, gint src, GdkInputCondition cond) {
     StreamInfo *si = (StreamInfo*) g_slist_nth_data (stream_list, 0);
-    if (!si) {
-        removeStream (NPRES_NETWORK_ERR);
-        return;
-    }
     gsize count = read (src,
             stream_buf + si->stream_buf_pos,
             sizeof (stream_buf) - si->stream_buf_pos);
+    g_assert (si);
     if (count > 0) {
         int32 sz;
         si->stream_buf_pos += count;
@@ -289,9 +296,9 @@ static void readStdin (gpointer d, gint src, GdkInputCondition cond) {
             si->stream_pos += sz;
         }
         if (si->stream_pos == si->total)
-            removeStream (NPRES_DONE);
+            removeStream (si->reason);
     } else
-        removeStream (NPRES_DONE);
+        removeStream (NPRES_DONE); /* only for 'cat foo | knpplayer' */
 }
 
 static int initPlugin (const char *plugin_lib) {
@@ -413,9 +420,14 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
 }
 
 static gboolean requestStream (void * p) {
-    StreamInfo *si = (StreamInfo*) g_slist_nth_data (stream_list, 0);
+    StreamInfo *si = (StreamInfo*) p;
     g_printf ("requestStream\n");
-    if (si) {
+    if (si && si == g_slist_nth_data (stream_list, 0)) {
+        uint16 stype = NP_NORMAL;
+        g_assert (!stdin_read_watch);
+        stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, NULL);
+        np_funcs.newstream (npp, si->mimetype, &si->np_stream, 0, &stype);
+
         DBusMessage *msg = dbus_message_new_method_call (
                 callback_service,
                 callback_path,
@@ -431,10 +443,26 @@ static gboolean requestStream (void * p) {
     return 0; /* single shot */
 }
 
+static gboolean destroyStream (void * p) {
+    StreamInfo *si = (StreamInfo*) p;
+    g_printf ("destroyStream\n");
+    if (si && si == g_slist_nth_data (stream_list, 0)) {
+        DBusMessage *msg = dbus_message_new_method_call (
+                callback_service,
+                callback_path,
+                "org.kde.kmplayer.callback",
+                "finish");
+        dbus_message_set_no_reply (msg, TRUE);
+        dbus_connection_send (dbus_connection, msg, NULL);
+        dbus_message_unref (msg);
+        dbus_connection_flush (dbus_connection);
+    }
+    return 0; /* single shot */
+}
+
 static gpointer newStream (const char *url, const char *mime) {
     StreamInfo *si;
-    uint16 stype = NP_NORMAL;
-    g_printf ("new stream\n");
+    g_printf ("new stream %s %s\n", url, mime);
     if (!npp) {
         char *argn[] = { "WIDTH", "HEIGHT", "SRC", "debug" };
         char *argv[] = { "320", "240", url, "yes" };
@@ -442,14 +470,6 @@ static gpointer newStream (const char *url, const char *mime) {
             return 0L;
     }
     si = addStream (url, mime, 0L, 0L, 0);
-    if (stdin_read_watch || !si) {
-        g_printerr ("startStream watch:%d list:%d\n", !!stdin_read_watch, !!si);
-        return 0L;
-    }
-    stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, NULL);
-    np_funcs.newstream (npp, si->mimetype, &si->np_stream, 0, &stype);
-    if (callback_service)
-        g_timeout_add (0, requestStream, 0L);
     return si;
 }
 
@@ -472,7 +492,13 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
                    DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
                 dbus_message_iter_get_basic (&args, &param);
                 mimetype = g_strdup (param);
-                newStream (url, mimetype);
+                if (dbus_message_iter_next (&args) && 
+                        DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
+                    dbus_message_iter_get_basic (&args, &param);
+                    plugin = g_strdup (param);
+                    g_printf ("play %s %s %s", url, mimetype, plugin);
+                    newStream (url, mimetype);
+                }
             }
         }
     } else if (dbus_message_is_method_call (message, iface, "getUrlNotify")) {
@@ -480,9 +506,13 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
         if (si && dbus_message_iter_init (message, &args) && 
                 DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type (&args)) {
             dbus_message_iter_get_basic (&args, &si->total);
-            g_printf( "getUrlNotify %d\n", si->total);
-            if (si->stream_pos == si->total)
-                removeStream (NPRES_DONE);
+            if (dbus_message_iter_next (&args) &&
+                   DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type (&args)) {
+                dbus_message_iter_get_basic (&args, &si->reason);
+                g_printf ("getUrlNotify bytes:%d reason:%d\n", si->total, si->reason);
+                if (si->stream_pos == si->total)
+                    removeStream (si->reason);
+            }
         }
     } else if (dbus_message_is_method_call (message, iface, "quit")) {
         g_printf ("quit\n");
@@ -536,8 +566,8 @@ int main (int argc, char **argv) {
         } else
             url = g_strdup (argv[i]);
     }
-    if (!plugin || (!callback_service && !(url && mimetype))) {
-        g_fprintf(stderr, "Usage: %s <-p plugin> <-m mimetype url|-cb service -wid id>\n", argv[0]);
+    if (!callback_service && !(url && mimetype && plugin)) {
+        g_fprintf(stderr, "Usage: %s <-m mimetype -p plugin url|-cb service -wid id>\n", argv[0]);
         return 1;
     }
     /*when called from kmplayer if (!callback_service) {*/

@@ -77,7 +77,7 @@ public:
     KDE_NO_EXPORT const QString & recordCmd () const { return m_recordcmd; }
     KDE_NO_EXPORT const QString & tuner () const { return m_tuner; }
     KDE_NO_EXPORT NodePtr current () const { return m_current; }
-    KDE_NO_EXPORT const QString & plugin () const { return m_plugin; }
+    QString plugin (const QString &mime) const;
     virtual NodePtr document ();
     virtual NodePtr root ();
     virtual QString filterOptions ();

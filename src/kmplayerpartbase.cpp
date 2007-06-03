@@ -1438,6 +1438,11 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
     }
 }
 
+QString Source::plugin (const QString &mime) const {
+    m_player->config ()->setGroup (mime);
+    return m_player->config ()->readEntry ("plugin", "" );
+}
+
 QString Source::prettyName () {
     return i18n ("Unknown");
 }
@@ -1766,12 +1771,8 @@ void URLSource::setURL (const KURL & url) {
     Mrl *mrl = document ()->mrl ();
     if (!url.isEmpty () && mrl->mimetype.isEmpty ()) {
         KMimeType::Ptr mimeptr = KMimeType::findByURL (url);
-        if (mimeptr) {
+        if (mimeptr)
             mrl->mimetype = mimeptr->name ();
-            m_player->config ()->setGroup (mrl->mimetype);
-            m_plugin = m_player->config ()->readEntry ("plugin", "" );
-            kdDebug () << "URLSource::setURL " << mimeptr->name () << " " << m_plugin << endl;
-        }
     }
 }
 

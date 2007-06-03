@@ -238,7 +238,7 @@ void Process::result (KIO::Job * job) {
 #endif
 }
 
-KDE_NO_EXPORT void Process::terminateJob () {
+void Process::terminateJobs () {
     if (m_job) {
         m_job->kill ();
         m_job = 0L;
@@ -300,7 +300,7 @@ KDE_NO_EXPORT bool MPlayerBase::sendCommand (const QString & cmd) {
 }
 
 KDE_NO_EXPORT bool MPlayerBase::stop () {
-    terminateJob ();
+    terminateJobs ();
     if (!m_source || !m_process || !m_process->isRunning ())
         return true;
     return true;
@@ -443,7 +443,7 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
 }
 
 KDE_NO_EXPORT bool MPlayer::stop () {
-    terminateJob ();
+    terminateJobs ();
     if (!m_source || !m_process || !m_process->isRunning ()) return true;
     if (m_use_slave)
         sendCommand (QString ("quit"));
@@ -1033,7 +1033,7 @@ bool MEncoder::deMediafiedPlay () {
 }
 
 KDE_NO_EXPORT bool MEncoder::stop () {
-    terminateJob ();
+    terminateJobs ();
     if (!m_source || !m_process || !m_process->isRunning ()) return true;
     kdDebug () << "MEncoder::stop ()" << endl;
     if (m_use_slave)
@@ -1095,7 +1095,7 @@ bool MPlayerDumpstream::deMediafiedPlay () {
 }
 
 KDE_NO_EXPORT bool MPlayerDumpstream::stop () {
-    terminateJob ();
+    terminateJobs ();
     if (!m_source || !m_process || !m_process->isRunning ()) return true;
     kdDebug () << "MPlayerDumpstream::stop ()" << endl;
     if (m_use_slave)
@@ -1317,7 +1317,7 @@ bool CallbackProcess::deMediafiedPlay () {
 }
 
 bool CallbackProcess::stop () {
-    terminateJob ();
+    terminateJobs ();
     if (!m_process || !m_process->isRunning () || m_state < Buffering)
         return true;
     kdDebug () << "CallbackProcess::stop ()" << m_backend << endl;
@@ -1860,7 +1860,7 @@ bool FFMpeg::deMediafiedPlay () {
 }
 
 KDE_NO_EXPORT bool FFMpeg::stop () {
-    terminateJob ();
+    terminateJobs ();
     if (!playing ()) return true;
     kdDebug () << "FFMpeg::stop" << endl;
     m_process->writeStdin ("q", 1);
@@ -1918,9 +1918,12 @@ dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
     NpPlayer *process = (NpPlayer *) data;
     kdDebug () << "dbusFilter " << sender << " " << dbus_message_get_interface (msg) << endl;
     const char * iface = process->interface ().ascii ();
+
     if (dbus_message_has_interface (msg, iface) &&
-            dbus_message_has_path (msg, process->objectPath ().ascii ())) {
+            dbus_message_has_path (msg, process->objectPath ().ascii ()))
+    {
         kdDebug () << "dbusFilter for us " << process << endl;
+
         if (dbus_message_is_method_call (msg, iface, "getUrl")) {
             char *param = 0;
             if (dbus_message_iter_init (msg, &args) &&
@@ -1929,6 +1932,10 @@ dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
                 process->requestStream (QString (param));
             }
             kdDebug () << "getUrl " << param << endl;
+
+        } else if (dbus_message_is_method_call (msg, iface, "finish")) {
+            process->finishStream (NpPlayer::BecauseStopped);
+
         } else if (dbus_message_is_method_call (msg, iface, "running")) {
             char *param = 0;
             if (dbus_message_iter_init (msg, &args) &&
@@ -2025,35 +2032,52 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
     kdDebug() << "NpPlayer::play '" << m_url << "'" << endl;
     if (m_mrl && !m_url.isEmpty () && dbus_static->dbus_connnection) {
         bytes = 0;
-        DBusMessage *msg = dbus_message_new_method_call (
-                remote_service.ascii(),
-                "/plugin",
-                "org.kde.kmplayer.backend",
-                "play");
-        char *c_url = strdup (m_url.local8Bit().data ());
-        char *c_mime = strdup (m_mrl->mrl ()->mimetype.ascii());
-        dbus_message_append_args(msg,
-                DBUS_TYPE_STRING, &c_url,
-                DBUS_TYPE_STRING, &c_mime,
-                DBUS_TYPE_INVALID);
-        dbus_message_set_no_reply (msg, TRUE);
-        dbus_connection_send (dbus_static->dbus_connnection, msg, NULL);
-        dbus_message_unref (msg);
-        dbus_connection_flush (dbus_static->dbus_connnection);
-        free (c_url);
-        free (c_mime);
-        setState (Buffering);
-    } else
-        stop ();
-    return true;
+        QString mime = "text/plain";
+        QString plugin;
+        for (NodePtr n = m_mrl; n; n = n->parentNode ()) {
+            Mrl *mrl = m_mrl->mrl ();
+            if (mrl && !mrl->mimetype.isEmpty ()) {
+                plugin = m_source->plugin (mrl->mimetype);
+                kdDebug() << "search plugin " << mrl->mimetype << "->" << plugin << endl;
+                if (!plugin.isEmpty ()) {
+                    mime = mrl->mimetype;
+                    break;
+                }
+            }
+        }
+        if (!plugin.isEmpty ()) {
+            DBusMessage *msg = dbus_message_new_method_call (
+                    remote_service.ascii(),
+                    "/plugin",
+                    "org.kde.kmplayer.backend",
+                    "play");
+            char *c_url = strdup (m_url.local8Bit().data ());
+            char *c_mime = strdup (mime.ascii ());
+            char *c_plugin = strdup (plugin.ascii ());
+            dbus_message_append_args(msg,
+                    DBUS_TYPE_STRING, &c_url,
+                    DBUS_TYPE_STRING, &c_mime,
+                    DBUS_TYPE_STRING, &c_plugin,
+                    DBUS_TYPE_INVALID);
+            dbus_message_set_no_reply (msg, TRUE);
+            dbus_connection_send (dbus_static->dbus_connnection, msg, NULL);
+            dbus_message_unref (msg);
+            dbus_connection_flush (dbus_static->dbus_connnection);
+            free (c_url);
+            free (c_mime);
+            free (c_plugin);
+            setState (Buffering);
+            return true;
+        }
+    }
+    stop ();
+    return false;
 }
 
 KDE_NO_EXPORT bool NpPlayer::ready (Viewer * viewer) {
     initProcess (viewer);
     kdDebug() << "NpPlayer::ready" << endl;
     QString cmd ("knpplayer");
-    cmd += QString (" -p ");
-    cmd += KProcess::quote(QString(QFile::encodeName(m_source->plugin())));
     cmd += QString (" -cb ");
     cmd += service;
     cmd += path;
@@ -2070,6 +2094,10 @@ KDE_NO_EXPORT void NpPlayer::setStarted (const QString & srv) {
 }
 
 KDE_NO_EXPORT void NpPlayer::requestStream (const QString & url) {
+    kdDebug () << "NpPlayer::requestStream '" << url << "'" << endl;
+    bytes = 0;
+    write_in_progress = false;
+    finish_reason = NoReason;
     job = KIO::get (KURL (url), false, false);
     connect (job, SIGNAL (data (KIO::Job *, const QByteArray &)),
             this, SLOT (slotData (KIO::Job *, const QByteArray &)));
@@ -2077,12 +2105,46 @@ KDE_NO_EXPORT void NpPlayer::requestStream (const QString & url) {
             this, SLOT (slotResult (KIO::Job *)));
 }
 
-KDE_NO_EXPORT bool NpPlayer::stop () {
-    terminateJob ();
+KDE_NO_EXPORT void NpPlayer::finishStream (Reason because) {
+    if (write_in_progress)
+        finish_reason = because;
+    else
+        sendFinish (because);
+}
+
+KDE_NO_EXPORT void NpPlayer::sendFinish (Reason because) {
+    terminateJobs ();
+    if (playing () && dbus_static->dbus_connnection) {
+        int reason = (int) because;
+        DBusMessage *msg = dbus_message_new_method_call (
+                remote_service.ascii(),
+                "/plugin",
+                "org.kde.kmplayer.backend",
+                "getUrlNotify");
+        dbus_message_append_args(msg,
+                DBUS_TYPE_UINT32, &bytes,
+                DBUS_TYPE_UINT32, &reason,
+                DBUS_TYPE_INVALID);
+        dbus_message_set_no_reply (msg, TRUE);
+        dbus_connection_send (dbus_static->dbus_connnection, msg, NULL);
+        dbus_message_unref (msg);
+        dbus_connection_flush (dbus_static->dbus_connnection);
+    }
+}
+
+KDE_NO_EXPORT void NpPlayer::terminateJobs () {
+    Process::terminateJobs ();
     if (job) {
         job->kill (); // quiet, no result signal
         job = 0L;
     }
+}
+
+KDE_NO_EXPORT bool NpPlayer::stop () {
+    if (job)
+        finishStream (BecauseStopped);
+    else
+        terminateJobs ();
     if (!playing ()) return true;
     kdDebug () << "NpPlayer::stop " << endl;
     if (dbus_static->dbus_connnection) {
@@ -2118,43 +2180,39 @@ KDE_NO_EXPORT void NpPlayer::processOutput (KProcess *, char * str, int slen) {
 }
 
 KDE_NO_EXPORT void NpPlayer::processStopped (KProcess *) {
+    terminateJobs ();
     if (m_source)
         ((PlayListNotify *) m_source)->setInfoMessage (QString ());
     setState (NotRunning);
 }
 
-KDE_NO_EXPORT void NpPlayer::slotResult (KIO::Job*) {
+KDE_NO_EXPORT void NpPlayer::slotResult (KIO::Job *jb) {
     kdDebug() << "slotResult " << playing () << bytes << endl;
-    if (playing ()) {
-        job = 0L; // signal KIO::Job::result deletes itself
-        if (dbus_static->dbus_connnection) {
-            DBusMessage *msg = dbus_message_new_method_call (
-                    remote_service.ascii(),
-                    "/plugin",
-                    "org.kde.kmplayer.backend",
-                    "getUrlNotify");
-            dbus_message_append_args(msg,
-                    DBUS_TYPE_UINT32, &bytes, DBUS_TYPE_INVALID);
-            dbus_message_set_no_reply (msg, TRUE);
-            dbus_connection_send (dbus_static->dbus_connnection, msg, NULL);
-            dbus_message_unref (msg);
-            dbus_connection_flush (dbus_static->dbus_connnection);
-            setState (Playing);
-        }
-    }
+    finish_reason = jb->error () ? BecauseError : BecauseDone;
+    job = 0L; // signal KIO::Job::result deletes itself
+    finishStream (finish_reason);
+    setState (Playing); // hmm, this doesn't really fit in current states
 }
 
 KDE_NO_EXPORT void NpPlayer::slotData (KIO::Job*, const QByteArray& qb) {
     if (playing ()) {
         bytes += qb.size ();
+        write_in_progress = true;
         m_process->writeStdin (qb.data (), qb.size ());
         job->suspend ();
     }
 }
 
 KDE_NO_EXPORT void NpPlayer::wroteStdin (KProcess *) {
-    if (playing () && job)
-        job->resume ();
+    write_in_progress = false;
+    if (playing () && job) {
+        if (finish_reason == NoReason) {
+            job->resume ();
+        } else {
+            sendFinish (finish_reason);
+            terminateJobs ();
+        }
+    }
 }
 
 KDE_NO_EXPORT QString NpPlayer::menuName () const {

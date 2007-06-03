@@ -41,12 +41,6 @@ namespace KIO {
     class TransferJob;
 }
 
-#ifdef HAVE_DBUS
-namespace DBusQt {
-    class Connection;
-}
-#endif
-
 namespace KMPlayer {
     
 class Settings;
@@ -104,7 +98,7 @@ protected slots:
 protected:
     void setState (State newstate);
     virtual bool deMediafiedPlay ();
-    void terminateJob ();
+    virtual void terminateJobs ();
     Source * m_source;
     Settings * m_settings;
     NodePtrW m_mrl;
@@ -418,6 +412,11 @@ private slots:
 class KMPLAYER_NO_EXPORT NpPlayer : public Process {
     Q_OBJECT
 public:
+    enum Reason {
+        NoReason = -1,
+        BecauseDone = 0, BecauseError = 1, BecauseStopped = 2
+    };
+
     NpPlayer (QObject * parent, Settings * settings, const QString & srv);
     ~NpPlayer ();
     virtual void init ();
@@ -427,6 +426,7 @@ public:
 
     void setStarted (const QString & srv);
     void requestStream (const QString & url);
+    void finishStream (Reason because);
 
     KDE_NO_EXPORT const QString & interface () const { return iface; }
     KDE_NO_EXPORT QString objectPath () const { return path; }
@@ -441,7 +441,10 @@ private slots:
     void wroteStdin (KProcess *);
     void slotResult (KIO::Job*);
     void slotData (KIO::Job*, const QByteArray& qb);
+protected:
+    virtual void terminateJobs ();
 private:
+    void sendFinish (Reason because);
     QString service;
     QString iface;
     QString path;
@@ -449,6 +452,8 @@ private:
     QString remote_service;
     KIO::TransferJob * job;
     unsigned int bytes;
+    bool write_in_progress;
+    Reason finish_reason;
 };
 #endif
 
