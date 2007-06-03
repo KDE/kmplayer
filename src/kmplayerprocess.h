@@ -164,6 +164,7 @@ public slots:
     virtual bool contrast (int pos, bool absolute);
     virtual bool brightness (int pos, bool absolute);
     MPlayerPreferencesPage * configPage () const { return m_configpage; }
+    bool ready (Viewer *);
 protected slots:
     void processStopped (KProcess *);
 private slots:

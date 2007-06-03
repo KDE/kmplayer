@@ -161,7 +161,7 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
     g_printf ("NPN_GetValue %d\n", variable & ~NP_ABI_MASK);
     switch (variable) {
         case NPNVxDisplay:
-            *(void**)value = (void*)(long)gdk_x11_display_get_xdisplay (gtk_widget_get_display (xembed));
+            *(void**)value = (void*)(long) gdk_x11_get_default_xdisplay ();
             break;
         case NPNVxtAppContext:
             *(void**)value = NULL;
@@ -388,6 +388,8 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     NPWindow window;
     NPSetWindowCallbackStruct ws_info;
     NPError np_err;
+    Display *display;
+    int screen;
 
     npp = (NPP_t*)malloc (sizeof (NPP_t));
     /*np_err = np_funcs.getvalue ((void*)npp, NPPVpluginNeedsXEmbed, (void*)&np_value);
@@ -409,10 +411,13 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     window.height = 240;
     window.window = (void*)socket_id;
     ws_info.type = 1; /*NP_SetWindow;*/
-    ws_info.display = (void*)(long)gdk_x11_display_get_xdisplay (gtk_widget_get_display (xembed));
-    ws_info.visual = (void*)(long)gdk_x11_visual_get_xvisual (gdk_visual_get_system());
-    ws_info.colormap = gdk_x11_colormap_get_xcolormap (gdk_colormap_get_system());
-    ws_info.depth = gdk_drawable_get_depth (xembed->window);
+    display = gdk_x11_get_default_xdisplay ();
+    screen = DefaultScreen (display);
+    ws_info.display = (void*)(long)display;
+    ws_info.visual = (void*)(long)DefaultVisual (display, screen);
+    ws_info.colormap = DefaultColormap (display, screen);
+    ws_info.depth = DefaultDepth (display, screen);
+    g_printf ("display %p nr:%d depth:%d\n", display, screen, ws_info.depth);
     window.ws_info = (void*)&ws_info;
 
     np_err = np_funcs.setwindow (npp, &window);
@@ -496,7 +501,7 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
                         DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
                     dbus_message_iter_get_basic (&args, &param);
                     plugin = g_strdup (param);
-                    g_printf ("play %s %s %s", url, mimetype, plugin);
+                    g_printf ("play %s %s %s\n", url, mimetype, plugin);
                     newStream (url, mimetype);
                 }
             }
@@ -529,7 +534,11 @@ static void pluginAdded (GtkSocket *socket, gpointer d) {
 }
 
 static void windowCreatedEvent (GtkWidget *w, gpointer d) {
-    socket_id = gtk_socket_get_id (GTK_SOCKET (xembed));
+    g_printf ("windowCreatedEvent\n");
+    if (!socket_id)
+        socket_id = gtk_socket_get_id (GTK_SOCKET (xembed));
+    else
+        gdk_window_move_resize (w->window, -100, -100, 1, 1);
     if (!callback_service)
         newStream (url, mimetype);
 }
@@ -591,8 +600,15 @@ int main (int argc, char **argv) {
         gtk_widget_modify_bg (xembed, GTK_STATE_NORMAL, &bg_color);
 
         gtk_container_add (GTK_CONTAINER (window), xembed);
-        gtk_widget_set_size_request (window, 320, 240);
-        gtk_widget_show_all (window);
+        if (socket_id)
+            gtk_widget_set_size_request (window, 10, 10);
+        else
+            gtk_widget_set_size_request (window, 320, 240);
+        g_printf ("dis %p\n", gdk_display_get_default ());
+        /*if (socket_id)
+            gdk_notify_startup_complete ();
+        else */
+            gtk_widget_show_all (window);
     /*} else {*/
     if (callback_service && callback_path) {
         DBusMessage *msg;

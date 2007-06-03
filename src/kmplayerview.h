@@ -226,6 +226,7 @@ public:
     void resetBackgroundColor ();
     void setCurrentBackgroundColor (const QColor & c);
     KDE_NO_EXPORT View * view () const { return m_view; }
+    void changeProtocol (QXEmbed::Protocol p);
 public slots:
     void sendConfigureEvent ();
 protected:
@@ -233,6 +234,7 @@ protected:
     void dropEvent (QDropEvent *);
     void mouseMoveEvent (QMouseEvent * e);
     void contextMenuEvent (QContextMenuEvent * e);
+    virtual void windowChanged( WId w );
 private:
     unsigned int m_bgcolor;
     float m_aspect;

@@ -381,6 +381,11 @@ KDE_NO_EXPORT WId MPlayer::widget () {
     return viewer ()->embeddedWinId ();
 }
 
+KDE_NO_EXPORT bool MPlayer::ready (Viewer * viewer) {
+    Process::ready (viewer);
+    viewer->changeProtocol (QXEmbed::XPLAIN);
+}
+
 KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
     if (playing ())
         return sendCommand (QString ("gui_play"));
@@ -1687,6 +1692,7 @@ KDE_NO_CDTOR_EXPORT Xine::~Xine () {}
 
 bool Xine::ready (Viewer * viewer) {
     initProcess (viewer);
+    viewer->changeProtocol (QXEmbed::XPLAIN);
     QString xine_config = KProcess::quote (QString (QFile::encodeName (locateLocal ("data", "kmplayer/") + QString ("xine_config"))));
     m_request_seek = -1;
     if (m_source && !m_source->pipeCmd ().isEmpty ()) {
@@ -1761,6 +1767,7 @@ KDE_NO_CDTOR_EXPORT GStreamer::~GStreamer () {}
 
 KDE_NO_EXPORT bool GStreamer::ready (Viewer * viewer) {
     initProcess (viewer);
+    viewer->changeProtocol (QXEmbed::XPLAIN);
     m_request_seek = -1;
     fprintf (stderr, "kgstplayer -wid %lu", (unsigned long) widget ());
     *m_process << "kgstplayer -wid " << QString::number (widget ());
@@ -2030,6 +2037,7 @@ KDE_NO_EXPORT void NpPlayer::initProcess (Viewer * viewer) {
 
 KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
     kdDebug() << "NpPlayer::play '" << m_url << "'" << endl;
+    viewer ()->changeProtocol (QXEmbed::XEMBED);
     if (m_mrl && !m_url.isEmpty () && dbus_static->dbus_connnection) {
         bytes = 0;
         QString mime = "text/plain";
@@ -2076,11 +2084,14 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
 
 KDE_NO_EXPORT bool NpPlayer::ready (Viewer * viewer) {
     initProcess (viewer);
+    viewer->changeProtocol (QXEmbed::XEMBED);
     kdDebug() << "NpPlayer::ready" << endl;
     QString cmd ("knpplayer");
     cmd += QString (" -cb ");
     cmd += service;
     cmd += path;
+    cmd += QString (" -wid ");
+    cmd += QString::number (viewer->winId ());
     fprintf (stderr, "%s\n", cmd.local8Bit ().data ());
     *m_process << cmd;
     m_process->start (KProcess::NotifyOnExit, KProcess::All);

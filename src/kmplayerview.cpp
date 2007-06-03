@@ -227,17 +227,7 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
 
     setAcceptDrops (true);
     m_view_area->resizeEvent (0L);
-    kdDebug() << "View " << (unsigned long) (m_viewer->embeddedWinId()) << endl;
 
-    XSelectInput (qt_xdisplay (), m_viewer->embeddedWinId (), 
-               //KeyPressMask | KeyReleaseMask |
-               KeyPressMask |
-               //EnterWindowMask | LeaveWindowMask |
-               //FocusChangeMask |
-               ExposureMask |
-               StructureNotifyMask |
-               PointerMotionMask
-              );
     kapp->installX11EventFilter (this);
 }
 
@@ -588,7 +578,9 @@ KDE_NO_EXPORT void View::playingStop () {
     killTimer (controlbar_timer);
     controlbar_timer = 0;
     m_playing = false;
-    XClearWindow (qt_xdisplay(), m_viewer->embeddedWinId ());
+    WId w = m_viewer->embeddedWinId ();
+    if (w)
+        XClearWindow (qt_xdisplay(), w);
     m_view_area->resizeEvent (0L);
 }
 
@@ -709,17 +701,48 @@ KDE_NO_CDTOR_EXPORT Viewer::Viewer (QWidget *parent, View * view)
                            x11Depth (), InputOutput, (Visual*)x11Visual (),
                            CWBackPixel | CWBorderPixel | CWColormap, &xswa));*/
     setAcceptDrops (true);
-#if KDE_IS_VERSION(3,1,1)
-    setProtocol(QXEmbed::XPLAIN);
-#endif
-    int scr = DefaultScreen (qt_xdisplay ());
-    embed (XCreateSimpleWindow (qt_xdisplay(), view->winId (), 0, 0, width(), height(), 1, BlackPixel (qt_xdisplay(), scr), BlackPixel (qt_xdisplay(), scr)));
-    XClearWindow (qt_xdisplay(), embeddedWinId ());
 }
 
 KDE_NO_CDTOR_EXPORT Viewer::~Viewer () {
 }
-    
+
+KDE_NO_EXPORT void Viewer::changeProtocol (QXEmbed::Protocol p) {
+    kdDebug () << "changeProtocol " << (int)protocol () << "->" << p << endl;
+    if (!embeddedWinId () || p != protocol ()) {
+        if (p == QXEmbed::XPLAIN) {
+            setProtocol (p);
+            int scr = DefaultScreen (qt_xdisplay ());
+            embed (XCreateSimpleWindow (
+                        qt_xdisplay(),
+                        m_view->winId (),
+                        0, 0, width(), height(),
+                        1,
+                        BlackPixel (qt_xdisplay(), scr),
+                        BlackPixel (qt_xdisplay(), scr)));
+            XClearWindow (qt_xdisplay(), embeddedWinId ());
+            XSelectInput (qt_xdisplay (), embeddedWinId (), 
+                    //KeyPressMask | KeyReleaseMask |
+                    KeyPressMask |
+                    //EnterWindowMask | LeaveWindowMask |
+                    //FocusChangeMask |
+                    ExposureMask |
+                    StructureNotifyMask |
+                    PointerMotionMask);
+        } else {
+            WId w = embeddedWinId ();
+            if (w) {
+                XDestroyWindow (qt_xdisplay(), w);
+                XSync (qt_xdisplay (), false);
+            }
+            setProtocol (p);
+        }
+    }
+}
+
+KDE_NO_EXPORT void Viewer::windowChanged (WId w) {
+    kdDebug () << "windowChanged " << (int)w << endl;
+}
+
 KDE_NO_EXPORT void Viewer::mouseMoveEvent (QMouseEvent * e) {
     if (e->state () == Qt::NoButton) {
         int cp_height = m_view->controlPanel ()->maximumSize ().height ();
@@ -748,27 +771,33 @@ KDE_NO_EXPORT void Viewer::dragEnterEvent (QDragEnterEvent* dee) {
 /*
 */
 void Viewer::sendKeyEvent (int key) {
-    char buf[2] = { char (key), '\0' }; 
-    KeySym keysym = XStringToKeysym (buf);
-    XKeyEvent event = {
-        XKeyPress, 0, true,
-        qt_xdisplay (), embeddedWinId (), qt_xrootwin(), embeddedWinId (),
-        /*time*/ 0, 0, 0, 0, 0,
-        0, XKeysymToKeycode (qt_xdisplay (), keysym), true
-    };
-    XSendEvent (qt_xdisplay(), embeddedWinId (), false, KeyPressMask, (XEvent *) &event);
-    XFlush (qt_xdisplay ());
+    WId w = embeddedWinId ();
+    if (w) {
+        char buf[2] = { char (key), '\0' }; 
+        KeySym keysym = XStringToKeysym (buf);
+        XKeyEvent event = {
+            XKeyPress, 0, true,
+            qt_xdisplay (), w, qt_xrootwin(), w,
+            /*time*/ 0, 0, 0, 0, 0,
+            0, XKeysymToKeycode (qt_xdisplay (), keysym), true
+        };
+        XSendEvent (qt_xdisplay(), w, false, KeyPressMask, (XEvent *) &event);
+        XFlush (qt_xdisplay ());
+    }
 }
 
 KDE_NO_EXPORT void Viewer::sendConfigureEvent () {
-    XConfigureEvent c = {
-        ConfigureNotify, 0UL, True,
-        qt_xdisplay (), embeddedWinId (), winId (),
-        x (), y (), width (), height (),
-        0, None, False
-    };
-    XSendEvent(qt_xdisplay(), c.event, true, StructureNotifyMask, (XEvent*) &c);
-    XFlush (qt_xdisplay ());
+    WId w = embeddedWinId ();
+    if (w) {
+        XConfigureEvent c = {
+            ConfigureNotify, 0UL, True,
+            qt_xdisplay (), w, winId (),
+            x (), y (), width (), height (),
+            0, None, False
+        };
+        XSendEvent(qt_xdisplay(),c.event,true,StructureNotifyMask,(XEvent*)&c);
+        XFlush (qt_xdisplay ());
+    }
 }
 
 KDE_NO_EXPORT void Viewer::contextMenuEvent (QContextMenuEvent * e) {
@@ -788,8 +817,11 @@ KDE_NO_EXPORT void Viewer::resetBackgroundColor () {
 
 KDE_NO_EXPORT void Viewer::setCurrentBackgroundColor (const QColor & c) {
     setPaletteBackgroundColor (c);
-    XSetWindowBackground (qt_xdisplay (), embeddedWinId (), c.rgb ());
-    XFlush (qt_xdisplay ());
+    WId w = embeddedWinId ();
+    if (w) {
+        XSetWindowBackground (qt_xdisplay (), w, c.rgb ());
+        XFlush (qt_xdisplay ());
+    }
 }
 
 #include "kmplayerview.moc"
