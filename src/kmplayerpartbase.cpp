@@ -1828,6 +1828,7 @@ bool URLSource::resolveURL (NodePtr m) {
               url.protocol () == QString::fromLatin1 ("remote")))) {
         KIO::Job * job = KIO::get (url, false, false);
         job->addMetaData ("PropagateHttpHeader", "true");
+        job->addMetaData ("errorPage", "false");
         m_resolve_info = new ResolveInfo (m, job, m_resolve_info);
         connect (m_resolve_info->job, SIGNAL(data(KIO::Job*,const QByteArray&)),
                 this, SLOT (kioData (KIO::Job *, const QByteArray &)));
