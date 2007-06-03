@@ -38,6 +38,7 @@ class KProcess;
 
 namespace KIO {
     class Job;
+    class TransferJob;
 }
 
 #ifdef HAVE_DBUS
@@ -423,18 +424,31 @@ public:
     virtual bool deMediafiedPlay ();
     virtual void initProcess (Viewer * viewer);
     virtual QString menuName () const;
-    KDE_NO_EXPORT QString interface () const { return iface; }
+
+    void setStarted (const QString & srv);
+    void requestStream (const QString & url);
+
+    KDE_NO_EXPORT const QString & interface () const { return iface; }
     KDE_NO_EXPORT QString objectPath () const { return path; }
 public slots:
     virtual bool stop ();
     virtual bool quit ();
+public slots:
+    bool ready (Viewer *);
 private slots:
+    void processOutput (KProcess *, char *, int);
     void processStopped (KProcess *);
+    void wroteStdin (KProcess *);
+    void slotResult (KIO::Job*);
+    void slotData (KIO::Job*, const QByteArray& qb);
 private:
     QString service;
     QString iface;
     QString path;
     QString filter;
+    QString remote_service;
+    KIO::TransferJob * job;
+    unsigned int bytes;
 };
 #endif
 

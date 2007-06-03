@@ -49,8 +49,9 @@ static gchar *url;
 static gchar *mimetype;
 
 static DBusConnection *dbus_connection;
-static char service_name[64];
+static char *service_name;
 static gchar *callback_service;
+static gchar *callback_path;
 static GModule *library;
 static GtkWidget *xembed;
 static Window socket_id;
@@ -64,8 +65,9 @@ static char stream_buf[4096];
 typedef struct _StreamInfo {
     NPStream np_stream;
     void *notify_data;
-    int stream_buf_pos;
-    int stream_pos;
+    unsigned int stream_buf_pos;
+    unsigned int stream_pos;
+    unsigned int total;
     char *url;
     char *mimetype;
     char *target;
@@ -248,7 +250,8 @@ static StreamInfo *addStream (const char *url, const char *mime, const char *tar
     g_printf ("new stream\n");
     StreamInfo *si = (StreamInfo *) malloc (sizeof (StreamInfo));
     memset (si, 0, sizeof (StreamInfo));
-    si->np_stream.url = g_strdup (url);
+    si->url = g_strdup (url);
+    si->np_stream.url = si->url;
     if (mime)
         si->mimetype = g_strdup (mime);
     if (target)
@@ -285,6 +288,8 @@ static void readStdin (gpointer d, gint src, GdkInputCondition cond) {
             }
             si->stream_pos += sz;
         }
+        if (si->stream_pos == si->total)
+            removeStream (NPRES_DONE);
     } else
         removeStream (NPRES_DONE);
 }
@@ -407,9 +412,29 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     return 0;
 }
 
+static gboolean requestStream (void * p) {
+    StreamInfo *si = (StreamInfo*) g_slist_nth_data (stream_list, 0);
+    g_printf ("requestStream\n");
+    if (si) {
+        DBusMessage *msg = dbus_message_new_method_call (
+                callback_service,
+                callback_path,
+                "org.kde.kmplayer.callback",
+                "getUrl");
+        dbus_message_append_args (
+                msg, DBUS_TYPE_STRING, &si->url, DBUS_TYPE_INVALID);
+        dbus_message_set_no_reply (msg, TRUE);
+        dbus_connection_send (dbus_connection, msg, NULL);
+        dbus_message_unref (msg);
+        dbus_connection_flush (dbus_connection);
+    }
+    return 0; /* single shot */
+}
+
 static gpointer newStream (const char *url, const char *mime) {
     StreamInfo *si;
     uint16 stype = NP_NORMAL;
+    g_printf ("new stream\n");
     if (!npp) {
         char *argn[] = { "WIDTH", "HEIGHT", "SRC", "debug" };
         char *argv[] = { "320", "240", url, "yes" };
@@ -423,6 +448,8 @@ static gpointer newStream (const char *url, const char *mime) {
     }
     stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, NULL);
     np_funcs.newstream (npp, si->mimetype, &si->np_stream, 0, &stype);
+    if (callback_service)
+        g_timeout_add (0, requestStream, 0L);
     return si;
 }
 
@@ -434,9 +461,8 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
     DBusMessage* reply;
     const char *sender = dbus_message_get_sender (message);
     const char *iface = "org.kde.kmplayer.backend";
-    g_printf ("dbusFilter %s %s\n", sender, dbus_message_get_interface (message));
+    g_printf("dbusFilter %s %s\n", sender,dbus_message_get_interface (message));
     if (dbus_message_is_method_call (message, iface, "play")) {
-        guint64 ret = 0;
         char *param = 0;
         if (dbus_message_iter_init (message, &args) && 
                 DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
@@ -446,20 +472,20 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
                    DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
                 dbus_message_iter_get_basic (&args, &param);
                 mimetype = g_strdup (param);
-                ret = (guint64) newStream (url, mimetype);
+                newStream (url, mimetype);
             }
         }
-        reply = dbus_message_new_method_return (message);
-        dbus_message_iter_init_append (reply, &args);
-        if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_UINT64, &ret)) { 
-            g_printerr ("Out Of Memory!\n");
-            gtk_main_quit();
-            return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    } else if (dbus_message_is_method_call (message, iface, "getUrlNotify")) {
+        StreamInfo *si = (StreamInfo*) g_slist_nth_data (stream_list, 0);
+        if (si && dbus_message_iter_init (message, &args) && 
+                DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type (&args)) {
+            dbus_message_iter_get_basic (&args, &si->total);
+            g_printf( "getUrlNotify %d\n", si->total);
+            if (si->stream_pos == si->total)
+                removeStream (NPRES_DONE);
         }
-        dbus_connection_send (dbus_connection, reply, NULL);
-        dbus_message_unref (reply);
-        dbus_connection_flush (dbus_connection);
     } else if (dbus_message_is_method_call (message, iface, "quit")) {
+        g_printf ("quit\n");
         shutDownPlugin();
         gtk_main_quit();
     }
@@ -495,7 +521,14 @@ int main (int argc, char **argv) {
         if (!strcmp (argv[i], "-p") && ++i < argc) {
             plugin = g_strdup (argv[i]);
         } else if (!strcmp (argv[i], "-cb") && ++i < argc) {
-            callback_service = g_strdup (argv[i]);
+            gchar *cb = g_strdup (argv[i]);
+            gchar *path = strchr(cb, '/');
+            if (path) {
+                callback_path = g_strdup (path);
+                *path = 0;
+            }
+            callback_service = g_strdup (cb);
+            g_free (cb);
         } else if (!strcmp (argv[i], "-m") && ++i < argc) {
             mimetype = g_strdup (argv[i]);
         } else if (!strcmp (argv [i], "-wid") && ++i < argc) {
@@ -531,9 +564,11 @@ int main (int argc, char **argv) {
         gtk_widget_set_size_request (window, 320, 240);
         gtk_widget_show_all (window);
     /*} else {*/
-    if (callback_service) {
+    if (callback_service && callback_path) {
+        DBusMessage *msg;
         DBusError dberr;
         const char *serv = "type='method_call',interface='org.kde.kmplayer.backend'";
+        char myname[64];
 
         dbus_error_init (&dberr);
         dbus_connection = dbus_bus_get (DBUS_BUS_SESSION, &dberr);
@@ -542,7 +577,8 @@ int main (int argc, char **argv) {
                     dberr.message);
             exit (1);
         }
-        g_sprintf (service_name, "org.kde.kmplayer.npplayer-%d", getpid ());
+        g_sprintf (myname, "org.kde.kmplayer.npplayer-%d", getpid ());
+        service_name = g_strdup (myname);
         g_printf ("using service %s was '%s'\n", service_name, dbus_bus_get_unique_name (dbus_connection));
         dbus_connection_setup_with_g_main (dbus_connection, 0L);
         dbus_bus_request_name (dbus_connection, service_name, 
@@ -559,6 +595,19 @@ int main (int argc, char **argv) {
             return -1;
         }
         dbus_connection_add_filter (dbus_connection, dbusFilter, 0L, 0L);
+
+        /* TODO: remove DBUS_BUS_SESSION and create a private connection */
+        msg = dbus_message_new_method_call (
+                callback_service,
+                callback_path,
+                "org.kde.kmplayer.callback",
+                "running");
+        dbus_message_append_args (
+                msg, DBUS_TYPE_STRING, &service_name, DBUS_TYPE_INVALID);
+        dbus_message_set_no_reply (msg, TRUE);
+        dbus_connection_send (dbus_connection, msg, NULL);
+        dbus_message_unref (msg);
+
         dbus_connection_flush (dbus_connection);
     }
 
