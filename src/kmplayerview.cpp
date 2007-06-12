@@ -701,6 +701,7 @@ KDE_NO_CDTOR_EXPORT Viewer::Viewer (QWidget *parent, View * view)
                            x11Depth (), InputOutput, (Visual*)x11Visual (),
                            CWBackPixel | CWBorderPixel | CWColormap, &xswa));*/
     setAcceptDrops (true);
+    setProtocol (QXEmbed::XPLAIN);
 }
 
 KDE_NO_CDTOR_EXPORT Viewer::~Viewer () {
@@ -710,7 +711,7 @@ KDE_NO_EXPORT void Viewer::changeProtocol (QXEmbed::Protocol p) {
     kdDebug () << "changeProtocol " << (int)protocol () << "->" << p << endl;
     if (!embeddedWinId () || p != protocol ()) {
         if (p == QXEmbed::XPLAIN) {
-            setProtocol (p);
+            //setProtocol (p);
             int scr = DefaultScreen (qt_xdisplay ());
             embed (XCreateSimpleWindow (
                         qt_xdisplay(),
@@ -734,7 +735,7 @@ KDE_NO_EXPORT void Viewer::changeProtocol (QXEmbed::Protocol p) {
                 XDestroyWindow (qt_xdisplay(), w);
                 XSync (qt_xdisplay (), false);
             }
-            setProtocol (p);
+            //setProtocol (p);
         }
     }
 }

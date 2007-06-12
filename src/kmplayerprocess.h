@@ -429,6 +429,7 @@ public:
     void requestStream (const QString & url);
     void finishStream (Reason because);
 
+    KDE_NO_EXPORT const QString & destination () const { return service; }
     KDE_NO_EXPORT const QString & interface () const { return iface; }
     KDE_NO_EXPORT QString objectPath () const { return path; }
 public slots:

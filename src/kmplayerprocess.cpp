@@ -1923,10 +1923,11 @@ dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
     const char *sender = dbus_message_get_sender (msg);
     //const char *iface = "org.kde.kmplayer.backend";
     NpPlayer *process = (NpPlayer *) data;
-    kdDebug () << "dbusFilter " << sender << " " << dbus_message_get_interface (msg) << endl;
+    kdDebug () << "dbusFilter " << sender << " " << dbus_message_get_interface (msg) << " dest:" << dbus_message_get_destination (msg) << endl;
     const char * iface = process->interface ().ascii ();
 
-    if (dbus_message_has_interface (msg, iface) &&
+    if (dbus_message_has_destination (msg, process->destination ().ascii ()) &&
+                dbus_message_has_interface (msg, iface) &&
             dbus_message_has_path (msg, process->objectPath ().ascii ()))
     {
         kdDebug () << "dbusFilter for us " << process << endl;
@@ -2037,7 +2038,7 @@ KDE_NO_EXPORT void NpPlayer::initProcess (Viewer * viewer) {
 
 KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
     kdDebug() << "NpPlayer::play '" << m_url << "'" << endl;
-    viewer ()->changeProtocol (QXEmbed::XEMBED);
+    //viewer ()->changeProtocol (QXEmbed::XEMBED);
     if (m_mrl && !m_url.isEmpty () && dbus_static->dbus_connnection) {
         bytes = 0;
         QString mime = "text/plain";
@@ -2083,6 +2084,8 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
 }
 
 KDE_NO_EXPORT bool NpPlayer::ready (Viewer * viewer) {
+    if (playing ())
+        return true; // wait for callback
     initProcess (viewer);
     viewer->changeProtocol (QXEmbed::XEMBED);
     kdDebug() << "NpPlayer::ready" << endl;
@@ -2105,11 +2108,12 @@ KDE_NO_EXPORT void NpPlayer::setStarted (const QString & srv) {
 }
 
 KDE_NO_EXPORT void NpPlayer::requestStream (const QString & url) {
-    kdDebug () << "NpPlayer::requestStream '" << url << "'" << endl;
+    KURL uri (m_url, url);
+    kdDebug () << "NpPlayer::requestStream '" << uri << "'" << endl;
     bytes = 0;
     write_in_progress = false;
     finish_reason = NoReason;
-    job = KIO::get (KURL (url), false, false);
+    job = KIO::get (uri, false, false);
     connect (job, SIGNAL (data (KIO::Job *, const QByteArray &)),
             this, SLOT (slotData (KIO::Job *, const QByteArray &)));
     connect (job, SIGNAL (result (KIO::Job *)),

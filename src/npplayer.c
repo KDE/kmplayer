@@ -55,6 +55,7 @@ static gchar *callback_path;
 static GModule *library;
 static GtkWidget *xembed;
 static Window socket_id;
+static Window parent_id;
 static int stdin_read_watch;
 
 static NPPluginFuncs np_funcs;       /* plugin functions              */
@@ -72,15 +73,28 @@ typedef struct _StreamInfo {
     char *url;
     char *mimetype;
     char *target;
+    char notify;
 } StreamInfo;
 
 static NP_GetMIMEDescriptionUPP npGetMIMEDescription;
 static NP_InitializeUPP npInitialize;
 static NP_ShutdownUPP npShutdown;
 
-static StreamInfo *addStream (const char *url, const char *mime, const char *target, void *notify, int req);
+static StreamInfo *addStream (const char *url, const char *mime, const char *target, void *notify_data, int notify);
 static gboolean requestStream (void * si);
 static gboolean destroyStream (void * si);
+
+/*----------------%<---------------------------------------------------------*/
+
+static void freeStream (StreamInfo *si) {
+    stream_list = g_slist_remove (stream_list, si);
+    g_free (si->url);
+    if (si->mimetype)
+        g_free (si->mimetype);
+    if (si->target)
+        g_free (si->target);
+    free (si);
+}
 
 /*----------------%<---------------------------------------------------------*/
 
@@ -115,7 +129,7 @@ static int32 nsWrite (NPP instance, NPStream* stream, int32 len, void *buf) {
 
 static NPError nsDestroyStream (NPP instance, NPStream *stream, NPError reason) {
     g_printf ("nsDestroyStream\n");
-    g_timeout_add (0, destroyStream, stream_list);
+    g_timeout_add (0, destroyStream, g_slist_nth_data (stream_list, 0));
     return NPERR_NO_ERROR;
 }
 
@@ -196,7 +210,7 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
 
 static NPError nsSetValue (NPP instance, NPPVariable variable, void *value) {
     /* NPPVpluginWindowBool */
-    g_printf ("NPN_SetValue\n");
+    g_printf ("NPN_SetValue %d\n", variable & ~NP_ABI_MASK);
     return NPERR_NO_ERROR;
 }
 
@@ -235,25 +249,19 @@ static void removeStream (NPReason reason) {
 
     if (si) {
         g_printf ("data received %d\n", si->stream_pos);
-        stream_list = g_slist_remove (stream_list, si);
         np_funcs.destroystream (npp, &si->np_stream, reason);
-        if (si->notify_data)
+        if (si->notify)
             np_funcs.urlnotify (npp, si->url, reason, si->notify_data);
-        g_free (si->url);
-        if (si->mimetype)
-            g_free (si->mimetype);
-        if (si->target)
-            g_free (si->target);
-        free (si);
+        freeStream (si);
         si = (StreamInfo*) g_slist_nth_data (stream_list, 0);
         if (si && callback_service)
             g_timeout_add (0, requestStream, si);
     }
 }
 
-static StreamInfo *addStream (const char *url, const char *mime, const char *target, void *notify, int req) {
+static StreamInfo *addStream (const char *url, const char *mime, const char *target, void *notify_data, int notify) {
     StreamInfo *si = (StreamInfo*) g_slist_nth_data (stream_list, 0);
-    int req1 = !si ? 1 : 0;
+    int req = !si ? 1 : 0;
     si = (StreamInfo *) malloc (sizeof (StreamInfo));
 
     g_printf ("new stream\n");
@@ -264,10 +272,11 @@ static StreamInfo *addStream (const char *url, const char *mime, const char *tar
         si->mimetype = g_strdup (mime);
     if (target)
         si->target = g_strdup (target);
-    si->notify_data = notify;
+    si->notify_data = notify_data;
+    si->notify = notify;
     stream_list = g_slist_append (stream_list, si);
 
-    if (req1 && callback_service)
+    if (req)
         g_timeout_add (0, requestStream, si);
 
     return si;
@@ -292,13 +301,20 @@ static void readStdin (gpointer d, gint src, GdkInputCondition cond) {
             else if (sz > 0) {
                 si->stream_buf_pos -= sz;
                 memmove (stream_buf, stream_buf + sz, si->stream_buf_pos);
+            } else {
             }
-            si->stream_pos += sz;
+            si->stream_pos += sz > 0 ? sz : 0;
+        } else {
         }
-        if (si->stream_pos == si->total)
-            removeStream (si->reason);
-    } else
+        if (si->stream_pos == si->total) {
+            if (si->stream_pos)
+                removeStream (si->reason);
+            else
+                g_timeout_add (0, destroyStream, si);
+        }
+    } else {
         removeStream (NPRES_DONE); /* only for 'cat foo | knpplayer' */
+    }
 }
 
 static int initPlugin (const char *plugin_lib) {
@@ -392,6 +408,7 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     int screen;
 
     npp = (NPP_t*)malloc (sizeof (NPP_t));
+    memset (npp, 0, sizeof (NPP_t));
     /*np_err = np_funcs.getvalue ((void*)npp, NPPVpluginNeedsXEmbed, (void*)&np_value);
     if (np_err != NPERR_NO_ERROR || !np_value) {
         g_printf ("NPP_GetValue NPPVpluginNeedsXEmbed failure %d\n", np_err);
@@ -400,15 +417,15 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     }*/
     np_err = np_funcs.newp (mime, npp, NP_EMBED, argc, argn, argv, saved_data);
     if (np_err != NPERR_NO_ERROR) {
-        g_printf ("NPP_GetValue NPP_New failure %d\n", np_err);
+        g_printf ("NPP_New failure %d\n", np_err);
         return -1;
     }
 
     memset (&window, 0, sizeof (NPWindow));
     window.x = 0;
     window.y = 0;
-    window.width = 320;
-    window.height = 240;
+    window.width = 440;
+    window.height = 330;
     window.window = (void*)socket_id;
     ws_info.type = 1; /*NP_SetWindow;*/
     display = gdk_x11_get_default_xdisplay ();
@@ -428,22 +445,30 @@ static gboolean requestStream (void * p) {
     StreamInfo *si = (StreamInfo*) p;
     g_printf ("requestStream\n");
     if (si && si == g_slist_nth_data (stream_list, 0)) {
+        NPError err;
         uint16 stype = NP_NORMAL;
+        si->np_stream.notifyData = si->notify_data;
+        err = np_funcs.newstream (npp, si->mimetype, &si->np_stream, 0, &stype);
+        if (err != NPERR_NO_ERROR) {
+            g_printerr ("newstream error %d\n", err);
+            freeStream (si);
+            return 0;
+        }
         g_assert (!stdin_read_watch);
         stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, NULL);
-        np_funcs.newstream (npp, si->mimetype, &si->np_stream, 0, &stype);
-
-        DBusMessage *msg = dbus_message_new_method_call (
-                callback_service,
-                callback_path,
-                "org.kde.kmplayer.callback",
-                "getUrl");
-        dbus_message_append_args (
-                msg, DBUS_TYPE_STRING, &si->url, DBUS_TYPE_INVALID);
-        dbus_message_set_no_reply (msg, TRUE);
-        dbus_connection_send (dbus_connection, msg, NULL);
-        dbus_message_unref (msg);
-        dbus_connection_flush (dbus_connection);
+        if (callback_service) {
+            DBusMessage *msg = dbus_message_new_method_call (
+                    callback_service,
+                    callback_path,
+                    "org.kde.kmplayer.callback",
+                    "getUrl");
+            dbus_message_append_args (
+                    msg, DBUS_TYPE_STRING, &si->url, DBUS_TYPE_INVALID);
+            dbus_message_set_no_reply (msg, TRUE);
+            dbus_connection_send (dbus_connection, msg, NULL);
+            dbus_message_unref (msg);
+            dbus_connection_flush (dbus_connection);
+        }
     }
     return 0; /* single shot */
 }
@@ -467,11 +492,11 @@ static gboolean destroyStream (void * p) {
 
 static gpointer newStream (const char *url, const char *mime) {
     StreamInfo *si;
-    g_printf ("new stream %s %s\n", url, mime);
+    g_printf ("new stream %s %s %d\n", url, mime, g_main_depth ());
     if (!npp) {
-        char *argn[] = { "WIDTH", "HEIGHT", "SRC", "debug" };
-        char *argv[] = { "320", "240", url, "yes" };
-        if (initPlugin (plugin) || newPlugin (mimetype, 2, argn, argv))
+        char *argn[] = { "WIDTH", "HEIGHT", "debug", "SRC" };
+        char *argv[] = { "440", "330", g_strdup("yes"), g_strdup(url) };
+        if (initPlugin (plugin) || newPlugin (mimetype, 4, argn, argv))
             return 0L;
     }
     si = addStream (url, mime, 0L, 0L, 0);
@@ -535,10 +560,15 @@ static void pluginAdded (GtkSocket *socket, gpointer d) {
 
 static void windowCreatedEvent (GtkWidget *w, gpointer d) {
     g_printf ("windowCreatedEvent\n");
-    if (!socket_id)
-        socket_id = gtk_socket_get_id (GTK_SOCKET (xembed));
-    else
-        gdk_window_move_resize (w->window, -100, -100, 1, 1);
+    socket_id = gtk_socket_get_id (GTK_SOCKET (xembed));
+    if (parent_id) {
+        /*gdk_window_withdraw (w->window);
+        gdk_window_reparent(w->window, gdk_window_foreign_new(parent_id), 0, 0);*/
+        XReparentWindow (gdk_x11_drawable_get_xdisplay (w->window),
+                gdk_x11_drawable_get_xid (w->window),
+                parent_id,
+                0, 0);
+    }
     if (!callback_service)
         newStream (url, mimetype);
 }
@@ -552,39 +582,20 @@ static void windowDestroyEvent (GtkWidget *w, gpointer d) {
     gtk_main_quit();
 }
 
-int main (int argc, char **argv) {
-    int i;
-    gtk_init (&argc, &argv);
-
-    for (i = 1; i < argc; i++) {
-        if (!strcmp (argv[i], "-p") && ++i < argc) {
-            plugin = g_strdup (argv[i]);
-        } else if (!strcmp (argv[i], "-cb") && ++i < argc) {
-            gchar *cb = g_strdup (argv[i]);
-            gchar *path = strchr(cb, '/');
-            if (path) {
-                callback_path = g_strdup (path);
-                *path = 0;
-            }
-            callback_service = g_strdup (cb);
-            g_free (cb);
-        } else if (!strcmp (argv[i], "-m") && ++i < argc) {
-            mimetype = g_strdup (argv[i]);
-        } else if (!strcmp (argv [i], "-wid") && ++i < argc) {
-            socket_id = strtol (argv[i], 0L, 10);
-        } else
-            url = g_strdup (argv[i]);
-    }
-    if (!callback_service && !(url && mimetype && plugin)) {
-        g_fprintf(stderr, "Usage: %s <-m mimetype -p plugin url|-cb service -wid id>\n", argv[0]);
-        return 1;
-    }
+static gboolean initPlayer (void * p) {
     /*when called from kmplayer if (!callback_service) {*/
         GtkWidget *window;
         GdkColormap *color_map;
         GdkColor bg_color;
 
-        window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+        window = gtk_window_new (parent_id
+                ? GTK_WINDOW_POPUP
+                : GTK_WINDOW_TOPLEVEL);
+        xembed = gtk_socket_new();
+        /*if (parent_id)
+            gtk_window_set_decorated (GTK_WINDOW (window), false);*/
+        /*if (parent_id)
+        //    gtk_widget_set_parent (window, gdk_window_foreign_new (parent_id));*/
         g_signal_connect (G_OBJECT (window), "delete_event",
                 G_CALLBACK (windowCloseEvent), NULL);
         g_signal_connect (G_OBJECT (window), "destroy",
@@ -592,7 +603,6 @@ int main (int argc, char **argv) {
         g_signal_connect (G_OBJECT (window), "realize",
                 GTK_SIGNAL_FUNC (windowCreatedEvent), NULL);
 
-        xembed = gtk_socket_new();
         g_signal_connect (G_OBJECT (xembed), "plug-added",
                 GTK_SIGNAL_FUNC (pluginAdded), NULL);
         color_map = gdk_colormap_get_system();
@@ -600,15 +610,9 @@ int main (int argc, char **argv) {
         gtk_widget_modify_bg (xembed, GTK_STATE_NORMAL, &bg_color);
 
         gtk_container_add (GTK_CONTAINER (window), xembed);
-        if (socket_id)
-            gtk_widget_set_size_request (window, 10, 10);
-        else
-            gtk_widget_set_size_request (window, 320, 240);
+        gtk_widget_set_size_request (window, 440, 330);
         g_printf ("dis %p\n", gdk_display_get_default ());
-        /*if (socket_id)
-            gdk_notify_startup_complete ();
-        else */
-            gtk_widget_show_all (window);
+        gtk_widget_show_all (window);
     /*} else {*/
     if (callback_service && callback_path) {
         DBusMessage *msg;
@@ -656,8 +660,41 @@ int main (int argc, char **argv) {
 
         dbus_connection_flush (dbus_connection);
     }
+    return 0; /* single shot */
+}
+
+int main (int argc, char **argv) {
+    int i;
+    gtk_init (&argc, &argv);
+
+    for (i = 1; i < argc; i++) {
+        if (!strcmp (argv[i], "-p") && ++i < argc) {
+            plugin = g_strdup (argv[i]);
+        } else if (!strcmp (argv[i], "-cb") && ++i < argc) {
+            gchar *cb = g_strdup (argv[i]);
+            gchar *path = strchr(cb, '/');
+            if (path) {
+                callback_path = g_strdup (path);
+                *path = 0;
+            }
+            callback_service = g_strdup (cb);
+            g_free (cb);
+        } else if (!strcmp (argv[i], "-m") && ++i < argc) {
+            mimetype = g_strdup (argv[i]);
+        } else if (!strcmp (argv [i], "-wid") && ++i < argc) {
+            parent_id = strtol (argv[i], 0L, 10);
+        } else
+            url = g_strdup (argv[i]);
+    }
+    if (!callback_service && !(url && mimetype && plugin)) {
+        g_fprintf(stderr, "Usage: %s <-m mimetype -p plugin url|-cb service -wid id>\n", argv[0]);
+        return 1;
+    }
+    g_timeout_add (0, initPlayer, NULL);
 
     fcntl (0, F_SETFL, fcntl (0, F_GETFL) | O_NONBLOCK);
+
+    g_printf ("entering gtk_main\n");
 
     gtk_main();
 
