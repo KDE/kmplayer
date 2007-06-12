@@ -1,4 +1,4 @@
-AM_CPPFLAGS= -I$(kde_includes)/kio $(CFLAGS_GST) $(all_includes) $(LIBCAIRO_CFLAGS) $(LIBNSPR_CFLAGS)
+AM_CPPFLAGS= -I$(kde_includes)/kio $(CFLAGS_GST) $(all_includes) $(LIBCAIRO_CFLAGS) $(LIBNSPR_CFLAGS) $(LIBDBUS_CFLAGS)
 
 METASOURCES= AUTO
 

@@ -137,6 +137,7 @@ hasnspr=yes
 LIBNSPR_LIBS=""
 LIBNSPR_CFLAGS=""
 LIBQTDBUS=""
+LIBDBUS_CFLAGS=""
 AC_ARG_ENABLE(nspr, [  --enable-npplayer    Enables building with npp support],
 [if test "x$enableval" == "xno"; then
         hasnspr=no
@@ -149,6 +150,7 @@ if test "$hasnspr" = "yes"; then
         if test "x$have_dbus" = "xyes"; then
             AC_DEFINE(HAVE_DBUS, 1, [have DBus])
             LIBQTDBUS="`$PKG_CONFIG --libs dbus-1` -ldbus-qt-1"
+	    LIBDBUS_CFLAGS="`$PKG_CONFIG --cflags dbus-1`"
             PKG_CHECK_MODULES(NSPR, nspr >= 1.8.0,
                               have_nspr=yes,have_nspr=no)
             if test "x$have_nspr" = "xno"; then
@@ -171,6 +173,7 @@ fi
 AC_SUBST(LIBNSPR_LIBS)
 AC_SUBST(LIBNSPR_CFLAGS)
 AC_SUBST(LIBQTDBUS)
+AC_SUBST(LIBDBUS_CFLAGS)
 
 AM_CONDITIONAL(include_knpplayer, test "$have_nspr" = "yes")
 
