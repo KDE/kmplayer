@@ -1923,13 +1923,15 @@ dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
     const char *sender = dbus_message_get_sender (msg);
     //const char *iface = "org.kde.kmplayer.backend";
     NpPlayer *process = (NpPlayer *) data;
-    kdDebug () << "dbusFilter " << sender << " " << dbus_message_get_interface (msg) << " dest:" << dbus_message_get_destination (msg) << endl;
     const char * iface = process->interface ().ascii ();
 
     if (dbus_message_has_destination (msg, process->destination ().ascii ()) &&
                 dbus_message_has_interface (msg, iface) &&
             dbus_message_has_path (msg, process->objectPath ().ascii ()))
     {
+        kdDebug () << "dbusFilter " << sender <<
+            " iface:" << dbus_message_get_interface (msg) <<
+            " dest:" << dbus_message_get_destination (msg) << endl;
         kdDebug () << "dbusFilter for us " << process << endl;
 
         if (dbus_message_is_method_call (msg, iface, "getUrl")) {

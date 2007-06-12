@@ -506,15 +506,17 @@ static gpointer newStream (const char *url, const char *mime) {
 /*----------------%<---------------------------------------------------------*/
 
 static DBusHandlerResult dbusFilter (DBusConnection * connection,
-        DBusMessage *message, void * user_data) {
+        DBusMessage *msg, void * user_data) {
     DBusMessageIter args;
     DBusMessage* reply;
-    const char *sender = dbus_message_get_sender (message);
+    const char *sender = dbus_message_get_sender (msg);
     const char *iface = "org.kde.kmplayer.backend";
-    g_printf("dbusFilter %s %s\n", sender,dbus_message_get_interface (message));
-    if (dbus_message_is_method_call (message, iface, "play")) {
+    if (!dbus_message_has_destination (msg, service_name))
+        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    g_printf("dbusFilter %s %s\n", sender,dbus_message_get_interface (msg));
+    if (dbus_message_is_method_call (msg, iface, "play")) {
         char *param = 0;
-        if (dbus_message_iter_init (message, &args) && 
+        if (dbus_message_iter_init (msg, &args) && 
                 DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
             dbus_message_iter_get_basic (&args, &param);
             url = g_strdup (param);
@@ -531,9 +533,9 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
                 }
             }
         }
-    } else if (dbus_message_is_method_call (message, iface, "getUrlNotify")) {
+    } else if (dbus_message_is_method_call (msg, iface, "getUrlNotify")) {
         StreamInfo *si = (StreamInfo*) g_slist_nth_data (stream_list, 0);
-        if (si && dbus_message_iter_init (message, &args) && 
+        if (si && dbus_message_iter_init (msg, &args) && 
                 DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type (&args)) {
             dbus_message_iter_get_basic (&args, &si->total);
             if (dbus_message_iter_next (&args) &&
@@ -544,7 +546,7 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
                     removeStream (si->reason);
             }
         }
-    } else if (dbus_message_is_method_call (message, iface, "quit")) {
+    } else if (dbus_message_is_method_call (msg, iface, "quit")) {
         g_printf ("quit\n");
         shutDownPlugin();
         gtk_main_quit();

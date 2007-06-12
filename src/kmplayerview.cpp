@@ -701,7 +701,6 @@ KDE_NO_CDTOR_EXPORT Viewer::Viewer (QWidget *parent, View * view)
                            x11Depth (), InputOutput, (Visual*)x11Visual (),
                            CWBackPixel | CWBorderPixel | CWColormap, &xswa));*/
     setAcceptDrops (true);
-    setProtocol (QXEmbed::XPLAIN);
 }
 
 KDE_NO_CDTOR_EXPORT Viewer::~Viewer () {
