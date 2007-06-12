@@ -406,6 +406,9 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     NPError np_err;
     Display *display;
     int screen;
+    Window root;
+    int x, y;
+    unsigned int width = 440, height = 330, bw, depth;
 
     npp = (NPP_t*)malloc (sizeof (NPP_t));
     memset (npp, 0, sizeof (NPP_t));
@@ -422,13 +425,16 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     }
 
     memset (&window, 0, sizeof (NPWindow));
+    display = gdk_x11_get_default_xdisplay ();
+    if (parent_id)
+        XGetGeometry (display, parent_id, &root,
+                &x, &y, &width, &height, &bw, &depth);
     window.x = 0;
     window.y = 0;
-    window.width = 440;
-    window.height = 330;
+    window.width = width;
+    window.height = height;
     window.window = (void*)socket_id;
     ws_info.type = 1; /*NP_SetWindow;*/
-    display = gdk_x11_get_default_xdisplay ();
     screen = DefaultScreen (display);
     ws_info.display = (void*)(long)display;
     ws_info.visual = (void*)(long)DefaultVisual (display, screen);
