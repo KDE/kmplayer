@@ -2065,11 +2065,31 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
             char *c_url = strdup (m_url.local8Bit().data ());
             char *c_mime = strdup (mime.ascii ());
             char *c_plugin = strdup (plugin.ascii ());
-            dbus_message_append_args(msg,
-                    DBUS_TYPE_STRING, &c_url,
-                    DBUS_TYPE_STRING, &c_mime,
-                    DBUS_TYPE_STRING, &c_plugin,
-                    DBUS_TYPE_INVALID);
+            DBusMessageIter it;
+            dbus_message_iter_init_append (msg, &it);
+            dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &c_url);
+            dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &c_mime);
+            dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &c_plugin);
+            unsigned int param_len = m_mrl->mrl ()->attributes ()->length ();
+            char **argn = (char **) malloc (param_len * sizeof (char *));
+            char **argv = (char **) malloc (param_len * sizeof (char *));
+            dbus_message_iter_append_basic (&it, DBUS_TYPE_UINT32, &param_len);
+            DBusMessageIter ait;
+            dbus_message_iter_open_container (&it, DBUS_TYPE_ARRAY,"{ss}",&ait);
+            AttributePtr a = m_mrl->mrl ()->attributes ()->first ();
+            for (int i = 0; i < param_len && a; i++, a = a->nextSibling ()) {
+                DBusMessageIter dit;
+                dbus_message_iter_open_container (&ait,
+                        DBUS_TYPE_DICT_ENTRY,
+                        NULL,
+                        &dit);
+                argn[i] = strdup (a->name ().toString ().local8Bit().data ());
+                argv[i] = strdup (a->value ().local8Bit().data ());
+                dbus_message_iter_append_basic (&dit, DBUS_TYPE_STRING, &argn[i]);
+                dbus_message_iter_append_basic (&dit, DBUS_TYPE_STRING, &argv[i]);
+                dbus_message_iter_close_container (&ait, &dit);
+            }
+            dbus_message_iter_close_container (&it, &ait);
             dbus_message_set_no_reply (msg, TRUE);
             dbus_connection_send (dbus_static->dbus_connnection, msg, NULL);
             dbus_message_unref (msg);
@@ -2077,6 +2097,12 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
             free (c_url);
             free (c_mime);
             free (c_plugin);
+            for (int i = 0; i < param_len; i++) {
+                free (argn[i]);
+                free (argv[i]);
+            }
+            free (argn);
+            free (argv);
             setState (Buffering);
             return true;
         }

@@ -406,9 +406,8 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     NPError np_err;
     Display *display;
     int screen;
-    Window root;
-    int x, y;
-    unsigned int width = 440, height = 330, bw, depth;
+    int i;
+    unsigned int width = 320, height = 240;
 
     npp = (NPP_t*)malloc (sizeof (NPP_t));
     memset (npp, 0, sizeof (NPP_t));
@@ -418,17 +417,19 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
         shutDownPlugin();
         return -1;
     }*/
+    for (i = 0; i < argc; i++) {
+        if (!strcasecmp (argn[i], "width"))
+            width = strtol (argv[i], 0L, 10);
+        else if (!strcasecmp (argn[i], "height"))
+            height = strtol (argv[i], 0L, 10);
+    }
     np_err = np_funcs.newp (mime, npp, NP_EMBED, argc, argn, argv, saved_data);
     if (np_err != NPERR_NO_ERROR) {
         g_printf ("NPP_New failure %d\n", np_err);
         return -1;
     }
-
     memset (&window, 0, sizeof (NPWindow));
     display = gdk_x11_get_default_xdisplay ();
-    if (parent_id)
-        XGetGeometry (display, parent_id, &root,
-                &x, &y, &width, &height, &bw, &depth);
     window.x = 0;
     window.y = 0;
     window.width = width;
@@ -440,7 +441,7 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     ws_info.visual = (void*)(long)DefaultVisual (display, screen);
     ws_info.colormap = DefaultColormap (display, screen);
     ws_info.depth = DefaultDepth (display, screen);
-    g_printf ("display %p nr:%d depth:%d\n", display, screen, ws_info.depth);
+    g_printf ("display %dx%d\n", width, height);
     window.ws_info = (void*)&ws_info;
 
     np_err = np_funcs.setwindow (npp, &window);
@@ -496,15 +497,12 @@ static gboolean destroyStream (void * p) {
     return 0; /* single shot */
 }
 
-static gpointer newStream (const char *url, const char *mime) {
+static gpointer newStream (const char *url, const char *mime,
+        int argc, char *argn[], char *argv[]) {
     StreamInfo *si;
     g_printf ("new stream %s %s %d\n", url, mime, g_main_depth ());
-    if (!npp) {
-        char *argn[] = { "WIDTH", "HEIGHT", "debug", "SRC" };
-        char *argv[] = { "440", "330", g_strdup("yes"), g_strdup(url) };
-        if (initPlugin (plugin) || newPlugin (mimetype, 4, argn, argv))
-            return 0L;
-    }
+    if (!npp && (initPlugin (plugin) || newPlugin (mimetype, argc, argn, argv)))
+        return 0L;
     si = addStream (url, mime, 0L, 0L, 0);
     return si;
 }
@@ -521,24 +519,72 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
         return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     g_printf("dbusFilter %s %s\n", sender,dbus_message_get_interface (msg));
     if (dbus_message_is_method_call (msg, iface, "play")) {
+        DBusMessageIter ait;
         char *param = 0;
-        if (dbus_message_iter_init (msg, &args) && 
-                DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
-            dbus_message_iter_get_basic (&args, &param);
-            url = g_strdup (param);
-            if (dbus_message_iter_next (&args) &&
-                   DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
-                dbus_message_iter_get_basic (&args, &param);
-                mimetype = g_strdup (param);
-                if (dbus_message_iter_next (&args) && 
-                        DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
-                    dbus_message_iter_get_basic (&args, &param);
-                    plugin = g_strdup (param);
-                    g_printf ("play %s %s %s\n", url, mimetype, plugin);
-                    newStream (url, mimetype);
-                }
-            }
+        unsigned int params;
+        char **argn = NULL;
+        char **argv = NULL;
+        int i;
+        char *fake_argn[] = { "WIDTH", "HEIGHT", "debug", "SRC" };
+        char *fake_argv[] = { "440", "330", g_strdup("yes"), g_strdup(url) };
+        if (!dbus_message_iter_init (msg, &args) ||
+                DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&args)) {
+            g_printerr ("missing url arg");
+            return DBUS_HANDLER_RESULT_HANDLED;
         }
+        dbus_message_iter_get_basic (&args, &param);
+        url = g_strdup (param);
+        if (!dbus_message_iter_next (&args) ||
+                DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&args)) {
+            g_printerr ("missing mimetype arg");
+            return DBUS_HANDLER_RESULT_HANDLED;
+        }
+        dbus_message_iter_get_basic (&args, &param);
+        mimetype = g_strdup (param);
+        if (!dbus_message_iter_next (&args) ||
+                DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&args)) {
+            g_printerr ("missing plugin arg");
+            return DBUS_HANDLER_RESULT_HANDLED;
+        }
+        dbus_message_iter_get_basic (&args, &param);
+        plugin = g_strdup (param);
+        if (!dbus_message_iter_next (&args) ||
+                DBUS_TYPE_UINT32 != dbus_message_iter_get_arg_type (&args)) {
+            g_printerr ("missing param count arg");
+            return DBUS_HANDLER_RESULT_HANDLED;
+        }
+        dbus_message_iter_get_basic (&args, &params);
+        if (params > 0 && params < 100) {
+            argn = (char**) malloc (params * sizeof (char *));
+            argv = (char**) malloc (params * sizeof (char *));
+        }
+        if (!dbus_message_iter_next (&args) ||
+                DBUS_TYPE_ARRAY != dbus_message_iter_get_arg_type (&args)) {
+            g_printerr ("missing params array");
+            return DBUS_HANDLER_RESULT_HANDLED;
+        }
+        dbus_message_iter_recurse (&args, &ait);
+        for (i = 0; i < params; i++) {
+            char *key, *value;
+            DBusMessageIter di;
+            if (dbus_message_iter_get_arg_type (&ait) != DBUS_TYPE_DICT_ENTRY)
+                break;
+            dbus_message_iter_recurse (&ait, &di);
+            if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&di))
+                break;
+            dbus_message_iter_get_basic (&di, &key);
+            if (!dbus_message_iter_next (&di) ||
+                    DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&di))
+                break;
+            dbus_message_iter_get_basic (&di, &value);
+            argn[i] = g_strdup (key);
+            argv[i] = g_strdup (value);
+            g_printf ("param %d:%s='%s'\n", i + 1, key, value);
+            if (!dbus_message_iter_next (&ait))
+                params = i + 1;
+        }
+        g_printf ("play %s %s %s params:%d\n", url, mimetype, plugin, i);
+        newStream (url, mimetype, i, argn, argv);
     } else if (dbus_message_is_method_call (msg, iface, "getUrlNotify")) {
         StreamInfo *si = (StreamInfo*) g_slist_nth_data (stream_list, 0);
         if (si && dbus_message_iter_init (msg, &args) && 
@@ -577,8 +623,11 @@ static void windowCreatedEvent (GtkWidget *w, gpointer d) {
                 parent_id,
                 0, 0);
     }
-    if (!callback_service)
-        newStream (url, mimetype);
+    if (!callback_service) {
+        char *argn[] = { "WIDTH", "HEIGHT", "debug", "SRC" };
+        char *argv[] = { "440", "330", g_strdup("yes"), g_strdup(url) };
+        newStream (url, mimetype, 4, argn, argv);
+    }
 }
 
 static gboolean windowCloseEvent (GtkWidget *w, GdkEvent *e, gpointer d) {
@@ -618,7 +667,10 @@ static gboolean initPlayer (void * p) {
         gtk_widget_modify_bg (xembed, GTK_STATE_NORMAL, &bg_color);
 
         gtk_container_add (GTK_CONTAINER (window), xembed);
-        gtk_widget_set_size_request (window, 440, 330);
+        if (parent_id)
+            gtk_widget_set_size_request (window, 1024, 1024);
+        else
+            gtk_widget_set_size_request (window, 440, 330);
         g_printf ("dis %p\n", gdk_display_get_default ());
         gtk_widget_show_all (window);
     /*} else {*/
