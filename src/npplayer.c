@@ -577,9 +577,9 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
                     DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&di))
                 break;
             dbus_message_iter_get_basic (&di, &value);
-            argn[i] = g_strdup (key);
+            argn[i] = g_strdup (strcasecmp (key, "flashvars") ? key : "flashlight");
             argv[i] = g_strdup (value);
-            g_printf ("param %d:%s='%s'\n", i + 1, key, value);
+            g_printf ("param %d:%s='%s'\n", i + 1, argn[i], value);
             if (!dbus_message_iter_next (&ait))
                 params = i + 1;
         }
