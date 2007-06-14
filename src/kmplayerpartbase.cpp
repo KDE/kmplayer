@@ -1787,6 +1787,8 @@ bool URLSource::resolveURL (NodePtr m) {
         return true;
     KURL url (mrl->absolutePath ());
     QString mimestr = mrl->mimetype;
+    if (mimestr == "application/x-shockwave-flash")
+        return true; // FIXME
     bool maybe_playlist = isPlayListMime (mimestr);
     kdDebug () << "resolveURL " << mrl->absolutePath () << " " << mimestr << endl;
     if (url.isLocalFile ()) {

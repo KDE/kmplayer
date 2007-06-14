@@ -1931,8 +1931,8 @@ dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
     {
         kdDebug () << "dbusFilter " << sender <<
             " iface:" << dbus_message_get_interface (msg) <<
+            " member:" << dbus_message_get_member (msg) <<
             " dest:" << dbus_message_get_destination (msg) << endl;
-        kdDebug () << "dbusFilter for us " << process << endl;
 
         if (dbus_message_is_method_call (msg, iface, "getUrl")) {
             char *param = 0;
@@ -1953,6 +1953,9 @@ dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
                 dbus_message_iter_get_basic (&args, &param);
                 process->setStarted (QString (param));
             }
+
+        } else if (dbus_message_is_method_call (msg, iface, "plugged")) {
+            process->viewer ()->view ()->videoStart ();
         }
         return DBUS_HANDLER_RESULT_HANDLED;
     }

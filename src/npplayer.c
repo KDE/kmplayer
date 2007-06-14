@@ -83,6 +83,7 @@ static NP_ShutdownUPP npShutdown;
 static StreamInfo *addStream (const char *url, const char *mime, const char *target, void *notify_data, int notify);
 static gboolean requestStream (void * si);
 static gboolean destroyStream (void * si);
+static void callFunction (const char *func, const char *arg1);
 
 /*----------------%<---------------------------------------------------------*/
 
@@ -463,19 +464,7 @@ static gboolean requestStream (void * p) {
         }
         g_assert (!stdin_read_watch);
         stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, NULL);
-        if (callback_service) {
-            DBusMessage *msg = dbus_message_new_method_call (
-                    callback_service,
-                    callback_path,
-                    "org.kde.kmplayer.callback",
-                    "getUrl");
-            dbus_message_append_args (
-                    msg, DBUS_TYPE_STRING, &si->url, DBUS_TYPE_INVALID);
-            dbus_message_set_no_reply (msg, TRUE);
-            dbus_connection_send (dbus_connection, msg, NULL);
-            dbus_message_unref (msg);
-            dbus_connection_flush (dbus_connection);
-        }
+        callFunction ("getUrl", si->url);
     }
     return 0; /* single shot */
 }
@@ -483,17 +472,8 @@ static gboolean requestStream (void * p) {
 static gboolean destroyStream (void * p) {
     StreamInfo *si = (StreamInfo*) p;
     g_printf ("destroyStream\n");
-    if (si && si == g_slist_nth_data (stream_list, 0)) {
-        DBusMessage *msg = dbus_message_new_method_call (
-                callback_service,
-                callback_path,
-                "org.kde.kmplayer.callback",
-                "finish");
-        dbus_message_set_no_reply (msg, TRUE);
-        dbus_connection_send (dbus_connection, msg, NULL);
-        dbus_message_unref (msg);
-        dbus_connection_flush (dbus_connection);
-    }
+    if (si && si == g_slist_nth_data (stream_list, 0))
+        callFunction ("finish", NULL);
     return 0; /* single shot */
 }
 
@@ -525,8 +505,6 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
         char **argn = NULL;
         char **argv = NULL;
         int i;
-        char *fake_argn[] = { "WIDTH", "HEIGHT", "debug", "SRC" };
-        char *fake_argv[] = { "440", "330", g_strdup("yes"), g_strdup(url) };
         if (!dbus_message_iter_init (msg, &args) ||
                 DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&args)) {
             g_printerr ("missing url arg");
@@ -606,10 +584,29 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
     return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+static void callFunction (const char *func, const char *arg1) {
+    g_printf ("call %s(%s)\n", func, arg1 ? arg1 : "");
+    if (callback_service) {
+        DBusMessage *msg = dbus_message_new_method_call (
+                callback_service,
+                callback_path,
+                "org.kde.kmplayer.callback",
+                func);
+        if (arg1)
+            dbus_message_append_args (
+                    msg, DBUS_TYPE_STRING, &arg1, DBUS_TYPE_INVALID);
+        dbus_message_set_no_reply (msg, TRUE);
+        dbus_connection_send (dbus_connection, msg, NULL);
+        dbus_message_unref (msg);
+        dbus_connection_flush (dbus_connection);
+    }
+}
+
 /*----------------%<---------------------------------------------------------*/
 
 static void pluginAdded (GtkSocket *socket, gpointer d) {
     g_printf ("pluginAdded\n");
+    callFunction ("plugged", NULL);
 }
 
 static void windowCreatedEvent (GtkWidget *w, gpointer d) {
@@ -675,7 +672,6 @@ static gboolean initPlayer (void * p) {
         gtk_widget_show_all (window);
     /*} else {*/
     if (callback_service && callback_path) {
-        DBusMessage *msg;
         DBusError dberr;
         const char *serv = "type='method_call',interface='org.kde.kmplayer.backend'";
         char myname[64];
@@ -707,16 +703,7 @@ static gboolean initPlayer (void * p) {
         dbus_connection_add_filter (dbus_connection, dbusFilter, 0L, 0L);
 
         /* TODO: remove DBUS_BUS_SESSION and create a private connection */
-        msg = dbus_message_new_method_call (
-                callback_service,
-                callback_path,
-                "org.kde.kmplayer.callback",
-                "running");
-        dbus_message_append_args (
-                msg, DBUS_TYPE_STRING, &service_name, DBUS_TYPE_INVALID);
-        dbus_message_set_no_reply (msg, TRUE);
-        dbus_connection_send (dbus_connection, msg, NULL);
-        dbus_message_unref (msg);
+        callFunction ("running", service_name);
 
         dbus_connection_flush (dbus_connection);
     }

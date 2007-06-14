@@ -418,8 +418,7 @@ void View::setControlPanelMode (ControlPanelMode m) {
         m_view_area->resizeEvent (0L);
     } else if (m_controlpanel_mode == CP_AutoHide) { 
         if ((m_playing &&
-                m_widgetstack->visibleWidget () == m_widgettypes[WT_Video]) ||
-                m_widgetstack->visibleWidget () == m_widgettypes[WT_Picture])
+                m_widgetstack->visibleWidget () != m_widgettypes[WT_Console]))
             delayedShowButtons (false);
         else if (!m_control_panel->isVisible ()) {
             m_control_panel->show ();
@@ -447,12 +446,15 @@ KDE_NO_EXPORT void View::delayedShowButtons (bool show) {
             killTimer (controlbar_timer);
             controlbar_timer = 0;
         }
+        if (!show)
+            m_control_panel->hide (); // for initial race
     } else if (m_controlpanel_mode == CP_AutoHide &&
             (m_playing ||
              m_widgetstack->visibleWidget () == m_widgettypes[WT_Picture]) &&
             m_widgetstack->visibleWidget () != m_widgettypes[WT_Console] &&
-            !controlbar_timer)
+            !controlbar_timer) {
         controlbar_timer = startTimer (500);
+    }
 }
 
 KDE_NO_EXPORT void View::setVolume (int vol) {
@@ -720,14 +722,6 @@ KDE_NO_EXPORT void Viewer::changeProtocol (QXEmbed::Protocol p) {
                         BlackPixel (qt_xdisplay(), scr),
                         BlackPixel (qt_xdisplay(), scr)));
             XClearWindow (qt_xdisplay(), embeddedWinId ());
-            XSelectInput (qt_xdisplay (), embeddedWinId (), 
-                    //KeyPressMask | KeyReleaseMask |
-                    KeyPressMask |
-                    //EnterWindowMask | LeaveWindowMask |
-                    //FocusChangeMask |
-                    ExposureMask |
-                    StructureNotifyMask |
-                    PointerMotionMask);
         } else {
             WId w = embeddedWinId ();
             if (w) {
@@ -741,6 +735,15 @@ KDE_NO_EXPORT void Viewer::changeProtocol (QXEmbed::Protocol p) {
 
 KDE_NO_EXPORT void Viewer::windowChanged (WId w) {
     kdDebug () << "windowChanged " << (int)w << endl;
+    if (w)
+        XSelectInput (qt_xdisplay (), w, 
+                //KeyPressMask | KeyReleaseMask |
+                KeyPressMask |
+                //EnterWindowMask | LeaveWindowMask |
+                //FocusChangeMask |
+                ExposureMask |
+                StructureNotifyMask |
+                PointerMotionMask);
 }
 
 KDE_NO_EXPORT void Viewer::mouseMoveEvent (QMouseEvent * e) {
