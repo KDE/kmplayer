@@ -2144,11 +2144,18 @@ KDE_NO_EXPORT void NpPlayer::requestStream (const QString & url) {
     bytes = 0;
     write_in_progress = false;
     finish_reason = NoReason;
-    job = KIO::get (uri, false, false);
-    connect (job, SIGNAL (data (KIO::Job *, const QByteArray &)),
-            this, SLOT (slotData (KIO::Job *, const QByteArray &)));
-    connect (job, SIGNAL (result (KIO::Job *)),
-            this, SLOT (slotResult (KIO::Job *)));
+    if (url.startsWith ("javascript:")) { //FIXME: signal plugin liveconnect
+        bytes += 9;
+        write_in_progress = true;
+        m_process->writeStdin ("undefined", 9);
+        finish_reason = BecauseDone;
+    } else {
+        job = KIO::get (uri, false, false);
+        connect (job, SIGNAL (data (KIO::Job *, const QByteArray &)),
+                this, SLOT (slotData (KIO::Job *, const QByteArray &)));
+        connect (job, SIGNAL (result (KIO::Job *)),
+                this, SLOT (slotResult (KIO::Job *)));
+    }
 }
 
 KDE_NO_EXPORT void NpPlayer::finishStream (Reason because) {
@@ -2251,8 +2258,8 @@ KDE_NO_EXPORT void NpPlayer::slotData (KIO::Job*, const QByteArray& qb) {
 
 KDE_NO_EXPORT void NpPlayer::wroteStdin (KProcess *) {
     write_in_progress = false;
-    if (playing () && job) {
-        if (finish_reason == NoReason) {
+    if (playing ()) {
+        if (job && finish_reason == NoReason) {
             job->resume ();
         } else {
             sendFinish (finish_reason);

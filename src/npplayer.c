@@ -45,7 +45,7 @@ typedef NPError (* NP_InitializeUPP)(NPNetscapeFuncs*, NPPluginFuncs*);
 typedef NPError (* NP_ShutdownUPP)(void);
 
 static gchar *plugin;
-static gchar *url;
+static gchar *object_url;
 static gchar *mimetype;
 
 static DBusConnection *dbus_connection;
@@ -100,6 +100,7 @@ static void freeStream (StreamInfo *si) {
 /*----------------%<---------------------------------------------------------*/
 
 static NPError nsGetURL (NPP instance, const char* url, const char* target) {
+    (void)instance;
     g_printf ("nsGetURL %s %s\n", url, target);
     addStream (url, 0L, target, 0L, 1);
     return NPERR_NO_ERROR;
@@ -107,38 +108,45 @@ static NPError nsGetURL (NPP instance, const char* url, const char* target) {
 
 static NPError nsPostURL (NPP instance, const char *url,
         const char *target, uint32 len, const char *buf, NPBool file) {
+    (void)instance; (void)len; (void)buf; (void)file;
     g_printf ("nsPostURL %s %s\n", url, target);
     addStream (url, 0L, target, 0L, 1);
     return NPERR_NO_ERROR;
 }
 
 static NPError nsRequestRead (NPStream *stream, NPByteRange *rangeList) {
+    (void)stream; (void)rangeList;
     g_printf ("nsRequestRead\n");
     return NPERR_NO_ERROR;
 }
 
 static NPError nsNewStream (NPP instance, NPMIMEType type,
         const char *target, NPStream **stream) {
+    (void)instance; (void)type; (void)stream; (void)target;
     g_printf ("nsNewStream\n");
     return NPERR_NO_ERROR;
 }
 
 static int32 nsWrite (NPP instance, NPStream* stream, int32 len, void *buf) {
+    (void)instance; (void)len; (void)buf; (void)stream;
     g_printf ("nsWrite\n");
     return 0;
 }
 
 static NPError nsDestroyStream (NPP instance, NPStream *stream, NPError reason) {
+    (void)instance; (void)stream; (void)reason;
     g_printf ("nsDestroyStream\n");
     g_timeout_add (0, destroyStream, g_slist_nth_data (stream_list, 0));
     return NPERR_NO_ERROR;
 }
 
 static void nsStatus (NPP instance, const char* message) {
+    (void)instance;
     g_printf ("NPN_Status %s\n", message);
 }
 
 static const char* nsUserAgent (NPP instance) {
+    (void)instance;
     g_printf ("NPN_UserAgent\n");
     return "";
 }
@@ -152,27 +160,43 @@ static void nsMemFree (void* ptr) {
 }
 
 static uint32 nsMemFlush (uint32 size) {
+    (void)size;
     g_printf ("NPN_MemFlush\n");
     return 0;
 }
 
 static void nsReloadPlugins (NPBool reloadPages) {
+    (void)reloadPages;
     g_printf ("NPN_ReloadPlugins\n");
 }
 
+static JRIEnv* nsGetJavaEnv () {
+    g_printf ("NPN_GetJavaEnv\n");
+    return NULL;
+}
+
+static jref nsGetJavaPeer (NPP instance) {
+    (void)instance;
+    g_printf ("NPN_GetJavaPeer\n");
+    return NULL;
+}
+
 static NPError nsGetURLNotify (NPP instance, const char* url, const char* target, void *notify) {
+    (void)instance;
     g_printf ("NPN_GetURLNotify %s %s\n", url, target);
     addStream (url, 0L, target, notify, 1);
     return NPERR_NO_ERROR;
 }
 
 static NPError nsPostURLNotify (NPP instance, const char* url, const char* target, uint32 len, const char* buf, NPBool file, void *notify) {
+    (void)instance; (void)len; (void)buf; (void)file;
     g_printf ("NPN_PostURLNotify\n");
     addStream (url, 0L, target, notify, 1);
     return NPERR_NO_ERROR;
 }
 
 static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
+    (void)instance;
     g_printf ("NPN_GetValue %d\n", variable & ~NP_ABI_MASK);
     switch (variable) {
         case NPNVxDisplay:
@@ -211,20 +235,36 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
 
 static NPError nsSetValue (NPP instance, NPPVariable variable, void *value) {
     /* NPPVpluginWindowBool */
+    (void)instance; (void)value;
     g_printf ("NPN_SetValue %d\n", variable & ~NP_ABI_MASK);
     return NPERR_NO_ERROR;
 }
 
 static void nsInvalidateRect (NPP instance, NPRect *invalidRect) {
+    (void)instance; (void)invalidRect;
     g_printf ("NPN_InvalidateRect\n");
 }
 
 static void nsInvalidateRegion (NPP instance, NPRegion invalidRegion) {
+    (void)instance; (void)invalidRegion;
     g_printf ("NPN_InvalidateRegion\n");
 }
 
 static void nsForceRedraw (NPP instance) {
+    (void)instance;
+    g_printf ("NPN_InvalidateRegion\n");
     g_printf ("NPN_ForceRedraw\n");
+}
+
+static NPIdentifier nsGetStringIdentifier (const NPUTF8* name) {
+    (void)name;
+    g_printf ("NPN_GetStringIdentifier\n");
+    return NULL;
+}
+
+static void nsGetStringIdentifiers (const NPUTF8** names, int32_t nameCount, NPIdentifier* identifiers) {
+    (void)names; (void)nameCount; (void)identifiers;
+    g_printf ("NPN_GetStringIdentifiers\n");
 }
 
 /*----------------%<---------------------------------------------------------*/
@@ -288,6 +328,7 @@ static void readStdin (gpointer d, gint src, GdkInputCondition cond) {
     gsize count = read (src,
             stream_buf + si->stream_buf_pos,
             sizeof (stream_buf) - si->stream_buf_pos);
+    (void)d;
     g_assert (si);
     if (count > 0) {
         int32 sz;
@@ -322,7 +363,7 @@ static int initPlugin (const char *plugin_lib) {
     NPNetscapeFuncs ns_funcs;
     NPError np_err;
 
-    g_printf ("starting %s with %s\n", plugin_lib, url);
+    g_printf ("starting %s with %s\n", plugin_lib, object_url);
     library = g_module_open (plugin_lib, G_MODULE_BIND_LAZY);
     if (!library) {
         g_printf ("failed to load %s\n", plugin_lib);
@@ -359,8 +400,8 @@ static int initPlugin (const char *plugin_lib) {
     ns_funcs.memfree = nsMemFree;
     ns_funcs.memflush = nsMemFlush;
     ns_funcs.reloadplugins = nsReloadPlugins;
-    /*ns_funcs.getJavaEnv;
-    //ns_funcs.getJavaPeer;*/
+    ns_funcs.getJavaEnv = nsGetJavaEnv;
+    ns_funcs.getJavaPeer = nsGetJavaPeer;
     ns_funcs.geturlnotify = nsGetURLNotify;
     ns_funcs.posturlnotify = nsPostURLNotify;
     ns_funcs.getvalue = nsGetValue;
@@ -368,9 +409,9 @@ static int initPlugin (const char *plugin_lib) {
     ns_funcs.invalidaterect = nsInvalidateRect;
     ns_funcs.invalidateregion = nsInvalidateRegion;
     ns_funcs.forceredraw = nsForceRedraw;
-    /*ns_funcs.getstringidentifier;
-    ns_funcs.getstringidentifiers;
-    ns_funcs.getintidentifier;
+    ns_funcs.getstringidentifier = nsGetStringIdentifier;
+    ns_funcs.getstringidentifiers = nsGetStringIdentifiers;
+    /*ns_funcs.getintidentifier;
     ns_funcs.identifierisstring;
     ns_funcs.utf8fromidentifier;
     ns_funcs.intfromidentifier;
@@ -426,7 +467,7 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     }
     np_err = np_funcs.newp (mime, npp, NP_EMBED, argc, argn, argv, saved_data);
     if (np_err != NPERR_NO_ERROR) {
-        g_printf ("NPP_New failure %d\n", np_err);
+        g_printf ("NPP_New failure %d %p %p\n", np_err, np_funcs, np_funcs.newp);
         return -1;
     }
     memset (&window, 0, sizeof (NPWindow));
@@ -492,9 +533,9 @@ static gpointer newStream (const char *url, const char *mime,
 static DBusHandlerResult dbusFilter (DBusConnection * connection,
         DBusMessage *msg, void * user_data) {
     DBusMessageIter args;
-    DBusMessage* reply;
     const char *sender = dbus_message_get_sender (msg);
     const char *iface = "org.kde.kmplayer.backend";
+    (void)user_data; (void)connection;
     if (!dbus_message_has_destination (msg, service_name))
         return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     g_printf("dbusFilter %s %s\n", sender,dbus_message_get_interface (msg));
@@ -511,7 +552,7 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
             return DBUS_HANDLER_RESULT_HANDLED;
         }
         dbus_message_iter_get_basic (&args, &param);
-        url = g_strdup (param);
+        object_url = g_strdup (param);
         if (!dbus_message_iter_next (&args) ||
                 DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&args)) {
             g_printerr ("missing mimetype arg");
@@ -561,8 +602,8 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
             if (!dbus_message_iter_next (&ait))
                 params = i + 1;
         }
-        g_printf ("play %s %s %s params:%d\n", url, mimetype, plugin, i);
-        newStream (url, mimetype, i, argn, argv);
+        g_printf ("play %s %s %s params:%d\n", object_url, mimetype, plugin, i);
+        newStream (object_url, mimetype, i, argn, argv);
     } else if (dbus_message_is_method_call (msg, iface, "getUrlNotify")) {
         StreamInfo *si = (StreamInfo*) g_slist_nth_data (stream_list, 0);
         if (si && dbus_message_iter_init (msg, &args) && 
@@ -605,11 +646,13 @@ static void callFunction (const char *func, const char *arg1) {
 /*----------------%<---------------------------------------------------------*/
 
 static void pluginAdded (GtkSocket *socket, gpointer d) {
+    (void)socket; (void)d;
     g_printf ("pluginAdded\n");
     callFunction ("plugged", NULL);
 }
 
 static void windowCreatedEvent (GtkWidget *w, gpointer d) {
+    (void)d;
     g_printf ("windowCreatedEvent\n");
     socket_id = gtk_socket_get_id (GTK_SOCKET (xembed));
     if (parent_id) {
@@ -622,17 +665,19 @@ static void windowCreatedEvent (GtkWidget *w, gpointer d) {
     }
     if (!callback_service) {
         char *argn[] = { "WIDTH", "HEIGHT", "debug", "SRC" };
-        char *argv[] = { "440", "330", g_strdup("yes"), g_strdup(url) };
-        newStream (url, mimetype, 4, argn, argv);
+        char *argv[] = { "440", "330", g_strdup("yes"), g_strdup(object_url) };
+        newStream (object_url, mimetype, 4, argn, argv);
     }
 }
 
 static gboolean windowCloseEvent (GtkWidget *w, GdkEvent *e, gpointer d) {
+    (void)w; (void)e; (void)d;
     shutDownPlugin();
     return FALSE;
 }
 
 static void windowDestroyEvent (GtkWidget *w, gpointer d) {
+    (void)w; (void)d;
     gtk_main_quit();
 }
 
@@ -641,6 +686,7 @@ static gboolean initPlayer (void * p) {
         GtkWidget *window;
         GdkColormap *color_map;
         GdkColor bg_color;
+        (void)p;
 
         window = gtk_window_new (parent_id
                 ? GTK_WINDOW_POPUP
@@ -731,9 +777,9 @@ int main (int argc, char **argv) {
         } else if (!strcmp (argv [i], "-wid") && ++i < argc) {
             parent_id = strtol (argv[i], 0L, 10);
         } else
-            url = g_strdup (argv[i]);
+            object_url = g_strdup (argv[i]);
     }
-    if (!callback_service && !(url && mimetype && plugin)) {
+    if (!callback_service && !(object_url && mimetype && plugin)) {
         g_fprintf(stderr, "Usage: %s <-m mimetype -p plugin url|-cb service -wid id>\n", argv[0]);
         return 1;
     }
