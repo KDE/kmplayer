@@ -406,7 +406,6 @@ private slots:
     void processStopped (KProcess *);
 };
 
-#ifdef HAVE_NSPR
 /*
  * npplayer backend
  */
@@ -457,7 +456,6 @@ private:
     bool write_in_progress;
     Reason finish_reason;
 };
-#endif
 
 } // namespace
 

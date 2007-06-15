@@ -2265,6 +2265,30 @@ KDE_NO_EXPORT QString NpPlayer::menuName () const {
     return i18n ("&Ice Ape");
 }
 
+#else
+
+KDE_NO_CDTOR_EXPORT
+NpPlayer::NpPlayer (QObject * parent, Settings * settings, const QString &)
+ : Process (parent, settings, "npp") {}
+KDE_NO_CDTOR_EXPORT NpPlayer::~NpPlayer () {}
+KDE_NO_EXPORT void NpPlayer::init () {}
+KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () { return false; }
+KDE_NO_EXPORT void NpPlayer::initProcess (Viewer *) {}
+KDE_NO_EXPORT QString NpPlayer::menuName () const { return QString (); }
+KDE_NO_EXPORT void NpPlayer::setStarted (const QString &) {}
+KDE_NO_EXPORT void NpPlayer::requestStream (const QString &) {}
+KDE_NO_EXPORT void NpPlayer::finishStream (Reason) {}
+KDE_NO_EXPORT bool NpPlayer::stop () { return false; }
+KDE_NO_EXPORT bool NpPlayer::quit () { return false; }
+KDE_NO_EXPORT bool NpPlayer::ready (Viewer *) { return false; }
+KDE_NO_EXPORT void NpPlayer::processOutput (KProcess *, char *, int) {}
+KDE_NO_EXPORT void NpPlayer::processStopped (KProcess *) {}
+KDE_NO_EXPORT void NpPlayer::wroteStdin (KProcess *) {}
+KDE_NO_EXPORT void NpPlayer::slotResult (KIO::Job*) {}
+KDE_NO_EXPORT void NpPlayer::slotData (KIO::Job*, const QByteArray&) {}
+KDE_NO_EXPORT void NpPlayer::terminateJobs () {}
+KDE_NO_EXPORT void NpPlayer::sendFinish (Reason) {}
+
 #endif
 
 #include "kmplayerprocess.moc"
