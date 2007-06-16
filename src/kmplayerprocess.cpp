@@ -1919,7 +1919,6 @@ static KStaticDeleter <DBusStatic> dbus_static_deleter;
 static DBusHandlerResult
 dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
     DBusMessageIter args;
-    DBusMessage* reply;
     const char *sender = dbus_message_get_sender (msg);
     //const char *iface = "org.kde.kmplayer.backend";
     NpPlayer *process = (NpPlayer *) data;
@@ -1939,9 +1938,27 @@ dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
             if (dbus_message_iter_init (msg, &args) &&
                     DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&args)) {
                 dbus_message_iter_get_basic (&args, &param);
-                process->requestStream (QString (param));
+                process->requestStream (QString::fromLocal8Bit (param));
             }
             kdDebug () << "getUrl " << param << endl;
+
+        } else if (dbus_message_is_method_call (msg, iface, "evaluate")) {
+            char *param = 0;
+            if (dbus_message_iter_init (msg, &args) &&
+                    DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&args)) {
+                dbus_message_iter_get_basic (&args, &param);
+                QString r = process->evaluateScript (QString::fromUtf8 (param));
+                DBusMessage * rmsg = dbus_message_new_method_return (msg);
+                char *res = strdup (r.utf8 ().data ());
+                kdDebug () << "evaluate => " << res << endl;
+                dbus_message_append_args (rmsg,
+                        DBUS_TYPE_STRING, &res,
+                        DBUS_TYPE_INVALID);
+                dbus_connection_send (conn, rmsg, NULL);
+                dbus_connection_flush (conn);
+                dbus_message_unref (rmsg);
+                free (res);
+            }
 
         } else if (dbus_message_is_method_call (msg, iface, "finish")) {
             process->finishStream (NpPlayer::BecauseStopped);
@@ -2138,6 +2155,12 @@ KDE_NO_EXPORT void NpPlayer::setStarted (const QString & srv) {
     setState (Ready);
 }
 
+KDE_NO_EXPORT QString NpPlayer::evaluateScript (const QString & script) {
+    QString result;
+    emit evaluate (script, result);
+    return result;
+}
+
 KDE_NO_EXPORT void NpPlayer::requestStream (const QString & url) {
     KURL uri (m_url, url);
     kdDebug () << "NpPlayer::requestStream '" << uri << "'" << endl;
@@ -2145,14 +2168,14 @@ KDE_NO_EXPORT void NpPlayer::requestStream (const QString & url) {
     write_in_progress = false;
     finish_reason = NoReason;
     if (url.startsWith ("javascript:")) { //FIXME: signal plugin liveconnect
-        QString result;
-        emit evaluate (url.mid (11), result);
+        QString result = evaluateScript (url.mid (11));
 #if (QT_VERSION < 0x040000)
         QCString cr = result.local8Bit ();
+        bytes += cr.length ();
 #else
         QByteArray cr = result.toLocal8Bit ();
+        bytes += strlen (cr.data ());
 #endif
-        bytes += cr.length ();
         eval_res.resize (bytes + 1);
         memcpy (eval_res.data (), cr.data (), bytes);
         *(eval_res.data () + bytes) = 0;

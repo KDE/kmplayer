@@ -431,6 +431,7 @@ public:
     KDE_NO_EXPORT const QString & destination () const { return service; }
     KDE_NO_EXPORT const QString & interface () const { return iface; }
     KDE_NO_EXPORT QString objectPath () const { return path; }
+    QString evaluateScript (const QString & scr);
 signals:
     void evaluate (const QString & scr, QString & result);
 public slots:
