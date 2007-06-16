@@ -2145,9 +2145,20 @@ KDE_NO_EXPORT void NpPlayer::requestStream (const QString & url) {
     write_in_progress = false;
     finish_reason = NoReason;
     if (url.startsWith ("javascript:")) { //FIXME: signal plugin liveconnect
-        bytes += 9;
+        QString result;
+        emit evaluate (url.mid (11), result);
+#if (QT_VERSION < 0x040000)
+        QCString cr = result.local8Bit ();
+#else
+        QByteArray cr = result.toLocal8Bit ();
+#endif
+        bytes += cr.length ();
+        eval_res.resize (bytes + 1);
+        memcpy (eval_res.data (), cr.data (), bytes);
+        *(eval_res.data () + bytes) = 0;
+        kdDebug () << "result is " << eval_res.data () << endl;
         write_in_progress = true;
-        m_process->writeStdin ("undefined", 9);
+        m_process->writeStdin (eval_res.data (), bytes);
         finish_reason = BecauseDone;
     } else {
         job = KIO::get (uri, false, false);

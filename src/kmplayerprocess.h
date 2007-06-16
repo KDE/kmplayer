@@ -431,6 +431,8 @@ public:
     KDE_NO_EXPORT const QString & destination () const { return service; }
     KDE_NO_EXPORT const QString & interface () const { return iface; }
     KDE_NO_EXPORT QString objectPath () const { return path; }
+signals:
+    void evaluate (const QString & scr, QString & result);
 public slots:
     virtual bool stop ();
     virtual bool quit ();
@@ -451,6 +453,7 @@ private:
     QString path;
     QString filter;
     QString remote_service;
+    QByteArray eval_res;
     KIO::TransferJob * job;
     unsigned int bytes;
     bool write_in_progress;

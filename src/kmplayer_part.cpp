@@ -152,6 +152,11 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     setInstance (KMPlayerFactory::instance (), true);
     init (actionCollection ());
     m_sources ["hrefsource"] = (new KMPlayerHRefSource (this));
+#ifdef HAVE_NSPR
+    KMPlayer::NpPlayer *npp = (KMPlayer::NpPlayer *) players () ["npp"];
+    connect (npp, SIGNAL (evaluate (const QString &, QString &)),
+          m_liveconnectextension, SLOT (evaluate (const QString &, QString &)));
+#endif
     /*KAction *playact =*/ new KAction(i18n("P&lay"), QString ("player_play"), KShortcut (), this, SLOT(play ()), actionCollection (), "play");
     /*KAction *pauseact =*/ new KAction(i18n("&Pause"), QString ("player_pause"), KShortcut (), this, SLOT(pause ()), actionCollection (), "pause");
     /*KAction *stopact =*/ new KAction(i18n("&Stop"), QString ("player_stop"), KShortcut (), this, SLOT(stop ()), actionCollection (), "stop");
@@ -853,6 +858,22 @@ KDE_NO_EXPORT void KMPlayerLiveConnectExtension::finished () {
     }
 }
 
+KDE_NO_EXPORT void KMPlayerLiveConnectExtension::evaluate (
+        const QString & scr, QString & result) {
+    QString script (scr);
+    KParts::LiveConnectExtension::ArgList args;
+    script = script.replace ('\\', "\\\\");
+    script = script.replace ('\n', "\\n");
+    script = script.replace ('\r', "");
+    script = script.replace ('"', "\\\"");
+    script = QString ("this.__kmplayer__res=eval(\"%1\")").arg (script);
+    args.push_back(qMakePair(KParts::LiveConnectExtension::TypeString, script));
+
+    script_result = "undefined";
+    emit partEvent (0, "eval", args);
+    result = script_result;
+}
+
 KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
   (const unsigned long id, const QString & name,
    KParts::LiveConnectExtension::Type & type,
@@ -887,6 +908,10 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
 KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::put
   (const unsigned long, const QString & name, const QString & val) {
     kdDebug () << "[01;35mput[00m " << name << "=" << val << endl;
+    if (name == "__kmplayer__res") {
+        script_result = val;
+        return true;
+    }
     const JSCommandEntry * entry = getJSCommandEntry (name.ascii ());
     if (!entry)
         return false;
