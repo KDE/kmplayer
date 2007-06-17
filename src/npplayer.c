@@ -96,7 +96,7 @@ static NP_ShutdownUPP npShutdown;
 static StreamInfo *addStream (const char *url, const char *mime, const char *target, void *notify_data, int notify);
 static gboolean requestStream (void * si);
 static gboolean destroyStream (void * si);
-static void callFunction (const char *func, const char *arg1);
+static void callFunction (const char *func, const char *arg1, const char *arg2);
 static char * evaluate (const char *script);
 
 /*----------------%<---------------------------------------------------------*/
@@ -917,7 +917,7 @@ static gboolean requestStream (void * p) {
         }
         g_assert (!stdin_read_watch);
         stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, NULL);
-        callFunction ("getUrl", si->url);
+        callFunction ("getUrl", si->url, si->target);
     }
     return 0; /* single shot */
 }
@@ -926,7 +926,7 @@ static gboolean destroyStream (void * p) {
     StreamInfo *si = (StreamInfo*) p;
     print ("destroyStream\n");
     if (si && si == g_slist_nth_data (stream_list, 0))
-        callFunction ("finish", NULL);
+        callFunction ("finish", NULL, NULL);
     return 0; /* single shot */
 }
 
@@ -1036,7 +1036,7 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
     return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-static void callFunction (const char *func, const char *arg1) {
+static void callFunction(const char *func, const char *arg1, const char *arg2) {
     print ("call %s(%s)\n", func, arg1 ? arg1 : "");
     if (callback_service) {
         DBusMessage *msg = dbus_message_new_method_call (
@@ -1044,9 +1044,13 @@ static void callFunction (const char *func, const char *arg1) {
                 callback_path,
                 "org.kde.kmplayer.callback",
                 func);
-        if (arg1)
-            dbus_message_append_args (
-                    msg, DBUS_TYPE_STRING, &arg1, DBUS_TYPE_INVALID);
+        if (arg1) { /* FIXME use the valist variant */
+            DBusMessageIter it;
+            dbus_message_iter_init_append (msg, &it);
+            dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &arg1);
+            if (arg2)
+                dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &arg2);
+        }
         dbus_message_set_no_reply (msg, TRUE);
         dbus_connection_send (dbus_connection, msg, NULL);
         dbus_message_unref (msg);
@@ -1089,7 +1093,7 @@ static char * evaluate (const char *script) {
 static void pluginAdded (GtkSocket *socket, gpointer d) {
     (void)socket; (void)d;
     print ("pluginAdded\n");
-    callFunction ("plugged", NULL);
+    callFunction ("plugged", NULL, NULL);
 }
 
 static void windowCreatedEvent (GtkWidget *w, gpointer d) {
@@ -1197,7 +1201,7 @@ static gboolean initPlayer (void * p) {
         dbus_connection_add_filter (dbus_connection, dbusFilter, 0L, 0L);
 
         /* TODO: remove DBUS_BUS_SESSION and create a private connection */
-        callFunction ("running", service_name);
+        callFunction ("running", service_name, NULL);
 
         dbus_connection_flush (dbus_connection);
     }

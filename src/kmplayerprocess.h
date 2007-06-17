@@ -425,7 +425,7 @@ public:
     virtual QString menuName () const;
 
     void setStarted (const QString & srv);
-    void requestStream (const QString & url);
+    void requestStream (const QString & url, const QString & target);
     void finishStream (Reason because);
 
     KDE_NO_EXPORT const QString & destination () const { return service; }
@@ -434,6 +434,7 @@ public:
     QString evaluateScript (const QString & scr);
 signals:
     void evaluate (const QString & scr, QString & result);
+    void openUrl (const QString & url, const QString & target);
 public slots:
     virtual bool stop ();
     virtual bool quit ();

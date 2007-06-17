@@ -1935,10 +1935,17 @@ dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
 
         if (dbus_message_is_method_call (msg, iface, "getUrl")) {
             char *param = 0;
+            QString url, target;
             if (dbus_message_iter_init (msg, &args) &&
                     DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&args)) {
                 dbus_message_iter_get_basic (&args, &param);
-                process->requestStream (QString::fromLocal8Bit (param));
+                url = QString::fromLocal8Bit (param);
+                if (dbus_message_iter_next (&args) &&
+                      DBUS_TYPE_STRING==dbus_message_iter_get_arg_type(&args)) {
+                    dbus_message_iter_get_basic (&args, &param);
+                    target = QString::fromLocal8Bit (param);
+                }
+                process->requestStream (url, target);
             }
             //kdDebug () << "getUrl " << param << endl;
 
@@ -2161,7 +2168,8 @@ KDE_NO_EXPORT QString NpPlayer::evaluateScript (const QString & script) {
     return result;
 }
 
-KDE_NO_EXPORT void NpPlayer::requestStream (const QString & url) {
+KDE_NO_EXPORT
+void NpPlayer::requestStream (const QString & url, const QString & target) {
     KURL uri (m_url, url);
     kdDebug () << "NpPlayer::requestStream '" << uri << "'" << endl;
     bytes = 0;
@@ -2183,6 +2191,10 @@ KDE_NO_EXPORT void NpPlayer::requestStream (const QString & url) {
         write_in_progress = true;
         m_process->writeStdin (eval_res.data (), bytes);
         finish_reason = BecauseDone;
+    } else if (!target.isEmpty ()) {
+        kdDebug () << "new page request " << target << endl;
+        emit openUrl (url, target);
+        sendFinish (BecauseDone);
     } else {
         job = KIO::get (uri, false, false);
         connect (job, SIGNAL (data (KIO::Job *, const QByteArray &)),
