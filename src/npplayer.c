@@ -548,8 +548,8 @@ static bool nsSetProperty (NPP instance, NPObject * npobj,
                 JsObject *jv = (JsObject *) value->value.objectValue;
                 char *val;
                 int vlen = 0;
-                script = (char *) malloc (len + vlen + 3);
                 createJsName (jv, &val, &vlen);
+                script = (char *) malloc (len + vlen + 3);
                 sprintf (script, "%s=%s;", fullname, val);
                 free (val);
             }
