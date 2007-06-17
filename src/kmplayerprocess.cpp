@@ -1928,10 +1928,10 @@ dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
                 dbus_message_has_interface (msg, iface) &&
             dbus_message_has_path (msg, process->objectPath ().ascii ()))
     {
-        kdDebug () << "dbusFilter " << sender <<
-            " iface:" << dbus_message_get_interface (msg) <<
-            " member:" << dbus_message_get_member (msg) <<
-            " dest:" << dbus_message_get_destination (msg) << endl;
+        //kdDebug () << "dbusFilter " << sender <<
+        //    " iface:" << dbus_message_get_interface (msg) <<
+        //    " member:" << dbus_message_get_member (msg) <<
+        //    " dest:" << dbus_message_get_destination (msg) << endl;
 
         if (dbus_message_is_method_call (msg, iface, "getUrl")) {
             char *param = 0;
@@ -1940,7 +1940,7 @@ dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
                 dbus_message_iter_get_basic (&args, &param);
                 process->requestStream (QString::fromLocal8Bit (param));
             }
-            kdDebug () << "getUrl " << param << endl;
+            //kdDebug () << "getUrl " << param << endl;
 
         } else if (dbus_message_is_method_call (msg, iface, "evaluate")) {
             char *param = 0;
@@ -1950,7 +1950,7 @@ dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
                 QString r = process->evaluateScript (QString::fromUtf8 (param));
                 DBusMessage * rmsg = dbus_message_new_method_return (msg);
                 char *res = strdup (r.utf8 ().data ());
-                kdDebug () << "evaluate => " << res << endl;
+                //kdDebug () << "evaluate => " << res << endl;
                 dbus_message_append_args (rmsg,
                         DBUS_TYPE_STRING, &res,
                         DBUS_TYPE_INVALID);
@@ -2060,7 +2060,7 @@ KDE_NO_EXPORT void NpPlayer::initProcess (Viewer * viewer) {
 
 KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
     kdDebug() << "NpPlayer::play '" << m_url << "'" << endl;
-    //viewer ()->changeProtocol (QXEmbed::XEMBED);
+    viewer ()->changeProtocol (QXEmbed::XEMBED);
     if (m_mrl && !m_url.isEmpty () && dbus_static->dbus_connnection) {
         bytes = 0;
         QString mime = "text/plain";

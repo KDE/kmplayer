@@ -1007,7 +1007,7 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
                     DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&di))
                 break;
             dbus_message_iter_get_basic (&di, &value);
-            argn[i] = g_strdup (strcasecmp (key, "flashvars") ? key : "flashlight");
+            argn[i] = g_strdup (key);
             argv[i] = g_strdup (value);
             print ("param %d:%s='%s'\n", i + 1, argn[i], value);
             if (!dbus_message_iter_next (&ait))
@@ -1134,42 +1134,37 @@ static void windowDestroyEvent (GtkWidget *w, gpointer d) {
 }
 
 static gboolean initPlayer (void * p) {
-    /*when called from kmplayer if (!callback_service) {*/
-        GtkWidget *window;
-        GdkColormap *color_map;
-        GdkColor bg_color;
-        (void)p;
+    GtkWidget *window;
+    GdkColormap *color_map;
+    GdkColor bg_color;
+    (void)p;
 
-        window = gtk_window_new (parent_id
-                ? GTK_WINDOW_POPUP
-                : GTK_WINDOW_TOPLEVEL);
-        xembed = gtk_socket_new();
-        /*if (parent_id)
-            gtk_window_set_decorated (GTK_WINDOW (window), false);*/
-        /*if (parent_id)
-        //    gtk_widget_set_parent (window, gdk_window_foreign_new (parent_id));*/
-        g_signal_connect (G_OBJECT (window), "delete_event",
-                G_CALLBACK (windowCloseEvent), NULL);
-        g_signal_connect (G_OBJECT (window), "destroy",
-                G_CALLBACK (windowDestroyEvent), NULL);
-        g_signal_connect (G_OBJECT (window), "realize",
-                GTK_SIGNAL_FUNC (windowCreatedEvent), NULL);
-        /*g_signal_connect (G_OBJECT (window), "configure-event",
-                GTK_SIGNAL_FUNC (configureEvent), NULL);*/
+    window = callback_service
+        ? gtk_plug_new (parent_id)
+        : gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    g_signal_connect (G_OBJECT (window), "delete_event",
+            G_CALLBACK (windowCloseEvent), NULL);
+    g_signal_connect (G_OBJECT (window), "destroy",
+            G_CALLBACK (windowDestroyEvent), NULL);
+    g_signal_connect (G_OBJECT (window), "realize",
+            GTK_SIGNAL_FUNC (windowCreatedEvent), NULL);
+    /*g_signal_connect (G_OBJECT (window), "configure-event",
+      GTK_SIGNAL_FUNC (configureEvent), NULL);*/
 
-        g_signal_connect (G_OBJECT (xembed), "plug-added",
-                GTK_SIGNAL_FUNC (pluginAdded), NULL);
-        color_map = gdk_colormap_get_system();
-        gdk_colormap_query_color (color_map, 0, &bg_color);
-        gtk_widget_modify_bg (xembed, GTK_STATE_NORMAL, &bg_color);
+    xembed = gtk_socket_new();
+    g_signal_connect (G_OBJECT (xembed), "plug-added",
+            GTK_SIGNAL_FUNC (pluginAdded), NULL);
 
-        gtk_container_add (GTK_CONTAINER (window), xembed);
-        if (parent_id)
-            gtk_widget_set_size_request (window, 1024, 1024);
-        else
-            gtk_widget_set_size_request (window, 440, 330);
-        gtk_widget_show_all (window);
-    /*} else {*/
+    color_map = gdk_colormap_get_system();
+    gdk_colormap_query_color (color_map, 0, &bg_color);
+    gtk_widget_modify_bg (xembed, GTK_STATE_NORMAL, &bg_color);
+
+    gtk_container_add (GTK_CONTAINER (window), xembed);
+
+    if (!parent_id)
+        gtk_widget_set_size_request (window, 440, 330);
+    gtk_widget_show_all (window);
+
     if (callback_service && callback_path) {
         DBusError dberr;
         const char *serv = "type='method_call',interface='org.kde.kmplayer.backend'";
