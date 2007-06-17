@@ -62,6 +62,7 @@ static int stdin_read_watch;
 
 static NPPluginFuncs np_funcs;       /* plugin functions              */
 static NPP npp;                      /* single instance of the plugin */
+static NPWindow np_window;
 static NPSavedData *saved_data;
 static NPClass window_class;
 static GSList *stream_list;
@@ -79,6 +80,13 @@ typedef struct _StreamInfo {
     char *target;
     char notify;
 } StreamInfo;
+struct JsObject;
+typedef struct _JsObject {
+    NPObject npobject;
+    struct _JsObject * parent;
+    char * name;
+    char * tostring;
+} JsObject;
 
 static NP_GetMIMEDescriptionUPP npGetMIMEDescription;
 static NP_InitializeUPP npInitialize;
@@ -113,6 +121,65 @@ static void freeStream (StreamInfo *si) {
 }
 
 /*----------------%<---------------------------------------------------------*/
+
+static void createJsName (JsObject * obj, char **name, int * len) {
+    int slen = strlen (obj->name);
+    if (obj->parent) {
+        *len += slen + 1;
+        createJsName (obj->parent, name, len);
+    } else {
+        *name = (char *) malloc (*len + slen + 1);
+        *(*name + *len + slen) = 0;
+        *len = 0;
+    }
+    if (obj->parent) {
+        *(*name + *len) = '.';
+        *len += 1;
+    }
+    memcpy (*name + *len, obj->name, slen);
+    *len += slen;
+}
+
+/*----------------%<---------------------------------------------------------*/
+
+static NPObject * nsCreateObject (NPP instance, NPClass *aClass) {
+    NPObject *obj;
+    (void)instance;
+    print ("NPN_CreateObject\n");
+    if (&window_class == aClass) {
+        JsObject * jo = (JsObject *) malloc (sizeof (JsObject));
+        jo->parent = NULL;
+        jo->name = NULL;
+        jo->tostring = NULL;
+        obj = (NPObject *) jo;
+    } else {
+        obj = (NPObject *) malloc (sizeof (NPObject));
+    }
+    obj->_class = aClass;
+    obj->referenceCount = 1;
+}
+
+static NPObject *nsRetainObject (NPObject *npobj) {
+    print( "nsRetainObject %p\n", npobj);
+    npobj->referenceCount++;
+    return npobj;
+}
+
+static void nsReleaseObject (NPObject *obj) {
+    print ("NPN_ReleaseObject\n");
+    if (! (--obj->referenceCount)) {
+        if (&window_class == obj->_class) {
+            JsObject *jo = (JsObject *) obj;
+            if (jo->parent)
+                nsReleaseObject ((NPObject *) jo->parent);
+            if (jo->name)
+                g_free (jo->name);
+            if (jo->tostring)
+                g_free (jo->tostring);
+        }
+        free (obj);
+    }
+}
 
 static NPError nsGetURL (NPP instance, const char* url, const char* target) {
     (void)instance;
@@ -211,7 +278,6 @@ static NPError nsPostURLNotify (NPP instance, const char* url, const char* targe
 }
 
 static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
-    (void)instance;
     print ("NPN_GetValue %d\n", variable & ~NP_ABI_MASK);
     switch (variable) {
         case NPNVxDisplay:
@@ -236,16 +302,16 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
             *(int*)value = 0;
             break;
         case NPNVToolkit:
-            *(int*)value = 2; /* ?? */
+            *(int*)value = NPNVGtk2;
             break;
         case NPNVSupportsXEmbedBool:
             *(int*)value = 1;
             break;
         case NPNVWindowNPObject: {
-            NPObject * obj = (NPObject *) malloc (sizeof (NPObject));
-            obj->_class = &window_class;
-            obj->referenceCount = 1;
-            *(NPObject**)value = obj;
+            JsObject * obj = (JsObject*)nsCreateObject(instance, &window_class);
+            obj->name = g_strdup ("window");
+            obj->tostring = g_strdup ("[object Window]");
+            *(JsObject**)value = obj;
             break;
         }
         default:
@@ -309,17 +375,27 @@ static NPUTF8 * nsUTF8FromIdentifier (NPIdentifier name) {
     return g_tree_lookup (identifiers, name);
 }
 
-static void nsReleaseObject (NPObject *obj) {
-    print ("NPN_ReleaseObject\n");
-    if (--obj->referenceCount)
-        free (obj);
-}
-
 static bool nsInvoke (NPP instance, NPObject * npobj, NPIdentifier method,
         const NPVariant *args, uint32_t arg_count, NPVariant *result) {
-    (void)instance; (void)npobj;
-    (void)method;(void)args; (void)arg_count; (void)result;
-    print ("NPN_Invoke\n");
+    JsObject * jo;
+    char * id = (char *) g_tree_lookup (identifiers, method);
+
+    (void)instance; (void)npobj; (void)args;
+
+    if (!id || npobj->_class != &window_class) {
+        print ("NPN_Invoke valid id:%d known type:%d\n",
+                !!id, &window_class == npobj->_class);
+        return false;
+    }
+    print ("NPN_Invoke %s\n", id);
+
+    jo = (JsObject *) npobj;
+    if (!arg_count && jo->tostring && !strcmp (id, "toString")) { /* use cache*/
+        result->type = NPVariantType_String;
+        result->value.stringValue.utf8characters = g_strdup (jo->tostring);
+        result->value.stringValue.utf8length = strlen (jo->tostring);
+        return true;
+    } /*else evaluate it*/
     return false;
 }
 
@@ -339,19 +415,73 @@ static bool nsEvaluate (NPP instance, NPObject * npobj, NPString * script,
 
 static bool nsGetProperty (NPP instance, NPObject * npobj,
         NPIdentifier property, NPVariant * result) {
-    (void)instance; (void)npobj;
     char * id = (char *) g_tree_lookup (identifiers, property);
+    JsObject * jo;
+    char * fullname = NULL;
+    char * script;
+    char * variable;
+    char * tostring;
+    char * res;
+    int len = 0;
+    static int counter = 0;
+
     print ("NPN_GetProperty %s\n", id);
-    result->type = NPVariantType_String;
-    char * res = evaluate (id);
-    if (res) {
-        result->value.stringValue.utf8characters = res;
-        result->value.stringValue.utf8length = strlen (res);
-        print ("   => %s\n", res);
+    result->type = NPVariantType_Null;
+    result->value.objectValue = NULL;
+
+    if (!id)
+        return false;
+
+    /* assign to a js variable */
+    jo = (JsObject *) nsCreateObject (instance, &window_class);
+    jo->name = g_strdup (id);
+    jo->parent = (JsObject *) nsRetainObject (npobj);
+    createJsName (jo, &fullname, &len);
+    nsReleaseObject ((NPObject *) jo);
+
+    variable = (char *) malloc (32 + len);
+    sprintf (variable, "this.__kmplayer_obj%d", counter);
+
+    script = (char *) malloc (strlen (variable) + len + 3);
+    sprintf (script, "%s=%s;", variable, fullname);
+    free (fullname);
+    tostring = evaluate (script);
+    free (script);
+
+    if (tostring) {
+        print("assign result %s\n", tostring);
+
+        /* get type of js variable */
+        script = (char *) malloc (strlen (variable) + 9);
+        sprintf (script, "typeof %s;", variable);
+        res = evaluate (script);
+        free (script);
+
+        if (res) {
+            print ("   => %s\n", res);
+            if (strcasecmp (res, "object")) { /* FIXME numbers/void/undefined*/
+                result->type = NPVariantType_String;
+                result->value.stringValue.utf8characters = res;
+                result->value.stringValue.utf8length = strlen (res);
+                g_free (tostring);
+            } else /*if (!strcasecmp (res, "object"))*/ {
+                g_free (res);
+                counter++;
+                result->type = NPVariantType_Object;
+                jo = (JsObject *) nsCreateObject (instance, &window_class);
+                jo->name = g_strdup (variable);
+                jo->tostring = tostring;
+                result->value.objectValue = (NPObject *)jo;
+            }
+        } else {
+            g_free (tostring);
+        }
     } else {
         print ("   => error\n");
         return false;
     }
+    free (variable);
+
     return true;
 }
 
@@ -370,9 +500,12 @@ static bool nsSetProperty (NPP instance, NPObject * npobj,
         default:
             return false;
     }
-    char *res = evaluate (script);
-    if (res)
-        g_free (res);
+    if (script) {
+        char *res = evaluate (script);
+        if (res)
+            g_free (res);
+        free (script);
+    }
     return true;
 }
 
@@ -401,9 +534,14 @@ static void nsReleaseVariantValue (NPVariant * variant) {
             if (variant->value.stringValue.utf8characters)
                 g_free (variant->value.stringValue.utf8characters);
             break;
+        case NPVariantType_Object:
+            if (variant->value.objectValue)
+                nsReleaseObject (variant->value.objectValue);
+            break;
         default:
-            print ("NPN_ReleaseVariantValue not handled\n");
+            break;
     }
+    variant->type = NPVariantType_Null;
 }
 
 /*----------------%<---------------------------------------------------------*/
@@ -618,9 +756,9 @@ static int initPlugin (const char *plugin_lib) {
     ns_funcs.getintidentifier = nsGetIntIdentifier;
     ns_funcs.identifierisstring = nsIdentifierIsString;
     ns_funcs.utf8fromidentifier = nsUTF8FromIdentifier;
-    /*ns_funcs.intfromidentifier;
-    ns_funcs.createobject;
-    ns_funcs.retainobject;*/
+    /*ns_funcs.intfromidentifier;*/
+    ns_funcs.createobject = nsCreateObject;
+    ns_funcs.retainobject = nsRetainObject;
     ns_funcs.releaseobject = nsReleaseObject;
     ns_funcs.invoke = nsInvoke;
     ns_funcs.invokeDefault = nsInvokeDefault;
@@ -659,7 +797,6 @@ static int initPlugin (const char *plugin_lib) {
 }
 
 static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
-    NPWindow window;
     NPSetWindowCallbackStruct ws_info;
     NPError np_err;
     Display *display;
@@ -686,23 +823,23 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
         print ("NPP_New failure %d %p %p\n", np_err, np_funcs, np_funcs.newp);
         return -1;
     }
-    memset (&window, 0, sizeof (NPWindow));
+    memset (&np_window, 0, sizeof (NPWindow));
     display = gdk_x11_get_default_xdisplay ();
-    window.x = 0;
-    window.y = 0;
-    window.width = width;
-    window.height = height;
-    window.window = (void*)socket_id;
+    np_window.x = 0;
+    np_window.y = 0;
+    np_window.width = width;
+    np_window.height = height;
+    np_window.window = (void*)socket_id;
     ws_info.type = 1; /*NP_SetWindow;*/
     screen = DefaultScreen (display);
     ws_info.display = (void*)(long)display;
     ws_info.visual = (void*)(long)DefaultVisual (display, screen);
     ws_info.colormap = DefaultColormap (display, screen);
     ws_info.depth = DefaultDepth (display, screen);
-    print ("display %dx%d\n", width, height);
-    window.ws_info = (void*)&ws_info;
+    print ("display %u %dx%d\n", socket_id, width, height);
+    np_window.ws_info = (void*)&ws_info;
 
-    np_err = np_funcs.setwindow (npp, &window);
+    np_err = np_funcs.setwindow (npp, &np_window);
     return 0;
 }
 
@@ -737,7 +874,6 @@ static gboolean destroyStream (void * p) {
 static gpointer newStream (const char *url, const char *mime,
         int argc, char *argn[], char *argv[]) {
     StreamInfo *si;
-    print ("new stream %s %s %d\n", url, mime, g_main_depth ());
     if (!npp && (initPlugin (plugin) || newPlugin (mimetype, argc, argn, argv)))
         return 0L;
     si = addStream (url, mime, 0L, 0L, 0);
@@ -916,6 +1052,17 @@ static void windowCreatedEvent (GtkWidget *w, gpointer d) {
     }
 }
 
+static gboolean configureEvent(GtkWidget *w, GdkEventConfigure *e, gpointer d) {
+    if (np_window.window &&
+            (e->width != np_window.width || e->height != np_window.height)) {
+        print ("Update size %dx%d\n", e->width, e->height);
+        np_window.width = e->width;
+        np_window.height = e->height;
+        np_funcs.setwindow (npp, &np_window);
+    }
+    return FALSE;
+}
+
 static gboolean windowCloseEvent (GtkWidget *w, GdkEvent *e, gpointer d) {
     (void)w; (void)e; (void)d;
     shutDownPlugin();
@@ -948,6 +1095,8 @@ static gboolean initPlayer (void * p) {
                 G_CALLBACK (windowDestroyEvent), NULL);
         g_signal_connect (G_OBJECT (window), "realize",
                 GTK_SIGNAL_FUNC (windowCreatedEvent), NULL);
+        /*g_signal_connect (G_OBJECT (window), "configure-event",
+                GTK_SIGNAL_FUNC (configureEvent), NULL);*/
 
         g_signal_connect (G_OBJECT (xembed), "plug-added",
                 GTK_SIGNAL_FUNC (pluginAdded), NULL);
@@ -960,7 +1109,6 @@ static gboolean initPlayer (void * p) {
             gtk_widget_set_size_request (window, 1024, 1024);
         else
             gtk_widget_set_size_request (window, 440, 330);
-        print ("dis %p\n", gdk_display_get_default ());
         gtk_widget_show_all (window);
     /*} else {*/
     if (callback_service && callback_path) {

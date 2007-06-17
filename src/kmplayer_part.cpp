@@ -877,7 +877,11 @@ KDE_NO_EXPORT void KMPlayerLiveConnectExtension::evaluate (
 KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
   (const unsigned long id, const QString & name,
    KParts::LiveConnectExtension::Type & type,
-   unsigned long & rid, QString & rval) {
+   unsigned long & rid, QString & rval)
+{
+    if (name.startsWith ("__kmplayer_obj"))
+        return false;
+
     const char * str = name.ascii ();
     kdDebug () << "[01;35mget[00m " << str << endl;
     const JSCommandEntry * entry = getJSCommandEntry (str);
@@ -907,11 +911,15 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
 
 KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::put
   (const unsigned long, const QString & name, const QString & val) {
-    kdDebug () << "[01;35mput[00m " << name << "=" << val << endl;
     if (name == "__kmplayer__res") {
         script_result = val;
         return true;
     }
+    if (name.startsWith ("__kmplayer_obj"))
+        return false;
+
+    kdDebug () << "[01;35mput[00m " << name << "=" << val << endl;
+
     const JSCommandEntry * entry = getJSCommandEntry (name.ascii ());
     if (!entry)
         return false;
