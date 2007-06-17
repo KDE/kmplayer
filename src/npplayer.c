@@ -67,6 +67,7 @@ static NPSavedData *saved_data;
 static NPClass window_class;
 static GSList *stream_list;
 static GTree *identifiers;
+static int js_obj_counter;
 static char stream_buf[4096];
 typedef struct _StreamInfo {
     NPStream np_stream;
@@ -170,8 +171,23 @@ static void nsReleaseObject (NPObject *obj) {
     if (! (--obj->referenceCount)) {
         if (&window_class == obj->_class) {
             JsObject *jo = (JsObject *) obj;
-            if (jo->parent)
+            if (jo->parent) {
                 nsReleaseObject ((NPObject *) jo->parent);
+            } else if (jo->name &&
+                    !strncmp(jo->name, "this.__kmplayer__obj_", 21)) {
+                char *script = (char *) malloc (strlen (jo->name) + 7);
+                char *result;
+                char *counter = strrchr (jo->name, '_');
+                sprintf (script, "%s=null;", jo->name);
+                result = evaluate (script);
+                free (script);
+                g_free (result);
+                if (counter) {
+                    int c = strtol (counter +1, NULL, 10);
+                    if (c == js_obj_counter -1)
+                        js_obj_counter--; /*poor man's variable name reuse */
+                }
+            }
             if (jo->name)
                 g_free (jo->name);
             if (jo->tostring)
@@ -423,7 +439,6 @@ static bool nsGetProperty (NPP instance, NPObject * npobj,
     char * tostring;
     char * res;
     int len = 0;
-    static int counter = 0;
 
     print ("NPN_GetProperty %s\n", id);
     result->type = NPVariantType_Null;
@@ -439,8 +454,8 @@ static bool nsGetProperty (NPP instance, NPObject * npobj,
     createJsName (jo, &fullname, &len);
     nsReleaseObject ((NPObject *) jo);
 
-    variable = (char *) malloc (32 + len);
-    sprintf (variable, "this.__kmplayer_obj%d", counter);
+    variable = (char *) malloc (64);
+    sprintf (variable, "this.__kmplayer__obj_%d", js_obj_counter);
 
     script = (char *) malloc (strlen (variable) + len + 3);
     sprintf (script, "%s=%s;", variable, fullname);
@@ -466,7 +481,7 @@ static bool nsGetProperty (NPP instance, NPObject * npobj,
                 g_free (tostring);
             } else /*if (!strcasecmp (res, "object"))*/ {
                 g_free (res);
-                counter++;
+                js_obj_counter++;
                 result->type = NPVariantType_Object;
                 jo = (JsObject *) nsCreateObject (instance, &window_class);
                 jo->name = g_strdup (variable);

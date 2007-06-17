@@ -879,7 +879,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
    KParts::LiveConnectExtension::Type & type,
    unsigned long & rid, QString & rval)
 {
-    if (name.startsWith ("__kmplayer_obj"))
+    if (name.startsWith ("__kmplayer__obj_"))
         return false;
 
     const char * str = name.ascii ();
@@ -915,7 +915,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::put
         script_result = val;
         return true;
     }
-    if (name.startsWith ("__kmplayer_obj"))
+    if (name.startsWith ("__kmplayer__obj_"))
         return false;
 
     kdDebug () << "[01;35mput[00m " << name << "=" << val << endl;
