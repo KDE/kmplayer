@@ -502,15 +502,57 @@ static bool nsGetProperty (NPP instance, NPObject * npobj,
 
 static bool nsSetProperty (NPP instance, NPObject * npobj,
         NPIdentifier property, const NPVariant *value) {
-    (void)instance; (void)npobj; (void)value;
     char * id = (char *) g_tree_lookup (identifiers, property);
     char * script = NULL;
+    JsObject * jo;
+    char * fullname = NULL;
+    int len = 0;
+
+    if (!id)
+        return false;
+
+    jo = (JsObject *) nsCreateObject (instance, &window_class);
+    jo->name = g_strdup (id);
+    jo->parent = (JsObject *) nsRetainObject (npobj);
+    createJsName (jo, &fullname, &len);
+    nsReleaseObject ((NPObject *) jo);
+
     print ("NPN_SetProperty %s %d\n", id, value->type);
     switch (value->type) {
         case NPVariantType_String:
-            script = (char *) malloc (strlen (id) + value->value.stringValue.utf8length + 2);
-            sprintf (script, "%s=%s", value->value.stringValue.utf8characters,
-                    id);
+            script = (char *) malloc (len +
+                    value->value.stringValue.utf8length + 5);
+            sprintf (script, "%s='%s';",
+                    fullname,
+                    value->value.stringValue.utf8characters);
+            break;
+        case NPVariantType_Int32:
+            script = (char *) malloc (len + 16);
+            sprintf (script, "%s=%d;", fullname, value->value.intValue);
+            break;
+        case NPVariantType_Double:
+            script = (char *) malloc (len + 64);
+            sprintf (script, "%s=%f;", fullname, value->value.doubleValue);
+            break;
+        case NPVariantType_Bool:
+            script = (char *) malloc (len + 8);
+            sprintf (script, "%s=%s;", fullname,
+                    value->value.boolValue ? "true" : "false");
+            break;
+        case NPVariantType_Null:
+            script = (char *) malloc (len + 8);
+            sprintf (script, "%s=null;", fullname);
+            break;
+        case NPVariantType_Object:
+            if (&window_class == value->value.objectValue->_class) {
+                JsObject *jv = (JsObject *) value->value.objectValue;
+                char *val;
+                int vlen = 0;
+                script = (char *) malloc (len + vlen + 3);
+                createJsName (jv, &val, &vlen);
+                sprintf (script, "%s=%s;", fullname, val);
+                free (val);
+            }
             break;
         default:
             return false;
@@ -521,6 +563,8 @@ static bool nsSetProperty (NPP instance, NPObject * npobj,
             g_free (res);
         free (script);
     }
+    free (fullname);
+
     return true;
 }
 
