@@ -109,8 +109,9 @@ private:
     KMPlayerPart * player;
     QString script_result;
     const JSCommandEntry * lastJSCommandEntry;
-    bool m_started : 1;
-    bool m_enablefinish : 1;
+    bool m_started;
+    bool m_enablefinish;
+    bool m_evaluating;
 };
 
 

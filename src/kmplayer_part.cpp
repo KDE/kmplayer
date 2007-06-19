@@ -843,7 +843,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerLiveConnectExtension::KMPlayerLiveConnectExtension (
   : KParts::LiveConnectExtension (parent), player (parent),
     lastJSCommandEntry (0L),
     m_started (false),
-    m_enablefinish (false) {
+    m_enablefinish (false),
+    m_evaluating (false) {
       connect (parent, SIGNAL (started (KIO::Job *)), this, SLOT (started ()));
 }
 
@@ -877,7 +878,9 @@ KDE_NO_EXPORT void KMPlayerLiveConnectExtension::evaluate (
     args.push_back(qMakePair(KParts::LiveConnectExtension::TypeString, script));
 
     script_result = "undefined";
+    m_evaluating = true;
     emit partEvent (0, "eval", args);
+    m_evaluating = false;
     result = script_result;
 }
 
@@ -886,9 +889,14 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
    KParts::LiveConnectExtension::Type & type,
    unsigned long & rid, QString & rval)
 {
-    if (name.startsWith ("__kmplayer__obj_"))
-        return false;
-
+    if (name.startsWith ("__kmplayer__obj_")) {
+        if (m_evaluating)
+            return false;
+        rid = 0;
+        type = KParts::LiveConnectExtension::TypeString;
+        rval = "Access denied";
+        return true;
+    }
     const char * str = name.ascii ();
     kdDebug () << "[01;35mget[00m " << str << endl;
     const JSCommandEntry * entry = getJSCommandEntry (str);
@@ -923,7 +931,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::put
         return true;
     }
     if (name.startsWith ("__kmplayer__obj_"))
-        return false;
+        return !m_evaluating;
 
     kdDebug () << "[01;35mput[00m " << name << "=" << val << endl;
 
