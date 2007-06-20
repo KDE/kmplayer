@@ -1769,7 +1769,7 @@ bool URLSource::requestPlayURL (NodePtr mrl) {
 void URLSource::setURL (const KURL & url) {
     Source::setURL (url);
     Mrl *mrl = document ()->mrl ();
-    if (!url.isEmpty () && mrl->mimetype.isEmpty ()) {
+    if (!url.isEmpty () && url.isLocalFile () && mrl->mimetype.isEmpty ()) {
         KMimeType::Ptr mimeptr = KMimeType::findByURL (url);
         if (mimeptr)
             mrl->mimetype = mimeptr->name ();
