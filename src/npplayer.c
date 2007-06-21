@@ -96,7 +96,7 @@ static NP_ShutdownUPP npShutdown;
 static StreamInfo *addStream (const char *url, const char *mime, const char *target, void *notify_data, int notify);
 static gboolean requestStream (void * si);
 static gboolean destroyStream (void * si);
-static void callFunction (const char *func, const char *arg1, const char *arg2);
+static void callFunction (const char *func, int first_arg_type, ...);
 static char * evaluate (const char *script);
 
 /*----------------%<---------------------------------------------------------*/
@@ -158,6 +158,7 @@ static NPObject * nsCreateObject (NPP instance, NPClass *aClass) {
     }
     obj->_class = aClass;
     obj->referenceCount = 1;
+    return obj;
 }
 
 static NPObject *nsRetainObject (NPObject *npobj) {
@@ -391,6 +392,12 @@ static NPUTF8 * nsUTF8FromIdentifier (NPIdentifier name) {
     return g_tree_lookup (identifiers, name);
 }
 
+static int32_t nsIntFromIdentifier (NPIdentifier identifier) {
+    (void)identifier;
+    print ("NPN_IntFromIdentifier\n");
+    return 0;
+}
+
 static bool nsInvoke (NPP instance, NPObject * npobj, NPIdentifier method,
         const NPVariant *args, uint32_t arg_count, NPVariant *result) {
     JsObject * jo;
@@ -464,8 +471,6 @@ static bool nsGetProperty (NPP instance, NPObject * npobj,
     free (script);
 
     if (tostring) {
-        print("assign result %s\n", tostring);
-
         /* get type of js variable */
         script = (char *) malloc (strlen (variable) + 9);
         sprintf (script, "typeof %s;", variable);
@@ -473,7 +478,6 @@ static bool nsGetProperty (NPP instance, NPObject * npobj,
         free (script);
 
         if (res) {
-            print ("   => %s\n", res);
             if (strcasecmp (res, "object")) { /* FIXME numbers/void/undefined*/
                 result->type = NPVariantType_String;
                 result->value.stringValue.utf8characters = res;
@@ -601,6 +605,23 @@ static void nsReleaseVariantValue (NPVariant * variant) {
             break;
     }
     variant->type = NPVariantType_Null;
+}
+
+static void nsSetException (NPObject *npobj, const NPUTF8 *message) {
+    (void)npobj;
+    print ("NPN_SetException %s\n", message);
+}
+
+static bool nsPushPopupsEnabledState (NPP instance, NPBool enabled) {
+    (void)instance;
+    print ("NPN_PushPopupsEnabledState %d\n", enabled);
+    return false;
+}
+
+static bool nsPopPopupsEnabledState (NPP instance) {
+    (void)instance;
+    print ("NPN_PopPopupsEnabledState\n");
+    return false;
 }
 
 /*----------------%<---------------------------------------------------------*/
@@ -815,7 +836,7 @@ static int initPlugin (const char *plugin_lib) {
     ns_funcs.getintidentifier = nsGetIntIdentifier;
     ns_funcs.identifierisstring = nsIdentifierIsString;
     ns_funcs.utf8fromidentifier = nsUTF8FromIdentifier;
-    /*ns_funcs.intfromidentifier;*/
+    ns_funcs.intfromidentifier = nsIntFromIdentifier;
     ns_funcs.createobject = nsCreateObject;
     ns_funcs.retainobject = nsRetainObject;
     ns_funcs.releaseobject = nsReleaseObject;
@@ -828,9 +849,9 @@ static int initPlugin (const char *plugin_lib) {
     ns_funcs.hasproperty = nsHasProperty;
     ns_funcs.hasmethod = nsHasMethod;
     ns_funcs.releasevariantvalue = nsReleaseVariantValue;
-    /*ns_funcs.setexception;
-    ns_funcs.pushpopupsenabledstate;
-    ns_funcs.poppopupsenabledstate;*/
+    ns_funcs.setexception = nsSetException;
+    ns_funcs.pushpopupsenabledstate = nsPushPopupsEnabledState;
+    ns_funcs.poppopupsenabledstate = nsPopPopupsEnabledState;
 
     window_class.structVersion = NP_CLASS_STRUCT_VERSION;
     window_class.allocate = windowClassAllocate;
@@ -917,7 +938,12 @@ static gboolean requestStream (void * p) {
         }
         g_assert (!stdin_read_watch);
         stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, NULL);
-        callFunction ("getUrl", si->url, si->target);
+        if (si->target)
+            callFunction ("getUrl",
+                    DBUS_TYPE_STRING, &si->url,
+                    DBUS_TYPE_STRING, &si->target);
+        else
+            callFunction ("getUrl", DBUS_TYPE_STRING, &si->url);
     }
     return 0; /* single shot */
 }
@@ -926,7 +952,7 @@ static gboolean destroyStream (void * p) {
     StreamInfo *si = (StreamInfo*) p;
     print ("destroyStream\n");
     if (si && si == g_slist_nth_data (stream_list, 0))
-        callFunction ("finish", NULL, NULL);
+        callFunction ("finish", DBUS_TYPE_INVALID);
     return 0; /* single shot */
 }
 
@@ -1036,20 +1062,19 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
     return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-static void callFunction(const char *func, const char *arg1, const char *arg2) {
-    print ("call %s(%s)\n", func, arg1 ? arg1 : "");
+static void callFunction(const char *func, int first_arg_type, ...) {
+    print ("call %s()\n", func);
     if (callback_service) {
+        va_list var_args;
         DBusMessage *msg = dbus_message_new_method_call (
                 callback_service,
                 callback_path,
                 "org.kde.kmplayer.callback",
                 func);
-        if (arg1) { /* FIXME use the valist variant */
-            DBusMessageIter it;
-            dbus_message_iter_init_append (msg, &it);
-            dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &arg1);
-            if (arg2)
-                dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &arg2);
+        if (first_arg_type != DBUS_TYPE_INVALID) {
+            va_start (var_args, first_arg_type);
+            dbus_message_append_args_valist (msg, first_arg_type, var_args);
+            va_end (var_args);
         }
         dbus_message_set_no_reply (msg, TRUE);
         dbus_connection_send (dbus_connection, msg, NULL);
@@ -1093,7 +1118,7 @@ static char * evaluate (const char *script) {
 static void pluginAdded (GtkSocket *socket, gpointer d) {
     (void)socket; (void)d;
     print ("pluginAdded\n");
-    callFunction ("plugged", NULL, NULL);
+    callFunction ("plugged", DBUS_TYPE_INVALID);
 }
 
 static void windowCreatedEvent (GtkWidget *w, gpointer d) {
@@ -1201,7 +1226,7 @@ static gboolean initPlayer (void * p) {
         dbus_connection_add_filter (dbus_connection, dbusFilter, 0L, 0L);
 
         /* TODO: remove DBUS_BUS_SESSION and create a private connection */
-        callFunction ("running", service_name, NULL);
+        callFunction ("running", DBUS_TYPE_STRING, &service_name);
 
         dbus_connection_flush (dbus_connection);
     }
