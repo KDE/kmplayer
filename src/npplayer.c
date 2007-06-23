@@ -123,7 +123,7 @@ static void freeStream (StreamInfo *si) {
 
 /*----------------%<---------------------------------------------------------*/
 
-static void createJsName (JsObject * obj, char **name, int * len) {
+static void createJsName (JsObject * obj, char **name, uint32_t * len) {
     int slen = strlen (obj->name);
     if (obj->parent) {
         *len += slen + 1;
@@ -144,19 +144,8 @@ static void createJsName (JsObject * obj, char **name, int * len) {
 /*----------------%<---------------------------------------------------------*/
 
 static NPObject * nsCreateObject (NPP instance, NPClass *aClass) {
-    NPObject *obj;
-    (void)instance;
+    NPObject *obj = aClass->allocate (instance, aClass);
     print ("NPN_CreateObject\n");
-    if (&window_class == aClass) {
-        JsObject * jo = (JsObject *) malloc (sizeof (JsObject));
-        jo->parent = NULL;
-        jo->name = NULL;
-        jo->tostring = NULL;
-        obj = (NPObject *) jo;
-    } else {
-        obj = (NPObject *) malloc (sizeof (NPObject));
-    }
-    obj->_class = aClass;
     obj->referenceCount = 1;
     return obj;
 }
@@ -169,33 +158,8 @@ static NPObject *nsRetainObject (NPObject *npobj) {
 
 static void nsReleaseObject (NPObject *obj) {
     print ("NPN_ReleaseObject\n");
-    if (! (--obj->referenceCount)) {
-        if (&window_class == obj->_class) {
-            JsObject *jo = (JsObject *) obj;
-            if (jo->parent) {
-                nsReleaseObject ((NPObject *) jo->parent);
-            } else if (jo->name &&
-                    !strncmp(jo->name, "this.__kmplayer__obj_", 21)) {
-                char *script = (char *) malloc (strlen (jo->name) + 7);
-                char *result;
-                char *counter = strrchr (jo->name, '_');
-                sprintf (script, "%s=null;", jo->name);
-                result = evaluate (script);
-                free (script);
-                g_free (result);
-                if (counter) {
-                    int c = strtol (counter +1, NULL, 10);
-                    if (c == js_obj_counter -1)
-                        js_obj_counter--; /*poor man's variable name reuse */
-                }
-            }
-            if (jo->name)
-                g_free (jo->name);
-            if (jo->tostring)
-                g_free (jo->tostring);
-        }
-        free (obj);
-    }
+    if (! (--obj->referenceCount))
+        obj->_class->deallocate (obj);
 }
 
 static NPError nsGetURL (NPP instance, const char* url, const char* target) {
@@ -357,7 +321,6 @@ static void nsInvalidateRegion (NPP instance, NPRegion invalidRegion) {
 
 static void nsForceRedraw (NPP instance) {
     (void)instance;
-    print ("NPN_InvalidateRegion\n");
     print ("NPN_ForceRedraw\n");
 }
 
@@ -400,194 +363,93 @@ static int32_t nsIntFromIdentifier (NPIdentifier identifier) {
 
 static bool nsInvoke (NPP instance, NPObject * npobj, NPIdentifier method,
         const NPVariant *args, uint32_t arg_count, NPVariant *result) {
-    JsObject * jo;
-    char * id = (char *) g_tree_lookup (identifiers, method);
-
-    (void)instance; (void)npobj; (void)args;
-
-    if (!id || npobj->_class != &window_class) {
-        print ("NPN_Invoke valid id:%d known type:%d\n",
-                !!id, &window_class == npobj->_class);
-        return false;
-    }
-    print ("NPN_Invoke %s\n", id);
-
-    jo = (JsObject *) npobj;
-    if (!arg_count && jo->tostring && !strcmp (id, "toString")) { /* use cache*/
-        result->type = NPVariantType_String;
-        result->value.stringValue.utf8characters = g_strdup (jo->tostring);
-        result->value.stringValue.utf8length = strlen (jo->tostring);
-        return true;
-    } /*else evaluate it*/
-    return false;
+    (void)instance;
+    /*print ("NPN_Invoke %s\n", id);*/
+    return npobj->_class->invoke (npobj, method, args, arg_count, result);
 }
 
 static bool nsInvokeDefault (NPP instance, NPObject * npobj,
         const NPVariant * args, uint32_t arg_count, NPVariant * result) {
-    (void)instance; (void)npobj; (void)args; (void)arg_count; (void)result;
-    print ("NPN_InvokeDefault\n");
-    return false;
+    (void)instance;
+    return npobj->_class->invokeDefault (npobj,args, arg_count, result);
 }
 
 static bool nsEvaluate (NPP instance, NPObject * npobj, NPString * script,
         NPVariant * result) {
-    (void)instance; (void)npobj; (void)script; (void)result;
+    char * this_var;
+    char * this_var_type;
+    char * this_var_string;
+    char * jsscript;
+    (void) npobj; /*FIXME scope, search npobj window*/
     print ("NPN_Evaluate\n");
-    return false;
-}
 
-static bool nsGetProperty (NPP instance, NPObject * npobj,
-        NPIdentifier property, NPVariant * result) {
-    char * id = (char *) g_tree_lookup (identifiers, property);
-    JsObject * jo;
-    char * fullname = NULL;
-    char * script;
-    char * variable;
-    char * tostring;
-    char * res;
-    int len = 0;
+    this_var = (char *) malloc (64);
+    sprintf (this_var, "this.__kmplayer__obj_%d", js_obj_counter);
 
-    print ("NPN_GetProperty %s\n", id);
-    result->type = NPVariantType_Null;
-    result->value.objectValue = NULL;
+    jsscript = (char *) malloc (strlen (this_var) + script->utf8length + 3);
+    sprintf (jsscript, "%s=%s;", this_var, script->utf8characters);
+    this_var_string = evaluate (jsscript);
+    free (jsscript);
 
-    if (!id)
-        return false;
+    if (this_var_string) {
+        /* get type of js this_var */
+        jsscript = (char *) malloc (strlen (this_var) + 9);
+        sprintf (jsscript, "typeof %s;", this_var);
+        this_var_type = evaluate (jsscript);
+        free (jsscript);
 
-    /* assign to a js variable */
-    jo = (JsObject *) nsCreateObject (instance, &window_class);
-    jo->name = g_strdup (id);
-    jo->parent = (JsObject *) nsRetainObject (npobj);
-    createJsName (jo, &fullname, &len);
-    nsReleaseObject ((NPObject *) jo);
-
-    variable = (char *) malloc (64);
-    sprintf (variable, "this.__kmplayer__obj_%d", js_obj_counter);
-
-    script = (char *) malloc (strlen (variable) + len + 3);
-    sprintf (script, "%s=%s;", variable, fullname);
-    free (fullname);
-    tostring = evaluate (script);
-    free (script);
-
-    if (tostring) {
-        /* get type of js variable */
-        script = (char *) malloc (strlen (variable) + 9);
-        sprintf (script, "typeof %s;", variable);
-        res = evaluate (script);
-        free (script);
-
-        if (res) {
-            if (strcasecmp (res, "object")) { /* FIXME numbers/void/undefined*/
+        if (this_var_type) {
+            if (strcasecmp (this_var_type, "object")) { /* FIXME numbers/void/undefined*/
                 result->type = NPVariantType_String;
-                result->value.stringValue.utf8characters = res;
-                result->value.stringValue.utf8length = strlen (res);
-                g_free (tostring);
+                result->value.stringValue.utf8characters = this_var_type;
+                result->value.stringValue.utf8length = strlen (this_var_type);
+                g_free (this_var_string);
             } else /*if (!strcasecmp (res, "object"))*/ {
-                g_free (res);
+                JsObject * jo = (JsObject *) nsCreateObject (instance, &window_class);
                 js_obj_counter++;
                 result->type = NPVariantType_Object;
-                jo = (JsObject *) nsCreateObject (instance, &window_class);
-                jo->name = g_strdup (variable);
-                jo->tostring = tostring;
+                jo->name = g_strdup (this_var);
+                jo->tostring = this_var_string;
                 result->value.objectValue = (NPObject *)jo;
+                g_free (this_var_type);
             }
         } else {
-            g_free (tostring);
+            g_free (this_var_string);
         }
     } else {
         print ("   => error\n");
         return false;
     }
-    free (variable);
+    free (this_var);
 
     return true;
+}
+
+static bool nsGetProperty (NPP instance, NPObject * npobj,
+        NPIdentifier property, NPVariant * result) {
+    (void)instance;
+    return npobj->_class->getProperty (npobj, property, result);
 }
 
 static bool nsSetProperty (NPP instance, NPObject * npobj,
         NPIdentifier property, const NPVariant *value) {
-    char * id = (char *) g_tree_lookup (identifiers, property);
-    char * script = NULL;
-    JsObject * jo;
-    char * fullname = NULL;
-    int len = 0;
-
-    if (!id)
-        return false;
-
-    jo = (JsObject *) nsCreateObject (instance, &window_class);
-    jo->name = g_strdup (id);
-    jo->parent = (JsObject *) nsRetainObject (npobj);
-    createJsName (jo, &fullname, &len);
-    nsReleaseObject ((NPObject *) jo);
-
-    print ("NPN_SetProperty %s %d\n", id, value->type);
-    switch (value->type) {
-        case NPVariantType_String:
-            script = (char *) malloc (len +
-                    value->value.stringValue.utf8length + 5);
-            sprintf (script, "%s='%s';",
-                    fullname,
-                    value->value.stringValue.utf8characters);
-            break;
-        case NPVariantType_Int32:
-            script = (char *) malloc (len + 16);
-            sprintf (script, "%s=%d;", fullname, value->value.intValue);
-            break;
-        case NPVariantType_Double:
-            script = (char *) malloc (len + 64);
-            sprintf (script, "%s=%f;", fullname, value->value.doubleValue);
-            break;
-        case NPVariantType_Bool:
-            script = (char *) malloc (len + 8);
-            sprintf (script, "%s=%s;", fullname,
-                    value->value.boolValue ? "true" : "false");
-            break;
-        case NPVariantType_Null:
-            script = (char *) malloc (len + 8);
-            sprintf (script, "%s=null;", fullname);
-            break;
-        case NPVariantType_Object:
-            if (&window_class == value->value.objectValue->_class) {
-                JsObject *jv = (JsObject *) value->value.objectValue;
-                char *val;
-                int vlen = 0;
-                createJsName (jv, &val, &vlen);
-                script = (char *) malloc (len + vlen + 3);
-                sprintf (script, "%s=%s;", fullname, val);
-                free (val);
-            }
-            break;
-        default:
-            return false;
-    }
-    if (script) {
-        char *res = evaluate (script);
-        if (res)
-            g_free (res);
-        free (script);
-    }
-    free (fullname);
-
-    return true;
+    (void)instance;
+    return npobj->_class->setProperty (npobj, property, value);
 }
 
-static bool nsRemoveProperty (NPP instance, NPObject * npobj, NPIdentifier property) {
-    (void)instance; (void)npobj; (void)property;
-    print ("NPN_RemoveProperty\n");
-    return false;
+static bool nsRemoveProperty (NPP inst, NPObject * npobj, NPIdentifier prop) {
+    (void)inst;
+    return npobj->_class->removeProperty (npobj, prop);
 }
 
 static bool nsHasProperty (NPP instance, NPObject * npobj, NPIdentifier prop) {
-    (void)instance; (void)npobj; (void)prop;
-    print ("NPN_HasProperty\n");
-    return false;
+    (void)instance;
+    return npobj->_class->hasProperty (npobj, prop);
 }
 
 static bool nsHasMethod (NPP instance, NPObject * npobj, NPIdentifier method) {
-    (void)instance; (void)npobj; (void)method;
-    print ("NPN_HasMethod\n");
-    return false;
+    (void)instance;
+    return npobj->_class->hasMethod (npobj, method);
 }
 
 static void nsReleaseVariantValue (NPVariant * variant) {
@@ -627,14 +489,38 @@ static bool nsPopPopupsEnabledState (NPP instance) {
 /*----------------%<---------------------------------------------------------*/
 
 static NPObject * windowClassAllocate (NPP instance, NPClass *aClass) {
-    (void)instance; (void)aClass;
-    print ("windowClassAllocate\n");
-    return NULL;
+    (void)instance;
+    /*print ("windowClassAllocate\n");*/
+    JsObject * jo = (JsObject *) malloc (sizeof (JsObject));
+    memset (jo, 0, sizeof (JsObject));
+    jo->npobject._class = aClass;
+    return (NPObject *) jo;
 }
 
 static void windowClassDeallocate (NPObject *npobj) {
-    (void)npobj;
-    print ("windowClassDeallocate\n");
+    JsObject *jo = (JsObject *) npobj;
+    /*print ("windowClassDeallocate\n");*/
+    if (jo->parent) {
+        nsReleaseObject ((NPObject *) jo->parent);
+    } else if (jo->name && !strncmp (jo->name, "this.__kmplayer__obj_", 21)) {
+        char *script = (char *) malloc (strlen (jo->name) + 7);
+        char *result;
+        char *counter = strrchr (jo->name, '_');
+        sprintf (script, "%s=null;", jo->name);
+        result = evaluate (script);
+        free (script);
+        g_free (result);
+        if (counter) {
+            int c = strtol (counter +1, NULL, 10);
+            if (c == js_obj_counter -1)
+                js_obj_counter--; /*poor man's variable name reuse */
+        }
+    }
+    if (jo->name)
+        g_free (jo->name);
+    if (jo->tostring)
+        g_free (jo->tostring);
+    free (npobj);
 }
 
 static void windowClassInvalidate (NPObject *npobj) {
@@ -648,10 +534,25 @@ static bool windowClassHasMethod (NPObject *npobj, NPIdentifier name) {
     return false;
 }
 
-static bool windowClassInvoke (NPObject *npobj, NPIdentifier name,
+static bool windowClassInvoke (NPObject *npobj, NPIdentifier method,
         const NPVariant *args, uint32_t arg_count, NPVariant *result) {
-    (void)npobj; (void)name; (void)args; (void)arg_count; (void)result;
-    print ("windowClassInvoke\n");
+    JsObject * jo = (JsObject *) npobj;
+    char * id = (char *) g_tree_lookup (identifiers, method);
+    (void)args; (void)arg_count;
+    /*print ("windowClassInvoke\n");*/
+
+    if (!id) {
+        print ("Invoke invalid id\n");
+        return false;
+    }
+    print ("Invoke %s\n", id);
+    if (!arg_count && jo->tostring && !strcmp (id, "toString")) { /* use cache*/
+        result->type = NPVariantType_String;
+        result->value.stringValue.utf8characters = g_strdup (jo->tostring);
+        result->value.stringValue.utf8length = strlen (jo->tostring);
+        return true;
+    } /*else evaluate it*/
+    print ("Invoke FIXME\n");
     return false;
 }
 
@@ -668,18 +569,96 @@ static bool windowClassHasProperty (NPObject *npobj, NPIdentifier name) {
     return false;
 }
 
-static bool windowClassGetProperty (NPObject *npobj, NPIdentifier name,
+static bool windowClassGetProperty (NPObject *npobj, NPIdentifier property,
         NPVariant *result) {
-    (void)npobj; (void)name; (void)result;
-    print ("windowClassGetProperty\n");
-    return false;
+    char * id = (char *) g_tree_lookup (identifiers, property);
+    JsObject jo;
+    NPString fullname = { NULL, 0 };
+    bool res;
+
+    print ("GetProperty %s\n", id);
+    result->type = NPVariantType_Null;
+    result->value.objectValue = NULL;
+
+    if (!id)
+        return false;
+
+    /* assign to a js variable */
+    jo.name = id;
+    jo.parent = (JsObject *) npobj;
+    createJsName (&jo, (char **)&fullname.utf8characters, &fullname.utf8length);
+
+    res = nsEvaluate (npp, npobj, &fullname, result);
+
+    free ((char *) fullname.utf8characters);
+
+    return res;
 }
 
-static bool windowClassSetProperty (NPObject *npobj, NPIdentifier name,
+static bool windowClassSetProperty (NPObject *npobj, NPIdentifier property,
         const NPVariant *value) {
-    (void)npobj; (void)name; (void)value;
-    print ("windowClassSetProperty\n");
-    return false;
+    char * id = (char *) g_tree_lookup (identifiers, property);
+    char * script = NULL;
+    JsObject jo;
+    char * fullname = NULL;
+    uint32_t len = 0;
+
+    if (!id)
+        return false;
+
+    jo.name = id;
+    jo.parent = (JsObject *) npobj;
+    createJsName (&jo, &fullname, &len);
+
+    print ("SetProperty %s %d\n", id, value->type);
+    switch (value->type) {
+        case NPVariantType_String:
+            script = (char *) malloc (len +
+                    value->value.stringValue.utf8length + 5);
+            sprintf (script, "%s='%s';",
+                    fullname,
+                    value->value.stringValue.utf8characters);
+            break;
+        case NPVariantType_Int32:
+            script = (char *) malloc (len + 16);
+            sprintf (script, "%s=%d;", fullname, value->value.intValue);
+            break;
+        case NPVariantType_Double:
+            script = (char *) malloc (len + 64);
+            sprintf (script, "%s=%f;", fullname, value->value.doubleValue);
+            break;
+        case NPVariantType_Bool:
+            script = (char *) malloc (len + 8);
+            sprintf (script, "%s=%s;", fullname,
+                    value->value.boolValue ? "true" : "false");
+            break;
+        case NPVariantType_Null:
+            script = (char *) malloc (len + 8);
+            sprintf (script, "%s=null;", fullname);
+            break;
+        case NPVariantType_Object:
+            if (&window_class == value->value.objectValue->_class) {
+                JsObject *jv = (JsObject *) value->value.objectValue;
+                char *val;
+                uint32_t vlen = 0;
+                createJsName (jv, &val, &vlen);
+                script = (char *) malloc (len + vlen + 3);
+                sprintf (script, "%s=%s;", fullname, val);
+                free (val);
+            }
+            break;
+        default:
+            return false;
+    }
+    if (script) {
+        char *res = evaluate (script);
+        if (res)
+            g_free (res);
+        free (script);
+    }
+    free (fullname);
+
+    return true;
 }
 
 static bool windowClassRemoveProperty (NPObject *npobj, NPIdentifier name) {
@@ -1126,12 +1105,19 @@ static void windowCreatedEvent (GtkWidget *w, gpointer d) {
     print ("windowCreatedEvent\n");
     socket_id = gtk_socket_get_id (GTK_SOCKET (xembed));
     if (parent_id) {
-        /*gdk_window_withdraw (w->window);
-        gdk_window_reparent(w->window, gdk_window_foreign_new(parent_id), 0, 0);*/
-        XReparentWindow (gdk_x11_drawable_get_xdisplay (w->window),
+        print ("windowCreatedEvent %p\n", GTK_PLUG (w)->socket_window);
+        if (!GTK_PLUG (w)->socket_window)
+            gtk_plug_construct (GTK_PLUG (w), parent_id);
+        gdk_window_reparent( w->window,
+                GTK_PLUG (w)->socket_window
+                    ? GTK_PLUG (w)->socket_window
+                    : gdk_window_foreign_new (parent_id),
+                0, 0);
+        gtk_widget_show_all (w);
+        /*XReparentWindow (gdk_x11_drawable_get_xdisplay (w->window),
                 gdk_x11_drawable_get_xid (w->window),
                 parent_id,
-                0, 0);
+                0, 0);*/
     }
     if (!callback_service) {
         char *argn[] = { "WIDTH", "HEIGHT", "debug", "SRC" };
@@ -1140,7 +1126,13 @@ static void windowCreatedEvent (GtkWidget *w, gpointer d) {
     }
 }
 
+static void embeddedEvent (GtkPlug *plug, gpointer d) {
+    (void)plug; (void)d;
+    print ("embeddedEvent\n");
+}
+
 static gboolean configureEvent(GtkWidget *w, GdkEventConfigure *e, gpointer d) {
+    (void)w; (void)d;
     if (np_window.window &&
             (e->width != np_window.width || e->height != np_window.height)) {
         print ("Update size %dx%d\n", e->width, e->height);
@@ -1177,8 +1169,8 @@ static gboolean initPlayer (void * p) {
             G_CALLBACK (windowDestroyEvent), NULL);
     g_signal_connect (G_OBJECT (window), "realize",
             GTK_SIGNAL_FUNC (windowCreatedEvent), NULL);
-    /*g_signal_connect (G_OBJECT (window), "configure-event",
-      GTK_SIGNAL_FUNC (configureEvent), NULL);*/
+    g_signal_connect (G_OBJECT (window), "configure-event",
+            GTK_SIGNAL_FUNC (configureEvent), NULL);
 
     xembed = gtk_socket_new();
     g_signal_connect (G_OBJECT (xembed), "plug-added",
@@ -1190,9 +1182,14 @@ static gboolean initPlayer (void * p) {
 
     gtk_container_add (GTK_CONTAINER (window), xembed);
 
-    if (!parent_id)
+    if (!parent_id) {
         gtk_widget_set_size_request (window, 440, 330);
-    gtk_widget_show_all (window);
+        gtk_widget_show_all (window);
+    } else {
+        g_signal_connect (G_OBJECT (window), "embedded",
+                GTK_SIGNAL_FUNC (embeddedEvent), NULL);
+        gtk_widget_realize (window);
+    }
 
     if (callback_service && callback_path) {
         DBusError dberr;
