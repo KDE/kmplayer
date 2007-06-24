@@ -63,8 +63,9 @@ static int stdin_read_watch;
 static NPPluginFuncs np_funcs;       /* plugin functions              */
 static NPP npp;                      /* single instance of the plugin */
 static NPWindow np_window;
+static NPObject *scriptable_peer;
 static NPSavedData *saved_data;
-static NPClass window_class;
+static NPClass js_class;
 static GSList *stream_list;
 static GTree *identifiers;
 static int js_obj_counter;
@@ -86,7 +87,6 @@ typedef struct _JsObject {
     NPObject npobject;
     struct _JsObject * parent;
     char * name;
-    char * tostring;
 } JsObject;
 
 static NP_GetMIMEDescriptionUPP npGetMIMEDescription;
@@ -148,7 +148,7 @@ static NPObject * nsCreateObject (NPP instance, NPClass *aClass) {
     if (aClass && aClass->allocate)
         obj = aClass->allocate (instance, aClass);
     else
-        obj = window_class.allocate (instance, &window_class);/*add null class*/
+        obj = js_class.allocate (instance, &js_class);/*add null class*/
     print ("NPN_CreateObject\n");
     obj->referenceCount = 1;
     return obj;
@@ -293,10 +293,15 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
             *(int*)value = 1;
             break;
         case NPNVWindowNPObject: {
-            JsObject * obj = (JsObject*)nsCreateObject(instance, &window_class);
+            JsObject * obj = (JsObject *) nsCreateObject (instance, &js_class);
             obj->name = g_strdup ("window");
-            obj->tostring = g_strdup ("[object Window]");
-            *(JsObject**)value = obj;
+            *(NPObject**)value = (NPObject *) obj;
+            break;
+        }
+        case NPNVPluginElementNPObject: {
+            JsObject * obj = (JsObject *) nsCreateObject (instance, &js_class);
+            obj->name = g_strdup ("this");
+            *(NPObject**)value = (NPObject *) obj;
             break;
         }
         default:
@@ -404,23 +409,23 @@ static bool nsEvaluate (NPP instance, NPObject * npobj, NPString * script,
         free (jsscript);
 
         if (this_var_type) {
-            if (strcasecmp (this_var_type, "object")) { /* FIXME numbers/void/undefined*/
-                result->type = NPVariantType_String;
-                result->value.stringValue.utf8characters = this_var_type;
-                result->value.stringValue.utf8length = strlen (this_var_type);
-                g_free (this_var_string);
-            } else /*if (!strcasecmp (res, "object"))*/ {
-                JsObject * jo = (JsObject *) nsCreateObject (instance, &window_class);
+            if (!strcasecmp (this_var_type, "undefined")) {
+                result->type = NPVariantType_Null;
+            } else if (!strcasecmp (this_var_type, "object")) {
+                JsObject *jo = (JsObject *)nsCreateObject (instance, &js_class);
                 js_obj_counter++;
                 result->type = NPVariantType_Object;
                 jo->name = g_strdup (this_var);
-                jo->tostring = this_var_string;
                 result->value.objectValue = (NPObject *)jo;
-                g_free (this_var_type);
+            } else { /* FIXME numbers/void/undefined*/
+                result->type = NPVariantType_String;
+                result->value.stringValue.utf8characters =
+                    g_strdup (this_var_string);
+                result->value.stringValue.utf8length = strlen (this_var_string);
             }
-        } else {
-            g_free (this_var_string);
+            g_free (this_var_type);
         }
+        g_free (this_var_string);
     } else {
         print ("   => error\n");
         return false;
@@ -462,7 +467,7 @@ static void nsReleaseVariantValue (NPVariant * variant) {
     switch (variant->type) {
         case NPVariantType_String:
             if (variant->value.stringValue.utf8characters)
-                g_free (variant->value.stringValue.utf8characters);
+                g_free ((char *) variant->value.stringValue.utf8characters);
             break;
         case NPVariantType_Object:
             if (variant->value.objectValue)
@@ -523,8 +528,6 @@ static void windowClassDeallocate (NPObject *npobj) {
     }
     if (jo->name)
         g_free (jo->name);
-    if (jo->tostring)
-        g_free (jo->tostring);
     free (npobj);
 }
 
@@ -542,23 +545,35 @@ static bool windowClassHasMethod (NPObject *npobj, NPIdentifier name) {
 static bool windowClassInvoke (NPObject *npobj, NPIdentifier method,
         const NPVariant *args, uint32_t arg_count, NPVariant *result) {
     JsObject * jo = (JsObject *) npobj;
+    NPString str = { NULL, 0 };
+    char buf[512];
+    int pos, i;
+    bool res;
     char * id = (char *) g_tree_lookup (identifiers, method);
-    (void)args; (void)arg_count;
     /*print ("windowClassInvoke\n");*/
+
+    result->type = NPVariantType_Null;
+    result->value.objectValue = NULL;
 
     if (!id) {
         print ("Invoke invalid id\n");
         return false;
     }
     print ("Invoke %s\n", id);
-    if (!arg_count && jo->tostring && !strcmp (id, "toString")) { /* use cache*/
-        result->type = NPVariantType_String;
-        result->value.stringValue.utf8characters = g_strdup (jo->tostring);
-        result->value.stringValue.utf8length = strlen (jo->tostring);
-        return true;
-    } /*else evaluate it*/
-    print ("Invoke FIXME\n");
-    return false;
+    createJsName (jo, (char **)&str.utf8characters, &str.utf8length);
+    pos = snprintf (buf, sizeof (buf), "%s.%s(", str.utf8characters, id);
+    free ((char *) str.utf8characters);
+    for (i = 0; i < arg_count; i++) {
+        (void)args;
+        /* TODO: append arguments */
+    }
+    pos += snprintf (buf + pos, sizeof (buf) - pos, ")");
+
+    str.utf8characters = buf;
+    str.utf8length = pos;
+    res = nsEvaluate (npp, npobj, &str, result);
+
+    return true;
 }
 
 static bool windowClassInvokeDefault (NPObject *npobj,
@@ -641,7 +656,7 @@ static bool windowClassSetProperty (NPObject *npobj, NPIdentifier property,
             sprintf (script, "%s=null;", fullname);
             break;
         case NPVariantType_Object:
-            if (&window_class == value->value.objectValue->_class) {
+            if (&js_class == value->value.objectValue->_class) {
                 JsObject *jv = (JsObject *) value->value.objectValue;
                 char *val;
                 uint32_t vlen = 0;
@@ -675,6 +690,10 @@ static bool windowClassRemoveProperty (NPObject *npobj, NPIdentifier name) {
 /*----------------%<---------------------------------------------------------*/
 
 static void shutDownPlugin() {
+    if (scriptable_peer) {
+        nsReleaseObject (scriptable_peer);
+        scriptable_peer = NULL;
+    }
     if (npShutdown) {
         if (npp) {
             np_funcs.destroy (npp, &saved_data);
@@ -836,17 +855,17 @@ static int initPlugin (const char *plugin_lib) {
     ns_funcs.pushpopupsenabledstate = nsPushPopupsEnabledState;
     ns_funcs.poppopupsenabledstate = nsPopPopupsEnabledState;
 
-    window_class.structVersion = NP_CLASS_STRUCT_VERSION;
-    window_class.allocate = windowClassAllocate;
-    window_class.deallocate = windowClassDeallocate;
-    window_class.invalidate = windowClassInvalidate;
-    window_class.hasMethod = windowClassHasMethod;
-    window_class.invoke = windowClassInvoke;
-    window_class.invokeDefault = windowClassInvokeDefault;
-    window_class.hasProperty = windowClassHasProperty;
-    window_class.getProperty = windowClassGetProperty;
-    window_class.setProperty = windowClassSetProperty;
-    window_class.removeProperty = windowClassRemoveProperty;
+    js_class.structVersion = NP_CLASS_STRUCT_VERSION;
+    js_class.allocate = windowClassAllocate;
+    js_class.deallocate = windowClassDeallocate;
+    js_class.invalidate = windowClassInvalidate;
+    js_class.hasMethod = windowClassHasMethod;
+    js_class.invoke = windowClassInvoke;
+    js_class.invokeDefault = windowClassInvokeDefault;
+    js_class.hasProperty = windowClassHasProperty;
+    js_class.getProperty = windowClassGetProperty;
+    js_class.setProperty = windowClassSetProperty;
+    js_class.removeProperty = windowClassRemoveProperty;
 
     np_funcs.size = sizeof (NPPluginFuncs);
 
@@ -865,16 +884,11 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     Display *display;
     int screen;
     int i;
+    int needs_xembed;
     unsigned int width = 320, height = 240;
 
     npp = (NPP_t*)malloc (sizeof (NPP_t));
     memset (npp, 0, sizeof (NPP_t));
-    /*np_err = np_funcs.getvalue ((void*)npp, NPPVpluginNeedsXEmbed, (void*)&np_value);
-    if (np_err != NPERR_NO_ERROR || !np_value) {
-        print ("NPP_GetValue NPPVpluginNeedsXEmbed failure %d\n", np_err);
-        shutDownPlugin();
-        return -1;
-    }*/
     for (i = 0; i < argc; i++) {
         if (!strcasecmp (argn[i], "width"))
             width = strtol (argv[i], 0L, 10);
@@ -886,6 +900,17 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
         print ("NPP_New failure %d %p %p\n", np_err, np_funcs, np_funcs.newp);
         return -1;
     }
+    np_err = np_funcs.getvalue ((void*)npp,
+            NPPVpluginNeedsXEmbed, (void*)&needs_xembed);
+    if (np_err != NPERR_NO_ERROR || !needs_xembed) {
+        print ("NPP_GetValue NPPVpluginNeedsXEmbed failure %d\n", np_err);
+        shutDownPlugin();
+        return -1;
+    }
+    np_err = np_funcs.getvalue ((void*)npp,
+            NPPVpluginScriptableNPObject, (void*)&scriptable_peer);
+    if (np_err != NPERR_NO_ERROR || !scriptable_peer)
+        print ("NPP_GetValue no NPPVpluginScriptableNPObject %d\n", np_err);
     memset (&np_window, 0, sizeof (NPWindow));
     display = gdk_x11_get_default_xdisplay ();
     np_window.x = 0;
@@ -1199,8 +1224,8 @@ static gboolean initPlayer (void * p) {
             G_CALLBACK (windowDestroyEvent), NULL);
     g_signal_connect_after (G_OBJECT (window), "realize",
             GTK_SIGNAL_FUNC (windowCreatedEvent), NULL);
-    g_signal_connect (G_OBJECT (window), "configure-event",
-            GTK_SIGNAL_FUNC (configureEvent), NULL);
+    /*g_signal_connect (G_OBJECT (window), "configure-event",
+            GTK_SIGNAL_FUNC (configureEvent), NULL);*/
 
     xembed = gtk_socket_new();
     g_signal_connect (G_OBJECT (xembed), "plug-added",
