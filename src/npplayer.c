@@ -144,7 +144,11 @@ static void createJsName (JsObject * obj, char **name, uint32_t * len) {
 /*----------------%<---------------------------------------------------------*/
 
 static NPObject * nsCreateObject (NPP instance, NPClass *aClass) {
-    NPObject *obj = aClass->allocate (instance, aClass);
+    NPObject *obj;
+    if (aClass && aClass->allocate)
+        obj = aClass->allocate (instance, aClass);
+    else
+        obj = window_class.allocate (instance, &window_class);/*add null class*/
     print ("NPN_CreateObject\n");
     obj->referenceCount = 1;
     return obj;
@@ -383,6 +387,7 @@ static bool nsEvaluate (NPP instance, NPObject * npobj, NPString * script,
     (void) npobj; /*FIXME scope, search npobj window*/
     print ("NPN_Evaluate\n");
 
+    /* assign to a js variable */
     this_var = (char *) malloc (64);
     sprintf (this_var, "this.__kmplayer__obj_%d", js_obj_counter);
 
@@ -583,7 +588,6 @@ static bool windowClassGetProperty (NPObject *npobj, NPIdentifier property,
     if (!id)
         return false;
 
-    /* assign to a js variable */
     jo.name = id;
     jo.parent = (JsObject *) npobj;
     createJsName (&jo, (char **)&fullname.utf8characters, &fullname.utf8length);
@@ -899,6 +903,7 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     np_window.ws_info = (void*)&ws_info;
 
     np_err = np_funcs.setwindow (npp, &np_window);
+
     return 0;
 }
 
@@ -920,9 +925,9 @@ static gboolean requestStream (void * p) {
         if (si->target)
             callFunction ("getUrl",
                     DBUS_TYPE_STRING, &si->url,
-                    DBUS_TYPE_STRING, &si->target);
+                    DBUS_TYPE_STRING, &si->target, DBUS_TYPE_INVALID);
         else
-            callFunction ("getUrl", DBUS_TYPE_STRING, &si->url);
+            callFunction ("getUrl", DBUS_TYPE_STRING, &si->url, DBUS_TYPE_INVALID);
     }
     return 0; /* single shot */
 }
@@ -1095,8 +1100,33 @@ static char * evaluate (const char *script) {
 /*----------------%<---------------------------------------------------------*/
 
 static void pluginAdded (GtkSocket *socket, gpointer d) {
-    (void)socket; (void)d;
+    /*(void)socket;*/ (void)d;
     print ("pluginAdded\n");
+    if (socket->plug_window) {
+        gpointer user_data = NULL;
+        gdk_window_get_user_data (socket->plug_window, &user_data);
+        if (!user_data) {
+            /**
+             * GtkSocket resets plugins XSelectInput in
+             * _gtk_socket_add_window
+             *   _gtk_socket_windowing_select_plug_window_input
+             **/
+            XSelectInput (gdk_x11_get_default_xdisplay (),
+                    gdk_x11_drawable_get_xid (socket->plug_window),
+                    KeyPressMask | KeyReleaseMask |
+                    ButtonPressMask | ButtonReleaseMask |
+                    KeymapStateMask |
+                    ButtonMotionMask |
+                    PointerMotionMask |
+                    EnterWindowMask | LeaveWindowMask |
+                    FocusChangeMask |
+                    ExposureMask |
+                    StructureNotifyMask |
+                    SubstructureRedirectMask |
+                    PropertyChangeMask
+                    );
+        }
+    }
     callFunction ("plugged", DBUS_TYPE_INVALID);
 }
 
@@ -1167,7 +1197,7 @@ static gboolean initPlayer (void * p) {
             G_CALLBACK (windowCloseEvent), NULL);
     g_signal_connect (G_OBJECT (window), "destroy",
             G_CALLBACK (windowDestroyEvent), NULL);
-    g_signal_connect (G_OBJECT (window), "realize",
+    g_signal_connect_after (G_OBJECT (window), "realize",
             GTK_SIGNAL_FUNC (windowCreatedEvent), NULL);
     g_signal_connect (G_OBJECT (window), "configure-event",
             GTK_SIGNAL_FUNC (configureEvent), NULL);
@@ -1223,7 +1253,7 @@ static gboolean initPlayer (void * p) {
         dbus_connection_add_filter (dbus_connection, dbusFilter, 0L, 0L);
 
         /* TODO: remove DBUS_BUS_SESSION and create a private connection */
-        callFunction ("running", DBUS_TYPE_STRING, &service_name);
+        callFunction ("running", DBUS_TYPE_STRING, &service_name, DBUS_TYPE_INVALID);
 
         dbus_connection_flush (dbus_connection);
     }
