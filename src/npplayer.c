@@ -900,17 +900,19 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
         print ("NPP_New failure %d %p %p\n", np_err, np_funcs, np_funcs.newp);
         return -1;
     }
-    np_err = np_funcs.getvalue ((void*)npp,
-            NPPVpluginNeedsXEmbed, (void*)&needs_xembed);
-    if (np_err != NPERR_NO_ERROR || !needs_xembed) {
-        print ("NPP_GetValue NPPVpluginNeedsXEmbed failure %d\n", np_err);
-        shutDownPlugin();
-        return -1;
+    if (np_funcs.getvalue) {
+        np_err = np_funcs.getvalue ((void*)npp,
+                NPPVpluginNeedsXEmbed, (void*)&needs_xembed);
+        if (np_err != NPERR_NO_ERROR || !needs_xembed) {
+            print ("NPP_GetValue NPPVpluginNeedsXEmbed failure %d\n", np_err);
+            shutDownPlugin();
+            return -1;
+        }
+        np_err = np_funcs.getvalue ((void*)npp,
+                NPPVpluginScriptableNPObject, (void*)&scriptable_peer);
+        if (np_err != NPERR_NO_ERROR || !scriptable_peer)
+            print ("NPP_GetValue no NPPVpluginScriptableNPObject %d\n", np_err);
     }
-    np_err = np_funcs.getvalue ((void*)npp,
-            NPPVpluginScriptableNPObject, (void*)&scriptable_peer);
-    if (np_err != NPERR_NO_ERROR || !scriptable_peer)
-        print ("NPP_GetValue no NPPVpluginScriptableNPObject %d\n", np_err);
     memset (&np_window, 0, sizeof (NPWindow));
     display = gdk_x11_get_default_xdisplay ();
     np_window.x = 0;
@@ -918,7 +920,8 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     np_window.width = width;
     np_window.height = height;
     np_window.window = (void*)socket_id;
-    ws_info.type = 1; /*NP_SetWindow;*/
+    np_window.type = NPWindowTypeWindow;
+    ws_info.type = NP_SETWINDOW;
     screen = DefaultScreen (display);
     ws_info.display = (void*)(long)display;
     ws_info.visual = (void*)(long)DefaultVisual (display, screen);
