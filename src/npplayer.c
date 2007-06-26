@@ -141,6 +141,44 @@ static void createJsName (JsObject * obj, char **name, uint32_t * len) {
     *len += slen;
 }
 
+static char *nsVariant2Str (const NPVariant *value) {
+    char *str;
+    switch (value->type) {
+        case NPVariantType_String:
+            str = (char *) malloc (value->value.stringValue.utf8length + 3);
+            sprintf (str, "'%s'", value->value.stringValue.utf8characters);
+            break;
+        case NPVariantType_Int32:
+            str = (char *) malloc (16);
+            snprintf (str, 15, "%d", value->value.intValue);
+            break;
+        case NPVariantType_Double:
+            str = (char *) malloc (64);
+            snprintf (str, 63, "%f", value->value.doubleValue);
+            break;
+        case NPVariantType_Bool:
+            str = strdup (value->value.boolValue ? "true" : "false");
+            break;
+        case NPVariantType_Null:
+            str = strdup ("null");
+            break;
+        case NPVariantType_Object:
+            if (&js_class == value->value.objectValue->_class) {
+                JsObject *jv = (JsObject *) value->value.objectValue;
+                char *val;
+                uint32_t vlen = 0;
+                createJsName (jv, &val, &vlen);
+                str = strdup (val);
+                free (val);
+            }
+            break;
+        default:
+            str = strdup ("");
+            break;
+    }
+    return str;
+}
+
 /*----------------%<---------------------------------------------------------*/
 
 static NPObject * nsCreateObject (NPP instance, NPClass *aClass) {
@@ -564,8 +602,9 @@ static bool windowClassInvoke (NPObject *npobj, NPIdentifier method,
     pos = snprintf (buf, sizeof (buf), "%s.%s(", str.utf8characters, id);
     free ((char *) str.utf8characters);
     for (i = 0; i < arg_count; i++) {
-        (void)args;
-        /* TODO: append arguments */
+        char *arg = nsVariant2Str (args + i);
+        pos += snprintf (buf + pos, sizeof (buf) - pos, i ? ",%s" : "%s", arg);
+        free (arg);
     }
     pos += snprintf (buf + pos, sizeof (buf) - pos, ")");
 
@@ -616,10 +655,9 @@ static bool windowClassGetProperty (NPObject *npobj, NPIdentifier property,
 
 static bool windowClassSetProperty (NPObject *npobj, NPIdentifier property,
         const NPVariant *value) {
-    char * id = (char *) g_tree_lookup (identifiers, property);
-    char * script = NULL;
+    char *id = (char *) g_tree_lookup (identifiers, property);
+    char *script, *var_name, *var_val, *res;
     JsObject jo;
-    char * fullname = NULL;
     uint32_t len = 0;
 
     if (!id)
@@ -627,55 +665,20 @@ static bool windowClassSetProperty (NPObject *npobj, NPIdentifier property,
 
     jo.name = id;
     jo.parent = (JsObject *) npobj;
-    createJsName (&jo, &fullname, &len);
+    createJsName (&jo, &var_name, &len);
 
-    print ("SetProperty %s %d\n", id, value->type);
-    switch (value->type) {
-        case NPVariantType_String:
-            script = (char *) malloc (len +
-                    value->value.stringValue.utf8length + 5);
-            sprintf (script, "%s='%s';",
-                    fullname,
-                    value->value.stringValue.utf8characters);
-            break;
-        case NPVariantType_Int32:
-            script = (char *) malloc (len + 16);
-            sprintf (script, "%s=%d;", fullname, value->value.intValue);
-            break;
-        case NPVariantType_Double:
-            script = (char *) malloc (len + 64);
-            sprintf (script, "%s=%f;", fullname, value->value.doubleValue);
-            break;
-        case NPVariantType_Bool:
-            script = (char *) malloc (len + 8);
-            sprintf (script, "%s=%s;", fullname,
-                    value->value.boolValue ? "true" : "false");
-            break;
-        case NPVariantType_Null:
-            script = (char *) malloc (len + 8);
-            sprintf (script, "%s=null;", fullname);
-            break;
-        case NPVariantType_Object:
-            if (&js_class == value->value.objectValue->_class) {
-                JsObject *jv = (JsObject *) value->value.objectValue;
-                char *val;
-                uint32_t vlen = 0;
-                createJsName (jv, &val, &vlen);
-                script = (char *) malloc (len + vlen + 3);
-                sprintf (script, "%s=%s;", fullname, val);
-                free (val);
-            }
-            break;
-        default:
-            return false;
-    }
-    if (script) {
-        char *res = evaluate (script);
-        if (res)
-            g_free (res);
-        free (script);
-    }
-    free (fullname);
+    var_val = nsVariant2Str (value);
+    script = (char *) malloc (len + strlen (var_val) + 3);
+    sprintf (script, "%s=%s;", var_name, var_val);
+    free (var_name);
+    free (var_val);
+    print ("SetProperty %s\n", script);
+
+    res = evaluate (script);
+    if (res)
+        g_free (res);
+    free (script);
+
 
     return true;
 }
@@ -929,6 +932,13 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     ws_info.depth = DefaultDepth (display, screen);
     print ("display %u %dx%d\n", socket_id, width, height);
     np_window.ws_info = (void*)&ws_info;
+
+    GtkAllocation allocation;
+    allocation.x = 0;
+    allocation.y = 0;
+    allocation.width = width;
+    allocation.height = height;
+    gtk_widget_size_allocate (xembed, &allocation);
 
     np_err = np_funcs.setwindow (npp, &np_window);
 
