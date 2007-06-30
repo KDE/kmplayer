@@ -425,8 +425,8 @@ public:
     virtual QString menuName () const;
 
     void setStarted (const QString & srv);
-    void requestStream (const QString & url, const QString & target);
-    void finishStream (Reason because);
+    void requestStream (const QString & path, const QString & url, const QString & target);
+    void finishStream (const QString & path, Reason because);
 
     KDE_NO_EXPORT const QString & destination () const { return service; }
     KDE_NO_EXPORT const QString & interface () const { return iface; }
@@ -453,6 +453,7 @@ private:
     QString service;
     QString iface;
     QString path;
+    QString stream;
     QString filter;
     QString remote_service;
     QByteArray eval_res;

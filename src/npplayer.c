@@ -96,7 +96,7 @@ static NP_GetMIMEDescriptionUPP npGetMIMEDescription;
 static NP_InitializeUPP npInitialize;
 static NP_ShutdownUPP npShutdown;
 
-static void callFunction (const char *func, int first_arg_type, ...);
+static void callFunction(int stream, const char *func, int first_arg_type, ...);
 static void readStdin (gpointer d, gint src, GdkInputCondition cond);
 static char * evaluate (const char *script);
 
@@ -150,11 +150,12 @@ static gboolean requestStream (void * p) {
         g_assert (!stdin_read_watch);
         stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, p);
         if (si->target)
-            callFunction ("getUrl",
+            callFunction ((int)(long)p, "getUrl",
                     DBUS_TYPE_STRING, &si->url,
                     DBUS_TYPE_STRING, &si->target, DBUS_TYPE_INVALID);
         else
-            callFunction ("getUrl", DBUS_TYPE_STRING, &si->url, DBUS_TYPE_INVALID);
+            callFunction ((int)(long)p, "getUrl",
+                    DBUS_TYPE_STRING, &si->url, DBUS_TYPE_INVALID);
     } else {
         print ("requestStream %d not found", (long) p);
     }
@@ -165,7 +166,7 @@ static gboolean destroyStream (void * p) {
     StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
     print ("FIXME destroyStream\n");
     if (si)
-        callFunction ("finish", DBUS_TYPE_INVALID);
+        callFunction ((int)(long)p, "destroy", DBUS_TYPE_INVALID);
     return 0; /* single shot */
 }
 
@@ -1106,7 +1107,7 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
         }
         print ("play %s %s %s params:%d\n", object_url, mimetype, plugin, i);
         startPlugin (object_url, mimetype, i, argn, argv);
-    } else if (dbus_message_is_method_call (msg, iface, "getUrlNotify")) {
+    } else if (dbus_message_is_method_call (msg, iface, "eof")) {
         StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, current_stream_id);
         if (si && dbus_message_iter_init (msg, &args) && 
                 DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type (&args)) {
@@ -1114,7 +1115,7 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
             if (dbus_message_iter_next (&args) &&
                    DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type (&args)) {
                 dbus_message_iter_get_basic (&args, &si->reason);
-                print ("getUrlNotify bytes:%d reason:%d\n", si->total, si->reason);
+                print ("eof %s bytes:%d reason:%d\n", dbus_message_get_path (msg), si->total, si->reason);
                 if (si->stream_pos == si->total)
                     removeStream (current_stream_id);
             }
@@ -1127,13 +1128,19 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
     return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-static void callFunction(const char *func, int first_arg_type, ...) {
-    print ("call %s()\n", func);
+static void callFunction(int stream,const char *func, int first_arg_type, ...) {
+    char path[64];
+    strncpy (path, callback_path, sizeof (path) -1);
+    if (stream > -1) {
+        int len = strlen (path);
+        snprintf (path + len, sizeof (path) - len, "/stream_%d", stream);
+    }
+    print ("call %s.%s()\n", path, func);
     if (callback_service) {
         va_list var_args;
         DBusMessage *msg = dbus_message_new_method_call (
                 callback_service,
-                callback_path,
+                path,
                 "org.kde.kmplayer.callback",
                 func);
         if (first_arg_type != DBUS_TYPE_INVALID) {
@@ -1210,7 +1217,7 @@ static void pluginAdded (GtkSocket *socket, gpointer d) {
                     );
         }
     }
-    callFunction ("plugged", DBUS_TYPE_INVALID);
+    callFunction (-1, "plugged", DBUS_TYPE_INVALID);
 }
 
 static void windowCreatedEvent (GtkWidget *w, gpointer d) {
@@ -1336,7 +1343,8 @@ static gboolean initPlayer (void * p) {
         dbus_connection_add_filter (dbus_connection, dbusFilter, 0L, 0L);
 
         /* TODO: remove DBUS_BUS_SESSION and create a private connection */
-        callFunction ("running", DBUS_TYPE_STRING, &service_name, DBUS_TYPE_INVALID);
+        callFunction (-1, "running",
+                DBUS_TYPE_STRING, &service_name, DBUS_TYPE_INVALID);
 
         dbus_connection_flush (dbus_connection);
     }

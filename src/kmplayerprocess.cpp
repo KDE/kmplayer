@@ -1923,10 +1923,11 @@ dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
     //const char *iface = "org.kde.kmplayer.backend";
     NpPlayer *process = (NpPlayer *) data;
     const char * iface = process->interface ().ascii ();
+    const char * path = dbus_message_get_path (msg);
 
     if (dbus_message_has_destination (msg, process->destination ().ascii ()) &&
                 dbus_message_has_interface (msg, iface) &&
-            dbus_message_has_path (msg, process->objectPath ().ascii ()))
+            QString (path).startsWith(process->objectPath ()))
     {
         //kdDebug () << "dbusFilter " << sender <<
         //    " iface:" << dbus_message_get_interface (msg) <<
@@ -1945,7 +1946,7 @@ dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
                     dbus_message_iter_get_basic (&args, &param);
                     target = QString::fromLocal8Bit (param);
                 }
-                process->requestStream (url, target);
+                process->requestStream (path, url, target);
             }
             //kdDebug () << "getUrl " << param << endl;
 
@@ -1967,8 +1968,9 @@ dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
                 free (res);
             }
 
-        } else if (dbus_message_is_method_call (msg, iface, "finish")) {
-            process->finishStream (NpPlayer::BecauseStopped);
+        } else if (dbus_message_is_method_call (msg, iface, "destroy")) {
+            QString stream =QString(path).mid(process->objectPath().length()+1);
+            process->finishStream (stream, NpPlayer::BecauseStopped);
 
         } else if (dbus_message_is_method_call (msg, iface, "running")) {
             char *param = 0;
@@ -2031,7 +2033,7 @@ KDE_NO_EXPORT void NpPlayer::initProcess (Viewer * viewer) {
         iface = QString ("org.kde.kmplayer.callback");
         static int count = 0;
         path = QString ("/npplayer%1").arg (count++);
-        filter = QString ("type='method_call',interface='org.kde.kmplayer.callback',path='%1'").arg (path);
+        filter = QString ("type='method_call',interface='org.kde.kmplayer.callback'").arg (path);
 
         dbus_error_init (&dberr);
         DBusConnection *conn = dbus_bus_get (DBUS_BUS_SESSION, &dberr);
@@ -2067,6 +2069,7 @@ KDE_NO_EXPORT void NpPlayer::initProcess (Viewer * viewer) {
 
 KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
     kdDebug() << "NpPlayer::play '" << m_url << "'" << endl;
+    // if we change from XPLAIN to XEMBED, the DestroyNotify may come later 
     viewer ()->changeProtocol (QXEmbed::XEMBED);
     if (m_mrl && !m_url.isEmpty () && dbus_static->dbus_connnection) {
         bytes = 0;
@@ -2169,9 +2172,10 @@ KDE_NO_EXPORT QString NpPlayer::evaluateScript (const QString & script) {
 }
 
 KDE_NO_EXPORT
-void NpPlayer::requestStream (const QString & url, const QString & target) {
+void NpPlayer::requestStream (const QString &path, const QString & url, const QString & target) {
     KURL uri (m_url, url);
-    kdDebug () << "NpPlayer::requestStream '" << uri << "'" << endl;
+    stream = path.mid (objectPath ().length () + 1);
+    kdDebug () << "NpPlayer::request " << stream << " '" << uri << "'" << endl;
     bytes = 0;
     write_in_progress = false;
     finish_reason = NoReason;
@@ -2197,6 +2201,7 @@ void NpPlayer::requestStream (const QString & url, const QString & target) {
         sendFinish (BecauseDone);
     } else {
         job = KIO::get (uri, false, false);
+        job->addMetaData ("errorPage", "false");
         connect (job, SIGNAL (data (KIO::Job *, const QByteArray &)),
                 this, SLOT (slotData (KIO::Job *, const QByteArray &)));
         connect (job, SIGNAL (result (KIO::Job *)),
@@ -2204,22 +2209,27 @@ void NpPlayer::requestStream (const QString & url, const QString & target) {
     }
 }
 
-KDE_NO_EXPORT void NpPlayer::finishStream (Reason because) {
-    if (write_in_progress)
-        finish_reason = because;
-    else
-        sendFinish (because);
+KDE_NO_EXPORT void NpPlayer::finishStream (const QString &s, Reason because) {
+    if (s == stream) {
+        if (write_in_progress)
+            finish_reason = because;
+        else
+            sendFinish (because);
+    } else {
+        kdWarning () << "Object " << s << " not found" << endl;
+    }
 }
 
 KDE_NO_EXPORT void NpPlayer::sendFinish (Reason because) {
     terminateJobs ();
     if (playing () && dbus_static->dbus_connnection) {
         int reason = (int) because;
+        QString objpath = QString ("/plugin/") + stream;
         DBusMessage *msg = dbus_message_new_method_call (
                 remote_service.ascii(),
-                "/plugin",
+                objpath.ascii (),
                 "org.kde.kmplayer.backend",
-                "getUrlNotify");
+                "eof");
         dbus_message_append_args(msg,
                 DBUS_TYPE_UINT32, &bytes,
                 DBUS_TYPE_UINT32, &reason,
@@ -2241,7 +2251,7 @@ KDE_NO_EXPORT void NpPlayer::terminateJobs () {
 
 KDE_NO_EXPORT bool NpPlayer::stop () {
     if (job)
-        finishStream (BecauseStopped);
+        finishStream (stream, BecauseStopped);
     else
         terminateJobs ();
     if (!playing ()) return true;
@@ -2289,7 +2299,7 @@ KDE_NO_EXPORT void NpPlayer::slotResult (KIO::Job *jb) {
     kdDebug() << "slotResult " << playing () << bytes << endl;
     finish_reason = jb->error () ? BecauseError : BecauseDone;
     job = 0L; // signal KIO::Job::result deletes itself
-    finishStream (finish_reason);
+    finishStream (stream, finish_reason);
     setState (Playing); // hmm, this doesn't really fit in current states
 }
 
@@ -2330,7 +2340,6 @@ KDE_NO_EXPORT void NpPlayer::initProcess (Viewer *) {}
 KDE_NO_EXPORT QString NpPlayer::menuName () const { return QString (); }
 KDE_NO_EXPORT void NpPlayer::setStarted (const QString &) {}
 KDE_NO_EXPORT void NpPlayer::requestStream (const QString &) {}
-KDE_NO_EXPORT void NpPlayer::finishStream (Reason) {}
 KDE_NO_EXPORT bool NpPlayer::stop () { return false; }
 KDE_NO_EXPORT bool NpPlayer::quit () { return false; }
 KDE_NO_EXPORT bool NpPlayer::ready (Viewer *) { return false; }
