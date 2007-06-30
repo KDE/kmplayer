@@ -63,13 +63,16 @@ static int stdin_read_watch;
 static NPPluginFuncs np_funcs;       /* plugin functions              */
 static NPP npp;                      /* single instance of the plugin */
 static NPWindow np_window;
+static NPObject *js_window;
 static NPObject *scriptable_peer;
 static NPSavedData *saved_data;
 static NPClass js_class;
-static GSList *stream_list;
+static GTree *stream_list;
+static gpointer current_stream_id;
+static int stream_id_counter;
 static GTree *identifiers;
 static int js_obj_counter;
-static char stream_buf[4096];
+static char stream_buf[32 * 1024];
 typedef struct _StreamInfo {
     NPStream np_stream;
     void *notify_data;
@@ -80,7 +83,7 @@ typedef struct _StreamInfo {
     char *url;
     char *mimetype;
     char *target;
-    char notify;
+    bool notify;
 } StreamInfo;
 struct JsObject;
 typedef struct _JsObject {
@@ -93,10 +96,8 @@ static NP_GetMIMEDescriptionUPP npGetMIMEDescription;
 static NP_InitializeUPP npInitialize;
 static NP_ShutdownUPP npShutdown;
 
-static StreamInfo *addStream (const char *url, const char *mime, const char *target, void *notify_data, int notify);
-static gboolean requestStream (void * si);
-static gboolean destroyStream (void * si);
 static void callFunction (const char *func, int first_arg_type, ...);
+static void readStdin (gpointer d, gint src, GdkInputCondition cond);
 static char * evaluate (const char *script);
 
 /*----------------%<---------------------------------------------------------*/
@@ -111,14 +112,130 @@ static void print (const char * format, ...) {
 
 /*----------------%<---------------------------------------------------------*/
 
+static gint streamCompare (gconstpointer a, gconstpointer b) {
+    return (long)a - (long)b;
+}
+
 static void freeStream (StreamInfo *si) {
-    stream_list = g_slist_remove (stream_list, si);
+    if (!g_tree_remove (stream_list, si->np_stream.ndata))
+        print ("WARNING freeStream not in tree\n");
     g_free (si->url);
     if (si->mimetype)
         g_free (si->mimetype);
     if (si->target)
         g_free (si->target);
     free (si);
+}
+
+static gboolean firstStream (gpointer key, gpointer value, gpointer data) {
+    (void)value;
+    *(void **)data = key;
+    return true;
+}
+
+static gboolean requestStream (void * p) {
+    StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
+    if (si) {
+        NPError err;
+        uint16 stype = NP_NORMAL;
+        current_stream_id = p;
+        si->np_stream.notifyData = si->notify_data;
+        err = np_funcs.newstream (npp, si->mimetype ? si->mimetype : "text/plain", &si->np_stream, 0, &stype);
+        if (err != NPERR_NO_ERROR) {
+            g_printerr ("newstream error %d\n", err);
+            freeStream (si);
+            return 0;
+        }
+        print ("requestStream %d type:%d\n", (long) p, stype);
+        g_assert (!stdin_read_watch);
+        stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, p);
+        if (si->target)
+            callFunction ("getUrl",
+                    DBUS_TYPE_STRING, &si->url,
+                    DBUS_TYPE_STRING, &si->target, DBUS_TYPE_INVALID);
+        else
+            callFunction ("getUrl", DBUS_TYPE_STRING, &si->url, DBUS_TYPE_INVALID);
+    } else {
+        print ("requestStream %d not found", (long) p);
+    }
+    return 0; /* single shot */
+}
+
+static gboolean destroyStream (void * p) {
+    StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
+    print ("FIXME destroyStream\n");
+    if (si)
+        callFunction ("finish", DBUS_TYPE_INVALID);
+    return 0; /* single shot */
+}
+
+static void removeStream (void * p) {
+    StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
+
+    if (stdin_read_watch)
+        gdk_input_remove (stdin_read_watch);
+    stdin_read_watch = 0;
+
+    if (si) {
+        gpointer next = NULL;
+        print ("removeStream %d rec:%d\n", (long) p, si->stream_pos);
+        if (!si->target)
+            np_funcs.destroystream (npp, &si->np_stream, si->reason);
+        if (si->notify)
+            np_funcs.urlnotify (npp, si->url, si->reason, si->notify_data);
+        freeStream (si);
+        g_tree_traverse (stream_list, firstStream, G_IN_ORDER, &next);
+        if (next)
+            g_timeout_add (0, requestStream, next);
+    }
+}
+
+static int32_t writeStream (gpointer p, char *buf, uint32_t count) {
+    int32_t sz = 0;
+    StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
+    /*print ("writeStream found %d count %d\n", !!si, count);*/
+    if (si) {
+        sz = np_funcs.writeready (npp, &si->np_stream);
+        if (sz > 0) {
+            sz = np_funcs.write (npp, &si->np_stream, si->stream_pos,
+                    (int32_t) count > sz ? sz : (int32_t) count, buf);
+            if (sz < 0) /*FIXME plugin destroys stream here*/
+                g_timeout_add (0, destroyStream, p);
+        } else {
+            sz = 0;
+        }
+        si->stream_pos += sz;
+        if (si->stream_pos == si->total) {
+            if (si->stream_pos)
+                removeStream (p);
+            else
+                g_timeout_add (0, destroyStream, p);
+        }
+    }
+    return sz;
+}
+
+static StreamInfo *addStream (const char *url, const char *mime, const char *target, void *notify_data, bool notify) {
+    bool req = !g_tree_height (stream_list);
+    StreamInfo *si = (StreamInfo *) malloc (sizeof (StreamInfo));
+
+    memset (si, 0, sizeof (StreamInfo));
+    si->url = g_strdup (url);
+    si->np_stream.url = si->url;
+    if (mime)
+        si->mimetype = g_strdup (mime);
+    if (target)
+        si->target = g_strdup (target);
+    si->notify_data = notify_data;
+    si->notify = notify;
+    si->np_stream.ndata = (void *) (long) (stream_id_counter++);
+    print ("add stream %d req:%d\n", (long) si->np_stream.ndata, req);
+    g_tree_insert (stream_list, si->np_stream.ndata, si);
+
+    if (req)
+        g_timeout_add (0, requestStream, si->np_stream.ndata);
+
+    return si;
 }
 
 /*----------------%<---------------------------------------------------------*/
@@ -187,19 +304,19 @@ static NPObject * nsCreateObject (NPP instance, NPClass *aClass) {
         obj = aClass->allocate (instance, aClass);
     else
         obj = js_class.allocate (instance, &js_class);/*add null class*/
-    print ("NPN_CreateObject\n");
+    /*print ("NPN_CreateObject\n");*/
     obj->referenceCount = 1;
     return obj;
 }
 
 static NPObject *nsRetainObject (NPObject *npobj) {
-    print( "nsRetainObject %p\n", npobj);
+    /*print( "nsRetainObject %p\n", npobj);*/
     npobj->referenceCount++;
     return npobj;
 }
 
 static void nsReleaseObject (NPObject *obj) {
-    print ("NPN_ReleaseObject\n");
+    /*print ("NPN_ReleaseObject\n");*/
     if (! (--obj->referenceCount))
         obj->_class->deallocate (obj);
 }
@@ -207,7 +324,7 @@ static void nsReleaseObject (NPObject *obj) {
 static NPError nsGetURL (NPP instance, const char* url, const char* target) {
     (void)instance;
     print ("nsGetURL %s %s\n", url, target);
-    addStream (url, 0L, target, 0L, 1);
+    addStream (url, 0L, target, 0L, false);
     return NPERR_NO_ERROR;
 }
 
@@ -215,7 +332,7 @@ static NPError nsPostURL (NPP instance, const char *url,
         const char *target, uint32 len, const char *buf, NPBool file) {
     (void)instance; (void)len; (void)buf; (void)file;
     print ("nsPostURL %s %s\n", url, target);
-    addStream (url, 0L, target, 0L, 1);
+    addStream (url, 0L, target, 0L, false);
     return NPERR_NO_ERROR;
 }
 
@@ -241,7 +358,7 @@ static int32 nsWrite (NPP instance, NPStream* stream, int32 len, void *buf) {
 static NPError nsDestroyStream (NPP instance, NPStream *stream, NPError reason) {
     (void)instance; (void)stream; (void)reason;
     print ("nsDestroyStream\n");
-    g_timeout_add (0, destroyStream, g_slist_nth_data (stream_list, 0));
+    g_timeout_add (0, destroyStream, stream->ndata);
     return NPERR_NO_ERROR;
 }
 
@@ -289,14 +406,14 @@ static jref nsGetJavaPeer (NPP instance) {
 static NPError nsGetURLNotify (NPP instance, const char* url, const char* target, void *notify) {
     (void)instance;
     print ("NPN_GetURLNotify %s %s\n", url, target);
-    addStream (url, 0L, target, notify, 1);
+    addStream (url, 0L, target, notify, true);
     return NPERR_NO_ERROR;
 }
 
 static NPError nsPostURLNotify (NPP instance, const char* url, const char* target, uint32 len, const char* buf, NPBool file, void *notify) {
     (void)instance; (void)len; (void)buf; (void)file;
     print ("NPN_PostURLNotify\n");
-    addStream (url, 0L, target, notify, 1);
+    addStream (url, 0L, target, notify, true);
     return NPERR_NO_ERROR;
 }
 
@@ -330,12 +447,14 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
         case NPNVSupportsXEmbedBool:
             *(int*)value = 1;
             break;
-        case NPNVWindowNPObject: {
-            JsObject * obj = (JsObject *) nsCreateObject (instance, &js_class);
-            obj->name = g_strdup ("window");
-            *(NPObject**)value = (NPObject *) obj;
+        case NPNVWindowNPObject:
+            if (!js_window) {
+                JsObject *jo = (JsObject*) nsCreateObject (instance, &js_class);
+                jo->name = g_strdup ("window");
+                js_window = (NPObject *) jo;
+            }
+            *(NPObject**)value = nsRetainObject (js_window);
             break;
-        }
         case NPNVPluginElementNPObject: {
             JsObject * obj = (JsObject *) nsCreateObject (instance, &js_class);
             obj->name = g_strdup ("this");
@@ -372,7 +491,7 @@ static void nsForceRedraw (NPP instance) {
 }
 
 static NPIdentifier nsGetStringIdentifier (const NPUTF8* name) {
-    print ("NPN_GetStringIdentifier %s\n", name);
+    /*print ("NPN_GetStringIdentifier %s\n", name);*/
     gpointer id = g_tree_lookup (identifiers, name);
     if (!id) {
         id = strdup (name);
@@ -389,7 +508,7 @@ static void nsGetStringIdentifiers (const NPUTF8** names, int32_t nameCount,
 
 static NPIdentifier nsGetIntIdentifier (int32_t intid) {
     print ("NPN_GetIntIdentifier %d\n", intid);
-    return NULL;
+    return (NPIdentifier) (long) intid;
 }
 
 static bool nsIdentifierIsString (NPIdentifier name) {
@@ -403,9 +522,8 @@ static NPUTF8 * nsUTF8FromIdentifier (NPIdentifier name) {
 }
 
 static int32_t nsIntFromIdentifier (NPIdentifier identifier) {
-    (void)identifier;
     print ("NPN_IntFromIdentifier\n");
-    return 0;
+    return (int32_t) (long) identifier;
 }
 
 static bool nsInvoke (NPP instance, NPObject * npobj, NPIdentifier method,
@@ -428,7 +546,7 @@ static bool nsEvaluate (NPP instance, NPObject * npobj, NPString * script,
     char * this_var_string;
     char * jsscript;
     (void) npobj; /*FIXME scope, search npobj window*/
-    print ("NPN_Evaluate\n");
+    print ("NPN_Evaluate:");
 
     /* assign to a js variable */
     this_var = (char *) malloc (64);
@@ -501,7 +619,7 @@ static bool nsHasMethod (NPP instance, NPObject * npobj, NPIdentifier method) {
 }
 
 static void nsReleaseVariantValue (NPVariant * variant) {
-    print ("NPN_ReleaseVariantValue\n");
+    /*print ("NPN_ReleaseVariantValue\n");*/
     switch (variant->type) {
         case NPVariantType_String:
             if (variant->value.stringValue.utf8characters)
@@ -566,6 +684,10 @@ static void windowClassDeallocate (NPObject *npobj) {
     }
     if (jo->name)
         g_free (jo->name);
+    if (npobj == js_window) {
+        print ("WARNING deleting window object\n");
+        js_window = NULL;
+    }
     free (npobj);
 }
 
@@ -642,6 +764,13 @@ static bool windowClassGetProperty (NPObject *npobj, NPIdentifier property,
     if (!id)
         return false;
 
+    if (!strcmp (((JsObject *) npobj)->name, "window") &&
+                !strcmp (id, "top")) {
+        result->type = NPVariantType_Object;
+        result->value.objectValue = nsRetainObject (js_window);
+        return true;
+    }
+
     jo.name = id;
     jo.parent = (JsObject *) npobj;
     createJsName (&jo, (char **)&fullname.utf8characters, &fullname.utf8length);
@@ -708,81 +837,28 @@ static void shutDownPlugin() {
     }
 }
 
-static void removeStream (NPReason reason) {
-    StreamInfo *si= (StreamInfo *) g_slist_nth_data (stream_list, 0);
-
-    if (stdin_read_watch)
-        gdk_input_remove (stdin_read_watch);
-    stdin_read_watch = 0;
-
-    if (si) {
-        print ("data received %d\n", si->stream_pos);
-        np_funcs.destroystream (npp, &si->np_stream, reason);
-        if (si->notify)
-            np_funcs.urlnotify (npp, si->url, reason, si->notify_data);
-        freeStream (si);
-        si = (StreamInfo*) g_slist_nth_data (stream_list, 0);
-        if (si && callback_service)
-            g_timeout_add (0, requestStream, si);
-    }
-}
-
-static StreamInfo *addStream (const char *url, const char *mime, const char *target, void *notify_data, int notify) {
-    StreamInfo *si = (StreamInfo*) g_slist_nth_data (stream_list, 0);
-    int req = !si ? 1 : 0;
-    si = (StreamInfo *) malloc (sizeof (StreamInfo));
-
-    print ("add stream\n");
-    memset (si, 0, sizeof (StreamInfo));
-    si->url = g_strdup (url);
-    si->np_stream.url = si->url;
-    if (mime)
-        si->mimetype = g_strdup (mime);
-    if (target)
-        si->target = g_strdup (target);
-    si->notify_data = notify_data;
-    si->notify = notify;
-    stream_list = g_slist_append (stream_list, si);
-
-    if (req)
-        g_timeout_add (0, requestStream, si);
-
-    return si;
-}
-
-static void readStdin (gpointer d, gint src, GdkInputCondition cond) {
-    StreamInfo *si = (StreamInfo*) g_slist_nth_data (stream_list, 0);
+static void readStdin (gpointer p, gint src, GdkInputCondition cond) {
+    StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
     gsize count = read (src,
             stream_buf + si->stream_buf_pos,
             sizeof (stream_buf) - si->stream_buf_pos);
-    (void)d; (void)cond;
+    (void)cond;
+
     g_assert (si);
+
     if (count > 0) {
-        int32 sz;
-        si->stream_buf_pos += count;
-        sz = np_funcs.writeready (npp, &si->np_stream);
-        if (sz > 0) {
-            sz = np_funcs.write (npp, &si->np_stream, si->stream_pos,
-                    si->stream_buf_pos > sz ? sz : si->stream_buf_pos,
-                    stream_buf);
-            if (sz == si->stream_buf_pos)
-                si->stream_buf_pos = 0;
-            else if (sz > 0) {
-                si->stream_buf_pos -= sz;
-                memmove (stream_buf, stream_buf + sz, si->stream_buf_pos);
-            } else {
-            }
-            si->stream_pos += sz > 0 ? sz : 0;
+        int32_t sz = writeStream (p, stream_buf, si->stream_buf_pos + count);
+        if (sz == si->stream_buf_pos + count)
+            si->stream_buf_pos = 0;
+        else if (sz > 0) {
+            si->stream_buf_pos += count - sz;
+            memmove (stream_buf, stream_buf + sz, si->stream_buf_pos);
         } else {
-        }
-        if (si->stream_pos == si->total) {
-            if (si->stream_pos)
-                removeStream (si->reason);
-            else
-                g_timeout_add (0, destroyStream, si);
+            /*FIXME retry later */
         }
     } else {
-        removeStream (NPRES_DONE); /* only for 'cat foo | knpplayer' */
+        si->reason = NPRES_DONE;
+        removeStream (p); /* only for 'cat foo | knpplayer' */
     }
 }
 
@@ -945,45 +1021,12 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     return 0;
 }
 
-static gboolean requestStream (void * p) {
-    StreamInfo *si = (StreamInfo*) p;
-    print ("requestStream\n");
-    if (si && si == g_slist_nth_data (stream_list, 0)) {
-        NPError err;
-        uint16 stype = NP_NORMAL;
-        si->np_stream.notifyData = si->notify_data;
-        err = np_funcs.newstream (npp, si->mimetype, &si->np_stream, 0, &stype);
-        if (err != NPERR_NO_ERROR) {
-            g_printerr ("newstream error %d\n", err);
-            freeStream (si);
-            return 0;
-        }
-        g_assert (!stdin_read_watch);
-        stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, NULL);
-        if (si->target)
-            callFunction ("getUrl",
-                    DBUS_TYPE_STRING, &si->url,
-                    DBUS_TYPE_STRING, &si->target, DBUS_TYPE_INVALID);
-        else
-            callFunction ("getUrl", DBUS_TYPE_STRING, &si->url, DBUS_TYPE_INVALID);
-    }
-    return 0; /* single shot */
-}
-
-static gboolean destroyStream (void * p) {
-    StreamInfo *si = (StreamInfo*) p;
-    print ("destroyStream\n");
-    if (si && si == g_slist_nth_data (stream_list, 0))
-        callFunction ("finish", DBUS_TYPE_INVALID);
-    return 0; /* single shot */
-}
-
-static gpointer newStream (const char *url, const char *mime,
+static gpointer startPlugin (const char *url, const char *mime,
         int argc, char *argn[], char *argv[]) {
     StreamInfo *si;
     if (!npp && (initPlugin (plugin) || newPlugin (mimetype, argc, argn, argv)))
         return 0L;
-    si = addStream (url, mime, 0L, 0L, 0);
+    si = addStream (url, mime, 0L, 0L, false);
     return si;
 }
 
@@ -1062,9 +1105,9 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
                 params = i + 1;
         }
         print ("play %s %s %s params:%d\n", object_url, mimetype, plugin, i);
-        newStream (object_url, mimetype, i, argn, argv);
+        startPlugin (object_url, mimetype, i, argn, argv);
     } else if (dbus_message_is_method_call (msg, iface, "getUrlNotify")) {
-        StreamInfo *si = (StreamInfo*) g_slist_nth_data (stream_list, 0);
+        StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, current_stream_id);
         if (si && dbus_message_iter_init (msg, &args) && 
                 DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type (&args)) {
             dbus_message_iter_get_basic (&args, &si->total);
@@ -1073,7 +1116,7 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
                 dbus_message_iter_get_basic (&args, &si->reason);
                 print ("getUrlNotify bytes:%d reason:%d\n", si->total, si->reason);
                 if (si->stream_pos == si->total)
-                    removeStream (si->reason);
+                    removeStream (current_stream_id);
             }
         }
     } else if (dbus_message_is_method_call (msg, iface, "quit")) {
@@ -1107,7 +1150,7 @@ static void callFunction(const char *func, int first_arg_type, ...) {
 
 static char * evaluate (const char *script) {
     char * ret = NULL;
-    print ("evaluate %s\n", script);
+    print ("evaluate %s", script);
     if (callback_service) {
         DBusMessage *rmsg;
         DBusMessage *msg = dbus_message_new_method_call (
@@ -1131,6 +1174,8 @@ static char * evaluate (const char *script) {
             print ("  => %s\n", ret);
         }
         dbus_message_unref (msg);
+    } else {
+        print ("  => NA\n");
     }
     return ret;
 }
@@ -1190,7 +1235,7 @@ static void windowCreatedEvent (GtkWidget *w, gpointer d) {
     if (!callback_service) {
         char *argn[] = { "WIDTH", "HEIGHT", "debug", "SRC" };
         char *argv[] = { "440", "330", g_strdup("yes"), g_strdup(object_url) };
-        newStream (object_url, mimetype, 4, argn, argv);
+        startPlugin (object_url, mimetype, 4, argn, argv);
     }
 }
 
@@ -1300,6 +1345,7 @@ static gboolean initPlayer (void * p) {
 
 int main (int argc, char **argv) {
     int i;
+
     gtk_init (&argc, &argv);
 
     for (i = 1; i < argc; i++) {
@@ -1327,6 +1373,7 @@ int main (int argc, char **argv) {
     }
 
     identifiers = g_tree_new (strcmp);
+    stream_list = g_tree_new (streamCompare);
 
     g_timeout_add (0, initPlayer, NULL);
 
