@@ -69,14 +69,17 @@ static NPSavedData *saved_data;
 static NPClass js_class;
 static GTree *stream_list;
 static gpointer current_stream_id;
+static uint32_t stream_chunk_size;
+static uint32_t stream_chunk_pos;
+static char stream_buf[32 * 1024];
+static unsigned int stream_buf_pos;
 static int stream_id_counter;
 static GTree *identifiers;
 static int js_obj_counter;
-static char stream_buf[32 * 1024];
 typedef struct _StreamInfo {
     NPStream np_stream;
     void *notify_data;
-    unsigned int stream_buf_pos;
+    /*unsigned int stream_buf_pos;*/
     unsigned int stream_pos;
     unsigned int total;
     unsigned int reason;
@@ -192,11 +195,12 @@ static void removeStream (void * p) {
 }
 
 static int32_t writeStream (gpointer p, char *buf, uint32_t count) {
-    int32_t sz = 0;
+    int32_t sz = -1;
     StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
     /*print ("writeStream found %d count %d\n", !!si, count);*/
     if (si) {
-        sz = np_funcs.writeready (npp, &si->np_stream);
+        if (count) /* urls with a target returns zero bytes */
+            sz = np_funcs.writeready (npp, &si->np_stream);
         if (sz > 0) {
             sz = np_funcs.write (npp, &si->np_stream, si->stream_pos,
                     (int32_t) count > sz ? sz : (int32_t) count, buf);
@@ -519,7 +523,10 @@ static bool nsIdentifierIsString (NPIdentifier name) {
 
 static NPUTF8 * nsUTF8FromIdentifier (NPIdentifier name) {
     print ("NPN_UTF8FromIdentifier\n");
-    return g_tree_lookup (identifiers, name);
+    char *str = g_tree_lookup (identifiers, name);
+    if (str)
+        return strdup (str);
+    return NULL;
 }
 
 static int32_t nsIntFromIdentifier (NPIdentifier identifier) {
@@ -839,27 +846,68 @@ static void shutDownPlugin() {
 }
 
 static void readStdin (gpointer p, gint src, GdkInputCondition cond) {
-    StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
+    char *buf_ptr = stream_buf;
     gsize count = read (src,
-            stream_buf + si->stream_buf_pos,
-            sizeof (stream_buf) - si->stream_buf_pos);
+            stream_buf + stream_buf_pos,
+            sizeof (stream_buf) - stream_buf_pos);
     (void)cond;
+    if (count > 0)
+        stream_buf_pos += count;
 
-    g_assert (si);
+    /*print ("readStdin %d\n", count);*/
+    while (buf_ptr < stream_buf + stream_buf_pos) {
+        uint32_t write_len;
+        int32_t sz;
 
-    if (count > 0) {
-        int32_t sz = writeStream (p, stream_buf, si->stream_buf_pos + count);
-        if (sz == si->stream_buf_pos + count)
-            si->stream_buf_pos = 0;
-        else if (sz > 0) {
-            si->stream_buf_pos += count - sz;
-            memmove (stream_buf, stream_buf + sz, si->stream_buf_pos);
-        } else {
-            /*FIXME retry later */
+        if (callback_service && !stream_chunk_size) {
+            /* read header info */
+            int i;
+            if (stream_buf + stream_buf_pos < buf_ptr + 2 * sizeof (uint32_t))
+                break; /* need more data */
+            current_stream_id = (gpointer)(long)*(uint32_t*)(buf_ptr);
+            stream_chunk_size = *((uint32_t *)(buf_ptr + sizeof (uint32_t)));
+        /*print ("header %d %d\n",(long)current_stream_id, stream_chunk_size);*/
+            buf_ptr += 2 * sizeof (uint32_t);
+            stream_chunk_pos = 0;
+            if (stream_chunk_size && stream_buf + stream_buf_pos == buf_ptr) {
+                stream_buf_pos = 0;
+                return; /* only read the header for chunk with data */
+            }
         }
+        /* feed it to the stream */
+        write_len = stream_buf + stream_buf_pos - buf_ptr;
+        if (callback_service && write_len > stream_chunk_size)
+            write_len = stream_chunk_size;
+        sz = writeStream (current_stream_id, buf_ptr, write_len);
+        if (sz < 0) {
+            print ("couldn't write to stream %d\n", (long)current_stream_id);
+            sz = write_len; /* assume stream destroyed, skip */
+        }
+
+        /* update chunk status */
+        if (sz > 0) {
+            buf_ptr += sz;
+            /*print ("update chunk %d %d\n", sz, stream_chunk_size);*/
+            stream_chunk_size -= sz;
+        } else {
+            /* FIXME if plugin didn't accept the data retry later, suspend stdin reading */
+            break;
+        }
+
+    }
+    /* update buffer */
+    /*print ("buffer written:%d bufpos:%d\n", buf_ptr-stream_buf, stream_buf_pos);*/
+    if (stream_buf + stream_buf_pos == buf_ptr) {
+        stream_buf_pos = 0;
     } else {
+        g_assert (buf_ptr < stream_buf + stream_buf_pos);
+        stream_buf_pos -= (stream_buf + stream_buf_pos - buf_ptr);
+        memmove (stream_buf, buf_ptr, stream_buf_pos);
+    }
+    if (count <= 0) { /* eof of stdin, only for 'cat foo | knpplayer' */
+        StreamInfo*si=(StreamInfo*)g_tree_lookup(stream_list,current_stream_id);
         si->reason = NPRES_DONE;
-        removeStream (p); /* only for 'cat foo | knpplayer' */
+        removeStream (p);
     }
 }
 

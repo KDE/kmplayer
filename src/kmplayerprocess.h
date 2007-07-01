@@ -456,9 +456,10 @@ private:
     QString stream;
     QString filter;
     QString remote_service;
-    QByteArray eval_res;
+    QByteArray send_buf;
     KIO::TransferJob * job;
-    unsigned int bytes;
+    Q_UINT32 bytes;
+    Q_UINT32 stream_id;
     bool write_in_progress;
     Reason finish_reason;
 };

@@ -2175,6 +2175,8 @@ KDE_NO_EXPORT
 void NpPlayer::requestStream (const QString &path, const QString & url, const QString & target) {
     KURL uri (m_url, url);
     stream = path.mid (objectPath ().length () + 1);
+    int p = stream.findRev (QChar ('_'));
+    stream_id = (p > -1 ? stream.mid (p+1).toInt() : 0);
     kdDebug () << "NpPlayer::request " << stream << " '" << uri << "'" << endl;
     bytes = 0;
     write_in_progress = false;
@@ -2188,12 +2190,15 @@ void NpPlayer::requestStream (const QString &path, const QString & url, const QS
         QByteArray cr = result.toLocal8Bit ();
         bytes += strlen (cr.data ());
 #endif
-        eval_res.resize (bytes + 1);
-        memcpy (eval_res.data (), cr.data (), bytes);
-        *(eval_res.data () + bytes) = 0;
-        kdDebug () << "result is " << eval_res.data () << endl;
+        const int header_len = 2 * sizeof (Q_UINT32);
+        send_buf.resize (bytes + 1 + header_len);
+        memcpy (send_buf.data (), &stream_id, sizeof (Q_UINT32));
+        memcpy (send_buf.data () + sizeof(Q_UINT32), &bytes, sizeof(Q_UINT32));
+        memcpy (send_buf.data () + header_len, cr.data (), bytes);
+        *(send_buf.data () + header_len + bytes) = 0;
+        kdDebug () << "result is " << send_buf.data () << endl;
         write_in_progress = true;
-        m_process->writeStdin (eval_res.data (), bytes);
+        m_process->writeStdin (send_buf.data (), bytes);
         finish_reason = BecauseDone;
     } else if (!target.isEmpty ()) {
         kdDebug () << "new page request " << target << endl;
@@ -2305,9 +2310,16 @@ KDE_NO_EXPORT void NpPlayer::slotResult (KIO::Job *jb) {
 
 KDE_NO_EXPORT void NpPlayer::slotData (KIO::Job*, const QByteArray& qb) {
     if (playing ()) {
+        const int header_len = 2 * sizeof (Q_UINT32);
+        send_buf.resize (qb.size () + header_len);
+        memcpy (send_buf.data (), &stream_id, sizeof (Q_UINT32));
+        Q_UINT32 chunk = qb.size();
+        memcpy (send_buf.data() + sizeof (Q_UINT32), &chunk, sizeof (Q_UINT32));
+        memcpy (send_buf.data()+header_len, qb.data (), qb.size ());
+        /*fprintf (stderr, " => %d %d\n", (long)stream_id, chunk);*/
         bytes += qb.size ();
         write_in_progress = true;
-        m_process->writeStdin (qb.data (), qb.size ());
+        m_process->writeStdin (send_buf.data (), send_buf.size ());
         job->suspend ();
     }
 }
