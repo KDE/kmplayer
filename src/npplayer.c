@@ -70,7 +70,6 @@ static NPClass js_class;
 static GTree *stream_list;
 static gpointer current_stream_id;
 static uint32_t stream_chunk_size;
-static uint32_t stream_chunk_pos;
 static char stream_buf[32 * 1024];
 static unsigned int stream_buf_pos;
 static int stream_id_counter;
@@ -868,10 +867,9 @@ static void readStdin (gpointer p, gint src, GdkInputCondition cond) {
             stream_chunk_size = *((uint32_t *)(buf_ptr + sizeof (uint32_t)));
         /*print ("header %d %d\n",(long)current_stream_id, stream_chunk_size);*/
             buf_ptr += 2 * sizeof (uint32_t);
-            stream_chunk_pos = 0;
             if (stream_chunk_size && stream_buf + stream_buf_pos == buf_ptr) {
                 stream_buf_pos = 0;
-                return; /* only read the header for chunk with data */
+                break; /* only read the header for chunk with data */
             }
         }
         /* feed it to the stream */
