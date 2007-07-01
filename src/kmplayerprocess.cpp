@@ -2196,9 +2196,9 @@ void NpPlayer::requestStream (const QString &path, const QString & url, const QS
         memcpy (send_buf.data () + sizeof(Q_UINT32), &bytes, sizeof(Q_UINT32));
         memcpy (send_buf.data () + header_len, cr.data (), bytes);
         *(send_buf.data () + header_len + bytes) = 0;
-        kdDebug () << "result is " << send_buf.data () << endl;
+        kdDebug () << "result is " << (send_buf.data () + header_len) << endl;
         write_in_progress = true;
-        m_process->writeStdin (send_buf.data (), bytes);
+        m_process->writeStdin (send_buf.data (), bytes + header_len);
         finish_reason = BecauseDone;
     } else if (!target.isEmpty ()) {
         kdDebug () << "new page request " << target << endl;
