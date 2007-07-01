@@ -150,8 +150,8 @@ static gboolean requestStream (void * p) {
             return 0;
         }
         print ("requestStream %d type:%d\n", (long) p, stype);
-        g_assert (!stdin_read_watch);
-        stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, NULL);
+        if (!stdin_read_watch)
+            stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ,readStdin,NULL);
         if (si->target)
             callFunction ((int)(long)p, "getUrl",
                     DBUS_TYPE_STRING, &si->url,
@@ -176,21 +176,13 @@ static gboolean destroyStream (void * p) {
 static void removeStream (void * p) {
     StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
 
-    if (stdin_read_watch)
-        gdk_input_remove (stdin_read_watch);
-    stdin_read_watch = 0;
-
     if (si) {
-        gpointer next = NULL;
         print ("removeStream %d rec:%d\n", (long) p, si->stream_pos);
         if (!si->target)
             np_funcs.destroystream (npp, &si->np_stream, si->reason);
         if (si->notify)
             np_funcs.urlnotify (npp, si->url, si->reason, si->notify_data);
         freeStream (si);
-        g_tree_traverse (stream_list, firstStream, G_IN_ORDER, &next);
-        if (next)
-            g_timeout_add (0, requestStream, next);
     }
 }
 
@@ -221,7 +213,6 @@ static int32_t writeStream (gpointer p, char *buf, uint32_t count) {
 }
 
 static StreamInfo *addStream (const char *url, const char *mime, const char *target, void *notify_data, bool notify) {
-    bool req = !g_tree_height (stream_list);
     StreamInfo *si = (StreamInfo *) malloc (sizeof (StreamInfo));
 
     memset (si, 0, sizeof (StreamInfo));
@@ -234,11 +225,10 @@ static StreamInfo *addStream (const char *url, const char *mime, const char *tar
     si->notify_data = notify_data;
     si->notify = notify;
     si->np_stream.ndata = (void *) (long) (stream_id_counter++);
-    print ("add stream %d req:%d\n", (long) si->np_stream.ndata, req);
+    print ("add stream %d\n", (long) si->np_stream.ndata);
     g_tree_insert (stream_list, si->np_stream.ndata, si);
 
-    if (req)
-        g_timeout_add (0, requestStream, si->np_stream.ndata);
+    g_timeout_add (0, requestStream, si->np_stream.ndata);
 
     return si;
 }
@@ -907,6 +897,10 @@ static void readStdin (gpointer p, gint src, GdkInputCondition cond) {
         StreamInfo*si=(StreamInfo*)g_tree_lookup(stream_list,current_stream_id);
         si->reason = NPRES_DONE;
         removeStream (current_stream_id);
+        if (stdin_read_watch) {
+            gdk_input_remove (stdin_read_watch);
+            stdin_read_watch = 0;
+        }
     }
 }
 

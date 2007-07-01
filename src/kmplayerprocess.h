@@ -409,7 +409,8 @@ private slots:
 /*
  * npplayer backend
  */
-class KMPLAYER_NO_EXPORT NpPlayer : public Process {
+
+class KMPLAYER_NO_EXPORT NpStream : public QObject {
     Q_OBJECT
 public:
     enum Reason {
@@ -417,6 +418,28 @@ public:
         BecauseDone = 0, BecauseError = 1, BecauseStopped = 2
     };
 
+    NpStream (QObject *parent, const KURL & url);
+    ~NpStream ();
+
+    void open ();
+    void close ();
+
+    KURL url;
+    QByteArray pending_buf;
+    KIO::TransferJob *job;
+    timeval data_arrival;
+    Q_UINT32 bytes;
+    Reason finish_reason;
+signals:
+    void stateChanged ();
+private slots:
+    void slotResult (KIO::Job*);
+    void slotData (KIO::Job*, const QByteArray& qb);
+};
+
+class KMPLAYER_NO_EXPORT NpPlayer : public Process {
+    Q_OBJECT
+public:
     NpPlayer (QObject * parent, Settings * settings, const QString & srv);
     ~NpPlayer ();
     virtual void init ();
@@ -426,7 +449,7 @@ public:
 
     void setStarted (const QString & srv);
     void requestStream (const QString & path, const QString & url, const QString & target);
-    void finishStream (const QString & path, Reason because);
+    void destroyStream (const QString & path);
 
     KDE_NO_EXPORT const QString & destination () const { return service; }
     KDE_NO_EXPORT const QString & interface () const { return iface; }
@@ -444,24 +467,22 @@ private slots:
     void processOutput (KProcess *, char *, int);
     void processStopped (KProcess *);
     void wroteStdin (KProcess *);
-    void slotResult (KIO::Job*);
-    void slotData (KIO::Job*, const QByteArray& qb);
+    void streamStateChanged ();
 protected:
     virtual void terminateJobs ();
 private:
-    void sendFinish (Reason because);
+    void sendFinish (Q_UINT32 sid, Q_UINT32 total, NpStream::Reason because);
+    void processStreams ();
     QString service;
     QString iface;
     QString path;
-    QString stream;
     QString filter;
+    typedef QMap <Q_UINT32, NpStream *> StreamMap;
+    StreamMap streams;
     QString remote_service;
     QByteArray send_buf;
-    KIO::TransferJob * job;
-    Q_UINT32 bytes;
-    Q_UINT32 stream_id;
+    Q_UINT32 pending_stream_id;
     bool write_in_progress;
-    Reason finish_reason;
 };
 
 } // namespace
