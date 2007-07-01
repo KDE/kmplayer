@@ -140,7 +140,8 @@ static gboolean requestStream (void * p) {
     if (si) {
         NPError err;
         uint16 stype = NP_NORMAL;
-        current_stream_id = p;
+        if (!callback_service)
+            current_stream_id = p;
         si->np_stream.notifyData = si->notify_data;
         err = np_funcs.newstream (npp, si->mimetype ? si->mimetype : "text/plain", &si->np_stream, 0, &stype);
         if (err != NPERR_NO_ERROR) {
@@ -150,7 +151,7 @@ static gboolean requestStream (void * p) {
         }
         print ("requestStream %d type:%d\n", (long) p, stype);
         g_assert (!stdin_read_watch);
-        stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, p);
+        stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, NULL);
         if (si->target)
             callFunction ((int)(long)p, "getUrl",
                     DBUS_TYPE_STRING, &si->url,
@@ -846,17 +847,17 @@ static void shutDownPlugin() {
 
 static void readStdin (gpointer p, gint src, GdkInputCondition cond) {
     char *buf_ptr = stream_buf;
-    gsize count = read (src,
+    gsize bytes_read = read (src,
             stream_buf + stream_buf_pos,
             sizeof (stream_buf) - stream_buf_pos);
-    (void)cond;
-    if (count > 0)
-        stream_buf_pos += count;
+    (void)cond; (void)p;
+    if (bytes_read > 0)
+        stream_buf_pos += bytes_read;
 
-    /*print ("readStdin %d\n", count);*/
+    /*print ("readStdin %d\n", bytes_read);*/
     while (buf_ptr < stream_buf + stream_buf_pos) {
         uint32_t write_len;
-        int32_t sz;
+        int32_t bytes_written;
 
         if (callback_service && !stream_chunk_size) {
             /* read header info */
@@ -876,17 +877,17 @@ static void readStdin (gpointer p, gint src, GdkInputCondition cond) {
         write_len = stream_buf + stream_buf_pos - buf_ptr;
         if (callback_service && write_len > stream_chunk_size)
             write_len = stream_chunk_size;
-        sz = writeStream (current_stream_id, buf_ptr, write_len);
-        if (sz < 0) {
+        bytes_written = writeStream (current_stream_id, buf_ptr, write_len);
+        if (bytes_written < 0) {
             print ("couldn't write to stream %d\n", (long)current_stream_id);
-            sz = write_len; /* assume stream destroyed, skip */
+            bytes_written = write_len; /* assume stream destroyed, skip */
         }
 
         /* update chunk status */
-        if (sz > 0) {
-            buf_ptr += sz;
-            /*print ("update chunk %d %d\n", sz, stream_chunk_size);*/
-            stream_chunk_size -= sz;
+        if (bytes_written > 0) {
+            buf_ptr += bytes_written;
+           /*print ("update chunk %d %d\n", bytes_written, stream_chunk_size);*/
+            stream_chunk_size -= bytes_written;
         } else {
             /* FIXME if plugin didn't accept the data retry later, suspend stdin reading */
             break;
@@ -902,10 +903,10 @@ static void readStdin (gpointer p, gint src, GdkInputCondition cond) {
         stream_buf_pos -= (stream_buf + stream_buf_pos - buf_ptr);
         memmove (stream_buf, buf_ptr, stream_buf_pos);
     }
-    if (count <= 0) { /* eof of stdin, only for 'cat foo | knpplayer' */
+    if (bytes_read <= 0) { /* eof of stdin, only for 'cat foo | knpplayer' */
         StreamInfo*si=(StreamInfo*)g_tree_lookup(stream_list,current_stream_id);
         si->reason = NPRES_DONE;
-        removeStream (p);
+        removeStream (current_stream_id);
     }
 }
 
@@ -1154,16 +1155,20 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
         print ("play %s %s %s params:%d\n", object_url, mimetype, plugin, i);
         startPlugin (object_url, mimetype, i, argn, argv);
     } else if (dbus_message_is_method_call (msg, iface, "eof")) {
-        StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, current_stream_id);
+        const char *path = dbus_message_get_path (msg);
+        StreamInfo *si;
+        const char *p = strrchr (path, '_');
+        gpointer stream_id = p ? (gpointer) strtol (p+1, NULL, 10) : NULL;
+        si = (StreamInfo *) g_tree_lookup (stream_list, stream_id);
         if (si && dbus_message_iter_init (msg, &args) && 
                 DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type (&args)) {
             dbus_message_iter_get_basic (&args, &si->total);
             if (dbus_message_iter_next (&args) &&
                    DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type (&args)) {
                 dbus_message_iter_get_basic (&args, &si->reason);
-                print ("eof %s bytes:%d reason:%d\n", dbus_message_get_path (msg), si->total, si->reason);
+                print ("eof %d bytes:%d reason:%d\n", (long)stream_id, si->total, si->reason);
                 if (si->stream_pos == si->total)
-                    removeStream (current_stream_id);
+                    removeStream (stream_id);
             }
         }
     } else if (dbus_message_is_method_call (msg, iface, "quit")) {
