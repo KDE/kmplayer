@@ -178,10 +178,12 @@ static void removeStream (void * p) {
 
     if (si) {
         print ("removeStream %d rec:%d\n", (long) p, si->stream_pos);
-        if (!si->target)
-            np_funcs.destroystream (npp, &si->np_stream, si->reason);
-        if (si->notify)
-            np_funcs.urlnotify (npp, si->url, si->reason, si->notify_data);
+        if (si->reason == NPRES_DONE || si->reason == NPRES_USER_BREAK) {
+            if (!si->target)
+                np_funcs.destroystream (npp, &si->np_stream, si->reason);
+            if (si->notify)
+                np_funcs.urlnotify (npp, si->url, si->reason, si->notify_data);
+        }
         freeStream (si);
     }
 }
@@ -191,22 +193,26 @@ static int32_t writeStream (gpointer p, char *buf, uint32_t count) {
     StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
     /*print ("writeStream found %d count %d\n", !!si, count);*/
     if (si) {
-        if (count) /* urls with a target returns zero bytes */
-            sz = np_funcs.writeready (npp, &si->np_stream);
-        if (sz > 0) {
-            sz = np_funcs.write (npp, &si->np_stream, si->stream_pos,
-                    (int32_t) count > sz ? sz : (int32_t) count, buf);
-            if (sz < 0) /*FIXME plugin destroys stream here*/
-                g_timeout_add (0, destroyStream, p);
+        if (si->reason > NPERR_NO_ERROR) {
+            sz = count; /* stream closed, skip remainings */
         } else {
-            sz = 0;
-        }
-        si->stream_pos += sz;
-        if (si->stream_pos == si->total) {
-            if (si->stream_pos)
-                removeStream (p);
-            else
-                g_timeout_add (0, destroyStream, p);
+            if (count) /* urls with a target returns zero bytes */
+                sz = np_funcs.writeready (npp, &si->np_stream);
+            if (sz > 0) {
+                sz = np_funcs.write (npp, &si->np_stream, si->stream_pos,
+                        (int32_t) count > sz ? sz : (int32_t) count, buf);
+                if (sz < 0) /*FIXME plugin destroys stream here*/
+                    g_timeout_add (0, destroyStream, p);
+            } else {
+                sz = 0;
+            }
+            si->stream_pos += sz;
+            if (si->stream_pos == si->total) {
+                if (si->stream_pos)
+                    removeStream (p);
+                else
+                    g_timeout_add (0, destroyStream, p);
+            }
         }
     }
     return sz;
@@ -351,10 +357,15 @@ static int32 nsWrite (NPP instance, NPStream* stream, int32 len, void *buf) {
 }
 
 static NPError nsDestroyStream (NPP instance, NPStream *stream, NPError reason) {
-    (void)instance; (void)stream; (void)reason;
+    StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, stream->ndata);
+    (void)instance;
     print ("nsDestroyStream\n");
-    g_timeout_add (0, destroyStream, stream->ndata);
-    return NPERR_NO_ERROR;
+    if (si) {
+        si->reason = reason;
+        g_timeout_add (0, destroyStream, stream->ndata);
+        return NPERR_NO_ERROR;
+    }
+    return NPERR_NO_DATA;
 }
 
 static void nsStatus (NPP instance, const char* message) {
@@ -851,7 +862,6 @@ static void readStdin (gpointer p, gint src, GdkInputCondition cond) {
 
         if (callback_service && !stream_chunk_size) {
             /* read header info */
-            int i;
             if (stream_buf + stream_buf_pos < buf_ptr + 2 * sizeof (uint32_t))
                 break; /* need more data */
             current_stream_id = (gpointer)(long)*(uint32_t*)(buf_ptr);
@@ -1161,7 +1171,8 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
                    DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type (&args)) {
                 dbus_message_iter_get_basic (&args, &si->reason);
                 print ("eof %d bytes:%d reason:%d\n", (long)stream_id, si->total, si->reason);
-                if (si->stream_pos == si->total)
+                if (si->stream_pos == si->total ||
+                        si->reason > NPERR_NO_ERROR)
                     removeStream (stream_id);
             }
         }
