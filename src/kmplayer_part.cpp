@@ -156,9 +156,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     KMPlayer::NpPlayer *npp = (KMPlayer::NpPlayer *) players () ["npp"];
     connect (npp, SIGNAL (evaluate (const QString &, QString &)),
           m_liveconnectextension, SLOT (evaluate (const QString &, QString &)));
-    connect (npp, SIGNAL (openUrl (const QString &, const QString &)),
+    connect (npp, SIGNAL (openUrl (const KURL &, const QString &)),
             m_browserextension,
-            SLOT (slotRequestOpenURL (const QString &, const QString &)));
+            SLOT (slotRequestOpenURL (const KURL &, const QString &)));
 #endif
     /*KAction *playact =*/ new KAction(i18n("P&lay"), QString ("player_play"), KShortcut (), this, SLOT(play ()), actionCollection (), "play");
     /*KAction *pauseact =*/ new KAction(i18n("&Pause"), QString ("player_pause"), KShortcut (), this, SLOT(pause ()), actionCollection (), "pause");
@@ -668,8 +668,8 @@ KDE_NO_EXPORT void KMPlayerBrowserExtension::requestOpenURL (const KURL & url, c
     emit openURLRequest (url, args);
 }
 
-KDE_NO_EXPORT void KMPlayerBrowserExtension::slotRequestOpenURL (const QString &url, const QString &target) {
-    requestOpenURL (KURL (url), target, QString ());
+KDE_NO_EXPORT void KMPlayerBrowserExtension::slotRequestOpenURL (const KURL &url, const QString &target) {
+    requestOpenURL (url, target, QString ());
 }
 
 //---------------------------------------------------------------------

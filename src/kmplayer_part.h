@@ -72,7 +72,7 @@ public:
     void restoreState (QDataStream & stream);
     void requestOpenURL (const KURL & url, const QString & target, const QString & service);
 public slots:
-    void slotRequestOpenURL (const QString & url, const QString & target);
+    void slotRequestOpenURL (const KURL & url, const QString & target);
 };
 
 /*

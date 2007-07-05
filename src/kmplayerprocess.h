@@ -457,7 +457,7 @@ public:
     QString evaluateScript (const QString & scr);
 signals:
     void evaluate (const QString & scr, QString & result);
-    void openUrl (const QString & url, const QString & target);
+    void openUrl (const KURL & url, const QString & target);
 public slots:
     virtual bool stop ();
     virtual bool quit ();
@@ -481,7 +481,6 @@ private:
     StreamMap streams;
     QString remote_service;
     QByteArray send_buf;
-    Q_UINT32 pending_stream_id;
     bool write_in_progress;
 };
 

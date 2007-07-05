@@ -2257,7 +2257,7 @@ void NpPlayer::requestStream (const QString &path, const QString & url, const QS
     if (sid >= 0) {
         if (!target.isEmpty ()) {
             kdDebug () << "new page request " << target << endl;
-            emit openUrl (url, target);
+            emit openUrl (uri, target);
             sendFinish (sid, 0, NpStream::BecauseDone);
         } else {
             NpStream * ns = new NpStream (this, uri);
@@ -2326,7 +2326,6 @@ KDE_NO_EXPORT bool NpPlayer::stop () {
         dbus_message_unref (msg);
         dbus_connection_flush (dbus_static->dbus_connnection);
     }
-    kdDebug () << "NpPlayer::stop" << endl;
     return true;
 }
 
@@ -2413,7 +2412,6 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
         /*fprintf (stderr, " => %d %d\n", (long)stream_id, chunk);*/
         stream->bytes += chunk;
         write_in_progress = true;
-        pending_stream_id = stream_id;
         m_process->writeStdin (send_buf.data (), send_buf.size ());
         if (stream->finish_reason == NpStream::NoReason)
             stream->job->resume ();
