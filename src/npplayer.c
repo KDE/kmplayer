@@ -77,7 +77,6 @@ static GTree *identifiers;
 static int js_obj_counter;
 typedef struct _StreamInfo {
     NPStream np_stream;
-    void *notify_data;
     /*unsigned int stream_buf_pos;*/
     unsigned int stream_pos;
     unsigned int total;
@@ -86,6 +85,8 @@ typedef struct _StreamInfo {
     char *mimetype;
     char *target;
     bool notify;
+    bool called_plugin;
+    bool destroyed;
 } StreamInfo;
 struct JsObject;
 typedef struct _JsObject {
@@ -138,18 +139,8 @@ static gboolean firstStream (gpointer key, gpointer value, gpointer data) {
 static gboolean requestStream (void * p) {
     StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
     if (si) {
-        NPError err;
-        uint16 stype = NP_NORMAL;
         if (!callback_service)
             current_stream_id = p;
-        si->np_stream.notifyData = si->notify_data;
-        err = np_funcs.newstream (npp, si->mimetype ? si->mimetype : "text/plain", &si->np_stream, 0, &stype);
-        if (err != NPERR_NO_ERROR) {
-            g_printerr ("newstream error %d\n", err);
-            freeStream (si);
-            return 0;
-        }
-        print ("requestStream %d type:%d\n", (long) p, stype);
         if (!stdin_read_watch)
             stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ,readStdin,NULL);
         if (si->target)
@@ -177,12 +168,13 @@ static void removeStream (void * p) {
     StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
 
     if (si) {
-        print ("removeStream %d rec:%d\n", (long) p, si->stream_pos);
-        if (si->reason == NPRES_DONE || si->reason == NPRES_USER_BREAK) {
-            if (!si->target)
+        print ("removeStream %d rec:%d reason %d\n", (long) p, si->stream_pos, si->reason);
+        if (!si->destroyed) {
+            if (si->called_plugin && !si->target)
                 np_funcs.destroystream (npp, &si->np_stream, si->reason);
             if (si->notify)
-                np_funcs.urlnotify (npp, si->url, si->reason, si->notify_data);
+                np_funcs.urlnotify (npp,
+                        si->url, si->reason, si->np_stream.notifyData);
         }
         freeStream (si);
     }
@@ -196,6 +188,20 @@ static int32_t writeStream (gpointer p, char *buf, uint32_t count) {
         if (si->reason > NPERR_NO_ERROR) {
             sz = count; /* stream closed, skip remainings */
         } else {
+            if (!si->called_plugin) {
+                uint16 stype = NP_NORMAL;
+                NPError err = np_funcs.newstream (npp, si->mimetype
+                        ?  si->mimetype
+                        : "text/plain",
+                        &si->np_stream, 0, &stype);
+                if (err != NPERR_NO_ERROR) {
+                    g_printerr ("newstream error %d\n", err);
+                    destroyStream (p);
+                    return count; /* stream not accepted, skip remainings */
+                }
+                print ("newStream %d type:%d\n", (long) p, stype);
+                si->called_plugin = true;
+            }
             if (count) /* urls with a target returns zero bytes */
                 sz = np_funcs.writeready (npp, &si->np_stream);
             if (sz > 0) {
@@ -208,7 +214,7 @@ static int32_t writeStream (gpointer p, char *buf, uint32_t count) {
             }
             si->stream_pos += sz;
             if (si->stream_pos == si->total) {
-                if (si->stream_pos)
+                if (si->stream_pos || !count)
                     removeStream (p);
                 else
                     g_timeout_add (0, destroyStream, p);
@@ -228,7 +234,7 @@ static StreamInfo *addStream (const char *url, const char *mime, const char *tar
         si->mimetype = g_strdup (mime);
     if (target)
         si->target = g_strdup (target);
-    si->notify_data = notify_data;
+    si->np_stream.notifyData = notify_data;
     si->notify = notify;
     si->np_stream.ndata = (void *) (long) (stream_id_counter++);
     print ("add stream %d\n", (long) si->np_stream.ndata);
@@ -362,6 +368,7 @@ static NPError nsDestroyStream (NPP instance, NPStream *stream, NPError reason) 
     print ("nsDestroyStream\n");
     if (si) {
         si->reason = reason;
+        si->destroyed = true;
         g_timeout_add (0, destroyStream, stream->ndata);
         return NPERR_NO_ERROR;
     }
@@ -586,7 +593,7 @@ static bool nsEvaluate (NPP instance, NPObject * npobj, NPString * script,
                 result->type = NPVariantType_String;
                 result->value.stringValue.utf8characters =
                     g_strdup (this_var_string);
-                result->value.stringValue.utf8length = strlen (this_var_string);
+                result->value.stringValue.utf8length=strlen (this_var_string)+1;
             }
             g_free (this_var_type);
         }
@@ -1171,8 +1178,7 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
                    DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type (&args)) {
                 dbus_message_iter_get_basic (&args, &si->reason);
                 print ("eof %d bytes:%d reason:%d\n", (long)stream_id, si->total, si->reason);
-                if (si->stream_pos == si->total ||
-                        si->reason > NPERR_NO_ERROR)
+                if (si->stream_pos == si->total || si->destroyed)
                     removeStream (stream_id);
             }
         }
