@@ -236,6 +236,7 @@ protected:
     void contextMenuEvent (QContextMenuEvent * e);
     virtual void windowChanged( WId w );
 private:
+    WId m_plain_window;
     unsigned int m_bgcolor;
     float m_aspect;
     View * m_view;

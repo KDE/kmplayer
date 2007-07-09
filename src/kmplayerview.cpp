@@ -691,7 +691,7 @@ KDE_NO_EXPORT bool View::x11Event (XEvent * e) {
 //----------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT Viewer::Viewer (QWidget *parent, View * view)
-  : QXEmbed (parent), m_bgcolor (0), m_aspect (0.0),
+  : QXEmbed (parent), m_plain_window (0), m_bgcolor (0), m_aspect (0.0),
     m_view (view) {
     /*XWindowAttributes xwa;
     XGetWindowAttributes (qt_xdisplay(), winId (), &xwa);
@@ -715,19 +715,22 @@ KDE_NO_EXPORT void Viewer::changeProtocol (QXEmbed::Protocol p) {
     if (!embeddedWinId () || p != protocol ()) {
         if (p == QXEmbed::XPLAIN) {
             setProtocol (p);
-            int scr = DefaultScreen (qt_xdisplay ());
-            embed (XCreateSimpleWindow (
+            if (!m_plain_window) {
+                int scr = DefaultScreen (qt_xdisplay ());
+                m_plain_window = XCreateSimpleWindow (
                         qt_xdisplay(),
                         m_view->winId (),
                         0, 0, width(), height(),
                         1,
                         BlackPixel (qt_xdisplay(), scr),
-                        BlackPixel (qt_xdisplay(), scr)));
-            XClearWindow (qt_xdisplay(), embeddedWinId ());
+                        BlackPixel (qt_xdisplay(), scr));
+                embed (m_plain_window);
+            }
+            XClearWindow (qt_xdisplay(), m_plain_window);
         } else {
-            WId w = embeddedWinId ();
-            if (w) {
-                XDestroyWindow (qt_xdisplay(), w);
+            if (m_plain_window) {
+                XDestroyWindow (qt_xdisplay(), m_plain_window);
+                m_plain_window = 0;
                 XSync (qt_xdisplay (), false);
             }
             setProtocol (p);
@@ -737,7 +740,7 @@ KDE_NO_EXPORT void Viewer::changeProtocol (QXEmbed::Protocol p) {
 
 KDE_NO_EXPORT void Viewer::windowChanged (WId w) {
     kdDebug () << "windowChanged " << (int)w << endl;
-    if (w)
+    if (w /*&& m_plain_window*/)
         XSelectInput (qt_xdisplay (), w, 
                 //KeyPressMask | KeyReleaseMask |
                 KeyPressMask |
