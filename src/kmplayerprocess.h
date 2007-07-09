@@ -418,7 +418,7 @@ public:
         BecauseDone = 0, BecauseError = 1, BecauseStopped = 2
     };
 
-    NpStream (QObject *parent, const KURL & url);
+    NpStream (QObject *parent, Q_UINT32 stream_id, const KURL & url);
     ~NpStream ();
 
     void open ();
@@ -429,12 +429,15 @@ public:
     KIO::TransferJob *job;
     timeval data_arrival;
     Q_UINT32 bytes;
+    Q_UINT32 stream_id;
     Reason finish_reason;
 signals:
     void stateChanged ();
+    void redirected (Q_UINT32, const KURL &);
 private slots:
     void slotResult (KIO::Job*);
     void slotData (KIO::Job*, const QByteArray& qb);
+    void redirection (KIO::Job *, const KURL &url);
 };
 
 class KMPLAYER_NO_EXPORT NpPlayer : public Process {
@@ -468,6 +471,7 @@ private slots:
     void processStopped (KProcess *);
     void wroteStdin (KProcess *);
     void streamStateChanged ();
+    void streamRedirected (Q_UINT32, const KURL &);
 protected:
     virtual void terminateJobs ();
 private:

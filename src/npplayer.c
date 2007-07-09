@@ -43,6 +43,7 @@ http://dbus.freedesktop.org/doc/dbus/libdbus-tutorial.html
 #include "moz-sdk/npupp.h"
 
 typedef const char* (* NP_LOADDS NP_GetMIMEDescriptionUPP)();
+typedef NPError (* NP_GetValueUPP)(void *inst, NPPVariable var, void *value);
 typedef NPError (* NP_InitializeUPP)(NPNetscapeFuncs*, NPPluginFuncs*);
 typedef NPError (* NP_ShutdownUPP)(void);
 
@@ -96,6 +97,7 @@ typedef struct _JsObject {
 } JsObject;
 
 static NP_GetMIMEDescriptionUPP npGetMIMEDescription;
+static NP_GetValueUPP npGetValue;
 static NP_InitializeUPP npInitialize;
 static NP_ShutdownUPP npShutdown;
 
@@ -170,8 +172,10 @@ static void removeStream (void * p) {
     if (si) {
         print ("removeStream %d rec:%d reason %d\n", (long) p, si->stream_pos, si->reason);
         if (!si->destroyed) {
-            if (si->called_plugin && !si->target)
+            if (si->called_plugin && !si->target) {
+                si->np_stream.end = si->total;
                 np_funcs.destroystream (npp, &si->np_stream, si->reason);
+            }
             if (si->notify)
                 np_funcs.urlnotify (npp,
                         si->url, si->reason, si->np_stream.notifyData);
@@ -307,11 +311,15 @@ static char *nsVariant2Str (const NPVariant *value) {
 
 static NPObject * nsCreateObject (NPP instance, NPClass *aClass) {
     NPObject *obj;
-    if (aClass && aClass->allocate)
+    if (aClass && aClass->allocate) {
         obj = aClass->allocate (instance, aClass);
-    else
-        obj = js_class.allocate (instance, &js_class);/*add null class*/
-    /*print ("NPN_CreateObject\n");*/
+    } else {
+        obj = (NPObject *) malloc (sizeof (NPObject));
+        memset (obj, 0, sizeof (NPObject));
+        obj->_class = aClass;
+        /*obj = js_class.allocate (instance, &js_class);/ *add null class*/
+        print ("NPN_CreateObject\n");
+    }
     obj->referenceCount = 1;
     return obj;
 }
@@ -477,6 +485,7 @@ static NPError nsGetValue (NPP instance, NPNVariable variable, void *value) {
         default:
             *(int*)value = 0;
             print ("unknown value\n");
+            return NPERR_GENERIC_ERROR;
     }
     return NPERR_NO_ERROR;
 }
@@ -924,6 +933,7 @@ static void readStdin (gpointer p, gint src, GdkInputCondition cond) {
 static int initPlugin (const char *plugin_lib) {
     NPNetscapeFuncs ns_funcs;
     NPError np_err;
+    char *pname;
 
     print ("starting %s with %s\n", plugin_lib, object_url);
     library = g_module_open (plugin_lib, G_MODULE_BIND_LAZY);
@@ -935,6 +945,10 @@ static int initPlugin (const char *plugin_lib) {
                 "NP_GetMIMEDescription", (gpointer *)&npGetMIMEDescription)) {
         print ("undefined reference to load NP_GetMIMEDescription\n");
         return -1;
+    }
+    if (!g_module_symbol (library,
+                "NP_GetValue", (gpointer *)&npGetValue)) {
+        print ("undefined reference to load NP_GetValue\n");
     }
     if (!g_module_symbol (library,
                 "NP_Initialize", (gpointer *)&npInitialize)) {
@@ -1013,6 +1027,12 @@ static int initPlugin (const char *plugin_lib) {
         npShutdown = 0;
         return -1;
     }
+    np_err = npGetValue (NULL, NPPVpluginNameString, &pname);
+    if (np_err == NPERR_NO_ERROR)
+        print ("NP_GetValue Name %s\n", pname);
+    np_err = npGetValue (NULL, NPPVpluginDescriptionString, &pname);
+    if (np_err == NPERR_NO_ERROR)
+        print ("NP_GetValue Description %s\n", pname);
     return 0;
 }
 
@@ -1039,6 +1059,12 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
         return -1;
     }
     if (np_funcs.getvalue) {
+        char *pname;
+        void *iid;
+        np_err = np_funcs.getvalue ((void*)npp,
+                NPPVpluginNameString, (void*)&pname);
+        if (np_err == NPERR_NO_ERROR)
+            print ("plugin name %s\n", pname);
         np_err = np_funcs.getvalue ((void*)npp,
                 NPPVpluginNeedsXEmbed, (void*)&needs_xembed);
         if (np_err != NPERR_NO_ERROR || !needs_xembed) {
@@ -1046,6 +1072,8 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
             shutDownPlugin();
             return -1;
         }
+        np_err = np_funcs.getvalue ((void*)npp,
+                NPPVpluginScriptableIID, (void*)&iid);
         np_err = np_funcs.getvalue ((void*)npp,
                 NPPVpluginScriptableNPObject, (void*)&scriptable_peer);
         if (np_err != NPERR_NO_ERROR || !scriptable_peer)
@@ -1165,6 +1193,21 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
         }
         print ("play %s %s %s params:%d\n", object_url, mimetype, plugin, i);
         startPlugin (object_url, mimetype, i, argn, argv);
+    } else if (dbus_message_is_method_call (msg, iface, "redirected")) {
+        char *url = 0;
+        const char *path = dbus_message_get_path (msg);
+        StreamInfo *si;
+        const char *p = strrchr (path, '_');
+        gpointer stream_id = p ? (gpointer) strtol (p+1, NULL, 10) : NULL;
+        si = (StreamInfo *) g_tree_lookup (stream_list, stream_id);
+        if (si && dbus_message_iter_init (msg, &args) && 
+                DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
+            dbus_message_iter_get_basic (&args, &url);
+            free (si->url);
+            si->url = g_strdup (url);
+            si->np_stream.url = si->url;
+            print ("redirect %d (had data %d) to %s\n", (long)stream_id, si->called_plugin, url);
+        }
     } else if (dbus_message_is_method_call (msg, iface, "eof")) {
         const char *path = dbus_message_get_path (msg);
         StreamInfo *si;
@@ -1186,6 +1229,8 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
         print ("quit\n");
         shutDownPlugin();
         gtk_main_quit();
+    } else {
+        print ("unknown message\n");
     }
     return DBUS_HANDLER_RESULT_HANDLED;
 }

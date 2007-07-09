@@ -1988,8 +1988,12 @@ dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
 }
 
 KDE_NO_CDTOR_EXPORT
-NpStream::NpStream (QObject *p, const KURL & u)
- : QObject (p), url (u), job (0L), bytes (0), finish_reason (NoReason) {
+NpStream::NpStream (QObject *p, Q_UINT32 sid, const KURL & u)
+ : QObject (p),
+   url (u),
+   job (0L), bytes (0),
+   stream_id (sid),
+   finish_reason (NoReason) {
     data_arrival.tv_sec = 0;
 }
 
@@ -1998,7 +2002,7 @@ KDE_NO_CDTOR_EXPORT NpStream::~NpStream () {
 }
 
 KDE_NO_EXPORT void NpStream::open () {
-    kdDebug () << "NpStream::open " << url.url () << endl;
+    kdDebug () << "NpStream " << stream_id << " open " << url.url () << endl;
     if (url.url().startsWith ("javascript:")) {
         NpPlayer *npp = static_cast <NpPlayer *> (parent ());
         QString result = npp->evaluateScript (url.url().mid (11));
@@ -2022,6 +2026,8 @@ KDE_NO_EXPORT void NpStream::open () {
                 this, SLOT (slotData (KIO::Job *, const QByteArray &)));
         connect (job, SIGNAL (result (KIO::Job *)),
                 this, SLOT (slotResult (KIO::Job *)));
+        connect (job, SIGNAL (redirection (KIO::Job *, const KURL &)),
+                this, SLOT (redirection (KIO::Job *, const KURL &)));
     }
 }
 
@@ -2035,7 +2041,7 @@ KDE_NO_EXPORT void NpStream::close () {
 }
 
 KDE_NO_EXPORT void NpStream::slotResult (KIO::Job *jb) {
-    kdDebug() << "slotResult " << bytes << endl;
+    kdDebug() << "slotResult " << bytes << " err:" << jb->error () << endl;
     finish_reason = jb->error () ? BecauseError : BecauseDone;
     job = 0L; // signal KIO::Job::result deletes itself
     emit stateChanged ();
@@ -2048,6 +2054,11 @@ KDE_NO_EXPORT void NpStream::slotData (KIO::Job*, const QByteArray& qb) {
         gettimeofday (&data_arrival, 0L);
         emit stateChanged ();
     }
+}
+
+KDE_NO_EXPORT void NpStream::redirection (KIO::Job *, const KURL &u) {
+    url = u;
+    emit redirected (stream_id, url);
 }
 
 static const char * npplayer_supports [] = {
@@ -2231,6 +2242,7 @@ KDE_NO_EXPORT void NpPlayer::setStarted (const QString & srv) {
 KDE_NO_EXPORT QString NpPlayer::evaluateScript (const QString & script) {
     QString result;
     emit evaluate (script, result);
+    //kdDebug () << "evaluateScript " << script << " => " << result << endl;
     return result;
 }
 
@@ -2257,10 +2269,19 @@ void NpPlayer::requestStream (const QString &path, const QString & url, const QS
     if (sid >= 0) {
         if (!target.isEmpty ()) {
             kdDebug () << "new page request " << target << endl;
-            emit openUrl (uri, target);
+            if (url.startsWith ("javascript:")) {
+                QString result = evaluateScript (url.mid (11));
+                kdDebug() << "result is " << result << endl;
+                if (result == "undefined")
+                    uri = KURL ();
+                else
+                    uri = KURL (m_url, result); // probably wrong ..
+            }
+            if (uri.isValid ())
+                emit openUrl (uri, target);
             sendFinish (sid, 0, NpStream::BecauseDone);
         } else {
-            NpStream * ns = new NpStream (this, uri);
+            NpStream * ns = new NpStream (this, sid, uri);
             connect (ns, SIGNAL (stateChanged ()),
                     this, SLOT (streamStateChanged ()));
             streams[sid] = ns;
@@ -2360,6 +2381,25 @@ KDE_NO_EXPORT void NpPlayer::streamStateChanged () {
         processStreams ();
 }
 
+KDE_NO_EXPORT void NpPlayer::streamRedirected (Q_UINT32 sid, const KURL &u) {
+    if (playing () && dbus_static->dbus_connnection) {
+        kdDebug() << "redirected " << sid << " to " << u.url() << endl;
+        char *cu = strdup (u.url ().local8Bit().data ());
+        QString objpath = QString ("/plugin/stream_%1").arg (sid);
+        DBusMessage *msg = dbus_message_new_method_call (
+                remote_service.ascii(),
+                objpath.ascii (),
+                "org.kde.kmplayer.backend",
+                "redirected");
+        dbus_message_append_args(msg, DBUS_TYPE_STRING, &cu, DBUS_TYPE_INVALID);
+        dbus_message_set_no_reply (msg, TRUE);
+        dbus_connection_send (dbus_static->dbus_connnection, msg, NULL);
+        dbus_message_unref (msg);
+        dbus_connection_flush (dbus_static->dbus_connnection);
+        free (cu);
+    }
+}
+
 KDE_NO_EXPORT void NpPlayer::processStreams () {
     NpStream *stream = 0L;
     Q_UINT32 stream_id;
@@ -2376,7 +2416,11 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
             write_in_progress = true; // javascript: urls emit stateChange
             ns->open ();
             write_in_progress = false;
-            active_count++;
+            if (ns->job) {
+                connect (ns, SIGNAL (redirected (Q_UINT32, const KURL&)),
+                        this, SLOT (streamRedirected (Q_UINT32, const KURL&)));
+                active_count++;
+            }
         }
         if (ns->finish_reason == NpStream::BecauseStopped ||
                 ns->finish_reason == NpStream::BecauseError ||
@@ -2431,7 +2475,7 @@ KDE_NO_EXPORT QString NpPlayer::menuName () const {
 #else
 
 KDE_NO_CDTOR_EXPORT
-NpStream::NpStream (QObject *p, const KURL & url)
+NpStream::NpStream (QObject *p, Q_UINT32, const KURL & url)
     : QObject (p) {}
 
 KDE_NO_CDTOR_EXPORT NpStream::~NpStream () {}
