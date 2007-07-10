@@ -384,6 +384,7 @@ KDE_NO_EXPORT WId MPlayer::widget () {
 KDE_NO_EXPORT bool MPlayer::ready (Viewer * viewer) {
     Process::ready (viewer);
     viewer->changeProtocol (QXEmbed::XPLAIN);
+    return false;
 }
 
 KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
