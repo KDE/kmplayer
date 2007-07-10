@@ -1204,15 +1204,20 @@ int main(int argc, char **argv) {
         xine_dispose (stream);
     }
     if (ao_port)
-        xine_close_audio_driver (xine, ao_port);  
+        xine_close_audio_driver (xine, ao_port);
     if (vo_port)
-        xine_close_video_driver (xine, vo_port);  
+        xine_close_video_driver (xine, vo_port);
     XLockDisplay(display);
-    XClientMessageEvent ev = {
-        ClientMessage, 0, true, display, wid, 
-        XInternAtom (display, "XINE", false), 8, {b: "quit_now"}
-    };
-    XSendEvent (display, wid, false, StructureNotifyMask, (XEvent *) & ev);
+    XEvent ev;
+    ev.xclient.type = ClientMessage;
+    ev.xclient.serial = 0;
+    ev.xclient.send_event = true;
+    ev.xclient.display = display;
+    ev.xclient.window = wid;
+    ev.xclient.message_type = XInternAtom (display, "XINE", false);
+    ev.xclient.format = 8;
+    strcpy(ev.xclient.data.b, "quit_now");
+    XSendEvent (display, wid, false, StructureNotifyMask, &ev);
     XFlush (display);
     XUnlockDisplay(display);
     eventThread->wait (500);
