@@ -98,7 +98,7 @@ class KMPLAYER_EXPORT Settings : public QObject {
 public:
     Settings (PartBase *, KConfig * part);
     ~Settings ();
-    bool createDialog ();
+    bool createDialog () KDE_NO_EXPORT;
     void show (const char * pagename = 0L);
     void addPage (PreferencesPage *);
     void removePage (PreferencesPage *);
@@ -188,7 +188,7 @@ public:
 signals:
     void configChanged ();
 public slots:
-    void readConfig ();
+    void readConfig () KDE_NO_EXPORT;
     void writeConfig ();
 private slots:
     void okPressed ();

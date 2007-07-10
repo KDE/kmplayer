@@ -642,7 +642,7 @@ KDE_NO_EXPORT int View::statusBarHeight () const {
     return 0;
 }
 
-KDE_NO_EXPORT bool View::x11Event (XEvent * e) {
+bool View::x11Event (XEvent * e) {
     switch (e->type) {
         case UnmapNotify:
             if (e->xunmap.event == m_viewer->embeddedWinId ()) {

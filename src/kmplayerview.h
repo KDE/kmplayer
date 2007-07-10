@@ -164,9 +164,9 @@ signals:
     void fullScreenChanged ();
     void windowVideoConsoleToggled (int wt);
 protected:
-    void leaveEvent (QEvent *);
-    void timerEvent (QTimerEvent *);
-    bool x11Event (XEvent *);
+    void leaveEvent (QEvent *) KDE_NO_EXPORT;
+    void timerEvent (QTimerEvent *) KDE_NO_EXPORT;
+    bool x11Event (XEvent *) KDE_NO_EXPORT;
 private:
     // widget for player's output
     Viewer * m_viewer;

@@ -590,7 +590,7 @@ void Settings::writeConfig () {
     m_config->sync ();
 }
 
-KDE_NO_EXPORT void Settings::okPressed () {
+void Settings::okPressed () {
     bool urlchanged = configdialog->m_SourcePageURL->changed;
     bool playerchanged = false;
     if (urlchanged) {

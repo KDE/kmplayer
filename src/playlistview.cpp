@@ -286,7 +286,7 @@ KDE_NO_EXPORT void PlayListView::updateTrees () {
     }
 }
 
-KDE_NO_EXPORT void PlayListView::updateTree (RootPlayListItem * ritem, NodePtr active, bool select) {
+void PlayListView::updateTree (RootPlayListItem * ritem, NodePtr active, bool select) {
     bool set_open = ritem->id == 0 || (ritem ? ritem->isOpen () : false);
     m_ignore_expanded = true;
     PlayListItem * curitem = 0L;

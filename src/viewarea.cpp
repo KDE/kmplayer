@@ -204,7 +204,6 @@ KDE_NO_CDTOR_EXPORT ViewSurface::~ViewSurface() {
     kdDebug() << "~ViewSurface" << endl;
 }
 
-KDE_NO_EXPORT
 SurfacePtr ViewSurface::createSurface (NodePtr owner, const SRect & rect) {
     SurfacePtr surface = new ViewSurface (view_widget, owner, rect);
     appendChild (surface);
