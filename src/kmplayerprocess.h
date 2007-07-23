@@ -29,6 +29,7 @@
 #include <qregexp.h>
 
 #include <kurl.h>
+#include <kio/global.h>
 
 #include "kmplayerconfig.h"
 #include "kmplayersource.h"
@@ -430,7 +431,9 @@ public:
     timeval data_arrival;
     Q_UINT32 bytes;
     Q_UINT32 stream_id;
+    Q_UINT32 content_length;
     Reason finish_reason;
+    QString mimetype;
 signals:
     void stateChanged ();
     void redirected (Q_UINT32, const KURL &);
@@ -438,6 +441,8 @@ private slots:
     void slotResult (KIO::Job*);
     void slotData (KIO::Job*, const QByteArray& qb);
     void redirection (KIO::Job *, const KURL &url);
+    void slotMimetype (KIO::Job *, const QString &mime);
+    void slotTotalSize (KIO::Job *, KIO::filesize_t sz);
 };
 
 class KMPLAYER_NO_EXPORT NpPlayer : public Process {

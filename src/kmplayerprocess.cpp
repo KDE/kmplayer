@@ -2004,7 +2004,7 @@ KDE_NO_CDTOR_EXPORT
 NpStream::NpStream (QObject *p, Q_UINT32 sid, const KURL & u)
  : QObject (p),
    url (u),
-   job (0L), bytes (0),
+   job (0L), bytes (0), content_length (0),
    stream_id (sid),
    finish_reason (NoReason) {
     data_arrival.tv_sec = 0;
@@ -2041,6 +2041,10 @@ KDE_NO_EXPORT void NpStream::open () {
                 this, SLOT (slotResult (KIO::Job *)));
         connect (job, SIGNAL (redirection (KIO::Job *, const KURL &)),
                 this, SLOT (redirection (KIO::Job *, const KURL &)));
+        connect (job, SIGNAL (mimetype (KIO::Job *, const QString &)),
+                SLOT (slotMimetype (KIO::Job *, const QString &)));
+        connect (job, SIGNAL (totalSize (KIO::Job *, KIO::filesize_t)),
+                SLOT (slotTotalSize (KIO::Job *, KIO::filesize_t)));
     }
 }
 
@@ -2072,6 +2076,14 @@ KDE_NO_EXPORT void NpStream::slotData (KIO::Job*, const QByteArray& qb) {
 KDE_NO_EXPORT void NpStream::redirection (KIO::Job *, const KURL &u) {
     url = u;
     emit redirected (stream_id, url);
+}
+
+void NpStream::slotMimetype (KIO::Job *, const QString &mime) {
+    mimetype = mime;
+}
+
+void NpStream::slotTotalSize (KIO::Job *, KIO::filesize_t sz) {
+    content_length = sz;
 }
 
 static const char * npplayer_supports [] = {
@@ -2468,6 +2480,28 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
     }
     //kdDebug() << "NpPlayer::processStreams " << stream << endl;
     if (stream) {
+        if (dbus_static->dbus_connnection &&
+                !stream->bytes &&
+                (!stream->mimetype.isEmpty() || stream->content_length)) {
+            char *mt = strdup (stream->mimetype.isEmpty ()
+                    ? ""
+                    : stream->mimetype.utf8 ().data ());
+            QString objpath=QString("/plugin/stream_%1").arg(stream->stream_id);
+            DBusMessage *msg = dbus_message_new_method_call (
+                    remote_service.ascii(),
+                    objpath.ascii (),
+                    "org.kde.kmplayer.backend",
+                    "streamInfo");
+            dbus_message_append_args (msg,
+                    DBUS_TYPE_STRING, &mt,
+                    DBUS_TYPE_UINT32, &stream->content_length,
+                    DBUS_TYPE_INVALID);
+            dbus_message_set_no_reply (msg, TRUE);
+            dbus_connection_send (dbus_static->dbus_connnection, msg, NULL);
+            dbus_message_unref (msg);
+            dbus_connection_flush (dbus_static->dbus_connnection);
+            free (mt);
+        }
         const int header_len = 2 * sizeof (Q_UINT32);
         Q_UINT32 chunk = stream->pending_buf.size();
         send_buf.resize (chunk + header_len);

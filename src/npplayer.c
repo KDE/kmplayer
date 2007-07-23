@@ -1126,6 +1126,13 @@ static gpointer startPlugin (const char *url, const char *mime,
 
 /*----------------%<---------------------------------------------------------*/
 
+static StreamInfo *getStreamInfo (const char *path, gpointer *stream_id) {
+    StreamInfo *si;
+    const char *p = strrchr (path, '_');
+    *stream_id = p ? (gpointer) strtol (p+1, NULL, 10) : NULL;
+    return (StreamInfo *) g_tree_lookup (stream_list, *stream_id);
+}
+
 static DBusHandlerResult dbusFilter (DBusConnection * connection,
         DBusMessage *msg, void * user_data) {
     DBusMessageIter args;
@@ -1202,11 +1209,8 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
         startPlugin (object_url, mimetype, i, argn, argv);
     } else if (dbus_message_is_method_call (msg, iface, "redirected")) {
         char *url = 0;
-        const char *path = dbus_message_get_path (msg);
-        StreamInfo *si;
-        const char *p = strrchr (path, '_');
-        gpointer stream_id = p ? (gpointer) strtol (p+1, NULL, 10) : NULL;
-        si = (StreamInfo *) g_tree_lookup (stream_list, stream_id);
+        gpointer stream_id;
+        StreamInfo *si = getStreamInfo(dbus_message_get_path (msg), &stream_id);
         if (si && dbus_message_iter_init (msg, &args) && 
                 DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
             dbus_message_iter_get_basic (&args, &url);
@@ -1216,11 +1220,8 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
             print ("redirect %d (had data %d) to %s\n", (long)stream_id, si->called_plugin, url);
         }
     } else if (dbus_message_is_method_call (msg, iface, "eof")) {
-        const char *path = dbus_message_get_path (msg);
-        StreamInfo *si;
-        const char *p = strrchr (path, '_');
-        gpointer stream_id = p ? (gpointer) strtol (p+1, NULL, 10) : NULL;
-        si = (StreamInfo *) g_tree_lookup (stream_list, stream_id);
+        gpointer stream_id;
+        StreamInfo *si = getStreamInfo(dbus_message_get_path (msg), &stream_id);
         if (si && dbus_message_iter_init (msg, &args) && 
                 DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type (&args)) {
             dbus_message_iter_get_basic (&args, &si->total);
@@ -1236,6 +1237,26 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
         print ("quit\n");
         shutDownPlugin();
         gtk_main_quit();
+    } else if (dbus_message_is_method_call (msg, iface, "streamInfo")) {
+        gpointer stream_id;
+        StreamInfo *si = getStreamInfo(dbus_message_get_path (msg), &stream_id);
+        const char *mime;
+        uint32_t length;
+        if (si && dbus_message_iter_init (msg, &args) && 
+                DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
+            dbus_message_iter_get_basic (&args, &mime);
+            if (*mime) {
+                if (si->mimetype)
+                    g_free (si->mimetype);
+                si->mimetype = g_strdup (mime);
+            }
+            if (dbus_message_iter_next (&args) &&
+                   DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type (&args)) {
+                dbus_message_iter_get_basic (&args, &length);
+                si->np_stream.end = length;
+            }
+            print ("streamInfo %d size:%d mime:%s\n", (long)stream_id, length, mime);
+        }
     } else {
         print ("unknown message\n");
     }
