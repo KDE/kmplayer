@@ -107,7 +107,7 @@ protected:
 public slots:
     void editCurrent ();
     void rename (QListViewItem * item, int c);
-    void updateTree (int id, NodePtr root, NodePtr active, bool sel, bool open) KDE_NO_EXPORT;
+    void updateTree (int id, NodePtr root, NodePtr active, bool sel, bool open);
 private slots:
     void contextMenuItem (QListViewItem *, const QPoint &, int);
     void itemExpanded (QListViewItem *);
