@@ -59,6 +59,8 @@ static GModule *library;
 static GtkWidget *xembed;
 static Window socket_id;
 static Window parent_id;
+static int top_w, top_h;
+static int update_dimension_timer;
 static int stdin_read_watch;
 
 static NPPluginFuncs np_funcs;       /* plugin functions              */
@@ -1043,16 +1045,17 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     int screen;
     int i;
     int needs_xembed;
-    unsigned int width = 320, height = 240;
+    const unsigned int width = 1920, height = 1200;
 
     npp = (NPP_t*)malloc (sizeof (NPP_t));
     memset (npp, 0, sizeof (NPP_t));
-    for (i = 0; i < argc; i++) {
+    /*for (i = 0; i < argc; i++) {
+      // TODO: use this to determine aspect
         if (!strcasecmp (argn[i], "width"))
             width = strtol (argv[i], 0L, 10);
         else if (!strcasecmp (argn[i], "height"))
             height = strtol (argv[i], 0L, 10);
-    }
+    }*/
     np_err = np_funcs.newp (mime, npp, NP_EMBED, argc, argn, argv, saved_data);
     if (np_err != NPERR_NO_ERROR) {
         print ("NPP_New failure %d %p %p\n", np_err, np_funcs, np_funcs.newp);
@@ -1358,14 +1361,28 @@ static void embeddedEvent (GtkPlug *plug, gpointer d) {
     print ("embeddedEvent\n");
 }
 
+static gboolean updateDimension (void * p) {
+    (void)p;
+    if (np_window.window) {
+        if (np_window.width != top_w || np_window.height != top_h) {
+            np_window.width = top_w;
+            np_window.height = top_h;
+            np_funcs.setwindow (npp, &np_window);
+        }
+        update_dimension_timer = 0;
+        return 0; /* single shot */
+    } else {
+        return 1;
+    }
+}
+
 static gboolean configureEvent(GtkWidget *w, GdkEventConfigure *e, gpointer d) {
     (void)w; (void)d;
-    if (np_window.window &&
-            (e->width != np_window.width || e->height != np_window.height)) {
-        print ("Update size %dx%d\n", e->width, e->height);
-        np_window.width = e->width;
-        np_window.height = e->height;
-        np_funcs.setwindow (npp, &np_window);
+    if (e->width != top_w || e->height != top_h) {
+        top_w = e->width;
+        top_h = e->height;
+        if (!update_dimension_timer)
+            update_dimension_timer = g_timeout_add (100, updateDimension, NULL);
     }
     return FALSE;
 }
@@ -1396,8 +1413,8 @@ static gboolean initPlayer (void * p) {
             G_CALLBACK (windowDestroyEvent), NULL);
     g_signal_connect_after (G_OBJECT (window), "realize",
             GTK_SIGNAL_FUNC (windowCreatedEvent), NULL);
-    /*g_signal_connect (G_OBJECT (window), "configure-event",
-            GTK_SIGNAL_FUNC (configureEvent), NULL);*/
+    g_signal_connect (G_OBJECT (window), "configure-event",
+            GTK_SIGNAL_FUNC (configureEvent), NULL);
 
     xembed = gtk_socket_new();
     g_signal_connect (G_OBJECT (xembed), "plug-added",
@@ -1415,6 +1432,7 @@ static gboolean initPlayer (void * p) {
     } else {
         g_signal_connect (G_OBJECT (window), "embedded",
                 GTK_SIGNAL_FUNC (embeddedEvent), NULL);
+        gtk_widget_set_size_request (window, 1920, 1200);
         gtk_widget_realize (window);
     }
 
