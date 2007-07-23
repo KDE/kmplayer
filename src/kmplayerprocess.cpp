@@ -1982,6 +1982,18 @@ dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
 
         } else if (dbus_message_is_method_call (msg, iface, "plugged")) {
             process->viewer ()->view ()->videoStart ();
+        } else if (dbus_message_is_method_call (msg, iface, "dimension")) {
+            Q_UINT32 w, h;
+            if (dbus_message_iter_init (msg, &args) &&
+                    DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type(&args)) {
+                dbus_message_iter_get_basic (&args, &w);
+                if (dbus_message_iter_next (&args) &&
+                  DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type(&args)) {
+                    dbus_message_iter_get_basic (&args, &h);
+                    if (h > 0)
+                        process->source ()->setAspect (process->mrl(), 1.0*w/h);
+                }
+            }
         }
         return DBUS_HANDLER_RESULT_HANDLED;
     }

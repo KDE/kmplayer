@@ -1045,17 +1045,21 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     int screen;
     int i;
     int needs_xembed;
-    const unsigned int width = 1920, height = 1200;
+    uint32_t width = 0, height = 0;
 
-    npp = (NPP_t*)malloc (sizeof (NPP_t));
-    memset (npp, 0, sizeof (NPP_t));
-    /*for (i = 0; i < argc; i++) {
-      // TODO: use this to determine aspect
+    for (i = 0; i < argc; i++) {
         if (!strcasecmp (argn[i], "width"))
             width = strtol (argv[i], 0L, 10);
         else if (!strcasecmp (argn[i], "height"))
             height = strtol (argv[i], 0L, 10);
-    }*/
+    }
+    if (width > 0 && height > 0)
+        callFunction (-1, "dimension",
+                DBUS_TYPE_UINT32, &width, DBUS_TYPE_UINT32, &height,
+                DBUS_TYPE_INVALID);
+
+    npp = (NPP_t*)malloc (sizeof (NPP_t));
+    memset (npp, 0, sizeof (NPP_t));
     np_err = np_funcs.newp (mime, npp, NP_EMBED, argc, argn, argv, saved_data);
     if (np_err != NPERR_NO_ERROR) {
         print ("NPP_New failure %d %p %p\n", np_err, np_funcs, np_funcs.newp);
@@ -1086,8 +1090,8 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     display = gdk_x11_get_default_xdisplay ();
     np_window.x = 0;
     np_window.y = 0;
-    np_window.width = width;
-    np_window.height = height;
+    np_window.width = 1920;
+    np_window.height = 1200;
     np_window.window = (void*)socket_id;
     np_window.type = NPWindowTypeWindow;
     ws_info.type = NP_SETWINDOW;
@@ -1102,8 +1106,8 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     GtkAllocation allocation;
     allocation.x = 0;
     allocation.y = 0;
-    allocation.width = width;
-    allocation.height = height;
+    allocation.width = np_window.width;
+    allocation.height = np_window.height;
     gtk_widget_size_allocate (xembed, &allocation);
 
     np_err = np_funcs.setwindow (npp, &np_window);
