@@ -472,6 +472,10 @@ const short id_node_cdata = 6;
 const short id_node_group_node = 25;
 const short id_node_playlist_document = 26;
 const short id_node_playlist_item = 27;
+const short id_node_param = 28;
+const short id_node_html_object = 29;
+const short id_node_html_embed = 30;
+
 /*
  * Element node, XML node that can have attributes
  */

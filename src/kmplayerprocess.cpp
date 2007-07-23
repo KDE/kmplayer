@@ -2150,8 +2150,17 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
     if (m_mrl && !m_url.isEmpty () && dbus_static->dbus_connnection) {
         QString mime = "text/plain";
         QString plugin;
+        Element *elm = m_mrl->mrl ();
+        if (elm->id == id_node_html_object) {
+            // this sucks to have to do this here ..
+            for (NodePtr n = elm->firstChild (); n; n = n->nextSibling ())
+                if (n->id == KMPlayer::id_node_html_embed) {
+                    elm = convertNode <Element> (n);
+                    break;
+                }
+        }
         for (NodePtr n = m_mrl; n; n = n->parentNode ()) {
-            Mrl *mrl = m_mrl->mrl ();
+            Mrl *mrl = n->mrl ();
             if (mrl && !mrl->mimetype.isEmpty ()) {
                 plugin = m_source->plugin (mrl->mimetype);
                 kdDebug() << "search plugin " << mrl->mimetype << "->" << plugin << endl;
@@ -2175,13 +2184,13 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
             dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &c_url);
             dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &c_mime);
             dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &c_plugin);
-            unsigned int param_len = m_mrl->mrl ()->attributes ()->length ();
+            unsigned int param_len = elm->attributes ()->length ();
             char **argn = (char **) malloc (param_len * sizeof (char *));
             char **argv = (char **) malloc (param_len * sizeof (char *));
             dbus_message_iter_append_basic (&it, DBUS_TYPE_UINT32, &param_len);
             DBusMessageIter ait;
             dbus_message_iter_open_container (&it, DBUS_TYPE_ARRAY,"{ss}",&ait);
-            AttributePtr a = m_mrl->mrl ()->attributes ()->first ();
+            AttributePtr a = elm->attributes ()->first ();
             for (int i = 0; i < param_len && a; i++, a = a->nextSibling ()) {
                 DBusMessageIter dit;
                 dbus_message_iter_open_container (&ait,
