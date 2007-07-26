@@ -246,9 +246,7 @@ KDE_NO_EXPORT void ViewSurface::video (Single x, Single y, Single w, Single h) {
 
 #ifdef HAVE_CAIRO
 
-//# define USE_CAIRO_GLITZ
-
-static cairo_surface_t * cairoCreateX11Surface (Window id, int w, int h) {
+static cairo_surface_t * cairoCreateSurface (Window id, int w, int h) {
     Display * display = qt_xdisplay ();
     return cairo_xlib_surface_create (display, id,
             DefaultVisual (display, DefaultScreen (display)), w, h);
@@ -261,86 +259,6 @@ static cairo_surface_t * cairoCreateX11Surface (Window id, int w, int h) {
                     DefaultScreen (qt_xdisplay ()))),
             w, h);*/
 }
-# ifndef USE_CAIRO_GLITZ
-cairo_surface_t * (*cairoCreateSurface)(Window, int, int)=cairoCreateX11Surface;
-# else
-
-#  include <cairo-glitz.h>
-#  include <glitz.h>
-#  include <glitz-glx.h>
-
-glitz_drawable_t * glitz_drawable = 0L; // FIXME add in ViewArea
-
-static cairo_surface_t * cairoCreateSurface (Window id, int w, int h) {
-    glitz_drawable_format_t  formatDrawableTemplate;
-    formatDrawableTemplate.doublebuffer = 1;
-    unsigned long mask = GLITZ_FORMAT_DOUBLEBUFFER_MASK;
-    glitz_drawable_format_t* draw_fmt = NULL;
-    glitz_drawable_format_t* fmt = 0L;
-    XVisualInfo* pVisualInfo;
-    VisualID vis_id = XVisualIDFromVisual (DefaultVisual (qt_xdisplay (),
-                DefaultScreen (qt_xdisplay ())));
-    int i = 0;
-    do {
-        fmt = glitz_glx_find_window_format (
-                qt_xdisplay (),
-                DefaultScreen (qt_xdisplay ()),
-                mask,
-                &formatDrawableTemplate,
-                i++);
-        if (fmt) {
-            pVisualInfo = glitz_glx_get_visual_info_from_format (
-                    qt_xdisplay (), DefaultScreen (qt_xdisplay()), fmt);
-            kdDebug() << "depth = " << pVisualInfo->depth << " id:" << pVisualInfo->visualid << endl;
-            if (pVisualInfo->visualid == vis_id) {
-            //if (pVisualInfo->depth == 32) {
-                  //DefaultDepth(qt_xdisplay(), DefaultScreen(qt_xdisplay()))) {
-                draw_fmt = fmt;
-                break;
-            } else if (!draw_fmt)
-                draw_fmt = fmt;
-        }
-    } while (fmt);
-    if (!draw_fmt)
-        return cairoCreateX11Surface (id, w, h);
-
-    glitz_drawable_t * drawable = glitz_glx_create_drawable_for_window (
-            qt_xdisplay (), DefaultScreen (qt_xdisplay()), draw_fmt, id, w, h);
-    if (!drawable) {
-        kdWarning() << "failed to create glitz drawable on screen " << DefaultScreen (qt_xdisplay()) << endl;
-        return cairoCreateX11Surface (id, w, h);
-    }
-
-    glitz_format_t formatTemplate;
-    formatTemplate.color = draw_fmt->color;
-    formatTemplate.color.fourcc = GLITZ_FOURCC_RGB;
-
-    glitz_format_t* format = glitz_find_format (drawable,
-            GLITZ_FORMAT_RED_SIZE_MASK   |
-            GLITZ_FORMAT_GREEN_SIZE_MASK |
-            GLITZ_FORMAT_BLUE_SIZE_MASK  |
-            GLITZ_FORMAT_ALPHA_SIZE_MASK |
-            GLITZ_FORMAT_FOURCC_MASK,
-            &formatTemplate,
-            0);
-    //glitz_format_t* format = glitz_find_standard_format (
-    //        drawable, GLITZ_STANDARD_ARGB32);
-    glitz_surface_t * pGlitzSurface = glitz_surface_create (
-            drawable, format, w, h, 0, NULL);
-    if (draw_fmt->doublebuffer)
-        glitz_surface_attach (pGlitzSurface,
-                drawable,
-                GLITZ_DRAWABLE_BUFFER_BACK_COLOR);
-    else
-        glitz_surface_attach (pGlitzSurface,
-                drawable,
-                GLITZ_DRAWABLE_BUFFER_FRONT_COLOR);
-    cairo_surface_t* pCairoSurface = cairo_glitz_surface_create (pGlitzSurface);
-    glitz_surface_destroy (pGlitzSurface);
-    glitz_drawable = drawable;
-    return pCairoSurface;
-}
-# endif
 
 # define CAIRO_SET_SOURCE_RGB(cr,c)           \
     cairo_set_source_rgb ((cr),               \
@@ -383,27 +301,19 @@ CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, const SRect & rect)
     cairo_clip (cr);
     cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
     cairo_set_tolerance (cr, 0.5 );
-# ifndef USE_CAIRO_GLITZ
     cairo_push_group (cr);
-#endif
     cairo_set_source_rgb (cr, 0, 0, 0);
     cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
     cairo_fill (cr);
 }
 
 KDE_NO_CDTOR_EXPORT CairoPaintVisitor::~CairoPaintVisitor () {
-# ifndef USE_CAIRO_GLITZ
     cairo_pattern_t * pat = cairo_pop_group (cr);
     //cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
     cairo_set_source (cr, pat);
     cairo_rectangle (cr, clip.x(), clip.y(), clip.width(), clip.height());
     cairo_fill (cr);
     cairo_pattern_destroy (pat);
-# else
-    cairo_surface_flush (cairo_surface);
-    if (glitz_drawable)
-        glitz_drawable_swap_buffers (glitz_drawable);
-#endif
     cairo_destroy (cr);
 }
 
@@ -1255,8 +1165,8 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const SRect & rect) {
     int ey = rect.y ();
     if (ey > 0)
         ey--;
-    int ew = rect.width () + 2;
-    int eh = rect.height () + 2;
+    int ew = rect.width () + 3;
+    int eh = rect.height () + 3;
     if (!cairo_surface)
         cairo_surface = cairoCreateSurface (winId (), width (), height ());
     CairoPaintVisitor visitor (cairo_surface, SRect (ex, ey, ew, eh));
@@ -1288,10 +1198,6 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
 #ifdef HAVE_CAIRO
     if (cairo_surface)
         cairo_xlib_surface_set_size (cairo_surface, width (), height ());
-# ifdef USE_CAIRO_GLITZ
-    if (glitz_drawable)
-        glitz_drawable_update_size (glitz_drawable, width (), height ());
-# endif
 #endif
     int hsb = m_view->statusBarHeight ();
     int hcp = m_view->controlPanel ()->isVisible () ? (m_view->controlPanelMode () == View::CP_Only ? h-hsb: m_view->controlPanel()->maximumSize ().height ()) : 0;
@@ -1398,9 +1304,9 @@ KDE_NO_EXPORT void ViewArea::mouseMoved () {
 }
 
 KDE_NO_EXPORT void ViewArea::scheduleRepaint (Single x, Single y, Single w, Single h) {
-    if (m_repaint_timer)
+    if (m_repaint_timer) {
         m_repaint_rect = m_repaint_rect.unite (SRect (x, y, w, h));
-    else {
+    } else {
         m_repaint_rect = SRect (x, y, w, h);
         m_repaint_timer = startTimer (10); // 100 per sec should do
     }
