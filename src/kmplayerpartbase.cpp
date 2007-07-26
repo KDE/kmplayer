@@ -274,16 +274,71 @@ KMediaPlayer::View* PartBase::view () {
     return m_view;
 }
 
+extern const char * strGeneralGroup;
+
+bool PartBase::setProcess (Mrl *mrl) {
+    // determine backend, start with temp_backends
+    QString p = temp_backends [m_source->name()];
+    bool remember_backend = p.isEmpty ();
+    bool changed = false;
+    if (p.isEmpty ()) {
+        // next try to find mimetype match from kmplayerrc
+        if (!mrl->mimetype.isEmpty ()) {
+            m_config->setGroup (mrl->mimetype);
+            p = m_config->readEntry ("player", "" );
+            remember_backend = !(!p.isEmpty () &&
+                    m_players.contains (p) &&
+                    m_players [p]->supports (m_source->name ()));
+        }
+    }
+    if (p.isEmpty ())
+        // try source match from kmplayerrc
+        p = m_settings->backends [m_source->name()];
+    if (p.isEmpty ()) {
+        // try source match from kmplayerrc by re-reading
+        m_config->setGroup (strGeneralGroup);
+        p = m_config->readEntry (m_source->name (), "");
+    }
+    if (p.isEmpty () ||
+            !m_players.contains (p) ||
+            !m_players [p]->supports (m_source->name ())) {
+        // finally find first supported player
+        p.truncate (0);
+        if (!m_process->supports (m_source->name ())) {
+            ProcessMap::const_iterator i, e = m_players.end();
+            for (i = m_players.begin(); i != e; ++i)
+                if (i.data ()->supports (m_source->name ())) {
+                    p = QString (i.data ()->name ());
+                    break;
+                }
+        } else
+            p = QString (m_process->name ());
+    }
+    if (!p.isEmpty ()) {
+        if (!m_process || p != m_process->name ()) {
+            setProcess (p.ascii ());
+            updatePlayerMenu (m_view->controlPanel ());
+            changed = true;
+        }
+        if (remember_backend)
+            m_settings->backends [m_source->name()] = m_process->name ();
+        else
+            temp_backends.remove (m_source->name());
+    }
+    return changed;
+}
+
 void PartBase::setProcess (const char * name) {
     Process * process = name ? m_players [name] : 0L;
     if (m_process == process)
         return;
     if (!m_source)
         m_source = m_sources ["urlsource"];
-    if (m_process)
-        m_process->quit ();
+    Process * old_process = m_process;
     m_process = process;
-    if (!process)
+    if (old_process && old_process->state () > Process::NotRunning)
+        old_process->quit ();
+    if (!m_process)
         return;
     m_process->setSource (m_source);
     if (m_process->playing ()) {
@@ -302,8 +357,6 @@ void PartBase::setRecorder (const char * name) {
         m_recorder->quit ();
     m_recorder = recorder;
 }
-
-extern const char * strGeneralGroup;
 
 KDE_NO_EXPORT void PartBase::slotPlayerMenu (int id) {
     bool playing = m_process->playing ();
@@ -394,52 +447,9 @@ void PartBase::setSource (Source * _source) {
         if (!m_settings->showplaylistbutton)
           m_view->controlPanel()->button(ControlPanel::button_playlist)->hide();
     }
-    // determine backend, start with temp_backends
-    QString p = temp_backends [_source->name()];
-    bool remember_backend = p.isEmpty ();
-    if (p.isEmpty () && _source->document ()) {
-        // next try to find mimetype match from kmplayerrc
-        Mrl * mrl = _source->document ()->mrl ();
-        if (!mrl->mimetype.isEmpty ()) {
-            m_config->setGroup (mrl->mimetype);
-            p = m_config->readEntry ("player", "" );
-            remember_backend = !(!p.isEmpty () &&
-                    m_players.contains (p) &&
-                    m_players [p]->supports (_source->name ()));
-        }
-    }
-    if (p.isEmpty ())
-        // try source match from kmplayerrc
-        p = m_settings->backends [_source->name()];
-    if (p.isEmpty ()) {
-        // try source match from kmplayerrc by re-reading
-        m_config->setGroup (strGeneralGroup);
-        p = m_config->readEntry (_source->name (), "");
-    }
-    if (p.isEmpty () ||
-            !m_players.contains (p) ||
-            !m_players [p]->supports (_source->name ())) {
-        // finally find first supported player
-        p.truncate (0);
-        if (!m_process->supports (_source->name ())) {
-            ProcessMap::const_iterator i, e = m_players.end();
-            for (i = m_players.begin(); i != e; ++i)
-                if (i.data ()->supports (_source->name ())) {
-                    p = QString (i.data ()->name ());
-                    break;
-                }
-        } else
-            p = QString (m_process->name ());
-    }
-    if (!p.isEmpty ()) {
-        if (!m_process || p != m_process->name ())
-            setProcess (p.ascii ());
-        if (remember_backend)
-            m_settings->backends [_source->name()] = m_process->name ();
-        else
-            temp_backends.remove (_source->name());
-    }
     m_source = _source;
+    if (m_source->document ())
+        setProcess (m_source->document ()->mrl ());
     connectSource (old_source, m_source);
     m_process->setSource (m_source);
     connect (m_source, SIGNAL(startRecording()), this,SLOT(recordingStarted()));
@@ -1091,6 +1101,7 @@ bool Source::requestPlayURL (NodePtr mrl) {
         m_player->updateTree ();
         QTimer::singleShot (0, this, SLOT (playCurrent ()));
     }
+    m_player->setProcess (mrl->mrl ());
     return true;
 }
 
@@ -1399,7 +1410,9 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
             if (hasLength () && position () > length ())
                 setLength (m_document, position ());
             setPosition (0);
-            emit stopPlaying ();
+            if (p == m_player->process ())
+                emit stopPlaying ();
+            // else changed process
         } else if (news == Process::Ready) {
             if (olds > Process::Ready) {
                 NodePtr node = p->mrl (); // p->mrl is weak, needs check

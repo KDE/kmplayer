@@ -128,10 +128,9 @@ public:
     KURL url () const { return m_sources ["urlsource"]->url (); }
     void setURL (const KURL & url) { m_sources ["urlsource"]->setURL (url); }
 
-    /* Changes the process,
-     * calls setSource if process was playing
-     * */
+    /* Changes the backend process */
     void setProcess (const char *);
+    bool setProcess (Mrl *mrl);
     void setRecorder (const char *);
 
     /* Changes the source,
