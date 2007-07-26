@@ -562,6 +562,10 @@ Single SizeType::size (Single relative_to) {
 }
 
 SRect SRect::unite (const SRect & r) const {
+    if (!(_w > 0 && _h > 0))
+        return r;
+    if (!(r._w > 0 && r._h > 0))
+        return *this;
     Single a (_x < r._x ? _x : r._x);
     Single b (_y < r._y ? _y : r._y);
     return SRect (a, b, 
