@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <!DOCTYPE book PUBLIC "-//KDE//DTD DocBook XML V4.1.2-Based Variant V1.1//EN" "dtd/kdex.dtd" [
-  <!ENTITY kmplayer '<application>Kmplayer</application>'>
+  <!ENTITY kmplayer '<application>KMPlayer</application>'>
   <!ENTITY kappname "&kmplayer;"><!-- replace kmplayer here -->
   <!ENTITY package "kdeextragear-2">
   <!ENTITY % addindex "IGNORE">
@@ -234,6 +234,9 @@ There is a configuration tab for MPlayer in &kmplayer;'s config dialog. Here
 you can set MPlayer's path and it cache size for network stream, among other
 things.
 </para>
+<para>
+This player configuration name is <parameter>mplayer</parameter>.
+</para>
 <section id="mplayer-debug">
 <title>Trouble shooting</title>
 <para>
@@ -260,6 +263,9 @@ get information on what these options do (ie. click on the question mark
 button from the dialog title bar and then click on an option).
 </para>
 <para>
+This player configuration name is <parameter>xine</parameter>.
+</para>
+<para>
 The options are saved in
 <filename>.kde/share/apps/kmplayer/xine_config</filename> as a text document.
 </para>
@@ -278,6 +284,9 @@ Basically the same way as trouble shooting
 There is no configuration tab for GStreamer in &kmplayer;'s config dialog. The
 common options for eg. <acronym>DVD</acronym> device are used when appropriate.
 </para>
+<para>
+This player configuration name is <parameter>gstreamer</parameter>.
+</para>
 <section id="gstremaer-debug">
 <title>Trouble shooting</title>
 <para>
@@ -286,6 +295,61 @@ Basically the same way as trouble shooting
 <filename>kgstplayer</filename>.
 </para>
 </section>
+</section>
+<section id="npp">
+<title>Browser plugin</title>
+<para>
+There is no configuration tab for this player in &kmplayer;'s config dialog. 
+Everything must be configured by manually editing the
+<filename>~/.kde/share/config/kmplayerrc</filename> like with configuring the
+<link linkend="backend-mimetype">backend per mimetype</link>. This is an
+example how to let flash be played with the swfdec-mozilla plugin:
+<programlisting>
+[application/x-shockwave-flash]
+player=npp
+plugin=/usr/lib/mozilla/plugins/libswfdecmozilla.so
+</programlisting>
+</para>
+<para>
+You can play flash inside &kmplayer;, actually you can even paste the special
+<parameter>embed</parameter> field for
+<ulink url="http://www.youtube.com">YouTube</ulink> in the 
+<link linkend="XML-editing">playlist <acronym>XML</acronym></link>.
+</para>
+<para>
+In order to let KMPlayer play flash in HTML pages, you should make the
+&kmplayer; plugin the service provider for the
+<parameter>application/x-shockwave-flash</parameter> mimetype in KDE's
+<guilabel>File Associations</guilabel> configuration dialog.
+</para>
+<para>
+As in the above example, this player configuration name is
+<parameter>npp</parameter>.
+</para>
+<section id="npp-debug">
+<title>Trouble shooting</title>
+<para>
+Start Konqueror or &kmplayer; in a console application and look for errors
+about loading the browser plugin library. The process started is called
+<filename>knpplayer</filename>. If that doesn't give any errors, check
+the backend output capturing inside &kmplayer; (<guimenu>View</guimenu>,
+<guimenuitem>Console</guimenuitem>, or <guimenuitem>Console</guimenuitem>
+from the popup menu).
+</para>
+</section>
+</section>
+<section id="backend-mimetype">
+<title>Force backend player for a mimetype</title>
+<para>
+To configure to always use a given backend for a particular mimetype
+(if detected of course) can be done by manually editing the
+<filename>~/.kde/share/config/kmplayerrc</filename>. For example, let xine play
+all ogg files:
+<programlisting>
+[audio/ogg]
+player=xine
+</programlisting>
+</para>
 </section>
 </chapter>
 <chapter id="sources">
