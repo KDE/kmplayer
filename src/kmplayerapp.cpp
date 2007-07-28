@@ -1904,7 +1904,7 @@ KDE_NO_EXPORT void KMPlayerDVDSource::buildArguments () {
         if (m_player->settings ()->dvddevice.length () > 0)
             m_options += QString(" -dvd-device ") + m_player->settings()->dvddevice;
     }
-    m_recordcmd = m_options + QString (" -vop scale -zoom");
+    m_recordcmd = m_options + QString (" -vf scale -zoom");
 }
 
 KDE_NO_EXPORT QString KMPlayerDVDSource::filterOptions () {

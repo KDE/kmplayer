@@ -505,7 +505,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::menuClicked (int id) {
 KDE_NO_EXPORT QString KMPlayerTVSource::filterOptions () {
     if (! m_player->settings ()->disableppauto)
         return KMPlayer::Source::filterOptions ();
-    return QString ("-vop pp=lb");
+    return QString ("-vf pp=lb");
 }
 
 KDE_NO_EXPORT bool KMPlayerTVSource::hasLength () {

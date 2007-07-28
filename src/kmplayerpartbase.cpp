@@ -1279,11 +1279,11 @@ QString Source::filterOptions () {
     if (m_settings->postprocessing)
     {
         if (m_settings->pp_default)
-            PPargs = "-vop pp=de";
+            PPargs = "-vf pp=de";
         else if (m_settings->pp_fast)
-            PPargs = "-vop pp=fa";
+            PPargs = "-vf pp=fa";
         else if (m_settings->pp_custom) {
-            PPargs = "-vop pp=";
+            PPargs = "-vf pp=";
             if (m_settings->pp_custom_hz) {
                 PPargs += "hb";
                 if (m_settings->pp_custom_hz_aq && \

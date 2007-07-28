@@ -136,8 +136,8 @@ public:
 // postproc thingies
     bool postprocessing : 1;
     bool disableppauto : 1;
-    bool pp_default : 1;	// -vop pp=de
-    bool pp_fast : 1;	// -vop pp=fa
+    bool pp_default : 1;	// -vf pp=de
+    bool pp_fast : 1;	// -vf pp=fa
     bool pp_custom : 1;	// coming up
 
     bool pp_custom_hz : 1; 		// horizontal deblocking
