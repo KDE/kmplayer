@@ -1,3 +1,6 @@
+Changes since version 0.9.4a
+- Allow per mimetype preferred player backend
+- Add npp backend that plays xembed style browser plugins
 Changes since version 0.9.4
 - Crash fix in playlist change while still playing
 - Support for mouse events on 'area' elements in SMIL

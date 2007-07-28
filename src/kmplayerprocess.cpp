@@ -2537,6 +2537,9 @@ NpStream::NpStream (QObject *p, Q_UINT32, const KURL & url)
 KDE_NO_CDTOR_EXPORT NpStream::~NpStream () {}
 void NpStream::slotResult (KIO::Job*) {}
 void NpStream::slotData (KIO::Job*, const QByteArray&) {}
+void NpStream::redirection (KIO::Job *, const KURL &) {}
+void NpStream::slotMimetype (KIO::Job *, const QString &) {}
+void NpStream::slotTotalSize (KIO::Job *, KIO::filesize_t) {}
 
 KDE_NO_CDTOR_EXPORT
 NpPlayer::NpPlayer (QObject * parent, Settings * settings, const QString &)
@@ -2554,6 +2557,7 @@ KDE_NO_EXPORT void NpPlayer::processOutput (KProcess *, char *, int) {}
 KDE_NO_EXPORT void NpPlayer::processStopped (KProcess *) {}
 KDE_NO_EXPORT void NpPlayer::wroteStdin (KProcess *) {}
 KDE_NO_EXPORT void NpPlayer::streamStateChanged () {}
+KDE_NO_EXPORT void NpPlayer::streamRedirected (Q_UINT32, const KURL &) {}
 KDE_NO_EXPORT void NpPlayer::terminateJobs () {}
 
 #endif
