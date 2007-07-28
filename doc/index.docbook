@@ -29,6 +29,7 @@
 <copyright>
 <year>2002</year>
 <year>2006</year>
+<year>2007</year>
 <holder>Koos Vriezen</holder>
 </copyright>
 <!-- Translators: put here the copyright notice of the translation -->
@@ -37,8 +38,8 @@
 <legalnotice>&FDLNotice;</legalnotice>
 
 
-<date>2003-12-24</date>
-<releaseinfo>0.05.00</releaseinfo>
+<date>2007-07-28</date>
+<releaseinfo>0.06.00</releaseinfo>
 
 <!-- Abstract about this handbook -->
 
@@ -204,7 +205,7 @@ enabled by editing the XML.
     the above option to '1'. Just add this option if it's not there yet.
 </para>
 <para>
-    It's also possible to set an alternative animation. KMPlayer will look at resp. <filename>~/.kde/share/apps/kmplayer/intro.xml</filename> and <filename>~/.kde/share/apps/kmplayer/exit.xml</filename>. The format has to be a supported <acronym>XML</acronym> file.
+    It's also possible to set an alternative animation. &kmplayer; will look at resp. <filename>~/.kde/share/apps/kmplayer/intro.xml</filename> and <filename>~/.kde/share/apps/kmplayer/exit.xml</filename>. The format has to be a supported <acronym>XML</acronym> file.
 </para>
 <para>
     The intro animation doesn't have to be a short one, because it will automatically end when another source is opened. Of course for the exit animation this would be a bit annoying, however the user can always end the application twice.
@@ -218,7 +219,7 @@ enabled by editing the XML.
   &lt;/body&gt;
 &lt;/smil&gt;
     </programlisting>
-    In KMPlayer's source package, in the <filename>tests/</filename> are some examples of <acronym>SMIL</acronym> that KMPlayer supports.
+    In &kmplayer;'s source package, in the <filename>tests/</filename> are some examples of <acronym>SMIL</acronym> that &kmplayer; supports.
 </para>
 </section>
 </chapter>
@@ -317,7 +318,7 @@ You can play flash inside &kmplayer;, actually you can even paste the special
 <link linkend="XML-editing">playlist <acronym>XML</acronym></link>.
 </para>
 <para>
-In order to let KMPlayer play flash in HTML pages, you should make the
+In order to let &kmplayer; play flash in HTML pages, you should make the
 &kmplayer; plugin the service provider for the
 <parameter>application/x-shockwave-flash</parameter> mimetype in KDE's
 <guilabel>File Associations</guilabel> configuration dialog.
@@ -427,7 +428,7 @@ EndSection
 <section id="kmplayer_url">
     <title>Commandline</title>
 <para>
-    Internally for the sources, KMPlayer uses distinct names. At the time of
+    Internally for the sources, &kmplayer; uses distinct names. At the time of
     this writing these are "dvdnavsource", "dvdsource", "exitsource",
     "hrefsource", "introsource", "pipesource", "tvscanner", "tvsource",
     "urlsource", "vcdsource" and "vdrsource". When activated, they mostly
