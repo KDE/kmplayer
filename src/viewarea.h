@@ -22,10 +22,6 @@
 
 #include <qwidget.h>
 
-#ifdef HAVE_CAIRO
-# include <cairo.h>
-#endif
-
 class KActionCollection;
 
 namespace KMPlayer {
@@ -72,9 +68,6 @@ private:
     ViewAreaPrivate * d;
     QWidget * m_parent;
     View * m_view;
-#ifdef HAVE_CAIRO
-    cairo_surface_t * cairo_surface;
-#endif
     KActionCollection * m_collection;
     SurfacePtr surface;
     QRect m_av_geometry;

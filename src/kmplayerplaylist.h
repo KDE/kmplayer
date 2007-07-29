@@ -32,6 +32,8 @@
 #include "kmplayertypes.h"
 #include "kmplayershared.h"
 
+typedef struct _cairo_surface cairo_surface_t;
+
 class QTextStream;
 
 namespace KMPlayer {
@@ -647,8 +649,9 @@ public:
     Single xoffset, yoffset;       // translation for aspects
     float xscale, yscale;          // internal scaling
     unsigned int background_color; // rgba background color
-protected:
-    Surface (const SRect & rect);
+#ifdef HAVE_CAIRO
+    cairo_surface_t *surface;
+#endif
 };
 
 ITEM_AS_POINTER(KMPlayer::Surface)

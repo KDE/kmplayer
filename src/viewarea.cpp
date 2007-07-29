@@ -192,7 +192,7 @@ public:
 } // namespace
 
 KDE_NO_CDTOR_EXPORT ViewSurface::ViewSurface (ViewArea * widget)
-  : Surface (SRect (0, 0, widget->width (), widget->height ())),
+  : Surface (NULL, SRect (0, 0, widget->width (), widget->height ())),
     view_widget (widget)
 {}
 
@@ -210,7 +210,12 @@ SurfacePtr ViewSurface::createSurface (NodePtr owner, const SRect & rect) {
     return surface;
 }
 
-KDE_NO_EXPORT void ViewSurface::resize (const SRect & ) {
+KDE_NO_EXPORT void ViewSurface::resize (const SRect &r) {
+    bounds = r;
+#ifdef HAVE_CAIRO
+    if (surface)
+        cairo_xlib_surface_set_size (surface, r.width (), r.height ());
+#endif
     /*if (rect == nrect)
         ;//return;
     SRect pr = rect.unite (nrect); // for repaint
@@ -1028,9 +1033,6 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
  : QWidget (parent, "kde_kmplayer_viewarea", WResizeNoErase | WRepaintNoErase),
    m_parent (parent),
    m_view (view),
-#ifdef HAVE_CAIRO
-    cairo_surface (0L),
-#endif
    m_collection (new KActionCollection (this)),
    surface (new ViewSurface (this)),
    m_mouse_invisible_timer (0),
@@ -1049,10 +1051,6 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
 }
 
 KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {
-#ifdef HAVE_CAIRO
-    if (cairo_surface)
-        cairo_surface_destroy (cairo_surface);
-#endif
 }
 
 KDE_NO_EXPORT void ViewArea::fullScreen () {
@@ -1088,9 +1086,9 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
     m_view->controlPanel()->popupMenu ()->setItemChecked (ControlPanel::menu_fullscreen, m_fullscreen);
 
 #ifdef HAVE_CAIRO
-    if (cairo_surface) {
-        cairo_surface_destroy (cairo_surface);
-        cairo_surface = 0L;
+    if (surface->surface) {
+        cairo_surface_destroy (surface->surface);
+        surface->surface = 0L;
     }
 #endif
     if (m_fullscreen) {
@@ -1167,9 +1165,9 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const SRect & rect) {
         ey--;
     int ew = rect.width () + 3;
     int eh = rect.height () + 3;
-    if (!cairo_surface)
-        cairo_surface = cairoCreateSurface (winId (), width (), height ());
-    CairoPaintVisitor visitor (cairo_surface, SRect (ex, ey, ew, eh));
+    if (!surface->surface)
+        surface->surface = cairoCreateSurface (winId (), width (), height ());
+    CairoPaintVisitor visitor (surface->surface, SRect (ex, ey, ew, eh));
     surface->node->accept (&visitor);
 #endif
     //XFlush (qt_xdisplay ());
@@ -1195,10 +1193,6 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     int w = width ();
     int h = height ();
     scheduleRepaint (0, 0, w, h);
-#ifdef HAVE_CAIRO
-    if (cairo_surface)
-        cairo_xlib_surface_set_size (cairo_surface, width (), height ());
-#endif
     int hsb = m_view->statusBarHeight ();
     int hcp = m_view->controlPanel ()->isVisible () ? (m_view->controlPanelMode () == View::CP_Only ? h-hsb: m_view->controlPanel()->maximumSize ().height ()) : 0;
     int wws = w;
@@ -1206,7 +1200,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     int hws = h - (m_view->controlPanelMode () == View::CP_AutoHide && m_view->widgetStack ()->visibleWidget () == m_view->viewer () ? 0 : hcp) - hsb;
     // now scale the regions and check if video region is already sized
     bool av_geometry_changed = false;
-    surface->bounds = SRect (x, y, wws, hws);
+    surface->resize (SRect (x, y, wws, hws));
     if (surface->node && wws > 0 && hws > 0) {
         m_av_geometry = QRect (0, 0, 0, 0);
         surface->node->handleEvent (new SizeEvent (x, y, wws, hws, m_view->keepSizeRatio () ? fit_meet : fit_fill));

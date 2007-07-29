@@ -745,12 +745,22 @@ void Mrl::parseParam (const TrieString & para, const QString & val) {
     }
 }
 
-KDE_NO_CDTOR_EXPORT Surface::Surface (NodePtr n, const SRect & r)
-  : node (n), bounds (r), xscale (1.0), yscale (1.0), background_color (0) {}
+Surface::Surface (NodePtr n, const SRect & r)
+  : node (n),
+    bounds (r),
+    xscale (1.0), yscale (1.0),
+    background_color (0),
+#ifdef HAVE_CAIRO
+    surface (0L)
+#endif
+{}
 
-Surface::Surface (const SRect & r) : bounds (r) {}
-
-Surface::~Surface() {}
+Surface::~Surface() {
+#ifdef HAVE_CAIRO
+    if (surface)
+        cairo_surface_destroy (surface);
+#endif
+}
 
 //-----------------------------------------------------------------------------
 
