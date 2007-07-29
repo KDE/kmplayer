@@ -112,7 +112,6 @@ PartBase::PartBase (QWidget * wparent, const char *wname,
    m_config (config),
    m_view (new View (wparent, wname ? wname : "kde_kmplayer_view")),
    m_settings (new Settings (this, config)),
-   m_process (0L),
    m_recorder (0L),
    m_source (0L),
    m_bookmark_menu (0L),
@@ -123,7 +122,9 @@ PartBase::PartBase (QWidget * wparent, const char *wname,
    m_bPosSliderPressed (false),
    m_in_update_tree (false)
 {
-    m_players ["mplayer"] = new MPlayer (this, m_settings);
+    MPlayer *mplayer = new MPlayer (this, m_settings);
+    m_players ["mplayer"] = mplayer;
+    m_process = mplayer;
     Xine * xine = new Xine (this, m_settings);
     m_players ["xine"] = xine;
     m_players ["gstreamer"] = new GStreamer (this, m_settings);
@@ -304,7 +305,7 @@ bool PartBase::setProcess (Mrl *mrl) {
             !m_players [p]->supports (m_source->name ())) {
         // finally find first supported player
         p.truncate (0);
-        if (!m_process->supports (m_source->name ())) {
+        if (!m_process || !m_process->supports (m_source->name ())) {
             ProcessMap::const_iterator i, e = m_players.end();
             for (i = m_players.begin(); i != e; ++i)
                 if (i.data ()->supports (m_source->name ())) {
@@ -448,8 +449,6 @@ void PartBase::setSource (Source * _source) {
           m_view->controlPanel()->button(ControlPanel::button_playlist)->hide();
     }
     m_source = _source;
-    if (m_source->document ())
-        setProcess (m_source->document ()->mrl ());
     connectSource (old_source, m_source);
     m_process->setSource (m_source);
     connect (m_source, SIGNAL(startRecording()), this,SLOT(recordingStarted()));
