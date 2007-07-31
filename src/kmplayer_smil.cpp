@@ -1025,9 +1025,9 @@ bool MediaTypeRuntime::parseParam (const TrieString &name, const QString &val) {
     } else if (!sizes.setSizeParam (name, val)) {
         return Runtime::parseParam (name, val);
     }
-    SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (mt->region_node);
-    if (rb && SMIL::TimedMrl::keepContent (element))
-        rb->repaint ();
+    resetSurface ();
+    if (surface ())
+        sub_surface->repaint ();
     return true;
 }
 
@@ -1066,13 +1066,65 @@ KDE_NO_EXPORT void MediaTypeRuntime::clipStop () {
 }
 
 KDE_NO_EXPORT SRect MediaTypeRuntime::intrinsicBounds () {
-    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
-    SMIL::RegionBase * rb = mt
+    SMIL::MediaType *mt = convertNode <SMIL::MediaType> (element);
+    SMIL::RegionBase *rb = mt
         ? convertNode <SMIL::RegionBase> (mt->region_node)
         : 0L;
     if (rb && rb->surface)
         return rb->surface->bounds;
-    return SRect (0, 0, 0, 0);
+    return SRect ();
+}
+
+KDE_NO_EXPORT SurfacePtr MediaTypeRuntime::surface () {
+    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
+    if (!mt || !mt->keepContent (element)) {
+        resetSurface ();
+    } else if (!sub_surface) {
+        SMIL::RegionBase * rb = mt
+            ? convertNode <SMIL::RegionBase> (mt->region_node)
+            : 0L;
+        if (rb && rb->surface) {
+            SRect ir = intrinsicBounds ();
+            SRect rr = rb->surface->bounds;
+            Single x, y, w = ir.width(), h = ir.height();
+            sizes.calcSizes (element, rr.width(), rr.height(), x, y, w, h);
+            if (ir.width() > 0 && ir.height() > 0 && w > 0 && h > 0)
+                switch (fit) {
+                    case fit_meet: {
+                        float iasp = 1.0 * ir.width() / ir.height();
+                        float rasp = 1.0 * w / h;
+                        if (iasp > rasp)
+                            h = ir.height() * w / ir.width();
+                        else
+                            w = ir.width() * h / ir.height();
+                        break;
+                    }
+                    case fit_hidden:
+                        w = ir.width();
+                        h = ir.height();
+                        break;
+                    case fit_slice: {
+                        float iasp = 1.0 * ir.width() / ir.height();
+                        float rasp = 1.0 * w / h;
+                        if (iasp > rasp)
+                            w = ir.width() * h / ir.height();
+                        else
+                            h = ir.height() * w / ir.width();
+                        break;
+                    }
+                    default: {} // fit_fill
+                }
+            sub_surface = rb->surface->createSurface (element, SRect (x,y,w,h));
+            //kdDebug() << sub_surface.ptr() << " " << mt->nodeName() << " " << mt->src << " " << rr.width() << "," << rr.height()  << " => " << x << "," << y << w << "," << h << endl;
+        }
+    }
+    return sub_surface;
+}
+
+KDE_NO_EXPORT void MediaTypeRuntime::resetSurface () {
+    if (sub_surface && sub_surface->parentNode ())
+        sub_surface->parentNode ()->removeChild (sub_surface);
+    sub_surface = NULL;
 }
 
 KDE_NO_EXPORT void MediaTypeRuntime::postpone (bool) {
@@ -1548,6 +1600,8 @@ KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
    m_SizeListeners (new NodeRefList) {}
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
+    if (surface && surface->parentNode ())
+        surface->parentNode ()->removeChild (surface);
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::activate () {
@@ -2408,6 +2462,7 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
     region_mouse_leave = 0L;
     region_mouse_click = 0L;
     region_attach = 0L;
+    region_attach_external = 0L;
     trans_step = trans_steps = 0;
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
@@ -2503,23 +2558,24 @@ KDE_NO_EXPORT void SMIL::MediaType::positionVideoWidget () {
 }
 
 SurfacePtr SMIL::MediaType::getSurface (NodePtr node) {
-    RegionBase * r = convertNode <RegionBase> (region_node);
-    if (r && r->surface) {
-        while (r->surface->hasChildNodes ())
-            r->surface->removeChild (r->surface->lastChild ());
+    MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (runtime ());
+    SurfacePtr s = mtr->surface ();
+    if (s) {
         if (node) {
-            r->surface->node = node;
-            node->handleEvent (new SizeEvent (0, 0, r->w, r->h, fit_meet));
-            return r->surface; // FIXME add surface to this one here
+            s->node = node;
+            region_attach_external = region_node->connectTo (node, mediatype_attached);
+        } else {
+            mtr->resetSurface ();
+            region_attach_external = NULL;
         }
-        r->surface->node = r;
     }
-    return 0L;
+    return s;
 }
 
 bool SMIL::MediaType::handleEvent (EventPtr event) {
     bool ret = false;
     RegionBase * r = convertNode <RegionBase> (region_node);
+    SurfacePtr s = static_cast<MediaTypeRuntime*>(runtime())->surface();
     switch (event->id ()) {
         case event_sized:
             break; // make it pass to all listeners
@@ -2534,9 +2590,8 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
             if (r && te && te->timer_info &&
                     te->timer_info->event_id == trans_timer_id) {
                 te->interval = ++trans_step < trans_steps;
-                SRect re = static_cast<MediaTypeRuntime*>(runtime())->
-                    intrinsicBounds (); // TODO unite w/ cached_rect
-                r->repaint (re);
+                if (s)
+                    s->repaint ();
                 ret = true;
                 break;
             }
@@ -2544,8 +2599,8 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
         default:
             ret = TimedMrl::handleEvent (event);
     }
-    if (r && r->surface && r->surface->node && r != r->surface->node)
-        return r->surface->node->handleEvent (event);
+    if (s && s->node && s->node.ptr () != this)
+        return s->node->handleEvent (event);
     return ret;
 }
 
@@ -2818,47 +2873,18 @@ KDE_NO_EXPORT void ImageRuntime::clipStop () {
 }
 
 KDE_NO_EXPORT SRect ImageRuntime::intrinsicBounds () {
-    SRect rect = MediaTypeRuntime::intrinsicBounds ();
     ImageData * id = cached_img.data.ptr ();
     if (id && !id->isEmpty () &&
-            (int)rect.width () > 0 && (int)rect.height () > 0 &&
-            id->width() > 0 && id->height() > 0) {
-        Single x, y, w = id->width(), h = id->height();
-        sizes.calcSizes(element.ptr(), rect.width(), rect.height(), x, y, w, h);
-        switch (fit) {
-            case fit_meet: {
-                float pasp = 1.0 * id->width() / id->height();
-                float rasp = 1.0 * w / h;
-                if (pasp > rasp)
-                    h = id->height() * w / id->width();
-                else
-                    w = id->width() * h / id->height();
-                break;
-            }
-            case fit_hidden:
-                w = id->width();
-                h = id->height();
-                break;
-            case fit_slice: {
-                float pasp = 1.0 * id->width() / id->height();
-                float rasp = 1.0 * w / h;
-                if (pasp > rasp)
-                    w = id->width() * h / id->height();
-                else
-                    h = id->height() * w / id->width();
-                break;
-            }
-            default: {} // fit_fill
-        }
-        return SRect (x, y, w, h);
-    }
-    return SRect (0, 0, 0, 0);
+            id->width() > 0 && id->height() > 0)
+        return SRect (0, 0, id->width(), id->height());
+    return SRect();
 }
 
 KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
     NodePtr element_protect = element; // note element is weak
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
     if (data.size () && mt) {
+        resetSurface ();
         QString mime = mimetype ();
         kdDebug () << "ImageRuntime::remoteReady " << mime << " empty:" << cached_img.data->isEmpty () << " " << mt->src << endl;
         if (mime.startsWith (QString::fromLatin1 ("text/"))) {
@@ -2872,10 +2898,8 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
             QImage *pix = new QImage (data);
             if (!pix->isNull ()) {
                 cached_img.data->image = pix;
-                if (mt->region_node && SMIL::TimedMrl::keepContent (element)) {
-                    SRect r = intrinsicBounds (); // TODO unite w/ cached_rect
-                    convertNode <SMIL::RegionBase>(mt->region_node)->repaint(r);
-                }
+                if (mt->region_node && SMIL::TimedMrl::keepContent (element))
+                    surface()->repaint ();
                 img_movie = new QMovie (data, data.size ());
                 img_movie->connectUpdate(this,SLOT(movieUpdated(const QRect&)));
                 img_movie->connectStatus (this, SLOT (movieStatus (int)));
@@ -2894,12 +2918,12 @@ KDE_NO_EXPORT void ImageRuntime::movieUpdated (const QRect &) {
     if (frame_nr++) {
         SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
         if (mt && mt->region_node && SMIL::TimedMrl::keepContent (element)) {
+            resetSurface ();
             cached_img.setUrl (QString ());
             ASSERT (cached_img.data && cached_img.data->isEmpty ());
             cached_img.data->image = new QImage;
             *cached_img.data->image = (img_movie->framePixmap ());
-            SRect r = intrinsicBounds (); // TODO unite w/ cached_rect
-            convertNode <SMIL::RegionBase>(mt->region_node)->repaint(r);
+            surface()->repaint ();
         }
     }
     if (timingstate != timings_started && img_movie)
@@ -2917,11 +2941,9 @@ KDE_NO_EXPORT void ImageRuntime::movieStatus (int s) {
 
 KDE_NO_EXPORT void ImageRuntime::movieResize (const QSize &) {
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
-    if (mt && mt->region_node && SMIL::TimedMrl::keepContent (element)) {
-        SRect r = intrinsicBounds (); // TODO unite w/ cached_rect
-        convertNode <SMIL::RegionBase>(mt->region_node)->repaint(r);
+    if (mt && mt->region_node && SMIL::TimedMrl::keepContent (element))
+        surface()->repaint ();
         //kdDebug () << "movieResize" << endl;
-    }
 }
 
 KDE_NO_EXPORT void ImageRuntime::postpone (bool b) {
@@ -3013,8 +3035,9 @@ bool TextRuntime::parseParam (const TrieString & name, const QString & val) {
     // TODO: expandTabs fontBackgroundColor fontSize fontStyle fontWeight hAlig vAlign wordWrap
     } else
         return MediaTypeRuntime::parseParam (name, val);
-    if (mt->region_node && SMIL::TimedMrl::keepContent (element))
-        convertNode <SMIL::RegionBase> (mt->region_node)->repaint ();
+    resetSurface ();
+    if (surface ())
+        sub_surface->repaint ();
     return true;
 }
 
@@ -3033,6 +3056,7 @@ KDE_NO_EXPORT void TextRuntime::remoteReady (QByteArray & data) {
     QString str (data);
     if (data.size () && element) {
         d->data = data;
+        resetSurface ();
         if (d->data.size () > 0 && !d->data [d->data.size () - 1])
             d->data.resize (d->data.size () - 1); // strip zero terminate char
         QTextStream ts (d->data, IO_ReadOnly);
@@ -3041,7 +3065,7 @@ KDE_NO_EXPORT void TextRuntime::remoteReady (QByteArray & data) {
         text  = ts.read ();
         SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
         if (mt && mt->region_node && SMIL::TimedMrl::keepContent (element))
-            convertNode <SMIL::RegionBase> (mt->region_node)->repaint ();
+            surface()->repaint ();
     }
     postpone_lock = 0L;
     if (timingstate == timings_started)

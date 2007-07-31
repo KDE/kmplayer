@@ -183,6 +183,7 @@ public:
     SurfacePtr createSurface (NodePtr owner, const SRect & rect);
     void toScreen (Single & x, Single & y, Single & w, Single & h);
     void resize (const SRect & rect);
+    void repaint ();
     void repaint (Single x, Single y, Single w, Single h);
     void video (Single x, Single y, Single w, Single h);
 
@@ -238,6 +239,11 @@ void ViewSurface::repaint (Single x, Single y, Single w, Single h) {
     toScreen (x, y, w, h);
     view_widget->scheduleRepaint (x, y, w, h);
     //kdDebug() << "Surface::repaint x:" << (int)x << " y:" << (int)y << " w:" << (int)w << " h:" << (int)h << endl;
+}
+
+KDE_NO_EXPORT
+void ViewSurface::repaint () {
+    repaint (0, 0, bounds.width (), bounds.height ());
 }
 
 KDE_NO_EXPORT void ViewSurface::video (Single x, Single y, Single w, Single h) {
@@ -427,51 +433,52 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     //kdDebug() << "Visit " << img->nodeName() << " " << img->src << endl;
     ImageRuntime * ir = static_cast <ImageRuntime *> (img->runtime ());
-    ImageData * id = ir->cached_img.data.ptr ();
-    SRect rect = ir->intrinsicBounds ();
-    if (id && !id->isEmpty () &&
-            img->keepContent (img) &&
-            rect.width() > 0 &&
-            id->width() > 0 && id->height() > 0) {
-        img->cached_rect = rect;
-        Single x = rect.x ();
-        Single y = rect.y ();
-        Single w = rect.width();
-        Single h = rect.height();
-        matrix.getXYWH (x, y, w, h);
-        SRect clip_rect = clip.intersect (SRect (x, y, w, h));
-        if (!clip_rect.isValid ())
-            return;
-        cairo_pattern_t * pat = id->cairoImage (w, h, cairo_surface);
-        if (pat) {
-            cairo_matrix_t mat;
-            cairo_matrix_init_identity (&mat);
-            cairo_matrix_translate (&mat, -x, -y);
-            cairo_pattern_set_matrix (pat, &mat);
-            cairo_pattern_set_filter (pat, CAIRO_FILTER_FAST);
-            cairo_set_source (cr, pat);
-            cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
-                    clip_rect.width (), clip_rect.height ());
-            if (img->trans_steps > img->trans_step) { // only fadein for now
-                cairo_save (cr);
-                cairo_clip (cr);
-                cairo_paint_with_alpha (
-                        cr, 1.0 * img->trans_step/img->trans_steps);
-                cairo_restore (cr);
-            } else
-                cairo_fill (cr);
+    SurfacePtr s = ir->surface ();
+    if (s /*TODO && !s->surface*/) {
+        ImageData * id = ir->cached_img.data.ptr ();
+        SRect rect = s->bounds;
+        if (id && !id->isEmpty () &&
+                rect.width() > 0 &&
+                id->width() > 0 && id->height() > 0) {
+            Single x = rect.x ();
+            Single y = rect.y ();
+            Single w = rect.width();
+            Single h = rect.height();
+            matrix.getXYWH (x, y, w, h);
+            SRect clip_rect = clip.intersect (SRect (x, y, w, h));
+            if (!clip_rect.isValid ())
+                return;
+            cairo_pattern_t * pat = id->cairoImage (w, h, cairo_surface);
+            if (pat) {
+                cairo_matrix_t mat;
+                cairo_matrix_init_identity (&mat);
+                cairo_matrix_translate (&mat, -x, -y);
+                cairo_pattern_set_matrix (pat, &mat);
+                cairo_pattern_set_filter (pat, CAIRO_FILTER_FAST);
+                cairo_set_source (cr, pat);
+                cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
+                        clip_rect.width (), clip_rect.height ());
+                if (img->trans_steps > img->trans_step) { // only fadein for now
+                    cairo_save (cr);
+                    cairo_clip (cr);
+                    cairo_paint_with_alpha (
+                            cr, 1.0 * img->trans_step/img->trans_steps);
+                    cairo_restore (cr);
+                } else
+                    cairo_fill (cr);
+            }
         }
     }
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     TextRuntime * td = static_cast <TextRuntime *> (txt->runtime ());
+    SurfacePtr s = td->surface ();
     //kdDebug() << "Visit " << txt->nodeName() << " " << td->text << endl;
-    SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (txt->region_node);
-    if (rb && rb->surface && txt->keepContent (txt)) {
-        SRect rect = rb->surface->bounds;
-        Single x, y, w = rect.width(), h = rect.height();
-        td->sizes.calcSizes (txt, rect.width(), rect.height(), x, y, w, h);
+    if (s) {
+        SRect rect = s->bounds;
+        Single x = rect.x (), y = rect.y(), w = rect.width(), h = rect.height();
+        //td->sizes.calcSizes (txt, rect.width(), rect.height(), x, y, w, h);
         matrix.getXYWH (x, y, w, h);
         /* QTextEdit * edit = new QTextEdit;
         edit->setReadOnly (true);
@@ -966,36 +973,41 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
     if (n->id >= SMIL::id_node_first_mediatype &&
             n->id < SMIL::id_node_last_mediatype) {
         SMIL::MediaType * mt = convertNode <SMIL::MediaType> (n);
-        Single x1 = mt->cached_rect.x (), x2 = mt->cached_rect.y ();
-        Single w = mt->cached_rect.width (), h = mt->cached_rect.height ();
-        matrix.getXYWH (x1, x2, w, h);
-        if (area->nr_coords > 1) {
-            Single left = area->coords[0].size (mt->cached_rect.width ());
-            Single top = area->coords[1].size (mt->cached_rect.height ());
-            matrix.getXY (left, top);
-            if (x < left || x > left + w || y < top || y > top + h)
-                return;
-            if (area->nr_coords > 3) {
-                Single right = area->coords[2].size (mt->cached_rect.width ());
-                Single bottom = area->coords[3].size(mt->cached_rect.height ());
-                matrix.getXY (right, bottom);
-                if (x > right || y > bottom)
+        MediaTypeRuntime *mtr = static_cast<MediaTypeRuntime*> (mt->runtime ());
+        SurfacePtr s = mtr->surface ();
+        if (s) {
+            SRect rect = s->bounds;
+            Single x1 = rect.x (), x2 = rect.y ();
+            Single w = rect.width (), h = rect.height ();
+            matrix.getXYWH (x1, x2, w, h);
+            if (area->nr_coords > 1) {
+                Single left = area->coords[0].size (rect.width ());
+                Single top = area->coords[1].size (rect.height ());
+                matrix.getXY (left, top);
+                if (x < left || x > left + w || y < top || y > top + h)
                     return;
-            }
-        }
-        if (event == event_pointer_moved)
-            cursor.setShape (Qt::PointingHandCursor);
-        else {
-            NodeRefListPtr nl = area->listeners (event);
-            if (nl)
-                for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
-                    if (c->data)
-                        c->data->accept (this);
-                    if (!node->active ())
+                if (area->nr_coords > 3) {
+                    Single right = area->coords[2].size (rect.width ());
+                    Single bottom = area->coords[3].size (rect.height ());
+                    matrix.getXY (right, bottom);
+                    if (x > right || y > bottom)
                         return;
                 }
-            if (event == event_pointer_clicked && !area->href.isEmpty ())
-                followLink (area);
+            }
+            if (event == event_pointer_moved)
+                cursor.setShape (Qt::PointingHandCursor);
+            else {
+                NodeRefListPtr nl = area->listeners (event);
+                if (nl)
+                    for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
+                        if (c->data)
+                            c->data->accept (this);
+                        if (!node->active ())
+                            return;
+                    }
+                if (event == event_pointer_clicked && !area->href.isEmpty ())
+                    followLink (area);
+            }
         }
     }
 }
@@ -1007,6 +1019,11 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::TimedMrl * timedmrl) {
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType * mediatype) {
     if (mediatype->sensitivity == SMIL::MediaType::sens_transparent) {
         bubble_up = true;
+        return;
+    }
+    SurfacePtr s = static_cast<MediaTypeRuntime*>(mediatype->runtime())->surface();
+    if (s && s->node && s->node.ptr () != mediatype) {
+        s->node->accept (this);
         return;
     }
     NodeRefListPtr nl = mediatype->listeners (

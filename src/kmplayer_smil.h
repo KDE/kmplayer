@@ -181,10 +181,15 @@ public:
     virtual void postpone (bool b);
     virtual void clipStart ();
     virtual void clipStop ();
+    /* size of the media type, like image or video dimensions */
     virtual SRect intrinsicBounds ();
+    /* (new) sub-region or NULL if not displayed */
+    SurfacePtr surface ();
+    void resetSurface ();
     CalculatedSizer sizes;
     PostponePtr postpone_lock;
     Fit fit;
+    SurfacePtrW sub_surface;
     MediaTypeRuntime (NodePtr e);
 protected:
     ConnectionPtr document_postponed;      // pauze audio/video accordantly
@@ -235,6 +240,7 @@ public:
     ~TextRuntime ();
     void reset ();
     virtual bool parseParam (const TrieString & name, const QString & value);
+    // TODO: virtual SRect intrinsicBounds ();
     int font_size;
     unsigned int font_color;
     unsigned int background_color;
@@ -721,7 +727,6 @@ public:
     NodePtrW trans_in;
     NodePtrW trans_out;
     NodePtrW region_node;
-    SRect cached_rect; // rel. rect wrt. region, eg. fit and regpoints applied
     QString m_type;
     unsigned int bitrate;
     unsigned int trans_step;
@@ -736,6 +741,7 @@ protected:
     ConnectionPtr region_mouse_leave;      // attached region has mouse left
     ConnectionPtr region_mouse_click;      // attached region is clicked
     ConnectionPtr region_attach;           // attached to region
+    ConnectionPtr region_attach_external;  // attached external to region
     TimerInfoPtrW trans_timer;
 };
 
