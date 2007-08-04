@@ -46,7 +46,6 @@ const unsigned int event_outbounds = (unsigned int) Runtime::dur_outbounds;
 static const unsigned int event_stopped = (unsigned int) Runtime::dur_end;
 static const unsigned int event_started = (unsigned int)Runtime::dur_start;
 static const unsigned int event_to_be_started = 1 + (unsigned int) Runtime::dur_last_dur;
-const unsigned int event_sized = (unsigned int) -10;
 const unsigned int event_pointer_clicked = (unsigned int) event_activated;
 const unsigned int event_pointer_moved = (unsigned int) -11;
 const unsigned int event_timer = (unsigned int) -12;
@@ -176,10 +175,6 @@ static NodePtr findLocalNodeById (NodePtr n, const QString & id) {
 
 KDE_NO_CDTOR_EXPORT ToBeStartedEvent::ToBeStartedEvent (NodePtr n)
  : Event (event_to_be_started), node (n) {}
-
-KDE_NO_CDTOR_EXPORT SizeEvent::SizeEvent (Single a, Single b, Single c, Single d
-        , Fit f)
- : Event (event_sized), x (a), y (b), w (c), h (d), fit (f) {}
 
 TimerEvent::TimerEvent (TimerInfoPtr tinfo)
  : Event (event_timer), timer_info (tinfo), interval (false) {}
@@ -1049,7 +1044,7 @@ KDE_NO_EXPORT void MediaTypeRuntime::stopped () {
 KDE_NO_EXPORT void MediaTypeRuntime::clipStart () {
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
     SMIL::RegionBase *r =mt ? convertNode<SMIL::RegionBase>(mt->region_node):0L;
-    if (r && r->surface)
+    if (r && r->surface ())
         for (NodePtr n = mt->firstChild (); n; n = n->nextSibling ())
             if ((n->mrl () && n->mrl ()->opener.ptr () == mt) ||
                     n->id == SMIL::id_node_smil ||
@@ -1070,8 +1065,8 @@ KDE_NO_EXPORT SRect MediaTypeRuntime::intrinsicBounds () {
     SMIL::RegionBase *rb = mt
         ? convertNode <SMIL::RegionBase> (mt->region_node)
         : 0L;
-    if (rb && rb->surface)
-        return rb->surface->bounds;
+    if (rb && rb->surface ())
+        return rb->region_surface->bounds;
     return SRect ();
 }
 
@@ -1083,9 +1078,9 @@ KDE_NO_EXPORT SurfacePtr MediaTypeRuntime::surface () {
         SMIL::RegionBase * rb = mt
             ? convertNode <SMIL::RegionBase> (mt->region_node)
             : 0L;
-        if (rb && rb->surface) {
+        if (rb && rb->surface ()) {
             SRect ir = intrinsicBounds ();
-            SRect rr = rb->surface->bounds;
+            SRect rr = rb->region_surface->bounds;
             Single x, y, w = ir.width(), h = ir.height();
             sizes.calcSizes (element, rr.width(), rr.height(), x, y, w, h);
             if (ir.width() > 0 && ir.height() > 0 && w > 0 && h > 0)
@@ -1114,7 +1109,7 @@ KDE_NO_EXPORT SurfacePtr MediaTypeRuntime::surface () {
                     }
                     default: {} // fit_fill
                 }
-            sub_surface = rb->surface->createSurface (element, SRect (x,y,w,h));
+            sub_surface = rb->region_surface->createSurface (element, SRect (x,y,w,h));
             //kdDebug() << sub_surface.ptr() << " " << mt->nodeName() << " " << mt->src << " " << rr.width() << "," << rr.height()  << " => " << x << "," << y << w << "," << h << endl;
         }
     }
@@ -1164,7 +1159,6 @@ KDE_NO_EXPORT void AudioVideoData::clipStart () {
     //kdDebug() << "AudioVideoData::clipStart " << mt->resolved << endl;
     if (n && mt->region_node && !mt->external_tree && !mt->src.isEmpty()) {
         setSmilLinkNode (element, element);
-        mt->positionVideoWidget ();
         mt->repeat = repeat_count == dur_infinite ? 9998 : repeat_count;
         repeat_count = 0;
         n->requestPlayURL (mt);
@@ -1177,6 +1171,7 @@ KDE_NO_EXPORT void AudioVideoData::clipStop () {
     if (durTime ().durval == dur_media)
         durTime ().durval = dur_timer;//reset to make this finish
     MediaTypeRuntime::clipStop ();
+    resetSurface ();
     setSmilLinkNode (element, 0L);
 }
 
@@ -1301,9 +1296,10 @@ KDE_NO_EXPORT void SMIL::Smil::activate () {
     current_av_media_type = NodePtr ();
     resolved = true;
     SMIL::Layout * layout = convertNode <SMIL::Layout> (layout_node);
+    if (layout &&layout->region_surface) {
+        kdError() << "Layout already has a surface" << endl;
+    }
     if (layout)
-        layout->surface = Mrl::getSurface (layout_node);
-    if (layout && layout->surface)
         Element::activate ();
     else
         Element::deactivate(); // some unfortunate reset in parent doc
@@ -1314,7 +1310,12 @@ KDE_NO_EXPORT void SMIL::Smil::deactivate () {
         convertNode <SMIL::Layout> (layout_node)->repaint ();
     Mrl::deactivate ();
     if (layout_node)
-        convertNode <SMIL::Layout> (layout_node)->surface = Mrl::getSurface(0L);
+        convertNode <SMIL::Layout> (layout_node)->region_surface = NULL;
+    Mrl::getSurface(0L);
+}
+
+KDE_NO_EXPORT bool SMIL::Smil::handleEvent (EventPtr event) {
+    return layout_node ? layout_node->handleEvent (event) : false;
 }
 
 KDE_NO_EXPORT void SMIL::Smil::closed () {
@@ -1351,11 +1352,6 @@ KDE_NO_EXPORT void SMIL::Smil::closed () {
     if (!layout_node) {
         kdError () << "no <root-layout>" << endl;
         return;
-    }
-    SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (layout_node);
-    if (rb && !rb->auxiliaryNode ()) {
-        width = rb->w;
-        height = rb->h;
     }
 }
 
@@ -1515,77 +1511,54 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
 KDE_NO_EXPORT void SMIL::Layout::activate () {
     //kdDebug () << "SMIL::Layout::activate" << endl;
     RegionBase::activate ();
-    updateDimensions (surface);
-    repaint ();
+    if (surface ()) {
+        updateDimensions ();
+        repaint ();
+    }
     finish (); // proceed and allow 'head' to finish
 }
 
-KDE_NO_EXPORT void SMIL::Layout::updateDimensions (SurfacePtr) {
+KDE_NO_EXPORT void SMIL::Layout::updateDimensions () {
     RegionBase * rb = static_cast <RegionBase *> (rootLayout.ptr ());
     x = y = 0;
     w = rb->sizes.width.size ();
     h = rb->sizes.height.size ();
     //kdDebug () << "Layout::updateDimensions " << w << "," << h <<endl;
-    SMIL::RegionBase::updateDimensions (surface);
+    SMIL::RegionBase::updateDimensions ();
 }
 
-KDE_NO_EXPORT bool SMIL::Layout::handleEvent (EventPtr event) {
-    bool handled = false;
-    switch (event->id ()) {
-        case event_sized: {
-            SizeEvent * e = static_cast <SizeEvent *> (event.ptr ());
-            Single ex = e->x, ey = e->y, ew = e->w, eh = e->h;
-            Single xoff, yoff;
-            float xscale = 1.0, yscale = 1.0;
-            float pxscale = 1.0, pyscale = 1.0;
-            if (auxiliaryNode () && rootLayout) {
-                w = ew;
-                h = eh;
-                Element * rl = convertNode <Element> (rootLayout);
-                rl->setAttribute (StringPool::attr_width, QString::number ((int)ew));
-                rl->setAttribute (StringPool::attr_height, QString::number ((int)eh));
-                rl->setParam (StringPool::attr_width, QString::number((int)ew));
-                rl->setParam (StringPool::attr_height,QString::number((int)eh));
-                updateDimensions (surface);
-            } else if (w > 0 && h > 0) {
-                xscale += 1.0 * (ew - w) / w;
-                yscale += 1.0 * (eh - h) / h;
-                if (surface) {
-                    pxscale = 1.0 * surface->bounds.width () / w;
-                    pyscale = 1.0 * surface->bounds.height () / h;
-                }
-                if (e->fit == fit_meet)
-                    if (xscale > yscale) {
-                        xscale = yscale;
-                        pxscale = pyscale;
-                        xoff = ew - (Single (w * (xscale - 1.0)) + w);
-                        ew -= xoff;
-                        xoff /= 2;
-                        ex += xoff;
-                    } else {
-                        yscale = xscale;
-                        pyscale = pxscale;
-                        yoff = eh - (Single (h * (yscale - 1.0)) + h);
-                        eh -= yoff;
-                        yoff /= 2;
-                        ey += yoff;
-                    }
-            } else
-                break;
-            if (surface) {
-                surface->xoffset = xoff;
-                surface->yoffset = yoff;
-                surface->xscale = pxscale;
-                surface->yscale = pyscale;
+KDE_NO_EXPORT SurfacePtr SMIL::Layout::surface () {
+    if (!region_surface) {
+        SMIL::Smil * s = Smil::findSmilNode (this);
+        if (s) {
+            SMIL::RegionBase *rl = convertNode <SMIL::RootLayout> (rootLayout);
+            if (rl && auxiliaryNode ()) {
+                s->width = 0;
+                s->height = 0;
+            } else if (rl) {
+                w = s->width = rl->getAttribute(StringPool::attr_width).toDouble ();
+                h = s->height =rl->getAttribute(StringPool::attr_height).toDouble();
             }
-            RegionBase::handleEvent (new SizeEvent (0, 0, ew, eh, e->fit));
-            handled = true;
-            break;
+            region_surface = s->getSurface (s);
+            if (region_surface) {
+                SRect rect = region_surface->bounds;
+                if (rl && auxiliaryNode ()) {
+                    w = rect.width ();
+                    h = rect.height ();
+                    rl->setAttribute (StringPool::attr_width, QString::number ((int)w));
+                    rl->setAttribute (StringPool::attr_height, QString::number ((int)h));
+                    rl->setParam (StringPool::attr_width, QString::number((int)w));
+                    rl->setParam (StringPool::attr_height,QString::number((int)h));
+                } else if (region_surface && w > 0 && h > 0) {
+                    region_surface->xscale = 1.0 * rect.width () / w;
+                    region_surface->yscale = 1.0 * rect.height () / h;
+                    updateDimensions ();
+                }
+                kdDebug() << "Layout::surface bounds " << rect.width () << "x" << rect.height () << " w:" << w << " h:" << h << " xs:" << region_surface->xscale << " ys:" << region_surface->yscale << endl;
+            }
         }
-        default:
-            return RegionBase::handleEvent (event);
     }
-    return handled;
+    return region_surface;
 }
 
 KDE_NO_EXPORT void SMIL::Layout::accept (Visitor * v) {
@@ -1596,17 +1569,17 @@ KDE_NO_EXPORT void SMIL::Layout::accept (Visitor * v) {
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
  : Element (d, id), x (0), y (0), w (0), h (0),
-   z_order (1), background_color (0),
-   m_SizeListeners (new NodeRefList) {}
+   z_order (1), background_color (0)
+   {}
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
-    if (surface && surface->parentNode ())
-        surface->parentNode ()->removeChild (surface);
+    if (region_surface && region_surface->parentNode ())
+        region_surface->parentNode ()->removeChild (region_surface);
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::activate () {
-    setState (state_activated);
     init ();
+    setState (state_activated);
     for (NodePtr r = firstChild (); r; r = r->nextSibling ())
         if (r->id == id_node_region || r->id == id_node_root_layout)
             r->activate ();
@@ -1618,50 +1591,48 @@ KDE_NO_EXPORT void SMIL::RegionBase::childDone (NodePtr child) {
 
 KDE_NO_EXPORT void SMIL::RegionBase::deactivate () {
     background_color = 0;
-    if (surface)
-        surface->background_color = 0;
+    if (region_surface)
+        region_surface->background_color = 0;
     sizes.resetSizes ();
     Element::deactivate ();
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::repaint () {
-    if (surface)
-        surface->repaint (0, 0, w, h);
+    if (surface ())
+        region_surface->repaint (0, 0, w, h);
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::repaint (const SRect & rect) {
-    if (surface) {
+    if (surface ()) {
         SRect r = SRect (0, 0, w, h).intersect (rect);
-        surface->repaint (r.x (), r.y (), r.width (), r.height ());
+        region_surface->repaint (r.x (), r.y (), r.width (), r.height ());
     }
 }
 
-KDE_NO_EXPORT void SMIL::RegionBase::updateDimensions (SurfacePtr psurface) {
-    if (!surface) {
-        surface = psurface->createSurface (this, SRect (x, y, w, h));
-        surface->background_color = background_color;
-    }
-    for (NodePtr r = firstChild (); r; r = r->nextSibling ())
-        if (r->id == id_node_region) {
-            SMIL::Region * cr = static_cast <SMIL::Region *> (r.ptr ());
-            cr->calculateBounds (w, h);
-            cr->updateDimensions (surface);
-        }
+KDE_NO_EXPORT void SMIL::RegionBase::updateDimensions () {
+    if (surface () && active ())
+        for (NodePtr r = firstChild (); r; r = r->nextSibling ())
+            if (r->id == id_node_region) {
+                SMIL::Region * cr = static_cast <SMIL::Region *> (r.ptr ());
+                cr->calculateBounds (w, h);
+                cr->updateDimensions ();
+            }
 }
 
-bool SMIL::RegionBase::handleEvent (EventPtr event) {
-    switch (event->id ()) {
-        case event_sized: {
-            propagateEvent (event);
-            for (NodePtr n = firstChild (); n; n = n->nextSibling ())
-                if (n->id == id_node_region)
-                    n->handleEvent (event);
-            break;
+KDE_NO_EXPORT SurfacePtr SMIL::RegionBase::surface () {
+    if (!region_surface) {
+        Node *n = parentNode ().ptr ();
+        if (n &&
+                (SMIL::id_node_region == n->id ||
+                 SMIL::id_node_layout == n->id)) {
+            SurfacePtr ps = static_cast <SMIL::Region *> (n)->surface ();
+            if (ps) {
+                region_surface = ps->createSurface (this, SRect (x, y, w, h));
+                region_surface->background_color = background_color;
+            }
         }
-        default:
-            return Element::handleEvent (event);
     }
-    return true;
+    return region_surface;
 }
 
 KDE_NO_EXPORT
@@ -1674,31 +1645,27 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
             background_color = 0;
         else
             background_color = 0xff000000 | QColor (val).rgb ();
-        if (surface)
-            surface->background_color = background_color;
+        if (region_surface || (active () && surface ()))
+            region_surface->background_color = background_color;
         need_repaint = true;
     } else if (name == "z-index") {
         z_order = val.toInt ();
         need_repaint = true;
     } else if (sizes.setSizeParam (name, val)) {
-        if (active () && surface) {
+        if (active ()) {
+            if (region_surface && region_surface->parentNode ())
+                region_surface->parentNode ()->removeChild (region_surface);
             NodePtr p = parentNode ();
             if (p &&(p->id==SMIL::id_node_region ||p->id==SMIL::id_node_layout))
-                convertNode <SMIL::RegionBase> (p)->updateDimensions (0L);
+                convertNode <SMIL::RegionBase> (p)->updateDimensions ();
             rect = rect.unite (SRect (x, y, w, h));
             need_repaint = true;
         }
     }
-    if (need_repaint && active () && surface && surface->parentNode ())
-        surface->parentNode ()->repaint (rect.x(), rect.y(),
+    if (need_repaint && active () && surface() && region_surface->parentNode ())
+        region_surface->parentNode ()->repaint (rect.x(), rect.y(),
                 rect.width(), rect.height());
     Element::parseParam (name, val);
-}
-
-NodeRefListPtr SMIL::RegionBase::listeners (unsigned int eid) {
-    if (eid == event_sized)
-        return m_SizeListeners;
-    return Element::listeners (eid);
 }
 
 KDE_NO_CDTOR_EXPORT SMIL::Region::Region (NodePtr & d)
@@ -1720,23 +1687,9 @@ KDE_NO_EXPORT
 void SMIL::Region::calculateBounds (Single pw, Single ph) {
     Single x1 (x), y1 (y), w1 (w), h1 (h);
     sizes.calcSizes (this, pw, ph, x, y, w, h);
-    if (x1 != x || y1 != y || w1 != w || h1 != h) {
-        propagateEvent (new SizeEvent (0, 0, w, h, fit_meet));
-    }
-    if (surface)
-        surface->bounds = SRect (x, y, w, h);
+    if (surface ())
+        region_surface->bounds = SRect (x, y, w, h);
     //kdDebug () << "Region::calculateBounds parent:" << pw << "x" << ph << " this:" << x << "," << y << " " << w << "x" << h << endl;
-}
-
-bool SMIL::Region::handleEvent (EventPtr event) {
-    switch (event->id ()) {
-        case event_sized: {
-            SizeEvent * e = static_cast <SizeEvent *> (event.ptr ());
-            return RegionBase::handleEvent (new SizeEvent (0, 0, w, h, e->fit));
-        }
-        default:
-            return RegionBase::handleEvent (event);
-    }
 }
 
 NodeRefListPtr SMIL::Region::listeners (unsigned int eid) {
@@ -2456,7 +2409,6 @@ KDE_NO_EXPORT void SMIL::MediaType::activate () {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
-    region_sized = 0L;
     region_paint = 0L;
     region_mouse_enter = 0L;
     region_mouse_leave = 0L;
@@ -2479,7 +2431,6 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
     MediaTypeRuntime *tr = static_cast<MediaTypeRuntime*>(runtime ());
     if (r) {
         region_node = r;
-        region_sized = r->connectTo (this, event_sized);
         region_mouse_enter = r->connectTo (this, event_inbounds);
         region_mouse_leave = r->connectTo (this, event_outbounds);
         region_mouse_click = r->connectTo (this, event_activated);
@@ -2499,7 +2450,6 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::finish () {
-    region_sized = 0L;
     if (trans_timer && !keepContent (this)) {
         document ()->cancelTimer (trans_timer);
         ASSERT(!trans_timer);
@@ -2541,20 +2491,15 @@ KDE_NO_EXPORT void SMIL::MediaType::childDone (NodePtr child) {
         finish ();
 }
 
-KDE_NO_EXPORT void SMIL::MediaType::positionVideoWidget () {
+KDE_NO_EXPORT bool SMIL::MediaType::needsVideoWidget () {
     MediaTypeRuntime * mtr = static_cast <MediaTypeRuntime *> (runtime ());
-    RegionBase * rb = convertNode <RegionBase> (region_node);
     SMIL::Smil * s = SMIL::Smil::findSmilNode (this);
     Node * link = s ? s->current_av_media_type.ptr () : 0L;
-    if (rb && (link == this || !link)) {
-        Single x = 0, y = 0, w = 0, h = 0;
-        if ((state == state_deferred || unfinished ()) && link &&
-                mtr->state () != Runtime::timings_stopped &&
-                !strcmp (nodeName (), "video") || !strcmp (nodeName (), "ref"))
-            mtr->sizes.calcSizes (this, rb->w, rb->h, x, y, w, h);
-        if (rb->surface)
-            rb->surface->video (x, y, w, h);
-    }
+    return ((link == this || !link) &&
+            (state == state_deferred || unfinished ()) && link &&
+            mtr->state () != Runtime::timings_stopped &&
+            (!strcmp (nodeName (), "video") || !strcmp (nodeName (), "ref")) &&
+            mtr->surface ());
 }
 
 SurfacePtr SMIL::MediaType::getSurface (NodePtr node) {
@@ -2577,8 +2522,6 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
     RegionBase * r = convertNode <RegionBase> (region_node);
     SurfacePtr s = static_cast<MediaTypeRuntime*>(runtime())->surface();
     switch (event->id ()) {
-        case event_sized:
-            break; // make it pass to all listeners
         case event_postponed: {
             PostponedEvent * pe = static_cast <PostponedEvent *> (event.ptr ());
             static_cast<MediaTypeRuntime*>(runtime())->postpone (pe->is_postponed);
@@ -2654,12 +2597,6 @@ KDE_NO_EXPORT Runtime * SMIL::AVMediaType::getNewRuntime () {
     return new AudioVideoData (this);
 }
 
-KDE_NO_EXPORT bool SMIL::AVMediaType::handleEvent (EventPtr event) {
-    if (event->id () == event_sized && !external_tree)
-        positionVideoWidget ();
-    return MediaType::handleEvent (event);
-}
-
 KDE_NO_EXPORT void SMIL::AVMediaType::accept (Visitor * v) {
     v->visit (this);
 }
@@ -2706,12 +2643,6 @@ SMIL::RefMediaType::RefMediaType (NodePtr & d)
 
 KDE_NO_EXPORT Runtime * SMIL::RefMediaType::getNewRuntime () {
     return new AudioVideoData (this); // FIXME check mimetype first
-}
-
-KDE_NO_EXPORT bool SMIL::RefMediaType::handleEvent (EventPtr event) {
-    if (event->id () == event_sized && !external_tree)
-        positionVideoWidget ();
-    return MediaType::handleEvent (event);
 }
 
 KDE_NO_EXPORT void SMIL::RefMediaType::accept (Visitor * v) {
@@ -2898,13 +2829,13 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
             QImage *pix = new QImage (data);
             if (!pix->isNull ()) {
                 cached_img.data->image = pix;
-                if (mt->region_node && SMIL::TimedMrl::keepContent (element))
-                    surface()->repaint ();
                 img_movie = new QMovie (data, data.size ());
                 img_movie->connectUpdate(this,SLOT(movieUpdated(const QRect&)));
                 img_movie->connectStatus (this, SLOT (movieStatus (int)));
                 img_movie->connectResize(this,SLOT (movieResize(const QSize&)));
                 frame_nr = 0;
+                if (surface ())
+                    sub_surface->repaint ();
             } else
                 delete pix;
         }
@@ -2916,15 +2847,13 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
 
 KDE_NO_EXPORT void ImageRuntime::movieUpdated (const QRect &) {
     if (frame_nr++) {
-        SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
-        if (mt && mt->region_node && SMIL::TimedMrl::keepContent (element)) {
-            resetSurface ();
-            cached_img.setUrl (QString ());
-            ASSERT (cached_img.data && cached_img.data->isEmpty ());
-            cached_img.data->image = new QImage;
-            *cached_img.data->image = (img_movie->framePixmap ());
-            surface()->repaint ();
-        }
+        resetSurface ();
+        cached_img.setUrl (QString ());
+        ASSERT (cached_img.data && cached_img.data->isEmpty ());
+        cached_img.data->image = new QImage;
+        *cached_img.data->image = (img_movie->framePixmap ());
+        if (surface())
+            sub_surface->repaint ();
     }
     if (timingstate != timings_started && img_movie)
         img_movie->pause ();
@@ -2940,9 +2869,8 @@ KDE_NO_EXPORT void ImageRuntime::movieStatus (int s) {
 }
 
 KDE_NO_EXPORT void ImageRuntime::movieResize (const QSize &) {
-    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
-    if (mt && mt->region_node && SMIL::TimedMrl::keepContent (element))
-        surface()->repaint ();
+    if (surface ())
+        sub_surface->repaint ();
         //kdDebug () << "movieResize" << endl;
 }
 
@@ -3063,9 +2991,8 @@ KDE_NO_EXPORT void TextRuntime::remoteReady (QByteArray & data) {
         if (d->codec)
             ts.setCodec (d->codec);
         text  = ts.read ();
-        SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
-        if (mt && mt->region_node && SMIL::TimedMrl::keepContent (element))
-            surface()->repaint ();
+        if (surface ())
+            sub_surface->repaint ();
     }
     postpone_lock = 0L;
     if (timingstate == timings_started)

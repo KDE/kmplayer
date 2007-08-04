@@ -43,6 +43,7 @@ public:
     KDE_NO_EXPORT QRect topWindowRect () const { return m_topwindow_rect; }
     SurfacePtr getSurface (NodePtr node);
     void setAudioVideoGeometry (int x, int y, int w, int y, unsigned int * bg);
+    void setAudioVideoNode (NodePtr n);
     void mouseMoved ();
     void scheduleRepaint (Single x, Single y, Single w, Single y);
     void moveRect(Single x, Single y, Single w, Single h, Single x1, Single y1);
@@ -65,11 +66,13 @@ protected:
     void closeEvent (QCloseEvent * e);
 private:
     void syncVisual (const SRect & rect);
+    void updateSurfaceBounds ();
     ViewAreaPrivate * d;
     QWidget * m_parent;
     View * m_view;
     KActionCollection * m_collection;
     SurfacePtr surface;
+    NodePtrW video_node;
     QRect m_av_geometry;
     SRect m_repaint_rect;
     QRect m_topwindow_rect;

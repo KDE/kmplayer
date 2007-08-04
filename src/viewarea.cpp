@@ -185,8 +185,9 @@ public:
     void resize (const SRect & rect);
     void repaint ();
     void repaint (Single x, Single y, Single w, Single h);
-    void video (Single x, Single y, Single w, Single h);
+    void video ();
 
+    NodePtrW current_video;
     ViewArea * view_widget;
 };
 
@@ -202,7 +203,7 @@ ViewSurface::ViewSurface (ViewArea * widget, NodePtr owner, const SRect & rect)
   : Surface (owner, rect), view_widget (widget) {}
 
 KDE_NO_CDTOR_EXPORT ViewSurface::~ViewSurface() {
-    kdDebug() << "~ViewSurface" << endl;
+    //kdDebug() << "~ViewSurface" << endl;
 }
 
 SurfacePtr ViewSurface::createSurface (NodePtr owner, const SRect & rect) {
@@ -246,7 +247,9 @@ void ViewSurface::repaint () {
     repaint (0, 0, bounds.width (), bounds.height ());
 }
 
-KDE_NO_EXPORT void ViewSurface::video (Single x, Single y, Single w, Single h) {
+KDE_NO_EXPORT void ViewSurface::video () {
+    view_widget->setAudioVideoNode (node);
+    Single x, y, w = bounds.width (), h = bounds.height ();
     toScreen (x, y, w, h);
     kdDebug() << "Surface::video:" << background_color << " " << (background_color & 0xff000000) << endl;
     view_widget->setAudioVideoGeometry (x, y, w, h,
@@ -284,7 +287,7 @@ class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
     void traverseRegion (SMIL::RegionBase * reg);
 public:
     cairo_t * cr;
-    CairoPaintVisitor (cairo_surface_t * cs, const SRect & rect);
+    CairoPaintVisitor (cairo_surface_t * cs, Single xoff, Single yoff, const SRect & rect);
     ~CairoPaintVisitor ();
     using Visitor::visit;
     void visit (Node * n);
@@ -293,8 +296,8 @@ public:
     void visit (SMIL::ImageMediaType *);
     void visit (SMIL::TextMediaType *);
     void visit (SMIL::Brush *);
-    KDE_NO_EXPORT void visit (SMIL::RefMediaType *) {}
-    KDE_NO_EXPORT void visit (SMIL::AVMediaType *) {}
+    void visit (SMIL::RefMediaType *);
+    void visit (SMIL::AVMediaType *);
     void visit (RP::Imfl *);
     void visit (RP::Fill *);
     void visit (RP::Fadein *);
@@ -305,8 +308,8 @@ public:
 };
 
 KDE_NO_CDTOR_EXPORT
-CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, const SRect & rect)
- : clip (rect), cairo_surface (cs) {
+CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Single xoff, Single yoff, const SRect & rect)
+ : clip (rect), cairo_surface (cs), matrix (Matrix (xoff, yoff, 1.0, 1.0)) {
     cr = cairo_create (cs);
     cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
     cairo_clip (cr);
@@ -340,8 +343,11 @@ KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (SMIL::RegionBase * reg) {
             if (c->data)
                 c->data->accept (this);
     }
-    if (reg->surface && reg->surface->node && reg->surface->node.ptr () != reg)
-        reg->surface->node->accept (this);
+    if (reg->surface () &&
+            reg->region_surface->node &&
+            reg->region_surface->node->id != SMIL::id_node_smil &&
+            reg->region_surface->node.ptr () != reg)
+        reg->region_surface->node->accept (this);
 
     // finally visit children, accounting for z-order FIXME optimize
     NodeRefList sorted;
@@ -365,24 +371,22 @@ KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (SMIL::RegionBase * reg) {
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout * reg) {
     //kdDebug() << "Visit " << reg->nodeName() << endl;
     SMIL::RegionBase *rb = convertNode <SMIL::RegionBase> (reg->rootLayout);
-    if (reg->surface && rb) {
+    if (reg->surface () && rb) {
         //cairo_save (cr);
         Matrix m = matrix;
 
-        SRect rect = reg->surface->bounds;
-        Single xoff = reg->surface->xoffset;
-        Single yoff = reg->surface->yoffset;
-        Single w = rect.width() - 2 * xoff, h = rect.height() - 2 * yoff;
-        matrix.getXYWH (xoff, yoff, w, h);
+        SRect rect = reg->region_surface->bounds;
+        Single x, y, w = rect.width(), h = rect.height();
+        matrix.getXYWH (x, y, w, h);
 
         SRect clip_save = clip;
-        clip = clip.intersect (SRect (xoff, yoff, w, h));
+        clip = clip.intersect (SRect (x, y, w, h));
 
-        rb->surface = reg->surface;
-        rb->surface->background_color = rb->background_color;
+        rb->region_surface = reg->region_surface;
+        rb->region_surface->background_color = rb->background_color;
 
-        if (reg->surface && (reg->surface->background_color & 0xff000000)) {
-            CAIRO_SET_SOURCE_RGB (cr, reg->surface->background_color);
+        if (reg->region_surface->background_color & 0xff000000) {
+            CAIRO_SET_SOURCE_RGB (cr, reg->region_surface->background_color);
             cairo_rectangle (cr, clip.x (), clip.y(),
                     clip.width (), clip.height ());
             cairo_fill (cr);
@@ -390,44 +394,63 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout * reg) {
         //cairo_rectangle (cr, xoff, yoff, w, h);
         //cairo_clip (cr);
 
-        matrix = Matrix (reg->surface->xoffset, reg->surface->yoffset,
-                reg->surface->xscale, reg->surface->yscale);
+        matrix = Matrix (0, 0, reg->region_surface->xscale, reg->region_surface->yscale);
         matrix.transform (m);
         traverseRegion (reg);
         //cairo_restore (cr);
         matrix = m;
         clip = clip_save;
 
-        rb->surface = 0L;
+        rb->region_surface = 0L;
     }
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
-    SRect rect = reg->surface->bounds;
+    if (reg->surface ()) {
+        SRect rect = reg->region_surface->bounds;
 
-    Matrix m = matrix;
-    Single x = rect.x (), y = rect.y (), w = rect.width(), h = rect.height();
-    matrix.getXYWH (x, y, w, h);
-    if (!clip.intersect (SRect (x, y, w, h)).isValid ())
-        return;
-    matrix = Matrix (rect.x(), rect.y(), 1.0, 1.0);
-    matrix.transform (m);
-    SRect clip_save = clip;
-    clip = clip.intersect (SRect (x, y, w, h));
-    cairo_save (cr);
-    if (reg->surface && (reg->surface->background_color & 0xff000000)) {
-        CAIRO_SET_SOURCE_RGB (cr, reg->surface->background_color);
-        cairo_rectangle (cr, clip.x (), clip.y(),
-                clip.width (), clip.height ());
+        Matrix m = matrix;
+        Single x = rect.x (), y = rect.y (), w = rect.width(), h = rect.height();
+        matrix.getXYWH (x, y, w, h);
+        if (!clip.intersect (SRect (x, y, w, h)).isValid ())
+            return;
+        matrix = Matrix (rect.x(), rect.y(), 1.0, 1.0);
+        matrix.transform (m);
+        SRect clip_save = clip;
+        clip = clip.intersect (SRect (x, y, w, h));
+        cairo_save (cr);
+        if (reg->region_surface->background_color & 0xff000000) {
+            CAIRO_SET_SOURCE_RGB (cr, reg->region_surface->background_color);
+            cairo_rectangle (cr, clip.x (), clip.y(),
+                    clip.width (), clip.height ());
+            //cairo_rectangle (cr, x, y, w, h);
+            cairo_fill (cr);
+        }
         //cairo_rectangle (cr, x, y, w, h);
-        cairo_fill (cr);
+        //cairo_clip (cr);
+        traverseRegion (reg);
+        cairo_restore (cr);
+        matrix = m;
+        clip = clip_save;
     }
-    //cairo_rectangle (cr, x, y, w, h);
-    //cairo_clip (cr);
-    traverseRegion (reg);
-    cairo_restore (cr);
-    matrix = m;
-    clip = clip_save;
+}
+
+KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
+    if (ref->needsVideoWidget ()) {
+        MediaTypeRuntime *mtr = static_cast<MediaTypeRuntime*>(ref->runtime ());
+        SurfacePtr s = mtr->surface ();
+        if (s)
+            s->video ();
+    }
+}
+
+KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
+    if (av->needsVideoWidget ()) {
+        MediaTypeRuntime *mtr = static_cast<MediaTypeRuntime*> (av->runtime ());
+        SurfacePtr s = mtr->surface ();
+        if (s)
+            s->video ();
+    }
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
@@ -478,7 +501,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     if (s) {
         SRect rect = s->bounds;
         Single x = rect.x (), y = rect.y(), w = rect.width(), h = rect.height();
-        //td->sizes.calcSizes (txt, rect.width(), rect.height(), x, y, w, h);
         matrix.getXYWH (x, y, w, h);
         /* QTextEdit * edit = new QTextEdit;
         edit->setReadOnly (true);
@@ -591,8 +613,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
     //kdDebug() << "Visit " << brush->nodeName() << endl;
     SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (brush->region_node);
-    if (rb && rb->surface) {
-        SRect rect = rb->surface->bounds;
+    if (rb && rb->surface ()) {
+        SRect rect = rb->surface ()->bounds;
         Single x, y, w = rect.width(), h = rect.height();
         matrix.getXYWH (x, y, w, h);
         unsigned int color = QColor (brush->param ("color")).rgb ();
@@ -867,77 +889,82 @@ KDE_NO_EXPORT void MouseVisitor::visit (Node * n) {
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Layout * layout) {
-    Matrix m = matrix;
-    matrix = Matrix (layout->surface->xoffset, layout->surface->yoffset,
-            layout->surface->xscale, layout->surface->yscale);
-    matrix.transform (m);
+    if (layout->surface ()) {
+        Matrix m = matrix;
+        SRect rect = layout->region_surface->bounds;
+        matrix = Matrix (rect.x(), rect.y(),
+                layout->region_surface->xscale, layout->region_surface->yscale);
+        matrix.transform (m);
 
-    NodePtr node_save = node;
-    node = layout;
-    for (NodePtr r = layout->firstChild (); r; r = r->nextSibling ()) {
-        if (r->id == SMIL::id_node_region)
-            r->accept (this);
-        if (!node->active ())
-            break;
-    }
-    node = node_save;
-
-    matrix = m;
-}
-
-KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Region * region) {
-    SRect rect = region->surface->bounds;
-    Single rx = rect.x (), ry = rect.y(), rw = rect.width(), rh = rect.height();
-    matrix.getXYWH (rx, ry, rw, rh);
-    handled = false;
-    bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
-    if (!inside && (event == event_pointer_clicked || !region->has_mouse))
-        return;
-    Matrix m = matrix;
-    matrix = Matrix (rect.x(), rect.y(), 1.0, 1.0);
-    matrix.transform (m);
-    bubble_up = false;
-
-    bool child_handled = false;
-    if (inside)
-        for (NodePtr r = region->firstChild (); r; r = r->nextSibling ()) {
-            r->accept (this);
-            child_handled |= handled;
+        NodePtr node_save = node;
+        node = layout;
+        for (NodePtr r = layout->firstChild (); r; r = r->nextSibling ()) {
+            if (r->id == SMIL::id_node_region)
+                r->accept (this);
             if (!node->active ())
                 break;
         }
-    child_handled &= !bubble_up;
-    bubble_up = false;
+        node = node_save;
 
-    int saved_event = event;
-    if (node->active ()) {
-        bool propagate_listeners = !child_handled;
-        if (event == event_pointer_moved) {
-            propagate_listeners = true; // always pass move events
-            if (region->has_mouse && (!inside || child_handled)) {
-                region->has_mouse = false;
-                event = event_outbounds;
-            } else if (inside && !child_handled && !region->has_mouse) {
-                region->has_mouse = true;
-                event = event_inbounds;
+        matrix = m;
+    }
+}
+
+KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Region * region) {
+    if (region->surface ()) {
+        SRect rect = region->region_surface->bounds;
+        Single rx = rect.x(), ry = rect.y(), rw = rect.width(), rh = rect.height();
+        matrix.getXYWH (rx, ry, rw, rh);
+        handled = false;
+        bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
+        if (!inside && (event == event_pointer_clicked || !region->has_mouse))
+            return;
+        Matrix m = matrix;
+        matrix = Matrix (rect.x(), rect.y(), 1.0, 1.0);
+        matrix.transform (m);
+        bubble_up = false;
+
+        bool child_handled = false;
+        if (inside)
+            for (NodePtr r = region->firstChild (); r; r = r->nextSibling ()) {
+                r->accept (this);
+                child_handled |= handled;
+                if (!node->active ())
+                    break;
             }
-        }// else // event_pointer_clicked
-        if (propagate_listeners) {
-            NodeRefListPtr nl = region->listeners (
-                    event == event_pointer_moved ? mediatype_attached : event);
-            if (nl) {
-                for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
-                    if (c->data)
-                        c->data->accept (this);
-                    if (!node->active ())
-                        break;
+        child_handled &= !bubble_up;
+        bubble_up = false;
+
+        int saved_event = event;
+        if (node->active ()) {
+            bool propagate_listeners = !child_handled;
+            if (event == event_pointer_moved) {
+                propagate_listeners = true; // always pass move events
+                if (region->has_mouse && (!inside || child_handled)) {
+                    region->has_mouse = false;
+                    event = event_outbounds;
+                } else if (inside && !child_handled && !region->has_mouse) {
+                    region->has_mouse = true;
+                    event = event_inbounds;
+                }
+            }// else // event_pointer_clicked
+            if (propagate_listeners) {
+                NodeRefListPtr nl = region->listeners (
+                        event == event_pointer_moved ? mediatype_attached : event);
+                if (nl) {
+                    for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
+                        if (c->data)
+                            c->data->accept (this);
+                        if (!node->active ())
+                            break;
+                    }
                 }
             }
         }
+        event = saved_event;
+        handled = inside;
+        matrix = m;
     }
-    event = saved_event;
-    handled = inside;
-    matrix = m;
 }
 
 static void followLink (SMIL::LinkingBase * link) {
@@ -1039,8 +1066,10 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType * mediatype) {
         visit (static_cast <SMIL::TimedMrl *> (mediatype));
     if (event != event_inbounds && event != event_outbounds) {
       SMIL::RegionBase *r=convertNode<SMIL::RegionBase>(mediatype->region_node);
-      if (r && r->surface && r->surface->node && r != r->surface->node)
-          return r->surface->node->accept (this);
+      if (r && r->surface () &&
+              r->id != SMIL::id_node_smil &&
+              r->region_surface->node && r != r->region_surface->node.ptr ())
+          return r->region_surface->node->accept (this);
     }
 }
 
@@ -1184,7 +1213,10 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const SRect & rect) {
     int eh = rect.height () + 3;
     if (!surface->surface)
         surface->surface = cairoCreateSurface (winId (), width (), height ());
-    CairoPaintVisitor visitor (surface->surface, SRect (ex, ey, ew, eh));
+    if (!video_node ||
+            !convertNode <SMIL::AVMediaType> (video_node)->needsVideoWidget())
+        setAudioVideoGeometry (0, 0, 0, 0, NULL);
+    CairoPaintVisitor visitor (surface->surface, surface->bounds.x(), surface->bounds.y(), SRect (ex, ey, ew, eh));
     surface->node->accept (&visitor);
 #endif
     //XFlush (qt_xdisplay ());
@@ -1204,31 +1236,57 @@ KDE_NO_EXPORT void ViewArea::scale (int val) {
     resizeEvent (0L);
 }
 
+KDE_NO_EXPORT void ViewArea::updateSurfaceBounds () {
+    Single x, y, w = width (), h = height ();
+    h -= m_view->statusBarHeight ();
+    h -= m_view->controlPanel ()->isVisible ()
+        ? (m_view->controlPanelMode () == View::CP_Only
+                ? h
+                : (Single) m_view->controlPanel()->maximumSize ().height ())
+        : Single (0);
+    surface->resize (SRect (x, y, w, h));
+    Mrl *mrl = surface->node ? surface->node->mrl () : NULL;
+    if (m_view->keepSizeRatio () &&
+            w > 0 && h > 0 &&
+            mrl && mrl->width > 0 && mrl->height > 0) {
+        double wasp = (double) w / h;
+        double masp = (double) mrl->width / mrl->height;
+        if (wasp > masp) {
+            Single tmp = w;
+            w = masp * h;
+            x += (tmp - w) / 2;
+        } else {
+            Single tmp = h;
+            h = Single (w / masp);
+            y += (tmp - h) / 2;
+        }
+        surface->bounds = SRect (x, y, w, h);
+    }
+    scheduleRepaint (0, 0, w, h);
+}
+
 KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     if (!m_view->controlPanel ()) return;
-    int x =0, y = 0;
-    int w = width ();
-    int h = height ();
-    scheduleRepaint (0, 0, w, h);
-    int hsb = m_view->statusBarHeight ();
-    int hcp = m_view->controlPanel ()->isVisible () ? (m_view->controlPanelMode () == View::CP_Only ? h-hsb: m_view->controlPanel()->maximumSize ().height ()) : 0;
-    int wws = w;
+    Single x, y, w = width (), h = height ();
+    Single hsb = m_view->statusBarHeight ();
+    Single hcp = m_view->controlPanel ()->isVisible ()
+        ? (m_view->controlPanelMode () == View::CP_Only
+                ? h-hsb
+                : (Single) m_view->controlPanel()->maximumSize ().height ())
+        : Single (0);
+    Single wws = w;
     // move controlpanel over video when autohiding and playing
-    int hws = h - (m_view->controlPanelMode () == View::CP_AutoHide && m_view->widgetStack ()->visibleWidget () == m_view->viewer () ? 0 : hcp) - hsb;
+    Single hws = h - (m_view->controlPanelMode () == View::CP_AutoHide &&
+            m_view->widgetStack ()->visibleWidget () == m_view->viewer ()
+            ? Single (0)
+            : hcp) - hsb;
     // now scale the regions and check if video region is already sized
-    bool av_geometry_changed = false;
-    surface->resize (SRect (x, y, wws, hws));
-    if (surface->node && wws > 0 && hws > 0) {
-        m_av_geometry = QRect (0, 0, 0, 0);
-        surface->node->handleEvent (new SizeEvent (x, y, wws, hws, m_view->keepSizeRatio () ? fit_meet : fit_fill));
-        av_geometry_changed = (m_av_geometry != QRect (0, 0, 0, 0));
-        x = m_av_geometry.x ();
-        y = m_av_geometry.y ();
-        wws = m_av_geometry.width ();
-        hws = m_av_geometry.height ();
-            //m_view->viewer ()->setAspect (region->w / region->h);
-    } else
-        m_av_geometry = QRect (x, y, wws, hws);
+    if (surface->node) {
+        NodePtr n = surface->node;
+        surface = new ViewSurface (this);
+        surface->node = n;
+    }
+    updateSurfaceBounds ();
 
     // finally resize controlpanel and video widget
     if (m_view->controlPanel ()->isVisible ())
@@ -1241,7 +1299,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
         x += (w - wws) / 2;
         y += (h - hws) / 2;
     }
-    if (!av_geometry_changed)
+    if (!surface->node)
         setAudioVideoGeometry (x, y, wws, hws, 0L);
 }
 
@@ -1249,7 +1307,7 @@ KDE_NO_EXPORT
 void ViewArea::setAudioVideoGeometry (int x, int y, int w, int h, unsigned int * bg_color) {
     if (m_view->controlPanelMode() == View::CP_Only) {
         w = h = 0;
-    } else if (m_view->keepSizeRatio ()) { // scale video widget inside region
+    } else if (!surface->node && m_view->keepSizeRatio ()) { // scale video widget inside region
         int hfw = m_view->viewer ()->heightForWidth (w);
         if (hfw > 0)
             if (hfw > h) {
@@ -1263,7 +1321,9 @@ void ViewArea::setAudioVideoGeometry (int x, int y, int w, int h, unsigned int *
     }
     m_av_geometry = QRect (x, y, w, h);
     QRect rect = m_view->widgetStack ()->geometry ();
-    if (m_av_geometry != rect) {
+    if (m_av_geometry != rect &&
+            !(m_av_geometry.width() <= 0 &&
+                rect.width() <= 1 && rect.height() <= 1)) {
         m_view->widgetStack ()->setGeometry (x, y, w, h);
         rect.unite (m_av_geometry);
         scheduleRepaint (rect.x (), rect.y (), rect.width (), rect.height ());
@@ -1275,17 +1335,18 @@ void ViewArea::setAudioVideoGeometry (int x, int y, int w, int h, unsigned int *
         }
 }
 
+KDE_NO_EXPORT void ViewArea::setAudioVideoNode (NodePtr n) {
+    video_node = n;
+}
+
 KDE_NO_EXPORT SurfacePtr ViewArea::getSurface (NodePtr node) {
     static_cast <ViewSurface *> (surface.ptr ())->clear ();
     surface->node = node;
-    qApp->postEvent (this, new QResizeEvent (size (), QSize (0, 0)));
-    if (m_repaint_timer) {
-        killTimer (m_repaint_timer);
-        m_repaint_timer = 0;
-    }
     m_view->viewer()->resetBackgroundColor ();
-    if (node)
+    if (node) {
+        updateSurfaceBounds ();
         return surface;
+    }
     return 0L;
 }
 

@@ -231,16 +231,6 @@ protected:
 
 ITEM_AS_POINTER(KMPlayer::Event)
 
-/**
- * Event signaling that attached region is resized
- */
-class SizeEvent : public Event {
-public:
-    SizeEvent (Single x, Single y, Single w, Single h, Fit f);
-    Single x, y, w, h;
-    Fit fit;
-};
-
 extern const unsigned int event_pointer_clicked;
 extern const unsigned int event_pointer_moved;
 extern const unsigned int event_inbounds;
@@ -568,8 +558,8 @@ public:
     QString src;
     QString pretty_name;
     QString mimetype;
-    int width;
-    int height;
+    Single width;
+    Single height;
     float aspect;
     int repeat;
     enum { SingleMode = 0, WindowMode } view_mode;
@@ -643,7 +633,7 @@ public:
     virtual void resize (const SRect & rect) = 0;
     virtual void repaint () = 0;
     virtual void repaint (Single x, Single y, Single w, Single h) = 0;
-    virtual void video (Single x, Single y, Single w, Single h) = 0;
+    virtual void video () = 0;
 
     NodePtrW node;
     SRect bounds;                  // bounds in in parent coord. 

@@ -140,7 +140,7 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
 }
 
 KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
-    if (event->id () == event_sized) {
+    /*if (event->id () == event_sized) {
         fit = static_cast <SizeEvent *> (event.ptr ())->fit;
         if (surface) {
             if (fit == fit_fill) {
@@ -153,7 +153,7 @@ KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
                     surface->yscale = surface->xscale;
             }
         }
-    } else if (event->id () == event_timer) {
+    } else*/ if (event->id () == event_timer) {
         TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
         if (te->timer_info == duration_timer) {
             kdDebug () << "RP::Imfl timer " << duration << endl;

@@ -376,6 +376,7 @@ public:
     void closed ();
     void childDone (NodePtr child);
     bool expose () const;
+    bool handleEvent (EventPtr event);
     void accept (Visitor *);
     void jump (const QString & id);
     static Smil * findSmilNode (Node * node);
@@ -412,9 +413,7 @@ public:
     void activate ();
     void childDone (NodePtr child);
     void deactivate ();
-    virtual bool handleEvent (EventPtr event);
     virtual void parseParam (const TrieString & name, const QString & value);
-    virtual NodeRefListPtr listeners (unsigned int event_id);
     /**
      * repaints region, calls scheduleRepaint(x,y,w,h) on view
      */
@@ -425,9 +424,10 @@ public:
      * given this element's w and h value
      * and child's left/top/right/width/height/bottom attributes
      */
-    virtual void updateDimensions (SurfacePtr parent_surface);
+    virtual void updateDimensions ();
 
-    SurfacePtrW surface;
+    virtual SurfacePtr surface ();
+    SurfacePtrW region_surface;
     CalculatedSizer sizes;
 
     Single x, y, w, h;     // unscaled values
@@ -435,7 +435,6 @@ public:
     unsigned int background_color;
 protected:
     RegionBase (NodePtr & d, short id);
-    NodeRefListPtr m_SizeListeners;        // region resized
 };
 
 /**
@@ -448,12 +447,12 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "layout"; }
     void activate ();
     void closed ();
-    virtual bool handleEvent (EventPtr event);
     virtual void accept (Visitor *);
     /**
      * recursively calculates dimensions of this and child regions
      */
-    virtual void updateDimensions (SurfacePtr parent_surface);
+    virtual void updateDimensions ();
+    virtual SurfacePtr surface ();
 
     NodePtrW rootLayout;
 };
@@ -467,7 +466,6 @@ public:
     KDE_NO_EXPORT const char * nodeName () const { return "region"; }
     NodePtr childFromTag (const QString & tag);
     void calculateBounds (Single w, Single h);
-    virtual bool handleEvent (EventPtr event);
     virtual NodeRefListPtr listeners (unsigned int event_id);
     virtual void accept (Visitor *);
     /**
@@ -722,7 +720,7 @@ public:
     virtual void parseParam (const TrieString & name, const QString & value);
     virtual bool handleEvent (EventPtr event);
     NodeRefListPtr listeners (unsigned int event_id);
-    void positionVideoWidget (); // for 'video' and 'ref' nodes
+    bool needsVideoWidget (); // for 'video' and 'ref' nodes
     NodePtrW external_tree; // if src points to playlist, the resolved top node
     NodePtrW trans_in;
     NodePtrW trans_out;
@@ -735,7 +733,6 @@ public:
 protected:
     MouseListeners mouse_listeners;
     NodeRefListPtr m_MediaAttached;        // mouse entered
-    ConnectionPtr region_sized;            // attached region is sized
     ConnectionPtr region_paint;            // attached region needs painting
     ConnectionPtr region_mouse_enter;      // attached region has mouse entered
     ConnectionPtr region_mouse_leave;      // attached region has mouse left
@@ -753,7 +750,6 @@ public:
     virtual void defer ();
     virtual void undefer ();
     virtual void endOfFile ();
-    virtual bool handleEvent (EventPtr event);
     virtual void accept (Visitor *);
 };
 
@@ -778,7 +774,6 @@ class KMPLAYER_NO_EXPORT RefMediaType : public MediaType {
 public:
     RefMediaType (NodePtr & d);
     Runtime * getNewRuntime ();
-    virtual bool handleEvent (EventPtr event);
     virtual void accept (Visitor *);
 };
 
