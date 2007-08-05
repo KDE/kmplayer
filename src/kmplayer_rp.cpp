@@ -51,11 +51,6 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
     kdDebug () << "RP::Imfl::activate " << endl;
     resolved = true;
     setState (state_activated);
-    surface = Mrl::getSurface (this);
-    if (!surface) {
-        finish ();
-        return;
-    }
     int timings_count = 0;
     for (NodePtr n = firstChild (); n; n = n->nextSibling ())
         switch (n->id) {
@@ -85,14 +80,6 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
                 }
                 break;
         }
-    if (width <= 0 || width > 32000)
-        width = surface->bounds.width ();
-    if (height <= 0 || height > 32000)
-        height = surface->bounds.height ();
-    if (width > 0 && height > 0) {
-        surface->xscale = 1.0 * surface->bounds.width () / width;
-        surface->yscale = 1.0 * surface->bounds.height () / height;
-    }
     if (duration > 0)
         duration_timer = document ()->setTimeout (this, duration * 100);
     else if (!timings_count)
@@ -136,24 +123,11 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
     for (NodePtr n = firstChild (); n; n = n->nextSibling ())
         if (n->active ())
             n->deactivate ();
-    surface = Mrl::getSurface (0L);
+    rp_surface = Mrl::getSurface (0L);
 }
 
 KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
-    /*if (event->id () == event_sized) {
-        fit = static_cast <SizeEvent *> (event.ptr ())->fit;
-        if (surface) {
-            if (fit == fit_fill) {
-                surface->xscale = 1.0 * surface->bounds.width () / width;
-                surface->yscale = 1.0 * surface->bounds.height () / height;
-            } else { // keep aspect, center (and so add offset) ??
-                if (surface->xscale > surface->yscale)
-                    surface->xscale = surface->yscale;
-                else
-                    surface->yscale = surface->xscale;
-            }
-        }
-    } else*/ if (event->id () == event_timer) {
+    if (event->id () == event_timer) {
         TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
         if (te->timer_info == duration_timer) {
             kdDebug () << "RP::Imfl timer " << duration << endl;
@@ -167,6 +141,23 @@ KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
 
 KDE_NO_EXPORT void RP::Imfl::accept (Visitor * v) {
     v->visit (this);
+}
+
+KDE_NO_EXPORT Surface *RP::Imfl::surface () {
+    if (!rp_surface) {
+        rp_surface = Mrl::getSurface (this);
+        if (rp_surface) {
+            if (width <= 0 || width > 32000)
+                width = rp_surface->bounds.width ();
+            if (height <= 0 || height > 32000)
+                height = rp_surface->bounds.height ();
+            if (width > 0 && height > 0) {
+                rp_surface->xscale = 1.0 * rp_surface->bounds.width () / width;
+                rp_surface->yscale = 1.0 * rp_surface->bounds.height() / height;
+            }
+        }
+    }
+    return rp_surface.ptr ();
 }
 
 KDE_NO_EXPORT NodePtr RP::Imfl::childFromTag (const QString & tag) {
@@ -193,8 +184,12 @@ KDE_NO_EXPORT NodePtr RP::Imfl::childFromTag (const QString & tag) {
 KDE_NO_EXPORT void RP::Imfl::repaint () {
     if (!active ())
         kdWarning () << "Spurious Imfl repaint" << endl;
-    else if (surface && width > 0 && height > 0)
-        surface->repaint (0, 0, width, height);
+    else {
+        if (rp_surface)
+            rp_surface = Mrl::getSurface (NULL);
+        if (surface () && width > 0 && height > 0)
+            rp_surface->repaint (0, 0, width, height);
+    }
 }
 
 KDE_NO_CDTOR_EXPORT RP::Image::Image (NodePtr & doc)

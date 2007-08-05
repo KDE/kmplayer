@@ -343,12 +343,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (SMIL::RegionBase * reg) {
             if (c->data)
                 c->data->accept (this);
     }
-    if (reg->surface () &&
-            reg->region_surface->node &&
-            reg->region_surface->node->id != SMIL::id_node_smil &&
-            reg->region_surface->node.ptr () != reg)
-        reg->region_surface->node->accept (this);
-
     // finally visit children, accounting for z-order FIXME optimize
     NodeRefList sorted;
     for (NodePtr n = reg->firstChild (); n; n = n->nextSibling ()) {
@@ -410,7 +404,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
         SRect rect = reg->region_surface->bounds;
 
         Matrix m = matrix;
-        Single x = rect.x (), y = rect.y (), w = rect.width(), h = rect.height();
+        Single x = rect.x(), y = rect.y(), w = rect.width(), h = rect.height();
         matrix.getXYWH (x, y, w, h);
         if (!clip.intersect (SRect (x, y, w, h)).isValid ())
             return;
@@ -625,16 +619,16 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Imfl * imfl) {
-    if (imfl->surface) {
+    if (imfl->surface ()) {
         cairo_save (cr);
         Matrix m = matrix;
-        Single xoff = imfl->surface->xoffset, yoff = imfl->surface->yoffset;
-        Single w = imfl->surface->bounds.width() - 2 * xoff;
-        Single h = imfl->surface->bounds.height() - 2 * yoff;
-        matrix.getXYWH (xoff, yoff, w, h);
-        cairo_rectangle (cr, xoff, yoff, w, h);
+        Single x, y;
+        Single w = imfl->rp_surface->bounds.width();
+        Single h = imfl->rp_surface->bounds.height();
+        matrix.getXYWH (x, y, w, h);
+        cairo_rectangle (cr, x, y, w, h);
         //cairo_clip (cr);
-        cairo_translate (cr, xoff, yoff);
+        cairo_translate (cr, x, y);
         cairo_scale (cr, w/imfl->width, h/imfl->height);
         if (imfl->needs_scene_img)
             cairo_push_group (cr);
@@ -1219,6 +1213,10 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const SRect & rect) {
     CairoPaintVisitor visitor (surface->surface, surface->bounds.x(), surface->bounds.y(), SRect (ex, ey, ew, eh));
     surface->node->accept (&visitor);
 #endif
+    if (m_repaint_timer) {
+        killTimer (m_repaint_timer);
+        m_repaint_timer = 0;
+    }
     //XFlush (qt_xdisplay ());
 }
 
@@ -1260,8 +1258,8 @@ KDE_NO_EXPORT void ViewArea::updateSurfaceBounds () {
             h = Single (w / masp);
             y += (tmp - h) / 2;
         }
-        surface->bounds = SRect (x, y, w, h);
     }
+    surface->bounds = SRect (x, y, w, h);
     scheduleRepaint (0, 0, w, h);
 }
 

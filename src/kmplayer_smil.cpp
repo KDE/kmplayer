@@ -706,23 +706,30 @@ KDE_NO_EXPORT void CalculatedSizer::calcSizes (Node * node, Single w, Single h,
 }
 
 KDE_NO_EXPORT
-bool CalculatedSizer::setSizeParam(const TrieString &name, const QString &val) {
+bool CalculatedSizer::setSizeParam(const TrieString &name, const QString &val, bool &dim_changed) {
+    dim_changed = true;
     if (name == StringPool::attr_left) {
         left = val;
+        dim_changed = right.isSet ();
     } else if (name == StringPool::attr_top) {
         top = val;
+        dim_changed = bottom.isSet ();
     } else if (name == StringPool::attr_width) {
         width = val;
     } else if (name == StringPool::attr_height) {
         height = val;
     } else if (name == StringPool::attr_right) {
         right = val;
+        dim_changed = left.isSet ();
     } else if (name == StringPool::attr_bottom) {
         bottom = val;
+        dim_changed = top.isSet ();
     } else if (name == "regPoint") {
         reg_point = val;
+        dim_changed = false;
     } else if (name == "regAlign") {
         reg_align = val;
+        dim_changed = false;
     } else
         return false;
     return true;
@@ -1001,6 +1008,7 @@ bool MediaTypeRuntime::parseParam (const TrieString &name, const QString &val) {
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
     if (!mt)
         return false;
+    bool dim_changed;
     if (name == "fit") {
         const char * cval = val.ascii ();
         if (!cval)
@@ -1017,9 +1025,10 @@ bool MediaTypeRuntime::parseParam (const TrieString &name, const QString &val) {
             fit = fit_slice;
         else
             fit = fit_hidden;
-    } else if (!sizes.setSizeParam (name, val)) {
+    } else if (!sizes.setSizeParam (name, val, dim_changed)) {
         return Runtime::parseParam (name, val);
     }
+    // TODO account for dim_changed
     resetSurface ();
     if (surface ())
         sub_surface->repaint ();
@@ -1640,6 +1649,7 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
     //kdDebug () << "RegionBase::parseParam " << getAttribute ("id") << " " << name << "=" << val << " active:" << active() << endl;
     bool need_repaint = false;
     SRect rect = SRect (x, y, w, h);
+    bool dim_changed;
     if (name == "background-color" || name == "backgroundColor") {
         if (val.isEmpty ())
             background_color = 0;
@@ -1651,9 +1661,9 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
     } else if (name == "z-index") {
         z_order = val.toInt ();
         need_repaint = true;
-    } else if (sizes.setSizeParam (name, val)) {
+    } else if (sizes.setSizeParam (name, val, dim_changed)) {
         if (active ()) {
-            if (region_surface && region_surface->parentNode ())
+            if (dim_changed && region_surface && region_surface->parentNode ())
                 region_surface->parentNode ()->removeChild (region_surface);
             NodePtr p = parentNode ();
             if (p &&(p->id==SMIL::id_node_region ||p->id==SMIL::id_node_layout))
@@ -1711,7 +1721,8 @@ KDE_NO_EXPORT void SMIL::Region::accept (Visitor * v) {
 
 KDE_NO_EXPORT
 void SMIL::RegPoint::parseParam (const TrieString & p, const QString & v) {
-    sizes.setSizeParam (p, v); // TODO: if dynamic, make sure to repaint
+    bool b;
+    sizes.setSizeParam (p, v, b); // TODO: if dynamic, make sure to repaint
     Element::parseParam (p, v);
 }
 

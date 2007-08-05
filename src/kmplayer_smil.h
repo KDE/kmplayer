@@ -111,7 +111,7 @@ public:
             Single & xoff, Single & yoff, Single & w1, Single & h1);
     SizeType left, top, width, height, right, bottom;
     QString reg_point, reg_align;
-    bool setSizeParam (const TrieString & name, const QString & value);
+    bool setSizeParam (const TrieString &name, const QString &value, bool &dim);
 };
 
 /**

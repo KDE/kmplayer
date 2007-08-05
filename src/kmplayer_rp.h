@@ -64,12 +64,12 @@ public:
     KDE_NO_EXPORT virtual PlayType playType () const { return play_type_image; }
     virtual bool handleEvent (EventPtr event);
     virtual void accept (Visitor *);
+    Surface *surface ();
     void repaint (); // called whenever something changes on image
     Fit fit;        // how to layout images
-    Single width, height;     // cached attributes of head
     unsigned int duration; // cached attributes of head
     TimerInfoPtrW duration_timer;
-    SurfacePtr surface;
+    SurfacePtrW rp_surface;
     int needs_scene_img;
 };
 
