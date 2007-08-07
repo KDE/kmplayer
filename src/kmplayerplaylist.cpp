@@ -135,6 +135,17 @@ void Matrix::getXYWH (Single & x, Single & y, Single & w, Single & h) const {
     h *= d;
 }
 
+void Matrix::invXYWH (Single & x, Single & y, Single & w, Single & h) const {
+    if (a > 0.00001 && d > 0.00001) {
+        w /= a;
+        h /= d;
+        x = Single ((x - tx) / a);
+        y = Single ((y - ty) / d);
+    } else {
+        kdWarning () << "Not invering " << a << ", " << d << " scale" << endl;
+    }
+}
+
 void Matrix::transform (const Matrix & matrix) {
     // TODO: rotate
     a *= matrix.a;

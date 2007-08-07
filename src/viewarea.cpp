@@ -492,10 +492,13 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     TextRuntime * td = static_cast <TextRuntime *> (txt->runtime ());
     SurfacePtr s = td->surface ();
     //kdDebug() << "Visit " << txt->nodeName() << " " << td->text << endl;
-    if (s) {
-        SRect rect = s->bounds;
-        Single x = rect.x (), y = rect.y(), w = rect.width(), h = rect.height();
-        matrix.getXYWH (x, y, w, h);
+    if (!s)
+        return;
+    SRect rect = s->bounds;
+    Single x = rect.x (), y = rect.y(), w = rect.width(), h = rect.height();
+    matrix.getXYWH (x, y, w, h);
+    if (!s->surface) {
+        kdDebug() << "new txt surface " << td->text << endl;
         /* QTextEdit * edit = new QTextEdit;
         edit->setReadOnly (true);
         edit->setHScrollBarMode (QScrollView::AlwaysOff);
@@ -527,8 +530,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         } *lines = 0, *last_line = 0;
         Single y1 = y;
         Single max_width;
+        int line_count = 0;
         Single min_xoff = w;
-        while (!str.isEmpty () && y1 < y + h) {
+        while (!str.isEmpty ()) {
             int len = str.find (QChar ('\n'));
             bool skip_cr = false;
             if (len > 1 && str[len-1] == QChar ('\r')) {
@@ -537,6 +541,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
             }
             QString para = len > -1 ? str.left (len) : str;
             Line * line = new Line (para);
+            ++line_count;
             if (!lines)
                 lines = line;
             else
@@ -572,10 +577,11 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
 
                 y1 += Single (txt_fnt.height);
                 ppos += line->txt.length () + 1;
-                if (ppos >= para.length () || y1 > y + h)
+                if (ppos >= para.length ())
                     break;
 
                 line->next = new Line (para.mid (ppos));
+                ++line_count;
                 line = line->next;
                 last_line = line;
             }
@@ -583,24 +589,53 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
                 break;
             str = str.mid (len + (skip_cr ? 2 : 1));
         }
+        // new coord in screen space
+        x += min_xoff;
+        w = (double)max_width + txt_fnt.max_x_advance / 2;
+        h = y1 - y /*txt_fnt.height + txt_fnt.descent*/;
+
+        s->surface = cairo_surface_create_similar (cairo_surface,
+                CAIRO_CONTENT_COLOR, w, h);
+        cairo_t * cr_txt = cairo_create (s->surface);
+        cairo_set_font_size (cr_txt, scale * td->font_size);
         if (td->bg_opacity) { // TODO real alpha
-            CAIRO_SET_SOURCE_RGB (cr, td->background_color);
-            cairo_rectangle(cr, x + min_xoff, y,
-                    (double)max_width + txt_fnt.max_x_advance / 2,
-                    y1 - y /*txt_fnt.height + txt_fnt.descent*/);
-            cairo_fill (cr);
+            CAIRO_SET_SOURCE_RGB (cr_txt, td->background_color);
+            cairo_paint (cr_txt);
         }
-        CAIRO_SET_SOURCE_RGB (cr, td->font_color);
+        CAIRO_SET_SOURCE_RGB (cr_txt, td->font_color);
+        y1 = 0;
         while (lines) {
             Line * line = lines;
             line->xoff += Single (txt_fnt.max_x_advance / 4);
-            cairo_move_to (cr, x+line->xoff, y + Single (txt_fnt.ascent));
-            cairo_show_text (cr, line->txt.utf8 ().data ());
-            y += Single (txt_fnt.height);
+            cairo_move_to (cr_txt, line->xoff - min_xoff, y1 + Single (txt_fnt.ascent));
+            cairo_show_text (cr_txt, line->txt.utf8 ().data ());
+            y1 += Single (txt_fnt.height);
             lines = lines->next;
             delete line;
         }
         //cairo_stroke (cr);
+        cairo_destroy (cr_txt);
+
+        // update bounds rect
+        Single sx = x, sy = y, sw = w, sh = h;
+        matrix.invXYWH (sx, sy, sw, sh);
+        s->bounds = SRect (sx, sy, sw, sh);
+    }
+    SRect clip_rect = clip.intersect (SRect (x, y, w, h));
+    if (clip_rect.isValid ()) {
+        //cairo_save (cr);
+        cairo_matrix_t mat;
+        cairo_matrix_init_translate (&mat, -x, -y);
+        cairo_pattern_t *pat = cairo_pattern_create_for_surface (s->surface);
+        cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
+        cairo_pattern_set_matrix (pat, &mat);
+        cairo_pattern_set_filter (pat, CAIRO_FILTER_FAST);
+        cairo_set_source (cr, pat);
+        cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
+                clip_rect.width (), clip_rect.height ());
+        cairo_fill (cr);
+        cairo_pattern_destroy (pat);
+        //cairo_restore (cr);
     }
 }
 

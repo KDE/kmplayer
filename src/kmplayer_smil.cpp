@@ -865,7 +865,7 @@ KDE_NO_EXPORT void AnimateData::started () {
             break;
         }
         if (calcMode == calc_linear) {
-            QRegExp reg ("^\\s*([0-9\\.]+)(\\s*[%a-z]*)?");
+            QRegExp reg ("^\\s*(-?[0-9\\.]+)(\\s*[%a-z]*)?");
             if (change_from.isEmpty ()) {
                 if (change_values.size () > 0) // check 'values' attribute
                      change_from = change_values.first ();
@@ -1008,7 +1008,7 @@ bool MediaTypeRuntime::parseParam (const TrieString &name, const QString &val) {
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
     if (!mt)
         return false;
-    bool dim_changed;
+    bool update_surface = true;
     if (name == "fit") {
         const char * cval = val.ascii ();
         if (!cval)
@@ -1025,10 +1025,32 @@ bool MediaTypeRuntime::parseParam (const TrieString &name, const QString &val) {
             fit = fit_slice;
         else
             fit = fit_hidden;
-    } else if (!sizes.setSizeParam (name, val, dim_changed)) {
+    } else if (sub_surface && sub_surface->surface && mt->region_node) {
+        SMIL::RegionBase *rb = convertNode <SMIL::RegionBase>(mt->region_node);
+        SRect rr = rb->region_surface->bounds;
+        SRect sr = sub_surface->bounds;
+        Single x, y, w = sr.width(), h = sr.height();
+        sizes.calcSizes (element, rr.width(), rr.height(), x, y, w, h);
+        if (sizes.setSizeParam (name, val, update_surface)) {
+            if (!update_surface) {
+                // preserve surface by recalculationg sub_surface top-left
+                Single x1, y1;
+                w = sr.width();
+                h = sr.height();
+                sizes.calcSizes(element, rr.width(), rr.height(), x1, y1, w, h);
+                SRect new_bounds = SRect (sr.x() + x1-x, sr.y() + y1-y,
+                        sr.width(), sr.height());
+                SRect ur = sub_surface->bounds.unite (new_bounds);
+                sub_surface->bounds = new_bounds;
+                rb->repaint (ur);
+                return true;
+            }
+        } else {
+            return Runtime::parseParam (name, val);
+        }
+    } else if (!sizes.setSizeParam (name, val, update_surface)) {
         return Runtime::parseParam (name, val);
     }
-    // TODO account for dim_changed
     resetSurface ();
     if (surface ())
         sub_surface->repaint ();

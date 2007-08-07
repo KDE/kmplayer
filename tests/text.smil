@@ -1,0 +1,40 @@
+<!-- test for moving a region with the animate element -->
+<smil>
+  <head>
+    <layout>
+      <root-layout width="640" height="480" background-color="green"/>
+      <region id="region1" left="7%" top="10%" width="24%" height="10%" z-index="1" background-color="pink"/>
+      <region id="region2" left="38%" top="10%" width="24%" height="10%" z-index="2" background-color="yellow"/>
+      <region id="region3" left="69%" top="10%" width="24%" height="10%" z-index="3" background-color="cyan"/>
+      <region id="region4" left="25%" top="10%" width="50%" height="80%" z-index="4"/>
+    </layout>
+  </head>
+  <body>
+    <par dur="5">
+      <text id="text1" src="data:,Left Align" region="region1">
+        <param name="fontColor" value="blue"/>
+        <param name="fontPtSize" value="12"/>
+      </text> 
+      <text id="text2" src="data:,Center Align" region="region2">
+        <param name="fontColor" value="blue"/>
+        <param name="fontPtSize" value="12"/>
+        <param name="hAlign" value="center"/>
+      </text> 
+      <text id="text3" src="data:,Right Align" region="region3">
+        <param name="fontColor" value="blue"/>
+        <param name="fontPtSize" value="12"/>
+        <param name="hAlign" value="right"/>
+      </text> 
+      <animate target="region1" attributeName="left" from="7%" to="69%" begin="2" dur="1.5" fill="freeze"/>
+      <animate target="region3" attributeName="left" from="69%" to="7%" begin="2" dur="1.5" fill="freeze"/>
+      <animate target="text3" attributeName="top" from="0%" to="-50%" begin="3.5" dur="1.5" fill="freeze"/>
+    </par>
+    <par dur="5">
+      <text id="text4" src="chapter2.txt" region="region4">
+        <param name="fontColor" value="blue"/>
+        <param name="fontPtSize" value="11"/>
+      </text> 
+      <animate target="text4" attributeName="top" from="0%" to="-170%" begin=".5" dur="4" fill="freeze"/>
+    <par>
+  </body>
+</smil>

@@ -42,6 +42,7 @@ class KMPLAYER_NO_EXPORT Single {
     friend float operator * (const float f, const Single s);
     friend double operator * (const double d, const Single s);
     friend Single operator / (const Single s, const int i);
+    friend float operator / (const Single s, const float f);
     friend double operator / (const Single s, const double d);
     friend double operator / (const double d, const Single s);
     friend bool operator > (const Single s1, const Single s2);
@@ -76,6 +77,7 @@ public:
     Single & operator *= (const Single & s);
     Single & operator *= (const float f) { value = int(value*f); return *this; }
     Single & operator /= (const int i) { value /= i; return *this; }
+    Single & operator /= (const float f);
     operator int () const { return value >> 8; }
     operator double () const { return 1.0 * value / 256; }
 };
@@ -93,6 +95,7 @@ public:
     Matrix (Single xoff, Single yoff, float xscale, float yscale);
     void getXY (Single & x, Single & y) const;
     void getXYWH (Single & x, Single & y, Single & w, Single & h) const;
+    void invXYWH (Single & x, Single & y, Single & w, Single & h) const;
     void transform (const Matrix & matrix);
     void scale (float sx, float sy);
     void translate (Single x, Single y);
@@ -120,9 +123,7 @@ public:
 
 #ifdef _KDEBUG_H_
 inline kdbgstream & operator << (kdbgstream & dbg, Single s) {
-    dbg << (int)s;
-    if (s.value & 0xff)
-        dbg << " " << (s.value & 0xff) << "/" << 256;
+    dbg << (double) (s);
     return dbg;
 }
 
@@ -131,6 +132,11 @@ inline kndbgstream & operator << (kndbgstream & dbg, Single) { return dbg; }
 
 inline Single & Single::operator *= (const Single & s) {
     value = (((int64_t)value) * s.value) >> 8;
+    return *this;
+}
+
+inline Single & Single::operator /= (const float f) {
+    value = (int) (value / f);
     return *this;
 }
 
@@ -195,6 +201,10 @@ inline Single operator / (const Single s, const int i) {
     Single s1;
     s1.value = s.value / i;
     return s1;
+}
+
+inline float operator / (const Single s, const float f) {
+    return (s.value / f ) / 256;
 }
 
 inline double operator / (const Single s, const double d) {
