@@ -1025,7 +1025,9 @@ bool MediaTypeRuntime::parseParam (const TrieString &name, const QString &val) {
             fit = fit_slice;
         else
             fit = fit_hidden;
-    } else if (sub_surface && sub_surface->surface && mt->region_node) {
+    } else if (fit_hidden == fit &&
+            sub_surface && sub_surface->surface &&
+            mt->region_node) {
         SMIL::RegionBase *rb = convertNode <SMIL::RegionBase>(mt->region_node);
         SRect rr = rb->region_surface->bounds;
         SRect sr = sub_surface->bounds;
@@ -1051,6 +1053,8 @@ bool MediaTypeRuntime::parseParam (const TrieString &name, const QString &val) {
     } else if (!sizes.setSizeParam (name, val, update_surface)) {
         return Runtime::parseParam (name, val);
     }
+    if (sub_surface)
+        sub_surface->repaint ();
     resetSurface ();
     if (surface ())
         sub_surface->repaint ();
