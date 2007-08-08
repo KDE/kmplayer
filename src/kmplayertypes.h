@@ -104,6 +104,10 @@ public:
 
 class KMPLAYER_NO_EXPORT SRect {
     Single _x, _y, _w, _h;
+#ifdef _KDEBUG_H_
+    friend kdbgstream & operator << (kdbgstream &, const SRect &s);
+    friend kndbgstream & operator << (kndbgstream &, const SRect &s);
+#endif
 public:
     SRect () {}
     SRect (Single a, Single b, Single w, Single h)
@@ -128,6 +132,13 @@ inline kdbgstream & operator << (kdbgstream & dbg, Single s) {
 }
 
 inline kndbgstream & operator << (kndbgstream & dbg, Single) { return dbg; }
+
+inline kdbgstream & operator << (kdbgstream & dbg, const SRect &r) {
+    dbg << "SRect(x=" << r._x << " y=" << r._y << " w=" << r._w << " h=" << r._h << ")";
+    return dbg;
+}
+
+inline kndbgstream & operator << (kndbgstream &d, const SRect&) { return d; }
 #endif
 
 inline Single & Single::operator *= (const Single & s) {
