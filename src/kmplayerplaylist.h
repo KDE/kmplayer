@@ -640,6 +640,7 @@ public:
     Single xoffset, yoffset;       // translation for aspects
     float xscale, yscale;          // internal scaling
     unsigned int background_color; // rgba background color
+    float alpha;                   // translucency, 1.0=opaque
 #ifdef HAVE_CAIRO
     cairo_surface_t *surface;
 #endif

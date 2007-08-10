@@ -40,6 +40,8 @@ namespace KIO {
     class Job;
 }
 
+struct TransTypeInfo;
+
 namespace KMPlayer {
 
 struct KMPLAYER_NO_EXPORT ImageData {
@@ -508,6 +510,31 @@ public:
  */
 class KMPLAYER_NO_EXPORT Transition : public Element {
 public:
+    enum TransType {
+        TransTypeNone = 0,
+        BarWipe, IrisWipe, ClockWipe, SnakeWipe, // required, TODO
+        BoxWipe, FourBoxWipe, BarnDoorWipe, DiagonalWipe, BowTieWipe,
+        MiscDiagonalWipe, VeeWipe, BarnVeeWipe, ZigZagWipe, BarnZigZagWipe,
+        TriangleWipe, ArrowHeadWipe, PentagonWipe, HexagonWipe, EllipsWipe,
+        EyeWipe, RoundRectWipe, StarWipe, MiscShapeWipe,
+        PinWheelWipe, SingleSweepWipe, FanWipe, DoubleFanWipe,
+        DoubleSweepWipe, SaloonDoorWipe, WindShieldWipe,
+        SpiralWipe, ParallelSnakesWipe, BoxSnakesWipe, WaterFallWipe,
+        PushWipe, SideWipe, Fade,
+        TransLast
+    };
+    enum TransSubType {
+        SubTransTypeNone = 0,
+        SubLeftToRight, SubTopToBottom, SubTopLeft, SubTopRight,
+        SubBottomRight, SubBottomLeft,
+        SubTopCenter, SubRightCenter, SubBottomCenter, SubLeftCenter,
+        SubCornersIn, SubCornersOut,
+        SubVertical, SubHorizontal,
+        SubFromLeft, SubFromTop, SubFromRight, SubFromBottom,
+        SubCrossfade, SubFadeToColor, SubFadeFromColor,
+         // and lots more .. TODO
+        SubTransLast
+    };
     Transition (NodePtr & d);
     KDE_NO_CDTOR_EXPORT ~Transition () {}
     void activate ();
@@ -515,8 +542,10 @@ public:
     void parseParam (const TrieString & name, const QString & value);
     KDE_NO_EXPORT bool expose () const { return false; }
     bool supported ();
-    QString type;
-    QString subtype;
+    void apply (MediaType *media, Surface *surface);
+    TransType type;
+    TransSubType sub_type;
+    TransTypeInfo *type_info;
     enum { dir_forward, dir_reverse } direction;
     unsigned int dur; // deci seconds
     unsigned int fade_color;
@@ -727,6 +756,7 @@ public:
     NodePtrW external_tree; // if src points to playlist, the resolved top node
     NodePtrW trans_in;
     NodePtrW trans_out;
+    NodePtrW active_trans;
     NodePtrW region_node;
     QString m_type;
     unsigned int bitrate;

@@ -1109,7 +1109,9 @@ KDE_NO_EXPORT SurfacePtr MediaTypeRuntime::surface () {
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
     if (!mt || !mt->keepContent (element)) {
         resetSurface ();
-    } else if (!sub_surface) {
+        return NULL;
+    }
+    if (!sub_surface) {
         SMIL::RegionBase * rb = mt
             ? convertNode <SMIL::RegionBase> (mt->region_node)
             : 0L;
@@ -1148,6 +1150,8 @@ KDE_NO_EXPORT SurfacePtr MediaTypeRuntime::surface () {
             //kdDebug() << sub_surface.ptr() << " " << mt->nodeName() << " " << mt->src << " " << rr.width() << "," << rr.height()  << " => " << x << "," << y << w << "," << h << endl;
         }
     }
+    if (mt->active_trans && sub_surface)
+        convertNode<SMIL::Transition>(mt->active_trans)->apply(mt, sub_surface);
     return sub_surface;
 }
 
@@ -1761,33 +1765,99 @@ void SMIL::RegPoint::parseParam (const TrieString & p, const QString & v) {
 
 //-----------------------------------------------------------------------------
 
+static struct TransTypeInfo {
+    char *name;
+    SMIL::Transition::TransType type;
+    short sub_types;
+    SMIL::Transition::TransSubType sub_type[8];
+} transition_type_info[] = {
+#include "transitions.txt"
+};
+
+static struct SubTransTypeInfo {
+    char *name;
+    SMIL::Transition::TransSubType sub_type;
+} sub_transition_type_info[] = {
+#include "subtrans.txt"
+};
+
+static TransTypeInfo *transInfoFromString (const char *t) {
+    // TODO binary search
+    for (int i = 0; transition_type_info[i].name; ++i)
+        if (!strcmp (t, transition_type_info[i].name))
+            return transition_type_info + i;
+    return NULL;
+}
+
+static
+SMIL::Transition::TransSubType subTransInfoFromString (const char *s) {
+    for (int i = 0; sub_transition_type_info[i].name; ++i)
+        if (!strcmp (s, sub_transition_type_info[i].name))
+            return sub_transition_type_info[i].sub_type;
+    return SMIL::Transition::SubTransTypeNone;
+}
+
 KDE_NO_CDTOR_EXPORT SMIL::Transition::Transition (NodePtr & d)
  : Element (d, id_node_transition),
-   direction (dir_forward), dur (10), fade_color (0) {}
+   type_info (NULL), direction (dir_forward), dur (10), fade_color (0) {}
 
 KDE_NO_EXPORT void SMIL::Transition::activate () {
+    type = TransTypeNone;
+    sub_type = SubTransTypeNone;
+    type_info = NULL;
     init ();
     Element::activate ();
 }
 
 KDE_NO_EXPORT
 void SMIL::Transition::parseParam (const TrieString & para, const QString & val) {
-    if (para == StringPool::attr_type)
-        type = val;
-    else if (para == StringPool::attr_dur)
+    if (para == StringPool::attr_type) {
+        type_info = transInfoFromString (val.ascii ());
+        if (type_info) {
+            type = type_info->type;
+            if (SubTransTypeNone != sub_type) {
+                for (int i = 0; i < type_info->sub_types; ++i)
+                    if (type_info->sub_type[i] == sub_type)
+                        return;
+            }
+            if (type_info->sub_types > 0)
+                sub_type = type_info->sub_type[0];
+        }
+    } else if (para == StringPool::attr_dur) {
         dur = int (10 * val.toDouble ());
-    else if (para == "subtype")
-        subtype = val;
-    else if (para == "fadeColor")
+    } else if (para == "subtype") {
+        sub_type = subTransInfoFromString (val.ascii ());
+        if (type_info) {
+            if (SubTransTypeNone != sub_type) {
+                for (int i = 0; i < type_info->sub_types; ++i)
+                    if (type_info->sub_type[i] == sub_type)
+                        return;
+            }
+            if (type_info->sub_types > 0)
+                sub_type = type_info->sub_type[0];
+        }
+    } else if (para == "fadeColor") {
         fade_color = QColor (getAttribute (val)).rgb ();
-    else if (para == "direction")
+    } else if (para == "direction") {
         direction = val == "reverse" ? dir_reverse : dir_forward;
-    else
+    } else {
         Element::parseParam (para, val);
+    }
 }
 
 KDE_NO_EXPORT bool SMIL::Transition::supported () {
-    return type == "fade";
+    return type == Fade;
+}
+
+KDE_NO_EXPORT void SMIL::Transition::apply (MediaType *media, Surface *s) {
+    if (type == Fade) {
+        if (media->trans_step >= media->trans_steps) {
+            s->alpha = 1.0;
+            media->active_trans = NULL; // FIXME, don't do this here ..
+        } else {
+            s->alpha = 1.0*media->trans_step / media->trans_steps;
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -2483,6 +2553,7 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
         tr->clipStart ();
         Transition * trans = convertNode <Transition> (trans_in);
         if (trans && trans->supported ()) {
+            active_trans = trans_in;
             trans_step = 1;
             trans_steps = trans->dur; // 10/s FIXME
             trans_timer = document()->setTimeout(this, 100, trans_timer_id);
