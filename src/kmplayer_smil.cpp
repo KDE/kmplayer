@@ -1613,6 +1613,7 @@ KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::activate () {
+    show_background = ShowAlways;
     init ();
     setState (state_activated);
     for (NodePtr r = firstChild (); r; r = r->nextSibling ())
@@ -1697,6 +1698,12 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
             rect = rect.unite (SRect (x, y, w, h));
             need_repaint = true;
         }
+    } else if (name == "showBackground") {
+        if (val == "whenActive")
+            show_background = ShowWhenActive;
+        else
+            show_background = ShowAlways;
+        need_repaint = true;
     }
     if (need_repaint && active () && surface() && region_surface->parentNode ())
         region_surface->parentNode ()->repaint (rect.x(), rect.y(),

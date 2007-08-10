@@ -413,7 +413,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
         SRect clip_save = clip;
         clip = clip.intersect (SRect (x, y, w, h));
         cairo_save (cr);
-        if (reg->region_surface->background_color & 0xff000000) {
+        if ((SMIL::RegionBase::ShowAlways == reg->show_background ||
+                    reg->m_AttachedMediaTypes->first ()) &&
+                reg->region_surface->background_color & 0xff000000) {
             CAIRO_SET_SOURCE_RGB (cr, reg->region_surface->background_color);
             cairo_rectangle (cr, clip.x (), clip.y(),
                     clip.width (), clip.height ());

@@ -408,6 +408,8 @@ public:
  */
 class KMPLAYER_NO_EXPORT RegionBase : public Element {
 public:
+    enum ShowBackground { ShowAlways, ShowWhenActive };
+
     ~RegionBase ();
     bool expose () const { return false; }
     void activate ();
@@ -433,6 +435,7 @@ public:
     Single x, y, w, h;     // unscaled values
     int z_order;
     unsigned int background_color;
+    ShowBackground show_background;
 protected:
     RegionBase (NodePtr & d, short id);
 };
@@ -472,9 +475,9 @@ public:
      * boolean for check if pointerEntered/pointerLeft should be called by View
      */
     bool has_mouse;
+    NodeRefListPtr m_AttachedMediaTypes;   // active attached mediatypes
 private:
     MouseListeners mouse_listeners;
-    NodeRefListPtr m_AttachedMediaTypes;   // active attached mediatypes
 };
 
 /**
