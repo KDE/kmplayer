@@ -433,8 +433,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
     if (ref->needsVideoWidget ()) {
-        MediaTypeRuntime *mtr = static_cast<MediaTypeRuntime*>(ref->runtime ());
-        SurfacePtr s = mtr->surface ();
+        SurfacePtr s = ref->surface ();
         if (s)
             s->video ();
     }
@@ -442,8 +441,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
     if (av->needsVideoWidget ()) {
-        MediaTypeRuntime *mtr = static_cast<MediaTypeRuntime*> (av->runtime ());
-        SurfacePtr s = mtr->surface ();
+        SurfacePtr s = av->surface ();
         if (s)
             s->video ();
     }
@@ -451,9 +449,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     //kdDebug() << "Visit " << img->nodeName() << " " << img->src << endl;
-    ImageRuntime * ir = static_cast <ImageRuntime *> (img->runtime ());
-    SurfacePtr s = ir->surface ();
+    SurfacePtr s = img->surface ();
     if (s /*TODO && !s->surface*/) {
+        ImageRuntime * ir = static_cast <ImageRuntime *> (img->runtime ());
         ImageData * id = ir->cached_img.data.ptr ();
         SRect rect = s->bounds;
         if (id && !id->isEmpty () &&
@@ -491,7 +489,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     TextRuntime * td = static_cast <TextRuntime *> (txt->runtime ());
-    SurfacePtr s = td->surface ();
+    SurfacePtr s = txt->surface ();
     //kdDebug() << "Visit " << txt->nodeName() << " " << td->text << endl;
     if (!s)
         return;
@@ -642,9 +640,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
     //kdDebug() << "Visit " << brush->nodeName() << endl;
-    SMIL::RegionBase * rb = convertNode <SMIL::RegionBase> (brush->region_node);
-    if (rb && rb->surface ()) {
-        SRect rect = rb->surface ()->bounds;
+    SurfacePtr s = brush->surface ();
+    if (s) {
+        SRect rect = s->bounds;
         Single x, y, w = rect.width(), h = rect.height();
         matrix.getXYWH (x, y, w, h);
         unsigned int color = QColor (brush->param ("color")).rgb ();
@@ -1030,8 +1028,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
     if (n->id >= SMIL::id_node_first_mediatype &&
             n->id < SMIL::id_node_last_mediatype) {
         SMIL::MediaType * mt = convertNode <SMIL::MediaType> (n);
-        MediaTypeRuntime *mtr = static_cast<MediaTypeRuntime*> (mt->runtime ());
-        SurfacePtr s = mtr->surface ();
+        SurfacePtr s = mt->surface ();
         if (s) {
             SRect rect = s->bounds;
             Single x1 = rect.x (), x2 = rect.y ();
@@ -1078,7 +1075,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType * mediatype) {
         bubble_up = true;
         return;
     }
-    SurfacePtr s = static_cast<MediaTypeRuntime*>(mediatype->runtime())->surface();
+    SurfacePtr s = mediatype->surface ();
     if (s && s->node && s->node.ptr () != mediatype) {
         s->node->accept (this);
         return;

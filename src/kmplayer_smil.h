@@ -183,15 +183,9 @@ public:
     virtual void postpone (bool b);
     virtual void clipStart ();
     virtual void clipStop ();
-    /* size of the media type, like image or video dimensions */
-    virtual SRect intrinsicBounds ();
-    /* (new) sub-region or NULL if not displayed */
-    SurfacePtr surface ();
-    void resetSurface ();
     CalculatedSizer sizes;
     PostponePtr postpone_lock;
     Fit fit;
-    SurfacePtrW sub_surface;
     MediaTypeRuntime (NodePtr e);
 protected:
     ConnectionPtr document_postponed;      // pauze audio/video accordantly
@@ -220,7 +214,6 @@ public:
     virtual void postpone (bool b);
     virtual void clipStart ();
     virtual void clipStop ();
-    virtual SRect intrinsicBounds ();
     QMovie * img_movie;
     CachedImage cached_img;
     int frame_nr;
@@ -242,7 +235,6 @@ public:
     ~TextRuntime ();
     void reset ();
     virtual bool parseParam (const TrieString & name, const QString & value);
-    // TODO: virtual SRect intrinsicBounds ();
     int font_size;
     unsigned int font_color;
     unsigned int background_color;
@@ -749,10 +741,14 @@ public:
     bool expose () const;
     void childDone (NodePtr child);
     virtual SurfacePtr getSurface (NodePtr node);
+    /* (new) sub-region or NULL if not displayed */
+    SurfacePtr surface ();
+    void resetSurface ();
     virtual void parseParam (const TrieString & name, const QString & value);
     virtual bool handleEvent (EventPtr event);
     NodeRefListPtr listeners (unsigned int event_id);
     bool needsVideoWidget (); // for 'video' and 'ref' nodes
+    SurfacePtrW sub_surface;
     NodePtrW external_tree; // if src points to playlist, the resolved top node
     NodePtrW trans_in;
     NodePtrW trans_out;
