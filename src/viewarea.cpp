@@ -473,6 +473,46 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
         cairo_set_source (cr, cur_pat);
         cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
         cairo_fill (cr);
+    } else if (SMIL::Transition::PushWipe == trans->type) {
+        Single dx, dy;
+        if (SMIL::Transition::SubFromTop == trans->sub_type)
+            dy = -Single ((1.0 - perc) * clip.height());
+        else if (SMIL::Transition::SubFromRight == trans->sub_type)
+            dx = Single ((1.0 - perc) * clip.width());
+        else if (SMIL::Transition::SubFromBottom == trans->sub_type)
+            dy = Single ((1.0 - perc) * clip.height());
+        else //if (SMIL::Transition::SubFromLeft == trans->sub_type)
+            dx = -Single ((1.0 - perc) * clip.width());
+        cairo_matrix_translate (&cur_mat, -dx, -dy);
+        SRect rect = clip.intersect (SRect (clip.x() + dx, clip.y() + dy,
+                    clip.width () - dx, clip.height() - dy));
+        cairo_pattern_set_matrix (cur_pat, &cur_mat);
+        cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
+        cairo_set_source (cr, cur_pat);
+        cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
+        cairo_fill (cr);
+    } else if (SMIL::Transition::IrisWipe == trans->type) {
+        cairo_pattern_set_matrix (cur_pat, &cur_mat);
+        cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
+        cairo_set_source (cr, cur_pat);
+        if (SMIL::Transition::SubDiamond == trans->sub_type) {
+            Single dx = perc * clip.width();
+            Single dy = perc * clip.height();
+            Single mx = clip.x() + clip.width()/2;
+            Single my = clip.y() + clip.height()/2;
+            cairo_new_path (cr);
+            cairo_move_to (cr, mx, my - dy);
+            cairo_line_to (cr, mx + dx, my);
+            cairo_line_to (cr, mx, my + dy);
+            cairo_line_to (cr, mx - dx, my);
+            cairo_close_path (cr);
+        } else { // SubRectangle
+            Single dx = 0.5 * (1 - perc) * clip.width();
+            Single dy = 0.5 * (1 - perc) * clip.height();
+            cairo_rectangle (cr, clip.x() + dx, clip.y() + dy,
+                    clip.width() - 2 * dx, clip.height() - 2 * dy);
+        }
+        cairo_fill (cr);
     }
     cairo_restore (cr);
     if (cur_media->trans_step >= cur_media->trans_steps)

@@ -1781,7 +1781,8 @@ void SMIL::Transition::parseParam (const TrieString & para, const QString & val)
 }
 
 KDE_NO_EXPORT bool SMIL::Transition::supported () {
-    return type == Fade || BarWipe == type;
+    return Fade == type || BarWipe == type ||
+        PushWipe == type || IrisWipe == type;
 }
 
 //-----------------------------------------------------------------------------

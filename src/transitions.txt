@@ -8,6 +8,8 @@
     SMIL::Transition::SubCrossfade,
     SMIL::Transition::SubFadeToColor,
     SMIL::Transition::SubFadeFromColor } },
+{ "irisWipe",   SMIL::Transition::IrisWipe,   2, {
+    SMIL::Transition::SubRectangle, SMIL::Transition::SubDiamond } },
 { "pushWipe",   SMIL::Transition::PushWipe,   4, {
     SMIL::Transition::SubFromLeft,
     SMIL::Transition::SubFromTop,

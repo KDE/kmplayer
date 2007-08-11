@@ -524,6 +524,7 @@ public:
         SubVertical, SubHorizontal,
         SubFromLeft, SubFromTop, SubFromRight, SubFromBottom,
         SubCrossfade, SubFadeToColor, SubFadeFromColor,
+        SubRectangle, SubDiamond,
          // and lots more .. TODO
         SubTransLast
     };
