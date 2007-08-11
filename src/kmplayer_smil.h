@@ -530,11 +530,11 @@ public:
     Transition (NodePtr & d);
     KDE_NO_CDTOR_EXPORT ~Transition () {}
     void activate ();
+    KDE_NO_EXPORT void accept (Visitor * v) { v->visit (this); }
     KDE_NO_EXPORT const char * nodeName () const { return "transition"; }
     void parseParam (const TrieString & name, const QString & value);
     KDE_NO_EXPORT bool expose () const { return false; }
     bool supported ();
-    void apply (MediaType *media, Surface *surface);
     TransType type;
     TransSubType sub_type;
     TransTypeInfo *type_info;

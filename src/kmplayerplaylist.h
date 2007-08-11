@@ -637,10 +637,8 @@ public:
 
     NodePtrW node;
     SRect bounds;                  // bounds in in parent coord. 
-    Single xoffset, yoffset;       // translation for aspects
     float xscale, yscale;          // internal scaling
     unsigned int background_color; // rgba background color
-    float alpha;                   // translucency, 1.0=opaque
 #ifdef HAVE_CAIRO
     cairo_surface_t *surface;
 #endif
@@ -802,6 +800,7 @@ namespace SMIL {
     class RegionBase;
     class Region;
     class Layout;
+    class Transition;
     class MediaType;
     class ImageMediaType;
     class TextMediaType;
@@ -830,6 +829,7 @@ public:
     virtual void visit (Node *) {}
     virtual void visit (SMIL::Region *);
     virtual void visit (SMIL::Layout *);
+    virtual void visit (SMIL::Transition *);
     virtual void visit (SMIL::TimedMrl *);
     virtual void visit (SMIL::MediaType *);
     virtual void visit (SMIL::ImageMediaType *);

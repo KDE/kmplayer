@@ -1781,18 +1781,7 @@ void SMIL::Transition::parseParam (const TrieString & para, const QString & val)
 }
 
 KDE_NO_EXPORT bool SMIL::Transition::supported () {
-    return type == Fade;
-}
-
-KDE_NO_EXPORT void SMIL::Transition::apply (MediaType *media, Surface *s) {
-    if (type == Fade) {
-        if (media->trans_step >= media->trans_steps) {
-            s->alpha = 1.0;
-            media->active_trans = NULL; // FIXME, don't do this here ..
-        } else {
-            s->alpha = 1.0*media->trans_step / media->trans_steps;
-        }
-    }
+    return type == Fade || BarWipe == type;
 }
 
 //-----------------------------------------------------------------------------
@@ -2608,8 +2597,6 @@ KDE_NO_EXPORT SurfacePtr SMIL::MediaType::surface () {
             //kdDebug() << sub_surface.ptr() << " " << mt->nodeName() << " " << mt->src << " " << rr.width() << "," << rr.height()  << " => " << x << "," << y << w << "," << h << endl;
         }
     }
-    if (active_trans && sub_surface)
-        convertNode<SMIL::Transition>(active_trans)->apply (this, sub_surface);
     return sub_surface;
 }
 
@@ -2809,6 +2796,10 @@ KDE_NO_EXPORT void Visitor::visit (SMIL::Region * n) {
 
 KDE_NO_EXPORT void Visitor::visit (SMIL::Layout * n) {
     visit (static_cast <SMIL::RegionBase *> (n));
+}
+
+KDE_NO_EXPORT void Visitor::visit (SMIL::Transition * n) {
+    visit (static_cast <Element *> (n));
 }
 
 KDE_NO_EXPORT void Visitor::visit (SMIL::TimedMrl * n) {
@@ -3090,7 +3081,7 @@ KDE_NO_EXPORT void TextRuntime::started () {
 KDE_NO_EXPORT void TextRuntime::remoteReady (QByteArray & data) {
     QString str (data);
     SMIL::MediaType * mt = convertNode <SMIL::MediaType> (element);
-    if (mt && data.size () && element) {
+    if (mt && data.size ()) {
         d->data = data;
         mt->resetSurface ();
         if (d->data.size () > 0 && !d->data [d->data.size () - 1])

@@ -226,10 +226,10 @@ KDE_NO_EXPORT void ViewSurface::resize (const SRect &r) {
 
 KDE_NO_EXPORT
 void ViewSurface::toScreen (Single & x, Single & y, Single & w, Single & h) {
-    Matrix matrix (xoffset, yoffset, xscale, yscale);
+    Matrix matrix (0, 0, xscale, yscale);
     matrix.translate (bounds.x (), bounds.y ());
     for (SurfacePtr s = parentNode(); s; s = s->parentNode()) {
-        matrix.transform(Matrix (s->xoffset, s->yoffset, s->xscale, s->yscale));
+        matrix.transform(Matrix (0, 0, s->xscale, s->yscale));
         matrix.translate (s->bounds.x (), s->bounds.y ());
     }
     matrix.getXYWH (x, y, w, h);
@@ -284,6 +284,11 @@ class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
     SRect clip;
     cairo_surface_t * cairo_surface;
     Matrix matrix;
+    // stack vars need for transitions
+    SMIL::MediaType *cur_media;
+    cairo_pattern_t * cur_pat;
+    cairo_matrix_t cur_mat;
+
     void traverseRegion (SMIL::RegionBase * reg);
 public:
     cairo_t * cr;
@@ -293,6 +298,7 @@ public:
     void visit (Node * n);
     void visit (SMIL::Layout *);
     void visit (SMIL::Region *);
+    void visit (SMIL::Transition *);
     void visit (SMIL::ImageMediaType *);
     void visit (SMIL::TextMediaType *);
     void visit (SMIL::Brush *);
@@ -431,6 +437,48 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
     }
 }
 
+KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
+    cairo_save (cr);
+    float perc = 1.0*cur_media->trans_step / cur_media->trans_steps;
+    if (SMIL::Transition::Fade == trans->type) {
+        cairo_pattern_set_matrix (cur_pat, &cur_mat);
+        cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
+        cairo_set_source (cr, cur_pat);
+        cairo_rectangle (cr, clip.x(), clip.y(), clip.width(), clip.height());
+        cairo_clip (cr);
+        cairo_paint_with_alpha (cr, perc);
+    } else if (SMIL::Transition::BarWipe == trans->type) {
+        SRect rect;
+        if (SMIL::Transition::SubTopToBottom == trans->sub_type) {
+            if (SMIL::Transition::dir_reverse == trans->direction) {
+                Single dy = (1.0 - perc) * clip.height();
+                rect = SRect (clip.x(), clip.y() + dy,
+                        clip.width (), clip.height() - dy);
+            } else {
+                rect = SRect (clip.x(), clip.y(),
+                        clip.width (), Single (perc * clip.height()));
+            }
+        } else {
+            if (SMIL::Transition::dir_reverse == trans->direction) {
+                Single dx = (1.0 - perc) * clip.width();
+                rect = SRect (clip.x() + dx, clip.y(),
+                        clip.width () - dx, clip.height());
+            } else {
+                rect = SRect (clip.x(), clip.y(),
+                        Single (perc * clip.width ()), clip.height());
+            }
+        }
+        cairo_pattern_set_matrix (cur_pat, &cur_mat);
+        cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
+        cairo_set_source (cr, cur_pat);
+        cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
+        cairo_fill (cr);
+    }
+    cairo_restore (cr);
+    if (cur_media->trans_step >= cur_media->trans_steps)
+        cur_media->active_trans = NULL; // FIXME, don't do this here ..
+}
+
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
     if (ref->needsVideoWidget ()) {
         SurfacePtr s = ref->surface ();
@@ -465,23 +513,24 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
             SRect clip_rect = clip.intersect (SRect (x, y, w, h));
             if (!clip_rect.isValid ())
                 return;
-            cairo_pattern_t * pat = id->cairoImage (w, h, cairo_surface);
-            if (pat) {
-                cairo_matrix_t mat;
-                cairo_matrix_init_identity (&mat);
-                cairo_matrix_translate (&mat, -x, -y);
-                cairo_pattern_set_matrix (pat, &mat);
-                cairo_pattern_set_filter (pat, CAIRO_FILTER_FAST);
-                cairo_set_source (cr, pat);
-                cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
-                        clip_rect.width (), clip_rect.height ());
-                if (s->alpha < 0.999) {
-                    cairo_save (cr);
-                    cairo_clip (cr);
-                    cairo_paint_with_alpha (cr, s->alpha);
-                    cairo_restore (cr);
-                } else
+            cur_pat = id->cairoImage (w, h, cairo_surface);
+            if (cur_pat) {
+                cairo_matrix_init_identity (&cur_mat);
+                cairo_matrix_translate (&cur_mat, -x, -y);
+                if (img->active_trans) {
+                    SRect clip_save = clip;
+                    clip = clip_rect;
+                    cur_media = img;
+                    img->active_trans->accept (this);
+                    clip = clip_save;
+                } else {
+                    cairo_pattern_set_matrix (cur_pat, &cur_mat);
+                    cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
+                    cairo_set_source (cr, cur_pat);
+                    cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
+                            clip_rect.width (), clip_rect.height ());
                     cairo_fill (cr);
+                }
             }
         }
     }
