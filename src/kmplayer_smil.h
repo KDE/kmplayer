@@ -770,6 +770,7 @@ protected:
     ConnectionPtr region_attach;           // attached to region
     ConnectionPtr region_attach_external;  // attached external to region
     TimerInfoPtrW trans_timer;
+    TimerInfoPtrW trans_out_timer;
 };
 
 class KMPLAYER_NO_EXPORT AVMediaType : public MediaType {

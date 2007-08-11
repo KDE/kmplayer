@@ -440,6 +440,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
     cairo_save (cr);
     float perc = 1.0*cur_media->trans_step / cur_media->trans_steps;
+    if (cur_media->active_trans == cur_media->trans_out)
+        perc = 1.0 - perc;
     if (SMIL::Transition::Fade == trans->type) {
         cairo_pattern_set_matrix (cur_pat, &cur_mat);
         cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);

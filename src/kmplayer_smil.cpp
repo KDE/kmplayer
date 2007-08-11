@@ -58,6 +58,7 @@ static const unsigned int start_timer_id = (unsigned int) 3;
 static const unsigned int dur_timer_id = (unsigned int) 4;
 static const unsigned int anim_timer_id = (unsigned int) 5;
 static const unsigned int trans_timer_id = (unsigned int) 6;
+static const unsigned int trans_out_timer_id = (unsigned int) 7;
 }
 
 /* Intrinsic duration 
@@ -2483,6 +2484,17 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
             trans_steps = trans->dur; // 10/s FIXME
             trans_timer = document()->setTimeout(this, 100, trans_timer_id);
         }
+        if (Runtime::dur_timer == tr->durTime().durval &&
+                tr->durTime().offset > 0) {
+            // FIXME: also account for fill duration
+            trans = convertNode <Transition> (trans_out);
+            if (trans && trans->supported () &&
+                    (int) trans->dur < tr->durTime().offset)
+                trans_out_timer = document()->setTimeout (
+                        this,
+                        (tr->durTime().offset - trans->dur) * 100,
+                        trans_out_timer_id);
+        }
     } else
         kdWarning () << nodeName() << "::begin " << src << " region '" <<
             param (StringPool::attr_region) << "' not found" << endl;
@@ -2620,13 +2632,29 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
         }
         case event_timer: {
             TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
-            if (r && te && te->timer_info &&
-                    te->timer_info->event_id == trans_timer_id) {
-                te->interval = ++trans_step < trans_steps;
-                if (s)
-                    s->repaint ();
-                ret = true;
-                break;
+            if (r && te && te->timer_info) {
+                if (te->timer_info->event_id == trans_timer_id) {
+                    te->interval = ++trans_step < trans_steps;
+                    if (s)
+                        s->repaint ();
+                    ret = true;
+                    break;
+                } else if (te->timer_info->event_id == trans_out_timer_id) {
+                    active_trans = trans_out;
+                    Transition * trans = convertNode <Transition> (trans_out);
+                    if (trans) {
+                        trans_step = 1;
+                        trans_steps = trans->dur; // 10/s FIXME
+                        if (trans_timer) // eg. overlapping transIn/transOut
+                            document ()->cancelTimer (trans_timer);
+                        trans_timer = document()->setTimeout(
+                                this, 100, trans_timer_id);
+                        if (s)
+                            s->repaint ();
+                    }
+                    ret = true;
+                    break;
+                }
             }
         } // fall through
         default:
