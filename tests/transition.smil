@@ -1,0 +1,86 @@
+<smil>
+  <head>
+    <layout>
+      <root-layout width="160" height="120" background-color="green"/>
+      <region id="region1" left="25%" top="10%" right="25%" bottom="30%"/>
+      <region id="region2" left="5%" top="75%" right="5%" bottom="5%"
+              background-color="white"/>
+    </layout>
+    <transition id="pushwipe1" dur="1" subtype="fromTop" type="pushWipe"/>
+    <transition id="pushwipe2" dur="1" subtype="fromBottom" type="pushWipe"/>
+    <transition id="iriswipe1" dur="1" type="irisWipe"/>
+    <transition id="iriswipe2" dur="1" subtype="diamond" type="irisWipe"/>
+    <transition id="barwipe1" dur="1" type="barWipe"/>
+    <transition id="barwipe2" dur="1" direction="reverse" type="barWipe"/>
+    <transition id="fade1" dur="1" type="fade"/>
+    <transition id="fade2" dur="0.3" type="fade"/>
+  </head>
+  <body>
+    <seq>
+      <par>
+        <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
+             transIn="pushwipe1" transOut="pushwipe2"/>
+        <seq>
+          <text src="data:,pushWipe%20fromTop" region="region2" dur="1.5"
+                transIn="fade2" transOut="fade2">
+            <param name="fontColor" value="blue"/>
+            <param name="fontPtSize" value="10"/>
+          </text>
+          <text src="data:,pushWipe%20fromBottom" region="region2" dur="1.5"
+                transIn="fade2" transOut="fade2">
+            <param name="fontColor" value="blue"/>
+            <param name="fontPtSize" value="10"/>
+          </text>
+        </seq>
+      </par>
+      <par>
+        <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
+             transIn="iriswipe1" transOut="iriswipe2"/>
+        <seq>
+          <text src="data:,irishWipe%20rectangle" region="region2" dur="1.5"
+                transIn="fade2" transOut="fade2">
+            <param name="fontColor" value="blue"/>
+            <param name="fontPtSize" value="10"/>
+          </text>
+          <text src="data:,irishWipe%20diamond" region="region2" dur="1.5"
+                transIn="fade2" transOut="fade2">
+            <param name="fontColor" value="blue"/>
+            <param name="fontPtSize" value="10"/>
+          </text>
+        </seq>
+      </par>
+      <par>
+        <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
+             transIn="barwipe1" transOut="barwipe2"/>
+        <seq>
+          <text src="data:,barWipe%20leftToRight" region="region2" dur="1.5"
+                transIn="fade2" transOut="fade2">
+            <param name="fontColor" value="blue"/>
+            <param name="fontPtSize" value="10"/>
+          </text>
+          <text src="data:,irishWipe%20leftToRight%20reversed"
+                region="region2" dur="1.5" transIn="fade2" transOut="fade2">
+            <param name="fontColor" value="blue"/>
+            <param name="fontPtSize" value="10"/>
+          </text>
+        </seq>
+      </par>
+      <par>
+        <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
+             transIn="fade1" transOut="fade1"/>
+        <seq>
+          <text src="data:,fade" region="region2" dur="1.5"
+                transIn="fade2" transOut="fade2">
+            <param name="fontColor" value="blue"/>
+            <param name="fontPtSize" value="10"/>
+          </text>
+          <text src="data:,fade" region="region2" dur="1.5"
+                transIn="fade2" transOut="fade2">
+            <param name="fontColor" value="blue"/>
+            <param name="fontPtSize" value="10"/>
+          </text>
+        </seq>
+      </par>
+    </seq>
+  </body>
+</smil>

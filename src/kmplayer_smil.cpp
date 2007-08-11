@@ -2397,7 +2397,7 @@ KDE_NO_EXPORT NodeRefListPtr SMIL::Area::listeners (unsigned int id) {
 
 KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, short id)
  : TimedMrl (d, id), m_type (t), bitrate (0), trans_step (0), trans_steps (0),
-   sensitivity (sens_opaque),
+   sensitivity (sens_opaque), trans_out_active (false),
    m_MediaAttached (new NodeRefList) {
     view_mode = Mrl::WindowMode;
 }
@@ -2437,6 +2437,7 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::activate () {
+    trans_out_active = false;
     setState (state_activated);
     init (); // sets all attributes
     for (NodePtr c = firstChild (); c; c = c->nextSibling ())
@@ -2460,6 +2461,8 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
     if (trans_timer)
         document ()->cancelTimer (trans_timer);
+    if (trans_out_timer)
+        document ()->cancelTimer (trans_out_timer);
     TimedMrl::deactivate (); // keep region for runtime rest
     region_node = 0L;
 }
@@ -2649,6 +2652,7 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
                             document ()->cancelTimer (trans_timer);
                         trans_timer = document()->setTimeout(
                                 this, 100, trans_timer_id);
+                        trans_out_active = true;
                         if (s)
                             s->repaint ();
                     }

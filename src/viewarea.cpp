@@ -440,7 +440,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
     cairo_save (cr);
     float perc = 1.0*cur_media->trans_step / cur_media->trans_steps;
-    if (cur_media->active_trans == cur_media->trans_out)
+    if (cur_media->trans_out_active)
         perc = 1.0 - perc;
     if (SMIL::Transition::Fade == trans->type) {
         cairo_pattern_set_matrix (cur_pat, &cur_mat);
@@ -714,17 +714,24 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     SRect clip_rect = clip.intersect (SRect (x, y, w, h));
     if (clip_rect.isValid ()) {
         //cairo_save (cr);
-        cairo_matrix_t mat;
-        cairo_matrix_init_translate (&mat, -x, -y);
-        cairo_pattern_t *pat = cairo_pattern_create_for_surface (s->surface);
-        cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
-        cairo_pattern_set_matrix (pat, &mat);
-        cairo_pattern_set_filter (pat, CAIRO_FILTER_FAST);
-        cairo_set_source (cr, pat);
-        cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
-                clip_rect.width (), clip_rect.height ());
-        cairo_fill (cr);
-        cairo_pattern_destroy (pat);
+        cairo_matrix_init_translate (&cur_mat, -x, -y);
+        cur_pat = cairo_pattern_create_for_surface (s->surface);
+        if (txt->active_trans) {
+            SRect clip_save = clip;
+            clip = clip_rect;
+            cur_media = txt;
+            txt->active_trans->accept (this);
+            clip = clip_save;
+        } else {
+            cairo_pattern_set_extend (cur_pat, CAIRO_EXTEND_NONE);
+            cairo_pattern_set_matrix (cur_pat, &cur_mat);
+            cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
+            cairo_set_source (cr, cur_pat);
+            cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
+                    clip_rect.width (), clip_rect.height ());
+            cairo_fill (cr);
+        }
+        cairo_pattern_destroy (cur_pat);
         //cairo_restore (cr);
     }
 }

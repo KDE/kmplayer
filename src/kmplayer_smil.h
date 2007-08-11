@@ -760,6 +760,7 @@ public:
     unsigned int trans_step;
     unsigned int trans_steps;
     enum { sens_opaque, sens_transparent, sens_percentage } sensitivity;
+    bool trans_out_active;
 protected:
     MouseListeners mouse_listeners;
     NodeRefListPtr m_MediaAttached;        // mouse entered
