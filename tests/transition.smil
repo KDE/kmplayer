@@ -5,6 +5,7 @@
       <region id="region1" left="25%" top="10%" right="25%" bottom="30%"/>
       <region id="region2" left="5%" top="75%" right="5%" bottom="5%"
               background-color="white"/>
+      <region id="region3" z-index="2"/>
     </layout>
     <transition id="pushwipe1" dur="1" subtype="fromTop" type="pushWipe"/>
     <transition id="pushwipe2" dur="1" subtype="fromBottom" type="pushWipe"/>
@@ -29,6 +30,7 @@
   </head>
   <body>
     <seq>
+      <brush region="region3" dur="1.5" color="gray" transOut="ellipsewipe1" />
       <par>
         <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
              transIn="bowtiewipe1" transOut="bowtiewipe2"/>
@@ -157,6 +159,7 @@
           </text>
         </seq>
       </par>
+      <brush region="region3" dur="2" color="gray" transIn="ellipsewipe1" />
     </seq>
   </body>
 </smil>
