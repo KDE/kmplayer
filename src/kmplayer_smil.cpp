@@ -1760,7 +1760,7 @@ void SMIL::Transition::parseParam (const TrieString & para, const QString & val)
                 sub_type = type_info->sub_type[0];
         }
     } else if (para == StringPool::attr_dur) {
-        dur = int (10 * val.toDouble ());
+        parseTime (val, dur);
     } else if (para == "subtype") {
         sub_type = subTransInfoFromString (val.ascii ());
         if (type_info) {
