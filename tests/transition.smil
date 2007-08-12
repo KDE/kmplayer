@@ -12,6 +12,12 @@
     <transition id="iriswipe2" dur="1" subtype="diamond" type="irisWipe"/>
     <transition id="barwipe1" dur="1" type="barWipe"/>
     <transition id="barwipe2" dur="1" direction="reverse" type="barWipe"/>
+    <transition id="barwipe3" dur="0.3" type="barWipe"/>
+    <transition id="clockwipe1" dur="1" type="clockWipe"/>
+    <transition id="clockwipe2" dur="1" type="clockWipe"
+                subtype="clockwiseThree" direction="reverse"/>
+    <transition id="bowtiewipe1" dur="1" type="bowTieWipe"/>
+    <transition id="bowtiewipe2" dur="1" type="bowTieWipe" subtype="horizontal"/>
     <transition id="fade1" dur="1" type="fade"/>
     <transition id="fade2" dur="0.3" type="fade"/>
   </head>
@@ -19,15 +25,47 @@
     <seq>
       <par>
         <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
+             transIn="bowtiewipe1" transOut="bowtiewipe2"/>
+        <seq>
+          <text src="data:,bowTieWipe%20vertical" region="region2"
+                dur="1.5" transIn="fade2" transOut="barwipe3">
+            <param name="fontColor" value="blue"/>
+            <param name="fontPtSize" value="10"/>
+          </text>
+          <text src="data:,bowTieWipe%20horizontal"
+                region="region2" dur="1.5" transIn="barwipe3" transOut="fade2">
+            <param name="fontColor" value="blue"/>
+            <param name="fontPtSize" value="10"/>
+          </text>
+        </seq>
+      </par>
+      <par>
+        <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
+             transIn="clockwipe1" transOut="clockwipe2"/>
+        <seq>
+          <text src="data:,clockWipe%20clockwiseTwelve" region="region2"
+                dur="1.5" transIn="fade2" transOut="barwipe3">
+            <param name="fontColor" value="blue"/>
+            <param name="fontPtSize" value="10"/>
+          </text>
+          <text src="data:,clockWipe%20clockwiseThree%20reversed"
+                region="region2" dur="1.5" transIn="barwipe3" transOut="fade2">
+            <param name="fontColor" value="blue"/>
+            <param name="fontPtSize" value="10"/>
+          </text>
+        </seq>
+      </par>
+      <par>
+        <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
              transIn="pushwipe1" transOut="pushwipe2"/>
         <seq>
           <text src="data:,pushWipe%20fromTop" region="region2" dur="1.5"
-                transIn="fade2" transOut="fade2">
+                transIn="fade2" transOut="barwipe3">
             <param name="fontColor" value="blue"/>
             <param name="fontPtSize" value="10"/>
           </text>
           <text src="data:,pushWipe%20fromBottom" region="region2" dur="1.5"
-                transIn="fade2" transOut="fade2">
+                transIn="barwipe3" transOut="fade2">
             <param name="fontColor" value="blue"/>
             <param name="fontPtSize" value="10"/>
           </text>
@@ -38,12 +76,12 @@
              transIn="iriswipe1" transOut="iriswipe2"/>
         <seq>
           <text src="data:,irishWipe%20rectangle" region="region2" dur="1.5"
-                transIn="fade2" transOut="fade2">
+                transIn="fade2" transOut="barwipe3">
             <param name="fontColor" value="blue"/>
             <param name="fontPtSize" value="10"/>
           </text>
           <text src="data:,irishWipe%20diamond" region="region2" dur="1.5"
-                transIn="fade2" transOut="fade2">
+                transIn="barwipe3" transOut="fade2">
             <param name="fontColor" value="blue"/>
             <param name="fontPtSize" value="10"/>
           </text>
@@ -54,12 +92,12 @@
              transIn="barwipe1" transOut="barwipe2"/>
         <seq>
           <text src="data:,barWipe%20leftToRight" region="region2" dur="1.5"
-                transIn="fade2" transOut="fade2">
+                transIn="fade2" transOut="barwipe3">
             <param name="fontColor" value="blue"/>
             <param name="fontPtSize" value="10"/>
           </text>
           <text src="data:,irishWipe%20leftToRight%20reversed"
-                region="region2" dur="1.5" transIn="fade2" transOut="fade2">
+                region="region2" dur="1.5" transIn="barwipe3" transOut="fade2">
             <param name="fontColor" value="blue"/>
             <param name="fontPtSize" value="10"/>
           </text>
@@ -70,7 +108,7 @@
              transIn="fade1" transOut="fade1"/>
         <seq>
           <text src="data:,fade" region="region2" dur="1.5"
-                transIn="fade2" transOut="fade2">
+                transIn="fade2" transOut="barwipe3">
             <param name="fontColor" value="blue"/>
             <param name="fontPtSize" value="10"/>
           </text>
