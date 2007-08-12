@@ -1,3 +1,4 @@
+{ "circle",         SMIL::Transition::SubCircle },
 { "clockwiseNine",  SMIL::Transition::SubClockwiseNine },
 { "clockwiseSix",   SMIL::Transition::SubClockwiseSix },
 { "clockwiseThree", SMIL::Transition::SubClockwiseThree },

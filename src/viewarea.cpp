@@ -471,10 +471,10 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
                         Single (perc * clip.width ()), clip.height());
             }
         }
+        cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
         cairo_pattern_set_matrix (cur_pat, &cur_mat);
         cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
         cairo_set_source (cr, cur_pat);
-        cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
         cairo_fill (cr);
     } else if (SMIL::Transition::PushWipe == trans->type) {
         Single dx, dy;
@@ -581,6 +581,29 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
         else
             cairo_arc (cr, mx, my, radius, -phi - dphi, -phi + dphi);
         cairo_close_path (cr);
+        cairo_pattern_set_matrix (cur_pat, &cur_mat);
+        cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
+        cairo_set_source (cr, cur_pat);
+        cairo_fill (cr);
+    } else if (SMIL::Transition::EllipseWipe == trans->type) {
+        cairo_rectangle (cr, clip.x(), clip.y(), clip.width(), clip.height());
+        cairo_clip (cr);
+        Single mx = clip.x() + clip.width()/2;
+        Single my = clip.y() + clip.height()/2;
+        float hw = (double) clip.width()/2;
+        float hh = (double) clip.height()/2;
+        float radius = sqrtf (hw * hw + hh * hh);
+        cairo_save (cr);
+        cairo_new_path (cr);
+        cairo_translate (cr, mx, my);
+        cairo_move_to (cr, - Single (radius), 0);
+        if (SMIL::Transition::SubHorizontal == trans->sub_type)
+            cairo_scale (cr, 1.0, 0.6);
+        else if (SMIL::Transition::SubVertical == trans->sub_type)
+            cairo_scale (cr, 0.6, 1.0);
+        cairo_arc (cr, 0, 0, perc * radius, 0, 2 * M_PI);
+        cairo_close_path (cr);
+        cairo_restore (cr);
         cairo_pattern_set_matrix (cur_pat, &cur_mat);
         cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
         cairo_set_source (cr, cur_pat);

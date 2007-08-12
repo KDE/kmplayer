@@ -507,7 +507,7 @@ public:
         BarWipe, IrisWipe, ClockWipe, SnakeWipe, // required, TODO
         BoxWipe, FourBoxWipe, BarnDoorWipe, DiagonalWipe, BowTieWipe,
         MiscDiagonalWipe, VeeWipe, BarnVeeWipe, ZigZagWipe, BarnZigZagWipe,
-        TriangleWipe, ArrowHeadWipe, PentagonWipe, HexagonWipe, EllipsWipe,
+        TriangleWipe, ArrowHeadWipe, PentagonWipe, HexagonWipe, EllipseWipe,
         EyeWipe, RoundRectWipe, StarWipe, MiscShapeWipe,
         PinWheelWipe, SingleSweepWipe, FanWipe, DoubleFanWipe,
         DoubleSweepWipe, SaloonDoorWipe, WindShieldWipe,
@@ -521,7 +521,7 @@ public:
         SubBottomRight, SubBottomLeft,
         SubTopCenter, SubRightCenter, SubBottomCenter, SubLeftCenter,
         SubCornersIn, SubCornersOut,
-        SubVertical, SubHorizontal,
+        SubCircle, SubVertical, SubHorizontal,
         SubFromLeft, SubFromTop, SubFromRight, SubFromBottom,
         SubCrossfade, SubFadeToColor, SubFadeFromColor,
         SubRectangle, SubDiamond,

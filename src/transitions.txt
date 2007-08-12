@@ -10,6 +10,10 @@
     SMIL::Transition::SubClockwiseThree,
     SMIL::Transition::SubClockwiseSix,
     SMIL::Transition::SubClockwiseNine } },
+{ "ellipseWipe",SMIL::Transition::EllipseWipe,3, {
+    SMIL::Transition::SubCircle,
+    SMIL::Transition::SubVertical,
+    SMIL::Transition::SubHorizontal } },
 { "fade",       SMIL::Transition::Fade,       3, {
     SMIL::Transition::SubCrossfade,
     SMIL::Transition::SubFadeToColor,
