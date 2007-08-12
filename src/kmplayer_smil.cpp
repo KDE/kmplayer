@@ -1740,6 +1740,8 @@ KDE_NO_CDTOR_EXPORT SMIL::Transition::Transition (NodePtr & d)
 KDE_NO_EXPORT void SMIL::Transition::activate () {
     type = TransTypeNone;
     sub_type = SubTransTypeNone;
+    start_progress = 0.0;
+    end_progress = 1.0;
     type_info = NULL;
     init ();
     Element::activate ();
@@ -1776,13 +1778,25 @@ void SMIL::Transition::parseParam (const TrieString & para, const QString & val)
         fade_color = QColor (getAttribute (val)).rgb ();
     } else if (para == "direction") {
         direction = val == "reverse" ? dir_reverse : dir_forward;
+    } else if (para == "startProgress") {
+        start_progress = val.toDouble();
+        if (start_progress < 0.0)
+            start_progress = 0.0;
+        else if (start_progress > 1.0)
+            start_progress = 1.0;
+    } else if (para == "endProgress") {
+        end_progress = val.toDouble();
+        if (end_progress < start_progress)
+            end_progress = start_progress;
+        else if (end_progress > 1.0)
+            end_progress = 1.0;
     } else {
         Element::parseParam (para, val);
     }
 }
 
 KDE_NO_EXPORT bool SMIL::Transition::supported () {
-    return Fade == type || BarWipe == type || BowTieWipe ||
+    return Fade == type || BarWipe == type || BowTieWipe == type ||
         PushWipe == type || IrisWipe == type || ClockWipe == type;
 }
 
@@ -2642,7 +2656,10 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
             TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
             if (r && te && te->timer_info) {
                 if (te->timer_info->event_id == trans_timer_id) {
-                    te->interval = ++trans_step < trans_steps;
+                    if (te->interval = trans_step >= trans_steps)
+                        active_trans = NULL;
+                    else
+                        te->interval = trans_step++ < trans_steps;
                     if (s)
                         s->repaint ();
                     ret = true;

@@ -542,7 +542,8 @@ public:
     TransSubType sub_type;
     TransTypeInfo *type_info;
     enum { dir_forward, dir_reverse } direction;
-    unsigned int dur; // deci seconds
+    int dur; // deci seconds
+    float start_progress, end_progress;
     unsigned int fade_color;
 };
 

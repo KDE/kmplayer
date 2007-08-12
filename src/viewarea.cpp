@@ -440,7 +440,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
     cairo_save (cr);
-    float perc = 1.0*cur_media->trans_step / cur_media->trans_steps;
+    float perc = trans->start_progress + (trans->end_progress - trans->start_progress)*cur_media->trans_step / cur_media->trans_steps;
     if (cur_media->trans_out_active)
         perc = 1.0 - perc;
     if (SMIL::Transition::Fade == trans->type) {
@@ -587,8 +587,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
         cairo_fill (cr);
     }
     cairo_restore (cr);
-    if (cur_media->trans_step >= cur_media->trans_steps)
-        cur_media->active_trans = NULL; // FIXME, don't do this here ..
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
