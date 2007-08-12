@@ -438,15 +438,20 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
     }
 }
 
+#define CAIRO_SET_PATTERHN(cr,pat,mat)                          \
+    if (pat) {                                                  \
+        cairo_pattern_set_matrix (pat, &mat);                   \
+        cairo_pattern_set_filter (pat, CAIRO_FILTER_FAST);      \
+        cairo_set_source (cr, pat);                             \
+    }
+
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
     cairo_save (cr);
     float perc = trans->start_progress + (trans->end_progress - trans->start_progress)*cur_media->trans_step / cur_media->trans_steps;
     if (cur_media->trans_out_active)
         perc = 1.0 - perc;
     if (SMIL::Transition::Fade == trans->type) {
-        cairo_pattern_set_matrix (cur_pat, &cur_mat);
-        cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
-        cairo_set_source (cr, cur_pat);
+        CAIRO_SET_PATTERHN(cr, cur_pat, cur_mat)
         cairo_rectangle (cr, clip.x(), clip.y(), clip.width(), clip.height());
         cairo_clip (cr);
         cairo_paint_with_alpha (cr, perc);
@@ -472,9 +477,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
             }
         }
         cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
-        cairo_pattern_set_matrix (cur_pat, &cur_mat);
-        cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
-        cairo_set_source (cr, cur_pat);
+        CAIRO_SET_PATTERHN(cr, cur_pat, cur_mat)
         cairo_fill (cr);
     } else if (SMIL::Transition::PushWipe == trans->type) {
         Single dx, dy;
@@ -489,15 +492,11 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
         cairo_matrix_translate (&cur_mat, -dx, -dy);
         SRect rect = clip.intersect (SRect (clip.x() + dx, clip.y() + dy,
                     clip.width () - dx, clip.height() - dy));
-        cairo_pattern_set_matrix (cur_pat, &cur_mat);
-        cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
-        cairo_set_source (cr, cur_pat);
         cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
+        CAIRO_SET_PATTERHN(cr, cur_pat, cur_mat)
         cairo_fill (cr);
     } else if (SMIL::Transition::IrisWipe == trans->type) {
-        cairo_pattern_set_matrix (cur_pat, &cur_mat);
-        cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
-        cairo_set_source (cr, cur_pat);
+        CAIRO_SET_PATTERHN(cr, cur_pat, cur_mat)
         if (SMIL::Transition::SubDiamond == trans->sub_type) {
             cairo_rectangle(cr,clip.x(), clip.y(), clip.width(), clip.height());
             cairo_clip (cr);
@@ -548,9 +547,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
         else
             cairo_arc (cr, mx, my, radius, phi, phi + 2 * M_PI * perc);
         cairo_close_path (cr);
-        cairo_pattern_set_matrix (cur_pat, &cur_mat);
-        cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
-        cairo_set_source (cr, cur_pat);
+        CAIRO_SET_PATTERHN(cr, cur_pat, cur_mat)
         cairo_fill (cr);
     } else if (SMIL::Transition::BowTieWipe == trans->type) {
         cairo_rectangle (cr, clip.x(), clip.y(), clip.width(), clip.height());
@@ -581,9 +578,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
         else
             cairo_arc (cr, mx, my, radius, -phi - dphi, -phi + dphi);
         cairo_close_path (cr);
-        cairo_pattern_set_matrix (cur_pat, &cur_mat);
-        cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
-        cairo_set_source (cr, cur_pat);
+        CAIRO_SET_PATTERHN(cr, cur_pat, cur_mat)
         cairo_fill (cr);
     } else if (SMIL::Transition::EllipseWipe == trans->type) {
         cairo_rectangle (cr, clip.x(), clip.y(), clip.width(), clip.height());
@@ -604,9 +599,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
         cairo_arc (cr, 0, 0, perc * radius, 0, 2 * M_PI);
         cairo_close_path (cr);
         cairo_restore (cr);
-        cairo_pattern_set_matrix (cur_pat, &cur_mat);
-        cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
-        cairo_set_source (cr, cur_pat);
+        CAIRO_SET_PATTERHN(cr, cur_pat, cur_mat)
         cairo_fill (cr);
     }
     cairo_restore (cr);
@@ -836,8 +829,14 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
         matrix.getXYWH (x, y, w, h);
         unsigned int color = QColor (brush->param ("color")).rgb ();
         CAIRO_SET_SOURCE_RGB (cr, color);
-        cairo_rectangle (cr, x, y, w, h);
-        cairo_fill (cr);
+        if (brush->active_trans) {
+            cur_media = brush;
+            cur_pat = NULL;
+            brush->active_trans->accept (this);
+        } else {
+            cairo_rectangle (cr, x, y, w, h);
+            cairo_fill (cr);
+        }
     }
 }
 
