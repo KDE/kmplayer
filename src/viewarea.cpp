@@ -525,7 +525,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
         Single my = clip.y() + clip.height()/2;
         cairo_new_path (cr);
         cairo_move_to (cr, mx, my);
-        float radius = sqrt (clip.width()/2*clip.width()/2 + clip.height()/2*clip.height()/2);
+        float hw = (double) clip.width()/2;
+        float hh = (double) clip.height()/2;
+        float radius = sqrtf (hw * hw + hh * hh);
         float phi;
         switch (trans->sub_type) {
             case SMIL::Transition::SubClockwiseThree:
@@ -557,7 +559,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
         Single my = clip.y() + clip.height()/2;
         cairo_new_path (cr);
         cairo_move_to (cr, mx, my);
-        float radius = sqrt (clip.width()/2*clip.width()/2 + clip.height()/2*clip.height()/2);
+        float hw = (double) clip.width()/2;
+        float hh = (double) clip.height()/2;
+        float radius = sqrtf (hw * hw + hh * hh);
         float phi;
         switch (trans->sub_type) {
             case SMIL::Transition::SubHorizontal:
