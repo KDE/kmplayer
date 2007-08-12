@@ -12,12 +12,18 @@
     <transition id="iriswipe2" dur="1" subtype="diamond" type="irisWipe"/>
     <transition id="barwipe1" dur="1" type="barWipe"/>
     <transition id="barwipe2" dur="1" direction="reverse" type="barWipe"/>
+    <transition id="barwipe4" dur="1" type="barWipe"
+                startProgress=".4" endProgress="0.6"/>
+    <transition id="barwipe5" dur="1" type="barWipe" endProgress="0.5"/>
     <transition id="barwipe3" dur="0.3" type="barWipe"/>
     <transition id="clockwipe1" dur="1" type="clockWipe"/>
     <transition id="clockwipe2" dur="1" type="clockWipe"
                 subtype="clockwiseThree" direction="reverse"/>
     <transition id="bowtiewipe1" dur="1" type="bowTieWipe"/>
     <transition id="bowtiewipe2" dur="1" type="bowTieWipe" subtype="horizontal"/>
+    <transition id="ellipsewipe1" dur="1" type="ellipseWipe"/>
+    <transition id="ellipsewipe2" dur="1" type="ellipseWipe"
+                subtype="vertical"/>
     <transition id="fade1" dur="1" type="fade"/>
     <transition id="fade2" dur="0.3" type="fade"/>
   </head>
@@ -105,6 +111,22 @@
       </par>
       <par>
         <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
+             transIn="barwipe4" transOut="barwipe5"/>
+        <seq>
+          <text src="data:,barWipe%20leftToRight%2040-60" region="region2"
+                dur="1.5" transIn="fade2" transOut="barwipe3">
+            <param name="fontColor" value="blue"/>
+            <param name="fontPtSize" value="10"/>
+          </text>
+          <text src="data:,irishWipe%20leftToRight%200-50%20reversed"
+                region="region2" dur="1.5" transIn="barwipe3" transOut="fade2">
+            <param name="fontColor" value="blue"/>
+            <param name="fontPtSize" value="10"/>
+          </text>
+        </seq>
+      </par>
+      <par>
+        <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
              transIn="fade1" transOut="fade1"/>
         <seq>
           <text src="data:,fade" region="region2" dur="1.5"
@@ -114,6 +136,22 @@
           </text>
           <text src="data:,fade" region="region2" dur="1.5"
                 transIn="fade2" transOut="fade2">
+            <param name="fontColor" value="blue"/>
+            <param name="fontPtSize" value="10"/>
+          </text>
+        </seq>
+      </par>
+      <par>
+        <img src="../icons/hi64-app-kmplayer.png" dur="3" region="region1"
+             transIn="ellipsewipe1" transOut="ellipsewipe2"/>
+        <seq>
+          <text src="data:,ellipseWipe%20vertical" region="region2"
+                dur="1.5" transIn="fade2" transOut="barwipe3">
+            <param name="fontColor" value="blue"/>
+            <param name="fontPtSize" value="10"/>
+          </text>
+          <text src="data:,ellipseWipe%20vertical"
+                region="region2" dur="1.5" transIn="barwipe3" transOut="fade2">
             <param name="fontColor" value="blue"/>
             <param name="fontPtSize" value="10"/>
           </text>
