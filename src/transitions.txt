@@ -1,9 +1,15 @@
+/*http://www.w3.org/TR/2005/REC-SMIL2-20050107/smil-transitions.html#Table%201:%20Taxonomy%20Table*/
 { "barWipe",    SMIL::Transition::BarWipe,    2, {
     SMIL::Transition::SubLeftToRight,
     SMIL::Transition::SubTopToBottom } },
 { "bowTieWipe", SMIL::Transition::BowTieWipe, 2, {
     SMIL::Transition::SubVertical,
     SMIL::Transition::SubHorizontal } },
+{ "clockWipe",  SMIL::Transition::ClockWipe,  4, {
+    SMIL::Transition::SubClockwiseTwelve,
+    SMIL::Transition::SubClockwiseThree,
+    SMIL::Transition::SubClockwiseSix,
+    SMIL::Transition::SubClockwiseNine } },
 { "fade",       SMIL::Transition::Fade,       3, {
     SMIL::Transition::SubCrossfade,
     SMIL::Transition::SubFadeToColor,

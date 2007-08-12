@@ -1,3 +1,7 @@
+{ "clockwiseNine",  SMIL::Transition::SubClockwiseNine },
+{ "clockwiseSix",   SMIL::Transition::SubClockwiseSix },
+{ "clockwiseThree", SMIL::Transition::SubClockwiseThree },
+{ "clockwiseTwelve",SMIL::Transition::SubClockwiseTwelve },
 { "crossfade",      SMIL::Transition::SubCrossfade },
 { "diamond",        SMIL::Transition::SubDiamond },
 { "fadeFromColor",  SMIL::Transition::SubFadeFromColor },

@@ -1782,8 +1782,8 @@ void SMIL::Transition::parseParam (const TrieString & para, const QString & val)
 }
 
 KDE_NO_EXPORT bool SMIL::Transition::supported () {
-    return Fade == type || BarWipe == type ||
-        PushWipe == type || IrisWipe == type;
+    return Fade == type || BarWipe == type || BowTieWipe ||
+        PushWipe == type || IrisWipe == type || ClockWipe == type;
 }
 
 //-----------------------------------------------------------------------------
@@ -2484,8 +2484,13 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
         if (trans && trans->supported ()) {
             active_trans = trans_in;
             trans_step = 1;
-            trans_steps = trans->dur; // 10/s FIXME
-            trans_timer = document()->setTimeout(this, 100, trans_timer_id);
+            if (Transition::Fade == trans->type) {
+                trans_steps = trans->dur;
+                trans_timer = document()->setTimeout(this, 100, trans_timer_id);
+            } else {
+                trans_steps = 4 * trans->dur;
+                trans_timer = document()->setTimeout(this, 25, trans_timer_id);
+            }
         }
         if (Runtime::dur_timer == tr->durTime().durval &&
                 tr->durTime().offset > 0) {
@@ -2646,12 +2651,16 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
                     active_trans = trans_out;
                     Transition * trans = convertNode <Transition> (trans_out);
                     if (trans) {
-                        trans_step = 1;
-                        trans_steps = trans->dur; // 10/s FIXME
                         if (trans_timer) // eg. overlapping transIn/transOut
                             document ()->cancelTimer (trans_timer);
-                        trans_timer = document()->setTimeout(
-                                this, 100, trans_timer_id);
+                        trans_step = 1;
+                        if (Transition::Fade == trans->type) {
+                            trans_steps = trans->dur;
+                            trans_timer = document()->setTimeout(this, 100, trans_timer_id);
+                        } else {
+                            trans_steps = 4 * trans->dur;
+                            trans_timer = document()->setTimeout(this, 25, trans_timer_id);
+                        }
                         trans_out_active = true;
                         if (s)
                             s->repaint ();

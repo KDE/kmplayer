@@ -20,6 +20,7 @@
 #include <config.h>
 
 #include <stdlib.h>
+#include <math.h>
 
 #include <qapplication.h>
 #include <qwidgetstack.h>
@@ -498,6 +499,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
         cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
         cairo_set_source (cr, cur_pat);
         if (SMIL::Transition::SubDiamond == trans->sub_type) {
+            cairo_rectangle(cr,clip.x(), clip.y(), clip.width(), clip.height());
+            cairo_clip (cr);
             Single dx = perc * clip.width();
             Single dy = perc * clip.height();
             Single mx = clip.x() + clip.width()/2;
@@ -514,6 +517,69 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
             cairo_rectangle (cr, clip.x() + dx, clip.y() + dy,
                     clip.width() - 2 * dx, clip.height() - 2 * dy);
         }
+        cairo_fill (cr);
+    } else if (SMIL::Transition::ClockWipe == trans->type) {
+        cairo_rectangle (cr, clip.x(), clip.y(), clip.width(), clip.height());
+        cairo_clip (cr);
+        Single mx = clip.x() + clip.width()/2;
+        Single my = clip.y() + clip.height()/2;
+        cairo_new_path (cr);
+        cairo_move_to (cr, mx, my);
+        float radius = sqrt (clip.width()/2*clip.width()/2 + clip.height()/2*clip.height()/2);
+        float phi;
+        switch (trans->sub_type) {
+            case SMIL::Transition::SubClockwiseThree:
+                phi = 0;
+                break;
+            case SMIL::Transition::SubClockwiseSix:
+                phi = M_PI / 2;
+                break;
+            case SMIL::Transition::SubClockwiseNine:
+                phi = M_PI;
+                break;
+            default: // Twelve
+                phi = -M_PI / 2;
+                break;
+        }
+        if (SMIL::Transition::dir_reverse == trans->direction)
+            cairo_arc_negative (cr, mx, my, radius, phi, phi - 2 * M_PI * perc);
+        else
+            cairo_arc (cr, mx, my, radius, phi, phi + 2 * M_PI * perc);
+        cairo_close_path (cr);
+        cairo_pattern_set_matrix (cur_pat, &cur_mat);
+        cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
+        cairo_set_source (cr, cur_pat);
+        cairo_fill (cr);
+    } else if (SMIL::Transition::BowTieWipe == trans->type) {
+        cairo_rectangle (cr, clip.x(), clip.y(), clip.width(), clip.height());
+        cairo_clip (cr);
+        Single mx = clip.x() + clip.width()/2;
+        Single my = clip.y() + clip.height()/2;
+        cairo_new_path (cr);
+        cairo_move_to (cr, mx, my);
+        float radius = sqrt (clip.width()/2*clip.width()/2 + clip.height()/2*clip.height()/2);
+        float phi;
+        switch (trans->sub_type) {
+            case SMIL::Transition::SubHorizontal:
+                phi = 0;
+                break;
+            default: // Vertical
+                phi = -M_PI / 2;
+                break;
+        }
+        float dphi = 0.5 * M_PI * perc;
+        cairo_arc (cr, mx, my, radius, phi - dphi, phi + dphi);
+        cairo_close_path (cr);
+        cairo_new_sub_path (cr);
+        cairo_move_to (cr, mx, my);
+        if (SMIL::Transition::SubHorizontal == trans->sub_type)
+            cairo_arc (cr, mx, my, radius, M_PI + phi - dphi, M_PI + phi +dphi);
+        else
+            cairo_arc (cr, mx, my, radius, -phi - dphi, -phi + dphi);
+        cairo_close_path (cr);
+        cairo_pattern_set_matrix (cur_pat, &cur_mat);
+        cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
+        cairo_set_source (cr, cur_pat);
         cairo_fill (cr);
     }
     cairo_restore (cr);

@@ -525,6 +525,8 @@ public:
         SubFromLeft, SubFromTop, SubFromRight, SubFromBottom,
         SubCrossfade, SubFadeToColor, SubFadeFromColor,
         SubRectangle, SubDiamond,
+        SubClockwiseTwelve, SubClockwiseThree, SubClockwiseSix,
+        SubClockwiseNine,
          // and lots more .. TODO
         SubTransLast
     };
