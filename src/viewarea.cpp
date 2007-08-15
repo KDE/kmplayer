@@ -204,7 +204,7 @@ ViewSurface::ViewSurface (ViewArea * widget, NodePtr owner, const SRect & rect)
   : Surface (owner, rect), view_widget (widget) {}
 
 KDE_NO_CDTOR_EXPORT ViewSurface::~ViewSurface() {
-    kdDebug() << "~ViewSurface" << endl;
+    //kdDebug() << "~ViewSurface" << endl;
 }
 
 SurfacePtr ViewSurface::createSurface (NodePtr owner, const SRect & rect) {

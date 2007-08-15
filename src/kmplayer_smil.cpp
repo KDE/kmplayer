@@ -1884,10 +1884,6 @@ KDE_NO_EXPORT void SMIL::TimedMrl::reset () {
     m_runtime = 0L;
 }
 
-KDE_NO_EXPORT bool SMIL::TimedMrl::expose () const {
-    return !pretty_name.isEmpty ();
-}
-
 KDE_NO_EXPORT void SMIL::TimedMrl::childBegan (NodePtr) {
     if (state != state_began)
         begin ();
@@ -2551,11 +2547,6 @@ KDE_NO_EXPORT void SMIL::MediaType::finish () {
     static_cast <MediaTypeRuntime *> (runtime ())->clipStop ();
 }
 
-KDE_NO_EXPORT bool SMIL::MediaType::expose () const {
-    return TimedMrl::expose () ||               // if title attribute
-        (!src.isEmpty () && !external_tree);    // or we're a playable leaf
-}
-
 /**
  * Re-implement from TimedMrl, because we may have children like
  * param/set/animatie that should all be activate, but also other smil or imfl
@@ -2757,6 +2748,10 @@ KDE_NO_EXPORT Runtime * SMIL::AVMediaType::getNewRuntime () {
 
 KDE_NO_EXPORT void SMIL::AVMediaType::accept (Visitor * v) {
     v->visit (this);
+}
+
+KDE_NO_EXPORT bool SMIL::AVMediaType::expose () const {
+    return !src.isEmpty () && !external_tree;
 }
 
 //-----------------------------------------------------------------------------

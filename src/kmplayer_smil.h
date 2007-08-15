@@ -563,7 +563,7 @@ public:
     void finish ();
     void deactivate ();
     void reset ();
-    bool expose () const;
+    bool expose () const { return false; }
     void childBegan (NodePtr child);
     void childDone (NodePtr child);
     virtual bool handleEvent (EventPtr event);
@@ -743,7 +743,6 @@ public:
     void deactivate ();
     void begin ();
     void finish ();
-    bool expose () const;
     void childDone (NodePtr child);
     virtual SurfacePtr getSurface (NodePtr node);
     /* (new) sub-region or NULL if not displayed */
@@ -786,6 +785,7 @@ public:
     virtual void undefer ();
     virtual void endOfFile ();
     virtual void accept (Visitor *);
+    virtual bool expose () const;
 };
 
 class KMPLAYER_NO_EXPORT ImageMediaType : public MediaType {
