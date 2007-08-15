@@ -1162,8 +1162,6 @@ bool AudioVideoData::parseParam(const TrieString &name, const QString &val) {
                     mt->removeChild (mt->external_tree);
                 mt->src = val;
                 mt->resolved = mt->document ()->notify_listener->resolveURL (element);
-                if (mt->resolved) // update external_tree here 
-                    mt->external_tree = findExternalTree (element);
             }
             if (timingstate == timings_started && mt->resolved)
                 clipStart ();
@@ -1294,8 +1292,6 @@ KDE_NO_EXPORT bool SMIL::Smil::handleEvent (EventPtr event) {
 }
 
 KDE_NO_EXPORT void SMIL::Smil::closed () {
-    width = 0;
-    height = 0;
     NodePtr head;
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         if (e->id == id_node_head) {
@@ -1447,13 +1443,13 @@ KDE_NO_EXPORT NodePtr SMIL::Layout::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void SMIL::Layout::closed () {
-    SMIL::RegionBase * smilroot = convertNode <SMIL::RootLayout> (rootLayout);
-    bool has_root (smilroot);
+    SMIL::RegionBase * rl = convertNode <SMIL::RootLayout> (rootLayout);
+    bool has_root (rl);
     if (!has_root) { // just add one if none there
-        smilroot = new SMIL::RootLayout (m_doc);
-        NodePtr sr = smilroot; // protect against destruction
-        smilroot->setAuxiliaryNode (true);
-        rootLayout = smilroot;
+        rl = new SMIL::RootLayout (m_doc);
+        NodePtr sr = rl; // protect against destruction
+        rl->setAuxiliaryNode (true);
+        rootLayout = rl;
         int w_root =0, h_root = 0, reg_count = 0;
         for (NodePtr n = firstChild (); n; n = n->nextSibling ()) {
             if (n->id == id_node_region) {
@@ -1473,13 +1469,20 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
             appendChild (r);
             r->setAuxiliaryNode (true);
         }
-        smilroot->setAttribute(StringPool::attr_width, QString::number(w_root));
-        smilroot->setAttribute(StringPool::attr_height,QString::number(h_root));
+        rl->setAttribute(StringPool::attr_width, QString::number(w_root));
+        rl->setAttribute(StringPool::attr_height,QString::number(h_root));
         insertBefore (sr, firstChild ());
-    } else if (childNodes ()->length () < 2) { // only a root-layout
-        SMIL::Region * r = new SMIL::Region (m_doc);
-        appendChild (r);
-        r->setAuxiliaryNode (true);
+    } else {
+        if (childNodes ()->length () < 2) { // only a root-layout
+            SMIL::Region * r = new SMIL::Region (m_doc);
+            appendChild (r);
+            r->setAuxiliaryNode (true);
+        }
+        Smil *s = Smil::findSmilNode (this);
+        if (s) {
+            s->width = rl->getAttribute(StringPool::attr_width).toDouble ();
+            s->height = rl->getAttribute(StringPool::attr_height).toDouble();
+        }
     }
 }
 
@@ -1507,14 +1510,9 @@ KDE_NO_EXPORT SurfacePtr SMIL::Layout::surface () {
         SMIL::Smil * s = Smil::findSmilNode (this);
         if (s) {
             SMIL::RegionBase *rl = convertNode <SMIL::RootLayout> (rootLayout);
-            if (rl && auxiliaryNode ()) {
-                s->width = 0;
-                s->height = 0;
-            } else if (rl) {
-                w = s->width = rl->getAttribute(StringPool::attr_width).toDouble ();
-                h = s->height =rl->getAttribute(StringPool::attr_height).toDouble();
-            }
             region_surface = s->getSurface (s);
+            w = s->width;
+            h = s->height;
             if (region_surface) {
                 SRect rect = region_surface->bounds;
                 if (rl && auxiliaryNode ()) {
@@ -1548,8 +1546,8 @@ KDE_NO_CDTOR_EXPORT SMIL::RegionBase::RegionBase (NodePtr & d, short id)
    {}
 
 KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
-    if (region_surface && region_surface->parentNode ())
-        region_surface->parentNode ()->removeChild (region_surface);
+    if (region_surface)
+        region_surface->remove ();
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::activate () {
@@ -2435,6 +2433,16 @@ KDE_NO_EXPORT NodePtr SMIL::MediaType::childFromTag (const QString & tag) {
     return 0L;
 }
 
+KDE_NO_EXPORT void SMIL::MediaType::closed () {
+    external_tree = findExternalTree (this);
+    Mrl *mrl = external_tree ? external_tree->mrl () : NULL;
+    if (mrl) {
+        width = mrl->width;
+        height = mrl->height;
+    }
+    TimedMrl::closed ();
+}
+
 KDE_NO_EXPORT
 void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
     if (para == "system-bitrate")
@@ -2479,7 +2487,6 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
     region_mouse_leave = 0L;
     region_mouse_click = 0L;
     region_attach = 0L;
-    region_attach_external = 0L;
     trans_step = trans_steps = 0;
     if (region_node)
         convertNode <SMIL::RegionBase> (region_node)->repaint ();
@@ -2587,16 +2594,10 @@ KDE_NO_EXPORT bool SMIL::MediaType::needsVideoWidget () {
 }
 
 SurfacePtr SMIL::MediaType::getSurface (NodePtr node) {
+    resetSurface ();
     SurfacePtr s = surface ();
-    if (s) {
-        if (node) {
-            s->node = node;
-            region_attach_external = region_node->connectTo (node, mediatype_attached);
-        } else {
-            resetSurface ();
-            region_attach_external = NULL;
-        }
-    }
+    if (s && node)
+        s->node = node;
     return s;
 }
 
@@ -2646,8 +2647,8 @@ KDE_NO_EXPORT SurfacePtr SMIL::MediaType::surface () {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::resetSurface () {
-    if (sub_surface && sub_surface->parentNode ())
-        sub_surface->parentNode ()->removeChild (sub_surface);
+    if (sub_surface)
+        sub_surface->remove ();
     sub_surface = NULL;
 }
 
@@ -2735,7 +2736,6 @@ KDE_NO_EXPORT void SMIL::AVMediaType::defer () {
 
 KDE_NO_EXPORT void SMIL::AVMediaType::undefer () {
     setState (state_activated);
-    external_tree = findExternalTree (this);
     MediaTypeRuntime * mr = static_cast <MediaTypeRuntime *> (runtime ());
     if (mr->state () == Runtime::timings_started) {
         mr->postpone_lock = 0L;
@@ -2979,7 +2979,6 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
         if (mime.startsWith (QString::fromLatin1 ("text/"))) {
             QTextStream ts (data, IO_ReadOnly);
             readXML (element, ts, QString ());
-            mt->external_tree = findExternalTree (element);
             Mrl *mrl = mt->external_tree ? mt->external_tree->mrl () : NULL;
             if (mrl) {
                 mt->width = mrl->width;

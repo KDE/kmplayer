@@ -738,6 +738,7 @@ public:
     MediaType (NodePtr & d, const QString & t, short id);
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
+    void closed ();
     void activate ();
     void deactivate ();
     void begin ();
@@ -772,7 +773,6 @@ protected:
     ConnectionPtr region_mouse_leave;      // attached region has mouse left
     ConnectionPtr region_mouse_click;      // attached region is clicked
     ConnectionPtr region_attach;           // attached to region
-    ConnectionPtr region_attach_external;  // attached external to region
     TimerInfoPtrW trans_timer;
     TimerInfoPtrW trans_out_timer;
 };

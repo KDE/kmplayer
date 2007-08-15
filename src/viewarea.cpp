@@ -204,7 +204,7 @@ ViewSurface::ViewSurface (ViewArea * widget, NodePtr owner, const SRect & rect)
   : Surface (owner, rect), view_widget (widget) {}
 
 KDE_NO_CDTOR_EXPORT ViewSurface::~ViewSurface() {
-    //kdDebug() << "~ViewSurface" << endl;
+    kdDebug() << "~ViewSurface" << endl;
 }
 
 SurfacePtr ViewSurface::createSurface (NodePtr owner, const SRect & rect) {
@@ -438,7 +438,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
     }
 }
 
-#define CAIRO_SET_PATTERHN(cr,pat,mat)                          \
+#define CAIRO_SET_PATTERN(cr,pat,mat)                          \
     if (pat) {                                                  \
         cairo_pattern_set_matrix (pat, &mat);                   \
         cairo_pattern_set_filter (pat, CAIRO_FILTER_FAST);      \
@@ -451,7 +451,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
     if (cur_media->trans_out_active)
         perc = 1.0 - perc;
     if (SMIL::Transition::Fade == trans->type) {
-        CAIRO_SET_PATTERHN(cr, cur_pat, cur_mat)
+        CAIRO_SET_PATTERN(cr, cur_pat, cur_mat)
         cairo_rectangle (cr, clip.x(), clip.y(), clip.width(), clip.height());
         cairo_clip (cr);
         cairo_paint_with_alpha (cr, perc);
@@ -477,7 +477,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
             }
         }
         cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
-        CAIRO_SET_PATTERHN(cr, cur_pat, cur_mat)
+        CAIRO_SET_PATTERN(cr, cur_pat, cur_mat)
         cairo_fill (cr);
     } else if (SMIL::Transition::PushWipe == trans->type) {
         Single dx, dy;
@@ -493,10 +493,10 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
         SRect rect = clip.intersect (SRect (clip.x() + dx, clip.y() + dy,
                     clip.width () - dx, clip.height() - dy));
         cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
-        CAIRO_SET_PATTERHN(cr, cur_pat, cur_mat)
+        CAIRO_SET_PATTERN(cr, cur_pat, cur_mat)
         cairo_fill (cr);
     } else if (SMIL::Transition::IrisWipe == trans->type) {
-        CAIRO_SET_PATTERHN(cr, cur_pat, cur_mat)
+        CAIRO_SET_PATTERN(cr, cur_pat, cur_mat)
         if (SMIL::Transition::SubDiamond == trans->sub_type) {
             cairo_rectangle(cr,clip.x(), clip.y(), clip.width(), clip.height());
             cairo_clip (cr);
@@ -547,7 +547,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
         else
             cairo_arc (cr, mx, my, radius, phi, phi + 2 * M_PI * perc);
         cairo_close_path (cr);
-        CAIRO_SET_PATTERHN(cr, cur_pat, cur_mat)
+        CAIRO_SET_PATTERN(cr, cur_pat, cur_mat)
         cairo_fill (cr);
     } else if (SMIL::Transition::BowTieWipe == trans->type) {
         cairo_rectangle (cr, clip.x(), clip.y(), clip.width(), clip.height());
@@ -578,7 +578,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
         else
             cairo_arc (cr, mx, my, radius, -phi - dphi, -phi + dphi);
         cairo_close_path (cr);
-        CAIRO_SET_PATTERHN(cr, cur_pat, cur_mat)
+        CAIRO_SET_PATTERN(cr, cur_pat, cur_mat)
         cairo_fill (cr);
     } else if (SMIL::Transition::EllipseWipe == trans->type) {
         cairo_rectangle (cr, clip.x(), clip.y(), clip.width(), clip.height());
@@ -599,24 +599,28 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
         cairo_arc (cr, 0, 0, perc * radius, 0, 2 * M_PI);
         cairo_close_path (cr);
         cairo_restore (cr);
-        CAIRO_SET_PATTERHN(cr, cur_pat, cur_mat)
+        CAIRO_SET_PATTERN(cr, cur_pat, cur_mat)
         cairo_fill (cr);
     }
     cairo_restore (cr);
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
-    if (ref->needsVideoWidget ()) {
-        SurfacePtr s = ref->surface ();
-        if (s)
+    SurfacePtr s = ref->surface ();
+    if (s) {
+        if (ref->external_tree)
+            ref->external_tree->accept (this);
+        else if (ref->needsVideoWidget ())
             s->video ();
     }
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
-    if (av->needsVideoWidget ()) {
-        SurfacePtr s = av->surface ();
-        if (s)
+    SurfacePtr s = av->surface ();
+    if (s) {
+        if (av->external_tree)
+            av->external_tree->accept (this);
+        else if (av->needsVideoWidget ())
             s->video ();
     }
 }
@@ -625,6 +629,10 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     //kdDebug() << "Visit " << img->nodeName() << " " << img->src << endl;
     SurfacePtr s = img->surface ();
     if (s /*TODO && !s->surface*/) {
+        if (img->external_tree) {
+            img->external_tree->accept (this);
+            return;
+        }
         ImageRuntime * ir = static_cast <ImageRuntime *> (img->runtime ());
         ImageData * id = ir->cached_img.data.ptr ();
         SRect rect = s->bounds;

@@ -55,6 +55,7 @@ public:
     ~Imfl ();
     KDE_NO_EXPORT virtual const char * nodeName () const { return "imfl"; }
     virtual NodePtr childFromTag (const QString & tag);
+    virtual void closed ();
     virtual void defer ();      // start loading the images if not yet done
     virtual void activate ();   // start timings, handle paint events
     virtual void finish ();     // end the timings

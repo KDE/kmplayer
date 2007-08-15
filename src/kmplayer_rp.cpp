@@ -39,6 +39,24 @@ KDE_NO_CDTOR_EXPORT RP::Imfl::Imfl (NodePtr & d)
 KDE_NO_CDTOR_EXPORT RP::Imfl::~Imfl () {
 }
 
+KDE_NO_EXPORT void RP::Imfl::closed () {
+    for (NodePtr n = firstChild (); n; n = n->nextSibling ())
+        if (RP::id_node_head == n->id) {
+            AttributePtr a = convertNode <Element> (n)->attributes ()->first ();
+            for (; a; a = a->nextSibling ()) {
+                if (StringPool::attr_width == a->name ()) {
+                    width = a->value ().toInt ();
+                } else if (StringPool::attr_height == a->name ()) {
+                    height = a->value ().toInt ();
+                } else if (a->name () == "duration") {
+                    int dur;
+                    parseTime (a->value ().lower (), dur);
+                    duration = dur;
+                }
+            }
+        }
+}
+
 KDE_NO_EXPORT void RP::Imfl::defer () {
     kdDebug () << "RP::Imfl::defer " << endl;
     setState (state_deferred);
@@ -66,18 +84,6 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
             case RP::id_node_image:
                 if (!n->active ())
                     n->activate ();
-            case RP::id_node_head:
-                for (AttributePtr a= convertNode <Element> (n)->attributes ()->first (); a; a = a->nextSibling ()) {
-                    if (a->name () == StringPool::attr_width) {
-                        width = a->value ().toInt ();
-                    } else if (a->name () == StringPool::attr_height) {
-                        height = a->value ().toInt ();
-                    } else if (a->name () == "duration") {
-                        int dur;
-                        parseTime (a->value ().lower (), dur);
-                        duration = dur;
-                    }
-                }
                 break;
         }
     if (duration > 0)
