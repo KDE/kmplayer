@@ -634,13 +634,13 @@ public:
     virtual void repaint () = 0;
     virtual void repaint (Single x, Single y, Single w, Single h) = 0;
     virtual void video () = 0;
-    void remove ();                // remove from parent, mark ansestors dirty
+    void remove ();                // remove from parent, mark ancestors dirty
 
     NodePtrW node;
     SRect bounds;                  // bounds in in parent coord. 
     float xscale, yscale;          // internal scaling
     unsigned int background_color; // rgba background color
-    bool dirty;                    // a child is removed
+    bool dirty;                    // a decendant is removed
 #ifdef HAVE_CAIRO
     cairo_surface_t *surface;
 #endif

@@ -157,10 +157,6 @@ KDE_NO_EXPORT Surface *RP::Imfl::surface () {
                 width = rp_surface->bounds.width ();
             if (height <= 0 || height > 32000)
                 height = rp_surface->bounds.height ();
-            if (width > 0 && height > 0) {
-                rp_surface->xscale = 1.0 * rp_surface->bounds.width () / width;
-                rp_surface->yscale = 1.0 * rp_surface->bounds.height() / height;
-            }
         }
     }
     return rp_surface.ptr ();

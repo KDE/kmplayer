@@ -1523,8 +1523,6 @@ KDE_NO_EXPORT SurfacePtr SMIL::Layout::surface () {
                     rl->setParam (StringPool::attr_width, QString::number((int)w));
                     rl->setParam (StringPool::attr_height,QString::number((int)h));
                 } else if (region_surface && w > 0 && h > 0) {
-                    region_surface->xscale = 1.0 * rect.width () / w;
-                    region_surface->yscale = 1.0 * rect.height () / h;
                     updateDimensions ();
                 }
                 kdDebug() << "Layout::surface bounds " << rect.width () << "x" << rect.height () << " w:" << w << " h:" << h << " xs:" << region_surface->xscale << " ys:" << region_surface->yscale << endl;
@@ -2631,6 +2629,8 @@ KDE_NO_EXPORT SurfacePtr SMIL::MediaType::surface () {
                     default: {} // fit_fill
                 }
             sub_surface =rb->region_surface->createSurface(this,SRect(x,y,w,h));
+            sub_surface->xscale = 1.0 * w / width;
+            sub_surface->yscale = 1.0 * h / height;
             //kdDebug() << sub_surface.ptr() << " " << mt->nodeName() << " " << mt->src << " " << rr.width() << "," << rr.height()  << " => " << x << "," << y << w << "," << h << endl;
         }
     }

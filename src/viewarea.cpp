@@ -1487,9 +1487,14 @@ KDE_NO_EXPORT void ViewArea::updateSurfaceBounds () {
             h = Single (w / masp);
             y += (tmp - h) / 2;
         }
+        surface->xscale = 1.0 * w / mrl->width;
+        surface->yscale = 1.0 * h / mrl->height;
+    } else {
+        surface->xscale = 1.0;
+        surface->yscale = 1.0;
     }
     surface->bounds = SRect (x, y, w, h);
-    scheduleRepaint (0, 0, w, h);
+    scheduleRepaint (0, 0, width (), height ());
 }
 
 KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
@@ -1574,6 +1579,7 @@ KDE_NO_EXPORT SurfacePtr ViewArea::getSurface (NodePtr node) {
         updateSurfaceBounds ();
         return surface;
     }
+    scheduleRepaint (0, 0, width (), height ());
     return 0L;
 }
 
