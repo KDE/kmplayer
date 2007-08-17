@@ -185,7 +185,7 @@ public:
     void toScreen (Single & x, Single & y, Single & w, Single & h);
     void resize (const SRect & rect);
     void repaint ();
-    void repaint (Single x, Single y, Single w, Single h);
+    void repaint (const SRect &rect);
     void video ();
 
     NodePtrW current_video;
@@ -237,7 +237,8 @@ void ViewSurface::toScreen (Single & x, Single & y, Single & w, Single & h) {
 }
 
 KDE_NO_EXPORT
-void ViewSurface::repaint (Single x, Single y, Single w, Single h) {
+void ViewSurface::repaint (const SRect &rect) {
+    Single x = rect.x (), y = rect.y (), w = rect.width (), h = rect.height ();
     toScreen (x, y, w, h);
     view_widget->scheduleRepaint (x, y, w, h);
     //kdDebug() << "Surface::repaint x:" << (int)x << " y:" << (int)y << " w:" << (int)w << " h:" << (int)h << endl;
@@ -245,7 +246,9 @@ void ViewSurface::repaint (Single x, Single y, Single w, Single h) {
 
 KDE_NO_EXPORT
 void ViewSurface::repaint () {
-    repaint (0, 0, bounds.width (), bounds.height ());
+    Single x, y, w = bounds.width (), h = bounds.height ();
+    toScreen (x, y, w, h);
+    view_widget->scheduleRepaint (x, y, w, h);
 }
 
 KDE_NO_EXPORT void ViewSurface::video () {
@@ -291,9 +294,10 @@ class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
     cairo_matrix_t cur_mat;
 
     void traverseRegion (SMIL::RegionBase * reg);
+    void updateExternal (SMIL::MediaType *av, SurfacePtr s);
 public:
     cairo_t * cr;
-    CairoPaintVisitor (cairo_surface_t * cs, Single xoff, Single yoff, const SRect & rect);
+    CairoPaintVisitor (cairo_surface_t * cs, Matrix m, const SRect & rect);
     ~CairoPaintVisitor ();
     using Visitor::visit;
     void visit (Node * n);
@@ -315,8 +319,8 @@ public:
 };
 
 KDE_NO_CDTOR_EXPORT
-CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Single xoff, Single yoff, const SRect & rect)
- : clip (rect), cairo_surface (cs), matrix (Matrix (xoff, yoff, 1.0, 1.0)) {
+CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Matrix m, const SRect & rect)
+ : clip (rect), cairo_surface (cs), matrix (m) {
     cr = cairo_create (cs);
     cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
     cairo_clip (cr);
@@ -609,17 +613,58 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
     SurfacePtr s = ref->surface ();
     if (s) {
         if (ref->external_tree)
-            ref->external_tree->accept (this);
+            updateExternal (ref, s);
         else if (ref->needsVideoWidget ())
             s->video ();
     }
+}
+
+KDE_NO_EXPORT
+void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
+    SRect rect = s->bounds;
+    Single x = rect.x ();
+    Single y = rect.y ();
+    Single w = rect.width();
+    Single h = rect.height();
+    matrix.getXYWH (x, y, w, h);
+    SRect clip_rect = clip.intersect (SRect (x, y, w, h));
+    if (!clip_rect.isValid ())
+        return;
+    if (!s->surface || s->dirty) {
+        if (!s->surface)
+            s->surface = cairo_surface_create_similar (cairo_surface,
+                    CAIRO_CONTENT_COLOR, w, h);
+        Matrix m = matrix;
+        m.translate (-x, -y);
+        CairoPaintVisitor visitor (s->surface, m, SRect (0, 0, w, h));
+        av->external_tree->accept (&visitor);
+        s->dirty = false;
+    }
+    cairo_matrix_init_translate (&cur_mat, -x, -y);
+    cur_pat = cairo_pattern_create_for_surface (s->surface);
+    if (av->active_trans) {
+        SRect clip_save = clip;
+        clip = clip_rect;
+        cur_media = av;
+        av->active_trans->accept (this);
+        clip = clip_save;
+    } else {
+        cairo_pattern_set_extend (cur_pat, CAIRO_EXTEND_NONE);
+        cairo_pattern_set_matrix (cur_pat, &cur_mat);
+        cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
+        cairo_set_source (cr, cur_pat);
+        cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
+                clip_rect.width (), clip_rect.height ());
+        cairo_fill (cr);
+    }
+    cairo_pattern_destroy (cur_pat);
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
     SurfacePtr s = av->surface ();
     if (s) {
         if (av->external_tree)
-            av->external_tree->accept (this);
+            updateExternal (av, s);
         else if (av->needsVideoWidget ())
             s->video ();
     }
@@ -667,6 +712,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
                 }
             }
         }
+        s->dirty = false;
     }
 }
 
@@ -826,6 +872,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         cairo_pattern_destroy (cur_pat);
         //cairo_restore (cr);
     }
+    s->dirty = false;
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
@@ -845,6 +892,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
             cairo_rectangle (cr, x, y, w, h);
             cairo_fill (cr);
         }
+        s->dirty = false;
     }
 }
 
@@ -1439,7 +1487,9 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const SRect & rect) {
     if (!video_node ||
             !convertNode <SMIL::AVMediaType> (video_node)->needsVideoWidget())
         setAudioVideoGeometry (0, 0, 0, 0, NULL);
-    CairoPaintVisitor visitor (surface->surface, surface->bounds.x(), surface->bounds.y(), SRect (ex, ey, ew, eh));
+    CairoPaintVisitor visitor (surface->surface,
+            Matrix (surface->bounds.x(), surface->bounds.y(), 1.0, 1.0),
+            SRect (ex, ey, ew, eh));
     surface->node->accept (&visitor);
 #endif
     if (m_repaint_timer) {

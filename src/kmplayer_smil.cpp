@@ -1571,14 +1571,12 @@ KDE_NO_EXPORT void SMIL::RegionBase::deactivate () {
 
 KDE_NO_EXPORT void SMIL::RegionBase::repaint () {
     if (surface ())
-        region_surface->repaint (0, 0, w, h);
+        region_surface->repaint (SRect (0, 0, w, h));
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::repaint (const SRect & rect) {
-    if (surface ()) {
-        SRect r = SRect (0, 0, w, h).intersect (rect);
-        region_surface->repaint (r.x (), r.y (), r.width (), r.height ());
-    }
+    if (surface ())
+        region_surface->repaint (SRect (0, 0, w, h).intersect (rect));
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::updateDimensions () {
@@ -1627,7 +1625,7 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
     } else if (sizes.setSizeParam (name, val, dim_changed)) {
         if (active ()) {
             if (dim_changed && region_surface && region_surface->parentNode ())
-                region_surface->parentNode ()->removeChild (region_surface);
+                region_surface->remove ();
             NodePtr p = parentNode ();
             if (p &&(p->id==SMIL::id_node_region ||p->id==SMIL::id_node_layout))
                 convertNode <SMIL::RegionBase> (p)->updateDimensions ();
@@ -1642,8 +1640,7 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
         need_repaint = true;
     }
     if (need_repaint && active () && surface() && region_surface->parentNode ())
-        region_surface->parentNode ()->repaint (rect.x(), rect.y(),
-                rect.width(), rect.height());
+        region_surface->parentNode ()->repaint (rect);
     Element::parseParam (name, val);
 }
 
@@ -2629,9 +2626,11 @@ KDE_NO_EXPORT SurfacePtr SMIL::MediaType::surface () {
                     default: {} // fit_fill
                 }
             sub_surface =rb->region_surface->createSurface(this,SRect(x,y,w,h));
-            sub_surface->xscale = 1.0 * w / width;
-            sub_surface->yscale = 1.0 * h / height;
-            //kdDebug() << sub_surface.ptr() << " " << mt->nodeName() << " " << mt->src << " " << rr.width() << "," << rr.height()  << " => " << x << "," << y << w << "," << h << endl;
+            if (width > 0 && height > 0) {
+                sub_surface->xscale = 1.0 * w / width;
+                sub_surface->yscale = 1.0 * h / height;
+            }
+            //kdDebug() << sub_surface.ptr() << " " << nodeName() << " " << src << " " << rr.width() << "," << rr.height()  << " => " << x << "," << y << w << "," << h << endl;
         }
     }
     return sub_surface;
@@ -2645,7 +2644,6 @@ KDE_NO_EXPORT void SMIL::MediaType::resetSurface () {
 
 bool SMIL::MediaType::handleEvent (EventPtr event) {
     bool ret = false;
-    RegionBase * r = convertNode <RegionBase> (region_node);
     SurfacePtr s = surface();
     switch (event->id ()) {
         case event_postponed: {
@@ -2656,16 +2654,15 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
         }
         case event_timer: {
             TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
-            if (r && te && te->timer_info) {
+            if (te && te->timer_info) {
                 if (te->timer_info->event_id == trans_timer_id) {
-                    if (te->interval = trans_step >= trans_steps)
+                    if (trans_step >= trans_steps)
                         active_trans = NULL;
                     else
                         te->interval = trans_step++ < trans_steps;
-                    if (s)
-                        s->repaint ();
-                    ret = true;
-                    break;
+                    if (s && s->parentNode())
+                        s->parentNode()->repaint (s->bounds);
+                    return true;
                 } else if (te->timer_info->event_id == trans_out_timer_id) {
                     active_trans = trans_out;
                     Transition * trans = convertNode <Transition> (trans_out);
@@ -2684,16 +2681,13 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
                         if (s)
                             s->repaint ();
                     }
-                    ret = true;
-                    break;
+                    return true;
                 }
             }
         } // fall through
         default:
             ret = TimedMrl::handleEvent (event);
     }
-    if (s && s->node && s->node.ptr () != this)
-        return s->node->handleEvent (event);
     return ret;
 }
 

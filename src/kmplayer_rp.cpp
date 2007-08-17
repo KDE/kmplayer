@@ -190,7 +190,7 @@ KDE_NO_EXPORT void RP::Imfl::repaint () {
         if (rp_surface)
             rp_surface = Mrl::getSurface (NULL);
         if (surface () && width > 0 && height > 0)
-            rp_surface->repaint (0, 0, width, height);
+            rp_surface->repaint (SRect (0, 0, width, height));
     }
 }
 
