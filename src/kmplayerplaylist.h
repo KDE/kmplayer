@@ -635,6 +635,7 @@ public:
     virtual void repaint (const SRect &rect) = 0;
     virtual void video () = 0;
     void remove ();                // remove from parent, mark ancestors dirty
+    void markDirty ();             // mark this and ancestors dirty
 
     NodePtrW node;
     SRect bounds;                  // bounds in in parent coord. 

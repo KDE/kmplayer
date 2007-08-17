@@ -776,10 +776,15 @@ Surface::~Surface() {
 
 void Surface::remove () {
     Surface *sp = parentNode ().ptr ();
-    for (Surface *p = sp; p; p = p->parentNode ().ptr ())
-        p->dirty = true;
-    if (sp)
+    if (sp) {
+        sp->markDirty ();
         sp->removeChild (this);
+    }
+}
+
+void Surface::markDirty () {
+    for (Surface *s = this; s; s = s->parentNode ().ptr ())
+        s->dirty = true;
 }
 
 //-----------------------------------------------------------------------------

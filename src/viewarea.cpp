@@ -238,6 +238,7 @@ void ViewSurface::toScreen (Single & x, Single & y, Single & w, Single & h) {
 
 KDE_NO_EXPORT
 void ViewSurface::repaint (const SRect &rect) {
+    markDirty ();
     Single x = rect.x (), y = rect.y (), w = rect.width (), h = rect.height ();
     toScreen (x, y, w, h);
     view_widget->scheduleRepaint (x, y, w, h);
@@ -246,6 +247,7 @@ void ViewSurface::repaint (const SRect &rect) {
 
 KDE_NO_EXPORT
 void ViewSurface::repaint () {
+    markDirty ();
     Single x, y, w = bounds.width (), h = bounds.height ();
     toScreen (x, y, w, h);
     view_widget->scheduleRepaint (x, y, w, h);
