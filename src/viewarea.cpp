@@ -633,12 +633,16 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
     if (!clip_rect.isValid ())
         return;
     if (!s->surface || s->dirty) {
-        if (!s->surface)
-            s->surface = cairo_surface_create_similar (cairo_surface,
-                    CAIRO_CONTENT_COLOR, w, h);
         Matrix m = matrix;
         m.translate (-x, -y);
-        CairoPaintVisitor visitor (s->surface, m, SRect (0, 0, w, h));
+        SRect r (clip_rect.x() - x - 1, clip_rect.y() - y - 1,
+                clip_rect.width() + 3, clip_rect.height() + 3);
+        if (!s->surface) {
+            s->surface = cairo_surface_create_similar (cairo_surface,
+                    CAIRO_CONTENT_COLOR, w, h);
+            r = SRect (0, 0, w, h);
+        }
+        CairoPaintVisitor visitor (s->surface, m, r);
         av->external_tree->accept (&visitor);
         s->dirty = false;
     }
