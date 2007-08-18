@@ -91,13 +91,10 @@ static void copyImage (Surface *s, Single w, Single h, QImage *img, cairo_surfac
             iw, ih, img->bytesPerLine ());
     cairo_pattern_t *img_pat = cairo_pattern_create_for_surface (sf);
     cairo_pattern_set_extend (img_pat, CAIRO_EXTEND_NONE);
-    if (w > 0 && h > 0) {
+    if ((int) w != iw && (int) h != ih) {
         cairo_matrix_t mat;
         cairo_matrix_init_scale (&mat, 1.0 * iw/w, 1.0 * ih/h);
         cairo_pattern_set_matrix (img_pat, &mat);
-    } else {
-        w = img->width ();
-        h = img->height ();
     }
     if (!s->surface)
         s->surface = cairo_surface_create_similar (similar,
@@ -905,7 +902,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
                 sh = img->height;
             if ((int)fi->w && (int)fi->h && (int)sw && (int)sh) {
                 if (!img->img_surface->surface)
-                    copyImage (img->img_surface, 0, 0, img->cached_img.data->image, cairo_surface);
+                    copyImage (img->img_surface, img->width, img->height, img->cached_img.data->image, cairo_surface);
                 cairo_pattern_t *pat = cairo_pattern_create_for_surface (img->img_surface->surface);
                 cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
                 cairo_matrix_t matrix;
@@ -955,7 +952,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
                 sh = img->height;
             if ((int)cf->w && (int)cf->h && (int)sw && (int)sh) {
                 if (!img->img_surface->surface)
-                    copyImage (img->img_surface, 0, 0, img->cached_img.data->image, cairo_surface);
+                    copyImage (img->img_surface, img->width, img->height, img->cached_img.data->image, cairo_surface);
                 cairo_pattern_t *pat = cairo_pattern_create_for_surface (img->img_surface->surface);
                 cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
                 cairo_save (cr);
@@ -1014,7 +1011,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
 
             if ((int)w && (int)h) {
                 if (!img->img_surface->surface)
-                    copyImage (img->img_surface, 0, 0, img->cached_img.data->image, cairo_surface);
+                    copyImage (img->img_surface, img->width, img->height, img->cached_img.data->image, cairo_surface);
                 cairo_pattern_t *pat = cairo_pattern_create_for_surface (img->img_surface->surface);
                 cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
                 cairo_matrix_t matrix;
