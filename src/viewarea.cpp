@@ -655,7 +655,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     }
     ImageRuntime * ir = static_cast <ImageRuntime *> (img->runtime ());
     ImageData * id = ir->cached_img.data.ptr ();
-    if (!id || !id->image || id->image->width() <= 0 || id->image->height() <= 0) {
+    if (!id || !id->image || img->width <= 0 || img->height <= 0) {
         s->remove();
         return;
     }
@@ -900,9 +900,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
         if (img->surface ()) {
             Single sx = fi->srcx, sy = fi->srcy, sw = fi->srcw, sh = fi->srch;
             if (!(int)sw)
-                sw = img->cached_img.data->image->width();
+                sw = img->width;
             if (!(int)sh)
-                sh = img->cached_img.data->image->height();
+                sh = img->height;
             if ((int)fi->w && (int)fi->h && (int)sw && (int)sh) {
                 if (!img->img_surface->surface)
                     copyImage (img->img_surface, 0, 0, img->cached_img.data->image, cairo_surface);
@@ -950,9 +950,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
         if (img->surface ()) {
             Single sx = cf->srcx, sy = cf->srcy, sw = cf->srcw, sh = cf->srch;
             if (!(int)sw)
-                sw = img->cached_img.data->image->width();
+                sw = img->width;
             if (!(int)sh)
-                sh = img->cached_img.data->image->height();
+                sh = img->height;
             if ((int)cf->w && (int)cf->h && (int)sw && (int)sh) {
                 if (!img->img_surface->surface)
                     copyImage (img->img_surface, 0, 0, img->cached_img.data->image, cairo_surface);
@@ -989,9 +989,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
             Single w = wipe->w, h = wipe->h;
             Single sx = wipe->srcx, sy = wipe->srcy, sw = wipe->srcw, sh = wipe->srch;
             if (!(int)sw)
-                sw = img->cached_img.data->image->width();
+                sw = img->width;
             if (!(int)sh)
-                sh = img->cached_img.data->image->height();
+                sh = img->height;
             if (wipe->direction == RP::Wipe::dir_right) {
                 Single dx = w * 1.0 * wipe->progress / 100;
                 tx = x -w + dx;

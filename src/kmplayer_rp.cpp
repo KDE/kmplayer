@@ -206,8 +206,12 @@ KDE_NO_EXPORT void RP::Image::activate () {
     setState (state_activated);
     isPlayable (); // update src attribute
     cached_img.setUrl (absolutePath ());
-    if (cached_img.isEmpty ())
+    if (cached_img.isEmpty ()) {
         wget (absolutePath ());
+    } else {
+        width = cached_img.data->image->width ();
+        height = cached_img.data->image->height ();
+    }
 }
 
 KDE_NO_EXPORT void RP::Image::deactivate () {
@@ -225,10 +229,13 @@ KDE_NO_EXPORT void RP::Image::remoteReady (QByteArray & data) {
     kdDebug () << "RP::Image::remoteReady" << endl;
     if (!data.isEmpty () && cached_img.isEmpty ()) {
         QImage * img = new QImage (data);
-        if (!img->isNull ())
+        if (!img->isNull ()) {
             cached_img.data->image = img;
-        else
+            width = img->width ();
+            height = img->height ();
+        } else {
             delete img;
+        }
     }
     postpone_lock = 0L;
 }
@@ -246,9 +253,7 @@ KDE_NO_EXPORT Surface *RP::Image::surface () {
             Surface *ps = static_cast <RP::Imfl *> (p)->surface ();
             if (ps)
                 img_surface = ps->createSurface (this,
-                        SRect (0, 0,
-                            cached_img.data->image->width (),
-                            cached_img.data->image->height ()));
+                        SRect (0, 0, width, height));
         }
     }
     return img_surface;
