@@ -159,6 +159,22 @@
           </text>
         </seq>
       </par>
+      <par>
+        <video src="rp.smil" dur="6" region="region1" fit="meet"
+             transIn="clockwipe1" transOut="ellipsewipe1"/>
+        <seq>
+          <text src="data:,nested rp.smil%20clockWipe" region="region2"
+                dur="3" transIn="fade2" transOut="barwipe3">
+            <param name="fontColor" value="blue"/>
+            <param name="fontPtSize" value="10"/>
+          </text>
+          <text src="data:,ellipseWipe%20circle"
+                region="region2" dur="3" transIn="barwipe3" transOut="fade2">
+            <param name="fontColor" value="blue"/>
+            <param name="fontPtSize" value="10"/>
+          </text>
+        </seq>
+      </par>
       <brush region="region3" dur="2" color="gray" transIn="ellipsewipe1" />
     </seq>
   </body>
