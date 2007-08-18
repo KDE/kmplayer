@@ -2917,11 +2917,11 @@ bool ImageRuntime::parseParam (const TrieString & name, const QString & val) {
         if (!val.isEmpty ()) {
             QString abs = mt->absolutePath ();
             cached_img.setUrl (abs);
-            if (cached_img.data->isEmpty ()) {
+            if (cached_img.isEmpty ()) {
                 wget (abs);
             } else {
-                mt->width = cached_img.data->width ();
-                mt->height = cached_img.data->height ();
+                mt->width = cached_img.data->image->width ();
+                mt->height = cached_img.data->image->height ();
             }
         }
     } else
@@ -2961,7 +2961,7 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
     if (data.size () && mt) {
         mt->resetSurface ();
         QString mime = mimetype ();
-        kdDebug () << "ImageRuntime::remoteReady " << mime << " empty:" << cached_img.data->isEmpty () << " " << mt->src << endl;
+        kdDebug () << "ImageRuntime::remoteReady " << mime << " empty:" << cached_img.isEmpty () << " " << mt->src << endl;
         if (mime.startsWith (QString::fromLatin1 ("text/"))) {
             QTextStream ts (data, IO_ReadOnly);
             readXML (element, ts, QString ());
@@ -2971,7 +2971,7 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
                 mt->height = mrl->height;
             }
         }
-        if (!mt->external_tree && cached_img.data->isEmpty ()) {
+        if (!mt->external_tree && cached_img.isEmpty ()) {
             delete img_movie;
             img_movie = 0L;
             QImage *pix = new QImage (data);
@@ -3000,7 +3000,7 @@ KDE_NO_EXPORT void ImageRuntime::movieUpdated (const QRect &) {
     if (mt && frame_nr++) {
         mt->resetSurface ();
         cached_img.setUrl (QString ());
-        ASSERT (cached_img.data && cached_img.data->isEmpty ());
+        ASSERT (cached_img.data && cached_img.isEmpty ());
         cached_img.data->image = new QImage;
         *cached_img.data->image = (img_movie->framePixmap ());
         if (mt->surface())

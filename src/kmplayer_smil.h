@@ -43,12 +43,8 @@ namespace KMPlayer {
 struct KMPLAYER_NO_EXPORT ImageData {
     ImageData( const QString & img);
     ~ImageData();
-    bool isEmpty ();
-    Single width ();
-    Single height ();
-    QImage * image;
+    QImage *image;
 private:
-    Single w, h;
     QString url;
 };
 
@@ -57,6 +53,7 @@ typedef WeakPtr <ImageData> ImageDataPtrW;
 
 struct KMPLAYER_NO_EXPORT CachedImage {
     void setUrl (const QString & url);
+    bool isEmpty ();
     ImageDataPtr data;
 };
 

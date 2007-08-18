@@ -206,7 +206,7 @@ KDE_NO_EXPORT void RP::Image::activate () {
     setState (state_activated);
     isPlayable (); // update src attribute
     cached_img.setUrl (absolutePath ());
-    if (cached_img.data->isEmpty ())
+    if (cached_img.isEmpty ())
         wget (absolutePath ());
 }
 
@@ -223,7 +223,7 @@ KDE_NO_EXPORT void RP::Image::deactivate () {
 
 KDE_NO_EXPORT void RP::Image::remoteReady (QByteArray & data) {
     kdDebug () << "RP::Image::remoteReady" << endl;
-    if (!data.isEmpty () && cached_img.data->isEmpty ()) {
+    if (!data.isEmpty () && cached_img.isEmpty ()) {
         QImage * img = new QImage (data);
         if (!img->isNull ())
             cached_img.data->image = img;
@@ -240,15 +240,15 @@ KDE_NO_EXPORT bool RP::Image::isReady (bool postpone_if_not) {
 }
 
 KDE_NO_EXPORT Surface *RP::Image::surface () {
-    if (!img_surface && !cached_img.data->isEmpty ()) {
+    if (!img_surface && !cached_img.isEmpty ()) {
         Node * p = parentNode ().ptr ();
         if (p && p->id == RP::id_node_imfl) {
             Surface *ps = static_cast <RP::Imfl *> (p)->surface ();
             if (ps)
                 img_surface = ps->createSurface (this,
                         SRect (0, 0,
-                            cached_img.data->width (),
-                            cached_img.data->height ()));
+                            cached_img.data->image->width (),
+                            cached_img.data->image->height ()));
         }
     }
     return img_surface;
