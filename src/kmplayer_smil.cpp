@@ -1116,7 +1116,7 @@ KDE_NO_EXPORT void AudioVideoData::started () {
         element->defer ();
         return;
     }
-    if (durTime ().durval == 0 && endTime ().durval == dur_media)
+    if (0 == durTime ().offset && dur_media == endTime ().durval)
         durTime ().durval = dur_media; // duration of clip
     MediaTypeRuntime::started ();
 }
@@ -2643,14 +2643,12 @@ KDE_NO_EXPORT void SMIL::MediaType::resetSurface () {
 }
 
 bool SMIL::MediaType::handleEvent (EventPtr event) {
-    bool ret = false;
     SurfacePtr s = surface();
     switch (event->id ()) {
         case event_postponed: {
             PostponedEvent * pe = static_cast <PostponedEvent *> (event.ptr ());
             static_cast<MediaTypeRuntime*>(runtime())->postpone (pe->is_postponed);
-            ret = true;
-            break;
+            return true;
         }
         case event_timer: {
             TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
@@ -2686,9 +2684,8 @@ bool SMIL::MediaType::handleEvent (EventPtr event) {
             }
         } // fall through
         default:
-            ret = TimedMrl::handleEvent (event);
+            return TimedMrl::handleEvent (event);
     }
-    return ret;
 }
 
 KDE_NO_EXPORT NodeRefListPtr SMIL::MediaType::listeners (unsigned int id) {
