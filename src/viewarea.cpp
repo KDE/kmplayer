@@ -84,6 +84,33 @@ ImageData::~ImageData() {
 }
 
 #ifdef HAVE_CAIRO
+static void copyImage (cairo_surface_t *s, Single w, Single h, QImage *img) {
+    int iw = img->width ();
+    int ih = img->height ();
+
+    if (img->depth () < 24) {
+        QImage qi = img->convertDepth (32, 0);
+        *img = qi;
+    }
+    cairo_surface_t *sf = cairo_image_surface_create_for_data (
+            img->bits (),
+            img->hasAlphaBuffer () ? CAIRO_FORMAT_ARGB32 : CAIRO_FORMAT_RGB24,
+            iw, ih, img->bytesPerLine ());
+    cairo_pattern_t *img_pat = cairo_pattern_create_for_surface (sf);
+    cairo_pattern_set_extend (img_pat, CAIRO_EXTEND_NONE);
+    cairo_matrix_t mat;
+    cairo_matrix_init_scale (&mat, 1.0 * iw/w, 1.0 * ih/h);
+    cairo_pattern_set_matrix (img_pat, &mat);
+
+    cairo_t *cr = cairo_create (s);
+    cairo_set_source (cr, img_pat);
+    cairo_paint (cr);
+    cairo_destroy (cr);
+
+    cairo_pattern_destroy (img_pat);
+    cairo_surface_destroy (sf);
+}
+
 cairo_pattern_t *
 ImageData::cairoImage (Single sw, Single sh, cairo_surface_t * similar) {
     if (cairo_image) {
@@ -297,6 +324,7 @@ class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
 
     void traverseRegion (SMIL::RegionBase * reg);
     void updateExternal (SMIL::MediaType *av, SurfacePtr s);
+    void paint(SMIL::MediaType *, Surface *, Single x, Single y, const SRect &);
 public:
     cairo_t * cr;
     CairoPaintVisitor (cairo_surface_t * cs, Matrix m, const SRect & rect);
@@ -621,6 +649,27 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
     }
 }
 
+KDE_NO_EXPORT void CairoPaintVisitor::paint (SMIL::MediaType *mt, Surface *s,
+        Single x, Single y, const SRect &rect) {
+    cairo_matrix_init_translate (&cur_mat, -x, -y);
+    cur_pat = cairo_pattern_create_for_surface (s->surface);
+    if (mt->active_trans) {
+        SRect clip_save = clip;
+        clip = rect;
+        cur_media = mt;
+        mt->active_trans->accept (this);
+        clip = clip_save;
+    } else {
+        cairo_pattern_set_extend (cur_pat, CAIRO_EXTEND_NONE);
+        cairo_pattern_set_matrix (cur_pat, &cur_mat);
+        cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
+        cairo_set_source (cr, cur_pat);
+        cairo_rectangle (cr, rect.x(), rect.y(), rect.width (), rect.height ());
+        cairo_fill (cr);
+    }
+    cairo_pattern_destroy (cur_pat);
+}
+
 KDE_NO_EXPORT
 void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
     SRect rect = s->bounds;
@@ -646,24 +695,7 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
         av->external_tree->accept (&visitor);
         s->dirty = false;
     }
-    cairo_matrix_init_translate (&cur_mat, -x, -y);
-    cur_pat = cairo_pattern_create_for_surface (s->surface);
-    if (av->active_trans) {
-        SRect clip_save = clip;
-        clip = clip_rect;
-        cur_media = av;
-        av->active_trans->accept (this);
-        clip = clip_save;
-    } else {
-        cairo_pattern_set_extend (cur_pat, CAIRO_EXTEND_NONE);
-        cairo_pattern_set_matrix (cur_pat, &cur_mat);
-        cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
-        cairo_set_source (cr, cur_pat);
-        cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
-                clip_rect.width (), clip_rect.height ());
-        cairo_fill (cr);
-    }
-    cairo_pattern_destroy (cur_pat);
+    paint (av, s.ptr (), x, y, clip_rect);
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
@@ -679,47 +711,36 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     //kdDebug() << "Visit " << img->nodeName() << " " << img->src << endl;
     SurfacePtr s = img->surface ();
-    if (s /*TODO && !s->surface*/) {
-        if (img->external_tree) {
-            img->external_tree->accept (this);
-            return;
-        }
-        ImageRuntime * ir = static_cast <ImageRuntime *> (img->runtime ());
-        ImageData * id = ir->cached_img.data.ptr ();
-        SRect rect = s->bounds;
-        if (id && !id->isEmpty () &&
-                rect.width() > 0 &&
-                id->width() > 0 && id->height() > 0) {
-            Single x = rect.x ();
-            Single y = rect.y ();
-            Single w = rect.width();
-            Single h = rect.height();
-            matrix.getXYWH (x, y, w, h);
-            SRect clip_rect = clip.intersect (SRect (x, y, w, h));
-            if (!clip_rect.isValid ())
-                return;
-            cur_pat = id->cairoImage (w, h, cairo_surface);
-            if (cur_pat) {
-                cairo_matrix_init_identity (&cur_mat);
-                cairo_matrix_translate (&cur_mat, -x, -y);
-                if (img->active_trans) {
-                    SRect clip_save = clip;
-                    clip = clip_rect;
-                    cur_media = img;
-                    img->active_trans->accept (this);
-                    clip = clip_save;
-                } else {
-                    cairo_pattern_set_matrix (cur_pat, &cur_mat);
-                    cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
-                    cairo_set_source (cr, cur_pat);
-                    cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
-                            clip_rect.width (), clip_rect.height ());
-                    cairo_fill (cr);
-                }
-            }
-        }
-        s->dirty = false;
+    if (!s)
+        return;
+    if (img->external_tree) {
+        updateExternal (img, s);
+        return;
     }
+    ImageRuntime * ir = static_cast <ImageRuntime *> (img->runtime ());
+    ImageData * id = ir->cached_img.data.ptr ();
+    if (!id || id->isEmpty () || id->width() <= 0 || id->height() <= 0) {
+        s->remove();
+        return;
+    }
+    SRect rect = s->bounds;
+    Single x = rect.x ();
+    Single y = rect.y ();
+    Single w = rect.width();
+    Single h = rect.height();
+    matrix.getXYWH (x, y, w, h);
+    SRect clip_rect = clip.intersect (SRect (x, y, w, h));
+    if (!clip_rect.isValid ())
+        return;
+    if (!s->surface || s->dirty) {
+        if (!s->surface)
+            s->surface = cairo_surface_create_similar (cairo_surface,
+                    id->image->hasAlphaBuffer () ?
+                    CAIRO_CONTENT_COLOR_ALPHA : CAIRO_CONTENT_COLOR, w, h);
+        copyImage (s->surface, w, h, id->image);
+    }
+    paint (img, s, x, y, clip_rect);
+    s->dirty = false;
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
@@ -856,28 +877,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         s->bounds = SRect (sx, sy, sw, sh);
     }
     SRect clip_rect = clip.intersect (SRect (x, y, w, h));
-    if (clip_rect.isValid ()) {
-        //cairo_save (cr);
-        cairo_matrix_init_translate (&cur_mat, -x, -y);
-        cur_pat = cairo_pattern_create_for_surface (s->surface);
-        if (txt->active_trans) {
-            SRect clip_save = clip;
-            clip = clip_rect;
-            cur_media = txt;
-            txt->active_trans->accept (this);
-            clip = clip_save;
-        } else {
-            cairo_pattern_set_extend (cur_pat, CAIRO_EXTEND_NONE);
-            cairo_pattern_set_matrix (cur_pat, &cur_mat);
-            cairo_pattern_set_filter (cur_pat, CAIRO_FILTER_FAST);
-            cairo_set_source (cr, cur_pat);
-            cairo_rectangle (cr, clip_rect.x (), clip_rect.y (),
-                    clip_rect.width (), clip_rect.height ());
-            cairo_fill (cr);
-        }
-        cairo_pattern_destroy (cur_pat);
-        //cairo_restore (cr);
-    }
+    if (clip_rect.isValid ())
+        paint (txt, s, x, y, clip_rect);
     s->dirty = false;
 }
 
