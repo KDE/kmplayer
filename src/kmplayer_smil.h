@@ -28,10 +28,6 @@
 
 #include "kmplayerplaylist.h"
 
-#ifdef HAVE_CAIRO
-# include <cairo.h>
-#endif
-
 class QTextStream;
 class QImage;
 class QPainter;
@@ -50,11 +46,6 @@ struct KMPLAYER_NO_EXPORT ImageData {
     bool isEmpty ();
     Single width ();
     Single height ();
-#ifdef HAVE_CAIRO
-    cairo_pattern_t * cairoImage (Single w, Single h, cairo_surface_t *cs);
-    cairo_pattern_t * cairoImage (cairo_surface_t *cs);
-    cairo_pattern_t * cairo_image;
-#endif
     QImage * image;
 private:
     Single w, h;

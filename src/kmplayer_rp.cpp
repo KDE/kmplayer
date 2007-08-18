@@ -186,12 +186,8 @@ KDE_NO_EXPORT NodePtr RP::Imfl::childFromTag (const QString & tag) {
 KDE_NO_EXPORT void RP::Imfl::repaint () {
     if (!active ())
         kdWarning () << "Spurious Imfl repaint" << endl;
-    else {
-        if (rp_surface)
-            rp_surface = Mrl::getSurface (NULL);
-        if (surface () && width > 0 && height > 0)
-            rp_surface->repaint (SRect (0, 0, width, height));
-    }
+    else if (surface () && width > 0 && height > 0)
+        rp_surface->repaint (SRect (0, 0, width, height));
 }
 
 KDE_NO_CDTOR_EXPORT RP::Image::Image (NodePtr & doc)
@@ -216,6 +212,10 @@ KDE_NO_EXPORT void RP::Image::activate () {
 
 KDE_NO_EXPORT void RP::Image::deactivate () {
     cached_img.setUrl (QString ());
+    if (img_surface) {
+        img_surface->remove ();
+        img_surface = NULL;
+    }
     setState (state_deactivated);
     postpone_lock = 0L;
 }
@@ -237,6 +237,21 @@ KDE_NO_EXPORT bool RP::Image::isReady (bool postpone_if_not) {
     if (downloading () && postpone_if_not)
         postpone_lock = document ()->postpone ();
     return !downloading ();
+}
+
+KDE_NO_EXPORT Surface *RP::Image::surface () {
+    if (!img_surface && !cached_img.data->isEmpty ()) {
+        Node * p = parentNode ().ptr ();
+        if (p && p->id == RP::id_node_imfl) {
+            Surface *ps = static_cast <RP::Imfl *> (p)->surface ();
+            if (ps)
+                img_surface = ps->createSurface (this,
+                        SRect (0, 0,
+                            cached_img.data->width (),
+                            cached_img.data->height ()));
+        }
+    }
+    return img_surface;
 }
 
 KDE_NO_CDTOR_EXPORT RP::TimingsBase::TimingsBase (NodePtr & d, const short i)

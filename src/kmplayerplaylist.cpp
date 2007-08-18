@@ -25,6 +25,9 @@
 #ifdef HAVE_EXPAT
 #include <expat.h>
 #endif
+#ifdef HAVE_CAIRO
+# include <cairo.h>
+#endif
 #include "kmplayerplaylist.h"
 #include "kmplayer_asx.h"
 #include "kmplayer_atom.h"

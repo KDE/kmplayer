@@ -176,6 +176,8 @@ public:
     virtual void deactivate ();
     virtual void closed ();
     bool isReady (bool postpone_if_not = false); // is downloading ready
+    Surface *surface ();
+    SurfacePtrW img_surface;
     CachedImage cached_img;
     //bool expose () const { return false; }
 protected:
