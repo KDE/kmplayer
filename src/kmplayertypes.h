@@ -66,15 +66,15 @@ public:
     Single (const int v) : value (v << 8) {}
     Single (const float v) : value (int (256 * v)) {}
     Single (const double v) : value (int (256 * v)) {}
-    Single & operator = (const Single & s) { value = s.value; return *this; }
+    Single & operator = (const Single s) { value = s.value; return *this; }
     Single & operator = (const int v) { value = v << 8; return *this; }
     Single & operator = (const float v) { value = int (256 * v); return *this; }
     Single & operator = (const double v) { value = int(256 * v); return *this; }
-    Single & operator += (const Single & s) { value += s.value; return *this; }
+    Single & operator += (const Single s) { value += s.value; return *this; }
     Single & operator += (const int i) { value += (i << 8); return *this; }
-    Single & operator -= (const Single & s) { value -= s.value; return *this; }
+    Single & operator -= (const Single s) { value -= s.value; return *this; }
     Single & operator -= (const int i) { value -= (i << 8); return *this; }
-    Single & operator *= (const Single & s);
+    Single & operator *= (const Single s);
     Single & operator *= (const float f) { value = int(value*f); return *this; }
     Single & operator /= (const int i) { value /= i; return *this; }
     Single & operator /= (const float f);
@@ -141,7 +141,7 @@ inline kdbgstream & operator << (kdbgstream & dbg, const SRect &r) {
 inline kndbgstream & operator << (kndbgstream &d, const SRect&) { return d; }
 #endif
 
-inline Single & Single::operator *= (const Single & s) {
+inline Single & Single::operator *= (const Single s) {
     value = (((int64_t)value) * s.value) >> 8;
     return *this;
 }

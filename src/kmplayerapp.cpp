@@ -332,7 +332,6 @@ KDE_NO_EXPORT KMPlayer::NodePtr Playlist::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void Playlist::childDone (KMPlayer::NodePtr c) {
-    kdDebug() << "Playlist::childDone " << c->nodeName() << playmode << endl;
     if (!playmode)
         finish ();
     else

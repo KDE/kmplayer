@@ -544,6 +544,7 @@ public:
      * Reimplement to callback with requestPlayURL if isPlayable()
      */ 
     virtual void activate ();
+    virtual void begin ();
     /**
      * By default support one event handler (eg. SMIL or RP child document)
      */
