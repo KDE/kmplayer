@@ -1281,10 +1281,10 @@ KDE_NO_EXPORT void SMIL::Smil::activate () {
 KDE_NO_EXPORT void SMIL::Smil::deactivate () {
     if (layout_node)
         convertNode <SMIL::Layout> (layout_node)->repaint ();
-    Mrl::deactivate ();
     if (layout_node)
         convertNode <SMIL::Layout> (layout_node)->region_surface = NULL;
     Mrl::getSurface(0L);
+    Mrl::deactivate ();
 }
 
 KDE_NO_EXPORT bool SMIL::Smil::handleEvent (EventPtr event) {
@@ -1844,7 +1844,7 @@ KDE_NO_EXPORT void SMIL::TimedMrl::activate () {
 
 KDE_NO_EXPORT void SMIL::TimedMrl::begin () {
     begin_time = document ()->last_event_time;
-    Mrl::begin ();
+    Element::begin ();
     runtime ()->propagateStop (false); //see whether this node has a livetime or not
 }
 

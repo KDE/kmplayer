@@ -717,8 +717,12 @@ void Mrl::activate () {
         Element::activate ();
         return;
     }
-    kdDebug () << nodeName () << " Mrl::activate" << endl;
     setState (state_activated);
+    begin ();
+}
+
+void Mrl::begin () {
+    kdDebug () << nodeName () << " Mrl::activate" << endl;
     if (document ()->notify_listener) {
         if (linkNode () != this) {
             linkNode ()->activate ();

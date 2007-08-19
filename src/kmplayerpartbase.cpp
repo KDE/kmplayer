@@ -1046,7 +1046,7 @@ void Source::playCurrent () {
             m_document->activate ();
         else { // ugly code duplicate w/ back_request
             for (NodePtr p = m_current->parentNode(); p; p = p->parentNode())
-                p->setState (Element::state_activated);
+                p->state = Element::state_activated;
             m_current->activate ();
         }
     } else if (!m_current) {
