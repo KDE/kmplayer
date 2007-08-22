@@ -1430,7 +1430,7 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
                         // sanitize pl having all parents of current activated
                         m_document->reset (); // deactivate everything
                         for (NodePtr p = m_current->parentNode(); p; p = p->parentNode())
-                            p->setState (Element::state_activated);
+                            p->state = Element::state_activated;
                         m_current->activate (); // calls requestPlayUrl
                     }
                     m_back_request = 0L;
