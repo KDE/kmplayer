@@ -174,6 +174,7 @@ public:
     CalculatedSizer sizes;
     PostponePtr postpone_lock;
     Fit fit;
+    int opacity;
     MediaTypeRuntime (NodePtr e);
 protected:
     ConnectionPtr document_postponed;      // pauze audio/video accordantly

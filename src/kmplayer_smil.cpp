@@ -998,6 +998,7 @@ KDE_NO_CDTOR_EXPORT MediaTypeRuntime::~MediaTypeRuntime () {
 KDE_NO_EXPORT void KMPlayer::MediaTypeRuntime::reset () {
     clear ();
     postpone_lock = 0L;
+    opacity = 100;
     Runtime::reset ();
 }
 
@@ -1050,6 +1051,8 @@ bool MediaTypeRuntime::parseParam (const TrieString &name, const QString &val) {
         } else {
             return Runtime::parseParam (name, val);
         }
+    } else if (name == "rn:mediaOpacity") {
+        opacity = (int) SizeType (val).size (100);
     } else if (!sizes.setSizeParam (name, val, update_surface)) {
         return Runtime::parseParam (name, val);
     }
