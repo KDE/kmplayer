@@ -823,16 +823,6 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
         Single x, y, w = rect.width(), h = rect.height();
         matrix.getXYWH (x, y, w, h);
         unsigned int color = QColor (brush->param ("color")).rgb ();
-        MediaTypeRuntime *rt = static_cast<MediaTypeRuntime*>(brush->runtime());
-        opacity *= rt->opacity / 100.0;
-        if (opacity < 0.99)
-            cairo_set_source_rgba (cr,
-                    1.0 * ((color >> 16) & 0xff) / 255,
-                    1.0 * ((color >> 8) & 0xff) / 255,
-                    1.0 * (color & 0xff) / 255,
-                    rt->opacity / 100.0);
-        else
-            CAIRO_SET_SOURCE_RGB (cr, color);
         if (brush->active_trans) {
             cur_media = brush;
             cur_pat = NULL;
@@ -840,6 +830,16 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
         } else {
             cairo_rectangle (cr, x, y, w, h);
         }
+        MediaTypeRuntime *rt = static_cast<MediaTypeRuntime*>(brush->runtime());
+        opacity *= rt->opacity / 100.0;
+        if (opacity < 0.99)
+            cairo_set_source_rgba (cr,
+                    1.0 * ((color >> 16) & 0xff) / 255,
+                    1.0 * ((color >> 8) & 0xff) / 255,
+                    1.0 * (color & 0xff) / 255,
+                    opacity);
+        else
+            CAIRO_SET_SOURCE_RGB (cr, color);
         cairo_fill (cr);
         s->dirty = false;
         cairo_restore (cr);
