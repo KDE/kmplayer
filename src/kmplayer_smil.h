@@ -389,7 +389,7 @@ public:
 /**
  * Base class for SMIL::Region, SMIL::RootLayout and SMIL::Layout
  */
-class KMPLAYER_NO_EXPORT RegionBase : public Element {
+class KMPLAYER_NO_EXPORT RegionBase : public RemoteObject, public Element {
 public:
     enum ShowBackground { ShowAlways, ShowWhenActive };
 
@@ -413,14 +413,18 @@ public:
 
     virtual SurfacePtr surface ();
     SurfacePtrW region_surface;
+    CachedImage cached_img;
     CalculatedSizer sizes;
 
     Single x, y, w, h;     // unscaled values
     int z_order;
     unsigned int background_color;
+    QString background_image;
     ShowBackground show_background;
 protected:
     RegionBase (NodePtr & d, short id);
+    PostponePtr postpone_lock;               // pauze while loading bg image
+    virtual void remoteReady (QByteArray &); // image downloaded
 };
 
 /**

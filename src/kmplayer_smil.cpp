@@ -1027,6 +1027,8 @@ bool MediaTypeRuntime::parseParam (const TrieString &name, const QString &val) {
             fit = fit_slice;
         else
             fit = fit_hidden;
+    } else if (name == "rn:mediaOpacity") {
+        opacity = (int) SizeType (val).size (100);
     } else if (fit_hidden == fit &&
             mt->sub_surface && mt->sub_surface->surface &&
             mt->region_node) {
@@ -1051,8 +1053,6 @@ bool MediaTypeRuntime::parseParam (const TrieString &name, const QString &val) {
         } else {
             return Runtime::parseParam (name, val);
         }
-    } else if (name == "rn:mediaOpacity") {
-        opacity = (int) SizeType (val).size (100);
     } else if (!sizes.setSizeParam (name, val, update_surface)) {
         return Runtime::parseParam (name, val);
     }
@@ -1566,10 +1566,26 @@ KDE_NO_EXPORT void SMIL::RegionBase::childDone (NodePtr child) {
 
 KDE_NO_EXPORT void SMIL::RegionBase::deactivate () {
     background_color = 0;
+    background_image.truncate (0);
     if (region_surface)
         region_surface->background_color = 0;
+    cached_img.setUrl (QString ());
+    postpone_lock = NULL;
+    killWGet ();
     sizes.resetSizes ();
     Element::deactivate ();
+}
+
+KDE_NO_EXPORT void SMIL::RegionBase::remoteReady (QByteArray & data) {
+    QImage *pix = new QImage (data);
+    if (!pix->isNull ()) {
+        cached_img.data->image = pix;
+        if (region_surface)
+            region_surface->remove (); // FIXME: only surface
+    } else {
+        delete pix;
+    }
+    postpone_lock = 0L;
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::repaint () {
@@ -1641,6 +1657,22 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
         else
             show_background = ShowAlways;
         need_repaint = true;
+    } else if (name == "backgroundImage") {
+        background_image = val;
+        Smil * s = SMIL::Smil::findSmilNode (this);
+        if (s) {
+            killWGet ();
+            need_repaint = !cached_img.isEmpty ();
+            Mrl *mrl = s->parentNode () ? s->parentNode ()->mrl () : NULL;
+            QString url = mrl ? KURL (mrl->absolutePath (), val).url () : val;
+            cached_img.setUrl (url);
+            if (cached_img.isEmpty ()) {
+                postpone_lock = document ()->postpone ();
+                wget (url);
+            } else {
+                need_repaint = true;
+            }
+        }
     }
     if (need_repaint && active () && surface() && region_surface->parentNode ())
         region_surface->parentNode ()->repaint (rect);

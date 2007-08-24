@@ -111,7 +111,7 @@ static void copyImage (Surface *s, Single w, Single h, QImage *img, cairo_surfac
 #endif
 
 bool CachedImage::isEmpty () {
-    return !data->image;
+    return !data || !data->image;
 }
 
 void CachedImage::setUrl (const QString & url) {
@@ -375,8 +375,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout * reg) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
-    if (reg->surface ()) {
-        SRect rect = reg->region_surface->bounds;
+    SurfacePtr s = reg->surface ();
+    if (s) {
+        SRect rect = s->bounds;
 
         Matrix m = matrix;
         Single x = rect.x(), y = rect.y(), w = rect.width(), h = rect.height();
@@ -390,15 +391,32 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
         cairo_save (cr);
         if ((SMIL::RegionBase::ShowAlways == reg->show_background ||
                     reg->m_AttachedMediaTypes->first ()) &&
-                reg->region_surface->background_color & 0xff000000) {
-            CAIRO_SET_SOURCE_RGB (cr, reg->region_surface->background_color);
-            cairo_rectangle (cr, clip.x (), clip.y(),
-                    clip.width (), clip.height ());
-            //cairo_rectangle (cr, x, y, w, h);
+                (s->background_color & 0xff000000 ||
+                 !reg->cached_img.isEmpty ())) {
+            cairo_pattern_t *pat = NULL;
+            cairo_save (cr);
+            if (s->background_color & 0xff000000)
+                CAIRO_SET_SOURCE_RGB (cr, s->background_color);
+            if (!reg->cached_img.isEmpty ()) {
+                Single x1, y1;
+                Single w = reg->cached_img.data->image->width ();
+                Single h = reg->cached_img.data->image->height();
+                matrix.getXYWH (x1, y1, w, h);
+                if (!s->surface)
+                    copyImage (s, w, h, reg->cached_img.data->image, cairo_surface);
+                cairo_pattern_t *pat = cairo_pattern_create_for_surface (s->surface);
+                cairo_pattern_set_extend (pat, CAIRO_EXTEND_REPEAT);
+                cairo_matrix_t mat;
+                cairo_matrix_init_translate (&mat, -x, -y);
+                cairo_pattern_set_matrix (pat, &mat);
+                cairo_set_source (cr, pat);
+            }
+            cairo_rectangle(cr, clip.x(),clip.y(), clip.width(), clip.height());
             cairo_fill (cr);
+            if (pat)
+                cairo_pattern_destroy (pat);
+            cairo_restore (cr);
         }
-        //cairo_rectangle (cr, x, y, w, h);
-        //cairo_clip (cr);
         traverseRegion (reg);
         cairo_restore (cr);
         matrix = m;
