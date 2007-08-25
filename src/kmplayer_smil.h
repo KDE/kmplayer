@@ -167,14 +167,10 @@ public:
     ~MediaTypeRuntime ();
     virtual void reset ();
     virtual void stopped ();
-    virtual bool parseParam (const TrieString & name, const QString & value);
     virtual void postpone (bool b);
     virtual void clipStart ();
     virtual void clipStop ();
-    CalculatedSizer sizes;
     PostponePtr postpone_lock;
-    Fit fit;
-    int opacity;
     MediaTypeRuntime (NodePtr e);
 protected:
     ConnectionPtr document_postponed;      // pause audio/video accordantly
@@ -736,6 +732,7 @@ public:
     /* (new) sub-region or NULL if not displayed */
     SurfacePtr surface ();
     void resetSurface ();
+    SRect calculateBounds ();
     virtual void parseParam (const TrieString & name, const QString & value);
     virtual bool handleEvent (EventPtr event);
     NodeRefListPtr listeners (unsigned int event_id);
@@ -747,6 +744,9 @@ public:
     NodePtrW active_trans;
     NodePtrW region_node;
     QString m_type;
+    CalculatedSizer sizes;
+    Fit fit;
+    int opacity;
     unsigned int bitrate;
     unsigned int trans_step;
     unsigned int trans_steps;

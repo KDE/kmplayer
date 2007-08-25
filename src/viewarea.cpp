@@ -615,8 +615,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::paint (SMIL::MediaType *mt, Surface *s,
         cairo_set_source (cr, cur_pat);
         cairo_rectangle (cr, rect.x(), rect.y(), rect.width (), rect.height ());
     }
-    MediaTypeRuntime *rt = static_cast <MediaTypeRuntime *> (mt->runtime ());
-    opacity *= rt->opacity / 100.0;
+    opacity *= mt->opacity / 100.0;
     if (opacity < 0.99) {
         cairo_clip (cr);
         cairo_paint_with_alpha (cr, opacity);
@@ -851,8 +850,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
         } else {
             cairo_rectangle (cr, x, y, w, h);
         }
-        MediaTypeRuntime *rt = static_cast<MediaTypeRuntime*>(brush->runtime());
-        opacity *= rt->opacity / 100.0;
+        opacity *= brush->opacity / 100.0;
         if (opacity < 0.99)
             cairo_set_source_rgba (cr,
                     1.0 * ((color >> 16) & 0xff) / 255,
