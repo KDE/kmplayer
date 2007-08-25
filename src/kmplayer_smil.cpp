@@ -1029,30 +1029,6 @@ bool MediaTypeRuntime::parseParam (const TrieString &name, const QString &val) {
             fit = fit_hidden;
     } else if (name == "rn:mediaOpacity") {
         opacity = (int) SizeType (val).size (100);
-    } else if (fit_hidden == fit &&
-            mt->sub_surface && mt->sub_surface->surface &&
-            mt->region_node) {
-        SMIL::RegionBase *rb = convertNode <SMIL::RegionBase>(mt->region_node);
-        SRect rr = rb->region_surface->bounds;
-        SRect sr = mt->sub_surface->bounds;
-        Single x, y, w = sr.width(), h = sr.height();
-        sizes.calcSizes (element, rr.width(), rr.height(), x, y, w, h);
-        if (sizes.setSizeParam (name, val, update_surface)) {
-            if (!update_surface) {
-                // preserve surface by recalculationg sub_surface top-left
-                Single x1, y1;
-                w = sr.width();
-                h = sr.height();
-                sizes.calcSizes(element, rr.width(), rr.height(), x1, y1, w, h);
-                SRect new_bounds = SRect (sr.x() + x1-x, sr.y() + y1-y,
-                        sr.width(), sr.height());
-                mt->sub_surface->bounds = new_bounds;
-                rb->repaint (sr.unite (new_bounds));
-                return true;
-            }
-        } else {
-            return Runtime::parseParam (name, val);
-        }
     } else if (!sizes.setSizeParam (name, val, update_surface)) {
         return Runtime::parseParam (name, val);
     }
