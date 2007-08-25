@@ -554,11 +554,23 @@ SizeType & SizeType::operator = (const QString & s) {
     return *this;
 }
 
-Single SizeType::size (Single relative_to) {
+SizeType & SizeType::operator += (const SizeType & s) {
+    m_size += s.size (100);
+    return *this;
+}
+
+SizeType & SizeType::operator -= (const SizeType & s) {
+    m_size -= s.size (100);
+    return *this;
+}
+
+Single SizeType::size (Single relative_to) const {
     if (percentage)
         return m_size * relative_to / 100;
     return m_size;
 }
+
+//-----------------%<----------------------------------------------------------
 
 SRect SRect::unite (const SRect & r) const {
     if (!(_w > 0 && _h > 0))
@@ -737,6 +749,28 @@ bool CalculatedSizer::setSizeParam(const TrieString &name, const QString &val, b
     } else
         return false;
     return true;
+}
+
+KDE_NO_EXPORT void
+CalculatedSizer::move (const SizeType &x, const SizeType &y) {
+    if (left.isSet ()) {
+        if (right.isSet ())
+            right.m_size += x.m_size - left.m_size;
+        left = x;
+    } else if (right.isSet ()) {
+        right = x;
+    } else {
+        left = x;
+    }
+    if (top.isSet ()) {
+        if (bottom.isSet ())
+            bottom.m_size += y.m_size - top.m_size;
+        top = y;
+    } else if (bottom.isSet ()) {
+            bottom = y;
+    } else {
+        top = y;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -979,6 +1013,205 @@ KDE_NO_EXPORT bool AnimateData::timerTick () {
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_CDTOR_EXPORT AnimateMotionData::AnimateMotionData (NodePtr e)
+ : AnimateGroupData (e), change_by (0), steps (0) {}
+
+KDE_NO_EXPORT void AnimateMotionData::reset () {
+    AnimateGroupData::reset ();
+    if (element) {
+        if (anim_timer)
+            element->document ()->cancelTimer (anim_timer);
+        ASSERT (!anim_timer);
+    } else
+        anim_timer = 0;
+    accumulate = acc_none;
+    additive = add_replace;
+    calcMode = calc_linear;
+    change_from.truncate (0);
+    change_by.truncate (0);
+    change_values.clear ();
+    steps = 0;
+    cur_x = cur_y = delta_x = delta_y = SizeType();
+}
+
+bool AnimateMotionData::parseParam (const TrieString & name, const QString & val) {
+    //kdDebug () << "AnimateMotionData::parseParam " << name << "=" << val << endl;
+    if (name == "change_by") {
+        change_by = val.toInt ();
+    } else if (name == "from") {
+        change_from = val;
+    } else if (name == "by") {
+        change_by = val;
+    } else if (name == "values") {
+        change_values = QStringList::split (QString (";"), val);
+    } else if (name == "calcMode") {
+        if (val == QString::fromLatin1 ("discrete"))
+            calcMode = calc_discrete;
+        else if (val == QString::fromLatin1 ("linear"))
+            calcMode = calc_linear;
+        else if (val == QString::fromLatin1 ("paced"))
+            calcMode = calc_paced;
+    } else
+        return AnimateGroupData::parseParam (name, val);
+    return true;
+}
+
+bool AnimateMotionData::getCoordinates (const QString &coord, SizeType &x, SizeType &y) {
+    int p = coord.find (QChar (','));
+    if (p > 0) {
+        x = coord.left (p).stripWhiteSpace ();
+        y = coord.mid (p + 1).stripWhiteSpace ();
+        return true;
+    }
+    return false;
+}
+
+KDE_NO_EXPORT void AnimateMotionData::started () {
+    //kdDebug () << "AnimateMotionData::started " << durTime ().durval << endl;
+    restoreModification ();
+    if (!element) {
+        kdWarning () << "set element disappeared" << endl;
+        propagateStop (true);
+        return;
+    }
+    if (anim_timer)
+        element->document ()->cancelTimer (anim_timer);
+    steps = 4 * durTime ().offset; // 40 per sec
+    if (steps <= 0) {
+        kdWarning () << "animateMotion has no duration" << endl;
+        propagateStop (true);
+        return;
+    }
+    NodePtr protect = target_element;
+    Element *target = convertNode <Element> (target_element);
+    if (!target) {
+        kdWarning () << "target element not found" << endl;
+        propagateStop (true);
+        return;
+    }
+    if (calcMode == calc_linear) {
+        if (change_from.isEmpty ()) {
+            if (change_values.size () > 0) {
+                change_from = change_values.first ();
+                getCoordinates (change_from, cur_x, cur_y);
+            } else {
+                CalculatedSizer sizes;
+                if (SMIL::id_node_region == target->id)
+                    sizes = static_cast<SMIL::Region*>(target)->sizes;
+                else if (SMIL::id_node_first_mediatype <= target->id &&
+                        SMIL::id_node_last_mediatype >= target->id)
+                    sizes = static_cast<SMIL::MediaType*>(target)->sizes;
+                else {
+                    kdWarning () << "target element not not supported" << endl;
+                    propagateStop (true);
+                    return;
+                }
+                if (sizes.left.isSet ()) {
+                    cur_x = sizes.left;
+                } else if (sizes.right.isSet() && sizes.width.isSet ()) {
+                    cur_x = sizes.right;
+                    cur_x -= sizes.width;
+                } // else assume 0
+                if (sizes.top.isSet ()) {
+                    cur_y = sizes.top;
+                } else if (sizes.bottom.isSet() && sizes.height.isSet ()) {
+                    cur_y = sizes.bottom;
+                    cur_y -= sizes.height;
+                } // else assume 0
+            }
+        } else {
+            getCoordinates (change_from, cur_x, cur_y);
+        }
+        if (!change_by.isEmpty ()) {
+            getCoordinates (change_by, delta_x, delta_y);
+        } else if (!change_to.isEmpty ()) {
+            getCoordinates (change_to, delta_x, delta_y);
+            delta_x -= cur_x;
+            delta_y -= cur_y;
+        }
+        end_x = cur_x;
+        end_y = cur_y;
+        end_x += delta_x;
+        end_y += delta_y;
+        delta_x /= steps;
+        delta_y /= steps;
+        anim_timer =element->document()->setTimeout(element, 25, anim_timer_id);
+        applyStep ();
+    }
+    AnimateGroupData::started ();
+}
+
+
+/**
+ * undo if necessary
+ */
+KDE_NO_EXPORT void AnimateMotionData::stopped () {
+    if (element) {
+        if (anim_timer) // make sure timers are stopped
+            element->document ()->cancelTimer (anim_timer);
+        ASSERT (!anim_timer);
+        if (steps > 0 && element->active ()) {
+            steps = 0;
+            if (calcMode == calc_linear) {
+                if (cur_x.size () != end_x.size () ||
+                        cur_y.size () != end_y.size ()) {
+                    cur_x = end_x;
+                    cur_y = end_y;
+                    applyStep (); // we lost some steps ..
+                }
+            }
+        }
+    } else
+        anim_timer = 0;
+    AnimateGroupData::stopped ();
+}
+
+KDE_NO_EXPORT void AnimateMotionData::applyStep () {
+    if (target_element && target_element->isElementNode ()) {
+        Element *target = convertNode <Element> (target_element);
+        if (SMIL::id_node_region == target->id) {
+            SMIL::Region* r = static_cast <SMIL::Region*> (target);
+            SurfacePtr s = r->surface ();
+            if (s) {
+                r->sizes.move (cur_x, cur_y);
+                r->boundsUpdate ();
+            }
+        } else if (SMIL::id_node_first_mediatype <= target->id &&
+                SMIL::id_node_last_mediatype >= target->id) {
+            SMIL::MediaType *mt = static_cast <SMIL::MediaType *> (target);
+            SurfacePtr s = mt->surface ();
+            if (s) {
+                mt->sizes.move (cur_x, cur_y);
+                mt->boundsUpdate ();
+            }
+        }
+    }
+}
+
+KDE_NO_EXPORT bool AnimateMotionData::timerTick () {
+    if (!anim_timer) {
+        kdError () << "spurious animateMotion timer tick" << endl;
+    } else if (steps-- > 0) {
+        if (calcMode == calc_linear) {
+            cur_x += delta_x;
+            cur_y += delta_y;
+        } else if (calcMode == calc_discrete) {
+            getCoordinates (change_values[change_values.size () - steps -1],
+                    cur_x, cur_y);
+        }
+        applyStep ();
+        return true;
+    } else {
+        if (element)
+            element->document ()->cancelTimer (anim_timer);
+        ASSERT (!anim_timer);
+        propagateStop (true); // not sure, actually
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+
 static NodePtr findExternalTree (NodePtr mrl) {
     for (NodePtr c = mrl->firstChild (); c; c = c->nextSibling ()) {
         Mrl * m = c->mrl ();
@@ -1169,6 +1402,8 @@ static Element * fromAnimateGroup (NodePtr & d, const QString & tag) {
         return new SMIL::Set (d);
     else if (!strcmp (ctag, "animate"))
         return new SMIL::Animate (d);
+    else if (!strcmp (ctag, "animateMotion"))
+        return new SMIL::AnimateMotion (d);
     return 0L;
 }
 
@@ -1548,6 +1783,20 @@ KDE_NO_EXPORT void SMIL::RegionBase::updateDimensions () {
             }
 }
 
+KDE_NO_EXPORT void SMIL::RegionBase::boundsUpdate () {
+    // if there is a region_surface and it's moved, do a limit repaint
+    NodePtr p = parentNode ();
+    if (p && (p->id==SMIL::id_node_region || p->id==SMIL::id_node_layout) &&
+            region_surface) {
+        RegionBase *pr = convertNode <SMIL::RegionBase> (p);
+        SRect old_bounds = region_surface->bounds;
+        w = 0; h = 0;
+        sizes.calcSizes (this, pr->w, pr->h, x, y, w, h);
+        region_surface->bounds = SRect (x, y, w, h);
+        pr->repaint (region_surface->bounds.unite (old_bounds));
+    }
+}
+
 KDE_NO_EXPORT SurfacePtr SMIL::RegionBase::surface () {
     if (!region_surface) {
         Node *n = parentNode ().ptr ();
@@ -1583,8 +1832,14 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
         need_repaint = true;
     } else if (sizes.setSizeParam (name, val, dim_changed)) {
         if (active ()) {
-            if (dim_changed && region_surface && region_surface->parentNode ())
-                region_surface->remove ();
+            if (region_surface) {
+                if (dim_changed) {
+                    region_surface->remove ();
+                } else {
+                    boundsUpdate ();
+                    return; // smart update of old bounds to new moved one
+                }
+            }
             NodePtr p = parentNode ();
             if (p &&(p->id==SMIL::id_node_region ||p->id==SMIL::id_node_layout))
                 convertNode <SMIL::RegionBase> (p)->updateDimensions ();
@@ -2411,23 +2666,13 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
         //    sensitivity = sens_percentage;
         else
             sensitivity = sens_opaque;
-    } else if (fit_hidden == fit &&
-            sub_surface && sub_surface->surface &&
-            region_node) {
-        if (sizes.setSizeParam (para, val, update_surface)) {
-            SMIL::RegionBase *rb = convertNode <SMIL::RegionBase> (region_node);
-            if (!update_surface) {
-                // preserve surface by recalculationg sub_surface top-left
-                SRect new_bounds = calculateBounds ();
-                SRect repaint_rect = sub_surface->bounds.unite (new_bounds);
-                sub_surface->bounds = new_bounds;
-                rb->repaint (repaint_rect);
-                return;
-            }
-        } else {
-            TimedMrl::parseParam (para, val);
+    } else if (sizes.setSizeParam (para, val, update_surface)) {
+        if (!update_surface && fit_hidden == fit &&
+                sub_surface && sub_surface->surface) {
+            boundsUpdate ();
+            return; // preserved surface by recalculationg sub_surface top-left
         }
-    } else if (!sizes.setSizeParam (para, val, update_surface)) {
+    } else {
         TimedMrl::parseParam (para, val);
     }
     if (sub_surface)
@@ -2435,6 +2680,16 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
     resetSurface ();
     if (surface ())
         sub_surface->repaint ();
+}
+
+KDE_NO_EXPORT void SMIL::MediaType::boundsUpdate () {
+    SMIL::RegionBase *rb = convertNode <SMIL::RegionBase> (region_node);
+    if (rb && sub_surface) {
+        SRect new_bounds = calculateBounds ();
+        SRect repaint_rect = sub_surface->bounds.unite (new_bounds);
+        sub_surface->bounds = new_bounds;
+        rb->repaint (repaint_rect);
+    }
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::activate () {
@@ -2813,6 +3068,25 @@ KDE_NO_EXPORT bool SMIL::Animate::handleEvent (EventPtr event) {
         TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
         if (te && te->timer_info && te->timer_info->event_id == anim_timer_id) {
             if (static_cast <AnimateData *> (runtime ())->timerTick () &&
+                    te->timer_info)
+                te->interval = true;
+            return true;
+        }
+    }
+    return TimedMrl::handleEvent (event);
+}
+
+//-----------------------------------------------------------------------------
+
+KDE_NO_EXPORT Runtime *SMIL::AnimateMotion::getNewRuntime () {
+    return new AnimateMotionData (this);
+}
+
+KDE_NO_EXPORT bool SMIL::AnimateMotion::handleEvent (EventPtr event) {
+    if (event->id () == event_timer) {
+        TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
+        if (te && te->timer_info && te->timer_info->event_id == anim_timer_id) {
+            if (static_cast <AnimateMotionData *> (runtime ())->timerTick () &&
                     te->timer_info)
                 te->interval = true;
             return true;

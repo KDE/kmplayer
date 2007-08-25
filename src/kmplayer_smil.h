@@ -73,12 +73,16 @@ public:
  * Interpretation of sizes
  */
 class KMPLAYER_NO_EXPORT SizeType {
+    friend class CalculatedSizer;
 public:
     SizeType ();
     SizeType (const QString & s);
     void reset ();
     SizeType & operator = (const QString & s);
-    Single size (Single relative_to = 100);
+    SizeType & operator += (const SizeType & s);
+    SizeType & operator -= (const SizeType & s);
+    SizeType & operator /= (const int i) { m_size /= i; return *this; }
+    Single size (Single relative_to = 100) const;
     bool isSet () const { return isset; }
 private:
     Single m_size;
@@ -102,6 +106,7 @@ public:
     SizeType left, top, width, height, right, bottom;
     QString reg_point, reg_align;
     bool setSizeParam (const TrieString &name, const QString &value, bool &dim);
+    void move (const SizeType &x, const SizeType &y);
 };
 
 /**
@@ -288,6 +293,34 @@ private:
     QString change_from_unit;
 };
 
+/**
+ * Stores runtime data of animate element
+ */
+class KMPLAYER_NO_EXPORT AnimateMotionData : public AnimateGroupData {
+public:
+    AnimateMotionData (NodePtr e);
+    KDE_NO_CDTOR_EXPORT ~AnimateMotionData () {}
+    virtual bool parseParam (const TrieString & name, const QString & value);
+    virtual void reset ();
+    virtual void started ();
+    virtual void stopped ();
+    bool timerTick();
+private:
+    void applyStep ();
+    bool getCoordinates (const QString &coord, SizeType &x, SizeType &y);
+    TimerInfoPtrW anim_timer;
+    enum { acc_none, acc_sum } accumulate;
+    enum { add_replace, add_sum } additive;
+    enum { calc_discrete, calc_linear, calc_paced } calcMode;
+    QString change_from;
+    QString change_by;
+    QStringList change_values;
+    int steps;
+    SizeType cur_x, cur_y;
+    SizeType delta_x, delta_y;
+    SizeType end_x, end_y;
+};
+
 class KMPLAYER_NO_EXPORT MouseListeners {
 public:
     MouseListeners();
@@ -406,6 +439,7 @@ public:
      * and child's left/top/right/width/height/bottom attributes
      */
     virtual void updateDimensions ();
+    void boundsUpdate (); // recalculates and repaint old and new bounds
 
     virtual SurfacePtr surface ();
     SurfacePtrW region_surface;
@@ -733,6 +767,7 @@ public:
     SurfacePtr surface ();
     void resetSurface ();
     SRect calculateBounds ();
+    void boundsUpdate (); // recalculates and repaint old and new bounds
     virtual void parseParam (const TrieString & name, const QString & value);
     virtual bool handleEvent (EventPtr event);
     NodeRefListPtr listeners (unsigned int event_id);
@@ -824,7 +859,17 @@ public:
     bool handleEvent (EventPtr event);
 };
 
-// TODO animateMotion animateColor transitionFilter
+class KMPLAYER_NO_EXPORT AnimateMotion : public TimedMrl {
+public:
+    KDE_NO_CDTOR_EXPORT AnimateMotion (NodePtr & d)
+        : TimedMrl (d, id_node_animate) {}
+    KDE_NO_EXPORT const char * nodeName () const { return "animateMotion"; }
+    virtual Runtime *getNewRuntime ();
+    PlayType playType () { return play_type_none; }
+    bool handleEvent (EventPtr event);
+};
+
+// TODO animateColor transitionFilter
 
 class KMPLAYER_NO_EXPORT Param : public Element {
 public:
