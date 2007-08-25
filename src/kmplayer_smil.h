@@ -602,6 +602,7 @@ KDE_NO_EXPORT inline bool TimedMrl::isTimedMrl (const NodePtr & n) {
 class KMPLAYER_NO_EXPORT GroupBase : public TimedMrl {
 public:
     KDE_NO_CDTOR_EXPORT ~GroupBase () {}
+    NodePtr childFromTag (const QString & tag);
     PlayType playType () { return play_type_none; }
     void finish ();
     void deactivate ();
@@ -617,7 +618,6 @@ protected:
 class KMPLAYER_NO_EXPORT Par : public GroupBase {
 public:
     KDE_NO_CDTOR_EXPORT Par (NodePtr & d) : GroupBase (d, id_node_par) {}
-    NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "par"; }
     void begin ();
     void reset ();
@@ -630,7 +630,6 @@ public:
 class KMPLAYER_NO_EXPORT Seq : public GroupBase {
 public:
     KDE_NO_CDTOR_EXPORT Seq (NodePtr & d) : GroupBase(d, id_node_seq) {}
-    NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "seq"; }
     void begin ();
     void childDone (NodePtr child);
@@ -654,7 +653,6 @@ public:
 class KMPLAYER_NO_EXPORT Excl : public GroupBase {
 public:
     KDE_NO_CDTOR_EXPORT Excl (NodePtr & d) : GroupBase (d, id_node_excl) {}
-    NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "excl"; }
     void begin ();
     void deactivate ();
@@ -671,15 +669,12 @@ private:
 class KMPLAYER_NO_EXPORT Switch : public GroupBase {
 public:
     KDE_NO_CDTOR_EXPORT Switch (NodePtr &d) : GroupBase (d, id_node_switch) {}
-    NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "switch"; }
-    PlayType playType ();
     // Condition
-    void activate ();
+    void begin ();
     void deactivate ();
     void reset ();
     void childDone (NodePtr child);
-    Mrl * linkNode ();
     NodePtrW chosenOne;
 };
 

@@ -17,6 +17,9 @@
  **/
 
 #include <config.h>
+
+#include <stdlib.h>
+
 #include <qtextstream.h>
 #include <qcolor.h>
 #include <qpixmap.h>
@@ -2069,6 +2072,16 @@ KDE_NO_EXPORT SMIL::TimedMrl::Fill SMIL::TimedMrl::getDefaultFill (NodePtr n) {
 
 //-----------------------------------------------------------------------------
 
+KDE_NO_EXPORT NodePtr SMIL::GroupBase::childFromTag (const QString & tag) {
+    Element * elm = fromScheduleGroup (m_doc, tag);
+    if (!elm) elm = fromMediaContentGroup (m_doc, tag);
+    if (!elm) elm = fromContentControlGroup (m_doc, tag);
+    if (!elm) elm = fromAnimateGroup (m_doc, tag);
+    if (elm)
+        return elm;
+    return NULL;
+}
+
 KDE_NO_EXPORT void SMIL::GroupBase::finish () {
     setState (state_finished); // avoid recurstion through childDone
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
@@ -2114,16 +2127,6 @@ KDE_NO_EXPORT void SMIL::GroupBase::setJumpNode (NodePtr n) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT NodePtr SMIL::Par::childFromTag (const QString & tag) {
-    Element * elm = fromScheduleGroup (m_doc, tag);
-    if (!elm) elm = fromMediaContentGroup (m_doc, tag);
-    if (!elm) elm = fromContentControlGroup (m_doc, tag);
-    if (!elm) elm = fromAnimateGroup (m_doc, tag);
-    if (elm)
-        return elm;
-    return NodePtr ();
-}
-
 KDE_NO_EXPORT void SMIL::Par::begin () {
     jump_node = 0L; // TODO: adjust timings
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
@@ -2156,16 +2159,6 @@ KDE_NO_EXPORT void SMIL::Par::childDone (NodePtr) {
 }
 
 //-----------------------------------------------------------------------------
-
-KDE_NO_EXPORT NodePtr SMIL::Seq::childFromTag (const QString & tag) {
-    Element * elm = fromScheduleGroup (m_doc, tag);
-    if (!elm) elm = fromMediaContentGroup (m_doc, tag);
-    if (!elm) elm = fromContentControlGroup (m_doc, tag);
-    if (!elm) elm = fromAnimateGroup (m_doc, tag);
-    if (elm)
-        return elm;
-    return 0L;
-}
 
 KDE_NO_EXPORT void SMIL::Seq::begin () {
     if (jump_node) {
@@ -2200,16 +2193,6 @@ KDE_NO_EXPORT void SMIL::Seq::childDone (NodePtr child) {
 }
 
 //-----------------------------------------------------------------------------
-
-KDE_NO_EXPORT NodePtr SMIL::Excl::childFromTag (const QString & tag) {
-    Element * elm = fromScheduleGroup (m_doc, tag);
-    if (!elm) elm = fromMediaContentGroup (m_doc, tag);
-    if (!elm) elm = fromContentControlGroup (m_doc, tag);
-    if (!elm) elm = fromAnimateGroup (m_doc, tag);
-    if (elm)
-        return elm;
-    return 0L;
-}
 
 KDE_NO_EXPORT void SMIL::Excl::begin () {
     //kdDebug () << "SMIL::Excl::begin" << endl;
@@ -2265,57 +2248,51 @@ KDE_NO_EXPORT bool SMIL::Excl::handleEvent (EventPtr event) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_EXPORT NodePtr SMIL::Switch::childFromTag (const QString & tag) {
-    Element * elm = fromContentControlGroup (m_doc, tag);
-    if (!elm) elm = fromMediaContentGroup (m_doc, tag);
-    if (elm)
-        return elm;
-    return 0L;
-}
-
-KDE_NO_EXPORT void SMIL::Switch::activate () {
+KDE_NO_EXPORT void SMIL::Switch::begin () {
     //kdDebug () << "SMIL::Switch::activate" << endl;
-    setState (state_activated);
-    init ();
     PlayListNotify * n = document()->notify_listener;
     int pref = 0, max = 0x7fffffff, currate = 0;
     if (n)
         n->bitRates (pref, max);
     if (firstChild ()) {
         NodePtr fallback;
-        for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
-            if (e->id == id_node_audio_video) {
-                SMIL::MediaType * mt = convertNode <SMIL::MediaType> (e);
-                if (!chosenOne) {
-                    chosenOne = e;
-                    currate = mt->bitrate;
-                } else if (int (mt->bitrate) <= max) {
-                    int delta1 = pref > currate ? pref-currate : currate-pref;
-                    int delta2 = pref > int (mt->bitrate) ? pref-mt->bitrate : mt->bitrate-pref;
-                    if (delta2 < delta1) {
+        for (NodePtr e = firstChild (); e; e = e->nextSibling ())
+            if (e->isElementNode ()) {
+                Element *elm = convertNode <Element> (e);
+                QString lang = elm->getAttribute ("systemLanguage");
+                if (!lang.isEmpty ()) {
+                    lang = lang.replace (QChar ('-'), QChar ('_'));
+                    char *clang = getenv ("LANG");
+                    if (!clang) {
+                        if (!fallback)
+                            fallback = e;
+                    } else if (QString (clang).lower ().startsWith (lang)) {
                         chosenOne = e;
-                        currate = mt->bitrate;
+                    } else if (!fallback) {
+                        fallback = e->nextSibling ();
                     }
                 }
-            } else if (!fallback && e->isPlayable ())
-                fallback = e;
-        }
+                if (e->id == id_node_audio_video) {
+                    SMIL::MediaType * mt = convertNode <SMIL::MediaType> (e);
+                    if (!chosenOne) {
+                        chosenOne = e;
+                        currate = mt->bitrate;
+                    } else if (int (mt->bitrate) <= max) {
+                        int delta1 = pref > currate ? pref-currate : currate-pref;
+                        int delta2 = pref > int (mt->bitrate) ? pref-mt->bitrate : mt->bitrate-pref;
+                        if (delta2 < delta1) {
+                            chosenOne = e;
+                            currate = mt->bitrate;
+                        }
+                    }
+                } else if (!fallback && e->isPlayable ())
+                    fallback = e;
+            }
         if (!chosenOne)
             chosenOne = (fallback ? fallback : firstChild ());
-        Mrl * mrl = chosenOne->mrl ();
-        if (mrl) {
-            src = mrl->src;
-            if (pretty_name.isEmpty ())
-                pretty_name = mrl->pretty_name;
-        }
-        // we must active chosenOne, it must set video position by itself
-        setState (state_activated);
         chosenOne->activate ();
     }
-}
-
-KDE_NO_EXPORT Mrl * SMIL::Switch::linkNode () {
-    return chosenOne ? chosenOne->mrl () : this;
+    GroupBase::begin ();
 }
 
 KDE_NO_EXPORT void SMIL::Switch::deactivate () {
@@ -2340,18 +2317,6 @@ KDE_NO_EXPORT void SMIL::Switch::childDone (NodePtr child) {
         child->deactivate ();
     //kdDebug () << "SMIL::Switch::childDone" << endl;
     finish (); // only one child can run
-}
-
-KDE_NO_EXPORT Node::PlayType SMIL::Switch::playType () {
-    if (cached_ismrl_version != document()->m_tree_version) {
-        cached_play_type = play_type_none;
-        for (NodePtr e = firstChild (); e; e = e->nextSibling ())
-            if (e->playType () != play_type_none) {
-                cached_play_type = e->playType ();
-                break;
-            }
-    }
-    return cached_play_type;
 }
 
 //-----------------------------------------------------------------------------
@@ -2529,6 +2494,8 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
     SMIL::Region * r = s ?
         findRegion (s->layout_node, param (StringPool::attr_region)) : 0L;
     MediaTypeRuntime *tr = static_cast<MediaTypeRuntime*>(runtime ());
+    if (trans_timer) // eg transOut and we're repeating
+        document ()->cancelTimer (trans_timer);
     if (r) {
         region_node = r;
         region_mouse_enter = r->connectTo (this, event_inbounds);
