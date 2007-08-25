@@ -1,0 +1,49 @@
+<!-- test for moving a region with the animate element -->
+<smil>
+  <head>
+    <layout>
+      <root-layout width="320" height="240" background-color="green"/>
+      <region id="region1" left="5%" top="10%" right="5%" bottom="10%"/>
+      <region id="region2" left="5%" top="10%" width="35%" height="20%"
+              background-color="yellow" showBackground="whenActive"/>
+    </layout>
+  </head>
+  <body>
+    <par>
+      <text id="text1" src="data:,8,8%20animateMotion%20by%2032x32%20and%20back"
+            region="region1" left="8" top="8" dur="5"/>
+      <animateMotion target="text1" begin="1" dur=".5" by="32,32"/>
+      <animateMotion target="text1" begin="3" dur=".5" by="-32,-32"/>
+    </par>
+    <par>
+      <text id="text2" src="data:,20%25,75%25%0AanimateMotion%0Ato%2040%25,20%25%0Aback%20to%20150,20"
+            region="region1" left="20%" top="75%" dur="5"/>
+      <animateMotion target="text2" begin="1" dur=".5" to="40%,20%"/>
+      <animateMotion target="text2" begin="3" dur=".5" to="150,20"/>
+    </par>
+    <par>
+      <text id="text3" src="data:,8,8%0AanimateMotion%0Afrom%2040%25,20%25%0Aby%2040%25,-20%25"
+            region="region1" left="8" top="8" dur="3"/>
+      <animateMotion target="text3" begin="1" dur=".5"
+                     from="20%,75%" by="40%,-20%"/>
+    </par>
+    <par>
+      <text id="text4" src="data:,8,8%0AanimateMotion%0Afrom%2010,150%0Ato%20150,10"
+            region="region1" left="8" top="8" dur="3"/>
+      <animateMotion target="text4" begin="1" dur=".5"
+                     from="10,150" to="150,10"/>
+    </par>
+    <par>
+      <text id="text5" src="data:,animateMotion%20on%20region"
+            region="region2" dur="5"/>
+      <animateMotion target="region2" begin="1" dur=".5"
+                     from="5%,10%" to="55%, 15%"/>
+      <animateMotion target="region2" begin="2" dur=".5"
+                     to="65%,60%"/>
+      <animateMotion target="region2" begin="3" dur=".5"
+                     by="-45%,10%"/>
+      <animateMotion target="region2" begin="4" dur=".5"
+                     from="20%,70%" by="-15%,-60%"/>
+    </par>
+  </body>
+</smil>
