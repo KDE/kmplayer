@@ -177,7 +177,7 @@ public:
     int opacity;
     MediaTypeRuntime (NodePtr e);
 protected:
-    ConnectionPtr document_postponed;      // pauze audio/video accordantly
+    ConnectionPtr document_postponed;      // pause audio/video accordantly
 };
 
 /**
@@ -423,7 +423,7 @@ public:
     ShowBackground show_background;
 protected:
     RegionBase (NodePtr & d, short id);
-    PostponePtr postpone_lock;               // pauze while loading bg image
+    PostponePtr postpone_lock;               // pause while loading bg image
     virtual void remoteReady (QByteArray &); // image downloaded
 };
 
