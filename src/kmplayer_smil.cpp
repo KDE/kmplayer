@@ -1808,9 +1808,9 @@ KDE_NO_EXPORT void SMIL::TimedMrl::init () {
 
 KDE_NO_EXPORT void SMIL::TimedMrl::activate () {
     //kdDebug () << "SMIL::TimedMrl(" << nodeName() << ")::activate" << endl;
-    setState (state_activated);
     Runtime * rt = runtime ();
     init ();
+    setState (state_activated);
     if (rt == m_runtime) // Runtime might already be dead
         rt->begin ();
     else
@@ -2441,8 +2441,8 @@ KDE_NO_EXPORT void SMIL::MediaType::activate () {
     trans_out_active = false;
     fit = fit_hidden;
     opacity = 100;
-    setState (state_activated);
     init (); // sets all attributes
+    setState (state_activated);
     for (NodePtr c = firstChild (); c; c = c->nextSibling ())
         if (c != external_tree) {
             // activate param/set/animate.. children
