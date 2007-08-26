@@ -69,12 +69,15 @@
       </text>
       <video src="img_scale_rep.smil" id="vid" region="reg_img" fill="freeze" fit="meet" repeatCount="indefinite"/>
       <excl dur="indefinite">
-        <animate targetElement="reg_img" attributeName="left" from="5" to="140" begin="but1.activateEvent" dur="2" fill="freeze"/>
-        <animate targetElement="reg_img" attributeName="top" from="5" to="180" begin="reg_but2.activateEvent" dur="2" fill="freeze"/>
-        <par begin="reg_but3.activateEvent">
-          <animate targetElement="reg_img" attributeName="left" from="5" to="140" dur="2" fill="freeze"/>
-          <animate targetElement="reg_img" attributeName="top" from="5" to="180" dur="2" fill="freeze"/>
-        </par>
+        <animateMotion targetElement="reg_img" from="5,5" to="140,5"
+                       begin="but1.activateEvent" dur="2" fill="freeze"
+                       calcMode="spline" keySplines="0 .75 .25 1"/>
+        <animateMotion targetElement="reg_img" from="5,5" to="5,180"
+                       begin="reg_but2.activateEvent" dur="2" fill="freeze"
+                       calcMode="spline" keySplines="0.75 0 1 0.25"/>
+        <animateMotion targetElement="reg_img" from="5,5" to="140,180"
+                       begin="reg_but3.activateEvent" dur="2" fill="freeze"
+                       calcMode="spline" keySplines=".5 0 .5 1"/>
       </excl>
     </par>
   </body>

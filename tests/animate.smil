@@ -2,9 +2,9 @@
 <smil>
   <head>
     <layout>
-      <root-layout width="320" height="240" background-color="green"/>
+      <root-layout width="400" height="300" background-color="green"/>
       <region id="region1" left="5%" top="10%" right="5%" bottom="10%"/>
-      <region id="region2" left="5%" top="10%" width="35%" height="20%"
+      <region id="region2" left="5%" top="10%" width="20%" height="20%"
               background-color="yellow" showBackground="whenActive"/>
     </layout>
   </head>
@@ -34,16 +34,43 @@
                      from="10,150" to="150,10"/>
     </par>
     <par>
-      <text id="text5" src="data:,animateMotion%20on%20region"
-            region="region2" dur="5"/>
-      <animateMotion target="region2" begin="1" dur=".5"
-                     from="5%,10%" to="55%, 15%"/>
-      <animateMotion target="region2" begin="2" dur=".5"
-                     to="65%,60%"/>
-      <animateMotion target="region2" begin="3" dur=".5"
-                     by="-45%,10%"/>
-      <animateMotion target="region2" begin="4" dur=".5"
-                     from="20%,70%" by="-15%,-60%"/>
+      <text id="text6" src="data:,lineair%20animateMotion%0Avalues%2020,20;150,5;160,160"
+            region="region1" left="8" top="8" dur="5"/>
+      <animateMotion target="text6" begin="2" dur="2"
+                     values="20,20;150,5;160,170"/>
+    </par>
+    <par>
+      <text id="text7" src="data:,lineair%20animateMotion%0Avalues%2020,20;160,35;140,160%0AkeyTimes0;0.8;1"
+            region="region1" left="8" top="8" dur="5"/>
+      <animateMotion target="text7" begin="2" dur="2"
+                     values="20,20;160,35;140,160" keyTimes="0;0.8;1"/>
+    </par>
+    <par>
+      <text id="text8" src="data:,spline%20animateMotion%0Avalues%2020,20;160,35;140,160%0AkeyTimes0;0.5;1%0AkeySplines%20.5%200%20.5%201;0%20.75%20.25%201"
+            region="region1" left="8" top="8" dur="5"/>
+      <animateMotion target="text8" begin="1" dur="3" calcMode="spline"
+                     values="20,20;160,35;140,160"
+                     keyTimes="0;0.5;1"
+                     keySplines=".5 0 .5 1;0 .75 .25 1"/>
+    </par>
+    <par>
+      <text id="text9" src="data:,discrete%20animateMotion%0Avalues%2020,20;160,35;140,160%0AkeyTimes0;0.5;1"
+            region="region1" left="8" top="8" dur="5"/>
+      <animateMotion target="text9" begin="1" dur="3" calcMode="discrete"
+                     values="20,20;160,35;140,160"
+                     keyTimes="0;0.5;1"/>
+    </par>
+    <par>
+      <text regPoint="center" regAlign="center" id="text5" src="data:,animateMotion%20on%20region"
+            region="region2" dur="10"/>
+      <animateMotion target="region2" begin="1" dur="2" calcMode="spline"
+                     from="5%,10%" to="55%, 15%" keySplines=".5 0 .5 1"/>
+      <animateMotion target="region2" begin="3" dur="2" calcMode="spline"
+                     to="65%,60%" keySplines=".5 0 .5 1"/>
+      <animateMotion target="region2" begin="5" dur="2" calcMode="spline"
+                     by="-45%,10%" keySplines=".5 0 .5 1"/>
+      <animateMotion target="region2" begin="7" dur="2" calcMode="spline"
+                     from="20%,70%" by="-15%,-60%" keySplines="1 0 0 1"/>
     </par>
   </body>
 </smil>
