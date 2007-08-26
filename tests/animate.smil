@@ -6,9 +6,38 @@
       <region id="region1" left="5%" top="10%" right="5%" bottom="10%"/>
       <region id="region2" left="5%" top="10%" width="20%" height="20%"
               background-color="yellow" showBackground="whenActive"/>
+      <region id="regimg1"/>
     </layout>
+    <transition id="fade1" dur="1" type="fade"/>
   </head>
   <body>
+    <par>
+      <img dur="40" id="img" src="../icons/hi48-app-kmplayer.png" 
+           region="regimg1" left="25" top="10" rn:mediaOpacity="40%"
+           transIn="fade1" transOut="fade1"/>
+      <animateMotion target="img" dur="20" calcMode="spline" repeat="1"
+                     values="25,10;300,45;25,85;300,125;25,165;300,205;25,80;25,10"
+                     keyTimes="0;.1;.2;.4;.6;.8;.9;1"
+                     keySplines=".5 0 .5 1;0 .75 .25 1;0 .75 .25 1;.5 0 .5 1;.5 0 .5 1;0 .75 .25 1;.5 0 .5 1"/>
+      <par begin="2">
+        <img dur="40" id="img2" src="../icons/hi48-app-kmplayer.png" 
+             region="regimg1" left="25" top="10" rn:mediaOpacity="40%"
+             transIn="fade1" transOut="fade1"/>
+        <animateMotion target="img2" dur="20" calcMode="spline" repeat="1"
+                       values="25,10;300,45;25,85;300,125;25,165;300,205;25,80;25,10"
+                       keyTimes="0;.1;.2;.4;.6;.8;.9;1"
+                       keySplines=".5 0 .5 1;0 .75 .25 1;0 .75 .25 1;.5 0 .5 1;.5 0 .5 1;0 .75 .25 1;.5 0 .5 1"/>
+      </par>
+      <par begin="4">
+        <img dur="40" id="img3" src="../icons/hi48-app-kmplayer.png" 
+             region="regimg1" left="25" top="10" rn:mediaOpacity="40%"
+             transIn="fade1" transOut="fade1"/>
+        <animateMotion target="img3" dur="20" calcMode="spline" repeat="1"
+                       values="25,10;300,45;25,85;300,125;25,165;300,205;25,80;25,10"
+                       keyTimes="0;.1;.2;.4;.6;.8;.9;1"
+                       keySplines=".5 0 .5 1;0 .75 .25 1;0 .75 .25 1;.5 0 .5 1;.5 0 .5 1;0 .75 .25 1;.5 0 .5 1"/>
+      </par>
+    <seq>
     <par>
       <text id="text1" src="data:,8,8%20animateMotion%20by%2032x32%20and%20back"
             region="region1" left="8" top="8" dur="5"/>
@@ -71,6 +100,8 @@
                      by="-45%,10%" keySplines=".5 0 .5 1"/>
       <animateMotion target="region2" begin="7" dur="2" calcMode="spline"
                      from="20%,70%" by="-15%,-60%" keySplines="1 0 0 1"/>
+    </par>
+    </seq>
     </par>
   </body>
 </smil>
