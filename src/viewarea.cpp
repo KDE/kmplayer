@@ -825,7 +825,16 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         // update bounds rect
         Single sx = x, sy = y, sw = w, sh = h;
         matrix.invXYWH (sx, sy, sw, sh);
-        s->bounds = SRect (sx, sy, sw, sh);
+        txt->width = sw;
+        txt->height = sh;
+        s->bounds = txt->calculateBounds ();
+
+        // update coord. for painting below
+        x = s->bounds.x ();
+        y = s->bounds.y();
+        w = s->bounds.width();
+        h = s->bounds.height();
+        matrix.getXYWH (x, y, w, h);
     }
     SRect clip_rect = clip.intersect (SRect (x, y, w, h));
     if (clip_rect.isValid ())
