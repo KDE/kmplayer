@@ -82,6 +82,7 @@ public:
     SizeType & operator += (const SizeType & s);
     SizeType & operator -= (const SizeType & s);
     SizeType & operator /= (const int i) { m_size /= i; return *this; }
+    SizeType & operator *= (const float f) { m_size *= f; return *this; }
     Single size (Single relative_to = 100) const;
     bool isSet () const { return isset; }
 private:
@@ -285,7 +286,7 @@ private:
     enum { acc_none, acc_sum } accumulate;
     enum { add_replace, add_sum } additive;
     int change_by;
-    enum { calc_discrete, calc_linear, calc_paced } calcMode;
+    enum { calc_discrete, calc_linear, calc_paced, calc_spline } calcMode;
     QString change_from;
     QStringList change_values;
     int steps;
@@ -299,23 +300,33 @@ private:
 class KMPLAYER_NO_EXPORT AnimateMotionData : public AnimateGroupData {
 public:
     AnimateMotionData (NodePtr e);
-    KDE_NO_CDTOR_EXPORT ~AnimateMotionData () {}
+    ~AnimateMotionData ();
     virtual bool parseParam (const TrieString & name, const QString & value);
     virtual void reset ();
     virtual void started ();
     virtual void stopped ();
     bool timerTick();
 private:
+    bool checkTarget (Node *n);
+    bool setInterval ();
     void applyStep ();
     bool getCoordinates (const QString &coord, SizeType &x, SizeType &y);
     TimerInfoPtrW anim_timer;
     enum { acc_none, acc_sum } accumulate;
     enum { add_replace, add_sum } additive;
-    enum { calc_discrete, calc_linear, calc_paced } calcMode;
+    enum { calc_discrete, calc_linear, calc_paced, calc_spline } calcMode;
     QString change_from;
     QString change_by;
-    QStringList change_values;
-    int steps;
+    QStringList values;
+    float *keytimes;
+    int keytime_count;
+    QStringList splines;
+    float control_point[4];
+    unsigned int steps;
+    unsigned int cur_step;
+    unsigned int keytime_steps;
+    unsigned int interval;
+    SizeType begin_x, begin_y;
     SizeType cur_x, cur_y;
     SizeType delta_x, delta_y;
     SizeType end_x, end_y;

@@ -838,6 +838,39 @@ KDE_NO_EXPORT void SetData::started () {
 
 //-----------------------------------------------------------------------------
 
+//http://en.wikipedia.org/wiki/B%C3%A9zier_curve
+typedef struct {
+    float x;
+    float y;
+} Point2D;
+
+static Point2D PointOnCubicBezier (Point2D *cp, float t) {
+    float   ax, bx, cx;
+    float   ay, by, cy;
+    float   tSquared, tCubed;
+    Point2D result;
+ 
+    /* calculate the polynomial coefficients */
+ 
+    cx = 3.0 * (cp[1].x - cp[0].x);
+    bx = 3.0 * (cp[2].x - cp[1].x) - cx;
+    ax = cp[3].x - cp[0].x - cx - bx;
+ 
+    cy = 3.0 * (cp[1].y - cp[0].y);
+    by = 3.0 * (cp[2].y - cp[1].y) - cy;
+    ay = cp[3].y - cp[0].y - cy - by;
+ 
+    /* calculate the curve point at parameter value t */
+ 
+    tSquared = t * t;
+    tCubed = tSquared * t;
+ 
+    result.x = (ax * tCubed) + (bx * tSquared) + (cx * t) + cp[0].x;
+    result.y = (ay * tCubed) + (by * tSquared) + (cy * t) + cp[0].y;
+ 
+    return result;
+}
+
 KDE_NO_CDTOR_EXPORT AnimateData::AnimateData (NodePtr e)
  : AnimateGroupData (e), change_by (0), steps (0) {}
 
@@ -1014,7 +1047,26 @@ KDE_NO_EXPORT bool AnimateData::timerTick () {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT AnimateMotionData::AnimateMotionData (NodePtr e)
- : AnimateGroupData (e), change_by (0), steps (0) {}
+ : AnimateGroupData (e), keytimes (NULL), steps (0) {}
+
+KDE_NO_CDTOR_EXPORT AnimateMotionData::~AnimateMotionData () {
+    reset ();
+}
+
+bool AnimateMotionData::checkTarget (Node *n) {
+    if (!n ||
+            (SMIL::id_node_region != n->id &&
+                !(SMIL::id_node_first_mediatype <= n->id &&
+                    SMIL::id_node_last_mediatype >= n->id))) {
+        kdWarning () << "animateMotion target element not " <<
+            (n ? "supported" : "found") << endl;
+        if (element && anim_timer)
+            element->document ()->cancelTimer (anim_timer);
+        propagateStop (true);
+        return false;
+    }
+    return true;
+}
 
 KDE_NO_EXPORT void AnimateMotionData::reset () {
     AnimateGroupData::reset ();
@@ -1029,21 +1081,43 @@ KDE_NO_EXPORT void AnimateMotionData::reset () {
     calcMode = calc_linear;
     change_from.truncate (0);
     change_by.truncate (0);
-    change_values.clear ();
+    values.clear ();
+    delete keytimes;
+    keytimes = NULL;
+    keytime_count = 0;
+    splines.clear ();
     steps = 0;
     cur_x = cur_y = delta_x = delta_y = SizeType();
 }
 
 bool AnimateMotionData::parseParam (const TrieString & name, const QString & val) {
     //kdDebug () << "AnimateMotionData::parseParam " << name << "=" << val << endl;
-    if (name == "change_by") {
-        change_by = val.toInt ();
-    } else if (name == "from") {
+    if (name == "from") {
         change_from = val;
     } else if (name == "by") {
         change_by = val;
     } else if (name == "values") {
-        change_values = QStringList::split (QString (";"), val);
+        values = QStringList::split (QString (";"), val);
+    } else if (name == "keyTimes") {
+        QStringList kts = QStringList::split (QString (";"), val);
+        delete keytimes;
+        keytime_count = kts.size ();
+        keytimes = new float [keytime_count];
+        for (int i = 0; i < keytime_count; i++) {
+            keytimes[i] = kts[i].stripWhiteSpace().toDouble();
+            if (keytimes[i] < 0.0 || keytimes[i] > 1.0)
+                kdWarning() << "animateMotion wrong keyTimes values" << endl;
+            else if (i == 0 && keytimes[i] > 0.01)
+                kdWarning() << "animateMotion first keyTimes value not 0" << endl;
+            else
+                continue;
+            delete keytimes;
+            keytimes = NULL;
+            keytime_count = 0;
+            return true;
+        }
+    } else if (name == "keySplines") {
+        splines = QStringList::split (QString (";"), val);
     } else if (name == "calcMode") {
         if (val == QString::fromLatin1 ("discrete"))
             calcMode = calc_discrete;
@@ -1051,6 +1125,8 @@ bool AnimateMotionData::parseParam (const TrieString & name, const QString & val
             calcMode = calc_linear;
         else if (val == QString::fromLatin1 ("paced"))
             calcMode = calc_paced;
+        else if (val == QString::fromLatin1 ("spline"))
+            calcMode = calc_spline;
     } else
         return AnimateGroupData::parseParam (name, val);
     return true;
@@ -1066,99 +1142,129 @@ bool AnimateMotionData::getCoordinates (const QString &coord, SizeType &x, SizeT
     return false;
 }
 
+bool AnimateMotionData::setInterval () {
+    int cs = 10 * durTime ().offset;
+    if (keytime_count > interval + 1)
+        cs = (int) (cs * (keytimes[interval+1] - keytimes[interval]));
+    else if (values.size () > 1)
+        cs /= values.size () - 1;
+    if (cs < 0) {
+        kdWarning () << "animateMotion has no valid duration interval " <<
+            interval << endl;
+        propagateStop (true);
+        return false;
+    }
+    steps = cs * 4 / 10; // 40 per sec
+    cur_step = 0;
+    cur_x = begin_x;
+    cur_y = begin_y;
+    delta_x = end_x;
+    delta_x -= begin_x;
+    delta_y = end_y;
+    delta_y -= begin_y;
+    switch (calcMode) {
+        case calc_paced: // FIXME
+        case calc_linear:
+            delta_x /= steps;
+            delta_y /= steps;
+            break;
+        case calc_spline:
+            if (splines.size () > interval) {
+                QStringList kss = QStringList::split (
+                        QString (" "), splines[interval]);
+                control_point[0] = control_point[1] = 0;
+                control_point[2] = control_point[3] = 1;
+                if (kss.size () == 4) {
+                    for (int i = 0; i < 4; ++i) {
+                        control_point[i] = kss[i].toDouble();
+                        if (control_point[i] < 0 || control_point[i] > 1) {
+                            kdWarning () << "keySplines values not between 0-1"
+                                << endl;
+                            control_point[i] = i > 1 ? 1 : 0;
+                            break;
+                        }
+                    }
+                } else {
+                    kdWarning () << "keySplines " << interval <<
+                        " has not 4 values" << endl;
+                }
+            }
+            break;
+        default:
+            break;
+    }
+    //kdDebug() << "setInterval " << steps << " " <<
+    //    cur_x.size() << "," << cur_y.size() << "=>"
+    //    << end_x.size() << "," << end_y.size() << " d:" << 
+    //    delta_x.size() << "," << delta_y.size() << endl;
+    return true;
+}
+
 KDE_NO_EXPORT void AnimateMotionData::started () {
     //kdDebug () << "AnimateMotionData::started " << durTime ().durval << endl;
-    restoreModification ();
-    if (!element) {
-        kdWarning () << "set element disappeared" << endl;
-        propagateStop (true);
+    Element *target = convertNode <Element> (target_element);
+    if (!element || !checkTarget (target))
         return;
-    }
     if (anim_timer)
         element->document ()->cancelTimer (anim_timer);
-    steps = 4 * durTime ().offset; // 40 per sec
-    if (steps <= 0) {
-        kdWarning () << "animateMotion has no duration" << endl;
-        propagateStop (true);
-        return;
-    }
-    NodePtr protect = target_element;
-    Element *target = convertNode <Element> (target_element);
-    if (!target) {
-        kdWarning () << "target element not found" << endl;
-        propagateStop (true);
-        return;
-    }
-    if (calcMode == calc_linear) {
-        if (change_from.isEmpty ()) {
-            if (change_values.size () > 0) {
-                change_from = change_values.first ();
-                getCoordinates (change_from, cur_x, cur_y);
-            } else {
-                CalculatedSizer sizes;
-                if (SMIL::id_node_region == target->id)
-                    sizes = static_cast<SMIL::Region*>(target)->sizes;
-                else if (SMIL::id_node_first_mediatype <= target->id &&
-                        SMIL::id_node_last_mediatype >= target->id)
-                    sizes = static_cast<SMIL::MediaType*>(target)->sizes;
-                else {
-                    kdWarning () << "target element not not supported" << endl;
-                    propagateStop (true);
-                    return;
-                }
-                if (sizes.left.isSet ()) {
-                    cur_x = sizes.left;
-                } else if (sizes.right.isSet() && sizes.width.isSet ()) {
-                    cur_x = sizes.right;
-                    cur_x -= sizes.width;
-                } // else assume 0
-                if (sizes.top.isSet ()) {
-                    cur_y = sizes.top;
-                } else if (sizes.bottom.isSet() && sizes.height.isSet ()) {
-                    cur_y = sizes.bottom;
-                    cur_y -= sizes.height;
-                } // else assume 0
-            }
+    interval = 0;
+    if (change_from.isEmpty ()) {
+        if (values.size () > 1) {
+            getCoordinates (values[0], begin_x, begin_y);
+            getCoordinates (values[1], end_x, end_y);
         } else {
-            getCoordinates (change_from, cur_x, cur_y);
+            CalculatedSizer sizes;
+            if (SMIL::id_node_region == target->id)
+                sizes = static_cast<SMIL::Region*>(target)->sizes;
+            else if (SMIL::id_node_first_mediatype <= target->id &&
+                    SMIL::id_node_last_mediatype >= target->id)
+                sizes = static_cast<SMIL::MediaType*>(target)->sizes;
+            if (sizes.left.isSet ()) {
+                begin_x = sizes.left;
+            } else if (sizes.right.isSet() && sizes.width.isSet ()) {
+                begin_x = sizes.right;
+                begin_x -= sizes.width;
+            } // else assume 0
+            if (sizes.top.isSet ()) {
+                begin_y = sizes.top;
+            } else if (sizes.bottom.isSet() && sizes.height.isSet ()) {
+                begin_y = sizes.bottom;
+                begin_y -= sizes.height;
+            } // else assume 0
         }
-        if (!change_by.isEmpty ()) {
-            getCoordinates (change_by, delta_x, delta_y);
-        } else if (!change_to.isEmpty ()) {
-            getCoordinates (change_to, delta_x, delta_y);
-            delta_x -= cur_x;
-            delta_y -= cur_y;
-        }
-        end_x = cur_x;
-        end_y = cur_y;
+    } else {
+        getCoordinates (change_from, begin_x, begin_y);
+    }
+    if (!change_by.isEmpty ()) {
+        getCoordinates (change_by, delta_x, delta_y);
+        end_x = begin_x;
+        end_y = begin_y;
         end_x += delta_x;
         end_y += delta_y;
-        delta_x /= steps;
-        delta_y /= steps;
-        anim_timer =element->document()->setTimeout(element, 25, anim_timer_id);
-        applyStep ();
+    } else if (!change_to.isEmpty ()) {
+        getCoordinates (change_to, end_x, end_y);
     }
+    if (!setInterval ())
+        return;
+    applyStep ();
+    anim_timer = element->document ()->setTimeout (element, 25, anim_timer_id);
     AnimateGroupData::started ();
 }
 
 
-/**
- * undo if necessary
- */
 KDE_NO_EXPORT void AnimateMotionData::stopped () {
     if (element) {
         if (anim_timer) // make sure timers are stopped
             element->document ()->cancelTimer (anim_timer);
         ASSERT (!anim_timer);
-        if (steps > 0 && element->active ()) {
+        if (cur_step < steps && element->active () ||
+                (interval > 1 && calcMode == calc_discrete)) {
             steps = 0;
-            if (calcMode == calc_linear) {
-                if (cur_x.size () != end_x.size () ||
-                        cur_y.size () != end_y.size ()) {
-                    cur_x = end_x;
-                    cur_y = end_y;
-                    applyStep (); // we lost some steps ..
-                }
+            if (cur_x.size () != end_x.size () ||
+                    cur_y.size () != end_y.size ()) {
+                cur_x = end_x;
+                cur_y = end_y;
+                applyStep (); // we lost some steps ..
             }
         }
     } else
@@ -1167,23 +1273,22 @@ KDE_NO_EXPORT void AnimateMotionData::stopped () {
 }
 
 KDE_NO_EXPORT void AnimateMotionData::applyStep () {
-    if (target_element && target_element->isElementNode ()) {
-        Element *target = convertNode <Element> (target_element);
-        if (SMIL::id_node_region == target->id) {
-            SMIL::Region* r = static_cast <SMIL::Region*> (target);
-            SurfacePtr s = r->surface ();
-            if (s) {
-                r->sizes.move (cur_x, cur_y);
-                r->boundsUpdate ();
-            }
-        } else if (SMIL::id_node_first_mediatype <= target->id &&
-                SMIL::id_node_last_mediatype >= target->id) {
-            SMIL::MediaType *mt = static_cast <SMIL::MediaType *> (target);
-            SurfacePtr s = mt->surface ();
-            if (s) {
-                mt->sizes.move (cur_x, cur_y);
-                mt->boundsUpdate ();
-            }
+    Node *target = target_element.ptr ();
+    if (!checkTarget (target))
+        return;
+    if (SMIL::id_node_region == target->id) {
+        SMIL::Region* r = static_cast <SMIL::Region*> (target);
+        SurfacePtr s = r->surface ();
+        if (s) {
+            r->sizes.move (cur_x, cur_y);
+            r->boundsUpdate ();
+        }
+    } else {
+        SMIL::MediaType *mt = static_cast <SMIL::MediaType *> (target);
+        SurfacePtr s = mt->surface ();
+        if (s) {
+            mt->sizes.move (cur_x, cur_y);
+            mt->boundsUpdate ();
         }
     }
 }
@@ -1191,22 +1296,43 @@ KDE_NO_EXPORT void AnimateMotionData::applyStep () {
 KDE_NO_EXPORT bool AnimateMotionData::timerTick () {
     if (!anim_timer) {
         kdError () << "spurious animateMotion timer tick" << endl;
-    } else if (steps-- > 0) {
-        if (calcMode == calc_linear) {
-            cur_x += delta_x;
-            cur_y += delta_y;
-        } else if (calcMode == calc_discrete) {
-            getCoordinates (change_values[change_values.size () - steps -1],
-                    cur_x, cur_y);
+    } else if (cur_step++ < steps) {
+        switch (calcMode) {
+            case calc_paced: // FIXME
+            case calc_linear:
+                cur_x += delta_x;
+                cur_y += delta_y;
+                break;
+            case calc_spline: {
+                Point2D ps[4] = {
+                    { 0, 0 },
+                    { control_point[0], control_point[1] },
+                    { control_point[2], control_point[3] },
+                    { 1, 1 }
+                };
+                Point2D p = PointOnCubicBezier (ps, 1.0 * cur_step / steps);
+                cur_x = delta_x;
+                cur_y = delta_y;
+                cur_x *= p.y;
+                cur_y *= p.y;
+                cur_x += begin_x;
+                cur_y += begin_y;
+                break;
+            }
+            case calc_discrete:
+                return true; // very sub-optimal timer
         }
         applyStep ();
         return true;
-    } else {
-        if (element)
-            element->document ()->cancelTimer (anim_timer);
-        ASSERT (!anim_timer);
-        propagateStop (true); // not sure, actually
+    } else if (values.size () > ++interval + 1) {
+        getCoordinates (values[interval], begin_x, begin_y);
+        getCoordinates (values[interval+1], end_x, end_y);
+        if (setInterval ()) {
+            applyStep ();
+            return true;
+        }
     }
+    anim_timer = NULL;
     return false;
 }
 
@@ -2222,7 +2348,12 @@ Runtime::DurationItem * SMIL::TimedMrl::getDuration (NodePtr n) {
 KDE_NO_EXPORT bool SMIL::TimedMrl::keepContent (NodePtr n) {
     if (isTimedMrl (n)) {
         TimedMrl * tm = convertNode <SMIL::TimedMrl> (n);
-        NodePtr p = n->parentNode ();
+        Node *p = n->parentNode ();
+        Node *np = tm;
+        while (p && id_node_body != p->id && !isTimedMrl (p)) {
+            np = p;
+            p = p->parentNode ().ptr (); // skip anchors
+        }
         if (tm->m_runtime && p && p->active ()) {
             if (tm->runtime ()->timingstate == Runtime::timings_started)
                 return true;
@@ -2231,13 +2362,20 @@ KDE_NO_EXPORT bool SMIL::TimedMrl::keepContent (NodePtr n) {
                     case fill_hold: // keep while parent active
                         return true;
                     case fill_freeze: // keep in parent duration
-                        return p->unfinished() &&
-                            (p->id == SMIL::id_node_par || p->lastChild() == n);
+                        if (p->unfinished() &&
+                                (p->id == SMIL::id_node_par ||
+                                 p->id == SMIL::id_node_excl ||
+                                 p->id == SMIL::id_node_switch ||
+                                 p->lastChild().ptr () == np))
+                            return true;
+                        // else fall through
                     case fill_default:  // as freeze when no duration is set
                     case fill_auto:     // or when parent finished w/o duration
                         return keepContent (p) &&
                             (p->id == SMIL::id_node_par ||
-                             p->lastChild() == n) &&
+                             p->id == SMIL::id_node_excl ||
+                             p->id == SMIL::id_node_switch ||
+                             p->lastChild().ptr () == np) &&
                             tm->runtime ()->durTime ().durval == Runtime::dur_timer &&
                             !tm->runtime ()->durTime ().offset;
                     default:
@@ -2246,7 +2384,7 @@ KDE_NO_EXPORT bool SMIL::TimedMrl::keepContent (NodePtr n) {
         }
         return false;
     }
-    return true; // FIXME check for anchor ..
+    return true;
 }
 
 KDE_NO_EXPORT SMIL::TimedMrl::Fill SMIL::TimedMrl::getDefaultFill (NodePtr n) {
