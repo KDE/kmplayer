@@ -537,8 +537,8 @@ KDE_NO_CDTOR_EXPORT SizeType::SizeType (const QString & s) {
 }
 
 void SizeType::reset () {
-    m_size = 0;
-    percentage = 0;
+    perc_size = 0;
+    abs_size = 0;
     isset = false;
 }
 
@@ -546,28 +546,29 @@ SizeType & SizeType::operator = (const QString & s) {
     QString strval (s);
     int p = strval.find (QChar ('%'));
     if (p > -1) {
-        percentage = true;
         strval.truncate (p);
+        perc_size = strval.toDouble (&isset);
     } else
-        percentage = false;
-    m_size = strval.toDouble (&isset);
+        abs_size = strval.toDouble (&isset);
     return *this;
 }
 
 SizeType & SizeType::operator += (const SizeType & s) {
-    m_size += s.size (100);
+    perc_size += s.perc_size;
+    abs_size += s.abs_size;
     return *this;
 }
 
 SizeType & SizeType::operator -= (const SizeType & s) {
-    m_size -= s.size (100);
+    perc_size -= s.perc_size;
+    abs_size -= s.abs_size;
     return *this;
 }
 
 Single SizeType::size (Single relative_to) const {
-    if (percentage)
-        return m_size * relative_to / 100;
-    return m_size;
+    Single s = abs_size;
+    s += perc_size * relative_to / 100;
+    return s;
 }
 
 //-----------------%<----------------------------------------------------------
@@ -754,8 +755,10 @@ bool CalculatedSizer::setSizeParam(const TrieString &name, const QString &val, b
 KDE_NO_EXPORT void
 CalculatedSizer::move (const SizeType &x, const SizeType &y) {
     if (left.isSet ()) {
-        if (right.isSet ())
-            right.m_size += x.m_size - left.m_size;
+        if (right.isSet ()) {
+            right += x;
+            right -= left;
+        }
         left = x;
     } else if (right.isSet ()) {
         right = x;
@@ -763,8 +766,10 @@ CalculatedSizer::move (const SizeType &x, const SizeType &y) {
         left = x;
     }
     if (top.isSet ()) {
-        if (bottom.isSet ())
-            bottom.m_size += y.m_size - top.m_size;
+        if (bottom.isSet ()) {
+            bottom += y;
+            bottom -= top;
+        }
         top = y;
     } else if (bottom.isSet ()) {
             bottom = y;

@@ -73,7 +73,6 @@ public:
  * Interpretation of sizes
  */
 class KMPLAYER_NO_EXPORT SizeType {
-    friend class CalculatedSizer;
 public:
     SizeType ();
     SizeType (const QString & s);
@@ -81,13 +80,15 @@ public:
     SizeType & operator = (const QString & s);
     SizeType & operator += (const SizeType & s);
     SizeType & operator -= (const SizeType & s);
-    SizeType & operator /= (const int i) { m_size /= i; return *this; }
-    SizeType & operator *= (const float f) { m_size *= f; return *this; }
+    SizeType & operator /= (const int i)
+        { perc_size /= i; abs_size /= i; return *this; }
+    SizeType & operator *= (const float f)
+        { perc_size *= f; abs_size *= f; return *this; }
     Single size (Single relative_to = 100) const;
     bool isSet () const { return isset; }
 private:
-    Single m_size;
-    bool percentage;
+    Single perc_size;
+    Single abs_size;
     bool isset;
 };
 
