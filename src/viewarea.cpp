@@ -1647,27 +1647,6 @@ KDE_NO_EXPORT void ViewArea::scheduleRepaint (Single x, Single y, Single w, Sing
     }
 }
 
-KDE_NO_EXPORT
-void ViewArea::moveRect (Single x, Single y, Single w, Single h, Single x1, Single y1) {
-    SRect r (x, y, w, h);
-    if (m_repaint_timer && m_repaint_rect.intersect (r).isValid ()) {
-        m_repaint_rect = m_repaint_rect.unite (SRect (x1, y1, w, h).unite (r));
-    } else if (m_view->viewer()->frameGeometry ().intersects (QRect(x,y,w,h))) {
-        SRect r2 (SRect (x1, y1, w, h).unite (r));
-        scheduleRepaint (r.x (), r.y (), r.width (), r.height ());
-    } else {
-        bitBlt (this, x1, y1, this, x, y, w, h);
-        if (x1 > x)
-            syncVisual (SRect (x, y, x1 - x, h));
-        else if (x > x1)
-            syncVisual (SRect (x1 + w, y, x - x1, h));
-        if (y1 > y)
-            syncVisual (SRect (x, y, w, y1 - y));
-        else if (y > y1)
-            syncVisual (SRect (x, y1 + h, w, y - y1));
-    }
-}
-
 KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
     if (e->timerId () == m_mouse_invisible_timer) {
         killTimer (m_mouse_invisible_timer);

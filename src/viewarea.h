@@ -46,7 +46,6 @@ public:
     void setAudioVideoNode (NodePtr n);
     void mouseMoved ();
     void scheduleRepaint (Single x, Single y, Single w, Single y);
-    void moveRect(Single x, Single y, Single w, Single h, Single x1, Single y1);
     void resizeEvent (QResizeEvent *);
     void minimalMode ();
 public slots:
