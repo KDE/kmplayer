@@ -453,7 +453,7 @@ public:
     virtual void updateDimensions ();
     void boundsUpdate (); // recalculates and repaint old and new bounds
 
-    virtual SurfacePtr surface ();
+    virtual Surface *surface ();
     SurfacePtrW region_surface;
     CachedImage cached_img;
     CalculatedSizer sizes;
@@ -484,7 +484,7 @@ public:
      * recursively calculates dimensions of this and child regions
      */
     virtual void updateDimensions ();
-    virtual SurfacePtr surface ();
+    virtual Surface *surface ();
 
     NodePtrW rootLayout;
 };
@@ -608,8 +608,8 @@ public:
     virtual void parseParam (const TrieString &, const QString &);
     Runtime * runtime ();
     static Runtime::DurationItem * getDuration (NodePtr n);
-    static bool isTimedMrl (const NodePtr & n);
-    static bool keepContent (NodePtr n);
+    static bool isTimedMrl (const Node *n);
+    static bool keepContent (Node *n);
     static Fill getDefaultFill (NodePtr n);
     unsigned int begin_time;
     unsigned int finish_time;
@@ -632,7 +632,7 @@ KDE_NO_EXPORT inline Runtime * TimedMrl::runtime () {
     return m_runtime;
 }
 
-KDE_NO_EXPORT inline bool TimedMrl::isTimedMrl (const NodePtr & n) {
+KDE_NO_EXPORT inline bool TimedMrl::isTimedMrl (const Node *n) {
     return n &&
         n->id >= id_node_first_timed_mrl &&
         n->id <= id_node_last_timed_mrl;
@@ -776,7 +776,7 @@ public:
     void childDone (NodePtr child);
     virtual SurfacePtr getSurface (NodePtr node);
     /* (new) sub-region or NULL if not displayed */
-    SurfacePtr surface ();
+    Surface *surface ();
     void resetSurface ();
     SRect calculateBounds ();
     void boundsUpdate (); // recalculates and repaint old and new bounds

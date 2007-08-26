@@ -1283,15 +1283,13 @@ KDE_NO_EXPORT void AnimateMotionData::applyStep () {
         return;
     if (SMIL::id_node_region == target->id) {
         SMIL::Region* r = static_cast <SMIL::Region*> (target);
-        SurfacePtr s = r->surface ();
-        if (s) {
+        if (r->surface ()) {
             r->sizes.move (cur_x, cur_y);
             r->boundsUpdate ();
         }
     } else {
         SMIL::MediaType *mt = static_cast <SMIL::MediaType *> (target);
-        SurfacePtr s = mt->surface ();
-        if (s) {
+        if (mt->surface ()) {
             mt->sizes.move (cur_x, cur_y);
             mt->boundsUpdate ();
         }
@@ -1578,7 +1576,7 @@ KDE_NO_EXPORT void SMIL::Smil::activate () {
     current_av_media_type = NodePtr ();
     resolved = true;
     SMIL::Layout * layout = convertNode <SMIL::Layout> (layout_node);
-    if (layout &&layout->region_surface) {
+    if (layout && layout->region_surface) {
         kdError() << "Layout already has a surface" << endl;
     }
     if (layout)
@@ -1814,7 +1812,7 @@ KDE_NO_EXPORT void SMIL::Layout::updateDimensions () {
     SMIL::RegionBase::updateDimensions ();
 }
 
-KDE_NO_EXPORT SurfacePtr SMIL::Layout::surface () {
+KDE_NO_EXPORT Surface *SMIL::Layout::surface () {
     if (!region_surface) {
         SMIL::Smil * s = Smil::findSmilNode (this);
         if (s) {
@@ -1834,11 +1832,11 @@ KDE_NO_EXPORT SurfacePtr SMIL::Layout::surface () {
                 } else if (region_surface && w > 0 && h > 0) {
                     updateDimensions ();
                 }
-                kdDebug() << "Layout::surface bounds " << rect.width () << "x" << rect.height () << " w:" << w << " h:" << h << " xs:" << region_surface->xscale << " ys:" << region_surface->yscale << endl;
+                //kdDebug() << "Layout::surface bounds " << rect.width () << "x" << rect.height () << " w:" << w << " h:" << h << " xs:" << region_surface->xscale << " ys:" << region_surface->yscale << endl;
             }
         }
     }
-    return region_surface;
+    return region_surface.ptr ();
 }
 
 KDE_NO_EXPORT void SMIL::Layout::accept (Visitor * v) {
@@ -1928,20 +1926,20 @@ KDE_NO_EXPORT void SMIL::RegionBase::boundsUpdate () {
     }
 }
 
-KDE_NO_EXPORT SurfacePtr SMIL::RegionBase::surface () {
+KDE_NO_EXPORT Surface *SMIL::RegionBase::surface () {
     if (!region_surface) {
         Node *n = parentNode ().ptr ();
         if (n &&
                 (SMIL::id_node_region == n->id ||
                  SMIL::id_node_layout == n->id)) {
-            SurfacePtr ps = static_cast <SMIL::Region *> (n)->surface ();
+            Surface *ps = static_cast <SMIL::Region *> (n)->surface ();
             if (ps) {
                 region_surface = ps->createSurface (this, SRect (x, y, w, h));
                 region_surface->background_color = background_color;
             }
         }
     }
-    return region_surface;
+    return region_surface.ptr ();
 }
 
 KDE_NO_EXPORT
@@ -2350,9 +2348,11 @@ Runtime::DurationItem * SMIL::TimedMrl::getDuration (NodePtr n) {
     return &tm->runtime ()->durations [Runtime::duration_time];
 }
 
-KDE_NO_EXPORT bool SMIL::TimedMrl::keepContent (NodePtr n) {
+KDE_NO_EXPORT bool SMIL::TimedMrl::keepContent (Node *n) {
     if (isTimedMrl (n)) {
         TimedMrl * tm = convertNode <SMIL::TimedMrl> (n);
+        if (tm->runtime ()->timingstate == Runtime::timings_started)
+            return true;
         Node *p = n->parentNode ();
         Node *np = tm;
         while (p && id_node_body != p->id && !isTimedMrl (p)) {
@@ -2360,8 +2360,6 @@ KDE_NO_EXPORT bool SMIL::TimedMrl::keepContent (NodePtr n) {
             p = p->parentNode ().ptr (); // skip anchors
         }
         if (tm->m_runtime && p && p->active ()) {
-            if (tm->runtime ()->timingstate == Runtime::timings_started)
-                return true;
             if (tm->runtime ()->timingstate == Runtime::timings_stopped)
                 switch (tm->fill_active) {
                     case fill_hold: // keep while parent active
@@ -2961,13 +2959,13 @@ KDE_NO_EXPORT bool SMIL::MediaType::needsVideoWidget () {
 
 SurfacePtr SMIL::MediaType::getSurface (NodePtr node) {
     resetSurface ();
-    SurfacePtr s = surface ();
+    Surface *s = surface ();
     if (s && node)
         s->node = node;
     return s;
 }
 
-KDE_NO_EXPORT SurfacePtr SMIL::MediaType::surface () {
+KDE_NO_EXPORT Surface *SMIL::MediaType::surface () {
     if (!keepContent (this)) {
         resetSurface ();
         return NULL;
@@ -2984,7 +2982,7 @@ KDE_NO_EXPORT SurfacePtr SMIL::MediaType::surface () {
             //kdDebug() << sub_surface.ptr() << " " << nodeName() << " " << src << " " << rr.width() << "," << rr.height()  << " => " << x << "," << y << w << "," << h << endl;
         }
     }
-    return sub_surface;
+    return sub_surface.ptr ();
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::resetSurface () {
@@ -3031,7 +3029,7 @@ KDE_NO_EXPORT SRect SMIL::MediaType::calculateBounds () {
 }
 
 bool SMIL::MediaType::handleEvent (EventPtr event) {
-    SurfacePtr s = surface();
+    Surface *s = surface();
     switch (event->id ()) {
         case event_postponed: {
             PostponedEvent * pe = static_cast <PostponedEvent *> (event.ptr ());

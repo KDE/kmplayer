@@ -375,7 +375,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout * reg) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
-    SurfacePtr s = reg->surface ();
+    Surface *s = reg->surface ();
     if (s) {
         SRect rect = s->bounds;
 
@@ -587,7 +587,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
-    SurfacePtr s = ref->surface ();
+    Surface *s = ref->surface ();
     if (s) {
         if (ref->external_tree)
             updateExternal (ref, s);
@@ -655,7 +655,7 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
-    SurfacePtr s = av->surface ();
+    Surface *s = av->surface ();
     if (s) {
         if (av->external_tree)
             updateExternal (av, s);
@@ -666,7 +666,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
     //kdDebug() << "Visit " << img->nodeName() << " " << img->src << endl;
-    SurfacePtr s = img->surface ();
+    Surface *s = img->surface ();
     if (!s)
         return;
     if (img->external_tree) {
@@ -696,7 +696,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     TextRuntime * td = static_cast <TextRuntime *> (txt->runtime ());
-    SurfacePtr s = txt->surface ();
+    Surface *s = txt->surface ();
     //kdDebug() << "Visit " << txt->nodeName() << " " << td->text << endl;
     if (!s)
         return;
@@ -844,7 +844,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
     //kdDebug() << "Visit " << brush->nodeName() << endl;
-    SurfacePtr s = brush->surface ();
+    Surface *s = brush->surface ();
     if (s) {
         cairo_save (cr);
         opacity = 1.0;
@@ -1253,7 +1253,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Area * area) {
     if (n->id >= SMIL::id_node_first_mediatype &&
             n->id < SMIL::id_node_last_mediatype) {
         SMIL::MediaType * mt = convertNode <SMIL::MediaType> (n);
-        SurfacePtr s = mt->surface ();
+        Surface *s = mt->surface ();
         if (s) {
             SRect rect = s->bounds;
             Single x1 = rect.x (), x2 = rect.y ();
@@ -1300,7 +1300,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType * mediatype) {
         bubble_up = true;
         return;
     }
-    SurfacePtr s = mediatype->surface ();
+    Surface *s = mediatype->surface ();
     if (s && s->node && s->node.ptr () != mediatype) {
         s->node->accept (this);
         return;
