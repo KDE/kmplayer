@@ -972,8 +972,13 @@ bool Document::timer () {
                 TimerInfoPtr tinfo2 (tinfo); // prevent destruction
                 timers.remove (tinfo);
                 timeOfDay (now);
+                int drift = diffTime (now, tinfo2->timeout);
+                if (drift > tinfo2->milli_sec) {
+                    drift = tinfo2->milli_sec;
+                    //kdWarning() << "time drift" << endl;
+                }
                 tinfo2->timeout = now;
-                addTime (tinfo2->timeout, tinfo2->milli_sec);
+                addTime (tinfo2->timeout, tinfo2->milli_sec - drift);
                 TimerInfoPtr ti = timers.first ();
                 int pos = 0;
                 for (; ti && diffTime (tinfo2->timeout, ti->timeout) >= 0; ti = ti->nextSibling ()) {
