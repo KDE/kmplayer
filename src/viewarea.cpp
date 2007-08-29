@@ -295,12 +295,16 @@ CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
         cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
         cairo_set_tolerance (cr, 0.5 );
         cairo_push_group (cr);
+        cairo_set_source_rgb (cr, 0, 0, 0);
+        cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
+        cairo_fill (cr);
+    } else {
+        cairo_save (cr);
+        cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
+        cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
+        cairo_fill (cr);
+        cairo_restore (cr);
     }
-    cairo_save (cr);
-    cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
-    cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
-    cairo_fill (cr);
-    cairo_restore (cr);
 }
 
 KDE_NO_CDTOR_EXPORT CairoPaintVisitor::~CairoPaintVisitor () {
