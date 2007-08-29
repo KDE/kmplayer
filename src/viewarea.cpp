@@ -295,10 +295,12 @@ CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
         cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
         cairo_set_tolerance (cr, 0.5 );
         cairo_push_group (cr);
-        cairo_set_source_rgb (cr, 0, 0, 0);
-        cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
-        cairo_fill (cr);
     }
+    cairo_save (cr);
+    cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
+    cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
+    cairo_fill (cr);
+    cairo_restore (cr);
 }
 
 KDE_NO_CDTOR_EXPORT CairoPaintVisitor::~CairoPaintVisitor () {
@@ -651,7 +653,7 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
                 clip_rect.width() + 3, clip_rect.height() + 3);
         if (!s->surface) {
             s->surface = cairo_surface_create_similar (cairo_surface,
-                    CAIRO_CONTENT_COLOR, w, h);
+                    CAIRO_CONTENT_COLOR_ALPHA, w, h);
             r = SRect (0, 0, w, h);
         }
         CairoPaintVisitor visitor (s->surface, m, r);
