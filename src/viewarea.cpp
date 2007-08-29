@@ -255,13 +255,15 @@ class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
     cairo_pattern_t * cur_pat;
     cairo_matrix_t cur_mat;
     float opacity;
+    bool toplevel;
 
     void traverseRegion (SMIL::RegionBase * reg);
     void updateExternal (SMIL::MediaType *av, SurfacePtr s);
     void paint(SMIL::MediaType *, Surface *, Single x, Single y, const SRect &);
 public:
     cairo_t * cr;
-    CairoPaintVisitor (cairo_surface_t * cs, Matrix m, const SRect & rect);
+    CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
+            const SRect & rect, bool toplevel=false);
     ~CairoPaintVisitor ();
     using Visitor::visit;
     void visit (Node * n);
@@ -283,26 +285,31 @@ public:
 };
 
 KDE_NO_CDTOR_EXPORT
-CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Matrix m, const SRect & rect)
- : clip (rect), cairo_surface (cs), matrix (m) {
+CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
+        const SRect & rect, bool top)
+ : clip (rect), cairo_surface (cs), matrix (m), toplevel (top) {
     cr = cairo_create (cs);
-    cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
-    cairo_clip (cr);
-    cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
-    cairo_set_tolerance (cr, 0.5 );
-    cairo_push_group (cr);
-    cairo_set_source_rgb (cr, 0, 0, 0);
-    cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
-    cairo_fill (cr);
+    if (toplevel) {
+        cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
+        cairo_clip (cr);
+        cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+        cairo_set_tolerance (cr, 0.5 );
+        cairo_push_group (cr);
+        cairo_set_source_rgb (cr, 0, 0, 0);
+        cairo_rectangle (cr, rect.x(), rect.y(), rect.width(), rect.height());
+        cairo_fill (cr);
+    }
 }
 
 KDE_NO_CDTOR_EXPORT CairoPaintVisitor::~CairoPaintVisitor () {
-    cairo_pattern_t * pat = cairo_pop_group (cr);
-    //cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
-    cairo_set_source (cr, pat);
-    cairo_rectangle (cr, clip.x(), clip.y(), clip.width(), clip.height());
-    cairo_fill (cr);
-    cairo_pattern_destroy (pat);
+    if (toplevel) {
+        cairo_pattern_t * pat = cairo_pop_group (cr);
+        //cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
+        cairo_set_source (cr, pat);
+        cairo_rectangle (cr, clip.x(), clip.y(), clip.width(), clip.height());
+        cairo_fill (cr);
+        cairo_pattern_destroy (pat);
+    }
     cairo_destroy (cr);
 }
 
@@ -1466,7 +1473,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const SRect & rect) {
         setAudioVideoGeometry (0, 0, 0, 0, NULL);
     CairoPaintVisitor visitor (surface->surface,
             Matrix (surface->bounds.x(), surface->bounds.y(), 1.0, 1.0),
-            SRect (ex, ey, ew, eh));
+            SRect (ex, ey, ew, eh), true);
     if (surface->node)
         surface->node->accept (&visitor);
 #else
