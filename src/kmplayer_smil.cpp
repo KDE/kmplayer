@@ -2809,7 +2809,11 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
             sensitivity = sens_opaque;
     } else if (sizes.setSizeParam (para, val, update_surface)) {
         if (!update_surface && fit_hidden == fit &&
-                sub_surface && sub_surface->surface) {
+                sub_surface
+#ifdef HAVE_CAIRO
+                && sub_surface->surface
+#endif
+                ) {
             boundsUpdate ();
             return; // preserved surface by recalculationg sub_surface top-left
         }

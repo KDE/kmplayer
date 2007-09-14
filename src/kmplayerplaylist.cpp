@@ -768,9 +768,9 @@ Surface::Surface (NodePtr n, const SRect & r)
     bounds (r),
     xscale (1.0), yscale (1.0),
     background_color (0),
-    dirty (false),
+    dirty (false)
 #ifdef HAVE_CAIRO
-    surface (0L)
+    , surface (0L)
 #endif
 {}
 

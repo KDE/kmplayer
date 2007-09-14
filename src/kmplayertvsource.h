@@ -116,7 +116,7 @@ public:
  */
 class KMPLAYER_NO_EXPORT TVDevice : public TVNode {
 public:
-    TVDevice (KMPlayer::NodePtr & d, const QString & d);
+    TVDevice (KMPlayer::NodePtr & d, const QString & s);
     TVDevice (KMPlayer::NodePtr & d);
     ~TVDevice ();
     KMPlayer::NodePtr childFromTag (const QString &);
