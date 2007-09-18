@@ -35,7 +35,12 @@
 #ifndef KDE_EXPORT
   #define KDE_EXPORT
 #endif
-#if __GNUC__ - 0 > 3 || (__GNUC__ - 0 == 3 && __GNUC_MINOR__ - 0 > 3)
+#if __GNUC__ - 0 > 3 && __GNUC_MINOR__ - 0 > 1
+# define KMPLAYER_NO_EXPORT __attribute__ ((visibility("hidden")))
+# define KMPLAYER_EXPORT __attribute__ ((visibility("default")))
+# define KDE_NO_CDTOR_EXPORT
+# define KDE_NO_EXPORT
+#elif __GNUC__ - 0 > 3 || (__GNUC__ - 0 == 3 && __GNUC_MINOR__ - 0 > 3)
   #if __GNUC__ - 0 > 3
     #define KMPLAYER_NO_EXPORT __attribute__ ((visibility("hidden")))
   #else
