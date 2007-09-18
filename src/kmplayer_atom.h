@@ -39,7 +39,7 @@ const short id_node_content = 305;
 /**
  * '<feed>' tag
  */
-class Feed : public Mrl {
+class KMPLAYER_NO_EXPORT Feed : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Feed (NodePtr & d) : Mrl (d, id_node_feed) {}
     NodePtr childFromTag (const QString & tag);

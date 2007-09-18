@@ -49,7 +49,7 @@ const short id_node_fadeout = 157;
 const short id_node_viewchange = 158;
 const short id_node_animate = 159;
 
-class Imfl : public Mrl {
+class KMPLAYER_NO_EXPORT Imfl : public Mrl {
 public:
     Imfl (NodePtr & d);
     ~Imfl ();

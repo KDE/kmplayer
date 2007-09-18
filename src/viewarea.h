@@ -45,7 +45,7 @@ public:
     void setAudioVideoGeometry (int x, int y, int w, int h, unsigned int * bg);
     void setAudioVideoNode (NodePtr n);
     void mouseMoved ();
-    void scheduleRepaint (int x, int y, int w, int y);
+    void scheduleRepaint (int x, int y, int w, int h);
     void resizeEvent (QResizeEvent *);
     void minimalMode ();
 public slots:

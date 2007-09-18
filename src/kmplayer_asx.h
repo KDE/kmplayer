@@ -42,7 +42,7 @@ const short id_node_duration = 408;
 /**
  * '<ASX>' tag
  */
-class Asx : public Mrl {
+class KMPLAYER_NO_EXPORT Asx : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Asx (NodePtr & d) : Mrl (d, id_node_asx) {}
     NodePtr childFromTag (const QString & tag);

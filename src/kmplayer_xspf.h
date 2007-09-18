@@ -49,7 +49,7 @@ const short id_node_tracknum = 516;
 const short id_node_duration = 517;
 const short id_node_link = 518;
 
-class Playlist : public Mrl {
+class KMPLAYER_NO_EXPORT Playlist : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Playlist (NodePtr & d) : Mrl (d, id_node_playlist) {}
     NodePtr childFromTag (const QString & tag);
@@ -58,7 +58,7 @@ public:
     void closed ();
 };
 
-class Tracklist : public Element {
+class KMPLAYER_NO_EXPORT Tracklist : public Element {
 public:
     KDE_NO_CDTOR_EXPORT Tracklist (NodePtr & d) : Element (d, id_node_tracklist) {}
     NodePtr childFromTag (const QString & tag);

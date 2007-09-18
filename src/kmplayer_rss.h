@@ -39,7 +39,7 @@ const short id_node_enclosure = 205;
 /**
  * '<RSS>' tag
  */
-class Rss : public Mrl {
+class KMPLAYER_NO_EXPORT Rss : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Rss (NodePtr & d) : Mrl (d, id_node_rss) {}
     NodePtr childFromTag (const QString & tag);
