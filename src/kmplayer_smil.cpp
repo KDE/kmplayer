@@ -593,6 +593,26 @@ SRect SRect::intersect (const SRect & r) const {
             ((_y + _h < r._y + r._h) ? _y + _h : r._y + r._h) - b);
 }
 
+IRect IRect::unite (const IRect & r) const {
+    if (isEmpty ())
+        return r;
+    if (r.isEmpty ())
+        return *this;
+    int a (x < r.x ? x : r.x);
+    int b (y < r.y ? y : r.y);
+    return IRect (a, b, 
+            ((x + w < r.x + r.w) ? r.x + r.w : x + w) - a,
+            ((y + h < r.y + r.h) ? r.y + r.h : y + h) - b);
+}
+
+IRect IRect::intersect (const IRect & r) const {
+    int a (x < r.x ? r.x : x);
+    int b (y < r.y ? r.y : y);
+    return IRect (a, b,
+            ((x + w < r.x + r.w) ? x + w : r.x + r.w) - a,
+            ((y + h < r.y + r.h) ? y + h : r.y + r.h) - b);
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_EXPORT void CalculatedSizer::resetSizes () {
@@ -2054,7 +2074,7 @@ void SMIL::RegPoint::parseParam (const TrieString & p, const QString & v) {
 //-----------------------------------------------------------------------------
 
 static struct TransTypeInfo {
-    char *name;
+    const char *name;
     SMIL::Transition::TransType type;
     short sub_types;
     SMIL::Transition::TransSubType sub_type[8];
@@ -2063,7 +2083,7 @@ static struct TransTypeInfo {
 };
 
 static struct SubTransTypeInfo {
-    char *name;
+    const char *name;
     SMIL::Transition::TransSubType sub_type;
 } sub_transition_type_info[] = {
 #include "subtrans.txt"

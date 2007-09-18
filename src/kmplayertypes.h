@@ -123,6 +123,21 @@ public:
     bool operator != (const SRect & r) const;
 };
 
+class KMPLAYER_NO_EXPORT IRect {
+public:
+    int x, y, w, h;
+    IRect ()
+        : x (0), y (0), w (0), h (0) {}
+    explicit IRect (const SRect r)
+        : x (r.x ()), y (r.y ()), w (r.width ()), h (r.height ()) {}
+    IRect (int a, int b, int c, int d)
+        : x (a), y (b), w (c), h (d) {}
+    IRect unite (const IRect & r) const;
+    IRect intersect (const IRect & r) const;
+    bool isValid () const { return w >= 0 && h >= 0; }
+    bool isEmpty () const { return w < 0 || h < 0; }
+};
+
 //-----------------------------------------------------------------------------
 
 #ifdef _KDEBUG_H_
@@ -139,6 +154,13 @@ inline kdbgstream & operator << (kdbgstream & dbg, const SRect &r) {
 }
 
 inline kndbgstream & operator << (kndbgstream &d, const SRect&) { return d; }
+
+inline kdbgstream & operator << (kdbgstream & dbg, const IRect &r) {
+    dbg << "IRect(x=" << r.x << " y=" << r.y << " w=" << r.w << " h=" << r.h << ")";
+    return dbg;
+}
+
+inline kndbgstream & operator << (kndbgstream &d, const IRect&) { return d; }
 #endif
 
 inline Single & Single::operator *= (const Single s) {

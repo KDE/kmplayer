@@ -45,7 +45,7 @@ public:
     void setAudioVideoGeometry (int x, int y, int w, int h, unsigned int * bg);
     void setAudioVideoNode (NodePtr n);
     void mouseMoved ();
-    void scheduleRepaint (Single x, Single y, Single w, Single h);
+    void scheduleRepaint (int x, int y, int w, int y);
     void resizeEvent (QResizeEvent *);
     void minimalMode ();
 public slots:
@@ -64,7 +64,7 @@ protected:
     void timerEvent (QTimerEvent * e);
     void closeEvent (QCloseEvent * e);
 private:
-    void syncVisual (const SRect & rect);
+    void syncVisual (const IRect & rect);
     void updateSurfaceBounds ();
     ViewAreaPrivate * d;
     QWidget * m_parent;
@@ -73,7 +73,7 @@ private:
     SurfacePtr surface;
     NodePtrW video_node;
     QRect m_av_geometry;
-    SRect m_repaint_rect;
+    IRect m_repaint_rect;
     QRect m_topwindow_rect;
     int m_mouse_invisible_timer;
     int m_repaint_timer;
