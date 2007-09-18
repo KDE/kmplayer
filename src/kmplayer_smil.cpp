@@ -1249,13 +1249,17 @@ KDE_NO_EXPORT void AnimateMotionData::started () {
             } else if (sizes.right.isSet() && sizes.width.isSet ()) {
                 begin_x = sizes.right;
                 begin_x -= sizes.width;
-            } // else assume 0
+            } else {
+                begin_x = "0";
+            }
             if (sizes.top.isSet ()) {
                 begin_y = sizes.top;
             } else if (sizes.bottom.isSet() && sizes.height.isSet ()) {
                 begin_y = sizes.bottom;
                 begin_y -= sizes.height;
-            } // else assume 0
+            } else {
+                begin_y = "0";
+            }
         }
     } else {
         getCoordinates (change_from, begin_x, begin_y);
