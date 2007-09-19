@@ -65,7 +65,7 @@
 
 namespace KMPlayer {
     
-class BookmarkOwner : public KBookmarkOwner {
+class KMPLAYER_NO_EXPORT BookmarkOwner : public KBookmarkOwner {
 public:
     BookmarkOwner (PartBase *);
     KDE_NO_CDTOR_EXPORT virtual ~BookmarkOwner () {}
@@ -76,7 +76,7 @@ private:
     PartBase * m_player;
 };
 
-class BookmarkManager : public KBookmarkManager {
+class KMPLAYER_NO_EXPORT BookmarkManager : public KBookmarkManager {
 public:
     BookmarkManager (const QString &);
 };

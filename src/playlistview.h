@@ -44,7 +44,7 @@ bool isDragValid (QDropEvent * de);
 /*
  * An item in the playlist
  */
-class KMPLAYER_EXPORT PlayListItem : public QListViewItem {
+class KMPLAYER_NO_EXPORT PlayListItem : public QListViewItem {
 public:
     PlayListItem (QListViewItem *p, const NodePtr & e, PlayListView * lv);
     PlayListItem (QListViewItem *p, const AttributePtr & e, PlayListView * lv);
@@ -60,7 +60,7 @@ protected:
     PlayListItem (PlayListView *v, const NodePtr & e);
 };
 
-class KMPLAYER_EXPORT RootPlayListItem : public PlayListItem {
+class KMPLAYER_NO_EXPORT RootPlayListItem : public PlayListItem {
 public:
     RootPlayListItem (int id, PlayListView *v, const NodePtr & d, QListViewItem * b, int flags);
     KDE_NO_CDTOR_EXPORT ~RootPlayListItem () {}

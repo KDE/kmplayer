@@ -1141,7 +1141,7 @@ bool GenericMrl::expose () const {
 
 namespace KMPlayer {
 
-class DocumentBuilder {
+class KMPLAYER_NO_EXPORT DocumentBuilder {
     int m_ignore_depth;
     bool m_set_opener;
     bool m_root_is_first;
@@ -1341,9 +1341,9 @@ void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool se
 //-----------------------------------------------------------------------------
 #else // HAVE_EXPAT
 
-namespace KMPlayer {
+namespace {
 
-class SimpleSAXParser {
+class KMPLAYER_NO_EXPORT SimpleSAXParser {
 public:
     SimpleSAXParser (DocumentBuilder & b) : builder (b), position (0), m_attributes (new AttributeList), equal_seen (false), in_dbl_quote (false), in_sngl_quote (false), have_error (false), no_entitity_look_ahead (false), have_next_char (false) {}
     virtual ~SimpleSAXParser () {};
@@ -1399,8 +1399,10 @@ private:
     void push_attribute ();
 };
 
+} // namespace
+
 KMPLAYER_EXPORT
-void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool set_opener) {
+void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstline, bool set_opener) {
     DocumentBuilder builder (root, set_opener);
     SimpleSAXParser parser (builder);
     if (!firstline.isEmpty ()) {
@@ -1415,8 +1417,6 @@ void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool se
     //doc->normalize ();
     //kdDebug () << root->outerXML ();
 }
-
-} // namespace
 
 void SimpleSAXParser::push () {
     if (next_token->string.length ()) {

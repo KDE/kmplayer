@@ -246,7 +246,8 @@ public slots:
 /*
  * MPlayer recorder, runs 'mplayer -dumpstream'
  */
-class MPlayerDumpstream : public MPlayerBase, public Recorder {
+class KMPLAYER_NO_EXPORT MPlayerDumpstream
+  : public MPlayerBase, public Recorder {
     Q_OBJECT
 public:
     MPlayerDumpstream (QObject * parent, Settings * settings);
@@ -320,7 +321,7 @@ protected:
 /*
  * Config document as used by kxineplayer backend
  */
-struct KMPLAYER_EXPORT ConfigDocument : public Document {
+struct KMPLAYER_NO_EXPORT ConfigDocument : public Document {
     ConfigDocument ();
     ~ConfigDocument ();
     NodePtr childFromTag (const QString & tag);
@@ -329,7 +330,7 @@ struct KMPLAYER_EXPORT ConfigDocument : public Document {
 /*
  * Element for ConfigDocument
  */
-struct KMPLAYER_EXPORT ConfigNode : public DarkNode {
+struct KMPLAYER_NO_EXPORT ConfigNode : public DarkNode {
     ConfigNode (NodePtr & d, const QString & tag);
     KDE_NO_CDTOR_EXPORT ~ConfigNode () {}
     NodePtr childFromTag (const QString & tag);
@@ -339,7 +340,7 @@ struct KMPLAYER_EXPORT ConfigNode : public DarkNode {
 /*
  * Element for ConfigDocument, defining type of config item
  */
-struct KMPLAYER_EXPORT TypeNode : public ConfigNode {
+struct KMPLAYER_NO_EXPORT TypeNode : public ConfigNode {
     TypeNode (NodePtr & d, const QString & t);
     KDE_NO_CDTOR_EXPORT ~TypeNode () {}
     NodePtr childFromTag (const QString & tag);
@@ -352,7 +353,7 @@ struct KMPLAYER_EXPORT TypeNode : public ConfigNode {
 /*
  * Preference page for XML type of docuement
  */
-class KMPLAYER_EXPORT XMLPreferencesPage : public PreferencesPage {
+class KMPLAYER_NO_EXPORT XMLPreferencesPage : public PreferencesPage {
 public:
     XMLPreferencesPage (CallbackProcess *);
     ~XMLPreferencesPage ();
@@ -369,7 +370,7 @@ private:
 /*
  * Xine backend process
  */
-class Xine : public CallbackProcess, public Recorder {
+class KMPLAYER_NO_EXPORT Xine : public CallbackProcess, public Recorder {
     Q_OBJECT
 public:
     Xine (QObject * parent, Settings * settings);
@@ -381,7 +382,7 @@ public slots:
 /*
  * GStreamer backend process
  */
-class GStreamer : public CallbackProcess {
+class KMPLAYER_NO_EXPORT GStreamer : public CallbackProcess {
     Q_OBJECT
 public:
     GStreamer (QObject * parent, Settings * settings);
