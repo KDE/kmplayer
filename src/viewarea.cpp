@@ -1311,6 +1311,13 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType * mediatype) {
         s->node->accept (this);
         return;
     }
+    SRect rect = s->bounds;
+    Single rx = rect.x(), ry = rect.y(), rw = rect.width(), rh = rect.height();
+    matrix.getXYWH (rx, ry, rw, rh);
+    bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
+    if (!inside && event == event_pointer_clicked)
+        return; // FIXME, also in/outbounds are bounds related
+
     NodeRefListPtr nl = mediatype->listeners (
             event == event_pointer_moved ? mediatype_attached : event);
     if (nl)
