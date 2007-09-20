@@ -1146,7 +1146,10 @@ void Source::stateElementChanged (Node * elm, Node::State os, Node::State ns) {
     } else if (ns == Node::state_activated &&
             elm->isPlayable () &&
             elm->mrl ()->view_mode == Mrl::SingleMode) {
-        m_current = elm;
+        Node *p = elm->parentNode();
+        if (!p || !p->mrl () || p->mrl ()->view_mode == Mrl::SingleMode)
+            // make sure we don't set current to nested document
+            m_current = elm;
     }
     if (elm->expose ()) {
         if (ns == Node::state_activated || ns == Node::state_deactivated)
