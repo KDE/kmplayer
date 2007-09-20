@@ -1307,7 +1307,9 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType * mediatype) {
         return;
     }
     Surface *s = mediatype->surface ();
-    if (s && s->node && s->node.ptr () != mediatype) {
+    if (!s)
+        return;
+    if (s->node && s->node.ptr () != mediatype) {
         s->node->accept (this);
         return;
     }
