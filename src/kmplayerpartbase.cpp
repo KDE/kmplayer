@@ -1144,7 +1144,6 @@ void Source::stateElementChanged (Node * elm, Node::State os, Node::State ns) {
             elm == m_document) {
         m_player->process ()->pause ();
     } else if (ns == Node::state_activated &&
-            (!m_current || !m_current->active() || !m_current->isPlayable ()) &&
             elm->isPlayable () &&
             elm->mrl ()->view_mode == Mrl::SingleMode) {
         m_current = elm;
@@ -1744,12 +1743,12 @@ KDE_NO_EXPORT void URLSource::kioResult (KIO::Job * job) {
 }
 
 void URLSource::playCurrent () {
-    if (m_current && m_current->active () &&
-            (!m_current->isPlayable () /* eg. has child mrl's*/ ||
-             !m_current->mrl ()->resolved)) {
+    Mrl *mrl = m_back_request
+        ? m_back_request->mrl ()
+        : m_current ? m_current->mrl () : NULL;
+    if (mrl && mrl->active () && (!mrl->isPlayable () || !mrl->resolved))
         // an async playCurrent() call (eg. backend is up & running), ignore
         return;
-    }
     Source::playCurrent ();
 }
 
