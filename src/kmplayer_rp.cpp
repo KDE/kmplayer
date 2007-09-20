@@ -214,6 +214,10 @@ KDE_NO_EXPORT void RP::Image::activate () {
     }
 }
 
+KDE_NO_EXPORT void RP::Image::begin () {
+    Node::begin ();
+}
+
 KDE_NO_EXPORT void RP::Image::deactivate () {
     cached_img.setUrl (QString ());
     if (img_surface) {

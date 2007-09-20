@@ -173,6 +173,7 @@ public:
     ~Image ();
     KDE_NO_EXPORT virtual const char * nodeName () const { return "image"; }
     virtual void activate ();
+    virtual void begin ();
     virtual void deactivate ();
     virtual void closed ();
     bool isReady (bool postpone_if_not = false); // is downloading ready
