@@ -260,7 +260,7 @@ KDE_NO_EXPORT void Recents::childDone (KMPlayer::NodePtr) {
 }
 
 KDE_NO_CDTOR_EXPORT
-Recent::Recent (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url) 
+Recent::Recent (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url)
   : KMPlayer::Mrl (doc, id_node_recent_node), app (a) {
     src = url;
     setAttribute (KMPlayer::StringPool::attr_url, url);
@@ -276,7 +276,7 @@ KDE_NO_EXPORT void Recent::activate () {
 }
 
 KDE_NO_CDTOR_EXPORT
-Group::Group (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString & pn) 
+Group::Group (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString & pn)
   : KMPlayer::Mrl (doc, KMPlayer::id_node_group_node), app (a) {
     pretty_name = pn;
     if (!pn.isEmpty ())
@@ -364,6 +364,7 @@ KDE_NO_EXPORT void PlaylistItemBase::activate () {
         KMPlayer::readXML (pl, inxml, QString (), false);
         pl->normalize ();
         KMPlayer::NodePtr cur = pl->firstChild ();
+        pl->mrl ()->resolved = !!cur;
         if (parentNode ()->id == KMPlayer::id_node_group_node && cur) {
             KMPlayer::NodePtr sister = parentNode ()->firstChild ();
             while (sister && cur && sister.ptr () != this) {

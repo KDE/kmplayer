@@ -123,7 +123,7 @@ Matrix::Matrix () : a (1.0), b (0.0), c (0.0), d (1.0), tx (0), ty (0) {}
 
 Matrix::Matrix (const Matrix & m)
  : a (m.a), b (m.b), c (m.c), d (m.d), tx (m.tx), ty (m.ty) {}
-    
+
 Matrix::Matrix (Single xoff, Single yoff, float xscale, float yscale)
  : a (xscale), b (0.0), c (0.0), d (yscale), tx (xoff), ty (yoff) {}
 
@@ -870,7 +870,7 @@ void Document::activate () {
 }
 
 void Document::defer () {
-    if (!firstChild () || firstChild ()->state > state_init)
+    if (resolved)
         postpone_lock = postpone ();
     Mrl::defer ();
 }
@@ -1515,7 +1515,7 @@ bool SimpleSAXParser::nextToken () {
                     }
                     //kdDebug () << "entity found "<<prev_token->string << endl;
                 } else if (token->token == tok_hash &&
-                        nextToken () && token->token == tok_text && 
+                        nextToken () && token->token == tok_text &&
                         nextToken () && token->token == tok_semi_colon) {
                     //kdDebug () << "char entity found " << prev_token->string << prev_token->string.toInt (0L, 16) << endl;
                     token->token = tok_text;
@@ -1550,7 +1550,7 @@ bool SimpleSAXParser::nextToken () {
         }
         if (append_char)
             next_token->string += next_char;
-        if (next_token->token == tok_text && 
+        if (next_token->token == tok_text &&
                 next_char == QChar ('[' ) && next_token->string == "[CDATA[") {
             next_token->token = tok_cdata_start;
             break;
