@@ -612,9 +612,9 @@ void Element::init () {
         setParam (a->name (), a->value ());
 }
 
-void Element::deactivate () {
+void Element::reset () {
     d->clear();
-    Node::deactivate ();
+    Node::reset ();
 }
 
 void Element::clear () {
@@ -954,18 +954,23 @@ void Document::cancelTimer (TimerInfoPtr tinfo) {
 
 bool Document::timer () {
     struct timeval now = { 0, 0 }; // unset
+    int new_timeout = -1;
     TimerInfoPtrW tinfo = timers.first (); // keep use_count on 1
-    if (postpone_ref || !tinfo || !tinfo->node) {
-        kdError () << "spurious timer event" << endl;
-        if (!postpone_ref) { // some part of document has gone
+
+    intimer = true;
+    // handle max 100 timeouts with timeout set to now
+    for (int i = 0; !!tinfo && !postpone_ref && i < 100; ++i) {
+        if (tinfo && !tinfo->node) {
+            // some part of document has gone and didn't remove timer
+            kdError () << "spurious timer" << endl;
             for (; tinfo && !tinfo->node; tinfo = timers.first ())
                 timers.remove (tinfo);
+            tinfo = timers.first ();
         }
-    } else {
+        if (!tinfo)
+            break;
         TimerEvent * te = new TimerEvent (tinfo);
         EventPtr e (te);
-        intimer = true;
-        //kdDebug () << "timer " << cur_timeout << endl;
         tinfo->node->handleEvent (e);
         if (tinfo) { // may be removed from timers and become 0
             if (te->interval) {
@@ -983,33 +988,33 @@ bool Document::timer () {
                 int pos = 0;
                 for (; ti && diffTime (tinfo2->timeout, ti->timeout) >= 0; ti = ti->nextSibling ()) {
                     pos++;
-                    //kdDebug () << "timer diff:" <<diffTime (tinfo2->timeout, ti->timeout) << endl;
                 }
-                //kdDebug () << "re-setTimeout " << tinfo2->milli_sec<< " at:" << pos << " diff:" << diffTime(tinfo->timeout, now) << endl;
                 timers.insertBefore (tinfo2, ti);
             } else
                 timers.remove (tinfo);
         }
-        intimer = false;
-    }
-    if (notify_listener) {// set new timeout to prevent interval timer events
         tinfo = timers.first ();
-        if (!postpone_ref && tinfo) {
-            if (!now.tv_sec)
-                timeOfDay (now);
-            int diff = diffTime (now, tinfo->timeout);
-            int new_timeout = diff > 0 ? 0 : -diff;
-            if (new_timeout != cur_timeout) {
-                //kdDebug () << "timer set new timeout now:" << now.tv_sec << "." << now.tv_usec << " "  << tinfo->timeout.tv_sec << "." << tinfo->timeout.tv_usec << " diff:" << diffTime(now, tinfo->timeout) << endl;
-                cur_timeout = new_timeout;
-                notify_listener->setTimeout (cur_timeout);
-            }
-            // else keep the timer, no new setTimeout
-        } else {
-            cur_timeout = -1;
-            notify_listener->setTimeout (-1); // kill timer
+        if (!tinfo)
+            break;
+        if (!now.tv_sec)
+            timeOfDay (now);
+        int diff = diffTime (now, tinfo->timeout);
+        new_timeout = diff > 0 ? 0 : -diff;
+        if (new_timeout > 0)
+            break;
+    }
+    intimer = false;
+
+    // set new timeout to prevent interval timer events
+    if (notify_listener && !postpone_ref && tinfo) {
+        if (new_timeout != cur_timeout) {
+            cur_timeout = new_timeout;
+            notify_listener->setTimeout (cur_timeout);
         }
-            //kdDebug () << "timer set new timeout now:" << now.tv_sec << "." << now.tv_usec << " "  << tinfo->timeout.tv_sec << "." << tinfo->timeout.tv_usec << " diff:" << diffTime(tinfo->timeout, now) << endl;
+        // else keep the timer, no new setTimeout
+    } else {
+        cur_timeout = -1;
+        notify_listener->setTimeout (-1); // kill timer
     }
     return false;
 }

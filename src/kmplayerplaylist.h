@@ -479,7 +479,7 @@ public:
     QString getAttribute (const TrieString & name);
     KDE_NO_EXPORT AttributeListPtr attributes () const { return m_attributes; }
     virtual void init ();
-    virtual void deactivate ();
+    virtual void reset ();
     virtual void clear ();
     virtual bool isElementNode () { return true; }
     /**
