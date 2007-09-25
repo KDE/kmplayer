@@ -3036,6 +3036,7 @@ KDE_NO_EXPORT SRect SMIL::MediaType::calculateBounds () {
                         w = width * h / height;
                     break;
                 }
+                case fit_scroll:
                 case fit_hidden:
                      w = width;
                      h = height;

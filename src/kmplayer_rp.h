@@ -180,7 +180,7 @@ public:
     Surface *surface ();
     SurfacePtrW img_surface;
     CachedImage cached_img;
-    //bool expose () const { return false; }
+    bool expose () const { return false; }
 protected:
     virtual void remoteReady (QByteArray & data);
 };

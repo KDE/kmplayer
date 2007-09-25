@@ -4,7 +4,7 @@
       <root-layout width="640" height="240"/>
       <region id="reg_img" >
         <region id="reg_text1" left="10%" top="25%" right="60%" bottom="25%"/>
-        <region id="reg_vid" left="55%" top="5%" right="5%" bottom="60%"/>
+        <region id="reg_vid" left="55%" top="5%" right="5%" bottom="60%" background-color="DarkBlue"/>
         <region id="reg_button1" left="446" top="202" width="130" height="26" z-index="2" background-color="LightGray"/>
         <region id="reg_button2" left="446" top="202" width="132" height="28" z-index="1" background-color="DarkGray"/>
         <region id="reg_text2" left="448" top="204" width="128" height="24" z-index="3"/>
@@ -21,7 +21,7 @@
         <param name="fontSize" value="+1"/>
         <param name="backgroundColor" value="blue"/>
       </text>
-      <video src="file:///home/koos/doc/example.avi" id="video1" region="reg_vid" begin="3"/>
+      <video src="file:///home/koos/doc/example.avi" fit="meet" id="video1" region="reg_vid" begin="3"/>
       <text src="data:,Stop" id="text2" region="reg_text2" fill="freeze">
         <param name="backgroundColor" value="gray"/>
       </text>

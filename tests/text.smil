@@ -35,6 +35,6 @@
         <param name="fontPtSize" value="11"/>
       </text> 
       <animate target="text4" attributeName="top" from="0%" to="-170%" begin=".5" dur="4" fill="freeze"/>
-    <par>
+    </par>
   </body>
 </smil>

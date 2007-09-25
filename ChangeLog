@@ -1,3 +1,11 @@
+Changes since version 0.10.0-pre2
+- Fix unpausing with multi items from playlist
+- Compile fix for gcc >= 4.2
+- Cairo painting speedups, always round to screen pixel values
+- Adjust for timer drifting in SMIL files
+- SMIL additions, add AnimateMotion, more transition types, transOut support,
+  region background image and 'showBackground' attribute among others
+- Replace -vop with -vf for MPlayer
 Changes since version 0.9.4a
 - Allow per mimetype preferred player backend
 - Add npp backend that plays xembed style browser plugins
