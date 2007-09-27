@@ -733,7 +733,8 @@ KDE_NO_EXPORT void Viewer::changeProtocol (QXEmbed::Protocol p) {
                 m_plain_window = 0;
                 XSync (qt_xdisplay (), false);
             }
-            setProtocol (p);
+            //setProtocol (p);
+            setProtocol (QXEmbed::XPLAIN);
         }
     }
 }
