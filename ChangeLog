@@ -1,3 +1,7 @@
+Changes since version 0.10.0-pre3
+- Fix double scaling of video in a region
+- Use XPLAIN again for npp's GtkPlug embedded in QXEmbed, makes reproducable
+  mouse grab go away
 Changes since version 0.10.0-pre2
 - Fix unpausing with multi items from playlist
 - Compile fix for gcc >= 4.2
