@@ -630,7 +630,7 @@ public:
     ~Surface();
 
     virtual SurfacePtr createSurface (NodePtr owner, const SRect & rect) = 0;
-    virtual void toScreen (Single & x, Single & y, Single & w, Single & h) = 0;
+    virtual IRect toScreen (Single x, Single y, Single w, Single h) = 0;
     virtual void resize (const SRect & rect) = 0;
     virtual void repaint () = 0;
     virtual void repaint (const SRect &rect) = 0;

@@ -64,10 +64,10 @@ namespace KMPlayer {
 ImageData::ImageData( const QString & img) :
     image (0L),
     url (img) {
-        if (img.isEmpty ())
-            ;//kdDebug() << "New ImageData for " << this << endl;
-        else
-            ;//kdDebug() << "New ImageData for " << img << endl;
+        //if (img.isEmpty ())
+        //    //kdDebug() << "New ImageData for " << this << endl;
+        //else
+        //    //kdDebug() << "New ImageData for " << img << endl;
     }
 
 ImageData::~ImageData() {
@@ -142,7 +142,7 @@ public:
     void clear () { m_first_child = 0L; }
 
     SurfacePtr createSurface (NodePtr owner, const SRect & rect);
-    void toScreen (Single & x, Single & y, Single & w, Single & h);
+    IRect toScreen (Single x, Single y, Single w, Single h);
     void resize (const SRect & rect);
     void repaint ();
     void repaint (const SRect &rect);
@@ -185,8 +185,7 @@ KDE_NO_EXPORT void ViewSurface::resize (const SRect &r) {
     rect = nrect;*/
 }
 
-KDE_NO_EXPORT
-void ViewSurface::toScreen (Single & x, Single & y, Single & w, Single & h) {
+KDE_NO_EXPORT IRect ViewSurface::toScreen (Single x, Single y, Single w, Single h) {
     Matrix matrix (0, 0, xscale, yscale);
     matrix.translate (bounds.x (), bounds.y ());
     for (SurfacePtr s = parentNode(); s; s = s->parentNode()) {
@@ -194,31 +193,27 @@ void ViewSurface::toScreen (Single & x, Single & y, Single & w, Single & h) {
         matrix.translate (s->bounds.x (), s->bounds.y ());
     }
     matrix.getXYWH (x, y, w, h);
+    return IRect (x, y, w, h);
 }
 
 KDE_NO_EXPORT
-void ViewSurface::repaint (const SRect &rect) {
+void ViewSurface::repaint (const SRect &r) {
     markDirty ();
-    Single x = rect.x (), y = rect.y (), w = rect.width (), h = rect.height ();
-    toScreen (x, y, w, h);
-    view_widget->scheduleRepaint (x, y, w, h);
+    view_widget->scheduleRepaint (toScreen (r.x (), r.y (), r.width (), r.height ()));
     //kdDebug() << "Surface::repaint x:" << (int)x << " y:" << (int)y << " w:" << (int)w << " h:" << (int)h << endl;
 }
 
 KDE_NO_EXPORT
 void ViewSurface::repaint () {
     markDirty ();
-    Single x, y, w = bounds.width (), h = bounds.height ();
-    toScreen (x, y, w, h);
-    view_widget->scheduleRepaint (x, y, w, h);
+    view_widget->scheduleRepaint (toScreen (0, 0, bounds.width (), bounds.height ()));
 }
 
 KDE_NO_EXPORT void ViewSurface::video () {
     view_widget->setAudioVideoNode (node);
-    Single x, y, w = bounds.width (), h = bounds.height ();
-    toScreen (x, y, w, h);
     kdDebug() << "Surface::video:" << background_color << " " << (background_color & 0xff000000) << endl;
-    view_widget->setAudioVideoGeometry (x, y, w, h,
+    xscale = yscale = 1; // either scale width/heigt or use bounds
+    view_widget->setAudioVideoGeometry (toScreen (0, 0, bounds.width(), bounds.height ()),
             (background_color & 0xff000000 ? &background_color : 0));
 }
 
@@ -710,7 +705,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     Single x = rect.x (), y = rect.y(), w = rect.width(), h = rect.height();
     matrix.getXYWH (x, y, w, h);
     if (!s->surface) {
-        kdDebug() << "new txt surface " << td->text << endl;
+        //kdDebug() << "new txt surface " << td->text << endl;
         /* QTextEdit * edit = new QTextEdit;
         edit->setReadOnly (true);
         edit->setHScrollBarMode (QScrollView::AlwaysOff);
@@ -1478,7 +1473,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const IRect & rect) {
         surface->surface = cairoCreateSurface (winId (), width (), height ());
     if (surface->node && (!video_node ||
             !convertNode <SMIL::MediaType> (video_node)->needsVideoWidget()))
-        setAudioVideoGeometry (0, 0, 0, 0, NULL);
+        setAudioVideoGeometry (IRect (), NULL);
     CairoPaintVisitor visitor (surface->surface,
             Matrix (surface->bounds.x(), surface->bounds.y(), 1.0, 1.0),
             IRect (ex, ey, ew, eh), true);
@@ -1497,7 +1492,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const IRect & rect) {
 KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
 #ifdef HAVE_CAIRO
     if (surface->node)
-        scheduleRepaint (pe->rect ().x (), pe->rect ().y (), pe->rect ().width (), pe->rect ().height ());
+        scheduleRepaint (IRect (pe->rect ().x (), pe->rect ().y (), pe->rect ().width (), pe->rect ().height ()));
     else
 #endif
         QWidget::paintEvent (pe);
@@ -1539,7 +1534,7 @@ KDE_NO_EXPORT void ViewArea::updateSurfaceBounds () {
         surface->yscale = 1.0;
     }
     surface->bounds = SRect (x, y, w, h);
-    scheduleRepaint (0, 0, width (), height ());
+    scheduleRepaint (IRect (0, 0, width (), height ()));
 }
 
 KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
@@ -1577,11 +1572,12 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
         y += (h - hws) / 2;
     }
     if (!surface->node)
-        setAudioVideoGeometry (x, y, wws, hws, 0L);
+        setAudioVideoGeometry (IRect (x, y, wws, hws), 0L);
 }
 
 KDE_NO_EXPORT
-void ViewArea::setAudioVideoGeometry (int x, int y, int w, int h, unsigned int * bg_color) {
+void ViewArea::setAudioVideoGeometry (const IRect &rect, unsigned int * bg_color) {
+    int x = rect.x, y = rect.y, w = rect.w, h = rect.h;
     if (m_view->controlPanelMode() == View::CP_Only) {
         w = h = 0;
     } else if (!surface->node && m_view->keepSizeRatio ()) { // scale video widget inside region
@@ -1597,18 +1593,18 @@ void ViewArea::setAudioVideoGeometry (int x, int y, int w, int h, unsigned int *
             }
     }
     m_av_geometry = QRect (x, y, w, h);
-    QRect rect = m_view->widgetStack ()->geometry ();
-    if (m_av_geometry != rect &&
+    QRect wrect = m_view->widgetStack ()->geometry ();
+    if (m_av_geometry != wrect &&
             !(m_av_geometry.width() <= 0 &&
-                rect.width() <= 1 && rect.height() <= 1)) {
+                wrect.width() <= 1 && wrect.height() <= 1)) {
         m_view->widgetStack ()->setGeometry (x, y, w, h);
-        rect.unite (m_av_geometry);
-        scheduleRepaint (rect.x (), rect.y (), rect.width (), rect.height ());
+        wrect.unite (m_av_geometry);
+        scheduleRepaint (IRect (wrect.x (), wrect.y (), wrect.width (), wrect.height ()));
     }
     if (bg_color)
         if (QColor (QRgb (*bg_color)) != (m_view->viewer ()->paletteBackgroundColor ())) {
             m_view->viewer()->setCurrentBackgroundColor (QColor (QRgb (*bg_color)));
-            scheduleRepaint (x, y, w, h);
+            scheduleRepaint (IRect (x, y, w, h));
         }
 }
 
@@ -1624,7 +1620,7 @@ KDE_NO_EXPORT SurfacePtr ViewArea::getSurface (NodePtr node) {
         updateSurfaceBounds ();
         return surface;
     }
-    scheduleRepaint (0, 0, width (), height ());
+    scheduleRepaint (IRect (0, 0, width (), height ()));
     return 0L;
 }
 
@@ -1653,11 +1649,11 @@ KDE_NO_EXPORT void ViewArea::mouseMoved () {
     }
 }
 
-KDE_NO_EXPORT void ViewArea::scheduleRepaint (int x, int y, int w, int h) {
+KDE_NO_EXPORT void ViewArea::scheduleRepaint (const IRect &rect) {
     if (m_repaint_timer) {
-        m_repaint_rect = m_repaint_rect.unite (IRect (x, y, w, h));
+        m_repaint_rect = m_repaint_rect.unite (rect);
     } else {
-        m_repaint_rect = IRect (x, y, w, h);
+        m_repaint_rect = rect;
         m_repaint_timer = startTimer (10); // 100 per sec should do
     }
 }

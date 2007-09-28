@@ -42,10 +42,10 @@ public:
     KDE_NO_EXPORT KActionCollection * actionCollection () const { return m_collection; }
     KDE_NO_EXPORT QRect topWindowRect () const { return m_topwindow_rect; }
     SurfacePtr getSurface (NodePtr node);
-    void setAudioVideoGeometry (int x, int y, int w, int h, unsigned int * bg);
+    void setAudioVideoGeometry (const IRect &rect, unsigned int * bg);
     void setAudioVideoNode (NodePtr n);
     void mouseMoved ();
-    void scheduleRepaint (int x, int y, int w, int h);
+    void scheduleRepaint (const IRect &rect);
     void resizeEvent (QResizeEvent *);
     void minimalMode ();
 public slots:
