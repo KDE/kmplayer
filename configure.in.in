@@ -160,7 +160,7 @@ if test "$hasnspr" = "yes"; then
                     NSPR_CFG=nspr-config
                 fi
             else
-                NSPR_CFG=pkg-config nspr
+                NSPR_CFG="pkg-config nspr"
             fi
             if test "x$have_nspr" = "xyes"; then
                 AC_DEFINE(HAVE_NSPR, 1, [have Netscape Portable Runtime])
