@@ -33,7 +33,7 @@ public:
 k_dcop:
     virtual ASYNC setURL (QString url);
     virtual ASYNC setSubTitleURL (QString url);
-    virtual ASYNC play ();
+    virtual ASYNC play (int repeat_count);
     virtual ASYNC stop ();
     virtual ASYNC pause ();
     /* seek (pos, abs) seek position in deci-seconds */

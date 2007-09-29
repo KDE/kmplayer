@@ -1,6 +1,6 @@
 /* This file is part of the KDE project
  *
- * Copyright (C) 2005 Koos Vriezen <koos.vriezen@xs4all.nl>
+ * Copyright (C) 2005-2006 Koos Vriezen <koos.vriezen@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -39,7 +39,7 @@ const short id_node_enclosure = 205;
 /**
  * '<RSS>' tag
  */
-class Rss : public Mrl {
+class KMPLAYER_NO_EXPORT Rss : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Rss (NodePtr & d) : Mrl (d, id_node_rss) {}
     NodePtr childFromTag (const QString & tag);
@@ -52,7 +52,7 @@ public:
     KDE_NO_CDTOR_EXPORT Channel (NodePtr & d) : Mrl (d, id_node_channel) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "channel"; }
-    bool isPlayable () { return false; }
+    PlayType playType () { return play_type_none; }
     void closed ();
     bool expose () const;
 };
@@ -62,10 +62,14 @@ public:
     KDE_NO_CDTOR_EXPORT Item (NodePtr & d) : Mrl (d, id_node_item) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "item"; }
-    bool isPlayable () { return !src.isEmpty (); }
+    PlayType playType () { return cached_play_type; }
+    Mrl * linkNode ();
     void closed ();
     void activate ();
     void deactivate ();
+    bool handleEvent (EventPtr event);
+    NodePtrW enclosure;
+    TimerInfoPtrW timer;
 };
 
 class KMPLAYER_NO_EXPORT Enclosure : public Mrl {

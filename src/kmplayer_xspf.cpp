@@ -81,7 +81,7 @@ KDE_NO_EXPORT NodePtr XSPF::Tracklist::childFromTag (const QString & tag) {
 KDE_NO_EXPORT NodePtr XSPF::Track::childFromTag (const QString & tag) {
     const char * name = tag.latin1 ();
     if (!strcasecmp (name, "location"))
-        return new DarkNode (m_doc, name, id_node_location);
+        return new Location (m_doc);
     else if (!strcasecmp (name, "creator"))
         return new DarkNode (m_doc, name, id_node_creator);
     else if (!strcasecmp (name, "title"))
@@ -116,7 +116,8 @@ KDE_NO_EXPORT void XSPF::Track::closed () {
                 pretty_name = e->innerText ();
                 break;
             case id_node_location:
-                src = e->innerText ().stripWhiteSpace ();
+                location = e;
+                src = e->mrl ()->src;
                 break;
         }
     }
@@ -131,4 +132,20 @@ KDE_NO_EXPORT void XSPF::Track::activate () {
             break;
         }
     Mrl::activate ();
+}
+
+KDE_NO_EXPORT Node::PlayType XSPF::Track::playType () {
+    if (location)
+        return location->playType ();
+    return Mrl::playType ();
+}
+
+KDE_NO_EXPORT Mrl * XSPF::Track::linkNode () {
+    if (location)
+        return location->mrl ();
+    return Mrl::linkNode ();
+}
+
+void XSPF::Location::closed () {
+    src = innerText ().stripWhiteSpace ();
 }

@@ -25,6 +25,9 @@
 #ifdef HAVE_EXPAT
 #include <expat.h>
 #endif
+#ifdef HAVE_CAIRO
+# include <cairo.h>
+#endif
 #include "kmplayerplaylist.h"
 #include "kmplayer_asx.h"
 #include "kmplayer_atom.h"
@@ -57,7 +60,7 @@ namespace KMPlayer {
         else if (!strcasecmp (name, "playlist"))
             return new XSPF::Playlist (d);
         else if (!strcasecmp (name, "url"))
-            return new GenericURL (d, QString::null);
+            return new GenericURL (d, QString ());
         else if (!strcasecmp (name, "mrl") ||
                 !strcasecmp (name, "document"))
             return new GenericMrl (d);
@@ -91,8 +94,9 @@ QTextStream & operator << (QTextStream & out, const XMLStringlet & txt) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT Connection::Connection (NodeRefListPtr ls, NodePtr node)
- : listeners (ls) {
+KDE_NO_CDTOR_EXPORT
+Connection::Connection (NodeRefListPtr ls, NodePtr node, NodePtr inv)
+ : connectee (inv), listeners (ls) {
     if (listeners) {
         NodeRefItemPtr nci = new NodeRefItem (node);
         listeners->append (nci);
@@ -109,7 +113,8 @@ KDE_NO_EXPORT void Connection::disconnect () {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT TimerInfo::TimerInfo (NodePtr n, unsigned id, struct timeval & tv, int ms)
+KDE_NO_CDTOR_EXPORT
+TimerInfo::TimerInfo (NodePtr n, unsigned id, struct timeval & tv, int ms)
  : node (n), event_id (id), timeout (tv), milli_sec (ms) {}
 
 //-----------------------------------------------------------------------------
@@ -118,37 +123,48 @@ Matrix::Matrix () : a (1.0), b (0.0), c (0.0), d (1.0), tx (0), ty (0) {}
 
 Matrix::Matrix (const Matrix & m)
  : a (m.a), b (m.b), c (m.c), d (m.d), tx (m.tx), ty (m.ty) {}
-    
-Matrix::Matrix (int xoff, int yoff, float xscale, float yscale)
+
+Matrix::Matrix (Single xoff, Single yoff, float xscale, float yscale)
  : a (xscale), b (0.0), c (0.0), d (yscale), tx (xoff), ty (yoff) {}
 
-void Matrix::getXY (int & x, int & y) const {
-    x = int (x * a) + tx;
-    y = int (y * d) + ty;
+void Matrix::getXY (Single & x, Single & y) const {
+    x = Single (x * a) + tx;
+    y = Single (y * d) + ty;
 }
 
-void Matrix::getXYWH (int & x, int & y, int & w, int & h) const {
+void Matrix::getXYWH (Single & x, Single & y, Single & w, Single & h) const {
     getXY (x, y);
-    w = int (w * a);
-    h = int (h * d);
+    w *= a;
+    h *= d;
+}
+
+void Matrix::invXYWH (Single & x, Single & y, Single & w, Single & h) const {
+    if (a > 0.00001 && d > 0.00001) {
+        w /= a;
+        h /= d;
+        x = Single ((x - tx) / a);
+        y = Single ((y - ty) / d);
+    } else {
+        kdWarning () << "Not invering " << a << ", " << d << " scale" << endl;
+    }
 }
 
 void Matrix::transform (const Matrix & matrix) {
     // TODO: rotate
     a *= matrix.a;
     d *= matrix.d;
-    tx = int (tx * matrix.a) + matrix.tx;
-    ty = int (ty * matrix.d) + matrix.ty;
+    tx = Single (tx * matrix.a) + matrix.tx;
+    ty = Single (ty * matrix.d) + matrix.ty;
 }
 
 void Matrix::scale (float sx, float sy) {
     a *= sx;
     d *= sy;
-    tx = int (tx * sx);
-    ty = int (ty * sy);
+    tx *= sx;
+    ty *= sy;
 }
 
-void Matrix::translate (int x, int y) {
+void Matrix::translate (Single x, Single y) {
     tx += x;
     ty += y;
 }
@@ -201,7 +217,7 @@ void Node::begin () {
     if (active ()) {
         setState (state_began);
     } else
-        kdError () << "Node::begin () call on not active element" << endl;
+        kdError () << nodeName() << " begin call on not active element" << endl;
 }
 
 void Node::defer () {
@@ -317,17 +333,7 @@ void Node::insertBefore (NodePtr c, NodePtr b) {
 
 void Node::removeChild (NodePtr c) {
     document()->m_tree_version++;
-    if (c->m_prev) {
-        c->m_prev->m_next = c->m_next;
-    } else
-        m_first_child = c->m_next;
-    if (c->m_next) {
-        c->m_next->m_prev = c->m_prev;
-        c->m_next = 0L;
-    } else
-        m_last_child = c->m_prev;
-    c->m_prev = 0L;
-    c->m_parent = 0L;
+    TreeNode <Node>::removeChild (c);
 }
 
 KDE_NO_EXPORT void Node::replaceChild (NodePtr _new, NodePtr old) {
@@ -373,7 +379,7 @@ void Node::normalize () {
             if (val.isEmpty ())
                 removeChild (e);
             else
-                e->setNodeValue (val);
+                convertNode <TextNode> (e)->setText (val);
         } else
             e->normalize ();
         e = tmp;
@@ -382,7 +388,7 @@ void Node::normalize () {
 
 static void getInnerText (const NodePtr p, QTextOStream & out) {
     for (NodePtr e = p->firstChild (); e; e = e->nextSibling ()) {
-        if (e->id == id_node_text)
+        if (e->id == id_node_text || e->id == id_node_cdata)
             out << e->nodeValue ();
         else
             getInnerText (e, out);
@@ -407,12 +413,14 @@ static void getOuterXML (const NodePtr p, QTextOStream & out, int depth) {
         QString indent (QString ().fill (QChar (' '), depth));
         out << indent << QChar ('<') << XMLStringlet (e->nodeName ());
         for (AttributePtr a = e->attributes()->first(); a; a = a->nextSibling())
-            out << " " << XMLStringlet (a->nodeName ()) << "=\"" << XMLStringlet (a->nodeValue ()) << "\"";
+            out << " " << XMLStringlet (a->name ().toString ()) <<
+                "=\"" << XMLStringlet (a->value ()) << "\"";
         if (e->hasChildNodes ()) {
             out << QChar ('>') << QChar ('\n');
             for (NodePtr c = e->firstChild (); c; c = c->nextSibling ())
                 getOuterXML (c, out, depth + 1);
-            out << indent << QString("</") << XMLStringlet (e->nodeName()) << QChar ('>') << QChar ('\n');
+            out << indent << QString("</") << XMLStringlet (e->nodeName()) <<
+                QChar ('>') << QChar ('\n');
         } else
             out << QString ("/>") << QChar ('\n');
     }
@@ -433,8 +441,8 @@ QString Node::outerXML () const {
     return buf;
 }
 
-bool Node::isPlayable () {
-    return false;
+Node::PlayType Node::playType () {
+    return play_type_none;
 }
 
 void Node::opened () {}
@@ -455,21 +463,25 @@ KDE_NO_EXPORT void Node::propagateEvent (EventPtr event) {
                 c->data->handleEvent (event);
 }
 
+void Node::accept (Visitor * v) {
+    v->visit (this);
+}
+
 KDE_NO_EXPORT
 ConnectionPtr Node::connectTo (NodePtr node, unsigned int evt_id) {
     NodeRefListPtr nl = listeners (evt_id);
     if (nl)
-        return ConnectionPtr (new Connection (nl, node));
+        return ConnectionPtr (new Connection (nl, node, this));
     return ConnectionPtr ();
 }
 
 QString Node::nodeValue () const {
-    return QString::null;
+    return QString ();
 }
 
-void Node::registerEventHandler (NodePtr) {}
-
-void Node::deregisterEventHandler (NodePtr) {}
+SurfacePtr Node::getSurface (NodePtr) {
+    return 0L;
+}
 
 //-----------------------------------------------------------------------------
 
@@ -486,31 +498,128 @@ void RefNode::setRefNode (const NodePtr ref) {
 
 //-----------------------------------------------------------------------------
 
-Element::Element (NodePtr & d, short id)
-    : Node (d, id), m_attributes (new AttributeList) {}
+namespace KMPlayer {
+    struct KMPLAYER_NO_EXPORT ParamValue {
+        QString val;
+        QStringList  * modifications;
+        ParamValue (const QString & v) : val (v), modifications (0L) {}
+        ~ParamValue () { delete modifications; }
+        QString value ();
+        void setValue (const QString & v) { val = v; }
+    };
+    typedef QMap <TrieString, ParamValue *> ParamMap;
+    class KMPLAYER_NO_EXPORT ElementPrivate {
+    public:
+        ~ElementPrivate ();
+        ParamMap params;
+        void clear ();
+    };
+}
 
-void Element::setAttribute (const QString & name, const QString & value) {
-    const char * name_latin = name.latin1 ();
+KDE_NO_EXPORT QString ParamValue::value () {
+    return modifications && modifications->size ()
+        ? modifications->back () : val;
+}
+
+KDE_NO_CDTOR_EXPORT ElementPrivate::~ElementPrivate () {
+    clear ();
+}
+
+KDE_NO_EXPORT void ElementPrivate::clear () {
+    const ParamMap::iterator e = params.end ();
+    for (ParamMap::iterator i = params.begin (); i != e; ++i)
+        delete i.data ();
+    params.clear ();
+}
+
+Element::Element (NodePtr & d, short id)
+    : Node (d, id), m_attributes (new AttributeList), d (new ElementPrivate) {}
+
+Element::~Element () {
+    delete d;
+}
+
+void Element::setParam (const TrieString &param, const QString &val, int *mid) {
+    ParamValue * pv = d->params [param];
+    if (!pv) {
+        pv = new ParamValue (mid ? QString() : val);
+        d->params.insert (param, pv);
+    }
+    if (mid) {
+        if (!pv->modifications)
+            pv->modifications = new QStringList;
+        if (*mid >= 0 && *mid < int (pv->modifications->size ())) {
+            (*pv->modifications) [*mid] = val;
+        } else {
+            *mid = pv->modifications->size ();
+            pv->modifications->push_back (val);
+        }
+    } else
+        pv->setValue (val);
+    parseParam (param, val);
+}
+
+QString Element::param (const TrieString & name) {
+    ParamValue * pv = d->params [name];
+    if (pv)
+        return pv->value ();
+    return QString ();
+}
+
+void Element::resetParam (const TrieString & param, int mid) {
+    ParamValue * pv = d->params [param];
+    if (pv && pv->modifications) {
+        if (int (pv->modifications->size ()) > mid && mid > -1) {
+            (*pv->modifications) [mid] = QString ();
+            while (pv->modifications->size () > 0 &&
+                    pv->modifications->back ().isNull ())
+                pv->modifications->pop_back ();
+        }
+        QString val = pv->value ();
+        if (pv->modifications->size () == 0) {
+            delete pv->modifications;
+            pv->modifications = 0L;
+            val = pv->value ();
+            if (val.isNull ()) {
+                delete pv;
+                d->params.remove (param);
+            }
+        }
+        parseParam (param, val);
+    } else
+        kdError () << "resetting " << param.toString() << " that doesn't exists" << endl;
+}
+
+void Element::setAttribute (const TrieString & name, const QString & value) {
     for (AttributePtr a = m_attributes->first (); a; a = a->nextSibling ())
-        if (!strcmp (name_latin, a->nodeName ())) {
-            static_cast <Attribute *> (a.ptr ())->setNodeValue (value);
+        if (name == a->name ()) {
+            a->setValue (value);
             return;
         }
     m_attributes->append (new Attribute (name, value));
 }
 
-QString Element::getAttribute (const QString & name) {
-    QString value;
+QString Element::getAttribute (const TrieString & name) {
     for (AttributePtr a = m_attributes->first (); a; a = a->nextSibling ())
-        if (!strcasecmp (name.ascii (), a->nodeName ())) {
-            value = a->nodeValue ();
-            break;
-        }
-    return value;
+        if (name == a->name ())
+            return a->value ();
+    return QString ();
+}
+
+void Element::init () {
+    d->clear();
+    for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ())
+        setParam (a->name (), a->value ());
+}
+
+void Element::reset () {
+    d->clear();
+    Node::reset ();
 }
 
 void Element::clear () {
     m_attributes = new AttributeList; // remove attributes
+    d->clear();
     Node::clear ();
 }
 
@@ -520,23 +629,15 @@ void Element::setAttributes (AttributeListPtr attrs) {
 
 //-----------------------------------------------------------------------------
 
-Attribute::Attribute (const QString & n, const QString & v)
-  : name (n), value (v) {}
+Attribute::Attribute (const TrieString & n, const QString & v)
+  : m_name (n), m_value (v) {}
 
-QString Attribute::nodeValue () const {
-    return value;
+void Attribute::setName (const TrieString & n) {
+    m_name = n;
 }
 
-const char * Attribute::nodeName () const {
-    return name.ascii ();
-}
-
-void Attribute::setNodeName (const QString & n) {
-    name = n;
-}
-
-void Attribute::setNodeValue (const QString & v) {
-    value = v;
+void Attribute::setValue (const QString & v) {
+    m_value = v;
 }
 
 //-----------------------------------------------------------------------------
@@ -548,16 +649,21 @@ static bool hasMrlChildren (const NodePtr & e) {
     return false;
 }
 
-Mrl::Mrl (NodePtr & d, short id) : Element (d, id), cached_ismrl_version (~0), width (0), height (0), aspect (0), view_mode (Single), resolved (false), bookmarkable (true) {}
+Mrl::Mrl (NodePtr & d, short id)
+    : Element (d, id), cached_ismrl_version (~0),
+      aspect (0), repeat (0),
+      view_mode (SingleMode),
+      resolved (false), bookmarkable (true) {}
 
 Mrl::~Mrl () {}
 
-bool Mrl::isPlayable () {
+Node::PlayType Mrl::playType () {
     if (cached_ismrl_version != document()->m_tree_version) {
-        cached_ismrl = !hasMrlChildren (this);
+        bool ismrl = !hasMrlChildren (this);
+        cached_play_type = ismrl ? play_type_unknown : play_type_none;
         cached_ismrl_version = document()->m_tree_version;
     }
-    return cached_ismrl;
+    return cached_play_type;
 }
 
 QString Mrl::absolutePath () {
@@ -581,7 +687,7 @@ NodePtr Mrl::childFromTag (const QString & tag) {
     return NodePtr ();
 }
 
-NodePtr Mrl::realMrl () {
+Mrl * Mrl::linkNode () {
     return this;
 }
 
@@ -589,72 +695,110 @@ Mrl * Mrl::mrl () {
     return this;
 }
 
+void Mrl::endOfFile () {
+    if (state == state_deferred &&
+            !isPlayable () && firstChild ()) { // if backend added child links
+        state = state_activated;
+        firstChild ()->activate ();
+    } else
+        finish ();
+}
+
 void Mrl::activate () {
+    resolved |= linkNode ()->resolved;
     if (!resolved && document ()->notify_listener)
         resolved = document ()->notify_listener->resolveURL (this);
     if (!resolved) {
         setState (state_deferred);
         return;
-    }
+    } else
+        linkNode ()->resolved = true;
     if (!isPlayable ()) {
         Element::activate ();
         return;
     }
-    kdDebug () << nodeName () << " Mrl::activate" << endl;
     setState (state_activated);
-    if (document ()->notify_listener && !src.isEmpty ()) {
-        if (document ()->notify_listener->requestPlayURL (this))
-            setState (state_began);
-    } else
-        deactivate (); // nothing to activate
+    begin ();
 }
 
-static NodePtr findChainEventHandler (NodePtr node) {
-    Node * p = node->parentNode ().ptr ();
-    Mrl * mrl = p ? p->mrl () : 0L;
-    while (p && (!mrl || !mrl->event_handler)) {
-        p = p->parentNode ().ptr ();
-        mrl = p ? p->mrl () : 0L;
-    }
-    if (!mrl)
-        return node->document ();
-    else {
-        while (mrl->event_handler && mrl->event_handler != node) {
-            Mrl * m = mrl->event_handler->mrl ();
-            if (!m) {
-                kdError () << "Wrong type event_handler set" << endl;
-                break;
-            }
-            mrl = m;
-        }
-        return mrl;
+void Mrl::begin () {
+    kdDebug () << nodeName () << " Mrl::activate" << endl;
+    if (document ()->notify_listener) {
+        if (linkNode () != this) {
+            linkNode ()->activate ();
+            if (linkNode ()->unfinished ())
+                setState (state_began);
+        } else if (!src.isEmpty ()) {
+            if (document ()->notify_listener->requestPlayURL (this))
+                setState (state_began);
+        } else
+            deactivate (); // nothing to activate
     }
 }
 
-void Mrl::registerEventHandler (NodePtr handler) {
-    if (event_handler != handler) {// in case findChainEventHandler returns this
-        event_handler = handler;
-        findChainEventHandler (this)->registerEventHandler (this);
-    }
+SurfacePtr Mrl::getSurface (NodePtr node) {
+    for (NodePtr p = parentNode (); p; p = p->parentNode ())
+        if (p->mrl ())
+            return p->getSurface (node);
+    return 0L;
 }
 
-void Mrl::deregisterEventHandler (NodePtr handler) {
-    if (event_handler == handler) {
-        event_handler = 0L;
-        findChainEventHandler (this)->deregisterEventHandler (this);
-    }
-}
-
-bool Mrl::handleEvent (EventPtr event) {
-    if (event_handler)
-        return event_handler->handleEvent (event);
+bool Mrl::handleEvent (EventPtr) {
     return false;
+}
+
+void Mrl::parseParam (const TrieString & para, const QString & val) {
+    if (para == StringPool::attr_src && !src.startsWith ("#")) {
+        QString abs = absolutePath ();
+        if (abs != src)
+            src = val;
+        else
+            src = KURL (abs, val).url ();
+        for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+            if (c->mrl () && c->mrl ()->opener.ptr () == this) {
+                removeChild (c);
+                c->reset();
+            }
+        resolved = false;
+    }
+}
+
+Surface::Surface (NodePtr n, const SRect & r)
+  : node (n),
+    bounds (r),
+    xscale (1.0), yscale (1.0),
+    background_color (0),
+    dirty (false)
+#ifdef HAVE_CAIRO
+    , surface (0L)
+#endif
+{}
+
+Surface::~Surface() {
+#ifdef HAVE_CAIRO
+    if (surface)
+        cairo_surface_destroy (surface);
+#endif
+}
+
+void Surface::remove () {
+    Surface *sp = parentNode ().ptr ();
+    if (sp) {
+        sp->markDirty ();
+        sp->removeChild (this);
+    }
+}
+
+void Surface::markDirty () {
+    for (Surface *s = this; s; s = s->parentNode ().ptr ())
+        s->dirty = true;
 }
 
 //-----------------------------------------------------------------------------
 
 Postpone::Postpone (NodePtr doc) : m_doc (doc) {
-    gettimeofday (&postponed_time, 0L);
+    if (m_doc)
+        m_doc->document ()->timeOfDay (postponed_time);
 }
 
 Postpone::~Postpone () {
@@ -683,21 +827,28 @@ Document::~Document () {
     kdDebug () << "~Document" << endl;
 }
 
-static NodePtr getElementByIdImpl (NodePtr n, const QString & id) {
+static NodePtr getElementByIdImpl (NodePtr n, const QString & id, bool inter) {
     NodePtr elm;
     if (!n->isElementNode ())
         return elm;
     Element * e = convertNode <Element> (n);
-    if (e->getAttribute ("id") == id)
+    if (e->getAttribute (StringPool::attr_id) == id)
         return n;
-    for (NodePtr c = e->firstChild (); c; c = c->nextSibling ())
-        if ((elm = getElementByIdImpl (c, id)))
+    for (NodePtr c = e->firstChild (); c; c = c->nextSibling ()) {
+        if (!inter && c->mrl () && c->mrl ()->opener == n)
+            continue;
+        if ((elm = getElementByIdImpl (c, id, inter)))
             break;
+    }
     return elm;
 }
 
 NodePtr Document::getElementById (const QString & id) {
-    return getElementByIdImpl (this, id);
+    return getElementByIdImpl (this, id, true);
+}
+
+NodePtr Document::getElementById (NodePtr n, const QString & id, bool inter) {
+    return getElementByIdImpl (n, id, inter);
 }
 
 NodePtr Document::childFromTag (const QString & tag) {
@@ -712,12 +863,14 @@ void Document::dispose () {
     m_doc = 0L;
 }
 
-bool Document::isPlayable () {
-    return Mrl::isPlayable ();
+void Document::activate () {
+    first_event_time.tv_sec = 0;
+    last_event_time = 0;
+    Mrl::activate ();
 }
 
 void Document::defer () {
-    if (!firstChild () || firstChild ()->state > state_init)
+    if (resolved)
         postpone_lock = postpone ();
     Mrl::defer ();
 }
@@ -752,13 +905,22 @@ static inline void addTime (struct timeval & tv, int ms) {
     tv.tv_usec = (tv.tv_usec + ms*1000) % 1000000;
 }
 
+void Document::timeOfDay (struct timeval & tv) {
+    gettimeofday (&tv, 0L);
+    if (!first_event_time.tv_sec) {
+        first_event_time = tv;
+        last_event_time = 0;
+    } else
+        last_event_time = diffTime (tv, first_event_time) / 100;
+}
+
 TimerInfoPtrW Document::setTimeout (NodePtr n, int ms, unsigned id) {
     if (!notify_listener)
         return 0L;
     TimerInfoPtr ti = timers.first ();
     int pos = 0;
     struct timeval tv;
-    gettimeofday (&tv, 0L);
+    timeOfDay (tv);
     addTime (tv, ms);
     for (; ti && diffTime (ti->timeout, tv) <= 0; ti = ti->nextSibling ()) {
         pos++;
@@ -780,7 +942,7 @@ void Document::cancelTimer (TimerInfoPtr tinfo) {
         TimerInfoPtr second = tinfo->nextSibling ();
         if (second) {
             struct timeval now;
-            gettimeofday (&now, 0L);
+            timeOfDay (now);
             int diff = diffTime (now, second->timeout);
             cur_timeout = diff > 0 ? 0 : -diff;
         } else
@@ -792,57 +954,67 @@ void Document::cancelTimer (TimerInfoPtr tinfo) {
 
 bool Document::timer () {
     struct timeval now = { 0, 0 }; // unset
+    int new_timeout = -1;
     TimerInfoPtrW tinfo = timers.first (); // keep use_count on 1
-    if (postpone_ref || !tinfo || !tinfo->node) {
-        kdError () << "spurious timer event" << endl;
-        if (!postpone_ref) { // some part of document has gone
+
+    intimer = true;
+    // handle max 100 timeouts with timeout set to now
+    for (int i = 0; !!tinfo && !postpone_ref && i < 100; ++i) {
+        if (tinfo && !tinfo->node) {
+            // some part of document has gone and didn't remove timer
+            kdError () << "spurious timer" << endl;
             for (; tinfo && !tinfo->node; tinfo = timers.first ())
                 timers.remove (tinfo);
+            tinfo = timers.first ();
         }
-    } else {
+        if (!tinfo)
+            break;
         TimerEvent * te = new TimerEvent (tinfo);
         EventPtr e (te);
-        intimer = true;
-        //kdDebug () << "timer " << cur_timeout << endl;
         tinfo->node->handleEvent (e);
         if (tinfo) { // may be removed from timers and become 0
             if (te->interval) {
                 TimerInfoPtr tinfo2 (tinfo); // prevent destruction
                 timers.remove (tinfo);
-                gettimeofday (&now, 0L);
+                timeOfDay (now);
+                int drift = diffTime (now, tinfo2->timeout);
+                if (drift > tinfo2->milli_sec) {
+                    drift = tinfo2->milli_sec;
+                    //kdWarning() << "time drift" << endl;
+                }
                 tinfo2->timeout = now;
-                addTime (tinfo2->timeout, tinfo2->milli_sec);
+                addTime (tinfo2->timeout, tinfo2->milli_sec - drift);
                 TimerInfoPtr ti = timers.first ();
                 int pos = 0;
                 for (; ti && diffTime (tinfo2->timeout, ti->timeout) >= 0; ti = ti->nextSibling ()) {
                     pos++;
-                    //kdDebug () << "timer diff:" <<diffTime (tinfo2->timeout, ti->timeout) << endl;
                 }
-                //kdDebug () << "re-setTimeout " << tinfo2->milli_sec<< " at:" << pos << " diff:" << diffTime(tinfo->timeout, now) << endl;
                 timers.insertBefore (tinfo2, ti);
             } else
                 timers.remove (tinfo);
         }
-        intimer = false;
-    }
-    if (notify_listener) {// set new timeout to prevent interval timer events
         tinfo = timers.first ();
-        if (!postpone_ref && tinfo) {
-            if (!now.tv_sec)
-                gettimeofday (&now, 0L); // system call ..
-            int diff = diffTime (now, tinfo->timeout);
-            int new_timeout = diff > 0 ? 0 : -diff;
-            if (new_timeout != cur_timeout) {
-                //kdDebug () << "timer set new timeout now:" << now.tv_sec << "." << now.tv_usec << " "  << tinfo->timeout.tv_sec << "." << tinfo->timeout.tv_usec << " diff:" << diffTime(now, tinfo->timeout) << endl;
-                cur_timeout = new_timeout;
-                notify_listener->setTimeout (cur_timeout);
-            }
-            // else keep the timer, no new setTimeout
-        } else {
-            cur_timeout = -1;
-            notify_listener->setTimeout (-1); // kill timer
+        if (!tinfo)
+            break;
+        if (!now.tv_sec)
+            timeOfDay (now);
+        int diff = diffTime (now, tinfo->timeout);
+        new_timeout = diff > 0 ? 0 : -diff;
+        if (new_timeout > 0)
+            break;
+    }
+    intimer = false;
+
+    // set new timeout to prevent interval timer events
+    if (notify_listener && !postpone_ref && tinfo) {
+        if (new_timeout != cur_timeout) {
+            cur_timeout = new_timeout;
+            notify_listener->setTimeout (cur_timeout);
         }
-            //kdDebug () << "timer set new timeout now:" << now.tv_sec << "." << now.tv_usec << " "  << tinfo->timeout.tv_sec << "." << tinfo->timeout.tv_usec << " diff:" << diffTime(tinfo->timeout, now) << endl;
+        // else keep the timer, no new setTimeout
+    } else {
+        cur_timeout = -1;
+        notify_listener->setTimeout (-1); // kill timer
     }
     return false;
 }
@@ -865,7 +1037,7 @@ void Document::proceed (const struct timeval & postponed_time) {
     kdDebug () << "proceed" << endl;
     if (timers.first () && notify_listener) {
         struct timeval now;
-        gettimeofday (&now, 0L);
+        timeOfDay (now);
         int diff = diffTime (now, postponed_time);
         if (diff > 0) {
             for (TimerInfoPtr t = timers.first (); t; t = t->nextSibling ())
@@ -880,18 +1052,10 @@ void Document::proceed (const struct timeval & postponed_time) {
     propagateEvent (new PostponedEvent (false));
 }
 
-void Document::registerEventHandler (NodePtr handler) {
-    event_handler = handler;
+SurfacePtr Document::getSurface (NodePtr node) {
     if (notify_listener)
-        notify_listener->setEventDispatcher (this);
-}
-
-void Document::deregisterEventHandler (NodePtr handler) {
-    if (event_handler == handler) {
-        event_handler = 0L;
-        if (notify_listener)
-            notify_listener->setEventDispatcher (0L);
-    }
+        return notify_listener->getSurface (node);
+    return 0L;
 }
 
 NodeRefListPtr Document::listeners (unsigned int id) {
@@ -942,13 +1106,13 @@ GenericURL::GenericURL (NodePtr & d, const QString & s, const QString & name)
  : Mrl (d, id_node_playlist_item) {
     src = s;
     if (!src.isEmpty ())
-        setAttribute (QString ("src"), src);
+        setAttribute (StringPool::attr_src, src);
     pretty_name = name;
 }
 
 KDE_NO_EXPORT void GenericURL::closed () {
     if (src.isEmpty ())
-        src = getAttribute (QString ("src"));
+        src = getAttribute (StringPool::attr_src);
 }
 
 //-----------------------------------------------------------------------------
@@ -957,28 +1121,20 @@ GenericMrl::GenericMrl (NodePtr & d, const QString & s, const QString & name, co
  : Mrl (d, id_node_playlist_item), node_name (tag) {
     src = s;
     if (!src.isEmpty ())
-        setAttribute (QString ("src"), src);
+        setAttribute (StringPool::attr_src, src);
     pretty_name = name;
     if (!name.isEmpty ())
-        setAttribute (QString ("name"), name);
-}
-
-bool GenericMrl::isPlayable () {
-    if (cached_ismrl_version != document()->m_tree_version) {
-        cached_ismrl = !hasMrlChildren (this);
-        cached_ismrl_version = document()->m_tree_version;
-    }
-    return cached_ismrl;
+        setAttribute (StringPool::attr_name, name);
 }
 
 void GenericMrl::closed () {
     if (src.isEmpty ()) {
-        src = getAttribute (QString ("src"));
+        src = getAttribute (StringPool::attr_src);
         if (src.isEmpty ())
-            src = getAttribute (QString ("url"));
+            src = getAttribute (StringPool::attr_url);
     }
     if (pretty_name.isEmpty ())
-        pretty_name = getAttribute (QString ("name"));
+        pretty_name = getAttribute (StringPool::attr_name);
 }
 
 bool GenericMrl::expose () const {
@@ -990,7 +1146,7 @@ bool GenericMrl::expose () const {
 
 namespace KMPlayer {
 
-class DocumentBuilder {
+class KMPLAYER_NO_EXPORT DocumentBuilder {
     int m_ignore_depth;
     bool m_set_opener;
     bool m_root_is_first;
@@ -1058,7 +1214,7 @@ bool DocumentBuilder::endTag (const QString & tag) {
     } else {  // endtag
         NodePtr n = m_node;
         while (n) {
-            if (!strcasecmp (n->nodeName (), tag.local8Bit ()) &&
+            if (!strcasecmp (n->nodeName (), tag.local8Bit ().data ()) &&
                     (m_root_is_first || n != m_root)) {
                 while (n != m_node) {
                     kdWarning() << m_node->nodeName () << " not closed" << endl;
@@ -1190,9 +1346,9 @@ void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool se
 //-----------------------------------------------------------------------------
 #else // HAVE_EXPAT
 
-namespace KMPlayer {
+namespace {
 
-class SimpleSAXParser {
+class KMPLAYER_NO_EXPORT SimpleSAXParser {
 public:
     SimpleSAXParser (DocumentBuilder & b) : builder (b), position (0), m_attributes (new AttributeList), equal_seen (false), in_dbl_quote (false), in_sngl_quote (false), have_error (false), no_entitity_look_ahead (false), have_next_char (false) {}
     virtual ~SimpleSAXParser () {};
@@ -1202,7 +1358,10 @@ private:
     DocumentBuilder & builder;
     int position;
     QChar next_char;
-    enum Token { tok_empty, tok_text, tok_white_space, tok_angle_open, tok_equal, tok_double_quote, tok_single_quote, tok_angle_close, tok_slash, tok_exclamation, tok_amp, tok_hash, tok_semi_colon, tok_question_mark };
+    enum Token { tok_empty, tok_text, tok_white_space, tok_angle_open,
+        tok_equal, tok_double_quote, tok_single_quote, tok_angle_close,
+        tok_slash, tok_exclamation, tok_amp, tok_hash, tok_semi_colon,
+        tok_question_mark, tok_cdata_start };
     enum State {
         InTag, InStartTag, InPITag, InDTDTag, InEndTag, InAttributes, InContent, InCDATA, InComment
     };
@@ -1245,8 +1404,10 @@ private:
     void push_attribute ();
 };
 
+} // namespace
+
 KMPLAYER_EXPORT
-void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool set_opener) {
+void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstline, bool set_opener) {
     DocumentBuilder builder (root, set_opener);
     SimpleSAXParser parser (builder);
     if (!firstline.isEmpty ()) {
@@ -1261,8 +1422,6 @@ void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool se
     //doc->normalize ();
     //kdDebug () << root->outerXML ();
 }
-
-} // namespace
 
 void SimpleSAXParser::push () {
     if (next_token->string.length ()) {
@@ -1346,7 +1505,7 @@ bool SimpleSAXParser::nextToken () {
                         token->string = QChar ('<');
                     else if (prev_token->string == QString ("gt"))
                         token->string = QChar ('>');
-                    else if (prev_token->string == QString ("quote"))
+                    else if (prev_token->string == QString ("quot"))
                         token->string = QChar ('"');
                     else if (prev_token->string == QString ("apos"))
                         token->string = QChar ('\'');
@@ -1361,7 +1520,7 @@ bool SimpleSAXParser::nextToken () {
                     }
                     //kdDebug () << "entity found "<<prev_token->string << endl;
                 } else if (token->token == tok_hash &&
-                        nextToken () && token->token == tok_text && 
+                        nextToken () && token->token == tok_text &&
                         nextToken () && token->token == tok_semi_colon) {
                     //kdDebug () << "char entity found " << prev_token->string << prev_token->string.toInt (0L, 16) << endl;
                     token->token = tok_text;
@@ -1396,6 +1555,11 @@ bool SimpleSAXParser::nextToken () {
         }
         if (append_char)
             next_token->string += next_char;
+        if (next_token->token == tok_text &&
+                next_char == QChar ('[' ) && next_token->string == "[CDATA[") {
+            next_token->token = tok_cdata_start;
+            break;
+        }
     }
     if (token == cur_token) {
         if (token && token->next) {
@@ -1515,14 +1679,13 @@ bool SimpleSAXParser::readDTD () {
         return readComment ();
     }
     //kdDebug () << "readDTD: " << token->string.latin1 () << endl;
-    if (token->token == tok_text && token->string.startsWith (QString ("[CDATA["))) {
+    if (token->token == tok_cdata_start) {
         m_state = new StateInfo (InCDATA, m_state->next); // note: pop DTD
-        cdata = token->string.mid (7);
         if (token->next) {
-            cdata += token->next->string;
+            cdata = token->next->string;
             token->next = 0;
         } else {
-            cdata += next_token->string;
+            cdata = next_token->string;
             next_token->string.truncate (0);
             next_token->token = tok_empty;
         }
@@ -1550,6 +1713,7 @@ bool SimpleSAXParser::readCDATA () {
                 else
                     attr_name += cdata;
             }
+            cdata.truncate (0);
             return true;
         }
         cdata += next_char;

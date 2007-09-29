@@ -44,7 +44,7 @@ bool isDragValid (QDropEvent * de);
 /*
  * An item in the playlist
  */
-class KMPLAYER_EXPORT PlayListItem : public QListViewItem {
+class KMPLAYER_NO_EXPORT PlayListItem : public QListViewItem {
 public:
     PlayListItem (QListViewItem *p, const NodePtr & e, PlayListView * lv);
     PlayListItem (QListViewItem *p, const AttributePtr & e, PlayListView * lv);
@@ -60,7 +60,7 @@ protected:
     PlayListItem (PlayListView *v, const NodePtr & e);
 };
 
-class KMPLAYER_EXPORT RootPlayListItem : public PlayListItem {
+class KMPLAYER_NO_EXPORT RootPlayListItem : public PlayListItem {
 public:
     RootPlayListItem (int id, PlayListView *v, const NodePtr & d, QListViewItem * b, int flags);
     KDE_NO_CDTOR_EXPORT ~RootPlayListItem () {}
@@ -146,6 +146,8 @@ private:
     QPixmap menu_pix;
     QPixmap config_pix;
     QPixmap url_pix;
+    QPixmap info_pix;
+    QPixmap img_pix;
     QColor m_active_color;
     NodePtrW m_current_find_elm;
     NodePtrW m_last_drag;

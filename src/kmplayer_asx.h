@@ -42,16 +42,13 @@ const short id_node_duration = 408;
 /**
  * '<ASX>' tag
  */
-class Asx : public Mrl {
+class KMPLAYER_NO_EXPORT Asx : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Asx (NodePtr & d) : Mrl (d, id_node_asx) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "ASX"; }
     bool expose () const { return !pretty_name.isEmpty (); }
-    /**
-     * True if no mrl children
-     */
-    bool isPlayable ();
+    PlayType playType ();
 };
 
 /**
@@ -66,7 +63,7 @@ public:
     /**
      * False, but since we might have a 'base' child, we can have a rel. src
      */
-    bool isPlayable ();
+    PlayType playType ();
     void activate ();
     void deactivate ();
     bool expose () const;

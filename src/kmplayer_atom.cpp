@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2005 by Koos Vriezen <koos.vriezen@gmail.com>
+ * Copyright (C) 2005-2006 by Koos Vriezen <koos.vriezen@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -60,16 +60,20 @@ void ATOM::Entry::closed () {
         }
 }
 
+Node::PlayType ATOM::Link::playType () {
+    return src.isEmpty () ? play_type_none : play_type_unknown;
+}
+
 void ATOM::Link::closed () {
     QString href;
     QString rel;
     for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ()) {
-        if (!strcasecmp (a->nodeName (), "rel"))
-            rel = a->nodeValue ();
-        else if (!strcasecmp (a->nodeName (), "href"))
-            href = a->nodeValue ();
-        else if (!strcasecmp (a->nodeName (), "title"))
-            pretty_name = a->nodeValue ();
+        if (a->name () == StringPool::attr_href)
+            href = a->value ();
+        else if (a->name () == StringPool::attr_title)
+            pretty_name = a->value ();
+        else if (a->name () == "rel")
+            rel = a->value ();
     }
     if (!href.isEmpty () && rel == QString::fromLatin1 ("enclosure"))
         src = href;
@@ -79,10 +83,10 @@ void ATOM::Link::closed () {
 
 void ATOM::Content::closed () {
     for (AttributePtr a = attributes ()->first (); a; a = a->nextSibling ()) {
-        if (!strcasecmp (a->nodeName (), "src"))
-            src = a->nodeValue ();
-        else if (!strcasecmp (a->nodeName (), "type")) {
-            QString v = a->nodeValue ().lower ();
+        if (a->name () == StringPool::attr_src)
+            src = a->value ();
+        else if (a->name () == StringPool::attr_type) {
+            QString v = a->value ().lower ();
             if (v == QString::fromLatin1 ("text"))
                 mimetype = QString::fromLatin1 ("text/plain");
             else if (v == QString::fromLatin1 ("html"))
@@ -95,9 +99,9 @@ void ATOM::Content::closed () {
     }
 }
 
-bool ATOM::Content::isPlayable () {
+Node::PlayType ATOM::Content::playType () {
     if (!hasChildNodes () && !src.isEmpty ())
-        return true;
-    return false;
+        return play_type_unknown;
+    return play_type_none;
 }
 

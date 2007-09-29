@@ -450,7 +450,7 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::sync (bool fromUI) {
         m_configpage->getSettings(ffserversettings);
     } else {
         m_configpage->setSettings (ffserversettings);
-        m_configpage->profile->setText (QString::null);
+        m_configpage->profile->setText (QString ());
     }
 }
 

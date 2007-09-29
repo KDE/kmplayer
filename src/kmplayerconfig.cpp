@@ -49,6 +49,7 @@
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
 #include "playlistview.h"
+#include "viewarea.h"
 #include "pref.h"
 
 using namespace KMPlayer;
@@ -65,7 +66,7 @@ static OutputDriver _ads[] = {
     { "alsa5", i18n ("Advanced Linux Sound Architecture v0.5") },
     { "alsa9", i18n ("Advanced Linux Sound Architecture v0.9") },
     { "", i18n ("Use back-end defaults") },
-    { 0, QString::null }
+    { 0, QString () }
 };
 
 static OutputDriver _vds [] = {
@@ -77,7 +78,7 @@ static OutputDriver _vds [] = {
     { "gl", i18n ("OpenGL") },
     { "gl2", i18n ("OpenGL MT") },
     { "xv", i18n ("XVideo") },
-    { 0, QString::null }
+    { 0, QString () }
 };
 
 static const int ADRIVER_ARTS_INDEX = 4;
@@ -272,7 +273,7 @@ KDE_NO_EXPORT void Settings::readConfig () {
     sub_urllist = m_config->readListEntry (strSubURLList, ';');
     prefbitrate = m_config->readNumEntry (strPrefBitRate, 512);
     maxbitrate = m_config->readNumEntry (strMaxBitRate, 1024);
-    volume = m_config->readNumEntry (strVolume, 80);
+    volume = m_config->readNumEntry (strVolume, 20);
     contrast = m_config->readNumEntry (strContrast, 0);
     brightness = m_config->readNumEntry (strBrightness, 0);
     hue = m_config->readNumEntry (strHue, 0);
@@ -589,7 +590,7 @@ void Settings::writeConfig () {
     m_config->sync ();
 }
 
-KDE_NO_EXPORT void Settings::okPressed () {
+void Settings::okPressed () {
     bool urlchanged = configdialog->m_SourcePageURL->changed;
     bool playerchanged = false;
     if (urlchanged) {
@@ -619,7 +620,7 @@ KDE_NO_EXPORT void Settings::okPressed () {
                 QFileInfo sfi (configdialog->m_SourcePageURL->sub_url->url ());
                 if (!sfi.exists ()) {
                     KMessageBox::error (m_player->view (), i18n ("Sub title file %1 does not exist.").arg (configdialog->m_SourcePageURL->sub_url->url ()), i18n ("Error"));
-                    configdialog->m_SourcePageURL->sub_url->setURL (QString::null);
+                    configdialog->m_SourcePageURL->sub_url->setURL (QString ());
                 } else
                     configdialog->m_SourcePageURL->sub_url->setURL (sfi.absFilePath ());
             }

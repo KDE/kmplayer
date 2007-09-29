@@ -1,6 +1,6 @@
 /* This file is part of the KDE project
  *
- * Copyright (C) 2005 Koos Vriezen <koos.vriezen@xs4all.nl>
+ * Copyright (C) 2005-2006 Koos Vriezen <koos.vriezen@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -39,7 +39,7 @@ const short id_node_content = 305;
 /**
  * '<feed>' tag
  */
-class Feed : public Mrl {
+class KMPLAYER_NO_EXPORT Feed : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Feed (NodePtr & d) : Mrl (d, id_node_feed) {}
     NodePtr childFromTag (const QString & tag);
@@ -53,7 +53,7 @@ public:
     KDE_NO_CDTOR_EXPORT Entry (NodePtr & d) : Mrl (d, id_node_entry) {}
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "entry"; }
-    bool isPlayable () { return false; }
+    PlayType playType () { return play_type_none; }
     void closed ();
 };
 
@@ -61,7 +61,7 @@ class KMPLAYER_NO_EXPORT Link : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Link (NodePtr & d) : Mrl (d, id_node_link) {}
     KDE_NO_EXPORT const char * nodeName () const { return "link"; }
-    bool isPlayable () { return !src.isEmpty (); }
+    PlayType playType ();
     void closed ();
 };
 
@@ -69,7 +69,7 @@ class KMPLAYER_NO_EXPORT Content : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT Content (NodePtr &d) : Mrl(d, id_node_content) {}
     KDE_NO_EXPORT const char * nodeName () const { return "content"; }
-    bool isPlayable ();
+    PlayType playType ();
     void closed ();
     //bool expose () const { return isPlayable (); }
 };

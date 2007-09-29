@@ -73,8 +73,6 @@ static xine_post_t         *post_plugin;
 static xine_event_queue_t  *event_queue;
 static xine_cfg_entry_t     audio_vis_cfg_entry;
 static x11_visual_t         vis;
-static const char          *dvd_device;
-static const char          *vcd_device;
 static char                 configfile[2048];
 
 static Display             *display;
@@ -86,6 +84,7 @@ static bool                 wants_config;
 static bool                 audio_vis;
 static int                  screen;
 static int                  completion_event;
+static int                  repeat_count;
 static int                  xpos, ypos, width, height;
 static int                  movie_width, movie_height, movie_length, movie_pos;
 static int                  movie_brightness = 32767;
@@ -111,12 +110,12 @@ static QStringList alanglist, slanglist;
 
 static QString elmentry ("entry");
 static QString elmitem ("item");
-static QString attname ("NAME");
-static QString atttype ("TYPE");
+static QString attname ("name");
+static QString atttype ("type");
 static QString attdefault ("DEFAULT");
-static QString attvalue ("VALUE");
+static QString attvalue ("value");
 static QString attstart ("START");
-static QString attend ("END");
+static QString attend ("end");
 static QString valrange ("range");
 static QString valnum ("num");
 static QString valbool ("bool");
@@ -182,7 +181,10 @@ static void event_listener(void * /*user_data*/, const xine_event_t *event) {
     switch(event->type) { 
         case XINE_EVENT_UI_PLAYBACK_FINISHED:
             fprintf (stderr, "XINE_EVENT_UI_PLAYBACK_FINISHED\n");
-            QApplication::postEvent (xineapp, new QEvent ((QEvent::Type) event_finished));
+            if (repeat_count-- > 0)
+                xine_play (stream, 0, 0);
+            else
+                QApplication::postEvent (xineapp, new QEvent ((QEvent::Type) event_finished));
             break;
         case XINE_EVENT_PROGRESS:
             QApplication::postEvent (xineapp, new XineProgressEvent (((xine_progress_data_t *) event->data)->percent));
@@ -281,8 +283,8 @@ void Backend::setSubTitleURL (QString url) {
     sub_mrl = url;
 }
 
-void Backend::play () {
-    xineapp->play ();
+void Backend::play (int repeat_count) {
+    xineapp->play (repeat_count);
 }
 
 void Backend::stop () {
@@ -502,9 +504,10 @@ void getConfigEntries (QByteArray & buf) {
     buf.resize (exp.length ()); // strip terminating \0
 }
 
-void KXinePlayer::play () {
+void KXinePlayer::play (int repeat) {
     fprintf (stderr, "play mrl: '%s'\n", (const char *) mrl.local8Bit ());
     mutex.lock ();
+    repeat_count = repeat;
     if (running) {
         if (xine_get_status (stream) == XINE_STATUS_PLAY &&
             xine_get_param (stream, XINE_PARAM_SPEED) == XINE_SPEED_PAUSE)
@@ -603,6 +606,7 @@ void KXinePlayer::stop () {
     if (!running) return;
     fprintf(stderr, "stop\n");
     mutex.lock ();
+    repeat_count = 0;
     if (sub_stream)
         xine_stop (sub_stream);
     xine_stop (stream);
@@ -1037,6 +1041,9 @@ protected:
 };
 
 int main(int argc, char **argv) {
+    const char *dvd_device = 0L;
+    const char *vcd_device = 0L;
+    const char *grab_device = 0L;
     if (!XInitThreads ()) {
         fprintf (stderr, "XInitThreads () failed\n");
         return 1;
@@ -1058,6 +1065,8 @@ int main(int argc, char **argv) {
             dvd_device = argv [i];
         } else if (!strcmp (argv [i], "-vcd-device") && ++i < argc) {
             vcd_device = argv [i];
+        } else if (!strcmp (argv [i], "-vd") && ++i < argc) {
+            grab_device = argv [i];
         } else if ((!strcmp (argv [i], "-wid") ||
                     !strcmp (argv [i], "-window-id")) && ++i < argc) {
             wid = atol (argv [i]);
@@ -1090,6 +1099,8 @@ int main(int argc, char **argv) {
             }
         } else if (!strcmp (argv [i], "-rec") && i < argc - 1) {
             rec_mrl = QString::fromLocal8Bit (argv [++i]);
+        } else if (!strcmp (argv [i], "-loop") && i < argc - 1) {
+            repeat_count = atol (argv [++i]);
         } else {
             if (mrl.startsWith ("-session")) {
                 delete xineapp;
@@ -1101,7 +1112,13 @@ int main(int argc, char **argv) {
     bool config_changed = !QFile (configfile).exists ();
 
     if (!callback && mrl.isEmpty ()) {
-        fprintf (stderr, "usage: %s [-vo (xv|xshm)] [-ao (arts|esd|..)] [-f <xine config file>] [-dvd-device <device>] [-vcd-device <device>] [-wid <X11 Window>|-window-id <X11 Window>|-root] [-sub <subtitle url>] [-lang <lang>] [(-v|-vv)] [-cb <DCOP callback name> [-c]] [<url>]\n", argv[0]);
+        fprintf (stderr, "usage: %s [-vo (xv|xshm)] [-ao (arts|esd|..)] "
+                "[-f <xine config file>] [-dvd-device <device>] "
+                "[-vcd-device <device>] [-vd <video device>] "
+                "[-wid <X11 Window>|-window-id <X11 Window>|-root] "
+                "[-sub <subtitle url>] [-lang <lang>] [(-v|-vv)] "
+                "[-cb <DCOP callback name> [-c]] "
+                "[-loop <repeat>] [<url>]\n", argv[0]);
         delete xineapp;
         return 1;
     }
@@ -1125,6 +1142,8 @@ int main(int argc, char **argv) {
         config_changed |= updateConfigEntry (QString ("input.dvd_device"), QString (dvd_device));
     if (vcd_device)
         config_changed |= updateConfigEntry (QString ("input.vcd_device"), QString (vcd_device));
+    if (grab_device)
+        config_changed |= updateConfigEntry (QString ("media.video4linux.video_device"), QString (grab_device));
 
     if (config_changed)
         xine_config_save (xine, configfile);
@@ -1185,15 +1204,20 @@ int main(int argc, char **argv) {
         xine_dispose (stream);
     }
     if (ao_port)
-        xine_close_audio_driver (xine, ao_port);  
+        xine_close_audio_driver (xine, ao_port);
     if (vo_port)
-        xine_close_video_driver (xine, vo_port);  
+        xine_close_video_driver (xine, vo_port);
     XLockDisplay(display);
-    XClientMessageEvent ev = {
-        ClientMessage, 0, true, display, wid, 
-        XInternAtom (display, "XINE", false), 8, {b: "quit_now"}
-    };
-    XSendEvent (display, wid, false, StructureNotifyMask, (XEvent *) & ev);
+    XEvent ev;
+    ev.xclient.type = ClientMessage;
+    ev.xclient.serial = 0;
+    ev.xclient.send_event = true;
+    ev.xclient.display = display;
+    ev.xclient.window = wid;
+    ev.xclient.message_type = XInternAtom (display, "XINE", false);
+    ev.xclient.format = 8;
+    strcpy(ev.xclient.data.b, "quit_now");
+    XSendEvent (display, wid, false, StructureNotifyMask, &ev);
     XFlush (display);
     XUnlockDisplay(display);
     eventThread->wait (500);

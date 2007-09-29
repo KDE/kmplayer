@@ -51,6 +51,8 @@ extern "C" {
         KCmdLineArgs::init (argc, argv, &aboutData);
         KCmdLineArgs::addCmdLineOptions (options); // Add our own options.
 
+        KMPlayer::StringPool::init();
+
         KApplication app;
         QGuardedPtr <KMPlayerApp> kmplayer;
 
@@ -80,6 +82,8 @@ extern "C" {
         int retvalue = app.exec ();
 
         delete kmplayer;
+
+        KMPlayer::StringPool::reset();
 
         return retvalue;
     }

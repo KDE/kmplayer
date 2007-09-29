@@ -29,19 +29,22 @@
 #include <qstring.h>
 
 #include "kmplayer_def.h"
+#include "kmplayertypes.h"
 #include "kmplayershared.h"
 
+typedef struct _cairo_surface cairo_surface_t;
+
 class QTextStream;
-class QPixmap;
-class QPainter;
 
 namespace KMPlayer {
 
 class Document;
 class Node;
 class Mrl;
-class ElementRuntime;
+class Surface;
+class ElementPrivate;
 class RemoteObjectPrivate;
+class Visitor;
 
 /*
  * Base class for objects that will be used as SharedPtr/WeakPtr pointers.
@@ -142,11 +145,6 @@ class KMPLAYER_EXPORT ListNodeBase : public Item <T> {
 public:
     virtual ~ListNodeBase () {}
 
-    virtual const char * nodeName () const { return "#nodebase"; }
-    virtual QString nodeValue () const { return QString (); }
-    virtual void setNodeName (const QString &) {}
-    virtual void setNodeValue (const QString &) {}
-
     typename Item<T>::SharedType nextSibling () const { return m_next; }
     typename Item<T>::SharedType previousSibling () const { return m_prev; }
 protected:
@@ -175,6 +173,7 @@ public:
     virtual ~TreeNode () {}
 
     virtual void appendChild (typename Item<T>::SharedType c);
+    virtual void removeChild (typename Item<T>::SharedType c);
 
     bool hasChildNodes () const { return m_first_child != 0L; }
     typename Item<T>::SharedType parentNode () const { return m_parent; }
@@ -194,37 +193,18 @@ protected:
 class KMPLAYER_EXPORT Attribute : public ListNodeBase <Attribute> {
 public:
     KDE_NO_CDTOR_EXPORT Attribute () {}
-    Attribute (const QString & n, const QString & v);
+    Attribute (const TrieString & n, const QString & v);
     KDE_NO_CDTOR_EXPORT ~Attribute () {}
-    virtual const char * nodeName () const;
-    virtual QString nodeValue () const;
-    virtual void setNodeName (const QString &);
-    virtual void setNodeValue (const QString &);
+    TrieString name () const { return m_name; }
+    QString value () const { return m_value; }
+    void setName (const TrieString &);
+    void setValue (const QString &);
 protected:
-    QString name;
-    QString value;
+    TrieString m_name;
+    QString m_value;
 };
 
 ITEM_AS_POINTER(KMPlayer::Attribute)
-
-/**                                   a  b  0
- * Matrix for coordinate transforms   c  d  0
- *                                    tx ty 1     */
-class Matrix {
-    friend class SizeEvent;
-    float a, b, c, d;
-    int tx, ty; 
-public:
-    Matrix ();
-    Matrix (const Matrix & matrix);
-    Matrix (int xoff, int yoff, float xscale, float yscale);
-    void getXY (int & x, int & y) const;
-    void getXYWH (int & x, int & y, int & w, int & h) const;
-    void transform (const Matrix & matrix);
-    void scale (float sx, float sy);
-    void translate (int x, int y);
-    // void rotate (float phi); // add this when needed
-};
 
 /**
  * Object should scale according the passed Fit value in SizedEvent
@@ -251,54 +231,14 @@ protected:
 
 ITEM_AS_POINTER(KMPlayer::Event)
 
-/**
- * Event signaling that attached region should be repainted
- */
-class PaintEvent : public Event {
-public:
-    PaintEvent (QPainter & p, int x, int y, int w, int h);
-    QPainter & painter;
-    int x, y, w, h;
-};
-
-/**
- * Event signaling that attached region is resized
- */
-class SizeEvent : public Event {
-public:
-    SizeEvent (int x, int y, int w, int h, Fit f, const Matrix & m=Matrix ());
-    int x () const;
-    int y () const;
-    int w () const;
-    int h () const;
-    int _x, _y, _w, _h;
-    Fit fit;
-    Matrix matrix;
-};
-
-// Note, add rotations when needed
-KDE_NO_EXPORT
-inline int SizeEvent::x () const { return int (_x * matrix.a) + matrix.tx; }
-KDE_NO_EXPORT
-inline int SizeEvent::y () const { return int (_y * matrix.d) + matrix.ty; }
-KDE_NO_EXPORT inline int SizeEvent::w () const { return int (_w * matrix.a); }
-KDE_NO_EXPORT inline int SizeEvent::h () const { return int (_h * matrix.d); }
-
-/**
- * Event signaling a pointer event
- */
-class PointerEvent : public Event {
-public:
-    PointerEvent (unsigned int event_id, int x, int y);
-    int x, y;
-};
-
 extern const unsigned int event_pointer_clicked;
 extern const unsigned int event_pointer_moved;
-extern const unsigned int event_paint;
+extern const unsigned int event_inbounds;
+extern const unsigned int event_outbounds;
 extern const unsigned int event_sized;
 extern const unsigned int event_postponed;
 extern const unsigned int event_timer;
+extern const unsigned int mediatype_attached;
 
 // convenient types
 typedef Item<Node>::SharedType NodePtr;
@@ -322,6 +262,8 @@ typedef List<NodeRefItem> NodeRefList;       // ref nodes, eg. event listeners
 typedef Item<NodeRefList>::SharedType NodeRefListPtr;
 typedef Item<NodeRefList>::WeakType NodeRefListPtrW;
 ITEM_AS_POINTER(KMPlayer::NodeRefList)
+typedef Item<Surface>::SharedType SurfacePtr;
+typedef Item<Surface>::WeakType SurfacePtrW;
 
 /*
  * Weak ref of the listeners list from signaler and the listener node
@@ -331,8 +273,9 @@ class KMPLAYER_EXPORT Connection {
 public:
     KDE_NO_CDTOR_EXPORT ~Connection () { disconnect (); }
     void disconnect ();
+    NodePtrW connectee; // the one that will, when ever, trigger the event
 private:
-    Connection (NodeRefListPtr ls, NodePtr node);
+    Connection (NodeRefListPtr ls, NodePtr node, NodePtr invoker);
     NodeRefListPtrW listeners;
     NodeRefItemPtrW listen_item;
 };
@@ -343,7 +286,7 @@ typedef SharedPtr <Connection> ConnectionPtr;
  * Base class for XML nodes. Provides a w3c's DOM like API
  *
  * Most severe traps with using SharedPtr/WeakPtr for tree nodes:
- * - pointer ends up in two independant shared objects (hopefully with
+ * - pointer ends up in two independent shared objects (hopefully with
  *   template specialization for constructor for T* and assignment of T* should
  *   be enough of defences ..)
  * - Node added two times (added ASSERT in appendChild/insertBefore)
@@ -352,7 +295,7 @@ typedef SharedPtr <Connection> ConnectionPtr;
  *   using m_self in the constructor, no SharedPtr storage yet)
  *
  * Livetime of an element is
- |-->state_activated<-->state_began<-->state_finished<-->state_deactivated-->|
+ |-->state_activated<-->state_began<-->state_finished-->state_deactivated-->|
   In scope            begin event    end event         Out scope
  */
 class KMPLAYER_EXPORT Node : public TreeNode <Node> {
@@ -361,6 +304,10 @@ public:
     enum State {
         state_init, state_deferred,
         state_activated, state_began, state_finished, state_deactivated
+    };
+    enum PlayType {
+        play_type_none, play_type_unknown, play_type_info,
+        play_type_image, play_type_audio, play_type_video
     };
     virtual ~Node ();
     Document * document ();
@@ -372,10 +319,13 @@ public:
     QString outerXML () const;
     virtual const char * nodeName () const;
     virtual QString nodeValue () const;
+    virtual void setNodeName (const QString &) {}
+
     /**
      * If this is a derived Mrl object and has a SRC attribute
      */
-    virtual bool isPlayable ();
+    virtual PlayType playType ();
+    bool isPlayable () { return playType () > play_type_none; }
     virtual bool isElementNode () { return false; }
     /**
      * If this node should be visible to the user
@@ -406,11 +356,18 @@ public:
      */
     void propagateEvent (EventPtr event);
     /**
+     * Alternative to event handling is the Visitor pattern
+     */
+    virtual void accept (Visitor *);
+    /*
+     * Returns a listener list for event_id, or a null ptr if not supported.
+     */
+    virtual NodeRefListPtr listeners (unsigned int event_id);
+    /**
      * Adds node to call 'handleEvent()' for all events that gets
      * delivered to this node, ignored by default
      */
-    virtual void registerEventHandler (NodePtr handler);
-    virtual void deregisterEventHandler (NodePtr handler);
+    virtual SurfacePtr getSurface (NodePtr node);
     /**
      * Activates element, sets state to state_activated. Will call activate() on
      * firstChild or call deactivate().
@@ -464,10 +421,6 @@ public:
      * or deactivate() if there is none.
      */
     virtual void childDone (NodePtr child);
-    /**
-     * Get Elements runtime object, guaranteed to be not nil but is volatile
-     */
-    virtual ElementRuntime * getRuntime ();
     virtual void clear ();
     void clearChildren ();
     void appendChild (NodePtr c);
@@ -492,10 +445,6 @@ public:
     virtual void closed ();
 protected:
     Node (NodePtr & d, short _id=0);
-    /*
-     * Returns a listener list for event_id, or a null ptr if not supported.
-     */
-    virtual NodeRefListPtr listeners (unsigned int event_id);
     NodePtr m_doc;
 public:
     State state;
@@ -515,21 +464,41 @@ const short id_node_cdata = 6;
 const short id_node_group_node = 25;
 const short id_node_playlist_document = 26;
 const short id_node_playlist_item = 27;
+const short id_node_param = 28;
+const short id_node_html_object = 29;
+const short id_node_html_embed = 30;
+
 /*
  * Element node, XML node that can have attributes
  */
 class KMPLAYER_EXPORT Element : public Node {
 public:
-    ~Element () {}
+    ~Element ();
     void setAttributes (AttributeListPtr attrs);
-    void setAttribute (const QString & name, const QString & value);
-    QString getAttribute (const QString & name);
+    void setAttribute (const TrieString & name, const QString & value);
+    QString getAttribute (const TrieString & name);
     KDE_NO_EXPORT AttributeListPtr attributes () const { return m_attributes; }
+    virtual void init ();
+    virtual void reset ();
     virtual void clear ();
     virtual bool isElementNode () { return true; }
+    /**
+     * Params are like attributes, but meant to be set dynamically. Caller may
+     * pass a modification id, that it can use to restore the old value.
+     * Param will be auto removed on deactivate
+     */
+    void setParam (const TrieString &para, const QString &val, int * mod_id=0L);
+    QString param (const TrieString & para);
+    void resetParam (const TrieString & para, int mod_id);
+    /**
+     * Called from (re)setParam for specialized interpretation of params
+     **/
+    virtual void parseParam (const TrieString &, const QString &) {}
 protected:
     Element (NodePtr & d, short id=0);
     AttributeListPtr m_attributes;
+private:
+    ElementPrivate * d;
 };
 
 /**
@@ -558,29 +527,30 @@ class KMPLAYER_EXPORT Mrl : public Element {
 protected:
     Mrl (NodePtr & d, short id=0);
     NodePtr childFromTag (const QString & tag);
+    void parseParam (const TrieString &, const QString &);
     unsigned int cached_ismrl_version;
-    bool cached_ismrl;
+    PlayType cached_play_type;
 public:
     ~Mrl ();
-    bool isPlayable ();
+    PlayType playType ();
     /*
-     * If this Mrl hides a child Mrl, return that one or else this one 
+     * The original node (or this) having the URL, needed for playlist expansion
      */ 
-    virtual NodePtr realMrl ();
+    virtual Mrl * linkNode ();
     virtual Mrl * mrl ();
+    virtual void endOfFile ();
     QString absolutePath ();
     /*
      * Reimplement to callback with requestPlayURL if isPlayable()
      */ 
     virtual void activate ();
+    virtual void begin ();
     /**
      * By default support one event handler (eg. SMIL or RP child document)
      */
-    virtual void registerEventHandler (NodePtr handler);
-    virtual void deregisterEventHandler (NodePtr handler);
+    virtual SurfacePtr getSurface (NodePtr node);
     virtual bool handleEvent (EventPtr event);
 
-    NodePtrW event_handler;
     /**
      * If this Mrl is top node of external document, opener has the
      * location in SCR. Typically that's the parent of this node.
@@ -589,10 +559,11 @@ public:
     QString src;
     QString pretty_name;
     QString mimetype;
-    int width;
-    int height;
+    Single width;
+    Single height;
     float aspect;
-    enum { Single = 0, Window } view_mode;
+    int repeat;
+    enum { SingleMode = 0, WindowMode } view_mode;
     bool resolved;
     bool bookmarkable;
 };
@@ -604,7 +575,7 @@ class KMPLAYER_EXPORT PlayListNotify {
 public:
     virtual ~PlayListNotify () {}
     /**
-     * Ask for setting this node current and playing a video/audio mrl
+     * Ask for playing a video/audio mrl by backend players
      * If returning false, the element will be set to finished
      */
     virtual bool requestPlayURL (NodePtr mrl) = 0;
@@ -613,33 +584,17 @@ public:
      */
     virtual bool resolveURL (NodePtr mrl) = 0;
     /**
-     * Ask for setting this node current and playing a video/audio mrl
-     */
-    virtual bool setCurrent (NodePtr mrl) = 0;
-    /**
      * Element has activated or deactivated notification
      */
     virtual void stateElementChanged (Node * element, Node::State old_state, Node::State new_state) = 0;
     /**
-     * Set element to which to send GUI events
+     * Set element to which to send GUI events and return a surface for drawing
      */
-    virtual void setEventDispatcher (NodePtr element) = 0;
+    virtual SurfacePtr getSurface (NodePtr node) = 0;
     /**
      * Request to show msg for informing the user
      */
     virtual void setInfoMessage (const QString & msg) = 0;
-    /**
-     * Some rectangle needs repainting
-     */
-    virtual void repaintRect (int x, int y, int w, int h) = 0;
-    /**
-     * move a rectangle
-     */
-    virtual void moveRect (int x, int y, int w, int h, int x1, int y1) = 0;
-    /**
-     * Sets the video widget postion and background color if bg not NULL
-     */
-    virtual void avWidgetSizes (int x, int y, int w, int h, unsigned int *bg)=0;
     /**
      * Ask for connection bitrates settings
      */
@@ -668,6 +623,32 @@ protected:
 private:
     RemoteObjectPrivate *d;
 };
+
+class KMPLAYER_NO_EXPORT Surface : public TreeNode <Surface> {
+public:
+    Surface (NodePtr node, const SRect & rect);
+    ~Surface();
+
+    virtual SurfacePtr createSurface (NodePtr owner, const SRect & rect) = 0;
+    virtual IRect toScreen (Single x, Single y, Single w, Single h) = 0;
+    virtual void resize (const SRect & rect) = 0;
+    virtual void repaint () = 0;
+    virtual void repaint (const SRect &rect) = 0;
+    virtual void video () = 0;
+    void remove ();                // remove from parent, mark ancestors dirty
+    void markDirty ();             // mark this and ancestors dirty
+
+    NodePtrW node;
+    SRect bounds;                  // bounds in in parent coord. 
+    float xscale, yscale;          // internal scaling
+    unsigned int background_color; // rgba background color
+    bool dirty;                    // a decendant is removed
+#ifdef HAVE_CAIRO
+    cairo_surface_t *surface;
+#endif
+};
+
+ITEM_AS_POINTER(KMPlayer::Surface)
 
 /**
  * To have a somewhat synchronized time base, node having timers should use
@@ -732,16 +713,14 @@ public:
     Document (const QString &, PlayListNotify * notify = 0L);
     ~Document ();
     NodePtr getElementById (const QString & id);
+    NodePtr getElementById (NodePtr start, const QString & id, bool inter_doc);
     /** All nodes have shared pointers to Document,
-     * so explicitly dispose it (calls clean and set m_doc to 0L)
+     * so explicitly dispose it (calls clear and set m_doc to 0L)
      * */
     void dispose ();
     virtual NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return "document"; }
-    /**
-     * Will return false if this document has child nodes
-     */
-    virtual bool isPlayable ();
+    virtual void activate ();
     virtual void defer ();
     virtual void undefer ();
     virtual void reset ();
@@ -751,8 +730,8 @@ public:
      */
     TimerInfoPtrW setTimeout (NodePtr n, int ms, unsigned id=0);
     void cancelTimer (TimerInfoPtr ti);
+    void timeOfDay (struct timeval &);
     PostponePtr postpone ();
-    void proceed ();
     /**
      * Called by PlayListNotify, creates TimerEvent on first item in timers. 
      * Returns true if to repeat this same timeout FIXME.
@@ -763,21 +742,21 @@ public:
      */
     virtual NodeRefListPtr listeners (unsigned int event_id);
     /**
-     * Reimplement, so it will call PlayListNotify::setEventDispatcher
+     * Reimplement, so it will call PlayListNotify::getSurface()
      */
-    virtual void registerEventHandler (NodePtr handler);
-    virtual void deregisterEventHandler (NodePtr handler);
+    virtual SurfacePtr getSurface (NodePtr node);
 
-    NodePtrW rootLayout;
     List <TimerInfo> timers; //FIXME: make as connections
     PlayListNotify * notify_listener;
     unsigned int m_tree_version;
+    unsigned int last_event_time;
 private:
     void proceed (const struct timeval & postponed_time);
     PostponePtrW postpone_ref;
     PostponePtr postpone_lock;
     NodeRefListPtr m_PostponedListeners;
     int cur_timeout;
+    struct timeval first_event_time;
     bool intimer;
 };
 
@@ -789,6 +768,7 @@ public:
     TextNode (NodePtr & d, const QString & s, short _id = id_node_text);
     KDE_NO_CDTOR_EXPORT ~TextNode () {}
     void appendText (const QString & s);
+    void setText (const QString & txt) { text = txt; }
     const char * nodeName () const { return "#text"; }
     QString nodeValue () const;
     bool expose () const;
@@ -820,6 +800,59 @@ protected:
     QString name;
 };
 
+namespace SMIL {
+    class RegionBase;
+    class Region;
+    class Layout;
+    class Transition;
+    class MediaType;
+    class ImageMediaType;
+    class TextMediaType;
+    class RefMediaType;
+    class AVMediaType;
+    class Brush;
+    class TimedMrl;
+    class Anchor;
+    class Area;
+}
+namespace RP {
+    class Imfl;
+    class Crossfade;
+    class Fadein;
+    class Fadeout;
+    class Fill;
+    class Wipe;
+    class ViewChange;
+    class Animate;
+}
+
+class KMPLAYER_NO_EXPORT Visitor {
+public:
+    KDE_NO_CDTOR_EXPORT Visitor () {}
+    KDE_NO_CDTOR_EXPORT virtual ~Visitor () {}
+    virtual void visit (Node *) {}
+    virtual void visit (SMIL::Region *);
+    virtual void visit (SMIL::Layout *);
+    virtual void visit (SMIL::Transition *);
+    virtual void visit (SMIL::TimedMrl *);
+    virtual void visit (SMIL::MediaType *);
+    virtual void visit (SMIL::ImageMediaType *);
+    virtual void visit (SMIL::TextMediaType *);
+    virtual void visit (SMIL::RefMediaType *);
+    virtual void visit (SMIL::AVMediaType *);
+    virtual void visit (SMIL::Brush *);
+    virtual void visit (SMIL::Anchor *);
+    virtual void visit (SMIL::Area *);
+    virtual void visit (RP::Imfl *) {}
+    virtual void visit (RP::Crossfade *) {}
+    virtual void visit (RP::Fadein *) {}
+    virtual void visit (RP::Fadeout *) {}
+    virtual void visit (RP::Fill *) {}
+    virtual void visit (RP::Wipe *) {}
+    virtual void visit (RP::ViewChange *) {}
+    virtual void visit (RP::Animate *) {}
+};
+
 //-----------------------------------------------------------------------------
 
 /**
@@ -827,7 +860,7 @@ protected:
  */
 class KMPLAYER_EXPORT GenericURL : public Mrl { 
 public:
-    GenericURL(NodePtr &d, const QString &s, const QString &n=QString::null);
+    GenericURL(NodePtr &d, const QString &s, const QString &n=QString ());
     KDE_NO_EXPORT const char * nodeName () const { return "url"; }
     void closed ();
 };
@@ -837,15 +870,11 @@ public:
  */
 class KMPLAYER_EXPORT GenericMrl : public Mrl { 
 public:
-    KDE_NO_CDTOR_EXPORT GenericMrl (NodePtr & d) : Mrl (d) {}
-    GenericMrl(NodePtr &d, const QString &s, const QString & name=QString::null, const QString &tag=QString ("mrl"));
+    KDE_NO_CDTOR_EXPORT GenericMrl (NodePtr & d) : Mrl (d), node_name ("mrl") {}
+    GenericMrl(NodePtr &d, const QString &s, const QString & name=QString (), const QString &tag=QString ("mrl"));
     KDE_NO_EXPORT const char * nodeName () const { return node_name.ascii (); }
     void closed ();
     bool expose () const;
-    /**
-     * Will return false if this document has child nodes
-     */
-    bool isPlayable ();
     QString node_name;
 };
 
@@ -924,6 +953,21 @@ inline void TreeNode<T>::appendChild (typename Item<T>::SharedType c) {
         m_last_child = c;
     }
     c->m_parent = Item<T>::m_self;
+}
+
+template <class T>
+inline void TreeNode<T>::removeChild (typename Item<T>::SharedType c) {
+    if (c->m_prev) {
+        c->m_prev->m_next = c->m_next;
+    } else
+        m_first_child = c->m_next;
+    if (c->m_next) {
+        c->m_next->m_prev = c->m_prev;
+        c->m_next = 0L;
+    } else
+        m_last_child = c->m_prev;
+    c->m_prev = 0L;
+    c->m_parent = 0L;
 }
 
 inline KDE_NO_EXPORT NodeListPtr Node::childNodes () const {

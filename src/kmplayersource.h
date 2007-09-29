@@ -77,11 +77,12 @@ public:
     KDE_NO_EXPORT const QString & recordCmd () const { return m_recordcmd; }
     KDE_NO_EXPORT const QString & tuner () const { return m_tuner; }
     KDE_NO_EXPORT NodePtr current () const { return m_current; }
+    QString plugin (const QString &mime) const;
     virtual NodePtr document ();
     virtual NodePtr root ();
     virtual QString filterOptions ();
 
-    void setURL (const KURL & url);
+    virtual void setURL (const KURL & url);
     void insertURL (NodePtr mrl, const QString & url, const QString & title=QString());
     KDE_NO_EXPORT void setSubURL (const KURL & url) { m_sub_url = url; }
     void setLanguages (const QStringList & alang, const QStringList & slang);
@@ -97,6 +98,7 @@ public:
     // backend process state changed
     virtual void stateChange (Process *, Process::State os, Process::State ns);
     KDE_NO_EXPORT void setAutoPlay (bool b) { m_auto_play = b; }
+    KDE_NO_EXPORT bool autoPlay () const { return m_auto_play; }
     void setTitle (const QString & title);
     void setLoading (int percentage);
     bool setCurrent (NodePtr mrl);
@@ -136,11 +138,8 @@ protected:
     bool requestPlayURL (NodePtr mrl);
     bool resolveURL (NodePtr mrl);
     void stateElementChanged (Node * element, Node::State os, Node::State ns);
-    void setEventDispatcher (NodePtr element);
+    SurfacePtr getSurface (NodePtr node);
     void setInfoMessage (const QString & msg);
-    void repaintRect (int x, int y, int w, int h);
-    void moveRect (int x, int y, int w, int h, int x1, int y1);
-    void avWidgetSizes (int x, int y, int w, int h, unsigned int * bg_color);
     void bitRates (int & preferred, int & maximal);
     void setTimeout (int ms);
 
@@ -163,6 +162,7 @@ protected:
     int m_xvencoding;
     QString m_pipecmd;
     QString m_options;
+    QString m_plugin;
 private:
     int m_width;
     int m_height;

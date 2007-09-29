@@ -83,7 +83,7 @@ protected:
 
 class KMPLAYER_NO_EXPORT TVNode : public KMPlayer::GenericMrl {
 public:
-    TVNode (KMPlayer::NodePtr &d, const QString &s, const char * t, short id, const QString &n=QString::null);
+    TVNode (KMPlayer::NodePtr &d, const QString &s, const char * t, short id, const QString &n=QString ());
     virtual void setNodeName (const QString &);
 };
 
@@ -116,7 +116,7 @@ public:
  */
 class KMPLAYER_NO_EXPORT TVDevice : public TVNode {
 public:
-    TVDevice (KMPlayer::NodePtr & d, const QString & d);
+    TVDevice (KMPlayer::NodePtr & d, const QString & s);
     TVDevice (KMPlayer::NodePtr & d);
     ~TVDevice ();
     KMPlayer::NodePtr childFromTag (const QString &);
@@ -135,6 +135,7 @@ class KMPLAYER_NO_EXPORT TVDocument : public FileDocument {
 public:
     TVDocument (KMPlayerTVSource *);
     KMPlayer::NodePtr childFromTag (const QString &);
+    void defer ();
     KDE_NO_EXPORT const char * nodeName () const { return "tvdevices"; }
     void childDone (KMPlayer::NodePtr child);
 };

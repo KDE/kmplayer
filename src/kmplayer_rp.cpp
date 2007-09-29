@@ -17,14 +17,12 @@
  **/
 
 #include <config.h>
+
 #include <qcolor.h>
-#include <qpainter.h>
-#include <qpixmap.h>
 #include <qimage.h>
 #include <qtimer.h>
 
 #include <kdebug.h>
-#include <kurl.h>
 
 #include "kmplayer_rp.h"
 #include "kmplayer_smil.h"
@@ -34,14 +32,29 @@ using namespace KMPlayer;
 
 KDE_NO_CDTOR_EXPORT RP::Imfl::Imfl (NodePtr & d)
   : Mrl (d, id_node_imfl),
-    x (0), y (0), w (0), h (0),
     fit (fit_hidden),
-    width (0), height (0), duration (0),
-    image (0L), cached_image (0L) {}
+    duration (0),
+    needs_scene_img (0) {}
 
 KDE_NO_CDTOR_EXPORT RP::Imfl::~Imfl () {
-    delete image;
-    delete cached_image;
+}
+
+KDE_NO_EXPORT void RP::Imfl::closed () {
+    for (NodePtr n = firstChild (); n; n = n->nextSibling ())
+        if (RP::id_node_head == n->id) {
+            AttributePtr a = convertNode <Element> (n)->attributes ()->first ();
+            for (; a; a = a->nextSibling ()) {
+                if (StringPool::attr_width == a->name ()) {
+                    width = a->value ().toInt ();
+                } else if (StringPool::attr_height == a->name ()) {
+                    height = a->value ().toInt ();
+                } else if (a->name () == "duration") {
+                    int dur;
+                    parseTime (a->value ().lower (), dur);
+                    duration = dur;
+                }
+            }
+        }
 }
 
 KDE_NO_EXPORT void RP::Imfl::defer () {
@@ -64,34 +77,15 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
             case RP::id_node_fadeout:
             case RP::id_node_fill:
             case RP::id_node_wipe:
+            case RP::id_node_viewchange:
                 n->activate (); // set their start timers
                 timings_count++;
                 break;
             case RP::id_node_image:
                 if (!n->active ())
                     n->activate ();
-            case RP::id_node_head:
-                for (AttributePtr a= convertNode <Element> (n)->attributes ()->first (); a; a = a->nextSibling ()) {
-                    if (!strcmp (a->nodeName (), "width")) {
-                        width = a->nodeValue ().toInt ();
-                    } else if (!strcmp (a->nodeName (), "height")) {
-                        height = a->nodeValue ().toInt ();
-                    } else if (!strcmp (a->nodeName (), "duration")) {
-                        parseTime (a->nodeValue ().lower (), duration);
-                    }
-                }
                 break;
         }
-    if (width <= 0 || width > 32000)
-        width = w;
-    if (height <= 0 || height > 32000)
-        height = h;
-    if (width > 0 && height > 0) {
-        image = new QPixmap (width, height);
-        image->fill ();
-    }
-    if (parentNode ())
-        parentNode ()->registerEventHandler (this);
     if (duration > 0)
         duration_timer = document ()->setTimeout (this, duration * 100);
     else if (!timings_count)
@@ -135,53 +129,11 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
     for (NodePtr n = firstChild (); n; n = n->nextSibling ())
         if (n->active ())
             n->deactivate ();
-    delete image;
-    image = 0L;
-    invalidateCachedImage ();
-    if (parentNode ())
-        parentNode ()->deregisterEventHandler (this);
-}
-
-KDE_NO_EXPORT void RP::Imfl::invalidateCachedImage () {
-    delete cached_image;
-    cached_image = 0L;
+    rp_surface = Mrl::getSurface (0L);
 }
 
 KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
-    if (event->id () == event_sized) {
-        SizeEvent * e = static_cast <SizeEvent *> (event.ptr ());
-        x = e->x ();
-        y = e->y ();
-        w = e->w ();
-        h = e->h ();
-        fit = e->fit;
-        matrix = e->matrix;
-        //kdDebug () << "RP::Imfl sized: " << x << "," << y << " " << w << "x" << h << endl;
-    } else if (event->id () == event_paint) {
-        if (active () && image) {
-            PaintEvent * p = static_cast <PaintEvent *> (event.ptr ());
-            //kdDebug () << "RP::Imfl paint: " << x << "," << y << " " << w << "x" << h << endl;
-            if (w == width && h == height) {
-                p->painter.drawPixmap (x, y, *image);
-            } else {
-                int x1=0, y1=0, w1=width, h1=height;
-                if (fit == fit_fill) {
-                    w1 = w;
-                    h1 = h;
-                } else
-                    matrix.getXYWH (x1, y1, w1, h1);
-                if (!cached_image ||
-                        cached_image->width () != w1 ||
-                        cached_image->height () != h1) {
-                    delete cached_image;
-                    QImage img;
-                    img = *image;
-                    cached_image = new QPixmap (img.scale (w1, h1));
-                }
-                p->painter.drawPixmap (x, y, *cached_image);
-            }
-        }
-    } else if (event->id () == event_timer) {
+    if (event->id () == event_timer) {
         TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
         if (te->timer_info == duration_timer) {
             kdDebug () << "RP::Imfl timer " << duration << endl;
@@ -191,6 +143,23 @@ KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
         }
     }
     return true;
+}
+
+KDE_NO_EXPORT void RP::Imfl::accept (Visitor * v) {
+    v->visit (this);
+}
+
+KDE_NO_EXPORT Surface *RP::Imfl::surface () {
+    if (!rp_surface) {
+        rp_surface = Mrl::getSurface (this);
+        if (rp_surface) {
+            if (width <= 0 || width > 32000)
+                width = rp_surface->bounds.width ();
+            if (height <= 0 || height > 32000)
+                height = rp_surface->bounds.height ();
+        }
+    }
+    return rp_surface.ptr ();
 }
 
 KDE_NO_EXPORT NodePtr RP::Imfl::childFromTag (const QString & tag) {
@@ -203,6 +172,8 @@ KDE_NO_EXPORT NodePtr RP::Imfl::childFromTag (const QString & tag) {
         return new RP::Fill (m_doc);
     else if (!strcmp (ctag, "wipe"))
         return new RP::Wipe (m_doc);
+    else if (!strcmp (ctag, "viewchange"))
+        return new RP::ViewChange (m_doc);
     else if (!strcmp (ctag, "crossfade"))
         return new RP::Crossfade (m_doc);
     else if (!strcmp (ctag, "fadein"))
@@ -213,32 +184,46 @@ KDE_NO_EXPORT NodePtr RP::Imfl::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void RP::Imfl::repaint () {
-    PlayListNotify * n = document()->notify_listener;
     if (!active ())
         kdWarning () << "Spurious Imfl repaint" << endl;
-    else if (n && w > 0 && h > 0)
-        n->repaintRect (x, y, w, h);
+    else if (surface () && width > 0 && height > 0)
+        rp_surface->repaint (SRect (0, 0, width, height));
 }
 
 KDE_NO_CDTOR_EXPORT RP::Image::Image (NodePtr & doc)
- : Mrl (doc, id_node_image), image (0L) {}
+ : Mrl (doc, id_node_image)
+{}
 
 KDE_NO_CDTOR_EXPORT RP::Image::~Image () {
-    delete image;
 }
 
 KDE_NO_EXPORT void RP::Image::closed () {
-    src = getAttribute ("name");
+    src = getAttribute (StringPool::attr_name);
 }
 
 KDE_NO_EXPORT void RP::Image::activate () {
     kdDebug () << "RP::Image::activate" << endl;
     setState (state_activated);
     isPlayable (); // update src attribute
-    wget (absolutePath ());
+    cached_img.setUrl (absolutePath ());
+    if (cached_img.isEmpty ()) {
+        wget (absolutePath ());
+    } else {
+        width = cached_img.data->image->width ();
+        height = cached_img.data->image->height ();
+    }
+}
+
+KDE_NO_EXPORT void RP::Image::begin () {
+    Node::begin ();
 }
 
 KDE_NO_EXPORT void RP::Image::deactivate () {
+    cached_img.setUrl (QString ());
+    if (img_surface) {
+        img_surface->remove ();
+        img_surface = NULL;
+    }
     setState (state_deactivated);
     postpone_lock = 0L;
 }
@@ -246,16 +231,17 @@ KDE_NO_EXPORT void RP::Image::deactivate () {
 
 KDE_NO_EXPORT void RP::Image::remoteReady (QByteArray & data) {
     kdDebug () << "RP::Image::remoteReady" << endl;
-    if (!data.isEmpty ()) {
+    if (!data.isEmpty () && cached_img.isEmpty ()) {
         QImage * img = new QImage (data);
         if (!img->isNull ()) {
-            image = img;
-            image->setAlphaBuffer (true);
-        } else
+            cached_img.data->image = img;
+            width = img->width ();
+            height = img->height ();
+        } else {
             delete img;
+        }
     }
     postpone_lock = 0L;
-    kdDebug () << "RP::Image::remoteReady " << (void *) image << endl;
 }
 
 KDE_NO_EXPORT bool RP::Image::isReady (bool postpone_if_not) {
@@ -264,28 +250,56 @@ KDE_NO_EXPORT bool RP::Image::isReady (bool postpone_if_not) {
     return !downloading ();
 }
 
+KDE_NO_EXPORT Surface *RP::Image::surface () {
+    if (!img_surface && !cached_img.isEmpty ()) {
+        Node * p = parentNode ().ptr ();
+        if (p && p->id == RP::id_node_imfl) {
+            Surface *ps = static_cast <RP::Imfl *> (p)->surface ();
+            if (ps)
+                img_surface = ps->createSurface (this,
+                        SRect (0, 0, width, height));
+        }
+    }
+    return img_surface;
+}
+
 KDE_NO_CDTOR_EXPORT RP::TimingsBase::TimingsBase (NodePtr & d, const short i)
- : Element (d, i), start (0), duration (0), x (0), y (0), w (0), h (0) {}
+ : Element (d, i), x (0), y (0), w (0), h (0), start (0), duration (0) {}
 
 KDE_NO_EXPORT void RP::TimingsBase::activate () {
     setState (state_activated);
+    x = y = w = h = 0;
+    srcx = srcy = srcw = srch = 0;
     for (Attribute * a= attributes ()->first ().ptr (); a; a = a->nextSibling ().ptr ()) {
-        if (!strcasecmp (a->nodeName (), "start"))
-            parseTime (a->nodeValue ().lower (), start);
-        else if (!strcasecmp (a->nodeName (), "duration"))
-            parseTime (a->nodeValue ().lower (), duration);
-        else if (!strcasecmp (a->nodeName (), "target")) {
+        if (a->name () == StringPool::attr_target) {
             for (NodePtr n = parentNode()->firstChild(); n; n= n->nextSibling())
-                if (convertNode <Element> (n)->getAttribute ("handle") == a->nodeValue ())
+                if (convertNode <Element> (n)->
+                        getAttribute ("handle") == a->value ())
                     target = n;
-        } else if (!strcasecmp (a->nodeName (), "dstx")) {
-            x = a->nodeValue ().toInt ();
-        } else if (!strcasecmp (a->nodeName (), "dsty")) {
-            y = a->nodeValue ().toInt ();
-        } else if (!strcasecmp (a->nodeName (), "dstw")) {
-            w = a->nodeValue ().toInt ();
-        } else if (!strcasecmp (a->nodeName (), "dsth")) {
-            h = a->nodeValue ().toInt ();
+        } else if (a->name () == "start") {
+            int dur;
+            parseTime (a->value ().lower (), dur);
+            start = dur;
+        } else if (a->name () == "duration") {
+            int dur;
+            parseTime (a->value ().lower (), dur);
+            duration = dur;
+        } else if (a->name () == "dstx") {
+            x = a->value ().toInt ();
+        } else if (a->name () == "dsty") {
+            y = a->value ().toInt ();
+        } else if (a->name () == "dstw") {
+            w = a->value ().toInt ();
+        } else if (a->name () == "dsth") {
+            h = a->value ().toInt ();
+        } else if (a->name () == "srcx") {
+            srcx = a->value ().toInt ();
+        } else if (a->name () == "srcy") {
+            srcy = a->value ().toInt ();
+        } else if (a->name () == "srcw") {
+            srcw = a->value ().toInt ();
+        } else if (a->name () == "srch") {
+            srch = a->value ().toInt ();
         }
     }
     start_timer = document ()->setTimeout (this, start *100);
@@ -324,6 +338,7 @@ KDE_NO_EXPORT bool RP::TimingsBase::handleEvent (EventPtr event) {
 }
 
 KDE_NO_EXPORT void RP::TimingsBase::begin () {
+    progress = 0;
     setState (state_began);
     if (target)
         target->begin ();
@@ -334,10 +349,15 @@ KDE_NO_EXPORT void RP::TimingsBase::begin () {
     }
 }
 
-KDE_NO_EXPORT void RP::TimingsBase::update (int /*percentage*/) {
+KDE_NO_EXPORT void RP::TimingsBase::update (int percentage) {
+    progress = percentage;
+    Node * p = parentNode ().ptr ();
+    if (p->id == RP::id_node_imfl)
+        static_cast <RP::Imfl *> (p)->repaint ();
 }
 
 KDE_NO_EXPORT void RP::TimingsBase::finish () {
+    progress = 100;
     if (start_timer) {
         document ()->cancelTimer (start_timer);
         start_timer = 0;
@@ -358,7 +378,7 @@ KDE_NO_EXPORT void RP::Crossfade::activate () {
 }
 
 KDE_NO_EXPORT void RP::Crossfade::begin () {
-    kdDebug () << "RP::Crossfade::begin" << endl;
+    //kdDebug () << "RP::Crossfade::begin" << endl;
     TimingsBase::begin ();
     if (target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
@@ -369,41 +389,18 @@ KDE_NO_EXPORT void RP::Crossfade::begin () {
     }
 }
 
-KDE_NO_EXPORT void RP::Crossfade::update (int percentage) {
-    if (percentage > 0 && percentage < 100)
-        return; // we do no crossfading yet, just paint the first and last time
-    Node * p = parentNode ().ptr ();
-    if (p->id != RP::id_node_imfl) {
-        kdWarning () << "crossfade update: no imfl parent found" << endl;
-        return;
-    }
-    RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
-    if (imfl->image && target && target->id == id_node_image) {
-        RP::Image * img = static_cast <RP::Image *> (target.ptr ());
-        if (img->image) {
-            QPainter painter;
-            painter.begin (imfl->image);
-            painter.drawImage (x, y, *img->image);
-            painter.end ();
-            imfl->invalidateCachedImage ();
-            imfl->repaint ();
-        }
-    }
+KDE_NO_EXPORT void RP::Crossfade::accept (Visitor * v) {
+    v->visit (this);
 }
 
 KDE_NO_EXPORT void RP::Fadein::activate () {
     // pickup color from Fill that should be declared before this node
     from_color = 0;
-    for (NodePtr n = previousSibling (); n; n = n->previousSibling ())
-        if (n->id == id_node_fill) {
-            from_color = convertNode <RP::Fill> (n)->fillColor ();
-            break;
-        }
     TimingsBase::activate ();
 }
 
 KDE_NO_EXPORT void RP::Fadein::begin () {
-    kdDebug () << "RP::Fadein::begin" << endl;
+    //kdDebug () << "RP::Fadein::begin" << endl;
     TimingsBase::begin ();
     if (target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
@@ -414,33 +411,8 @@ KDE_NO_EXPORT void RP::Fadein::begin () {
     }
 }
 
-KDE_NO_EXPORT void RP::Fadein::update (int percentage) {
-    Node * p = parentNode ().ptr ();
-    if (p->id != RP::id_node_imfl) {
-        kdWarning () << "fadein begin: no imfl parent found" << endl;
-        return;
-    }
-    RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
-    if (imfl->image && target && target->id == id_node_image) {
-        RP::Image * img = static_cast <RP::Image *> (target.ptr ());
-        if (img->image) {
-            QPainter painter;
-            painter.begin (imfl->image);
-            painter.drawImage (x, y, *img->image);
-            //QImage alpha (img->image->width(), img->image->height(), img->image->depth ());
-            //alpha.setAlphaBuffer (true);
-            //alpha.fill (((0x00ff * (100 - percentage) / 100) << 24) | (0xffffff & from_color));
-            //painter.fillRect (x, y, img->image->width(), img->image->height(), QBrush (QColor (((0x00ff * (100 - percentage) / 100) << 24) | (0xffffff & from_color)), Qt::Dense7Pattern));
-            if (percentage < 90) {
-                int brush_pat = ((int) Qt::SolidPattern) + 10 * percentage / 125;
-                painter.fillRect (x, y, img->image->width(), img->image->height(), QBrush (QColor (from_color), (Qt::BrushStyle) brush_pat));
-            }
-            //painter.drawImage (x, y, alpha, Qt::OrderedAlphaDither);
-            painter.end ();
-            imfl->invalidateCachedImage ();
-            imfl->repaint ();
-        }
-    }
+KDE_NO_EXPORT void RP::Fadein::accept (Visitor * v) {
+    v->visit (this);
 }
 
 KDE_NO_EXPORT void RP::Fadeout::activate () {
@@ -449,30 +421,12 @@ KDE_NO_EXPORT void RP::Fadeout::activate () {
 }
 
 KDE_NO_EXPORT void RP::Fadeout::begin () {
-    kdDebug () << "RP::Fadeout::begin" << endl;
+    //kdDebug () << "RP::Fadeout::begin" << endl;
     TimingsBase::begin ();
 }
 
-KDE_NO_EXPORT void RP::Fadeout::update (int percentage) {
-    Node * p = parentNode ().ptr ();
-    if (p->id == RP::id_node_imfl) {
-        RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
-        if (imfl->image) {
-            int brush_pat = ((int) Qt::Dense7Pattern) - 10 * percentage / 126;
-            int pw = w;
-            int ph = h;
-            if (!w || !h) {
-                pw = imfl->image->width ();
-                ph = imfl->image->height ();
-            }
-            QPainter painter;
-            painter.begin (imfl->image);
-            painter.fillRect (x, y, pw, ph, QBrush (QColor (to_color), (Qt::BrushStyle) brush_pat));
-            painter.end ();
-            imfl->invalidateCachedImage ();
-            imfl->repaint ();
-        }
-    }
+KDE_NO_EXPORT void RP::Fadeout::accept (Visitor * v) {
+    v->visit (this);
 }
 
 KDE_NO_EXPORT void RP::Fill::activate () {
@@ -481,23 +435,12 @@ KDE_NO_EXPORT void RP::Fill::activate () {
 }
 
 KDE_NO_EXPORT void RP::Fill::begin () {
-    TimingsBase::begin ();
-    Node * p = parentNode ().ptr ();
-    if (p->id == RP::id_node_imfl) {
-        RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
-        if (imfl->image) {
-            if (!w || !h) {
-                imfl->image->fill (color);
-            } else {
-                QPainter painter;
-                painter.begin (imfl->image);
-                painter.fillRect (x, y, w, h, QBrush (color));
-                painter.end ();
-            }
-            imfl->invalidateCachedImage ();
-            imfl->repaint ();
-        }
-    }
+    setState (state_began);
+    update (0);
+}
+
+KDE_NO_EXPORT void RP::Fill::accept (Visitor * v) {
+    v->visit (this);
 }
 
 KDE_NO_EXPORT void RP::Wipe::activate () {
@@ -514,7 +457,7 @@ KDE_NO_EXPORT void RP::Wipe::activate () {
 }
 
 KDE_NO_EXPORT void RP::Wipe::begin () {
-    kdDebug () << "RP::Wipe::begin" << endl;
+    //kdDebug () << "RP::Wipe::begin" << endl;
     TimingsBase::begin ();
     if (target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
@@ -525,43 +468,30 @@ KDE_NO_EXPORT void RP::Wipe::begin () {
     }
 }
 
-KDE_NO_EXPORT void RP::Wipe::update (int percentage) {
+KDE_NO_EXPORT void RP::Wipe::accept (Visitor * v) {
+    v->visit (this);
+}
+
+KDE_NO_EXPORT void RP::ViewChange::activate () {
+    TimingsBase::activate ();
+}
+
+KDE_NO_EXPORT void RP::ViewChange::begin () {
+    kdDebug () << "RP::ViewChange::begin" << endl;
+    setState (state_began);
     Node * p = parentNode ().ptr ();
-    if (p->id != RP::id_node_imfl) {
-        kdWarning () << "wipe update: no imfl parent found" << endl;
-        return;
-    }
-    RP::Imfl * imfl = static_cast <RP::Imfl *> (p);
-    if (imfl->image && target && target->id == id_node_image) {
-        RP::Image * img = static_cast <RP::Image *> (target.ptr ());
-        if (img->image) {
-            QPainter painter;
-            painter.begin (imfl->image);
-            int dx = x, dy = y;
-            int sx = 0, sy = 0;
-            int sw = img->image->width ();
-            int sh = img->image->height ();
-            if (direction == dir_right) {
-                int iw = sw * percentage / 100;
-                sx = sw - iw;
-                sw = iw;
-            } else if (direction == dir_left) {
-                int iw = sw * percentage / 100;
-                dx += sw - iw;
-                sw = iw;
-            } else if (direction == dir_down) {
-                int ih = sh * percentage / 100;
-                sy = sh - ih;
-                sh = ih;
-            } else if (direction == dir_up) {
-                int ih = sh * percentage / 100;
-                dy += sh - ih;
-                sh = ih;
-            }
-            painter.drawImage (dx, dy, *img->image, sx, sy, sw, sh);
-            painter.end ();
-            imfl->invalidateCachedImage ();
-            imfl->repaint ();
-        }
-    }
+    if (p->id == RP::id_node_imfl)
+        static_cast <RP::Imfl *> (p)->needs_scene_img++;
+    update (0);
+}
+
+KDE_NO_EXPORT void RP::ViewChange::finish () {
+    Node * p = parentNode ().ptr ();
+    if (p && p->id == RP::id_node_imfl)
+        static_cast <RP::Imfl *> (p)->needs_scene_img--;
+    TimingsBase::finish ();
+}
+
+KDE_NO_EXPORT void RP::ViewChange::accept (Visitor * v) {
+    v->visit (this);
 }

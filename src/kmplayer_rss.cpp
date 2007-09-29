@@ -22,21 +22,22 @@
 
 using namespace KMPlayer;
 
-NodePtr RSS::Rss::childFromTag (const QString & tag) {
+KDE_NO_EXPORT NodePtr RSS::Rss::childFromTag (const QString & tag) {
     if (!strcmp (tag.latin1 (), "channel"))
         return new RSS::Channel (m_doc);
     return 0L;
 }
 
-NodePtr RSS::Channel::childFromTag (const QString & tag) {
-    if (!strcmp (tag.latin1 (), "item"))
+KDE_NO_EXPORT NodePtr RSS::Channel::childFromTag (const QString & tag) {
+    const char *ctag = tag.ascii ();
+    if (!strcmp (ctag, "item"))
         return new RSS::Item (m_doc);
-    else if (!strcmp (tag.latin1 (), "title"))
+    else if (!strcmp (ctag, "title"))
         return new DarkNode (m_doc, tag, id_node_title);
     return 0L;
 }
 
-void RSS::Channel::closed () {
+KDE_NO_EXPORT void RSS::Channel::closed () {
     for (NodePtr c = firstChild (); c; c = c->nextSibling ())
         if (c->id == id_node_title) {
             pretty_name = c->innerText ().simplifyWhiteSpace ();
@@ -44,47 +45,86 @@ void RSS::Channel::closed () {
         }
 }
 
-bool RSS::Channel::expose () const {
+KDE_NO_EXPORT bool RSS::Channel::expose () const {
     return !pretty_name.isEmpty () || //return false if no title and only one
         previousSibling () || nextSibling ();
 }
 
-NodePtr RSS::Item::childFromTag (const QString & tag) {
-    if (!strcmp (tag.latin1 (), "enclosure"))
+KDE_NO_EXPORT NodePtr RSS::Item::childFromTag (const QString & tag) {
+    const char *ctag = tag.ascii ();
+    if (!strcmp (ctag, "enclosure"))
         return new RSS::Enclosure (m_doc);
-    else if (!strcmp (tag.latin1 (), "title"))
+    else if (!strcmp (ctag, "title"))
         return new DarkNode (m_doc, tag, id_node_title);
-    else if (!strcmp (tag.latin1 (), "description"))
+    else if (!strcmp (ctag, "description"))
         return new DarkNode (m_doc, tag, id_node_description);
     return 0L;
 }
 
-void RSS::Item::closed () {
+KDE_NO_EXPORT void RSS::Item::closed () {
+    cached_play_type = play_type_none;
     for (NodePtr c = firstChild (); c; c = c->nextSibling ()) {
-        if (c->id == id_node_title)
-            pretty_name = c->innerText ().simplifyWhiteSpace ();
-        if (c->isPlayable ())
-            src = c->mrl ()->src;
+        switch (c->id) {
+            case id_node_title:
+                pretty_name = c->innerText ().simplifyWhiteSpace ();
+                break;
+            case id_node_enclosure:
+                enclosure = c;
+                src = c->mrl ()->src;
+                break;
+            case id_node_description:
+                cached_play_type = play_type_info;
+                break;
+        }
     }
+    if (enclosure && !enclosure->mrl ()->src.isEmpty ())
+        cached_play_type = play_type_audio;
 }
 
-void RSS::Item::activate () {
+KDE_NO_EXPORT Mrl * RSS::Item::linkNode () {
+    if (enclosure)
+        return enclosure->mrl ();
+    return Mrl::linkNode ();
+}
+
+KDE_NO_EXPORT void RSS::Item::activate () {
     PlayListNotify * n = document()->notify_listener;
     if (n) {
         for (NodePtr c = firstChild (); c; c = c->nextSibling ())
-            if (c->id == id_node_description)
-                n->setInfoMessage (c->innerText ());
+            if (c->id == id_node_description) {
+                QString s = c->innerText ();
+                n->setInfoMessage (s);
+                if (!enclosure && !s.isEmpty ()) {
+                    setState (state_activated);
+                    begin ();
+                    timer = document ()->setTimeout (this, 5000+s.length()*200);
+                    return;
+                }
+                break;
+            }
     }
     Mrl::activate ();
 }
 
-void RSS::Item::deactivate () {
+KDE_NO_EXPORT void RSS::Item::deactivate () {
+    if (timer) {
+        document ()->cancelTimer (timer);
+        timer = 0L;
+    }
     PlayListNotify * n = document()->notify_listener;
     if (n)
-        n->setInfoMessage (QString::null);
+        n->setInfoMessage (QString ());
     Mrl::deactivate ();
 }
 
-void RSS::Enclosure::closed () {
-    src = getAttribute (QString::fromLatin1 ("url"));
+KDE_NO_EXPORT bool RSS::Item::handleEvent (EventPtr event) {
+    if (event->id () == event_timer) {
+        timer = 0L;
+        finish ();
+    }
+    return true;
+}
+
+KDE_NO_EXPORT void RSS::Enclosure::closed () {
+    src = getAttribute (StringPool::attr_url);
 }

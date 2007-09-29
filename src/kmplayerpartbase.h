@@ -19,6 +19,8 @@
 #ifndef KMPLAYERPARTBASE_H
 #define KMPLAYERPARTBASE_H
 
+#include <config.h>
+
 #include "kmplayer_def.h"
 
 #include <qobject.h>
@@ -74,6 +76,7 @@ public:
     virtual bool hasLength ();
     virtual QString prettyName ();
     virtual void reset ();
+    virtual void setURL (const KURL & url);
 public slots:
     virtual void init ();
     virtual void activate ();
@@ -114,7 +117,7 @@ class KMPLAYER_EXPORT PartBase : public KMediaPlayer::Player {
     K_DCOP
 public:
     typedef QMap <QString, Process *> ProcessMap;
-    PartBase (QWidget * parent,  const char * wname,QObject * parent, const char * name, KConfig *);
+    PartBase (QWidget * parent,  const char * wname,QObject * objectParent, const char * name, KConfig *);
     ~PartBase ();
     void init (KActionCollection * = 0L);
     virtual KMediaPlayer::View* view ();
@@ -125,10 +128,9 @@ public:
     KURL url () const { return m_sources ["urlsource"]->url (); }
     void setURL (const KURL & url) { m_sources ["urlsource"]->setURL (url); }
 
-    /* Changes the process,
-     * calls setSource if process was playing
-     * */
+    /* Changes the backend process */
     void setProcess (const char *);
+    bool setProcess (Mrl *mrl);
     void setRecorder (const char *);
 
     /* Changes the source,
@@ -150,6 +152,10 @@ public:
     void updatePlayerMenu (ControlPanel *);
     void updateInfo (const QString & msg);
     void updateStatus (const QString & msg);
+#ifdef HAVE_DBUS
+    void setServiceName (const QString & srv) { m_service = srv; }
+    QString serviceName () const { return m_service; }
+#endif
 
     // these are called from Process
     void changeURL (const QString & url);
@@ -225,6 +231,7 @@ protected slots:
 protected:
     KConfig * m_config;
     QGuardedPtr <View> m_view;
+    QMap <QString, QString> temp_backends;
     Settings * m_settings;
     Process * m_process;
     Process * m_recorder;
@@ -235,6 +242,9 @@ protected:
     BookmarkManager * m_bookmark_manager;
     BookmarkOwner * m_bookmark_owner;
     KBookmarkMenu * m_bookmark_menu;
+#ifdef HAVE_DBUS
+    QString m_service;
+#endif
     int m_record_timer;
     int m_update_tree_timer;
     bool m_noresize : 1;
@@ -258,6 +268,7 @@ public:
     bool get (const QString &, QByteArray &);
     bool preserve (const QString &);
     bool unpreserve (const QString &);
+    bool isPreserved (const QString &);
 signals:
     void preserveRemoved (const QString &); // ready or canceled
 };
@@ -280,6 +291,7 @@ private slots:
     void cachePreserveRemoved (const QString &);
 private:
     RemoteObject * remote_object;
+    bool preserve_wait;
 };
 
 } // namespace

@@ -22,7 +22,6 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif 
-
 #include <qwidget.h>
 #include <qguardedptr.h>
 #include <qtextedit.h>
@@ -33,6 +32,8 @@
 #include <kmediaplayer/view.h>
 
 #include "kmplayersource.h"
+
+#define MOUSE_INVISIBLE_DELAY 2000
 
 class QWidgetStack;
 class QPixmap;
@@ -51,71 +52,16 @@ class KFindDialog;
 namespace KMPlayer {
 
 class View;
+class ViewArea;
 class Viewer;
 class ControlPanel;
 class VolumeBar;
 class Console;
 class PlayListView;
-class ViewAreaPrivate;
 class PlayListView;
 class RootPlayListItem;
 
 typedef KStatusBar StatusBar;
-
-/*
- * The area in which the video widget and controlpanel are laid out
- */
-class KMPLAYER_EXPORT ViewArea : public QWidget {
-    Q_OBJECT
-public:
-    ViewArea (QWidget * parent, View * view);
-    ~ViewArea ();
-    KDE_NO_EXPORT bool isFullScreen () const { return m_fullscreen; }
-    KDE_NO_EXPORT bool isMinimalMode () const { return m_minimal; }
-    KDE_NO_EXPORT KActionCollection * actionCollection () const { return m_collection; }
-    KDE_NO_EXPORT QRect topWindowRect () const { return m_topwindow_rect; }
-    void setEventListener (NodePtr rl);
-    void setAudioVideoGeometry (int x, int y, int w, int y, unsigned int * bg);
-    void mouseMoved ();
-    void scheduleRepaint (int x, int y, int w, int y);
-    void moveRect (int x, int y, int w, int h, int x1, int y1);
-    void resizeEvent (QResizeEvent *);
-    void minimalMode ();
-public slots:
-    void fullScreen ();
-    void accelActivated ();
-    void scale (int);
-protected:
-    void showEvent (QShowEvent *);
-    void mouseMoveEvent (QMouseEvent *);
-    void mousePressEvent (QMouseEvent *);
-    void mouseDoubleClickEvent (QMouseEvent *);
-    void dragEnterEvent (QDragEnterEvent *);
-    void dropEvent (QDropEvent *);
-    void contextMenuEvent (QContextMenuEvent * e);
-    void paintEvent (QPaintEvent *);
-    void timerEvent (QTimerEvent * e);
-    void closeEvent (QCloseEvent * e);
-private:
-    void syncVisual (QRect rect);
-    ViewAreaPrivate * d;
-    QWidget * m_parent;
-    View * m_view;
-    QPainter * m_painter;
-    QPaintDevice * m_paint_buffer;
-    KActionCollection * m_collection;
-    NodePtrW eventListener;
-    QRect m_av_geometry;
-    QRect m_repaint_rect;
-    QRect m_topwindow_rect;
-    int m_mouse_invisible_timer;
-    int m_repaint_timer;
-    int m_fullscreen_scale;
-    int scale_lbl_id;
-    int scale_slider_id;
-    bool m_fullscreen;
-    bool m_minimal;
-};
 
 /*
  * The console GUI
@@ -185,6 +131,7 @@ public:
     KDE_NO_EXPORT StatusBarMode statusBarMode () const { return m_statusbar_mode; }
     void delayedShowButtons (bool show);
     bool isFullScreen () const;
+    int statusBarHeight () const;
     KDE_NO_EXPORT bool editMode () const { return m_edit_mode; }
     bool setPicture (const QString & path);
     KDE_NO_EXPORT QPixmap * image () const { return m_image; }
@@ -192,6 +139,7 @@ public:
     void setViewOnly ();
     void setInfoPanelOnly ();
     void setPlaylistOnly ();
+    bool playlistVisible () const { return !m_dock_playlist->mayBeShow (); }
     void setEditMode (RootPlayListItem *, bool enable=true);
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
@@ -216,9 +164,9 @@ signals:
     void fullScreenChanged ();
     void windowVideoConsoleToggled (int wt);
 protected:
-    void leaveEvent (QEvent *);
-    void timerEvent (QTimerEvent *);
-    bool x11Event (XEvent *);
+    void leaveEvent (QEvent *) KDE_NO_EXPORT;
+    void timerEvent (QTimerEvent *) KDE_NO_EXPORT;
+    bool x11Event (XEvent *) KDE_NO_EXPORT;
 private:
     // widget for player's output
     Viewer * m_viewer;
@@ -248,6 +196,7 @@ private:
     ControlPanelMode m_old_controlpanel_mode;
     StatusBarMode m_statusbar_mode;
     int controlbar_timer;
+    int infopanel_timer;
     bool m_keepsizeratio;
     bool m_playing;
     bool m_mixer_init;
@@ -277,6 +226,7 @@ public:
     void resetBackgroundColor ();
     void setCurrentBackgroundColor (const QColor & c);
     KDE_NO_EXPORT View * view () const { return m_view; }
+    void changeProtocol (QXEmbed::Protocol p);
 public slots:
     void sendConfigureEvent ();
 protected:
@@ -284,7 +234,9 @@ protected:
     void dropEvent (QDropEvent *);
     void mouseMoveEvent (QMouseEvent * e);
     void contextMenuEvent (QContextMenuEvent * e);
+    virtual void windowChanged( WId w );
 private:
+    WId m_plain_window;
     unsigned int m_bgcolor;
     float m_aspect;
     View * m_view;

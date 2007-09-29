@@ -179,7 +179,7 @@ public slots:
     void recorderClicked (int id);
 private slots:
     void slotRecord ();
-    void slotNotPlaying ();
+    void playingStopped ();
     void sourceChanged (KMPlayer::Source *, KMPlayer::Source *);
     void recordingStarted ();
     void recordingFinished ();

@@ -29,6 +29,7 @@
 #include <qregexp.h>
 
 #include <kurl.h>
+#include <kio/global.h>
 
 #include "kmplayerconfig.h"
 #include "kmplayersource.h"
@@ -38,6 +39,7 @@ class KProcess;
 
 namespace KIO {
     class Job;
+    class TransferJob;
 }
 
 namespace KMPlayer {
@@ -97,7 +99,7 @@ protected slots:
 protected:
     void setState (State newstate);
     virtual bool deMediafiedPlay ();
-    void terminateJob ();
+    virtual void terminateJobs ();
     Source * m_source;
     Settings * m_settings;
     NodePtrW m_mrl;
@@ -163,6 +165,7 @@ public slots:
     virtual bool contrast (int pos, bool absolute);
     virtual bool brightness (int pos, bool absolute);
     MPlayerPreferencesPage * configPage () const { return m_configpage; }
+    bool ready (Viewer *);
 protected slots:
     void processStopped (KProcess *);
 private slots:
@@ -243,7 +246,8 @@ public slots:
 /*
  * MPlayer recorder, runs 'mplayer -dumpstream'
  */
-class MPlayerDumpstream : public MPlayerBase, public Recorder {
+class KMPLAYER_NO_EXPORT MPlayerDumpstream
+  : public MPlayerBase, public Recorder {
     Q_OBJECT
 public:
     MPlayerDumpstream (QObject * parent, Settings * settings);
@@ -317,7 +321,7 @@ protected:
 /*
  * Config document as used by kxineplayer backend
  */
-struct KMPLAYER_EXPORT ConfigDocument : public Document {
+struct KMPLAYER_NO_EXPORT ConfigDocument : public Document {
     ConfigDocument ();
     ~ConfigDocument ();
     NodePtr childFromTag (const QString & tag);
@@ -326,7 +330,7 @@ struct KMPLAYER_EXPORT ConfigDocument : public Document {
 /*
  * Element for ConfigDocument
  */
-struct KMPLAYER_EXPORT ConfigNode : public DarkNode {
+struct KMPLAYER_NO_EXPORT ConfigNode : public DarkNode {
     ConfigNode (NodePtr & d, const QString & tag);
     KDE_NO_CDTOR_EXPORT ~ConfigNode () {}
     NodePtr childFromTag (const QString & tag);
@@ -336,7 +340,7 @@ struct KMPLAYER_EXPORT ConfigNode : public DarkNode {
 /*
  * Element for ConfigDocument, defining type of config item
  */
-struct KMPLAYER_EXPORT TypeNode : public ConfigNode {
+struct KMPLAYER_NO_EXPORT TypeNode : public ConfigNode {
     TypeNode (NodePtr & d, const QString & t);
     KDE_NO_CDTOR_EXPORT ~TypeNode () {}
     NodePtr childFromTag (const QString & tag);
@@ -349,7 +353,7 @@ struct KMPLAYER_EXPORT TypeNode : public ConfigNode {
 /*
  * Preference page for XML type of docuement
  */
-class KMPLAYER_EXPORT XMLPreferencesPage : public PreferencesPage {
+class KMPLAYER_NO_EXPORT XMLPreferencesPage : public PreferencesPage {
 public:
     XMLPreferencesPage (CallbackProcess *);
     ~XMLPreferencesPage ();
@@ -366,7 +370,7 @@ private:
 /*
  * Xine backend process
  */
-class Xine : public CallbackProcess, public Recorder {
+class KMPLAYER_NO_EXPORT Xine : public CallbackProcess, public Recorder {
     Q_OBJECT
 public:
     Xine (QObject * parent, Settings * settings);
@@ -378,7 +382,7 @@ public slots:
 /*
  * GStreamer backend process
  */
-class GStreamer : public CallbackProcess {
+class KMPLAYER_NO_EXPORT GStreamer : public CallbackProcess {
     Q_OBJECT
 public:
     GStreamer (QObject * parent, Settings * settings);
@@ -402,6 +406,92 @@ public slots:
     virtual bool quit ();
 private slots:
     void processStopped (KProcess *);
+};
+
+/*
+ * npplayer backend
+ */
+
+class KMPLAYER_NO_EXPORT NpStream : public QObject {
+    Q_OBJECT
+public:
+    enum Reason {
+        NoReason = -1,
+        BecauseDone = 0, BecauseError = 1, BecauseStopped = 2
+    };
+
+    NpStream (QObject *parent, Q_UINT32 stream_id, const KURL & url);
+    ~NpStream ();
+
+    void open ();
+    void close ();
+
+    KURL url;
+    QByteArray pending_buf;
+    KIO::TransferJob *job;
+    timeval data_arrival;
+    Q_UINT32 bytes;
+    Q_UINT32 stream_id;
+    Q_UINT32 content_length;
+    Reason finish_reason;
+    QString mimetype;
+signals:
+    void stateChanged ();
+    void redirected (Q_UINT32, const KURL &);
+private slots:
+    void slotResult (KIO::Job*);
+    void slotData (KIO::Job*, const QByteArray& qb);
+    void redirection (KIO::Job *, const KURL &url);
+    void slotMimetype (KIO::Job *, const QString &mime);
+    void slotTotalSize (KIO::Job *, KIO::filesize_t sz);
+};
+
+class KMPLAYER_NO_EXPORT NpPlayer : public Process {
+    Q_OBJECT
+public:
+    NpPlayer (QObject * parent, Settings * settings, const QString & srv);
+    ~NpPlayer ();
+    virtual void init ();
+    virtual bool deMediafiedPlay ();
+    virtual void initProcess (Viewer * viewer);
+    virtual QString menuName () const;
+
+    void setStarted (const QString & srv);
+    void requestStream (const QString & path, const QString & url, const QString & target);
+    void destroyStream (const QString & path);
+
+    KDE_NO_EXPORT const QString & destination () const { return service; }
+    KDE_NO_EXPORT const QString & interface () const { return iface; }
+    KDE_NO_EXPORT QString objectPath () const { return path; }
+    QString evaluateScript (const QString & scr);
+signals:
+    void evaluate (const QString & scr, QString & result);
+    void openUrl (const KURL & url, const QString & target);
+public slots:
+    virtual bool stop ();
+    virtual bool quit ();
+public slots:
+    bool ready (Viewer *);
+private slots:
+    void processOutput (KProcess *, char *, int);
+    void processStopped (KProcess *);
+    void wroteStdin (KProcess *);
+    void streamStateChanged ();
+    void streamRedirected (Q_UINT32, const KURL &);
+protected:
+    virtual void terminateJobs ();
+private:
+    void sendFinish (Q_UINT32 sid, Q_UINT32 total, NpStream::Reason because);
+    void processStreams ();
+    QString service;
+    QString iface;
+    QString path;
+    QString filter;
+    typedef QMap <Q_UINT32, NpStream *> StreamMap;
+    StreamMap streams;
+    QString remote_service;
+    QByteArray send_buf;
+    bool write_in_progress;
 };
 
 } // namespace

@@ -114,7 +114,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
    last_id (0),
    last_drag_tree_id (0),
    m_ignore_expanded (false) {
-    addColumn (QString::null);
+    addColumn (QString ());
     header()->hide ();
     //setRootIsDecorated (true);
     setSorting (-1);
@@ -126,6 +126,8 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
     folder_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder"), KIcon::Small);
     auxiliary_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder_grey"), KIcon::Small);
     video_pix = KGlobal::iconLoader ()->loadIcon (QString ("video"), KIcon::Small);
+    info_pix = KGlobal::iconLoader ()->loadIcon (QString ("messagebox_info"), KIcon::Small);
+    img_pix = KGlobal::iconLoader ()->loadIcon (QString ("colorize"), KIcon::Small);
     unknown_pix = KGlobal::iconLoader ()->loadIcon (QString ("unknown"), KIcon::Small);
     menu_pix = KGlobal::iconLoader ()->loadIcon (QString ("player_playlist"), KIcon::Small);
     config_pix = KGlobal::iconLoader ()->loadIcon (QString ("configure"), KIcon::Small);
@@ -197,15 +199,33 @@ KDE_NO_EXPORT PlayListItem * PlayListView::populate
                 as->setPixmap (0, menu_pix);
                 for (; a; a = a->nextSibling ()) {
                     PlayListItem * ai = new PlayListItem (as, a, this);
-                    ai->setText (0, QString ("%1=%2").arg (a->nodeName ()).arg (a->nodeValue ()));
+                    ai->setText (0, QString ("%1=%2").arg (
+                                a->name ().toString ()).arg (a->value ()));
                     ai->setPixmap (0, config_pix);
                 }
             }
         }
     }
     if (item != root) {
-        QPixmap & pix = e->isPlayable() ? video_pix : (item->firstChild ()) ? (e->auxiliaryNode () ? auxiliary_pix : folder_pix) : unknown_pix;
-        item->setPixmap (0, pix);
+        Node::PlayType pt = e->playType ();
+        QPixmap * pix;
+        switch (pt) {
+            case Node::play_type_image:
+                pix = &img_pix;
+                break;
+            case Node::play_type_info:
+                pix = &info_pix;
+                break;
+            default:
+                if (pt > Node::play_type_none)
+                    pix = &video_pix;
+                else 
+                    pix = item->firstChild ()
+                        ? e->auxiliaryNode ()
+                          ? &auxiliary_pix : &folder_pix
+                          : &unknown_pix;
+        }
+        item->setPixmap (0, *pix);
         if (root->flags & PlayListView::AllowDrag)
             item->setDragEnabled (true);
     }
@@ -266,7 +286,7 @@ KDE_NO_EXPORT void PlayListView::updateTrees () {
     }
 }
 
-KDE_NO_EXPORT void PlayListView::updateTree (RootPlayListItem * ritem, NodePtr active, bool select) {
+void PlayListView::updateTree (RootPlayListItem * ritem, NodePtr active, bool select) {
     bool set_open = ritem->id == 0 || (ritem ? ritem->isOpen () : false);
     m_ignore_expanded = true;
     PlayListItem * curitem = 0L;
@@ -486,11 +506,11 @@ KDE_NO_EXPORT void PlayListView::itemIsRenamed (QListViewItem * qitem) {
         QString txt = item->text (0);
         int pos = txt.find (QChar ('='));
         if (pos > -1) {
-            item->m_attr->setNodeName (txt.left (pos));
-            item->m_attr->setNodeValue (txt.mid (pos + 1));
+            item->m_attr->setName (txt.left (pos));
+            item->m_attr->setValue (txt.mid (pos + 1));
         } else {
-            item->m_attr->setNodeName (txt);
-            item->m_attr->setNodeValue (QString (""));
+            item->m_attr->setName (txt);
+            item->m_attr->setValue (QString (""));
         }
         PlayListItem * pi = static_cast <PlayListItem *> (item->parent ());
         if (pi && pi->node)
@@ -535,7 +555,7 @@ KDE_NO_EXPORT void PlayListView::slotFind () {
         m_find_dialog->setHasSelection (false);
         connect(m_find_dialog, SIGNAL(okClicked ()), this, SLOT(slotFindOk ()));
     } else
-        m_find_dialog->setPattern (QString::null);
+        m_find_dialog->setPattern (QString ());
     m_find_dialog->show ();
 }
 
@@ -625,16 +645,18 @@ KDE_NO_EXPORT void PlayListView::slotFindNext () {
                 m_current_find_attr = 0L;
                 found = true;
             } else if (elm && ri->show_all_nodes) {
-                for (AttributePtr a = convertNode <Element> (n)->attributes ()->first (); a; a = a->nextSibling ())
+                for (AttributePtr a = convertNode <Element> (n)->attributes ()->first (); a; a = a->nextSibling ()) {
+                    QString attr = a->name ().toString ();
                     if (((opt & KFindDialog::RegularExpression) &&
-                                (QString::fromLatin1 (a->nodeName ()).find (regexp, 0) || a->nodeValue ().find (regexp, 0) > -1)) ||
+                                (attr.find (regexp, 0) || a->value ().find (regexp, 0) > -1)) ||
                                 (!(opt & KFindDialog::RegularExpression) &&
-                                 (QString::fromLatin1 (a->nodeName ()).find (str, 0, cs) > -1 || a->nodeValue ().find (str, 0, cs) > -1))) {
+                                 (attr.find (str, 0, cs) > -1 || a->value ().find (str, 0, cs) > -1))) {
                         node = n;
                         m_current_find_attr = a;
                         found = true;
                         break;
                     }
+                }
             }
         }
         if (n) { //set pointer to next

@@ -86,10 +86,10 @@ enum {
 static struct Limit { int min; int max; } xv_limits [limit_last];
 static QString elmentry ("entry");
 static QString elmitem ("item");
-static QString attname ("NAME");
-static QString atttype ("TYPE");
+static QString attname ("name");
+static QString atttype ("type");
 static QString attdefault ("DEFAULT");
-static QString attvalue ("VALUE");
+static QString attvalue ("value");
 //static QString attstart ("START");
 //static QString attend ("END");
 //static QString valrange ("range");
@@ -124,7 +124,7 @@ void Backend::setURL (QString) {
 void Backend::setSubTitleURL (QString) {
 }
 
-void Backend::play () {
+void Backend::play (int) {
     xvapp->play ();
 }
 
@@ -594,8 +594,9 @@ protected:
                     break;
                 }
                 default:
-                    if (xevent.type < LASTEvent)
-                        ;//fprintf (stderr, "event %d\n", xevent.type);
+                    if (xevent.type < LASTEvent) {
+                        //fprintf (stderr, "event %d\n", xevent.type);
+                    }
             }
         }
     }

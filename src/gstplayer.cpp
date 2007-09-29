@@ -57,6 +57,7 @@ static int                  running;
 static int                  movie_width;
 static int                  movie_height;
 static int                  movie_length;
+static int                  repeat_count;
 static int                  screen;
 static const int            event_finished = QEvent::User;
 static const int            event_playing = QEvent::User + 1;
@@ -97,6 +98,8 @@ extern "C" {
   // nothing yet
 } // extern "C"
 
+
+static bool gstPollForStateChange (GstElement *, GstState, gint64=GST_SECOND/2);
 
 static void
 cb_error (GstElement * play,
@@ -238,7 +241,7 @@ static void gstBusMessage (GstBus *, GstMessage * message, gpointer) {
         }
         case GST_MESSAGE_EOS:
             fprintf (stderr, "eos msg\n");
-            QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_eos));
+            gst_element_set_state (gst_elm_play, GST_STATE_READY);
             break;
         case GST_MESSAGE_BUFFERING: {
             gint percent = 0;
@@ -265,8 +268,15 @@ static void gstBusMessage (GstBus *, GstMessage * message, gpointer) {
                     gstGetDuration ();
                     QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_playing));
                 } else if (old_state >= GST_STATE_PAUSED &&
-                        new_state <= GST_STATE_READY)
-                    QApplication::postEvent (gstapp, new QEvent ((QEvent::Type) event_finished));
+                        new_state <= GST_STATE_READY) {
+                    if (repeat_count-- > 0 &&
+                      (gst_element_set_state(gst_elm_play, GST_STATE_PAUSED),
+                       gstPollForStateChange(gst_elm_play, GST_STATE_PAUSED)))
+                         gst_element_set_state(gst_elm_play, GST_STATE_PLAYING);
+                    else
+                        QApplication::postEvent (gstapp,
+                                new QEvent ((QEvent::Type) event_finished));
+                }
             }
             //g_free (src_name);
             break;
@@ -294,7 +304,7 @@ static void gstMessageElement (GstBus *, GstMessage *msg, gpointer /*data*/) {
     }
 }
 
-static bool gstPollForStateChange (GstElement *element, GstState state, gint64 timeout=GST_SECOND/2) {
+static bool gstPollForStateChange (GstElement *element, GstState state, gint64 timeout) {
     /*GstMessageType*/ unsigned int events, saved_events;
     GstBus *bus = gst_element_get_bus (element);
     GError **error = 0L;
@@ -406,8 +416,8 @@ void Backend::setSubTitleURL (QString url) {
     sub_mrl = url;
 }
 
-void Backend::play () {
-    gstapp->play ();
+void Backend::play (int repeat) {
+    gstapp->play (repeat);
 }
 
 void Backend::stop () {
@@ -539,7 +549,7 @@ void getConfigEntries (QByteArray & buf) {
     buf.resize (exp.length ()); // strip terminating \0
 }
 
-void KGStreamerPlayer::play () {
+void KGStreamerPlayer::play (int repeat) {
     GstElement *element;
     GstElement *videosink = 0L;
     GstElement *audiosink = 0L;
@@ -635,6 +645,7 @@ void KGStreamerPlayer::play () {
         g_object_set (gst_elm_play, "suburi", sub_uri, NULL);
         g_free (sub_uri);
     }
+    repeat_count = repeat;
     mutex.unlock ();
     gst_element_set_state (gst_elm_play, GST_STATE_PAUSED);
     if (gstPollForStateChange (gst_elm_play, GST_STATE_PAUSED)) {
@@ -671,6 +682,7 @@ void KGStreamerPlayer::pause () {
 void KGStreamerPlayer::stop () {
     fprintf (stderr, "stop %s\n", mrl.isEmpty () ? "<empty>" : mrl.ascii ());
     mutex.lock ();
+    repeat_count = 0;
     if (gst_elm_play) {
         GstState current_state;
         gst_element_get_state (gst_elm_play, &current_state, NULL, 0);
@@ -952,6 +964,8 @@ int main(int argc, char **argv) {
         } else if (!strcmp (argv [i], "-f") && i < argc - 1) {
             strncpy (configfile, argv [++i], sizeof (configfile));
             configfile[sizeof (configfile) - 1] = 0;
+        } else if (!strcmp (argv [i], "-loop") && i < argc - 1) {
+            repeat_count = atol (argv [++i]);
         } else if (!strcmp (argv [i], "-cb")) {
             QString str = argv [++i];
             int pos = str.find ('/');
@@ -984,7 +998,7 @@ int main(int argc, char **argv) {
             getConfigEntries (buf);
         callback->started (dcopclient.appId (), buf);
     } else
-        QTimer::singleShot (10, gstapp, SLOT (play ()));
+        QTimer::singleShot (10, gstapp, SLOT (play (int)));
 
     gstapp->exec ();
 

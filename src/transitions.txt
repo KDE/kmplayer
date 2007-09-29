@@ -1,0 +1,29 @@
+/*http://www.w3.org/TR/2005/REC-SMIL2-20050107/smil-transitions.html#Table%201:%20Taxonomy%20Table*/
+{ "barWipe",    SMIL::Transition::BarWipe,    2, {
+    SMIL::Transition::SubLeftToRight,
+    SMIL::Transition::SubTopToBottom } },
+{ "bowTieWipe", SMIL::Transition::BowTieWipe, 2, {
+    SMIL::Transition::SubVertical,
+    SMIL::Transition::SubHorizontal } },
+{ "clockWipe",  SMIL::Transition::ClockWipe,  4, {
+    SMIL::Transition::SubClockwiseTwelve,
+    SMIL::Transition::SubClockwiseThree,
+    SMIL::Transition::SubClockwiseSix,
+    SMIL::Transition::SubClockwiseNine } },
+{ "ellipseWipe",SMIL::Transition::EllipseWipe,3, {
+    SMIL::Transition::SubCircle,
+    SMIL::Transition::SubVertical,
+    SMIL::Transition::SubHorizontal } },
+{ "fade",       SMIL::Transition::Fade,       3, {
+    SMIL::Transition::SubCrossfade,
+    SMIL::Transition::SubFadeToColor,
+    SMIL::Transition::SubFadeFromColor } },
+{ "irisWipe",   SMIL::Transition::IrisWipe,   2, {
+    SMIL::Transition::SubRectangle, SMIL::Transition::SubDiamond } },
+{ "pushWipe",   SMIL::Transition::PushWipe,   4, {
+    SMIL::Transition::SubFromLeft,
+    SMIL::Transition::SubFromTop,
+    SMIL::Transition::SubFromRight,
+    SMIL::Transition::SubFromBottom } },
+{ NULL,         SMIL::Transition::TransTypeNone, 0, {
+    } }

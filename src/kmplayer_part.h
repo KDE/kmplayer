@@ -71,6 +71,8 @@ public:
     void saveState (QDataStream & stream);
     void restoreState (QDataStream & stream);
     void requestOpenURL (const KURL & url, const QString & target, const QString & service);
+public slots:
+    void slotRequestOpenURL (const KURL & url, const QString & target);
 };
 
 /*
@@ -102,11 +104,14 @@ public slots:
     void setSize (int w, int h);
     void started ();
     void finished ();
+    void evaluate (const QString & script, QString & result);
 private:
     KMPlayerPart * player;
+    QString script_result;
     const JSCommandEntry * lastJSCommandEntry;
-    bool m_started : 1;
-    bool m_enablefinish : 1;
+    bool m_started;
+    bool m_enablefinish;
+    bool m_evaluating;
 };
 
 
@@ -122,7 +127,7 @@ public:
         Feat_Viewer = 0x01, Feat_Controls = 0x02,
         Feat_Label = 0x04, Feat_StatusBar = 0x08,
         Feat_InfoPanel = 0x10, Feat_VolumeSlider = 0x20, Feat_PlayList = 0x40,
-        Feat_All = 0xff
+        Feat_ImageWindow = 0x80, Feat_All = 0xff
     };
     KMPlayerPart (QWidget * wparent, const char * wname,
               QObject * parent, const char * name, const QStringList &args);

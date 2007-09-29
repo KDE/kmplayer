@@ -63,6 +63,7 @@
 #include "kmplayer.h"
 #include "kmplayerview.h"
 #include "playlistview.h"
+#include "viewarea.h"
 #include "kmplayercontrolpanel.h"
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
@@ -80,10 +81,10 @@ static const int DVDNav_up = 5;
 
 extern const char * strMPlayerGroup;
 
-static const short id_node_recent_document = 28;
-static const short id_node_recent_node = 29;
-static const short id_node_disk_document = 30;
-static const short id_node_disk_node = 31;
+static const short id_node_recent_document = 31;
+static const short id_node_recent_node = 32;
+static const short id_node_disk_document = 33;
+static const short id_node_disk_node = 34;
 
 
 class KMPLAYER_NO_EXPORT ListsSource : public KMPlayer::URLSource {
@@ -138,14 +139,23 @@ public:
     bool playmode;
 };
 
-class KMPLAYER_NO_EXPORT PlaylistItem : public KMPlayer::Mrl {
+class KMPLAYER_NO_EXPORT PlaylistItemBase : public KMPlayer::Mrl {
 public:
-    PlaylistItem (KMPlayer::NodePtr & doc, KMPlayerApp *a, const QString &url = QString());
+    PlaylistItemBase (KMPlayer::NodePtr &d, short id, KMPlayerApp *a, bool pm);
     void activate ();
     void closed ();
-    void setNodeName (const QString &);
-    KDE_NO_EXPORT const char * nodeName () const { return "item"; }
     KMPlayerApp * app;
+    bool playmode;
+};
+
+class KMPLAYER_NO_EXPORT PlaylistItem : public PlaylistItemBase {
+public:
+    PlaylistItem (KMPlayer::NodePtr & doc, KMPlayerApp *a, bool playmode, const QString &url = QString());
+    void closed ();
+    void begin ();
+    PlayType playType () { return play_type_unknown; }
+    void setNodeName (const QString &);
+    const char * nodeName () const KDE_NO_EXPORT { return "item"; }
 };
 
 class KMPLAYER_NO_EXPORT PlaylistGroup : public KMPlayer::Mrl {
@@ -160,8 +170,20 @@ public:
     bool playmode;
 };
 
+class KMPLAYER_NO_EXPORT HtmlObject : public PlaylistItemBase {
+public:
+    HtmlObject (KMPlayer::NodePtr & doc, KMPlayerApp *a, bool playmode);
+    void activate ();
+    void closed ();
+    KMPlayer::NodePtr childFromTag (const QString & tag);
+    const char * nodeName () const KDE_NO_EXPORT { return "object"; }
+};
+
 KDE_NO_EXPORT void ListsSource::jump (KMPlayer::NodePtr e) {
-    e->activate ();
+    if (e->document()->firstChild ())
+        Source::jump (e);
+    else
+        e->activate ();
 }
 
 KDE_NO_EXPORT void ListsSource::activate () {
@@ -173,7 +195,7 @@ KDE_NO_EXPORT void ListsSource::setDocument (KMPlayer::NodePtr doc, KMPlayer::No
         m_document->document()->dispose ();
     m_document = doc;
     m_current = cur;
-    kdDebug () << "setDocument: " << m_document->outerXML () << endl;
+    //kdDebug () << "setDocument: " << m_document->outerXML () << endl;
 }
 
 KDE_NO_CDTOR_EXPORT FileDocument::FileDocument (short i, const QString &s, KMPlayer::PlayListNotify * n)
@@ -193,7 +215,7 @@ void FileDocument::readFromFile (const QString & fn) {
     if (file.exists ()) {
         file.open (IO_ReadOnly);
         QTextStream inxml (&file);
-        KMPlayer::readXML (this, inxml, QString::null, false);
+        KMPlayer::readXML (this, inxml, QString (), false);
         normalize ();
     }
 }
@@ -238,15 +260,15 @@ KDE_NO_EXPORT void Recents::childDone (KMPlayer::NodePtr) {
 }
 
 KDE_NO_CDTOR_EXPORT
-Recent::Recent (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url) 
+Recent::Recent (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url)
   : KMPlayer::Mrl (doc, id_node_recent_node), app (a) {
     src = url;
-    setAttribute ("url", url);
+    setAttribute (KMPlayer::StringPool::attr_url, url);
 }
 
 KDE_NO_EXPORT void Recent::closed () {
     if (src.isEmpty ())
-        src = getAttribute ("url");
+        src = getAttribute (KMPlayer::StringPool::attr_url);
 }
 
 KDE_NO_EXPORT void Recent::activate () {
@@ -254,11 +276,11 @@ KDE_NO_EXPORT void Recent::activate () {
 }
 
 KDE_NO_CDTOR_EXPORT
-Group::Group (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString & pn) 
+Group::Group (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString & pn)
   : KMPlayer::Mrl (doc, KMPlayer::id_node_group_node), app (a) {
     pretty_name = pn;
     if (!pn.isEmpty ())
-        setAttribute ("title", pn);
+        setAttribute (KMPlayer::StringPool::attr_title, pn);
 }
 
 KDE_NO_EXPORT KMPlayer::NodePtr Group::childFromTag (const QString & tag) {
@@ -271,7 +293,7 @@ KDE_NO_EXPORT KMPlayer::NodePtr Group::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT void Group::closed () {
     if (pretty_name.isEmpty ())
-        pretty_name = getAttribute ("title");
+        pretty_name = getAttribute (KMPlayer::StringPool::attr_title);
 }
 
 KDE_NO_EXPORT void Playlist::defer () {
@@ -299,12 +321,13 @@ KDE_NO_CDTOR_EXPORT Playlist::Playlist (KMPlayerApp *a, KMPlayer::PlayListNotify
 
 KDE_NO_EXPORT KMPlayer::NodePtr Playlist::childFromTag (const QString & tag) {
     // kdDebug () << nodeName () << " childFromTag " << tag << endl;
-    if (tag == QString::fromLatin1 ("item"))
-        return playmode
-            ? KMPlayer::NodePtr (new KMPlayer::GenericMrl (m_doc, QString(), QString(), "item"))
-            : KMPlayer::NodePtr (new PlaylistItem (m_doc, app));
-    else if (tag == QString::fromLatin1 ("group"))
+    const char * name = tag.ascii ();
+    if (!strcmp (name, "item"))
+        return new PlaylistItem (m_doc, app, playmode);
+    else if (!strcmp (name, "group"))
         return new PlaylistGroup (m_doc, app, playmode);
+    else if (!strcmp (name, "object"))
+        return new HtmlObject (m_doc, app, playmode);
     return FileDocument::childFromTag (tag);
 }
 
@@ -316,56 +339,79 @@ KDE_NO_EXPORT void Playlist::childDone (KMPlayer::NodePtr c) {
 }
 
 KDE_NO_CDTOR_EXPORT
-PlaylistItem::PlaylistItem (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString &url) 
-  : KMPlayer::Mrl (doc, KMPlayer::id_node_playlist_item), app (a) {
+PlaylistItemBase::PlaylistItemBase (KMPlayer::NodePtr &d, short i, KMPlayerApp *a, bool pm)
+    : KMPlayer::Mrl (d, i), app (a), playmode (pm) {
+}
+
+KDE_NO_EXPORT void PlaylistItemBase::activate () {
+    if (playmode) {
+        Mrl::activate ();
+    } else {
+        ListsSource * source = static_cast <ListsSource *> (app->player ()->sources () ["listssource"]);
+        KMPlayer::NodePtr pl = new Playlist (app, source, true);
+        QString data;
+        QString pn;
+        if (parentNode ()->id == KMPlayer::id_node_group_node) {
+            data = parentNode ()->innerXML ();
+            pn = parentNode ()->mrl ()->pretty_name;
+        } else {
+            data = outerXML ();
+            pn = pretty_name.isEmpty () ? src : pretty_name;
+        }
+        pl->mrl ()->pretty_name = pn;
+        //kdDebug () << "cloning to " << data << endl;
+        QTextStream inxml (data, IO_ReadOnly);
+        KMPlayer::readXML (pl, inxml, QString (), false);
+        pl->normalize ();
+        KMPlayer::NodePtr cur = pl->firstChild ();
+        pl->mrl ()->resolved = !!cur;
+        if (parentNode ()->id == KMPlayer::id_node_group_node && cur) {
+            KMPlayer::NodePtr sister = parentNode ()->firstChild ();
+            while (sister && cur && sister.ptr () != this) {
+                sister = sister->nextSibling ();
+                cur = cur->nextSibling ();
+            }
+        }
+        bool reset_only = source == app->player ()->source ();
+        if (reset_only)
+            app->player ()->stop ();
+        source->setDocument (pl, cur);
+        if (reset_only) {
+            source->activate ();
+            app->setCaption (pn);
+        } else
+            app->player ()->setSource (source);
+    }
+}
+
+void PlaylistItemBase::closed () {
+    if (pretty_name.isEmpty ())
+        pretty_name = getAttribute (KMPlayer::StringPool::attr_title);
+}
+
+KDE_NO_CDTOR_EXPORT
+PlaylistItem::PlaylistItem (KMPlayer::NodePtr & doc, KMPlayerApp *a, bool pm, const QString &url)
+ : PlaylistItemBase (doc, KMPlayer::id_node_playlist_item, a, pm) {
     src = url;
-    setAttribute ("url", url);
+    setAttribute (KMPlayer::StringPool::attr_url, url);
 }
 
 KDE_NO_EXPORT void PlaylistItem::closed () {
     if (src.isEmpty ())
-        src = getAttribute ("url");
+        src = getAttribute (KMPlayer::StringPool::attr_url);
+    PlaylistItemBase::closed ();
 }
 
-KDE_NO_EXPORT void PlaylistItem::activate () {
-    ListsSource * source = static_cast <ListsSource *> (app->player ()->sources () ["listssource"]);
-    KMPlayer::NodePtr pl = new Playlist (app, source, true);
-    QString data;
-    QString pn;
-    if (parentNode ()->id == KMPlayer::id_node_group_node) {
-        data = parentNode ()->innerXML ();
-        pn = parentNode ()->mrl ()->pretty_name;
-    } else {
-        data = outerXML ();
-        pn = pretty_name.isEmpty () ? src : pretty_name;
-    }
-    pl->mrl ()->pretty_name = pn;
-    //kdDebug () << "cloning to " << data << endl;
-    QTextStream inxml (data, IO_ReadOnly);
-    KMPlayer::readXML (pl, inxml, QString::null, false);
-    pl->normalize ();
-    KMPlayer::NodePtr cur = pl->firstChild ();
-    if (parentNode ()->id == KMPlayer::id_node_group_node && cur) {
-        KMPlayer::NodePtr sister = parentNode ()->firstChild ();
-        while (sister && cur && sister.ptr () != this) {
-            sister = sister->nextSibling ();
-            cur = cur->nextSibling ();
-        }
-    }
-    bool reset_only = source == app->player ()->source ();
-    if (reset_only)
-        app->player ()->stop ();
-    source->setDocument (pl, cur);
-    if (reset_only) {
-        source->activate ();
-        app->setCaption (pn);
-    } else
-        app->player ()->setSource (source);
+KDE_NO_EXPORT void PlaylistItem::begin () {
+    if (playmode && firstChild ())
+        firstChild ()->activate ();
+    else
+        Mrl::begin ();
 }
 
 KDE_NO_EXPORT void PlaylistItem::setNodeName (const QString & s) {
     src = s;
-    setAttribute ("url", s);
+    setAttribute (KMPlayer::StringPool::attr_url, s);
 }
 
 KDE_NO_CDTOR_EXPORT
@@ -373,7 +419,7 @@ PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QS
   : KMPlayer::Mrl (doc, KMPlayer::id_node_group_node), app (a), playmode (false) {
     pretty_name = pn;
     if (!pn.isEmpty ())
-        setAttribute ("title", pn);
+        setAttribute (KMPlayer::StringPool::attr_title, pn);
 }
 
 KDE_NO_CDTOR_EXPORT
@@ -382,23 +428,66 @@ PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr & doc, KMPlayerApp * a, bool lm)
 }
 
 KDE_NO_EXPORT KMPlayer::NodePtr PlaylistGroup::childFromTag (const QString & tag) {
-    if (tag == QString::fromLatin1 ("item"))
-        return playmode
-            ? KMPlayer::NodePtr (new KMPlayer::GenericMrl (m_doc, QString(), QString(), "item"))
-            : KMPlayer::NodePtr (new PlaylistItem (m_doc, app));
-    else if (tag == QString::fromLatin1 ("group"))
+    const char * name = tag.ascii ();
+    if (!strcmp (name, "item"))
+        return new PlaylistItem (m_doc, app, playmode);
+    else if (!strcmp (name, "group"))
         return new PlaylistGroup (m_doc, app, playmode);
+    else if (!strcmp (name, "object"))
+        return new HtmlObject (m_doc, app, playmode);
     return 0L;
 }
 
 KDE_NO_EXPORT void PlaylistGroup::closed () {
     if (pretty_name.isEmpty ())
-        pretty_name = getAttribute ("title");
+        pretty_name = getAttribute (KMPlayer::StringPool::attr_title);
 }
 
 KDE_NO_EXPORT void PlaylistGroup::setNodeName (const QString & t) {
     pretty_name = t;
-    setAttribute ("title", t);
+    setAttribute (KMPlayer::StringPool::attr_title, t);
+}
+
+KDE_NO_CDTOR_EXPORT
+HtmlObject::HtmlObject (KMPlayer::NodePtr &doc, KMPlayerApp *a, bool pm)
+  : PlaylistItemBase (doc, KMPlayer::id_node_html_object, a, pm) {}
+
+KDE_NO_EXPORT void HtmlObject::activate () {
+    if (playmode)
+        KMPlayer::Mrl::activate ();
+    else
+        PlaylistItemBase::activate ();
+}
+
+KDE_NO_EXPORT void HtmlObject::closed () {
+    for (Node *n = firstChild ().ptr (); n; n = n->nextSibling ().ptr ()) {
+        if (n->id == KMPlayer::id_node_param) {
+            KMPlayer::Element *e = static_cast <KMPlayer::Element *> (n);
+            QString name = e->getAttribute (KMPlayer::StringPool::attr_name);
+            if (name == "type")
+                mimetype = e->getAttribute (KMPlayer::StringPool::attr_value);
+            else if (name == "movie")
+                src = e->getAttribute (KMPlayer::StringPool::attr_value);
+        } else if (n->id == KMPlayer::id_node_html_embed) {
+            KMPlayer::Element *e = static_cast <KMPlayer::Element *> (n);
+            QString type = e->getAttribute (KMPlayer::StringPool::attr_type);
+            if (!type.isEmpty ())
+                mimetype = type;
+            QString asrc = e->getAttribute (KMPlayer::StringPool::attr_src);
+            if (!asrc.isEmpty ())
+                src = asrc;
+        }
+    }
+    PlaylistItemBase::closed ();
+}
+
+KDE_NO_EXPORT KMPlayer::NodePtr HtmlObject::childFromTag (const QString & tag) {
+    const char *name = tag.ascii ();
+    if (!strcasecmp (name, "param"))
+        return new KMPlayer::DarkNode (m_doc, name, KMPlayer::id_node_param);
+    else if (!strcasecmp (name, "embed"))
+        return new KMPlayer::DarkNode(m_doc, name,KMPlayer::id_node_html_embed);
+    return NULL;
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
@@ -424,6 +513,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     connect (m_broadcastconfig, SIGNAL (broadcastStarted()), this, SLOT (broadcastStarted()));
     connect (m_broadcastconfig, SIGNAL (broadcastStopped()), this, SLOT (broadcastStopped()));
     initStatusBar();
+#ifdef HAVE_DBUS
+    m_player->setServiceName (QString ("org.kde.kmplayer-%1").arg (getpid ()));
+#endif
     m_player->init (actionCollection ());
     m_player->players () ["xvideo"] = new XVideo(m_player,m_player->settings());
     m_player->setProcess ("mplayer");
@@ -656,7 +748,7 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
             }
         }
         if (!more && count > 10) {
-            more = new Group (recents, this, i18n ("More ..."));
+            more = new Group (recents, this, i18n ("More..."));
             recents->appendChild (more);
         }
         if (more) {
@@ -706,7 +798,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotSourceChanged (KMPlayer::Source *olds, KMPla
 }
 
 KDE_NO_EXPORT void KMPlayerApp::dvdNav () {
-    slotStatusMsg(i18n("DVD Navigation ..."));
+    slotStatusMsg(i18n("DVD Navigation..."));
     m_player->setSource (m_player->sources () ["dvdnavsource"]);
     slotStatusMsg(i18n("Ready"));
 }
@@ -747,6 +839,7 @@ KDE_NO_EXPORT void KMPlayerApp::openVDR () {
         m_player->setSource (m_player->sources () ["vdrsource"]);
 }
 
+#ifdef HAVE_CAIRO
 struct IntroSource : public KMPlayer::Source {
     KMPlayerApp * m_app;
     IntroSource (KMPlayer::PartBase *p, KMPlayerApp * a)
@@ -769,31 +862,31 @@ KDE_NO_EXPORT void IntroSource::activate () {
     QFile file (introfile);
     if (file.exists () && file.open (IO_ReadOnly)) {
         QTextStream ts (&file);
-        KMPlayer::readXML (m_document, ts, QString::null, false);
+        KMPlayer::readXML (m_document, ts, QString (), false);
     } else {
-        QString smil = QString::fromLatin1 ("<smil><head><layout>"
+        QString smil = QString::fromLatin1 (
+          "<smil><head><layout>"
           "<root-layout width='320' height='240' background-color='black'/>"
           "<region id='image1' left='31.25%' top='25%' width='37.5%' height='50%' z-order='1'/>"
           "<region id='reg1' top='10%' height='80%' z-order='2'>"
-          "<region id='image2' left='128' top='136' width='64' bottom='56'/>"
+          "<region id='image2' left='128' top='72' width='64' bottom='56'/>"
           "</region>"
-          "</layout></head><body><excl><seq>"
-          "<img src='%1' region='image1' dur='0.5s' fit='fill'/>"
+          "</layout>"
+          "<transition id='fadein-1' dur='0.6' type='fade'/>"
+          "<transition id='iris1' dur='0.3' type='irisWipe'/>"
+          "</head>"
+          "<body>"
+          "<excl>"
           "<par>"
-          "<animate target='image1' attribute='width' from='37.5%' to='1%' dur='0.5' fill='freeze'/>"
-          "<animate target='image1' attribute='left' from='31.25%' to='50%' dur='0.5' fill='freeze'/>"
-          "<animate target='image1' attribute='height' from='50%' to='1%' dur='0.5' fill='freeze'/>"
-          "<animate target='image1' attribute='top' from='25%' to='50%' dur='0.5' fill='freeze'/>"
-          "<set target='image1' attribute='background-color' to='white' dur='0.5'/>"
+          "<img src='%1' region='image1' dur='.6' fit='fill' transOut='iris1'/>"
+          "<img region='image2' src='%2' begin='0.3' dur='0.6' fit='hidden' fill='freeze' transIn='fadein-1'/>"
           "</par>"
-          "<par>"
-          "<animate target='reg1' attribute='background-color' calcMode='discrete' values='#000000;#000000;#020202;#060606;#0B0B0B;#111111;#191919;#222222;#2D2D2D;#393939;#464646;#555555;#656565;#777777;#8A8A8A;#9E9E9E;#B4B4B4;#CCCCCC;#E4E4E4;#FFFFFF' dur='0.6'/>"
-          "<animate target='image2' attribute='top' from='136' to='72' dur='0.4' fill='freeze'/>"
-          "<img src='%2' region='image2' dur='0.6' fit='hidden'/>"
-          "</par></seq><seq begin='reg1.activateEvent'/>"
-          "</excl></body></smil>").arg (locate ("data", "kmplayer/noise.gif")).arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
+          "<seq begin='reg1.activateEvent'/>"
+          "</excl>"
+          "</body></smil>"
+          ).arg (locate ("data", "kmplayer/noise.gif")).arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
         QTextStream ts (smil.utf8 (), IO_ReadOnly);
-        KMPlayer::readXML (m_document, ts, QString::null, false);
+        KMPlayer::readXML (m_document, ts, QString (), false);
     }
     //m_document->normalize ();
     m_current = m_document; //mrl->self ();
@@ -829,6 +922,7 @@ KDE_NO_EXPORT void IntroSource::deactivate () {
     if (!finished && m_document) // user opens a source while introducing
         m_document->reset ();
 }
+#endif
 
 KDE_NO_EXPORT void KMPlayerApp::restoreFromConfig () {
     if (m_player->view ()) {
@@ -849,9 +943,11 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
             restoreFromConfig ();
             m_player->setSource (src);
             return;
+#ifdef HAVE_CAIRO
         } else if (!m_player->settings ()->no_intro && url.isEmpty ()) {
             m_player->setSource (new IntroSource (m_player, this));
             return;
+#endif
         } else {
             m_played_exit = true; // no intro, so no exit as well
             restoreFromConfig ();
@@ -1018,7 +1114,7 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
         config->setGroup ("Pipe Command");
         config->writeEntry ("Command1", m_player->sources () ["pipesource"]->pipeCmd ());
     }
-    m_view->setInfoMessage (QString::null);
+    m_view->setInfoMessage (QString ());
     m_view->docArea ()->writeDockConfig (config, QString ("Window Layout"));
     Recents * rc = static_cast <Recents *> (recents.ptr ());
     if (rc && rc->resolved) {
@@ -1111,6 +1207,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotMinimalMode () {
     minimalMode (true);
 }
 
+#ifdef HAVE_CAIRO
 struct ExitSource : public KMPlayer::Source {
     KDE_NO_CDTOR_EXPORT ExitSource (KMPlayer::PartBase *p)
         : KMPlayer::Source (i18n ("Exit"), p, "exitsource") {}
@@ -1128,22 +1225,22 @@ KDE_NO_EXPORT void ExitSource::activate () {
     QFile file (exitfile);
     if (file.exists () && file.open (IO_ReadOnly)) {
         QTextStream ts (&file);
-        KMPlayer::readXML (m_document, ts, QString::null, false);
+        KMPlayer::readXML (m_document, ts, QString (), false);
     } else {
         QString smil = QString::fromLatin1 ("<smil><head><layout>"
           "<root-layout width='320' height='240' background-color='black'/>"
           "<region id='reg1' top='10%' height='80%' z-order='2'>"
           "<region id='image' left='128' top='72' width='64' bottom='56'/>"
-          "</region>"
-          "</layout></head><body>"
+          "</region></layout>"
+          "<transition id='pw' dur='0.3' type='pushWipe' subtype='fromBottom'/>"
+          "</head><body>"
           "<par>"
-          "<animate target='reg1' attribute='background-color' calcMode='discrete' values='#FFFFFF;#E4E4E4;#CCCCCC;#B4B4B4;#9E9E9E;#8A8A8A;#777777;#656565;#555555;#464646;#393939;#2D2D2D;#222222;#191919;#111111;#0B0B0B;#060606;#020202;#000000;#000000' dur='0.6'/>"
-          "<animate target='image' attribute='top' from='72' to='136' dur='0.4' fill='freeze'/>"
-          "<img src='%2' region='image' dur='0.6' fit='hidden'/>"
+          //"<animate target='reg1' attribute='background-color' calcMode='discrete' values='#FFFFFF;#E4E4E4;#CCCCCC;#B4B4B4;#9E9E9E;#8A8A8A;#777777;#656565;#555555;#464646;#393939;#2D2D2D;#222222;#191919;#111111;#0B0B0B;#060606;#020202;#000000;#000000' dur='0.6'/>"
+          "<img src='%2' id='img1' region='image' dur='0.4' fit='hidden' transOut='pw'/>"
           "</par>"
           "</body></smil>").arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
         QTextStream ts (smil.utf8 (), IO_ReadOnly);
-        KMPlayer::readXML (m_document, ts, QString::null, false);
+        KMPlayer::readXML (m_document, ts, QString (), false);
     }
     //m_document->normalize ();
     m_current = m_document;
@@ -1166,6 +1263,7 @@ KDE_NO_EXPORT void ExitSource::stateElementChanged (KMPlayer::Node * node, KMPla
             m_player->view ())
        m_player->view ()->topLevelWidget ()->close ();
 }
+#endif
 
 KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
     // KMPlayerVDRSource has to wait for pending commands like mute and quit
@@ -1177,15 +1275,19 @@ KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
         QByteArray data, replydata;
         kapp->dcopClient ()->call (m_dcopName, "MainApplication-Interface", "quit()", data, replytype, replydata);
     }
-    if (m_played_exit || m_player->settings ()->no_intro)
+    if (m_played_exit || m_player->settings ()->no_intro || kapp->sessionSaving() )
         return true;
     if (m_auto_resize)
         disconnect(m_player, SIGNAL(sourceDimensionChanged()),this,SLOT(zoom100()));
     m_played_exit = true;
     if (!m_minimal_mode)
         minimalMode (false);
+#ifdef HAVE_CAIRO
     m_player->setSource (new ExitSource (m_player));
     return false;
+#else
+    return true;
+#endif
 }
 
 KDE_NO_EXPORT bool KMPlayerApp::queryExit()
@@ -1209,7 +1311,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileNewWindow()
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotFileOpen () {
-    KURL::List urls = KFileDialog::getOpenURLs (QString::null, i18n ("*|All Files"), this, i18n ("Open File"));
+    KURL::List urls = KFileDialog::getOpenURLs (QString (), i18n ("*|All Files"), this, i18n ("Open File"));
     if (urls.size () == 1) {
         openDocumentFile (urls [0]);
     } else if (urls.size () > 1) {
@@ -1228,7 +1330,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileOpenRecent(const KURL& url)
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotSaveAs () {
-    QString url = KFileDialog::getSaveFileName (QString::null, QString::null, this, i18n ("Save File"));
+    QString url = KFileDialog::getSaveFileName (QString (), QString (), this, i18n ("Save File"));
     if (!url.isEmpty ()) {
         QFile file (url);
         if (!file.open (IO_WriteOnly)) {
@@ -1424,7 +1526,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuDropInList () {
             manip_node = 0L;
             pi->parentNode ()->removeChild (pi);
         } else
-            pi = new PlaylistItem (playlist, this, m_drop_list[i-1].url ());
+            pi = new PlaylistItem(playlist, this,false, m_drop_list[i-1].url());
         if (n == playlist || m_drop_after->isOpen ())
             n->insertBefore (pi, n->firstChild ());
         else
@@ -1449,7 +1551,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuDropInGroup () {
             manip_node = 0L;
             pi->parentNode ()->removeChild (pi);
         } else
-            pi = new PlaylistItem (playlist,this,m_drop_list[i].url ());
+            pi = new PlaylistItem (playlist,this, false, m_drop_list[i].url ());
         g->appendChild (pi);
     }
     m_view->playList()->updateTree (playlist_id, playlist, pi, true, false);
@@ -1458,7 +1560,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuDropInGroup () {
 KDE_NO_EXPORT void KMPlayerApp::menuCopyDrop () {
     KMPlayer::NodePtr n = static_cast<KMPlayer::PlayListItem*>(m_drop_after)->node;
     if (n && manip_node) {
-        KMPlayer::NodePtr pi = new PlaylistItem (playlist, this, manip_node->mrl ()->src);
+        KMPlayer::NodePtr pi = new PlaylistItem (playlist, this, false, manip_node->mrl ()->src);
         if (n == playlist || m_drop_after->isOpen ())
             n->insertBefore (pi, n->firstChild ());
         else
@@ -1813,7 +1915,7 @@ KDE_NO_EXPORT void KMPlayerDVDSource::buildArguments () {
         if (m_player->settings ()->dvddevice.length () > 0)
             m_options += QString(" -dvd-device ") + m_player->settings()->dvddevice;
     }
-    m_recordcmd = m_options + QString (" -vop scale -zoom");
+    m_recordcmd = m_options + QString (" -vf scale -zoom");
 }
 
 KDE_NO_EXPORT QString KMPlayerDVDSource::filterOptions () {

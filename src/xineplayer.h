@@ -67,7 +67,7 @@ public:
     void setAudioLang (int, const QString &);
     void setSubtitle (int, const QString &);
 public slots:
-    void play ();
+    void play (int repeat_count);
     void stop ();
     void pause ();
     void updatePosition ();
