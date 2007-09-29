@@ -19,6 +19,8 @@ set(libkmplayercommon_SRCS
   kmplayer_rss.cpp
   kmplayer_atom.cpp
   kmplayer_xspf.cpp
+  triestring.cpp
+  viewarea.cpp
 )
 
 kde4_add_library(kmplayercommon SHARED ${libkmplayercommon_SRCS})
