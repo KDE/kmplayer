@@ -1,5 +1,52 @@
+Changes since version 0.10.0-pre3
+- Fix double scaling of video in a region
+- Use XPLAIN again for npp's GtkPlug embedded in QXEmbed, makes reproducable
+  mouse grab go away
+Changes since version 0.10.0-pre2
+- Fix unpausing with multi items from playlist
+- Compile fix for gcc >= 4.2
+- Cairo painting speedups, always round to screen pixel values
+- Adjust for timer drifting in SMIL files
+- SMIL additions, add AnimateMotion, more transition types, transOut support,
+  region background image and 'showBackground' attribute among others
+- Replace -vop with -vf for MPlayer
+Changes since version 0.9.4a
+- Allow per mimetype preferred player backend
+- Add npp backend that plays xembed style browser plugins
+Changes since version 0.9.4
+- Crash fix in playlist change while still playing
+- Support for mouse events on 'area' elements in SMIL
+- Clear the 'Connecting' status message when we got the data
+- Fix regression in 0.9.4, xine added reference links weren't auto played
+- Fix painting gifs that where larger than qmovie default buffer size
+- Support SMIL 'fillDefault' attribute
+- Globally share XML attribute names, reducing memory pressure
+- Fix region painting regression to limit updating only the region rectangle
+- Add audio/x-ms* to list of possible playlists
+Changes since version 0.9.3a
+- Support for MPlayer ICY stream info
+- Fix flashing/resizing infowindow between two items having info
+- Podcast item w/o an enclose but having a description now keep them self
+  active for a calculated time
+- Fix easy breaking reading CDATA sections
+- Changed intro animation, making it slightly shorter and using fade transition
+- Add support for SMIL linknodes a and area, brush and transiton (only fade)
+- RealPix's fades now realy fades in or out
+- Moved SMIL/RealPix painting to libcairo
+- Fix auto hiding controlpanel disappeared after switching to console view
+- Fix autohiding controlpanel when there is also a statusbar
 Changes since version 0.9.3
-- Panel's 'Playlist' popup menu item didn't work in fullscreen/minimal view
+- Reading RAM playlists should stop on '--stop--' stop lines
+- Make playlist occuring on top less likely
+- Support for 'repeatCount="indefinite"' in SMIL
+- Fix uninitialized member in GenericMrl, eg. reopening saved playlist crashed
+- "quot" entity fix in XML parser
+- Also show content of cdata sections in infoview w/ RSS and XSPF
+- Fix konqueror wheel spinning when HTML object has an 'autostart=0' set
+- Fix possible hang in RemoteObject for SMIL or RealPix
+- Don't play exit animation when KDE terminates
+- Nested playlist fix for RSS and XSPF
+- Item 'Playlist', of panel's popup menu, didn't work in fullscreen/minimal view
 - Allow Xine as player for TV using v4l:/Tuner/frequency mrls
 Changes since version 0.9.3-rc1
 - Fix audio/video CD w/ MPlayer adding more and more nodes on restart
