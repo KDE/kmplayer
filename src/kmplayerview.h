@@ -21,9 +21,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif 
+#endif
 #include <qwidget.h>
-#include <qguardedptr.h>
 #include <qtextedit.h>
 
 #include <kdockwidget.h>
@@ -42,7 +41,6 @@ class QPainter;
 class QPopupMenu;
 class QSlider;
 class QLabel;
-class QAccel;
 class KActionCollection;
 class KAction;
 class KShortcut;

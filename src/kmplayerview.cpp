@@ -31,14 +31,12 @@
 #include <qtooltip.h>
 #include <qapplication.h>
 #include <qiconset.h>
-#include <qaccel.h>
 #include <qcursor.h>
 #include <qkeysequence.h>
 #include <qslider.h>
 #include <qlabel.h>
 #include <qdatastream.h>
 #include <qwidgetstack.h>
-#include <qheader.h>
 #include <qcursor.h>
 #include <qclipboard.h>
 
@@ -51,7 +49,6 @@
 #include <kstdaction.h>
 #include <kshortcut.h>
 #include <kurldrag.h>
-#include <klistview.h>
 #include <kfinddialog.h>
 #include <dcopclient.h>
 #include <kglobalsettings.h>
@@ -592,7 +589,7 @@ KDE_NO_EXPORT void View::leaveEvent (QEvent *) {
 
 KDE_NO_EXPORT void View::reset () {
     if (m_revert_fullscreen && isFullScreen())
-        m_control_panel->popupMenu ()->activateItemAt (m_control_panel->popupMenu ()->indexOf (ControlPanel::menu_fullscreen)); 
+        m_control_panel->popupMenu ()->activateItemAt (m_control_panel->popupMenu ()->indexOf (ControlPanel::menu_fullscreen));
         //m_view_area->fullScreen ();
     playingStop ();
     m_viewer->show ();
