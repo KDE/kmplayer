@@ -4,6 +4,8 @@ set(CMAKE_CXX_FLAGS_PROFILE "-DDEBUG ${CMAKE_CXX_FLAGS_PROFILE}")
 
 ########### next target ###############
 
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/..)
+
 set(libkmplayercommon_SRCS
   kmplayerview.cpp
   playlistview.cpp

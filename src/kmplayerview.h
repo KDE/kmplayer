@@ -21,28 +21,26 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif 
+#endif
 #include <qwidget.h>
-#include <qguardedptr.h>
 #include <qtextedit.h>
 
-#include <kdockwidget.h>
+#include <k3dockwidget.h>
 #include <kurl.h>
-#include <qxembed.h>
+#include <QtGui/QX11EmbedContainer>
 #include <kmediaplayer/view.h>
 
 #include "kmplayersource.h"
 
 #define MOUSE_INVISIBLE_DELAY 2000
 
-class QWidgetStack;
+class QStackedWidget;
 class QPixmap;
 class QPaintDevice;
 class QPainter;
 class QPopupMenu;
 class QSlider;
 class QLabel;
-class QAccel;
 class KActionCollection;
 class KAction;
 class KShortcut;
@@ -118,7 +116,7 @@ public:
     KDE_NO_EXPORT StatusBar * statusBar () const {return m_status_bar;}
     KDE_NO_EXPORT PlayListView * playList () const { return m_playlist; }
     KDE_NO_EXPORT InfoWindow * infoPanel () const { return m_infopanel; }
-    KDE_NO_EXPORT QWidgetStack * widgetStack () const { return m_widgetstack; }
+    KDE_NO_EXPORT QStackedWidget * widgetStack () const { return m_widgetstack; }
     KDE_NO_EXPORT KDockArea * docArea () const { return m_dockarea; }
     KDE_NO_EXPORT ViewArea * viewArea () const { return m_view_area; }
     KDE_NO_EXPORT bool keepSizeRatio () const { return m_keepsizeratio; }
@@ -173,7 +171,7 @@ private:
     // console output
     TextEdit * m_multiedit;
     // widget stack contains m_viewer, m_multiedit and m_picturewidget
-    QWidgetStack * m_widgetstack;
+    QStackedWidget * m_widgetstack;
     // widget that layouts m_widgetstack for ratio setting and m_control_panel
     ViewArea * m_view_area;
     // playlist widget
@@ -211,7 +209,7 @@ private:
 /*
  * The video widget
  */
-class KMPLAYER_EXPORT Viewer : public QXEmbed {
+class KMPLAYER_EXPORT Viewer : public QX11EmbedContainer {
     Q_OBJECT
 public:
     Viewer(QWidget *parent, View * view);
@@ -229,6 +227,7 @@ public:
     void changeProtocol (QXEmbed::Protocol p);
 public slots:
     void sendConfigureEvent ();
+    void embedded ();
 protected:
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);

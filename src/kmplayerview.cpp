@@ -31,14 +31,12 @@
 #include <qtooltip.h>
 #include <qapplication.h>
 #include <qiconset.h>
-#include <qaccel.h>
 #include <qcursor.h>
 #include <qkeysequence.h>
 #include <qslider.h>
 #include <qlabel.h>
 #include <qdatastream.h>
-#include <qwidgetstack.h>
-#include <qheader.h>
+#include <QStackedWidget>
 #include <qcursor.h>
 #include <qclipboard.h>
 
@@ -50,12 +48,9 @@
 #include <kactioncollection.h>
 #include <kstdaction.h>
 #include <kshortcut.h>
-#include <kurldrag.h>
-#include <klistview.h>
 #include <kfinddialog.h>
-#include <dcopclient.h>
 #include <kglobalsettings.h>
-#include <kstaticdeleter.h>
+#include <k3staticdeleter.h>
 
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
@@ -152,19 +147,19 @@ KDE_NO_CDTOR_EXPORT View::View (QWidget *parent, const char *name)
 {}
 
 KDE_NO_EXPORT void View::dropEvent (QDropEvent * de) {
-    KURL::List sl;
-    if (KURLDrag::canDecode (de)) {
+    KUrl::List uris = KUrl::List::fromMimeData( de->mimeData() );
+    if (!uriList.isEmpty()) {
         KURLDrag::decode (de, sl);
     } else if (QTextDrag::canDecode (de)) {
         QString text;
         QTextDrag::decode (de, text);
-        sl.push_back (KURL (text));
+        uris.push_back (KURL (text));
     }
-    if (sl.size () > 0) {
+    if (uris.size () > 0) {
         for (unsigned i = 0; i < sl.size (); i++)
-            sl [i] = KURL::decode_string (sl [i].url ());
+            sl [i] = KURL::decode_string (uris [i].url ());
         m_widgetstack->visibleWidget ()->setFocus ();
-        emit urlDropped (sl);
+        emit urlDropped (uris);
         de->accept ();
     }
 }
@@ -193,7 +188,7 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
     m_playlist->setPaletteForegroundColor (QColor (0xB2, 0xB2, 0xB2));
     m_dock_playlist->setWidget (m_playlist);
     viewbox->addWidget (m_dockarea);
-    m_widgetstack = new QWidgetStack (m_view_area);
+    m_widgetstack = new QStackedWidget (m_view_area);
     m_control_panel = new ControlPanel (m_view_area, this);
     m_control_panel->setMaximumSize (2500, controlPanel ()->maximumSize ().height ());
     m_status_bar = new StatusBar (m_view_area);
@@ -353,13 +348,14 @@ KDE_NO_EXPORT void View::updateVolume () {
     QByteArray data, replydata;
     QCString replyType;
     int volume;
-    bool has_mixer = kapp->dcopClient ()->call (m_mixer_object, "Mixer0",
+    bool has_mixer = false;
+    /*bool has_mixer = kapp->dcopClient ()->call (m_mixer_object, "Mixer0",
             "masterVolume()", data, replyType, replydata);
     if (!has_mixer) {
         m_mixer_object = "kmix";
         has_mixer = kapp->dcopClient ()->call (m_mixer_object, "Mixer0",
                 "masterVolume()", data, replyType, replydata);
-    }
+    }*/
     if (has_mixer) {
         QDataStream replystream (replydata, IO_ReadOnly);
         replystream >> volume;
@@ -462,8 +458,8 @@ KDE_NO_EXPORT void View::setVolume (int vol) {
     QByteArray data;
     QDataStream arg( data, IO_WriteOnly );
     arg << vol;
-    if (!kapp->dcopClient()->send (m_mixer_object, "Mixer0", "setMasterVolume(int)", data))
-        kdWarning() << "Failed to update volume" << endl;
+    //if (!kapp->dcopClient()->send (m_mixer_object, "Mixer0", "setMasterVolume(int)", data))
+    //    kdWarning() << "Failed to update volume" << endl;
 }
 
 KDE_NO_EXPORT void View::updateLayout () {
@@ -580,7 +576,7 @@ KDE_NO_EXPORT void View::playingStop () {
     killTimer (controlbar_timer);
     controlbar_timer = 0;
     m_playing = false;
-    WId w = m_viewer->embeddedWinId ();
+    WId w = m_viewer->clientWinId ();
     if (w)
         XClearWindow (qt_xdisplay(), w);
     m_view_area->resizeEvent (0L);
@@ -592,7 +588,7 @@ KDE_NO_EXPORT void View::leaveEvent (QEvent *) {
 
 KDE_NO_EXPORT void View::reset () {
     if (m_revert_fullscreen && isFullScreen())
-        m_control_panel->popupMenu ()->activateItemAt (m_control_panel->popupMenu ()->indexOf (ControlPanel::menu_fullscreen)); 
+        m_control_panel->popupMenu ()->activateItemAt (m_control_panel->popupMenu ()->indexOf (ControlPanel::menu_fullscreen));
         //m_view_area->fullScreen ();
     playingStop ();
     m_viewer->show ();
@@ -605,7 +601,7 @@ bool View::isFullScreen () const {
 void View::fullScreen () {
     if (!m_view_area->isFullScreen()) {
         m_sreensaver_disabled = false;
-        QByteArray data, replydata;
+        /*QByteArray data, replydata;
         QCString replyType;
         if (kapp->dcopClient ()->call ("kdesktop", "KScreensaverIface",
                     "isEnabled()", data, replyType, replydata)) {
@@ -615,16 +611,16 @@ void View::fullScreen () {
             if (enabled)
                 m_sreensaver_disabled = kapp->dcopClient()->send
                     ("kdesktop", "KScreensaverIface", "enable(bool)", "false");
-        }
+        }*/
         //if (m_keepsizeratio && m_viewer->aspect () < 0.01)
         //    m_viewer->setAspect (1.0 * m_viewer->width() / m_viewer->height());
         m_view_area->fullScreen();
         m_control_panel->popupMenu ()->setItemVisible (ControlPanel::menu_zoom, false);
         m_widgetstack->visibleWidget ()->setFocus ();
     } else {
-        if (m_sreensaver_disabled)
-            m_sreensaver_disabled = !kapp->dcopClient()->send
-                ("kdesktop", "KScreensaverIface", "enable(bool)", "true");
+       // if (m_sreensaver_disabled)
+       //     m_sreensaver_disabled = !kapp->dcopClient()->send
+       //         ("kdesktop", "KScreensaverIface", "enable(bool)", "true");
         m_view_area->fullScreen();
         m_control_panel->popupMenu ()->setItemVisible (ControlPanel::menu_zoom, true);
     }
@@ -636,7 +632,7 @@ KDE_NO_EXPORT int View::statusBarHeight () const {
     if (statusBar()->isVisible () && !viewArea()->isFullScreen ()) {
         if (statusBarMode () == SB_Only)
             return height ();
-        else 
+        else
             return statusBar()->maximumSize ().height ();
     }
     return 0;
@@ -645,13 +641,13 @@ KDE_NO_EXPORT int View::statusBarHeight () const {
 bool View::x11Event (XEvent * e) {
     switch (e->type) {
         case UnmapNotify:
-            if (e->xunmap.event == m_viewer->embeddedWinId ()) {
+            if (e->xunmap.event == m_viewer->clientWinId ()) {
                 videoStart ();
                 //hide();
             }
             break;
         case XKeyPress:
-            if (e->xkey.window == m_viewer->embeddedWinId ()) {
+            if (e->xkey.window == m_viewer->clientWinId ()) {
                 KeySym ksym;
                 char kbuf[16];
                 XLookupString (&e->xkey, kbuf, sizeof(kbuf), &ksym, NULL);
@@ -667,14 +663,14 @@ bool View::x11Event (XEvent * e) {
             fprintf (stderr, "colormap notify\n");
             return true;*/
         case MotionNotify:
-            if (e->xmotion.window == m_viewer->embeddedWinId ())
+            if (e->xmotion.window == m_viewer->clientWinId ())
                 delayedShowButtons (e->xmotion.y > m_view_area->height () -
                         statusBarHeight () -
                         m_control_panel->maximumSize ().height ());
             m_view_area->mouseMoved ();
             break;
         case MapNotify:
-            if (e->xmap.event == m_viewer->embeddedWinId ()) {
+            if (e->xmap.event == m_viewer->clientWinId ()) {
                 show ();
                 QTimer::singleShot (10, m_viewer, SLOT (sendConfigureEvent ()));
             }
@@ -703,7 +699,6 @@ KDE_NO_CDTOR_EXPORT Viewer::Viewer (QWidget *parent, View * view)
                            x11Depth (), InputOutput, (Visual*)x11Visual (),
                            CWBackPixel | CWBorderPixel | CWColormap, &xswa));*/
     setAcceptDrops (true);
-    initialize ();
     //setProtocol (QXEmbed::XPLAIN);
 }
 
@@ -712,7 +707,7 @@ KDE_NO_CDTOR_EXPORT Viewer::~Viewer () {
 
 KDE_NO_EXPORT void Viewer::changeProtocol (QXEmbed::Protocol p) {
     kdDebug () << "changeProtocol " << (int)protocol () << "->" << p << endl;
-    if (!embeddedWinId () || p != protocol ()) {
+    if (!clientWinId () || p != protocol ()) {
         if (p == QXEmbed::XPLAIN) {
             setProtocol (p);
             if (!m_plain_window) {
@@ -724,7 +719,7 @@ KDE_NO_EXPORT void Viewer::changeProtocol (QXEmbed::Protocol p) {
                         1,
                         BlackPixel (qt_xdisplay(), scr),
                         BlackPixel (qt_xdisplay(), scr));
-                embed (m_plain_window);
+                embedClient (m_plain_window);
             }
             XClearWindow (qt_xdisplay(), m_plain_window);
         } else {
@@ -742,7 +737,7 @@ KDE_NO_EXPORT void Viewer::changeProtocol (QXEmbed::Protocol p) {
 KDE_NO_EXPORT void Viewer::windowChanged (WId w) {
     kdDebug () << "windowChanged " << (int)w << endl;
     if (w /*&& m_plain_window*/)
-        XSelectInput (qt_xdisplay (), w, 
+        XSelectInput (qt_xdisplay (), w,
                 //KeyPressMask | KeyReleaseMask |
                 KeyPressMask |
                 //EnterWindowMask | LeaveWindowMask |
@@ -767,7 +762,7 @@ void Viewer::setAspect (float a) {
 KDE_NO_EXPORT int Viewer::heightForWidth (int w) const {
     if (m_aspect <= 0.01)
         return 0;
-    return int (w/m_aspect); 
+    return int (w/m_aspect);
 }
 
 KDE_NO_EXPORT void Viewer::dropEvent (QDropEvent * de) {
@@ -780,9 +775,9 @@ KDE_NO_EXPORT void Viewer::dragEnterEvent (QDragEnterEvent* dee) {
 /*
 */
 void Viewer::sendKeyEvent (int key) {
-    WId w = embeddedWinId ();
+    WId w = clientWinId ();
     if (w) {
-        char buf[2] = { char (key), '\0' }; 
+        char buf[2] = { char (key), '\0' };
         KeySym keysym = XStringToKeysym (buf);
         XKeyEvent event = {
             XKeyPress, 0, true,
@@ -796,7 +791,7 @@ void Viewer::sendKeyEvent (int key) {
 }
 
 KDE_NO_EXPORT void Viewer::sendConfigureEvent () {
-    WId w = embeddedWinId ();
+    WId w = clientWinId ();
     if (w) {
         XConfigureEvent c = {
             ConfigureNotify, 0UL, True,
@@ -826,7 +821,7 @@ KDE_NO_EXPORT void Viewer::resetBackgroundColor () {
 
 KDE_NO_EXPORT void Viewer::setCurrentBackgroundColor (const QColor & c) {
     setPaletteBackgroundColor (c);
-    WId w = embeddedWinId ();
+    WId w = clientWinId ();
     if (w) {
         XSetWindowBackground (qt_xdisplay (), w, c.rgb ());
         XFlush (qt_xdisplay ());

@@ -22,9 +22,9 @@
 #define _KMPLAYERPROCESS_H_
 
 #include <qobject.h>
-#include <qguardedptr.h>
+#include <QPointer>
 #include <qstring.h>
-#include <qcstring.h>
+#include <qbytearray.h>
 #include <qstringlist.h>
 #include <qregexp.h>
 
@@ -43,7 +43,7 @@ namespace KIO {
 }
 
 namespace KMPlayer {
-    
+
 class Settings;
 class Viewer;
 class Source;
@@ -111,7 +111,7 @@ protected:
     int m_request_seek;
     const char ** m_supported_sources;
 private:
-    QGuardedPtr <Viewer> m_viewer;
+    QPointer <Viewer> m_viewer;
 };
 
 /*
@@ -264,6 +264,7 @@ class XMLPreferencesFrame;
 /*
  * Base class for all backend processes having the KMPlayer::Backend interface
  */
+/*
 class KMPLAYER_EXPORT CallbackProcess : public Process {
     Q_OBJECT
     friend class Callback;
@@ -317,7 +318,7 @@ protected:
     enum { config_unknown, config_probe, config_yes, config_no } m_have_config;
     enum { send_no, send_try, send_new } m_send_config;
 };
-
+*/
 /*
  * Config document as used by kxineplayer backend
  */
@@ -346,13 +347,14 @@ struct KMPLAYER_NO_EXPORT TypeNode : public ConfigNode {
     NodePtr childFromTag (const QString & tag);
     void changedXML (QTextStream & out);
     QWidget * createWidget (QWidget * parent);
-    const char * nodeName () const { return tag.ascii (); }
+    const char * nodeName () const { return tag.toAscii (); }
     QString tag;
 };
 
 /*
  * Preference page for XML type of docuement
  */
+/*
 class KMPLAYER_NO_EXPORT XMLPreferencesPage : public PreferencesPage {
 public:
     XMLPreferencesPage (CallbackProcess *);
@@ -366,10 +368,11 @@ private:
     CallbackProcess * m_process;
     XMLPreferencesFrame * m_configframe;
 };
-
+*/
 /*
  * Xine backend process
  */
+/*
 class KMPLAYER_NO_EXPORT Xine : public CallbackProcess, public Recorder {
     Q_OBJECT
 public:
@@ -378,10 +381,11 @@ public:
 public slots:
     bool ready (Viewer *);
 };
-
+*/
 /*
  * GStreamer backend process
  */
+/*
 class KMPLAYER_NO_EXPORT GStreamer : public CallbackProcess {
     Q_OBJECT
 public:
@@ -390,7 +394,7 @@ public:
 public slots:
     virtual bool ready (Viewer *);
 };
-
+*/
 /*
  * ffmpeg backend recorder
  */
@@ -420,7 +424,7 @@ public:
         BecauseDone = 0, BecauseError = 1, BecauseStopped = 2
     };
 
-    NpStream (QObject *parent, Q_UINT32 stream_id, const KURL & url);
+    NpStream (QObject *parent, uint32_t stream_id, const KURL & url);
     ~NpStream ();
 
     void open ();
@@ -430,14 +434,14 @@ public:
     QByteArray pending_buf;
     KIO::TransferJob *job;
     timeval data_arrival;
-    Q_UINT32 bytes;
-    Q_UINT32 stream_id;
-    Q_UINT32 content_length;
+    uint32_t bytes;
+    uint32_t stream_id;
+    uint32_t content_length;
     Reason finish_reason;
     QString mimetype;
 signals:
     void stateChanged ();
-    void redirected (Q_UINT32, const KURL &);
+    void redirected (uint32_t, const KURL &);
 private slots:
     void slotResult (KIO::Job*);
     void slotData (KIO::Job*, const QByteArray& qb);
@@ -477,17 +481,17 @@ private slots:
     void processStopped (KProcess *);
     void wroteStdin (KProcess *);
     void streamStateChanged ();
-    void streamRedirected (Q_UINT32, const KURL &);
+    void streamRedirected (uint32_t, const KURL &);
 protected:
     virtual void terminateJobs ();
 private:
-    void sendFinish (Q_UINT32 sid, Q_UINT32 total, NpStream::Reason because);
+    void sendFinish (uint32_t sid, uint32_t total, NpStream::Reason because);
     void processStreams ();
     QString service;
     QString iface;
     QString path;
     QString filter;
-    typedef QMap <Q_UINT32, NpStream *> StreamMap;
+    typedef QMap <uint32_t, NpStream *> StreamMap;
     StreamMap streams;
     QString remote_service;
     QByteArray send_buf;

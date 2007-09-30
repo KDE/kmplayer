@@ -507,7 +507,7 @@ private:
 class RefNode : public Node {
 public:
     RefNode (NodePtr & d, NodePtr ref);
-    virtual const char * nodeName () const { return tag_name.ascii (); }
+    virtual const char * nodeName () const { return tag_name.toAscii (); }
     NodePtr refNode () const { return ref_node; }
     void setRefNode (const NodePtr ref);
 protected:
@@ -793,7 +793,7 @@ class DarkNode : public Element {
 public:
     DarkNode (NodePtr & d, const QString & n, short id=0);
     KDE_NO_CDTOR_EXPORT ~DarkNode () {}
-    const char * nodeName () const { return name.ascii (); }
+    const char * nodeName () const { return name.toAscii (); }
     NodePtr childFromTag (const QString & tag);
     virtual bool expose () const;
 protected:
@@ -858,7 +858,7 @@ public:
 /**
  * just some url, can get a SMIL, RSS, or ASX childtree
  */
-class KMPLAYER_EXPORT GenericURL : public Mrl { 
+class KMPLAYER_EXPORT GenericURL : public Mrl {
 public:
     GenericURL(NodePtr &d, const QString &s, const QString &n=QString ());
     KDE_NO_EXPORT const char * nodeName () const { return "url"; }
@@ -868,11 +868,11 @@ public:
 /**
  * Non url mrl
  */
-class KMPLAYER_EXPORT GenericMrl : public Mrl { 
+class KMPLAYER_EXPORT GenericMrl : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT GenericMrl (NodePtr & d) : Mrl (d), node_name ("mrl") {}
     GenericMrl(NodePtr &d, const QString &s, const QString & name=QString (), const QString &tag=QString ("mrl"));
-    KDE_NO_EXPORT const char * nodeName () const { return node_name.ascii (); }
+    KDE_NO_EXPORT const char * nodeName () const { return node_name.toAscii (); }
     void closed ();
     bool expose () const;
     QString node_name;
