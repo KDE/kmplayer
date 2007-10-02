@@ -561,7 +561,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     new KAction (i18n ("&Open VCD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openVCD ()), ac, "openvcd");
     new KAction (i18n ("&Open Audio CD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openAudioCD ()), ac, "openaudiocd");
     new KAction (i18n ("&Open Pipe..."), QString ("pipe"), KShortcut (), this, SLOT(openPipe ()), ac, "source_pipe");
-    //KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0,true)
+    //KIconLoader::global ()->loadIconSet (QString ("tv"), K3Icon::Small, 0,true)
     new KAction (i18n ("&Connect"), QString ("connect_established"), KShortcut (), this, SLOT (openVDR ()), ac, "vdr_connect");
     editVolumeInc = new KAction (i18n ("Increase Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT (increaseVolume ()), ac, "edit_volume_up");
     editVolumeDec = new KAction (i18n ("Decrease Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT(decreaseVolume ()), ac, "edit_volume_down");
@@ -616,7 +616,7 @@ KDE_NO_EXPORT void KMPlayerApp::initMenu () {
     menuBar ()->insertItem (i18n ("&Bookmarks"), bookmarkmenu, -1, 2);
     m_sourcemenu = menuBar ()->findItem (menuBar ()->idAt (0));
     m_sourcemenu->setText (i18n ("S&ource"));
-    m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("dvd_mount"), KIcon::Small, 0, true), i18n ("&DVD"), m_dvdmenu, -1, 5);
+    m_sourcemenu->popup ()->insertItem (KIconLoader::global ()->loadIconSet (QString ("dvd_mount"), K3Icon::Small, 0, true), i18n ("&DVD"), m_dvdmenu, -1, 5);
     m_dvdmenu->clear ();
 #ifdef HAVE_XINE
     m_dvdnavmenu->clear ();
@@ -626,11 +626,11 @@ KDE_NO_EXPORT void KMPlayerApp::initMenu () {
 #else
     m_dvdmenu->insertItem (i18n ("&Open DVD"), this, SLOT(openDVD ()), 0,-1, 1);
 #endif
-    m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("cdrom_mount"), KIcon::Small, 0, true), i18n ("V&CD"), m_vcdmenu, -1, 6);
+    m_sourcemenu->popup ()->insertItem (KIconLoader::global ()->loadIconSet (QString ("cdrom_mount"), K3Icon::Small, 0, true), i18n ("V&CD"), m_vcdmenu, -1, 6);
     m_vcdmenu->clear ();
-    m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("tv"), KIcon::Small, 0, true), i18n ("&TV"), m_tvmenu, -1, 8);
+    m_sourcemenu->popup ()->insertItem (KIconLoader::global ()->loadIconSet (QString ("tv"), K3Icon::Small, 0, true), i18n ("&TV"), m_tvmenu, -1, 8);
     m_vcdmenu->insertItem (i18n ("&Open VCD"), this, SLOT(openVCD ()), 0,-1, 1);
-    m_sourcemenu->popup ()->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("cdrom_mount"), KIcon::Small, 0, true), i18n ("&Audio CD"), m_audiocdmenu, -1, 7);
+    m_sourcemenu->popup ()->insertItem (KIconLoader::global ()->loadIconSet (QString ("cdrom_mount"), K3Icon::Small, 0, true), i18n ("&Audio CD"), m_audiocdmenu, -1, 7);
     m_audiocdmenu->insertItem (i18n ("&Open Audio CD"), this, SLOT(openAudioCD ()), 0,-1, 1);
 }
 
@@ -665,18 +665,18 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
                  this, SLOT (zoom100 ()));
     connect (m_view, SIGNAL (fullScreenChanged ()),
             this, SLOT (fullScreen ()));
-    connect (m_view->playList (), SIGNAL (selectionChanged (QListViewItem *)),
-            this, SLOT (playListItemSelected (QListViewItem *)));
-    connect (m_view->playList(), SIGNAL (dropped (QDropEvent*, QListViewItem*)),
-            this, SLOT (playListItemDropped (QDropEvent *, QListViewItem *)));
+    connect (m_view->playList (), SIGNAL (selectionChanged (Q3ListViewItem *)),
+            this, SLOT (playListItemSelected (Q3ListViewItem *)));
+    connect (m_view->playList(), SIGNAL (dropped (QDropEvent*, Q3ListViewItem*)),
+            this, SLOT (playListItemDropped (QDropEvent *, Q3ListViewItem *)));
     connect (m_view->playList(), SIGNAL (moved ()),
             this, SLOT (playListItemMoved ()));
     connect (m_view->playList(), SIGNAL (prepareMenu (KMPlayer::PlayListItem *, QPopupMenu *)), this, SLOT (preparePlaylistMenu (KMPlayer::PlayListItem *, QPopupMenu *)));
     m_dropmenu = new QPopupMenu (m_view->playList ());
-    m_dropmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("player_playlist"), KIcon::Small, 0, true), i18n ("&Add to list"), this, SLOT (menuDropInList ()));
-    m_dropmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("folder_grey"), KIcon::Small, 0, true), i18n ("Add in new &Group"), this, SLOT (menuDropInGroup ()));
-    m_dropmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("editcopy"), KIcon::Small, 0, true), i18n ("&Copy here"), this, SLOT (menuCopyDrop ()));
-    m_dropmenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("editdelete"), KIcon::Small, 0, true), i18n ("&Delete"), this, SLOT (menuDeleteNode ()));
+    m_dropmenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("player_playlist"), K3Icon::Small, 0, true), i18n ("&Add to list"), this, SLOT (menuDropInList ()));
+    m_dropmenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("folder_grey"), K3Icon::Small, 0, true), i18n ("Add in new &Group"), this, SLOT (menuDropInGroup ()));
+    m_dropmenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("editcopy"), K3Icon::Small, 0, true), i18n ("&Copy here"), this, SLOT (menuCopyDrop ()));
+    m_dropmenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("editdelete"), K3Icon::Small, 0, true), i18n ("&Delete"), this, SLOT (menuDeleteNode ()));
     /*QPopupMenu * viewmenu = new QPopupMenu;
     viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()),
                           QKeySequence ("CTRL + Key_F"));
@@ -884,7 +884,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
           "<seq begin='reg1.activateEvent'/>"
           "</excl>"
           "</body></smil>"
-          ).arg (locate ("data", "kmplayer/noise.gif")).arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
+          ).arg (locate ("data", "kmplayer/noise.gif")).arg (KIconLoader::global()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
         QTextStream ts (smil.utf8 (), IO_ReadOnly);
         KMPlayer::readXML (m_document, ts, QString (), false);
     }
@@ -1171,7 +1171,7 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
 
 KDE_NO_EXPORT void KMPlayerApp::minimalMode (bool by_user) {
     unsigned long props = NET::WMWindowType;
-    NETWinInfo winfo (qt_xdisplay (), winId (), qt_xrootwin (), props);
+    NETWinInfo winfo (QX11Info::display (), winId (), QX11Info::appRootWindow(), props);
     if (m_minimal_mode) {
         winfo.setWindowType (NET::Normal);
         readOptions ();
@@ -1238,7 +1238,7 @@ KDE_NO_EXPORT void ExitSource::activate () {
           //"<animate target='reg1' attribute='background-color' calcMode='discrete' values='#FFFFFF;#E4E4E4;#CCCCCC;#B4B4B4;#9E9E9E;#8A8A8A;#777777;#656565;#555555;#464646;#393939;#2D2D2D;#222222;#191919;#111111;#0B0B0B;#060606;#020202;#000000;#000000' dur='0.6'/>"
           "<img src='%2' id='img1' region='image' dur='0.4' fit='hidden' transOut='pw'/>"
           "</par>"
-          "</body></smil>").arg (KGlobal::iconLoader()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
+          "</body></smil>").arg (KIconLoader::global()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
         QTextStream ts (smil.utf8 (), IO_ReadOnly);
         KMPlayer::readXML (m_document, ts, QString (), false);
     }
@@ -1465,7 +1465,7 @@ KDE_NO_EXPORT void KMPlayerApp::fullScreen () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::playListItemSelected (QListViewItem * item) {
+KDE_NO_EXPORT void KMPlayerApp::playListItemSelected (Q3ListViewItem * item) {
     KMPlayer::PlayListItem * vi = static_cast <KMPlayer::PlayListItem *> (item);
     if (edit_tree_id > -1) {
         if (vi->playListView ()->rootItem (item)->id != edit_tree_id)
@@ -1476,11 +1476,11 @@ KDE_NO_EXPORT void KMPlayerApp::playListItemSelected (QListViewItem * item) {
 }
 
 KDE_NO_EXPORT
-void KMPlayerApp::playListItemDropped (QDropEvent * de, QListViewItem * after) {
+void KMPlayerApp::playListItemDropped (QDropEvent * de, Q3ListViewItem * after) {
     if (!after) { // could still be a descendent
         after = m_view->playList()->itemAt (m_view->playList()->contentsToViewport (de->pos ()));
         if (after) {
-            QListViewItem * p = after->itemAbove ();
+            Q3ListViewItem * p = after->itemAbove ();
             if (p && p->nextSibling () != after)
                 after = after->parent ();
         }
@@ -1619,12 +1619,12 @@ KDE_NO_EXPORT void KMPlayerApp::preparePlaylistMenu (KMPlayer::PlayListItem * it
         pm->insertSeparator ();
         manip_node = item->node;
         if (ri->flags & KMPlayer::PlayListView::Deleteable)
-            pm->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("editdelete"), KIcon::Small, 0, true), i18n ("&Delete item"), this, SLOT (menuDeleteNode ()));
+            pm->insertItem (KIconLoader::global ()->loadIconSet (QString ("editdelete"), K3Icon::Small, 0, true), i18n ("&Delete item"), this, SLOT (menuDeleteNode ()));
         if (ri->flags & KMPlayer::PlayListView::Moveable) {
             if (manip_node->previousSibling ())
-                pm->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("up"), KIcon::Small, 0, true), i18n ("&Move up"), this, SLOT (menuMoveUpNode ()));
+                pm->insertItem (KIconLoader::global ()->loadIconSet (QString ("up"), K3Icon::Small, 0, true), i18n ("&Move up"), this, SLOT (menuMoveUpNode ()));
             if (manip_node->nextSibling ())
-                pm->insertItem (KGlobal::iconLoader()->loadIconSet (QString ("down"), KIcon::Small, 0, true), i18n ("Move &down"), this, SLOT (menuMoveDownNode ()));
+                pm->insertItem (KIconLoader::global()->loadIconSet (QString ("down"), K3Icon::Small, 0, true), i18n ("Move &down"), this, SLOT (menuMoveDownNode ()));
         }
     }
 }
@@ -1656,7 +1656,7 @@ KDE_NO_EXPORT void KMPlayerApp::configChanged () {
     viewKeepRatio->setChecked (m_player->settings ()->sizeratio);
     if (m_player->settings ()->docksystray && !m_systray) {
         m_systray = new KSystemTray (this);
-        m_systray->setPixmap (KGlobal::iconLoader ()->loadIcon (QString ("kmplayer"), KIcon::NoGroup, 22));
+        m_systray->setPixmap (KIconLoader::global ()->loadIcon (QString ("kmplayer"), K3Icon::NoGroup, 22));
         m_systray->show ();
     } else if (!m_player->settings ()->docksystray && m_systray) {
         delete m_systray;

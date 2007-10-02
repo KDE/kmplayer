@@ -21,18 +21,18 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif 
+#endif
 
 #include <qwidget.h>
 #include <qpushbutton.h>
 
-#include <kpopupmenu.h>
+#include <kmenu.h>
 
 class QSlider;
 //class QPushButton;
 class QBoxLayout;
 class QStringList;
-class KPopupMenu;
+class KMenu;
 
 namespace KMPlayer {
 
@@ -55,7 +55,7 @@ protected:
 /*
  * The pop down menu from the controlpanel
  */
-class KMPLAYER_EXPORT KMPlayerPopupMenu : public KPopupMenu {
+class KMPLAYER_EXPORT KMPlayerPopupMenu : public KMenu {
     Q_OBJECT
 public:
     KMPlayerPopupMenu (QWidget *);
@@ -127,12 +127,12 @@ public:
     KDE_NO_EXPORT QPushButton * broadcastButton () const { return m_buttons[button_broadcast]; }
     KDE_NO_EXPORT VolumeBar * volumeBar () const { return m_volume; }
     KDE_NO_EXPORT KMPlayerPopupMenu * popupMenu () const { return m_popupMenu; }
-    KDE_NO_EXPORT KPopupMenu * bookmarkMenu () const { return m_bookmarkMenu; }
-    KDE_NO_EXPORT QPopupMenu * zoomMenu () const { return m_zoomMenu; }
-    KDE_NO_EXPORT QPopupMenu * playerMenu () const { return m_playerMenu; }
-    KDE_NO_EXPORT QPopupMenu * colorMenu () const { return m_colorMenu; }
-    KDE_NO_EXPORT QPopupMenu * audioMenu () const { return m_audioMenu; }
-    KDE_NO_EXPORT QPopupMenu * subtitleMenu () const { return m_subtitleMenu; }
+    KDE_NO_EXPORT KMenu * bookmarkMenu () const { return m_bookmarkMenu; }
+    KDE_NO_EXPORT QMenu * zoomMenu () const { return m_zoomMenu; }
+    KDE_NO_EXPORT QMenu * playerMenu () const { return m_playerMenu; }
+    KDE_NO_EXPORT QMenu * colorMenu () const { return m_colorMenu; }
+    KDE_NO_EXPORT QMenu * audioMenu () const { return m_audioMenu; }
+    KDE_NO_EXPORT QMenu * subtitleMenu () const { return m_subtitleMenu; }
     KDE_NO_EXPORT View * view () const { return m_view; }
 public slots:
     void setLanguages (const QStringList & al, const QStringList & sl);

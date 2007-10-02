@@ -41,7 +41,7 @@ struct KMPLAYER_NO_EXPORT TrieNode {
     void removeChild (TrieNode *);
     void dump (int lvl) {
         QString indent (QString ().fill (QChar ('.'), lvl));
-        printf("%s%s len:%4d rc:%4d\n", indent.ascii(), str, length, ref_count);
+        printf("%s%s len:%4d rc:%4d\n", indent.toAscii(), str, length, ref_count);
     }
     char * str;
     unsigned short length;
@@ -486,28 +486,28 @@ int main (int, char **) {
     dump (root_trie, 0);
     QString qs1 = s1.toString ();
     QString qs2 = s2.toString ();
-    printf ("%s\n%s\n", qs1.ascii(), qs2.ascii());
-    printf("equal %s %s %d\n", qs2.ascii(), "regionName", s2 == "regionName");
-    printf("equal %s %s %d\n", qs2.ascii(), "zegionName", s2 == "zegionName");
-    printf("equal %s %s %d\n", qs2.ascii(), "reqionName", s2 == "reqionName");
-    printf("equal %s %s %d\n", qs2.ascii(), "regiinName", s2 == "regiinName");
-    printf("equal %s %s %d\n", qs2.ascii(), "regionNeme", s2 == "regionNeme");
-    printf("%s < %s %d\n", qs2.ascii(), "regionName", s2 < TrieString("regionName"));
-    printf("%s < %s %d\n", qs2.ascii(), "zegion", s2 < TrieString("zegion"));
-    printf("%s < %s %d\n", qs2.ascii(), "req", s2 < TrieString("req"));
-    printf("%s < %s %d\n", qs2.ascii(), "regiinName", s2 < TrieString("regiinName"));
-    printf("%s < %s %d\n", qs2.ascii(), "regionNeme", s2 < TrieString("regionNeme"));
-    printf("%s startsWith %s %d\n", s1.toString().ascii(), "region", s1.startsWith ("region"));
-    printf("%s startsWith %s %d\n", qs2.ascii(), "region", s2.startsWith ("region"));
-    printf("%s startsWith %s %d\n", qs2.ascii(), "regi", s2.startsWith ("regi"));
-    printf("%s startsWith %s %d\n", qs2.ascii(), "regian", s2.startsWith ("regian"));
-    printf("%s startsWith %s %d\n", qs2.ascii(), "regio", s2.startsWith ("regio"));
-    printf("%s startsWith %s %d\n", qs2.ascii(), "zegio", s2.startsWith ("zegio"));
-    printf("%s startsWith %s %d\n", qs2.ascii(), "r", s2.startsWith ("r"));
-    printf("%s startsWith %s %d\n", qs2.ascii(), "q", s2.startsWith ("q"));
+    printf ("%s\n%s\n", qs1.toAscii(), qs2.toAscii());
+    printf("equal %s %s %d\n", qs2.toAscii(), "regionName", s2 == "regionName");
+    printf("equal %s %s %d\n", qs2.toAscii(), "zegionName", s2 == "zegionName");
+    printf("equal %s %s %d\n", qs2.toAscii(), "reqionName", s2 == "reqionName");
+    printf("equal %s %s %d\n", qs2.toAscii(), "regiinName", s2 == "regiinName");
+    printf("equal %s %s %d\n", qs2.toAscii(), "regionNeme", s2 == "regionNeme");
+    printf("%s < %s %d\n", qs2.toAscii(), "regionName", s2 < TrieString("regionName"));
+    printf("%s < %s %d\n", qs2.toAscii(), "zegion", s2 < TrieString("zegion"));
+    printf("%s < %s %d\n", qs2.toAscii(), "req", s2 < TrieString("req"));
+    printf("%s < %s %d\n", qs2.toAscii(), "regiinName", s2 < TrieString("regiinName"));
+    printf("%s < %s %d\n", qs2.toAscii(), "regionNeme", s2 < TrieString("regionNeme"));
+    printf("%s startsWith %s %d\n", s1.toString().toAscii(), "region", s1.startsWith ("region"));
+    printf("%s startsWith %s %d\n", qs2.toAscii(), "region", s2.startsWith ("region"));
+    printf("%s startsWith %s %d\n", qs2.toAscii(), "regi", s2.startsWith ("regi"));
+    printf("%s startsWith %s %d\n", qs2.toAscii(), "regian", s2.startsWith ("regian"));
+    printf("%s startsWith %s %d\n", qs2.toAscii(), "regio", s2.startsWith ("regio"));
+    printf("%s startsWith %s %d\n", qs2.toAscii(), "zegio", s2.startsWith ("zegio"));
+    printf("%s startsWith %s %d\n", qs2.toAscii(), "r", s2.startsWith ("r"));
+    printf("%s startsWith %s %d\n", qs2.toAscii(), "q", s2.startsWith ("q"));
     TrieString fnt ("font");
-    printf("%s startsWith %s %d\n", s8.toString().ascii(), fnt.toString().ascii(), s8.startsWith(fnt));
-    printf("%s startsWith %s %d\n", s8.toString().ascii(), s14.toString().ascii(), s8.startsWith(s14));
+    printf("%s startsWith %s %d\n", s8.toString().toAscii(), fnt.toString().toAscii(), s8.startsWith(fnt));
+    printf("%s startsWith %s %d\n", s8.toString().toAscii(), s14.toString().toAscii(), s8.startsWith(s14));
     }
     dump (root_trie, 0);
     StringPool::reset();

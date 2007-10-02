@@ -87,7 +87,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::KMPlayerPrefSourcePageVDR (QWidge
     xv_port->setTreeStepSize (15);
     //xv_port->setRootIsDecorated (true);
     //xv_port->setSorting (-1);
-    QListViewItem * vitem = new QListViewItem (xv_port, i18n ("XVideo port"));
+    Q3ListViewItem * vitem = new Q3ListViewItem (xv_port, i18n ("XVideo port"));
     vitem->setOpen (true);
     QWhatsThis::add (xv_port, i18n ("Port base of the X Video extension.\nIf left to default (0), the first available port will be used. However if you have multiple XVideo instances, you might have to provide the port to use here.\nSee the output from 'xvinfo' for more information"));
     QLabel * label = new QLabel (i18n ("Communication port:"), this);
@@ -652,9 +652,9 @@ KDE_NO_EXPORT void KMPlayerVDRSource::read (KConfig * m_config) {
     scale = m_config->readNumEntry (strXVScale, 0);
 }
 
-struct XVTreeItem : public QListViewItem {
-    XVTreeItem (QListViewItem *parent, const QString & t, int p, int e)
-        : QListViewItem (parent, t), port (p), encoding (e) {}
+struct XVTreeItem : public Q3ListViewItem {
+    XVTreeItem (Q3ListViewItem *parent, const QString & t, int p, int e)
+        : Q3ListViewItem (parent, t), port (p), encoding (e) {}
     int port;
     int encoding;
 };
@@ -673,10 +673,10 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
     } else {
         m_configpage->tcp_port->setText (QString::number (tcp_port));
         m_configpage->scale->setButton (scale);
-        QListViewItem * vitem = m_configpage->xv_port->firstChild ();
+        Q3ListViewItem * vitem = m_configpage->xv_port->firstChild ();
         NodePtr configdoc = xvideo->configDocument ();
         if (configdoc && configdoc->firstChild ()) {
-            for (QListViewItem *i=vitem->firstChild(); i; i=vitem->firstChild())
+            for (Q3ListViewItem *i=vitem->firstChild(); i; i=vitem->firstChild())
                 delete i;
             NodePtr node = configdoc->firstChild ();
             for (node = node->firstChild (); node; node = node->nextSibling()) {
@@ -693,7 +693,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
                     QString portatt = e->getAttribute (
                             KMPlayer::StringPool::attr_value);
                     int port;
-                    QListViewItem *pi = new QListViewItem (vitem, i18n ("Port ") + portatt);
+                    Q3ListViewItem *pi = new Q3ListViewItem (vitem, i18n ("Port ") + portatt);
                     port = portatt.toInt ();
                     for (NodePtr in=e->firstChild(); in; in=in->nextSibling()) {
                         if (!in->isElementNode () ||
@@ -704,7 +704,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
                                 KMPlayer::StringPool::attr_name);
                         int enc = i->getAttribute (
                                 KMPlayer::StringPool::attr_value).toInt ();
-                        QListViewItem * ii = new XVTreeItem(pi, inp, port, enc);
+                        Q3ListViewItem * ii = new XVTreeItem(pi, inp, port, enc);
                         if (m_xvport == port && enc == m_xvencoding) {
                             ii->setSelected (true);
                             m_configpage->xv_port->ensureItemVisible (ii);

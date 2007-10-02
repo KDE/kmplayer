@@ -30,6 +30,8 @@
 #include <qheader.h>
 #include <qstyle.h>
 #include <qtimer.h>
+#include <Q3DragObject>
+#include <QPalette>
 
 #include <kiconloader.h>
 #include <kfinddialog.h>
@@ -62,22 +64,22 @@ namespace KMPlayer {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT PlayListItem::PlayListItem (QListViewItem *p, const NodePtr & e, PlayListView * lv) : QListViewItem (p), node (e), listview (lv) {}
+KDE_NO_CDTOR_EXPORT PlayListItem::PlayListItem (Q3ListViewItem *p, const NodePtr & e, PlayListView * lv) : Q3ListViewItem (p), node (e), listview (lv) {}
 
-KDE_NO_CDTOR_EXPORT PlayListItem::PlayListItem (QListViewItem *p, const AttributePtr & a, PlayListView * lv) : QListViewItem (p), m_attr (a), listview (lv) {}
+KDE_NO_CDTOR_EXPORT PlayListItem::PlayListItem (Q3ListViewItem *p, const AttributePtr & a, PlayListView * lv) : Q3ListViewItem (p), m_attr (a), listview (lv) {}
 
 KDE_NO_CDTOR_EXPORT
-PlayListItem::PlayListItem (PlayListView *v, const NodePtr &e, QListViewItem *b)
-  : QListViewItem (v, b), node (e), listview (v) {}
+PlayListItem::PlayListItem (PlayListView *v, const NodePtr &e, Q3ListViewItem *b)
+  : Q3ListViewItem (v, b), node (e), listview (v) {}
 
 KDE_NO_CDTOR_EXPORT void PlayListItem::paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align) {
     if (node && node->state == Node::state_began) {
         QColorGroup mycg (cg);
         mycg.setColor (QColorGroup::Foreground, listview->activeColor ());
         mycg.setColor (QColorGroup::Text, listview->activeColor ());
-        QListViewItem::paintCell (p, mycg, column, width, align);
+        Q3ListViewItem::paintCell (p, mycg, column, width, align);
     } else
-        QListViewItem::paintCell (p, cg, column, width, align);
+        Q3ListViewItem::paintCell (p, cg, column, width, align);
 }
 
 KDE_NO_CDTOR_EXPORT void PlayListItem::paintBranches (QPainter * p, const QColorGroup &, int w, int, int h) {
@@ -87,7 +89,7 @@ KDE_NO_CDTOR_EXPORT void PlayListItem::paintBranches (QPainter * p, const QColor
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT
-RootPlayListItem::RootPlayListItem (int _id, PlayListView *v, const NodePtr & e, QListViewItem * before, int flgs)
+RootPlayListItem::RootPlayListItem (int _id, PlayListView *v, const NodePtr & e, Q3ListViewItem * before, int flgs)
   : PlayListItem (v, e, before),
     id (_id),
     flags (flgs),
@@ -100,14 +102,14 @@ KDE_NO_CDTOR_EXPORT void RootPlayListItem::paintCell (QPainter * p, const QColor
     mycg.setColor (QColorGroup::Highlight, mycg.base ());
     mycg.setColor (QColorGroup::Text, listview->topLevelWidget()->paletteForegroundColor());
     mycg.setColor (QColorGroup::HighlightedText, mycg.text ());
-    QListViewItem::paintCell (p, mycg, column, width, align);
+    Q3ListViewItem::paintCell (p, mycg, column, width, align);
     qDrawShadeRect (p, 0, 0, width -1, height () -1, mycg, !isOpen ());
 }
 
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, KActionCollection * ac)
- : KListView (parent, "kde_kmplayer_playlist"),
+ : K3ListView (parent, "kde_kmplayer_playlist"),
    m_view (view),
    m_find_dialog (0L),
    m_active_color (30, 0, 255),
@@ -122,28 +124,32 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
     setDropVisualizer (true);
     setItemsRenameable (true);
     setItemMargin (2);
-    m_itemmenu = new QPopupMenu (this);
-    folder_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder"), KIcon::Small);
-    auxiliary_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder_grey"), KIcon::Small);
-    video_pix = KGlobal::iconLoader ()->loadIcon (QString ("video"), KIcon::Small);
-    info_pix = KGlobal::iconLoader ()->loadIcon (QString ("messagebox_info"), KIcon::Small);
-    img_pix = KGlobal::iconLoader ()->loadIcon (QString ("colorize"), KIcon::Small);
-    unknown_pix = KGlobal::iconLoader ()->loadIcon (QString ("unknown"), KIcon::Small);
-    menu_pix = KGlobal::iconLoader ()->loadIcon (QString ("player_playlist"), KIcon::Small);
-    config_pix = KGlobal::iconLoader ()->loadIcon (QString ("configure"), KIcon::Small);
-    url_pix = KGlobal::iconLoader ()->loadIcon (QString ("www"), KIcon::Small);
+    QPalette palette;
+    palette.setColor (foregroundRole(), QColor (0, 0, 0));
+    palette.setColor (backgroundRole(), QColor (0xB2, 0xB2, 0xB2));
+    setPalette(palette);
+    m_itemmenu = new QMenu (this);
+    folder_pix = KIconLoader::global ()->loadIcon (QString ("folder"), K3Icon::Small);
+    auxiliary_pix = KIconLoader::global ()->loadIcon (QString ("folder_grey"), K3Icon::Small);
+    video_pix = KIconLoader::global ()->loadIcon (QString ("video"), K3Icon::Small);
+    info_pix = KIconLoader::global ()->loadIcon (QString ("messagebox_info"), K3Icon::Small);
+    img_pix = KIconLoader::global ()->loadIcon (QString ("colorize"), K3Icon::Small);
+    unknown_pix = KIconLoader::global ()->loadIcon (QString ("unknown"), K3Icon::Small);
+    menu_pix = KIconLoader::global ()->loadIcon (QString ("player_playlist"), K3Icon::Small);
+    config_pix = KIconLoader::global ()->loadIcon (QString ("configure"), K3Icon::Small);
+    url_pix = KIconLoader::global ()->loadIcon (QString ("www"), K3Icon::Small);
     m_find = KStdAction::find (this, SLOT (slotFind ()), ac, "find");
     m_find_next = KStdAction::findNext (this, SLOT(slotFindNext()), ac, "next");
     m_find_next->setEnabled (false);
-    connect (this, SIGNAL (contextMenuRequested (QListViewItem *, const QPoint &, int)), this, SLOT (contextMenuItem (QListViewItem *, const QPoint &, int)));
-    connect (this, SIGNAL (expanded (QListViewItem *)),
-             this, SLOT (itemExpanded (QListViewItem *)));
-    connect (this, SIGNAL (dropped (QDropEvent *, QListViewItem *)),
-             this, SLOT (itemDropped (QDropEvent *, QListViewItem *)));
-    connect (this, SIGNAL (itemRenamed (QListViewItem *)),
-             this, SLOT (itemIsRenamed (QListViewItem *)));
-    connect (this, SIGNAL (selectionChanged (QListViewItem *)),
-             this, SLOT (itemIsSelected (QListViewItem *)));
+    connect (this, SIGNAL (contextMenuRequested (Q3ListViewItem *, const QPoint &, int)), this, SLOT (contextMenuItem (Q3ListViewItem *, const QPoint &, int)));
+    connect (this, SIGNAL (expanded (Q3ListViewItem *)),
+             this, SLOT (itemExpanded (Q3ListViewItem *)));
+    connect (this, SIGNAL (dropped (QDropEvent *, Q3ListViewItem *)),
+             this, SLOT (itemDropped (QDropEvent *, Q3ListViewItem *)));
+    connect (this, SIGNAL (itemRenamed (Q3ListViewItem *)),
+             this, SLOT (itemIsRenamed (Q3ListViewItem *)));
+    connect (this, SIGNAL (selectionChanged (Q3ListViewItem *)),
+             this, SLOT (itemIsSelected (Q3ListViewItem *)));
 }
 
 KDE_NO_CDTOR_EXPORT PlayListView::~PlayListView () {
@@ -155,7 +161,7 @@ int PlayListView::addTree (NodePtr root, const QString & source, const QString &
     ritem->source = source;
     ritem->icon = icon;
     ritem->setPixmap (0, !ritem->icon.isEmpty ()
-            ? KGlobal::iconLoader ()->loadIcon (ritem->icon, KIcon::Small)
+            ? KIconLoader::global ()->loadIcon (ritem->icon, K3Icon::Small)
             : url_pix);
     updateTree (ritem, 0L, false);
     return last_id;
@@ -219,7 +225,7 @@ KDE_NO_EXPORT PlayListItem * PlayListView::populate
             default:
                 if (pt > Node::play_type_none)
                     pix = &video_pix;
-                else 
+                else
                     pix = item->firstChild ()
                         ? e->auxiliaryNode ()
                           ? &auxiliary_pix : &folder_pix
@@ -307,7 +313,7 @@ void PlayListView::updateTree (RootPlayListItem * ritem, NodePtr active, bool se
 }
 
 void PlayListView::selectItem (const QString & txt) {
-    QListViewItem * item = selectedItem ();
+    Q3ListViewItem * item = selectedItem ();
     if (item && item->text (0) == txt)
         return;
     item = findItem (txt, 0);
@@ -317,7 +323,7 @@ void PlayListView::selectItem (const QString & txt) {
     }
 }
 
-KDE_NO_EXPORT QDragObject * PlayListView::dragObject () {
+KDE_NO_EXPORT Q3DragObject * PlayListView::dragObject () {
     PlayListItem * item = static_cast <PlayListItem *> (selectedItem ());
     if (item && item->node) {
         QString txt = item->node->isPlayable ()
@@ -335,10 +341,10 @@ KDE_NO_EXPORT QDragObject * PlayListView::dragObject () {
 
 KDE_NO_EXPORT void PlayListView::setFont (const QFont & fnt) {
     setTreeStepSize (QFontMetrics (fnt).boundingRect ('m').width ());
-    KListView::setFont (fnt);
+    K3ListView::setFont (fnt);
 }
 
-KDE_NO_EXPORT void PlayListView::contextMenuItem (QListViewItem * vi, const QPoint & p, int) {
+KDE_NO_EXPORT void PlayListView::contextMenuItem (Q3ListViewItem * vi, const QPoint & p, int) {
     if (vi) {
         PlayListItem * item = static_cast <PlayListItem *> (vi);
         if (item->node || item->m_attr) {
@@ -348,16 +354,16 @@ KDE_NO_EXPORT void PlayListView::contextMenuItem (QListViewItem * vi, const QPoi
                 m_find_next->unplug (m_itemmenu);
                 m_itemmenu->clear ();
             }
-            m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet
-                    (QString ("editcopy"), KIcon::Small, 0, true),
+            m_itemmenu->insertItem (KIconLoader::global ()->loadIconSet
+                    (QString ("editcopy"), K3Icon::Small, 0, true),
                     i18n ("&Copy to Clipboard"),
                     this, SLOT (copyToClipboard ()), 0, 0);
             if (item->m_attr ||
                     (item->node && (item->node->isPlayable () ||
                                     item->node->isDocument ()) &&
                      item->node->mrl ()->bookmarkable))
-                m_itemmenu->insertItem (KGlobal::iconLoader ()->loadIconSet
-                        (QString ("bookmark_add"), KIcon::Small, 0, true),
+                m_itemmenu->insertItem (KIconLoader::global ()->loadIconSet
+                        (QString ("bookmark_add"), K3Icon::Small, 0, true),
                         i18n ("&Add Bookmark"),
                         this, SLOT (addBookMark ()), 0, 1);
             if (ritem->have_dark_nodes) {
@@ -375,7 +381,7 @@ KDE_NO_EXPORT void PlayListView::contextMenuItem (QListViewItem * vi, const QPoi
         m_view->controlPanel ()->popupMenu ()->exec (p);
 }
 
-void PlayListView::itemExpanded (QListViewItem * item) {
+void PlayListView::itemExpanded (Q3ListViewItem * item) {
     if (!m_ignore_expanded && item->childCount () == 1) {
         PlayListItem * child_item = static_cast<PlayListItem*>(item->firstChild ());
         child_item->setOpen (rootItem (item)->show_all_nodes ||
@@ -383,7 +389,7 @@ void PlayListView::itemExpanded (QListViewItem * item) {
     }
 }
 
-RootPlayListItem * PlayListView::rootItem (QListViewItem * item) const {
+RootPlayListItem * PlayListView::rootItem (Q3ListViewItem * item) const {
     if (!item)
         return 0L;
     while (item->parent ())
@@ -444,7 +450,7 @@ KDE_NO_EXPORT void PlayListView::showAllNodes(RootPlayListItem *ri, bool show) {
 }
 
 KDE_NO_EXPORT bool PlayListView::acceptDrag (QDropEvent * de) const {
-    QListViewItem * item = itemAt (contentsToViewport (de->pos ()));
+    Q3ListViewItem * item = itemAt (contentsToViewport (de->pos ()));
     if (item && (de->source () == this || isDragValid (de))) {
         RootPlayListItem * ritem = rootItem (item);
         return ritem->flags & AllowDrops;
@@ -452,7 +458,7 @@ KDE_NO_EXPORT bool PlayListView::acceptDrag (QDropEvent * de) const {
     return false;
 }
 
-KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, QListViewItem *after) {
+KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, Q3ListViewItem *after) {
     if (!after) { // could still be a descendent
         after = itemAt (contentsToViewport (de->pos ()));
         if (after)
@@ -492,7 +498,7 @@ KDE_NO_EXPORT void PlayListView::itemDropped (QDropEvent * de, QListViewItem *af
         m_view->dropEvent (de);
 }
 
-KDE_NO_EXPORT void PlayListView::itemIsRenamed (QListViewItem * qitem) {
+KDE_NO_EXPORT void PlayListView::itemIsRenamed (Q3ListViewItem * qitem) {
     PlayListItem * item = static_cast <PlayListItem *> (qitem);
     if (item->node) {
         RootPlayListItem * ri = rootItem (qitem);
@@ -518,29 +524,29 @@ KDE_NO_EXPORT void PlayListView::itemIsRenamed (QListViewItem * qitem) {
     }
 }
 
-KDE_NO_EXPORT void PlayListView::itemIsSelected (QListViewItem * qitem) {
+KDE_NO_EXPORT void PlayListView::itemIsSelected (Q3ListViewItem * qitem) {
     RootPlayListItem * ri = rootItem (qitem);
     setItemsRenameable (ri && (ri->flags & TreeEdit) && ri != qitem);
 }
 
-KDE_NO_EXPORT void PlayListView::rename (QListViewItem * qitem, int c) {
+KDE_NO_EXPORT void PlayListView::rename (Q3ListViewItem * qitem, int c) {
     PlayListItem * item = static_cast <PlayListItem *> (qitem);
     if (rootItem (qitem)->show_all_nodes && item && item->m_attr) {
         PlayListItem * pi = static_cast <PlayListItem *> (qitem->parent ());
         if (pi && pi->node && pi->node->isEditable ())
-            KListView::rename (item, c);
+            K3ListView::rename (item, c);
     } else if (item && item->node && item->node->isEditable ()) {
         if (!rootItem (qitem)->show_all_nodes &&
                 item->node->isPlayable () &&
                 item->node->mrl ()->pretty_name.isEmpty ())
             // populate() has crippled src, restore for editing 
             item->setText (0, item->node->mrl ()->src);
-        KListView::rename (item, c);
+        K3ListView::rename (item, c);
     }
 }
 
 KDE_NO_EXPORT void PlayListView::editCurrent () {
-    QListViewItem * qitem = selectedItem ();
+    Q3ListViewItem * qitem = selectedItem ();
     if (qitem) {
         RootPlayListItem * ri = rootItem (qitem);
         if (ri && (ri->flags & TreeEdit) && ri != qitem)
@@ -559,21 +565,21 @@ KDE_NO_EXPORT void PlayListView::slotFind () {
     m_find_dialog->show ();
 }
 
-static QListViewItem * findNodeInTree (NodePtr n, QListViewItem * item) {
+static Q3ListViewItem * findNodeInTree (NodePtr n, Q3ListViewItem * item) {
     //kdDebug () << "item:" << item->text (0) << " n:" << (n ? n->nodeName () : "null" )  <<endl;
     PlayListItem * pi = static_cast <PlayListItem *> (item);
     if (!n || !pi->node)
         return 0L;
     if (n == pi->node)
         return item;
-    for (QListViewItem * ci = item->firstChild(); ci; ci = ci->nextSibling ()) {
+    for (Q3ListViewItem * ci = item->firstChild(); ci; ci = ci->nextSibling ()) {
         //kdDebug () << "ci:" << ci->text (0) << " n:" << n->nodeName () <<endl;
-        QListViewItem * vi = findNodeInTree (n, ci);
+        Q3ListViewItem * vi = findNodeInTree (n, ci);
         if (vi)
             return vi;
     }
     return 0L;
-    
+
 }
 
 KDE_NO_EXPORT void PlayListView::slotFindOk () {
@@ -701,7 +707,7 @@ KDE_NO_EXPORT void PlayListView::slotFindNext () {
     m_current_find_elm = n;
     kdDebug () << " search for " << str << "=" << (node ? node->nodeName () : "not found") << " next:" << (n ? n->nodeName () : " not found") << endl;
     if (found) {
-        QListViewItem * fc = findNodeInTree (node, ri);
+        Q3ListViewItem * fc = findNodeInTree (node, ri);
         if (!fc) {
             m_current_find_elm = 0L;
             kdDebug () << "node not found in tree tree:" << ri->id << endl;

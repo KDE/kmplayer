@@ -31,10 +31,9 @@
 class KConfig;
 class QWidget;
 class QFrame;
-class QListViewItem;
 
 namespace KMPlayer {
-    
+
 class PartBase;
 
 /**

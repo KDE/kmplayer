@@ -21,18 +21,18 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif 
+#endif
 
-#include <kdockwidget.h>
-#include <klistview.h>
+#include <k3listview.h>
 
 #include "kmplayerplaylist.h"
 
 class QFont;
 class QPixmap;
 class QPainter;
-class QPopupMenu;
+class QMenu;
 class QDropEvent;
+class Q3DragObject;
 
 namespace KMPlayer {
 
@@ -44,11 +44,11 @@ bool isDragValid (QDropEvent * de);
 /*
  * An item in the playlist
  */
-class KMPLAYER_NO_EXPORT PlayListItem : public QListViewItem {
+class KMPLAYER_NO_EXPORT PlayListItem : public Q3ListViewItem {
 public:
-    PlayListItem (QListViewItem *p, const NodePtr & e, PlayListView * lv);
-    PlayListItem (QListViewItem *p, const AttributePtr & e, PlayListView * lv);
-    PlayListItem (PlayListView *v, const NodePtr & d, QListViewItem * b);
+    PlayListItem (Q3ListViewItem *p, const NodePtr & e, PlayListView * lv);
+    PlayListItem (Q3ListViewItem *p, const AttributePtr & e, PlayListView * lv);
+    PlayListItem (PlayListView *v, const NodePtr & d, Q3ListViewItem * b);
     KDE_NO_CDTOR_EXPORT ~PlayListItem () {}
     void paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align);
     void paintBranches(QPainter *p, const QColorGroup &cg, int w, int y, int h);
@@ -62,7 +62,7 @@ protected:
 
 class KMPLAYER_NO_EXPORT RootPlayListItem : public PlayListItem {
 public:
-    RootPlayListItem (int id, PlayListView *v, const NodePtr & d, QListViewItem * b, int flags);
+    RootPlayListItem (int id, PlayListView *v, const NodePtr & d, Q3ListViewItem * b, int flags);
     KDE_NO_CDTOR_EXPORT ~RootPlayListItem () {}
     void paintCell (QPainter * p, const QColorGroup & cg, int column, int width, int align);
     QString source;
@@ -76,7 +76,7 @@ public:
 /*
  * The playlist GUI
  */
-class KMPLAYER_EXPORT PlayListView : public KListView {
+class KMPLAYER_EXPORT PlayListView : public K3ListView {
     Q_OBJECT
 public:
     enum Flags {
@@ -91,7 +91,7 @@ public:
     void setActiveForegroundColor (const QColor & c) { m_active_color = c; }
     const QColor & activeColor () const { return m_active_color; }
     int addTree (NodePtr r, const QString & src, const QString & ico, int flgs);
-    RootPlayListItem * rootItem (QListViewItem * item) const;
+    RootPlayListItem * rootItem (Q3ListViewItem * item) const;
     RootPlayListItem * rootItem (int id) const;
     void setFont (const QFont &);
     PlayListItem * currentPlayListItem () const;
@@ -100,23 +100,23 @@ public:
     int lastDragTreeId () const { return last_drag_tree_id; }
 signals:
     void addBookMark (const QString & title, const QString & url);
-    void prepareMenu (KMPlayer::PlayListItem * item, QPopupMenu * menu);
+    void prepareMenu (KMPlayer::PlayListItem * item, QMenu * menu);
 protected:
     bool acceptDrag (QDropEvent* event) const;
-    QDragObject * dragObject ();
+    Q3DragObject * dragObject ();
 public slots:
     void editCurrent ();
-    void rename (QListViewItem * item, int c);
+    void rename (Q3ListViewItem * item, int c);
     void updateTree (int id, NodePtr root, NodePtr active, bool sel, bool open);
 private slots:
-    void contextMenuItem (QListViewItem *, const QPoint &, int);
-    void itemExpanded (QListViewItem *);
+    void contextMenuItem (Q3ListViewItem *, const QPoint &, int);
+    void itemExpanded (Q3ListViewItem *);
     void copyToClipboard ();
     void addBookMark ();
     void toggleShowAllNodes ();
-    void itemDropped (QDropEvent * e, QListViewItem * after);
-    void itemIsRenamed (QListViewItem * item);
-    void itemIsSelected (QListViewItem * item);
+    void itemDropped (QDropEvent * e, Q3ListViewItem * after);
+    void itemIsRenamed (Q3ListViewItem * item);
+    void itemIsSelected (Q3ListViewItem * item);
     void updateTrees ();
     void slotFind ();
     void slotFindOk ();
@@ -135,7 +135,7 @@ private:
     };
     SharedPtr <TreeUpdate> tree_update;
     View * m_view;
-    QPopupMenu * m_itemmenu;
+    QMenu * m_itemmenu;
     KAction * m_find;
     KAction * m_find_next;
     KFindDialog * m_find_dialog;

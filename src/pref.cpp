@@ -72,7 +72,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     QStringList hierarchy; // typo? :)
     QVBoxLayout *vlay;
 
-    frame = addPage(i18n("General Options"), QString(), KGlobal::iconLoader()->loadIcon (QString ("kmplayer"), KIcon::NoGroup, 32));
+    frame = addPage(i18n("General Options"), QString(), KIconLoader::global()->loadIcon (QString ("kmplayer"), K3Icon::NoGroup, 32));
     vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
@@ -85,7 +85,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     tab->insertTab (m_GeneralPageOutput, i18n("Output"));
     entries.insert (i18n("General Options"), tab);
 
-    frame = addPage (i18n ("Source"), QString(), KGlobal::iconLoader()->loadIcon (QString ("source"), KIcon::NoGroup, 32));
+    frame = addPage (i18n ("Source"), QString(), KIconLoader::global()->loadIcon (QString ("source"), K3Icon::NoGroup, 32));
     vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
@@ -93,7 +93,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     tab->insertTab (m_SourcePageURL, i18n ("URL"));
     entries.insert (i18n("Source"), tab);
 
-    frame = addPage (i18n ("Recording"), QString(), KGlobal::iconLoader()->loadIcon (QString ("video"), KIcon::NoGroup, 32));
+    frame = addPage (i18n ("Recording"), QString(), KIconLoader::global()->loadIcon (QString ("video"), K3Icon::NoGroup, 32));
     vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
@@ -121,7 +121,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     tab->setCurrentPage (0);
     entries.insert (i18n("Recording"), tab);
 
-    frame = addPage (i18n ("Output Plugins"), QString(), KGlobal::iconLoader()->loadIcon (QString ("image"), KIcon::NoGroup, 32));
+    frame = addPage (i18n ("Output Plugins"), QString(), KIconLoader::global()->loadIcon (QString ("image"), K3Icon::NoGroup, 32));
     vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
     tab = new QTabWidget (frame);
     vlay->addWidget (tab);
@@ -131,7 +131,6 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
 
     for (PreferencesPage * p = settings->pagelist; p; p = p->next)
         addPrefPage (p);
-        
 
     connect (this, SIGNAL (defaultClicked ()), SLOT (confirmDefaults ()));
 }
@@ -161,7 +160,7 @@ KDE_NO_EXPORT void Preferences::addPrefPage (PreferencesPage * page) {
         return;
     QMap<QString, QTabWidget *>::iterator en_it = entries.find (item);
     if (en_it == entries.end ()) {
-        frame = addPage (item, QString(), KGlobal::iconLoader()->loadIcon ((icon), KIcon::NoGroup, 32));
+        frame = addPage (item, QString(), KIconLoader::global()->loadIcon ((icon), K3Icon::NoGroup, 32));
         vlay = new QVBoxLayout (frame, marginHint(), spacingHint());
         tab = new QTabWidget (frame);
         vlay->addWidget (tab);

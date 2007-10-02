@@ -226,10 +226,10 @@ void PartBase::connectPanel (ControlPanel * panel) {
 void PartBase::connectPlaylist (PlayListView * playlist) {
     connect (playlist, SIGNAL (addBookMark (const QString &, const QString &)),
              this, SLOT (addBookMark (const QString &, const QString &)));
-    connect (playlist, SIGNAL (executed (QListViewItem *)),
-             this, SLOT (playListItemExecuted (QListViewItem *)));
-    connect (playlist, SIGNAL (clicked (QListViewItem *)),
-             this, SLOT (playListItemClicked (QListViewItem *)));
+    connect (playlist, SIGNAL (executed (Q3ListViewItem *)),
+             this, SLOT (playListItemExecuted (Q3ListViewItem *)));
+    connect (playlist, SIGNAL (clicked (Q3ListViewItem *)),
+             this, SLOT (playListItemClicked (Q3ListViewItem *)));
     connect (this, SIGNAL (treeChanged (int, NodePtr, NodePtr, bool, bool)),
              playlist, SLOT (updateTree (int, NodePtr, NodePtr, bool, bool)));
     connect (this, SIGNAL (treeUpdated ()),
@@ -616,7 +616,7 @@ void PartBase::forward () {
     m_source->forward ();
 }
 
-KDE_NO_EXPORT void PartBase::playListItemClicked (QListViewItem * item) {
+KDE_NO_EXPORT void PartBase::playListItemClicked (Q3ListViewItem * item) {
     if (!item)
         return;
     PlayListItem * vi = static_cast <PlayListItem *> (item);
@@ -635,7 +635,7 @@ KDE_NO_EXPORT void PartBase::playListItemClicked (QListViewItem * item) {
         updateTree (); // items already deleted
 }
 
-KDE_NO_EXPORT void PartBase::playListItemExecuted (QListViewItem * item) {
+KDE_NO_EXPORT void PartBase::playListItemExecuted (Q3ListViewItem * item) {
     if (m_in_update_tree) return;
     if (m_view->editMode ()) return;
     PlayListItem * vi = static_cast <PlayListItem *> (item);
@@ -744,7 +744,7 @@ void PartBase::play () {
     if (m_process->state () == Process::NotRunning) {
         PlayListItem * lvi = m_view->playList ()->currentPlayListItem ();
         if (lvi) { // make sure it's in the first tree
-            QListViewItem * pitem = lvi;
+            Q3ListViewItem * pitem = lvi;
             while (pitem->parent())
                 pitem = pitem->parent();
             if (pitem != m_view->playList ()->firstChild ())

@@ -35,7 +35,7 @@ static const int id_status_timer = 2;
 
 class QPopupMenu;
 class QMenuItem;
-class QListViewItem;
+class Q3ListViewItem;
 class KProcess;
 class KMPlayerBroadcastConfig;
 class KMPlayerFFServerConfig;
@@ -126,8 +126,8 @@ private slots:
     void slotConfigureToolbars ();
     void slotClearHistory ();
     void windowVideoConsoleToggled (int wt);
-    void playListItemSelected (QListViewItem *);
-    void playListItemDropped (QDropEvent * e, QListViewItem * after);
+    void playListItemSelected (Q3ListViewItem *);
+    void playListItemDropped (QDropEvent * e, Q3ListViewItem * after);
     void playListItemMoved ();
     void menuDropInList ();
     void menuDropInGroup ();
@@ -178,7 +178,7 @@ private:
     KMPlayerBroadcastConfig * m_broadcastconfig;
     QCString m_dcopName;
     KURL::List m_drop_list;
-    QListViewItem * m_drop_after;
+    Q3ListViewItem * m_drop_after;
     int edit_tree_id;
     int manip_tree_id;
     int last_time_left;

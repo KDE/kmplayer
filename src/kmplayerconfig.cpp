@@ -213,35 +213,43 @@ KDE_NO_EXPORT void Settings::applyColorSetting (bool only_changed_ones) {
     for (int i = 0; i < int (ColorSetting::last_target); i++)
         if (!only_changed_ones || colors[i].color != colors[i].newcolor) {
             colors[i].color = colors[i].newcolor;
+            QPalette palette;
             switch (ColorSetting::Target (i)) {
                 case ColorSetting::playlist_background:
-                   view->playList()->setPaletteBackgroundColor(colors[i].color);
+                   palette.setColor (view->playList()->backgroundRole(), colors[i].color);
+                   view->playList()->setPalette (palette);
                    break;
                 case ColorSetting::playlist_foreground:
-                   view->playList()->setPaletteForegroundColor(colors[i].color);
+                   palette.setColor (view->playList()->foregroundRole(), colors[i].color);
+                   view->playList()->setPalette (palette);
                    break;
                 case ColorSetting::playlist_active:
                    view->playList()->setActiveForegroundColor (colors[i].color);
                    break;
                 case ColorSetting::console_background:
-                   view->console()->setPaper (QBrush (colors[i].color));
+                   palette.setColor (view->console()->backgroundRole(), colors[i].color);
+                   view->console()->setPalette (palette);
                    break;
                 case ColorSetting::console_foreground:
-                   view->console()->setColor(colors[i].color);
+                   palette.setColor (view->console()->foregroundRole(), colors[i].color);
+                   view->console()->setPalette (palette);
                    break;
                 case ColorSetting::video_background:
-                   view->viewer ()->setBackgroundColor (colors[i].color);
+                   palette.setColor (view->viewer()->backgroundRole(), colors[i].color);
+                   view->viewer()->setPalette (palette);
                    break;
                 case ColorSetting::area_background:
-                   view->viewArea()->setPaletteBackgroundColor(colors[i].color);
+                   palette.setColor (view->viewArea()->backgroundRole(), colors[i].color);
+                   view->viewArea()->setPalette (palette);
                    break;
                 case ColorSetting::infowindow_background:
-                   view->infoPanel ()->setPaper (QBrush (colors[i].color));
-                  break;
+                   palette.setColor(view->infoPanel()->backgroundRole(), colors[i].color);
+                   view->infoPanel()->setPalette (palette);
+                   break;
                 case ColorSetting::infowindow_foreground:
-                  view->infoPanel()->setPaletteForegroundColor(colors[i].color);
-                  view->infoPanel ()->setColor (colors[i].color);
-                  break;
+                   palette.setColor(view->infoPanel()->foregroundRole(), colors[i].color);
+                   view->infoPanel()->setPalette (palette);
+                   break;
                 default:
                     ;
             }

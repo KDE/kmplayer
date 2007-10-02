@@ -219,8 +219,8 @@ protected slots:
     void saturationValueChanged (int val);
     void sourceHasChangedAspects ();
     void fullScreen ();
-    void playListItemClicked (QListViewItem *);
-    void playListItemExecuted (QListViewItem *);
+    void playListItemClicked (Q3ListViewItem *);
+    void playListItemExecuted (Q3ListViewItem *);
     virtual void playingStarted ();
     virtual void playingStopped ();
     void recordingStarted ();

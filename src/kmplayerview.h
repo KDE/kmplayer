@@ -102,7 +102,7 @@ public:
         WT_Video, WT_Console, WT_Picture, WT_Last
     };
 
-    View (QWidget *parent, const char *);
+    View (QWidget *parent);
     ~View();
 
     void addText (const QString &, bool eol=false);
@@ -117,7 +117,7 @@ public:
     KDE_NO_EXPORT PlayListView * playList () const { return m_playlist; }
     KDE_NO_EXPORT InfoWindow * infoPanel () const { return m_infopanel; }
     KDE_NO_EXPORT QStackedWidget * widgetStack () const { return m_widgetstack; }
-    KDE_NO_EXPORT KDockArea * docArea () const { return m_dockarea; }
+    KDE_NO_EXPORT K3DockArea * docArea () const { return m_dockarea; }
     KDE_NO_EXPORT ViewArea * viewArea () const { return m_view_area; }
     KDE_NO_EXPORT bool keepSizeRatio () const { return m_keepsizeratio; }
     void setKeepSizeRatio (bool b);
@@ -180,10 +180,10 @@ private:
     InfoWindow * m_infopanel;
     // all widget types
     QWidget * m_widgettypes [WT_Last];
-    KDockArea * m_dockarea;
-    KDockWidget * m_dock_video;
-    KDockWidget * m_dock_playlist;
-    KDockWidget * m_dock_infopanel;
+    K3DockArea * m_dockarea;
+    K3DockWidget * m_dock_video;
+    K3DockWidget * m_dock_playlist;
+    K3DockWidget * m_dock_infopanel;
     QString tmplog;
     QPixmap * m_image;
     ControlPanel * m_control_panel;
@@ -224,7 +224,7 @@ public:
     void resetBackgroundColor ();
     void setCurrentBackgroundColor (const QColor & c);
     KDE_NO_EXPORT View * view () const { return m_view; }
-    void changeProtocol (QXEmbed::Protocol p);
+    void setIntermediateWindow (bool set);
 public slots:
     void sendConfigureEvent ();
     void embedded ();

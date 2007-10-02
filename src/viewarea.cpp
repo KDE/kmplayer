@@ -28,6 +28,7 @@
 #include <qcursor.h>
 #include <qimage.h>
 #include <qmap.h>
+#include <QPalette>
 
 #include <kactioncollection.h>
 #include <kstaticdeleter.h>
@@ -222,16 +223,16 @@ KDE_NO_EXPORT void ViewSurface::video () {
 #ifdef HAVE_CAIRO
 
 static cairo_surface_t * cairoCreateSurface (Window id, int w, int h) {
-    Display * display = qt_xdisplay ();
+    Display * display = QX11Info::display ();
     return cairo_xlib_surface_create (display, id,
             DefaultVisual (display, DefaultScreen (display)), w, h);
     /*return cairo_xlib_surface_create_with_xrender_format (
-            qt_xdisplay (),
+            QX11Info::display (),
             id,
-            DefaultScreenOfDisplay (qt_xdisplay ()),
-            XRenderFindVisualFormat (qt_xdisplay (),
-                DefaultVisual (qt_xdisplay (),
-                    DefaultScreen (qt_xdisplay ()))),
+            DefaultScreenOfDisplay (QX11Info::display ()),
+            XRenderFindVisualFormat (QX11Info::display (),
+                DefaultVisual (QX11Info::display (),
+                    DefaultScreen (QX11Info::display ()))),
             w, h);*/
 }
 
@@ -1350,7 +1351,9 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
    scale_slider_id (-1),
    m_fullscreen (false),
    m_minimal (false) {
-    setEraseColor (QColor (0, 0, 0));
+    QPalette palette;
+    palette.setColor (backgroundRole(), QColor (0, 0, 0));
+    setPalette (palette);
     setAcceptDrops (true);
     new KAction (i18n ("Fullscreen"), KShortcut (Qt::Key_F), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_toggle");
     setMouseTracking (true);
@@ -1486,7 +1489,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const IRect & rect) {
         killTimer (m_repaint_timer);
         m_repaint_timer = 0;
     }
-    //XFlush (qt_xdisplay ());
+    //XFlush (QX11Info::display ());
 }
 
 KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {

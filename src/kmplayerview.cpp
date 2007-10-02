@@ -37,6 +37,10 @@
 #include <qlabel.h>
 #include <qdatastream.h>
 #include <QStackedWidget>
+#include <QContextMenuEvent>
+#include <Q3TextDrag>
+#include <QDropEvent>
+#include <QDragEnterEvent>
 #include <qcursor.h>
 #include <qclipboard.h>
 
@@ -101,10 +105,12 @@ KDE_NO_EXPORT void KMPlayerPictureWidget::mousePressEvent (QMouseEvent *) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT TextEdit::TextEdit (QWidget * parent, View * view) : QTextEdit (parent, "kde_kmplayer_console"), m_view (view) {
+KDE_NO_CDTOR_EXPORT TextEdit::TextEdit (QWidget * parent, View * view) : QTextEdit (parent), m_view (view) {
     setReadOnly (true);
-    setPaper (QBrush (QColor (0, 0, 0)));
-    setColor (QColor (0xB2, 0xB2, 0xB2));
+    QPalette p=palette();
+    p.setColor (QPalette::Active, QPalette::Base, QColor (Qt::black));
+    p.setColor (QPalette::Active, QPalette::Foreground, (QColor (0xB2, 0xB2, 0xB2)));
+    setPalette (p);
 }
 
 KDE_NO_EXPORT void TextEdit::contextMenuEvent (QContextMenuEvent * e) {
@@ -113,9 +119,9 @@ KDE_NO_EXPORT void TextEdit::contextMenuEvent (QContextMenuEvent * e) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT InfoWindow::InfoWindow (QWidget * parent, View * view) : QTextEdit (parent, "kde_kmplayer_console"), m_view (view) {
+KDE_NO_CDTOR_EXPORT InfoWindow::InfoWindow (QWidget * parent, View * view) : QTextEdit (parent), m_view (view) {
     setReadOnly (true);
-    setLinkUnderline (false);
+    //setLinkUnderline (false);
 }
 
 KDE_NO_EXPORT void InfoWindow::contextMenuEvent (QContextMenuEvent * e) {
@@ -124,8 +130,8 @@ KDE_NO_EXPORT void InfoWindow::contextMenuEvent (QContextMenuEvent * e) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT View::View (QWidget *parent, const char *name)
-  : KMediaPlayer::View (parent, name),
+KDE_NO_CDTOR_EXPORT View::View (QWidget *parent)
+  : KMediaPlayer::View (parent),
     m_image (0L),
     m_control_panel (0L),
     m_status_bar (0L),
@@ -148,17 +154,15 @@ KDE_NO_CDTOR_EXPORT View::View (QWidget *parent, const char *name)
 
 KDE_NO_EXPORT void View::dropEvent (QDropEvent * de) {
     KUrl::List uris = KUrl::List::fromMimeData( de->mimeData() );
-    if (!uriList.isEmpty()) {
-        KURLDrag::decode (de, sl);
-    } else if (QTextDrag::canDecode (de)) {
+    if (uris.isEmpty() && Q3TextDrag::canDecode (de)) {
         QString text;
-        QTextDrag::decode (de, text);
+        Q3TextDrag::decode (de, text);
         uris.push_back (KURL (text));
     }
     if (uris.size () > 0) {
-        for (unsigned i = 0; i < sl.size (); i++)
-            sl [i] = KURL::decode_string (uris [i].url ());
-        m_widgetstack->visibleWidget ()->setFocus ();
+        for (int i = 0; i < uris.size (); i++)
+            uris [i] = KURL::decode_string (uris [i].url ());
+        m_widgetstack->currentWidget ()->setFocus ();
         emit urlDropped (uris);
         de->accept ();
     }
@@ -174,18 +178,16 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
     //m_dockarea->setEraseColor (QColor (0, 0, 0));
     QPalette pal (QColor (64, 64,64), QColor (32, 32, 32));
     QVBoxLayout * viewbox = new QVBoxLayout (this, 0, 0);
-    m_dockarea = new KDockArea (this, "kde_kmplayer_dock_area");
-    m_dock_video = new KDockWidget (m_dockarea->manager (), 0, KGlobal::iconLoader ()->loadIcon (QString ("kmplayer"), KIcon::Small), m_dockarea);
+    m_dockarea = new K3DockArea (this, "kde_kmplayer_dock_area");
+    m_dock_video = new K3DockWidget (m_dockarea->manager (), 0, KIconLoader::global ()->loadIcon (QString ("kmplayer"), K3Icon::Small), m_dockarea);
     m_dock_video->setEraseColor (QColor (0, 0, 255));
-    m_dock_video->setDockSite (KDockWidget::DockLeft | KDockWidget::DockBottom | KDockWidget::DockRight | KDockWidget::DockTop);
-    m_dock_video->setEnableDocking(KDockWidget::DockNone);
+    m_dock_video->setDockSite (K3DockWidget::DockLeft | K3DockWidget::DockBottom | K3DockWidget::DockRight | K3DockWidget::DockTop);
+    m_dock_video->setEnableDocking(K3DockWidget::DockNone);
     m_view_area = new ViewArea (m_dock_video, this);
     m_dock_video->setWidget (m_view_area);
     m_dockarea->setMainDockWidget (m_dock_video);
-    m_dock_playlist = m_dockarea->createDockWidget (i18n ("Play List"), KGlobal::iconLoader ()->loadIcon (QString ("player_playlist"), KIcon::Small));
+    m_dock_playlist = m_dockarea->createDockWidget (i18n ("Play List"), KIconLoader::global ()->loadIcon (QString ("player_playlist"), K3Icon::Small));
     m_playlist = new PlayListView (m_dock_playlist, this, action_collection);
-    m_playlist->setPaletteBackgroundColor (QColor (0, 0, 0));
-    m_playlist->setPaletteForegroundColor (QColor (0xB2, 0xB2, 0xB2));
     m_dock_playlist->setWidget (m_playlist);
     viewbox->addWidget (m_dockarea);
     m_widgetstack = new QStackedWidget (m_view_area);
@@ -210,7 +212,7 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
 
     m_widgettypes[WT_Picture] = new KMPlayerPictureWidget (m_widgetstack, this);
 
-    m_dock_infopanel = m_dockarea->createDockWidget ("infopanel", KGlobal::iconLoader ()->loadIcon (QString ("info"), KIcon::Small));
+    m_dock_infopanel = m_dockarea->createDockWidget ("infopanel", KIconLoader::global ()->loadIcon (QString ("info"), K3Icon::Small));
     m_infopanel = new InfoWindow (m_dock_infopanel, this);
     m_dock_infopanel->setWidget (m_infopanel);
 
@@ -218,7 +220,7 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
     m_widgetstack->addWidget (m_multiedit);
     m_widgetstack->addWidget (m_widgettypes[WT_Picture]);
 
-    setFocusPolicy (QWidget::ClickFocus);
+    setFocusPolicy (Qt::ClickFocus);
 
     setAcceptDrops (true);
     m_view_area->resizeEvent (0L);
@@ -248,8 +250,11 @@ void View::setInfoMessage (const QString & msg) {
        m_infopanel->clear ();
     } else if (ismain || !m_no_info) {
         if (!m_edit_mode && m_dock_infopanel->mayBeShow ())
-          m_dock_infopanel->manualDock(m_dock_video,KDockWidget::DockBottom,80);
-        m_infopanel->setText (msg);
+          m_dock_infopanel->manualDock(m_dock_video,K3DockWidget::DockBottom,80);
+        if (m_edit_mode)
+            m_infopanel->setPlainText (msg);
+        else
+            m_infopanel->setHtml (msg);
     }
 }
 
@@ -266,11 +271,11 @@ void View::toggleShowPlaylist () {
             m_dock_playlist->dockBack ();
         else {
             bool horz = true;
-            QStyle & style = m_playlist->style ();
-            int h = style.pixelMetric (QStyle::PM_ScrollBarExtent, m_playlist);
-            h += style.pixelMetric(QStyle::PM_DockWindowFrameWidth, m_playlist);
-            h +=style.pixelMetric(QStyle::PM_DockWindowHandleExtent,m_playlist);
-            for (QListViewItem *i=m_playlist->firstChild();i;i=i->itemBelow()) {
+            QStyle *style = m_playlist->style ();
+            int h = style->pixelMetric (QStyle::PM_ScrollBarExtent, NULL, m_playlist);
+            h += style->pixelMetric (QStyle::PM_DockWidgetFrameWidth, NULL, m_playlist);
+            h +=style->pixelMetric (QStyle::PM_DockWidgetHandleExtent, NULL, m_playlist);
+            for (Q3ListViewItem *i=m_playlist->firstChild();i;i=i->itemBelow()) {
                 h += i->height ();
                 if (h > int (0.25 * height ())) {
                     horz = false;
@@ -280,7 +285,7 @@ void View::toggleShowPlaylist () {
             int perc = 30;
             if (horz && 100 * h / height () < perc)
                 perc = 100 * h / height ();
-            m_dock_playlist->manualDock (m_dock_video, horz ? KDockWidget::DockTop : KDockWidget::DockLeft, perc);
+            m_dock_playlist->manualDock (m_dock_video, horz ? K3DockWidget::DockTop : K3DockWidget::DockLeft, perc);
         }
     } else
         m_dock_playlist->undock ();
@@ -296,27 +301,26 @@ void View::setViewOnly () {
 void View::setInfoPanelOnly () {
     if (m_dock_playlist->mayBeHide ())
         m_dock_playlist->undock ();
-    m_dock_video->setEnableDocking (KDockWidget::DockCenter);
+    m_dock_video->setEnableDocking (K3DockWidget::DockCenter);
     m_dock_video->undock ();
-    m_dock_infopanel->setEnableDocking (KDockWidget::DockNone);
+    m_dock_infopanel->setEnableDocking (K3DockWidget::DockNone);
     m_dockarea->setMainDockWidget (m_dock_infopanel);
 }
 
 void View::setPlaylistOnly () {
     if (m_dock_infopanel->mayBeHide ())
        m_dock_infopanel->undock ();
-    m_dock_video->setEnableDocking (KDockWidget::DockCenter);
+    m_dock_video->setEnableDocking (K3DockWidget::DockCenter);
     m_dock_video->undock ();
-    m_dock_playlist->setEnableDocking (KDockWidget::DockNone);
+    m_dock_playlist->setEnableDocking (K3DockWidget::DockNone);
     m_dockarea->setMainDockWidget (m_dock_playlist);
 }
 
 void View::setEditMode (RootPlayListItem *ri, bool enable) {
     m_edit_mode = enable;
     m_infopanel->setReadOnly (!m_edit_mode);
-    m_infopanel->setTextFormat (enable ? Qt::PlainText : Qt::AutoText);
     if (m_edit_mode && m_dock_infopanel->mayBeShow ())
-        m_dock_infopanel->manualDock(m_dock_video,KDockWidget::DockBottom,50);
+        m_dock_infopanel->manualDock(m_dock_video,K3DockWidget::DockBottom,50);
     m_playlist->showAllNodes (ri, m_edit_mode);
 }
 
@@ -329,7 +333,7 @@ bool View::setPicture (const QString & path) {
         if (m_image->isNull ()) {
             delete m_image;
             m_image = 0L;
-            kdDebug() << "View::setPicture failed " << path << endl;
+            kDebug() << "View::setPicture failed " << path << endl;
         }
     }
     if (!m_image) {
@@ -395,9 +399,9 @@ void View::toggleVideoConsoleWindow () {
     WidgetType wt = WT_Console;
     if (m_widgetstack->visibleWidget () == m_widgettypes[WT_Console]) {
         wt = WT_Video;
-        m_control_panel->popupMenu ()->changeItem (ControlPanel::menu_video, KGlobal::iconLoader ()->loadIconSet (QString ("konsole"), KIcon::Small, 0, true), i18n ("Con&sole"));
+        m_control_panel->popupMenu ()->changeItem (ControlPanel::menu_video, KIconLoader::global ()->loadIconSet (QString ("konsole"), K3Icon::Small, 0, true), i18n ("Con&sole"));
     } else
-        m_control_panel->popupMenu ()->changeItem (ControlPanel::menu_video, KGlobal::iconLoader ()->loadIconSet (QString ("video"), KIcon::Small, 0, true), i18n ("V&ideo"));
+        m_control_panel->popupMenu ()->changeItem (ControlPanel::menu_video, KIconLoader::global ()->loadIconSet (QString ("video"), K3Icon::Small, 0, true), i18n ("V&ideo"));
     showWidget (wt);
     emit windowVideoConsoleToggled (int (wt));
 }
@@ -412,7 +416,7 @@ void View::setControlPanelMode (ControlPanelMode m) {
             !m_control_panel->isVisible ()) {
         m_control_panel->show ();
         m_view_area->resizeEvent (0L);
-    } else if (m_controlpanel_mode == CP_AutoHide) { 
+    } else if (m_controlpanel_mode == CP_AutoHide) {
         if ((m_playing &&
                 m_widgetstack->visibleWidget () != m_widgettypes[WT_Console]))
             delayedShowButtons (false);
@@ -459,7 +463,7 @@ KDE_NO_EXPORT void View::setVolume (int vol) {
     QDataStream arg( data, IO_WriteOnly );
     arg << vol;
     //if (!kapp->dcopClient()->send (m_mixer_object, "Mixer0", "setMasterVolume(int)", data))
-    //    kdWarning() << "Failed to update volume" << endl;
+    //    kWarning() << "Failed to update volume" << endl;
 }
 
 KDE_NO_EXPORT void View::updateLayout () {
@@ -545,10 +549,10 @@ void View::addText (const QString & str, bool eol) {
 KDE_NO_EXPORT void View::videoStart () {
     if (m_dockarea->getMainDockWidget () != m_dock_video) {
         // restore from an info or playlist only setting
-        KDockWidget * dw = m_dockarea->getMainDockWidget ();
-        dw->setEnableDocking (KDockWidget::DockCenter);
+        K3DockWidget * dw = m_dockarea->getMainDockWidget ();
+        dw->setEnableDocking (K3DockWidget::DockCenter);
         dw->undock ();
-        m_dock_video->setEnableDocking (KDockWidget::DockNone);
+        m_dock_video->setEnableDocking (K3DockWidget::DockNone);
         m_dockarea->setMainDockWidget (m_dock_video);
         m_view_area->resizeEvent (0L);
     }
@@ -578,7 +582,7 @@ KDE_NO_EXPORT void View::playingStop () {
     m_playing = false;
     WId w = m_viewer->clientWinId ();
     if (w)
-        XClearWindow (qt_xdisplay(), w);
+        XClearWindow (QX11Info::display(), w);
     m_view_area->resizeEvent (0L);
 }
 
@@ -687,57 +691,55 @@ bool View::x11Event (XEvent * e) {
 //----------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT Viewer::Viewer (QWidget *parent, View * view)
-  : QXEmbed (parent), m_plain_window (0), m_bgcolor (0), m_aspect (0.0),
+  : QX11EmbedContainer (parent), m_plain_window (0), m_bgcolor (0), m_aspect (0.0),
     m_view (view) {
     /*XWindowAttributes xwa;
-    XGetWindowAttributes (qt_xdisplay(), winId (), &xwa);
+    XGetWindowAttributes (QX11Info::display(), winId (), &xwa);
     XSetWindowAttributes xswa;
     xswa.background_pixel = 0;
     xswa.border_pixel = 0;
     xswa.colormap = xwa.colormap;
-    create (XCreateWindow (qt_xdisplay (), parent->winId (), 0, 0, 10, 10, 0, 
+    create (XCreateWindow (QX11Info::display()), parent->winId (), 0, 0, 10, 10, 0, 
                            x11Depth (), InputOutput, (Visual*)x11Visual (),
                            CWBackPixel | CWBorderPixel | CWColormap, &xswa));*/
     setAcceptDrops (true);
+    connect (this, SIGNAL (clientEmbedded ()), this, SLOT (embedded ()));
     //setProtocol (QXEmbed::XPLAIN);
 }
 
 KDE_NO_CDTOR_EXPORT Viewer::~Viewer () {
 }
 
-KDE_NO_EXPORT void Viewer::changeProtocol (QXEmbed::Protocol p) {
-    kdDebug () << "changeProtocol " << (int)protocol () << "->" << p << endl;
-    if (!clientWinId () || p != protocol ()) {
-        if (p == QXEmbed::XPLAIN) {
-            setProtocol (p);
+KDE_NO_EXPORT void Viewer::setIntermediateWindow (bool set) {
+    kDebug () << "setIntermediateWindow " << !!m_plain_window << "->" << set << endl;
+    if (!clientWinId () || !!m_plain_window != set) {
+        if (set) {
             if (!m_plain_window) {
-                int scr = DefaultScreen (qt_xdisplay ());
+                int scr = DefaultScreen (QX11Info::display ());
                 m_plain_window = XCreateSimpleWindow (
-                        qt_xdisplay(),
+                        QX11Info::display(),
                         m_view->winId (),
                         0, 0, width(), height(),
                         1,
-                        BlackPixel (qt_xdisplay(), scr),
-                        BlackPixel (qt_xdisplay(), scr));
+                        BlackPixel (QX11Info::display(), scr),
+                        BlackPixel (QX11Info::display(), scr));
                 embedClient (m_plain_window);
             }
-            XClearWindow (qt_xdisplay(), m_plain_window);
+            XClearWindow (QX11Info::display(), m_plain_window);
         } else {
             if (m_plain_window) {
-                XDestroyWindow (qt_xdisplay(), m_plain_window);
+                XDestroyWindow (QX11Info::display(), m_plain_window);
                 m_plain_window = 0;
-                XSync (qt_xdisplay (), false);
+                XSync (QX11Info::display (), false);
             }
-            //setProtocol (p);
-            setProtocol (QXEmbed::XPLAIN);
         }
     }
 }
 
-KDE_NO_EXPORT void Viewer::windowChanged (WId w) {
-    kdDebug () << "windowChanged " << (int)w << endl;
-    if (w /*&& m_plain_window*/)
-        XSelectInput (qt_xdisplay (), w,
+KDE_NO_EXPORT void Viewer::embedded () {
+    kDebug () << "windowChanged " << (int)clientWinId () << endl;
+    if (clientWinId () /*&& m_plain_window*/)
+        XSelectInput (QX11Info::display (), clientWinId (),
                 //KeyPressMask | KeyReleaseMask |
                 KeyPressMask |
                 //EnterWindowMask | LeaveWindowMask |
@@ -781,12 +783,12 @@ void Viewer::sendKeyEvent (int key) {
         KeySym keysym = XStringToKeysym (buf);
         XKeyEvent event = {
             XKeyPress, 0, true,
-            qt_xdisplay (), w, qt_xrootwin(), w,
+            QX11Info::display (), w, QX11Info::appRootWindow(), w,
             /*time*/ 0, 0, 0, 0, 0,
-            0, XKeysymToKeycode (qt_xdisplay (), keysym), true
+            0, XKeysymToKeycode (QX11Info::display (), keysym), true
         };
-        XSendEvent (qt_xdisplay(), w, false, KeyPressMask, (XEvent *) &event);
-        XFlush (qt_xdisplay ());
+        XSendEvent (QX11Info::display(), w, false, KeyPressMask, (XEvent *) &event);
+        XFlush (QX11Info::display ());
     }
 }
 
@@ -795,12 +797,12 @@ KDE_NO_EXPORT void Viewer::sendConfigureEvent () {
     if (w) {
         XConfigureEvent c = {
             ConfigureNotify, 0UL, True,
-            qt_xdisplay (), w, winId (),
+            QX11Info::display (), w, winId (),
             x (), y (), width (), height (),
             0, None, False
         };
-        XSendEvent(qt_xdisplay(),c.event,true,StructureNotifyMask,(XEvent*)&c);
-        XFlush (qt_xdisplay ());
+        XSendEvent(QX11Info::display(),c.event,true,StructureNotifyMask,(XEvent*)&c);
+        XFlush (QX11Info::display ());
     }
 }
 
@@ -820,11 +822,13 @@ KDE_NO_EXPORT void Viewer::resetBackgroundColor () {
 }
 
 KDE_NO_EXPORT void Viewer::setCurrentBackgroundColor (const QColor & c) {
-    setPaletteBackgroundColor (c);
+    QPalette palette;
+    palette.setColor (backgroundRole(), c);
+    setPalette (palette);
     WId w = clientWinId ();
     if (w) {
-        XSetWindowBackground (qt_xdisplay (), w, c.rgb ());
-        XFlush (qt_xdisplay ());
+        XSetWindowBackground (QX11Info::display (), w, c.rgb ());
+        XFlush (QX11Info::display ());
     }
 }
 
