@@ -4,6 +4,8 @@ set(CMAKE_CXX_FLAGS_PROFILE "-DDEBUG ${CMAKE_CXX_FLAGS_PROFILE}")
 
 ########### next target ###############
 
+add_definitions( -DQT3_SUPPORT -DKDE3_SUPPORT )
+
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/..)
 
 set(libkmplayercommon_SRCS

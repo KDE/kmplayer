@@ -30,6 +30,7 @@
 
 class QSlider;
 //class QPushButton;
+class QAction;
 class QBoxLayout;
 class QStringList;
 class KMenu;
@@ -94,11 +95,6 @@ private:
 class KMPLAYER_EXPORT ControlPanel : public QWidget {
     Q_OBJECT
 public:
-    enum MenuID {
-        menu_config = 0, menu_player, menu_fullscreen, menu_volume, 
-        menu_bookmark, menu_zoom, menu_zoom50, menu_zoom100, menu_zoom150,
-        menu_view, menu_video, menu_playlist
-    };
     enum Button {
         button_config = 0, button_playlist,
         button_back, button_play, button_forward,
@@ -126,14 +122,20 @@ public:
     QPushButton * button (Button b) const { return m_buttons [(int) b]; }
     KDE_NO_EXPORT QPushButton * broadcastButton () const { return m_buttons[button_broadcast]; }
     KDE_NO_EXPORT VolumeBar * volumeBar () const { return m_volume; }
-    KDE_NO_EXPORT KMPlayerPopupMenu * popupMenu () const { return m_popupMenu; }
-    KDE_NO_EXPORT KMenu * bookmarkMenu () const { return m_bookmarkMenu; }
-    KDE_NO_EXPORT QMenu * zoomMenu () const { return m_zoomMenu; }
-    KDE_NO_EXPORT QMenu * playerMenu () const { return m_playerMenu; }
-    KDE_NO_EXPORT QMenu * colorMenu () const { return m_colorMenu; }
-    KDE_NO_EXPORT QMenu * audioMenu () const { return m_audioMenu; }
-    KDE_NO_EXPORT QMenu * subtitleMenu () const { return m_subtitleMenu; }
     KDE_NO_EXPORT View * view () const { return m_view; }
+    QAction *videoConsoleAction;
+    QAction *playlistAction;
+    QAction *zoomAction;
+    QAction *fullscreenAction;
+    QAction *configureAction;
+    KMPlayerPopupMenu *popupMenu;
+    KMPlayerPopupMenu *bookmarkMenu;
+    KMPlayerPopupMenu *zoomMenu;
+    KMPlayerPopupMenu *playerMenu;
+    KMPlayerPopupMenu *colorMenu;
+    KMPlayerPopupMenu *languageMenu;
+    KMPlayerPopupMenu *audioMenu;
+    KMPlayerPopupMenu *subtitleMenu;
 public slots:
     void setLanguages (const QStringList & al, const QStringList & sl);
     void selectSubtitle (int id);
@@ -164,14 +166,6 @@ private:
     QSlider * m_saturationSlider;
     QPushButton * m_buttons [button_last];
     VolumeBar * m_volume;
-    KMPlayerPopupMenu * m_popupMenu;
-    KMPlayerPopupMenu * m_bookmarkMenu;
-    KMPlayerPopupMenu * m_zoomMenu;
-    KMPlayerPopupMenu * m_playerMenu;
-    KMPlayerPopupMenu * m_colorMenu;
-    KMPlayerPopupMenu * m_languageMenu;
-    KMPlayerPopupMenu * m_audioMenu;
-    KMPlayerPopupMenu * m_subtitleMenu;
     bool m_auto_controls; // depending on source caps
     bool m_popup_clicked;
 };

@@ -433,10 +433,10 @@ void Settings::show (const char * pagename) {
         fonts[i].newfont = fonts[i].font;
     configdialog->m_SourcePageURL->urllist->clear ();
     configdialog->m_SourcePageURL->urllist->insertStringList (urllist);
-    configdialog->m_SourcePageURL->urllist->setCurrentText (m_player->source ()->url ().prettyURL ());
+    configdialog->m_SourcePageURL->urllist->setCurrentText (m_player->source ()->url ().prettyUrl ());
     configdialog->m_SourcePageURL->sub_urllist->clear ();
     configdialog->m_SourcePageURL->sub_urllist->insertStringList (sub_urllist);
-    configdialog->m_SourcePageURL->sub_urllist->setCurrentText (m_player->source ()->subUrl ().prettyURL ());
+    configdialog->m_SourcePageURL->sub_urllist->setCurrentText (m_player->source ()->subUrl ().prettyUrl ());
     configdialog->m_SourcePageURL->changed = false;
     configdialog->m_SourcePageURL->prefBitRate->setText (QString::number (prefbitrate));
     configdialog->m_SourcePageURL->maxBitRate->setText (QString::number (maxbitrate));
@@ -606,14 +606,14 @@ void Settings::okPressed () {
             urlchanged = false;
         else {
             if (KURL::fromPathOrURL (configdialog->m_SourcePageURL->url->url ()).isLocalFile () ||
-                    KURL::isRelativeURL (configdialog->m_SourcePageURL->url->url ())) {
+                    KUrl::isRelativeUrl (configdialog->m_SourcePageURL->url->url ())) {
                 QFileInfo fi (configdialog->m_SourcePageURL->url->url ());
-                int hpos = configdialog->m_SourcePageURL->url->url ().findRev ('#');
+                int hpos = configdialog->m_SourcePageURL->url->url ().lastIndexOf ('#');
                 QString xine_directives ("");
                 while (!fi.exists () && hpos > -1) {
                     xine_directives = configdialog->m_SourcePageURL->url->url ().mid (hpos);
                     fi.setFile (configdialog->m_SourcePageURL->url->url ().left (hpos));
-                    hpos = configdialog->m_SourcePageURL->url->url ().findRev ('#', hpos-1);
+                    hpos = configdialog->m_SourcePageURL->url->url ().lastIndexOf ('#', hpos-1);
                 }
                 if (!fi.exists ()) {
                     urlchanged = false;
@@ -624,7 +624,7 @@ void Settings::okPressed () {
             if (urlchanged &&
                     !configdialog->m_SourcePageURL->sub_url->url ().isEmpty () &&
                     (KURL::fromPathOrURL (configdialog->m_SourcePageURL->sub_url->url ()).isLocalFile () ||
-                     KURL::isRelativeURL (configdialog->m_SourcePageURL->sub_url->url ()))) {
+                     KUrl::isRelativeUrl (configdialog->m_SourcePageURL->sub_url->url ()))) {
                 QFileInfo sfi (configdialog->m_SourcePageURL->sub_url->url ());
                 if (!sfi.exists ()) {
                     KMessageBox::error (m_player->view (), i18n ("Sub title file %1 does not exist.").arg (configdialog->m_SourcePageURL->sub_url->url ()), i18n ("Error"));
@@ -635,13 +635,13 @@ void Settings::okPressed () {
         }
     }
     if (urlchanged) {
-        KURL url = KURL::fromPathOrURL (configdialog->m_SourcePageURL->url->url ());
+        KURL url = KURL::fromPathOrUrl (configdialog->m_SourcePageURL->url->url ());
         m_player->setURL (url);
-        if (urllist.find (url.prettyURL ()) == urllist.end ())
-            configdialog->m_SourcePageURL->urllist->insertItem (url.prettyURL (), 0);
+        if (urllist.find (url.prettyUrl ()) == urllist.end ())
+            configdialog->m_SourcePageURL->urllist->insertItem (url.prettyUrl (), 0);
         KURL sub_url = KURL::fromPathOrURL (configdialog->m_SourcePageURL->sub_url->url ());
-        if (sub_urllist.find (sub_url.prettyURL ()) == sub_urllist.end ())
-            configdialog->m_SourcePageURL->sub_urllist->insertItem (sub_url.prettyURL (), 0);
+        if (sub_urllist.find (sub_url.prettyUrl ()) == sub_urllist.end ())
+            configdialog->m_SourcePageURL->sub_urllist->insertItem (sub_url.prettyUrl (), 0);
     }
     urllist.clear ();
     for (int i = 0; i < configdialog->m_SourcePageURL->urllist->count () && i < 20; ++i)

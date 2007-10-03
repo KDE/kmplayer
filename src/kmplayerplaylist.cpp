@@ -1821,7 +1821,7 @@ bool SimpleSAXParser::parse (QTextStream & d) {
                     } else {
                         if (!white_space.isEmpty ()) {
                             if (!in_character_data) {
-                                int pos = white_space.findRev (QChar ('\n'));
+                                int pos = white_space.lastIndexOf (QChar ('\n'));
                                 if (pos > -1)
                                     white_space = white_space.mid (pos + 1);
                             }

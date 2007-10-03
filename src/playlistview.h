@@ -33,13 +33,14 @@ class QPainter;
 class QMenu;
 class QDropEvent;
 class Q3DragObject;
+class KActionCollection;
 
 namespace KMPlayer {
 
 class View;
 class PlayListView;
 
-bool isDragValid (QDropEvent * de);
+bool isDragValid (QDropEvent * de) KMPLAYER_NO_MBR_EXPORT;
 
 /*
  * An item in the playlist

@@ -2281,7 +2281,7 @@ KDE_NO_EXPORT QString NpPlayer::evaluateScript (const QString & script) {
 }
 
 static int getStreamId (const QString &path) {
-    int p = path.findRev (QChar ('_'));
+    int p = path.lastIndexOf (QChar ('_'));
     if (p < 0) {
         kdError() << "wrong object path " << path << endl;
         return -1;

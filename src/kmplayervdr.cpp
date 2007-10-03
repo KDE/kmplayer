@@ -418,7 +418,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::readyRead () {
                     }
                 }
             } else if (cmd_done && !strcmp(commands->command,cmd_volume_query)){
-                int pos = line.findRev (QChar (' '));
+                int pos = line.lastIndexOf (QChar (' '));
                 if (pos > 0) {
                     QString vol = line.mid (pos + 1);
                     if (!vol.compare ("mute"))

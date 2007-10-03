@@ -764,7 +764,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
                     int br_pos = int (line->txt.length () * frag); //educated guess
                     while (br_pos > 0) {
                         line->txt.truncate (br_pos);
-                        br_pos = line->txt.findRev (QChar (' '));
+                        br_pos = line->txt.lastIndexOf (QChar (' '));
                         if (br_pos < 1)
                             break;
                         line->txt.truncate (br_pos);
@@ -1552,7 +1552,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     Single wws = w;
     // move controlpanel over video when autohiding and playing
     Single hws = h - (m_view->controlPanelMode () == View::CP_AutoHide &&
-            m_view->widgetStack ()->visibleWidget () == m_view->viewer ()
+            m_view->widgetStack ()->currentWidget () == m_view->viewer ()
             ? Single (0)
             : hcp) - hsb;
     // now scale the regions and check if video region is already sized

@@ -1563,7 +1563,7 @@ QString URLSource::prettyName () {
         newurl += dir + file;
         return i18n ("URL - %1").arg (newurl);
     }
-    return i18n ("URL - %1").arg (m_url.prettyURL ());
+    return i18n ("URL - %1").arg (m_url.prettyUrl ());
 }
 
 static bool isPlayListMime (const QString & mime) {
