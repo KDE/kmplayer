@@ -135,7 +135,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
     QPalette palette;
     palette.setColor (foregroundRole(), QColor (0, 0, 0));
     palette.setColor (backgroundRole(), QColor (0xB2, 0xB2, 0xB2));
-    setPalette(palette);
+    setPalette (palette);
     m_itemmenu = new QMenu (this);
     folder_pix = KIconLoader::global ()->loadIcon (QString ("folder"), K3Icon::Small);
     auxiliary_pix = KIconLoader::global ()->loadIcon (QString ("folder_grey"), K3Icon::Small);

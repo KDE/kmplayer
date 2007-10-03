@@ -59,7 +59,7 @@ protected:
 class KMPLAYER_EXPORT KMPlayerPopupMenu : public KMenu {
     Q_OBJECT
 public:
-    KMPlayerPopupMenu (QWidget *);
+    KMPlayerPopupMenu (QWidget *, const QString &title);
     KDE_NO_CDTOR_EXPORT ~KMPlayerPopupMenu () {}
 signals:
     void mouseLeft ();
@@ -123,11 +123,18 @@ public:
     KDE_NO_EXPORT QPushButton * broadcastButton () const { return m_buttons[button_broadcast]; }
     KDE_NO_EXPORT VolumeBar * volumeBar () const { return m_volume; }
     KDE_NO_EXPORT View * view () const { return m_view; }
+    QAction *playersAction;
     QAction *videoConsoleAction;
     QAction *playlistAction;
     QAction *zoomAction;
+    QAction *zoom50Action;
+    QAction *zoom100Action;
+    QAction *zoom150Action;
     QAction *fullscreenAction;
+    QAction *colorAction;
     QAction *configureAction;
+    QAction *bookmarkAction;
+    QAction *languageAction;
     KMPlayerPopupMenu *popupMenu;
     KMPlayerPopupMenu *bookmarkMenu;
     KMPlayerPopupMenu *zoomMenu;

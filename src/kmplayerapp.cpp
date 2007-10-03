@@ -25,7 +25,6 @@
 #include <qcursor.h>
 #include <qpainter.h>
 #include <qcheckbox.h>
-#include <qmultilineedit.h>
 #include <qpushbutton.h>
 #include <qkeysequence.h>
 #include <qapplication.h>
@@ -1707,7 +1706,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageDVD::KMPlayerPrefSourcePageDVD (QWidge
     autoPlayDVD = new QCheckBox (i18n ("Auto play after opening DVD"), this, 0);
     QWhatsThis::add(autoPlayDVD, i18n ("Start playing DVD right after opening DVD"));
     QLabel *dvdDevicePathLabel = new QLabel (i18n("DVD device:"), this, 0);
-    dvddevice = new KURLRequester ("/dev/dvd", this, 0);
+    dvddevice = new KUrlRequester ("/dev/dvd", this, 0);
     QWhatsThis::add(dvddevice, i18n ("Path to your DVD device, you must have read rights to this device"));
     layout->addWidget (autoPlayDVD);
     layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));
@@ -2068,7 +2067,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVCD::KMPlayerPrefSourcePageVCD (QWidge
      autoPlayVCD = new QCheckBox (i18n ("Auto play after opening a VCD"), this, 0);
      QWhatsThis::add(autoPlayVCD, i18n ("Start playing VCD right after opening VCD"));
      QLabel *vcdDevicePathLabel = new QLabel (i18n ("VCD (CDROM) device:"), this, 0);
-     vcddevice= new KURLRequester ("/dev/cdrom", this, 0);
+     vcddevice= new KUrlRequester ("/dev/cdrom", this, 0);
      QWhatsThis::add(vcddevice, i18n ("Path to your CDROM/DVD device, you must have read rights to this device"));
      layout->addWidget (autoPlayVCD);
      layout->addItem (new QSpacerItem (0, 10, QSizePolicy::Minimum, QSizePolicy::Minimum));

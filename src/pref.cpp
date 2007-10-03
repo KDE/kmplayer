@@ -36,12 +36,13 @@
 #include <qwhatsthis.h>
 #include <qtabwidget.h>
 #include <qslider.h>
-#include <qbuttongroup.h>
+#include <Q3ButtonGroup>
 #include <qspinbox.h>
 #include <qmessagebox.h>
 #include <qmap.h>
 #include <qtimer.h>
 #include <qfont.h>
+#include <Q3ListBox>
 
 #include <klocale.h>
 #include <kdebug.h>
@@ -64,13 +65,17 @@
 using namespace KMPlayer;
 
 KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * settings)
-: KDialogBase (IconList, i18n ("Preferences"),
-		Help|Default|Ok|Apply|Cancel, Ok, player->view (), 0, false)
+: KPageDialog (player->view ())
 {
     QFrame *frame;
     QTabWidget * tab;
     QStringList hierarchy; // typo? :)
     QVBoxLayout *vlay;
+
+    setFaceType (KPageWidget::List);
+    setCaption (i18n ("Preferences"));
+    setButtons (KDialog::Ok | KDialog::Cancel | KDialog::Apply);
+    setDefaultButton (KDialog::Ok);
 
     frame = addPage(i18n("General Options"), QString(), KIconLoader::global()->loadIcon (QString ("kmplayer"), K3Icon::NoGroup, 32));
     vlay = new QVBoxLayout(frame, marginHint(), spacingHint());
@@ -217,7 +222,7 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageGeneral::PrefGeneralPageGeneral(QWidget *pare
     gridlayout->addWidget (keepSizeRatio, 0, 0);
     gridlayout->addWidget (dockSysTray, 1, 0);
     gridlayout->addWidget (autoResize, 0, 1);
-    sizesChoice = new QButtonGroup (2, Qt::Vertical, wbox);
+    sizesChoice = new Q3ButtonGroup (2, Qt::Vertical, wbox);
     new QRadioButton (i18n("Remember window size on exit"), sizesChoice);
     new QRadioButton (i18n("Always start with fixed size"), sizesChoice);
     QVBoxLayout * vbox = new QVBoxLayout (wbox, 2, 2);
@@ -337,7 +342,7 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     urllist = new KComboBox (true, this);
     urllist->setMaxCount (20);
     urllist->setDuplicatesEnabled (false); // not that it helps much :(
-    url = new KURLRequester (urllist, this);
+    url = new KUrlRequester (urllist, this);
     QWhatsThis::add (url, i18n ("Location of the playable item"));
     //url->setShowLocalProtocol (true);
     url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
@@ -345,10 +350,10 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     sub_urllist = new KComboBox (true, this);
     sub_urllist->setMaxCount (20);
     sub_urllist->setDuplicatesEnabled (false); // not that it helps much :(
-    sub_url = new KURLRequester (sub_urllist, this);
+    sub_url = new KUrlRequester (sub_urllist, this);
     QWhatsThis::add (sub_url, i18n ("Optional location of a file containing the subtitles of the URL above"));
     sub_url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
-    backend = new QListBox (this);
+    backend = new Q3ListBox (this);
     allowhref = new QCheckBox (i18n ("Enable 'Click to Play' support"), this);
     QWhatsThis::add (allowhref, i18n ("Support for WEB pages having a start image"));
     layout->addWidget (allowhref);
@@ -398,7 +403,7 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent, PartBase * 
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
     QHBoxLayout * urllayout = new QHBoxLayout ();
     QLabel *urlLabel = new QLabel (i18n ("Output file:"), this);
-    url = new KURLRequester ("", this);
+    url = new KUrlRequester ("", this);
     url->setShowLocalProtocol (true);
     urllayout->addWidget (urlLabel);
     urllayout->addWidget (url);
@@ -408,13 +413,13 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent, PartBase * 
     buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
     buttonlayout->addWidget (recordButton);
     source = new QLabel (i18n ("Current source: ") + m_player->source ()->prettyName (), this);
-    recorder = new QButtonGroup (m_recorders_length, Qt::Vertical, i18n ("Recorder"), this);
+    recorder = new Q3ButtonGroup (m_recorders_length, Qt::Vertical, i18n ("Recorder"), this);
     for (RecorderPage * p = m_recorders; p; p = p->next)
         new QRadioButton (p->name (), recorder);
     if (m_player->source ())
         sourceChanged (0L, m_player->source ());
     recorder->setButton(0); // for now
-    replay = new QButtonGroup (4, Qt::Vertical, i18n ("Auto Playback"), this);
+    replay = new Q3ButtonGroup (4, Qt::Vertical, i18n ("Auto Playback"), this);
     new QRadioButton (i18n ("&No"), replay);
     new QRadioButton (i18n ("&When recording finished"), replay);
     new QRadioButton (i18n ("A&fter"), replay);
@@ -539,7 +544,7 @@ KDE_NO_EXPORT void RecorderPage::record () {
 
 KDE_NO_CDTOR_EXPORT PrefMEncoderPage::PrefMEncoderPage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 5);
-    format = new QButtonGroup (3, Qt::Vertical, i18n ("Format"), this);
+    format = new Q3ButtonGroup (3, Qt::Vertical, i18n ("Format"), this);
     new QRadioButton (i18n ("Same as source"), format);
     new QRadioButton (i18n ("Custom"), format);
     QWidget * customopts = new QWidget (format);
@@ -613,14 +618,14 @@ KDE_NO_CDTOR_EXPORT PrefGeneralPageOutput::PrefGeneralPageOutput(QWidget *parent
  : QFrame (parent) {
     QGridLayout *layout = new QGridLayout (this, 2, 2, 5);
 
-    videoDriver = new QListBox (this);
+    videoDriver = new Q3ListBox (this);
     for (int i = 0; vd[i].driver; i++)
         videoDriver->insertItem (vd[i].description, i);
     QWhatsThis::add(videoDriver, i18n("Sets video driver. Recommended is XVideo, or, if it is not supported, X11, which is slower."));
     layout->addWidget (new QLabel (i18n ("Video driver:"), this), 0, 0);
     layout->addWidget (videoDriver, 1, 0);
 
-    audioDriver = new QListBox (this);
+    audioDriver = new Q3ListBox (this);
     for (int i = 0; ad[i].driver; i++)
         audioDriver->insertItem (ad[i].description, i);
     layout->addWidget (new QLabel (i18n ("Audio driver:"), this), 0, 1);
@@ -656,7 +661,7 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : QF
     QWidget *presetSelectionWidget = new QWidget( PostprocessingOptions, "presetSelectionWidget" );
     QGridLayout *presetSelectionWidgetLayout = new QGridLayout( presetSelectionWidget, 1, 1, 1);
 
-    QButtonGroup *presetSelection = new QButtonGroup(3, Qt::Vertical, presetSelectionWidget);
+    Q3ButtonGroup *presetSelection = new Q3ButtonGroup(3, Qt::Vertical, presetSelectionWidget);
     presetSelection->setInsideSpacing(KDialog::spacingHint());
 
     defaultPreset = new QRadioButton (i18n ("Default"), presetSelection);
@@ -782,7 +787,7 @@ KDE_NO_CDTOR_EXPORT PrefOPPagePostProc::PrefOPPagePostProc(QWidget *parent) : QF
     //
     QWidget *deintSelectionWidget = new QWidget( PostprocessingOptions, "deintSelectionWidget" );
     QVBoxLayout *deintSelectionWidgetLayout = new QVBoxLayout( deintSelectionWidget);
-    QButtonGroup *deinterlacingGroup = new QButtonGroup(5, Qt::Vertical, deintSelectionWidget, "deinterlacingGroup" );
+    Q3ButtonGroup *deinterlacingGroup = new Q3ButtonGroup(5, Qt::Vertical, deintSelectionWidget, "deinterlacingGroup" );
 
     LinBlendDeinterlacer = new QCheckBox (i18n ("Linear blend deinterlacer"), deinterlacingGroup);
     LinIntDeinterlacer = new QCheckBox (i18n ("Linear interpolating deinterlacer"), deinterlacingGroup);

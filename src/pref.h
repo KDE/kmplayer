@@ -23,7 +23,7 @@
 
 #include "kmplayer_def.h"
 
-#include <kdialogbase.h>
+#include <kpagedialog.h>
 #include <qframe.h>
 #include <qmap.h>
 
@@ -37,15 +37,16 @@ class QRadioButton;
 class QSlider;
 class QSpinBox;
 class QColor;
-class QButtonGroup;
+class Q3ButtonGroup;
+class Q3ListBox;
 class KHistoryCombo;
 class KComboBox;
-class KURLRequester;
+class KUrlRequester;
 class KColorButton;
 
 namespace KMPlayer {
-    
-class PrefGeneralPageGeneral; 	// general, general
+
+class PrefGeneralPageGeneral;   // general, general
 class PrefSourcePageURL;        // source, url
 class PrefRecordPage;           // recording
 class RecorderPage;                     // base recorder
@@ -53,7 +54,7 @@ class PrefMEncoderPage;         // mencoder
 class PrefMPlayerDumpstreamPage; // mplayer -dumpstream
 class PrefFFMpegPage;           // ffmpeg
 class PrefXinePage;             // xine url:record
-class PrefGeneralPageLooks; 	// general, looks
+class PrefGeneralPageLooks;     // general, looks
 class PrefGeneralPageOutput;	// general, output
 class PrefOPPageGeneral;	// OP = outputplugins, general
 class PrefOPPagePostProc;	// outputplugins, postproc
@@ -65,7 +66,7 @@ class OutputDriver;
 class ColorSetting;
 class FontSetting;
 
-class KMPLAYER_NO_EXPORT Preferences : public KDialogBase
+class KMPLAYER_NO_EXPORT Preferences : public KPageDialog
 {
     Q_OBJECT
 public:
@@ -73,18 +74,18 @@ public:
     Preferences(PartBase *, Settings *);
     ~Preferences();
 
-    PrefGeneralPageGeneral 	*m_GeneralPageGeneral;
-    PrefSourcePageURL 		*m_SourcePageURL;
-    PrefRecordPage 		*m_RecordPage;
+    PrefGeneralPageGeneral      *m_GeneralPageGeneral;
+    PrefSourcePageURL           *m_SourcePageURL;
+    PrefRecordPage              *m_RecordPage;
     PrefMEncoderPage            *m_MEncoderPage;
     PrefMPlayerDumpstreamPage   *m_MPlayerDumpstreamPage;
 #ifdef HAVE_XINE
     PrefXinePage                *m_XinePage;
 #endif
     PrefFFMpegPage              *m_FFMpegPage;
-    PrefGeneralPageLooks 	*m_GeneralPageLooks;
-    PrefGeneralPageOutput 	*m_GeneralPageOutput;
-    PrefOPPageGeneral 		*m_OPPageGeneral;
+    PrefGeneralPageLooks        *m_GeneralPageLooks;
+    PrefGeneralPageOutput       *m_GeneralPageOutput;
+    PrefOPPageGeneral           *m_OPPageGeneral;
     PrefOPPagePostProc		*m_OPPagePostproc;
     void setDefaults();
     void setPage (const char *);
@@ -106,7 +107,7 @@ public:
 
     QCheckBox *keepSizeRatio;
     QCheckBox * autoResize;
-    QButtonGroup *sizesChoice;
+    Q3ButtonGroup *sizesChoice;
     QCheckBox *dockSysTray;
     QCheckBox *loop;
     QCheckBox *showConfigButton;
@@ -146,12 +147,12 @@ public:
     PrefSourcePageURL (QWidget *parent);
     ~PrefSourcePageURL () {}
 
-    KURLRequester * url;
+    KUrlRequester * url;
     //KHistoryCombo * url;
     KComboBox * urllist;
-    KURLRequester * sub_url;
+    KUrlRequester * sub_url;
     KComboBox * sub_urllist;
-    QListBox * backend;
+    Q3ListBox * backend;
     QCheckBox * allowhref;
     QLineEdit * prefBitRate;
     QLineEdit * maxBitRate;
@@ -169,9 +170,9 @@ public:
     PrefRecordPage (QWidget *parent, PartBase *, RecorderPage *, int len);
     ~PrefRecordPage () {}
 
-    KURLRequester * url;
-    QButtonGroup * recorder;
-    QButtonGroup * replay;
+    KUrlRequester * url;
+    Q3ButtonGroup * recorder;
+    Q3ButtonGroup * replay;
     QLineEdit * replaytime;
     QLabel * source;
 public slots:
@@ -204,7 +205,7 @@ protected:
     PartBase * m_player;
 };
 
-class KMPLAYER_NO_EXPORT PrefMEncoderPage : public RecorderPage 
+class KMPLAYER_NO_EXPORT PrefMEncoderPage : public RecorderPage
 {
     Q_OBJECT
 public:
@@ -216,7 +217,7 @@ public:
     const char * recorderName () { return "mencoder"; }
 
     QLineEdit * arguments;
-    QButtonGroup * format;
+    Q3ButtonGroup * format;
 public slots:
     void formatClicked (int id);
 private:
@@ -254,7 +255,7 @@ public:
     const char * recorderName () { return "ffmpeg"; }
 
     QLineEdit * arguments;
-    QButtonGroup * format;
+    Q3ButtonGroup * format;
 private:
 };
 
@@ -266,8 +267,8 @@ public:
     PrefGeneralPageOutput (QWidget *parent, OutputDriver * ad, OutputDriver * vd);
     ~PrefGeneralPageOutput() {}
 
-    QListBox *videoDriver;
-    QListBox *audioDriver;
+    Q3ListBox *videoDriver;
+    Q3ListBox *audioDriver;
 };
 
 class KMPLAYER_NO_EXPORT PrefOPPageGeneral : public QFrame

@@ -23,7 +23,7 @@ email                :
 #include <kdemacros.h>
 #include <dcopclient.h>
 
-#include <qguardedptr.h>
+#include <QPointer>
 #include <qfileinfo.h>
 
 #include "kmplayer.h"
@@ -54,7 +54,7 @@ extern "C" {
         KMPlayer::StringPool::init();
 
         KApplication app;
-        QGuardedPtr <KMPlayerApp> kmplayer;
+        QPointer <KMPlayerApp> kmplayer;
 
         if (app.isRestored ()) {
             RESTORE (KMPlayerApp);

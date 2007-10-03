@@ -24,13 +24,10 @@
 #include "kmplayer_def.h"
 
 #include <qobject.h>
-#include <qguardedptr.h>
-#include <qvaluelist.h>
-#include <qcstring.h>
+#include <QPointer>
 #include <qstringlist.h>
 #include <qmap.h>
 
-#include <dcopobject.h>
 #include <kmediaplayer/player.h>
 #include <kurl.h>
 
@@ -115,7 +112,6 @@ private:
  */
 class KMPLAYER_EXPORT PartBase : public KMediaPlayer::Player {
     Q_OBJECT
-    K_DCOP
 public:
     typedef QMap <QString, Process *> ProcessMap;
     PartBase (QWidget * parent,  const char * wname,QObject * objectParent, const char * name, KConfig *);
@@ -186,10 +182,9 @@ public slots:
     virtual void setLoaded (int percentage);
 public:
     virtual bool isSeekable (void) const;
-    virtual unsigned long position (void) const;
+    virtual qlonglong position (void) const;
     virtual bool hasLength (void) const;
-    virtual unsigned long length (void) const;
-k_dcop:
+    virtual qlonglong length (void) const;
     void toggleFullScreen ();
     bool isPlaying ();
 signals:
@@ -231,7 +226,7 @@ protected slots:
     void subtitleSelected (int);
 protected:
     KConfig * m_config;
-    QGuardedPtr <View> m_view;
+    QPointer <View> m_view;
     QMap <QString, QString> temp_backends;
     Settings * m_settings;
     Process * m_process;

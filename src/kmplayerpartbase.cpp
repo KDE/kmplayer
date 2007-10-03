@@ -32,7 +32,6 @@
 #include <qpushbutton.h>
 #include <qpopupmenu.h>
 #include <qslider.h>
-#include <qvaluelist.h>
 #include <qfile.h>
 #include <qregexp.h>
 #include <qtextstream.h>
@@ -64,7 +63,7 @@
 #include "kmplayer_smil.h"
 
 namespace KMPlayer {
-    
+
 class KMPLAYER_NO_EXPORT BookmarkOwner : public KBookmarkOwner {
 public:
     BookmarkOwner (PartBase *);
@@ -184,11 +183,11 @@ void PartBase::init (KActionCollection * action_collection) {
 }
 
 void PartBase::connectPanel (ControlPanel * panel) {
-    panel->contrastSlider ()->setValue (m_settings->contrast);
+    /*panel->contrastSlider ()->setValue (m_settings->contrast);
     panel->brightnessSlider ()->setValue (m_settings->brightness);
     panel->hueSlider ()->setValue (m_settings->hue);
     panel->saturationSlider ()->setValue (m_settings->saturation);
-    panel->volumeBar ()->setValue (m_settings->volume);
+    panel->volumeBar ()->setValue (m_settings->volume);*/
     connect (panel->button (ControlPanel::button_playlist), SIGNAL (clicked ()), this, SLOT (showPlayListWindow ()));
     connect (panel->button (ControlPanel::button_back), SIGNAL (clicked ()), this, SLOT (back ()));
     connect (panel->button (ControlPanel::button_play), SIGNAL (clicked ()), this, SLOT (play ()));
@@ -196,28 +195,29 @@ void PartBase::connectPanel (ControlPanel * panel) {
     connect (panel->button (ControlPanel::button_pause), SIGNAL (clicked ()), this, SLOT (pause ()));
     connect (panel->button (ControlPanel::button_stop), SIGNAL (clicked ()), this, SLOT (stop ()));
     connect (panel->button (ControlPanel::button_record), SIGNAL (clicked()), this, SLOT (record()));
-    connect (panel->volumeBar (), SIGNAL (volumeChanged (int)), this, SLOT (volumeChanged (int)));
+    //connect (panel->volumeBar (), SIGNAL (volumeChanged (int)), this, SLOT (volumeChanged (int)));
     connect (panel->positionSlider (), SIGNAL (valueChanged (int)), this, SLOT (positionValueChanged (int)));
     connect (panel->positionSlider (), SIGNAL (sliderPressed()), this, SLOT (posSliderPressed()));
     connect (panel->positionSlider (), SIGNAL (sliderReleased()), this, SLOT (posSliderReleased()));
     connect (this, SIGNAL (positioned (int, int)), panel, SLOT (setPlayingProgress (int, int)));
     connect (this, SIGNAL (loading(int)), panel, SLOT(setLoadingProgress(int)));
-    connect (panel->contrastSlider (), SIGNAL (valueChanged(int)), this, SLOT (contrastValueChanged(int)));
+    /*connect (panel->contrastSlider (), SIGNAL (valueChanged(int)), this, SLOT (contrastValueChanged(int)));
     connect (panel->brightnessSlider (), SIGNAL (valueChanged(int)), this, SLOT (brightnessValueChanged(int)));
     connect (panel->hueSlider (), SIGNAL (valueChanged(int)), this, SLOT (hueValueChanged(int)));
-    connect (panel->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));
+    connect (panel->saturationSlider (), SIGNAL (valueChanged(int)), this, SLOT (saturationValueChanged(int)));*/
     connect (this, SIGNAL (languagesUpdated(const QStringList &, const QStringList &)), panel, SLOT (setLanguages (const QStringList &, const QStringList &)));
     connect (panel->audioMenu (), SIGNAL (activated (int)), this, SLOT (audioSelected (int)));
     connect (panel->subtitleMenu (), SIGNAL (activated (int)), this, SLOT (subtitleSelected (int)));
     connect (this, SIGNAL (audioIsSelected (int)), panel, SLOT (selectAudioLanguage (int)));
     connect (this, SIGNAL (subtitleIsSelected (int)), panel, SLOT (selectSubtitle (int)));
-    panel->popupMenu()->connectItem (ControlPanel::menu_fullscreen, this, SLOT (fullScreen ()));
-    panel->popupMenu ()->connectItem (ControlPanel::menu_config,
-                                       this, SLOT (showConfigDialog ()));
-    panel->popupMenu ()->connectItem (ControlPanel::menu_video,
-                                      m_view, SLOT(toggleVideoConsoleWindow()));
-    panel->popupMenu ()->connectItem (ControlPanel::menu_playlist,
-                                      m_view, SLOT (toggleShowPlaylist ()));
+    connect (panel->fullscreenAction, SIGNAL (triggered (bool)),
+            this, SLOT (fullScreen ()));
+    connect (panel->configureAction, SIGNAL (triggered (bool)),
+            this, SLOT (showConfigDialog ()));
+    connect (panel->videoConsoleAction, SIGNAL (triggered (bool)),
+            m_view, SLOT(toggleVideoConsoleWindow ()));
+    connect (panel->playlistAction, SIGNAL (triggered (bool)),
+            m_view, SLOT (toggleShowPlaylist ()));
     connect (this, SIGNAL (statusUpdated (const QString &)),
              panel->view (), SLOT (setStatusMessage (const QString &)));
     //connect (panel (), SIGNAL (clicked ()), m_settings, SLOT (show ()));
@@ -476,10 +476,10 @@ bool PartBase::isSeekable (void) const {
 }
 
 bool PartBase::hasLength () const {
-    return m_source ? m_source->hasLength () : false; 
+    return m_source ? m_source->hasLength () : false;
 }
 
-unsigned long PartBase::length () const {
+qlonglong PartBase::length () const {
     return m_source ? m_source->length () : 0;
 }
 
@@ -570,8 +570,8 @@ void PartBase::playingStarted () {
         m_view->controlPanel ()->setPlaying (true);
         m_view->controlPanel ()->showPositionSlider (!!m_source->length ());
         m_view->controlPanel ()->enableSeekButtons (m_source->isSeekable ());
-        if (m_settings->autoadjustvolume && m_process)
-           m_process->volume(m_view->controlPanel()->volumeBar()->value(),true);
+        //if (m_settings->autoadjustvolume && m_process)
+        //   m_process->volume(m_view->controlPanel()->volumeBar()->value(),true);
     }
     emit loading (100);
 }
@@ -594,7 +594,7 @@ void PartBase::setLoaded (int percentage) {
     emit loading (percentage);
 }
 
-unsigned long PartBase::position () const {
+qlonglong PartBase::position () const {
     return m_source ? 100 * m_source->position () : 0;
 }
 
@@ -800,13 +800,13 @@ void PartBase::adjustVolume (int incdec) {
 }
 
 void PartBase::increaseVolume () {
-    if (m_view)
-        m_view->controlPanel ()->volumeBar ()->setValue (m_view->controlPanel ()->volumeBar ()->value () + 2);
+    /*if (m_view)
+        m_view->controlPanel ()->volumeBar ()->setValue (m_view->controlPanel ()->volumeBar ()->value () + 2);*/
 }
 
 void PartBase::decreaseVolume () {
-    if (m_view)
-        m_view->controlPanel ()->volumeBar ()->setValue (m_view->controlPanel ()->volumeBar ()->value () - 2);
+    //if (m_view)
+    //    m_view->controlPanel ()->volumeBar ()->setValue (m_view->controlPanel ()->volumeBar ()->value () - 2);
 }
 
 KDE_NO_EXPORT void PartBase::posSliderPressed () {

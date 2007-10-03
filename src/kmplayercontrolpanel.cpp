@@ -258,7 +258,7 @@ static const char * blue_xpm[] = {
 
 static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char ** p, int key = 0) {
     QPushButton * b = new QPushButton (QIconSet (QPixmap(p)), QString (), w);
-    b->setFocusPolicy (QWidget::NoFocus);
+    b->setFocusPolicy (Qt::NoFocus);
     b->setFlat (true);
     if (key)
         b->setAccel (QKeySequence (key));
@@ -268,8 +268,8 @@ static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char ** p, i
 
 KDE_NO_CDTOR_EXPORT
 KMPlayerMenuButton::KMPlayerMenuButton (QWidget * parent, QBoxLayout * l, const char ** p, int key)
- : QPushButton (QIconSet (QPixmap(p)), QString (), parent, "kde_kmplayer_control_button") {
-   setFocusPolicy (QWidget::NoFocus);
+ : QPushButton (QIconSet (QPixmap(p)), QString (), parent) {
+   setFocusPolicy (Qt::NoFocus);
    setFlat (true);
    if (key)
        setAccel (QKeySequence (key));
@@ -282,8 +282,9 @@ KDE_NO_EXPORT void KMPlayerMenuButton::enterEvent (QEvent *) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT KMPlayerPopupMenu::KMPlayerPopupMenu (QWidget * parent)
- : KMenu (parent, "kde_kmplayer_popupmenu") {}
+KDE_NO_CDTOR_EXPORT
+KMPlayerPopupMenu::KMPlayerPopupMenu (QWidget *parent, const QString &title)
+ : KMenu (title, parent) {}
 
 KDE_NO_EXPORT void KMPlayerPopupMenu::leaveEvent (QEvent *) {
     emit mouseLeft ();
@@ -379,46 +380,72 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     setupPositionSlider (true);
     m_volume = new VolumeBar (this, m_view);
     m_buttonbox->addWidget (m_volume);
-    m_popupMenu = new KMPlayerPopupMenu (this);
-    m_playerMenu = new KMPlayerPopupMenu (this);
-    m_popupMenu->insertItem (i18n ("&Play with"), m_playerMenu, menu_player);
-    m_bookmarkMenu = new KMPlayerPopupMenu (this);
-    m_popupMenu->insertItem (i18n("&Bookmarks"), m_bookmarkMenu, menu_bookmark);
-    m_popupMenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("konsole"), K3Icon::Small, 0, true), i18n ("Con&sole"), menu_video);
-    m_popupMenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("player_playlist"), K3Icon::Small, 0, true), i18n ("Play&list"), menu_playlist);
-    m_zoomMenu = new KMPlayerPopupMenu (this);
-    m_zoomMenu->insertItem (i18n ("50%"), menu_zoom50);
-    m_zoomMenu->insertItem (i18n ("100%"), menu_zoom100);
-    m_zoomMenu->insertItem (i18n ("150%"), menu_zoom150);
-    m_popupMenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("viewmag"), K3Icon::Small, 0, false), i18n ("&Zoom"), m_zoomMenu, menu_zoom);
-    m_popupMenu->insertItem (KIconLoader::global()->loadIconSet (QString ("window_fullscreen"), K3Icon::Small, 0, true), i18n ("&Full Screen"), menu_fullscreen);
-    m_popupMenu->setAccel (QKeySequence (Qt::Key_F), menu_fullscreen);
-    m_popupMenu->insertSeparator ();
-    m_colorMenu = new KMPlayerPopupMenu (this);
-    m_languageMenu = new KMPlayerPopupMenu (this);
-    m_audioMenu = new KMPlayerPopupMenu (this);
-    m_subtitleMenu = new KMPlayerPopupMenu (this);
-    m_languageMenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("mime-sound"), K3Icon::Small, 0, true), i18n ("&Audio languages"), m_audioMenu);
-    m_languageMenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("view_text"), K3Icon::Small, 0, true), i18n ("&Subtitles"), m_subtitleMenu);
-    QLabel * label = new QLabel (i18n ("Contrast:"), m_colorMenu);
-    m_colorMenu->insertItem (label);
-    m_contrastSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, m_colorMenu);
-    m_colorMenu->insertItem (m_contrastSlider);
-    label = new QLabel (i18n ("Brightness:"), m_colorMenu);
-    m_colorMenu->insertItem (label);
-    m_brightnessSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, m_colorMenu);
-    m_colorMenu->insertItem (m_brightnessSlider);
-    label = new QLabel (i18n ("Hue:"), m_colorMenu);
-    m_colorMenu->insertItem (label);
-    m_hueSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, m_colorMenu);
-    m_colorMenu->insertItem (m_hueSlider);
-    label = new QLabel (i18n ("Saturation:"), m_colorMenu);
-    m_colorMenu->insertItem (label);
-    m_saturationSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, m_colorMenu);
-    m_colorMenu->insertItem (m_saturationSlider);
-    m_popupMenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("colorize"), K3Icon::Small, 0, true), i18n ("Co&lors"), m_colorMenu);
-    m_popupMenu->insertSeparator ();
-    m_popupMenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("configure"), K3Icon::Small, 0, true), i18n ("&Configure KMPlayer..."), menu_config);
+
+    popupMenu = new KMPlayerPopupMenu (this, QString ());
+
+    playerMenu = new KMPlayerPopupMenu (NULL, i18n ("&Play with"));
+    playersAction = popupMenu->addMenu (playerMenu);
+
+    videoConsoleAction = popupMenu->addAction (KIconLoader::global ()->loadIconSet (
+                QString ("konsole"), K3Icon::Small, 0, true), i18n ("Con&sole"));
+
+    playlistAction = popupMenu->addAction (KIconLoader::global ()->loadIconSet (
+                QString ("player_playlist"), K3Icon::Small, 0, true), i18n ("Play&list"));
+
+    zoomMenu = new KMPlayerPopupMenu (NULL, i18n ("&Zoom"));
+    zoomAction = popupMenu->addMenu (zoomMenu);
+    zoomAction->setIcon (KIconLoader::global ()->loadIconSet (
+                QString ("viewmag"), K3Icon::Small, 0, false));
+    zoom50Action = zoomMenu->addAction (i18n ("50%"));
+    zoom100Action = zoomMenu->addAction (i18n ("100%"));
+    zoom150Action = zoomMenu->addAction (i18n ("150%"));
+
+    fullscreenAction = popupMenu->addAction (KIconLoader::global()->loadIconSet (
+           QString ("window_fullscreen"), K3Icon::Small, 0, true), i18n ("&Full Screen"));
+    fullscreenAction->setShortcut (QKeySequence (Qt::Key_F));
+
+    popupMenu->addSeparator ();
+
+    colorMenu = new KMPlayerPopupMenu (NULL, i18n ("Co&lors"));
+    colorAction = popupMenu->addMenu (colorMenu);
+    colorAction->setIcon (KIconLoader::global ()->loadIconSet (
+                QString ("colorize"), K3Icon::Small, 0, true));
+    /*QLabel * label = new QLabel (i18n ("Contrast:"), colorMenu);
+    colorMenu->insertItem (label);
+    m_contrastSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
+    colorMenu->insertItem (m_contrastSlider);
+    label = new QLabel (i18n ("Brightness:"), colorMenu);
+    colorMenu->insertItem (label);
+    m_brightnessSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
+    colorMenu->insertItem (m_brightnessSlider);
+    label = new QLabel (i18n ("Hue:"), colorMenu);
+    colorMenu->insertItem (label);
+    m_hueSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
+    colorMenu->insertItem (m_hueSlider);
+    label = new QLabel (i18n ("Saturation:"), colorMenu);
+    colorMenu->insertItem (label);
+    m_saturationSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
+    colorMenu->insertItem (m_saturationSlider);*/
+
+    bookmarkMenu = new KMPlayerPopupMenu (NULL, i18n("&Bookmarks"));
+    bookmarkAction = popupMenu->addMenu (bookmarkMenu);
+    bookmarkAction->setVisible (false);
+
+    languageMenu = new KMPlayerPopupMenu (NULL, i18n ("&Audio languages"));
+    languageAction = popupMenu->addMenu (languageMenu);
+    audioMenu = new KMPlayerPopupMenu (NULL, i18n ("&Audio languages"));
+    subtitleMenu = new KMPlayerPopupMenu (NULL, i18n ("&Subtitles"));
+    QAction *audioAction = languageMenu->addMenu (audioMenu);
+    QAction *subtitleAction = languageMenu->addMenu (subtitleMenu);
+    audioAction->setIcon (KIconLoader::global ()->loadIconSet (
+                QString ("mime-sound"), K3Icon::Small, 0, true));
+    subtitleAction->setIcon (KIconLoader::global ()->loadIconSet (
+                QString ("view_text"), K3Icon::Small, 0, true));
+    languageAction->setVisible (false);
+
+    configureAction = popupMenu->addAction (KIconLoader::global ()->loadIconSet (
+         QString ("configure"), K3Icon::Small, 0, true), i18n ("&Configure KMPlayer..."));
+
     setAutoControls (true);
     connect (m_buttons [button_config], SIGNAL (clicked ()),
             this, SLOT (buttonClicked ()));
@@ -428,13 +455,13 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
              this, SLOT (buttonMouseEntered ()));
     connect (m_buttons [button_language], SIGNAL (mouseEntered ()),
              this, SLOT (buttonMouseEntered ()));
-    connect (m_popupMenu, SIGNAL (mouseLeft ()), this, SLOT (menuMouseLeft ()));
-    connect (m_playerMenu, SIGNAL (mouseLeft ()), this, SLOT(menuMouseLeft ()));
-    connect (m_zoomMenu, SIGNAL (mouseLeft ()), this, SLOT (menuMouseLeft ()));
-    connect (m_colorMenu, SIGNAL (mouseLeft ()), this, SLOT (menuMouseLeft ()));
-    connect (m_languageMenu, SIGNAL(mouseLeft ()), this, SLOT(menuMouseLeft()));
-    connect (m_subtitleMenu, SIGNAL(mouseLeft ()), this, SLOT(menuMouseLeft()));
-    connect (m_audioMenu, SIGNAL (mouseLeft ()), this, SLOT (menuMouseLeft ()));
+    connect (popupMenu, SIGNAL (mouseLeft ()), this, SLOT (menuMouseLeft ()));
+    connect (playerMenu, SIGNAL (mouseLeft ()), this, SLOT(menuMouseLeft ()));
+    connect (zoomMenu, SIGNAL (mouseLeft ()), this, SLOT (menuMouseLeft ()));
+    connect (colorMenu, SIGNAL (mouseLeft ()), this, SLOT (menuMouseLeft ()));
+    connect (languageMenu, SIGNAL(mouseLeft ()), this, SLOT(menuMouseLeft()));
+    connect (subtitleMenu, SIGNAL(mouseLeft ()), this, SLOT(menuMouseLeft()));
+    connect (audioMenu, SIGNAL (mouseLeft ()), this, SLOT (menuMouseLeft ()));
 }
 
 KDE_NO_EXPORT void ControlPanel::setPalette (const QPalette & pal) {
@@ -463,32 +490,32 @@ KDE_NO_EXPORT void ControlPanel::timerEvent (QTimerEvent * e) {
         m_popup_timer = 0;
         if (m_button_monitored == button_config) {
             if (m_buttons [button_config]->hasMouse() &&
-                    !m_popupMenu->isVisible ())
+                    !popupMenu->isVisible ())
                 showPopupMenu ();
-        } else if (m_buttons [button_language]->hasMouse() && 
-                    !m_languageMenu->isVisible ()) {
+        } else if (m_buttons [button_language]->hasMouse() &&
+                    !languageMenu->isVisible ()) {
             showLanguageMenu ();
         }
     } else if (e->timerId () == m_popdown_timer) {
         m_popdown_timer = 0;
-        if (m_popupMenu->isVisible () &&
-                !m_popupMenu->hasMouse () &&
-                !m_playerMenu->hasMouse () &&
-                !m_zoomMenu->hasMouse () &&
-                !m_colorMenu->hasMouse () &&
-                !m_bookmarkMenu->hasMouse ()) {
-            if (!(m_bookmarkMenu->isVisible () && 
-                        static_cast <QWidget *> (m_bookmarkMenu) != QWidget::keyboardGrabber ())) {
+        if (popupMenu->isVisible () &&
+                !popupMenu->hasMouse () &&
+                !playerMenu->hasMouse () &&
+                !zoomMenu->hasMouse () &&
+                !colorMenu->hasMouse () &&
+                !bookmarkMenu->hasMouse ()) {
+            if (!(bookmarkMenu->isVisible () &&
+                        static_cast <QWidget *> (bookmarkMenu) != QWidget::keyboardGrabber ())) {
                 // not if user entered the bookmark sub menu or if I forgot one
-                m_popupMenu->hide ();
+                popupMenu->hide ();
                 if (m_buttons [button_config]->isOn ())
                     m_buttons [button_config]->toggle ();
             }
-        } else if (m_languageMenu->isVisible () &&
-                !m_languageMenu->hasMouse () &&
-                !m_audioMenu->hasMouse () &&
-                !m_subtitleMenu->hasMouse ()) {
-            m_languageMenu->hide ();
+        } else if (languageMenu->isVisible () &&
+                !languageMenu->hasMouse () &&
+                !audioMenu->hasMouse () &&
+                !subtitleMenu->hasMouse ()) {
+            languageMenu->hide ();
             if (m_buttons [button_language]->isOn ())
                 m_buttons [button_language]->toggle ();
         }
@@ -518,11 +545,11 @@ void ControlPanel::setAutoControls (bool b) {
 
 KDE_NO_EXPORT void ControlPanel::showPopupMenu () {
     m_view->updateVolume ();
-    m_popupMenu->exec (m_buttons [button_config]->mapToGlobal (QPoint (0, maximumSize ().height ())));
+    popupMenu->exec (m_buttons [button_config]->mapToGlobal (QPoint (0, maximumSize ().height ())));
 }
 
 KDE_NO_EXPORT void ControlPanel::showLanguageMenu () {
-    m_languageMenu->exec (m_buttons [button_language]->mapToGlobal (QPoint (0, maximumSize ().height ())));
+    languageMenu->exec (m_buttons [button_language]->mapToGlobal (QPoint (0, maximumSize ().height ())));
 }
 
 void ControlPanel::showPositionSlider (bool show) {
@@ -537,19 +564,19 @@ KDE_NO_EXPORT void ControlPanel::setupPositionSlider (bool show) {
     int h = show ? button_height_with_slider : button_height_only_buttons;
     m_posSlider->setEnabled (false);
     m_posSlider->setValue (0);
+    QPalette palette;
     if (show) {
         m_posSlider->show ();
         m_buttonbox->setMargin (4);
         m_buttonbox->setSpacing (4);
-        setPalette (m_view->topLevelWidget ()->backgroundRole ());
+        palette.setColor(backgroundRole(), m_view->palette().color(QPalette::Background));
     } else {
         m_posSlider->hide ();
         m_buttonbox->setMargin (1);
         m_buttonbox->setSpacing (1);
-        QPalette palette;
         palette.setColor (backgroundRole(), QColor (0, 0, 0));
-        setPalette (palette);
     }
+    setPalette (palette);
     for (int i = 0; i < (int) button_last; i++) {
         m_buttons[i]->setMinimumSize (15, h-1);
         m_buttons[i]->setMaximumSize (750, h);
@@ -641,12 +668,12 @@ KDE_NO_EXPORT void ControlPanel::buttonClicked () {
 KDE_NO_EXPORT void ControlPanel::buttonMouseEntered () {
     if (!m_popup_timer) {
         if (sender () == m_buttons [button_config]) {
-            if (!m_popupMenu->isVisible ()) {
+            if (!popupMenu->isVisible ()) {
                 m_button_monitored = button_config;
                 m_popup_clicked = false;
                 m_popup_timer = startTimer (400);
             }
-        } else if (!m_languageMenu->isVisible ()) {
+        } else if (!languageMenu->isVisible ()) {
             m_button_monitored = button_language;
             m_popup_clicked = false;
             m_popup_timer = startTimer (400);
@@ -662,14 +689,14 @@ KDE_NO_EXPORT void ControlPanel::menuMouseLeft () {
 KDE_NO_EXPORT void ControlPanel::setLanguages (const QStringList & alang, const QStringList & slang) {
     int sz = (int) alang.size ();
     bool showbutton = (sz > 0);
-    m_audioMenu->clear ();
+    audioMenu->clear ();
     for (int i = 0; i < sz; i++)
-        m_audioMenu->insertItem (alang [i], i);
+        audioMenu->insertItem (alang [i], i);
     sz = (int) slang.size ();
     showbutton |= (sz > 0);
-    m_subtitleMenu->clear ();
+    subtitleMenu->clear ();
     for (int i = 0; i < sz; i++)
-        m_subtitleMenu->insertItem (slang [i], i);
+        subtitleMenu->insertItem (slang [i], i);
     if (showbutton)
         m_buttons [button_language]->show ();
     else
@@ -677,28 +704,28 @@ KDE_NO_EXPORT void ControlPanel::setLanguages (const QStringList & alang, const 
 }
 
 KDE_NO_EXPORT void ControlPanel::selectSubtitle (int id) {
-    if (m_subtitleMenu->isItemChecked (id))
+    if (subtitleMenu->isItemChecked (id))
         return;
-    int size = m_subtitleMenu->count ();
+    int size = subtitleMenu->count ();
     for (int i = 0; i < size; i++)
-        if (m_subtitleMenu->isItemChecked (i)) {
-            m_subtitleMenu->setItemChecked (i, false);
+        if (subtitleMenu->isItemChecked (i)) {
+            subtitleMenu->setItemChecked (i, false);
             break;
         }
-    m_subtitleMenu->setItemChecked (id, true);
+    subtitleMenu->setItemChecked (id, true);
 }
 
 KDE_NO_EXPORT void ControlPanel::selectAudioLanguage (int id) {
     kdDebug () << "ControlPanel::selectAudioLanguage " << id << endl;
-    if (m_audioMenu->isItemChecked (id))
+    if (audioMenu->isItemChecked (id))
         return;
-    int sz = m_audioMenu->count ();
+    int sz = audioMenu->count ();
     for (int i = 0; i < sz; i++)
-        if (m_audioMenu->isItemChecked (i)) {
-            m_audioMenu->setItemChecked (i, false);
+        if (audioMenu->isItemChecked (i)) {
+            audioMenu->setItemChecked (i, false);
             break;
         }
-    m_audioMenu->setItemChecked (id, true);
+    audioMenu->setItemChecked (id, true);
 }
 
 //-----------------------------------------------------------------------------

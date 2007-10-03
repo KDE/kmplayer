@@ -20,7 +20,7 @@
 #ifndef _KMPLAYER_TV_SOURCE_H_
 #define _KMPLAYER_TV_SOURCE_H_
 
-#include <qguardedptr.h>
+#include <QPointer>
 #include <qstring.h>
 #include <qframe.h>
 
@@ -36,7 +36,7 @@ const short id_node_tv_channel = 43;
 class KMPlayerPrefSourcePageTV;         // source, TV
 class TVDeviceScannerSource;
 class KMPlayerTVSource;
-class KURLRequester;
+class KUrlRequester;
 class KHistoryCombo;
 class KMPlayerApp;
 class QTabWidget;
@@ -55,7 +55,7 @@ public:
     KDE_NO_CDTOR_EXPORT ~TVDevicePage () {}
 
     QLineEdit * name;
-    KURLRequester * audiodevice;
+    KUrlRequester * audiodevice;
     QLineEdit * sizewidth;
     QLineEdit * sizeheight;
     QCheckBox * noplayback;
@@ -73,7 +73,7 @@ public:
     KMPlayerPrefSourcePageTV (QWidget *parent, KMPlayerTVSource *);
     KDE_NO_CDTOR_EXPORT ~KMPlayerPrefSourcePageTV () {}
     QLineEdit * driver;
-    KURLRequester * device;
+    KUrlRequester * device;
     QPushButton * scan;
     QTabWidget * notebook;
 protected:
@@ -127,7 +127,7 @@ public:
     void updateNodeName ();
     void updateDevicePage ();
     bool zombie;
-    QGuardedPtr <TVDevicePage> device_page;
+    QPointer <TVDevicePage> device_page;
 };
 
 class KMPLAYER_NO_EXPORT TVDocument : public FileDocument {

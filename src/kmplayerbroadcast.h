@@ -24,7 +24,7 @@
 #include <vector>
 
 #include <qframe.h>
-#include <qguardedptr.h>
+#include <QPointer>
 
 #include "kmplayerappsource.h"
 #include "kmplayerprocess.h"
@@ -145,7 +145,7 @@ public:
     int feedfilesize;
     QString bindaddress;
 private:
-    QGuardedPtr <KMPlayerPrefBroadcastPage> m_configpage;
+    QPointer <KMPlayerPrefBroadcastPage> m_configpage;
 };
 
 /*
@@ -182,7 +182,7 @@ private slots:
 private:
     KMPlayer::PartBase * m_player;
     KMPlayerFFServerConfig * m_ffserverconfig;
-    QGuardedPtr <KMPlayerPrefBroadcastFormatPage> m_configpage;
+    QPointer <KMPlayerPrefBroadcastFormatPage> m_configpage;
     KMPlayer::FFMpeg * m_ffmpeg_process;
     KProcess * m_ffserver_process;
     bool m_endserver;

@@ -35,9 +35,9 @@
 
 class KMPlayerApp;
 class VDRCommand;
-class KURLRequester;
+class KUrlRequester;
 class QPopupMenu;
-class QButtonGroup;
+class Q3ButtonGroup;
 class QMenuItem;
 class QCheckBox;
 class QLineEdit;
@@ -54,10 +54,10 @@ class KMPLAYER_NO_EXPORT KMPlayerPrefSourcePageVDR : public QFrame {
 public:
     KMPlayerPrefSourcePageVDR (QWidget * parent, KMPlayer::PartBase * player);
     ~KMPlayerPrefSourcePageVDR ();
-    KURLRequester * vcddevice;
+    KUrlRequester * vcddevice;
     KListView * xv_port;
     QLineEdit * tcp_port;
-    QButtonGroup * scale;
+    Q3ButtonGroup * scale;
 protected:
     void showEvent (QShowEvent *);
 private:

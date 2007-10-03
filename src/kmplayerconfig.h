@@ -24,6 +24,8 @@
 #endif
 
 #include <qobject.h>
+#include <QColor>
+#include <QFont>
 #include <qstringlist.h>
 #include <qmap.h>
 
@@ -32,7 +34,7 @@
 class KConfig;
 
 namespace KMPlayer {
-    
+
 class PartBase;
 class Preferences;
 class View;

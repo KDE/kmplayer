@@ -25,7 +25,7 @@
 #include <qmap.h>
 #include <qtimer.h>
 #include <qpushbutton.h>
-#include <qbuttongroup.h>
+#include <Q3ButtonGroup>
 #include <qcheckbox.h>
 #include <qtable.h>
 #include <qstringlist.h>
@@ -34,7 +34,6 @@
 #include <qgroupbox.h>
 #include <qwhatsthis.h>
 #include <qtabwidget.h>
-#include <qbuttongroup.h>
 #include <qradiobutton.h>
 #include <qmessagebox.h>
 #include <qpopupmenu.h>
@@ -97,7 +96,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::KMPlayerPrefSourcePageVDR (QWidge
     gridlayout->addWidget (tcp_port, 0, 1);
     layout->addWidget (xv_port);
     layout->addLayout (gridlayout);
-    scale = new QButtonGroup (2, Qt::Vertical, i18n ("Scale"), this);
+    scale = new Q3ButtonGroup (2, Qt::Vertical, i18n ("Scale"), this);
     new QRadioButton (i18n ("4:3"), scale);
     new QRadioButton (i18n ("16:9"), scale);
     QWhatsThis::add (scale, i18n ("Aspects to use when viewing VDR"));

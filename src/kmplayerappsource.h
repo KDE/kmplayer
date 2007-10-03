@@ -32,7 +32,7 @@
 
 
 class KMPlayerApp;
-class KURLRequester;
+class KUrlRequester;
 class QPopupMenu;
 class QMenuItem;
 class QCheckBox;
@@ -64,7 +64,7 @@ public:
     ~KMPlayerPrefSourcePageDVD () {}
 
     QCheckBox * autoPlayDVD;
-    KURLRequester * dvddevice;
+    KUrlRequester * dvddevice;
 };
 
 /*
@@ -133,7 +133,7 @@ class KMPLAYER_NO_EXPORT KMPlayerPrefSourcePageVCD : public QFrame {
 public:
     KMPlayerPrefSourcePageVCD (QWidget * parent);
     ~KMPlayerPrefSourcePageVCD () {}
-    KURLRequester * vcddevice;
+    KUrlRequester * vcddevice;
     QCheckBox *autoPlayVCD;
 };
 

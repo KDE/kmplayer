@@ -23,19 +23,20 @@
 #include <qtextedit.h>
 #include <qpushbutton.h>
 #include <qradiobutton.h>
-#include <qmultilineedit.h>
 #include <qtabwidget.h>
 #include <qslider.h>
 #include <qspinbox.h>
 #include <qlabel.h>
-#include <qbuttongroup.h>
 #include <qfileinfo.h>
+#include <Q3ListBox>
+#include <Q3ButtonGroup>
 
 #include <kurlrequester.h>
 #include <klineedit.h>
 #include <kstatusbar.h>
 
 #include <kconfig.h>
+#include <kconfiggroup.h>
 #include <kapplication.h>
 #include <kurl.h>
 #include <kdebug.h>
@@ -43,6 +44,7 @@
 #include <kcombobox.h>
 #include <kmessagebox.h>
 #include <kglobalsettings.h>
+#include <kcolorscheme.h>
 
 #include "kmplayersource.h"
 #include "kmplayerconfig.h"
@@ -90,14 +92,17 @@ KDE_NO_CDTOR_EXPORT Settings::Settings (PartBase * player, KConfig * config)
     videodrivers = _vds;
     colors [ColorSetting::playlist_background].title = i18n ("Playlist background");
     colors [ColorSetting::playlist_background].option = "PlaylistBackground";
-    colors [ColorSetting::playlist_background].color = KGlobalSettings::baseColor ();
+    colors [ColorSetting::playlist_background].color =
+        KColorScheme(QPalette::Active, KColorScheme::View).background().color();
     colors [ColorSetting::playlist_foreground].title = i18n ("Playlist foreground");
     colors [ColorSetting::playlist_foreground].option = "PlaylistForeground";
-    colors [ColorSetting::playlist_foreground].color = KGlobalSettings::textColor();
+    colors [ColorSetting::playlist_foreground].color =
+        KColorScheme(QPalette::Active, KColorScheme::View).foreground().color();
     colors [ColorSetting::console_background].title =i18n("Console background");
     colors [ColorSetting::playlist_active].title = i18n("Playlist active item");
     colors [ColorSetting::playlist_active].option = "PlaylistActive";
-    colors [ColorSetting::playlist_active].color = KGlobalSettings::linkColor();
+    colors [ColorSetting::playlist_active].color =
+        KColorScheme(QPalette::Active, KColorScheme::Selection).foreground().color();
     colors [ColorSetting::console_background].option = "ConsoleBackground";
     colors [ColorSetting::console_background].color = QColor (0, 0, 0);
     colors [ColorSetting::console_foreground].title = i18n ("Console foreground");
@@ -114,7 +119,8 @@ KDE_NO_CDTOR_EXPORT Settings::Settings (PartBase * player, KConfig * config)
     colors [ColorSetting::infowindow_background].color = KGlobalSettings::baseColor ();
     colors [ColorSetting::infowindow_foreground].title = i18n ("Info window foreground");
     colors [ColorSetting::infowindow_foreground].option ="InfoWindowForeground";
-    colors [ColorSetting::infowindow_foreground].color = KGlobalSettings::textColor();
+    colors [ColorSetting::infowindow_foreground].color =
+        colors [ColorSetting::playlist_foreground].color;
     fonts [FontSetting::playlist].title = i18n ("Playlist");
     fonts [FontSetting::playlist].option = "PlaylistFont";
     fonts [FontSetting::playlist].font = KGlobalSettings::generalFont();
@@ -275,46 +281,46 @@ View * Settings::defaultView () {
 }
 
 KDE_NO_EXPORT void Settings::readConfig () {
-    m_config->setGroup (strGeneralGroup);
-    no_intro = m_config->readBoolEntry (strNoIntro, false);
-    urllist = m_config->readListEntry (strURLList, ';');
-    sub_urllist = m_config->readListEntry (strSubURLList, ';');
-    prefbitrate = m_config->readNumEntry (strPrefBitRate, 512);
-    maxbitrate = m_config->readNumEntry (strMaxBitRate, 1024);
-    volume = m_config->readNumEntry (strVolume, 20);
-    contrast = m_config->readNumEntry (strContrast, 0);
-    brightness = m_config->readNumEntry (strBrightness, 0);
-    hue = m_config->readNumEntry (strHue, 0);
-    saturation = m_config->readNumEntry (strSaturation, 0);
+    KConfigGroup general (m_config, strGeneralGroup);
+    no_intro = general.readEntry (strNoIntro, false);
+    urllist = general.readEntry (strURLList, QStringList(), ';');
+    sub_urllist = general.readEntry (strSubURLList, QStringList(), ';');
+    prefbitrate = general.readEntry (strPrefBitRate, 512);
+    maxbitrate = general.readEntry (strMaxBitRate, 1024);
+    volume = general.readEntry (strVolume, 20);
+    contrast = general.readEntry (strContrast, 0);
+    brightness = general.readEntry (strBrightness, 0);
+    hue = general.readEntry (strHue, 0);
+    saturation = general.readEntry (strSaturation, 0);
     const QMap <QString, Source*>::const_iterator e = m_player->sources ().end ();
     QMap <QString, Source *>::const_iterator i = m_player->sources().begin ();
     for (; i != e; ++i)
-        backends[i.data()->name ()] = m_config->readEntry (i.data()->name ());
+        backends[i.data()->name ()] = general.readEntry (i.data()->name ());
     for (int i = 0; i < int (ColorSetting::last_target); i++)
-        colors[i].newcolor = colors[i].color = m_config->readColorEntry (colors[i].option, &colors[i].color);
+        colors[i].newcolor = colors[i].color = general.readEntry (colors[i].option, colors[i].color);
     for (int i = 0; i < int (FontSetting::last_target); i++)
-        fonts[i].newfont = fonts[i].font = m_config->readFontEntry (fonts[i].option, &fonts[i].font);
+        fonts[i].newfont = fonts[i].font = general.readEntry (fonts[i].option, fonts[i].font);
 
-    m_config->setGroup (strMPlayerGroup);
-    sizeratio = m_config->readBoolEntry (strKeepSizeRatio, true);
-    remembersize = m_config->readBoolEntry (strRememberSize, true);
-    autoresize = m_config->readBoolEntry (strAutoResize, true);
-    docksystray = m_config->readBoolEntry (strDockSysTray, true);
-    loop = m_config->readBoolEntry (strLoop, false);
-    framedrop = m_config->readBoolEntry (strFrameDrop, true);
-    autoadjustvolume = m_config->readBoolEntry (strAdjustVolume, true);
-    autoadjustcolors = m_config->readBoolEntry (strAdjustColors, true);
-    mplayerpost090 = m_config->readBoolEntry (strPostMPlayer090, true);
-    showcnfbutton = m_config->readBoolEntry (strAddConfigButton, true);
-    showrecordbutton = m_config->readBoolEntry (strAddRecordButton, true);
-    showbroadcastbutton = m_config->readBoolEntry (strAddBroadcastButton, true);
-    showplaylistbutton = m_config->readBoolEntry (strAddPlaylistButton, true);
-    seektime = m_config->readNumEntry (strSeekTime, 10);
-    dvddevice = m_config->readEntry (strDVDDevice, "/dev/dvd");
-    vcddevice = m_config->readEntry (strVCDDevice, "/dev/cdrom");
-    videodriver = m_config->readNumEntry (strVoDriver, 0);
-    audiodriver = m_config->readNumEntry (strAoDriver, 0);
-    allowhref = m_config->readBoolEntry(strAllowHref, false);
+    KConfigGroup mplayer (m_config, strMPlayerGroup);
+    sizeratio = mplayer.readEntry (strKeepSizeRatio, true);
+    remembersize = mplayer.readEntry (strRememberSize, true);
+    autoresize = mplayer.readEntry (strAutoResize, true);
+    docksystray = mplayer.readEntry (strDockSysTray, true);
+    loop = mplayer.readEntry (strLoop, false);
+    framedrop = mplayer.readEntry (strFrameDrop, true);
+    autoadjustvolume = mplayer.readEntry (strAdjustVolume, true);
+    autoadjustcolors = mplayer.readEntry (strAdjustColors, true);
+    mplayerpost090 = mplayer.readEntry (strPostMPlayer090, true);
+    showcnfbutton = mplayer.readEntry (strAddConfigButton, true);
+    showrecordbutton = mplayer.readEntry (strAddRecordButton, true);
+    showbroadcastbutton = mplayer.readEntry (strAddBroadcastButton, true);
+    showplaylistbutton = mplayer.readEntry (strAddPlaylistButton, true);
+    seektime = mplayer.readEntry (strSeekTime, 10);
+    dvddevice = mplayer.readEntry (strDVDDevice, "/dev/dvd");
+    vcddevice = mplayer.readEntry (strVCDDevice, "/dev/cdrom");
+    videodriver = mplayer.readEntry (strVoDriver, 0);
+    audiodriver = mplayer.readEntry (strAoDriver, 0);
+    allowhref = mplayer.readEntry(strAllowHref, false);
 
     // recording
     m_config->setGroup (strRecordingGroup);
@@ -601,47 +607,49 @@ void Settings::writeConfig () {
 void Settings::okPressed () {
     bool urlchanged = configdialog->m_SourcePageURL->changed;
     bool playerchanged = false;
+    KUrl url = configdialog->m_SourcePageURL->url->url ();
+    KUrl sub_url = configdialog->m_SourcePageURL->sub_url->url ();
     if (urlchanged) {
-        if (configdialog->m_SourcePageURL->url->url ().isEmpty ())
+        if (url.isEmpty ()) {
             urlchanged = false;
-        else {
-            if (KURL::fromPathOrURL (configdialog->m_SourcePageURL->url->url ()).isLocalFile () ||
-                    KUrl::isRelativeUrl (configdialog->m_SourcePageURL->url->url ())) {
-                QFileInfo fi (configdialog->m_SourcePageURL->url->url ());
-                int hpos = configdialog->m_SourcePageURL->url->url ().lastIndexOf ('#');
+        } else {
+            if (KUrl (url.url ()).isLocalFile () || KUrl::isRelativeUrl (url.url ())) {
+                QFileInfo fi (url.url ());
+                int hpos = url.url ().lastIndexOf ('#');
                 QString xine_directives ("");
                 while (!fi.exists () && hpos > -1) {
-                    xine_directives = configdialog->m_SourcePageURL->url->url ().mid (hpos);
-                    fi.setFile (configdialog->m_SourcePageURL->url->url ().left (hpos));
-                    hpos = configdialog->m_SourcePageURL->url->url ().lastIndexOf ('#', hpos-1);
+                    xine_directives = url.url ().mid (hpos);
+                    fi.setFile (url.url ().left (hpos));
+                    hpos = url.url ().lastIndexOf ('#', hpos-1);
                 }
                 if (!fi.exists ()) {
                     urlchanged = false;
-                    KMessageBox::error (m_player->view (), i18n ("File %1 does not exist.").arg (configdialog->m_SourcePageURL->url->url ()), i18n ("Error"));
-                } else
-                    configdialog->m_SourcePageURL->url->setURL (fi.absFilePath () + xine_directives);
+                    KMessageBox::error (m_player->view (), i18n ("File %1 does not exist.").arg (url.url ()), i18n ("Error"));
+                } else {
+                    configdialog->m_SourcePageURL->url->setUrl (fi.absFilePath () + xine_directives);
+                }
             }
             if (urlchanged &&
-                    !configdialog->m_SourcePageURL->sub_url->url ().isEmpty () &&
-                    (KURL::fromPathOrURL (configdialog->m_SourcePageURL->sub_url->url ()).isLocalFile () ||
-                     KUrl::isRelativeUrl (configdialog->m_SourcePageURL->sub_url->url ()))) {
-                QFileInfo sfi (configdialog->m_SourcePageURL->sub_url->url ());
+                    !sub_url.url ().isEmpty () &&
+                    (KUrl (sub_url.url ()).isLocalFile () ||
+                     KUrl::isRelativeUrl (sub_url.url ()))) {
+                QFileInfo sfi (sub_url.url ());
                 if (!sfi.exists ()) {
-                    KMessageBox::error (m_player->view (), i18n ("Sub title file %1 does not exist.").arg (configdialog->m_SourcePageURL->sub_url->url ()), i18n ("Error"));
-                    configdialog->m_SourcePageURL->sub_url->setURL (QString ());
+                    KMessageBox::error (m_player->view (), i18n ("Sub title file %1 does not exist.").arg (sub_url.url ()), i18n ("Error"));
+                    configdialog->m_SourcePageURL->sub_url->setUrl (QString ());
                 } else
-                    configdialog->m_SourcePageURL->sub_url->setURL (sfi.absFilePath ());
+                    configdialog->m_SourcePageURL->sub_url->setUrl (sfi.absFilePath ());
             }
         }
     }
     if (urlchanged) {
-        KURL url = KURL::fromPathOrUrl (configdialog->m_SourcePageURL->url->url ());
-        m_player->setURL (url);
-        if (urllist.find (url.prettyUrl ()) == urllist.end ())
-            configdialog->m_SourcePageURL->urllist->insertItem (url.prettyUrl (), 0);
-        KURL sub_url = KURL::fromPathOrURL (configdialog->m_SourcePageURL->sub_url->url ());
-        if (sub_urllist.find (sub_url.prettyUrl ()) == sub_urllist.end ())
-            configdialog->m_SourcePageURL->sub_urllist->insertItem (sub_url.prettyUrl (), 0);
+        KURL uri (url.url ());
+        m_player->setURL (uri);
+        if (urllist.find (uri.prettyUrl ()) == urllist.end ())
+            configdialog->m_SourcePageURL->urllist->insertItem (uri.prettyUrl (), 0);
+        KURL sub_uri (sub_url.url ());
+        if (sub_urllist.find (sub_uri.prettyUrl ()) == sub_urllist.end ())
+            configdialog->m_SourcePageURL->sub_urllist->insertItem (sub_uri.prettyUrl (), 0);
     }
     urllist.clear ();
     for (int i = 0; i < configdialog->m_SourcePageURL->urllist->count () && i < 20; ++i)
@@ -745,13 +753,13 @@ void Settings::okPressed () {
     if (urlchanged || playerchanged) {
         m_player->sources () ["urlsource"]->setSubURL
             (KURL(configdialog->m_SourcePageURL->sub_url->url()));
-        m_player->openURL (KURL::fromPathOrURL (configdialog->m_SourcePageURL->url->url ()));
-        m_player->source ()->setSubURL (KURL::fromPathOrURL (configdialog->m_SourcePageURL->sub_url->url ()));
+        m_player->openURL (KUrl (configdialog->m_SourcePageURL->url->url ()));
+        m_player->source ()->setSubURL (KUrl (configdialog->m_SourcePageURL->sub_url->url ()));
     }
 }
 
 KDE_NO_EXPORT void Settings::getHelp () {
-    KApplication::kApplication()->invokeBrowser ("man:/mplayer");
+   // KApplication::kApplication()->invokeBrowser ("man:/mplayer");
 }
 
 #include "kmplayerconfig.moc"

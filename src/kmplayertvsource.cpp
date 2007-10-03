@@ -29,7 +29,6 @@
 #include <qgroupbox.h>
 #include <qwhatsthis.h>
 #include <qtabwidget.h>
-#include <qbuttongroup.h>
 #include <qmessagebox.h>
 #include <qpopupmenu.h>
 #include <qfontmetrics.h>
@@ -64,7 +63,7 @@ KDE_NO_CDTOR_EXPORT TVDevicePage::TVDevicePage (QWidget *parent, KMPlayer::NodeP
     layout->addWidget (deviceLabel);
     QGridLayout *gridlayout = new QGridLayout (layout, 3, 4);
     QLabel * audioLabel = new QLabel (i18n ("Audio device:"), this);
-    audiodevice = new KURLRequester (device->getAttribute ("audio"), this);
+    audiodevice = new KUrlRequester (device->getAttribute ("audio"), this);
     QLabel * nameLabel = new QLabel (i18n ("Name:"), this, 0);
     name = new QLineEdit (device->pretty_name, this, 0);
     QLabel *sizewidthLabel = new QLabel (i18n ("Width:"), this, 0);
@@ -156,7 +155,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageTV::KMPlayerPrefSourcePageTV (QWidget 
     driver = new QLineEdit ("", general, 0);
     QWhatsThis::add (driver, i18n ("dummy, v4l or bsdbt848"));
     QLabel *deviceLabel = new QLabel (i18n ("Device:"), general, 0);
-    device = new KURLRequester ("/dev/video", general);
+    device = new KUrlRequester ("/dev/video", general);
     QWhatsThis::add(device, i18n("Path to your video device, eg. /dev/video0"));
     scan = new QPushButton (i18n ("Scan..."), general);
     gridlayout->addWidget (driverLabel, 0, 0);
