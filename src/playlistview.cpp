@@ -122,6 +122,8 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
     setDropVisualizer (true);
     setItemsRenameable (true);
     setItemMargin (2);
+    setPaletteBackgroundColor (QColor (0, 0, 0));
+    setPaletteForegroundColor (QColor (0xB2, 0xB2, 0xB2));
     m_itemmenu = new QPopupMenu (this);
     folder_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder"), KIcon::Small);
     auxiliary_pix = KGlobal::iconLoader ()->loadIcon (QString ("folder_grey"), KIcon::Small);

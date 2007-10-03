@@ -186,8 +186,6 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
     m_dockarea->setMainDockWidget (m_dock_video);
     m_dock_playlist = m_dockarea->createDockWidget (i18n ("Play List"), KGlobal::iconLoader ()->loadIcon (QString ("player_playlist"), KIcon::Small));
     m_playlist = new PlayListView (m_dock_playlist, this, action_collection);
-    m_playlist->setPaletteBackgroundColor (QColor (0, 0, 0));
-    m_playlist->setPaletteForegroundColor (QColor (0xB2, 0xB2, 0xB2));
     m_dock_playlist->setWidget (m_playlist);
     viewbox->addWidget (m_dockarea);
     m_widgetstack = new QWidgetStack (m_view_area);

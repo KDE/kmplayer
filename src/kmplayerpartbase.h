@@ -45,13 +45,14 @@ class KBookmarkMenu;
 class KConfig;
 class QIODevice;
 class QTextStream;
+class QListViewItem;
 
 namespace KIO {
     class Job;
 }
 
 namespace KMPlayer {
-    
+
 class PartBase;
 class Process;
 class MPlayer;
