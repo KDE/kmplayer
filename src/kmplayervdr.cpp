@@ -34,7 +34,6 @@
 #include <qgroupbox.h>
 #include <qwhatsthis.h>
 #include <qtabwidget.h>
-#include <qbuttongroup.h>
 #include <qradiobutton.h>
 #include <qmessagebox.h>
 #include <qpopupmenu.h>

@@ -23,7 +23,6 @@
 #include <qtextedit.h>
 #include <qpushbutton.h>
 #include <qradiobutton.h>
-#include <qmultilineedit.h>
 #include <qtabwidget.h>
 #include <qslider.h>
 #include <qspinbox.h>

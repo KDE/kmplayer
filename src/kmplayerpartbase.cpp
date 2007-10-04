@@ -32,7 +32,6 @@
 #include <qpushbutton.h>
 #include <qpopupmenu.h>
 #include <qslider.h>
-#include <qvaluelist.h>
 #include <qfile.h>
 #include <qregexp.h>
 #include <qtextstream.h>

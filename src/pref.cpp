@@ -28,7 +28,6 @@
 #include <qpushbutton.h>
 #include <qradiobutton.h>
 #include <qcheckbox.h>
-#include <qtable.h>
 #include <qstringlist.h>
 #include <qcombobox.h>
 #include <qlineedit.h>

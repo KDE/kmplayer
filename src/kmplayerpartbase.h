@@ -25,8 +25,6 @@
 
 #include <qobject.h>
 #include <qguardedptr.h>
-#include <qvaluelist.h>
-#include <qcstring.h>
 #include <qstringlist.h>
 #include <qmap.h>
 

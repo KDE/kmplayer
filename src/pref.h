@@ -44,7 +44,7 @@ class KURLRequester;
 class KColorButton;
 
 namespace KMPlayer {
-    
+
 class PrefGeneralPageGeneral; 	// general, general
 class PrefSourcePageURL;        // source, url
 class PrefRecordPage;           // recording

@@ -29,7 +29,6 @@
 #include <qgroupbox.h>
 #include <qwhatsthis.h>
 #include <qtabwidget.h>
-#include <qbuttongroup.h>
 #include <qmessagebox.h>
 #include <qpopupmenu.h>
 #include <qfontmetrics.h>

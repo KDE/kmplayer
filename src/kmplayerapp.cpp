@@ -25,7 +25,6 @@
 #include <qcursor.h>
 #include <qpainter.h>
 #include <qcheckbox.h>
-#include <qmultilineedit.h>
 #include <qpushbutton.h>
 #include <qkeysequence.h>
 #include <qapplication.h>
