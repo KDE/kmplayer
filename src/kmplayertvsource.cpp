@@ -335,7 +335,7 @@ KDE_NO_EXPORT void TVDocument::childDone (KMPlayer::NodePtr) {
 KDE_NO_EXPORT void TVDocument::defer () {
     if (!resolved) {
         resolved = true;
-        readFromFile (locateLocal ("data", "kmplayer/tv.xml"));
+        readFromFile (KStandardDirs::locateLocal ("data", "kmplayer/tv.xml"));
     }
 }
 
@@ -527,7 +527,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::write (KConfig * m_config) {
     m_config->setGroup (strTV);
     m_config->writeEntry (strTVDriver, tvdriver);
     static_cast <TVDocument *> (m_document.ptr ())->writeToFile
-        (locateLocal ("data", "kmplayer/tv.xml"));
+        (KStandardDirs::locateLocal ("data", "kmplayer/tv.xml"));
     kdDebug () << "KMPlayerTVSource::write XML" << endl;
 }
 

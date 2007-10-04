@@ -24,7 +24,7 @@
 #include "kmplayer_def.h"
 
 #include <kpagedialog.h>
-#include <qframe.h>
+#include <kvbox.h>
 #include <qmap.h>
 
 class QTabWidget;
@@ -98,7 +98,7 @@ public slots:
     void confirmDefaults();
 };
 
-class KMPLAYER_NO_EXPORT PrefGeneralPageGeneral : public QFrame
+class KMPLAYER_NO_EXPORT PrefGeneralPageGeneral : public KVBox
 {
     Q_OBJECT
 public:
@@ -121,7 +121,7 @@ public:
     QSpinBox *seekTime;
 };
 
-class KMPLAYER_NO_EXPORT PrefGeneralPageLooks : public QFrame {
+class KMPLAYER_NO_EXPORT PrefGeneralPageLooks : public KVBox {
     Q_OBJECT
 public:
     PrefGeneralPageLooks (QWidget *parent, Settings *);
@@ -140,7 +140,7 @@ private:
     FontSetting * fonts;
 };
 
-class KMPLAYER_NO_EXPORT PrefSourcePageURL : public QFrame
+class KMPLAYER_NO_EXPORT PrefSourcePageURL : public KVBox
 {
     Q_OBJECT
 public:
@@ -163,7 +163,7 @@ private slots:
 };
 
 
-class KMPLAYER_NO_EXPORT PrefRecordPage : public QFrame
+class KMPLAYER_NO_EXPORT PrefRecordPage : public KVBox
 {
     Q_OBJECT
 public:
@@ -191,7 +191,7 @@ private:
     int m_recorders_length;
 };
 
-class KMPLAYER_NO_EXPORT RecorderPage : public QFrame
+class KMPLAYER_NO_EXPORT RecorderPage : public KVBox
 {
     Q_OBJECT
 public:
@@ -260,7 +260,7 @@ private:
 };
 
 
-class KMPLAYER_NO_EXPORT PrefGeneralPageOutput : public QFrame
+class KMPLAYER_NO_EXPORT PrefGeneralPageOutput : public KVBox
 {
     Q_OBJECT
 public:
@@ -271,7 +271,7 @@ public:
     Q3ListBox *audioDriver;
 };
 
-class KMPLAYER_NO_EXPORT PrefOPPageGeneral : public QFrame
+class KMPLAYER_NO_EXPORT PrefOPPageGeneral : public KVBox
 {
     Q_OBJECT
 public:
@@ -279,7 +279,7 @@ public:
     ~PrefOPPageGeneral() {}
 };
 
-class KMPLAYER_NO_EXPORT PrefOPPagePostProc : public QFrame
+class KMPLAYER_NO_EXPORT PrefOPPagePostProc : public KVBox
 {
     Q_OBJECT
 public:

@@ -35,7 +35,7 @@
 #include "kmplayersource.h"
 
 class QWidget;
-class KProcess;
+class K3Process;
 
 namespace KIO {
     class Job;
@@ -67,7 +67,7 @@ public:
     virtual void setAudioLang (int, const QString &);
     virtual void setSubtitle (int, const QString &);
     bool playing () const;
-    KDE_NO_EXPORT KProcess * process () const { return m_process; }
+    KDE_NO_EXPORT K3Process * process () const { return m_process; }
     KDE_NO_EXPORT Source * source () const { return m_source; }
     virtual WId widget ();
     Viewer * viewer () const;
@@ -105,7 +105,7 @@ protected:
     NodePtrW m_mrl;
     State m_state;
     State m_old_state;
-    KProcess * m_process;
+    K3Process * m_process;
     KIO::Job * m_job;
     QString m_url;
     int m_request_seek;
@@ -131,9 +131,9 @@ protected:
     QStringList commands;
     bool m_use_slave : 1;
 protected slots:
-    virtual void processStopped (KProcess *);
+    virtual void processStopped (K3Process *);
 private slots:
-    void dataWritten (KProcess *);
+    void dataWritten (K3Process *);
 };
 
 class MPlayerPreferencesPage;
@@ -167,9 +167,9 @@ public slots:
     MPlayerPreferencesPage * configPage () const { return m_configpage; }
     bool ready (Viewer *);
 protected slots:
-    void processStopped (KProcess *);
+    void processStopped (K3Process *);
 private slots:
-    void processOutput (KProcess *, char *, int);
+    void processOutput (K3Process *, char *, int);
 private:
     QString m_process_output;
     QString m_grabfile;
@@ -304,8 +304,8 @@ public slots:
 signals:
     void configReceived ();
 protected slots:
-    void processStopped (KProcess *);
-    void processOutput (KProcess *, char *, int);
+    void processStopped (K3Process *);
+    void processOutput (K3Process *, char *, int);
 protected:
     Callback * m_callback;
     Backend_stub * m_backend;
@@ -409,7 +409,7 @@ public slots:
     virtual bool stop ();
     virtual bool quit ();
 private slots:
-    void processStopped (KProcess *);
+    void processStopped (K3Process *);
 };
 
 /*
@@ -477,9 +477,9 @@ public slots:
 public slots:
     bool ready (Viewer *);
 private slots:
-    void processOutput (KProcess *, char *, int);
-    void processStopped (KProcess *);
-    void wroteStdin (KProcess *);
+    void processOutput (K3Process *, char *, int);
+    void processStopped (K3Process *);
+    void wroteStdin (K3Process *);
     void streamStateChanged ();
     void streamRedirected (uint32_t, const KURL &);
 protected:

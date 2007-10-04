@@ -241,7 +241,7 @@ KDE_NO_EXPORT void Recents::activate () {
 KDE_NO_EXPORT void Recents::defer () {
     if (!resolved) {
         resolved = true;
-        readFromFile (locateLocal ("data", "kmplayer/recent.xml"));
+        readFromFile (KStandardDirs::locateLocal ("data", "kmplayer/recent.xml"));
     }
 }
 
@@ -300,7 +300,7 @@ KDE_NO_EXPORT void Playlist::defer () {
         KMPlayer::Document::defer ();
     else if (!resolved) {
         resolved = true;
-        readFromFile (locateLocal ("data", "kmplayer/playlist.xml"));
+        readFromFile (KStandardDirs::locateLocal ("data", "kmplayer/playlist.xml"));
     }
 }
 
@@ -1118,11 +1118,11 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
     Recents * rc = static_cast <Recents *> (recents.ptr ());
     if (rc && rc->resolved) {
         fileOpenRecent->saveEntries (config,"Recent Files");
-        rc->writeToFile (locateLocal ("data", "kmplayer/recent.xml"));
+        rc->writeToFile (KStandardDirs::locateLocal ("data", "kmplayer/recent.xml"));
     }
     Playlist * pl = static_cast <Playlist *> (playlist.ptr ());
     if (pl && pl->resolved)
-        pl->writeToFile (locateLocal ("data", "kmplayer/playlist.xml"));
+        pl->writeToFile (KStandardDirs::locateLocal ("data", "kmplayer/playlist.xml"));
 }
 
 
