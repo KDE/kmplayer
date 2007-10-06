@@ -24,6 +24,7 @@
 #include <config.h>
 #include <qobject.h>
 #include <qstring.h>
+#include <QMovie>
 #include <qstringlist.h>
 
 #include "kmplayerplaylist.h"
@@ -31,6 +32,7 @@
 class QTextStream;
 class QImage;
 class QPainter;
+class QBuffer;
 
 namespace KIO {
     class Job;
@@ -206,7 +208,8 @@ public:
     virtual void postpone (bool b);
     virtual void clipStart ();
     virtual void clipStop ();
-    QMovie * img_movie;
+    QBuffer *buffer;
+    QMovie *img_movie;
     CachedImage cached_img;
     int frame_nr;
 protected:
@@ -214,7 +217,7 @@ protected:
     virtual void remoteReady (QByteArray &);
 private slots:
     void movieUpdated (const QRect &);
-    void movieStatus (int);
+    void movieStatus (QMovie::MovieState);
     void movieResize (const QSize &);
 };
 

@@ -35,6 +35,7 @@ target_link_libraries(kmplayercommon
   ${KDE4_KDEUI_LIBS}
   ${QT_QT3SUPPORT_LIBRARY}
   ${KDE4_KDE3SUPPORT_LIBRARY}
+  kmediaplayer
 )
 
 install(TARGETS kmplayercommon DESTINATION ${LIB_INSTALL_DIR} )

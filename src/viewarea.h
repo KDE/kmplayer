@@ -66,6 +66,7 @@ protected:
 private:
     void syncVisual (const IRect & rect);
     void updateSurfaceBounds ();
+    void stopTimers ();
     ViewAreaPrivate * d;
     QWidget * m_parent;
     View * m_view;

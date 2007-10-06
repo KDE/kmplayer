@@ -46,6 +46,17 @@ class ElementPrivate;
 class RemoteObjectPrivate;
 class Visitor;
 
+class KMPLAYER_EXPORT GlobalShared {
+    void **global;
+    int refcount;
+public:
+    GlobalShared (void **glob);
+    virtual ~GlobalShared ();
+
+    void ref () { refcount++; }
+    void unref();
+};
+
 /*
  * Base class for objects that will be used as SharedPtr/WeakPtr pointers.
  * Item<T> keeps its own copy of the shared SharedData<T> as a weak refence.

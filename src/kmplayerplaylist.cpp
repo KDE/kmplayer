@@ -145,7 +145,7 @@ void Matrix::invXYWH (Single & x, Single & y, Single & w, Single & h) const {
         x = Single ((x - tx) / a);
         y = Single ((y - ty) / d);
     } else {
-        kdWarning () << "Not invering " << a << ", " << d << " scale" << endl;
+        kWarning () << "Not invering " << a << ", " << d << " scale" << endl;
     }
 }
 
@@ -205,7 +205,7 @@ bool Node::expose () const {
 }
 
 void Node::activate () {
-    //kdDebug () << nodeName () << " Node::activate" << endl;
+    //kDebug () << nodeName () << " Node::activate" << endl;
     setState (state_activated);
     if (firstChild ())
         firstChild ()->activate (); // activate only the first
@@ -217,14 +217,14 @@ void Node::begin () {
     if (active ()) {
         setState (state_began);
     } else
-        kdError () << nodeName() << " begin call on not active element" << endl;
+        kError () << nodeName() << " begin call on not active element" << endl;
 }
 
 void Node::defer () {
     if (active ()) {
         setState (state_deferred);
     } else
-        kdError () << "Node::defer () call on not activated element" << endl;
+        kError () << "Node::defer () call on not activated element" << endl;
 }
 
 void Node::undefer () {
@@ -232,7 +232,7 @@ void Node::undefer () {
         setState (state_activated);
         activate ();
     } else
-        kdWarning () <<"Node::undefer () call on not deferred element"<< endl;
+        kWarning () <<"Node::undefer () call on not deferred element"<< endl;
 }
 
 void Node::finish () {
@@ -243,11 +243,11 @@ void Node::finish () {
         else
             deactivate (); // document deactivates itself on finish
     } else
-        kdWarning () <<"Node::finish () call on not active element"<< endl;
+        kWarning () <<"Node::finish () call on not active element"<< endl;
 }
 
 void Node::deactivate () {
-    //kdDebug () << nodeName () << " Node::deactivate" << endl;
+    //kDebug () << nodeName () << " Node::deactivate" << endl;
     bool need_finish (unfinished ());
     setState (state_deactivated);
     for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
@@ -261,7 +261,7 @@ void Node::deactivate () {
 }
 
 void Node::reset () {
-    //kdDebug () << nodeName () << " Node::reset" << endl;
+    //kDebug () << nodeName () << " Node::reset" << endl;
     if (active ())
         deactivate ();
     setState (state_init);
@@ -277,7 +277,7 @@ void Node::childBegan (NodePtr /*child*/) {
 }
 
 void Node::childDone (NodePtr child) {
-    //kdDebug () << nodeName () << " Node::childDone" << endl;
+    //kDebug () << nodeName () << " Node::childDone" << endl;
     if (unfinished ()) {
         if (child->state == state_finished)
             child->deactivate ();
@@ -587,7 +587,7 @@ void Element::resetParam (const TrieString & param, int mid) {
         }
         parseParam (param, val);
     } else
-        kdError () << "resetting " << param.toString() << " that doesn't exists" << endl;
+        kError () << "resetting " << param.toString() << " that doesn't exists" << endl;
 }
 
 void Element::setAttribute (const TrieString & name, const QString & value) {
@@ -722,7 +722,7 @@ void Mrl::activate () {
 }
 
 void Mrl::begin () {
-    kdDebug () << nodeName () << " Mrl::activate" << endl;
+    kDebug () << nodeName () << " Mrl::activate" << endl;
     if (document ()->notify_listener) {
         if (linkNode () != this) {
             linkNode ()->activate ();
@@ -824,7 +824,7 @@ Document::Document (const QString & s, PlayListNotify * n)
 }
 
 Document::~Document () {
-    kdDebug () << "~Document" << endl;
+    kDebug () << "~Document" << endl;
 }
 
 static NodePtr getElementByIdImpl (NodePtr n, const QString & id, bool inter) {
@@ -896,7 +896,7 @@ void Document::reset () {
 
 static inline
 int diffTime (const struct timeval & tv1, const struct timeval & tv2) {
-    //kdDebug () << "diffTime sec:" << ((tv1.tv_sec - tv2.tv_sec) * 1000) << " usec:" << ((tv1.tv_usec - tv2.tv_usec) /1000) << endl;
+    //kDebug () << "diffTime sec:" << ((tv1.tv_sec - tv2.tv_sec) * 1000) << " usec:" << ((tv1.tv_usec - tv2.tv_usec) /1000) << endl;
     return (tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) /1000;
 }
 
@@ -924,11 +924,11 @@ TimerInfoPtrW Document::setTimeout (NodePtr n, int ms, unsigned id) {
     addTime (tv, ms);
     for (; ti && diffTime (ti->timeout, tv) <= 0; ti = ti->nextSibling ()) {
         pos++;
-        //kdDebug () << "setTimeout tv:" << tv.tv_sec << "." << tv.tv_usec << " "  << ti->timeout.tv_sec << "." << ti->timeout.tv_usec << endl;
+        //kDebug () << "setTimeout tv:" << tv.tv_sec << "." << tv.tv_usec << " "  << ti->timeout.tv_sec << "." << ti->timeout.tv_usec << endl;
     }
     TimerInfo * tinfo = new TimerInfo (n, id, tv, ms);
     timers.insertBefore (tinfo, ti);
-    //kdDebug () << "setTimeout " << ms << " at:" << pos << " tv:" << tv.tv_sec << "." << tv.tv_usec << endl;
+    //kDebug () << "setTimeout " << ms << " at:" << pos << " tv:" << tv.tv_sec << "." << tv.tv_usec << endl;
     if (!postpone_ref && pos == 0 && !intimer) { // timer() does that too
         cur_timeout = ms;
         notify_listener->setTimeout (ms);
@@ -938,7 +938,7 @@ TimerInfoPtrW Document::setTimeout (NodePtr n, int ms, unsigned id) {
 
 void Document::cancelTimer (TimerInfoPtr tinfo) {
     if (!postpone_ref && !intimer && tinfo == timers.first ()) {
-        //kdDebug () << "cancel first" << endl;
+        //kDebug () << "cancel first" << endl;
         TimerInfoPtr second = tinfo->nextSibling ();
         if (second) {
             struct timeval now;
@@ -962,7 +962,7 @@ bool Document::timer () {
     for (int i = 0; !!tinfo && !postpone_ref && i < 100; ++i) {
         if (tinfo && !tinfo->node) {
             // some part of document has gone and didn't remove timer
-            kdError () << "spurious timer" << endl;
+            kError () << "spurious timer" << endl;
             for (; tinfo && !tinfo->node; tinfo = timers.first ())
                 timers.remove (tinfo);
             tinfo = timers.first ();
@@ -980,7 +980,7 @@ bool Document::timer () {
                 int drift = diffTime (now, tinfo2->timeout);
                 if (drift > tinfo2->milli_sec) {
                     drift = tinfo2->milli_sec;
-                    //kdWarning() << "time drift" << endl;
+                    //kWarning() << "time drift" << endl;
                 }
                 tinfo2->timeout = now;
                 addTime (tinfo2->timeout, tinfo2->milli_sec - drift);
@@ -1022,7 +1022,7 @@ bool Document::timer () {
 PostponePtr Document::postpone () {
     if (postpone_ref)
         return postpone_ref;
-    kdDebug () << "postpone" << endl;
+    kDebug () << "postpone" << endl;
     if (!intimer && notify_listener) {
         cur_timeout = -1;
         notify_listener->setTimeout (-1);
@@ -1034,7 +1034,7 @@ PostponePtr Document::postpone () {
 }
 
 void Document::proceed (const struct timeval & postponed_time) {
-    kdDebug () << "proceed" << endl;
+    kDebug () << "proceed" << endl;
     if (timers.first () && notify_listener) {
         struct timeval now;
         timeOfDay (now);
@@ -1181,15 +1181,15 @@ DocumentBuilder::DocumentBuilder (NodePtr d, bool set_opener)
 bool DocumentBuilder::startTag(const QString &tag, AttributeListPtr attr) {
     if (m_ignore_depth) {
         m_ignore_depth++;
-        //kdDebug () << "Warning: ignored tag " << tag.latin1 () << " ignore depth = " << m_ignore_depth << endl;
+        //kDebug () << "Warning: ignored tag " << tag.latin1 () << " ignore depth = " << m_ignore_depth << endl;
     } else {
         NodePtr n = m_node->childFromTag (tag);
         if (!n) {
-            kdDebug () << "Warning: unknown tag " << tag.latin1 () << endl;
+            kDebug () << "Warning: unknown tag " << tag.latin1 () << endl;
             NodePtr doc = m_root->document ();
             n = new DarkNode (doc, tag);
         }
-        //kdDebug () << "Found tag " << tag << endl;
+        //kDebug () << "Found tag " << tag << endl;
         if (n->isElementNode ())
             convertNode <Element> (n)->setAttributes (attr);
         if (m_node == n && m_node == m_root)
@@ -1210,14 +1210,14 @@ bool DocumentBuilder::startTag(const QString &tag, AttributeListPtr attr) {
 bool DocumentBuilder::endTag (const QString & tag) {
     if (m_ignore_depth) { // endtag to ignore
         m_ignore_depth--;
-        kdDebug () << "Warning: ignored end tag " << " ignore depth = " << m_ignore_depth <<  endl;
+        kDebug () << "Warning: ignored end tag " << " ignore depth = " << m_ignore_depth <<  endl;
     } else {  // endtag
         NodePtr n = m_node;
         while (n) {
             if (!strcasecmp (n->nodeName (), tag.local8Bit ().data ()) &&
                     (m_root_is_first || n != m_root)) {
                 while (n != m_node) {
-                    kdWarning() << m_node->nodeName () << " not closed" << endl;
+                    kWarning() << m_node->nodeName () << " not closed" << endl;
                     if (m_root == m_node->parentNode ())
                         break;
                     m_node->closed ();
@@ -1227,16 +1227,16 @@ bool DocumentBuilder::endTag (const QString & tag) {
             }
             if (n == m_root) {
                 if (n == m_node) {
-                    kdError () << "m_node == m_doc, stack underflow " << endl;
+                    kError () << "m_node == m_doc, stack underflow " << endl;
                     return false;
                 }
-                kdWarning () << "endtag: no match " << tag.local8Bit () << endl;
+                kWarning () << "endtag: no match " << tag.local8Bit () << endl;
                 break;
             } else
-                 kdWarning () << "tag " << tag << " not " << n->nodeName () << endl;
+                 kWarning () << "tag " << tag << " not " << n->nodeName () << endl;
             n = n ->parentNode ();
         }
-        //kdDebug () << "end tag " << tag << endl;
+        //kDebug () << "end tag " << tag << endl;
         m_node->closed ();
         m_node = m_node->parentNode ();
     }
@@ -1252,7 +1252,7 @@ bool DocumentBuilder::characterData (const QString & data) {
 #endif
             m_node->characterData (data);
     }
-    //kdDebug () << "characterData " << d.latin1() << endl;
+    //kDebug () << "characterData " << d.latin1() << endl;
     return true;
 }
 
@@ -1261,7 +1261,7 @@ bool DocumentBuilder::cdataData (const QString & data) {
         NodePtr d = m_node->document ();
         m_node->appendChild (new CData (d, data));
     }
-    //kdDebug () << "cdataData " << d.latin1() << endl;
+    //kDebug () << "cdataData " << d.latin1() << endl;
     return true;
 }
 
@@ -1328,13 +1328,13 @@ void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool se
         QCString buf = str.utf8 ();
         ok = XML_Parse(parser, buf, strlen (buf), false) != XML_STATUS_ERROR;
         if (!ok)
-            kdWarning () << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser) << endl;
+            kWarning () << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser) << endl;
     }
     if (ok && !in.atEnd ()) {
         QCString buf = in.read ().utf8 ();
         ok = XML_Parse(parser, buf, strlen (buf), true) != XML_STATUS_ERROR;
         if (!ok)
-            kdWarning () << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser) << endl;
+            kWarning () << XML_ErrorString(XML_GetErrorCode(parser)) << " at " << XML_GetCurrentLineNumber(parser) << " col " << XML_GetCurrentColumnNumber(parser) << endl;
     }
     XML_ParserFree(parser);
     root->normalize ();
@@ -1420,7 +1420,7 @@ void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstlin
     for (NodePtr e = root; e; e = e->parentNode ())
         e->closed ();
     //doc->normalize ();
-    //kdDebug () << root->outerXML ();
+    //kDebug () << root->outerXML ();
 }
 
 void SimpleSAXParser::push () {
@@ -1430,12 +1430,12 @@ void SimpleSAXParser::push () {
         if (prev_token)
             prev_token->next = token;
         next_token = TokenInfoPtr (new TokenInfo);
-        //kdDebug () << "push " << token->string << endl;
+        //kDebug () << "push " << token->string << endl;
     }
 }
 
 void SimpleSAXParser::push_attribute () {
-    //kdDebug () << "attribute " << attr_name.latin1 () << "=" << attr_value.latin1 () << endl;
+    //kDebug () << "attribute " << attr_name.latin1 () << "=" << attr_value.latin1 () << endl;
     m_attributes->append (new Attribute (attr_name, attr_value));
     attr_name.truncate (0);
     attr_value.truncate (0);
@@ -1518,11 +1518,11 @@ bool SimpleSAXParser::nextToken () {
                         tmp->next = token;
                         token = tmp;
                     }
-                    //kdDebug () << "entity found "<<prev_token->string << endl;
+                    //kDebug () << "entity found "<<prev_token->string << endl;
                 } else if (token->token == tok_hash &&
                         nextToken () && token->token == tok_text &&
                         nextToken () && token->token == tok_semi_colon) {
-                    //kdDebug () << "char entity found " << prev_token->string << prev_token->string.toInt (0L, 16) << endl;
+                    //kDebug () << "char entity found " << prev_token->string << prev_token->string.toInt (0L, 16) << endl;
                     token->token = tok_text;
                     if (!prev_token->string.startsWith (QChar ('x')))
                         token->string = QChar (prev_token->string.toInt ());
@@ -1578,7 +1578,7 @@ bool SimpleSAXParser::readAttributes () {
     bool closed = false;
     while (true) {
         if (!nextToken ()) return false;
-        //kdDebug () << "readAttributes " << token->string.latin1() << endl;
+        //kDebug () << "readAttributes " << token->string.latin1() << endl;
         if ((in_dbl_quote && token->token != tok_double_quote) ||
                     (in_sngl_quote && token->token != tok_single_quote)) {
             attr_value += token->string;
@@ -1587,7 +1587,7 @@ bool SimpleSAXParser::readAttributes () {
                 return false;
             if (equal_seen)
                 attr_value += token->string; // EQ=a=2c ???
-            //kdDebug () << "equal_seen"<< endl;
+            //kDebug () << "equal_seen"<< endl;
             equal_seen = true;
         } else if (token->token == tok_white_space) {
             if (!attr_value.isEmpty ())
@@ -1610,18 +1610,18 @@ bool SimpleSAXParser::readAttributes () {
                 in_dbl_quote = true;
             else
                 attr_value += token->string;
-            //kdDebug () << "in_dbl_quote:"<< in_dbl_quote << endl;
+            //kDebug () << "in_dbl_quote:"<< in_dbl_quote << endl;
         } else if (token->token == tok_slash) {
             TokenInfoPtr mark_token = token;
             if (nextToken () &&
                     (token->token != tok_white_space || nextToken()) &&//<e / >
                     token->token == tok_angle_close) {
-            //kdDebug () << "close mark:"<< endl;
+            //kDebug () << "close mark:"<< endl;
                 closed = true;
                 break;
             } else {
                 token = mark_token;
-            //kdDebug () << "not end mark:"<< equal_seen << endl;
+            //kDebug () << "not end mark:"<< equal_seen << endl;
                 if (equal_seen)
                     attr_value += token->string; // ABBR=w/o ???
                 else
@@ -1643,13 +1643,13 @@ bool SimpleSAXParser::readAttributes () {
             /*const AttributeMap::const_iterator e = attr.end ();
             for (AttributeMap::const_iterator i = attr.begin (); i != e; ++i)
                 if (!strcasecmp (i.key ().latin1 (), "encoding"))
-                  kdDebug () << "encodeing " << i.data().latin1() << endl;*/
+                  kDebug () << "encodeing " << i.data().latin1() << endl;*/
         }
     } else {
         have_error = builder.startTag (tagname, m_attributes);
         if (closed)
             have_error &= builder.endTag (tagname);
-        //kdDebug () << "readTag " << tagname << " closed:" << closed << " ok:" << have_error << endl;
+        //kDebug () << "readTag " << tagname << " closed:" << closed << " ok:" << have_error << endl;
     }
     m_state = m_state->next; // pop Node or PI
     return true;
@@ -1678,7 +1678,7 @@ bool SimpleSAXParser::readDTD () {
         m_state = new StateInfo (InComment, m_state->next); // note: pop DTD
         return readComment ();
     }
-    //kdDebug () << "readDTD: " << token->string.latin1 () << endl;
+    //kDebug () << "readDTD: " << token->string.latin1 () << endl;
     if (token->token == tok_cdata_start) {
         m_state = new StateInfo (InCDATA, m_state->next); // note: pop DTD
         if (token->next) {
@@ -1752,7 +1752,7 @@ bool SimpleSAXParser::readTag () {
     if (!nextToken ()) return false;
     if (token->token == tok_exclamation) {
         m_state = new StateInfo (InDTDTag, m_state->next);
-    //kdDebug () << "readTag: " << token->string.latin1 () << endl;
+    //kDebug () << "readTag: " << token->string.latin1 () << endl;
         return readDTD ();
     }
     if (token->token == tok_white_space)
@@ -1768,7 +1768,7 @@ bool SimpleSAXParser::readTag () {
     if (token->token != tok_text)
         return false; // FIXME entities
     tagname = token->string;
-    //kdDebug () << "readTag " << tagname.latin1() << endl;
+    //kDebug () << "readTag " << tagname.latin1() << endl;
     m_state = new StateInfo (InAttributes, m_state);
     return readAttributes ();
 }

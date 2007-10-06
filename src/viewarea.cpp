@@ -23,15 +23,15 @@
 #include <math.h>
 
 #include <qapplication.h>
-#include <qwidgetstack.h>
+#include <qstackedwidget.h>
 #include <qslider.h>
 #include <qcursor.h>
 #include <qimage.h>
 #include <qmap.h>
 #include <QPalette>
+#include <QDesktopWidget>
 
 #include <kactioncollection.h>
-#include <kstaticdeleter.h>
 #include <kstatusbar.h>
 #include <kstdaction.h>
 #include <kshortcut.h>
@@ -56,19 +56,22 @@ extern const char * playlist_xpm[];
 
 //-------------------------------------------------------------------------
 
-namespace KMPlayer {
-    typedef QMap <QString, ImageDataPtrW> ImageDataMap;
-    static KStaticDeleter <ImageDataMap> imageCacheDeleter;
-    static ImageDataMap * image_data_map;
+namespace {
+    class ImageDataMap
+        : public QMap <QString, ImageDataPtrW>, public KMPlayer::GlobalShared {
+    public:
+        ImageDataMap (void **glob) : GlobalShared (glob) {}
+    };
+    static ImageDataMap *image_data_map;
 }
 
 ImageData::ImageData( const QString & img) :
     image (0L),
     url (img) {
         //if (img.isEmpty ())
-        //    //kdDebug() << "New ImageData for " << this << endl;
+        //    //kDebug() << "New ImageData for " << this << endl;
         //else
-        //    //kdDebug() << "New ImageData for " << img << endl;
+        //    //kDebug() << "New ImageData for " << img << endl;
     }
 
 ImageData::~ImageData() {
@@ -165,7 +168,7 @@ ViewSurface::ViewSurface (ViewArea * widget, NodePtr owner, const SRect & rect)
   : Surface (owner, rect), view_widget (widget) {}
 
 KDE_NO_CDTOR_EXPORT ViewSurface::~ViewSurface() {
-    //kdDebug() << "~ViewSurface" << endl;
+    //kDebug() << "~ViewSurface" << endl;
 }
 
 SurfacePtr ViewSurface::createSurface (NodePtr owner, const SRect & rect) {
@@ -201,7 +204,7 @@ KDE_NO_EXPORT
 void ViewSurface::repaint (const SRect &r) {
     markDirty ();
     view_widget->scheduleRepaint (toScreen (r.x (), r.y (), r.width (), r.height ()));
-    //kdDebug() << "Surface::repaint x:" << (int)x << " y:" << (int)y << " w:" << (int)w << " h:" << (int)h << endl;
+    //kDebug() << "Surface::repaint x:" << (int)x << " y:" << (int)y << " w:" << (int)w << " h:" << (int)h << endl;
 }
 
 KDE_NO_EXPORT
@@ -212,7 +215,7 @@ void ViewSurface::repaint () {
 
 KDE_NO_EXPORT void ViewSurface::video () {
     view_widget->setAudioVideoNode (node);
-    kdDebug() << "Surface::video:" << background_color << " " << (background_color & 0xff000000) << endl;
+    kDebug() << "Surface::video:" << background_color << " " << (background_color & 0xff000000) << endl;
     xscale = yscale = 1; // either scale width/heigt or use bounds
     view_widget->setAudioVideoGeometry (toScreen (0, 0, bounds.width(), bounds.height ()),
             (background_color & 0xff000000 ? &background_color : 0));
@@ -316,7 +319,7 @@ KDE_NO_CDTOR_EXPORT CairoPaintVisitor::~CairoPaintVisitor () {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (Node * n) {
-    kdWarning() << "Paint called on " << n->nodeName() << endl;
+    kWarning() << "Paint called on " << n->nodeName() << endl;
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (SMIL::RegionBase * reg) {
@@ -347,7 +350,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (SMIL::RegionBase * reg) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout * reg) {
-    //kdDebug() << "Visit " << reg->nodeName() << endl;
+    //kDebug() << "Visit " << reg->nodeName() << endl;
     SMIL::RegionBase *rb = convertNode <SMIL::RegionBase> (reg->rootLayout);
     if (reg->surface () && rb) {
         //cairo_save (cr);
@@ -667,7 +670,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
-    //kdDebug() << "Visit " << img->nodeName() << " " << img->src << endl;
+    //kDebug() << "Visit " << img->nodeName() << " " << img->src << endl;
     Surface *s = img->surface ();
     if (!s)
         return;
@@ -699,14 +702,14 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     TextRuntime * td = static_cast <TextRuntime *> (txt->runtime ());
     Surface *s = txt->surface ();
-    //kdDebug() << "Visit " << txt->nodeName() << " " << td->text << endl;
+    //kDebug() << "Visit " << txt->nodeName() << " " << td->text << endl;
     if (!s)
         return;
     SRect rect = s->bounds;
     Single x = rect.x (), y = rect.y(), w = rect.width(), h = rect.height();
     matrix.getXYWH (x, y, w, h);
     if (!s->surface) {
-        //kdDebug() << "new txt surface " << td->text << endl;
+        //kDebug() << "new txt surface " << td->text << endl;
         /* QTextEdit * edit = new QTextEdit;
         edit->setReadOnly (true);
         edit->setHScrollBarMode (QScrollView::AlwaysOff);
@@ -845,7 +848,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
-    //kdDebug() << "Visit " << brush->nodeName() << endl;
+    //kDebug() << "Visit " << brush->nodeName() << endl;
     Surface *s = brush->surface ();
     if (s) {
         cairo_save (cr);
@@ -927,7 +930,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Imfl * imfl) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fill * fi) {
-    //kdDebug() << "Visit " << fi->nodeName() << endl;
+    //kDebug() << "Visit " << fi->nodeName() << endl;
     CAIRO_SET_SOURCE_RGB (cr, fi->color);
     if ((int)fi->w && (int)fi->h) {
         cairo_rectangle (cr, fi->x, fi->y, fi->w, fi->h);
@@ -936,7 +939,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fill * fi) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
-    //kdDebug() << "Visit " << fi->nodeName() << endl;
+    //kDebug() << "Visit " << fi->nodeName() << endl;
     if (fi->target && fi->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (fi->target);
         if (img->surface ()) {
@@ -972,7 +975,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadeout * fo) {
-    //kdDebug() << "Visit " << fo->nodeName() << endl;
+    //kDebug() << "Visit " << fo->nodeName() << endl;
     if (fo->progress > 0) {
         CAIRO_SET_SOURCE_RGB (cr, fo->to_color);
         if ((int)fo->w && (int)fo->h) {
@@ -986,7 +989,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadeout * fo) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
-    //kdDebug() << "Visit " << cf->nodeName() << endl;
+    //kDebug() << "Visit " << cf->nodeName() << endl;
     if (cf->target && cf->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (cf->target);
         if (img->surface ()) {
@@ -1022,7 +1025,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
-    //kdDebug() << "Visit " << wipe->nodeName() << endl;
+    //kDebug() << "Visit " << wipe->nodeName() << endl;
     if (wipe->target && wipe->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (wipe->target);
         if (img->surface ()) {
@@ -1078,7 +1081,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::ViewChange * vc) {
-    //kdDebug() << "Visit " << vc->nodeName() << endl;
+    //kDebug() << "Visit " << vc->nodeName() << endl;
     if (vc->unfinished () || vc->progress < 100) {
         cairo_pattern_t * pat = cairo_pop_group (cr); // from imfl
         cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
@@ -1140,7 +1143,7 @@ MouseVisitor::MouseVisitor (unsigned int evt, int a, int b)
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (Node * n) {
-    kdDebug () << "Mouse event ignored for " << n->nodeName () << endl;
+    kDebug () << "Mouse event ignored for " << n->nodeName () << endl;
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Layout * layout) {
@@ -1223,14 +1226,14 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Region * region) {
 }
 
 static void followLink (SMIL::LinkingBase * link) {
-    kdDebug() << "link to " << link->href << " clicked" << endl;
+    kDebug() << "link to " << link->href << " clicked" << endl;
     NodePtr n = link;
     if (link->href.startsWith ("#")) {
         SMIL::Smil * s = SMIL::Smil::findSmilNode (link);
         if (s)
             s->jump (link->href.mid (1));
         else
-            kdError() << "In document jumps smil not found" << endl;
+            kError() << "In document jumps smil not found" << endl;
     } else
         for (NodePtr p = link->parentNode (); p; p = p->parentNode ()) {
             if (n->mrl () && n->mrl ()->opener == p) {
@@ -1339,7 +1342,8 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType * mediatype) {
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
- : QWidget (parent, "kde_kmplayer_viewarea", WResizeNoErase | WRepaintNoErase),
+// : QWidget (parent, "kde_kmplayer_viewarea", WResizeNoErase | WRepaintNoErase),
+ : QWidget (parent),
    m_parent (parent),
    m_view (view),
    m_collection (new KActionCollection (this)),
@@ -1355,29 +1359,40 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
     palette.setColor (backgroundRole(), QColor (0, 0, 0));
     setPalette (palette);
     setAcceptDrops (true);
-    new KAction (i18n ("Fullscreen"), KShortcut (Qt::Key_F), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_toggle");
+    //new KAction (i18n ("Fullscreen"), KShortcut (Qt::Key_F), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_toggle");
     setMouseTracking (true);
     if (!image_data_map)
-        imageCacheDeleter.setObject (image_data_map, new ImageDataMap);
+        new ImageDataMap ((void **)image_data_map);
 }
 
 KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {
+    image_data_map->unref ();
+}
+
+KDE_NO_EXPORT void ViewArea::stopTimers () {
+    if (m_mouse_invisible_timer) {
+        killTimer (m_mouse_invisible_timer);
+        m_mouse_invisible_timer = 0;
+    }
+    if (m_repaint_timer) {
+        killTimer (m_repaint_timer);
+        m_repaint_timer = 0;
+    }
 }
 
 KDE_NO_EXPORT void ViewArea::fullScreen () {
-    killTimers ();
-    m_mouse_invisible_timer = m_repaint_timer = 0;
+    stopTimers ();
     if (m_fullscreen) {
         showNormal ();
         reparent (m_parent, 0, QPoint (0, 0), true);
-        static_cast <KDockWidget *> (m_parent)->setWidget (this);
+        static_cast <K3DockWidget *> (m_parent)->setWidget (this);
         for (unsigned i = 0; i < m_collection->count (); ++i)
             m_collection->action (i)->setEnabled (false);
-        if (scale_lbl_id != -1) {
-            m_view->controlPanel ()->popupMenu ()->removeItem (scale_lbl_id);
-            m_view->controlPanel ()->popupMenu ()->removeItem (scale_slider_id);
+        /*if (scale_lbl_id != -1) {
+            m_view->controlPanel ()->popupMenu->removeItem (scale_lbl_id);
+            m_view->controlPanel ()->popupMenu->removeItem (scale_slider_id);
             scale_lbl_id = scale_slider_id = -1;
-        }
+        }*/
         m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (playlist_xpm)));
     } else {
         m_topwindow_rect = topLevelWidget ()->geometry ();
@@ -1385,16 +1400,16 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
         showFullScreen ();
         for (unsigned i = 0; i < m_collection->count (); ++i)
             m_collection->action (i)->setEnabled (true);
-        QPopupMenu * menu = m_view->controlPanel ()->popupMenu ();
+        /*QPopupMenu * menu = m_view->controlPanel ()->popupMenu;
         QLabel * lbl = new QLabel (i18n ("Scale:"), menu);
         scale_lbl_id = menu->insertItem (lbl, -1, 4);
         QSlider * slider = new QSlider (50, 150, 10, m_fullscreen_scale, Qt::Horizontal, menu);
         connect (slider, SIGNAL (valueChanged (int)), this, SLOT (scale (int)));
-        scale_slider_id = menu->insertItem (slider, -1, 5);
+        scale_slider_id = menu->insertItem (slider, -1, 5);*/
         m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (normal_window_xpm)));
     }
     m_fullscreen = !m_fullscreen;
-    m_view->controlPanel()->popupMenu ()->setItemChecked (ControlPanel::menu_fullscreen, m_fullscreen);
+    m_view->controlPanel()->fullscreenAction->setChecked (m_fullscreen);
 
 #ifdef HAVE_CAIRO
     if (surface->surface) {
@@ -1415,7 +1430,7 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
 
 void ViewArea::minimalMode () {
     m_minimal = !m_minimal;
-    killTimers ();
+    stopTimers ();
     m_mouse_invisible_timer = m_repaint_timer = 0;
     if (m_minimal) {
         m_view->setViewOnly ();
@@ -1431,7 +1446,7 @@ void ViewArea::minimalMode () {
 }
 
 KDE_NO_EXPORT void ViewArea::accelActivated () {
-    m_view->controlPanel()->popupMenu ()->activateItemAt (m_view->controlPanel()->popupMenu ()->indexOf (ControlPanel::menu_fullscreen)); 
+    m_view->controlPanel()->fullscreenAction->trigger ();
 }
 
 KDE_NO_EXPORT void ViewArea::mousePressEvent (QMouseEvent * e) {
@@ -1640,7 +1655,7 @@ KDE_NO_EXPORT void ViewArea::dragEnterEvent (QDragEnterEvent* dee) {
 }
 
 KDE_NO_EXPORT void ViewArea::contextMenuEvent (QContextMenuEvent * e) {
-    m_view->controlPanel ()->popupMenu ()->exec (e->globalPos ());
+    m_view->controlPanel ()->popupMenu->exec (e->globalPos ());
 }
 
 KDE_NO_EXPORT void ViewArea::mouseMoved () {
@@ -1666,20 +1681,20 @@ KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
         killTimer (m_mouse_invisible_timer);
         m_mouse_invisible_timer = 0;
         if (m_fullscreen)
-            setCursor (BlankCursor);
+            setCursor (QCursor (Qt::BlankCursor));
     } else if (e->timerId () == m_repaint_timer) {
         killTimer (m_repaint_timer);
         m_repaint_timer = 0;
         //repaint (m_repaint_rect, false);
         syncVisual (m_repaint_rect.intersect (IRect (0, 0, width (), height ())));
     } else {
-        kdError () << "unknown timer " << e->timerId () << " " << m_repaint_timer << endl;
+        kError () << "unknown timer " << e->timerId () << " " << m_repaint_timer << endl;
         killTimer (e->timerId ());
     }
 }
 
 KDE_NO_EXPORT void ViewArea::closeEvent (QCloseEvent * e) {
-    //kdDebug () << "closeEvent" << endl;
+    //kDebug () << "closeEvent" << endl;
     if (m_fullscreen) {
         fullScreen ();
         if (!m_parent->topLevelWidget ()->isVisible ())

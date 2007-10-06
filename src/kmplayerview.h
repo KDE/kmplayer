@@ -233,7 +233,7 @@ protected:
     void dropEvent (QDropEvent *);
     void mouseMoveEvent (QMouseEvent * e);
     void contextMenuEvent (QContextMenuEvent * e);
-    virtual void windowChanged( WId w );
+    //virtual void windowChanged( WId w );
 private:
     WId m_plain_window;
     unsigned int m_bgcolor;

@@ -35,7 +35,7 @@ class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollect
 #include <kconfig.h>
 #include <ksimpleconfig.h>
 #include <kaction.h>
-#include <kapplication.h>
+#include <kauthorized.h>
 #include <klocale.h>
 #include <kinstance.h>
 #include <kparts/factory.h>
@@ -138,7 +138,7 @@ static bool getBoolValue (const QString & value) {
 
 KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
                     QObject * parent, const char *name, const QStringList &args)
- : PartBase (wparent, wname, parent, name, new KSimpleConfig ("kmplayerrc")),
+ : PartBase (wparent, wname, parent, new KSimpleConfig ("kmplayerrc")),
    m_master (0L),
    m_browserextension (new KMPlayerBrowserExtension (this)),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
@@ -381,7 +381,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::~KMPlayerPart () {
 }
 
 KDE_NO_EXPORT bool KMPlayerPart::allowRedir (const KURL & url) const {
-    return kapp->authorizeURLAction ("redirect", m_docbase, url);
+    return KAuthorized::authorizeUrlAction ("redirect", m_docbase, url);
 }
 
 KDE_NO_EXPORT void KMPlayerPart::setAutoControls (bool b) {
@@ -452,7 +452,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KURL & _url) {
                     break;
                 }
     }
-    if (m_havehref && (!kapp->authorizeURLAction ("redirect", url, urlsource->url ()) || !m_settings->allowhref)) {
+    if (m_havehref && (!KAuthorized::authorizeUrlAction ("redirect", url, urlsource->url ()) || !m_settings->allowhref)) {
         m_havehref = false;
         url = urlsource->url ();
     }

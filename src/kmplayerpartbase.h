@@ -39,6 +39,7 @@ class KAboutData;
 class KInstance;
 class KActionCollection;
 class KBookmarkMenu;
+class KBookmarkManager;
 class KConfig;
 class QIODevice;
 class QTextStream;
@@ -54,7 +55,6 @@ class PartBase;
 class Process;
 class MPlayer;
 class BookmarkOwner;
-class BookmarkManager;
 class MEncoder;
 class MPlayerDumpstream;
 class FFMpeg;
@@ -114,7 +114,7 @@ class KMPLAYER_EXPORT PartBase : public KMediaPlayer::Player {
     Q_OBJECT
 public:
     typedef QMap <QString, Process *> ProcessMap;
-    PartBase (QWidget * parent,  const char * wname,QObject * objectParent, const char * name, KConfig *);
+    PartBase (QWidget * parent,  const char * wname,QObject * objectParent, KConfig *);
     ~PartBase ();
     void init (KActionCollection * = 0L);
     virtual KMediaPlayer::View* view ();
@@ -235,7 +235,7 @@ protected:
     ProcessMap m_players;
     ProcessMap m_recorders;
     QMap <QString, Source *> m_sources;
-    BookmarkManager * m_bookmark_manager;
+    KBookmarkManager * m_bookmark_manager;
     BookmarkOwner * m_bookmark_owner;
     KBookmarkMenu * m_bookmark_menu;
 #ifdef HAVE_DBUS
@@ -251,15 +251,16 @@ protected:
     bool m_update_tree_full : 1;
 };
 
-class KMPLAYER_NO_EXPORT DataCache : public QObject {
+class KMPLAYER_NO_EXPORT DataCache : public QObject, public GlobalShared {
     Q_OBJECT
     typedef QMap <QString, QByteArray> DataMap;
     typedef QMap <QString, bool> PreserveMap;
     DataMap cache_map;
     PreserveMap preserve_map;
 public:
-    DataCache () {}
+    DataCache (void **glob) : QObject (NULL), GlobalShared (glob) {}
     ~DataCache () {}
+
     void add (const QString &, const QByteArray &);
     bool get (const QString &, QByteArray &);
     bool preserve (const QString &);
@@ -267,6 +268,8 @@ public:
     bool isPreserved (const QString &);
 signals:
     void preserveRemoved (const QString &); // ready or canceled
+private:
+    DataCache (const DataCache &);
 };
 
 class KMPLAYER_NO_EXPORT RemoteObjectPrivate : public QObject {

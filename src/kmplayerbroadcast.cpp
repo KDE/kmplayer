@@ -494,7 +494,7 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::startServer () {
     m_ffserver_process->setUseShell (true);
     connect (m_ffserver_process, SIGNAL (processExited (KProcess *)),
              this, SLOT (processStopped (KProcess *)));
-    QString conffile = locateLocal ("data", "kmplayer/ffserver.conf");
+    QString conffile = KStandardDirs::locateLocal ("data", "kmplayer/ffserver.conf");
     const char * noaudio = m_player->source ()->audioDevice ().isEmpty () ? "NoAudio" : "";
     FFServerSetting ffs;
     m_configpage->getSettings (ffs);

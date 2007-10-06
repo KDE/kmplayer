@@ -493,7 +493,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     : KMainWindow(0, name),
       config (kapp->config ()),
       m_systray (0L),
-      m_player (new KMPlayer::PartBase (this, 0L, 0L, 0L, config)),
+      m_player (new KMPlayer::PartBase (this, 0L, 0L, config)),
       m_view (static_cast <KMPlayer::View*> (m_player->view())),
       m_dvdmenu (new QPopupMenu (this)),
       m_dvdnavmenu (new QPopupMenu (this)),
@@ -857,7 +857,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
     if (m_player->settings ()->autoresize)
         m_app->disconnect(m_player, SIGNAL(sourceDimensionChanged()),m_app,SLOT(zoom100()));
     m_document = new KMPlayer::Document (QString (""), this);
-    QString introfile = locate ("data", "kmplayer/intro.xml");
+    QString introfile = KStandardDirs::locate ("data", "kmplayer/intro.xml");
     QFile file (introfile);
     if (file.exists () && file.open (IO_ReadOnly)) {
         QTextStream ts (&file);
@@ -883,7 +883,7 @@ KDE_NO_EXPORT void IntroSource::activate () {
           "<seq begin='reg1.activateEvent'/>"
           "</excl>"
           "</body></smil>"
-          ).arg (locate ("data", "kmplayer/noise.gif")).arg (KIconLoader::global()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
+          ).arg (KStandardDirs::locate ("data", "kmplayer/noise.gif")).arg (KIconLoader::global()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
         QTextStream ts (smil.utf8 (), IO_ReadOnly);
         KMPlayer::readXML (m_document, ts, QString (), false);
     }
@@ -1220,7 +1220,7 @@ struct ExitSource : public KMPlayer::Source {
 
 KDE_NO_EXPORT void ExitSource::activate () {
     m_document = new KMPlayer::Document (QString (""), this);
-    QString exitfile = locate ("data", "kmplayer/exit.xml");
+    QString exitfile = KStandardDirs::locate ("data", "kmplayer/exit.xml");
     QFile file (exitfile);
     if (file.exists () && file.open (IO_ReadOnly)) {
         QTextStream ts (&file);
