@@ -789,7 +789,7 @@ public:
 /**
  * Unrecognized tag by parent element or just some auxiliary node
  */
-class DarkNode : public Element {
+class KMPLAYER_EXPORT DarkNode : public Element {
 public:
     DarkNode (NodePtr & d, const QString & n, short id=0);
     KDE_NO_CDTOR_EXPORT ~DarkNode () {}
