@@ -60,16 +60,16 @@ install(TARGETS kmplayerpart DESTINATION ${PLUGIN_INSTALL_DIR} )
 ########### next target ###############
 
 set(kmplayer_SRCS
-  main.cpp
   kmplayerapp.cpp
   kmplayertvsource.cpp
-  kmplayerbroadcast.cpp
-  kmplayervdr.cpp
 )
 
-kde4_add_executable(kmplayer ${kmplayer_SRCS})
+#kmplayerbroadcast.cpp
+#kmplayervdr.cpp
 
-target_link_libraries(kmplayer
+kde4_add_kdeinit_executable(kmplayer ${kmplayer_SRCS} main.cpp)
+
+target_link_libraries(kdeinit_kmplayer
   kmplayercommon
   ${KDE4_KDECORE_LIBS}
   ${KDE4_KPARTS_LIBS}
@@ -78,7 +78,13 @@ target_link_libraries(kmplayer
   ${KDE4_KDE3SUPPORT_LIBRARY}
 )
 
+target_link_libraries(kmplayer kdeinit_kmplayer)
+
+install(TARGETS kdeinit_kmplayer  DESTINATION ${LIB_INSTALL_DIR} )
+
 install(TARGETS kmplayer DESTINATION ${BIN_INSTALL_DIR})
+
+#qt4_add_dbus_interface(kmplayer_SRCS org.kde.Konqueror.Main.xml kmplayer_interface)
 
 ########### next target ###############
 
@@ -86,3 +92,8 @@ install(TARGETS kmplayer DESTINATION ${BIN_INSTALL_DIR})
 #kgstplayer
 #kxvplayer
 #knppplayer
+
+########### install files ###############
+
+install(FILES kmplayerui.rc kmplayerpartui.rc DESTINATION  ${DATA_INSTALL_DIR}/kmplayer)
+#install(FILES kmplayer.kcfg  DESTINATION  ${KCFG_INSTALL_DIR})

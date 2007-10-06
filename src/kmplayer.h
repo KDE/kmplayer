@@ -23,9 +23,7 @@
 #include <config.h>
 #endif
 
-#include <kapp.h>
-#include <kmainwindow.h>
-#include <kaccel.h>
+#include <kxmlguiwindow.h>
 #include <kaction.h>
 #include <kurl.h>
 #include "kmplayerplaylist.h"
@@ -33,13 +31,18 @@
 static const int id_status_msg = 1;
 static const int id_status_timer = 2;
 
-class QPopupMenu;
+class QMenu;
 class QMenuItem;
 class Q3ListViewItem;
 class KProcess;
 class KMPlayerBroadcastConfig;
 class KMPlayerFFServerConfig;
-class KSystemTray;
+class KSystemTrayIcon;
+class KToggleAction;
+class KRecentFilesAction;
+class KSharedConfig;
+template<class T> class KSharedPtr;
+typedef KSharedPtr<KSharedConfig> KSharedConfigPtr;
 
 namespace KMPlayer {
     class View;
@@ -55,15 +58,13 @@ namespace KMPlayer {
 } // namespace
 
 
-class KMPlayerApp : public KMainWindow
-{
+class KMPlayerApp : public KXmlGuiWindow {
     Q_OBJECT
-
 public:
-    KMPlayerApp (QWidget* parent=0, const char* name=0);
+    KMPlayerApp (QWidget* parent=NULL);
     ~KMPlayerApp ();
-    void openDocumentFile (const KURL& url=KURL());
-    void addURL (const KURL& url);
+    void openDocumentFile (const KUrl& url=KUrl());
+    void addURL (const KUrl& url);
     KMPlayer::PartBase * player () const { return m_player; }
     void resizePlayer (int percentage);
     KDE_NO_EXPORT KRecentFilesAction * recentFiles () const { return fileOpenRecent; }
@@ -78,8 +79,8 @@ public:
 protected:
     void saveOptions ();
     void readOptions ();
-    void saveProperties (KConfig * config);
-    void readProperties (KConfig * config);
+    void saveProperties ();
+    void readProperties ();
     void initActions ();
     void initStatusBar ();
     void initView ();
@@ -89,7 +90,7 @@ protected:
 public slots:
     void slotFileNewWindow ();
     void slotFileOpen ();
-    void slotFileOpenRecent (const KURL& url);
+    void slotFileOpenRecent (const KUrl& url);
     void slotSaveAs ();
     void slotFileClose ();
     void slotFileQuit ();
@@ -109,7 +110,6 @@ private slots:
     void fullScreen ();
     void configChanged ();
     void keepSizeRatio ();
-    void startArtsControl();
     void loadingProgress (int percentage);
     void positioned (int pos, int length);
     void zoom50 ();
@@ -135,13 +135,12 @@ private slots:
     void menuDeleteNode ();
     void menuMoveUpNode ();
     void menuMoveDownNode ();
-    void preparePlaylistMenu (KMPlayer::PlayListItem *, QPopupMenu *);
+    void preparePlaylistMenu (KMPlayer::PlayListItem *, QMenu *);
 
 private:
-    void menuItemClicked (QPopupMenu * menu, int id);
+    void menuItemClicked (QMenu * menu, int id);
     void minimalMode (bool deco=true);
-    KConfig * config;
-    KSystemTray * m_systray;
+    KSystemTrayIcon *m_systray;
     KMPlayer::PartBase * m_player;
     KMPlayer::View * m_view;
     KMPlayer::NodePtr recents;
@@ -157,27 +156,22 @@ private:
     KAction * editVolumeDec;
     KAction * toggleView;
     KAction * viewSyncEditMode;
-#if KDE_IS_VERSION(3,1,90)
     KToggleAction * viewFullscreen;
-#else
-    KAction * viewFullscreen;
-#endif
     KToggleAction * viewEditMode;
     KToggleAction * viewToolBar;
     KToggleAction * viewStatusBar;
     KToggleAction * viewMenuBar;
     KToggleAction * viewKeepRatio;
     QMenuItem * m_sourcemenu;
-    QPopupMenu * m_dvdmenu;
-    QPopupMenu * m_dvdnavmenu;
-    QPopupMenu * m_vcdmenu;
-    QPopupMenu * m_audiocdmenu;
-    QPopupMenu * m_tvmenu;
-    QPopupMenu * m_dropmenu;
+    QMenu * m_dvdmenu;
+    QMenu * m_dvdnavmenu;
+    QMenu * m_vcdmenu;
+    QMenu * m_audiocdmenu;
+    QMenu * m_tvmenu;
+    QMenu * m_dropmenu;
     KMPlayerFFServerConfig * m_ffserverconfig;
     KMPlayerBroadcastConfig * m_broadcastconfig;
-    QCString m_dcopName;
-    KURL::List m_drop_list;
+    KUrl::List m_drop_list;
     Q3ListViewItem * m_drop_after;
     int edit_tree_id;
     int manip_tree_id;

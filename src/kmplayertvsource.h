@@ -44,8 +44,6 @@ class QGroupBox;
 class QLineEdit;
 class QCheckBox;
 class KComboBox;
-class KConfig;
-class QTable;
 
 
 class KMPLAYER_NO_EXPORT TVDevicePage : public QFrame {
@@ -178,7 +176,7 @@ private:
 class KMPLAYER_NO_EXPORT KMPlayerTVSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
-    KMPlayerTVSource (KMPlayerApp * app, QPopupMenu * m);
+    KMPlayerTVSource (KMPlayerApp * app, QMenu * m);
     virtual ~KMPlayerTVSource ();
     virtual QString filterOptions ();
     virtual bool hasLength ();
@@ -186,8 +184,8 @@ public:
     virtual KMPlayer::NodePtr root ();
     void buildMenu ();
     virtual QString prettyName ();
-    virtual void write (KConfig *);
-    virtual void read (KConfig *);
+    virtual void write (KSharedConfigPtr);
+    virtual void read (KSharedConfigPtr);
     virtual void sync (bool);
     virtual void prefLocation (QString & item, QString & icon, QString & tab);
     virtual QFrame * prefPage (QWidget * parent);
@@ -208,7 +206,7 @@ private:
     void buildArguments ();
     KMPlayer::NodePtrW m_cur_tvdevice;
     KMPlayer::NodePtrW m_cur_tvinput;
-    QPopupMenu * m_channelmenu;
+    QMenu * m_channelmenu;
     QString tvdriver;
     KMPlayerPrefSourcePageTV * m_configpage;
     TVDeviceScannerSource * scanner;

@@ -203,8 +203,8 @@ public:
     };
     MPlayerPreferencesPage (MPlayer *);
     KDE_NO_CDTOR_EXPORT ~MPlayerPreferencesPage () {}
-    void write (KConfig *);
-    void read (KConfig *);
+    void write (KSharedConfigPtr);
+    void read (KSharedConfigPtr);
     void sync (bool fromUI);
     void prefLocation (QString & item, QString & icon, QString & tab);
     QFrame * prefPage (QWidget * parent);
@@ -359,8 +359,8 @@ class KMPLAYER_NO_EXPORT XMLPreferencesPage : public PreferencesPage {
 public:
     XMLPreferencesPage (CallbackProcess *);
     ~XMLPreferencesPage ();
-    void write (KConfig *);
-    void read (KConfig *);
+    void write (KSharedConfigPtr);
+    void read (KSharedConfigPtr);
     void sync (bool fromUI);
     void prefLocation (QString & item, QString & icon, QString & tab);
     QFrame * prefPage (QWidget * parent);

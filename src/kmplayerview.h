@@ -38,7 +38,6 @@ class QStackedWidget;
 class QPixmap;
 class QPaintDevice;
 class QPainter;
-class QPopupMenu;
 class QSlider;
 class QLabel;
 class KActionCollection;

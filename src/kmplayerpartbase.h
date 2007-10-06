@@ -30,6 +30,7 @@
 
 #include <kmediaplayer/player.h>
 #include <kurl.h>
+#include <kurl.h>
 
 #include "kmplayerview.h"
 #include "kmplayersource.h"
@@ -40,10 +41,12 @@ class KInstance;
 class KActionCollection;
 class KBookmarkMenu;
 class KBookmarkManager;
-class KConfig;
 class QIODevice;
 class QTextStream;
 class Q3ListViewItem;
+class KSharedConfig;
+template<class T> class KSharedPtr;
+typedef KSharedPtr<KSharedConfig> KSharedConfigPtr;
 
 namespace KIO {
     class Job;
@@ -114,7 +117,7 @@ class KMPLAYER_EXPORT PartBase : public KMediaPlayer::Player {
     Q_OBJECT
 public:
     typedef QMap <QString, Process *> ProcessMap;
-    PartBase (QWidget * parent,  const char * wname,QObject * objectParent, KConfig *);
+    PartBase (QWidget *parent,  const char *wname,QObject *objParent, KSharedConfigPtr);
     ~PartBase ();
     void init (KActionCollection * = 0L);
     virtual KMediaPlayer::View* view ();
@@ -144,7 +147,7 @@ public:
     QMap <QString, Process *> & players () { return m_players; }
     QMap <QString, Process *> & recorders () { return m_recorders; }
     QMap <QString, Source *> & sources () { return m_sources; }
-    KConfig * config () const { return m_config; }
+    KSharedConfigPtr config () const { return m_config; }
     bool mayResize () const { return !m_noresize; }
     void updatePlayerMenu (ControlPanel *);
     void updateInfo (const QString & msg);
@@ -166,7 +169,6 @@ public slots:
     virtual void play (void);
     virtual void stop (void);
     void record ();
-    virtual void seek (unsigned long msec);
     void adjustVolume (int incdec);
     bool playing () const;
     void showConfigDialog ();
@@ -185,6 +187,7 @@ public:
     virtual qlonglong position (void) const;
     virtual bool hasLength (void) const;
     virtual qlonglong length (void) const;
+    virtual void seek (qlonglong);
     void toggleFullScreen ();
     bool isPlaying ();
 signals:
@@ -225,7 +228,7 @@ protected slots:
     void audioSelected (int);
     void subtitleSelected (int);
 protected:
-    KConfig * m_config;
+    KSharedConfigPtr m_config;
     QPointer <View> m_view;
     QMap <QString, QString> temp_backends;
     Settings * m_settings;

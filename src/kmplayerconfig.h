@@ -31,7 +31,9 @@
 
 #include <kurl.h>
 
-class KConfig;
+class KSharedConfig;
+template<class T> class KSharedPtr;
+typedef KSharedPtr<KSharedConfig> KSharedConfigPtr;
 
 namespace KMPlayer {
 
@@ -84,8 +86,8 @@ struct Deleter {
 class KMPLAYER_EXPORT PreferencesPage {
 public:
     virtual ~PreferencesPage () {}
-    virtual void write (KConfig *) = 0;
-    virtual void read (KConfig *) = 0;
+    virtual void write (KSharedConfigPtr) = 0;
+    virtual void read (KSharedConfigPtr) = 0;
     virtual void sync (bool fromUI) = 0;
     virtual void prefLocation (QString & item, QString & icon, QString & tab) = 0;
     virtual QFrame * prefPage (QWidget * parent) = 0;
@@ -98,7 +100,7 @@ public:
 class KMPLAYER_EXPORT Settings : public QObject {
     Q_OBJECT
 public:
-    Settings (PartBase *, KConfig * part);
+    Settings (PartBase *, KSharedConfigPtr part);
     ~Settings ();
     bool createDialog () KDE_NO_EXPORT;
     void show (const char * pagename = 0L);
@@ -107,7 +109,7 @@ public:
     void applyColorSetting (bool only_changed_ones);
     Preferences *configDialog() const { return configdialog; }
     View * defaultView ();
-    KConfig * kconfig () { return m_config; }
+    KSharedConfigPtr kconfig () { return m_config; }
 
     QStringList urllist;
     QStringList sub_urllist;
@@ -197,7 +199,7 @@ private slots:
     void getHelp ();
 private:
     Preferences * configdialog;
-    KConfig * m_config;
+    KSharedConfigPtr m_config;
     PartBase * m_player;
 };
 

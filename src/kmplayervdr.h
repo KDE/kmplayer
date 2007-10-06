@@ -36,7 +36,6 @@
 class KMPlayerApp;
 class VDRCommand;
 class KUrlRequester;
-class QPopupMenu;
 class Q3ButtonGroup;
 class QMenuItem;
 class QCheckBox;
@@ -131,9 +130,7 @@ private:
         act_setup, act_channels, act_menu,
         act_red, act_green, act_yellow, act_blue,
         act_0, act_1, act_2, act_3, act_4, act_5, act_6, act_7, act_8, act_9,
-#if KDE_IS_VERSION(3, 1, 90)
         act_custom,
-#endif
         act_last
     };
     void queueCommand (const char * cmd);

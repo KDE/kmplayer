@@ -86,7 +86,7 @@ static OutputDriver _vds [] = {
 static const int ADRIVER_ARTS_INDEX = 4;
 
 
-KDE_NO_CDTOR_EXPORT Settings::Settings (PartBase * player, KConfig * config)
+KDE_NO_CDTOR_EXPORT Settings::Settings (PartBase * player, KSharedConfigPtr config)
   : pagelist (0L), configdialog (0L), m_config (config), m_player (player) {
     audiodrivers = _ads;
     videodrivers = _vds;

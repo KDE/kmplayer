@@ -33,7 +33,7 @@
 
 class KMPlayerApp;
 class KUrlRequester;
-class QPopupMenu;
+class QMenu;
 class QMenuItem;
 class QCheckBox;
 class QLineEdit;
@@ -46,11 +46,11 @@ class TVChannel;
 class KMPLAYER_NO_EXPORT KMPlayerMenuSource : public KMPlayer::Source {
     Q_OBJECT
 public:
-    KMPlayerMenuSource (const QString & n, KMPlayerApp * app, QPopupMenu * m, const char * src);
+    KMPlayerMenuSource (const QString & n, KMPlayerApp * app, QMenu * m, const char * src);
     virtual ~KMPlayerMenuSource ();
 protected:
-    void menuItemClicked (QPopupMenu * menu, int id);
-    QPopupMenu * m_menu;
+    void menuItemClicked (QMenu * menu, int id);
+    QMenu * m_menu;
     KMPlayerApp * m_app;
 };
 
@@ -73,14 +73,14 @@ public:
 class KMPLAYER_NO_EXPORT KMPlayerDVDSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
-    KMPlayerDVDSource (KMPlayerApp * app, QPopupMenu * m);
+    KMPlayerDVDSource (KMPlayerApp * app, QMenu * m);
     virtual ~KMPlayerDVDSource ();
     virtual bool processOutput (const QString & line);
     virtual QString filterOptions ();
     virtual void setIdentified (bool b = true);
     virtual QString prettyName ();
-    virtual void write (KConfig *);
-    virtual void read (KConfig *);
+    virtual void write (KSharedConfigPtr);
+    virtual void read (KSharedConfigPtr);
     virtual void sync (bool);
     virtual void prefLocation (QString & item, QString & icon, QString & tab);
     virtual QFrame * prefPage (QWidget * parent);
@@ -95,10 +95,10 @@ public slots:
 private:
     void buildArguments ();
     void play ();
-    QPopupMenu * m_dvdtitlemenu;
-    QPopupMenu * m_dvdchaptermenu;
-    QPopupMenu * m_dvdlanguagemenu;
-    QPopupMenu * m_dvdsubtitlemenu;
+    QMenu * m_dvdtitlemenu;
+    QMenu * m_dvdchaptermenu;
+    QMenu * m_dvdlanguagemenu;
+    QMenu * m_dvdsubtitlemenu;
     KMPlayer::NodePtr disks;
     KMPlayerPrefSourcePageDVD * m_configpage;
     int m_current_title;
@@ -112,7 +112,7 @@ private:
 class KMPLAYER_NO_EXPORT KMPlayerDVDNavSource : public KMPlayerMenuSource {
     Q_OBJECT
 public:
-    KMPlayerDVDNavSource (KMPlayerApp * app, QPopupMenu * m);
+    KMPlayerDVDNavSource (KMPlayerApp * app, QMenu * m);
     virtual ~KMPlayerDVDNavSource ();
     virtual QString prettyName ();
 public slots:
@@ -144,13 +144,13 @@ public:
 class KMPLAYER_NO_EXPORT KMPlayerVCDSource : public KMPlayerMenuSource, public KMPlayer::PreferencesPage {
     Q_OBJECT
 public:
-    KMPlayerVCDSource (KMPlayerApp * app, QPopupMenu * m);
+    KMPlayerVCDSource (KMPlayerApp * app, QMenu * m);
     virtual ~KMPlayerVCDSource ();
     virtual bool processOutput (const QString & line);
     virtual void setIdentified (bool b = true);
     virtual QString prettyName ();
-    virtual void write (KConfig *);
-    virtual void read (KConfig *);
+    virtual void write (KSharedConfigPtr);
+    virtual void read (KSharedConfigPtr);
     virtual void sync (bool);
     virtual void prefLocation (QString & item, QString & icon, QString & tab);
     virtual QFrame * prefPage (QWidget * parent);
@@ -170,7 +170,7 @@ private:
 class KMPLAYER_NO_EXPORT KMPlayerAudioCDSource : public KMPlayerMenuSource {
     Q_OBJECT
 public:
-    KMPlayerAudioCDSource (KMPlayerApp * app, QPopupMenu * m);
+    KMPlayerAudioCDSource (KMPlayerApp * app, QMenu * m);
     virtual ~KMPlayerAudioCDSource ();
     virtual bool processOutput (const QString & line);
     virtual void setIdentified (bool b = true);

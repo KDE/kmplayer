@@ -918,7 +918,7 @@ KDE_NO_CDTOR_EXPORT MPlayerPreferencesPage::MPlayerPreferencesPage (MPlayer * p)
  : m_process (p), m_configframe (0L) {
 }
 
-KDE_NO_EXPORT void MPlayerPreferencesPage::write (KConfig * config) {
+KDE_NO_EXPORT void MPlayerPreferencesPage::write (KSharedConfigPtr config) {
     config->setGroup (strMPlayerPatternGroup);
     for (int i = 0; i < int (pat_last); i++)
         config->writeEntry
@@ -930,7 +930,7 @@ KDE_NO_EXPORT void MPlayerPreferencesPage::write (KConfig * config) {
     config->writeEntry (strAlwaysBuildIndex, alwaysbuildindex);
 }
 
-KDE_NO_EXPORT void MPlayerPreferencesPage::read (KConfig * config) {
+KDE_NO_EXPORT void MPlayerPreferencesPage::read (KSharedConfigPtr config) {
     config->setGroup (strMPlayerPatternGroup);
     for (int i = 0; i < int (pat_last); i++)
         m_patterns[i].setPattern (config->readEntry
@@ -1581,10 +1581,10 @@ KDE_NO_EXPORT void XMLPreferencesFrame::showEvent (QShowEvent *) {
         m_process->getConfigData ();
 }
 
-KDE_NO_EXPORT void XMLPreferencesPage::write (KConfig *) {
+KDE_NO_EXPORT void XMLPreferencesPage::write (KSharedConfigPtr) {
 }
 
-KDE_NO_EXPORT void XMLPreferencesPage::read (KConfig *) {
+KDE_NO_EXPORT void XMLPreferencesPage::read (KSharedConfigPtr) {
 }
 
 KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
