@@ -1362,7 +1362,7 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
     //new KAction (i18n ("Fullscreen"), KShortcut (Qt::Key_F), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_toggle");
     setMouseTracking (true);
     if (!image_data_map)
-        new ImageDataMap ((void **)image_data_map);
+        new ImageDataMap ((void **)&image_data_map);
 }
 
 KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {

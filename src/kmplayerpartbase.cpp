@@ -99,9 +99,8 @@ KDE_NO_EXPORT QString BookmarkOwner::currentURL () const {
 
 //-----------------------------------------------------------------------------
 
-PartBase::PartBase (QWidget * wparent, const char *wname,
-                    QObject * parent, KSharedConfigPtr config)
- : KMediaPlayer::Player (wparent, wname ? wname : "kde_kmplayer_view", parent),
+PartBase::PartBase (QWidget * wparent, QObject * parent, KSharedConfigPtr config)
+ : KMediaPlayer::Player (wparent, "kde_kmplayer_part", parent),
    m_config (config),
    m_view (new View (wparent)),
    m_settings (new Settings (this, config)),

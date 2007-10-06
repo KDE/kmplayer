@@ -495,7 +495,7 @@ KDE_NO_EXPORT KMPlayer::NodePtr HtmlObject::childFromTag (const QString & tag) {
 KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp (QWidget *)
     : KXmlGuiWindow (NULL),
       m_systray (0L),
-      m_player (new KMPlayer::PartBase (this, 0L, 0L, KGlobal::config ())),
+      m_player (new KMPlayer::PartBase (this, 0L, KGlobal::config ())),
       m_view (static_cast <KMPlayer::View*> (m_player->view())),
       m_dvdmenu (new QMenu (this)),
       m_dvdnavmenu (new QMenu (this)),
@@ -793,8 +793,8 @@ KDE_NO_EXPORT void KMPlayerApp::slotSourceChanged (KMPlayer::Source *olds, KMPla
                  this, SLOT (setCaption (const QString &)));
         connect (news, SIGNAL (startPlaying ()),
                  this, SLOT (playerStarted ()));
-        viewSyncEditMode->setEnabled (m_view->editMode () ||
-                !strcmp (m_player->source ()->name (), "urlsource"));
+        //viewSyncEditMode->setEnabled (m_view->editMode () ||
+        //        !strcmp (m_player->source ()->name (), "urlsource"));
     }
 }
 
@@ -1045,11 +1045,11 @@ KDE_NO_EXPORT void KMPlayerApp::editMode () {
         edit_tree_id = ri->id;
         m_view->setEditMode (ri, true);
         m_view->setInfoMessage (pi->node->innerXML ());
-        viewSyncEditMode->setEnabled (true);
+        //viewSyncEditMode->setEnabled (true);
     } else {
         m_view->setEditMode (ri, false);
         edit_tree_id = -1;
-        viewSyncEditMode->setEnabled (!strcmp (m_player->source ()->name (), "urlsource"));
+        //viewSyncEditMode->setEnabled (!strcmp (m_player->source ()->name (), "urlsource"));
     }
 }
 
@@ -1109,10 +1109,10 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
     config->setGroup ("General Options");
     if (m_player->settings ()->remembersize)
         config->writeEntry ("Geometry", size());
-    config->writeEntry ("Show Toolbar", viewToolBar->isChecked());
+    //config->writeEntry ("Show Toolbar", viewToolBar->isChecked());
     //config->writeEntry ("ToolBarPos", (int) toolBar("mainToolBar")->barPos());
-    config->writeEntry ("Show Statusbar",viewStatusBar->isChecked());
-    config->writeEntry ("Show Menubar",viewMenuBar->isChecked());
+    //config->writeEntry ("Show Statusbar",viewStatusBar->isChecked());
+    //config->writeEntry ("Show Menubar",viewMenuBar->isChecked());
     if (!m_player->sources () ["pipesource"]->pipeCmd ().isEmpty ()) {
         config->setGroup ("Pipe Command");
         config->writeEntry ("Command1", m_player->sources () ["pipesource"]->pipeCmd ());
@@ -1141,15 +1141,15 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     //toolBar("mainToolBar")->setBarPos(toolBarPos);
 
     // bar status settings
-    viewToolBar->setChecked (config->readBoolEntry("Show Toolbar", true));
-    slotViewToolBar();
+    //viewToolBar->setChecked (config->readBoolEntry("Show Toolbar", true));
+    //slotViewToolBar();
 
     bool bViewStatusbar = config->readBoolEntry("Show Statusbar", true);
-    viewStatusBar->setChecked(bViewStatusbar);
-    slotViewStatusBar();
+    //viewStatusBar->setChecked(bViewStatusbar);
+    //slotViewStatusBar();
 
-    viewMenuBar->setChecked (config->readBoolEntry("Show Menubar", true));
-    slotViewMenuBar();
+    //viewMenuBar->setChecked (config->readBoolEntry("Show Menubar", true));
+    //slotViewMenuBar();
 
     QSize size = config->readSizeEntry ("Geometry");
     if (!size.isEmpty ())
@@ -1159,7 +1159,7 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     static_cast <KMPlayerPipeSource *> (m_player->sources () ["pipesource"])->setCommand (config->readEntry ("Command1", ""));
     // initialize the recent file list
     if (!recents) {
-        fileOpenRecent->loadEntries (KConfigGroup (config, "Recent Files"));
+        //fileOpenRecent->loadEntries (KConfigGroup (config, "Recent Files"));
         recents = new Recents (this);
         recents_id = m_view->playList ()->addTree (recents, "listssource", "history", KMPlayer::PlayListView::AllowDrag);
     }
@@ -1354,9 +1354,9 @@ KDE_NO_EXPORT void KMPlayerApp::slotSaveAs () {
 
 KDE_NO_EXPORT void KMPlayerApp::slotClearHistory () {
     //fileOpenRecent->clearURLList ();
-    int mi = fileOpenRecent->maxItems ();
-    fileOpenRecent->setMaxItems (0);
-    fileOpenRecent->setMaxItems (mi);
+    //int mi = fileOpenRecent->maxItems ();
+    //fileOpenRecent->setMaxItems (0);
+    //fileOpenRecent->setMaxItems (mi);
     m_player->settings ()->urllist.clear ();
     m_player->settings ()->sub_urllist.clear ();
     if (recents) { // small window this check fails and thus ClearHistory fails
@@ -1628,7 +1628,7 @@ KDE_NO_EXPORT void KMPlayerApp::preparePlaylistMenu (KMPlayer::PlayListItem * it
 }
 
 KDE_NO_EXPORT void KMPlayerApp::configChanged () {
-    viewKeepRatio->setChecked (m_player->settings ()->sizeratio);
+    //viewKeepRatio->setChecked (m_player->settings ()->sizeratio);
     if (m_player->settings ()->docksystray && !m_systray) {
         m_systray = new KSystemTrayIcon (this);
         m_systray->loadIcon ("kmplayer");
@@ -1648,7 +1648,7 @@ KDE_NO_EXPORT void KMPlayerApp::configChanged () {
 KDE_NO_EXPORT void KMPlayerApp::keepSizeRatio () {
     m_view->setKeepSizeRatio (!m_view->keepSizeRatio ());
     m_player->settings ()->sizeratio = m_view->keepSizeRatio ();
-    viewKeepRatio->setChecked (m_view->keepSizeRatio ());
+    //viewKeepRatio->setChecked (m_view->keepSizeRatio ());
 }
 
 //-----------------------------------------------------------------------------

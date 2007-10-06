@@ -34,7 +34,7 @@ extern "C" KDE_EXPORT int kdemain (int argc, char *argv[]) {
 
     KAboutData aboutData ("kmplayer", 0, ki18n("KMPlayer"),
             KDE_VERSION_STRING,
-            ki18n("Web browser, file manager and document viewer."),
+            ki18n ("Media player."),
             KAboutData::License_GPL,
             ki18n ("(c) 2002-2007, Koos Vriezen"),
             KLocalizedString(),

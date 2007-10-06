@@ -117,7 +117,7 @@ class KMPLAYER_EXPORT PartBase : public KMediaPlayer::Player {
     Q_OBJECT
 public:
     typedef QMap <QString, Process *> ProcessMap;
-    PartBase (QWidget *parent,  const char *wname,QObject *objParent, KSharedConfigPtr);
+    PartBase (QWidget *parent, QObject *objParent, KSharedConfigPtr);
     ~PartBase ();
     void init (KActionCollection * = 0L);
     virtual KMediaPlayer::View* view ();

@@ -129,8 +129,7 @@ public:
         Feat_InfoPanel = 0x10, Feat_VolumeSlider = 0x20, Feat_PlayList = 0x40,
         Feat_ImageWindow = 0x80, Feat_All = 0xff
     };
-    KMPlayerPart (QWidget * wparent, const char * wname,
-              QObject * parent, const char * name, const QStringList &args);
+    KMPlayerPart (QWidget *wparent, QObject *parent, const QStringList &args);
     ~KMPlayerPart ();
 
     KDE_NO_EXPORT KMPlayerBrowserExtension * browserextension() const
