@@ -46,16 +46,28 @@ class ElementPrivate;
 class RemoteObjectPrivate;
 class Visitor;
 
-class KMPLAYER_EXPORT GlobalShared {
-    void **global;
+template <class T> class KMPLAYER_EXPORT GlobalShared {
+    T **global;
     int refcount;
 public:
-    GlobalShared (void **glob);
-    virtual ~GlobalShared ();
+    GlobalShared (T **glob);
+    virtual ~GlobalShared () {}
 
     void ref () { refcount++; }
     void unref();
 };
+
+template <class T>
+inline GlobalShared<T>::GlobalShared (T **glob) : global (glob), refcount (1) {
+    *global = static_cast <T*> (this);
+}
+
+template <class T> inline void GlobalShared<T>::unref() {
+    if (--refcount <= 0) {
+        *global = NULL;
+        delete this;
+    }
+}
 
 /*
  * Base class for objects that will be used as SharedPtr/WeakPtr pointers.
@@ -546,14 +558,14 @@ public:
     PlayType playType ();
     /*
      * The original node (or this) having the URL, needed for playlist expansion
-     */ 
+     */
     virtual Mrl * linkNode ();
     virtual Mrl * mrl ();
     virtual void endOfFile ();
     QString absolutePath ();
     /*
      * Reimplement to callback with requestPlayURL if isPlayable()
-     */ 
+     */
     virtual void activate ();
     virtual void begin ();
     /**

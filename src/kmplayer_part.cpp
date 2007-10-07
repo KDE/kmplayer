@@ -48,9 +48,9 @@ using namespace KMPlayer;
 
 typedef std::list <KMPlayerPart *> KMPlayerPartList;
 
-class KMPLAYER_NO_EXPORT KMPlayerPartStatic : public GlobalShared {
+class KMPLAYER_NO_EXPORT KMPlayerPartStatic : public GlobalShared<KMPlayerPartStatic> {
 public:
-    KMPlayerPartStatic (void **);
+    KMPlayerPartStatic (KMPlayerPartStatic **);
     ~KMPlayerPartStatic ();
     KMPlayerPartList partlist;
 };
@@ -58,7 +58,7 @@ public:
 static KMPlayerPartStatic * kmplayerpart_static = 0L;
 
 KDE_NO_CDTOR_EXPORT
-KMPlayerPartStatic::KMPlayerPartStatic (void **glob) : GlobalShared (glob) {
+KMPlayerPartStatic::KMPlayerPartStatic (KMPlayerPartStatic **glob) : GlobalShared<KMPlayerPartStatic> (glob) {
     StringPool::init ();
 }
 
@@ -152,7 +152,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
     kDebug () << "KMPlayerPart(" << this << ")::KMPlayerPart ()" << endl;
     bool show_fullscreen = false;
     if (!kmplayerpart_static)
-        (void) new KMPlayerPartStatic ((void **) &kmplayerpart_static);
+        (void) new KMPlayerPartStatic (&kmplayerpart_static);
     setComponentData (KMPlayerFactory::componentData ());
     init (actionCollection ());
     m_sources ["hrefsource"] = (new KMPlayerHRefSource (this));

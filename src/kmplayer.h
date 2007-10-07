@@ -147,17 +147,17 @@ private:
     KMPlayer::NodePtr playlist;
     KMPlayer::NodePtrW manip_node;
 
-    KAction * fileNewWindow;
-    KAction * fileOpen;
+    QAction * fileNewWindow;
+    QAction * fileOpen;
     KRecentFilesAction * fileOpenRecent;
-    KAction * fileClose;
-    KAction * fileQuit;
-    KAction * editVolumeInc;
-    KAction * editVolumeDec;
-    KAction * toggleView;
-    KAction * viewSyncEditMode;
+    QAction * fileClose;
+    QAction * fileQuit;
+    QAction * editVolumeInc;
+    QAction * editVolumeDec;
+    QAction * toggleView;
+    QAction * viewSyncEditMode;
+    QAction * viewEditMode;
     KToggleAction * viewFullscreen;
-    KToggleAction * viewEditMode;
     KToggleAction * viewToolBar;
     KToggleAction * viewStatusBar;
     KToggleAction * viewMenuBar;

@@ -115,7 +115,7 @@ PartBase::PartBase (QWidget * wparent, QObject * parent, KSharedConfigPtr config
    m_in_update_tree (false)
 {
     if (!memory_cache)
-        (void) new DataCache ((void **)&memory_cache);
+        (void) new DataCache (&memory_cache);
 
     MPlayer *mplayer = new MPlayer (this, m_settings);
     m_players ["mplayer"] = mplayer;
@@ -1861,19 +1861,6 @@ bool URLSource::resolveURL (NodePtr m) {
 }
 
 //-----------------------------------------------------------------------------
-
-GlobalShared::GlobalShared (void **glob) : global (glob), refcount (1) {
-    *global = this;
-}
-
-GlobalShared::~GlobalShared () {}
-
-void GlobalShared::unref() {
-    if (--refcount <= 0) {
-        *global = NULL;
-        delete this;
-    }
-}
 
 void DataCache::add (const QString & url, const QByteArray & data) {
     QByteArray bytes;

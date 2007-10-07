@@ -50,7 +50,8 @@
 #include <ktoolbar.h>
 #include <klocale.h>
 #include <kconfig.h>
-#include <kstdaction.h>
+#include <kstandardaction.h>
+#include <kactioncollection.h>
 #include <kdebug.h>
 #include <kmenu.h>
 #include <kurlrequester.h>
@@ -417,7 +418,7 @@ KDE_NO_EXPORT void PlaylistItem::setNodeName (const QString & s) {
 }
 
 KDE_NO_CDTOR_EXPORT
-PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QString & pn) 
+PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, const QString &pn)
   : KMPlayer::Mrl (doc, KMPlayer::id_node_group_node), app (a), playmode (false) {
     pretty_name = pn;
     if (!pn.isEmpty ())
@@ -425,11 +426,11 @@ PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr & doc, KMPlayerApp * a, const QS
 }
 
 KDE_NO_CDTOR_EXPORT
-PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr & doc, KMPlayerApp * a, bool lm)
+PlaylistGroup::PlaylistGroup (KMPlayer::NodePtr &doc, KMPlayerApp *a, bool lm)
   : KMPlayer::Mrl (doc, KMPlayer::id_node_group_node), app (a), playmode (lm) {
 }
 
-KDE_NO_EXPORT KMPlayer::NodePtr PlaylistGroup::childFromTag (const QString & tag) {
+KDE_NO_EXPORT KMPlayer::NodePtr PlaylistGroup::childFromTag (const QString &tag) {
     const char * name = tag.ascii ();
     if (!strcmp (name, "item"))
         return new PlaylistItem (m_doc, app, playmode);
@@ -445,7 +446,7 @@ KDE_NO_EXPORT void PlaylistGroup::closed () {
         pretty_name = getAttribute (KMPlayer::StringPool::attr_title);
 }
 
-KDE_NO_EXPORT void PlaylistGroup::setNodeName (const QString & t) {
+KDE_NO_EXPORT void PlaylistGroup::setNodeName (const QString &t) {
     pretty_name = t;
     setAttribute (KMPlayer::StringPool::attr_title, t);
 }
@@ -551,13 +552,25 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::~KMPlayerApp () {
 
 KDE_NO_EXPORT void KMPlayerApp::initActions () {
     KActionCollection * ac = actionCollection ();
+    fileNewWindow = ac->addAction ("new_window");
+    fileNewWindow->setIcon (KIcon ("window-new"));
+    connect (fileNewWindow, SIGNAL (triggered (bool)), this, SLOT (slotFileNewWindow ()));
+    fileOpen = KStandardAction::open (this, SLOT (slotFileOpen()), ac);
+    fileOpenRecent = KStandardAction::openRecent(this, SLOT(slotFileOpenRecent(const KUrl&)), ac);
+    KStandardAction::saveAs (this, SLOT (slotSaveAs ()), ac);
+    fileClose = KStandardAction::close (this, SLOT (slotFileClose ()), ac);
+    fileQuit = KStandardAction::quit (this, SLOT (slotFileQuit ()), ac);
+    viewEditMode = ac->addAction ("edit_mode");
+    viewEditMode->setCheckable (true);
+    viewEditMode->setText (i18n ("&Edit mode"));
+    connect (viewEditMode, SIGNAL (triggered (bool)), this, SLOT (editMode ()));
+    QAction *viewplaylist = ac->addAction ( "view_playlist");
+    viewplaylist->setText (i18n ("Pla&y List"));
+    viewplaylist->setIcon (KIcon ("media-playlist"));
+    connect (viewplaylist, SIGNAL(triggered(bool)), m_player, SLOT(showPlayListWindow()));
+        //;new KToggleAction (i18n ("&Edit mode"), 0, 0, this, SLOT (editMode ()), ac, "edit_mode");
     /*fileNewWindow = new KAction(i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), ac, "new_window");
-    fileOpen = KStdAction::open(this, SLOT(slotFileOpen()), ac, "open");
-    fileOpenRecent = KStdAction::openRecent(this, SLOT(slotFileOpenRecent(const KURL&)), ac, "open_recent");
-    KStdAction::saveAs (this, SLOT (slotSaveAs ()), ac, "save_as");
     new KAction (i18n ("Clear &History"), 0, 0, this, SLOT (slotClearHistory ()), ac, "clear_history");
-    fileClose = KStdAction::close (this, SLOT (slotFileClose ()), ac);
-    fileQuit = KStdAction::quit (this, SLOT (slotFileQuit ()), ac);
     new KAction (i18n ("&Open DVD"), QString ("dvd_mount"), KShortcut (), this, SLOT(openDVD ()), ac, "opendvd");
     new KAction (i18n ("&Open VCD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openVCD ()), ac, "openvcd");
     new KAction (i18n ("&Open Audio CD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openAudioCD ()), ac, "openaudiocd");
@@ -573,7 +586,6 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), ac, "view_zoom_50");
     new KAction (i18n ("100%"), QString ("viewmagfit"), KShortcut (), this, SLOT (zoom100 ()), ac, "view_zoom_100");
     new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), ac, "view_zoom_150");
-    viewEditMode = new KToggleAction (i18n ("&Edit mode"), 0, 0, this, SLOT (editMode ()), ac, "edit_mode");
     viewSyncEditMode = new KAction (i18n ("Sync &with playlist"), QString ("reload"), KShortcut (), this, SLOT (syncEditMode ()), ac, "sync_edit_mode");
     viewSyncEditMode->setEnabled (false);
     new KAction (i18n ("Show Popup Menu"), KShortcut (), m_view->controlPanel (), SLOT (showPopupMenu ()), ac, "view_show_popup_menu");
@@ -636,7 +648,8 @@ KDE_NO_EXPORT void KMPlayerApp::initMenu () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::initView () {
-    //m_view->docArea ()->readDockConfig (config, QString ("Window Layout"));
+    KSharedConfigPtr config = KGlobal::config ();
+    m_view->docArea ()->readDockConfig (config.data (), QString ("Window Layout"));
     m_player->connectPanel (m_view->controlPanel ());
     initMenu ();
     //new KAction (i18n ("Increase Volume"), editVolumeInc->shortcut (), m_player, SLOT (increaseVolume ()), m_view->viewArea ()->actionCollection (), "edit_volume_up");
@@ -929,7 +942,8 @@ KDE_NO_EXPORT void IntroSource::deactivate () {
 KDE_NO_EXPORT void KMPlayerApp::restoreFromConfig () {
     if (m_player->view ()) {
         m_view->docArea ()->hide ();
-        //m_view->docArea ()->readDockConfig (m_player->config (), QString ("Window Layout"));
+        //m_view->docArea ()->readDockConfig (
+        //        m_player->config ().data (), QString ("Window Layout"));
         m_view->docArea ()->show ();
         m_view->layout ()->activate ();
     }
@@ -1045,11 +1059,11 @@ KDE_NO_EXPORT void KMPlayerApp::editMode () {
         edit_tree_id = ri->id;
         m_view->setEditMode (ri, true);
         m_view->setInfoMessage (pi->node->innerXML ());
-        //viewSyncEditMode->setEnabled (true);
+        viewSyncEditMode->setEnabled (true);
     } else {
         m_view->setEditMode (ri, false);
         edit_tree_id = -1;
-        //viewSyncEditMode->setEnabled (!strcmp (m_player->source ()->name (), "urlsource"));
+        viewSyncEditMode->setEnabled (!strcmp (m_player->source()->name (), "urlsource"));
     }
 }
 
@@ -1106,22 +1120,22 @@ KDE_NO_EXPORT bool KMPlayerApp::broadcasting () const {
 KDE_NO_EXPORT void KMPlayerApp::saveOptions()
 {
     KSharedConfigPtr config = KGlobal::config ();
-    config->setGroup ("General Options");
+    KConfigGroup general (config, "General Options");
     if (m_player->settings ()->remembersize)
-        config->writeEntry ("Geometry", size());
-    //config->writeEntry ("Show Toolbar", viewToolBar->isChecked());
-    //config->writeEntry ("ToolBarPos", (int) toolBar("mainToolBar")->barPos());
-    //config->writeEntry ("Show Statusbar",viewStatusBar->isChecked());
-    //config->writeEntry ("Show Menubar",viewMenuBar->isChecked());
+        general.writeEntry ("Geometry", size());
+    //general.writeEntry ("Show Toolbar", viewToolBar->isChecked());
+    //general.writeEntry ("ToolBarPos", (int) toolBar("mainToolBar")->barPos());
+    //general.writeEntry ("Show Statusbar",viewStatusBar->isChecked());
+    //general.writeEntry ("Show Menubar",viewMenuBar->isChecked());
     if (!m_player->sources () ["pipesource"]->pipeCmd ().isEmpty ()) {
-        config->setGroup ("Pipe Command");
-        config->writeEntry ("Command1", m_player->sources () ["pipesource"]->pipeCmd ());
+        KConfigGroup (config, "Pipe Command").writeEntry (
+                "Command1", m_player->sources () ["pipesource"]->pipeCmd ());
     }
     m_view->setInfoMessage (QString ());
-    //m_view->docArea ()->writeDockConfig (config, QString ("Window Layout"));
+    m_view->docArea ()->writeDockConfig (config.data (), QString ("Window Layout"));
     Recents * rc = static_cast <Recents *> (recents.ptr ());
     if (rc && rc->resolved) {
-        //fileOpenRecent->saveEntries (config.data (), "Recent Files");
+        fileOpenRecent->saveEntries (KConfigGroup (config, "Recent Files"));
         rc->writeToFile (KStandardDirs::locateLocal ("data", "kmplayer/recent.xml"));
     }
     Playlist * pl = static_cast <Playlist *> (playlist.ptr ());
@@ -1159,7 +1173,7 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     static_cast <KMPlayerPipeSource *> (m_player->sources () ["pipesource"])->setCommand (config->readEntry ("Command1", ""));
     // initialize the recent file list
     if (!recents) {
-        //fileOpenRecent->loadEntries (KConfigGroup (config, "Recent Files"));
+        fileOpenRecent->loadEntries (KConfigGroup (config, "Recent Files"));
         recents = new Recents (this);
         recents_id = m_view->playList ()->addTree (recents, "listssource", "history", KMPlayer::PlayListView::AllowDrag);
     }
@@ -1244,7 +1258,7 @@ KDE_NO_EXPORT void ExitSource::activate () {
           "</par>"
           "</body></smil>").arg (KIconLoader::global()->iconPath (QString::fromLatin1 ("kmplayer"), -64));
         QByteArray ba = smil.toUtf8 ();
-        QTextStream ts (&ba, QTextStream::ReadOnly);
+        QTextStream ts (&ba, QIODevice::ReadOnly);
         KMPlayer::readXML (m_document, ts, QString (), false);
     }
     //m_document->normalize ();
@@ -1353,10 +1367,10 @@ KDE_NO_EXPORT void KMPlayerApp::slotSaveAs () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotClearHistory () {
-    //fileOpenRecent->clearURLList ();
-    //int mi = fileOpenRecent->maxItems ();
-    //fileOpenRecent->setMaxItems (0);
-    //fileOpenRecent->setMaxItems (mi);
+    fileOpenRecent->clear ();
+    int mi = fileOpenRecent->maxItems ();
+    fileOpenRecent->setMaxItems (0);
+    fileOpenRecent->setMaxItems (mi);
     m_player->settings ()->urllist.clear ();
     m_player->settings ()->sub_urllist.clear ();
     if (recents) { // small window this check fails and thus ClearHistory fails
@@ -2121,13 +2135,11 @@ KDE_NO_EXPORT QString KMPlayerVCDSource::prettyName () {
 static const char * strPlayVCD = "Immediately Play VCD";
 
 KDE_NO_EXPORT void KMPlayerVCDSource::write (KSharedConfigPtr config) {
-    config->setGroup (strMPlayerGroup);
-    config->writeEntry (strPlayVCD, m_auto_play);
+    KConfigGroup (config, strMPlayerGroup).writeEntry (strPlayVCD, m_auto_play);
 }
 
 KDE_NO_EXPORT void KMPlayerVCDSource::read (KSharedConfigPtr config) {
-    config->setGroup (strMPlayerGroup);
-    m_auto_play = config->readBoolEntry (strPlayVCD, true);
+    m_auto_play = KConfigGroup (config, strMPlayerGroup).readEntry (strPlayVCD, true);
 }
 
 KDE_NO_EXPORT void KMPlayerVCDSource::sync (bool fromUI) {

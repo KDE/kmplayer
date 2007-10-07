@@ -30,6 +30,7 @@
 #include <qmap.h>
 #include <QPalette>
 #include <QDesktopWidget>
+#include <QX11Info>
 
 #include <kactioncollection.h>
 #include <kstatusbar.h>
@@ -58,9 +59,9 @@ extern const char * playlist_xpm[];
 
 namespace {
     class ImageDataMap
-        : public QMap <QString, ImageDataPtrW>, public KMPlayer::GlobalShared {
+        : public QMap <QString, ImageDataPtrW>, public GlobalShared<ImageDataMap> {
     public:
-        ImageDataMap (void **glob) : GlobalShared (glob) {}
+        ImageDataMap (ImageDataMap **glob) : GlobalShared<ImageDataMap> (glob) {}
     };
     static ImageDataMap *image_data_map;
 }
@@ -1362,7 +1363,7 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
     //new KAction (i18n ("Fullscreen"), KShortcut (Qt::Key_F), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_toggle");
     setMouseTracking (true);
     if (!image_data_map)
-        new ImageDataMap ((void **)&image_data_map);
+        new ImageDataMap (&image_data_map);
 }
 
 KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {
@@ -1581,6 +1582,8 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     // finally resize controlpanel and video widget
     if (m_view->controlPanel ()->isVisible ())
         m_view->controlPanel ()->setGeometry (0, h-hcp-hsb, w, hcp);
+    kDebug() << "resize cp " << m_view->controlPanel ()->isVisible () <<
+        IRect (0, h-hcp-hsb, w, hcp) << endl;
     if (m_view->statusBar ()->isVisible ())
         m_view->statusBar ()->setGeometry (0, h-hsb, w, hsb);
     if (m_fullscreen && wws == w && hws == h) {

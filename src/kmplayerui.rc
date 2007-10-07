@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <!DOCTYPE gui SYSTEM "kpartgui.dtd">
-<kpartgui name="kmplayer" version="24">
+<kpartgui name="kmplayer" version="25">
 <MenuBar>
   <Menu name="file"><text>&amp;File</text>
     <Action name="open"/>
-    <Action name="new_window"/>
-    <Action name="open_recent"/>
-    <Action name="save_as"/>
+    <Action name="new_window" icon="window-new"/>
+    <Action name="open_recent" icon="document-open-recent"/>
+    <Action name="save_as" icon="document-save-as"/>
     <Action name="clear_history"/>
     <Separator/>
     <Action name="source_pipe"/>
@@ -49,7 +49,6 @@
     <Action name="sync_edit_mode"/>
     <Action name="edit_playlist_item"/>
     <Separator />
-    <Action name="view_arts_control"/>
   </Menu>
   <Menu name="settings"><text>&amp;Settings</text>
     <Separator />
@@ -64,10 +63,10 @@
 </MenuBar>
 <ActionProperties>
   <Action name="new_window" icon="window_new"/>
-  <Action name="play" icon="player_play"/>
-  <Action name="pause" icon="player_pause"/>
-  <Action name="stop" icon="player_stop"/>
-  <Action shortcut="F" name="view_fullscreen" />
+  <Action name="play" icon="media-playback-start"/>
+  <Action name="pause" icon="media-playback-pause"/>
+  <Action name="stop" icon="media-playback-stop"/>
+  <Action shortcut="F" name="view_fullscreen" icon="view-fullscreen"/>
   <Action shortcut="R" name="play" />
   <Action shortcut="P" name="pause" />
   <Action shortcut="S" name="stop" />

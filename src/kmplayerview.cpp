@@ -453,7 +453,7 @@ void View::setStatusBarMode (StatusBarMode m) {
 }
 
 KDE_NO_EXPORT void View::delayedShowButtons (bool show) {
-    if ((show && m_control_panel->isVisible ()) || 
+    if ((show && m_control_panel->isVisible ()) ||
             (!show && !m_control_panel->isVisible ())) {
         if (controlbar_timer) {
             killTimer (controlbar_timer);
@@ -720,7 +720,7 @@ KDE_NO_CDTOR_EXPORT Viewer::Viewer (QWidget *parent, View * view)
                            x11Depth (), InputOutput, (Visual*)x11Visual (),
                            CWBackPixel | CWBorderPixel | CWColormap, &xswa));*/
     setAcceptDrops (true);
-    connect (this, SIGNAL (clientEmbedded ()), this, SLOT (embedded ()));
+    connect (this, SIGNAL (clientIsEmbedded ()), this, SLOT (embedded ()));
     //setProtocol (QXEmbed::XPLAIN);
 }
 

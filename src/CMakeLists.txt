@@ -4,9 +4,21 @@ set(CMAKE_CXX_FLAGS_PROFILE "-DDEBUG ${CMAKE_CXX_FLAGS_PROFILE}")
 
 ########### next target ###############
 
-add_definitions( -DQT3_SUPPORT -DKDE3_SUPPORT )
+SET(optionalCFlags)
+SET(optionalLinkFlags)
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/..)
+IF (HAVE_CAIRO)
+    SET(optionalCFlags ${optionalCFlags} ${CAIROCFlags})
+    SET(optionalLinkFlags ${optionalLinkFlags} ${CAIROLinkFlags})
+    MESSAGE("have cairo cflags:${optionalCFlags} ldflags:${optionalLinkFlags}")
+endif (HAVE_CAIRO)
+
+add_definitions(-DQT3_SUPPORT -DKDE3_SUPPORT)
+
+ADD_DEFINITIONS(${CAIROCFlags})
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/.. ${CAIROIncDir})
+
 
 set(libkmplayercommon_SRCS
   kmplayerview.cpp
@@ -28,6 +40,9 @@ set(libkmplayercommon_SRCS
 )
 
 kde4_add_library(kmplayercommon SHARED ${libkmplayercommon_SRCS})
+
+SET_TARGET_PROPERTIES(kmplayercommon PROPERTIES COMPILE_FLAGS ${CAIROCflags})
+SET_TARGET_PROPERTIES(kmplayercommon PROPERTIES LINK_FLAGS ${CAIROLinkFlags})
 
 target_link_libraries(kmplayercommon
   ${KDE4_KDECORE_LIBS}
@@ -95,5 +110,5 @@ install(TARGETS kmplayer DESTINATION ${BIN_INSTALL_DIR})
 
 ########### install files ###############
 
-install(FILES kmplayerui.rc kmplayerpartui.rc DESTINATION  ${DATA_INSTALL_DIR}/kmplayer)
+install(FILES kmplayerui.rc kmplayerpartui.rc noise.gif DESTINATION  ${DATA_INSTALL_DIR}/kmplayer)
 #install(FILES kmplayer.kcfg  DESTINATION  ${KCFG_INSTALL_DIR})

@@ -26,6 +26,7 @@
 #include <QPalette>
 
 #include <kiconloader.h>
+#include <kicon.h>
 #include <klocale.h>
 #include <kdebug.h>
 
@@ -256,7 +257,7 @@ static const char * blue_xpm[] = {
 
 //-----------------------------------------------------------------------------
 
-static QPushButton * ctrlButton (QWidget * w, QBoxLayout * l, const char ** p, int key = 0) {
+static QPushButton *ctrlButton (QWidget *w, QBoxLayout *l, const char **p, int key = 0) {
     QPushButton * b = new QPushButton (QIconSet (QPixmap(p)), QString (), w);
     b->setFocusPolicy (Qt::NoFocus);
     b->setFlat (true);
@@ -386,11 +387,9 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     playerMenu = new KMPlayerPopupMenu (NULL, i18n ("&Play with"));
     playersAction = popupMenu->addMenu (playerMenu);
 
-    videoConsoleAction = popupMenu->addAction (KIconLoader::global ()->loadIconSet (
-                QString ("konsole"), K3Icon::Small, 0, true), i18n ("Con&sole"));
+    videoConsoleAction = popupMenu->addAction (KIcon ("konsole"), i18n ("Con&sole"));
 
-    playlistAction = popupMenu->addAction (KIconLoader::global ()->loadIconSet (
-                QString ("player_playlist"), K3Icon::Small, 0, true), i18n ("Play&list"));
+    playlistAction = popupMenu->addAction (KIcon ("media-playlist"), i18n ("Play&list"));
 
     zoomMenu = new KMPlayerPopupMenu (NULL, i18n ("&Zoom"));
     zoomAction = popupMenu->addMenu (zoomMenu);
@@ -400,8 +399,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     zoom100Action = zoomMenu->addAction (i18n ("100%"));
     zoom150Action = zoomMenu->addAction (i18n ("150%"));
 
-    fullscreenAction = popupMenu->addAction (KIconLoader::global()->loadIconSet (
-           QString ("window_fullscreen"), K3Icon::Small, 0, true), i18n ("&Full Screen"));
+    fullscreenAction = popupMenu->addAction (KIcon ("view-fullscreen"), i18n ("&Full Screen"));
     fullscreenAction->setShortcut (QKeySequence (Qt::Key_F));
 
     popupMenu->addSeparator ();
@@ -574,7 +572,7 @@ KDE_NO_EXPORT void ControlPanel::setupPositionSlider (bool show) {
         m_posSlider->hide ();
         m_buttonbox->setMargin (1);
         m_buttonbox->setSpacing (1);
-        palette.setColor (backgroundRole(), QColor (0, 0, 0));
+        palette.setColor (backgroundRole(), QColor (255, 0, 0));
     }
     setPalette (palette);
     for (int i = 0; i < (int) button_last; i++) {

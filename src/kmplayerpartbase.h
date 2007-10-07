@@ -254,14 +254,14 @@ protected:
     bool m_update_tree_full : 1;
 };
 
-class KMPLAYER_NO_EXPORT DataCache : public QObject, public GlobalShared {
+class KMPLAYER_NO_EXPORT DataCache : public QObject, public GlobalShared<DataCache> {
     Q_OBJECT
     typedef QMap <QString, QByteArray> DataMap;
     typedef QMap <QString, bool> PreserveMap;
     DataMap cache_map;
     PreserveMap preserve_map;
 public:
-    DataCache (void **glob) : QObject (NULL), GlobalShared (glob) {}
+    DataCache (DataCache **glob) : QObject (NULL), GlobalShared<DataCache> (glob) {}
     ~DataCache () {}
 
     void add (const QString &, const QByteArray &);

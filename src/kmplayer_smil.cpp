@@ -3416,7 +3416,7 @@ KDE_NO_EXPORT void ImageRuntime::remoteReady (QByteArray & data) {
             QImage *pix = new QImage (data);
             if (!pix->isNull ()) {
                 cached_img.data->image = pix;
-                new QBuffer (&data);
+                buffer = new QBuffer (&data);
                 img_movie = new QMovie (buffer);
                 connect (img_movie, SIGNAL (updated (const QRect &)),
                             this, SLOT (movieUpdated (const QRect &)));

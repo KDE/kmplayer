@@ -87,7 +87,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
 
     page = new KVBox (this);
     item = addPage (page, i18n ("Source"));
-    item->setIcon (KIcon ("source"));
+    item->setIcon (KIcon ("file-import"));
     tab = new QTabWidget (page);
     m_SourcePageURL = new PrefSourcePageURL (tab);
     tab->insertTab (m_SourcePageURL, i18n ("URL"));
