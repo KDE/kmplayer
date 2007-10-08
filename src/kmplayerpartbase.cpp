@@ -116,6 +116,8 @@ PartBase::PartBase (QWidget * wparent, QObject * parent, KSharedConfigPtr config
 {
     if (!memory_cache)
         (void) new DataCache (&memory_cache);
+    else
+        memory_cache->ref ();
 
     MPlayer *mplayer = new MPlayer (this, m_settings);
     m_players ["mplayer"] = mplayer;
@@ -165,8 +167,8 @@ KDE_NO_EXPORT void PartBase::addBookMark (const QString & t, const QString & url
 void PartBase::init (KActionCollection * action_collection) {
     KParts::Part::setWidget (m_view);
     m_view->init (action_collection);
-#ifdef HAVE_NSPR
-    m_players ["npp"] = new NpPlayer (this, m_settings, m_service);
+#ifdef HAVE_NPP
+    m_players ["npp"] = new NpPlayer (this, m_settings, QString ());
 #endif
     connect(m_settings, SIGNAL(configChanged()), this, SLOT(settingsChanged()));
     m_settings->readConfig ();
@@ -1396,7 +1398,8 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
     } else {
         p->viewer()->view()->controlPanel()->setPlaying(news > Process::Ready);
         kDebug () << "processState " << statemap[olds] << " -> " << statemap[news] << endl;
-        m_player->updateStatus (i18n ("Player %1 %2").arg (p->name ()).arg (statemap[news]));
+        m_player->updateStatus (i18n ("Player") + QChar (' ' ) +
+                p->name () + QChar (' ' ) + statemap[news]);
         if (!p->mrl () && news > Process::Ready) {
             p->stop (); // reschedule for Ready state
         } else if (news == Process::Playing) {
@@ -1558,9 +1561,9 @@ QString URLSource::prettyName () {
         if (modified)
             dir += QString (".../");
         newurl += dir + file;
-        return i18n ("URL - %1").arg (newurl);
+        return i18n ("Url - ") + newurl;
     }
-    return i18n ("URL - %1").arg (m_url.prettyUrl ());
+    return i18n ("Url - ") + m_url.prettyUrl ();
 }
 
 static bool isPlayListMime (const QString & mime) {
@@ -1568,7 +1571,9 @@ static bool isPlayListMime (const QString & mime) {
     int plugin_pos = m.find ("-plugin");
     if (plugin_pos > 0)
         m.truncate (plugin_pos);
-    const char * mimestr = m.ascii ();
+    QByteArray ba = m.toAscii ();
+    const char * mimestr = ba.data ();
+    kDebug() << "isPlayListMime " << mimestr << endl;
     return mimestr && (!strcmp (mimestr, "audio/mpegurl") ||
             !strcmp (mimestr, "audio/x-mpegurl") ||
             !strncmp (mimestr, "video/x-ms", 10) ||
@@ -1702,7 +1707,7 @@ KDE_NO_EXPORT void URLSource::kioData (KIO::Job * job, const QByteArray & d) {
     }
 }
 
-KDE_NO_EXPORT void URLSource::kioMimetype (KIO::Job * job, const QString & mimestr) {
+KDE_NO_EXPORT void URLSource::kioMimetype (KIO::Job *job, const QString & mimestr) {
     SharedPtr <ResolveInfo> rinfo = m_resolve_info;
     while (rinfo && rinfo->job != job)
         rinfo = rinfo->next;
@@ -1710,13 +1715,15 @@ KDE_NO_EXPORT void URLSource::kioMimetype (KIO::Job * job, const QString & mimes
         kWarning () << "Spurious kioData" << endl;
         return;
     }
+    kDebug() << "kioMimetype " << mimestr << endl;
     if (!rinfo->resolving_mrl || !isPlayListMime (mimestr))
         job->kill (KJob::EmitResult);
     if (rinfo->resolving_mrl)
         rinfo->resolving_mrl->mrl ()->mimetype = mimestr;
 }
 
-KDE_NO_EXPORT void URLSource::kioResult (KIO::Job * job) {
+KDE_NO_EXPORT void URLSource::kioResult (KJob *job) {
+    kDebug() << "kioResult" << endl;
     SharedPtr <ResolveInfo> previnfo, rinfo = m_resolve_info;
     while (rinfo && rinfo->job != job) {
         previnfo = rinfo;
@@ -1816,18 +1823,13 @@ bool URLSource::resolveURL (NodePtr m) {
                 maybe_playlist = isPlayListMime (mrl->mimetype); // get new mime
             }
         }
-        if (maybe_playlist && file.size () < 2000000 && file.open (IO_ReadOnly)) {
+        if (maybe_playlist && file.size () < 2000000 && file.open (QIODevice::ReadOnly)) {
             char databuf [512];
             int nr_bytes = file.readBlock (databuf, 512);
-            if (nr_bytes > 3) {
-                int accuraty = 0;
-                KMimeType::Ptr mime = KMimeType::findByContent (QByteArray (databuf, nr_bytes), &accuraty);
-                if ((mime && !mime->name().startsWith (QString("text/"))) ||
-                        !strncmp (databuf, "RIFF", 4)) {
-                    return true;
-                }
-                kDebug () << "mime: " << (mime ? mime->name (): QString("null")) << endl;
-            }
+            if (nr_bytes > 3 &&
+                    (KMimeType::isBufferBinaryData (QByteArray (databuf, nr_bytes)) ||
+                     !strncmp (databuf, "RIFF", 4)))
+                return true;
             file.reset ();
             QTextStream textstream (&file);
             read (m, textstream);
@@ -1850,8 +1852,8 @@ bool URLSource::resolveURL (NodePtr m) {
         //         this, SLOT(slotConnected(KIO::Job*)));
         connect(m_resolve_info->job, SIGNAL(mimetype(KIO::Job*,const QString&)),
                 this, SLOT (kioMimetype (KIO::Job *, const QString &)));
-        connect (m_resolve_info->job, SIGNAL (result (KIO::Job *)),
-                this, SLOT (kioResult (KIO::Job *)));
+        connect (m_resolve_info->job, SIGNAL (result (KJob *)),
+                this, SLOT (kioResult (KJob *)));
         static_cast <View *> (m_player->view ())->controlPanel ()->setPlaying (true);
         m_player->updateStatus (i18n ("Connecting"));
         m_player->setLoaded (0);
@@ -1931,8 +1933,8 @@ KDE_NO_EXPORT bool RemoteObjectPrivate::download (const QString & str) {
         job = KIO::get (kurl, false, false);
         connect (job, SIGNAL (data (KIO::Job *, const QByteArray &)),
                 this, SLOT (slotData (KIO::Job *, const QByteArray &)));
-        connect (job, SIGNAL (result (KIO::Job *)),
-                this, SLOT (slotResult (KIO::Job *)));
+        connect (job, SIGNAL (result (KJob *)),
+                this, SLOT (slotResult (KJob *)));
         connect (job, SIGNAL (mimetype (KIO::Job *, const QString &)),
                 this, SLOT (slotMimetype (KIO::Job *, const QString &)));
     } else {
@@ -1956,7 +1958,7 @@ KDE_NO_EXPORT void RemoteObjectPrivate::clear () {
     }
 }
 
-KDE_NO_EXPORT void RemoteObjectPrivate::slotResult (KIO::Job * kjob) {
+KDE_NO_EXPORT void RemoteObjectPrivate::slotResult (KJob * kjob) {
     if (!kjob->error ())
         memory_cache->add (url, data);
     else

@@ -41,9 +41,14 @@ set(libkmplayercommon_SRCS
 
 kde4_add_library(kmplayercommon SHARED ${libkmplayercommon_SRCS})
 
-SET_TARGET_PROPERTIES(kmplayercommon PROPERTIES COMPILE_FLAGS ${CAIROCflags})
-SET_TARGET_PROPERTIES(kmplayercommon PROPERTIES LINK_FLAGS ${CAIROLinkFlags})
+MESSAGE("extra ${CAIROCflags} ${GLibDBusCflags}  libs ${CAIROLinkFlags} ${GLibDBusLinkFlags}")
 
+SET_TARGET_PROPERTIES(kmplayercommon PROPERTIES COMPILE_FLAGS
+    "${CAIROCflags} ${GLibDBusCflags}")
+
+SET_TARGET_PROPERTIES(kmplayercommon PROPERTIES LINK_FLAGS
+    "${CAIROLinkFlags} ${GLibDBusLinkFlags}"
+)
 target_link_libraries(kmplayercommon
   ${KDE4_KDECORE_LIBS}
   ${KDE4_KPARTS_LIBS}
@@ -103,6 +108,22 @@ install(TARGETS kmplayer DESTINATION ${BIN_INSTALL_DIR})
 
 ########### next target ###############
 
+if (HAVE_NPP)
+    MESSAGE("build npp")
+    set(knpplayer_SRCS npplayer.c)
+
+    add_executable(knpplayer ${knpplayer_SRCS})
+
+    SET_TARGET_PROPERTIES(knpplayer PROPERTIES COMPILE_FLAGS
+        "${GLibDBusCflags} ${GTKCflags}"
+    )
+    SET_TARGET_PROPERTIES(knpplayer PROPERTIES LINK_FLAGS
+        "${GLibDBusLinkFlags} ${GTKLinkFlags}"
+    )
+
+    install(TARGETS knpplayer DESTINATION ${BIN_INSTALL_DIR})
+
+endif (HAVE_NPP)
 #kxineplayer
 #kgstplayer
 #kxvplayer

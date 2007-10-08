@@ -31,6 +31,7 @@
 #include <QPalette>
 #include <QDesktopWidget>
 #include <QX11Info>
+#include <QPainter>
 
 #include <kactioncollection.h>
 #include <kstatusbar.h>
@@ -1356,6 +1357,7 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
    scale_slider_id (-1),
    m_fullscreen (false),
    m_minimal (false) {
+    setAttribute (Qt::WA_OpaquePaintEvent, true);
     QPalette palette;
     palette.setColor (backgroundRole(), QColor (0, 0, 0));
     setPalette (palette);
@@ -1364,6 +1366,8 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
     setMouseTracking (true);
     if (!image_data_map)
         new ImageDataMap (&image_data_map);
+    else
+        image_data_map->ref ();
 }
 
 KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {
@@ -1514,7 +1518,11 @@ KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
         scheduleRepaint (IRect (pe->rect ().x (), pe->rect ().y (), pe->rect ().width (), pe->rect ().height ()));
     else
 #endif
-        QWidget::paintEvent (pe);
+    {
+        QPainter p (this);
+        p.fillRect (pe->rect (), QBrush (QColor (Qt::black)));
+        p.end ();
+    }
 }
 
 KDE_NO_EXPORT void ViewArea::scale (int val) {

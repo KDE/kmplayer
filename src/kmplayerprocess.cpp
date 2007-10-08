@@ -18,6 +18,7 @@
  * Boston, MA 02110-1301, USA.
  */
 #include <math.h>
+#include <dbus/dbus.h>
 #include <config.h>
 #include <qstring.h>
 #include <qfile.h>
@@ -34,6 +35,7 @@
 #include <qfontmetrics.h>
 #include <qwhatsthis.h>
 #include <QList>
+#include <QtDBus/QtDBus>
 
 #include <k3process.h>
 #include <k3processcontroller.h>
@@ -45,11 +47,6 @@
 #include <kapplication.h>
 #include <kstandarddirs.h>
 #include <kio/job.h>
-
-#ifdef HAVE_DBUS
-# include <kstaticdeleter.h>
-# include <dbus/connection.h>
-#endif
 
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
@@ -210,7 +207,7 @@ bool Process::play (Source * src, NodePtr _mrl) {
         return deMediafiedPlay ();
     m_url = url;
     m_job = KIO::stat (m_url, false);
-    connect(m_job, SIGNAL (result(KIO::Job *)), this, SLOT(result(KIO::Job *)));
+    connect(m_job, SIGNAL (result(KJob *)), this, SLOT (result (KJob *)));
     return true;
 #else
     return deMediafiedPlay ();
@@ -221,7 +218,7 @@ bool Process::deMediafiedPlay () {
     return false;
 }
 
-void Process::result (KIO::Job * job) {
+void Process::result (KJob * job) {
 #if KDE_IS_VERSION(3,3,91)
     KIO::UDSEntry entry = static_cast <KIO::StatJob *> (job)->statResult ();
     m_url = KUrl (entry.stringValue (KIO::UDSEntry::UDS_LOCAL_PATH)).url ();
@@ -1884,28 +1881,24 @@ KDE_NO_EXPORT void FFMpeg::processStopped (K3Process *) {
 
 //-----------------------------------------------------------------------------
 
-#ifdef HAVE_NSPR
+#ifdef HAVE_NPP
 
-struct KMPLAYER_NO_EXPORT DBusStatic {
-    DBusStatic ();
+class KMPLAYER_NO_EXPORT DBusStatic : public GlobalShared <DBusStatic> {
+public:
+    DBusStatic (DBusStatic **glob);
     ~DBusStatic ();
-    DBusQt::Connection *connection; // FIXME find a way to detect if already connected
     DBusConnection *dbus_connnection;
 };
 
-static DBusStatic * dbus_static = 0L;
+static DBusStatic *dbus_static = 0L;
 
-DBusStatic::DBusStatic ()
- : connection (new DBusQt::Connection (DBUS_BUS_SESSION, 0L)),
-   dbus_connnection (0L) {}
+DBusStatic::DBusStatic (DBusStatic **glob)
+ : GlobalShared <DBusStatic> (glob), dbus_connnection (0L) {}
 
 DBusStatic::~DBusStatic () {
     dbus_connection_unref (dbus_connnection);
-    delete connection;
     dbus_static = 0L;
 }
-
-static KStaticDeleter <DBusStatic> dbus_static_deleter;
 
 //------------------%<---------------------------------------------------------
 
@@ -2011,13 +2004,8 @@ KDE_NO_EXPORT void NpStream::open () {
     if (url.url().startsWith ("javascript:")) {
         NpPlayer *npp = static_cast <NpPlayer *> (parent ());
         QString result = npp->evaluateScript (url.url().mid (11));
-#if (QT_VERSION < 0x040000)
-        QByteArray cr = result.local8Bit ();
-        bytes += cr.length ();
-#else
         QByteArray cr = result.toLocal8Bit ();
         bytes += strlen (cr.data ());
-#endif
         pending_buf.resize (bytes + 1);
         memcpy (pending_buf.data (), cr.data (), bytes);
         *(pending_buf.data () + bytes) = 0;
@@ -2029,10 +2017,10 @@ KDE_NO_EXPORT void NpStream::open () {
         job->addMetaData ("errorPage", "false");
         connect (job, SIGNAL (data (KIO::Job *, const QByteArray &)),
                 this, SLOT (slotData (KIO::Job *, const QByteArray &)));
-        connect (job, SIGNAL (result (KIO::Job *)),
-                this, SLOT (slotResult (KIO::Job *)));
-        connect (job, SIGNAL (redirection (KIO::Job *, const KURL &)),
-                this, SLOT (redirection (KIO::Job *, const KURL &)));
+        connect (job, SIGNAL (result (KJob *)),
+                this, SLOT (slotResult (KJob *)));
+        connect (job, SIGNAL (redirection (KIO::Job *, const KUrl &)),
+                this, SLOT (redirection (KIO::Job *, const KUrl &)));
         connect (job, SIGNAL (mimetype (KIO::Job *, const QString &)),
                 SLOT (slotMimetype (KIO::Job *, const QString &)));
         connect (job, SIGNAL (totalSize (KIO::Job *, KIO::filesize_t)),
@@ -2049,7 +2037,7 @@ KDE_NO_EXPORT void NpStream::close () {
     }
 }
 
-KDE_NO_EXPORT void NpStream::slotResult (KIO::Job *jb) {
+KDE_NO_EXPORT void NpStream::slotResult (KJob *jb) {
     kDebug() << "slotResult " << bytes << " err:" << jb->error () << endl;
     finish_reason = jb->error () ? BecauseError : BecauseDone;
     job = 0L; // signal KIO::Job::result deletes itself
@@ -2065,7 +2053,7 @@ KDE_NO_EXPORT void NpStream::slotData (KIO::Job*, const QByteArray& qb) {
     }
 }
 
-KDE_NO_EXPORT void NpStream::redirection (KIO::Job *, const KURL &u) {
+KDE_NO_EXPORT void NpStream::redirection (KIO::Job *, const KUrl &u) {
     url = u;
     emit redirected (stream_id, url);
 }
@@ -2087,6 +2075,10 @@ NpPlayer::NpPlayer (QObject * parent, Settings * settings, const QString & srv)
  : Process (parent, settings, "npp"),
    service (srv),
    write_in_progress (false) {
+    if (!dbus_static)
+        (void) new DBusStatic (&dbus_static);
+    else
+        dbus_static->ref ();
     m_supported_sources = npplayer_supports;
 }
 
@@ -2103,6 +2095,7 @@ KDE_NO_CDTOR_EXPORT NpPlayer::~NpPlayer () {
             dbus_connection_flush (conn);
         }
     }
+    dbus_static->unref ();
 }
 
 KDE_NO_EXPORT void NpPlayer::init () {
@@ -2118,8 +2111,6 @@ KDE_NO_EXPORT void NpPlayer::initProcess (Viewer * viewer) {
             this, SLOT (processOutput (K3Process *, char *, int)));
     connect (m_process, SIGNAL (wroteStdin (K3Process *)),
             this, SLOT (wroteStdin (K3Process *)));
-    if (!dbus_static)
-        dbus_static = dbus_static_deleter.setObject (new DBusStatic ());
     if (iface.isEmpty ()) {
         DBusError dberr;
         iface = QString ("org.kde.kmplayer.callback");
@@ -2136,17 +2127,7 @@ KDE_NO_EXPORT void NpPlayer::initProcess (Viewer * viewer) {
             return;
         }
         bool has_service = !service.isEmpty();
-        if (has_service) { // standalone kmplayer
-            dbus_bus_request_name (conn, service.ascii(),
-                    DBUS_NAME_FLAG_DO_NOT_QUEUE, &dberr);
-            if (dbus_error_is_set (&dberr)) {
-                kError () << "Failed to register name " << service << ": " << dberr.message;
-                dbus_error_free (&dberr);
-                has_service = false;
-            }
-        }
-        if (!has_service) // plugin, accept what-is [sic]
-            service = QString (dbus_bus_get_unique_name (conn));
+        service = QString (dbus_bus_get_unique_name (conn));
         kDebug() << "using service " << service << " interface " << iface << endl;
         dbus_bus_add_match (conn, filter.ascii(), &dberr);
         if (dbus_error_is_set (&dberr)) {
@@ -2162,7 +2143,7 @@ KDE_NO_EXPORT void NpPlayer::initProcess (Viewer * viewer) {
 KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
     kDebug() << "NpPlayer::play '" << m_url << "'" << endl;
     // if we change from XPLAIN to XEMBED, the DestroyNotify may come later 
-    viewer->setIntermediateWindow (false);
+    viewer ()->setIntermediateWindow (false);
     if (m_mrl && !m_url.isEmpty () && dbus_static->dbus_connnection) {
         QString mime = "text/plain";
         QString plugin;
@@ -2527,7 +2508,7 @@ NpStream::NpStream (QObject *p, Q_UINT32, const KURL & url)
     : QObject (p) {}
 
 KDE_NO_CDTOR_EXPORT NpStream::~NpStream () {}
-void NpStream::slotResult (KIO::Job*) {}
+void NpStream::slotResult (KJob*) {}
 void NpStream::slotData (KIO::Job*, const QByteArray&) {}
 void NpStream::redirection (KIO::Job *, const KURL &) {}
 void NpStream::slotMimetype (KIO::Job *, const QString &) {}

@@ -157,7 +157,7 @@ private:
     QAction * toggleView;
     QAction * viewSyncEditMode;
     QAction * viewEditMode;
-    KToggleAction * viewFullscreen;
+    QAction * viewFullscreen;
     KToggleAction * viewToolBar;
     KToggleAction * viewStatusBar;
     KToggleAction * viewMenuBar;

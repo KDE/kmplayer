@@ -153,6 +153,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
     bool show_fullscreen = false;
     if (!kmplayerpart_static)
         (void) new KMPlayerPartStatic (&kmplayerpart_static);
+    else
+        kmplayerpart_static->ref ();
     setComponentData (KMPlayerFactory::componentData ());
     init (actionCollection ());
     m_sources ["hrefsource"] = (new KMPlayerHRefSource (this));

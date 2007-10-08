@@ -34,6 +34,7 @@ http://dbus.freedesktop.org/doc/dbus/libdbus-tutorial.html
 #include <gdk/gdkx.h>
 #include <gtk/gtk.h>
 
+#include <dbus/dbus-glib-lowlevel.h>
 #define DBUS_API_SUBJECT_TO_CHANGE
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>

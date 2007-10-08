@@ -44,6 +44,7 @@ class KBookmarkManager;
 class QIODevice;
 class QTextStream;
 class Q3ListViewItem;
+class KJob;
 class KSharedConfig;
 template<class T> class KSharedPtr;
 typedef KSharedPtr<KSharedConfig> KSharedConfigPtr;
@@ -90,7 +91,7 @@ public slots:
 private slots:
     void kioData (KIO::Job *, const QByteArray &);
     void kioMimetype (KIO::Job *, const QString &);
-    void kioResult (KIO::Job *);
+    void kioResult (KJob *);
 protected:
     virtual bool requestPlayURL (NodePtr mrl);
     virtual bool resolveURL (NodePtr mrl);
@@ -287,7 +288,7 @@ public:
     QByteArray data;
     QString mime;
 private slots:
-    void slotResult (KIO::Job*);
+    void slotResult (KJob*);
     void slotData (KIO::Job*, const QByteArray& qb);
     void slotMimetype (KIO::Job * job, const QString & mimestr);
     void cachePreserveRemoved (const QString &);

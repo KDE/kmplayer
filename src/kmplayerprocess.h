@@ -36,6 +36,7 @@
 
 class QWidget;
 class K3Process;
+class KJob;
 
 namespace KIO {
     class Job;
@@ -95,7 +96,7 @@ public slots:
     virtual bool brightness (int pos, bool absolute);
 protected slots:
     void rescheduledStateChanged ();
-    void result (KIO::Job *);
+    void result (KJob *);
 protected:
     void setState (State newstate);
     virtual bool deMediafiedPlay ();
@@ -441,9 +442,9 @@ public:
     QString mimetype;
 signals:
     void stateChanged ();
-    void redirected (uint32_t, const KURL &);
+    void redirected (uint32_t, const KUrl &);
 private slots:
-    void slotResult (KIO::Job*);
+    void slotResult (KJob*);
     void slotData (KIO::Job*, const QByteArray& qb);
     void redirection (KIO::Job *, const KURL &url);
     void slotMimetype (KIO::Job *, const QString &mime);

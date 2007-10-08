@@ -261,6 +261,7 @@ static QPushButton *ctrlButton (QWidget *w, QBoxLayout *l, const char **p, int k
     QPushButton * b = new QPushButton (QIconSet (QPixmap(p)), QString (), w);
     b->setFocusPolicy (Qt::NoFocus);
     b->setFlat (true);
+    b->setAutoFillBackground (true);
     if (key)
         b->setAccel (QKeySequence (key));
     l->addWidget (b);
@@ -270,11 +271,12 @@ static QPushButton *ctrlButton (QWidget *w, QBoxLayout *l, const char **p, int k
 KDE_NO_CDTOR_EXPORT
 KMPlayerMenuButton::KMPlayerMenuButton (QWidget * parent, QBoxLayout * l, const char ** p, int key)
  : QPushButton (QIconSet (QPixmap(p)), QString (), parent) {
-   setFocusPolicy (Qt::NoFocus);
-   setFlat (true);
-   if (key)
-       setAccel (QKeySequence (key));
-   l->addWidget (this);
+    setFocusPolicy (Qt::NoFocus);
+    setFlat (true);
+    setAutoFillBackground (true);
+    if (key)
+        setAccel (QKeySequence (key));
+    l->addWidget (this);
 }
 
 KDE_NO_EXPORT void KMPlayerMenuButton::enterEvent (QEvent *) {
@@ -297,7 +299,8 @@ KDE_NO_CDTOR_EXPORT VolumeBar::VolumeBar (QWidget * parent, View * view)
  : QWidget (parent), m_view (view), m_value (100) {
     setSizePolicy( QSizePolicy (QSizePolicy::Minimum, QSizePolicy::Fixed));
     setMinimumSize (QSize (51, button_height_only_buttons + 2));
-    QToolTip::add (this, i18n ("Volume is %1").arg (m_value));
+    QToolTip::add (this, i18n ("Volume is ") + QString::number (m_value));
+    setAutoFillBackground (true);
 }
 
 KDE_NO_CDTOR_EXPORT VolumeBar::~VolumeBar () {
@@ -308,7 +311,7 @@ void VolumeBar::setValue (int v) {
     if (m_value < 0) m_value = 0;
     if (m_value > 100) m_value = 100;
     QToolTip::remove (this);
-    QToolTip::add (this, i18n ("Volume is %1").arg (m_value));
+    QToolTip::add (this, i18n ("Volume is ") + QString::number (m_value));
     repaint (true);
     emit volumeChanged (m_value);
 }
