@@ -19,9 +19,7 @@
 #define KMPLAYER_H
 
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "config-kmplayer.h"
 
 #include <kxmlguiwindow.h>
 #include <kaction.h>

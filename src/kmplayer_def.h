@@ -23,7 +23,7 @@
 #ifndef _KMPLAYER_DEF_H_
 #define _KMPLAYER_DEF_H_
 
-#include <config.h>
+#include "config-kmplayer.h"
 #ifndef ASSERT
 #define ASSERT Q_ASSERT
 #endif

@@ -19,7 +19,7 @@
  */
 #include <math.h>
 #include <dbus/dbus.h>
-#include <config.h>
+#include "config-kmplayer.h"
 #include <qstring.h>
 #include <qfile.h>
 #include <qfileinfo.h>

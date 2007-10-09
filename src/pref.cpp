@@ -20,9 +20,7 @@
 
 #undef Always
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "config-kmplayer.h"
 #include <qlayout.h>
 #include <qlabel.h>
 #include <qpushbutton.h>

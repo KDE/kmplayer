@@ -23,7 +23,7 @@
 # define KDE_NO_EXPORT
 # define KDE_NO_CDTOR_EXPORT
 #else
-# include <config.h>
+# include <config-kmplayer.h>
 # include "kmplayer_def.h"
 #endif
 #include <stdio.h>

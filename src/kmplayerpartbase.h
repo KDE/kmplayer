@@ -19,7 +19,7 @@
 #ifndef KMPLAYERPARTBASE_H
 #define KMPLAYERPARTBASE_H
 
-#include <config.h>
+#include "config-kmplayer.h"
 
 #include "kmplayer_def.h"
 

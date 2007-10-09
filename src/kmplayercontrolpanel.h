@@ -19,9 +19,7 @@
 #ifndef KMPLAYER_CONTROLPANEL_H
 #define KMPLAYER_CONTROLPANEL_H
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "config-kmplayer.h"
 
 #include <qwidget.h>
 #include <qpushbutton.h>

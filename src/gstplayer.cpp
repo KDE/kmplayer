@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <config.h>
+#include "config-kmplayer.h"
 #include <dcopclient.h>
 #include <qcstring.h>
 #include <qtimer.h>

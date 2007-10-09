@@ -19,9 +19,7 @@
 #ifndef _KMPLAYERCONFIG_H_
 #define _KMPLAYERCONFIG_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "config-kmplayer.h"
 
 #include <qobject.h>
 #include <QColor>

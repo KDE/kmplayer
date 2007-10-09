@@ -23,7 +23,7 @@
 #ifndef _KMPLAYER_PLAYLIST_H_
 #define _KMPLAYER_PLAYLIST_H_
 
-#include <config.h>
+#include "config-kmplayer.h"
 #include <sys/time.h>
 
 #include <qstring.h>

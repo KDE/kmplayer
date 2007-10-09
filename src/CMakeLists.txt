@@ -68,7 +68,6 @@ kde4_add_plugin(kmplayerpart WITH_PREFIX ${kmplayerpart_SRCS})
 
 target_link_libraries(kmplayerpart
   kmplayercommon
-  ${KDE4_KDECORE_LIBS}
   ${KDE4_KPARTS_LIBS}
   ${KDE4_KDEUI_LIBS}
   ${QT_QT3SUPPORT_LIBRARY}
@@ -91,7 +90,6 @@ kde4_add_kdeinit_executable(kmplayer ${kmplayer_SRCS} main.cpp)
 
 target_link_libraries(kdeinit_kmplayer
   kmplayercommon
-  ${KDE4_KDECORE_LIBS}
   ${KDE4_KPARTS_LIBS}
   ${KDE4_KDEUI_LIBS}
   ${QT_QT3SUPPORT_LIBRARY}

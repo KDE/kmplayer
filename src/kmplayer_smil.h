@@ -21,7 +21,7 @@
 #ifndef _KMPLAYER_SMILL_H_
 #define _KMPLAYER_SMILL_H_
 
-#include <config.h>
+#include "config-kmplayer.h"
 #include <qobject.h>
 #include <qstring.h>
 #include <QMovie>

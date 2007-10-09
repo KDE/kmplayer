@@ -19,7 +19,7 @@
 #ifndef KMPLAYER_KOFFICE_PART_H
 #define KMPLAYER_KOFFICE_PART_H
 
-#include <config.h>
+#include "config-kmplayer.h"
 #include <kmediaplayer/player.h>
 #include <kparts/browserextension.h>
 #include <kparts/factory.h>

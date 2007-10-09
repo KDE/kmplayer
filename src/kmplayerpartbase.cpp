@@ -20,7 +20,7 @@
 #undef Always
 #endif
 
-#include <config.h>
+#include "config-kmplayer.h"
 
 #include <math.h>
 

@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 
-#include <config.h>
+#include "config-kmplayer.h"
 // include files for Qt
 #include <qapplication.h>
 #include <qclipboard.h>

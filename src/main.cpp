@@ -16,7 +16,7 @@ email                :
  ***************************************************************************/
 #include <unistd.h>
 
-#include <config.h>
+#include "config-kmplayer.h"
 #include <kcmdlineargs.h>
 #include <kaboutdata.h>
 #include <klocale.h>
