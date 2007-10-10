@@ -35,6 +35,7 @@ class QFrame;
 namespace KMPlayer {
 
 class PartBase;
+class Process;
 
 /**
  * Class for a certain media, like URL, DVD, TV etc

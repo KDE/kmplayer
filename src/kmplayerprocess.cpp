@@ -48,18 +48,23 @@
 #include <kstandarddirs.h>
 #include <kio/job.h>
 
+#include "kmplayer_def.h"
+#include "kmplayerconfig.h"
 #include "kmplayerview.h"
 #include "kmplayercontrolpanel.h"
 #include "kmplayerprocess.h"
 #include "kmplayersource.h"
-#include "kmplayerconfig.h"
+#if HAVE_NPP
+# include "callbackadaptor.h"
+# include "streamadaptor.h"
+#endif
 
 using namespace KMPlayer;
 
 static const char * default_supported [] = { 0L };
 
-static QString getPath (const KURL & url) {
-    QString p = KURL::decode_string (url.url ());
+static QString getPath (const KUrl & url) {
+    QString p = KUrl::decode_string (url.url ());
     if (p.startsWith (QString ("file:/"))) {
         p = p.mid (5);
         unsigned int i = 0;
@@ -139,7 +144,7 @@ bool Process::brightness (int /*pos*/, bool /*absolute*/) {
     return false;
 }
 
-bool Process::grabPicture (const KURL & /*url*/, int /*pos*/) {
+bool Process::grabPicture (const KUrl & /*url*/, int /*pos*/) {
     return false;
 }
 
@@ -202,16 +207,11 @@ bool Process::play (Source * src, NodePtr _mrl) {
     QString url = m ? m->absolutePath () : QString ();
     bool changed = m_url != url;
     m_url = url;
-#if KDE_IS_VERSION(3,3,91)
-    if (!changed || KURL (m_url).isLocalFile ())
+    if (!changed || KUrl (m_url).isLocalFile ())
         return deMediafiedPlay ();
-    m_url = url;
     m_job = KIO::stat (m_url, false);
     connect(m_job, SIGNAL (result(KJob *)), this, SLOT (result (KJob *)));
     return true;
-#else
-    return deMediafiedPlay ();
-#endif
 }
 
 bool Process::deMediafiedPlay () {
@@ -219,12 +219,12 @@ bool Process::deMediafiedPlay () {
 }
 
 void Process::result (KJob * job) {
-#if KDE_IS_VERSION(3,3,91)
     KIO::UDSEntry entry = static_cast <KIO::StatJob *> (job)->statResult ();
-    m_url = KUrl (entry.stringValue (KIO::UDSEntry::UDS_LOCAL_PATH)).url ();
+    QString url = entry.stringValue (KIO::UDSEntry::UDS_LOCAL_PATH);
+    if (!url.isEmpty ())
+        m_url = url;
     m_job = 0L;
     deMediafiedPlay ();
-#endif
 }
 
 void Process::terminateJobs () {
@@ -247,7 +247,7 @@ Viewer * Process::viewer () const {
 
 //-----------------------------------------------------------------------------
 
-static bool proxyForURL (const KURL& url, QString& proxy) {
+static bool proxyForURL (const KUrl &url, QString &proxy) {
     KProtocolManager::slaveProtocol (url, proxy);
     return !proxy.isNull ();
 }
@@ -264,7 +264,7 @@ KDE_NO_CDTOR_EXPORT MPlayerBase::~MPlayerBase () {
 
 KDE_NO_EXPORT void MPlayerBase::initProcess (Viewer * viewer) {
     Process::initProcess (viewer);
-    const KURL & url (m_source->url ());
+    const KUrl &url (m_source->url ());
     if (!url.isEmpty ()) {
         QString proxy_url;
         if (KProtocolManager::useProxy () && proxyForURL (url, proxy_url))
@@ -391,7 +391,7 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
     slanglist = 0L;
     m_request_seek = -1;
     QString args = m_source->options () + ' ';
-    KURL url (m_url);
+    KUrl url (m_url);
     if (!url.isEmpty ()) {
         if (m_source->url ().isLocalFile ())
             m_process->setWorkingDirectory
@@ -427,7 +427,7 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
             args += QString (" -identify");
         if (!m_source->subUrl ().isEmpty ()) {
             args += QString (" -sub ");
-            const KURL & sub_url (m_source->subUrl ());
+            const KUrl & sub_url (m_source->subUrl ());
             if (!sub_url.isEmpty ()) {
                 QString myurl (sub_url.isLocalFile () ? getPath (sub_url) : sub_url.url ());
                 args += K3Process::quote (QString (QFile::encodeName (myurl)));
@@ -618,7 +618,7 @@ bool MPlayer::run (const char * args, const char * pipe) {
     return false;
 }
 
-KDE_NO_EXPORT bool MPlayer::grabPicture (const KURL & url, int pos) {
+KDE_NO_EXPORT bool MPlayer::grabPicture (const KUrl & url, int pos) {
     stop ();
     initProcess (viewer ());
     QString outdir = KStandardDirs::locateLocal ("data", "kmplayer/");
@@ -916,27 +916,27 @@ KDE_NO_CDTOR_EXPORT MPlayerPreferencesPage::MPlayerPreferencesPage (MPlayer * p)
 }
 
 KDE_NO_EXPORT void MPlayerPreferencesPage::write (KSharedConfigPtr config) {
-    config->setGroup (strMPlayerPatternGroup);
+    KConfigGroup patterns_cfg (config, strMPlayerPatternGroup);
     for (int i = 0; i < int (pat_last); i++)
-        config->writeEntry
+        patterns_cfg.writeEntry
             (_mplayer_patterns[i].name, m_patterns[i].pattern ());
-    config->setGroup (strMPlayerGroup);
-    config->writeEntry (strMPlayerPath, mplayer_path);
-    config->writeEntry (strAddArgs, additionalarguments);
-    config->writeEntry (strCacheSize, cachesize);
-    config->writeEntry (strAlwaysBuildIndex, alwaysbuildindex);
+    KConfigGroup mplayer_cfg (config, strMPlayerGroup);
+    mplayer_cfg.writeEntry (strMPlayerPath, mplayer_path);
+    mplayer_cfg.writeEntry (strAddArgs, additionalarguments);
+    mplayer_cfg.writeEntry (strCacheSize, cachesize);
+    mplayer_cfg.writeEntry (strAlwaysBuildIndex, alwaysbuildindex);
 }
 
 KDE_NO_EXPORT void MPlayerPreferencesPage::read (KSharedConfigPtr config) {
-    config->setGroup (strMPlayerPatternGroup);
+    KConfigGroup patterns_cfg (config, strMPlayerPatternGroup);
     for (int i = 0; i < int (pat_last); i++)
-        m_patterns[i].setPattern (config->readEntry
+        m_patterns[i].setPattern (patterns_cfg.readEntry
                 (_mplayer_patterns[i].name, _mplayer_patterns[i].pattern));
-    config->setGroup (strMPlayerGroup);
-    mplayer_path = config->readEntry (strMPlayerPath, "mplayer");
-    additionalarguments = config->readEntry (strAddArgs);
-    cachesize = config->readNumEntry (strCacheSize, 384);
-    alwaysbuildindex = config->readBoolEntry (strAlwaysBuildIndex, false);
+    KConfigGroup mplayer_cfg (config, strMPlayerGroup);
+    mplayer_path = mplayer_cfg.readEntry (strMPlayerPath, QString ("mplayer"));
+    additionalarguments = mplayer_cfg.readEntry (strAddArgs, QString ());
+    cachesize = mplayer_cfg.readEntry (strCacheSize, 384);
+    alwaysbuildindex = mplayer_cfg.readEntry (strAlwaysBuildIndex, false);
 }
 
 KDE_NO_EXPORT void MPlayerPreferencesPage::sync (bool fromUI) {
@@ -993,7 +993,7 @@ bool MEncoder::deMediafiedPlay () {
     bool success = false;
     stop ();
     initProcess (viewer ());
-    KURL url (m_url);
+    KUrl url (m_url);
     m_source->setPosition (0);
     QString args;
     m_use_slave = m_source->pipeCmd ().isEmpty ();
@@ -1058,7 +1058,7 @@ bool MPlayerDumpstream::deMediafiedPlay () {
     bool success = false;
     stop ();
     initProcess (viewer ());
-    KURL url (m_url);
+    KUrl url (m_url);
     m_source->setPosition (0);
     QString args;
     m_use_slave = m_source->pipeCmd ().isEmpty ();
@@ -1126,7 +1126,7 @@ void Callback::statusMessage (int code, QString msg) {
 
 void Callback::subMrl (QString mrl, QString title) {
     if (!m_process->m_source) return;
-    m_process->m_source->insertURL (m_process->m_mrl, KURL::fromPathOrURL (mrl).url (), title);
+    m_process->m_source->insertURL (m_process->m_mrl, KUrl::fromPathOrURL (mrl).url (), title);
     if (m_process->m_mrl && m_process->m_mrl->active ())
         m_process->m_mrl->defer (); // Xine detected this is a playlist
 }
@@ -1193,7 +1193,7 @@ QString CallbackProcess::menuName () const {
 }
 
 void CallbackProcess::setErrorMessage (int code, const QString & msg) {
-    kdDebug () << "setErrorMessage " << code << " " << msg << endl;
+    kDebug () << "setErrorMessage " << code << " " << msg << endl;
     if (code == 0 && m_send_config != send_no) {
         if (m_send_config == send_new)
             stop ();
@@ -1212,7 +1212,7 @@ void CallbackProcess::setPlaying () {
 void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
     if (data.size ())
         m_configdata = data;
-    kdDebug () << "up and running " << dcopname << endl;
+    kDebug () << "up and running " << dcopname << endl;
     m_backend = new Backend_stub (dcopname, "Backend");
     if (m_send_config == send_new) {
         m_backend->setConfig (m_changeddata);
@@ -1225,7 +1225,7 @@ void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
             QTextStream ts (data, IO_ReadOnly);
             readXML (configdoc, ts, QString ());
             configdoc->normalize ();
-            //kdDebug () << mydoc->innerText () << endl;
+            //kDebug () << mydoc->innerText () << endl;
         }
         emit configReceived ();
         if (m_configpage)
@@ -1245,7 +1245,7 @@ void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
 }
 
 void CallbackProcess::setMovieParams (int len, int w, int h, float a, const QStringList & alang, const QStringList & slang) {
-    kdDebug () << "setMovieParams " << len << " " << w << "," << h << " " << a << endl;
+    kDebug () << "setMovieParams " << len << " " << w << "," << h << " " << a << endl;
     if (!m_source) return;
     in_gui_update = true;
     m_source->setDimensions (m_mrl, w, h);
@@ -1291,17 +1291,17 @@ void CallbackProcess::setChangedData (const QByteArray & data) {
 bool CallbackProcess::deMediafiedPlay () {
     if (!m_backend)
         return false;
-    kdDebug () << "CallbackProcess::play " << m_url << endl;
+    kDebug () << "CallbackProcess::play " << m_url << endl;
     QString u = m_url;
     if (u == "tv://" && !m_source->tuner ().isEmpty ()) {
         u = "v4l:/" + m_source->tuner ();
         if (m_source->frequency () > 0)
             u += QChar ('/') + QString::number (m_source->frequency ());
     }
-    KURL url (u);
+    KUrl url (u);
     QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
     m_backend->setURL (myurl);
-    const KURL & sub_url = m_source->subUrl ();
+    const KUrl & sub_url = m_source->subUrl ();
     if (!sub_url.isEmpty ())
         m_backend->setSubTitleURL (QString (QFile::encodeName (sub_url.isLocalFile () ? QFileInfo (getPath (sub_url)).absFilePath () : sub_url.url ())));
     if (m_source->frequency () > 0)
@@ -1315,7 +1315,7 @@ bool CallbackProcess::stop () {
     terminateJobs ();
     if (!m_process || !m_process->isRunning () || m_state < Buffering)
         return true;
-    kdDebug () << "CallbackProcess::stop ()" << m_backend << endl;
+    kDebug () << "CallbackProcess::stop ()" << m_backend << endl;
     if (m_backend)
         m_backend->stop ();
     return true;
@@ -1327,7 +1327,7 @@ bool CallbackProcess::quit () {
     if (m_send_config == send_new)
         m_send_config = send_no; // oh well
     if (playing ()) {
-        kdDebug () << "CallbackProcess::quit ()" << endl;
+        kDebug () << "CallbackProcess::quit ()" << endl;
         if (m_backend)
             m_backend->quit ();
         else if (viewer ())
@@ -1594,7 +1594,7 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
             return;
         NodePtr elm = configdoc->firstChild (); // document
         if (!elm || !elm->hasChildNodes ()) {
-            kdDebug () << "No valid data" << endl;
+            kDebug () << "No valid data" << endl;
             return;
         }
         QString str;
@@ -1605,7 +1605,7 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
         if (str.length () > 10) {
             ts << "</document>";
             QByteArray changeddata = QCString (str.ascii ());
-            kdDebug () << str <<  " " << changeddata.size () << str.length () << endl;
+            kDebug () << str <<  " " << changeddata.size () << str.length () << endl;
             changeddata.resize (str.length ());
             m_process->setChangedData (changeddata);
         }
@@ -1620,7 +1620,7 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
             int first_column_width = 50;
             NodePtr elm = configdoc->firstChild (); // document
             if (!elm || !elm->hasChildNodes ()) {
-                kdDebug () << "No valid data" << endl;
+                kDebug () << "No valid data" << endl;
                 return;
             }
             // set up the table fields
@@ -1644,7 +1644,7 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
                     table->setCellWidget (row, 1, w);
                     QWhatsThis::add (w, elm->innerText ());
                 } else
-                    kdDebug () << "No widget for " << name;
+                    kDebug () << "No widget for " << name;
             }
             table->setColumnWidth (0, first_column_width);
             table->setColumnStretchable (1, true);
@@ -1810,7 +1810,7 @@ KDE_NO_EXPORT void FFMpeg::init () {
 
 bool FFMpeg::deMediafiedPlay () {
     initProcess (viewer ());
-    KURL url (m_url);
+    KUrl url (m_url);
     connect (m_process, SIGNAL (processExited (K3Process *)),
             this, SLOT (processStopped (K3Process *)));
     QString outurl = QString (QFile::encodeName (m_recordurl.isLocalFile () ? getPath (m_recordurl) : m_recordurl.url ()));
@@ -1902,97 +1902,16 @@ DBusStatic::~DBusStatic () {
 
 //------------------%<---------------------------------------------------------
 
-static DBusHandlerResult
-dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
-    DBusMessageIter args;
-    //const char *iface = "org.kde.kmplayer.backend";
-    NpPlayer *process = (NpPlayer *) data;
-    const char * iface = process->interface ().ascii ();
-    const char * path = dbus_message_get_path (msg);
-
-    if (dbus_message_has_destination (msg, process->destination ().ascii ()) &&
-                dbus_message_has_interface (msg, iface) &&
-            QString (path).startsWith(process->objectPath ()))
-    {
-        //kdDebug () << "dbusFilter " << sender <<
-        //    " iface:" << dbus_message_get_interface (msg) <<
-        //    " member:" << dbus_message_get_member (msg) <<
-        //    " dest:" << dbus_message_get_destination (msg) << endl;
-
-        if (dbus_message_is_method_call (msg, iface, "getUrl")) {
-            char *param = 0;
-            QString url, target;
-            if (dbus_message_iter_init (msg, &args) &&
-                    DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&args)) {
-                dbus_message_iter_get_basic (&args, &param);
-                url = QString::fromLocal8Bit (param);
-                if (dbus_message_iter_next (&args) &&
-                      DBUS_TYPE_STRING==dbus_message_iter_get_arg_type(&args)) {
-                    dbus_message_iter_get_basic (&args, &param);
-                    target = QString::fromLocal8Bit (param);
-                }
-                process->requestStream (path, url, target);
-            }
-            //kdDebug () << "getUrl " << param << endl;
-
-        } else if (dbus_message_is_method_call (msg, iface, "evaluate")) {
-            char *param = 0;
-            if (dbus_message_iter_init (msg, &args) &&
-                    DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&args)) {
-                dbus_message_iter_get_basic (&args, &param);
-                QString r = process->evaluateScript (QString::fromUtf8 (param));
-                DBusMessage * rmsg = dbus_message_new_method_return (msg);
-                char *res = strdup (r.utf8 ().data ());
-                //kdDebug () << "evaluate => " << res << endl;
-                dbus_message_append_args (rmsg,
-                        DBUS_TYPE_STRING, &res,
-                        DBUS_TYPE_INVALID);
-                dbus_connection_send (conn, rmsg, NULL);
-                dbus_connection_flush (conn);
-                dbus_message_unref (rmsg);
-                free (res);
-            }
-
-        } else if (dbus_message_is_method_call (msg, iface, "destroy")) {
-            QString stream =QString(path).mid(process->objectPath().length()+1);
-            process->destroyStream (stream);
-
-        } else if (dbus_message_is_method_call (msg, iface, "running")) {
-            char *param = 0;
-            if (dbus_message_iter_init (msg, &args) &&
-                    DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(&args)) {
-                dbus_message_iter_get_basic (&args, &param);
-                process->setStarted (QString (param));
-            }
-
-        } else if (dbus_message_is_method_call (msg, iface, "plugged")) {
-            process->viewer ()->view ()->videoStart ();
-        } else if (dbus_message_is_method_call (msg, iface, "dimension")) {
-            Q_UINT32 w, h;
-            if (dbus_message_iter_init (msg, &args) &&
-                    DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type(&args)) {
-                dbus_message_iter_get_basic (&args, &w);
-                if (dbus_message_iter_next (&args) &&
-                  DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type(&args)) {
-                    dbus_message_iter_get_basic (&args, &h);
-                    if (h > 0)
-                        process->source ()->setAspect (process->mrl(), 1.0*w/h);
-                }
-            }
-        }
-        return DBUS_HANDLER_RESULT_HANDLED;
-    }
-    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-}
-
-KDE_NO_CDTOR_EXPORT
-NpStream::NpStream (QObject *p, Q_UINT32 sid, const KURL & u)
+KDE_NO_CDTOR_EXPORT NpStream::NpStream (NpPlayer *p, uint32_t sid, const QString &u)
  : QObject (p),
    url (u),
    job (0L), bytes (0), content_length (0),
    stream_id (sid),
    finish_reason (NoReason) {
     data_arrival.tv_sec = 0;
+    (void) new StreamAdaptor (this);
+    QString objpath = QString ("/%1/stream_%2").arg (p->objectPath ()).arg (sid);
+    QDBusConnection::sessionBus().registerObject (objpath, this);
 }
 
 KDE_NO_CDTOR_EXPORT NpStream::~NpStream () {
@@ -2000,10 +1919,10 @@ KDE_NO_CDTOR_EXPORT NpStream::~NpStream () {
 }
 
 KDE_NO_EXPORT void NpStream::open () {
-    kDebug () << "NpStream " << stream_id << " open " << url.url () << endl;
-    if (url.url().startsWith ("javascript:")) {
+    kDebug () << "NpStream " << stream_id << " open " << url << endl;
+    if (url.startsWith ("javascript:")) {
         NpPlayer *npp = static_cast <NpPlayer *> (parent ());
-        QString result = npp->evaluateScript (url.url().mid (11));
+        QString result = npp->evaluate (url.mid (11));
         QByteArray cr = result.toLocal8Bit ();
         bytes += strlen (cr.data ());
         pending_buf.resize (bytes + 1);
@@ -2013,7 +1932,7 @@ KDE_NO_EXPORT void NpStream::open () {
         finish_reason = BecauseDone;
         emit stateChanged ();
     } else {
-        job = KIO::get (url, false, false);
+        job = KIO::get (KUrl (url), false, false);
         job->addMetaData ("errorPage", "false");
         connect (job, SIGNAL (data (KIO::Job *, const QByteArray &)),
                 this, SLOT (slotData (KIO::Job *, const QByteArray &)));
@@ -2023,8 +1942,8 @@ KDE_NO_EXPORT void NpStream::open () {
                 this, SLOT (redirection (KIO::Job *, const KUrl &)));
         connect (job, SIGNAL (mimetype (KIO::Job *, const QString &)),
                 SLOT (slotMimetype (KIO::Job *, const QString &)));
-        connect (job, SIGNAL (totalSize (KIO::Job *, KIO::filesize_t)),
-                SLOT (slotTotalSize (KIO::Job *, KIO::filesize_t)));
+        connect (job, SIGNAL (totalSize (KJob *, qulonglong)),
+                SLOT (slotTotalSize (KJob *, qulonglong)));
     }
 }
 
@@ -2035,6 +1954,10 @@ KDE_NO_EXPORT void NpStream::close () {
         finish_reason = BecauseStopped;
         // don't emit stateChanged(), because always triggered from NpPlayer
     }
+}
+
+KDE_NO_EXPORT void NpStream::destroy () {
+     static_cast <NpPlayer *> (parent ())->destroyStream (stream_id);
 }
 
 KDE_NO_EXPORT void NpStream::slotResult (KJob *jb) {
@@ -2053,16 +1976,16 @@ KDE_NO_EXPORT void NpStream::slotData (KIO::Job*, const QByteArray& qb) {
     }
 }
 
-KDE_NO_EXPORT void NpStream::redirection (KIO::Job *, const KUrl &u) {
-    url = u;
-    emit redirected (stream_id, url);
+KDE_NO_EXPORT void NpStream::redirection (KIO::Job *, const KUrl &kurl) {
+    url = kurl.url ();
+    emit redirected (stream_id, kurl);
 }
 
 void NpStream::slotMimetype (KIO::Job *, const QString &mime) {
     mimetype = mime;
 }
 
-void NpStream::slotTotalSize (KIO::Job *, KIO::filesize_t sz) {
+void NpStream::slotTotalSize (KJob *, qulonglong sz) {
     content_length = sz;
 }
 
@@ -2083,18 +2006,6 @@ NpPlayer::NpPlayer (QObject * parent, Settings * settings, const QString & srv)
 }
 
 KDE_NO_CDTOR_EXPORT NpPlayer::~NpPlayer () {
-    if (!iface.isEmpty ()) {
-        DBusError dberr;
-        dbus_error_init (&dberr);
-        DBusConnection *conn = dbus_static->dbus_connnection;
-        if (conn) {
-            dbus_bus_remove_match (conn, filter.ascii(), &dberr);
-            if (dbus_error_is_set (&dberr))
-                dbus_error_free (&dberr);
-            dbus_connection_remove_filter (conn, dbusFilter, this);
-            dbus_connection_flush (conn);
-        }
-    }
     dbus_static->unref ();
 }
 
@@ -2116,7 +2027,9 @@ KDE_NO_EXPORT void NpPlayer::initProcess (Viewer * viewer) {
         iface = QString ("org.kde.kmplayer.callback");
         static int count = 0;
         path = QString ("/npplayer%1").arg (count++);
-        filter = QString ("type='method_call',interface='org.kde.kmplayer.callback'").arg (path);
+        (void) new CallbackAdaptor (this);
+        QDBusConnection::sessionBus().registerObject (path, this);
+        filter = QString ("type='method_call',interface='org.kde.kmplayer.callback'");
 
         dbus_error_init (&dberr);
         DBusConnection *conn = dbus_bus_get (DBUS_BUS_SESSION, &dberr);
@@ -2127,15 +2040,9 @@ KDE_NO_EXPORT void NpPlayer::initProcess (Viewer * viewer) {
             return;
         }
         bool has_service = !service.isEmpty();
-        service = QString (dbus_bus_get_unique_name (conn));
-        kDebug() << "using service " << service << " interface " << iface << endl;
-        dbus_bus_add_match (conn, filter.ascii(), &dberr);
-        if (dbus_error_is_set (&dberr)) {
-            kError () << "Failed to set match " << filter << ": " <<  dberr.message << endl;
-            dbus_error_free (&dberr);
-        }
-        dbus_connection_add_filter (conn, dbusFilter, this, 0L);
-        dbus_connection_flush (conn);
+        service = QDBusConnection::sessionBus().baseService ();
+        //service = QString (dbus_bus_get_unique_name (conn));
+        kDebug() << "using service " << service << " interface " << iface << " filter:" << filter.ascii() << endl;
         dbus_static->dbus_connnection = conn;
     }
 }
@@ -2144,7 +2051,7 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
     kDebug() << "NpPlayer::play '" << m_url << "'" << endl;
     // if we change from XPLAIN to XEMBED, the DestroyNotify may come later 
     viewer ()->setIntermediateWindow (false);
-    if (m_mrl && !m_url.isEmpty () && dbus_static->dbus_connnection) {
+    if (m_mrl && !m_url.isEmpty ()) {
         QString mime = "text/plain";
         QString plugin;
         Element *elm = m_mrl->mrl ();
@@ -2240,17 +2147,14 @@ KDE_NO_EXPORT bool NpPlayer::ready (Viewer * viewer) {
     return m_process->isRunning ();
 }
 
-KDE_NO_EXPORT void NpPlayer::setStarted (const QString & srv) {
+KDE_NO_EXPORT void NpPlayer::running (const QString &srv) {
     remote_service = srv;
-    kDebug () << "NpPlayer::setStarted " << srv << endl;
+    kDebug () << "NpPlayer::running " << srv << endl;
     setState (Ready);
 }
 
-KDE_NO_EXPORT QString NpPlayer::evaluateScript (const QString & script) {
-    QString result;
-    emit evaluate (script, result);
-    //kDebug () << "evaluateScript " << script << " => " << result << endl;
-    return result;
+void NpPlayer::plugged () {
+    viewer ()->view ()->videoStart ();
 }
 
 static int getStreamId (const QString &path) {
@@ -2268,29 +2172,32 @@ static int getStreamId (const QString &path) {
     return sid;
 }
 
-KDE_NO_EXPORT
-void NpPlayer::requestStream (const QString &path, const QString & url, const QString & target) {
-    KURL uri (m_url, url);
-    kDebug () << "NpPlayer::request " << path << " '" << uri << "'" << endl;
+KDE_NO_EXPORT void NpPlayer::request_stream (const QString &path, const QString &url, const QString &target) {
+    QString uri (url);
+    kDebug () << "NpPlayer::request " << path << " '" << url << "' " << " tg:" << target << endl;
+    bool js = url.startsWith ("javascript:");
+    if (!js)
+        uri = KUrl (m_url, url).url ();
+    kDebug () << "NpPlayer::request " << path << " '" << uri << "'" << m_url << "->" << url << endl;
     Q_UINT32 sid = getStreamId (path);
     if (sid >= 0) {
         if (!target.isEmpty ()) {
             kDebug () << "new page request " << target << endl;
-            if (url.startsWith ("javascript:")) {
-                QString result = evaluateScript (url.mid (11));
+            if (js) {
+                QString result = evaluate (url.mid (11));
                 kDebug() << "result is " << result << endl;
                 if (result == "undefined")
-                    uri = KURL ();
+                    uri = QString ();
                 else
-                    uri = KURL (m_url, result); // probably wrong ..
+                    uri = KUrl (m_url, result).url (); // probably wrong ..
             }
-            if (uri.isValid ())
-                emit openUrl (uri, target);
+            KUrl kurl(uri);
+            if (kurl.isValid ())
+                emit openUrl (kurl, target);
             sendFinish (sid, 0, NpStream::BecauseDone);
         } else {
             NpStream * ns = new NpStream (this, sid, uri);
-            connect (ns, SIGNAL (stateChanged ()),
-                    this, SLOT (streamStateChanged ()));
+            connect (ns, SIGNAL (stateChanged ()), this, SLOT (streamStateChanged ()));
             streams[sid] = ns;
             if (!write_in_progress)
                 processStreams ();
@@ -2298,15 +2205,25 @@ void NpPlayer::requestStream (const QString &path, const QString & url, const QS
     }
 }
 
-KDE_NO_EXPORT void NpPlayer::destroyStream (const QString &s) {
-    int sid = getStreamId (s);
-    if (sid >= 0 && streams.contains ((Q_UINT32) sid)) {
-        NpStream *ns = streams[(Q_UINT32) sid];
+KDE_NO_EXPORT QString NpPlayer::evaluate (const QString &script) {
+    QString result ("undefined");
+    emit evaluate (script, result);
+    //kDebug () << "evaluate " << script << " => " << result << endl;
+    return result;
+}
+
+KDE_NO_EXPORT void NpPlayer::dimension (int w, int h) {
+    source ()->setAspect (m_mrl, 1.0 * w/ h);
+}
+
+KDE_NO_EXPORT void NpPlayer::destroyStream (uint32_t sid) {
+    if (streams.contains (sid)) {
+        NpStream *ns = streams[sid];
         ns->close ();
         if (!write_in_progress)
             processStreams ();
     } else {
-        kWarning () << "Object " << s << " not found" << endl;
+        kWarning () << "Object " << sid << " not found" << endl;
     }
 }
 
@@ -2388,7 +2305,7 @@ KDE_NO_EXPORT void NpPlayer::streamStateChanged () {
         processStreams ();
 }
 
-KDE_NO_EXPORT void NpPlayer::streamRedirected (Q_UINT32 sid, const KURL &u) {
+KDE_NO_EXPORT void NpPlayer::streamRedirected (uint32_t sid, const KUrl &u) {
     if (playing () && dbus_static->dbus_connnection) {
         kDebug() << "redirected " << sid << " to " << u.url() << endl;
         char *cu = strdup (u.url ().local8Bit().data ());
@@ -2424,8 +2341,8 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
             ns->open ();
             write_in_progress = false;
             if (ns->job) {
-                connect (ns, SIGNAL (redirected (Q_UINT32, const KURL&)),
-                        this, SLOT (streamRedirected (Q_UINT32, const KURL&)));
+                connect (ns, SIGNAL (redirected (uint32_t, const KUrl&)),
+                        this, SLOT (streamRedirected (uint32_t, const KUrl&)));
                 active_count++;
             }
         }
@@ -2504,15 +2421,15 @@ KDE_NO_EXPORT QString NpPlayer::menuName () const {
 #else
 
 KDE_NO_CDTOR_EXPORT
-NpStream::NpStream (QObject *p, Q_UINT32, const KURL & url)
+NpStream::NpStream (QObject *p, Q_UINT32, const KUrl & url)
     : QObject (p) {}
 
 KDE_NO_CDTOR_EXPORT NpStream::~NpStream () {}
 void NpStream::slotResult (KJob*) {}
 void NpStream::slotData (KIO::Job*, const QByteArray&) {}
-void NpStream::redirection (KIO::Job *, const KURL &) {}
+void NpStream::redirection (KIO::Job *, const KUrl &) {}
 void NpStream::slotMimetype (KIO::Job *, const QString &) {}
-void NpStream::slotTotalSize (KIO::Job *, KIO::filesize_t) {}
+void NpStream::slotTotalSize (KJob *, KIO::filesize_t) {}
 
 KDE_NO_CDTOR_EXPORT
 NpPlayer::NpPlayer (QObject * parent, Settings * settings, const QString &)
@@ -2522,7 +2439,6 @@ KDE_NO_EXPORT void NpPlayer::init () {}
 KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () { return false; }
 KDE_NO_EXPORT void NpPlayer::initProcess (Viewer *) {}
 KDE_NO_EXPORT QString NpPlayer::menuName () const { return QString (); }
-KDE_NO_EXPORT void NpPlayer::setStarted (const QString &) {}
 KDE_NO_EXPORT bool NpPlayer::stop () { return false; }
 KDE_NO_EXPORT bool NpPlayer::quit () { return false; }
 KDE_NO_EXPORT bool NpPlayer::ready (Viewer *) { return false; }
@@ -2530,7 +2446,7 @@ KDE_NO_EXPORT void NpPlayer::processOutput (K3Process *, char *, int) {}
 KDE_NO_EXPORT void NpPlayer::processStopped (K3Process *) {}
 KDE_NO_EXPORT void NpPlayer::wroteStdin (K3Process *) {}
 KDE_NO_EXPORT void NpPlayer::streamStateChanged () {}
-KDE_NO_EXPORT void NpPlayer::streamRedirected (Q_UINT32, const KURL &) {}
+KDE_NO_EXPORT void NpPlayer::streamRedirected (uint32_t, const KUrl &) {}
 KDE_NO_EXPORT void NpPlayer::terminateJobs () {}
 
 #endif

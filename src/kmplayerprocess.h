@@ -31,8 +31,8 @@
 #include <kurl.h>
 #include <kio/global.h>
 
-#include "kmplayerconfig.h"
-#include "kmplayersource.h"
+#include "kmplayer_def.h"
+#include "kmplayerplaylist.h"
 
 class QWidget;
 class K3Process;
@@ -50,6 +50,7 @@ class Viewer;
 class Source;
 class Callback;
 class Backend_stub;
+class NpPlayer;
 
 /*
  * Base class for all backend processes
@@ -114,6 +115,7 @@ protected:
 private:
     QPointer <Viewer> m_viewer;
 };
+
 
 /*
  * Base class for all MPlayer based processes
@@ -190,6 +192,7 @@ private:
     bool m_needs_restarted;
 };
 
+#ifdef _KMPLAYERCONFIG_H_
 /*
  * MPlayer preferences page
  */
@@ -219,6 +222,7 @@ private:
     MPlayerPreferencesFrame * m_configframe;
 };
 
+#endif
 /*
  * Base class for all recorders
  */
@@ -425,13 +429,15 @@ public:
         BecauseDone = 0, BecauseError = 1, BecauseStopped = 2
     };
 
-    NpStream (QObject *parent, uint32_t stream_id, const KURL & url);
+    NpStream (NpPlayer *parent, uint32_t stream_id, const QString &url);
     ~NpStream ();
 
-    void open ();
-    void close ();
+    void open () KMPLAYER_NO_MBR_EXPORT;
+    void close () KMPLAYER_NO_MBR_EXPORT;
 
-    KURL url;
+    void destroy () KMPLAYER_NO_MBR_EXPORT;
+
+    QString url;
     QByteArray pending_buf;
     KIO::TransferJob *job;
     timeval data_arrival;
@@ -446,29 +452,32 @@ signals:
 private slots:
     void slotResult (KJob*);
     void slotData (KIO::Job*, const QByteArray& qb);
-    void redirection (KIO::Job *, const KURL &url);
+    void redirection (KIO::Job *, const KUrl &url);
     void slotMimetype (KIO::Job *, const QString &mime);
-    void slotTotalSize (KIO::Job *, KIO::filesize_t sz);
+    void slotTotalSize (KJob *, qulonglong sz);
 };
 
 class KMPLAYER_NO_EXPORT NpPlayer : public Process {
     Q_OBJECT
 public:
-    NpPlayer (QObject * parent, Settings * settings, const QString & srv);
+    NpPlayer (QObject *parent, Settings *settings, const QString &srv);
     ~NpPlayer ();
     virtual void init ();
     virtual bool deMediafiedPlay ();
     virtual void initProcess (Viewer * viewer);
     virtual QString menuName () const;
 
-    void setStarted (const QString & srv);
-    void requestStream (const QString & path, const QString & url, const QString & target);
-    void destroyStream (const QString & path);
+    void running (const QString &srv) KMPLAYER_NO_MBR_EXPORT;
+    void plugged () KMPLAYER_NO_MBR_EXPORT;
+    void request_stream (const QString &path, const QString &url, const QString &target) KMPLAYER_NO_MBR_EXPORT;
+    QString evaluate (const QString &script) KMPLAYER_NO_MBR_EXPORT;
+    void dimension (int w, int h) KMPLAYER_NO_MBR_EXPORT;
+
+    void destroyStream (uint32_t sid);
 
     KDE_NO_EXPORT const QString & destination () const { return service; }
     KDE_NO_EXPORT const QString & interface () const { return iface; }
     KDE_NO_EXPORT QString objectPath () const { return path; }
-    QString evaluateScript (const QString & scr);
 signals:
     void evaluate (const QString & scr, QString & result);
     void openUrl (const KURL & url, const QString & target);
@@ -482,7 +491,7 @@ private slots:
     void processStopped (K3Process *);
     void wroteStdin (K3Process *);
     void streamStateChanged ();
-    void streamRedirected (uint32_t, const KURL &);
+    void streamRedirected (uint32_t, const KUrl &);
 protected:
     virtual void terminateJobs ();
 private:

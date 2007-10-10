@@ -39,6 +39,13 @@ set(libkmplayercommon_SRCS
   viewarea.cpp
 )
 
+if (HAVE_NPP)
+    qt4_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.callback.xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerprocess.h KMPlayer::NpPlayer)
+    qt4_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.stream.xml
+        ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerprocess.h KMPlayer::NpStream)
+endif (HAVE_NPP)
+
 kde4_add_library(kmplayercommon SHARED ${libkmplayercommon_SRCS})
 
 MESSAGE("extra ${CAIROCflags} ${GLibDBusCflags}  libs ${CAIROLinkFlags} ${GLibDBusLinkFlags}")

@@ -63,6 +63,8 @@
 #include <ktoggleaction.h>
 
 // application specific includes
+#include "kmplayer_def.h"
+#include "kmplayerconfig.h"
 #include "kmplayer.h"
 #include "kmplayerview.h"
 #include "playlistview.h"
@@ -574,7 +576,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     connect (playmedia, SIGNAL (triggered (bool)), m_player, SLOT (play ()));
     QAction *pausemedia = ac->addAction ("pause");
     pausemedia->setText (i18n ("&Pause"));
-    connect (pausemedia, SIGNAL (triggered (bool)), m_player, SLOT (puase ()));
+    connect (pausemedia, SIGNAL (triggered (bool)), m_player, SLOT (pause ()));
     QAction *stopmedia = ac->addAction ("stop");
     stopmedia->setText (i18n ("&Stop"));
     connect (stopmedia, SIGNAL (triggered (bool)), m_player, SLOT (stop ()));

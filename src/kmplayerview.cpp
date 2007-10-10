@@ -745,9 +745,12 @@ KDE_NO_EXPORT void Viewer::setIntermediateWindow (bool set) {
             XClearWindow (QX11Info::display(), m_plain_window);
         } else {
             if (m_plain_window) {
+                XUnmapWindow (QX11Info::display(), m_plain_window);
+                XFlush (QX11Info::display());
+                discardClient ();
                 XDestroyWindow (QX11Info::display(), m_plain_window);
                 m_plain_window = 0;
-                XSync (QX11Info::display (), false);
+                //XSync (QX11Info::display (), false);
             }
         }
     }
@@ -755,7 +758,7 @@ KDE_NO_EXPORT void Viewer::setIntermediateWindow (bool set) {
 
 KDE_NO_EXPORT void Viewer::embedded () {
     kDebug () << "windowChanged " << (int)clientWinId () << endl;
-    if (clientWinId () /*&& m_plain_window*/)
+    if (clientWinId () && m_plain_window)
         XSelectInput (QX11Info::display (), clientWinId (),
                 //KeyPressMask | KeyReleaseMask |
                 KeyPressMask |

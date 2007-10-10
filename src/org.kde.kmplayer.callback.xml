@@ -1,0 +1,28 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="org.kde.kmplayer.callback">
+    <method name="running">
+      <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+      <arg name="service" type="s" direction="in"/>
+    </method>
+    <method name="plugged">
+      <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+    </method>
+    <method name="dimension">
+      <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+      <arg name="width" type="i" direction="in"/>
+      <arg name="height" type="i" direction="in"/>
+    </method>
+    <method name="request_stream">
+      <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+      <arg name="path" type="s" direction="in"/>
+      <arg name="url" type="s" direction="in"/>
+      <arg name="target" type="s" direction="in"/>
+    </method>
+    <method name="evaluate">
+      <arg type="s" direction="out"/>
+      <arg name="script" type="s" direction="in"/>
+    </method>
+  </interface>
+</node>

@@ -29,6 +29,8 @@
 
 #include <kurl.h>
 
+#include "kmplayer_def.h"
+
 class KSharedConfig;
 template<class T> class KSharedPtr;
 typedef KSharedPtr<KSharedConfig> KSharedConfigPtr;

@@ -106,7 +106,7 @@ static NP_ShutdownUPP npShutdown;
 
 static void callFunction(int stream, const char *func, int first_arg_type, ...);
 static void readStdin (gpointer d, gint src, GdkInputCondition cond);
-static char * evaluate (const char *script);
+static char *evaluate (const char *script);
 
 /*----------------%<---------------------------------------------------------*/
 
@@ -116,6 +116,15 @@ static void print (const char * format, ...) {
     vprintf (format, vl);
     va_end (vl);
     fflush (stdout);
+}
+
+static void createPath (int stream, char *buf, int buf_len) {
+    strncpy (buf, callback_path, buf_len -1);
+    buf [buf_len -1] = 0;
+    if (stream > -1) {
+        int len = strlen (buf);
+        snprintf (buf + len, buf_len - len, "/stream_%d", stream);
+    }
 }
 
 /*----------------%<---------------------------------------------------------*/
@@ -144,17 +153,22 @@ static gboolean firstStream (gpointer key, gpointer value, gpointer data) {
 static gboolean requestStream (void * p) {
     StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
     if (si) {
+        char *path = (char *)malloc (64);
+        char *target = g_strdup ("");
         if (!callback_service)
             current_stream_id = p;
         if (!stdin_read_watch)
-            stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ,readStdin,NULL);
+            stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, NULL);
+        createPath ((int)(long)p, path, 64);
         if (si->target)
-            callFunction ((int)(long)p, "getUrl",
-                    DBUS_TYPE_STRING, &si->url,
-                    DBUS_TYPE_STRING, &si->target, DBUS_TYPE_INVALID);
-        else
-            callFunction ((int)(long)p, "getUrl",
-                    DBUS_TYPE_STRING, &si->url, DBUS_TYPE_INVALID);
+            target = si->target;
+        callFunction (-1, "request_stream",
+                DBUS_TYPE_STRING, &path,
+                DBUS_TYPE_STRING, &si->url,
+                DBUS_TYPE_STRING, &target, DBUS_TYPE_INVALID);
+        free (path);
+        if (!si->target)
+            g_free (target);
     } else {
         print ("requestStream %d not found", (long) p);
     }
@@ -1243,7 +1257,7 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
         StreamInfo *si = getStreamInfo(dbus_message_get_path (msg), &stream_id);
         const char *mime;
         uint32_t length;
-        if (si && dbus_message_iter_init (msg, &args) && 
+        if (si && dbus_message_iter_init (msg, &args) &&
                 DBUS_TYPE_STRING == dbus_message_iter_get_arg_type (&args)) {
             dbus_message_iter_get_basic (&args, &mime);
             if (*mime) {
@@ -1260,17 +1274,14 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
         }
     } else {
         print ("unknown message\n");
+        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     }
     return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 static void callFunction(int stream,const char *func, int first_arg_type, ...) {
     char path[64];
-    strncpy (path, callback_path, sizeof (path) -1);
-    if (stream > -1) {
-        int len = strlen (path);
-        snprintf (path + len, sizeof (path) - len, "/stream_%d", stream);
-    }
+    createPath (stream, path, sizeof (path));
     print ("call %s.%s()\n", path, func);
     if (callback_service) {
         va_list var_args;
@@ -1364,11 +1375,11 @@ static void windowCreatedEvent (GtkWidget *w, gpointer d) {
         print ("windowCreatedEvent %p\n", GTK_PLUG (w)->socket_window);
         if (!GTK_PLUG (w)->socket_window)
             gtk_plug_construct (GTK_PLUG (w), parent_id);
-        gdk_window_reparent( w->window,
+        /*gdk_window_reparent( w->window,
                 GTK_PLUG (w)->socket_window
                     ? GTK_PLUG (w)->socket_window
                     : gdk_window_foreign_new (parent_id),
-                0, 0);
+                0, 0);*/
         gtk_widget_show_all (w);
         /*XReparentWindow (gdk_x11_drawable_get_xdisplay (w->window),
                 gdk_x11_drawable_get_xid (w->window),

@@ -174,7 +174,7 @@ void PartBase::init (KActionCollection * action_collection) {
     m_settings->readConfig ();
     m_settings->applyColorSetting (false);
     m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner, m_view->controlPanel ()->bookmarkMenu, action_collection);
-    connect (m_view, SIGNAL (urlDropped (const KURL::List &)), this, SLOT (openURL (const KURL::List &)));
+    connect (m_view, SIGNAL (urlDropped (const KUrl::List &)), this, SLOT (openURL (const KUrl::List &)));
     connectPlaylist (m_view->playList ());
     connectInfoPanel (m_view->infoPanel ());
     //new KAction (i18n ("Edit playlist &item"), 0, 0, m_view->playList (), SLOT (editCurrent ()), action_collection, "edit_playlist_item");
@@ -245,6 +245,9 @@ PartBase::~PartBase () {
     stop ();
     if (m_source)
         m_source->deactivate ();
+#ifdef HAVE_NPP
+    delete m_players ["npp"];
+#endif
     delete m_settings;
     delete m_bookmark_menu;
     delete m_bookmark_manager;
@@ -284,8 +287,8 @@ bool PartBase::setProcess (Mrl *mrl) {
     if (p.isEmpty ()) {
         // next try to find mimetype match from kmplayerrc
         if (!mrl->mimetype.isEmpty ()) {
-            m_config->setGroup (mrl->mimetype);
-            p = m_config->readEntry ("player", "" );
+            KConfigGroup mime_cfg (m_config, mrl->mimetype);
+            p = mime_cfg.readEntry ("player", QString ());
             remember_backend = !(!p.isEmpty () &&
                     m_players.contains (p) &&
                     m_players [p]->supports (m_source->name ()));
@@ -296,8 +299,7 @@ bool PartBase::setProcess (Mrl *mrl) {
         p = m_settings->backends [m_source->name()];
     if (p.isEmpty ()) {
         // try source match from kmplayerrc by re-reading
-        m_config->setGroup (strGeneralGroup);
-        p = m_config->readEntry (m_source->name (), "");
+        p = KConfigGroup(m_config, strGeneralGroup).readEntry(m_source->name(),QString());
     }
     if (p.isEmpty () ||
             !m_players.contains (p) ||
@@ -482,26 +484,26 @@ qlonglong PartBase::length () const {
     return m_source ? m_source->length () : 0;
 }
 
-bool PartBase::openURL (const KURL & url) {
+bool PartBase::openURL (const KUrl &url) {
     kDebug () << "PartBase::openURL " << url.url() << url.isValid () << endl;
     if (!m_view) return false;
     stop ();
     Source * src = (url.isEmpty () ? m_sources ["urlsource"] : (!url.protocol ().compare ("kmplayer") && m_sources.contains (url.host ()) ? m_sources [url.host ()] : m_sources ["urlsource"]));
-    src->setSubURL (KURL ());
+    src->setSubURL (KUrl ());
     src->setURL (url);
     setSource (src);
     return true;
 }
 
-bool PartBase::openURL (const KURL::List & urls) {
+bool PartBase::openURL (const KUrl::List & urls) {
     if (urls.size () == 1) {
         openURL (urls[0]);
     } else {
-        openURL (KURL ());
+        openURL (KUrl ());
         NodePtr d = m_source->document ();
         if (d)
             for (unsigned int i = 0; i < urls.size (); i++)
-                d->appendChild (new GenericURL (d, KURL::decode_string (urls [i].url ())));
+                d->appendChild (new GenericURL (d, KUrl::decode_string (urls [i].url ())));
     }
     return true;
 }
@@ -540,7 +542,7 @@ void PartBase::recordingStopped () {
         if (m_settings->replayoption == Settings::ReplayFinished ||
              (m_settings->replayoption == Settings::ReplayAfter && !playing ()))
             openURL (rec->recordURL ());
-        rec->setURL (KURL ());
+        rec->setURL (KUrl ());
     }
     setRecorder ("mencoder"); //FIXME see PartBase::record() checking playing()
 }
@@ -553,7 +555,7 @@ void PartBase::timerEvent (QTimerEvent * e) {
             Recorder * rec = dynamic_cast <Recorder*> (m_recorder);
             if (rec) {
                 openURL (rec->recordURL ());
-                rec->setURL (KURL ());
+                rec->setURL (KUrl ());
             }
         }
     } else if (e->timerId () == m_update_tree_timer) {
@@ -664,9 +666,9 @@ KDE_NO_EXPORT void PartBase::playListItemExecuted (Q3ListViewItem * item) {
                     for (NodePtr e = pi->node; e; e = e->parentNode ()) {
                         Mrl * mrl = e->mrl ();
                         if (mrl)
-                            src = KURL (mrl->absolutePath (), src).url ();
+                            src = KUrl (mrl->absolutePath (), src).url ();
                     }
-                    KURL url (src);
+                    KUrl url (src);
                     if (url.isValid ())
                         openURL (url);
                 }
@@ -982,7 +984,7 @@ static void printTree (NodePtr root, QString off=QString()) {
         printTree(e, off);
 }*/
 
-void Source::setURL (const KURL & url) {
+void Source::setURL (const KUrl & url) {
     m_url = url;
     m_back_request = 0L;
     if (m_document && !m_document->hasChildNodes () &&
@@ -1177,18 +1179,18 @@ void Source::insertURL (NodePtr node, const QString & mrl, const QString & title
     if (!node || !node->mrl ()) // this should always be false
         return;
     QString cur_url = node->mrl ()->absolutePath ();
-    KURL url (cur_url, mrl);
-    kDebug() << "Source::insertURL " << KURL (cur_url) << " " << url << endl;
+    KUrl url (cur_url, mrl);
+    kDebug() << "Source::insertURL " << KUrl (cur_url) << " " << url << endl;
     if (!url.isValid ())
         kError () << "try to append non-valid url" << endl;
-    else if (KURL (cur_url) == url)
+    else if (KUrl (cur_url) == url)
         kError () << "try to append url to itself" << endl;
     else {
         int depth = 0; // cache this?
         for (NodePtr e = node; e->parentNode (); e = e->parentNode ())
             ++depth;
         if (depth < 40) {
-            node->appendChild (new GenericURL (m_document, KURL::decode_string (url.url ()), title.isEmpty() ? KURL::decode_string (mrl) : title));
+            node->appendChild (new GenericURL (m_document, KUrl::decode_string (url.url ()), title.isEmpty() ? KUrl::decode_string (mrl) : title));
             m_player->updateTree ();
         } else
             kError () << "insertURL exceeds depth limit" << endl;
@@ -1453,8 +1455,7 @@ void Source::stateChange(Process *p, Process::State olds, Process::State news) {
 }
 
 QString Source::plugin (const QString &mime) const {
-    m_player->config ()->setGroup (mime);
-    return m_player->config ()->readEntry ("plugin", "" );
+    return KConfigGroup (m_player->config (), mime).readEntry ("plugin", QString ());
 }
 
 QString Source::prettyName () {
@@ -1463,7 +1464,7 @@ QString Source::prettyName () {
 
 //-----------------------------------------------------------------------------
 
-URLSource::URLSource (PartBase * player, const KURL & url)
+URLSource::URLSource (PartBase * player, const KUrl & url)
     : Source (i18n ("URL"), player, "urlsource"), activated (false) {
     setURL (url);
     //kDebug () << "URLSource::URLSource" << endl;
@@ -1481,9 +1482,9 @@ void URLSource::dimensions (int & w, int & h) {
     if (!m_player->mayResize () && m_player->view ()) {
         w = static_cast <View *> (m_player->view ())->viewer ()->width ();
         h = static_cast <View *> (m_player->view ())->viewer ()->height ();
-    } else
+    } else {
         Source::dimensions (w, h);
-    
+    }
 }
 
 bool URLSource::hasLength () {
@@ -1549,7 +1550,7 @@ QString URLSource::prettyName () {
             newurl += QString (":%1").arg (m_url.port ());
         QString file = m_url.fileName ();
         int len = newurl.length () + file.length ();
-        KURL path = KURL (m_url.directory ());
+        KUrl path = KUrl (m_url.directory ());
         bool modified = false;
         while (path.url ().length () + len > 50 && path != path.upUrl ()) {
             path = path.upUrl ();
@@ -1651,7 +1652,7 @@ KDE_NO_EXPORT void URLSource::read (NodePtr root, QTextStream & textstream) {
             } while (!line.isNull ());
             for (int i = 0; i < nr; i++)
                 if (!entries[i].url.isEmpty ())
-                    cur_elm->appendChild (new GenericURL (m_document, KURL::decode_string (entries[i].url), entries[i].title));
+                    cur_elm->appendChild (new GenericURL (m_document, KUrl::decode_string (entries[i].url), entries[i].title));
             delete [] entries;
         } else if (line.stripWhiteSpace ().startsWith (QChar ('<'))) {
             readXML (cur_elm, textstream, line);
@@ -1765,8 +1766,8 @@ void URLSource::play () {
 
 bool URLSource::requestPlayURL (NodePtr mrl) {
     if (m_document.ptr () != mrl->mrl ()->linkNode ()) {
-        KURL base = m_document->mrl ()->src;
-        KURL dest = mrl->mrl ()->linkNode ()->absolutePath ();
+        KUrl base = m_document->mrl ()->src;
+        KUrl dest = mrl->mrl ()->linkNode ()->absolutePath ();
         // check if some remote playlist tries to open something local, but
         // do ignore unknown protocols because there are so many and we only
         // want to cache local ones.
@@ -1784,7 +1785,7 @@ bool URLSource::requestPlayURL (NodePtr mrl) {
     return Source::requestPlayURL (mrl);
 }
 
-void URLSource::setURL (const KURL & url) {
+void URLSource::setURL (const KUrl & url) {
     Source::setURL (url);
     Mrl *mrl = document ()->mrl ();
     if (!url.isEmpty () && url.isLocalFile () && mrl->mimetype.isEmpty ()) {
@@ -1803,7 +1804,7 @@ bool URLSource::resolveURL (NodePtr m) {
         ++depth;
     if (depth > 40)
         return true;
-    KURL url (mrl->absolutePath ());
+    KUrl url (mrl->absolutePath ());
     QString mimestr = mrl->mimetype;
     if (mimestr == "application/x-shockwave-flash" ||
             mimestr == "application/futuresplash")
@@ -1913,7 +1914,7 @@ RemoteObjectPrivate::~RemoteObjectPrivate () {
 
 KDE_NO_EXPORT bool RemoteObjectPrivate::download (const QString & str) {
     url = str;
-    KURL kurl (str);
+    KUrl kurl (str);
     if (kurl.isLocalFile ()) {
         QFile file (kurl.path ());
         if (file.exists () && file.open (IO_ReadOnly)) {
