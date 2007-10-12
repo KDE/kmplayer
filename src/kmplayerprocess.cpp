@@ -1932,7 +1932,7 @@ KDE_NO_EXPORT void NpStream::open () {
         finish_reason = BecauseDone;
         emit stateChanged ();
     } else {
-        job = KIO::get (KUrl (url), false, false);
+        job = KIO::get (KUrl (url), KIO::NoReload, KIO::HideProgressInfo);
         job->addMetaData ("errorPage", "false");
         connect (job, SIGNAL (data (KIO::Job *, const QByteArray &)),
                 this, SLOT (slotData (KIO::Job *, const QByteArray &)));
@@ -1968,7 +1968,9 @@ KDE_NO_EXPORT void NpStream::slotResult (KJob *jb) {
 }
 
 KDE_NO_EXPORT void NpStream::slotData (KIO::Job*, const QByteArray& qb) {
-    pending_buf = qb; // we suspend job, so qb should be valid until resume
+    //pending_buf = qb; // we suspend job, so qb should be valid until resume
+    pending_buf.resize (qb.size ());
+    memcpy (pending_buf.data (), qb.data (), qb.size ());
     if (qb.size()) {
         job->suspend ();
         gettimeofday (&data_arrival, 0L);
@@ -2039,7 +2041,6 @@ KDE_NO_EXPORT void NpPlayer::initProcess (Viewer * viewer) {
             kError () << "Failed to get dbus connection: " << dberr.message << endl;
             return;
         }
-        bool has_service = !service.isEmpty();
         service = QDBusConnection::sessionBus().baseService ();
         //service = QString (dbus_bus_get_unique_name (conn));
         kDebug() << "using service " << service << " interface " << iface << " filter:" << filter.ascii() << endl;

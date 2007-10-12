@@ -184,14 +184,14 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
     viewbox->setContentsMargins (0, 0, 0, 0);
     setLayout (viewbox);
     m_dockarea = new K3DockArea (this, "kde_kmplayer_dock_area");
-    m_dock_video = new K3DockWidget (m_dockarea->manager (), 0, KIconLoader::global ()->loadIcon (QString ("kmplayer"), K3Icon::Small), m_dockarea);
+    m_dock_video = new K3DockWidget (m_dockarea->manager (), 0, KIconLoader::global ()->loadIcon (QString ("kmplayer"), KIconLoader::Small), m_dockarea);
     //m_dock_video->setEraseColor (QColor (0, 0, 255));
     m_dock_video->setDockSite (K3DockWidget::DockLeft | K3DockWidget::DockBottom | K3DockWidget::DockRight | K3DockWidget::DockTop);
     m_dock_video->setEnableDocking(K3DockWidget::DockNone);
     m_view_area = new ViewArea (m_dock_video, this);
     m_dock_video->setWidget (m_view_area);
     m_dockarea->setMainDockWidget (m_dock_video);
-    m_dock_playlist = m_dockarea->createDockWidget (i18n ("Play List"), KIconLoader::global ()->loadIcon (QString ("player_playlist"), K3Icon::Small));
+    m_dock_playlist = m_dockarea->createDockWidget (i18n ("Play List"), KIconLoader::global ()->loadIcon (QString ("player_playlist"), KIconLoader::Small));
     m_playlist = new PlayListView (m_dock_playlist, this, action_collection);
     m_dock_playlist->setWidget (m_playlist);
     viewbox->addWidget (m_dockarea);
@@ -216,7 +216,7 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
 
     m_widgettypes[WT_Picture] = new KMPlayerPictureWidget (m_widgetstack, this);
 
-    m_dock_infopanel = m_dockarea->createDockWidget ("infopanel", KIconLoader::global ()->loadIcon (QString ("info"), K3Icon::Small));
+    m_dock_infopanel = m_dockarea->createDockWidget ("infopanel", KIconLoader::global ()->loadIcon (QString ("info"), KIconLoader::Small));
     m_infopanel = new InfoWindow (m_dock_infopanel, this);
     m_dock_infopanel->setWidget (m_infopanel);
 
@@ -407,12 +407,12 @@ void View::toggleVideoConsoleWindow () {
         wt = WT_Video;
         m_control_panel->videoConsoleAction->setIcon (
                 KIconLoader::global ()->loadIconSet (
-                    QString ("konsole"), K3Icon::Small, 0, true));
+                    QString ("konsole"), KIconLoader::Small, 0, true));
         m_control_panel->videoConsoleAction->setText (i18n ("Con&sole"));
     } else {
         m_control_panel->videoConsoleAction->setIcon (
                 KIconLoader::global ()->loadIconSet (
-                    QString ("video"), K3Icon::Small, 0, true));
+                    QString ("video"), KIconLoader::Small, 0, true));
         m_control_panel->videoConsoleAction->setText (i18n ("V&ideo"));
     }
     showWidget (wt);

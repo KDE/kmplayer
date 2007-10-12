@@ -116,7 +116,8 @@ KDE_NO_CDTOR_EXPORT Settings::Settings (PartBase * player, KSharedConfigPtr conf
     colors [ColorSetting::area_background].color = QColor (0, 0, 0);
     colors [ColorSetting::infowindow_background].title = i18n ("Info window background");
     colors [ColorSetting::infowindow_background].option ="InfoWindowBackground";
-    colors [ColorSetting::infowindow_background].color = KGlobalSettings::baseColor ();
+    colors [ColorSetting::infowindow_background].color =
+        KColorScheme(QPalette::Active, KColorScheme::View).background().color();
     colors [ColorSetting::infowindow_foreground].title = i18n ("Info window foreground");
     colors [ColorSetting::infowindow_foreground].option ="InfoWindowForeground";
     colors [ColorSetting::infowindow_foreground].color =
@@ -323,47 +324,47 @@ KDE_NO_EXPORT void Settings::readConfig () {
     allowhref = mplayer.readEntry(strAllowHref, false);
 
     // recording
-    m_config->setGroup (strRecordingGroup);
-    mencoderarguments = m_config->readEntry (strMencoderArgs, "-oac mp3lame -ovc lavc");
-    ffmpegarguments = m_config->readEntry (strFFMpegArgs, "-f avi -acodec mp3 -vcodec mpeg4");
-    recordfile = m_config->readPathEntry(strRecordingFile, QDir::homeDirPath () + "/record.avi");
-    recorder = Recorder (m_config->readNumEntry (strRecorder, int (MEncoder)));
-    replayoption = ReplayOption (m_config->readNumEntry (strAutoPlayAfterRecording, ReplayFinished));
-    replaytime = m_config->readNumEntry (strAutoPlayAfterTime, 60);
-    recordcopy = m_config->readBoolEntry(strRecordingCopy, true);
+    KConfigGroup rec_cfg (m_config, strRecordingGroup);
+    mencoderarguments = rec_cfg.readEntry (strMencoderArgs, QString ("-oac mp3lame -ovc lavc"));
+    ffmpegarguments = rec_cfg.readEntry (strFFMpegArgs, QString ("-f avi -acodec mp3 -vcodec mpeg4"));
+    recordfile = rec_cfg.readPathEntry(strRecordingFile, QDir::homeDirPath () + "/record.avi");
+    recorder = Recorder (rec_cfg.readEntry (strRecorder, int (MEncoder)));
+    replayoption = ReplayOption (rec_cfg.readEntry (strAutoPlayAfterRecording, int (ReplayFinished)));
+    replaytime = rec_cfg.readEntry (strAutoPlayAfterTime, 60);
+    recordcopy = rec_cfg.readEntry(strRecordingCopy, true);
 
     // postproc
-    m_config->setGroup (strPPGroup);
-    postprocessing = m_config->readBoolEntry (strPostProcessing, false);
-    disableppauto = m_config->readBoolEntry (strDisablePPauto, true);
+    KConfigGroup pp_cfg (m_config, strPPGroup);
+    postprocessing = pp_cfg.readEntry (strPostProcessing, false);
+    disableppauto = pp_cfg.readEntry (strDisablePPauto, true);
 
-    pp_default = m_config->readBoolEntry (strPP_Default, true);
-    pp_fast = m_config->readBoolEntry (strPP_Fast, false);
-    pp_custom = m_config->readBoolEntry (strPP_Custom, false);
+    pp_default = pp_cfg.readEntry (strPP_Default, true);
+    pp_fast = pp_cfg.readEntry (strPP_Fast, false);
+    pp_custom = pp_cfg.readEntry (strPP_Custom, false);
     // default these to default preset
-    pp_custom_hz = m_config->readBoolEntry (strCustom_Hz, true);
-    pp_custom_hz_aq = m_config->readBoolEntry (strCustom_Hz_Aq, true);
-    pp_custom_hz_ch = m_config->readBoolEntry (strCustom_Hz_Ch, false);
+    pp_custom_hz = pp_cfg.readEntry (strCustom_Hz, true);
+    pp_custom_hz_aq = pp_cfg.readEntry (strCustom_Hz_Aq, true);
+    pp_custom_hz_ch = pp_cfg.readEntry (strCustom_Hz_Ch, false);
 
-    pp_custom_vt = m_config->readBoolEntry (strCustom_Vt, true);
-    pp_custom_vt_aq = m_config->readBoolEntry (strCustom_Vt_Aq, true);
-    pp_custom_vt_ch = m_config->readBoolEntry (strCustom_Vt_Ch, false);
+    pp_custom_vt = pp_cfg.readEntry (strCustom_Vt, true);
+    pp_custom_vt_aq = pp_cfg.readEntry (strCustom_Vt_Aq, true);
+    pp_custom_vt_ch = pp_cfg.readEntry (strCustom_Vt_Ch, false);
 
-    pp_custom_dr = m_config->readBoolEntry (strCustom_Dr, true);
-    pp_custom_dr_aq = m_config->readBoolEntry (strCustom_Dr_Aq, true);
-    pp_custom_dr_ch = m_config->readBoolEntry (strCustom_Dr_Ch, false);
+    pp_custom_dr = pp_cfg.readEntry (strCustom_Dr, true);
+    pp_custom_dr_aq = pp_cfg.readEntry (strCustom_Dr_Aq, true);
+    pp_custom_dr_ch = pp_cfg.readEntry (strCustom_Dr_Ch, false);
 
-    pp_custom_al = m_config->readBoolEntry (strCustom_Al, true);
-    pp_custom_al_f = m_config->readBoolEntry (strCustom_Al_F, false);
+    pp_custom_al = pp_cfg.readEntry (strCustom_Al, true);
+    pp_custom_al_f = pp_cfg.readEntry (strCustom_Al_F, false);
 
-    pp_custom_tn = m_config->readBoolEntry (strCustom_Tn, true);
-    pp_custom_tn_s = m_config->readNumEntry (strCustom_Tn_S, 0);
+    pp_custom_tn = pp_cfg.readEntry (strCustom_Tn, true);
+    pp_custom_tn_s = pp_cfg.readEntry (strCustom_Tn_S, 0);
 
-    pp_lin_blend_int = m_config->readBoolEntry (strPP_Lin_Blend_Int, false);
-    pp_lin_int = m_config->readBoolEntry (strPP_Lin_Int, false);
-    pp_cub_int = m_config->readBoolEntry (strPP_Cub_Int, false);
-    pp_med_int = m_config->readBoolEntry (strPP_Med_Int, false);
-    pp_ffmpeg_int = m_config->readBoolEntry (strPP_FFmpeg_Int, false);
+    pp_lin_blend_int = pp_cfg.readEntry (strPP_Lin_Blend_Int, false);
+    pp_lin_int = pp_cfg.readEntry (strPP_Lin_Int, false);
+    pp_cub_int = pp_cfg.readEntry (strPP_Cub_Int, false);
+    pp_med_int = pp_cfg.readEntry (strPP_Med_Int, false);
+    pp_ffmpeg_int = pp_cfg.readEntry (strPP_FFmpeg_Int, false);
 
     for (PreferencesPage * p = pagelist; p; p = p->next)
         p->read (m_config);
@@ -517,85 +518,85 @@ void Settings::show (const char * pagename) {
 }
 
 void Settings::writeConfig () {
-    m_config->setGroup (strGeneralGroup);
-    m_config->writeEntry (strURLList, urllist, ';');
-    m_config->writeEntry (strSubURLList, sub_urllist, ';');
-    m_config->writeEntry (strPrefBitRate, prefbitrate);
-    m_config->writeEntry (strMaxBitRate, maxbitrate);
-    m_config->writeEntry (strVolume, volume);
-    m_config->writeEntry (strContrast, contrast);
-    m_config->writeEntry (strBrightness, brightness);
-    m_config->writeEntry (strHue, hue);
-    m_config->writeEntry (strSaturation, saturation);
+    KConfigGroup gen_cfg (m_config, strGeneralGroup);
+    gen_cfg.writeEntry (strURLList, urllist, ';');
+    gen_cfg.writeEntry (strSubURLList, sub_urllist, ';');
+    gen_cfg.writeEntry (strPrefBitRate, prefbitrate);
+    gen_cfg.writeEntry (strMaxBitRate, maxbitrate);
+    gen_cfg.writeEntry (strVolume, volume);
+    gen_cfg.writeEntry (strContrast, contrast);
+    gen_cfg.writeEntry (strBrightness, brightness);
+    gen_cfg.writeEntry (strHue, hue);
+    gen_cfg.writeEntry (strSaturation, saturation);
     const QMap<QString,QString>::iterator b_end = backends.end ();
     for (QMap<QString,QString>::iterator i = backends.begin(); i != b_end; ++i)
-        m_config->writeEntry (i.key (), i.data ());
+        gen_cfg.writeEntry (i.key (), i.data ());
     for (int i = 0; i < int (ColorSetting::last_target); i++)
-        m_config->writeEntry (colors[i].option, colors[i].color);
+        gen_cfg.writeEntry (colors[i].option, colors[i].color);
     for (int i = 0; i < int (FontSetting::last_target); i++)
-        m_config->writeEntry (fonts[i].option, fonts[i].font);
-    m_config->setGroup (strMPlayerGroup);
-    m_config->writeEntry (strKeepSizeRatio, sizeratio);
-    m_config->writeEntry (strAutoResize, autoresize);
-    m_config->writeEntry (strRememberSize, remembersize);
-    m_config->writeEntry (strDockSysTray, docksystray);
-    m_config->writeEntry (strLoop, loop);
-    m_config->writeEntry (strFrameDrop, framedrop);
-    m_config->writeEntry (strAdjustVolume, autoadjustvolume);
-    m_config->writeEntry (strAdjustColors, autoadjustcolors);
-    m_config->writeEntry (strSeekTime, seektime);
-    m_config->writeEntry (strVoDriver, videodriver);
-    m_config->writeEntry (strAoDriver, audiodriver);
-    m_config->writeEntry (strAllowHref, allowhref);
-    m_config->writeEntry (strAddConfigButton, showcnfbutton);
-    m_config->writeEntry (strAddPlaylistButton, showplaylistbutton);
-    m_config->writeEntry (strAddRecordButton, showrecordbutton);
-    m_config->writeEntry (strAddBroadcastButton, showbroadcastbutton);
+        gen_cfg.writeEntry (fonts[i].option, fonts[i].font);
 
-    m_config->writeEntry (strDVDDevice, dvddevice);
-    m_config->writeEntry (strVCDDevice, vcddevice);
+    KConfigGroup mplayer_cfg (m_config, strMPlayerGroup);
+    mplayer_cfg.writeEntry (strKeepSizeRatio, sizeratio);
+    mplayer_cfg.writeEntry (strAutoResize, autoresize);
+    mplayer_cfg.writeEntry (strRememberSize, remembersize);
+    mplayer_cfg.writeEntry (strDockSysTray, docksystray);
+    mplayer_cfg.writeEntry (strLoop, loop);
+    mplayer_cfg.writeEntry (strFrameDrop, framedrop);
+    mplayer_cfg.writeEntry (strAdjustVolume, autoadjustvolume);
+    mplayer_cfg.writeEntry (strAdjustColors, autoadjustcolors);
+    mplayer_cfg.writeEntry (strSeekTime, seektime);
+    mplayer_cfg.writeEntry (strVoDriver, videodriver);
+    mplayer_cfg.writeEntry (strAoDriver, audiodriver);
+    mplayer_cfg.writeEntry (strAllowHref, allowhref);
+    mplayer_cfg.writeEntry (strAddConfigButton, showcnfbutton);
+    mplayer_cfg.writeEntry (strAddPlaylistButton, showplaylistbutton);
+    mplayer_cfg.writeEntry (strAddRecordButton, showrecordbutton);
+    mplayer_cfg.writeEntry (strAddBroadcastButton, showbroadcastbutton);
+    mplayer_cfg.writeEntry (strDVDDevice, dvddevice);
+    mplayer_cfg.writeEntry (strVCDDevice, vcddevice);
 
     //postprocessing stuff
-    m_config->setGroup (strPPGroup);
-    m_config->writeEntry (strPostProcessing, postprocessing);
-    m_config->writeEntry (strDisablePPauto, disableppauto);
-    m_config->writeEntry (strPP_Default, pp_default);
-    m_config->writeEntry (strPP_Fast, pp_fast);
-    m_config->writeEntry (strPP_Custom, pp_custom);
+    KConfigGroup pp_cfg (m_config, strPPGroup);
+    pp_cfg.writeEntry (strPostProcessing, postprocessing);
+    pp_cfg.writeEntry (strDisablePPauto, disableppauto);
+    pp_cfg.writeEntry (strPP_Default, pp_default);
+    pp_cfg.writeEntry (strPP_Fast, pp_fast);
+    pp_cfg.writeEntry (strPP_Custom, pp_custom);
 
-    m_config->writeEntry (strCustom_Hz, pp_custom_hz);
-    m_config->writeEntry (strCustom_Hz_Aq, pp_custom_hz_aq);
-    m_config->writeEntry (strCustom_Hz_Ch, pp_custom_hz_ch);
+    pp_cfg.writeEntry (strCustom_Hz, pp_custom_hz);
+    pp_cfg.writeEntry (strCustom_Hz_Aq, pp_custom_hz_aq);
+    pp_cfg.writeEntry (strCustom_Hz_Ch, pp_custom_hz_ch);
 
-    m_config->writeEntry (strCustom_Vt, pp_custom_vt);
-    m_config->writeEntry (strCustom_Vt_Aq, pp_custom_vt_aq);
-    m_config->writeEntry (strCustom_Vt_Ch, pp_custom_vt_ch);
+    pp_cfg.writeEntry (strCustom_Vt, pp_custom_vt);
+    pp_cfg.writeEntry (strCustom_Vt_Aq, pp_custom_vt_aq);
+    pp_cfg.writeEntry (strCustom_Vt_Ch, pp_custom_vt_ch);
 
-    m_config->writeEntry (strCustom_Dr, pp_custom_dr);
-    m_config->writeEntry (strCustom_Dr_Aq, pp_custom_vt_aq);
-    m_config->writeEntry (strCustom_Dr_Ch, pp_custom_vt_ch);
+    pp_cfg.writeEntry (strCustom_Dr, pp_custom_dr);
+    pp_cfg.writeEntry (strCustom_Dr_Aq, pp_custom_vt_aq);
+    pp_cfg.writeEntry (strCustom_Dr_Ch, pp_custom_vt_ch);
 
-    m_config->writeEntry (strCustom_Al, pp_custom_al);
-    m_config->writeEntry (strCustom_Al_F, pp_custom_al_f);
+    pp_cfg.writeEntry (strCustom_Al, pp_custom_al);
+    pp_cfg.writeEntry (strCustom_Al_F, pp_custom_al_f);
 
-    m_config->writeEntry (strCustom_Tn, pp_custom_tn);
-    m_config->writeEntry (strCustom_Tn_S, pp_custom_tn_s);
+    pp_cfg.writeEntry (strCustom_Tn, pp_custom_tn);
+    pp_cfg.writeEntry (strCustom_Tn_S, pp_custom_tn_s);
 
-    m_config->writeEntry (strPP_Lin_Blend_Int, pp_lin_blend_int);
-    m_config->writeEntry (strPP_Lin_Int, pp_lin_int);
-    m_config->writeEntry (strPP_Cub_Int, pp_cub_int);
-    m_config->writeEntry (strPP_Med_Int, pp_med_int);
-    m_config->writeEntry (strPP_FFmpeg_Int, pp_ffmpeg_int);
+    pp_cfg.writeEntry (strPP_Lin_Blend_Int, pp_lin_blend_int);
+    pp_cfg.writeEntry (strPP_Lin_Int, pp_lin_int);
+    pp_cfg.writeEntry (strPP_Cub_Int, pp_cub_int);
+    pp_cfg.writeEntry (strPP_Med_Int, pp_med_int);
+    pp_cfg.writeEntry (strPP_FFmpeg_Int, pp_ffmpeg_int);
 
     // recording
-    m_config->setGroup (strRecordingGroup);
-    m_config->writePathEntry (strRecordingFile, recordfile);
-    m_config->writeEntry (strAutoPlayAfterRecording, int (replayoption));
-    m_config->writeEntry (strAutoPlayAfterTime, replaytime);
-    m_config->writeEntry (strRecorder, int (recorder));
-    m_config->writeEntry (strRecordingCopy, recordcopy);
-    m_config->writeEntry (strMencoderArgs, mencoderarguments);
-    m_config->writeEntry (strFFMpegArgs, ffmpegarguments);
+    KConfigGroup rec_cfg (m_config, strRecordingGroup);
+    rec_cfg.writePathEntry (strRecordingFile, recordfile);
+    rec_cfg.writeEntry (strAutoPlayAfterRecording, int (replayoption));
+    rec_cfg.writeEntry (strAutoPlayAfterTime, replaytime);
+    rec_cfg.writeEntry (strRecorder, int (recorder));
+    rec_cfg.writeEntry (strRecordingCopy, recordcopy);
+    rec_cfg.writeEntry (strMencoderArgs, mencoderarguments);
+    rec_cfg.writeEntry (strFFMpegArgs, ffmpegarguments);
 
     //dynamic stuff
     for (PreferencesPage * p = pagelist; p; p = p->next)

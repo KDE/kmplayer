@@ -43,6 +43,7 @@
 #include <kbookmarkmanager.h>
 #include <kbookmark.h>
 #include <kconfig.h>
+#include <kconfiggroup.h>
 #include <ksimpleconfig.h>
 #include <kaction.h>
 #include <k3process.h>
@@ -1843,7 +1844,7 @@ bool URLSource::resolveURL (NodePtr m) {
              (url.protocol ().startsWith (QString ("http")) ||
               url.protocol () == QString::fromLatin1 ("media") ||
               url.protocol () == QString::fromLatin1 ("remote")))) {
-        KIO::Job * job = KIO::get (url, false, false);
+        KIO::Job * job = KIO::get (url, KIO::NoReload, KIO::HideProgressInfo);
         job->addMetaData ("PropagateHttpHeader", "true");
         job->addMetaData ("errorPage", "false");
         m_resolve_info = new ResolveInfo (m, job, m_resolve_info);
@@ -1931,7 +1932,7 @@ KDE_NO_EXPORT bool RemoteObjectPrivate::download (const QString & str) {
     }
     if (memory_cache->preserve (str)) {
         //kDebug () << "downloading " << str << endl;
-        job = KIO::get (kurl, false, false);
+        job = KIO::get (kurl, KIO::NoReload, KIO::HideProgressInfo);
         connect (job, SIGNAL (data (KIO::Job *, const QByteArray &)),
                 this, SLOT (slotData (KIO::Job *, const QByteArray &)));
         connect (job, SIGNAL (result (KJob *)),

@@ -397,7 +397,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     zoomMenu = new KMPlayerPopupMenu (NULL, i18n ("&Zoom"));
     zoomAction = popupMenu->addMenu (zoomMenu);
     zoomAction->setIcon (KIconLoader::global ()->loadIconSet (
-                QString ("viewmag"), K3Icon::Small, 0, false));
+                QString ("viewmag"), KIconLoader::Small, 0, false));
     zoom50Action = zoomMenu->addAction (i18n ("50%"));
     zoom100Action = zoomMenu->addAction (i18n ("100%"));
     zoom150Action = zoomMenu->addAction (i18n ("150%"));
@@ -410,7 +410,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     colorMenu = new KMPlayerPopupMenu (NULL, i18n ("Co&lors"));
     colorAction = popupMenu->addMenu (colorMenu);
     colorAction->setIcon (KIconLoader::global ()->loadIconSet (
-                QString ("colorize"), K3Icon::Small, 0, true));
+                QString ("colorize"), KIconLoader::Small, 0, true));
     /*QLabel * label = new QLabel (i18n ("Contrast:"), colorMenu);
     colorMenu->insertItem (label);
     m_contrastSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
@@ -439,13 +439,12 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     QAction *audioAction = languageMenu->addMenu (audioMenu);
     QAction *subtitleAction = languageMenu->addMenu (subtitleMenu);
     audioAction->setIcon (KIconLoader::global ()->loadIconSet (
-                QString ("mime-sound"), K3Icon::Small, 0, true));
+                QString ("mime-sound"), KIconLoader::Small, 0, true));
     subtitleAction->setIcon (KIconLoader::global ()->loadIconSet (
-                QString ("view_text"), K3Icon::Small, 0, true));
+                QString ("view_text"), KIconLoader::Small, 0, true));
     languageAction->setVisible (false);
 
-    configureAction = popupMenu->addAction (KIconLoader::global ()->loadIconSet (
-         QString ("configure"), K3Icon::Small, 0, true), i18n ("&Configure KMPlayer..."));
+    configureAction = popupMenu->addAction (KIcon ("configure"), i18n ("&Configure KMPlayer..."));
 
     setAutoControls (true);
     connect (m_buttons [button_config], SIGNAL (clicked ()),

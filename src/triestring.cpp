@@ -41,7 +41,7 @@ struct KMPLAYER_NO_EXPORT TrieNode {
     void removeChild (TrieNode *);
     void dump (int lvl) {
         QString indent (QString ().fill (QChar ('.'), lvl));
-        printf("%s%s len:%4d rc:%4d\n", indent.toAscii(), str, length, ref_count);
+        printf("%s%s len:%4d rc:%4d\n", indent.toAscii().data(), str, length, ref_count);
     }
     char * str;
     unsigned short length;

@@ -40,6 +40,7 @@
 #include <kurlrequester.h>
 #include <kcombobox.h>
 #include <kconfig.h>
+#include <kconfiggroup.h>
 #include <kstandarddirs.h>
 
 #include "kmplayerpartbase.h"
@@ -524,8 +525,7 @@ KDE_NO_EXPORT QString KMPlayerTVSource::prettyName () {
 
 KDE_NO_EXPORT void KMPlayerTVSource::write (KSharedConfigPtr m_config) {
     if (!config_read) return;
-    m_config->setGroup (strTV);
-    m_config->writeEntry (strTVDriver, tvdriver);
+    KConfigGroup (m_config, strTV).writeEntry (strTVDriver, tvdriver);
     static_cast <TVDocument *> (m_document.ptr ())->writeToFile
         (KStandardDirs::locateLocal ("data", "kmplayer/tv.xml"));
     kDebug () << "KMPlayerTVSource::write XML" << endl;
@@ -542,8 +542,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::readXML () {
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::read (KSharedConfigPtr m_config) {
-    m_config->setGroup (strTV);
-    tvdriver = m_config->readEntry (strTVDriver, "v4l");
+    KConfigGroup (m_config, strTV).readEntry (strTVDriver, QString ("v4l"));
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::sync (bool fromUI) {

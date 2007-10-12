@@ -137,15 +137,15 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
     palette.setColor (backgroundRole(), QColor (0xB2, 0xB2, 0xB2));
     setPalette (palette);
     m_itemmenu = new QMenu (this);
-    folder_pix = KIconLoader::global ()->loadIcon (QString ("folder"), K3Icon::Small);
-    auxiliary_pix = KIconLoader::global ()->loadIcon (QString ("folder_grey"), K3Icon::Small);
-    video_pix = KIconLoader::global ()->loadIcon (QString ("video"), K3Icon::Small);
-    info_pix = KIconLoader::global ()->loadIcon (QString ("messagebox_info"), K3Icon::Small);
-    img_pix = KIconLoader::global ()->loadIcon (QString ("colorize"), K3Icon::Small);
-    unknown_pix = KIconLoader::global ()->loadIcon (QString ("unknown"), K3Icon::Small);
-    menu_pix = KIconLoader::global ()->loadIcon (QString ("player_playlist"), K3Icon::Small);
-    config_pix = KIconLoader::global ()->loadIcon (QString ("configure"), K3Icon::Small);
-    url_pix = KIconLoader::global ()->loadIcon (QString ("www"), K3Icon::Small);
+    folder_pix = KIconLoader::global ()->loadIcon (QString ("folder"), KIconLoader::Small);
+    auxiliary_pix = KIconLoader::global ()->loadIcon (QString ("folder_grey"), KIconLoader::Small);
+    video_pix = KIconLoader::global ()->loadIcon (QString ("video"), KIconLoader::Small);
+    info_pix = KIconLoader::global ()->loadIcon (QString ("messagebox_info"), KIconLoader::Small);
+    img_pix = KIconLoader::global ()->loadIcon (QString ("colorize"), KIconLoader::Small);
+    unknown_pix = KIconLoader::global ()->loadIcon (QString ("unknown"), KIconLoader::Small);
+    menu_pix = KIconLoader::global ()->loadIcon (QString ("player_playlist"), KIconLoader::Small);
+    config_pix = KIconLoader::global ()->loadIcon (QString ("configure"), KIconLoader::Small);
+    url_pix = KIconLoader::global ()->loadIcon (QString ("www"), KIconLoader::Small);
     m_find = KStandardAction::find (this, SLOT (slotFind ()), this);
     m_find_next = KStandardAction::findNext (this, SLOT(slotFindNext()), this);
     m_find_next->setEnabled (false);
@@ -169,7 +169,7 @@ int PlayListView::addTree (NodePtr root, const QString & source, const QString &
     ritem->source = source;
     ritem->icon = icon;
     ritem->setPixmap (0, !ritem->icon.isEmpty ()
-            ? KIconLoader::global ()->loadIcon (ritem->icon, K3Icon::Small)
+            ? KIconLoader::global ()->loadIcon (ritem->icon, KIconLoader::Small)
             : url_pix);
     updateTree (ritem, 0L, false);
     return last_id;
@@ -362,16 +362,14 @@ KDE_NO_EXPORT void PlayListView::contextMenuItem (Q3ListViewItem * vi, const QPo
                 m_find_next->setVisible (false);
                 m_itemmenu->clear ();
             }
-            m_itemmenu->insertItem (KIconLoader::global ()->loadIconSet
-                    (QString ("editcopy"), K3Icon::Small, 0, true),
+            m_itemmenu->insertItem (KIcon ("edit-copy"),
                     i18n ("&Copy to Clipboard"),
                     this, SLOT (copyToClipboard ()), 0, 0);
             if (item->m_attr ||
                     (item->node && (item->node->isPlayable () ||
                                     item->node->isDocument ()) &&
                      item->node->mrl ()->bookmarkable))
-                m_itemmenu->insertItem (KIconLoader::global ()->loadIconSet
-                        (QString ("bookmark_add"), K3Icon::Small, 0, true),
+                m_itemmenu->insertItem (KIcon ("bookmark"),
                         i18n ("&Add Bookmark"),
                         this, SLOT (addBookMark ()), 0, 1);
             if (ritem->have_dark_nodes) {

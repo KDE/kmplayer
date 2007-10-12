@@ -1005,14 +1005,16 @@ KDE_NO_EXPORT void KMPlayerApp::addURL (const KURL& url) {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::saveProperties () {
-    KGlobal::config()->writeEntry ("URL", m_player->source ()->url ().url ());
-    KGlobal::config()->writeEntry ("Visible", isVisible ());
+    KConfigGroup def_cfg (KGlobal::config(), "<default>");
+    def_cfg.writeEntry ("URL", m_player->source ()->url ().url ());
+    def_cfg.writeEntry ("Visible", isVisible ());
 }
 
 KDE_NO_EXPORT void KMPlayerApp::readProperties () {
-    KUrl url (KGlobal::config()->readEntry ("URL", QString ()));
+    KConfigGroup def_cfg (KGlobal::config(), "<default>");
+    KUrl url (def_cfg.readEntry ("URL", QString ()));
     openDocumentFile (url);
-    if (!KGlobal::config()->readBoolEntry ("Visible", true) && m_systray)
+    if (!def_cfg.readEntry ("Visible", true) && m_systray)
         hide ();
 }
 
@@ -1160,30 +1162,31 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
 KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     KSharedConfigPtr config = KGlobal::config ();
 
-    config->setGroup("General Options");
+    KConfigGroup gen_cfg (config, "General Options");
 
     // bar position settings
     //KToolBar::BarPosition toolBarPos;
-    //toolBarPos=(KToolBar::BarPosition) config->readNumEntry("ToolBarPos", KToolBar::Top);
+    //toolBarPos=(KToolBar::BarPosition) gen_cfg.readNumEntry("ToolBarPos", KToolBar::Top);
     //toolBar("mainToolBar")->setBarPos(toolBarPos);
 
     // bar status settings
-    //viewToolBar->setChecked (config->readBoolEntry("Show Toolbar", true));
+    //viewToolBar->setChecked (gen_cfg.readBoolEntry("Show Toolbar", true));
     //slotViewToolBar();
 
-    bool bViewStatusbar = config->readBoolEntry("Show Statusbar", true);
+    bool bViewStatusbar = gen_cfg.readEntry("Show Statusbar", true);
     //viewStatusBar->setChecked(bViewStatusbar);
     //slotViewStatusBar();
 
-    //viewMenuBar->setChecked (config->readBoolEntry("Show Menubar", true));
+    //viewMenuBar->setChecked (gen_cfg.readBoolEntry("Show Menubar", true));
     //slotViewMenuBar();
 
-    QSize size = config->readSizeEntry ("Geometry");
+    QSize size = gen_cfg.readEntry ("Geometry", QSize ());
     if (!size.isEmpty ())
         resize (size);
 
-    config->setGroup ("Pipe Command");
-    static_cast <KMPlayerPipeSource *> (m_player->sources () ["pipesource"])->setCommand (config->readEntry ("Command1", ""));
+    KConfigGroup pipe_cfg (config, "Pipe Command");
+    static_cast <KMPlayerPipeSource *> (m_player->sources () ["pipesource"])->setCommand (
+            pipe_cfg.readEntry ("Command1", QString ()));
     // initialize the recent file list
     if (!recents) {
         fileOpenRecent->loadEntries (KConfigGroup (config, "Recent Files"));
@@ -1644,12 +1647,12 @@ KDE_NO_EXPORT void KMPlayerApp::preparePlaylistMenu (KMPlayer::PlayListItem * it
         pm->insertSeparator ();
         manip_node = item->node;
         if (ri->flags & KMPlayer::PlayListView::Deleteable)
-            pm->insertItem (KIconLoader::global ()->loadIconSet (QString ("editdelete"), K3Icon::Small, 0, true), i18n ("&Delete item"), this, SLOT (menuDeleteNode ()));
+            pm->insertItem (KIconLoader::global ()->loadIconSet (QString ("editdelete"), KIconLoader::Small, 0, true), i18n ("&Delete item"), this, SLOT (menuDeleteNode ()));
         if (ri->flags & KMPlayer::PlayListView::Moveable) {
             if (manip_node->previousSibling ())
-                pm->insertItem (KIconLoader::global ()->loadIconSet (QString ("up"), K3Icon::Small, 0, true), i18n ("&Move up"), this, SLOT (menuMoveUpNode ()));
+                pm->insertItem (KIconLoader::global ()->loadIconSet (QString ("up"), KIconLoader::Small, 0, true), i18n ("&Move up"), this, SLOT (menuMoveUpNode ()));
             if (manip_node->nextSibling ())
-                pm->insertItem (KIconLoader::global()->loadIconSet (QString ("down"), K3Icon::Small, 0, true), i18n ("Move &down"), this, SLOT (menuMoveDownNode ()));
+                pm->insertItem (KIconLoader::global()->loadIconSet (QString ("down"), KIconLoader::Small, 0, true), i18n ("Move &down"), this, SLOT (menuMoveDownNode ()));
         }
     }
 }
@@ -1972,13 +1975,11 @@ KDE_NO_EXPORT QString KMPlayerDVDSource::prettyName () {
 static const char * strPlayDVD = "Immediately Play DVD";
 
 KDE_NO_EXPORT void KMPlayerDVDSource::write (KSharedConfigPtr config) {
-    config->setGroup (strMPlayerGroup);
-    config->writeEntry (strPlayDVD, m_auto_play);
+    KConfigGroup (config, strMPlayerGroup).writeEntry (strPlayDVD, m_auto_play);
 }
 
 KDE_NO_EXPORT void KMPlayerDVDSource::read (KSharedConfigPtr config) {
-    config->setGroup (strMPlayerGroup);
-    m_auto_play = config->readBoolEntry (strPlayDVD, true);
+    m_auto_play = KConfigGroup (config, strMPlayerGroup).readEntry (strPlayDVD, true);
 }
 
 KDE_NO_EXPORT void KMPlayerDVDSource::sync (bool fromUI) {
