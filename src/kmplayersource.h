@@ -60,8 +60,8 @@ public:
     /* position () returns position in deci-seconds */
     KDE_NO_EXPORT int position () const { return m_position; }
     KDE_NO_EXPORT float aspect () const { return m_aspect; }
-    KDE_NO_EXPORT const KURL & url () const { return m_url; }
-    KDE_NO_EXPORT const KURL & subUrl () const { return m_sub_url; }
+    KDE_NO_EXPORT const KUrl & url () const { return m_url; }
+    KDE_NO_EXPORT const KUrl & subUrl () const { return m_sub_url; }
     PartBase * player () { return m_player; }
     virtual void reset ();
     QString currentMrl ();
@@ -82,9 +82,9 @@ public:
     virtual NodePtr root ();
     virtual QString filterOptions ();
 
-    virtual void setURL (const KURL & url);
+    virtual void setUrl (const KUrl & url);
     void insertURL (NodePtr mrl, const QString & url, const QString & title=QString());
-    KDE_NO_EXPORT void setSubURL (const KURL & url) { m_sub_url = url; }
+    KDE_NO_EXPORT void setSubURL (const KUrl & url) { m_sub_url = url; }
     void setLanguages (const QStringList & alang, const QStringList & slang);
     KDE_NO_EXPORT void setWidth (int w) { m_width = w; }
     KDE_NO_EXPORT void setHeight (int h) { m_height = h; }
@@ -151,8 +151,8 @@ protected:
     QString m_recordcmd;
     bool m_identified;
     bool m_auto_play;
-    KURL m_url;
-    KURL m_sub_url;
+    KUrl m_url;
+    KUrl m_sub_url;
     QString m_audiodevice;
     QString m_videodevice;
     QString m_videonorm;

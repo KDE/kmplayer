@@ -187,7 +187,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
                 value.truncate (value.length () - 1);
             kDebug () << "name=" << name << " value=" << value << endl;
             if (name == "href") {
-                urlsource->setURL (KUrl (value));
+                urlsource->setUrl (KUrl (value));
                 urlsource->setIdentified (false);
                 m_havehref = true;
             } else if (name == QString::fromLatin1("width")) {
@@ -420,8 +420,8 @@ KDE_NO_EXPORT void KMPlayerPart::viewerPartSourceChanged(Source *o, Source *s) {
     }
 }
 
-KDE_NO_EXPORT bool KMPlayerPart::openURL (const KUrl & _url) {
-    kDebug () << "KMPlayerPart::openURL " << _url.url() << endl;
+KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
+    kDebug () << "KMPlayerPart::openUrl " << _url.url() << endl;
     Source * urlsource = m_sources ["urlsource"];
     KMPlayerHRefSource * hrefsource = static_cast <KMPlayerHRefSource *>(m_sources ["hrefsource"]);
     KMPlayerPartList::iterator i =kmplayerpart_static->partlist.begin ();
@@ -444,7 +444,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KUrl & _url) {
                     u.setPath (QChar ('/') + _url.host ());
                 if (allowRedir (u)) {
                     url = u;
-                    kDebug () << "KMPlayerPart::openURL compose " << m_file_name << " " << _url.url() << " ->" << u.url() << endl;
+                    kDebug () << "KMPlayerPart::openUrl compose " << m_file_name << " " << _url.url() << " ->" << u.url() << endl;
                 }
             }
         }
@@ -463,7 +463,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KUrl & _url) {
         url = urlsource->url ();
     }
     if (!m_havehref)
-        setURL (url);
+        setUrl (url);
     if (url.isEmpty ()) {
         if (!m_master && !(m_features & Feat_Viewer))
             // no master set, wait for a viewer to attach or timeout
@@ -476,7 +476,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KUrl & _url) {
                 i != e;
                 i = std::find_if (++i, e, pred))
             if ((*i)->url ().isEmpty ()) // image window created w/o url
-                return (*i)->openURL (_url);
+                return (*i)->openUrl (_url);
         QTimer::singleShot (50, this, SLOT (waitForImageWindowTimeOut ()));
         //kError () << "Not the ImageWindow and no ImageWindow found" << endl;
         return true;
@@ -486,11 +486,11 @@ KDE_NO_EXPORT bool KMPlayerPart::openURL (const KUrl & _url) {
     if (!args.mimeType ().isEmpty ())
         urlsource->document ()->mrl ()->mimetype = args.mimeType ();
     if (m_havehref && m_settings->allowhref) {
-        hrefsource->setURL (url);
+        hrefsource->setUrl (url);
         setSource (hrefsource);
     } else {
         hrefsource->clear ();
-        PartBase::openURL (m_havehref ? urlsource->url () : url);
+        PartBase::openUrl (m_havehref ? urlsource->url () : url);
         if (urlsource->autoPlay ()) {
             emit started (0L);
             m_started_emited = true;
@@ -504,7 +504,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openNewURL (const KUrl & url) {
     m_file_name.truncate (0);
     m_havehref = false;
     m_sources ["urlsource"]->setAutoPlay (true);
-    return openURL (url);
+    return openUrl (url);
 }
 
 KDE_NO_EXPORT void KMPlayerPart::waitForImageWindowTimeOut () {
@@ -519,7 +519,7 @@ KDE_NO_EXPORT void KMPlayerPart::waitForImageWindowTimeOut () {
                 m_features |= KMPlayerPart::Feat_Viewer; //hack, become the view
                 for (i = std::find_if (kmplayerpart_static->partlist.begin (), e, pred); i != e; i = std::find_if (++i, e, pred))
                     (*i)->connectToPart (this);
-                PartBase::openURL (url ());
+                PartBase::openUrl (url ());
             } else { // see if we can attach to something out there ..
                 i = std::find_if (kmplayerpart_static->partlist.begin (), e, GroupPredicate (this, m_group, true));
                 noattach = (i == e);
@@ -530,12 +530,12 @@ KDE_NO_EXPORT void KMPlayerPart::waitForImageWindowTimeOut () {
     }
 }
 
-KDE_NO_EXPORT bool KMPlayerPart::closeURL () {
+KDE_NO_EXPORT bool KMPlayerPart::closeUrl () {
     if (!m_group.isEmpty ()) {
         kmplayerpart_static->partlist.remove (this);
         m_group.truncate (0);
     }
-    return PartBase::closeURL ();
+    return PartBase::closeUrl ();
 }
 
 KDE_NO_EXPORT void KMPlayerPart::connectToPart (KMPlayerPart * m) {
@@ -664,7 +664,7 @@ KDE_NO_EXPORT void KMPlayerBrowserExtension::saveState (QDataStream & stream) {
 KDE_NO_EXPORT void KMPlayerBrowserExtension::restoreState (QDataStream & stream) {
     QString url;
     stream >> url;
-    static_cast <PartBase *> (parent ())->openURL (KUrl(url));
+    static_cast <PartBase *> (parent ())->openUrl (KUrl(url));
 }
 
 KDE_NO_EXPORT void KMPlayerBrowserExtension::requestOpenURL (const KUrl & url, const QString & target, const QString & service) {
@@ -1119,12 +1119,12 @@ KDE_NO_EXPORT bool KMPlayerHRefSource::processOutput (const QString & /*str*/) {
     return true;
 }
 
-KDE_NO_EXPORT void KMPlayerHRefSource::setURL (const KUrl & url) {
+KDE_NO_EXPORT void KMPlayerHRefSource::setUrl (const KUrl & url) {
     m_url = url;
     m_identified = false;
     m_finished = false;
-    Source::setURL (url);
-    kDebug () << "KMPlayerHRefSource::setURL " << m_url.url() << endl;
+    Source::setUrl (url);
+    kDebug () << "KMPlayerHRefSource::setUrl " << m_url.url() << endl;
 }
 
 KDE_NO_EXPORT void KMPlayerHRefSource::play () {
@@ -1151,13 +1151,13 @@ KDE_NO_EXPORT void KMPlayerHRefSource::activate () {
         connect (m_player->process (), SIGNAL (grabReady (const QString &)),
                  this, SLOT (grabReady (const QString &)));
     else {
-        setURL (KUrl ());
+        setUrl (KUrl ());
         QTimer::singleShot (0, this, SLOT (play ()));
     }
 }
 
 KDE_NO_EXPORT void KMPlayerHRefSource::clear () {
-    setURL (KUrl ());
+    setUrl (KUrl ());
 }
 
 KDE_NO_EXPORT void KMPlayerHRefSource::grabReady (const QString & path) {

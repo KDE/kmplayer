@@ -405,7 +405,8 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent, PartBase * 
     QHBoxLayout *buttonlayout = new QHBoxLayout;
     buttonlayout->addItem (new QSpacerItem (0, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
     buttonlayout->addWidget (recordButton);
-    source = new QLabel (i18n ("Current source: ") + m_player->source ()->prettyName (), this);
+    source = new QLabel (i18n ("Current source: ") +
+           (m_player->source () ? m_player->source ()->prettyName () : QString ()), this);
     recorder = new Q3ButtonGroup (m_recorders_length, Qt::Vertical, i18n ("Recorder"), this);
     for (RecorderPage * p = m_recorders; p; p = p->next)
         new QRadioButton (p->name (), recorder);
@@ -445,7 +446,7 @@ KDE_NO_EXPORT void PrefRecordPage::recordingStarted () {
 KDE_NO_EXPORT void PrefRecordPage::recordingFinished () {
     recordButton->setText (i18n ("Start Recording"));
     url->setEnabled (true);
-    QTimer::singleShot (0, m_player, SLOT(recordingStopped())); // removed from PartBase::setSource because PartBase::recordingStopped calls openURL and that will call PartBase::setSource and Qt doesn't like disconnecting/connecting a signal that is current
+    QTimer::singleShot (0, m_player, SLOT(recordingStopped())); // removed from PartBase::setSource because PartBase::recordingStopped calls openUrl and that will call PartBase::setSource and Qt doesn't like disconnecting/connecting a signal that is current
 }
 
 KDE_NO_EXPORT void PrefRecordPage::sourceChanged (Source * olds, Source * nws) {
@@ -523,11 +524,11 @@ KDE_NO_EXPORT void RecorderPage::record () {
     if (!proc->playing ()) {
         if (m_player->process ())
             m_player->process ()->quit ();
-        rec->setURL (KURL (m_player->settings ()->recordfile));
+        rec->setUrl (KUrl (m_player->settings ()->recordfile));
         proc->setSource (m_player->source ());
         proc->ready (0L);
     } else {
-        rec->setURL (KURL ());
+        rec->setUrl (KUrl ());
         proc->stop ();
     }
 }

@@ -154,7 +154,7 @@ public slots:
     void setInfoMessage (const QString & msg);
     void setStatusMessage (const QString & msg);
 signals:
-    void urlDropped (const KURL::List & urls);
+    void urlDropped (const KUrl::List & urls);
     void pictureClicked ();
     void fullScreenChanged ();
     void windowVideoConsoleToggled (int wt);

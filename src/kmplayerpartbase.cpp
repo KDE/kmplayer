@@ -87,7 +87,7 @@ KDE_NO_CDTOR_EXPORT BookmarkOwner::BookmarkOwner (PartBase * player)
 
 KDE_NO_EXPORT void BookmarkOwner::openBookmark(const KBookmark &bm, Qt::MouseButtons, Qt::KeyboardModifiers) {
     if (!bm.isNull ())
-        m_player->openURL (bm.url ());
+        m_player->openUrl (bm.url ());
 }
 
 KDE_NO_EXPORT QString BookmarkOwner::currentTitle () const {
@@ -175,7 +175,7 @@ void PartBase::init (KActionCollection * action_collection) {
     m_settings->readConfig ();
     m_settings->applyColorSetting (false);
     m_bookmark_menu = new KBookmarkMenu (m_bookmark_manager, m_bookmark_owner, m_view->controlPanel ()->bookmarkMenu, action_collection);
-    connect (m_view, SIGNAL (urlDropped (const KUrl::List &)), this, SLOT (openURL (const KUrl::List &)));
+    connect (m_view, SIGNAL (urlDropped (const KUrl::List &)), this, SLOT (openUrl (const KUrl::List &)));
     connectPlaylist (m_view->playList ());
     connectInfoPanel (m_view->infoPanel ());
     //new KAction (i18n ("Edit playlist &item"), 0, 0, m_view->playList (), SLOT (editCurrent ()), action_collection, "edit_playlist_item");
@@ -250,9 +250,9 @@ PartBase::~PartBase () {
     delete m_players ["npp"];
 #endif
     delete m_settings;
-    delete m_bookmark_menu;
-    delete m_bookmark_manager;
-    delete m_bookmark_owner;
+    //delete m_bookmark_menu;
+    //delete m_bookmark_manager;
+    //delete m_bookmark_owner;
     memory_cache->unref ();
 }
 
@@ -485,22 +485,22 @@ qlonglong PartBase::length () const {
     return m_source ? m_source->length () : 0;
 }
 
-bool PartBase::openURL (const KUrl &url) {
-    kDebug () << "PartBase::openURL " << url.url() << url.isValid () << endl;
+bool PartBase::openUrl (const KUrl &url) {
+    kDebug () << "PartBase::openUrl " << url.url() << url.isValid () << endl;
     if (!m_view) return false;
     stop ();
     Source * src = (url.isEmpty () ? m_sources ["urlsource"] : (!url.protocol ().compare ("kmplayer") && m_sources.contains (url.host ()) ? m_sources [url.host ()] : m_sources ["urlsource"]));
     src->setSubURL (KUrl ());
-    src->setURL (url);
+    src->setUrl (url);
     setSource (src);
     return true;
 }
 
-bool PartBase::openURL (const KUrl::List & urls) {
+bool PartBase::openUrl (const KUrl::List & urls) {
     if (urls.size () == 1) {
-        openURL (urls[0]);
+        openUrl (urls[0]);
     } else {
-        openURL (KUrl ());
+        openUrl (KUrl ());
         NodePtr d = m_source->document ();
         if (d)
             for (unsigned int i = 0; i < urls.size (); i++)
@@ -509,7 +509,7 @@ bool PartBase::openURL (const KUrl::List & urls) {
     return true;
 }
 
-bool PartBase::closeURL () {
+bool PartBase::closeUrl () {
     stop ();
     if (m_view) {
         m_view->viewer ()->setAspect (0.0);
@@ -542,8 +542,8 @@ void PartBase::recordingStopped () {
     if (rec) {
         if (m_settings->replayoption == Settings::ReplayFinished ||
              (m_settings->replayoption == Settings::ReplayAfter && !playing ()))
-            openURL (rec->recordURL ());
-        rec->setURL (KUrl ());
+            openUrl (rec->recordURL ());
+        rec->setUrl (KUrl ());
     }
     setRecorder ("mencoder"); //FIXME see PartBase::record() checking playing()
 }
@@ -555,8 +555,8 @@ void PartBase::timerEvent (QTimerEvent * e) {
         if (m_recorder->playing () && !playing ()) {
             Recorder * rec = dynamic_cast <Recorder*> (m_recorder);
             if (rec) {
-                openURL (rec->recordURL ());
-                rec->setURL (KUrl ());
+                openUrl (rec->recordURL ());
+                rec->setUrl (KUrl ());
             }
         }
     } else if (e->timerId () == m_update_tree_timer) {
@@ -671,7 +671,7 @@ KDE_NO_EXPORT void PartBase::playListItemExecuted (Q3ListViewItem * item) {
                     }
                     KUrl url (src);
                     if (url.isValid ())
-                        openURL (url);
+                        openUrl (url);
                 }
             }
         }
@@ -985,7 +985,7 @@ static void printTree (NodePtr root, QString off=QString()) {
         printTree(e, off);
 }*/
 
-void Source::setURL (const KUrl & url) {
+void Source::setUrl (const KUrl & url) {
     m_url = url;
     m_back_request = 0L;
     if (m_document && !m_document->hasChildNodes () &&
@@ -1000,7 +1000,7 @@ void Source::setURL (const KUrl & url) {
     }
     if (m_player->process () && m_player->source () == this)
         m_player->updateTree ();
-    //kDebug() << name() << " setURL " << url << endl;
+    //kDebug() << name() << " setUrl " << url << endl;
     m_current = m_document;
 }
 
@@ -1467,7 +1467,7 @@ QString Source::prettyName () {
 
 URLSource::URLSource (PartBase * player, const KUrl & url)
     : Source (i18n ("URL"), player, "urlsource"), activated (false) {
-    setURL (url);
+    setUrl (url);
     //kDebug () << "URLSource::URLSource" << endl;
 }
 
@@ -1786,8 +1786,8 @@ bool URLSource::requestPlayURL (NodePtr mrl) {
     return Source::requestPlayURL (mrl);
 }
 
-void URLSource::setURL (const KUrl & url) {
-    Source::setURL (url);
+void URLSource::setUrl (const KUrl & url) {
+    Source::setUrl (url);
     Mrl *mrl = document ()->mrl ();
     if (!url.isEmpty () && url.isLocalFile () && mrl->mimetype.isEmpty ()) {
         KMimeType::Ptr mimeptr = KMimeType::findByUrl (url);

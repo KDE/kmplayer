@@ -74,7 +74,7 @@ public:
     virtual WId widget ();
     Viewer * viewer () const;
     void setSource (Source * src) { m_source = src; }
-    virtual bool grabPicture (const KURL & url, int pos);
+    virtual bool grabPicture (const KUrl & url, int pos);
     bool supports (const char * source) const;
     State state () const { return m_state; }
     NodePtr mrl () const { return m_mrl; }
@@ -153,7 +153,7 @@ public:
     virtual void init ();
     virtual QString menuName () const;
     virtual WId widget ();
-    virtual bool grabPicture (const KURL & url, int pos);
+    virtual bool grabPicture (const KUrl & url, int pos);
     virtual void setAudioLang (int, const QString &);
     virtual void setSubtitle (int, const QString &);
     bool run (const char * args, const char * pipe = 0L);
@@ -228,10 +228,10 @@ private:
  */
 class KMPLAYER_EXPORT Recorder {
 public:
-    KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
-    KDE_NO_EXPORT void setURL (const KURL & url) { m_recordurl = url; }
+    KDE_NO_EXPORT const KUrl & recordURL () const { return m_recordurl; }
+    KDE_NO_EXPORT void setUrl (const KUrl & url) { m_recordurl = url; }
 protected:
-    KURL m_recordurl;
+    KUrl m_recordurl;
 };
 
 /*
@@ -480,7 +480,7 @@ public:
     KDE_NO_EXPORT QString objectPath () const { return path; }
 signals:
     void evaluate (const QString & scr, QString & result);
-    void openUrl (const KURL & url, const QString & target);
+    void openUrl (const KUrl & url, const QString & target);
 public slots:
     virtual bool stop ();
     virtual bool quit ();

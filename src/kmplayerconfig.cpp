@@ -644,11 +644,11 @@ void Settings::okPressed () {
         }
     }
     if (urlchanged) {
-        KURL uri (url.url ());
-        m_player->setURL (uri);
+        KUrl uri (url.url ());
+        m_player->setUrl (uri);
         if (urllist.find (uri.prettyUrl ()) == urllist.end ())
             configdialog->m_SourcePageURL->urllist->insertItem (uri.prettyUrl (), 0);
-        KURL sub_uri (sub_url.url ());
+        KUrl sub_uri (sub_url.url ());
         if (sub_urllist.find (sub_uri.prettyUrl ()) == sub_urllist.end ())
             configdialog->m_SourcePageURL->sub_urllist->insertItem (sub_uri.prettyUrl (), 0);
     }
@@ -753,8 +753,8 @@ void Settings::okPressed () {
 
     if (urlchanged || playerchanged) {
         m_player->sources () ["urlsource"]->setSubURL
-            (KURL(configdialog->m_SourcePageURL->sub_url->url()));
-        m_player->openURL (KUrl (configdialog->m_SourcePageURL->url->url ()));
+            (KUrl(configdialog->m_SourcePageURL->sub_url->url()));
+        m_player->openUrl (KUrl (configdialog->m_SourcePageURL->url->url ()));
         m_player->source ()->setSubURL (KUrl (configdialog->m_SourcePageURL->sub_url->url ()));
     }
 }

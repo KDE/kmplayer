@@ -77,7 +77,7 @@ static const char * strXVScale = "XV Scale";
 
 KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::KMPlayerPrefSourcePageVDR (QWidget * parent, KMPlayer::PartBase * player)
  : QFrame (parent), m_player (player) {
-    //KURLRequester * v4ldevice;
+    //KUrlRequester * v4ldevice;
     QVBoxLayout *layout = new QVBoxLayout (this, 5, 2);
     QGridLayout *gridlayout = new QGridLayout (1, 2);
     xv_port = new KListView (this);
@@ -190,8 +190,8 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     connect (panel->button (KMPlayer::ControlPanel::button_blue), SIGNAL (clicked ()), this, SLOT (keyBlue ()));
     setAspect (m_document, scale ? 16.0/9 : 1.33);
     if (!m_url.protocol ().compare ("kmplayer"))
-        m_request_jump = KURL::decode_string (m_url.path ()).mid (1);
-    setURL (KURL (QString ("vdr://localhost:%1").arg (tcp_port)));
+        m_request_jump = KUrl::decode_string (m_url.path ()).mid (1);
+    setUrl (KUrl (QString ("vdr://localhost:%1").arg (tcp_port)));
     QTimer::singleShot (0, m_player, SLOT (play ()));
 }
 
@@ -280,7 +280,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::disconnected () {
         deleteCommands ();
         return;
     }
-    setURL (KURL (QString ("vdr://localhost:%1").arg (tcp_port)));
+    setUrl (KUrl (QString ("vdr://localhost:%1").arg (tcp_port)));
     if (channel_timer && m_player->source () == this)
         m_player->process ()->quit ();
     deleteCommands ();

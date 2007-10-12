@@ -1300,7 +1300,7 @@ bool CallbackProcess::deMediafiedPlay () {
     }
     KUrl url (u);
     QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
-    m_backend->setURL (myurl);
+    m_backend->setUrl (myurl);
     const KUrl & sub_url = m_source->subUrl ();
     if (!sub_url.isEmpty ())
         m_backend->setSubTitleURL (QString (QFile::encodeName (sub_url.isLocalFile () ? QFileInfo (getPath (sub_url)).absFilePath () : sub_url.url ())));

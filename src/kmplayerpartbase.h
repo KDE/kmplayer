@@ -71,14 +71,14 @@ class Settings;
 class KMPLAYER_EXPORT URLSource : public Source {
     Q_OBJECT
 public:
-    URLSource (PartBase * player, const KURL & url = KURL ());
+    URLSource (PartBase * player, const KUrl & url = KUrl ());
     virtual ~URLSource ();
 
     virtual void dimensions (int & w, int & h);
     virtual bool hasLength ();
     virtual QString prettyName ();
     virtual void reset ();
-    virtual void setURL (const KURL & url);
+    virtual void setUrl (const KUrl & url);
 public slots:
     virtual void init ();
     virtual void activate ();
@@ -126,8 +126,8 @@ public:
 
     Settings * settings () const { return m_settings; }
     void keepMovieAspect (bool);
-    KURL url () const { return m_sources ["urlsource"]->url (); }
-    void setURL (const KURL & url) { m_sources ["urlsource"]->setURL (url); }
+    KUrl url () const { return m_sources ["urlsource"]->url (); }
+    void setUrl (const KUrl & url) { m_sources ["urlsource"]->setUrl (url); }
 
     /* Changes the backend process */
     void setProcess (const char *);
@@ -163,9 +163,9 @@ public:
     void updateTree (bool full=true, bool force=false);
     void setLanguages (const QStringList & alang, const QStringList & slang);
 public slots:
-    virtual bool openURL (const KURL & url);
-    virtual bool openURL (const KURL::List & urls);
-    virtual bool closeURL ();
+    virtual bool openUrl (const KUrl & url);
+    virtual bool openUrl (const KUrl::List & urls);
+    virtual bool closeUrl ();
     virtual void pause (void);
     virtual void play (void);
     virtual void stop (void);

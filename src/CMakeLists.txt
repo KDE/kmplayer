@@ -83,6 +83,8 @@ target_link_libraries(kmplayerpart
 
 install(TARGETS kmplayerpart DESTINATION ${PLUGIN_INSTALL_DIR} )
 
+install( FILES kmplayer_part.desktop  DESTINATION  ${SERVICES_INSTALL_DIR} )
+
 ########### next target ###############
 
 set(kmplayer_SRCS
@@ -108,6 +110,8 @@ target_link_libraries(kmplayer kdeinit_kmplayer)
 install(TARGETS kdeinit_kmplayer  DESTINATION ${LIB_INSTALL_DIR} )
 
 install(TARGETS kmplayer DESTINATION ${BIN_INSTALL_DIR})
+
+install( FILES kmplayer.desktop  DESTINATION  ${SERVICES_INSTALL_DIR} )
 
 #qt4_add_dbus_interface(kmplayer_SRCS org.kde.Konqueror.Main.xml kmplayer_interface)
 
@@ -136,5 +140,5 @@ endif (HAVE_NPP)
 
 ########### install files ###############
 
-install(FILES kmplayerui.rc kmplayerpartui.rc noise.gif DESTINATION  ${DATA_INSTALL_DIR}/kmplayer)
+install(FILES kmplayerui.rc kmplayerpartui.rc noise.gif pluginsinfo DESTINATION  ${DATA_INSTALL_DIR}/kmplayer)
 #install(FILES kmplayer.kcfg  DESTINATION  ${KCFG_INSTALL_DIR})

@@ -67,7 +67,7 @@ extern "C" KDE_EXPORT int kdemain (int argc, char *argv[]) {
                 if (url.url ().find ("://") < 0)
                     url = KUrl (QFileInfo (url.url ()).absFilePath ());
                 if (url.isValid ())
-                    kmplayer->addURL (url);
+                    kmplayer->addUrl (url);
             }
         kmplayer->openDocumentFile (url);
         args->clear ();

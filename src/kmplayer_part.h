@@ -40,7 +40,7 @@ public:
     virtual bool processOutput (const QString & line);
     virtual bool hasLength ();
 
-    void setURL (const KURL &);
+    void setUrl (const KUrl &);
     void clear ();
     virtual QString prettyName ();
 public slots:
@@ -70,9 +70,9 @@ public:
 
     void saveState (QDataStream & stream);
     void restoreState (QDataStream & stream);
-    void requestOpenURL (const KURL & url, const QString & target, const QString & service);
+    void requestOpenURL (const KUrl & url, const QString & target, const QString & service);
 public slots:
-    void slotRequestOpenURL (const KURL & url, const QString & target);
+    void slotRequestOpenURL (const KUrl & url, const QString & target);
 };
 
 /*
@@ -137,15 +137,15 @@ public:
     KMPlayerLiveConnectExtension * liveconnectextension () const
         { return m_liveconnectextension; }
     KDE_NO_EXPORT bool hasFeature (int f) { return m_features & f; }
-    bool allowRedir (const KURL & url) const;
+    bool allowRedir (const KUrl & url) const;
     void connectToPart (KMPlayerPart *);
     KMPlayerPart * master () const { return m_master; }
     void setMaster (KMPlayerPart * m) { m_master = m; }
     virtual void setLoaded (int percentage);
-    bool openNewURL (const KURL & url); // for JS interface
+    bool openNewURL (const KUrl & url); // for JS interface
 public slots:
-    virtual bool openURL (const KURL & url);
-    virtual bool closeURL ();
+    virtual bool openUrl (const KUrl & url);
+    virtual bool closeUrl ();
     void setMenuZoom (int id);
 protected slots:
     virtual void playingStarted ();
@@ -161,7 +161,7 @@ private:
     KMPlayerBrowserExtension * m_browserextension;
     KMPlayerLiveConnectExtension * m_liveconnectextension;
     QString m_group;
-    KURL m_docbase;
+    KUrl m_docbase;
     QString m_src_url;
     QString m_file_name;
     int m_features;

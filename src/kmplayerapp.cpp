@@ -277,7 +277,7 @@ KDE_NO_EXPORT void Recent::closed () {
 }
 
 KDE_NO_EXPORT void Recent::activate () {
-    app->openDocumentFile (KURL (src));
+    app->openDocumentFile (KUrl (src));
 }
 
 KDE_NO_CDTOR_EXPORT
@@ -750,11 +750,11 @@ KDE_NO_EXPORT void KMPlayerApp::windowVideoConsoleToggled (int wt) {
 KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
     KMPlayer::Source * source = m_player->source ();
     if (!strcmp (source->name (), "urlsource")) {
-        KURL url = source->url ();
+        KUrl url = source->url ();
         if (url.url ().startsWith ("lists"))
             return;
         if (url.isEmpty () && m_player->process ()->mrl ())
-            url = KURL (m_player->process ()->mrl ()->mrl ()->src);
+            url = KUrl (m_player->process ()->mrl ()->mrl ()->src);
         recentFiles ()->addUrl (url);
         recents->defer (); // make sure it's loaded
         recents->insertBefore (new Recent (recents, this, url.url ()), recents->firstChild ());
@@ -939,7 +939,7 @@ KDE_NO_EXPORT void IntroSource::stateElementChanged (KMPlayer::Node * node, KMPl
             m_app->restoreFromConfig ();
         emit stopPlaying ();
         if (!deactivated) // replace introsource with urlsource
-            m_player->openURL (KURL ());
+            m_player->openUrl (KUrl ());
     }
 }
 
@@ -962,7 +962,7 @@ KDE_NO_EXPORT void KMPlayerApp::restoreFromConfig () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
+KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KUrl& url)
 {
     if (!m_played_intro) {
         m_played_intro = true;
@@ -983,7 +983,7 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
         }
     }
     slotStatusMsg(i18n("Opening file..."));
-    m_player->openURL (url);
+    m_player->openUrl (url);
     /*if (m_broadcastconfig->broadcasting () && url.url() == m_broadcastconfig->serverURL ()) {
         // speed up replay
         FFServerSetting & ffs = m_broadcastconfig->ffserversettings;
@@ -997,7 +997,7 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KURL& url)
     slotStatusMsg (i18n ("Ready."));
 }
 
-KDE_NO_EXPORT void KMPlayerApp::addURL (const KURL& url) {
+KDE_NO_EXPORT void KMPlayerApp::addUrl (const KUrl& url) {
     KMPlayer::Source * src = m_player->sources () ["urlsource"];
     KMPlayer::NodePtr d = src->document ();
     if (d)
@@ -1093,7 +1093,7 @@ KDE_NO_EXPORT void KMPlayerApp::syncEditMode () {
             m_view->playList ()->updateTree (edit_tree_id, si->node->document(), si->node, true, false);
         }
     } else
-        m_player->openURL (m_player->source ()->url ());
+        m_player->openUrl (m_player->source ()->url ());
 }
 
 KDE_NO_EXPORT void KMPlayerApp::showBroadcastConfig () {
@@ -1340,17 +1340,17 @@ KDE_NO_EXPORT void KMPlayerApp::slotFileNewWindow()
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotFileOpen () {
-    KURL::List urls = KFileDialog::getOpenUrls (QString (), i18n ("*|All Files"), this, i18n ("Open File"));
+    KUrl::List urls = KFileDialog::getOpenUrls (QString (), i18n ("*|All Files"), this, i18n ("Open File"));
     if (urls.size () == 1) {
         openDocumentFile (urls [0]);
     } else if (urls.size () > 1) {
-        m_player->openURL (KURL ());
+        m_player->openUrl (KUrl ());
         for (unsigned int i = 0; i < urls.size (); i++)
-            addURL (urls [i]);
+            addUrl (urls [i]);
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::slotFileOpenRecent(const KURL& url)
+KDE_NO_EXPORT void KMPlayerApp::slotFileOpenRecent(const KUrl& url)
 {
     slotStatusMsg(i18n("Opening file..."));
 
@@ -1533,8 +1533,8 @@ void KMPlayerApp::playListItemDropped (QDropEvent * de, Q3ListViewItem * after) 
         KUrl::List m_drop_list = KUrl::List::fromMimeData (de->mimeData ());
         if (m_drop_list.isEmpty () && Q3TextDrag::canDecode (de)) {
             QString text;
-            if (Q3TextDrag::decode (de, text) && KURL (text).isValid ())
-                m_drop_list.push_back (KURL (text));
+            if (Q3TextDrag::decode (de, text) && KUrl (text).isValid ())
+                m_drop_list.push_back (KUrl (text));
         }
     }
     m_dropmenu->changeItem (m_dropmenu->idAt (0),
@@ -1777,7 +1777,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QMenu
     m_dvdsubtitlemenu->setCheckable (true);
     m_dvdchaptermenu->setCheckable (true);
     m_dvdlanguagemenu->setCheckable (true);
-    setURL (KURL ("dvd://"));
+    setUrl (KUrl ("dvd://"));
     m_player->settings ()->addPage (this);
     disks = new Disks (a);
     disks->appendChild (new Disk (disks, a, "cdda://", i18n ("CDROM - Audio Compact Disk")));
@@ -1838,7 +1838,7 @@ KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
 KDE_NO_EXPORT void KMPlayerDVDSource::activate () {
     m_start_play = m_auto_play;
     m_current_title = -1;
-    setURL (KURL ("dvd://"));
+    setUrl (KUrl ("dvd://"));
     buildArguments ();
     m_menu->insertItem (i18n ("&Titles"), m_dvdtitlemenu);
     m_menu->insertItem (i18n ("&Chapters"), m_dvdchaptermenu);
@@ -1905,7 +1905,7 @@ KDE_NO_EXPORT void KMPlayerDVDSource::buildArguments () {
             url += QString::number (m_current_title);
         m_document->mrl ()->src = url;
     } else
-        setURL (KURL (url));
+        setUrl (KUrl (url));
     m_options = QString (m_identified ? "" : "-v ");
     if (m_identified) {
         for (unsigned i = 0; i < m_dvdsubtitlemenu->count (); i++)
@@ -2008,13 +2008,13 @@ KDE_NO_EXPORT QFrame * KMPlayerDVDSource::prefPage (QWidget * parent) {
 KDE_NO_CDTOR_EXPORT KMPlayerDVDNavSource::KMPlayerDVDNavSource (KMPlayerApp * app, QMenu * m)
     : KMPlayerMenuSource (i18n ("DVDNav"), app, m, "dvdnavsource") {
     m_menu->insertTearOffHandle (-1, 0);
-    setURL (KURL ("dvd://"));
+    setUrl (KUrl ("dvd://"));
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerDVDNavSource::~KMPlayerDVDNavSource () {}
 
 KDE_NO_EXPORT void KMPlayerDVDNavSource::activate () {
-    setURL (KURL ("dvd://"));
+    setUrl (KUrl ("dvd://"));
     play ();
 }
 
@@ -2085,7 +2085,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVCD::KMPlayerPrefSourcePageVCD (QWidge
 KDE_NO_CDTOR_EXPORT KMPlayerVCDSource::KMPlayerVCDSource (KMPlayerApp * a, QMenu * m)
     : KMPlayerMenuSource (i18n ("VCD"), a, m, "vcdsource"), m_configpage (0L) {
     m_player->settings ()->addPage (this);
-    setURL (KURL ("vcd://"));
+    setUrl (KUrl ("vcd://"));
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerVCDSource::~KMPlayerVCDSource () {
@@ -2112,7 +2112,7 @@ KDE_NO_EXPORT void KMPlayerVCDSource::activate () {
     m_player->stop ();
     init ();
     m_start_play = m_auto_play;
-    setURL (KURL ("vcd://"));
+    setUrl (KUrl ("vcd://"));
     buildArguments ();
     if (m_start_play)
         QTimer::singleShot (0, m_player, SLOT (play ()));
@@ -2181,7 +2181,7 @@ KDE_NO_EXPORT QFrame * KMPlayerVCDSource::prefPage (QWidget * parent) {
 
 KDE_NO_CDTOR_EXPORT KMPlayerAudioCDSource::KMPlayerAudioCDSource (KMPlayerApp * a, QMenu * m)
     : KMPlayerMenuSource (i18n ("Audio CD"), a, m, "audiocdsource") {
-    setURL (KURL ("cdda://"));
+    setUrl (KUrl ("cdda://"));
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerAudioCDSource::~KMPlayerAudioCDSource () {
@@ -2211,7 +2211,7 @@ KDE_NO_EXPORT void KMPlayerAudioCDSource::activate () {
     m_player->stop ();
     init ();
     //m_start_play = m_auto_play;
-    setURL (KURL ("cdda://"));
+    setUrl (KUrl ("cdda://"));
     buildArguments ();
     //if (m_start_play)
         QTimer::singleShot (0, m_player, SLOT (play ()));
@@ -2268,8 +2268,8 @@ KDE_NO_EXPORT bool KMPlayerPipeSource::isSeekable () {
 
 KDE_NO_EXPORT void KMPlayerPipeSource::activate () {
     // dangerous !! if (!m_url.protocol ().compare ("kmplayer"))
-    //    m_pipecmd = KURL::decode_string (m_url.path ()).mid (1);
-    setURL (KURL ("stdin://"));
+    //    m_pipecmd = KUrl::decode_string (m_url.path ()).mid (1);
+    setUrl (KUrl ("stdin://"));
     KMPlayer::GenericMrl * gen = new KMPlayer::GenericMrl (m_document, QString ("stdin://"), m_pipecmd);
     gen->bookmarkable = false;
     m_document->appendChild (gen);
