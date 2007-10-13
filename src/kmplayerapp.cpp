@@ -36,6 +36,7 @@
 #include <qmetaobject.h>
 #include <QLabel>
 #include <Q3TextDrag>
+#include <QDockWidget>
 
 // include files for KDE
 #include <kapplication.h>
@@ -958,10 +959,11 @@ KDE_NO_EXPORT void IntroSource::deactivate () {
 
 KDE_NO_EXPORT void KMPlayerApp::restoreFromConfig () {
     if (m_player->view ()) {
-        //m_view->docArea ()->hide ();
-        //m_view->docArea ()->readDockConfig (
-        //        m_player->config ().data (), QString ("Window Layout"));
-        //m_view->docArea ()->show ();
+        m_view->dockArea ()->hide ();
+        KConfigGroup dock_cfg (KGlobal::config(), "Window Layout");
+        m_view->dockArea ()->restoreState (dock_cfg.readEntry ("Layout", QByteArray ()));
+        m_view->dockPlaylist ()->setVisible (dock_cfg.readEntry ("Show playlist", false));
+        m_view->dockArea ()->show ();
         m_view->layout ()->activate ();
     }
 }
@@ -1064,12 +1066,12 @@ KDE_NO_EXPORT void KMPlayerApp::zoom150 () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::editMode () {
-    //m_view->docArea ()->hide ();
+    //m_view->dockArea ()->hide ();
     bool editmode = !m_view->editMode ();
     KMPlayer::PlayListItem * pi = m_view->playList ()->currentPlayListItem ();
     if (!pi || !pi->node)
         editmode = false;
-    //m_view->docArea ()->show ();
+    //m_view->dockArea ()->show ();
     viewEditMode->setChecked (editmode);
     KMPlayer::RootPlayListItem * ri = (edit_tree_id > 0 && !editmode)
         ? m_view->playList ()->rootItem (edit_tree_id)
@@ -1151,7 +1153,9 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
                 "Command1", m_player->sources () ["pipesource"]->pipeCmd ());
     }
     m_view->setInfoMessage (QString ());
-    //m_view->docArea ()->writeDockConfig (config.data (), QString ("Window Layout"));
+    KConfigGroup dock_cfg (KGlobal::config(), "Window Layout");
+    dock_cfg.writeEntry ("Layout", m_view->dockArea ()->saveState ());
+    dock_cfg.writeEntry ("Show playlist", m_view->dockPlaylist ()->isVisible ());
     Recents * rc = static_cast <Recents *> (recents.ptr ());
     if (rc && rc->resolved) {
         fileOpenRecent->saveEntries (KConfigGroup (config, "Recent Files"));

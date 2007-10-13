@@ -115,7 +115,8 @@ public:
     KDE_NO_EXPORT PlayListView * playList () const { return m_playlist; }
     KDE_NO_EXPORT InfoWindow * infoPanel () const { return m_infopanel; }
     KDE_NO_EXPORT QStackedWidget * widgetStack () const { return m_widgetstack; }
-    //KDE_NO_EXPORT K3DockArea * docArea () const { return m_dockarea; }
+    KDE_NO_EXPORT QMainWindow *dockArea () const { return m_dockarea; }
+    KDE_NO_EXPORT QDockWidget *dockPlaylist () const { return m_dock_playlist; }
     KDE_NO_EXPORT ViewArea * viewArea () const { return m_view_area; }
     KDE_NO_EXPORT bool keepSizeRatio () const { return m_keepsizeratio; }
     void setKeepSizeRatio (bool b);

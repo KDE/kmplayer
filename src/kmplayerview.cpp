@@ -192,6 +192,9 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
     m_dockarea->addDockWidget (Qt::LeftDockWidgetArea, m_dock_playlist);
     m_playlist = new PlayListView (m_dock_playlist, this, action_collection);
     m_dock_playlist->setWidget (m_playlist);
+    m_dock_playlist->hide ();
+    m_dock_playlist->setObjectName ("playlist");
+
     viewbox->addWidget (m_dockarea);
     m_widgetstack = new QStackedWidget (m_view_area);
     m_control_panel = new ControlPanel (m_view_area, this);
@@ -218,6 +221,8 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
     m_dockarea->addDockWidget (Qt::BottomDockWidgetArea, m_dock_infopanel);
     m_infopanel = new InfoWindow (m_dock_infopanel, this);
     m_dock_infopanel->setWidget (m_infopanel);
+    m_dock_infopanel->setObjectName ("infopanel");
+    m_dock_infopanel->hide ();
 
     m_widgetstack->addWidget (m_viewer);
     m_widgetstack->addWidget (m_multiedit);
