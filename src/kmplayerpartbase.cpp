@@ -1687,16 +1687,10 @@ KDE_NO_EXPORT void URLSource::kioData (KIO::Job * job, const QByteArray & d) {
     }
     int size = rinfo->data.size ();
     int newsize = size + d.size ();
-    if (!size) { // first data
-        int accuraty = 0;
-        KMimeType::Ptr mime = KMimeType::findByContent (d, &accuraty);
-        if (!mime ||
-                !mime->name ().startsWith (QString ("text/")) ||
-                (newsize > 4 && !strncmp (d.data (), "RIFF", 4))) {
-            newsize = 0;
-            kDebug () << "URLSource::kioData: " << mime->name () << accuraty << endl;
-        }
-    }
+    if (!size /* first data*/ &&
+            (KMimeType::isBufferBinaryData (d) ||
+             (newsize > 4 && !strncmp (d.data (), "RIFF", 4))))
+        newsize = 0;
     //kDebug () << "URLSource::kioData: " << newsize << endl;
     if (newsize <= 0 || newsize > 200000) {
         rinfo->data.resize (0);

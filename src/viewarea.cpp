@@ -32,6 +32,7 @@
 #include <QDesktopWidget>
 #include <QX11Info>
 #include <QPainter>
+#include <QDockWidget>
 
 #include <kactioncollection.h>
 #include <kstatusbar.h>
@@ -1345,7 +1346,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType * mediatype) {
 
 KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
 // : QWidget (parent, "kde_kmplayer_viewarea", WResizeNoErase | WRepaintNoErase),
- : QWidget (parent),
+ : //QWidget (parent),
    m_parent (parent),
    m_view (view),
    m_collection (new KActionCollection (this)),
@@ -1390,7 +1391,7 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
     if (m_fullscreen) {
         showNormal ();
         reparent (m_parent, 0, QPoint (0, 0), true);
-        static_cast <K3DockWidget *> (m_parent)->setWidget (this);
+        static_cast <QDockWidget *> (m_parent)->setWidget (this);
         for (unsigned i = 0; i < m_collection->count (); ++i)
             m_collection->action (i)->setEnabled (false);
         /*if (scale_lbl_id != -1) {

@@ -539,7 +539,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp (QWidget *)
 
     //setAutoSaveSettings();
     playlist = new Playlist (this, lstsrc);
-    playlist_id = m_view->playList ()->addTree (playlist, "listssource", "player_playlist", KMPlayer::PlayListView::AllowDrag | KMPlayer::PlayListView::AllowDrops | KMPlayer::PlayListView::TreeEdit | KMPlayer::PlayListView::Moveable | KMPlayer::PlayListView::Deleteable);
+    playlist_id = m_view->playList ()->addTree (playlist, "listssource", "media-playlist", KMPlayer::PlayListView::AllowDrag | KMPlayer::PlayListView::AllowDrops | KMPlayer::PlayListView::TreeEdit | KMPlayer::PlayListView::Moveable | KMPlayer::PlayListView::Deleteable);
     readOptions();
 }
 
@@ -584,12 +584,18 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     KStandardAction::configureToolbars (this, SLOT (slotConfigureToolbars ()), ac);
     viewFullscreen = ac->addAction ("view_fullscreen");
     viewFullscreen->setCheckable (true);
+    viewFullscreen->setText (i18n("Fullscreen"));
     connect (viewFullscreen, SIGNAL (triggered (bool)), this, SLOT (fullScreen ()));
     toggleView = ac->addAction ("view_video");
     toggleView->setText (i18n ("C&onsole"));
     toggleView->setIcon (KIcon ("konsole"));
     connect (toggleView, SIGNAL (triggered (bool)),
             m_player->view (), SLOT (toggleVideoConsoleWindow ()));
+    viewSyncEditMode = ac->addAction ("sync_edit_mode");
+    viewSyncEditMode->setText (i18n ("Reload"));
+    viewSyncEditMode->setIcon (KIcon ("view-refresh"));
+    connect (viewSyncEditMode, SIGNAL (triggered (bool)), this, SLOT (syncEditMode ()));
+    viewSyncEditMode->setEnabled (false);
     /*fileNewWindow = new KAction(i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), ac, "new_window");
     new KAction (i18n ("Clear &History"), 0, 0, this, SLOT (slotClearHistory ()), ac, "clear_history");
     new KAction (i18n ("&Open DVD"), QString ("dvd_mount"), KShortcut (), this, SLOT(openDVD ()), ac, "opendvd");
@@ -606,8 +612,6 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     new KAction (i18n ("50%"), 0, 0, this, SLOT (zoom50 ()), ac, "view_zoom_50");
     new KAction (i18n ("100%"), QString ("viewmagfit"), KShortcut (), this, SLOT (zoom100 ()), ac, "view_zoom_100");
     new KAction (i18n ("150%"), 0, 0, this, SLOT (zoom150 ()), ac, "view_zoom_150");
-    viewSyncEditMode = new KAction (i18n ("Sync &with playlist"), QString ("reload"), KShortcut (), this, SLOT (syncEditMode ()), ac, "sync_edit_mode");
-    viewSyncEditMode->setEnabled (false);
     new KAction (i18n ("Show Popup Menu"), KShortcut (), m_view->controlPanel (), SLOT (showPopupMenu ()), ac, "view_show_popup_menu");
     new KAction (i18n ("Show Language Menu"), KShortcut (Qt::Key_L), m_view->controlPanel (), SLOT (showLanguageMenu ()), ac, "view_show_lang_menu");
     viewKeepRatio = new KToggleAction (i18n ("&Keep Width/Height Ratio"), 0, this, SLOT (keepSizeRatio ()), ac, "view_keep_ratio");
@@ -662,7 +666,7 @@ KDE_NO_EXPORT void KMPlayerApp::initMenu () {
 
 KDE_NO_EXPORT void KMPlayerApp::initView () {
     KSharedConfigPtr config = KGlobal::config ();
-    m_view->docArea ()->readDockConfig (config.data (), QString ("Window Layout"));
+    //m_view->docArea ()->readDockConfig (config.data (), QString ("Window Layout"));
     m_player->connectPanel (m_view->controlPanel ());
     initMenu ();
     //new KAction (i18n ("Increase Volume"), editVolumeInc->shortcut (), m_player, SLOT (increaseVolume ()), m_view->viewArea ()->actionCollection (), "edit_volume_up");
@@ -819,8 +823,8 @@ KDE_NO_EXPORT void KMPlayerApp::slotSourceChanged (KMPlayer::Source *olds, KMPla
                  this, SLOT (setCaption (const QString &)));
         connect (news, SIGNAL (startPlaying ()),
                  this, SLOT (playerStarted ()));
-        //viewSyncEditMode->setEnabled (m_view->editMode () ||
-        //        !strcmp (m_player->source ()->name (), "urlsource"));
+        viewSyncEditMode->setEnabled (m_view->editMode () ||
+                !strcmp (m_player->source ()->name (), "urlsource"));
     }
 }
 
@@ -954,10 +958,10 @@ KDE_NO_EXPORT void IntroSource::deactivate () {
 
 KDE_NO_EXPORT void KMPlayerApp::restoreFromConfig () {
     if (m_player->view ()) {
-        m_view->docArea ()->hide ();
+        //m_view->docArea ()->hide ();
         //m_view->docArea ()->readDockConfig (
         //        m_player->config ().data (), QString ("Window Layout"));
-        m_view->docArea ()->show ();
+        //m_view->docArea ()->show ();
         m_view->layout ()->activate ();
     }
 }
@@ -1060,12 +1064,12 @@ KDE_NO_EXPORT void KMPlayerApp::zoom150 () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::editMode () {
-    m_view->docArea ()->hide ();
+    //m_view->docArea ()->hide ();
     bool editmode = !m_view->editMode ();
     KMPlayer::PlayListItem * pi = m_view->playList ()->currentPlayListItem ();
     if (!pi || !pi->node)
         editmode = false;
-    m_view->docArea ()->show ();
+    //m_view->docArea ()->show ();
     viewEditMode->setChecked (editmode);
     KMPlayer::RootPlayListItem * ri = (edit_tree_id > 0 && !editmode)
         ? m_view->playList ()->rootItem (edit_tree_id)
@@ -1147,7 +1151,7 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
                 "Command1", m_player->sources () ["pipesource"]->pipeCmd ());
     }
     m_view->setInfoMessage (QString ());
-    m_view->docArea ()->writeDockConfig (config.data (), QString ("Window Layout"));
+    //m_view->docArea ()->writeDockConfig (config.data (), QString ("Window Layout"));
     Recents * rc = static_cast <Recents *> (recents.ptr ());
     if (rc && rc->resolved) {
         fileOpenRecent->saveEntries (KConfigGroup (config, "Recent Files"));
@@ -1783,7 +1787,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QMenu
     disks->appendChild (new Disk (disks, a, "cdda://", i18n ("CDROM - Audio Compact Disk")));
     disks->appendChild (new Disk (disks, a, "vcd://", i18n ("VCD - Video Compact Disk")));
     disks->appendChild (new Disk (disks, a, "dvd://", i18n ("DVD - Digital Video Disk")));
-    m_app->view()->playList()->addTree (disks, "listssource", "cdrom_mount", 0);
+    m_app->view()->playList()->addTree (disks, "listssource", "cd", 0);
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::~KMPlayerDVDSource () {

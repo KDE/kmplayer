@@ -68,6 +68,7 @@
   <Action name="stop" icon="media-playback-stop"/>
   <Action name="view_playlist" icon="media-playlist"/>
   <Action name="view_fullscreen" icon="view-fullscreen"/>
+  <Action name="sync_edit_mode" icon="view-refresh"/>
   <Action shortcut="F" name="view_fullscreen" icon="view-fullscreen"/>
   <Action shortcut="R" name="play" />
   <Action shortcut="P" name="pause" />

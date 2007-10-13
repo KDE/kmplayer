@@ -23,7 +23,6 @@
 #include <qwidget.h>
 #include <qtextedit.h>
 
-#include <k3dockwidget.h>
 #include <kurl.h>
 #include <QtGui/QX11EmbedContainer>
 #include <kmediaplayer/view.h>
@@ -38,6 +37,8 @@ class QPaintDevice;
 class QPainter;
 class QSlider;
 class QLabel;
+class QMainWindow;
+class QDockWidget;
 class KActionCollection;
 class KAction;
 class KShortcut;
@@ -114,7 +115,7 @@ public:
     KDE_NO_EXPORT PlayListView * playList () const { return m_playlist; }
     KDE_NO_EXPORT InfoWindow * infoPanel () const { return m_infopanel; }
     KDE_NO_EXPORT QStackedWidget * widgetStack () const { return m_widgetstack; }
-    KDE_NO_EXPORT K3DockArea * docArea () const { return m_dockarea; }
+    //KDE_NO_EXPORT K3DockArea * docArea () const { return m_dockarea; }
     KDE_NO_EXPORT ViewArea * viewArea () const { return m_view_area; }
     KDE_NO_EXPORT bool keepSizeRatio () const { return m_keepsizeratio; }
     void setKeepSizeRatio (bool b);
@@ -134,7 +135,6 @@ public:
     void setViewOnly ();
     void setInfoPanelOnly ();
     void setPlaylistOnly ();
-    bool playlistVisible () const { return !m_dock_playlist->mayBeShow (); }
     void setEditMode (RootPlayListItem *, bool enable=true);
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
@@ -177,10 +177,10 @@ private:
     InfoWindow * m_infopanel;
     // all widget types
     QWidget * m_widgettypes [WT_Last];
-    K3DockArea * m_dockarea;
-    K3DockWidget * m_dock_video;
-    K3DockWidget * m_dock_playlist;
-    K3DockWidget * m_dock_infopanel;
+    QMainWindow *m_dockarea;
+    QDockWidget *m_dock_video;
+    QDockWidget *m_dock_playlist;
+    QDockWidget *m_dock_infopanel;
     QString tmplog;
     QPixmap * m_image;
     ControlPanel * m_control_panel;
