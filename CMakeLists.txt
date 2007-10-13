@@ -1,12 +1,11 @@
 project(kmplayer)
 
 find_package(KDE4 REQUIRED)
-set(CMAKE_VERBOSE_MAKEFILE ON)
+include (KDE4Defaults)
+include (MacroLibrary)
 
 add_definitions (${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
-
-include_directories( ${KDE4_INCLUDE_DIR} ${QT_INCLUDES}  )
-
+include_directories( ${KDE4_INCLUDES})
 
 if(NOT WIN32)
   INCLUDE(UsePkgConfig)

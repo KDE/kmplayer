@@ -17,7 +17,7 @@ add_definitions(-DQT3_SUPPORT -DKDE3_SUPPORT)
 
 ADD_DEFINITIONS(${CAIROCFlags})
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/.. ${CAIROIncDir})
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR} ${CAIROIncDir})
 
 
 set(libkmplayercommon_SRCS
