@@ -753,8 +753,9 @@ KDE_NO_EXPORT void Viewer::setIntermediateWindow (bool set) {
 }
 
 KDE_NO_EXPORT void Viewer::embedded () {
-    kDebug () << "windowChanged " << (int)clientWinId () << endl;
-    if (clientWinId () && m_plain_window)
+    kDebug () << "[01;35mwindowChanged[00m " << (int)clientWinId () << endl;
+    QTimer::singleShot (10, this, SLOT (sendConfigureEvent ()));
+    /*if (clientWinId () && m_plain_window)
         XSelectInput (QX11Info::display (), clientWinId (),
                 //KeyPressMask | KeyReleaseMask |
                 KeyPressMask |
@@ -762,7 +763,7 @@ KDE_NO_EXPORT void Viewer::embedded () {
                 //FocusChangeMask |
                 ExposureMask |
                 StructureNotifyMask |
-                PointerMotionMask);
+                PointerMotionMask);*/
 }
 
 KDE_NO_EXPORT void Viewer::mouseMoveEvent (QMouseEvent * e) {
@@ -810,6 +811,7 @@ void Viewer::sendKeyEvent (int key) {
 
 KDE_NO_EXPORT void Viewer::sendConfigureEvent () {
     WId w = clientWinId ();
+    kDebug() << "[01;35msendConfigureEvent[00m " << width () << endl;
     if (w) {
         XConfigureEvent c = {
             ConfigureNotify, 0UL, True,

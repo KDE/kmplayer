@@ -209,8 +209,8 @@ bool Process::play (Source * src, NodePtr _mrl) {
     m_url = url;
     if (!changed || KUrl (m_url).isLocalFile ())
         return deMediafiedPlay ();
-    m_job = KIO::stat (m_url, false);
-    connect(m_job, SIGNAL (result(KJob *)), this, SLOT (result (KJob *)));
+    m_job = KIO::stat (m_url, KIO::HideProgressInfo);
+    connect (m_job, SIGNAL (result (KJob *)), this, SLOT (result (KJob *)));
     return true;
 }
 
@@ -1883,30 +1883,12 @@ KDE_NO_EXPORT void FFMpeg::processStopped (K3Process *) {
 
 #ifdef HAVE_NPP
 
-class KMPLAYER_NO_EXPORT DBusStatic : public GlobalShared <DBusStatic> {
-public:
-    DBusStatic (DBusStatic **glob);
-    ~DBusStatic ();
-    DBusConnection *dbus_connnection;
-};
-
-static DBusStatic *dbus_static = 0L;
-
-DBusStatic::DBusStatic (DBusStatic **glob)
- : GlobalShared <DBusStatic> (glob), dbus_connnection (0L) {}
-
-DBusStatic::~DBusStatic () {
-    dbus_connection_unref (dbus_connnection);
-    dbus_static = 0L;
-}
-
-//------------------%<---------------------------------------------------------
-
 KDE_NO_CDTOR_EXPORT NpStream::NpStream (NpPlayer *p, uint32_t sid, const QString &u)
  : QObject (p),
    url (u),
-   job (0L), bytes (0), content_length (0),
+   job (0L), bytes (0),
    stream_id (sid),
+   content_length (0),
    finish_reason (NoReason) {
     data_arrival.tv_sec = 0;
     (void) new StreamAdaptor (this);
@@ -1923,11 +1905,14 @@ KDE_NO_EXPORT void NpStream::open () {
     if (url.startsWith ("javascript:")) {
         NpPlayer *npp = static_cast <NpPlayer *> (parent ());
         QString result = npp->evaluate (url.mid (11));
-        QByteArray cr = result.toLocal8Bit ();
-        bytes += strlen (cr.data ());
-        pending_buf.resize (bytes + 1);
-        memcpy (pending_buf.data (), cr.data (), bytes);
-        *(pending_buf.data () + bytes) = 0;
+        if (!result.isEmpty ()) {
+            QByteArray cr = result.toLocal8Bit ();
+            int len = strlen (cr.data ());
+            pending_buf.resize (len + 1);
+            memcpy (pending_buf.data (), cr.data (), len);
+            pending_buf.data ()[len] = 0;
+            gettimeofday (&data_arrival, 0L);
+        }
         kDebug () << "result is " << pending_buf.data () << endl;
         finish_reason = BecauseDone;
         emit stateChanged ();
@@ -1961,7 +1946,7 @@ KDE_NO_EXPORT void NpStream::destroy () {
 }
 
 KDE_NO_EXPORT void NpStream::slotResult (KJob *jb) {
-    kDebug() << "slotResult " << bytes << " err:" << jb->error () << endl;
+    kDebug() << "slotResult " << stream_id << " " << bytes << " err:" << jb->error () << endl;
     finish_reason = jb->error () ? BecauseError : BecauseDone;
     job = 0L; // signal KIO::Job::result deletes itself
     emit stateChanged ();
@@ -1999,16 +1984,12 @@ KDE_NO_CDTOR_EXPORT
 NpPlayer::NpPlayer (QObject * parent, Settings * settings, const QString & srv)
  : Process (parent, settings, "npp"),
    service (srv),
-   write_in_progress (false) {
-    if (!dbus_static)
-        (void) new DBusStatic (&dbus_static);
-    else
-        dbus_static->ref ();
+   write_in_progress (false),
+   in_process_stream (false) {
     m_supported_sources = npplayer_supports;
 }
 
 KDE_NO_CDTOR_EXPORT NpPlayer::~NpPlayer () {
-    dbus_static->unref ();
 }
 
 KDE_NO_EXPORT void NpPlayer::init () {
@@ -2025,32 +2006,21 @@ KDE_NO_EXPORT void NpPlayer::initProcess (Viewer * viewer) {
     connect (m_process, SIGNAL (wroteStdin (K3Process *)),
             this, SLOT (wroteStdin (K3Process *)));
     if (iface.isEmpty ()) {
-        DBusError dberr;
         iface = QString ("org.kde.kmplayer.callback");
         static int count = 0;
         path = QString ("/npplayer%1").arg (count++);
         (void) new CallbackAdaptor (this);
         QDBusConnection::sessionBus().registerObject (path, this);
         filter = QString ("type='method_call',interface='org.kde.kmplayer.callback'");
-
-        dbus_error_init (&dberr);
-        DBusConnection *conn = dbus_bus_get (DBUS_BUS_SESSION, &dberr);
-        if (dbus_error_is_set (&dberr))
-            dbus_error_free (&dberr);
-        if (!conn) {
-            kError () << "Failed to get dbus connection: " << dberr.message << endl;
-            return;
-        }
         service = QDBusConnection::sessionBus().baseService ();
         //service = QString (dbus_bus_get_unique_name (conn));
         kDebug() << "using service " << service << " interface " << iface << " filter:" << filter.ascii() << endl;
-        dbus_static->dbus_connnection = conn;
     }
 }
 
 KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
     kDebug() << "NpPlayer::play '" << m_url << "'" << endl;
-    // if we change from XPLAIN to XEMBED, the DestroyNotify may come later 
+    // if we change from XPLAIN to XEMBED, the DestroyNotify may come later
     viewer ()->setIntermediateWindow (false);
     if (m_mrl && !m_url.isEmpty ()) {
         QString mime = "text/plain";
@@ -2076,52 +2046,17 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
             }
         }
         if (!plugin.isEmpty ()) {
-            DBusMessage *msg = dbus_message_new_method_call (
-                    remote_service.ascii(),
-                    "/plugin",
-                    "org.kde.kmplayer.backend",
-                    "play");
-            char *c_url = strdup (m_url.local8Bit().data ());
-            char *c_mime = strdup (mime.ascii ());
-            char *c_plugin = strdup (plugin.ascii ());
-            DBusMessageIter it;
-            dbus_message_iter_init_append (msg, &it);
-            dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &c_url);
-            dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &c_mime);
-            dbus_message_iter_append_basic (&it, DBUS_TYPE_STRING, &c_plugin);
             unsigned int param_len = elm->attributes ()->length ();
-            char **argn = (char **) malloc (param_len * sizeof (char *));
-            char **argv = (char **) malloc (param_len * sizeof (char *));
-            dbus_message_iter_append_basic (&it, DBUS_TYPE_UINT32, &param_len);
-            DBusMessageIter ait;
-            dbus_message_iter_open_container (&it, DBUS_TYPE_ARRAY,"{ss}",&ait);
+            QDBusMessage msg = QDBusMessage::createMethodCall (
+                    remote_service, "/plugin", "org.kde.kmplayer.backend", "play");
+            msg << m_url << mime << plugin << param_len;
+            QMap <QString, QVariant> urlargs;
             AttributePtr a = elm->attributes ()->first ();
-            for (int i = 0; i < param_len && a; i++, a = a->nextSibling ()) {
-                DBusMessageIter dit;
-                dbus_message_iter_open_container (&ait,
-                        DBUS_TYPE_DICT_ENTRY,
-                        NULL,
-                        &dit);
-                argn[i] = strdup (a->name ().toString ().local8Bit().data ());
-                argv[i] = strdup (a->value ().local8Bit().data ());
-                dbus_message_iter_append_basic (&dit, DBUS_TYPE_STRING, &argn[i]);
-                dbus_message_iter_append_basic (&dit, DBUS_TYPE_STRING, &argv[i]);
-                dbus_message_iter_close_container (&ait, &dit);
-            }
-            dbus_message_iter_close_container (&it, &ait);
-            dbus_message_set_no_reply (msg, TRUE);
-            dbus_connection_send (dbus_static->dbus_connnection, msg, NULL);
-            dbus_message_unref (msg);
-            dbus_connection_flush (dbus_static->dbus_connnection);
-            free (c_url);
-            free (c_mime);
-            free (c_plugin);
-            for (int i = 0; i < param_len; i++) {
-                free (argn[i]);
-                free (argv[i]);
-            }
-            free (argn);
-            free (argv);
+            for (int i = 0; i < param_len && a; i++, a = a->nextSibling ())
+                urlargs.insert (a->name ().toString (), a->value ());
+            msg << urlargs;
+            msg.setDelayedReply (false);
+            QDBusConnection::sessionBus().send (msg);
             setState (Buffering);
             return true;
         }
@@ -2230,22 +2165,15 @@ KDE_NO_EXPORT void NpPlayer::destroyStream (uint32_t sid) {
 
 KDE_NO_EXPORT
 void NpPlayer::sendFinish (Q_UINT32 sid, Q_UINT32 bytes, NpStream::Reason because) {
-    if (playing () && dbus_static->dbus_connnection) {
-        int reason = (int) because;
+    kDebug() << "NpPlayer::sendFinish " << sid << " bytes:" << bytes << endl;
+    if (playing ()) {
+        uint32_t reason = (int) because;
         QString objpath = QString ("/plugin/stream_%1").arg (sid);
-        DBusMessage *msg = dbus_message_new_method_call (
-                remote_service.ascii(),
-                objpath.ascii (),
-                "org.kde.kmplayer.backend",
-                "eof");
-        dbus_message_append_args(msg,
-                DBUS_TYPE_UINT32, &bytes,
-                DBUS_TYPE_UINT32, &reason,
-                DBUS_TYPE_INVALID);
-        dbus_message_set_no_reply (msg, TRUE);
-        dbus_connection_send (dbus_static->dbus_connnection, msg, NULL);
-        dbus_message_unref (msg);
-        dbus_connection_flush (dbus_static->dbus_connnection);
+        QDBusMessage msg = QDBusMessage::createMethodCall (
+                remote_service, objpath, "org.kde.kmplayer.backend", "eof");
+        msg << bytes << reason;
+        msg.setDelayedReply (false);
+        QDBusConnection::sessionBus().send (msg);
     }
 }
 
@@ -2261,17 +2189,10 @@ KDE_NO_EXPORT bool NpPlayer::stop () {
     terminateJobs ();
     if (!playing ()) return true;
     kDebug () << "NpPlayer::stop " << endl;
-    if (dbus_static->dbus_connnection) {
-        DBusMessage *msg = dbus_message_new_method_call (
-                remote_service.ascii(),
-                "/plugin",
-                "org.kde.kmplayer.backend",
-                "quit");
-        dbus_message_set_no_reply (msg, TRUE);
-        dbus_connection_send (dbus_static->dbus_connnection, msg, NULL);
-        dbus_message_unref (msg);
-        dbus_connection_flush (dbus_static->dbus_connnection);
-    }
+    QDBusMessage msg = QDBusMessage::createMethodCall (
+            remote_service, "/plugin", "org.kde.kmplayer.backend", "quit");
+    msg.setDelayedReply (false);
+    QDBusConnection::sessionBus().send (msg);
     return true;
 }
 
@@ -2307,21 +2228,14 @@ KDE_NO_EXPORT void NpPlayer::streamStateChanged () {
 }
 
 KDE_NO_EXPORT void NpPlayer::streamRedirected (uint32_t sid, const KUrl &u) {
-    if (playing () && dbus_static->dbus_connnection) {
+    if (playing ()) {
         kDebug() << "redirected " << sid << " to " << u.url() << endl;
-        char *cu = strdup (u.url ().local8Bit().data ());
         QString objpath = QString ("/plugin/stream_%1").arg (sid);
-        DBusMessage *msg = dbus_message_new_method_call (
-                remote_service.ascii(),
-                objpath.ascii (),
-                "org.kde.kmplayer.backend",
-                "redirected");
-        dbus_message_append_args(msg, DBUS_TYPE_STRING, &cu, DBUS_TYPE_INVALID);
-        dbus_message_set_no_reply (msg, TRUE);
-        dbus_connection_send (dbus_static->dbus_connnection, msg, NULL);
-        dbus_message_unref (msg);
-        dbus_connection_flush (dbus_static->dbus_connnection);
-        free (cu);
+        QDBusMessage msg = QDBusMessage::createMethodCall (
+                remote_service, objpath, "org.kde.kmplayer.backend", "redirected");
+        msg << u.url ();
+        msg.setDelayedReply (false);
+        QDBusConnection::sessionBus().send (msg);
     }
 }
 
@@ -2331,6 +2245,13 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
     timeval tv = { 0x7fffffff, 0 };
     const StreamMap::iterator e = streams.end ();
     int active_count = 0;
+
+    if (in_process_stream || write_in_progress) {
+        kDebug() << "wrong call" << kBacktrace() << endl;
+        return;
+    }
+    in_process_stream = true;
+
     //kDebug() << "NpPlayer::processStreams " << streams.size() << endl;
     for (StreamMap::iterator i = streams.begin (); i != e;) {
         NpStream *ns = i.data ();
@@ -2371,27 +2292,13 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
     }
     //kDebug() << "NpPlayer::processStreams " << stream << endl;
     if (stream) {
-        if (dbus_static->dbus_connnection &&
-                !stream->bytes &&
-                (!stream->mimetype.isEmpty() || stream->content_length)) {
-            char *mt = strdup (stream->mimetype.isEmpty ()
-                    ? ""
-                    : stream->mimetype.utf8 ().data ());
-            QString objpath=QString("/plugin/stream_%1").arg(stream->stream_id);
-            DBusMessage *msg = dbus_message_new_method_call (
-                    remote_service.ascii(),
-                    objpath.ascii (),
-                    "org.kde.kmplayer.backend",
-                    "streamInfo");
-            dbus_message_append_args (msg,
-                    DBUS_TYPE_STRING, &mt,
-                    DBUS_TYPE_UINT32, &stream->content_length,
-                    DBUS_TYPE_INVALID);
-            dbus_message_set_no_reply (msg, TRUE);
-            dbus_connection_send (dbus_static->dbus_connnection, msg, NULL);
-            dbus_message_unref (msg);
-            dbus_connection_flush (dbus_static->dbus_connnection);
-            free (mt);
+        if (!stream->bytes && (!stream->mimetype.isEmpty() || stream->content_length)) {
+            QString objpath = QString ("/plugin/stream_%1").arg (stream->stream_id);
+            QDBusMessage msg = QDBusMessage::createMethodCall (
+                    remote_service, objpath, "org.kde.kmplayer.backend", "streamInfo");
+            msg << stream->mimetype << stream->content_length;
+            msg.setDelayedReply (false);
+            QDBusConnection::sessionBus().send (msg);
         }
         const int header_len = 2 * sizeof (Q_UINT32);
         Q_UINT32 chunk = stream->pending_buf.size();
@@ -2407,12 +2314,17 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
         if (stream->finish_reason == NpStream::NoReason)
             stream->job->resume ();
     }
+    in_process_stream = false;
 }
 
 KDE_NO_EXPORT void NpPlayer::wroteStdin (K3Process *) {
     write_in_progress = false;
-    if (playing ())
+    if (playing ()) {
+        if (in_process_stream) {
+            kDebug() << "sync wroteStdin" << endl;
+        }
         processStreams ();
+    }
 }
 
 KDE_NO_EXPORT QString NpPlayer::menuName () const {

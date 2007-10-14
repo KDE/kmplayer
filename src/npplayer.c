@@ -43,6 +43,8 @@ http://dbus.freedesktop.org/doc/dbus/libdbus-tutorial.html
 #define MOZ_X11
 #include "moz-sdk/npupp.h"
 
+#define INITIAL_WINDOW_WIDTH 1920
+
 typedef const char* (* NP_LOADDS NP_GetMIMEDescriptionUPP)();
 typedef NPError (* NP_GetValueUPP)(void *inst, NPPVariable var, void *value);
 typedef NPError (* NP_InitializeUPP)(NPNetscapeFuncs*, NPPluginFuncs*);
@@ -144,24 +146,16 @@ static void freeStream (StreamInfo *si) {
     free (si);
 }
 
-static gboolean firstStream (gpointer key, gpointer value, gpointer data) {
-    (void)value;
-    *(void **)data = key;
-    return true;
-}
-
 static gboolean requestStream (void * p) {
     StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
     if (si) {
         char *path = (char *)malloc (64);
-        char *target = g_strdup ("");
+        char *target = si->target ? si->target : g_strdup ("");
         if (!callback_service)
             current_stream_id = p;
         if (!stdin_read_watch)
             stdin_read_watch = gdk_input_add (0, GDK_INPUT_READ, readStdin, NULL);
         createPath ((int)(long)p, path, 64);
-        if (si->target)
-            target = si->target;
         callFunction (-1, "request_stream",
                 DBUS_TYPE_STRING, &path,
                 DBUS_TYPE_STRING, &si->url,
@@ -187,7 +181,7 @@ static void removeStream (void * p) {
     StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
 
     if (si) {
-        print ("removeStream %d rec:%d reason %d\n", (long) p, si->stream_pos, si->reason);
+        print ("removeStream %d rec:%d reason %d %dx%d\n", (long) p, si->stream_pos, si->reason, top_w, top_h);
         if (!si->destroyed) {
             if (si->called_plugin && !si->target) {
                 si->np_stream.end = si->total;
@@ -1105,7 +1099,7 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
     display = gdk_x11_get_default_xdisplay ();
     np_window.x = 0;
     np_window.y = 0;
-    np_window.width = 1920;
+    np_window.width = INITIAL_WINDOW_WIDTH;
     np_window.height = 1200;
     np_window.window = (void*)socket_id;
     np_window.type = NPWindowTypeWindow;
@@ -1142,7 +1136,6 @@ static gpointer startPlugin (const char *url, const char *mime,
 /*----------------%<---------------------------------------------------------*/
 
 static StreamInfo *getStreamInfo (const char *path, gpointer *stream_id) {
-    StreamInfo *si;
     const char *p = strrchr (path, '_');
     *stream_id = p ? (gpointer) strtol (p+1, NULL, 10) : NULL;
     return (StreamInfo *) g_tree_lookup (stream_list, *stream_id);
@@ -1204,16 +1197,27 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
         for (i = 0; i < params; i++) {
             char *key, *value;
             DBusMessageIter di;
+            int arg_type;
             if (dbus_message_iter_get_arg_type (&ait) != DBUS_TYPE_DICT_ENTRY)
                 break;
             dbus_message_iter_recurse (&ait, &di);
             if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&di))
                 break;
             dbus_message_iter_get_basic (&di, &key);
-            if (!dbus_message_iter_next (&di) ||
-                    DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&di))
+            if (!dbus_message_iter_next (&di))
                 break;
-            dbus_message_iter_get_basic (&di, &value);
+            arg_type = dbus_message_iter_get_arg_type (&di);
+            if (DBUS_TYPE_STRING == arg_type) {
+                dbus_message_iter_get_basic (&di, &value);
+            } else if (DBUS_TYPE_VARIANT == arg_type) {
+                DBusMessageIter vi;
+                dbus_message_iter_recurse (&di, &vi);
+                if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&vi))
+                    break;
+                dbus_message_iter_get_basic (&vi, &value);
+            } else {
+                break;
+            }
             argn[i] = g_strdup (key);
             argv[i] = g_strdup (value);
             print ("param %d:%s='%s'\n", i + 1, argn[i], value);
@@ -1237,7 +1241,7 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
     } else if (dbus_message_is_method_call (msg, iface, "eof")) {
         gpointer stream_id;
         StreamInfo *si = getStreamInfo(dbus_message_get_path (msg), &stream_id);
-        if (si && dbus_message_iter_init (msg, &args) && 
+        if (si && dbus_message_iter_init (msg, &args) &&
                 DBUS_TYPE_UINT32 == dbus_message_iter_get_arg_type (&args)) {
             dbus_message_iter_get_basic (&args, &si->total);
             if (dbus_message_iter_next (&args) &&
@@ -1355,11 +1359,11 @@ static void pluginAdded (GtkSocket *socket, gpointer d) {
                     KeymapStateMask |
                     ButtonMotionMask |
                     PointerMotionMask |
-                    EnterWindowMask | LeaveWindowMask |
+                    /*EnterWindowMask | LeaveWindowMask |*/
                     FocusChangeMask |
                     ExposureMask |
-                    StructureNotifyMask |
-                    SubstructureRedirectMask |
+                    StructureNotifyMask | SubstructureNotifyMask |
+                    /*SubstructureRedirectMask |*/
                     PropertyChangeMask
                     );
         }
@@ -1414,7 +1418,13 @@ static gboolean updateDimension (void * p) {
 }
 
 static gboolean configureEvent(GtkWidget *w, GdkEventConfigure *e, gpointer d) {
+    static int first_configure_pre_size;
     (void)w; (void)d;
+    print("configureEvent %dx%d\n", e->width, e->height);
+    if (!first_configure_pre_size && e->width == INITIAL_WINDOW_WIDTH) {
+        first_configure_pre_size = 1;
+        return;
+    }
     if (e->width != top_w || e->height != top_h) {
         top_w = e->width;
         top_h = e->height;
@@ -1469,7 +1479,7 @@ static gboolean initPlayer (void * p) {
     } else {
         g_signal_connect (G_OBJECT (window), "embedded",
                 GTK_SIGNAL_FUNC (embeddedEvent), NULL);
-        gtk_widget_set_size_request (window, 1920, 1200);
+        gtk_widget_set_size_request (window, INITIAL_WINDOW_WIDTH, 1200);
         gtk_widget_realize (window);
     }
 
@@ -1489,7 +1499,7 @@ static gboolean initPlayer (void * p) {
         service_name = g_strdup (myname);
         print ("using service %s was '%s'\n", service_name, dbus_bus_get_unique_name (dbus_connection));
         dbus_connection_setup_with_g_main (dbus_connection, 0L);
-        dbus_bus_request_name (dbus_connection, service_name, 
+        dbus_bus_request_name (dbus_connection, service_name,
                 DBUS_NAME_FLAG_REPLACE_EXISTING, &dberr);
         if (dbus_error_is_set (&dberr)) {
             g_printerr ("Failed to register name: %s\n", dberr.message);

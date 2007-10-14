@@ -506,6 +506,7 @@ private:
     QString remote_service;
     QByteArray send_buf;
     bool write_in_progress;
+    bool in_process_stream;
 };
 
 } // namespace
