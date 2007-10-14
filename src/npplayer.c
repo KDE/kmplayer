@@ -134,12 +134,6 @@ static void freeStream (StreamInfo *si) {
     free (si);
 }
 
-static gboolean firstStream (gpointer key, gpointer value, gpointer data) {
-    (void)value;
-    *(void **)data = key;
-    return true;
-}
-
 static gboolean requestStream (void * p) {
     StreamInfo *si = (StreamInfo *) g_tree_lookup (stream_list, p);
     if (si) {
@@ -1127,7 +1121,6 @@ static gpointer startPlugin (const char *url, const char *mime,
 /*----------------%<---------------------------------------------------------*/
 
 static StreamInfo *getStreamInfo (const char *path, gpointer *stream_id) {
-    StreamInfo *si;
     const char *p = strrchr (path, '_');
     *stream_id = p ? (gpointer) strtol (p+1, NULL, 10) : NULL;
     return (StreamInfo *) g_tree_lookup (stream_list, *stream_id);

@@ -3334,6 +3334,7 @@ KDE_NO_CDTOR_EXPORT ImageRuntime::ImageRuntime (NodePtr e)
 {}
 
 KDE_NO_CDTOR_EXPORT ImageRuntime::~ImageRuntime () {
+    delete img_movie;
 }
 
 KDE_NO_EXPORT

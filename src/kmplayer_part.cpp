@@ -23,7 +23,6 @@
 #include <algorithm>
 
 #include <config.h>
-#include <qcstring.h>
 #include <qpopupmenu.h>
 #include <qtimer.h>
 #include <qpushbutton.h>

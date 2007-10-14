@@ -45,7 +45,6 @@ class QLineEdit;
 class QCheckBox;
 class KComboBox;
 class KConfig;
-class QTable;
 
 
 class KMPLAYER_NO_EXPORT TVDevicePage : public QFrame {

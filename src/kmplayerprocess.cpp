@@ -2019,16 +2019,14 @@ KDE_NO_EXPORT void NpStream::open () {
     if (url.url().startsWith ("javascript:")) {
         NpPlayer *npp = static_cast <NpPlayer *> (parent ());
         QString result = npp->evaluateScript (url.url().mid (11));
-#if (QT_VERSION < 0x040000)
-        QCString cr = result.local8Bit ();
-        bytes += cr.length ();
-#else
-        QByteArray cr = result.toLocal8Bit ();
-        bytes += strlen (cr.data ());
-#endif
-        pending_buf.resize (bytes + 1);
-        memcpy (pending_buf.data (), cr.data (), bytes);
-        *(pending_buf.data () + bytes) = 0;
+        if (!result.isEmpty ()) {
+            QCString cr = result.local8Bit ();
+            int len = cr.length ();
+            pending_buf.resize (len + 1);
+            memcpy (pending_buf.data (), cr.data (), len);
+            pending_buf.data ()[len] = 0;
+            gettimeofday (&data_arrival, 0L);
+        }
         kdDebug () << "result is " << pending_buf.data () << endl;
         finish_reason = BecauseDone;
         emit stateChanged ();
@@ -2133,7 +2131,7 @@ KDE_NO_EXPORT void NpPlayer::initProcess (Viewer * viewer) {
         iface = QString ("org.kde.kmplayer.callback");
         static int count = 0;
         path = QString ("/npplayer%1").arg (count++);
-        filter = QString ("type='method_call',interface='org.kde.kmplayer.callback'").arg (path);
+        filter = QString ("type='method_call',interface='org.kde.kmplayer.callback'");
 
         dbus_error_init (&dberr);
         DBusConnection *conn = dbus_bus_get (DBUS_BUS_SESSION, &dberr);

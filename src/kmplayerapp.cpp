@@ -49,7 +49,6 @@
 #include <kconfig.h>
 #include <kstdaction.h>
 #include <kdebug.h>
-#include <kprocess.h>
 #include <dcopclient.h>
 #include <kpopupmenu.h>
 #include <kurlrequester.h>
