@@ -530,12 +530,12 @@ private:
 class RefNode : public Node {
 public:
     RefNode (NodePtr & d, NodePtr ref);
-    virtual const char * nodeName () const { return tag_name.toAscii (); }
+    virtual const char * nodeName () const { return tag_name.data (); }
     NodePtr refNode () const { return ref_node; }
     void setRefNode (const NodePtr ref);
 protected:
     NodePtrW ref_node;
-    QString tag_name;
+    QByteArray tag_name;
 };
 
 template <class T>
@@ -814,13 +814,13 @@ public:
  */
 class KMPLAYER_EXPORT DarkNode : public Element {
 public:
-    DarkNode (NodePtr & d, const QString & n, short id=0);
+    DarkNode (NodePtr & d, const QByteArray &n, short id=0);
     KDE_NO_CDTOR_EXPORT ~DarkNode () {}
-    const char * nodeName () const { return name.toAscii (); }
+    const char * nodeName () const { return name.data (); }
     NodePtr childFromTag (const QString & tag);
     virtual bool expose () const;
 protected:
-    QString name;
+    QByteArray name;
 };
 
 namespace SMIL {
@@ -894,11 +894,11 @@ public:
 class KMPLAYER_EXPORT GenericMrl : public Mrl {
 public:
     KDE_NO_CDTOR_EXPORT GenericMrl (NodePtr & d) : Mrl (d), node_name ("mrl") {}
-    GenericMrl(NodePtr &d, const QString &s, const QString & name=QString (), const QString &tag=QString ("mrl"));
-    KDE_NO_EXPORT const char * nodeName () const { return node_name.toAscii (); }
+    GenericMrl(NodePtr &d, const QString &s, const QString &name=QString (), const QByteArray &tag=QByteArray ("mrl"));
+    KDE_NO_EXPORT const char * nodeName () const { return node_name.data (); }
     void closed ();
     bool expose () const;
-    QString node_name;
+    QByteArray node_name;
 };
 
 KMPLAYER_EXPORT

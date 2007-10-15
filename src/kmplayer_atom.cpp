@@ -28,7 +28,7 @@ NodePtr ATOM::Feed::childFromTag (const QString & tag) {
     else if (!strcmp (tag.latin1 (), "link"))
         return new ATOM::Link (m_doc);
     else if (!strcmp (tag.latin1 (), "title"))
-        return new DarkNode (m_doc, tag, id_node_title);
+        return new DarkNode (m_doc, tag.toUtf8 (), id_node_title);
     return 0L;
 }
 
@@ -46,9 +46,9 @@ NodePtr ATOM::Entry::childFromTag (const QString & tag) {
     else if (!strcmp (tag.latin1 (), "content"))
         return new ATOM::Content (m_doc);
     else if (!strcmp (tag.latin1 (), "title"))
-        return new DarkNode (m_doc, tag, id_node_title);
+        return new DarkNode (m_doc, tag.toUtf8 (), id_node_title);
     else if (!strcmp (tag.latin1 (), "summary"))
-        return new DarkNode (m_doc, tag, id_node_summary);
+        return new DarkNode (m_doc, tag.toUtf8 (), id_node_summary);
     return 0L;
 }
 

@@ -493,7 +493,7 @@ RefNode::RefNode (NodePtr & d, NodePtr ref)
 void RefNode::setRefNode (const NodePtr ref) {
     ref_node = ref;
     if (ref_node)
-        tag_name = QString ("&%1").arg (ref_node->nodeName ());
+        tag_name = QString ("&%1").arg (ref_node->nodeName ()).toUtf8 ();
 }
 
 //-----------------------------------------------------------------------------
@@ -1088,12 +1088,12 @@ KDE_NO_CDTOR_EXPORT CData::CData (NodePtr & d, const QString & s)
 
 //-----------------------------------------------------------------------------
 
-DarkNode::DarkNode (NodePtr & d, const QString & n, short id)
+DarkNode::DarkNode (NodePtr & d, const QByteArray &n, short id)
  : Element (d, id), name (n) {
 }
 
 NodePtr DarkNode::childFromTag (const QString & tag) {
-    return new DarkNode (m_doc, tag);
+    return new DarkNode (m_doc, tag.toUtf8 ());
 }
 
 KDE_NO_EXPORT bool DarkNode::expose () const {
@@ -1117,7 +1117,7 @@ KDE_NO_EXPORT void GenericURL::closed () {
 
 //-----------------------------------------------------------------------------
 
-GenericMrl::GenericMrl (NodePtr & d, const QString & s, const QString & name, const QString & tag)
+GenericMrl::GenericMrl (NodePtr & d, const QString &s, const QString &name, const QByteArray &tag)
  : Mrl (d, id_node_playlist_item), node_name (tag) {
     src = s;
     if (!src.isEmpty ())
@@ -1187,7 +1187,7 @@ bool DocumentBuilder::startTag(const QString &tag, AttributeListPtr attr) {
         if (!n) {
             kDebug () << "Warning: unknown tag " << tag.latin1 () << endl;
             NodePtr doc = m_root->document ();
-            n = new DarkNode (doc, tag);
+            n = new DarkNode (doc, tag.toUtf8 ());
         }
         //kDebug () << "Found tag " << tag << endl;
         if (n->isElementNode ())

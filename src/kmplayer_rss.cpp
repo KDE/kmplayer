@@ -33,7 +33,7 @@ KDE_NO_EXPORT NodePtr RSS::Channel::childFromTag (const QString & tag) {
     if (!strcmp (ctag, "item"))
         return new RSS::Item (m_doc);
     else if (!strcmp (ctag, "title"))
-        return new DarkNode (m_doc, tag, id_node_title);
+        return new DarkNode (m_doc, ctag, id_node_title);
     return 0L;
 }
 
@@ -55,9 +55,9 @@ KDE_NO_EXPORT NodePtr RSS::Item::childFromTag (const QString & tag) {
     if (!strcmp (ctag, "enclosure"))
         return new RSS::Enclosure (m_doc);
     else if (!strcmp (ctag, "title"))
-        return new DarkNode (m_doc, tag, id_node_title);
+        return new DarkNode (m_doc, ctag, id_node_title);
     else if (!strcmp (ctag, "description"))
-        return new DarkNode (m_doc, tag, id_node_description);
+        return new DarkNode (m_doc, ctag, id_node_description);
     return 0L;
 }
 

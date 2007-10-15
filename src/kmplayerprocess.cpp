@@ -1467,7 +1467,7 @@ namespace KMPlayer {
 } // namespace
 
 KDE_NO_CDTOR_EXPORT ConfigNode::ConfigNode (NodePtr & d, const QString & t)
-    : DarkNode (d, t), w (0L) {}
+    : DarkNode (d, t.toUtf8 ()), w (0L) {}
 
 NodePtr ConfigDocument::childFromTag (const QString & tag) {
     if (tag.lower () == QString ("document"))
@@ -1953,11 +1953,17 @@ KDE_NO_EXPORT void NpStream::slotResult (KJob *jb) {
 }
 
 KDE_NO_EXPORT void NpStream::slotData (KIO::Job*, const QByteArray& qb) {
-    //pending_buf = qb; // we suspend job, so qb should be valid until resume
-    pending_buf.resize (qb.size ());
-    memcpy (pending_buf.data (), qb.data (), qb.size ());
-    if (qb.size()) {
-        job->suspend ();
+    int sz = pending_buf.size ();
+    if (sz) {
+        kError () << "new data " << stream_id << " not send " << sz << endl;
+        pending_buf.resize (sz + qb.size ());
+        memcpy (pending_buf.data () + sz, qb.data (), qb.size ());
+    } else {
+        pending_buf = qb; // we suspend job, so qb should be valid until resume
+    }
+    if (sz + qb.size()) {
+        if (!job->suspend ())
+            kError () << "suspend not supported" << endl;
         gettimeofday (&data_arrival, 0L);
         emit stateChanged ();
     }

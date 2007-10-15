@@ -1730,9 +1730,9 @@ KDE_NO_EXPORT NodePtr SMIL::Head::childFromTag (const QString & tag) {
     if (!strcmp (ctag, "layout"))
         return new SMIL::Layout (m_doc);
     else if (!strcmp (ctag, "title"))
-        return new DarkNode (m_doc, tag, id_node_title);
+        return new DarkNode (m_doc, ctag, id_node_title);
     else if (!strcmp (ctag, "meta"))
-        return new DarkNode (m_doc, tag, id_node_meta);
+        return new DarkNode (m_doc, ctag, id_node_meta);
     else if (!strcmp (ctag, "transition"))
         return new SMIL::Transition (m_doc);
     return NodePtr ();
