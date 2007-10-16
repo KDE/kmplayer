@@ -1148,6 +1148,8 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     QSize size = config->readSizeEntry ("Geometry");
     if (!size.isEmpty ())
         resize (size);
+    else if (m_player->settings ()->remembersize)
+        resize (QSize (640, 480));
 
     config->setGroup ("Pipe Command");
     static_cast <KMPlayerPipeSource *> (m_player->sources () ["pipesource"])->setCommand (config->readEntry ("Command1", ""));
