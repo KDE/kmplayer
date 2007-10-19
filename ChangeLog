@@ -1,3 +1,7 @@
+Changes since version 0.10.0
+- Fix npp streams with javascript urls, that never reached the finish state
+- Fix memory leak in SMIL image
+- Get rid of nspr dependency
 Changes since version 0.10.0-pre3
 - Fix double scaling of video in a region
 - Use XPLAIN again for npp's GtkPlug embedded in QXEmbed, makes reproducable
