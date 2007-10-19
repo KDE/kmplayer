@@ -2338,7 +2338,7 @@ KDE_NO_EXPORT void NpPlayer::destroyStream (const QString &s) {
 KDE_NO_EXPORT
 void NpPlayer::sendFinish (Q_UINT32 sid, Q_UINT32 bytes, NpStream::Reason because) {
     if (playing () && dbus_static->dbus_connnection) {
-        int reason = (int) because;
+        Q_UINT32 reason = (int) because;
         QString objpath = QString ("/plugin/stream_%1").arg (sid);
         DBusMessage *msg = dbus_message_new_method_call (
                 remote_service.ascii(),
