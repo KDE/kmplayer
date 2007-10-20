@@ -36,7 +36,6 @@
 #include <qslider.h>
 #include <qlabel.h>
 #include <qdatastream.h>
-#include <QStackedWidget>
 #include <QContextMenuEvent>
 #include <Q3TextDrag>
 #include <QDropEvent>
@@ -168,7 +167,7 @@ KDE_NO_EXPORT void View::dropEvent (QDropEvent * de) {
     if (uris.size () > 0) {
         for (int i = 0; i < uris.size (); i++)
             uris [i] = KURL::decode_string (uris [i].url ());
-        m_widgetstack->currentWidget ()->setFocus ();
+        //m_widgetstack->currentWidget ()->setFocus ();
         emit urlDropped (uris);
         de->accept ();
     }
@@ -196,26 +195,28 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
     m_dock_playlist->setObjectName ("playlist");
 
     viewbox->addWidget (m_dockarea);
-    m_widgetstack = new QStackedWidget (m_view_area);
     m_control_panel = new ControlPanel (m_view_area, this);
     m_control_panel->setMaximumSize (2500, controlPanel ()->maximumSize ().height ());
     m_status_bar = new StatusBar (m_view_area);
     m_status_bar->insertItem (QString (""), 0);
+    m_status_bar->setItemAlignment (0, Qt::AlignLeft);
+    m_status_bar->setSizeGripEnabled (false);
+    m_status_bar->setAutoFillBackground (true);
     QSize sbsize = m_status_bar->sizeHint ();
     m_status_bar->hide ();
     m_status_bar->setMaximumSize (2500, sbsize.height ());
-    m_viewer = new Viewer (m_widgetstack, this);
-    m_widgettypes [WT_Video] = m_viewer;
+    m_viewer = new Viewer (m_view_area, this);
 #if KDE_IS_VERSION(3,1,90)
     setVideoWidget (m_view_area);
 #endif
 
-    m_multiedit = new TextEdit (m_widgetstack, this);
+    m_multiedit = new TextEdit (m_view_area, this);
     QFont fnt = KGlobalSettings::fixedFont ();
     m_multiedit->setFont (fnt);
-    m_widgettypes[WT_Console] = m_multiedit;
+    m_multiedit->hide ();
 
-    m_widgettypes[WT_Picture] = new KMPlayerPictureWidget (m_widgetstack, this);
+    m_picture = new KMPlayerPictureWidget (m_view_area, this);
+    m_picture->hide ();
 
     m_dock_infopanel = new QDockWidget (i18n ("Information"));
     m_dockarea->addDockWidget (Qt::BottomDockWidgetArea, m_dock_infopanel);
@@ -223,10 +224,6 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
     m_dock_infopanel->setWidget (m_infopanel);
     m_dock_infopanel->setObjectName ("infopanel");
     m_dock_infopanel->hide ();
-
-    m_widgetstack->addWidget (m_viewer);
-    m_widgetstack->addWidget (m_multiedit);
-    m_widgetstack->addWidget (m_widgettypes[WT_Picture]);
 
     setFocusPolicy (Qt::ClickFocus);
 
@@ -351,12 +348,14 @@ bool View::setPicture (const QString & path) {
         }
     }
     if (!m_image) {
-        m_widgetstack->setCurrentWidget (m_viewer);
+        m_viewer->show ();
+        m_picture->hide ();
     } else {
         QPalette palette;
-        palette.setBrush (m_widgettypes[WT_Picture]->backgroundRole(), QBrush (*m_image));
-        m_widgettypes[WT_Picture]->setPalette(palette);
-        m_widgetstack->setCurrentWidget (m_widgettypes[WT_Picture]);
+        palette.setBrush (m_picture->backgroundRole(), QBrush (*m_image));
+        m_picture->setPalette(palette);
+        m_viewer->hide ();
+        m_picture->show ();
         setControlPanelMode (CP_AutoHide);
     }
     return m_image;
@@ -400,33 +399,28 @@ KDE_NO_EXPORT void View::updateVolume () {
     m_mixer_init = true;
 }
 
-void View::showWidget (WidgetType wt) {
-    m_widgetstack->setCurrentWidget (m_widgettypes [wt]);
-    if (m_widgetstack->currentWidget () == m_widgettypes[WT_Console]) {
-        addText (QString (""), false);
-        if (m_controlpanel_mode == CP_AutoHide && m_playing)
-            m_control_panel->show();
-    } else
-        delayedShowButtons (false);
-    updateLayout ();
-}
-
 void View::toggleVideoConsoleWindow () {
-    WidgetType wt = WT_Console;
-    if (m_widgetstack->currentWidget () == m_widgettypes[WT_Console]) {
-        wt = WT_Video;
+    if (m_multiedit->isVisible ()) {
+        m_multiedit->hide ();
+        m_viewer->show ();
         m_control_panel->videoConsoleAction->setIcon (
                 KIconLoader::global ()->loadIconSet (
                     QString ("konsole"), KIconLoader::Small, 0, true));
         m_control_panel->videoConsoleAction->setText (i18n ("Con&sole"));
+        delayedShowButtons (false);
     } else {
         m_control_panel->videoConsoleAction->setIcon (
                 KIconLoader::global ()->loadIconSet (
                     QString ("video"), KIconLoader::Small, 0, true));
         m_control_panel->videoConsoleAction->setText (i18n ("V&ideo"));
+        m_multiedit->show ();
+        m_viewer->hide ();
+        addText (QString (""), false);
+        if (m_controlpanel_mode == CP_AutoHide && m_playing)
+            m_control_panel->show();
     }
-    showWidget (wt);
-    emit windowVideoConsoleToggled (int (wt));
+    updateLayout ();
+    emit windowVideoConsoleToggled (m_multiedit->isVisible ());
 }
 
 void View::setControlPanelMode (ControlPanelMode m) {
@@ -440,8 +434,7 @@ void View::setControlPanelMode (ControlPanelMode m) {
         m_control_panel->show ();
         m_view_area->resizeEvent (0L);
     } else if (m_controlpanel_mode == CP_AutoHide) {
-        if ((m_playing &&
-                m_widgetstack->currentWidget () != m_widgettypes[WT_Console]))
+        if (m_playing && !m_multiedit->isVisible ())
             delayedShowButtons (false);
         else if (!m_control_panel->isVisible ()) {
             m_control_panel->show ();
@@ -455,10 +448,7 @@ void View::setControlPanelMode (ControlPanelMode m) {
 
 void View::setStatusBarMode (StatusBarMode m) {
     m_statusbar_mode = m;
-    if (m == SB_Hide)
-        m_status_bar->hide ();
-    else
-        m_status_bar->show ();
+    m_status_bar->setVisible (m != SB_Hide);
     m_view_area->resizeEvent (0L);
 }
 
@@ -472,10 +462,8 @@ KDE_NO_EXPORT void View::delayedShowButtons (bool show) {
         if (!show)
             m_control_panel->hide (); // for initial race
     } else if (m_controlpanel_mode == CP_AutoHide &&
-            (m_playing ||
-             m_widgetstack->currentWidget () == m_widgettypes[WT_Picture]) &&
-            m_widgetstack->currentWidget () != m_widgettypes[WT_Console] &&
-            !controlbar_timer) {
+            (m_playing || m_picture->isVisible ()) &&
+            !m_multiedit->isVisible () && !controlbar_timer) {
         controlbar_timer = startTimer (500);
     }
 }
@@ -507,11 +495,11 @@ KDE_NO_EXPORT void View::timerEvent (QTimerEvent * e) {
     if (e->timerId () == controlbar_timer) {
         controlbar_timer = 0;
         if (m_playing ||
-                m_widgetstack->currentWidget () == m_widgettypes[WT_Picture]) {
+                m_picture->isVisible ()) {
             int vert_buttons_pos = m_view_area->height()-statusBarHeight ();
             QPoint mouse_pos = m_view_area->mapFromGlobal (QCursor::pos ());
             int cp_height = m_control_panel->maximumSize ().height ();
-            bool mouse_on_buttons = (//m_view_area->hasMouse () && 
+            bool mouse_on_buttons = (//m_view_area->hasMouse () &&
                     mouse_pos.y () >= vert_buttons_pos-cp_height &&
                     mouse_pos.y ()<= vert_buttons_pos &&
                     mouse_pos.x () > 0 &&
@@ -538,8 +526,7 @@ void View::addText (const QString & str, bool eol) {
         tmplog += QChar ('\n');
     tmplog += str;
     m_tmplog_needs_eol = eol;
-    if (m_widgetstack->currentWidget () != m_widgettypes[WT_Console] &&
-            tmplog.length () < 7500)
+    if (!m_multiedit->isVisible () && tmplog.length () < 7500)
         return;
     if (eol) {
         if (m_multiedit->document ()->isEmpty ())
@@ -577,8 +564,10 @@ KDE_NO_EXPORT void View::videoStart () {
 
 KDE_NO_EXPORT void View::playingStart () {
     if (m_playing) return; //FIXME: make symetric with playingStop
-    if (m_widgetstack->currentWidget () == m_widgettypes[WT_Picture])
-        m_widgetstack->setCurrentWidget (m_viewer);
+    if (m_picture->isVisible ()) {
+        m_picture->hide ();
+        m_viewer->show ();
+    }
     m_playing = true;
     m_revert_fullscreen = !isFullScreen();
     setControlPanelMode (m_old_controlpanel_mode);
@@ -586,7 +575,7 @@ KDE_NO_EXPORT void View::playingStart () {
 
 KDE_NO_EXPORT void View::playingStop () {
     if (m_controlpanel_mode == CP_AutoHide &&
-            m_widgetstack->currentWidget () != m_widgettypes[WT_Picture]) {
+            !m_picture->isVisible ()) {
         m_control_panel->show ();
         //m_view_area->setMouseTracking (false);
     }
@@ -633,7 +622,8 @@ void View::fullScreen () {
         //    m_viewer->setAspect (1.0 * m_viewer->width() / m_viewer->height());
         m_view_area->fullScreen();
         m_control_panel->zoomAction->setVisible (false);
-        m_widgetstack->currentWidget ()->setFocus ();
+        if (m_viewer->isVisible ())
+            m_viewer->setFocus ();
     } else {
        // if (m_sreensaver_disabled)
        //     m_sreensaver_disabled = !kapp->dcopClient()->send
@@ -704,7 +694,7 @@ bool View::x11Event (XEvent * e) {
 //----------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT Viewer::Viewer (QWidget *parent, View * view)
-  : QX11EmbedContainer (parent), m_plain_window (0), m_bgcolor (0), m_aspect (0.0),
+  : QX11EmbedContainer (parent), resized_timer (0), m_plain_window (0), m_bgcolor (0), m_aspect (0.0),
     m_view (view) {
     /*XWindowAttributes xwa;
     XGetWindowAttributes (QX11Info::display(), winId (), &xwa);
@@ -754,7 +744,8 @@ KDE_NO_EXPORT void Viewer::setIntermediateWindow (bool set) {
 
 KDE_NO_EXPORT void Viewer::embedded () {
     kDebug () << "[01;35mwindowChanged[00m " << (int)clientWinId () << endl;
-    QTimer::singleShot (10, this, SLOT (sendConfigureEvent ()));
+    //QTimer::singleShot (10, this, SLOT (sendConfigureEvent ()));
+    emit resized (width (), height ());
     /*if (clientWinId () && m_plain_window)
         XSelectInput (QX11Info::display (), clientWinId (),
                 //KeyPressMask | KeyReleaseMask |
@@ -764,6 +755,19 @@ KDE_NO_EXPORT void Viewer::embedded () {
                 ExposureMask |
                 StructureNotifyMask |
                 PointerMotionMask);*/
+}
+
+KDE_NO_EXPORT void Viewer::resizeEvent (QResizeEvent *e) {
+    if (clientWinId () && !resized_timer)
+         resized_timer = startTimer (50);
+}
+
+KDE_NO_EXPORT void Viewer::timerEvent (QTimerEvent * e) {
+    if (e->timerId () == resized_timer) {
+        killTimer (resized_timer);
+        resized_timer = 0;
+        emit resized (width (), height ());
+    }
 }
 
 KDE_NO_EXPORT void Viewer::mouseMoveEvent (QMouseEvent * e) {

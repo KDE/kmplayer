@@ -348,6 +348,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
             connect (this, SIGNAL (positioned (int, int)),
                      this, SLOT (statusPosition (int, int)));
             m_view->statusBar ()->insertItem (QString ("--:--"), 1, 0);
+            m_view->statusBar ()->setItemAlignment (1, Qt::AlignRight);
         }
     }
     if (group_member) {

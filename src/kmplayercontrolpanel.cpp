@@ -301,6 +301,9 @@ KDE_NO_CDTOR_EXPORT VolumeBar::VolumeBar (QWidget * parent, View * view)
     setMinimumSize (QSize (51, button_height_only_buttons + 2));
     QToolTip::add (this, i18n ("Volume is ") + QString::number (m_value));
     setAutoFillBackground (true);
+    QPalette palette;
+    palette.setColor (backgroundRole (), m_view->palette ().color (QPalette::Background));
+    setPalette (palette);
 }
 
 KDE_NO_CDTOR_EXPORT VolumeBar::~VolumeBar () {
@@ -357,6 +360,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
    m_auto_controls (true),
    m_popup_clicked (false) {
     m_buttonbox = new QHBoxLayout (this, 5, 4);
+    setAutoFillBackground (true);
     QColor c = paletteForegroundColor ();
     strncpy (xpm_fg_color, QString().sprintf(".      c #%02x%02x%02x", c.red(), c.green(),c.blue()).ascii(), 31);
     xpm_fg_color[31] = 0;
@@ -574,7 +578,7 @@ KDE_NO_EXPORT void ControlPanel::setupPositionSlider (bool show) {
         m_posSlider->hide ();
         m_buttonbox->setMargin (1);
         m_buttonbox->setSpacing (1);
-        palette.setColor (backgroundRole(), QColor (255, 0, 0));
+        palette.setColor (backgroundRole(), QColor (0, 0, 0));
     }
     setPalette (palette);
     for (int i = 0; i < (int) button_last; i++) {

@@ -31,7 +31,6 @@
 
 #define MOUSE_INVISIBLE_DELAY 2000
 
-class QStackedWidget;
 class QPixmap;
 class QPaintDevice;
 class QPainter;
@@ -56,6 +55,7 @@ class Console;
 class PlayListView;
 class PlayListView;
 class RootPlayListItem;
+class KMPlayerPictureWidget;
 
 typedef KStatusBar StatusBar;
 
@@ -96,9 +96,6 @@ public:
     enum StatusBarMode {
         SB_Hide, SB_Show, SB_Only /* no video widget */
     };
-    enum WidgetType {
-        WT_Video, WT_Console, WT_Picture, WT_Last
-    };
 
     View (QWidget *parent);
     ~View();
@@ -114,13 +111,11 @@ public:
     KDE_NO_EXPORT StatusBar * statusBar () const {return m_status_bar;}
     KDE_NO_EXPORT PlayListView * playList () const { return m_playlist; }
     KDE_NO_EXPORT InfoWindow * infoPanel () const { return m_infopanel; }
-    KDE_NO_EXPORT QStackedWidget * widgetStack () const { return m_widgetstack; }
     KDE_NO_EXPORT QMainWindow *dockArea () const { return m_dockarea; }
     KDE_NO_EXPORT QDockWidget *dockPlaylist () const { return m_dock_playlist; }
     KDE_NO_EXPORT ViewArea * viewArea () const { return m_view_area; }
     KDE_NO_EXPORT bool keepSizeRatio () const { return m_keepsizeratio; }
     void setKeepSizeRatio (bool b);
-    void showWidget (WidgetType w);
     void setControlPanelMode (ControlPanelMode m);
     void setStatusBarMode (StatusBarMode m);
     void setEraseColor (const QColor &);
@@ -158,7 +153,7 @@ signals:
     void urlDropped (const KUrl::List & urls);
     void pictureClicked ();
     void fullScreenChanged ();
-    void windowVideoConsoleToggled (int wt);
+    void windowVideoConsoleToggled (bool show);
 protected:
     void leaveEvent (QEvent *) KDE_NO_EXPORT;
     void timerEvent (QTimerEvent *) KDE_NO_EXPORT;
@@ -168,16 +163,13 @@ private:
     Viewer * m_viewer;
     // console output
     TextEdit * m_multiedit;
-    // widget stack contains m_viewer, m_multiedit and m_picturewidget
-    QStackedWidget * m_widgetstack;
+    KMPlayerPictureWidget *m_picture;
     // widget that layouts m_widgetstack for ratio setting and m_control_panel
     ViewArea * m_view_area;
     // playlist widget
     PlayListView * m_playlist;
     // infopanel widget
     InfoWindow * m_infopanel;
-    // all widget types
-    QWidget * m_widgettypes [WT_Last];
     QMainWindow *m_dockarea;
     QDockWidget *m_dock_video;
     QDockWidget *m_dock_playlist;
@@ -223,10 +215,14 @@ public:
     void setCurrentBackgroundColor (const QColor & c);
     KDE_NO_EXPORT View * view () const { return m_view; }
     void setIntermediateWindow (bool set);
+signals:
+    void resized (int w, int h);
 public slots:
     void sendConfigureEvent ();
     void embedded ();
 protected:
+    void resizeEvent (QResizeEvent *);
+    void timerEvent (QTimerEvent *) KDE_NO_EXPORT;
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
     void mouseMoveEvent (QMouseEvent * e);
@@ -234,6 +230,7 @@ protected:
     //virtual void windowChanged( WId w );
 private:
     WId m_plain_window;
+    int resized_timer;
     unsigned int m_bgcolor;
     float m_aspect;
     View * m_view;

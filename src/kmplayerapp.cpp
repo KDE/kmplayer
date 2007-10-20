@@ -597,6 +597,12 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     viewSyncEditMode->setIcon (KIcon ("view-refresh"));
     connect (viewSyncEditMode, SIGNAL (triggered (bool)), this, SLOT (syncEditMode ()));
     viewSyncEditMode->setEnabled (false);
+    viewToolBar = KStandardAction::create (KStandardAction::ShowToolbar,
+            this, SLOT (slotViewToolBar ()), ac);
+    viewStatusBar = KStandardAction::create (KStandardAction::ShowStatusbar,
+            this,SLOT (slotViewStatusBar ()),ac);
+    viewMenuBar = KStandardAction::create (KStandardAction::ShowMenubar,
+            this, SLOT (slotViewMenuBar ()), ac);
     /*fileNewWindow = new KAction(i18n("New &Window"), 0, 0, this, SLOT(slotFileNewWindow()), ac, "new_window");
     new KAction (i18n ("Clear &History"), 0, 0, this, SLOT (slotClearHistory ()), ac, "clear_history");
     new KAction (i18n ("&Open DVD"), QString ("dvd_mount"), KShortcut (), this, SLOT(openDVD ()), ac, "opendvd");
@@ -620,23 +626,22 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
 #else
     viewFullscreen = new KAction (i18n("&Full Screen"), 0, 0, this, SLOT(fullScreen ()), ac, "view_fullscreen");
 #endif
-    viewToolBar = KStdAction::showToolbar(this, SLOT(slotViewToolBar()), ac, "showtoolbar");
-    viewStatusBar =KStdAction::showStatusbar(this,SLOT(slotViewStatusBar()),ac, "showstatusbar");
-    viewMenuBar = KStdAction::showMenubar(this, SLOT(slotViewMenuBar()), ac, "showmenu");
     fileNewWindow->setStatusText(i18n("Opens a new application window"));
     fileOpen->setStatusText(i18n("Opens an existing file"));
     fileOpenRecent->setStatusText(i18n("Opens a recently used file"));
     fileClose->setStatusText(i18n("Closes the actual source"));
-    fileQuit->setStatusText(i18n("Quits the application"));
-    //viewToolBar->setStatusText(i18n("Enables/disables the toolbar"));
-    viewStatusBar->setStatusText(i18n("Enables/disables the statusbar"));
-    viewMenuBar->setStatusText(i18n("Enables/disables the menubar"));*/
+    fileQuit->setStatusText(i18n("Quits the application"));*/
+    viewStatusBar->setStatusTip (i18n ("Enables/disables the statusbar"));
+    viewMenuBar->setStatusTip (i18n ("Enables/disables the menubar"));
+    viewToolBar->setStatusTip (i18n ("Enables/disables the toolbar"));
 }
 
 KDE_NO_EXPORT void KMPlayerApp::initStatusBar () {
     KStatusBar *sb = statusBar ();
     sb->insertItem (i18n ("Ready."), id_status_msg);
+    sb->setItemAlignment (id_status_msg, Qt::AlignLeft);
     sb->insertItem (QString ("--:--"), id_status_timer, 0);
+    sb->setItemAlignment (id_status_timer, Qt::AlignRight);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::initMenu () {
@@ -680,8 +685,8 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
              this, SLOT (positioned (int, int)));
     connect (m_player, SIGNAL (statusUpdated (const QString &)),
              this, SLOT (slotStatusMsg (const QString &)));
-    connect (m_view, SIGNAL (windowVideoConsoleToggled (int)),
-             this, SLOT (windowVideoConsoleToggled (int)));
+    connect (m_view, SIGNAL (windowVideoConsoleToggled (bool)),
+             this, SLOT (windowVideoConsoleToggled (bool)));
     connect (m_player, SIGNAL (sourceChanged (KMPlayer::Source *, KMPlayer::Source *)), this, SLOT (slotSourceChanged(KMPlayer::Source *, KMPlayer::Source *)));
     /*m_view->controlPanel ()->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom50,
             this, SLOT (zoom50 ()));
@@ -742,13 +747,13 @@ KDE_NO_EXPORT void KMPlayerApp::positioned (int pos, int length) {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::windowVideoConsoleToggled (int wt) {
-    if (wt == int (KMPlayer::View::WT_Video)) {
-        toggleView->setText (i18n ("C&onsole"));
-        toggleView->setIcon (KIcon ("konsole"));
-    } else {
+KDE_NO_EXPORT void KMPlayerApp::windowVideoConsoleToggled (bool show) {
+    if (show) {
         toggleView->setText (i18n ("V&ideo"));
         toggleView->setIcon (KIcon ("video"));
+    } else {
+        toggleView->setText (i18n ("C&onsole"));
+        toggleView->setIcon (KIcon ("konsole"));
     }
 }
 
@@ -1144,10 +1149,10 @@ KDE_NO_EXPORT void KMPlayerApp::saveOptions()
     KConfigGroup general (config, "General Options");
     if (m_player->settings ()->remembersize)
         general.writeEntry ("Geometry", size());
-    //general.writeEntry ("Show Toolbar", viewToolBar->isChecked());
+    general.writeEntry ("Show Toolbar", viewToolBar->isChecked());
     //general.writeEntry ("ToolBarPos", (int) toolBar("mainToolBar")->barPos());
-    //general.writeEntry ("Show Statusbar",viewStatusBar->isChecked());
-    //general.writeEntry ("Show Menubar",viewMenuBar->isChecked());
+    general.writeEntry ("Show Statusbar", viewStatusBar->isChecked ());
+    general.writeEntry ("Show Menubar", viewMenuBar->isChecked ());
     if (!m_player->sources () ["pipesource"]->pipeCmd ().isEmpty ()) {
         KConfigGroup (config, "Pipe Command").writeEntry (
                 "Command1", m_player->sources () ["pipesource"]->pipeCmd ());
@@ -1178,19 +1183,21 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     //toolBar("mainToolBar")->setBarPos(toolBarPos);
 
     // bar status settings
-    //viewToolBar->setChecked (gen_cfg.readBoolEntry("Show Toolbar", true));
-    //slotViewToolBar();
+    viewToolBar->setChecked (gen_cfg.readEntry("Show Toolbar", true));
+    slotViewToolBar();
 
     bool bViewStatusbar = gen_cfg.readEntry("Show Statusbar", true);
-    //viewStatusBar->setChecked(bViewStatusbar);
-    //slotViewStatusBar();
+    viewStatusBar->setChecked(bViewStatusbar);
+    slotViewStatusBar();
 
-    //viewMenuBar->setChecked (gen_cfg.readBoolEntry("Show Menubar", true));
-    //slotViewMenuBar();
+    viewMenuBar->setChecked (gen_cfg.readEntry("Show Menubar", true));
+    slotViewMenuBar();
 
     QSize size = gen_cfg.readEntry ("Geometry", QSize ());
     if (!size.isEmpty ())
         resize (size);
+    else if (m_player->settings ()->remembersize)
+        resize (QSize (640, 480));
 
     KConfigGroup pipe_cfg (config, "Pipe Command");
     static_cast <KMPlayerPipeSource *> (m_player->sources () ["pipesource"])->setCommand (
@@ -1461,25 +1468,23 @@ KDE_NO_EXPORT void KMPlayerApp::slotViewToolBar() {
 
 KDE_NO_EXPORT void KMPlayerApp::slotViewStatusBar() {
     m_showStatusbar = viewStatusBar->isChecked();
-    if(m_showStatusbar)
-        statusBar()->show();
-    else
-        statusBar()->hide();
+    statusBar()->setVisible (m_showStatusbar);
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotViewMenuBar() {
     m_showMenubar = viewMenuBar->isChecked();
-    //if (m_showMenubar) {
+    if (m_showMenubar) {
         menuBar()->show();
         slotStatusMsg(i18n("Ready"));
-    /*} else {
+    } else {
         menuBar()->hide();
-        slotStatusMsg (i18n ("Show Menubar with %1").arg(viewMenuBar->shortcutText()));
+        slotStatusMsg (i18n ("Show Menubar with %1").arg(
+                    viewMenuBar->shortcut ().toString ()));
         if (!m_showStatusbar) {
             statusBar()->show();
             QTimer::singleShot (3000, statusBar(), SLOT (hide ()));
         }
-    }*/
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerApp::slotStatusMsg (const QString &text) {

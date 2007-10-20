@@ -23,7 +23,6 @@
 #include <math.h>
 
 #include <qapplication.h>
-#include <qstackedwidget.h>
 #include <qslider.h>
 #include <qcursor.h>
 #include <qimage.h>
@@ -1577,7 +1576,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     Single wws = w;
     // move controlpanel over video when autohiding and playing
     Single hws = h - (m_view->controlPanelMode () == View::CP_AutoHide &&
-            m_view->widgetStack ()->currentWidget () == m_view->viewer ()
+            m_view->viewer ()->isVisible ()
             ? Single (0)
             : hcp) - hsb;
     // now scale the regions and check if video region is already sized
@@ -1591,8 +1590,6 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     // finally resize controlpanel and video widget
     if (m_view->controlPanel ()->isVisible ())
         m_view->controlPanel ()->setGeometry (0, h-hcp-hsb, w, hcp);
-    kDebug() << "resize cp " << m_view->controlPanel ()->isVisible () <<
-        IRect (0, h-hcp-hsb, w, hcp) << endl;
     if (m_view->statusBar ()->isVisible ())
         m_view->statusBar ()->setGeometry (0, h-hsb, w, hsb);
     if (m_fullscreen && wws == w && hws == h) {
@@ -1601,6 +1598,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
         x += (w - wws) / 2;
         y += (h - hws) / 2;
     }
+    m_view->console ()->setGeometry (0, 0, w, h - hsb - hcp);
     if (!surface->node)
         setAudioVideoGeometry (IRect (x, y, wws, hws), 0L);
 }
@@ -1623,11 +1621,13 @@ void ViewArea::setAudioVideoGeometry (const IRect &rect, unsigned int * bg_color
             }
     }
     m_av_geometry = QRect (x, y, w, h);
-    QRect wrect = m_view->widgetStack ()->geometry ();
+    QRect wrect = m_view->viewer ()->geometry ();
     if (m_av_geometry != wrect &&
             !(m_av_geometry.width() <= 0 &&
                 wrect.width() <= 1 && wrect.height() <= 1)) {
-        m_view->widgetStack ()->setGeometry (x, y, w, h);
+        m_view->viewer ()->setGeometry (x, y, w, h);
+        //FIXME m_view->picture ()->setGeometry (x, y, w, h);
+    kDebug() << "setAudioVideoGeometry " << m_av_geometry << endl;
         wrect.unite (m_av_geometry);
         scheduleRepaint (IRect (wrect.x (), wrect.y (), wrect.width (), wrect.height ()));
     }
