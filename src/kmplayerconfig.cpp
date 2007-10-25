@@ -284,8 +284,8 @@ View * Settings::defaultView () {
 KDE_NO_EXPORT void Settings::readConfig () {
     KConfigGroup general (m_config, strGeneralGroup);
     no_intro = general.readEntry (strNoIntro, false);
-    urllist = general.readEntry (strURLList, QStringList(), ';');
-    sub_urllist = general.readEntry (strSubURLList, QStringList(), ';');
+    urllist = general.readEntry (strURLList, QStringList());
+    sub_urllist = general.readEntry (strSubURLList, QStringList());
     prefbitrate = general.readEntry (strPrefBitRate, 512);
     maxbitrate = general.readEntry (strMaxBitRate, 1024);
     volume = general.readEntry (strVolume, 20);
@@ -519,8 +519,8 @@ void Settings::show (const char * pagename) {
 
 void Settings::writeConfig () {
     KConfigGroup gen_cfg (m_config, strGeneralGroup);
-    gen_cfg.writeEntry (strURLList, urllist, ';');
-    gen_cfg.writeEntry (strSubURLList, sub_urllist, ';');
+    gen_cfg.writeEntry (strURLList, urllist);
+    gen_cfg.writeEntry (strSubURLList, sub_urllist);
     gen_cfg.writeEntry (strPrefBitRate, prefbitrate);
     gen_cfg.writeEntry (strMaxBitRate, maxbitrate);
     gen_cfg.writeEntry (strVolume, volume);
