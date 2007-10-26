@@ -1892,7 +1892,7 @@ KDE_NO_CDTOR_EXPORT NpStream::NpStream (NpPlayer *p, uint32_t sid, const QString
    finish_reason (NoReason) {
     data_arrival.tv_sec = 0;
     (void) new StreamAdaptor (this);
-    QString objpath = QString ("/%1/stream_%2").arg (p->objectPath ()).arg (sid);
+    QString objpath = QString ("%1/stream_%2").arg (p->objectPath ()).arg (sid);
     QDBusConnection::sessionBus().registerObject (objpath, this);
 }
 
