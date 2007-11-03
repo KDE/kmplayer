@@ -189,7 +189,6 @@ protected:
 class KMPLAYER_NO_EXPORT AudioVideoData : public MediaTypeRuntime {
 public:
     AudioVideoData (NodePtr e);
-    virtual bool isAudioVideo ();
     virtual bool parseParam (const TrieString & name, const QString & value);
     virtual void started ();
     virtual void postpone (bool b);

@@ -646,8 +646,8 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
              this, SLOT (positioned (int, int)));
     connect (m_player, SIGNAL (statusUpdated (const QString &)),
              this, SLOT (slotStatusMsg (const QString &)));
-    connect (m_view, SIGNAL (windowVideoConsoleToggled (int)),
-             this, SLOT (windowVideoConsoleToggled (int)));
+    connect (m_view, SIGNAL (windowVideoConsoleToggled (bool)),
+             this, SLOT (windowVideoConsoleToggled (bool)));
     connect (m_player, SIGNAL (sourceChanged (KMPlayer::Source *, KMPlayer::Source *)), this, SLOT (slotSourceChanged(KMPlayer::Source *, KMPlayer::Source *)));
     m_view->controlPanel ()->zoomMenu ()->connectItem (KMPlayer::ControlPanel::menu_zoom50,
             this, SLOT (zoom50 ()));
@@ -708,13 +708,13 @@ KDE_NO_EXPORT void KMPlayerApp::positioned (int pos, int length) {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerApp::windowVideoConsoleToggled (int wt) {
-    if (wt == int (KMPlayer::View::WT_Video)) {
-        toggleView->setText (i18n ("C&onsole"));
-        toggleView->setIcon (QString ("konsole"));
-    } else {
+KDE_NO_EXPORT void KMPlayerApp::windowVideoConsoleToggled (bool show) {
+    if (show) {
         toggleView->setText (i18n ("V&ideo"));
         toggleView->setIcon (QString ("video"));
+    } else {
+        toggleView->setText (i18n ("C&onsole"));
+        toggleView->setIcon (QString ("konsole"));
     }
 }
 

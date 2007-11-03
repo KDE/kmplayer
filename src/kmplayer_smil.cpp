@@ -1433,10 +1433,6 @@ KDE_NO_EXPORT void MediaTypeRuntime::postpone (bool) {
 KDE_NO_CDTOR_EXPORT AudioVideoData::AudioVideoData (NodePtr e)
     : MediaTypeRuntime (e) {}
 
-KDE_NO_EXPORT bool AudioVideoData::isAudioVideo () {
-    return timingstate == timings_started;
-}
-
 /**
  * reimplement for request backend to play audio/video
  */

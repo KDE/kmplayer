@@ -125,7 +125,7 @@ private slots:
     void slotConfigureKeys();
     void slotConfigureToolbars ();
     void slotClearHistory ();
-    void windowVideoConsoleToggled (int wt);
+    void windowVideoConsoleToggled (bool show);
     void playListItemSelected (QListViewItem *);
     void playListItemDropped (QDropEvent * e, QListViewItem * after);
     void playListItemMoved ();
