@@ -61,6 +61,7 @@ class MPlayerDumpstream;
 class FFMpeg;
 class Xine;
 class Settings;
+class MediaManager;
 
 /*
  * Source from URLs
@@ -140,6 +141,7 @@ public:
     void connectPlaylist (PlayListView * playlist);
     void connectInfoPanel (InfoWindow * infopanel);
     void connectSource (Source * old_source, Source * source);
+    MediaManager *mediaManager () const { return m_media_manager; }
     Process * process () const { return m_process; }
     Process * recorder () const { return m_recorder; }
     Source * source () const { return m_source; }
@@ -232,6 +234,7 @@ protected:
     QGuardedPtr <View> m_view;
     QMap <QString, QString> temp_backends;
     Settings * m_settings;
+    MediaManager *m_media_manager;
     Process * m_process;
     Process * m_recorder;
     Source * m_source;
@@ -252,45 +255,6 @@ protected:
     bool m_bPosSliderPressed : 1;
     bool m_in_update_tree : 1;
     bool m_update_tree_full : 1;
-};
-
-class KMPLAYER_NO_EXPORT DataCache : public QObject {
-    Q_OBJECT
-    typedef QMap <QString, QByteArray> DataMap;
-    typedef QMap <QString, bool> PreserveMap;
-    DataMap cache_map;
-    PreserveMap preserve_map;
-public:
-    DataCache () {}
-    ~DataCache () {}
-    void add (const QString &, const QByteArray &);
-    bool get (const QString &, QByteArray &);
-    bool preserve (const QString &);
-    bool unpreserve (const QString &);
-    bool isPreserved (const QString &);
-signals:
-    void preserveRemoved (const QString &); // ready or canceled
-};
-
-class KMPLAYER_NO_EXPORT RemoteObjectPrivate : public QObject {
-    Q_OBJECT
-public:
-    RemoteObjectPrivate (RemoteObject * r);
-    ~RemoteObjectPrivate ();
-    bool download (const QString &);
-    void clear ();
-    KIO::Job * job;
-    QString url;
-    QByteArray data;
-    QString mime;
-private slots:
-    void slotResult (KIO::Job*);
-    void slotData (KIO::Job*, const QByteArray& qb);
-    void slotMimetype (KIO::Job * job, const QString & mimestr);
-    void cachePreserveRemoved (const QString &);
-private:
-    RemoteObject * remote_object;
-    bool preserve_wait;
 };
 
 } // namespace

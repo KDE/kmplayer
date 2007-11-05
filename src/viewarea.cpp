@@ -44,8 +44,10 @@
 # include <cairo-xlib.h>
 # include <cairo-xlib-xrender.h>
 #endif
+#include "mediaobject.h"
 #include "kmplayer_smil.h"
 #include "kmplayer_rp.h"
+#include "mediaobject.h"
 
 using namespace KMPlayer;
 
@@ -395,23 +397,26 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
         IRect clip_save = clip;
         clip = clip.intersect (IRect (x, y, w, h));
         cairo_save (cr);
+        QImage *bg_img = reg->bg_image &&
+            !reg->bg_image->cached_img.isEmpty()
+                ? reg->bg_image->cached_img.data->image
+                : NULL;
         if ((SMIL::RegionBase::ShowAlways == reg->show_background ||
                     reg->m_AttachedMediaTypes->first ()) &&
-                (s->background_color & 0xff000000 ||
-                 !reg->cached_img.isEmpty ())) {
+                (s->background_color & 0xff000000 || bg_img)) {
             cairo_save (cr);
             if (s->background_color & 0xff000000) {
                 CAIRO_SET_SOURCE_RGB (cr, s->background_color);
                 cairo_rectangle (cr, clip.x, clip.y, clip.w, clip.h);
                 cairo_fill (cr);
             }
-            if (!reg->cached_img.isEmpty ()) {
+            if (bg_img) {
                 Single x1, y1;
-                Single w = reg->cached_img.data->image->width ();
-                Single h = reg->cached_img.data->image->height();
+                Single w = bg_img->width ();
+                Single h = bg_img->height();
                 matrix.getXYWH (x1, y1, w, h);
                 if (!s->surface)
-                    copyImage (s, w, h, reg->cached_img.data->image, cairo_surface);
+                    copyImage (s, w, h, bg_img, cairo_surface);
                 cairo_pattern_t *pat = cairo_pattern_create_for_surface (s->surface);
                 cairo_pattern_set_extend (pat, CAIRO_EXTEND_REPEAT);
                 cairo_matrix_t mat;
@@ -673,8 +678,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
         updateExternal (img, s);
         return;
     }
-    ImageRuntime * ir = static_cast <ImageRuntime *> (img->runtime ());
-    ImageData * id = ir->cached_img.data.ptr ();
+    ImageMedia *im = static_cast <ImageMedia *> (img->media_object);
+    ImageData *id = im ? im->cached_img.data.ptr () : NULL;
     if (!id || !id->image || img->width <= 0 || img->height <= 0) {
         s->remove();
         return;
@@ -695,8 +700,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
-    TextRuntime * td = static_cast <TextRuntime *> (txt->runtime ());
-    Surface *s = txt->surface ();
+    TextMedia *tm = static_cast <TextMedia *> (txt->media_object);
+    Surface *s = tm ? txt->surface () : NULL;
     //kdDebug() << "Visit " << txt->nodeName() << " " << td->text << endl;
     if (!s)
         return;
@@ -723,10 +728,10 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
                 rect.y () - (int) yoff, rect.width (), rect.height ());*/
 
         float scale = 1.0 * w / rect.width (); // TODO: make an image
-        cairo_set_font_size (cr, scale * td->font_size);
+        cairo_set_font_size (cr, scale * txt->font_size);
         cairo_font_extents_t txt_fnt;
         cairo_font_extents (cr, &txt_fnt);
-        QString str = td->text;
+        QString str = tm->text;
         struct Line {
             Line (const QString & ln) : txt (ln), next(0) {}
             QString txt;
@@ -774,9 +779,9 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
                 if (line->txt_ext.width > (double)max_width)
                     max_width = line->txt_ext.width;
 
-                if (td->halign == TextRuntime::align_center)
+                if (txt->halign == SMIL::TextMediaType::align_center)
                     line->xoff = (w - Single (line->txt_ext.width)) / 2;
-                else if (td->halign == TextRuntime::align_right)
+                else if (txt->halign == SMIL::TextMediaType::align_right)
                     line->xoff = w - Single (line->txt_ext.width);
                 if (line->xoff < min_xoff)
                     min_xoff = line->xoff;
@@ -803,12 +808,12 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         s->surface = cairo_surface_create_similar (cairo_surface,
                 CAIRO_CONTENT_COLOR, (int) w, (int) h);
         cairo_t * cr_txt = cairo_create (s->surface);
-        cairo_set_font_size (cr_txt, scale * td->font_size);
-        if (td->bg_opacity) { // TODO real alpha
-            CAIRO_SET_SOURCE_RGB (cr_txt, td->background_color);
+        cairo_set_font_size (cr_txt, scale * txt->font_size);
+        if (txt->bg_opacity) { // TODO real alpha
+            CAIRO_SET_SOURCE_RGB (cr_txt, txt->background_color);
             cairo_paint (cr_txt);
         }
-        CAIRO_SET_SOURCE_RGB (cr_txt, td->font_color);
+        CAIRO_SET_SOURCE_RGB (cr_txt, txt->font_color);
         y1 = 0;
         while (lines) {
             Line * line = lines;
@@ -937,7 +942,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
     //kdDebug() << "Visit " << fi->nodeName() << endl;
     if (fi->target && fi->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (fi->target);
-        if (img->surface ()) {
+        ImageMedia *im = img ? static_cast<ImageMedia*>(img->media_object):NULL;
+        if (im && img->surface ()) {
             Single sx = fi->srcx, sy = fi->srcy, sw = fi->srcw, sh = fi->srch;
             if (!(int)sw)
                 sw = img->width;
@@ -945,7 +951,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
                 sh = img->height;
             if ((int)fi->w && (int)fi->h && (int)sw && (int)sh) {
                 if (!img->img_surface->surface)
-                    copyImage (img->img_surface, img->width, img->height, img->cached_img.data->image, cairo_surface);
+                    copyImage (img->img_surface, img->width, img->height, im->cached_img.data->image, cairo_surface);
                 cairo_matrix_t matrix;
                 cairo_matrix_init_identity (&matrix);
                 float scalex = 1.0 * sw / fi->w;
@@ -987,7 +993,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
     //kdDebug() << "Visit " << cf->nodeName() << endl;
     if (cf->target && cf->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (cf->target);
-        if (img->surface ()) {
+        ImageMedia *im = img ? static_cast<ImageMedia*>(img->media_object):NULL;
+        if (im && img->surface ()) {
             Single sx = cf->srcx, sy = cf->srcy, sw = cf->srcw, sh = cf->srch;
             if (!(int)sw)
                 sw = img->width;
@@ -995,7 +1002,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
                 sh = img->height;
             if ((int)cf->w && (int)cf->h && (int)sw && (int)sh) {
                 if (!img->img_surface->surface)
-                    copyImage (img->img_surface, img->width, img->height, img->cached_img.data->image, cairo_surface);
+                    copyImage (img->img_surface, img->width, img->height, im->cached_img.data->image, cairo_surface);
                 cairo_save (cr);
                 cairo_matrix_t matrix;
                 cairo_matrix_init_identity (&matrix);
@@ -1023,7 +1030,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
     //kdDebug() << "Visit " << wipe->nodeName() << endl;
     if (wipe->target && wipe->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (wipe->target);
-        if (img->surface ()) {
+        ImageMedia *im = img ? static_cast<ImageMedia*>(img->media_object):NULL;
+        if (im && img->surface ()) {
             Single x = wipe->x, y = wipe->y;
             Single tx = x, ty = y;
             Single w = wipe->w, h = wipe->h;
@@ -1054,7 +1062,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
 
             if ((int)w && (int)h) {
                 if (!img->img_surface->surface)
-                    copyImage (img->img_surface, img->width, img->height, img->cached_img.data->image, cairo_surface);
+                    copyImage (img->img_surface, img->width, img->height, im->cached_img.data->image, cairo_surface);
                 cairo_matrix_t matrix;
                 cairo_matrix_init_identity (&matrix);
                 float scalex = 1.0 * sw / wipe->w;

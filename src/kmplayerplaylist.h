@@ -45,6 +45,8 @@ class Surface;
 class ElementPrivate;
 class RemoteObjectPrivate;
 class Visitor;
+class MediaManager;
+class MediaObject;
 
 /*
  * Base class for objects that will be used as SharedPtr/WeakPtr pointers.
@@ -535,14 +537,14 @@ public:
     PlayType playType ();
     /*
      * The original node (or this) having the URL, needed for playlist expansion
-     */ 
+     */
     virtual Mrl * linkNode ();
     virtual Mrl * mrl ();
     virtual void endOfFile ();
     QString absolutePath ();
     /*
      * Reimplement to callback with requestPlayURL if isPlayable()
-     */ 
+     */
     virtual void activate ();
     virtual void begin ();
     /**
@@ -556,6 +558,7 @@ public:
      * location in SCR. Typically that's the parent of this node.
      */
     NodePtrW opener; //if this node is top node of external document,
+    MediaObject *media_object;
     QString src;
     QString pretty_name;
     QString mimetype;
@@ -574,6 +577,8 @@ public:
 class KMPLAYER_EXPORT PlayListNotify {
 public:
     virtual ~PlayListNotify () {}
+
+    virtual MediaManager *mediaManager () const = 0;
     /**
      * Ask for playing a video/audio mrl by backend players
      * If returning false, the element will be set to finished
@@ -603,25 +608,6 @@ public:
      * Sets next call to Document::timer() or -1 to cancel a previous call
      */
     virtual void setTimeout (int ms) = 0;
-};
-
-/**
- * Base class for cached network data
- */
-class KMPLAYER_NO_EXPORT RemoteObject {
-    friend class RemoteObjectPrivate;
-public:
-    RemoteObject ();
-    virtual ~RemoteObject ();
-    bool wget (const QString & url);
-    void killWGet ();
-    void clear ();
-    QString mimetype ();
-protected:
-    KDE_NO_EXPORT virtual void remoteReady (QByteArray &) {}
-    bool downloading () const;
-private:
-    RemoteObjectPrivate *d;
 };
 
 class KMPLAYER_NO_EXPORT Surface : public TreeNode <Surface> {

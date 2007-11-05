@@ -35,6 +35,7 @@
 #include "kmplayer_rss.h"
 #include "kmplayer_smil.h"
 #include "kmplayer_xspf.h"
+#include "mediaobject.h"
 
 #ifdef SHAREDPTR_DEBUG
 int shared_data_count;
@@ -651,11 +652,14 @@ static bool hasMrlChildren (const NodePtr & e) {
 
 Mrl::Mrl (NodePtr & d, short id)
     : Element (d, id), cached_ismrl_version (~0),
+      media_object (NULL),
       aspect (0), repeat (0),
       view_mode (SingleMode),
       resolved (false), bookmarkable (true) {}
 
-Mrl::~Mrl () {}
+Mrl::~Mrl () {
+    delete media_object;
+}
 
 Node::PlayType Mrl::playType () {
     if (cached_ismrl_version != document()->m_tree_version) {

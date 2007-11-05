@@ -26,6 +26,7 @@
 
 #include "kmplayer_rp.h"
 #include "kmplayer_smil.h"
+#include "mediaobject.h"
 
 using namespace KMPlayer;
 
@@ -205,13 +206,12 @@ KDE_NO_EXPORT void RP::Image::activate () {
     kdDebug () << "RP::Image::activate" << endl;
     setState (state_activated);
     isPlayable (); // update src attribute
-    cached_img.setUrl (absolutePath ());
-    if (cached_img.isEmpty ()) {
-        wget (absolutePath ());
-    } else {
-        width = cached_img.data->image->width ();
-        height = cached_img.data->image->height ();
+    if (!media_object) {
+        PlayListNotify *n = document()->notify_listener;
+        if (n)
+            media_object = n->mediaManager ()->createMedia (MediaManager::Image, this);
     }
+    media_object->wget (absolutePath ());
 }
 
 KDE_NO_EXPORT void RP::Image::begin () {
@@ -219,39 +219,42 @@ KDE_NO_EXPORT void RP::Image::begin () {
 }
 
 KDE_NO_EXPORT void RP::Image::deactivate () {
-    cached_img.setUrl (QString ());
     if (img_surface) {
         img_surface->remove ();
         img_surface = NULL;
     }
     setState (state_deactivated);
     postpone_lock = 0L;
+    delete media_object;
+    media_object = NULL;
 }
 
+bool RP::Image::handleEvent (EventPtr event) {
+    if (event->id () != event_data_arrived)
+        return Mrl::handleEvent (event);
+    dataArrived ();
+    return true;
+}
 
-KDE_NO_EXPORT void RP::Image::remoteReady (QByteArray & data) {
+KDE_NO_EXPORT void RP::Image::dataArrived () {
     kdDebug () << "RP::Image::remoteReady" << endl;
-    if (!data.isEmpty () && cached_img.isEmpty ()) {
-        QImage * img = new QImage (data);
-        if (!img->isNull ()) {
-            cached_img.data->image = img;
-            width = img->width ();
-            height = img->height ();
-        } else {
-            delete img;
-        }
+    ImageMedia *im = static_cast <ImageMedia *> (media_object);
+    if (!im->cached_img.isEmpty ()) {
+        width = im->cached_img.data->image->width ();
+        height = im->cached_img.data->image->height ();
     }
     postpone_lock = 0L;
 }
 
 KDE_NO_EXPORT bool RP::Image::isReady (bool postpone_if_not) {
-    if (downloading () && postpone_if_not)
+    if (media_object->downloading () && postpone_if_not)
         postpone_lock = document ()->postpone ();
-    return !downloading ();
+    return !media_object->downloading ();
 }
 
 KDE_NO_EXPORT Surface *RP::Image::surface () {
-    if (!img_surface && !cached_img.isEmpty ()) {
+    ImageMedia *im = static_cast <ImageMedia *> (media_object);
+    if (im && !img_surface && !im->cached_img.isEmpty ()) {
         Node * p = parentNode ().ptr ();
         if (p && p->id == RP::id_node_imfl) {
             Surface *ps = static_cast <RP::Imfl *> (p)->surface ();

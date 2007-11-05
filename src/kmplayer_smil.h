@@ -22,42 +22,18 @@
 #define _KMPLAYER_SMILL_H_
 
 #include <config.h>
-#include <qobject.h>
 #include <qstring.h>
 #include <qstringlist.h>
 
 #include "kmplayerplaylist.h"
 
 class QTextStream;
-class QImage;
-class QPainter;
-
-namespace KIO {
-    class Job;
-}
 
 struct TransTypeInfo;
 
 namespace KMPlayer {
 
-struct KMPLAYER_NO_EXPORT ImageData {
-    ImageData( const QString & img);
-    ~ImageData();
-    QImage *image;
-private:
-    QString url;
-};
-
-typedef SharedPtr <ImageData> ImageDataPtr;
-typedef WeakPtr <ImageData> ImageDataPtrW;
-
-struct KMPLAYER_NO_EXPORT CachedImage {
-    void setUrl (const QString & url);
-    bool isEmpty ();
-    ImageDataPtr data;
-};
-
-class TextRuntimePrivate;
+class ImageMedia;
 
 /*
  * Event signaled before the actual starting takes place. Use by SMIL::Excl
@@ -159,83 +135,11 @@ private:
     void setDurationItem (DurationTime item, const QString & val);
 public:
     TimingState timingstate;
+    int repeat_count;
 protected:
     NodePtrW element;
     TimerInfoPtrW start_timer;
     TimerInfoPtrW duration_timer;
-    int repeat_count;
-};
-
-/**
- * Some common runtime data for all mediatype classes
- */
-class KMPLAYER_NO_EXPORT MediaTypeRuntime : public RemoteObject,public Runtime {
-public:
-    ~MediaTypeRuntime ();
-    virtual void reset ();
-    virtual void stopped ();
-    virtual void postpone (bool b);
-    virtual void clipStart ();
-    virtual void clipStop ();
-    PostponePtr postpone_lock;
-    MediaTypeRuntime (NodePtr e);
-protected:
-    ConnectionPtr document_postponed;      // pause audio/video accordantly
-};
-
-/**
- * Data needed for audio/video clips
- */
-class KMPLAYER_NO_EXPORT AudioVideoData : public MediaTypeRuntime {
-public:
-    AudioVideoData (NodePtr e);
-    virtual bool parseParam (const TrieString & name, const QString & value);
-    virtual void started ();
-    virtual void postpone (bool b);
-    virtual void clipStart ();
-    virtual void clipStop ();
-};
-
-class KMPLAYER_NO_EXPORT ImageRuntime : public QObject,public MediaTypeRuntime {
-    Q_OBJECT
-public:
-    ImageRuntime (NodePtr e);
-    ~ImageRuntime ();
-    virtual bool parseParam (const TrieString & name, const QString & value);
-    virtual void postpone (bool b);
-    virtual void clipStart ();
-    virtual void clipStop ();
-    QMovie * img_movie;
-    CachedImage cached_img;
-    int frame_nr;
-protected:
-    virtual void started ();
-    virtual void remoteReady (QByteArray &);
-private slots:
-    void movieUpdated (const QRect &);
-    void movieStatus (int);
-    void movieResize (const QSize &);
-};
-
-/**
- * Data needed for text
- */
-class KMPLAYER_NO_EXPORT TextRuntime : public MediaTypeRuntime {
-public:
-    TextRuntime (NodePtr e);
-    ~TextRuntime ();
-    void reset ();
-    virtual bool parseParam (const TrieString & name, const QString & value);
-    int font_size;
-    unsigned int font_color;
-    unsigned int background_color;
-    int bg_opacity;
-    enum { align_left, align_center, align_right } halign;
-    QString text;
-    TextRuntimePrivate * d;
-protected:
-    virtual void started ();
-    virtual void remoteReady (QByteArray &);
 };
 
 /**
@@ -429,7 +333,7 @@ public:
 /**
  * Base class for SMIL::Region, SMIL::RootLayout and SMIL::Layout
  */
-class KMPLAYER_NO_EXPORT RegionBase : public RemoteObject, public Element {
+class KMPLAYER_NO_EXPORT RegionBase : public Element {
 public:
     enum ShowBackground { ShowAlways, ShowWhenActive };
 
@@ -439,6 +343,7 @@ public:
     void childDone (NodePtr child);
     void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
+    virtual bool handleEvent (EventPtr event);
     /**
      * repaints region, calls scheduleRepaint(x,y,w,h) on view
      */
@@ -454,7 +359,7 @@ public:
 
     virtual Surface *surface ();
     SurfacePtrW region_surface;
-    CachedImage cached_img;
+    ImageMedia *bg_image;
     CalculatedSizer sizes;
 
     Single x, y, w, h;     // unscaled values
@@ -465,7 +370,7 @@ public:
 protected:
     RegionBase (NodePtr & d, short id);
     PostponePtr postpone_lock;               // pause while loading bg image
-    virtual void remoteReady (QByteArray &); // image downloaded
+    void dataArrived (); // image downloaded
 };
 
 /**
@@ -765,6 +670,8 @@ public:
 class KMPLAYER_NO_EXPORT MediaType : public TimedMrl {
 public:
     MediaType (NodePtr & d, const QString & t, short id);
+    ~MediaType ();
+
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
     void closed ();
@@ -783,6 +690,7 @@ public:
     virtual bool handleEvent (EventPtr event);
     NodeRefListPtr listeners (unsigned int event_id);
     bool needsVideoWidget (); // for 'video' and 'ref' nodes
+
     SurfacePtrW sub_surface;
     NodePtrW external_tree; // if src points to playlist, the resolved top node
     NodePtrW trans_in;
@@ -798,7 +706,11 @@ public:
     unsigned int trans_steps;
     enum { sens_opaque, sens_transparent, sens_percentage } sensitivity;
     bool trans_out_active;
+
 protected:
+    virtual void clipStart ();
+    virtual void clipStop ();
+
     MouseListeners mouse_listeners;
     NodeRefListPtr m_MediaAttached;        // mouse entered
     ConnectionPtr region_paint;            // attached region needs painting
@@ -808,41 +720,61 @@ protected:
     ConnectionPtr region_attach;           // attached to region
     TimerInfoPtrW trans_timer;
     TimerInfoPtrW trans_out_timer;
+    ConnectionPtr document_postponed;      // pause audio/video accordantly
+    PostponePtr postpone_lock;
 };
 
 class KMPLAYER_NO_EXPORT AVMediaType : public MediaType {
 public:
     AVMediaType (NodePtr & d, const QString & t);
     NodePtr childFromTag (const QString & tag);
-    virtual Runtime * getNewRuntime ();
     virtual void defer ();
+    virtual void begin ();
     virtual void undefer ();
     virtual void endOfFile ();
     virtual void accept (Visitor *);
     virtual bool expose () const;
+    virtual void parseParam (const TrieString &, const QString &);
+    virtual void clipStart ();
+    virtual void clipStop ();
 };
 
 class KMPLAYER_NO_EXPORT ImageMediaType : public MediaType {
 public:
     ImageMediaType (NodePtr & d);
-    Runtime * getNewRuntime ();
     NodePtr childFromTag (const QString & tag);
     PlayType playType () { return play_type_image; }
+    virtual void activate ();
+    virtual void begin ();
     virtual void accept (Visitor *);
+    virtual void parseParam (const TrieString &, const QString &);
+    virtual bool handleEvent (EventPtr event);
+    virtual void clipStart ();
+    void dataArrived ();
 };
 
 class KMPLAYER_NO_EXPORT TextMediaType : public MediaType {
 public:
     TextMediaType (NodePtr & d);
-    Runtime * getNewRuntime ();
     PlayType playType () { return play_type_info; }
+    virtual void activate ();
+    virtual void begin ();
     virtual void accept (Visitor *);
+    virtual void parseParam (const TrieString &, const QString &);
+    virtual bool handleEvent (EventPtr event);
+    void dataArrived ();
+
+    QString font_name;
+    int font_size;
+    unsigned int font_color;
+    unsigned int background_color;
+    int bg_opacity;
+    enum { align_left, align_center, align_right } halign;
 };
 
 class KMPLAYER_NO_EXPORT RefMediaType : public MediaType {
 public:
     RefMediaType (NodePtr & d);
-    Runtime * getNewRuntime ();
     virtual void accept (Visitor *);
 };
 
@@ -850,7 +782,6 @@ class KMPLAYER_NO_EXPORT Brush : public MediaType {
 public:
     Brush (NodePtr & d);
     virtual void accept (Visitor *);
-    virtual Runtime * getNewRuntime ();
 };
 
 class KMPLAYER_NO_EXPORT Set : public TimedMrl {

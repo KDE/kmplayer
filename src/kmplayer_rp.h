@@ -25,7 +25,6 @@
 #include <qstring.h>
 
 #include "kmplayerplaylist.h"
-#include "kmplayer_smil.h"
 
 namespace KIO {
     class Job;
@@ -166,7 +165,7 @@ public:
     virtual void accept (Visitor *);
 };
 
-class KMPLAYER_NO_EXPORT Image : public RemoteObject, public Mrl {
+class KMPLAYER_NO_EXPORT Image : public Mrl {
     PostponePtr postpone_lock;
 public:
     Image (NodePtr & d);
@@ -176,13 +175,13 @@ public:
     virtual void begin ();
     virtual void deactivate ();
     virtual void closed ();
+    virtual bool handleEvent (EventPtr event);
     bool isReady (bool postpone_if_not = false); // is downloading ready
     Surface *surface ();
     SurfacePtrW img_surface;
-    CachedImage cached_img;
     bool expose () const { return false; }
 protected:
-    virtual void remoteReady (QByteArray & data);
+    void dataArrived ();
 };
 
 } // RP namespace

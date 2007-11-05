@@ -35,6 +35,7 @@ class QFrame;
 namespace KMPlayer {
 
 class PartBase;
+class MediaManager;
 
 /**
  * Class for a certain media, like URL, DVD, TV etc
@@ -141,6 +142,7 @@ protected:
     void setInfoMessage (const QString & msg);
     void bitRates (int & preferred, int & maximal);
     void setTimeout (int ms);
+    MediaManager *mediaManager () const;
 
     NodePtr m_document;
     NodePtrW m_current;
