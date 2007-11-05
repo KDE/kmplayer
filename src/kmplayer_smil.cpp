@@ -1778,7 +1778,7 @@ KDE_NO_EXPORT void SMIL::RegionBase::deactivate () {
 }
 
 KDE_NO_EXPORT void SMIL::RegionBase::dataArrived () {
-    if (!bg_image->cached_img.isEmpty () && region_surface)
+    if (!bg_image->isEmpty () && region_surface)
         region_surface->remove (); // FIXME: only surface
     postpone_lock = 0L;
 }
@@ -1880,7 +1880,7 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
                 bg_image = static_cast <ImageMedia *> (
                         document()->notify_listener->mediaManager ()->
                         createMedia (MediaManager::Image, this));
-            need_repaint = !bg_image->cached_img.isEmpty ();
+            need_repaint = !bg_image->isEmpty ();
             Mrl *mrl = s->parentNode () ? s->parentNode ()->mrl () : NULL;
             QString url = mrl ? KURL (mrl->absolutePath (), val).url () : val;
             if (!bg_image->wget (url))
@@ -3171,7 +3171,7 @@ void SMIL::ImageMediaType::dataArrived () {
     ImageMedia *im = static_cast <ImageMedia *> (media_object);
     resetSurface ();
     QString mime = im->mimetype ();
-    kdDebug () << "ImageMediaType::dataArrived " << mime << " empty:" << im->cached_img.isEmpty () << " " << src << " " << state << endl;
+    kdDebug () << "ImageMediaType::dataArrived " << mime << " empty:" << im->isEmpty () << " " << src << " " << state << endl;
     if (mime.startsWith (QString::fromLatin1 ("text/"))) {
         QTextStream ts (im->rawData (), IO_ReadOnly);
         readXML (this, ts, QString ());
@@ -3180,9 +3180,9 @@ void SMIL::ImageMediaType::dataArrived () {
             width = mrl->width;
             height = mrl->height;
         }
-    } else if (!im->cached_img.isEmpty ()) {
-        width = im->cached_img.data->image->width ();
-        height = im->cached_img.data->image->height ();
+    } else if (!im->isEmpty ()) {
+        width = im->cached_img->image->width ();
+        height = im->cached_img->image->height ();
         if (surface ())
             sub_surface->repaint ();
     }

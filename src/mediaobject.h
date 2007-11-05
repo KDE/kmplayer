@@ -203,12 +203,6 @@ private:
 typedef SharedPtr <ImageData> ImageDataPtr;
 typedef WeakPtr <ImageData> ImageDataPtrW;
 
-struct KMPLAYER_NO_EXPORT CachedImage {
-    void setUrl (const QString & url);
-    bool isEmpty ();
-    ImageDataPtr data;
-};
-
 class KMPLAYER_NO_EXPORT ImageMedia : public MediaObject {
     Q_OBJECT
 public:
@@ -222,7 +216,9 @@ public:
     void pause ();
     void unpause ();
 
-    CachedImage cached_img;
+    void setUrl (const QString & url);
+    bool isEmpty ();
+    ImageDataPtr cached_img;
 
 private slots:
     void movieUpdated (const QRect &);

@@ -62,9 +62,28 @@ MediaObject *MediaManager::createMedia (MediaType type, Node *node) {
 
 //------------------------%<----------------------------------------------------
 
-namespace KMPlayer {
-    static KStaticDeleter <DataCache> dataCacheDeleter;
+namespace {
+
+    typedef QMap <QString, ImageDataPtrW> ImageDataMap;
+
     static DataCache *memory_cache;
+    static ImageDataMap *image_data_map;
+
+    struct GlobalMediaData {
+        GlobalMediaData () {
+            memory_cache = new DataCache;
+            image_data_map = new ImageDataMap;
+        }
+        ~GlobalMediaData ();
+    };
+
+    static GlobalMediaData *global_media;
+    static KStaticDeleter <GlobalMediaData> globalMediaDataDeleter;
+
+    GlobalMediaData::~GlobalMediaData () {
+        delete memory_cache;
+        delete image_data_map;
+    }
 }
 
 void DataCache::add (const QString & url, const QByteArray & data) {
@@ -108,8 +127,8 @@ bool DataCache::unpreserve (const QString & url) {
 
 MediaObject::MediaObject (MediaManager *manager, Node *node)
  : m_manager (manager), m_node (node), job (NULL), preserve_wait (false) {
-    if (!memory_cache)
-        dataCacheDeleter.setObject (memory_cache, new DataCache);
+    if (!global_media)
+        globalMediaDataDeleter.setObject (global_media, new GlobalMediaData);
 }
 
 MediaObject::~MediaObject () {
@@ -259,6 +278,19 @@ IViewer *AudioVideoMedia::viewer () {
 
 //------------------------%<----------------------------------------------------
 
+ImageData::ImageData( const QString & img) : image (0L), url (img) {
+    //if (img.isEmpty ())
+    //    //kdDebug() << "New ImageData for " << this << endl;
+    //else
+    //    //kdDebug() << "New ImageData for " << img << endl;
+}
+
+ImageData::~ImageData() {
+    if (!url.isEmpty ())
+        image_data_map->erase (url);
+    delete image;
+}
+
 ImageMedia::ImageMedia (MediaManager *manager, Node *node)
  : MediaObject (manager, node), img_movie (NULL) {}
 
@@ -290,13 +322,12 @@ KDE_NO_EXPORT void ImageMedia::remoteReady (const QString &url) {
     if (data.size ()) {
         QString mime = mimetype ();
         if (!mime.startsWith (QString::fromLatin1 ("text/"))) { // FIXME svg
-            cached_img.setUrl (url);
+            setUrl (url);
             delete img_movie;
             img_movie = 0L;
-            QImage *pix = cached_img.isEmpty () ?
-                new QImage (data) : cached_img.data->image;
+            QImage *pix = isEmpty () ? new QImage (data) : cached_img->image;
             if (!pix->isNull ()) {
-                cached_img.data->image = pix;
+                cached_img->image = pix;
                 img_movie = new QMovie (data, data.size ());
                 img_movie->connectUpdate(this,SLOT(movieUpdated(const QRect&)));
                 img_movie->connectStatus (this, SLOT (movieStatus (int)));
@@ -310,6 +341,25 @@ KDE_NO_EXPORT void ImageMedia::remoteReady (const QString &url) {
     MediaObject::remoteReady (url);
 }
 
+bool ImageMedia::isEmpty () {
+    return !cached_img || !cached_img->image;
+}
+
+void ImageMedia::setUrl (const QString & url) {
+    if (url.isEmpty ()) {
+        cached_img = ImageDataPtr (new ImageData (url));
+    } else {
+        ImageDataMap::iterator i = image_data_map->find (url);
+        if (i == image_data_map->end ()) {
+            cached_img = ImageDataPtr (new ImageData (url));
+            image_data_map->insert (url, ImageDataPtrW (cached_img));
+        } else {
+            ImageDataPtr safe = i.data ();
+            cached_img = safe;
+        }
+    }
+}
+
 KDE_NO_EXPORT void ImageMedia::movieResize (const QSize &) {
     //kdDebug () << "movieResize" << endl;
     if (m_node)
@@ -318,10 +368,10 @@ KDE_NO_EXPORT void ImageMedia::movieResize (const QSize &) {
 
 KDE_NO_EXPORT void ImageMedia::movieUpdated (const QRect &) {
     if (frame_nr++) {
-        cached_img.setUrl (QString ());
-        ASSERT (cached_img.data && cached_img.isEmpty ());
-        cached_img.data->image = new QImage;
-        *cached_img.data->image = (img_movie->framePixmap ());
+        setUrl (QString ());
+        ASSERT (cached_img && isEmpty ());
+        cached_img->image = new QImage;
+        *cached_img->image = (img_movie->framePixmap ());
         if (m_node)
             m_node->handleEvent (new Event (event_img_updated));
     }

@@ -29,7 +29,6 @@
 #include <qmap.h>
 
 #include <kactioncollection.h>
-#include <kstaticdeleter.h>
 #include <kstatusbar.h>
 #include <kstdaction.h>
 #include <kshortcut.h>
@@ -55,27 +54,6 @@ extern const char * normal_window_xpm[];
 extern const char * playlist_xpm[];
 
 //-------------------------------------------------------------------------
-
-namespace KMPlayer {
-    typedef QMap <QString, ImageDataPtrW> ImageDataMap;
-    static KStaticDeleter <ImageDataMap> imageCacheDeleter;
-    static ImageDataMap * image_data_map;
-}
-
-ImageData::ImageData( const QString & img) :
-    image (0L),
-    url (img) {
-        //if (img.isEmpty ())
-        //    //kdDebug() << "New ImageData for " << this << endl;
-        //else
-        //    //kdDebug() << "New ImageData for " << img << endl;
-    }
-
-ImageData::~ImageData() {
-    if (!url.isEmpty ())
-        image_data_map->erase (url);
-    delete image;
-}
 
 #ifdef HAVE_CAIRO
 static void copyImage (Surface *s, int w, int h, QImage *img, cairo_surface_t *similar) {
@@ -110,25 +88,6 @@ static void copyImage (Surface *s, int w, int h, QImage *img, cairo_surface_t *s
     cairo_surface_destroy (sf);
 }
 #endif
-
-bool CachedImage::isEmpty () {
-    return !data || !data->image;
-}
-
-void CachedImage::setUrl (const QString & url) {
-    if (url.isEmpty ()) {
-        data = ImageDataPtr (new ImageData (url));
-    } else {
-        ImageDataMap::iterator i = image_data_map->find (url);
-        if (i == image_data_map->end ()) {
-            data = ImageDataPtr (new ImageData (url));
-            image_data_map->insert (url, ImageDataPtrW (data));
-        } else {
-            ImageDataPtr safe = i.data ();
-            data = safe;
-        }
-    }
-}
 
 //-------------------------------------------------------------------------
 
@@ -398,8 +357,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
         clip = clip.intersect (IRect (x, y, w, h));
         cairo_save (cr);
         QImage *bg_img = reg->bg_image &&
-            !reg->bg_image->cached_img.isEmpty()
-                ? reg->bg_image->cached_img.data->image
+            !reg->bg_image->isEmpty()
+                ? reg->bg_image->cached_img->image
                 : NULL;
         if ((SMIL::RegionBase::ShowAlways == reg->show_background ||
                     reg->m_AttachedMediaTypes->first ()) &&
@@ -679,7 +638,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
         return;
     }
     ImageMedia *im = static_cast <ImageMedia *> (img->media_object);
-    ImageData *id = im ? im->cached_img.data.ptr () : NULL;
+    ImageData *id = im ? im->cached_img.ptr () : NULL;
     if (!id || !id->image || img->width <= 0 || img->height <= 0) {
         s->remove();
         return;
@@ -951,7 +910,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
                 sh = img->height;
             if ((int)fi->w && (int)fi->h && (int)sw && (int)sh) {
                 if (!img->img_surface->surface)
-                    copyImage (img->img_surface, img->width, img->height, im->cached_img.data->image, cairo_surface);
+                    copyImage (img->img_surface, img->width, img->height,
+                            im->cached_img->image, cairo_surface);
                 cairo_matrix_t matrix;
                 cairo_matrix_init_identity (&matrix);
                 float scalex = 1.0 * sw / fi->w;
@@ -1002,7 +962,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
                 sh = img->height;
             if ((int)cf->w && (int)cf->h && (int)sw && (int)sh) {
                 if (!img->img_surface->surface)
-                    copyImage (img->img_surface, img->width, img->height, im->cached_img.data->image, cairo_surface);
+                    copyImage (img->img_surface, img->width, img->height,
+                            im->cached_img->image, cairo_surface);
                 cairo_save (cr);
                 cairo_matrix_t matrix;
                 cairo_matrix_init_identity (&matrix);
@@ -1062,7 +1023,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
 
             if ((int)w && (int)h) {
                 if (!img->img_surface->surface)
-                    copyImage (img->img_surface, img->width, img->height, im->cached_img.data->image, cairo_surface);
+                    copyImage (img->img_surface, img->width, img->height,
+                            im->cached_img->image, cairo_surface);
                 cairo_matrix_t matrix;
                 cairo_matrix_init_identity (&matrix);
                 float scalex = 1.0 * sw / wipe->w;
@@ -1361,8 +1323,6 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
     setAcceptDrops (true);
     new KAction (i18n ("Fullscreen"), KShortcut (Qt::Key_F), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_toggle");
     setMouseTracking (true);
-    if (!image_data_map)
-        imageCacheDeleter.setObject (image_data_map, new ImageDataMap);
 }
 
 KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {

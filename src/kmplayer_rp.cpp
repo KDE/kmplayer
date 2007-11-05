@@ -239,9 +239,9 @@ bool RP::Image::handleEvent (EventPtr event) {
 KDE_NO_EXPORT void RP::Image::dataArrived () {
     kdDebug () << "RP::Image::remoteReady" << endl;
     ImageMedia *im = static_cast <ImageMedia *> (media_object);
-    if (!im->cached_img.isEmpty ()) {
-        width = im->cached_img.data->image->width ();
-        height = im->cached_img.data->image->height ();
+    if (!im->isEmpty ()) {
+        width = im->cached_img->image->width ();
+        height = im->cached_img->image->height ();
     }
     postpone_lock = 0L;
 }
@@ -254,7 +254,7 @@ KDE_NO_EXPORT bool RP::Image::isReady (bool postpone_if_not) {
 
 KDE_NO_EXPORT Surface *RP::Image::surface () {
     ImageMedia *im = static_cast <ImageMedia *> (media_object);
-    if (im && !img_surface && !im->cached_img.isEmpty ()) {
+    if (im && !img_surface && !im->isEmpty ()) {
         Node * p = parentNode ().ptr ();
         if (p && p->id == RP::id_node_imfl) {
             Surface *ps = static_cast <RP::Imfl *> (p)->surface ();
