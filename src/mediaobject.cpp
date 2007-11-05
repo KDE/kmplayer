@@ -42,26 +42,6 @@ const unsigned int event_img_anim_finished = 102;
 
 using namespace KMPlayer;
 
-MediaManager::MediaManager (PartBase *player) : m_player (player) {
-}
-
-MediaManager::~MediaManager () {
-}
-
-MediaObject *MediaManager::createMedia (MediaType type, Node *node) {
-    switch (type) {
-        case AudioVideo:
-            return new AudioVideoMedia (this, node);
-        case Image:
-            return new ImageMedia (this, node);
-        case Text:
-            return new TextMedia (this, node);
-    }
-    return NULL;
-}
-
-//------------------------%<----------------------------------------------------
-
 namespace {
 
     typedef QMap <QString, ImageDataPtrW> ImageDataMap;
@@ -83,8 +63,33 @@ namespace {
     GlobalMediaData::~GlobalMediaData () {
         delete memory_cache;
         delete image_data_map;
+        global_media = NULL;
     }
 }
+
+//------------------------%<----------------------------------------------------
+
+MediaManager::MediaManager (PartBase *player) : m_player (player) {
+    if (!global_media)
+        globalMediaDataDeleter.setObject (global_media, new GlobalMediaData);
+}
+
+MediaManager::~MediaManager () {
+}
+
+MediaObject *MediaManager::createMedia (MediaType type, Node *node) {
+    switch (type) {
+        case AudioVideo:
+            return new AudioVideoMedia (this, node);
+        case Image:
+            return new ImageMedia (this, node);
+        case Text:
+            return new TextMedia (this, node);
+    }
+    return NULL;
+}
+
+//------------------------%<----------------------------------------------------
 
 void DataCache::add (const QString & url, const QByteArray & data) {
     QByteArray bytes;
@@ -127,8 +132,6 @@ bool DataCache::unpreserve (const QString & url) {
 
 MediaObject::MediaObject (MediaManager *manager, Node *node)
  : m_manager (manager), m_node (node), job (NULL), preserve_wait (false) {
-    if (!global_media)
-        globalMediaDataDeleter.setObject (global_media, new GlobalMediaData);
 }
 
 MediaObject::~MediaObject () {
@@ -354,8 +357,7 @@ void ImageMedia::setUrl (const QString & url) {
             cached_img = ImageDataPtr (new ImageData (url));
             image_data_map->insert (url, ImageDataPtrW (cached_img));
         } else {
-            ImageDataPtr safe = i.data ();
-            cached_img = safe;
+            cached_img = i.data ();
         }
     }
 }
@@ -371,7 +373,7 @@ KDE_NO_EXPORT void ImageMedia::movieUpdated (const QRect &) {
         setUrl (QString ());
         ASSERT (cached_img && isEmpty ());
         cached_img->image = new QImage;
-        *cached_img->image = (img_movie->framePixmap ());
+        *cached_img->image = img_movie->framePixmap ();
         if (m_node)
             m_node->handleEvent (new Event (event_img_updated));
     }

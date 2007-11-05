@@ -61,9 +61,10 @@
 #include "kmplayerconfig.h"
 #include "kmplayerprocess.h"
 #include "kmplayer_smil.h"
+#include "mediaobject.h"
 
 namespace KMPlayer {
-    
+
 class KMPLAYER_NO_EXPORT BookmarkOwner : public KBookmarkOwner {
 public:
     BookmarkOwner (PartBase *);
@@ -111,6 +112,7 @@ PartBase::PartBase (QWidget * wparent, const char *wname,
    m_config (config),
    m_view (new View (wparent, wname ? wname : "kde_kmplayer_view")),
    m_settings (new Settings (this, config)),
+   m_media_manager (new MediaManager (this)),
    m_recorder (0L),
    m_source (0L),
    m_bookmark_menu (0L),
@@ -246,6 +248,7 @@ PartBase::~PartBase () {
     stop ();
     if (m_source)
         m_source->deactivate ();
+    delete m_media_manager;
     delete m_settings;
     delete m_bookmark_menu;
     delete m_bookmark_manager;
