@@ -211,11 +211,6 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
     m_request_jump.truncate (0);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::playCurrent () {
-    if (m_player->process ())
-        m_player->process ()->play (this, current ()); // FIXME HACK
-}
-
 KDE_NO_EXPORT void KMPlayerVDRSource::processStopped () {
     if (m_socket->state () == QSocket::Connected) {
         queueCommand (QString ("VOLU %1\n").arg (m_stored_volume).ascii ());
@@ -525,10 +520,9 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deleteCommands () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::jump (KMPlayer::NodePtr e) {
-    if (!e->isPlayable ()) return;
-    m_current = e;
-    jump (e->mrl ()->pretty_name);
+KDE_NO_EXPORT void KMPlayerVDRSource::play (KMPlayer::Mrl *mrl) {
+    if (!mrl || !mrl->isPlayable ()) return;
+    jump (mrl->pretty_name);
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::jump (const QString & channel) {
@@ -732,10 +726,6 @@ KDE_NO_EXPORT QFrame * KMPlayerVDRSource::prefPage (QWidget * parent) {
     if (!m_configpage)
         m_configpage = new KMPlayerPrefSourcePageVDR (parent, m_player);
     return m_configpage;
-}
-
-KDE_NO_EXPORT bool KMPlayerVDRSource::requestPlayURL (KMPlayer::NodePtr) {
-    return true;
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::stateElementChanged (KMPlayer::Node *, KMPlayer::Node::State, KMPlayer::Node::State) {

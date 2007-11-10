@@ -674,12 +674,14 @@ public:
 
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
-    void closed ();
-    void activate ();
-    void deactivate ();
-    void begin ();
-    void finish ();
-    void childDone (NodePtr child);
+    virtual void closed ();
+    virtual void activate ();
+    virtual void deactivate ();
+    virtual void defer ();
+    virtual void undefer ();
+    virtual void begin ();
+    virtual void finish ();
+    virtual void childDone (NodePtr child);
     virtual SurfacePtr getSurface (NodePtr node);
     /* (new) sub-region or NULL if not displayed */
     Surface *surface ();
@@ -728,9 +730,7 @@ class KMPLAYER_NO_EXPORT AVMediaType : public MediaType {
 public:
     AVMediaType (NodePtr & d, const QString & t);
     NodePtr childFromTag (const QString & tag);
-    virtual void defer ();
     virtual void begin ();
-    virtual void undefer ();
     virtual void endOfFile ();
     virtual void accept (Visitor *);
     virtual bool expose () const;
@@ -749,7 +749,6 @@ public:
     virtual void accept (Visitor *);
     virtual void parseParam (const TrieString &, const QString &);
     virtual bool handleEvent (EventPtr event);
-    virtual void clipStart ();
     void dataArrived ();
 };
 

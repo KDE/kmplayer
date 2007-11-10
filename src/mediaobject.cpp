@@ -26,11 +26,16 @@
 
 #include <kdebug.h>
 #include <kmimetype.h>
+#include <klocale.h>
 #include <kio/job.h>
 #include <kio/jobclasses.h>
 #include <kstaticdeleter.h>
 
 #include "mediaobject.h"
+#include "kmplayerpartbase.h"
+#include "kmplayerprocess.h"
+#include "kmplayersource.h"
+#include "kmplayerview.h"
 
 namespace KMPlayer {
 
@@ -79,8 +84,20 @@ MediaManager::~MediaManager () {
 
 MediaObject *MediaManager::createMedia (MediaType type, Node *node) {
     switch (type) {
-        case AudioVideo:
-            return new AudioVideoMedia (this, node);
+        case Audio:
+        case AudioVideo: {
+            if (!m_player->source ()->authoriseUrl (node->mrl ()->absolutePath ()))
+                return NULL;
+            AudioVideoMedia *av = new AudioVideoMedia (this, node);
+            // FIXME: support more pocesses and viewers
+            m_player->setProcess (node->mrl ());
+            av->process = m_player->process ();
+            av->process->setMrl (node->mrl ());
+            av->viewer = static_cast <View *>(m_player->view ())->viewer ();
+            if (av->process->state () < IProcess::Ready)
+                av->process->ready (av->viewer);
+            return av;
+        }
         case Image:
             return new ImageMedia (this, node);
         case Text:
@@ -88,6 +105,15 @@ MediaObject *MediaManager::createMedia (MediaType type, Node *node) {
     }
     return NULL;
 }
+
+//------------------------%<----------------------------------------------------
+
+ProcessInfo::ProcessInfo (const char *nm, const QString &lbl,
+        const char **supported, IProcess *(*create_func) (Source *))
+ : name (nm),
+   label (lbl),
+   supported_sources (supported),
+   create (create_func) {}
 
 //------------------------%<----------------------------------------------------
 
@@ -248,35 +274,72 @@ KDE_NO_EXPORT void MediaObject::slotMimetype (KIO::Job *, const QString & m) {
 //------------------------%<----------------------------------------------------
 
 AudioVideoMedia::AudioVideoMedia (MediaManager *manager, Node *node)
- : MediaObject (manager, node) {}
+ : MediaObject (manager, node),
+   process (NULL),
+   viewer (NULL),
+   request (ask_stop) {}
 
 AudioVideoMedia::~AudioVideoMedia () {
-    m_process->stop ();
+    stop ();
     // delete m_process;
 }
 
-void AudioVideoMedia::clipStart () {
-    m_process->play (m_node->mrl ());
+bool AudioVideoMedia::play () {
+    if (process) {
+        if (process->state () < IProcess::Ready) {
+            request = ask_play;
+            return true; // FIXME add Launching state
+        }
+        return process->play (m_node->mrl ());
+    }
+    return false;
 }
 
-void AudioVideoMedia::clipStop () {
-    m_process->stop ();
+void AudioVideoMedia::stop () {
+    request = ask_stop;
+    if (process)
+        process->stop ();
 }
 
 void AudioVideoMedia::pause () {
-    m_process->pause ();
+    if (process)
+        process->pause ();
 }
 
 void AudioVideoMedia::unpause () {
-    m_process->pause ();
+    process->pause ();
 }
 
-IProcess *AudioVideoMedia::process () {
-    return m_process;
-}
+static const QString statemap [] = {
+    i18n ("Not Running"), i18n ("Ready"), i18n ("Buffering"), i18n ("Playing")
+};
 
-IViewer *AudioVideoMedia::viewer () {
-    return m_viewer;
+void AudioVideoMedia::stateChange(Process *p, IProcess::State olds, IProcess::State news) {
+    if (!p || !p->viewer ()) return;
+    //p->viewer()->view()->controlPanel()->setPlaying(news > Process::Ready);
+    kdDebug () << "processState " << statemap[olds] << " -> " << statemap[news] << endl;
+    //m_player->updateStatus (i18n ("Player %1 %2").arg (p->name ()).arg (statemap[news]));
+    if (IProcess::Playing == news) {
+        if (Element::state_deferred == m_node->state)
+            m_node->undefer ();
+        p->viewer ()->view ()->playingStart ();
+    } else if (IProcess::NotRunning == news) {
+        if (p == process) {
+            if (m_node->unfinished ())
+                m_node->mrl ()->endOfFile ();
+        } else { // changed process
+            process = p;
+            // TODO: call ready ..
+        }
+    } else if (IProcess::Ready == news) {
+        if (olds > IProcess::Ready)
+            m_node->mrl ()->endOfFile ();
+        else if (m_node && ask_play == request)
+            p->play (m_node->mrl ());
+    } else if (IProcess::Buffering == news) {
+        if (m_node->mrl ()->view_mode != Mrl::SingleMode)
+            m_node->defer (); // paused the SMIL
+    }
 }
 
 //------------------------%<----------------------------------------------------
@@ -299,15 +362,16 @@ ImageMedia::ImageMedia (MediaManager *manager, Node *node)
 
 ImageMedia::~ImageMedia () {}
 
-KDE_NO_EXPORT void ImageMedia::clipStart () {
-    if (img_movie) {
-        img_movie->restart ();
-        if (img_movie->paused ())
-            img_movie->unpause ();
-    }
+KDE_NO_EXPORT bool ImageMedia::play () {
+    if (!img_movie)
+        return false;
+    img_movie->restart ();
+    if (img_movie->paused ())
+        img_movie->unpause ();
+    return true;
 }
 
-KDE_NO_EXPORT void ImageMedia::clipStop () {
+KDE_NO_EXPORT void ImageMedia::stop () {
     pause ();
 }
 
@@ -405,6 +469,10 @@ KDE_NO_EXPORT void TextMedia::remoteReady (const QString &url) {
         text  = ts.read ();
     }
     MediaObject::remoteReady (url);
+}
+
+bool TextMedia::play () {
+    return !text.isEmpty ();
 }
 
 #include "mediaobject.moc"

@@ -339,7 +339,7 @@ void PartBase::setProcess (const char * name) {
         m_source = m_sources ["urlsource"];
     Process * old_process = m_process;
     m_process = process;
-    if (old_process && old_process->state () > Process::NotRunning)
+    if (old_process && old_process->state () > IProcess::NotRunning)
         old_process->quit ();
     if (!m_process)
         return;
@@ -478,7 +478,7 @@ bool PartBase::isSeekable (void) const {
 }
 
 bool PartBase::hasLength () const {
-    return m_source ? m_source->hasLength () : false; 
+    return m_source ? m_source->hasLength () : false;
 }
 
 unsigned long PartBase::length () const {
@@ -628,7 +628,7 @@ KDE_NO_EXPORT void PartBase::playListItemClicked (QListViewItem * item) {
         //kdDebug() << "playListItemClicked " << src << " " << vi->node->nodeName() << endl;
         Source * source = src.isEmpty() ? m_source : m_sources[src.ascii()];
         if (vi->node->isPlayable ()) {
-            source->jump (vi->node); //may become !isPlayable by lazy loading
+            source->play (vi->node->mrl ()); //may become !isPlayable by lazy loading
             if (!vi->node->isPlayable ())
                 emit treeChanged (ri->id, vi->node, 0, false, true);
         } else if (vi->firstChild ())
@@ -649,7 +649,7 @@ KDE_NO_EXPORT void PartBase::playListItemExecuted (QListViewItem * item) {
         //kdDebug() << "playListItemExecuted " << src << " " << vi->node->nodeName() << endl;
         Source * source = src.isEmpty() ? m_source : m_sources[src.ascii()];
         if (vi->node->isPlayable ()) {
-            source->jump (vi->node); //may become !isPlayable by lazy loading
+            source->play (vi->node->mrl ()); //may become !isPlayable by lazy loading
             if (!vi->node->isPlayable ())
                 emit treeChanged (ri->id, vi->node, 0, false, true);
         } else if (vi->firstChild ())
@@ -743,7 +743,7 @@ void PartBase::play () {
         killTimer (m_update_tree_timer);
         m_update_tree_timer = 0;
     }
-    if (m_process->state () == Process::NotRunning) {
+    if (m_process->state () == IProcess::NotRunning) {
         PlayListItem * lvi = m_view->playList ()->currentPlayListItem ();
         if (lvi) { // make sure it's in the first tree
             QListViewItem * pitem = lvi;
@@ -757,19 +757,17 @@ void PartBase::play () {
         if (lvi)
             for (NodePtr n = lvi->node; n; n = n->parentNode ()) {
                 if (n->isPlayable ()) {
-                    m_source->setCurrent (n);
+                    m_source->play (n->mrl ());
                     break;
                 }
             }
-        m_process->ready (m_view->viewer ());
-    } else if (m_process->state () == Process::Ready) {
-        m_source->playCurrent ();
-    } else
-        m_process->play (m_source, m_source->current ());
+    } else {
+        m_source->play (NULL);
+    }
 }
 
 bool PartBase::playing () const {
-    return m_process && m_process->state () > Process::Ready;
+    return m_process && m_process->state () > IProcess::Ready;
 }
 
 void PartBase::stop () {
@@ -798,7 +796,8 @@ void PartBase::seek (unsigned long msec) {
 }
 
 void PartBase::adjustVolume (int incdec) {
-    m_process->volume (incdec, false);
+    if (m_process)
+        m_process->volume (incdec, false);
 }
 
 void PartBase::increaseVolume () {
@@ -899,7 +898,6 @@ Source::~Source () {
     if (m_document)
         m_document->document ()->dispose ();
     m_document = 0L;
-    Q_ASSERT (m_current.ptr () == 0L);
 }
 
 void Source::init () {
@@ -987,7 +985,6 @@ static void printTree (NodePtr root, QString off=QString()) {
 
 void Source::setURL (const KURL & url) {
     m_url = url;
-    m_back_request = 0L;
     if (m_document && !m_document->hasChildNodes () &&
             (m_document->mrl()->src.isEmpty () ||
              m_document->mrl()->src == url.url ()))
@@ -1001,7 +998,6 @@ void Source::setURL (const KURL & url) {
     if (m_player->process () && m_player->source () == this)
         m_player->updateTree ();
     //kdDebug() << name() << " setURL " << url << endl;
-    m_current = m_document;
 }
 
 void Source::setTitle (const QString & title) {
@@ -1023,50 +1019,35 @@ KDE_NO_EXPORT void Source::setSubtitle (int id) {
 void Source::reset () {
     if (m_document) {
         //kdDebug() << "Source::first" << endl;
-        m_current = NodePtr ();
         m_document->reset ();
         m_player->updateTree ();
     }
     init ();
 }
 
-QString Source::currentMrl () {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    kdDebug() << "Source::currentMrl " << (m_current ? m_current->nodeName():"") << " src:" << (mrl ? mrl->absolutePath ()  : QString ()) << endl;
-    return mrl ? mrl->absolutePath () : QString ();
-}
-
-void Source::playCurrent () {
-    QString url = currentMrl ();
-    m_player->changeURL (url);
-    m_width = m_height = 0;
-    m_aspect = 0.0;
-    if (m_player->view ())
-        static_cast <View *> (m_player->view ())->playingStop ();//show controls
-    if (m_document && !m_document->active ()) {
-        if (!m_current)
-            m_document->activate ();
-        else { // ugly code duplicate w/ back_request
-            for (NodePtr p = m_current->parentNode(); p; p = p->parentNode())
-                p->state = Element::state_activated;
-            m_current->activate ();
-        }
-    } else if (!m_current) {
-        emit endOfPlayItems ();
-    } else if (m_current->state == Element::state_deferred) {
-     //   m_current->undefer ();
-    } else if (m_player->process ()->state () == Process::NotRunning) {
-        m_player->process ()->ready (static_cast <View *> (m_player->view ())->viewer ());
-    } else if (m_player->process ()) {
-        Mrl * mrl = m_back_request ? m_back_request->mrl () : m_current->mrl ();
-        if (mrl->view_mode == Mrl::SingleMode) {
-            // don't reset the dimensions if we have any
-            m_width = mrl->width;
-            m_height = mrl->height;
-            m_aspect = mrl->aspect;
-        }
-        m_back_request = 0L;
-        m_player->process ()->play (this, mrl->linkNode ());
+void Source::play (Mrl *mrl) {
+    if (!mrl)
+        mrl = document ()->mrl ();
+    NodePtrW guarded = mrl;
+    if (Node::state_deferred == mrl->state) {
+        mrl->undefer ();
+    } else if (mrl->unfinished ()) {
+        mrl->defer ();
+    } else {
+        blockSignals (true); //endOfPlayItems, but what is hyperspace?
+        m_document->reset ();
+        blockSignals (false);
+        mrl = guarded ? guarded->mrl () : m_document->mrl ();
+        if (!mrl)
+            return;
+        m_width = m_height = 0;
+        m_player->changeURL (mrl->src);
+        for (NodePtr p = mrl->parentNode(); p; p = p->parentNode())
+            p->state = Element::state_activated;
+        mrl->activate ();
+        m_width = mrl->width;
+        m_height = mrl->height;
+        m_aspect = mrl->aspect;
     }
     //kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():" doc act:") <<  (m_document && !m_document->active ()) << " cur:" << (!m_current)  << " cur act:" << (m_current && !m_current->active ()) <<  endl;
     m_player->updateTree ();
@@ -1087,22 +1068,7 @@ static NodePtr findDepthFirst (NodePtr elm) {
     return NodePtr ();
 }
 
-bool Source::requestPlayURL (NodePtr mrl) {
-    //kdDebug() << "Source::requestPlayURL " << mrl->mrl ()->src << endl;
-    if (m_player->process ()->state () > Process::Ready) {
-        if (m_player->process ()->mrl () == mrl->mrl ()->linkNode ())
-            return true;
-        m_back_request = mrl; // still playing, schedule it
-        m_player->process ()->stop ();
-    } else {
-        if (mrl->mrl ()->view_mode == Mrl::SingleMode)
-            m_current = mrl;
-        else
-            m_back_request = mrl;
-        m_player->updateTree ();
-        QTimer::singleShot (0, this, SLOT (playCurrent ()));
-    }
-    m_player->setProcess (mrl->mrl ());
+bool Source::authoriseUrl (const QString &) {
     return true;
 }
 
@@ -1124,34 +1090,14 @@ void Source::timerEvent (QTimerEvent * e) {
         killTimer (e->timerId ());
 }
 
-bool Source::setCurrent (NodePtr mrl) {
-    m_current = mrl;
-    return true;
-}
-
-void Source::stateElementChanged (Node * elm, Node::State os, Node::State ns) {
+void Source::stateElementChanged (Node *elm, Node::State os, Node::State ns) {
     //kdDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isPlayable:" << (m_current && m_current->isPlayable ()) << " elm==linkNode:" << (m_current && elm == m_current->mrl ()->linkNode ()) << " p state:" << m_player->process ()->state () << endl;
-    if (ns == Node::state_deactivated && elm == m_document && !m_back_request) {
-        emit endOfPlayItems (); // played all items
-    } else if ((ns == Node::state_deactivated || ns == Node::state_finished) &&
-             m_player->process ()->mrl() &&
-             elm == m_player->process ()->mrl ()->mrl ()->linkNode ()) {
-        if (m_player->process ()->state () > Process::Ready)
-            //a SMIL movies stopped by SMIL events rather than movie just ending
-            m_player->process ()->stop ();
-        if (m_player->view ()) // move away the video widget
-            QTimer::singleShot (0, m_player->view (), SLOT (updateLayout ()));
-    } else if ((ns == Node::state_deferred ||
-                (os == Node::state_deferred && ns > Node::state_deferred)) &&
-            elm == m_document) {
-        m_player->process ()->pause ();
-    } else if (ns == Node::state_activated &&
-            elm->isPlayable () &&
-            elm->mrl ()->view_mode == Mrl::SingleMode) {
-        Node *p = elm->parentNode();
-        if (!p || !p->mrl () || p->mrl ()->view_mode == Mrl::SingleMode)
-            // make sure we don't set current to nested document
-            m_current = elm;
+    if (ns == Node::state_activated &&
+            elm->mrl () &&
+            Mrl::WindowMode != elm->mrl ()->view_mode) {
+        m_current = elm;
+    } else if (ns == Node::state_deactivated && elm == m_document) {
+        emit endOfPlayItems (); // played all items FIXME on jumps
     }
     if (elm->expose ()) {
         if (ns == Node::state_activated || ns == Node::state_deactivated)
@@ -1202,14 +1148,8 @@ void Source::insertURL (NodePtr node, const QString & mrl, const QString & title
     }
 }
 
-void Source::play () {
-    m_player->updateTree ();
-    QTimer::singleShot (0, m_player, SLOT (play ()));
-    //printTree (m_document);
-}
-
 void Source::backward () {
-    if (m_document->hasChildNodes ()) {
+   /* if (m_document->hasChildNodes ()) {
         m_back_request = m_current;
         if (!m_back_request || m_back_request == m_document) {
             m_back_request = m_document->lastChild ();
@@ -1239,31 +1179,18 @@ void Source::backward () {
         m_back_request = 0L;
     } else
         m_player->process ()->seek (-1 * m_player->settings ()->seektime * 10, false);
+        */
 }
 
 void Source::forward () {
-    if (m_document->hasChildNodes ()) {
+    /*if (m_document->hasChildNodes ()) {
         if (m_player->playing ())
             m_player->process ()->stop ();
         else if (m_current)
             m_current->finish ();
     } else
         m_player->process ()->seek (m_player->settings()->seektime * 10, false);
-}
-
-void Source::jump (NodePtr e) {
-    if (e->isPlayable ()) {
-        if (m_player->playing ()) {
-            m_back_request = e;
-            m_player->process ()->stop ();
-        } else {
-            if (m_current)
-                m_document->reset ();
-            m_current = e;
-            QTimer::singleShot (0, this, SLOT (playCurrent ()));
-        }
-    } else
-        m_player->updateTree ();
+        */
 }
 
 NodePtr Source::document () {
@@ -1378,86 +1305,6 @@ void Source::setIdentified (bool b) {
     m_identified = b;
 }
 
-static const QString statemap [] = {
-    i18n ("Not Running"), i18n ("Ready"), i18n ("Buffering"), i18n ("Playing")
-};
-
-void Source::stateChange(Process *p, Process::State olds, Process::State news) {
-    if (!p || !p->viewer ()) return;
-    Recorder *rec = dynamic_cast <Recorder *> (p);
-    if (rec && !rec->recordURL ().isEmpty ()) {
-        kdDebug () << "recordState " << statemap[olds] << " -> " << statemap[news] << endl;
-        m_player->updateStatus (i18n ("Recorder %1 %2").arg (p->name ()).arg (statemap[news]));
-        p->viewer ()->view ()->controlPanel ()->setRecording (news > Process::Ready);
-        if (news == Process::Ready) {
-            if (olds > Process::Ready) {
-                p->quit ();
-            } else {
-                NodePtr n = current ();
-                if (!n)
-                    n = document ();
-                p->play (this, n);
-            }
-        } else if (news > Process::Ready) {
-            emit startRecording ();
-        } else if (news == Process::NotRunning)
-            emit stopRecording ();
-    } else {
-        p->viewer()->view()->controlPanel()->setPlaying(news > Process::Ready);
-        kdDebug () << "processState " << statemap[olds] << " -> " << statemap[news] << endl;
-        m_player->updateStatus (i18n ("Player %1 %2").arg (p->name ()).arg (statemap[news]));
-        if (!p->mrl () && news > Process::Ready) {
-            p->stop (); // reschedule for Ready state
-        } else if (news == Process::Playing) {
-            if (p->mrl ()->state == Element::state_deferred)
-                p->mrl ()->undefer ();
-            p->viewer ()->view ()->playingStart ();
-            emit startPlaying ();
-        } else if (news == Process::NotRunning) {
-            if (hasLength () && position () > length ())
-                setLength (m_document, position ());
-            setPosition (0);
-            if (p == m_player->process ())
-                emit stopPlaying ();
-            // else changed process
-        } else if (news == Process::Ready) {
-            if (olds > Process::Ready) {
-                NodePtr node = p->mrl (); // p->mrl is weak, needs check
-                Mrl * mrl = node ? node->mrl () : 0L;
-                if (m_back_request && m_back_request->isPlayable ()) {
-                    if (m_back_request->mrl ()->view_mode == Mrl::SingleMode)
-                        // jump in pl
-                        m_current = m_back_request;
-                    else if (mrl)
-                        // overlapping SMIL audio/video
-                        mrl->endOfFile ();
-                    if (m_current->id >= SMIL::id_node_first &&
-                            m_current->id < SMIL::id_node_last) {
-                        playCurrent ();  // just play back_request
-                    } else {
-                        // sanitize pl having all parents of current activated
-                        m_document->reset (); // deactivate everything
-                        for (NodePtr p = m_current->parentNode(); p; p = p->parentNode())
-                            p->state = Element::state_activated;
-                        m_current->activate (); // calls requestPlayUrl
-                    }
-                    m_back_request = 0L;
-                } else if(mrl)
-		{
-                    mrl->endOfFile (); // set node to finished
-		}
-                if (m_player->view() &&
-                        (!mrl || mrl->view_mode != Mrl::WindowMode))
-                    static_cast<View*>(m_player->view())->viewArea()->repaint();
-            } else
-                QTimer::singleShot (0, this, SLOT (playCurrent ()));
-        } else if (news == Process::Buffering) {
-            if (p->mrl ()->mrl ()->view_mode != Mrl::SingleMode)
-                p->mrl ()->defer (); // paused the SMIL
-        }
-    }
-}
-
 QString Source::plugin (const QString &mime) const {
     m_player->config ()->setGroup (mime);
     return m_player->config ()->readEntry ("plugin", "" );
@@ -1487,9 +1334,9 @@ void URLSource::dimensions (int & w, int & h) {
     if (!m_player->mayResize () && m_player->view ()) {
         w = static_cast <View *> (m_player->view ())->viewer ()->width ();
         h = static_cast <View *> (m_player->view ())->viewer ()->height ();
-    } else
+    } else {
         Source::dimensions (w, h);
-    
+    }
 }
 
 bool URLSource::hasLength () {
@@ -1505,7 +1352,7 @@ KDE_NO_EXPORT void URLSource::activate () {
         return;
     }
     if (m_auto_play)
-        play ();
+        play (NULL);
 }
 
 KDE_NO_EXPORT void URLSource::stopResolving () {
@@ -1533,9 +1380,10 @@ void URLSource::backward () {
     Source::backward ();
 }
 
-void URLSource::jump (NodePtr e) {
-    stopResolving ();
-    Source::jump (e);
+void URLSource::play (Mrl *mrl) {
+    // what should we do if currently resolving this mrl ..
+    if (!m_resolve_info)
+        Source::play (mrl);
 }
 
 void URLSource::deactivate () {
@@ -1751,24 +1599,10 @@ KDE_NO_EXPORT void URLSource::kioResult (KIO::Job * job) {
     static_cast <View *> (m_player->view())->controlPanel()->setPlaying (false);
 }
 
-void URLSource::playCurrent () {
-    Mrl *mrl = m_back_request
-        ? m_back_request->mrl ()
-        : m_current ? m_current->mrl () : NULL;
-    if (mrl && mrl->active () && (!mrl->isPlayable () || !mrl->resolved))
-        // an async playCurrent() call (eg. backend is up & running), ignore
-        return;
-    Source::playCurrent ();
-}
-
-void URLSource::play () {
-    Source::play ();
-}
-
-bool URLSource::requestPlayURL (NodePtr mrl) {
-    if (m_document.ptr () != mrl->mrl ()->linkNode ()) {
-        KURL base = m_document->mrl ()->src;
-        KURL dest = mrl->mrl ()->linkNode ()->absolutePath ();
+bool URLSource::authoriseUrl (const QString &url) {
+    KURL base = document ()->mrl ()->src;
+    if (base != url) {
+        KURL dest (url);
         // check if some remote playlist tries to open something local, but
         // do ignore unknown protocols because there are so many and we only
         // want to cache local ones.
@@ -1783,7 +1617,7 @@ bool URLSource::requestPlayURL (NodePtr mrl) {
             return false;
         }
     }
-    return Source::requestPlayURL (mrl);
+    return Source::authoriseUrl (url);
 }
 
 void URLSource::setURL (const KURL & url) {

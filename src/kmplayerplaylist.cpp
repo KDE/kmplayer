@@ -726,18 +726,43 @@ void Mrl::activate () {
 }
 
 void Mrl::begin () {
-    kdDebug () << nodeName () << " Mrl::activate" << endl;
+    kdDebug () << nodeName () << " Mrl::begin" << endl;
     if (document ()->notify_listener) {
         if (linkNode () != this) {
             linkNode ()->activate ();
             if (linkNode ()->unfinished ())
                 setState (state_began);
         } else if (!src.isEmpty ()) {
-            if (document ()->notify_listener->requestPlayURL (this))
+            if (!media_object)
+                media_object = document ()->notify_listener->mediaManager()->createMedia (MediaManager::AudioVideo, this);
+            if (media_object->play ())
                 setState (state_began);
+            else
+                deactivate ();
         } else
             deactivate (); // nothing to activate
     }
+}
+
+void Mrl::defer () {
+    if (media_object)
+        media_object->pause ();
+    Node::defer ();
+}
+
+void Mrl::undefer () {
+    if (media_object) {
+        media_object->unpause ();
+        setState (state_began);
+    } else {
+        Node::undefer ();
+    }
+}
+
+void Mrl::deactivate () {
+    delete media_object;
+    media_object = NULL;
+    Node::deactivate ();
 }
 
 SurfacePtr Mrl::getSurface (NodePtr node) {
@@ -766,6 +791,8 @@ void Mrl::parseParam (const TrieString & para, const QString & val) {
         resolved = false;
     }
 }
+
+//----------------------%<-----------------------------------------------------
 
 Surface::Surface (NodePtr n, const SRect & r)
   : node (n),

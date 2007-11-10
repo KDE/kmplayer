@@ -26,7 +26,6 @@
 #include <kurl.h>
 
 #include "kmplayerplaylist.h"
-#include "kmplayerprocess.h"
 
 class KConfig;
 class QWidget;
@@ -64,7 +63,6 @@ public:
     KDE_NO_EXPORT const KURL & subUrl () const { return m_sub_url; }
     PartBase * player () { return m_player; }
     virtual void reset ();
-    QString currentMrl ();
     KDE_NO_EXPORT const QString & audioDevice () const { return m_audiodevice; }
     KDE_NO_EXPORT const QString & videoDevice () const { return m_videodevice; }
     KDE_NO_EXPORT const QString & videoNorm () const { return m_videonorm; }
@@ -81,6 +79,7 @@ public:
     virtual NodePtr document ();
     virtual NodePtr root ();
     virtual QString filterOptions ();
+    virtual bool authoriseUrl (const QString &url);
 
     virtual void setURL (const KURL & url);
     void insertURL (NodePtr mrl, const QString & url, const QString & title=QString());
@@ -95,13 +94,10 @@ public:
     /* setPosition (pos) set position in deci-seconds */
     void setPosition (int pos);
     virtual void setIdentified (bool b = true);
-    // backend process state changed
-    virtual void stateChange (Process *, Process::State os, Process::State ns);
     KDE_NO_EXPORT void setAutoPlay (bool b) { m_auto_play = b; }
     KDE_NO_EXPORT bool autoPlay () const { return m_auto_play; }
     void setTitle (const QString & title);
     void setLoading (int percentage);
-    bool setCurrent (NodePtr mrl);
 
     virtual QString prettyName ();
 signals:
@@ -120,14 +116,10 @@ public slots:
     virtual void deactivate () = 0;
     virtual void forward ();
     virtual void backward ();
-    virtual void play ();
     /**
-     * Continuing playing where current is now
-     * May call play process if a video needs to play or 
-     * emit endOfPlayItems when done
+     * Play at node position
      */
-    virtual void playCurrent ();
-    virtual void jump (NodePtr e);
+    virtual void play (Mrl *);
     void setAudioLang (int);
     void setSubtitle (int);
 protected:
@@ -135,7 +127,6 @@ protected:
     /**
      * PlayListNotify implementation
      */
-    bool requestPlayURL (NodePtr mrl);
     bool resolveURL (NodePtr mrl);
     void stateElementChanged (Node * element, Node::State os, Node::State ns);
     SurfacePtr getSurface (NodePtr node);
@@ -146,7 +137,6 @@ protected:
 
     NodePtr m_document;
     NodePtrW m_current;
-    NodePtrW m_back_request;
     QString m_name;
     PartBase * m_player;
     QString m_recordcmd;

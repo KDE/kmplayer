@@ -158,7 +158,6 @@ public slots:
     virtual void activate ();
     virtual void deactivate ();
     virtual void play ();
-    virtual void stateChange (KMPlayer::Process *, KMPlayer::Process::State os, KMPlayer::Process::State ns);
 signals:
     void scanFinished (TVDevice * tvdevice);
 private:
@@ -194,8 +193,7 @@ public:
 public slots:
     virtual void activate ();
     virtual void deactivate ();
-    virtual void playCurrent ();
-    virtual void jump (KMPlayer::NodePtr e);
+    virtual void play (KMPlayer::Mrl *);
     void menuAboutToShow ();
     void menuClicked (int id);
 private slots:

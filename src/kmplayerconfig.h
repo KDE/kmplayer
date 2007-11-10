@@ -29,10 +29,11 @@
 
 #include <kurl.h>
 
+class QFrame;
 class KConfig;
 
 namespace KMPlayer {
-    
+
 class PartBase;
 class Preferences;
 class View;

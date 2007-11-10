@@ -46,6 +46,9 @@ extern const unsigned int event_img_anim_finished;
 class IProcess;
 class IViewer;
 class PartBase;
+class Source;
+class Process;
+class Viewer;
 
 
 /*
@@ -53,7 +56,7 @@ class PartBase;
  */
 class KMPLAYER_EXPORT MediaManager {
 public:
-    enum MediaType { AudioVideo, Image, Text };
+    enum MediaType { Audio, AudioVideo, Image, Text };
 
     MediaManager (PartBase *player);
     ~MediaManager ();
@@ -97,10 +100,10 @@ public:
 
     virtual MediaManager::MediaType type () const = 0;
 
-    virtual void clipStart () {}
-    virtual void clipStop () {}
+    virtual bool play () = 0;
     virtual void pause () {}
     virtual void unpause () {}
+    virtual void stop () {}
 
     bool wget (const QString & url);
     void killWGet ();
@@ -152,6 +155,8 @@ private:
 
 class KMPLAYER_EXPORT IProcess {
 public:
+    enum State { NotRunning = 0, Ready, Buffering, Playing };
+
     virtual bool play (Mrl *) = 0;
     virtual void pause () = 0;
     virtual void stop () = 0;
@@ -166,6 +171,17 @@ private:
     IProcess (const IViewer &);
 };
 
+class KMPLAYER_EXPORT ProcessInfo {
+public:
+    ProcessInfo (const char *nm, const QString &lbl, const char **supported,
+            IProcess *(*create_func) (Source *));
+
+    const char *name;
+    QString label;
+    const char **supported_sources;
+    IProcess *(*create) (Source *);
+};
+
 class KMPLAYER_NO_EXPORT AudioVideoMedia : public MediaObject {
 public:
     AudioVideoMedia (MediaManager *manager, Node *node);
@@ -173,16 +189,18 @@ public:
 
     MediaManager::MediaType type () const { return MediaManager::AudioVideo; }
 
-    void clipStart ();
-    void clipStop ();
+    bool play ();
+    void stop ();
     void pause ();
     void unpause ();
 
-    IProcess *process ();
-    IViewer *viewer();
+    // backend process state changed
+    void stateChange (Process *, IProcess::State os, IProcess::State ns);
+
+    Process *process;
+    Viewer *viewer;
 private:
-    IProcess *m_process;
-    IViewer *m_viewer;
+    enum { ask_play, ask_stop } request;
 };
 
 
@@ -211,8 +229,8 @@ public:
 
     MediaManager::MediaType type () const { return MediaManager::Image; }
 
-    void clipStart ();
-    void clipStop ();
+    bool play ();
+    void stop ();
     void pause ();
     void unpause ();
 
@@ -244,6 +262,8 @@ public:
     ~TextMedia ();
 
     MediaManager::MediaType type () const { return MediaManager::Text; }
+
+    bool play ();
 
     QString text;
     QTextCodec *codec;

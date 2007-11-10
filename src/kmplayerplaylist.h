@@ -542,11 +542,12 @@ public:
     virtual Mrl * mrl ();
     virtual void endOfFile ();
     QString absolutePath ();
-    /*
-     * Reimplement to callback with requestPlayURL if isPlayable()
-     */
+
     virtual void activate ();
     virtual void begin ();
+    virtual void defer ();
+    virtual void undefer ();
+    virtual void deactivate ();
     /**
      * By default support one event handler (eg. SMIL or RP child document)
      */
@@ -579,11 +580,6 @@ public:
     virtual ~PlayListNotify () {}
 
     virtual MediaManager *mediaManager () const = 0;
-    /**
-     * Ask for playing a video/audio mrl by backend players
-     * If returning false, the element will be set to finished
-     */
-    virtual bool requestPlayURL (NodePtr mrl) = 0;
     /**
      * Called by an unresolved Mrl, check if this node points to a playlist
      */

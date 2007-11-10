@@ -2774,6 +2774,27 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
     postpone_lock = 0L;
 }
 
+KDE_NO_EXPORT void SMIL::MediaType::defer () {
+    if (media_object) {
+        setState (state_deferred);
+        media_object->pause ();
+        if (unfinished ())
+            postpone_lock = document ()->postpone ();
+    }
+}
+
+KDE_NO_EXPORT void SMIL::MediaType::undefer () {
+    if (Runtime::timings_started == runtime ()->state ()) {
+        setState (state_began);
+        if (media_object)
+            media_object->unpause ();
+    } else {
+        setState (state_activated);
+        runtime ()->started ();
+    }
+    postpone_lock = 0L;
+}
+
 KDE_NO_EXPORT void SMIL::MediaType::begin () {
     SMIL::Smil * s = Smil::findSmilNode (parentNode ().ptr ());
     SMIL::Region * r = s ?
@@ -2819,19 +2840,22 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
 
 KDE_NO_EXPORT void SMIL::MediaType::clipStart () {
     SMIL::RegionBase *r = convertNode<SMIL::RegionBase> (region_node);
-    if (r && r->surface ())
+    if (r && r->surface ()) {
         for (NodePtr n = firstChild (); n; n = n->nextSibling ())
             if ((n->mrl () && n->mrl ()->opener.ptr () == this) ||
                     n->id == SMIL::id_node_smil ||
                     n->id == RP::id_node_imfl) {
                 n->activate ();
-                break;
+                return;
             }
+        if (media_object)
+            media_object->play ();
+    }
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::clipStop () {
     if (media_object)
-        media_object->clipStop ();
+        media_object->stop ();
     resetSurface ();
     if (external_tree && external_tree->active ())
         external_tree->deactivate ();
@@ -3042,7 +3066,6 @@ KDE_NO_EXPORT void SMIL::AVMediaType::clipStart () {
         repeat = runtime ()->repeat_count == Runtime::dur_infinite
             ? 9998 : runtime ()->repeat_count;
         runtime ()->repeat_count = 0;
-        n->requestPlayURL (this);
         document_postponed = document()->connectTo (this, event_postponed);
     }
     MediaType::clipStart ();
@@ -3055,26 +3078,15 @@ KDE_NO_EXPORT void SMIL::AVMediaType::clipStop () {
     setSmilLinkNode (this, 0L);
 }
 
-KDE_NO_EXPORT void SMIL::AVMediaType::defer () {
-    setState (state_deferred);
-    if (unfinished ())
-        postpone_lock = document ()->postpone ();
-}
-
-KDE_NO_EXPORT void SMIL::AVMediaType::undefer () {
-    setState (state_activated);
-    if (unfinished ()) {
-        postpone_lock = 0L;
-        runtime ()->started ();
-    }
-}
-
 KDE_NO_EXPORT void SMIL::AVMediaType::begin () {
     if (!resolved) {
         defer ();
     } else if (0 == runtime ()->durTime ().offset &&
             Runtime::dur_media == runtime ()->endTime ().durval) {
         runtime ()->durTime ().durval = Runtime::dur_media; // duration of clip
+        if (!media_object)
+            media_object = document ()->notify_listener->mediaManager()->
+                createMedia (MediaManager::AudioVideo, this);
         MediaType::begin ();
     }
 }
@@ -3140,17 +3152,15 @@ KDE_NO_EXPORT void SMIL::ImageMediaType::begin () {
     MediaType::begin ();
 }
 
-KDE_NO_EXPORT void SMIL::ImageMediaType::clipStart () {
-    static_cast <ImageMedia *> (media_object)->clipStart ();
-    MediaType::clipStart ();
-}
-
 KDE_NO_EXPORT void SMIL::ImageMediaType::accept (Visitor * v) {
     v->visit (this);
 }
 
 void
 SMIL::ImageMediaType::parseParam (const TrieString &name, const QString &val) {
+    PlayListNotify *n = document ()->notify_listener;
+    if (n && !media_object)
+        media_object = n->mediaManager()->createMedia(MediaManager::Image,this);
     ImageMedia *im = static_cast <ImageMedia *> (media_object);
     //kdDebug () << "ImageRuntime::param " << name << "=" << val << endl;
     if (name == StringPool::attr_src) {
@@ -3231,6 +3241,9 @@ KDE_NO_EXPORT void SMIL::TextMediaType::activate () {
 
 void
 SMIL::TextMediaType::parseParam (const TrieString &name, const QString &val) {
+    PlayListNotify *n = document ()->notify_listener;
+    if (n && !media_object)
+        media_object = n->mediaManager()->createMedia(MediaManager::Text, this);
     TextMedia *ti = static_cast <TextMedia *> (media_object);
     //kdDebug () << "TextRuntime::parseParam " << name << "=" << val << endl;
     ASSERT (ti);

@@ -77,21 +77,19 @@ public:
     virtual QString prettyName ();
     virtual void reset ();
     virtual void setURL (const KURL & url);
+    virtual bool authoriseUrl (const QString &url);
 public slots:
     virtual void init ();
     virtual void activate ();
     virtual void deactivate ();
-    virtual void playCurrent ();
     virtual void forward ();
     virtual void backward ();
-    virtual void jump (NodePtr e);
-    void play ();
+    virtual void play (Mrl *);
 private slots:
     void kioData (KIO::Job *, const QByteArray &);
     void kioMimetype (KIO::Job *, const QString &);
     void kioResult (KIO::Job *);
 protected:
-    virtual bool requestPlayURL (NodePtr mrl);
     virtual bool resolveURL (NodePtr mrl);
 private:
     void read (NodePtr mrl, QTextStream &);
@@ -142,7 +140,7 @@ public:
     void connectInfoPanel (InfoWindow * infopanel);
     void connectSource (Source * old_source, Source * source);
     MediaManager *mediaManager () const { return m_media_manager; }
-    Process * process () const { return m_process; }
+    Process *process () const { return m_process; }
     Process * recorder () const { return m_recorder; }
     Source * source () const { return m_source; }
     QMap <QString, Process *> & players () { return m_players; }
@@ -235,7 +233,7 @@ protected:
     QMap <QString, QString> temp_backends;
     Settings * m_settings;
     MediaManager *m_media_manager;
-    Process * m_process;
+    Process *m_process;
     Process * m_recorder;
     Source * m_source;
     ProcessMap m_players;

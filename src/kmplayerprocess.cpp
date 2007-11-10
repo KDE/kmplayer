@@ -81,7 +81,7 @@ static QString getPath (const KURL & url) {
 
 Process::Process (QObject * parent, Settings * settings, const char * n)
     : QObject (parent, n), m_source (0L), m_settings (settings),
-      m_state (NotRunning), m_old_state (NotRunning), m_process (0L), m_job(0L),
+      m_state (IProcess::NotRunning), m_old_state (IProcess::NotRunning), m_process (0L), m_job(0L),
       m_supported_sources (default_supported), m_viewer (0L) {}
 
 Process::~Process () {
@@ -181,11 +181,11 @@ bool Process::quit () {
         }
         break;
     }
-    setState (NotRunning);
+    setState (IProcess::NotRunning);
     return !playing ();
 }
 
-void Process::setState (State newstate) {
+void Process::setState (IProcess::State newstate) {
     if (m_state != newstate) {
         bool need_timer = m_old_state == m_state;
         m_old_state = m_state;
@@ -196,13 +196,19 @@ void Process::setState (State newstate) {
 }
 
 KDE_NO_EXPORT void Process::rescheduledStateChanged () {
-    State old_state = m_old_state;
+    IProcess::State old_state = m_old_state;
     m_old_state = m_state;
-    m_source->stateChange (this, old_state, m_state);
+    MediaObject *mo = m_mrl ? m_mrl->mrl()->media_object : NULL;
+    kdDebug() << "Process::rescheduledStateChanged " << mo << endl;
+    if (mo)
+        static_cast <AudioVideoMedia *> (mo)->stateChange (this, old_state, m_state);
+    else if (m_state > IProcess::Ready)
+        kdError() << "Process running, mrl disappeared" << endl;
+    if (old_state > IProcess::Ready && m_state == IProcess::Ready)
+        emit finished ();
 }
 
-bool Process::play (Source * src, NodePtr _mrl) {
-    m_source = src;
+bool Process::play (NodePtr _mrl) {
     m_mrl = _mrl;
     Mrl * m = _mrl ? _mrl->mrl () : 0L;
     QString url = m ? m->absolutePath () : QString ();
@@ -247,7 +253,7 @@ void Process::terminateJobs () {
 
 bool Process::ready (Viewer * viewer) {
     m_viewer = viewer;
-    setState (Ready);
+    setState (IProcess::Ready);
     return true;
 }
 
@@ -345,7 +351,7 @@ KDE_NO_EXPORT void MPlayerBase::dataWritten (KProcess *) {
 KDE_NO_EXPORT void MPlayerBase::processStopped (KProcess *) {
     kdDebug() << "process stopped" << endl;
     commands.clear ();
-    setState (Ready);
+    setState (IProcess::Ready);
 }
 
 //-----------------------------------------------------------------------------
@@ -623,7 +629,7 @@ bool MPlayer::run (const char * args, const char * pipe) {
     old_volume = viewer ()->view ()->controlPanel ()->volumeBar ()->value ();
 
     if (m_process->isRunning ()) {
-        setState (Buffering); // wait for start regexp for state Playing
+        setState (IProcess::Buffering); // wait for start regexp for state Playing
         return true;
     }
     return false;
@@ -802,7 +808,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                     for (SharedPtr <LangInfo> li = slanglist; li; li = li->next)
                         slst.push_back (li->name);
                     m_source->setLanguages (alst, slst);
-                    setState (Playing);
+                    setState (IProcess::Playing);
                 }
             }
         }
@@ -825,7 +831,7 @@ KDE_NO_EXPORT void MPlayer::processStopped (KProcess * p) {
         if (m_source && m_needs_restarted) {
             commands.clear ();
             int pos = m_source->position ();
-            play (m_source, m_mrl);
+            play (m_mrl);
             seek (pos, true);
         } else
             MPlayerBase::processStopped (p);
@@ -1034,7 +1040,7 @@ bool MEncoder::deMediafiedPlay () {
     m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
     success = m_process->isRunning ();
     if (success)
-        setState (Playing);
+        setState (IProcess::Playing);
     return success;
 }
 
@@ -1096,7 +1102,7 @@ bool MPlayerDumpstream::deMediafiedPlay () {
     m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
     success = m_process->isRunning ();
     if (success)
-        setState (Playing);
+        setState (IProcess::Playing);
     return success;
 }
 
@@ -1213,11 +1219,11 @@ void CallbackProcess::setErrorMessage (int code, const QString & msg) {
 }
 
 void CallbackProcess::setFinished () {
-    setState (Ready);
+    setState (IProcess::Ready);
 }
 
 void CallbackProcess::setPlaying () {
-    setState (Playing);
+    setState (IProcess::Playing);
 }
 
 void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
@@ -1252,7 +1258,7 @@ void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
         brightness (m_settings->brightness, true);
         contrast (m_settings->contrast, true);
     }
-    setState (Ready);
+    setState (IProcess::Ready);
 }
 
 void CallbackProcess::setMovieParams (int len, int w, int h, float a, const QStringList & alang, const QStringList & slang) {
@@ -1318,13 +1324,13 @@ bool CallbackProcess::deMediafiedPlay () {
     if (m_source->frequency () > 0)
         m_backend->frequency (m_source->frequency ());
     m_backend->play (m_mrl ? m_mrl->mrl ()->repeat : 0);
-    setState (Buffering);
+    setState (IProcess::Buffering);
     return true;
 }
 
 bool CallbackProcess::stop () {
     terminateJobs ();
-    if (!m_process || !m_process->isRunning () || m_state < Buffering)
+    if (!m_process || !m_process->isRunning () || m_state < IProcess::Buffering)
         return true;
     kdDebug () << "CallbackProcess::stop ()" << m_backend << endl;
     if (m_backend)
@@ -1445,7 +1451,7 @@ KDE_NO_EXPORT void CallbackProcess::processStopped (KProcess *) {
         ((PlayListNotify *) m_source)->setInfoMessage (QString ());
     delete m_backend;
     m_backend = 0L;
-    setState (NotRunning);
+    setState (IProcess::NotRunning);
     if (m_send_config == send_try) {
         m_send_config = send_new; // we failed, retry ..
         ready (viewer ());
@@ -1863,7 +1869,7 @@ bool FFMpeg::deMediafiedPlay () {
     //    m_player->stop ();
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
     if (m_process->isRunning ())
-        setState (Playing);
+        setState (IProcess::Playing);
     return m_process->isRunning ();
 }
 
@@ -1887,7 +1893,7 @@ KDE_NO_EXPORT bool FFMpeg::quit () {
 }
 
 KDE_NO_EXPORT void FFMpeg::processStopped (KProcess *) {
-    setState (NotRunning);
+    setState (IProcess::NotRunning);
 }
 
 //-----------------------------------------------------------------------------
@@ -2239,7 +2245,7 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
             }
             free (argn);
             free (argv);
-            setState (Buffering);
+            setState (IProcess::Buffering);
             return true;
         }
     }
@@ -2268,7 +2274,7 @@ KDE_NO_EXPORT bool NpPlayer::ready (Viewer * viewer) {
 KDE_NO_EXPORT void NpPlayer::setStarted (const QString & srv) {
     remote_service = srv;
     kdDebug () << "NpPlayer::setStarted " << srv << endl;
-    setState (Ready);
+    setState (IProcess::Ready);
 }
 
 KDE_NO_EXPORT QString NpPlayer::evaluateScript (const QString & script) {
@@ -2404,11 +2410,11 @@ KDE_NO_EXPORT void NpPlayer::processStopped (KProcess *) {
     terminateJobs ();
     if (m_source)
         ((PlayListNotify *) m_source)->setInfoMessage (QString ());
-    setState (NotRunning);
+    setState (IProcess::NotRunning);
 }
 
 KDE_NO_EXPORT void NpPlayer::streamStateChanged () {
-    setState (Playing); // hmm, this doesn't really fit in current states
+    setState (IProcess::Playing); // hmm, this doesn't really fit in current states
     if (!write_in_progress)
         processStreams ();
 }

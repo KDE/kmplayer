@@ -33,6 +33,7 @@
 
 #include "kmplayerconfig.h"
 #include "kmplayersource.h"
+#include "mediaobject.h"
 
 class QWidget;
 class KProcess;
@@ -43,7 +44,7 @@ namespace KIO {
 }
 
 namespace KMPlayer {
-    
+
 class Settings;
 class Viewer;
 class Source;
@@ -56,9 +57,6 @@ class Backend_stub;
 class KMPLAYER_EXPORT Process : public QObject {
     Q_OBJECT
 public:
-    enum State {
-        NotRunning = 0, Ready, Buffering, Playing
-    };
     Process (QObject * parent, Settings * settings, const char * n);
     virtual ~Process ();
     virtual void init ();
@@ -74,13 +72,15 @@ public:
     void setSource (Source * src) { m_source = src; }
     virtual bool grabPicture (const KURL & url, int pos);
     bool supports (const char * source) const;
-    State state () const { return m_state; }
+    IProcess::State state () const { return m_state; }
+    void setMrl (Mrl *mrl) { m_mrl = mrl; }
     NodePtr mrl () const { return m_mrl; }
 signals:
     void grabReady (const QString & path);
+    void finished ();
 public slots:
     virtual bool ready (Viewer *);
-    bool play (Source *, NodePtr mrl);
+    bool play (NodePtr mrl);
     virtual bool stop ();
     virtual bool quit ();
     virtual bool pause ();
@@ -97,14 +97,14 @@ protected slots:
     void rescheduledStateChanged ();
     void result (KIO::Job *);
 protected:
-    void setState (State newstate);
+    void setState (IProcess::State newstate);
     virtual bool deMediafiedPlay ();
     virtual void terminateJobs ();
     Source * m_source;
     Settings * m_settings;
     NodePtrW m_mrl;
-    State m_state;
-    State m_old_state;
+    IProcess::State m_state;
+    IProcess::State m_old_state;
     KProcess * m_process;
     KIO::Job * m_job;
     QString m_url;

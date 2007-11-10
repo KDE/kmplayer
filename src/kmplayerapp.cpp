@@ -89,7 +89,7 @@ class KMPLAYER_NO_EXPORT ListsSource : public KMPlayer::URLSource {
 public:
     KDE_NO_CDTOR_EXPORT ListsSource (KMPlayer::PartBase * p)
         : KMPlayer::URLSource (p, "lists://") {}
-    void jump (KMPlayer::NodePtr e);
+    void play (KMPlayer::Mrl *);
     void activate ();
     void setDocument (KMPlayer::NodePtr doc, KMPlayer::NodePtr cur);
     QString prettyName () { return m_document->mrl ()->pretty_name; }
@@ -177,15 +177,15 @@ public:
     const char * nodeName () const KDE_NO_EXPORT { return "object"; }
 };
 
-KDE_NO_EXPORT void ListsSource::jump (KMPlayer::NodePtr e) {
-    if (e->document()->firstChild ())
-        Source::jump (e);
+KDE_NO_EXPORT void ListsSource::play (KMPlayer::Mrl *mrl) {
+    if (mrl && mrl->document()->firstChild ())
+        Source::play (mrl);
     else
-        e->activate ();
+        mrl->activate ();
 }
 
 KDE_NO_EXPORT void ListsSource::activate () {
-    playCurrent ();
+    play (m_current ? m_current->mrl () : NULL);
 }
 
 KDE_NO_EXPORT void ListsSource::setDocument (KMPlayer::NodePtr doc, KMPlayer::NodePtr cur) {
@@ -2225,7 +2225,7 @@ KDE_NO_EXPORT void KMPlayerAudioCDSource::setIdentified (bool b) {
         m_current = m_document;
     buildArguments ();
     if (m_current == m_document && m_document->hasChildNodes ()) {
-        m_back_request = m_document->firstChild ();
+        //m_back_request = m_document->firstChild ();
         m_player->process ()->stop ();
     }
     m_player->updateTree ();

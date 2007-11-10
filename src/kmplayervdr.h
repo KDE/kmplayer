@@ -80,16 +80,14 @@ public:
     virtual void sync (bool);
     virtual void prefLocation (QString & item, QString & icon, QString & tab);
     virtual QFrame * prefPage (QWidget * parent);
-    virtual bool requestPlayURL (KMPlayer::NodePtr mrl);
     virtual void stateElementChanged (KMPlayer::Node * node, KMPlayer::Node::State os, KMPlayer::Node::State ns);
     void waitForConnectionClose ();
 public slots:
     void activate ();
     void deactivate ();
-    void jump (KMPlayer::NodePtr e);
+    void play (KMPlayer::Mrl *);
     void forward ();
     void backward ();
-    void playCurrent ();
     void toggleConnected ();
     void volumeChanged (int);
 private slots:

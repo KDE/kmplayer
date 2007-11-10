@@ -30,6 +30,7 @@
 #include <qheader.h>
 #include <qstyle.h>
 #include <qtimer.h>
+#include <qregexp.h>
 
 #include <kiconloader.h>
 #include <kfinddialog.h>
