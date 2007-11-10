@@ -503,7 +503,7 @@ void getConfigEntries (QByteArray & buf) {
     QString exp = doc.toString ();
     QCString cexp = exp.utf8 ();
     buf.duplicate (cexp);
-    buf.resize (exp.length ()); // strip terminating \0
+    buf.resize (cexp.length ()); // strip terminating \0
 }
 
 void KXinePlayer::play (int repeat) {
