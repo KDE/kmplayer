@@ -74,6 +74,7 @@ static xine_event_queue_t  *event_queue;
 static xine_cfg_entry_t     audio_vis_cfg_entry;
 static x11_visual_t         vis;
 static char                 configfile[2048];
+static Atom                 quit_atom;
 
 static Display             *display;
 static Window               wid;
@@ -499,8 +500,9 @@ void getConfigEntries (QByteArray & buf) {
         root.appendChild (elm);
     }
     doc.appendChild (root);
-    QCString exp = doc.toCString ();
-    buf = exp;
+    QString exp = doc.toString ();
+    QCString cexp = exp.utf8 ();
+    buf.duplicate (cexp);
     buf.resize (exp.length ()); // strip terminating \0
 }
 
@@ -826,8 +828,7 @@ protected:
             XNextEvent(display, &xevent);
             switch(xevent.type) {
                 case ClientMessage:
-                    if (xevent.xclient.format == 8 &&
-                            !strncmp(xevent.xclient.data.b, "quit_now", 8)) {
+                    if (xevent.xclient.message_type == quit_atom) {
                         fprintf(stderr, "request quit\n");
                         return;
                     }
@@ -1050,6 +1051,7 @@ int main(int argc, char **argv) {
     }
     display = XOpenDisplay(NULL);
     screen  = XDefaultScreen(display);
+    quit_atom = XInternAtom (display, "kxineplayer_quit", false);
 
     snprintf(configfile, sizeof (configfile), "%s%s", xine_get_homedir(), "/.xine/config2");
     xineapp = new KXinePlayer (argc, argv);
@@ -1214,9 +1216,9 @@ int main(int argc, char **argv) {
     ev.xclient.send_event = true;
     ev.xclient.display = display;
     ev.xclient.window = wid;
-    ev.xclient.message_type = XInternAtom (display, "XINE", false);
+    ev.xclient.message_type = quit_atom;
     ev.xclient.format = 8;
-    strcpy(ev.xclient.data.b, "quit_now");
+    ev.xclient.data.b[0] = 0;
     XSendEvent (display, wid, false, StructureNotifyMask, &ev);
     XFlush (display);
     XUnlockDisplay(display);
