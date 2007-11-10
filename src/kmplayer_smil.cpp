@@ -3081,10 +3081,11 @@ KDE_NO_EXPORT void SMIL::AVMediaType::clipStop () {
 KDE_NO_EXPORT void SMIL::AVMediaType::begin () {
     if (!resolved) {
         defer ();
-    } else if (0 == runtime ()->durTime ().offset &&
-            Runtime::dur_media == runtime ()->endTime ().durval) {
-        runtime ()->durTime ().durval = Runtime::dur_media; // duration of clip
-        if (!media_object)
+    } else {
+        if (0 == runtime ()->durTime ().offset &&
+            Runtime::dur_media == runtime ()->endTime ().durval)
+            runtime ()->durTime ().durval = Runtime::dur_media; // duration of clip
+        if (!external_tree && !media_object)
             media_object = document ()->notify_listener->mediaManager()->
                 createMedia (MediaManager::AudioVideo, this);
         MediaType::begin ();
