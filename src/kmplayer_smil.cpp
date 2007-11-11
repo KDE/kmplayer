@@ -375,11 +375,14 @@ bool Runtime::parseParam (const TrieString & name, const QString & val) {
         if ((timingstate == timings_began && !start_timer) ||
                 timingstate == timings_stopped) {
             if (beginTime ().offset > 0) { // create a timer for start
+                if (start_timer)
+                    element->document ()->cancelTimer (start_timer);
                 if (beginTime ().durval == dur_timer)
                     start_timer = element->document ()->setTimeout
                         (element, 100 * beginTime ().offset, start_timer_id);
-            } else                                // start now
+            } else {                              // start now
                 propagateStart ();
+            }
         }
     } else if (name == StringPool::attr_dur) {
         setDurationItem (duration_time, val);
@@ -419,6 +422,8 @@ KDE_NO_EXPORT void Runtime::processEvent (unsigned int event) {
     SMIL::TimedMrl * tm = convertNode <SMIL::TimedMrl> (element);
     if (tm) {
         if (timingstate != timings_started && beginTime ().durval == event) {
+            if (start_timer)
+                element->document ()->cancelTimer (start_timer);
             if (element && beginTime ().offset > 0)
                 start_timer = element->document ()->setTimeout (element,
                         100 * beginTime ().offset, start_timer_id);
@@ -512,11 +517,14 @@ KDE_NO_EXPORT void Runtime::stopped () {
     } else if (element->active ()) {
         if (repeat_count == dur_infinite || 0 < repeat_count--) {
             if (beginTime ().offset > 0 &&
-                    beginTime ().durval == dur_timer)
+                    beginTime ().durval == dur_timer) {
+                if (start_timer)
+                    element->document ()->cancelTimer (start_timer);
                 start_timer = element->document ()->setTimeout
                     (element, 100 * beginTime ().offset, start_timer_id);
-            else
+            } else {
                 propagateStart ();
+            }
         } else {
             repeat_count = 0;
             element->finish ();
@@ -3159,20 +3167,24 @@ KDE_NO_EXPORT void SMIL::ImageMediaType::accept (Visitor * v) {
 
 void
 SMIL::ImageMediaType::parseParam (const TrieString &name, const QString &val) {
-    PlayListNotify *n = document ()->notify_listener;
-    if (n && !media_object)
-        media_object = n->mediaManager()->createMedia(MediaManager::Image,this);
-    ImageMedia *im = static_cast <ImageMedia *> (media_object);
     //kdDebug () << "ImageRuntime::param " << name << "=" << val << endl;
     if (name == StringPool::attr_src) {
-        im->killWGet ();
+        ImageMedia *im = static_cast <ImageMedia *> (media_object);
+        if (im)
+            im->killWGet ();
         if (external_tree)
             removeChild (external_tree);
         src = val;
-        if (!src.isEmpty ())
+        if (!src.isEmpty ()) {
+            if (!media_object) {
+                media_object = document ()->notify_listener->
+                    mediaManager()->createMedia(MediaManager::Image,this);
+                im = static_cast <ImageMedia *> (media_object);
+            }
             im->wget (absolutePath ());
-        else
+        } else if (im) {
             im->clearData ();
+        }
     } else {
         MediaType::parseParam (name, val);
     }
@@ -3226,7 +3238,7 @@ bool SMIL::ImageMediaType::handleEvent (EventPtr event) {
 KDE_NO_CDTOR_EXPORT SMIL::TextMediaType::TextMediaType (NodePtr & d)
     : SMIL::MediaType (d, "text", id_node_text) {}
 
-KDE_NO_EXPORT void SMIL::TextMediaType::activate () {
+KDE_NO_EXPORT void SMIL::TextMediaType::init () {
     PlayListNotify *n = document ()->notify_listener;
     if (n && !media_object)
         media_object = n->mediaManager()->createMedia(MediaManager::Text, this);
@@ -3237,17 +3249,16 @@ KDE_NO_EXPORT void SMIL::TextMediaType::activate () {
     bg_opacity = 100;
     halign = align_left;
 
-    MediaType::activate ();
+    MediaType::init ();
 }
 
 void
 SMIL::TextMediaType::parseParam (const TrieString &name, const QString &val) {
-    PlayListNotify *n = document ()->notify_listener;
-    if (n && !media_object)
-        media_object = n->mediaManager()->createMedia(MediaManager::Text, this);
+    if (!media_object)
+        media_object = document ()->notify_listener->
+            mediaManager()->createMedia(MediaManager::Text, this);
     TextMedia *ti = static_cast <TextMedia *> (media_object);
     //kdDebug () << "TextRuntime::parseParam " << name << "=" << val << endl;
-    ASSERT (ti);
     if (name == StringPool::attr_src) {
         src = val;
         if (!val.isEmpty ())
