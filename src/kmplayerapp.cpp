@@ -201,7 +201,7 @@ KDE_NO_EXPORT void ListsSource::setDocument (KMPlayer::NodePtr doc, KMPlayer::No
         m_document->document()->dispose ();
     m_document = doc;
     m_current = cur;
-    //kDebug () << "setDocument: " << m_document->outerXML () << endl;
+    //kDebug () << "setDocument: " << m_document->outerXML ();
 }
 
 KDE_NO_CDTOR_EXPORT FileDocument::FileDocument (short i, const QString &s, KMPlayer::PlayListNotify * n)
@@ -217,7 +217,7 @@ KDE_NO_EXPORT KMPlayer::NodePtr FileDocument::childFromTag(const QString &tag) {
 
 void FileDocument::readFromFile (const QString & fn) {
     QFile file (fn);
-    kDebug () << "readFromFile " << fn << endl;
+    kDebug () << "readFromFile " << fn;
     if (file.exists ()) {
         file.open (IO_ReadOnly);
         QTextStream inxml (&file);
@@ -228,7 +228,7 @@ void FileDocument::readFromFile (const QString & fn) {
 
 void FileDocument::writeToFile (const QString & fn) {
     QFile file (fn);
-    kDebug () << "writeToFile " << fn << endl;
+    kDebug () << "writeToFile " << fn;
     file.open (IO_WriteOnly);
     QByteArray utf = outerXML ().toUtf8 ();
     file.writeBlock (utf, utf.length ());
@@ -253,7 +253,7 @@ KDE_NO_EXPORT void Recents::defer () {
 }
 
 KDE_NO_EXPORT KMPlayer::NodePtr Recents::childFromTag (const QString & tag) {
-    // kDebug () << nodeName () << " childFromTag " << tag << endl;
+    // kDebug () << nodeName () << " childFromTag " << tag;
     if (tag == QString::fromLatin1 ("item"))
         return new Recent (m_doc, app);
     else if (tag == QString::fromLatin1 ("group"))
@@ -326,7 +326,7 @@ KDE_NO_CDTOR_EXPORT Playlist::Playlist (KMPlayerApp *a, KMPlayer::PlayListNotify
 }
 
 KDE_NO_EXPORT KMPlayer::NodePtr Playlist::childFromTag (const QString & tag) {
-    // kDebug () << nodeName () << " childFromTag " << tag << endl;
+    // kDebug () << nodeName () << " childFromTag " << tag;
     const char * name = tag.ascii ();
     if (!strcmp (name, "item"))
         return new PlaylistItem (m_doc, app, playmode);
@@ -365,7 +365,7 @@ KDE_NO_EXPORT void PlaylistItemBase::activate () {
             pn = pretty_name.isEmpty () ? src : pretty_name;
         }
         pl->mrl ()->pretty_name = pn;
-        //kDebug () << "cloning to " << data << endl;
+        //kDebug () << "cloning to " << data;
         QTextStream inxml (&data, QIODevice::ReadOnly);
         KMPlayer::readXML (pl, inxml, QString (), false);
         pl->normalize ();
@@ -1040,7 +1040,7 @@ KDE_NO_EXPORT void KMPlayerApp::resizePlayer (int percentage) {
         h = 240;
     } else
         h = m_view->viewer ()->heightForWidth (w);
-    //kDebug () << "KMPlayerApp::resizePlayer (" << w << "," << h << ")" << endl;
+    //kDebug () << "KMPlayerApp::resizePlayer (" << w << "," << h << ")";
     /*if (w > 0 && h > 0) {
         if (m_view->controlPanel ()->isVisible ())
             h += m_view->controlPanel ()->size ().height ();
@@ -1642,7 +1642,7 @@ KDE_NO_EXPORT void KMPlayerApp::menuMoveDownNode () {
 KDE_NO_EXPORT void KMPlayerApp::playListItemMoved () {
     KMPlayer::PlayListItem * si = m_view->playList ()->selectedPlayListItem ();
     KMPlayer::RootPlayListItem * ri = m_view->playList ()->rootItem (si);
-    kDebug() << "playListItemMoved " << (ri->id == playlist_id) << !! si->node << endl;
+    kDebug() << "playListItemMoved " << (ri->id == playlist_id) << !! si->node;
     if (ri->id == playlist_id && si->node) {
         KMPlayer::NodePtr p = si->node->parentNode ();
         if (p) {
@@ -1808,7 +1808,7 @@ KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
         return true;
     if (m_identified)
         return false;
-    //kDebug () << "scanning " << cstr << endl;
+    //kDebug () << "scanning " << cstr;
     QRegExp * patterns = static_cast <KMPlayer::MPlayer *> (m_player->players () ["mplayer"])->configPage ()->m_patterns;
     QRegExp & langRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdlang];
     QRegExp & subtitleRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdsub];
@@ -1822,7 +1822,7 @@ KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
         if (!ok)
             sub_id = subtitleRegExp.cap (2).toInt (&ok);
         m_dvdsubtitlemenu->insertItem (sub_title, sub_id);
-        kDebug () << "subtitle sid:" << sub_id << " lang:" << sub_title <<endl;
+        kDebug () << "subtitle sid:" << sub_id << " lang:" << sub_title;
     } else if (!post090 && langRegExp.search (str) > -1) {
         bool ok;
         int lang_id = langRegExp.cap (1).toInt (&ok);
@@ -1830,15 +1830,15 @@ KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
         if (!ok)
             lang_id = langRegExp.cap (2).toInt (&ok);
         m_dvdlanguagemenu->insertItem (lang_title, lang_id);
-        kDebug () << "lang aid:" << lang_id << " lang:" << lang_title << endl;
+        kDebug () << "lang aid:" << lang_id << " lang:" << lang_title;
     } else if (titleRegExp.search (str) > -1) {
-        kDebug () << "title " << titleRegExp.cap (1) << endl;
+        kDebug () << "title " << titleRegExp.cap (1);
         unsigned ts = titleRegExp.cap (1).toInt ();
         if ( ts > 100) ts = 100;
         for (unsigned t = 1; t <= ts; t++)
             m_dvdtitlemenu->insertItem (QString::number (t), t);
     } else if (chapterRegExp.search (str) > -1) {
-        kDebug () << "chapter " << chapterRegExp.cap (1) << endl;
+        kDebug () << "chapter " << chapterRegExp.cap (1);
         unsigned chs = chapterRegExp.cap (1).toInt ();
         if ( chs > 100) chs = 100;
         for (unsigned c = 1; c <= chs; c++)
@@ -2109,13 +2109,13 @@ KDE_NO_EXPORT bool KMPlayerVCDSource::processOutput (const QString & str) {
         return true;
     if (m_identified)
         return false;
-    //kDebug () << "scanning " << cstr << endl;
+    //kDebug () << "scanning " << cstr;
     QRegExp * patterns = static_cast<KMPlayer::MPlayer *> (m_player->players () ["mplayer"])->configPage ()->m_patterns;
     QRegExp & trackRegExp = patterns [KMPlayer::MPlayerPreferencesPage::pat_vcdtrack];
     if (trackRegExp.search (str) > -1) {
         m_document->state = KMPlayer::Element::state_deferred;
         m_document->appendChild (new KMPlayer::GenericMrl (m_document, QString ("vcd://") + trackRegExp.cap (1), i18n ("Track ") + trackRegExp.cap (1)));
-        kDebug () << "track " << trackRegExp.cap (1) << endl;
+        kDebug () << "track " << trackRegExp.cap (1);
         return true;
     }
     return false;
@@ -2205,14 +2205,14 @@ KDE_NO_EXPORT bool KMPlayerAudioCDSource::processOutput (const QString & str) {
         return true;
     if (m_identified)
         return false;
-    //kDebug () << "scanning " << str << endl;
+    //kDebug () << "scanning " << str;
     QRegExp * patterns = static_cast<KMPlayer::MPlayer *> (m_player->players () ["mplayer"])->configPage ()->m_patterns;
     QRegExp & trackRegExp = patterns [KMPlayer::MPlayerPreferencesPage::pat_cdromtracks];
     if (trackRegExp.search (str) > -1) {
         //if (m_document->state != KMPlayer::Element::state_deferred)
         //    m_document->defer ();
         int nt = trackRegExp.cap (1).toInt ();
-        kDebug () << "tracks " << trackRegExp.cap (1) << endl;
+        kDebug () << "tracks " << trackRegExp.cap (1);
         for (int i = 0; i < nt; i++)
             m_document->appendChild (new KMPlayer::GenericMrl (m_document, QString ("cdda://%1").arg (i+1), i18n ("Track %1").arg (i+1)));
         return true;

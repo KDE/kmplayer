@@ -58,7 +58,7 @@ KDE_NO_EXPORT void RP::Imfl::closed () {
 }
 
 KDE_NO_EXPORT void RP::Imfl::defer () {
-    kDebug () << "RP::Imfl::defer " << endl;
+    kDebug () << "RP::Imfl::defer ";
     setState (state_deferred);
     for (Node * n = firstChild ().ptr (); n; n = n->nextSibling ().ptr ())
         if (n->id == RP::id_node_image && !n->active ())
@@ -66,7 +66,7 @@ KDE_NO_EXPORT void RP::Imfl::defer () {
 }
 
 KDE_NO_EXPORT void RP::Imfl::activate () {
-    kDebug () << "RP::Imfl::activate " << endl;
+    kDebug () << "RP::Imfl::activate ";
     resolved = true;
     setState (state_activated);
     int timings_count = 0;
@@ -93,7 +93,7 @@ KDE_NO_EXPORT void RP::Imfl::activate () {
 }
 
 KDE_NO_EXPORT void RP::Imfl::finish () {
-    kDebug () << "RP::Imfl::finish " << endl;
+    kDebug () << "RP::Imfl::finish ";
     Mrl::finish ();
     if (duration_timer) {
         document ()->cancelTimer (duration_timer);
@@ -120,7 +120,7 @@ KDE_NO_EXPORT void RP::Imfl::childDone (NodePtr) {
 }
 
 KDE_NO_EXPORT void RP::Imfl::deactivate () {
-    kDebug () << "RP::Imfl::deactivate " << endl;
+    kDebug () << "RP::Imfl::deactivate ";
     if (unfinished ())
         finish ();
     if (!active ())
@@ -136,7 +136,7 @@ KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {
     if (event->id () == event_timer) {
         TimerEvent * te = static_cast <TimerEvent *> (event.ptr ());
         if (te->timer_info == duration_timer) {
-            kDebug () << "RP::Imfl timer " << duration << endl;
+            kDebug () << "RP::Imfl timer " << duration;
             duration_timer = 0;
             if (unfinished ())
                 finish ();
@@ -185,7 +185,7 @@ KDE_NO_EXPORT NodePtr RP::Imfl::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT void RP::Imfl::repaint () {
     if (!active ())
-        kWarning () << "Spurious Imfl repaint" << endl;
+        kWarning () << "Spurious Imfl repaint";
     else if (surface () && width > 0 && height > 0)
         rp_surface->repaint (SRect (0, 0, width, height));
 }
@@ -202,7 +202,7 @@ KDE_NO_EXPORT void RP::Image::closed () {
 }
 
 KDE_NO_EXPORT void RP::Image::activate () {
-    kDebug () << "RP::Image::activate" << endl;
+    kDebug () << "RP::Image::activate";
     setState (state_activated);
     isPlayable (); // update src attribute
     cached_img.setUrl (absolutePath ());
@@ -230,7 +230,7 @@ KDE_NO_EXPORT void RP::Image::deactivate () {
 
 
 KDE_NO_EXPORT void RP::Image::remoteReady (QByteArray & data) {
-    kDebug () << "RP::Image::remoteReady" << endl;
+    kDebug () << "RP::Image::remoteReady";
     if (!data.isEmpty () && cached_img.isEmpty ()) {
         QImage * img = new QImage (data);
         if (!img->isNull ()) {
@@ -378,7 +378,7 @@ KDE_NO_EXPORT void RP::Crossfade::activate () {
 }
 
 KDE_NO_EXPORT void RP::Crossfade::begin () {
-    //kDebug () << "RP::Crossfade::begin" << endl;
+    //kDebug () << "RP::Crossfade::begin";
     TimingsBase::begin ();
     if (target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
@@ -400,7 +400,7 @@ KDE_NO_EXPORT void RP::Fadein::activate () {
 }
 
 KDE_NO_EXPORT void RP::Fadein::begin () {
-    //kDebug () << "RP::Fadein::begin" << endl;
+    //kDebug () << "RP::Fadein::begin";
     TimingsBase::begin ();
     if (target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
@@ -421,7 +421,7 @@ KDE_NO_EXPORT void RP::Fadeout::activate () {
 }
 
 KDE_NO_EXPORT void RP::Fadeout::begin () {
-    //kDebug () << "RP::Fadeout::begin" << endl;
+    //kDebug () << "RP::Fadeout::begin";
     TimingsBase::begin ();
 }
 
@@ -457,7 +457,7 @@ KDE_NO_EXPORT void RP::Wipe::activate () {
 }
 
 KDE_NO_EXPORT void RP::Wipe::begin () {
-    //kDebug () << "RP::Wipe::begin" << endl;
+    //kDebug () << "RP::Wipe::begin";
     TimingsBase::begin ();
     if (target && target->id == id_node_image) {
         RP::Image * img = static_cast <RP::Image *> (target.ptr ());
@@ -477,7 +477,7 @@ KDE_NO_EXPORT void RP::ViewChange::activate () {
 }
 
 KDE_NO_EXPORT void RP::ViewChange::begin () {
-    kDebug () << "RP::ViewChange::begin" << endl;
+    kDebug () << "RP::ViewChange::begin";
     setState (state_began);
     Node * p = parentNode ().ptr ();
     if (p->id == RP::id_node_imfl)

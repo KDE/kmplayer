@@ -71,9 +71,9 @@ ImageData::ImageData( const QString & img) :
     image (0L),
     url (img) {
         //if (img.isEmpty ())
-        //    //kDebug() << "New ImageData for " << this << endl;
+        //    //kDebug() << "New ImageData for " << this;
         //else
-        //    //kDebug() << "New ImageData for " << img << endl;
+        //    //kDebug() << "New ImageData for " << img;
     }
 
 ImageData::~ImageData() {
@@ -170,7 +170,7 @@ ViewSurface::ViewSurface (ViewArea * widget, NodePtr owner, const SRect & rect)
   : Surface (owner, rect), view_widget (widget) {}
 
 KDE_NO_CDTOR_EXPORT ViewSurface::~ViewSurface() {
-    //kDebug() << "~ViewSurface" << endl;
+    //kDebug() << "~ViewSurface";
 }
 
 SurfacePtr ViewSurface::createSurface (NodePtr owner, const SRect & rect) {
@@ -206,7 +206,7 @@ KDE_NO_EXPORT
 void ViewSurface::repaint (const SRect &r) {
     markDirty ();
     view_widget->scheduleRepaint (toScreen (r.x (), r.y (), r.width (), r.height ()));
-    //kDebug() << "Surface::repaint x:" << (int)x << " y:" << (int)y << " w:" << (int)w << " h:" << (int)h << endl;
+    //kDebug() << "Surface::repaint x:" << (int)x << " y:" << (int)y << " w:" << (int)w << " h:" << (int)h;
 }
 
 KDE_NO_EXPORT
@@ -217,7 +217,7 @@ void ViewSurface::repaint () {
 
 KDE_NO_EXPORT void ViewSurface::video () {
     view_widget->setAudioVideoNode (node);
-    kDebug() << "Surface::video:" << background_color << " " << (background_color & 0xff000000) << endl;
+    kDebug() << "Surface::video:" << background_color << " " << (background_color & 0xff000000);
     xscale = yscale = 1; // either scale width/heigt or use bounds
     view_widget->setAudioVideoGeometry (toScreen (0, 0, bounds.width(), bounds.height ()),
             (background_color & 0xff000000 ? &background_color : 0));
@@ -321,7 +321,7 @@ KDE_NO_CDTOR_EXPORT CairoPaintVisitor::~CairoPaintVisitor () {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (Node * n) {
-    kWarning() << "Paint called on " << n->nodeName() << endl;
+    kWarning() << "Paint called on " << n->nodeName();
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (SMIL::RegionBase * reg) {
@@ -352,7 +352,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (SMIL::RegionBase * reg) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout * reg) {
-    //kDebug() << "Visit " << reg->nodeName() << endl;
+    //kDebug() << "Visit " << reg->nodeName();
     SMIL::RegionBase *rb = convertNode <SMIL::RegionBase> (reg->rootLayout);
     if (reg->surface () && rb) {
         //cairo_save (cr);
@@ -672,7 +672,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
-    //kDebug() << "Visit " << img->nodeName() << " " << img->src << endl;
+    //kDebug() << "Visit " << img->nodeName() << " " << img->src;
     Surface *s = img->surface ();
     if (!s)
         return;
@@ -704,14 +704,14 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
     TextRuntime * td = static_cast <TextRuntime *> (txt->runtime ());
     Surface *s = txt->surface ();
-    //kDebug() << "Visit " << txt->nodeName() << " " << td->text << endl;
+    //kDebug() << "Visit " << txt->nodeName() << " " << td->text;
     if (!s)
         return;
     SRect rect = s->bounds;
     Single x = rect.x (), y = rect.y(), w = rect.width(), h = rect.height();
     matrix.getXYWH (x, y, w, h);
     if (!s->surface) {
-        //kDebug() << "new txt surface " << td->text << endl;
+        //kDebug() << "new txt surface " << td->text;
         /* QTextEdit * edit = new QTextEdit;
         edit->setReadOnly (true);
         edit->setHScrollBarMode (QScrollView::AlwaysOff);
@@ -850,7 +850,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
-    //kDebug() << "Visit " << brush->nodeName() << endl;
+    //kDebug() << "Visit " << brush->nodeName();
     Surface *s = brush->surface ();
     if (s) {
         cairo_save (cr);
@@ -932,7 +932,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Imfl * imfl) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fill * fi) {
-    //kDebug() << "Visit " << fi->nodeName() << endl;
+    //kDebug() << "Visit " << fi->nodeName();
     CAIRO_SET_SOURCE_RGB (cr, fi->color);
     if ((int)fi->w && (int)fi->h) {
         cairo_rectangle (cr, fi->x, fi->y, fi->w, fi->h);
@@ -941,7 +941,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fill * fi) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
-    //kDebug() << "Visit " << fi->nodeName() << endl;
+    //kDebug() << "Visit " << fi->nodeName();
     if (fi->target && fi->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (fi->target);
         if (img->surface ()) {
@@ -977,7 +977,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadein * fi) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadeout * fo) {
-    //kDebug() << "Visit " << fo->nodeName() << endl;
+    //kDebug() << "Visit " << fo->nodeName();
     if (fo->progress > 0) {
         CAIRO_SET_SOURCE_RGB (cr, fo->to_color);
         if ((int)fo->w && (int)fo->h) {
@@ -991,7 +991,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Fadeout * fo) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
-    //kDebug() << "Visit " << cf->nodeName() << endl;
+    //kDebug() << "Visit " << cf->nodeName();
     if (cf->target && cf->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (cf->target);
         if (img->surface ()) {
@@ -1027,7 +1027,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Crossfade * cf) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
-    //kDebug() << "Visit " << wipe->nodeName() << endl;
+    //kDebug() << "Visit " << wipe->nodeName();
     if (wipe->target && wipe->target->id == RP::id_node_image) {
         RP::Image *img = convertNode <RP::Image> (wipe->target);
         if (img->surface ()) {
@@ -1083,7 +1083,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::Wipe * wipe) {
 }
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (RP::ViewChange * vc) {
-    //kDebug() << "Visit " << vc->nodeName() << endl;
+    //kDebug() << "Visit " << vc->nodeName();
     if (vc->unfinished () || vc->progress < 100) {
         cairo_pattern_t * pat = cairo_pop_group (cr); // from imfl
         cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
@@ -1145,7 +1145,7 @@ MouseVisitor::MouseVisitor (unsigned int evt, int a, int b)
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (Node * n) {
-    kDebug () << "Mouse event ignored for " << n->nodeName () << endl;
+    kDebug () << "Mouse event ignored for " << n->nodeName ();
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Layout * layout) {
@@ -1228,7 +1228,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Region * region) {
 }
 
 static void followLink (SMIL::LinkingBase * link) {
-    kDebug() << "link to " << link->href << " clicked" << endl;
+    kDebug() << "link to " << link->href << " clicked";
     NodePtr n = link;
     if (link->href.startsWith ("#")) {
         SMIL::Smil * s = SMIL::Smil::findSmilNode (link);
@@ -1627,7 +1627,7 @@ void ViewArea::setAudioVideoGeometry (const IRect &rect, unsigned int * bg_color
                 wrect.width() <= 1 && wrect.height() <= 1)) {
         m_view->viewer ()->setGeometry (x, y, w, h);
         //FIXME m_view->picture ()->setGeometry (x, y, w, h);
-    kDebug() << "setAudioVideoGeometry " << m_av_geometry << endl;
+    kDebug() << "setAudioVideoGeometry " << m_av_geometry;
         wrect.unite (m_av_geometry);
         scheduleRepaint (IRect (wrect.x (), wrect.y (), wrect.width (), wrect.height ()));
     }
@@ -1706,7 +1706,7 @@ KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
 }
 
 KDE_NO_EXPORT void ViewArea::closeEvent (QCloseEvent * e) {
-    //kDebug () << "closeEvent" << endl;
+    //kDebug () << "closeEvent";
     if (m_fullscreen) {
         fullScreen ();
         if (!m_parent->topLevelWidget ()->isVisible ())

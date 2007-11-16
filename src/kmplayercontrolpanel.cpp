@@ -335,7 +335,7 @@ void VolumeBar::paintEvent (QPaintEvent * e) {
     p.fillRect (3, 3, vx, 7, color);
     p.drawRect (vx + 3, 3, w - vx, 7);
     p.end ();
-    //kDebug () << "w=" << w << " vx=" << vx << endl;
+    //kDebug () << "w=" << w << " vx=" << vx;
 }
 
 void VolumeBar::mousePressEvent (QMouseEvent * e) {
@@ -720,7 +720,7 @@ KDE_NO_EXPORT void ControlPanel::selectSubtitle (int id) {
 }
 
 KDE_NO_EXPORT void ControlPanel::selectAudioLanguage (int id) {
-    kDebug () << "ControlPanel::selectAudioLanguage " << id << endl;
+    kDebug () << "ControlPanel::selectAudioLanguage " << id;
     if (audioMenu->isItemChecked (id))
         return;
     int sz = audioMenu->count ();

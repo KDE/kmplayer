@@ -164,7 +164,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::~PlayListView () {
 }
 
 int PlayListView::addTree (NodePtr root, const QString & source, const QString & icon, int flags) {
-    //kDebug () << "addTree " << source << " " << root->mrl()->src << endl;
+    //kDebug () << "addTree " << source << " " << root->mrl()->src;
     RootPlayListItem * ritem = new RootPlayListItem (++last_id, this, root, lastChild(), flags);
     ritem->source = source;
     ritem->icon = icon;
@@ -570,14 +570,14 @@ KDE_NO_EXPORT void PlayListView::slotFind () {
 }
 
 static Q3ListViewItem * findNodeInTree (NodePtr n, Q3ListViewItem * item) {
-    //kDebug () << "item:" << item->text (0) << " n:" << (n ? n->nodeName () : "null" )  <<endl;
+    //kDebug () << "item:" << item->text (0) << " n:" << (n ? n->nodeName () : "null" );
     PlayListItem * pi = static_cast <PlayListItem *> (item);
     if (!n || !pi->node)
         return 0L;
     if (n == pi->node)
         return item;
     for (Q3ListViewItem * ci = item->firstChild(); ci; ci = ci->nextSibling ()) {
-        //kDebug () << "ci:" << ci->text (0) << " n:" << n->nodeName () <<endl;
+        //kDebug () << "ci:" << ci->text (0) << " n:" << n->nodeName ();
         Q3ListViewItem * vi = findNodeInTree (n, ci);
         if (vi)
             return vi;
@@ -709,12 +709,12 @@ KDE_NO_EXPORT void PlayListView::slotFindNext () {
         }
     }
     m_current_find_elm = n;
-    kDebug () << " search for " << str << "=" << (node ? node->nodeName () : "not found") << " next:" << (n ? n->nodeName () : " not found") << endl;
+    kDebug () << " search for " << str << "=" << (node ? node->nodeName () : "not found") << " next:" << (n ? n->nodeName () : " not found");
     if (found) {
         Q3ListViewItem * fc = findNodeInTree (node, ri);
         if (!fc) {
             m_current_find_elm = 0L;
-            kDebug () << "node not found in tree tree:" << ri->id << endl;
+            kDebug () << "node not found in tree tree:" << ri->id;
         } else {
             setSelected (fc, true);
             if (m_current_find_attr && fc->firstChild () && fc->firstChild ()->firstChild ())

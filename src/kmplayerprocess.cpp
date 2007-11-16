@@ -70,7 +70,7 @@ static QString getPath (const KUrl & url) {
         unsigned int i = 0;
         for (; i < p.length () && p[i] == QChar ('/'); ++i)
             ;
-        //kDebug () << "getPath " << p.mid (i-1) << endl;
+        //kDebug () << "getPath " << p.mid (i-1);
         if (i > 0)
             return p.mid (i-1);
         return QString (QChar ('/') + p);
@@ -324,7 +324,7 @@ KDE_NO_EXPORT bool MPlayerBase::quit () {
 
 KDE_NO_EXPORT void MPlayerBase::dataWritten (K3Process *) {
     if (!commands.size ()) return;
-    kDebug() << "eval done " << commands.last () << endl;
+    kDebug() << "eval done " << commands.last ();
     commands.pop_back ();
     if (commands.size ())
         m_process->writeStdin (QFile::encodeName(commands.last ()),
@@ -332,7 +332,7 @@ KDE_NO_EXPORT void MPlayerBase::dataWritten (K3Process *) {
 }
 
 KDE_NO_EXPORT void MPlayerBase::processStopped (K3Process *) {
-    kDebug() << "process stopped" << endl;
+    kDebug() << "process stopped";
     commands.clear ();
     setState (Ready);
 }
@@ -636,7 +636,7 @@ KDE_NO_EXPORT bool MPlayer::grabPicture (const KUrl & url, int pos) {
         args += QString ("-ss %1 ").arg (pos);
     args += K3Process::quote (QString (QFile::encodeName (myurl)));
     *m_process << args;
-    kDebug () << args << endl;
+    kDebug () << args;
     m_process->start (K3Process::NotifyOnExit, K3Process::NoCommunication);
     return m_process->isRunning ();
 }
@@ -689,14 +689,14 @@ KDE_NO_EXPORT void MPlayer::processOutput (K3Process *, char * str, int slen) {
                 }
             }
         } else if (m_refURLRegExp.search(out) > -1) {
-            kDebug () << "Reference mrl " << m_refURLRegExp.cap (1) << endl;
+            kDebug () << "Reference mrl " << m_refURLRegExp.cap (1);
             if (!m_tmpURL.isEmpty () && m_url != m_tmpURL)
                 m_source->insertURL (m_mrl, m_tmpURL);;
             m_tmpURL = KUrl (m_refURLRegExp.cap (1)).url ();
             if (m_source->url () == m_tmpURL || m_url == m_tmpURL)
                 m_tmpURL.truncate (0);
         } else if (m_refRegExp.search (out) > -1) {
-            kDebug () << "Reference File " << endl;
+            kDebug () << "Reference File ";
             m_tmpURL.truncate (0);
         } else if (out.startsWith ("ID_VIDEO_WIDTH")) {
             int pos = out.find ('=');
@@ -736,7 +736,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (K3Process *, char * str, int slen) {
                         alanglist_end->next = new LangInfo (id, out.mid(pos+1));
                         alanglist_end = alanglist_end->next;
                     }
-                    kDebug () << "lang " << id << " " << alanglist_end->name <<endl;
+                    kDebug () << "lang " << id << " " << alanglist_end->name;
                 }
             }
         } else if (out.startsWith ("ID_SID_")) {
@@ -752,7 +752,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (K3Process *, char * str, int slen) {
                         slanglist_end->next = new LangInfo (id, out.mid(pos+1));
                         slanglist_end = slanglist_end->next;
                     }
-                    kDebug () << "sid " << id << " " << slanglist_end->name <<endl;
+                    kDebug () << "sid " << id << " " << slanglist_end->name;
                 }
             }
         } else if (out.startsWith ("ICY Info")) {
@@ -1018,7 +1018,7 @@ bool MEncoder::deMediafiedPlay () {
             args += ' ' + K3Process::quote (QString (QFile::encodeName (myurl)));
     }
     QString outurl = K3Process::quote (QString (QFile::encodeName (m_recordurl.isLocalFile () ? getPath (m_recordurl) : m_recordurl.url ())));
-    kDebug () << args << " -o " << outurl << endl;
+    kDebug () << args << " -o " << outurl;
     *m_process << args << " -o " << outurl;
     m_process->start (K3Process::NotifyOnExit, K3Process::NoCommunication);
     success = m_process->isRunning ();
@@ -1030,7 +1030,7 @@ bool MEncoder::deMediafiedPlay () {
 KDE_NO_EXPORT bool MEncoder::stop () {
     terminateJobs ();
     if (!m_source || !m_process || !m_process->isRunning ()) return true;
-    kDebug () << "MEncoder::stop ()" << endl;
+    kDebug () << "MEncoder::stop ()";
     if (m_use_slave)
         m_process->kill (SIGINT);
     return MPlayerBase::stop ();
@@ -1080,7 +1080,7 @@ bool MPlayerDumpstream::deMediafiedPlay () {
             args += ' ' + K3Process::quote (QString (QFile::encodeName (myurl)));
     }
     QString outurl = K3Process::quote (QString (QFile::encodeName (m_recordurl.isLocalFile () ? getPath (m_recordurl) : m_recordurl.url ())));
-    kDebug () << args << " -dumpstream -dumpfile " << outurl << endl;
+    kDebug () << args << " -dumpstream -dumpfile " << outurl;
     *m_process << args << " -dumpstream -dumpfile " << outurl;
     m_process->start (K3Process::NotifyOnExit, K3Process::NoCommunication);
     success = m_process->isRunning ();
@@ -1092,7 +1092,7 @@ bool MPlayerDumpstream::deMediafiedPlay () {
 KDE_NO_EXPORT bool MPlayerDumpstream::stop () {
     terminateJobs ();
     if (!m_source || !m_process || !m_process->isRunning ()) return true;
-    kDebug () << "MPlayerDumpstream::stop ()" << endl;
+    kDebug () << "MPlayerDumpstream::stop ()";
     if (m_use_slave)
         m_process->kill (SIGINT);
     return MPlayerBase::stop ();
@@ -1193,7 +1193,7 @@ QString CallbackProcess::menuName () const {
 }
 
 void CallbackProcess::setErrorMessage (int code, const QString & msg) {
-    kDebug () << "setErrorMessage " << code << " " << msg << endl;
+    kDebug () << "setErrorMessage " << code << " " << msg;
     if (code == 0 && m_send_config != send_no) {
         if (m_send_config == send_new)
             stop ();
@@ -1212,7 +1212,7 @@ void CallbackProcess::setPlaying () {
 void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
     if (data.size ())
         m_configdata = data;
-    kDebug () << "up and running " << dcopname << endl;
+    kDebug () << "up and running " << dcopname;
     m_backend = new Backend_stub (dcopname, "Backend");
     if (m_send_config == send_new) {
         m_backend->setConfig (m_changeddata);
@@ -1225,7 +1225,7 @@ void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
             QTextStream ts (data, IO_ReadOnly);
             readXML (configdoc, ts, QString ());
             configdoc->normalize ();
-            //kDebug () << mydoc->innerText () << endl;
+            //kDebug () << mydoc->innerText ();
         }
         emit configReceived ();
         if (m_configpage)
@@ -1245,7 +1245,7 @@ void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
 }
 
 void CallbackProcess::setMovieParams (int len, int w, int h, float a, const QStringList & alang, const QStringList & slang) {
-    kDebug () << "setMovieParams " << len << " " << w << "," << h << " " << a << endl;
+    kDebug () << "setMovieParams " << len << " " << w << "," << h << " " << a;
     if (!m_source) return;
     in_gui_update = true;
     m_source->setDimensions (m_mrl, w, h);
@@ -1291,7 +1291,7 @@ void CallbackProcess::setChangedData (const QByteArray & data) {
 bool CallbackProcess::deMediafiedPlay () {
     if (!m_backend)
         return false;
-    kDebug () << "CallbackProcess::play " << m_url << endl;
+    kDebug () << "CallbackProcess::play " << m_url;
     QString u = m_url;
     if (u == "tv://" && !m_source->tuner ().isEmpty ()) {
         u = "v4l:/" + m_source->tuner ();
@@ -1315,7 +1315,7 @@ bool CallbackProcess::stop () {
     terminateJobs ();
     if (!m_process || !m_process->isRunning () || m_state < Buffering)
         return true;
-    kDebug () << "CallbackProcess::stop ()" << m_backend << endl;
+    kDebug () << "CallbackProcess::stop ()" << m_backend;
     if (m_backend)
         m_backend->stop ();
     return true;
@@ -1327,7 +1327,7 @@ bool CallbackProcess::quit () {
     if (m_send_config == send_new)
         m_send_config = send_no; // oh well
     if (playing ()) {
-        kDebug () << "CallbackProcess::quit ()" << endl;
+        kDebug () << "CallbackProcess::quit ()";
         if (m_backend)
             m_backend->quit ();
         else if (viewer ())
@@ -1451,7 +1451,7 @@ KDE_NO_CDTOR_EXPORT ConfigDocument::ConfigDocument ()
     : Document (QString ()) {}
 
 KDE_NO_CDTOR_EXPORT ConfigDocument::~ConfigDocument () {
-    kDebug () << "~ConfigDocument" << endl;
+    kDebug () << "~ConfigDocument";
 }
 
 namespace KMPlayer {
@@ -1513,7 +1513,7 @@ QWidget * TypeNode::createWidget (QWidget * parent) {
         w = combo;
     } else if (!strcmp (ctype, "tree")) {
     } else
-        kDebug() << "Unknown type:" << ctype << endl;
+        kDebug() << "Unknown type:" << ctype;
     return w;
 }
 
@@ -1533,7 +1533,7 @@ void TypeNode::changedXML (QTextStream & out) {
         newvalue = QString::number (static_cast<QComboBox *>(w)->currentItem());
     } else if (!strcmp (ctype, "tree")) {
     } else
-        kDebug() << "Unknown type:" << ctype << endl;
+        kDebug() << "Unknown type:" << ctype;
     if (value != newvalue) {
         value = newvalue;
         setAttribute (StringPool::attr_value, newvalue);
@@ -1594,7 +1594,7 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
             return;
         NodePtr elm = configdoc->firstChild (); // document
         if (!elm || !elm->hasChildNodes ()) {
-            kDebug () << "No valid data" << endl;
+            kDebug () << "No valid data";
             return;
         }
         QString str;
@@ -1605,7 +1605,7 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
         if (str.length () > 10) {
             ts << "</document>";
             QByteArray changeddata = QCString (str.ascii ());
-            kDebug () << str <<  " " << changeddata.size () << str.length () << endl;
+            kDebug () << str <<  " " << changeddata.size () << str.length ();
             changeddata.resize (str.length ());
             m_process->setChangedData (changeddata);
         }
@@ -1620,7 +1620,7 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
             int first_column_width = 50;
             NodePtr elm = configdoc->firstChild (); // document
             if (!elm || !elm->hasChildNodes ()) {
-                kDebug () << "No valid data" << endl;
+                kDebug () << "No valid data";
                 return;
             }
             // set up the table fields
@@ -1831,14 +1831,14 @@ bool FFMpeg::deMediafiedPlay () {
         process.setUseShell (true);
         if (!m_source->videoNorm ().isEmpty ()) {
             process << "v4lctl -c " << m_source->videoDevice () << " setnorm " << m_source->videoNorm ();
-            kDebug () << "v4lctl -c " << m_source->videoDevice () << " setnorm " << m_source->videoNorm () << endl;
+            kDebug () << "v4lctl -c " << m_source->videoDevice () << " setnorm " << m_source->videoNorm ();
             process.start (K3Process::Block);
             cmd += QString (" -tvstd ") + m_source->videoNorm ();
         }
         if (m_source->frequency () > 0) {
             process.clearArguments();
             process << "v4lctl -c " << m_source->videoDevice () << " setfreq " << QString::number (m_source->frequency ());
-            kDebug () << "v4lctl -c " << m_source->videoDevice () << " setfreq " << m_source->frequency () << endl;
+            kDebug () << "v4lctl -c " << m_source->videoDevice () << " setfreq " << m_source->frequency ();
             process.start (K3Process::Block);
         }
     } else {
@@ -1859,7 +1859,7 @@ bool FFMpeg::deMediafiedPlay () {
 KDE_NO_EXPORT bool FFMpeg::stop () {
     terminateJobs ();
     if (!playing ()) return true;
-    kDebug () << "FFMpeg::stop" << endl;
+    kDebug () << "FFMpeg::stop";
     m_process->writeStdin ("q", 1);
     return true;
 }
@@ -1901,7 +1901,7 @@ KDE_NO_CDTOR_EXPORT NpStream::~NpStream () {
 }
 
 KDE_NO_EXPORT void NpStream::open () {
-    kDebug () << "NpStream " << stream_id << " open " << url << endl;
+    kDebug () << "NpStream " << stream_id << " open " << url;
     if (url.startsWith ("javascript:")) {
         NpPlayer *npp = static_cast <NpPlayer *> (parent ());
         QString result = npp->evaluate (url.mid (11));
@@ -1913,7 +1913,7 @@ KDE_NO_EXPORT void NpStream::open () {
             pending_buf.data ()[len] = 0;
             gettimeofday (&data_arrival, 0L);
         }
-        kDebug () << "result is " << pending_buf.data () << endl;
+        kDebug () << "result is " << pending_buf.data ();
         finish_reason = BecauseDone;
         emit stateChanged ();
     } else {
@@ -1946,7 +1946,7 @@ KDE_NO_EXPORT void NpStream::destroy () {
 }
 
 KDE_NO_EXPORT void NpStream::slotResult (KJob *jb) {
-    kDebug() << "slotResult " << stream_id << " " << bytes << " err:" << jb->error () << endl;
+    kDebug() << "slotResult " << stream_id << " " << bytes << " err:" << jb->error ();
     finish_reason = jb->error () ? BecauseError : BecauseDone;
     job = 0L; // signal KIO::Job::result deletes itself
     emit stateChanged ();
@@ -2020,12 +2020,12 @@ KDE_NO_EXPORT void NpPlayer::initProcess (Viewer * viewer) {
         filter = QString ("type='method_call',interface='org.kde.kmplayer.callback'");
         service = QDBusConnection::sessionBus().baseService ();
         //service = QString (dbus_bus_get_unique_name (conn));
-        kDebug() << "using service " << service << " interface " << iface << " filter:" << filter.ascii() << endl;
+        kDebug() << "using service " << service << " interface " << iface << " filter:" << filter.ascii();
     }
 }
 
 KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
-    kDebug() << "NpPlayer::play '" << m_url << "'" << endl;
+    kDebug() << "NpPlayer::play '" << m_url << "'";
     // if we change from XPLAIN to XEMBED, the DestroyNotify may come later
     viewer ()->setIntermediateWindow (false);
     if (m_mrl && !m_url.isEmpty ()) {
@@ -2044,7 +2044,7 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
             Mrl *mrl = n->mrl ();
             if (mrl && !mrl->mimetype.isEmpty ()) {
                 plugin = m_source->plugin (mrl->mimetype);
-                kDebug() << "search plugin " << mrl->mimetype << "->" << plugin << endl;
+                kDebug() << "search plugin " << mrl->mimetype << "->" << plugin;
                 if (!plugin.isEmpty ()) {
                     mime = mrl->mimetype;
                     break;
@@ -2076,7 +2076,7 @@ KDE_NO_EXPORT bool NpPlayer::ready (Viewer * viewer) {
         return true; // wait for callback
     initProcess (viewer);
     viewer->setIntermediateWindow (false);
-    kDebug() << "NpPlayer::ready" << endl;
+    kDebug() << "NpPlayer::ready";
     QString cmd ("knpplayer");
     cmd += QString (" -cb ");
     cmd += service;
@@ -2091,7 +2091,7 @@ KDE_NO_EXPORT bool NpPlayer::ready (Viewer * viewer) {
 
 KDE_NO_EXPORT void NpPlayer::running (const QString &srv) {
     remote_service = srv;
-    kDebug () << "NpPlayer::running " << srv << endl;
+    kDebug () << "NpPlayer::running " << srv;
     setState (Ready);
 }
 
@@ -2116,18 +2116,18 @@ static int getStreamId (const QString &path) {
 
 KDE_NO_EXPORT void NpPlayer::request_stream (const QString &path, const QString &url, const QString &target) {
     QString uri (url);
-    kDebug () << "NpPlayer::request " << path << " '" << url << "' " << " tg:" << target << endl;
+    kDebug () << "NpPlayer::request " << path << " '" << url << "' " << " tg:" << target;
     bool js = url.startsWith ("javascript:");
     if (!js)
         uri = KUrl (m_url, url).url ();
-    kDebug () << "NpPlayer::request " << path << " '" << uri << "'" << m_url << "->" << url << endl;
+    kDebug () << "NpPlayer::request " << path << " '" << uri << "'" << m_url << "->" << url;
     Q_UINT32 sid = getStreamId (path);
     if (sid >= 0) {
         if (!target.isEmpty ()) {
-            kDebug () << "new page request " << target << endl;
+            kDebug () << "new page request " << target;
             if (js) {
                 QString result = evaluate (url.mid (11));
-                kDebug() << "result is " << result << endl;
+                kDebug() << "result is " << result;
                 if (result == "undefined")
                     uri = QString ();
                 else
@@ -2150,7 +2150,7 @@ KDE_NO_EXPORT void NpPlayer::request_stream (const QString &path, const QString 
 KDE_NO_EXPORT QString NpPlayer::evaluate (const QString &script) {
     QString result ("undefined");
     emit evaluate (script, result);
-    //kDebug () << "evaluate " << script << " => " << result << endl;
+    //kDebug () << "evaluate " << script << " => " << result;
     return result;
 }
 
@@ -2165,13 +2165,13 @@ KDE_NO_EXPORT void NpPlayer::destroyStream (uint32_t sid) {
         if (!write_in_progress)
             processStreams ();
     } else {
-        kWarning () << "Object " << sid << " not found" << endl;
+        kWarning () << "Object " << sid << " not found";
     }
 }
 
 KDE_NO_EXPORT
 void NpPlayer::sendFinish (Q_UINT32 sid, Q_UINT32 bytes, NpStream::Reason because) {
-    kDebug() << "NpPlayer::sendFinish " << sid << " bytes:" << bytes << endl;
+    kDebug() << "NpPlayer::sendFinish " << sid << " bytes:" << bytes;
     if (playing ()) {
         uint32_t reason = (int) because;
         QString objpath = QString ("/plugin/stream_%1").arg (sid);
@@ -2194,7 +2194,7 @@ KDE_NO_EXPORT void NpPlayer::terminateJobs () {
 KDE_NO_EXPORT bool NpPlayer::stop () {
     terminateJobs ();
     if (!playing ()) return true;
-    kDebug () << "NpPlayer::stop " << endl;
+    kDebug () << "NpPlayer::stop ";
     QDBusMessage msg = QDBusMessage::createMethodCall (
             remote_service, "/plugin", "org.kde.kmplayer.backend", "quit");
     msg.setDelayedReply (false);
@@ -2235,7 +2235,7 @@ KDE_NO_EXPORT void NpPlayer::streamStateChanged () {
 
 KDE_NO_EXPORT void NpPlayer::streamRedirected (uint32_t sid, const KUrl &u) {
     if (playing ()) {
-        kDebug() << "redirected " << sid << " to " << u.url() << endl;
+        kDebug() << "redirected " << sid << " to " << u.url();
         QString objpath = QString ("/plugin/stream_%1").arg (sid);
         QDBusMessage msg = QDBusMessage::createMethodCall (
                 remote_service, objpath, "org.kde.kmplayer.backend", "redirected");
@@ -2253,12 +2253,12 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
     int active_count = 0;
 
     if (in_process_stream || write_in_progress) {
-        kDebug() << "wrong call" << kBacktrace() << endl;
+        kDebug() << "wrong call" << kBacktrace();
         return;
     }
     in_process_stream = true;
 
-    //kDebug() << "NpPlayer::processStreams " << streams.size() << endl;
+    //kDebug() << "NpPlayer::processStreams " << streams.size();
     for (StreamMap::iterator i = streams.begin (); i != e;) {
         NpStream *ns = i.data ();
         if (ns->job) {
@@ -2296,7 +2296,7 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
             ++i;
         }
     }
-    //kDebug() << "NpPlayer::processStreams " << stream << endl;
+    //kDebug() << "NpPlayer::processStreams " << stream;
     if (stream) {
         if (!stream->bytes && (!stream->mimetype.isEmpty() || stream->content_length)) {
             QString objpath = QString ("/plugin/stream_%1").arg (stream->stream_id);
@@ -2327,7 +2327,7 @@ KDE_NO_EXPORT void NpPlayer::wroteStdin (K3Process *) {
     write_in_progress = false;
     if (playing ()) {
         if (in_process_stream) {
-            kDebug() << "sync wroteStdin" << endl;
+            kDebug() << "sync wroteStdin";
         }
         processStreams ();
     }

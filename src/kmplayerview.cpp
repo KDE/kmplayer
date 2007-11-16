@@ -344,7 +344,7 @@ bool View::setPicture (const QString & path) {
         if (m_image->isNull ()) {
             delete m_image;
             m_image = 0L;
-            kDebug() << "View::setPicture failed " << path << endl;
+            kDebug() << "View::setPicture failed " << path;
         }
     }
     if (!m_image) {
@@ -474,7 +474,7 @@ KDE_NO_EXPORT void View::setVolume (int vol) {
     //QDataStream arg( data, IO_WriteOnly );
     //arg << vol;
     //if (!kapp->dcopClient()->send (m_mixer_object, "Mixer0", "setMasterVolume(int)", data))
-    //    kWarning() << "Failed to update volume" << endl;
+    //    kWarning() << "Failed to update volume";
 }
 
 KDE_NO_EXPORT void View::updateLayout () {
@@ -714,7 +714,7 @@ KDE_NO_CDTOR_EXPORT Viewer::~Viewer () {
 }
 
 KDE_NO_EXPORT void Viewer::setIntermediateWindow (bool set) {
-    kDebug () << "setIntermediateWindow " << !!m_plain_window << "->" << set << endl;
+    kDebug () << "setIntermediateWindow " << !!m_plain_window << "->" << set;
     if (!clientWinId () || !!m_plain_window != set) {
         if (set) {
             if (!m_plain_window) {
@@ -743,7 +743,7 @@ KDE_NO_EXPORT void Viewer::setIntermediateWindow (bool set) {
 }
 
 KDE_NO_EXPORT void Viewer::embedded () {
-    kDebug () << "[01;35mwindowChanged[00m " << (int)clientWinId () << endl;
+    kDebug () << "[01;35mwindowChanged[00m " << (int)clientWinId ();
     //QTimer::singleShot (10, this, SLOT (sendConfigureEvent ()));
     emit resized (width (), height ());
     /*if (clientWinId () && m_plain_window)
@@ -815,7 +815,7 @@ void Viewer::sendKeyEvent (int key) {
 
 KDE_NO_EXPORT void Viewer::sendConfigureEvent () {
     WId w = clientWinId ();
-    kDebug() << "[01;35msendConfigureEvent[00m " << width () << endl;
+    kDebug() << "[01;35msendConfigureEvent[00m " << width ();
     if (w) {
         XConfigureEvent c = {
             ConfigureNotify, 0UL, True,
