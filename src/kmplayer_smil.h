@@ -756,7 +756,7 @@ class KMPLAYER_NO_EXPORT TextMediaType : public MediaType {
 public:
     TextMediaType (NodePtr & d);
     PlayType playType () { return play_type_info; }
-    virtual void activate ();
+    virtual void init ();
     virtual void begin ();
     virtual void accept (Visitor *);
     virtual void parseParam (const TrieString &, const QString &);

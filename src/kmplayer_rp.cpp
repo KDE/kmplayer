@@ -225,8 +225,10 @@ KDE_NO_EXPORT void RP::Image::deactivate () {
     }
     setState (state_deactivated);
     postpone_lock = 0L;
-    delete media_object;
-    media_object = NULL;
+    if (media_object) {
+        media_object->destroy ();
+        media_object = NULL;
+    }
 }
 
 bool RP::Image::handleEvent (EventPtr event) {

@@ -123,16 +123,10 @@ PartBase::PartBase (QWidget * wparent, const char *wname,
    m_bPosSliderPressed (false),
    m_in_update_tree (false)
 {
-    MPlayer *mplayer = new MPlayer (this, m_settings);
-    m_players ["mplayer"] = mplayer;
-    m_process = mplayer;
-    Xine * xine = new Xine (this, m_settings);
-    m_players ["xine"] = xine;
-    m_players ["gstreamer"] = new GStreamer (this, m_settings);
-    m_recorders ["mencoder"] = new MEncoder (this, m_settings);
+    m_recorders ["mencoder"] = new MEncoder (this, NULL, m_settings);
     m_recorders ["mplayerdumpstream"] = new MPlayerDumpstream(this, m_settings);
     m_recorders ["ffmpeg"] = new FFMpeg (this, m_settings);
-    m_recorders ["xine"] = xine;
+    //m_recorders ["xine"] = xine;
     m_sources ["urlsource"] = new URLSource (this);
 
     QString bmfile = locate ("data", "kmplayer/bookmarks.xml");
@@ -171,9 +165,6 @@ KDE_NO_EXPORT void PartBase::addBookMark (const QString & t, const QString & url
 void PartBase::init (KActionCollection * action_collection) {
     KParts::Part::setWidget (m_view);
     m_view->init (action_collection);
-#ifdef HAVE_NSPR
-    m_players ["npp"] = new NpPlayer (this, m_settings, m_service);
-#endif
     connect(m_settings, SIGNAL(configChanged()), this, SLOT(settingsChanged()));
     m_settings->readConfig ();
     m_settings->applyColorSetting (false);
@@ -279,19 +270,19 @@ KMediaPlayer::View* PartBase::view () {
 
 extern const char * strGeneralGroup;
 
-bool PartBase::setProcess (Mrl *mrl) {
+QString PartBase::processName (Mrl *mrl) {
     // determine backend, start with temp_backends
     QString p = temp_backends [m_source->name()];
     bool remember_backend = p.isEmpty ();
-    bool changed = false;
+    MediaManager::ProcessInfoMap &pinfos = m_media_manager->processInfos ();
     if (p.isEmpty ()) {
         // next try to find mimetype match from kmplayerrc
         if (!mrl->mimetype.isEmpty ()) {
             m_config->setGroup (mrl->mimetype);
             p = m_config->readEntry ("player", "" );
             remember_backend = !(!p.isEmpty () &&
-                    m_players.contains (p) &&
-                    m_players [p]->supports (m_source->name ()));
+                    pinfos.contains (p) &&
+                    pinfos [p]->supports (m_source->name ()));
         }
     }
     if (p.isEmpty ())
@@ -303,35 +294,28 @@ bool PartBase::setProcess (Mrl *mrl) {
         p = m_config->readEntry (m_source->name (), "");
     }
     if (p.isEmpty () ||
-            !m_players.contains (p) ||
-            !m_players [p]->supports (m_source->name ())) {
+            !pinfos.contains (p) ||
+            !pinfos [p]->supports (m_source->name ())) {
         // finally find first supported player
         p.truncate (0);
-        if (!m_process || !m_process->supports (m_source->name ())) {
-            ProcessMap::const_iterator i, e = m_players.end();
-            for (i = m_players.begin(); i != e; ++i)
-                if (i.data ()->supports (m_source->name ())) {
-                    p = QString (i.data ()->name ());
-                    break;
-                }
-        } else
-            p = QString (m_process->name ());
+        const MediaManager::ProcessInfoMap::const_iterator e = pinfos.end();
+        for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.begin(); i != e; ++i)
+            if (i.data ()->supports (m_source->name ())) {
+                p = QString (i.data ()->name);
+                break;
+            }
     }
     if (!p.isEmpty ()) {
-        if (!m_process || p != m_process->name ()) {
-            setProcess (p.ascii ());
-            updatePlayerMenu (m_view->controlPanel ());
-            changed = true;
-        }
+        //updatePlayerMenu (m_view->controlPanel ());
         if (remember_backend)
-            m_settings->backends [m_source->name()] = m_process->name ();
-        else
-            temp_backends.remove (m_source->name());
+            m_settings->backends [m_source->name()] = p;
     }
-    return changed;
+    return p;
 }
 
-void PartBase::setProcess (const char * name) {
+void PartBase::processCreated (Process*) {}
+
+/*void PartBase::setProcess (const char * name) {
     Process * process = name ? m_players [name] : 0L;
     if (m_process == process)
         return;
@@ -350,7 +334,7 @@ void PartBase::setProcess (const char * name) {
         m_view->controlPanel ()->enableSeekButtons (m_source->isSeekable ());
     }
     emit processChanged (name);
-}
+}*/
 
 void PartBase::setRecorder (const char * name) {
     Process * recorder = name ? m_recorders [name] : 0L;
@@ -362,7 +346,7 @@ void PartBase::setRecorder (const char * name) {
 }
 
 KDE_NO_EXPORT void PartBase::slotPlayerMenu (int id) {
-    bool playing = m_process->playing ();
+    /*bool playing = m_process->playing ();
     const char * srcname = m_source->name ();
     QPopupMenu * menu = m_view->controlPanel ()->playerMenu ();
     ProcessMap::const_iterator pi = m_players.begin(), e = m_players.end();
@@ -384,24 +368,25 @@ KDE_NO_EXPORT void PartBase::slotPlayerMenu (int id) {
         ++i;
     }
     if (playing)
-        setSource (m_source); // re-activate
+        setSource (m_source); // re-activate*/
 }
 
 void PartBase::updatePlayerMenu (ControlPanel * panel) {
-    if (!m_view || !m_process)
+    if (!m_view)
         return;
     QPopupMenu * menu = panel->playerMenu ();
     menu->clear ();
     if (!m_source)
         return;
-    const ProcessMap::const_iterator e = m_players.end();
+    MediaManager::ProcessInfoMap &pinfos = m_media_manager->processInfos ();
+    const MediaManager::ProcessInfoMap::const_iterator e = pinfos.end();
     int id = 0; // if multiple parts, id's should be the same for all menu's
-    for (ProcessMap::const_iterator i = m_players.begin(); i != e; ++i) {
-        Process * p = i.data ();
+    for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.begin(); i != e; ++i) {
+        ProcessInfo *p = i.data ();
         if (p->supports (m_source->name ())) {
-            menu->insertItem (p->menuName (), this, SLOT (slotPlayerMenu (int)), 0, id++);
-            if (i.data() == m_process)
-                menu->setItemChecked (id-1, true);
+            menu->insertItem (p->label, this, SLOT (slotPlayerMenu (int)), 0, id++);
+            //if (i.data() == m_process)
+            //    menu->setItemChecked (id-1, true);
         }
     }
 }
@@ -452,7 +437,6 @@ void PartBase::setSource (Source * _source) {
     }
     m_source = _source;
     connectSource (old_source, m_source);
-    m_process->setSource (m_source);
     connect (m_source, SIGNAL(startRecording()), this,SLOT(recordingStarted()));
     connect (this, SIGNAL (audioIsSelected (int)),
              m_source, SLOT (setAudioLang (int)));
@@ -460,10 +444,8 @@ void PartBase::setSource (Source * _source) {
              m_source, SLOT (setSubtitle (int)));
     m_source->init ();
     m_source->setIdentified (false);
-    if (m_view && m_view->viewer ()) {
+    if (m_view)
         updatePlayerMenu (m_view->controlPanel ());
-        m_view->viewer ()->setAspect (0.0);
-    }
     if (m_source) QTimer::singleShot (0, m_source, SLOT (activate ()));
     updateTree (true, true);
     emit sourceChanged (old_source, m_source);
@@ -511,10 +493,8 @@ bool PartBase::openURL (const KURL::List & urls) {
 
 bool PartBase::closeURL () {
     stop ();
-    if (m_view) {
-        m_view->viewer ()->setAspect (0.0);
+    if (m_view)
         m_view->reset ();
-    }
     return true;
 }
 
@@ -523,11 +503,8 @@ bool PartBase::openFile () {
 }
 
 void PartBase::keepMovieAspect (bool b) {
-    if (m_view) {
+    if (m_view)
         m_view->setKeepSizeRatio (b);
-        if (m_source)
-            m_view->viewer ()->setAspect (b ? m_source->aspect () : 0.0);
-    }
 }
 
 void PartBase::recordingStarted () {
@@ -550,9 +527,9 @@ void PartBase::recordingStopped () {
 
 void PartBase::timerEvent (QTimerEvent * e) {
     if (e->timerId () == m_record_timer) {
-        kdDebug () << "record timer event" << (m_recorder->playing () && !playing ()) << endl;
+        kdDebug () << "record timer event" << (m_recorder->running () && !playing ()) << endl;
         m_record_timer = 0;
-        if (m_recorder->playing () && !playing ()) {
+        if (m_recorder->running () && !playing ()) {
             Recorder * rec = dynamic_cast <Recorder*> (m_recorder);
             if (rec) {
                 openURL (rec->recordURL ());
@@ -567,13 +544,12 @@ void PartBase::timerEvent (QTimerEvent * e) {
 }
 
 void PartBase::playingStarted () {
-    //m_view->viewer ()->setAspect (m_source->aspect ());
     if (m_view) {
         m_view->controlPanel ()->setPlaying (true);
         m_view->controlPanel ()->showPositionSlider (!!m_source->length ());
         m_view->controlPanel ()->enableSeekButtons (m_source->isSeekable ());
-        if (m_settings->autoadjustvolume && m_process)
-           m_process->volume(m_view->controlPanel()->volumeBar()->value(),true);
+        //if (m_settings->autoadjustvolume && m_process)
+        //   m_process->volume(m_view->controlPanel()->volumeBar()->value(),true);
     }
     emit loading (100);
 }
@@ -588,8 +564,12 @@ void PartBase::playingStopped () {
 }
 
 KDE_NO_EXPORT void PartBase::setPosition (int position, int length) {
-    if (m_view && !m_bPosSliderPressed)
-        emit positioned (position, length);
+    if (m_view && !m_bPosSliderPressed) {
+        if (m_media_manager->processes ().size () > 1)
+            emit positioned (0, 0);
+        else
+            emit positioned (position, length);
+    }
 }
 
 void PartBase::setLoaded (int percentage) {
@@ -723,7 +703,7 @@ KDE_NO_EXPORT void PartBase::subtitleSelected (int id) {
 
 void PartBase::record () {
     if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
-    if (m_recorder->playing ()) {
+    if (m_recorder->running ()) {
         m_recorder->stop ();
     } else {
         m_settings->show  ("RecordPage");
@@ -733,8 +713,9 @@ void PartBase::record () {
 }
 
 void PartBase::play () {
-    if (!m_process || !m_view) return;
-    QPushButton * pb = ::qt_cast <QPushButton *> (sender ());
+    if (!m_view)
+        return;
+    QPushButton *pb = ::qt_cast <QPushButton *> (sender ());
     if (pb && !pb->isOn ()) {
         stop ();
         return;
@@ -743,8 +724,8 @@ void PartBase::play () {
         killTimer (m_update_tree_timer);
         m_update_tree_timer = 0;
     }
-    if (m_process->state () == IProcess::NotRunning) {
-        PlayListItem * lvi = m_view->playList ()->currentPlayListItem ();
+    if (!playing ()) {
+        PlayListItem *lvi = m_view->playList ()->currentPlayListItem ();
         if (lvi) { // make sure it's in the first tree
             QListViewItem * pitem = lvi;
             while (pitem->parent())
@@ -767,7 +748,7 @@ void PartBase::play () {
 }
 
 bool PartBase::playing () const {
-    return m_process && m_process->state () > IProcess::Ready;
+    return m_source && m_source->document ()->active ();
 }
 
 void PartBase::stop () {
@@ -777,10 +758,12 @@ void PartBase::stop () {
             b->toggle ();
         m_view->setCursor (QCursor (Qt::WaitCursor));
     }
-    if (m_process)
-        m_process->quit ();
     if (m_source)
         m_source->reset ();
+    MediaManager::ProcessList &processes = m_media_manager->processes ();
+    const MediaManager::ProcessList::const_iterator e = processes.end();
+    for (MediaManager::ProcessList::const_iterator i = processes.begin(); i != e; ++i)
+        (*i)->quit ();
     if (m_view) {
         m_view->setCursor (QCursor (Qt::ArrowCursor));
         if (b->isOn ())
@@ -791,13 +774,13 @@ void PartBase::stop () {
 }
 
 void PartBase::seek (unsigned long msec) {
-    if (m_process)
-        m_process->seek (msec/100, true);
+    if (m_media_manager->processes ().size () == 1)
+        m_media_manager->processes ().first ()->seek (msec/100, true);
 }
 
 void PartBase::adjustVolume (int incdec) {
-    if (m_process)
-        m_process->volume (incdec, false);
+    if (m_media_manager->processes ().size () > 0)
+        m_media_manager->processes ().first ()->volume (incdec, false);
 }
 
 void PartBase::increaseVolume () {
@@ -821,50 +804,50 @@ KDE_NO_EXPORT void PartBase::posSliderReleased () {
 #else
     const QSlider * posSlider = ::qt_cast<const QSlider *> (sender ());
 #endif
-    if (posSlider)
-        m_process->seek (posSlider->value(), true);
+    if (m_media_manager->processes ().size () == 1)
+        m_media_manager->processes ().first ()->seek (posSlider->value(), true);
 }
 
 KDE_NO_EXPORT void PartBase::volumeChanged (int val) {
-    if (m_process) {
+    if (m_media_manager->processes ().size () > 0) {
         m_settings->volume = val;
-        m_process->volume (val, true);
+        m_media_manager->processes ().first ()->volume (val, true);
     }
 }
 
 KDE_NO_EXPORT void PartBase::contrastValueChanged (int val) {
     m_settings->contrast = val;
-    m_process->contrast (val, true);
+    if (m_media_manager->processes ().size () > 0)
+        m_media_manager->processes ().first ()->contrast (val, true);
 }
 
 KDE_NO_EXPORT void PartBase::brightnessValueChanged (int val) {
     m_settings->brightness = val;
-    m_process->brightness (val, true);
+    if (m_media_manager->processes ().size () > 0)
+        m_media_manager->processes ().first ()->brightness (val, true);
 }
 
 KDE_NO_EXPORT void PartBase::hueValueChanged (int val) {
     m_settings->hue = val;
-    m_process->hue (val, true);
+    if (m_media_manager->processes ().size () > 0)
+        m_media_manager->processes ().first ()->hue (val, true);
 }
 
 KDE_NO_EXPORT void PartBase::saturationValueChanged (int val) {
     m_settings->saturation = val;
-    m_process->saturation (val, true);
+    if (m_media_manager->processes ().size () > 0)
+        m_media_manager->processes ().first ()->saturation (val, true);
 }
 
 KDE_NO_EXPORT void PartBase::sourceHasChangedAspects () {
-    if (m_view && m_source) {
-      //kdDebug () << "sourceHasChangedAspects " << m_source->aspect () << endl;
-        m_view->viewer ()->setAspect (m_source->aspect ());
-        m_view->updateLayout ();
-    }
     emit sourceDimensionChanged ();
 }
 
 KDE_NO_EXPORT void PartBase::positionValueChanged (int pos) {
     QSlider * slider = ::qt_cast <QSlider *> (sender ());
-    if (slider && slider->isEnabled ())
-        m_process->seek (pos, true);
+    if (m_media_manager->processes ().size () == 1 &&
+            slider && slider->isEnabled ())
+        m_media_manager->processes ().first ()->seek (pos, true);
 }
 
 KDE_NO_EXPORT void PartBase::fullScreen () {
@@ -916,35 +899,35 @@ KDE_NO_EXPORT void Source::setLanguages (const QStringList & alang, const QStrin
 }
 
 void Source::setDimensions (NodePtr node, int w, int h) {
-    Mrl * mrl = node ? node->mrl () : 0L;
-    if (mrl && mrl->view_mode == Mrl::WindowMode) {
+    Mrl *mrl = node ? node->mrl () : 0L;
+    if (mrl) {
+        float a = h > 0 ? 1.0 * w / h : 0.0;
         mrl->width = w;
         mrl->height = h;
-        float a = h > 0 ? 1.0 * w / h : 0.0;
         mrl->aspect = a;
-        if (m_player->view ()) {
-            static_cast <View *> (m_player->view())->viewer()->setAspect(a);
-            static_cast <View *> (m_player->view ())->updateLayout ();
-        }
-    } else if (m_aspect < 0.001 || m_width != w || m_height != h) {
         bool ev = (w > 0 && h > 0) ||
             (h == 0 && m_height > 0) ||
             (w == 0 && m_width > 0);
-        m_width = w;
-        m_height = h;
-        if (m_aspect < 0.001)
+        if (Mrl::SingleMode == mrl->view_mode) {
+            m_width = w;
+            m_height = h;
+        }
+        if (Mrl::WindowMode == mrl->view_mode || m_aspect < 0.001)
             setAspect (node, h > 0 ? 1.0 * w / h : 0.0);
-        //kdDebug () << "setDimensions " << w << "x" << h << " a:" << m_aspect << endl;
-        if (ev)
+            //kdDebug () << "setDimensions " << w << "x" << h << " a:" << m_aspect << endl;
+        else if (ev)
             emit dimensionsChanged ();
     }
 }
 
 void Source::setAspect (NodePtr node, float a) {
     //kdDebug () << "setAspect " << a << endl;
-    Mrl * mrl = node ? node->mrl () : 0L;
+    Mrl *mrl = node ? node->mrl () : 0L;
     bool changed = false;
-    if (mrl) {
+    if (mrl &&
+            mrl->media_object &&
+            MediaManager::AudioVideo == mrl->media_object->type ()) {
+        static_cast <AudioVideoMedia*>(mrl->media_object)->viewer->setAspect(a);
         if (mrl->view_mode == Mrl::WindowMode)
             changed |= (fabs (mrl->aspect - a) > 0.001);
         mrl->aspect = a;
@@ -995,7 +978,7 @@ void Source::setURL (const KURL & url) {
             m_document->document ()->dispose ();
         m_document = new Document (url.url (), this);
     }
-    if (m_player->process () && m_player->source () == this)
+    if (m_player->source () == this)
         m_player->updateTree ();
     //kdDebug() << name() << " setURL " << url << endl;
 }
@@ -1006,14 +989,14 @@ void Source::setTitle (const QString & title) {
 
 KDE_NO_EXPORT void Source::setAudioLang (int id) {
     View * v = static_cast <View *> (m_player->view());
-    if (v && m_player->process ())
-        m_player->process ()->setAudioLang (id, v->controlPanel ()->audioMenu ()->text (id));
+    if (v && m_player->mediaManager ()->processes ().size ())
+        m_player->mediaManager ()->processes ().first ()->setAudioLang (id, v->controlPanel ()->audioMenu ()->text (id));
 }
 
 KDE_NO_EXPORT void Source::setSubtitle (int id) {
     View * v = static_cast <View *> (m_player->view());
-    if (v && m_player->process ())
-        m_player->process ()->setSubtitle (id, v->controlPanel ()->subtitleMenu ()->text (id));
+    if (v && m_player->mediaManager ()->processes ().size ())
+        m_player->mediaManager ()->processes ().first ()->setSubtitle (id, v->controlPanel ()->subtitleMenu ()->text (id));
 }
 
 void Source::reset () {
@@ -1332,8 +1315,8 @@ void URLSource::init () {
 
 void URLSource::dimensions (int & w, int & h) {
     if (!m_player->mayResize () && m_player->view ()) {
-        w = static_cast <View *> (m_player->view ())->viewer ()->width ();
-        h = static_cast <View *> (m_player->view ())->viewer ()->height ();
+        w = static_cast <View *> (m_player->view ())->viewArea ()->width ();
+        h = static_cast <View *> (m_player->view ())->viewArea ()->height ();
     } else {
         Source::dimensions (w, h);
     }

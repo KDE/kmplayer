@@ -56,13 +56,37 @@
 #include "kmplayercontrolpanel.h"
 #include "kmplayerprocess.h"
 #include "kmplayersource.h"
+#include "kmplayerpartbase.h"
 #include "kmplayerconfig.h"
 #include "kmplayer_callback.h"
 #include "kmplayer_backend_stub.h"
 
 using namespace KMPlayer;
 
-static const char * default_supported [] = { 0L };
+ProcessInfo::ProcessInfo (const char *nm, const QString &lbl,
+        const char **supported, MediaManager* mgr, PreferencesPage *prefs)
+ : name (nm),
+   label (lbl),
+   supported_sources (supported),
+   manager (mgr),
+   config_page (prefs) {
+    if (config_page)
+        manager->player ()->settings ()->addPage (config_page);
+}
+
+ProcessInfo::~ProcessInfo () {
+    delete config_page;
+}
+
+bool ProcessInfo::supports (const char *source) const {
+    for (const char ** s = supported_sources; s[0]; ++s) {
+        if (!strcmp (s[0], source))
+            return true;
+    }
+    return false;
+}
+
+//------------------------%<----------------------------------------------------
 
 static QString getPath (const KURL & url) {
     QString p = KURL::decode_string (url.url ());
@@ -79,37 +103,84 @@ static QString getPath (const KURL & url) {
     return p;
 }
 
-Process::Process (QObject * parent, Settings * settings, const char * n)
-    : QObject (parent, n), m_source (0L), m_settings (settings),
-      m_state (IProcess::NotRunning), m_old_state (IProcess::NotRunning), m_process (0L), m_job(0L),
-      m_supported_sources (default_supported), m_viewer (0L) {}
+static void setupProcess (KProcess **process) {
+    delete *process;
+    *process = new KProcess;
+    (*process)->setUseShell (true);
+    (*process)->setEnvironment (QString::fromLatin1 ("SESSION_MANAGER"), QString::fromLatin1 (""));
+}
+
+static void killProcess (KProcess *process, QWidget *widget, bool group) {
+    if (!process || !process->isRunning ())
+        return;
+    if (group) {
+        void (*oldhandler)(int) = signal(SIGTERM, SIG_IGN);
+        ::kill (-1 * ::getpid (), SIGTERM);
+        signal(SIGTERM, oldhandler);
+    } else
+        process->kill (SIGTERM);
+#if KDE_IS_VERSION(3, 1, 90)
+    process->wait(1);
+#else
+    KProcessController::theKProcessController->waitForProcessExit (1);
+#endif
+    if (!process->isRunning ())
+        return;
+    process->kill (SIGKILL);
+#if KDE_IS_VERSION(3, 1, 90)
+    process->wait(1);
+#else
+    KProcessController::theKProcessController->waitForProcessExit (1);
+#endif
+    if (process->isRunning ())
+        KMessageBox::error (widget,
+                i18n ("Failed to end player process."), i18n ("Error"));
+}
+
+Process::Process (QObject *parent, ProcessInfo *pinfo, Settings *settings, const char * n)
+ : QObject (parent, n),
+   process_info (pinfo),
+   m_source (0L),
+   m_settings (settings),
+   m_old_state (IProcess::NotRunning),
+   m_process (0L),
+   m_job(0L) {
+    kdDebug() << "new Process " << name () << endl;
+}
 
 Process::~Process () {
-    stop ();
+    quit ();
     delete m_process;
+    if (process_info) // FIXME: remove
+        process_info->manager->processDestroyed (this);
+    if (media_object) {
+        media_object->viewer = NULL;
+        media_object->process = NULL;
+    }
+    kdDebug() << "~Process " << name () << endl;
 }
 
 void Process::init () {
 }
 
-QString Process::menuName () const {
-    return QString (className ());
-}
-
-void Process::initProcess (Viewer * viewer) {
-    m_viewer = viewer;
-    delete m_process;
-    m_process = new KProcess;
-    m_process->setUseShell (true);
-    m_process->setEnvironment (QString::fromLatin1 ("SESSION_MANAGER"), QString::fromLatin1 (""));
+void Process::initProcess () {
+    setupProcess (&m_process);
     if (m_source) m_source->setPosition (0);
 }
 
 WId Process::widget () {
-    return 0;
+    return media_object && media_object->viewer
+        ? media_object->viewer->windowHandle ()
+        : 0;
 }
 
-bool Process::playing () const {
+Mrl *Process::mrl () const {
+    if (media_object)
+        return media_object->mrl ();
+    return NULL;
+}
+
+bool Process::running () const {
     return m_process && m_process->isRunning ();
 }
 
@@ -117,8 +188,7 @@ void Process::setAudioLang (int, const QString &) {}
 
 void Process::setSubtitle (int, const QString &) {}
 
-bool Process::pause () {
-    return false;
+void Process::pause () {
 }
 
 bool Process::seek (int /*pos*/, bool /*absolute*/) {
@@ -149,40 +219,12 @@ bool Process::grabPicture (const KURL & /*url*/, int /*pos*/) {
     return false;
 }
 
-bool Process::supports (const char * source) const {
-    for (const char ** s = m_supported_sources; s[0]; ++s) {
-        if (!strcmp (s[0], source))
-            return true;
-    }
-    return false;
+void Process::stop () {
 }
 
-bool Process::stop () {
-    if (!playing ())
-        return true;
-    return false;
-}
-
-bool Process::quit () {
-    while (playing ()) {
-        if (m_source && !m_source->pipeCmd ().isEmpty ()) {
-            void (*oldhandler)(int) = signal(SIGTERM, SIG_IGN);
-            ::kill (-1 * ::getpid (), SIGTERM);
-            signal(SIGTERM, oldhandler);
-        } else
-            m_process->kill (SIGTERM);
-        KProcessController::theKProcessController->waitForProcessExit (1);
-        if (!m_process->isRunning ())
-            break;
-        m_process->kill (SIGKILL);
-        KProcessController::theKProcessController->waitForProcessExit (1);
-        if (m_process->isRunning ()) {
-            KMessageBox::error (viewer (), i18n ("Failed to end player process."), i18n ("Error"));
-        }
-        break;
-    }
+void Process::quit () {
+    killProcess (m_process, view(), m_source && !m_source->pipeCmd().isEmpty());
     setState (IProcess::NotRunning);
-    return !playing ();
 }
 
 void Process::setState (IProcess::State newstate) {
@@ -198,24 +240,27 @@ void Process::setState (IProcess::State newstate) {
 KDE_NO_EXPORT void Process::rescheduledStateChanged () {
     IProcess::State old_state = m_old_state;
     m_old_state = m_state;
-    MediaObject *mo = m_mrl ? m_mrl->mrl()->media_object : NULL;
-    kdDebug() << "Process::rescheduledStateChanged " << mo << endl;
-    if (mo)
-        static_cast <AudioVideoMedia *> (mo)->stateChange (this, old_state, m_state);
-    else if (m_state > IProcess::Ready)
-        kdError() << "Process running, mrl disappeared" << endl;
-    if (old_state > IProcess::Ready && m_state == IProcess::Ready)
-        emit finished ();
+    kdDebug() << "Process::rescheduledStateChanged " << media_object << endl;
+    if (media_object) {
+        process_info->manager->stateChange (media_object, old_state, m_state);
+        if (old_state > IProcess::Ready && m_state == IProcess::Ready)
+            emit finished ();
+    } else {
+        if (m_state > IProcess::Ready)
+            kdError() << "Process running, mrl disappeared" << endl;
+        delete this;
+    }
 }
 
-bool Process::play (NodePtr _mrl) {
-    m_mrl = _mrl;
-    Mrl * m = _mrl ? _mrl->mrl () : 0L;
+bool Process::play () {
+    Mrl *m = mrl ();
     QString url = m ? m->absolutePath () : QString ();
     bool changed = m_url != url;
     m_url = url;
+    if (media_object) // FIXME: remove check
+        media_object->request = AudioVideoMedia::ask_nothing;
 #if KDE_IS_VERSION(3,3,91)
-    if (!changed || KURL (m_url).isLocalFile ())
+    if (!changed || KURL (m_url).isLocalFile () || m_url.startsWith ("tv:/"))
         return deMediafiedPlay ();
     m_url = url;
     m_job = KIO::stat (m_url, false);
@@ -251,15 +296,13 @@ void Process::terminateJobs () {
     }
 }
 
-bool Process::ready (Viewer * viewer) {
-    m_viewer = viewer;
+bool Process::ready () {
     setState (IProcess::Ready);
     return true;
 }
 
-Viewer * Process::viewer () const {
-    return (m_viewer ? (Viewer*)m_viewer :
-        (m_settings->defaultView() ? m_settings->defaultView()->viewer() : 0L));
+View *Process::view () const {
+    return m_source ? m_source->player ()->viewWidget () : NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -271,16 +314,16 @@ static bool proxyForURL (const KURL& url, QString& proxy) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT MPlayerBase::MPlayerBase (QObject * parent, Settings * settings, const char * n)
-    : Process (parent, settings, n), m_use_slave (true) {
+KDE_NO_CDTOR_EXPORT MPlayerBase::MPlayerBase (QObject *parent, ProcessInfo *pinfo, Settings * settings, const char * n)
+    : Process (parent, pinfo, settings, n), m_use_slave (true) {
     m_process = new KProcess;
 }
 
 KDE_NO_CDTOR_EXPORT MPlayerBase::~MPlayerBase () {
 }
 
-KDE_NO_EXPORT void MPlayerBase::initProcess (Viewer * viewer) {
-    Process::initProcess (viewer);
+KDE_NO_EXPORT void MPlayerBase::initProcess () {
+    Process::initProcess ();
     const KURL & url (m_source->url ());
     if (!url.isEmpty ()) {
         QString proxy_url;
@@ -294,7 +337,7 @@ KDE_NO_EXPORT void MPlayerBase::initProcess (Viewer * viewer) {
 }
 
 KDE_NO_EXPORT bool MPlayerBase::sendCommand (const QString & cmd) {
-    if (playing () && m_use_slave) {
+    if (running () && m_use_slave) {
         commands.push_front (cmd + '\n');
         fprintf (stderr, "eval %s", commands.last ().latin1 ());
         if (commands.size () < 2)
@@ -305,15 +348,12 @@ KDE_NO_EXPORT bool MPlayerBase::sendCommand (const QString & cmd) {
     return false;
 }
 
-KDE_NO_EXPORT bool MPlayerBase::stop () {
+KDE_NO_EXPORT void MPlayerBase::stop () {
     terminateJobs ();
-    if (!m_source || !m_process || !m_process->isRunning ())
-        return true;
-    return true;
 }
 
-KDE_NO_EXPORT bool MPlayerBase::quit () {
-    if (playing ()) {
+KDE_NO_EXPORT void MPlayerBase::quit () {
+    if (running ()) {
         stop ();
         disconnect (m_process, SIGNAL (processExited (KProcess *)),
                 this, SLOT (processStopped (KProcess *)));
@@ -336,7 +376,7 @@ KDE_NO_EXPORT bool MPlayerBase::quit () {
         processStopped (0L);
         commands.clear ();
     }
-    return Process::quit ();
+    Process::quit ();
 }
 
 KDE_NO_EXPORT void MPlayerBase::dataWritten (KProcess *) {
@@ -356,49 +396,52 @@ KDE_NO_EXPORT void MPlayerBase::processStopped (KProcess *) {
 
 //-----------------------------------------------------------------------------
 
-static const char * mplayer_supports [] = {
+static const char *mplayer_supports [] = {
     "dvdsource", "exitsource", "hrefsource", "introsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", "audiocdsource", 0L
 };
 
-KDE_NO_CDTOR_EXPORT MPlayer::MPlayer (QObject * parent, Settings * settings)
- : MPlayerBase (parent, settings, "mplayer"),
+MPlayerProcessInfo::MPlayerProcessInfo (MediaManager *mgr)
+ : ProcessInfo ("mplayer", i18n ("&MPlayer"), mplayer_supports,
+         mgr, new MPlayerPreferencesPage ()) {}
+
+IProcess *MPlayerProcessInfo::create (PartBase *part, ProcessInfo *pinfo,
+        AudioVideoMedia *media) {
+    MPlayer *m = new MPlayer (part, pinfo, part->settings ());
+    m->setSource (part->source ());
+    m->setMediaObject (media);
+    part->processCreated (m);
+    return m;
+}
+
+KDE_NO_CDTOR_EXPORT
+MPlayer::MPlayer (QObject *parent, ProcessInfo *pinfo, Settings *settings)
+ : MPlayerBase (parent, pinfo, settings, "mplayer"),
    m_widget (0L),
-   m_configpage (new MPlayerPreferencesPage (this)),
    aid (-1), sid (-1),
    m_needs_restarted (false) {
-       m_supported_sources = mplayer_supports;
-    m_settings->addPage (m_configpage);
 }
 
 KDE_NO_CDTOR_EXPORT MPlayer::~MPlayer () {
     if (m_widget && !m_widget->parent ())
         delete m_widget;
-    delete m_configpage;
 }
 
 KDE_NO_EXPORT void MPlayer::init () {
 }
 
-QString MPlayer::menuName () const {
-    return i18n ("&MPlayer");
-}
-
-KDE_NO_EXPORT WId MPlayer::widget () {
-    return viewer ()->embeddedWinId ();
-}
-
-KDE_NO_EXPORT bool MPlayer::ready (Viewer * viewer) {
-    Process::ready (viewer);
-    viewer->changeProtocol (QXEmbed::XPLAIN);
+KDE_NO_EXPORT bool MPlayer::ready () {
+    Process::ready ();
+    if (media_object && media_object->viewer)
+        media_object->viewer->useIndirectWidget (true);
     return false;
 }
 
 KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
-    if (playing ())
+    if (running ())
         return sendCommand (QString ("gui_play"));
-    if (!m_needs_restarted && playing ())
+    if (!m_needs_restarted && running ())
         quit (); // rescheduling of setState will reset state just-in-time
-    initProcess (viewer ());
+    initProcess ();
     m_source->setPosition (0);
     if (!m_needs_restarted) {
         aid = sid = -1;
@@ -409,18 +452,19 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
     m_request_seek = -1;
     QString args = m_source->options () + ' ';
     KURL url (m_url);
+    MPlayerPreferencesPage *cfg_page = static_cast <MPlayerPreferencesPage *>(process_info->config_page);
     if (!url.isEmpty ()) {
         if (m_source->url ().isLocalFile ())
             m_process->setWorkingDirectory
                 (QFileInfo (m_source->url ().path ()).dirPath (true));
         if (url.isLocalFile ()) {
             m_url = getPath (url);
-            if (m_configpage->alwaysbuildindex &&
+            if (cfg_page->alwaysbuildindex &&
                     (m_url.lower ().endsWith (".avi") ||
                      m_url.lower ().endsWith (".divx")))
                 args += QString (" -idx ");
         } else {
-            int cache = m_configpage->cachesize;
+            int cache = cfg_page->cachesize;
             if (cache > 3 && !url.url ().startsWith (QString ("dvd")) &&
                     !url.url ().startsWith (QString ("vcd")) &&
                     !url.url ().startsWith (QString ("tv://")))
@@ -436,8 +480,9 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
     if (!m_source->identified () && !m_settings->mplayerpost090) {
         args += QString (" -quiet -nocache -identify -frames 0 ");
     } else {
-        if (m_mrl->mrl ()->repeat > 0)
-            args += QString(" -loop " +QString::number(m_mrl->mrl()->repeat+1));
+        Mrl *m = mrl ();
+        if (m && m->repeat > 0)
+            args += QString (" -loop " + QString::number (m->repeat + 1));
         else if (m_settings->loop)
             args += QString (" -loop 0");
         if (m_settings->mplayerpost090)
@@ -454,16 +499,17 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
     return run (args.ascii (), m_source->pipeCmd ().ascii ());
 }
 
-KDE_NO_EXPORT bool MPlayer::stop () {
+KDE_NO_EXPORT void MPlayer::stop () {
     terminateJobs ();
-    if (!m_source || !m_process || !m_process->isRunning ()) return true;
+    if (!m_source || !m_process || !m_process->isRunning ())
+        return;
     if (m_use_slave)
         sendCommand (QString ("quit"));
-    return MPlayerBase::stop ();
+    MPlayerBase::stop ();
 }
 
-KDE_NO_EXPORT bool MPlayer::pause () {
-    return sendCommand (QString ("pause"));
+KDE_NO_EXPORT void MPlayer::pause () {
+    sendCommand (QString ("pause"));
 }
 
 KDE_NO_EXPORT bool MPlayer::seek (int pos, bool absolute) {
@@ -538,7 +584,8 @@ bool MPlayer::run (const char * args, const char * pipe) {
         fprintf (stderr, "%s | ", pipe);
         *m_process << pipe << " | ";
     }
-    QString exe = m_configpage->mplayer_path;
+    MPlayerPreferencesPage *cfg_page = static_cast <MPlayerPreferencesPage *>(process_info->config_page);
+    QString exe = cfg_page->mplayer_path;
     if (exe.isEmpty ())
         exe = "mplayer";
     fprintf (stderr, "%s -wid %lu ", exe.ascii(), (unsigned long) widget ());
@@ -553,7 +600,7 @@ bool MPlayer::run (const char * args, const char * pipe) {
     if (!strVideoDriver.isEmpty ()) {
         fprintf (stderr, " -vo %s", strVideoDriver.lower().ascii());
         *m_process << " -vo " << strVideoDriver.lower();
-        if (viewer ()->view ()->keepSizeRatio () &&
+        if (view () && view ()->keepSizeRatio () &&
                 strVideoDriver.lower() == QString::fromLatin1 ("x11")) {
             fprintf (stderr, " -zoom");
             *m_process << " -zoom";
@@ -569,9 +616,9 @@ bool MPlayer::run (const char * args, const char * pipe) {
         *m_process << " -framedrop";
     }
 
-    if (m_configpage->additionalarguments.length () > 0) {
-        fprintf (stderr, " %s", m_configpage->additionalarguments.ascii());
-        *m_process << " " << m_configpage->additionalarguments;
+    if (cfg_page->additionalarguments.length () > 0) {
+        fprintf (stderr, " %s", cfg_page->additionalarguments.ascii());
+        *m_process << " " << cfg_page->additionalarguments;
     }
     // postproc thingies
 
@@ -600,7 +647,7 @@ bool MPlayer::run (const char * args, const char * pipe) {
         fprintf (stderr, " -sid %d", sid);
         *m_process << " -sid " << QString::number (sid);
     }
-    for (NodePtr n = m_mrl; n; n = n->parentNode ()) {
+    for (NodePtr n = mrl (); n; n = n->parentNode ()) {
         if (n->id != id_node_group_node && n->id != id_node_playlist_item)
             break;
         QString plops = convertNode <Element> (n)->getAttribute ("mplayeropts");
@@ -626,7 +673,7 @@ bool MPlayer::run (const char * args, const char * pipe) {
     }
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
 
-    old_volume = viewer ()->view ()->controlPanel ()->volumeBar ()->value ();
+    old_volume = view () ? view ()->controlPanel ()->volumeBar ()->value () : 0;
 
     if (m_process->isRunning ()) {
         setState (IProcess::Buffering); // wait for start regexp for state Playing
@@ -637,7 +684,7 @@ bool MPlayer::run (const char * args, const char * pipe) {
 
 KDE_NO_EXPORT bool MPlayer::grabPicture (const KURL & url, int pos) {
     stop ();
-    initProcess (viewer ());
+    initProcess ();
     QString outdir = locateLocal ("data", "kmplayer/");
     m_grabfile = outdir + QString ("00000001.jpg");
     unlink (m_grabfile.ascii ());
@@ -659,11 +706,11 @@ KDE_NO_EXPORT bool MPlayer::grabPicture (const KURL & url, int pos) {
 }
 
 KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
-    if (!viewer () || slen <= 0) return;
-    View * v = viewer ()->view ();
+    if (!mrl () || slen <= 0) return;
+    View *v = view ();
 
     bool ok;
-    QRegExp * patterns = m_configpage->m_patterns;
+    QRegExp *patterns = static_cast<MPlayerPreferencesPage *>(process_info->config_page)->m_patterns;
     QRegExp & m_refURLRegExp = patterns[MPlayerPreferencesPage::pat_refurl];
     QRegExp & m_refRegExp = patterns[MPlayerPreferencesPage::pat_ref];
     do {
@@ -702,13 +749,13 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
             if (pos > 0) {
                 int l = (int) out.mid (pos + 1).toDouble (&ok);
                 if (ok && l >= 0) {
-                    m_source->setLength (m_mrl, 10 * l);
+                    m_source->setLength (mrl (), 10 * l);
                 }
             }
         } else if (m_refURLRegExp.search(out) > -1) {
             kdDebug () << "Reference mrl " << m_refURLRegExp.cap (1) << endl;
             if (!m_tmpURL.isEmpty () && m_url != m_tmpURL)
-                m_source->insertURL (m_mrl, m_tmpURL);;
+                m_source->insertURL (mrl (), m_tmpURL);;
             m_tmpURL = KURL::fromPathOrURL (m_refURLRegExp.cap (1)).url ();
             if (m_source->url () == m_tmpURL || m_url == m_tmpURL)
                 m_tmpURL.truncate (0);
@@ -719,13 +766,13 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
             int pos = out.find ('=');
             if (pos > 0) {
                 int w = out.mid (pos + 1).toInt ();
-                m_source->setDimensions (m_mrl, w, m_source->height ());
+                m_source->setDimensions (mrl (), w, m_source->height ());
             }
         } else if (out.startsWith ("ID_VIDEO_HEIGHT")) {
             int pos = out.find ('=');
             if (pos > 0) {
                 int h = out.mid (pos + 1).toInt ();
-                m_source->setDimensions (m_mrl, m_source->width (), h);
+                m_source->setDimensions (mrl (), m_source->width (), h);
             }
         } else if (out.startsWith ("ID_VIDEO_ASPECT")) {
             int pos = out.find ('=');
@@ -738,7 +785,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                     a = val.toFloat (&ok);
                 }
                 if (ok && a > 0.001)
-                    m_source->setAspect (m_mrl, a);
+                    m_source->setAspect (mrl (), a);
             }
         } else if (out.startsWith ("ID_AID_")) {
             int pos = out.find ('_', 7);
@@ -791,13 +838,13 @@ KDE_NO_EXPORT void MPlayer::processOutput (KProcess *, char * str, int slen) {
                     int movie_width = m_sizeRegExp.cap (1).toInt (&ok);
                     int movie_height = ok ? m_sizeRegExp.cap (2).toInt (&ok) : 0;
                     if (ok && movie_width > 0 && movie_height > 0) {
-                        m_source->setDimensions(m_mrl,movie_width,movie_height);
-                        m_source->setAspect (m_mrl, 1.0*movie_width/movie_height);
+                        m_source->setDimensions(mrl(),movie_width,movie_height);
+                        m_source->setAspect (mrl(), 1.0*movie_width/movie_height);
                     }
                 } else if (m_startRegExp.search (out) > -1) {
                     if (m_settings->mplayerpost090) {
                         if (!m_tmpURL.isEmpty () && m_url != m_tmpURL) {
-                            m_source->insertURL (m_mrl, m_tmpURL);;
+                            m_source->insertURL (mrl (), m_tmpURL);;
                             m_tmpURL.truncate (0);
                         }
                         m_source->setIdentified ();
@@ -819,19 +866,19 @@ KDE_NO_EXPORT void MPlayer::processStopped (KProcess * p) {
     if (p && !m_grabfile.isEmpty ()) {
         emit grabReady (m_grabfile);
         m_grabfile.truncate (0);
-    } else if (p) {
+    } else if (p && mrl ()) {
         QString url;
         if (!m_source->identified ()) {
             m_source->setIdentified ();
             if (!m_tmpURL.isEmpty () && m_url != m_tmpURL) {
-                m_source->insertURL (m_mrl, m_tmpURL);;
+                m_source->insertURL (mrl (), m_tmpURL);;
                 m_tmpURL.truncate (0);
             }
         }
         if (m_source && m_needs_restarted) {
             commands.clear ();
             int pos = m_source->position ();
-            play (m_mrl);
+            play ();
             seek (pos, true);
         } else
             MPlayerBase::processStopped (p);
@@ -928,8 +975,8 @@ KDE_NO_CDTOR_EXPORT MPlayerPreferencesFrame::MPlayerPreferencesFrame (QWidget * 
     layout->addWidget (table);
 }
 
-KDE_NO_CDTOR_EXPORT MPlayerPreferencesPage::MPlayerPreferencesPage (MPlayer * p)
- : m_process (p), m_configframe (0L) {
+KDE_NO_CDTOR_EXPORT MPlayerPreferencesPage::MPlayerPreferencesPage ()
+ : m_configframe (0L) {
 }
 
 KDE_NO_EXPORT void MPlayerPreferencesPage::write (KConfig * config) {
@@ -995,10 +1042,9 @@ static const char * mencoder_supports [] = {
     "dvdsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", "audiocdsource", 0L
 };
 
-KDE_NO_CDTOR_EXPORT MEncoder::MEncoder (QObject * parent, Settings * settings)
- : MPlayerBase (parent, settings, "mencoder") {
-    m_supported_sources = mencoder_supports;
-}
+KDE_NO_CDTOR_EXPORT
+MEncoder::MEncoder (QObject * parent, ProcessInfo *pinfo, Settings * settings)
+ : MPlayerBase (parent, pinfo, settings, "mencoder") {}
 
 KDE_NO_CDTOR_EXPORT MEncoder::~MEncoder () {
 }
@@ -1009,7 +1055,7 @@ KDE_NO_EXPORT void MEncoder::init () {
 bool MEncoder::deMediafiedPlay () {
     bool success = false;
     stop ();
-    initProcess (viewer ());
+    initProcess ();
     KURL url (m_url);
     m_source->setPosition (0);
     QString args;
@@ -1044,13 +1090,14 @@ bool MEncoder::deMediafiedPlay () {
     return success;
 }
 
-KDE_NO_EXPORT bool MEncoder::stop () {
+KDE_NO_EXPORT void MEncoder::stop () {
     terminateJobs ();
-    if (!m_source || !m_process || !m_process->isRunning ()) return true;
+    if (!m_source || !m_process || !m_process->isRunning ())
+        return;
     kdDebug () << "MEncoder::stop ()" << endl;
     if (m_use_slave)
         m_process->kill (SIGINT);
-    return MPlayerBase::stop ();
+    MPlayerBase::stop ();
 }
 
 //-----------------------------------------------------------------------------
@@ -1061,9 +1108,7 @@ static const char * mplayerdump_supports [] = {
 
 KDE_NO_CDTOR_EXPORT
 MPlayerDumpstream::MPlayerDumpstream (QObject * parent, Settings * settings)
-    : MPlayerBase (parent, settings, "mplayerdumpstream") {
-    m_supported_sources = mplayerdump_supports;
-    }
+ : MPlayerBase (parent, NULL, settings, "mplayerdumpstream") {}
 
 KDE_NO_CDTOR_EXPORT MPlayerDumpstream::~MPlayerDumpstream () {
 }
@@ -1074,7 +1119,7 @@ KDE_NO_EXPORT void MPlayerDumpstream::init () {
 bool MPlayerDumpstream::deMediafiedPlay () {
     bool success = false;
     stop ();
-    initProcess (viewer ());
+    initProcess ();
     KURL url (m_url);
     m_source->setPosition (0);
     QString args;
@@ -1106,107 +1151,244 @@ bool MPlayerDumpstream::deMediafiedPlay () {
     return success;
 }
 
-KDE_NO_EXPORT bool MPlayerDumpstream::stop () {
+KDE_NO_EXPORT void MPlayerDumpstream::stop () {
     terminateJobs ();
-    if (!m_source || !m_process || !m_process->isRunning ()) return true;
+    if (!m_source || !m_process || !m_process->isRunning ())
+        return;
     kdDebug () << "MPlayerDumpstream::stop ()" << endl;
     if (m_use_slave)
         m_process->kill (SIGINT);
-    return MPlayerBase::stop ();
+    MPlayerBase::stop ();
 }
 
 //-----------------------------------------------------------------------------
 
 static int callback_counter = 0;
 
-Callback::Callback (CallbackProcess * process)
-    : DCOPObject (QString (QString ("KMPlayerCallback-") +
-                           QString::number (callback_counter++)).ascii ()),
-      m_process (process) {}
+Callback::Callback (CallbackProcessInfo *pinfo, const char *pname)
+ : DCOPObject (QString (QString ("KMPlayerCallback-") +
+             QString::number (callback_counter++)).ascii ()),
+   process_info (pinfo),
+   proc_name (pname) {}
 
-void Callback::statusMessage (int code, QString msg) {
-    if (!m_process->m_source) return;
+CallbackProcess *Callback::process (unsigned long id) {
+    MediaManager::MediaList &ml = process_info->manager->medias ();
+    const MediaManager::MediaList::iterator e = ml.end ();
+    for (MediaManager::MediaList::iterator i = ml.begin (); i != e; ++i)
+        if ((*i)->type () == MediaManager::AudioVideo) {
+            AudioVideoMedia *av = static_cast <AudioVideoMedia *> (*i);
+            if (av->viewer && av->viewer->windowHandle () == id)
+                return static_cast <CallbackProcess *> (av->process);
+        }
+    return NULL;
+}
+
+void Callback::statusMessage (unsigned long id, int code, QString msg) {
+    CallbackProcess *proc = process (id);
+    if (!proc || proc->m_source)
+        return;
     switch ((StatusCode) code) {
         case stat_newtitle:
-            //m_process->source ()->setTitle (msg);
-            if (m_process->viewer ())
-                ((PlayListNotify *) m_process->source ())->setInfoMessage (msg);
+            //proc->source ()->setTitle (msg);
+            if (proc->view ())
+                ((PlayListNotify *) proc->source ())->setInfoMessage (msg);
             break;
         case stat_hasvideo:
-            if (m_process->viewer ())
-                m_process->viewer ()->view ()->videoStart ();
+            if (proc->view ())
+                proc->view ()->videoStart ();
             break;
         default:
-            m_process->setStatusMessage (msg);
+            proc->setStatusMessage (msg);
     };
 }
 
-void Callback::subMrl (QString mrl, QString title) {
-    if (!m_process->m_source) return;
-    m_process->m_source->insertURL (m_process->m_mrl, KURL::fromPathOrURL (mrl).url (), title);
-    if (m_process->m_mrl && m_process->m_mrl->active ())
-        m_process->m_mrl->defer (); // Xine detected this is a playlist
+void Callback::subMrl (unsigned long id, QString url, QString title) {
+    CallbackProcess *proc = process (id);
+    Mrl *m = proc ? proc->mrl () : NULL;
+    if (!m || !proc->m_source)
+        return;
+    proc->m_source->insertURL (m, KURL::fromPathOrURL(url).url(), title);
+    if (m->active ())
+        m->defer (); // Xine detected this is a playlist
 }
 
-void Callback::errorMessage (int code, QString msg) {
-    m_process->setErrorMessage (code, msg);
+void Callback::errorMessage (unsigned long id, int code, QString msg) {
+    CallbackProcess *proc = process (id);
+    if (proc)
+        proc->setErrorMessage (code, msg);
 }
 
-void Callback::finished () {
-    m_process->setFinished ();
+void Callback::finished (unsigned long id) {
+    CallbackProcess *proc = process (id);
+    if (proc)
+        proc->setFinished ();
 }
 
-void Callback::playing () {
-    m_process->setPlaying ();
+void Callback::playing (unsigned long id) {
+    CallbackProcess *proc = process (id);
+    if (proc)
+        proc->setPlaying ();
 }
 
 void Callback::started (QCString dcopname, QByteArray data) {
-    m_process->setStarted (dcopname, data);
+    static_cast <CallbackProcessInfo *> (process_info)->backendStarted (
+            dcopname, data);
 }
 
-void Callback::movieParams (int length, int w, int h, float aspect, QStringList alang, QStringList slang) {
-    m_process->setMovieParams (length, w, h, aspect, alang, slang);
+void Callback::movieParams (unsigned long id, int length, int w, int h, float aspect, QStringList alang, QStringList slang) {
+    CallbackProcess *proc = process (id);
+    if (proc)
+        proc->setMovieParams (length, w, h, aspect, alang, slang);
 }
 
-void Callback::moviePosition (int position) {
-    m_process->setMoviePosition (position);
+void Callback::moviePosition (unsigned long id, int position) {
+    CallbackProcess *proc = process (id);
+    if (proc)
+        proc->setMoviePosition (position);
 }
 
-void Callback::loadingProgress (int percentage) {
-    m_process->setLoadingProgress (percentage);
+void Callback::loadingProgress (unsigned long id, int percentage) {
+    CallbackProcess *proc = process (id);
+    if (proc)
+        proc->setLoadingProgress (percentage);
 }
 
-void Callback::toggleFullScreen () {
-    Viewer * v = m_process->viewer ();
-    if (v)
-        v->view ()->fullScreen ();
+void Callback::toggleFullScreen (unsigned long id) {
+    CallbackProcess *proc = process (id);
+    if (proc && proc->view ())
+        proc->view ()->fullScreen ();
 }
 
 //-----------------------------------------------------------------------------
 
-CallbackProcess::CallbackProcess (QObject * parent, Settings * settings, const char * n, const QString & menuname)
- : Process (parent, settings, n),
-   m_callback (new Callback (this)),
-   m_backend (0L),
-   m_menuname (menuname),
-   m_configpage (new XMLPreferencesPage (this)),
+CallbackProcessInfo::CallbackProcessInfo (const char *nm, const QString &lbl,
+        const char **supported, MediaManager *mgr, PreferencesPage *pref)
+ : ProcessInfo (nm, lbl, supported, mgr, pref),
+   backend (NULL),
+   callback (NULL),
+   m_process (NULL) {}
+
+CallbackProcessInfo::~CallbackProcessInfo () {
+    delete callback;
+    if (config_doc)
+        config_doc->document()->dispose ();
+    delete m_process;
+}
+
+QString CallbackProcessInfo::dcopName () {
+    QString cbname;
+    if (callback) {
+        kdError() << "backend still avaible" << endl;
+        delete callback;
+    }
+    callback = new Callback (this, ProcessInfo::name);
+    cbname.sprintf ("%s/%s", QString (kapp->dcopClient ()->appId ()).ascii (),
+                             QString (callback->objId ()).ascii ());
+    return cbname;
+}
+
+void CallbackProcessInfo::backendStarted (QCString dcopname, QByteArray &data) {
+    MediaManager::ProcessList &pl = manager->processes ();
+    kdDebug () << "up and running " << dcopname << endl;
+
+    backend = new Backend_stub (dcopname, "Backend");
+
+    /*if (m_send_config == send_new) {
+        cb->backend->setConfig (m_changeddata);
+    }*/
+    if (data.size ()) {
+        //if (m_have_config == config_probe || m_have_config == config_unknown) {
+        //bool was_probe = m_have_config == config_probe;
+        //m_have_config = data.size () ? config_yes : config_no;
+        //if (m_have_config == config_yes) {
+            if (config_doc)
+                config_doc->document ()->dispose ();
+            config_doc = new ConfigDocument ();
+            QTextStream ts (data, IO_ReadOnly);
+            readXML (config_doc, ts, QString ());
+            config_doc->normalize ();
+            //kdDebug () << mydoc->innerText () << endl;
+        //}
+        emit configReceived ();
+        if (config_page)
+            config_page->sync (false);
+        /*if (was_probe) {
+            quit ();
+            return;
+        }*/
+    }
+
+    const MediaManager::ProcessList::iterator e = pl.end ();
+    for (MediaManager::ProcessList::iterator i = pl.begin (); i != e; ++i) {
+        Process *proc = static_cast <Process *> (*i);
+        if (!strcmp (ProcessInfo::name, proc->name ()))
+             static_cast <CallbackProcess *>(proc)->setState (IProcess::Ready);
+    }
+}
+
+KDE_NO_EXPORT
+void CallbackProcessInfo::processOutput (KProcess *, char *str, int slen) {
+    if (manager->player ()->viewWidget () && slen > 0)
+        manager->player ()->viewWidget ()->addText (QString::fromLocal8Bit (str, slen));
+}
+
+KDE_NO_EXPORT void CallbackProcessInfo::processStopped (KProcess *) {
+    MediaManager::ProcessList &pl = manager->processes ();
+
+    delete m_process;
+    m_process = NULL;
+
+    const MediaManager::ProcessList::iterator e = pl.end ();
+    for (MediaManager::ProcessList::iterator i = pl.begin (); i != e; ++i) {
+        Process *proc = static_cast <Process *> (*i);
+        if (!strcmp (ProcessInfo::name, proc->name ()))
+             static_cast <CallbackProcess *>(proc)->setState (
+                     IProcess::NotRunning);
+    }
+    manager->player ()->updateInfo (QString ());
+    delete backend;
+    backend = 0L;
+    /*if (m_send_config == send_try) {
+        m_send_config = send_new; // we failed, retry ..
+        ready ();
+    }*/
+}
+
+void CallbackProcessInfo::stopBackend () {
+    /*if (m_have_config == config_probe)
+        m_have_config = config_unknown; // hmm
+    if (m_send_config == send_new)
+        m_send_config = send_no; // oh well*/
+    if (m_process && m_process->isRunning ()) {
+        kdDebug () << "CallbackProcessInfo::quit ()" << endl;
+        if (backend)
+            backend->quit ();
+        //else if (media_object && media_object->viewer)
+        //    media_object && media_object->viewer->sendKeyEvent ('q');
+#if KDE_IS_VERSION(3, 1, 90)
+        m_process->wait(1);
+#else
+        QTime t;
+        t.start ();
+        do {
+            KProcessController::theKProcessController->waitForProcessExit (2);
+        } while (t.elapsed () < 1000 && m_process->isRunning ());
+#endif
+    }
+    killProcess (m_process, manager->player ()->view(), false);
+}
+
+CallbackProcess::CallbackProcess (QObject *parent, ProcessInfo *pi, Settings *settings, const char *n)
+ : Process (parent, pi, settings, n),
    in_gui_update (false),
    m_have_config (config_unknown),
    m_send_config (send_no) {
 }
 
 CallbackProcess::~CallbackProcess () {
-    delete m_callback;
-    delete m_configpage;
-    if (configdoc)
-        configdoc->document()->dispose ();
 }
 
 void CallbackProcess::setStatusMessage (const QString & /*msg*/) {
-}
-
-QString CallbackProcess::menuName () const {
-    return m_menuname;
 }
 
 void CallbackProcess::setErrorMessage (int code, const QString & msg) {
@@ -1226,48 +1408,14 @@ void CallbackProcess::setPlaying () {
     setState (IProcess::Playing);
 }
 
-void CallbackProcess::setStarted (QCString dcopname, QByteArray & data) {
-    if (data.size ())
-        m_configdata = data;
-    kdDebug () << "up and running " << dcopname << endl;
-    m_backend = new Backend_stub (dcopname, "Backend");
-    if (m_send_config == send_new) {
-        m_backend->setConfig (m_changeddata);
-    }
-    if (m_have_config == config_probe || m_have_config == config_unknown) {
-        bool was_probe = m_have_config == config_probe;
-        m_have_config = data.size () ? config_yes : config_no;
-        if (m_have_config == config_yes) {
-            configdoc = new ConfigDocument ();
-            QTextStream ts (data, IO_ReadOnly);
-            readXML (configdoc, ts, QString ());
-            configdoc->normalize ();
-            //kdDebug () << mydoc->innerText () << endl;
-        }
-        emit configReceived ();
-        if (m_configpage)
-            m_configpage->sync (false);
-        if (was_probe) {
-            quit ();
-            return;
-        }
-    }
-    if (m_settings->autoadjustcolors) {
-        saturation (m_settings->saturation, true);
-        hue (m_settings->hue, true);
-        brightness (m_settings->brightness, true);
-        contrast (m_settings->contrast, true);
-    }
-    setState (IProcess::Ready);
-}
-
 void CallbackProcess::setMovieParams (int len, int w, int h, float a, const QStringList & alang, const QStringList & slang) {
+    Mrl *m = mrl ();
     kdDebug () << "setMovieParams " << len << " " << w << "," << h << " " << a << endl;
-    if (!m_source) return;
+    if (!m || !m_source) return;
     in_gui_update = true;
-    m_source->setDimensions (m_mrl, w, h);
-    m_source->setAspect (m_mrl, a);
-    m_source->setLength (m_mrl, len);
+    m_source->setDimensions (m, w, h);
+    m_source->setAspect (m, a);
+    m_source->setLength (m, len);
     m_source->setLanguages (alang, slang);
     in_gui_update = false;
 }
@@ -1289,27 +1437,31 @@ void CallbackProcess::setLoadingProgress (int percentage) {
 bool CallbackProcess::getConfigData () {
     if (m_have_config == config_no)
         return false;
-    if (m_have_config == config_unknown && !playing ()) {
+    if (m_have_config == config_unknown && !running ()) {
         m_have_config = config_probe;
-        ready (viewer ());
+        ready ();
     }
     return true;
 }
 
-void CallbackProcess::setChangedData (const QByteArray & data) {
+void CallbackProcess::setChangedData (CallbackProcessInfo *, const QByteArray & data) {
+    // lookup a Xine process, or create one
+    /*
     m_changeddata = data;
-    m_send_config = playing () ? send_try : send_new;
+    m_send_config = running () ? send_try : send_new;
     if (m_send_config == send_try)
-        m_backend->setConfig (data);
+        static_cast <CallbackProcessInfo *>(process_info)->backend->setConfig (data);
     else
-        ready (viewer ());
+        ready ();*/
 }
 
 bool CallbackProcess::deMediafiedPlay () {
-    if (!m_backend)
+    CallbackProcessInfo *cb = static_cast <CallbackProcessInfo *>(process_info);
+    if (!cb->backend)
         return false;
     kdDebug () << "CallbackProcess::play " << m_url << endl;
     QString u = m_url;
+    m_request_seek = -1;
     if (u == "tv://" && !m_source->tuner ().isEmpty ()) {
         u = "v4l:/" + m_source->tuner ();
         if (m_source->frequency () > 0)
@@ -1317,70 +1469,64 @@ bool CallbackProcess::deMediafiedPlay () {
     }
     KURL url (u);
     QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
-    m_backend->setURL (myurl);
+    cb->backend->setURL (widget (), myurl);
     const KURL & sub_url = m_source->subUrl ();
     if (!sub_url.isEmpty ())
-        m_backend->setSubTitleURL (QString (QFile::encodeName (sub_url.isLocalFile () ? QFileInfo (getPath (sub_url)).absFilePath () : sub_url.url ())));
+        cb->backend->setSubTitleURL (widget (), QString (QFile::encodeName (sub_url.isLocalFile () ? QFileInfo (getPath (sub_url)).absFilePath () : sub_url.url ())));
     if (m_source->frequency () > 0)
-        m_backend->frequency (m_source->frequency ());
-    m_backend->play (m_mrl ? m_mrl->mrl ()->repeat : 0);
+        cb->backend->frequency (widget (), m_source->frequency ());
+    if (m_settings->autoadjustcolors) {
+        saturation (m_settings->saturation, true);
+        hue (m_settings->hue, true);
+        brightness (m_settings->brightness, true);
+        contrast (m_settings->contrast, true);
+    }
+    cb->backend->play (widget (), mrl () ? mrl ()->repeat : 0);
     setState (IProcess::Buffering);
     return true;
 }
 
-bool CallbackProcess::stop () {
+bool CallbackProcess::running () const {
+    CallbackProcessInfo *cb = static_cast <CallbackProcessInfo *>(process_info);
+    return cb->m_process && cb->m_process->isRunning ();
+}
+
+void CallbackProcess::stop () {
+    CallbackProcessInfo *cb = static_cast <CallbackProcessInfo *>(process_info);
     terminateJobs ();
-    if (!m_process || !m_process->isRunning () || m_state < IProcess::Buffering)
-        return true;
-    kdDebug () << "CallbackProcess::stop ()" << m_backend << endl;
-    if (m_backend)
-        m_backend->stop ();
-    return true;
+    if (!running () || m_state < IProcess::Buffering)
+        return;
+    kdDebug () << "CallbackProcess::stop ()" << cb->backend << endl;
+    if (cb->backend)
+        cb->backend->stop (widget ());
 }
 
-bool CallbackProcess::quit () {
-    if (m_have_config == config_probe)
-        m_have_config = config_unknown; // hmm
-    if (m_send_config == send_new)
-        m_send_config = send_no; // oh well
-    if (playing ()) {
-        kdDebug () << "CallbackProcess::quit ()" << endl;
-        if (m_backend)
-            m_backend->quit ();
-        else if (viewer ())
-            viewer ()->sendKeyEvent ('q');
-#if KDE_IS_VERSION(3, 1, 90)
-        m_process->wait(1);
-#else
-        QTime t;
-        t.start ();
-        do {
-            KProcessController::theKProcessController->waitForProcessExit (2);
-        } while (t.elapsed () < 1000 && m_process->isRunning ());
-#endif
-    }
-    return Process::quit ();
+void CallbackProcess::quit () {
+    static_cast <CallbackProcessInfo *>(process_info)->stopBackend ();
 }
 
-bool CallbackProcess::pause () {
-    if (!playing () || !m_backend) return false;
-    m_backend->pause ();
-    return true;
+void CallbackProcess::pause () {
+    CallbackProcessInfo *cb = static_cast <CallbackProcessInfo *>(process_info);
+    if (running () && cb->backend)
+        cb->backend->pause (widget ());
 }
 
 void CallbackProcess::setAudioLang (int id, const QString & al) {
-    if (!m_backend) return;
-    m_backend->setAudioLang (id, al);
+    CallbackProcessInfo *cb = static_cast <CallbackProcessInfo *>(process_info);
+    if (cb->backend)
+        cb->backend->setAudioLang (widget (), id, al);
 }
 
 void CallbackProcess::setSubtitle (int id, const QString & sl) {
-    if (!m_backend) return;
-    m_backend->setSubtitle (id, sl);
+    CallbackProcessInfo *cb = static_cast <CallbackProcessInfo *>(process_info);
+    if (cb->backend)
+        cb->backend->setSubtitle (widget (), id, sl);
 }
 
 bool CallbackProcess::seek (int pos, bool absolute) {
-    if (in_gui_update || !playing () ||
-            !m_backend || !m_source ||
+    CallbackProcessInfo *cb = static_cast <CallbackProcessInfo *>(process_info);
+    if (in_gui_update || !running () ||
+            !cb->backend || !m_source ||
             !m_source->hasLength () ||
             (absolute && m_source->position () == pos))
         return false;
@@ -1388,78 +1534,55 @@ bool CallbackProcess::seek (int pos, bool absolute) {
         pos = m_source->position () + pos;
     m_source->setPosition (pos);
     if (m_request_seek < 0)
-        m_backend->seek (pos, true);
+        cb->backend->seek (widget (), pos, true);
     m_request_seek = pos;
     return true;
 }
 
 bool CallbackProcess::volume (int val, bool b) {
-    if (m_backend)
-        m_backend->volume (int (sqrt (val*100)), b);
-    //m_backend->volume (100 * log (1.0*val) / log (100.0), b);
-    return !!m_backend;
+    CallbackProcessInfo *cb = static_cast <CallbackProcessInfo *>(process_info);
+    if (cb->backend)
+        cb->backend->volume (widget (), int (sqrt (val*100)), b);
+    //cb->backend->volume (100 * log (1.0*val) / log (100.0), b);
+    return !!cb->backend;
 }
 
 bool CallbackProcess::saturation (int val, bool b) {
-    if (m_backend)
-        m_backend->saturation (val, b);
-    return !!m_backend;
+    CallbackProcessInfo *cb = static_cast <CallbackProcessInfo *>(process_info);
+    if (cb->backend)
+        cb->backend->saturation (widget (), val, b);
+    return !!cb->backend;
 }
 
 bool CallbackProcess::hue (int val, bool b) {
-    if (m_backend)
-        m_backend->hue (val, b);
-    return !!m_backend;
+    CallbackProcessInfo *cb = static_cast <CallbackProcessInfo *>(process_info);
+    if (cb->backend)
+        cb->backend->hue (widget (), val, b);
+    return !!cb->backend;
 }
 
 bool CallbackProcess::brightness (int val, bool b) {
-    if (m_backend)
-        m_backend->brightness (val, b);
-    return !!m_backend;
+    CallbackProcessInfo *cb = static_cast <CallbackProcessInfo *>(process_info);
+    if (cb->backend)
+        cb->backend->brightness (widget (), val, b);
+    return !!cb->backend;
 }
 
 bool CallbackProcess::contrast (int val, bool b) {
-    if (m_backend)
-        m_backend->contrast (val, b);
-    return !!m_backend;
+    CallbackProcessInfo *cb = static_cast <CallbackProcessInfo *>(process_info);
+    if (cb->backend)
+        cb->backend->contrast (widget (), val, b);
+    return !!cb->backend;
 }
 
-QString CallbackProcess::dcopName () {
-    QString cbname;
-    cbname.sprintf ("%s/%s", QString (kapp->dcopClient ()->appId ()).ascii (),
-                             QString (m_callback->objId ()).ascii ());
-    return cbname;
-}
-
-void CallbackProcess::initProcess (Viewer * viewer) {
-    Process::initProcess (viewer);
+void CallbackProcess::initProcess () {
+    /*Process::initProcess ();
     connect (m_process, SIGNAL (processExited (KProcess *)),
             this, SLOT (processStopped (KProcess *)));
     connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
             this, SLOT (processOutput (KProcess *, char *, int)));
     connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
-            this, SLOT (processOutput (KProcess *, char *, int)));
-}
-
-KDE_NO_EXPORT void CallbackProcess::processOutput (KProcess *, char * str, int slen) {
-    if (viewer () && slen > 0)
-        viewer ()->view ()->addText (QString::fromLocal8Bit (str, slen));
-}
-
-KDE_NO_EXPORT void CallbackProcess::processStopped (KProcess *) {
-    if (m_source)
-        ((PlayListNotify *) m_source)->setInfoMessage (QString ());
-    delete m_backend;
-    m_backend = 0L;
-    setState (IProcess::NotRunning);
-    if (m_send_config == send_try) {
-        m_send_config = send_new; // we failed, retry ..
-        ready (viewer ());
-    }
-}
-
-WId CallbackProcess::widget () {
-    return viewer () ? viewer ()->embeddedWinId () : 0;
+            this, SLOT (processOutput (KProcess *, char *, int)));*/
 }
 
 //-----------------------------------------------------------------------------
@@ -1564,35 +1687,36 @@ namespace KMPlayer {
 
 class KMPLAYER_NO_EXPORT XMLPreferencesFrame : public QFrame {
 public:
-    XMLPreferencesFrame (QWidget * parent, CallbackProcess *);
+    XMLPreferencesFrame (QWidget * parent, CallbackProcessInfo *);
     KDE_NO_CDTOR_EXPORT ~XMLPreferencesFrame () {}
     QTable * table;
 protected:
     void showEvent (QShowEvent *);
 private:
-    CallbackProcess * m_process;
+    CallbackProcessInfo *m_process_info;
 };
 
 } // namespace
 
 KDE_NO_CDTOR_EXPORT XMLPreferencesFrame::XMLPreferencesFrame
-(QWidget * parent, CallbackProcess * p)
- : QFrame (parent), m_process (p){
+(QWidget * parent, CallbackProcessInfo *p)
+ : QFrame (parent), m_process_info (p){
     QVBoxLayout * layout = new QVBoxLayout (this);
     table = new QTable (this);
     layout->addWidget (table);
 }
 
-KDE_NO_CDTOR_EXPORT XMLPreferencesPage::XMLPreferencesPage (CallbackProcess * p)
- : m_process (p), m_configframe (0L) {
+KDE_NO_CDTOR_EXPORT
+XMLPreferencesPage::XMLPreferencesPage (CallbackProcessInfo *pi)
+ : m_process_info (pi), m_configframe (NULL) {
 }
 
 KDE_NO_CDTOR_EXPORT XMLPreferencesPage::~XMLPreferencesPage () {
 }
 
 KDE_NO_EXPORT void XMLPreferencesFrame::showEvent (QShowEvent *) {
-    if (!m_process->haveConfig ())
-        m_process->getConfigData ();
+    //if (!m_process->haveConfig ())
+    //    m_process->getConfigData ();
 }
 
 KDE_NO_EXPORT void XMLPreferencesPage::write (KConfig *) {
@@ -1606,7 +1730,7 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
     QTable * table = m_configframe->table;
     int row = 0;
     if (fromUI) {
-        NodePtr configdoc = m_process->configDocument ();
+        NodePtr configdoc = m_process_info->config_doc;
         if (!configdoc || m_configframe->table->numCols () < 1) //not yet created
             return;
         NodePtr elm = configdoc->firstChild (); // document
@@ -1624,12 +1748,12 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
             QByteArray changeddata = QCString (str.ascii ());
             kdDebug () << str <<  " " << changeddata.size () << str.length () << endl;
             changeddata.resize (str.length ());
-            m_process->setChangedData (changeddata);
+            CallbackProcess::setChangedData (m_process_info, changeddata);
         }
     } else {
-        if (!m_process->haveConfig ())
-            return;
-        NodePtr configdoc = m_process->configDocument ();
+        //if (!m_process->haveConfig ())
+        //    return;
+        NodePtr configdoc = m_process_info->config_doc;
         if (!configdoc)
             return;
         if (m_configframe->table->numCols () < 1) { // not yet created
@@ -1672,86 +1796,110 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
 KDE_NO_EXPORT void XMLPreferencesPage::prefLocation (QString & item, QString & icon, QString & tab) {
     item = i18n ("General Options");
     icon = QString ("kmplayer");
-    tab = m_process->menuName ();
+    tab = m_process_info->label;
 }
 
 KDE_NO_EXPORT QFrame * XMLPreferencesPage::prefPage (QWidget * parent) {
-    m_configframe = new XMLPreferencesFrame (parent, m_process);
+    m_configframe = new XMLPreferencesFrame (parent, m_process_info);
     return m_configframe;
 }
 
 //-----------------------------------------------------------------------------
 
-static const char * xine_supported [] = {
+static const char *xine_supports [] = {
     "dvdnavsource", "dvdsource", "exitsource", "introsource", "pipesource",
     "tvsource", "urlsource", "vcdsource", "audiocdsource", 0L
 };
 
-KDE_NO_CDTOR_EXPORT Xine::Xine (QObject * parent, Settings * settings)
-    : CallbackProcess (parent, settings, "xine", i18n ("&Xine")) {
+XineProcessInfo::XineProcessInfo (MediaManager *mgr)
+ : CallbackProcessInfo ("xine", i18n ("&Xine"), xine_supports, mgr,
 #ifdef HAVE_XINE
-    m_supported_sources = xine_supported;
-    m_settings->addPage (m_configpage);
+            new XMLPreferencesPage (this)
+#else
+            NULL
 #endif
+         ) {}
+
+IProcess *XineProcessInfo::create (PartBase *part, ProcessInfo *pinfo, AudioVideoMedia *media) {
+    Xine *x = new Xine (part, pinfo, part->settings ());
+    x->setSource (part->source ());
+    x->setMediaObject (media);
+    part->processCreated (x);
+    return x;
 }
 
-KDE_NO_CDTOR_EXPORT Xine::~Xine () {}
+bool XineProcessInfo::startBackend () {
+    if (m_process && m_process->isRunning ())
+        return true;
+    Settings *cfg = manager->player ()->settings();
 
-bool Xine::ready (Viewer * viewer) {
-    initProcess (viewer);
-    viewer->changeProtocol (QXEmbed::XPLAIN);
+    setupProcess (&m_process);
+    connect (m_process, SIGNAL (processExited (KProcess *)),
+            this, SLOT (processStopped (KProcess *)));
+    connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
+            this, SLOT (processOutput (KProcess *, char *, int)));
+    connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
+            this, SLOT (processOutput (KProcess *, char *, int)));
+
     QString xine_config = KProcess::quote (QString (QFile::encodeName (locateLocal ("data", "kmplayer/") + QString ("xine_config"))));
-    m_request_seek = -1;
-    if (m_source && !m_source->pipeCmd ().isEmpty ()) {
-        fprintf (stderr, "%s | ", m_source->pipeCmd ().ascii ());
-        *m_process << m_source->pipeCmd ().ascii () << " | ";
-    }
-    fprintf (stderr, "kxineplayer -wid %lu", (unsigned long) widget ());
-    *m_process << "kxineplayer -wid " << QString::number (widget ());
+    fprintf (stderr, "kxineplayer ");
+    *m_process << "kxineplayer ";
     fprintf (stderr, " -f %s", xine_config.ascii ());
     *m_process << " -f " << xine_config;
 
-    QString strVideoDriver = QString (m_settings->videodrivers[m_settings->videodriver].driver);
-    if (!strVideoDriver.isEmpty ()) {
-        fprintf (stderr, " -vo %s", strVideoDriver.lower().ascii());
-        *m_process << " -vo " << strVideoDriver.lower();
+    QString vo = QString (cfg->videodrivers[cfg->videodriver].driver);
+    if (!vo.isEmpty ()) {
+        fprintf (stderr, " -vo %s", vo.lower().ascii());
+        *m_process << " -vo " << vo.lower();
     }
-    QString strAudioDriver = QString (m_settings->audiodrivers[m_settings->audiodriver].driver);
-    if (!strAudioDriver.isEmpty ()) {
-        if (strAudioDriver.startsWith (QString ("alsa")))
-            strAudioDriver = QString ("alsa");
-        fprintf (stderr, " -ao %s", strAudioDriver.lower().ascii());
-        *m_process << " -ao " << strAudioDriver.lower();
+    QString ao = QString (cfg->audiodrivers[cfg->audiodriver].driver);
+    if (!ao.isEmpty ()) {
+        if (ao.startsWith (QString ("alsa")))
+            ao = QString ("alsa");
+        fprintf (stderr, " -ao %s", ao.lower().ascii());
+        *m_process << " -ao " << ao.lower();
     }
-    fprintf (stderr, " -cb %s", dcopName ().ascii());
-    *m_process << " -cb " << dcopName ();
-    if (m_have_config == config_unknown || m_have_config == config_probe) {
+    QString service = dcopName ();
+    fprintf (stderr, " -cb %s", service.ascii());
+    *m_process << " -cb " << service;
+    //if (m_have_config == config_unknown || m_have_config == config_probe) {
         fprintf (stderr, " -c");
         *m_process << " -c";
-    }
-    if (m_source)
-        if (m_source->url ().url ().startsWith (QString ("dvd://")) &&
-                !m_settings->dvddevice.isEmpty ()) {
-            fprintf (stderr, " -dvd-device %s", m_settings->dvddevice.ascii ());
-            *m_process << " -dvd-device " << m_settings->dvddevice;
-        } else if (m_source->url ().url ().startsWith (QString ("vcd://")) &&
-                !m_settings->vcddevice.isEmpty ()) {
-            fprintf (stderr, " -vcd-device %s", m_settings->vcddevice.ascii ());
-            *m_process << " -vcd-device " << m_settings->vcddevice;
-        } else if (m_source->url ().url ().startsWith (QString ("tv://")) &&
-                !m_source->videoDevice ().isEmpty ()) {
-            fprintf (stderr, " -vd %s", m_source->videoDevice ().ascii ());
-            *m_process << " -vd " << m_source->videoDevice ();
-        }
-    if (!m_recordurl.isEmpty ()) {
+    //}
+    // if (m_source->url ().url ().startsWith (QString ("vcd://")) &&
+    // if (m_source->url ().url ().startsWith (QString ("tv://")) &
+    fprintf (stderr, " -dvd-device %s", cfg->dvddevice.ascii ());
+    *m_process << " -dvd-device " << cfg->dvddevice;
+    fprintf (stderr, " -vcd-device %s", cfg->vcddevice.ascii ());
+    *m_process << " -vcd-device " << cfg->vcddevice;
+    //fprintf (stderr, " -vd %s", m_source->videoDevice ().ascii ());
+    //*m_process << " -vd " << m_source->videoDevice ();
+    /*if (!m_recordurl.isEmpty ()) {
         QString rf = KProcess::quote (
                 QString (QFile::encodeName (getPath (m_recordurl))));
         fprintf (stderr, " -rec %s", rf.ascii ());
         *m_process << " -rec " << rf;
-    }
+    }*/
     fprintf (stderr, "\n");
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
     return m_process->isRunning ();
+}
+
+KDE_NO_CDTOR_EXPORT
+Xine::Xine (QObject *parent, ProcessInfo *pinfo, Settings *settings)
+ : CallbackProcess (parent, pinfo, settings, "xine") {}
+
+KDE_NO_CDTOR_EXPORT Xine::~Xine () {}
+
+bool Xine::ready () {
+    if (media_object && media_object->viewer)
+        media_object->viewer->useIndirectWidget (true);
+    kdDebug() << "Xine::ready " << state () << endl;
+    if (running ()) {
+        setState (IProcess::Ready);
+        return true;
+    }
+    return static_cast <XineProcessInfo *> (process_info)->startBackend ();
 }
 
 // TODO:input.v4l_video_device_path input.v4l_radio_device_path
@@ -1764,20 +1912,22 @@ static const char * gst_supported [] = {
 };
 
 KDE_NO_CDTOR_EXPORT GStreamer::GStreamer (QObject * parent, Settings * settings)
-    : CallbackProcess (parent, settings, "gstreamer", i18n ("&GStreamer")) {
+    : CallbackProcess (parent, NULL, settings, "gstreamer") {
 #ifdef HAVE_GSTREAMER
-    m_supported_sources = gst_supported;
 #endif
 }
 
 KDE_NO_CDTOR_EXPORT GStreamer::~GStreamer () {}
 
-KDE_NO_EXPORT bool GStreamer::ready (Viewer * viewer) {
-    initProcess (viewer);
-    viewer->changeProtocol (QXEmbed::XPLAIN);
-    m_request_seek = -1;
-    fprintf (stderr, "kgstplayer -wid %lu", (unsigned long) widget ());
-    *m_process << "kgstplayer -wid " << QString::number (widget ());
+KDE_NO_EXPORT bool GStreamer::ready () {
+    if (media_object && media_object->viewer)
+        media_object->viewer->useIndirectWidget (true);
+    if (state () >= IProcess::Ready)
+        return true;
+    initProcess ();
+    /*m_request_seek = -1;
+    fprintf (stderr, "kgstplayer");
+    *m_process << "kgstplayer";
 
     QString strVideoDriver = QString (m_settings->videodrivers[m_settings->videodriver].driver);
     if (!strVideoDriver.isEmpty ()) {
@@ -1804,7 +1954,7 @@ KDE_NO_EXPORT bool GStreamer::ready (Viewer * viewer) {
             *m_process << " -vcd-device " << m_settings->vcddevice;
         }
     fprintf (stderr, "\n");
-    m_process->start (KProcess::NotifyOnExit, KProcess::All);
+    m_process->start (KProcess::NotifyOnExit, KProcess::All);*/
     return m_process->isRunning ();
 }
 
@@ -1815,8 +1965,7 @@ static const char * ffmpeg_supports [] = {
 };
 
 FFMpeg::FFMpeg (QObject * parent, Settings * settings)
- : Process (parent, settings, "ffmpeg") {
-    m_supported_sources = ffmpeg_supports;
+ : Process (parent, NULL, settings, "ffmpeg") {
 }
 
 KDE_NO_CDTOR_EXPORT FFMpeg::~FFMpeg () {
@@ -1826,7 +1975,7 @@ KDE_NO_EXPORT void FFMpeg::init () {
 }
 
 bool FFMpeg::deMediafiedPlay () {
-    initProcess (viewer ());
+    initProcess ();
     KURL url (m_url);
     connect (m_process, SIGNAL (processExited (KProcess *)),
             this, SLOT (processStopped (KProcess *)));
@@ -1873,23 +2022,24 @@ bool FFMpeg::deMediafiedPlay () {
     return m_process->isRunning ();
 }
 
-KDE_NO_EXPORT bool FFMpeg::stop () {
+KDE_NO_EXPORT void FFMpeg::stop () {
     terminateJobs ();
-    if (!playing ()) return true;
+    if (!running ())
+        return;
     kdDebug () << "FFMpeg::stop" << endl;
     m_process->writeStdin ("q", 1);
-    return true;
 }
 
-KDE_NO_EXPORT bool FFMpeg::quit () {
+KDE_NO_EXPORT void FFMpeg::quit () {
     stop ();
-    if (!playing ()) return true;
+    if (!running ())
+        return;
     QTime t;
     t.start ();
     do {
         KProcessController::theKProcessController->waitForProcessExit (2);
     } while (t.elapsed () < 2000 && m_process->isRunning ());
-    return Process::quit ();
+    Process::quit ();
 }
 
 KDE_NO_EXPORT void FFMpeg::processStopped (KProcess *) {
@@ -1986,8 +2136,9 @@ dbusFilter (DBusConnection *conn, DBusMessage *msg, void *data) {
                 process->setStarted (QString (param));
             }
 
-        } else if (dbus_message_is_method_call (msg, iface, "plugged")) {
-            process->viewer ()->view ()->videoStart ();
+        } else if (dbus_message_is_method_call (msg, iface, "plugged") &&
+                process->view ()) {
+            process->view ()->videoStart ();
         } else if (dbus_message_is_method_call (msg, iface, "dimension")) {
             Q_UINT32 w, h;
             if (dbus_message_iter_init (msg, &args) &&
@@ -2090,16 +2241,24 @@ void NpStream::slotTotalSize (KIO::Job *, KIO::filesize_t sz) {
     content_length = sz;
 }
 
-static const char * npplayer_supports [] = {
-    "urlsource", 0L
-};
+static const char *npp_supports [] = { "urlsource", 0L };
+
+NppProcessInfo::NppProcessInfo (MediaManager *mgr)
+ : ProcessInfo ("npp", i18n ("&Ice Ape"), npp_supports, mgr, NULL) {}
+
+IProcess *NppProcessInfo::create (PartBase *part, ProcessInfo *pinfo, AudioVideoMedia *media) {
+    NpPlayer *n = new NpPlayer(part,pinfo,part->settings(),part->serviceName());
+    n->setSource (part->source ());
+    n->setMediaObject (media);
+    part->processCreated (n);
+    return n;
+}
 
 KDE_NO_CDTOR_EXPORT
-NpPlayer::NpPlayer (QObject * parent, Settings * settings, const QString & srv)
- : Process (parent, settings, "npp"),
+NpPlayer::NpPlayer (QObject *parent, ProcessInfo *pinfo, Settings *settings, const QString & srv)
+ : Process (parent, pinfo, settings, "npp"),
    service (srv),
    write_in_progress (false) {
-    m_supported_sources = npplayer_supports;
 }
 
 KDE_NO_CDTOR_EXPORT NpPlayer::~NpPlayer () {
@@ -2120,8 +2279,8 @@ KDE_NO_CDTOR_EXPORT NpPlayer::~NpPlayer () {
 KDE_NO_EXPORT void NpPlayer::init () {
 }
 
-KDE_NO_EXPORT void NpPlayer::initProcess (Viewer * viewer) {
-    Process::initProcess (viewer);
+KDE_NO_EXPORT void NpPlayer::initProcess () {
+    Process::initProcess ();
     connect (m_process, SIGNAL (processExited (KProcess *)),
             this, SLOT (processStopped (KProcess *)));
     connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
@@ -2173,12 +2332,16 @@ KDE_NO_EXPORT void NpPlayer::initProcess (Viewer * viewer) {
 
 KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
     kdDebug() << "NpPlayer::play '" << m_url << "'" << endl;
-    // if we change from XPLAIN to XEMBED, the DestroyNotify may come later 
-    viewer ()->changeProtocol (QXEmbed::XEMBED);
-    if (m_mrl && !m_url.isEmpty () && dbus_static->dbus_connnection) {
+    // if we change from XPLAIN to XEMBED, the DestroyNotify may come later
+    Mrl *node = mrl ();
+    if (!view ())
+        return false;
+    if (media_object && media_object->viewer)
+        media_object->viewer->useIndirectWidget (false);
+    if (node && !m_url.isEmpty () && dbus_static->dbus_connnection) {
         QString mime = "text/plain";
         QString plugin;
-        Element *elm = m_mrl->mrl ();
+        Element *elm = node;
         if (elm->id == id_node_html_object) {
             // this sucks to have to do this here ..
             for (NodePtr n = elm->firstChild (); n; n = n->nextSibling ())
@@ -2187,13 +2350,13 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
                     break;
                 }
         }
-        for (NodePtr n = m_mrl; n; n = n->parentNode ()) {
-            Mrl *mrl = n->mrl ();
-            if (mrl && !mrl->mimetype.isEmpty ()) {
-                plugin = m_source->plugin (mrl->mimetype);
-                kdDebug() << "search plugin " << mrl->mimetype << "->" << plugin << endl;
+        for (NodePtr n = node; n; n = n->parentNode ()) {
+            Mrl *m = n->mrl ();
+            if (m && !m->mimetype.isEmpty ()) {
+                plugin = m_source->plugin (m->mimetype);
+                kdDebug() << "search plugin " << m->mimetype << "->" << plugin << endl;
                 if (!plugin.isEmpty ()) {
-                    mime = mrl->mimetype;
+                    mime = m->mimetype;
                     break;
                 }
             }
@@ -2253,18 +2416,21 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
     return false;
 }
 
-KDE_NO_EXPORT bool NpPlayer::ready (Viewer * viewer) {
-    if (playing ())
-        return true; // wait for callback
-    initProcess (viewer);
-    viewer->changeProtocol (QXEmbed::XEMBED);
+KDE_NO_EXPORT bool NpPlayer::ready () {
+    if (!media_object || !media_object->viewer)
+        return false;
+    // FIXME wait for callback
+    media_object->viewer->useIndirectWidget (false);
+    if (state () == IProcess::Ready)
+        return true;
+    initProcess ();
     kdDebug() << "NpPlayer::ready" << endl;
     QString cmd ("knpplayer");
     cmd += QString (" -cb ");
     cmd += service;
     cmd += path;
     cmd += QString (" -wid ");
-    cmd += QString::number (viewer->winId ());
+    cmd += QString::number (media_object->viewer->windowHandle ());
     fprintf (stderr, "%s\n", cmd.local8Bit ().data ());
     *m_process << cmd;
     m_process->start (KProcess::NotifyOnExit, KProcess::All);
@@ -2343,7 +2509,7 @@ KDE_NO_EXPORT void NpPlayer::destroyStream (const QString &s) {
 
 KDE_NO_EXPORT
 void NpPlayer::sendFinish (Q_UINT32 sid, Q_UINT32 bytes, NpStream::Reason because) {
-    if (playing () && dbus_static->dbus_connnection) {
+    if (running () && dbus_static->dbus_connnection) {
         Q_UINT32 reason = (int) because;
         QString objpath = QString ("/plugin/stream_%1").arg (sid);
         DBusMessage *msg = dbus_message_new_method_call (
@@ -2370,9 +2536,10 @@ KDE_NO_EXPORT void NpPlayer::terminateJobs () {
     streams.clear ();
 }
 
-KDE_NO_EXPORT bool NpPlayer::stop () {
+KDE_NO_EXPORT void NpPlayer::stop () {
     terminateJobs ();
-    if (!playing ()) return true;
+    if (!running ())
+        return;
     kdDebug () << "NpPlayer::stop " << endl;
     if (dbus_static->dbus_connnection) {
         DBusMessage *msg = dbus_message_new_method_call (
@@ -2385,11 +2552,10 @@ KDE_NO_EXPORT bool NpPlayer::stop () {
         dbus_message_unref (msg);
         dbus_connection_flush (dbus_static->dbus_connnection);
     }
-    return true;
 }
 
-KDE_NO_EXPORT bool NpPlayer::quit () {
-    if (playing ()) {
+KDE_NO_EXPORT void NpPlayer::quit () {
+    if (running ()) {
         stop ();
         QTime t;
         t.start ();
@@ -2398,12 +2564,11 @@ KDE_NO_EXPORT bool NpPlayer::quit () {
         } while (t.elapsed () < 2000 && m_process->isRunning ());
         return Process::quit ();
     }
-    return true;
 }
 
 KDE_NO_EXPORT void NpPlayer::processOutput (KProcess *, char * str, int slen) {
-    if (viewer () && slen > 0)
-        viewer ()->view ()->addText (QString::fromLocal8Bit (str, slen));
+    if (view () && slen > 0)
+        view ()->addText (QString::fromLocal8Bit (str, slen));
 }
 
 KDE_NO_EXPORT void NpPlayer::processStopped (KProcess *) {
@@ -2420,7 +2585,7 @@ KDE_NO_EXPORT void NpPlayer::streamStateChanged () {
 }
 
 KDE_NO_EXPORT void NpPlayer::streamRedirected (Q_UINT32 sid, const KURL &u) {
-    if (playing () && dbus_static->dbus_connnection) {
+    if (running () && dbus_static->dbus_connnection) {
         kdDebug() << "redirected " << sid << " to " << u.url() << endl;
         char *cu = strdup (u.url ().local8Bit().data ());
         QString objpath = QString ("/plugin/stream_%1").arg (sid);
@@ -2524,12 +2689,8 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
 
 KDE_NO_EXPORT void NpPlayer::wroteStdin (KProcess *) {
     write_in_progress = false;
-    if (playing ())
+    if (running ())
         processStreams ();
-}
-
-KDE_NO_EXPORT QString NpPlayer::menuName () const {
-    return i18n ("&Ice Ape");
 }
 
 #else
@@ -2551,12 +2712,11 @@ NpPlayer::NpPlayer (QObject * parent, Settings * settings, const QString &)
 KDE_NO_CDTOR_EXPORT NpPlayer::~NpPlayer () {}
 KDE_NO_EXPORT void NpPlayer::init () {}
 KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () { return false; }
-KDE_NO_EXPORT void NpPlayer::initProcess (Viewer *) {}
-KDE_NO_EXPORT QString NpPlayer::menuName () const { return QString (); }
+KDE_NO_EXPORT void NpPlayer::initProcess () {}
 KDE_NO_EXPORT void NpPlayer::setStarted (const QString &) {}
-KDE_NO_EXPORT bool NpPlayer::stop () { return false; }
-KDE_NO_EXPORT bool NpPlayer::quit () { return false; }
-KDE_NO_EXPORT bool NpPlayer::ready (Viewer *) { return false; }
+KDE_NO_EXPORT void NpPlayer::stop () {}
+KDE_NO_EXPORT void NpPlayer::quit () { return false; }
+KDE_NO_EXPORT bool NpPlayer::ready () { return false; }
 KDE_NO_EXPORT void NpPlayer::processOutput (KProcess *, char *, int) {}
 KDE_NO_EXPORT void NpPlayer::processStopped (KProcess *) {}
 KDE_NO_EXPORT void NpPlayer::wroteStdin (KProcess *) {}

@@ -27,7 +27,6 @@
 #include <qguardedptr.h>
 
 #include "kmplayerappsource.h"
-#include "kmplayerprocess.h"
 #include "kmplayerconfig.h"
 
 class KMPlayerPrefBroadcastPage;        // broadcast

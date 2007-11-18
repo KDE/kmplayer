@@ -712,11 +712,11 @@ KDE_NO_EXPORT void TVDeviceScannerSource::play () {
     QString args;
     args.sprintf ("tv:// -tv driver=%s:device=%s -identify -frames 0", m_driver.ascii (), m_tvdevice->src.ascii ());
     m_tvsource->player ()->stop ();
-    m_tvsource->player ()->process ()->initProcess (m_player->settings ()->defaultView ()->viewer ());
-    KMPlayer::Process *proc = m_tvsource->player ()->players () ["mplayer"];
-    proc->setSource (this);
-    if (!static_cast <KMPlayer::MPlayer *> (proc)->run (args.ascii()))
-        deactivate ();
+    //m_tvsource->player ()->process ()->initProcess ();
+    //KMPlayer::Process *proc = m_tvsource->player ()->players () ["mplayer"];
+    //proc->setSource (this);
+    //if (!static_cast <KMPlayer::MPlayer *> (proc)->run (args.ascii()))
+    //    deactivate ();
 }
 /*
 KDE_NO_EXPORT void TVDeviceScannerSource::stateChange (KMPlayer::Process * p, KMPlayer::Process::State os, KMPlayer::Process::State ns) {

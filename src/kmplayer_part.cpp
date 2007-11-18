@@ -46,6 +46,7 @@ class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollect
 #include "kmplayercontrolpanel.h"
 #include "kmplayerconfig.h"
 #include "kmplayerprocess.h"
+#include "viewarea.h"
 
 using namespace KMPlayer;
 
@@ -151,14 +152,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     setInstance (KMPlayerFactory::instance (), true);
     init (actionCollection ());
     m_sources ["hrefsource"] = (new KMPlayerHRefSource (this));
-#ifdef HAVE_NSPR
-    KMPlayer::NpPlayer *npp = (KMPlayer::NpPlayer *) players () ["npp"];
-    connect (npp, SIGNAL (evaluate (const QString &, QString &)),
-          m_liveconnectextension, SLOT (evaluate (const QString &, QString &)));
-    connect (npp, SIGNAL (openUrl (const KURL &, const QString &)),
-            m_browserextension,
-            SLOT (slotRequestOpenURL (const KURL &, const QString &)));
-#endif
     /*KAction *playact =*/ new KAction(i18n("P&lay"), QString ("player_play"), KShortcut (), this, SLOT(play ()), actionCollection (), "play");
     /*KAction *pauseact =*/ new KAction(i18n("&Pause"), QString ("player_pause"), KShortcut (), this, SLOT(pause ()), actionCollection (), "pause");
     /*KAction *stopact =*/ new KAction(i18n("&Stop"), QString ("player_stop"), KShortcut (), this, SLOT(stop ()), actionCollection (), "stop");
@@ -333,7 +326,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     bool group_member = !m_group.isEmpty () && m_group != QString::fromLatin1("_unique") && m_features != Feat_Unknown;
     if (!group_member || m_features & Feat_Viewer) {
         // not part of a group or we're the viewer
-        setProcess ("mplayer");
         setRecorder ("mencoder");
         connectPanel (m_view->controlPanel ());
         if (m_features & Feat_StatusBar) {
@@ -353,12 +345,16 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
             // found viewer and control part, exchange players now
             KMPlayerPart * vp = (m_features & Feat_Viewer) ? this : *i;
             KMPlayerPart * cp = (m_features & Feat_Viewer) ? *i : this;
-            setProcess ("mplayer");
             cp->connectToPart (vp);
         }
     } else
         m_group.truncate (0);
     kmplayerpart_static->partlist.push_back (this);
+
+    QWidget *pwidget = view ()->parentWidget ();
+    if (pwidget)
+        viewWidget ()->viewArea()->setPaletteBackgroundColor(pwidget->paletteBackgroundColor ());
+
     if (m_view->isFullScreen () != show_fullscreen)
         m_view->fullScreen ();
 }
@@ -377,6 +373,19 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::~KMPlayerPart () {
     //}
     delete m_config;
     m_config = 0L;
+}
+
+KDE_NO_EXPORT void KMPlayerPart::processCreated (KMPlayer::Process *p) {
+#ifdef HAVE_NSPR
+    if (!strcmp (p->name (), "npp")) {
+        connect (p, SIGNAL (evaluate (const QString &, QString &)),
+                m_liveconnectextension,
+                SLOT (evaluate (const QString &, QString &)));
+        connect (p, SIGNAL (openUrl (const KURL &, const QString &)),
+                m_browserextension,
+                SLOT (slotRequestOpenURL (const KURL &, const QString &)));
+    }
+#endif
 }
 
 KDE_NO_EXPORT bool KMPlayerPart::allowRedir (const KURL & url) const {
@@ -613,9 +622,9 @@ KDE_NO_EXPORT void KMPlayerPart::setMenuZoom (int id) {
     float scale = 1.5;
     if (id == KMPlayer::ControlPanel::menu_zoom50)
         scale = 0.5;
-    if (m_view->viewer ())
-        m_liveconnectextension->setSize (int (scale * m_view->viewer ()->width ()),
-                                         int (scale * m_view->viewer ()->height()));
+    if (m_view)
+        m_liveconnectextension->setSize (int (scale * m_view->viewArea ()->width ()),
+                                         int (scale * m_view->viewArea ()->height()));
 }
 
 KDE_NO_EXPORT void KMPlayerPart::statusPosition (int pos, int length) {
@@ -910,7 +919,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
             break;
         case prop_volume:
             if (player->view ())
-                rval = QString::number (player->process()->viewer ()->view()->controlPanel()->volumeBar()->value());
+                rval = QString::number (player->viewWidget ()->controlPanel()->volumeBar()->value());
             break;
         case prop_error:
             type = KParts::LiveConnectExtension::TypeNumber;
@@ -946,7 +955,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::put
         }
         case prop_volume:
             if (player->view ())
-                player->process()->viewer ()->view()->controlPanel()->volumeBar()->setValue(val.toInt ());
+                player->viewWidget ()->controlPanel()->volumeBar()->setValue(val.toInt ());
             break;
         default:
             return false;
@@ -967,8 +976,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
     kdDebug () << "[01;35mentry[00m " << entry->name << endl;
     for (unsigned int i = 0; i < args.size (); ++i)
         kdDebug () << "      " << args[i] << endl;
-    KMPlayer::View * view = static_cast <KMPlayer::View*> (player->view ());
-    if (!view)
+    if (!player->view ())
         return false;
     rid = id;
     type = entry->rettype;
@@ -978,13 +986,13 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
                 rval = entry->defaultvalue;
             break;
         case canpause:
-            rval = (player->process ()->playing () && !view->controlPanel()->button (KMPlayer::ControlPanel::button_pause)->isOn ()) ? "true" : "false";
+            rval = (player->playing () && !player->viewWidget ()->controlPanel()->button (KMPlayer::ControlPanel::button_pause)->isOn ()) ? "true" : "false";
             break;
         case canplay:
-            rval = (!player->process ()->playing () || view->controlPanel()->button (KMPlayer::ControlPanel::button_pause)->isOn ()) ? "true" : "false";
+            rval = (!player->playing () || player->viewWidget ()->controlPanel()->button (KMPlayer::ControlPanel::button_pause)->isOn ()) ? "true" : "false";
             break;
         case canstop:
-            rval = player->process ()->playing () ? "true" : "false";
+            rval = player->playing () ? "true" : "false";
             break;
         case canseek:
             rval = player->source ()->isSeekable () ? "true" : "false";
@@ -1010,9 +1018,9 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
             if (args.size () &&
                     (args.first () == QString::fromLatin1 ("0") ||
                      args.first () == QString::fromLatin1 ("false")))
-                static_cast <KMPlayer::View*> (player->view ())->setControlPanelMode (KMPlayer::View::CP_Hide);
+                player->viewWidget ()->setControlPanelMode (KMPlayer::View::CP_Hide);
             else
-                static_cast <KMPlayer::View*> (player->view ())->setControlPanelMode (KMPlayer::View::CP_Show);
+                player->viewWidget ()->setControlPanelMode (KMPlayer::View::CP_Show);
             break;
         case jsc_pause:
             player->pause ();
@@ -1025,7 +1033,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
             rval = player->settings ()->sizeratio ? "true" : "false";
             break;
         case isfullscreen:
-            rval = static_cast <KMPlayer::View*> (player->view ())->isFullScreen () ? "true" : "false";
+            rval = player->viewWidget ()->isFullScreen () ? "true" : "false";
             break;
         case length:
             rval.setNum (player->source ()->length ());
@@ -1037,7 +1045,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
             rval.setNum (player->source ()->height ());
             break;
         case playstate: // FIXME 0-6
-            rval = player->process ()->playing () ? "3" : "0";
+            rval = player->playing () ? "3" : "0";
             break;
         case position:
             rval.setNum (player->position ());
@@ -1056,7 +1064,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
         case setvolume:
             if (!args.size ())
                 return false;
-            player->process()->viewer ()->view()->controlPanel()->volumeBar()->setValue(args.first ().toInt ());
+            player->viewWidget ()->controlPanel()->volumeBar()->setValue(args.first ().toInt ());
             rval = "true";
             break;
         case source:
@@ -1064,7 +1072,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
             break;
         case volume:
             if (player->view ())
-                rval = QString::number (player->process()->viewer ()->view()->controlPanel()->volumeBar()->value());
+                rval = QString::number (player->viewWidget ()->controlPanel()->volumeBar()->value());
             break;
         default:
             return false;
@@ -1138,14 +1146,14 @@ KDE_NO_EXPORT void KMPlayerHRefSource::activate () {
         return;
     }
     init ();
-    m_player->setProcess ("mplayer");
-    if (m_player->process ()->grabPicture (m_url, 0))
-        connect (m_player->process (), SIGNAL (grabReady (const QString &)),
-                 this, SLOT (grabReady (const QString &)));
-    else {
+    //m_player->setProcess ("mplayer");
+    //if (m_player->process ()->grabPicture (m_url, 0))
+    //    connect (m_player->process (), SIGNAL (grabReady (const QString &)),
+    //             this, SLOT (grabReady (const QString &)));
+    //else {
         setURL (KURL ());
         QTimer::singleShot (0, this, SLOT (play ()));
-    }
+    //}
 }
 
 KDE_NO_EXPORT void KMPlayerHRefSource::clear () {
@@ -1161,24 +1169,24 @@ KDE_NO_EXPORT void KMPlayerHRefSource::grabReady (const QString & path) {
 
 KDE_NO_EXPORT void KMPlayerHRefSource::finished () {
     kdDebug () << "KMPlayerHRefSource::finished()" << endl;
-    KMPlayer::View * view = static_cast <KMPlayer::View*> (m_player->view ());
-    if (!view) return;
-    if (!view->setPicture (m_grabfile)) {
-        clear ();
-        QTimer::singleShot (0, this, SLOT (play ()));
-        return;
-    }
-    if (view->viewer ())
+    KMPlayer::View *view = m_player->viewWidget ();
+    if (view) {
+        if (!view->setPicture (m_grabfile)) {
+            clear ();
+            QTimer::singleShot (0, this, SLOT (play ()));
+            return;
+        }
         connect (view, SIGNAL (pictureClicked ()), this, SLOT (play ()));
+    }
 }
 
 KDE_NO_EXPORT void KMPlayerHRefSource::deactivate () {
     kdDebug () << "KMPlayerHRefSource::deactivate()" << endl;
-    KMPlayer::View * view = static_cast <KMPlayer::View*> (m_player->view ());
-    if (!view) return;
-    view->setPicture (QString ());
-    if (view->viewer ())
+    KMPlayer::View *view = m_player->viewWidget ();
+    if (view) {
+        view->setPicture (QString ());
         disconnect (view, SIGNAL (pictureClicked ()), this, SLOT (play ()));
+    }
 }
 
 KDE_NO_EXPORT QString KMPlayerHRefSource::prettyName () {

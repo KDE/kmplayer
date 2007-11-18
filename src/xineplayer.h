@@ -25,28 +25,38 @@
 #include <qsessionmanager.h>
 
 struct XineMovieParamEvent : public QEvent {
-    XineMovieParamEvent (int l, int w, int h, const QStringList & al, const QStringList & sl, bool ff=false);
+    XineMovieParamEvent (unsigned long wid, int l, int w, int h,
+            const QStringList &al, const QStringList &sl, bool ff=false);
     int length;
     int width;
     int height;
     QStringList alang;
     QStringList slang;
     bool first_frame;
+    unsigned long wid;
 };
 
 struct XineURLEvent : public QEvent {
-    XineURLEvent (const QString & u);
+    XineURLEvent (unsigned long wid, const QString & u);
     QString url;
+    unsigned long wid;
 };
 
 struct XineTitleEvent : public QEvent {
-    XineTitleEvent (const char *);
+    XineTitleEvent (unsigned long wid, const char *);
     QString title;
+    unsigned long wid;
 };
 
 struct XineProgressEvent : public QEvent {
-    XineProgressEvent (int p);
+    XineProgressEvent (unsigned long wid, int p);
     int progress;
+    unsigned long wid;
+};
+
+struct XineFinishedEvent : public QEvent {
+    XineFinishedEvent (unsigned long wid);
+    unsigned long wid;
 };
 
 class KXinePlayer : public QApplication {
@@ -56,22 +66,22 @@ public:
     ~KXinePlayer ();
 
     void init ();
-    void finished ();
-    void saturation (int val);
-    void hue (int val);
-    void contrast (int val);
-    void brightness (int val);
-    void volume (int val);
-    void seek (int val);
+    void finished (unsigned long);
+    void saturation (unsigned long, int val);
+    void hue (unsigned long, int val);
+    void contrast (unsigned long, int val);
+    void brightness (unsigned long, int val);
+    void volume (unsigned long, int val);
+    void seek (unsigned long, int val);
     bool event (QEvent * e);
-    void setAudioLang (int, const QString &);
-    void setSubtitle (int, const QString &);
+    void setAudioLang (unsigned long, int, const QString &);
+    void setSubtitle (unsigned long, int, const QString &);
 public slots:
-    void play (int repeat_count);
-    void stop ();
-    void pause ();
+    void play (unsigned long, int repeat_count);
+    void play ();
+    void stop (unsigned long);
+    void pause (unsigned long);
     void updatePosition ();
-    void postFinished ();
 protected:
     void saveState (QSessionManager & sm);
 };

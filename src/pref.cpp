@@ -463,7 +463,7 @@ KDE_NO_EXPORT void PrefRecordPage::sourceChanged (Source * olds, Source * nws) {
     if (nws) {
         for (RecorderPage * p = m_recorders; p; p = p->next, ++id) {
             QButton * radio = recorder->find (id);
-            bool b = m_player->recorders () [p->recorderName ()]->supports (nws->name ());
+            bool b = true; //m_player->recorders () [p->recorderName ()]->supports (nws->name ());
             radio->setEnabled (b);
             if (b) nr_recs++;
         }
@@ -487,11 +487,11 @@ KDE_NO_EXPORT void PrefRecordPage::replayClicked (int id) {
 }
 
 KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
-    connect (m_player->source (), SIGNAL (stopPlaying ()),
-             this, SLOT (playingStopped ()));
-    if (m_player->process () && m_player->process ()->playing ())
-        m_player->process ()->quit ();
-    else
+    //connect (m_player->source (), SIGNAL (stopPlaying ()),
+    //         this, SLOT (playingStopped ()));
+    //if (m_player->process () && m_player->process ()->playing ())
+    //    m_player->process ()->quit ();
+    //else
         playingStopped ();
 }
 
@@ -525,12 +525,12 @@ KDE_NO_EXPORT void RecorderPage::record () {
     Process * proc = m_player->recorders () [recorderName ()];
     m_player->setRecorder (recorderName ());
     Recorder * rec = dynamic_cast <Recorder *> (proc);
-    if (!proc->playing ()) {
-        if (m_player->process ())
-            m_player->process ()->quit ();
+    if (!proc->running ()) {
+        //if (m_player->process ())
+        //    m_player->process ()->quit ();
         rec->setURL (KURL (m_player->settings ()->recordfile));
         proc->setSource (m_player->source ());
-        proc->ready (0L);
+        proc->ready ();
     } else {
         rec->setURL (KURL ());
         proc->stop ();

@@ -155,13 +155,20 @@ private:
     int last_channel;
 };
 
+class KMPLAYER_NO_EXPORT XvProcessInfo : public KMPlayer::ProcessInfo {
+public:
+    XvProcessInfo (KMPlayer::MediaManager *);
+    virtual KMPlayer::IProcess *create (KMPlayer::PartBase*,
+            KMPlayer::ProcessInfo*, KMPlayer::AudioVideoMedia*);
+};
+
 class XVideo : public KMPlayer::CallbackProcess {
     Q_OBJECT
 public:
-    XVideo (QObject * parent, KMPlayer::Settings * settings);
+    XVideo (QObject *, KMPlayer::ProcessInfo *, KMPlayer::Settings *);
     ~XVideo ();
 public slots:
-    virtual bool ready (KMPlayer::Viewer *);
+    virtual bool ready ();
 };
 
 #endif // KMPLAYER_VDR_SOURCE_H

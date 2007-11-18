@@ -229,7 +229,7 @@ KDE_NO_EXPORT void Settings::applyColorSetting (bool only_changed_ones) {
                    view->console()->setColor(colors[i].color);
                    break;
                 case ColorSetting::video_background:
-                   view->viewer ()->setBackgroundColor (colors[i].color);
+                   //view->viewer ()->setBackgroundColor (colors[i].color);
                    break;
                 case ColorSetting::area_background:
                    view->viewArea()->setPaletteBackgroundColor(colors[i].color);
@@ -359,11 +359,13 @@ KDE_NO_EXPORT bool Settings::createDialog () {
     if (configdialog) return false;
     configdialog = new Preferences (m_player, this);
     int id = 0;
-    const PartBase::ProcessMap::const_iterator e = m_player->players ().end ();
-    for (PartBase::ProcessMap::const_iterator i = m_player->players ().begin(); i != e; ++i) {
-        Process * p = i.data ();
-        if (p->supports ("urlsource"))
-            configdialog->m_SourcePageURL->backend->insertItem (p->menuName ().remove (QChar ('&')), id++);
+    const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().end ();
+    for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().begin(); i != e; ++i) {
+        ProcessInfo *p = i.data ();
+        if (p->supports ("urlsource")) {
+            QString lbl = p->label.remove (QChar ('&'));
+            configdialog->m_SourcePageURL->backend->insertItem (lbl, id++);
+        }
     }
     connect (configdialog, SIGNAL (okClicked ()),
             this, SLOT (okPressed ()));
@@ -401,7 +403,7 @@ void Settings::removePage (PreferencesPage * page) {
             break;
         }
 }
-    
+
 void Settings::show (const char * pagename) {
     bool created = createDialog ();
     configdialog->m_GeneralPageGeneral->keepSizeRatio->setChecked (sizeratio);
@@ -436,11 +438,11 @@ void Settings::show (const char * pagename) {
     configdialog->m_GeneralPageOutput->audioDriver->setCurrentItem (audiodriver);
     configdialog->m_SourcePageURL->backend->setCurrentItem (configdialog->m_SourcePageURL->backend->findItem (backends["urlsource"]));
     int id = 0;
-    const PartBase::ProcessMap::const_iterator e = m_player->players ().end ();
-    for (PartBase::ProcessMap::const_iterator i = m_player->players ().begin(); i != e; ++i) {
-        Process * p = i.data ();
+    const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().end ();
+    for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().begin(); i != e; ++i) {
+        ProcessInfo *p = i.data ();
         if (p->supports ("urlsource")) {
-            if (backends["urlsource"] == QString (p->name()))
+            if (backends["urlsource"] == QString (p->name))
                 configdialog->m_SourcePageURL->backend->setCurrentItem (id);
             id++;
         }
@@ -662,20 +664,20 @@ void Settings::okPressed () {
 
     videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentItem();
     audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentItem();
-    if (!strcmp (m_player->source()->name (), "urlsource")) {
+    /*if (!strcmp (m_player->source()->name (), "urlsource")) {
         int backend = configdialog->m_SourcePageURL->backend->currentItem ();
-        const PartBase::ProcessMap::const_iterator e = m_player->players ().end();
-        for (PartBase::ProcessMap::const_iterator i = m_player->players ().begin(); backend >=0 && i != e; ++i) {
-            Process * proc = i.data ();
-            if (proc->supports ("urlsource") && backend-- == 0) {
-                backends["urlsource"] = proc->name ();
-                if (proc != m_player->process ()) {
+        const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().end ();
+        for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().begin(); backend >=0 && i != e; ++i) {
+            ProcessInfo *pi = i.data ();
+            if (pi->supports ("urlsource") && backend-- == 0) {
+                backends["urlsource"] = pi->name;
+                if (pi != m_player->process ()) {
                     m_player->setProcess (proc->name ());
                     playerchanged = true;
                 }
             }
         }
-    }
+    }*/
     allowhref = configdialog->m_SourcePageURL->allowhref->isChecked ();
     //postproc
     postprocessing = configdialog->m_OPPagePostproc->postProcessing->isChecked();

@@ -658,7 +658,8 @@ Mrl::Mrl (NodePtr & d, short id)
       resolved (false), bookmarkable (true) {}
 
 Mrl::~Mrl () {
-    delete media_object;
+    if (media_object)
+        media_object->destroy ();
 }
 
 Node::PlayType Mrl::playType () {
@@ -760,8 +761,10 @@ void Mrl::undefer () {
 }
 
 void Mrl::deactivate () {
-    delete media_object;
-    media_object = NULL;
+    if (media_object) {
+        media_object->destroy ();
+        media_object = NULL;
+    }
     Node::deactivate ();
 }
 

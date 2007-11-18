@@ -1778,8 +1778,10 @@ KDE_NO_EXPORT void SMIL::RegionBase::deactivate () {
     background_image.truncate (0);
     if (region_surface)
         region_surface->background_color = 0;
-    delete bg_image;
-    bg_image = NULL;
+    if (bg_image) {
+        bg_image->destroy ();
+        bg_image = NULL;
+    }
     postpone_lock = NULL;
     sizes.resetSizes ();
     Element::deactivate ();
@@ -2777,8 +2779,10 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
         document ()->cancelTimer (trans_out_timer);
     TimedMrl::deactivate (); // keep region for runtime rest
     region_node = 0L;
-    delete media_object;
-    media_object = NULL;
+    if (media_object) {
+        media_object->destroy ();
+        media_object = NULL;
+    }
     postpone_lock = 0L;
 }
 
@@ -3103,6 +3107,10 @@ KDE_NO_EXPORT void SMIL::AVMediaType::begin () {
 KDE_NO_EXPORT void SMIL::AVMediaType::endOfFile () {
     if (!active())
         return; // backend eof after a reset
+    if (media_object) {
+        media_object->destroy ();
+        media_object = NULL;
+    }
     postpone_lock = 0L;
     runtime ()->propagateStop (true);
 }

@@ -25,25 +25,28 @@
 namespace KMPlayer {
 
 class CallbackProcess;
+class CallbackProcessInfo;
 
 class Callback : public DCOPObject {
     K_DCOP
 public:
     enum StatusCode { stat_addurl = 0, stat_newtitle, stat_hasvideo };
-    Callback (CallbackProcess *);
+    Callback (CallbackProcessInfo *, const char *pname);
+    CallbackProcess *process (unsigned long id);
 k_dcop:
-    ASYNC statusMessage (int code, QString msg);
-    ASYNC errorMessage (int code, QString msg);
-    ASYNC subMrl (QString mrl, QString title);
-    ASYNC finished ();
-    ASYNC playing ();
+    ASYNC statusMessage (unsigned long id, int code, QString msg);
+    ASYNC errorMessage (unsigned long id, int code, QString msg);
+    ASYNC subMrl (unsigned long id, QString mrl, QString title);
+    ASYNC finished (unsigned long id);
+    ASYNC playing (unsigned long id);
     ASYNC started (QCString dcopname, QByteArray data);
-    ASYNC movieParams (int length, int width, int height, float aspect, QStringList alang, QStringList slang);
-    ASYNC moviePosition (int position);
-    ASYNC loadingProgress (int percentage);
-    ASYNC toggleFullScreen ();
+    ASYNC movieParams (unsigned long id, int length, int width, int height, float aspect, QStringList alang, QStringList slang);
+    ASYNC moviePosition (unsigned long id, int position);
+    ASYNC loadingProgress (unsigned long id, int percentage);
+    ASYNC toggleFullScreen (unsigned long id);
 private:
-    CallbackProcess * m_process;
+    CallbackProcessInfo *process_info;
+    QString proc_name;
 };
 
 } // namespace

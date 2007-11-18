@@ -36,6 +36,7 @@
 #include "kmplayerprocess.h"
 #include "kmplayersource.h"
 #include "kmplayerview.h"
+#include "viewarea.h"
 
 namespace KMPlayer {
 
@@ -77,25 +78,42 @@ namespace {
 MediaManager::MediaManager (PartBase *player) : m_player (player) {
     if (!global_media)
         globalMediaDataDeleter.setObject (global_media, new GlobalMediaData);
+    m_process_infos ["mplayer"] = new MPlayerProcessInfo (this);
+    m_process_infos ["xine"] = new XineProcessInfo (this);
+    //m_process_infos ["gstreamer"] = new GStreamer (this, m_settings);, i18n ("&GStreamer")
+#ifdef HAVE_NSPR
+    m_process_infos ["npp"] = new NppProcessInfo (this);
+#endif
 }
 
 MediaManager::~MediaManager () {
+    const ProcessList::iterator e = m_processes.end ();
+    for (ProcessList::iterator i = m_processes.begin ();
+            i != e;
+            i = m_processes.begin () /*~Process removes itself from this list*/)
+    {
+        kdDebug() << "~MediaManager " << *i << endl;
+        delete *i;
+    }
+    const ProcessInfoMap::iterator ie = m_process_infos.end ();
+    for (ProcessInfoMap::iterator i = m_process_infos.begin (); i != ie; ++i)
+        delete i.data ();
+    if (m_media_objects.size ())
+        kdError () << "~MediaManager media list not empty" << endl;
 }
 
 MediaObject *MediaManager::createMedia (MediaType type, Node *node) {
     switch (type) {
         case Audio:
         case AudioVideo: {
-            if (!m_player->source ()->authoriseUrl (node->mrl ()->absolutePath ()))
+            if (!m_player->source()->authoriseUrl(node->mrl()->absolutePath ()))
                 return NULL;
             AudioVideoMedia *av = new AudioVideoMedia (this, node);
-            // FIXME: support more pocesses and viewers
-            m_player->setProcess (node->mrl ());
-            av->process = m_player->process ();
-            av->process->setMrl (node->mrl ());
-            av->viewer = static_cast <View *>(m_player->view ())->viewer ();
-            if (av->process->state () < IProcess::Ready)
-                av->process->ready (av->viewer);
+            av->process = process (av);
+            av->process->setMediaObject (av);
+            av->viewer = static_cast <View *>(m_player->view ())->viewArea ()->createVideoWidget ();
+            if (av->process->state () <= IProcess::Ready)
+                av->process->ready ();
             return av;
         }
         case Image:
@@ -106,14 +124,87 @@ MediaObject *MediaManager::createMedia (MediaType type, Node *node) {
     return NULL;
 }
 
-//------------------------%<----------------------------------------------------
+static const QString statemap [] = {
+    i18n ("Not Running"), i18n ("Ready"), i18n ("Buffering"), i18n ("Playing")
+};
 
-ProcessInfo::ProcessInfo (const char *nm, const QString &lbl,
-        const char **supported, IProcess *(*create_func) (Source *))
- : name (nm),
-   label (lbl),
-   supported_sources (supported),
-   create (create_func) {}
+void MediaManager::stateChange(AudioVideoMedia *media,
+        IProcess::State olds, IProcess::State news) {
+    //p->viewer()->view()->controlPanel()->setPlaying(news > Process::Ready);
+    kdDebug () << "processState " << statemap[olds] << " -> " << statemap[news] << endl;
+    Mrl *mrl = media->mrl ();
+    if (!mrl ||!m_player->view ())
+        return;
+    //m_player->updateStatus (i18n ("Player %1 %2").arg (p->name ()).arg (statemap[news]));
+    if (IProcess::Playing == news) {
+        if (Element::state_deferred == mrl->state)
+            mrl->undefer ();
+        m_player->viewWidget ()->playingStart ();
+        if (m_player->view ()) {
+            if (media->viewer)
+                media->viewer->map ();
+            if (Mrl::SingleMode == mrl->view_mode)
+                m_player->viewWidget ()->viewArea ()->resizeEvent (NULL); // ugh
+        }
+    } else if (IProcess::NotRunning == news) {
+        if (AudioVideoMedia::ask_delete == media->request) {
+            delete media;
+        } else if (mrl->unfinished ()) {
+            mrl->endOfFile ();
+        }
+    } else if (IProcess::Ready == news) {
+        if (olds > IProcess::Ready && mrl->unfinished ())
+            mrl->endOfFile ();
+        if (AudioVideoMedia::ask_play == media->request) {
+            playAudioVideo (media);
+        } else {
+            if (Mrl::SingleMode == mrl->view_mode) {
+                ProcessList::iterator e = m_processes.end ();
+                for (ProcessList::iterator i = m_processes.begin(); i != e; ++i)
+                    if (*i != media->process &&
+                            (*i)->state () == IProcess::Ready)
+                        (*i)->play (); // delayed playing
+            }
+            if (AudioVideoMedia::ask_delete == media->request)
+                delete media;
+        }
+    } else if (IProcess::Buffering == news) {
+        if (mrl->view_mode != Mrl::SingleMode)
+            mrl->defer (); // paused the SMIL
+    }
+}
+
+void MediaManager::playAudioVideo (AudioVideoMedia *media) {
+    Mrl *mrl = media->mrl ();
+    if (!mrl ||!m_player->view ())
+        return;
+    if (Mrl::SingleMode == mrl->view_mode) {
+        ProcessList::iterator e = m_processes.end ();
+        for (ProcessList::iterator i = m_processes.begin(); i != e; ++i)
+        {
+            kdDebug() << "found process " << (*i != media->process) << (*i)->state () << endl;
+            if (*i != media->process && (*i)->state () > IProcess::Ready)
+                return; // delay, avoiding two overlaping widgets
+        }
+    }
+    media->process->play ();
+}
+
+IProcess *MediaManager::process (AudioVideoMedia *media) {
+    QString p = m_player->processName (media->mrl ());
+    if (!p.isEmpty ()) {
+        IProcess *proc = m_process_infos[p]->create (
+                m_player, m_process_infos[p], media);
+        m_processes.push_back (proc);
+        return proc;
+    }
+    return NULL;
+}
+
+void MediaManager::processDestroyed (IProcess *process) {
+    kdDebug() << "processDestroyed " << process << endl;
+    m_processes.remove (process);
+}
 
 //------------------------%<----------------------------------------------------
 
@@ -158,10 +249,12 @@ bool DataCache::unpreserve (const QString & url) {
 
 MediaObject::MediaObject (MediaManager *manager, Node *node)
  : m_manager (manager), m_node (node), job (NULL), preserve_wait (false) {
+   manager->medias ().push_back (this);
 }
 
 MediaObject::~MediaObject () {
     clearData ();
+   m_manager->medias ().remove (this);
 }
 
 KDE_NO_EXPORT void MediaObject::killWGet () {
@@ -215,6 +308,10 @@ KDE_NO_EXPORT bool MediaObject::wget (const QString &str) {
     return false;
 }
 
+Mrl *MediaObject::mrl () {
+    return m_node ? m_node->mrl () : NULL;
+}
+
 KDE_NO_EXPORT QString MediaObject::mimetype () {
     if (data.size () > 0 && mime.isEmpty ()) {
         int accuraty;
@@ -230,6 +327,10 @@ KDE_NO_EXPORT void MediaObject::clearData () {
     url.truncate (0);
     mime.truncate (0);
     data.resize (0);
+}
+
+KDE_NO_EXPORT void MediaObject::destroy () {
+    delete this;
 }
 
 KDE_NO_EXPORT bool MediaObject::downloading () const {
@@ -273,24 +374,40 @@ KDE_NO_EXPORT void MediaObject::slotMimetype (KIO::Job *, const QString & m) {
 
 //------------------------%<----------------------------------------------------
 
+IProcess::IProcess () :
+    media_object (NULL),
+    m_state (NotRunning) {}
+
 AudioVideoMedia::AudioVideoMedia (MediaManager *manager, Node *node)
  : MediaObject (manager, node),
    process (NULL),
    viewer (NULL),
-   request (ask_stop) {}
+   request (ask_nothing) {
+    kdDebug() << "AudioVideoMedia::AudioVideoMedia" << endl;
+}
 
 AudioVideoMedia::~AudioVideoMedia () {
     stop ();
     // delete m_process;
+    if (viewer) { //nicer with QObject destroy signal, but preventing unmap on destruction
+        View *view = m_manager->player ()->viewWidget ();
+        if (view)
+            view->viewArea ()->destroyVideoWidget (viewer);
+    }
+    delete process;
+    kdDebug() << "AudioVideoMedia::~AudioVideoMedia" << endl;
 }
 
 bool AudioVideoMedia::play () {
     if (process) {
-        if (process->state () < IProcess::Ready) {
+        kdDebug() << "AudioVideoMedia::play " << process->state () << endl;
+        if (process->state () != IProcess::Ready) {
             request = ask_play;
             return true; // FIXME add Launching state
         }
-        return process->play (m_node->mrl ());
+        process->ready ();
+        m_manager->playAudioVideo (this);
+        return true;
     }
     return false;
 }
@@ -310,35 +427,14 @@ void AudioVideoMedia::unpause () {
     process->pause ();
 }
 
-static const QString statemap [] = {
-    i18n ("Not Running"), i18n ("Ready"), i18n ("Buffering"), i18n ("Playing")
-};
-
-void AudioVideoMedia::stateChange(Process *p, IProcess::State olds, IProcess::State news) {
-    if (!p || !p->viewer ()) return;
-    //p->viewer()->view()->controlPanel()->setPlaying(news > Process::Ready);
-    kdDebug () << "processState " << statemap[olds] << " -> " << statemap[news] << endl;
-    //m_player->updateStatus (i18n ("Player %1 %2").arg (p->name ()).arg (statemap[news]));
-    if (IProcess::Playing == news) {
-        if (Element::state_deferred == m_node->state)
-            m_node->undefer ();
-        p->viewer ()->view ()->playingStart ();
-    } else if (IProcess::NotRunning == news) {
-        if (p == process) {
-            if (m_node->unfinished ())
-                m_node->mrl ()->endOfFile ();
-        } else { // changed process
-            process = p;
-            // TODO: call ready ..
-        }
-    } else if (IProcess::Ready == news) {
-        if (olds > IProcess::Ready)
-            m_node->mrl ()->endOfFile ();
-        else if (m_node && ask_play == request)
-            p->play (m_node->mrl ());
-    } else if (IProcess::Buffering == news) {
-        if (m_node->mrl ()->view_mode != Mrl::SingleMode)
-            m_node->defer (); // paused the SMIL
+void AudioVideoMedia::destroy () {
+    if (viewer)
+        viewer->unmap ();
+    if (!process || IProcess::Ready >= process->state ()) {
+        delete this;
+    } else {
+        stop ();
+        request = ask_delete;
     }
 }
 

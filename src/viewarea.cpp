@@ -29,6 +29,7 @@
 #include <qmap.h>
 
 #include <kactioncollection.h>
+#include <kapplication.h>
 #include <kstatusbar.h>
 #include <kstdaction.h>
 #include <kshortcut.h>
@@ -47,6 +48,18 @@
 #include "kmplayer_smil.h"
 #include "kmplayer_rp.h"
 #include "mediaobject.h"
+
+#include <X11/Xlib.h>
+#include <X11/keysym.h>
+#include <X11/Intrinsic.h>
+#include <X11/StringDefs.h>
+static const int XKeyPress = KeyPress;
+#undef KeyPress
+#undef Always
+#undef Never
+#undef Status
+#undef Unsorted
+#undef Bool
 
 using namespace KMPlayer;
 
@@ -106,7 +119,7 @@ public:
     void resize (const SRect & rect);
     void repaint ();
     void repaint (const SRect &rect);
-    void video ();
+    void video (Mrl *mt);
 
     NodePtrW current_video;
     ViewArea * view_widget;
@@ -169,12 +182,13 @@ void ViewSurface::repaint () {
     view_widget->scheduleRepaint (toScreen (0, 0, bounds.width (), bounds.height ()));
 }
 
-KDE_NO_EXPORT void ViewSurface::video () {
-    view_widget->setAudioVideoNode (node);
+KDE_NO_EXPORT void ViewSurface::video (Mrl *mt) {
     kdDebug() << "Surface::video:" << background_color << " " << (background_color & 0xff000000) << endl;
     xscale = yscale = 1; // either scale width/heigt or use bounds
-    view_widget->setAudioVideoGeometry (toScreen (0, 0, bounds.width(), bounds.height ()),
-            (background_color & 0xff000000 ? &background_color : 0));
+    if (mt->media_object &&
+            MediaManager::AudioVideo == mt->media_object->type ())
+        static_cast <AudioVideoMedia *> (mt->media_object)->viewer->
+            setGeometry (toScreen (0, 0, bounds.width(), bounds.height ()));
 }
 
 //-------------------------------------------------------------------------
@@ -218,7 +232,7 @@ class KMPLAYER_NO_EXPORT CairoPaintVisitor : public Visitor {
 public:
     cairo_t * cr;
     CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
-            const IRect & rect, bool toplevel=false);
+            const IRect & rect, QColor c=QColor(), bool toplevel=false);
     ~CairoPaintVisitor ();
     using Visitor::visit;
     void visit (Node * n);
@@ -241,7 +255,7 @@ public:
 
 KDE_NO_CDTOR_EXPORT
 CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
-        const IRect & rect, bool top)
+        const IRect & rect, QColor c, bool top)
  : clip (rect), cairo_surface (cs), matrix (m), toplevel (top) {
     cr = cairo_create (cs);
     if (toplevel) {
@@ -250,7 +264,8 @@ CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
         //cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
         cairo_set_tolerance (cr, 0.5 );
         cairo_push_group (cr);
-        cairo_set_source_rgb (cr, 0, 0, 0);
+        cairo_set_source_rgb (cr,
+           1.0 * c.red () / 255, 1.0 * c.green () / 255, 1.0 * c.blue () / 255);
         cairo_rectangle (cr, rect.x, rect.y, rect.w, rect.h);
         cairo_fill (cr);
     } else {
@@ -556,7 +571,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
         if (ref->external_tree)
             updateExternal (ref, s);
         else if (ref->needsVideoWidget ())
-            s->video ();
+            s->video (ref);
     }
 }
 
@@ -624,7 +639,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
         if (av->external_tree)
             updateExternal (av, s);
         else if (av->needsVideoWidget ())
-            s->video ();
+            s->video (av);
     }
 }
 
@@ -1323,6 +1338,8 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
     setAcceptDrops (true);
     new KAction (i18n ("Fullscreen"), KShortcut (Qt::Key_F), this, SLOT (accelActivated ()), m_collection, "view_fullscreen_toggle");
     setMouseTracking (true);
+
+    kapp->installX11EventFilter (this);
 }
 
 KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {
@@ -1438,12 +1455,9 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const IRect & rect) {
     int eh = rect.h + 2;
     if (!surface->surface)
         surface->surface = cairoCreateSurface (winId (), width (), height ());
-    if (surface->node && (!video_node ||
-            !convertNode <SMIL::MediaType> (video_node)->needsVideoWidget()))
-        setAudioVideoGeometry (IRect (), NULL);
     CairoPaintVisitor visitor (surface->surface,
             Matrix (surface->bounds.x(), surface->bounds.y(), 1.0, 1.0),
-            IRect (ex, ey, ew, eh), true);
+            IRect (ex, ey, ew, eh), paletteBackgroundColor (), true);
     if (surface->node)
         surface->node->accept (&visitor);
 #else
@@ -1515,8 +1529,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
         : Single (0);
     Single wws = w;
     // move controlpanel over video when autohiding and playing
-    Single hws = h - (m_view->controlPanelMode () == View::CP_AutoHide &&
-            m_view->viewer ()->isVisible ()
+    Single hws = h - (m_view->controlPanelMode () == View::CP_AutoHide
             ? Single (0)
             : hcp) - hsb;
     // now scale the regions and check if video region is already sized
@@ -1539,51 +1552,14 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
         y += (h - hws) / 2;
     }
     m_view->console ()->setGeometry (0, 0, w, h - hsb - hcp);
-    if (!surface->node)
-        setAudioVideoGeometry (IRect (x, y, wws, hws), 0L);
-}
-
-KDE_NO_EXPORT
-void ViewArea::setAudioVideoGeometry (const IRect &rect, unsigned int * bg_color) {
-    int x = rect.x, y = rect.y, w = rect.w, h = rect.h;
-    if (m_view->controlPanelMode() == View::CP_Only) {
-        w = h = 0;
-    } else if (!surface->node && m_view->keepSizeRatio ()) { // scale video widget inside region
-        int hfw = m_view->viewer ()->heightForWidth (w);
-        if (hfw > 0)
-            if (hfw > h) {
-                int old_w = w;
-                w = int ((1.0 * h * w)/(1.0 * hfw));
-                x += (old_w - w) / 2;
-            } else {
-                y += (h - hfw) / 2;
-                h = hfw;
-            }
-    }
-    m_av_geometry = QRect (x, y, w, h);
-    QRect wrect = m_view->viewer ()->geometry ();
-    if (m_av_geometry != wrect &&
-            !(m_av_geometry.width() <= 0 &&
-                wrect.width() <= 1 && wrect.height() <= 1)) {
-        m_view->viewer ()->setGeometry (x, y, w, h);
-        wrect.unite (m_av_geometry);
-        scheduleRepaint (IRect (wrect.x (), wrect.y (), wrect.width (), wrect.height ()));
-    }
-    if (bg_color)
-        if (QColor (QRgb (*bg_color)) != (m_view->viewer ()->paletteBackgroundColor ())) {
-            m_view->viewer()->setCurrentBackgroundColor (QColor (QRgb (*bg_color)));
-            scheduleRepaint (IRect (x, y, w, h));
-        }
-}
-
-KDE_NO_EXPORT void ViewArea::setAudioVideoNode (NodePtr n) {
-    video_node = n;
+    if (!surface->node && video_widgets.size () == 1)
+        video_widgets.first ()->setGeometry (IRect (x, y, wws, hws));
 }
 
 KDE_NO_EXPORT SurfacePtr ViewArea::getSurface (NodePtr node) {
     static_cast <ViewSurface *> (surface.ptr ())->clear ();
     surface->node = node;
-    m_view->viewer()->resetBackgroundColor ();
+    //m_view->viewer()->resetBackgroundColor ();
     if (node) {
         updateSurfaceBounds ();
         return surface;
@@ -1654,5 +1630,264 @@ KDE_NO_EXPORT void ViewArea::closeEvent (QCloseEvent * e) {
         QWidget::closeEvent (e);
 }
 
+IViewer *ViewArea::createVideoWidget () {
+    VideoOutput *viewer = new VideoOutput (this, m_view);
+    video_widgets.push_back (viewer);
+    viewer->setGeometry (IRect (-60, -60, 50, 50));
+    return viewer;
+}
+
+void ViewArea::destroyVideoWidget (IViewer *widget) {
+    VideoWidgetList::iterator it = video_widgets.find (widget);
+    if (it != video_widgets.end ()) {
+        IViewer *viewer = *it;
+        delete viewer;
+        video_widgets.erase (it);
+    } else {
+        kdWarning () << "destroyVideoWidget widget not found" << endl;
+    }
+}
+
+void ViewArea::setVideoWidgetVisible (bool show) {
+    const VideoWidgetList::iterator e = video_widgets.end ();
+    for (VideoWidgetList::iterator it = video_widgets.begin (); it != e; ++it)
+        if (show)
+            static_cast <VideoOutput *> (*it)->show ();
+        else
+            static_cast <VideoOutput *> (*it)->hide ();
+}
+
+bool ViewArea::x11Event (XEvent *xe) {
+    switch (xe->type) {
+        case UnmapNotify: {
+            const VideoWidgetList::iterator e = video_widgets.end ();
+            for (VideoWidgetList::iterator it = video_widgets.begin(); it != e; ++it) {
+                if ((*it)->windowHandle () == xe->xunmap.event) {
+                    m_view->videoStart ();
+                    break;
+                }
+            }
+            break;
+        }
+        /*case XKeyPress:
+            if (e->xkey.window == m_viewer->embeddedWinId ()) {
+                KeySym ksym;
+                char kbuf[16];
+                XLookupString (&e->xkey, kbuf, sizeof(kbuf), &ksym, NULL);
+                switch (ksym) {
+                    case XK_f:
+                    case XK_F:
+                        //fullScreen ();
+                        break;
+                };
+            }
+            break;*/
+        /*case ColormapNotify:
+            fprintf (stderr, "colormap notify\n");
+            return true;*/
+        /*case MotionNotify:
+            if (e->xmotion.window == m_viewer->embeddedWinId ())
+                delayedShowButtons (e->xmotion.y > m_view_area->height () -
+                        statusBarHeight () -
+                        m_control_panel->maximumSize ().height ());
+            m_view_area->mouseMoved ();
+            break;*/
+        /*case MapNotify:
+            if (e->xmap.event == m_viewer->embeddedWinId ()) {
+                show ();
+                QTimer::singleShot (10, m_viewer, SLOT (sendConfigureEvent ()));
+            }
+            break;*/
+        /*case ConfigureNotify:
+            break;
+            //return true;*/
+        default:
+            break;
+    }
+    return false;
+}
+
+//----------------------------------------------------------------------
+
+KDE_NO_CDTOR_EXPORT VideoOutput::VideoOutput (QWidget *parent, View * view)
+  : QXEmbed (parent), m_plain_window (0), m_bgcolor (0), m_aspect (0.0),
+    m_view (view) {
+    /*XWindowAttributes xwa;
+    XGetWindowAttributes (qt_xdisplay(), winId (), &xwa);
+    XSetWindowAttributes xswa;
+    xswa.background_pixel = 0;
+    xswa.border_pixel = 0;
+    xswa.colormap = xwa.colormap;
+    create (XCreateWindow (qt_xdisplay (), parent->winId (), 0, 0, 10, 10, 0, 
+                           x11Depth (), InputOutput, (Visual*)x11Visual (),
+                           CWBackPixel | CWBorderPixel | CWColormap, &xswa));*/
+    setAcceptDrops (true);
+    initialize ();
+    kdDebug() << "VideoOutput::VideoOutput" << endl;
+    //setProtocol (QXEmbed::XPLAIN);
+}
+
+KDE_NO_CDTOR_EXPORT VideoOutput::~VideoOutput () {
+    kdDebug() << "VideoOutput::~VideoOutput" << endl;
+    //if (m_plain_window)
+    //    XDestroyWindow (qt_xdisplay(), m_plain_window);
+}
+
+void VideoOutput::useIndirectWidget (bool inderect) {
+    //kdDebug () << "changeProtocol " << (int)protocol () << "->" << p << endl;
+    if (!embeddedWinId () || inderect != protocol () == QXEmbed::XPLAIN) {
+        if (inderect) {
+            setProtocol (QXEmbed::XPLAIN);
+            if (!m_plain_window) {
+                int scr = DefaultScreen (qt_xdisplay ());
+                m_plain_window = XCreateSimpleWindow (
+                        qt_xdisplay(),
+                        m_view->winId (),
+                        0, 0, width(), height(),
+                        1,
+                        BlackPixel (qt_xdisplay(), scr),
+                        BlackPixel (qt_xdisplay(), scr));
+                embed (m_plain_window);
+            }
+            XClearWindow (qt_xdisplay(), m_plain_window);
+        } else {
+            if (m_plain_window) {
+                XDestroyWindow (qt_xdisplay(), m_plain_window);
+                m_plain_window = 0;
+                XSync (qt_xdisplay (), false);
+            }
+            //setProtocol (QXEmbed::XEMBED);
+            setProtocol (QXEmbed::XPLAIN);
+        }
+    }
+}
+
+KDE_NO_EXPORT void VideoOutput::windowChanged (WId w) {
+    kdDebug () << "windowChanged " << (int)w << endl;
+    if (w /*&& m_plain_window*/)
+        XSelectInput (qt_xdisplay (), w, 
+                //KeyPressMask | KeyReleaseMask |
+                KeyPressMask |
+                //EnterWindowMask | LeaveWindowMask |
+                //FocusChangeMask |
+                ExposureMask |
+                StructureNotifyMask |
+                PointerMotionMask);
+}
+
+KDE_NO_EXPORT void VideoOutput::mouseMoveEvent (QMouseEvent * e) {
+    if (e->state () == Qt::NoButton) {
+        int cp_height = m_view->controlPanel ()->maximumSize ().height ();
+        m_view->delayedShowButtons (e->y () > height () - cp_height);
+    }
+    m_view->viewArea ()->mouseMoved ();
+}
+
+WindowId VideoOutput::windowHandle () {
+    return m_plain_window ? embeddedWinId () : winId ();
+}
+
+void VideoOutput::setGeometry (const IRect &rect) {
+    int x = rect.x, y = rect.y, w = rect.w, h = rect.h;
+    if (m_view->keepSizeRatio ()) {
+        // scale video widget inside region
+        int hfw = heightForWidth (w);
+        if (hfw > 0)
+            if (hfw > h) {
+                int old_w = w;
+                w = int ((1.0 * h * w)/(1.0 * hfw));
+                x += (old_w - w) / 2;
+            } else {
+                y += (h - hfw) / 2;
+                h = hfw;
+            }
+    }
+    setGeometry (x, y, w, h);
+    show ();
+}
+
+void VideoOutput::setAspect (float a) {
+    m_aspect = a;
+    QRect r = geometry ();
+    m_view->viewArea ()->scheduleRepaint (
+            IRect (r.x (), r.y (), r.width (), r.height ()));
+}
+
+KDE_NO_EXPORT void VideoOutput::map () {
+    show ();
+}
+
+KDE_NO_EXPORT void VideoOutput::unmap () {
+    hide ();
+}
+
+KDE_NO_EXPORT int VideoOutput::heightForWidth (int w) const {
+    if (m_aspect <= 0.01)
+        return 0;
+    return int (w/m_aspect);
+}
+
+KDE_NO_EXPORT void VideoOutput::dropEvent (QDropEvent * de) {
+    m_view->dropEvent (de);
+}
+
+KDE_NO_EXPORT void VideoOutput::dragEnterEvent (QDragEnterEvent* dee) {
+    m_view->dragEnterEvent (dee);
+}
+/*
+*/
+void VideoOutput::sendKeyEvent (int key) {
+    WId w = embeddedWinId ();
+    if (w) {
+        char buf[2] = { char (key), '\0' };
+        KeySym keysym = XStringToKeysym (buf);
+        XKeyEvent event = {
+            XKeyPress, 0, true,
+            qt_xdisplay (), w, qt_xrootwin(), w,
+            /*time*/ 0, 0, 0, 0, 0,
+            0, XKeysymToKeycode (qt_xdisplay (), keysym), true
+        };
+        XSendEvent (qt_xdisplay(), w, false, KeyPressMask, (XEvent *) &event);
+        XFlush (qt_xdisplay ());
+    }
+}
+
+KDE_NO_EXPORT void VideoOutput::sendConfigureEvent () {
+    WId w = embeddedWinId ();
+    if (w) {
+        XConfigureEvent c = {
+            ConfigureNotify, 0UL, True,
+            qt_xdisplay (), w, winId (),
+            x (), y (), width (), height (),
+            0, None, False
+        };
+        XSendEvent(qt_xdisplay(),c.event,true,StructureNotifyMask,(XEvent*)&c);
+        XFlush (qt_xdisplay ());
+    }
+}
+
+KDE_NO_EXPORT void VideoOutput::contextMenuEvent (QContextMenuEvent * e) {
+    m_view->controlPanel ()->popupMenu ()->exec (e->globalPos ());
+}
+
+KDE_NO_EXPORT void VideoOutput::setBackgroundColor (const QColor & c) {
+    if (m_bgcolor != c.rgb ()) {
+        m_bgcolor = c.rgb ();
+        setCurrentBackgroundColor (c);
+    }
+}
+
+KDE_NO_EXPORT void VideoOutput::resetBackgroundColor () {
+    setCurrentBackgroundColor (m_bgcolor);
+}
+
+KDE_NO_EXPORT void VideoOutput::setCurrentBackgroundColor (const QColor & c) {
+    setPaletteBackgroundColor (c);
+    WId w = embeddedWinId ();
+    if (w) {
+        XSetWindowBackground (qt_xdisplay (), w, c.rgb ());
+        XFlush (qt_xdisplay ());
+    }
+}
 
 #include "viewarea.moc"

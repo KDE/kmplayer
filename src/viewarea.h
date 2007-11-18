@@ -21,12 +21,17 @@
 #define KMPLAYER_VIEW_AREA_H
 
 #include <qwidget.h>
+#include <qvaluelist.h>
+#include <qxembed.h>
+
+#include "mediaobject.h"
 
 class KActionCollection;
 
 namespace KMPlayer {
 
 class View;
+class IViewer;
 class ViewAreaPrivate;
 
 /*
@@ -42,12 +47,13 @@ public:
     KDE_NO_EXPORT KActionCollection * actionCollection () const { return m_collection; }
     KDE_NO_EXPORT QRect topWindowRect () const { return m_topwindow_rect; }
     SurfacePtr getSurface (NodePtr node);
-    void setAudioVideoGeometry (const IRect &rect, unsigned int * bg);
-    void setAudioVideoNode (NodePtr n);
     void mouseMoved ();
     void scheduleRepaint (const IRect &rect);
     void resizeEvent (QResizeEvent *);
     void minimalMode ();
+    IViewer *createVideoWidget ();
+    void destroyVideoWidget (IViewer *widget);
+    void setVideoWidgetVisible (bool show);
 public slots:
     void fullScreen ();
     void accelActivated ();
@@ -63,6 +69,7 @@ protected:
     void paintEvent (QPaintEvent *);
     void timerEvent (QTimerEvent * e);
     void closeEvent (QCloseEvent * e);
+    bool x11Event (XEvent *e);
 private:
     void syncVisual (const IRect & rect);
     void updateSurfaceBounds ();
@@ -71,10 +78,10 @@ private:
     View * m_view;
     KActionCollection * m_collection;
     SurfacePtr surface;
-    NodePtrW video_node;
-    QRect m_av_geometry;
     IRect m_repaint_rect;
     QRect m_topwindow_rect;
+    typedef QValueList <IViewer *> VideoWidgetList;
+    VideoWidgetList video_widgets;
     int m_mouse_invisible_timer;
     int m_repaint_timer;
     int m_fullscreen_scale;
@@ -82,6 +89,46 @@ private:
     int scale_slider_id;
     bool m_fullscreen;
     bool m_minimal;
+};
+
+/*
+ * The video widget
+ */
+class KMPLAYER_EXPORT VideoOutput : public QXEmbed, public IViewer {
+    Q_OBJECT
+public:
+    VideoOutput (QWidget *parent, View * view);
+    ~VideoOutput ();
+
+    int heightForWidth (int w) const;
+
+    virtual WindowId windowHandle ();
+    using QWidget::setGeometry;
+    virtual void setGeometry (const IRect &rect);
+    virtual void setAspect (float a);
+    virtual float aspect () { return m_aspect; }
+    virtual void useIndirectWidget (bool);
+    virtual void map ();
+    virtual void unmap ();
+
+    void sendKeyEvent (int key);
+    void setBackgroundColor (const QColor & c);
+    void resetBackgroundColor ();
+    void setCurrentBackgroundColor (const QColor & c);
+    KDE_NO_EXPORT View * view () const { return m_view; }
+public slots:
+    void sendConfigureEvent ();
+protected:
+    void dragEnterEvent (QDragEnterEvent *);
+    void dropEvent (QDropEvent *);
+    void mouseMoveEvent (QMouseEvent * e);
+    void contextMenuEvent (QContextMenuEvent * e);
+    virtual void windowChanged( WId w );
+private:
+    WId m_plain_window;
+    unsigned int m_bgcolor;
+    float m_aspect;
+    View * m_view;
 };
 
 } // namespace KMPlayer

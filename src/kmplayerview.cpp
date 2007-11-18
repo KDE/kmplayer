@@ -59,18 +59,6 @@
 #include "playlistview.h"
 #include "viewarea.h"
 
-#include <X11/Xlib.h>
-#include <X11/keysym.h>
-#include <X11/Intrinsic.h>
-#include <X11/StringDefs.h>
-static const int XKeyPress = KeyPress;
-#undef KeyPress
-#undef Always
-#undef Never
-#undef Status
-#undef Unsorted
-#undef Bool
-
 extern const char * normal_window_xpm[];
 extern const char * playlist_xpm[];
 
@@ -194,7 +182,6 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
     QSize sbsize = m_status_bar->sizeHint ();
     m_status_bar->hide ();
     m_status_bar->setMaximumSize (2500, sbsize.height ());
-    m_viewer = new Viewer (m_view_area, this);
 #if KDE_IS_VERSION(3,1,90)
     setVideoWidget (m_view_area);
 #endif
@@ -216,8 +203,6 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
 
     setAcceptDrops (true);
     m_view_area->resizeEvent (0L);
-
-    kapp->installX11EventFilter (this);
 }
 
 KDE_NO_CDTOR_EXPORT View::~View () {
@@ -327,11 +312,11 @@ bool View::setPicture (const QString & path) {
         }
     }
     if (!m_image) {
-        m_viewer->show ();
+        m_view_area->setVideoWidgetVisible (true);
         m_picture->hide ();
     } else {
         m_picture->setPaletteBackgroundPixmap (*m_image);
-        m_viewer->hide ();
+        m_view_area->setVideoWidgetVisible (false);
         m_picture->show ();
         setControlPanelMode (CP_AutoHide);
     }
@@ -378,13 +363,13 @@ KDE_NO_EXPORT void View::updateVolume () {
 void View::toggleVideoConsoleWindow () {
     if (m_multiedit->isVisible ()) {
         m_multiedit->hide ();
-        m_viewer->show ();
+        m_view_area->setVideoWidgetVisible (true);
         m_control_panel->popupMenu ()->changeItem (ControlPanel::menu_video, KGlobal::iconLoader ()->loadIconSet (QString ("konsole"), KIcon::Small, 0, true), i18n ("Con&sole"));
         delayedShowButtons (false);
     } else {
         m_control_panel->popupMenu ()->changeItem (ControlPanel::menu_video, KGlobal::iconLoader ()->loadIconSet (QString ("video"), KIcon::Small, 0, true), i18n ("V&ideo"));
         m_multiedit->show ();
-        m_viewer->hide ();
+        m_view_area->setVideoWidgetVisible (false);
         addText (QString (""), false);
         if (m_controlpanel_mode == CP_AutoHide && m_playing)
             m_control_panel->show();
@@ -548,7 +533,7 @@ KDE_NO_EXPORT void View::playingStart () {
     if (m_playing) return; //FIXME: make symetric with playingStop
     if (m_picture->isVisible ()) {
         m_picture->hide ();
-        m_viewer->show ();
+        m_view_area->setVideoWidgetVisible (true);
     }
     m_playing = true;
     m_revert_fullscreen = !isFullScreen();
@@ -563,9 +548,6 @@ KDE_NO_EXPORT void View::playingStop () {
     killTimer (controlbar_timer);
     controlbar_timer = 0;
     m_playing = false;
-    WId w = m_viewer->embeddedWinId ();
-    if (w)
-        XClearWindow (qt_xdisplay(), w);
     m_view_area->resizeEvent (0L);
 }
 
@@ -578,7 +560,6 @@ KDE_NO_EXPORT void View::reset () {
         m_control_panel->popupMenu ()->activateItemAt (m_control_panel->popupMenu ()->indexOf (ControlPanel::menu_fullscreen));
         //m_view_area->fullScreen ();
     playingStop ();
-    m_viewer->show ();
 }
 
 bool View::isFullScreen () const {
@@ -603,8 +584,8 @@ void View::fullScreen () {
         //    m_viewer->setAspect (1.0 * m_viewer->width() / m_viewer->height());
         m_view_area->fullScreen();
         m_control_panel->popupMenu ()->setItemVisible (ControlPanel::menu_zoom, false);
-        if (m_viewer->isVisible ())
-            m_viewer->setFocus ();
+        //if (m_viewer->isVisible ())
+        //    m_viewer->setFocus ();
     } else {
         if (m_sreensaver_disabled)
             m_sreensaver_disabled = !kapp->dcopClient()->send
@@ -620,201 +601,10 @@ KDE_NO_EXPORT int View::statusBarHeight () const {
     if (statusBar()->isVisible () && !viewArea()->isFullScreen ()) {
         if (statusBarMode () == SB_Only)
             return height ();
-        else 
+        else
             return statusBar()->maximumSize ().height ();
     }
     return 0;
-}
-
-bool View::x11Event (XEvent * e) {
-    switch (e->type) {
-        case UnmapNotify:
-            if (e->xunmap.event == m_viewer->embeddedWinId ()) {
-                videoStart ();
-                //hide();
-            }
-            break;
-        case XKeyPress:
-            if (e->xkey.window == m_viewer->embeddedWinId ()) {
-                KeySym ksym;
-                char kbuf[16];
-                XLookupString (&e->xkey, kbuf, sizeof(kbuf), &ksym, NULL);
-                switch (ksym) {
-                    case XK_f:
-                    case XK_F:
-                        //fullScreen ();
-                        break;
-                };
-            }
-            break;
-        /*case ColormapNotify:
-            fprintf (stderr, "colormap notify\n");
-            return true;*/
-        case MotionNotify:
-            if (e->xmotion.window == m_viewer->embeddedWinId ())
-                delayedShowButtons (e->xmotion.y > m_view_area->height () -
-                        statusBarHeight () -
-                        m_control_panel->maximumSize ().height ());
-            m_view_area->mouseMoved ();
-            break;
-        case MapNotify:
-            if (e->xmap.event == m_viewer->embeddedWinId ()) {
-                show ();
-                QTimer::singleShot (10, m_viewer, SLOT (sendConfigureEvent ()));
-            }
-            break;
-        /*case ConfigureNotify:
-            break;
-            //return true;*/
-        default:
-            break;
-    }
-    return false;
-}
-
-//----------------------------------------------------------------------
-
-KDE_NO_CDTOR_EXPORT Viewer::Viewer (QWidget *parent, View * view)
-  : QXEmbed (parent), m_plain_window (0), m_bgcolor (0), m_aspect (0.0),
-    m_view (view) {
-    /*XWindowAttributes xwa;
-    XGetWindowAttributes (qt_xdisplay(), winId (), &xwa);
-    XSetWindowAttributes xswa;
-    xswa.background_pixel = 0;
-    xswa.border_pixel = 0;
-    xswa.colormap = xwa.colormap;
-    create (XCreateWindow (qt_xdisplay (), parent->winId (), 0, 0, 10, 10, 0, 
-                           x11Depth (), InputOutput, (Visual*)x11Visual (),
-                           CWBackPixel | CWBorderPixel | CWColormap, &xswa));*/
-    setAcceptDrops (true);
-    initialize ();
-    //setProtocol (QXEmbed::XPLAIN);
-}
-
-KDE_NO_CDTOR_EXPORT Viewer::~Viewer () {
-}
-
-KDE_NO_EXPORT void Viewer::changeProtocol (QXEmbed::Protocol p) {
-    kdDebug () << "changeProtocol " << (int)protocol () << "->" << p << endl;
-    if (!embeddedWinId () || p != protocol ()) {
-        if (p == QXEmbed::XPLAIN) {
-            setProtocol (p);
-            if (!m_plain_window) {
-                int scr = DefaultScreen (qt_xdisplay ());
-                m_plain_window = XCreateSimpleWindow (
-                        qt_xdisplay(),
-                        m_view->winId (),
-                        0, 0, width(), height(),
-                        1,
-                        BlackPixel (qt_xdisplay(), scr),
-                        BlackPixel (qt_xdisplay(), scr));
-                embed (m_plain_window);
-            }
-            XClearWindow (qt_xdisplay(), m_plain_window);
-        } else {
-            if (m_plain_window) {
-                XDestroyWindow (qt_xdisplay(), m_plain_window);
-                m_plain_window = 0;
-                XSync (qt_xdisplay (), false);
-            }
-            //setProtocol (p);
-            setProtocol (QXEmbed::XPLAIN);
-        }
-    }
-}
-
-KDE_NO_EXPORT void Viewer::windowChanged (WId w) {
-    kdDebug () << "windowChanged " << (int)w << endl;
-    if (w /*&& m_plain_window*/)
-        XSelectInput (qt_xdisplay (), w, 
-                //KeyPressMask | KeyReleaseMask |
-                KeyPressMask |
-                //EnterWindowMask | LeaveWindowMask |
-                //FocusChangeMask |
-                ExposureMask |
-                StructureNotifyMask |
-                PointerMotionMask);
-}
-
-KDE_NO_EXPORT void Viewer::mouseMoveEvent (QMouseEvent * e) {
-    if (e->state () == Qt::NoButton) {
-        int cp_height = m_view->controlPanel ()->maximumSize ().height ();
-        m_view->delayedShowButtons (e->y () > height () - cp_height);
-    }
-    m_view->viewArea ()->mouseMoved ();
-}
-
-void Viewer::setAspect (float a) {
-    m_aspect = a;
-}
-
-KDE_NO_EXPORT int Viewer::heightForWidth (int w) const {
-    if (m_aspect <= 0.01)
-        return 0;
-    return int (w/m_aspect); 
-}
-
-KDE_NO_EXPORT void Viewer::dropEvent (QDropEvent * de) {
-    m_view->dropEvent (de);
-}
-
-KDE_NO_EXPORT void Viewer::dragEnterEvent (QDragEnterEvent* dee) {
-    m_view->dragEnterEvent (dee);
-}
-/*
-*/
-void Viewer::sendKeyEvent (int key) {
-    WId w = embeddedWinId ();
-    if (w) {
-        char buf[2] = { char (key), '\0' }; 
-        KeySym keysym = XStringToKeysym (buf);
-        XKeyEvent event = {
-            XKeyPress, 0, true,
-            qt_xdisplay (), w, qt_xrootwin(), w,
-            /*time*/ 0, 0, 0, 0, 0,
-            0, XKeysymToKeycode (qt_xdisplay (), keysym), true
-        };
-        XSendEvent (qt_xdisplay(), w, false, KeyPressMask, (XEvent *) &event);
-        XFlush (qt_xdisplay ());
-    }
-}
-
-KDE_NO_EXPORT void Viewer::sendConfigureEvent () {
-    WId w = embeddedWinId ();
-    if (w) {
-        XConfigureEvent c = {
-            ConfigureNotify, 0UL, True,
-            qt_xdisplay (), w, winId (),
-            x (), y (), width (), height (),
-            0, None, False
-        };
-        XSendEvent(qt_xdisplay(),c.event,true,StructureNotifyMask,(XEvent*)&c);
-        XFlush (qt_xdisplay ());
-    }
-}
-
-KDE_NO_EXPORT void Viewer::contextMenuEvent (QContextMenuEvent * e) {
-    m_view->controlPanel ()->popupMenu ()->exec (e->globalPos ());
-}
-
-KDE_NO_EXPORT void Viewer::setBackgroundColor (const QColor & c) {
-    if (m_bgcolor != c.rgb ()) {
-        m_bgcolor = c.rgb ();
-        setCurrentBackgroundColor (c);
-    }
-}
-
-KDE_NO_EXPORT void Viewer::resetBackgroundColor () {
-    setCurrentBackgroundColor (m_bgcolor);
-}
-
-KDE_NO_EXPORT void Viewer::setCurrentBackgroundColor (const QColor & c) {
-    setPaletteBackgroundColor (c);
-    WId w = embeddedWinId ();
-    if (w) {
-        XSetWindowBackground (qt_xdisplay (), w, c.rgb ());
-        XFlush (qt_xdisplay ());
-    }
 }
 
 #include "kmplayerview.moc"

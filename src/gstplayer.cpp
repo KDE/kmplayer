@@ -408,64 +408,64 @@ Backend::Backend ()
 
 Backend::~Backend () {}
 
-void Backend::setURL (QString url) {
+void Backend::setURL (unsigned long, QString url) {
     mrl = url;
 }
 
-void Backend::setSubTitleURL (QString url) {
+void Backend::setSubTitleURL (unsigned long, QString url) {
     sub_mrl = url;
 }
 
-void Backend::play (int repeat) {
+void Backend::play (long unsigned int, int repeat) {
     gstapp->play (repeat);
 }
 
-void Backend::stop () {
+void Backend::stop (unsigned long) {
     QTimer::singleShot (0, gstapp, SLOT (stop ()));
 }
 
-void Backend::pause () {
+void Backend::pause (unsigned long) {
     gstapp->pause ();
 }
 
-void Backend::seek (int v, bool /*absolute*/) {
+void Backend::seek (unsigned long, int v, bool /*absolute*/) {
     gstapp->seek (v);
 }
 
-void Backend::hue (int h, bool) {
+void Backend::hue (unsigned long, int h, bool) {
     gstapp->hue (h);
 }
 
-void Backend::saturation (int s, bool) {
+void Backend::saturation (unsigned long, int s, bool) {
     gstapp->saturation (s);
 }
 
-void Backend::contrast (int c, bool) {
+void Backend::contrast (unsigned long, int c, bool) {
     gstapp->contrast (c);
 }
 
-void Backend::brightness (int b, bool) {
+void Backend::brightness (unsigned long, int b, bool) {
     gstapp->brightness (b);
 }
 
-void Backend::volume (int v, bool) {
+void Backend::volume (unsigned long, int v, bool) {
     gstapp->volume (v);
 }
 
-void Backend::frequency (int) {
+void Backend::frequency (unsigned long, int) {
 }
 
-void Backend::setAudioLang (int, QString) {
+void Backend::setAudioLang (unsigned long, int, QString) {
 }
 
-void Backend::setSubtitle (int, QString) {
+void Backend::setSubtitle (unsigned long, int, QString) {
 }
 
 void Backend::quit () {
     delete callback;
     callback = 0L;
     if (running)
-        stop ();
+        stop (0);
     else
         QTimer::singleShot (0, qApp, SLOT (quit ()));
 }
@@ -495,7 +495,7 @@ void Backend::setConfig (QByteArray /*data*/) {
         callback->errorMessage (0, err);*/
 }
 
-bool Backend::isPlaying () {
+bool Backend::isPlaying (unsigned long) {
     mutex.lock ();
     bool b = gst_elm_play && (GST_STATE (gst_elm_play) == GST_STATE_PLAYING);
     mutex.unlock ();
@@ -767,7 +767,7 @@ void KGStreamerPlayer::updatePosition () {
             GstFormat fmt = GST_FORMAT_TIME;
             gint64 val = 0; // usec
             if (gst_element_query_position (gst_elm_play, &fmt, &val))
-                callback->moviePosition (int (val / (GST_MSECOND * 100)));
+                callback->moviePosition (0, int (val / (GST_MSECOND * 100)));
         }
         mutex.unlock ();
         QTimer::singleShot (500, this, SLOT (updatePosition ()));
@@ -795,7 +795,7 @@ bool KGStreamerPlayer::event (QEvent * e) {
             }
             mutex.unlock ();
             if (callback)
-                callback->finished ();
+                callback->finished (0);
             else
                 QTimer::singleShot (0, this, SLOT (quit ()));
             break;
@@ -806,7 +806,7 @@ bool KGStreamerPlayer::event (QEvent * e) {
             fprintf (stderr, "movie parms: %d %d %d\n", se->length, se->width, se->height);
             if (callback) {
                 if (se->length < 0) se->length = 0;
-                callback->movieParams (se->length, se->width, se->height, se->height ? 1.0*se->width/se->height : 1.0, QStringList (), QStringList ());
+                callback->movieParams (0, se->length, se->width, se->height, se->height ? 1.0*se->width/se->height : 1.0, QStringList (), QStringList ());
             }
             if (window_created && movie_width > 0 && movie_height > 0) {
                 XLockDisplay (display);
@@ -819,12 +819,12 @@ bool KGStreamerPlayer::event (QEvent * e) {
         case event_playing:
             notified_playing = true;
             if (callback)
-                callback->playing ();
+                callback->playing (0);
             break;
         case event_progress:
             if (callback)
                 callback->loadingProgress
-                    (static_cast <GstProgressEvent *> (e)->progress);
+                    (0, static_cast <GstProgressEvent *> (e)->progress);
             break;
         case event_eos:
         case event_error:
@@ -832,7 +832,7 @@ bool KGStreamerPlayer::event (QEvent * e) {
             break;
         case event_video:
             if (callback)
-                callback->statusMessage ((int) KMPlayer::Callback::stat_hasvideo, QString ());
+                callback->statusMessage (0, (int) KMPlayer::Callback::stat_hasvideo, QString ());
             break;
         default:
             return false;
@@ -912,7 +912,7 @@ protected:
                             (dx * dx + dy * dy) < 25) {
                         gstapp->lock ();
                         if (callback)
-                            callback->toggleFullScreen ();
+                            callback->toggleFullScreen (0);
                         gstapp->unlock ();
                     }
                     prev_click_time = bev->time;

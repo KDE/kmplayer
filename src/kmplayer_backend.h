@@ -31,24 +31,24 @@ public:
     Backend ();
     virtual ~Backend ();
 k_dcop:
-    virtual ASYNC setURL (QString url);
-    virtual ASYNC setSubTitleURL (QString url);
-    virtual ASYNC play (int repeat_count);
-    virtual ASYNC stop ();
-    virtual ASYNC pause ();
+    virtual ASYNC setURL (unsigned long wid, QString url);
+    virtual ASYNC setSubTitleURL (unsigned long wid, QString url);
+    virtual ASYNC play (unsigned long wid, int repeat_count);
+    virtual ASYNC stop (unsigned long wid);
+    virtual ASYNC pause (unsigned long wid);
     /* seek (pos, abs) seek position in deci-seconds */
-    virtual ASYNC seek (int pos, bool absolute);
-    virtual ASYNC hue (int h, bool absolute);
-    virtual ASYNC saturation (int s, bool absolute);
-    virtual ASYNC contrast (int c, bool absolute);
-    virtual ASYNC brightness (int b, bool absolute);
-    virtual ASYNC volume (int v, bool absolute);
-    virtual ASYNC frequency (int f);
+    virtual ASYNC seek (unsigned long wid, int pos, bool absolute);
+    virtual ASYNC hue (unsigned long wid, int h, bool absolute);
+    virtual ASYNC saturation (unsigned long wid, int s, bool absolute);
+    virtual ASYNC contrast (unsigned long wid, int c, bool absolute);
+    virtual ASYNC brightness (unsigned long wid, int b, bool absolute);
+    virtual ASYNC volume (unsigned long wid, int v, bool absolute);
+    virtual ASYNC frequency (unsigned long wid, int f);
     virtual ASYNC quit ();
     virtual ASYNC setConfig (QByteArray);
-    virtual ASYNC setAudioLang (int, QString);
-    virtual ASYNC setSubtitle (int, QString);
-    virtual bool isPlaying ();
+    virtual ASYNC setAudioLang (unsigned long wid, int, QString);
+    virtual ASYNC setSubtitle (unsigned long wid, int, QString);
+    virtual bool isPlaying (unsigned long wid);
 private:
     BackendPrivate * d;
 };

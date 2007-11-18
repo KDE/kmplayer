@@ -43,13 +43,49 @@ extern const unsigned int event_data_arrived;
 extern const unsigned int event_img_updated;
 extern const unsigned int event_img_anim_finished;
 
-class IProcess;
 class IViewer;
 class PartBase;
-class Source;
 class Process;
+class ProcessInfo;
 class Viewer;
+class AudioVideoMedia;
 
+
+class KMPLAYER_EXPORT IProcess {
+public:
+    enum State { NotRunning = 0, Ready, Buffering, Playing };
+
+    virtual ~IProcess () {}
+
+    virtual bool ready () = 0;
+    virtual bool play () = 0;
+    virtual void pause () = 0;
+    virtual void stop () = 0;
+    virtual void quit () = 0;
+    /* seek (pos, abs) seek position in deci-seconds */
+    virtual bool seek (int pos, bool absolute) = 0;;
+    /* volume from 0 to 100 */
+    virtual bool volume (int pos, bool absolute) = 0;
+    virtual bool saturation (int pos, bool absolute) = 0;
+    virtual bool hue (int pos, bool absolute) = 0;
+    virtual bool contrast (int pos, bool absolute) = 0;
+    virtual bool brightness (int pos, bool absolute) = 0;
+    virtual void setAudioLang (int, const QString &) = 0;
+    virtual void setSubtitle (int, const QString &) = 0;
+    virtual bool running () const = 0;
+
+    State state () const { return m_state; }
+    void setMediaObject (AudioVideoMedia *media) { media_object = media; }
+
+protected:
+    IProcess ();
+
+    AudioVideoMedia *media_object;
+    State m_state;
+
+private:
+    IProcess (const IViewer &);
+};
 
 /*
  * Class that creates MediaObject and keeps track objects
@@ -57,13 +93,30 @@ class Viewer;
 class KMPLAYER_EXPORT MediaManager {
 public:
     enum MediaType { Audio, AudioVideo, Image, Text };
+    typedef QMap <QString, ProcessInfo *> ProcessInfoMap;
+    typedef QValueList <IProcess *> ProcessList;
+    typedef QValueList <MediaObject *> MediaList;
 
     MediaManager (PartBase *player);
     ~MediaManager ();
 
     MediaObject *createMedia (MediaType type, Node *node);
+
+    // backend process state changed
+    void stateChange (AudioVideoMedia *m, IProcess::State o, IProcess::State n);
+    void playAudioVideo (AudioVideoMedia *m);
+
+    IProcess *process (AudioVideoMedia *media);
+    void processDestroyed (IProcess *process);
+    ProcessInfoMap &processInfos () { return m_process_infos; }
+    ProcessList &processes () { return m_processes; }
+    MediaList &medias () { return m_media_objects; }
+    PartBase *player () const { return m_player; }
+
 private:
-    QValueList <MediaObject *> media_objects;
+    MediaList m_media_objects;
+    ProcessInfoMap m_process_infos;
+    ProcessList m_processes;
     PartBase *m_player;
 };
 
@@ -94,16 +147,15 @@ signals:
 
 class KMPLAYER_EXPORT MediaObject : public QObject {
     Q_OBJECT
+    friend class MediaManager;
 public:
-    MediaObject (MediaManager *manager, Node *node);
-    virtual ~MediaObject ();
-
     virtual MediaManager::MediaType type () const = 0;
 
     virtual bool play () = 0;
     virtual void pause () {}
     virtual void unpause () {}
     virtual void stop () {}
+    virtual void destroy ();
 
     bool wget (const QString & url);
     void killWGet ();
@@ -111,7 +163,7 @@ public:
     QString mimetype ();
     bool downloading () const;
 
-    Node *node ();
+    Mrl *mrl ();
     QByteArray &rawData () { return data; }
 
 private slots:
@@ -121,6 +173,9 @@ private slots:
     void cachePreserveRemoved (const QString &);
 
 protected:
+    MediaObject (MediaManager *manager, Node *node);
+    virtual ~MediaObject ();
+
     virtual void remoteReady (const QString &url);
 
     MediaManager *m_manager;
@@ -145,62 +200,41 @@ class AudioVideoMedia;
 
 class KMPLAYER_NO_EXPORT IViewer {
 public:
+    IViewer () {}
+    virtual ~IViewer () {}
+
     virtual WindowId windowHandle () = 0;
     virtual void setGeometry (const IRect &rect) = 0;
-protected:
-    virtual ~IViewer () {}
+    virtual void setAspect (float a) = 0;
+    virtual float aspect () = 0;
+    virtual void useIndirectWidget (bool) = 0;
+    virtual void map () = 0;
+    virtual void unmap () = 0;
 private:
     IViewer (const IViewer &);
 };
 
-class KMPLAYER_EXPORT IProcess {
-public:
-    enum State { NotRunning = 0, Ready, Buffering, Playing };
-
-    virtual bool play (Mrl *) = 0;
-    virtual void pause () = 0;
-    virtual void stop () = 0;
-    /* seek (pos, abs) seek position in deci-seconds */
-    virtual bool seek (int pos, bool absolute);
-    /* volume from 0 to 100 */
-    virtual bool volume (int pos, bool absolute);
-    virtual bool running () = 0;
-protected:
-    virtual ~IProcess () {}
-private:
-    IProcess (const IViewer &);
-};
-
-class KMPLAYER_EXPORT ProcessInfo {
-public:
-    ProcessInfo (const char *nm, const QString &lbl, const char **supported,
-            IProcess *(*create_func) (Source *));
-
-    const char *name;
-    QString label;
-    const char **supported_sources;
-    IProcess *(*create) (Source *);
-};
-
 class KMPLAYER_NO_EXPORT AudioVideoMedia : public MediaObject {
+    friend class MediaManager;
 public:
+    enum Request { ask_nothing, ask_play, ask_stop, ask_delete };
+
     AudioVideoMedia (MediaManager *manager, Node *node);
-    ~AudioVideoMedia ();
 
     MediaManager::MediaType type () const { return MediaManager::AudioVideo; }
 
-    bool play ();
-    void stop ();
-    void pause ();
-    void unpause ();
+    virtual bool play ();
+    virtual void stop ();
+    virtual void pause ();
+    virtual void unpause ();
+    virtual void destroy ();
 
-    // backend process state changed
-    void stateChange (Process *, IProcess::State os, IProcess::State ns);
+    IProcess *process;
+    IViewer *viewer;
+    Request request;
 
-    Process *process;
-    Viewer *viewer;
-private:
-    enum { ask_play, ask_stop } request;
+protected:
+    ~AudioVideoMedia ();
 };
 
 
@@ -225,7 +259,6 @@ class KMPLAYER_NO_EXPORT ImageMedia : public MediaObject {
     Q_OBJECT
 public:
     ImageMedia (MediaManager *manager, Node *node);
-    ~ImageMedia ();
 
     MediaManager::MediaType type () const { return MediaManager::Image; }
 
@@ -244,6 +277,8 @@ private slots:
     void movieResize (const QSize &);
 
 protected:
+    ~ImageMedia ();
+
     void remoteReady (const QString &url);
 
 private:
@@ -259,7 +294,6 @@ private:
 class KMPLAYER_NO_EXPORT TextMedia : public MediaObject {
 public:
     TextMedia (MediaManager *manager, Node *node);
-    ~TextMedia ();
 
     MediaManager::MediaType type () const { return MediaManager::Text; }
 
@@ -270,6 +304,8 @@ public:
     int default_font_size;
 
 protected:
+    ~TextMedia ();
+
     void remoteReady (const QString &url);
 };
 

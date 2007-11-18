@@ -52,6 +52,7 @@ namespace KIO {
 namespace KMPlayer {
 
 class PartBase;
+class IProcess;
 class Process;
 class MPlayer;
 class BookmarkOwner;
@@ -62,6 +63,8 @@ class FFMpeg;
 class Xine;
 class Settings;
 class MediaManager;
+class AudioVideoMedia;
+class ProcessInfo;
 
 /*
  * Source from URLs
@@ -114,11 +117,12 @@ class KMPLAYER_EXPORT PartBase : public KMediaPlayer::Player {
     Q_OBJECT
     K_DCOP
 public:
-    typedef QMap <QString, Process *> ProcessMap;
+
     PartBase (QWidget * parent,  const char * wname,QObject * objectParent, const char * name, KConfig *);
     ~PartBase ();
     void init (KActionCollection * = 0L);
     virtual KMediaPlayer::View* view ();
+    View* viewWidget () const { return m_view; }
     static KAboutData* createAboutData ();
 
     Settings * settings () const { return m_settings; }
@@ -127,8 +131,7 @@ public:
     void setURL (const KURL & url) { m_sources ["urlsource"]->setURL (url); }
 
     /* Changes the backend process */
-    void setProcess (const char *);
-    bool setProcess (Mrl *mrl);
+    QString processName (Mrl *mrl);
     void setRecorder (const char *);
 
     /* Changes the source,
@@ -140,10 +143,8 @@ public:
     void connectInfoPanel (InfoWindow * infopanel);
     void connectSource (Source * old_source, Source * source);
     MediaManager *mediaManager () const { return m_media_manager; }
-    Process *process () const { return m_process; }
     Process * recorder () const { return m_recorder; }
     Source * source () const { return m_source; }
-    QMap <QString, Process *> & players () { return m_players; }
     QMap <QString, Process *> & recorders () { return m_recorders; }
     QMap <QString, Source *> & sources () { return m_sources; }
     KConfig * config () const { return m_config; }
@@ -182,6 +183,7 @@ public slots:
     void decreaseVolume ();
     void setPosition (int position, int length);
     virtual void setLoaded (int percentage);
+    virtual void processCreated (Process *);
 public:
     virtual bool isSeekable (void) const;
     virtual unsigned long position (void) const;
@@ -231,13 +233,11 @@ protected:
     KConfig * m_config;
     QGuardedPtr <View> m_view;
     QMap <QString, QString> temp_backends;
-    Settings * m_settings;
+    Settings *m_settings;
     MediaManager *m_media_manager;
-    Process *m_process;
     Process * m_recorder;
     Source * m_source;
-    ProcessMap m_players;
-    ProcessMap m_recorders;
+    QMap <QString, Process *> m_recorders;
     QMap <QString, Source *> m_sources;
     BookmarkManager * m_bookmark_manager;
     BookmarkOwner * m_bookmark_owner;

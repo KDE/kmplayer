@@ -616,12 +616,12 @@ public:
     virtual void resize (const SRect & rect) = 0;
     virtual void repaint () = 0;
     virtual void repaint (const SRect &rect) = 0;
-    virtual void video () = 0;
+    virtual void video (Mrl *) = 0;
     void remove ();                // remove from parent, mark ancestors dirty
     void markDirty ();             // mark this and ancestors dirty
 
     NodePtrW node;
-    SRect bounds;                  // bounds in in parent coord. 
+    SRect bounds;                  // bounds in in parent coord.
     float xscale, yscale;          // internal scaling
     unsigned int background_color; // rgba background color
     bool dirty;                    // a decendant is removed

@@ -148,6 +148,8 @@ public slots:
     virtual bool openURL (const KURL & url);
     virtual bool closeURL ();
     void setMenuZoom (int id);
+protected:
+    virtual void processCreated (KMPlayer::Process *);
 protected slots:
     virtual void playingStarted ();
     virtual void playingStopped ();
