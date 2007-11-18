@@ -138,7 +138,7 @@ static bool getBoolValue (const QString & value) {
 
 KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *wname,
                     QObject * parent, const char *name, const QStringList &args)
- : PartBase (wparent, wname, parent, name, new KSimpleConfig ("kmplayerrc")),
+ : PartBase (wparent, wname, parent, name, new KConfig ("kmplayerrc")),
    m_master (0L),
    m_browserextension (new KMPlayerBrowserExtension (this)),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
