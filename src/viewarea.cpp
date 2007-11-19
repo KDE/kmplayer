@@ -186,9 +186,15 @@ KDE_NO_EXPORT void ViewSurface::video (Mrl *mt) {
     kdDebug() << "Surface::video:" << background_color << " " << (background_color & 0xff000000) << endl;
     xscale = yscale = 1; // either scale width/heigt or use bounds
     if (mt->media_object &&
-            MediaManager::AudioVideo == mt->media_object->type ())
-        static_cast <AudioVideoMedia *> (mt->media_object)->viewer->
-            setGeometry (toScreen (0, 0, bounds.width(), bounds.height ()));
+            MediaManager::AudioVideo == mt->media_object->type ()) {
+        AudioVideoMedia *avm = static_cast <AudioVideoMedia*>(mt->media_object);
+        if (avm->viewer &&
+                avm->process &&
+                avm->process->state () > IProcess::Ready &&
+                strcmp (mt->nodeName (), "audio"))
+            avm->viewer->setGeometry (toScreen (
+                        0, 0, bounds.width(), bounds.height ()));
+    }
 }
 
 //-------------------------------------------------------------------------
@@ -570,7 +576,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
     if (s) {
         if (ref->external_tree)
             updateExternal (ref, s);
-        else if (ref->needsVideoWidget ())
+        else
             s->video (ref);
     }
 }
@@ -638,7 +644,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
     if (s) {
         if (av->external_tree)
             updateExternal (av, s);
-        else if (av->needsVideoWidget ())
+        else
             s->video (av);
     }
 }

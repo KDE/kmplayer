@@ -1380,13 +1380,6 @@ static NodePtr findExternalTree (NodePtr mrl) {
     return 0L;
 }
 
-static void setSmilLinkNode (NodePtr n, NodePtr link) {
-    // this works only because we can only play one at a time FIXME
-    SMIL::Smil * s = SMIL::Smil::findSmilNode (n.ptr ());
-    if (s && (link || s->current_av_media_type == n)) // only reset ones own
-        s->current_av_media_type = link;
-}
-
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT MouseListeners::MouseListeners () :
@@ -1476,7 +1469,6 @@ KDE_NO_EXPORT NodePtr SMIL::Smil::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT void SMIL::Smil::activate () {
     //kdDebug () << "Smil::activate" << endl;
-    current_av_media_type = NodePtr ();
     resolved = true;
     SMIL::Layout * layout = convertNode <SMIL::Layout> (layout_node);
     if (layout && layout->region_surface) {
@@ -1547,10 +1539,6 @@ KDE_NO_EXPORT void SMIL::Smil::childDone (NodePtr child) {
             finish ();
         }
     }
-}
-
-KDE_NO_EXPORT Mrl * SMIL::Smil::linkNode () {
-    return current_av_media_type ? current_av_media_type->mrl () : this;
 }
 
 KDE_NO_EXPORT bool SMIL::Smil::expose () const {
@@ -2800,6 +2788,8 @@ KDE_NO_EXPORT void SMIL::MediaType::undefer () {
         setState (state_began);
         if (media_object)
             media_object->unpause ();
+        if (surface ())
+            sub_surface->repaint ();
     } else {
         setState (state_activated);
         runtime ()->started ();
@@ -2909,16 +2899,6 @@ KDE_NO_EXPORT void SMIL::MediaType::childDone (NodePtr child) {
     }
     if (active ())
         finish ();
-}
-
-KDE_NO_EXPORT bool SMIL::MediaType::needsVideoWidget () {
-    SMIL::Smil *s = SMIL::Smil::findSmilNode (this);
-    Node * link = s ? s->current_av_media_type.ptr () : 0L;
-    return ((link == this || !link) &&
-            (state == state_deferred || unfinished ()) && link &&
-            runtime ()->state () != Runtime::timings_stopped &&
-            (!strcmp (nodeName (), "video") || !strcmp (nodeName (), "ref")) &&
-            surface ());
 }
 
 SurfacePtr SMIL::MediaType::getSurface (NodePtr node) {
@@ -3074,7 +3054,6 @@ KDE_NO_EXPORT void SMIL::AVMediaType::clipStart () {
     PlayListNotify *n = document ()->notify_listener;
     //kdDebug() << "AudioVideoData::clipStart " << mt->resolved << endl;
     if (n && region_node && !external_tree && !src.isEmpty()) {
-        setSmilLinkNode (this, this);
         repeat = runtime ()->repeat_count == Runtime::dur_infinite
             ? 9998 : runtime ()->repeat_count;
         runtime ()->repeat_count = 0;
@@ -3087,7 +3066,6 @@ KDE_NO_EXPORT void SMIL::AVMediaType::clipStop () {
     if (runtime ()->durTime ().durval == Runtime::dur_media)
         runtime ()->durTime ().durval = Runtime::dur_timer;//reset to make this finish
     MediaType::clipStop ();
-    setSmilLinkNode (this, 0L);
 }
 
 KDE_NO_EXPORT void SMIL::AVMediaType::begin () {

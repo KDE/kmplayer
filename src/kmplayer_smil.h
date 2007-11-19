@@ -307,12 +307,7 @@ public:
     void accept (Visitor *);
     void jump (const QString & id);
     static Smil * findSmilNode (Node * node);
-    /**
-     * Hack to mark the currently playing MediaType as finished
-     * FIXME: think of a descent callback way for this
-     */
-    Mrl * linkNode ();
-    NodePtrW current_av_media_type;
+
     NodePtrW layout_node;
 };
 
@@ -691,7 +686,6 @@ public:
     virtual void parseParam (const TrieString & name, const QString & value);
     virtual bool handleEvent (EventPtr event);
     NodeRefListPtr listeners (unsigned int event_id);
-    bool needsVideoWidget (); // for 'video' and 'ref' nodes
 
     SurfacePtrW sub_surface;
     NodePtrW external_tree; // if src points to playlist, the resolved top node
