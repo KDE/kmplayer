@@ -277,7 +277,7 @@ public slots:
 /*
  * Base class for backend processes having the KMPlayer::Backend interface
  */
-class KMPLAYER_NO_EXPORT CallbackProcessInfo
+class KMPLAYER_EXPORT CallbackProcessInfo
  : public QObject, public ProcessInfo {
     Q_OBJECT
 public:
@@ -289,6 +289,11 @@ public:
     virtual bool startBackend () {};
     void stopBackend ();
     void backendStarted (QCString dcopname, QByteArray & data);
+
+    KDE_NO_EXPORT bool haveConfig () { return have_config == config_yes; }
+    bool getConfigData ();
+    void setChangedData (const QByteArray &);
+    void changesReceived ();
 
     QByteArray changed_data;
     NodePtr config_doc;
@@ -302,6 +307,11 @@ signals:
 protected slots:
     void processStopped (KProcess *);
     void processOutput (KProcess *, char *, int);
+
+protected:
+    void initProcess ();
+    enum { config_unknown, config_probe, config_yes, config_no } have_config;
+    enum { send_no, send_try, send_new } send_config;
 };
 
 class KMPLAYER_EXPORT CallbackProcess : public Process {
@@ -320,10 +330,6 @@ public:
     virtual void setLoadingProgress (int percentage);
     virtual void setAudioLang (int, const QString &);
     virtual void setSubtitle (int, const QString &);
-    KDE_NO_EXPORT bool haveConfig () { return m_have_config == config_yes; }
-    bool getConfigData ();
-    static void setChangedData (CallbackProcessInfo *, const QByteArray &);
-    void initProcess ();
     virtual bool deMediafiedPlay ();
     virtual bool running () const;
 public slots:
@@ -339,8 +345,6 @@ public slots:
 protected:
     XMLPreferencesPage * m_configpage;
     bool in_gui_update;
-    enum { config_unknown, config_probe, config_yes, config_no } m_have_config;
-    enum { send_no, send_try, send_new } m_send_config;
 };
 
 /*

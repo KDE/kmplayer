@@ -155,11 +155,13 @@ private:
     int last_channel;
 };
 
-class KMPLAYER_NO_EXPORT XvProcessInfo : public KMPlayer::ProcessInfo {
+class KMPLAYER_NO_EXPORT XvProcessInfo : public KMPlayer::CallbackProcessInfo {
 public:
     XvProcessInfo (KMPlayer::MediaManager *);
+
     virtual KMPlayer::IProcess *create (KMPlayer::PartBase*,
             KMPlayer::ProcessInfo*, KMPlayer::AudioVideoMedia*);
+    virtual bool startBackend ();
 };
 
 class XVideo : public KMPlayer::CallbackProcess {

@@ -1213,9 +1213,13 @@ void Callback::subMrl (unsigned long id, QString url, QString title) {
 }
 
 void Callback::errorMessage (unsigned long id, int code, QString msg) {
-    CallbackProcess *proc = process (id);
-    if (proc)
-        proc->setErrorMessage (code, msg);
+    if (!id && !code) {
+        process_info->changesReceived ();
+    } else {
+        CallbackProcess *proc = process (id);
+        if (proc)
+            proc->setErrorMessage (code, msg);
+    }
 }
 
 void Callback::finished (unsigned long id) {
@@ -1266,7 +1270,9 @@ CallbackProcessInfo::CallbackProcessInfo (const char *nm, const QString &lbl,
  : ProcessInfo (nm, lbl, supported, mgr, pref),
    backend (NULL),
    callback (NULL),
-   m_process (NULL) {}
+   m_process (NULL),
+   have_config (config_unknown),
+   send_config (send_no) {}
 
 CallbackProcessInfo::~CallbackProcessInfo () {
     delete callback;
@@ -1289,18 +1295,18 @@ QString CallbackProcessInfo::dcopName () {
 
 void CallbackProcessInfo::backendStarted (QCString dcopname, QByteArray &data) {
     MediaManager::ProcessList &pl = manager->processes ();
-    kdDebug () << "up and running " << dcopname << endl;
+    bool kill_backend = false;
+    kdDebug () << "up and running " << dcopname << " " << have_config << endl;
 
     backend = new Backend_stub (dcopname, "Backend");
 
-    /*if (m_send_config == send_new) {
-        cb->backend->setConfig (m_changeddata);
-    }*/
-    if (data.size ()) {
-        //if (m_have_config == config_probe || m_have_config == config_unknown) {
-        //bool was_probe = m_have_config == config_probe;
-        //m_have_config = data.size () ? config_yes : config_no;
-        //if (m_have_config == config_yes) {
+    if (send_config == send_new)
+        backend->setConfig (changed_data);
+
+    if (have_config == config_probe || have_config == config_unknown) {
+        bool was_probe = have_config == config_probe;
+        have_config = data.size () ? config_yes : config_no;
+        if (have_config == config_yes) {
             if (config_doc)
                 config_doc->document ()->dispose ();
             config_doc = new ConfigDocument ();
@@ -1308,22 +1314,24 @@ void CallbackProcessInfo::backendStarted (QCString dcopname, QByteArray &data) {
             readXML (config_doc, ts, QString ());
             config_doc->normalize ();
             //kdDebug () << mydoc->innerText () << endl;
-        //}
+        }
         emit configReceived ();
         if (config_page)
             config_page->sync (false);
-        /*if (was_probe) {
-            quit ();
-            return;
-        }*/
+        if (was_probe)
+            kill_backend = true;
     }
 
     const MediaManager::ProcessList::iterator e = pl.end ();
     for (MediaManager::ProcessList::iterator i = pl.begin (); i != e; ++i) {
         Process *proc = static_cast <Process *> (*i);
-        if (!strcmp (ProcessInfo::name, proc->name ()))
+        if (!strcmp (ProcessInfo::name, proc->name ())) {
              static_cast <CallbackProcess *>(proc)->setState (IProcess::Ready);
+             kill_backend = false;
+        }
     }
+    if (kill_backend)
+        backend->quit ();
 }
 
 KDE_NO_EXPORT
@@ -1334,6 +1342,7 @@ void CallbackProcessInfo::processOutput (KProcess *, char *str, int slen) {
 
 KDE_NO_EXPORT void CallbackProcessInfo::processStopped (KProcess *) {
     MediaManager::ProcessList &pl = manager->processes ();
+    kdDebug () << "ProcessInfo " << ProcessInfo::name << " stopped" << endl;
 
     delete m_process;
     m_process = NULL;
@@ -1347,7 +1356,9 @@ KDE_NO_EXPORT void CallbackProcessInfo::processStopped (KProcess *) {
     }
     manager->player ()->updateInfo (QString ());
     delete backend;
-    backend = 0L;
+    backend = NULL;
+    delete callback;
+    callback = NULL;
     /*if (m_send_config == send_try) {
         m_send_config = send_new; // we failed, retry ..
         ready ();
@@ -1355,10 +1366,10 @@ KDE_NO_EXPORT void CallbackProcessInfo::processStopped (KProcess *) {
 }
 
 void CallbackProcessInfo::stopBackend () {
-    /*if (m_have_config == config_probe)
-        m_have_config = config_unknown; // hmm
-    if (m_send_config == send_new)
-        m_send_config = send_no; // oh well*/
+    if (have_config == config_probe)
+        have_config = config_unknown; // hmm
+    if (send_config == send_new)
+        send_config = send_no; // oh well
     if (m_process && m_process->isRunning ()) {
         kdDebug () << "CallbackProcessInfo::quit ()" << endl;
         if (backend)
@@ -1378,11 +1389,50 @@ void CallbackProcessInfo::stopBackend () {
     killProcess (m_process, manager->player ()->view(), false);
 }
 
+bool CallbackProcessInfo::getConfigData () {
+    if (have_config == config_no)
+        return false;
+    if (have_config == config_unknown &&
+            (!m_process || !m_process->isRunning())) {
+        have_config = config_probe;
+        startBackend ();
+    }
+    return true;
+}
+
+void CallbackProcessInfo::setChangedData (const QByteArray & data) {
+    // lookup a Xine process, or create one
+    changed_data.duplicate (data);
+    if (m_process && m_process->isRunning ()) {
+        send_config = send_try;
+        backend->setConfig (data);
+    } else {
+        send_config = send_new;
+        startBackend ();
+    }
+}
+
+void CallbackProcessInfo::changesReceived () {
+    if (send_config != send_no) {
+        if (send_new == send_config)
+            backend->quit ();
+        send_config = send_no;
+    }
+}
+
+void CallbackProcessInfo::initProcess () {
+    setupProcess (&m_process);
+    connect (m_process, SIGNAL (processExited (KProcess *)),
+            this, SLOT (processStopped (KProcess *)));
+    connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
+            this, SLOT (processOutput (KProcess *, char *, int)));
+    connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
+            this, SLOT (processOutput (KProcess *, char *, int)));
+}
+
 CallbackProcess::CallbackProcess (QObject *parent, ProcessInfo *pi, Settings *settings, const char *n)
  : Process (parent, pi, settings, n),
-   in_gui_update (false),
-   m_have_config (config_unknown),
-   m_send_config (send_no) {
+   in_gui_update (false) {
 }
 
 CallbackProcess::~CallbackProcess () {
@@ -1393,11 +1443,6 @@ void CallbackProcess::setStatusMessage (const QString & /*msg*/) {
 
 void CallbackProcess::setErrorMessage (int code, const QString & msg) {
     kdDebug () << "setErrorMessage " << code << " " << msg << endl;
-    if (code == 0 && m_send_config != send_no) {
-        if (m_send_config == send_new)
-            stop ();
-        m_send_config = send_no;
-    }
 }
 
 void CallbackProcess::setFinished () {
@@ -1432,27 +1477,6 @@ void CallbackProcess::setLoadingProgress (int percentage) {
     in_gui_update = true;
     m_source->setLoading (percentage);
     in_gui_update = false;
-}
-
-bool CallbackProcess::getConfigData () {
-    if (m_have_config == config_no)
-        return false;
-    if (m_have_config == config_unknown && !running ()) {
-        m_have_config = config_probe;
-        ready ();
-    }
-    return true;
-}
-
-void CallbackProcess::setChangedData (CallbackProcessInfo *, const QByteArray & data) {
-    // lookup a Xine process, or create one
-    /*
-    m_changeddata = data;
-    m_send_config = running () ? send_try : send_new;
-    if (m_send_config == send_try)
-        static_cast <CallbackProcessInfo *>(process_info)->backend->setConfig (data);
-    else
-        ready ();*/
 }
 
 bool CallbackProcess::deMediafiedPlay () {
@@ -1573,16 +1597,6 @@ bool CallbackProcess::contrast (int val, bool b) {
     if (cb->backend)
         cb->backend->contrast (widget (), val, b);
     return !!cb->backend;
-}
-
-void CallbackProcess::initProcess () {
-    /*Process::initProcess ();
-    connect (m_process, SIGNAL (processExited (KProcess *)),
-            this, SLOT (processStopped (KProcess *)));
-    connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
-            this, SLOT (processOutput (KProcess *, char *, int)));
-    connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
-            this, SLOT (processOutput (KProcess *, char *, int)));*/
 }
 
 //-----------------------------------------------------------------------------
@@ -1715,8 +1729,8 @@ KDE_NO_CDTOR_EXPORT XMLPreferencesPage::~XMLPreferencesPage () {
 }
 
 KDE_NO_EXPORT void XMLPreferencesFrame::showEvent (QShowEvent *) {
-    //if (!m_process->haveConfig ())
-    //    m_process->getConfigData ();
+    if (!m_process_info->haveConfig ())
+        m_process_info->getConfigData ();
 }
 
 KDE_NO_EXPORT void XMLPreferencesPage::write (KConfig *) {
@@ -1748,7 +1762,7 @@ KDE_NO_EXPORT void XMLPreferencesPage::sync (bool fromUI) {
             QByteArray changeddata = QCString (str.ascii ());
             kdDebug () << str <<  " " << changeddata.size () << str.length () << endl;
             changeddata.resize (str.length ());
-            CallbackProcess::setChangedData (m_process_info, changeddata);
+            m_process_info->setChangedData (changeddata);
         }
     } else {
         //if (!m_process->haveConfig ())
@@ -1833,13 +1847,7 @@ bool XineProcessInfo::startBackend () {
         return true;
     Settings *cfg = manager->player ()->settings();
 
-    setupProcess (&m_process);
-    connect (m_process, SIGNAL (processExited (KProcess *)),
-            this, SLOT (processStopped (KProcess *)));
-    connect (m_process, SIGNAL (receivedStdout (KProcess *, char *, int)),
-            this, SLOT (processOutput (KProcess *, char *, int)));
-    connect (m_process, SIGNAL (receivedStderr (KProcess *, char *, int)),
-            this, SLOT (processOutput (KProcess *, char *, int)));
+    initProcess ();
 
     QString xine_config = KProcess::quote (QString (QFile::encodeName (locateLocal ("data", "kmplayer/") + QString ("xine_config"))));
     fprintf (stderr, "kxineplayer ");
@@ -1862,10 +1870,10 @@ bool XineProcessInfo::startBackend () {
     QString service = dcopName ();
     fprintf (stderr, " -cb %s", service.ascii());
     *m_process << " -cb " << service;
-    //if (m_have_config == config_unknown || m_have_config == config_probe) {
+    if (have_config == config_unknown || have_config == config_probe) {
         fprintf (stderr, " -c");
         *m_process << " -c";
-    //}
+    }
     // if (m_source->url ().url ().startsWith (QString ("vcd://")) &&
     // if (m_source->url ().url ().startsWith (QString ("tv://")) &
     fprintf (stderr, " -dvd-device %s", cfg->dvddevice.ascii ());
