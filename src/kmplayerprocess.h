@@ -286,7 +286,7 @@ public:
     ~CallbackProcessInfo ();
 
     QString dcopName ();
-    virtual bool startBackend () {};
+    virtual bool startBackend () = 0;
     void stopBackend ();
     void backendStarted (QCString dcopname, QByteArray & data);
 
