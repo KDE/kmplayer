@@ -453,9 +453,9 @@ bool PartBase::openURL (const KURL & url) {
     if (!m_view) return false;
     stop ();
     Source * src = (url.isEmpty () ? m_sources ["urlsource"] : (!url.protocol ().compare ("kmplayer") && m_sources.contains (url.host ()) ? m_sources [url.host ()] : m_sources ["urlsource"]));
+    setSource (src);
     src->setSubURL (KURL ());
     src->setURL (url);
-    setSource (src);
     return true;
 }
 
@@ -975,10 +975,10 @@ KDE_NO_EXPORT void Source::setSubtitle (int id) {
 void Source::reset () {
     if (m_document) {
         kdDebug() << "Source::reset " << name () << endl;
-        NodePtr doc = m_document;
+        NodePtr doc = m_document; // avoid recursive calls
         m_document = NULL;
         doc->reset ();
-        doc->document ()->dispose ();
+        m_document = doc;
         m_player->updateTree ();
     }
     init ();
@@ -1353,6 +1353,10 @@ void URLSource::play (Mrl *mrl) {
 void URLSource::deactivate () {
     activated = false;
     reset ();
+    if (m_document) {
+        m_document->document ()->dispose ();
+        m_document = NULL;
+    }
     getSurface (0L);
 }
 
