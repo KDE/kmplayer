@@ -467,7 +467,7 @@ KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
             element->document ()->cancelTimer (duration_timer);
             ASSERT (!duration_timer);
         }
-        if (was_started)
+        if (was_started && element->document ()->active ())
             element->document ()->setTimeout (element, 0, stopped_timer_id);
         else if (element->unfinished ())
             element->finish ();
@@ -2127,8 +2127,10 @@ KDE_NO_EXPORT void SMIL::TimedMrl::finish () {
         runtime ()->propagateStop (true); // reschedule through Runtime::stopped
     } else {
         finish_time = document ()->last_event_time;
+        NodePtrW guard = this;
         Mrl::finish ();
-        propagateEvent (new Event (event_stopped));
+        if (guard && document ()->active ()) // check for reset
+            propagateEvent (new Event (event_stopped));
     }
 }
 
