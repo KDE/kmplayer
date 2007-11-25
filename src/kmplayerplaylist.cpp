@@ -990,10 +990,11 @@ bool Document::timer () {
     struct timeval now = { 0, 0 }; // unset
     int new_timeout = -1;
     TimerInfoPtrW tinfo = timers.first (); // keep use_count on 1
+    NodePtrW guard = this;
 
     intimer = true;
     // handle max 100 timeouts with timeout set to now
-    for (int i = 0; !!tinfo && !postpone_ref && i < 100; ++i) {
+    for (int i = 0; !!tinfo && !postpone_ref && i < 100 && active (); ++i) {
         if (tinfo && !tinfo->node) {
             // some part of document has gone and didn't remove timer
             kdError () << "spurious timer" << endl;
@@ -1006,6 +1007,8 @@ bool Document::timer () {
         TimerEvent * te = new TimerEvent (tinfo);
         EventPtr e (te);
         tinfo->node->handleEvent (e);
+        if (!guard)
+            return false;
         if (tinfo) { // may be removed from timers and become 0
             if (te->interval) {
                 TimerInfoPtr tinfo2 (tinfo); // prevent destruction
@@ -1040,7 +1043,7 @@ bool Document::timer () {
     intimer = false;
 
     // set new timeout to prevent interval timer events
-    if (notify_listener && !postpone_ref && tinfo) {
+    if (notify_listener && !postpone_ref && tinfo && active ()) {
         if (new_timeout != cur_timeout) {
             cur_timeout = new_timeout;
             notify_listener->setTimeout (cur_timeout);

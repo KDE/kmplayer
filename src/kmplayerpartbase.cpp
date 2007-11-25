@@ -974,8 +974,11 @@ KDE_NO_EXPORT void Source::setSubtitle (int id) {
 
 void Source::reset () {
     if (m_document) {
-        //kdDebug() << "Source::first" << endl;
-        m_document->reset ();
+        kdDebug() << "Source::reset " << name () << endl;
+        NodePtr doc = m_document;
+        m_document = NULL;
+        doc->reset ();
+        doc->document ()->dispose ();
         m_player->updateTree ();
     }
     init ();
@@ -1040,7 +1043,7 @@ void Source::setTimeout (int ms) {
 }
 
 void Source::timerEvent (QTimerEvent * e) {
-    if (e->timerId () == m_doc_timer && m_document)
+    if (e->timerId () == m_doc_timer && m_document && m_document->active ())
         m_document->document ()->timer (); // will call setTimeout()
     else
         killTimer (e->timerId ());
@@ -1055,7 +1058,10 @@ void Source::stateElementChanged (Node *elm, Node::State os, Node::State ns) {
         if (m_current == m_document)
             emit startPlaying ();
     } else if (ns == Node::state_deactivated && elm == m_document) {
+        NodePtrW guard = elm;
         emit endOfPlayItems (); // played all items FIXME on jumps
+        if (!guard)
+            return;
     }
     if (elm->expose ()) {
         if (ns == Node::state_activated || ns == Node::state_deactivated)
