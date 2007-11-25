@@ -79,11 +79,16 @@ MediaManager::MediaManager (PartBase *player) : m_player (player) {
     if (!global_media)
         globalMediaDataDeleter.setObject (global_media, new GlobalMediaData);
     m_process_infos ["mplayer"] = new MPlayerProcessInfo (this);
-    m_process_infos ["xine"] = new XineProcessInfo (this);
+    XineProcessInfo *xpi = new XineProcessInfo (this);
+    m_process_infos ["xine"] = xpi;
     //m_process_infos ["gstreamer"] = new GStreamer (this, m_settings);, i18n ("&GStreamer")
 #ifdef HAVE_NSPR
     m_process_infos ["npp"] = new NppProcessInfo (this);
 #endif
+    m_record_infos ["mencoder"] = new MEncoderProcessInfo (this);
+    m_record_infos ["mplayerdumpstream"] = new MPlayerDumpProcessInfo (this);
+    m_record_infos ["ffmpeg"] = new FFMpegProcessInfo (this);
+    m_record_infos ["xine"] = xpi;
 }
 
 MediaManager::~MediaManager () {
@@ -95,9 +100,23 @@ MediaManager::~MediaManager () {
         kdDebug() << "~MediaManager " << *i << endl;
         delete *i;
     }
+    const ProcessList::iterator re = m_recorders.end ();
+    for (ProcessList::iterator i = m_recorders.begin ();
+            i != re;
+            i = m_recorders.begin ())
+    {
+        kdDebug() << "~MediaManager " << *i << endl;
+        delete *i;
+    }
     const ProcessInfoMap::iterator ie = m_process_infos.end ();
     for (ProcessInfoMap::iterator i = m_process_infos.begin (); i != ie; ++i)
+        if (!m_record_infos.contains (i.key ()))
+            delete i.data ();
+
+    const ProcessInfoMap::iterator rie = m_record_infos.end ();
+    for (ProcessInfoMap::iterator i = m_record_infos.begin (); i != rie; ++i)
         delete i.data ();
+
     if (m_media_objects.size ())
         kdError () << "~MediaManager media list not empty" << endl;
 }
@@ -106,12 +125,28 @@ MediaObject *MediaManager::createMedia (MediaType type, Node *node) {
     switch (type) {
         case Audio:
         case AudioVideo: {
-            if (!m_player->source()->authoriseUrl(node->mrl()->absolutePath ()))
+            RecordDocument *rec = id_node_record_document == node->id
+                ? convertNode <RecordDocument> (node)
+                : NULL;
+            if (!rec && !m_player->source()->authoriseUrl (
+                        node->mrl()->absolutePath ()))
                 return NULL;
+
             AudioVideoMedia *av = new AudioVideoMedia (this, node);
-            av->process = process (av);
-            av->process->setMediaObject (av);
-            av->viewer = static_cast <View *>(m_player->view ())->viewArea ()->createVideoWidget ();
+            if (rec) {
+                av->process = m_record_infos[rec->recorder]->create (m_player, av);
+                m_recorders.push_back (av->process);
+                kdDebug() << "Adding recorder " << endl;
+            } else {
+                av->process = m_process_infos[m_player->processName (
+                        av->mrl ())]->create (m_player, av);
+                m_processes.push_back (av->process);
+            }
+            av->process->media_object = av;
+            av->viewer = !rec || rec->has_video
+                ? m_player->viewWidget ()->viewArea ()->createVideoWidget ()
+                : NULL;
+
             if (av->process->state () <= IProcess::Ready)
                 av->process->ready ();
             return av;
@@ -128,23 +163,37 @@ static const QString statemap [] = {
     i18n ("Not Running"), i18n ("Ready"), i18n ("Buffering"), i18n ("Playing")
 };
 
-void MediaManager::stateChange(AudioVideoMedia *media,
+void MediaManager::stateChange (AudioVideoMedia *media,
         IProcess::State olds, IProcess::State news) {
     //p->viewer()->view()->controlPanel()->setPlaying(news > Process::Ready);
     kdDebug () << "processState " << statemap[olds] << " -> " << statemap[news] << endl;
     Mrl *mrl = media->mrl ();
-    if (!mrl ||!m_player->view ())
+    if (!mrl || !m_player->view ())
         return;
-    //m_player->updateStatus (i18n ("Player %1 %2").arg (p->name ()).arg (statemap[news]));
+    bool is_rec = id_node_record_document == mrl->id;
+    m_player->updateStatus (i18n ("Player %1 %2").arg (
+                media->process->process_info->name).arg (statemap[news]));
     if (IProcess::Playing == news) {
-        if (Element::state_deferred == mrl->state)
+        if (Element::state_deferred == mrl->state) {
+            media->ignore_pause = true;
             mrl->undefer ();
-        m_player->viewWidget ()->playingStart ();
-        if (m_player->view ()) {
-            if (media->viewer)
-                media->viewer->map ();
-            if (Mrl::SingleMode == mrl->view_mode)
-                m_player->viewWidget ()->viewArea ()->resizeEvent (NULL); // ugh
+            media->ignore_pause = false;
+        }
+        bool has_video = !is_rec;
+        if (is_rec) {
+            const ProcessList::iterator i = m_recorders.find (media->process);
+            if (i != m_recorders.end ())
+                m_player->startRecording ();
+            has_video = static_cast <RecordDocument *> (mrl)->has_video;
+        }
+        if (has_video) {
+            m_player->viewWidget ()->playingStart ();
+            if (m_player->view ()) {
+                if (media->viewer)
+                    media->viewer->map ();
+                if (Mrl::SingleMode == mrl->view_mode)
+                    m_player->viewWidget ()->viewArea ()->resizeEvent (NULL);
+            }
         }
     } else if (IProcess::NotRunning == news) {
         if (AudioVideoMedia::ask_delete == media->request) {
@@ -153,12 +202,10 @@ void MediaManager::stateChange(AudioVideoMedia *media,
             mrl->endOfFile ();
         }
     } else if (IProcess::Ready == news) {
-        if (olds > IProcess::Ready && mrl->unfinished ())
-            mrl->endOfFile ();
         if (AudioVideoMedia::ask_play == media->request) {
             playAudioVideo (media);
         } else {
-            if (Mrl::SingleMode == mrl->view_mode) {
+            if (!is_rec && Mrl::SingleMode == mrl->view_mode) {
                 ProcessList::iterator e = m_processes.end ();
                 for (ProcessList::iterator i = m_processes.begin(); i != e; ++i)
                     if (*i != media->process &&
@@ -167,10 +214,15 @@ void MediaManager::stateChange(AudioVideoMedia *media,
             }
             if (AudioVideoMedia::ask_delete == media->request)
                 delete media;
+            else if (olds > IProcess::Ready && mrl->unfinished ())
+                mrl->endOfFile ();
         }
     } else if (IProcess::Buffering == news) {
-        if (mrl->view_mode != Mrl::SingleMode)
+        if (mrl->view_mode != Mrl::SingleMode) {
+            media->ignore_pause = true;
             mrl->defer (); // paused the SMIL
+            media->ignore_pause = false;
+        }
     }
 }
 
@@ -178,7 +230,8 @@ void MediaManager::playAudioVideo (AudioVideoMedia *media) {
     Mrl *mrl = media->mrl ();
     if (!mrl ||!m_player->view ())
         return;
-    if (Mrl::SingleMode == mrl->view_mode) {
+    if (id_node_record_document != mrl->id &&
+            Mrl::SingleMode == mrl->view_mode) {
         ProcessList::iterator e = m_processes.end ();
         for (ProcessList::iterator i = m_processes.begin(); i != e; ++i)
         {
@@ -190,20 +243,10 @@ void MediaManager::playAudioVideo (AudioVideoMedia *media) {
     media->process->play ();
 }
 
-IProcess *MediaManager::process (AudioVideoMedia *media) {
-    QString p = m_player->processName (media->mrl ());
-    if (!p.isEmpty ()) {
-        IProcess *proc = m_process_infos[p]->create (
-                m_player, m_process_infos[p], media);
-        m_processes.push_back (proc);
-        return proc;
-    }
-    return NULL;
-}
-
 void MediaManager::processDestroyed (IProcess *process) {
     kdDebug() << "processDestroyed " << process << endl;
     m_processes.remove (process);
+    m_recorders.remove (process);
 }
 
 //------------------------%<----------------------------------------------------
@@ -374,15 +417,17 @@ KDE_NO_EXPORT void MediaObject::slotMimetype (KIO::Job *, const QString & m) {
 
 //------------------------%<----------------------------------------------------
 
-IProcess::IProcess () :
+IProcess::IProcess (ProcessInfo *pinfo) :
     media_object (NULL),
+    process_info (pinfo),
     m_state (NotRunning) {}
 
 AudioVideoMedia::AudioVideoMedia (MediaManager *manager, Node *node)
  : MediaObject (manager, node),
    process (NULL),
    viewer (NULL),
-   request (ask_nothing) {
+   request (ask_nothing),
+   ignore_pause (false) {
     kdDebug() << "AudioVideoMedia::AudioVideoMedia" << endl;
 }
 
@@ -419,12 +464,13 @@ void AudioVideoMedia::stop () {
 }
 
 void AudioVideoMedia::pause () {
-    if (process)
+    if (!ignore_pause && process)
         process->pause ();
 }
 
 void AudioVideoMedia::unpause () {
-    process->pause ();
+    if (!ignore_pause && process)
+        process->pause ();
 }
 
 void AudioVideoMedia::destroy () {

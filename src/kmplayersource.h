@@ -74,7 +74,7 @@ public:
     KDE_NO_EXPORT const QString & options () const { return m_options; }
     KDE_NO_EXPORT const QString & recordCmd () const { return m_recordcmd; }
     KDE_NO_EXPORT const QString & tuner () const { return m_tuner; }
-    KDE_NO_EXPORT NodePtr current () const { return m_current; }
+    KDE_NO_EXPORT Mrl *current() { return m_current ? m_current->mrl() : NULL;}
     QString plugin (const QString &mime) const;
     virtual NodePtr document ();
     virtual NodePtr root ();
@@ -103,8 +103,6 @@ public:
 signals:
     void startPlaying ();
     void stopPlaying ();
-    void startRecording ();
-    void stopRecording ();
     /**
      * Signal for notifying this source is at the end of play items
      */

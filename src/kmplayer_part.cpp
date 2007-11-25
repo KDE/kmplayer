@@ -326,7 +326,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     bool group_member = !m_group.isEmpty () && m_group != QString::fromLatin1("_unique") && m_features != Feat_Unknown;
     if (!group_member || m_features & Feat_Viewer) {
         // not part of a group or we're the viewer
-        setRecorder ("mencoder");
         connectPanel (m_view->controlPanel ());
         if (m_features & Feat_StatusBar) {
             last_time_left = 0;

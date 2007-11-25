@@ -132,7 +132,6 @@ public:
 
     /* Changes the backend process */
     QString processName (Mrl *mrl);
-    void setRecorder (const char *);
 
     /* Changes the source,
      * calls init() and reschedules an activate() on the source
@@ -143,9 +142,7 @@ public:
     void connectInfoPanel (InfoWindow * infopanel);
     void connectSource (Source * old_source, Source * source);
     MediaManager *mediaManager () const { return m_media_manager; }
-    Process * recorder () const { return m_recorder; }
     Source * source () const { return m_source; }
-    QMap <QString, Process *> & recorders () { return m_recorders; }
     QMap <QString, Source *> & sources () { return m_sources; }
     KConfig * config () const { return m_config; }
     bool mayResize () const { return !m_noresize; }
@@ -161,6 +158,8 @@ public:
     void changeURL (const QString & url);
     void updateTree (bool full=true, bool force=false);
     void setLanguages (const QStringList & alang, const QStringList & slang);
+    void startRecording ();
+    void stopRecording ();
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool openURL (const KURL::List & urls);
@@ -207,6 +206,7 @@ signals:
     void audioIsSelected (int id);
     void subtitleIsSelected (int id);
     void positioned (int pos, int length);
+    void recording (bool);
 protected:
     bool openFile();
     virtual void timerEvent (QTimerEvent *);
@@ -224,8 +224,6 @@ protected slots:
     void playListItemExecuted (QListViewItem *);
     virtual void playingStarted ();
     virtual void playingStopped ();
-    void recordingStarted ();
-    void recordingStopped ();
     void settingsChanged ();
     void audioSelected (int);
     void subtitleSelected (int);
@@ -235,9 +233,7 @@ protected:
     QMap <QString, QString> temp_backends;
     Settings *m_settings;
     MediaManager *m_media_manager;
-    Process * m_recorder;
     Source * m_source;
-    QMap <QString, Process *> m_recorders;
     QMap <QString, Source *> m_sources;
     BookmarkManager * m_bookmark_manager;
     BookmarkOwner * m_bookmark_owner;
@@ -245,7 +241,6 @@ protected:
 #ifdef HAVE_DBUS
     QString m_service;
 #endif
-    int m_record_timer;
     int m_update_tree_timer;
     bool m_noresize : 1;
     bool m_auto_controls : 1;

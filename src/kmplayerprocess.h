@@ -57,22 +57,6 @@ class XMLPreferencesPage;
 class XMLPreferencesFrame;
 
 
-class KMPLAYER_EXPORT ProcessInfo {
-public:
-    ProcessInfo (const char *nm, const QString &lbl, const char **supported,
-            MediaManager *, PreferencesPage *);
-    virtual ~ProcessInfo ();
-
-    bool supports (const char *source) const;
-    virtual IProcess *create (PartBase*, ProcessInfo*, AudioVideoMedia*) = 0;
-
-    const char *name;
-    QString label;
-    const char **supported_sources;
-    MediaManager *manager;
-    PreferencesPage *config_page;
-};
-
 /*
  * Base class for all backend processes
  */
@@ -96,7 +80,6 @@ public:
     Mrl *mrl () const;
 signals:
     void grabReady (const QString & path);
-    void finished ();
 public slots:
     virtual bool ready ();
     virtual bool play ();
@@ -120,7 +103,6 @@ protected:
     virtual bool deMediafiedPlay ();
     virtual void terminateJobs ();
 
-    ProcessInfo *process_info;
     Source * m_source;
     Settings * m_settings;
     State m_old_state;
@@ -158,7 +140,7 @@ private slots:
 class KMPLAYER_NO_EXPORT MPlayerProcessInfo : public ProcessInfo {
 public:
     MPlayerProcessInfo (MediaManager *);
-    virtual IProcess *create (PartBase*, ProcessInfo*, AudioVideoMedia*);
+    virtual IProcess *create (PartBase*, AudioVideoMedia*);
 };
 
 class KDE_EXPORT MPlayer : public MPlayerBase {
@@ -236,18 +218,31 @@ private:
 /*
  * Base class for all recorders
  */
-class KMPLAYER_EXPORT Recorder {
+class KMPLAYER_NO_EXPORT RecordDocument : public Document {
 public:
-    KDE_NO_EXPORT const KURL & recordURL () const { return m_recordurl; }
-    KDE_NO_EXPORT void setURL (const KURL & url) { m_recordurl = url; }
-protected:
-    KURL m_recordurl;
+    RecordDocument (const QString &url, const QString &rurl, const QString &rec,
+                    bool video, PlayListNotify *notify);
+
+    virtual void begin ();
+    virtual void endOfFile ();
+    virtual void deactivate ();
+
+    QString record_file;
+    QString recorder;
+    TimerInfoPtrW timer;
+    bool has_video;
 };
 
 /*
  * MEncoder recorder
  */
-class MEncoder : public MPlayerBase, public Recorder {
+class KMPLAYER_NO_EXPORT MEncoderProcessInfo : public ProcessInfo {
+public:
+    MEncoderProcessInfo (MediaManager *);
+    virtual IProcess *create (PartBase*, AudioVideoMedia*);
+};
+
+class MEncoder : public MPlayerBase {
     Q_OBJECT
 public:
     MEncoder (QObject *parent, ProcessInfo *pinfo, Settings *settings);
@@ -261,11 +256,16 @@ public slots:
 /*
  * MPlayer recorder, runs 'mplayer -dumpstream'
  */
-class KMPLAYER_NO_EXPORT MPlayerDumpstream
-  : public MPlayerBase, public Recorder {
+class KMPLAYER_NO_EXPORT MPlayerDumpProcessInfo : public ProcessInfo {
+public:
+    MPlayerDumpProcessInfo (MediaManager *);
+    virtual IProcess *create (PartBase*, AudioVideoMedia*);
+};
+
+class KMPLAYER_NO_EXPORT MPlayerDumpstream : public MPlayerBase {
     Q_OBJECT
 public:
-    MPlayerDumpstream (QObject * parent, Settings * settings);
+    MPlayerDumpstream (QObject *parent, ProcessInfo *pinfo, Settings *settings);
     ~MPlayerDumpstream ();
     virtual void init ();
     virtual bool deMediafiedPlay ();
@@ -287,6 +287,7 @@ public:
 
     QString dcopName ();
     virtual bool startBackend () = 0;
+    virtual void quitProcesses ();
     void stopBackend ();
     void backendStarted (QCString dcopname, QByteArray & data);
 
@@ -402,12 +403,12 @@ private:
 class KMPLAYER_NO_EXPORT XineProcessInfo : public CallbackProcessInfo {
 public:
     XineProcessInfo (MediaManager *);
-    virtual IProcess *create (PartBase*, ProcessInfo*, AudioVideoMedia*);
+    virtual IProcess *create (PartBase*, AudioVideoMedia*);
 
     virtual bool startBackend ();
 };
 
-class KMPLAYER_NO_EXPORT Xine : public CallbackProcess, public Recorder {
+class KMPLAYER_NO_EXPORT Xine : public CallbackProcess {
     Q_OBJECT
 public:
     Xine (QObject *parent, ProcessInfo*, Settings *settings);
@@ -432,10 +433,16 @@ public slots:
 /*
  * ffmpeg backend recorder
  */
-class KMPLAYER_EXPORT FFMpeg : public Process, public Recorder {
+class KMPLAYER_NO_EXPORT FFMpegProcessInfo : public ProcessInfo {
+public:
+    FFMpegProcessInfo (MediaManager *);
+    virtual IProcess *create (PartBase*, AudioVideoMedia*);
+};
+
+class KMPLAYER_EXPORT FFMpeg : public Process {
     Q_OBJECT
 public:
-    FFMpeg (QObject * parent, Settings * settings);
+    FFMpeg (QObject *parent, ProcessInfo *pinfo, Settings *settings);
     ~FFMpeg ();
     virtual void init ();
     virtual bool deMediafiedPlay ();
@@ -487,7 +494,7 @@ private slots:
 class KMPLAYER_NO_EXPORT NppProcessInfo : public ProcessInfo {
 public:
     NppProcessInfo (MediaManager *);
-    virtual IProcess *create (PartBase*, ProcessInfo*, AudioVideoMedia*);
+    virtual IProcess *create (PartBase*, AudioVideoMedia*);
 };
 
 class KMPLAYER_NO_EXPORT NpPlayer : public Process {
@@ -498,7 +505,7 @@ public:
 
     static const char *name;
     static const char *supports [];
-    static IProcess *create (PartBase *, ProcessInfo *, AudioVideoMedia *);
+    static IProcess *create (PartBase *, AudioVideoMedia *);
 
     virtual void init ();
     virtual bool deMediafiedPlay ();

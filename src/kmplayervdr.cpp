@@ -744,10 +744,10 @@ static const char * xv_supported [] = {
 XvProcessInfo::XvProcessInfo (MediaManager *mgr)
  : CallbackProcessInfo ("xvideo", i18n ("X&Video"), xv_supported, mgr, NULL) {}
 
-IProcess *XvProcessInfo::create (PartBase *part, ProcessInfo *pinfo, AudioVideoMedia *media) {
-    XVideo *x = new XVideo (part, pinfo, part->settings ());
+IProcess *XvProcessInfo::create (PartBase *part, AudioVideoMedia *media) {
+    XVideo *x = new XVideo (part, this, part->settings ());
     x->setSource (part->source ());
-    x->setMediaObject (media);
+    x->media_object = media;
     part->processCreated (x);
     return x;
 }

@@ -54,8 +54,8 @@ struct XineProgressEvent : public QEvent {
     unsigned long wid;
 };
 
-struct XineFinishedEvent : public QEvent {
-    XineFinishedEvent (unsigned long wid);
+struct XineEvent : public QEvent {
+    XineEvent (int id, unsigned long wid);
     unsigned long wid;
 };
 

@@ -47,8 +47,10 @@ class IViewer;
 class PartBase;
 class Process;
 class ProcessInfo;
+class MediaManager;
 class Viewer;
 class AudioVideoMedia;
+class PreferencesPage;
 
 
 class KMPLAYER_EXPORT IProcess {
@@ -75,16 +77,33 @@ public:
     virtual bool running () const = 0;
 
     State state () const { return m_state; }
-    void setMediaObject (AudioVideoMedia *media) { media_object = media; }
+    AudioVideoMedia *media_object;
+    ProcessInfo *process_info;
 
 protected:
-    IProcess ();
+    IProcess (ProcessInfo *pinfo);
 
-    AudioVideoMedia *media_object;
     State m_state;
 
 private:
     IProcess (const IViewer &);
+};
+
+class KMPLAYER_EXPORT ProcessInfo {
+public:
+    ProcessInfo (const char *nm, const QString &lbl, const char **supported,
+            MediaManager *, PreferencesPage *);
+    virtual ~ProcessInfo ();
+
+    bool supports (const char *source) const;
+    virtual IProcess *create (PartBase*, AudioVideoMedia*) = 0;
+    virtual void quitProcesses () {};
+
+    const char *name;
+    QString label;
+    const char **supported_sources;
+    MediaManager *manager;
+    PreferencesPage *config_page;
 };
 
 /*
@@ -106,10 +125,11 @@ public:
     void stateChange (AudioVideoMedia *m, IProcess::State o, IProcess::State n);
     void playAudioVideo (AudioVideoMedia *m);
 
-    IProcess *process (AudioVideoMedia *media);
     void processDestroyed (IProcess *process);
     ProcessInfoMap &processInfos () { return m_process_infos; }
     ProcessList &processes () { return m_processes; }
+    ProcessInfoMap &recorderInfos () { return m_record_infos; }
+    ProcessList &recorders () { return m_recorders; }
     MediaList &medias () { return m_media_objects; }
     PartBase *player () const { return m_player; }
 
@@ -117,6 +137,8 @@ private:
     MediaList m_media_objects;
     ProcessInfoMap m_process_infos;
     ProcessList m_processes;
+    ProcessInfoMap m_record_infos;
+    ProcessList m_recorders;
     PartBase *m_player;
 };
 
@@ -232,6 +254,7 @@ public:
     IProcess *process;
     IViewer *viewer;
     Request request;
+    bool ignore_pause;
 
 protected:
     ~AudioVideoMedia ();

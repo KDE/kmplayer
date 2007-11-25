@@ -460,6 +460,7 @@ protected:
 ITEM_AS_POINTER(KMPlayer::Node)
 
 const short id_node_document = 1;
+const short id_node_record_document = 2;
 const short id_node_text = 5;
 const short id_node_cdata = 6;
 

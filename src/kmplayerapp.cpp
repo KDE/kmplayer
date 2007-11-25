@@ -64,7 +64,6 @@
 #include "viewarea.h"
 #include "kmplayercontrolpanel.h"
 #include "kmplayerpartbase.h"
-#include "kmplayerprocess.h"
 #include "kmplayerappsource.h"
 #include "kmplayertvsource.h"
 #include "kmplayerbroadcast.h"
@@ -517,7 +516,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp(QWidget* , const char* name)
     m_player->init (actionCollection ());
     m_player->mediaManager ()->processInfos () ["xvideo"] =
         new XvProcessInfo (m_player->mediaManager ());
-    m_player->setRecorder ("mencoder");
     ListsSource * lstsrc = new ListsSource (m_player);
     m_player->sources () ["listssource"] = lstsrc;
     m_player->sources () ["dvdsource"] = new ::KMPlayerDVDSource(this, m_dvdmenu);

@@ -498,9 +498,12 @@ KDE_NO_EXPORT void Runtime::started () {
     NodePtr e = element; // element is weak
     SMIL::TimedMrl * tm = convertNode <SMIL::TimedMrl> (e);
     if (tm) {
-        if (durTime ().offset > 0 && durTime ().durval == dur_timer)
+        if (durTime ().offset > 0 && durTime ().durval == dur_timer) {
+            if (duration_timer)
+                tm->document ()->cancelTimer (duration_timer);
             duration_timer = element->document ()->setTimeout
                 (element, 100 * durTime ().offset, dur_timer_id);
+        }
         // kdDebug () << "Runtime::started set dur timer " << durTime ().offset << endl;
         tm->propagateEvent (new Event (event_started));
         tm->begin ();
@@ -1483,6 +1486,7 @@ KDE_NO_EXPORT void SMIL::Smil::activate () {
 KDE_NO_EXPORT void SMIL::Smil::deactivate () {
     if (layout_node)
         convertNode <SMIL::Layout> (layout_node)->repaint ();
+    state = state_deactivated;
     if (layout_node)
         convertNode <SMIL::Layout> (layout_node)->region_surface = NULL;
     Mrl::getSurface(0L);
@@ -1705,8 +1709,8 @@ KDE_NO_EXPORT void SMIL::Layout::updateDimensions () {
 
 KDE_NO_EXPORT Surface *SMIL::Layout::surface () {
     if (!region_surface) {
-        SMIL::Smil * s = Smil::findSmilNode (this);
-        if (s) {
+        SMIL::Smil *s = Smil::findSmilNode (this);
+        if (s && s->active ()) {
             SMIL::RegionBase *rl = convertNode <SMIL::RootLayout> (rootLayout);
             region_surface = s->getSurface (s);
             w = s->width;
@@ -2777,7 +2781,7 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
 KDE_NO_EXPORT void SMIL::MediaType::defer () {
     if (media_object) {
         setState (state_deferred);
-        media_object->pause ();
+        //media_object->pause ();
         if (unfinished ())
             postpone_lock = document ()->postpone ();
     }

@@ -59,7 +59,6 @@
 #include "viewarea.h"
 #include "kmplayercontrolpanel.h"
 #include "kmplayerconfig.h"
-#include "kmplayerprocess.h"
 #include "kmplayer_smil.h"
 #include "mediaobject.h"
 
@@ -113,20 +112,14 @@ PartBase::PartBase (QWidget * wparent, const char *wname,
    m_view (new View (wparent, wname ? wname : "kde_kmplayer_view")),
    m_settings (new Settings (this, config)),
    m_media_manager (new MediaManager (this)),
-   m_recorder (0L),
    m_source (0L),
    m_bookmark_menu (0L),
-   m_record_timer (0),
    m_update_tree_timer (0),
    m_noresize (false),
    m_auto_controls (true),
    m_bPosSliderPressed (false),
    m_in_update_tree (false)
 {
-    m_recorders ["mencoder"] = new MEncoder (this, NULL, m_settings);
-    m_recorders ["mplayerdumpstream"] = new MPlayerDumpstream(this, m_settings);
-    m_recorders ["ffmpeg"] = new FFMpeg (this, m_settings);
-    //m_recorders ["xine"] = xine;
     m_sources ["urlsource"] = new URLSource (this);
 
     QString bmfile = locate ("data", "kmplayer/bookmarks.xml");
@@ -336,15 +329,6 @@ void PartBase::processCreated (Process*) {}
     emit processChanged (name);
 }*/
 
-void PartBase::setRecorder (const char * name) {
-    Process * recorder = name ? m_recorders [name] : 0L;
-    if (m_recorder == recorder)
-        return;
-    if (m_recorder)
-        m_recorder->quit ();
-    m_recorder = recorder;
-}
-
 KDE_NO_EXPORT void PartBase::slotPlayerMenu (int id) {
     /*bool playing = m_process->playing ();
     const char * srcname = m_source->name ();
@@ -419,8 +403,6 @@ void PartBase::setSource (Source * _source) {
             m_view->reset ();
             emit infoUpdated (QString ());
         }
-        disconnect (m_source, SIGNAL (startRecording ()),
-                    this, SLOT (recordingStarted ()));
         disconnect (this, SIGNAL (audioIsSelected (int)),
                     m_source, SLOT (setAudioLang (int)));
         disconnect (this, SIGNAL (subtitleIsSelected (int)),
@@ -437,7 +419,6 @@ void PartBase::setSource (Source * _source) {
     }
     m_source = _source;
     connectSource (old_source, m_source);
-    connect (m_source, SIGNAL(startRecording()), this,SLOT(recordingStarted()));
     connect (this, SIGNAL (audioIsSelected (int)),
              m_source, SLOT (setAudioLang (int)));
     connect (this, SIGNAL (subtitleIsSelected (int)),
@@ -507,36 +488,8 @@ void PartBase::keepMovieAspect (bool b) {
         m_view->setKeepSizeRatio (b);
 }
 
-void PartBase::recordingStarted () {
-    if (m_settings->replayoption == Settings::ReplayAfter)
-        m_record_timer = startTimer (1000 * m_settings->replaytime);
-}
-
-void PartBase::recordingStopped () {
-    killTimer (m_record_timer);
-    m_record_timer = 0;
-    Recorder * rec = dynamic_cast <Recorder*> (m_recorder);
-    if (rec) {
-        if (m_settings->replayoption == Settings::ReplayFinished ||
-             (m_settings->replayoption == Settings::ReplayAfter && !playing ()))
-            openURL (rec->recordURL ());
-        rec->setURL (KURL ());
-    }
-    setRecorder ("mencoder"); //FIXME see PartBase::record() checking playing()
-}
-
 void PartBase::timerEvent (QTimerEvent * e) {
-    if (e->timerId () == m_record_timer) {
-        kdDebug () << "record timer event" << (m_recorder->running () && !playing ()) << endl;
-        m_record_timer = 0;
-        if (m_recorder->running () && !playing ()) {
-            Recorder * rec = dynamic_cast <Recorder*> (m_recorder);
-            if (rec) {
-                openURL (rec->recordURL ());
-                rec->setURL (KURL ());
-            }
-        }
-    } else if (e->timerId () == m_update_tree_timer) {
+    if (e->timerId () == m_update_tree_timer) {
         m_update_tree_timer = 0;
         updateTree (m_update_tree_full, true);
     }
@@ -701,10 +654,25 @@ KDE_NO_EXPORT void PartBase::subtitleSelected (int id) {
     emit subtitleIsSelected (id);
 }
 
+void PartBase::startRecording () {
+    m_view->controlPanel ()->setRecording (true);
+    emit recording (true);
+}
+
+void PartBase::stopRecording () {
+    if (m_view) {
+        m_view->controlPanel ()->setRecording (false);
+        emit recording (false);
+    }
+}
+
 void PartBase::record () {
     if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
-    if (m_recorder->running ()) {
-        m_recorder->stop ();
+    if (!m_view->controlPanel()->button(ControlPanel::button_record)->isOn ()) {
+        MediaManager::ProcessList &r = m_media_manager->recorders ();
+        const MediaManager::ProcessList::const_iterator e = r.end ();
+        for (MediaManager::ProcessList::const_iterator i = r.begin(); i!=e; ++i)
+            (*i)->quit ();
     } else {
         m_settings->show  ("RecordPage");
         m_view->controlPanel ()->setRecording (false);
@@ -760,6 +728,10 @@ void PartBase::stop () {
     }
     if (m_source)
         m_source->reset ();
+    MediaManager::ProcessInfoMap &pi = m_media_manager->processInfos ();
+    const MediaManager::ProcessInfoMap::const_iterator ie = pi.end();
+    for (MediaManager::ProcessInfoMap::const_iterator i = pi.begin(); i != ie; ++i)
+        i.data ()->quitProcesses ();
     MediaManager::ProcessList &processes = m_media_manager->processes ();
     const MediaManager::ProcessList::const_iterator e = processes.end();
     for (MediaManager::ProcessList::const_iterator i = processes.begin(); i != e; ++i)
@@ -770,6 +742,7 @@ void PartBase::stop () {
             b->toggle ();
         m_view->controlPanel ()->setPlaying (false);
         setLoaded (100);
+        updateStatus (i18n ("Ready"));
     }
 }
 
@@ -1074,11 +1047,13 @@ void Source::timerEvent (QTimerEvent * e) {
 }
 
 void Source::stateElementChanged (Node *elm, Node::State os, Node::State ns) {
-    //kdDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isPlayable:" << (m_current && m_current->isPlayable ()) << " elm==linkNode:" << (m_current && elm == m_current->mrl ()->linkNode ()) << " p state:" << m_player->process ()->state () << endl;
+    //kdDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isPlayable:" << (m_current && m_current->isPlayable ()) << " elm==linkNode:" << (m_current && elm == m_current->mrl ()->linkNode ()) << endl;
     if (ns == Node::state_activated &&
             elm->mrl () &&
             Mrl::WindowMode != elm->mrl ()->view_mode) {
         m_current = elm;
+        if (m_current == m_document)
+            emit startPlaying ();
     } else if (ns == Node::state_deactivated && elm == m_document) {
         emit endOfPlayItems (); // played all items FIXME on jumps
     }

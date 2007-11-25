@@ -139,7 +139,7 @@ static void killProcess (KProcess *process, QWidget *widget, bool group) {
 
 Process::Process (QObject *parent, ProcessInfo *pinfo, Settings *settings, const char * n)
  : QObject (parent, n),
-   process_info (pinfo),
+   IProcess (pinfo),
    m_source (0L),
    m_settings (settings),
    m_old_state (IProcess::NotRunning),
@@ -243,8 +243,6 @@ KDE_NO_EXPORT void Process::rescheduledStateChanged () {
     kdDebug() << "Process::rescheduledStateChanged " << media_object << endl;
     if (media_object) {
         process_info->manager->stateChange (media_object, old_state, m_state);
-        if (old_state > IProcess::Ready && m_state == IProcess::Ready)
-            emit finished ();
     } else {
         if (m_state > IProcess::Ready)
             kdError() << "Process running, mrl disappeared" << endl;
@@ -307,6 +305,39 @@ View *Process::view () const {
 
 //-----------------------------------------------------------------------------
 
+RecordDocument::RecordDocument (const QString &url, const QString &rurl,
+        const QString &rec, bool video, PlayListNotify *n)
+ : Document (url, n),
+   record_file (rurl),
+   recorder (rec),
+   has_video (video) {
+    id = id_node_record_document;
+}
+
+void RecordDocument::begin () {
+    media_object = notify_listener->mediaManager ()->createMedia (
+            MediaManager::AudioVideo, this);
+    media_object->play ();
+}
+
+void RecordDocument::endOfFile () {
+    deactivate ();
+}
+
+void RecordDocument::deactivate () {
+    state = state_deactivated;
+    notify_listener->mediaManager ()->player ()->stopRecording ();
+    Document::deactivate ();
+}
+
+static RecordDocument *recordDocument (AudioVideoMedia *media_object) {
+    Mrl *mrl = media_object ? media_object->mrl () : NULL;
+    return mrl && id_node_record_document == mrl->id
+        ? static_cast <RecordDocument *> (mrl) : NULL;
+}
+
+//-----------------------------------------------------------------------------
+
 static bool proxyForURL (const KURL& url, QString& proxy) {
     KProtocolManager::slaveProtocol (url, proxy);
     return !proxy.isNull ();
@@ -354,6 +385,7 @@ KDE_NO_EXPORT void MPlayerBase::stop () {
 
 KDE_NO_EXPORT void MPlayerBase::quit () {
     if (running ()) {
+        kdDebug() << "PlayerBase::quit" << endl;
         stop ();
         disconnect (m_process, SIGNAL (processExited (KProcess *)),
                 this, SLOT (processStopped (KProcess *)));
@@ -404,11 +436,10 @@ MPlayerProcessInfo::MPlayerProcessInfo (MediaManager *mgr)
  : ProcessInfo ("mplayer", i18n ("&MPlayer"), mplayer_supports,
          mgr, new MPlayerPreferencesPage ()) {}
 
-IProcess *MPlayerProcessInfo::create (PartBase *part, ProcessInfo *pinfo,
-        AudioVideoMedia *media) {
-    MPlayer *m = new MPlayer (part, pinfo, part->settings ());
+IProcess *MPlayerProcessInfo::create (PartBase *part, AudioVideoMedia *media) {
+    MPlayer *m = new MPlayer (part, this, part->settings ());
     m->setSource (part->source ());
-    m->setMediaObject (media);
+    m->media_object = media;
     part->processCreated (m);
     return m;
 }
@@ -1039,8 +1070,21 @@ KDE_NO_EXPORT QFrame * MPlayerPreferencesPage::prefPage (QWidget * parent) {
 //-----------------------------------------------------------------------------
 
 static const char * mencoder_supports [] = {
-    "dvdsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", "audiocdsource", 0L
+    "dvdsource", "pipesource", "tvscanner", "tvsource", "urlsource",
+    "vcdsource", "audiocdsource", NULL
 };
+
+MEncoderProcessInfo::MEncoderProcessInfo (MediaManager *mgr)
+ : ProcessInfo ("mencoder", i18n ("M&Encoder"), mencoder_supports,
+         mgr, NULL) {}
+
+IProcess *MEncoderProcessInfo::create (PartBase *part, AudioVideoMedia *media) {
+    MEncoder *m = new MEncoder (part, this, part->settings ());
+    m->setSource (part->source ());
+    m->media_object = media;
+    part->processCreated (m);
+    return m;
+}
 
 KDE_NO_CDTOR_EXPORT
 MEncoder::MEncoder (QObject * parent, ProcessInfo *pinfo, Settings * settings)
@@ -1055,17 +1099,21 @@ KDE_NO_EXPORT void MEncoder::init () {
 bool MEncoder::deMediafiedPlay () {
     bool success = false;
     stop ();
+    RecordDocument *rd = recordDocument (media_object);
+    if (!rd)
+        return false;
     initProcess ();
     KURL url (m_url);
-    m_source->setPosition (0);
     QString args;
-    m_use_slave = m_source->pipeCmd ().isEmpty ();
-    if (!m_use_slave)
-        args = m_source->pipeCmd () + QString (" | ");
+    m_use_slave = m_source ? m_source->pipeCmd ().isEmpty () : true;
+    //if (!m_use_slave)
+    //    args = m_source->pipeCmd () + QString (" | ");
     QString margs = m_settings->mencoderarguments;
     if (m_settings->recordcopy)
         margs = QString ("-oac copy -ovc copy");
-    args += QString ("mencoder ") + margs + ' ' + m_source->recordCmd ();
+    args += QString ("mencoder ") + margs;
+    if (m_source)
+        args += + ' ' + m_source->recordCmd ();
     // FIXME if (m_player->source () == source) // ugly
     //    m_player->stop ();
     QString myurl = url.isLocalFile () ? getPath (url) : url.url ();
@@ -1080,10 +1128,12 @@ bool MEncoder::deMediafiedPlay () {
         else
             args += ' ' + KProcess::quote (QString (QFile::encodeName (myurl)));
     }
-    QString outurl = KProcess::quote (QString (QFile::encodeName (m_recordurl.isLocalFile () ? getPath (m_recordurl) : m_recordurl.url ())));
+    KURL out (rd->record_file);
+    QString outurl = KProcess::quote (QString (QFile::encodeName (
+                    out.isLocalFile () ? getPath (out) : out.url ())));
     kdDebug () << args << " -o " << outurl << endl;
     *m_process << args << " -o " << outurl;
-    m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
+    m_process->start (KProcess::NotifyOnExit, KProcess::All);
     success = m_process->isRunning ();
     if (success)
         setState (IProcess::Playing);
@@ -1092,7 +1142,7 @@ bool MEncoder::deMediafiedPlay () {
 
 KDE_NO_EXPORT void MEncoder::stop () {
     terminateJobs ();
-    if (!m_source || !m_process || !m_process->isRunning ())
+    if (!m_process || !m_process->isRunning ())
         return;
     kdDebug () << "MEncoder::stop ()" << endl;
     if (m_use_slave)
@@ -1106,9 +1156,21 @@ static const char * mplayerdump_supports [] = {
     "dvdsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", "audiocdsource", 0L
 };
 
+MPlayerDumpProcessInfo::MPlayerDumpProcessInfo (MediaManager *mgr)
+ : ProcessInfo ("mplayerdumpstream", i18n ("&MPlayerDumpstream"),
+         mplayerdump_supports, mgr, NULL) {}
+
+IProcess *MPlayerDumpProcessInfo::create (PartBase *p, AudioVideoMedia *media) {
+    MPlayerDumpstream *m = new MPlayerDumpstream (p, this, p->settings ());
+    m->setSource (p->source ());
+    m->media_object = media;
+    p->processCreated (m);
+    return m;
+}
+
 KDE_NO_CDTOR_EXPORT
-MPlayerDumpstream::MPlayerDumpstream (QObject * parent, Settings * settings)
- : MPlayerBase (parent, NULL, settings, "mplayerdumpstream") {}
+MPlayerDumpstream::MPlayerDumpstream (QObject *p, ProcessInfo *pi, Settings *s)
+ : MPlayerBase (p, pi, s, "mplayerdumpstream") {}
 
 KDE_NO_CDTOR_EXPORT MPlayerDumpstream::~MPlayerDumpstream () {
 }
@@ -1119,11 +1181,13 @@ KDE_NO_EXPORT void MPlayerDumpstream::init () {
 bool MPlayerDumpstream::deMediafiedPlay () {
     bool success = false;
     stop ();
+    RecordDocument *rd = recordDocument (media_object);
+    if (!rd)
+        return false;
     initProcess ();
     KURL url (m_url);
-    m_source->setPosition (0);
     QString args;
-    m_use_slave = m_source->pipeCmd ().isEmpty ();
+    m_use_slave = m_source ? m_source->pipeCmd ().isEmpty () : true;
     if (!m_use_slave)
         args = m_source->pipeCmd () + QString (" | ");
     args += QString ("mplayer ") + m_source->recordCmd ();
@@ -1141,7 +1205,9 @@ bool MPlayerDumpstream::deMediafiedPlay () {
         else
             args += ' ' + KProcess::quote (QString (QFile::encodeName (myurl)));
     }
-    QString outurl = KProcess::quote (QString (QFile::encodeName (m_recordurl.isLocalFile () ? getPath (m_recordurl) : m_recordurl.url ())));
+    KURL out (rd->record_file);
+    QString outurl = KProcess::quote (QString (QFile::encodeName (
+                    out.isLocalFile () ? getPath (out) : out.url ())));
     kdDebug () << args << " -dumpstream -dumpfile " << outurl << endl;
     *m_process << args << " -dumpstream -dumpfile " << outurl;
     m_process->start (KProcess::NotifyOnExit, KProcess::NoCommunication);
@@ -1180,6 +1246,7 @@ CallbackProcess *Callback::process (unsigned long id) {
             if (av->viewer && av->viewer->windowHandle () == id)
                 return static_cast <CallbackProcess *> (av->process);
         }
+    kdWarning() << "process " << id << " not found" << kdBacktrace() << endl;
     return NULL;
 }
 
@@ -1349,9 +1416,8 @@ KDE_NO_EXPORT void CallbackProcessInfo::processStopped (KProcess *) {
 
     const MediaManager::ProcessList::iterator e = pl.end ();
     for (MediaManager::ProcessList::iterator i = pl.begin (); i != e; ++i) {
-        Process *proc = static_cast <Process *> (*i);
-        if (!strcmp (ProcessInfo::name, proc->name ()))
-             static_cast <CallbackProcess *>(proc)->setState (
+        if (this == (*i)->process_info)
+             static_cast <CallbackProcess *>(*i)->setState (
                      IProcess::NotRunning);
     }
     manager->player ()->updateInfo (QString ());
@@ -1363,6 +1429,10 @@ KDE_NO_EXPORT void CallbackProcessInfo::processStopped (KProcess *) {
         m_send_config = send_new; // we failed, retry ..
         ready ();
     }*/
+}
+
+void CallbackProcessInfo::quitProcesses () {
+    stopBackend ();
 }
 
 void CallbackProcessInfo::stopBackend () {
@@ -1436,6 +1506,7 @@ CallbackProcess::CallbackProcess (QObject *parent, ProcessInfo *pi, Settings *se
 }
 
 CallbackProcess::~CallbackProcess () {
+    kdDebug() << "~CallbackProcess " << process_info->name << endl;
 }
 
 void CallbackProcess::setStatusMessage (const QString & /*msg*/) {
@@ -1530,6 +1601,7 @@ void CallbackProcess::quit () {
 }
 
 void CallbackProcess::pause () {
+    kdDebug() << "pause " << process_info->name << endl;
     CallbackProcessInfo *cb = static_cast <CallbackProcessInfo *>(process_info);
     if (running () && cb->backend)
         cb->backend->pause (widget ());
@@ -1834,10 +1906,10 @@ XineProcessInfo::XineProcessInfo (MediaManager *mgr)
 #endif
          ) {}
 
-IProcess *XineProcessInfo::create (PartBase *part, ProcessInfo *pinfo, AudioVideoMedia *media) {
-    Xine *x = new Xine (part, pinfo, part->settings ());
+IProcess *XineProcessInfo::create (PartBase *part, AudioVideoMedia *media) {
+    Xine *x = new Xine (part, this, part->settings ());
     x->setSource (part->source ());
-    x->setMediaObject (media);
+    x->media_object = media;
     part->processCreated (x);
     return x;
 }
@@ -1972,8 +2044,19 @@ static const char * ffmpeg_supports [] = {
     "tvsource", "urlsource", 0L
 };
 
-FFMpeg::FFMpeg (QObject * parent, Settings * settings)
- : Process (parent, NULL, settings, "ffmpeg") {
+FFMpegProcessInfo::FFMpegProcessInfo (MediaManager *mgr)
+ : ProcessInfo ("ffmpeg", i18n ("&FFMpeg"), ffmpeg_supports, mgr, NULL) {}
+
+IProcess *FFMpegProcessInfo::create (PartBase *p, AudioVideoMedia *media) {
+    FFMpeg *m = new FFMpeg (p, this, p->settings ());
+    m->setSource (p->source ());
+    m->media_object = media;
+    p->processCreated (m);
+    return m;
+}
+
+FFMpeg::FFMpeg (QObject *parent, ProcessInfo *pinfo, Settings * settings)
+ : Process (parent, pinfo, settings, "ffmpeg") {
 }
 
 KDE_NO_CDTOR_EXPORT FFMpeg::~FFMpeg () {
@@ -1983,12 +2066,17 @@ KDE_NO_EXPORT void FFMpeg::init () {
 }
 
 bool FFMpeg::deMediafiedPlay () {
+    RecordDocument *rd = recordDocument (media_object);
+    if (!rd)
+        return false;
     initProcess ();
     KURL url (m_url);
     connect (m_process, SIGNAL (processExited (KProcess *)),
             this, SLOT (processStopped (KProcess *)));
-    QString outurl = QString (QFile::encodeName (m_recordurl.isLocalFile () ? getPath (m_recordurl) : m_recordurl.url ()));
-    if (m_recordurl.isLocalFile ())
+    KURL out (rd->record_file);
+    QString outurl = QString (QFile::encodeName (out.isLocalFile ()
+                ? getPath (out) : out.url ()));
+    if (out.isLocalFile ())
         QFile (outurl).remove ();
     QString cmd ("ffmpeg ");
     if (!m_source->videoDevice ().isEmpty () ||
@@ -2254,11 +2342,11 @@ static const char *npp_supports [] = { "urlsource", 0L };
 NppProcessInfo::NppProcessInfo (MediaManager *mgr)
  : ProcessInfo ("npp", i18n ("&Ice Ape"), npp_supports, mgr, NULL) {}
 
-IProcess *NppProcessInfo::create (PartBase *part, ProcessInfo *pinfo, AudioVideoMedia *media) {
-    NpPlayer *n = new NpPlayer(part,pinfo,part->settings(),part->serviceName());
-    n->setSource (part->source ());
-    n->setMediaObject (media);
-    part->processCreated (n);
+IProcess *NppProcessInfo::create (PartBase *p, AudioVideoMedia *media) {
+    NpPlayer *n = new NpPlayer (p, this, p->settings(), p->serviceName ());
+    n->setSource (p->source ());
+    n->media_object = media;
+    p->processCreated (n);
     return n;
 }
 

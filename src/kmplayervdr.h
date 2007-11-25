@@ -160,7 +160,7 @@ public:
     XvProcessInfo (KMPlayer::MediaManager *);
 
     virtual KMPlayer::IProcess *create (KMPlayer::PartBase*,
-            KMPlayer::ProcessInfo*, KMPlayer::AudioVideoMedia*);
+            KMPlayer::AudioVideoMedia*);
     virtual bool startBackend ();
 };
 

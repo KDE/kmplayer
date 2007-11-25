@@ -302,7 +302,7 @@ static void event_listener(void *data, const xine_event_t *event) {
             if (si->repeat_count-- > 0)
                 xine_play (si->stream, 0, 0);
             else
-                QApplication::postEvent(xineapp,new XineFinishedEvent(si->wid));
+                QApplication::postEvent(xineapp,new XineEvent(event_finished, si->wid));
             break;
         case XINE_EVENT_PROGRESS:
             QApplication::postEvent (xineapp, new XineProgressEvent (si->wid,
@@ -616,7 +616,7 @@ void KXinePlayer::play (unsigned long wid, int repeat) {
     if (!si)
         return;
 
-    fprintf (stderr, "play mrl: '%s'\n", (const char *) si->mrl.local8Bit ());
+    fprintf (stderr, "play mrl: '%s' %d\n", (const char *) si->mrl.local8Bit (), wid);
     si->mutex->lock ();
     si->repeat_count = repeat;
     if (xine_get_status (si->stream) == XINE_STATUS_PLAY &&
@@ -701,7 +701,7 @@ void KXinePlayer::play (unsigned long wid, int repeat) {
     }
     si->audio_vis = false;
     if (xine_get_stream_info (si->stream, XINE_STREAM_INFO_HAS_VIDEO))
-        QApplication::postEvent(xineapp, new QEvent((QEvent::Type)event_video));
+        QApplication::postEvent(xineapp, new XineEvent(event_video, wid));
     else
         si->audio_vis = xine_config_lookup_entry
             (xine, "audio.visualization", &audio_vis_cfg_entry);
@@ -732,7 +732,7 @@ void KXinePlayer::stop (unsigned long wid) {
         xine_stop (si->sub_stream);
     xine_stop (si->stream);
     si->mutex->unlock ();
-    QApplication::postEvent (xineapp, new XineFinishedEvent (si->wid));
+    QApplication::postEvent (xineapp, new XineEvent (event_finished, si->wid));
 }
 
 void KXinePlayer::pause (unsigned long wid) {
@@ -865,7 +865,7 @@ void KXinePlayer::seek (unsigned long wid, int val) {
 bool KXinePlayer::event (QEvent * e) {
     switch (e->type()) {
         case event_finished: {
-            XineFinishedEvent *fe = static_cast <XineFinishedEvent *> (e);
+            XineEvent *fe = static_cast <XineEvent *> (e);
             StreamInfo *si = getStreamInfo (fe->wid, "finished event");
             if (!si)
                 return true;
@@ -934,10 +934,12 @@ bool KXinePlayer::event (QEvent * e) {
                         (int) KMPlayer::Callback::stat_newtitle, ue->title);
             break;
         }
-        case event_video:
+        case event_video: {
+            XineEvent *ve = static_cast <XineEvent *> (e);
             if (callback)
-                callback->statusMessage (0, (int) KMPlayer::Callback::stat_hasvideo, QString ());
+                callback->statusMessage (ve->wid, (int) KMPlayer::Callback::stat_hasvideo, QString ());
             break;
+        }
         default:
             return false;
     }
@@ -973,8 +975,8 @@ XineProgressEvent::XineProgressEvent (unsigned long id, const int p)
   : QEvent ((QEvent::Type) event_progress), progress (p), wid (id)
 {}
 
-XineFinishedEvent::XineFinishedEvent (unsigned long id)
-  : QEvent ((QEvent::Type) event_finished), wid (id)
+XineEvent::XineEvent (int event, unsigned long id)
+  : QEvent ((QEvent::Type) event), wid (id)
 {}
 
 //static bool translateCoordinates (int wx, int wy, int mx, int my) {
