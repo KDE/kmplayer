@@ -474,7 +474,7 @@ void AudioVideoMedia::unpause () {
 }
 
 void AudioVideoMedia::destroy () {
-    if (viewer)
+    if (m_manager->player ()->view () && viewer)
         viewer->unmap ();
     if (!process || IProcess::Ready >= process->state ()) {
         delete this;
