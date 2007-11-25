@@ -232,7 +232,7 @@ void Process::setState (IProcess::State newstate) {
         bool need_timer = m_old_state == m_state;
         m_old_state = m_state;
         m_state = newstate;
-        if (need_timer && m_source)
+        if (need_timer)
             QTimer::singleShot (0, this, SLOT (rescheduledStateChanged ()));
     }
 }
@@ -240,7 +240,6 @@ void Process::setState (IProcess::State newstate) {
 KDE_NO_EXPORT void Process::rescheduledStateChanged () {
     IProcess::State old_state = m_old_state;
     m_old_state = m_state;
-    kdDebug() << "Process::rescheduledStateChanged " << media_object << endl;
     if (media_object) {
         process_info->manager->stateChange (media_object, old_state, m_state);
     } else {

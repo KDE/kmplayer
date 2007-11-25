@@ -181,10 +181,21 @@ static const QString statemap [] = {
 void MediaManager::stateChange (AudioVideoMedia *media,
         IProcess::State olds, IProcess::State news) {
     //p->viewer()->view()->controlPanel()->setPlaying(news > Process::Ready);
-    kdDebug () << "processState " << statemap[olds] << " -> " << statemap[news] << endl;
     Mrl *mrl = media->mrl ();
-    if (!mrl || !m_player->view ())
+    kdDebug () << "processState " << media->process->process_info->name << " "
+        << statemap[olds] << " -> " << statemap[news] << endl;
+
+    if (!mrl) { // document dispose
+        if (IProcess::Ready < news)
+            media->process->quit ();
+        else
+            delete media;
         return;
+    }
+
+    if (!m_player->view ()) // part destruction
+        return;
+
     bool is_rec = id_node_record_document == mrl->id;
     m_player->updateStatus (i18n ("Player %1 %2").arg (
                 media->process->process_info->name).arg (statemap[news]));
