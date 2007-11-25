@@ -117,8 +117,23 @@ MediaManager::~MediaManager () {
     for (ProcessInfoMap::iterator i = m_record_infos.begin (); i != rie; ++i)
         delete i.data ();
 
-    if (m_media_objects.size ())
-        kdError () << "~MediaManager media list not empty" << endl;
+    if (m_media_objects.size ()) {
+        kdError () << "~MediaManager media list not empty " << m_media_objects.size () << endl;
+        // bug elsewere, but don't crash
+        const MediaList::iterator me = m_media_objects.end ();
+        for (MediaList::iterator i = m_media_objects.begin (); i != me; ) {
+            if ((*i)->mrl ()) {
+                if ((*i)->mrl ()->document ()->active ())
+                    (*i)->mrl ()->document ()->deactivate ();
+                (*i)->mrl ()->document ()->dispose ();
+                i = m_media_objects.begin ();
+            } else {
+                ++i;
+            }
+        }
+        if (m_media_objects.size ())
+            kdError () << "~MediaManager media list still not empty" << m_media_objects.size () << endl;
+    }
 }
 
 MediaObject *MediaManager::createMedia (MediaType type, Node *node) {
