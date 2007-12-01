@@ -299,69 +299,49 @@ QString PartBase::processName (Mrl *mrl) {
             }
     }
     if (!p.isEmpty ()) {
-        //updatePlayerMenu (m_view->controlPanel ());
+        updatePlayerMenu (m_view->controlPanel (), p);
         if (remember_backend)
             m_settings->backends [m_source->name()] = p;
+        else
+            temp_backends [m_source->name()] = QString ();
     }
     return p;
 }
 
 void PartBase::processCreated (Process*) {}
 
-/*void PartBase::setProcess (const char * name) {
-    Process * process = name ? m_players [name] : 0L;
-    if (m_process == process)
-        return;
-    if (!m_source)
-        m_source = m_sources ["urlsource"];
-    Process * old_process = m_process;
-    m_process = process;
-    if (old_process && old_process->state () > IProcess::NotRunning)
-        old_process->quit ();
-    if (!m_process)
-        return;
-    m_process->setSource (m_source);
-    if (m_process->playing ()) {
-        m_view->controlPanel ()->setPlaying (true);
-        m_view->controlPanel ()->showPositionSlider (!!m_source->length ());
-        m_view->controlPanel ()->enableSeekButtons (m_source->isSeekable ());
-    }
-    emit processChanged (name);
-}*/
-
-KDE_NO_EXPORT void PartBase::slotPlayerMenu (int id) {
-    /*bool playing = m_process->playing ();
+KDE_NO_EXPORT void PartBase::slotPlayerMenu (int menu) {
+    Mrl *mrl = m_source->current ();
+    bool playing = mrl && mrl->active ();
     const char * srcname = m_source->name ();
-    QPopupMenu * menu = m_view->controlPanel ()->playerMenu ();
-    ProcessMap::const_iterator pi = m_players.begin(), e = m_players.end();
-    unsigned i = 0;
-    for (; pi != e && i < menu->count(); ++pi) {
-        Process * proc = pi.data ();
-        if (!proc->supports (srcname))
+    QPopupMenu *player_menu = m_view->controlPanel ()->playerMenu ();
+    MediaManager::ProcessInfoMap &pinfos = m_media_manager->processInfos ();
+    const MediaManager::ProcessInfoMap::const_iterator e = pinfos.end();
+    unsigned id = 0;
+    for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.begin();
+            id < player_menu->count() && i != e;
+            ++i, id++) {
+        ProcessInfo *pinfo = i.data ();
+        if (!pinfo->supports (srcname))
             continue;
-        int menuid = menu->idAt (i);
-        menu->setItemChecked (menuid, menuid == id);
-        if (menuid == id) {
-            if (proc->name () != QString ("npp"))
-                m_settings->backends [srcname] = proc->name ();
-            temp_backends [srcname] = proc->name ();
-            if (playing && strcmp (m_process->name (), proc->name ()))
-                m_process->quit ();
-            setProcess (proc->name ());
+        int menuid = player_menu->idAt (id);
+        player_menu->setItemChecked (menuid, menu == id);
+        if (menuid == menu) {
+            if (strcmp (pinfo->name, "npp"))
+                m_settings->backends [srcname] = pinfo->name;
+            temp_backends [srcname] = pinfo->name;
         }
-        ++i;
     }
-    if (playing)
-        setSource (m_source); // re-activate*/
+    if (playing) {
+        m_source->play (mrl);
+    }
 }
 
-void PartBase::updatePlayerMenu (ControlPanel * panel) {
+void PartBase::updatePlayerMenu (ControlPanel *panel, const QString &backend) {
     if (!m_view)
         return;
     QPopupMenu * menu = panel->playerMenu ();
     menu->clear ();
-    if (!m_source)
-        return;
     MediaManager::ProcessInfoMap &pinfos = m_media_manager->processInfos ();
     const MediaManager::ProcessInfoMap::const_iterator e = pinfos.end();
     int id = 0; // if multiple parts, id's should be the same for all menu's
@@ -369,8 +349,8 @@ void PartBase::updatePlayerMenu (ControlPanel * panel) {
         ProcessInfo *p = i.data ();
         if (p->supports (m_source->name ())) {
             menu->insertItem (p->label, this, SLOT (slotPlayerMenu (int)), 0, id++);
-            //if (i.data() == m_process)
-            //    menu->setItemChecked (id-1, true);
+            if (backend == p->name)
+                menu->setItemChecked (id-1, true);
         }
     }
 }
@@ -988,26 +968,20 @@ void Source::play (Mrl *mrl) {
     if (!mrl)
         mrl = document ()->mrl ();
     NodePtrW guarded = mrl;
-    if (Node::state_deferred == mrl->state) {
-        mrl->undefer ();
-    } else if (mrl->unfinished ()) {
-        mrl->defer ();
-    } else {
-        blockSignals (true); //endOfPlayItems, but what is hyperspace?
-        m_document->reset ();
-        blockSignals (false);
-        mrl = guarded ? guarded->mrl () : m_document->mrl ();
-        if (!mrl)
-            return;
-        m_width = m_height = 0;
-        m_player->changeURL (mrl->src);
-        for (NodePtr p = mrl->parentNode(); p; p = p->parentNode())
-            p->state = Element::state_activated;
-        mrl->activate ();
-        m_width = mrl->width;
-        m_height = mrl->height;
-        m_aspect = mrl->aspect;
-    }
+    blockSignals (true); //endOfPlayItems, but what is hyperspace?
+    m_document->reset ();
+    blockSignals (false);
+    mrl = guarded ? guarded->mrl () : m_document->mrl ();
+    if (!mrl)
+        return;
+    m_width = m_height = 0;
+    m_player->changeURL (mrl->src);
+    for (NodePtr p = mrl->parentNode(); p; p = p->parentNode())
+        p->state = Element::state_activated;
+    mrl->activate ();
+    m_width = mrl->width;
+    m_height = mrl->height;
+    m_aspect = mrl->aspect;
     //kdDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():" doc act:") <<  (m_document && !m_document->active ()) << " cur:" << (!m_current)  << " cur act:" << (m_current && !m_current->active ()) <<  endl;
     m_player->updateTree ();
     emit dimensionsChanged ();

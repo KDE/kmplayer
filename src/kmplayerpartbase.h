@@ -146,7 +146,7 @@ public:
     QMap <QString, Source *> & sources () { return m_sources; }
     KConfig * config () const { return m_config; }
     bool mayResize () const { return !m_noresize; }
-    void updatePlayerMenu (ControlPanel *);
+    void updatePlayerMenu (ControlPanel *, const QString &backend=QString ());
     void updateInfo (const QString & msg);
     void updateStatus (const QString & msg);
 #ifdef HAVE_DBUS
