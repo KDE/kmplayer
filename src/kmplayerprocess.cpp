@@ -2588,6 +2588,8 @@ void NpPlayer::requestStream (const QString &path, const QString & url, const QS
             connect (ns, SIGNAL (stateChanged ()),
                     this, SLOT (streamStateChanged ()));
             streams[sid] = ns;
+            if (url != uri.url ())
+                streamRedirected (sid, uri.url ());
             if (!write_in_progress)
                 processStreams ();
         }
