@@ -151,12 +151,10 @@ Process::Process (QObject *parent, ProcessInfo *pinfo, Settings *settings, const
 Process::~Process () {
     quit ();
     delete m_process;
+    if (media_object)
+        media_object->process = NULL;
     if (process_info) // FIXME: remove
         process_info->manager->processDestroyed (this);
-    if (media_object) {
-        media_object->viewer = NULL;
-        media_object->process = NULL;
-    }
     kdDebug() << "~Process " << name () << endl;
 }
 
@@ -896,7 +894,7 @@ KDE_NO_EXPORT void MPlayer::processStopped (KProcess * p) {
     if (p && !m_grabfile.isEmpty ()) {
         emit grabReady (m_grabfile);
         m_grabfile.truncate (0);
-    } else if (p && mrl ()) {
+    } else if (mrl ()) {
         QString url;
         if (!m_source->identified ()) {
             m_source->setIdentified ();
@@ -905,7 +903,7 @@ KDE_NO_EXPORT void MPlayer::processStopped (KProcess * p) {
                 m_tmpURL.truncate (0);
             }
         }
-        if (m_source && m_needs_restarted) {
+        if (p && m_source && m_needs_restarted) {
             commands.clear ();
             int pos = m_source->position ();
             play ();
@@ -1567,15 +1565,21 @@ bool CallbackProcess::deMediafiedPlay () {
     const KURL & sub_url = m_source->subUrl ();
     if (!sub_url.isEmpty ())
         cb->backend->setSubTitleURL (widget (), QString (QFile::encodeName (sub_url.isLocalFile () ? QFileInfo (getPath (sub_url)).absFilePath () : sub_url.url ())));
+
+    Mrl *link = mrl ();
+    if (link && Mrl::WindowMode == link->view_mode)
+        cb->backend->property (widget (),
+                QString ("audiovisualization"), QString ("0"));
     if (m_source->frequency () > 0)
-        cb->backend->frequency (widget (), m_source->frequency ());
+        cb->backend->property (widget (),
+                QString ("frequency"), QString::number(m_source->frequency ()));
     if (m_settings->autoadjustcolors) {
         saturation (m_settings->saturation, true);
         hue (m_settings->hue, true);
         brightness (m_settings->brightness, true);
         contrast (m_settings->contrast, true);
     }
-    cb->backend->play (widget (), mrl () ? mrl ()->repeat : 0);
+    cb->backend->play (widget (), link ? link->repeat : 0);
     setState (IProcess::Buffering);
     return true;
 }

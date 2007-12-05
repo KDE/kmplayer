@@ -725,6 +725,7 @@ public:
     AVMediaType (NodePtr & d, const QString & t);
     NodePtr childFromTag (const QString & tag);
     virtual void begin ();
+    virtual void undefer ();
     virtual void endOfFile ();
     virtual void accept (Visitor *);
     virtual bool expose () const;

@@ -84,7 +84,7 @@ typedef struct {
     QStringList          alanglist, slanglist;
     QMutex              *mutex;
     bool                 running;
-    bool                 audio_vis;
+    enum { AutoAudioVis, NoAudioVis, AudioVis} audio_vis;
     bool                 finished;
     volatile bool        firstframe; /*yes this sucks */
 } StreamInfo;
@@ -154,7 +154,7 @@ static void initStreamInfo (StreamInfo *si, unsigned long wid) {
     si->event_queue = NULL;
     si->post_plugin = NULL;
     si->running = false;
-    si->audio_vis = false;
+    si->audio_vis = StreamInfo::AutoAudioVis;
     si->finished = false;
     si->firstframe = false;
     si->movie_brightness = 32767;
@@ -280,7 +280,7 @@ static void xine_config_cb (void *data, xine_cfg_entry_t * entry) {
         xine_post_dispose (xine, si->post_plugin);
         si->post_plugin = 0L;
     }
-    if (si->audio_vis && !si->finished &&
+    if (StreamInfo::AudioVis == si->audio_vis && !si->finished &&
             strcmp (entry->enum_values[entry->num_value], "none")) {
         si->post_plugin = xine_post_init (xine,
                 entry->enum_values[entry->num_value], 0,
@@ -299,10 +299,13 @@ static void event_listener(void *data, const xine_event_t *event) {
     switch(event->type) {
         case XINE_EVENT_UI_PLAYBACK_FINISHED:
             fprintf (stderr, "XINE_EVENT_UI_PLAYBACK_FINISHED\n");
-            if (si->repeat_count-- > 0)
+            if (si->repeat_count-- > 0) {
+                si->mutex->lock ();
                 xine_play (si->stream, 0, 0);
-            else
+                si->mutex->unlock ();
+            } else {
                 QApplication::postEvent(xineapp,new XineEvent(event_finished, si->wid));
+            }
             break;
         case XINE_EVENT_PROGRESS:
             QApplication::postEvent (xineapp, new XineProgressEvent (si->wid,
@@ -444,7 +447,14 @@ void Backend::volume (unsigned long wid, int v, bool) {
     xineapp->volume (wid, v);
 }
 
-void Backend::frequency (unsigned long, int) {
+void Backend::property (unsigned long wid, QString prop, QString val) {
+    StreamInfo *si = getStreamInfo (wid, "property");
+    if (!si)
+        return;
+    fprintf (stderr, "property %d\n", prop == "audiovisualization");
+    if (prop == "audiovisualization")
+        si->audio_vis = val.toInt ()
+            ? StreamInfo::AutoAudioVis : StreamInfo::NoAudioVis;
 }
 
 void Backend::setAudioLang (unsigned long wid, int id, QString al) {
@@ -699,14 +709,15 @@ void KXinePlayer::play (unsigned long wid, int repeat) {
         finished (si->wid);
         return;
     }
-    si->audio_vis = false;
     if (xine_get_stream_info (si->stream, XINE_STREAM_INFO_HAS_VIDEO))
         QApplication::postEvent(xineapp, new XineEvent(event_video, wid));
-    else
+    else if (StreamInfo::AutoAudioVis == si->audio_vis)
         si->audio_vis = xine_config_lookup_entry
-            (xine, "audio.visualization", &audio_vis_cfg_entry);
+            (xine, "audio.visualization", &audio_vis_cfg_entry)
+                ? StreamInfo::AudioVis
+                : StreamInfo::NoAudioVis;
     si->mutex->unlock ();
-    if (si->audio_vis)
+    if (StreamInfo::AudioVis == si->audio_vis)
         xine_config_cb (si, &audio_vis_cfg_entry);
     if (callback)
         si->firstframe = true;
@@ -726,6 +737,7 @@ void KXinePlayer::stop (unsigned long wid) {
     if (!si)
         return;
     fprintf(stderr, "stop\n");
+    fflush(stderr);
     si->mutex->lock ();
     si->repeat_count = 0;
     if (si->sub_stream)
@@ -871,7 +883,7 @@ bool KXinePlayer::event (QEvent * e) {
                 return true;
             fprintf (stderr, "event_finished\n");
             si->finished = true;
-            if (si->audio_vis)
+            if (StreamInfo::AudioVis == si->audio_vis)
                 xine_config_cb (si, &audio_vis_cfg_entry);
             si->mutex->lock ();
             if (si->sub_stream)

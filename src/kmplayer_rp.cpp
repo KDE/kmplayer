@@ -232,7 +232,7 @@ KDE_NO_EXPORT void RP::Image::deactivate () {
 }
 
 bool RP::Image::handleEvent (EventPtr event) {
-    if (event->id () != event_data_arrived)
+    if (event->id () != event_media_ready)
         return Mrl::handleEvent (event);
     dataArrived ();
     return true;

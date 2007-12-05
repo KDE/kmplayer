@@ -39,7 +39,7 @@ namespace KIO {
 
 namespace KMPlayer {
 
-extern const unsigned int event_data_arrived;
+extern const unsigned int event_media_ready;
 extern const unsigned int event_img_updated;
 extern const unsigned int event_img_anim_finished;
 
@@ -198,7 +198,7 @@ protected:
     MediaObject (MediaManager *manager, Node *node);
     virtual ~MediaObject ();
 
-    virtual void remoteReady (const QString &url);
+    virtual void ready (const QString &url);
 
     MediaManager *m_manager;
     NodePtrW m_node;
@@ -302,7 +302,7 @@ private slots:
 protected:
     ~ImageMedia ();
 
-    void remoteReady (const QString &url);
+    void ready (const QString &url);
 
 private:
     QMovie *img_movie;
@@ -329,7 +329,7 @@ public:
 protected:
     ~TextMedia ();
 
-    void remoteReady (const QString &url);
+    void ready (const QString &url);
 };
 
 } // namespace

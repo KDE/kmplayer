@@ -1897,7 +1897,7 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
 }
 
 bool SMIL::RegionBase::handleEvent (EventPtr event) {
-    if (event->id () == event_data_arrived)
+    if (event->id () == event_media_ready)
         dataArrived ();
     else
         return Element::handleEvent (event);
@@ -3088,6 +3088,14 @@ KDE_NO_EXPORT void SMIL::AVMediaType::begin () {
     }
 }
 
+KDE_NO_EXPORT void SMIL::AVMediaType::undefer () {
+    if (Runtime::timings_started == runtime ()->state () &&
+            resolved && !media_object)
+        runtime ()->started ();
+    else
+        MediaType::undefer ();
+}
+
 KDE_NO_EXPORT void SMIL::AVMediaType::endOfFile () {
     if (!active())
         return; // backend eof after a reset
@@ -3217,7 +3225,7 @@ bool SMIL::ImageMediaType::handleEvent (EventPtr event) {
     } else if (im && event->id () == event_img_anim_finished) {
         if (state >= Node::state_began)
             runtime ()->propagateStop (false);
-    } else if (im && event->id () == event_data_arrived) {
+    } else if (im && event->id () == event_media_ready) {
         dataArrived ();
     } else {
         return MediaType::handleEvent (event);
@@ -3316,7 +3324,7 @@ void SMIL::TextMediaType::dataArrived () {
 }
 
 bool SMIL::TextMediaType::handleEvent (EventPtr event) {
-    if (event->id () == event_data_arrived) {
+    if (event->id () == event_media_ready) {
         dataArrived ();
     } else {
         return MediaType::handleEvent (event);

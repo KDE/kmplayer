@@ -452,7 +452,7 @@ void Backend::volume (unsigned long, int v, bool) {
     gstapp->volume (v);
 }
 
-void Backend::frequency (unsigned long, int) {
+void Backend::property (unsigned long wid, QString, QString) {
 }
 
 void Backend::setAudioLang (unsigned long, int, QString) {

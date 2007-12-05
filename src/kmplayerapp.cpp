@@ -179,7 +179,7 @@ public:
 KDE_NO_EXPORT void ListsSource::play (KMPlayer::Mrl *mrl) {
     if (mrl && mrl->document()->firstChild ())
         Source::play (mrl);
-    else
+    else if (mrl)
         mrl->activate ();
 }
 

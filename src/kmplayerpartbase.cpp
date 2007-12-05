@@ -969,7 +969,7 @@ void Source::play (Mrl *mrl) {
         mrl = document ()->mrl ();
     NodePtrW guarded = mrl;
     blockSignals (true); //endOfPlayItems, but what is hyperspace?
-    m_document->reset ();
+    document ()->reset ();
     blockSignals (false);
     mrl = guarded ? guarded->mrl () : m_document->mrl ();
     if (!mrl)
@@ -1531,10 +1531,13 @@ KDE_NO_EXPORT void URLSource::kioResult (KIO::Job * job) {
         previnfo->next = rinfo->next;
     else
         m_resolve_info = rinfo->next;
-    QTextStream textstream (rinfo->data, IO_ReadOnly);
+
     if (rinfo->resolving_mrl) {
-        if (isPlayListMime (rinfo->resolving_mrl->mrl ()->mimetype))
+        if (rinfo->data.size () > 0 &&
+                isPlayListMime (rinfo->resolving_mrl->mrl ()->mimetype)) {
+            QTextStream textstream (rinfo->data, IO_ReadOnly);
             read (rinfo->resolving_mrl, textstream);
+        }
         rinfo->resolving_mrl->mrl ()->resolved = true;
         rinfo->resolving_mrl->undefer ();
     }

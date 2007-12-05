@@ -43,7 +43,7 @@ k_dcop:
     virtual ASYNC contrast (unsigned long wid, int c, bool absolute);
     virtual ASYNC brightness (unsigned long wid, int b, bool absolute);
     virtual ASYNC volume (unsigned long wid, int v, bool absolute);
-    virtual ASYNC frequency (unsigned long wid, int f);
+    virtual ASYNC property (unsigned long wid, QString prop, QString val);
     virtual ASYNC quit ();
     virtual ASYNC setConfig (QByteArray);
     virtual ASYNC setAudioLang (unsigned long wid, int, QString);

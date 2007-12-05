@@ -40,7 +40,7 @@
 
 namespace KMPlayer {
 
-const unsigned int event_data_arrived = 100;
+const unsigned int event_media_ready = 100;
 const unsigned int event_img_updated = 101;
 const unsigned int event_img_anim_finished = 102;
 
@@ -122,10 +122,9 @@ MediaManager::~MediaManager () {
         // bug elsewere, but don't crash
         const MediaList::iterator me = m_media_objects.end ();
         for (MediaList::iterator i = m_media_objects.begin (); i != me; ) {
-            if ((*i)->mrl ()) {
-                if ((*i)->mrl ()->document ()->active ())
-                    (*i)->mrl ()->document ()->deactivate ();
-                (*i)->mrl ()->document ()->dispose ();
+            if ((*i)->mrl () &&
+                    (*i)->mrl ()->document ()->active ()) {
+                (*i)->mrl ()->document ()->deactivate ();
                 i = m_media_objects.begin ();
             } else {
                 ++i;
@@ -273,6 +272,9 @@ void MediaManager::processDestroyed (IProcess *process) {
     kdDebug() << "processDestroyed " << process << endl;
     m_processes.remove (process);
     m_recorders.remove (process);
+    if (process->media_object &&
+            AudioVideoMedia::ask_delete == process->media_object->request)
+        delete process->media_object;
 }
 
 //------------------------%<----------------------------------------------------
@@ -323,7 +325,7 @@ MediaObject::MediaObject (MediaManager *manager, Node *node)
 
 MediaObject::~MediaObject () {
     clearData ();
-   m_manager->medias ().remove (this);
+    m_manager->medias ().remove (this);
 }
 
 KDE_NO_EXPORT void MediaObject::killWGet () {
@@ -351,12 +353,12 @@ KDE_NO_EXPORT bool MediaObject::wget (const QString &str) {
             data = file.readAll ();
             file.close ();
         }
-        remoteReady (str);
+        ready (str);
         return true;
     }
     if (memory_cache->get (str, data)) {
         //kdDebug () << "download found in cache " << str << endl;
-        remoteReady (str);
+        ready (str);
         return true;
     }
     if (memory_cache->preserve (str)) {
@@ -412,12 +414,12 @@ KDE_NO_EXPORT void MediaObject::slotResult (KIO::Job * kjob) {
     else
         data.resize (0);
     job = 0L; // signal KIO::Job::result deletes itself
-    remoteReady (url);
+    ready (url);
 }
 
-KDE_NO_EXPORT void MediaObject::remoteReady (const QString &) {
+KDE_NO_EXPORT void MediaObject::ready (const QString &) {
     if (m_node)
-        m_node->handleEvent (new Event (event_data_arrived));
+        m_node->handleEvent (new Event (event_media_ready));
 }
 
 KDE_NO_EXPORT void MediaObject::cachePreserveRemoved (const QString & str) {
@@ -465,13 +467,20 @@ AudioVideoMedia::~AudioVideoMedia () {
         if (view)
             view->viewArea ()->destroyVideoWidget (viewer);
     }
-    delete process;
+    if (process) {
+        process->media_object = NULL;
+        delete process;
+    }
     kdDebug() << "AudioVideoMedia::~AudioVideoMedia" << endl;
 }
 
 bool AudioVideoMedia::play () {
     if (process) {
         kdDebug() << "AudioVideoMedia::play " << process->state () << endl;
+        if (process->state () > IProcess::Ready) {
+            kdError() << "already playing" << endl;
+            return true;
+        }
         if (process->state () != IProcess::Ready) {
             request = ask_play;
             return true; // FIXME add Launching state
@@ -484,7 +493,8 @@ bool AudioVideoMedia::play () {
 }
 
 void AudioVideoMedia::stop () {
-    request = ask_stop;
+    if (ask_delete != request)
+        request = ask_stop;
     if (process)
         process->stop ();
 }
@@ -553,7 +563,7 @@ void ImageMedia::unpause () {
         img_movie->unpause ();
 }
 
-KDE_NO_EXPORT void ImageMedia::remoteReady (const QString &url) {
+KDE_NO_EXPORT void ImageMedia::ready (const QString &url) {
     if (data.size ()) {
         QString mime = mimetype ();
         if (!mime.startsWith (QString::fromLatin1 ("text/"))) { // FIXME svg
@@ -573,7 +583,7 @@ KDE_NO_EXPORT void ImageMedia::remoteReady (const QString &url) {
             }
         }
     }
-    MediaObject::remoteReady (url);
+    MediaObject::ready (url);
 }
 
 bool ImageMedia::isEmpty () {
@@ -627,7 +637,7 @@ TextMedia::~TextMedia () {
     delete codec;
 }
 
-KDE_NO_EXPORT void TextMedia::remoteReady (const QString &url) {
+KDE_NO_EXPORT void TextMedia::ready (const QString &url) {
     if (data.size ()) {
         if (!data [data.size () - 1])
             data.resize (data.size () - 1); // strip zero terminate char
@@ -636,7 +646,7 @@ KDE_NO_EXPORT void TextMedia::remoteReady (const QString &url) {
             ts.setCodec (codec);
         text  = ts.read ();
     }
-    MediaObject::remoteReady (url);
+    MediaObject::ready (url);
 }
 
 bool TextMedia::play () {

@@ -163,8 +163,9 @@ void Backend::volume (unsigned long, int v, bool) {
         xvapp->volume (v*(xv_limits[limit_volume].max - xv_limits[limit_volume].min)/100 + xv_limits[limit_volume].min);
 }
 
-void Backend::frequency (unsigned long, int f) {
-    xvapp->frequency (f);
+void Backend::property (unsigned long wid, QString prop, QString val) {
+    if (prop == "frequency")
+        xvapp->frequency (val.toInt ());
 }
 
 void Backend::setAudioLang (unsigned long, int, QString) {
