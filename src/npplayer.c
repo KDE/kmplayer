@@ -338,7 +338,7 @@ static void nsReleaseObject (NPObject *obj) {
 
 static NPError nsGetURL (NPP instance, const char* url, const char* target) {
     (void)instance;
-    print ("nsGetURL %s %s\n", url, target);
+    print ("nsGetURL %s %s\n", url, target ? target : "");
     addStream (url, 0L, target, 0L, false);
     return NPERR_NO_ERROR;
 }
@@ -346,7 +346,7 @@ static NPError nsGetURL (NPP instance, const char* url, const char* target) {
 static NPError nsPostURL (NPP instance, const char *url,
         const char *target, uint32 len, const char *buf, NPBool file) {
     (void)instance; (void)len; (void)buf; (void)file;
-    print ("nsPostURL %s %s\n", url, target);
+    print ("nsPostURL %s %s\n", url, target ? target : "");
     addStream (url, 0L, target, 0L, false);
     return NPERR_NO_ERROR;
 }
@@ -385,7 +385,7 @@ static NPError nsDestroyStream (NPP instance, NPStream *stream, NPError reason) 
 
 static void nsStatus (NPP instance, const char* message) {
     (void)instance;
-    print ("NPN_Status %s\n", message);
+    print ("NPN_Status %s\n", message ? message : "-");
 }
 
 static const char* nsUserAgent (NPP instance) {
@@ -426,7 +426,7 @@ static jref nsGetJavaPeer (NPP instance) {
 
 static NPError nsGetURLNotify (NPP instance, const char* url, const char* target, void *notify) {
     (void)instance;
-    print ("NPN_GetURLNotify %s %s\n", url, target);
+    print ("NPN_GetURLNotify %s %s\n", url, target ? target : "");
     addStream (url, 0L, target, notify, true);
     return NPERR_NO_ERROR;
 }
@@ -662,7 +662,7 @@ static void nsReleaseVariantValue (NPVariant * variant) {
 
 static void nsSetException (NPObject *npobj, const NPUTF8 *message) {
     (void)npobj;
-    print ("NPN_SetException %s\n", message);
+    print ("NPN_SetException %s\n", message ? message : "-");
 }
 
 static bool nsPushPopupsEnabledState (NPP instance, NPBool enabled) {
@@ -1202,7 +1202,8 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
             if (!dbus_message_iter_next (&ait))
                 params = i + 1;
         }
-        print ("play %s %s %s params:%d\n", object_url, mimetype, plugin, i);
+        print ("play %s %s %s params:%d\n", object_url,
+                mimetype ? mimetype : "", plugin, i);
         startPlugin (object_url, mimetype, i, argn, argv);
     } else if (dbus_message_is_method_call (msg, iface, "redirected")) {
         char *url = 0;
@@ -1252,7 +1253,8 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
                 dbus_message_iter_get_basic (&args, &length);
                 si->np_stream.end = length;
             }
-            print ("streamInfo %d size:%d mime:%s\n", (long)stream_id, length, mime);
+            print ("streamInfo %d size:%d mime:%s\n", (long)stream_id, length,
+                    mime ? mime : "");
         }
     } else {
         print ("unknown message\n");
