@@ -1,3 +1,11 @@
+Changes since version 0.10.0b
+- Support for simultaneous audio/video streams with SMIL
+Changes since version 0.10.0a
+- Fix some flash wanting full Url out of a relative Url before streaming data
+- Hardcode flash mimetypes in pluginsinfo
+- Fix kpart not reading the system global kmplayerrc
+- Set viewarea background to part's parent background for the plugin
+- Fix kxineplayer crash when sending the configurations
 Changes since version 0.10.0
 - Fix npp streams with javascript urls, that never reached the finish state
 - Fix memory leak in SMIL image
