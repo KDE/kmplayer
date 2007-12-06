@@ -1509,10 +1509,10 @@ KDE_NO_EXPORT void URLSource::kioMimetype (KIO::Job * job, const QString & mimes
         kdWarning () << "Spurious kioData" << endl;
         return;
     }
-    if (!rinfo->resolving_mrl || !isPlayListMime (mimestr))
-        job->kill (false);
     if (rinfo->resolving_mrl)
         rinfo->resolving_mrl->mrl ()->mimetype = mimestr;
+    if (!rinfo->resolving_mrl || !isPlayListMime (mimestr))
+        job->kill (false);
 }
 
 KDE_NO_EXPORT void URLSource::kioResult (KIO::Job * job) {
