@@ -30,6 +30,7 @@ http://dbus.freedesktop.org/doc/dbus/libdbus-tutorial.html
 #include <sys/time.h>
 #include <fcntl.h>
 
+#include <glib/gthread.h>
 #include <glib/gprintf.h>
 #include <gdk/gdkx.h>
 #include <gtk/gtk.h>
@@ -1503,6 +1504,8 @@ static gboolean initPlayer (void * p) {
 int main (int argc, char **argv) {
     int i;
 
+    XInitThreads ();
+    g_thread_init (NULL);
     gtk_init (&argc, &argv);
 
     for (i = 1; i < argc; i++) {
