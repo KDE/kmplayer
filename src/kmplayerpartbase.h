@@ -37,11 +37,9 @@
 
 
 class KAboutData;
-class KInstance;
 class KActionCollection;
 class KBookmarkMenu;
 class KBookmarkManager;
-class QIODevice;
 class QTextStream;
 class Q3ListViewItem;
 class KJob;
@@ -59,10 +57,6 @@ class PartBase;
 class Process;
 class MPlayer;
 class BookmarkOwner;
-class MEncoder;
-class MPlayerDumpstream;
-class FFMpeg;
-class Xine;
 class Settings;
 
 /*

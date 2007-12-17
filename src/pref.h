@@ -28,8 +28,6 @@
 #include <qmap.h>
 
 class QTabWidget;
-class QTable;
-class QGroupBox;
 class QCheckBox;
 class QComboBox;
 class QLineEdit;

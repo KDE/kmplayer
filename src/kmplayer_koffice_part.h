@@ -37,10 +37,7 @@
 #include "kmplayersource.h"
 
 
-class KProcess;
-class KAboutData;
 class KMPlayer;
-class KInstance;
 class KConfig;
 class QIODevice;
 

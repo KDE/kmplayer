@@ -32,6 +32,7 @@ class QMenu;
 class QDropEvent;
 class Q3DragObject;
 class KActionCollection;
+class KFindDialog;
 
 namespace KMPlayer {
 

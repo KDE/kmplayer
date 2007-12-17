@@ -24,9 +24,7 @@
 #include "kmplayersource.h"
 
 
-class KAboutData;
 class KMPlayerPart;
-class KInstance;
 class JSCommandEntry;
 
 /*

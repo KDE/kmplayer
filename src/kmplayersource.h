@@ -28,9 +28,6 @@
 #include "kmplayerplaylist.h"
 #include "kmplayerprocess.h"
 
-class KConfig;
-class QWidget;
-class QFrame;
 
 namespace KMPlayer {
 

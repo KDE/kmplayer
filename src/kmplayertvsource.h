@@ -37,13 +37,10 @@ class KMPlayerPrefSourcePageTV;         // source, TV
 class TVDeviceScannerSource;
 class KMPlayerTVSource;
 class KUrlRequester;
-class KHistoryCombo;
 class KMPlayerApp;
 class QTabWidget;
-class QGroupBox;
 class QLineEdit;
 class QCheckBox;
-class KComboBox;
 
 
 class KMPLAYER_NO_EXPORT TVDevicePage : public QFrame {

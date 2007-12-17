@@ -32,17 +32,12 @@
 #define MOUSE_INVISIBLE_DELAY 2000
 
 class QPixmap;
-class QPaintDevice;
-class QPainter;
 class QSlider;
-class QLabel;
 class QMainWindow;
 class QDockWidget;
 class KActionCollection;
 class KAction;
-class KShortcut;
 class KStatusBar;
-class KFindDialog;
 
 namespace KMPlayer {
 
@@ -50,7 +45,6 @@ class View;
 class ViewArea;
 class Viewer;
 class ControlPanel;
-class VolumeBar;
 class Console;
 class PlayListView;
 class PlayListView;

@@ -32,11 +32,7 @@
 class KMPlayerApp;
 class KUrlRequester;
 class QMenu;
-class QMenuItem;
 class QCheckBox;
-class QLineEdit;
-class TVInput;
-class TVChannel;
 
 /*
  * Base class for sources having a sub menu in the application

@@ -38,6 +38,7 @@ class QLineEdit;
 class QTable;
 class QPushButton;
 class KLed;
+class KProcess;
 
 namespace KMPlayer {
     class FFMpeg;

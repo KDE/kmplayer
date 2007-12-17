@@ -35,8 +35,6 @@ class KMPlayerApp;
 class VDRCommand;
 class KUrlRequester;
 class Q3ButtonGroup;
-class QMenuItem;
-class QCheckBox;
 class QLineEdit;
 class KAction;
 class QSocket;

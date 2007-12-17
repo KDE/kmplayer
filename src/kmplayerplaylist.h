@@ -824,7 +824,6 @@ protected:
 };
 
 namespace SMIL {
-    class RegionBase;
     class Region;
     class Layout;
     class Transition;

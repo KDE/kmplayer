@@ -29,14 +29,8 @@
 
 #include "kmplayerplaylist.h"
 
-class QTextStream;
 class QImage;
-class QPainter;
 class QBuffer;
-
-namespace KIO {
-    class Job;
-}
 
 struct TransTypeInfo;
 

@@ -32,7 +32,6 @@ static const int id_status_timer = 2;
 class QMenu;
 class QMenuItem;
 class Q3ListViewItem;
-class KProcess;
 class KMPlayerBroadcastConfig;
 class KMPlayerFFServerConfig;
 class KSystemTrayIcon;
@@ -45,12 +44,6 @@ namespace KMPlayer {
     class View;
     class PartBase;
     class Source;
-    class KMPlayerDVDSource;
-    class KMPlayerDVDNavSource;
-    class KMPlayerVCDSource;
-    class KMPlayerPipeSource;
-    class KMPlayerTVSource;
-    class FFMpeg;
     class PlayListItem;
 } // namespace
 
