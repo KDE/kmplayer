@@ -857,8 +857,10 @@ KDE_NO_EXPORT NodePtr AnimateGroupData::targetElement () {
     if (!target_element && element) {
         for (Node *p = element->parentNode().ptr(); p; p =p->parentNode().ptr())
             if (SMIL::id_node_first_mediatype <= p->id &&
-                    SMIL::id_node_last_mediatype >= p->id)
+                    SMIL::id_node_last_mediatype >= p->id) {
                 target_element = p;
+                break;
+            }
     }
     return target_element;
 }
