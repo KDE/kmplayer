@@ -485,7 +485,6 @@ bool AudioVideoMedia::play () {
             request = ask_play;
             return true; // FIXME add Launching state
         }
-        process->ready ();
         m_manager->playAudioVideo (this);
         return true;
     }

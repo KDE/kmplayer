@@ -523,6 +523,7 @@ protected:
     NodeRefListPtr m_StartedListeners;      // Element is started
     NodeRefListPtr m_StoppedListeners;      // Element stopped
     Runtime * m_runtime;
+    bool inited;
 };
 
 KDE_NO_EXPORT inline Runtime * TimedMrl::runtime () {
@@ -546,11 +547,14 @@ public:
     NodePtr childFromTag (const QString & tag);
     PlayType playType () { return play_type_none; }
     void finish ();
+    void activate ();
     void deactivate ();
+    bool handleEvent (EventPtr);
     void setJumpNode (NodePtr);
 protected:
     KDE_NO_CDTOR_EXPORT GroupBase (NodePtr & d, short id) : TimedMrl (d, id) {}
     NodePtrW jump_node;
+    PostponePtr postpone_lock;
 };
 
 /**
@@ -670,6 +674,7 @@ public:
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
     virtual void closed ();
+    virtual void init ();
     virtual void activate ();
     virtual void deactivate ();
     virtual void defer ();

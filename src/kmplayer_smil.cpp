@@ -498,6 +498,8 @@ KDE_NO_EXPORT void Runtime::started () {
     NodePtr e = element; // element is weak
     SMIL::TimedMrl * tm = convertNode <SMIL::TimedMrl> (e);
     if (tm) {
+        if (start_timer)
+            tm->document ()->cancelTimer (start_timer);
         if (durTime ().offset > 0 && durTime ().durval == dur_timer) {
             if (duration_timer)
                 tm->document ()->cancelTimer (duration_timer);
@@ -2071,7 +2073,8 @@ KDE_NO_CDTOR_EXPORT SMIL::TimedMrl::TimedMrl (NodePtr & d, short id)
    m_StartListeners (new NodeRefList),
    m_StartedListeners (new NodeRefList),
    m_StoppedListeners (new NodeRefList),
-   m_runtime (0L) {}
+   m_runtime (0L),
+   inited (false) {}
 
 KDE_NO_CDTOR_EXPORT SMIL::TimedMrl::~TimedMrl () {
     delete m_runtime;
@@ -2083,12 +2086,15 @@ KDE_NO_EXPORT void SMIL::TimedMrl::closed () {
 }
 
 KDE_NO_EXPORT void SMIL::TimedMrl::init () {
-    runtime ()->reset ();
-    begin_time = finish_time = 0;
-    fill = fill_default;
-    fill_def = fill_inherit;
-    fill_active = getDefaultFill (this);
-    Mrl::init ();
+    if (!inited) {
+        runtime ()->reset ();
+        begin_time = finish_time = 0;
+        fill = fill_default;
+        fill_def = fill_inherit;
+        fill_active = getDefaultFill (this);
+        Mrl::init ();
+        inited = true;
+    }
 }
 
 KDE_NO_EXPORT void SMIL::TimedMrl::activate () {
@@ -2137,6 +2143,7 @@ KDE_NO_EXPORT void SMIL::TimedMrl::finish () {
 KDE_NO_EXPORT void SMIL::TimedMrl::reset () {
     //kdDebug () << "SMIL::TimedMrl::reset " << endl;
     Mrl::reset ();
+    inited = false;
     delete m_runtime;
     m_runtime = 0L;
 }
@@ -2327,6 +2334,36 @@ KDE_NO_EXPORT void SMIL::GroupBase::finish () {
         } else if (e->active ())
             e->deactivate ();
     TimedMrl::finish ();
+}
+
+static bool childMediaTypeReady (Node *p) {
+    for (Node *c = p->firstChild ().ptr (); c; c = c->nextSibling ().ptr ())
+        if (c->id >= SMIL::id_node_first_mediatype &&
+                c->id <= SMIL::id_node_last_mediatype) {
+            SMIL::MediaType *mt = static_cast <SMIL::MediaType *> (c);
+            if (mt->media_object && mt->media_object->downloading ())
+                return false;
+        }
+    return true;
+}
+
+KDE_NO_EXPORT void SMIL::GroupBase::activate () {
+    TimedMrl::activate ();
+    for (NodePtr n = firstChild (); n; n = n->nextSibling ())
+        if (isTimedMrl (n))
+            convertNode <Element> (n)->init ();
+    if (!childMediaTypeReady (this))
+        postpone_lock = document ()->postpone ();
+}
+
+KDE_NO_EXPORT bool SMIL::GroupBase::handleEvent (EventPtr event) {
+    if (event->id () == event_media_ready) {
+        if (childMediaTypeReady (this))
+            postpone_lock = NULL;
+    } else {
+        return TimedMrl::handleEvent (event);
+    }
+    return true;
 }
 
 KDE_NO_EXPORT void SMIL::GroupBase::deactivate () {
@@ -2743,10 +2780,16 @@ KDE_NO_EXPORT void SMIL::MediaType::boundsUpdate () {
     }
 }
 
+KDE_NO_EXPORT void SMIL::MediaType::init () {
+    if (!inited) {
+        trans_out_active = false;
+        fit = fit_hidden;
+        opacity = 100;
+        TimedMrl::init (); // sets all attributes
+    }
+}
+
 KDE_NO_EXPORT void SMIL::MediaType::activate () {
-    trans_out_active = false;
-    fit = fit_hidden;
-    opacity = 100;
     init (); // sets all attributes
     setState (state_activated);
     for (NodePtr c = firstChild (); c; c = c->nextSibling ())
@@ -2782,10 +2825,10 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
 
 KDE_NO_EXPORT void SMIL::MediaType::defer () {
     if (media_object) {
-        setState (state_deferred);
         //media_object->pause ();
         if (unfinished ())
             postpone_lock = document ()->postpone ();
+        setState (state_deferred);
     }
 }
 
@@ -2798,7 +2841,6 @@ KDE_NO_EXPORT void SMIL::MediaType::undefer () {
             sub_surface->repaint ();
     } else {
         setState (state_activated);
-        runtime ()->started ();
     }
     postpone_lock = 0L;
 }
@@ -3091,7 +3133,7 @@ KDE_NO_EXPORT void SMIL::AVMediaType::begin () {
 KDE_NO_EXPORT void SMIL::AVMediaType::undefer () {
     if (Runtime::timings_started == runtime ()->state () &&
             resolved && !media_object)
-        runtime ()->started ();
+        begin ();
     else
         MediaType::undefer ();
 }
@@ -3227,6 +3269,8 @@ bool SMIL::ImageMediaType::handleEvent (EventPtr event) {
             runtime ()->propagateStop (false);
     } else if (im && event->id () == event_media_ready) {
         dataArrived ();
+        if (parentNode ())
+            parentNode ()->handleEvent (event);
     } else {
         return MediaType::handleEvent (event);
     }
@@ -3239,17 +3283,19 @@ KDE_NO_CDTOR_EXPORT SMIL::TextMediaType::TextMediaType (NodePtr & d)
     : SMIL::MediaType (d, "text", id_node_text) {}
 
 KDE_NO_EXPORT void SMIL::TextMediaType::init () {
-    PlayListNotify *n = document ()->notify_listener;
-    if (n && !media_object)
-        media_object = n->mediaManager()->createMedia(MediaManager::Text, this);
+    if (!inited) {
+        PlayListNotify *n = document ()->notify_listener;
+        if (n && !media_object)
+            media_object = n->mediaManager()->createMedia(MediaManager::Text, this);
 
-    font_size = static_cast <TextMedia *> (media_object)->default_font_size;
-    font_color = 0;
-    background_color = 0xffffff;
-    bg_opacity = 100;
-    halign = align_left;
+        font_size = static_cast <TextMedia *> (media_object)->default_font_size;
+        font_color = 0;
+        background_color = 0xffffff;
+        bg_opacity = 100;
+        halign = align_left;
 
-    MediaType::init ();
+        MediaType::init ();
+    }
 }
 
 void
@@ -3326,6 +3372,8 @@ void SMIL::TextMediaType::dataArrived () {
 bool SMIL::TextMediaType::handleEvent (EventPtr event) {
     if (event->id () == event_media_ready) {
         dataArrived ();
+        if (parentNode ())
+            parentNode ()->handleEvent (event);
     } else {
         return MediaType::handleEvent (event);
     }
