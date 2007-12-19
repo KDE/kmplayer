@@ -150,11 +150,6 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     if (!kmplayerpart_static)
         kmplayerpart_static = kmplayerpart_staticdeleter.setObject (new KMPlayerPartStatic ());
     setInstance (KMPlayerFactory::instance (), true);
-
-    QWidget *pwidget = view ()->parentWidget ();
-    if (pwidget)
-        view ()->setPaletteBackgroundColor(pwidget->paletteBackgroundColor ());
-
     init (actionCollection ());
     m_sources ["hrefsource"] = (new KMPlayerHRefSource (this));
     /*KAction *playact =*/ new KAction(i18n("P&lay"), QString ("player_play"), KShortcut (), this, SLOT(play ()), actionCollection (), "play");
@@ -354,6 +349,10 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     } else
         m_group.truncate (0);
     kmplayerpart_static->partlist.push_back (this);
+
+    QWidget *pwidget = view ()->parentWidget ();
+    if (pwidget)
+        viewWidget ()->viewArea()->setPaletteBackgroundColor(pwidget->paletteBackgroundColor ());
 
     if (m_view->isFullScreen () != show_fullscreen)
         m_view->fullScreen ();

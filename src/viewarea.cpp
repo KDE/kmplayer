@@ -1463,7 +1463,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const IRect & rect) {
         surface->surface = cairoCreateSurface (winId (), width (), height ());
     CairoPaintVisitor visitor (surface->surface,
             Matrix (surface->bounds.x(), surface->bounds.y(), 1.0, 1.0),
-            IRect (ex, ey, ew, eh), m_view->paletteBackgroundColor (), true);
+            IRect (ex, ey, ew, eh), paletteBackgroundColor (), true);
     if (surface->node)
         surface->node->accept (&visitor);
 #else
