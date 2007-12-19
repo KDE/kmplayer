@@ -90,15 +90,24 @@
                      keyTimes="0;0.5;1"/>
     </par>
     <par>
-      <text regPoint="center" regAlign="center" id="text5" src="data:,animateMotion%20on%20region"
-            region="region2" dur="10"/>
-      <animateMotion target="region2" begin="1" dur="2" calcMode="spline"
-                     from="5%,10%" to="55%, 15%" keySplines=".5 0 .5 1"/>
-      <animateMotion target="region2" begin="3" dur="2" calcMode="spline"
-                     to="65%,60%" keySplines=".5 0 .5 1"/>
-      <animateMotion target="region2" begin="5" dur="2" calcMode="spline"
-                     by="-45%,10%" keySplines=".5 0 .5 1"/>
-      <animateMotion target="region2" begin="7" dur="2" calcMode="spline"
+      <text left="0" id="text5" src="data:,animateMotion%20on%20region"
+            region="region2" dur="10">
+        <animateMotion begin="2.7" dur=".3" calcMode="spline"
+                       from="0,0" to="25%, 0%" keySplines="0 .75 .25 1"/>
+        <animateMotion begin="4.7" dur=".3" calcMode="spline"
+                       from="25%,0%" to="25%, 25%" keySplines="0 .75 .25 1"/>
+        <animateMotion begin="6.7" dur=".3" calcMode="spline"
+                       from="25%,25%" to="0%, 25%" keySplines="0 .75 .25 1"/>
+        <animateMotion begin="8.6" dur=".4" calcMode="spline"
+                       from="0%,25%" to="0%, 0%" keySplines="0 .75 .25 1"/>
+      </text>
+      <animateMotion target="region2" begin="1" dur="1.7" calcMode="spline"
+                     from="5%,10%" to="55%, 15%" keySplines=".75 0 1 .25"/>
+      <animateMotion target="region2" begin="3" dur="1.7" calcMode="spline"
+                     to="65%,60%" keySplines=".75 0 1 .25"/>
+      <animateMotion target="region2" begin="5" dur="1.7" calcMode="spline"
+                     by="-45%,10%" keySplines=".75 0 1 .25"/>
+      <animateMotion target="region2" begin="7" dur="1.8" calcMode="spline"
                      from="20%,70%" by="-15%,-60%" keySplines="1 0 0 1"/>
     </par>
     </seq>
