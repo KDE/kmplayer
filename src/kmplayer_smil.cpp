@@ -853,6 +853,16 @@ KDE_NO_EXPORT void AnimateGroupData::restoreModification () {
     modification_id = -1;
 }
 
+KDE_NO_EXPORT NodePtr AnimateGroupData::targetElement () {
+    if (!target_element && element) {
+        for (Node *p = element->parentNode().ptr(); p; p =p->parentNode().ptr())
+            if (SMIL::id_node_first_mediatype <= p->id &&
+                    SMIL::id_node_last_mediatype >= p->id)
+                target_element = p;
+    }
+    return target_element;
+}
+
 //-----------------------------------------------------------------------------
 
 /**
@@ -861,7 +871,7 @@ KDE_NO_EXPORT void AnimateGroupData::restoreModification () {
 KDE_NO_EXPORT void SetData::started () {
     restoreModification ();
     if (element) {
-        if (target_element) {
+        if (targetElement ()) {
             convertNode <Element> (target_element)->setParam (
                     changed_attribute, change_to, &modification_id);
             //kdDebug () << "SetData(" << this << ")::started " << target_element->nodeName () << "." << changed_attribute << " ->" << change_to << " modid:" << modification_id << endl;
@@ -966,7 +976,7 @@ KDE_NO_EXPORT void AnimateData::started () {
             break;
         }
         NodePtr protect = target_element;
-        Element * target = convertNode <Element> (target_element);
+        Element * target = convertNode <Element> (targetElement ());
         if (!target) {
             kdWarning () << "target element not found" << endl;
             break;
@@ -1238,7 +1248,7 @@ bool AnimateMotionData::setInterval () {
 
 KDE_NO_EXPORT void AnimateMotionData::started () {
     //kdDebug () << "AnimateMotionData::started " << durTime ().durval << endl;
-    Element *target = convertNode <Element> (target_element);
+    Element *target = convertNode <Element> (targetElement ());
     if (!element || !checkTarget (target))
         return;
     if (anim_timer)
@@ -2352,13 +2362,16 @@ KDE_NO_EXPORT void SMIL::GroupBase::activate () {
     for (NodePtr n = firstChild (); n; n = n->nextSibling ())
         if (isTimedMrl (n))
             convertNode <Element> (n)->init ();
+}
+
+KDE_NO_EXPORT void SMIL::GroupBase::begin () {
     if (!childMediaTypeReady (this))
         postpone_lock = document ()->postpone ();
 }
 
 KDE_NO_EXPORT bool SMIL::GroupBase::handleEvent (EventPtr event) {
     if (event->id () == event_media_ready) {
-        if (childMediaTypeReady (this))
+        if (postpone_lock && childMediaTypeReady (this))
             postpone_lock = NULL;
     } else {
         return TimedMrl::handleEvent (event);
@@ -2371,6 +2384,7 @@ KDE_NO_EXPORT void SMIL::GroupBase::deactivate () {
     for (NodePtr e = firstChild (); e; e = e->nextSibling ())
         if (e->active ())
             e->deactivate ();
+    postpone_lock = NULL;
     TimedMrl::deactivate ();
 }
 
@@ -2792,12 +2806,6 @@ KDE_NO_EXPORT void SMIL::MediaType::init () {
 KDE_NO_EXPORT void SMIL::MediaType::activate () {
     init (); // sets all attributes
     setState (state_activated);
-    for (NodePtr c = firstChild (); c; c = c->nextSibling ())
-        if (c != external_tree) {
-            // activate param/set/animate.. children
-            c->activate ();
-            break; // childDone will handle next siblings
-        }
     runtime ()->begin ();
 }
 
@@ -2851,6 +2859,9 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
         findRegion (s->layout_node, param (StringPool::attr_region)) : 0L;
     if (trans_timer) // eg transOut and we're repeating
         document ()->cancelTimer (trans_timer);
+    for (NodePtr c = firstChild (); c; c = c->nextSibling ())
+        if (c != external_tree)
+            c->activate (); // activate param/set/animate.. children
     if (r) {
         region_node = r;
         region_mouse_enter = r->connectTo (this, event_inbounds);
@@ -2932,16 +2943,11 @@ KDE_NO_EXPORT void SMIL::MediaType::childDone (NodePtr child) {
     bool child_doc = child->mrl () && child->mrl ()->opener.ptr () == this;
     if (child_doc) {
         child->deactivate (); // should only if fill not is freeze or hold
-    } else if (active ()) { // traverse param or area children
-        for (NodePtr c = child->nextSibling(); c; c = c->nextSibling ())
-            if (!c->mrl () || c->mrl ()->opener.ptr () != this ) {
-                c->activate ();
-                return;
-            }
+    } else if (active ()) {
         Runtime * tr = runtime ();
         if (tr->state () < Runtime::timings_stopped) {
             if (tr->state () == Runtime::timings_started)
-                tr->propagateStop (child_doc); // what about repeat_count ..
+                tr->propagateStop (false); // what about repeat_count ..
             return; // still running, wait for runtime to finish
         }
     }

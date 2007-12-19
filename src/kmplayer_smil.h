@@ -152,6 +152,7 @@ public:
     virtual void reset ();
 protected:
     void restoreModification ();
+    NodePtr targetElement ();
     AnimateGroupData (NodePtr e);
     NodePtrW target_element;
     TrieString changed_attribute;
@@ -548,6 +549,7 @@ public:
     PlayType playType () { return play_type_none; }
     void finish ();
     void activate ();
+    void begin ();
     void deactivate ();
     bool handleEvent (EventPtr);
     void setJumpNode (NodePtr);
