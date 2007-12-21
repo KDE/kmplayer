@@ -352,8 +352,10 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
     kmplayerpart_static->partlist.push_back (this);
 
     QWidget *pwidget = view ()->parentWidget ();
-    if (pwidget)
+    if (pwidget) {
         viewWidget ()->viewArea()->setPaletteBackgroundColor(pwidget->paletteBackgroundColor ());
+     // m_view->viewer()->setBackgroundColor(pwidget->paletteBackgroundColor());
+    }
 
     if (m_view->isFullScreen () != show_fullscreen)
         m_view->fullScreen ();
