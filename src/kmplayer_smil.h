@@ -69,7 +69,7 @@ private:
 };
 
 /**
- * For RegPoint, RegionRuntime and MediaRuntime, having sizes
+ * For RegPoint, Region and MediaType, having sizes
  */
 class KMPLAYER_NO_EXPORT CalculatedSizer {
 public:
@@ -102,17 +102,17 @@ public:
         dur_end, dur_start, dur_last_dur
     };
     Runtime (NodePtr e);
-    virtual ~Runtime ();
+    ~Runtime ();
     /**
      * Called when element is pulled in scope, from Node::activate()
      */
-    virtual void begin ();
-    virtual void beginAndStart (); // skip start timer (if any)
+    void begin ();
+    void beginAndStart (); // skip start timer (if any)
     /**
      * Reset all data, called from end() and init()
      */
-    virtual void reset ();
-    virtual bool parseParam (const TrieString & name, const QString & value);
+    void reset ();
+    bool parseParam (const TrieString & name, const QString & value);
     TimingState state () const { return timingstate; }
     void propagateStop (bool forced);
     void propagateStart ();
@@ -126,8 +126,8 @@ public:
         int offset;
         ConnectionPtr connection;
     } durations [(const int) durtime_last];
-    virtual void started ();
-    virtual void stopped ();
+    void started ();
+    void stopped ();
     KDE_NO_EXPORT DurationItem & beginTime () { return durations[begin_time]; }
     KDE_NO_EXPORT DurationItem & durTime () { return durations[duration_time]; }
     KDE_NO_EXPORT DurationItem & endTime () { return durations [end_time]; }
@@ -140,101 +140,6 @@ protected:
     NodePtrW element;
     TimerInfoPtrW start_timer;
     TimerInfoPtrW duration_timer;
-};
-
-/**
- * Stores runtime data of elements from animate group set/animate/..
- */
-class KMPLAYER_NO_EXPORT AnimateGroupData : public Runtime {
-public:
-    KDE_NO_CDTOR_EXPORT ~AnimateGroupData () {}
-    virtual bool parseParam (const TrieString & name, const QString & value);
-    virtual void reset ();
-protected:
-    void restoreModification ();
-    NodePtr targetElement ();
-    AnimateGroupData (NodePtr e);
-    NodePtrW target_element;
-    TrieString changed_attribute;
-    QString change_to;
-    int modification_id;
-protected:
-    virtual void stopped ();
-};
-
-/**
- * Stores runtime data of set element
- */
-class KMPLAYER_NO_EXPORT SetData : public AnimateGroupData {
-public:
-    KDE_NO_CDTOR_EXPORT SetData (NodePtr e) : AnimateGroupData (e) {}
-    KDE_NO_CDTOR_EXPORT ~SetData () {}
-protected:
-    virtual void started ();
-};
-
-/**
- * Stores runtime data of animate element
- */
-class KMPLAYER_NO_EXPORT AnimateData : public AnimateGroupData {
-public:
-    AnimateData (NodePtr e);
-    KDE_NO_CDTOR_EXPORT ~AnimateData () {}
-    virtual bool parseParam (const TrieString & name, const QString & value);
-    virtual void reset ();
-    virtual void started ();
-    virtual void stopped ();
-    bool timerTick();
-private:
-    void applyStep ();
-    TimerInfoPtrW anim_timer;
-    enum { acc_none, acc_sum } accumulate;
-    enum { add_replace, add_sum } additive;
-    int change_by;
-    enum { calc_discrete, calc_linear, calc_paced, calc_spline } calcMode;
-    QString change_from;
-    QStringList change_values;
-    int steps;
-    float change_delta, change_to_val, change_from_val;
-    QString change_from_unit;
-};
-
-/**
- * Stores runtime data of animate element
- */
-class KMPLAYER_NO_EXPORT AnimateMotionData : public AnimateGroupData {
-public:
-    AnimateMotionData (NodePtr e);
-    ~AnimateMotionData ();
-    virtual bool parseParam (const TrieString & name, const QString & value);
-    virtual void reset ();
-    virtual void started ();
-    virtual void stopped ();
-    bool timerTick();
-private:
-    bool checkTarget (Node *n);
-    bool setInterval ();
-    void applyStep ();
-    bool getCoordinates (const QString &coord, SizeType &x, SizeType &y);
-    TimerInfoPtrW anim_timer;
-    enum { acc_none, acc_sum } accumulate;
-    enum { add_replace, add_sum } additive;
-    enum { calc_discrete, calc_linear, calc_paced, calc_spline } calcMode;
-    QString change_from;
-    QString change_by;
-    QStringList values;
-    float *keytimes;
-    int keytime_count;
-    QStringList splines;
-    float control_point[4];
-    unsigned int steps;
-    unsigned int cur_step;
-    unsigned int keytime_steps;
-    unsigned int interval;
-    SizeType begin_x, begin_y;
-    SizeType cur_x, cur_y;
-    SizeType delta_x, delta_y;
-    SizeType end_x, end_y;
 };
 
 class KMPLAYER_NO_EXPORT MouseListeners {
@@ -518,7 +423,6 @@ public:
     Fill fill_active;
 protected:
     TimedMrl (NodePtr & d, short id);
-    virtual Runtime * getNewRuntime ();
 
     NodeRefListPtr m_StartListeners;        // Element about to be started
     NodeRefListPtr m_StartedListeners;      // Element is started
@@ -529,7 +433,7 @@ protected:
 
 KDE_NO_EXPORT inline Runtime * TimedMrl::runtime () {
     if (!m_runtime)
-        m_runtime = getNewRuntime ();
+        m_runtime = new Runtime (this);
     return m_runtime;
 }
 
@@ -785,31 +689,95 @@ public:
     virtual void accept (Visitor *);
 };
 
-class KMPLAYER_NO_EXPORT Set : public TimedMrl {
+class KMPLAYER_NO_EXPORT AnimateGroup : public TimedMrl {
 public:
-    KDE_NO_CDTOR_EXPORT Set (NodePtr & d) : TimedMrl (d, id_node_set) {}
+    KDE_NO_CDTOR_EXPORT ~AnimateGroup () {}
+    virtual void finish ();
+    virtual void deactivate ();
+    virtual void parseParam (const TrieString & name, const QString & value);
+protected:
+    void restoreModification ();
+    NodePtr targetElement ();
+    AnimateGroup (NodePtr d, short _id);
+    NodePtrW target_element;
+    TrieString changed_attribute;
+    QString change_to;
+    int modification_id;
+protected:
+};
+
+class KMPLAYER_NO_EXPORT Set : public AnimateGroup {
+public:
+    KDE_NO_CDTOR_EXPORT Set (NodePtr & d) : AnimateGroup (d, id_node_set) {}
+    virtual void begin ();
     KDE_NO_EXPORT const char * nodeName () const { return "set"; }
-    virtual Runtime * getNewRuntime ();
     PlayType playType () { return play_type_none; }
 };
 
-class KMPLAYER_NO_EXPORT Animate : public TimedMrl {
+class KMPLAYER_NO_EXPORT Animate : public AnimateGroup {
 public:
-    KDE_NO_CDTOR_EXPORT Animate (NodePtr & d) : TimedMrl (d, id_node_animate) {}
+    Animate(NodePtr &doc);
+    virtual void init ();
+    virtual void begin ();
+    virtual void finish ();
+    virtual void deactivate ();
+    virtual void parseParam (const TrieString & name, const QString & value);
+    virtual bool handleEvent (EventPtr event);
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
-    virtual Runtime * getNewRuntime ();
     PlayType playType () { return play_type_none; }
-    bool handleEvent (EventPtr event);
+private:
+    void applyStep ();
+    bool timerTick();
+
+    TimerInfoPtrW anim_timer;
+    enum { acc_none, acc_sum } accumulate;
+    enum { add_replace, add_sum } additive;
+    int change_by;
+    enum { calc_discrete, calc_linear, calc_paced, calc_spline } calcMode;
+    QString change_from;
+    QStringList change_values;
+    int steps;
+    float change_delta, change_to_val, change_from_val;
+    QString change_from_unit;
 };
 
-class KMPLAYER_NO_EXPORT AnimateMotion : public TimedMrl {
+class KMPLAYER_NO_EXPORT AnimateMotion : public AnimateGroup {
 public:
-    KDE_NO_CDTOR_EXPORT AnimateMotion (NodePtr & d)
-        : TimedMrl (d, id_node_animate) {}
+    AnimateMotion (NodePtr & d);
+    ~AnimateMotion ();
+    virtual void init ();
+    virtual void begin ();
+    virtual void finish ();
+    virtual void deactivate ();
+    virtual void parseParam (const TrieString & name, const QString & value);
+    virtual bool handleEvent (EventPtr event);
     KDE_NO_EXPORT const char * nodeName () const { return "animateMotion"; }
-    virtual Runtime *getNewRuntime ();
     PlayType playType () { return play_type_none; }
-    bool handleEvent (EventPtr event);
+private:
+    bool timerTick();
+    bool checkTarget (Node *n);
+    bool setInterval ();
+    void applyStep ();
+    bool getCoordinates (const QString &coord, SizeType &x, SizeType &y);
+    TimerInfoPtrW anim_timer;
+    enum { acc_none, acc_sum } accumulate;
+    enum { add_replace, add_sum } additive;
+    enum { calc_discrete, calc_linear, calc_paced, calc_spline } calcMode;
+    QString change_from;
+    QString change_by;
+    QStringList values;
+    float *keytimes;
+    int keytime_count;
+    QStringList splines;
+    float control_point[4];
+    unsigned int steps;
+    unsigned int cur_step;
+    unsigned int keytime_steps;
+    unsigned int interval;
+    SizeType begin_x, begin_y;
+    SizeType cur_x, cur_y;
+    SizeType delta_x, delta_y;
+    SizeType end_x, end_y;
 };
 
 // TODO animateColor transitionFilter
