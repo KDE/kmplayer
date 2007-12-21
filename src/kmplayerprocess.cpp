@@ -2451,7 +2451,7 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
         }
         for (NodePtr n = node; n; n = n->parentNode ()) {
             Mrl *m = n->mrl ();
-            if (m_base_url.isEmpty ())
+            if (m && m_base_url.isEmpty ())
                 m_base_url = m->getAttribute ("pluginbaseurl");
             if (m && !m->mimetype.isEmpty ()) {
                 plugin = m_source->plugin (m->mimetype);
