@@ -2451,6 +2451,8 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
         }
         for (NodePtr n = node; n; n = n->parentNode ()) {
             Mrl *m = n->mrl ();
+            if (m_base_url.isEmpty ())
+                m_base_url = m->getAttribute ("pluginbaseurl");
             if (m && !m->mimetype.isEmpty ()) {
                 plugin = m_source->plugin (m->mimetype);
                 kdDebug() << "search plugin " << m->mimetype << "->" << plugin << endl;
@@ -2566,7 +2568,7 @@ static int getStreamId (const QString &path) {
 
 KDE_NO_EXPORT
 void NpPlayer::requestStream (const QString &path, const QString & url, const QString & target) {
-    KURL uri (m_url, url);
+    KURL uri (m_base_url.isEmpty () ? m_url : m_base_url, url);
     kdDebug () << "NpPlayer::request " << path << " '" << uri << "'" << endl;
     Q_UINT32 sid = getStreamId (path);
     if (sid >= 0) {

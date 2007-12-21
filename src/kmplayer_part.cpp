@@ -290,8 +290,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget * wparent, const char *w
 	    }
             // volume/clicktoplay/transparentatstart/animationatstart
             // autorewind/displaysize/border
-            if (!name.startsWith (QString::fromLatin1 ("__khtml__")))
-                convertNode <KMPlayer::Element> (urlsource->document ())->setAttribute (name, value);
+            if (name.startsWith (QString::fromLatin1 ("__khtml__")))
+                name = name.mid (9);
+            convertNode <KMPlayer::Element> (urlsource->document ())->setAttribute (name, value);
         }
     }
     if (turned_off_features) {

@@ -542,6 +542,7 @@ private:
     QString iface;
     QString path;
     QString filter;
+    QString m_base_url;
     typedef QMap <Q_UINT32, NpStream *> StreamMap;
     StreamMap streams;
     QString remote_service;
