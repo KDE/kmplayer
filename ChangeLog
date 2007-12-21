@@ -1,5 +1,9 @@
-Changes since version 0.10.0b
+Changes since version 0.10.0c
 - Support for simultaneous audio/video streams with SMIL
+Changes since version 0.10.0b
+- Use html page baseurl for resolving urls from the knpplayer backend
+- Initialize thread support for knpplayer, makes knpplayer crashes go away
+- Second part of set viewarea background to part's parent background
 Changes since version 0.10.0a
 - Fix some flash wanting full Url out of a relative Url before streaming data
 - Hardcode flash mimetypes in pluginsinfo
