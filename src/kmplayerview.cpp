@@ -766,7 +766,11 @@ KDE_NO_EXPORT void Viewer::timerEvent (QTimerEvent * e) {
     if (e->timerId () == resized_timer) {
         killTimer (resized_timer);
         resized_timer = 0;
-        emit resized (width (), height ());
+        if (m_plain_window)
+            XMoveResizeWindow (QX11Info::display(), m_plain_window,
+                    0, 0, width (), height ());
+        else
+            emit resized (width (), height ());
     }
 }
 
