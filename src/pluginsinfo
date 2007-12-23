@@ -1,19 +1,31 @@
-number=3
+number=5
 
 [0]
 description=RealPlayer LiveConnect-Enabled Plug-In G2
 file=libkmplayerpart.so
-mime=audio/x-pn-realaudio:rm:Real Audio Stream;audio/x-pn-realaudio-plugin:rpm,rm,ram:RealPlayer Plug-in
+mime=audio/x-pn-realaudio:rm:Real Audio Stream;audio/x-pn-realaudio-plugin:rpm,rm,ram:RealPlayer Plug-in;
 name=RealPlayer
 
 [1]
 description=Windows Media Player Plug-in
 file=libkmplayerpart.so
-mime=application/x-mplayer2:wmp:Windows Media Player;audio/x-ms-wma:wma:Windows Media Audio;video/x-ms-asf:asx,asf:Media Files;video/x-ms-asf-plugin:*:Media Files;video/x-ms-wmv:wmv:Windows Media Video;video/msvideo:avi,*:AVI;video/x-ms-wmp:wmp,*:Windows Media;video/x-ms-wvx:wvx,*:Windows Media;audio/x-ms-wax:wax,*:Windows Media;application/x-drm-v2:asx,*:Windows Media;audio/wav:wav,*:Microsoft wave file;audio/x-wav:wav,*:Microsoft wave file;video/x-ms-wm:wm,*:Media Files
+mime=application/x-mplayer2:wmp:Windows Media Player;audio/x-ms-wma:wma:Windows Media Audio;video/x-ms-asf:asx,asf:Media Files;video/x-ms-asf-plugin:*:Media Files;video/x-ms-wmv:wmv:Windows Media Video;video/msvideo:avi,*:AVI;video/x-ms-wmp:wmp,*:Windows Media;video/x-ms-wvx:wvx,*:Windows Media;audio/x-ms-wax:wax,*:Windows Media;application/x-drm-v2:asx,*:Windows Media;audio/wav:wav,*:Microsoft wave file;audio/x-wav:wav,*:Microsoft wave file;video/x-ms-wm:wm,*:Media Files;
 name=Windows Media Player Plugin
 
 [2]
 description=QuickTime Movie
 file=libkmplayerpart.so
-mime=video/quicktime:mov,qt:QuickTime
+mime=video/quicktime:mov,qt:QuickTime;
 name=QuickTime Plug-in
+
+[3]
+description=Shockwave Flash 9.0 r115
+file=libkmplayerpart.so
+mime=application/x-shockwave-flash:swf:Shockwave Flash;
+name=Shockwave Flash
+
+[4]
+description=FutureSplash Player 9.0 r115
+file=libkmplayerpart.so
+mime=application/futuresplash:spl:FutureSplash Player;
+name=FutureSplash Player
