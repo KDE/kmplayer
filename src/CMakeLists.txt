@@ -124,10 +124,10 @@ if (HAVE_NPP)
     add_executable(knpplayer ${knpplayer_SRCS})
 
     SET_TARGET_PROPERTIES(knpplayer PROPERTIES COMPILE_FLAGS
-        "${GLibDBusCflags} ${GTKCflags}"
+        "${GLibDBusCflags} ${GTKCflags} ${GThreadCflags}"
     )
     SET_TARGET_PROPERTIES(knpplayer PROPERTIES LINK_FLAGS
-        "${GLibDBusLinkFlags} ${GTKLinkFlags}"
+        "${GLibDBusLinkFlags} ${GTKLinkFlags} ${GThreadLinkFlags}"
     )
 
     install(TARGETS knpplayer DESTINATION ${BIN_INSTALL_DIR})
