@@ -24,7 +24,6 @@
 #include <qtextedit.h>
 
 #include <kurl.h>
-#include <QtGui/QX11EmbedContainer>
 #include <kmediaplayer/view.h>
 
 #include "kmplayersource.h"
@@ -43,7 +42,6 @@ namespace KMPlayer {
 
 class View;
 class ViewArea;
-class Viewer;
 class ControlPanel;
 class Console;
 class PlayListView;
@@ -100,7 +98,6 @@ public:
     //void print(QPrinter *pPrinter);
 
     TextEdit * console () const { return m_multiedit; }
-    KDE_NO_EXPORT Viewer * viewer () const { return m_viewer; }
     KDE_NO_EXPORT ControlPanel * controlPanel () const {return m_control_panel;}
     KDE_NO_EXPORT StatusBar * statusBar () const {return m_status_bar;}
     KDE_NO_EXPORT PlayListView * playList () const { return m_playlist; }
@@ -151,10 +148,7 @@ signals:
 protected:
     void leaveEvent (QEvent *) KDE_NO_EXPORT;
     void timerEvent (QTimerEvent *) KDE_NO_EXPORT;
-    bool x11Event (XEvent *) KDE_NO_EXPORT;
 private:
-    // widget for player's output
-    Viewer * m_viewer;
     // console output
     TextEdit * m_multiedit;
     KMPlayerPictureWidget *m_picture;
@@ -188,46 +182,6 @@ private:
     bool m_revert_fullscreen;
     bool m_no_info;
     bool m_edit_mode;
-};
-
-/*
- * The video widget
- */
-class KMPLAYER_EXPORT Viewer : public QX11EmbedContainer {
-    Q_OBJECT
-public:
-    Viewer(QWidget *parent, View * view);
-    ~Viewer();
-
-    int heightForWidth (int w) const;
-
-    void setAspect (float a);
-    float aspect () { return m_aspect; }
-    void sendKeyEvent (int key);
-    void setBackgroundColor (const QColor & c);
-    void resetBackgroundColor ();
-    void setCurrentBackgroundColor (const QColor & c);
-    KDE_NO_EXPORT View * view () const { return m_view; }
-    void setIntermediateWindow (bool set);
-signals:
-    void resized (int w, int h);
-public slots:
-    void sendConfigureEvent ();
-    void embedded ();
-protected:
-    void resizeEvent (QResizeEvent *);
-    void timerEvent (QTimerEvent *) KDE_NO_EXPORT;
-    void dragEnterEvent (QDragEnterEvent *);
-    void dropEvent (QDropEvent *);
-    void mouseMoveEvent (QMouseEvent * e);
-    void contextMenuEvent (QContextMenuEvent * e);
-    //virtual void windowChanged( WId w );
-private:
-    WId m_plain_window;
-    int resized_timer;
-    unsigned int m_bgcolor;
-    float m_aspect;
-    View * m_view;
 };
 
 } // namespace

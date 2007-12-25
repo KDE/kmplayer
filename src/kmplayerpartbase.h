@@ -54,10 +54,14 @@ namespace KIO {
 namespace KMPlayer {
 
 class PartBase;
+class IProcess;
 class Process;
 class MPlayer;
 class BookmarkOwner;
 class Settings;
+class MediaManager;
+class AudioVideoMedia;
+class ProcessInfo;
 
 /*
  * Source from URLs
@@ -73,21 +77,19 @@ public:
     virtual QString prettyName ();
     virtual void reset ();
     virtual void setUrl (const KUrl & url);
+    virtual bool authoriseUrl (const QString &url);
 public slots:
     virtual void init ();
     virtual void activate ();
     virtual void deactivate ();
-    virtual void playCurrent ();
     virtual void forward ();
     virtual void backward ();
-    virtual void jump (NodePtr e);
-    void play ();
+    virtual void play (Mrl *);
 private slots:
     void kioData (KIO::Job *, const QByteArray &);
     void kioMimetype (KIO::Job *, const QString &);
     void kioResult (KJob *);
 protected:
-    virtual bool requestPlayURL (NodePtr mrl);
     virtual bool resolveURL (NodePtr mrl);
 private:
     void read (NodePtr mrl, QTextStream &);
@@ -111,11 +113,11 @@ private:
 class KMPLAYER_EXPORT PartBase : public KMediaPlayer::Player {
     Q_OBJECT
 public:
-    typedef QMap <QString, Process *> ProcessMap;
     PartBase (QWidget *parent, QObject *objParent, KSharedConfigPtr);
     ~PartBase ();
     void init (KActionCollection * = 0L);
     virtual KMediaPlayer::View* view ();
+    View* viewWidget () const { return m_view; }
     static KAboutData* createAboutData ();
 
     Settings * settings () const { return m_settings; }
@@ -124,9 +126,7 @@ public:
     void setUrl (const KUrl & url) { m_sources ["urlsource"]->setUrl (url); }
 
     /* Changes the backend process */
-    void setProcess (const char *);
-    bool setProcess (Mrl *mrl);
-    void setRecorder (const char *);
+    QString processName (Mrl *mrl);
 
     /* Changes the source,
      * calls init() and reschedules an activate() on the source
@@ -136,15 +136,12 @@ public:
     void connectPlaylist (PlayListView * playlist);
     void connectInfoPanel (InfoWindow * infopanel);
     void connectSource (Source * old_source, Source * source);
-    Process * process () const { return m_process; }
-    Process * recorder () const { return m_recorder; }
+    MediaManager *mediaManager () const { return m_media_manager; }
     Source * source () const { return m_source; }
-    QMap <QString, Process *> & players () { return m_players; }
-    QMap <QString, Process *> & recorders () { return m_recorders; }
     QMap <QString, Source *> & sources () { return m_sources; }
     KSharedConfigPtr config () const { return m_config; }
     bool mayResize () const { return !m_noresize; }
-    void updatePlayerMenu (ControlPanel *);
+    void updatePlayerMenu (ControlPanel *, const QString &backend=QString ());
     void updateInfo (const QString & msg);
     void updateStatus (const QString & msg);
 #ifdef HAVE_DBUS
@@ -156,6 +153,8 @@ public:
     void changeURL (const QString & url);
     void updateTree (bool full=true, bool force=false);
     void setLanguages (const QStringList & alang, const QStringList & slang);
+    void startRecording ();
+    void stopRecording ();
 public slots:
     virtual bool openUrl (const KUrl & url);
     virtual bool openUrl (const KUrl::List & urls);
@@ -177,6 +176,7 @@ public slots:
     void decreaseVolume ();
     void setPosition (int position, int length);
     virtual void setLoaded (int percentage);
+    virtual void processCreated (Process *);
 public:
     virtual bool isSeekable (void) const;
     virtual qlonglong position (void) const;
@@ -200,6 +200,7 @@ signals:
     void audioIsSelected (int id);
     void subtitleIsSelected (int id);
     void positioned (int pos, int length);
+    void recording (bool);
 protected:
     bool openFile();
     virtual void timerEvent (QTimerEvent *);
@@ -217,8 +218,6 @@ protected slots:
     void playListItemExecuted (Q3ListViewItem *);
     virtual void playingStarted ();
     virtual void playingStopped ();
-    void recordingStarted ();
-    void recordingStopped ();
     void settingsChanged ();
     void audioSelected (int);
     void subtitleSelected (int);
@@ -226,12 +225,9 @@ protected:
     KSharedConfigPtr m_config;
     QPointer <View> m_view;
     QMap <QString, QString> temp_backends;
-    Settings * m_settings;
-    Process * m_process;
-    Process * m_recorder;
+    Settings *m_settings;
+    MediaManager *m_media_manager;
     Source * m_source;
-    ProcessMap m_players;
-    ProcessMap m_recorders;
     QMap <QString, Source *> m_sources;
     KBookmarkManager * m_bookmark_manager;
     BookmarkOwner * m_bookmark_owner;
@@ -239,7 +235,6 @@ protected:
 #ifdef HAVE_DBUS
     QString m_service;
 #endif
-    int m_record_timer;
     int m_update_tree_timer;
     bool m_noresize : 1;
     bool m_auto_controls : 1;
@@ -247,48 +242,6 @@ protected:
     bool m_bPosSliderPressed : 1;
     bool m_in_update_tree : 1;
     bool m_update_tree_full : 1;
-};
-
-class KMPLAYER_NO_EXPORT DataCache : public QObject, public GlobalShared<DataCache> {
-    Q_OBJECT
-    typedef QMap <QString, QByteArray> DataMap;
-    typedef QMap <QString, bool> PreserveMap;
-    DataMap cache_map;
-    PreserveMap preserve_map;
-public:
-    DataCache (DataCache **glob) : QObject (NULL), GlobalShared<DataCache> (glob) {}
-    ~DataCache () {}
-
-    void add (const QString &, const QByteArray &);
-    bool get (const QString &, QByteArray &);
-    bool preserve (const QString &);
-    bool unpreserve (const QString &);
-    bool isPreserved (const QString &);
-signals:
-    void preserveRemoved (const QString &); // ready or canceled
-private:
-    DataCache (const DataCache &);
-};
-
-class KMPLAYER_NO_EXPORT RemoteObjectPrivate : public QObject {
-    Q_OBJECT
-public:
-    RemoteObjectPrivate (RemoteObject * r);
-    ~RemoteObjectPrivate ();
-    bool download (const QString &);
-    void clear ();
-    KIO::Job * job;
-    QString url;
-    QByteArray data;
-    QString mime;
-private slots:
-    void slotResult (KJob*);
-    void slotData (KIO::Job*, const QByteArray& qb);
-    void slotMimetype (KIO::Job * job, const QString & mimestr);
-    void cachePreserveRemoved (const QString &);
-private:
-    RemoteObject * remote_object;
-    bool preserve_wait;
 };
 
 } // namespace

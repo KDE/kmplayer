@@ -22,38 +22,16 @@
 #define _KMPLAYER_SMILL_H_
 
 #include "config-kmplayer.h"
-#include <qobject.h>
 #include <qstring.h>
-#include <QMovie>
 #include <qstringlist.h>
 
 #include "kmplayerplaylist.h"
-
-class QImage;
-class QBuffer;
 
 struct TransTypeInfo;
 
 namespace KMPlayer {
 
-struct KMPLAYER_NO_EXPORT ImageData {
-    ImageData( const QString & img);
-    ~ImageData();
-    QImage *image;
-private:
-    QString url;
-};
-
-typedef SharedPtr <ImageData> ImageDataPtr;
-typedef WeakPtr <ImageData> ImageDataPtrW;
-
-struct KMPLAYER_NO_EXPORT CachedImage {
-    void setUrl (const QString & url);
-    bool isEmpty ();
-    ImageDataPtr data;
-};
-
-class TextRuntimePrivate;
+class ImageMedia;
 
 /*
  * Event signaled before the actual starting takes place. Use by SMIL::Excl
@@ -89,7 +67,7 @@ private:
 };
 
 /**
- * For RegPoint, RegionRuntime and MediaRuntime, having sizes
+ * For RegPoint, Region and MediaType, having sizes
  */
 class KMPLAYER_NO_EXPORT CalculatedSizer {
 public:
@@ -122,17 +100,17 @@ public:
         dur_end, dur_start, dur_last_dur
     };
     Runtime (NodePtr e);
-    virtual ~Runtime ();
+    ~Runtime ();
     /**
      * Called when element is pulled in scope, from Node::activate()
      */
-    virtual void begin ();
-    virtual void beginAndStart (); // skip start timer (if any)
+    void begin ();
+    void beginAndStart (); // skip start timer (if any)
     /**
      * Reset all data, called from end() and init()
      */
-    virtual void reset ();
-    virtual bool parseParam (const TrieString & name, const QString & value);
+    void reset ();
+    bool parseParam (const TrieString & name, const QString & value);
     TimingState state () const { return timingstate; }
     void propagateStop (bool forced);
     void propagateStart ();
@@ -146,8 +124,8 @@ public:
         int offset;
         ConnectionPtr connection;
     } durations [(const int) durtime_last];
-    virtual void started ();
-    virtual void stopped ();
+    void started ();
+    void stopped ();
     KDE_NO_EXPORT DurationItem & beginTime () { return durations[begin_time]; }
     KDE_NO_EXPORT DurationItem & durTime () { return durations[duration_time]; }
     KDE_NO_EXPORT DurationItem & endTime () { return durations [end_time]; }
@@ -155,179 +133,11 @@ private:
     void setDurationItem (DurationTime item, const QString & val);
 public:
     TimingState timingstate;
+    int repeat_count;
 protected:
     NodePtrW element;
     TimerInfoPtrW start_timer;
     TimerInfoPtrW duration_timer;
-    int repeat_count;
-};
-
-/**
- * Some common runtime data for all mediatype classes
- */
-class KMPLAYER_NO_EXPORT MediaTypeRuntime : public RemoteObject,public Runtime {
-public:
-    ~MediaTypeRuntime ();
-    virtual void reset ();
-    virtual void stopped ();
-    virtual void postpone (bool b);
-    virtual void clipStart ();
-    virtual void clipStop ();
-    PostponePtr postpone_lock;
-    MediaTypeRuntime (NodePtr e);
-protected:
-    ConnectionPtr document_postponed;      // pause audio/video accordantly
-};
-
-/**
- * Data needed for audio/video clips
- */
-class KMPLAYER_NO_EXPORT AudioVideoData : public MediaTypeRuntime {
-public:
-    AudioVideoData (NodePtr e);
-    virtual bool isAudioVideo ();
-    virtual bool parseParam (const TrieString & name, const QString & value);
-    virtual void started ();
-    virtual void postpone (bool b);
-    virtual void clipStart ();
-    virtual void clipStop ();
-};
-
-class KMPLAYER_NO_EXPORT ImageRuntime : public QObject,public MediaTypeRuntime {
-    Q_OBJECT
-public:
-    ImageRuntime (NodePtr e);
-    ~ImageRuntime ();
-    virtual bool parseParam (const TrieString & name, const QString & value);
-    virtual void postpone (bool b);
-    virtual void clipStart ();
-    virtual void clipStop ();
-    QBuffer *buffer;
-    QMovie *img_movie;
-    CachedImage cached_img;
-    int frame_nr;
-protected:
-    virtual void started ();
-    virtual void remoteReady (QByteArray &);
-private slots:
-    void movieUpdated (const QRect &);
-    void movieStatus (QMovie::MovieState);
-    void movieResize (const QSize &);
-};
-
-/**
- * Data needed for text
- */
-class KMPLAYER_NO_EXPORT TextRuntime : public MediaTypeRuntime {
-public:
-    TextRuntime (NodePtr e);
-    ~TextRuntime ();
-    void reset ();
-    virtual bool parseParam (const TrieString & name, const QString & value);
-    int font_size;
-    unsigned int font_color;
-    unsigned int background_color;
-    int bg_opacity;
-    enum { align_left, align_center, align_right } halign;
-    QString text;
-    TextRuntimePrivate * d;
-protected:
-    virtual void started ();
-    virtual void remoteReady (QByteArray &);
-};
-
-/**
- * Stores runtime data of elements from animate group set/animate/..
- */
-class KMPLAYER_NO_EXPORT AnimateGroupData : public Runtime {
-public:
-    KDE_NO_CDTOR_EXPORT ~AnimateGroupData () {}
-    virtual bool parseParam (const TrieString & name, const QString & value);
-    virtual void reset ();
-protected:
-    void restoreModification ();
-    AnimateGroupData (NodePtr e);
-    NodePtrW target_element;
-    TrieString changed_attribute;
-    QString change_to;
-    int modification_id;
-protected:
-    virtual void stopped ();
-};
-
-/**
- * Stores runtime data of set element
- */
-class KMPLAYER_NO_EXPORT SetData : public AnimateGroupData {
-public:
-    KDE_NO_CDTOR_EXPORT SetData (NodePtr e) : AnimateGroupData (e) {}
-    KDE_NO_CDTOR_EXPORT ~SetData () {}
-protected:
-    virtual void started ();
-};
-
-/**
- * Stores runtime data of animate element
- */
-class KMPLAYER_NO_EXPORT AnimateData : public AnimateGroupData {
-public:
-    AnimateData (NodePtr e);
-    KDE_NO_CDTOR_EXPORT ~AnimateData () {}
-    virtual bool parseParam (const TrieString & name, const QString & value);
-    virtual void reset ();
-    virtual void started ();
-    virtual void stopped ();
-    bool timerTick();
-private:
-    void applyStep ();
-    TimerInfoPtrW anim_timer;
-    enum { acc_none, acc_sum } accumulate;
-    enum { add_replace, add_sum } additive;
-    int change_by;
-    enum { calc_discrete, calc_linear, calc_paced, calc_spline } calcMode;
-    QString change_from;
-    QStringList change_values;
-    int steps;
-    float change_delta, change_to_val, change_from_val;
-    QString change_from_unit;
-};
-
-/**
- * Stores runtime data of animate element
- */
-class KMPLAYER_NO_EXPORT AnimateMotionData : public AnimateGroupData {
-public:
-    AnimateMotionData (NodePtr e);
-    ~AnimateMotionData ();
-    virtual bool parseParam (const TrieString & name, const QString & value);
-    virtual void reset ();
-    virtual void started ();
-    virtual void stopped ();
-    bool timerTick();
-private:
-    bool checkTarget (Node *n);
-    bool setInterval ();
-    void applyStep ();
-    bool getCoordinates (const QString &coord, SizeType &x, SizeType &y);
-    TimerInfoPtrW anim_timer;
-    enum { acc_none, acc_sum } accumulate;
-    enum { add_replace, add_sum } additive;
-    enum { calc_discrete, calc_linear, calc_paced, calc_spline } calcMode;
-    QString change_from;
-    QString change_by;
-    QStringList values;
-    float *keytimes;
-    int keytime_count;
-    QStringList splines;
-    float control_point[4];
-    unsigned int steps;
-    unsigned int cur_step;
-    unsigned int keytime_steps;
-    unsigned int interval;
-    SizeType begin_x, begin_y;
-    SizeType cur_x, cur_y;
-    SizeType delta_x, delta_y;
-    SizeType end_x, end_y;
 };
 
 class KMPLAYER_NO_EXPORT MouseListeners {
@@ -401,12 +211,7 @@ public:
     void accept (Visitor *);
     void jump (const QString & id);
     static Smil * findSmilNode (Node * node);
-    /**
-     * Hack to mark the currently playing MediaType as finished
-     * FIXME: think of a descent callback way for this
-     */
-    Mrl * linkNode ();
-    NodePtrW current_av_media_type;
+
     NodePtrW layout_node;
 };
 
@@ -427,7 +232,7 @@ public:
 /**
  * Base class for SMIL::Region, SMIL::RootLayout and SMIL::Layout
  */
-class KMPLAYER_NO_EXPORT RegionBase : public RemoteObject, public Element {
+class KMPLAYER_NO_EXPORT RegionBase : public Element {
 public:
     enum ShowBackground { ShowAlways, ShowWhenActive };
 
@@ -437,6 +242,7 @@ public:
     void childDone (NodePtr child);
     void deactivate ();
     virtual void parseParam (const TrieString & name, const QString & value);
+    virtual bool handleEvent (EventPtr event);
     /**
      * repaints region, calls scheduleRepaint(x,y,w,h) on view
      */
@@ -452,7 +258,7 @@ public:
 
     virtual Surface *surface ();
     SurfacePtrW region_surface;
-    CachedImage cached_img;
+    ImageMedia *bg_image;
     CalculatedSizer sizes;
 
     Single x, y, w, h;     // unscaled values
@@ -463,7 +269,7 @@ public:
 protected:
     RegionBase (NodePtr & d, short id);
     PostponePtr postpone_lock;               // pause while loading bg image
-    virtual void remoteReady (QByteArray &); // image downloaded
+    void dataArrived (); // image downloaded
 };
 
 /**
@@ -615,17 +421,17 @@ public:
     Fill fill_active;
 protected:
     TimedMrl (NodePtr & d, short id);
-    virtual Runtime * getNewRuntime ();
 
     NodeRefListPtr m_StartListeners;        // Element about to be started
     NodeRefListPtr m_StartedListeners;      // Element is started
     NodeRefListPtr m_StoppedListeners;      // Element stopped
     Runtime * m_runtime;
+    bool inited;
 };
 
 KDE_NO_EXPORT inline Runtime * TimedMrl::runtime () {
     if (!m_runtime)
-        m_runtime = getNewRuntime ();
+        m_runtime = new Runtime (this);
     return m_runtime;
 }
 
@@ -644,11 +450,15 @@ public:
     NodePtr childFromTag (const QString & tag);
     PlayType playType () { return play_type_none; }
     void finish ();
+    void activate ();
+    void begin ();
     void deactivate ();
+    bool handleEvent (EventPtr);
     void setJumpNode (NodePtr);
 protected:
     KDE_NO_CDTOR_EXPORT GroupBase (NodePtr & d, short id) : TimedMrl (d, id) {}
     NodePtrW jump_node;
+    PostponePtr postpone_lock;
 };
 
 /**
@@ -763,14 +573,19 @@ public:
 class KMPLAYER_NO_EXPORT MediaType : public TimedMrl {
 public:
     MediaType (NodePtr & d, const QString & t, short id);
+    ~MediaType ();
+
     NodePtr childFromTag (const QString & tag);
     KDE_NO_EXPORT const char * nodeName () const { return m_type.latin1 (); }
-    void closed ();
-    void activate ();
-    void deactivate ();
-    void begin ();
-    void finish ();
-    void childDone (NodePtr child);
+    virtual void closed ();
+    virtual void init ();
+    virtual void activate ();
+    virtual void deactivate ();
+    virtual void defer ();
+    virtual void undefer ();
+    virtual void begin ();
+    virtual void finish ();
+    virtual void childDone (NodePtr child);
     virtual SurfacePtr getSurface (NodePtr node);
     /* (new) sub-region or NULL if not displayed */
     Surface *surface ();
@@ -780,7 +595,7 @@ public:
     virtual void parseParam (const TrieString & name, const QString & value);
     virtual bool handleEvent (EventPtr event);
     NodeRefListPtr listeners (unsigned int event_id);
-    bool needsVideoWidget (); // for 'video' and 'ref' nodes
+
     SurfacePtrW sub_surface;
     NodePtrW external_tree; // if src points to playlist, the resolved top node
     NodePtrW trans_in;
@@ -796,7 +611,11 @@ public:
     unsigned int trans_steps;
     enum { sens_opaque, sens_transparent, sens_percentage } sensitivity;
     bool trans_out_active;
+
 protected:
+    virtual void clipStart ();
+    virtual void clipStop ();
+
     MouseListeners mouse_listeners;
     NodeRefListPtr m_MediaAttached;        // mouse entered
     ConnectionPtr region_paint;            // attached region needs painting
@@ -806,41 +625,59 @@ protected:
     ConnectionPtr region_attach;           // attached to region
     TimerInfoPtrW trans_timer;
     TimerInfoPtrW trans_out_timer;
+    ConnectionPtr document_postponed;      // pause audio/video accordantly
+    PostponePtr postpone_lock;
 };
 
 class KMPLAYER_NO_EXPORT AVMediaType : public MediaType {
 public:
     AVMediaType (NodePtr & d, const QString & t);
     NodePtr childFromTag (const QString & tag);
-    virtual Runtime * getNewRuntime ();
-    virtual void defer ();
+    virtual void begin ();
     virtual void undefer ();
     virtual void endOfFile ();
     virtual void accept (Visitor *);
     virtual bool expose () const;
+    virtual void parseParam (const TrieString &, const QString &);
+    virtual void clipStart ();
+    virtual void clipStop ();
 };
 
 class KMPLAYER_NO_EXPORT ImageMediaType : public MediaType {
 public:
     ImageMediaType (NodePtr & d);
-    Runtime * getNewRuntime ();
     NodePtr childFromTag (const QString & tag);
     PlayType playType () { return play_type_image; }
+    virtual void activate ();
+    virtual void begin ();
     virtual void accept (Visitor *);
+    virtual void parseParam (const TrieString &, const QString &);
+    virtual bool handleEvent (EventPtr event);
+    void dataArrived ();
 };
 
 class KMPLAYER_NO_EXPORT TextMediaType : public MediaType {
 public:
     TextMediaType (NodePtr & d);
-    Runtime * getNewRuntime ();
     PlayType playType () { return play_type_info; }
+    virtual void init ();
+    virtual void begin ();
     virtual void accept (Visitor *);
+    virtual void parseParam (const TrieString &, const QString &);
+    virtual bool handleEvent (EventPtr event);
+    void dataArrived ();
+
+    QString font_name;
+    int font_size;
+    unsigned int font_color;
+    unsigned int background_color;
+    int bg_opacity;
+    enum { align_left, align_center, align_right } halign;
 };
 
 class KMPLAYER_NO_EXPORT RefMediaType : public MediaType {
 public:
     RefMediaType (NodePtr & d);
-    Runtime * getNewRuntime ();
     virtual void accept (Visitor *);
 };
 
@@ -848,34 +685,97 @@ class KMPLAYER_NO_EXPORT Brush : public MediaType {
 public:
     Brush (NodePtr & d);
     virtual void accept (Visitor *);
-    virtual Runtime * getNewRuntime ();
 };
 
-class KMPLAYER_NO_EXPORT Set : public TimedMrl {
+class KMPLAYER_NO_EXPORT AnimateGroup : public TimedMrl {
 public:
-    KDE_NO_CDTOR_EXPORT Set (NodePtr & d) : TimedMrl (d, id_node_set) {}
+    KDE_NO_CDTOR_EXPORT ~AnimateGroup () {}
+    virtual void finish ();
+    virtual void deactivate ();
+    virtual void parseParam (const TrieString & name, const QString & value);
+protected:
+    void restoreModification ();
+    NodePtr targetElement ();
+    AnimateGroup (NodePtr d, short _id);
+    NodePtrW target_element;
+    TrieString changed_attribute;
+    QString change_to;
+    int modification_id;
+protected:
+};
+
+class KMPLAYER_NO_EXPORT Set : public AnimateGroup {
+public:
+    KDE_NO_CDTOR_EXPORT Set (NodePtr & d) : AnimateGroup (d, id_node_set) {}
+    virtual void begin ();
     KDE_NO_EXPORT const char * nodeName () const { return "set"; }
-    virtual Runtime * getNewRuntime ();
     PlayType playType () { return play_type_none; }
 };
 
-class KMPLAYER_NO_EXPORT Animate : public TimedMrl {
+class KMPLAYER_NO_EXPORT Animate : public AnimateGroup {
 public:
-    KDE_NO_CDTOR_EXPORT Animate (NodePtr & d) : TimedMrl (d, id_node_animate) {}
+    Animate(NodePtr &doc);
+    virtual void init ();
+    virtual void begin ();
+    virtual void finish ();
+    virtual void deactivate ();
+    virtual void parseParam (const TrieString & name, const QString & value);
+    virtual bool handleEvent (EventPtr event);
     KDE_NO_EXPORT const char * nodeName () const { return "animate"; }
-    virtual Runtime * getNewRuntime ();
     PlayType playType () { return play_type_none; }
-    bool handleEvent (EventPtr event);
+private:
+    void applyStep ();
+    bool timerTick();
+
+    TimerInfoPtrW anim_timer;
+    enum { acc_none, acc_sum } accumulate;
+    enum { add_replace, add_sum } additive;
+    int change_by;
+    enum { calc_discrete, calc_linear, calc_paced, calc_spline } calcMode;
+    QString change_from;
+    QStringList change_values;
+    int steps;
+    float change_delta, change_to_val, change_from_val;
+    QString change_from_unit;
 };
 
-class KMPLAYER_NO_EXPORT AnimateMotion : public TimedMrl {
+class KMPLAYER_NO_EXPORT AnimateMotion : public AnimateGroup {
 public:
-    KDE_NO_CDTOR_EXPORT AnimateMotion (NodePtr & d)
-        : TimedMrl (d, id_node_animate) {}
+    AnimateMotion (NodePtr & d);
+    ~AnimateMotion ();
+    virtual void init ();
+    virtual void begin ();
+    virtual void finish ();
+    virtual void deactivate ();
+    virtual void parseParam (const TrieString & name, const QString & value);
+    virtual bool handleEvent (EventPtr event);
     KDE_NO_EXPORT const char * nodeName () const { return "animateMotion"; }
-    virtual Runtime *getNewRuntime ();
     PlayType playType () { return play_type_none; }
-    bool handleEvent (EventPtr event);
+private:
+    bool timerTick();
+    bool checkTarget (Node *n);
+    bool setInterval ();
+    void applyStep ();
+    bool getCoordinates (const QString &coord, SizeType &x, SizeType &y);
+    TimerInfoPtrW anim_timer;
+    enum { acc_none, acc_sum } accumulate;
+    enum { add_replace, add_sum } additive;
+    enum { calc_discrete, calc_linear, calc_paced, calc_spline } calcMode;
+    QString change_from;
+    QString change_by;
+    QStringList values;
+    float *keytimes;
+    int keytime_count;
+    QStringList splines;
+    float control_point[4];
+    unsigned int steps;
+    unsigned int cur_step;
+    unsigned int keytime_steps;
+    unsigned int interval;
+    SizeType begin_x, begin_y;
+    SizeType cur_x, cur_y;
+    SizeType delta_x, delta_y;
+    SizeType end_x, end_y;
 };
 
 // TODO animateColor transitionFilter

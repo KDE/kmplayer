@@ -22,7 +22,6 @@
 #define _KMPLAYERPROCESS_H_
 
 #include <qobject.h>
-#include <QPointer>
 #include <qstring.h>
 #include <qbytearray.h>
 #include <qstringlist.h>
@@ -33,6 +32,7 @@
 
 #include "kmplayer_def.h"
 #include "kmplayerplaylist.h"
+#include "mediaobject.h"
 
 class QWidget;
 class K3Process;
@@ -46,46 +46,48 @@ namespace KIO {
 namespace KMPlayer {
 
 class Settings;
-class Viewer;
+class View;
+class MediaManager;
+class AudioVideoMedia;
 class Source;
 class Callback;
 class Backend_stub;
 class NpPlayer;
+class MPlayerPreferencesPage;
+class MPlayerPreferencesFrame;
+class XMLPreferencesPage;
+class XMLPreferencesFrame;
+
 
 /*
  * Base class for all backend processes
  */
-class KMPLAYER_EXPORT Process : public QObject {
+class KMPLAYER_EXPORT Process : public QObject, public IProcess {
     Q_OBJECT
 public:
-    enum State {
-        NotRunning = 0, Ready, Buffering, Playing
-    };
-    Process (QObject * parent, Settings * settings, const char * n);
+    Process (QObject *parent, ProcessInfo *, Settings *settings, const char *n);
     virtual ~Process ();
+
     virtual void init ();
-    virtual void initProcess (Viewer *);
-    virtual QString menuName () const;
+    virtual void initProcess ();
     virtual void setAudioLang (int, const QString &);
     virtual void setSubtitle (int, const QString &);
-    bool playing () const;
+    virtual bool running () const;
     KDE_NO_EXPORT K3Process * process () const { return m_process; }
     KDE_NO_EXPORT Source * source () const { return m_source; }
-    virtual WId widget ();
-    Viewer * viewer () const;
+    View *view () const;
+    WId widget ();
     void setSource (Source * src) { m_source = src; }
     virtual bool grabPicture (const KUrl & url, int pos);
-    bool supports (const char * source) const;
-    State state () const { return m_state; }
-    NodePtr mrl () const { return m_mrl; }
+    Mrl *mrl () const;
 signals:
     void grabReady (const QString & path);
 public slots:
-    virtual bool ready (Viewer *);
-    bool play (Source *, NodePtr mrl);
-    virtual bool stop ();
-    virtual bool quit ();
-    virtual bool pause ();
+    virtual bool ready ();
+    virtual bool play ();
+    virtual void stop ();
+    virtual void quit ();
+    virtual void pause ();
     /* seek (pos, abs) seek position in deci-seconds */
     virtual bool seek (int pos, bool absolute);
     /* volume from 0 to 100 */
@@ -99,21 +101,17 @@ protected slots:
     void rescheduledStateChanged ();
     void result (KJob *);
 protected:
-    void setState (State newstate);
+    void setState (IProcess::State newstate);
     virtual bool deMediafiedPlay ();
     virtual void terminateJobs ();
+
     Source * m_source;
     Settings * m_settings;
-    NodePtrW m_mrl;
-    State m_state;
     State m_old_state;
     K3Process * m_process;
     KIO::Job * m_job;
     QString m_url;
     int m_request_seek;
-    const char ** m_supported_sources;
-private:
-    QPointer <Viewer> m_viewer;
 };
 
 
@@ -123,12 +121,12 @@ private:
 class MPlayerBase : public Process {
     Q_OBJECT
 public:
-    MPlayerBase (QObject * parent, Settings * settings, const char * n);
+    MPlayerBase (QObject *parent, ProcessInfo *, Settings *, const char *);
     ~MPlayerBase ();
-    void initProcess (Viewer *);
+    void initProcess ();
 public slots:
-    virtual bool stop ();
-    virtual bool quit ();
+    virtual void stop ();
+    virtual void quit ();
 protected:
     bool sendCommand (const QString &);
     QStringList commands;
@@ -139,36 +137,37 @@ private slots:
     void dataWritten (K3Process *);
 };
 
-class MPlayerPreferencesPage;
-class MPlayerPreferencesFrame;
-
 /*
  * MPlayer process
  */
+class KMPLAYER_NO_EXPORT MPlayerProcessInfo : public ProcessInfo {
+public:
+    MPlayerProcessInfo (MediaManager *);
+    virtual IProcess *create (PartBase*, AudioVideoMedia*);
+};
+
 class KDE_EXPORT MPlayer : public MPlayerBase {
     Q_OBJECT
 public:
-    MPlayer (QObject * parent, Settings * settings);
+    MPlayer (QObject *parent, ProcessInfo *pinfo, Settings *settings);
     ~MPlayer ();
+
     virtual void init ();
-    virtual QString menuName () const;
-    virtual WId widget ();
     virtual bool grabPicture (const KUrl & url, int pos);
     virtual void setAudioLang (int, const QString &);
     virtual void setSubtitle (int, const QString &);
     bool run (const char * args, const char * pipe = 0L);
 public slots:
     virtual bool deMediafiedPlay ();
-    virtual bool stop ();
-    virtual bool pause ();
+    virtual void stop ();
+    virtual void pause ();
     virtual bool seek (int pos, bool absolute);
     virtual bool volume (int pos, bool absolute);
     virtual bool saturation (int pos, bool absolute);
     virtual bool hue (int pos, bool absolute);
     virtual bool contrast (int pos, bool absolute);
     virtual bool brightness (int pos, bool absolute);
-    MPlayerPreferencesPage * configPage () const { return m_configpage; }
-    bool ready (Viewer *);
+    bool ready ();
 protected slots:
     void processStopped (K3Process *);
 private slots:
@@ -177,7 +176,6 @@ private:
     QString m_process_output;
     QString m_grabfile;
     QWidget * m_widget;
-    MPlayerPreferencesPage * m_configpage;
     QString m_tmpURL;
     struct LangInfo {
         LangInfo (int i, const QString & n) : id (i), name (n) {}
@@ -205,7 +203,7 @@ public:
         pat_vcdtrack, pat_cdromtracks,
         pat_last
     };
-    MPlayerPreferencesPage (MPlayer *);
+    MPlayerPreferencesPage ();
     KDE_NO_CDTOR_EXPORT ~MPlayerPreferencesPage () {}
     void write (KSharedConfigPtr);
     void read (KSharedConfigPtr);
@@ -219,109 +217,141 @@ public:
     bool alwaysbuildindex;
 private:
     MPlayer * m_process;
-    MPlayerPreferencesFrame * m_configframe;
+    MPlayerPreferencesFrame *m_configframe;
 };
 
 #endif
 /*
  * Base class for all recorders
  */
-class KMPLAYER_EXPORT Recorder {
+class KMPLAYER_NO_EXPORT RecordDocument : public Document {
 public:
-    KDE_NO_EXPORT const KUrl & recordURL () const { return m_recordurl; }
-    KDE_NO_EXPORT void setUrl (const KUrl & url) { m_recordurl = url; }
-protected:
-    KUrl m_recordurl;
+    RecordDocument (const QString &url, const QString &rurl, const QString &rec,
+                    bool video, PlayListNotify *notify);
+
+    virtual void begin ();
+    virtual void endOfFile ();
+    virtual void deactivate ();
+
+    QString record_file;
+    QString recorder;
+    TimerInfoPtrW timer;
+    bool has_video;
 };
 
 /*
  * MEncoder recorder
  */
-class MEncoder : public MPlayerBase, public Recorder {
+class KMPLAYER_NO_EXPORT MEncoderProcessInfo : public ProcessInfo {
+public:
+    MEncoderProcessInfo (MediaManager *);
+    virtual IProcess *create (PartBase*, AudioVideoMedia*);
+};
+
+class MEncoder : public MPlayerBase {
     Q_OBJECT
 public:
-    MEncoder (QObject * parent, Settings * settings);
+    MEncoder (QObject *parent, ProcessInfo *pinfo, Settings *settings);
     ~MEncoder ();
     virtual void init ();
     virtual bool deMediafiedPlay ();
 public slots:
-    virtual bool stop ();
+    virtual void stop ();
 };
 
 /*
  * MPlayer recorder, runs 'mplayer -dumpstream'
  */
-class KMPLAYER_NO_EXPORT MPlayerDumpstream
-  : public MPlayerBase, public Recorder {
+class KMPLAYER_NO_EXPORT MPlayerDumpProcessInfo : public ProcessInfo {
+public:
+    MPlayerDumpProcessInfo (MediaManager *);
+    virtual IProcess *create (PartBase*, AudioVideoMedia*);
+};
+
+class KMPLAYER_NO_EXPORT MPlayerDumpstream : public MPlayerBase {
     Q_OBJECT
 public:
-    MPlayerDumpstream (QObject * parent, Settings * settings);
+    MPlayerDumpstream (QObject *parent, ProcessInfo *pinfo, Settings *settings);
     ~MPlayerDumpstream ();
     virtual void init ();
     virtual bool deMediafiedPlay ();
 public slots:
-    virtual bool stop ();
+    virtual void stop ();
 };
 
-class XMLPreferencesPage;
-class XMLPreferencesFrame;
 
 /*
- * Base class for all backend processes having the KMPlayer::Backend interface
+ * Base class for backend processes having the KMPlayer::Backend interface
  */
 /*
+class KMPLAYER_EXPORT CallbackProcessInfo
+ : public QObject, public ProcessInfo {
+    Q_OBJECT
+public:
+    CallbackProcessInfo (const char *nm, const QString &lbl,
+            const char **supported,MediaManager *, PreferencesPage *);
+    ~CallbackProcessInfo ();
+
+    QString dcopName ();
+    virtual bool startBackend () = 0;
+    virtual void quitProcesses ();
+    void stopBackend ();
+    void backendStarted (QCString dcopname, QByteArray & data);
+
+    KDE_NO_EXPORT bool haveConfig () { return have_config == config_yes; }
+    bool getConfigData ();
+    void setChangedData (const QByteArray &);
+    void changesReceived ();
+
+    QByteArray changed_data;
+    NodePtr config_doc;
+    Backend_stub *backend;
+    Callback *callback;
+    KProcess *m_process;
+
+signals:
+    void configReceived ();
+
+protected slots:
+    void processStopped (KProcess *);
+    void processOutput (KProcess *, char *, int);
+
+protected:
+    void initProcess ();
+    enum { config_unknown, config_probe, config_yes, config_no } have_config;
+    enum { send_no, send_try, send_new } send_config;
+};
+
 class KMPLAYER_EXPORT CallbackProcess : public Process {
     Q_OBJECT
-    friend class Callback;
+    friend class CallbackProcessInfo;
 public:
-    CallbackProcess (QObject * parent, Settings * settings, const char * n, const QString & menu);
+    CallbackProcess (QObject *, ProcessInfo *, Settings *, const char * n);
     ~CallbackProcess ();
     virtual void setStatusMessage (const QString & msg);
     virtual void setErrorMessage (int code, const QString & msg);
     virtual void setFinished ();
     virtual void setPlaying ();
-    virtual void setStarted (QCString dcopname, QByteArray & data);
     virtual void setMovieParams (int length, int width, int height, float aspect, const QStringList & alang, const QStringList & slang);
     virtual void setMoviePosition (int position);
     virtual void setLoadingProgress (int percentage);
     virtual void setAudioLang (int, const QString &);
     virtual void setSubtitle (int, const QString &);
-    virtual QString menuName () const;
-    virtual WId widget ();
-    KDE_NO_EXPORT QByteArray & configData () { return m_configdata; }
-    KDE_NO_EXPORT bool haveConfig () { return m_have_config == config_yes; }
-    bool getConfigData ();
-    void setChangedData (const QByteArray &);
-    QString dcopName ();
-    NodePtr configDocument () { return configdoc; }
-    void initProcess (Viewer *);
     virtual bool deMediafiedPlay ();
+    virtual bool running () const;
 public slots:
-    bool stop ();
-    bool quit ();
-    bool pause ();
+    void stop ();
+    void quit ();
+    void pause ();
     bool seek (int pos, bool absolute);
     bool volume (int pos, bool absolute);
     bool saturation (int pos, bool absolute);
     bool hue (int pos, bool absolute);
     bool contrast (int pos, bool absolute);
     bool brightness (int pos, bool absolute);
-signals:
-    void configReceived ();
-protected slots:
-    void processStopped (K3Process *);
-    void processOutput (K3Process *, char *, int);
 protected:
-    Callback * m_callback;
-    Backend_stub * m_backend;
-    QString m_menuname;
-    QByteArray m_configdata;
-    QByteArray m_changeddata;
     XMLPreferencesPage * m_configpage;
-    NodePtr configdoc;
     bool in_gui_update;
-    enum { config_unknown, config_probe, config_yes, config_no } m_have_config;
-    enum { send_no, send_try, send_new } m_send_config;
 };
 */
 /*
@@ -362,7 +392,7 @@ struct KMPLAYER_NO_EXPORT TypeNode : public ConfigNode {
 /*
 class KMPLAYER_NO_EXPORT XMLPreferencesPage : public PreferencesPage {
 public:
-    XMLPreferencesPage (CallbackProcess *);
+    XMLPreferencesPage (CallbackProcessInfo *);
     ~XMLPreferencesPage ();
     void write (KSharedConfigPtr);
     void read (KSharedConfigPtr);
@@ -370,7 +400,7 @@ public:
     void prefLocation (QString & item, QString & icon, QString & tab);
     QFrame * prefPage (QWidget * parent);
 private:
-    CallbackProcess * m_process;
+    CallbackProcess *m_process_info;
     XMLPreferencesFrame * m_configframe;
 };
 */
@@ -378,13 +408,21 @@ private:
  * Xine backend process
  */
 /*
-class KMPLAYER_NO_EXPORT Xine : public CallbackProcess, public Recorder {
+class KMPLAYER_NO_EXPORT XineProcessInfo : public CallbackProcessInfo {
+public:
+    XineProcessInfo (MediaManager *);
+    virtual IProcess *create (PartBase*, AudioVideoMedia*);
+
+    virtual bool startBackend ();
+};
+
+class KMPLAYER_NO_EXPORT Xine : public CallbackProcess {
     Q_OBJECT
 public:
-    Xine (QObject * parent, Settings * settings);
+    Xine (QObject *parent, ProcessInfo*, Settings *settings);
     ~Xine ();
 public slots:
-    bool ready (Viewer *);
+    bool ready ();
 };
 */
 /*
@@ -397,22 +435,28 @@ public:
     GStreamer (QObject * parent, Settings * settings);
     ~GStreamer ();
 public slots:
-    virtual bool ready (Viewer *);
+    virtual bool ready ();
 };
 */
 /*
  * ffmpeg backend recorder
  */
-class KMPLAYER_EXPORT FFMpeg : public Process, public Recorder {
+class KMPLAYER_NO_EXPORT FFMpegProcessInfo : public ProcessInfo {
+public:
+    FFMpegProcessInfo (MediaManager *);
+    virtual IProcess *create (PartBase*, AudioVideoMedia*);
+};
+
+class KMPLAYER_EXPORT FFMpeg : public Process {
     Q_OBJECT
 public:
-    FFMpeg (QObject * parent, Settings * settings);
+    FFMpeg (QObject *parent, ProcessInfo *pinfo, Settings *settings);
     ~FFMpeg ();
     virtual void init ();
     virtual bool deMediafiedPlay ();
 public slots:
-    virtual bool stop ();
-    virtual bool quit ();
+    virtual void stop ();
+    virtual void quit ();
 private slots:
     void processStopped (K3Process *);
 };
@@ -457,16 +501,27 @@ private slots:
     void slotTotalSize (KJob *, qulonglong sz);
 };
 
+class KMPLAYER_NO_EXPORT NppProcessInfo : public ProcessInfo {
+public:
+    NppProcessInfo (MediaManager *);
+    virtual IProcess *create (PartBase*, AudioVideoMedia*);
+};
+
 class KMPLAYER_NO_EXPORT NpPlayer : public Process {
     Q_OBJECT
 public:
-    NpPlayer (QObject *parent, Settings *settings, const QString &srv);
+    NpPlayer (QObject *, KMPlayer::ProcessInfo*, Settings *);
     ~NpPlayer ();
+
+    static const char *name;
+    static const char *supports [];
+    static IProcess *create (PartBase *, AudioVideoMedia *);
+
     virtual void init ();
     virtual bool deMediafiedPlay ();
-    virtual void initProcess (Viewer * viewer);
-    virtual QString menuName () const;
+    virtual void initProcess ();
 
+    using Process::running;
     void running (const QString &srv) KMPLAYER_NO_MBR_EXPORT;
     void plugged () KMPLAYER_NO_MBR_EXPORT;
     void request_stream (const QString &path, const QString &url, const QString &target) KMPLAYER_NO_MBR_EXPORT;
@@ -482,10 +537,10 @@ signals:
     void evaluate (const QString & scr, QString & result);
     void openUrl (const KUrl & url, const QString & target);
 public slots:
-    virtual bool stop ();
-    virtual bool quit ();
+    virtual void stop ();
+    virtual void quit ();
 public slots:
-    bool ready (Viewer *);
+    bool ready ();
 private slots:
     void processOutput (K3Process *, char *, int);
     void processStopped (K3Process *);
@@ -504,6 +559,7 @@ private:
     typedef QMap <uint32_t, NpStream *> StreamMap;
     StreamMap streams;
     QString remote_service;
+    QString m_base_url;
     QByteArray send_buf;
     bool write_in_progress;
     bool in_process_stream;

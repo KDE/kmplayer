@@ -25,7 +25,6 @@
 #include <qstring.h>
 
 #include "kmplayerplaylist.h"
-#include "kmplayer_smil.h"
 
 namespace KMPlayer {
 
@@ -58,7 +57,7 @@ public:
     virtual void deactivate (); // stop handling paint events
     virtual void childDone (NodePtr child); // for if no duration_timer set
     KDE_NO_EXPORT virtual bool expose () const { return false; }
-    KDE_NO_EXPORT virtual PlayType playType () const { return play_type_image; }
+    KDE_NO_EXPORT virtual PlayType playType () { return play_type_image; }
     virtual bool handleEvent (EventPtr event);
     virtual void accept (Visitor *);
     Surface *surface ();
@@ -162,7 +161,7 @@ public:
     virtual void accept (Visitor *);
 };
 
-class KMPLAYER_NO_EXPORT Image : public RemoteObject, public Mrl {
+class KMPLAYER_NO_EXPORT Image : public Mrl {
     PostponePtr postpone_lock;
 public:
     Image (NodePtr & d);
@@ -172,13 +171,13 @@ public:
     virtual void begin ();
     virtual void deactivate ();
     virtual void closed ();
+    virtual bool handleEvent (EventPtr event);
     bool isReady (bool postpone_if_not = false); // is downloading ready
     Surface *surface ();
     SurfacePtrW img_surface;
-    CachedImage cached_img;
     bool expose () const { return false; }
 protected:
-    virtual void remoteReady (QByteArray & data);
+    void dataArrived ();
 };
 
 } // RP namespace

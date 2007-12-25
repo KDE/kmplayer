@@ -20,7 +20,6 @@
 
 #undef Always
 
-#include "config-kmplayer.h"
 #include <qlayout.h>
 #include <qlabel.h>
 #include <qpushbutton.h>
@@ -53,12 +52,16 @@
 #include <kcolorbutton.h>
 #include <kurlrequester.h>
 #include <kfontdialog.h>
-
 #include "pref.h"
 #include "kmplayerpartbase.h"
 #include "kmplayerprocess.h"
+#include "mediaobject.h"
 #include "kmplayerconfig.h"
 
+#ifdef HAVE_XINE
+#warning xine defined
+#undef HAVE_XINE
+#endif
 
 using namespace KMPlayer;
 
@@ -385,8 +388,13 @@ KDE_NO_EXPORT void PrefSourcePageURL::slotTextChanged (const QString &) {
     changed = true;
 }
 
-KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent, PartBase * player, RecorderPage * rl, int rec_len)
- : KVBox (parent), m_player (player), m_recorders (rl), m_recorders_length (rec_len) {
+KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent,
+        PartBase * player, RecorderPage * rl, int rec_len)
+ : KVBox (player->view ()),
+   m_player (player),
+   m_recorders (rl),
+   m_recorders_length (rec_len),
+   rec_timer (0) {
     setMargin (5);
     setSpacing (2);
 
@@ -410,8 +418,6 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent, PartBase * 
     recorder = new Q3ButtonGroup (m_recorders_length, Qt::Vertical, i18n ("Recorder"), this);
     for (RecorderPage * p = m_recorders; p; p = p->next)
         new QRadioButton (p->name (), recorder);
-    if (m_player->source ())
-        sourceChanged (0L, m_player->source ());
     recorder->setButton(0); // for now
 
     layout()->addItem(new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Minimum));
@@ -430,44 +436,64 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent, PartBase * 
 
     static_cast <QBoxLayout *>(layout())->addLayout (buttonlayout);
     layout()->addItem (new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    connect (m_player, SIGNAL (sourceChanged(KMPlayer::Source*,KMPlayer::Source*)), this, SLOT (sourceChanged(KMPlayer::Source*,KMPlayer::Source*)));
 #ifdef HAVE_XINE
     connect (recorder, SIGNAL (clicked(int)), this, SLOT(recorderClicked(int)));
 #endif
-    connect (replay, SIGNAL (clicked (int)), this, SLOT (replayClicked (int)));
+    connect (player, SIGNAL (recording (bool)), this, SLOT (recording (bool)));
 }
 
-KDE_NO_EXPORT void PrefRecordPage::recordingStarted () {
-    recordButton->setText (i18n ("Stop Recording"));
-    url->setEnabled (false);
-    topLevelWidget ()->hide ();
+PrefRecordPage::~PrefRecordPage () {
+    if (record_doc)
+        record_doc->document ()->dispose ();
 }
 
-KDE_NO_EXPORT void PrefRecordPage::recordingFinished () {
-    recordButton->setText (i18n ("Start Recording"));
-    url->setEnabled (true);
-    QTimer::singleShot (0, m_player, SLOT(recordingStopped())); // removed from PartBase::setSource because PartBase::recordingStopped calls openUrl and that will call PartBase::setSource and Qt doesn't like disconnecting/connecting a signal that is current
-}
-
-KDE_NO_EXPORT void PrefRecordPage::sourceChanged (Source * olds, Source * nws) {
-    int id = 0;
-    int nr_recs = 0;
-    if (olds) {
-        disconnect(nws,SIGNAL(startRecording()),this, SLOT(recordingStarted()));
-        disconnect(nws,SIGNAL(stopRecording()),this, SLOT(recordingFinished()));
+KDE_NO_EXPORT void PrefRecordPage::recording (bool on) {
+    kDebug() << "PrefRecordPage::recording " << on << endl;
+    recordButton->setText (on
+            ? i18n ("Stop &Recording")
+            : i18n ("Start &Recording"));
+    url->setEnabled (!on);
+    if (on) {
+        topLevelWidget ()->hide ();
+    } else if (record_doc && record_doc->active ()) {
+        record_doc->deactivate ();
+        if (replay->selectedId () != Settings::ReplayNo) {
+            if (record_doc)
+                record_doc->deactivate ();
+            if (rec_timer)
+                timerEvent (NULL);
+            else
+                m_player->openUrl (
+                        convertNode <RecordDocument> (record_doc)->record_file);
+        }
     }
-    if (nws) {
+}
+
+KDE_NO_EXPORT void PrefRecordPage::showEvent (QShowEvent *e) {
+    Source *src = m_player->source ();
+    if (recordButton->text () == i18n ("Start &Recording") && src &&
+            src->current ()) {
+        int id = 0;
+        int nr_recs = 0;
         for (RecorderPage * p = m_recorders; p; p = p->next, ++id) {
             QAbstractButton * radio = recorder->find (id);
-            bool b = m_player->recorders () [p->recorderName ()]->supports (nws->name ());
+            bool b = m_player->mediaManager ()->recorderInfos ()
+                [p->recorderName ()]->supports (src->name ());
             radio->setEnabled (b);
             if (b) nr_recs++;
         }
-        source->setText (i18n ("Current Source: ") + nws->prettyName ());
-        connect (nws, SIGNAL(startRecording()), this, SLOT(recordingStarted()));
-        connect (nws, SIGNAL(stopRecording()), this, SLOT(recordingFinished()));
+        source_url = src->current ()->src;
+        source->setText (i18n ("Current Source: ") + source_url);
+        recordButton->setEnabled (nr_recs > 0);
     }
-    recordButton->setEnabled (nr_recs > 0);
+    KVBox::showEvent (e);
+}
+
+KDE_NO_EXPORT void PrefRecordPage::timerEvent (QTimerEvent *) {
+    killTimer (rec_timer);
+    rec_timer = 0;
+    if (record_doc)
+        m_player->openUrl(convertNode<RecordDocument>(record_doc)->record_file);
 }
 
 KDE_NO_EXPORT void PrefRecordPage::recorderClicked (int id) {
@@ -483,18 +509,9 @@ KDE_NO_EXPORT void PrefRecordPage::replayClicked (int id) {
 }
 
 KDE_NO_EXPORT void PrefRecordPage::slotRecord () {
-    connect (m_player->source (), SIGNAL (stopPlaying ()),
-             this, SLOT (playingStopped ()));
-    if (m_player->process () && m_player->process ()->playing ())
-        m_player->process ()->quit ();
-    else
-        playingStopped ();
-}
-
-KDE_NO_EXPORT void PrefRecordPage::playingStopped () {
-    disconnect (m_player->source (), SIGNAL (stopPlaying ()),
-                this, SLOT (playingStopped ()));
     if (!url->lineEdit()->text().isEmpty()) {
+        m_player->source ()->document ()->reset ();
+        kDebug() << "Source resetted" << endl;
         m_player->settings ()->recordfile = url->lineEdit()->text();
         m_player->settings ()->replaytime = replaytime->text ().toInt ();
 #if KDE_IS_VERSION(3,1,90)
@@ -508,7 +525,24 @@ KDE_NO_EXPORT void PrefRecordPage::playingStopped () {
         m_player->settings ()->replayoption = Settings::ReplayOption (replayid);
         for (RecorderPage * p = m_recorders; p; p = p->next)
             if (id-- == 0) {
-                p->record ();
+                if (record_doc) {
+                    if (record_doc->active ())
+                        record_doc->reset ();
+                    record_doc->document ()->dispose ();
+                }
+                record_doc = new RecordDocument (
+                        source_url,
+                        url->lineEdit()->text(),
+                        p->recorderName (),
+                        !strcmp (p->recorderName (), "xine"), // FIXME
+                        m_player->source ());
+                p->startRecording ();
+                record_doc->activate ();
+                if (replay->selectedId () == Settings::ReplayAfter) {
+                    double t = replaytime->text ().toDouble ();
+                    if (t > 0.01)
+                        rec_timer = startTimer (int (t * 1000));
+                }
                 break;
             }
     }
@@ -516,22 +550,6 @@ KDE_NO_EXPORT void PrefRecordPage::playingStopped () {
 
 KDE_NO_CDTOR_EXPORT RecorderPage::RecorderPage (QWidget *parent, PartBase * player)
  : KVBox (parent), next (0L), m_player (player) {}
-
-KDE_NO_EXPORT void RecorderPage::record () {
-    Process * proc = m_player->recorders () [recorderName ()];
-    m_player->setRecorder (recorderName ());
-    Recorder * rec = dynamic_cast <Recorder *> (proc);
-    if (!proc->playing ()) {
-        if (m_player->process ())
-            m_player->process ()->quit ();
-        rec->setUrl (KUrl (m_player->settings ()->recordfile));
-        proc->setSource (m_player->source ());
-        proc->ready (0L);
-    } else {
-        rec->setUrl (KUrl ());
-        proc->stop ();
-    }
-}
 
 KDE_NO_CDTOR_EXPORT PrefMEncoderPage::PrefMEncoderPage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
     setMargin (5);
@@ -554,14 +572,13 @@ KDE_NO_EXPORT void PrefMEncoderPage::formatClicked (int id) {
     arguments->setEnabled (!!id);
 }
 
-KDE_NO_EXPORT void PrefMEncoderPage::record () {
+KDE_NO_EXPORT void PrefMEncoderPage::startRecording () {
 #if KDE_IS_VERSION(3,1,90)
     m_player->settings ()->recordcopy = !format->selectedId ();
 #else
     m_player->settings ()->recordcopy = !format->id (format->selected ());
 #endif
     m_player->settings ()->mencoderarguments = arguments->text ();
-    RecorderPage::record ();
 }
 
 KDE_NO_EXPORT QString PrefMEncoderPage::name () {
@@ -589,9 +606,8 @@ KDE_NO_CDTOR_EXPORT PrefFFMpegPage::PrefFFMpegPage (QWidget *parent, PartBase * 
     layout()->addItem(new QSpacerItem(0,0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 }
 
-KDE_NO_EXPORT void PrefFFMpegPage::record () {
+KDE_NO_EXPORT void PrefFFMpegPage::startRecording () {
     m_player->settings ()->ffmpegarguments = arguments->text ();
-    RecorderPage::record ();
 }
 
 KDE_NO_EXPORT QString PrefFFMpegPage::name () {

@@ -108,9 +108,10 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::KMPlayerPrefSourcePageVDR (QWidge
 KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVDR::~KMPlayerPrefSourcePageVDR () {}
 
 KDE_NO_EXPORT void KMPlayerPrefSourcePageVDR::showEvent (QShowEvent *) {
-    XVideo * xvideo = static_cast<XVideo *>(m_player->players()["xvideo"]);
-    if (!xvideo->configDocument ())
-        xvideo->getConfigData ();
+    XvProcessInfo *pi = static_cast<XvProcessInfo *>(m_player->mediaManager()->
+            processInfos()["xvideo"]);
+    if (!pi->config_doc)
+        pi->getConfigData ();
 }
 //-----------------------------------------------------------------------------
 
@@ -211,11 +212,6 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deactivate () {
     m_request_jump.truncate (0);
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::playCurrent () {
-    if (m_player->process ())
-        m_player->process ()->play (this, current ()); // FIXME HACK
-}
-
 KDE_NO_EXPORT void KMPlayerVDRSource::processStopped () {
     if (m_socket->state () == QSocket::Connected) {
         queueCommand (QString ("VOLU %1\n").arg (m_stored_volume).ascii ());
@@ -282,7 +278,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::disconnected () {
     }
     setUrl (KUrl (QString ("vdr://localhost:%1").arg (tcp_port)));
     if (channel_timer && m_player->source () == this)
-        m_player->process ()->quit ();
+        m_player->stop ();
     deleteCommands ();
     KAction * action = m_app->actionCollection ()->action ("vdr_connect");
     action->setIcon (QString ("connect_established"));
@@ -525,10 +521,9 @@ KDE_NO_EXPORT void KMPlayerVDRSource::deleteCommands () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerVDRSource::jump (KMPlayer::NodePtr e) {
-    if (!e->isPlayable ()) return;
-    m_current = e;
-    jump (e->mrl ()->pretty_name);
+KDE_NO_EXPORT void KMPlayerVDRSource::play (KMPlayer::Mrl *mrl) {
+    if (!mrl || !mrl->isPlayable ()) return;
+    jump (mrl->pretty_name);
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::jump (const QString & channel) {
@@ -659,7 +654,8 @@ struct XVTreeItem : public Q3ListViewItem {
 };
 
 KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
-    XVideo * xvideo = static_cast<XVideo *>(m_player->players()["xvideo"]);
+    XvProcessInfo *pi = static_cast<XvProcessInfo *>(m_player->mediaManager()->
+            processInfos()["xvideo"]);
     if (fromUI) {
         tcp_port = m_configpage->tcp_port->text ().toInt ();
         scale = m_configpage->scale->id (m_configpage->scale->selected ());
@@ -673,7 +669,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
         m_configpage->tcp_port->setText (QString::number (tcp_port));
         m_configpage->scale->setButton (scale);
         Q3ListViewItem * vitem = m_configpage->xv_port->firstChild ();
-        NodePtr configdoc = xvideo->configDocument ();
+        NodePtr configdoc = pi->config_doc;
         if (configdoc && configdoc->firstChild ()) {
             for (Q3ListViewItem *i=vitem->firstChild(); i; i=vitem->firstChild())
                 delete i;
@@ -711,14 +707,16 @@ KDE_NO_EXPORT void KMPlayerVDRSource::sync (bool fromUI) {
                     }
                 }
             }
-        } else // wait for showEvent
-            connect (xvideo, SIGNAL (configReceived()), this, SLOT (configReceived()));
+        } else { // wait for showEvent
+            connect(pi, SIGNAL(configReceived()), this, SLOT(configReceived()));
+        }
     }
 }
 
 KDE_NO_EXPORT void KMPlayerVDRSource::configReceived () {
-    XVideo * xvideo = static_cast<XVideo *>(m_player->players()["xvideo"]);
-    disconnect (xvideo, SIGNAL (configReceived()), this, SLOT (configReceived()));
+    XvProcessInfo *pi = static_cast<XvProcessInfo *>(m_player->mediaManager()->
+            processInfos()["xvideo"]);
+    disconnect (pi, SIGNAL (configReceived()), this, SLOT (configReceived()));
     sync (false);
 }
 
@@ -734,10 +732,6 @@ KDE_NO_EXPORT QFrame * KMPlayerVDRSource::prefPage (QWidget * parent) {
     return m_configpage;
 }
 
-KDE_NO_EXPORT bool KMPlayerVDRSource::requestPlayURL (KMPlayer::NodePtr) {
-    return true;
-}
-
 KDE_NO_EXPORT void KMPlayerVDRSource::stateElementChanged (KMPlayer::Node *, KMPlayer::Node::State, KMPlayer::Node::State) {
 }
 
@@ -747,34 +741,55 @@ static const char * xv_supported [] = {
     "tvsource", "vdrsource", 0L
 };
 
-KDE_NO_CDTOR_EXPORT XVideo::XVideo (QObject * parent, Settings * settings)
- : KMPlayer::CallbackProcess (parent, settings, "xvideo", i18n ("X&Video")) {
-    m_supported_sources = xv_supported;
+XvProcessInfo::XvProcessInfo (MediaManager *mgr)
+ : CallbackProcessInfo ("xvideo", i18n ("X&Video"), xv_supported, mgr, NULL) {}
+
+IProcess *XvProcessInfo::create (PartBase *part, AudioVideoMedia *media) {
+    XVideo *x = new XVideo (part, this, part->settings ());
+    x->setSource (part->source ());
+    x->media_object = media;
+    part->processCreated (x);
+    return x;
+}
+
+bool XvProcessInfo::startBackend () {
+    if (m_process && m_process->isRunning ())
+        return true;
+    Settings *cfg = manager->player ()->settings();
+
+    initProcess ();
+
+    QString cmd  = QString ("kxvplayer -cb %1").arg (dcopName ());
+    if (have_config == config_unknown || have_config == config_probe)
+        cmd += QString (" -c");
+    //if (m_source) {
+    //    int xv_port = m_source->xvPort ();
+    //    int xv_encoding = m_source->xvEncoding ();
+    //    int freq = m_source->frequency ();
+    //    cmd += QString (" -port %1 -enc %2 -norm \"%3\"").arg (xv_port).arg (xv_encoding).arg (m_source->videoNorm ());
+    //    if (freq > 0)
+    //        cmd += QString (" -freq %1").arg (freq);
+    //}
+    fprintf (stderr, "%s\n", cmd.latin1 ());
+    *m_process << cmd;
+    m_process->start (KProcess::NotifyOnExit, KProcess::All);
+
+    return m_process->isRunning ();
+}
+
+KDE_NO_CDTOR_EXPORT XVideo::XVideo (QObject *p, ProcessInfo *pi, Settings *s)
+ : KMPlayer::CallbackProcess (p, pi, s, "xvideo") {
     //m_player->settings ()->addPage (m_configpage);
 }
 
 KDE_NO_CDTOR_EXPORT XVideo::~XVideo () {}
 
-KDE_NO_EXPORT bool XVideo::ready (KMPlayer::Viewer * v) {
-    if (playing ()) {
+KDE_NO_EXPORT bool XVideo::ready () {
+    if (running () || !media_object || !media_object->viewer) {
+        setState (IProcess::Ready);
         return true;
     }
-    initProcess (v);
-    QString cmd  = QString ("kxvplayer -wid %3 -cb %4").arg (viewer ()->embeddedWinId ()).arg (dcopName ());
-    if (m_have_config == config_unknown || m_have_config == config_probe)
-        cmd += QString (" -c");
-    if (m_source) {
-        int xv_port = m_source->xvPort ();
-        int xv_encoding = m_source->xvEncoding ();
-        int freq = m_source->frequency ();
-        cmd += QString (" -port %1 -enc %2 -norm \"%3\"").arg (xv_port).arg (xv_encoding).arg (m_source->videoNorm ());
-        if (freq > 0)
-            cmd += QString (" -freq %1").arg (freq);
-    }
-    fprintf (stderr, "%s\n", cmd.latin1 ());
-    *m_process << cmd;
-    m_process->start (KProcess::NotifyOnExit, KProcess::All);
-    return m_process->isRunning ();
+    return static_cast <XvProcessInfo *> (process_info)->startBackend ();
 }
 
 #include "kmplayervdr.moc"

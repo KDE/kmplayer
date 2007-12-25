@@ -118,66 +118,67 @@ Backend::Backend ()
 
 Backend::~Backend () {}
 
-void Backend::setURL (QString) {
+void Backend::setURL (unsigned long, QString) {
 }
 
-void Backend::setSubTitleURL (QString) {
+void Backend::setSubTitleURL (unsigned long, QString) {
 }
 
-void Backend::play (int) {
+void Backend::play (long unsigned int, int) {
     xvapp->play ();
 }
 
-void Backend::stop () {
+void Backend::stop (unsigned long) {
     QTimer::singleShot (0, xvapp, SLOT (stop ()));
 }
 
-void Backend::pause () {
+void Backend::pause (unsigned long) {
 }
 
-void Backend::seek (int, bool /*absolute*/) {
+void Backend::seek (unsigned long, int, bool /*absolute*/) {
 }
 
-void Backend::hue (int h, bool) {
+void Backend::hue (unsigned long, int h, bool) {
     if (xv_limits[limit_hue].max > xv_limits[limit_hue].min)
         xvapp->hue ((h + 100) * (xv_limits[limit_hue].max - xv_limits[limit_hue].min)/200 + xv_limits[limit_hue].min);
 }
 
-void Backend::saturation (int s, bool) {
+void Backend::saturation (unsigned long, int s, bool) {
     if (xv_limits[limit_saturation].max > xv_limits[limit_saturation].min)
         xvapp->saturation ((s + 100) * (xv_limits[limit_saturation].max - xv_limits[limit_saturation].min)/200 + xv_limits[limit_saturation].min);
 }
 
-void Backend::contrast (int c, bool) {
+void Backend::contrast (unsigned long, int c, bool) {
     if (xv_limits[limit_contrast].max > xv_limits[limit_contrast].min)
         xvapp->contrast ((c + 100)*(xv_limits[limit_contrast].max - xv_limits[limit_contrast].min)/200 + xv_limits[limit_contrast].min);
 }
 
-void Backend::brightness (int b, bool) {
+void Backend::brightness (unsigned long, int b, bool) {
     if (xv_limits[limit_brightness].max > xv_limits[limit_brightness].min)
         xvapp->brightness ((b + 100)*(xv_limits[limit_brightness].max - xv_limits[limit_brightness].min)/200 + xv_limits[limit_brightness].min);
 }
 
-void Backend::volume (int v, bool) {
+void Backend::volume (unsigned long, int v, bool) {
     if (xv_limits[limit_volume].max > xv_limits[limit_volume].min)
         xvapp->volume (v*(xv_limits[limit_volume].max - xv_limits[limit_volume].min)/100 + xv_limits[limit_volume].min);
 }
 
-void Backend::frequency (int f) {
-    xvapp->frequency (f);
+void Backend::property (unsigned long wid, QString prop, QString val) {
+    if (prop == "frequency")
+        xvapp->frequency (val.toInt ());
 }
 
-void Backend::setAudioLang (int, QString) {
+void Backend::setAudioLang (unsigned long, int, QString) {
 }
 
-void Backend::setSubtitle (int, QString) {
+void Backend::setSubtitle (unsigned long, int, QString) {
 }
 
 void Backend::quit () {
     delete callback;
     callback = 0L;
     if (running)
-        stop ();
+        stop (0);
     else
         QTimer::singleShot (0, qApp, SLOT (quit ()));
 }
@@ -204,10 +205,10 @@ void Backend::setConfig (QByteArray data) {
             err = QString ("invalid data");
     }
     if (callback)
-        callback->errorMessage (0, err);
+        callback->errorMessage (0, 0, err);
 }
 
-bool Backend::isPlaying () {
+bool Backend::isPlaying (unsigned long) {
     return running;
 }
 
@@ -346,7 +347,7 @@ void KXVideoPlayer::play () {
     if (!xv_success)
         return;
     if (callback && movie_width > 0 && movie_height > 0)
-        callback->movieParams (0, movie_width, movie_height, 1.0*movie_width/movie_height, QStringList (), QStringList ());
+        callback->movieParams (0, 0, movie_width, movie_height, 1.0*movie_width/movie_height, QStringList (), QStringList ());
     XLockDisplay (display);
     if (!running && XvGrabPort (display, xvport, CurrentTime) == Success) {
         gc = XCreateGC (display, wid, 0, NULL);
@@ -403,8 +404,8 @@ void KXVideoPlayer::play () {
     if (running) {
         putVideo ();
         if (callback) {
-            callback->playing ();
-            callback->statusMessage ((int) KMPlayer::Callback::stat_hasvideo, QString ());
+            callback->playing (0);
+            callback->statusMessage (0, (int) KMPlayer::Callback::stat_hasvideo, QString ());
         }
     }
     XUnlockDisplay (display);
@@ -433,7 +434,7 @@ void KXVideoPlayer::stop () {
         XUnlockDisplay (display);
     }
     if (callback)
-        callback->finished ();
+        callback->finished (0);
     else
         QTimer::singleShot (0, qApp, SLOT (quit ()));
 }
@@ -585,7 +586,7 @@ protected:
                             (dx * dx + dy * dy) < 25) {
                         xvapp->lock ();
                         if (callback)
-                            callback->toggleFullScreen ();
+                            callback->toggleFullScreen (0);
                         xvapp->unlock ();
                     }
                     prev_click_time = bev->time;

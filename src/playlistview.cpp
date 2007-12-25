@@ -35,6 +35,7 @@
 #include <QDropEvent>
 #include <Q3TextDrag>
 #include <QPalette>
+#include <qregexp.h>
 
 #include <kiconloader.h>
 #include <kstandardaction.h>

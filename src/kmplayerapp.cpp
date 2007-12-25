@@ -97,7 +97,7 @@ class KMPLAYER_NO_EXPORT ListsSource : public KMPlayer::URLSource {
 public:
     KDE_NO_CDTOR_EXPORT ListsSource (KMPlayer::PartBase * p)
         : KMPlayer::URLSource (p, KUrl ("lists://")) {}
-    void jump (KMPlayer::NodePtr e);
+    void play (KMPlayer::Mrl *);
     void activate ();
     void setDocument (KMPlayer::NodePtr doc, KMPlayer::NodePtr cur);
     QString prettyName () { return m_document->mrl ()->pretty_name; }
@@ -185,15 +185,15 @@ public:
     const char * nodeName () const KDE_NO_EXPORT { return "object"; }
 };
 
-KDE_NO_EXPORT void ListsSource::jump (KMPlayer::NodePtr e) {
-    if (e->document()->firstChild ())
-        Source::jump (e);
-    else
-        e->activate ();
+KDE_NO_EXPORT void ListsSource::play (KMPlayer::Mrl *mrl) {
+    if (mrl && mrl->document()->firstChild ())
+        Source::play (mrl);
+    else if (mrl)
+        mrl->activate ();
 }
 
 KDE_NO_EXPORT void ListsSource::activate () {
-    playCurrent ();
+    play (m_current ? m_current->mrl () : NULL);
 }
 
 KDE_NO_EXPORT void ListsSource::setDocument (KMPlayer::NodePtr doc, KMPlayer::NodePtr cur) {
@@ -522,9 +522,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp (QWidget *)
     m_player->setServiceName (QString ("org.kde.kmplayer-%1").arg (getpid ()));
 #endif
     m_player->init (actionCollection ());
-    //m_player->players () ["xvideo"] = new XVideo(m_player,m_player->settings());
-    m_player->setProcess ("mplayer");
-    m_player->setRecorder ("mencoder");
+    //m_player->mediaManager ()->processInfos () ["xvideo"] =
+    //    new XvProcessInfo (m_player->mediaManager ());
     ListsSource * lstsrc = new ListsSource (m_player);
     m_player->sources () ["listssource"] = lstsrc;
     m_player->sources () ["dvdsource"] = new ::KMPlayerDVDSource(this, m_dvdmenu);
@@ -761,10 +760,10 @@ KDE_NO_EXPORT void KMPlayerApp::playerStarted () {
     KMPlayer::Source * source = m_player->source ();
     if (!strcmp (source->name (), "urlsource")) {
         KUrl url = source->url ();
-        if (url.url ().startsWith ("lists"))
+        if (url.isEmpty () || url.url ().startsWith ("lists"))
             return;
-        if (url.isEmpty () && m_player->process ()->mrl ())
-            url = KUrl (m_player->process ()->mrl ()->mrl ()->src);
+        //if (url.isEmpty () && m_player->process ()->mrl ())
+        //    url = KUrl (m_player->process ()->mrl ()->mrl ()->src);
         recentFiles ()->addUrl (url);
         recents->defer (); // make sure it's loaded
         recents->insertBefore (new Recent (recents, this, url.url ()), recents->firstChild ());
@@ -870,7 +869,7 @@ KDE_NO_EXPORT void KMPlayerApp::openPipe () {
 
 KDE_NO_EXPORT void KMPlayerApp::openVDR () {
     /*slotStatusMsg(i18n("Opening VDR..."));
-    if (!strcmp (m_player->source ()->name (), "vdrsource") && m_player->process ()->playing ())
+    if (!strcmp (m_player->source ()->name (), "vdrsource") && m_player->playing ())
         static_cast<KMPlayerVDRSource *>(m_player->source())->toggleConnected();
     else
         m_player->setSource (m_player->sources () ["vdrsource"]);*/
@@ -1030,7 +1029,7 @@ KDE_NO_EXPORT void KMPlayerApp::readProperties () {
 }
 
 KDE_NO_EXPORT void KMPlayerApp::resizePlayer (int percentage) {
-    KMPlayer::Source * source = m_player->source ();
+    /*KMPlayer::Source * source = m_player->source ();
     if (!source)
         return;
     int w, h;
@@ -1041,7 +1040,7 @@ KDE_NO_EXPORT void KMPlayerApp::resizePlayer (int percentage) {
     } else
         h = m_view->viewer ()->heightForWidth (w);
     //kDebug () << "KMPlayerApp::resizePlayer (" << w << "," << h << ")";
-    /*if (w > 0 && h > 0) {
+    if (w > 0 && h > 0) {
         if (m_view->controlPanel ()->isVisible ())
             h += m_view->controlPanel ()->size ().height ();
         QSize s1 = size ();
@@ -1809,7 +1808,7 @@ KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
     if (m_identified)
         return false;
     //kDebug () << "scanning " << cstr;
-    QRegExp * patterns = static_cast <KMPlayer::MPlayer *> (m_player->players () ["mplayer"])->configPage ()->m_patterns;
+    QRegExp * patterns = static_cast <KMPlayer::MPlayerPreferencesPage *> (m_player->mediaManager ()->processInfos () ["mplayer"]->config_page)->m_patterns;
     QRegExp & langRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdlang];
     QRegExp & subtitleRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdsub];
     QRegExp & titleRegExp = patterns[KMPlayer::MPlayerPreferencesPage::pat_dvdtitle];
@@ -2054,7 +2053,7 @@ KDE_NO_EXPORT void KMPlayerDVDNavSource::finished () {
 }
 
 KDE_NO_EXPORT void KMPlayerDVDNavSource::navMenuClicked (int id) {
-    switch (id) {
+    /*switch (id) {
         case DVDNav_start:
             break;
         case DVDNav_previous:
@@ -2069,7 +2068,7 @@ KDE_NO_EXPORT void KMPlayerDVDNavSource::navMenuClicked (int id) {
         case DVDNav_up:
             m_app->view ()->viewer ()->sendKeyEvent ('u');
             break;
-    }
+    }*/
 }
 
 KDE_NO_EXPORT QString KMPlayerDVDNavSource::prettyName () {
@@ -2110,7 +2109,7 @@ KDE_NO_EXPORT bool KMPlayerVCDSource::processOutput (const QString & str) {
     if (m_identified)
         return false;
     //kDebug () << "scanning " << cstr;
-    QRegExp * patterns = static_cast<KMPlayer::MPlayer *> (m_player->players () ["mplayer"])->configPage ()->m_patterns;
+    QRegExp * patterns = static_cast <KMPlayer::MPlayerPreferencesPage *> (m_player->mediaManager ()->processInfos () ["mplayer"]->config_page)->m_patterns;
     QRegExp & trackRegExp = patterns [KMPlayer::MPlayerPreferencesPage::pat_vcdtrack];
     if (trackRegExp.search (str) > -1) {
         m_document->state = KMPlayer::Element::state_deferred;
@@ -2206,7 +2205,7 @@ KDE_NO_EXPORT bool KMPlayerAudioCDSource::processOutput (const QString & str) {
     if (m_identified)
         return false;
     //kDebug () << "scanning " << str;
-    QRegExp * patterns = static_cast<KMPlayer::MPlayer *> (m_player->players () ["mplayer"])->configPage ()->m_patterns;
+    QRegExp * patterns = static_cast <KMPlayer::MPlayerPreferencesPage *> (m_player->mediaManager ()->processInfos () ["mplayer"]->config_page)->m_patterns;
     QRegExp & trackRegExp = patterns [KMPlayer::MPlayerPreferencesPage::pat_cdromtracks];
     if (trackRegExp.search (str) > -1) {
         //if (m_document->state != KMPlayer::Element::state_deferred)
@@ -2239,8 +2238,8 @@ KDE_NO_EXPORT void KMPlayerAudioCDSource::setIdentified (bool b) {
         m_current = m_document;
     buildArguments ();
     if (m_current == m_document && m_document->hasChildNodes ()) {
-        m_back_request = m_document->firstChild ();
-        m_player->process ()->stop ();
+        //m_back_request = m_document->firstChild ();
+        //m_player->process ()->stop ();
     }
     m_player->updateTree ();
     //if (m_current->state == KMPlayer::Element::state_deferred)

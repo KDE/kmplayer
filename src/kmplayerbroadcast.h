@@ -27,7 +27,6 @@
 #include <QPointer>
 
 #include "kmplayerappsource.h"
-#include "kmplayerprocess.h"
 #include "kmplayerconfig.h"
 
 class KMPlayerPrefBroadcastPage;        // broadcast
@@ -178,7 +177,6 @@ private slots:
     void processStopped (KProcess * process);
     void startServer ();
     void startFeed ();
-    void stateChange (KMPlayer::Process::State, KMPlayer::Process::State);
     void sourceChanged (KMPlayer::Source *, KMPlayer::Source *);
 private:
     KMPlayer::PartBase * m_player;

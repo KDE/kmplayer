@@ -60,8 +60,8 @@
 #include "viewarea.h"
 #include "kmplayercontrolpanel.h"
 #include "kmplayerconfig.h"
-#include "kmplayerprocess.h"
 #include "kmplayer_smil.h"
+#include "mediaobject.h"
 
 namespace KMPlayer {
 
@@ -79,8 +79,6 @@ private:
 } // namespace
 
 using namespace KMPlayer;
-
-static KMPlayer::DataCache *memory_cache;
 
 KDE_NO_CDTOR_EXPORT BookmarkOwner::BookmarkOwner (PartBase * player)
     : m_player (player) {}
@@ -105,31 +103,15 @@ PartBase::PartBase (QWidget * wparent, QObject * parent, KSharedConfigPtr config
    m_config (config),
    m_view (new View (wparent)),
    m_settings (new Settings (this, config)),
-   m_recorder (0L),
+   m_media_manager (new MediaManager (this)),
    m_source (0L),
    m_bookmark_menu (0L),
-   m_record_timer (0),
    m_update_tree_timer (0),
    m_noresize (false),
    m_auto_controls (true),
    m_bPosSliderPressed (false),
    m_in_update_tree (false)
 {
-    if (!memory_cache)
-        (void) new DataCache (&memory_cache);
-    else
-        memory_cache->ref ();
-
-    MPlayer *mplayer = new MPlayer (this, m_settings);
-    m_players ["mplayer"] = mplayer;
-    m_process = mplayer;
-    //Xine * xine = new Xine (this, m_settings);
-    //m_players ["xine"] = xine;
-    //m_players ["gstreamer"] = new GStreamer (this, m_settings);
-    m_recorders ["mencoder"] = new MEncoder (this, m_settings);
-    m_recorders ["mplayerdumpstream"] = new MPlayerDumpstream(this, m_settings);
-    m_recorders ["ffmpeg"] = new FFMpeg (this, m_settings);
-    //m_recorders ["xine"] = xine;
     m_sources ["urlsource"] = new URLSource (this);
 
     QString bmfile = KStandardDirs::locate ("data", "kmplayer/bookmarks.xml");
@@ -168,9 +150,6 @@ KDE_NO_EXPORT void PartBase::addBookMark (const QString & t, const QString & url
 void PartBase::init (KActionCollection * action_collection) {
     KParts::Part::setWidget (m_view);
     m_view->init (action_collection);
-#ifdef HAVE_NPP
-    m_players ["npp"] = new NpPlayer (this, m_settings, QString ());
-#endif
     connect(m_settings, SIGNAL(configChanged()), this, SLOT(settingsChanged()));
     m_settings->readConfig ();
     m_settings->applyColorSetting (false);
@@ -246,14 +225,11 @@ PartBase::~PartBase () {
     stop ();
     if (m_source)
         m_source->deactivate ();
-#ifdef HAVE_NPP
-    delete m_players ["npp"];
-#endif
+    delete m_media_manager;
     delete m_settings;
     //delete m_bookmark_menu;
     //delete m_bookmark_manager;
     //delete m_bookmark_owner;
-    memory_cache->unref ();
 }
 
 void PartBase::settingsChanged () {
@@ -280,19 +256,19 @@ KMediaPlayer::View* PartBase::view () {
 
 extern const char * strGeneralGroup;
 
-bool PartBase::setProcess (Mrl *mrl) {
+QString PartBase::processName (Mrl *mrl) {
     // determine backend, start with temp_backends
     QString p = temp_backends [m_source->name()];
     bool remember_backend = p.isEmpty ();
-    bool changed = false;
+    MediaManager::ProcessInfoMap &pinfos = m_media_manager->processInfos ();
     if (p.isEmpty ()) {
         // next try to find mimetype match from kmplayerrc
         if (!mrl->mimetype.isEmpty ()) {
             KConfigGroup mime_cfg (m_config, mrl->mimetype);
             p = mime_cfg.readEntry ("player", QString ());
             remember_backend = !(!p.isEmpty () &&
-                    m_players.contains (p) &&
-                    m_players [p]->supports (m_source->name ()));
+                    pinfos.contains (p) &&
+                    pinfos [p]->supports (m_source->name ()));
         }
     }
     if (p.isEmpty ())
@@ -303,104 +279,68 @@ bool PartBase::setProcess (Mrl *mrl) {
         p = KConfigGroup(m_config, strGeneralGroup).readEntry(m_source->name(),QString());
     }
     if (p.isEmpty () ||
-            !m_players.contains (p) ||
-            !m_players [p]->supports (m_source->name ())) {
+            !pinfos.contains (p) ||
+            !pinfos [p]->supports (m_source->name ())) {
         // finally find first supported player
         p.truncate (0);
-        if (!m_process || !m_process->supports (m_source->name ())) {
-            ProcessMap::const_iterator i, e = m_players.end();
-            for (i = m_players.begin(); i != e; ++i)
-                if (i.data ()->supports (m_source->name ())) {
-                    p = QString (i.data ()->name ());
-                    break;
-                }
-        } else
-            p = QString (m_process->name ());
+        const MediaManager::ProcessInfoMap::const_iterator e = pinfos.end();
+        for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.begin(); i != e; ++i)
+            if (i.data ()->supports (m_source->name ())) {
+                p = QString (i.data ()->name);
+                break;
+            }
     }
     if (!p.isEmpty ()) {
-        if (!m_process || p != m_process->name ()) {
-            setProcess (p.ascii ());
-            updatePlayerMenu (m_view->controlPanel ());
-            changed = true;
-        }
+        updatePlayerMenu (m_view->controlPanel (), p);
         if (remember_backend)
-            m_settings->backends [m_source->name()] = m_process->name ();
+            m_settings->backends [m_source->name()] = p;
         else
-            temp_backends.remove (m_source->name());
+            temp_backends [m_source->name()] = QString ();
     }
-    return changed;
+    return p;
 }
 
-void PartBase::setProcess (const char * name) {
-    Process * process = name ? m_players [name] : 0L;
-    if (m_process == process)
-        return;
-    if (!m_source)
-        m_source = m_sources ["urlsource"];
-    Process * old_process = m_process;
-    m_process = process;
-    if (old_process && old_process->state () > Process::NotRunning)
-        old_process->quit ();
-    if (!m_process)
-        return;
-    m_process->setSource (m_source);
-    if (m_process->playing ()) {
-        m_view->controlPanel ()->setPlaying (true);
-        m_view->controlPanel ()->showPositionSlider (!!m_source->length ());
-        m_view->controlPanel ()->enableSeekButtons (m_source->isSeekable ());
-    }
-    emit processChanged (name);
-}
+void PartBase::processCreated (Process*) {}
 
-void PartBase::setRecorder (const char * name) {
-    Process * recorder = name ? m_recorders [name] : 0L;
-    if (m_recorder == recorder)
-        return;
-    if (m_recorder)
-        m_recorder->quit ();
-    m_recorder = recorder;
-}
-
-KDE_NO_EXPORT void PartBase::slotPlayerMenu (int id) {
-    bool playing = m_process->playing ();
+KDE_NO_EXPORT void PartBase::slotPlayerMenu (int menu) {
+    Mrl *mrl = m_source->current ();
+    bool playing = mrl && mrl->active ();
     const char * srcname = m_source->name ();
-    QMenu *menu = m_view->controlPanel ()->playerMenu;
-    ProcessMap::const_iterator pi = m_players.begin(), e = m_players.end();
-    unsigned i = 0;
-    for (; pi != e && i < menu->count(); ++pi) {
-        Process * proc = pi.data ();
-        if (!proc->supports (srcname))
+    QMenu *player_menu = m_view->controlPanel ()->playerMenu;
+    MediaManager::ProcessInfoMap &pinfos = m_media_manager->processInfos ();
+    const MediaManager::ProcessInfoMap::const_iterator e = pinfos.end();
+    unsigned id = 0;
+    for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.begin();
+            id < player_menu->count() && i != e;
+            ++i, id++) {
+        ProcessInfo *pinfo = i.data ();
+        if (!pinfo->supports (srcname))
             continue;
-        int menuid = menu->idAt (i);
-        menu->setItemChecked (menuid, menuid == id);
-        if (menuid == id) {
-            if (proc->name () != QString ("npp"))
-                m_settings->backends [srcname] = proc->name ();
-            temp_backends [srcname] = proc->name ();
-            if (playing && strcmp (m_process->name (), proc->name ()))
-                m_process->quit ();
-            setProcess (proc->name ());
+        int menuid = player_menu->idAt (id);
+        player_menu->setItemChecked (menuid, menu == id);
+        if (menuid == menu) {
+            if (strcmp (pinfo->name, "npp"))
+                m_settings->backends [srcname] = pinfo->name;
+            temp_backends [srcname] = pinfo->name;
         }
-        ++i;
     }
     if (playing)
-        setSource (m_source); // re-activate
+        m_source->play (mrl);
 }
 
-void PartBase::updatePlayerMenu (ControlPanel * panel) {
-    if (!m_view || !m_process)
+void PartBase::updatePlayerMenu (ControlPanel *panel, const QString &backend) {
+    if (!m_view)
         return;
     QMenu *menu = panel->playerMenu;
     menu->clear ();
-    if (!m_source)
-        return;
-    const ProcessMap::const_iterator e = m_players.end();
+    MediaManager::ProcessInfoMap &pinfos = m_media_manager->processInfos ();
+    const MediaManager::ProcessInfoMap::const_iterator e = pinfos.end();
     int id = 0; // if multiple parts, id's should be the same for all menu's
-    for (ProcessMap::const_iterator i = m_players.begin(); i != e; ++i) {
-        Process * p = i.data ();
+    for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.begin(); i != e; ++i) {
+        ProcessInfo *p = i.data ();
         if (p->supports (m_source->name ())) {
-            menu->insertItem (p->menuName (), this, SLOT (slotPlayerMenu (int)), 0, id++);
-            if (i.data() == m_process)
+            menu->insertItem (p->label, this, SLOT (slotPlayerMenu (int)), 0, id++);
+            if (backend == p->name)
                 menu->setItemChecked (id-1, true);
         }
     }
@@ -434,8 +374,6 @@ void PartBase::setSource (Source * _source) {
             m_view->reset ();
             emit infoUpdated (QString ());
         }
-        disconnect (m_source, SIGNAL (startRecording ()),
-                    this, SLOT (recordingStarted ()));
         disconnect (this, SIGNAL (audioIsSelected (int)),
                     m_source, SLOT (setAudioLang (int)));
         disconnect (this, SIGNAL (subtitleIsSelected (int)),
@@ -452,18 +390,14 @@ void PartBase::setSource (Source * _source) {
     }
     m_source = _source;
     connectSource (old_source, m_source);
-    m_process->setSource (m_source);
-    connect (m_source, SIGNAL(startRecording()), this,SLOT(recordingStarted()));
     connect (this, SIGNAL (audioIsSelected (int)),
              m_source, SLOT (setAudioLang (int)));
     connect (this, SIGNAL (subtitleIsSelected (int)),
              m_source, SLOT (setSubtitle (int)));
     m_source->init ();
     m_source->setIdentified (false);
-    if (m_view && m_view->viewer ()) {
+    if (m_view)
         updatePlayerMenu (m_view->controlPanel ());
-        m_view->viewer ()->setAspect (0.0);
-    }
     if (m_source) QTimer::singleShot (0, m_source, SLOT (activate ()));
     updateTree (true, true);
     emit sourceChanged (old_source, m_source);
@@ -490,9 +424,9 @@ bool PartBase::openUrl (const KUrl &url) {
     if (!m_view) return false;
     stop ();
     Source * src = (url.isEmpty () ? m_sources ["urlsource"] : (!url.protocol ().compare ("kmplayer") && m_sources.contains (url.host ()) ? m_sources [url.host ()] : m_sources ["urlsource"]));
+    setSource (src);
     src->setSubURL (KUrl ());
     src->setUrl (url);
-    setSource (src);
     return true;
 }
 
@@ -511,10 +445,8 @@ bool PartBase::openUrl (const KUrl::List & urls) {
 
 bool PartBase::closeUrl () {
     stop ();
-    if (m_view) {
-        m_view->viewer ()->setAspect (0.0);
+    if (m_view)
         m_view->reset ();
-    }
     return true;
 }
 
@@ -523,43 +455,12 @@ bool PartBase::openFile () {
 }
 
 void PartBase::keepMovieAspect (bool b) {
-    if (m_view) {
+    if (m_view)
         m_view->setKeepSizeRatio (b);
-        if (m_source)
-            m_view->viewer ()->setAspect (b ? m_source->aspect () : 0.0);
-    }
-}
-
-void PartBase::recordingStarted () {
-    if (m_settings->replayoption == Settings::ReplayAfter)
-        m_record_timer = startTimer (1000 * m_settings->replaytime);
-}
-
-void PartBase::recordingStopped () {
-    killTimer (m_record_timer);
-    m_record_timer = 0;
-    Recorder * rec = dynamic_cast <Recorder*> (m_recorder);
-    if (rec) {
-        if (m_settings->replayoption == Settings::ReplayFinished ||
-             (m_settings->replayoption == Settings::ReplayAfter && !playing ()))
-            openUrl (rec->recordURL ());
-        rec->setUrl (KUrl ());
-    }
-    setRecorder ("mencoder"); //FIXME see PartBase::record() checking playing()
 }
 
 void PartBase::timerEvent (QTimerEvent * e) {
-    if (e->timerId () == m_record_timer) {
-        kDebug () << "record timer event" << (m_recorder->playing () && !playing ());
-        m_record_timer = 0;
-        if (m_recorder->playing () && !playing ()) {
-            Recorder * rec = dynamic_cast <Recorder*> (m_recorder);
-            if (rec) {
-                openUrl (rec->recordURL ());
-                rec->setUrl (KUrl ());
-            }
-        }
-    } else if (e->timerId () == m_update_tree_timer) {
+    if (e->timerId () == m_update_tree_timer) {
         m_update_tree_timer = 0;
         updateTree (m_update_tree_full, true);
     }
@@ -567,7 +468,6 @@ void PartBase::timerEvent (QTimerEvent * e) {
 }
 
 void PartBase::playingStarted () {
-    //m_view->viewer ()->setAspect (m_source->aspect ());
     if (m_view) {
         m_view->controlPanel ()->setPlaying (true);
         m_view->controlPanel ()->showPositionSlider (!!m_source->length ());
@@ -588,8 +488,12 @@ void PartBase::playingStopped () {
 }
 
 KDE_NO_EXPORT void PartBase::setPosition (int position, int length) {
-    if (m_view && !m_bPosSliderPressed)
-        emit positioned (position, length);
+    if (m_view && !m_bPosSliderPressed) {
+        if (m_media_manager->processes ().size () > 1)
+            emit positioned (0, 0);
+        else
+            emit positioned (position, length);
+    }
 }
 
 void PartBase::setLoaded (int percentage) {
@@ -628,7 +532,7 @@ KDE_NO_EXPORT void PartBase::playListItemClicked (Q3ListViewItem * item) {
         //kDebug() << "playListItemClicked " << src << " " << vi->node->nodeName();
         Source * source = src.isEmpty() ? m_source : m_sources[src.ascii()];
         if (vi->node->isPlayable ()) {
-            source->jump (vi->node); //may become !isPlayable by lazy loading
+            source->play (vi->node->mrl ()); //may become !isPlayable by lazy loading
             if (!vi->node->isPlayable ())
                 emit treeChanged (ri->id, vi->node, 0, false, true);
         } else if (vi->firstChild ())
@@ -649,7 +553,7 @@ KDE_NO_EXPORT void PartBase::playListItemExecuted (Q3ListViewItem * item) {
         //kDebug() << "playListItemExecuted " << src << " " << vi->node->nodeName();
         Source * source = src.isEmpty() ? m_source : m_sources[src.ascii()];
         if (vi->node->isPlayable ()) {
-            source->jump (vi->node); //may become !isPlayable by lazy loading
+            source->play (vi->node->mrl ()); //may become !isPlayable by lazy loading
             if (!vi->node->isPlayable ())
                 emit treeChanged (ri->id, vi->node, 0, false, true);
         } else if (vi->firstChild ())
@@ -721,10 +625,25 @@ KDE_NO_EXPORT void PartBase::subtitleSelected (int id) {
     emit subtitleIsSelected (id);
 }
 
+void PartBase::startRecording () {
+    m_view->controlPanel ()->setRecording (true);
+    emit recording (true);
+}
+
+void PartBase::stopRecording () {
+    if (m_view) {
+        m_view->controlPanel ()->setRecording (false);
+        emit recording (false);
+    }
+}
+
 void PartBase::record () {
     if (m_view) m_view->setCursor (QCursor (Qt::WaitCursor));
-    if (m_recorder->playing ()) {
-        m_recorder->stop ();
+    if (!m_view->controlPanel()->button(ControlPanel::button_record)->isOn ()) {
+        MediaManager::ProcessList &r = m_media_manager->recorders ();
+        const MediaManager::ProcessList::const_iterator e = r.end ();
+        for (MediaManager::ProcessList::const_iterator i = r.begin(); i!=e; ++i)
+            (*i)->quit ();
     } else {
         m_settings->show  ("RecordPage");
         m_view->controlPanel ()->setRecording (false);
@@ -733,7 +652,8 @@ void PartBase::record () {
 }
 
 void PartBase::play () {
-    if (!m_process || !m_view) return;
+    if (!m_view)
+        return;
     QPushButton * pb = ::qobject_cast <QPushButton *> (sender ());
     if (pb && !pb->isOn ()) {
         stop ();
@@ -743,8 +663,8 @@ void PartBase::play () {
         killTimer (m_update_tree_timer);
         m_update_tree_timer = 0;
     }
-    if (m_process->state () == Process::NotRunning) {
-        PlayListItem * lvi = m_view->playList ()->currentPlayListItem ();
+    if (!playing ()) {
+        PlayListItem *lvi = m_view->playList ()->currentPlayListItem ();
         if (lvi) { // make sure it's in the first tree
             Q3ListViewItem * pitem = lvi;
             while (pitem->parent())
@@ -757,19 +677,17 @@ void PartBase::play () {
         if (lvi)
             for (NodePtr n = lvi->node; n; n = n->parentNode ()) {
                 if (n->isPlayable ()) {
-                    m_source->setCurrent (n);
+                    m_source->play (n->mrl ());
                     break;
                 }
             }
-        m_process->ready (m_view->viewer ());
-    } else if (m_process->state () == Process::Ready) {
-        m_source->playCurrent ();
-    } else
-        m_process->play (m_source, m_source->current ());
+    } else {
+        m_source->play (NULL);
+    }
 }
 
 bool PartBase::playing () const {
-    return m_process && m_process->state () > Process::Ready;
+    return m_source && m_source->document ()->active ();
 }
 
 void PartBase::stop () {
@@ -779,26 +697,34 @@ void PartBase::stop () {
             b->toggle ();
         m_view->setCursor (QCursor (Qt::WaitCursor));
     }
-    if (m_process)
-        m_process->quit ();
     if (m_source)
         m_source->reset ();
+    MediaManager::ProcessInfoMap &pi = m_media_manager->processInfos ();
+    const MediaManager::ProcessInfoMap::const_iterator ie = pi.end();
+    for (MediaManager::ProcessInfoMap::const_iterator i = pi.begin(); i != ie; ++i)
+        i.data ()->quitProcesses ();
+    MediaManager::ProcessList &processes = m_media_manager->processes ();
+    const MediaManager::ProcessList::const_iterator e = processes.end();
+    for (MediaManager::ProcessList::const_iterator i = processes.begin(); i != e; ++i)
+        (*i)->quit ();
     if (m_view) {
         m_view->setCursor (QCursor (Qt::ArrowCursor));
         if (b->isOn ())
             b->toggle ();
         m_view->controlPanel ()->setPlaying (false);
         setLoaded (100);
+        updateStatus (i18n ("Ready"));
     }
 }
 
 void PartBase::seek (qlonglong msec) {
-    if (m_process)
-        m_process->seek (msec/100, true);
+    if (m_media_manager->processes ().size () == 1)
+        m_media_manager->processes ().first ()->seek (msec/100, true);
 }
 
 void PartBase::adjustVolume (int incdec) {
-    m_process->volume (incdec, false);
+    if (m_media_manager->processes ().size () > 0)
+        m_media_manager->processes ().first ()->volume (incdec, false);
 }
 
 void PartBase::increaseVolume () {
@@ -822,50 +748,47 @@ KDE_NO_EXPORT void PartBase::posSliderReleased () {
 #else
     const QSlider * posSlider = ::qobject_cast<const QSlider *> (sender ());
 #endif
-    if (posSlider)
-        m_process->seek (posSlider->value(), true);
+    if (m_media_manager->processes ().size () == 1)
+        m_media_manager->processes ().first ()->seek (posSlider->value(), true);
 }
 
 KDE_NO_EXPORT void PartBase::volumeChanged (int val) {
-    if (m_process) {
+    if (m_media_manager->processes ().size () > 0) {
         m_settings->volume = val;
-        m_process->volume (val, true);
+        m_media_manager->processes ().first ()->volume (val, true);
     }
 }
 
 KDE_NO_EXPORT void PartBase::contrastValueChanged (int val) {
-    m_settings->contrast = val;
-    m_process->contrast (val, true);
+    if (m_media_manager->processes ().size () > 0)
+        m_media_manager->processes ().first ()->contrast (val, true);
 }
 
 KDE_NO_EXPORT void PartBase::brightnessValueChanged (int val) {
-    m_settings->brightness = val;
-    m_process->brightness (val, true);
+    if (m_media_manager->processes ().size () > 0)
+        m_media_manager->processes ().first ()->brightness (val, true);
 }
 
 KDE_NO_EXPORT void PartBase::hueValueChanged (int val) {
-    m_settings->hue = val;
-    m_process->hue (val, true);
+    if (m_media_manager->processes ().size () > 0)
+        m_media_manager->processes ().first ()->hue (val, true);
 }
 
 KDE_NO_EXPORT void PartBase::saturationValueChanged (int val) {
     m_settings->saturation = val;
-    m_process->saturation (val, true);
+    if (m_media_manager->processes ().size () > 0)
+        m_media_manager->processes ().first ()->saturation (val, true);
 }
 
 KDE_NO_EXPORT void PartBase::sourceHasChangedAspects () {
-    if (m_view && m_source) {
-      //kDebug () << "sourceHasChangedAspects " << m_source->aspect ();
-        m_view->viewer ()->setAspect (m_source->aspect ());
-        m_view->updateLayout ();
-    }
     emit sourceDimensionChanged ();
 }
 
 KDE_NO_EXPORT void PartBase::positionValueChanged (int pos) {
     QSlider * slider = ::qobject_cast <QSlider *> (sender ());
-    if (slider && slider->isEnabled ())
-        m_process->seek (pos, true);
+    if (m_media_manager->processes ().size () == 1 &&
+            slider && slider->isEnabled ())
+        m_media_manager->processes ().first ()->seek (pos, true);
 }
 
 KDE_NO_EXPORT void PartBase::fullScreen () {
@@ -899,7 +822,6 @@ Source::~Source () {
     if (m_document)
         m_document->document ()->dispose ();
     m_document = 0L;
-    Q_ASSERT (m_current.ptr () == 0L);
 }
 
 void Source::init () {
@@ -918,35 +840,35 @@ KDE_NO_EXPORT void Source::setLanguages (const QStringList & alang, const QStrin
 }
 
 void Source::setDimensions (NodePtr node, int w, int h) {
-    Mrl * mrl = node ? node->mrl () : 0L;
-    if (mrl && mrl->view_mode == Mrl::WindowMode) {
+    Mrl *mrl = node ? node->mrl () : 0L;
+    if (mrl) {
+        float a = h > 0 ? 1.0 * w / h : 0.0;
         mrl->width = w;
         mrl->height = h;
-        float a = h > 0 ? 1.0 * w / h : 0.0;
         mrl->aspect = a;
-        if (m_player->view ()) {
-            static_cast <View *> (m_player->view())->viewer()->setAspect(a);
-            static_cast <View *> (m_player->view ())->updateLayout ();
-        }
-    } else if (m_aspect < 0.001 || m_width != w || m_height != h) {
         bool ev = (w > 0 && h > 0) ||
             (h == 0 && m_height > 0) ||
             (w == 0 && m_width > 0);
-        m_width = w;
-        m_height = h;
-        if (m_aspect < 0.001)
+        if (Mrl::SingleMode == mrl->view_mode) {
+            m_width = w;
+            m_height = h;
+        }
+        if (Mrl::WindowMode == mrl->view_mode || m_aspect < 0.001)
             setAspect (node, h > 0 ? 1.0 * w / h : 0.0);
-        //kDebug () << "setDimensions " << w << "x" << h << " a:" << m_aspect;
-        if (ev)
+            //kDebug () << "setDimensions " << w << "x" << h << " a:" << m_aspect;
+        else if (ev)
             emit dimensionsChanged ();
     }
 }
 
 void Source::setAspect (NodePtr node, float a) {
     //kDebug () << "setAspect " << a;
-    Mrl * mrl = node ? node->mrl () : 0L;
+    Mrl *mrl = node ? node->mrl () : 0L;
     bool changed = false;
-    if (mrl) {
+    if (mrl &&
+            mrl->media_object &&
+            MediaManager::AudioVideo == mrl->media_object->type ()) {
+        static_cast <AudioVideoMedia*>(mrl->media_object)->viewer->setAspect(a);
         if (mrl->view_mode == Mrl::WindowMode)
             changed |= (fabs (mrl->aspect - a) > 0.001);
         mrl->aspect = a;
@@ -987,7 +909,6 @@ static void printTree (NodePtr root, QString off=QString()) {
 
 void Source::setUrl (const KUrl & url) {
     m_url = url;
-    m_back_request = 0L;
     if (m_document && !m_document->hasChildNodes () &&
             (m_document->mrl()->src.isEmpty () ||
              m_document->mrl()->src == url.url ()))
@@ -998,76 +919,57 @@ void Source::setUrl (const KUrl & url) {
             m_document->document ()->dispose ();
         m_document = new Document (url.url (), this);
     }
-    if (m_player->process () && m_player->source () == this)
+    if (m_player->source () == this)
         m_player->updateTree ();
     //kDebug() << name() << " setUrl " << url;
-    m_current = m_document;
 }
 
 void Source::setTitle (const QString & title) {
     emit titleChanged (title);
 }
 
-KDE_NO_EXPORT void Source::setAudioLang (int id) {
+KDE_NO_EXPORT void Source::setAudioLang (int /*id*/) {
     //View * v = static_cast <View *> (m_player->view());
-    //if (v && m_player->process ())
-    //    m_player->process ()->setAudioLang (id, v->controlPanel ()->audioMenu->text (id));
+    //if (v && m_player->mediaManager ()->processes ().size ())
+    //    m_player->mediaManager ()->processes ().first ()->setAudioLang (id, v->controlPanel ()->audioMenu ()->text (id));
 }
 
-KDE_NO_EXPORT void Source::setSubtitle (int id) {
+KDE_NO_EXPORT void Source::setSubtitle (int /*id*/) {
     //View * v = static_cast <View *> (m_player->view());
-    //if (v && m_player->process ())
-    //    m_player->process ()->setSubtitle (id, v->controlPanel ()->subtitleMenu->text (id));
+    //if (v && m_player->mediaManager ()->processes ().size ())
+    //    m_player->mediaManager ()->processes ().first ()->setSubtitle (id, v->controlPanel ()->subtitleMenu ()->text (id));
 }
 
 void Source::reset () {
     if (m_document) {
-        //kDebug() << "Source::first";
-        m_current = NodePtr ();
-        m_document->reset ();
+        kDebug() << "Source::reset " << name () << endl;
+        NodePtr doc = m_document; // avoid recursive calls
+        m_document = NULL;
+        doc->reset ();
+        m_document = doc;
         m_player->updateTree ();
     }
     init ();
 }
 
-QString Source::currentMrl () {
-    Mrl * mrl = m_current ? m_current->mrl () : 0L;
-    kDebug() << "Source::currentMrl " << (m_current ? m_current->nodeName():"") << " src:" << (mrl ? mrl->absolutePath ()  : QString ());
-    return mrl ? mrl->absolutePath () : QString ();
-}
-
-void Source::playCurrent () {
-    QString url = currentMrl ();
-    m_player->changeURL (url);
+void Source::play (Mrl *mrl) {
+    if (!mrl)
+        mrl = document ()->mrl ();
+    NodePtrW guarded = mrl;
+    blockSignals (true); //endOfPlayItems, but what is hyperspace?
+    document ()->reset ();
+    blockSignals (false);
+    mrl = guarded ? guarded->mrl () : m_document->mrl ();
+    if (!mrl)
+        return;
     m_width = m_height = 0;
-    m_aspect = 0.0;
-    if (m_player->view ())
-        static_cast <View *> (m_player->view ())->playingStop ();//show controls
-    if (m_document && !m_document->active ()) {
-        if (!m_current)
-            m_document->activate ();
-        else { // ugly code duplicate w/ back_request
-            for (NodePtr p = m_current->parentNode(); p; p = p->parentNode())
-                p->state = Element::state_activated;
-            m_current->activate ();
-        }
-    } else if (!m_current) {
-        emit endOfPlayItems ();
-    } else if (m_current->state == Element::state_deferred) {
-     //   m_current->undefer ();
-    } else if (m_player->process ()->state () == Process::NotRunning) {
-        m_player->process ()->ready (static_cast <View *> (m_player->view ())->viewer ());
-    } else if (m_player->process ()) {
-        Mrl * mrl = m_back_request ? m_back_request->mrl () : m_current->mrl ();
-        if (mrl->view_mode == Mrl::SingleMode) {
-            // don't reset the dimensions if we have any
-            m_width = mrl->width;
-            m_height = mrl->height;
-            m_aspect = mrl->aspect;
-        }
-        m_back_request = 0L;
-        m_player->process ()->play (this, mrl->linkNode ());
-    }
+    m_player->changeURL (mrl->src);
+    for (NodePtr p = mrl->parentNode(); p; p = p->parentNode())
+        p->state = Element::state_activated;
+    mrl->activate ();
+    m_width = mrl->width;
+    m_height = mrl->height;
+    m_aspect = mrl->aspect;
     //kDebug () << "Source::playCurrent " << (m_current ? m_current->nodeName():" doc act:") <<  (m_document && !m_document->active ()) << " cur:" << (!m_current)  << " cur act:" << (m_current && !m_current->active ());
     m_player->updateTree ();
     emit dimensionsChanged ();
@@ -1087,22 +989,7 @@ static NodePtr findDepthFirst (NodePtr elm) {
     return NodePtr ();
 }
 
-bool Source::requestPlayURL (NodePtr mrl) {
-    //kDebug() << "Source::requestPlayURL " << mrl->mrl ()->src;
-    if (m_player->process ()->state () > Process::Ready) {
-        if (m_player->process ()->mrl () == mrl->mrl ()->linkNode ())
-            return true;
-        m_back_request = mrl; // still playing, schedule it
-        m_player->process ()->stop ();
-    } else {
-        if (mrl->mrl ()->view_mode == Mrl::SingleMode)
-            m_current = mrl;
-        else
-            m_back_request = mrl;
-        m_player->updateTree ();
-        QTimer::singleShot (0, this, SLOT (playCurrent ()));
-    }
-    m_player->setProcess (mrl->mrl ());
+bool Source::authoriseUrl (const QString &) {
     return true;
 }
 
@@ -1118,40 +1005,25 @@ void Source::setTimeout (int ms) {
 }
 
 void Source::timerEvent (QTimerEvent * e) {
-    if (e->timerId () == m_doc_timer && m_document)
+    if (e->timerId () == m_doc_timer && m_document && m_document->active ())
         m_document->document ()->timer (); // will call setTimeout()
     else
         killTimer (e->timerId ());
 }
 
-bool Source::setCurrent (NodePtr mrl) {
-    m_current = mrl;
-    return true;
-}
-
-void Source::stateElementChanged (Node * elm, Node::State os, Node::State ns) {
-    //kDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isPlayable:" << (m_current && m_current->isPlayable ()) << " elm==linkNode:" << (m_current && elm == m_current->mrl ()->linkNode ()) << " p state:" << m_player->process ()->state ();
-    if (ns == Node::state_deactivated && elm == m_document && !m_back_request) {
-        emit endOfPlayItems (); // played all items
-    } else if ((ns == Node::state_deactivated || ns == Node::state_finished) &&
-             m_player->process ()->mrl() &&
-             elm == m_player->process ()->mrl ()->mrl ()->linkNode ()) {
-        if (m_player->process ()->state () > Process::Ready)
-            //a SMIL movies stopped by SMIL events rather than movie just ending
-            m_player->process ()->stop ();
-        if (m_player->view ()) // move away the video widget
-            QTimer::singleShot (0, m_player->view (), SLOT (updateLayout ()));
-    } else if ((ns == Node::state_deferred ||
-                (os == Node::state_deferred && ns > Node::state_deferred)) &&
-            elm == m_document) {
-        m_player->process ()->pause ();
-    } else if (ns == Node::state_activated &&
-            elm->isPlayable () &&
-            elm->mrl ()->view_mode == Mrl::SingleMode) {
-        Node *p = elm->parentNode();
-        if (!p || !p->mrl () || p->mrl ()->view_mode == Mrl::SingleMode)
-            // make sure we don't set current to nested document
-            m_current = elm;
+void Source::stateElementChanged (Node *elm, Node::State os, Node::State ns) {
+    //kDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isPlayable:" << (m_current && m_current->isPlayable ()) << " elm==linkNode:" << (m_current && elm == m_current->mrl ()->linkNode ()) << endl;
+    if (ns == Node::state_activated &&
+            elm->mrl () &&
+            Mrl::WindowMode != elm->mrl ()->view_mode) {
+        m_current = elm;
+        if (m_current == m_document)
+            emit startPlaying ();
+    } else if (ns == Node::state_deactivated && elm == m_document) {
+        NodePtrW guard = elm;
+        emit endOfPlayItems (); // played all items FIXME on jumps
+        if (!guard)
+            return;
     }
     if (elm->expose ()) {
         if (ns == Node::state_activated || ns == Node::state_deactivated)
@@ -1176,6 +1048,10 @@ void Source::bitRates (int & preferred, int & maximal) {
     maximal= 1024 * m_player->settings ()->maxbitrate;
 }
 
+MediaManager *Source::mediaManager () const {
+    return m_player->mediaManager ();
+}
+
 void Source::insertURL (NodePtr node, const QString & mrl, const QString & title) {
     if (!node || !node->mrl ()) // this should always be false
         return;
@@ -1198,14 +1074,8 @@ void Source::insertURL (NodePtr node, const QString & mrl, const QString & title
     }
 }
 
-void Source::play () {
-    m_player->updateTree ();
-    QTimer::singleShot (0, m_player, SLOT (play ()));
-    //printTree (m_document);
-}
-
 void Source::backward () {
-    if (m_document->hasChildNodes ()) {
+   /* if (m_document->hasChildNodes ()) {
         m_back_request = m_current;
         if (!m_back_request || m_back_request == m_document) {
             m_back_request = m_document->lastChild ();
@@ -1235,31 +1105,18 @@ void Source::backward () {
         m_back_request = 0L;
     } else
         m_player->process ()->seek (-1 * m_player->settings ()->seektime * 10, false);
+        */
 }
 
 void Source::forward () {
-    if (m_document->hasChildNodes ()) {
+    /*if (m_document->hasChildNodes ()) {
         if (m_player->playing ())
             m_player->process ()->stop ();
         else if (m_current)
             m_current->finish ();
     } else
         m_player->process ()->seek (m_player->settings()->seektime * 10, false);
-}
-
-void Source::jump (NodePtr e) {
-    if (e->isPlayable ()) {
-        if (m_player->playing ()) {
-            m_back_request = e;
-            m_player->process ()->stop ();
-        } else {
-            if (m_current)
-                m_document->reset ();
-            m_current = e;
-            QTimer::singleShot (0, this, SLOT (playCurrent ()));
-        }
-    } else
-        m_player->updateTree ();
+        */
 }
 
 NodePtr Source::document () {
@@ -1374,87 +1231,6 @@ void Source::setIdentified (bool b) {
     m_identified = b;
 }
 
-static const QString statemap [] = {
-    i18n ("Not Running"), i18n ("Ready"), i18n ("Buffering"), i18n ("Playing")
-};
-
-void Source::stateChange(Process *p, Process::State olds, Process::State news) {
-    if (!p || !p->viewer ()) return;
-    Recorder *rec = dynamic_cast <Recorder *> (p);
-    if (rec && !rec->recordURL ().isEmpty ()) {
-        kDebug () << "recordState " << statemap[olds] << " -> " << statemap[news];
-        m_player->updateStatus (i18n ("Recorder %1 %2").arg (p->name ()).arg (statemap[news]));
-        p->viewer ()->view ()->controlPanel ()->setRecording (news > Process::Ready);
-        if (news == Process::Ready) {
-            if (olds > Process::Ready) {
-                p->quit ();
-            } else {
-                NodePtr n = current ();
-                if (!n)
-                    n = document ();
-                p->play (this, n);
-            }
-        } else if (news > Process::Ready) {
-            emit startRecording ();
-        } else if (news == Process::NotRunning)
-            emit stopRecording ();
-    } else {
-        p->viewer()->view()->controlPanel()->setPlaying(news > Process::Ready);
-        kDebug () << "processState " << statemap[olds] << " -> " << statemap[news];
-        m_player->updateStatus (i18n ("Player") + QChar (' ' ) +
-                p->name () + QChar (' ' ) + statemap[news]);
-        if (!p->mrl () && news > Process::Ready) {
-            p->stop (); // reschedule for Ready state
-        } else if (news == Process::Playing) {
-            if (p->mrl ()->state == Element::state_deferred)
-                p->mrl ()->undefer ();
-            p->viewer ()->view ()->playingStart ();
-            emit startPlaying ();
-        } else if (news == Process::NotRunning) {
-            if (hasLength () && position () > length ())
-                setLength (m_document, position ());
-            setPosition (0);
-            if (p == m_player->process ())
-                emit stopPlaying ();
-            // else changed process
-        } else if (news == Process::Ready) {
-            if (olds > Process::Ready) {
-                NodePtr node = p->mrl (); // p->mrl is weak, needs check
-                Mrl * mrl = node ? node->mrl () : 0L;
-                if (m_back_request && m_back_request->isPlayable ()) {
-                    if (m_back_request->mrl ()->view_mode == Mrl::SingleMode)
-                        // jump in pl
-                        m_current = m_back_request;
-                    else if (mrl)
-                        // overlapping SMIL audio/video
-                        mrl->endOfFile ();
-                    if (m_current->id >= SMIL::id_node_first &&
-                            m_current->id < SMIL::id_node_last) {
-                        playCurrent ();  // just play back_request
-                    } else {
-                        // sanitize pl having all parents of current activated
-                        m_document->reset (); // deactivate everything
-                        for (NodePtr p = m_current->parentNode(); p; p = p->parentNode())
-                            p->state = Element::state_activated;
-                        m_current->activate (); // calls requestPlayUrl
-                    }
-                    m_back_request = 0L;
-                } else if(mrl)
-		{
-                    mrl->endOfFile (); // set node to finished
-		}
-                if (m_player->view() &&
-                        (!mrl || mrl->view_mode != Mrl::WindowMode))
-                    static_cast<View*>(m_player->view())->viewArea()->repaint();
-            } else
-                QTimer::singleShot (0, this, SLOT (playCurrent ()));
-        } else if (news == Process::Buffering) {
-            if (p->mrl ()->mrl ()->view_mode != Mrl::SingleMode)
-                p->mrl ()->defer (); // paused the SMIL
-        }
-    }
-}
-
 QString Source::plugin (const QString &mime) const {
     return KConfigGroup (m_player->config (), mime).readEntry ("plugin", QString ());
 }
@@ -1481,8 +1257,8 @@ void URLSource::init () {
 
 void URLSource::dimensions (int & w, int & h) {
     if (!m_player->mayResize () && m_player->view ()) {
-        w = static_cast <View *> (m_player->view ())->viewer ()->width ();
-        h = static_cast <View *> (m_player->view ())->viewer ()->height ();
+        w = static_cast <View *> (m_player->view ())->viewArea ()->width ();
+        h = static_cast <View *> (m_player->view ())->viewArea ()->height ();
     } else {
         Source::dimensions (w, h);
     }
@@ -1501,7 +1277,7 @@ KDE_NO_EXPORT void URLSource::activate () {
         return;
     }
     if (m_auto_play)
-        play ();
+        play (NULL);
 }
 
 KDE_NO_EXPORT void URLSource::stopResolving () {
@@ -1529,14 +1305,19 @@ void URLSource::backward () {
     Source::backward ();
 }
 
-void URLSource::jump (NodePtr e) {
-    stopResolving ();
-    Source::jump (e);
+void URLSource::play (Mrl *mrl) {
+    // what should we do if currently resolving this mrl ..
+    if (!m_resolve_info)
+        Source::play (mrl);
 }
 
 void URLSource::deactivate () {
     activated = false;
     reset ();
+    if (m_document) {
+        m_document->document ()->dispose ();
+        m_document = NULL;
+    }
     getSurface (0L);
 }
 
@@ -1712,10 +1493,10 @@ KDE_NO_EXPORT void URLSource::kioMimetype (KIO::Job *job, const QString & mimest
         return;
     }
     kDebug() << "kioMimetype " << mimestr;
-    if (!rinfo->resolving_mrl || !isPlayListMime (mimestr))
-        job->kill (KJob::EmitResult);
     if (rinfo->resolving_mrl)
         rinfo->resolving_mrl->mrl ()->mimetype = mimestr;
+    if (!rinfo->resolving_mrl || !isPlayListMime (mimestr))
+        job->kill (KJob::EmitResult);
 }
 
 KDE_NO_EXPORT void URLSource::kioResult (KJob *job) {
@@ -1735,34 +1516,23 @@ KDE_NO_EXPORT void URLSource::kioResult (KJob *job) {
         previnfo->next = rinfo->next;
     else
         m_resolve_info = rinfo->next;
-    QTextStream textstream (rinfo->data, IO_ReadOnly);
+
     if (rinfo->resolving_mrl) {
-        if (isPlayListMime (rinfo->resolving_mrl->mrl ()->mimetype))
+        if (rinfo->data.size () > 0 &&
+                isPlayListMime (rinfo->resolving_mrl->mrl ()->mimetype)) {
+            QTextStream textstream (rinfo->data, IO_ReadOnly);
             read (rinfo->resolving_mrl, textstream);
+        }
         rinfo->resolving_mrl->mrl ()->resolved = true;
         rinfo->resolving_mrl->undefer ();
     }
     static_cast <View *> (m_player->view())->controlPanel()->setPlaying (false);
 }
 
-void URLSource::playCurrent () {
-    Mrl *mrl = m_back_request
-        ? m_back_request->mrl ()
-        : m_current ? m_current->mrl () : NULL;
-    if (mrl && mrl->active () && (!mrl->isPlayable () || !mrl->resolved))
-        // an async playCurrent() call (eg. backend is up & running), ignore
-        return;
-    Source::playCurrent ();
-}
-
-void URLSource::play () {
-    Source::play ();
-}
-
-bool URLSource::requestPlayURL (NodePtr mrl) {
-    if (m_document.ptr () != mrl->mrl ()->linkNode ()) {
-        KUrl base = m_document->mrl ()->src;
-        KUrl dest = mrl->mrl ()->linkNode ()->absolutePath ();
+bool URLSource::authoriseUrl (const QString &url) {
+    KUrl base = document ()->mrl ()->src;
+    if (base != url) {
+        KUrl dest (url);
         // check if some remote playlist tries to open something local, but
         // do ignore unknown protocols because there are so many and we only
         // want to cache local ones.
@@ -1777,7 +1547,7 @@ bool URLSource::requestPlayURL (NodePtr mrl) {
             return false;
         }
     }
-    return Source::requestPlayURL (mrl);
+    return Source::authoriseUrl (url);
 }
 
 void URLSource::setUrl (const KUrl & url) {
@@ -1856,178 +1626,6 @@ bool URLSource::resolveURL (NodePtr m) {
         return false; // wait for result ..
     }
     return true;
-}
-
-//-----------------------------------------------------------------------------
-
-void DataCache::add (const QString & url, const QByteArray & data) {
-    QByteArray bytes;
-    bytes.duplicate (data);
-    cache_map.insert (url, bytes);
-    preserve_map.erase (url);
-    emit preserveRemoved (url);
-}
-
-bool DataCache::get (const QString & url, QByteArray & data) {
-    DataMap::const_iterator it = cache_map.find (url);
-    if (it != cache_map.end ()) {
-        data.duplicate (it.data ());
-        return true;
-    }
-    return false;
-}
-
-bool DataCache::preserve (const QString & url) {
-    PreserveMap::const_iterator it = preserve_map.find (url);
-    if (it == preserve_map.end ()) {
-        preserve_map.insert (url, true);
-        return true;
-    }
-    return false;
-}
-
-bool DataCache::isPreserved (const QString & url) {
-    return preserve_map.find (url) != preserve_map.end ();
-}
-
-bool DataCache::unpreserve (const QString & url) {
-    const PreserveMap::iterator it = preserve_map.find (url);
-    if (it == preserve_map.end ())
-        return false;
-    preserve_map.erase (it);
-    emit preserveRemoved (url);
-    return true;
-}
-
-RemoteObjectPrivate::RemoteObjectPrivate (RemoteObject * r)
- : job (0L), remote_object (r), preserve_wait (false) {
-}
-
-RemoteObjectPrivate::~RemoteObjectPrivate () {
-    clear ();
-}
-
-KDE_NO_EXPORT bool RemoteObjectPrivate::download (const QString & str) {
-    url = str;
-    KUrl kurl (str);
-    if (kurl.isLocalFile ()) {
-        QFile file (kurl.path ());
-        if (file.exists () && file.open (IO_ReadOnly)) {
-            data = file.readAll ();
-            file.close ();
-        }
-        remote_object->remoteReady (data);
-        return true;
-    }
-    if (memory_cache->get (str, data)) {
-        //kDebug () << "download found in cache " << str;
-        remote_object->remoteReady (data);
-        return true;
-    }
-    if (memory_cache->preserve (str)) {
-        //kDebug () << "downloading " << str;
-        job = KIO::get (kurl, KIO::NoReload, KIO::HideProgressInfo);
-        connect (job, SIGNAL (data (KIO::Job *, const QByteArray &)),
-                this, SLOT (slotData (KIO::Job *, const QByteArray &)));
-        connect (job, SIGNAL (result (KJob *)),
-                this, SLOT (slotResult (KJob *)));
-        connect (job, SIGNAL (mimetype (KIO::Job *, const QString &)),
-                this, SLOT (slotMimetype (KIO::Job *, const QString &)));
-    } else {
-        //kDebug () << "download preserved " << str;
-        connect (memory_cache, SIGNAL (preserveRemoved (const QString &)),
-                 this, SLOT (cachePreserveRemoved (const QString &)));
-        preserve_wait = true;
-    }
-    return false;
-}
-
-KDE_NO_EXPORT void RemoteObjectPrivate::clear () {
-    if (job) {
-        job->kill (); // quiet, no result signal
-        job = 0L;
-        memory_cache->unpreserve (url);
-    } else if (preserve_wait) {
-        disconnect (memory_cache, SIGNAL (preserveRemoved (const QString &)),
-                    this, SLOT (cachePreserveRemoved (const QString &)));
-        preserve_wait = false;
-    }
-}
-
-KDE_NO_EXPORT void RemoteObjectPrivate::slotResult (KJob * kjob) {
-    if (!kjob->error ())
-        memory_cache->add (url, data);
-    else
-        data.resize (0);
-    job = 0L; // signal KIO::Job::result deletes itself
-    remote_object->remoteReady (data);
-}
-
-KDE_NO_EXPORT
-void RemoteObjectPrivate::cachePreserveRemoved (const QString & str) {
-    if (str == url && !memory_cache->isPreserved (str)) {
-        preserve_wait = false;
-        disconnect (memory_cache, SIGNAL (preserveRemoved (const QString &)),
-                    this, SLOT (cachePreserveRemoved (const QString &)));
-        download (str);
-    }
-}
-
-KDE_NO_EXPORT
-void RemoteObjectPrivate::slotData (KIO::Job*, const QByteArray& qb) {
-    if (qb.size ()) {
-        int old_size = data.size ();
-        data.resize (old_size + qb.size ());
-        memcpy (data.data () + old_size, qb.data (), qb.size ());
-    }
-}
-
-KDE_NO_EXPORT
-void RemoteObjectPrivate::slotMimetype (KIO::Job *, const QString & m) {
-    mime = m;
-}
-
-KDE_NO_CDTOR_EXPORT RemoteObject::RemoteObject ()
- : d (new RemoteObjectPrivate (this)) {}
-
-KDE_NO_CDTOR_EXPORT RemoteObject::~RemoteObject () {
-    delete d;
-}
-
-/**
- * abort previous wget job
- */
-KDE_NO_EXPORT void RemoteObject::killWGet () {
-    d->clear (); // assume data is invalid
-}
-
-/**
- * Gets contents from url and puts it in m_data
- */
-KDE_NO_EXPORT bool RemoteObject::wget (const QString & url) {
-    clear ();
-    return d->download (url);
-}
-
-KDE_NO_EXPORT QString RemoteObject::mimetype () {
-    if (d->data.size () > 0 && d->mime.isEmpty ()) {
-        int accuraty;
-        KMimeType::Ptr mime = KMimeType::findByContent (d->data, &accuraty);
-        if (mime)
-            d->mime = mime->name ();
-    }
-    return d->mime;
-}
-
-KDE_NO_EXPORT void RemoteObject::clear () {
-    killWGet ();
-    d->url.truncate (0);
-    d->mime.truncate (0);
-    d->data.resize (0);
-}
-
-KDE_NO_EXPORT bool RemoteObject::downloading () const {
-    return !!d->job;
 }
 
 //-----------------------------------------------------------------------------

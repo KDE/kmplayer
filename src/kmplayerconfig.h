@@ -32,6 +32,7 @@
 #include "kmplayer_def.h"
 
 class KSharedConfig;
+class QFrame;
 template<class T> class KSharedPtr;
 typedef KSharedPtr<KSharedConfig> KSharedConfigPtr;
 

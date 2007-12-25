@@ -35,6 +35,7 @@
 #include "kmplayer_rss.h"
 #include "kmplayer_smil.h"
 #include "kmplayer_xspf.h"
+#include "mediaobject.h"
 
 #ifdef SHAREDPTR_DEBUG
 int shared_data_count;
@@ -651,11 +652,15 @@ static bool hasMrlChildren (const NodePtr & e) {
 
 Mrl::Mrl (NodePtr & d, short id)
     : Element (d, id), cached_ismrl_version (~0),
+      media_object (NULL),
       aspect (0), repeat (0),
       view_mode (SingleMode),
       resolved (false), bookmarkable (true) {}
 
-Mrl::~Mrl () {}
+Mrl::~Mrl () {
+    if (media_object)
+        media_object->destroy ();
+}
 
 Node::PlayType Mrl::playType () {
     if (cached_ismrl_version != document()->m_tree_version) {
@@ -722,18 +727,45 @@ void Mrl::activate () {
 }
 
 void Mrl::begin () {
-    kDebug () << nodeName () << " Mrl::activate";
+    kDebug () << nodeName () << " Mrl::begin" << endl;
     if (document ()->notify_listener) {
         if (linkNode () != this) {
             linkNode ()->activate ();
             if (linkNode ()->unfinished ())
                 setState (state_began);
         } else if (!src.isEmpty ()) {
-            if (document ()->notify_listener->requestPlayURL (this))
+            if (!media_object)
+                media_object = document ()->notify_listener->mediaManager()->createMedia (MediaManager::AudioVideo, this);
+            if (media_object->play ())
                 setState (state_began);
+            else
+                deactivate ();
         } else
             deactivate (); // nothing to activate
     }
+}
+
+void Mrl::defer () {
+    if (media_object)
+        media_object->pause ();
+    Node::defer ();
+}
+
+void Mrl::undefer () {
+    if (media_object) {
+        media_object->unpause ();
+        setState (state_began);
+    } else {
+        Node::undefer ();
+    }
+}
+
+void Mrl::deactivate () {
+    if (media_object) {
+        media_object->destroy ();
+        media_object = NULL;
+    }
+    Node::deactivate ();
 }
 
 SurfacePtr Mrl::getSurface (NodePtr node) {
@@ -762,6 +794,8 @@ void Mrl::parseParam (const TrieString & para, const QString & val) {
         resolved = false;
     }
 }
+
+//----------------------%<-----------------------------------------------------
 
 Surface::Surface (NodePtr n, const SRect & r)
   : node (n),
@@ -956,10 +990,11 @@ bool Document::timer () {
     struct timeval now = { 0, 0 }; // unset
     int new_timeout = -1;
     TimerInfoPtrW tinfo = timers.first (); // keep use_count on 1
+    NodePtrW guard = this;
 
     intimer = true;
     // handle max 100 timeouts with timeout set to now
-    for (int i = 0; !!tinfo && !postpone_ref && i < 100; ++i) {
+    for (int i = 0; !!tinfo && !postpone_ref && i < 100 && active (); ++i) {
         if (tinfo && !tinfo->node) {
             // some part of document has gone and didn't remove timer
             kError () << "spurious timer" << endl;
@@ -972,6 +1007,8 @@ bool Document::timer () {
         TimerEvent * te = new TimerEvent (tinfo);
         EventPtr e (te);
         tinfo->node->handleEvent (e);
+        if (!guard)
+            return false;
         if (tinfo) { // may be removed from timers and become 0
             if (te->interval) {
                 TimerInfoPtr tinfo2 (tinfo); // prevent destruction
@@ -1006,7 +1043,7 @@ bool Document::timer () {
     intimer = false;
 
     // set new timeout to prevent interval timer events
-    if (notify_listener && !postpone_ref && tinfo) {
+    if (notify_listener && !postpone_ref && tinfo && active ()) {
         if (new_timeout != cur_timeout) {
             cur_timeout = new_timeout;
             notify_listener->setTimeout (cur_timeout);

@@ -405,25 +405,34 @@ KDE_NO_EXPORT void KMPlayerTVSource::menuAboutToShow () {
     readXML ();
 }
 
-void KMPlayerTVSource::jump (KMPlayer::NodePtr e) {
-    if (e->id == id_node_tv_document) {
+void KMPlayerTVSource::play (KMPlayer::Mrl *mrl) {
+    if (mrl && mrl->id == id_node_tv_document) {
         readXML ();
     } else {
-        m_current = e;
-        for (; e; e = e->parentNode ()) {
+        m_current = mrl;
+        for (KMPlayer::NodePtr e = mrl; e; e = e->parentNode ()) {
             if (e->id == id_node_tv_device) {
                 m_cur_tvdevice = e;
                 break;
             } else if (e->id == id_node_tv_input)
                 m_cur_tvinput = e;
         }
-        if (m_player->source () != this)
+        if (m_player->source () != this) {
             m_player->setSource (this);
-        else if (m_player->process ()->playing ()) {
-            m_back_request = m_current;
+        } else {
+            buildArguments ();
+            KMPlayer::Source::play (mrl);
+        }
+        /*else if (m_player->process ()->playing ()) {
+            //m_back_request = m_current;
             m_player->process ()->stop ();
-        } else
-            playCurrent ();
+        } else {
+            buildArguments ();
+            if (m_app->broadcasting ())
+                QTimer::singleShot (0, m_app->broadcastConfig (), SLOT (startFeed ()));
+            else
+                KMPlayer::Source::play (mrl);
+        }*/
     }
 }
 
@@ -482,14 +491,6 @@ KDE_NO_EXPORT void KMPlayerTVSource::buildArguments () {
         m_recordcmd.sprintf ("-tv %s:driver=%s:%s:width=%d:height=%d", m_audiodevice.isEmpty () ? "noaudio" : (QString ("forceaudio:adevice=") + m_audiodevice).ascii(), tvdriver.ascii (), command.ascii (), width (), height ());
     else
         m_recordcmd.sprintf ("-tv on:%s:driver=%s:%s:width=%d:height=%d", m_audiodevice.isEmpty () ? "noaudio" : (QString ("forceaudio:adevice=") + m_audiodevice).ascii(), tvdriver.ascii (), command.ascii (), width (), height ());
-}
-
-KDE_NO_EXPORT void KMPlayerTVSource::playCurrent () {
-    buildArguments ();
-    if (m_app->broadcasting ())
-        QTimer::singleShot (0, m_app->broadcastConfig (), SLOT (startFeed ()));
-    else
-        KMPlayer::Source::playCurrent ();
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::menuClicked (int id) {
@@ -710,13 +711,13 @@ KDE_NO_EXPORT void TVDeviceScannerSource::play () {
     QString args;
     args.sprintf ("tv:// -tv driver=%s:device=%s -identify -frames 0", m_driver.ascii (), m_tvdevice->src.ascii ());
     m_tvsource->player ()->stop ();
-    m_tvsource->player ()->process ()->initProcess (m_player->settings ()->defaultView ()->viewer ());
-    KMPlayer::Process *proc = m_tvsource->player ()->players () ["mplayer"];
-    proc->setSource (this);
-    if (!static_cast <KMPlayer::MPlayer *> (proc)->run (args.ascii()))
-        deactivate ();
+    //m_tvsource->player ()->process ()->initProcess ();
+    //KMPlayer::Process *proc = m_tvsource->player ()->players () ["mplayer"];
+    //proc->setSource (this);
+    //if (!static_cast <KMPlayer::MPlayer *> (proc)->run (args.ascii()))
+    //    deactivate ();
 }
-
+/*
 KDE_NO_EXPORT void TVDeviceScannerSource::stateChange (KMPlayer::Process * p, KMPlayer::Process::State os, KMPlayer::Process::State ns) {
     if (m_tvdevice &&  // can be deactivated
             ns == KMPlayer::Process::Ready && os > KMPlayer::Process::Ready) {
@@ -730,7 +731,7 @@ KDE_NO_EXPORT void TVDeviceScannerSource::stateChange (KMPlayer::Process * p, KM
         m_player->setSource (m_old_source);
         emit scanFinished (dev);
     }
-    KMPlayer::Source::stateChange (p, os, ns);
-}
+    //KMPlayer::Source::stateChange (p, os, ns);
+}*/
 
 #include "kmplayertvsource.moc"

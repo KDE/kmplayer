@@ -557,16 +557,16 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::startFeed () {
     if (m_ffmpeg_process)
         m_ffmpeg_process->stop ();
     delete m_ffmpeg_process;
-    m_ffmpeg_process = new KMPlayer::FFMpeg (m_player, m_player->settings ());
+    m_ffmpeg_process = new KMPlayer::FFMpeg (m_player, NULL, m_player->settings ());
     connect (m_ffmpeg_process, SIGNAL (stateChange (KMPlayer::Process::State, KMPlayer::Process::State)), this, SLOT (stateChange (KMPlayer::Process::State, KMPlayer::Process::State)));
     ffurl.sprintf ("http://localhost:%d/kmplayer.ffm", m_ffserverconfig->ffserverport);
-    m_ffmpeg_process->setUrl (KUrl(ffurl));
-    if (!m_ffmpeg_process->play (m_player->source (), KMPlayer::NodePtr())) {
+    //m_ffmpeg_process->setUrl (KUrl(ffurl));
+    if (!m_ffmpeg_process->play ()) {
         KMessageBox::error (m_configpage, i18n ("Failed to start ffmpeg."), i18n ("Error"));
         stopProcess (m_ffserver_process);
         goto bail_out;
     }
-    if (m_ffmpeg_process->playing ()) {
+    if (m_ffmpeg_process->running ()) {
         m_ffserver_url.sprintf ("http://localhost:%d/video.%s", m_ffserverconfig->ffserverport, ffs.format.ascii ());
         m_endserver = false;
         m_configpage->feedled->setState (KLed::On);
@@ -576,7 +576,7 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::startFeed () {
 bail_out:
     m_configpage->setCursor (QCursor (Qt::ArrowCursor));
 }
-
+/*
 KDE_NO_EXPORT void KMPlayerBroadcastConfig::stateChange (KMPlayer::Process::State old, KMPlayer::Process::State state) {
     if (state < KMPlayer::Process::Buffering && old >KMPlayer::Process::Ready) {
         if (m_configpage)
@@ -593,7 +593,7 @@ KDE_NO_EXPORT void KMPlayerBroadcastConfig::stateChange (KMPlayer::Process::Stat
         }
     }
 }
-
+*/
 KDE_NO_EXPORT void KMPlayerBroadcastConfig::processStopped (KProcess *) {
     kdDebug () << "ffserver process stopped" << endl;
     if (m_configpage) {

@@ -45,6 +45,8 @@ class Surface;
 class ElementPrivate;
 class RemoteObjectPrivate;
 class Visitor;
+class MediaManager;
+class MediaObject;
 
 template <class T> class KMPLAYER_EXPORT GlobalShared {
     T **global;
@@ -481,6 +483,7 @@ protected:
 ITEM_AS_POINTER(KMPlayer::Node)
 
 const short id_node_document = 1;
+const short id_node_record_document = 2;
 const short id_node_text = 5;
 const short id_node_cdata = 6;
 
@@ -563,11 +566,12 @@ public:
     virtual Mrl * mrl ();
     virtual void endOfFile ();
     QString absolutePath ();
-    /*
-     * Reimplement to callback with requestPlayURL if isPlayable()
-     */
+
     virtual void activate ();
     virtual void begin ();
+    virtual void defer ();
+    virtual void undefer ();
+    virtual void deactivate ();
     /**
      * By default support one event handler (eg. SMIL or RP child document)
      */
@@ -579,6 +583,7 @@ public:
      * location in SCR. Typically that's the parent of this node.
      */
     NodePtrW opener; //if this node is top node of external document,
+    MediaObject *media_object;
     QString src;
     QString pretty_name;
     QString mimetype;
@@ -597,11 +602,8 @@ public:
 class KMPLAYER_EXPORT PlayListNotify {
 public:
     virtual ~PlayListNotify () {}
-    /**
-     * Ask for playing a video/audio mrl by backend players
-     * If returning false, the element will be set to finished
-     */
-    virtual bool requestPlayURL (NodePtr mrl) = 0;
+
+    virtual MediaManager *mediaManager () const = 0;
     /**
      * Called by an unresolved Mrl, check if this node points to a playlist
      */
@@ -628,25 +630,6 @@ public:
     virtual void setTimeout (int ms) = 0;
 };
 
-/**
- * Base class for cached network data
- */
-class KMPLAYER_NO_EXPORT RemoteObject {
-    friend class RemoteObjectPrivate;
-public:
-    RemoteObject ();
-    virtual ~RemoteObject ();
-    bool wget (const QString & url);
-    void killWGet ();
-    void clear ();
-    QString mimetype ();
-protected:
-    KDE_NO_EXPORT virtual void remoteReady (QByteArray &) {}
-    bool downloading () const;
-private:
-    RemoteObjectPrivate *d;
-};
-
 class KMPLAYER_NO_EXPORT Surface : public TreeNode <Surface> {
 public:
     Surface (NodePtr node, const SRect & rect);
@@ -657,12 +640,12 @@ public:
     virtual void resize (const SRect & rect) = 0;
     virtual void repaint () = 0;
     virtual void repaint (const SRect &rect) = 0;
-    virtual void video () = 0;
+    virtual void video (Mrl *) = 0;
     void remove ();                // remove from parent, mark ancestors dirty
     void markDirty ();             // mark this and ancestors dirty
 
     NodePtrW node;
-    SRect bounds;                  // bounds in in parent coord. 
+    SRect bounds;                  // bounds in in parent coord.
     float xscale, yscale;          // internal scaling
     unsigned int background_color; // rgba background color
     bool dirty;                    // a decendant is removed

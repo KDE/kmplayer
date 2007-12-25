@@ -21,11 +21,15 @@
 #ifndef _KMPlayerPREF_H_
 #define _KMPlayerPREF_H_
 
+#include "config-kmplayer.h"
+
 #include "kmplayer_def.h"
 
 #include <kpagedialog.h>
 #include <kvbox.h>
 #include <qmap.h>
+
+#include "kmplayerplaylist.h"
 
 class QTabWidget;
 class QCheckBox;
@@ -79,6 +83,7 @@ public:
     PrefMPlayerDumpstreamPage   *m_MPlayerDumpstreamPage;
 #ifdef HAVE_XINE
     PrefXinePage                *m_XinePage;
+#warning foo
 #endif
     PrefFFMpegPage              *m_FFMpegPage;
     PrefGeneralPageLooks        *m_GeneralPageLooks;
@@ -166,27 +171,30 @@ class KMPLAYER_NO_EXPORT PrefRecordPage : public KVBox
     Q_OBJECT
 public:
     PrefRecordPage (QWidget *parent, PartBase *, RecorderPage *, int len);
-    ~PrefRecordPage () {}
+    ~PrefRecordPage ();
 
     KUrlRequester * url;
     Q3ButtonGroup * recorder;
     Q3ButtonGroup * replay;
     QLineEdit * replaytime;
     QLabel * source;
+protected:
+    void showEvent (QShowEvent *);
+    void timerEvent (QTimerEvent *);
 public slots:
     void replayClicked (int id);
     void recorderClicked (int id);
 private slots:
     void slotRecord ();
-    void playingStopped ();
-    void sourceChanged (KMPlayer::Source *, KMPlayer::Source *);
-    void recordingStarted ();
-    void recordingFinished ();
+    void recording (bool);
 private:
     PartBase * m_player;
-    RecorderPage * m_recorders;
+    RecorderPage *m_recorders;
     QPushButton * recordButton;
+    QString source_url;
+    NodePtr record_doc;
     int m_recorders_length;
+    int rec_timer;
 };
 
 class KMPLAYER_NO_EXPORT RecorderPage : public KVBox
@@ -194,13 +202,13 @@ class KMPLAYER_NO_EXPORT RecorderPage : public KVBox
     Q_OBJECT
 public:
     RecorderPage (QWidget *parent, PartBase *);
-    virtual ~RecorderPage () {};
-    virtual void record ();
+    virtual ~RecorderPage () {}
+    virtual void startRecording () {}
     virtual QString name () = 0;
     virtual const char * recorderName () = 0;
     RecorderPage * next;
 protected:
-    PartBase * m_player;
+    PartBase *m_player;
 };
 
 class KMPLAYER_NO_EXPORT PrefMEncoderPage : public RecorderPage
@@ -210,7 +218,7 @@ public:
     PrefMEncoderPage (QWidget *parent, PartBase *);
     ~PrefMEncoderPage () {}
 
-    void record ();
+    virtual void startRecording ();
     QString name ();
     const char * recorderName () { return "mencoder"; }
 
@@ -248,7 +256,7 @@ public:
     PrefFFMpegPage (QWidget *parent, PartBase *);
     ~PrefFFMpegPage () {}
 
-    void record ();
+    virtual void startRecording ();
     QString name ();
     const char * recorderName () { return "ffmpeg"; }
 
