@@ -81,7 +81,7 @@ public:
     PrefRecordPage              *m_RecordPage;
     PrefMEncoderPage            *m_MEncoderPage;
     PrefMPlayerDumpstreamPage   *m_MPlayerDumpstreamPage;
-#ifdef HAVE_XINE
+#ifdef KMPLAYER_WITH_XINE
     PrefXinePage                *m_XinePage;
 #warning foo
 #endif
@@ -238,7 +238,7 @@ public:
     const char * recorderName () { return "mplayerdumpstream"; }
 };
 
-#ifdef HAVE_XINE
+#ifdef KMPLAYER_WITH_XINE
 class KMPLAYER_NO_EXPORT PrefXinePage : public RecorderPage {
 public:
     PrefXinePage (QWidget *parent, PartBase *);

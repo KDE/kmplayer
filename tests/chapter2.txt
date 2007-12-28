@@ -1,0 +1,37 @@
+Chapter 2. The user interface
+
+ The application window is made of so called dockable windows. There is always the central view window. Optional there is the playlist window. And finally there is an info window, that just shows itself when some information is there to been shown.
+
+Playlist window
+
+ The playlist window has as of this writing five categories, current item(s), Optical Disks, Television, Persistent Playlists and Most Recent. When clicked on a category's text, it will show the contents below this line. Of course there has to be contents, eg. see TV settings for adding content for the Television category. The Most Recent category will fill itself when playing locale media files or network Urls. This category can hold 60 items of which the last 50 are under the More .. branch. 
+
+Persisent Playlists category
+
+ It's possible to store your favorite links in the Bookmark menu, but those are single items. If you want to create a list of items that play after each other, than you should use the Persistent Playlists category. 
+ The easiest way to add an item in this list is to drag it from Most Recent and drop it on Persistent Playlists. As you will see, when dropped, a pop-up menu appears where you can choose to add to this list or create a new group. Top level items behave like a bookmark item, but items in groups will play the whole group wherein they reside. Items in this category can easily be moved, copied, added to a new group or deleted just by dragging this item to another place in this category. Additionally there are Delete item, Move up and Move down items in the context menu (when clicking with the right mouse button on an item). 
+ Of course you can add groups to groups to get a deeper hierarchy. When clicked on an item, its group and all its child groups will be copied to the current category and playings starts at the clicked item position. 
+Storage format
+ The data is stored in ~/.kde/share/apps/kmplayer/playlist.xml, and its format is like this example. See here for manipulating this data directly. 
+
+<playlist>
+    <group title="feeds">
+        <item url="http://www.lugradio.org/episodes.rss"/>
+        <item url="http://science.nasa.gov/podcast.xml"/>
+        <item url="http://www.theworld.org/rss/tech.xml"/>
+    </group>
+    <group title="iradio">
+        <group title="sunny">
+            <item mplayeropts="-cache 256" url="http://www.swissgroove.ch/listen.m3u"/>
+            <item url="http://www.boombasticradio.com/shoutcast/64.pls"/>
+        </group>
+        <group title="rainy">
+            <item url="http://www.radioparadise.com/musiclinks/rp_64.m3u"/>
+            <item url="http://www.woxy.com/stream/wma64.asx"/>
+            <item url="http://radionigel.com/winmedia.asx"/>
+            <item url="rtsp://livestreams.omroep.nl/live/vpro/vpro3voor12radioalt.rm"/>
+        </group>
+    </group>
+</playlist>
+
+ Also note that for MPlayer custom options can be set using the mplayeropts argument. Kmplayer searches for this option upwards in the tree, so you can set it for a whole group and override it for a child group or item.

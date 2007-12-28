@@ -45,7 +45,7 @@
 #include "kmplayercontrolpanel.h"
 #include "playlistview.h"
 #include "viewarea.h"
-#ifdef HAVE_CAIRO
+#ifdef KMPLAYER_WITH_CAIRO
 # include <cairo-xlib.h>
 # include <cairo-xlib-xrender.h>
 #endif
@@ -73,7 +73,7 @@ extern const char * playlist_xpm[];
 
 //-------------------------------------------------------------------------
 
-#ifdef HAVE_CAIRO
+#ifdef KMPLAYER_WITH_CAIRO
 static void copyImage (Surface *s, int w, int h, QImage *img, cairo_surface_t *similar) {
     int iw = img->width ();
     int ih = img->height ();
@@ -153,7 +153,7 @@ SurfacePtr ViewSurface::createSurface (NodePtr owner, const SRect & rect) {
 
 KDE_NO_EXPORT void ViewSurface::resize (const SRect &r) {
     bounds = r;
-#ifdef HAVE_CAIRO
+#ifdef KMPLAYER_WITH_CAIRO
     if (surface)
         cairo_xlib_surface_set_size (surface, (int)r.width(), (int)r.height ());
 #endif
@@ -204,7 +204,7 @@ KDE_NO_EXPORT void ViewSurface::video (Mrl *mt) {
 
 //-------------------------------------------------------------------------
 
-#ifdef HAVE_CAIRO
+#ifdef KMPLAYER_WITH_CAIRO
 
 static cairo_surface_t * cairoCreateSurface (Window id, int w, int h) {
     Display * display = QX11Info::display ();
@@ -1401,7 +1401,7 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
     m_fullscreen = !m_fullscreen;
     m_view->controlPanel()->fullscreenAction->setChecked (m_fullscreen);
 
-#ifdef HAVE_CAIRO
+#ifdef KMPLAYER_WITH_CAIRO
     if (surface->surface) {
         cairo_surface_destroy (surface->surface);
         surface->surface = 0L;
@@ -1468,7 +1468,7 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
 }
 
 KDE_NO_EXPORT void ViewArea::syncVisual (const IRect & rect) {
-#ifdef HAVE_CAIRO
+#ifdef KMPLAYER_WITH_CAIRO
     int ex = rect.x;
     if (ex > 0)
         ex--;
@@ -1495,7 +1495,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const IRect & rect) {
 }
 
 KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
-#ifdef HAVE_CAIRO
+#ifdef KMPLAYER_WITH_CAIRO
     if (surface->node)
         scheduleRepaint (IRect (pe->rect ().x (), pe->rect ().y (), pe->rect ().width (), pe->rect ().height ()));
     else

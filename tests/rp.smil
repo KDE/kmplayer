@@ -1,0 +1,13 @@
+<smil>
+  <head>
+    <layout>
+      <root-layout width="320" height="240" background-color="red"/>
+      <region left="5" top="15" width="160" height="120" background-color="blue">
+        <region id="img1" left="5" top="5" right="5" bottom="5"/>
+      </region>
+    </layout>
+  </head>
+  <body>
+    <img region="img1" fit="meet" src="fade.rp"/>
+  </body>
+</smil>

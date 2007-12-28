@@ -649,7 +649,7 @@ public:
     float xscale, yscale;          // internal scaling
     unsigned int background_color; // rgba background color
     bool dirty;                    // a decendant is removed
-#ifdef HAVE_CAIRO
+#ifdef KMPLAYER_WITH_CAIRO
     cairo_surface_t *surface;
 #endif
 };

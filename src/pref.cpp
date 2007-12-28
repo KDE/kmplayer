@@ -58,11 +58,6 @@
 #include "mediaobject.h"
 #include "kmplayerconfig.h"
 
-#ifdef HAVE_XINE
-#warning xine defined
-#undef HAVE_XINE
-#endif
-
 using namespace KMPlayer;
 
 KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * settings)
@@ -111,7 +106,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     m_MPlayerDumpstreamPage = new PrefMPlayerDumpstreamPage (tab, player);
     // tab->insertTab (m_MPlayerDumpstreamPage, i18n ("MPlayer -dumpstream"));
     m_FFMpegPage->next = m_MPlayerDumpstreamPage;
-#ifdef HAVE_XINE
+#ifdef KMPLAYER_WITH_XINE
     recorders_count = 4;
     m_XinePage = new PrefXinePage (tab, player);
     // tab->insertTab (m_XinePage, i18n ("Xine"));
@@ -436,7 +431,7 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent,
 
     static_cast <QBoxLayout *>(layout())->addLayout (buttonlayout);
     layout()->addItem (new QSpacerItem (5, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-#ifdef HAVE_XINE
+#ifdef KMPLAYER_WITH_XINE
     connect (recorder, SIGNAL (clicked(int)), this, SLOT(recorderClicked(int)));
 #endif
     connect (player, SIGNAL (recording (bool)), this, SLOT (recording (bool)));
@@ -614,7 +609,7 @@ KDE_NO_EXPORT QString PrefFFMpegPage::name () {
     return i18n ("&FFMpeg");
 }
 
-#ifdef HAVE_XINE
+#ifdef KMPLAYER_WITH_XINE
 KDE_NO_CDTOR_EXPORT PrefXinePage::PrefXinePage (QWidget *parent, PartBase * player) : RecorderPage (parent, player) {
     hide();
 }

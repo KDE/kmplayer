@@ -389,7 +389,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::~KMPlayerPart () {
 }
 
 KDE_NO_EXPORT void KMPlayerPart::processCreated (KMPlayer::Process *p) {
-#ifdef HAVE_NPP
+#ifdef KMPLAYER_WITH_NPP
     if (!strcmp (p->name (), "npp")) {
         connect (p, SIGNAL (evaluate (const QString &, QString &)),
                 m_liveconnectextension,

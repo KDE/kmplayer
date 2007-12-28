@@ -2188,7 +2188,7 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
     } else if (sizes.setSizeParam (para, val, update_surface)) {
         if (!update_surface && fit_hidden == fit &&
                 sub_surface
-#ifdef HAVE_CAIRO
+#ifdef KMPLAYER_WITH_CAIRO
                 && sub_surface->surface
 #endif
                 ) {

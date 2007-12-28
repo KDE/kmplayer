@@ -4,10 +4,10 @@
 #define HAVE_STDINT_H 1
 
 /* have CAIRO */
-#cmakedefine HAVE_CAIRO 1
+#cmakedefine KMPLAYER_WITH_CAIRO 1
 
 /* have GDBUS */
-#cmakedefine HAVE_GDBUS 1
+#cmakedefine KMPLAYER_WITH_GDBUS 1
 
 /* have NPP */
-#cmakedefine HAVE_NPP 1
+#cmakedefine KMPLAYER_WITH_NPP 1

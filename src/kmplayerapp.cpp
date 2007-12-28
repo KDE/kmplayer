@@ -518,7 +518,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp (QWidget *)
     //connect (m_broadcastconfig, SIGNAL (broadcastStarted()), this, SLOT (broadcastStarted()));
     //connect (m_broadcastconfig, SIGNAL (broadcastStopped()), this, SLOT (broadcastStopped()));
     initStatusBar();
-#ifdef HAVE_DBUS
+#ifdef KMPLAYER_WITH_DBUS
     m_player->setServiceName (QString ("org.kde.kmplayer-%1").arg (getpid ()));
 #endif
     m_player->init (actionCollection ());
@@ -653,7 +653,7 @@ KDE_NO_EXPORT void KMPlayerApp::initMenu () {
     m_sourcemenu->setText (i18n ("S&ource"));
     m_sourcemenu->popup ()->insertItem (KIconLoader::global ()->loadIconSet (QString ("dvd_mount"), K3Icon::Small, 0, true), i18n ("&DVD"), m_dvdmenu, -1, 5);
     m_dvdmenu->clear ();
-#ifdef HAVE_XINE
+#ifdef KMPLAYER_WITH_XINE
     m_dvdnavmenu->clear ();
     m_dvdnavmenu->insertItem (i18n ("&Start"), this, SLOT (dvdNav ()));
     m_dvdmenu->insertItem (i18n ("&DVD Navigator"), m_dvdnavmenu, -1, 1);
@@ -875,7 +875,7 @@ KDE_NO_EXPORT void KMPlayerApp::openVDR () {
         m_player->setSource (m_player->sources () ["vdrsource"]);*/
 }
 
-#ifdef HAVE_CAIRO
+#ifdef KMPLAYER_WITH_CAIRO
 struct IntroSource : public KMPlayer::Source {
     KMPlayerApp * m_app;
     IntroSource (KMPlayer::PartBase *p, KMPlayerApp * a)
@@ -982,7 +982,7 @@ KDE_NO_EXPORT void KMPlayerApp::openDocumentFile (const KUrl& url)
             restoreFromConfig ();
             m_player->setSource (src);
             return;
-#ifdef HAVE_CAIRO
+#ifdef KMPLAYER_WITH_CAIRO
         } else if (!m_player->settings ()->no_intro && url.isEmpty ()) {
             m_player->setSource (new IntroSource (m_player, this));
             return;
@@ -1255,7 +1255,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotMinimalMode () {
     minimalMode (true);
 }
 
-#ifdef HAVE_CAIRO
+#ifdef KMPLAYER_WITH_CAIRO
 struct ExitSource : public KMPlayer::Source {
     KDE_NO_CDTOR_EXPORT ExitSource (KMPlayer::PartBase *p)
         : KMPlayer::Source (i18n ("Exit"), p, "exitsource") {}
@@ -1325,7 +1325,7 @@ KDE_NO_EXPORT bool KMPlayerApp::queryClose () {
     m_played_exit = true;
     if (!m_minimal_mode)
         minimalMode (false);
-#ifdef HAVE_CAIRO
+#ifdef KMPLAYER_WITH_CAIRO
     m_player->setSource (new ExitSource (m_player));
     return false;
 #else

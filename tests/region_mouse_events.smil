@@ -1,41 +1,115 @@
-<!-- test for mouse events, region z-index changes when entering the red region -->
+<!-- test for mouse events -->
 <smil>
   <head>
     <layout>
-      <root-layout width="320" height="240" background-color="green"/>
-      <region id="region1" left="5%" top="10%" right="50%" bottom="40%" z-index="2"/>
-      <region id="region2" left="35%" top="40%" right="40%" bottom="5%" z-index="3" background-color="red"/>
-      <region id="region3" z-index="1"/>
-      <region id="region4" left="65%" top="10%" right="10%" bottom="70%" z-index="2" background-color="purple"/>
-      <region id="region5" left="65%" top="35%" right="10%" bottom="50%" z-index="2" background-color="red"/>
+      <root-layout width="320" height="240" background-color="orange"/>
+      <region id="reg1" left="5%" top="10%" right="60%" bottom="50%"
+           background-color="blue">
+        <region id="reg1_1" left="10%" top="30%" right="10%" bottom="30%"/>
+      </region>
+      <region id="reg2" left="60%" top="10%" right="5%" bottom="50%"
+           background-color="blue">
+        <region id="reg2_1" left="5%" top="30%" right="10%" bottom="30%"/>
+      </region>
+      <region id="reg1_txt" left="5%" top="55%" width="15%" bottom="35%"/>
+      <region id="reg1_click" left="5%" top="65%" width="15%" bottom="25%"
+           background-color="red"/>
+      <region id="reg1_enter" left="5%" top="75%" width="15%" bottom="15%"
+           background-color="red"/>
+      <region id="reg1_leave" left="5%" top="85%" width="15%" bottom="5%"
+           background-color="red"/>
+      <region id="reg1_1_txt" left="25%" top="55%" width="15%" bottom="35%"/>
+      <region id="reg1_1_click" left="25%" top="65%" width="15%" bottom="25%"
+           background-color="red"/>
+      <region id="reg1_1_enter" left="25%" top="75%" width="15%" bottom="15%"
+           background-color="red"/>
+      <region id="reg1_1_leave" left="25%" top="85%" width="15%" bottom="5%"
+           background-color="red"/>
+      <region id="reg2_txt" left="60%" top="55%" width="15%" bottom="35%"/>
+      <region id="reg2_click" left="60%" top="65%" width="15%" bottom="25%"
+           background-color="red"/>
+      <region id="reg2_enter" left="60%" top="75%" width="15%" bottom="15%"
+           background-color="red"/>
+      <region id="reg2_leave" left="60%" top="85%" width="15%" bottom="5%"
+           background-color="red"/>
+      <region id="reg2_1_txt" left="80%" top="55%" width="15%" bottom="35%"/>
+      <region id="reg2_1_click" left="80%" top="65%" width="15%" bottom="25%"
+           background-color="red"/>
+      <region id="reg2_1_enter" left="80%" top="75%" width="15%" bottom="15%"
+           background-color="red"/>
+      <region id="reg2_1_leave" left="80%" top="85%" width="15%" bottom="5%"
+           background-color="red"/>
     </layout>
   </head>
   <body>
-    <par>
-      <text id="text1" src="data:,move%20here" region="region1" dur="10">
-        <param name="fontColor" value="yellow"/>
-        <param name="fontSize" value="+2"/>
-        <param name="backgroundColor" value="blue"/>
-      </text> 
-      <set targetElement="region1" attributeName="z-index" to="4" begin="text1.inBoundsEvent" end="text1.outOfBoundsEvent"/>
-      <text id="text2" src="data:,click%20me" left="5" right="5" region="region4" dur="10" bottom="15">
-        <param name="fontColor" value="red"/>
-        <param name="fontSize" value="+1"/>
-        <param name="backgroundColor" value="orange"/>
-      </text> 
-      <text src="data:,clicked" region="region5" begin="text2.activateEvent" dur="0.5">
-      </text> 
-    </par>
-    <par>
-      <set targetElement="region2" attributeName="z-index" to="6" dur="2s"/>
-      <set targetElement="region2" attributeName="right" to="20%" fill="freeze"/>
-      <set targetElement="region3" attributeName="background-color" to="black" fill="freeze"/>
-      <set targetElement="region3" attributeName="z-index" to="5" fill="freeze"/>
-      <text src="data:,that's all folks" region="region2" dur="2">
-        <param name="fontColor" value="green"/>
-        <param name="fontSize" value="+2"/>
-        <param name="backgroundColor" value="black"/>
-      </text> 
+    <par dur="50">
+      <text id="text1" src="data:,Opaque%20child" region="reg1_1" fill="freeze">
+        <param name="backgroundColor" value="yellow"/>
+      </text>
+      <text id="text2" src="data:,Transparent%20child" region="reg2_1"
+           fill="freeze" sensitivity="transparent">
+        <param name="backgroundColor" value="yellow"/>
+      </text>
+      <text src="data:,Outer" region="reg1_txt" fill="freeze"
+           rn:backgroundOpacity="0%"/>
+      <text id="text1_click" src="data:,Clicked" region="reg1_click"
+           fill="freeze" rn:backgroundOpacity="0%"/>
+      <text id="text1_enter" src="data:,Entered" region="reg1_enter"
+           fill="freeze" rn:backgroundOpacity="0%"/>
+      <text id="text1_leave" src="data:,Leaved" region="reg1_leave"
+           fill="freeze" rn:backgroundOpacity="0%"/>
+      <text src="data:,Inner" region="reg1_1_txt" fill="freeze"
+           rn:backgroundOpacity="0%"/>
+      <text id="text1_1_click" src="data:,Clicked" region="reg1_1_click"
+           fill="freeze" rn:backgroundOpacity="0%"/>
+      <text id="text1_1_enter" src="data:,Entered" region="reg1_1_enter"
+           fill="freeze" rn:backgroundOpacity="0%"/>
+      <text id="text1_1_leave" src="data:,Leaved" region="reg1_1_leave"
+           fill="freeze" rn:backgroundOpacity="0%"/>
+      <text src="data:,Outer" region="reg2_txt" fill="freeze"
+           rn:backgroundOpacity="0%"/>
+      <text id="text2_click" src="data:,Clicked" region="reg2_click"
+           fill="freeze" rn:backgroundOpacity="0%"/>
+      <text id="text2_enter" src="data:,Entered" region="reg2_enter"
+           fill="freeze" rn:backgroundOpacity="0%"/>
+      <text id="text2_leave" src="data:,Leaved" region="reg2_leave"
+           fill="freeze" rn:backgroundOpacity="0%"/>
+      <text src="data:,Inner" region="reg2_1_txt" fill="freeze"
+           rn:backgroundOpacity="0%"/>
+      <text id="text2_1_click" src="data:,Clicked" region="reg2_1_click"
+           fill="freeze" rn:backgroundOpacity="0%"/>
+      <text id="text2_1_enter" src="data:,Entered" region="reg2_1_enter"
+           fill="freeze" rn:backgroundOpacity="0%"/>
+      <text id="text2_1_leave" src="data:,Leaved" region="reg2_1_leave"
+           fill="freeze" rn:backgroundOpacity="0%"/>
+
+      <set target="reg1_click" attribute="background-color" to="green"
+           begin="reg1.activateEvent" dur="1"/>
+      <set target="reg1_enter" attribute="background-color" to="green"
+           begin="reg1.inBoundsEvent" end="reg1.outOfBoundsEvent"/>
+      <set target="reg1_leave" attribute="background-color" to="green"
+           end="reg1.inBoundsEvent" begin="reg1.outOfBoundsEvent"/>
+
+      <set target="reg1_1_click" attribute="background-color" to="green"
+           begin="reg1_1.activateEvent" dur="1"/>
+      <set target="reg1_1_enter" attribute="background-color" to="green"
+           begin="reg1_1.inBoundsEvent" end="reg1_1.outOfBoundsEvent"/>
+      <set target="reg1_1_leave" attribute="background-color" to="green"
+           end="reg1_1.inBoundsEvent" begin="reg1_1.outOfBoundsEvent"/>
+
+      <set target="reg2_click" attribute="background-color" to="green"
+           begin="reg2.activateEvent" dur="1"/>
+      <set target="reg2_enter" attribute="background-color" to="green"
+           begin="reg2.inBoundsEvent" end="reg2.outOfBoundsEvent"/>
+      <set target="reg2_leave" attribute="background-color" to="green"
+           end="reg2.inBoundsEvent" begin="reg2.outOfBoundsEvent"/>
+
+      <set target="reg2_1_click" attribute="background-color" to="green"
+           begin="reg2_1.activateEvent" dur="1"/>
+      <set target="reg2_1_enter" attribute="background-color" to="green"
+           begin="reg2_1.inBoundsEvent" end="reg2_1.outOfBoundsEvent"/>
+      <set target="reg2_1_leave" attribute="background-color" to="green"
+           end="reg2_1.inBoundsEvent" begin="reg2_1.outOfBoundsEvent"/>
     </par>
   </body>
 </smil>

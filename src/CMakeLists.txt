@@ -7,11 +7,11 @@ set(CMAKE_CXX_FLAGS_PROFILE "-DDEBUG ${CMAKE_CXX_FLAGS_PROFILE}")
 SET(optionalCFlags)
 SET(optionalLinkFlags)
 
-IF (HAVE_CAIRO)
+IF (KMPLAYER_WITH_CAIRO)
     SET(optionalCFlags ${optionalCFlags} ${CAIROCFlags})
     SET(optionalLinkFlags ${optionalLinkFlags} ${CAIROLinkFlags})
     MESSAGE("have cairo cflags:${optionalCFlags} ldflags:${optionalLinkFlags}")
-endif (HAVE_CAIRO)
+endif (KMPLAYER_WITH_CAIRO)
 
 add_definitions(-DQT3_SUPPORT -DKDE3_SUPPORT)
 
@@ -40,12 +40,12 @@ set(libkmplayercommon_SRCS
   viewarea.cpp
 )
 
-if (HAVE_NPP)
+if (KMPLAYER_WITH_NPP)
     qt4_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.callback.xml
         ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerprocess.h KMPlayer::NpPlayer)
     qt4_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.stream.xml
         ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerprocess.h KMPlayer::NpStream)
-endif (HAVE_NPP)
+endif (KMPLAYER_WITH_NPP)
 
 kde4_add_library(kmplayercommon SHARED ${libkmplayercommon_SRCS})
 
@@ -118,7 +118,7 @@ install( FILES kmplayer.desktop  DESTINATION  ${SERVICES_INSTALL_DIR} )
 
 ########### next target ###############
 
-if (HAVE_NPP)
+if (KMPLAYER_WITH_NPP)
     MESSAGE("build npp")
     set(knpplayer_SRCS npplayer.c)
 
@@ -133,11 +133,10 @@ if (HAVE_NPP)
 
     install(TARGETS knpplayer DESTINATION ${BIN_INSTALL_DIR})
 
-endif (HAVE_NPP)
+endif (KMPLAYER_WITH_NPP)
 #kxineplayer
 #kgstplayer
 #kxvplayer
-#knppplayer
 
 ########### install files ###############
 

@@ -13,19 +13,17 @@ if(NOT WIN32)
   PKGCONFIG(cairo CAIROIncDir CAIROLinkDir CAIROLinkFlags CAIROCflags)
 
   if (CAIROCflags)
-      set(HAVE_CAIRO 1)
+      set(KMPLAYER_WITH_CAIRO 1)
   endif (CAIROCflags)
 
   PKGCONFIG(dbus-glib-1 GLibDBusIncDir GLibDBusLinkDir GLibDBusLinkFlags GLibDBusCflags)
 
   if (GLibDBusCflags)
-    set(HAVE_GDBUS 1)
-    MESSAGE("have GDBUS")
+    set(KMPLAYER_WITH_GDBUS 1)
     PKGCONFIG(gtk+-x11-2.0 GTKIncDir GTKLinkDir GTKLinkFlags GTKCflags)
     PKGCONFIG(gthread-2.0 GThreadIncDir GThreadLinkDir GThreadLinkFlags GThreadCflags)
     if (GTKCflags)
-        MESSAGE("have GTK")
-        set(HAVE_NPP 1)
+        set(KMPLAYER_WITH_NPP 1)
     endif (GTKCflags)
   endif (GLibDBusCflags)
 

@@ -85,7 +85,7 @@ MediaManager::MediaManager (PartBase *player) : m_player (player) {
     //XineProcessInfo *xpi = new XineProcessInfo (this);
     //m_process_infos ["xine"] = xpi;
     //m_process_infos ["gstreamer"] = new GStreamer (this, m_settings);, i18n ("&GStreamer")
-#ifdef HAVE_NPP
+#ifdef KMPLAYER_WITH_NPP
     m_process_infos ["npp"] = new NppProcessInfo (this);
 #endif
     m_record_infos ["mencoder"] = new MEncoderProcessInfo (this);

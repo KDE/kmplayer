@@ -55,7 +55,7 @@
 #include "kmplayerprocess.h"
 #include "kmplayersource.h"
 #include "kmplayerpartbase.h"
-#if HAVE_NPP
+#if KMPLAYER_WITH_NPP
 # include "callbackadaptor.h"
 # include "streamadaptor.h"
 #endif
@@ -837,7 +837,7 @@ KDE_NO_EXPORT void MPlayer::processOutput (K3Process *, char * str, int slen) {
                     e -= p;
                 ((PlayListNotify *)m_source)->setInfoMessage (out.mid (p, e));
             }
-        } else {
+        } else if (v) {
             QRegExp & m_startRegExp = patterns[MPlayerPreferencesPage::pat_start];
             QRegExp & m_sizeRegExp = patterns[MPlayerPreferencesPage::pat_size];
             v->addText (out, true);
@@ -1779,7 +1779,7 @@ static const char * xine_supported [] = {
 
 KDE_NO_CDTOR_EXPORT Xine::Xine (QObject * parent, Settings * settings)
     : CallbackProcess (parent, settings, "xine", i18n ("&Xine")) {
-#ifdef HAVE_XINE
+#ifdef KMPLAYER_WITH_XINE
     m_supported_sources = xine_supported;
     m_settings->addPage (m_configpage);
 #endif
@@ -1855,7 +1855,7 @@ static const char * gst_supported [] = {
 
 KDE_NO_CDTOR_EXPORT GStreamer::GStreamer (QObject * parent, Settings * settings)
     : CallbackProcess (parent, settings, "gstreamer", i18n ("&GStreamer")) {
-#ifdef HAVE_GSTREAMER
+#ifdef KMPLAYER_WITH_GSTREAMER
     m_supported_sources = gst_supported;
 #endif
 }
@@ -2004,7 +2004,7 @@ KDE_NO_EXPORT void FFMpeg::processStopped (K3Process *) {
 
 //-----------------------------------------------------------------------------
 
-#ifdef HAVE_NPP
+#ifdef KMPLAYER_WITH_NPP
 
 KDE_NO_CDTOR_EXPORT NpStream::NpStream (NpPlayer *p, uint32_t sid, const QString &u)
  : QObject (p),

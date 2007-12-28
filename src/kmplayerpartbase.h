@@ -144,7 +144,7 @@ public:
     void updatePlayerMenu (ControlPanel *, const QString &backend=QString ());
     void updateInfo (const QString & msg);
     void updateStatus (const QString & msg);
-#ifdef HAVE_DBUS
+#ifdef KMPLAYER_WITH_DBUS
     void setServiceName (const QString & srv) { m_service = srv; }
     QString serviceName () const { return m_service; }
 #endif
@@ -232,7 +232,7 @@ protected:
     KBookmarkManager * m_bookmark_manager;
     BookmarkOwner * m_bookmark_owner;
     KBookmarkMenu * m_bookmark_menu;
-#ifdef HAVE_DBUS
+#ifdef KMPLAYER_WITH_DBUS
     QString m_service;
 #endif
     int m_update_tree_timer;
