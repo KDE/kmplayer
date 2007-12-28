@@ -34,8 +34,8 @@
 #include "kmplayercontrolpanel.h"
 #include "kmplayersource.h"
 
-static const int button_height_with_slider = 15;
-static const int button_height_only_buttons = 11;
+static const int button_height_with_slider = 16;
+static const int button_height_only_buttons = 16;
 extern const char * normal_window_xpm[];
 extern const char * playlist_xpm[];
 #include "kmplayerview.h"
@@ -360,6 +360,8 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
    m_auto_controls (true),
    m_popup_clicked (false) {
     m_buttonbox = new QHBoxLayout (this, 5, 4);
+    m_buttonbox->setMargin (2);
+    m_buttonbox->setSpacing (4);
     setAutoFillBackground (true);
     QColor c = paletteForegroundColor ();
     strncpy (xpm_fg_color, QString().sprintf(".      c #%02x%02x%02x", c.red(), c.green(),c.blue()).ascii(), 31);
@@ -450,6 +452,9 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
 
     configureAction = popupMenu->addAction (KIcon ("configure"), i18n ("&Configure KMPlayer..."));
 
+    QPalette pal = palette ();
+    pal.setColor(backgroundRole(), view->palette().color(QPalette::Background));
+    setPalette (pal);
     setAutoControls (true);
     connect (m_buttons [button_config], SIGNAL (clicked ()),
             this, SLOT (buttonClicked ()));
@@ -568,24 +573,12 @@ KDE_NO_EXPORT void ControlPanel::setupPositionSlider (bool show) {
     int h = show ? button_height_with_slider : button_height_only_buttons;
     m_posSlider->setEnabled (false);
     m_posSlider->setValue (0);
-    QPalette palette;
-    if (show) {
-        m_posSlider->show ();
-        m_buttonbox->setMargin (4);
-        m_buttonbox->setSpacing (4);
-        palette.setColor(backgroundRole(), m_view->palette().color(QPalette::Background));
-    } else {
-        m_posSlider->hide ();
-        m_buttonbox->setMargin (1);
-        m_buttonbox->setSpacing (1);
-        palette.setColor (backgroundRole(), QColor (0, 0, 0));
-    }
-    setPalette (palette);
+    m_posSlider->setVisible (show);
     for (int i = 0; i < (int) button_last; i++) {
         m_buttons[i]->setMinimumSize (15, h-1);
         m_buttons[i]->setMaximumSize (750, h);
     }
-    setMaximumSize (2500, h + (show ? 8 : 2 ));
+    setMaximumSize (2500, h + 6);
 }
 
 KDE_NO_EXPORT int ControlPanel::preferedHeight () {
