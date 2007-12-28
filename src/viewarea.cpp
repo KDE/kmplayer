@@ -1663,6 +1663,7 @@ IViewer *ViewArea::createVideoWidget () {
     video_widgets.push_back (viewer);
     viewer->setGeometry (IRect (-60, -60, 50, 50));
     viewer->setVisible (true);
+    m_view->controlPanel ()->raise ();
     return viewer;
 }
  
