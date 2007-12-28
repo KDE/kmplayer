@@ -173,7 +173,7 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
     viewbox->setContentsMargins (0, 0, 0, 0);
     setLayout (viewbox);
     m_dockarea = new QMainWindow (this);
-    m_view_area = new ViewArea (m_dock_video, this);
+    m_view_area = new ViewArea (m_dockarea, this);
     m_dockarea->setCentralWidget (m_view_area);
     m_dock_playlist = new QDockWidget (i18n ("Playlist"));
     m_dockarea->addDockWidget (Qt::LeftDockWidgetArea, m_dock_playlist);

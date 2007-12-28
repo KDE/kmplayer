@@ -159,7 +159,6 @@ private:
     // infopanel widget
     InfoWindow * m_infopanel;
     QMainWindow *m_dockarea;
-    QDockWidget *m_dock_video;
     QDockWidget *m_dock_playlist;
     QDockWidget *m_dock_infopanel;
     QString tmplog;
