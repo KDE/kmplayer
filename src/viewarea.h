@@ -117,8 +117,6 @@ public:
     void resetBackgroundColor ();
     void setCurrentBackgroundColor (const QColor & c);
     KDE_NO_EXPORT View * view () const { return m_view; }
-signals:
-    void resized (int w, int h);
 public slots:
     void sendConfigureEvent ();
     void embedded ();

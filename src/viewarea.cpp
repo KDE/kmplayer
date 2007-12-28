@@ -1793,7 +1793,8 @@ void VideoOutput::useIndirectWidget (bool inderect) {
 KDE_NO_EXPORT void VideoOutput::embedded () {
     kDebug () << "[01;35mwindowChanged[00m " << (int)clientWinId ();
     //QTimer::singleShot (10, this, SLOT (sendConfigureEvent ()));
-    emit resized (width (), height ());
+    if (clientWinId () && !resized_timer)
+         resized_timer = startTimer (50);
     /*if (clientWinId () && m_plain_window)
         XSelectInput (QX11Info::display (), clientWinId (),
                 //KeyPressMask | KeyReleaseMask |
