@@ -416,7 +416,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     colorMenu = new KMPlayerPopupMenu (NULL, i18n ("Co&lors"));
     colorAction = popupMenu->addMenu (colorMenu);
     colorAction->setIcon (KIconLoader::global ()->loadIconSet (
-                QString ("colorize"), KIconLoader::Small, 0, true));
+                QString ("color-fill"), KIconLoader::Small, 0, true));
     /*QLabel * label = new QLabel (i18n ("Contrast:"), colorMenu);
     colorMenu->insertItem (label);
     m_contrastSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);

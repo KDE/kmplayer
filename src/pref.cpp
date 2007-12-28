@@ -83,7 +83,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
 
     page = new KVBox (this);
     item = addPage (page, i18n ("Source"));
-    item->setIcon (KIcon ("file-import"));
+    item->setIcon (KIcon ("document-import"));
     tab = new QTabWidget (page);
     m_SourcePageURL = new PrefSourcePageURL (tab);
     tab->insertTab (m_SourcePageURL, i18n ("URL"));
@@ -91,7 +91,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
 
     page = new KVBox (this);
     item = addPage (page, i18n ("Recording"));
-    item->setIcon (KIcon ("video"));
+    item->setIcon (KIcon ("folder-video"));
     tab = new QTabWidget (page);
 
     int recorders_count = 3;
@@ -119,7 +119,7 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
 
     page = new KVBox (this);
     item = addPage (page, i18n ("Output Plugins"));
-    item->setIcon (KIcon ("image"));
+    item->setIcon (KIcon ("folder-image"));
     tab = new QTabWidget (page);
     m_OPPagePostproc = new PrefOPPagePostProc (tab);
     tab->insertTab (m_OPPagePostproc, i18n ("Postprocessing"));
