@@ -78,7 +78,7 @@ struct KMPLAYER_NO_EXPORT GroupPredicate {
     bool operator () (const KMPlayerPart * part) const {
         return ((m_get_any && part != m_part &&
                     !part->master () && !part->url ().isEmpty ()) ||
-                (m_part->allowRedir (part->m_docbase) &&
+                (m_part->allowRedir (part->docBase ()) &&
                  (part->m_group == m_group ||
                   part->m_group == QString::fromLatin1("_master") ||
                   m_group == QString::fromLatin1("_master")) &&

@@ -2255,8 +2255,10 @@ KDE_NO_EXPORT void NpPlayer::request_stream (const QString &path, const QString 
     QString uri (url);
     kDebug () << "NpPlayer::request " << path << " '" << url << "' " << " tg:" << target;
     bool js = url.startsWith ("javascript:");
-    if (!js)
-        uri = KUrl (m_base_url.isEmpty () ? m_url : m_base_url, url).url ();
+    if (!js) {
+        QString base = process_info->manager->player ()->docBase ().url ();
+        uri = KUrl (base.isEmpty () ? m_url : base, url).url ();
+    }
     kDebug () << "NpPlayer::request " << path << " '" << uri << "'" << m_url << "->" << url;
     Q_UINT32 sid = getStreamId (path);
     if (sid >= 0) {

@@ -161,7 +161,6 @@ private:
     KMPlayerBrowserExtension * m_browserextension;
     KMPlayerLiveConnectExtension * m_liveconnectextension;
     QString m_group;
-    KUrl m_docbase;
     QString m_src_url;
     QString m_file_name;
     int m_features;
