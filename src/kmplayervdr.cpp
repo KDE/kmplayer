@@ -234,21 +234,21 @@ KDE_NO_EXPORT void KMPlayerVDRSource::connected () {
     killTimer (channel_timer);
     channel_timer = startTimer (3000);
     KAction * action = m_app->actionCollection ()->action ("vdr_connect");
-    action->setIcon (QString ("connect_no"));
+    action->setIcon (QString ("network-disconnect"));
     action->setText (i18n ("Dis&connect"));
-    DEF_ACT (act_up, i18n ("VDR Key Up"), "up", , SLOT (keyUp ()), "vdr_key_up");
-    DEF_ACT (act_down, i18n ("VDR Key Down"), "down", , SLOT (keyDown ()), "vdr_key_down");
-    DEF_ACT (act_back, i18n ("VDR Key Back"), "back", , SLOT (keyBack ()), "vdr_key_back");
-    DEF_ACT (act_ok, i18n ("VDR Key Ok"), "ok", , SLOT (keyOk ()), "vdr_key_ok");
+    DEF_ACT (act_up, i18n ("VDR Key Up"), "go-up", , SLOT (keyUp ()), "vdr_key_up");
+    DEF_ACT (act_down, i18n ("VDR Key Down"), "go-down", , SLOT (keyDown ()), "vdr_key_down");
+    DEF_ACT (act_back, i18n ("VDR Key Back"), "go-previous", , SLOT (keyBack ()), "vdr_key_back");
+    DEF_ACT (act_ok, i18n ("VDR Key Ok"), "dialog-ok", , SLOT (keyOk ()), "vdr_key_ok");
     DEF_ACT (act_setup, i18n ("VDR Key Setup"), "configure", , SLOT (keySetup ()), "vdr_key_setup");
-    DEF_ACT (act_channels, i18n ("VDR Key Channels"), "player_playlist", , SLOT (keyChannels ()), "vdr_key_channels");
-    DEF_ACT (act_menu, i18n ("VDR Key Menu"), "showmenu", , SLOT (keyMenu ()), "vdr_key_menu");
+    DEF_ACT (act_channels, i18n ("VDR Key Channels"), "view-media-playlist", , SLOT (keyChannels ()), "vdr_key_channels");
+    DEF_ACT (act_menu, i18n ("VDR Key Menu"), "show-menu", , SLOT (keyMenu ()), "vdr_key_menu");
     DEF_ACT (act_red, i18n ("VDR Key Red"), "red", , SLOT (keyRed ()), "vdr_key_red");
     DEF_ACT (act_green, i18n ("VDR Key Green"), "green", , SLOT (keyGreen ()), "vdr_key_green");
     DEF_ACT (act_yellow, i18n ("VDR Key Yellow"), "yellow", , SLOT (keyYellow ()), "vdr_key_yellow");
     DEF_ACT (act_blue, i18n ("VDR Key Blue"), "blue", , SLOT (keyBlue ()), "vdr_key_blue");
 #if KDE_IS_VERSION(3, 1, 90)
-    DEF_ACT (act_custom, "VDR Custom Command", "exec", , SLOT (customCmd ()), "vdr_key_custom");
+    DEF_ACT (act_custom, "VDR Custom Command", "system-run", , SLOT (customCmd ()), "vdr_key_custom");
 #endif
     m_app->initMenu (); // update menu and toolbar
     DEF_ACT (act_0, i18n ("VDR Key 0"), "0", Qt::Key_0, SLOT (key0 ()), "vdr_key_0");
@@ -281,7 +281,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::disconnected () {
         m_player->stop ();
     deleteCommands ();
     KAction * action = m_app->actionCollection ()->action ("vdr_connect");
-    action->setIcon (QString ("connect_established"));
+    action->setIcon (QString ("network-connect"));
     action->setText (i18n ("&Connect"));
     m_app->guiFactory ()->removeClient (m_app);// crash w/ m_actions[i]->unplugAll (); in for loop below
     for (int i = 0; i < int (act_last); ++i)
