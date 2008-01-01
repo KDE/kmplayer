@@ -50,7 +50,6 @@
 #include "playlistview.h"
 #include "kmplayer.h"
 #include "kmplayercontrolpanel.h"
-#include "kmplayerbroadcast.h"
 
 static const char * strTV = "TV";
 static const char * strTVDriver = "Driver";
@@ -357,8 +356,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerTVSource::~KMPlayerTVSource () {
 
 KDE_NO_EXPORT void KMPlayerTVSource::activate () {
     m_identified = true;
-    if (m_player->settings ()->showbroadcastbutton)
-        m_app->view()->controlPanel()->broadcastButton ()->show ();
+    //if (m_player->settings ()->showbroadcastbutton)
+    //    m_app->view()->controlPanel()->broadcastButton ()->show ();
     if (m_cur_tvdevice && !m_current) {
         for (KMPlayer::NodePtr i = m_cur_tvdevice->firstChild(); i && !m_current; i=i->nextSibling())
             if (i->id == id_node_tv_input) {
@@ -388,8 +387,8 @@ KDE_NO_EXPORT void KMPlayerTVSource::activate () {
  */
 
 KDE_NO_EXPORT void KMPlayerTVSource::deactivate () {
-    if (m_player->view () && !m_app->view ()->controlPanel()->broadcastButton ()->isOn ())
-        m_app->view ()->controlPanel()->broadcastButton ()->hide ();
+    //if (m_player->view () && !m_app->view ()->controlPanel()->broadcastButton ()->isOn ())
+    //    m_app->view ()->controlPanel()->broadcastButton ()->hide ();
     reset ();
 }
 
@@ -543,7 +542,8 @@ KDE_NO_EXPORT void KMPlayerTVSource::readXML () {
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::read (KSharedConfigPtr m_config) {
-    KConfigGroup (m_config, strTV).readEntry (strTVDriver, QString ("v4l"));
+    tvdriver = KConfigGroup (m_config, strTV).readEntry (
+            strTVDriver, QString ("v4l"));
 }
 
 KDE_NO_EXPORT void KMPlayerTVSource::sync (bool fromUI) {
