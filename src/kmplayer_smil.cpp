@@ -2124,8 +2124,6 @@ KDE_NO_EXPORT NodePtr SMIL::MediaType::childFromTag (const QString & tag) {
     return 0L;
 }
 
-//-----------------------------------------------------------------------------
-
 static NodePtr findExternalTree (NodePtr mrl) {
     for (NodePtr c = mrl->firstChild (); c; c = c->nextSibling ()) {
         Mrl * m = c->mrl ();
@@ -2253,7 +2251,7 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::defer () {
-    if (media_object) {
+    if (!postpone_lock && media_object) {
         //media_object->pause ();
         if (unfinished ())
             postpone_lock = document ()->postpone ();
@@ -2832,7 +2830,7 @@ KDE_NO_EXPORT void SMIL::Brush::accept (Visitor * v) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT SMIL::AnimateGroup::AnimateGroup (NodePtr d, short _id)
+KDE_NO_CDTOR_EXPORT SMIL::AnimateGroup::AnimateGroup (NodePtr &d, short _id)
  : TimedMrl (d, _id), modification_id (-1) {}
 
 void SMIL::AnimateGroup::parseParam (const TrieString &name, const QString &val) {
@@ -3029,7 +3027,7 @@ KDE_NO_EXPORT void SMIL::Animate::begin () {
     if (success)
         AnimateGroup::begin ();
     else
-        runtime ()->propagateStop (true);
+        rt->propagateStop (true);
 }
 
 KDE_NO_EXPORT void SMIL::Animate::finish () {
@@ -3074,7 +3072,7 @@ KDE_NO_EXPORT bool SMIL::Animate::handleEvent (EventPtr event) {
             return true;
         }
     }
-    return TimedMrl::handleEvent (event);
+    return AnimateGroup::handleEvent (event);
 }
 
 KDE_NO_EXPORT void SMIL::Animate::applyStep () {
@@ -3224,7 +3222,7 @@ KDE_NO_EXPORT bool SMIL::AnimateMotion::handleEvent (EventPtr event) {
             return true;
         }
     }
-    return TimedMrl::handleEvent (event);
+    return AnimateGroup::handleEvent (event);
 }
 
 void SMIL::AnimateMotion::parseParam (const TrieString &name, const QString &val) {
