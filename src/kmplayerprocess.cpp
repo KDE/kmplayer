@@ -242,12 +242,15 @@ KDE_NO_EXPORT void Process::rescheduledStateChanged () {
 
 bool Process::play () {
     Mrl *m = mrl ();
-    QString url = m ? m->absolutePath () : QString ();
+    if (!m)
+        return false;
+    bool nonstdurl = m->src.startsWith ("tv:/");
+    QString url = nonstdurl ? m->src : m->absolutePath ();
     bool changed = m_url != url;
     m_url = url;
     if (media_object) // FIXME: remove check
         media_object->request = AudioVideoMedia::ask_nothing;
-    if (!changed || KUrl (m_url).isLocalFile () || m_url.startsWith ("tv:/"))
+    if (!changed || KUrl (m_url).isLocalFile () || nonstdurl)
         return deMediafiedPlay ();
     m_job = KIO::stat (m_url, KIO::HideProgressInfo);
     connect (m_job, SIGNAL (result (KJob *)), this, SLOT (result (KJob *)));
@@ -478,7 +481,7 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
             int cache = cfg_page->cachesize;
             if (cache > 3 && !url.url ().startsWith (QString ("dvd")) &&
                     !url.url ().startsWith (QString ("vcd")) &&
-                    !url.url ().startsWith (QString ("tv://")))
+                    !m_url.startsWith (QString ("tv://")))
                 args += QString ("-cache %1 ").arg (cache);
             if (m_url.startsWith (QString ("cdda:/")) && 
                     !m_url.startsWith (QString ("cdda://")))
@@ -676,12 +679,6 @@ bool MPlayer::run (const char * args, const char * pipe) {
     fprintf (stderr, " %s\n", args);
     *m_process << " " << args;
 
-    QList<QByteArray>::const_iterator it;
-    QString sMPArgs;
-    QList<QByteArray>::const_iterator end( m_process->args().end() );
-    for ( it = m_process->args().begin(); it != end; ++it ){
-        sMPArgs += (*it);
-    }
     m_process->start (K3Process::NotifyOnExit, K3Process::All);
 
     old_volume = view () ? view ()->controlPanel ()->volumeBar ()->value () : 0;
