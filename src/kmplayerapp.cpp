@@ -539,7 +539,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp (QWidget *)
 
     //setAutoSaveSettings();
     playlist = new Playlist (this, lstsrc);
-    playlist_id = m_view->playList ()->addTree (playlist, "listssource", "media-playlist", KMPlayer::PlayListView::AllowDrag | KMPlayer::PlayListView::AllowDrops | KMPlayer::PlayListView::TreeEdit | KMPlayer::PlayListView::Moveable | KMPlayer::PlayListView::Deleteable);
+    playlist_id = m_view->playList ()->addTree (playlist, "listssource", "view-media-playlist", KMPlayer::PlayListView::AllowDrag | KMPlayer::PlayListView::AllowDrops | KMPlayer::PlayListView::TreeEdit | KMPlayer::PlayListView::Moveable | KMPlayer::PlayListView::Deleteable);
     readOptions();
 }
 
@@ -588,7 +588,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     connect (viewFullscreen, SIGNAL (triggered (bool)), this, SLOT (fullScreen ()));
     toggleView = ac->addAction ("view_video");
     toggleView->setText (i18n ("C&onsole"));
-    toggleView->setIcon (KIcon ("konsole"));
+    toggleView->setIcon (KIcon ("utilities-terminal"));
     connect (toggleView, SIGNAL (triggered (bool)),
             m_player->view (), SLOT (toggleVideoConsoleWindow ()));
     viewSyncEditMode = ac->addAction ("sync_edit_mode");
@@ -608,7 +608,7 @@ KDE_NO_EXPORT void KMPlayerApp::initActions () {
     new KAction (i18n ("&Open VCD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openVCD ()), ac, "openvcd");
     new KAction (i18n ("&Open Audio CD"), QString ("cdrom_mount"), KShortcut (), this, SLOT(openAudioCD ()), ac, "openaudiocd");
     new KAction (i18n ("&Open Pipe..."), QString ("pipe"), KShortcut (), this, SLOT(openPipe ()), ac, "source_pipe");
-    //KIconLoader::global ()->loadIconSet (QString ("tv"), K3Icon::Small, 0,true)
+    //KIconLoader::global ()->loadIconSet (QString ("video-television"), K3Icon::Small, 0,true)
     new KAction (i18n ("&Connect"), QString ("connect_established"), KShortcut (), this, SLOT (openVDR ()), ac, "vdr_connect");
     editVolumeInc = new KAction (i18n ("Increase Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT (increaseVolume ()), ac, "edit_volume_up");
     editVolumeDec = new KAction (i18n ("Decrease Volume"), QString ("player_volume"), KShortcut (), m_player, SLOT(decreaseVolume ()), ac, "edit_volume_down");
@@ -663,7 +663,7 @@ KDE_NO_EXPORT void KMPlayerApp::initMenu () {
 #endif
     m_sourcemenu->popup ()->insertItem (KIconLoader::global ()->loadIconSet (QString ("cdrom_mount"), K3Icon::Small, 0, true), i18n ("V&CD"), m_vcdmenu, -1, 6);
     m_vcdmenu->clear ();
-    m_sourcemenu->popup ()->insertItem (KIconLoader::global ()->loadIconSet (QString ("tv"), K3Icon::Small, 0, true), i18n ("&TV"), m_tvmenu, -1, 8);
+    m_sourcemenu->popup ()->insertItem (KIconLoader::global ()->loadIconSet (QString ("video-television"), K3Icon::Small, 0, true), i18n ("&TV"), m_tvmenu, -1, 8);
     m_vcdmenu->insertItem (i18n ("&Open VCD"), this, SLOT(openVCD ()), 0,-1, 1);
     m_sourcemenu->popup ()->insertItem (KIconLoader::global ()->loadIconSet (QString ("cdrom_mount"), K3Icon::Small, 0, true), i18n ("&Audio CD"), m_audiocdmenu, -1, 7);
     m_audiocdmenu->insertItem (i18n ("&Open Audio CD"), this, SLOT(openAudioCD ()), 0,-1, 1);*/
@@ -709,10 +709,10 @@ KDE_NO_EXPORT void KMPlayerApp::initView () {
             this, SLOT (playListItemMoved ()));
     /*connect (m_view->playList(), SIGNAL (prepareMenu (KMPlayer::PlayListItem *, QMenu *)), this, SLOT (preparePlaylistMenu (KMPlayer::PlayListItem *, QMenu *)));
     m_dropmenu = new QMenu (m_view->playList ());
-    m_dropmenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("player_playlist"), K3Icon::Small, 0, true), i18n ("&Add to list"), this, SLOT (menuDropInList ()));
-    m_dropmenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("folder_grey"), K3Icon::Small, 0, true), i18n ("Add in new &Group"), this, SLOT (menuDropInGroup ()));
-    m_dropmenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("editcopy"), K3Icon::Small, 0, true), i18n ("&Copy here"), this, SLOT (menuCopyDrop ()));
-    m_dropmenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("editdelete"), K3Icon::Small, 0, true), i18n ("&Delete"), this, SLOT (menuDeleteNode ()));*/
+    m_dropmenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("view-media-playlist"), K3Icon::Small, 0, true), i18n ("&Add to list"), this, SLOT (menuDropInList ()));
+    m_dropmenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("folder-grey"), K3Icon::Small, 0, true), i18n ("Add in new &Group"), this, SLOT (menuDropInGroup ()));
+    m_dropmenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("edit-copy"), K3Icon::Small, 0, true), i18n ("&Copy here"), this, SLOT (menuCopyDrop ()));
+    m_dropmenu->insertItem (KIconLoader::global ()->loadIconSet (QString ("edit-delete"), K3Icon::Small, 0, true), i18n ("&Delete"), this, SLOT (menuDeleteNode ()));*/
     /*QMenu * viewmenu = new QMenu;
     viewmenu->insertItem (i18n ("Full Screen"), this, SLOT(fullScreen ()),
                           QKeySequence ("CTRL + Key_F"));
@@ -749,10 +749,10 @@ KDE_NO_EXPORT void KMPlayerApp::positioned (int pos, int length) {
 KDE_NO_EXPORT void KMPlayerApp::windowVideoConsoleToggled (bool show) {
     if (show) {
         toggleView->setText (i18n ("V&ideo"));
-        toggleView->setIcon (KIcon ("video"));
+        toggleView->setIcon (KIcon ("video-display"));
     } else {
         toggleView->setText (i18n ("C&onsole"));
-        toggleView->setIcon (KIcon ("konsole"));
+        toggleView->setIcon (KIcon ("utilities-terminal"));
     }
 }
 
@@ -1205,7 +1205,7 @@ KDE_NO_EXPORT void KMPlayerApp::readOptions() {
     if (!recents) {
         fileOpenRecent->loadEntries (KConfigGroup (config, "Recent Files"));
         recents = new Recents (this);
-        recents_id = m_view->playList ()->addTree (recents, "listssource", "history", KMPlayer::PlayListView::AllowDrag);
+        recents_id = m_view->playList ()->addTree (recents, "listssource", "view-history", KMPlayer::PlayListView::AllowDrag);
     }
     configChanged ();
 }
@@ -1659,12 +1659,12 @@ KDE_NO_EXPORT void KMPlayerApp::preparePlaylistMenu (KMPlayer::PlayListItem * it
         pm->insertSeparator ();
         manip_node = item->node;
         if (ri->flags & KMPlayer::PlayListView::Deleteable)
-            pm->insertItem (KIconLoader::global ()->loadIconSet (QString ("editdelete"), KIconLoader::Small, 0, true), i18n ("&Delete item"), this, SLOT (menuDeleteNode ()));
+            pm->insertItem (KIconLoader::global ()->loadIconSet (QString ("edit-delete"), KIconLoader::Small, 0, true), i18n ("&Delete item"), this, SLOT (menuDeleteNode ()));
         if (ri->flags & KMPlayer::PlayListView::Moveable) {
             if (manip_node->previousSibling ())
-                pm->insertItem (KIconLoader::global ()->loadIconSet (QString ("up"), KIconLoader::Small, 0, true), i18n ("&Move up"), this, SLOT (menuMoveUpNode ()));
+                pm->insertItem (KIconLoader::global ()->loadIconSet (QString ("go-up"), KIconLoader::Small, 0, true), i18n ("&Move up"), this, SLOT (menuMoveUpNode ()));
             if (manip_node->nextSibling ())
-                pm->insertItem (KIconLoader::global()->loadIconSet (QString ("down"), KIconLoader::Small, 0, true), i18n ("Move &down"), this, SLOT (menuMoveDownNode ()));
+                pm->insertItem (KIconLoader::global()->loadIconSet (QString ("go-down"), KIconLoader::Small, 0, true), i18n ("Move &down"), this, SLOT (menuMoveDownNode ()));
         }
     }
 }
@@ -1795,7 +1795,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QMenu
     disks->appendChild (new Disk (disks, a, "cdda://", i18n ("CDROM - Audio Compact Disk")));
     disks->appendChild (new Disk (disks, a, "vcd://", i18n ("VCD - Video Compact Disk")));
     disks->appendChild (new Disk (disks, a, "dvd://", i18n ("DVD - Digital Video Disk")));
-    m_app->view()->playList()->addTree (disks, "listssource", "cd", 0);
+    m_app->view()->playList()->addTree (disks, "listssource", "media-optical", 0);
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::~KMPlayerDVDSource () {
