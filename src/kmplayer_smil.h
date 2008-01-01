@@ -696,7 +696,7 @@ public:
 protected:
     void restoreModification ();
     NodePtr targetElement ();
-    AnimateGroup (NodePtr d, short _id);
+    AnimateGroup (NodePtr &d, short _id);
     NodePtrW target_element;
     TrieString changed_attribute;
     QString change_to;

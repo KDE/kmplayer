@@ -2832,7 +2832,7 @@ KDE_NO_EXPORT void SMIL::Brush::accept (Visitor * v) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT SMIL::AnimateGroup::AnimateGroup (NodePtr d, short _id)
+KDE_NO_CDTOR_EXPORT SMIL::AnimateGroup::AnimateGroup (NodePtr &d, short _id)
  : TimedMrl (d, _id), modification_id (-1) {}
 
 void SMIL::AnimateGroup::parseParam (const TrieString &name, const QString &val) {
