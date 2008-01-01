@@ -3074,7 +3074,7 @@ KDE_NO_EXPORT bool SMIL::Animate::handleEvent (EventPtr event) {
             return true;
         }
     }
-    return TimedMrl::handleEvent (event);
+    return AnimateGroup::handleEvent (event);
 }
 
 KDE_NO_EXPORT void SMIL::Animate::applyStep () {
@@ -3224,7 +3224,7 @@ KDE_NO_EXPORT bool SMIL::AnimateMotion::handleEvent (EventPtr event) {
             return true;
         }
     }
-    return TimedMrl::handleEvent (event);
+    return AnimateGroup::handleEvent (event);
 }
 
 void SMIL::AnimateMotion::parseParam (const TrieString &name, const QString &val) {
