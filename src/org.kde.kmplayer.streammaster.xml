@@ -1,0 +1,22 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="org.kde.kmplayer.StreamMaster">
+    <method name="dimension">
+      <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+      <arg name="width" type="i" direction="in"/>
+      <arg name="height" type="i" direction="in"/>
+    </method>
+    <method name="loading">
+      <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+      <arg name="percentage" type="i" direction="in"/>
+    </method>
+    <method name="progress">
+      <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+      <arg name="position" type="t" direction="in"/>
+    </method>
+    <method name="eof">
+      <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+    </method>
+  </interface>
+</node>

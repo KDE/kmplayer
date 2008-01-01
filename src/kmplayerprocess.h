@@ -279,7 +279,68 @@ public slots:
     virtual void stop ();
 };
 
+class KMPLAYER_NO_EXPORT MasterProcessInfo : public QObject, public ProcessInfo {
+    Q_OBJECT
+public:
+    MasterProcessInfo (const char *nm, const QString &lbl,
+            const char **supported,MediaManager *, PreferencesPage *);
+    ~MasterProcessInfo ();
 
+    virtual void quitProcesses ();
+
+    void running (const QString &srv);
+
+    QString m_service;
+    QString m_path;
+    QString m_slave_service;
+    K3Process *m_slave;
+
+private slots:
+    void slaveStopped (K3Process *);
+    void slaveOutput (K3Process *, char *, int);
+
+protected:
+    virtual void initSlave ();
+    virtual bool startSlave () = 0;
+    virtual void stopSlave ();
+};
+
+class KMPLAYER_NO_EXPORT MasterProcess : public Process {
+    Q_OBJECT
+public:
+    MasterProcess (QObject *p, ProcessInfo *pi, Settings *s, const char *n);
+    ~MasterProcess ();
+
+    virtual void init ();
+    virtual bool deMediafiedPlay ();
+    virtual bool running () const;
+
+    void dimension (int w, int h);
+    void loading (int p);
+    void progress (uint64_t pos);
+    void eof ();
+
+public slots:
+    virtual void stop ();
+};
+
+class KMPLAYER_NO_EXPORT PhononProcessInfo : public MasterProcessInfo {
+public:
+    PhononProcessInfo (MediaManager *);
+
+    virtual IProcess *create (PartBase*, AudioVideoMedia*);
+
+    virtual bool startSlave ();
+};
+
+class KMPLAYER_NO_EXPORT Phonon : public MasterProcess {
+    Q_OBJECT
+public:
+    Phonon (QObject *parent, ProcessInfo*, Settings *settings);
+
+public slots:
+    virtual bool ready ();
+};
 /*
  * Base class for backend processes having the KMPlayer::Backend interface
  */

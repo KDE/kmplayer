@@ -55,6 +55,8 @@
 #include "kmplayerprocess.h"
 #include "kmplayersource.h"
 #include "kmplayerpartbase.h"
+#include "masteradaptor.h"
+#include "streammasteradaptor.h"
 #if KMPLAYER_WITH_NPP
 # include "callbackadaptor.h"
 # include "streamadaptor.h"
@@ -1206,6 +1208,128 @@ KDE_NO_EXPORT void MPlayerDumpstream::stop () {
 }
 
 //-----------------------------------------------------------------------------
+
+MasterProcessInfo::MasterProcessInfo (const char *nm, const QString &lbl,
+            const char **supported, MediaManager *mgr, PreferencesPage *pp)
+ : ProcessInfo (nm, lbl, supported, mgr, pp),
+   m_slave (NULL) {}
+
+MasterProcessInfo::~MasterProcessInfo () {
+}
+
+void MasterProcessInfo::initSlave () {
+    if (m_path.isEmpty ()) {
+        static int count = 0;
+        m_path = QString ("/master-%1").arg (count++);
+        (void) new MasterAdaptor (this);
+        QDBusConnection::sessionBus().registerObject (m_path, this);
+        m_service = QDBusConnection::sessionBus().baseService ();
+    }
+    setupProcess (&m_slave);
+    connect (m_slave, SIGNAL (processExited (K3Process *)),
+            this, SLOT (slaveStopped (K3Process *)));
+    connect (m_slave, SIGNAL (receivedStdout (K3Process *, char *, int)),
+            this, SLOT (slaveOutput (K3Process *, char *, int)));
+    connect (m_slave, SIGNAL (receivedStderr (K3Process *, char *, int)),
+            this, SLOT (slaveOutput (K3Process *, char *, int)));
+}
+
+void MasterProcessInfo::quitProcesses () {
+    stopSlave ();
+}
+
+void MasterProcessInfo::stopSlave () {
+}
+
+void MasterProcessInfo::running (const QString &srv) {
+    m_slave_service = srv;
+}
+
+void MasterProcessInfo::slaveStopped (K3Process *) {
+}
+
+void MasterProcessInfo::slaveOutput (K3Process *, char *, int) {
+}
+
+MasterProcess::MasterProcess (QObject *parent, ProcessInfo *pinfo, Settings *settings, const char *n)
+ : Process (parent, pinfo, settings, n) {}
+
+MasterProcess::~MasterProcess () {
+}
+
+void MasterProcess::init () {
+}
+
+bool MasterProcess::deMediafiedPlay () {
+    return false;
+}
+
+bool MasterProcess::running () const {
+    MasterProcessInfo *mpi = static_cast <MasterProcessInfo *>(process_info);
+    return mpi->m_slave && mpi->m_slave->isRunning ();
+}
+
+void MasterProcess::dimension (int w, int h) {
+}
+
+void MasterProcess::loading (int p) {
+}
+
+void MasterProcess::progress (uint64_t pos) {
+}
+
+void MasterProcess::eof () {
+}
+
+void MasterProcess::stop () {
+}
+
+//-------------------------%<--------------------------------------------------
+
+static const char *phonon_supports [] = {
+    "urlsource", 0L
+};
+
+PhononProcessInfo::PhononProcessInfo (MediaManager *mgr)
+  : MasterProcessInfo ("phonon", i18n ("&Phonon"), phonon_supports, mgr, NULL)
+{}
+
+IProcess *PhononProcessInfo::create (PartBase *part, AudioVideoMedia *media) {
+    if (!m_slave || !m_slave->isRunning ())
+        startSlave ();
+    Phonon *p = new Phonon (part, this, part->settings ());
+    p->setSource (part->source ());
+    p->media_object = media;
+    part->processCreated (p);
+    return p;
+}
+
+bool PhononProcessInfo::startSlave () {
+    initSlave ();
+    QString cmd ("kphononplayer");
+    cmd += QString (" -cb ");
+    cmd += m_service;
+    cmd += m_path;
+    fprintf (stderr, "%s\n", cmd.local8Bit ().data ());
+    *m_slave << cmd;
+    m_slave->start (K3Process::NotifyOnExit, K3Process::All);
+    return m_slave->isRunning ();
+}
+
+Phonon::Phonon (QObject *parent, ProcessInfo *pinfo, Settings *settings)
+ : MasterProcess (parent, pinfo, settings, "phonon") {}
+
+bool Phonon::ready () {
+    if (media_object && media_object->viewer)
+        media_object->viewer->useIndirectWidget (false);
+    kDebug() << "Phonon::ready " << state () << endl;
+    if (running ()) {
+        setState (IProcess::Ready);
+        return true;
+    }
+    return static_cast <PhononProcessInfo *> (process_info)->startSlave ();
+}
+
 /*
 static int callback_counter = 0;
 

@@ -40,6 +40,11 @@ set(libkmplayercommon_SRCS
   viewarea.cpp
 )
 
+qt4_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.master.xml
+    ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerprocess.h KMPlayer::MasterProcessInfo)
+qt4_add_dbus_adaptor(libkmplayercommon_SRCS
+    org.kde.kmplayer.streammaster.xml
+    ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerprocess.h KMPlayer::MasterProcess)
 if (KMPLAYER_WITH_NPP)
     qt4_add_dbus_adaptor(libkmplayercommon_SRCS org.kde.kmplayer.callback.xml
         ${CMAKE_CURRENT_SOURCE_DIR}/kmplayerprocess.h KMPlayer::NpPlayer)
@@ -137,6 +142,28 @@ endif (KMPLAYER_WITH_NPP)
 #kxineplayer
 #kgstplayer
 #kxvplayer
+
+########### next target ###############
+
+set(kphononplayer_SRCS
+  phononplayer.cpp
+)
+
+qt4_add_dbus_adaptor(kphononplayer_SRCS org.kde.kmplayer.slave.xml
+    ${CMAKE_CURRENT_SOURCE_DIR}/phononplayer.h Slave)
+qt4_add_dbus_adaptor(kphononplayer_SRCS org.kde.kmplayer.streamslave.xml
+    ${CMAKE_CURRENT_SOURCE_DIR}/phononplayer.h Stream)
+
+kde4_add_executable(kphononplayer ${kphononplayer_SRCS})
+
+target_link_libraries(kphononplayer
+  ${KDE4_KDEUI_LIBS}
+  ${QT_QT3SUPPORT_LIBRARY}
+  ${KDE4_KDE3SUPPORT_LIBRARY}
+  ${KDE4_PHONON_LIBS}
+)
+
+install(TARGETS kphononplayer DESTINATION ${BIN_INSTALL_DIR})
 
 ########### install files ###############
 
