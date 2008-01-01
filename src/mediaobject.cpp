@@ -200,7 +200,7 @@ void MediaManager::stateChange (AudioVideoMedia *media,
         return;
 
     bool is_rec = id_node_record_document == mrl->id;
-    m_player->updateStatus (i18n ("Player %1 %2").arg (
+    m_player->updateStatus (i18n ("Player ") + QString ("%1 %2").arg (
                 media->process->process_info->name).arg (statemap[news]));
     if (IProcess::Playing == news) {
         if (Element::state_deferred == mrl->state) {
