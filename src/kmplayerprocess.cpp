@@ -72,7 +72,6 @@ ProcessInfo::ProcessInfo (const char *nm, const QString &lbl,
    config_page (prefs) {
     if (config_page)
         manager->player ()->settings ()->addPage (config_page);
-    K3ProcessController::ref ();
 }
 
 ProcessInfo::~ProcessInfo () {
@@ -84,7 +83,6 @@ bool ProcessInfo::supports (const char *source) const {
         if (!strcmp (s[0], source))
             return true;
     }
-    K3ProcessController::deref ();
     return false;
 }
 
