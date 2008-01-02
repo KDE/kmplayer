@@ -1263,8 +1263,6 @@ void MasterProcessInfo::running (const QString &srv) {
 }
 
 void MasterProcessInfo::slaveStopped (K3Process *) {
-    delete m_slave;
-    m_slave = NULL;
     m_slave_service.truncate (0);
     MediaManager::ProcessList &pl = manager->processes ();
     const MediaManager::ProcessList::iterator e = pl.end ();
