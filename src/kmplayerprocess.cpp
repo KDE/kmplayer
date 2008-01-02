@@ -18,7 +18,6 @@
  * Boston, MA 02110-1301, USA.
  */
 #include <math.h>
-#include <dbus/dbus.h>
 #include "config-kmplayer.h"
 #include <qstring.h>
 #include <qfile.h>
