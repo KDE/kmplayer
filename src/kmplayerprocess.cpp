@@ -2595,8 +2595,7 @@ KDE_NO_EXPORT void NpPlayer::wroteStdin (K3Process *) {
 
 #else
 
-KDE_NO_CDTOR_EXPORT
-NpStream::NpStream (QObject *p, Q_UINT32, const KUrl & url)
+KDE_NO_CDTOR_EXPORT NpStream::NpStream (NpPlayer *p, uint32_t sid, const QString &u)
     : QObject (p) {}
 
 KDE_NO_CDTOR_EXPORT NpStream::~NpStream () {}
@@ -2607,14 +2606,14 @@ void NpStream::slotMimetype (KIO::Job *, const QString &) {}
 void NpStream::slotTotalSize (KJob *, KIO::filesize_t) {}
 
 KDE_NO_CDTOR_EXPORT
-NpPlayer::NpPlayer (QObject * parent, Settings * settings, const QString &)
- : Process (parent, settings, "npp") {}
+NpPlayer::NpPlayer (QObject *parent, ProcessInfo *pinfo, Settings *settings)
+ : Process (parent, pinfo, settings, "npp") {}
 KDE_NO_CDTOR_EXPORT NpPlayer::~NpPlayer () {}
 KDE_NO_EXPORT void NpPlayer::init () {}
 KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () { return false; }
 KDE_NO_EXPORT void NpPlayer::initProcess () {}
 KDE_NO_EXPORT void NpPlayer::stop () {}
-KDE_NO_EXPORT void NpPlayer::quit () { return false; }
+KDE_NO_EXPORT void NpPlayer::quit () { }
 KDE_NO_EXPORT bool NpPlayer::ready () { return false; }
 KDE_NO_EXPORT void NpPlayer::processOutput (K3Process *, char *, int) {}
 KDE_NO_EXPORT void NpPlayer::processStopped (K3Process *) {}
