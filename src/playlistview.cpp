@@ -144,7 +144,7 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
     info_pix = KIconLoader::global ()->loadIcon (QString ("messagebox_info"), KIconLoader::Small);
     img_pix = KIconLoader::global ()->loadIcon (QString ("colorize"), KIconLoader::Small);
     unknown_pix = KIconLoader::global ()->loadIcon (QString ("unknown"), KIconLoader::Small);
-    menu_pix = KIconLoader::global ()->loadIcon (QString ("media-playlist"), KIconLoader::Small);
+    menu_pix = KIconLoader::global ()->loadIcon (QString ("view-media-playlist"), KIconLoader::Small);
     config_pix = KIconLoader::global ()->loadIcon (QString ("configure"), KIconLoader::Small);
     url_pix = KIconLoader::global ()->loadIcon (QString ("world"), KIconLoader::Small);
     m_find = KStandardAction::find (this, SLOT (slotFind ()), this);

@@ -398,7 +398,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
 
     videoConsoleAction = popupMenu->addAction (KIcon ("konsole"), i18n ("Con&sole"));
 
-    playlistAction = popupMenu->addAction (KIcon ("media-playlist"), i18n ("Play&list"));
+    playlistAction = popupMenu->addAction (KIcon ("view-media-playlist"), i18n ("Play&list"));
 
     zoomMenu = new KMPlayerPopupMenu (NULL, i18n ("&Zoom"));
     zoomAction = popupMenu->addMenu (zoomMenu);

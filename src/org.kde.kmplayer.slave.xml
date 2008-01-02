@@ -2,7 +2,7 @@
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
   <interface name="org.kde.kmplayer.Slave">
-    <method name="new_stream">
+    <method name="newStream">
       <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
       <arg name="url" type="s" direction="in"/>
       <arg name="wid" type="t" direction="in"/>

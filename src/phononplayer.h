@@ -24,6 +24,8 @@
 
 #include <QtGui/QX11EmbedWidget>
 
+#include <phonon/phononnamespace.h>
+
 class KUrl;
 
 namespace Phonon
@@ -38,15 +40,23 @@ class Slave : public QObject {
 public:
     Slave ();
 
-    void new_stream (const QString &url, uint64_t wid);
+    void newStream (const QString &url, uint64_t wid);
     void quit ();
+
+    void streamDestroyed (uint64_t wid);
+
+protected:
+    void timerEvent (QTimerEvent *e);
+
+private:
+    int stay_alive_timer;
 };
 
-class Stream : public QWidget { // QX11EmbedWidget {
+class Stream : public QX11EmbedWidget { // QWidget {
     Q_OBJECT
 public:
-    Stream (QWidget *parent, unsigned long wid);
-    void setUrl (const KUrl &url);
+    Stream (QWidget *parent, const QString &url, unsigned long wid);
+    ~Stream ();
 
     void play ();
     void pause ();
@@ -55,7 +65,9 @@ public:
 
 private Q_SLOTS:
     void hasVideoChanged (bool hasVideo);
-    void bufferStatus(int percentFilled);
+    void bufferStatus (int percentFilled);
+    void stateChanged (Phonon::State newstate, Phonon::State oldstate);
+    void finished ();
 
 private:
     Phonon::VideoWidget *m_vwidget;

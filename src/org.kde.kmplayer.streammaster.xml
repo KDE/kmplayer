@@ -11,6 +11,9 @@
       <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
       <arg name="percentage" type="i" direction="in"/>
     </method>
+    <method name="playing">
+      <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+    </method>
     <method name="progress">
       <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
       <arg name="position" type="t" direction="in"/>

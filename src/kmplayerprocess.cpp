@@ -72,6 +72,7 @@ ProcessInfo::ProcessInfo (const char *nm, const QString &lbl,
    config_page (prefs) {
     if (config_page)
         manager->player ()->settings ()->addPage (config_page);
+    K3ProcessController::ref ();
 }
 
 ProcessInfo::~ProcessInfo () {
@@ -83,6 +84,7 @@ bool ProcessInfo::supports (const char *source) const {
         if (!strcmp (s[0], source))
             return true;
     }
+    K3ProcessController::deref ();
     return false;
 }
 
@@ -109,7 +111,7 @@ static void setupProcess (K3Process **process) {
     (*process)->setUseShell (true);
     (*process)->setEnvironment (QString::fromLatin1 ("SESSION_MANAGER"), QString::fromLatin1 (""));
 }
- 
+
 static void killProcess (K3Process *process, QWidget *widget, bool group) {
     if (!process || !process->isRunning ())
         return;
@@ -119,11 +121,13 @@ static void killProcess (K3Process *process, QWidget *widget, bool group) {
         signal(SIGTERM, oldhandler);
     } else
         process->kill (SIGTERM);
-    process->wait(1);
+    if (process->isRunning ())
+        process->wait(1);
     if (!process->isRunning ())
         return;
     process->kill (SIGKILL);
-    process->wait(1);
+    if (process->isRunning ())
+        process->wait(1);
     if (process->isRunning ())
         KMessageBox::error (widget,
                 i18n ("Failed to end player process."), i18n ("Error"));
@@ -1211,12 +1215,13 @@ MasterProcessInfo::MasterProcessInfo (const char *nm, const QString &lbl,
    m_slave (NULL) {}
 
 MasterProcessInfo::~MasterProcessInfo () {
+    stopSlave ();
 }
 
 void MasterProcessInfo::initSlave () {
     if (m_path.isEmpty ()) {
         static int count = 0;
-        m_path = QString ("/master-%1").arg (count++);
+        m_path = QString ("/master_%1").arg (count++);
         (void) new MasterAdaptor (this);
         QDBusConnection::sessionBus().registerObject (m_path, this);
         m_service = QDBusConnection::sessionBus().baseService ();
@@ -1235,16 +1240,44 @@ void MasterProcessInfo::quitProcesses () {
 }
 
 void MasterProcessInfo::stopSlave () {
+    if (!m_slave_service.isEmpty ()) {
+        QDBusMessage msg = QDBusMessage::createMethodCall (
+                m_slave_service, QString ("/%1").arg (ProcessInfo::name),
+                "org.kde.kmplayer.Slave", "quit");
+        //msg << m_url << mime << plugin << param_len;
+        msg.setDelayedReply (false);
+        QDBusConnection::sessionBus().send (msg);
+    }
+    if (m_slave && m_slave->isRunning ()) {
+        m_slave->wait(1);
+        killProcess (m_slave, manager->player ()->view (), false);
+    }
 }
 
 void MasterProcessInfo::running (const QString &srv) {
+    kDebug() << "MasterProcessInfo::running " << srv;
     m_slave_service = srv;
+    MediaManager::ProcessList &pl = manager->processes ();
+    const MediaManager::ProcessList::iterator e = pl.end ();
+    for (MediaManager::ProcessList::iterator i = pl.begin (); i != e; ++i)
+        if (this == (*i)->process_info)
+            static_cast <Process *> (*i)->setState (IProcess::Ready);
 }
 
 void MasterProcessInfo::slaveStopped (K3Process *) {
+    delete m_slave;
+    m_slave = NULL;
+    m_slave_service.truncate (0);
+    MediaManager::ProcessList &pl = manager->processes ();
+    const MediaManager::ProcessList::iterator e = pl.end ();
+    for (MediaManager::ProcessList::iterator i = pl.begin (); i != e; ++i)
+        if (this == (*i)->process_info)
+            static_cast <Process *> (*i)->setState (IProcess::NotRunning);
 }
 
-void MasterProcessInfo::slaveOutput (K3Process *, char *, int) {
+void MasterProcessInfo::slaveOutput (K3Process *, char *str, int slen) {
+    if (manager->player ()->view () && slen > 0)
+        manager->player()->viewWidget()->addText (QString::fromLocal8Bit (str, slen));
 }
 
 MasterProcess::MasterProcess (QObject *parent, ProcessInfo *pinfo, Settings *settings, const char *n)
@@ -1257,7 +1290,25 @@ void MasterProcess::init () {
 }
 
 bool MasterProcess::deMediafiedPlay () {
-    return false;
+    WindowId wid = media_object->viewer->windowHandle ();
+    MasterProcessInfo *mpi = static_cast <MasterProcessInfo *>(process_info);
+    kDebug() << "MasterProcess::deMediafiedPlay " << m_url << " " << wid;
+
+    (void) new StreamMasterAdaptor (this);
+    QDBusConnection::sessionBus().registerObject (
+            QString ("/stream_%1").arg (wid), this);
+
+    QDBusMessage msg = QDBusMessage::createMethodCall (
+            mpi->m_slave_service, QString ("/%1").arg (process_info->name),
+                "org.kde.kmplayer.Slave", "newStream");
+    KUrl url (m_url);
+    if (url.isLocalFile ())
+        m_url = getPath (url);
+    msg << m_url << (qulonglong)wid;
+    msg.setDelayedReply (false);
+    QDBusConnection::sessionBus().send (msg);
+    setState (IProcess::Buffering);
+    return true;
 }
 
 bool MasterProcess::running () const {
@@ -1271,13 +1322,28 @@ void MasterProcess::dimension (int w, int h) {
 void MasterProcess::loading (int p) {
 }
 
+void MasterProcess::playing () {
+    setState (IProcess::Playing);
+}
+
 void MasterProcess::progress (uint64_t pos) {
 }
 
 void MasterProcess::eof () {
+    setState (IProcess::Ready);
 }
 
 void MasterProcess::stop () {
+    if (m_state > IProcess::Ready) {
+        MasterProcessInfo *mpi = static_cast<MasterProcessInfo *>(process_info);
+        QDBusMessage msg = QDBusMessage::createMethodCall (
+                mpi->m_slave_service,
+                QString("/stream_%1").arg(media_object->viewer->windowHandle()),
+                "org.kde.kmplayer.StreamSlave",
+                "stop");
+        msg.setDelayedReply (false);
+        QDBusConnection::sessionBus().send (msg);
+    }
 }
 
 //-------------------------%<--------------------------------------------------
@@ -1319,11 +1385,14 @@ bool Phonon::ready () {
     if (media_object && media_object->viewer)
         media_object->viewer->useIndirectWidget (false);
     kDebug() << "Phonon::ready " << state () << endl;
+    PhononProcessInfo *ppi = static_cast <PhononProcessInfo *>(process_info);
     if (running ()) {
-        setState (IProcess::Ready);
+        if (!ppi->m_slave_service.isEmpty ())
+            setState (IProcess::Ready);
         return true;
+    } else {
+        return ppi->startSlave ();
     }
-    return static_cast <PhononProcessInfo *> (process_info)->startSlave ();
 }
 
 /*

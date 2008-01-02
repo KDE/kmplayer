@@ -1346,6 +1346,7 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
    m_fullscreen (false),
    m_minimal (false) {
     setAttribute (Qt::WA_OpaquePaintEvent, true);
+    setAttribute (Qt::WA_PaintOnScreen, true);
     QPalette palette;
     palette.setColor (backgroundRole(), QColor (0, 0, 0));
     setPalette (palette);
@@ -1666,7 +1667,7 @@ IViewer *ViewArea::createVideoWidget () {
     m_view->controlPanel ()->raise ();
     return viewer;
 }
- 
+
 void ViewArea::destroyVideoWidget (IViewer *widget) {
     VideoWidgetList::iterator it = video_widgets.find (widget);
     if (it != video_widgets.end ()) {

@@ -82,6 +82,7 @@ MediaManager::MediaManager (PartBase *player) : m_player (player) {
         global_media->ref ();
 
     m_process_infos ["mplayer"] = new MPlayerProcessInfo (this);
+    m_process_infos ["phonon"] = new PhononProcessInfo (this);
     //XineProcessInfo *xpi = new XineProcessInfo (this);
     //m_process_infos ["xine"] = xpi;
     //m_process_infos ["gstreamer"] = new GStreamer (this, m_settings);, i18n ("&GStreamer")

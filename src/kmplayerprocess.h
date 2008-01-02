@@ -78,6 +78,7 @@ public:
     View *view () const;
     WId widget ();
     void setSource (Source * src) { m_source = src; }
+    void setState (IProcess::State newstate);
     virtual bool grabPicture (const KUrl & url, int pos);
     Mrl *mrl () const;
 signals:
@@ -101,7 +102,6 @@ protected slots:
     void rescheduledStateChanged ();
     void result (KJob *);
 protected:
-    void setState (IProcess::State newstate);
     virtual bool deMediafiedPlay ();
     virtual void terminateJobs ();
 
@@ -317,6 +317,7 @@ public:
 
     void dimension (int w, int h);
     void loading (int p);
+    void playing ();
     void progress (uint64_t pos);
     void eof ();
 
