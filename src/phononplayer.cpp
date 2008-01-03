@@ -29,6 +29,7 @@
 #include <QtDBus/QtDBus>
 #include <QtCore/QMap>
 #include <QtCore/QTimer>
+#include <QtCore/QUrl>
 
 #include <phonon/audiooutput.h>
 #include <phonon/mediaobject.h>
@@ -119,7 +120,7 @@ void Stream::init () {
             SLOT (stateChanged (Phonon::State, Phonon::State)));
     connect (m_media, SIGNAL (finished ()), SLOT (finished ()));
 
-    m_media->setCurrentSource (m_url);
+    m_media->setCurrentSource (QUrl (m_url));
     play ();
 }
 
@@ -137,6 +138,7 @@ bool Stream::x11Event (XEvent *event) {
 }
 
 void Stream::play () {
+    qDebug ("play %s@%lu", qPrintable (m_url), video_handle);
     m_media->play ();
     m_vwidget->setVisible (m_media->hasVideo ());
 }
