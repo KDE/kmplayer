@@ -140,13 +140,13 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
     m_itemmenu = new QMenu (this);
     folder_pix = KIconLoader::global ()->loadIcon (QString ("folder"), KIconLoader::Small);
     auxiliary_pix = KIconLoader::global ()->loadIcon (QString ("folder_grey"), KIconLoader::Small);
-    video_pix = KIconLoader::global ()->loadIcon (QString ("video"), KIconLoader::Small);
-    info_pix = KIconLoader::global ()->loadIcon (QString ("messagebox_info"), KIconLoader::Small);
+    video_pix = KIconLoader::global ()->loadIcon (QString ("video-x-generic"), KIconLoader::Small);
+    info_pix = KIconLoader::global ()->loadIcon (QString ("dialog-info"), KIconLoader::Small);
     img_pix = KIconLoader::global ()->loadIcon (QString ("colorize"), KIconLoader::Small);
     unknown_pix = KIconLoader::global ()->loadIcon (QString ("unknown"), KIconLoader::Small);
     menu_pix = KIconLoader::global ()->loadIcon (QString ("view-media-playlist"), KIconLoader::Small);
     config_pix = KIconLoader::global ()->loadIcon (QString ("configure"), KIconLoader::Small);
-    url_pix = KIconLoader::global ()->loadIcon (QString ("world"), KIconLoader::Small);
+    url_pix = KIconLoader::global ()->loadIcon (QString ("internet-web-browser"), KIconLoader::Small);
     m_find = KStandardAction::find (this, SLOT (slotFind ()), this);
     m_find_next = KStandardAction::findNext (this, SLOT(slotFindNext()), this);
     m_find_next->setEnabled (false);
@@ -376,7 +376,7 @@ KDE_NO_EXPORT void PlayListView::contextMenuItem (Q3ListViewItem * vi, const QPo
                     (item->node && (item->node->isPlayable () ||
                                     item->node->isDocument ()) &&
                      item->node->mrl ()->bookmarkable))
-                m_itemmenu->insertItem (KIcon ("bookmark"),
+                m_itemmenu->insertItem (KIcon ("bookmark-new"),
                         i18n ("&Add Bookmark"),
                         this, SLOT (addBookMark ()), 0, 1);
             if (ritem->have_dark_nodes) {
