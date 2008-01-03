@@ -469,6 +469,7 @@ void PartBase::timerEvent (QTimerEvent * e) {
 }
 
 void PartBase::playingStarted () {
+    kDebug () << "playingStarted " << this;
     if (m_view) {
         m_view->controlPanel ()->setPlaying (true);
         m_view->controlPanel ()->showPositionSlider (!!m_source->length ());
@@ -1014,16 +1015,20 @@ void Source::timerEvent (QTimerEvent * e) {
 void Source::stateElementChanged (Node *elm, Node::State os, Node::State ns) {
     //kDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isPlayable:" << (m_current && m_current->isPlayable ()) << " elm==linkNode:" << (m_current && elm == m_current->mrl ()->linkNode ()) << endl;
     if (ns == Node::state_activated &&
-            elm->mrl () &&
-            Mrl::WindowMode != elm->mrl ()->view_mode) {
-        m_current = elm;
-        if (m_current == m_document)
+            elm->mrl ()) {
+        if (Mrl::WindowMode != elm->mrl ()->view_mode)
+            m_current = elm;
+        if (m_current.ptr () == elm)
             emit startPlaying ();
-    } else if (ns == Node::state_deactivated && elm == m_document) {
-        NodePtrW guard = elm;
-        emit endOfPlayItems (); // played all items FIXME on jumps
-        if (!guard)
-            return;
+    } else if (ns == Node::state_deactivated) {
+        if (elm == m_document) {
+            NodePtrW guard = elm;
+            emit endOfPlayItems (); // played all items FIXME on jumps
+            if (!guard)
+                return;
+        } else if (m_current.ptr () == elm) {
+            emit stopPlaying ();
+        }
     }
     if (elm->expose ()) {
         if (ns == Node::state_activated || ns == Node::state_deactivated)
