@@ -19,6 +19,8 @@
 
 #include <sys/types.h>
 #include <unistd.h>
+#include <X11/Xlib.h>
+#include <fixx11h.h>
 
 #include "phononplayer.h"
 
@@ -26,6 +28,7 @@
 #include <QtGui/QBoxLayout>
 #include <QtDBus/QtDBus>
 #include <QtCore/QMap>
+#include <QtCore/QTimer>
 
 #include <phonon/audiooutput.h>
 #include <phonon/mediaobject.h>
@@ -34,8 +37,6 @@
 
 #include "slaveadaptor.h"
 #include "streamslaveadaptor.h"
-
-using namespace Phonon;
 
 static QString control_service;
 static QString control_path;
@@ -53,11 +54,13 @@ Slave::Slave () : stay_alive_timer (0) {
         service = QDBusConnection::sessionBus().baseService ();
     }
     qDebug ("register as %s", qPrintable (service));
-    QDBusMessage msg = QDBusMessage::createMethodCall (
-            control_service, control_path, "org.kde.kmplayer.Master",
-            "running");
-    msg << service;
-    QDBusConnection::sessionBus().send (msg);
+    if (!control_service.isEmpty ()) {
+        QDBusMessage msg = QDBusMessage::createMethodCall (
+                control_service, control_path, "org.kde.kmplayer.Master",
+                "running");
+        msg << service;
+        QDBusConnection::sessionBus().send (msg);
+    }
 }
 
 void Slave::newStream (const QString &url, uint64_t wid) {
@@ -84,25 +87,29 @@ void Slave::timerEvent (QTimerEvent *e) {
 }
 
 Stream::Stream (QWidget *parent, const QString &url, unsigned long wid)
-    : QX11EmbedWidget (parent), video_handle (wid)
+    : QX11EmbedWidget (parent), m_url (url), video_handle (wid)
     //: QWidget (parent), video_handle (wid)
 {
     embedInto (wid);
     show ();
+    QTimer::singleShot (0, this, SLOT (init ()));
     qDebug ("newStream xembed cont: %lu", containerWinId ());
+}
 
+void Stream::init () {
     (void) new StreamSlaveAdaptor (this);
     QDBusConnection::sessionBus().registerObject (
-            QString ("/stream_%1").arg (wid), this);
+            QString ("/stream_%1").arg (video_handle), this);
 
-    m_media = new MediaObject(this);
+    m_media = new Phonon::MediaObject(this);
     // might need VideoCategory here
-    m_aoutput = new AudioOutput (Phonon::MusicCategory, this);
-    m_vwidget = new VideoWidget(this);
-    createPath (m_media, m_aoutput);
-    createPath (m_media, m_vwidget);
+    m_aoutput = new Phonon::AudioOutput (Phonon::MusicCategory, this);
+    m_vwidget = new Phonon::VideoWidget(this);
+    Phonon::createPath (m_media, m_aoutput);
+    Phonon::createPath (m_media, m_vwidget);
 
     QVBoxLayout *layout = new QVBoxLayout(this);
+    layout->setContentsMargins (0, 0, 0, 0);
     layout->addWidget(m_vwidget);
     m_vwidget->hide();
 
@@ -112,13 +119,21 @@ Stream::Stream (QWidget *parent, const QString &url, unsigned long wid)
             SLOT (stateChanged (Phonon::State, Phonon::State)));
     connect (m_media, SIGNAL (finished ()), SLOT (finished ()));
 
-    m_media->setCurrentSource (url);
+    m_media->setCurrentSource (m_url);
     play ();
 }
 
 Stream::~Stream () {
     delete m_media;
     slave->streamDestroyed (video_handle);
+}
+
+bool Stream::x11Event (XEvent *event) {
+    switch (event->type) {
+        case PropertyNotify:
+            return QWidget::x11Event (event);
+    }
+    return QX11EmbedWidget::x11Event (event);
 }
 
 void Stream::play () {
@@ -154,8 +169,6 @@ void Stream::stateChanged (Phonon::State newstate, Phonon::State) {
                 control_service, QString ("/stream_%1").arg (video_handle),
                 "org.kde.kmplayer.StreamMaster", "playing");
         QDBusConnection::sessionBus().send (msg);
-        show ();
-        m_vwidget->setVisible (m_media->hasVideo ());
     }
 }
 
@@ -186,7 +199,7 @@ int main (int argc, char **argv) {
     }
     slave = new Slave;
     if (!url.isEmpty ()) {
-        Stream mw (NULL, url, 0);
+        new Stream (NULL, url, 0);
         //mw.show ();
         //mw.play ();
     }

@@ -63,7 +63,12 @@ public:
     void stop ();
     void seek (uint64_t position, bool absolute);
 
+protected:
+    bool x11Event (XEvent *event);
+
 private Q_SLOTS:
+    void init ();
+
     void hasVideoChanged (bool hasVideo);
     void bufferStatus (int percentFilled);
     void stateChanged (Phonon::State newstate, Phonon::State oldstate);
@@ -73,13 +78,8 @@ private:
     Phonon::VideoWidget *m_vwidget;
     Phonon::AudioOutput *m_aoutput;
     Phonon::MediaObject *m_media;
+    QString m_url;
     unsigned long video_handle;
-};
-
-class Manager : public QObject {
-    Q_OBJECT
-public:
-    Manager ();
 };
 
 #endif
