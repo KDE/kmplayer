@@ -396,14 +396,14 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     playerMenu = new KMPlayerPopupMenu (NULL, i18n ("&Play with"));
     playersAction = popupMenu->addMenu (playerMenu);
 
-    videoConsoleAction = popupMenu->addAction (KIcon ("konsole"), i18n ("Con&sole"));
+    videoConsoleAction = popupMenu->addAction (KIcon ("utilities-terminal"), i18n ("Con&sole"));
 
     playlistAction = popupMenu->addAction (KIcon ("view-media-playlist"), i18n ("Play&list"));
 
     zoomMenu = new KMPlayerPopupMenu (NULL, i18n ("&Zoom"));
     zoomAction = popupMenu->addMenu (zoomMenu);
     zoomAction->setIcon (KIconLoader::global ()->loadIconSet (
-                QString ("viewmag"), KIconLoader::Small, 0, false));
+                QString ("zoom-fit-best"), KIconLoader::Small, 0, false));
     zoom50Action = zoomMenu->addAction (i18n ("50%"));
     zoom100Action = zoomMenu->addAction (i18n ("100%"));
     zoom150Action = zoomMenu->addAction (i18n ("150%"));
@@ -416,7 +416,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     colorMenu = new KMPlayerPopupMenu (NULL, i18n ("Co&lors"));
     colorAction = popupMenu->addMenu (colorMenu);
     colorAction->setIcon (KIconLoader::global ()->loadIconSet (
-                QString ("color-fill"), KIconLoader::Small, 0, true));
+                QString ("format-fill-color"), KIconLoader::Small, 0, true));
     /*QLabel * label = new QLabel (i18n ("Contrast:"), colorMenu);
     colorMenu->insertItem (label);
     m_contrastSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
@@ -445,9 +445,9 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     QAction *audioAction = languageMenu->addMenu (audioMenu);
     QAction *subtitleAction = languageMenu->addMenu (subtitleMenu);
     audioAction->setIcon (KIconLoader::global ()->loadIconSet (
-                QString ("mime-sound"), KIconLoader::Small, 0, true));
+                QString ("audio-x-generic"), KIconLoader::Small, 0, true));
     subtitleAction->setIcon (KIconLoader::global ()->loadIconSet (
-                QString ("view_text"), KIconLoader::Small, 0, true));
+                QString ("view-list-text"), KIconLoader::Small, 0, true));
     languageAction->setVisible (false);
 
     configureAction = popupMenu->addAction (KIcon ("configure"), i18n ("&Configure KMPlayer..."));
