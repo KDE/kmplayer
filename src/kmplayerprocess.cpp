@@ -2271,18 +2271,18 @@ KDE_NO_EXPORT void NpStream::slotResult (KJob *jb) {
 KDE_NO_EXPORT void NpStream::slotData (KIO::Job*, const QByteArray& qb) {
     int sz = pending_buf.size ();
     if (sz) {
-        kError () << "new data " << stream_id << " not send " << sz << endl;
         pending_buf.resize (sz + qb.size ());
         memcpy (pending_buf.data () + sz, qb.data (), qb.size ());
     } else {
-        pending_buf = qb; // we suspend job, so qb should be valid until resume
+        pending_buf = qb;
     }
-    if (sz + qb.size()) {
-        if (!job->suspend ())
-            kError () << "suspend not supported" << endl;
+    if (sz + qb.size() > 64000 &&
+            !job->isSuspended () && !job->suspend ())
+        kError () << "suspend not supported" << endl;
+    if (!sz)
         gettimeofday (&data_arrival, 0L);
+    if (sz + qb.size())
         emit stateChanged ();
-    }
 }
 
 KDE_NO_EXPORT void NpStream::redirection (KIO::Job *, const KUrl &kurl) {
