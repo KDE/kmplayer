@@ -188,7 +188,6 @@ void ViewSurface::repaint () {
 }
 
 KDE_NO_EXPORT void ViewSurface::video (Mrl *mt) {
-    kDebug() << "Surface::video:" << background_color << " " << (background_color & 0xff000000);
     xscale = yscale = 1; // either scale width/heigt or use bounds
     if (mt->media_object &&
             MediaManager::AudioVideo == mt->media_object->type ()) {
