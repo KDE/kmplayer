@@ -539,7 +539,7 @@ void View::addText (const QString & str, bool eol) {
 }
 
 KDE_NO_EXPORT void View::videoStart () {
-    if (m_dockarea->centralWidget () != m_view_area) {
+    if (!isFullScreen () && m_dockarea->centralWidget () != m_view_area) {
         // restore from an info or playlist only setting
         m_dockarea->setCentralWidget (m_view_area);
     }

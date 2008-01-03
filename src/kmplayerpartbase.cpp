@@ -1531,7 +1531,6 @@ KDE_NO_EXPORT void URLSource::kioResult (KJob *job) {
         rinfo->resolving_mrl->mrl ()->resolved = true;
         rinfo->resolving_mrl->undefer ();
     }
-    static_cast <View *> (m_player->view())->controlPanel()->setPlaying (false);
 }
 
 bool URLSource::authoriseUrl (const QString &url) {
@@ -1625,7 +1624,6 @@ bool URLSource::resolveURL (NodePtr m) {
                 this, SLOT (kioMimetype (KIO::Job *, const QString &)));
         connect (m_resolve_info->job, SIGNAL (result (KJob *)),
                 this, SLOT (kioResult (KJob *)));
-        static_cast <View *> (m_player->view ())->controlPanel ()->setPlaying (true);
         m_player->updateStatus (i18n ("Connecting"));
         m_player->setLoaded (0);
         return false; // wait for result ..

@@ -103,6 +103,7 @@ public:
     int heightForWidth (int w) const;
 
     virtual WindowId windowHandle ();
+    virtual WindowId clientHandle ();
     using QWidget::setGeometry;
     virtual void setGeometry (const IRect &rect);
     virtual void setAspect (float a);

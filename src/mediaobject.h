@@ -229,6 +229,7 @@ public:
     virtual ~IViewer () {}
 
     virtual WindowId windowHandle () = 0;
+    virtual WindowId clientHandle () = 0;
     virtual void setGeometry (const IRect &rect) = 0;
     virtual void setAspect (float a) = 0;
     virtual float aspect () = 0;
