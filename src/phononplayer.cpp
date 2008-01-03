@@ -93,6 +93,7 @@ Stream::Stream (QWidget *parent, const QString &url, unsigned long wid)
 {
     embedInto (wid);
     show ();
+    m_master_stream_path = QString ("%1/stream_%2").arg(control_path).arg (wid);
     QTimer::singleShot (0, this, SLOT (init ()));
     qDebug ("newStream xembed cont: %lu", containerWinId ());
 }
@@ -175,7 +176,7 @@ void Stream::stateChanged (Phonon::State newstate, Phonon::State) {
     if (Phonon::PlayingState == newstate) {
         qDebug ("playing %lu", video_handle);
         QDBusMessage msg = QDBusMessage::createMethodCall (
-                control_service, QString ("/stream_%1").arg (video_handle),
+                control_service, m_master_stream_path,
                 "org.kde.kmplayer.StreamMaster", "playing");
         QDBusConnection::sessionBus().send (msg);
     }
@@ -184,7 +185,7 @@ void Stream::stateChanged (Phonon::State newstate, Phonon::State) {
 void Stream::finished () {
     qDebug ("finished %lu", video_handle);
     QDBusMessage msg = QDBusMessage::createMethodCall (
-            control_service, QString ("/stream_%1").arg (video_handle),
+            control_service, m_master_stream_path,
             "org.kde.kmplayer.StreamMaster", "eof");
     QDBusConnection::sessionBus().send (msg);
     delete this;

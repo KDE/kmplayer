@@ -323,6 +323,9 @@ public:
 
 public slots:
     virtual void stop ();
+
+private:
+    QString m_slave_path;
 };
 
 class KMPLAYER_NO_EXPORT PhononProcessInfo : public MasterProcessInfo {

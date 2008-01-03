@@ -1291,12 +1291,13 @@ void MasterProcess::init () {
 
 bool MasterProcess::deMediafiedPlay () {
     WindowId wid = media_object->viewer->windowHandle ();
+    m_slave_path = QString ("/stream_%1").arg (wid);
     MasterProcessInfo *mpi = static_cast <MasterProcessInfo *>(process_info);
     kDebug() << "MasterProcess::deMediafiedPlay " << m_url << " " << wid;
 
     (void) new StreamMasterAdaptor (this);
     QDBusConnection::sessionBus().registerObject (
-            QString ("/stream_%1").arg (wid), this);
+            QString ("%1/stream_%2").arg (mpi->m_path).arg (wid), this);
 
     QDBusMessage msg = QDBusMessage::createMethodCall (
             mpi->m_slave_service, QString ("/%1").arg (process_info->name),
@@ -1342,7 +1343,7 @@ void MasterProcess::stop () {
         MasterProcessInfo *mpi = static_cast<MasterProcessInfo *>(process_info);
         QDBusMessage msg = QDBusMessage::createMethodCall (
                 mpi->m_slave_service,
-                QString("/stream_%1").arg(media_object->viewer->windowHandle()),
+                m_slave_path,
                 "org.kde.kmplayer.StreamSlave",
                 "stop");
         msg.setDelayedReply (false);

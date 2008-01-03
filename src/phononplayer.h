@@ -79,6 +79,7 @@ private:
     Phonon::AudioOutput *m_aoutput;
     Phonon::MediaObject *m_media;
     QString m_url;
+    QString m_master_stream_path;
     unsigned long video_handle;
 };
 
