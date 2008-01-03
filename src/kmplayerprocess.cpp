@@ -245,7 +245,10 @@ bool Process::play () {
     Mrl *m = mrl ();
     if (!m)
         return false;
-    bool nonstdurl = m->src.startsWith ("tv:/");
+    bool nonstdurl = m->src.startsWith ("tv:/") ||
+        m->src.startsWith ("dvd:") ||
+        m->src.startsWith ("cdda:") ||
+        m->src.startsWith ("vcd:");
     QString url = nonstdurl ? m->src : m->absolutePath ();
     bool changed = m_url != url;
     m_url = url;
@@ -511,6 +514,7 @@ KDE_NO_EXPORT bool MPlayer::deMediafiedPlay () {
             }
         }
     }
+    kDebug() << args;
     return run (args.ascii (), m_source->pipeCmd ().ascii ());
 }
 
@@ -1297,9 +1301,13 @@ bool MasterProcess::deMediafiedPlay () {
     QDBusMessage msg = QDBusMessage::createMethodCall (
             mpi->m_slave_service, QString ("/%1").arg (process_info->name),
                 "org.kde.kmplayer.Slave", "newStream");
-    KUrl url (m_url);
-    if (url.isLocalFile ())
-        m_url = getPath (url);
+    if (!m_url.startsWith ("dvd:") ||
+            !m_url.startsWith ("vcd:") ||
+            !m_url.startsWith ("cdda:")) {
+        KUrl url (m_url);
+        if (url.isLocalFile ())
+            m_url = getPath (url);
+    }
     msg << m_url << (qulonglong)wid;
     msg.setDelayedReply (false);
     QDBusConnection::sessionBus().send (msg);
@@ -1345,7 +1353,7 @@ void MasterProcess::stop () {
 //-------------------------%<--------------------------------------------------
 
 static const char *phonon_supports [] = {
-    "urlsource", 0L
+    "urlsource", "dvdsource", "vcdsource", "audiocdsource", 0L
 };
 
 PhononProcessInfo::PhononProcessInfo (MediaManager *mgr)

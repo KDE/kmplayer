@@ -1789,7 +1789,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerDVDSource::KMPlayerDVDSource (KMPlayerApp * a, QMenu
     m_dvdsubtitlemenu->setCheckable (true);
     m_dvdchaptermenu->setCheckable (true);
     m_dvdlanguagemenu->setCheckable (true);
-    setUrl (KUrl ("dvd://"));
+    setUrl ("dvd://");
     m_player->settings ()->addPage (this);
     disks = new Disks (a);
     disks->appendChild (new Disk (disks, a, "cdda://", i18n ("CDROM - Audio Compact Disk")));
@@ -1850,7 +1850,7 @@ KDE_NO_EXPORT bool KMPlayerDVDSource::processOutput (const QString & str) {
 KDE_NO_EXPORT void KMPlayerDVDSource::activate () {
     m_start_play = m_auto_play;
     m_current_title = -1;
-    setUrl (KUrl ("dvd://"));
+    setUrl ("dvd://");
     buildArguments ();
     m_menu->insertItem (i18n ("&Titles"), m_dvdtitlemenu);
     m_menu->insertItem (i18n ("&Chapters"), m_dvdchaptermenu);
@@ -1917,7 +1917,7 @@ KDE_NO_EXPORT void KMPlayerDVDSource::buildArguments () {
             url += QString::number (m_current_title);
         m_document->mrl ()->src = url;
     } else
-        setUrl (KUrl (url));
+        setUrl (url);
     m_options = QString (m_identified ? "" : "-v ");
     if (m_identified) {
         for (unsigned i = 0; i < m_dvdsubtitlemenu->count (); i++)
@@ -2020,13 +2020,13 @@ KDE_NO_EXPORT QFrame * KMPlayerDVDSource::prefPage (QWidget * parent) {
 KDE_NO_CDTOR_EXPORT KMPlayerDVDNavSource::KMPlayerDVDNavSource (KMPlayerApp * app, QMenu * m)
     : KMPlayerMenuSource (i18n ("DVDNav"), app, m, "dvdnavsource") {
     m_menu->insertTearOffHandle (-1, 0);
-    setUrl (KUrl ("dvd://"));
+    setUrl ("dvd://");
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerDVDNavSource::~KMPlayerDVDNavSource () {}
 
 KDE_NO_EXPORT void KMPlayerDVDNavSource::activate () {
-    setUrl (KUrl ("dvd://"));
+    setUrl ("dvd://");
     play ();
 }
 
@@ -2097,7 +2097,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPrefSourcePageVCD::KMPlayerPrefSourcePageVCD (QWidge
 KDE_NO_CDTOR_EXPORT KMPlayerVCDSource::KMPlayerVCDSource (KMPlayerApp * a, QMenu * m)
     : KMPlayerMenuSource (i18n ("VCD"), a, m, "vcdsource"), m_configpage (0L) {
     m_player->settings ()->addPage (this);
-    setUrl (KUrl ("vcd://"));
+    setUrl ("vcd://");
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerVCDSource::~KMPlayerVCDSource () {
@@ -2124,7 +2124,7 @@ KDE_NO_EXPORT void KMPlayerVCDSource::activate () {
     m_player->stop ();
     init ();
     m_start_play = m_auto_play;
-    setUrl (KUrl ("vcd://"));
+    setUrl ("vcd://");
     buildArguments ();
     if (m_start_play)
         QTimer::singleShot (0, m_player, SLOT (play ()));
@@ -2193,7 +2193,7 @@ KDE_NO_EXPORT QFrame * KMPlayerVCDSource::prefPage (QWidget * parent) {
 
 KDE_NO_CDTOR_EXPORT KMPlayerAudioCDSource::KMPlayerAudioCDSource (KMPlayerApp * a, QMenu * m)
     : KMPlayerMenuSource (i18n ("Audio CD"), a, m, "audiocdsource") {
-    setUrl (KUrl ("cdda://"));
+    setUrl ("cdda://");
 }
 
 KDE_NO_CDTOR_EXPORT KMPlayerAudioCDSource::~KMPlayerAudioCDSource () {
@@ -2223,7 +2223,7 @@ KDE_NO_EXPORT void KMPlayerAudioCDSource::activate () {
     m_player->stop ();
     init ();
     //m_start_play = m_auto_play;
-    setUrl (KUrl ("cdda://"));
+    setUrl ("cdda://");
     buildArguments ();
     //if (m_start_play)
         QTimer::singleShot (0, m_player, SLOT (play ()));
@@ -2281,7 +2281,7 @@ KDE_NO_EXPORT bool KMPlayerPipeSource::isSeekable () {
 KDE_NO_EXPORT void KMPlayerPipeSource::activate () {
     // dangerous !! if (!m_url.protocol ().compare ("kmplayer"))
     //    m_pipecmd = KUrl::decode_string (m_url.path ()).mid (1);
-    setUrl (KUrl ("stdin://"));
+    setUrl ("stdin://");
     KMPlayer::GenericMrl * gen = new KMPlayer::GenericMrl (m_document, QString ("stdin://"), m_pipecmd);
     gen->bookmarkable = false;
     m_document->appendChild (gen);

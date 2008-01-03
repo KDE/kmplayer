@@ -120,7 +120,14 @@ void Stream::init () {
             SLOT (stateChanged (Phonon::State, Phonon::State)));
     connect (m_media, SIGNAL (finished ()), SLOT (finished ()));
 
-    m_media->setCurrentSource (QUrl (m_url));
+    if (m_url.startsWith ("dvd:"))
+        m_media->setCurrentSource (Phonon::Dvd);
+    else if (m_url.startsWith ("vcd:"))
+        m_media->setCurrentSource (Phonon::Vcd);
+    else if (m_url.startsWith ("cdda:"))
+        m_media->setCurrentSource (Phonon::Cd);
+    else
+        m_media->setCurrentSource (QUrl (m_url));
     play ();
 }
 

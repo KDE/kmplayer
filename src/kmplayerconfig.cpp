@@ -647,7 +647,7 @@ void Settings::okPressed () {
     }
     if (urlchanged) {
         KUrl uri (url.url ());
-        m_player->setUrl (uri);
+        m_player->setUrl (uri.url ());
         if (urllist.find (uri.prettyUrl ()) == urllist.end ())
             configdialog->m_SourcePageURL->urllist->insertItem (uri.prettyUrl (), 0);
         KUrl sub_uri (sub_url.url ());

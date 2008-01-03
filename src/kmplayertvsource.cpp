@@ -676,7 +676,7 @@ KDE_NO_EXPORT bool TVDeviceScannerSource::isSeekable () {
 KDE_NO_EXPORT bool TVDeviceScannerSource::scan (const QString & dev, const QString & dri) {
     if (m_tvdevice)
         return false;
-    setUrl (KUrl ("tv://"));
+    setUrl ("tv://");
     KMPlayer::NodePtr doc = m_tvsource->document ();
     m_tvdevice = new TVDevice (doc, dev);
     m_tvsource->document ()->appendChild (m_tvdevice);

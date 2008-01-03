@@ -180,7 +180,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
                 value.truncate (value.length () - 1);
             kDebug () << "name=" << name << " value=" << value;
             if (name == "href") {
-                urlsource->setUrl (KUrl (value));
+                urlsource->setUrl (value);
                 urlsource->setIdentified (false);
                 m_havehref = true;
             } else if (name == QString::fromLatin1("width")) {
@@ -478,7 +478,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
         url = urlsource->url ();
     }
     if (!m_havehref)
-        setUrl (url);
+        setUrl (url.url ());
     if (url.isEmpty ()) {
         if (!m_master && !(m_features & Feat_Viewer))
             // no master set, wait for a viewer to attach or timeout
@@ -501,7 +501,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
     if (!args.mimeType ().isEmpty ())
         urlsource->document ()->mrl ()->mimetype = args.mimeType ();
     if (m_havehref && m_settings->allowhref) {
-        hrefsource->setUrl (url);
+        hrefsource->setUrl (url.url ());
         setSource (hrefsource);
     } else {
         hrefsource->clear ();
@@ -1133,12 +1133,12 @@ KDE_NO_EXPORT bool KMPlayerHRefSource::processOutput (const QString & /*str*/) {
     return true;
 }
 
-KDE_NO_EXPORT void KMPlayerHRefSource::setUrl (const KUrl & url) {
-    m_url = url;
+KDE_NO_EXPORT void KMPlayerHRefSource::setUrl (const QString &url) {
+    m_url = KUrl (url);
     m_identified = false;
     m_finished = false;
     Source::setUrl (url);
-    kDebug () << "KMPlayerHRefSource::setUrl " << m_url.url();
+    kDebug () << url;
 }
 
 KDE_NO_EXPORT void KMPlayerHRefSource::play () {
@@ -1165,13 +1165,13 @@ KDE_NO_EXPORT void KMPlayerHRefSource::activate () {
     //    connect (m_player->process (), SIGNAL (grabReady (const QString &)),
     //             this, SLOT (grabReady (const QString &)));
     //else {
-        setUrl (KUrl ());
+        setUrl (QString ());
         QTimer::singleShot (0, this, SLOT (play ()));
     //}
 }
 
 KDE_NO_EXPORT void KMPlayerHRefSource::clear () {
-    setUrl (KUrl ());
+    setUrl (QString ());
 }
 
 KDE_NO_EXPORT void KMPlayerHRefSource::grabReady (const QString & path) {

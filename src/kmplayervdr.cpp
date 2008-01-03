@@ -192,7 +192,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::activate () {
     setAspect (m_document, scale ? 16.0/9 : 1.33);
     if (!m_url.protocol ().compare ("kmplayer"))
         m_request_jump = KUrl::decode_string (m_url.path ()).mid (1);
-    setUrl (KUrl (QString ("vdr://localhost:%1").arg (tcp_port)));
+    setUrl (QString ("vdr://localhost:%1").arg (tcp_port));
     QTimer::singleShot (0, m_player, SLOT (play ()));
 }
 
@@ -276,7 +276,7 @@ KDE_NO_EXPORT void KMPlayerVDRSource::disconnected () {
         deleteCommands ();
         return;
     }
-    setUrl (KUrl (QString ("vdr://localhost:%1").arg (tcp_port)));
+    setUrl (QString ("vdr://localhost:%1").arg (tcp_port));
     if (channel_timer && m_player->source () == this)
         m_player->stop ();
     deleteCommands ();

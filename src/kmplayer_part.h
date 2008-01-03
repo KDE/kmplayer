@@ -38,7 +38,7 @@ public:
     virtual bool processOutput (const QString & line);
     virtual bool hasLength ();
 
-    void setUrl (const KUrl &);
+    void setUrl (const QString &);
     void clear ();
     virtual QString prettyName ();
 public slots:

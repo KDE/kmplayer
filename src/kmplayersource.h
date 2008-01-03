@@ -79,7 +79,7 @@ public:
     virtual QString filterOptions ();
     virtual bool authoriseUrl (const QString &url);
 
-    virtual void setUrl (const KUrl & url);
+    virtual void setUrl (const QString &url);
     void insertURL (NodePtr mrl, const QString & url, const QString & title=QString());
     KDE_NO_EXPORT void setSubURL (const KUrl & url) { m_sub_url = url; }
     void setLanguages (const QStringList & alang, const QStringList & slang);

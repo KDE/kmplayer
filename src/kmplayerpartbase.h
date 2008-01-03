@@ -76,7 +76,7 @@ public:
     virtual bool hasLength ();
     virtual QString prettyName ();
     virtual void reset ();
-    virtual void setUrl (const KUrl & url);
+    virtual void setUrl (const QString &url);
     virtual bool authoriseUrl (const QString &url);
 public slots:
     virtual void init ();
@@ -123,7 +123,7 @@ public:
     Settings * settings () const { return m_settings; }
     void keepMovieAspect (bool);
     KUrl url () const { return m_sources ["urlsource"]->url (); }
-    void setUrl (const KUrl & url) { m_sources ["urlsource"]->setUrl (url); }
+    void setUrl (const QString &url) { m_sources ["urlsource"]->setUrl (url); }
     KUrl docBase () const { return m_docbase; }
 
     /* Changes the backend process */

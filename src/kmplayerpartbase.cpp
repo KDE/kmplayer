@@ -312,7 +312,7 @@ KDE_NO_EXPORT void PartBase::slotPlayerMenu (int menu) {
     unsigned id = 0;
     for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.begin();
             id < player_menu->count() && i != e;
-            ++i, id++) {
+            ++i) {
         ProcessInfo *pinfo = i.data ();
         if (!pinfo->supports (srcname))
             continue;
@@ -323,6 +323,7 @@ KDE_NO_EXPORT void PartBase::slotPlayerMenu (int menu) {
                 m_settings->backends [srcname] = pinfo->name;
             temp_backends [srcname] = pinfo->name;
         }
+        id++;
     }
     if (playing)
         m_source->play (mrl);
@@ -426,7 +427,7 @@ bool PartBase::openUrl (const KUrl &url) {
     Source * src = (url.isEmpty () ? m_sources ["urlsource"] : (!url.protocol ().compare ("kmplayer") && m_sources.contains (url.host ()) ? m_sources [url.host ()] : m_sources ["urlsource"]));
     setSource (src);
     src->setSubURL (KUrl ());
-    src->setUrl (url);
+    src->setUrl (url.url ());
     return true;
 }
 
@@ -550,7 +551,7 @@ KDE_NO_EXPORT void PartBase::playListItemExecuted (Q3ListViewItem * item) {
         return; // both null or handled by playListItemClicked
     if (vi->node) {
         QString src = ri->source;
-        //kDebug() << "playListItemExecuted " << src << " " << vi->node->nodeName();
+        //kDebug() << src << " " << vi->node->nodeName();
         Source * source = src.isEmpty() ? m_source : m_sources[src.ascii()];
         if (vi->node->isPlayable ()) {
             source->play (vi->node->mrl ()); //may become !isPlayable by lazy loading
@@ -654,7 +655,7 @@ void PartBase::record () {
 void PartBase::play () {
     if (!m_view)
         return;
-    QPushButton * pb = ::qobject_cast <QPushButton *> (sender ());
+    QPushButton *pb = ::qobject_cast <QPushButton *> (sender ());
     if (pb && !pb->isOn ()) {
         stop ();
         return;
@@ -907,21 +908,20 @@ static void printTree (NodePtr root, QString off=QString()) {
         printTree(e, off);
 }*/
 
-void Source::setUrl (const KUrl & url) {
-    m_url = url;
+void Source::setUrl (const QString &url) {
+    m_url = KUrl (url);
     if (m_document && !m_document->hasChildNodes () &&
             (m_document->mrl()->src.isEmpty () ||
-             m_document->mrl()->src == url.url ()))
+             m_document->mrl()->src == url))
         // special case, mime is set first by plugin FIXME v
-        m_document->mrl()->src = url.url ();
+        m_document->mrl()->src = url;
     else {
         if (m_document)
             m_document->document ()->dispose ();
-        m_document = new Document (url.url (), this);
+        m_document = new Document (url, this);
     }
     if (m_player->source () == this)
         m_player->updateTree ();
-    //kDebug() << name() << " setUrl " << url;
 }
 
 void Source::setTitle (const QString & title) {
@@ -1243,7 +1243,7 @@ QString Source::prettyName () {
 
 URLSource::URLSource (PartBase * player, const KUrl & url)
     : Source (i18n ("URL"), player, "urlsource"), activated (false) {
-    setUrl (url);
+    setUrl (url.url ());
     //kDebug () << "URLSource::URLSource";
 }
 
@@ -1550,11 +1550,11 @@ bool URLSource::authoriseUrl (const QString &url) {
     return Source::authoriseUrl (url);
 }
 
-void URLSource::setUrl (const KUrl & url) {
+void URLSource::setUrl (const QString &url) {
     Source::setUrl (url);
     Mrl *mrl = document ()->mrl ();
-    if (!url.isEmpty () && url.isLocalFile () && mrl->mimetype.isEmpty ()) {
-        KMimeType::Ptr mimeptr = KMimeType::findByUrl (url);
+    if (!url.isEmpty () && m_url.isLocalFile () && mrl->mimetype.isEmpty ()) {
+        KMimeType::Ptr mimeptr = KMimeType::findByUrl (m_url);
         if (mimeptr)
             mrl->mimetype = mimeptr->name ();
     }
