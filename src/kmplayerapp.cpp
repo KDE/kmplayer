@@ -1377,7 +1377,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotSaveAs () {
     if (!url.isEmpty ()) {
         QFile file (url);
         if (!file.open (IO_WriteOnly)) {
-            KMessageBox::error (this, i18n ("Error opening file %1.\n%2.").arg (url).arg (file.errorString ()), i18n("Error"));
+            KMessageBox::error (this, i18n ("Error opening file %1.\n%2.",url,file.errorString ()), i18n("Error"));
             return;
         }
         if (m_player->source ()) {
@@ -1477,7 +1477,7 @@ KDE_NO_EXPORT void KMPlayerApp::slotViewMenuBar() {
         slotStatusMsg(i18n("Ready"));
     } else {
         menuBar()->hide();
-        slotStatusMsg (i18n ("Show Menubar with %1").arg(
+        slotStatusMsg (i18n ("Show Menubar with %1",
                     viewMenuBar->shortcut ().toString ()));
         if (!m_showStatusbar) {
             statusBar()->show();
@@ -2213,7 +2213,7 @@ KDE_NO_EXPORT bool KMPlayerAudioCDSource::processOutput (const QString & str) {
         int nt = trackRegExp.cap (1).toInt ();
         kDebug () << "tracks " << trackRegExp.cap (1);
         for (int i = 0; i < nt; i++)
-            m_document->appendChild (new KMPlayer::GenericMrl (m_document, QString ("cdda://%1").arg (i+1), i18n ("Track %1").arg (i+1)));
+            m_document->appendChild (new KMPlayer::GenericMrl (m_document, QString ("cdda://%1").arg (i+1), i18n ("Track %1",QString::number(i+1))));
         return true;
     }
     return false;
@@ -2296,7 +2296,7 @@ KDE_NO_EXPORT void KMPlayerPipeSource::deactivate () {
 }
 
 KDE_NO_EXPORT QString KMPlayerPipeSource::prettyName () {
-    return i18n ("Pipe - %1").arg (m_pipecmd);
+    return i18n ("Pipe - %1",m_pipecmd);
 }
 
 KDE_NO_EXPORT void KMPlayerPipeSource::setCommand (const QString & cmd) {
