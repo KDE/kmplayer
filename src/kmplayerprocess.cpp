@@ -2354,8 +2354,10 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
     Mrl *node = mrl ();
     if (!view ())
         return false;
-    if (media_object && media_object->viewer)
+    if (media_object && media_object->viewer) {
         media_object->viewer->useIndirectWidget (false);
+        media_object->viewer->setMonitoring (IViewer::MonitorNothing);
+    }
     if (node && !m_url.isEmpty ()) {
         QString mime = "text/plain";
         QString plugin;

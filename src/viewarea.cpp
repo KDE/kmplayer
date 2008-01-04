@@ -1371,7 +1371,6 @@ KDE_NO_EXPORT void ViewArea::stopTimers () {
 
 KDE_NO_EXPORT void ViewArea::fullScreen () {
     stopTimers ();
-    kDebug() << "had :" << m_fullscreen;
     if (m_fullscreen) {
         showNormal ();
         m_view->dockArea ()->setCentralWidget (this);
@@ -1417,6 +1416,7 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
         }
         unsetCursor();
     }
+    emit fullScreenChanged ();
 }
 
 void ViewArea::minimalMode () {
@@ -1685,21 +1685,13 @@ void ViewArea::setVideoWidgetVisible (bool show) {
         static_cast <VideoOutput *> (*it)->setVisible (show);
 }
 
-static void setXSelectInput (WId wid) {
+static void setXSelectInput (WId wid, long mask) {
     WId r, p, *c;
     unsigned int nr;
-    XSelectInput (QX11Info::display (), wid,
-            //KeyPressMask | KeyReleaseMask |
-            KeyPressMask |
-            //EnterWindowMask | LeaveWindowMask |
-            //FocusChangeMask |
-            ExposureMask |
-            StructureNotifyMask |
-            SubstructureNotifyMask |
-            PointerMotionMask);
+    XSelectInput (QX11Info::display (), wid, mask);
     if (XQueryTree (QX11Info::display (), wid, &r, &p, &c, &nr)) {
         for (int i = 0; i < nr; ++i)
-            setXSelectInput (c[i]);
+            setXSelectInput (c[i], mask);
         XFree (c);
     }
 }
@@ -1719,7 +1711,8 @@ bool ViewArea::x11Event (XEvent *xe) {
         case XKeyPress: {
             const VideoWidgetList::iterator e = video_widgets.end ();
             for (VideoWidgetList::iterator i=video_widgets.begin(); i != e; ++i)
-                if ((*i)->clientHandle () == xe->xkey.window) {
+                if ((*i)->clientHandle () == xe->xkey.window &&
+                        static_cast <VideoOutput *>(*i)->inputMask() & KeyPressMask) {
                     KeySym ksym;
                     char kbuf[16];
                     XLookupString (&xe->xkey, kbuf, sizeof(kbuf), &ksym, NULL);
@@ -1742,10 +1735,13 @@ bool ViewArea::x11Event (XEvent *xe) {
                     QPoint p = mapToGlobal (QPoint (0, 0));
                     int x = xe->xmotion.x_root - p.x ();
                     int y = xe->xmotion.y_root - p.y ();
-                    if (x > 0 && x < width ()) {
-                        m_view->delayedShowButtons (y > height () -
-                                m_view->statusBarHeight () -
-                                m_view->controlPanel()->maximumSize().height());
+                    int b = height ();
+                    int t = b - m_view->statusBarHeight () -
+                        m_view->controlPanel ()->maximumSize ().height ();
+                    if (x > -50 && x < width () + 50 &&
+                            y > t - 50 && y < b + 50) {
+                        m_view->delayedShowButtons (
+                                x > 0 && x < width () && y > t && y < b);
                         mouseMoved ();
                     }
                 }
@@ -1772,7 +1768,8 @@ bool ViewArea::x11Event (XEvent *xe) {
                         w = p;
                     }
                     if (p == v)
-                        setXSelectInput (xe->xmap.window);
+                        setXSelectInput (xe->xmap.window,
+                                static_cast <VideoOutput *>(*i)->inputMask ());
                 }
                 /*if (e->xmap.event == m_viewer->clientWinId ()) {
                   show ();
@@ -1807,7 +1804,10 @@ KDE_NO_CDTOR_EXPORT VideoOutput::VideoOutput (QWidget *parent, View * view)
                            CWBackPixel | CWBorderPixel | CWColormap, &xswa));*/
     setAcceptDrops (true);
     connect (this, SIGNAL (clientIsEmbedded ()), this, SLOT (embedded ()));
+    connect (view->viewArea (), SIGNAL (fullScreenChanged ()),
+             this, SLOT (fullScreenChanged ()));
     kDebug() << "VideoOutput::VideoOutput" << endl;
+    setMonitoring (MonitorAll);
     //setProtocol (QXEmbed::XPLAIN);
 }
 
@@ -1852,7 +1852,7 @@ KDE_NO_EXPORT void VideoOutput::embedded () {
     if (clientWinId () && !resized_timer)
          resized_timer = startTimer (50);
     if (clientWinId ())
-        setXSelectInput (clientWinId ());
+        setXSelectInput (clientWinId (), m_input_mask);
 }
 
 KDE_NO_EXPORT void VideoOutput::resizeEvent (QResizeEvent *) {
@@ -1919,6 +1919,33 @@ KDE_NO_EXPORT void VideoOutput::map () {
 
 KDE_NO_EXPORT void VideoOutput::unmap () {
     setVisible (false);
+}
+
+KDE_NO_EXPORT void VideoOutput::setMonitoring (Monitor m) {
+    m_input_mask =
+        //KeyPressMask | KeyReleaseMask |
+        //EnterWindowMask | LeaveWindowMask |
+        //FocusChangeMask |
+        ExposureMask |
+        //StructureNotifyMask |
+        SubstructureNotifyMask;
+    if (m & MonitorMouse)
+        m_input_mask |= PointerMotionMask;
+    if (m & MonitorKey)
+        m_input_mask |= KeyPressMask;
+    if (clientWinId ())
+        setXSelectInput (clientWinId (), m_input_mask);
+}
+
+KDE_NO_EXPORT void VideoOutput::fullScreenChanged () {
+    if (!(m_input_mask & KeyPressMask)) { // FIXME: store monitor when needed
+        if (m_view->isFullScreen ())
+            m_input_mask |= PointerMotionMask;
+        else
+            m_input_mask &= ~PointerMotionMask;
+    }
+    if (clientWinId ())
+        setXSelectInput (clientWinId (), m_input_mask);
 }
 
 KDE_NO_EXPORT int VideoOutput::heightForWidth (int w) const {
