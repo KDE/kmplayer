@@ -401,6 +401,7 @@ void View::toggleVideoConsoleWindow () {
                     QString ("video"), KIconLoader::Small, 0, true));
         m_control_panel->videoConsoleAction->setText (i18n ("V&ideo"));
         m_multiedit->show ();
+        m_multiedit->raise ();
         m_view_area->setVideoWidgetVisible (false);
         addText (QString (""), false);
         if (m_controlpanel_mode == CP_AutoHide && m_playing)
