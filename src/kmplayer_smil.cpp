@@ -1091,7 +1091,7 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
                 reg_count++;
             }
         }
-        if (!reg_count) {
+        if (!reg_count || !w_root || !h_root) {
             w_root = 320; h_root = 240; // have something to start with
             SMIL::Region * r = new SMIL::Region (m_doc);
             appendChild (r);
@@ -1143,16 +1143,17 @@ KDE_NO_EXPORT Surface *SMIL::Layout::surface () {
             h = s->height;
             if (region_surface) {
                 SRect rect = region_surface->bounds;
-                if (rl && auxiliaryNode ()) {
-                    w = rect.width ();
-                    h = rect.height ();
+                if (rl && rl->auxiliaryNode ()) {
+                    s->width = w = rect.width ();
+                    s->height = h = rect.height ();
                     rl->setAttribute (StringPool::attr_width, QString::number ((int)w));
                     rl->setAttribute (StringPool::attr_height, QString::number ((int)h));
                     rl->setParam (StringPool::attr_width, QString::number((int)w));
+                    h = rect.height ();
                     rl->setParam (StringPool::attr_height,QString::number((int)h));
-                } else if (region_surface && w > 0 && h > 0) {
-                    updateDimensions ();
                 }
+                if (region_surface && w > 0 && h > 0)
+                    updateDimensions ();
                 //kdDebug() << "Layout::surface bounds " << rect.width () << "x" << rect.height () << " w:" << w << " h:" << h << " xs:" << region_surface->xscale << " ys:" << region_surface->yscale << endl;
             }
         }
