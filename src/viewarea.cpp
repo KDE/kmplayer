@@ -1344,8 +1344,10 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
    scale_slider_id (-1),
    m_fullscreen (false),
    m_minimal (false) {
+#ifdef KMPLAYER_WITH_CAIRO
     setAttribute (Qt::WA_OpaquePaintEvent, true);
-    //setAttribute (Qt::WA_PaintOnScreen, true);
+    setAttribute (Qt::WA_PaintOnScreen, true);
+#endif
     QPalette palette;
     palette.setColor (backgroundRole(), QColor (0, 0, 0));
     setPalette (palette);

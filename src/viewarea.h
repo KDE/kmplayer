@@ -26,6 +26,7 @@
 
 #include "mediaobject.h"
 
+class QPaintEngine;
 class KActionCollection;
 
 namespace KMPlayer {
@@ -71,6 +72,9 @@ protected:
     void timerEvent (QTimerEvent * e);
     void closeEvent (QCloseEvent * e);
     bool x11Event (XEvent *e);
+#ifdef KMPLAYER_WITH_CAIRO
+    QPaintEngine *paintEngine () const { return NULL; }
+#endif
 private:
     void syncVisual (const IRect & rect);
     void updateSurfaceBounds ();
