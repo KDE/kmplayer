@@ -2,10 +2,10 @@
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
   <interface name="org.kde.kmplayer.StreamMaster">
-    <method name="dimension">
+    <method name="streamInfo">
       <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
-      <arg name="width" type="i" direction="in"/>
-      <arg name="height" type="i" direction="in"/>
+      <arg name="length" type="t" direction="in"/>
+      <arg name="aspect" type="d" direction="in"/>
     </method>
     <method name="loading">
       <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>

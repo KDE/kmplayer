@@ -1321,11 +1321,14 @@ bool MasterProcess::running () const {
     return mpi->m_slave && mpi->m_slave->isRunning ();
 }
 
-void MasterProcess::dimension (int w, int h) {
-}
-
 void MasterProcess::loading (int perc) {
     process_info->manager->player ()->setLoaded (perc);
+}
+
+void MasterProcess::streamInfo (uint64_t length, double aspect) {
+    kDebug() << length;
+    m_source->setLength (mrl (), length);
+    m_source->setAspect (mrl (), aspect);
 }
 
 void MasterProcess::playing () {
@@ -1334,6 +1337,21 @@ void MasterProcess::playing () {
 }
 
 void MasterProcess::progress (uint64_t pos) {
+    m_source->setPosition (pos);
+}
+
+bool MasterProcess::seek (int pos, bool) {
+    if (IProcess::Playing == m_state) {
+        MasterProcessInfo *mpi = static_cast<MasterProcessInfo *>(process_info);
+        QDBusMessage msg = QDBusMessage::createMethodCall (
+                mpi->m_slave_service,
+                m_slave_path,
+                "org.kde.kmplayer.StreamSlave",
+                "seek");
+        msg << (qulonglong) pos << true;
+        msg.setDelayedReply (false);
+        QDBusConnection::sessionBus().send (msg);
+    }
 }
 
 void MasterProcess::eof () {

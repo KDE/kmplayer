@@ -117,6 +117,7 @@ void Stream::init () {
 
     connect(m_media,SIGNAL(hasVideoChanged(bool)), SLOT(hasVideoChanged(bool)));
     connect (m_media, SIGNAL (bufferStatus (int)), SLOT (bufferStatus (int)));
+    connect (m_media, SIGNAL (tick (qint64)), SLOT (tick (qint64)));
     connect (m_media, SIGNAL (stateChanged(Phonon::State, Phonon::State)),
             SLOT (stateChanged (Phonon::State, Phonon::State)));
     connect (m_media, SIGNAL (finished ()), SLOT (finished ()));
@@ -147,6 +148,7 @@ bool Stream::x11Event (XEvent *event) {
 
 void Stream::play () {
     qDebug ("play %s@%lu", qPrintable (m_url), video_handle);
+    m_media->setTickInterval (500);
     m_media->play ();
     m_vwidget->setVisible (m_media->hasVideo ());
 }
@@ -161,6 +163,7 @@ void Stream::stop () {
 }
 
 void Stream::seek (uint64_t position, bool absolute) {
+    m_media->seek (position * 100);
 }
 
 void Stream::hasVideoChanged (bool hasVideo) {
@@ -176,13 +179,27 @@ void Stream::bufferStatus (int percent_filled) {
     QDBusConnection::sessionBus().send (msg);
 }
 
+void Stream::tick (qint64 t) {
+    QDBusMessage msg = QDBusMessage::createMethodCall (
+            control_service, m_master_stream_path,
+            "org.kde.kmplayer.StreamMaster", "progress");
+    msg << (qulonglong) t/100;
+    QDBusConnection::sessionBus().send (msg);
+}
+
 void Stream::stateChanged (Phonon::State newstate, Phonon::State) {
     if (Phonon::PlayingState == newstate) {
-        qDebug ("playing %lu", video_handle);
+        qDebug ("playing %lu len:%lu", video_handle, m_media->totalTime());
         QDBusMessage msg = QDBusMessage::createMethodCall (
                 control_service, m_master_stream_path,
-                "org.kde.kmplayer.StreamMaster", "playing");
+                "org.kde.kmplayer.StreamMaster", "streamInfo");
+        msg << (qulonglong) m_media->totalTime()/100 << (double)0.0; //FIXME:
         QDBusConnection::sessionBus().send (msg);
+
+        QDBusMessage msg2 = QDBusMessage::createMethodCall (
+                control_service, m_master_stream_path,
+                "org.kde.kmplayer.StreamMaster", "playing");
+        QDBusConnection::sessionBus().send (msg2);
     }
 }
 

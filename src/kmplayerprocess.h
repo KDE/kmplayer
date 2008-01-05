@@ -315,10 +315,11 @@ public:
     virtual bool deMediafiedPlay ();
     virtual bool running () const;
 
-    void dimension (int w, int h);
+    void streamInfo (uint64_t length, double aspect);
     void loading (int p);
     void playing ();
     void progress (uint64_t pos);
+    bool seek (int pos, bool absolute);
     void eof ();
 
 public slots:
