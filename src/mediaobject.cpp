@@ -217,7 +217,6 @@ void MediaManager::stateChange (AudioVideoMedia *media,
             has_video = static_cast <RecordDocument *> (mrl)->has_video;
         }
         if (has_video) {
-            m_player->viewWidget ()->playingStart ();
             if (m_player->view ()) {
                 if (media->viewer)
                     media->viewer->map ();

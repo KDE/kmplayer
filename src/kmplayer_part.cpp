@@ -491,7 +491,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
                 i != e;
                 i = std::find_if (++i, e, pred))
             if ((*i)->url ().isEmpty ()) // image window created w/o url
-                return (*i)->openUrl (_url);
+                return (*i)->startUrl (_url);
         QTimer::singleShot (50, this, SLOT (waitForImageWindowTimeOut ()));
         //kError () << "Not the ImageWindow and no ImageWindow found" << endl;
         return true;
@@ -505,7 +505,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
         setSource (hrefsource);
     } else {
         hrefsource->clear ();
-        PartBase::openUrl (m_havehref ? urlsource->url () : url);
+        startUrl (m_havehref ? urlsource->url () : url);
         if (urlsource->autoPlay ()) {
             emit started (0L);
             m_started_emited = true;
@@ -520,6 +520,45 @@ KDE_NO_EXPORT bool KMPlayerPart::openNewURL (const KUrl & url) {
     m_havehref = false;
     m_sources ["urlsource"]->setAutoPlay (true);
     return openUrl (url);
+}
+
+KDE_NO_EXPORT bool KMPlayerPart::startUrl (const KUrl &url, const KUrl &pic) {
+    Source * src = sources () ["urlsource"];
+#ifdef KMPLAYER_WITH_CAIRO
+    if (m_settings->allowhref) {
+        QString img = pic.isEmpty ()
+            ? KUrl (KIconLoader::global()->iconPath (
+                        QString::fromLatin1 ("kmplayer"), -64)).url ()
+            : pic.url ();
+        QString smil = QString::fromLatin1 (
+          "<smil><head><layout>"
+          "<region id='reg1' left='12.5%' top='5%' right='12.5%' bottom'5%' "
+          "background-color='#202030' showBackground='whenActive'/>"
+          "<region id='reg2'/>"
+          "</layout>"
+          "<transition id='clockwipe1' dur='1' type='clockWipe'/>"
+          "</head>"
+          "<body>"
+          "<img id='image1' src='%1' region='reg1' fit='meet' "
+          "begin='.5' end='image1.activateEvent'transIn='clockwipe1'/>"
+          "<video id='video1' region='reg2' src='%2' fit='fill'/>"
+          "</body></smil>"
+          ).arg (img).arg (url.url ());
+        QByteArray ba = smil.toUtf8 ();
+        QTextStream ts (&ba, QIODevice::ReadOnly);
+        KMPlayer::readXML (src->document (), ts, QString (), false);
+        NodePtr n = src->document ()->document ()->getElementById ("video1");
+        if (n) {
+            Mrl *mrl = n->mrl ();
+            AttributePtr a = src->document ()->mrl ()->attributes ()->first ();
+            for (; a; a = a->nextSibling ())
+                mrl->setAttribute (a->name (), a->value ());
+        }
+        setSource (src);
+        return true;
+    } else
+#endif
+        return PartBase::openUrl (m_havehref ? src->url () : url);
 }
 
 KDE_NO_EXPORT void KMPlayerPart::waitForImageWindowTimeOut () {

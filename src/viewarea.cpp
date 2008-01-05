@@ -1313,7 +1313,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType * mediatype) {
             event == event_pointer_moved ? mediatype_attached : event);
     if (nl)
         for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
-            if (c->data)
+            if (c->data && c->data.ptr () != mediatype)
                 c->data->accept (this);
             if (!node->active ())
                 return;

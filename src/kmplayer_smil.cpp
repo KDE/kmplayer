@@ -1091,7 +1091,7 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
                 reg_count++;
             }
         }
-        if (!reg_count) {
+        if (!reg_count || !w_root || !h_root) {
             w_root = 320; h_root = 240; // have something to start with
             SMIL::Region * r = new SMIL::Region (m_doc);
             appendChild (r);
@@ -1129,7 +1129,7 @@ KDE_NO_EXPORT void SMIL::Layout::updateDimensions () {
     x = y = 0;
     w = rb->sizes.width.size ();
     h = rb->sizes.height.size ();
-    //kDebug () << "Layout::updateDimensions " << w << "," << h;
+    //kDebug () << (int)w << "," << (int)h;
     SMIL::RegionBase::updateDimensions ();
 }
 
@@ -1143,13 +1143,13 @@ KDE_NO_EXPORT Surface *SMIL::Layout::surface () {
             h = s->height;
             if (region_surface) {
                 SRect rect = region_surface->bounds;
-                if (rl && auxiliaryNode ()) {
+                if (rl && rl->auxiliaryNode ()) {
                     w = rect.width ();
                     h = rect.height ();
                     rl->setAttribute (StringPool::attr_width, QString::number ((int)w));
                     rl->setAttribute (StringPool::attr_height, QString::number ((int)h));
-                    rl->setParam (StringPool::attr_width, QString::number((int)w));
-                    rl->setParam (StringPool::attr_height,QString::number((int)h));
+                    rl->sizes.width = QString::number ((int) w);
+                    rl->setParam (StringPool::attr_height, QString::number((int)h));
                 } else if (region_surface && w > 0 && h > 0) {
                     updateDimensions ();
                 }

@@ -474,6 +474,7 @@ void PartBase::playingStarted () {
         m_view->controlPanel ()->setPlaying (true);
         m_view->controlPanel ()->showPositionSlider (!!m_source->length ());
         m_view->controlPanel ()->enableSeekButtons (m_source->isSeekable ());
+        m_view->playingStart ();
         //if (m_settings->autoadjustvolume && m_process)
         //   m_process->volume(m_view->controlPanel()->volumeBar()->value(),true);
     }
@@ -484,6 +485,7 @@ void PartBase::playingStopped () {
     kDebug () << "playingStopped " << this;
     if (m_view) {
         m_view->controlPanel ()->setPlaying (false);
+        m_view->playingStop ();
         m_view->reset ();
     }
     m_bPosSliderPressed = false;

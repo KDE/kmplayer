@@ -141,6 +141,7 @@ public:
     void setMaster (KMPlayerPart * m) { m_master = m; }
     virtual void setLoaded (int percentage);
     bool openNewURL (const KUrl & url); // for JS interface
+    bool startUrl (const KUrl &url, const KUrl &pic=KUrl ()); // clickToPlay
 public slots:
     virtual bool openUrl (const KUrl & url);
     virtual bool closeUrl ();
