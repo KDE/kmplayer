@@ -528,11 +528,11 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl (const KUrl &url, const KUrl &pic) {
     if (m_settings->allowhref) {
         QString img = pic.isEmpty ()
             ? KUrl (KIconLoader::global()->iconPath (
-                        QString::fromLatin1 ("kmplayer"), -64)).url ()
+                        QString::fromLatin1 ("kmplayer"), -128)).url ()
             : pic.url ();
         QString smil = QString::fromLatin1 (
           "<smil><head><layout>"
-          "<region id='reg1' left='12.5%' top='5%' right='12.5%' bottom'5%' "
+          "<region id='reg1' left='12.5%' top='5%' right='12.5%' bottom='5%' "
           "background-color='#202030' showBackground='whenActive'/>"
           "<region id='reg2'/>"
           "</layout>"
