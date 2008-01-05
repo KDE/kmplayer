@@ -1144,16 +1144,16 @@ KDE_NO_EXPORT Surface *SMIL::Layout::surface () {
             if (region_surface) {
                 SRect rect = region_surface->bounds;
                 if (rl && rl->auxiliaryNode ()) {
-                    s->width = w = rect.width ();
-                    s->height = h = rect.height ();
+                    w = rect.width ();
+                    h = rect.height ();
                     rl->setAttribute (StringPool::attr_width, QString::number ((int)w));
                     rl->setAttribute (StringPool::attr_height, QString::number ((int)h));
-                    rl->setParam (StringPool::attr_width, QString::number((int)w));
-                    h = rect.height ();
-                    rl->setParam (StringPool::attr_height,QString::number((int)h));
-                }
-                if (region_surface && w > 0 && h > 0)
+                    rl->sizes.width = QString::number ((int) w);
+                    rl->setParam (StringPool::attr_height,
+                            QString::number ((int) h)); //doess updateDimensions
+                } else if (region_surface && w > 0 && h > 0) {
                     updateDimensions ();
+                }
                 //kdDebug() << "Layout::surface bounds " << rect.width () << "x" << rect.height () << " w:" << w << " h:" << h << " xs:" << region_surface->xscale << " ys:" << region_surface->yscale << endl;
             }
         }
