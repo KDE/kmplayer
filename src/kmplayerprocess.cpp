@@ -1324,10 +1324,12 @@ bool MasterProcess::running () const {
 void MasterProcess::dimension (int w, int h) {
 }
 
-void MasterProcess::loading (int p) {
+void MasterProcess::loading (int perc) {
+    process_info->manager->player ()->setLoaded (perc);
 }
 
 void MasterProcess::playing () {
+    process_info->manager->player ()->setLoaded (100);
     setState (IProcess::Playing);
 }
 

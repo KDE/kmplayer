@@ -168,8 +168,12 @@ void Stream::hasVideoChanged (bool hasVideo) {
     m_vwidget->setVisible (hasVideo);
 }
 
-void Stream::bufferStatus (int percentFilled) {
-    qDebug ("buffering %d", percentFilled);
+void Stream::bufferStatus (int percent_filled) {
+    QDBusMessage msg = QDBusMessage::createMethodCall (
+            control_service, m_master_stream_path,
+            "org.kde.kmplayer.StreamMaster", "loading");
+    msg << percent_filled;
+    QDBusConnection::sessionBus().send (msg);
 }
 
 void Stream::stateChanged (Phonon::State newstate, Phonon::State) {
