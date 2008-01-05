@@ -167,7 +167,7 @@ void Process::initProcess () {
 }
 
 WId Process::widget () {
-    return media_object && media_object->viewer
+    return view () && media_object && media_object->viewer
         ? media_object->viewer->windowHandle ()
         : 0;
 }
