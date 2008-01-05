@@ -615,6 +615,8 @@ KDE_NO_EXPORT void ControlPanel::setPlayingProgress (int pos, int len) {
 KDE_NO_EXPORT void ControlPanel::setLoadingProgress (int pos) {
     if (pos > 0 && pos < 100 && !m_posSlider->isVisible ())
         showPositionSlider (true);
+    else if (pos >= 100 && m_posSlider->isVisible ())
+        showPositionSlider (false);
     m_posSlider->setEnabled (false);
     if (m_progress_mode != progress_loading) {
         m_posSlider->setMaxValue (100);

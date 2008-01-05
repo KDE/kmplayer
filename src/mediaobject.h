@@ -222,14 +222,19 @@ class AudioVideoMedia;
 
 class KMPLAYER_NO_EXPORT IViewer {
 public:
+    enum Monitor {
+        MonitorNothing = 0, MonitorMouse = 1, MonitorKey = 2 , MonitorAll = 3
+    };
     IViewer () {}
     virtual ~IViewer () {}
 
     virtual WindowId windowHandle () = 0;
+    virtual WindowId clientHandle () = 0;
     virtual void setGeometry (const IRect &rect) = 0;
     virtual void setAspect (float a) = 0;
     virtual float aspect () = 0;
     virtual void useIndirectWidget (bool) = 0;
+    virtual void setMonitoring (Monitor) = 0;
     virtual void map () = 0;
     virtual void unmap () = 0;
 private:

@@ -514,7 +514,7 @@ void View::addText (const QString & str, bool eol) {
 }*/
 
 KDE_NO_EXPORT void View::videoStart () {
-    if (m_dockarea->getMainDockWidget () != m_dock_video) {
+    if (!isFullScreen () && m_dockarea->getMainDockWidget () != m_dock_video) {
         // restore from an info or playlist only setting
         KDockWidget * dw = m_dockarea->getMainDockWidget ();
         dw->setEnableDocking (KDockWidget::DockCenter);

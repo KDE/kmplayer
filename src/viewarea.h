@@ -54,6 +54,8 @@ public:
     IViewer *createVideoWidget ();
     void destroyVideoWidget (IViewer *widget);
     void setVideoWidgetVisible (bool show);
+signals:
+    void fullScreenChanged ();
 public slots:
     void fullScreen ();
     void accelActivated ();
@@ -94,7 +96,7 @@ private:
 /*
  * The video widget
  */
-class KMPLAYER_EXPORT VideoOutput : public QXEmbed, public IViewer {
+class KMPLAYER_NO_EXPORT VideoOutput : public QXEmbed, public IViewer {
     Q_OBJECT
 public:
     VideoOutput (QWidget *parent, View * view);
@@ -103,14 +105,17 @@ public:
     int heightForWidth (int w) const;
 
     virtual WindowId windowHandle ();
+    virtual WindowId clientHandle ();
     using QWidget::setGeometry;
     virtual void setGeometry (const IRect &rect);
     virtual void setAspect (float a);
     virtual float aspect () { return m_aspect; }
     virtual void useIndirectWidget (bool);
+    virtual void setMonitoring (Monitor m);
     virtual void map ();
     virtual void unmap ();
 
+    KDE_NO_EXPORT long inputMask () const { return m_input_mask; }
     void sendKeyEvent (int key);
     void setBackgroundColor (const QColor & c);
     void resetBackgroundColor ();
@@ -118,6 +123,7 @@ public:
     KDE_NO_EXPORT View * view () const { return m_view; }
 public slots:
     void sendConfigureEvent ();
+    void fullScreenChanged ();
 protected:
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
@@ -129,6 +135,7 @@ private:
     unsigned int m_bgcolor;
     float m_aspect;
     View * m_view;
+    long m_input_mask;
 };
 
 } // namespace KMPlayer

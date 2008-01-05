@@ -1498,7 +1498,9 @@ KDE_NO_CDTOR_EXPORT SMIL::TimedMrl::TimedMrl (NodePtr & d, short id)
    m_StartedListeners (new NodeRefList),
    m_StoppedListeners (new NodeRefList),
    m_runtime (0L),
-   inited (false) {}
+   inited (false) {
+    view_mode = Mrl::WindowMode;
+}
 
 KDE_NO_CDTOR_EXPORT SMIL::TimedMrl::~TimedMrl () {
     delete m_runtime;
@@ -2109,7 +2111,6 @@ KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, sh
  : TimedMrl (d, id), m_type (t), bitrate (0), trans_step (0), trans_steps (0),
    sensitivity (sens_opaque), trans_out_active (false),
    m_MediaAttached (new NodeRefList) {
-    view_mode = Mrl::WindowMode;
 }
 
 KDE_NO_CDTOR_EXPORT SMIL::MediaType::~MediaType () {

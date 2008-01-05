@@ -1026,16 +1026,20 @@ void Source::timerEvent (QTimerEvent * e) {
 void Source::stateElementChanged (Node *elm, Node::State os, Node::State ns) {
     //kdDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isPlayable:" << (m_current && m_current->isPlayable ()) << " elm==linkNode:" << (m_current && elm == m_current->mrl ()->linkNode ()) << endl;
     if (ns == Node::state_activated &&
-            elm->mrl () &&
-            Mrl::WindowMode != elm->mrl ()->view_mode) {
-        m_current = elm;
-        if (m_current == m_document)
+            elm->mrl ()) {
+        if (Mrl::WindowMode != elm->mrl ()->view_mode)
+            m_current = elm;
+        if (m_current.ptr () == elm)
             emit startPlaying ();
-    } else if (ns == Node::state_deactivated && elm == m_document) {
-        NodePtrW guard = elm;
-        emit endOfPlayItems (); // played all items FIXME on jumps
-        if (!guard)
-            return;
+    } else if (ns == Node::state_deactivated) {
+        if (elm == m_document) {
+            NodePtrW guard = elm;
+            emit endOfPlayItems (); // played all items FIXME on jumps
+            if (!guard)
+                return;
+        } else if (m_current.ptr () == elm) {
+            emit stopPlaying ();
+        }
     }
     if (elm->expose ()) {
         if (ns == Node::state_activated || ns == Node::state_deactivated)
@@ -1541,7 +1545,6 @@ KDE_NO_EXPORT void URLSource::kioResult (KIO::Job * job) {
         rinfo->resolving_mrl->mrl ()->resolved = true;
         rinfo->resolving_mrl->undefer ();
     }
-    static_cast <View *> (m_player->view())->controlPanel()->setPlaying (false);
 }
 
 bool URLSource::authoriseUrl (const QString &url) {
@@ -1640,7 +1643,6 @@ bool URLSource::resolveURL (NodePtr m) {
                 this, SLOT (kioMimetype (KIO::Job *, const QString &)));
         connect (m_resolve_info->job, SIGNAL (result (KIO::Job *)),
                 this, SLOT (kioResult (KIO::Job *)));
-        static_cast <View *> (m_player->view ())->controlPanel ()->setPlaying (true);
         m_player->updateStatus (i18n ("Connecting"));
         m_player->setLoaded (0);
         return false; // wait for result ..

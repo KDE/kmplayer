@@ -297,6 +297,12 @@ void PlayListView::updateTree (RootPlayListItem * ritem, NodePtr active, bool se
         delete ritem->firstChild ();
     if (!ritem->node)
         return;
+    if (!ritem->show_all_nodes)
+        for (NodePtr n = active; n; n = n->parentNode ()) {
+            active = n;
+            if (n->expose ())
+                break;
+        }
     populate (ritem->node, active, ritem, 0L, &curitem);
     if (set_open && ritem->firstChild () && !ritem->isOpen ())
         setOpen (ritem, true);
