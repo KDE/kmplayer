@@ -1672,8 +1672,7 @@ KDE_NO_EXPORT void KMPlayerApp::preparePlaylistMenu (KMPlayer::PlayListItem * it
 KDE_NO_EXPORT void KMPlayerApp::configChanged () {
     //viewKeepRatio->setChecked (m_player->settings ()->sizeratio);
     if (m_player->settings ()->docksystray && !m_systray) {
-        m_systray = new KSystemTrayIcon (this);
-        m_systray->loadIcon ("kmplayer");
+        m_systray = new KSystemTrayIcon (KIcon ("kmplayer"), this);
         m_systray->show ();
     } else if (!m_player->settings ()->docksystray && m_systray) {
         delete m_systray;
