@@ -110,16 +110,39 @@ KDE_NO_EXPORT void ASX::Entry::activate () {
                 if (n)
                     n->setInfoMessage (KURL::decode_string (
                                 getAsxAttribute (elm, "value")));
-                break;
             }
+        } else if (e->id == id_node_duration) {
+            QString s = convertNode <Element> (e)->getAttribute (
+                    StringPool::attr_value);
+            int multiply[] = { 1, 60, 60 * 60, 24 * 60 * 60, 0 };
+            int mpos = 0;
+            double d = 0;
+            while (!s.isEmpty () && multiply[mpos]) {
+                int p = s.findRev (QChar (':'));
+                QString t = p >= 0 ? s.mid (p + 1) : s;
+                d += multiply[mpos++] * t.toDouble();
+                s = p >= 0 ? s.left (p) : QString ();
+            }
+            if (d > 0.00001)
+                duration_timer = document()->setTimeout (this, int (d * 1000));
         }
     Mrl::activate ();
+}
+
+KDE_NO_EXPORT bool ASX::Entry::handleEvent (EventPtr event) {
+    if (event->id () == event_timer) {
+        document()->cancelTimer (duration_timer);
+        deactivate ();
+    }
 }
 
 KDE_NO_EXPORT void ASX::Entry::deactivate () {
     PlayListNotify * n = document ()->notify_listener;
     if (n)
         n->setInfoMessage (QString ());
+    if (duration_timer)
+        document()->cancelTimer (duration_timer);
+    Mrl::deactivate ();
 }
 
 KDE_NO_EXPORT bool ASX::Entry::expose () const {

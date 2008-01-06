@@ -554,6 +554,7 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl (const KUrl &url, const KUrl &pic) {
             for (; a; a = a->nextSibling ())
                 mrl->setAttribute (a->name (), a->value ());
         }
+        src->document ()->document ()->resolved = true;
         setSource (src);
         return true;
     } else

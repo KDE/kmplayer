@@ -187,18 +187,29 @@ void ViewSurface::repaint () {
     view_widget->scheduleRepaint (toScreen (0, 0, bounds.width (), bounds.height ()));
 }
 
+static AudioVideoMedia *findAudioVideoMedia (Mrl *m) {
+    if (m->media_object &&
+            MediaManager::AudioVideo == m->media_object->type ())
+        return static_cast <AudioVideoMedia *> (m->media_object);
+    for (Node *c = m->firstChild ().ptr (); c; c = c->nextSibling ()) {
+        Mrl *mrl = c->mrl ();
+        if (mrl) {
+            AudioVideoMedia *avm = findAudioVideoMedia (mrl);
+            if (avm)
+                return avm;
+        }
+    }
+}
+
 KDE_NO_EXPORT void ViewSurface::video (Mrl *mt) {
     xscale = yscale = 1; // either scale width/heigt or use bounds
-    if (mt->media_object &&
-            MediaManager::AudioVideo == mt->media_object->type ()) {
-        AudioVideoMedia *avm = static_cast <AudioVideoMedia*>(mt->media_object);
-        if (avm->viewer &&
-                avm->process &&
-                avm->process->state () > IProcess::Ready &&
-                strcmp (mt->nodeName (), "audio"))
-            avm->viewer->setGeometry (toScreen (
-                        0, 0, bounds.width(), bounds.height ()));
-    }
+    AudioVideoMedia *avm = findAudioVideoMedia (mt);
+    if (avm && avm->viewer &&
+            avm->process &&
+            avm->process->state () > IProcess::Ready &&
+            strcmp (mt->nodeName (), "audio"))
+        avm->viewer->setGeometry (toScreen (
+                    0, 0, bounds.width(), bounds.height ()));
 }
 
 //-------------------------------------------------------------------------
@@ -617,6 +628,12 @@ KDE_NO_EXPORT void CairoPaintVisitor::paint (SMIL::MediaType *mt, Surface *s,
 
 KDE_NO_EXPORT
 void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
+    short exid = av->external_tree->id;
+    if (!((exid >= SMIL::id_node_first && exid < SMIL::id_node_last) ||
+            (exid >= RP::id_node_first && exid < RP::id_node_last))) {
+        s->video (av);
+        return;
+    }
     SRect rect = s->bounds;
     Single x = rect.x ();
     Single y = rect.y ();
