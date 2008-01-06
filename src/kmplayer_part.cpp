@@ -540,21 +540,23 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl (const KUrl &url, const KUrl &pic) {
           "</head>"
           "<body>"
           "<img id='image1' src='%1' region='reg1' fit='meet' "
-          "begin='.5' end='image1.activateEvent'transIn='clockwipe1'/>"
-          "<video id='video1' region='reg2' src='%2' fit='fill'/>"
+          "begin='.5' end='image1.activateEvent' transIn='clockwipe1'/>"
+          "<video id='video1' region='reg2' fit='fill'/>"
           "</body></smil>"
-          ).arg (img).arg (url.url ());
+          ).arg (img);
         QByteArray ba = smil.toUtf8 ();
         QTextStream ts (&ba, QIODevice::ReadOnly);
-        KMPlayer::readXML (src->document (), ts, QString (), false);
-        NodePtr n = src->document ()->document ()->getElementById ("video1");
+        NodePtr doc = src->document ();
+        KMPlayer::readXML (doc, ts, QString (), false);
+        NodePtr n = doc->document ()->getElementById ("video1");
         if (n) {
-            Mrl *mrl = n->mrl ();
-            AttributePtr a = src->document ()->mrl ()->attributes ()->first ();
-            for (; a; a = a->nextSibling ())
-                mrl->setAttribute (a->name (), a->value ());
+            Mrl *mrl = new GenericURL (doc, url.url ());
+            n->appendChild (mrl);
+            mrl->opener = n;
+            mrl->setAttributes (convertNode <Element> (doc)->attributes ());
+            n->closed ();
         }
-        src->document ()->document ()->resolved = true;
+        doc->document ()->resolved = true;
         setSource (src);
         return true;
     } else
