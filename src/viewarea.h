@@ -90,9 +90,6 @@ private:
     VideoWidgetList video_widgets;
     int m_mouse_invisible_timer;
     int m_repaint_timer;
-    int m_fullscreen_scale;
-    int scale_lbl_id;
-    int scale_slider_id;
     bool m_fullscreen;
     bool m_minimal;
 };

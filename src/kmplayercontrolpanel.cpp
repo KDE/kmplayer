@@ -24,6 +24,9 @@
 #include <qpainter.h>
 #include <qstringlist.h>
 #include <QPalette>
+#include <QSlider>
+#include <QLabel>
+#include <QWidgetAction>
 
 #include <kiconloader.h>
 #include <kicon.h>
@@ -403,7 +406,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     zoomMenu = new KMPlayerPopupMenu (NULL, i18n ("&Zoom"));
     zoomAction = popupMenu->addMenu (zoomMenu);
     zoomAction->setIcon (KIconLoader::global ()->loadIconSet (
-                QString ("zoom-fit-best"), KIconLoader::Small, 0, false));
+                QString ("zoom-best-fit"), KIconLoader::Small, 0, false));
     zoom50Action = zoomMenu->addAction (i18n ("50%"));
     zoom100Action = zoomMenu->addAction (i18n ("100%"));
     zoom150Action = zoomMenu->addAction (i18n ("150%"));
@@ -436,7 +439,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
 
     bookmarkMenu = new KMPlayerPopupMenu (NULL, i18n("&Bookmarks"));
     bookmarkAction = popupMenu->addMenu (bookmarkMenu);
-    bookmarkAction->setVisible (false);
+    //bookmarkAction->setVisible (false);
 
     languageMenu = new KMPlayerPopupMenu (NULL, i18n ("&Audio languages"));
     languageAction = popupMenu->addMenu (languageMenu);
@@ -449,6 +452,20 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     subtitleAction->setIcon (KIconLoader::global ()->loadIconSet (
                 QString ("view-list-text"), KIconLoader::Small, 0, true));
     languageAction->setVisible (false);
+
+    scaleLabelAction = new QWidgetAction (popupMenu);
+    scaleLabelAction->setDefaultWidget (new QLabel (i18n ("Scale:")));
+    popupMenu->addAction (scaleLabelAction);
+    scaleLabelAction->setVisible (false);
+    scaleAction = new QWidgetAction (popupMenu);
+    scale_slider = new QSlider (Qt::Horizontal);
+    scale_slider->setMinimum (50);
+    scale_slider->setMaximum (150);
+    scale_slider->setPageStep (10);
+    scale_slider->setSliderPosition (100);
+    scaleAction->setDefaultWidget (scale_slider);
+    popupMenu->addAction (scaleAction);
+    scaleAction->setVisible (false);
 
     configureAction = popupMenu->addAction (KIcon ("configure"), i18n ("&Configure KMPlayer..."));
 

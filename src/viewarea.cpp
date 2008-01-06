@@ -32,6 +32,7 @@
 #include <QX11Info>
 #include <QPainter>
 #include <QMainWindow>
+#include <QWidgetAction>
 
 #include <kactioncollection.h>
 #include <kapplication.h>
@@ -1358,9 +1359,6 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
    surface (new ViewSurface (this)),
    m_mouse_invisible_timer (0),
    m_repaint_timer (0),
-   m_fullscreen_scale (100),
-   scale_lbl_id (-1),
-   scale_slider_id (-1),
    m_fullscreen (false),
    m_minimal (false) {
 #ifdef KMPLAYER_WITH_CAIRO
@@ -1398,11 +1396,10 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
         m_view->dockArea ()->restoreState (m_dock_state);
         for (unsigned i = 0; i < m_collection->count (); ++i)
             m_collection->action (i)->setEnabled (false);
-        /*if (scale_lbl_id != -1) {
-            m_view->controlPanel ()->popupMenu->removeItem (scale_lbl_id);
-            m_view->controlPanel ()->popupMenu->removeItem (scale_slider_id);
-            scale_lbl_id = scale_slider_id = -1;
-        }*/
+        m_view->controlPanel ()->scaleLabelAction->setVisible (false);
+        m_view->controlPanel ()->scaleAction->setVisible (false);
+        disconnect ( m_view->controlPanel ()->scale_slider,
+                SIGNAL (valueChanged (int)), this, SLOT (scale (int)));
         m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (playlist_xpm)));
     } else {
         m_dock_state = m_view->dockArea ()->saveState ();
@@ -1411,12 +1408,10 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
         showFullScreen ();
         for (unsigned i = 0; i < m_collection->count (); ++i)
             m_collection->action (i)->setEnabled (true);
-        /*QPopupMenu * menu = m_view->controlPanel ()->popupMenu;
-        QLabel * lbl = new QLabel (i18n ("Scale:"), menu);
-        scale_lbl_id = menu->insertItem (lbl, -1, 4);
-        QSlider * slider = new QSlider (50, 150, 10, m_fullscreen_scale, Qt::Horizontal, menu);
-        connect (slider, SIGNAL (valueChanged (int)), this, SLOT (scale (int)));
-        scale_slider_id = menu->insertItem (slider, -1, 5);*/
+        m_view->controlPanel ()->scaleLabelAction->setVisible (true);
+        m_view->controlPanel ()->scaleAction->setVisible (true);
+        connect ( m_view->controlPanel ()->scale_slider,
+                SIGNAL (valueChanged (int)), this, SLOT (scale (int)));
         m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (normal_window_xpm)));
     }
     m_fullscreen = !m_fullscreen;
@@ -1466,7 +1461,6 @@ KDE_NO_EXPORT void ViewArea::mousePressEvent (QMouseEvent * e) {
         MouseVisitor visitor (event_pointer_clicked, e->x(), e->y());
         surface->node->accept (&visitor);
     }
-    e->accept ();
 }
 
 KDE_NO_EXPORT void ViewArea::mouseDoubleClickEvent (QMouseEvent *) {
@@ -1539,7 +1533,6 @@ QPaintEngine *ViewArea::paintEngine () const {
 }
 
 KDE_NO_EXPORT void ViewArea::scale (int val) {
-    m_fullscreen_scale = val;
     resizeEvent (0L);
 }
 
@@ -1605,8 +1598,9 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
     if (m_view->statusBar ()->isVisible ())
         m_view->statusBar ()->setGeometry (0, h-hsb, w, hsb);
     if (m_fullscreen && wws == w && hws == h) {
-        wws = wws * m_fullscreen_scale / 100;
-        hws = hws * m_fullscreen_scale / 100;
+        int scale = m_view->controlPanel ()->scale_slider->sliderPosition ();
+        wws = wws * scale / 100;
+        hws = hws * scale / 100;
         x += (w - wws) / 2;
         y += (h - hws) / 2;
     }

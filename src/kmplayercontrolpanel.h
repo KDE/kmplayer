@@ -29,6 +29,7 @@
 class QSlider;
 //class QPushButton;
 class QAction;
+class QWidgetAction;
 class QBoxLayout;
 class QStringList;
 class KMenu;
@@ -133,6 +134,9 @@ public:
     QAction *configureAction;
     QAction *bookmarkAction;
     QAction *languageAction;
+    QWidgetAction *scaleLabelAction;
+    QWidgetAction *scaleAction;
+    QSlider *scale_slider;
     KMPlayerPopupMenu *popupMenu;
     KMPlayerPopupMenu *bookmarkMenu;
     KMPlayerPopupMenu *zoomMenu;
