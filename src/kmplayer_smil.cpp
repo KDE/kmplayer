@@ -1091,8 +1091,9 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
                 reg_count++;
             }
         }
-        if (!reg_count || !w_root || !h_root) {
+        if (!w_root || !h_root)
             w_root = 320; h_root = 240; // have something to start with
+        if (!reg_count) {
             SMIL::Region * r = new SMIL::Region (m_doc);
             appendChild (r);
             r->setAuxiliaryNode (true);
