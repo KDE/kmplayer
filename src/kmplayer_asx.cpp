@@ -118,7 +118,7 @@ KDE_NO_EXPORT void ASX::Entry::activate () {
             int mpos = 0;
             double d = 0;
             while (!s.isEmpty () && multiply[mpos]) {
-                int p = s.findRev (QChar (':'));
+                int p = s.lastIndexOf (QChar (':'));
                 QString t = p >= 0 ? s.mid (p + 1) : s;
                 d += multiply[mpos++] * t.toDouble();
                 s = p >= 0 ? s.left (p) : QString ();
