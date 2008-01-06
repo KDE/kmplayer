@@ -73,7 +73,7 @@ protected:
     void closeEvent (QCloseEvent * e);
     bool x11Event (XEvent *e);
 #ifdef KMPLAYER_WITH_CAIRO
-    QPaintEngine *paintEngine () const { return NULL; }
+    QPaintEngine *paintEngine () const;
 #endif
 private:
     void syncVisual (const IRect & rect);

@@ -1529,6 +1529,15 @@ KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
     }
 }
 
+QPaintEngine *ViewArea::paintEngine () const {
+#ifdef KMPLAYER_WITH_CAIRO
+    if (surface->node)
+        return NULL;
+    else
+#endif
+        return QWidget::paintEngine ();
+}
+
 KDE_NO_EXPORT void ViewArea::scale (int val) {
     m_fullscreen_scale = val;
     resizeEvent (0L);
