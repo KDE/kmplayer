@@ -640,7 +640,7 @@ public:
     virtual void resize (const SRect & rect) = 0;
     virtual void repaint () = 0;
     virtual void repaint (const SRect &rect) = 0;
-    virtual void video (Mrl *) = 0;
+    virtual void video (Mrl *, Visitor *) = 0;
     void remove ();                // remove from parent, mark ancestors dirty
     void markDirty ();             // mark this and ancestors dirty
 
