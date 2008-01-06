@@ -316,7 +316,7 @@ KDE_NO_EXPORT void Runtime::begin () {
         reset ();
         return;
     }
-    //kDebug () << "Runtime::begin " << element->nodeName(); 
+    //kDebug () << "Runtime::begin " << element->nodeName();
     if (start_timer || duration_timer)
         convertNode <SMIL::TimedMrl> (element)->init ();
     timingstate = timings_began;
@@ -494,7 +494,7 @@ KDE_NO_EXPORT void Runtime::propagateStart () {
  * start_timer timer expired
  */
 KDE_NO_EXPORT void Runtime::started () {
-    //kDebug () << "Runtime::started " << (element ? element->nodeName() : "-"); 
+    //kDebug () << (element ? element->nodeName() : "-");
     NodePtr e = element; // element is weak
     SMIL::TimedMrl * tm = convertNode <SMIL::TimedMrl> (e);
     if (tm) {
@@ -2126,12 +2126,12 @@ KDE_NO_EXPORT NodePtr SMIL::MediaType::childFromTag (const QString & tag) {
     return 0L;
 }
 
-//-----------------------------------------------------------------------------
-
-static NodePtr findExternalTree (NodePtr mrl) {
+static NodePtr findExternalTree (Mrl *mrl) {
     for (NodePtr c = mrl->firstChild (); c; c = c->nextSibling ()) {
         Mrl * m = c->mrl ();
-        if (m && m->opener == mrl)
+        if (m && (m->opener.ptr () == mrl ||
+                    m->id == SMIL::id_node_smil ||
+                    m->id == RP::id_node_imfl))
             return c;
     }
     return 0L;
@@ -2325,14 +2325,9 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
 KDE_NO_EXPORT void SMIL::MediaType::clipStart () {
     SMIL::RegionBase *r = convertNode<SMIL::RegionBase> (region_node);
     if (r && r->surface ()) {
-        for (NodePtr n = firstChild (); n; n = n->nextSibling ())
-            if ((n->mrl () && n->mrl ()->opener.ptr () == this) ||
-                    n->id == SMIL::id_node_smil ||
-                    n->id == RP::id_node_imfl) {
-                n->activate ();
-                return;
-            }
-        if (media_object)
+        if (external_tree)
+            external_tree->activate ();
+        else if (media_object)
             media_object->play ();
     }
 }
@@ -2380,7 +2375,7 @@ KDE_NO_EXPORT void SMIL::MediaType::childDone (NodePtr child) {
 
 SurfacePtr SMIL::MediaType::getSurface (NodePtr node) {
     resetSurface ();
-    Surface *s = surface ();
+    Surface *s = node ? surface () : NULL;
     if (s && node)
         s->node = node;
     return s;
@@ -2546,7 +2541,7 @@ KDE_NO_EXPORT void SMIL::AVMediaType::clipStop () {
 }
 
 KDE_NO_EXPORT void SMIL::AVMediaType::begin () {
-    if (!resolved) {
+    if (!external_tree && !resolved) {
         defer ();
     } else {
         if (0 == runtime ()->durTime ().offset &&
