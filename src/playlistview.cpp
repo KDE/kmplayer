@@ -139,10 +139,10 @@ KDE_NO_CDTOR_EXPORT PlayListView::PlayListView (QWidget * parent, View * view, K
     setPalette (palette);
     m_itemmenu = new QMenu (this);
     folder_pix = KIconLoader::global ()->loadIcon (QString ("folder"), KIconLoader::Small);
-    auxiliary_pix = KIconLoader::global ()->loadIcon (QString ("folder_grey"), KIconLoader::Small);
+    auxiliary_pix = KIconLoader::global ()->loadIcon (QString ("folder-grey"), KIconLoader::Small);
     video_pix = KIconLoader::global ()->loadIcon (QString ("video-x-generic"), KIconLoader::Small);
     info_pix = KIconLoader::global ()->loadIcon (QString ("dialog-info"), KIconLoader::Small);
-    img_pix = KIconLoader::global ()->loadIcon (QString ("colorize"), KIconLoader::Small);
+    img_pix = KIconLoader::global ()->loadIcon (QString ("image-png"), KIconLoader::Small);
     unknown_pix = KIconLoader::global ()->loadIcon (QString ("unknown"), KIconLoader::Small);
     menu_pix = KIconLoader::global ()->loadIcon (QString ("view-media-playlist"), KIconLoader::Small);
     config_pix = KIconLoader::global ()->loadIcon (QString ("configure"), KIconLoader::Small);
