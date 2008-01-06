@@ -193,7 +193,9 @@ static AudioVideoMedia *findAudioVideoMedia (Mrl *m) {
         return static_cast <AudioVideoMedia *> (m->media_object);
     for (Node *c = m->firstChild ().ptr (); c; c = c->nextSibling ()) {
         Mrl *mrl = c->mrl ();
-        if (mrl) {
+        if (mrl &&
+                !(mrl->id >= SMIL::id_node_first && //FIXME, if smil and active
+                    mrl->id < SMIL::id_node_last)) {// call updateExternal
             AudioVideoMedia *avm = findAudioVideoMedia (mrl);
             if (avm)
                 return avm;
