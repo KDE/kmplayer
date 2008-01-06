@@ -141,26 +141,34 @@ public:
 //-----------------------------------------------------------------------------
 
 #ifdef _KDEBUG_H_
-inline kdbgstream & operator << (kdbgstream & dbg, Single s) {
+# ifndef KDE_NO_DEBUG_OUTPUT
+inline QDebug & operator << (QDebug & dbg, Single s) {
     dbg << (double) (s);
     return dbg;
 }
 
-inline kndbgstream & operator << (kndbgstream & dbg, Single) { return dbg; }
-
-inline kdbgstream & operator << (kdbgstream & dbg, const SRect &r) {
+inline QDebug & operator << (QDebug & dbg, const SRect &r) {
     dbg << "SRect(x=" << r._x << " y=" << r._y << " w=" << r._w << " h=" << r._h << ")";
     return dbg;
 }
 
-inline kndbgstream & operator << (kndbgstream &d, const SRect&) { return d; }
-
-inline kdbgstream & operator << (kdbgstream & dbg, const IRect &r) {
+inline QDebug & operator << (QDebug & dbg, const IRect &r) {
     dbg << "IRect(x=" << r.x << " y=" << r.y << " w=" << r.w << " h=" << r.h << ")";
     return dbg;
 }
+# else
+inline QDebug & operator << (QDebug & dbg, Single) {
+    return dbg;
+}
 
-inline kndbgstream & operator << (kndbgstream &d, const IRect&) { return d; }
+inline QDebug & operator << (QDebug & dbg, const SRect &r) {
+    return dbg;
+}
+
+inline QDebug & operator << (QDebug & dbg, const IRect &r) {
+    return dbg;
+}
+# endif
 #endif
 
 inline Single & Single::operator *= (const Single s) {
