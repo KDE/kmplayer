@@ -1040,10 +1040,10 @@ void Source::stateElementChanged (Node *elm, Node::State os, Node::State ns) {
     }
 }
 
-SurfacePtr Source::getSurface (NodePtr n) {
+Surface *Source::getSurface (Mrl *mrl) {
     if (m_player->view ())
-        return static_cast <View*>(m_player->view())->viewArea()->getSurface(n);
-    return 0L;
+        return m_player->viewWidget ()->viewArea ()->getSurface (mrl);
+    return NULL;
 }
 
 void Source::setInfoMessage (const QString & msg) {
@@ -1325,7 +1325,7 @@ void URLSource::deactivate () {
         m_document->document ()->dispose ();
         m_document = NULL;
     }
-    getSurface (0L);
+    getSurface (NULL);
 }
 
 QString URLSource::prettyName () {

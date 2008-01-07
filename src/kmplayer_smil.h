@@ -586,7 +586,7 @@ public:
     virtual void begin ();
     virtual void finish ();
     virtual void childDone (NodePtr child);
-    virtual SurfacePtr getSurface (NodePtr node);
+    virtual Surface *getSurface (Mrl *mrl);
     /* (new) sub-region or NULL if not displayed */
     Surface *surface ();
     void resetSurface ();

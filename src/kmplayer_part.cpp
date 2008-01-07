@@ -541,7 +541,7 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl (const KUrl &url, const KUrl &pic) {
           "<body>"
           "<img id='image1' src='%1' region='reg1' fit='meet' "
           "begin='.5' end='image1.activateEvent' transIn='clockwipe1'/>"
-          "<video id='video1' region='reg2' fit='fill'/>"
+          "<video id='video1' region='reg2' fit='meet'/>"
           "</body></smil>"
           ).arg (img);
         QByteArray ba = smil.toUtf8 ();

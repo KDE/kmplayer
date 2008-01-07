@@ -125,7 +125,7 @@ protected:
      */
     bool resolveURL (NodePtr mrl);
     void stateElementChanged (Node * element, Node::State os, Node::State ns);
-    SurfacePtr getSurface (NodePtr node);
+    Surface *getSurface (Mrl *mrl);
     void setInfoMessage (const QString & msg);
     void bitRates (int & preferred, int & maximal);
     void setTimeout (int ms);

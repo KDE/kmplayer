@@ -915,7 +915,7 @@ KDE_NO_EXPORT void SMIL::Smil::deactivate () {
     state = state_deactivated;
     if (layout_node)
         convertNode <SMIL::Layout> (layout_node)->region_surface = NULL;
-    Mrl::getSurface(0L);
+    Mrl::getSurface (NULL);
     Mrl::deactivate ();
 }
 
@@ -2373,11 +2373,16 @@ KDE_NO_EXPORT void SMIL::MediaType::childDone (NodePtr child) {
         finish ();
 }
 
-SurfacePtr SMIL::MediaType::getSurface (NodePtr node) {
+Surface *SMIL::MediaType::getSurface (Mrl *mrl) {
     resetSurface ();
-    Surface *s = node ? surface () : NULL;
-    if (s && node)
-        s->node = node;
+    Surface *s = NULL;
+    if (mrl) {
+        width = mrl->width;
+        height = mrl->height;
+        s = surface ();
+        if (s)
+            s->node = mrl;
+    }
     return s;
 }
 

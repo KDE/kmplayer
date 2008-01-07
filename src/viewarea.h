@@ -46,7 +46,7 @@ public:
     KDE_NO_EXPORT bool isMinimalMode () const { return m_minimal; }
     KDE_NO_EXPORT KActionCollection * actionCollection () const { return m_collection; }
     KDE_NO_EXPORT QRect topWindowRect () const { return m_topwindow_rect; }
-    SurfacePtr getSurface (NodePtr node);
+    Surface *getSurface (Mrl *mrl);
     void mouseMoved ();
     void scheduleRepaint (const IRect &rect);
     void resizeEvent (QResizeEvent *);

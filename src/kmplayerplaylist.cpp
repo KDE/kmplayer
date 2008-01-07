@@ -480,8 +480,8 @@ QString Node::nodeValue () const {
     return QString ();
 }
 
-SurfacePtr Node::getSurface (NodePtr) {
-    return 0L;
+Surface *Node::getSurface (Mrl *) {
+    return NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -768,11 +768,11 @@ void Mrl::deactivate () {
     Node::deactivate ();
 }
 
-SurfacePtr Mrl::getSurface (NodePtr node) {
+Surface *Mrl::getSurface (Mrl *mrl) {
     for (NodePtr p = parentNode (); p; p = p->parentNode ())
         if (p->mrl ())
-            return p->getSurface (node);
-    return 0L;
+            return p->getSurface (mrl);
+    return NULL;
 }
 
 bool Mrl::handleEvent (EventPtr) {
@@ -1089,10 +1089,10 @@ void Document::proceed (const struct timeval & postponed_time) {
     propagateEvent (new PostponedEvent (false));
 }
 
-SurfacePtr Document::getSurface (NodePtr node) {
+Surface *Document::getSurface (Mrl *mrl) {
     if (notify_listener)
-        return notify_listener->getSurface (node);
-    return 0L;
+        return notify_listener->getSurface (mrl);
+    return NULL;
 }
 
 NodeRefListPtr Document::listeners (unsigned int id) {

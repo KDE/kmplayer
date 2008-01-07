@@ -125,7 +125,7 @@ public:
     void resize (const SRect & rect);
     void repaint ();
     void repaint (const SRect &rect);
-    void video (Mrl *mt, Visitor *v);
+    void video (Mrl *mt);
 
     NodePtrW current_video;
     ViewArea * view_widget;
@@ -188,33 +188,18 @@ void ViewSurface::repaint () {
     view_widget->scheduleRepaint (toScreen (0, 0, bounds.width (), bounds.height ()));
 }
 
-static AudioVideoMedia *findAudioVideoMedia (Mrl *m, Visitor *v) {
-    if (m->media_object &&
-            MediaManager::AudioVideo == m->media_object->type ())
-        return static_cast <AudioVideoMedia *> (m->media_object);
-    for (Node *c = m->firstChild ().ptr (); c; c = c->nextSibling ()) {
-        Mrl *mrl = c->mrl ();
-        if (mrl && mrl->active ()) {
-            AudioVideoMedia *avm = NULL;
-            if ((mrl->id >= SMIL::id_node_first &&   //FIXME, if smil and active
-                      mrl->id < SMIL::id_node_last)) // call updateExternal
-                mrl->accept (v);
-            else
-                avm = findAudioVideoMedia (mrl, v);
-            return avm;
-        }
-    }
-}
-
-KDE_NO_EXPORT void ViewSurface::video (Mrl *mt, Visitor *v) {
+KDE_NO_EXPORT void ViewSurface::video (Mrl *m) {
     xscale = yscale = 1; // either scale width/heigt or use bounds
-    AudioVideoMedia *avm = findAudioVideoMedia (mt, v);
-    if (avm && avm->viewer &&
-            avm->process &&
-            avm->process->state () > IProcess::Ready &&
-            strcmp (mt->nodeName (), "audio"))
-        avm->viewer->setGeometry (toScreen (
-                    0, 0, bounds.width(), bounds.height ()));
+    if (m->media_object &&
+            MediaManager::AudioVideo == m->media_object->type ()) {
+        AudioVideoMedia *avm = static_cast<AudioVideoMedia *> (m->media_object);
+        if (avm->viewer &&
+                avm->process &&
+                avm->process->state () > IProcess::Ready &&
+                strcmp (m->nodeName (), "audio"))
+            avm->viewer->setGeometry (toScreen (
+                        0, 0, bounds.width(), bounds.height ()));
+    }
 }
 
 //-------------------------------------------------------------------------
@@ -597,7 +582,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::RefMediaType *ref) {
         if (ref->external_tree)
             updateExternal (ref, s);
         else
-            s->video (ref, this);
+            s->video (ref);
     }
 }
 
@@ -631,12 +616,35 @@ KDE_NO_EXPORT void CairoPaintVisitor::paint (SMIL::MediaType *mt, Surface *s,
     cairo_restore (cr);
 }
 
+static Mrl *findActiveMrl (Node *n, bool *rp_or_smil) {
+    Mrl *mrl = n->mrl ();
+    if (mrl) {
+        *rp_or_smil = (mrl->id >= SMIL::id_node_first &&
+                mrl->id < SMIL::id_node_last) ||
+            (mrl->id >= RP::id_node_first &&
+             mrl->id < RP::id_node_last);
+        if (*rp_or_smil ||
+                (mrl->media_object &&
+                 MediaManager::AudioVideo == mrl->media_object->type () &&
+                 static_cast<AudioVideoMedia *> (mrl->media_object)->process))
+            return mrl;
+    }
+    for (Node *c = n->firstChild ().ptr (); c; c = c->nextSibling ())
+        if (c->active ()) {
+            Mrl *m = findActiveMrl (c, rp_or_smil);
+            if (m)
+                return m;
+        }
+}
+
 KDE_NO_EXPORT
 void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
-    short exid = av->external_tree->id;
-    if (!((exid >= SMIL::id_node_first && exid < SMIL::id_node_last) ||
-            (exid >= RP::id_node_first && exid < RP::id_node_last))) {
-        s->video (av, this);
+    bool rp_or_smil = false;
+    Mrl *ext_mrl = findActiveMrl (av->external_tree.ptr (), &rp_or_smil);
+    if (!ext_mrl)
+        return;
+    if (!rp_or_smil) {
+        s->video (ext_mrl);
         return;
     }
     SRect rect = s->bounds;
@@ -659,7 +667,7 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
             r = IRect (0, 0, w, h);
         }
         CairoPaintVisitor visitor (s->surface, m, r);
-        av->external_tree->accept (&visitor);
+        ext_mrl->accept (&visitor);
         s->dirty = false;
     }
     paint (av, s.ptr (), x, y, clip_rect);
@@ -671,7 +679,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::AVMediaType *av) {
         if (av->external_tree)
             updateExternal (av, s);
         else
-            s->video (av, this);
+            s->video (av);
     }
 }
 
@@ -1611,13 +1619,13 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
         video_widgets.first ()->setGeometry (IRect (x, y, wws, hws));
 }
 
-KDE_NO_EXPORT SurfacePtr ViewArea::getSurface (NodePtr node) {
+KDE_NO_EXPORT Surface *ViewArea::getSurface (Mrl *mrl) {
     static_cast <ViewSurface *> (surface.ptr ())->clear ();
-    surface->node = node;
+    surface->node = mrl;
     //m_view->viewer()->resetBackgroundColor ();
-    if (node) {
+    if (mrl) {
         updateSurfaceBounds ();
-        return surface;
+        return surface.ptr ();
     }
     scheduleRepaint (IRect (0, 0, width (), height ()));
     return 0L;

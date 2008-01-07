@@ -105,8 +105,7 @@ public:
 class KMPLAYER_NO_EXPORT SRect {
     Single _x, _y, _w, _h;
 #ifdef _KDEBUG_H_
-    friend kdbgstream & operator << (kdbgstream &, const SRect &s);
-    friend kndbgstream & operator << (kndbgstream &, const SRect &s);
+    friend QDebug & operator << (QDebug &dbg, const SRect &r);
 #endif
 public:
     SRect () {}

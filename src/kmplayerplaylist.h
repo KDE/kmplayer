@@ -392,7 +392,7 @@ public:
      * Adds node to call 'handleEvent()' for all events that gets
      * delivered to this node, ignored by default
      */
-    virtual SurfacePtr getSurface (NodePtr node);
+    virtual Surface *getSurface (Mrl *mrl);
     /**
      * Activates element, sets state to state_activated. Will call activate() on
      * firstChild or call deactivate().
@@ -575,7 +575,7 @@ public:
     /**
      * By default support one event handler (eg. SMIL or RP child document)
      */
-    virtual SurfacePtr getSurface (NodePtr node);
+    virtual Surface *getSurface (Mrl *mrl);
     virtual bool handleEvent (EventPtr event);
 
     /**
@@ -615,7 +615,7 @@ public:
     /**
      * Set element to which to send GUI events and return a surface for drawing
      */
-    virtual SurfacePtr getSurface (NodePtr node) = 0;
+    virtual Surface *getSurface (Mrl *mrl) = 0;
     /**
      * Request to show msg for informing the user
      */
@@ -640,7 +640,7 @@ public:
     virtual void resize (const SRect & rect) = 0;
     virtual void repaint () = 0;
     virtual void repaint (const SRect &rect) = 0;
-    virtual void video (Mrl *, Visitor *) = 0;
+    virtual void video (Mrl *) = 0;
     void remove ();                // remove from parent, mark ancestors dirty
     void markDirty ();             // mark this and ancestors dirty
 
@@ -750,7 +750,7 @@ public:
     /**
      * Reimplement, so it will call PlayListNotify::getSurface()
      */
-    virtual SurfacePtr getSurface (NodePtr node);
+    virtual Surface *getSurface (Mrl *mrl);
 
     List <TimerInfo> timers; //FIXME: make as connections
     PlayListNotify * notify_listener;
