@@ -625,8 +625,7 @@ static Mrl *findActiveMrl (Node *n, bool *rp_or_smil) {
              mrl->id < RP::id_node_last);
         if (*rp_or_smil ||
                 (mrl->media_object &&
-                 MediaManager::AudioVideo == mrl->media_object->type () &&
-                 static_cast<AudioVideoMedia *> (mrl->media_object)->process))
+                 MediaManager::AudioVideo == mrl->media_object->type ()))
             return mrl;
     }
     for (Node *c = n->firstChild ().ptr (); c; c = c->nextSibling ())
