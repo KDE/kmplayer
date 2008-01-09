@@ -72,9 +72,7 @@ protected:
     void timerEvent (QTimerEvent * e);
     void closeEvent (QCloseEvent * e);
     bool x11Event (XEvent *e);
-#ifdef KMPLAYER_WITH_CAIRO
     QPaintEngine *paintEngine () const;
-#endif
 private:
     void syncVisual (const IRect & rect);
     void updateSurfaceBounds ();
