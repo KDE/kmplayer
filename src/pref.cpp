@@ -442,6 +442,7 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent,
 #ifdef KMPLAYER_WITH_XINE
     connect (recorder, SIGNAL (clicked(int)), this, SLOT(recorderClicked(int)));
 #endif
+    connect (replay, SIGNAL (clicked (int)), this, SLOT (replayClicked (int)));
     connect (player, SIGNAL (recording (bool)), this, SLOT (recording (bool)));
 }
 
