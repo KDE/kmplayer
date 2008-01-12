@@ -1255,8 +1255,8 @@ static void followLink (SMIL::LinkingBase * link) {
             kError() << "In document jumps smil not found" << endl;
     } else {
         PlayListNotify *notify = link->document ()->notify_listener;
-        if (notify)
-            notify->openUrl (link->href, QString (), QString ());
+        if (notify && !link->target.isEmpty ())
+            notify->openUrl (link->href, link->target, QString ());
         else
             for (NodePtr p = link->parentNode (); p; p = p->parentNode ()) {
                 if (n->mrl () && n->mrl ()->opener == p) {

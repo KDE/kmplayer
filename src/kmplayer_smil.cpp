@@ -2038,6 +2038,8 @@ KDE_NO_EXPORT
 void SMIL::LinkingBase::parseParam(const TrieString &para, const QString &val) {
     if (para == StringPool::attr_href) {
         href = val;
+    } else if (para == StringPool::attr_target) {
+        target = val;
     }
 }
 

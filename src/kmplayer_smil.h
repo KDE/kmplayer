@@ -536,6 +536,7 @@ public:
     ConnectionPtr mediatype_activated;
     ConnectionPtr mediatype_attach;
     QString href;
+    QString target;
     enum { show_new, show_replace } show;
 protected:
     LinkingBase (NodePtr & d, short id);

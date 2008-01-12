@@ -548,7 +548,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
 
 KDE_NO_EXPORT void
 KMPlayerPart::openUrl (const KUrl &u, const QString &t, const QString &srv) {
-    m_browserextension->requestOpenURL (u, t.isEmpty () ? m_target : t, srv);
+    m_browserextension->requestOpenURL (u, t, srv);
 }
 
 KDE_NO_EXPORT bool KMPlayerPart::openNewURL (const KUrl & url) {
@@ -603,13 +603,16 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
           "<transition id='clockwipe1' dur='1' type='clockWipe'/>"
           "</head>"
           "<body>"
-          "<a href='%1'>"
-          "<img id='image1' src='%2' region='reg1' fit='meet' "
+          "<a href='%1'%2>"
+          "<img id='image1' src='%3' region='reg1' fit='meet' "
           "begin='.5' dur='indefinite' transIn='clockwipe1'/>"
           "</a>"
           "<video id='video1' region='reg2' fit='meet'/>"
           "</body></smil>"
           ).arg (m_href_url.isEmpty () ? QString ("#video1") : m_src_url)
+           .arg (m_target.isEmpty ()
+                   ? QString ()
+                   : QString (" target='%1'").arg (m_target))
            .arg (img);
         QByteArray ba = smil.toUtf8 ();
         QTextStream ts (&ba, QIODevice::ReadOnly);
