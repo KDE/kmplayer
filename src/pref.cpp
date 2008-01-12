@@ -341,7 +341,7 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     sub_url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
     backend = new Q3ListBox (this);
     clicktoplay = new QCheckBox (i18n ("Enable 'Click to Play' support"), this);
-    QWhatsThis::add (clicktoplay, i18n ("When enabled, all embedded movies will start with a image\nthat needs to be clicked to start the video playback"));
+    QWhatsThis::add (clicktoplay, i18n ("When enabled, all embedded movies will start with a image that needs to be clicked to start the video playback"));
     urllayout->addWidget (urlLabel);
     urllayout->addWidget (url);
     static_cast <QBoxLayout *>(layout())->addLayout (urllayout);
