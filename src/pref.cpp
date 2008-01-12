@@ -82,16 +82,16 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
     entries.insert (i18n("General Options"), tab);
 
     page = new KVBox (this);
-    item = addPage (page, i18n ("Source"));
-    item->setIcon (KIcon ("document-import"));
+    m_url_item = addPage (page, i18n ("Source"));
+    m_url_item->setIcon (KIcon ("document-import"));
     tab = new QTabWidget (page);
     m_SourcePageURL = new PrefSourcePageURL (tab);
     tab->insertTab (m_SourcePageURL, i18n ("URL"));
     entries.insert (i18n("Source"), tab);
 
     page = new KVBox (this);
-    item = addPage (page, i18n ("Recording"));
-    item->setIcon (KIcon ("folder-video"));
+    m_record_item = addPage (page, i18n ("Recording"));
+    m_record_item->setIcon (KIcon ("folder-video"));
     tab = new QTabWidget (page);
 
     int recorders_count = 3;
@@ -132,18 +132,24 @@ KDE_NO_CDTOR_EXPORT Preferences::Preferences(PartBase * player, Settings * setti
 }
 
 KDE_NO_EXPORT void Preferences::setPage (const char * name) {
-    QObject * o = child (name, "QFrame");
-    if (!o) return;
-    QFrame * page = static_cast <QFrame *> (o);
-    QWidget * w = page->parentWidget ();
-    while (w && !w->inherits ("QTabWidget"))
-        w = w->parentWidget ();
-    if (!w) return;
-    QTabWidget * t = static_cast <QTabWidget*> (w);
-    t->setCurrentPage (t->indexOf(page));
-    if (!t->parentWidget() || !t->parentWidget()->inherits ("QFrame"))
-        return;
-    // setCurrentPage (..)//showPage (pageIndex (t->parentWidget ()));
+    KPageWidgetItem *item = NULL;
+    if (!strcmp (name, "RecordPage"))
+        item = m_record_item;
+    else if (!strcmp (name, "URLPage"))
+        item = m_url_item;
+    if (item) {
+        setCurrentPage (item);
+        KVBox *page = findChild <KVBox *> (name);
+        if (!page)
+            return;
+        QWidget * w = page->parentWidget ();
+        while (w && !qobject_cast <QTabWidget *> (w))
+            w = w->parentWidget ();
+        if (!w)
+            return;
+        QTabWidget *t = static_cast <QTabWidget*> (w);
+        t->setCurrentPage (t->indexOf(page));
+    }
 }
 
 KDE_NO_EXPORT void Preferences::addPrefPage (PreferencesPage * page) {
@@ -319,6 +325,7 @@ KDE_NO_EXPORT void PrefGeneralPageLooks::fontClicked () {
 KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
 : KVBox (parent)
 {
+    setObjectName ("URLPage");
     setMargin (5);
     setSpacing (2);
 
@@ -390,6 +397,7 @@ KDE_NO_CDTOR_EXPORT PrefRecordPage::PrefRecordPage (QWidget *parent,
    m_recorders (rl),
    m_recorders_length (rec_len),
    rec_timer (0) {
+    setObjectName ("RecordPage");
     setMargin (5);
     setSpacing (2);
 

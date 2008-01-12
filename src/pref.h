@@ -45,6 +45,7 @@ class KHistoryCombo;
 class KComboBox;
 class KUrlRequester;
 class KColorButton;
+class KPageWidgetItem;
 
 namespace KMPlayer {
 
@@ -99,6 +100,9 @@ public:
     QMap<QString, QTabWidget *> entries;
 public slots:
     void confirmDefaults();
+private:
+    KPageWidgetItem *m_record_item;
+    KPageWidgetItem *m_url_item;
 };
 
 class KMPLAYER_NO_EXPORT PrefGeneralPageGeneral : public KVBox
