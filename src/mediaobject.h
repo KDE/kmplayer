@@ -71,7 +71,7 @@ public:
     /* seek (pos, abs) seek position in deci-seconds */
     virtual bool seek (int pos, bool absolute) = 0;
     /* volume from 0 to 100 */
-    virtual bool volume (int pos, bool absolute) = 0;
+    virtual void volume (int pos, bool absolute) = 0;
     virtual bool saturation (int pos, bool absolute) = 0;
     virtual bool hue (int pos, bool absolute) = 0;
     virtual bool contrast (int pos, bool absolute) = 0;

@@ -16,5 +16,9 @@
       <arg name="position" type="t" direction="in"/>
       <arg name="absolute" type="b" direction="in"/>
     </method>
+    <method name="volume">
+      <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+      <arg name="value" type="i" direction="in"/>
+    </method>
   </interface>
 </node>

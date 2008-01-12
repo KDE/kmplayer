@@ -166,6 +166,10 @@ void Stream::seek (uint64_t position, bool absolute) {
     m_media->seek (position * 100);
 }
 
+void Stream::volume (int value) {
+    m_aoutput->setVolume (1.0 * value / 100);
+}
+
 void Stream::hasVideoChanged (bool hasVideo) {
     qDebug ("hasVideoChanged %d", hasVideo);
     m_vwidget->setVisible (hasVideo);

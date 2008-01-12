@@ -62,6 +62,7 @@ public:
     void pause ();
     void stop ();
     void seek (uint64_t position, bool absolute);
+    void volume (int value);
 
 protected:
     bool x11Event (XEvent *event);

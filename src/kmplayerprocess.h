@@ -92,7 +92,7 @@ public slots:
     /* seek (pos, abs) seek position in deci-seconds */
     virtual bool seek (int pos, bool absolute);
     /* volume from 0 to 100 */
-    virtual bool volume (int pos, bool absolute);
+    virtual void volume (int pos, bool absolute);
     /* saturation/hue/contrast/brightness from -100 to 100 */
     virtual bool saturation (int pos, bool absolute);
     virtual bool hue (int pos, bool absolute);
@@ -162,7 +162,7 @@ public slots:
     virtual void stop ();
     virtual void pause ();
     virtual bool seek (int pos, bool absolute);
-    virtual bool volume (int pos, bool absolute);
+    virtual void volume (int pos, bool absolute);
     virtual bool saturation (int pos, bool absolute);
     virtual bool hue (int pos, bool absolute);
     virtual bool contrast (int pos, bool absolute);
@@ -321,6 +321,7 @@ public:
     void playing ();
     void progress (uint64_t pos);
     bool seek (int pos, bool absolute);
+    void volume (int pos, bool absolute);
     void eof ();
 
 public slots:

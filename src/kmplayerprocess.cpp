@@ -188,8 +188,7 @@ bool Process::seek (int /*pos*/, bool /*absolute*/) {
     return false;
 }
 
-bool Process::volume (int /*pos*/, bool /*absolute*/) {
-    return false;
+void Process::volume (int /*pos*/, bool /*absolute*/) {
 }
 
 bool Process::saturation (int /*pos*/, bool /*absolute*/) {
@@ -561,13 +560,13 @@ KDE_NO_EXPORT bool MPlayer::seek (int pos, bool absolute) {
     return sendCommand (cmd);
 }
 
-KDE_NO_EXPORT bool MPlayer::volume (int incdec, bool absolute) {
+KDE_NO_EXPORT void MPlayer::volume (int incdec, bool absolute) {
     if (absolute)
         incdec -= old_volume;
     if (incdec == 0)
-        return true;
+        return;
     old_volume += incdec;
-    return sendCommand (QString ("volume ") + QString::number (incdec));
+    sendCommand (QString ("volume ") + QString::number (incdec));
 }
 
 KDE_NO_EXPORT bool MPlayer::saturation (int val, bool absolute) {
@@ -1392,6 +1391,20 @@ bool MasterProcess::seek (int pos, bool) {
                 "org.kde.kmplayer.StreamSlave",
                 "seek");
         msg << (qulonglong) pos << true;
+        msg.setDelayedReply (false);
+        QDBusConnection::sessionBus().send (msg);
+    }
+}
+
+KDE_NO_EXPORT void MasterProcess::volume (int incdec, bool) {
+    if (IProcess::Playing == m_state) {
+        MasterProcessInfo *mpi = static_cast<MasterProcessInfo *>(process_info);
+        QDBusMessage msg = QDBusMessage::createMethodCall (
+                mpi->m_slave_service,
+                m_slave_path,
+                "org.kde.kmplayer.StreamSlave",
+                "volume");
+        msg << incdec;
         msg.setDelayedReply (false);
         QDBusConnection::sessionBus().send (msg);
     }
