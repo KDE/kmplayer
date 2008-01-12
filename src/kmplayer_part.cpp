@@ -28,6 +28,7 @@
 #include <qpushbutton.h>
 #include <qslider.h>
 #include <QFile>
+#include <QMetaObject>
 
 class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollection.h does not forward declare KXMLGUIClient
 #include <kaboutdata.h>
@@ -561,8 +562,7 @@ KDE_NO_EXPORT bool KMPlayerPart::openNewURL (const KUrl & url) {
 KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
     Source * src = sources () ["urlsource"];
     KUrl url (uri);
-#ifdef KMPLAYER_WITH_CAIRO
-    kDebug() << "uri '" << uri << "' img '" << img << "'";
+    kDebug() << "uri '" << uri << "' img '" << img;
     if (url.isEmpty ()) {
         url = m_src_url;
     } else if (!m_href_url.isEmpty ()) {
@@ -579,7 +579,9 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
         setSource (src);
         return true;
     }
-    if (m_settings->clicktoplay) {
+    if (m_settings->clicktoplay &&
+            parent () &&
+            !strcmp ("KHTMLPart", parent ()->metaObject ()->className())) {
         QString pic (img);
         if (!pic.isEmpty ()) {
             QFile file (pic);
@@ -592,8 +594,15 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
         }
         QString img = pic.isEmpty ()
             ? KUrl (KIconLoader::global()->iconPath (
-                        QString::fromLatin1 ("kmplayer"), -128)).url ()
+                        QString::fromLatin1 ("kmplayer"),
+#ifdef KMPLAYER_WITH_CAIRO
+                        -128
+#else
+                        -32
+#endif
+                        )).url ()
             : pic;
+#ifdef KMPLAYER_WITH_CAIRO
         QString smil = QString::fromLatin1 (
           "<smil><head><layout>"
           "<region id='reg1' left='12.5%' top='5%' right='12.5%' bottom='5%' "
@@ -633,11 +642,27 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
             m_source->activate();
         else
             setSource (src);
+#else
+        if (m_view->setPicture (KUrl (img).path ())) {
+            connect (m_view, SIGNAL (pictureClicked ()),
+                     this, SLOT (pictureClicked ()));
+            emit completed ();
+            m_started_emited = false;
+        } else {
+            return PartBase::openUrl(m_href_url.isEmpty() ? url : KUrl(m_href_url));
+        }
+#endif
         return true;
     } else
-#endif
         return PartBase::openUrl(m_href_url.isEmpty() ? url : KUrl(m_href_url));
 }
+
+#ifndef KMPLAYER_WITH_CAIRO
+KDE_NO_EXPORT void KMPlayerPart::pictureClicked () {
+    m_view->setPicture (QString ());
+    PartBase::openUrl (KUrl (m_src_url));
+}
+#endif
 
 KDE_NO_EXPORT void KMPlayerPart::waitForImageWindowTimeOut () {
     if (!m_master) {

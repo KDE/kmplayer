@@ -1482,14 +1482,8 @@ KDE_NO_EXPORT void ViewArea::mouseDoubleClickEvent (QMouseEvent *) {
 }
 
 KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
-    if (e->state () == Qt::NoButton) {
-        int vert_buttons_pos = height () - m_view->statusBarHeight ();
-        int cp_height = m_view->controlPanel ()->maximumSize ().height ();
-        if (cp_height > int (0.25 * height ()))
-            cp_height = int (0.25 * height ());
-        m_view->delayedShowButtons (e->y() > vert_buttons_pos-cp_height &&
-                                    e->y() < vert_buttons_pos);
-    }
+    if (e->state () == Qt::NoButton)
+        m_view->mouseMoved (e->x (), e->y ());
     if (surface->node) {
         MouseVisitor visitor (event_pointer_moved, e->x(), e->y());
         surface->node->accept (&visitor);
@@ -1621,6 +1615,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
         y += (h - hws) / 2;
     }
     m_view->console ()->setGeometry (0, 0, w, h - hsb - hcp);
+    m_view->picture ()->setGeometry (0, 0, w, h - hsb - hcp);
     if (!surface->node && video_widgets.size () == 1)
         video_widgets.first ()->setGeometry (IRect (x, y, wws, hws));
 }
@@ -1775,17 +1770,8 @@ bool ViewArea::x11Event (XEvent *xe) {
                     QPoint p = mapToGlobal (QPoint (0, 0));
                     int x = xe->xmotion.x_root - p.x ();
                     int y = xe->xmotion.y_root - p.y ();
-                    int b = height ();
-                    int t = b - m_view->statusBarHeight () -
-                        m_view->controlPanel ()->maximumSize ().height ();
-                    if (t < int (0.75 * b))
-                        t = int (0.75 * b);
-                    if (x > -50 && x < width () + 50 &&
-                            y > t - 50 && y < b + 50) {
-                        m_view->delayedShowButtons (
-                                x > 0 && x < width () && y > t && y < b);
-                    }
-                    if (x > 0 && x < width () && y > 0 && y < b)
+                    m_view->mouseMoved (x, y);
+                    if (x > 0 && x < width () && y > 0 && y < height ())
                         mouseMoved ();
                 }
             }

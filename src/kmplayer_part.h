@@ -147,6 +147,9 @@ protected slots:
     void viewerPartSourceChanged (KMPlayer::Source *, KMPlayer::Source *);
     void waitForImageWindowTimeOut ();
     void statusPosition (int pos, int length);
+#ifndef KMPLAYER_WITH_CAIRO
+    void pictureClicked ();
+#endif
 private:
     void setAutoControls (bool);
     KMPlayerPart * m_master;

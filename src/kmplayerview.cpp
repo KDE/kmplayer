@@ -77,22 +77,18 @@ using namespace KMPlayer;
 
 //-------------------------------------------------------------------------
 
-namespace KMPlayer {
+KDE_NO_CDTOR_EXPORT PictureWidget::PictureWidget (QWidget * parent, View * view)
+ : QWidget (parent), m_view (view) {
+    setAutoFillBackground (true);
+}
 
-class KMPlayerPictureWidget : public QWidget {
-    View * m_view;
-public:
-    KDE_NO_CDTOR_EXPORT KMPlayerPictureWidget (QWidget * parent, View * view)
-        : QWidget (parent), m_view (view) {}
-    KDE_NO_CDTOR_EXPORT ~KMPlayerPictureWidget () {}
-protected:
-    void mousePressEvent (QMouseEvent *);
-};
-
-} // namespace
-
-KDE_NO_EXPORT void KMPlayerPictureWidget::mousePressEvent (QMouseEvent *) {
+KDE_NO_EXPORT void PictureWidget::mousePressEvent (QMouseEvent *) {
     m_view->emitPictureClicked ();
+}
+
+KDE_NO_EXPORT void PictureWidget::mouseMoveEvent (QMouseEvent *e) {
+    if (e->state () == Qt::NoButton)
+        m_view->mouseMoved (e->x (), e->y ());
 }
 
 //-----------------------------------------------------------------------------
@@ -125,7 +121,6 @@ KDE_NO_EXPORT void InfoWindow::contextMenuEvent (QContextMenuEvent * e) {
 
 KDE_NO_CDTOR_EXPORT View::View (QWidget *parent)
   : KMediaPlayer::View (parent),
-    m_image (0L),
     m_control_panel (0L),
     m_status_bar (0L),
     m_volume_slider (0L),
@@ -183,6 +178,9 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
     m_dock_playlist->setObjectName ("playlist");
 
     viewbox->addWidget (m_dockarea);
+
+    m_picture = new PictureWidget (m_view_area, this);
+    m_picture->hide ();
     m_control_panel = new ControlPanel (m_view_area, this);
     m_control_panel->setMaximumSize (2500, controlPanel ()->maximumSize ().height ());
     m_status_bar = new StatusBar (m_view_area);
@@ -202,9 +200,6 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
     m_multiedit->setFont (fnt);
     m_multiedit->hide ();
 
-    m_picture = new KMPlayerPictureWidget (m_view_area, this);
-    m_picture->hide ();
-
     m_dock_infopanel = new QDockWidget (i18n ("Information"));
     m_dockarea->addDockWidget (Qt::BottomDockWidgetArea, m_dock_infopanel);
     m_infopanel = new InfoWindow (m_dock_infopanel, this);
@@ -223,7 +218,6 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
 }
 
 KDE_NO_CDTOR_EXPORT View::~View () {
-    delete m_image;
     if (m_view_area->parent () != this)
         delete m_view_area;
 }
@@ -322,31 +316,32 @@ void View::setEditMode (RootPlayListItem *ri, bool enable) {
     m_playlist->showAllNodes (ri, m_edit_mode);
 }
 
+#ifndef KMPLAYER_WITH_CAIRO
 bool View::setPicture (const QString & path) {
-    delete m_image;
     if (path.isEmpty ())
-        m_image = 0L;
+        m_image = QImage ();
     else {
-        m_image = new QPixmap (path);
-        if (m_image->isNull ()) {
-            delete m_image;
-            m_image = 0L;
+        m_image = QImage (path);
+        if (m_image.isNull ())
             kDebug() << "View::setPicture failed " << path;
-        }
+        else if (m_image.depth () < 24)
+            m_image = m_image.convertDepth (32, 0);
     }
-    if (!m_image) {
+    m_picture->setVisible (!m_image.isNull ());
+    if (m_image.isNull ()) {
         m_view_area->setVideoWidgetVisible (true);
-        m_picture->hide ();
     } else {
-        QPalette palette;
-        palette.setBrush (m_picture->backgroundRole(), QBrush (*m_image));
-        m_picture->setPalette(palette);
+        QPalette palette = m_picture->palette ();
+        palette.setColor (m_picture->backgroundRole(), viewArea()->palette ().color (backgroundRole ()));
+        palette.setBrush (m_picture->backgroundRole(), QBrush (m_image));
+        m_picture->setPalette (palette);
         m_view_area->setVideoWidgetVisible (false);
-        m_picture->show ();
+        controlPanel ()->raise ();
         setControlPanelMode (CP_AutoHide);
     }
-    return m_image;
+    return !m_image.isNull ();
 }
+#endif
 
 KDE_NO_EXPORT void View::updateVolume () {
     /*if (m_mixer_init && !m_volume_slider)
@@ -422,7 +417,7 @@ void View::setControlPanelMode (ControlPanelMode m) {
         m_control_panel->show ();
         m_view_area->resizeEvent (0L);
     } else if (m_controlpanel_mode == CP_AutoHide) {
-        if (m_playing && !m_multiedit->isVisible ())
+        if (!m_image.isNull () || (m_playing && !m_multiedit->isVisible ()))
             delayedShowButtons (false);
         else if (!m_control_panel->isVisible ()) {
             m_control_panel->show ();
@@ -450,10 +445,19 @@ KDE_NO_EXPORT void View::delayedShowButtons (bool show) {
         if (!show)
             m_control_panel->hide (); // for initial race
     } else if (m_controlpanel_mode == CP_AutoHide &&
-            (m_playing || m_picture->isVisible ()) &&
+            (m_playing || !m_image.isNull ()) &&
             !m_multiedit->isVisible () && !controlbar_timer) {
         controlbar_timer = startTimer (500);
     }
+}
+
+KDE_NO_EXPORT void View::mouseMoved (int x, int y) {
+    int h = m_view_area->height ();
+    int vert_buttons_pos = h - statusBarHeight ();
+    int cp_height = controlPanel ()->maximumSize ().height ();
+    if (cp_height > int (0.25 * h))
+        cp_height = int (0.25 * h);
+    delayedShowButtons (y > vert_buttons_pos-cp_height && y < vert_buttons_pos);
 }
 
 KDE_NO_EXPORT void View::setVolume (int vol) {
@@ -482,8 +486,7 @@ void View::setKeepSizeRatio (bool b) {
 KDE_NO_EXPORT void View::timerEvent (QTimerEvent * e) {
     if (e->timerId () == controlbar_timer) {
         controlbar_timer = 0;
-        if (m_playing ||
-                m_picture->isVisible ()) {
+        if (m_playing || !m_image.isNull ()) {
             int vert_buttons_pos = m_view_area->height()-statusBarHeight ();
             QPoint mouse_pos = m_view_area->mapFromGlobal (QCursor::pos ());
             int cp_height = m_control_panel->maximumSize ().height ();
@@ -551,19 +554,15 @@ KDE_NO_EXPORT void View::videoStart () {
 }
 
 KDE_NO_EXPORT void View::playingStart () {
-    if (m_playing) return; //FIXME: make symetric with playingStop
-    if (m_picture->isVisible ()) {
-        m_picture->hide ();
-        m_view_area->setVideoWidgetVisible (true);
-    }
+    if (m_playing)
+        return; //FIXME: make symetric with playingStop
     m_playing = true;
     m_revert_fullscreen = !isFullScreen();
     setControlPanelMode (m_old_controlpanel_mode);
 }
 
 KDE_NO_EXPORT void View::playingStop () {
-    if (m_controlpanel_mode == CP_AutoHide &&
-            !m_picture->isVisible ()) {
+    if (m_controlpanel_mode == CP_AutoHide && m_image.isNull ()) {
         m_control_panel->show ();
         //m_view_area->setMouseTracking (false);
     }
