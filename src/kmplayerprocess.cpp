@@ -209,6 +209,8 @@ bool Process::brightness (int /*pos*/, bool /*absolute*/) {
 }
 
 bool Process::grabPicture (const QString &/*file*/, int /*pos*/) {
+    m_old_state = m_state = Buffering;
+    setState (Ready);
     return false;
 }
 
@@ -702,6 +704,7 @@ KDE_NO_EXPORT bool MPlayer::grabPicture (const QString &file, int pos) {
     if (m_state > Ready || !m || m->src.isEmpty ())
         return false; //FIXME
     initProcess ();
+    m_old_state = m_state = Buffering;
     unlink (file.ascii ());
     QByteArray ba = file.toLocal8Bit ();
     char *buf = new char[strlen (ba.data ()) + 7];
@@ -735,7 +738,7 @@ KDE_NO_EXPORT bool MPlayer::grabPicture (const QString &file, int pos) {
         kdError () << "mkdtemp failure";
     }
     delete [] buf;
-    setState (ret ? Playing : NotRunning);
+    setState (ret ? Playing : Ready);
     return ret;
 }
 
