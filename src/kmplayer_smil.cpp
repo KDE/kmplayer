@@ -1804,6 +1804,7 @@ KDE_NO_EXPORT void SMIL::GroupBase::deactivate () {
 KDE_NO_EXPORT void SMIL::GroupBase::setJumpNode (NodePtr n) {
     NodePtr child = n;
     if (state > state_init) {
+        state = state_deferred;
         for (NodePtr c = firstChild (); c; c = c->nextSibling ())
             if (c->active ())
                 c->reset ();
@@ -1818,6 +1819,9 @@ KDE_NO_EXPORT void SMIL::GroupBase::setJumpNode (NodePtr n) {
     jump_node = child;
     state = state_activated;
     init ();
+    for (NodePtr n = firstChild (); n; n = n->nextSibling ())
+        if (isTimedMrl (n))
+            convertNode <Element> (n)->init ();
     runtime()->beginAndStart (); // undefer through begin()
 }
 
