@@ -444,6 +444,10 @@ bool PartBase::openUrl (const KUrl::List & urls) {
     return true;
 }
 
+void PartBase::openUrl (const KUrl &u, const QString &t, const QString &srv) {
+    kDebug() << u << " " << t << " " << srv;
+}
+
 bool PartBase::closeUrl () {
     stop ();
     if (m_view)
@@ -1059,6 +1063,10 @@ MediaManager *Source::mediaManager () const {
     return m_player->mediaManager ();
 }
 
+void Source::openUrl (const KUrl &url, const QString &t, const QString &srv) {
+    m_player->openUrl (url, t, srv);
+}
+
 void Source::insertURL (NodePtr node, const QString & mrl, const QString & title) {
     if (!node || !node->mrl ()) // this should always be false
         return;
@@ -1124,6 +1132,14 @@ void Source::forward () {
     } else
         m_player->process ()->seek (m_player->settings()->seektime * 10, false);
         */
+}
+
+void Source::setDocument (KMPlayer::NodePtr doc, KMPlayer::NodePtr cur) {
+    if (m_document)
+        m_document->document()->dispose ();
+    m_document = doc;
+    m_current = cur;
+    //kDebug () << "setDocument: " << m_document->outerXML ();
 }
 
 NodePtr Source::document () {

@@ -628,6 +628,10 @@ public:
      * Sets next call to Document::timer() or -1 to cancel a previous call
      */
     virtual void setTimeout (int ms) = 0;
+    /**
+     * Request to open url with mimetype
+     */
+    virtual void openUrl (const KUrl &, const QString &t, const QString &srv)=0;
 };
 
 class KMPLAYER_NO_EXPORT Surface : public TreeNode <Surface> {

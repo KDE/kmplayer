@@ -156,7 +156,7 @@ public:
     KUrlRequester * sub_url;
     KComboBox * sub_urllist;
     Q3ListBox * backend;
-    QCheckBox * allowhref;
+    QCheckBox * clicktoplay;
     QLineEdit * prefBitRate;
     QLineEdit * maxBitRate;
     bool changed;

@@ -129,7 +129,6 @@ protected:
     void timerEvent (QTimerEvent *) KDE_NO_EXPORT;
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);
-    void mouseMoveEvent (QMouseEvent * e);
     void contextMenuEvent (QContextMenuEvent * e);
     //virtual void windowChanged( WId w );
 private:

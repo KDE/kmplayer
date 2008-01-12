@@ -1253,16 +1253,21 @@ static void followLink (SMIL::LinkingBase * link) {
             s->jump (link->href.mid (1));
         else
             kError() << "In document jumps smil not found" << endl;
-    } else
-        for (NodePtr p = link->parentNode (); p; p = p->parentNode ()) {
-            if (n->mrl () && n->mrl ()->opener == p) {
-                p->setState (Node::state_deferred);
-                p->mrl ()->setParam (StringPool::attr_src, link->href, 0L);
-                p->activate ();
-                break;
+    } else {
+        PlayListNotify *notify = link->document ()->notify_listener;
+        if (notify)
+            notify->openUrl (link->href, QString (), QString ());
+        else
+            for (NodePtr p = link->parentNode (); p; p = p->parentNode ()) {
+                if (n->mrl () && n->mrl ()->opener == p) {
+                    p->setState (Node::state_deferred);
+                    p->mrl ()->setParam (StringPool::attr_src, link->href, 0L);
+                    p->activate ();
+                    break;
+                }
+                n = p;
             }
-            n = p;
-        }
+    }
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Anchor * anchor) {
@@ -1480,6 +1485,8 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
     if (e->state () == Qt::NoButton) {
         int vert_buttons_pos = height () - m_view->statusBarHeight ();
         int cp_height = m_view->controlPanel ()->maximumSize ().height ();
+        if (cp_height > int (0.25 * height ()))
+            cp_height = int (0.25 * height ());
         m_view->delayedShowButtons (e->y() > vert_buttons_pos-cp_height &&
                                     e->y() < vert_buttons_pos);
     }
@@ -1771,12 +1778,15 @@ bool ViewArea::x11Event (XEvent *xe) {
                     int b = height ();
                     int t = b - m_view->statusBarHeight () -
                         m_view->controlPanel ()->maximumSize ().height ();
+                    if (t < int (0.75 * b))
+                        t = int (0.75 * b);
                     if (x > -50 && x < width () + 50 &&
                             y > t - 50 && y < b + 50) {
                         m_view->delayedShowButtons (
                                 x > 0 && x < width () && y > t && y < b);
-                        mouseMoved ();
                     }
+                    if (x > 0 && x < width () && y > 0 && y < b)
+                        mouseMoved ();
                 }
             }
             break;
@@ -1901,14 +1911,6 @@ KDE_NO_EXPORT void VideoOutput::timerEvent (QTimerEvent *e) {
             XMoveResizeWindow (QX11Info::display(), clientWinId (),
                     0, 0, width (), height ());
     }
-}
-
-KDE_NO_EXPORT void VideoOutput::mouseMoveEvent (QMouseEvent * e) {
-    if (e->buttons () == Qt::NoButton) {
-        int cp_height = m_view->controlPanel ()->maximumSize ().height ();
-        m_view->delayedShowButtons (e->y () > height () - cp_height);
-    }
-    m_view->viewArea ()->mouseMoved ();
 }
 
 WindowId VideoOutput::windowHandle () {

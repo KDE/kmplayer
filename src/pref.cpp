@@ -340,8 +340,8 @@ KDE_NO_CDTOR_EXPORT PrefSourcePageURL::PrefSourcePageURL (QWidget *parent)
     QWhatsThis::add (sub_url, i18n ("Optional location of a file containing the subtitles of the URL above"));
     sub_url->setSizePolicy (QSizePolicy (QSizePolicy::Expanding, QSizePolicy::Preferred));
     backend = new Q3ListBox (this);
-    allowhref = new QCheckBox (i18n ("Enable 'Click to Play' support"), this);
-    QWhatsThis::add (allowhref, i18n ("Support for WEB pages having a start image"));
+    clicktoplay = new QCheckBox (i18n ("Enable 'Click to Play' support"), this);
+    QWhatsThis::add (clicktoplay, i18n ("When enabled, all embedded movies will start with a image\nthat needs to be clicked to start the video playback"));
     urllayout->addWidget (urlLabel);
     urllayout->addWidget (url);
     static_cast <QBoxLayout *>(layout())->addLayout (urllayout);

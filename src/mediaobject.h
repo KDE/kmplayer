@@ -65,6 +65,7 @@ public:
     virtual bool ready () = 0;
     virtual bool play () = 0;
     virtual void pause () = 0;
+    virtual bool grabPicture (const QString &file, int frame) = 0;
     virtual void stop () = 0;
     virtual void quit () = 0;
     /* seek (pos, abs) seek position in deci-seconds */
@@ -127,6 +128,7 @@ public:
     // backend process state changed
     void stateChange (AudioVideoMedia *m, IProcess::State o, IProcess::State n);
     void playAudioVideo (AudioVideoMedia *m);
+    void grabPicture (AudioVideoMedia *m);
 
     void processDestroyed (IProcess *process);
     ProcessInfoMap &processInfos () { return m_process_infos; }
@@ -247,13 +249,14 @@ private:
 class KMPLAYER_NO_EXPORT AudioVideoMedia : public MediaObject {
     friend class MediaManager;
 public:
-    enum Request { ask_nothing, ask_play, ask_stop, ask_delete };
+    enum Request { ask_nothing, ask_play, ask_grab, ask_stop, ask_delete };
 
     AudioVideoMedia (MediaManager *manager, Node *node);
 
     MediaManager::MediaType type () const { return MediaManager::AudioVideo; }
 
     virtual bool play ();
+    virtual bool grabPicture (const QString &file, int frame);
     virtual void stop ();
     virtual void pause ();
     virtual void unpause ();
@@ -261,6 +264,8 @@ public:
 
     IProcess *process;
     IViewer *viewer;
+    QString m_grab_file;
+    int m_frame;
     Request request;
     bool ignore_pause;
 

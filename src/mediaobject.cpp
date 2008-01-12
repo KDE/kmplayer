@@ -233,6 +233,8 @@ void MediaManager::stateChange (AudioVideoMedia *media,
     } else if (IProcess::Ready == news) {
         if (AudioVideoMedia::ask_play == media->request) {
             playAudioVideo (media);
+        } else if (AudioVideoMedia::ask_grab == media->request) {
+            grabPicture (media);
         } else {
             if (!is_rec && Mrl::SingleMode == mrl->view_mode) {
                 ProcessList::iterator e = m_processes.end ();
@@ -257,6 +259,7 @@ void MediaManager::stateChange (AudioVideoMedia *media,
 
 void MediaManager::playAudioVideo (AudioVideoMedia *media) {
     Mrl *mrl = media->mrl ();
+    media->request = AudioVideoMedia::ask_nothing;
     if (!mrl ||!m_player->view ())
         return;
     if (id_node_record_document != mrl->id &&
@@ -270,6 +273,14 @@ void MediaManager::playAudioVideo (AudioVideoMedia *media) {
         }
     }
     media->process->play ();
+}
+
+void MediaManager::grabPicture (AudioVideoMedia *media) {
+    Mrl *mrl = media->mrl ();
+    media->request = AudioVideoMedia::ask_nothing;
+    if (!mrl)
+        return;
+    media->process->grabPicture (media->m_grab_file, media->m_frame);
 }
 
 void MediaManager::processDestroyed (IProcess *process) {
@@ -475,7 +486,7 @@ AudioVideoMedia::~AudioVideoMedia () {
         process->media_object = NULL;
         delete process;
     }
-    kDebug() << "AudioVideoMedia::~AudioVideoMedia" << endl;
+    kDebug() << "AudioVideoMedia::~AudioVideoMedia";
 }
 
 bool AudioVideoMedia::play () {
@@ -490,6 +501,21 @@ bool AudioVideoMedia::play () {
             return true; // FIXME add Launching state
         }
         m_manager->playAudioVideo (this);
+        return true;
+    }
+    return false;
+}
+
+bool AudioVideoMedia::grabPicture (const QString &file, int frame) {
+    if (process) {
+        kDebug() << "AudioVideoMedia::grab " << file << endl;
+        m_grab_file = file;
+        m_frame = frame;
+        if (process->state () < IProcess::Ready) {
+            request = ask_grab;
+            return true; // FIXME add Launching state
+        }
+        m_manager->grabPicture (this);
         return true;
     }
     return false;

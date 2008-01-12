@@ -159,6 +159,7 @@ public:
 public slots:
     virtual bool openUrl (const KUrl & url);
     virtual bool openUrl (const KUrl::List & urls);
+    virtual void openUrl (const KUrl &, const QString &t, const QString &srv);
     virtual bool closeUrl ();
     virtual void pause (void);
     virtual void play (void);

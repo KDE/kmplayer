@@ -35,6 +35,7 @@
 #include <qwhatsthis.h>
 #include <QList>
 #include <QtDBus/QtDBus>
+#include <QtCore/QDir>
 
 #include <k3process.h>
 #include <k3processcontroller.h>
@@ -207,7 +208,7 @@ bool Process::brightness (int /*pos*/, bool /*absolute*/) {
     return false;
 }
 
-bool Process::grabPicture (const KUrl & /*url*/, int /*pos*/) {
+bool Process::grabPicture (const QString &/*file*/, int /*pos*/) {
     return false;
 }
 
@@ -416,7 +417,7 @@ KDE_NO_EXPORT void MPlayerBase::processStopped (K3Process *) {
 //-----------------------------------------------------------------------------
 
 static const char *mplayer_supports [] = {
-    "dvdsource", "exitsource", "hrefsource", "introsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", "audiocdsource", 0L
+    "dvdsource", "exitsource", "introsource", "pipesource", "tvscanner", "tvsource", "urlsource", "vcdsource", "audiocdsource", 0L
 };
 
 MPlayerProcessInfo::MPlayerProcessInfo (MediaManager *mgr)
@@ -695,27 +696,47 @@ bool MPlayer::run (const char * args, const char * pipe) {
     return false;
 }
 
-KDE_NO_EXPORT bool MPlayer::grabPicture (const KUrl & url, int pos) {
-    stop ();
+KDE_NO_EXPORT bool MPlayer::grabPicture (const QString &file, int pos) {
+    bool ret = false;
+    Mrl *m = mrl ();
+    if (m_state > Ready || !m || m->src.isEmpty ())
+        return false; //FIXME
     initProcess ();
-    QString outdir = KStandardDirs::locateLocal ("data", "kmplayer/");
-    m_grabfile = outdir + QString ("00000001.jpg");
-    unlink (m_grabfile.ascii ());
-    QString myurl (url.isLocalFile () ? getPath (url) : url.url ());
-    QString args ("mplayer ");
-    if (m_settings->mplayerpost090)
-        args += "-vo jpeg:outdir=";
-    else
-        args += "-vo jpeg -jpeg outdir=";
-    args += K3Process::quote (outdir);
-    args += QString (" -frames 1 -nosound -quiet ");
-    if (pos > 0)
-        args += QString ("-ss %1 ").arg (pos);
-    args += K3Process::quote (QString (QFile::encodeName (myurl)));
-    *m_process << args;
-    kDebug () << args;
-    m_process->start (K3Process::NotifyOnExit, K3Process::NoCommunication);
-    return m_process->isRunning ();
+    unlink (file.ascii ());
+    QByteArray ba = file.toLocal8Bit ();
+    char *buf = new char[strlen (ba.data ()) + 7];
+    strcpy (buf, ba.data ());
+    strcat (buf, "XXXXXX");
+    if (mkdtemp (buf)) {
+        m_grab_dir = QString (buf);
+        KUrl url (m->src);
+        QString myurl (url.isLocalFile () ? getPath (url) : url.url ());
+        QString args ("mplayer ");
+        if (m_settings->mplayerpost090)
+            args += "-vo jpeg:outdir=";
+        else
+            args += "-vo jpeg -jpeg outdir=";
+        args += K3Process::quote (m_grab_dir);
+        args += QString (" -frames 1 -nosound -quiet ");
+        if (pos > 0)
+            args += QString ("-ss %1 ").arg (pos);
+        args += K3Process::quote (QString (QFile::encodeName (myurl)));
+        *m_process << args;
+        kDebug () << args;
+        m_process->start (K3Process::NotifyOnExit, K3Process::NoCommunication);
+        if (m_process->isRunning ()) {
+            m_grab_file = file;
+            ret = true;
+        } else {
+            rmdir (buf);
+            m_grab_dir.truncate (0);
+        }
+    } else {
+        kdError () << "mkdtemp failure";
+    }
+    delete [] buf;
+    setState (ret ? Playing : NotRunning);
+    return ret;
 }
 
 KDE_NO_EXPORT void MPlayer::processOutput (K3Process *, char * str, int slen) {
@@ -876,12 +897,31 @@ KDE_NO_EXPORT void MPlayer::processOutput (K3Process *, char * str, int slen) {
 }
 
 KDE_NO_EXPORT void MPlayer::processStopped (K3Process * p) {
-    if (p && !m_grabfile.isEmpty ()) {
-        emit grabReady (m_grabfile);
-        m_grabfile.truncate (0);
-    } else if (mrl ()) {
+    if (mrl ()) {
         QString url;
-        if (!m_source->identified ()) {
+        if (!m_grab_dir.isEmpty ()) {
+            QDir dir (m_grab_dir);
+            QStringList files = dir.entryList ();
+            bool renamed = false;
+            for (int i = 0; i < files.size (); ++i) {
+                kDebug() << files[i];
+                if (files[i] == "." || files[i] == "..")
+                    continue;
+                if (!renamed) {
+                    kDebug() << "rename " << dir.filePath (files[i]) << "->" << m_grab_file;
+                    renamed = true;
+                    ::rename (dir.filePath (files[i]).toLocal8Bit ().data (),
+                            m_grab_file.toLocal8Bit ().data ());
+                } else {
+                    kDebug() << "rm " << files[i];
+                    dir.remove (files[i]);
+                }
+            }
+            QString dirname = dir.dirName ();
+            dir.cdUp ();
+            kDebug() << m_grab_dir << " " << files.size () << " rmdir " << dirname;
+            dir.rmdir (dirname);
+        } else if (!m_source->identified ()) {
             m_source->setIdentified ();
             if (!m_tmpURL.isEmpty () && m_url != m_tmpURL) {
                 m_source->insertURL (mrl (), m_tmpURL);;
@@ -2490,7 +2530,7 @@ KDE_NO_EXPORT void NpPlayer::request_stream (const QString &path, const QString 
             }
             KUrl kurl(uri);
             if (kurl.isValid ())
-                emit openUrl (kurl, target);
+                process_info->manager->player ()->openUrl (kurl, target, QString ());
             sendFinish (sid, 0, NpStream::BecauseDone);
         } else {
             NpStream * ns = new NpStream (this, sid, uri);

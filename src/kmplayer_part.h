@@ -26,34 +26,26 @@
 
 class KMPlayerPart;
 class JSCommandEntry;
+namespace KMPlayer {
+    class PlayListNotify;
+}
 
 /*
- * Wrapper source for URLSource that has a HREF attribute
+ * Document to get first frame for streams starting with a picture
  */
-class KMPLAYER_NO_EXPORT KMPlayerHRefSource : public KMPlayer::Source {
-    Q_OBJECT
+class KMPLAYER_NO_EXPORT GrabDocument : public KMPlayer::Document {
 public:
-    KMPlayerHRefSource (KMPlayer::PartBase * player);
-    virtual ~KMPlayerHRefSource ();
-    virtual bool processOutput (const QString & line);
-    virtual bool hasLength ();
+    GrabDocument (KMPlayerPart *part, const QString &url, const QString &file,
+            KMPlayer::PlayListNotify *);
 
-    void setUrl (const QString &);
-    void clear ();
-    virtual QString prettyName ();
-public slots:
-    virtual void init ();
     virtual void activate ();
-    virtual void deactivate ();
-    void finished ();
-private slots:
-    void grabReady (const QString & path);
-    void play ();
-private:
-    QString m_grabfile;
-    bool m_finished;
-};
+    virtual void undefer ();
+    virtual void begin ();
+    virtual void endOfFile ();
 
+    QString m_grab_file;
+    KMPlayerPart *m_part;
+};
 
 /*
  * Part notifications to hosting application
@@ -69,8 +61,6 @@ public:
     void saveState (QDataStream & stream);
     void restoreState (QDataStream & stream);
     void requestOpenURL (const KUrl & url, const QString & target, const QString & service);
-public slots:
-    void slotRequestOpenURL (const KUrl & url, const QString & target);
 };
 
 /*
@@ -141,9 +131,10 @@ public:
     void setMaster (KMPlayerPart * m) { m_master = m; }
     virtual void setLoaded (int percentage);
     bool openNewURL (const KUrl & url); // for JS interface
-    bool startUrl (const KUrl &url, const KUrl &pic=KUrl ()); // clickToPlay
+    bool startUrl (const KUrl &url, const QString &pic=QString ());//clickToPlay
 public slots:
     virtual bool openUrl (const KUrl & url);
+    virtual void openUrl (const KUrl &, const QString &t, const QString &srv);
     virtual bool closeUrl ();
     void setMenuZoom (int id);
 protected:
@@ -163,12 +154,15 @@ private:
     KMPlayerLiveConnectExtension * m_liveconnectextension;
     QString m_group;
     QString m_src_url;
+    QString m_href_url;
     QString m_file_name;
+    QString m_grab_file;
+    QString m_target;
+    KMPlayer::AttributeListPtr m_doc_attributes;
     int m_features;
     int last_time_left;
     bool m_started_emited : 1;
     //bool m_noresize : 1;
-    bool m_havehref : 1;
 };
 
 

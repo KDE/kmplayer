@@ -79,7 +79,7 @@ public:
     WId widget ();
     void setSource (Source * src) { m_source = src; }
     void setState (IProcess::State newstate);
-    virtual bool grabPicture (const KUrl & url, int pos);
+    virtual bool grabPicture (const QString &file, int frame);
     Mrl *mrl () const;
 signals:
     void grabReady (const QString & path);
@@ -153,7 +153,7 @@ public:
     ~MPlayer ();
 
     virtual void init ();
-    virtual bool grabPicture (const KUrl & url, int pos);
+    virtual bool grabPicture (const QString &file, int pos);
     virtual void setAudioLang (int, const QString &);
     virtual void setSubtitle (int, const QString &);
     bool run (const char * args, const char * pipe = 0L);
@@ -174,7 +174,8 @@ private slots:
     void processOutput (K3Process *, char *, int);
 private:
     QString m_process_output;
-    QString m_grabfile;
+    QString m_grab_file;
+    QString m_grab_dir;
     QWidget * m_widget;
     QString m_tmpURL;
     struct LangInfo {
@@ -601,7 +602,6 @@ public:
     KDE_NO_EXPORT QString objectPath () const { return path; }
 signals:
     void evaluate (const QString & scr, QString & result);
-    void openUrl (const KUrl & url, const QString & target);
 public slots:
     virtual void stop ();
     virtual void quit ();

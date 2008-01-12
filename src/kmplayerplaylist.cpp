@@ -858,7 +858,7 @@ Document::Document (const QString & s, PlayListNotify * n)
 }
 
 Document::~Document () {
-    kDebug () << "~Document";
+    kDebug () << "~Document " << src;
 }
 
 static NodePtr getElementByIdImpl (NodePtr n, const QString & id, bool inter) {

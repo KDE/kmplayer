@@ -321,7 +321,7 @@ KDE_NO_EXPORT void Settings::readConfig () {
     vcddevice = mplayer.readEntry (strVCDDevice, "/dev/cdrom");
     videodriver = mplayer.readEntry (strVoDriver, 0);
     audiodriver = mplayer.readEntry (strAoDriver, 0);
-    allowhref = mplayer.readEntry(strAllowHref, false);
+    clicktoplay = mplayer.readEntry(strAllowHref, false);
 
     // recording
     KConfigGroup rec_cfg (m_config, strRecordingGroup);
@@ -463,7 +463,7 @@ void Settings::show (const char * pagename) {
             id++;
         }
     }
-    configdialog->m_SourcePageURL->allowhref->setChecked (allowhref);
+    configdialog->m_SourcePageURL->clicktoplay->setChecked (clicktoplay);
 
     // postproc
     configdialog->m_OPPagePostproc->postProcessing->setChecked (postprocessing);
@@ -550,7 +550,7 @@ void Settings::writeConfig () {
     mplayer_cfg.writeEntry (strSeekTime, seektime);
     mplayer_cfg.writeEntry (strVoDriver, videodriver);
     mplayer_cfg.writeEntry (strAoDriver, audiodriver);
-    mplayer_cfg.writeEntry (strAllowHref, allowhref);
+    mplayer_cfg.writeEntry (strAllowHref, clicktoplay);
     mplayer_cfg.writeEntry (strAddConfigButton, showcnfbutton);
     mplayer_cfg.writeEntry (strAddPlaylistButton, showplaylistbutton);
     mplayer_cfg.writeEntry (strAddRecordButton, showrecordbutton);
@@ -696,7 +696,7 @@ void Settings::okPressed () {
             }
         }
     }*/
-    allowhref = configdialog->m_SourcePageURL->allowhref->isChecked ();
+    clicktoplay = configdialog->m_SourcePageURL->clicktoplay->isChecked ();
     //postproc
     postprocessing = configdialog->m_OPPagePostproc->postProcessing->isChecked();
     disableppauto = configdialog->m_OPPagePostproc->disablePPauto->isChecked();

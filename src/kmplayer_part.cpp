@@ -27,6 +27,7 @@
 #include <qtimer.h>
 #include <qpushbutton.h>
 #include <qslider.h>
+#include <QFile>
 
 class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollection.h does not forward declare KXMLGUIClient
 #include <kaboutdata.h>
@@ -37,6 +38,7 @@ class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollect
 #include <klocale.h>
 #include <kparts/factory.h>
 #include <kstatusbar.h>
+#include <kstandarddirs.h>
 
 #include "kmplayer_part.h"
 #include "kmplayerview.h"
@@ -132,6 +134,42 @@ KAboutData *KMPlayerFactory::aboutData () {
 
 //-----------------------------------------------------------------------------
 
+GrabDocument::GrabDocument (KMPlayerPart *part, const QString &url,
+        const QString &file, PlayListNotify * n)
+ : Document (url, n),
+   m_grab_file (file),
+   m_part (part) {
+     kDebug() << file << " " << n;
+}
+
+void GrabDocument::activate () {
+    media_object = notify_listener->mediaManager()->createMedia (
+            MediaManager::AudioVideo, this);
+    kDebug() << src;
+    Mrl::activate ();
+}
+
+void GrabDocument::undefer () {
+    kDebug() << src;
+    begin ();
+}
+
+void GrabDocument::begin () {
+    setState (state_began);
+    AudioVideoMedia *av = static_cast <AudioVideoMedia *> (media_object);
+    av->grabPicture (m_grab_file, 0);
+    kDebug() << m_grab_file;
+}
+
+void GrabDocument::endOfFile () {
+    kDebug() << "";
+    state = state_finished;
+    m_part->startUrl (KUrl (), m_grab_file);
+    // deleted here by Source::reset
+}
+
+//-----------------------------------------------------------------------------
+
 static bool getBoolValue (const QString & value) {
     return (value.lower() != QString::fromLatin1("false") &&
             value.lower() != QString::fromLatin1("off") &&
@@ -148,8 +186,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
    m_browserextension (new KMPlayerBrowserExtension (this)),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
    m_features (Feat_Unknown),
-   m_started_emited (false),
-   m_havehref (false) {
+   m_started_emited (false) {
     kDebug () << "KMPlayerPart(" << this << ")::KMPlayerPart ()";
     bool show_fullscreen = false;
     if (!kmplayerpart_static)
@@ -158,13 +195,12 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
         kmplayerpart_static->ref ();
     setComponentData (KMPlayerFactory::componentData ());
     init (actionCollection ());
-    m_sources ["hrefsource"] = (new KMPlayerHRefSource (this));
     ///*KAction *playact =*/ new KAction(i18n("P&lay"), QString ("player_play"), KShortcut (), this, SLOT(play ()), actionCollection (), "play");
     ///*KAction *pauseact =*/ new KAction(i18n("&Pause"), QString ("player_pause"), KShortcut (), this, SLOT(pause ()), actionCollection (), "pause");
     ///*KAction *stopact =*/ new KAction(i18n("&Stop"), QString ("player_stop"), KShortcut (), this, SLOT(stop ()), actionCollection (), "stop");
     //new KAction (i18n ("Increase Volume"), QString ("player_volume"), KShortcut (), this, SLOT (increaseVolume ()), actionCollection (), "edit_volume_up");
     //new KAction (i18n ("Decrease Volume"), QString ("player_volume"), KShortcut (), this, SLOT (decreaseVolume ()), actionCollection (), "edit_volume_down");
-    Source * urlsource = m_sources ["urlsource"];
+    Source *source = m_sources ["urlsource"];
     KMPlayer::ControlPanel * panel = m_view->controlPanel ();
     QStringList::const_iterator it = args.begin ();
     QStringList::const_iterator end = args.end ();
@@ -180,15 +216,15 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
                 value.truncate (value.length () - 1);
             kDebug () << "name=" << name << " value=" << value;
             if (name == "href") {
-                urlsource->setUrl (value);
-                urlsource->setIdentified (false);
-                m_havehref = true;
+                m_href_url = value;
+            } else if (name == QString::fromLatin1("target")) {
+                m_target = value;
             } else if (name == QString::fromLatin1("width")) {
                 m_noresize = true;
             } else if (name == QString::fromLatin1("height")) {
                 m_noresize = true;
             } else if (name == QString::fromLatin1("type")) {
-                urlsource->document ()->mrl ()->mimetype = value;
+                source->document ()->mrl ()->mimetype = value;
             } else if (name == QString::fromLatin1("controls")) {
                 //http://service.real.com/help/library/guides/production8/realpgd.htm?src=noref,rnhmpg_080301,rnhmtn,nosrc
                 //http://service.real.com/help/library/guides/production8/htmfiles/control.htm
@@ -293,13 +329,13 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
             } else if (name == QString::fromLatin1 ("fullscreenmode")) {
                 show_fullscreen = getBoolValue (value);
             } else if (name == QString::fromLatin1 ("autostart")) {
-                urlsource->setAutoPlay (getBoolValue (value));
+                source->setAutoPlay (getBoolValue (value));
 	    }
             // volume/clicktoplay/transparentatstart/animationatstart
             // autorewind/displaysize/border
             if (name.startsWith (QString::fromLatin1 ("__khtml__")))
                 name = name.mid (9);
-            convertNode <KMPlayer::Element> (urlsource->document ())->setAttribute (name, value);
+            convertNode <KMPlayer::Element> (source->document ())->setAttribute (name, value);
         }
     }
     if (turned_off_features) {
@@ -384,20 +420,18 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::~KMPlayerPart () {
         else
             kError () << "KMPlayerPart::~KMPlayerPart group lost" << endl;
     //}
+    if (!m_grab_file.isEmpty ())
+        ::unlink (m_grab_file.toLocal8Bit ().data ());
     m_config = 0L;
     kmplayerpart_static->unref ();
 }
 
 KDE_NO_EXPORT void KMPlayerPart::processCreated (KMPlayer::Process *p) {
 #ifdef KMPLAYER_WITH_NPP
-    if (!strcmp (p->name (), "npp")) {
+    if (!strcmp (p->name (), "npp"))
         connect (p, SIGNAL (evaluate (const QString &, QString &)),
                 m_liveconnectextension,
                 SLOT (evaluate (const QString &, QString &)));
-        connect (p, SIGNAL (openUrl (const KUrl &, const QString &)),
-                m_browserextension,
-                SLOT (slotRequestOpenURL (const KUrl &, const QString &)));
-    }
 #endif
 }
 
@@ -438,7 +472,6 @@ KDE_NO_EXPORT void KMPlayerPart::viewerPartSourceChanged(Source *o, Source *s) {
 KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
     kDebug () << "KMPlayerPart::openUrl " << _url.url();
     Source * urlsource = m_sources ["urlsource"];
-    KMPlayerHRefSource * hrefsource = static_cast <KMPlayerHRefSource *>(m_sources ["hrefsource"]);
     KMPlayerPartList::iterator i =kmplayerpart_static->partlist.begin ();
     KMPlayerPartList::iterator e =kmplayerpart_static->partlist.end ();
     GroupPredicate pred (this, m_group);
@@ -473,11 +506,10 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
                     break;
                 }
     }
-    if (m_havehref && (!KAuthorized::authorizeUrlAction ("redirect", url, urlsource->url ()) || !m_settings->allowhref)) {
-        m_havehref = false;
-        url = urlsource->url ();
-    }
-    if (!m_havehref)
+    if (!m_href_url.isEmpty () &&
+            !KAuthorized::authorizeUrlAction("redirect", url, KUrl(m_href_url)))
+        m_href_url.truncate (0);
+    if (m_href_url.isEmpty ())
         setUrl (url.url ());
     if (url.isEmpty ()) {
         if (!m_master && !(m_features & Feat_Viewer))
@@ -485,6 +517,8 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
             QTimer::singleShot (50, this, SLOT (waitForImageWindowTimeOut ()));
         return true;
     }
+    m_src_url = url.url ();
+
     if (!m_group.isEmpty () && !(m_features & Feat_Viewer)) {
         // group member, not the image window
         for (i = std::find_if (i, e, pred);
@@ -496,40 +530,70 @@ KDE_NO_EXPORT bool KMPlayerPart::openUrl (const KUrl & _url) {
         //kError () << "Not the ImageWindow and no ImageWindow found" << endl;
         return true;
     }
-    if (!m_view || !url.isValid ()) return false;
+    if (!m_view || !url.isValid ())
+        return false;
+
     KParts::OpenUrlArguments args = arguments ();
     if (!args.mimeType ().isEmpty ())
         urlsource->document ()->mrl ()->mimetype = args.mimeType ();
-    if (m_havehref && m_settings->allowhref) {
-        hrefsource->setUrl (url.url ());
-        setSource (hrefsource);
-    } else {
-        hrefsource->clear ();
-        startUrl (m_havehref ? urlsource->url () : url);
-        if (urlsource->autoPlay ()) {
-            emit started (0L);
-            m_started_emited = true;
-        }
-        m_havehref = false;
+
+    startUrl (url);
+
+    if (urlsource->autoPlay ()) {
+        emit started (0L);
+        m_started_emited = true;
     }
     return true;
 }
 
+KDE_NO_EXPORT void
+KMPlayerPart::openUrl (const KUrl &u, const QString &t, const QString &srv) {
+    m_browserextension->requestOpenURL (u, t.isEmpty () ? m_target : t, srv);
+}
+
 KDE_NO_EXPORT bool KMPlayerPart::openNewURL (const KUrl & url) {
     m_file_name.truncate (0);
-    m_havehref = false;
+    m_href_url.truncate (0);
     m_sources ["urlsource"]->setAutoPlay (true);
     return openUrl (url);
 }
 
-KDE_NO_EXPORT bool KMPlayerPart::startUrl (const KUrl &url, const KUrl &pic) {
+KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
     Source * src = sources () ["urlsource"];
+    KUrl url (uri);
 #ifdef KMPLAYER_WITH_CAIRO
-    if (m_settings->allowhref) {
+    kDebug() << "uri '" << uri << "' img '" << img << "'";
+    if (url.isEmpty ()) {
+        url = m_src_url;
+    } else if (!m_href_url.isEmpty ()) {
+        static int counter;
+        m_href_url = KUrl (m_docbase, m_href_url).url ();
+        m_grab_file = QString ("%1grab-%2-%3.jpg")
+            .arg (KStandardDirs::locateLocal ("data", "kmplayer/"))
+            .arg (getpid ())
+            .arg (counter++);
+        Node *n = new GrabDocument (this, url.url (), m_grab_file, src);
+        src->setUrl (url.url ());
+        m_src_url = KUrl (m_docbase, m_href_url).url ();
+        src->setDocument (n, n);
+        setSource (src);
+        return true;
+    }
+    if (m_settings->clicktoplay) {
+        QString pic (img);
+        if (!pic.isEmpty ()) {
+            QFile file (pic);
+            if (!file.exists ()) {
+                m_grab_file.truncate (0);
+                pic.truncate (0);
+            } else if (!file.size ()) {
+                pic.truncate (0);
+            }
+        }
         QString img = pic.isEmpty ()
             ? KUrl (KIconLoader::global()->iconPath (
                         QString::fromLatin1 ("kmplayer"), -128)).url ()
-            : pic.url ();
+            : pic;
         QString smil = QString::fromLatin1 (
           "<smil><head><layout>"
           "<region id='reg1' left='12.5%' top='5%' right='12.5%' bottom='5%' "
@@ -539,13 +603,18 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl (const KUrl &url, const KUrl &pic) {
           "<transition id='clockwipe1' dur='1' type='clockWipe'/>"
           "</head>"
           "<body>"
-          "<img id='image1' src='%1' region='reg1' fit='meet' "
-          "begin='.5' end='image1.activateEvent' transIn='clockwipe1'/>"
+          "<a href='%1'>"
+          "<img id='image1' src='%2' region='reg1' fit='meet' "
+          "begin='.5' dur='indefinite' transIn='clockwipe1'/>"
+          "</a>"
           "<video id='video1' region='reg2' fit='meet'/>"
           "</body></smil>"
-          ).arg (img);
+          ).arg (m_href_url.isEmpty () ? QString ("#video1") : m_src_url)
+           .arg (img);
         QByteArray ba = smil.toUtf8 ();
         QTextStream ts (&ba, QIODevice::ReadOnly);
+        if (m_source)
+            m_source->deactivate ();
         NodePtr doc = src->document ();
         KMPlayer::readXML (doc, ts, QString (), false);
         NodePtr n = doc->document ()->getElementById ("video1");
@@ -557,11 +626,14 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl (const KUrl &url, const KUrl &pic) {
             n->closed ();
         }
         doc->document ()->resolved = true;
-        setSource (src);
+        if (m_source)
+            m_source->activate();
+        else
+            setSource (src);
         return true;
     } else
 #endif
-        return PartBase::openUrl (m_havehref ? src->url () : url);
+        return PartBase::openUrl(m_href_url.isEmpty() ? url : KUrl(m_href_url));
 }
 
 KDE_NO_EXPORT void KMPlayerPart::waitForImageWindowTimeOut () {
@@ -659,8 +731,6 @@ KDE_NO_EXPORT void KMPlayerPart::playingStopped () {
         emit completed ();
     }
     m_liveconnectextension->finished ();
-    if (m_havehref)
-        static_cast <KMPlayerHRefSource *>(m_sources["hrefsource"])->finished();
     m_browserextension->infoMessage (i18n ("KMPlayer: Stop Playing"));
     if (m_view)
         m_view->controlPanel ()->setPlaying (false);
@@ -730,10 +800,6 @@ KDE_NO_EXPORT void KMPlayerBrowserExtension::requestOpenURL (const KUrl & url, c
     bargs.frameName = target;
     args.setMimeType (service);
     emit openUrlRequest (url, args, bargs);
-}
-
-KDE_NO_EXPORT void KMPlayerBrowserExtension::slotRequestOpenURL (const KUrl &url, const QString &target) {
-    requestOpenURL (url, target, QString ());
 }
 
 //---------------------------------------------------------------------
@@ -1148,105 +1214,6 @@ KDE_NO_EXPORT void KMPlayerLiveConnectExtension::setSize (int w, int h) {
     KParts::LiveConnectExtension::ArgList args;
     args.push_back (qMakePair (KParts::LiveConnectExtension::TypeString, jscode));
     emit partEvent (0, "eval", args);
-}
-
-//-----------------------------------------------------------------------------
-
-KDE_NO_CDTOR_EXPORT KMPlayerHRefSource::KMPlayerHRefSource (PartBase * player)
-    : Source (i18n ("HREF"), player, "hrefsource") {
-    //kDebug () << "KMPlayerHRefSource::KMPlayerHRefSource";
-}
-
-KDE_NO_CDTOR_EXPORT KMPlayerHRefSource::~KMPlayerHRefSource () {
-    //kDebug () << "KMPlayerHRefSource::~KMPlayerHRefSource";
-}
-
-KDE_NO_EXPORT void KMPlayerHRefSource::init () {
-    Source::init ();
-    setIdentified ();
-}
-
-KDE_NO_EXPORT bool KMPlayerHRefSource::hasLength () {
-    return false;
-}
-
-KDE_NO_EXPORT bool KMPlayerHRefSource::processOutput (const QString & /*str*/) {
-    //return Source::processOutput (str);
-    return true;
-}
-
-KDE_NO_EXPORT void KMPlayerHRefSource::setUrl (const QString &url) {
-    m_url = KUrl (url);
-    m_identified = false;
-    m_finished = false;
-    Source::setUrl (url);
-    kDebug () << url;
-}
-
-KDE_NO_EXPORT void KMPlayerHRefSource::play () {
-    kDebug () << "KMPlayerHRefSource::play " << m_url.url();
-    Source * src = m_player->sources () ["urlsource"];
-    QString target = src->document ()->document ()->
-        getAttribute (StringPool::attr_target);
-    if (!target.isEmpty ()) {
-        KMPlayer::Mrl * mrl = src->document ()->mrl ();
-        static_cast <KMPlayerPart *> (m_player)->browserextension ()->requestOpenURL (mrl->src, target, mrl->mimetype);
-    } else
-        m_player->setSource (m_player->sources () ["urlsource"]);
-}
-
-KDE_NO_EXPORT void KMPlayerHRefSource::activate () {
-    m_player->stop ();
-    if (m_finished) {
-        QTimer::singleShot (0, this, SLOT (finished ()));
-        return;
-    }
-    init ();
-    //m_player->setProcess ("mplayer");
-    //if (m_player->process ()->grabPicture (m_url, 0))
-    //    connect (m_player->process (), SIGNAL (grabReady (const QString &)),
-    //             this, SLOT (grabReady (const QString &)));
-    //else {
-        setUrl (QString ());
-        QTimer::singleShot (0, this, SLOT (play ()));
-    //}
-}
-
-KDE_NO_EXPORT void KMPlayerHRefSource::clear () {
-    setUrl (QString ());
-}
-
-KDE_NO_EXPORT void KMPlayerHRefSource::grabReady (const QString & path) {
-    kDebug () << "KMPlayerHRefSource::grabReady(" << path << ")";
-    m_finished = true;
-    m_grabfile = path;
-    finished ();
-}
-
-KDE_NO_EXPORT void KMPlayerHRefSource::finished () {
-    kDebug () << "KMPlayerHRefSource::finished()";
-    KMPlayer::View *view = m_player->viewWidget ();
-    if (view) {
-        if (!view->setPicture (m_grabfile)) {
-            clear ();
-            QTimer::singleShot (0, this, SLOT (play ()));
-            return;
-        }
-        connect (view, SIGNAL (pictureClicked ()), this, SLOT (play ()));
-    }
-}
-
-KDE_NO_EXPORT void KMPlayerHRefSource::deactivate () {
-    kDebug () << "KMPlayerHRefSource::deactivate()";
-    KMPlayer::View *view = m_player->viewWidget ();
-    if (view) {
-        view->setPicture (QString ());
-        disconnect (view, SIGNAL (pictureClicked ()), this, SLOT (play ()));
-    }
-}
-
-KDE_NO_EXPORT QString KMPlayerHRefSource::prettyName () {
-    return i18n ("WEB");
 }
 
 #include "kmplayer_part.moc"

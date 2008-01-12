@@ -99,7 +99,6 @@ public:
         : KMPlayer::URLSource (p, KUrl ("lists://")) {}
     void play (KMPlayer::Mrl *);
     void activate ();
-    void setDocument (KMPlayer::NodePtr doc, KMPlayer::NodePtr cur);
     QString prettyName () { return m_document->mrl ()->pretty_name; }
 };
 
@@ -194,14 +193,6 @@ KDE_NO_EXPORT void ListsSource::play (KMPlayer::Mrl *mrl) {
 
 KDE_NO_EXPORT void ListsSource::activate () {
     play (m_current ? m_current->mrl () : NULL);
-}
-
-KDE_NO_EXPORT void ListsSource::setDocument (KMPlayer::NodePtr doc, KMPlayer::NodePtr cur) {
-    if (m_document)
-        m_document->document()->dispose ();
-    m_document = doc;
-    m_current = cur;
-    //kDebug () << "setDocument: " << m_document->outerXML ();
 }
 
 KDE_NO_CDTOR_EXPORT FileDocument::FileDocument (short i, const QString &s, KMPlayer::PlayListNotify * n)

@@ -75,6 +75,7 @@ public:
     KDE_NO_EXPORT Mrl *current() { return m_current ? m_current->mrl() : NULL;}
     QString plugin (const QString &mime) const;
     virtual NodePtr document ();
+    void setDocument (KMPlayer::NodePtr doc, KMPlayer::NodePtr cur);
     virtual NodePtr root ();
     virtual QString filterOptions ();
     virtual bool authoriseUrl (const QString &url);
@@ -130,6 +131,7 @@ protected:
     void bitRates (int & preferred, int & maximal);
     void setTimeout (int ms);
     MediaManager *mediaManager () const;
+    void openUrl (const KUrl &url, const QString &target, const QString &srv);
 
     NodePtr m_document;
     NodePtrW m_current;
