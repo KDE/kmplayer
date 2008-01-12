@@ -36,6 +36,7 @@
 #include <QList>
 #include <QtDBus/QtDBus>
 #include <QtCore/QDir>
+#include <QtCore/QUrl>
 
 #include <k3process.h>
 #include <k3processcontroller.h>
@@ -90,10 +91,10 @@ bool ProcessInfo::supports (const char *source) const {
 //------------------------%<----------------------------------------------------
 
 static QString getPath (const KUrl & url) {
-    QString p = KUrl::decode_string (url.url ());
+    QString p = QUrl::fromPercentEncoding (url.url ().toAscii ());
     if (p.startsWith (QString ("file:/"))) {
+        int i = 0;
         p = p.mid (5);
-        unsigned int i = 0;
         for (; i < p.length () && p[i] == QChar ('/'); ++i)
             ;
         //kDebug () << "getPath " << p.mid (i-1);
@@ -374,7 +375,7 @@ KDE_NO_EXPORT void MPlayerBase::stop () {
 
 KDE_NO_EXPORT void MPlayerBase::quit () {
     if (running ()) {
-        kDebug() << "PlayerBase::quit" << endl;
+        kDebug() << "MPlayerBase::quit";
         stop ();
         disconnect (m_process, SIGNAL (processExited (K3Process *)),
                 this, SLOT (processStopped (K3Process *)));
@@ -383,15 +384,7 @@ KDE_NO_EXPORT void MPlayerBase::quit () {
             ::kill (-1 * ::getpid (), SIGTERM);
             signal(SIGTERM, oldhandler);
         }
-#if KDE_IS_VERSION(3, 1, 90)
         m_process->wait(2);
-#else
-        QTime t;
-        t.start ();
-        do {
-            K3ProcessController::instance ()->waitForProcessExit (2);
-        } while (t.elapsed () < 2000 && m_process->isRunning ());
-#endif
         if (m_process->isRunning ())
             Process::quit ();
         processStopped (0L);
@@ -734,7 +727,7 @@ KDE_NO_EXPORT bool MPlayer::grabPicture (const QString &file, int pos) {
             m_grab_dir.truncate (0);
         }
     } else {
-        kdError () << "mkdtemp failure";
+        kError () << "mkdtemp failure";
     }
     delete [] buf;
     setState (ret ? Playing : Ready);
@@ -1170,7 +1163,7 @@ KDE_NO_EXPORT void MEncoder::stop () {
         return;
     kDebug () << "MEncoder::stop ()";
     if (m_use_slave)
-        m_process->kill (SIGINT);
+        m_process->kill (SIGTERM);
     MPlayerBase::stop ();
 }
 
@@ -1245,9 +1238,9 @@ KDE_NO_EXPORT void MPlayerDumpstream::stop () {
     terminateJobs ();
     if (!m_source || !m_process || !m_process->isRunning ())
         return;
-    kDebug () << "MPlayerDumpstream::stop ()";
+    kDebug () << "MPlayerDumpstream::stop";
     if (m_use_slave)
-        m_process->kill (SIGINT);
+        m_process->kill (SIGTERM);
     MPlayerBase::stop ();
 }
 
@@ -1393,7 +1386,9 @@ bool MasterProcess::seek (int pos, bool) {
         msg << (qulonglong) pos << true;
         msg.setDelayedReply (false);
         QDBusConnection::sessionBus().send (msg);
+        return true;
     }
+    return false;
 }
 
 KDE_NO_EXPORT void MasterProcess::volume (int incdec, bool) {
@@ -2464,7 +2459,7 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
             msg << m_url << mime << plugin << param_len;
             QMap <QString, QVariant> urlargs;
             AttributePtr a = elm->attributes ()->first ();
-            for (int i = 0; i < param_len && a; i++, a = a->nextSibling ())
+            for (unsigned i = 0; i < param_len && a; i++, a = a->nextSibling ())
                 urlargs.insert (a->name ().toString (), a->value ());
             msg << urlargs;
             msg.setDelayedReply (false);
