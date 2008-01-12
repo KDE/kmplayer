@@ -575,9 +575,10 @@ ImageMedia::~ImageMedia () {
 KDE_NO_EXPORT bool ImageMedia::play () {
     if (!img_movie)
         return false;
-    img_movie->restart ();
-    if (img_movie->paused ())
-        img_movie->unpause ();
+    if (img_movie->state () == QMovie::Paused)
+        img_movie->setPaused (false);
+    else if (img_movie->state () != QMovie::Running)
+        img_movie->start ();
     return true;
 }
 
@@ -586,13 +587,13 @@ KDE_NO_EXPORT void ImageMedia::stop () {
 }
 
 void ImageMedia::pause () {
-    if (img_movie && !img_movie->paused ())
-        img_movie->pause ();
+    if (img_movie && !img_movie->state () == QMovie::Paused)
+        img_movie->setPaused (true);
 }
 
 void ImageMedia::unpause () {
     if (img_movie && img_movie->paused ())
-        img_movie->unpause ();
+        img_movie->setPaused (false);
 }
 
 KDE_NO_EXPORT void ImageMedia::ready (const QString &url) {
