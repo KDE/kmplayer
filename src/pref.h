@@ -161,6 +161,7 @@ public:
     KComboBox * sub_urllist;
     Q3ListBox * backend;
     QCheckBox * clicktoplay;
+    QCheckBox * grabhref;
     QLineEdit * prefBitRate;
     QLineEdit * maxBitRate;
     bool changed;

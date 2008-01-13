@@ -655,7 +655,7 @@ Mrl::Mrl (NodePtr & d, short id)
       media_object (NULL),
       aspect (0), repeat (0),
       view_mode (SingleMode),
-      resolved (false), bookmarkable (true) {}
+      resolved (false), bookmarkable (true), access_granted (false) {}
 
 Mrl::~Mrl () {
     if (media_object)

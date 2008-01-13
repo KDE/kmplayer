@@ -257,6 +257,8 @@ KMediaPlayer::View* PartBase::view () {
 extern const char * strGeneralGroup;
 
 QString PartBase::processName (Mrl *mrl) {
+    if (id_node_grab_document == mrl->id)
+        return QString ("mplayer"); //FIXME
     // determine backend, start with temp_backends
     QString p = temp_backends [m_source->name()];
     bool remember_backend = p.isEmpty ();

@@ -140,7 +140,7 @@ GrabDocument::GrabDocument (KMPlayerPart *part, const QString &url,
  : Document (url, n),
    m_grab_file (file),
    m_part (part) {
-     kDebug() << file << " " << n;
+     id = id_node_grab_document;
 }
 
 void GrabDocument::activate () {
@@ -151,15 +151,14 @@ void GrabDocument::activate () {
 }
 
 void GrabDocument::undefer () {
-    kDebug() << src;
     begin ();
 }
 
 void GrabDocument::begin () {
     setState (state_began);
     AudioVideoMedia *av = static_cast <AudioVideoMedia *> (media_object);
-    av->grabPicture (m_grab_file, 0);
     kDebug() << m_grab_file;
+    av->grabPicture (m_grab_file, 0);
 }
 
 void GrabDocument::endOfFile () {
@@ -565,7 +564,7 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
     kDebug() << "uri '" << uri << "' img '" << img;
     if (url.isEmpty ()) {
         url = m_src_url;
-    } else if (!m_href_url.isEmpty ()) {
+    } else if (m_settings->grabhref && !m_href_url.isEmpty ()) {
         static int counter;
         m_href_url = KUrl (m_docbase, m_href_url).url ();
         m_grab_file = QString ("%1grab-%2-%3.jpg")
@@ -579,7 +578,7 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
         setSource (src);
         return true;
     }
-    if (m_settings->clicktoplay &&
+    if ((m_settings->clicktoplay || !m_href_url.isEmpty ()) &&
             parent () &&
             !strcmp ("KHTMLPart", parent ()->metaObject ()->className())) {
         QString pic (img);
@@ -608,12 +607,13 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
           "<region id='reg1' left='12.5%' top='5%' right='12.5%' bottom='5%' "
           "background-color='#202030' showBackground='whenActive'/>"
           "<region id='reg2'/>"
+          "<region id='reg3'/>"
           "</layout>"
           "<transition id='clockwipe1' dur='1' type='clockWipe'/>"
           "</head>"
           "<body>"
           "<a href='%1'%2>"
-          "<img id='image1' src='%3' region='reg1' fit='meet' "
+          "<img id='image1' src='%3' region='reg%4' fit='meet' "
           "begin='.5' dur='indefinite' transIn='clockwipe1'/>"
           "</a>"
           "<video id='video1' region='reg2' fit='meet'/>"
@@ -622,7 +622,8 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
            .arg (m_target.isEmpty ()
                    ? QString ()
                    : QString (" target='%1'").arg (m_target))
-           .arg (img);
+           .arg (img)
+           .arg (pic.isEmpty () ? "1" : "3");
         QByteArray ba = smil.toUtf8 ();
         QTextStream ts (&ba, QIODevice::ReadOnly);
         if (m_source)
