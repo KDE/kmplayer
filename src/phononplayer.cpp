@@ -154,6 +154,10 @@ void Stream::play () {
 }
 
 void Stream::pause () {
+    if (m_media->state () == Phonon::PausedState)
+        m_media->play ();
+    else
+        m_media->pause ();
 }
 
 void Stream::stop () {

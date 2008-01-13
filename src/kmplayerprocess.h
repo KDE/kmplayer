@@ -320,6 +320,7 @@ public:
     void loading (int p);
     void playing ();
     void progress (uint64_t pos);
+    void pause ();
     bool seek (int pos, bool absolute);
     void volume (int pos, bool absolute);
     void eof ();
