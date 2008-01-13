@@ -910,12 +910,9 @@ void Document::defer () {
 }
 
 void Document::undefer () {
-    if (!postpone_lock) {
-        Mrl::undefer ();
-    } else {
-        setState (state_activated);
-        postpone_lock = 0L;
-    }
+    setState (state_activated);
+    postpone_lock = 0L;
+    Mrl::undefer ();
 }
 
 void Document::reset () {
