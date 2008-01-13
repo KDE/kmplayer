@@ -30,6 +30,7 @@
 <year>2002</year>
 <year>2006</year>
 <year>2007</year>
+<year>2008</year>
 <holder>Koos Vriezen</holder>
 </copyright>
 <!-- Translators: put here the copyright notice of the translation -->
@@ -38,14 +39,14 @@
 <legalnotice>&FDLNotice;</legalnotice>
 
 
-<date>2007-07-28</date>
-<releaseinfo>0.06.00</releaseinfo>
+<date>2008-01-13</date>
+<releaseinfo>0.07.00</releaseinfo>
 
 <!-- Abstract about this handbook -->
 
 <abstract>
 <para>
-    &kmplayer; is an application that is a &kde; frontend to <application>MPlayer</application>, <application>Xine</application> and <application>GStreamer</application>.
+    &kmplayer; is an application that is a &kde; frontend to <application>MPlayer</application> and <application>Phonon</application>.
 </para>
 </abstract>
 
@@ -64,10 +65,10 @@
 <title>Introduction</title>
 <para>
 &kmplayer; is a simple frontend to <application>MPlayer</application>,
-<application>Xine</application>, <application>GStreamer</application> and
-<application>FFMpeg</application>. You can use it for watching all the movie
+<application>Phonon</application> and <application>FFMpeg</application>.
+You can use it for watching all the movie
 file formats that <application>MPlayer</application>,
-<application>Xine</application> or <application>GStreamer</application>
+or <application>Phonon</application>
 supports as well as watching from <acronym>DVD</acronym>,
 <acronym>VCD</acronym> or <acronym>TV</acronym> and <acronym>camera</acronym>.
 </para>
@@ -254,46 +255,21 @@ can see the output from mplayer.
 </para>
 </section>
 </section>
-<section id="xine">
-<title>Xine</title>
+<section id="phonon">
+<title>Phonon</title>
 <para>
-When configured &kmplayer; with Xine support, there will be configuration tab
-for Xine in &kmplayer;'s config dialog. Here you can set various options.
-These options are dynamic retrieved from the Xine library. Use context help to
-get information on what these options do (ie. click on the question mark
-button from the dialog title bar and then click on an option).
+<application>Phonon</application> is the &kde; desktop wide multimedia
+framework and can be configured in <application>System Settings</application>.
 </para>
 <para>
-This player configuration name is <parameter>xine</parameter>.
+This player configuration name is <parameter>phonon</parameter>.
 </para>
-<para>
-The options are saved in
-<filename>.kde/share/apps/kmplayer/xine_config</filename> as a text document.
-</para>
-<section id="xine-debug">
+<section id="phonon-debug">
 <title>Trouble shooting</title>
 <para>
 Basically the same way as trouble shooting
 <link linkend="mplayer-debug">MPlayer</link>, with the application name of
-<filename>kxineplayer</filename>.
-</para>
-</section>
-</section>
-<section id="gstreamer">
-<title>GStreamer</title>
-<para>
-There is no configuration tab for GStreamer in &kmplayer;'s config dialog. The
-common options for eg. <acronym>DVD</acronym> device are used when appropriate.
-</para>
-<para>
-This player configuration name is <parameter>gstreamer</parameter>.
-</para>
-<section id="gstremaer-debug">
-<title>Trouble shooting</title>
-<para>
-Basically the same way as trouble shooting
-<link linkend="mplayer-debug">MPlayer</link>, with the application name of
-<filename>kgstplayer</filename>.
+<filename>kphononplayer</filename>.
 </para>
 </section>
 </section>
@@ -344,11 +320,11 @@ from the popup menu).
 <para>
 To configure to always use a given backend for a particular mimetype
 (if detected of course) can be done by manually editing the
-<filename>~/.kde/share/config/kmplayerrc</filename>. For example, let xine play
-all ogg files:
+<filename>~/.kde/share/config/kmplayerrc</filename>. For example, let phonon
+play all ogg files:
 <programlisting>
 [audio/ogg]
-player=xine
+player=phonon
 </programlisting>
 </para>
 </section>
@@ -430,7 +406,7 @@ EndSection
 <para>
     Internally for the sources, &kmplayer; uses distinct names. At the time of
     this writing these are "dvdnavsource", "dvdsource", "exitsource",
-    "hrefsource", "introsource", "pipesource", "tvscanner", "tvsource",
+    "introsource", "pipesource", "tvscanner", "tvsource",
     "urlsource", "vcdsource" and "vdrsource". When activated, they mostly
     starts playing the list of playable items.
 </para>
@@ -454,17 +430,6 @@ dcop kmplayer-$PID KMediaPlayer toggleFullScreen
 
     <qandaset id="faq">
       <title>Frequently asked questions</title>
-      <qandaentry>
-        <question>
-          <para>Xine starts up slow, why does it have to benchmark my CPU all the time?</para>
-        </question>
-        <answer>
-            <para>
-                Note the answer below is outdated. <application>kxineplayer</application> saves it automatically to last value, so only the first time xine will do the CPU test.
-            </para>
-            <para>The <application>Xine</application> frontend for &kmplayer;, <application>kxineplayer</application>, uses <filename>~/.kde/share/apps/kmplayer/xine_config</filename> for its configuration. Settings for <application>Xine</application> are found in the configuration dialog <quote>General Options</quote>|<quote>Xine</quote>. (If you change an option here and save it, <filename>~/.kde/share/apps/kmplayer/xine_config</filename> will contain some explainations too). The CPU benchmarking is caused by the option <computeroutput>misc.memcpy_method</computeroutput> set to <computeroutput>probe</computeroutput>. To see which memcpy version works the fastest for you, enable <quote>Show Console Output</quote> from the <quote>View</quote> menu and look at the results from this benchmarking when you play something with Xine. Configure <computeroutput>misc.memcpy_method</computeroutput> with the method with the lowest time.</para>
-        </answer>
-      </qandaentry>
       <qandaentry>
         <question>
             <para>Any hints to make my CDROM less noisy when playing from it (not VCD://)?</para>
