@@ -16,7 +16,7 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/* gcc -o knpplayer `pkg-config --libs --cflags gtk+-x11-2.0` `pkg-config --libs --cflags dbus-glib-1` `pkg-config  --libs --cflags gthread-2.0` npplayer.c
+/* gcc -o knpplayer `pkg-config --libs --cflags gtk+-x11-2.0` `pkg-config --libs --cflags dbus-glib-1` `pkg-config --libs --cflags gthread-2.0` npplayer.c
 
 http://devedge-temp.mozilla.org/library/manuals/2002/plugin/1.0/
 http://dbus.freedesktop.org/doc/dbus/libdbus-tutorial.html
@@ -30,7 +30,6 @@ http://dbus.freedesktop.org/doc/dbus/libdbus-tutorial.html
 #include <sys/time.h>
 #include <fcntl.h>
 
-#include <glib/gthread.h>
 #include <glib/gprintf.h>
 #include <glib/gthread.h>
 #include <gdk/gdkx.h>
