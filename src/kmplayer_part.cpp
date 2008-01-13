@@ -634,6 +634,7 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
         if (n) {
             Mrl *mrl = new GenericURL (doc, url.url ());
             n->appendChild (mrl);
+            mrl->mimetype = doc->document ()->mimetype;
             mrl->opener = n;
             mrl->setAttributes (convertNode <Element> (doc)->attributes ());
             n->closed ();
