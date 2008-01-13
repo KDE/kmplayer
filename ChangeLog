@@ -1,3 +1,24 @@
+Changes since version 0.10.0c
+- Never start playing directly if we detected a HREF attribute
+- Rename option 'Click to Play' to 'Grab image when 'Click to Play' is detected
+- Add option for load on demand for when embedded in khtml
+- Remove xine and gstreamer, add phonon backend
+- Port to KDE4
+- Support for simultaneous audio/video streams with SMIL
+Changes since version 0.10.0b
+- Use html page baseurl for resolving urls from the knpplayer backend
+- Initialize thread support for knpplayer, makes knpplayer crashes go away
+- Second part of set viewarea background to part's parent background
+Changes since version 0.10.0a
+- Fix some flash wanting full Url out of a relative Url before streaming data
+- Hardcode flash mimetypes in pluginsinfo
+- Fix kpart not reading the system global kmplayerrc
+- Set viewarea background to part's parent background for the plugin
+- Fix kxineplayer crash when sending the configurations
+Changes since version 0.10.0
+- Fix npp streams with javascript urls, that never reached the finish state
+- Fix memory leak in SMIL image
+- Get rid of nspr dependency
 Changes since version 0.10.0-pre3
 - Fix double scaling of video in a region
 - Use XPLAIN again for npp's GtkPlug embedded in QXEmbed, makes reproducable
