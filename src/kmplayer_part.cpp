@@ -49,6 +49,7 @@ class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollect
 #include "viewarea.h"
 
 #include <stdlib.h>
+#include <unistd.h> // unlink, getpid
 
 using namespace KMPlayer;
 
