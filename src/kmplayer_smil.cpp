@@ -1061,7 +1061,7 @@ KDE_NO_EXPORT NodePtr SMIL::Layout::childFromTag (const QString & tag) {
     const char * ctag = tag.ascii ();
     if (!strcmp (ctag, "root-layout")) {
         NodePtr e = new SMIL::RootLayout (m_doc);
-        rootLayout = e;
+        root_layout = e;
         return e;
     } else if (!strcmp (ctag, "region"))
         return new SMIL::Region (m_doc);
@@ -1071,14 +1071,14 @@ KDE_NO_EXPORT NodePtr SMIL::Layout::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void SMIL::Layout::closed () {
-    SMIL::RegionBase * rl = convertNode <SMIL::RootLayout> (rootLayout);
+    SMIL::RegionBase * rl = convertNode <SMIL::RootLayout> (root_layout);
     bool has_root (rl);
     if (!has_root) { // just add one if none there
         rl = new SMIL::RootLayout (m_doc);
         NodePtr sr = rl; // protect against destruction
         rl->setAuxiliaryNode (true);
-        rootLayout = rl;
-        int w_root =0, h_root = 0, reg_count = 0;
+        root_layout = rl;
+        int w_root =0, h_root = 0;
         for (NodePtr n = firstChild (); n; n = n->nextSibling ()) {
             if (n->id == id_node_region) {
                 SMIL::Region * rb =convertNode <SMIL::Region> (n);
@@ -1088,30 +1088,26 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
                     w_root = rb->x + rb->w;
                 if (int (rb->y + rb->h) > h_root)
                     h_root = rb->y + rb->h;
-                reg_count++;
             }
         }
         if (!w_root || !h_root)
             w_root = 320; h_root = 240; // have something to start with
-        if (!reg_count) {
-            SMIL::Region * r = new SMIL::Region (m_doc);
-            appendChild (r);
-            r->setAuxiliaryNode (true);
-        }
         rl->setAttribute(StringPool::attr_width, QString::number(w_root));
         rl->setAttribute(StringPool::attr_height,QString::number(h_root));
         insertBefore (sr, firstChild ());
-    } else {
-        if (childNodes ()->length () < 2) { // only a root-layout
-            SMIL::Region * r = new SMIL::Region (m_doc);
-            appendChild (r);
-            r->setAuxiliaryNode (true);
-        }
+    }
+    else {
         Smil *s = Smil::findSmilNode (this);
         if (s) {
             s->width = rl->getAttribute(StringPool::attr_width).toDouble ();
             s->height = rl->getAttribute(StringPool::attr_height).toDouble();
         }
+    }
+    if (!default_region) {
+        SMIL::Region *r = new SMIL::Region (m_doc);
+        insertBefore (r, rl->nextSibling ());
+        r->setAuxiliaryNode (true);
+        default_region = r;
     }
 }
 
@@ -1126,7 +1122,7 @@ KDE_NO_EXPORT void SMIL::Layout::activate () {
 }
 
 KDE_NO_EXPORT void SMIL::Layout::updateDimensions () {
-    RegionBase * rb = static_cast <RegionBase *> (rootLayout.ptr ());
+    RegionBase * rb = static_cast <RegionBase *> (root_layout.ptr ());
     x = y = 0;
     w = rb->sizes.width.size ();
     h = rb->sizes.height.size ();
@@ -1138,7 +1134,7 @@ KDE_NO_EXPORT Surface *SMIL::Layout::surface () {
     if (!region_surface) {
         SMIL::Smil *s = Smil::findSmilNode (this);
         if (s && s->active ()) {
-            SMIL::RegionBase *rl = convertNode <SMIL::RootLayout> (rootLayout);
+            SMIL::RegionBase *rl = convertNode <SMIL::RootLayout> (root_layout);
             region_surface = s->getSurface (s);
             w = s->width;
             h = s->height;
@@ -2286,6 +2282,8 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
     SMIL::Smil * s = Smil::findSmilNode (parentNode ().ptr ());
     SMIL::Region * r = s ?
         findRegion (s->layout_node, param (StringPool::attr_region)) : 0L;
+    if (!r)
+        r = convertNode <SMIL::Region> (convertNode <SMIL::Layout> (s->layout_node)->default_region);
     if (trans_timer) // eg transOut and we're repeating
         document ()->cancelTimer (trans_timer);
     for (NodePtr c = firstChild (); c; c = c->nextSibling ())
@@ -2535,7 +2533,7 @@ KDE_NO_EXPORT NodePtr SMIL::AVMediaType::childFromTag (const QString & tag) {
 
 KDE_NO_EXPORT void SMIL::AVMediaType::clipStart () {
     PlayListNotify *n = document ()->notify_listener;
-    //kDebug() << "AudioVideoData::clipStart " << mt->resolved << endl;
+    //kDebug() << resolved;
     if (n && region_node && !external_tree && !src.isEmpty()) {
         repeat = runtime ()->repeat_count == Runtime::dur_infinite
             ? 9998 : runtime ()->repeat_count;
