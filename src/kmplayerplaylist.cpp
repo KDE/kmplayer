@@ -233,7 +233,7 @@ void Node::undefer () {
         setState (state_activated);
         activate ();
     } else
-        kWarning () <<"Node::undefer () call on not deferred element";
+        kWarning () << nodeName () << " call on not deferred element";
 }
 
 void Node::finish () {
@@ -910,7 +910,6 @@ void Document::defer () {
 }
 
 void Document::undefer () {
-    setState (state_activated);
     postpone_lock = 0L;
     Mrl::undefer ();
 }
