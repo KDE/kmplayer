@@ -341,7 +341,7 @@ void PartBase::updatePlayerMenu (ControlPanel *panel, const QString &backend) {
     int id = 0; // if multiple parts, id's should be the same for all menu's
     for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.begin(); i != e; ++i) {
         ProcessInfo *p = i.data ();
-        if (p->supports (m_source->name ())) {
+        if (p->supports (m_source ? m_source->name () : "urlsource")) {
             menu->insertItem (p->label, this, SLOT (slotPlayerMenu (int)), 0, id++);
             if (backend == p->name)
                 menu->setItemChecked (id-1, true);
