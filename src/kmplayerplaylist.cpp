@@ -45,31 +45,31 @@ using namespace KMPlayer;
 
 //-----------------------------------------------------------------------------
 
-namespace KMPlayer {
-    Node * fromXMLDocumentTag (NodePtr & d, const QString & tag) {
-        const char * const name = tag.latin1 ();
-        if (!strcmp (name, "smil"))
-            return new SMIL::Smil (d);
-        else if (!strcasecmp (name, "asx"))
-            return new ASX::Asx (d);
-        else if (!strcasecmp (name, "imfl"))
-            return new RP::Imfl (d);
-        else if (!strcasecmp (name, "rss"))
-            return new RSS::Rss (d);
-        else if (!strcasecmp (name, "feed"))
-            return new ATOM::Feed (d);
-        else if (!strcasecmp (name, "playlist"))
-            return new XSPF::Playlist (d);
-        else if (!strcasecmp (name, "url"))
-            return new GenericURL (d, QString ());
-        else if (!strcasecmp (name, "mrl") ||
-                !strcasecmp (name, "document"))
-            return new GenericMrl (d);
-        return 0L;
-    }
+Node *KMPlayer::fromXMLDocumentTag (NodePtr & d, const QString & tag) {
+    const char * const name = tag.latin1 ();
+    if (!strcmp (name, "smil"))
+        return new SMIL::Smil (d);
+    else if (!strcasecmp (name, "asx"))
+        return new ASX::Asx (d);
+    else if (!strcasecmp (name, "imfl"))
+        return new RP::Imfl (d);
+    else if (!strcasecmp (name, "rss"))
+        return new RSS::Rss (d);
+    else if (!strcasecmp (name, "feed"))
+        return new ATOM::Feed (d);
+    else if (!strcasecmp (name, "playlist"))
+        return new XSPF::Playlist (d);
+    else if (!strcasecmp (name, "url"))
+        return new GenericURL (d, QString ());
+    else if (!strcasecmp (name, "mrl") ||
+            !strcasecmp (name, "document"))
+        return new GenericMrl (d);
+    return 0L;
+}
 
 //-----------------------------------------------------------------------------
 
+namespace {
     struct XMLStringlet {
         const QString str;
         XMLStringlet (const QString & s) : str (s) {}
@@ -499,7 +499,7 @@ void RefNode::setRefNode (const NodePtr ref) {
 
 //-----------------------------------------------------------------------------
 
-namespace KMPlayer {
+namespace {
     struct KMPLAYER_NO_EXPORT ParamValue {
         QString val;
         QStringList  * modifications;
@@ -509,6 +509,9 @@ namespace KMPlayer {
         void setValue (const QString & v) { val = v; }
     };
     typedef QMap <TrieString, ParamValue *> ParamMap;
+}
+
+namespace KMPlayer {
     class KMPLAYER_NO_EXPORT ElementPrivate {
     public:
         ~ElementPrivate ();
@@ -842,9 +845,7 @@ Postpone::~Postpone () {
 
 //-----------------------------------------------------------------------------
 
-namespace KMPlayer {
-    static NodePtr dummy_element;
-}
+static NodePtr dummy_element;
 
 Document::Document (const QString & s, PlayListNotify * n)
  : Mrl (dummy_element, id_node_document),
@@ -1345,10 +1346,8 @@ static void cdataEnd (void *data) {
     builder->cdataEnd ();
 }
 
-namespace KMPlayer {
-
 KMPLAYER_EXPORT
-void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool set_opener) {
+void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstline, bool set_opener) {
     bool ok = true;
     DocumentBuilder builder (root, set_opener);
     XML_Parser parser = XML_ParserCreate (0L);
@@ -1373,8 +1372,6 @@ void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool se
     root->normalize ();
     //return ok;
 }
-
-} // namespace KMPlayer
 
 //-----------------------------------------------------------------------------
 #else // HAVE_EXPAT
