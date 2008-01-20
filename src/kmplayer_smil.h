@@ -289,7 +289,8 @@ public:
     virtual void updateDimensions ();
     virtual Surface *surface ();
 
-    NodePtrW rootLayout;
+    NodePtrW root_layout;
+    NodePtrW default_region;
 };
 
 /**
