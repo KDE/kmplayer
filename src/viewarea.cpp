@@ -333,7 +333,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (SMIL::RegionBase * reg) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout * reg) {
     //kDebug() << "Visit " << reg->nodeName();
-    SMIL::RegionBase *rb = convertNode <SMIL::RegionBase> (reg->rootLayout);
+    SMIL::RegionBase *rb = convertNode <SMIL::RegionBase> (reg->root_layout);
     if (reg->surface () && rb) {
         //cairo_save (cr);
         Matrix m = matrix;
