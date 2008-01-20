@@ -189,6 +189,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
    m_master (0L),
    m_browserextension (new KMPlayerBrowserExtension (this)),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
+   m_expected_view_width (0),
+   m_expected_view_height (0),
    m_features (Feat_Unknown),
    m_started_emited (false) {
     kDebug () << "KMPlayerPart(" << this << ")::KMPlayerPart ()";
@@ -225,8 +227,10 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
                 m_target = value;
             } else if (name == QString::fromLatin1("width")) {
                 m_noresize = true;
+                m_expected_view_width = value.toInt ();
             } else if (name == QString::fromLatin1("height")) {
                 m_noresize = true;
+                m_expected_view_height = value.toInt ();
             } else if (name == QString::fromLatin1("type")) {
                 source->document ()->mrl ()->mimetype = value;
             } else if (name == QString::fromLatin1("controls")) {
@@ -365,10 +369,14 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
         m_view->initDock (m_view->statusBar ());
     } else {
         m_view->initDock (m_view->viewArea ());
-        if (m_features & Feat_StatusBar)
+        if (m_features & Feat_StatusBar) {
             m_view->setStatusBarMode (KMPlayer::View::SB_Show);
-        if (m_features & (Feat_Controls | Feat_VolumeSlider))
+            m_expected_view_height -= m_view->statusBar ()->height ();
+        }
+        if (m_features & (Feat_Controls | Feat_VolumeSlider)) {
             m_view->setControlPanelMode (m_features & Feat_Viewer ? KMPlayer::View::CP_Show : KMPlayer::View::CP_Only);
+            m_expected_view_height -= m_view->controlPanel ()->height ();
+        }
         else if (parent ())
             m_view->setControlPanelMode (KMPlayer::View::CP_Hide);
         else
@@ -586,6 +594,10 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
         return true;
     }
     if ((m_settings->clicktoplay || !m_href_url.isEmpty ()) &&
+            (m_features & Feat_ImageWindow ||
+             Feat_Unknown == m_features) &&
+            m_expected_view_width > 10 &&
+            m_expected_view_height > 10 &&
             parent () &&
             !strcmp ("KHTMLPart", parent ()->metaObject ()->className())) {
         QString pic (img);
