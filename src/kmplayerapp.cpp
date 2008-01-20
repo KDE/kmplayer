@@ -513,6 +513,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerApp::KMPlayerApp (QWidget *)
     m_player->setServiceName (QString ("org.kde.kmplayer-%1").arg (getpid ()));
 #endif
     m_player->init (actionCollection ());
+    m_view->initDock (m_view->viewArea ());
     //m_player->mediaManager ()->processInfos () ["xvideo"] =
     //    new XvProcessInfo (m_player->mediaManager ());
     ListsSource * lstsrc = new ListsSource (m_player);

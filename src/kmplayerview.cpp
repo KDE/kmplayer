@@ -161,23 +161,43 @@ KDE_NO_EXPORT void View::dragEnterEvent (QDragEnterEvent* dee) {
         dee->accept ();
 }
 
+KDE_NO_EXPORT void View::initDock (QWidget *central) {
+    m_dockarea = new QMainWindow;
+    m_dockarea->setCentralWidget (central);
+    central->setVisible (true);
+
+    m_dock_playlist = new QDockWidget (i18n ("Playlist"));
+    if (central != m_playlist)
+        m_dock_playlist->setWidget (m_playlist);
+    m_dock_playlist->setObjectName ("playlist");
+
+    m_dock_infopanel = new QDockWidget (i18n ("Information"));
+    if (central != m_infopanel)
+        m_dock_infopanel->setWidget (m_infopanel);
+    m_dock_infopanel->setObjectName ("infopanel");
+
+    m_dock_playlist->hide ();
+    m_dock_infopanel->hide ();
+
+    m_dockarea->addDockWidget (Qt::BottomDockWidgetArea, m_dock_infopanel);
+    m_dockarea->addDockWidget (Qt::LeftDockWidgetArea, m_dock_playlist);
+
+    layout ()->addWidget (m_dockarea);
+
+    m_dockarea->setWindowFlags (Qt::SubWindow);
+    m_dockarea->show ();
+
+    m_view_area->resizeEvent (0L);
+}
+
 KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
     setAutoFillBackground (false); // prevents flashing
     QPalette pal (QColor (64, 64,64), QColor (32, 32, 32));
     QVBoxLayout * viewbox = new QVBoxLayout;
     viewbox->setContentsMargins (0, 0, 0, 0);
     setLayout (viewbox);
-    m_dockarea = new QMainWindow (this);
-    m_view_area = new ViewArea (m_dockarea, this);
-    m_dockarea->setCentralWidget (m_view_area);
-    m_dock_playlist = new QDockWidget (i18n ("Playlist"));
-    m_dockarea->addDockWidget (Qt::LeftDockWidgetArea, m_dock_playlist);
-    m_playlist = new PlayListView (m_dock_playlist, this, action_collection);
-    m_dock_playlist->setWidget (m_playlist);
-    m_dock_playlist->hide ();
-    m_dock_playlist->setObjectName ("playlist");
-
-    viewbox->addWidget (m_dockarea);
+    m_view_area = new ViewArea (NULL, this);
+    m_playlist = new PlayListView (NULL, this, action_collection);
 
     m_picture = new PictureWidget (m_view_area, this);
     m_picture->hide ();
@@ -200,21 +220,11 @@ KDE_NO_EXPORT void View::init (KActionCollection * action_collection) {
     m_multiedit->setFont (fnt);
     m_multiedit->hide ();
 
-    m_dock_infopanel = new QDockWidget (i18n ("Information"));
-    m_dockarea->addDockWidget (Qt::BottomDockWidgetArea, m_dock_infopanel);
-    m_infopanel = new InfoWindow (m_dock_infopanel, this);
-    m_dock_infopanel->setWidget (m_infopanel);
-    m_dock_infopanel->setObjectName ("infopanel");
-    m_dock_infopanel->hide ();
+    m_infopanel = new InfoWindow (NULL, this);
 
     setFocusPolicy (Qt::ClickFocus);
 
     setAcceptDrops (true);
-
-    m_dockarea->setWindowFlags (Qt::SubWindow);
-    m_dockarea->show ();
-
-    m_view_area->resizeEvent (0L);
 }
 
 KDE_NO_CDTOR_EXPORT View::~View () {
@@ -286,24 +296,6 @@ void View::toggleShowPlaylist () {
 void View::setViewOnly () {
     m_dock_playlist->hide ();
     m_dock_infopanel->hide ();
-}
-
-void View::setInfoPanelOnly () {
-    /*if (m_dock_playlist->mayBeHide ())
-        m_dock_playlist->undock ();
-    m_dock_video->setEnableDocking (K3DockWidget::DockCenter);
-    m_dock_video->undock ();
-    m_dock_infopanel->setEnableDocking (K3DockWidget::DockNone);
-    m_dockarea->setMainDockWidget (m_dock_infopanel);*/
-}
-
-void View::setPlaylistOnly () {
-    /*if (m_dock_infopanel->mayBeHide ())
-       m_dock_infopanel->undock ();
-    m_dock_video->setEnableDocking (K3DockWidget::DockCenter);
-    m_dock_video->undock ();
-    m_dock_playlist->setEnableDocking (K3DockWidget::DockNone);
-    m_dockarea->setMainDockWidget (m_dock_playlist);*/
 }
 
 void View::setEditMode (RootPlayListItem *ri, bool enable) {
@@ -423,9 +415,11 @@ void View::setControlPanelMode (ControlPanelMode m) {
             m_control_panel->show ();
             m_view_area->resizeEvent (0L);
         }
-    } else if (m_controlpanel_mode == CP_Hide && m_control_panel->isVisible()) {
+    } else if (m_controlpanel_mode == CP_Hide) {
+        bool vis = m_control_panel->isVisible();
         m_control_panel->hide ();
-        m_view_area->resizeEvent (0L);
+        if (vis)
+            m_view_area->resizeEvent (0L);
     }
 }
 
@@ -545,6 +539,12 @@ void View::addText (const QString & str, bool eol) {
 KDE_NO_EXPORT void View::videoStart () {
     if (!isFullScreen () && m_dockarea->centralWidget () != m_view_area) {
         // restore from an info or playlist only setting
+        if (m_dockarea->centralWidget () == m_playlist)
+            m_dock_playlist->setWidget (m_playlist);
+        else if (m_dockarea->centralWidget () == m_infopanel)
+            m_dock_infopanel->setWidget (m_infopanel);
+        else
+            m_status_bar->setVisible (false);
         m_dockarea->setCentralWidget (m_view_area);
     }
     if (m_controlpanel_mode == CP_Only) {

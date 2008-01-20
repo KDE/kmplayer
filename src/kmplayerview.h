@@ -104,6 +104,7 @@ public:
 
     void addText (const QString &, bool eol=false);
     void init (KActionCollection * ac);
+    void initDock (QWidget *central);
     void reset ();
     //void print(QPrinter *pPrinter);
 
@@ -132,8 +133,6 @@ public:
 #endif
     void setNoInfoMessages (bool b) { m_no_info = b; }
     void setViewOnly ();
-    void setInfoPanelOnly ();
-    void setPlaylistOnly ();
     void setEditMode (RootPlayListItem *, bool enable=true);
     void dragEnterEvent (QDragEnterEvent *);
     void dropEvent (QDropEvent *);

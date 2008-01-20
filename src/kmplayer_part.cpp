@@ -43,6 +43,7 @@ class KXMLGUIClient; // workaround for kde3.3 on sarge with gcc4, kactioncollect
 
 #include "kmplayer_part.h"
 #include "kmplayerview.h"
+#include "playlistview.h"
 #include "kmplayercontrolpanel.h"
 #include "kmplayerconfig.h"
 #include "kmplayerprocess.h"
@@ -183,8 +184,8 @@ static bool getBoolValue (const QString & value) {
 #define SET_FEAT_OFF(f) { m_features &= ~f; turned_off_features |= f; }
 
 KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
-                    QObject *parent, const QStringList &args)
- : PartBase (wparent, parent, KSharedConfig::openConfig ("kmplayerrc")),
+                    QObject *ppart, const QStringList &args)
+ : PartBase (wparent, ppart, KSharedConfig::openConfig ("kmplayerrc")),
    m_master (0L),
    m_browserextension (new KMPlayerBrowserExtension (this)),
    m_liveconnectextension (new KMPlayerLiveConnectExtension (this)),
@@ -356,16 +357,19 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
                                       this, SLOT (setMenuZoom (int)));*/
 
     m_view->setNoInfoMessages (m_features != Feat_InfoPanel);
-    if (m_features == Feat_InfoPanel)
-        m_view->setInfoPanelOnly ();
-    else if (m_features == Feat_PlayList)
-        m_view->setPlaylistOnly ();
-    else {
+    if (m_features == Feat_InfoPanel) {
+        m_view->initDock (m_view->infoPanel ());
+    } else if (m_features == Feat_PlayList) {
+        m_view->initDock (m_view->playList ());
+    } else if (m_features == Feat_StatusBar) {
+        m_view->initDock (m_view->statusBar ());
+    } else {
+        m_view->initDock (m_view->viewArea ());
         if (m_features & Feat_StatusBar)
             m_view->setStatusBarMode (KMPlayer::View::SB_Show);
         if (m_features & (Feat_Controls | Feat_VolumeSlider))
             m_view->setControlPanelMode (m_features & Feat_Viewer ? KMPlayer::View::CP_Show : KMPlayer::View::CP_Only);
-        else if (m_features & Feat_ImageWindow)
+        else if (parent ())
             m_view->setControlPanelMode (KMPlayer::View::CP_Hide);
         else
             m_view->setControlPanelMode (KMPlayer::View::CP_AutoHide);
