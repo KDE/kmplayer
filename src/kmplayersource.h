@@ -32,7 +32,6 @@ namespace KMPlayer {
 
 class PartBase;
 class MediaManager;
-class Process;
 
 /**
  * Class for a certain media, like URL, DVD, TV etc

@@ -54,14 +54,11 @@ namespace KIO {
 namespace KMPlayer {
 
 class PartBase;
-class IProcess;
 class Process;
 class MPlayer;
 class BookmarkOwner;
 class Settings;
 class MediaManager;
-class AudioVideoMedia;
-class ProcessInfo;
 
 /*
  * Source from URLs

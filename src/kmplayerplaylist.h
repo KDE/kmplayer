@@ -43,7 +43,6 @@ class Node;
 class Mrl;
 class Surface;
 class ElementPrivate;
-class RemoteObjectPrivate;
 class Visitor;
 class MediaManager;
 class MediaObject;

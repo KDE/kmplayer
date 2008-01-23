@@ -47,7 +47,6 @@ class Console;
 class PlayListView;
 class PlayListView;
 class RootPlayListItem;
-class KMPlayerPictureWidget;
 
 typedef KStatusBar StatusBar;
 

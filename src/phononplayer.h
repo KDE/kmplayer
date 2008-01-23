@@ -26,7 +26,6 @@
 
 #include <phonon/phononnamespace.h>
 
-class KUrl;
 
 namespace Phonon
 {
