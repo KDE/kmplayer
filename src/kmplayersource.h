@@ -72,6 +72,7 @@ public:
     KDE_NO_EXPORT const QString & recordCmd () const { return m_recordcmd; }
     KDE_NO_EXPORT const QString & tuner () const { return m_tuner; }
     KDE_NO_EXPORT Mrl *current() { return m_current ? m_current->mrl() : NULL;}
+    virtual void setCurrent (Mrl *mrl);
     QString plugin (const QString &mime) const;
     virtual NodePtr document ();
     void setDocument (KMPlayer::NodePtr doc, KMPlayer::NodePtr cur);

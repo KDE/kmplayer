@@ -278,7 +278,7 @@ void Node::childBegan (NodePtr /*child*/) {
 }
 
 void Node::childDone (NodePtr child) {
-    //kDebug () << nodeName () << " Node::childDone";
+    //kDebug () << nodeName () << child.ptr ();
     if (unfinished ()) {
         if (child->state == state_finished)
             child->deactivate ();
@@ -730,7 +730,7 @@ void Mrl::activate () {
 }
 
 void Mrl::begin () {
-    kDebug () << nodeName () << " Mrl::begin" << endl;
+    kDebug () << nodeName () << src << this;
     if (document ()->notify_listener) {
         if (linkNode () != this) {
             linkNode ()->activate ();

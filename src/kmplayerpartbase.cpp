@@ -918,6 +918,7 @@ static void printTree (NodePtr root, QString off=QString()) {
 }*/
 
 void Source::setUrl (const QString &url) {
+    kDebug() << url;
     m_url = KUrl (url);
     if (m_document && !m_document->hasChildNodes () &&
             (m_document->mrl()->src.isEmpty () ||
@@ -984,20 +985,6 @@ void Source::play (Mrl *mrl) {
     emit dimensionsChanged ();
 }
 
-static NodePtr findDepthFirst (NodePtr elm) {
-    if (!elm)
-        return NodePtr ();
-    NodePtr tmp = elm;
-    for ( ; tmp; tmp = tmp->nextSibling ()) {
-        if (tmp->isPlayable ())
-            return tmp;
-        NodePtr tmp2 = findDepthFirst (tmp->firstChild ());
-        if (tmp2)
-            return tmp2;
-    }
-    return NodePtr ();
-}
-
 bool Source::authoriseUrl (const QString &) {
     return true;
 }
@@ -1020,12 +1007,16 @@ void Source::timerEvent (QTimerEvent * e) {
         killTimer (e->timerId ());
 }
 
+void Source::setCurrent (Mrl *mrl) {
+    m_current = mrl;
+}
+
 void Source::stateElementChanged (Node *elm, Node::State os, Node::State ns) {
     //kDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isPlayable:" << (m_current && m_current->isPlayable ()) << " elm==linkNode:" << (m_current && elm == m_current->mrl ()->linkNode ()) << endl;
     if (ns == Node::state_activated &&
             elm->mrl ()) {
         if (Mrl::WindowMode != elm->mrl ()->view_mode)
-            m_current = elm;
+            setCurrent (elm->mrl ());
         if (m_current.ptr () == elm)
             emit startPlaying ();
     } else if (ns == Node::state_deactivated) {
@@ -1092,55 +1083,34 @@ void Source::insertURL (NodePtr node, const QString & mrl, const QString & title
 }
 
 void Source::backward () {
-   /* if (m_document->hasChildNodes ()) {
-        m_back_request = m_current;
-        if (!m_back_request || m_back_request == m_document) {
-            m_back_request = m_document->lastChild ();
-            while (m_back_request->lastChild () && !m_back_request->isPlayable ())
-                m_back_request = m_back_request->lastChild ();
-            if (m_back_request->isPlayable ())
-                return;
+    Node *back = m_current ? m_current.ptr () : m_document.ptr ();
+    while (back && back != m_document.ptr ()) {
+        if (back->previousSibling ().ptr ()) {
+            back = back->previousSibling ().ptr ();
+            while (!back->isPlayable () && back->lastChild ())
+                back = back->lastChild ().ptr ();
+            if (back->isPlayable () && !back->active ()) {
+                play (back->mrl ());
+                break;
+            }
+        } else {
+            back = back->parentNode().ptr ();
         }
-        while (m_back_request && m_back_request != m_document) {
-            if (m_back_request->previousSibling ()) {
-                m_back_request = m_back_request->previousSibling ();
-                NodePtr e = findDepthFirst (m_back_request); // lastDepth..
-                if (e) {
-                    m_back_request = e;
-                    if (m_player->playing ())
-                        m_player->process ()->stop ();
-                    else if (m_current) {
-                        m_document->reset ();
-                        m_current = e;
-                        QTimer::singleShot (0, this, SLOT (playCurrent ()));
-                    }
-                    return;
-                }
-            } else
-                m_back_request = m_back_request->parentNode ();
-        }
-        m_back_request = 0L;
-    } else
-        m_player->process ()->seek (-1 * m_player->settings ()->seektime * 10, false);
-        */
+    }
 }
 
 void Source::forward () {
-    /*if (m_document->hasChildNodes ()) {
-        if (m_player->playing ())
-            m_player->process ()->stop ();
-        else if (m_current)
-            m_current->finish ();
-    } else
-        m_player->process ()->seek (m_player->settings()->seektime * 10, false);
-        */
+    if (m_current)
+        m_current->finish ();
+    if (m_document && !m_document->active ())
+        play (m_document->mrl ());
 }
 
 void Source::setDocument (KMPlayer::NodePtr doc, KMPlayer::NodePtr cur) {
     if (m_document)
         m_document->document()->dispose ();
     m_document = doc;
-    m_current = cur;
+    setCurrent (cur->mrl ());
     //kDebug () << "setDocument: " << m_document->outerXML ();
 }
 

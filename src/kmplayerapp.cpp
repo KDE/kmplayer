@@ -185,7 +185,7 @@ public:
 };
 
 KDE_NO_EXPORT void ListsSource::play (KMPlayer::Mrl *mrl) {
-    if (mrl && mrl->document()->firstChild ())
+    if (m_player->source () == this)
         Source::play (mrl);
     else if (mrl)
         mrl->activate ();
@@ -1842,7 +1842,6 @@ KDE_NO_EXPORT void KMPlayerDVDSource::activate () {
     m_start_play = m_auto_play;
     m_current_title = -1;
     setUrl ("dvd://");
-    buildArguments ();
     m_menu->insertItem (i18n ("&Titles"), m_dvdtitlemenu);
     m_menu->insertItem (i18n ("&Chapters"), m_dvdchaptermenu);
     if (!m_player->settings ()->mplayerpost090) {
@@ -1874,7 +1873,6 @@ KDE_NO_EXPORT void KMPlayerDVDSource::setIdentified (bool b) {
     // TODO remember lang/subtitles settings
     if (m_dvdlanguagemenu->count())
         m_dvdlanguagemenu->setItemChecked (m_dvdlanguagemenu->idAt (0), true);
-    buildArguments ();
     m_app->slotStatusMsg (i18n ("Ready."));
 }
 
@@ -1901,7 +1899,8 @@ KDE_NO_EXPORT void KMPlayerDVDSource::deactivate () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerDVDSource::buildArguments () {
+KDE_NO_EXPORT void KMPlayerDVDSource::setCurrent (KMPlayer::Mrl *cur) {
+    KMPlayer::Source::setCurrent (cur);
     QString url ("dvd://");
     if (m_document) {
         if (m_current_title > 0)
@@ -1938,7 +1937,6 @@ KDE_NO_EXPORT void KMPlayerDVDSource::titleMenuClicked (int id) {
         m_player->stop ();
         m_current_title = id;
         m_identified = false;
-        buildArguments ();
         m_dvdtitlemenu->clear ();
         m_dvdsubtitlemenu->clear ();
         m_dvdchaptermenu->clear ();
@@ -1949,7 +1947,6 @@ KDE_NO_EXPORT void KMPlayerDVDSource::titleMenuClicked (int id) {
 }
 
 KDE_NO_EXPORT void KMPlayerDVDSource::play () {
-    buildArguments ();
     if (m_start_play) {
         m_player->stop ();
         QTimer::singleShot (0, m_player, SLOT (play ()));
@@ -2116,7 +2113,6 @@ KDE_NO_EXPORT void KMPlayerVCDSource::activate () {
     init ();
     m_start_play = m_auto_play;
     setUrl ("vcd://");
-    buildArguments ();
     if (m_start_play)
         QTimer::singleShot (0, m_player, SLOT (play ()));
 }
@@ -2126,16 +2122,16 @@ KDE_NO_EXPORT void KMPlayerVCDSource::deactivate () {
 
 KDE_NO_EXPORT void KMPlayerVCDSource::setIdentified (bool b) {
     KMPlayer::Source::setIdentified (b);
-    if (!m_current || !m_document->hasChildNodes ())
-        m_current = m_document;
+    setCurrent (!m_current || !m_document->hasChildNodes ()
+            ? m_document->mrl () : m_current->mrl ());
     m_player->updateTree ();
-    buildArguments ();
     if (m_current->state == KMPlayer::Element::state_deferred)
         m_current->undefer ();
     m_app->slotStatusMsg (i18n ("Ready."));
 }
 
-KDE_NO_EXPORT void KMPlayerVCDSource::buildArguments () {
+KDE_NO_EXPORT void KMPlayerVCDSource::setCurrent (KMPlayer::Mrl *cur) {
+    KMPlayer::Source::setCurrent (cur);
     QString url ("vcd://");
     if (m_current && m_current != m_document)
         url += m_current->mrl ()->src;
@@ -2215,7 +2211,6 @@ KDE_NO_EXPORT void KMPlayerAudioCDSource::activate () {
     init ();
     //m_start_play = m_auto_play;
     setUrl ("cdda://");
-    buildArguments ();
     //if (m_start_play)
         QTimer::singleShot (0, m_player, SLOT (play ()));
 }
@@ -2225,9 +2220,8 @@ KDE_NO_EXPORT void KMPlayerAudioCDSource::deactivate () {
 
 KDE_NO_EXPORT void KMPlayerAudioCDSource::setIdentified (bool b) {
     KMPlayer::Source::setIdentified (b);
-    if (!m_current || !m_document->hasChildNodes ())
-        m_current = m_document;
-    buildArguments ();
+    setCurrent (!m_current || !m_document->hasChildNodes ()
+            ? m_document->mrl () : m_current->mrl ());
     if (m_current == m_document && m_document->hasChildNodes ()) {
         //m_back_request = m_document->firstChild ();
         //m_player->process ()->stop ();
@@ -2238,7 +2232,8 @@ KDE_NO_EXPORT void KMPlayerAudioCDSource::setIdentified (bool b) {
     m_app->slotStatusMsg (i18n ("Ready."));
 }
 
-KDE_NO_EXPORT void KMPlayerAudioCDSource::buildArguments () {
+KDE_NO_EXPORT void KMPlayerAudioCDSource::setCurrent (KMPlayer::Mrl *cur) {
+    KMPlayer::Source::setCurrent (cur);
     QString url ("cdda://");
     if (m_current && m_current != m_document)
         url += m_current->mrl ()->src;

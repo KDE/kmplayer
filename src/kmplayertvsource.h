@@ -186,6 +186,7 @@ public:
     virtual void prefLocation (QString & item, QString & icon, QString & tab);
     virtual QFrame * prefPage (QWidget * parent);
     void readXML ();
+    void setCurrent (KMPlayer::Mrl *);
 public slots:
     virtual void activate ();
     virtual void deactivate ();
@@ -198,7 +199,6 @@ private slots:
     void slotDeviceDeleted (TVDevicePage *);
 private:
     void addTVDevicePage (TVDevice * dev, bool show=false);
-    void buildArguments ();
     KMPlayer::NodePtrW m_cur_tvdevice;
     KMPlayer::NodePtrW m_cur_tvinput;
     QMenu * m_channelmenu;

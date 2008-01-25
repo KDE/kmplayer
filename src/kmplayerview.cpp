@@ -407,13 +407,11 @@ void View::setControlPanelMode (ControlPanelMode m) {
     if ((m_controlpanel_mode == CP_Show || m_controlpanel_mode == CP_Only) &&
             !m_control_panel->isVisible ()) {
         m_control_panel->show ();
-        m_view_area->resizeEvent (0L);
     } else if (m_controlpanel_mode == CP_AutoHide) {
         if (!m_image.isNull () || (m_playing && !m_multiedit->isVisible ()))
             delayedShowButtons (false);
         else if (!m_control_panel->isVisible ()) {
             m_control_panel->show ();
-            m_view_area->resizeEvent (0L);
         }
     } else if (m_controlpanel_mode == CP_Hide) {
         bool vis = m_control_panel->isVisible();
@@ -421,6 +419,7 @@ void View::setControlPanelMode (ControlPanelMode m) {
         if (vis)
             m_view_area->resizeEvent (0L);
     }
+    m_view_area->resizeEvent (0L);
 }
 
 void View::setStatusBarMode (StatusBarMode m) {
