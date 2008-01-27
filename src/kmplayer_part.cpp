@@ -594,7 +594,7 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
         return true;
     }
     if ((m_settings->clicktoplay || !m_href_url.isEmpty ()) &&
-            (m_features & Feat_ImageWindow ||
+            (m_features & Feat_Viewer ||
              Feat_Unknown == m_features) &&
             m_expected_view_width > 10 &&
             m_expected_view_height > 10 &&
