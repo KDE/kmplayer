@@ -158,7 +158,6 @@ public:
     PlaylistItem (KMPlayer::NodePtr & doc, KMPlayerApp *a, bool playmode, const QString &url = QString());
     void closed ();
     void begin ();
-    PlayType playType () { return play_type_unknown; }
     void setNodeName (const QString &);
     const char * nodeName () const KDE_NO_EXPORT { return "item"; }
 };
