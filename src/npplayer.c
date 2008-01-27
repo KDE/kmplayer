@@ -16,7 +16,7 @@
 * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/* gcc -o knpplayer `pkg-config --libs --cflags gtk+-x11-2.0` `pkg-config --libs --cflags dbus-glib-1` `pkg-config --libs gthread-2.0` npplayer.c
+/* gcc -o knpplayer `pkg-config --libs --cflags gtk+-x11-2.0` `pkg-config --libs --cflags dbus-glib-1` `pkg-config --libs --cflags gthread-2.0` npplayer.c
 
 http://devedge-temp.mozilla.org/library/manuals/2002/plugin/1.0/
 http://dbus.freedesktop.org/doc/dbus/libdbus-tutorial.html
@@ -106,7 +106,7 @@ static NP_ShutdownUPP npShutdown;
 
 static void callFunction(int stream, const char *func, int first_arg_type, ...);
 static void readStdin (gpointer d, gint src, GdkInputCondition cond);
-static char * evaluate (const char *script);
+static char *evaluate (const char *script);
 
 /*----------------%<---------------------------------------------------------*/
 
@@ -565,7 +565,7 @@ static bool nsInvokeDefault (NPP instance, NPObject * npobj,
     return npobj->_class->invokeDefault (npobj,args, arg_count, result);
 }
 
-static bool nsEvaluate (NPP instance, NPObject * npobj, NPString * script,
+static bool doEvaluate (NPP instance, NPObject * npobj, NPString * script,
         NPVariant * result) {
     char * this_var;
     char * this_var_type;
@@ -615,6 +615,27 @@ static bool nsEvaluate (NPP instance, NPObject * npobj, NPString * script,
     free (this_var);
 
     return true;
+}
+
+static bool nsEvaluate (NPP instance, NPObject * npobj, NPString * script,
+        NPVariant * result) {
+    NPString str;
+    char *jsscript;
+    char *escaped;
+    bool res;
+
+    escaped = g_strescape (script->utf8characters, "");
+    str.utf8length = strlen (escaped) + 9;
+    jsscript = (char *) malloc (str.utf8length);
+    sprintf (jsscript, "eval(\"%s\")", escaped);
+    str.utf8characters = jsscript;
+
+    res = doEvaluate (instance, npobj, &str, result);
+
+    free (jsscript);
+    g_free (escaped);
+
+    return res;
 }
 
 static bool nsGetProperty (NPP instance, NPObject * npobj,
@@ -758,7 +779,7 @@ static bool windowClassInvoke (NPObject *npobj, NPIdentifier method,
 
     str.utf8characters = buf;
     str.utf8length = pos;
-    res = nsEvaluate (npp, npobj, &str, result);
+    res = doEvaluate (npp, npobj, &str, result);
 
     return true;
 }
@@ -801,7 +822,7 @@ static bool windowClassGetProperty (NPObject *npobj, NPIdentifier property,
     jo.parent = (JsObject *) npobj;
     createJsName (&jo, (char **)&fullname.utf8characters, &fullname.utf8length);
 
-    res = nsEvaluate (npp, npobj, &fullname, result);
+    res = doEvaluate (npp, npobj, &fullname, result);
 
     free ((char *) fullname.utf8characters);
 
