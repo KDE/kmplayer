@@ -1,3 +1,11 @@
+Changes since version 0.11.0-rc1
+- Fix browser function 'evalutate' in npp
+- Make forward/backward buttons work again
+- Add default region to smil layout, fixes some audio only cases
+- Simple 'target' attribute support for smil a/area elements for plugin
+- Hide controlpanel in khtml by default
+- Skip OnDemand plugin loading if we expect too little space to click on
+- Make collaboratiog kparts work again
 Changes since version 0.10.0c
 - Never start playing directly if we detected a HREF attribute
 - Rename option 'Click to Play' to 'Grab image when 'Click to Play' is detected
