@@ -1415,6 +1415,7 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
         disconnect ( m_view->controlPanel ()->scale_slider,
                 SIGNAL (valueChanged (int)), this, SLOT (scale (int)));
         m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (playlist_xpm)));
+        unsetCursor();
     } else {
         m_dock_state = m_view->dockArea ()->saveState ();
         m_topwindow_rect = topLevelWidget ()->geometry ();
@@ -1427,6 +1428,7 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
         connect ( m_view->controlPanel ()->scale_slider,
                 SIGNAL (valueChanged (int)), this, SLOT (scale (int)));
         m_view->controlPanel ()->button (ControlPanel::button_playlist)->setIconSet (QIconSet (QPixmap (normal_window_xpm)));
+        m_mouse_invisible_timer = startTimer(MOUSE_INVISIBLE_DELAY);
     }
     m_fullscreen = !m_fullscreen;
     m_view->controlPanel()->fullscreenAction->setChecked (m_fullscreen);
@@ -1437,15 +1439,6 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
         surface->surface = 0L;
     }
 #endif
-    if (m_fullscreen) {
-        m_mouse_invisible_timer = startTimer(MOUSE_INVISIBLE_DELAY);
-    } else {
-        if (m_mouse_invisible_timer) {
-            killTimer (m_mouse_invisible_timer);
-            m_mouse_invisible_timer = 0;
-        }
-        unsetCursor();
-    }
     emit fullScreenChanged ();
 }
 
