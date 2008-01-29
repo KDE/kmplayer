@@ -32,8 +32,8 @@
 #include "kmplayercontrolpanel.h"
 #include "kmplayersource.h"
 
-static const int button_height_with_slider = 15;
-static const int button_height_only_buttons = 11;
+static const int button_height_with_slider = 16;
+static const int button_height_only_buttons = 16;
 extern const char * normal_window_xpm[];
 extern const char * playlist_xpm[];
 #include "kmplayerview.h"
@@ -351,6 +351,8 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
    m_auto_controls (true),
    m_popup_clicked (false) {
     m_buttonbox = new QHBoxLayout (this, 5, 4);
+    m_buttonbox->setMargin (2);
+    m_buttonbox->setSpacing (4);
     QColor c = paletteForegroundColor ();
     strncpy (xpm_fg_color, QString().sprintf(".      c #%02x%02x%02x", c.red(), c.green(),c.blue()).ascii(), 31);
     xpm_fg_color[31] = 0;
@@ -418,6 +420,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     m_popupMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("colorize"), KIcon::Small, 0, true), i18n ("Co&lors"), m_colorMenu);
     m_popupMenu->insertSeparator ();
     m_popupMenu->insertItem (KGlobal::iconLoader ()->loadIconSet (QString ("configure"), KIcon::Small, 0, true), i18n ("&Configure KMPlayer..."), menu_config);
+    setEraseColor (m_view->topLevelWidget ()->paletteBackgroundColor ());
     setAutoControls (true);
     connect (m_buttons [button_config], SIGNAL (clicked ()),
             this, SLOT (buttonClicked ()));
@@ -536,17 +539,10 @@ KDE_NO_EXPORT void ControlPanel::setupPositionSlider (bool show) {
     int h = show ? button_height_with_slider : button_height_only_buttons;
     m_posSlider->setEnabled (false);
     m_posSlider->setValue (0);
-    if (show) {
+    if (show)
         m_posSlider->show ();
-        m_buttonbox->setMargin (4);
-        m_buttonbox->setSpacing (4);
-        setEraseColor (m_view->topLevelWidget ()->paletteBackgroundColor ());
-    } else {
+    else
         m_posSlider->hide ();
-        m_buttonbox->setMargin (1);
-        m_buttonbox->setSpacing (1);
-        setEraseColor (QColor (0, 0, 0));
-    }
     for (int i = 0; i < (int) button_last; i++) {
         m_buttons[i]->setMinimumSize (15, h-1);
         m_buttons[i]->setMaximumSize (750, h);

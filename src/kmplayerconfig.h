@@ -133,7 +133,8 @@ public:
     bool showbroadcastbutton : 1;
     bool autohideslider : 1;
     bool mplayerpost090 : 1;
-    bool allowhref : 1;
+    bool clicktoplay : 1;
+    bool grabhref : 1;
 // postproc thingies
     bool postprocessing : 1;
     bool disableppauto : 1;

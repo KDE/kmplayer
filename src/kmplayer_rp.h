@@ -47,6 +47,8 @@ const short id_node_fadein = 156;
 const short id_node_fadeout = 157;
 const short id_node_viewchange = 158;
 const short id_node_animate = 159;
+const short id_node_first = id_node_imfl;
+const short id_node_last = 160;
 
 class KMPLAYER_NO_EXPORT Imfl : public Mrl {
 public:

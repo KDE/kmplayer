@@ -367,7 +367,7 @@ KDE_NO_EXPORT void KMPlayerTVSource::activate () {
                 if (input->getAttribute ("tuner").toInt (&ok) && ok) {
                     for (KMPlayer::NodePtr c = i->firstChild (); c; c = c->nextSibling ())
                         if (c->id == id_node_tv_channel) {
-                            m_current = c;
+                            setCurrent (c->mrl ());
                             break;
                         }
                 } else
@@ -375,7 +375,6 @@ KDE_NO_EXPORT void KMPlayerTVSource::activate () {
             }
     } else if (!m_cur_tvdevice)
         KMPlayer::Source::reset ();
-    buildArguments ();
     if (m_cur_tvdevice) {
         QString playback = static_cast <KMPlayer::Element *> (m_cur_tvdevice.ptr ())->getAttribute (QString::fromLatin1 ("playback"));
         if (playback.isEmpty () || playback.toInt ())
@@ -416,12 +415,10 @@ void KMPlayerTVSource::play (KMPlayer::Mrl *mrl) {
             } else if (e->id == id_node_tv_input)
                 m_cur_tvinput = e;
         }
-        if (m_player->source () != this) {
+        if (m_player->source () != this)
             m_player->setSource (this);
-        } else {
-            buildArguments ();
+        else
             KMPlayer::Source::play (mrl);
-        }
         /*else if (m_player->process ()->playing ()) {
             //m_back_request = m_current;
             m_player->process ()->stop ();
@@ -439,9 +436,10 @@ KDE_NO_EXPORT KMPlayer::NodePtr KMPlayerTVSource::root () {
     return m_cur_tvinput;
 }
 
-KDE_NO_EXPORT void KMPlayerTVSource::buildArguments () {
+KDE_NO_EXPORT void KMPlayerTVSource::setCurrent (KMPlayer::Mrl *mrl) {
     TVChannel * channel = 0L;
     TVInput * input = 0L;
+    m_current = mrl;
     KMPlayer::NodePtr elm = m_current;
     if (elm && elm->id == id_node_tv_channel) {
         channel = KMPlayer::convertNode <TVChannel> (elm);

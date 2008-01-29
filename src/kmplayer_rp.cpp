@@ -130,7 +130,7 @@ KDE_NO_EXPORT void RP::Imfl::deactivate () {
     for (NodePtr n = firstChild (); n; n = n->nextSibling ())
         if (n->active ())
             n->deactivate ();
-    rp_surface = Mrl::getSurface (0L);
+    rp_surface = Mrl::getSurface (NULL);
 }
 
 KDE_NO_EXPORT bool RP::Imfl::handleEvent (EventPtr event) {

@@ -182,15 +182,15 @@ void ViewSurface::repaint () {
     view_widget->scheduleRepaint (toScreen (0, 0, bounds.width (), bounds.height ()));
 }
 
-KDE_NO_EXPORT void ViewSurface::video (Mrl *mt) {
+KDE_NO_EXPORT void ViewSurface::video (Mrl *m) {
     xscale = yscale = 1; // either scale width/heigt or use bounds
-    if (mt->media_object &&
-            MediaManager::AudioVideo == mt->media_object->type ()) {
-        AudioVideoMedia *avm = static_cast <AudioVideoMedia*>(mt->media_object);
+    if (m->media_object &&
+            MediaManager::AudioVideo == m->media_object->type ()) {
+        AudioVideoMedia *avm = static_cast<AudioVideoMedia *> (m->media_object);
         if (avm->viewer &&
                 avm->process &&
                 avm->process->state () > IProcess::Ready &&
-                strcmp (mt->nodeName (), "audio"))
+                strcmp (m->nodeName (), "audio"))
             avm->viewer->setGeometry (toScreen (
                         0, 0, bounds.width(), bounds.height ()));
     }
@@ -327,7 +327,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (SMIL::RegionBase * reg) {
 
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout * reg) {
     //kdDebug() << "Visit " << reg->nodeName() << endl;
-    SMIL::RegionBase *rb = convertNode <SMIL::RegionBase> (reg->rootLayout);
+    SMIL::RegionBase *rb = convertNode <SMIL::RegionBase> (reg->root_layout);
     if (reg->surface () && rb) {
         //cairo_save (cr);
         Matrix m = matrix;
@@ -610,8 +610,36 @@ KDE_NO_EXPORT void CairoPaintVisitor::paint (SMIL::MediaType *mt, Surface *s,
     cairo_restore (cr);
 }
 
+static Mrl *findActiveMrl (Node *n, bool *rp_or_smil) {
+    Mrl *mrl = n->mrl ();
+    if (mrl) {
+        *rp_or_smil = (mrl->id >= SMIL::id_node_first &&
+                mrl->id < SMIL::id_node_last) ||
+            (mrl->id >= RP::id_node_first &&
+             mrl->id < RP::id_node_last);
+        if (*rp_or_smil ||
+                (mrl->media_object &&
+                 MediaManager::AudioVideo == mrl->media_object->type ()))
+            return mrl;
+    }
+    for (Node *c = n->firstChild ().ptr (); c; c = c->nextSibling ())
+        if (c->active ()) {
+            Mrl *m = findActiveMrl (c, rp_or_smil);
+            if (m)
+                return m;
+        }
+}
+
 KDE_NO_EXPORT
 void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
+    bool rp_or_smil = false;
+    Mrl *ext_mrl = findActiveMrl (av->external_tree.ptr (), &rp_or_smil);
+    if (!ext_mrl)
+        return;
+    if (!rp_or_smil) {
+        s->video (ext_mrl);
+        return;
+    }
     SRect rect = s->bounds;
     Single x = rect.x ();
     Single y = rect.y ();
@@ -632,7 +660,7 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
             r = IRect (0, 0, w, h);
         }
         CairoPaintVisitor visitor (s->surface, m, r);
-        av->external_tree->accept (&visitor);
+        ext_mrl->accept (&visitor);
         s->dirty = false;
     }
     paint (av, s.ptr (), x, y, clip_rect);
@@ -1219,16 +1247,21 @@ static void followLink (SMIL::LinkingBase * link) {
             s->jump (link->href.mid (1));
         else
             kdError() << "In document jumps smil not found" << endl;
-    } else
-        for (NodePtr p = link->parentNode (); p; p = p->parentNode ()) {
-            if (n->mrl () && n->mrl ()->opener == p) {
-                p->setState (Node::state_deferred);
-                p->mrl ()->setParam (StringPool::attr_src, link->href, 0L);
-                p->activate ();
-                break;
+    } else {
+        PlayListNotify *notify = link->document ()->notify_listener;
+        if (notify && !link->target.isEmpty ())
+            notify->openUrl (link->href, link->target, QString ());
+        else 
+            for (NodePtr p = link->parentNode (); p; p = p->parentNode ()) {
+                if (n->mrl () && n->mrl ()->opener == p) {
+                    p->setState (Node::state_deferred);
+                    p->mrl ()->setParam (StringPool::attr_src, link->href, 0L);
+                    p->activate ();
+                    break;
+                }
+                n = p;
             }
-            n = p;
-        }
+    }
 }
 
 KDE_NO_EXPORT void MouseVisitor::visit (SMIL::Anchor * anchor) {
@@ -1426,7 +1459,6 @@ KDE_NO_EXPORT void ViewArea::mousePressEvent (QMouseEvent * e) {
         MouseVisitor visitor (event_pointer_clicked, e->x(), e->y());
         surface->node->accept (&visitor);
     }
-    e->accept ();
 }
 
 KDE_NO_EXPORT void ViewArea::mouseDoubleClickEvent (QMouseEvent *) {
@@ -1434,12 +1466,8 @@ KDE_NO_EXPORT void ViewArea::mouseDoubleClickEvent (QMouseEvent *) {
 }
 
 KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
-    if (e->state () == Qt::NoButton) {
-        int vert_buttons_pos = height () - m_view->statusBarHeight ();
-        int cp_height = m_view->controlPanel ()->maximumSize ().height ();
-        m_view->delayedShowButtons (e->y() > vert_buttons_pos-cp_height &&
-                                    e->y() < vert_buttons_pos);
-    }
+    if (e->state () == Qt::NoButton)
+        m_view->mouseMoved (e->x (), e->y ());
     if (surface->node) {
         MouseVisitor visitor (event_pointer_moved, e->x(), e->y());
         surface->node->accept (&visitor);
@@ -1558,17 +1586,18 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
         y += (h - hws) / 2;
     }
     m_view->console ()->setGeometry (0, 0, w, h - hsb - hcp);
+    m_view->picture ()->setGeometry (0, 0, w, h - hsb - hcp);
     if (!surface->node && video_widgets.size () == 1)
         video_widgets.first ()->setGeometry (IRect (x, y, wws, hws));
 }
 
-KDE_NO_EXPORT SurfacePtr ViewArea::getSurface (NodePtr node) {
+KDE_NO_EXPORT Surface *ViewArea::getSurface (Mrl *mrl) {
     static_cast <ViewSurface *> (surface.ptr ())->clear ();
-    surface->node = node;
+    surface->node = mrl;
     //m_view->viewer()->resetBackgroundColor ();
-    if (node) {
+    if (mrl) {
         updateSurfaceBounds ();
-        return surface;
+        return surface.ptr ();
     }
     scheduleRepaint (IRect (0, 0, width (), height ()));
     return 0L;
@@ -1640,6 +1669,7 @@ IViewer *ViewArea::createVideoWidget () {
     VideoOutput *viewer = new VideoOutput (this, m_view);
     video_widgets.push_back (viewer);
     viewer->setGeometry (IRect (-60, -60, 50, 50));
+    viewer->show ();
     m_view->controlPanel ()->raise ();
     return viewer;
 }
@@ -1714,15 +1744,9 @@ bool ViewArea::x11Event (XEvent *xe) {
                     QPoint p = mapToGlobal (QPoint (0, 0));
                     int x = xe->xmotion.x_root - p.x ();
                     int y = xe->xmotion.y_root - p.y ();
-                    int b = height ();
-                    int t = b - m_view->statusBarHeight () -
-                        m_view->controlPanel ()->maximumSize ().height ();
-                    if (x > -50 && x < width () + 50 &&
-                            y > t - 50 && y < b + 50) {
-                        m_view->delayedShowButtons (
-                                x > 0 && x < width () && y > t && y < b);
+                    m_view->mouseMoved (x, y);
+                    if (x > 0 && x < width () && y > 0 && y < height ())
                         mouseMoved ();
-                    }
                 }
             }
             break;

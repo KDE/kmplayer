@@ -181,6 +181,7 @@ public:
     virtual QString filterOptions ();
     virtual bool hasLength ();
     virtual bool isSeekable ();
+    virtual void setCurrent (KMPlayer::Mrl *mrl);
     virtual KMPlayer::NodePtr root ();
     void buildMenu ();
     virtual QString prettyName ();
@@ -202,7 +203,6 @@ private slots:
     void slotDeviceDeleted (TVDevicePage *);
 private:
     void addTVDevicePage (TVDevice * dev, bool show=false);
-    void buildArguments ();
     KMPlayer::NodePtrW m_cur_tvdevice;
     KMPlayer::NodePtrW m_cur_tvinput;
     QPopupMenu * m_channelmenu;

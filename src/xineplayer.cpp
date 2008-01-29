@@ -82,7 +82,6 @@ typedef struct {
     QString              rec_mrl;
     QString              alang, slang;
     QStringList          alanglist, slanglist;
-    QMutex              *mutex;
     bool                 running;
     enum { AutoAudioVis, NoAudioVis, AudioVis} audio_vis;
     bool                 finished;
@@ -164,7 +163,6 @@ static void initStreamInfo (StreamInfo *si, unsigned long wid) {
     si->movie_volume = 32767;
     si->slang = slang;
     si->alang = alang;
-    si->mutex = new QMutex (true);
 }
 
 static StreamInfo *getStreamInfo (Window wid, const char *notfoundmsg=NULL) {
@@ -248,13 +246,11 @@ static void frame_output_cb (void *data, int /*video_width*/, int /*video_height
         si->firstframe = false;
         int pos;
         fprintf(stderr, "first frame\n");
-        si->mutex->lock ();
         xine_get_pos_length (si->stream, 0, &pos, &si->movie_length);
         si->movie_width = xine_get_stream_info (si->stream,
                 XINE_STREAM_INFO_VIDEO_WIDTH);
         si->movie_height = xine_get_stream_info (si->stream,
                 XINE_STREAM_INFO_VIDEO_HEIGHT);
-        si->mutex->unlock ();
         QApplication::postEvent (xineapp, new XineMovieParamEvent (si->wid,
                     si->movie_length, si->movie_width, si->movie_height,
                     si->alanglist, si->slanglist, true));
@@ -274,7 +270,6 @@ static void xine_config_cb (void *data, xine_cfg_entry_t * entry) {
     fprintf (stderr, "xine_config_cb %s\n", entry->enum_values[entry->num_value]);
     if (!si || !si->stream)
         return;
-    si->mutex->lock ();
     if (si->post_plugin) {
         xine_post_wire_audio_port (xine_get_audio_source (si->stream), si->ao_port);
         xine_post_dispose (xine, si->post_plugin);
@@ -289,7 +284,6 @@ static void xine_config_cb (void *data, xine_cfg_entry_t * entry) {
                 (xine_post_in_t *) xine_post_input (si->post_plugin,
                     (char *) "audio in"));
     }
-    si->mutex->unlock ();
 }
 
 static void event_listener(void *data, const xine_event_t *event) {
@@ -300,9 +294,7 @@ static void event_listener(void *data, const xine_event_t *event) {
         case XINE_EVENT_UI_PLAYBACK_FINISHED:
             fprintf (stderr, "XINE_EVENT_UI_PLAYBACK_FINISHED\n");
             if (si->repeat_count-- > 0) {
-                si->mutex->lock ();
                 xine_play (si->stream, 0, 0);
-                si->mutex->unlock ();
             } else {
                 QApplication::postEvent(xineapp,new XineEvent(event_finished, si->wid));
             }
@@ -330,7 +322,6 @@ static void event_listener(void *data, const xine_event_t *event) {
         }
         case XINE_EVENT_UI_CHANNELS_CHANGED: {
             fprintf (stderr, "Channel changed event %d\n", si->firstframe);
-            si->mutex->lock ();
             int w = xine_get_stream_info(si->stream, XINE_STREAM_INFO_VIDEO_WIDTH);
             int h = xine_get_stream_info(si->stream, XINE_STREAM_INFO_VIDEO_HEIGHT);
             int pos, l, nr;
@@ -366,7 +357,6 @@ static void event_listener(void *data, const xine_event_t *event) {
                 fprintf (stderr, "slang %s\n", langstr);
             }
             delete langstr;
-            si->mutex->unlock ();
             si->movie_width = w;
             si->movie_height = h;
             si->movie_length = l;
@@ -522,11 +512,9 @@ void Backend::setConfig (QByteArray data) {
 
 bool Backend::isPlaying (unsigned long wid) {
     StreamInfo *si = getStreamInfo (wid, "playing");
-    si->mutex->lock ();
     bool b = si->running &&
         (xine_get_status (si->stream) == XINE_STATUS_PLAY) &&
         (xine_get_param (si->stream, XINE_PARAM_SPEED) != XINE_SPEED_PAUSE);
-    si->mutex->unlock ();
     return b;
 }
 
@@ -627,12 +615,10 @@ void KXinePlayer::play (unsigned long wid, int repeat) {
         return;
 
     fprintf (stderr, "play mrl: '%s' %d\n", (const char *) si->mrl.local8Bit (), wid);
-    si->mutex->lock ();
     si->repeat_count = repeat;
     if (xine_get_status (si->stream) == XINE_STATUS_PLAY &&
             xine_get_param (si->stream, XINE_PARAM_SPEED) == XINE_SPEED_PAUSE) {
         xine_set_param (si->stream, XINE_PARAM_SPEED, XINE_SPEED_NORMAL);
-        si->mutex->unlock ();
         return;
     }
     si->movie_pos = 0;
@@ -662,7 +648,6 @@ void KXinePlayer::play (unsigned long wid, int repeat) {
             else
                 printf ("track %s\n", m.utf8 ().data ());
         }
-        si->mutex->unlock ();
         finished (si->wid);
         return;
     }
@@ -682,7 +667,6 @@ void KXinePlayer::play (unsigned long wid, int repeat) {
     }
     if (!xine_open (si->stream, (const char *) mrlsetup.local8Bit ())) {
         fprintf(stderr, "Unable to open mrl '%s'\n", (const char *) si->mrl.local8Bit ());
-        si->mutex->unlock ();
         finished (si->wid);
         return;
     }
@@ -705,7 +689,6 @@ void KXinePlayer::play (unsigned long wid, int repeat) {
     }
     if (!xine_play (si->stream, 0, 0)) {
         fprintf(stderr, "Unable to play mrl '%s'\n", (const char *) si->mrl.local8Bit ());
-        si->mutex->unlock ();
         finished (si->wid);
         return;
     }
@@ -716,7 +699,6 @@ void KXinePlayer::play (unsigned long wid, int repeat) {
             (xine, "audio.visualization", &audio_vis_cfg_entry)
                 ? StreamInfo::AudioVis
                 : StreamInfo::NoAudioVis;
-    si->mutex->unlock ();
     if (StreamInfo::AudioVis == si->audio_vis)
         xine_config_cb (si, &audio_vis_cfg_entry);
     if (callback)
@@ -738,12 +720,10 @@ void KXinePlayer::stop (unsigned long wid) {
         return;
     fprintf(stderr, "stop\n");
     fflush(stderr);
-    si->mutex->lock ();
     si->repeat_count = 0;
     if (si->sub_stream)
         xine_stop (si->sub_stream);
     xine_stop (si->stream);
-    si->mutex->unlock ();
     QApplication::postEvent (xineapp, new XineEvent (event_finished, si->wid));
 }
 
@@ -751,14 +731,12 @@ void KXinePlayer::pause (unsigned long wid) {
     StreamInfo *si = getStreamInfo (wid, "pause");
     if (!si || !si->running)
         return;
-    si->mutex->lock ();
     if (xine_get_status (si->stream) == XINE_STATUS_PLAY) {
         if (xine_get_param (si->stream, XINE_PARAM_SPEED) == XINE_SPEED_PAUSE)
             xine_set_param (si->stream, XINE_PARAM_SPEED, XINE_SPEED_NORMAL);
         else
             xine_set_param (si->stream, XINE_PARAM_SPEED, XINE_SPEED_PAUSE);
     }
-    si->mutex->unlock ();
 }
 
 void KXinePlayer::finished (unsigned long wid) {
@@ -770,10 +748,8 @@ void KXinePlayer::setAudioLang (unsigned long wid, int id, const QString & al) {
     if (!si)
         return;
     si->alang = al;
-    si->mutex->lock ();
     if (xine_get_status (si->stream) == XINE_STATUS_PLAY)
         xine_set_param(si->stream, XINE_PARAM_AUDIO_CHANNEL_LOGICAL, id);
-    si->mutex->unlock ();
 }
 
 void KXinePlayer::setSubtitle (unsigned long wid, int id, const QString & sl) {
@@ -781,10 +757,8 @@ void KXinePlayer::setSubtitle (unsigned long wid, int id, const QString & sl) {
     if (!si)
         return;
     si->slang = sl;
-    si->mutex->lock ();
     if (xine_get_status (si->stream) == XINE_STATUS_PLAY)
         xine_set_param (si->stream, XINE_PARAM_SPU_CHANNEL, id);
-    si->mutex->unlock ();
 }
 
 void KXinePlayer::updatePosition () {
@@ -806,9 +780,7 @@ void KXinePlayer::saturation (unsigned long wid, int val) {
         return;
     si->movie_saturation = val;
     if (si->running) {
-        si->mutex->lock ();
         xine_set_param (si->stream, XINE_PARAM_VO_SATURATION, val);
-        si->mutex->unlock ();
     }
 }
 
@@ -818,9 +790,7 @@ void KXinePlayer::hue (unsigned long wid, int val) {
         return;
     si->movie_hue = val;
     if (si->running) {
-        si->mutex->lock ();
         xine_set_param (si->stream, XINE_PARAM_VO_HUE, val);
-        si->mutex->unlock ();
     }
 }
 
@@ -830,9 +800,7 @@ void KXinePlayer::contrast (unsigned long wid, int val) {
         return;
     si->movie_contrast = val;
     if (si->running) {
-        si->mutex->lock ();
         xine_set_param (si->stream, XINE_PARAM_VO_CONTRAST, val);
-        si->mutex->unlock ();
     }
 }
 
@@ -842,9 +810,7 @@ void KXinePlayer::brightness (unsigned long wid, int val) {
         return;
     si->movie_brightness = val;
     if (si->running) {
-        si->mutex->lock ();
         xine_set_param (si->stream, XINE_PARAM_VO_BRIGHTNESS, val);
-        si->mutex->unlock ();
     }
 }
 
@@ -854,9 +820,7 @@ void KXinePlayer::volume (unsigned long wid, int val) {
         return;
     si->movie_volume = val;
     if (si->running) {
-        si->mutex->lock ();
         xine_set_param( si->stream, XINE_PARAM_AUDIO_VOLUME, val);
-        si->mutex->unlock ();
     }
 }
 
@@ -866,11 +830,9 @@ void KXinePlayer::seek (unsigned long wid, int val) {
         return;
     if (si->running) {
         fprintf(stderr, "seek %d\n", val);
-        si->mutex->lock ();
         if (!xine_play (si->stream, 0, val * 100)) {
             fprintf(stderr, "Unable to seek to %d :-(\n", val);
         }
-        si->mutex->unlock ();
     }
 }
 
@@ -885,7 +847,6 @@ bool KXinePlayer::event (QEvent * e) {
             si->finished = true;
             if (StreamInfo::AudioVis == si->audio_vis)
                 xine_config_cb (si, &audio_vis_cfg_entry);
-            si->mutex->lock ();
             if (si->sub_stream)
                 xine_dispose (si->sub_stream);
             if (si->stream) {
@@ -896,7 +857,6 @@ bool KXinePlayer::event (QEvent * e) {
                 xine_close_audio_driver (xine, si->ao_port);
             if (si->vo_port)
                 xine_close_video_driver (xine, si->vo_port);
-            si->mutex->unlock ();
             //XLockDisplay (display);
             //XClearWindow (display, wid);
             //XUnlockDisplay (display);
@@ -904,7 +864,6 @@ bool KXinePlayer::event (QEvent * e) {
                 callback->finished (si->wid);
             else
                 QTimer::singleShot (0, this, SLOT (quit ()));
-            delete si->mutex;
             stream_list_mutex.lock ();
             stream_info_map.remove (si->wid);
             stream_list_mutex.unlock ();
@@ -1035,7 +994,7 @@ protected:
                             break;
 
                         case XK_p: // previous
-                            si->mutex->lock ();
+                            qApp->lock ();
                             if (si->stream) {
                                 xine_event_t xine_event =  {
                                     XINE_EVENT_INPUT_PREVIOUS,
@@ -1043,11 +1002,11 @@ protected:
                                 };
                                 xine_event_send (si->stream, &xine_event);
                             }
-                            si->mutex->unlock ();
+                            qApp->unlock ();
                             break;
 
                         case XK_n: // next
-                            si->mutex->lock ();
+                            qApp->lock ();
                             if (si->stream) {
                                 xine_event_t xine_event =  {
                                     XINE_EVENT_INPUT_NEXT,
@@ -1055,11 +1014,11 @@ protected:
                                 };
                                 xine_event_send (si->stream, &xine_event);
                             }
-                            si->mutex->unlock ();
+                            qApp->unlock ();
                             break;
 
                         case XK_u: // up menu
-                            si->mutex->lock ();
+                            qApp->lock ();
                             if (si->stream) {
                                 xine_event_t xine_event =  {
                                     XINE_EVENT_INPUT_MENU1,
@@ -1067,11 +1026,11 @@ protected:
                                 };
                                 xine_event_send (si->stream, &xine_event);
                             }
-                            si->mutex->unlock ();
+                            qApp->unlock ();
                             break;
 
                         case XK_r: // root menu
-                            si->mutex->lock ();
+                            qApp->lock ();
                             if (si->stream) {
                                 xine_event_t xine_event =  {
                                     XINE_EVENT_INPUT_MENU3,
@@ -1079,7 +1038,7 @@ protected:
                                 };
                                 xine_event_send (si->stream, &xine_event);
                             }
-                            si->mutex->unlock ();
+                            qApp->unlock ();
                             break;
 
                         case XK_Up:
@@ -1126,10 +1085,10 @@ protected:
                     StreamInfo *si = getStreamInfo (xevent.xany.window, "expose");
                     if (!si || xevent.xexpose.count != 0 || !si->stream)
                         break;
-                    si->mutex->lock ();
+                    qApp->lock ();
                     xine_gui_send_vo_data (si->stream,
                             XINE_GUI_SEND_EXPOSE_EVENT, &xevent);
-                    si->mutex->unlock ();
+                    qApp->unlock ();
                     break;
                 }
                 case ConfigureNotify: {
@@ -1173,9 +1132,9 @@ protected:
                         si->stream, &data, sizeof (xine_input_data_t),
                         { 0 , 0 }
                     };
-                    si->mutex->lock ();
+                    qApp->lock ();
                     xine_event_send (si->stream, &xine_event);
-                    si->mutex->unlock ();
+                    qApp->unlock ();
                     break;
                 }
                 case ButtonPress: {
@@ -1212,9 +1171,9 @@ protected:
                         si->stream, &data, sizeof (xine_input_data_t),
                         { 0, 0 }
                     };
-                    si->mutex->lock ();
+                    qApp->lock ();
                     xine_event_send (si->stream, &xine_event);
-                    si->mutex->unlock ();
+                    qApp->unlock ();
                     break;
                 }
                 case NoExpose:

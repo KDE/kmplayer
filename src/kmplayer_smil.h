@@ -291,7 +291,8 @@ public:
     virtual void updateDimensions ();
     virtual Surface *surface ();
 
-    NodePtrW rootLayout;
+    NodePtrW root_layout;
+    NodePtrW default_region;
 };
 
 /**
@@ -538,6 +539,7 @@ public:
     ConnectionPtr mediatype_activated;
     ConnectionPtr mediatype_attach;
     QString href;
+    QString target;
     enum { show_new, show_replace } show;
 protected:
     LinkingBase (NodePtr & d, short id);
@@ -588,7 +590,7 @@ public:
     virtual void begin ();
     virtual void finish ();
     virtual void childDone (NodePtr child);
-    virtual SurfacePtr getSurface (NodePtr node);
+    virtual Surface *getSurface (Mrl *mrl);
     /* (new) sub-region or NULL if not displayed */
     Surface *surface ();
     void resetSurface ();

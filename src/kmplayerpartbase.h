@@ -129,6 +129,7 @@ public:
     void keepMovieAspect (bool);
     KURL url () const { return m_sources ["urlsource"]->url (); }
     void setURL (const KURL & url) { m_sources ["urlsource"]->setURL (url); }
+    KURL docBase () const { return m_docbase; }
 
     /* Changes the backend process */
     QString processName (Mrl *mrl);
@@ -163,6 +164,7 @@ public:
 public slots:
     virtual bool openURL (const KURL & url);
     virtual bool openURL (const KURL::List & urls);
+    virtual void openUrl (const KURL &, const QString &t, const QString &srv);
     virtual bool closeURL ();
     virtual void pause (void);
     virtual void play (void);
@@ -228,6 +230,7 @@ protected slots:
     void audioSelected (int);
     void subtitleSelected (int);
 protected:
+    KURL m_docbase;
     KConfig * m_config;
     QGuardedPtr <View> m_view;
     QMap <QString, QString> temp_backends;

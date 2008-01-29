@@ -369,7 +369,7 @@ public:
      * Adds node to call 'handleEvent()' for all events that gets
      * delivered to this node, ignored by default
      */
-    virtual SurfacePtr getSurface (NodePtr node);
+    virtual Surface *getSurface (Mrl *mrl);
     /**
      * Activates element, sets state to state_activated. Will call activate() on
      * firstChild or call deactivate().
@@ -461,6 +461,7 @@ ITEM_AS_POINTER(KMPlayer::Node)
 
 const short id_node_document = 1;
 const short id_node_record_document = 2;
+const short id_node_grab_document = 3;
 const short id_node_text = 5;
 const short id_node_cdata = 6;
 
@@ -552,7 +553,7 @@ public:
     /**
      * By default support one event handler (eg. SMIL or RP child document)
      */
-    virtual SurfacePtr getSurface (NodePtr node);
+    virtual Surface *getSurface (Mrl *mrl);
     virtual bool handleEvent (EventPtr event);
 
     /**
@@ -571,6 +572,7 @@ public:
     enum { SingleMode = 0, WindowMode } view_mode;
     bool resolved;
     bool bookmarkable;
+    bool access_granted;
 };
 
 /**
@@ -592,7 +594,7 @@ public:
     /**
      * Set element to which to send GUI events and return a surface for drawing
      */
-    virtual SurfacePtr getSurface (NodePtr node) = 0;
+    virtual Surface *getSurface (Mrl *mrl) = 0;
     /**
      * Request to show msg for informing the user
      */
@@ -605,6 +607,10 @@ public:
      * Sets next call to Document::timer() or -1 to cancel a previous call
      */
     virtual void setTimeout (int ms) = 0;
+    /**
+     * Request to open url with mimetype
+     */
+    virtual void openUrl (const KURL &, const QString &t, const QString &srv)=0;
 };
 
 class KMPLAYER_NO_EXPORT Surface : public TreeNode <Surface> {
@@ -727,7 +733,7 @@ public:
     /**
      * Reimplement, so it will call PlayListNotify::getSurface()
      */
-    virtual SurfacePtr getSurface (NodePtr node);
+    virtual Surface *getSurface (Mrl *mrl);
 
     List <TimerInfo> timers; //FIXME: make as connections
     PlayListNotify * notify_listener;

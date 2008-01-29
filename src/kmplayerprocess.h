@@ -76,7 +76,6 @@ public:
     View *view () const;
     WId widget ();
     void setSource (Source * src) { m_source = src; }
-    virtual bool grabPicture (const KURL & url, int pos);
     Mrl *mrl () const;
 signals:
     void grabReady (const QString & path);
@@ -86,6 +85,7 @@ public slots:
     virtual void stop ();
     virtual void quit ();
     virtual void pause ();
+    virtual bool grabPicture (const QString &, int) { return false; }
     /* seek (pos, abs) seek position in deci-seconds */
     virtual bool seek (int pos, bool absolute);
     /* volume from 0 to 100 */
@@ -150,7 +150,7 @@ public:
     ~MPlayer ();
 
     virtual void init ();
-    virtual bool grabPicture (const KURL & url, int pos);
+    virtual bool grabPicture (const QString &, int);
     virtual void setAudioLang (int, const QString &);
     virtual void setSubtitle (int, const QString &);
     bool run (const char * args, const char * pipe = 0L);
@@ -171,7 +171,8 @@ private slots:
     void processOutput (KProcess *, char *, int);
 private:
     QString m_process_output;
-    QString m_grabfile;
+    QString m_grab_file;
+    QString m_grab_dir;
     QWidget * m_widget;
     QString m_tmpURL;
     struct LangInfo {
@@ -465,13 +466,13 @@ public:
         BecauseDone = 0, BecauseError = 1, BecauseStopped = 2
     };
 
-    NpStream (QObject *parent, Q_UINT32 stream_id, const KURL & url);
+    NpStream (QObject *parent, Q_UINT32 stream_id, const QString &url);
     ~NpStream ();
 
     void open ();
     void close ();
 
-    KURL url;
+    QString url;
     QByteArray pending_buf;
     KIO::TransferJob *job;
     timeval data_arrival;
@@ -521,7 +522,6 @@ public:
     QString evaluateScript (const QString & scr);
 signals:
     void evaluate (const QString & scr, QString & result);
-    void openUrl (const KURL & url, const QString & target);
 public slots:
     virtual void stop ();
     virtual void quit ();
@@ -542,7 +542,6 @@ private:
     QString iface;
     QString path;
     QString filter;
-    QString m_base_url;
     typedef QMap <Q_UINT32, NpStream *> StreamMap;
     StreamMap streams;
     QString remote_service;

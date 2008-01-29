@@ -154,7 +154,8 @@ public:
     KURLRequester * sub_url;
     KComboBox * sub_urllist;
     QListBox * backend;
-    QCheckBox * allowhref;
+    QCheckBox * clicktoplay;
+    QCheckBox * grabhref;
     QLineEdit * prefBitRate;
     QLineEdit * maxBitRate;
     bool changed;

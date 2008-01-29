@@ -22,7 +22,6 @@
 #include <qmovie.h>
 #include <qimage.h>
 #include <qfile.h>
-#include <qtextcodec.h>
 
 #include <kdebug.h>
 #include <kmimetype.h>
@@ -212,7 +211,6 @@ void MediaManager::stateChange (AudioVideoMedia *media,
             has_video = static_cast <RecordDocument *> (mrl)->has_video;
         }
         if (has_video) {
-            m_player->viewWidget ()->playingStart ();
             if (m_player->view ()) {
                 if (media->viewer)
                     media->viewer->map ();
@@ -229,6 +227,8 @@ void MediaManager::stateChange (AudioVideoMedia *media,
     } else if (IProcess::Ready == news) {
         if (AudioVideoMedia::ask_play == media->request) {
             playAudioVideo (media);
+        } else if (AudioVideoMedia::ask_grab == media->request) {
+            grabPicture (media);
         } else {
             if (!is_rec && Mrl::SingleMode == mrl->view_mode) {
                 ProcessList::iterator e = m_processes.end ();
@@ -253,6 +253,7 @@ void MediaManager::stateChange (AudioVideoMedia *media,
 
 void MediaManager::playAudioVideo (AudioVideoMedia *media) {
     Mrl *mrl = media->mrl ();
+    media->request = AudioVideoMedia::ask_nothing;
     if (!mrl ||!m_player->view ())
         return;
     if (id_node_record_document != mrl->id &&
@@ -266,6 +267,14 @@ void MediaManager::playAudioVideo (AudioVideoMedia *media) {
         }
     }
     media->process->play ();
+}
+
+void MediaManager::grabPicture (AudioVideoMedia *media) {
+    Mrl *mrl = media->mrl ();
+    media->request = AudioVideoMedia::ask_nothing;
+    if (!mrl)
+        return;
+    media->process->grabPicture (media->m_grab_file, media->m_frame);
 }
 
 void MediaManager::processDestroyed (IProcess *process) {
@@ -491,6 +500,21 @@ bool AudioVideoMedia::play () {
     return false;
 }
 
+bool AudioVideoMedia::grabPicture (const QString &file, int frame) {
+    if (process) {
+        kdDebug() << "AudioVideoMedia::grab " << file << endl;
+        m_grab_file = file;
+        m_frame = frame;
+        if (process->state () < IProcess::Ready) {
+            request = ask_grab;
+            return true; // FIXME add Launching state
+        }
+        m_manager->grabPicture (this);
+        return true;
+    }
+    return false;
+}
+
 void AudioVideoMedia::stop () {
     if (ask_delete != request)
         request = ask_stop;
@@ -537,7 +561,9 @@ ImageData::~ImageData() {
 ImageMedia::ImageMedia (MediaManager *manager, Node *node)
  : MediaObject (manager, node), img_movie (NULL) {}
 
-ImageMedia::~ImageMedia () {}
+ImageMedia::~ImageMedia () {
+    delete img_movie;
+}
 
 KDE_NO_EXPORT bool ImageMedia::play () {
     if (!img_movie)
@@ -628,12 +654,11 @@ KDE_NO_EXPORT void ImageMedia::movieStatus (int status) {
 //------------------------%<----------------------------------------------------
 
 TextMedia::TextMedia (MediaManager *manager, Node *node)
- : MediaObject (manager, node), codec (NULL) {
+ : MediaObject (manager, node) {
     default_font_size = QApplication::font ().pointSize ();
 }
 
 TextMedia::~TextMedia () {
-    delete codec;
 }
 
 KDE_NO_EXPORT void TextMedia::ready (const QString &url) {
@@ -641,8 +666,6 @@ KDE_NO_EXPORT void TextMedia::ready (const QString &url) {
         if (!data [data.size () - 1])
             data.resize (data.size () - 1); // strip zero terminate char
         QTextStream ts (data, IO_ReadOnly);
-        if (codec)
-            ts.setCodec (codec);
         text  = ts.read ();
     }
     MediaObject::ready (url);

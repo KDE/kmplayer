@@ -45,31 +45,31 @@ using namespace KMPlayer;
 
 //-----------------------------------------------------------------------------
 
-namespace KMPlayer {
-    Node * fromXMLDocumentTag (NodePtr & d, const QString & tag) {
-        const char * const name = tag.latin1 ();
-        if (!strcmp (name, "smil"))
-            return new SMIL::Smil (d);
-        else if (!strcasecmp (name, "asx"))
-            return new ASX::Asx (d);
-        else if (!strcasecmp (name, "imfl"))
-            return new RP::Imfl (d);
-        else if (!strcasecmp (name, "rss"))
-            return new RSS::Rss (d);
-        else if (!strcasecmp (name, "feed"))
-            return new ATOM::Feed (d);
-        else if (!strcasecmp (name, "playlist"))
-            return new XSPF::Playlist (d);
-        else if (!strcasecmp (name, "url"))
-            return new GenericURL (d, QString ());
-        else if (!strcasecmp (name, "mrl") ||
-                !strcasecmp (name, "document"))
-            return new GenericMrl (d);
-        return 0L;
-    }
+Node * KMPlayer::fromXMLDocumentTag (NodePtr & d, const QString & tag) {
+    const char * const name = tag.latin1 ();
+    if (!strcmp (name, "smil"))
+        return new SMIL::Smil (d);
+    else if (!strcasecmp (name, "asx"))
+        return new ASX::Asx (d);
+    else if (!strcasecmp (name, "imfl"))
+        return new RP::Imfl (d);
+    else if (!strcasecmp (name, "rss"))
+        return new RSS::Rss (d);
+    else if (!strcasecmp (name, "feed"))
+        return new ATOM::Feed (d);
+    else if (!strcasecmp (name, "playlist"))
+        return new XSPF::Playlist (d);
+    else if (!strcasecmp (name, "url"))
+        return new GenericURL (d, QString ());
+    else if (!strcasecmp (name, "mrl") ||
+            !strcasecmp (name, "document"))
+        return new GenericMrl (d);
+    return 0L;
+}
 
 //-----------------------------------------------------------------------------
 
+namespace {
     struct XMLStringlet {
         const QString str;
         XMLStringlet (const QString & s) : str (s) {}
@@ -480,8 +480,8 @@ QString Node::nodeValue () const {
     return QString ();
 }
 
-SurfacePtr Node::getSurface (NodePtr) {
-    return 0L;
+Surface *Node::getSurface (Mrl *) {
+    return NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -499,7 +499,7 @@ void RefNode::setRefNode (const NodePtr ref) {
 
 //-----------------------------------------------------------------------------
 
-namespace KMPlayer {
+namespace {
     struct KMPLAYER_NO_EXPORT ParamValue {
         QString val;
         QStringList  * modifications;
@@ -509,6 +509,9 @@ namespace KMPlayer {
         void setValue (const QString & v) { val = v; }
     };
     typedef QMap <TrieString, ParamValue *> ParamMap;
+}
+
+namespace KMPlayer {
     class KMPLAYER_NO_EXPORT ElementPrivate {
     public:
         ~ElementPrivate ();
@@ -655,7 +658,7 @@ Mrl::Mrl (NodePtr & d, short id)
       media_object (NULL),
       aspect (0), repeat (0),
       view_mode (SingleMode),
-      resolved (false), bookmarkable (true) {}
+      resolved (false), bookmarkable (true), access_granted (false) {}
 
 Mrl::~Mrl () {
     if (media_object)
@@ -768,11 +771,11 @@ void Mrl::deactivate () {
     Node::deactivate ();
 }
 
-SurfacePtr Mrl::getSurface (NodePtr node) {
+Surface *Mrl::getSurface (Mrl *mrl) {
     for (NodePtr p = parentNode (); p; p = p->parentNode ())
         if (p->mrl ())
-            return p->getSurface (node);
-    return 0L;
+            return p->getSurface (mrl);
+    return NULL;
 }
 
 bool Mrl::handleEvent (EventPtr) {
@@ -842,9 +845,7 @@ Postpone::~Postpone () {
 
 //-----------------------------------------------------------------------------
 
-namespace KMPlayer {
-    static NodePtr dummy_element;
-}
+static NodePtr dummy_element;
 
 Document::Document (const QString & s, PlayListNotify * n)
  : Mrl (dummy_element, id_node_document),
@@ -910,12 +911,8 @@ void Document::defer () {
 }
 
 void Document::undefer () {
-    if (!postpone_lock) {
-        Mrl::undefer ();
-    } else {
-        setState (state_activated);
-        postpone_lock = 0L;
-    }
+    postpone_lock = 0L;
+    Mrl::undefer ();
 }
 
 void Document::reset () {
@@ -1089,10 +1086,10 @@ void Document::proceed (const struct timeval & postponed_time) {
     propagateEvent (new PostponedEvent (false));
 }
 
-SurfacePtr Document::getSurface (NodePtr node) {
+Surface *Document::getSurface (Mrl *mrl) {
     if (notify_listener)
-        return notify_listener->getSurface (node);
-    return 0L;
+        return notify_listener->getSurface (mrl);
+    return NULL;
 }
 
 NodeRefListPtr Document::listeners (unsigned int id) {
@@ -1349,10 +1346,8 @@ static void cdataEnd (void *data) {
     builder->cdataEnd ();
 }
 
-namespace KMPlayer {
-
 KMPLAYER_EXPORT
-void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool set_opener) {
+void KMPlayer::readXML (NodePtr root, QTextStream & in, const QString & firstline, bool set_opener) {
     bool ok = true;
     DocumentBuilder builder (root, set_opener);
     XML_Parser parser = XML_ParserCreate (0L);
@@ -1377,8 +1372,6 @@ void readXML (NodePtr root, QTextStream & in, const QString & firstline, bool se
     root->normalize ();
     //return ok;
 }
-
-} // namespace KMPlayer
 
 //-----------------------------------------------------------------------------
 #else // HAVE_EXPAT

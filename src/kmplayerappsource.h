@@ -93,7 +93,7 @@ public slots:
     void languageMenuClicked (int id);
     void chapterMenuClicked (int id);
 private:
-    void buildArguments ();
+    void setCurrent (KMPlayer::Mrl *);
     void play ();
     QPopupMenu * m_dvdtitlemenu;
     QPopupMenu * m_dvdchaptermenu;
@@ -158,7 +158,7 @@ public slots:
     virtual void activate ();
     virtual void deactivate ();
 private:
-    void buildArguments ();
+    void setCurrent (KMPlayer::Mrl *);
     KMPlayerPrefSourcePageVCD * m_configpage;
     bool m_start_play;
 };
@@ -179,7 +179,7 @@ public slots:
     virtual void activate ();
     virtual void deactivate ();
 private:
-    void buildArguments ();
+    void setCurrent (KMPlayer::Mrl *);
 };
 
 

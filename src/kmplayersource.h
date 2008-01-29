@@ -75,8 +75,10 @@ public:
     KDE_NO_EXPORT const QString & recordCmd () const { return m_recordcmd; }
     KDE_NO_EXPORT const QString & tuner () const { return m_tuner; }
     KDE_NO_EXPORT Mrl *current() { return m_current ? m_current->mrl() : NULL;}
+    virtual void setCurrent (Mrl *mrl);
     QString plugin (const QString &mime) const;
     virtual NodePtr document ();
+    void setDocument (KMPlayer::NodePtr doc, KMPlayer::NodePtr cur);
     virtual NodePtr root ();
     virtual QString filterOptions ();
     virtual bool authoriseUrl (const QString &url);
@@ -127,11 +129,12 @@ protected:
      */
     bool resolveURL (NodePtr mrl);
     void stateElementChanged (Node * element, Node::State os, Node::State ns);
-    SurfacePtr getSurface (NodePtr node);
+    Surface *getSurface (Mrl *mrl);
     void setInfoMessage (const QString & msg);
     void bitRates (int & preferred, int & maximal);
     void setTimeout (int ms);
     MediaManager *mediaManager () const;
+    void openUrl (const KURL &url, const QString &target, const QString &srv);
 
     NodePtr m_document;
     NodePtrW m_current;

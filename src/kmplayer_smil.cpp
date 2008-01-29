@@ -915,7 +915,7 @@ KDE_NO_EXPORT void SMIL::Smil::deactivate () {
     state = state_deactivated;
     if (layout_node)
         convertNode <SMIL::Layout> (layout_node)->region_surface = NULL;
-    Mrl::getSurface(0L);
+    Mrl::getSurface (NULL);
     Mrl::deactivate ();
 }
 
@@ -1061,7 +1061,7 @@ KDE_NO_EXPORT NodePtr SMIL::Layout::childFromTag (const QString & tag) {
     const char * ctag = tag.ascii ();
     if (!strcmp (ctag, "root-layout")) {
         NodePtr e = new SMIL::RootLayout (m_doc);
-        rootLayout = e;
+        root_layout = e;
         return e;
     } else if (!strcmp (ctag, "region"))
         return new SMIL::Region (m_doc);
@@ -1071,14 +1071,14 @@ KDE_NO_EXPORT NodePtr SMIL::Layout::childFromTag (const QString & tag) {
 }
 
 KDE_NO_EXPORT void SMIL::Layout::closed () {
-    SMIL::RegionBase * rl = convertNode <SMIL::RootLayout> (rootLayout);
+    SMIL::RegionBase * rl = convertNode <SMIL::RootLayout> (root_layout);
     bool has_root (rl);
     if (!has_root) { // just add one if none there
         rl = new SMIL::RootLayout (m_doc);
         NodePtr sr = rl; // protect against destruction
         rl->setAuxiliaryNode (true);
-        rootLayout = rl;
-        int w_root =0, h_root = 0, reg_count = 0;
+        root_layout = rl;
+        int w_root =0, h_root = 0;
         for (NodePtr n = firstChild (); n; n = n->nextSibling ()) {
             if (n->id == id_node_region) {
                 SMIL::Region * rb =convertNode <SMIL::Region> (n);
@@ -1088,29 +1088,25 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
                     w_root = rb->x + rb->w;
                 if (int (rb->y + rb->h) > h_root)
                     h_root = rb->y + rb->h;
-                reg_count++;
             }
         }
-        if (!reg_count || !w_root || !h_root) {
+        if (!w_root || !h_root)
             w_root = 320; h_root = 240; // have something to start with
-            SMIL::Region * r = new SMIL::Region (m_doc);
-            appendChild (r);
-            r->setAuxiliaryNode (true);
-        }
         rl->setAttribute(StringPool::attr_width, QString::number(w_root));
         rl->setAttribute(StringPool::attr_height,QString::number(h_root));
         insertBefore (sr, firstChild ());
     } else {
-        if (childNodes ()->length () < 2) { // only a root-layout
-            SMIL::Region * r = new SMIL::Region (m_doc);
-            appendChild (r);
-            r->setAuxiliaryNode (true);
-        }
         Smil *s = Smil::findSmilNode (this);
         if (s) {
             s->width = rl->getAttribute(StringPool::attr_width).toDouble ();
             s->height = rl->getAttribute(StringPool::attr_height).toDouble();
         }
+    }
+    if (!default_region) {
+        SMIL::Region *r = new SMIL::Region (m_doc);
+        insertBefore (r, rl->nextSibling ());
+        r->setAuxiliaryNode (true);
+        default_region = r;
     }
 }
 
@@ -1125,7 +1121,7 @@ KDE_NO_EXPORT void SMIL::Layout::activate () {
 }
 
 KDE_NO_EXPORT void SMIL::Layout::updateDimensions () {
-    RegionBase * rb = static_cast <RegionBase *> (rootLayout.ptr ());
+    RegionBase * rb = static_cast <RegionBase *> (root_layout.ptr ());
     x = y = 0;
     w = rb->sizes.width.size ();
     h = rb->sizes.height.size ();
@@ -1137,7 +1133,7 @@ KDE_NO_EXPORT Surface *SMIL::Layout::surface () {
     if (!region_surface) {
         SMIL::Smil *s = Smil::findSmilNode (this);
         if (s && s->active ()) {
-            SMIL::RegionBase *rl = convertNode <SMIL::RootLayout> (rootLayout);
+            SMIL::RegionBase *rl = convertNode <SMIL::RootLayout> (root_layout);
             region_surface = s->getSurface (s);
             w = s->width;
             h = s->height;
@@ -1804,6 +1800,7 @@ KDE_NO_EXPORT void SMIL::GroupBase::deactivate () {
 KDE_NO_EXPORT void SMIL::GroupBase::setJumpNode (NodePtr n) {
     NodePtr child = n;
     if (state > state_init) {
+        state = state_deferred;
         for (NodePtr c = firstChild (); c; c = c->nextSibling ())
             if (c->active ())
                 c->reset ();
@@ -1818,6 +1815,9 @@ KDE_NO_EXPORT void SMIL::GroupBase::setJumpNode (NodePtr n) {
     jump_node = child;
     state = state_activated;
     init ();
+    for (NodePtr n = firstChild (); n; n = n->nextSibling ())
+        if (isTimedMrl (n))
+            convertNode <Element> (n)->init ();
     runtime()->beginAndStart (); // undefer through begin()
 }
 
@@ -2034,6 +2034,8 @@ KDE_NO_EXPORT
 void SMIL::LinkingBase::parseParam(const TrieString &para, const QString &val) {
     if (para == StringPool::attr_href) {
         href = val;
+    } else if (para == StringPool::attr_target) {
+        target = val;
     }
 }
 
@@ -2126,10 +2128,12 @@ KDE_NO_EXPORT NodePtr SMIL::MediaType::childFromTag (const QString & tag) {
     return 0L;
 }
 
-static NodePtr findExternalTree (NodePtr mrl) {
+static NodePtr findExternalTree (Mrl *mrl) {
     for (NodePtr c = mrl->firstChild (); c; c = c->nextSibling ()) {
         Mrl * m = c->mrl ();
-        if (m && m->opener == mrl)
+        if (m && (m->opener.ptr () == mrl ||
+                    m->id == SMIL::id_node_smil ||
+                    m->id == RP::id_node_imfl))
             return c;
     }
     return 0L;
@@ -2253,7 +2257,7 @@ KDE_NO_EXPORT void SMIL::MediaType::deactivate () {
 }
 
 KDE_NO_EXPORT void SMIL::MediaType::defer () {
-    if (!postpone_lock && media_object) {
+    if (media_object) {
         //media_object->pause ();
         if (unfinished ())
             postpone_lock = document ()->postpone ();
@@ -2278,6 +2282,8 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
     SMIL::Smil * s = Smil::findSmilNode (parentNode ().ptr ());
     SMIL::Region * r = s ?
         findRegion (s->layout_node, param (StringPool::attr_region)) : 0L;
+    if (!r)
+        r = convertNode <SMIL::Region> (convertNode <SMIL::Layout> (s->layout_node)->default_region);
     if (trans_timer) // eg transOut and we're repeating
         document ()->cancelTimer (trans_timer);
     for (NodePtr c = firstChild (); c; c = c->nextSibling ())
@@ -2323,14 +2329,9 @@ KDE_NO_EXPORT void SMIL::MediaType::begin () {
 KDE_NO_EXPORT void SMIL::MediaType::clipStart () {
     SMIL::RegionBase *r = convertNode<SMIL::RegionBase> (region_node);
     if (r && r->surface ()) {
-        for (NodePtr n = firstChild (); n; n = n->nextSibling ())
-            if ((n->mrl () && n->mrl ()->opener.ptr () == this) ||
-                    n->id == SMIL::id_node_smil ||
-                    n->id == RP::id_node_imfl) {
-                n->activate ();
-                return;
-            }
-        if (media_object)
+        if (external_tree)
+            external_tree->activate ();
+        else if (media_object)
             media_object->play ();
     }
 }
@@ -2376,11 +2377,16 @@ KDE_NO_EXPORT void SMIL::MediaType::childDone (NodePtr child) {
         finish ();
 }
 
-SurfacePtr SMIL::MediaType::getSurface (NodePtr node) {
+Surface *SMIL::MediaType::getSurface (Mrl *mrl) {
     resetSurface ();
-    Surface *s = surface ();
-    if (s && node)
-        s->node = node;
+    Surface *s = NULL;
+    if (mrl) {
+        width = mrl->width;
+        height = mrl->height;
+        s = surface ();
+        if (s)
+            s->node = mrl;
+    }
     return s;
 }
 
@@ -2544,7 +2550,7 @@ KDE_NO_EXPORT void SMIL::AVMediaType::clipStop () {
 }
 
 KDE_NO_EXPORT void SMIL::AVMediaType::begin () {
-    if (!resolved) {
+    if (!external_tree && !resolved) {
         defer ();
     } else {
         if (0 == runtime ()->durTime ().offset &&

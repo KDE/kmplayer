@@ -164,6 +164,7 @@ static const char * strDVDDevice = "DVD Device";
 static const char * strVCDDevice = "VCD Device";
 const char * strUrlBackend = "URL Backend";
 static const char * strAllowHref = "Allow HREF";
+static const char * strClickToPlay = "Click to Play";
 // postproc thingies
 static const char * strPPGroup = "Post processing options";
 static const char * strPostProcessing = "Post processing";
@@ -305,7 +306,8 @@ KDE_NO_EXPORT void Settings::readConfig () {
     vcddevice = m_config->readEntry (strVCDDevice, "/dev/cdrom");
     videodriver = m_config->readNumEntry (strVoDriver, 0);
     audiodriver = m_config->readNumEntry (strAoDriver, 0);
-    allowhref = m_config->readBoolEntry(strAllowHref, false);
+    clicktoplay = m_config->readBoolEntry (strClickToPlay, false);
+    grabhref = m_config->readBoolEntry (strAllowHref, false);
 
     // recording
     m_config->setGroup (strRecordingGroup);
@@ -447,7 +449,8 @@ void Settings::show (const char * pagename) {
             id++;
         }
     }
-    configdialog->m_SourcePageURL->allowhref->setChecked (allowhref);
+    configdialog->m_SourcePageURL->clicktoplay->setChecked (clicktoplay);
+    configdialog->m_SourcePageURL->grabhref->setChecked (grabhref);
 
     // postproc
     configdialog->m_OPPagePostproc->postProcessing->setChecked (postprocessing);
@@ -533,7 +536,8 @@ void Settings::writeConfig () {
     m_config->writeEntry (strSeekTime, seektime);
     m_config->writeEntry (strVoDriver, videodriver);
     m_config->writeEntry (strAoDriver, audiodriver);
-    m_config->writeEntry (strAllowHref, allowhref);
+    m_config->writeEntry (strClickToPlay, clicktoplay);
+    m_config->writeEntry (strAllowHref, grabhref);
     m_config->writeEntry (strAddConfigButton, showcnfbutton);
     m_config->writeEntry (strAddPlaylistButton, showplaylistbutton);
     m_config->writeEntry (strAddRecordButton, showrecordbutton);
@@ -664,21 +668,20 @@ void Settings::okPressed () {
 
     videodriver = configdialog->m_GeneralPageOutput->videoDriver->currentItem();
     audiodriver = configdialog->m_GeneralPageOutput->audioDriver->currentItem();
-    /*if (!strcmp (m_player->source()->name (), "urlsource")) {
-        int backend = configdialog->m_SourcePageURL->backend->currentItem ();
-        const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().end ();
-        for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().begin(); backend >=0 && i != e; ++i) {
-            ProcessInfo *pi = i.data ();
-            if (pi->supports ("urlsource") && backend-- == 0) {
-                backends["urlsource"] = pi->name;
-                if (pi != m_player->process ()) {
-                    m_player->setProcess (proc->name ());
-                    playerchanged = true;
-                }
+    QString backend_name = configdialog->m_SourcePageURL->backend->currentText ();
+    if (!backend_name.isEmpty ()) {
+         const MediaManager::ProcessInfoMap::const_iterator e = m_player->mediaManager()->processInfos ().end ();
+        for (MediaManager::ProcessInfoMap::const_iterator i = m_player->mediaManager()->processInfos ().begin(); i != e; ++i) {
+            ProcessInfo *p = i.data ();
+            if (p->supports ("urlsource") &&
+                    p->label.remove (QChar ('&')) == backend_name) {
+                backends["urlsource"] = p->name;
+                break;
             }
         }
-    }*/
-    allowhref = configdialog->m_SourcePageURL->allowhref->isChecked ();
+    }
+    clicktoplay = configdialog->m_SourcePageURL->clicktoplay->isChecked ();
+    grabhref = configdialog->m_SourcePageURL->grabhref->isChecked ();
     //postproc
     postprocessing = configdialog->m_OPPagePostproc->postProcessing->isChecked();
     disableppauto = configdialog->m_OPPagePostproc->disablePPauto->isChecked();

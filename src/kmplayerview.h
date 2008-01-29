@@ -23,6 +23,7 @@
 #include <config.h>
 #endif
 #include <qwidget.h>
+#include <qimage.h>
 #include <qtextedit.h>
 
 #include <kdockwidget.h>
@@ -33,7 +34,6 @@
 
 #define MOUSE_INVISIBLE_DELAY 2000
 
-class QPixmap;
 class QPaintDevice;
 class QPainter;
 class QSlider;
@@ -83,6 +83,16 @@ private:
     View * m_view;
 };
 
+class KMPLAYER_NO_EXPORT PictureWidget : public QWidget {
+    View *m_view;
+public:
+    PictureWidget (QWidget *parent, View *view);
+    KDE_NO_CDTOR_EXPORT ~PictureWidget () {}
+protected:
+    void mousePressEvent (QMouseEvent *);
+    void mouseMoveEvent (QMouseEvent *);
+};
+
 /*
  * The view containing ViewArea and playlist
  */
@@ -105,6 +115,7 @@ public:
     //void print(QPrinter *pPrinter);
 
     TextEdit * console () const { return m_multiedit; }
+    PictureWidget *picture () const KMPLAYER_NO_MBR_EXPORT { return m_picture; }
     KDE_NO_EXPORT ControlPanel * controlPanel () const {return m_control_panel;}
     KDE_NO_EXPORT StatusBar * statusBar () const {return m_status_bar;}
     KDE_NO_EXPORT PlayListView * playList () const { return m_playlist; }
@@ -123,7 +134,6 @@ public:
     int statusBarHeight () const;
     KDE_NO_EXPORT bool editMode () const { return m_edit_mode; }
     bool setPicture (const QString & path);
-    KDE_NO_EXPORT QPixmap * image () const { return m_image; }
     void setNoInfoMessages (bool b) { m_no_info = b; }
     void setViewOnly ();
     void setInfoPanelOnly ();
@@ -137,6 +147,7 @@ public:
     void playingStart ();
     /* shows panel */
     void playingStop ();
+    void mouseMoved (int x, int y) KMPLAYER_NO_MBR_EXPORT;
 public slots:
     void setVolume (int);
     void updateVolume ();
@@ -170,7 +181,7 @@ private:
     KDockWidget * m_dock_playlist;
     KDockWidget * m_dock_infopanel;
     QString tmplog;
-    QPixmap * m_image;
+    QImage m_image;
     ControlPanel * m_control_panel;
     StatusBar * m_status_bar;
     QSlider * m_volume_slider;

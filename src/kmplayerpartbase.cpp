@@ -264,6 +264,8 @@ KMediaPlayer::View* PartBase::view () {
 extern const char * strGeneralGroup;
 
 QString PartBase::processName (Mrl *mrl) {
+    if (id_node_grab_document == mrl->id)
+        return QString ("mplayer"); //FIXME
     // determine backend, start with temp_backends
     QString p = temp_backends [m_source->name()];
     bool remember_backend = p.isEmpty ();
@@ -320,7 +322,7 @@ KDE_NO_EXPORT void PartBase::slotPlayerMenu (int menu) {
     unsigned id = 0;
     for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.begin();
             id < player_menu->count() && i != e;
-            ++i, id++) {
+            ++i) {
         ProcessInfo *pinfo = i.data ();
         if (!pinfo->supports (srcname))
             continue;
@@ -331,10 +333,10 @@ KDE_NO_EXPORT void PartBase::slotPlayerMenu (int menu) {
                 m_settings->backends [srcname] = pinfo->name;
             temp_backends [srcname] = pinfo->name;
         }
+        id++;
     }
-    if (playing) {
+    if (playing)
         m_source->play (mrl);
-    }
 }
 
 void PartBase::updatePlayerMenu (ControlPanel *panel, const QString &backend) {
@@ -347,7 +349,7 @@ void PartBase::updatePlayerMenu (ControlPanel *panel, const QString &backend) {
     int id = 0; // if multiple parts, id's should be the same for all menu's
     for (MediaManager::ProcessInfoMap::const_iterator i = pinfos.begin(); i != e; ++i) {
         ProcessInfo *p = i.data ();
-        if (p->supports (m_source->name ())) {
+        if (p->supports (m_source ? m_source->name () : "urlsource")) {
             menu->insertItem (p->label, this, SLOT (slotPlayerMenu (int)), 0, id++);
             if (backend == p->name)
                 menu->setItemChecked (id-1, true);
@@ -452,6 +454,10 @@ bool PartBase::openURL (const KURL::List & urls) {
     return true;
 }
 
+void PartBase::openUrl (const KURL &u, const QString &t, const QString &srv) {
+    kdDebug() << u << " " << t << " " << srv << endl;
+}
+
 bool PartBase::closeURL () {
     stop ();
     if (m_view)
@@ -481,6 +487,7 @@ void PartBase::playingStarted () {
         m_view->controlPanel ()->setPlaying (true);
         m_view->controlPanel ()->showPositionSlider (!!m_source->length ());
         m_view->controlPanel ()->enableSeekButtons (m_source->isSeekable ());
+        m_view->playingStart ();
         //if (m_settings->autoadjustvolume && m_process)
         //   m_process->volume(m_view->controlPanel()->volumeBar()->value(),true);
     }
@@ -491,6 +498,7 @@ void PartBase::playingStopped () {
     kdDebug () << "playingStopped " << this << endl;
     if (m_view) {
         m_view->controlPanel ()->setPlaying (false);
+        m_view->playingStop ();
         m_view->reset ();
     }
     m_bPosSliderPressed = false;
@@ -987,20 +995,6 @@ void Source::play (Mrl *mrl) {
     emit dimensionsChanged ();
 }
 
-static NodePtr findDepthFirst (NodePtr elm) {
-    if (!elm)
-        return NodePtr ();
-    NodePtr tmp = elm;
-    for ( ; tmp; tmp = tmp->nextSibling ()) {
-        if (tmp->isPlayable ())
-            return tmp;
-        NodePtr tmp2 = findDepthFirst (tmp->firstChild ());
-        if (tmp2)
-            return tmp2;
-    }
-    return NodePtr ();
-}
-
 bool Source::authoriseUrl (const QString &) {
     return true;
 }
@@ -1023,12 +1017,16 @@ void Source::timerEvent (QTimerEvent * e) {
         killTimer (e->timerId ());
 }
 
+void Source::setCurrent (Mrl *mrl) {
+    m_current = mrl;
+}
+
 void Source::stateElementChanged (Node *elm, Node::State os, Node::State ns) {
     //kdDebug() << "[01;31mSource::stateElementChanged[00m " << elm->nodeName () << " state:" << (int) elm->state << " cur isPlayable:" << (m_current && m_current->isPlayable ()) << " elm==linkNode:" << (m_current && elm == m_current->mrl ()->linkNode ()) << endl;
     if (ns == Node::state_activated &&
             elm->mrl ()) {
         if (Mrl::WindowMode != elm->mrl ()->view_mode)
-            m_current = elm;
+            setCurrent (elm->mrl ());
         if (m_current.ptr () == elm)
             emit startPlaying ();
     } else if (ns == Node::state_deactivated) {
@@ -1049,10 +1047,10 @@ void Source::stateElementChanged (Node *elm, Node::State os, Node::State ns) {
     }
 }
 
-SurfacePtr Source::getSurface (NodePtr n) {
+Surface *Source::getSurface (Mrl *mrl) {
     if (m_player->view ())
-        return static_cast <View*>(m_player->view())->viewArea()->getSurface(n);
-    return 0L;
+        return m_player->viewWidget ()->viewArea ()->getSurface (mrl);
+    return NULL;
 }
 
 void Source::setInfoMessage (const QString & msg) {
@@ -1066,6 +1064,10 @@ void Source::bitRates (int & preferred, int & maximal) {
 
 MediaManager *Source::mediaManager () const {
     return m_player->mediaManager ();
+}
+
+void Source::openUrl (const KURL &url, const QString &t, const QString &srv) {
+    m_player->openUrl (url, t, srv);
 }
 
 void Source::insertURL (NodePtr node, const QString & mrl, const QString & title) {
@@ -1091,48 +1093,35 @@ void Source::insertURL (NodePtr node, const QString & mrl, const QString & title
 }
 
 void Source::backward () {
-   /* if (m_document->hasChildNodes ()) {
-        m_back_request = m_current;
-        if (!m_back_request || m_back_request == m_document) {
-            m_back_request = m_document->lastChild ();
-            while (m_back_request->lastChild () && !m_back_request->isPlayable ())
-                m_back_request = m_back_request->lastChild ();
-            if (m_back_request->isPlayable ())
-                return;
+    Node *back = m_current ? m_current.ptr () : m_document.ptr ();
+    while (back && back != m_document.ptr ()) {
+        if (back->previousSibling ().ptr ()) {
+            back = back->previousSibling ().ptr ();
+            while (!back->isPlayable () && back->lastChild ())
+                back = back->lastChild ().ptr ();
+            if (back->isPlayable () && !back->active ()) {
+                play (back->mrl ());
+                break;
+            }
+        } else {
+            back = back->parentNode().ptr ();
         }
-        while (m_back_request && m_back_request != m_document) {
-            if (m_back_request->previousSibling ()) {
-                m_back_request = m_back_request->previousSibling ();
-                NodePtr e = findDepthFirst (m_back_request); // lastDepth..
-                if (e) {
-                    m_back_request = e;
-                    if (m_player->playing ())
-                        m_player->process ()->stop ();
-                    else if (m_current) {
-                        m_document->reset ();
-                        m_current = e;
-                        QTimer::singleShot (0, this, SLOT (playCurrent ()));
-                    }
-                    return;
-                }
-            } else
-                m_back_request = m_back_request->parentNode ();
-        }
-        m_back_request = 0L;
-    } else
-        m_player->process ()->seek (-1 * m_player->settings ()->seektime * 10, false);
-        */
+    }
 }
 
 void Source::forward () {
-    /*if (m_document->hasChildNodes ()) {
-        if (m_player->playing ())
-            m_player->process ()->stop ();
-        else if (m_current)
-            m_current->finish ();
-    } else
-        m_player->process ()->seek (m_player->settings()->seektime * 10, false);
-        */
+    if (m_current)
+        m_current->finish ();
+    if (m_document && !m_document->active ())
+        play (m_document->mrl ());
+}
+
+KDE_NO_EXPORT void Source::setDocument (NodePtr doc, NodePtr cur) {
+    if (m_document)
+        m_document->document()->dispose ();
+    m_document = doc;
+    setCurrent (cur->mrl ());
+    //kdDebug () << "setDocument: " << m_document->outerXML () << endl;
 }
 
 NodePtr Source::document () {
@@ -1335,7 +1324,7 @@ void URLSource::deactivate () {
         m_document->document ()->dispose ();
         m_document = NULL;
     }
-    getSurface (0L);
+    getSurface (NULL);
 }
 
 QString URLSource::prettyName () {
