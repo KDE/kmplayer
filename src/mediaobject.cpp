@@ -305,7 +305,7 @@ void DataCache::add (const QString & url, const QByteArray & data) {
 bool DataCache::get (const QString & url, QByteArray & data) {
     DataMap::const_iterator it = cache_map.find (url);
     if (it != cache_map.end ()) {
-        data.duplicate (it.data ());
+        data = it.data ();
         return true;
     }
     return false;
@@ -450,7 +450,7 @@ KDE_NO_EXPORT void MediaObject::slotData (KIO::Job*, const QByteArray& qb) {
     if (qb.size ()) {
         int old_size = data.size ();
         data.resize (old_size + qb.size ());
-        memcpy (data.data () + old_size, qb.data (), qb.size ());
+        memcpy (data.data () + old_size, qb.constData (), qb.size ());
     }
 }
 

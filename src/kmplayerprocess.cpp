@@ -699,8 +699,8 @@ KDE_NO_EXPORT bool MPlayer::grabPicture (const QString &file, int pos) {
     m_old_state = m_state = Buffering;
     unlink (file.ascii ());
     QByteArray ba = file.toLocal8Bit ();
-    char *buf = new char[strlen (ba.data ()) + 7];
-    strcpy (buf, ba.data ());
+    char *buf = new char[strlen (ba.constData ()) + 7];
+    strcpy (buf, ba.constData ());
     strcat (buf, "XXXXXX");
     if (mkdtemp (buf)) {
         m_grab_dir = QString (buf);
@@ -905,8 +905,8 @@ KDE_NO_EXPORT void MPlayer::processStopped (K3Process * p) {
                 if (!renamed) {
                     kDebug() << "rename " << dir.filePath (files[i]) << "->" << m_grab_file;
                     renamed = true;
-                    ::rename (dir.filePath (files[i]).toLocal8Bit ().data (),
-                            m_grab_file.toLocal8Bit ().data ());
+                    ::rename (dir.filePath (files[i]).toLocal8Bit().constData(),
+                            m_grab_file.toLocal8Bit ().constData ());
                 } else {
                     kDebug() << "rm " << files[i];
                     dir.remove (files[i]);
@@ -1461,7 +1461,7 @@ bool PhononProcessInfo::startSlave () {
     cmd += QString (" -cb ");
     cmd += m_service;
     cmd += m_path;
-    fprintf (stderr, "%s\n", cmd.local8Bit ().data ());
+    fprintf (stderr, "%s\n", cmd.local8Bit ().constData ());
     *m_slave << cmd;
     m_slave->start (K3Process::NotifyOnExit, K3Process::All);
     return m_slave->isRunning ();
@@ -2308,13 +2308,13 @@ KDE_NO_EXPORT void NpStream::open () {
         QString result = npp->evaluate (url.mid (11));
         if (!result.isEmpty ()) {
             QByteArray cr = result.toLocal8Bit ();
-            int len = strlen (cr.data ());
+            int len = strlen (cr.constData ());
             pending_buf.resize (len + 1);
-            memcpy (pending_buf.data (), cr.data (), len);
+            memcpy (pending_buf.data (), cr.constData (), len);
             pending_buf.data ()[len] = 0;
             gettimeofday (&data_arrival, 0L);
         }
-        kDebug () << "result is " << pending_buf.data ();
+        kDebug () << "result is " << pending_buf.constData ();
         finish_reason = BecauseDone;
         emit stateChanged ();
     } else {
@@ -2357,7 +2357,7 @@ KDE_NO_EXPORT void NpStream::slotData (KIO::Job*, const QByteArray& qb) {
     int sz = pending_buf.size ();
     if (sz) {
         pending_buf.resize (sz + qb.size ());
-        memcpy (pending_buf.data () + sz, qb.data (), qb.size ());
+        memcpy (pending_buf.data () + sz, qb.constData (), qb.size ());
     } else {
         pending_buf = qb;
     }
@@ -2500,7 +2500,7 @@ KDE_NO_EXPORT bool NpPlayer::ready () {
     cmd += path;
     cmd += QString (" -wid ");
     cmd += QString::number (media_object->viewer->windowHandle ());
-    fprintf (stderr, "%s\n", cmd.local8Bit ().data ());
+    fprintf (stderr, "%s\n", cmd.local8Bit ().constData ());
     *m_process << cmd;
     m_process->start (K3Process::NotifyOnExit, K3Process::All);
     return m_process->isRunning ();
@@ -2731,12 +2731,13 @@ KDE_NO_EXPORT void NpPlayer::processStreams () {
         send_buf.resize (chunk + header_len);
         memcpy (send_buf.data (), &stream_id, sizeof (Q_UINT32));
         memcpy (send_buf.data() + sizeof (Q_UINT32), &chunk, sizeof (Q_UINT32));
-        memcpy (send_buf.data()+header_len, stream->pending_buf.data (), chunk);
+        memcpy (send_buf.data ()+header_len,
+                stream->pending_buf.constData (), chunk);
         stream->pending_buf = QByteArray ();
         /*fprintf (stderr, " => %d %d\n", (long)stream_id, chunk);*/
         stream->bytes += chunk;
         write_in_progress = true;
-        m_process->writeStdin (send_buf.data (), send_buf.size ());
+        m_process->writeStdin (send_buf.constData (), send_buf.size ());
         if (stream->finish_reason == NpStream::NoReason)
             stream->job->resume ();
     }

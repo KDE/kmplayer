@@ -341,9 +341,8 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
 	    }
             // volume/clicktoplay/transparentatstart/animationatstart
             // autorewind/displaysize/border
-            if (name.startsWith (QString::fromLatin1 ("__khtml__")))
-                name = name.mid (9);
-            convertNode <KMPlayer::Element> (source->document ())->setAttribute (name, value);
+            if (!name.startsWith (QString::fromLatin1 ("__khtml__")))
+                convertNode <KMPlayer::Element> (source->document ())->setAttribute (name, value);
         }
     }
     if (turned_off_features) {
@@ -376,8 +375,7 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::KMPlayerPart (QWidget *wparent,
         if (m_features & (Feat_Controls | Feat_VolumeSlider)) {
             m_view->setControlPanelMode (m_features & Feat_Viewer ? KMPlayer::View::CP_Show : KMPlayer::View::CP_Only);
             m_expected_view_height -= m_view->controlPanel ()->height ();
-        }
-        else if (parent ())
+        } else if (parent ())
             m_view->setControlPanelMode (KMPlayer::View::CP_Hide);
         else
             m_view->setControlPanelMode (KMPlayer::View::CP_AutoHide);

@@ -773,7 +773,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
             last_line = line;
             int ppos = 0;
             while (true) {
-                cairo_text_extents (cr, line->txt.utf8 ().data (), &line->txt_ext);
+                cairo_text_extents (cr, line->txt.utf8 ().constData (), &line->txt_ext);
                 float frag = line->txt_ext.width > 0.1
                     ? w / line->txt_ext.width : 1.1;
                 if (frag < 1.0) {
@@ -784,7 +784,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
                         if (br_pos < 1)
                             break;
                         line->txt.truncate (br_pos);
-                        cairo_text_extents (cr, line->txt.utf8 ().data (), &line->txt_ext);
+                        cairo_text_extents (cr, line->txt.utf8 ().constData (), &line->txt_ext);
                         if (line->txt_ext.width < (double)w)
                             break;
                     }
@@ -832,7 +832,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
             Line * line = lines;
             line->xoff += Single (txt_fnt.max_x_advance / 4);
             cairo_move_to (cr_txt, line->xoff - min_xoff, y1 + Single (txt_fnt.ascent));
-            cairo_show_text (cr_txt, line->txt.utf8 ().data ());
+            cairo_show_text (cr_txt, line->txt.utf8 ().constData ());
             y1 += Single (txt_fnt.height);
             lines = lines->next;
             delete line;

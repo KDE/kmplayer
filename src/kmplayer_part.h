@@ -161,7 +161,6 @@ private:
     QString m_file_name;
     QString m_grab_file;
     QString m_target;
-    KMPlayer::AttributeListPtr m_doc_attributes;
     int m_expected_view_width;
     int m_expected_view_height;
     int m_features;

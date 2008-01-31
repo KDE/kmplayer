@@ -703,7 +703,6 @@ protected:
     TrieString changed_attribute;
     QString change_to;
     int modification_id;
-protected:
 };
 
 class KMPLAYER_NO_EXPORT Set : public AnimateGroup {

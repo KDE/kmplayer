@@ -1095,8 +1095,7 @@ KDE_NO_EXPORT void SMIL::Layout::closed () {
         rl->setAttribute(StringPool::attr_width, QString::number(w_root));
         rl->setAttribute(StringPool::attr_height,QString::number(h_root));
         insertBefore (sr, firstChild ());
-    }
-    else {
+    } else {
         Smil *s = Smil::findSmilNode (this);
         if (s) {
             s->width = rl->getAttribute(StringPool::attr_width).toDouble ();
@@ -3035,7 +3034,7 @@ KDE_NO_EXPORT void SMIL::Animate::begin () {
     if (success)
         AnimateGroup::begin ();
     else
-        runtime ()->propagateStop (true);
+        rt->propagateStop (true);
 }
 
 KDE_NO_EXPORT void SMIL::Animate::finish () {
