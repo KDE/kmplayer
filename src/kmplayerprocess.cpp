@@ -691,7 +691,6 @@ bool MPlayer::run (const char * args, const char * pipe) {
 }
 
 KDE_NO_EXPORT bool MPlayer::grabPicture (const QString &file, int pos) {
-    bool ret = false;
     Mrl *m = mrl ();
     if (m_state > Ready || !m || m->src.isEmpty ())
         return false; //FIXME
@@ -699,11 +698,9 @@ KDE_NO_EXPORT bool MPlayer::grabPicture (const QString &file, int pos) {
     m_old_state = m_state = Buffering;
     unlink (file.ascii ());
     QByteArray ba = file.toLocal8Bit ();
-    char *buf = new char[strlen (ba.constData ()) + 7];
-    strcpy (buf, ba.constData ());
-    strcat (buf, "XXXXXX");
-    if (mkdtemp (buf)) {
-        m_grab_dir = QString (buf);
+    ba.append ("XXXXXX");
+    if (mkdtemp ((char *) ba.constData ())) {
+        m_grab_dir = QString::fromLocal8Bit (ba.constData ());
         KUrl url (m->src);
         QString myurl (url.isLocalFile () ? getPath (url) : url.url ());
         QString args ("mplayer ");
@@ -721,17 +718,17 @@ KDE_NO_EXPORT bool MPlayer::grabPicture (const QString &file, int pos) {
         m_process->start (K3Process::NotifyOnExit, K3Process::NoCommunication);
         if (m_process->isRunning ()) {
             m_grab_file = file;
-            ret = true;
+            setState (Playing);
+            return true;
         } else {
-            rmdir (buf);
+            rmdir (ba.constData ());
             m_grab_dir.truncate (0);
         }
     } else {
         kError () << "mkdtemp failure";
     }
-    delete [] buf;
-    setState (ret ? Playing : Ready);
-    return ret;
+    setState (Ready);
+    return false;
 }
 
 KDE_NO_EXPORT void MPlayer::processOutput (K3Process *, char * str, int slen) {
