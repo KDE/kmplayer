@@ -646,12 +646,12 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl (const KURL &uri, const QString &img) 
         else
             setSource (src);
 #else
-        if (m_view->setPicture (KUrl (img).path ())) {
+        if (m_view->setPicture (KURL (img).path ())) {
             connect (m_view, SIGNAL (pictureClicked ()),
                     this, SLOT (pictureClicked ()));
             emit completed ();
         } else {
-            return PartBase::openUrl(m_href_url.isEmpty() ? url : KURL(m_href_url));
+            return PartBase::openURL(m_href_url.isEmpty() ? url : KURL(m_href_url));
         }
 #endif
         return true;
@@ -662,7 +662,7 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl (const KURL &uri, const QString &img) 
 KDE_NO_EXPORT void KMPlayerPart::pictureClicked () {
 #ifndef HAVE_CAIRO
     m_view->setPicture (QString ());
-    PartBase::openUrl (KURL (m_src_url));
+    PartBase::openURL (KURL (m_src_url));
 #endif
 }
 
