@@ -594,7 +594,7 @@ public:
     void running (const QString &srv) KMPLAYER_NO_MBR_EXPORT;
     void plugged () KMPLAYER_NO_MBR_EXPORT;
     void request_stream (const QString &path, const QString &url, const QString &target) KMPLAYER_NO_MBR_EXPORT;
-    QString evaluate (const QString &script) KMPLAYER_NO_MBR_EXPORT;
+    QString evaluate (const QString &script, bool store) KMPLAYER_NO_MBR_EXPORT;
     void dimension (int w, int h) KMPLAYER_NO_MBR_EXPORT;
 
     void destroyStream (uint32_t sid);
@@ -603,7 +603,7 @@ public:
     KDE_NO_EXPORT const QString & interface () const { return iface; }
     KDE_NO_EXPORT QString objectPath () const { return path; }
 signals:
-    void evaluate (const QString & scr, QString & result);
+    void evaluate (const QString & scr, bool store, QString & result);
 public slots:
     virtual void stop ();
     virtual void quit ();

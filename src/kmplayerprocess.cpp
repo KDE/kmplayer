@@ -2302,7 +2302,7 @@ KDE_NO_EXPORT void NpStream::open () {
     kDebug () << "NpStream " << stream_id << " open " << url;
     if (url.startsWith ("javascript:")) {
         NpPlayer *npp = static_cast <NpPlayer *> (parent ());
-        QString result = npp->evaluate (url.mid (11));
+        QString result = npp->evaluate (url.mid (11), false);
         if (!result.isEmpty ()) {
             QByteArray cr = result.toLocal8Bit ();
             int len = strlen (cr.constData ());
@@ -2542,7 +2542,7 @@ KDE_NO_EXPORT void NpPlayer::request_stream (const QString &path, const QString 
         if (!target.isEmpty ()) {
             kDebug () << "new page request " << target;
             if (js) {
-                QString result = evaluate (url.mid (11));
+                QString result = evaluate (url.mid (11), false);
                 kDebug() << "result is " << result;
                 if (result == "undefined")
                     uri = QString ();
@@ -2565,9 +2565,9 @@ KDE_NO_EXPORT void NpPlayer::request_stream (const QString &path, const QString 
     }
 }
 
-KDE_NO_EXPORT QString NpPlayer::evaluate (const QString &script) {
+KDE_NO_EXPORT QString NpPlayer::evaluate (const QString &script, bool store) {
     QString result ("undefined");
-    emit evaluate (script, result);
+    emit evaluate (script, store, result);
     //kDebug () << "evaluate " << script << " => " << result;
     return result;
 }
