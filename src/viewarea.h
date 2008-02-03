@@ -33,6 +33,7 @@ namespace KMPlayer {
 
 class View;
 class IViewer;
+class ViewerAreaPrivate;
 
 /*
  * The area in which the video widget and controlpanel are laid out
@@ -79,6 +80,7 @@ private:
     void stopTimers ();
 
     QByteArray m_dock_state;
+    ViewerAreaPrivate *d;
     View * m_view;
     KActionCollection * m_collection;
     SurfacePtr surface;

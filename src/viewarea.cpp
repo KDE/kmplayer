@@ -59,6 +59,7 @@
 #include <X11/keysym.h>
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
+#include <X11/extensions/Xdbe.h>
 static const int XKeyPress = KeyPress;
 #undef KeyPress
 #undef Always
@@ -154,10 +155,6 @@ SurfacePtr ViewSurface::createSurface (NodePtr owner, const SRect & rect) {
 
 KDE_NO_EXPORT void ViewSurface::resize (const SRect &r) {
     bounds = r;
-#ifdef KMPLAYER_WITH_CAIRO
-    if (surface)
-        cairo_xlib_surface_set_size (surface, (int)r.width(), (int)r.height ());
-#endif
     /*if (rect == nrect)
         ;//return;
     SRect pr = rect.unite (nrect); // for repaint
@@ -205,20 +202,6 @@ KDE_NO_EXPORT void ViewSurface::video (Mrl *m) {
 //-------------------------------------------------------------------------
 
 #ifdef KMPLAYER_WITH_CAIRO
-
-static cairo_surface_t * cairoCreateSurface (Window id, int w, int h) {
-    Display * display = QX11Info::display ();
-    return cairo_xlib_surface_create (display, id,
-            DefaultVisual (display, DefaultScreen (display)), w, h);
-    /*return cairo_xlib_surface_create_with_xrender_format (
-            QX11Info::display (),
-            id,
-            DefaultScreenOfDisplay (QX11Info::display ()),
-            XRenderFindVisualFormat (QX11Info::display (),
-                DefaultVisual (QX11Info::display (),
-                    DefaultScreen (QX11Info::display ()))),
-            w, h);*/
-}
 
 # define CAIRO_SET_SOURCE_RGB(cr,c)           \
     cairo_set_source_rgb ((cr),               \
@@ -271,10 +254,9 @@ CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
     cr = cairo_create (cs);
     if (toplevel) {
         cairo_rectangle (cr, rect.x, rect.y, rect.w, rect.h);
-        cairo_clip (cr);
         //cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
         cairo_set_tolerance (cr, 0.5 );
-        cairo_push_group (cr);
+        //cairo_push_group (cr);
         cairo_set_source_rgb (cr,
            1.0 * c.red () / 255, 1.0 * c.green () / 255, 1.0 * c.blue () / 255);
         cairo_rectangle (cr, rect.x, rect.y, rect.w, rect.h);
@@ -289,14 +271,14 @@ CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
 }
 
 KDE_NO_CDTOR_EXPORT CairoPaintVisitor::~CairoPaintVisitor () {
-    if (toplevel) {
+    /*if (toplevel) {
         cairo_pattern_t * pat = cairo_pop_group (cr);
         //cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
         cairo_set_source (cr, pat);
         cairo_rectangle (cr, clip.x, clip.y, clip.w, clip.h);
         cairo_fill (cr);
         cairo_pattern_destroy (pat);
-    }
+    }*/
     cairo_destroy (cr);
 }
 
@@ -334,36 +316,31 @@ KDE_NO_EXPORT void CairoPaintVisitor::traverseRegion (SMIL::RegionBase * reg) {
 KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Layout * reg) {
     //kDebug() << "Visit " << reg->nodeName();
     SMIL::RegionBase *rb = convertNode <SMIL::RegionBase> (reg->root_layout);
-    if (reg->surface () && rb) {
+    Surface *s = reg->surface ();
+    if (s && rb) {
         //cairo_save (cr);
         Matrix m = matrix;
 
-        SRect rect = reg->region_surface->bounds;
+        SRect rect = s->bounds;
         Single x, y, w = rect.width(), h = rect.height();
         matrix.getXYWH (x, y, w, h);
 
         IRect clip_save = clip;
         clip = clip.intersect (IRect (x, y, w, h));
 
-        rb->region_surface = reg->region_surface;
-        rb->region_surface->background_color = rb->background_color;
-
-        if (reg->region_surface->background_color & 0xff000000) {
-            CAIRO_SET_SOURCE_RGB (cr, reg->region_surface->background_color);
+        s->background_color = rb->background_color;
+        if (s->background_color & 0xff000000) {
+            CAIRO_SET_SOURCE_RGB (cr, s->background_color);
             cairo_rectangle (cr, clip.x, clip.y, clip.w, clip.h);
             cairo_fill (cr);
         }
-        //cairo_rectangle (cr, xoff, yoff, w, h);
-        //cairo_clip (cr);
 
-        matrix = Matrix (0, 0, reg->region_surface->xscale, reg->region_surface->yscale);
+        matrix = Matrix (0, 0, s->xscale, s->yscale);
         matrix.transform (m);
         traverseRegion (reg);
         //cairo_restore (cr);
         matrix = m;
         clip = clip_save;
-
-        rb->region_surface = 0L;
     }
 }
 
@@ -1365,9 +1342,89 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType * mediatype) {
 
 //-----------------------------------------------------------------------------
 
+namespace KMPlayer {
+class KMPLAYER_NO_EXPORT ViewerAreaPrivate {
+public:
+    ViewerAreaPrivate (ViewArea *v)
+        : m_view_area (v), backing_store (0), use_dbe (false) {
+#ifdef KMPLAYER_WITH_CAIRO
+        int m, n;
+        use_dbe = XdbeQueryExtension (QX11Info::display(), &m, &n);
+        kDebug() << "dbe " << m << "." << n << endl;
+#endif
+    }
+    ~ViewerAreaPrivate() {
+        destroyBackingStore ();
+    }
+    void resizeSurface (Surface *s) {
+#ifdef KMPLAYER_WITH_CAIRO
+        int w = (int) s->bounds.width ();
+        int h = (int) s->bounds.height ();
+        if (s->surface) {
+            Display *d = QX11Info::display();
+            if (use_dbe) {
+                cairo_xlib_surface_set_size (s->surface, w, h);
+            } else {
+                XFreePixmap (d, backing_store);
+                backing_store = XCreatePixmap (d, m_view_area->winId (),
+                        w, h, QX11Info::appDepth ());
+                cairo_xlib_surface_set_drawable(s->surface, backing_store, w,h);
+            }
+        }
+#endif
+    }
+#ifdef KMPLAYER_WITH_CAIRO
+    cairo_surface_t *createSurface (int w, int h) {
+        Display * display = QX11Info::display ();
+        if (use_dbe)
+            backing_store = XdbeAllocateBackBufferName (display,
+                    m_view_area->winId(), XdbeUndefined);
+        else
+            backing_store = XCreatePixmap (display,
+                    m_view_area->winId (), w, h, QX11Info::appDepth ());
+        return cairo_xlib_surface_create (display, backing_store,
+                DefaultVisual (display, DefaultScreen (display)), w, h);
+        /*return cairo_xlib_surface_create_with_xrender_format (
+            QX11Info::display (),
+            id,
+            DefaultScreenOfDisplay (QX11Info::display ()),
+            XRenderFindVisualFormat (QX11Info::display (),
+                DefaultVisual (QX11Info::display (),
+                    DefaultScreen (QX11Info::display ()))),
+            w, h);*/
+    }
+    void swapBuffer (int sx, int sy, int sw, int sh, int dx, int dy) {
+        if (use_dbe) {
+            XdbeSwapInfo info = { m_view_area->winId (), XdbeUndefined };
+            XdbeSwapBuffers (QX11Info::display(), &info, 1);
+        } else {
+            GC gc = XCreateGC (QX11Info::display(), backing_store, 0, NULL);
+            XCopyArea (QX11Info::display(), backing_store, m_view_area->winId(),
+                    gc, sx, sy, sw, sh, dx, dy);
+            XFreeGC (QX11Info::display(), gc);
+        }
+        XFlush (QX11Info::display());
+    }
+#endif
+    void destroyBackingStore () {
+#ifdef KMPLAYER_WITH_CAIRO
+        if (use_dbe && backing_store)
+            XdbeDeallocateBackBufferName (QX11Info::display(), backing_store);
+        else if (backing_store)
+            XFreePixmap (QX11Info::display(), backing_store);
+#endif
+        backing_store = 0;
+    }
+    ViewArea *m_view_area;
+    Drawable backing_store;
+    bool use_dbe;
+};
+}
+
 KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
 // : QWidget (parent, "kde_kmplayer_viewarea", WResizeNoErase | WRepaintNoErase),
  : //QWidget (parent),
+   d (new ViewerAreaPrivate (this)),
    m_view (view),
    m_collection (new KActionCollection (this)),
    surface (new ViewSurface (this)),
@@ -1389,6 +1446,7 @@ KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
 }
 
 KDE_NO_CDTOR_EXPORT ViewArea::~ViewArea () {
+    delete d;
 }
 
 KDE_NO_EXPORT void ViewArea::stopTimers () {
@@ -1437,6 +1495,7 @@ KDE_NO_EXPORT void ViewArea::fullScreen () {
     if (surface->surface) {
         cairo_surface_destroy (surface->surface);
         surface->surface = 0L;
+        d->destroyBackingStore ();
     }
 #endif
     emit fullScreenChanged ();
@@ -1488,29 +1547,33 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
 
 KDE_NO_EXPORT void ViewArea::syncVisual (const IRect & rect) {
 #ifdef KMPLAYER_WITH_CAIRO
-    int ex = rect.x;
-    if (ex > 0)
-        ex--;
-    int ey = rect.y;
-    if (ey > 0)
-        ey--;
-    int ew = rect.w + 2;
-    int eh = rect.h + 2;
-    if (!surface->surface)
-        surface->surface = cairoCreateSurface (winId (), width (), height ());
-    CairoPaintVisitor visitor (surface->surface,
-            Matrix (surface->bounds.x(), surface->bounds.y(), 1.0, 1.0),
-            IRect (ex, ey, ew, eh), palette ().color (backgroundRole ()), true);
-    if (surface->node)
-        surface->node->accept (&visitor);
-#else
-    repaint (QRect(rect.x, rect.y, rect.w, rect.h), false);
+    if (surface->node) {
+        int ex = rect.x;
+        if (ex > 0)
+            ex--;
+        int ey = rect.y;
+        if (ey > 0)
+            ey--;
+        int ew = rect.w + 2;
+        int eh = rect.h + 2;
+        if (!surface->surface)
+            surface->surface = d->createSurface (width (), height ());
+        {
+            CairoPaintVisitor visitor (surface->surface,
+                    Matrix (surface->bounds.x(), surface->bounds.y(), 1.0, 1.0),
+                    IRect (ex, ey, ew, eh),
+                    palette ().color (backgroundRole ()), true);
+            surface->node->accept (&visitor);
+        }
+        cairo_surface_flush (surface->surface);
+        d->swapBuffer (ex, ey, ew, eh, ex, ey);
+    } else
 #endif
+        repaint (QRect(rect.x, rect.y, rect.w, rect.h), false);
     if (m_repaint_timer) {
         killTimer (m_repaint_timer);
         m_repaint_timer = 0;
     }
-    //XFlush (QX11Info::display ());
 }
 
 KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
@@ -1594,6 +1657,7 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
         surface->node = n;
     }
     updateSurfaceBounds ();
+    d->resizeSurface (surface.ptr ());
 
     // finally resize controlpanel and video widget
     if (m_view->controlPanel ()->isVisible ())
@@ -1616,10 +1680,15 @@ KDE_NO_EXPORT void ViewArea::resizeEvent (QResizeEvent *) {
 KDE_NO_EXPORT Surface *ViewArea::getSurface (Mrl *mrl) {
     static_cast <ViewSurface *> (surface.ptr ())->clear ();
     surface->node = mrl;
+    kDebug() << mrl;
     //m_view->viewer()->resetBackgroundColor ();
     if (mrl) {
         updateSurfaceBounds ();
         return surface.ptr ();
+    } else {
+        cairo_surface_destroy (surface->surface);
+        surface->surface = 0L;
+        d->destroyBackingStore ();
     }
     scheduleRepaint (IRect (0, 0, width (), height ()));
     return 0L;
