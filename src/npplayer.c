@@ -81,7 +81,6 @@ static char stream_buf[32 * 1024];
 static unsigned int stream_buf_pos;
 static int stream_id_counter;
 static GTree *identifiers;
-static int js_obj_counter;
 typedef struct _StreamInfo {
     NPStream np_stream;
     /*unsigned int stream_buf_pos;*/
@@ -109,7 +108,7 @@ static NP_ShutdownUPP npShutdown;
 
 static void callFunction(int stream, const char *func, int first_arg_type, ...);
 static void readStdin (gpointer d, gint src, GdkInputCondition cond);
-static char *evaluate (const char *script);
+static char *evaluate (const char *script, bool store);
 
 /*----------------%<---------------------------------------------------------*/
 
@@ -582,54 +581,59 @@ static bool nsInvokeDefault (NPP instance, NPObject * npobj,
 
 static bool doEvaluate (NPP instance, NPObject * npobj, NPString * script,
         NPVariant * result) {
-    char * this_var;
-    char * this_var_type;
-    char * this_var_string;
-    char * jsscript;
+    char *result_string;
+    bool success = true;
     (void) npobj; /*FIXME scope, search npobj window*/
-    print ("NPN_Evaluate:");
 
-    /* assign to a js variable */
-    this_var = (char *) malloc (64);
-    sprintf (this_var, "this.__kmplayer__obj_%d", js_obj_counter);
+    result_string = evaluate (script->utf8characters, true);
 
-    jsscript = (char *) malloc (strlen (this_var) + script->utf8length + 3);
-    sprintf (jsscript, "%s=%s;", this_var, script->utf8characters);
-    this_var_string = evaluate (jsscript);
-    free (jsscript);
-
-    if (this_var_string) {
-        /* get type of js this_var */
-        jsscript = (char *) malloc (strlen (this_var) + 9);
-        sprintf (jsscript, "typeof %s;", this_var);
-        this_var_type = evaluate (jsscript);
-        free (jsscript);
-
-        if (this_var_type) {
-            if (!strcasecmp (this_var_type, "undefined")) {
+    if (result_string && *result_string) {
+        if (!strncmp (result_string, "o:", 2)) {
+            JsObject *jo = (JsObject *)nsCreateObject (instance, &js_class);
+            result->type = NPVariantType_Object;
+            jo->name = g_strdup (result_string + 2);
+            result->value.objectValue = (NPObject *)jo;
+            print ("object\n");
+        } else if (!strncmp (result_string, "s:", 2)) {
+            result->type = NPVariantType_String;
+            result->value.stringValue.utf8characters= g_strdup(result_string+2);
+            result->value.stringValue.utf8length = strlen (result_string) - 2;
+            print ("string %s\n", result_string + 2);
+        } else if (!strncmp (result_string, "u:", 2)) {
+            result->type = NPVariantType_Null;
+            print ("null\n");
+        } else if (!strncmp (result_string, "n:", 2)) {
+            char *eptr;
+            long l = strtol (result_string + 2, &eptr, 10);
+            if (*eptr && *eptr == '.') {
+                result->type = NPVariantType_Double;
+                result->value.doubleValue = strtod (result_string + 2, NULL);
+                print ("number %f\n", result->value.doubleValue);
+            } else if (eptr != result_string + 2) {
+                result->type = NPVariantType_Int32;
+                result->value.intValue = (int)l;
+                print ("number %d\n", l);
+            } else {
                 result->type = NPVariantType_Null;
-            } else if (!strcasecmp (this_var_type, "object")) {
-                JsObject *jo = (JsObject *)nsCreateObject (instance, &js_class);
-                js_obj_counter++;
-                result->type = NPVariantType_Object;
-                jo->name = g_strdup (this_var);
-                result->value.objectValue = (NPObject *)jo;
-            } else { /* FIXME numbers/void/undefined*/
-                result->type = NPVariantType_String;
-                result->value.stringValue.utf8characters =
-                    g_strdup (this_var_string);
-                result->value.stringValue.utf8length=strlen (this_var_string)+1;
+                success = false;
             }
-            g_free (this_var_type);
+        } else if (!strncmp (result_string, "b:", 2)) {
+            result->type = NPVariantType_Bool;
+            if (!strcasecmp (result_string + 2, "true")) {
+                result->value.boolValue = true;
+            } else {
+                char *eptr;
+                long l = strtol (result_string + 2, &eptr, 10);
+                result->value.boolValue = eptr != result_string ? !!l : false;
+            }
+            print ("bool %d\n", result->value.boolValue);
         }
-        g_free (this_var_string);
+        g_free (result_string);
     } else {
-        print ("   => error\n");
-        return false;
+        success = false;
     }
-    free (this_var);
 
-    return true;
+    return success;
 }
 
 static bool nsEvaluate (NPP instance, NPObject * npobj, NPString * script,
@@ -639,6 +643,7 @@ static bool nsEvaluate (NPP instance, NPObject * npobj, NPString * script,
     char *escaped;
     bool res;
 
+    print ("NPN_Evaluate:");
     escaped = g_strescape (script->utf8characters, "");
     str.utf8length = strlen (escaped) + 9;
     jsscript = (char *) malloc (str.utf8length);
@@ -733,16 +738,10 @@ static void windowClassDeallocate (NPObject *npobj) {
     } else if (jo->name && !strncmp (jo->name, "this.__kmplayer__obj_", 21)) {
         char *script = (char *) malloc (strlen (jo->name) + 7);
         char *result;
-        char *counter = strrchr (jo->name, '_');
         sprintf (script, "%s=null;", jo->name);
-        result = evaluate (script);
+        result = evaluate (script, false);
         free (script);
         g_free (result);
-        if (counter) {
-            int c = strtol (counter +1, NULL, 10);
-            if (c == js_obj_counter -1)
-                js_obj_counter--; /*poor man's variable name reuse */
-        }
     }
     if (jo->name)
         g_free (jo->name);
@@ -865,7 +864,7 @@ static bool windowClassSetProperty (NPObject *npobj, NPIdentifier property,
     free (var_val);
     print ("SetProperty %s\n", script);
 
-    res = evaluate (script);
+    res = evaluate (script, false);
     if (res)
         g_free (res);
     free (script);
@@ -1334,7 +1333,7 @@ static void callFunction(int stream,const char *func, int first_arg_type, ...) {
     }
 }
 
-static char * evaluate (const char *script) {
+static char *evaluate (const char *script, bool store) {
     char * ret = NULL;
     print ("evaluate %s", script);
     if (callback_service) {
@@ -1344,8 +1343,11 @@ static char * evaluate (const char *script) {
                 callback_path,
                 "org.kde.kmplayer.callback",
                 "evaluate");
-        dbus_message_append_args (
-                msg, DBUS_TYPE_STRING, &script, DBUS_TYPE_INVALID);
+        int bool_val = store;
+        dbus_message_append_args (msg,
+                DBUS_TYPE_STRING, &script,
+                DBUS_TYPE_BOOLEAN, &bool_val,
+                DBUS_TYPE_INVALID);
         rmsg = dbus_connection_send_with_reply_and_block (dbus_connection,
                 msg, 2000, NULL);
         if (rmsg) {
@@ -1451,7 +1453,7 @@ static gboolean configureEvent(GtkWidget *w, GdkEventConfigure *e, gpointer d) {
     print("configureEvent %dx%d\n", e->width, e->height);
     if (!first_configure_pre_size && e->width == INITIAL_WINDOW_WIDTH) {
         first_configure_pre_size = 1;
-        return;
+        return FALSE;
     }
     if (e->width != top_w || e->height != top_h) {
         top_w = e->width;

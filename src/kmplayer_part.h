@@ -92,11 +92,13 @@ public slots:
     void setSize (int w, int h);
     void started ();
     void finished ();
-    void evaluate (const QString & script, QString & result);
+    void evaluate (const QString & script, bool store, QString & result);
 private:
+    QString evaluate (const QString & script);
     KMPlayerPart * player;
     QString script_result;
     const JSCommandEntry * lastJSCommandEntry;
+    unsigned int object_counter;
     bool m_started;
     bool m_enablefinish;
     bool m_evaluating;

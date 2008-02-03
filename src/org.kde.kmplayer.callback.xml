@@ -23,6 +23,7 @@
     <method name="evaluate">
       <arg type="s" direction="out"/>
       <arg name="script" type="s" direction="in"/>
+      <arg name="store" type="b" direction="in"/>
     </method>
   </interface>
 </node>

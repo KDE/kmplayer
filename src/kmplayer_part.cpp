@@ -442,9 +442,9 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::~KMPlayerPart () {
 KDE_NO_EXPORT void KMPlayerPart::processCreated (KMPlayer::Process *p) {
 #ifdef KMPLAYER_WITH_NPP
     if (!strcmp (p->name (), "npp"))
-        connect (p, SIGNAL (evaluate (const QString &, QString &)),
+        connect (p, SIGNAL (evaluate (const QString &, bool, QString &)),
                 m_liveconnectextension,
-                SLOT (evaluate (const QString &, QString &)));
+                SLOT (evaluate (const QString &, bool, QString &)));
 #endif
 }
 
@@ -1019,6 +1019,7 @@ static const JSCommandEntry * getJSCommandEntry (const char * name, int start = 
 KDE_NO_CDTOR_EXPORT KMPlayerLiveConnectExtension::KMPlayerLiveConnectExtension (KMPlayerPart * parent)
   : KParts::LiveConnectExtension (parent), player (parent),
     lastJSCommandEntry (0L),
+    object_counter (0),
     m_started (false),
     m_enablefinish (false),
     m_evaluating (false) {
@@ -1043,22 +1044,69 @@ KDE_NO_EXPORT void KMPlayerLiveConnectExtension::finished () {
     }
 }
 
-KDE_NO_EXPORT void KMPlayerLiveConnectExtension::evaluate (
-        const QString & scr, QString & result) {
-    QString script (scr);
+KDE_NO_EXPORT
+QString KMPlayerLiveConnectExtension::evaluate (const QString &script) {
     KParts::LiveConnectExtension::ArgList args;
+    args.push_back(qMakePair(KParts::LiveConnectExtension::TypeString, script));
+    script_result.clear ();
+    emit partEvent (0, "eval", args);
+    kDebug() << script << script_result;
+    return script_result;
+}
+
+KDE_NO_EXPORT void KMPlayerLiveConnectExtension::evaluate (
+        const QString & scr, bool store, QString & result) {
+    m_evaluating = true;
+
+    QString script (scr);
     script = script.replace ('\\', "\\\\");
     script = script.replace ('\n', "\\n");
     script = script.replace ('\r', "");
     script = script.replace ('"', "\\\"");
-    script = QString ("this.__kmplayer__res=eval(\"%1\")").arg (script);
-    args.push_back(qMakePair(KParts::LiveConnectExtension::TypeString, script));
+    QString obj_var = QString ("this.__kmplayer__obj_%1").arg (object_counter);
+    script = obj_var + QString ("=eval(\"%1\")").arg (script);
+    QString eval_result = evaluate (script);
 
-    script_result = "undefined";
-    m_evaluating = true;
-    emit partEvent (0, "eval", args);
+    bool clear_result = true;
+    if (!store) {
+        result = eval_result;
+        if (scr.startsWith ("this.__kmplayer__obj_")) {
+            // TODO add dbus method for this
+            int p = scr.indexOf ("=null", 21);
+            if (p > -1) {
+                int i = scr.mid (21, p - 21).toInt ();
+                if (i == object_counter-1)
+                    object_counter--; // works most of the time :-)
+            }
+        }
+    } else {
+        script = QString ("this.__kmplayer__res=typeof(%1)").arg (obj_var);
+        QString result_type = evaluate (script);
+
+        if (result_type == "string") {
+            result = QString ("s:") + eval_result;
+        } else if (result_type == "object" ||
+                result_type == "function" ||
+                result_type.startsWith ("[")) {
+            result = QString ("o:") + obj_var;
+            clear_result = false;
+            object_counter++;
+        } else if (result_type == "number") {
+            result = QString ("n:") + eval_result;
+        } else if (result_type == "boolean") {
+            result = QString ("b:") + eval_result;
+        } else if (result_type == "undefined" || result_type == "null") {
+            result = QString ("u:") + eval_result;
+        } else {
+            result = "error";
+        }
+    }
+    if (clear_result)
+        evaluate (obj_var + "=null");
+
+    script_result.clear ();
+
     m_evaluating = false;
-    result = script_result;
 }
 
 KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
@@ -1107,8 +1155,10 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::put
         script_result = val;
         return true;
     }
-    if (name.startsWith ("__kmplayer__obj_"))
+    if (name.startsWith ("__kmplayer__obj_")) {
+        script_result = val;
         return !m_evaluating;
+    }
 
     kDebug () << "[01;35mput[00m " << name << "=" << val;
 
