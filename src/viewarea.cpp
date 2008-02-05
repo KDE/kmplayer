@@ -1686,7 +1686,9 @@ KDE_NO_EXPORT Surface *ViewArea::getSurface (Mrl *mrl) {
         updateSurfaceBounds ();
         return surface.ptr ();
     } else {
+#ifdef KMPLAYER_WITH_CAIRO
         cairo_surface_destroy (surface->surface);
+#endif
         surface->surface = 0L;
         d->destroyBackingStore ();
     }
