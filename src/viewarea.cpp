@@ -59,7 +59,7 @@
 #include <X11/keysym.h>
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
-#include <X11/extensions/Xdbe.h>
+//#include <X11/extensions/Xdbe.h>
 static const int XKeyPress = KeyPress;
 #undef KeyPress
 #undef Always
@@ -611,6 +611,7 @@ static Mrl *findActiveMrl (Node *n, bool *rp_or_smil) {
             if (m)
                 return m;
         }
+    return NULL;
 }
 
 KDE_NO_EXPORT
@@ -1347,11 +1348,11 @@ class KMPLAYER_NO_EXPORT ViewerAreaPrivate {
 public:
     ViewerAreaPrivate (ViewArea *v)
         : m_view_area (v), backing_store (0), use_dbe (false) {
-#ifdef KMPLAYER_WITH_CAIRO
-        int m, n;
-        use_dbe = XdbeQueryExtension (QX11Info::display(), &m, &n);
-        kDebug() << "dbe " << m << "." << n << endl;
-#endif
+//#ifdef KMPLAYER_WITH_CAIRO
+//        int m, n;
+//        use_dbe = XdbeQueryExtension (QX11Info::display(), &m, &n);
+//        kDebug() << "dbe " << m << "." << n << endl;
+//#endif
     }
     ~ViewerAreaPrivate() {
         destroyBackingStore ();
@@ -1376,10 +1377,10 @@ public:
 #ifdef KMPLAYER_WITH_CAIRO
     cairo_surface_t *createSurface (int w, int h) {
         Display * display = QX11Info::display ();
-        if (use_dbe)
-            backing_store = XdbeAllocateBackBufferName (display,
-                    m_view_area->winId(), XdbeUndefined);
-        else
+        //if (use_dbe)
+        //    backing_store = XdbeAllocateBackBufferName (display,
+        //            m_view_area->winId(), XdbeUndefined);
+        //else
             backing_store = XCreatePixmap (display,
                     m_view_area->winId (), w, h, QX11Info::appDepth ());
         return cairo_xlib_surface_create (display, backing_store,
@@ -1394,10 +1395,10 @@ public:
             w, h);*/
     }
     void swapBuffer (int sx, int sy, int sw, int sh, int dx, int dy) {
-        if (use_dbe) {
+        /*if (use_dbe) {
             XdbeSwapInfo info = { m_view_area->winId (), XdbeUndefined };
             XdbeSwapBuffers (QX11Info::display(), &info, 1);
-        } else {
+        } else*/ {
             GC gc = XCreateGC (QX11Info::display(), backing_store, 0, NULL);
             XCopyArea (QX11Info::display(), backing_store, m_view_area->winId(),
                     gc, sx, sy, sw, sh, dx, dy);
@@ -1408,9 +1409,9 @@ public:
 #endif
     void destroyBackingStore () {
 #ifdef KMPLAYER_WITH_CAIRO
-        if (use_dbe && backing_store)
-            XdbeDeallocateBackBufferName (QX11Info::display(), backing_store);
-        else if (backing_store)
+        //if (use_dbe && backing_store)
+        //    XdbeDeallocateBackBufferName (QX11Info::display(), backing_store);
+        //else if (backing_store)
             XFreePixmap (QX11Info::display(), backing_store);
 #endif
         backing_store = 0;
@@ -1421,7 +1422,7 @@ public:
 };
 }
 
-KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget * parent, View * view)
+KDE_NO_CDTOR_EXPORT ViewArea::ViewArea (QWidget *, View * view)
 // : QWidget (parent, "kde_kmplayer_viewarea", WResizeNoErase | WRepaintNoErase),
  : //QWidget (parent),
    d (new ViewerAreaPrivate (this)),
@@ -1598,7 +1599,7 @@ QPaintEngine *ViewArea::paintEngine () const {
         return QWidget::paintEngine ();
 }
 
-KDE_NO_EXPORT void ViewArea::scale (int val) {
+KDE_NO_EXPORT void ViewArea::scale (int) {
     resizeEvent (0L);
 }
 
