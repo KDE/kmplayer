@@ -628,6 +628,7 @@ static Mrl *findActiveMrl (Node *n, bool *rp_or_smil) {
             if (m)
                 return m;
         }
+    return NULL;
 }
 
 KDE_NO_EXPORT
