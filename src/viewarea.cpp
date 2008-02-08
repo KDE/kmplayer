@@ -1689,8 +1689,8 @@ KDE_NO_EXPORT Surface *ViewArea::getSurface (Mrl *mrl) {
     } else {
 #ifdef KMPLAYER_WITH_CAIRO
         cairo_surface_destroy (surface->surface);
-#endif
         surface->surface = 0L;
+#endif
         d->destroyBackingStore ();
     }
     scheduleRepaint (IRect (0, 0, width (), height ()));
