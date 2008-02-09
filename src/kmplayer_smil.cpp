@@ -22,7 +22,6 @@
 
 #include <qtextstream.h>
 #include <qcolor.h>
-#include <qimage.h>
 #include <qfont.h>
 #include <qapplication.h>
 #include <qregexp.h>
@@ -2678,8 +2677,8 @@ void SMIL::ImageMediaType::dataArrived () {
             height = mrl->height;
         }
     } else if (!im->isEmpty ()) {
-        width = im->cached_img->image->width ();
-        height = im->cached_img->image->height ();
+        width = im->cached_img->width;
+        height = im->cached_img->height;
         if (surface ())
             sub_surface->repaint ();
     }

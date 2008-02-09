@@ -556,11 +556,14 @@ void AudioVideoMedia::destroy () {
 #endif
 
 ImageData::ImageData( const QString & img)
- : image (0L),
+ : width (0),
+   height (0),
+   flags (0),
+   has_alpha (false),
+   image (0L),
 #ifdef KMPLAYER_WITH_CAIRO
    surface (NULL),
 #endif
-   flags (0),
    url (img) {
     //if (img.isEmpty ())
     //    //kDebug() << "New ImageData for " << this << endl;
@@ -576,6 +579,16 @@ ImageData::~ImageData() {
         cairo_surface_destroy (surface);
 #endif
     delete image;
+}
+
+void ImageData::setImage (QImage *img) {
+    if (image != img) {
+        delete image;
+        image = img;
+        width = img->width ();
+        height = img->height ();
+        has_alpha = img->hasAlphaBuffer ();
+    }
 }
 
 ImageMedia::ImageMedia (MediaManager *manager, Node *node)
@@ -610,15 +623,21 @@ void ImageMedia::unpause () {
         img_movie->setPaused (false);
 }
 
-KDE_NO_EXPORT void ImageMedia::setupMovie () {
+KDE_NO_EXPORT void ImageMedia::setupImage () {
     delete img_movie;
     img_movie = 0L;
     delete buffer;
     buffer = 0L;
-    QImage *pix = isEmpty () ? new QImage (data) : cached_img->image;
-    if (!pix->isNull ()) {
-        cached_img->image = pix;
-        cached_img->flags |= (int)ImageData::ImagePixmap; // TODO
+
+    if (isEmpty () && data.size ()) {
+        QImage *pix = new QImage (data);
+        if (!pix->isNull ())
+            cached_img->setImage (pix);
+        else
+            delete pix;
+    }
+    if (!isEmpty ()) {
+        cached_img->flags |= (short)ImageData::ImagePixmap; // TODO
         buffer = new QBuffer (&data);
         img_movie = new QMovie (buffer);
         connect (img_movie, SIGNAL (updated (const QRect &)),
@@ -628,8 +647,6 @@ KDE_NO_EXPORT void ImageMedia::setupMovie () {
         connect (img_movie, SIGNAL (resized (const QSize &)),
                 this, SLOT (movieResize (const QSize &)));
         frame_nr = 0;
-    } else {
-        delete pix;
     }
 }
 
@@ -637,23 +654,18 @@ KDE_NO_EXPORT void ImageMedia::ready (const QString &url) {
     if (data.size ()) {
         QString mime = mimetype ();
         if (!mime.startsWith (QString::fromLatin1 ("text/"))) { // FIXME svg
-            setUrl (url);
-            setupMovie ();
+            updateCachedImage (url);
+            setupImage ();
         }
     }
     MediaObject::ready (url);
 }
 
-bool ImageMedia::isEmpty () {
-    return !cached_img ||
-        (!cached_img->image
-#ifdef KMPLAYER_WITH_CAIRO
-         && !cached_img->surface
-#endif
-        );
+bool ImageMedia::isEmpty () const {
+    return !cached_img || cached_img->isEmpty ();
 }
 
-void ImageMedia::setUrl (const QString & url) {
+void ImageMedia::updateCachedImage (const QString & url) {
     if (url.isEmpty ()) {
         ImageData *id = new ImageData (url);
         cached_img = id;
@@ -672,7 +684,7 @@ KDE_NO_EXPORT bool ImageMedia::wget (const QString &str) {
     ImageDataMap::iterator i = image_data_map->find (str);
     if (i != image_data_map->end ()) {
         cached_img = i.data ();
-        setupMovie ();
+        setupImage ();
         MediaObject::ready (str);
         return true;
     } else {
@@ -688,10 +700,11 @@ KDE_NO_EXPORT void ImageMedia::movieResize (const QSize &) {
 
 KDE_NO_EXPORT void ImageMedia::movieUpdated (const QRect &) {
     if (frame_nr++) {
-        setUrl (QString ());
+        updateCachedImage (QString ());
         ASSERT (cached_img && isEmpty ());
-        cached_img->image = new QImage;
-        *cached_img->image = img_movie->framePixmap ();
+        QImage *img = new QImage;
+        *img = img_movie->framePixmap ();
+        cached_img->setImage (img);
         cached_img->flags = (int)(ImageData::ImagePixmap | ImageData::ImageAnimated); //TODO
         if (m_node)
             m_node->handleEvent (new Event (event_img_updated));

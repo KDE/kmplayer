@@ -286,12 +286,27 @@ struct KMPLAYER_NO_EXPORT ImageData {
     };
     ImageData( const QString & img);
     ~ImageData();
+    void setImage (QImage *img);
+#ifdef KMPLAYER_WITH_CAIRO
+    void copyImage (Surface *s, int w, int h, cairo_surface_t *similar);
+#endif
+    bool isEmpty () const {
+        return !image
+#ifdef KMPLAYER_WITH_CAIRO
+            && !surface
+#endif
+            ;
+    }
+
+    unsigned short width;
+    unsigned short height;
+    short flags;
+    bool has_alpha;
+private:
     QImage *image;
 #ifdef KMPLAYER_WITH_CAIRO
     cairo_surface_t *surface;
 #endif
-    int flags;
-private:
     QString url;
 };
 
@@ -310,10 +325,10 @@ public:
     void pause ();
     void unpause ();
 
-    void setupMovie ();
-    void setUrl (const QString & url);
+    void setupImage ();
+    void updateCachedImage (const QString & url);
     bool wget (const QString &url);
-    bool isEmpty ();
+    bool isEmpty () const;
     ImageDataPtr cached_img;
 
 private slots:

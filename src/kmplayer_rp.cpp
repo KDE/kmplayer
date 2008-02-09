@@ -19,7 +19,6 @@
 #include "config-kmplayer.h"
 
 #include <qcolor.h>
-#include <qimage.h>
 #include <qtimer.h>
 
 #include <kdebug.h>
@@ -242,8 +241,8 @@ KDE_NO_EXPORT void RP::Image::dataArrived () {
     kDebug () << "RP::Image::remoteReady";
     ImageMedia *im = static_cast <ImageMedia *> (media_object);
     if (!im->isEmpty ()) {
-        width = im->cached_img->image->width ();
-        height = im->cached_img->image->height ();
+        width = im->cached_img->width;
+        height = im->cached_img->height;
     }
     postpone_lock = 0L;
 }
