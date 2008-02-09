@@ -1430,9 +1430,9 @@ public:
 #endif
     void destroyBackingStore () {
 #ifdef KMPLAYER_WITH_CAIRO
-        //if (use_dbe && backing_store)
-        //    XdbeDeallocateBackBufferName (QX11Info::display(), backing_store);
-        //else if (backing_store)
+        /*if (use_dbe && backing_store)
+            XdbeDeallocateBackBufferName (QX11Info::display(), backing_store);
+        else*/ if (backing_store)
             XFreePixmap (QX11Info::display(), backing_store);
 #endif
         backing_store = 0;
@@ -1707,13 +1707,14 @@ KDE_NO_EXPORT Surface *ViewArea::getSurface (Mrl *mrl) {
     if (mrl) {
         updateSurfaceBounds ();
         return surface.ptr ();
-    } else {
+    }
 #ifdef KMPLAYER_WITH_CAIRO
+    else if (surface->surface) {
         cairo_surface_destroy (surface->surface);
         surface->surface = 0L;
-#endif
         d->destroyBackingStore ();
     }
+#endif
     scheduleRepaint (IRect (0, 0, width (), height ()));
     return 0L;
 }
