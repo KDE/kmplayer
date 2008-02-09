@@ -551,7 +551,17 @@ void AudioVideoMedia::destroy () {
 
 //------------------------%<----------------------------------------------------
 
-ImageData::ImageData( const QString & img) : image (0L), url (img) {
+#ifdef KMPLAYER_WITH_CAIRO
+# include <cairo.h>
+#endif
+
+ImageData::ImageData( const QString & img)
+ : image (0L),
+#ifdef KMPLAYER_WITH_CAIRO
+   surface (NULL),
+#endif
+   flags (0),
+   url (img) {
     //if (img.isEmpty ())
     //    //kDebug() << "New ImageData for " << this << endl;
     //else
@@ -561,6 +571,10 @@ ImageData::ImageData( const QString & img) : image (0L), url (img) {
 ImageData::~ImageData() {
     if (!url.isEmpty ())
         image_data_map->erase (url);
+#ifdef KMPLAYER_WITH_CAIRO
+    if (surface)
+        cairo_surface_destroy (surface);
+#endif
     delete image;
 }
 
@@ -596,42 +610,53 @@ void ImageMedia::unpause () {
         img_movie->setPaused (false);
 }
 
+KDE_NO_EXPORT void ImageMedia::setupMovie () {
+    delete img_movie;
+    img_movie = 0L;
+    delete buffer;
+    buffer = 0L;
+    QImage *pix = isEmpty () ? new QImage (data) : cached_img->image;
+    if (!pix->isNull ()) {
+        cached_img->image = pix;
+        cached_img->flags |= (int)ImageData::ImagePixmap; // TODO
+        buffer = new QBuffer (&data);
+        img_movie = new QMovie (buffer);
+        connect (img_movie, SIGNAL (updated (const QRect &)),
+                this, SLOT (movieUpdated (const QRect &)));
+        connect (img_movie, SIGNAL (stateChanged (QMovie::MovieState)),
+                this, SLOT (movieStatus (QMovie::MovieState)));
+        connect (img_movie, SIGNAL (resized (const QSize &)),
+                this, SLOT (movieResize (const QSize &)));
+        frame_nr = 0;
+    } else {
+        delete pix;
+    }
+}
+
 KDE_NO_EXPORT void ImageMedia::ready (const QString &url) {
     if (data.size ()) {
         QString mime = mimetype ();
         if (!mime.startsWith (QString::fromLatin1 ("text/"))) { // FIXME svg
             setUrl (url);
-            delete img_movie;
-            img_movie = 0L;
-            delete buffer;
-            buffer = 0L;
-            QImage *pix = isEmpty () ? new QImage (data) : cached_img->image;
-            if (!pix->isNull ()) {
-                cached_img->image = pix;
-                buffer = new QBuffer (&data);
-                img_movie = new QMovie (buffer);
-                connect (img_movie, SIGNAL (updated (const QRect &)),
-                            this, SLOT (movieUpdated (const QRect &)));
-                connect (img_movie, SIGNAL (stateChanged (QMovie::MovieState)),
-                        this, SLOT (movieStatus (QMovie::MovieState)));
-                connect (img_movie, SIGNAL (resized (const QSize &)),
-                        this, SLOT (movieResize (const QSize &)));
-                frame_nr = 0;
-            } else {
-                delete pix;
-            }
+            setupMovie ();
         }
     }
     MediaObject::ready (url);
 }
 
 bool ImageMedia::isEmpty () {
-    return !cached_img || !cached_img->image;
+    return !cached_img ||
+        (!cached_img->image
+#ifdef KMPLAYER_WITH_CAIRO
+         && !cached_img->surface
+#endif
+        );
 }
 
 void ImageMedia::setUrl (const QString & url) {
     if (url.isEmpty ()) {
-        cached_img = ImageDataPtr (new ImageData (url));
+        ImageData *id = new ImageData (url);
+        cached_img = id;
     } else {
         ImageDataMap::iterator i = image_data_map->find (url);
         if (i == image_data_map->end ()) {
@@ -640,6 +665,18 @@ void ImageMedia::setUrl (const QString & url) {
         } else {
             cached_img = i.data ();
         }
+    }
+}
+
+KDE_NO_EXPORT bool ImageMedia::wget (const QString &str) {
+    ImageDataMap::iterator i = image_data_map->find (str);
+    if (i != image_data_map->end ()) {
+        cached_img = i.data ();
+        setupMovie ();
+        MediaObject::ready (str);
+        return true;
+    } else {
+        return MediaObject::wget (str);
     }
 }
 
@@ -655,6 +692,7 @@ KDE_NO_EXPORT void ImageMedia::movieUpdated (const QRect &) {
         ASSERT (cached_img && isEmpty ());
         cached_img->image = new QImage;
         *cached_img->image = img_movie->framePixmap ();
+        cached_img->flags = (int)(ImageData::ImagePixmap | ImageData::ImageAnimated); //TODO
         if (m_node)
             m_node->handleEvent (new Event (event_img_updated));
     }

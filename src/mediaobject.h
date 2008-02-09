@@ -184,7 +184,7 @@ public:
     virtual void stop () {}
     virtual void destroy ();
 
-    bool wget (const QString & url);
+    virtual bool wget (const QString &url);
     void killWGet ();
     void clearData ();
     QString mimetype ();
@@ -281,9 +281,16 @@ protected:
  */
 
 struct KMPLAYER_NO_EXPORT ImageData {
+    enum ImageFlags {
+        ImageAny=0, ImagePixmap=0x1, ImageAnimated=0x2, ImageScalable=0x4
+    };
     ImageData( const QString & img);
     ~ImageData();
     QImage *image;
+#ifdef KMPLAYER_WITH_CAIRO
+    cairo_surface_t *surface;
+#endif
+    int flags;
 private:
     QString url;
 };
@@ -303,7 +310,9 @@ public:
     void pause ();
     void unpause ();
 
+    void setupMovie ();
     void setUrl (const QString & url);
+    bool wget (const QString &url);
     bool isEmpty ();
     ImageDataPtr cached_img;
 
