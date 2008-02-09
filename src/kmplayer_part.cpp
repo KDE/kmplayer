@@ -610,7 +610,7 @@ KDE_NO_EXPORT bool KMPlayerPart::startUrl(const KUrl &uri, const QString &img) {
         }
         QString img = pic.isEmpty ()
             ? KUrl (KIconLoader::global()->iconPath (
-                        QString::fromLatin1 ("kmplayer"),
+                        QString::fromLatin1 ("video-x-generic"),
 #ifdef KMPLAYER_WITH_CAIRO
                         -128
 #else
