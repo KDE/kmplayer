@@ -1116,6 +1116,34 @@ KDE_NO_EXPORT void KMPlayerLiveConnectExtension::evaluate (
     m_evaluating = false;
 }
 
+static
+bool str2LC (const QString s, KParts::LiveConnectExtension::Type &type, QString &rval) {
+    if (s == "error")
+        return false;
+    if (s == "o:function") {
+        type = KParts::LiveConnectExtension::TypeFunction;
+    } else if (s.startsWith (QChar ('\'')) && s.endsWith (QChar ('\''))) {
+        type = KParts::LiveConnectExtension::TypeString;
+        rval = s.mid (1, s.length () - 2);
+    } else if (s == "true" || s == "false") {
+        type = KParts::LiveConnectExtension::TypeBool;
+        rval = s;
+    } else {
+        bool ok;
+        s.toInt (&ok);
+        if (!ok)
+            s.toDouble (&ok);
+        if (ok) {
+            type = KParts::LiveConnectExtension::TypeNumber;
+            rval = s;
+        } else {
+            type = KParts::LiveConnectExtension::TypeVoid;
+            rval = s;
+        }
+    }
+    return true;
+}
+
 KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
   (const unsigned long id, const QString & name,
    KParts::LiveConnectExtension::Type & type,
@@ -1133,13 +1161,8 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
     QString req_result;
     emit requestGet (id, name, &req_result);
     if (!req_result.isEmpty ()) {
-        if (req_result == "o:function") {
-            type = KParts::LiveConnectExtension::TypeFunction;
-        } else {
-            type = KParts::LiveConnectExtension::TypeString;
-            rval = req_result;
-        }
-        return true;
+        if (str2LC (req_result, type, rval))
+            return true;
     }
     const char * str = name.ascii ();
     const JSCommandEntry * entry = getJSCommandEntry (str);
@@ -1223,13 +1246,8 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
     }
     emit requestCall (0 /*id*/, name, arglst, &req_result);
     if (!req_result.isEmpty ()) {
-        if (req_result == "o:function") {
-            type = KParts::LiveConnectExtension::TypeFunction;
-        } else {
-            type = KParts::LiveConnectExtension::TypeString;
-            rval = req_result;
-        }
-        return true;
+        if (str2LC (req_result, type, rval))
+            return true;
     }
     const JSCommandEntry * entry = lastJSCommandEntry;
     const char * str = name.ascii ();
