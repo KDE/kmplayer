@@ -59,7 +59,6 @@
 #include <X11/keysym.h>
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
-//#include <X11/extensions/Xdbe.h>
 static const int XKeyPress = KeyPress;
 #undef KeyPress
 #undef Always
@@ -1369,12 +1368,7 @@ namespace KMPlayer {
 class KMPLAYER_NO_EXPORT ViewerAreaPrivate {
 public:
     ViewerAreaPrivate (ViewArea *v)
-        : m_view_area (v), backing_store (0), use_dbe (false) {
-//#ifdef KMPLAYER_WITH_CAIRO
-//        int m, n;
-//        use_dbe = XdbeQueryExtension (QX11Info::display(), &m, &n);
-//        kDebug() << "dbe " << m << "." << n << endl;
-//#endif
+        : m_view_area (v), backing_store (0) {
     }
     ~ViewerAreaPrivate() {
         destroyBackingStore ();
@@ -1385,26 +1379,19 @@ public:
         int h = (int) s->bounds.height ();
         if (s->surface) {
             Display *d = QX11Info::display();
-            if (use_dbe) {
-                cairo_xlib_surface_set_size (s->surface, w, h);
-            } else {
-                XFreePixmap (d, backing_store);
-                backing_store = XCreatePixmap (d, m_view_area->winId (),
-                        w, h, QX11Info::appDepth ());
-                cairo_xlib_surface_set_drawable(s->surface, backing_store, w,h);
-            }
+            //cairo_xlib_surface_set_size (s->surface, w, h);
+            XFreePixmap (d, backing_store);
+            backing_store = XCreatePixmap (d, m_view_area->winId (),
+                    w, h, QX11Info::appDepth ());
+            cairo_xlib_surface_set_drawable(s->surface, backing_store, w,h);
         }
 #endif
     }
 #ifdef KMPLAYER_WITH_CAIRO
     cairo_surface_t *createSurface (int w, int h) {
         Display * display = QX11Info::display ();
-        //if (use_dbe)
-        //    backing_store = XdbeAllocateBackBufferName (display,
-        //            m_view_area->winId(), XdbeUndefined);
-        //else
-            backing_store = XCreatePixmap (display,
-                    m_view_area->winId (), w, h, QX11Info::appDepth ());
+        backing_store = XCreatePixmap (display,
+                m_view_area->winId (), w, h, QX11Info::appDepth ());
         return cairo_xlib_surface_create (display, backing_store,
                 DefaultVisual (display, DefaultScreen (display)), w, h);
         /*return cairo_xlib_surface_create_with_xrender_format (
@@ -1417,30 +1404,22 @@ public:
             w, h);*/
     }
     void swapBuffer (int sx, int sy, int sw, int sh, int dx, int dy) {
-        /*if (use_dbe) {
-            XdbeSwapInfo info = { m_view_area->winId (), XdbeUndefined };
-            XdbeSwapBuffers (QX11Info::display(), &info, 1);
-        } else*/ {
-            GC gc = XCreateGC (QX11Info::display(), backing_store, 0, NULL);
-            XCopyArea (QX11Info::display(), backing_store, m_view_area->winId(),
-                    gc, sx, sy, sw, sh, dx, dy);
-            XFreeGC (QX11Info::display(), gc);
-        }
+        GC gc = XCreateGC (QX11Info::display(), backing_store, 0, NULL);
+        XCopyArea (QX11Info::display(), backing_store, m_view_area->winId(),
+                gc, sx, sy, sw, sh, dx, dy);
+        XFreeGC (QX11Info::display(), gc);
         XFlush (QX11Info::display());
     }
 #endif
     void destroyBackingStore () {
 #ifdef KMPLAYER_WITH_CAIRO
-        /*if (use_dbe && backing_store)
-            XdbeDeallocateBackBufferName (QX11Info::display(), backing_store);
-        else*/ if (backing_store)
+        if (backing_store)
             XFreePixmap (QX11Info::display(), backing_store);
 #endif
         backing_store = 0;
     }
     ViewArea *m_view_area;
     Drawable backing_store;
-    bool use_dbe;
 };
 }
 
