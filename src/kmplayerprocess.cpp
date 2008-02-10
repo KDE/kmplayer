@@ -2463,13 +2463,11 @@ KDE_NO_EXPORT bool NpPlayer::deMediafiedPlay () {
             }
         }
         if (!plugin.isEmpty ()) {
-            unsigned int param_len = elm->attributes ()->length ();
             QDBusMessage msg = QDBusMessage::createMethodCall (
                     remote_service, "/plugin", "org.kde.kmplayer.backend", "play");
-            msg << m_url << mime << plugin << param_len;
+            msg << m_url << mime << plugin;
             QMap <QString, QVariant> urlargs;
-            AttributePtr a = elm->attributes ()->first ();
-            for (unsigned i = 0; i < param_len && a; i++, a = a->nextSibling ())
+            for (AttributePtr a = elm->attributes ()->first (); a; a = a->nextSibling ())
                 urlargs.insert (a->name ().toString (), a->value ());
             msg << urlargs;
             msg.setDelayedReply (false);

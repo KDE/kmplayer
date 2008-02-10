@@ -1178,10 +1178,11 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
     if (dbus_message_is_method_call (msg, iface, "play")) {
         DBusMessageIter ait;
         char *param = 0;
-        unsigned int params;
+        unsigned int params = 0;
         char **argn = NULL;
         char **argv = NULL;
         int i;
+        GSList *arglst = NULL;
         if (!dbus_message_iter_init (msg, &args) ||
                 DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&args)) {
             g_printerr ("missing url arg");
@@ -1204,22 +1205,12 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
         dbus_message_iter_get_basic (&args, &param);
         plugin = g_strdup (param);
         if (!dbus_message_iter_next (&args) ||
-                DBUS_TYPE_UINT32 != dbus_message_iter_get_arg_type (&args)) {
-            g_printerr ("missing param count arg");
-            return DBUS_HANDLER_RESULT_HANDLED;
-        }
-        dbus_message_iter_get_basic (&args, &params);
-        if (params > 0 && params < 100) {
-            argn = (char**) malloc (params * sizeof (char *));
-            argv = (char**) malloc (params * sizeof (char *));
-        }
-        if (!dbus_message_iter_next (&args) ||
                 DBUS_TYPE_ARRAY != dbus_message_iter_get_arg_type (&args)) {
             g_printerr ("missing params array");
             return DBUS_HANDLER_RESULT_HANDLED;
         }
         dbus_message_iter_recurse (&args, &ait);
-        for (i = 0; i < params; i++) {
+        do {
             char *key, *value;
             DBusMessageIter di;
             int arg_type;
@@ -1243,14 +1234,25 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
             } else {
                 break;
             }
-            argn[i] = g_strdup (key);
-            argv[i] = g_strdup (value);
-            print ("param %d:%s='%s'\n", i + 1, argn[i], value);
-            if (!dbus_message_iter_next (&ait))
-                params = i + 1;
+            arglst = g_slist_append (arglst, g_strdup (key));
+            arglst = g_slist_append (arglst, g_strdup (value));
+            params++;
+            print ("param %d:%s='%s'\n", params, key, value);
+        } while (dbus_message_iter_next (&ait));
+        if (params > 0 && params < 100) {
+            GSList *sl = arglst;
+            argn = (char**) malloc (params * sizeof (char *));
+            argv = (char**) malloc (params * sizeof (char *));
+            for (i = 0; sl; i++) {
+                argn[i] = (gchar *)sl->data;
+                sl = sl->next;
+                argv[i] = (gchar *)sl->data;
+                sl = sl->next;
+            }
+            g_slist_free (arglst);
         }
         print ("play %s %s %s params:%d\n", object_url,
-                mimetype ? mimetype : "", plugin, i);
+                mimetype ? mimetype : "", plugin, params);
         startPlugin (object_url, mimetype, i, argn, argv);
     } else if (dbus_message_is_method_call (msg, iface, "redirected")) {
         char *url = 0;
