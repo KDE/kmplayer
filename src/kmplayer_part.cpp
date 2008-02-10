@@ -441,10 +441,17 @@ KDE_NO_CDTOR_EXPORT KMPlayerPart::~KMPlayerPart () {
 
 KDE_NO_EXPORT void KMPlayerPart::processCreated (KMPlayer::Process *p) {
 #ifdef KMPLAYER_WITH_NPP
-    if (!strcmp (p->name (), "npp"))
+    if (!strcmp (p->name (), "npp")) {
         connect (p, SIGNAL (evaluate (const QString &, bool, QString &)),
                 m_liveconnectextension,
                 SLOT (evaluate (const QString &, bool, QString &)));
+        connect (m_liveconnectextension,
+                SIGNAL (requestGet (const uint32_t, const QString &, QString *)),
+                p, SLOT (requestGet (const uint32_t, const QString &, QString *)));
+        connect (m_liveconnectextension,
+                SIGNAL (requestCall (const uint32_t, const QString &, const QStringList, QString *)),
+                p, SLOT (requestCall (const uint32_t, const QString &, const QStringList, QString *)));
+    }
 #endif
 }
 
@@ -1122,8 +1129,19 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
         rval = "Access denied";
         return true;
     }
+    kDebug () << "[01;35mget[00m " << name;
+    QString req_result;
+    emit requestGet (id, name, &req_result);
+    if (!req_result.isEmpty ()) {
+        if (req_result == "o:function") {
+            type = KParts::LiveConnectExtension::TypeFunction;
+        } else {
+            type = KParts::LiveConnectExtension::TypeString;
+            rval = req_result;
+        }
+        return true;
+    }
     const char * str = name.ascii ();
-    kDebug () << "[01;35mget[00m " << str;
     const JSCommandEntry * entry = getJSCommandEntry (str);
     if (!entry)
         return false;
@@ -1186,13 +1204,39 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
   (const unsigned long id, const QString & name,
    const QStringList & args, KParts::LiveConnectExtension::Type & type,
    unsigned long & rid, QString & rval) {
+    kDebug () << "[01;35mentry[00m " << name;
+    QString req_result;
+    QStringList arglst;
+    for (QList<QString>::const_iterator i = args.begin (); i != args.end (); ++i) {
+        bool ok;
+        int iv = (*i).toInt (&ok);
+        if (ok) {
+            arglst << QString ("n:%1").arg (iv);
+        } else {
+            double dv = (*i).toDouble (&ok);
+            if (ok) {
+                arglst << QString ("n:%1").arg (dv);
+            } else {
+                arglst << QString ("s:%1").arg (*i);
+            }
+        }
+    }
+    emit requestCall (0 /*id*/, name, arglst, &req_result);
+    if (!req_result.isEmpty ()) {
+        if (req_result == "o:function") {
+            type = KParts::LiveConnectExtension::TypeFunction;
+        } else {
+            type = KParts::LiveConnectExtension::TypeString;
+            rval = req_result;
+        }
+        return true;
+    }
     const JSCommandEntry * entry = lastJSCommandEntry;
     const char * str = name.ascii ();
     if (!entry || strcmp (entry->name, str))
         entry = getJSCommandEntry (str);
     if (!entry)
         return false;
-    kDebug () << "[01;35mentry[00m " << entry->name;
     for (unsigned int i = 0; i < args.size (); ++i)
         kDebug () << "      " << args[i];
     if (!player->view ())

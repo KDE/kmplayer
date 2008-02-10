@@ -2660,6 +2660,34 @@ KDE_NO_EXPORT void NpPlayer::streamRedirected (uint32_t sid, const KUrl &u) {
     }
 }
 
+KDE_NO_EXPORT
+void NpPlayer::requestGet (const uint32_t id, const QString &prop, QString *res) {
+    QDBusMessage msg = QDBusMessage::createMethodCall (
+            remote_service, "/plugin", "org.kde.kmplayer.backend", "get");
+    msg << id << prop;
+    QDBusMessage rmsg = QDBusConnection::sessionBus().call (msg);
+    kDebug() << "get " << prop << rmsg.arguments ().size ();
+    if (rmsg.arguments ().size ()) {
+        QString s = rmsg.arguments ().first ().toString ();
+        if (s != "error")
+            *res = s;
+    }
+}
+
+KDE_NO_EXPORT void NpPlayer::requestCall (const uint32_t id, const QString &func,
+        const QStringList &args, QString *res) {
+    QDBusMessage msg = QDBusMessage::createMethodCall (
+            remote_service, "/plugin", "org.kde.kmplayer.backend", "call");
+    msg << id << func << args;
+    QDBusMessage rmsg = QDBusConnection::sessionBus().call (msg);
+    kDebug() << "call " << func << rmsg.arguments ().size ();
+    if (rmsg.arguments ().size ()) {
+        QString s = rmsg.arguments ().first ().toString ();
+        if (s != "error")
+            *res = s;
+    }
+}
+
 KDE_NO_EXPORT void NpPlayer::processStreams () {
     NpStream *stream = 0L;
     Q_UINT32 stream_id;

@@ -605,6 +605,9 @@ public:
 signals:
     void evaluate (const QString & scr, bool store, QString & result);
 public slots:
+    void requestGet (const uint32_t, const QString &, QString *);
+    void requestCall (const uint32_t, const QString &, const QStringList &, QString *);
+public slots:
     virtual void stop ();
     virtual void quit ();
 public slots:

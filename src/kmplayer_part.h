@@ -88,6 +88,8 @@ public:
 signals:
     void partEvent (const unsigned long, const QString &,
                     const KParts::LiveConnectExtension::ArgList &);
+    void requestGet (const uint32_t, const QString &, QString *);
+    void requestCall (const uint32_t, const QString &, const QStringList &, QString *);
 public slots:
     void setSize (int w, int h);
     void started ();

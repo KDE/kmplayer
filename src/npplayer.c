@@ -313,6 +313,8 @@ static char *nsVariant2Str (const NPVariant *value) {
                 createJsName (jv, &val, &vlen);
                 str = strdup (val);
                 free (val);
+            } else {
+                str = strdup ("null"); /* TODO track plugin objects */
             }
             break;
         default:
@@ -554,8 +556,8 @@ static bool nsIdentifierIsString (NPIdentifier name) {
 }
 
 static NPUTF8 * nsUTF8FromIdentifier (NPIdentifier name) {
-    print ("NPN_UTF8FromIdentifier\n");
     char *str = g_tree_lookup (identifiers, name);
+    print ("NPN_UTF8FromIdentifier %s\n", str ? str : "not found");
     if (str)
         return strdup (str);
     return NULL;
@@ -579,58 +581,65 @@ static bool nsInvokeDefault (NPP instance, NPObject * npobj,
     return npobj->_class->invokeDefault (npobj,args, arg_count, result);
 }
 
+static bool str2NPVariant (NPP instance, const char *str, NPVariant *result) {
+    if (!str || !*str)
+        return false;
+    if (!strncmp (str, "o:", 2)) {
+        JsObject *jo = (JsObject *)nsCreateObject (instance, &js_class);
+        result->type = NPVariantType_Object;
+        jo->name = g_strdup (str + 2);
+        result->value.objectValue = (NPObject *)jo;
+        print ("object\n");
+    } else if (!strncmp (str, "s:", 2)) {
+        result->type = NPVariantType_String;
+        result->value.stringValue.utf8characters= g_strdup(str+2);
+        result->value.stringValue.utf8length = strlen (str) - 2;
+        print ("string %s\n", str + 2);
+    } else if (!strncmp (str, "u:", 2)) {
+        result->type = NPVariantType_Null;
+        print ("null\n");
+    } else if (!strncmp (str, "n:", 2)) {
+        char *eptr;
+        long l = strtol (str + 2, &eptr, 10);
+        if (*eptr && *eptr == '.') {
+            result->type = NPVariantType_Double;
+            result->value.doubleValue = strtod (str + 2, NULL);
+            print ("double %f\n", result->value.doubleValue);
+        } else if (eptr != str + 2) {
+            result->type = NPVariantType_Int32;
+            result->value.intValue = (int)l;
+            print ("int32 %d\n", l);
+        } else {
+            result->type = NPVariantType_Null;
+            return false;
+        }
+    } else if (!strncmp (str, "b:", 2)) {
+        result->type = NPVariantType_Bool;
+        if (!strcasecmp (str + 2, "true")) {
+            result->value.boolValue = true;
+        } else {
+            char *eptr;
+            long l = strtol (str + 2, &eptr, 10);
+            result->value.boolValue = eptr != str ? !!l : false;
+        }
+        print ("bool %d\n", result->value.boolValue);
+    } else {
+        return false;
+    }
+    return true;
+}
+
 static bool doEvaluate (NPP instance, NPObject * npobj, NPString * script,
         NPVariant * result) {
     char *result_string;
-    bool success = true;
+    bool success = false;
     (void) npobj; /*FIXME scope, search npobj window*/
 
     result_string = evaluate (script->utf8characters, true);
 
-    if (result_string && *result_string) {
-        if (!strncmp (result_string, "o:", 2)) {
-            JsObject *jo = (JsObject *)nsCreateObject (instance, &js_class);
-            result->type = NPVariantType_Object;
-            jo->name = g_strdup (result_string + 2);
-            result->value.objectValue = (NPObject *)jo;
-            print ("object\n");
-        } else if (!strncmp (result_string, "s:", 2)) {
-            result->type = NPVariantType_String;
-            result->value.stringValue.utf8characters= g_strdup(result_string+2);
-            result->value.stringValue.utf8length = strlen (result_string) - 2;
-            print ("string %s\n", result_string + 2);
-        } else if (!strncmp (result_string, "u:", 2)) {
-            result->type = NPVariantType_Null;
-            print ("null\n");
-        } else if (!strncmp (result_string, "n:", 2)) {
-            char *eptr;
-            long l = strtol (result_string + 2, &eptr, 10);
-            if (*eptr && *eptr == '.') {
-                result->type = NPVariantType_Double;
-                result->value.doubleValue = strtod (result_string + 2, NULL);
-                print ("number %f\n", result->value.doubleValue);
-            } else if (eptr != result_string + 2) {
-                result->type = NPVariantType_Int32;
-                result->value.intValue = (int)l;
-                print ("number %d\n", l);
-            } else {
-                result->type = NPVariantType_Null;
-                success = false;
-            }
-        } else if (!strncmp (result_string, "b:", 2)) {
-            result->type = NPVariantType_Bool;
-            if (!strcasecmp (result_string + 2, "true")) {
-                result->value.boolValue = true;
-            } else {
-                char *eptr;
-                long l = strtol (result_string + 2, &eptr, 10);
-                result->value.boolValue = eptr != result_string ? !!l : false;
-            }
-            print ("bool %d\n", result->value.boolValue);
-        }
+    if (result_string) {
+        success = str2NPVariant (instance, result_string, result);
         g_free (result_string);
-    } else {
-        success = false;
     }
 
     return success;
@@ -717,6 +726,84 @@ static bool nsPopPopupsEnabledState (NPP instance) {
     (void)instance;
     print ("NPN_PopPopupsEnabledState\n");
     return false;
+}
+
+/*----------------%<---------------------------------------------------------*/
+
+static bool doInvoke (uint32_t obj, const char *func, GSList *arglst,
+        uint32_t arg_count, char **resultstring) {
+    NPObject *npobj;
+    NPVariant result;
+    NPVariant *args = NULL;
+
+    *resultstring = NULL;
+    if (!obj) { /*TODO NPObject tracking */
+        NPError np_err = np_funcs.getvalue ((void*)npp,
+                NPPVpluginScriptableNPObject, (void*)&npobj);
+        if (np_err == NPERR_NO_ERROR && npobj) {
+            NPIdentifier method = nsGetStringIdentifier (func);
+
+            if (nsHasMethod (npp, npobj, method)) {
+                GSList *sl;
+                int i;
+                if (arg_count) {
+                    args = (NPVariant *) malloc (arg_count * sizeof (NPVariant *));
+                    memset (args, 0, arg_count * sizeof (NPVariant *));
+                    for (sl = arglst, i = 0; sl; sl = sl->next, i++)
+                        str2NPVariant (npp, (const char *) sl->data, args + i);
+                }
+                if (nsInvoke (npp, npobj, method, args, arg_count, &result)) {
+                    *resultstring = nsVariant2Str (&result);
+                    nsReleaseVariantValue (&result);
+                    print ("nsInvoke succes %s\n", *resultstring);
+                } else {
+                    print ("nsInvoke failure\n");
+                }
+                if (args) {
+                    for (sl = arglst, i = 0; sl; sl = sl->next, i++)
+                        nsReleaseVariantValue (args + i);
+                    free (args);
+                }
+            }
+            nsReleaseObject (npobj);
+        } else {
+            print("no obj %d\n", obj);
+        }
+    }
+    if (!*resultstring) {
+        *resultstring = g_strdup ("error");
+        return false;
+    }
+    return true;
+}
+
+static bool doGet (uint32_t obj, const char *prop, char **resultstring) {
+    NPObject *npobj;
+    NPVariant result;
+
+    *resultstring = NULL;
+    if (!obj) { /*TODO NPObject tracking */
+        NPError np_err = np_funcs.getvalue ((void*)npp,
+                NPPVpluginScriptableNPObject, (void*)&npobj);
+        if (np_err == NPERR_NO_ERROR && npobj) {
+            NPIdentifier identifier = nsGetStringIdentifier (prop);
+
+            if (nsHasMethod (npp, npobj, identifier)) {
+                *resultstring = g_strdup ("o:function");
+            } else if (nsHasMethod (npp, npobj, identifier)) {
+                if (nsGetProperty (npp, npobj, identifier, &result)) {
+                    *resultstring = nsVariant2Str (&result);
+                    nsReleaseVariantValue (&result);
+                }
+            }
+            nsReleaseObject (npobj);
+        }
+    }
+    if (!*resultstring) {
+        *resultstring = g_strdup ("error");
+        return false;
+    }
+    return true;
 }
 
 /*----------------%<---------------------------------------------------------*/
@@ -1181,7 +1268,6 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
         unsigned int params = 0;
         char **argn = NULL;
         char **argv = NULL;
-        int i;
         GSList *arglst = NULL;
         if (!dbus_message_iter_init (msg, &args) ||
                 DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&args)) {
@@ -1240,6 +1326,7 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
             print ("param %d:%s='%s'\n", params, key, value);
         } while (dbus_message_iter_next (&ait));
         if (params > 0 && params < 100) {
+            int i;
             GSList *sl = arglst;
             argn = (char**) malloc (params * sizeof (char *));
             argv = (char**) malloc (params * sizeof (char *));
@@ -1253,7 +1340,7 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
         }
         print ("play %s %s %s params:%d\n", object_url,
                 mimetype ? mimetype : "", plugin, params);
-        startPlugin (object_url, mimetype, i, argn, argv);
+        startPlugin (object_url, mimetype, params, argn, argv);
     } else if (dbus_message_is_method_call (msg, iface, "redirected")) {
         char *url = 0;
         gpointer stream_id;
@@ -1304,6 +1391,81 @@ static DBusHandlerResult dbusFilter (DBusConnection * connection,
             }
             print ("streamInfo %d size:%d mime:%s\n", (long)stream_id, length,
                     mime ? mime : "");
+        }
+    } else if (dbus_message_is_method_call (msg, iface, "get")) {
+        DBusMessage * rmsg;
+        uint32_t object;
+        char *property;
+        char *result = NULL;
+        if (!dbus_message_iter_init (msg, &args) ||
+                DBUS_TYPE_UINT32 != dbus_message_iter_get_arg_type (&args)) {
+            g_printerr ("missing object");
+            return DBUS_HANDLER_RESULT_HANDLED;
+        }
+        dbus_message_iter_get_basic (&args, &object);
+        if (!dbus_message_iter_next (&args) ||
+                DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&args)) {
+            g_printerr ("missing function");
+            return DBUS_HANDLER_RESULT_HANDLED;
+        }
+        dbus_message_iter_get_basic (&args, &property);
+        doGet (object, property, &result);
+        print ("get %s => %s\n", property, result ? result : "NULL");
+        rmsg = dbus_message_new_method_return (msg);
+        dbus_message_append_args (rmsg, DBUS_TYPE_STRING, &result, DBUS_TYPE_INVALID);
+        dbus_connection_send (connection, rmsg, NULL);
+        dbus_connection_flush (connection);
+        dbus_message_unref (rmsg);
+        g_free (result);
+    } else if (dbus_message_is_method_call (msg, iface, "call")) {
+        DBusMessage * rmsg;
+        DBusMessageIter ait;
+        uint32_t object;
+        char *function;
+        GSList *arglst = NULL;
+        GSList *sl;
+        uint32_t arg_count = 0;
+        char *result = NULL;
+        if (!dbus_message_iter_init (msg, &args) ||
+                DBUS_TYPE_UINT32 != dbus_message_iter_get_arg_type (&args)) {
+            g_printerr ("missing object");
+            return DBUS_HANDLER_RESULT_HANDLED;
+        }
+        dbus_message_iter_get_basic (&args, &object);
+        if (!dbus_message_iter_next (&args) ||
+                DBUS_TYPE_STRING != dbus_message_iter_get_arg_type (&args)) {
+            g_printerr ("missing function");
+            return DBUS_HANDLER_RESULT_HANDLED;
+        }
+        dbus_message_iter_get_basic (&args, &function);
+        if (!dbus_message_iter_next (&args) ||
+                DBUS_TYPE_ARRAY != dbus_message_iter_get_arg_type (&args)) {
+            g_printerr ("missing arguments array");
+            return DBUS_HANDLER_RESULT_HANDLED;
+        }
+        dbus_message_iter_recurse (&args, &ait);
+        print ("call %d:%s(", object, function);
+        do {
+            char *arg;
+            if (dbus_message_iter_get_arg_type (&ait) != DBUS_TYPE_STRING)
+                break;
+            dbus_message_iter_get_basic (&ait, &arg);
+            print ("%s, ", arg);
+            arglst = g_slist_append (arglst, g_strdup (arg));
+            arg_count++;
+        } while (dbus_message_iter_next (&ait));
+        doInvoke (object, function, arglst, arg_count, &result);
+        print (") %s\n", result ? result : "NULL");
+        rmsg = dbus_message_new_method_return (msg);
+        dbus_message_append_args (rmsg, DBUS_TYPE_STRING, &result, DBUS_TYPE_INVALID);
+        dbus_connection_send (connection, rmsg, NULL);
+        dbus_connection_flush (connection);
+        dbus_message_unref (rmsg);
+        g_free (result);
+        if (arglst) {
+            for (sl = arglst; sl; sl = sl->next)
+                g_free ((char *)sl->data);
+            g_slist_free (arglst);
         }
     } else {
         print ("unknown message\n");
