@@ -1158,6 +1158,7 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
         return true;
     }
     kDebug () << "[01;35mget[00m " << name;
+    rid = id;
     QString req_result;
     emit requestGet (id, name, &req_result);
     if (!req_result.isEmpty ()) {
@@ -1168,7 +1169,6 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::get
     const JSCommandEntry * entry = getJSCommandEntry (str);
     if (!entry)
         return false;
-    rid = id;
     type = entry->rettype;
     switch (entry->command) {
         case prop_source:
@@ -1244,7 +1244,8 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
             }
         }
     }
-    emit requestCall (0 /*id*/, name, arglst, &req_result);
+    rid = id;
+    emit requestCall (id, name, arglst, &req_result);
     if (!req_result.isEmpty ()) {
         if (str2LC (req_result, type, rval))
             return true;
@@ -1259,7 +1260,6 @@ KDE_NO_EXPORT bool KMPlayerLiveConnectExtension::call
         kDebug () << "      " << args[i];
     if (!player->view ())
         return false;
-    rid = id;
     type = entry->rettype;
     switch (entry->command) {
         case notsupported:
