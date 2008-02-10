@@ -1323,38 +1323,39 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::TimedMrl * timedmrl) {
     timedmrl->runtime ()->processEvent (event);
 }
 
-KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType * mediatype) {
-    if (mediatype->sensitivity == SMIL::MediaType::sens_transparent) {
+KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
+    if (mt->sensitivity == SMIL::MediaType::sens_transparent) {
         bubble_up = true;
         return;
     }
-    Surface *s = mediatype->surface ();
+    Surface *s = mt->surface ();
     if (!s)
         return;
-    if (s->node && s->node.ptr () != mediatype) {
+    if (s->node && s->node.ptr () != mt) {
         s->node->accept (this);
         return;
     }
     SRect rect = s->bounds;
     Single rx = rect.x(), ry = rect.y(), rw = rect.width(), rh = rect.height();
     matrix.getXYWH (rx, ry, rw, rh);
-    bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
-    if (!inside && event == event_pointer_clicked)
+    const bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
+    if (!inside && (event == event_pointer_clicked || inside == mt->has_mouse))
         return; // FIXME, also in/outbounds are bounds related
+    mt->has_mouse = inside;
 
-    NodeRefListPtr nl = mediatype->listeners (
+    NodeRefListPtr nl = mt->listeners (
             event == event_pointer_moved ? mediatype_attached : event);
     if (nl)
         for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ()) {
-            if (c->data && c->data.ptr () != mediatype)
+            if (c->data && c->data.ptr () != mt)
                 c->data->accept (this);
             if (!node->active ())
                 return;
         }
     if (event != event_pointer_moved)
-        visit (static_cast <SMIL::TimedMrl *> (mediatype));
+        visit (static_cast <SMIL::TimedMrl *> (mt));
     if (event != event_inbounds && event != event_outbounds) {
-      SMIL::RegionBase *r=convertNode<SMIL::RegionBase>(mediatype->region_node);
+      SMIL::RegionBase *r=convertNode<SMIL::RegionBase>(mt->region_node);
       if (r && r->surface () &&
               r->id != SMIL::id_node_smil &&
               r->region_surface->node && r != r->region_surface->node.ptr ())

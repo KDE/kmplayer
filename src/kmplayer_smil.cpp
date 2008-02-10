@@ -2110,7 +2110,7 @@ KDE_NO_EXPORT NodeRefListPtr SMIL::Area::listeners (unsigned int id) {
 
 KDE_NO_CDTOR_EXPORT SMIL::MediaType::MediaType (NodePtr &d, const QString &t, short id)
  : TimedMrl (d, id), m_type (t), bitrate (0), trans_step (0), trans_steps (0),
-   sensitivity (sens_opaque), trans_out_active (false),
+   sensitivity (sens_opaque), trans_out_active (false), has_mouse (false),
    m_MediaAttached (new NodeRefList) {
 }
 

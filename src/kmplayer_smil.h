@@ -613,6 +613,7 @@ public:
     unsigned int trans_steps;
     enum { sens_opaque, sens_transparent, sens_percentage } sensitivity;
     bool trans_out_active;
+    bool has_mouse;
 
 protected:
     virtual void clipStart ();
