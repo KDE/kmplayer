@@ -71,7 +71,6 @@ static NPPluginFuncs np_funcs;       /* plugin functions              */
 static NPP npp;                      /* single instance of the plugin */
 static NPWindow np_window;
 static NPObject *js_window;
-static NPObject *scriptable_peer;
 static NPSavedData *saved_data;
 static NPClass js_class;
 static GTree *stream_list;
@@ -970,10 +969,6 @@ static bool windowClassRemoveProperty (NPObject *npobj, NPIdentifier name) {
 /*----------------%<---------------------------------------------------------*/
 
 static void shutDownPlugin() {
-    if (scriptable_peer) {
-        nsReleaseObject (scriptable_peer);
-        scriptable_peer = NULL;
-    }
     if (npShutdown) {
         if (npp) {
             np_funcs.destroy (npp, &saved_data);
@@ -1202,10 +1197,6 @@ static int newPlugin (NPMIMEType mime, int16 argc, char *argn[], char *argv[]) {
         }
         np_err = np_funcs.getvalue ((void*)npp,
                 NPPVpluginScriptableIID, (void*)&iid);
-        np_err = np_funcs.getvalue ((void*)npp,
-                NPPVpluginScriptableNPObject, (void*)&scriptable_peer);
-        if (np_err != NPERR_NO_ERROR || !scriptable_peer)
-            print ("NPP_GetValue no NPPVpluginScriptableNPObject %d\n", np_err);
     }
     memset (&np_window, 0, sizeof (NPWindow));
     display = gdk_x11_get_default_xdisplay ();
