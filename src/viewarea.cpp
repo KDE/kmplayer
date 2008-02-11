@@ -81,15 +81,14 @@ void ImageData::copyImage (Surface *s, int w, int h, cairo_surface_t *similar) {
     if (surface) {
         src_sf = surface;
     } else {
-        QImage *img = image;
-        if (img->depth () < 24) {
-            QImage qi = img->convertDepth (32, 0);
-            *img = qi;
+        if (image->depth () < 24) {
+            QImage qi = image->convertDepth (32, 0);
+            *image = qi;
         }
         src_sf = cairo_image_surface_create_for_data (
-                img->bits (),
+                image->bits (),
                 has_alpha ? CAIRO_FORMAT_ARGB32:CAIRO_FORMAT_RGB24,
-                width, height, img->bytesPerLine ());
+                width, height, image->bytesPerLine ());
         if (flags & ImagePixmap && !(flags & ImageAnimated)) {
             surface = cairo_surface_create_similar (similar,
                     has_alpha ? CAIRO_CONTENT_COLOR_ALPHA : CAIRO_CONTENT_COLOR,
@@ -103,7 +102,7 @@ void ImageData::copyImage (Surface *s, int w, int h, cairo_surface_t *similar) {
             cairo_pattern_destroy (pat);
             cairo_surface_destroy (src_sf);
             src_sf = surface;
-            delete img;
+            delete image;
             image = NULL;
         }
     }
@@ -1339,7 +1338,7 @@ KDE_NO_EXPORT void MouseVisitor::visit (SMIL::MediaType *mt) {
     matrix.getXYWH (rx, ry, rw, rh);
     const bool inside = x > rx && x < rx+rw && y > ry && y< ry+rh;
     if (!inside && (event == event_pointer_clicked || inside == mt->has_mouse))
-        return; // FIXME, also in/outbounds are bounds related
+        return;
     mt->has_mouse = inside;
 
     NodeRefListPtr nl = mt->listeners (
