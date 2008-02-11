@@ -329,6 +329,7 @@ public:
     void updateCachedImage (const QString & url);
     bool wget (const QString &url);
     bool isEmpty () const;
+
     ImageDataPtr cached_img;
 
 private slots:

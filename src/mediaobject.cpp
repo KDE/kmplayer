@@ -584,6 +584,10 @@ ImageData::~ImageData() {
 void ImageData::setImage (QImage *img) {
     if (image != img) {
         delete image;
+#ifdef KMPLAYER_WITH_CAIRO
+        if (surface)
+            cairo_surface_destroy (surface);
+#endif
         image = img;
         width = img->width ();
         height = img->height ();
@@ -667,8 +671,7 @@ bool ImageMedia::isEmpty () const {
 
 void ImageMedia::updateCachedImage (const QString & url) {
     if (url.isEmpty ()) {
-        ImageData *id = new ImageData (url);
-        cached_img = id;
+        cached_img = new ImageData (url);
     } else {
         ImageDataMap::iterator i = image_data_map->find (url);
         if (i == image_data_map->end ()) {
