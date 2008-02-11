@@ -2279,6 +2279,19 @@ KDE_NO_EXPORT void FFMpeg::processStopped (K3Process *) {
 
 //-----------------------------------------------------------------------------
 
+static const char *npp_supports [] = { "urlsource", 0L };
+
+NppProcessInfo::NppProcessInfo (MediaManager *mgr)
+ : ProcessInfo ("npp", i18n ("&Ice Ape"), npp_supports, mgr, NULL) {}
+
+IProcess *NppProcessInfo::create (PartBase *p, AudioVideoMedia *media) {
+    NpPlayer *n = new NpPlayer (p, this, p->settings());
+    n->setSource (p->source ());
+    n->media_object = media;
+    p->processCreated (n);
+    return n;
+}
+
 #ifdef KMPLAYER_WITH_NPP
 
 KDE_NO_CDTOR_EXPORT NpStream::NpStream (NpPlayer *p, uint32_t sid, const QString &u)
@@ -2378,19 +2391,6 @@ void NpStream::slotMimetype (KIO::Job *, const QString &mime) {
 
 void NpStream::slotTotalSize (KJob *, qulonglong sz) {
     content_length = sz;
-}
-
-static const char *npp_supports [] = { "urlsource", 0L };
-
-NppProcessInfo::NppProcessInfo (MediaManager *mgr)
- : ProcessInfo ("npp", i18n ("&Ice Ape"), npp_supports, mgr, NULL) {}
-
-IProcess *NppProcessInfo::create (PartBase *p, AudioVideoMedia *media) {
-    NpPlayer *n = new NpPlayer (p, this, p->settings());
-    n->setSource (p->source ());
-    n->media_object = media;
-    p->processCreated (n);
-    return n;
 }
 
 KDE_NO_CDTOR_EXPORT
@@ -2799,6 +2799,8 @@ KDE_NO_EXPORT void NpPlayer::initProcess () {}
 KDE_NO_EXPORT void NpPlayer::stop () {}
 KDE_NO_EXPORT void NpPlayer::quit () { }
 KDE_NO_EXPORT bool NpPlayer::ready () { return false; }
+KDE_NO_EXPORT void NpPlayer::requestGet (const uint32_t, const QString &, QString *) {}
+KDE_NO_EXPORT void NpPlayer::requestCall (const uint32_t, const QString &, const QStringList &, QString *) {}
 KDE_NO_EXPORT void NpPlayer::processOutput (K3Process *, char *, int) {}
 KDE_NO_EXPORT void NpPlayer::processStopped (K3Process *) {}
 KDE_NO_EXPORT void NpPlayer::wroteStdin (K3Process *) {}
