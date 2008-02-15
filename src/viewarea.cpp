@@ -655,7 +655,7 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
     if (!s->surface || s->dirty) {
         Matrix m = matrix;
         m.translate (-x, -y);
-        IRect r (clip_rect.x - (int) x - 1, clip_rect.y - (int) y - 1,
+        IRect r (0, 0, //clip_rect.x - (int) x - 1, clip_rect.y - (int) y - 1,
                 clip_rect.w + 3, clip_rect.h + 3);
         if (!s->surface) {
             s->surface = cairo_surface_create_similar (cairo_surface,
@@ -1546,7 +1546,8 @@ KDE_NO_EXPORT void ViewArea::mouseMoveEvent (QMouseEvent * e) {
     mouseMoved (); // for m_mouse_invisible_timer
 }
 
-KDE_NO_EXPORT void ViewArea::syncVisual (const IRect & rect) {
+KDE_NO_EXPORT void ViewArea::syncVisual () {
+    IRect rect = m_repaint_rect.intersect (IRect (0, 0, width (), height ()));
 #ifdef KMPLAYER_WITH_CAIRO
     if (surface->node) {
         int ex = rect.x;
@@ -1557,24 +1558,58 @@ KDE_NO_EXPORT void ViewArea::syncVisual (const IRect & rect) {
             ey--;
         int ew = rect.w + 2;
         int eh = rect.h + 2;
-        if (!surface->surface)
+        IRect swap_rect;
+        cairo_surface_t *merge = NULL;
+        cairo_pattern_t *pat = NULL;
+        cairo_t *cr = NULL;
+        if (!surface->surface) {
             surface->surface = d->createSurface (width (), height ());
-        {
+            swap_rect = IRect (ex, ey, ew, eh);
             CairoPaintVisitor visitor (surface->surface,
                     Matrix (surface->bounds.x(), surface->bounds.y(), 1.0, 1.0),
-                    IRect (ex, ey, ew, eh),
+                    swap_rect,
                     palette ().color (backgroundRole ()), true);
             surface->node->accept (&visitor);
+            m_update_rect = IRect ();
+        } else if (surface->surface && !rect.isEmpty ()) {
+            merge = cairo_surface_create_similar (surface->surface,
+                    CAIRO_CONTENT_COLOR, ew, eh);
+            Matrix m (surface->bounds.x(), surface->bounds.y(), 1.0, 1.0);
+            m.translate (-ex, -ey);
+            {
+                CairoPaintVisitor visitor (merge, m, IRect (0, 0, ew, eh),
+                        palette ().color (backgroundRole ()), true);
+                surface->node->accept (&visitor);
+            }
+            cr = cairo_create (surface->surface);
+            pat = cairo_pattern_create_for_surface (merge);
+            cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
+            cairo_matrix_t mat;
+            cairo_matrix_init_translate (&mat, (int) -ex, (int) -ey);
+            cairo_pattern_set_matrix (pat, &mat);
+            cairo_set_source (cr, pat);
+            cairo_rectangle (cr, ex, ey, ew, eh);
+            cairo_clip (cr);
+            cairo_paint_with_alpha (cr, .6);
+            swap_rect = IRect (ex, ey, ew, eh);
+            swap_rect = swap_rect.unite (m_update_rect);
+            m_update_rect = IRect (ex, ey, ew, eh);
+        } else {
+            swap_rect = m_update_rect;
+            m_update_rect = IRect ();
         }
-        cairo_surface_flush (surface->surface);
-        d->swapBuffer (ex, ey, ew, eh, ex, ey);
+        d->swapBuffer (swap_rect.x, swap_rect.y, swap_rect.w, swap_rect.h,
+                swap_rect.x, swap_rect.y);
+        if (merge) {
+            cairo_rectangle (cr, ex, ey, ew, eh);
+            cairo_fill (cr);
+            cairo_destroy (cr);
+            cairo_pattern_destroy (pat);
+            cairo_surface_destroy (merge);
+        }
     } else
 #endif
         repaint (QRect(rect.x, rect.y, rect.w, rect.h), false);
-    if (m_repaint_timer) {
-        killTimer (m_repaint_timer);
-        m_repaint_timer = 0;
-    }
 }
 
 KDE_NO_EXPORT void ViewArea::paintEvent (QPaintEvent * pe) {
@@ -1728,7 +1763,7 @@ KDE_NO_EXPORT void ViewArea::scheduleRepaint (const IRect &rect) {
         m_repaint_rect = m_repaint_rect.unite (rect);
     } else {
         m_repaint_rect = rect;
-        m_repaint_timer = startTimer (10); // 100 per sec should do
+        m_repaint_timer = startTimer (25); // 40 per sec should do
     }
 }
 
@@ -1739,10 +1774,13 @@ KDE_NO_EXPORT void ViewArea::timerEvent (QTimerEvent * e) {
         if (m_fullscreen)
             setCursor (QCursor (Qt::BlankCursor));
     } else if (e->timerId () == m_repaint_timer) {
-        killTimer (m_repaint_timer);
-        m_repaint_timer = 0;
         //repaint (m_repaint_rect, false);
-        syncVisual (m_repaint_rect.intersect (IRect (0, 0, width (), height ())));
+        syncVisual ();
+        m_repaint_rect = IRect ();
+        if (m_update_rect.isEmpty ()) {
+            killTimer (m_repaint_timer);
+            m_repaint_timer = 0;
+        }
     } else {
         kError () << "unknown timer " << e->timerId () << " " << m_repaint_timer << endl;
         killTimer (e->timerId ());

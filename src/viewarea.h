@@ -75,7 +75,7 @@ protected:
     bool x11Event (XEvent *e);
     QPaintEngine *paintEngine () const;
 private:
-    void syncVisual (const IRect & rect);
+    void syncVisual ();
     void updateSurfaceBounds ();
     void stopTimers ();
 
@@ -85,6 +85,7 @@ private:
     KActionCollection * m_collection;
     SurfacePtr surface;
     IRect m_repaint_rect;
+    IRect m_update_rect;
     QRect m_topwindow_rect;
     typedef QList <IViewer *> VideoWidgetList;
     VideoWidgetList video_widgets;
