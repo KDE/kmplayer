@@ -325,8 +325,6 @@ public:
     void pause ();
     void unpause ();
 
-    void setupImage ();
-    void updateCachedImage (const QString & url);
     bool wget (const QString &url);
     bool isEmpty () const;
 
@@ -343,6 +341,8 @@ protected:
     void ready (const QString &url);
 
 private:
+    void setupImage ();
+
     QBuffer *buffer;
     QMovie *img_movie;
     int frame_nr;

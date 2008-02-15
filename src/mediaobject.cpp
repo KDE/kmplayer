@@ -628,38 +628,49 @@ void ImageMedia::unpause () {
 }
 
 KDE_NO_EXPORT void ImageMedia::setupImage () {
-    delete img_movie;
-    img_movie = 0L;
-    delete buffer;
-    buffer = 0L;
-
     if (isEmpty () && data.size ()) {
         QImage *pix = new QImage (data);
-        if (!pix->isNull ())
+        if (!pix->isNull ()) {
+            cached_img = ImageDataPtr (new ImageData (url));
             cached_img->setImage (pix);
-        else
+        } else {
             delete pix;
+        }
     }
     if (!isEmpty ()) {
-        cached_img->flags |= (short)ImageData::ImagePixmap; // TODO
         buffer = new QBuffer (&data);
         img_movie = new QMovie (buffer);
-        connect (img_movie, SIGNAL (updated (const QRect &)),
-                this, SLOT (movieUpdated (const QRect &)));
-        connect (img_movie, SIGNAL (stateChanged (QMovie::MovieState)),
-                this, SLOT (movieStatus (QMovie::MovieState)));
-        connect (img_movie, SIGNAL (resized (const QSize &)),
-                this, SLOT (movieResize (const QSize &)));
-        frame_nr = 0;
+        kDebug() << img_movie->frameCount ();
+        if (img_movie->frameCount () > 1) {
+            cached_img->flags |= (short)ImageData::ImagePixmap | ImageData::ImageAnimated;
+            connect (img_movie, SIGNAL (updated (const QRect &)),
+                    this, SLOT (movieUpdated (const QRect &)));
+            connect (img_movie, SIGNAL (stateChanged (QMovie::MovieState)),
+                    this, SLOT (movieStatus (QMovie::MovieState)));
+            connect (img_movie, SIGNAL (resized (const QSize &)),
+                    this, SLOT (movieResize (const QSize &)));
+        } else {
+            delete img_movie;
+            img_movie = 0L;
+            delete buffer;
+            buffer = 0L;
+            frame_nr = 0;
+            cached_img->flags |= (short)ImageData::ImagePixmap;
+            image_data_map->insert (url, ImageDataPtrW (cached_img));
+        }
     }
+    data = QByteArray ();
 }
 
 KDE_NO_EXPORT void ImageMedia::ready (const QString &url) {
     if (data.size ()) {
         QString mime = mimetype ();
         if (!mime.startsWith (QString::fromLatin1 ("text/"))) { // FIXME svg
-            updateCachedImage (url);
-            setupImage ();
+            ImageDataMap::iterator i = image_data_map->find (url);
+            if (i == image_data_map->end ())
+                setupImage ();
+            else
+                cached_img = i.data ();
         }
     }
     MediaObject::ready (url);
@@ -669,25 +680,10 @@ bool ImageMedia::isEmpty () const {
     return !cached_img || cached_img->isEmpty ();
 }
 
-void ImageMedia::updateCachedImage (const QString & url) {
-    if (url.isEmpty ()) {
-        cached_img = new ImageData (url);
-    } else {
-        ImageDataMap::iterator i = image_data_map->find (url);
-        if (i == image_data_map->end ()) {
-            cached_img = ImageDataPtr (new ImageData (url));
-            image_data_map->insert (url, ImageDataPtrW (cached_img));
-        } else {
-            cached_img = i.data ();
-        }
-    }
-}
-
 KDE_NO_EXPORT bool ImageMedia::wget (const QString &str) {
     ImageDataMap::iterator i = image_data_map->find (str);
     if (i != image_data_map->end ()) {
         cached_img = i.data ();
-        setupImage ();
         MediaObject::ready (str);
         return true;
     } else {
@@ -703,7 +699,6 @@ KDE_NO_EXPORT void ImageMedia::movieResize (const QSize &) {
 
 KDE_NO_EXPORT void ImageMedia::movieUpdated (const QRect &) {
     if (frame_nr++) {
-        updateCachedImage (QString ());
         ASSERT (cached_img && isEmpty ());
         QImage *img = new QImage;
         *img = img_movie->framePixmap ();
