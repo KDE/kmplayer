@@ -134,7 +134,7 @@ public:
     IRect unite (const IRect & r) const;
     IRect intersect (const IRect & r) const;
     bool isValid () const { return w >= 0 && h >= 0; }
-    bool isEmpty () const { return w < 0 || h < 0; }
+    bool isEmpty () const { return w <= 0 || h <= 0; }
 };
 
 //-----------------------------------------------------------------------------
