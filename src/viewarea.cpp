@@ -655,7 +655,7 @@ void CairoPaintVisitor::updateExternal (SMIL::MediaType *av, SurfacePtr s) {
     if (!s->surface || s->dirty) {
         Matrix m = matrix;
         m.translate (-x, -y);
-        IRect r (0, 0, //clip_rect.x - (int) x - 1, clip_rect.y - (int) y - 1,
+        IRect r (clip_rect.x - (int) x - 1, clip_rect.y - (int) y - 1,
                 clip_rect.w + 3, clip_rect.h + 3);
         if (!s->surface) {
             s->surface = cairo_surface_create_similar (cairo_surface,
@@ -1571,7 +1571,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual () {
                     palette ().color (backgroundRole ()), true);
             surface->node->accept (&visitor);
             m_update_rect = IRect ();
-        } else if (surface->surface && !rect.isEmpty ()) {
+        } else if (!rect.isEmpty ()) {
             merge = cairo_surface_create_similar (surface->surface,
                     CAIRO_CONTENT_COLOR, ew, eh);
             Matrix m (surface->bounds.x(), surface->bounds.y(), 1.0, 1.0);
@@ -1591,8 +1591,7 @@ KDE_NO_EXPORT void ViewArea::syncVisual () {
             cairo_rectangle (cr, ex, ey, ew, eh);
             cairo_clip (cr);
             cairo_paint_with_alpha (cr, .6);
-            swap_rect = IRect (ex, ey, ew, eh);
-            swap_rect = swap_rect.unite (m_update_rect);
+            swap_rect = IRect (ex, ey, ew, eh).unite (m_update_rect);
             m_update_rect = IRect (ex, ey, ew, eh);
         } else {
             swap_rect = m_update_rect;
@@ -1763,7 +1762,7 @@ KDE_NO_EXPORT void ViewArea::scheduleRepaint (const IRect &rect) {
         m_repaint_rect = m_repaint_rect.unite (rect);
     } else {
         m_repaint_rect = rect;
-        m_repaint_timer = startTimer (25); // 40 per sec should do
+        m_repaint_timer = startTimer (12); // 50 per with one oversample
     }
 }
 
