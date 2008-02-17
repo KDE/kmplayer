@@ -96,6 +96,7 @@ void ImageData::copyImage (Surface *s, int w, int h, cairo_surface_t *similar) {
             cairo_pattern_t *pat = cairo_pattern_create_for_surface (src_sf);
             cairo_pattern_set_extend (pat, CAIRO_EXTEND_NONE);
             cairo_t *cr = cairo_create (surface);
+            cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
             cairo_set_source (cr, pat);
             cairo_paint (cr);
             cairo_destroy (cr);
@@ -274,7 +275,7 @@ CairoPaintVisitor::CairoPaintVisitor (cairo_surface_t * cs, Matrix m,
     cr = cairo_create (cs);
     if (toplevel) {
         cairo_rectangle (cr, rect.x, rect.y, rect.w, rect.h);
-        //cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+        cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
         cairo_set_tolerance (cr, 0.5 );
         //cairo_push_group (cr);
         cairo_set_source_rgb (cr,
@@ -398,6 +399,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
                 matrix.getXYWH (x1, y1, w, h);
                 if (!s->surface)
                     bg_img->copyImage (s, w, h, cairo_surface);
+                if (bg_img->has_alpha)
+                    cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
                 cairo_pattern_t *pat = cairo_pattern_create_for_surface (s->surface);
                 cairo_pattern_set_extend (pat, CAIRO_EXTEND_REPEAT);
                 cairo_matrix_t mat;
@@ -407,6 +410,8 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Region * reg) {
                 cairo_rectangle (cr, clip.x, clip.y, clip.w, clip.h);
                 cairo_fill (cr);
                 cairo_pattern_destroy (pat);
+                if (bg_img->has_alpha)
+                    cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
             }
             cairo_restore (cr);
         }
@@ -603,8 +608,11 @@ KDE_NO_EXPORT void CairoPaintVisitor::paint (SMIL::MediaType *mt, Surface *s,
     }
     opacity *= mt->opacity / 100.0;
     if (opacity < 0.99) {
+        cairo_operator_t op = cairo_get_operator (cr);
+        cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
         cairo_clip (cr);
         cairo_paint_with_alpha (cr, opacity);
+        cairo_set_operator (cr, op);
     } else {
         cairo_fill (cr);
     }
@@ -705,7 +713,11 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::ImageMediaType * img) {
         return;
     if (!s->surface || s->dirty)
         id->copyImage (s, w, h, cairo_surface);
+    if (id->has_alpha)
+        cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
     paint (img, s, x, y, clip_rect);
+    if (id->has_alpha)
+        cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
     s->dirty = false;
 }
 
@@ -820,6 +832,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::TextMediaType * txt) {
         cairo_t * cr_txt = cairo_create (s->surface);
         cairo_set_font_size (cr_txt, scale * txt->font_size);
         if (txt->bg_opacity) { // TODO real alpha
+            cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
             CAIRO_SET_SOURCE_RGB (cr_txt, txt->background_color);
             cairo_paint (cr_txt);
         }
@@ -875,15 +888,19 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Brush * brush) {
             cairo_rectangle (cr, (int) x, (int) y, (int) w, (int) h);
         }
         opacity *= brush->opacity / 100.0;
-        if (opacity < 0.99)
+        if (opacity < 0.99) {
+            cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
             cairo_set_source_rgba (cr,
                     1.0 * ((color >> 16) & 0xff) / 255,
                     1.0 * ((color >> 8) & 0xff) / 255,
                     1.0 * (color & 0xff) / 255,
                     opacity);
-        else
+        } else {
             CAIRO_SET_SOURCE_RGB (cr, color);
+        }
         cairo_fill (cr);
+        if (opacity < 0.99)
+            cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
         s->dirty = false;
         cairo_restore (cr);
     }
@@ -1600,12 +1617,14 @@ KDE_NO_EXPORT void ViewArea::syncVisual () {
         d->swapBuffer (swap_rect.x, swap_rect.y, swap_rect.w, swap_rect.h,
                 swap_rect.x, swap_rect.y);
         if (merge) {
+            cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
             cairo_rectangle (cr, ex, ey, ew, eh);
             cairo_fill (cr);
             cairo_destroy (cr);
             cairo_pattern_destroy (pat);
             cairo_surface_destroy (merge);
         }
+        cairo_surface_flush (surface->surface);
     } else
 #endif
         repaint (QRect(rect.x, rect.y, rect.w, rect.h), false);
