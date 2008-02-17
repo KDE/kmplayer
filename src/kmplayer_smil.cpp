@@ -2197,7 +2197,10 @@ void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
         else
             sensitivity = sens_opaque;
     } else if (sizes.setSizeParam (para, val, update_surface)) {
-        if (!update_surface && fit_hidden == fit &&
+        SMIL::RegionBase *rb = convertNode <SMIL::RegionBase> (region_node);
+        Fit ft = rb && fit_default == fit ? rb->fit : fit;
+        if (!update_surface &&
+                (fit_default == fit || fit_hidden == fit) &&
                 sub_surface
 #ifdef KMPLAYER_WITH_CAIRO
                 && sub_surface->surface
