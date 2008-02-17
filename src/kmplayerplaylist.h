@@ -234,6 +234,7 @@ ITEM_AS_POINTER(KMPlayer::Attribute)
  * Object should scale according the passed Fit value in SizedEvent
  */
 enum Fit {
+    fit_default,   // fill hidden
     fit_fill,      // fill complete area, no aspect preservation
     fit_hidden,    // keep aspect and don't scale, cut off what doesn't fit
     fit_meet,      // keep aspect and scale so that the smallest size just fits
