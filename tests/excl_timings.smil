@@ -2,41 +2,47 @@
   <head>
     <meta name="title" content="excl group test"/>
     <layout>
-      <root-layout width="320" height="240" background-color="yellow"/>
-      <region id="reg_but1" left="5" top="15" width="80" height="30" background-color="red"/>
-      <region id="reg_but2" left="5" top="55" width="80" height="30" background-color="red"/>
-      <region id="reg_but3" left="5" top="95" width="80" height="30" background-color="red"/>
+      <root-layout width="320" height="240" background-color="goldenrod"/>
+      <region id="reg_but1" left="5" top="15" width="80" height="30" background-color="MistyRose"/>
+      <region id="reg_but2" left="5" top="55" width="80" height="30" background-color="MistyRose"/>
+      <region id="reg_but3" left="5" top="95" width="80" height="30" background-color="MistyRose"/>
       <region left="5" top="135" width="80" height="40">
         <region id="reg_text" left="5" top="0" width="70" height="18""/>
         <region id="reg_ext" left="5" top="22" width="30" height="18""/>
         <region id="reg_int" left="45" top="22" width="30" height="18"/>
       </region>
-      <region id="reg_but4" left="5" top="185" width="80" height="30" background-color="red"/>
-      <region left="95" top="15" width="210" height="210" background-color="blue">
+      <region id="reg_but4" left="5" top="185" width="80" height="30" background-color="IndianRed"/>
+      <region left="95" top="15" width="210" height="210" background-color="steelblue">
         <region id="reg_img" left="5" top="5" width="64" height="24" background-color="orange"/>
       </region>
     </layout>
   </head>
   <body>
     <par end="but4.activateEvent">
-      <text src="data:,Horizontal" id="but1" region="reg_but1" fill="freeze">
+      <text src="data:,Horizontal" id="but1" region="reg_but1" fill="freeze"
+            regPoint="midLeft" regAlign="midLeft">
         <param name="fontColor" value="yellow"/>
         <param name="fontSize" value="+1"/>
-        <param name="backgroundColor" value="blue"/>
+        <param name="backgroundColor" value="navy"/>
       </text>
-      <set targetElement="but1" attributeName="backgroundColor" to="red" begin="but1.activateEvent" dur="0.1"/>
-      <text src="data:,Vertical" id="but2" region="reg_but2" fill="freeze">
+      <set targetElement="reg_but1" attributeName="background-color" to="red"
+           begin="reg_but1.activateEvent" dur="0.1"/>
+      <text src="data:,Vertical" id="but2" region="reg_but2" fill="freeze"
+            regPoint="topMid" regAlign="topMid">
         <param name="fontColor" value="yellow"/>
         <param name="fontSize" value="+1"/>
-        <param name="backgroundColor" value="blue"/>
+        <param name="backgroundColor" value="navy"/>
       </text>
-      <set targetElement="but2" attributeName="backgroundColor" to="red" begin="but2.activateEvent" dur="0.1"/>
-      <text src="data:,Diagonal" id="but3" region="reg_but3" fill="freeze">
+      <set targetElement="reg_but2" attributeName="background-color" to="red"
+           begin="reg_but2.activateEvent" dur="0.1"/>
+      <text src="data:,Diagonal" id="but3" region="reg_but3" fill="freeze"
+            regPoint="center" regAlign="center">
         <param name="fontColor" value="yellow"/>
         <param name="fontSize" value="+1"/>
-        <param name="backgroundColor" value="blue"/>
+        <param name="backgroundColor" value="navy"/>
       </text>
-      <set targetElement="but3" attributeName="backgroundColor" to="red" begin="but3.activateEvent" dur="0.1"/>
+      <set targetElement="reg_but3" attributeName="background-color" to="red"
+           begin="reg_but3.activateEvent" dur="0.1"/>
       <text src="data:,Repeat" id="but_rep" region="reg_text" fill="freeze">
         <param name="backgroundColor" value="cyan"/>
       </text>
@@ -62,7 +68,8 @@
         <set targetElement="vid" attributeName="src" to="img_scale.smil"
            begin="but_int.activateEvent" dur="indefinite"/>
       </excl>
-      <text src="data:,Stop" id="but4" region="reg_but4" fill="freeze">
+      <text src="data:,Stop" id="but4" region="reg_but4" fill="freeze"
+            regPoint="center" regAlign="center">
         <param name="fontColor" value="green"/>
         <param name="fontSize" value="+1"/>
         <param name="backgroundColor" value="red"/>

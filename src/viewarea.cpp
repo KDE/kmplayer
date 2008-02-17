@@ -1622,7 +1622,9 @@ KDE_NO_EXPORT void ViewArea::syncVisual () {
             cairo_matrix_init_translate (&mat, (int) -ex, (int) -ey);
             cairo_pattern_set_matrix (pat, &mat);
             cairo_set_source (cr, pat);
+            //cairo_set_operator (cr, CAIRO_OPERATOR_ADD);
             cairo_rectangle (cr, ex, ey, ew, eh);
+            //cairo_fill (cr);
             cairo_clip (cr);
             cairo_paint_with_alpha (cr, .6);
             swap_rect = IRect (ex, ey, ew, eh).unite (m_update_rect);
