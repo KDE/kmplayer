@@ -485,8 +485,7 @@ KDE_NO_EXPORT void CairoPaintVisitor::visit (SMIL::Transition *trans) {
         else //if (SMIL::Transition::SubFromLeft == trans->sub_type)
             dx = -(int) ((1.0 - perc) * clip.w);
         cairo_matrix_translate (&cur_mat, -dx, -dy);
-        IRect rect = clip.intersect (IRect (clip.x + dx, clip.y + dy,
-                    clip.w - dx, clip.h - dy));
+        IRect rect = clip.intersect (IRect (clip.x + dx, clip.y + dy, clip.w, clip.h));
         cairo_rectangle (cr, rect.x, rect.y, rect.w, rect.h);
         CAIRO_SET_PATTERN_COND(cr, cur_pat, cur_mat)
     } else if (SMIL::Transition::IrisWipe == trans->type) {
