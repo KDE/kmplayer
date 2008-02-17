@@ -2639,7 +2639,7 @@ KDE_NO_EXPORT void SMIL::ImageMediaType::activate () {
 
 KDE_NO_EXPORT void SMIL::ImageMediaType::begin () {
     ImageMedia *im = static_cast <ImageMedia *> (media_object);
-    if (im->downloading ()) {
+    if (im && im->downloading ()) { // FIXME we shouldn't loose media_object after a pause
         postpone_lock = document ()->postpone ();
         state = state_began;
         return;
@@ -2793,7 +2793,7 @@ SMIL::TextMediaType::parseParam (const TrieString &name, const QString &val) {
 
 KDE_NO_EXPORT void SMIL::TextMediaType::begin () {
     TextMedia *tm = static_cast <TextMedia *> (media_object);
-    if (tm->downloading ()) {
+    if (tm && tm->downloading ()) { // FIXME we shouldn't loose media_object after a pause
         postpone_lock = document ()->postpone ();
         state = state_began;
         return;
