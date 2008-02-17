@@ -144,6 +144,7 @@ public:
 
     SurfacePtr createSurface (NodePtr owner, const SRect & rect);
     IRect toScreen (Single x, Single y, Single w, Single h);
+    IRect clipToScreen (Single x, Single y, Single w, Single h);
     void resize (const SRect & rect);
     void repaint ();
     void repaint (const SRect &rect);
@@ -193,17 +194,33 @@ KDE_NO_EXPORT IRect ViewSurface::toScreen (Single x, Single y, Single w, Single 
     return IRect (x, y, w, h);
 }
 
+KDE_NO_EXPORT IRect ViewSurface::clipToScreen (Single x, Single y, Single w, Single h) {
+    Matrix m (0, 0, xscale, yscale);
+    m.translate (bounds.x (), bounds.y ());
+    m.getXYWH (x, y, w, h);
+    SRect r = bounds.intersect (SRect (x, y, w, h));
+    x= r.x (), y = r.y (), w = r.width (), h = r.height ();
+    for (SurfacePtr s = parentNode (); s; s = s->parentNode ()) {
+        m = Matrix (0, 0, s->xscale, s->yscale);
+        m.translate (s->bounds.x (), s->bounds.y ());
+        m.getXYWH (x, y, w, h);
+        r = SRect (s->bounds).intersect (SRect (x, y, w, h));
+        x= r.x (); y = r.y (); w = r.width (); h = r.height ();
+    }
+    return IRect (x, y, w, h);
+}
+
 KDE_NO_EXPORT
 void ViewSurface::repaint (const SRect &r) {
     markDirty ();
-    view_widget->scheduleRepaint (toScreen (r.x (), r.y (), r.width (), r.height ()));
+    view_widget->scheduleRepaint (clipToScreen (r.x (), r.y (), r.width (), r.height ()));
     //kDebug() << "Surface::repaint x:" << (int)x << " y:" << (int)y << " w:" << (int)w << " h:" << (int)h;
 }
 
 KDE_NO_EXPORT
 void ViewSurface::repaint () {
     markDirty ();
-    view_widget->scheduleRepaint (toScreen (0, 0, bounds.width (), bounds.height ()));
+    view_widget->scheduleRepaint (clipToScreen (0, 0, bounds.width (), bounds.height ()));
 }
 
 KDE_NO_EXPORT void ViewSurface::video (Mrl *m) {
