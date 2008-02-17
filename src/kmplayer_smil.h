@@ -266,6 +266,7 @@ public:
     unsigned int background_color;
     QString background_image;
     ShowBackground show_background;
+    Fit fit;
 protected:
     RegionBase (NodePtr & d, short id);
     PostponePtr postpone_lock;               // pause while loading bg image

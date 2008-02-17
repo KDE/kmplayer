@@ -173,6 +173,25 @@ static NodePtr findLocalNodeById (NodePtr n, const QString & id) {
     return 0L;
 }
 
+static Fit parseFit (const char *cval) {
+    Fit fit;
+    if (!cval)
+        fit = fit_hidden;
+    else if (!strcmp (cval, "fill"))
+        fit = fit_fill;
+    else if (!strcmp (cval, "hidden"))
+        fit = fit_hidden;
+    else if (!strcmp (cval, "meet"))
+        fit = fit_meet;
+    else if (!strcmp (cval, "scroll"))
+        fit = fit_scroll;
+    else if (!strcmp (cval, "slice"))
+        fit = fit_slice;
+    else
+        fit = fit_hidden;
+    return fit;
+}
+
 //-----------------------------------------------------------------------------
 
 KDE_NO_CDTOR_EXPORT ToBeStartedEvent::ToBeStartedEvent (NodePtr n)
@@ -1175,6 +1194,7 @@ KDE_NO_CDTOR_EXPORT SMIL::RegionBase::~RegionBase () {
 
 KDE_NO_EXPORT void SMIL::RegionBase::activate () {
     show_background = ShowAlways;
+    fit = fit_default;
     init ();
     setState (state_activated);
     for (NodePtr r = firstChild (); r; r = r->nextSibling ())
@@ -1311,6 +1331,9 @@ void SMIL::RegionBase::parseParam (const TrieString & name, const QString & val)
             else
                 need_repaint = true;
         }
+    } else if (name == "fit") {
+        fit = parseFit (val.ascii ());
+        need_repaint = true;
     }
     if (need_repaint && active () && surface() && region_surface->parentNode ())
         region_surface->parentNode ()->repaint (rect);
@@ -2151,21 +2174,7 @@ KDE_NO_EXPORT
 void SMIL::MediaType::parseParam (const TrieString &para, const QString & val) {
     bool update_surface = true;
     if (para == "fit") {
-        const char * cval = val.ascii ();
-        if (!cval)
-            fit = fit_hidden;
-        else if (!strcmp (cval, "fill"))
-            fit = fit_fill;
-        else if (!strcmp (cval, "hidden"))
-            fit = fit_hidden;
-        else if (!strcmp (cval, "meet"))
-            fit = fit_meet;
-        else if (!strcmp (cval, "scroll"))
-            fit = fit_scroll;
-        else if (!strcmp (cval, "slice"))
-            fit = fit_slice;
-        else
-            fit = fit_hidden;
+        fit = parseFit (val.ascii ());
     } else if (para == "rn:mediaOpacity") {
         opacity = (int) SizeType (val).size (100);
     } else if (para == "system-bitrate") {
@@ -2220,7 +2229,7 @@ KDE_NO_EXPORT void SMIL::MediaType::boundsUpdate () {
 KDE_NO_EXPORT void SMIL::MediaType::init () {
     if (!inited) {
         trans_out_active = false;
-        fit = fit_hidden;
+        fit = fit_default;
         opacity = 100;
         TimedMrl::init (); // sets all attributes
     }
@@ -2420,8 +2429,9 @@ KDE_NO_EXPORT SRect SMIL::MediaType::calculateBounds () {
         SRect rr = rb->region_surface->bounds;
         Single x, y, w = width, h = height;
         sizes.calcSizes (this, rr.width(), rr.height(), x, y, w, h);
+        Fit ft = fit_default == fit ? rb->fit : fit;
         if (width > 0 && height > 0 && w > 0 && h > 0)
-            switch (fit) {
+            switch (ft) {
                 case fit_meet: {
                     float iasp = 1.0 * width / height;
                     float rasp = 1.0 * w / h;
@@ -2432,6 +2442,7 @@ KDE_NO_EXPORT SRect SMIL::MediaType::calculateBounds () {
                     break;
                 }
                 case fit_scroll:
+                case fit_default:
                 case fit_hidden:
                      w = width;
                      h = height;
