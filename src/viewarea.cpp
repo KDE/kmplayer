@@ -121,6 +121,8 @@ void ImageData::copyImage (Surface *s, int w, int h, cairo_surface_t *similar) {
                 CAIRO_CONTENT_COLOR_ALPHA : CAIRO_CONTENT_COLOR, w, h);
     cairo_t *cr = cairo_create (s->surface);
     cairo_set_source (cr, img_pat);
+    if (!has_alpha)
+        cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
     cairo_paint (cr);
     cairo_destroy (cr);
 
