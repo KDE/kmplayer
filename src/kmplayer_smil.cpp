@@ -3302,6 +3302,8 @@ bool SMIL::AnimateMotion::checkTarget (Node *n) {
 
 bool SMIL::AnimateMotion::getCoordinates (const QString &coord, SizeType &x, SizeType &y) {
     int p = coord.find (QChar (','));
+    if (p < 0)
+        p = coord.find (QChar (' '));
     if (p > 0) {
         x = coord.left (p).stripWhiteSpace ();
         y = coord.mid (p + 1).stripWhiteSpace ();
