@@ -135,32 +135,98 @@ AM_CONDITIONAL(include_kgstplayer, [test "x$have_gst" = "xyes" && test "x$have_g
 buildnpp=yes
 LIBNSPR_LIBS=""
 LIBNSPR_CFLAGS=""
-LIBQTDBUS=""
-LIBDBUS_CFLAGS=""
 AC_ARG_ENABLE(nspr, [  --enable-npplayer    Enables building with npp support],
 [if test "x$enableval" == "xno"; then
         buildnpp=no
     fi])
 if test "$buildnpp" = "yes"; then
-    if test "$PKGCONFIGFOUND" = "yes" ; then
-        DBUS_REQ=1.0.0
-        PKG_CHECK_MODULES(DBUS, dbus-1 >= $DBUS_REQ,
-                          have_dbus=yes,have_dbus=no)
-        if test "x$have_dbus" = "xyes"; then
+
+    ########### Check for DBus
+
+    AC_MSG_CHECKING(for DBus)
+
+    dbus_inc=NOTFOUND
+    dbus_lib=NOTFOUND
+    dbus=NOTFOUND
+
+    search_incs="$kde_includes $kde_includes/dbus-1.0 /usr/include /usr/include/dbus-1.0 /usr/local/include /usr/local/include/dbus-1.0"
+    AC_FIND_FILE(dbus/dbus.h, $search_incs, dbus_incdir)
+
+    search_incs_arch_deps="$kde_includes /usr/lib64/dbus-1.0/include /usr/lib/dbus-1.0/include /usr/local/lib/dbus-1.0/include"
+    AC_FIND_FILE(dbus/dbus-arch-deps.h, $search_incs_arch_deps, dbus_incdir_arch_deps)
+
+    if [test -r $dbus_incdir/dbus/dbus.h] && [test -r $dbus_incdir_arch_deps/dbus/dbus-arch-deps.h] ; then
+      DBUS_INCS="-I$dbus_incdir -I$dbus_incdir_arch_deps"
+      dbus_inc=FOUND
+    fi
+
+    search_libs="$kde_libraries /usr/lib64 /usr/lib /usr/local/lib /lib /lib64"
+    AC_FIND_FILE(libdbus-1.so, $search_libs, dbus_libdir)
+
+    if test -r $dbus_libdir/libdbus-1.so ; then
+      DBUS_LIBS="-L$dbus_libdir -ldbus-1"
+      dbus_lib=FOUND
+    fi
+
+    if [test $dbus_inc = FOUND] && [test $dbus_lib = FOUND] ; then
+      AC_MSG_RESULT(headers $dbus_incdir $dbus_incdir_arch_deps  libraries $dbus_libdir)
+      dbus=FOUND
+    else
+      AC_MSG_RESULT(searched but not found)
+    fi
+
+    AC_SUBST(DBUS_INCS)
+    AC_SUBST(DBUS_LIBS)
+
+    ########### Check for DBus-Qt bindings
+
+    AC_MSG_CHECKING(for DBus-Qt bindings)
+
+    dbusqt_inc=NOTFOUND
+    dbusqt_lib=NOTFOUND
+    dbusqt=NOTFOUND
+
+    search_incs="$kde_includes $kde_includes/dbus-1.0 /usr/include /usr/include/dbus-1.0 /usr/local/include /usr/local/include/dbus-1.0"
+    AC_FIND_FILE(dbus/connection.h, $search_incs, dbusqt_incdir)
+
+    if test -r $dbusqt_incdir/dbus/connection.h ; then
+      have_qt_patch=0
+      grep dbus_connection_setup_with_qt_main $dbusqt_incdir/dbus/connection.h \
+      > /dev/null 2>&1 && have_qt_patch=1
+      if test $have_qt_patch = 1 ; then
+        DBUSQT_INCS="-I$dbusqt_incdir"
+        dbusqt_inc=FOUND
+      fi
+    fi
+
+    search_libs="$kde_libraries /usr/lib /usr/lib64 /usr/local/lib"
+    AC_FIND_FILE(libdbus-qt-1.so, $search_libs, dbusqt_libdir)
+
+    if test -r $dbusqt_libdir/libdbus-qt-1.so ; then
+      DBUSQT_LIBS="-L$dbusqt_libdir -ldbus-qt-1"
+      dbusqt_lib=FOUND
+    fi
+
+    if [test $dbusqt_inc = FOUND] && [test $dbusqt_lib = FOUND] ; then
+      AC_MSG_RESULT(headers $dbusqt_incdir libraries $dbusqt_libdir)
+      dbusqt=FOUND
+    else
+      AC_MSG_RESULT(searched but not found)
+    fi
+
+    AC_SUBST(DBUSQT_INCS)
+    AC_SUBST(DBUSQT_LIBS)
+
+    if test "$dbusqt" = "FOUND" ; then
+            AC_DEFINE(HAVE_DBUS, 1, [have D-Bus])
             have_nspr=yes
-            AC_DEFINE(HAVE_DBUS, 1, [have DBus])
-            LIBQTDBUS="`$PKG_CONFIG --libs dbus-1` -ldbus-qt-1"
-	    LIBDBUS_CFLAGS="`$PKG_CONFIG --cflags dbus-1`"
             AC_DEFINE(HAVE_NSPR, 1, [build Netscape plugin loader])
             LIBNSPR_LIBS="`$PKG_CONFIG --libs gtk+-x11-2.0` `$PKG_CONFIG --libs dbus-glib-1` `$PKG_CONFIG --libs gthread-2.0`"
             LIBNSPR_CFLAGS="`$PKG_CONFIG --cflags gtk+-x11-2.0` `$PKG_CONFIG --cflags dbus-glib-1`"
-        fi
     fi
 fi
 AC_SUBST(LIBNSPR_LIBS)
 AC_SUBST(LIBNSPR_CFLAGS)
-AC_SUBST(LIBQTDBUS)
-AC_SUBST(LIBDBUS_CFLAGS)
 
 AM_CONDITIONAL(include_knpplayer, test "$have_nspr" = "yes")
 
