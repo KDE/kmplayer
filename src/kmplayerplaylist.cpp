@@ -1016,7 +1016,10 @@ Event *Document::postEvent (Node *n, Event *e) {
     int ms = e->id () == event_timer ? static_cast <TimerEvent *> (e)->milli_sec : 0;
     struct timeval now, tv;
     timeOfDay (now);
-    tv = now;
+    if (cur_event)
+        tv = cur_event->timeout;
+    else
+        tv = now;
     addTime (tv, ms);
     insertEvent (n, e, tv);
     if (postpone_ref || event_queue->event.ptr () == e)
@@ -1036,7 +1039,8 @@ void Document::cancelEvent (Event *e) {
                 } else {
                     event_queue = ed->next;
                     struct timeval now;
-                    timeOfDay (now);
+                    if (!cur_event && event_queue) // save a sys call
+                        timeOfDay (now);
                     setNextTimeout (now);
                 }
                 delete ed;
