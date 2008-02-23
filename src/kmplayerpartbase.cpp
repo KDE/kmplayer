@@ -335,10 +335,7 @@ void PartBase::updatePlayerMenu (ControlPanel *panel, const QString &backend) {
     if (!m_view)
         return;
     QMenu *menu = panel->playerMenu;
-    QList <QAction *> actions = menu->actions ();
-    for (QList <QAction *>::iterator i = actions.begin (); i != actions.end (); ++i)
-        delete *i;
-    actions.clear ();
+    menu->clear ();
     MediaManager::ProcessInfoMap &pinfos = m_media_manager->processInfos ();
     const MediaManager::ProcessInfoMap::const_iterator e = pinfos.end();
     int id = 0; // if multiple parts, id's should be the same for all menu's

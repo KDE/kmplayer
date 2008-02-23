@@ -3135,7 +3135,8 @@ KDE_NO_CDTOR_EXPORT SMIL::AnimateMotion::AnimateMotion (NodePtr &d)
    steps (0) {}
 
 KDE_NO_CDTOR_EXPORT SMIL::AnimateMotion::~AnimateMotion () {
-    delete keytimes;
+    if (keytimes)
+        free (keytimes);
 }
 
 KDE_NO_EXPORT void SMIL::AnimateMotion::init () {
@@ -3149,11 +3150,13 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::init () {
         change_from.truncate (0);
         change_by.truncate (0);
         values.clear ();
-        delete keytimes;
+        if (keytimes)
+            free (keytimes);
         keytimes = NULL;
         keytime_count = 0;
         splines.clear ();
         steps = 0;
+        cur_step = 0;
         cur_x = cur_y = delta_x = delta_y = SizeType();
         AnimateGroup::init ();
     }
@@ -3218,8 +3221,7 @@ KDE_NO_EXPORT void SMIL::AnimateMotion::finish () {
     if (anim_timer) // make sure timers are stopped
         document ()->cancelEvent (anim_timer);
     ASSERT (!anim_timer);
-    if (cur_step < steps && active () ||
-            (interval > 1 && calcMode == calc_discrete)) {
+    if (active () && (cur_step < steps || (interval > 1 && calcMode == calc_discrete))) {
         steps = 0;
         if (cur_x.size () != end_x.size () || cur_y.size () != end_y.size ()) {
             cur_x = end_x;
@@ -3258,9 +3260,14 @@ void SMIL::AnimateMotion::parseParam (const TrieString &name, const QString &val
         values = QStringList::split (QString (";"), val);
     } else if (name == "keyTimes") {
         QStringList kts = QStringList::split (QString (";"), val);
-        delete keytimes;
+        if (keytimes)
+            free (keytimes);
         keytime_count = kts.size ();
-        keytimes = new float [keytime_count];
+        if (0 == keytime_count) {
+            keytimes = NULL;
+            return;
+        }
+        keytimes = (float *) malloc (sizeof (float) * keytime_count);
         for (int i = 0; i < keytime_count; i++) {
             keytimes[i] = kts[i].stripWhiteSpace().toDouble();
             if (keytimes[i] < 0.0 || keytimes[i] > 1.0)
@@ -3269,7 +3276,7 @@ void SMIL::AnimateMotion::parseParam (const TrieString &name, const QString &val
                 kWarning() << "animateMotion first keyTimes value not 0" << endl;
             else
                 continue;
-            delete keytimes;
+            free (keytimes);
             keytimes = NULL;
             keytime_count = 0;
             return;

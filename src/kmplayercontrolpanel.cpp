@@ -396,14 +396,14 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
 
     popupMenu = new KMPlayerPopupMenu (this, QString ());
 
-    playerMenu = new KMPlayerPopupMenu (NULL, i18n ("&Play with"));
+    playerMenu = new KMPlayerPopupMenu (this, i18n ("&Play with"));
     playersAction = popupMenu->addMenu (playerMenu);
 
     videoConsoleAction = popupMenu->addAction (KIcon ("utilities-terminal"), i18n ("Con&sole"));
 
     playlistAction = popupMenu->addAction (KIcon ("view-media-playlist"), i18n ("Play&list"));
 
-    zoomMenu = new KMPlayerPopupMenu (NULL, i18n ("&Zoom"));
+    zoomMenu = new KMPlayerPopupMenu (this, i18n ("&Zoom"));
     zoomAction = popupMenu->addMenu (zoomMenu);
     zoomAction->setIcon (KIconLoader::global ()->loadIconSet (
                 QString ("zoom-best-fit"), KIconLoader::Small, 0, false));
@@ -416,7 +416,7 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
 
     popupMenu->addSeparator ();
 
-    colorMenu = new KMPlayerPopupMenu (NULL, i18n ("Co&lors"));
+    colorMenu = new KMPlayerPopupMenu (this, i18n ("Co&lors"));
     colorAction = popupMenu->addMenu (colorMenu);
     colorAction->setIcon (KIconLoader::global ()->loadIconSet (
                 QString ("format-fill-color"), KIconLoader::Small, 0, true));
@@ -437,14 +437,14 @@ KDE_NO_CDTOR_EXPORT ControlPanel::ControlPanel(QWidget * parent, View * view)
     m_saturationSlider = new QSlider (-100, 100, 10, 0, Qt::Horizontal, colorMenu);
     colorMenu->insertItem (m_saturationSlider);*/
 
-    bookmarkMenu = new KMPlayerPopupMenu (NULL, i18n("&Bookmarks"));
+    bookmarkMenu = new KMPlayerPopupMenu (this, i18n("&Bookmarks"));
     bookmarkAction = popupMenu->addMenu (bookmarkMenu);
     //bookmarkAction->setVisible (false);
 
-    languageMenu = new KMPlayerPopupMenu (NULL, i18n ("&Audio languages"));
+    languageMenu = new KMPlayerPopupMenu (this, i18n ("&Audio languages"));
     languageAction = popupMenu->addMenu (languageMenu);
-    audioMenu = new KMPlayerPopupMenu (NULL, i18n ("&Audio languages"));
-    subtitleMenu = new KMPlayerPopupMenu (NULL, i18n ("&Subtitles"));
+    audioMenu = new KMPlayerPopupMenu (this, i18n ("&Audio languages"));
+    subtitleMenu = new KMPlayerPopupMenu (this, i18n ("&Subtitles"));
     QAction *audioAction = languageMenu->addMenu (audioMenu);
     QAction *subtitleAction = languageMenu->addMenu (subtitleMenu);
     audioAction->setIcon (KIconLoader::global ()->loadIconSet (
