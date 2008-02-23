@@ -116,7 +116,7 @@ KDE_NO_EXPORT void Connection::disconnect () {
 
 KDE_NO_CDTOR_EXPORT
 TimerEvent::TimerEvent (int ms, unsigned eid)
- : Event (event_timer), event_id (eid), milli_sec (ms), interval (false) {}
+ : Event (NULL, event_timer), event_id (eid), milli_sec (ms), interval (false) {}
 
 //-----------------------------------------------------------------------------
 
@@ -456,7 +456,8 @@ NodeRefListPtr Node::listeners (unsigned int /*event_id*/) {
 
 bool Node::handleEvent (Event * /*event*/) { return false; }
 
-KDE_NO_EXPORT void Node::propagateEvent (EventPtr event) {
+KDE_NO_EXPORT void Node::propagateEvent (Event *event) {
+    EventPtr store (event);
     NodeRefListPtr nl = listeners (event->id ());
     if (nl)
         for (NodeRefItemPtr c = nl->first(); c; c = c->nextSibling ())
@@ -970,7 +971,9 @@ void Document::timeOfDay (struct timeval & tv) {
 }
 
 static bool postponedSensible (Event *e) {
-    return e->id () == event_timer;
+    return e->id () == event_timer ||
+        e->id () == event_started ||
+        e->id () == event_stopped;
 }
 
 void Document::insertEvent (Node *n, Event *e, const struct timeval &tv) {

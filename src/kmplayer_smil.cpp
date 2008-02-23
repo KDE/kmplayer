@@ -44,8 +44,8 @@ namespace KMPlayer {
 static const unsigned int event_activated = (unsigned int) Runtime::dur_activated;
 const unsigned int event_inbounds = (unsigned int) Runtime::dur_inbounds;
 const unsigned int event_outbounds = (unsigned int) Runtime::dur_outbounds;
-static const unsigned int event_stopped = (unsigned int) Runtime::dur_end;
-static const unsigned int event_started = (unsigned int)Runtime::dur_start;
+const unsigned int event_stopped = (unsigned int) Runtime::dur_end;
+const unsigned int event_started = (unsigned int)Runtime::dur_start;
 static const unsigned int event_to_be_started = 1 + (unsigned int) Runtime::dur_last_dur;
 const unsigned int event_pointer_clicked = (unsigned int) event_activated;
 const unsigned int event_pointer_moved = (unsigned int) -11;
@@ -53,8 +53,6 @@ const unsigned int event_timer = (unsigned int) -12;
 const unsigned int event_postponed = (unsigned int) -13;
 const unsigned int mediatype_attached = (unsigned int) -14;
 
-static const unsigned int started_timer_id = (unsigned int) 1;
-static const unsigned int stopped_timer_id = (unsigned int) 2;
 static const unsigned int start_timer_id = (unsigned int) 3;
 static const unsigned int dur_timer_id = (unsigned int) 4;
 static const unsigned int anim_timer_id = (unsigned int) 5;
@@ -194,11 +192,8 @@ static Fit parseFit (const char *cval) {
 
 //-----------------------------------------------------------------------------
 
-KDE_NO_CDTOR_EXPORT ToBeStartedEvent::ToBeStartedEvent (NodePtr n)
- : Event (event_to_be_started), node (n) {}
-
 PostponedEvent::PostponedEvent (bool postponed)
- : Event (event_postponed), is_postponed (postponed) {}
+ : Event (NULL, event_postponed), is_postponed (postponed) {}
 
 //-----------------------------------------------------------------------------
 
@@ -483,7 +478,7 @@ KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
             ASSERT (!duration_timer);
         }
         if (was_started && element->document ()->active ())
-            element->document()->postEvent (element, new TimerEvent(0, stopped_timer_id));
+            element->document()->postEvent (element, new Event (element, event_stopped));
         else if (element->unfinished ())
             element->finish ();
     } else {
@@ -493,16 +488,17 @@ KDE_NO_EXPORT void Runtime::propagateStop (bool forced) {
 }
 
 KDE_NO_EXPORT void Runtime::propagateStart () {
-    SMIL::TimedMrl * tm = convertNode <SMIL::TimedMrl> (element);
-    if (tm) {
-        tm->propagateEvent (new ToBeStartedEvent (element));
+    Node *e = element.ptr ();
+    if (e) {
+        e->propagateEvent (new Event (e, event_to_be_started));
         if (start_timer)
-            tm->document ()->cancelEvent (start_timer);
+            e->document ()->cancelEvent (start_timer);
         ASSERT (!start_timer);
-    } else
-        start_timer = 0L;
-    timingstate = timings_started;
-    element->document ()->postEvent (element, new TimerEvent (0, started_timer_id));
+        timingstate = timings_started;
+        element->document ()->postEvent (element, new Event (e, event_started));
+    } else {
+        reset ();
+    }
 }
 
 /**
@@ -510,45 +506,46 @@ KDE_NO_EXPORT void Runtime::propagateStart () {
  */
 KDE_NO_EXPORT void Runtime::started () {
     //kDebug () << (element ? element->nodeName() : "-");
-    NodePtr e = element; // element is weak
-    SMIL::TimedMrl * tm = convertNode <SMIL::TimedMrl> (e);
-    if (tm) {
+    Node *e = element.ptr (); // element is weak
+    if (e) {
         if (start_timer)
-            tm->document ()->cancelEvent (start_timer);
+            e->document ()->cancelEvent (start_timer);
         if (durTime ().offset > 0 && durTime ().durval == dur_timer) {
             if (duration_timer)
-                tm->document ()->cancelEvent (duration_timer);
-            duration_timer = element->document ()->postEvent
-                (element, new TimerEvent (100 * durTime ().offset, dur_timer_id));
+                e->document ()->cancelEvent (duration_timer);
+            duration_timer = e->document ()->postEvent
+                (e, new TimerEvent (100 * durTime ().offset, dur_timer_id));
         }
         // kDebug () << "Runtime::started set dur timer " << durTime ().offset;
-        tm->propagateEvent (new Event (event_started));
-        tm->begin ();
-    } else
+    } else {
         reset ();
+    }
 }
 
 /**
  * duration_timer timer expired or no duration set after started
  */
 KDE_NO_EXPORT void Runtime::stopped () {
-    if (!element) {
-        reset ();
-    } else if (element->active ()) {
-        if (repeat_count == dur_infinite || 0 < repeat_count--) {
-            if (beginTime ().offset > 0 &&
-                    beginTime ().durval == dur_timer) {
-                if (start_timer)
-                    element->document ()->cancelEvent (start_timer);
-                start_timer = element->document ()->postEvent
-                    (element, new TimerEvent (100 * beginTime ().offset, start_timer_id));
+    Node *e = element.ptr (); // element is weak
+    if (e) {
+        if (element->active ()) {
+            if (repeat_count == dur_infinite || 0 < repeat_count--) {
+                if (beginTime ().offset > 0 &&
+                        beginTime ().durval == dur_timer) {
+                    if (start_timer)
+                        e->document ()->cancelEvent (start_timer);
+                    start_timer = e->document ()->postEvent
+                        (e, new TimerEvent (100 * beginTime ().offset, start_timer_id));
+                } else {
+                    propagateStart ();
+                }
             } else {
-                propagateStart ();
+                repeat_count = 0;
+                e->finish ();
             }
-        } else {
-            repeat_count = 0;
-            element->finish ();
         }
+    } else {
+        reset ();
     }
 }
 
@@ -1577,7 +1574,7 @@ KDE_NO_EXPORT void SMIL::TimedMrl::finish () {
         NodePtrW guard = this;
         Mrl::finish ();
         if (guard && document ()->active ()) // check for reset
-            propagateEvent (new Event (event_stopped));
+            propagateEvent (new Event (this, event_stopped));
     }
 }
 
@@ -1631,22 +1628,31 @@ KDE_NO_EXPORT bool SMIL::TimedMrl::handleEvent (Event *event) {
     switch (id) {
         case event_timer: {
             TimerEvent * te = static_cast <TimerEvent *> (event);
-            if (te->event_id == started_timer_id)
-                runtime ()->started ();
-            else if (te->event_id == stopped_timer_id)
-                runtime ()->stopped ();
-            else if (te->event_id == start_timer_id)
+            if (te->event_id == start_timer_id)
                 runtime ()->propagateStart ();
             else if (te->event_id == dur_timer_id)
                 runtime ()->propagateStop (true);
             else
                 kWarning () << "unhandled timer event";
-            break;
+            return true;
         }
-        default:
-            if (m_runtime)
-                m_runtime->processEvent (id);
+        case event_started:
+            if (event->source.ptr () == this) {
+                runtime ()->started ();
+                propagateEvent (event);
+                begin ();
+                return true;
+            }
+            break;
+        case event_stopped:
+            if (event->source.ptr () == this) {
+                runtime ()->stopped ();
+                return true;
+            }
+            break;
     }
+    if (m_runtime)
+        m_runtime->processEvent (id);
     return true;
 }
 
@@ -1948,10 +1954,9 @@ KDE_NO_EXPORT void SMIL::Excl::childDone (NodePtr /*child*/) {
 
 KDE_NO_EXPORT bool SMIL::Excl::handleEvent (Event *event) {
     if (event->id () == event_to_be_started) {
-        ToBeStartedEvent * se = static_cast <ToBeStartedEvent *> (event);
         //kDebug () << "Excl::handleEvent " << se->node->nodeName();
         for (NodePtr e = firstChild (); e; e = e->nextSibling ()) {
-            if (e == se->node) // stop all _other_ child elements
+            if (e == event->source) // stop all _other_ child elements
                 continue;
             if (!isTimedMrl (e))
                 continue; // definitely a stowaway
@@ -2694,7 +2699,7 @@ void SMIL::ImageMediaType::dataArrived () {
     }
     postpone_lock = 0L;
     if (state == state_began)
-        runtime ()->started ();
+        MediaType::begin ();
 }
 
 bool SMIL::ImageMediaType::handleEvent (Event *event) {
@@ -2807,7 +2812,7 @@ void SMIL::TextMediaType::dataArrived () {
     }
     postpone_lock = 0L;
     if (state == state_began)
-        runtime ()->started ();
+        MediaType::begin ();
 }
 
 bool SMIL::TextMediaType::handleEvent (Event *event) {

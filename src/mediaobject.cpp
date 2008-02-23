@@ -434,7 +434,7 @@ KDE_NO_EXPORT void MediaObject::slotResult (KJob *kjob) {
 
 KDE_NO_EXPORT void MediaObject::ready (const QString &) {
     if (m_node)
-        m_node->document ()->postEvent (m_node.ptr (), new Event (event_media_ready));
+        m_node->document()->postEvent (m_node.ptr(), new Event (NULL, event_media_ready));
 }
 
 KDE_NO_EXPORT void MediaObject::cachePreserveRemoved (const QString & str) {
@@ -694,7 +694,7 @@ KDE_NO_EXPORT bool ImageMedia::wget (const QString &str) {
 KDE_NO_EXPORT void ImageMedia::movieResize (const QSize &) {
     //kDebug () << "movieResize" << endl;
     if (m_node)
-        m_node->handleEvent (new Event (event_img_updated));
+        m_node->document ()->postEvent (m_node, new Event (NULL, event_img_updated));
 }
 
 KDE_NO_EXPORT void ImageMedia::movieUpdated (const QRect &) {
@@ -705,13 +705,13 @@ KDE_NO_EXPORT void ImageMedia::movieUpdated (const QRect &) {
         cached_img->setImage (img);
         cached_img->flags = (int)(ImageData::ImagePixmap | ImageData::ImageAnimated); //TODO
         if (m_node)
-            m_node->handleEvent (new Event (event_img_updated));
+            m_node->document ()->postEvent (m_node, new Event (NULL, event_img_updated));
     }
 }
 
 KDE_NO_EXPORT void ImageMedia::movieStatus (QMovie::MovieState status) {
     if (QMovie::NotRunning == status && m_node)
-        m_node->handleEvent (new Event (event_img_anim_finished));
+        m_node->document ()->postEvent(m_node, new Event (NULL, event_img_anim_finished));
 }
 
 //------------------------%<----------------------------------------------------

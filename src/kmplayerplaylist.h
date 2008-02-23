@@ -40,6 +40,7 @@ namespace KMPlayer {
 
 class Document;
 class Node;
+class Event;
 class Mrl;
 class Surface;
 class ElementPrivate;
@@ -242,27 +243,14 @@ enum Fit {
     fit_scroll     // keep aspect and don't scale, add scollbars if needed
 };
 
-/*
- * A generic event type
- */
-class KMPLAYER_EXPORT Event : public Item <Event> {
-public:
-    KDE_NO_CDTOR_EXPORT Event (unsigned int event_id) : m_event_id (event_id) {}
-    KDE_NO_CDTOR_EXPORT virtual ~Event () {}
-    KDE_NO_EXPORT unsigned int id () const { return m_event_id; }
-protected:
-    unsigned int m_event_id;
-};
-
-ITEM_AS_POINTER(KMPlayer::Event)
-
 extern const unsigned int event_pointer_clicked;
 extern const unsigned int event_pointer_moved;
 extern const unsigned int event_inbounds;
 extern const unsigned int event_outbounds;
-extern const unsigned int event_sized;
 extern const unsigned int event_postponed;
 extern const unsigned int event_timer;
+extern const unsigned int event_started;
+extern const unsigned int event_stopped;
 extern const unsigned int mediatype_attached;
 
 // convenient types
@@ -380,7 +368,7 @@ public:
     /*
      * Dispatch Event to all listeners of event->id()
      */
-    void propagateEvent (EventPtr event);
+    void propagateEvent (Event *event);
     /**
      * Alternative to event handling is the Visitor pattern
      */
@@ -662,6 +650,22 @@ public:
 };
 
 ITEM_AS_POINTER(KMPlayer::Surface)
+
+/*
+ * A generic event type
+ */
+class KMPLAYER_EXPORT Event : public Item <Event> {
+public:
+    KDE_NO_CDTOR_EXPORT Event (Node *n, unsigned int event_id)
+        : source (n), m_event_id (event_id) {}
+    KDE_NO_CDTOR_EXPORT virtual ~Event () {}
+    KDE_NO_EXPORT unsigned int id () const { return m_event_id; }
+    NodePtrW source;
+protected:
+    unsigned int m_event_id;
+};
+
+ITEM_AS_POINTER(KMPlayer::Event)
 
 /**
  * Event signaling a timer event

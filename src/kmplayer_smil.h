@@ -34,16 +34,6 @@ namespace KMPlayer {
 class ImageMedia;
 
 /*
- * Event signaled before the actual starting takes place. Use by SMIL::Excl
- * to stop possible other children
- */
-class ToBeStartedEvent : public Event {
-public:
-    ToBeStartedEvent (NodePtr n);
-    NodePtrW node;
-};
-
-/*
  * Interpretation of sizes
  */
 class KMPLAYER_NO_EXPORT SizeType {
