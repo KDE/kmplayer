@@ -932,6 +932,7 @@ void Document::reset () {
             event_queue = ed->next;
             delete ed;
         }
+        cur_timeout = -1;
     }
     postpone_lock = 0L;
 }
@@ -984,16 +985,36 @@ void Document::insertEvent (Node *n, Event *e, const struct timeval &tv) {
     //kDebug () << "setTimeout " << ms << " at:" << pos << " tv:" << tv.tv_sec << "." << tv.tv_usec;
 }
 
+void Document::setNextTimeout (const struct timeval &now) {
+    if (!cur_event) {              // if we're not processing events
+        int timeout = 0x7FFFFFFF;
+        if (event_queue && active ()) {
+            if (!postpone_ref)     // not paused
+                timeout = diffTime (event_queue->timeout, now);
+            else                   // paused, allow non-timer events
+                for (EventData *ed = event_queue; ed; ed = ed->next)
+                    if (event_timer != ed->event->id ()) {
+                        timeout = diffTime (ed->timeout, now);
+                        break;
+                    }
+        }
+        timeout = 0x7FFFFFFF != timeout ? (timeout > 0 ? timeout : 0) : -1;
+        if (timeout != cur_timeout) {
+            cur_timeout = timeout;
+            notify_listener->setTimeout (cur_timeout);
+        }
+    }
+}
+
 Event *Document::postEvent (Node *n, Event *e) {
     int ms = e->id () == event_timer ? static_cast <TimerEvent *> (e)->milli_sec : 0;
-    struct timeval tv;
-    timeOfDay (tv);
+    struct timeval now, tv;
+    timeOfDay (now);
+    tv = now;
     addTime (tv, ms);
     insertEvent (n, e, tv);
-    if (!postpone_ref && event_queue && event_queue->event.ptr () == e && !cur_event) {
-        cur_timeout = ms;
-        notify_listener->setTimeout (ms);
-    }
+    if (postpone_ref || event_queue && event_queue->event.ptr () == e)
+        setNextTimeout (now);
     return e;
 }
 
@@ -1008,17 +1029,9 @@ void Document::cancelEvent (Event *e) {
                     prev->next = ed->next;
                 } else {
                     event_queue = ed->next;
-                    if (!cur_event) {
-                        if (!postpone_ref && event_queue) {
-                            //kDebug () << "cancel first";
-                            struct timeval now;
-                            timeOfDay (now);
-                            int diff = diffTime (now, event_queue->timeout);
-                            cur_timeout = diff > 0 ? 0 : -diff;
-                        } else
-                            cur_timeout = -1;
-                        notify_listener->setTimeout (cur_timeout);
-                    }
+                    struct timeval now;
+                    timeOfDay (now);
+                    setNextTimeout (now);
                 }
                 delete ed;
                 return;
@@ -1030,91 +1043,74 @@ void Document::cancelEvent (Event *e) {
 }
 
 void Document::timer () {
+    struct timeval now;
     cur_event = event_queue;
-    if (!cur_event)
-        return;
+    if (cur_event) {
+        NodePtrW guard = this;
+        struct timeval start = cur_event->timeout;
 
-    NodePtrW guard = this;
-    struct timeval start = cur_event->timeout;
-
-    // handle max 100 timeouts with timeout set to now
-    for (int i = 0; cur_event && !postpone_ref && i < 100 && active (); ++i) {
-        event_queue = cur_event->next;
-        if (!cur_event->target) {
-            // some part of document has gone and didn't remove timer
-            kError () << "spurious timer" << endl;
-        } else {
-            EventData *ed = cur_event;
-            cur_event->target->handleEvent (cur_event->event.ptr ());
-            if (!guard) {
-                delete ed;
-                return;
-            }
-            if (cur_event->event && cur_event->event->id () == event_timer) {
-                TimerEvent *te = static_cast <TimerEvent *> (cur_event->event.ptr ());
-                if (te->interval) {
-                    te->interval = false; // reset interval
-                    addTime (cur_event->timeout, te->milli_sec);
-                    insertEvent (cur_event->target, cur_event->event.ptr (), cur_event->timeout);
+        // handle max 100 timeouts with timeout set to now
+        for (int i = 0; cur_event && !postpone_ref && i < 100 && active (); ++i) {
+            event_queue = cur_event->next;
+            if (!cur_event->target) {
+                // some part of document has gone and didn't remove timer
+                kError () << "spurious timer" << endl;
+            } else {
+                EventData *ed = cur_event;
+                cur_event->target->handleEvent (cur_event->event.ptr ());
+                if (!guard) {
+                    delete ed;
+                    return;
+                }
+                if (cur_event->event && cur_event->event->id () == event_timer) {
+                    TimerEvent *te = static_cast <TimerEvent *> (cur_event->event.ptr ());
+                    if (te->interval) {
+                        te->interval = false; // reset interval
+                        addTime (cur_event->timeout, te->milli_sec);
+                        insertEvent (cur_event->target,
+                                cur_event->event.ptr (), cur_event->timeout);
+                    }
                 }
             }
+            delete cur_event;
+            cur_event = event_queue;
+            if (!cur_event || diffTime (cur_event->timeout, start) > 5)
+                break;
         }
-        delete cur_event;
-        cur_event = event_queue;
-        if (!cur_event || diffTime (cur_event->timeout, start) > 5)
-            break;
-    }
-    cur_event = NULL;
-
-    // update timeouts and set new timeout to prevent interval timer events
-    if (notify_listener && !postpone_ref && event_queue && active ()) {
-        struct timeval now;
+        cur_event = NULL;
         timeOfDay (now);
-        int new_timeout = diffTime (event_queue->timeout, now);
-        if (new_timeout < 0)
-            new_timeout = 0;
-        if (new_timeout != cur_timeout) {
-            cur_timeout = new_timeout;
-            notify_listener->setTimeout (cur_timeout);
-        }
-        // else keep the timer, no new setTimeout
-    } else {
-        cur_timeout = -1;
-        notify_listener->setTimeout (-1); // kill timer
     }
+    setNextTimeout (now);
 }
 
 PostponePtr Document::postpone () {
     if (postpone_ref)
         return postpone_ref;
     kDebug () << "postpone";
-    if (!cur_event && notify_listener) {
-        cur_timeout = -1;
-        notify_listener->setTimeout (-1);
-    }
     PostponePtr p = new Postpone (this);
     postpone_ref = p;
     propagateEvent (new PostponedEvent (true));
+    struct timeval now;
+    timeOfDay (now);
+    setNextTimeout (now);
     return p;
 }
 
 void Document::proceed (const struct timeval & postponed_time) {
     kDebug () << "proceed";
+    postpone_ref = NULL;
+    struct timeval now;
+    timeOfDay (now);
     if (event_queue && notify_listener) {
-        struct timeval now;
-        timeOfDay (now);
         int diff = diffTime (now, postponed_time);
         if (diff > 0) {
             for (EventData *ed = event_queue; ed; ed = ed->next)
-                addTime (ed->timeout, diff);
-        }
-        if (!cur_event) { // eg. postpone() + proceed() in same timer()
-            diff = diffTime (event_queue->timeout, now);
-            cur_timeout = diff < 0 ? 0 : diff;
-            notify_listener->setTimeout (cur_timeout);
+                if (ed->event->id () == event_timer)
+                    addTime (ed->timeout, diff);
         }
     }
     propagateEvent (new PostponedEvent (false));
+    setNextTimeout (now);
 }
 
 Surface *Document::getSurface (Mrl *mrl) {

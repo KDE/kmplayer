@@ -754,6 +754,8 @@ public:
 private:
     void proceed (const struct timeval & postponed_time);
     void insertEvent (Node *n, Event *e, const struct timeval &tv);
+    void setNextTimeout (const struct timeval &now);
+
     PostponePtrW postpone_ref;
     PostponePtr postpone_lock;
     NodeRefListPtr m_PostponedListeners;
